@@ -276,6 +276,7 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 			break;
 
 		case RDPGFX_CODECID_AVC444:
+		case RDPGFX_CODECID_AVC444v2:
 			if ((error = rdpgfx_decode_AVC444(gfx, cmd)))
 				WLog_ERR(TAG, "rdpgfx_decode_AVC444 failed with error %"PRIu32"", error);
 

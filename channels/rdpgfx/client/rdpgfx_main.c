@@ -104,6 +104,8 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 
 		capsSets[pdu.capsSetCount] = *capsSet;
 		capsSets[pdu.capsSetCount++].version = RDPGFX_CAPVERSION_102;
+		capsSets[pdu.capsSetCount] = *capsSet;
+		capsSets[pdu.capsSetCount++].version = RDPGFX_CAPVERSION_103;
 	}
 
 	header.pduLength = RDPGFX_HEADER_SIZE + 2 + (pdu.capsSetCount *
@@ -271,11 +273,13 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	Stream_Seek(s, pad); /* pad (total size is 340 bytes) */
 	WLog_DBG(TAG, "RecvResetGraphicsPdu: width: %"PRIu32" height: %"PRIu32" count: %"PRIu32"",
 	         pdu.width, pdu.height, pdu.monitorCount);
+
 	for (index = 0; index < pdu.monitorCount; index++)
 	{
 		monitor = &(pdu.monitorDefArray[index]);
-		WLog_DBG(TAG, "RecvResetGraphicsPdu: monitor left:%"PRIi32" top:%"PRIi32" right:%"PRIi32" left:%"PRIi32" flags:0x%"PRIx32"",
-				monitor->left, monitor->top, monitor->right, monitor->bottom, monitor->flags);
+		WLog_DBG(TAG,
+		         "RecvResetGraphicsPdu: monitor left:%"PRIi32" top:%"PRIi32" right:%"PRIi32" left:%"PRIi32" flags:0x%"PRIx32"",
+		         monitor->left, monitor->top, monitor->right, monitor->bottom, monitor->flags);
 	}
 
 	if (context)
