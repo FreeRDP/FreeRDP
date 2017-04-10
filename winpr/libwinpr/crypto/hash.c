@@ -452,25 +452,24 @@ void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx)
 BOOL winpr_Digest_MD5_Allow_FIPS(const BYTE* input, size_t ilen, BYTE* output, size_t olen)
 {
 	BOOL result = FALSE;
-        WINPR_DIGEST_CTX *ctx = winpr_Digest_New();
+	WINPR_DIGEST_CTX *ctx = winpr_Digest_New();
 
 	if (!ctx)
-                return FALSE;
+		return FALSE;
 
 	if (!winpr_Digest_Init_MD5_Allow_FIPS(ctx))
-                goto out;
-        if (!winpr_Digest_Update(ctx, input, ilen))
-                goto out;
-        if (!winpr_Digest_Final(ctx, output, olen))
-                goto out;
+		goto out;
+	if (!winpr_Digest_Update(ctx, input, ilen))
+		goto out;
+	if (!winpr_Digest_Final(ctx, output, olen))
+		goto out;
 
-        result = TRUE;
+	result = TRUE;
 out:
-        winpr_Digest_Free(ctx);
-        return result;
-
-
+	winpr_Digest_Free(ctx);
+	return result;
 }
+
 BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen)
 {
 	BOOL result = FALSE;
