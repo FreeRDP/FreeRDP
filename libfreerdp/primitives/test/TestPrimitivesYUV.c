@@ -175,6 +175,7 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 	UINT32 chromaStride[3];
 	UINT32 yuvStride[3];
 	size_t padding = 10000;
+	RECTANGLE_16 rect;
 	PROFILER_DEFINE(yuvCombine);
 	PROFILER_DEFINE(yuvSplit);
 	awidth = roi.width + 16 - roi.width % 16;
@@ -183,6 +184,10 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 	        roi.width, roi.height, awidth, aheight);
 	PROFILER_CREATE(yuvCombine, "YUV420CombineToYUV444");
 	PROFILER_CREATE(yuvSplit, "YUV444SplitToYUV420");
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = roi.width;
+	rect.bottom = roi.height;
 
 	if (!prims || !prims->YUV420CombineToYUV444)
 		goto fail;
@@ -234,9 +239,17 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 
 	PROFILER_ENTER(yuvCombine);
 
-	if (prims->YUV420CombineToYUV444((const BYTE**)luma, lumaStride,
+	if (prims->YUV420CombineToYUV444(AVC444_LUMA,
+	                                 (const BYTE**)luma, lumaStride,
+	                                 yuv, yuvStride, &rect) != PRIMITIVES_SUCCESS)
+	{
+		PROFILER_EXIT(yuvCombine);
+		goto fail;
+	}
+
+	if (prims->YUV420CombineToYUV444(AVC444_CHROMAv1,
 	                                 (const BYTE**)chroma, chromaStride,
-	                                 yuv, yuvStride, &roi) != PRIMITIVES_SUCCESS)
+	                                 yuv, yuvStride, &rect) != PRIMITIVES_SUCCESS)
 	{
 		PROFILER_EXIT(yuvCombine);
 		goto fail;
