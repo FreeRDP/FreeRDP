@@ -76,7 +76,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 {
 	int status;
 	long options = 0;
-	context->ctx = SSL_CTX_new(TLSv1_client_method());
+	context->ctx = SSL_CTX_new(SSLv23_client_method());
 
 	if (!context->ctx)
 	{
@@ -198,7 +198,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 {
 	int status;
 	long options = 0;
-	context->ctx = SSL_CTX_new(TLSv1_server_method());
+	context->ctx = SSL_CTX_new(SSLv23_server_method());
 
 	if (!context->ctx)
 	{
