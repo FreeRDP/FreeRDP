@@ -65,8 +65,8 @@ WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOOL overr
 	EVP_CIPHER_CTX_init((EVP_CIPHER_CTX *) ctx);
 	EVP_EncryptInit_ex((EVP_CIPHER_CTX *) ctx, evp, NULL, NULL, NULL);
 
-	/* EVP_CIPH_FLAG_NON_FIPS_ALLOW does not exist in openssl 1.0.0 */
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	/* EVP_CIPH_FLAG_NON_FIPS_ALLOW does not exist before openssl 1.0.1 */
+#if !(OPENSSL_VERSION_NUMBER < 0x10001000L)
 	if (override_fips == TRUE)
 		EVP_CIPHER_CTX_set_flags((EVP_CIPHER_CTX *) ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
 #endif
