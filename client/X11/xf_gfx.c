@@ -39,10 +39,10 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	gdi = xfc->context.gdi;
 	surfaceX = surface->gdi.outputOriginX;
 	surfaceY = surface->gdi.outputOriginY;
-	surfaceRect.left = surfaceX;
-	surfaceRect.top = surfaceY;
-	surfaceRect.right = surfaceX + surface->gdi.width;
-	surfaceRect.bottom = surfaceY + surface->gdi.height;
+	surfaceRect.left = 0;
+	surfaceRect.top = 0;
+	surfaceRect.right = surface->gdi.width;
+	surfaceRect.bottom = surface->gdi.height;
 	XSetClipMask(xfc->display, xfc->gc, None);
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
@@ -80,7 +80,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		{
 			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
 			          nXSrc, nYSrc, nXDst, nYDst, width, height);
-			xf_draw_screen(xfc, nXSrc, nYSrc, width, height);
+			xf_draw_screen(xfc, nXDst, nYDst, width, height);
 		}
 		else
 #endif
