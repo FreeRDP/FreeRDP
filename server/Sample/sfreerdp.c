@@ -27,6 +27,7 @@
 #include <signal.h>
 
 #include <winpr/crt.h>
+#include <winpr/ssl.h>
 #include <winpr/synch.h>
 #include <winpr/string.h>
 #include <winpr/path.h>
@@ -919,6 +920,7 @@ int main(int argc, char* argv[])
 	}
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	instance = freerdp_listener_new();
 
 	if (!instance)
