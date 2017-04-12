@@ -374,15 +374,22 @@ BOOL winpr_Digest_Init_Internal(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 }
 #endif
 
-BOOL winpr_Digest_Init_MD5_Allow_FIPS(WINPR_DIGEST_CTX* ctx)
+BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 {
 #if defined(WITH_OPENSSL)
 	EVP_MD_CTX* mdctx = (EVP_MD_CTX*) ctx;
-	const EVP_MD* evp = EVP_md5();
+	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
+
+	/* Only MD5 is supported for FIPS allow override */
+	if (md != WINPR_MD_MD5)
+		return FALSE;
 	EVP_MD_CTX_set_flags(mdctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-	return winpr_Digest_Init_Internal(ctx, WINPR_MD_MD5, evp);
+	return winpr_Digest_Init_Internal(ctx, md, evp);
 #elif defined(WITH_MBEDTLS)
-	return winpr_Digest_Init_Internal(ctx, WINPR_MD_MD5);
+	/* Only MD5 is supported for FIPS allow override */
+	if (md != WINPR_MD_MD5)
+                return FALSE;
+	return winpr_Digest_Init_Internal(ctx, md);
 #endif
 }
 
@@ -449,7 +456,7 @@ void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx)
 #endif
 }
 
-BOOL winpr_Digest_MD5_Allow_FIPS(const BYTE* input, size_t ilen, BYTE* output, size_t olen)
+BOOL winpr_Digest_Allow_FIPS(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen)
 {
 	BOOL result = FALSE;
 	WINPR_DIGEST_CTX *ctx = winpr_Digest_New();
@@ -457,7 +464,7 @@ BOOL winpr_Digest_MD5_Allow_FIPS(const BYTE* input, size_t ilen, BYTE* output, s
 	if (!ctx)
 		return FALSE;
 
-	if (!winpr_Digest_Init_MD5_Allow_FIPS(ctx))
+	if (!winpr_Digest_Init_Allow_FIPS(ctx, md))
 		goto out;
 	if (!winpr_Digest_Update(ctx, input, ilen))
 		goto out;

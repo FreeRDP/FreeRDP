@@ -156,7 +156,7 @@ static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, int length
 	/* Allow FIPS override for use of MD5 here, this is used for creating hashes of the premaster_secret and master_secret */
 	/* used for RDP licensing as described in MS-RDPELE. This is for RDP licensing packets */
 	/* which will already be encrypted under FIPS, so the use of MD5 here is not for sensitive data protection. */
-	if (!winpr_Digest_Init_MD5_Allow_FIPS(md5))
+	if (!winpr_Digest_Init_Allow_FIPS(md5, WINPR_MD_MD5))
 		goto out;
 	if (!winpr_Digest_Update(md5, salt, 48)) /* Salt (48 bytes) */
 		goto out;
@@ -242,7 +242,7 @@ BOOL security_md5_16_32_32_Allow_FIPS(const BYTE* in0, const BYTE* in1, const BY
 
         if (!(md5 = winpr_Digest_New()))
                 return FALSE;
-        if (!winpr_Digest_Init_MD5_Allow_FIPS(md5))
+        if (!winpr_Digest_Init_Allow_FIPS(md5, WINPR_MD_MD5))
                 goto out;
         if (!winpr_Digest_Update(md5, in0, 16))
                 goto out;
@@ -312,7 +312,7 @@ BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	/* Allow FIPS override for use of MD5 here, this is only used for creating the MACData field of the */
 	/* Client Platform Challenge Response packet (from MS-RDPELE section 2.2.2.5). This is for RDP licensing packets */
 	/* which will already be encrypted under FIPS, so the use of MD5 here is not for sensitive data protection. */
-	if (!winpr_Digest_Init_MD5_Allow_FIPS(md5))
+	if (!winpr_Digest_Init_Allow_FIPS(md5, WINPR_MD_MD5))
 		goto out;
 	if (!winpr_Digest_Update(md5, mac_salt_key, 16)) /* MacSaltKey */
 		goto out;

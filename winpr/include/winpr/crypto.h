@@ -665,12 +665,12 @@ extern "C" {
 #endif
 
 WINPR_API WINPR_DIGEST_CTX* winpr_Digest_New(void);
-WINPR_API BOOL winpr_Digest_Init_MD5_Allow_FIPS(WINPR_DIGEST_CTX* ctx);
+WINPR_API BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md);
 WINPR_API BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md);
 WINPR_API BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen);
 WINPR_API BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t ilen);
 WINPR_API void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx);
-WINPR_API BOOL winpr_Digest_MD5_Allow_FIPS(const BYTE* input, size_t ilen, BYTE* output, size_t olen);
+WINPR_API BOOL winpr_Digest_Allow_FIPS(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen);
 WINPR_API BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen);
 
 #ifdef __cplusplus
