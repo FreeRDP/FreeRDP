@@ -72,7 +72,7 @@ typedef struct _DEVICE_DRIVE_EXT DEVICE_DRIVE_EXT;
 struct _DEVICE_DRIVE_EXT
 {
 	DEVICE device;
-	char* path;
+	WCHAR* path;
 };
 
 static const char* automountLocations[] =
@@ -756,7 +756,6 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	int i, j;
 	int size = 0;
 	int count;
-	DEVICE_DRIVE_EXT* device_ext;
 	ULONG_PTR* keys;
 	UINT32 ids[1];
 	UINT error = 0;
@@ -794,26 +793,34 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 
 	for (j = 0; j < count; j++)
 	{
+		char* path = NULL;
 		BOOL dev_found = FALSE;
-		device_ext = (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(
-		                 rdpdr->devman->devices, (void*)keys[j]);
+		DEVICE_DRIVE_EXT* device_ext = (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(
+		                                   rdpdr->devman->devices, (void*)keys[j]);
 
 		if (!device_ext || !device_ext->path)
 			continue;
 
-		/* not plugable device */
-		if (!isAutomountLocation(device_ext->path))
+		ConvertFromUnicode(CP_UTF8, 0, device_ext->path, -1, &path, 0, NULL, NULL);
+
+		if (!path)
 			continue;
 
-		for (i = 0; i < size; i++)
+		/* not plugable device */
+		if (isAutomountLocation(path))
 		{
-			if (strstr(device_ext->path, dev_array[i].path) != NULL)
+			for (i = 0; i < size; i++)
 			{
-				dev_found = TRUE;
-				dev_array[i].to_add = FALSE;
-				break;
+				if (strstr(path, dev_array[i].path) != NULL)
+				{
+					dev_found = TRUE;
+					dev_array[i].to_add = FALSE;
+					break;
+				}
 			}
 		}
+
+		free(path);
 
 		if (!dev_found)
 		{
