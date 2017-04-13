@@ -75,6 +75,46 @@ struct _DEVICE_DRIVE_EXT
 	char* path;
 };
 
+static const char* automountLocations[] =
+{
+	"/run/user/%lu/gvfs",
+	"/run/media/%s",
+	"/media/%s",
+	"/mnt"
+};
+
+static BOOL isAutomountLocation(const char* path)
+{
+	const size_t nrLocations = sizeof(automountLocations) / sizeof(automountLocations[0]);
+	size_t x;
+	char buffer[MAX_PATH];
+	uid_t uid = getuid();
+	const char* uname = getlogin();
+
+	if (!path)
+		return FALSE;
+
+	for (x = 0; x < nrLocations; x++)
+	{
+		const char* location = automountLocations[x];
+		size_t length;
+
+		if (strstr(location, "%lu"))
+			snprintf(buffer, sizeof(buffer), location, (unsigned long)uid);
+		else if (strstr(location, "%s"))
+			snprintf(buffer, sizeof(buffer), location, uname);
+		else
+			snprintf(buffer, sizeof(buffer), "%s", location);
+
+		length = strnlen(buffer, MAX_PATH);
+
+		if (strncmp(buffer, path, length) == 0)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 /**
  * Function description
  *
@@ -736,7 +776,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		while ((word = get_word(line, &wlen)))
 		{
 			/* copy hotpluged device mount point to the dev_array */
-			if (strstr(word, "/mnt/") != NULL || strstr(word, "/media/") != NULL)
+			if (isAutomountLocation(word))
 			{
 				dev_array[size].path = word;
 				dev_array[size++].to_add = TRUE;
@@ -762,8 +802,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 			continue;
 
 		/* not plugable device */
-		if (strstr(device_ext->path, "/mnt/") == NULL
-		    && strstr(device_ext->path, "/media/") == NULL)
+		if (!isAutomountLocation(device_ext->path))
 			continue;
 
 		for (i = 0; i < size; i++)
