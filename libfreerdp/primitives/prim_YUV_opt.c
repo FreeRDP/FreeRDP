@@ -945,8 +945,10 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcSte
 	const UINT32 quaterWidth = (nWidth + 3) / 4;
 	const UINT32 quaterPad = quaterWidth % 16;
 	const __m128i zero = _mm_setzero_si128();
-	const __m128i mask = _mm_set_epi8(0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0,
-	                                  0x80);
+	const __m128i mask = _mm_set_epi8(0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0,
+	                                  0x80, 0);
+	const __m128i mask2 = _mm_set_epi8(0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0,
+	                                   0x80);
 	const __m128i shuffle1 = _mm_set_epi8(0x80, 15, 0x80, 14, 0x80, 13, 0x80, 12, 0x80, 11, 0x80, 10,
 	                                      0x80, 9, 0x80, 8);
 	const __m128i shuffle2 = _mm_set_epi8(0x80, 7, 0x80, 6, 0x80, 5, 0x80, 4, 0x80, 3, 0x80, 2, 0x80, 1,
@@ -965,17 +967,17 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcSte
 		{
 			{
 				const __m128i u = _mm_loadu_si128((__m128i*)&pYaU[x]);
-				const __m128i u2 = _mm_unpackhi_epi8(u, zero);
-				const __m128i u1 = _mm_unpacklo_epi8(u, zero);
+				const __m128i u2 = _mm_unpackhi_epi8(zero, u);
+				const __m128i u1 = _mm_unpacklo_epi8(zero, u);
 				_mm_maskmoveu_si128(u1, mask, (char*)&pU[2 * x]);
 				_mm_maskmoveu_si128(u2, mask, (char*)&pU[2 * x + 16]);
 			}
 			{
-				const __m128i u = _mm_loadu_si128((__m128i*)&pYaV[x]);
-				const __m128i u2 = _mm_unpackhi_epi8(u, zero);
-				const __m128i u1 = _mm_unpacklo_epi8(u, zero);
-				_mm_maskmoveu_si128(u1, mask, (char*)&pV[2 * x]);
-				_mm_maskmoveu_si128(u2, mask, (char*)&pV[2 * x + 16]);
+				const __m128i v = _mm_loadu_si128((__m128i*)&pYaV[x]);
+				const __m128i v2 = _mm_unpackhi_epi8(zero, v);
+				const __m128i v1 = _mm_unpacklo_epi8(zero, v);
+				_mm_maskmoveu_si128(v1, mask, (char*)&pV[2 * x]);
+				_mm_maskmoveu_si128(v2, mask, (char*)&pV[2 * x + 16]);
 			}
 		}
 
@@ -1008,24 +1010,24 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcSte
 				const __m128i u2 = _mm_shuffle_epi8(uLow, shuffle1);
 				const __m128i u3 = _mm_shuffle_epi8(uHigh, shuffle2);
 				const __m128i u4 = _mm_shuffle_epi8(uHigh, shuffle1);
-				_mm_maskmoveu_si128(u1, mask, (char*)&pU[2 * x + 0]);
-				_mm_maskmoveu_si128(u2, mask, (char*)&pU[2 * x + 16]);
-				_mm_maskmoveu_si128(u3, mask, (char*)&pU[2 * x + 32]);
-				_mm_maskmoveu_si128(u4, mask, (char*)&pU[2 * x + 48]);
+				_mm_maskmoveu_si128(u1, mask2, (char*)&pU[4 * x + 0]);
+				_mm_maskmoveu_si128(u2, mask2, (char*)&pU[4 * x + 16]);
+				_mm_maskmoveu_si128(u3, mask2, (char*)&pU[4 * x + 32]);
+				_mm_maskmoveu_si128(u4, mask2, (char*)&pU[4 * x + 48]);
 			}
 			{
-				const __m128i uU = _mm_loadu_si128((__m128i*)&pUaV[x]);
-				const __m128i uV = _mm_loadu_si128((__m128i*)&pVaV[x]);
-				const __m128i uHigh = _mm_unpackhi_epi8(uU, uV);
-				const __m128i uLow = _mm_unpacklo_epi8(uU, uV);
-				const __m128i u1 = _mm_shuffle_epi8(uLow, shuffle2);
-				const __m128i u2 = _mm_shuffle_epi8(uLow, shuffle1);
-				const __m128i u3 = _mm_shuffle_epi8(uHigh, shuffle2);
-				const __m128i u4 = _mm_shuffle_epi8(uHigh, shuffle1);
-				_mm_maskmoveu_si128(u1, mask, (char*)&pV[2 * x + 0]);
-				_mm_maskmoveu_si128(u2, mask, (char*)&pV[2 * x + 16]);
-				_mm_maskmoveu_si128(u3, mask, (char*)&pV[2 * x + 32]);
-				_mm_maskmoveu_si128(u4, mask, (char*)&pV[2 * x + 48]);
+				const __m128i vU = _mm_loadu_si128((__m128i*)&pUaV[x]);
+				const __m128i vV = _mm_loadu_si128((__m128i*)&pVaV[x]);
+				const __m128i vHigh = _mm_unpackhi_epi8(vU, vV);
+				const __m128i vLow = _mm_unpacklo_epi8(vU, vV);
+				const __m128i v1 = _mm_shuffle_epi8(vLow, shuffle2);
+				const __m128i v2 = _mm_shuffle_epi8(vLow, shuffle1);
+				const __m128i v3 = _mm_shuffle_epi8(vHigh, shuffle2);
+				const __m128i v4 = _mm_shuffle_epi8(vHigh, shuffle1);
+				_mm_maskmoveu_si128(v1, mask2, (char*)&pV[4 * x + 0]);
+				_mm_maskmoveu_si128(v2, mask2, (char*)&pV[4 * x + 16]);
+				_mm_maskmoveu_si128(v3, mask2, (char*)&pV[4 * x + 32]);
+				_mm_maskmoveu_si128(v4, mask2, (char*)&pV[4 * x + 48]);
 			}
 		}
 
