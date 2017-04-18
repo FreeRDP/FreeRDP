@@ -75,46 +75,6 @@ struct _DEVICE_DRIVE_EXT
 	WCHAR* path;
 };
 
-static const char* automountLocations[] =
-{
-	"/run/user/%lu/gvfs",
-	"/run/media/%s",
-	"/media/%s",
-	"/mnt"
-};
-
-static BOOL isAutomountLocation(const char* path)
-{
-	const size_t nrLocations = sizeof(automountLocations) / sizeof(automountLocations[0]);
-	size_t x;
-	char buffer[MAX_PATH];
-	uid_t uid = getuid();
-	const char* uname = getlogin();
-
-	if (!path)
-		return FALSE;
-
-	for (x = 0; x < nrLocations; x++)
-	{
-		const char* location = automountLocations[x];
-		size_t length;
-
-		if (strstr(location, "%lu"))
-			snprintf(buffer, sizeof(buffer), location, (unsigned long)uid);
-		else if (strstr(location, "%s"))
-			snprintf(buffer, sizeof(buffer), location, uname);
-		else
-			snprintf(buffer, sizeof(buffer), "%s", location);
-
-		length = strnlen(buffer, MAX_PATH);
-
-		if (strncmp(buffer, path, length) == 0)
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
 /**
  * Function description
  *
@@ -649,6 +609,62 @@ typedef struct _hotplug_dev
 	char* path;
 	BOOL  to_add;
 } hotplug_dev;
+
+
+static const char* automountLocations[] =
+{
+	"/run/user/%lu/gvfs",
+	"/run/media/%s",
+	"/media/%s",
+	"/media",
+	"/mnt"
+};
+
+static BOOL isAutomountLocation(const char* path)
+{
+	const size_t nrLocations = sizeof(automountLocations) / sizeof(automountLocations[0]);
+	size_t x;
+	char buffer[MAX_PATH];
+	uid_t uid = getuid();
+	const char* uname = getlogin();
+
+	if (!path)
+		return FALSE;
+
+	for (x = 0; x < nrLocations; x++)
+	{
+		const char* location = automountLocations[x];
+		size_t length;
+
+		if (strstr(location, "%lu"))
+			snprintf(buffer, sizeof(buffer), location, (unsigned long)uid);
+		else if (strstr(location, "%s"))
+			snprintf(buffer, sizeof(buffer), location, uname);
+		else
+			snprintf(buffer, sizeof(buffer), "%s", location);
+
+		length = strnlen(buffer, sizeof(buffer));
+
+		if (strncmp(buffer, path, length) == 0)
+		{
+			const char* rest = &path[length];
+
+			/* Only consider mount locations with max depth of 1 below the
+			 * base path or the base path itself. */
+			if (*rest == '\0')
+				return TRUE;
+			else if (*rest == '/')
+			{
+				const char* token = strstr(&rest[1], "/");
+
+				if (!token || (token[1] == '\0'))
+					return TRUE;
+			}
+		}
+	}
+
+	return FALSE;
+}
 
 static char* next_line(FILE* fd, size_t* len)
 {
