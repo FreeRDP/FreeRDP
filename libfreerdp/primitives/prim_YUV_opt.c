@@ -1707,12 +1707,12 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep
 		{
 			{
 				uint8x16x2_t u = vld2q_u8(&pU[2 * x]);
-				u.val[0] = vld1q_u8(&pYaU[x]);
+				u.val[1] = vld1q_u8(&pYaU[x]);
 				vst2q_u8(&pU[2 * x], u);
 			}
 			{
 				uint8x16x2_t v = vld2q_u8(&pV[2 * x]);
-				v.val[0] = vld1q_u8(&pYaV[x]);
+				v.val[1] = vld1q_u8(&pYaV[x]);
 				vst2q_u8(&pV[2 * x], v);
 			}
 		}
