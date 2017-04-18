@@ -190,6 +190,7 @@ typedef pstatus_t (*__RGBToYUV444_8u_P3AC4R_t)(
 typedef pstatus_t (*__YUV420CombineToYUV444_t)(
     avc444_frame_type type,
     const BYTE* pSrc[3], const UINT32 srcStep[3],
+    UINT32 nWidth, UINT32 nHeight,
     BYTE* pDst[3], const UINT32 dstStep[3],
     const RECTANGLE_16* roi);
 typedef pstatus_t (*__YUV444SplitToYUV420_t)(

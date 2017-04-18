@@ -932,6 +932,7 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 src
 }
 
 static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep[3],
+                                        UINT32 nTotalWidth, UINT32 nTotalHeight,
                                         BYTE* pDst[3], const UINT32 dstStep[3],
                                         const RECTANGLE_16* roi)
 {
@@ -956,7 +957,7 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcSte
 	{
 		const UINT32 yTop = y + roi->top;
 		const BYTE* pYaU = pSrc[0] + srcStep[0] * yTop + roi->left / 2;
-		const BYTE* pYaV = pYaU + srcStep[0] / 2;
+		const BYTE* pYaV = pYaU + nTotalWidth / 2;
 		BYTE* pU = pDst[1] + dstStep[1] * yTop + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * yTop + roi->left;
 
@@ -990,9 +991,9 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcSte
 	for (y = 0; y < halfHeight; y++)
 	{
 		const BYTE* pUaU = pSrc[1] + srcStep[1] * (y + roi->top / 2) + roi->left / 4;
-		const BYTE* pUaV = pUaU + srcStep[1] / 2;
+		const BYTE* pUaV = pUaU + nTotalWidth / 4;
 		const BYTE* pVaU = pSrc[2] + srcStep[2] * (y + roi->top / 2) + roi->left / 4;
-		const BYTE* pVaV = pVaU + srcStep[2] / 2;
+		const BYTE* pVaV = pVaU + nTotalWidth / 4;
 		BYTE* pU = pDst[1] + dstStep[1] * (2 * y + 1 + roi->top) + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * (2 * y + 1 + roi->top) + roi->left;
 
@@ -1043,6 +1044,7 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcSte
 static pstatus_t ssse3_YUV420CombineToYUV444(
     avc444_frame_type type,
     const BYTE* pSrc[3], const UINT32 srcStep[3],
+    UINT32 nWidth, UINT32 nHeight,
     BYTE* pDst[3], const UINT32 dstStep[3],
     const RECTANGLE_16* roi)
 {
@@ -1064,7 +1066,7 @@ static pstatus_t ssse3_YUV420CombineToYUV444(
 			return ssse3_ChromaV1ToYUV444(pSrc, srcStep, pDst, dstStep, roi);
 
 		case AVC444_CHROMAv2:
-			return ssse3_ChromaV2ToYUV444(pSrc, srcStep, pDst, dstStep, roi);
+			return ssse3_ChromaV2ToYUV444(pSrc, srcStep, nWidth, nHeight, pDst, dstStep, roi);
 
 		default:
 			return -1;
@@ -1677,6 +1679,7 @@ static pstatus_t neon_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcS
 }
 
 static pstatus_t neon_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep[3],
+                                       UINT32 nTotalWidth, UINT32 nTotalHeight,
                                        BYTE* pDst[3], const UINT32 dstStep[3],
                                        const RECTANGLE_16* roi)
 {
@@ -1694,7 +1697,7 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep
 	{
 		const UINT32 yTop = y + roi->top;
 		const BYTE* pYaU = pSrc[0] + srcStep[0] * yTop + roi->left / 2;
-		const BYTE* pYaV = pYaU + srcStep[0] / 2;
+		const BYTE* pYaV = pYaU + nTotalWidth / 2;
 		BYTE* pU = pDst[1] + dstStep[1] * yTop + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * yTop + roi->left;
 
@@ -1724,9 +1727,9 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep
 	for (y = 0; y < halfHeight; y++)
 	{
 		const BYTE* pUaU = pSrc[1] + srcStep[1] * (y + roi->top / 2) + roi->left / 4;
-		const BYTE* pUaV = pUaU + srcStep[1] / 2;
+		const BYTE* pUaV = pUaU + nTotalWidth / 4;
 		const BYTE* pVaU = pSrc[2] + srcStep[2] * (y + roi->top / 2) + roi->left / 4;
-		const BYTE* pVaV = pVaU + srcStep[2] / 2;
+		const BYTE* pVaV = pVaU + nTotalWidth / 4;
 		BYTE* pU = pDst[1] + dstStep[1] * (2 * y + 1 + roi->top) + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * (2 * y + 1 + roi->top) + roi->left;
 
@@ -1761,6 +1764,7 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep
 static pstatus_t neon_YUV420CombineToYUV444(
     avc444_frame_type type,
     const BYTE* pSrc[3], const UINT32 srcStep[3],
+    UINT32 nWidth, UINT32 nHeight,
     BYTE* pDst[3], const UINT32 dstStep[3],
     const RECTANGLE_16* roi)
 {
@@ -1782,7 +1786,7 @@ static pstatus_t neon_YUV420CombineToYUV444(
 			return neon_ChromaV1ToYUV444(pSrc, srcStep, pDst, dstStep, roi);
 
 		case AVC444_CHROMAv2:
-			return neon_ChromaV2ToYUV444(pSrc, srcStep, pDst, dstStep, roi);
+			return neon_ChromaV2ToYUV444(pSrc, srcStep, nWidth, nHeight, pDst, dstStep, roi);
 
 		default:
 			return -1;

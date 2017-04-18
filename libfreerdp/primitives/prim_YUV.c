@@ -224,6 +224,7 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 s
 }
 
 static pstatus_t general_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep[3],
+        UINT32 nTotalWidth, UINT32 nTotalHeight,
         BYTE* pDst[3], const UINT32 dstStep[3],
         const RECTANGLE_16* roi)
 {
@@ -233,14 +234,13 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcS
 	const UINT32 halfWidth = (nWidth + 1) / 2;
 	const UINT32 halfHeight = (nHeight + 1) / 2;
 	const UINT32 quaterWidth = (nWidth + 3) / 4;
-	const UINT32 quaterHeight = (nHeight + 3) / 4;
 
 	/* B4 and B5: odd UV values for width/2, height */
 	for (y = 0; y < nHeight; y++)
 	{
 		const UINT32 yTop = y + roi->top;
 		const BYTE* pYaU = pSrc[0] + srcStep[0] * yTop + roi->left / 2;
-		const BYTE* pYaV = pYaU + srcStep[0] / 2;
+		const BYTE* pYaV = pYaU + nTotalWidth / 2;
 		BYTE* pU = pDst[1] + dstStep[1] * yTop + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * yTop + roi->left;
 
@@ -256,9 +256,9 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcS
 	for (y = 0; y < halfHeight; y++)
 	{
 		const BYTE* pUaU = pSrc[1] + srcStep[1] * (y + roi->top / 2) + roi->left / 4;
-		const BYTE* pUaV = pUaU + srcStep[1] / 2;
+		const BYTE* pUaV = pUaU + nTotalWidth / 4;
 		const BYTE* pVaU = pSrc[2] + srcStep[2] * (y + roi->top / 2) + roi->left / 4;
-		const BYTE* pVaV = pVaU + srcStep[2] / 2;
+		const BYTE* pVaV = pVaU + nTotalWidth / 4;
 		BYTE* pU = pDst[1] + dstStep[1] * (2 * y + 1 + roi->top) + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * (2 * y + 1 + roi->top) + roi->left;
 
@@ -274,22 +274,10 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcS
 	return general_ChromaFilter(pDst, dstStep, roi);
 }
 
-/**
- * @brief general_YUV420CombineToYUV444
- *
- * @param pMainSrc    Pointer to luma YUV420 data
- * @param srcMainStep Step width in luma YUV420 data
- * @param pAuxSrc     Pointer to chroma YUV420 data
- * @param srcAuxStep  Step width in chroma YUV420 data
- * @param pDst        Pointer to YUV444 data
- * @param dstStep     Step width in YUV444 data
- * @param roi         Region of source to combine in destination.
- *
- * @return PRIMITIVES_SUCCESS on success, an error code otherwise.
- */
 static pstatus_t general_YUV420CombineToYUV444(
     avc444_frame_type type,
     const BYTE* pSrc[3], const UINT32 srcStep[3],
+    UINT32 nWidth, UINT32 nHeight,
     BYTE* pDst[3], const UINT32 dstStep[3],
     const RECTANGLE_16* roi)
 {
@@ -311,7 +299,7 @@ static pstatus_t general_YUV420CombineToYUV444(
 			return general_ChromaV1ToYUV444(pSrc, srcStep, pDst, dstStep, roi);
 
 		case AVC444_CHROMAv2:
-			return general_ChromaV2ToYUV444(pSrc, srcStep, pDst, dstStep, roi);
+			return general_ChromaV2ToYUV444(pSrc, srcStep, nWidth, nHeight, pDst, dstStep, roi);
 
 		default:
 			return -1;

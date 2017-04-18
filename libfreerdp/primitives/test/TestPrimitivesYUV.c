@@ -241,6 +241,7 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 
 	if (prims->YUV420CombineToYUV444(AVC444_LUMA,
 	                                 (const BYTE**)luma, lumaStride,
+	                                 roi.width, roi.height,
 	                                 yuv, yuvStride, &rect) != PRIMITIVES_SUCCESS)
 	{
 		PROFILER_EXIT(yuvCombine);
@@ -249,6 +250,7 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 
 	if (prims->YUV420CombineToYUV444(AVC444_CHROMAv1,
 	                                 (const BYTE**)chroma, chromaStride,
+	                                 roi.width, roi.height,
 	                                 yuv, yuvStride, &rect) != PRIMITIVES_SUCCESS)
 	{
 		PROFILER_EXIT(yuvCombine);
