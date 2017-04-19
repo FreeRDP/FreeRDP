@@ -233,6 +233,8 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi,
 	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
 	                    &invalidRect);
 
+	IFCALL(context->UpdateSurfaceArea, context, surface->surfaceId, 1, &invalidRect);
+
 	if (!gdi->inGfxFrame)
 	{
 		status = CHANNEL_RC_NOT_INITIALIZED;
@@ -278,11 +280,12 @@ static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi,
 	}
 
 	rects = region16_rects(&invalidRegion, &nrRects);
-	region16_uninit(&invalidRegion);
 	IFCALL(context->UpdateSurfaceArea, context, surface->surfaceId, nrRects, rects);
 
 	for (x=0; x<nrRects; x++)
 		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &rects[x]);
+
+	region16_uninit(&invalidRegion);
 	if (!gdi->inGfxFrame)
 	{
 		status = CHANNEL_RC_NOT_INITIALIZED;
@@ -331,6 +334,7 @@ static UINT gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi,
 	invalidRect.bottom = cmd->bottom;
 	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
 	                    &invalidRect);
+
 	IFCALL(context->UpdateSurfaceArea, context, surface->surfaceId, 1, &invalidRect);
 
 	if (!gdi->inGfxFrame)
@@ -377,6 +381,7 @@ static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
 	invalidRect.bottom = cmd->bottom;
 	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
 	                    &invalidRect);
+
 	IFCALL(context->UpdateSurfaceArea, context, surface->surfaceId, 1, &invalidRect);
 
 	if (!gdi->inGfxFrame)
@@ -560,6 +565,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	                    &invalidRect);
 
 	IFCALL(context->UpdateSurfaceArea, context, surface->surfaceId, 1, &invalidRect);
+
 	if (!gdi->inGfxFrame)
 	{
 		status = CHANNEL_RC_NOT_INITIALIZED;
@@ -620,12 +626,13 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi,
 		region16_uninit(&invalidRegion);
 		return ERROR_INTERNAL_ERROR;
 	}
+
 	rects = region16_rects(&invalidRegion, &nrRects);
-	region16_uninit(&invalidRegion);
 	IFCALL(context->UpdateSurfaceArea, context, surface->surfaceId, nrRects, rects);
 
 	for (x=0; x<nrRects; x++)
 		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &rects[x]);
+	region16_uninit(&invalidRegion);
 
 	if (!gdi->inGfxFrame)
 	{
