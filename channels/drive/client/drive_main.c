@@ -25,14 +25,6 @@
 #include "config.h"
 #endif
 
-#ifndef _WIN32
-#define __USE_LARGEFILE64
-#define _LARGEFILE_SOURCE
-#define _LARGEFILE64_SOURCE
-
-#include <sys/time.h>
-#endif
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -423,6 +415,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 	switch (FsInformationClass)
 	{
 		case FileFsVolumeInformation:
+
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
 			if ((length = ConvertToUnicode(sys_code_page, 0, volumeLabel, -1, &outStr, 0) * 2) <= 0)
 			{
@@ -467,6 +460,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 			break;
 
 		case FileFsAttributeInformation:
+
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
 			if ((length = ConvertToUnicode(sys_code_page, 0, diskType, -1, &outStr, 0) * 2) <= 0)
 			{
@@ -564,7 +558,6 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 	Stream_Read_UINT8(irp->input, InitialQuery);
 	Stream_Read_UINT32(irp->input, PathLength);
 	Stream_Seek(irp->input, 23); /* Padding */
-
 	path = (WCHAR*) Stream_Pointer(irp->input);
 	file = drive_get_file_by_id(drive, irp->FileId);
 

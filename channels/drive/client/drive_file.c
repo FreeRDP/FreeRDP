@@ -29,20 +29,11 @@
 #include "config.h"
 #endif
 
-#ifndef _WIN32
-#define __USE_LARGEFILE64
-#define _LARGEFILE_SOURCE
-#define _LARGEFILE64_SOURCE
-
-#include <sys/time.h>
-#endif
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/stat.h>
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
@@ -54,17 +45,11 @@
 
 #include "drive_file.h"
 
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning(disable: 4244)
-#endif
-
 #ifdef WITH_DEBUG_RDPDR
 #define DEBUG_WSTR(msg, wstr) do { LPSTR lpstr; ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &lpstr, 0, NULL, NULL); WLog_DBG(TAG, msg, lpstr); free(lpstr); } while (0)
 #else
 #define DEBUG_WSTR(msg, wstr) do { } while (0)
 #endif
-
 
 static void drive_file_fix_path(WCHAR* path)
 {
@@ -630,7 +615,8 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (file->file_handle == INVALID_HANDLE_VALUE)
 			{
-				WLog_ERR(TAG, "Unable to truncate %s to %"PRId64" (%"PRId32")", file->fullpath, size, GetLastError());
+				WLog_ERR(TAG, "Unable to truncate %s to %"PRId64" (%"PRId32")", file->fullpath, size,
+				         GetLastError());
 				return FALSE;
 			}
 
