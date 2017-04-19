@@ -815,7 +815,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 
 	/* Check if the path is a directory */
 
-	if (lstat(pFileSearch->lpPath, &fileStat) < 0)
+	if (stat(pFileSearch->lpPath, &fileStat) < 0)
 	{
 		FindClose(pFileSearch);
 		return INVALID_HANDLE_VALUE; /* stat error */
@@ -936,7 +936,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			memcpy(fullpath + pathlen + 1, pFileSearch->pDirent->d_name, namelen);
 			fullpath[pathlen+namelen+1] = 0;
 
-			if (lstat(fullpath, &fileStat) != 0)
+			if (stat(fullpath, &fileStat) != 0)
 			{
 				free(fullpath);
 				SetLastError(map_posix_err(errno));
