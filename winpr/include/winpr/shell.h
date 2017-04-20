@@ -27,7 +27,12 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#include <shlobj.h>
+#include <userenv.h>
+
+#else
 
 /* Shell clipboard formats */
 
