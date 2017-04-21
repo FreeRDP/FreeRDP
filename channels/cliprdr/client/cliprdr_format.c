@@ -425,8 +425,8 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 		file->ftLastWriteTime = uint64_to_filetime(lastWriteTime);
 		Stream_Read_UINT32(s, file->nFileSizeHigh); /* fileSizeHigh (4 bytes) */
 		Stream_Read_UINT32(s, file->nFileSizeLow); /* fileSizeLow (4 bytes) */
-		for (c = 0; c < 260; c++) /* fileName (520 bytes) */
-			Stream_Read_UINT16(s, file->fileName[c]);
+		for (c = 0; c < 260; c++) /* cFileName (520 bytes) */
+			Stream_Read_UINT16(s, file->cFileName[c]);
 	}
 
 	if (Stream_GetRemainingLength(s) > 0)
@@ -496,8 +496,8 @@ UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
 		Stream_Write_UINT64(s, lastWriteTime); /* lastWriteTime (8 bytes) */
 		Stream_Write_UINT32(s, file->nFileSizeHigh); /* fileSizeHigh (4 bytes) */
 		Stream_Write_UINT32(s, file->nFileSizeLow); /* fileSizeLow (4 bytes) */
-		for (c = 0; c < 260; c++) /* fileName (520 bytes) */
-			Stream_Write_UINT16(s, file->fileName[c]);
+		for (c = 0; c < 260; c++) /* cFileName (520 bytes) */
+			Stream_Write_UINT16(s, file->cFileName[c]);
 	}
 
 	Stream_SealLength(s);

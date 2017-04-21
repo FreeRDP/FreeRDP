@@ -540,13 +540,13 @@ static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
 	}
 
 	remote_len = _wcslen(file->remote_name);
-	if (remote_len + 1 > ARRAYSIZE(descriptor->fileName))
+	if (remote_len + 1 > ARRAYSIZE(descriptor->cFileName))
 	{
 		WLog_ERR(TAG, "file name too long (%"PRIuz" characters)", remote_len);
 		return FALSE;
 	}
 
-	memcpy(descriptor->fileName, file->remote_name, remote_len * sizeof(WCHAR));
+	memcpy(descriptor->cFileName, file->remote_name, remote_len * sizeof(WCHAR));
 
 	return TRUE;
 }

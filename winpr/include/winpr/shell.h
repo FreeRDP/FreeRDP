@@ -47,7 +47,7 @@ struct _FILEDESCRIPTOR {
 	FILETIME ftLastWriteTime;
 	DWORD    nFileSizeHigh;
 	DWORD    nFileSizeLow;
-	WCHAR    fileName[260];
+	WCHAR    cFileName[260];
 };
 typedef struct _FILEDESCRIPTOR FILEDESCRIPTOR;
 
