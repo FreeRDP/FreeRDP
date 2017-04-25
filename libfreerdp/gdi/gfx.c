@@ -687,6 +687,7 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context,
 			status = gdi_SurfaceCommand_AVC420(gdi, context, cmd);
 			break;
 
+		case RDPGFX_CODECID_AVC444v2:
 		case RDPGFX_CODECID_AVC444:
 			status = gdi_SurfaceCommand_AVC444(gdi, context, cmd);
 			break;
@@ -857,6 +858,8 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context,
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
 		                    &invalidRect);
 	}
+	IFCALL(context->UpdateSurfaceArea, context, surface->surfaceId,
+	       solidFill->fillRectCount, solidFill->fillRects);
 
 	if (!gdi->inGfxFrame)
 	{
@@ -921,6 +924,7 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 		invalidRect.bottom = destPt->y + rectSrc->bottom;
 		region16_union_rect(&surfaceDst->invalidRegion, &surfaceDst->invalidRegion,
 		                    &invalidRect);
+		IFCALL(context->UpdateSurfaceArea, context, surfaceDst->surfaceId, 1, &invalidRect);
 	}
 
 	if (!gdi->inGfxFrame)
@@ -1019,6 +1023,7 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 		invalidRect.bottom = destPt->y + cacheEntry->height;
 		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion,
 		                    &invalidRect);
+		IFCALL(context->UpdateSurfaceArea, context, surface->surfaceId, 1, &invalidRect);
 	}
 
 	if (!gdi->inGfxFrame)
