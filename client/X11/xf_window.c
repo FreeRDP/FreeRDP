@@ -521,7 +521,7 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style,
 {
 	Atom window_type;
 
-	if (/*(ex_style & WS_EX_TOPMOST) ||*/ (ex_style & WS_EX_TOOLWINDOW))
+	if ((ex_style & WS_EX_NOACTIVATE) || (ex_style & WS_EX_TOOLWINDOW))
 	{
 		/*
 		 * Tooltips and menu items should be unmanaged windows
