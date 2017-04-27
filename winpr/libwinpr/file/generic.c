@@ -787,7 +787,7 @@ typedef struct _WIN32_FILE_SEARCH WIN32_FILE_SEARCH;
 
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
-	char* p;
+	LPSTR p;
 	int index;
 	int length;
 	struct stat fileStat;
@@ -808,7 +808,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		p = strrchr(lpFileName, '\\');
 
 	index = (p - lpFileName);
-	length = (p - lpFileName);
+	length = (p - lpFileName) + 1;
 	pFileSearch->lpPath = (LPSTR) malloc(length + 1);
 
 	if (!pFileSearch->lpPath)
@@ -908,7 +908,7 @@ static BOOL ConvertFindDataAToW(LPWIN32_FIND_DATAA lpFindFileDataA,
 
 HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 {
-	char* utfFileName = NULL;
+	LPSTR utfFileName = NULL;
 	HANDLE h;
 	LPWIN32_FIND_DATAA fd = (LPWIN32_FIND_DATAA)calloc(1, sizeof(WIN32_FIND_DATAA));
 
