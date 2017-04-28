@@ -47,7 +47,6 @@ struct mac_shadow_subsystem
 	BOOL mouseDownLeft;
 	BOOL mouseDownRight;
 	BOOL mouseDownOther;
-	BYTE* updateBuffer;
 	CGDisplayStreamRef stream;
 	dispatch_queue_t captureQueue;
 	CGDisplayStreamUpdateRef lastUpdate;
