@@ -112,6 +112,10 @@ static BOOL drive_file_remove_dir(const WCHAR* path)
 	WCHAR* fullpath;
 	WCHAR* path_slash;
 	UINT32 base_path_length;
+
+	if (!path)
+		return FALSE;
+
 	base_path_length = _wcslen(path) * 2;
 	path_slash = (WCHAR*)calloc(1, base_path_length + sizeof(WCHAR) * 3);
 
@@ -120,9 +124,6 @@ static BOOL drive_file_remove_dir(const WCHAR* path)
 		WLog_ERR(TAG, "malloc failed!");
 		return FALSE;
 	}
-
-	if (!path)
-		return FALSE;
 
 	CopyMemory(path_slash, path, base_path_length);
 	path_slash[base_path_length / 2] = '/';
