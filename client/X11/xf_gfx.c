@@ -210,21 +210,21 @@ UINT32 x11_pad_scanline(UINT32 scanline, UINT32 inPad)
 static UINT xf_CreateSurface(RdpgfxClientContext* context,
                              const RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
+	UINT ret = CHANNEL_RC_NO_MEMORY;
 	size_t size;
 	xfGfxSurface* surface;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 	xfContext* xfc = (xfContext*) gdi->context;
-	surface = (xfGfxSurface*) calloc(1, sizeof(xfGfxSurface));
 
+	surface = (xfGfxSurface *) calloc(1, sizeof(xfGfxSurface));
 	if (!surface)
 		return CHANNEL_RC_NO_MEMORY;
 
 	surface->gdi.codecs = gdi->context->codecs;
-
 	if (!surface->gdi.codecs)
 	{
-		free(surface);
-		return CHANNEL_RC_NO_MEMORY;
+		WLog_ERR(TAG, "%s: global GDI codecs aren't set", __FUNCTION__);
+		goto out_free;
 	}
 
 	surface->gdi.surfaceId = createSurface->surfaceId;
@@ -242,22 +242,21 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 			break;
 
 		default:
-			free(surface);
-			return ERROR_INTERNAL_ERROR;
+			WLog_ERR(TAG, "%s: unknown pixelFormat 0x%"PRIx32"", __FUNCTION__, createSurface->pixelFormat);
+			ret = ERROR_INTERNAL_ERROR;
+			goto out_free;
 	}
 
-	surface->gdi.scanline = surface->gdi.width * GetBytesPerPixel(
-	                            surface->gdi.format);
+	surface->gdi.scanline = surface->gdi.width * GetBytesPerPixel(surface->gdi.format);
 	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, xfc->scanline_pad);
 	size = surface->gdi.scanline * surface->gdi.height;
-	surface->gdi.data = (BYTE*) _aligned_malloc(size, 16);
 
+	surface->gdi.data = (BYTE*)_aligned_malloc(size, 16);
 	if (!surface->gdi.data)
 	{
-		free(surface);
-		return CHANNEL_RC_NO_MEMORY;
+		WLog_ERR(TAG, "%s: unable to allocate GDI data", __FUNCTION__);
+		goto out_free;
 	}
-
 	ZeroMemory(surface->gdi.data, size);
 
 	if (AreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
@@ -273,26 +272,45 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		surface->stageScanline = width * bytes;
 		surface->stageScanline = x11_pad_scanline(surface->stageScanline, xfc->scanline_pad);
 		size = surface->stageScanline * surface->gdi.height;
-		surface->stage = (BYTE*) _aligned_malloc(size, 16);
 
+		surface->stage = (BYTE*) _aligned_malloc(size, 16);
 		if (!surface->stage)
 		{
-			_aligned_free(surface->gdi.data);
-			free(surface);
-			return CHANNEL_RC_NO_MEMORY;
+			WLog_ERR(TAG, "%s: unable to allocate stage buffer", __FUNCTION__);
+			goto out_free_gdidata;
 		}
-
 		ZeroMemory(surface->stage, size);
+
 		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 		                              ZPixmap, 0, (char*) surface->stage,
 		                              surface->gdi.width, surface->gdi.height,
 		                              xfc->scanline_pad, surface->stageScanline);
 	}
 
+	if (!surface->image)
+	{
+		WLog_ERR(TAG, "%s: an error occurred when creating the XImage", __FUNCTION__);
+		goto error_surface_image;
+	}
+
 	surface->gdi.outputMapped = FALSE;
 	region16_init(&surface->gdi.invalidRegion);
-	context->SetSurfaceData(context, surface->gdi.surfaceId, (void*) surface);
+	if (context->SetSurfaceData(context, surface->gdi.surfaceId, (void*) surface) < 0)
+	{
+		WLog_ERR(TAG, "%s: an error occurred during SetSurfaceData", __FUNCTION__);
+		goto error_set_surface_data;
+	}
 	return CHANNEL_RC_OK;
+
+error_set_surface_data:
+	XFree(surface->image);
+error_surface_image:
+	_aligned_free(surface->stage);
+out_free_gdidata:
+	_aligned_free(surface->gdi.data);
+out_free:
+	free(surface);
+	return ret;
 }
 
 /**

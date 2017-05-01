@@ -27,6 +27,7 @@ struct gdi_gfx_surface
 {
 	UINT16 surfaceId;
 	rdpCodecs* codecs;
+	H264_CONTEXT *h264;
 	UINT32 width;
 	UINT32 height;
 	BYTE* data;
