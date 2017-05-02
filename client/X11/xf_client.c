@@ -585,7 +585,7 @@ BOOL xf_create_window(xfContext* xfc)
 	}
 	else
 	{
-		xfc->drawable = DefaultRootWindow(xfc->display);
+		xfc->drawable = xf_CreateDummyWindow(xfc);
 	}
 
 	ZeroMemory(&gcv, sizeof(gcv));
