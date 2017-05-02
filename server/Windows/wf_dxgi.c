@@ -192,7 +192,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 	{
 		if (status == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
 		{
-			WLog_ERR(TAG, "There is already the maximum number of applications using the Desktop Duplication API running, please close one of those applications and then try again."));
+			WLog_ERR(TAG, "There is already the maximum number of applications using the Desktop Duplication API running, please close one of those applications and then try again.");
 			return 1;
 		}
 
