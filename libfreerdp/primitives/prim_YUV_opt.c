@@ -662,6 +662,419 @@ static pstatus_t ssse3_RGBToAVC444YUV(
 	}
 }
 
+static pstatus_t ssse3_LumaToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep[3],
+                                    BYTE* pDstRaw[3], const UINT32 dstStep[3],
+                                    const RECTANGLE_16* roi)
+{
+	UINT32 x, y;
+	const UINT32 nWidth = roi->right - roi->left;
+	const UINT32 nHeight = roi->bottom - roi->top;
+	const UINT32 halfWidth = (nWidth + 1) / 2;
+	const UINT32 halfPad = halfWidth % 16;
+	const UINT32 halfHeight = (nHeight + 1) / 2;
+	const UINT32 oddY = 1;
+	const UINT32 evenY = 0;
+	const UINT32 oddX = 1;
+	const UINT32 evenX = 0;
+	const BYTE* pSrc[3] =
+	{
+		pSrcRaw[0] + roi->top* srcStep[0] + roi->left,
+		pSrcRaw[1] + roi->top / 2 * srcStep[1] + roi->left / 2,
+		pSrcRaw[2] + roi->top / 2 * srcStep[2] + roi->left / 2
+	};
+	BYTE* pDst[3] =
+	{
+		pDstRaw[0] + roi->top* dstStep[0] + roi->left,
+		pDstRaw[1] + roi->top* dstStep[1] + roi->left,
+		pDstRaw[2] + roi->top* dstStep[2] + roi->left
+	};
+
+	/* Y data is already here... */
+	/* B1 */
+	for (y = 0; y < nHeight; y++)
+	{
+		const BYTE* Ym = pSrc[0] + srcStep[0] * y;
+		BYTE* pY = pDst[0] + dstStep[0] * y;
+		memcpy(pY, Ym, nWidth);
+	}
+
+	/* The first half of U, V are already here part of this frame. */
+	/* B2 and B3 */
+	for (y = 0; y < halfHeight; y++)
+	{
+		const UINT32 val2y = (2 * y + evenY);
+		const UINT32 val2y1 = val2y + oddY;
+		const BYTE* Um = pSrc[1] + srcStep[1] * y;
+		const BYTE* Vm = pSrc[2] + srcStep[2] * y;
+		BYTE* pU = pDst[1] + dstStep[1] * val2y;
+		BYTE* pV = pDst[2] + dstStep[2] * val2y;
+		BYTE* pU1 = pDst[1] + dstStep[1] * val2y1;
+		BYTE* pV1 = pDst[2] + dstStep[2] * val2y1;
+
+		for (x = 0; x < halfWidth - halfPad; x += 16)
+		{
+			const __m128i unpackHigh = _mm_set_epi8(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0);
+			const __m128i unpackLow = _mm_set_epi8(15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 8, 8);
+			{
+				const __m128i u = _mm_loadu_si128((__m128i*)&Um[x]);
+				const __m128i uHigh = _mm_shuffle_epi8(u, unpackHigh);
+				const __m128i uLow = _mm_shuffle_epi8(u, unpackLow);
+				_mm_storeu_si128((__m128i*)&pU[2 * x], uHigh);
+				_mm_storeu_si128((__m128i*)&pU[2 * x + 16], uLow);
+				_mm_storeu_si128((__m128i*)&pU1[2 * x], uHigh);
+				_mm_storeu_si128((__m128i*)&pU1[2 * x + 16], uLow);
+			}
+			{
+				const __m128i u = _mm_loadu_si128((__m128i*)&Vm[x]);
+				const __m128i uHigh = _mm_shuffle_epi8(u, unpackHigh);
+				const __m128i uLow = _mm_shuffle_epi8(u, unpackLow);
+				_mm_storeu_si128((__m128i*)&pV[2 * x], uHigh);
+				_mm_storeu_si128((__m128i*)&pV[2 * x + 16], uLow);
+				_mm_storeu_si128((__m128i*)&pV1[2 * x], uHigh);
+				_mm_storeu_si128((__m128i*)&pV1[2 * x + 16], uLow);
+			}
+		}
+
+		for (; x < halfWidth; x++)
+		{
+			const UINT32 val2x = 2 * x + evenX;
+			const UINT32 val2x1 = val2x + oddX;
+			pU[val2x] = Um[x];
+			pV[val2x] = Vm[x];
+			pU[val2x1] = Um[x];
+			pV[val2x1] = Vm[x];
+			pU1[val2x] = Um[x];
+			pV1[val2x] = Vm[x];
+			pU1[val2x1] = Um[x];
+			pV1[val2x1] = Vm[x];
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static INLINE void ssse3_filter(BYTE* pSrcDst, const BYTE* pSrc2)
+{
+	const __m128i even = _mm_set_epi8(0x80, 14, 0x80, 12, 0x80, 10, 0x80, 8, 0x80, 6, 0x80, 4, 0x80, 2,
+	                                  0x80, 0);
+	const __m128i odd = _mm_set_epi8(0x80, 15, 0x80, 13, 0x80, 11, 0x80, 9, 0x80, 7, 0x80, 5, 0x80, 3,
+	                                 0x80, 1);
+	const __m128i interleave = _mm_set_epi8(15, 7, 14, 6, 13, 5, 12, 4, 11, 3, 10, 2, 9, 1, 8, 0);
+	const __m128i u = _mm_loadu_si128((__m128i*)pSrcDst);
+	const __m128i u1 = _mm_loadu_si128((__m128i*)pSrc2);
+	const __m128i uEven = _mm_shuffle_epi8(u, even);
+	const __m128i uEven4 = _mm_slli_epi16(uEven, 2);
+	const __m128i uOdd = _mm_shuffle_epi8(u, odd);
+	const __m128i u1Even = _mm_shuffle_epi8(u1, even);
+	const __m128i u1Odd = _mm_shuffle_epi8(u1, odd);
+	const __m128i tmp1 = _mm_add_epi16(uOdd, u1Even);
+	const __m128i tmp2 = _mm_add_epi16(tmp1, u1Odd);
+	const __m128i result = _mm_sub_epi16(uEven4, tmp2);
+	const __m128i packed = _mm_packus_epi16(result, uOdd);
+	const __m128i interleaved = _mm_shuffle_epi8(packed, interleave);
+	_mm_storeu_si128((__m128i*)pSrcDst, interleaved);
+}
+
+static pstatus_t ssse3_ChromaFilter(BYTE* pDst[3], const UINT32 dstStep[3],
+                                    const RECTANGLE_16* roi)
+{
+	const UINT32 oddY = 1;
+	const UINT32 evenY = 0;
+	const UINT32 nWidth = roi->right - roi->left;
+	const UINT32 nHeight = roi->bottom - roi->top;
+	const UINT32 halfHeight = (nHeight + 1) / 2;
+	const UINT32 halfWidth = (nWidth + 1) / 2;
+	const UINT32 halfPad = halfWidth % 16;
+	UINT32 x, y;
+
+	/* Filter */
+	for (y = roi->top; y < halfHeight + roi->top; y++)
+	{
+		const UINT32 val2y = (y * 2 + evenY);
+		const UINT32 val2y1 = val2y + oddY;
+		BYTE* pU1 = pDst[1] + dstStep[1] * val2y1;
+		BYTE* pV1 = pDst[2] + dstStep[2] * val2y1;
+		BYTE* pU = pDst[1] + dstStep[1] * val2y;
+		BYTE* pV = pDst[2] + dstStep[2] * val2y;
+
+		if (val2y1 > nHeight)
+			continue;
+
+		for (x = roi->left; x < halfWidth + roi->left - halfPad; x += 16)
+		{
+			ssse3_filter(&pU[2 * x], &pU1[2 * x]);
+			ssse3_filter(&pV[2 * x], &pV1[2 * x]);
+		}
+
+		for (; x < halfWidth + roi->left; x++)
+		{
+			const UINT32 val2x = (x * 2);
+			const UINT32 val2x1 = val2x + 1;
+			const INT32 up = pU[val2x] * 4;
+			const INT32 vp = pV[val2x] * 4;
+			INT32 u2020;
+			INT32 v2020;
+
+			if (val2x1 > nWidth)
+				continue;
+
+			u2020 = up - pU[val2x1] - pU1[val2x] - pU1[val2x1];
+			v2020 = vp - pV[val2x1] - pV1[val2x] - pV1[val2x1];
+			pU[val2x] = CLIP(u2020);
+			pV[val2x] = CLIP(v2020);
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep[3],
+                                        BYTE* pDstRaw[3], const UINT32 dstStep[3],
+                                        const RECTANGLE_16* roi)
+{
+	const UINT32 mod = 16;
+	UINT32 uY = 0;
+	UINT32 vY = 0;
+	UINT32 x, y;
+	const UINT32 nWidth = roi->right - roi->left;
+	const UINT32 nHeight = roi->bottom - roi->top;
+	const UINT32 halfWidth = (nWidth + 1) / 2;
+	const UINT32 halfPad = halfWidth % 16;
+	const UINT32 halfHeight = (nHeight + 1) / 2;
+	const UINT32 oddY = 1;
+	const UINT32 evenY = 0;
+	const UINT32 oddX = 1;
+	/* The auxilary frame is aligned to multiples of 16x16.
+	 * We need the padded height for B4 and B5 conversion. */
+	const UINT32 padHeigth = nHeight + 16 - nHeight % 16;
+	const BYTE* pSrc[3] =
+	{
+		pSrcRaw[0] + roi->top* srcStep[0] + roi->left,
+		pSrcRaw[1] + roi->top / 2 * srcStep[1] + roi->left / 2,
+		pSrcRaw[2] + roi->top / 2 * srcStep[2] + roi->left / 2
+	};
+	BYTE* pDst[3] =
+	{
+		pDstRaw[0] + roi->top* dstStep[0] + roi->left,
+		pDstRaw[1] + roi->top* dstStep[1] + roi->left,
+		pDstRaw[2] + roi->top* dstStep[2] + roi->left
+	};
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i mask = _mm_set_epi8(0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0,
+	                                  0x80);
+
+	/* The second half of U and V is a bit more tricky... */
+	/* B4 and B5 */
+	for (y = 0; y < padHeigth; y++)
+	{
+		const BYTE* Ya = pSrc[0] + srcStep[0] * y;
+		BYTE* pX;
+
+		if ((y) % mod < (mod + 1) / 2)
+		{
+			const UINT32 pos = (2 * uY++ + oddY);
+
+			if (pos >= nHeight)
+				continue;
+
+			pX = pDst[1] + dstStep[1] * pos;
+		}
+		else
+		{
+			const UINT32 pos = (2 * vY++ + oddY);
+
+			if (pos >= nHeight)
+				continue;
+
+			pX = pDst[2] + dstStep[2] * pos;
+		}
+
+		memcpy(pX, Ya, nWidth);
+	}
+
+	/* B6 and B7 */
+	for (y = 0; y < halfHeight; y++)
+	{
+		const UINT32 val2y = (y * 2 + evenY);
+		const BYTE* Ua = pSrc[1] + srcStep[1] * y;
+		const BYTE* Va = pSrc[2] + srcStep[2] * y;
+		BYTE* pU = pDst[1] + dstStep[1] * val2y;
+		BYTE* pV = pDst[2] + dstStep[2] * val2y;
+
+		for (x = 0; x < halfWidth - halfPad; x += 16)
+		{
+			{
+				const __m128i u = _mm_loadu_si128((__m128i*)&Ua[x]);
+				const __m128i u2 = _mm_unpackhi_epi8(u, zero);
+				const __m128i u1 = _mm_unpacklo_epi8(u, zero);
+				_mm_maskmoveu_si128(u1, mask, (char*)&pU[2 * x]);
+				_mm_maskmoveu_si128(u2, mask, (char*)&pU[2 * x + 16]);
+			}
+			{
+				const __m128i u = _mm_loadu_si128((__m128i*)&Va[x]);
+				const __m128i u2 = _mm_unpackhi_epi8(u, zero);
+				const __m128i u1 = _mm_unpacklo_epi8(u, zero);
+				_mm_maskmoveu_si128(u1, mask, (char*)&pV[2 * x]);
+				_mm_maskmoveu_si128(u2, mask, (char*)&pV[2 * x + 16]);
+			}
+		}
+
+		for (; x < halfWidth; x++)
+		{
+			const UINT32 val2x1 = (x * 2 + oddX);
+			pU[val2x1] = Ua[x];
+			pV[val2x1] = Va[x];
+		}
+	}
+
+	/* Filter */
+	return ssse3_ChromaFilter(pDst, dstStep, roi);
+}
+
+static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep[3],
+                                        UINT32 nTotalWidth, UINT32 nTotalHeight,
+                                        BYTE* pDst[3], const UINT32 dstStep[3],
+                                        const RECTANGLE_16* roi)
+{
+	UINT32 x, y;
+	const UINT32 nWidth = roi->right - roi->left;
+	const UINT32 nHeight = roi->bottom - roi->top;
+	const UINT32 halfWidth = (nWidth + 1) / 2;
+	const UINT32 halfPad = halfWidth % 16;
+	const UINT32 halfHeight = (nHeight + 1) / 2;
+	const UINT32 quaterWidth = (nWidth + 3) / 4;
+	const UINT32 quaterPad = quaterWidth % 16;
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i mask = _mm_set_epi8(0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0,
+	                                  0x80, 0);
+	const __m128i mask2 = _mm_set_epi8(0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0,
+	                                   0x80);
+	const __m128i shuffle1 = _mm_set_epi8(0x80, 15, 0x80, 14, 0x80, 13, 0x80, 12, 0x80, 11, 0x80, 10,
+	                                      0x80, 9, 0x80, 8);
+	const __m128i shuffle2 = _mm_set_epi8(0x80, 7, 0x80, 6, 0x80, 5, 0x80, 4, 0x80, 3, 0x80, 2, 0x80, 1,
+	                                      0x80, 0);
+
+	/* B4 and B5: odd UV values for width/2, height */
+	for (y = 0; y < nHeight; y++)
+	{
+		const UINT32 yTop = y + roi->top;
+		const BYTE* pYaU = pSrc[0] + srcStep[0] * yTop + roi->left / 2;
+		const BYTE* pYaV = pYaU + nTotalWidth / 2;
+		BYTE* pU = pDst[1] + dstStep[1] * yTop + roi->left;
+		BYTE* pV = pDst[2] + dstStep[2] * yTop + roi->left;
+
+		for (x = 0; x < halfWidth - halfPad; x += 16)
+		{
+			{
+				const __m128i u = _mm_loadu_si128((__m128i*)&pYaU[x]);
+				const __m128i u2 = _mm_unpackhi_epi8(zero, u);
+				const __m128i u1 = _mm_unpacklo_epi8(zero, u);
+				_mm_maskmoveu_si128(u1, mask, (char*)&pU[2 * x]);
+				_mm_maskmoveu_si128(u2, mask, (char*)&pU[2 * x + 16]);
+			}
+			{
+				const __m128i v = _mm_loadu_si128((__m128i*)&pYaV[x]);
+				const __m128i v2 = _mm_unpackhi_epi8(zero, v);
+				const __m128i v1 = _mm_unpacklo_epi8(zero, v);
+				_mm_maskmoveu_si128(v1, mask, (char*)&pV[2 * x]);
+				_mm_maskmoveu_si128(v2, mask, (char*)&pV[2 * x + 16]);
+			}
+		}
+
+		for (; x < halfWidth; x++)
+		{
+			const UINT32 odd = 2 * x + 1;
+			pU[odd] = pYaU[x];
+			pV[odd] = pYaV[x];
+		}
+	}
+
+	/* B6 - B9 */
+	for (y = 0; y < halfHeight; y++)
+	{
+		const BYTE* pUaU = pSrc[1] + srcStep[1] * (y + roi->top / 2) + roi->left / 4;
+		const BYTE* pUaV = pUaU + nTotalWidth / 4;
+		const BYTE* pVaU = pSrc[2] + srcStep[2] * (y + roi->top / 2) + roi->left / 4;
+		const BYTE* pVaV = pVaU + nTotalWidth / 4;
+		BYTE* pU = pDst[1] + dstStep[1] * (2 * y + 1 + roi->top) + roi->left;
+		BYTE* pV = pDst[2] + dstStep[2] * (2 * y + 1 + roi->top) + roi->left;
+
+		for (x = 0; x < quaterWidth - quaterPad; x += 16)
+		{
+			{
+				const __m128i uU = _mm_loadu_si128((__m128i*)&pUaU[x]);
+				const __m128i uV = _mm_loadu_si128((__m128i*)&pVaU[x]);
+				const __m128i uHigh = _mm_unpackhi_epi8(uU, uV);
+				const __m128i uLow = _mm_unpacklo_epi8(uU, uV);
+				const __m128i u1 = _mm_shuffle_epi8(uLow, shuffle2);
+				const __m128i u2 = _mm_shuffle_epi8(uLow, shuffle1);
+				const __m128i u3 = _mm_shuffle_epi8(uHigh, shuffle2);
+				const __m128i u4 = _mm_shuffle_epi8(uHigh, shuffle1);
+				_mm_maskmoveu_si128(u1, mask2, (char*)&pU[4 * x + 0]);
+				_mm_maskmoveu_si128(u2, mask2, (char*)&pU[4 * x + 16]);
+				_mm_maskmoveu_si128(u3, mask2, (char*)&pU[4 * x + 32]);
+				_mm_maskmoveu_si128(u4, mask2, (char*)&pU[4 * x + 48]);
+			}
+			{
+				const __m128i vU = _mm_loadu_si128((__m128i*)&pUaV[x]);
+				const __m128i vV = _mm_loadu_si128((__m128i*)&pVaV[x]);
+				const __m128i vHigh = _mm_unpackhi_epi8(vU, vV);
+				const __m128i vLow = _mm_unpacklo_epi8(vU, vV);
+				const __m128i v1 = _mm_shuffle_epi8(vLow, shuffle2);
+				const __m128i v2 = _mm_shuffle_epi8(vLow, shuffle1);
+				const __m128i v3 = _mm_shuffle_epi8(vHigh, shuffle2);
+				const __m128i v4 = _mm_shuffle_epi8(vHigh, shuffle1);
+				_mm_maskmoveu_si128(v1, mask2, (char*)&pV[4 * x + 0]);
+				_mm_maskmoveu_si128(v2, mask2, (char*)&pV[4 * x + 16]);
+				_mm_maskmoveu_si128(v3, mask2, (char*)&pV[4 * x + 32]);
+				_mm_maskmoveu_si128(v4, mask2, (char*)&pV[4 * x + 48]);
+			}
+		}
+
+		for (; x < quaterWidth; x++)
+		{
+			pU[4 * x + 0] = pUaU[x];
+			pV[4 * x + 0] = pUaV[x];
+			pU[4 * x + 2] = pVaU[x];
+			pV[4 * x + 2] = pVaV[x];
+		}
+	}
+
+	return ssse3_ChromaFilter(pDst, dstStep, roi);
+}
+
+static pstatus_t ssse3_YUV420CombineToYUV444(
+    avc444_frame_type type,
+    const BYTE* pSrc[3], const UINT32 srcStep[3],
+    UINT32 nWidth, UINT32 nHeight,
+    BYTE* pDst[3], const UINT32 dstStep[3],
+    const RECTANGLE_16* roi)
+{
+	if (!pSrc || !pSrc[0] || !pSrc[1] || !pSrc[2])
+		return -1;
+
+	if (!pDst || !pDst[0] || !pDst[1] || !pDst[2])
+		return -1;
+
+	if (!roi)
+		return -1;
+
+	switch (type)
+	{
+		case AVC444_LUMA:
+			return ssse3_LumaToYUV444(pSrc, srcStep, pDst, dstStep, roi);
+
+		case AVC444_CHROMAv1:
+			return ssse3_ChromaV1ToYUV444(pSrc, srcStep, pDst, dstStep, roi);
+
+		case AVC444_CHROMAv2:
+			return ssse3_ChromaV2ToYUV444(pSrc, srcStep, nWidth, nHeight, pDst, dstStep, roi);
+
+		default:
+			return -1;
+	}
+}
+
 #elif defined(WITH_NEON)
 
 static INLINE uint8x8_t neon_YUV2R(int32x4_t Ch, int32x4_t Cl,
@@ -1006,208 +1419,152 @@ static pstatus_t neon_YUV444ToRGB_8u_P3AC4R(
 	}
 }
 
-static pstatus_t neon_YUV420CombineToYUV444(
-    const BYTE* pMainSrc[3], const UINT32 srcMainStep[3],
-    const BYTE* pAuxSrc[3], const UINT32 srcAuxStep[3],
-    BYTE* pDst[3], const UINT32 dstStep[3],
-    const prim_size_t* roi)
+static pstatus_t neon_LumaToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep[3],
+                                   BYTE* pDstRaw[3], const UINT32 dstStep[3],
+                                   const RECTANGLE_16* roi)
 {
 	UINT32 x, y;
-	const UINT32 nWidth = roi->width;
-	const UINT32 nHeight = roi->height;
-	const UINT32 halfWidth = nWidth / 2, halfHeight = nHeight / 2;
-	const UINT32 oddY = 1;
+	const UINT32 nWidth = roi->right - roi->left;
+	const UINT32 nHeight = roi->bottom - roi->top;
+	const UINT32 halfWidth = (nWidth + 1) / 2;
+	const UINT32 halfHeight = (nHeight + 1) / 2;
 	const UINT32 evenY = 0;
-	/* The auxilary frame is aligned to multiples of 16x16.
-	 * We need the padded height for B4 and B5 conversion. */
-	const UINT32 padHeigth = roi->height + 16 - roi->height % 16;
-
-	if (pMainSrc && pMainSrc[0] && pMainSrc[1] && pMainSrc[2])
+	const BYTE* pSrc[3] =
 	{
-		/* Y data is already here... */
-		/* B1 */
-		for (y = 0; y < nHeight; y++)
-		{
-			const BYTE* Ym = pMainSrc[0] + srcMainStep[0] * y;
-			BYTE* pY = pDst[0] + dstStep[0] * y;
-			memcpy(pY, Ym, nWidth);
-		}
+		pSrcRaw[0] + roi->top* srcStep[0] + roi->left,
+		pSrcRaw[1] + roi->top / 2 * srcStep[1] + roi->left / 2,
+		pSrcRaw[2] + roi->top / 2 * srcStep[2] + roi->left / 2
+	};
+	BYTE* pDst[3] =
+	{
+		pDstRaw[0] + roi->top* dstStep[0] + roi->left,
+		pDstRaw[1] + roi->top* dstStep[1] + roi->left,
+		pDstRaw[2] + roi->top* dstStep[2] + roi->left
+	};
 
-		/* The first half of U, V are already here part of this frame. */
-		/* B2 and B3 */
-		for (y = 0; y < halfHeight; y++)
-		{
-			const UINT32 val2y = (2 * y + evenY);
-			const BYTE* Um = pMainSrc[1] + srcMainStep[1] * y;
-			const BYTE* Vm = pMainSrc[2] + srcMainStep[2] * y;
-			BYTE* pU = pDst[1] + dstStep[1] * val2y;
-			BYTE* pV = pDst[2] + dstStep[2] * val2y;
-			BYTE* pU1 = pU + dstStep[1];
-			BYTE* pV1 = pV + dstStep[2];
-
-			for (x = 0; x + 16 < halfWidth; x += 16)
-			{
-				{
-					const uint8x16_t u = vld1q_u8(Um);
-					uint8x16x2_t u2x;
-					u2x.val[0] = u;
-					u2x.val[1] = u;
-					vst2q_u8(pU, u2x);
-					vst2q_u8(pU1, u2x);
-					Um += 16;
-					pU += 32;
-					pU1 += 32;
-				}
-				{
-					const uint8x16_t v = vld1q_u8(Vm);
-					uint8x16x2_t v2x;
-					v2x.val[0] = v;
-					v2x.val[1] = v;
-					vst2q_u8(pV, v2x);
-					vst2q_u8(pV1, v2x);
-					Vm += 16;
-					pV += 32;
-					pV1 += 32;
-				}
-			}
-
-			for (; x < halfWidth; x++)
-			{
-				const BYTE u = *Um++;
-				const BYTE v = *Vm++;
-				*pU++ = u;
-				*pU++ = u;
-				*pU1++ = u;
-				*pU1++ = u;
-				*pV++ = v;
-				*pV++ = v;
-				*pV1++ = v;
-				*pV1++ = v;
-			}
-		}
+	/* Y data is already here... */
+	/* B1 */
+	for (y = 0; y < nHeight; y++)
+	{
+		const BYTE* Ym = pSrc[0] + srcStep[0] * y;
+		BYTE* pY = pDst[0] + dstStep[0] * y;
+		memcpy(pY, Ym, nWidth);
 	}
 
-	if (!pAuxSrc || !pAuxSrc[0] || !pAuxSrc[1] || !pAuxSrc[2])
-		return PRIMITIVES_SUCCESS;
-
-	/* The second half of U and V is a bit more tricky... */
-	/* B4 and B5 */
-	for (y = 0; y < padHeigth; y += 16)
-	{
-		const BYTE* Ya = pAuxSrc[0] + srcAuxStep[0] * y;
-		UINT32 x;
-		BYTE* pU = pDst[1] + dstStep[1] * (y + 1);
-		BYTE* pV = pDst[2] + dstStep[2] * (y + 1);
-
-		for (x = 0; x < 8; x++)
-		{
-			if (y + x >= nHeight)
-				continue;
-
-			memcpy(pU, Ya, nWidth);
-			pU += dstStep[1] * 2;
-			Ya += srcAuxStep[0];
-		}
-
-		for (x = 0; x < 8; x++)
-		{
-			if (y + x >= nHeight)
-				continue;
-
-			memcpy(pV, Ya, nWidth);
-			pV += dstStep[1] * 2;
-			Ya += srcAuxStep[0];
-		}
-	}
-
-	/* B6 and B7 */
+	/* The first half of U, V are already here part of this frame. */
+	/* B2 and B3 */
 	for (y = 0; y < halfHeight; y++)
 	{
-		const UINT32 val2y = (y * 2 + evenY);
-		const BYTE* Ua = pAuxSrc[1] + srcAuxStep[1] * y;
-		const BYTE* Va = pAuxSrc[2] + srcAuxStep[2] * y;
-		BYTE* pU = pDst[1] + dstStep[1] * val2y;
-		BYTE* pV = pDst[2] + dstStep[2] * val2y;
-
-		for (x = 0; x + 16 < halfWidth; x += 16)
-		{
-			{
-				const uint8x16_t u = vld1q_u8(Ua);
-				uint8x16x2_t uu = vld2q_u8(pU);
-				uu.val[1] = u;
-				vst2q_u8(pU, uu);
-				Ua += 16;
-				pU += 32;
-			}
-			{
-				const uint8x16_t v = vld1q_u8(Va);
-				uint8x16x2_t vv = vld2q_u8(pV);
-				vv.val[1] = v;
-				vst2q_u8(pV, vv);
-				Va += 16;
-				pV += 32;
-			}
-		}
-
-		for (; x < halfWidth; x++)
-		{
-			pU++;
-			*pU++ = *Ua++;
-			pV++;
-			*pV++ = *Va++;
-		}
-	}
-
-	/* Filter */
-	for (y = 0; y < halfHeight; y++)
-	{
-		const UINT32 val2y = (y * 2 + evenY);
-		const UINT32 val2y1 = val2y + oddY;
+		const UINT32 val2y = (2 * y + evenY);
+		const BYTE* Um = pSrc[1] + srcStep[1] * y;
+		const BYTE* Vm = pSrc[2] + srcStep[2] * y;
 		BYTE* pU = pDst[1] + dstStep[1] * val2y;
 		BYTE* pV = pDst[2] + dstStep[2] * val2y;
 		BYTE* pU1 = pU + dstStep[1];
 		BYTE* pV1 = pV + dstStep[2];
 
-		if (val2y1 > nHeight)
-			continue;
-
 		for (x = 0; x + 16 < halfWidth; x += 16)
 		{
 			{
+				const uint8x16_t u = vld1q_u8(Um);
+				uint8x16x2_t u2x;
+				u2x.val[0] = u;
+				u2x.val[1] = u;
+				vst2q_u8(pU, u2x);
+				vst2q_u8(pU1, u2x);
+				Um += 16;
+				pU += 32;
+				pU1 += 32;
+			}
+			{
+				const uint8x16_t v = vld1q_u8(Vm);
+				uint8x16x2_t v2x;
+				v2x.val[0] = v;
+				v2x.val[1] = v;
+				vst2q_u8(pV, v2x);
+				vst2q_u8(pV1, v2x);
+				Vm += 16;
+				pV += 32;
+				pV1 += 32;
+			}
+		}
+
+		for (; x < halfWidth; x++)
+		{
+			const BYTE u = *Um++;
+			const BYTE v = *Vm++;
+			*pU++ = u;
+			*pU++ = u;
+			*pU1++ = u;
+			*pU1++ = u;
+			*pV++ = v;
+			*pV++ = v;
+			*pV1++ = v;
+			*pV1++ = v;
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t neon_ChromaFilter(BYTE* pDst[3], const UINT32 dstStep[3],
+                                   const RECTANGLE_16* roi)
+{
+	const UINT32 oddY = 1;
+	const UINT32 evenY = 0;
+	const UINT32 nWidth = roi->right - roi->left;
+	const UINT32 nHeight = roi->bottom - roi->top;
+	const UINT32 halfHeight = (nHeight + 1) / 2;
+	const UINT32 halfWidth = (nWidth + 1) / 2;
+	const UINT32 halfPad = halfWidth % 16;
+	UINT32 x, y;
+
+	/* Filter */
+	for (y = roi->top; y < halfHeight + roi->top; y++)
+	{
+		const UINT32 val2y = (y * 2 + evenY);
+		const UINT32 val2y1 = val2y + oddY;
+		BYTE* pU1 = pDst[1] + dstStep[1] * val2y1;
+		BYTE* pV1 = pDst[2] + dstStep[2] * val2y1;
+		BYTE* pU = pDst[1] + dstStep[1] * val2y;
+		BYTE* pV = pDst[2] + dstStep[2] * val2y;
+
+		if (val2y1 > nHeight)
+			continue;
+
+		for (x = roi->left / 2; x < halfWidth + roi->left / 2 - halfPad; x += 16)
+		{
+			{
 				/* U = (U2x,2y << 2) - U2x1,2y - U2x,2y1 - U2x1,2y1 */
-				uint8x8x2_t u = vld2_u8(pU);
+				uint8x8x2_t u = vld2_u8(&pU[2 * x]);
 				const int16x8_t up = vreinterpretq_s16_u16(vshll_n_u8(u.val[0], 2)); /* Ux2,2y << 2 */
-				const uint8x8x2_t u1 = vld2_u8(pU1);
+				const uint8x8x2_t u1 = vld2_u8(&pU1[2 * x]);
 				const uint16x8_t usub = vaddl_u8(u1.val[1], u1.val[0]); /* U2x,2y1 + U2x1,2y1 */
 				const int16x8_t us = vreinterpretq_s16_u16(vaddw_u8(usub,
 				                     u.val[1])); /* U2x1,2y + U2x,2y1 + U2x1,2y1 */
 				const int16x8_t un = vsubq_s16(up, us);
 				const uint8x8_t u8 = vqmovun_s16(un); /* CLIP(un) */
 				u.val[0] = u8;
-				vst2_u8(pU, u);
-				pU += 16;
-				pU1 += 16;
+				vst2_u8(&pU[2 * x], u);
 			}
 			{
 				/* V = (V2x,2y << 2) - V2x1,2y - V2x,2y1 - V2x1,2y1 */
-				uint8x8x2_t v = vld2_u8(pV);
+				uint8x8x2_t v = vld2_u8(&pV[2 * x]);
 				const int16x8_t vp = vreinterpretq_s16_u16(vshll_n_u8(v.val[0], 2)); /* Vx2,2y << 2 */
-				const uint8x8x2_t v1 = vld2_u8(pV1);
+				const uint8x8x2_t v1 = vld2_u8(&pV1[2 * x]);
 				const uint16x8_t vsub = vaddl_u8(v1.val[1], v1.val[0]); /* V2x,2y1 + V2x1,2y1 */
 				const int16x8_t vs = vreinterpretq_s16_u16(vaddw_u8(vsub,
 				                     v.val[1])); /* V2x1,2y + V2x,2y1 + V2x1,2y1 */
 				const int16x8_t vn = vsubq_s16(vp, vs);
 				const uint8x8_t v8 = vqmovun_s16(vn); /* CLIP(vn) */
 				v.val[0] = v8;
-				vst2_u8(pV, v);
-				pV += 16;
-				pV1 += 16;
+				vst2_u8(&pV[2 * x], v);
 			}
 		}
 
-		for (; x < halfWidth; x++)
+		for (; x < halfWidth + roi->left / 2; x++)
 		{
-			const UINT32 val2x = 0;
+			const UINT32 val2x = (x * 2);
 			const UINT32 val2x1 = val2x + 1;
 			const INT32 up = pU[val2x] * 4;
 			const INT32 vp = pV[val2x] * 4;
@@ -1219,14 +1576,223 @@ static pstatus_t neon_YUV420CombineToYUV444(
 
 			u2020 = up - pU[val2x1] - pU1[val2x] - pU1[val2x1];
 			v2020 = vp - pV[val2x1] - pV1[val2x] - pV1[val2x1];
-			*pU = CLIP(u2020);
-			*pV = CLIP(v2020);
-			pU += 2;
-			pV += 2;
+			pU[val2x] = CLIP(u2020);
+			pV[val2x] = CLIP(v2020);
 		}
 	}
 
 	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t neon_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep[3],
+                                       BYTE* pDstRaw[3], const UINT32 dstStep[3],
+                                       const RECTANGLE_16* roi)
+{
+	const UINT32 mod = 16;
+	UINT32 uY = 0;
+	UINT32 vY = 0;
+	UINT32 x, y;
+	const UINT32 nWidth = roi->right - roi->left;
+	const UINT32 nHeight = roi->bottom - roi->top;
+	const UINT32 halfWidth = (nWidth) / 2;
+	const UINT32 halfHeight = (nHeight) / 2;
+	const UINT32 oddY = 1;
+	const UINT32 evenY = 0;
+	const UINT32 oddX = 1;
+	/* The auxilary frame is aligned to multiples of 16x16.
+	 * We need the padded height for B4 and B5 conversion. */
+	const UINT32 padHeigth = nHeight + 16 - nHeight % 16;
+	const UINT32 halfPad = halfWidth % 16;
+	const BYTE* pSrc[3] =
+	{
+		pSrcRaw[0] + roi->top* srcStep[0] + roi->left,
+		pSrcRaw[1] + roi->top / 2 * srcStep[1] + roi->left / 2,
+		pSrcRaw[2] + roi->top / 2 * srcStep[2] + roi->left / 2
+	};
+	BYTE* pDst[3] =
+	{
+		pDstRaw[0] + roi->top* dstStep[0] + roi->left,
+		pDstRaw[1] + roi->top* dstStep[1] + roi->left,
+		pDstRaw[2] + roi->top* dstStep[2] + roi->left
+	};
+
+	/* The second half of U and V is a bit more tricky... */
+	/* B4 and B5 */
+	for (y = 0; y < padHeigth; y++)
+	{
+		const BYTE* Ya = pSrc[0] + srcStep[0] * y;
+		BYTE* pX;
+
+		if ((y) % mod < (mod + 1) / 2)
+		{
+			const UINT32 pos = (2 * uY++ + oddY);
+
+			if (pos >= nHeight)
+				continue;
+
+			pX = pDst[1] + dstStep[1] * pos;
+		}
+		else
+		{
+			const UINT32 pos = (2 * vY++ + oddY);
+
+			if (pos >= nHeight)
+				continue;
+
+			pX = pDst[2] + dstStep[2] * pos;
+		}
+
+		memcpy(pX, Ya, nWidth);
+	}
+
+	/* B6 and B7 */
+	for (y = 0; y < halfHeight; y++)
+	{
+		const UINT32 val2y = (y * 2 + evenY);
+		const BYTE* Ua = pSrc[1] + srcStep[1] * y;
+		const BYTE* Va = pSrc[2] + srcStep[2] * y;
+		BYTE* pU = pDst[1] + dstStep[1] * val2y;
+		BYTE* pV = pDst[2] + dstStep[2] * val2y;
+
+		for (x = 0; x < halfWidth - halfPad; x += 16)
+		{
+			{
+				uint8x16x2_t u = vld2q_u8(&pU[2 * x]);
+				u.val[1] = vld1q_u8(&Ua[x]);
+				vst2q_u8(&pU[2 * x], u);
+			}
+			{
+				uint8x16x2_t v = vld2q_u8(&pV[2 * x]);
+				v.val[1] = vld1q_u8(&Va[x]);
+				vst2q_u8(&pV[2 * x], v);
+			}
+		}
+
+		for (; x < halfWidth; x++)
+		{
+			const UINT32 val2x1 = (x * 2 + oddX);
+			pU[val2x1] = Ua[x];
+			pV[val2x1] = Va[x];
+		}
+	}
+
+	/* Filter */
+	return neon_ChromaFilter(pDst, dstStep, roi);
+}
+
+static pstatus_t neon_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep[3],
+                                       UINT32 nTotalWidth, UINT32 nTotalHeight,
+                                       BYTE* pDst[3], const UINT32 dstStep[3],
+                                       const RECTANGLE_16* roi)
+{
+	UINT32 x, y;
+	const UINT32 nWidth = roi->right - roi->left;
+	const UINT32 nHeight = roi->bottom - roi->top;
+	const UINT32 halfWidth = (nWidth + 1) / 2;
+	const UINT32 halfPad = halfWidth % 16;
+	const UINT32 halfHeight = (nHeight + 1) / 2;
+	const UINT32 quaterWidth = (nWidth + 3) / 4;
+	const UINT32 quaterPad = quaterWidth % 16;
+
+	/* B4 and B5: odd UV values for width/2, height */
+	for (y = 0; y < nHeight; y++)
+	{
+		const UINT32 yTop = y + roi->top;
+		const BYTE* pYaU = pSrc[0] + srcStep[0] * yTop + roi->left / 2;
+		const BYTE* pYaV = pYaU + nTotalWidth / 2;
+		BYTE* pU = pDst[1] + dstStep[1] * yTop + roi->left;
+		BYTE* pV = pDst[2] + dstStep[2] * yTop + roi->left;
+
+		for (x = 0; x < halfWidth - halfPad; x += 16)
+		{
+			{
+				uint8x16x2_t u = vld2q_u8(&pU[2 * x]);
+				u.val[1] = vld1q_u8(&pYaU[x]);
+				vst2q_u8(&pU[2 * x], u);
+			}
+			{
+				uint8x16x2_t v = vld2q_u8(&pV[2 * x]);
+				v.val[1] = vld1q_u8(&pYaV[x]);
+				vst2q_u8(&pV[2 * x], v);
+			}
+		}
+
+		for (; x < halfWidth; x++)
+		{
+			const UINT32 odd = 2 * x + 1;
+			pU[odd] = pYaU[x];
+			pV[odd] = pYaV[x];
+		}
+	}
+
+	/* B6 - B9 */
+	for (y = 0; y < halfHeight; y++)
+	{
+		const BYTE* pUaU = pSrc[1] + srcStep[1] * (y + roi->top / 2) + roi->left / 4;
+		const BYTE* pUaV = pUaU + nTotalWidth / 4;
+		const BYTE* pVaU = pSrc[2] + srcStep[2] * (y + roi->top / 2) + roi->left / 4;
+		const BYTE* pVaV = pVaU + nTotalWidth / 4;
+		BYTE* pU = pDst[1] + dstStep[1] * (2 * y + 1 + roi->top) + roi->left;
+		BYTE* pV = pDst[2] + dstStep[2] * (2 * y + 1 + roi->top) + roi->left;
+
+		for (x = 0; x < quaterWidth - quaterPad; x += 16)
+		{
+			{
+				uint8x16x4_t u = vld4q_u8(&pU[4 * x]);
+				u.val[0] = vld1q_u8(&pUaU[x]);
+				u.val[2] = vld1q_u8(&pVaU[x]);
+				vst4q_u8(&pU[4 * x], u);
+			}
+			{
+				uint8x16x4_t v = vld4q_u8(&pV[4 * x]);
+				v.val[0] = vld1q_u8(&pUaV[x]);
+				v.val[2] = vld1q_u8(&pVaV[x]);
+				vst4q_u8(&pV[4 * x], v);
+			}
+		}
+
+		for (; x < quaterWidth; x++)
+		{
+			pU[4 * x + 0] = pUaU[x];
+			pV[4 * x + 0] = pUaV[x];
+			pU[4 * x + 2] = pVaU[x];
+			pV[4 * x + 2] = pVaV[x];
+		}
+	}
+
+	return neon_ChromaFilter(pDst, dstStep, roi);
+}
+
+static pstatus_t neon_YUV420CombineToYUV444(
+    avc444_frame_type type,
+    const BYTE* pSrc[3], const UINT32 srcStep[3],
+    UINT32 nWidth, UINT32 nHeight,
+    BYTE* pDst[3], const UINT32 dstStep[3],
+    const RECTANGLE_16* roi)
+{
+	if (!pSrc || !pSrc[0] || !pSrc[1] || !pSrc[2])
+		return -1;
+
+	if (!pDst || !pDst[0] || !pDst[1] || !pDst[2])
+		return -1;
+
+	if (!roi)
+		return -1;
+
+	switch (type)
+	{
+		case AVC444_LUMA:
+			return neon_LumaToYUV444(pSrc, srcStep, pDst, dstStep, roi);
+
+		case AVC444_CHROMAv1:
+			return neon_ChromaV1ToYUV444(pSrc, srcStep, pDst, dstStep, roi);
+
+		case AVC444_CHROMAv2:
+			return neon_ChromaV2ToYUV444(pSrc, srcStep, nWidth, nHeight, pDst, dstStep, roi);
+
+		default:
+			return -1;
+	}
 }
 #endif
 
@@ -1243,6 +1809,7 @@ void primitives_init_YUV_opt(primitives_t* prims)
 		prims->RGBToAVC444YUV = ssse3_RGBToAVC444YUV;
 		prims->YUV420ToRGB_8u_P3AC4R = ssse3_YUV420ToRGB;
 		prims->YUV444ToRGB_8u_P3AC4R = ssse3_YUV444ToRGB_8u_P3AC4R;
+		prims->YUV420CombineToYUV444 = ssse3_YUV420CombineToYUV444;
 	}
 
 #elif defined(WITH_NEON)

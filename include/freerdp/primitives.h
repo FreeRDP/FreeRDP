@@ -63,6 +63,13 @@ typedef struct
 	UINT32 height;
 } prim_size_t;		/* like IppiSize */
 
+typedef enum
+{
+	AVC444_LUMA,
+	AVC444_CHROMAv1,
+	AVC444_CHROMAv2
+} avc444_frame_type;
+
 /* Function prototypes for all of the supported primitives. */
 typedef pstatus_t (*__copy_t)(
     const void* pSrc,
@@ -181,10 +188,11 @@ typedef pstatus_t (*__RGBToYUV444_8u_P3AC4R_t)(
     BYTE* pDst[3], UINT32 dstStep[3],
     const prim_size_t* roi);
 typedef pstatus_t (*__YUV420CombineToYUV444_t)(
-    const BYTE* pMainSrc[3], const UINT32 srcMainStep[3],
-    const BYTE* pAuxSrc[3], const UINT32 srcAuxStep[3],
+    avc444_frame_type type,
+    const BYTE* pSrc[3], const UINT32 srcStep[3],
+    UINT32 nWidth, UINT32 nHeight,
     BYTE* pDst[3], const UINT32 dstStep[3],
-    const prim_size_t* roi);
+    const RECTANGLE_16* roi);
 typedef pstatus_t (*__YUV444SplitToYUV420_t)(
     const BYTE* pSrc[3], const UINT32 srcStep[3],
     BYTE* pMainDst[3], const UINT32 dstMainStep[3],
