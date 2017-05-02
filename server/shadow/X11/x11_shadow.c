@@ -383,12 +383,13 @@ static int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE templateMsg;
 	int count = 0;
 	int index = 0;
+
+        if (!subsystem || !subsystem->server || !subsystem->server->clients)
+                return -1;
+
 	templateMsg.xPos = subsystem->pointerX;
 	templateMsg.yPos = subsystem->pointerY;
 	templateMsg.Free = x11_shadow_message_free;
-
-	if (!subsystem || !subsystem->server || !subsystem->server->clients)
-		return -1;
 
 	server = subsystem->server;
 	ArrayList_Lock(server->clients);
