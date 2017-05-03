@@ -1778,6 +1778,12 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 		freerdp_peer_context_free(peer);
 		return FALSE;
 	}
+	else
+	{
+		/* Close the thread handle to make it detached. */
+		CloseHandle(client->thread);
+		client->thread = NULL;
+	}
 
 	return TRUE;
 }
