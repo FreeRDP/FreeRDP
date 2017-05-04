@@ -77,6 +77,9 @@ typedef void* (*pcRdpgfxGetCacheSlotData)(RdpgfxClientContext* context,
 
 typedef UINT(*pcRdpgfxUpdateSurfaces)(RdpgfxClientContext* context);
 
+typedef UINT(*pcRdpgfxUpdateSurfaceArea)(RdpgfxClientContext* context, UINT16 surfaceId,
+                                         UINT32 nrRects, const RECTANGLE_16* rects);
+
 struct _rdpgfx_client_context
 {
 	void* handle;
@@ -106,6 +109,7 @@ struct _rdpgfx_client_context
 	pcRdpgfxGetCacheSlotData GetCacheSlotData;
 
 	pcRdpgfxUpdateSurfaces UpdateSurfaces;
+	pcRdpgfxUpdateSurfaceArea UpdateSurfaceArea;
 
 	PROFILER_DEFINE(SurfaceProfiler);
 };
