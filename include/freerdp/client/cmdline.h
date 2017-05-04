@@ -20,6 +20,8 @@
 #ifndef FREERDP_CLIENT_CMDLINE_H
 #define FREERDP_CLIENT_CMDLINE_H
 
+#include <winpr/cmdline.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
@@ -28,13 +30,19 @@ extern "C" {
 #endif
 
 FREERDP_API int freerdp_client_settings_parse_command_line_arguments(
-	rdpSettings* settings, int argc, char** argv, BOOL allowUnknown);
-FREERDP_API int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int status, int argc, char** argv);
+    rdpSettings* settings, int argc, char** argv, BOOL allowUnknown);
+FREERDP_API int freerdp_client_settings_command_line_status_print(
+    rdpSettings* settings, int status, int argc, char** argv);
+FREERDP_API int freerdp_client_settings_command_line_status_print_ex(
+    rdpSettings* settings, int status, int argc, char** argv,
+    COMMAND_LINE_ARGUMENT_A* custom);
 FREERDP_API BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
 
 FREERDP_API BOOL freerdp_client_print_version(void);
 FREERDP_API BOOL freerdp_client_print_buildconfig(void);
 FREERDP_API BOOL freerdp_client_print_command_line_help(int argc, char** argv);
+FREERDP_API BOOL freerdp_client_print_command_line_help_ex(
+    int argc, char** argv, COMMAND_LINE_ARGUMENT_A* custom);
 
 FREERDP_API BOOL freerdp_parse_username(char* username, char** user, char** domain);
 FREERDP_API BOOL freerdp_parse_hostname(char* hostname, char** host, int* port);
@@ -42,7 +50,8 @@ FREERDP_API BOOL freerdp_set_connection_type(rdpSettings* settings, int type);
 
 FREERDP_API BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count, char** params);
 FREERDP_API BOOL freerdp_client_add_static_channel(rdpSettings* settings, int count, char** params);
-FREERDP_API BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** params);
+FREERDP_API BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, int count,
+        char** params);
 
 #ifdef __cplusplus
 }

@@ -199,36 +199,23 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-BOOL freerdp_client_print_version()
+BOOL freerdp_client_print_version(void)
 {
 	printf("This is FreeRDP version %s (%s)\n", FREERDP_VERSION_FULL,
 	       GIT_REVISION);
 	return TRUE;
 }
 
-BOOL freerdp_client_print_buildconfig()
+BOOL freerdp_client_print_buildconfig(void)
 {
 	printf("%s", freerdp_get_build_config());
 	return TRUE;
 }
 
-BOOL freerdp_client_print_command_line_help(int argc, char** argv)
+static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 {
-	char* str;
-	int length;
-	COMMAND_LINE_ARGUMENT_A* arg;
-	printf("\n");
-	printf("FreeRDP - A Free Remote Desktop Protocol Implementation\n");
-	printf("See www.freerdp.com for more information\n");
-	printf("\n");
-	printf("Usage: %s [file] [options] [/v:<server>[:port]]\n", argv[0]);
-	printf("\n");
-	printf("Syntax:\n");
-	printf("    /flag (enables flag)\n");
-	printf("    /option:<value> (specifies option with value)\n");
-	printf("    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')\n");
-	printf("\n");
-	arg = args;
+	if (!arg)
+		return;
 
 	do
 	{
@@ -242,12 +229,12 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 		         || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 		{
 			BOOL overlong = FALSE;
-
 			printf("    %s", "/");
 
 			if (arg->Format)
 			{
-				length = (int)(strlen(arg->Name) + strlen(arg->Format) + 2);
+				size_t length = (strlen(arg->Name) + strlen(arg->Format) + 2);
+
 				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
 					length += 2;
 
@@ -257,18 +244,10 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 					overlong = TRUE;
 				}
 
-				str = (char*) calloc(length + 1UL, sizeof(char));
-
-				if (!str)
-					return FALSE;
-
 				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
-					sprintf_s(str, length + 1, "%s[:%s]", arg->Name, overlong ? "..." : arg->Format);
+					printf("%s[:%s]", arg->Name, overlong ? "..." : arg->Format);
 				else
-					sprintf_s(str, length + 1, "%s:%s", arg->Name, overlong ? "..." : arg->Format);
-				printf("%-20s", str);
-
-				free(str);
+					printf("%s:%s", arg->Name, overlong ? "..." : arg->Format);
 			}
 			else
 			{
@@ -285,7 +264,29 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 		}
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+}
 
+BOOL freerdp_client_print_command_line_help(int argc, char** argv)
+{
+	return freerdp_client_print_command_line_help_ex(argc, argv, NULL);
+}
+
+BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
+        COMMAND_LINE_ARGUMENT_A* custom)
+{
+	printf("\n");
+	printf("FreeRDP - A Free Remote Desktop Protocol Implementation\n");
+	printf("See www.freerdp.com for more information\n");
+	printf("\n");
+	printf("Usage: %s [file] [options] [/v:<server>[:port]]\n", argv[0]);
+	printf("\n");
+	printf("Syntax:\n");
+	printf("    /flag (enables flag)\n");
+	printf("    /option:<value> (specifies option with value)\n");
+	printf("    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')\n");
+	printf("\n");
+	freerdp_client_print_command_line_args(custom);
+	freerdp_client_print_command_line_args(args);
 	printf("\n");
 	printf("Examples:\n");
 	printf("    xfreerdp connection.rdp /p:Pwd123! /f\n");
@@ -311,7 +312,6 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("Multimedia Redirection: /multimedia:sys:alsa\n");
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
 	printf("\n");
-
 	printf("For Gateways, the https_proxy environment variable is respected:\n");
 #ifdef _WIN32
 	printf("    set HTTPS_PROXY=http://proxy.contoso.com:3128/\n");
@@ -320,7 +320,6 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 #endif
 	printf("    xfreerdp /g:rdp.contoso.com ...\n");
 	printf("\n");
-
 	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
 	return TRUE;
@@ -867,24 +866,13 @@ static int freerdp_client_command_line_post_filter(void* context,
 	}
 	CommandLineSwitchCase(arg, "smartcard")
 	{
-		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
-		{
-			char** p;
-			int count;
-			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value,
-			        &count);
-			p[0] = "smartcard";
-			status = freerdp_client_add_device_channel(settings, count, p);
-			free(p);
-		}
-		else
-		{
-			char* p[1];
-			int count;
-			count = 1;
-			p[0] = "smartcard";
-			status = freerdp_client_add_device_channel(settings, count, p);
-		}
+		char** p;
+		int count;
+		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value,
+		        &count);
+		p[0] = "smartcard";
+		status = freerdp_client_add_device_channel(settings, count, p);
+		free(p);
 	}
 	CommandLineSwitchCase(arg, "printer")
 	{
@@ -1396,6 +1384,13 @@ static BOOL freerdp_client_detect_command_line(int argc, char** argv,
 int freerdp_client_settings_command_line_status_print(rdpSettings* settings,
         int status, int argc, char** argv)
 {
+	return freerdp_client_settings_command_line_status_print_ex(
+	           settings, status, argc, argv, NULL);
+}
+
+int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings,
+        int status, int argc, char** argv, COMMAND_LINE_ARGUMENT_A* custom)
+{
 	COMMAND_LINE_ARGUMENT_A* arg;
 
 	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
@@ -1456,7 +1451,7 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings,
 	}
 	else if (status < 0)
 	{
-		freerdp_client_print_command_line_help(argc, argv);
+		freerdp_client_print_command_line_help_ex(argc, argv, custom);
 		return COMMAND_LINE_STATUS_PRINT_HELP;
 	}
 
@@ -1621,6 +1616,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 						settings->PercentScreenUseWidth = 1;
 						partial = TRUE;
 					}
+
 					if (strchr(p, 'h'))
 					{
 						settings->PercentScreenUseHeight = 1;
@@ -2148,6 +2144,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (arg->Value)
 			{
 #ifdef WITH_GFX_H264
+
 				if (_strnicmp("AVC444", arg->Value, 6) == 0)
 				{
 					settings->GfxH264 = TRUE;
@@ -2159,15 +2156,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				}
 				else
 #endif
-				if (_strnicmp("RFX", arg->Value, 3) != 0)
-					return COMMAND_LINE_ERROR;
+					if (_strnicmp("RFX", arg->Value, 3) != 0)
+						return COMMAND_LINE_ERROR;
 			}
 		}
 		CommandLineSwitchCase(arg, "gfx-thin-client")
 		{
 			settings->GfxThinClient = arg->Value ? TRUE : FALSE;
+
 			if (settings->GfxThinClient)
 				settings->GfxSmallCache = TRUE;
+
 			settings->SupportGraphicsPipeline = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gfx-small-cache")
@@ -2427,6 +2426,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 				settings->NSCodec = TRUE;
 			}
+
 #if defined(WITH_JPEG)
 			else if (strcmp(arg->Value, "jpeg") == 0)
 			{
@@ -2435,6 +2435,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				if (settings->JpegQuality == 0)
 					settings->JpegQuality = 75;
 			}
+
 #endif
 		}
 		CommandLineSwitchCase(arg, "fast-path")
