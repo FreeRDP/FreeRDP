@@ -916,6 +916,7 @@ static void encomsp_process_connect(encomspPlugin* encomsp)
 {
 }
 
+#if 0
 static int encomsp_send(encomspPlugin* encomsp, wStream* s)
 {
 	UINT32 status = 0;
@@ -940,6 +941,7 @@ static int encomsp_send(encomspPlugin* encomsp, wStream* s)
 
 	return status;
 }
+#endif
 
 /**
  * Function description

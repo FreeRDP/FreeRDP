@@ -23,7 +23,7 @@ LPSTR tr_esc_str(LPCSTR arg)
 	/* Prepare a initial buffer with the size of the result string. */
 	ds = s + 1;
 	if(s)
-		tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+		tmp = (LPSTR) calloc(ds, sizeof(CHAR));
 	if(NULL == tmp)
 	{
 		WLog_ERR(TAG,  "Could not allocate string buffer.");

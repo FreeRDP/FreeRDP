@@ -102,6 +102,7 @@ static INLINE void progressive_component_codec_quant_read(const BYTE* block,
 	quantVal->HH1 = block[4] >> 4;
 }
 
+#if 0
 static INLINE void progressive_rfx_quant_ladd(RFX_COMPONENT_CODEC_QUANT* q, int val)
 {
 	q->HL1 += val; /* HL1 */
@@ -115,6 +116,7 @@ static INLINE void progressive_rfx_quant_ladd(RFX_COMPONENT_CODEC_QUANT* q, int 
 	q->HH3 += val; /* HH3 */
 	q->LL3 += val; /* LL3 */
 }
+#endif
 
 static INLINE void progressive_rfx_quant_add(RFX_COMPONENT_CODEC_QUANT* q1,
         RFX_COMPONENT_CODEC_QUANT* q2,
@@ -188,6 +190,7 @@ static INLINE BOOL progressive_rfx_quant_lcmp_less_equal(RFX_COMPONENT_CODEC_QUA
 	return TRUE;
 }
 
+#if 0
 static INLINE BOOL progressive_rfx_quant_cmp_less_equal(RFX_COMPONENT_CODEC_QUANT* q1,
         RFX_COMPONENT_CODEC_QUANT* q2)
 {
@@ -213,6 +216,7 @@ static INLINE BOOL progressive_rfx_quant_cmp_less_equal(RFX_COMPONENT_CODEC_QUAN
 
 	return TRUE;
 }
+#endif
 
 static INLINE BOOL progressive_rfx_quant_lcmp_greater_equal(RFX_COMPONENT_CODEC_QUANT* q,
         int val)
@@ -240,6 +244,7 @@ static INLINE BOOL progressive_rfx_quant_lcmp_greater_equal(RFX_COMPONENT_CODEC_
 	return TRUE;
 }
 
+#if 0
 static INLINE BOOL progressive_rfx_quant_cmp_greater_equal(RFX_COMPONENT_CODEC_QUANT* q1,
         RFX_COMPONENT_CODEC_QUANT* q2)
 {
@@ -265,6 +270,7 @@ static INLINE BOOL progressive_rfx_quant_cmp_greater_equal(RFX_COMPONENT_CODEC_Q
 
 	return TRUE;
 }
+#endif
 
 static INLINE BOOL progressive_rfx_quant_cmp_equal(RFX_COMPONENT_CODEC_QUANT* q1,
         RFX_COMPONENT_CODEC_QUANT* q2)
@@ -292,6 +298,7 @@ static INLINE BOOL progressive_rfx_quant_cmp_equal(RFX_COMPONENT_CODEC_QUANT* q1
 	return TRUE;
 }
 
+#if 0
 static void progressive_rfx_quant_print(RFX_COMPONENT_CODEC_QUANT* q,
                                         const char* name)
 {
@@ -300,6 +307,7 @@ static void progressive_rfx_quant_print(RFX_COMPONENT_CODEC_QUANT* q,
 	        name, q->HL1, q->LH1, q->HH1, q->HL2, q->LH2, q->HH2, q->HL3, q->LH3, q->HH3,
 	        q->LL3);
 }
+#endif
 
 static INLINE BOOL progressive_set_surface_data(PROGRESSIVE_CONTEXT* progressive,
         UINT16 surfaceId, void* pData)

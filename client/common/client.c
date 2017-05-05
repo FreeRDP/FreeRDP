@@ -36,6 +36,12 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
+#include <winpr/sspi.h>
+
+#ifdef WITH_PKCS11H
+#include "../../libfreerdp/core/smartcardlogon.h"
+#endif // WITH_PKCS11H
+
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
@@ -422,7 +428,15 @@ fail:
 BOOL client_cli_authenticate(freerdp* instance, char** username,
                              char** password, char** domain)
 {
-	return client_cli_authenticate_raw(instance, FALSE, username, password, domain);
+	if( instance->settings->SmartcardLogon ) {
+		WLog_INFO(TAG, "Authentication via smartcard");
+		instance->settings->CredentialsType = SEC_SMARTCARD_DELEGATION_CRED_TYPE;
+		return TRUE;
+	}
+	else{
+		return client_cli_authenticate_raw(instance, FALSE, username, password, domain);
+	}
+	return FALSE;
 }
 
 BOOL client_cli_gw_authenticate(freerdp* instance, char** username,

@@ -21,7 +21,6 @@ set(MODULE_PREFIX "FREERDP_CORE")
 freerdp_definition_add(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 
 freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
-freerdp_include_directory_add(${KRB5_INCLUDE_DIRS})
 
 set(${MODULE_PREFIX}_GATEWAY_DIR "gateway")
 
@@ -48,6 +47,36 @@ set(${MODULE_PREFIX}_GATEWAY_SRCS
 	${${MODULE_PREFIX}_GATEWAY_DIR}/http.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/ncacn_http.c
 	${${MODULE_PREFIX}_GATEWAY_DIR}/ncacn_http.h)
+
+set(${MODULE_PREFIX}_PKCS11_DIR "pkcs11")
+
+set(${MODULE_PREFIX}_PKCS11_SRCS
+	${${MODULE_PREFIX}_PKCS11_DIR}/cert_info.h
+	${${MODULE_PREFIX}_PKCS11_DIR}/cert_info.c
+	${${MODULE_PREFIX}_PKCS11_DIR}/cert_st.h
+	${${MODULE_PREFIX}_PKCS11_DIR}/cert_vfy.h
+	${${MODULE_PREFIX}_PKCS11_DIR}/cert_vfy.c
+	${${MODULE_PREFIX}_PKCS11_DIR}/alg_st.h
+	${${MODULE_PREFIX}_PKCS11_DIR}/base64.h
+	${${MODULE_PREFIX}_PKCS11_DIR}/base64.c
+	${${MODULE_PREFIX}_PKCS11_DIR}/uri.h
+	${${MODULE_PREFIX}_PKCS11_DIR}/uri.c
+	${${MODULE_PREFIX}_PKCS11_DIR}/error.h
+	${${MODULE_PREFIX}_PKCS11_DIR}/error.c
+	${${MODULE_PREFIX}_PKCS11_DIR}/strings.h
+	${${MODULE_PREFIX}_PKCS11_DIR}/strings.c)
+	
+set(${MODULE_PREFIX}_PKINIT_DIR "pkinit")
+
+if(GSS_FOUND)
+set(${MODULE_PREFIX}_PKINIT_SRCS
+	${${MODULE_PREFIX}_PKINIT_DIR}/autoconf.h
+	${${MODULE_PREFIX}_PKINIT_DIR}/k5-platform.h
+	${${MODULE_PREFIX}_PKINIT_DIR}/k5-json.h
+	${${MODULE_PREFIX}_PKINIT_DIR}/k5-thread.h
+	${${MODULE_PREFIX}_PKINIT_DIR}/pkinit.h
+	${${MODULE_PREFIX}_PKINIT_DIR}/pkinit.c)
+endif()
 
 set(${MODULE_PREFIX}_SRCS
 	bulk.c
@@ -128,9 +157,12 @@ set(${MODULE_PREFIX}_SRCS
 	listener.c
 	listener.h
 	peer.c
-	peer.h)
+	peer.h
+	smartcardlogon.h
+	smartcardlogon.c
+	)
 
-set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
+set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS} ${${MODULE_PREFIX}_PKCS11_SRCS} ${${MODULE_PREFIX}_PKINIT_SRCS} )
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
@@ -140,10 +172,6 @@ if(WIN32)
 endif()
 
 freerdp_library_add(${OPENSSL_LIBRARIES})
-
-if (WITH_KRB5)
-	freerdp_library_add(${KRB5_LIBRARIES})
-endif(WITH_KRB5)
 
 if(BUILD_TESTING)
 	add_subdirectory(test)

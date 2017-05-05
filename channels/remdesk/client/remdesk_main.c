@@ -33,6 +33,7 @@
 
 #include "remdesk_main.h"
 
+#if 0
 static RemdeskClientContext* remdesk_get_client_interface(
     remdeskPlugin* remdesk)
 {
@@ -40,6 +41,7 @@ static RemdeskClientContext* remdesk_get_client_interface(
 	pInterface = (RemdeskClientContext*) remdesk->channelEntryPoints.pInterface;
 	return pInterface;
 }
+#endif
 
 /**
  * Function description
@@ -715,6 +717,7 @@ static void remdesk_process_connect(remdeskPlugin* remdesk)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+#if 0
 static UINT remdesk_send(remdeskPlugin* remdesk, wStream* s)
 {
 	UINT status = 0;
@@ -739,6 +742,7 @@ static UINT remdesk_send(remdeskPlugin* remdesk, wStream* s)
 
 	return status;
 }
+#endif
 
 /**
  * Function description

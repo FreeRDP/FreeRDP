@@ -107,6 +107,16 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "serial", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, "tty", "Redirect serial device" },
 	{ "parallel", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
 	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
+	{ "smartcard-logon", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Smartcard authentication" },
+	{ "pin", COMMAND_LINE_VALUE_OPTIONAL, "<PIN code>", NULL, NULL, -1, NULL, "PIN code" },
+	{ "pkcs11-module", COMMAND_LINE_VALUE_OPTIONAL, "<module>", NULL, NULL, -1, NULL, "Module PKCS11" },
+	{ "pkinit-anchors", COMMAND_LINE_VALUE_OPTIONAL, "<pkinit anchors>", NULL, NULL, -1, NULL, "PKINIT anchors" },
+	{ "start-time", COMMAND_LINE_VALUE_OPTIONAL, "<start time>", NULL, NULL, -1, NULL, "Ticket start time" },
+	{ "lifetime", COMMAND_LINE_VALUE_OPTIONAL, "<lifetime>", NULL, NULL, -1, NULL, "Ticket lifetime" },
+	{ "renewable-lifetime", COMMAND_LINE_VALUE_OPTIONAL, "<renewable lifetime>", NULL, NULL, -1, NULL, "Ticket renewable lifetime" },
+	{ "T", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Activate KRB5 PKINIT trace" },
+	{ "csp", COMMAND_LINE_VALUE_OPTIONAL, "<csp name>", NULL, NULL, -1, NULL, "CSP Name" },
+	{ "card", COMMAND_LINE_VALUE_OPTIONAL, "<card name>", NULL, NULL, -1, NULL, "Card Name" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED, "[dbg][dev][id|addr][auto]", NULL, NULL, -1, NULL, "Redirect USB device" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect multitouch input" },
@@ -298,6 +308,18 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
 	printf("\n");
 
+	printf("Smartcard logon: /smartcard-logon\n");
+	printf("PIN code: /pin:<PIN code>\n");
+	printf("PKCS11 module to load: /pkcs11-module:<module>\n");
+	printf("PKINIT anchors : /pkinit-anchors:<pkinit_anchors>\n");
+	printf("Ticket start time: /start-time:<time to issue ticket>\n");
+	printf("Ticket lifetime: /lifetime:<ticket lifetime>\n");
+	printf("Ticket renewable lifetime: /renewable-lifetime:<ticket renewable lifetime>\n");
+	printf("Activate KRB5 PKINIT trace: /T\n");
+	printf("CSP Name : /csp:<csp name>\n");
+	printf("Card Name : /card:<card name>\n");
+	printf("\n");
+
 	printf("For Gateways, the https_proxy environment variable is respected:\n");
 #ifdef _WIN32
 	printf("    set HTTPS_PROXY=http://proxy.contoso.com:3128/\n");
@@ -481,6 +503,8 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 					free(smartcard);
 					return FALSE;
 				}
+
+				settings->SmartcardReaderName = _strdup(smartcard->Name);
 			}
 
 			if (count > 2)
@@ -779,7 +803,7 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(
 
 	p = t;
 
-	if (count)
+	if (*count)
 		MoveMemory(&p[1], p, sizeof(char*)** count);
 
 	(*count)++;
@@ -853,13 +877,29 @@ static int freerdp_client_command_line_post_filter(void* context,
 	}
 	CommandLineSwitchCase(arg, "smartcard")
 	{
-		char** p;
-		int count;
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value,
-		        &count);
-		p[0] = "smartcard";
-		status = freerdp_client_add_device_channel(settings, count, p);
-		free(p);
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			char** p;
+			int count;
+			
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "smartcard";
+
+			status = freerdp_client_add_device_channel(settings, count, p);
+
+			free(p);
+		}
+		else
+		{
+			char* p[2];
+			int count;
+			
+			count = 2;
+			p[0] = "smartcard";
+			p[1] = "";
+			
+			status = freerdp_client_add_device_channel(settings, count, p);
+		}
 	}
 	CommandLineSwitchCase(arg, "printer")
 	{
@@ -1768,6 +1808,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			if (!(settings->Password = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
+
+			/* overwrite argument so it won't appear in ps */
+			p = arg->Value;
+			while (*p)
+				*(p++) = 'X';
+			while (*arg->Value)
+				*(arg->Value++) = 'X';
 		}
 		CommandLineSwitchCase(arg, "g")
 		{
@@ -2432,8 +2479,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->AutoReconnectMaxRetries = atoi(arg->Value);
 
-			if ((settings->AutoReconnectMaxRetries < 0) ||
-				(settings->AutoReconnectMaxRetries > 1000))
+			if ( settings->AutoReconnectMaxRetries > 1000)
 				return COMMAND_LINE_ERROR;
 		}
 		CommandLineSwitchCase(arg, "reconnect-cookie")
@@ -2527,6 +2573,139 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (!(settings->ActionScript = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
+		CommandLineSwitchCase(arg, "smartcard-logon")
+		{
+			settings->SmartcardLogon = TRUE;
+			settings->Pin = NULL;
+
+			settings->RdpSecurity = FALSE;
+			settings->TlsSecurity = FALSE;
+			settings->NlaSecurity = TRUE;
+			settings->ExtSecurity = FALSE;
+
+			settings->DisableCredentialsDelegation = FALSE;
+			settings->PinPadIsPresent = FALSE;
+
+			settings->StartTime = 0;
+			/* Ticket lifetime value in seconds ; KDC default value : 600mn (i.e. 36000s) ; 600mn at maximum */
+			settings->LifeTime = 36000;
+			/* Ticket renewable lifetime value in seconds ; KDC default value : 1 day (i.e. 86400s) ; 7 days at maximum */
+			settings->RenewableLifeTime = 86400;
+			settings->Krb5Trace = FALSE;
+
+			freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
+		}
+
+		CommandLineSwitchCase(arg, "pin")
+		{
+			if(settings->SmartcardLogon == TRUE){
+				free (settings->Pin);
+				if(!(settings->Pin = _strdup(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+			else{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+
+			/* overwrite argument so it won't appear in ps */
+			p = arg->Value;
+			while (*p)
+				*(p++) = 'X';
+			while (*arg->Value)
+				*(arg->Value++) = 'X';
+		}
+
+		CommandLineSwitchCase(arg, "pkcs11-module")
+		{
+			if(settings->SmartcardLogon == TRUE){
+				free (settings->Pkcs11Module);
+				if(!(settings->Pkcs11Module = _strdup(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+			else{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+
+		CommandLineSwitchCase(arg, "pkinit-anchors")
+		{
+			if(settings->SmartcardLogon == TRUE){
+				free (settings->PkinitAnchors);
+				if(!(settings->PkinitAnchors = _strdup(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+			else{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+
+		CommandLineSwitchCase(arg, "start-time")
+		{
+			if(settings->SmartcardLogon == TRUE){
+				if(!(settings->StartTime = atoi(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+			else{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+
+		CommandLineSwitchCase(arg, "lifetime")
+		{
+			if(settings->SmartcardLogon == TRUE){
+				if(!(settings->LifeTime = atoi(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+			else{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+
+		CommandLineSwitchCase(arg, "renewable-lifetime")
+		{
+			if(settings->SmartcardLogon == TRUE){
+				if(!(settings->RenewableLifeTime = atoi(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+			else{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+
+		CommandLineSwitchCase(arg, "T")
+		{
+			if(settings->SmartcardLogon == TRUE){
+				settings->Krb5Trace = TRUE;
+			}
+			else{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+
+		CommandLineSwitchCase(arg, "csp")
+		{
+			if(settings->SmartcardLogon == TRUE){
+				free (settings->CspName);
+				if(!(settings->CspName = _strdup(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+			else{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+
+		CommandLineSwitchCase(arg, "card")
+		{
+			if(settings->SmartcardLogon == TRUE){
+				free (settings->CardName);
+				if(!(settings->CardName = _strdup(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+			else{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+
 		CommandLineSwitchDefault(arg)
 		{
 		}
@@ -2541,7 +2720,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			BOOL ret;
 			free(settings->Domain);
-
+		
 			ret = freerdp_parse_username(user, &settings->Username, &settings->Domain);
 			free(user);
 			if (!ret)

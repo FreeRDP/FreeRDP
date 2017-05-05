@@ -44,6 +44,7 @@ struct _NEGOTIATE_CONTEXT
 
 	CtxtHandle SubContext;
 
+	BOOL kerberos;
 	SecurityFunctionTableA* sspiA;
 	SecurityFunctionTableW* sspiW;
 };

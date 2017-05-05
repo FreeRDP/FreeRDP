@@ -85,6 +85,7 @@ enum SecurityFunctionTableIndex
 
 BOOL IsSecurityStatusError(SECURITY_STATUS status);
 
+#include "sspi_gss.h"
 #include "sspi_winpr.h"
 
 #endif /* WINPR_SSPI_PRIVATE_H */

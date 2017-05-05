@@ -694,9 +694,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 	{
 		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
 		ContextSizes->cbMaxToken = 2010;
-		ContextSizes->cbMaxSignature = 16;
-		ContextSizes->cbBlockSize = 0;
-		ContextSizes->cbSecurityTrailer = 16;
+		ContextSizes->cbMaxSignature = 16; /* the size of expected signature is 16 bytes */
+		ContextSizes->cbBlockSize = 0; /* no padding */
+		ContextSizes->cbSecurityTrailer = 16;  /* no security trailer appended in NTLM mode contrary to Kerberos */
 		return SEC_E_OK;
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_IDENTITY)
@@ -809,6 +809,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 		ZeroMemory(blob, 16);
 		return (SEC_E_OK);
 	}
+
 
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
@@ -1220,13 +1221,13 @@ const SecPkgInfoA NTLM_SecPkgInfoA =
 	"NTLM Security Package" /* Comment */
 };
 
-WCHAR NTLM_SecPkgInfoW_Name[] = { 'N', 'T', 'L', 'M', '\0' };
+WCHAR NTLM_SecPkgInfoW_Name[] = { 'N','T','L','M','\0' };
 
 WCHAR NTLM_SecPkgInfoW_Comment[] =
 {
-	'N', 'T', 'L', 'M', ' ',
-	'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ',
-	'P', 'a', 'c', 'k', 'a', 'g', 'e', '\0'
+	'N','T','L','M',' ',
+	'S','e','c','u','r','i','t','y',' ',
+	'P','a','c','k','a','g','e','\0'
 };
 
 const SecPkgInfoW NTLM_SecPkgInfoW =

@@ -23,10 +23,11 @@
 
 #include "bulk.h"
 
-#define TAG "com.freerdp.core"
+#define TAG FREERDP_TAG("core.bulk")
 
 //#define WITH_BULK_DEBUG		1
 
+#if 0
 static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
 {
 	flags &= BULK_COMPRESSION_FLAGS_MASK;
@@ -50,6 +51,7 @@ static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
 
 	return "PACKET_UNKNOWN";
 }
+#endif
 
 UINT32 bulk_compression_level(rdpBulk* bulk)
 {
@@ -66,6 +68,7 @@ UINT32 bulk_compression_max_size(rdpBulk* bulk)
 	return bulk->CompressionMaxSize;
 }
 
+#if 0
 static INLINE  int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize,
         BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
@@ -107,6 +110,7 @@ static INLINE  int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 
 
 	return status;
 }
+#endif
 
 int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
                     UINT32* pDstSize, UINT32 flags)

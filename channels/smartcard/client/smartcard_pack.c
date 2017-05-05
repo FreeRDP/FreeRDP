@@ -848,6 +848,7 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 		}
 
 		CopyMemory(mszA, ret->msz, ret->cBytes);
+		mszA[ret->cBytes -1 ] = '\0';
 	}
 
 	for (index = 0; index < length - 2; index++)

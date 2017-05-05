@@ -2011,6 +2011,7 @@ static BOOL rdp_write_draw_nine_grid_cache_capability_set(wStream* s,
 	return TRUE;
 }
 
+#if 0
 static void rdp_write_gdiplus_cache_entries(wStream* s, UINT16 gce, UINT16 bce,
         UINT16 pce, UINT16 ice, UINT16 ace)
 {
@@ -2038,6 +2039,7 @@ static void rdp_write_gdiplus_image_cache_properties(wStream* s, UINT16 oiccs,
 	Stream_Write_UINT16(s, oicts); /* gdipObjectImageCacheTotalSize (2 bytes) */
 	Stream_Write_UINT16(s, oicms); /* gdipObjectImageCacheMaxSize (2 bytes) */
 }
+#endif
 
 #ifdef WITH_DEBUG_CAPABILITIES
 static BOOL rdp_print_draw_nine_grid_cache_capability_set(wStream* s,
@@ -2097,7 +2099,7 @@ static BOOL rdp_read_draw_gdiplus_cache_capability_set(wStream* s,
  * @param s stream
  * @param settings settings
  */
-
+#if 0
 static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s,
         rdpSettings* settings)
 {
@@ -2122,6 +2124,7 @@ static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s,
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_DRAW_GDI_PLUS);
 	return TRUE;
 }
+#endif
 
 #ifdef WITH_DEBUG_CAPABILITIES
 static BOOL rdp_print_draw_gdiplus_cache_capability_set(wStream* s,

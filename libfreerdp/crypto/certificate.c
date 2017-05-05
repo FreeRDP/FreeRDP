@@ -502,7 +502,7 @@ BOOL certificate_split_line(char* line, char** host, UINT16* port, char** subjec
 		char* cur;
 		size_t length = strlen(line);
 
-		if (length <= 0)
+		if (length == 0)
 			return FALSE;
 
 		cur = StrSep(&line, " \t");

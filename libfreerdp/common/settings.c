@@ -1677,6 +1677,22 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->RedirectClipboard = param;
 			break;
 
+		case FreeRDP_SmartcardLogon:
+			settings->SmartcardLogon = param;
+			break;
+
+		case FreeRDP_PinLoginRequired:
+			settings->PinLoginRequired = param;
+			break;
+
+		case FreeRDP_PinPadIsPresent:
+			settings->PinPadIsPresent = param;
+			break;
+
+		case FreeRDP_Krb5Trace:
+			settings->Krb5Trace = param;
+			break;
+
 		default:
 			WLog_ERR(TAG,  "freerdp_set_param_bool: unknown id %d (param = %"PRId32")", id, param);
 			return -1;
@@ -1979,6 +1995,12 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 
 		case FreeRDP_SmartSizingHeight:
 			return settings->SmartSizingHeight;
+
+		case FreeRDP_KeySpec:
+			return settings->KeySpec;
+
+		case FreeRDP_CredentialsType:
+			return settings->CredentialsType;
 
 		default:
 			WLog_ERR(TAG,  "freerdp_get_param_uint32: unknown id: %d", id);
@@ -2314,6 +2336,14 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			settings->DynamicChannelArraySize = param;
 			break;
 
+		case FreeRDP_KeySpec:
+			settings->KeySpec = param;
+			break;
+
+		case FreeRDP_CredentialsType:
+			settings->CredentialsType = param;
+			break;
+
 		default:
 			WLog_ERR(TAG, "freerdp_set_param_uint32: unknown id %d (param = %"PRIu32")", id, param);
 			return -1;
@@ -2332,6 +2362,18 @@ UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id)
 		case FreeRDP_ParentWindowId:
 			return settings->ParentWindowId;
 
+		case FreeRDP_IdCertificateLength:
+			return settings->IdCertificateLength;
+
+		case FreeRDP_StartTime:
+			return settings->StartTime;
+
+		case FreeRDP_LifeTime:
+			return settings->LifeTime;
+
+		case FreeRDP_RenewableLifeTime:
+			return settings->RenewableLifeTime;
+
 		default:
 			WLog_ERR(TAG, "freerdp_get_param_uint64: unknown id: %d", id);
 			return -1;
@@ -2344,6 +2386,22 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 	{
 		case FreeRDP_ParentWindowId:
 			settings->ParentWindowId = param;
+			break;
+
+		case FreeRDP_IdCertificateLength:
+			settings->IdCertificateLength = param;
+			break;
+
+		case FreeRDP_StartTime:
+			settings->StartTime = param;
+			break;
+
+		case FreeRDP_LifeTime:
+			settings->LifeTime = param;
+			break;
+
+		case FreeRDP_RenewableLifeTime:
+			settings->RenewableLifeTime = param;
 			break;
 
 		default:
@@ -2513,6 +2571,51 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 
 		case FreeRDP_DrivesToRedirect:
 			return settings->DrivesToRedirect;
+
+		case FreeRDP_SmartcardReaderName:
+			return settings->SmartcardReaderName;
+
+		case FreeRDP_Pkcs11Module:
+			return settings->Pkcs11Module;
+
+		case FreeRDP_Pin:
+			return settings->Pin;
+
+		case FreeRDP_CardName:
+			return settings->CardName;
+
+		case FreeRDP_ReaderName:
+			return settings->ReaderName;
+
+		case FreeRDP_ContainerName:
+			return settings->ContainerName;
+
+		case FreeRDP_CspName:
+			return settings->CspName;
+
+		case FreeRDP_UserHint:
+			return settings->UserHint;
+
+		case FreeRDP_DomainHint:
+			return settings->DomainHint;
+
+		case FreeRDP_UserPrincipalName:
+			return settings->UserPrincipalName;
+
+		case FreeRDP_CanonicalizedUserHint:
+			return settings->CanonicalizedUserHint;
+
+		case FreeRDP_PkinitIdentity:
+			return settings->PkinitIdentity;
+
+		case FreeRDP_PkinitAnchors:
+			return settings->PkinitAnchors;
+
+		case FreeRDP_SlotID:
+			return settings->SlotID;
+
+		case FreeRDP_TokenLabel:
+			return settings->TokenLabel;
 
 		default:
 			WLog_ERR(TAG, "freerdp_get_param_string: unknown id: %d", id);
@@ -2731,6 +2834,58 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 
 		case FreeRDP_DrivesToRedirect:
 			tmp = &settings->DrivesToRedirect;
+			break;
+
+		case FreeRDP_SmartcardReaderName:
+			tmp = &settings->SmartcardReaderName;
+			break;
+
+		case FreeRDP_Pkcs11Module:
+			tmp = &settings->Pkcs11Module;
+			break;
+
+		case FreeRDP_Pin:
+			tmp = &settings->Pin;
+			break;
+
+		case FreeRDP_CardName:
+			tmp = &settings->CardName;
+			break;
+
+		case FreeRDP_ReaderName:
+			tmp = &settings->ReaderName;
+			break;
+
+		case FreeRDP_ContainerName:
+			tmp = &settings->ContainerName;
+			break;
+
+		case FreeRDP_CspName:
+			tmp = &settings->CspName;
+			break;
+
+		case FreeRDP_UserHint:
+			tmp = &settings->UserHint;
+			break;
+
+		case FreeRDP_UserPrincipalName:
+			tmp = &settings->UserPrincipalName;
+			break;
+
+		case FreeRDP_PkinitIdentity:
+			tmp = &settings->PkinitIdentity;
+			break;
+
+		case FreeRDP_PkinitAnchors:
+			tmp = &settings->PkinitAnchors;
+			break;
+
+		case FreeRDP_SlotID:
+			tmp = &settings->SlotID;
+			break;
+
+		case FreeRDP_TokenLabel:
+			tmp = &settings->TokenLabel;
 			break;
 
 		default:

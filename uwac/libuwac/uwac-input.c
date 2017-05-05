@@ -673,6 +673,7 @@ static void pointer_handle_axis(void *data, struct wl_pointer *pointer, uint32_t
 	event->value = value;
 }
 
+#if 0
 static void pointer_frame(void *data, struct wl_pointer *wl_pointer)
 {
 	/*UwacSeat *seat = data;*/
@@ -687,6 +688,7 @@ void pointer_axis_stop(void *data, struct wl_pointer *wl_pointer, uint32_t time,
 {
 	/*UwacSeat *seat = data;*/
 }
+#endif
 
 static const struct wl_pointer_listener pointer_listener = {
 	pointer_handle_enter,
@@ -694,9 +696,11 @@ static const struct wl_pointer_listener pointer_listener = {
 	pointer_handle_motion,
 	pointer_handle_button,
 	pointer_handle_axis,
+#if 0
 	pointer_frame,
 	pointer_axis_source,
 	pointer_axis_stop,
+#endif
 };
 
 

@@ -422,6 +422,15 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 	settings->CompressionEnabled = ((flags & INFO_COMPRESSION) ? TRUE : FALSE);
 	settings->LogonNotify = ((flags & INFO_LOGONNOTIFY) ? TRUE : FALSE);
 
+	 // settings for smartcard-logon
+	 if(settings->SmartcardLogon){
+		 settings->DisableCtrlAltDel = ((flags & INFO_DISABLECTRLALTDEL) ? TRUE : FALSE);
+	     settings->ForceEncryptedCsPdu = ((flags & INFO_FORCE_ENCRYPTED_CS_PDU) ? TRUE : FALSE);
+	     settings->MouseHasWheel = ((flags & INFO_MOUSE_HAS_WHEEL) ? TRUE : FALSE);
+	     settings->PasswordIsSmartcardPin = ((flags & INFO_PASSWORD_IS_SC_PIN) ? TRUE : FALSE);
+	 }
+
+
 	if (flags & INFO_COMPRESSION)
 	{
 		CompressionLevel = ((flags & 0x00001E00) >> 9);
@@ -644,6 +653,15 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		INFO_MAXIMIZESHELL |
 		INFO_ENABLEWINDOWSKEY |
 		INFO_DISABLECTRLALTDEL;
+
+	/* set flags for smartcard-logon */
+	if(settings->SmartcardLogon){
+		flags |= INFO_DISABLECTRLALTDEL;
+		flags |= INFO_AUTOLOGON;
+		flags |= INFO_FORCE_ENCRYPTED_CS_PDU;
+		flags |= INFO_MOUSE_HAS_WHEEL;
+		flags |= INFO_PASSWORD_IS_SC_PIN;
+	}
 
 	if (settings->AudioCapture)
 		flags |= INFO_AUDIOCAPTURE;
