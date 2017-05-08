@@ -1658,7 +1658,7 @@ cancel_retry:
 		WLog_DBG(TAG,"CancelId:0x%"PRIx32" RequestId:0x%x endpoint 0x%x!!",
 			RequestId, request->RequestId, request->endpoint); 
 
-		if ((request && request->RequestId) == (RequestId && retry_times <= 10))
+		if (request->RequestId == (RequestId && retry_times <= 10))
 		{
 			status = func_cancel_xact_request(request);
 			break;
