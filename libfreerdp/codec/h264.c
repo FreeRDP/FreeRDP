@@ -1010,6 +1010,8 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
 		{
 #if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 			sys->EncParamExt.sSpatialLayers[0].sSliceCfg.uiSliceMode = SM_AUTO_SLICE;
+#else
+			sys->EncParamExt.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
 #endif
 		}
 
