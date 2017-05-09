@@ -45,10 +45,10 @@ FREERDP_API INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
         UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
         REGION16* invalidRegion, UINT16 surfaceId);
 
-FREERDP_API INT32 progressive_create_surface_context(PROGRESSIVE_CONTEXT*
-        progressive, UINT16 surfaceId, UINT32 width, UINT32 height);
-FREERDP_API int progressive_delete_surface_context(PROGRESSIVE_CONTEXT*
-        progressive, UINT16 surfaceId);
+FREERDP_API INT32 progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive,
+		UINT16 surfaceId, UINT32 width, UINT32 height);
+FREERDP_API int progressive_delete_surface_context(PROGRESSIVE_CONTEXT* progressive,
+		UINT16 surfaceId);
 
 FREERDP_API BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive);
 
