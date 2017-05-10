@@ -161,6 +161,11 @@ endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_EXPORTS")
 
+# Enable 64bit file support on linux.
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+	add_definitions("-D_FILE_OFFSET_BITS=64")
+endif()
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 

@@ -184,6 +184,11 @@ if(MSVC)
 	endif()
 endif()
 
+# Enable 64bit file support on linux.
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+	add_definitions("-D_FILE_OFFSET_BITS=64")
+endif()
+
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i686")
