@@ -27,8 +27,6 @@ set(${MODULE_PREFIX}_SRCS
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
-
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
