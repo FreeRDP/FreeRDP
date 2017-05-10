@@ -424,6 +424,9 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi,
 			WLog_ERR(TAG, "%s: unable to create h264 context", __FUNCTION__);
 			return ERROR_NOT_ENOUGH_MEMORY;
 		}
+
+		if (!h264_context_reset(surface->h264, surface->width, surface->height))
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	bs = (RDPGFX_AVC420_BITMAP_STREAM*) cmd->extra;
@@ -493,6 +496,9 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 			WLog_ERR(TAG, "%s: unable to create h264 context", __FUNCTION__);
 			return ERROR_NOT_ENOUGH_MEMORY;
 		}
+
+		if (!h264_context_reset(surface->h264, surface->width, surface->height))
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	bs = (RDPGFX_AVC444_BITMAP_STREAM*) cmd->extra;
