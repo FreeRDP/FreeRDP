@@ -72,8 +72,7 @@ static const BYTE TEST_NTLM_HASH[16] =
 static const BYTE TEST_NTLM_V2_HASH[16] =
 { 0x4c, 0x7f, 0x70, 0x6f, 0x7d, 0xde, 0x05, 0xa9, 0xd1, 0xa0, 0xf4, 0xe7, 0xff, 0xe3, 0xbf, 0xb8 };
 
-//#define NTLM_PACKAGE_NAME	NEGOSSP_NAME
-#define NTLM_PACKAGE_NAME	NTLMSP_NAME
+#define NTLM_PACKAGE_NAME	NTLMSSP_NAME
 
 struct _TEST_NTLM_CLIENT
 {

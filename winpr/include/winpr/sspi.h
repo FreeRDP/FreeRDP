@@ -92,8 +92,9 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define PSecPkgInfo PSecPkgInfoA
 #endif
 
-#define NTLMSP_NAME	_T("NTLM")
-#define NEGOSSP_NAME	_T("Negotiate")
+#define NTLMSSP_NAME		_T("NTLM")
+#define KERBEROS_SSP_NAME	_T("Kerberos")
+#define NEGOSSP_NAME	   	_T("Negotiate")
 
 #endif
 
@@ -589,6 +590,7 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 
 typedef struct _SEC_WINNT_AUTH_IDENTITY_W
 {
+	/* TSPasswordCreds */
 	UINT16* User;
 	UINT32 UserLength;
 	UINT16* Domain;
@@ -600,6 +602,7 @@ typedef struct _SEC_WINNT_AUTH_IDENTITY_W
 
 typedef struct _SEC_WINNT_AUTH_IDENTITY_A
 {
+	/* TSPasswordCreds */
 	BYTE* User;
 	UINT32 UserLength;
 	BYTE* Domain;
@@ -611,6 +614,7 @@ typedef struct _SEC_WINNT_AUTH_IDENTITY_A
 
 struct _SEC_WINNT_AUTH_IDENTITY
 {
+	/* TSPasswordCreds */
 	UINT16* User;
 	UINT32 UserLength;
 	UINT16* Domain;

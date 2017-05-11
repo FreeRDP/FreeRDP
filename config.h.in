@@ -56,7 +56,6 @@
 /* Plugins */
 #cmakedefine BUILTIN_CHANNELS
 #cmakedefine WITH_RDPDR
-#cmakedefine WITH_KRB5
 
 /* Debug */
 #cmakedefine WITH_DEBUG_CERTIFICATE

@@ -29,7 +29,7 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 
 	table = InitSecurityInterface();
 
-	status = QuerySecurityPackageInfo(NTLMSP_NAME, &pPackageInfo);
+	status = QuerySecurityPackageInfo(NTLMSSP_NAME, &pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
@@ -56,7 +56,7 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	identity.PasswordLength = strlen(test_Password);
 	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
-	status = table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
+	status = table->AcquireCredentialsHandle(NULL, NTLMSSP_NAME,
 			SECPKG_CRED_OUTBOUND, NULL, &identity, NULL, NULL, &credentials, &expiration);
 
 	if (status != SEC_E_OK)
