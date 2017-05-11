@@ -49,7 +49,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
 
-	status = ntlm->table->QuerySecurityPackageInfo(NTLMSP_NAME, &ntlm->pPackageInfo);
+	status = ntlm->table->QuerySecurityPackageInfo(NTLMSSP_NAME, &ntlm->pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
@@ -60,7 +60,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
 
-	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
+	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLMSSP_NAME,
 						       SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL,
 						       &ntlm->credentials, &ntlm->expiration);
 
