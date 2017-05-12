@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __XF_KEYBOARD_H
-#define __XF_KEYBOARD_H
+#ifndef XF_KEYBOARD_H
+#define XF_KEYBOARD_H
 
 #include <freerdp/locale/keyboard.h>
 
@@ -57,5 +57,6 @@ void xf_keyboard_focus_in(xfContext* xfc);
 BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym);
 void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym);
 BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
+BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState, UINT32 imeConvMode);
 
 #endif /* __XF_KEYBOARD_H */

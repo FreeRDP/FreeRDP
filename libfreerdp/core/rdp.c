@@ -34,7 +34,7 @@
 
 #define TAG FREERDP_TAG("core.rdp")
 
-const char* DATA_PDU_TYPE_STRINGS[80] =
+static const char* DATA_PDU_TYPE_STRINGS[80] =
 {
 		"?", "?", /* 0x00 - 0x01 */
 		"Update", /* 0x02 */
@@ -626,12 +626,12 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 	return TRUE;
 }
 
-BOOL rdp_recv_server_shutdown_denied_pdu(rdpRdp* rdp, wStream* s)
+static BOOL rdp_recv_server_shutdown_denied_pdu(rdpRdp* rdp, wStream* s)
 {
 	return TRUE;
 }
 
-BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
+static BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT16 unitId;
 	UINT16 ledFlags;
@@ -648,11 +648,14 @@ BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 	return TRUE;
 }
 
-BOOL rdp_recv_server_set_keyboard_ime_status_pdu(rdpRdp* rdp, wStream* s)
+static BOOL rdp_recv_server_set_keyboard_ime_status_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT16 unitId;
 	UINT32 imeState;
 	UINT32 imeConvMode;
+
+	if (!rdp || !rdp->input)
+		return FALSE;
 
 	if (Stream_GetRemainingLength(s) < 10)
 		return FALSE;
@@ -660,10 +663,13 @@ BOOL rdp_recv_server_set_keyboard_ime_status_pdu(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, unitId); /* unitId (2 bytes) */
 	Stream_Read_UINT32(s, imeState); /* imeState (4 bytes) */
 	Stream_Read_UINT32(s, imeConvMode); /* imeConvMode (4 bytes) */
+
+	IFCALL(rdp->update->SetKeyboardImeStatus, rdp->context, unitId, imeState, imeConvMode);
+
 	return TRUE;
 }
 
-BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
+static BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT32 errorInfo;
 
@@ -674,7 +680,7 @@ BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 	return rdp_set_error_info(rdp, errorInfo);
 }
 
-BOOL rdp_recv_server_auto_reconnect_status_pdu(rdpRdp* rdp, wStream* s)
+static BOOL rdp_recv_server_auto_reconnect_status_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT32 arcStatus;
 
@@ -688,7 +694,7 @@ BOOL rdp_recv_server_auto_reconnect_status_pdu(rdpRdp* rdp, wStream* s)
 	return TRUE;
 }
 
-BOOL rdp_recv_server_status_info_pdu(rdpRdp* rdp, wStream* s)
+static BOOL rdp_recv_server_status_info_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT32 statusCode;
 
@@ -699,7 +705,7 @@ BOOL rdp_recv_server_status_info_pdu(rdpRdp* rdp, wStream* s)
 	return TRUE;
 }
 
-BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
+static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT32 index;
 	UINT32 monitorCount;

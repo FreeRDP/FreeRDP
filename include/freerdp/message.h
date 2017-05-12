@@ -55,6 +55,7 @@
 #define Update_SurfaceFrameMarker				13
 #define Update_SurfaceFrameAcknowledge				14
 #define Update_SetKeyboardIndicators				15
+#define Update_SetKeyboardImeStatus				16
 
 #define FREERDP_UPDATE_BEGIN_PAINT				MakeMessageId(Update, BeginPaint)
 #define FREERDP_UPDATE_	END_PAINT				MakeMessageId(Update, EndPaint)
