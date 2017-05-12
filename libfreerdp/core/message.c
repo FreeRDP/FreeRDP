@@ -196,6 +196,15 @@ static BOOL update_message_SetKeyboardIndicators(rdpContext* context, UINT16 led
 	                         MakeMessageId(Update, SetKeyboardIndicators), (void*)(size_t)led_flags, NULL);
 }
 
+static BOOL update_message_SetKeyboardImeStatus(rdpContext* context, UINT16 imeId, UINT32 imeState, UINT32 imeConvMode)
+{
+	if (!context || !context->update)
+		return FALSE;
+
+	return MessageQueue_Post(context->update->queue, (void*) context,
+	                         MakeMessageId(Update, SetKeyboardImeStatus), (void*)(size_t)((imeId << 16UL) | imeState), (void*)(size_t) imeConvMode);
+}
+
 static BOOL update_message_RefreshRect(rdpContext* context, BYTE count,
                                        const RECTANGLE_16* areas)
 {
@@ -1706,6 +1715,7 @@ static int update_message_free_update_class(wMessage* msg, int type)
 
 		case Update_SurfaceFrameAcknowledge:
 		case Update_SetKeyboardIndicators:
+		case Update_SetKeyboardImeStatus:
 			break;
 
 		default:
@@ -1786,6 +1796,15 @@ static int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* 
 
 		case Update_SetKeyboardIndicators:
 			IFCALL(proxy->SetKeyboardIndicators, msg->context, (UINT16)(size_t) msg->wParam);
+			break;
+
+		case Update_SetKeyboardImeStatus:
+			{
+				const UINT16 imeId = ((size_t)msg->wParam) >> 16 & 0xFFFF;
+				const UINT32 imeState = ((size_t)msg->wParam) & 0xFFFF;
+				const UINT32 imeConvMode = ((size_t)msg->lParam);
+				IFCALL(proxy->SetKeyboardImeStatus, msg->context, imeId, imeState, imeConvMode);
+			}
 			break;
 
 		default:
@@ -2687,6 +2706,7 @@ static BOOL update_message_register_interface(rdpUpdateProxy* message, rdpUpdate
 	message->Palette = update->Palette;
 	message->PlaySound = update->PlaySound;
 	message->SetKeyboardIndicators = update->SetKeyboardIndicators;
+	message->SetKeyboardImeStatus = update->SetKeyboardImeStatus;
 	message->RefreshRect = update->RefreshRect;
 	message->SuppressOutput = update->SuppressOutput;
 	message->SurfaceCommand = update->SurfaceCommand;
@@ -2702,6 +2722,7 @@ static BOOL update_message_register_interface(rdpUpdateProxy* message, rdpUpdate
 	update->Palette = update_message_Palette;
 	update->PlaySound = update_message_PlaySound;
 	update->SetKeyboardIndicators = update_message_SetKeyboardIndicators;
+	update->SetKeyboardImeStatus = update_message_SetKeyboardImeStatus;
 	update->RefreshRect = update_message_RefreshRect;
 	update->SuppressOutput = update_message_SuppressOutput;
 	update->SurfaceCommand = update_message_SurfaceCommand;
