@@ -35,9 +35,9 @@
 
 #define TAG FREERDP_TAG("cache.nine_grid")
 
-
 static void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index);
 static void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry);
+
 
 static BOOL update_gdi_draw_nine_grid(rdpContext* context,
 					  const DRAW_NINE_GRID_ORDER* draw_nine_grid)

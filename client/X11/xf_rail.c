@@ -43,6 +43,7 @@ static const char* error_code_names[] =
 	"RAIL_EXEC_E_SESSION_LOCKED"
 };
 
+#ifdef WITH_DEBUG_RAIL
 static const char* movetype_names[] =
 {
 	"(invalid)",
@@ -58,6 +59,7 @@ static const char* movetype_names[] =
 	"RAIL_WMSZ_KEYMOVE",
 	"RAIL_WMSZ_KEYSIZE"
 };
+#endif
 
 void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 {
