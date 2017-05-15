@@ -33,6 +33,7 @@
 #include <freerdp/log.h>
 #include <freerdp/crypto/tls.h>
 #include <freerdp/build-config.h>
+#include <freerdp/peer.h>
 
 #include <winpr/crt.h>
 #include <winpr/sam.h>
@@ -715,10 +716,28 @@ int nla_server_authenticate(rdpNla* nla)
 
 		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 		{
-			if (nla->SamFile)
+			freerdp_peer *peer = nla->instance->context->peer;
+
+			if (peer->ComputeNtlmHash)
 			{
-				nla->table->SetContextAttributes(&nla->context,
-				                                 SECPKG_ATTR_AUTH_NTLM_SAM_FILE, nla->SamFile, strlen(nla->SamFile) + 1);
+				SECURITY_STATUS status;
+
+				status = nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB, peer->ComputeNtlmHash, 0);
+				if (status != SEC_E_OK)
+				{
+					WLog_ERR(TAG, "SetContextAttributesA(hash cb) status %s [0x%08"PRIX32"]", GetSecurityStatusString(status), status);
+				}
+
+				status = nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB_DATA, peer, 0);
+				if (status != SEC_E_OK)
+				{
+					WLog_ERR(TAG, "SetContextAttributesA(hash cb data) status %s [0x%08"PRIX32"]", GetSecurityStatusString(status), status);
+				}
+			}
+			else if (nla->SamFile)
+			{
+				nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_SAM_FILE, nla->SamFile,
+						strlen(nla->SamFile) + 1);
 			}
 
 			if (nla->table->CompleteAuthToken)
@@ -758,7 +777,7 @@ int nla_server_authenticate(rdpNla* nla)
 			}
 
 			nla->havePubKeyAuth = TRUE;
-			nla->status  = nla->table->QueryContextAttributes(&nla->context, SECPKG_ATTR_SIZES,
+			nla->status = nla->table->QueryContextAttributes(&nla->context, SECPKG_ATTR_SIZES,
 			               &nla->ContextSizes);
 
 			if (nla->status != SEC_E_OK)
@@ -1746,7 +1765,6 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 		return NULL;
 
 	nla->identity = calloc(1, sizeof(SEC_WINNT_AUTH_IDENTITY));
-
 	if (!nla->identity)
 	{
 		free(nla);
