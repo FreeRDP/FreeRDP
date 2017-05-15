@@ -916,31 +916,6 @@ static void encomsp_process_connect(encomspPlugin* encomsp)
 {
 }
 
-static int encomsp_send(encomspPlugin* encomsp, wStream* s)
-{
-	UINT32 status = 0;
-	encomspPlugin* plugin = (encomspPlugin*) encomsp;
-
-	if (!plugin)
-	{
-		status = CHANNEL_RC_BAD_INIT_HANDLE;
-	}
-	else
-	{
-		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(plugin->InitHandle, plugin->OpenHandle,
-		         Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
-	}
-
-	if (status != CHANNEL_RC_OK)
-	{
-		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "VirtualChannelWriteEx failed with %s [%08"PRIX32"]",
-		         WTSErrorToString(status), status);
-	}
-
-	return status;
-}
-
 /**
  * Function description
  *
@@ -1018,8 +993,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_DATA_RECEIVED:
 			if ((error = encomsp_virtual_channel_event_data_received(encomsp, pData,
 			             dataLength, totalLength, dataFlags)))
-				WLog_ERR(TAG,
-				         "encomsp_virtual_channel_event_data_received failed with error %"PRIu32"", error);
+				WLog_ERR(TAG, "encomsp_virtual_channel_event_data_received failed with error %"PRIu32"", error);
 
 			break;
 

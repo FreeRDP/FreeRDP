@@ -353,6 +353,7 @@ static BOOL mcs_write_domain_parameters(wStream* s, DomainParameters* domainPara
 	return TRUE;
 }
 
+#ifdef DEBUG_MCS
 /**
  * Print MCS Domain Parameters.
  * @param domainParameters domain parameters
@@ -378,6 +379,7 @@ static void mcs_print_domain_parameters(DomainParameters* domainParameters)
 
 	WLog_INFO(TAG,  "}");
 }
+#endif
 
 /**
  * Merge MCS Domain Parameters.

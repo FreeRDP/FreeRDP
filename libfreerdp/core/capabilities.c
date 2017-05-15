@@ -2039,6 +2039,7 @@ static void rdp_write_gdiplus_image_cache_properties(wStream* s, UINT16 oiccs,
 	Stream_Write_UINT16(s, oicms); /* gdipObjectImageCacheMaxSize (2 bytes) */
 }
 
+
 #ifdef WITH_DEBUG_CAPABILITIES
 static BOOL rdp_print_draw_nine_grid_cache_capability_set(wStream* s,
         UINT16 length)
@@ -2098,8 +2099,7 @@ static BOOL rdp_read_draw_gdiplus_cache_capability_set(wStream* s,
  * @param settings settings
  */
 
-static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s,
-        rdpSettings* settings)
+static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s, rdpSettings* settings)
 {
 	int header;
 	UINT32 drawGDIPlusSupportLevel;

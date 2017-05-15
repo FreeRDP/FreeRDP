@@ -292,14 +292,14 @@ static INLINE BOOL progressive_rfx_quant_cmp_equal(RFX_COMPONENT_CODEC_QUANT* q1
 	return TRUE;
 }
 
-static void progressive_rfx_quant_print(RFX_COMPONENT_CODEC_QUANT* q,
-                                        const char* name)
+static void progressive_rfx_quant_print(RFX_COMPONENT_CODEC_QUANT* q, const char* name)
 {
 	fprintf(stderr,
 	        "%s: HL1: %"PRIu8" LH1: %"PRIu8" HH1: %"PRIu8" HL2: %"PRIu8" LH2: %"PRIu8" HH2: %"PRIu8" HL3: %"PRIu8" LH3: %"PRIu8" HH3: %"PRIu8" LL3: %"PRIu8"\n",
 	        name, q->HL1, q->LH1, q->HH1, q->HL2, q->LH2, q->HH2, q->HL3, q->LH3, q->HH3,
 	        q->LL3);
 }
+
 
 static INLINE BOOL progressive_set_surface_data(PROGRESSIVE_CONTEXT* progressive,
         UINT16 surfaceId, void* pData)
@@ -338,8 +338,7 @@ static PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfa
 	surface->gridWidth = (width + (64 - width % 64)) / 64;
 	surface->gridHeight = (height + (64 - height % 64)) / 64;
 	surface->gridSize = surface->gridWidth * surface->gridHeight;
-	surface->tiles = (RFX_PROGRESSIVE_TILE*) calloc(
-	                     surface->gridSize, sizeof(RFX_PROGRESSIVE_TILE));
+	surface->tiles = (RFX_PROGRESSIVE_TILE*) calloc(surface->gridSize, sizeof(RFX_PROGRESSIVE_TILE));
 
 	if (!surface->tiles)
 	{
@@ -399,7 +398,6 @@ INT32 progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive,
 int progressive_delete_surface_context(PROGRESSIVE_CONTEXT* progressive,
                                        UINT16 surfaceId)
 {
-	int ret = 0;
 	PROGRESSIVE_SURFACE_CONTEXT* surface;
 	surface = (PROGRESSIVE_SURFACE_CONTEXT *)progressive_get_surface_data(progressive, surfaceId);
 
