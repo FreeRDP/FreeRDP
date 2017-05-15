@@ -785,7 +785,7 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(
 
 	p = t;
 
-	if (count)
+	if (*count)
 		MoveMemory(&p[1], p, sizeof(char*)** count);
 
 	(*count)++;
@@ -859,13 +859,24 @@ static int freerdp_client_command_line_post_filter(void* context,
 	}
 	CommandLineSwitchCase(arg, "smartcard")
 	{
-		char** p;
-		int count;
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value,
-		        &count);
-		p[0] = "smartcard";
-		status = freerdp_client_add_device_channel(settings, count, p);
-		free(p);
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			char** p;
+			int count;
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "smartcard";
+			status = freerdp_client_add_device_channel(settings, count, p);
+			free(p);
+		}
+		else
+		{
+			char* p[2];
+			int count;
+			count = 2;
+			p[0] = "smartcard";
+			p[1] = "";
+			status = freerdp_client_add_device_channel(settings, count, p);
+		}
 	}
 	CommandLineSwitchCase(arg, "printer")
 	{
@@ -1815,14 +1826,21 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
 				p = strstr(arg->Value, "://");
-				if (p) {
+
+				if (p)
+				{
 					*p = '\0';
-					if (!strcmp("http", arg->Value)) {
+
+					if (!strcmp("http", arg->Value))
+					{
 						settings->ProxyType = PROXY_TYPE_HTTP;
-					} else {
+					}
+					else
+					{
 						WLog_ERR(TAG, "Only HTTP proxys supported by now");
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
+
 					arg->Value = p + 3;
 				}
 
@@ -1830,16 +1848,18 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 				if (p)
 				{
-					length = (int) (p - arg->Value);
-					if (!isdigit(p[1])) {
+					length = (int)(p - arg->Value);
+
+					if (!isdigit(p[1]))
+					{
 						WLog_ERR(TAG, "Could not parse proxy port");
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
+
 					settings->ProxyPort = atoi(&p[1]);
 					settings->ProxyHostname = (char*) malloc(length + 1);
 					strncpy(settings->ProxyHostname, arg->Value, length);
 					settings->ProxyHostname[length] = '\0';
-
 					settings->ProxyType = PROXY_TYPE_HTTP;
 				}
 			}
@@ -2533,7 +2553,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "action-script")
 		{
-			free (settings->ActionScript);
+			free(settings->ActionScript);
+
 			if (!(settings->ActionScript = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
@@ -2547,13 +2568,14 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	if (user)
 	{
 		free(settings->Username);
+
 		if (!settings->Domain && user)
 		{
 			BOOL ret;
 			free(settings->Domain);
-
 			ret = freerdp_parse_username(user, &settings->Username, &settings->Domain);
 			free(user);
+
 			if (!ret)
 				return COMMAND_LINE_ERROR;
 		}
@@ -2570,7 +2592,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			BOOL ret;
 			free(settings->GatewayDomain);
 			ret = freerdp_parse_username(gwUser, &settings->GatewayUsername,
-						     &settings->GatewayDomain);
+			                             &settings->GatewayDomain);
 			free(gwUser);
 
 			if (!ret)
@@ -2710,7 +2732,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->DeviceRedirection)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdpdr",
-			settings))
+		        settings))
 			return FALSE;
 
 		if (!freerdp_static_channel_collection_find(settings, "rdpsnd"))
@@ -2785,14 +2807,14 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->EncomspVirtualChannel)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "encomsp",
-			settings))
+		        settings))
 			return FALSE;
 	}
 
 	if (settings->RemdeskVirtualChannel)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "remdesk",
-			settings))
+		        settings))
 			return FALSE;
 	}
 
