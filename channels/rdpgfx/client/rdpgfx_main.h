@@ -78,6 +78,8 @@ struct _RDPGFX_PLUGIN
 	UINT16 MaxCacheSlot;
 	void* CacheSlots[25600];
 	rdpContext* rdpcontext;
+
+	wLog* log;
 };
 typedef struct _RDPGFX_PLUGIN RDPGFX_PLUGIN;
 
