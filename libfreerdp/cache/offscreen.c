@@ -44,7 +44,12 @@ static BOOL update_gdi_create_offscreen_bitmap(rdpContext* context,
 	UINT32 i;
 	UINT16 index;
 	rdpBitmap* bitmap;
-	rdpCache* cache = context->cache;
+	rdpCache* cache;
+
+	if (!context || !createOffscreenBitmap || !context->cache)
+		return FALSE;
+
+	cache = context->cache;
 	bitmap = Bitmap_Alloc(context);
 
 	if (!bitmap)
@@ -77,8 +82,16 @@ static BOOL update_gdi_create_offscreen_bitmap(rdpContext* context,
 static BOOL update_gdi_switch_surface(rdpContext* context,
                                       const SWITCH_SURFACE_ORDER* switchSurface)
 {
-	rdpCache* cache = context->cache;
-	rdpBitmap* bitmap = context->graphics->Bitmap_Prototype;
+	rdpCache* cache;
+	rdpBitmap* bitmap;
+
+	if (!context || !context->cache || !switchSurface || !context->graphics)
+		return FALSE;
+
+	cache = context->cache;
+	bitmap = context->graphics->Bitmap_Prototype;
+	if (!bitmap)
+		return FALSE;
 
 	if (switchSurface->bitmapId == SCREEN_BITMAP_SURFACE)
 	{
