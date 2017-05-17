@@ -631,6 +631,8 @@ void update_post_disconnect(rdpUpdate* update)
 
 	if (update->asynchronous)
 		update_message_proxy_free(update->proxy);
+
+	update->initialState = TRUE;
 }
 
 static BOOL update_begin_paint(rdpContext* context)
@@ -1714,7 +1716,12 @@ static BOOL update_send_switch_surface_order(
 	BYTE orderType;
 	BYTE controlFlags;
 	int headerLength;
-	rdpUpdate* update = context->update;
+	rdpUpdate* update;
+
+	if (!context || !switch_surface || !context->update)
+		return FALSE;
+
+	update = context->update;
 	headerLength = 1;
 	orderType = ORDER_TYPE_SWITCH_SURFACE;
 	controlFlags = ORDER_SECONDARY | (orderType << 2);
