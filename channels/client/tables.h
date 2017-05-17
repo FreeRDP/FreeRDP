@@ -22,7 +22,7 @@
 struct _STATIC_ENTRY
 {
 	const char* name;
-	const void* entry;
+	UINT(*entry)();
 };
 typedef struct _STATIC_ENTRY STATIC_ENTRY;
 
@@ -37,14 +37,14 @@ struct _STATIC_SUBSYSTEM_ENTRY
 {
 	const char* name;
 	const char* type;
-	const void* entry;
+	void (*entry)(void);
 };
 typedef struct _STATIC_SUBSYSTEM_ENTRY STATIC_SUBSYSTEM_ENTRY;
 
 struct _STATIC_ADDIN_TABLE
 {
 	const char* name;
-	const void* entry;
+	UINT(*entry)();
 	const STATIC_SUBSYSTEM_ENTRY* table;
 };
 typedef struct _STATIC_ADDIN_TABLE STATIC_ADDIN_TABLE;

@@ -712,7 +712,7 @@ static BOOL LoadAndInitialize(char* library)
 	if (!g_WtsApiModule)
 		return FALSE;
 
-	pInitWtsApi = (INIT_WTSAPI_FN) GetProcAddress(g_WtsApiModule, "InitWtsApi");
+	*((FARPROC*)&pInitWtsApi) = GetProcAddress(g_WtsApiModule, "InitWtsApi");
 
 	if (!pInitWtsApi)
 	{

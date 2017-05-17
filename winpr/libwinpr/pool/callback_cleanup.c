@@ -43,12 +43,12 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID *context)
 	HMODULE kernel32 = LoadLibraryA("kernel32.dll");
 	if (kernel32)
 	{
-		pSetEventWhenCallbackReturns = (void*)GetProcAddress(kernel32, "SetEventWhenCallbackReturns");
-		pReleaseSemaphoreWhenCallbackReturns = (void*)GetProcAddress(kernel32, "ReleaseSemaphoreWhenCallbackReturns");
-		pReleaseMutexWhenCallbackReturns = (void*)GetProcAddress(kernel32, "ReleaseMutexWhenCallbackReturns");
-		pLeaveCriticalSectionWhenCallbackReturns = (void*)GetProcAddress(kernel32, "LeaveCriticalSectionWhenCallbackReturns");
-		pFreeLibraryWhenCallbackReturns = (void*)GetProcAddress(kernel32, "FreeLibraryWhenCallbackReturns");
-		pDisassociateCurrentThreadFromCallback = (void*)GetProcAddress(kernel32, "DisassociateCurrentThreadFromCallback");
+		*((FARPROC*)&pSetEventWhenCallbackReturns) = GetProcAddress(kernel32, "SetEventWhenCallbackReturns");
+		*((FARPROC*)&pReleaseSemaphoreWhenCallbackReturns) = GetProcAddress(kernel32, "ReleaseSemaphoreWhenCallbackReturns");
+		*((FARPROC*)&pReleaseMutexWhenCallbackReturns) = GetProcAddress(kernel32, "ReleaseMutexWhenCallbackReturns");
+		*((FARPROC*)&pLeaveCriticalSectionWhenCallbackReturns) = GetProcAddress(kernel32, "LeaveCriticalSectionWhenCallbackReturns");
+		*((FARPROC*)&pFreeLibraryWhenCallbackReturns) = GetProcAddress(kernel32, "FreeLibraryWhenCallbackReturns");
+		*((FARPROC*)&pDisassociateCurrentThreadFromCallback) = GetProcAddress(kernel32, "DisassociateCurrentThreadFromCallback");
 	}
 	return TRUE;
 }
