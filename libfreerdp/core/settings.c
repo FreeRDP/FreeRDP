@@ -520,6 +520,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->GfxProgressiveV2 = FALSE;
 	settings->GfxH264 = FALSE;
 	settings->GfxAVC444 = FALSE;
+	settings->GfxSendQoeAck = FALSE;
 	settings->ClientAutoReconnectCookie = (ARC_CS_PRIVATE_PACKET*) calloc(1,
 	                                      sizeof(ARC_CS_PRIVATE_PACKET));
 

@@ -1633,6 +1633,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->GfxAVC444 = param;
 			break;
 
+		case FreeRDP_GfxSendQoeAck:
+			settings->GfxSendQoeAck = param;
+			break;
+
 		case FreeRDP_DrawNineGridEnabled:
 			settings->DrawNineGridEnabled = param;
 			break;

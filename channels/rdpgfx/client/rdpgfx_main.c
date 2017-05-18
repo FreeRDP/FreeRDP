@@ -590,6 +590,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	case RDPGFX_CAPVERSION_10:
 	case RDPGFX_CAPVERSION_102:
 	case RDPGFX_CAPVERSION_103:
+		if (gfx->SendQoeAck)
 		{
 			RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe;
 			UINT32 diff = (GetTickCountPrecise() - gfx->StartDecodingTime);
@@ -1704,6 +1705,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		gfx->ProgressiveV2 = gfx->settings->GfxProgressiveV2;
 		gfx->H264 = gfx->settings->GfxH264;
 		gfx->AVC444 = gfx->settings->GfxAVC444;
+		gfx->SendQoeAck = gfx->settings->GfxSendQoeAck;
 
 		if (gfx->H264)
 			gfx->SmallCache = TRUE;
