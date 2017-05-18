@@ -790,7 +790,7 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 
 	if (name[0] && path[0])
 	{
-		size_t pathLength = strnlen(path, PATH_MAX);
+		size_t pathLength = strnlen(path, MAX_PATH);
 		drive = (DRIVE_DEVICE*) calloc(1, sizeof(DRIVE_DEVICE));
 
 		if (!drive)
