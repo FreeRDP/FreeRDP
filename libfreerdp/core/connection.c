@@ -772,6 +772,15 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 				if (!rdp_read_security_header(s, &securityFlags))
 					return FALSE;
 
+				if (securityFlags & SEC_ENCRYPT)
+				{
+					if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+					{
+						WLog_ERR(TAG, "rdp_decrypt failed");
+						return FALSE;
+					}
+				}
+
 				if (rdp_recv_message_channel_pdu(rdp, s, securityFlags) == 0)
 					return TRUE;
 			}
