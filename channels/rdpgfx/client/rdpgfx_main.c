@@ -120,10 +120,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	}
 
 	if ((error = rdpgfx_write_header(s, &header)))
-	{
-		WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_write_header failed with error %"PRIu32"!", error);
-		return error;
-	}
+		goto fail;
 
 	/* RDPGFX_CAPS_ADVERTISE_PDU */
 	Stream_Write_UINT16(s, pdu.capsSetCount); /* capsSetCount (2 bytes) */
@@ -139,6 +136,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	Stream_SealLength(s);
 	error = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s),
 	                                 Stream_Buffer(s), NULL);
+fail:
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -167,6 +165,9 @@ static UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	Stream_Read_UINT32(s, capsSet.version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, capsDataLength); /* capsDataLength (4 bytes) */
 	Stream_Read_UINT32(s, capsSet.flags); /* capsData (4 bytes) */
+
+	gfx->ConnectionCaps = capsSet;
+
 	WLog_Print(gfx->log, WLOG_DEBUG, "RecvCapsConfirmPdu: version: 0x%08"PRIX32" flags: 0x%08"PRIX32"",
 	         capsSet.version, capsSet.flags);
 	return CHANNEL_RC_OK;
@@ -198,10 +199,7 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	}
 
 	if ((error = rdpgfx_write_header(s, &header)))
-	{
-		WLog_ERR(TAG, "rdpgfx_write_header failed with error %"PRIu32"!", error);
-		return error;
-	}
+		goto fail;
 
 	/* RDPGFX_FRAME_ACKNOWLEDGE_PDU */
 	Stream_Write_UINT32(s, pdu->queueDepth); /* queueDepth (4 bytes) */
@@ -210,6 +208,43 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	                    pdu->totalFramesDecoded); /* totalFramesDecoded (4 bytes) */
 	error = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s),
 	                                 Stream_Buffer(s), NULL);
+fail:
+	Stream_Free(s, TRUE);
+	return error;
+}
+
+static UINT rdpgfx_send_qoe_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
+                                                  const RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* pdu)
+{
+	UINT error;
+	wStream* s;
+	RDPGFX_HEADER header;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+
+	header.flags = 0;
+	header.cmdId = RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE;
+	header.pduLength = RDPGFX_HEADER_SIZE + 12;
+	WLog_Print(gfx->log, WLOG_DEBUG, "SendQoeFrameAcknowledgePdu: %"PRIu32"", pdu->frameId);
+	s = Stream_New(NULL, header.pduLength);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	if ((error = rdpgfx_write_header(s, &header)))
+		goto fail;
+
+	/* RDPGFX_FRAME_ACKNOWLEDGE_PDU */
+	Stream_Write_UINT32(s, pdu->frameId);
+	Stream_Write_UINT32(s, pdu->timestamp);
+	Stream_Write_UINT16(s, pdu->timeDiffSE);
+	Stream_Write_UINT16(s, pdu->timeDiffEDR);
+
+	error = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s),
+	                                 Stream_Buffer(s), NULL);
+fail:
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -482,6 +517,7 @@ static UINT rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	WLog_Print(gfx->log, WLOG_DEBUG, "RecvStartFramePdu: frameId: %"PRIu32" timestamp: 0x%08"PRIX32"",
 	         pdu.frameId, pdu.timestamp);
 
+	gfx->StartDecodingTime = GetTickCountPrecise();
 	if (context)
 	{
 		IFCALLRET(context->StartFrame, error, context, &pdu);
@@ -547,6 +583,31 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 		if ((error = rdpgfx_send_frame_acknowledge_pdu(callback, &ack)))
 			WLog_Print(gfx->log, WLOG_DEBUG, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"", error);
+	}
+
+	switch(gfx->ConnectionCaps.version)
+	{
+	case RDPGFX_CAPVERSION_10:
+	case RDPGFX_CAPVERSION_102:
+	case RDPGFX_CAPVERSION_103:
+		if (gfx->SendQoeAck)
+		{
+			RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe;
+			UINT32 diff = (GetTickCountPrecise() - gfx->StartDecodingTime);
+
+			if (diff > 65000)
+				diff = 0;
+
+			qoe.frameId = pdu.frameId;
+			qoe.timestamp = gfx->StartDecodingTime;
+			qoe.timeDiffSE = diff;
+			qoe.timeDiffEDR = 1;
+			if ((error = rdpgfx_send_qoe_frame_acknowledge_pdu(callback, &qoe)))
+				WLog_Print(gfx->log, WLOG_DEBUG, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"", error);
+		}
+		break;
+	default:
+		break;
 	}
 
 	return error;
@@ -1644,6 +1705,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		gfx->ProgressiveV2 = gfx->settings->GfxProgressiveV2;
 		gfx->H264 = gfx->settings->GfxH264;
 		gfx->AVC444 = gfx->settings->GfxAVC444;
+		gfx->SendQoeAck = gfx->settings->GfxSendQoeAck;
 
 		if (gfx->H264)
 			gfx->SmallCache = TRUE;
