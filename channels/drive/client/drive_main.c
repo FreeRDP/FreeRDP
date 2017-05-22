@@ -790,6 +790,7 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 
 	if (name[0] && path[0])
 	{
+		size_t pathLength = strnlen(path, MAX_PATH);
 		drive = (DRIVE_DEVICE*) calloc(1, sizeof(DRIVE_DEVICE));
 
 		if (!drive)
@@ -816,7 +817,10 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		for (i = 0; i <= length; i++)
 			Stream_Write_UINT8(drive->device.data, name[i] < 0 ? '_' : name[i]);
 
-		if (ConvertToUnicode(sys_code_page, 0, path, -1, &drive->path, 0) <= 0)
+		if ((pathLength > 0) && (path[pathLength-1] == '/'))
+		        pathLength --;
+
+		if (ConvertToUnicode(sys_code_page, 0, path, pathLength, &drive->path, 0) <= 0)
 		{
 			WLog_ERR(TAG, "ConvertToUnicode failed!");
 			error = CHANNEL_RC_NO_MEMORY;
