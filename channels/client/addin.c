@@ -365,11 +365,11 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 						if (pszType)
 						{
 							if (strcmp(subsystems[j].type, pszType) == 0)
-								return subsystems[j].entry;
+								return (PVIRTUALCHANNELENTRY) subsystems[j].entry;
 						}
 						else
 						{
-							return subsystems[j].entry;
+							return (PVIRTUALCHANNELENTRY) subsystems[j].entry;
 						}
 					}
 				}
@@ -382,7 +382,7 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 						return NULL;
 				}
 
-				return CLIENT_STATIC_ADDIN_TABLE[i].entry;
+				return (PVIRTUALCHANNELENTRY) CLIENT_STATIC_ADDIN_TABLE[i].entry;
 			}
 		}
 	}

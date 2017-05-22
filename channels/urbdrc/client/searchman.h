@@ -57,7 +57,7 @@ struct _USB_SEARCHMAN
 	/* show all device in the list */
 	void (*show) (USB_SEARCHMAN* self);
 	/* start searchman */
-	BOOL (*start) (USB_SEARCHMAN* self, void * func);
+	BOOL (*start) (USB_SEARCHMAN* self, void* (*func)(void*));
 	/* close searchman */
 	void (*close) (USB_SEARCHMAN* self);
 	/* add a new usb device for search */
