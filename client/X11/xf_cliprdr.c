@@ -110,7 +110,7 @@ struct xf_clipboard
 	BOOL file_formats_registered;
 };
 
-UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard);
+static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard);
 
 static void xf_cliprdr_check_owner(xfClipboard* clipboard)
 {
@@ -1065,7 +1065,7 @@ void xf_cliprdr_handle_xevent(xfContext* xfc, XEvent* event)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
+static UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
 {
 	CLIPRDR_CAPABILITIES capabilities;
 	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet;
@@ -1090,7 +1090,7 @@ UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
+static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
 {
 	UINT32 i, numFormats;
 	CLIPRDR_FORMAT* formats = NULL;
@@ -1136,7 +1136,7 @@ UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_cliprdr_send_client_format_list_response(xfClipboard* clipboard,
+static UINT xf_cliprdr_send_client_format_list_response(xfClipboard* clipboard,
         BOOL status)
 {
 	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
@@ -1455,7 +1455,7 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 	return CHANNEL_RC_OK;
 }
 
-UINT xf_cliprdr_server_file_size_request(xfClipboard* clipboard,
+static UINT xf_cliprdr_server_file_size_request(xfClipboard* clipboard,
 		const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	wClipboardFileSizeRequest request;
@@ -1474,7 +1474,7 @@ UINT xf_cliprdr_server_file_size_request(xfClipboard* clipboard,
 	return clipboard->delegate->ClientRequestFileSize(clipboard->delegate, &request);
 }
 
-UINT xf_cliprdr_server_file_range_request(xfClipboard* clipboard,
+static UINT xf_cliprdr_server_file_range_request(xfClipboard* clipboard,
 		const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	wClipboardFileRangeRequest request;
@@ -1490,7 +1490,7 @@ UINT xf_cliprdr_server_file_range_request(xfClipboard* clipboard,
 	return clipboard->delegate->ClientRequestFileRange(clipboard->delegate, &request);
 }
 
-UINT xf_cliprdr_send_file_contents_failure(CliprdrClientContext* context,
+static UINT xf_cliprdr_send_file_contents_failure(CliprdrClientContext* context,
 		const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response;
@@ -1504,7 +1504,7 @@ UINT xf_cliprdr_send_file_contents_failure(CliprdrClientContext* context,
 	return context->ClientFileContentsResponse(context, &response);
 }
 
-UINT xf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
+static UINT xf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 		CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	UINT error = NO_ERROR;
@@ -1538,7 +1538,7 @@ UINT xf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-UINT xf_cliprdr_clipboard_file_size_success(wClipboardDelegate* delegate,
+static UINT xf_cliprdr_clipboard_file_size_success(wClipboardDelegate* delegate,
 		const wClipboardFileSizeRequest* request, UINT64 fileSize)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response;
@@ -1555,7 +1555,7 @@ UINT xf_cliprdr_clipboard_file_size_success(wClipboardDelegate* delegate,
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
-UINT xf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate,
+static UINT xf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate,
 		const wClipboardFileSizeRequest* request, UINT errorCode)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response;
@@ -1570,7 +1570,7 @@ UINT xf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate,
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
-UINT xf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegate,
+static UINT xf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegate,
 		const wClipboardFileRangeRequest* request, const BYTE* data, UINT32 size)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response;
@@ -1587,7 +1587,7 @@ UINT xf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegate,
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
-UINT xf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate,
+static UINT xf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate,
 		const wClipboardFileRangeRequest* request, UINT errorCode)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response;
