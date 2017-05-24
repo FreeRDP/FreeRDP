@@ -824,6 +824,9 @@ BOOL ValidFileNameComponent(LPCWSTR lpFileName)
 {
 	LPCWSTR c = NULL;
 
+	if (!lpFileName)
+		return FALSE;
+
 	/* CON */
 	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'C' || lpFileName[0] == L'c')) &&
 	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'O' || lpFileName[1] == L'o')) &&
