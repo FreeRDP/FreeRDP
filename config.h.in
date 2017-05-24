@@ -81,7 +81,6 @@
 #cmakedefine WITH_DEBUG_THREADS
 #cmakedefine WITH_DEBUG_MUTEX
 #cmakedefine WITH_DEBUG_TRANSPORT
-#cmakedefine WITH_DEBUG_WCLIPBOARD
 #cmakedefine WITH_DEBUG_WND
 #cmakedefine WITH_DEBUG_X11
 #cmakedefine WITH_DEBUG_X11_CLIPRDR

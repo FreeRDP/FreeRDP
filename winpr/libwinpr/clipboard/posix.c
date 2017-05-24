@@ -343,9 +343,7 @@ static BOOL add_directory_contents_to_list(const char* local_name, const WCHAR* 
 	BOOL result = FALSE;
 	DIR* dirp = NULL;
 
-#ifdef WITH_DEBUG_WCLIPBOARD
-	WLog_DBG(TAG, "adding directory: %s", local_name);
-#endif
+	WLog_VRB(TAG, "adding directory: %s", local_name);
 
 	dirp = opendir(local_name);
 	if (!dirp)
@@ -370,9 +368,7 @@ static BOOL add_file_to_list(const char* local_name, const WCHAR* remote_name, w
 {
 	struct posix_file* file = NULL;
 
-#ifdef WITH_DEBUG_WCLIPBOARD
-	WLog_DBG(TAG, "adding file: %s", local_name);
-#endif
+	WLog_VRB(TAG, "adding file: %s", local_name);
 
 	file = make_posix_file(local_name, remote_name);
 	if (!file)
@@ -441,9 +437,7 @@ static BOOL process_uri(const char* uri, size_t uri_len, wArrayList* files)
 	BOOL result = FALSE;
 	char* name = NULL;
 
-#ifdef WITH_DEBUG_WCLIPBOARD
-	WLog_DBG(TAG, "processing URI: %.*s", uri_len, uri);
-#endif
+	WLog_VRB(TAG, "processing URI: %.*s", uri_len, uri);
 
 	if ((uri_len < strlen("file://")) || strncmp(uri, "file://", strlen("file://")))
 	{
@@ -469,9 +463,7 @@ static BOOL process_uri_list(const char* data, size_t length, wArrayList* files)
 	const char* start = NULL;
 	const char* stop = NULL;
 
-#ifdef WITH_DEBUG_WCLIPBOARD
-	WLog_DBG(TAG, "processing URI list:\n%.*s", length, data);
-#endif
+	WLog_VRB(TAG, "processing URI list:\n%.*s", length, data);
 
 	ArrayList_Clear(files);
 
@@ -705,10 +697,8 @@ static UINT posix_file_read_open(struct posix_file* file)
 	file->offset = 0;
 	file->size = statbuf.st_size;
 
-#ifdef WITH_DEBUG_WCLIPBOARD
-	WLog_DBG(TAG, "open file %d -> %s", file->fd, file->local_name);
-	WLog_DBG(TAG, "file %d size: %"PRIu64" bytes", file->fd, file->size);
-#endif
+	WLog_VRB(TAG, "open file %d -> %s", file->fd, file->local_name);
+	WLog_VRB(TAG, "file %d size: %"PRIu64" bytes", file->fd, file->size);
 
 	return NO_ERROR;
 }
@@ -724,10 +714,8 @@ static UINT posix_file_read_seek(struct posix_file* file, UINT64 offset)
 	if (file->offset == offset)
 		return NO_ERROR;
 
-#ifdef WITH_DEBUG_WCLIPBOARD
-	WLog_DBG(TAG, "file %d force seeking to %"PRIu64", current %"PRIu64, file->fd,
+	WLog_VRB(TAG, "file %d force seeking to %"PRIu64", current %"PRIu64, file->fd,
 		offset, file->offset);
-#endif
 
 	if (lseek(file->fd, offset, SEEK_SET) < 0)
 	{
@@ -745,9 +733,7 @@ static UINT posix_file_read_perform(struct posix_file* file, UINT32 size,
 	BYTE* buffer = NULL;
 	ssize_t amount = 0;
 
-#ifdef WITH_DEBUG_WCLIPBOARD
-	WLog_DBG(TAG, "file %d request read %"PRIu32" bytes", file->fd, size);
-#endif
+	WLog_VRB(TAG, "file %d request read %"PRIu32" bytes", file->fd, size);
 
 	buffer = malloc(size);
 	if (!buffer)
@@ -768,10 +754,8 @@ static UINT posix_file_read_perform(struct posix_file* file, UINT32 size,
 	*actual_size = amount;
 	file->offset += amount;
 
-#ifdef WITH_DEBUG_WCLIPBOARD
-	WLog_DBG(TAG, "file %d actual read %"PRIu32" bytes (offset %"PRIu64")", file->fd,
+	WLog_VRB(TAG, "file %d actual read %"PRIu32" bytes (offset %"PRIu64")", file->fd,
 		amount, file->offset);
-#endif
 
 	return NO_ERROR;
 
@@ -788,9 +772,8 @@ static UINT posix_file_read_close(struct posix_file* file)
 
 	if (file->offset == file->size)
 	{
-#ifdef WITH_DEBUG_WCLIPBOARD
-		WLog_DBG(TAG, "close file %d", file->fd);
-#endif
+		WLog_VRB(TAG, "close file %d", file->fd);
+
 		if (close(file->fd) < 0)
 		{
 			int err = errno;
