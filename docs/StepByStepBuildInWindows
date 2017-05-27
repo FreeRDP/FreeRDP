@@ -1,0 +1,70 @@
+Step By Step to Build FreeRDP in Windows
+
+	
+Revision History
+Revision summary 
+Author	         Date 	      history 	Comments 
+Joseph Benraz	20/06/2014	      Initial draft
+ 
+Table of Contents
+
+1	Download sources
+1.1	Install git tools
+1.2	FreeRDP sources
+1.3	OpenSSL	
+2	Build FreeRDP
+2.1	cmake
+2.2	Open ‘Visual Studio command prompt”
+2.3	Preparing the build	
+2.4	Building
+3	References
+	 
+1   	Download sources
+Before building FreeRDP, all sources and all relative 3rd party projects should be downloaded. Here all sources are download from github. 
+1.1   	Install git tools
+git for Windows: http://code.google.com/p/msysgit/
+tortoisegit: http://code.google.com/p/tortoisegit/
+GitHub for Windows: http://windows.github.com/
+
+1.2   	FreeRDP sources
+	==Obtaining the source==
+  git clone git://github.com/FreeRDP/FreeRDP.git
+	
+1.3   	OpenSSL
+	Obtaining the source of OpenSSL: http://www.openssl.org/source/openssl-1.0.1c.tar.gz
+	Prebuilt versions of OpenSSL can be downloaded from
+	http://slproweb.com/products/Win32OpenSSL.html
+	Install the full version to OPENSSL_PATH. (when ask where to add additional dll, select same OPENSSL_PATH)
+	
+	
+2   	Build FreeRDP
+2.1   	cmake
+	To build FreeRDP, cmake is needed to generate Visual Studio projects.
+	Get cmake from http://www.cmake.org/cmake/resources/software.html.
+
+2.2   	Open ‘Visual Studio command prompt”
+	Go to FreeRDP folder by: cd c:…..\FreeRDP
+	
+2.3   	Preparing the build 
+	From the command line, go to the directory where you pulled the sources and type:  
+cmake .
+  •	If you wish to build for 64 bit systems an edit is required. Edit winpr/sysinfo.c and change the line
+  o	#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+  back to the original
+  o	#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0501))
+  and type:
+  cmake . -G"Visual Studio 11 Win64"
+  •	If you have a multi targeting environment that targets Win32 and Win64, you'll note that OpenSSL is not in your path. To add it at the cmake at the:
+cmake . -DOPENSSL_ROOT_DIR=c:/Openssl/Whatever (in this case we put in OPENSSL_PATH\bin)
+  •	Of course, you can also run cmake-gui that comes with the windows cmake install and point it to your sources. See Build options for a list of options you can specify. 
+
+2.4   	Building 
+	In Visual Studio, open the FreeRDP project map and build it. It should build clean.
+  If you wish to build from the command line call the appropriate environment x64 -- x86_amd64 or x86 and call:
+
+  msbuild FreeRDP.sln /p:Configuration=Debug or Release
+3     References
+	https://github.com/FreeRDP/FreeRDP/wiki/Build-on-Windows-with-Visual-C---2010
+	https://github.com/FreeRDP/FreeRDP/issues/736
+
+
