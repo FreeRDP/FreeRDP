@@ -588,7 +588,6 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard,
 			break;
 
 		case CB_FORMAT_HTML:
-			size = strlen((char*) data) + 1;
 			srcFormatId = ClipboardGetFormatId(clipboard->system, "text/html");
 			break;
 	}
