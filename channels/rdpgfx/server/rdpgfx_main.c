@@ -428,7 +428,7 @@ static INLINE UINT32 rdpgfx_estimate_h264_avc420(
 {
 	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
 	return sizeof(UINT32) /* numRegionRects */
-	       + 10 /* regionRects + quantQualityVals */
+	       + (sizeof(RECTANGLE_16) + sizeof(RDPGFX_H264_QUANT_QUALITY))
 	       * havc420->meta.numRegionRects
 	       + havc420->length;
 }
@@ -460,16 +460,22 @@ static INLINE UINT32 rdpgfx_estimate_surface_command(RDPGFX_SURFACE_COMMAND*
 
 		case RDPGFX_CODECID_AVC444:
 			havc444 = (RDPGFX_AVC444_BITMAP_STREAM*)cmd->extra;
-			h264Size = sizeof(UINT32); /* cbAvc420EncodedBitstream1 */
-			/* avc420EncodedBitstream1 */
-			havc420 = &(havc444->bitstream[0]);
-			h264Size += rdpgfx_estimate_h264_avc420(havc420);
-
-			/* avc420EncodedBitstream2 */
-			if (havc444->LC == 0)
+			h264Size = sizeof(havc444->cbAvc420EncodedBitstream1);
+			h264Size += sizeof(havc444->LC);
+			switch(havc444->LC)
 			{
-				havc420 = &(havc444->bitstream[1]);
-				h264Size += rdpgfx_estimate_h264_avc420(havc420);
+			case 0: /* Luma and chroma */
+				h264Size += rdpgfx_estimate_h264_avc420(&(havc444->bitstream[0]));
+				h264Size += rdpgfx_estimate_h264_avc420(&(havc444->bitstream[1]));
+				break;
+			case 1: /* Luma */
+				h264Size += rdpgfx_estimate_h264_avc420(&(havc444->bitstream[0]));
+				break;
+			case 2: /* Chroma */
+				h264Size += rdpgfx_estimate_h264_avc420(&(havc444->bitstream[0]));
+				break;
+			default:
+				break;
 			}
 
 			return RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE + h264Size;
@@ -508,6 +514,7 @@ static UINT rdpgfx_write_h264_metablock(wStream* s, RDPGFX_H264_METABLOCK* meta)
 	RECTANGLE_16* regionRect;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal;
 	UINT error = CHANNEL_RC_OK;
+
 	Stream_Write_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
 
 	for (index = 0; index < meta->numRegionRects; index++)
@@ -656,7 +663,6 @@ static UINT rdpgfx_write_surface_command(wStream* s,
 			Stream_Write(s, cmd->data, cmd->length);
 		}
 
-		assert(Stream_GetPosition(s) <= Stream_Capacity(s));
 		/* Fill actual bitmap data length */
 		bitmapDataLength = Stream_GetPosition(s) - bitmapDataStart;
 		Stream_SetPosition(s, bitmapDataStart - sizeof(UINT32));
