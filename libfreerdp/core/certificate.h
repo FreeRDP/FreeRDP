@@ -58,7 +58,7 @@ FREERDP_LOCAL BOOL certificate_read_server_proprietary_certificate(
 FREERDP_LOCAL BOOL certificate_read_server_x509_certificate_chain(
     rdpCertificate* certificate, wStream* s);
 FREERDP_LOCAL BOOL certificate_read_server_certificate(rdpCertificate*
-        certificate, BYTE* server_cert, int length);
+        certificate, BYTE* server_cert, size_t length);
 
 FREERDP_LOCAL rdpCertificate* certificate_clone(rdpCertificate* certificate);
 

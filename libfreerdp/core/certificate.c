@@ -362,7 +362,6 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 	UINT32 keylen;
 	UINT32 bitlen;
 	UINT32 datalen;
-	UINT32 modlen;
 
 	if (Stream_GetRemainingLength(s) < 20)
 		return FALSE;
@@ -379,12 +378,11 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 	Stream_Read_UINT32(s, bitlen);
 	Stream_Read_UINT32(s, datalen);
 	Stream_Read(s, certificate->cert_info.exponent, 4);
-	modlen = keylen - 8;
 
-	if (Stream_GetRemainingLength(s) < modlen + 8)	// count padding
+	if ((keylen <= 8) || (Stream_GetRemainingLength(s) < keylen))
 		return FALSE;
 
-	certificate->cert_info.ModulusLength = modlen;
+	certificate->cert_info.ModulusLength = keylen - 8;
 	certificate->cert_info.Modulus = malloc(certificate->cert_info.ModulusLength);
 
 	if (!certificate->cert_info.Modulus)
@@ -405,7 +403,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	BYTE md5hash[WINPR_MD5_DIGEST_LENGTH];
 
 	if (!winpr_Digest(WINPR_MD_MD5, sigdata, sigdatalen, md5hash, sizeof(md5hash)))
-            return FALSE;
+		return FALSE;
 	Stream_Read(s, encsig, siglen);
 
 	/* Last 8 bytes shall be all zero. */
@@ -546,7 +544,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, wStream* s)
 {
-	int i;
+	UINT32 i;
 	BOOL ret;
 	UINT32 certLength;
 	UINT32 numCertBlobs;
@@ -562,7 +560,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 	if (!certificate->x509_cert_chain)
 		return FALSE;
 
-	for (i = 0; i < (int) numCertBlobs; i++)
+	for (i = 0; i < numCertBlobs; i++)
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
@@ -621,7 +619,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
  * @param length certificate length
  */
 
-BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length)
+BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, size_t length)
 {
 	BOOL ret;
 	wStream* s;
