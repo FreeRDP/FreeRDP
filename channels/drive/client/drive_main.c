@@ -817,7 +817,7 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		for (i = 0; i <= length; i++)
 			Stream_Write_UINT8(drive->device.data, name[i] < 0 ? '_' : name[i]);
 
-		if ((pathLength > 0) && (path[pathLength-1] == '/'))
+		if ((pathLength > 1) && (path[pathLength-1] == '/'))
 		        pathLength --;
 
 		if (ConvertToUnicode(sys_code_page, 0, path, pathLength, &drive->path, 0) <= 0)
