@@ -429,7 +429,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
 	 * for details
 	 */
-	crypt_client_random = calloc(1, key_len + 8);
+	crypt_client_random = calloc(key_len + 8, 1);
 
 	if (!crypt_client_random)
 		return FALSE;

@@ -1067,8 +1067,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client,
 	totalBitmapSize = 0;
 	bitmapUpdate.count = bitmapUpdate.number = rows * cols;
 
-	if (!(bitmapData = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) *
-	                   bitmapUpdate.number)))
+	if (!(bitmapData = (BITMAP_DATA*) calloc(bitmapUpdate.number, sizeof(BITMAP_DATA))))
 		return FALSE;
 
 	bitmapUpdate.rectangles = bitmapData;
@@ -1154,7 +1153,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client,
 		BITMAP_DATA* fragBitmapData = NULL;
 
 		if (k > 0)
-			fragBitmapData = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * k);
+			fragBitmapData = (BITMAP_DATA*) calloc(k, sizeof(BITMAP_DATA));
 
 		if (!fragBitmapData)
 		{

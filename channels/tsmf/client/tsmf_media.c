@@ -465,7 +465,7 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		if (presentation->nr_rects > 0)
 		{
 			event.numVisibleRects = presentation->nr_rects;
-			event.visibleRects = (RECTANGLE_16*) calloc(1, event.numVisibleRects * sizeof(RECTANGLE_16));
+			event.visibleRects = (RECTANGLE_16*) calloc(event.numVisibleRects, sizeof(RECTANGLE_16));
 
 			if (!event.visibleRects)
 			{

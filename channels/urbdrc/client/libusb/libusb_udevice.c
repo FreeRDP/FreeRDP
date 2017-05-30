@@ -759,7 +759,7 @@ static MSUSB_CONFIG_DESCRIPTOR* libusb_udev_complete_msconfig_setup(IUDEVICE* id
 		LibusbInterface = &LibusbConfig->interface[MsInterface->InterfaceNumber];
 		LibusbAltsetting = &LibusbInterface->altsetting[MsInterface->AlternateSetting];
 		LibusbNumEndpoint = LibusbAltsetting->bNumEndpoints;
-		t_MsPipes = (MSUSB_PIPE_DESCRIPTOR**) malloc(LibusbNumEndpoint * sizeof(MSUSB_PIPE_DESCRIPTOR*));
+		t_MsPipes = (MSUSB_PIPE_DESCRIPTOR**) calloc(LibusbNumEndpoint, sizeof(MSUSB_PIPE_DESCRIPTOR*));
 
 		for (pnum = 0; pnum < LibusbNumEndpoint; pnum++)
 		{

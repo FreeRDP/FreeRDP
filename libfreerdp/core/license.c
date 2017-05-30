@@ -734,7 +734,7 @@ BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList)
 		return FALSE;
 
 	scopeList->count = scopeCount;
-	scopeList->array = (LICENSE_BLOB*) malloc(sizeof(LICENSE_BLOB) * scopeCount);
+	scopeList->array = (LICENSE_BLOB*) calloc(scopeCount, sizeof(LICENSE_BLOB));
 	if (!scopeList->array)
 		return FALSE;
 

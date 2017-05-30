@@ -131,7 +131,7 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL) != ERROR_BUFFER_OVERFLOW)
 		goto error;
 
-	ntlm->ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
+	ntlm->ServicePrincipalName = (LPTSTR) calloc(SpnLength, sizeof(TCHAR));
 
 	if (!ntlm->ServicePrincipalName)
 		goto error;

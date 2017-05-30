@@ -797,7 +797,7 @@ char* PCSC_ConvertReaderNamesToWinSCard(const char* names, LPDWORD pcchReaders)
 	BOOL allReaders = FALSE;
 	p = (char*) names;
 	cchReaders = *pcchReaders;
-	namesWinSCard = (char*) malloc(cchReaders * 2);
+	namesWinSCard = (char*) calloc(cchReaders, 2);
 
 	if (!namesWinSCard)
 		return NULL;
@@ -865,7 +865,7 @@ char* PCSC_ConvertReaderNamesToPCSC(const char* names, LPDWORD pcchReaders)
 	DWORD cchReaders;
 	p = (char*) names;
 	cchReaders = *pcchReaders;
-	namesPCSC = (char*) malloc(cchReaders * 2);
+	namesPCSC = (char*) calloc(cchReaders, 2);
 
 	if (!namesPCSC)
 		return NULL;

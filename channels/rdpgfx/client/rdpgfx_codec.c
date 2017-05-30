@@ -63,7 +63,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s,
 		goto error_out;
 	}
 
-	meta->regionRects = (RECTANGLE_16*) malloc(meta->numRegionRects * sizeof(RECTANGLE_16));
+	meta->regionRects = (RECTANGLE_16*) calloc(meta->numRegionRects, sizeof(RECTANGLE_16));
 
 	if (!meta->regionRects)
 	{
@@ -72,7 +72,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s,
 		goto error_out;
 	}
 
-	meta->quantQualityVals = (RDPGFX_H264_QUANT_QUALITY*) malloc(meta->numRegionRects * sizeof(
+	meta->quantQualityVals = (RDPGFX_H264_QUANT_QUALITY*) calloc(meta->numRegionRects, sizeof(
 	                             RDPGFX_H264_QUANT_QUALITY));
 
 	if (!meta->quantQualityVals)

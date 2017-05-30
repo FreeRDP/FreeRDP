@@ -580,7 +580,7 @@ static BOOL xf_gdi_polyline(rdpContext* context,
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, color.pixel);
 	npoints = polyline->numDeltaEntries + 1;
-	points = malloc(sizeof(XPoint) * npoints);
+	points = calloc(npoints, sizeof(XPoint));
 
 	if (!points)
 	{
@@ -743,7 +743,7 @@ static BOOL xf_gdi_polygon_sc(rdpContext* context,
 	xf_lock_x11(xfc, FALSE);
 	xf_set_rop2(xfc, polygon_sc->bRop2);
 	npoints = polygon_sc->numPoints + 1;
-	points = malloc(sizeof(XPoint) * npoints);
+	points = calloc(npoints, sizeof(XPoint));
 
 	if (!points)
 	{
@@ -814,7 +814,7 @@ static BOOL xf_gdi_polygon_cb(rdpContext* context,
 	brush = &(polygon_cb->brush);
 	xf_set_rop2(xfc, polygon_cb->bRop2);
 	npoints = polygon_cb->numPoints + 1;
-	points = malloc(sizeof(XPoint) * npoints);
+	points = calloc(npoints, sizeof(XPoint));
 
 	if (!points)
 	{

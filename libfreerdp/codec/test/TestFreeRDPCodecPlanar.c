@@ -2968,7 +2968,7 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* planar, const BYTE* srcBitmap,
 	UINT32 dstSize;
 	BYTE* compressedBitmap = freerdp_bitmap_compress_planar(planar,
 	                         srcBitmap, srcFormat, width, height, 0, NULL, &dstSize);
-	BYTE* decompressedBitmap = (BYTE*) calloc(1, size);
+	BYTE* decompressedBitmap = (BYTE*) calloc(height, width * GetBytesPerPixel(dstFormat));
 	printf("%s [%s] --> [%s]: ", __FUNCTION__,
 	       GetColorFormatName(srcFormat), GetColorFormatName(dstFormat));
 	fflush(stdout);

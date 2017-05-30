@@ -1938,28 +1938,28 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 		progressive->Compressor = Compressor;
 		progressive->bufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
 		progressive->cRects = 64;
-		progressive->rects = (RFX_RECT*) malloc(progressive->cRects * sizeof(RFX_RECT));
+		progressive->rects = (RFX_RECT*) calloc(progressive->cRects, sizeof(RFX_RECT));
 
 		if (!progressive->rects)
 			goto cleanup;
 
 		progressive->cTiles = 64;
-		progressive->tiles = (RFX_PROGRESSIVE_TILE**) malloc(progressive->cTiles *
+		progressive->tiles = (RFX_PROGRESSIVE_TILE**) calloc(progressive->cTiles,
 		                     sizeof(RFX_PROGRESSIVE_TILE*));
 
 		if (!progressive->tiles)
 			goto cleanup;
 
 		progressive->cQuant = 8;
-		progressive->quantVals = (RFX_COMPONENT_CODEC_QUANT*) malloc(
-		                             progressive->cQuant * sizeof(RFX_COMPONENT_CODEC_QUANT));
+		progressive->quantVals = (RFX_COMPONENT_CODEC_QUANT*) calloc(
+		                             progressive->cQuant, sizeof(RFX_COMPONENT_CODEC_QUANT));
 
 		if (!progressive->quantVals)
 			goto cleanup;
 
 		progressive->cProgQuant = 8;
-		progressive->quantProgVals = (RFX_PROGRESSIVE_CODEC_QUANT*) malloc(
-		                                 progressive->cProgQuant * sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
+		progressive->quantProgVals = (RFX_PROGRESSIVE_CODEC_QUANT*) calloc(
+		                                 progressive->cProgQuant, sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
 
 		if (!progressive->quantProgVals)
 			goto cleanup;

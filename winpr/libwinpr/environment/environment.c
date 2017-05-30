@@ -231,7 +231,7 @@ LPCH GetEnvironmentStringsA(VOID)
 	envp = environ;
 
 	cchEnvironmentBlock = 128;
-	lpszEnvironmentBlock = (LPCH) malloc(cchEnvironmentBlock * sizeof(CHAR));
+	lpszEnvironmentBlock = (LPCH) calloc(cchEnvironmentBlock, sizeof(CHAR));
 	if (!lpszEnvironmentBlock)
 		return NULL;
 
@@ -365,7 +365,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 	offset = 0;
 
 	cchEnvironmentBlock = 128;
-	lpszEnvironmentBlock = (LPCH) malloc(cchEnvironmentBlock * sizeof(CHAR));
+	lpszEnvironmentBlock = (LPCH) calloc(cchEnvironmentBlock, sizeof(CHAR));
 
 	if (!lpszEnvironmentBlock)
 	{

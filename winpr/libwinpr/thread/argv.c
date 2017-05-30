@@ -114,7 +114,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	numArgs = 0;
 	lpEscapedCmdLine = NULL;
 	cmdLineLength = (int) strlen(lpCmdLine);
-	lpEscapedChars = (BOOL*) calloc(1, (cmdLineLength + 1) * sizeof(BOOL));
+	lpEscapedChars = (BOOL*) calloc(cmdLineLength + 1, sizeof(BOOL));
 
 	if (!lpEscapedChars)
 		return NULL;
@@ -123,7 +123,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	{
 		int i, n;
 		char* pLastEnd = NULL;
-		lpEscapedCmdLine = (char*) malloc((cmdLineLength + 1) * sizeof(char));
+		lpEscapedCmdLine = (char*) calloc(cmdLineLength + 1, sizeof(char));
 
 		if (!lpEscapedCmdLine)
 		{

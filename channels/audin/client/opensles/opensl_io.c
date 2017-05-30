@@ -253,7 +253,7 @@ OPENSL_STREAM* android_OpenRecDevice(char* name, int sr, int inchannels,
                                      int bufferframes, int bits_per_sample)
 {
 	OPENSL_STREAM* p;
-	p = (OPENSL_STREAM*) calloc(sizeof(OPENSL_STREAM), 1);
+	p = (OPENSL_STREAM*) calloc(1, sizeof(OPENSL_STREAM));
 
 	if (!p)
 		return NULL;

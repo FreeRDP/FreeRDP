@@ -56,7 +56,7 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int hei
 	{
 		surface->scanline = (surface->width + (surface->width % 4)) * 4;
 
-		surface->data = (BYTE*) malloc(surface->scanline * surface->height);
+		surface->data = (BYTE*) calloc(surface->height, surface->scanline);
 
 		if (!surface->data)
 		{
