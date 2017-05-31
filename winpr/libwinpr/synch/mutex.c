@@ -121,7 +121,7 @@ HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 	{
 		pthread_mutexattr_t attr;
 		pthread_mutexattr_init(&attr);
-		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
 		pthread_mutex_init(&mutex->mutex, &attr);
 
 		WINPR_HANDLE_SET_TYPE_AND_MODE(mutex, HANDLE_TYPE_MUTEX, WINPR_FD_READ);
