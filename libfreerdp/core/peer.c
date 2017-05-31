@@ -30,13 +30,10 @@
 
 #include <freerdp/log.h>
 
+#include "rdp.h"
 #include "peer.h"
 
 #define TAG FREERDP_TAG("core.peer")
-
-#ifdef WITH_DEBUG_RDP
-extern const char* DATA_PDU_TYPE_STRINGS[80];
-#endif
 
 static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char* name,
         UINT32 flags)

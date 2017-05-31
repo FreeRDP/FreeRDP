@@ -240,6 +240,7 @@ FREERDP_LOCAL void rdp_free(rdpRdp* rdp);
 #define RDP_TAG FREERDP_TAG("core.rdp")
 #ifdef WITH_DEBUG_RDP
 #define DEBUG_RDP(...) WLog_DBG(RDP_TAG, __VA_ARGS__)
+extern const char* DATA_PDU_TYPE_STRINGS[80];
 #else
 #define DEBUG_RDP(...) do { } while (0)
 #endif

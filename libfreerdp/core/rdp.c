@@ -34,7 +34,7 @@
 
 #define TAG FREERDP_TAG("core.rdp")
 
-static const char* DATA_PDU_TYPE_STRINGS[80] =
+const char* DATA_PDU_TYPE_STRINGS[80] =
 {
 		"?", "?", /* 0x00 - 0x01 */
 		"Update", /* 0x02 */
