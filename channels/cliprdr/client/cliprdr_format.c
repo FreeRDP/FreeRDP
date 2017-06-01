@@ -393,10 +393,10 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 
 	Stream_Read_UINT32(s, count); /* cItems (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < count * CLIPRDR_FILEDESCRIPTOR_SIZE)
+	if (Stream_GetRemainingLength(s) / CLIPRDR_FILEDESCRIPTOR_SIZE < count)
 	{
-		WLog_ERR(TAG, "packed file list is too short: expected %"PRIu32", have %"PRIuz,
-			count * CLIPRDR_FILEDESCRIPTOR_SIZE,
+		WLog_ERR(TAG, "packed file list is too short: expected %"PRIuz", have %"PRIuz,
+			((size_t) count) * CLIPRDR_FILEDESCRIPTOR_SIZE,
 			Stream_GetRemainingLength(s));
 
 		result = ERROR_INCORRECT_SIZE;
