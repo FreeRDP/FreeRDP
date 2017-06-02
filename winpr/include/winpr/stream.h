@@ -332,6 +332,38 @@ static INLINE BOOL Stream_SafeSeek(wStream* s, size_t size)
 	return TRUE;
 }
 
+static INLINE BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length)
+{
+	size_t x;
+
+	if (!s || !dst)
+		return FALSE;
+
+	if (Stream_GetRemainingLength(s) / sizeof(WCHAR) < length)
+		return FALSE;
+
+	for (x=0; x<length; x++)
+		Stream_Read_UINT16(s, dst[x]);
+
+	return TRUE;
+}
+
+static INLINE BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length)
+{
+	size_t x;
+
+	if (!s || !src)
+		return FALSE;
+
+	if (Stream_GetRemainingCapacity(s) / sizeof(WCHAR) < length)
+		return FALSE;
+
+	for (x=0; x<length; x++)
+		Stream_Write_UINT16(s, src[x]);
+
+	return TRUE;
+}
+
 /* StreamPool */
 
 struct _wStreamPool
