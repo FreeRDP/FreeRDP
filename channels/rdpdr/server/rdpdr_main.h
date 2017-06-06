@@ -20,8 +20,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_RDPDR_MAIN_H
-#define FREERDP_CHANNEL_SERVER_RDPDR_MAIN_H
+#ifndef FREERDP_CHANNEL_RDPDR_SERVER_MAIN_H
+#define FREERDP_CHANNEL_RDPDR_SERVER_MAIN_H
 
 #include <winpr/collections.h>
 #include <winpr/crt.h>
@@ -86,4 +86,4 @@ struct _RDPDR_IRP
 };
 typedef struct _RDPDR_IRP RDPDR_IRP;
 
-#endif /* FREERDP_CHANNEL_SERVER_RDPDR_MAIN_H */
+#endif /* FREERDP_CHANNEL_RDPDR_SERVER_MAIN_H */

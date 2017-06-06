@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_REMDESK_H
-#define FREERDP_CHANNEL_SERVER_REMDESK_H
+#ifndef FREERDP_CHANNEL_REMDESK_SERVER_REMDESK_H
+#define FREERDP_CHANNEL_REMDESK_SERVER_REMDESK_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -61,5 +61,5 @@ FREERDP_API void remdesk_server_context_free(RemdeskServerContext* context);
  }
 #endif
 
-#endif /* FREERDP_CHANNEL_SERVER_REMDESK_H */
+#endif /* FREERDP_CHANNEL_REMDESK_SERVER_REMDESK_H */
 

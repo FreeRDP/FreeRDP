@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_MAC_H
-#define FREERDP_SHADOW_SERVER_MAC_H
+#ifndef FREERDP_SERVER_SHADOW_MAC_SHADOW_H
+#define FREERDP_SERVER_SHADOW_MAC_SHADOW_H
 
 #include <freerdp/server/shadow.h>
 
@@ -62,4 +62,4 @@ extern "C" {
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_MAC_H */
+#endif /* FREERDP_SERVER_SHADOW_MAC_SHADOW_H */

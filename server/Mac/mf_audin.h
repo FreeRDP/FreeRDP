@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef MF_AUDIN_H
-#define MF_AUDIN_H
+#ifndef FREERDP_SERVER_MAC_AUDIN_H
+#define FREERDP_SERVER_MAC_AUDIN_H
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
@@ -30,5 +30,5 @@
 
 void mf_peer_audin_init(mfPeerContext* context);
 
-#endif /* MF_AUDIN_H */
+#endif /* FREERDP_SERVER_MAC_AUDIN_H */
 

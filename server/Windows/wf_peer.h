@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef WF_PEER_H
-#define WF_PEER_H
+#ifndef FREERDP_SERVER_WIN_PEER_H
+#define FREERDP_SERVER_WIN_PEER_H
 
 #include "wf_interface.h"
 
@@ -48,4 +48,4 @@ BOOL wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
 DWORD WINAPI wf_peer_main_loop(LPVOID lpParam);
 
 
-#endif /* WF_PEER_H */
+#endif /* FREERDP_SERVER_WIN_PEER_H */

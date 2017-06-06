@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __DFREERDP_H
-#define __DFREERDP_H
+#ifndef FREERDP_CLIENT_DF_FREERDP_H
+#define FREERDP_CLIENT_DF_FREERDP_H
 
 #include "config.h"
 #include <freerdp/freerdp.h>
@@ -67,4 +67,4 @@ struct df_info
 	IDirectFBEventBuffer* event_buffer;
 };
 
-#endif /* __DFREERDP_H */
+#endif /* FREERDP_CLIENT_DF_FREERDP_H */

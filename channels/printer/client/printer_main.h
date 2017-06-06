@@ -20,8 +20,8 @@
  * limitations under the License.
  */
 
-#ifndef __PRINTER_MAIN_H
-#define __PRINTER_MAIN_H
+#ifndef FREERDP_CHANNEL_PRINTER_CLIENT_MAIN_H
+#define FREERDP_CHANNEL_PRINTER_CLIENT_MAIN_H
 
 #include <freerdp/channels/rdpdr.h>
 
@@ -66,4 +66,4 @@ struct rdp_print_job
 	pcClosePrintJob Close;
 };
 
-#endif
+#endif /* FREERDP_CHANNEL_PRINTER_CLIENT_MAIN_H */

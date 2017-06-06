@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_NLA_H
-#define FREERDP_CORE_NLA_H
+#ifndef FREERDP_LIB_CORE_NLA_H
+#define FREERDP_LIB_CORE_NLA_H
 
 typedef struct rdp_nla rdpNla;
 
@@ -97,4 +97,4 @@ FREERDP_LOCAL rdpNla* nla_new(freerdp* instance, rdpTransport* transport,
                               rdpSettings* settings);
 FREERDP_LOCAL void nla_free(rdpNla* nla);
 
-#endif /* FREERDP_CORE_NLA_H */
+#endif /* FREERDP_LIB_CORE_NLA_H */

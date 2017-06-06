@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_INPUT_H
-#define FREERDP_SHADOW_SERVER_INPUT_H
+#ifndef FREERDP_SERVER_SHADOW_INPUT_H
+#define FREERDP_SERVER_SHADOW_INPUT_H
 
 #include <freerdp/server/shadow.h>
 
@@ -31,4 +31,4 @@ void shadow_input_register_callbacks(rdpInput* input);
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_INPUT_H */
+#endif /* FREERDP_SERVER_SHADOW_INPUT_H */

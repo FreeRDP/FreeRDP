@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __MF_EVENT_H
-#define __MF_EVENT_H
+#ifndef FREERDP_SERVER_MAC_EVENT_H
+#define FREERDP_SERVER_MAC_EVENT_H
 
 typedef struct mf_event mfEvent;
 typedef struct mf_event_queue mfEventQueue;
@@ -31,8 +31,8 @@ typedef struct mf_event_region mfEventRegion;
 
 enum mf_event_type
 {
-	MF_EVENT_TYPE_REGION,
-	MF_EVENT_TYPE_FRAME_TICK
+	FREERDP_SERVER_MAC_EVENT_TYPE_REGION,
+	FREERDP_SERVER_MAC_EVENT_TYPE_FRAME_TICK
 };
 
 struct mf_event
@@ -72,4 +72,4 @@ void mf_event_free(mfEvent* event);
 mfEventQueue* mf_event_queue_new(void);
 void mf_event_queue_free(mfEventQueue* event_queue);
 
-#endif /* __MF_EVENT_H */
+#endif /* FREERDP_SERVER_MAC_EVENT_H */

@@ -21,8 +21,8 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __REGION_H___
-#define __REGION_H___
+#ifndef FREERDP_CODEC_REGION_H
+#define FREERDP_CODEC_REGION_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -153,4 +153,4 @@ FREERDP_API void region16_uninit(REGION16* region);
 }
 #endif
 
-#endif /* __REGION_H___ */
+#endif /* FREERDP_CODEC_REGION_H */

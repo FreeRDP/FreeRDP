@@ -17,13 +17,13 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_ENCODE_H
-#define __RFX_ENCODE_H
+#ifndef FREERDP_LIB_CODEC_RFX_ENCODE_H
+#define FREERDP_LIB_CODEC_RFX_ENCODE_H
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
 
 FREERDP_LOCAL void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile);
 
-#endif
+#endif /* FREERDP_LIB_CODEC_RFX_ENCODE_H */
 

@@ -1,5 +1,5 @@
-#ifndef __CONFIG_H
-#define __CONFIG_H
+#ifndef FREERDP_CONFIG_H
+#define FREERDP_CONFIG_H
 
 /* Include files */
 #cmakedefine HAVE_FCNTL_H
@@ -90,4 +90,4 @@
 #cmakedefine WITH_DEBUG_X11_LOCAL_MOVESIZE
 #cmakedefine WITH_DEBUG_XV
 #cmakedefine WITH_DEBUG_RINGBUFFER
-#endif
+#endif /* FREERDP_CONFIG_H */

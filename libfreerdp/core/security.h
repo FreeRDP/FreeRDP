@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SECURITY_H
-#define FREERDP_SECURITY_H
+#ifndef FREERDP_LIB_CORE_SECURITY_H
+#define FREERDP_LIB_CORE_SECURITY_H
 
 #include "rdp.h"
 #include <freerdp/crypto/crypto.h>
@@ -54,4 +54,4 @@ FREERDP_LOCAL BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 FREERDP_LOCAL BOOL security_fips_check_signature(const BYTE* data, size_t length,
         const BYTE* sig, rdpRdp* rdp);
 
-#endif /* __SECURITY_H */
+#endif /* FREERDP_LIB_CORE_SECURITY_H */

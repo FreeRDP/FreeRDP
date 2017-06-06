@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __INPUT_H
-#define __INPUT_H
+#ifndef FREERDP_LIB_CORE_INPUT_H
+#define FREERDP_LIB_CORE_INPUT_H
 
 #include "rdp.h"
 #include "fastpath.h"
@@ -68,4 +68,4 @@ FREERDP_LOCAL BOOL input_register_client_callbacks(rdpInput* input);
 FREERDP_LOCAL rdpInput* input_new(rdpRdp* rdp);
 FREERDP_LOCAL void input_free(rdpInput* input);
 
-#endif /* __INPUT_H */
+#endif /* FREERDP_LIB_CORE_INPUT_H */

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_ENCODER_H
-#define FREERDP_SHADOW_SERVER_ENCODER_H
+#ifndef FREERDP_SERVER_SHADOW_ENCODER_H
+#define FREERDP_SERVER_SHADOW_ENCODER_H
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
@@ -74,4 +74,4 @@ void shadow_encoder_free(rdpShadowEncoder* encoder);
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_ENCODER_H */
+#endif /* FREERDP_SERVER_SHADOW_ENCODER_H */

@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef WF_MIRAGE_H
-#define WF_MIRAGE_H
+#ifndef FREERDP_SERVER_WIN_MIRAGE_H
+#define FREERDP_SERVER_WIN_MIRAGE_H
 
 #include "wf_interface.h"
 
@@ -218,4 +218,4 @@ BOOL wf_mirror_driver_cleanup(wfInfo* wfi);
 BOOL wf_mirror_driver_activate(wfInfo* wfi);
 void wf_mirror_driver_deactivate(wfInfo* wfi);
 
-#endif /* WF_MIRAGE_H */
+#endif /* FREERDP_SERVER_WIN_MIRAGE_H */

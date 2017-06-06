@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_LICENSE_H
-#define FREERDP_LICENSE_H
+#ifndef FREERDP_LIB_CORE_LICENSE_H
+#define FREERDP_LIB_CORE_LICENSE_H
 
 typedef struct rdp_license rdpLicense;
 
@@ -216,4 +216,4 @@ FREERDP_LOCAL void license_free(rdpLicense* license);
 #define DEBUG_LICENSE(...) do { } while (0)
 #endif
 
-#endif /* __LICENSE_H */
+#endif /* FREERDP_LIB_CORE_LICENSE_H */

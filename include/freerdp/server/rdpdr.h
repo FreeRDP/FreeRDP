@@ -20,8 +20,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_RDPDR_H
-#define FREERDP_CHANNEL_SERVER_RDPDR_H
+#ifndef FREERDP_CHANNEL_RDPDR_SERVER_RDPDR_H
+#define FREERDP_CHANNEL_RDPDR_SERVER_RDPDR_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -152,4 +152,4 @@ FREERDP_API void rdpdr_server_context_free(RdpdrServerContext* context);
  }
 #endif
 
-#endif /* FREERDP_CHANNEL_SERVER_RDPDR_H */
+#endif /* FREERDP_CHANNEL_RDPDR_SERVER_RDPDR_H */

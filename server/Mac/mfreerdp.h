@@ -18,11 +18,11 @@
  * limitations under the License.
  */
 
-#ifndef MFREERDP_SERVER_H
-#define MFREERDP_SERVER_H
+#ifndef FREERDP_SERVER_MAC_FREERDP_H
+#define FREERDP_SERVER_MAC_FREERDP_H
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
 
-#endif /* MFREERDP_SERVER_H */
+#endif /* FREERDP_SERVER_MAC_FREERDP_H */

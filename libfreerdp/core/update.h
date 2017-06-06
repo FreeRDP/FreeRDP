@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UPDATE_H
-#define __UPDATE_H
+#ifndef FREERDP_LIB_CORE_UPDATE_H
+#define FREERDP_LIB_CORE_UPDATE_H
 
 #include "rdp.h"
 #include "orders.h"
@@ -67,4 +67,4 @@ FREERDP_LOCAL void update_register_server_callbacks(rdpUpdate* update);
 FREERDP_LOCAL void update_register_client_callbacks(rdpUpdate* update);
 FREERDP_LOCAL int update_process_messages(rdpUpdate* update);
 
-#endif /* __UPDATE_H */
+#endif /* FREERDP_LIB_CORE_UPDATE_H */

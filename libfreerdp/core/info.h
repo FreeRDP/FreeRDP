@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __INFO_H
-#define __INFO_H
+#ifndef FREERDP_LIB_CORE_INFO_H
+#define FREERDP_LIB_CORE_INFO_H
 
 #include "rdp.h"
 
@@ -65,4 +65,4 @@ FREERDP_LOCAL BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type,
         void* data);
 
-#endif /* __INFO_H */
+#endif /* FREERDP_LIB_CORE_INFO_H */

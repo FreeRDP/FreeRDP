@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_SUBSYSTEM_H
-#define FREERDP_SHADOW_SERVER_SUBSYSTEM_H
+#ifndef FREERDP_SERVER_SHADOW_SUBSYSTEM_H
+#define FREERDP_SERVER_SHADOW_SUBSYSTEM_H
 
 #include <freerdp/server/shadow.h>
 
@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-rdpShadowSubsystem* shadow_subsystem_new();
+rdpShadowSubsystem* shadow_subsystem_new(void);
 void shadow_subsystem_free(rdpShadowSubsystem* subsystem);
 
 int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server);
@@ -41,5 +41,5 @@ int shadow_subsystem_stop(rdpShadowSubsystem* subsystem);
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_SUBSYSTEM_H */
+#endif /* FREERDP_SERVER_SHADOW_SUBSYSTEM_H */
 

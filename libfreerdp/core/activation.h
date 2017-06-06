@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __ACTIVATION_H
-#define __ACTIVATION_H
+#ifndef FREERDP_LIB_CORE_ACTIVATION_H
+#define FREERDP_LIB_CORE_ACTIVATION_H
 
 #include "rdp.h"
 
@@ -64,4 +64,4 @@ FREERDP_LOCAL BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp,
 FREERDP_LOCAL BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp,
         wStream* s);
 
-#endif /* __ACTIVATION_H */
+#endif /* FREERDP_LIB_CORE_ACTIVATION_H */

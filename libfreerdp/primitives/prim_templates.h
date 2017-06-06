@@ -17,8 +17,8 @@
 # pragma once
 #endif
 
-#ifndef __PRIM_TEMPLATES_H_INCLUDED__
-#define __PRIM_TEMPLATES_H_INCLUDED__
+#ifndef FREERDP_LIB_PRIM_TEMPLATES_H
+#define FREERDP_LIB_PRIM_TEMPLATES_H
 
 /* These are prototypes for SSE (potentially NEON) routines that do a
  * simple SSE operation over an array of data.  Since so much of this
@@ -415,4 +415,4 @@
 	    return PRIMITIVES_SUCCESS; \
 	}
 
-#endif /* !__PRIM_TEMPLATES_H_INCLUDED__ */
+#endif /* FREERDP_LIB_PRIM_TEMPLATES_H */

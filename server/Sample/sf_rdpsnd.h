@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef SF_RDPSND_H
-#define SF_RDPSND_H
+#ifndef FREERDP_SERVER_SAMPLE_SF_RDPSND_H
+#define FREERDP_SERVER_SAMPLE_SF_RDPSND_H
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
@@ -28,5 +28,5 @@
 
 BOOL sf_peer_rdpsnd_init(testPeerContext* context);
 
-#endif /* SF_RDPSND_H */
+#endif /* FREERDP_SERVER_SAMPLE_SF_RDPSND_H */
 

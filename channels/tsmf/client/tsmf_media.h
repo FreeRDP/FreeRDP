@@ -25,8 +25,8 @@
  * streams in each presentation.
  */
 
-#ifndef __TSMF_MEDIA_H
-#define __TSMF_MEDIA_H
+#ifndef FREERDP_CHANNEL_TSMF_CLIENT_MEDIA_H
+#define FREERDP_CHANNEL_TSMF_CLIENT_MEDIA_H
 
 #include <freerdp/freerdp.h>
 
@@ -69,5 +69,5 @@ BOOL tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 BOOL tsmf_media_init(void);
 void tsmf_stream_start_threads(TSMF_STREAM* stream);
 
-#endif
+#endif /* FREERDP_CHANNEL_TSMF_CLIENT_MEDIA_H */
 

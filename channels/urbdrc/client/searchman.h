@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __SEACH_MAN_H
-#define __SEACH_MAN_H
+#ifndef FREERDP_CHANNEL_URBDRC_CLIENT_SEARCHMAN_H
+#define FREERDP_CHANNEL_URBDRC_CLIENT_SEARCHMAN_H
 
 #include "urbdrc_types.h"
 
@@ -74,5 +74,5 @@ struct _USB_SEARCHMAN
 
 USB_SEARCHMAN* searchman_new(void* urbdrc, UINT32 UsbDevice);
 
-#endif
+#endif /* FREERDP_CHANNEL_URBDRC_CLIENT_SEARCHMAN_H */
 

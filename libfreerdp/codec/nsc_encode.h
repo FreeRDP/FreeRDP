@@ -19,12 +19,12 @@
  * limitations under the License.
  */
 
-#ifndef __NSC_ENCODE_H
-#define __NSC_ENCODE_H
+#ifndef FREERDP_LIB_CODEC_NSC_ENCODE_H
+#define FREERDP_LIB_CODEC_NSC_ENCODE_H
 
 #include <freerdp/api.h>
 
 FREERDP_LOCAL void nsc_encode(NSC_CONTEXT* context, const BYTE* bmpdata,
                               UINT32 rowstride);
 
-#endif
+#endif /* FREERDP_LIB_CODEC_NSC_ENCODE_H */

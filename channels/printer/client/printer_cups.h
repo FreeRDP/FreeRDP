@@ -17,12 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __PRINTER_CUPS_H
-#define __PRINTER_CUPS_H
+#ifndef FREERDP_CHANNEL_PRINTER_CLIENT_CUPS_H
+#define FREERDP_CHANNEL_PRINTER_CLIENT_CUPS_H
 
 #include "printer_main.h"
 
 rdpPrinterDriver* printer_cups_get_driver(void);
 
-#endif
+#endif /* FREERDP_CHANNEL_PRINTER_CLIENT_CUPS_H */
 

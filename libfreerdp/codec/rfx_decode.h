@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_DECODE_H
-#define __RFX_DECODE_H
+#ifndef FREERDP_LIB_CODEC_RFX_DECODE_H
+#define FREERDP_LIB_CODEC_RFX_DECODE_H
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
@@ -27,5 +27,5 @@
 FREERDP_LOCAL BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile,
                                   BYTE* rgb_buffer, int stride);
 
-#endif /* __RFX_DECODE_H */
+#endif /* FREERDP_LIB_CODEC_RFX_DECODE_H */
 

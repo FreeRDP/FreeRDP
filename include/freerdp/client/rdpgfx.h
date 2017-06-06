@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_CLIENT_RDPGFX_H
-#define FREERDP_CHANNEL_CLIENT_RDPGFX_H
+#ifndef FREERDP_CHANNEL_RDPGFX_CLIENT_RDPGFX_H
+#define FREERDP_CHANNEL_RDPGFX_CLIENT_RDPGFX_H
 
 #include <freerdp/channels/rdpgfx.h>
 #include <freerdp/utils/profiler.h>
@@ -114,4 +114,4 @@ struct _rdpgfx_client_context
 	PROFILER_DEFINE(SurfaceProfiler);
 };
 
-#endif /* FREERDP_CHANNEL_CLIENT_RDPGFX_H */
+#endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_RDPGFX_H */

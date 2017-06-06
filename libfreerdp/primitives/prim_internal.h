@@ -14,12 +14,8 @@
  *
  */
 
-#ifdef __GNUC__
-# pragma once
-#endif
-
-#ifndef __PRIM_INTERNAL_H_INCLUDED__
-#define __PRIM_INTERNAL_H_INCLUDED__
+#ifndef FREERDP_LIB_PRIM_INTERNAL_H
+#define FREERDP_LIB_PRIM_INTERNAL_H
 
 #ifndef CMAKE_BUILD_TYPE
 #define CMAKE_BUILD_TYPE Release
@@ -193,4 +189,4 @@ FREERDP_LOCAL void primitives_init_colors_opt(primitives_t* prims);
 FREERDP_LOCAL void primitives_init_YCoCg_opt(primitives_t* prims);
 FREERDP_LOCAL void primitives_init_YUV_opt(primitives_t* prims);
 
-#endif /* !__PRIM_INTERNAL_H_INCLUDED__ */
+#endif /* FREERDP_LIB_PRIM_INTERNAL_H */

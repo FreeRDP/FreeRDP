@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __RDP_H
-#define __RDP_H
+#ifndef FREERDP_LIB_CORE_RDP_H
+#define FREERDP_LIB_CORE_RDP_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -250,4 +250,4 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, INT32 length, UINT16 securityFlags);
 BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo);
 BOOL rdp_send_error_info(rdpRdp* rdp);
 
-#endif /* __RDP_H */
+#endif /* FREERDP_LIB_CORE_RDP_H */

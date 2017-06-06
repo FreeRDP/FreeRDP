@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __TPDU_H
-#define __TPDU_H
+#ifndef FREERDP_LIB_CORE_TPDU_H
+#define FREERDP_LIB_CORE_TPDU_H
 
 #include <winpr/stream.h>
 #include <freerdp/api.h>
@@ -52,4 +52,4 @@ FREERDP_LOCAL void tpdu_write_disconnect_request(wStream* s, UINT16 length);
 FREERDP_LOCAL BOOL tpdu_read_data(wStream* s, UINT16* li);
 FREERDP_LOCAL void tpdu_write_data(wStream* s);
 
-#endif /* __TPDU_H */
+#endif /* FREERDP_LIB_CORE_TPDU_H */

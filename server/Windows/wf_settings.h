@@ -17,12 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef WF_SETTINGS_H
-#define WF_SETTINGS_H
+#ifndef FREERDP_SERVER_WIN_SETTINGS_H
+#define FREERDP_SERVER_WIN_SETTINGS_H
 
 #include "wf_interface.h"
 
 BOOL wf_settings_read_dword(HKEY key, LPCSTR subkey, LPTSTR name, DWORD* value);
 BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** value);
 
-#endif /* WF_SETTINGS_H */
+#endif /* FREERDP_SERVER_WIN_SETTINGS_H */

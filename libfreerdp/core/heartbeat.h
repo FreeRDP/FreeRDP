@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __HEARTBEAT_H
-#define __HEARTBEAT_H
+#ifndef FREERDP_LIB_CORE_HEARTBEET_H
+#define FREERDP_LIB_CORE_HEARTBEET_H
 
 typedef struct rdp_heartbeat rdpHeartbeat;
 
@@ -42,4 +42,4 @@ FREERDP_LOCAL void heartbeat_free(rdpHeartbeat* heartbeat);
 
 #define HEARTBEAT_TAG FREERDP_TAG("core.heartbeat")
 
-#endif /* __HEARTBEAT_H */
+#endif /* FREERDP_LIB_CORE_HEARTBEET_H */

@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __TCP_H
-#define __TCP_H
+#ifndef FREERDP_LIB_CORE_TCP_H
+#define FREERDP_LIB_CORE_TCP_H
 
 #include <winpr/windows.h>
 
@@ -67,4 +67,4 @@ FREERDP_LOCAL int freerdp_tcp_connect(rdpContext* context,
                                       rdpSettings* settings,
                                       const char* hostname, int port, int timeout);
 
-#endif /* __TCP_H */
+#endif /* FREERDP_LIB_CORE_TCP_H */

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef WF_PEER_H
-#define WF_PEER_H
+#ifndef FREERDP_SERVER_MAC_PEER_H
+#define FREERDP_SERVER_MAC_PEER_H
 
 #include "mf_interface.h"
 
@@ -41,4 +41,4 @@ BOOL mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
 
 void* mf_peer_main_loop(void* arg);
 
-#endif /* MF_PEER_H */
+#endif /* FREERDP_SERVER_MAC_PEER_H */

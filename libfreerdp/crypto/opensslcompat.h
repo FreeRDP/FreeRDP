@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CRYPTO_OPENSSLCOMPAT_H
-#define FREERDP_CRYPTO_OPENSSLCOMPAT_H
+#ifndef FREERDP_LIB_CRYPTO_OPENSSLCOMPAT_H
+#define FREERDP_LIB_CRYPTO_OPENSSLCOMPAT_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -62,4 +62,4 @@ void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM
 #endif /* OPENSSL < 1.1.0 || LIBRESSL */
 #endif /* WITH_OPENSSL */
 
-#endif /* FREERDP_CRYPTO_OPENSSLCOMPAT_H */
+#endif /* FREERDP_LIB_CRYPTO_OPENSSLCOMPAT_H */

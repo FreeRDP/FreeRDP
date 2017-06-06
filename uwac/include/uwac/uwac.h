@@ -20,8 +20,8 @@
  * OF THIS SOFTWARE.
  */
 
-#ifndef __UWAC_H_
-#define __UWAC_H_
+#ifndef UWAC_H_
+#define UWAC_H_
 
 #include <wayland-client.h>
 #include <stdbool.h>
@@ -483,4 +483,4 @@ UWAC_API const char *UwacSeatGetName(const UwacSeat *seat);
 }
 #endif
 
-#endif /* __UWAC_H_ */
+#endif /* UWAC_H_ */

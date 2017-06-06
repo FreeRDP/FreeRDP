@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef MF_RDPSND_H
-#define MF_RDPSND_H
+#ifndef FREERDP_SERVER_MAC_RDPSND_H
+#define FREERDP_SERVER_MAC_RDPSND_H
 
 #include <CoreAudio/CoreAudio.h>
 #include <AudioToolbox/AudioToolbox.h>
@@ -62,5 +62,5 @@ typedef struct _AQRecorderState AQRecorderState;
 BOOL mf_peer_rdpsnd_init(mfPeerContext* context);
 BOOL mf_peer_rdpsnd_stop(void);
 
-#endif /* MF_RDPSND_H */
+#endif /* FREERDP_SERVER_MAC_RDPSND_H */
 

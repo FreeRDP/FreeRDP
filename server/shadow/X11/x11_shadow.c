@@ -46,7 +46,7 @@
 
 #define TAG SERVER_TAG("shadow.x11")
 
-static int x11_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors);
+static UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors);
 
 #ifdef WITH_PAM
 
@@ -591,6 +591,10 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	BYTE* pDstData;
 	BYTE A, R, G, B;
 	rdpShadowSurface* surface;
+
+	if (!subsystem)
+		return -1;
+
 	surface = subsystem->server->surface;
 	nXSrc = 0;
 	nYSrc = 0;
@@ -1102,7 +1106,7 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 	return 1;
 }
 
-int x11_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
+UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 {
 	int index;
 	Display* display;
@@ -1175,7 +1179,7 @@ int x11_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
 	return numMonitors;
 }
 
-static int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
+static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 {
 	int i;
 	int pf_count;
@@ -1188,6 +1192,11 @@ static int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
 	MONITOR_DEF* virtualScreen;
+	x11ShadowSubsystem* subsystem = (x11ShadowSubsystem*)sub;
+
+	if (!subsystem)
+		return -1;
+
 	subsystem->numMonitors = x11_shadow_enum_monitors(subsystem->monitors, 16);
 	x11_shadow_subsystem_base_init(subsystem);
 
@@ -1311,8 +1320,10 @@ static int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	return 1;
 }
 
-static int x11_shadow_subsystem_uninit(x11ShadowSubsystem* subsystem)
+static int x11_shadow_subsystem_uninit(rdpShadowSubsystem* sub)
 {
+	                                             x11ShadowSubsystem* subsystem = (x11ShadowSubsystem*)sub;
+
 	if (!subsystem)
 		return -1;
 
@@ -1337,10 +1348,12 @@ static int x11_shadow_subsystem_uninit(x11ShadowSubsystem* subsystem)
 	return 1;
 }
 
-static int x11_shadow_subsystem_start(x11ShadowSubsystem* subsystem)
+static int x11_shadow_subsystem_start(rdpShadowSubsystem* sub)
 {
-	if (!subsystem)
-		return -1;
+	                                             x11ShadowSubsystem* subsystem = (x11ShadowSubsystem*)sub;
+
+												 if (!subsystem)
+													 return -1;
 
 	if (!(subsystem->thread = CreateThread(NULL, 0,
 	                                       (LPTHREAD_START_ROUTINE) x11_shadow_subsystem_thread,
@@ -1353,10 +1366,12 @@ static int x11_shadow_subsystem_start(x11ShadowSubsystem* subsystem)
 	return 1;
 }
 
-static int x11_shadow_subsystem_stop(x11ShadowSubsystem* subsystem)
+static int x11_shadow_subsystem_stop(rdpShadowSubsystem* sub)
 {
-	if (!subsystem)
-		return -1;
+	                                             x11ShadowSubsystem* subsystem = (x11ShadowSubsystem*)sub;
+
+												 if (!subsystem)
+													 return -1;
 
 	if (subsystem->thread)
 	{
@@ -1370,7 +1385,7 @@ static int x11_shadow_subsystem_stop(x11ShadowSubsystem* subsystem)
 	return 1;
 }
 
-static x11ShadowSubsystem* x11_shadow_subsystem_new(void)
+static rdpShadowSubsystem* x11_shadow_subsystem_new(void)
 {
 	x11ShadowSubsystem* subsystem;
 	subsystem = (x11ShadowSubsystem*) calloc(1, sizeof(x11ShadowSubsystem));
@@ -1395,10 +1410,10 @@ static x11ShadowSubsystem* x11_shadow_subsystem_new(void)
 	subsystem->use_xfixes = TRUE;
 	subsystem->use_xdamage = FALSE;
 	subsystem->use_xinerama = TRUE;
-	return subsystem;
+	return (rdpShadowSubsystem*)subsystem;
 }
 
-static void x11_shadow_subsystem_free(x11ShadowSubsystem* subsystem)
+static void x11_shadow_subsystem_free(rdpShadowSubsystem* subsystem)
 {
 	if (!subsystem)
 		return;
@@ -1409,12 +1424,15 @@ static void x11_shadow_subsystem_free(x11ShadowSubsystem* subsystem)
 
 FREERDP_API int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
-	pEntryPoints->New = (pfnShadowSubsystemNew) x11_shadow_subsystem_new;
-	pEntryPoints->Free = (pfnShadowSubsystemFree) x11_shadow_subsystem_free;
-	pEntryPoints->Init = (pfnShadowSubsystemInit) x11_shadow_subsystem_init;
-	pEntryPoints->Uninit = (pfnShadowSubsystemInit) x11_shadow_subsystem_uninit;
-	pEntryPoints->Start = (pfnShadowSubsystemStart) x11_shadow_subsystem_start;
-	pEntryPoints->Stop = (pfnShadowSubsystemStop) x11_shadow_subsystem_stop;
-	pEntryPoints->EnumMonitors = (pfnShadowEnumMonitors) x11_shadow_enum_monitors;
+	                                             if (!pEntryPoints)
+	                                             return -1;
+
+	pEntryPoints->New = x11_shadow_subsystem_new;
+	pEntryPoints->Free = x11_shadow_subsystem_free;
+	pEntryPoints->Init = x11_shadow_subsystem_init;
+	pEntryPoints->Uninit = x11_shadow_subsystem_uninit;
+	pEntryPoints->Start = x11_shadow_subsystem_start;
+	pEntryPoints->Stop = x11_shadow_subsystem_stop;
+	pEntryPoints->EnumMonitors = x11_shadow_enum_monitors;
 	return 1;
 }

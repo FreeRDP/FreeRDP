@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FASTPATH_H
-#define __FASTPATH_H
+#ifndef FREERDP_LIB_CORE_FASTPATH_H
+#define FREERDP_LIB_CORE_FASTPATH_H
 
 /*
  * Fast-Path has 15 bits available for length information which would lead to a
@@ -174,4 +174,4 @@ FREERDP_LOCAL BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath,
 FREERDP_LOCAL rdpFastPath* fastpath_new(rdpRdp* rdp);
 FREERDP_LOCAL void fastpath_free(rdpFastPath* fastpath);
 
-#endif
+#endif /* FREERDP_LIB_CORE_FASTPATH_H */

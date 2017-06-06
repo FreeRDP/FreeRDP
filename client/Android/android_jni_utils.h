@@ -9,8 +9,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef _ANDROID_JNI_UTILS_H_
-#define _ANDROID_JNI_UTILS_H_
+#ifndef FREERDP_CLIENT_ANDROID_JNI_UTILS_H
+#define FREERDP_CLIENT_ANDROID_JNI_UTILS_H
 
 #include <jni.h>
 #include <freerdp/api.h>
@@ -34,4 +34,4 @@ FREERDP_LOCAL extern JavaVM* g_JavaVm;
 }
 #endif
 
-#endif /* _ANDROID_JNI_UTILS_H_ */
+#endif /* FREERDP_CLIENT_ANDROID_JNI_UTILS_H */

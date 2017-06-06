@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_MESSAGE_PRIVATE_H
-#define FREERDP_CORE_MESSAGE_PRIVATE_H
+#ifndef FREERDP_LIB_CORE_MESSAGE_H
+#define FREERDP_LIB_CORE_MESSAGE_H
 
 #include <freerdp/freerdp.h>
 #include <freerdp/message.h>
@@ -166,4 +166,4 @@ FREERDP_LOCAL int input_message_queue_process_pending_messages(rdpInput* input);
 FREERDP_LOCAL rdpInputProxy* input_message_proxy_new(rdpInput* input);
 FREERDP_LOCAL void input_message_proxy_free(rdpInputProxy* proxy);
 
-#endif /* FREERDP_CORE_MESSAGE_PRIVATE_H */
+#endif /* FREERDP_LIB_CORE_MESSAGE_H */

@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __WINDOW_H
-#define __WINDOW_H
+#ifndef FREERDP_LIB_CORE_WINDOW_H
+#define FREERDP_LIB_CORE_WINDOW_H
 
 #include "update.h"
 
@@ -38,4 +38,4 @@ FREERDP_LOCAL BOOL update_recv_altsec_window_order(rdpUpdate* update,
 #define DEBUG_WND(...) do { } while (0)
 #endif
 
-#endif /* __WINDOW_H */
+#endif /* FREERDP_LIB_CORE_WINDOW_H */

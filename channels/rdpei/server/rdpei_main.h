@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_CHANNEL_SERVER_RDPEI_MAIN_H_
-#define __FREERDP_CHANNEL_SERVER_RDPEI_MAIN_H_
+#ifndef FREERDP_CHANNEL_RDPEI_SERVER_MAIN_H
+#define FREERDP_CHANNEL_RDPEI_SERVER_MAIN_H
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -31,5 +31,5 @@
 
 
 
-#endif /* FREERDP_CHANNEL_SERVER_RDPEI_MAIN_H_ */
+#endif /* FREERDP_CHANNEL_RDPEI_SERVER_MAIN_H */
 

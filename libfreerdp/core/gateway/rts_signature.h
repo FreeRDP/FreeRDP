@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_RTS_SIGNATURE_H
-#define FREERDP_CORE_RTS_SIGNATURE_H
+#ifndef FREERDP_LIB_CORE_GATEWAY_RTS_SIGNATURE_H
+#define FREERDP_LIB_CORE_GATEWAY_RTS_SIGNATURE_H
 
 typedef struct rts_pdu_signature RtsPduSignature;
 typedef struct _RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_ENTRY;
@@ -188,4 +188,4 @@ FREERDP_LOCAL UINT32 rts_identify_pdu_signature(rdpRpc* rpc,
 FREERDP_LOCAL int rts_print_pdu_signature(rdpRpc* rpc,
         RtsPduSignature* signature);
 
-#endif
+#endif /* FREERDP_LIB_CORE_GATEWAY_RTS_SIGNATURE_H */

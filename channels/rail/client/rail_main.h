@@ -21,8 +21,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H
-#define FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H
+#ifndef FREERDP_CHANNEL_RAIL_CLIENT_MAIN_H
+#define FREERDP_CHANNEL_RAIL_CLIENT_MAIN_H
 
 #include <freerdp/rail.h>
 #include <freerdp/svc.h>
@@ -56,4 +56,4 @@ typedef struct rail_plugin railPlugin;
 RailClientContext* rail_get_client_interface(railPlugin* rail);
 UINT rail_send_channel_data(railPlugin* rail, void* data, size_t length);
 
-#endif /* FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H */
+#endif /* FREERDP_CHANNEL_RAIL_CLIENT_MAIN_H */

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __WLFREERDP_H
-#define __WLFREERDP_H
+#ifndef FREERDP_CLIENT_WAYLAND_FREERDP_H
+#define FREERDP_CLIENT_WAYLAND_FREERDP_H
 
 #include <freerdp/client/encomsp.h>
 #include <freerdp/client/rdpei.h>
@@ -50,5 +50,5 @@ struct wlf_context
 	EncomspClientContext* encomsp;
 };
 
-#endif /* __WLFREERDP_H */
+#endif /* FREERDP_CLIENT_WAYLAND_FREERDP_H */
 
