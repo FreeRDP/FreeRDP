@@ -814,6 +814,89 @@ BOOL GetDiskFreeSpaceW(LPCWSTR lpwRootPathName, LPDWORD lpSectorsPerCluster,
 	return ret;
 }
 
+/**
+ * Check if a file name component is valid.
+ *
+ * Some file names are not valid on Windows. See "Naming Files, Paths, and Namespaces":
+ * https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+ */
+BOOL ValidFileNameComponent(LPCWSTR lpFileName)
+{
+	LPCWSTR c = NULL;
+
+	if (!lpFileName)
+		return FALSE;
+
+	/* CON */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'C' || lpFileName[0] == L'c')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'O' || lpFileName[1] == L'o')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'N' || lpFileName[2] == L'n')) &&
+	    (lpFileName[3] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* PRN */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'P' || lpFileName[0] == L'p')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'R' || lpFileName[1] == L'r')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'N' || lpFileName[2] == L'n')) &&
+	    (lpFileName[3] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* AUX */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'A' || lpFileName[0] == L'a')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'U' || lpFileName[1] == L'u')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'X' || lpFileName[2] == L'x')) &&
+	    (lpFileName[3] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* NUL */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'N' || lpFileName[0] == L'n')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'U' || lpFileName[1] == L'u')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'L' || lpFileName[2] == L'l')) &&
+	    (lpFileName[3] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* LPT0-9 */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'L' || lpFileName[0] == L'l')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'P' || lpFileName[1] == L'p')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'T' || lpFileName[2] == L't')) &&
+	    (lpFileName[3] != L'\0' && (L'0' <= lpFileName[3] && lpFileName[3] <= L'9')) &&
+	    (lpFileName[4] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* COM0-9 */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'C' || lpFileName[0] == L'c')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'O' || lpFileName[1] == L'o')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'M' || lpFileName[2] == L'm')) &&
+	    (lpFileName[3] != L'\0' && (L'0' <= lpFileName[3] && lpFileName[3] <= L'9')) &&
+	    (lpFileName[4] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* Reserved characters */
+	for (c = lpFileName; *c; c++)
+	{
+		if ((*c == L'<') || (*c == L'>') || (*c == L':') ||
+		    (*c == L'"') || (*c == L'/') || (*c == L'\\') ||
+		    (*c == L'|') || (*c == L'?') || (*c == L'*'))
+		{
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 #endif /* _WIN32 */
 
 #ifdef _UWP

@@ -23,10 +23,18 @@
 
 #include <winpr/crt.h>
 #include <winpr/collections.h>
+#include <winpr/wlog.h>
 
 #include <winpr/clipboard.h>
 
 #include "clipboard.h"
+
+#ifdef WITH_WCLIPBOARD_POSIX
+#include "posix.h"
+#endif
+
+#include "../log.h"
+#define TAG WINPR_TAG("clipboard")
 
 /**
  * Clipboard (Windows):
@@ -365,23 +373,22 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 		ZeroMemory(format, sizeof(wClipboardFormat));
 		format->formatId = formatId;
 		format->formatName = _strdup(CF_STANDARD_STRINGS[formatId]);
-
 		if (!format->formatName)
-		{
-			int i;
-
-			for (i = formatId - 1; i >= 0; --i)
-			{
-				format = &(clipboard->formats[--clipboard->numFormats]);
-				free((void*)format->formatName);
-			}
-
-			return FALSE;
-		}
+			goto error;
 	}
 
-	ClipboardInitSynthesizers(clipboard);
+	if (!ClipboardInitSynthesizers(clipboard))
+		goto error;
+
 	return TRUE;
+
+error:
+	for (formatId = 0; formatId < clipboard->numFormats; formatId++)
+	{
+		free(clipboard->formats[formatId].formatName);
+		free(clipboard->formats[formatId].synthesizers);
+	}
+	return FALSE;
 }
 
 UINT32 ClipboardGetFormatId(wClipboard* clipboard, const char* name)
@@ -506,43 +513,74 @@ void ClipboardSetOwner(wClipboard* clipboard, UINT64 ownerId)
 	clipboard->ownerId = ownerId;
 }
 
+wClipboardDelegate* ClipboardGetDelegate(wClipboard* clipboard)
+{
+	if (!clipboard)
+		return NULL;
+
+	return &clipboard->delegate;
+}
+
+void ClipboardInitLocalFileSubsystem(wClipboard* clipboard)
+{
+	/*
+	 * There can be only one local file subsystem active.
+	 * Return as soon as initialization succeeds.
+	 */
+
+#ifdef WITH_WCLIPBOARD_POSIX
+	if (ClipboardInitPosixFileSubsystem(clipboard))
+	{
+		WLog_INFO(TAG, "initialized POSIX local file subsystem");
+		return;
+	}
+	else
+	{
+		WLog_WARN(TAG, "failed to initialize POSIX local file subsystem");
+	}
+#endif
+
+	WLog_INFO(TAG, "failed to initialize local file subsystem, file transfer not available");
+}
+
 wClipboard* ClipboardCreate()
 {
 	wClipboard* clipboard;
+
 	clipboard = (wClipboard*) calloc(1, sizeof(wClipboard));
+	if (!clipboard)
+		return NULL;
 
-	if (clipboard)
-	{
-		clipboard->nextFormatId = 0xC000;
-		clipboard->sequenceNumber = 0;
+	clipboard->nextFormatId = 0xC000;
+	clipboard->sequenceNumber = 0;
 
-		if (!InitializeCriticalSectionAndSpinCount(&(clipboard->lock), 4000))
-		{
-			free(clipboard);
-			return NULL;
-		}
+	if (!InitializeCriticalSectionAndSpinCount(&(clipboard->lock), 4000))
+		goto error_free_clipboard;
 
-		clipboard->numFormats = 0;
-		clipboard->maxFormats = 64;
-		clipboard->formats = (wClipboardFormat*) malloc(clipboard->maxFormats * sizeof(
-		                         wClipboardFormat));
+	clipboard->numFormats = 0;
+	clipboard->maxFormats = 64;
 
-		if (!clipboard->formats)
-		{
-			DeleteCriticalSection(&(clipboard->lock));
-			free(clipboard);
-			return NULL;
-		}
+	clipboard->formats = (wClipboardFormat*)
+		calloc(clipboard->maxFormats, sizeof(wClipboardFormat));
+	if (!clipboard->formats)
+		goto error_free_lock;
 
-		if (!ClipboardInitFormats(clipboard))
-		{
-			DeleteCriticalSection(&(clipboard->lock));
-			free(clipboard);
-			return NULL;
-		}
-	}
+	if (!ClipboardInitFormats(clipboard))
+		goto error_free_formats;
+
+	clipboard->delegate.clipboard = clipboard;
+
+	ClipboardInitLocalFileSubsystem(clipboard);
 
 	return clipboard;
+
+error_free_formats:
+	free(clipboard->formats);
+error_free_lock:
+	DeleteCriticalSection(&(clipboard->lock));
+error_free_clipboard:
+	free(clipboard);
+	return NULL;
 }
 
 void ClipboardDestroy(wClipboard* clipboard)
@@ -552,6 +590,9 @@ void ClipboardDestroy(wClipboard* clipboard)
 
 	if (!clipboard)
 		return;
+
+	ArrayList_Free(clipboard->localFiles);
+	clipboard->localFiles = NULL;
 
 	for (index = 0; index < clipboard->numFormats; index++)
 	{
