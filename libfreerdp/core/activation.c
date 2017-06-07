@@ -311,18 +311,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		while(0);
 	}
 
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
-
-	while (rdp->state != CONNECTION_STATE_ACTIVE)
-	{
-		if (rdp_check_fds(rdp) < 0)
-			return FALSE;
-
-		if (freerdp_shall_disconnect(rdp->instance))
-			break;
-	}
-
-	return TRUE;
+	return rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE) != -1;
 }
 
 BOOL rdp_send_deactivate_all(rdpRdp* rdp)
