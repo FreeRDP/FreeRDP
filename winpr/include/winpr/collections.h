@@ -327,11 +327,11 @@ WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
 
 /* Hash Table */
 
-typedef UINT32 (*HASH_TABLE_HASH_FN)(void* key);
-typedef BOOL (*HASH_TABLE_KEY_COMPARE_FN)(void* key1, void* key2);
-typedef BOOL (*HASH_TABLE_VALUE_COMPARE_FN)(void* value1, void* value2);
-typedef void* (*HASH_TABLE_KEY_CLONE_FN)(void* key);
-typedef void* (*HASH_TABLE_VALUE_CLONE_FN)(void* value);
+typedef UINT32 (*HASH_TABLE_HASH_FN)(const void* key);
+typedef BOOL (*HASH_TABLE_KEY_COMPARE_FN)(const void* key1, const void* key2);
+typedef BOOL (*HASH_TABLE_VALUE_COMPARE_FN)(const void* value1, const void* value2);
+typedef void* (*HASH_TABLE_KEY_CLONE_FN)(const void* key);
+typedef void* (*HASH_TABLE_VALUE_CLONE_FN)(const void* value);
 typedef void (*HASH_TABLE_KEY_FREE_FN)(void* key);
 typedef void (*HASH_TABLE_VALUE_FREE_FN)(void* value);
 
@@ -357,24 +357,16 @@ struct _wHashTable
 };
 typedef struct _wHashTable wHashTable;
 
-WINPR_API int HashTable_Count(wHashTable* table);
-WINPR_API int HashTable_Add(wHashTable* table, void* key, void* value);
-WINPR_API BOOL HashTable_Remove(wHashTable* table, void* key);
+WINPR_API size_t HashTable_Count(wHashTable* table);
+WINPR_API BOOL HashTable_Add(wHashTable* table, const void* key, const void* value);
+WINPR_API BOOL HashTable_Remove(wHashTable* table, const void* key);
 WINPR_API void HashTable_Clear(wHashTable* table);
-WINPR_API BOOL HashTable_Contains(wHashTable* table, void* key);
-WINPR_API BOOL HashTable_ContainsKey(wHashTable* table, void* key);
-WINPR_API BOOL HashTable_ContainsValue(wHashTable* table, void* value);
-WINPR_API void* HashTable_GetItemValue(wHashTable* table, void* key);
-WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value);
-WINPR_API int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys);
-
-WINPR_API UINT32 HashTable_PointerHash(void* pointer);
-WINPR_API BOOL HashTable_PointerCompare(void* pointer1, void* pointer2);
-
-WINPR_API UINT32 HashTable_StringHash(void* key);
-WINPR_API BOOL HashTable_StringCompare(void* string1, void* string2);
-WINPR_API void* HashTable_StringClone(void* str);
-WINPR_API void HashTable_StringFree(void* str);
+WINPR_API BOOL HashTable_Contains(wHashTable* table, const void* key);
+WINPR_API BOOL HashTable_ContainsKey(wHashTable* table, const void* key);
+WINPR_API BOOL HashTable_ContainsValue(wHashTable* table, const void* value);
+WINPR_API void* HashTable_GetItemValue(wHashTable* table, const void* key);
+WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, const void* key, const void* value);
+WINPR_API size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys);
 
 WINPR_API wHashTable* HashTable_New(BOOL synchronized);
 WINPR_API void HashTable_Free(wHashTable* table);
