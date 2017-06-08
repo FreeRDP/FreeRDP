@@ -42,20 +42,20 @@ typedef int (*pRdpClientStop)(rdpContext* context);
 
 struct rdp_client_entry_points_v1
 {
-	DWORD Size;
-	DWORD Version;
+	DWORD Size; /*自身结构的大小2016-11-12 9:58:40*/
+	DWORD Version; /*值是RDP_CLIENT_INTERFACE_VERSION宏 2016-11-12 10:01:16*/
 
 	rdpSettings* settings;
 
-	pRdpGlobalInit GlobalInit;
-	pRdpGlobalUninit GlobalUninit;
+	pRdpGlobalInit GlobalInit;/*初始化本地化的设置和Linux系统的信号量 指向xfreerdp_client_global_init函数 2016-11-12 10:11:50*/
+	pRdpGlobalUninit GlobalUninit;/*最终化函数，当前是空函数 指向xfreerdp_client_global_uninit函数 2016-11-12 10:19:52*/
 
-	DWORD ContextSize;
-	pRdpClientNew ClientNew;
-	pRdpClientFree ClientFree;
+	DWORD ContextSize;/*xfContext结构大小 2016-11-12 10:39:08*/
+	pRdpClientNew ClientNew;/*指向xfreerdp_client_new函数 2016-11-12 10:39:48*/
+	pRdpClientFree ClientFree;/*指向xfreerdp_client_free函数 2016-11-12 10:40:16*/
 
-	pRdpClientStart ClientStart;
-	pRdpClientStop ClientStop;
+	pRdpClientStart ClientStart;/*指向xfreerdp_client_start函数 2016-11-12 10:40:34*/
+	pRdpClientStop ClientStop;/*指向xfreerdp_client_stop函数 2016-11-12 10:40:50*/
 };
 
 #define RDP_CLIENT_INTERFACE_VERSION	1

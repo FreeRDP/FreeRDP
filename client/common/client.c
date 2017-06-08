@@ -58,7 +58,7 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	if (!pEntryPoints)
 		return NULL;
 
-	IFCALL(pEntryPoints->GlobalInit);
+	IFCALL(pEntryPoints->GlobalInit);/*x11上调用xfreerdp_client_global_init函数 2016-11-12 10:43:12*/
 	instance = freerdp_new();
 
 	if (!instance)

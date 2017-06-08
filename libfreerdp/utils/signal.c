@@ -120,7 +120,7 @@ int freerdp_handle_signals(void)
 	{
 		if (sigaction(fatal_signals[signal_index], NULL, &orig_sigaction) == 0)
 		{
-			if (orig_sigaction.sa_handler != SIG_IGN)
+			if (orig_sigaction.sa_handler != SIG_IGN)/*如果fatal_signals中的信号没有被忽略，那么重新设置处理函数为自定义的fatal_handler 2016-11-12 10:18:44*/
 			{
 				sigaction(fatal_signals[signal_index], &fatal_sigaction, NULL);
 			}

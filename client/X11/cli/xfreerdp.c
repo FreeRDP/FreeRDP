@@ -32,6 +32,7 @@
 #include "../xf_client.h"
 #include "../xfreerdp.h"
 
+// Linux 系统xfreerdp程序的主函数 2016-11-12 9:57:50
 int main(int argc, char* argv[])
 {
 	int status;
@@ -46,9 +47,9 @@ int main(int argc, char* argv[])
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 
-	RdpClientEntry(&clientEntryPoints);
+	RdpClientEntry(&clientEntryPoints);/*初始化clientEntryPoints变量，size和version会重新被赋值 2016-11-12 10:03:51*/
 
-	context = freerdp_client_context_new(&clientEntryPoints);
+	context = freerdp_client_context_new(&clientEntryPoints);/*这里是程序的核心初始化过程，初始化关键的数据结构，需要仔细研究 2016-11-12 17:29:13*/
 	if (!context)
 		return 1;
 
