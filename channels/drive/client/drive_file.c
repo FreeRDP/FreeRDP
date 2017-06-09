@@ -718,7 +718,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
                                 const WCHAR* path, UINT32 PathLength, wStream* output)
 {
-	int length;
+	size_t length;
 	WCHAR* ent_path;
 
 	if (!file || !path || !output)
@@ -788,10 +788,10 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwLowDateTime); /* LastWriteTime */
 			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwHighDateTime); /* ChangeTime */
 			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwLowDateTime); /* ChangeTime */
-			Stream_Write_UINT32(output, file->find_data.nFileSizeHigh); /* EndOfFile */
 			Stream_Write_UINT32(output, file->find_data.nFileSizeLow); /* EndOfFile */
-			Stream_Write_UINT32(output, file->find_data.nFileSizeHigh); /* AllocationSize */
+			Stream_Write_UINT32(output, file->find_data.nFileSizeHigh); /* EndOfFile */
 			Stream_Write_UINT32(output, file->find_data.nFileSizeLow); /* AllocationSize */
+			Stream_Write_UINT32(output, file->find_data.nFileSizeHigh); /* AllocationSize */
 			Stream_Write_UINT32(output, file->find_data.dwFileAttributes); /* FileAttributes */
 			Stream_Write_UINT32(output, length); /* FileNameLength */
 			Stream_Write_UINT32(output, 0); /* EaSize */
