@@ -438,10 +438,142 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--plugin <replaceable class="parameter">pluginname</replaceable></term>
+        <term>--plugin <replaceable class="parameter">plugin</replaceable> [--data <replaceable class="parameter">data</replaceable> --]</term>
         <listitem>
           <para>
-            load <replaceable class="parameter">pluginname</replaceable>
+            Load one of the following <replaceable class="parameter">plugin</replaceable>:
+            <variablelist>
+              <varlistentry>
+                <term>cliprdr</term>
+                <listitem>
+                  <para>
+                    Synchronize client and server clipboard data.
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>drdynvc --data <replaceable class="parameter">subplugin</replaceable> [<replaceable class="parameter">subplugin</replaceable> ...] --</term>
+                <listitem>
+                  <para>
+                    Enable multimedia redirection.
+                    The <replaceable class="parameter">subplugin</replaceable> must be one of the following:
+                  </para>
+                  <variablelist>
+                    <varlistentry>
+                      <term>audin</term>
+                      <listitem>
+                        <para>
+                          Redirect audio recording device to the server.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>tsmf</term>
+                      <listitem>
+                        <para>
+                          Enable video redirection. The --plugin rdpsnd needs to be enabled as well.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                  </variablelist>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>rdpsnd [--data [<replaceable class="parameter">subplugin</replaceable>] [latency:<replaceable class="parameter">latency</replaceable>] --]</term>
+                <listitem>
+                  <para>
+                    Enable audio output using one of the following <replaceable class="parameter">subplugin</replaceable> and with a given <replaceable class="parameter">latency</replaceable> in ms:
+                  </para>
+                  <variablelist>
+                    <varlistentry>
+                      <term>alsa</term>
+                      <listitem>
+                        <para>
+                          Use ALSA mixer.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>pulse</term>
+                      <listitem>
+                        <para>
+                          Use PulseAudio mixer.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                  </variablelist>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>rail --data <replaceable class="parameter">executable</replaceable>[:<replaceable class="parameter">workingdir</replaceable>[:<replaceable class="parameter">arguments</replaceable>]] --</term>
+                <listitem>
+                  <para>
+                    Launch one <replaceable class="parameter">executable</replaceable> in a <replaceable class="parameter">workingdir</replaceable> with given <replaceable class="parameter">arguments</replaceable>.
+                    You must use --app before you can use rail.
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>rdpdbg</term>
+                <listitem>
+                  <para>
+                    Enable debugging virtual channel.
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>rdpdr --data <replaceable class="parameter">subplugin</replaceable> [<replaceable class="parameter">subplugin</replaceable> ...] --</term>
+                <listitem>
+                  <para>
+                    Redirect filesystem devices on your client to the server.
+                    If you want any redirection to work with Windows Server 2012 and newer you must use --plugin rdpsnd before you use any rdpdr options.
+                    The <replaceable class="parameter">subplugin</replaceable> must be one of the following:
+                  </para>
+                  <variablelist>
+                    <varlistentry>
+                      <term>drive:<replaceable class="parameter">name</replaceable>:<replaceable class="parameter">path</replaceable></term>
+                      <listitem>
+                        <para>
+                          Redirect system <replaceable class="parameter">path</replaceable> as disk with <replaceable class="parameter">name</replaceable>.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>smartcard[:<replaceable class="parameter">name</replaceable>]</term>
+                      <listitem>
+                        <para>
+                          Redirect smartcard with <replaceable class="parameter">name</replaceable>.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>serial:<replaceable class="parameter">port</replaceable>:<replaceable class="parameter">device</replaceable></term>
+                      <listitem>
+                        <para>
+                          Redirect serial <replaceable class="parameter">device</replaceable> (e.g. /dev/ttyS0) to <replaceable class="parameter">port</replaceable> (e.g. COM0).
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>parallel:<replaceable class="parameter">port</replaceable>:<replaceable class="parameter">device</replaceable></term>
+                      <listitem>
+                        <para>
+                          Redirect parallel <replaceable class="parameter">device</replaceable> (e.g. /dev/lp0) to <replaceable class="parameter">port</replaceable> (e.g. LPT0).
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>printer:<replaceable class="parameter">cupsname</replaceable>:<replaceable class="parameter">drivername</replaceable></term>
+                      <listitem>
+                        <para>
+                          Redirect printer with <replaceable class="parameter">cupsname</replaceable> and <replaceable class="parameter">drivername</replaceable>.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                  </variablelist>
+                </listitem>
+              </varlistentry>
+            </variablelist>
           </para>
         </listitem>
       </varlistentry>
