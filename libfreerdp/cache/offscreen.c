@@ -155,7 +155,7 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 	prevBitmap = offscreenCache->entries[index];
 
 	if (prevBitmap != NULL)
-		prevBitmap->Free(offscreenCache->update->context, prevBitmap);
+		Bitmap_Free(offscreenCache->update->context, prevBitmap);
 
 	offscreenCache->entries[index] = NULL;
 }
