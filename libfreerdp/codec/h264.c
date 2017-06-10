@@ -1711,12 +1711,14 @@ static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData,
 	for (x = 0; x < nrRects; x++)
 	{
 		const RECTANGLE_16* rect = &rects[x];
+		const UINT32 alignedWidth = h264->width + ((h264->width % 16 != 0) ? 16 - h264->width % 16 : 0);
+		const UINT32 alignedHeight = h264->height + ((h264->height % 16 != 0) ? 16 - h264->height % 16 : 0);
 
 		if (!check_rect(h264, rect, nDstWidth, nDstHeight))
 			continue;
 
 		if (prims->YUV420CombineToYUV444(type, ppYUVData, piStride,
-		                                 h264->width, h264->height,
+		                                 alignedWidth, alignedHeight,
 		                                 ppYUVDstData, piDstStride,
 		                                 rect) != PRIMITIVES_SUCCESS)
 			return FALSE;
