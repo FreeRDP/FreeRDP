@@ -85,7 +85,10 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 	if (argc == 1)
 	{
-		status = COMMAND_LINE_STATUS_PRINT_HELP;
+		if (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD)
+			status = 0;
+		else
+			status = COMMAND_LINE_STATUS_PRINT_HELP;
 		return status;
 	}
 
