@@ -1011,7 +1011,7 @@ struct rdp_settings
 	ALIGN64 BOOL RestrictedAdminModeRequired; /* 1097 */
 	ALIGN64 char* AuthenticationServiceClass; /* 1098 */
 	ALIGN64 BOOL DisableCredentialsDelegation; /* 1099 */
-	ALIGN64 BOOL AuthenticationLevel; /* 1100 */
+	ALIGN64 DWORD AuthenticationLevel; /* 1100 */
 	ALIGN64 char* AllowedTlsCiphers; /* 1101 */
 	ALIGN64 BOOL VmConnectMode; /* 1102 */
 	ALIGN64 char* NtlmSamFile; /* 1103 */

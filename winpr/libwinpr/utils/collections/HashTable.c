@@ -33,65 +33,34 @@
  * http://www.pomakis.com/hashtable/hashtable.h
  */
 
-BOOL HashTable_PointerCompare(void* pointer1, void* pointer2)
+static BOOL HashTable_PointerCompare(const void* pointer1, const void* pointer2)
 {
 	return (pointer1 == pointer2);
 }
 
-UINT32 HashTable_PointerHash(void* pointer)
+static UINT32 HashTable_PointerHash(const void* pointer)
 {
 	return ((UINT32) (UINT_PTR) pointer) >> 4;
 }
 
-BOOL HashTable_StringCompare(void* string1, void* string2)
+static BOOL HashTable_IsProbablePrime(size_t oddNumber)
 {
-	if (!string1 || !string2)
-		return (string1 == string2);
-
-	return (strcmp((char*) string1, (char*) string2) == 0);
-}
-
-UINT32 HashTable_StringHash(void* key)
-{
-	UINT32 c;
-	UINT32 hash = 5381;
-	BYTE* str = (BYTE*) key;
-
-	/* djb2 algorithm */
-	while ((c = *str++) != '\0')
-		hash = (hash * 33) + c;
-
-	return hash;
-}
-
-void* HashTable_StringClone(void* str)
-{
-	return _strdup((char*) str);
-}
-
-void HashTable_StringFree(void* str)
-{
-	free(str);
-}
-
-static int HashTable_IsProbablePrime(int oddNumber)
-{
-	int i;
+	size_t i;
 
 	for (i = 3; i < 51; i += 2)
 	{
 		if (oddNumber == i)
-			return 1;
+			return TRUE;
 		else if (oddNumber % i == 0)
-			return 0;
+			return FALSE;
 	}
 
-	return 1; /* maybe */
+	return TRUE; /* maybe */
 }
 
-static long HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
+static size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 {
-	int idealNumOfBuckets = table->numOfElements / ((int) table->idealRatio);
+	size_t idealNumOfBuckets = table->numOfElements / ((size_t) table->idealRatio);
 
 	if (idealNumOfBuckets < 5)
 		idealNumOfBuckets = 5;
@@ -104,9 +73,9 @@ static long HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 	return idealNumOfBuckets;
 }
 
-void HashTable_Rehash(wHashTable* table, int numOfBuckets)
+static void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 {
-	int index;
+	size_t index;
 	UINT32 hashValue;
 	wKeyValuePair* pair;
 	wKeyValuePair* nextPair;
@@ -156,7 +125,7 @@ void HashTable_SetIdealRatio(wHashTable* table, float idealRatio,
 	table->upperRehashThreshold = upperRehashThreshold;
 }
 
-wKeyValuePair* HashTable_Get(wHashTable* table, void* key)
+static wKeyValuePair* HashTable_Get(wHashTable* table, const void* key)
 {
 	UINT32 hashValue;
 	wKeyValuePair* pair;
@@ -184,7 +153,7 @@ wKeyValuePair* HashTable_Get(wHashTable* table, void* key)
  * Gets the number of key/value pairs contained in the HashTable.
  */
 
-int HashTable_Count(wHashTable* table)
+size_t HashTable_Count(wHashTable* table)
 {
 	return table->numOfElements;
 }
@@ -197,31 +166,42 @@ int HashTable_Count(wHashTable* table)
  * Adds an element with the specified key and value into the HashTable.
  */
 
-int HashTable_Add(wHashTable* table, void* key, void* value)
+BOOL HashTable_Add(wHashTable* table, const void* rawKey, const void* rawValue)
 {
-	int status = 0;
+	BOOL status = FALSE;
 	UINT32 hashValue;
 	wKeyValuePair* pair;
-	wKeyValuePair* newPair;
+	void* clonedKey = NULL;
+	void* clonedValue = NULL;
+	void* key;
+	void* value;
 
-	if (!key || !value)
-		return -1;
+	if (!rawKey || !rawValue)
+		return FALSE;
 
 	if (table->keyClone)
 	{
-		key = table->keyClone(key);
+		clonedKey = table->keyClone(rawKey);
 
-		if (!key)
-			return -1;
+		if (!clonedKey)
+			goto fail;
+
+		key = clonedKey;
 	}
+	else
+		key = (void*)rawKey;
 
 	if (table->valueClone)
 	{
-		value = table->valueClone(value);
+		clonedValue = table->valueClone(rawValue);
 
-		if (!value)
-			return -1;
+		if (!clonedValue)
+			goto fail;
+
+		value = clonedValue;
 	}
+	else
+		value = (void*)rawValue;
 
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
@@ -250,13 +230,9 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 	}
 	else
 	{
-		newPair = (wKeyValuePair*) malloc(sizeof(wKeyValuePair));
+		wKeyValuePair* newPair = (wKeyValuePair*) malloc(sizeof(wKeyValuePair));
 
-		if (!newPair)
-		{
-			status = -1;
-		}
-		else
+		if (newPair)
 		{
 			newPair->key = key;
 			newPair->value = value;
@@ -266,25 +242,33 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 
 			if (table->upperRehashThreshold > table->idealRatio)
 			{
-				float elementToBucketRatio = (float) table->numOfElements / (float) table->numOfBuckets;
+				const float elementToBucketRatio = (float) table->numOfElements / (float) table->numOfBuckets;
 
 				if (elementToBucketRatio > table->upperRehashThreshold)
 					HashTable_Rehash(table, 0);
 			}
 		}
+
+		status = TRUE;
 	}
 
 	if (table->synchronized)
 		LeaveCriticalSection(&table->lock);
 
 	return status;
+
+fail:
+	free(clonedKey);
+	free(clonedValue);
+
+	return FALSE;
 }
 
 /**
  * Removes the element with the specified key from the HashTable.
  */
 
-BOOL HashTable_Remove(wHashTable* table, void* key)
+BOOL HashTable_Remove(wHashTable* table, const void* key)
 {
 	UINT32 hashValue;
 	BOOL status = TRUE;
@@ -305,9 +289,7 @@ BOOL HashTable_Remove(wHashTable* table, void* key)
 	}
 
 	if (!pair)
-	{
 		status = FALSE;
-	}
 	else
 	{
 		if (table->keyFree)
@@ -327,7 +309,7 @@ BOOL HashTable_Remove(wHashTable* table, void* key)
 
 		if (table->lowerRehashThreshold > 0.0)
 		{
-			float elementToBucketRatio = (float) table->numOfElements / (float) table->numOfBuckets;
+			const float elementToBucketRatio = (float) table->numOfElements / (float) table->numOfBuckets;
 
 			if (elementToBucketRatio < table->lowerRehashThreshold)
 				HashTable_Rehash(table, 0);
@@ -344,7 +326,7 @@ BOOL HashTable_Remove(wHashTable* table, void* key)
  * Get an item value using key
  */
 
-void* HashTable_GetItemValue(wHashTable* table, void* key)
+void* HashTable_GetItemValue(wHashTable* table, const void* key)
 {
 	void* value = NULL;
 	wKeyValuePair* pair;
@@ -367,7 +349,7 @@ void* HashTable_GetItemValue(wHashTable* table, void* key)
  * Set an item value using key
  */
 
-BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value)
+BOOL HashTable_SetItemValue(wHashTable* table, const void* key, const void* value)
 {
 	BOOL status = TRUE;
 	wKeyValuePair* pair;
@@ -388,7 +370,7 @@ BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value)
 	if (!pair)
 		status = FALSE;
 	else
-		pair->value = value;
+		pair->value = (void*)value;
 
 	if (table->synchronized)
 		LeaveCriticalSection(&table->lock);
@@ -442,7 +424,7 @@ void HashTable_Clear(wHashTable* table)
  * Gets the list of keys as an array
  */
 
-int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
+size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 {
 	int iKey;
 	int count;
@@ -501,7 +483,7 @@ int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
  * Determines whether the HashTable contains a specific key.
  */
 
-BOOL HashTable_Contains(wHashTable* table, void* key)
+BOOL HashTable_Contains(wHashTable* table, const void* key)
 {
 	BOOL status;
 
@@ -520,7 +502,7 @@ BOOL HashTable_Contains(wHashTable* table, void* key)
  * Determines whether the HashTable contains a specific key.
  */
 
-BOOL HashTable_ContainsKey(wHashTable* table, void* key)
+BOOL HashTable_ContainsKey(wHashTable* table, const void* key)
 {
 	BOOL status;
 
@@ -539,7 +521,7 @@ BOOL HashTable_ContainsKey(wHashTable* table, void* key)
  * Determines whether the HashTable contains a specific value.
  */
 
-BOOL HashTable_ContainsValue(wHashTable* table, void* value)
+BOOL HashTable_ContainsValue(wHashTable* table, const void* value)
 {
 	int index;
 	BOOL status = FALSE;

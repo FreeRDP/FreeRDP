@@ -753,8 +753,10 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 			return FALSE;
 		}
 
-		avc420_compress(encoder->h264, pSrcData, cmd.format, nSrcStep,
-		                nWidth, nHeight, &avc420.data, &avc420.length);
+		if (avc420_compress(encoder->h264, pSrcData, cmd.format, nSrcStep,
+		                nWidth, nHeight, &avc420.data, &avc420.length) < 0)
+			return FALSE;
+
 		cmd.codecId = RDPGFX_CODECID_AVC420;
 		cmd.extra = (void*)&avc420;
 		regionRect.left = cmd.left;
