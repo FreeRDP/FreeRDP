@@ -226,6 +226,7 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 		}
 	}
 
+	free(pKeys);
 	region16_uninit(&windowInvalidRegion);
 }
 
