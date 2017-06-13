@@ -938,6 +938,7 @@ HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 		}
 	}
 
+	free(fd);
 	return h;
 }
 
