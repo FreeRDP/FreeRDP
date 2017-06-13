@@ -2140,6 +2140,7 @@ void update_free(rdpUpdate* update)
 		free(update->secondary);
 		free(update->altsec);
 		free(update->window->monitored_desktop.windowIds);
+		free(update->window->window_state.titleInfo.string);
 		free(update->window);
 		MessageQueue_Free(update->queue);
 		free(update);
