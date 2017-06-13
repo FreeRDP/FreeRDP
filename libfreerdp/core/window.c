@@ -352,6 +352,14 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 BOOL update_read_window_icon_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
 {
+	if (window_icon->iconInfo)
+	{
+		free(window_icon->iconInfo->bitsColor);
+		free(window_icon->iconInfo->bitsMask);
+		free(window_icon->iconInfo->colorTable);
+		free(window_icon->iconInfo);
+	}
+
 	window_icon->iconInfo = (ICON_INFO*) calloc(1, sizeof(ICON_INFO));
 	if (!window_icon->iconInfo)
 		return FALSE;

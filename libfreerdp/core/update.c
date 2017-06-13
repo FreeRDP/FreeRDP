@@ -2143,6 +2143,13 @@ void update_free(rdpUpdate* update)
 		free(update->window->window_state.titleInfo.string);
 		free(update->window->window_state.windowRects);
 		free(update->window->window_state.visibilityRects);
+		if (update->window->window_icon.iconInfo)
+		{
+			free(update->window->window_icon.iconInfo->bitsColor);
+			free(update->window->window_icon.iconInfo->bitsMask);
+			free(update->window->window_icon.iconInfo->colorTable);
+			free(update->window->window_icon.iconInfo);
+		}
 		free(update->window);
 		MessageQueue_Free(update->queue);
 		free(update);
