@@ -122,7 +122,11 @@ static UINT rail_client_execute(RailClientContext* context,
 	                              &exec->workingDir); /* ShellWorkingDirectory */
 	rail_string_to_unicode_string(exec->RemoteApplicationArguments,
 	                              &exec->arguments); /* RemoteApplicationCmdLine */
-	return rail_send_client_exec_order(rail, exec);
+	UINT ret = rail_send_client_exec_order(rail, exec);
+	free(exec->exeOrFile.string);
+	free(exec->workingDir.string);
+	free(exec->arguments.string);
+	return ret;
 }
 
 /**
