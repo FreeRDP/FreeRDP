@@ -367,24 +367,25 @@ void mf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	float width, height;
-	
+
 	CGWheelCount wheelCount = 2;
-	UINT32 scroll_x = 0;
-	UINT32 scroll_y = 0;
-	
-	if (flags & PTR_FLAGS_WHEEL)
+	INT32 scroll_x = 0;
+	INT32 scroll_y = 0;
+
+	if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 	{
-		scroll_y = flags & WheelRotationMask;
-		
+		INT32 scroll = flags & WheelRotationMask;
+
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-		{
-			scroll_y = -(flags & WheelRotationMask) / 392;
-		}
+			scroll = -(flags & WheelRotationMask) / 392;
 		else
-		{
-			scroll_y = (flags & WheelRotationMask) / 120;
-		}
-		
+			scroll = (flags & WheelRotationMask) / 120;
+
+		if (flags & PTR_FLAGS_WHEEL)
+			scroll_y = scroll;
+		else
+			scroll_x = scroll;
+
 		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
 		CGEventRef scroll = CGEventCreateScrollWheelEvent(source,
 								  kCGScrollEventUnitLine,
@@ -392,21 +393,21 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 								  scroll_y,
 								  scroll_x);
 		CGEventPost(kCGHIDEventTap, scroll);
-		
+
 		CFRelease(scroll);
 		CFRelease(source);
 	}
 	else
 	{
-		
+
 		mfInfo * mfi;
 		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
 		CGEventType mouseType = kCGEventNull;
 		CGMouseButton mouseButton = kCGMouseButtonLeft;
-		
-		
+
+
 		mfi = mf_info_get_instance();
-		
+
 		//width and height of primary screen (even in multimon setups
 		width = (float) mfi->servscreen_width;
 		height = (float) mfi->servscreen_height;
