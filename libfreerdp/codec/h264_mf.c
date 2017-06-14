@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
 
 #include <ks.h>
@@ -30,6 +31,10 @@
 #undef DEFINE_GUID
 #define INITGUID
 #include <initguid.h>
+
+#define TAG FREERDP_TAG("codec")
+
+BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height);
 
 DEFINE_GUID(CLSID_CMSH264DecoderMFT, 0x62CE7E72, 0x4C71, 0x4d20, 0xB1, 0x5D,
             0x45, 0x28, 0x31, 0xA8, 0x7D, 0x9D);

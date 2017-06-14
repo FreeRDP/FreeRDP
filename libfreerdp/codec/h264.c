@@ -67,7 +67,7 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_dummy =
 	dummy_compress
 };
 
-static BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
+BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
 {
 	if (!h264)
 		return FALSE;
@@ -444,13 +444,16 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
 static INIT_ONCE subsystems_once = INIT_ONCE_STATIC_INIT;
 static H264_CONTEXT_SUBSYSTEM *subSystems[MAX_SUBSYSTEMS];
 
+#if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
+extern H264_CONTEXT_SUBSYSTEM g_Subsystem_MF;
+#endif
+
 static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOID *context) {
-	ZeroMemory(subSystems, sizeof(subSystems));
 	int i = 0;
+	ZeroMemory(subSystems, sizeof(subSystems));
 
 #if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
-	extern H264_CONTEXT_SUBSYSTEM g_Subsystem_MF;
-	subSystems[i] = &g_Subsystem_MF
+	subSystems[i] = &g_Subsystem_MF;
 	i++;
 #endif
 
@@ -479,9 +482,11 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 
 BOOL h264_context_init(H264_CONTEXT* h264)
 {
+	int i;
+
 	InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, NULL, NULL);
 
-	for (int i = 0; i < MAX_SUBSYSTEMS; i++)
+	for (i = 0; i < MAX_SUBSYSTEMS; i++)
 	{
 		if (subSystems[i]->Init(h264))
 		{
