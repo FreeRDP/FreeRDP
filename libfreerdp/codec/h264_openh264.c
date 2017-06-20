@@ -18,6 +18,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
 
 #include "wels/codec_def.h"
