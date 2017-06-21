@@ -2041,6 +2041,13 @@ static void update_free_queued_message(void* obj)
 	update_message_queue_free_message(msg);
 }
 
+static void update_free_window_state(WINDOW_STATE_ORDER window_state)
+{
+	free(window_state.titleInfo.string);
+	free(window_state.windowRects);
+	free(window_state.visibilityRects);
+}
+
 rdpUpdate* update_new(rdpRdp* rdp)
 {
 	const wObject cb = { NULL, NULL, NULL,  update_free_queued_message, NULL };
@@ -2140,15 +2147,10 @@ void update_free(rdpUpdate* update)
 		free(update->secondary);
 		free(update->altsec);
 		free(update->window->monitored_desktop.windowIds);
-		free(update->window->window_state.titleInfo.string);
-		free(update->window->window_state.windowRects);
-		free(update->window->window_state.visibilityRects);
+		update_free_window_state(update->window->window_state);
 		if (update->window->window_icon.iconInfo)
 		{
-			free(update->window->window_icon.iconInfo->bitsColor);
-			free(update->window->window_icon.iconInfo->bitsMask);
-			free(update->window->window_icon.iconInfo->colorTable);
-			free(update->window->window_icon.iconInfo);
+			update_free_window_icon_info(update->window->window_icon.iconInfo);
 		}
 		free(update->window);
 		MessageQueue_Free(update->queue);

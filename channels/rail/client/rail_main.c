@@ -92,6 +92,17 @@ UINT rail_send_channel_data(railPlugin* rail, void* data, size_t length)
 }
 
 /**
+ * used by rail_client_execute() to free RAIL_EXEC_ORDER's
+ * internal malloced memory;
+ */
+static void rail_client_clean_exec_order(RAIL_EXEC_ORDER* exec)
+{
+	free(exec->exeOrFile.string);
+	free(exec->workingDir.string);
+	free(exec->arguments.string);
+}
+
+/**
  * Callback Interface
  */
 
@@ -124,9 +135,7 @@ static UINT rail_client_execute(RailClientContext* context,
 	rail_string_to_unicode_string(exec->RemoteApplicationArguments,
 	                              &exec->arguments); /* RemoteApplicationCmdLine */
 	error = rail_send_client_exec_order(rail, exec);
-	free(exec->exeOrFile.string);
-	free(exec->workingDir.string);
-	free(exec->arguments.string);
+	rail_client_clean_exec_order(exec);
 	return error;
 }
 
