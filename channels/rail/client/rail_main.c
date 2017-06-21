@@ -104,6 +104,7 @@ static UINT rail_client_execute(RailClientContext* context,
                                 RAIL_EXEC_ORDER* exec)
 {
 	char* exeOrFile;
+	UINT error;
 	railPlugin* rail = (railPlugin*) context->handle;
 	exeOrFile = exec->RemoteApplicationProgram;
 
@@ -122,11 +123,11 @@ static UINT rail_client_execute(RailClientContext* context,
 	                              &exec->workingDir); /* ShellWorkingDirectory */
 	rail_string_to_unicode_string(exec->RemoteApplicationArguments,
 	                              &exec->arguments); /* RemoteApplicationCmdLine */
-	UINT ret = rail_send_client_exec_order(rail, exec);
+	error = rail_send_client_exec_order(rail, exec);
 	free(exec->exeOrFile.string);
 	free(exec->workingDir.string);
 	free(exec->arguments.string);
-	return ret;
+	return error;
 }
 
 /**
