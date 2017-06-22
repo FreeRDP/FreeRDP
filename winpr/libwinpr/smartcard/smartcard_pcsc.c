@@ -787,14 +787,14 @@ int PCSC_RedirectReader(char* readerName)
 
 char* PCSC_ConvertReaderNamesToWinSCard(const char* names, LPDWORD pcchReaders)
 {
-	int ret=0;
+	int ret = 0;
 	int length;
 	char* p, *q;
 	DWORD cchReaders;
 	char* nameWinSCard;
 	char* namesWinSCard;
 	BOOL endReaderName = FALSE;
-	BOOL allReaders=FALSE;
+	BOOL allReaders = FALSE;
 	p = (char*) names;
 	cchReaders = *pcchReaders;
 	namesWinSCard = (char*) malloc(cchReaders * 2);
@@ -812,14 +812,14 @@ char* PCSC_ConvertReaderNamesToWinSCard(const char* names, LPDWORD pcchReaders)
 		if (nameWinSCard)
 		{
 			length = strlen(nameWinSCard);
-
 			ret = PCSC_RedirectReader(nameWinSCard);
-			if ( ret == 1 )
+
+			if (ret == 1)
 			{
 				CopyMemory(q, nameWinSCard, length);
 				endReaderName = TRUE;
 			}
-			else if( ret == 2 )
+			else if (ret == 2)
 			{
 				CopyMemory(q, nameWinSCard, length);
 				allReaders = TRUE;
