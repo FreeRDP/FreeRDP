@@ -364,6 +364,7 @@ BOOL update_read_window_icon_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WIN
 	if (window_icon->iconInfo)
 	{
 		update_free_window_icon_info(window_icon->iconInfo);
+		window_icon->iconInfo = NULL;
 	}
 
 	window_icon->iconInfo = (ICON_INFO*) calloc(1, sizeof(ICON_INFO));
@@ -599,9 +600,24 @@ BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_
 
 void update_free_window_icon_info(ICON_INFO* iconInfo)
 {
-	free(iconInfo->bitsColor);
-	free(iconInfo->bitsMask);
-	free(iconInfo->colorTable);
+    if (iconInfo->bitsColor)
+    {
+        free(iconInfo->bitsColor);
+        iconInfo->bitsColor = NULL;
+    }
+
+    if (iconInfo->bitsMask)
+    {
+        free(iconInfo->bitsMask);
+        iconInfo->bitsMask = NULL;
+    }
+
+    if (iconInfo->colorTable)
+    {
+        free(iconInfo->colorTable);
+        iconInfo->colorTable = NULL;
+    }
+
 	free(iconInfo);
 }
 

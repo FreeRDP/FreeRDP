@@ -2041,11 +2041,28 @@ static void update_free_queued_message(void* obj)
 	update_message_queue_free_message(msg);
 }
 
-static void update_free_window_state(WINDOW_STATE_ORDER window_state)
+static void update_free_window_state(WINDOW_STATE_ORDER* window_state)
 {
-	free(window_state.titleInfo.string);
-	free(window_state.windowRects);
-	free(window_state.visibilityRects);
+    if (!window_state)
+        return;
+
+    if (window_state->titleInfo.string)
+    {
+        free(window_state->titleInfo.string);
+        window_state->titleInfo.string = NULL;
+    }
+
+    if (window_state->windowRects)
+    {
+        free(window_state->windowRects);
+        window_state->windowRects = NULL;
+    }
+
+    if (window_state->visibilityRects)
+    {
+        free(window_state->visibilityRects);
+        window_state->visibilityRects = NULL;
+    }
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)
@@ -2147,10 +2164,11 @@ void update_free(rdpUpdate* update)
 		free(update->secondary);
 		free(update->altsec);
 		free(update->window->monitored_desktop.windowIds);
-		update_free_window_state(update->window->window_state);
+		update_free_window_state(&update->window->window_state);
 		if (update->window->window_icon.iconInfo)
 		{
 			update_free_window_icon_info(update->window->window_icon.iconInfo);
+			update->window->window_icon.iconInfo = NULL;
 		}
 		free(update->window);
 		MessageQueue_Free(update->queue);
