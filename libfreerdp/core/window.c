@@ -194,6 +194,7 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 {
 	int i;
 	int size;
+	RECTANGLE_16* newRect;
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 	{
@@ -294,11 +295,15 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 		Stream_Read_UINT16(s, windowState->numWindowRects); /* numWindowRects (2 bytes) */
 
-		free(windowState->windowRects);
 		size = sizeof(RECTANGLE_16) * windowState->numWindowRects;
-		windowState->windowRects = (RECTANGLE_16*) malloc(size);
-		if (!windowState->windowRects)
+		newRect = (RECTANGLE_16*)realloc(windowState->windowRects, size);
+		if (!newRect)
+		{
+			free(windowState->windowRects);
+			windowState->windowRects = NULL;
 			return FALSE;
+		}
+		windowState->windowRects = newRect;
 
 		if (Stream_GetRemainingLength(s) < 8 * windowState->numWindowRects)
 			return FALSE;
@@ -329,11 +334,15 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 		Stream_Read_UINT16(s, windowState->numVisibilityRects); /* numVisibilityRects (2 bytes) */
 
-		free(windowState->visibilityRects);
 		size = sizeof(RECTANGLE_16) * windowState->numVisibilityRects;
-		windowState->visibilityRects = (RECTANGLE_16*) malloc(size);
-		if (!windowState->visibilityRects)
+		newRect = (RECTANGLE_16*)realloc(windowState->visibilityRects, size);
+		if (!newRect)
+		{
+			free(windowState->visibilityRects);
+			windowState->visibilityRects = NULL;
 			return FALSE;
+		}
+		windowState->visibilityRects = newRect;
 
 		if (Stream_GetRemainingLength(s) < windowState->numVisibilityRects * 8)
 			return FALSE;

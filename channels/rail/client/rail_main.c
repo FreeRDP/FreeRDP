@@ -628,13 +628,13 @@ static void* rail_virtual_channel_client_thread(void* arg)
 		{
 			data = (wStream*) message.wParam;
 
-			if ((error = rail_order_recv(rail, data)))
+			error = rail_order_recv(rail, data);
+			Stream_Free(data, TRUE);
+			if (error)
 			{
-				Stream_Free(data, TRUE);
 				WLog_ERR(TAG, "rail_order_recv failed with error %"PRIu32"!", error);
 				break;
 			}
-			Stream_Free(data, TRUE);
 		}
 	}
 
