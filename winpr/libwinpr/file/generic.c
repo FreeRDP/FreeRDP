@@ -933,11 +933,13 @@ HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 		if (!ConvertFindDataAToW(fd, lpFindFileData))
 		{
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-			free(fd);
-			return INVALID_HANDLE_VALUE;
+			h = INVALID_HANDLE_VALUE;
+			goto out;
 		}
 	}
 
+out:
+	free(fd);
 	return h;
 }
 

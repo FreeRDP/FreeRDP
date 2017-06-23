@@ -27,6 +27,7 @@
 #include <freerdp/log.h>
 #include <freerdp/api.h>
 
+FREERDP_LOCAL void update_free_window_icon_info(ICON_INFO* iconInfo);
 FREERDP_LOCAL BOOL update_recv_altsec_window_order(rdpUpdate* update,
         wStream* s);
 

@@ -757,6 +757,7 @@ static UINT drive_free(DEVICE* device)
 	ListDictionary_Free(drive->files);
 	MessageQueue_Free(drive->IrpQueue);
 	Stream_Free(drive->device.data, TRUE);
+	free(drive->path);
 	free(drive);
 	return error;
 }
@@ -865,9 +866,7 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 
 	return CHANNEL_RC_OK;
 out_error:
-	MessageQueue_Free(drive->IrpQueue);
-	ListDictionary_Free(drive->files);
-	free(drive);
+	drive_free(drive);
 	return error;
 }
 
