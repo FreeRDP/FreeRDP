@@ -600,23 +600,17 @@ BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_
 
 void update_free_window_icon_info(ICON_INFO* iconInfo)
 {
-    if (iconInfo->bitsColor)
-    {
-        free(iconInfo->bitsColor);
-        iconInfo->bitsColor = NULL;
-    }
+    if (!iconInfo)
+        return;
 
-    if (iconInfo->bitsMask)
-    {
-        free(iconInfo->bitsMask);
-        iconInfo->bitsMask = NULL;
-    }
+    free(iconInfo->bitsColor);
+    iconInfo->bitsColor = NULL;
 
-    if (iconInfo->colorTable)
-    {
-        free(iconInfo->colorTable);
-        iconInfo->colorTable = NULL;
-    }
+    free(iconInfo->bitsMask);
+    iconInfo->bitsMask = NULL;
+
+    free(iconInfo->colorTable);
+    iconInfo->colorTable = NULL;
 
 	free(iconInfo);
 }

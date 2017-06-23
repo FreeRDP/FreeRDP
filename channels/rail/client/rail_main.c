@@ -100,23 +100,14 @@ static void rail_client_clean_exec_order(RAIL_EXEC_ORDER* exec)
     if (!exec)
         return;
 
-    if (exec->exeOrFile.string)
-    {
-    	free(exec->exeOrFile.string);
-    	exec->exeOrFile.string = NULL;
-    }
+    free(exec->exeOrFile.string);
+    exec->exeOrFile.string = NULL;
 
-    if (exec->workingDir.string)
-    {
-		free(exec->workingDir.string);
-		exec->workingDir.string = NULL;
-    }
+    free(exec->workingDir.string);
+    exec->workingDir.string = NULL;
 
-    if (exec->arguments.string)
-    {
-		free(exec->arguments.string);
-		exec->arguments.string = NULL;
-    }
+    free(exec->arguments.string);
+    exec->arguments.string = NULL;
 }
 
 /**

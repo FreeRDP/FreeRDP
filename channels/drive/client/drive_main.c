@@ -869,7 +869,6 @@ out_error:
 	MessageQueue_Free(drive->IrpQueue);
 	ListDictionary_Free(drive->files);
 	drive_free(drive);
-	free(drive);
 	return error;
 }
 
