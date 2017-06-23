@@ -866,8 +866,6 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 
 	return CHANNEL_RC_OK;
 out_error:
-	MessageQueue_Free(drive->IrpQueue);
-	ListDictionary_Free(drive->files);
 	drive_free(drive);
 	return error;
 }
