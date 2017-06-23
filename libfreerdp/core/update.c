@@ -2156,7 +2156,7 @@ void update_free(rdpUpdate* update)
 		free(update->altsec);
 		free(update->window->monitored_desktop.windowIds);
 		update_free_window_state(&update->window->window_state);
-        update_free_window_icon_info(update->window->window_icon.iconInfo);
+		update_free_window_icon_info(update->window->window_icon.iconInfo);
 		free(update->window);
 		MessageQueue_Free(update->queue);
 		free(update);
