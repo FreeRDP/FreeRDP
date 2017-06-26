@@ -179,6 +179,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "sound", COMMAND_LINE_VALUE_OPTIONAL, "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>,][latency:<latency>,][quality:<quality>]", NULL, NULL, -1, "audio", "Audio output (sound)" },
 	{ "span", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Span screen over multiple monitors" },
 	{ "spn-class", COMMAND_LINE_VALUE_REQUIRED, "<service-class>", NULL, NULL, -1, NULL, "SPN authentication service class" },
+	{ "ssh-agent", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "ssh-agent", "SSH Agent forwarding channel" },
 	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "Window title" },
 	{ "themes", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable themes" },
 	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, "netmon|ma|ciphers", NULL, NULL, -1, NULL, "Allowed TLS ciphers" },
@@ -927,6 +928,10 @@ static int freerdp_client_command_line_post_filter(void* context,
 	CommandLineSwitchCase(arg, "echo")
 	{
 		settings->SupportEchoChannel = TRUE;
+	}
+	CommandLineSwitchCase(arg, "ssh-agent")
+	{
+		settings->SupportSSHAgentChannel = TRUE;
 	}
 	CommandLineSwitchCase(arg, "disp")
 	{
@@ -2899,6 +2904,17 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		int count;
 		count = 1;
 		p[0] = "echo";
+
+		if (!freerdp_client_add_dynamic_channel(settings, count, p))
+			return FALSE;
+	}
+
+	if (settings->SupportSSHAgentChannel)
+	{
+		char* p[1];
+		int count;
+		count = 1;
+		p[0] = "sshagent";
 
 		if (!freerdp_client_add_dynamic_channel(settings, count, p))
 			return FALSE;
