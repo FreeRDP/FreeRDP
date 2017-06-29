@@ -165,21 +165,28 @@ if(WITH_JPEG)
 endif()
 
 if(WITH_X264)
+	set(CODEC_SRCS ${CODEC_SRCS} codec/h264_x264.c)
 	freerdp_definition_add(-DWITH_X264)
 	freerdp_include_directory_add(${X264_INCLUDE_DIR})
 	freerdp_library_add(${X264_LIBRARIES})
 endif()
 
 if(WITH_OPENH264)
+	set(CODEC_SRCS ${CODEC_SRCS} codec/h264_openh264.c)
 	freerdp_definition_add(-DWITH_OPENH264)
 	freerdp_include_directory_add(${OPENH264_INCLUDE_DIR})
 	freerdp_library_add(${OPENH264_LIBRARIES})
 endif()
 
 if(WITH_FFMPEG)
+	set(CODEC_SRCS ${CODEC_SRCS} codec/h264_ffmpeg.c)
 	freerdp_definition_add(-DWITH_LIBAVCODEC)
 	freerdp_include_directory_add(${FFMPEG_INCLUDE_DIRS})
 	freerdp_library_add(${FFMPEG_LIBRARIES})
+endif()
+
+if(WIN32 AND WITH_MEDIA_FOUNDATION)
+	set(CODEC_SRCS ${CODEC_SRCS} codec/h264_mf.c)
 endif()
 
 freerdp_module_add(${CODEC_SRCS})
