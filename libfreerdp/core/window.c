@@ -295,6 +295,10 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 		Stream_Read_UINT16(s, windowState->numWindowRects); /* numWindowRects (2 bytes) */
 
+		if (windowState->numWindowRects == 0) {
+			return TRUE;
+		}
+
 		size = sizeof(RECTANGLE_16) * windowState->numWindowRects;
 		newRect = (RECTANGLE_16*)realloc(windowState->windowRects, size);
 		if (!newRect)
@@ -334,6 +338,9 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 		Stream_Read_UINT16(s, windowState->numVisibilityRects); /* numVisibilityRects (2 bytes) */
 
+		if (windowState->numVisibilityRects == 0) {
+			return TRUE;
+		}
 		size = sizeof(RECTANGLE_16) * windowState->numVisibilityRects;
 		newRect = (RECTANGLE_16*)realloc(windowState->visibilityRects, size);
 		if (!newRect)
