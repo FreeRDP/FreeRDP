@@ -32,6 +32,10 @@
 
 #include "kerberos.h"
 
+#ifdef WITH_GSSAPI_HEIMDAL
+#include <krb5-protos.h>
+#endif
+
 #include "../sspi.h"
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.Kerberos")
@@ -285,6 +289,8 @@ int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, size_t p
 	char* lusername = NULL;
 	char* lrealm = NULL;
 	char* lpassword = NULL;
+	int flags = 0;
+	char* pstr = NULL;
 	size_t krb_name_len = 0;
 	size_t lrealm_len = 0;
 	size_t lusername_len = 0;
@@ -341,7 +347,14 @@ int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, size_t p
 #ifdef WITH_DEBUG_NLA
 	WLog_DBG(TAG, "copied string is %s\n", krb_name);
 #endif
-	ret = krb5_parse_name(ctx, krb_name, &principal);
+	pstr = strchr(lusername, '@');
+
+	if (pstr != NULL)
+		flags = KRB5_PRINCIPAL_PARSE_ENTERPRISE;
+
+	/* Use the specified principal name. */
+	ret = krb5_parse_name_flags(ctx, krb_name, flags,
+	                            &principal);
 
 	if (ret)
 	{
@@ -439,9 +452,8 @@ SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle phCred
 				               context->credentials->identity.Password,
 				               context->credentials->identity.PasswordLength))
 					return SEC_E_NO_CREDENTIALS;
-				else
-					WLog_INFO(TAG, "Authenticated to Kerberos v5 via login/password");
 
+				WLog_INFO(TAG, "Authenticated to Kerberos v5 via login/password");
 				/* retry GSSAPI call */
 				context->major_status = sspi_gss_init_sec_context(&(context->minor_status),
 				                        context->cred, &(context->gss_ctx), context->target_name,
@@ -452,6 +464,7 @@ SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle phCred
 				if (SSPI_GSS_ERROR(context->major_status))
 				{
 					/* We can't use Kerberos */
+					WLog_ERR(TAG, "Init GSS security context failed : can't use Kerberos");
 					return SEC_E_INTERNAL_ERROR;
 				}
 			}

@@ -43,6 +43,36 @@ static BOOL ErrorInitContextKerberos = FALSE;
 static BOOL ErrorInitContextKerberos = TRUE;
 #endif
 
+const SecPkgInfoA NEGOTIATE_SecPkgInfoA =
+{
+	0x00083BB3, /* fCapabilities */
+	1, /* wVersion */
+	0x0009, /* wRPCID */
+	0x00002FE0, /* cbMaxToken */
+	"Negotiate", /* Name */
+	"Microsoft Package Negotiator" /* Comment */
+};
+
+WCHAR NEGOTIATE_SecPkgInfoW_Name[] = { 'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', '\0' };
+
+WCHAR NEGOTIATE_SecPkgInfoW_Comment[] =
+{
+	'M', 'i', 'c', 'r', 'o', 's', 'o', 'f', 't', ' ',
+	'P', 'a', 'c', 'k', 'a', 'g', 'e', ' ',
+	'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'o', 'r', '\0'
+};
+
+const SecPkgInfoW NEGOTIATE_SecPkgInfoW =
+{
+	0x00083BB3, /* fCapabilities */
+	1, /* wVersion */
+	0x0009, /* wRPCID */
+	0x00002FE0, /* cbMaxToken */
+	NEGOTIATE_SecPkgInfoW_Name, /* Name */
+	NEGOTIATE_SecPkgInfoW_Comment /* Comment */
+};
+
+
 void negotiate_SetSubPackage(NEGOTIATE_CONTEXT* context, const char* name)
 {
 	if (strcmp(name, KERBEROS_SSP_NAME) == 0)
@@ -73,7 +103,7 @@ NEGOTIATE_CONTEXT* negotiate_ContextNew()
 	context->NegotiateFlags = 0;
 	context->state = NEGOTIATE_STATE_INITIAL;
 	SecInvalidateHandle(&(context->SubContext));
-	negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
+	negotiate_SetSubPackage(context, (const char*) KERBEROS_SSP_NAME);
 	return context;
 }
 
@@ -100,7 +130,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(PCredHandle phCre
 			return SEC_E_INTERNAL_ERROR;
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
-		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NEGOSSP_NAME);
+		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NEGO_SSP_NAME);
 	}
 
 	/* if Kerberos has previously failed or WITH_GSSAPI is not defined, we use NTLM directly */
@@ -108,7 +138,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(PCredHandle phCre
 	{
 		if (!pInput)
 		{
-			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
+			negotiate_SetSubPackage(context, (const char*) KERBEROS_SSP_NAME);
 		}
 
 		status = context->sspiW->InitializeSecurityContextW(phCredential, &(context->SubContext),
@@ -129,7 +159,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(PCredHandle phCre
 		if (!pInput)
 		{
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_SetSubPackage(context, NTLMSSP_NAME);
+			negotiate_SetSubPackage(context, (const char*) NTLM_SSP_NAME);
 		}
 
 		status = context->sspiW->InitializeSecurityContextW(phCredential, &(context->SubContext),
@@ -158,7 +188,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(PCredHandle phCre
 			return SEC_E_INTERNAL_ERROR;
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
-		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NEGOSSP_NAME);
+		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NEGO_SSP_NAME);
 	}
 
 	/* if Kerberos has previously failed or WITH_GSSAPI is not defined, we use NTLM directly */
@@ -166,7 +196,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(PCredHandle phCre
 	{
 		if (!pInput)
 		{
-			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
+			negotiate_SetSubPackage(context, (const char*) KERBEROS_SSP_NAME);
 		}
 
 		status = context->sspiA->InitializeSecurityContextA(phCredential, &(context->SubContext),
@@ -187,7 +217,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(PCredHandle phCre
 		if (!pInput)
 		{
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_SetSubPackage(context, NTLMSSP_NAME);
+			negotiate_SetSubPackage(context, (const char*) NTLM_SSP_NAME);
 		}
 
 		status = context->sspiA->InitializeSecurityContextA(phCredential, &(context->SubContext),
@@ -215,10 +245,11 @@ SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(PCredHandle phCredenti
 			return SEC_E_INTERNAL_ERROR;
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
-		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NEGOSSP_NAME);
+		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NEGO_SSP_NAME);
 	}
 
-	negotiate_SetSubPackage(context, NTLMSSP_NAME); /* server-side Kerberos not yet implemented */
+	negotiate_SetSubPackage(context,
+	                        (const char*) NTLM_SSP_NAME); /* server-side Kerberos not yet implemented */
 	status = context->sspiA->AcceptSecurityContext(phCredential, &(context->SubContext),
 	         pInput, fContextReq, TargetDataRep, &(context->SubContext),
 	         pOutput, pfContextAttr, ptsTimeStamp);
@@ -400,7 +431,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(SEC_WCHAR* pszPrin
 		sspi_CopyAuthIdentity(&(credentials->identity), identity);
 
 	sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
-	sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOSSP_NAME);
+	sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGO_SSP_NAME);
 	return SEC_E_OK;
 }
 
@@ -433,7 +464,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(SEC_CHAR* pszPrinc
 		sspi_CopyAuthIdentity(&(credentials->identity), identity);
 
 	sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
-	sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOSSP_NAME);
+	sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGO_SSP_NAME);
 	return SEC_E_OK;
 }
 
@@ -582,31 +613,3 @@ const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW =
 	negotiate_SetContextAttributesW, /* SetContextAttributes */
 };
 
-const SecPkgInfoA NEGOTIATE_SecPkgInfoA =
-{
-	0x00083BB3, /* fCapabilities */
-	1, /* wVersion */
-	0x0009, /* wRPCID */
-	0x00002FE0, /* cbMaxToken */
-	"Negotiate", /* Name */
-	"Microsoft Package Negotiator" /* Comment */
-};
-
-WCHAR NEGOTIATE_SecPkgInfoW_Name[] = { 'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', '\0' };
-
-WCHAR NEGOTIATE_SecPkgInfoW_Comment[] =
-{
-	'M', 'i', 'c', 'r', 'o', 's', 'o', 'f', 't', ' ',
-	'P', 'a', 'c', 'k', 'a', 'g', 'e', ' ',
-	'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'o', 'r', '\0'
-};
-
-const SecPkgInfoW NEGOTIATE_SecPkgInfoW =
-{
-	0x00083BB3, /* fCapabilities */
-	1, /* wVersion */
-	0x0009, /* wRPCID */
-	0x00002FE0, /* cbMaxToken */
-	NEGOTIATE_SecPkgInfoW_Name, /* Name */
-	NEGOTIATE_SecPkgInfoW_Comment /* Comment */
-};

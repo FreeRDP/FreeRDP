@@ -275,6 +275,7 @@ void sspi_SecBufferFree(PSecBuffer SecBuffer)
 
 	if (SecBuffer->pvBuffer)
 		memset(SecBuffer->pvBuffer, 0, SecBuffer->cbBuffer);
+
 	free(SecBuffer->pvBuffer);
 	SecBuffer->pvBuffer = NULL;
 	SecBuffer->cbBuffer = 0;

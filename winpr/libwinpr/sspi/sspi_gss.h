@@ -4,6 +4,7 @@
  *
  * Copyright 2015 ANSSI, Author Thomas Calderon
  * Copyright 2015 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2017 Dorian Ducournau <dorian.ducournau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -869,6 +870,8 @@ struct _GSSAPI_FUNCTION_TABLE
 	fn_sspi_gss_set_neg_mechs gss_set_neg_mechs;
 };
 typedef struct _GSSAPI_FUNCTION_TABLE GSSAPI_FUNCTION_TABLE;
+
+GSSAPI_FUNCTION_TABLE* SEC_ENTRY gssApi_InitSecurityInterface(void);
 
 #ifdef __cplusplus
 extern "C" {
