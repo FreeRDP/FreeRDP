@@ -173,6 +173,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	if (!window)
 		return FALSE;
 
+	UwacWindowSetFullscreenState(window, NULL, instance->context->settings->Fullscreen);
 	UwacWindowSetTitle(window, "FreeRDP");
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
@@ -180,6 +181,9 @@ static BOOL wl_post_connect(freerdp* instance)
 	       gdi->width * gdi->height * 4);
 	UwacWindowAddDamage(context->window, 0, 0, gdi->width, gdi->height);
 	context->haveDamage = TRUE;
+
+	freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
+
 	return wl_update_content(context);
 }
 
