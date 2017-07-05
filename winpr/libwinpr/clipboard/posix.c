@@ -394,7 +394,7 @@ static BOOL add_file_to_list(const char* local_name, const WCHAR* remote_name, w
 	return TRUE;
 }
 
-static const char* basename(const char* name)
+static const char* get_basename(const char* name)
 {
 	const char* c = name;
 	const char* last_name = name;
@@ -419,7 +419,7 @@ static BOOL process_file_name(const char* local_name, wArrayList* files)
 	 * exact files selected by the user, and we want the remote files
 	 * to have names relative to that selection.
 	 */
-	base_name = basename(local_name);
+	base_name = get_basename(local_name);
 
 	remote_name = convert_local_name_component_to_remote(base_name);
 	if (!remote_name)
