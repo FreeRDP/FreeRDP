@@ -109,7 +109,11 @@ static GstBusSyncReply tsmf_platform_bus_sync_handler(GstBus *bus, GstMessage *m
 		gst_video_overlay_handle_events(hdl->overlay, TRUE);
 #else
 		hdl->overlay = GST_X_OVERLAY (GST_MESSAGE_SRC (message));
+#if GST_CHECK_VERSION(0,10,31) 
 		gst_x_overlay_set_window_handle(hdl->overlay, hdl->subwin);
+#else
+		gst_x_overlay_set_xwindow_id(hdl->overlay, hdl->subwin);
+#endif
 		gst_x_overlay_handle_events(hdl->overlay, TRUE);
 #endif
 
