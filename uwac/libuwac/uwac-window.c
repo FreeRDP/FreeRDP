@@ -682,6 +682,19 @@ UwacReturnCode UwacWindowSetFullscreenState(UwacWindow* window, UwacOutput* outp
 			xdg_surface_unset_fullscreen(window->xdg_surface);
 		}
 	}
+	else if (window->shell_surface)
+	{
+		if (isFullscreen) {
+			wl_shell_surface_set_fullscreen(window->shell_surface,
+							WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT,
+							0,
+							output ? output->output : NULL);
+		}
+		else
+		{
+			wl_shell_surface_set_toplevel(window->shell_surface);
+		}
+	}
 
 	return UWAC_SUCCESS;
 }
