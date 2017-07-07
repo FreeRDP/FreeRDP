@@ -1111,19 +1111,14 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client,
 		{
 			newUpdateSize = updateSize + (bitmapData[i].bitmapLength + 16);
 
-			if ((newUpdateSize < maxUpdateSize) && ((i + 1) < k))
+			if (newUpdateSize < maxUpdateSize)
 			{
 				CopyMemory(&fragBitmapData[j++], &bitmapData[i++], sizeof(BITMAP_DATA));
 				updateSize = newUpdateSize;
 			}
-			else
-			{
-				if ((i + 1) >= k)
-				{
-					CopyMemory(&fragBitmapData[j++], &bitmapData[i++], sizeof(BITMAP_DATA));
-					updateSize = newUpdateSize;
-				}
 
+			if ((newUpdateSize >= maxUpdateSize) || (i + 1) >= k)
+			{
 				bitmapUpdate.count = bitmapUpdate.number = j;
 				IFCALLRET(update->BitmapUpdate, ret, context, &bitmapUpdate);
 
