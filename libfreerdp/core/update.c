@@ -33,6 +33,7 @@
 #include "surface.h"
 #include "message.h"
 #include "info.h"
+#include "window.h"
 
 #include <freerdp/log.h>
 #include <freerdp/peer.h>

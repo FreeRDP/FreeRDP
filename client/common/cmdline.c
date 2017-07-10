@@ -2432,8 +2432,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->AutoReconnectMaxRetries = atoi(arg->Value);
 
-			if ((settings->AutoReconnectMaxRetries < 0) ||
-				(settings->AutoReconnectMaxRetries > 1000))
+			if (settings->AutoReconnectMaxRetries > 1000)
 				return COMMAND_LINE_ERROR;
 		}
 		CommandLineSwitchCase(arg, "reconnect-cookie")

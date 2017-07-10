@@ -295,7 +295,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	surface->gdi.outputMapped = FALSE;
 	region16_init(&surface->gdi.invalidRegion);
-	if (context->SetSurfaceData(context, surface->gdi.surfaceId, (void*) surface) < 0)
+	if (context->SetSurfaceData(context, surface->gdi.surfaceId, (void*) surface) != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "%s: an error occurred during SetSurfaceData", __FUNCTION__);
 		goto error_set_surface_data;
