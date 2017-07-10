@@ -773,7 +773,7 @@ find_feature(GSSAPI ${GSSAPI_FEATURE_TYPE} ${GSSAPI_FEATURE_PURPOSE} ${GSSAPI_FE
 
 if ( (WITH_GSSAPI) AND (NOT GSS_FOUND))
 	message(WARNING "-DWITH_GSSAPI=ON is set, but not GSSAPI implementation was found, disabling")
-else()
+elseif(WITH_GSSAPI)
 	if(GSS_FLAVOUR STREQUAL "MIT") 
 		message(STATUS "MIT Kerberos suppport")
 		add_definitions("-DWITH_GSSAPI -DWITH_GSSAPI_MIT")

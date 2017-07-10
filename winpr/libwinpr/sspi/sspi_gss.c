@@ -19,13 +19,6 @@
  * limitations under the License.
  */
 
-#include <inttypes.h>
-#include <stddef.h>
-
-#include "../../include/winpr/synch.h"
-#include "../../include/winpr/wlog.h"
-#include "../../include/winpr/wtypes.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
