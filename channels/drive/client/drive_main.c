@@ -866,7 +866,7 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 
 	return CHANNEL_RC_OK;
 out_error:
-	drive_free(drive);
+	drive_free((DEVICE*) drive);
 	return error;
 }
 

@@ -181,7 +181,7 @@ static BOOL drive_file_remove_dir(const WCHAR* path)
 	return ret;
 }
 
-static void drive_file_set_fullpath(DRIVE_FILE* file, const WCHAR* fullpath)
+static void drive_file_set_fullpath(DRIVE_FILE* file, WCHAR* fullpath)
 {
 	free(file->fullpath);
 	file->fullpath = fullpath;
