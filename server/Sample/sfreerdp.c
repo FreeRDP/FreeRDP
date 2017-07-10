@@ -64,7 +64,7 @@ BOOL test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 		goto fail_rfx_context;
 
 	context->rfx_context->mode = RLGR3;
-	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_BGRX32);
+	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_RGB24);
 
 	if (!(context->nsc_context = nsc_context_new()))
 		goto fail_nsc_context;
