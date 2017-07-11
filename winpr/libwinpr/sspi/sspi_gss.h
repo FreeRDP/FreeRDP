@@ -775,7 +775,7 @@ UINT32 SSPI_GSSAPI sspi_gss_pseudo_random(
     sspi_gss_ctx_id_t context,
     int prf_key,
     const sspi_gss_buffer_t prf_in,
-    ssize_t desired_output_len,
+    SSIZE_T desired_output_len,
     sspi_gss_buffer_t prf_out);
 
 typedef UINT32(SSPI_GSSAPI* fn_sspi_gss_pseudo_random)(
@@ -783,7 +783,7 @@ typedef UINT32(SSPI_GSSAPI* fn_sspi_gss_pseudo_random)(
     sspi_gss_ctx_id_t context,
     int prf_key,
     const sspi_gss_buffer_t prf_in,
-    ssize_t desired_output_len,
+    SSIZE_T desired_output_len,
     sspi_gss_buffer_t prf_out);
 
 UINT32 SSPI_GSSAPI sspi_gss_store_cred(
