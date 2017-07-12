@@ -92,11 +92,11 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define PSecPkgInfo PSecPkgInfoA
 #endif
 
+#endif
+
 #define NTLM_SSP_NAME	_T("NTLM")
 #define KERBEROS_SSP_NAME	_T("Kerberos")
 #define NEGO_SSP_NAME	_T("Negotiate")
-
-#endif
 
 #define SECPKG_ID_NONE				0xFFFF
 
