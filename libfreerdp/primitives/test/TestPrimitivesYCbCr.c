@@ -2162,7 +2162,7 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	BYTE* actual1;
 	BYTE* expected;
 	int margin = 1;
-	INT16* pYCbCr[3];
+	INT16* pYCbCr[3] = { NULL, NULL, NULL };
 	const UINT32 srcStride = roi.width * 2;
 	const UINT32 dstStride = roi.width * GetBytesPerPixel(format);
 	const UINT32 srcSize = srcStride * roi.height;

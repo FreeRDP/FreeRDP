@@ -167,6 +167,11 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	int exponent_length;
 	int error = 0;
 
+	if (!cert || !info)
+		return FALSE;
+
+	memset(info, 0, sizeof(rdpCertInfo));
+
 	s = Stream_New(cert->data, cert->length);
 
 	if (!s)
