@@ -1618,10 +1618,7 @@ skip_encoding_loop:
 				success = FALSE;
 		}
 		else
-		{
-			free(message->tiles);
 			success = FALSE;
-		}
 	}
 
 	/* when using threads ensure all computations are done */
