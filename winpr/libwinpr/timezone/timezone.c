@@ -134,7 +134,8 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_21[] =
 	{ 634925268000000000ULL, 634609908000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, },
 	{ 635240628000000000ULL, 634926132000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, },
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, },
-	{ 635871348000000000ULL, 635556852000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
+	{ 635871348000000000ULL, 635556852000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, },
+	{ 3155378292000000000ULL, 636188436000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_22[] =
@@ -395,8 +396,9 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_46[] =
 	{ 635240628000000000ULL, 634926132000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 4, 0, 5, 2, 0 }, },
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 635871348000000000ULL, 635556852000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
-	{ 636187572000000000ULL, 635872212000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 7, 0, 2, 2, 0 }, },
-	{ 3155378292000000000ULL, 636188436000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
+	{ 636187572000000000ULL, 635872212000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
+	{ 636502932000000000ULL, 636188436000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 7, 0, 1, 2, 0 }, },
+	{ 3155378292000000000ULL, 636503796000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_47[] =
@@ -1006,7 +1008,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Haiti Standard Time", 300, TRUE, "(UTC-05:00) Haiti",
 		"Haiti Standard Time", "Haiti Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_21, 5
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_21, 6
 	},
 	{
 		"Cuba Standard Time", 300, TRUE, "(UTC-05:00) Havana",
@@ -1131,7 +1133,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Morocco Standard Time", 0, TRUE, "(UTC+00:00) Casablanca",
 		"Morocco Standard Time", "Morocco Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_46, 10
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_46, 11
 	},
 	{
 		"GMT Standard Time", 0, TRUE, "(UTC+00:00) Dublin, Edinburgh, Lisbon, London",
