@@ -402,6 +402,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi,
                                       RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
+#ifdef WITH_GFX_H264
 	INT32 rc;
 	UINT status = CHANNEL_RC_OK;
 	UINT32 i;
@@ -460,6 +461,9 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi,
 	}
 
 	return status;
+#else
+	return ERROR_NOT_SUPPORTED;
+#endif
 }
 
 /**
@@ -470,6 +474,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi,
 static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
+#ifdef WITH_GFX_H264
 	INT32 rc;
 	UINT status = CHANNEL_RC_OK;
 	UINT32 i;
@@ -547,6 +552,9 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	free(regionRects);
 	return status;
+#else
+	return ERROR_NOT_SUPPORTED;
+#endif
 }
 
 /**
@@ -814,7 +822,9 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 
 	if (surface)
 	{
+#ifdef WITH_GFX_H264
 		h264_context_free(surface->h264);
+#endif
 		region16_uninit(&surface->invalidRegion);
 		codecs = surface->codecs;
 		_aligned_free(surface->data);

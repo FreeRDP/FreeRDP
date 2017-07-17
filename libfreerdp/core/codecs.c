@@ -88,6 +88,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags,
 		}
 	}
 
+#ifdef WITH_GFX_H264
 	if ((flags & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444)) && !codecs->h264)
 	{
 		if (!(codecs->h264 = h264_context_new(FALSE)))
@@ -96,6 +97,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags,
 			return FALSE;
 		}
 	}
+#endif
 
 	return freerdp_client_codecs_reset(codecs, flags, width, height);
 }
@@ -157,6 +159,7 @@ BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width,
 		}
 	}
 
+#ifdef WITH_GFX_H264
 	if (flags & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444))
 	{
 		if (codecs->h264)
@@ -164,6 +167,7 @@ BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width,
 			rc &= h264_context_reset(codecs->h264, width, height);
 		}
 	}
+#endif
 
 	return rc;
 }
@@ -196,11 +200,13 @@ void codecs_free(rdpCodecs* codecs)
 		codecs->nsc = NULL;
 	}
 
+#ifdef WITH_GFX_H264
 	if (codecs->h264)
 	{
 		h264_context_free(codecs->h264);
 		codecs->h264 = NULL;
 	}
+#endif
 
 	if (codecs->clear)
 	{

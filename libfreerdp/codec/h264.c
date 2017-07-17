@@ -442,7 +442,7 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 	i++;
 #endif
 
-	return (i > 0);
+	return TRUE;
 }
 
 
@@ -450,13 +450,22 @@ BOOL h264_context_init(H264_CONTEXT* h264)
 {
 	int i;
 
+	if (!h264)
+		return FALSE;
+
+	h264->subsystem = NULL;
+
 	InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, NULL, NULL);
 
 	for (i = 0; i < MAX_SUBSYSTEMS; i++)
 	{
-		if (subSystems[i]->Init(h264))
+		const H264_CONTEXT_SUBSYSTEM* subsystem = &subSystems[i];
+		if (!subsystem->Init)
+			break;
+
+		if (subsystem->Init(h264))
 		{
-			h264->subsystem = subSystems[i];
+			h264->subsystem = subsystem;
 			return TRUE;
 		}
 	}
