@@ -121,11 +121,17 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "themes", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable themes" },
 	{ "wallpaper", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable wallpaper" },
 	{ "gdi", COMMAND_LINE_VALUE_REQUIRED, "<sw|hw>", NULL, NULL, -1, NULL, "GDI rendering" },
+#ifdef WITH_GFX_H264
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "<RFX|AVC420|AVC444>", NULL, NULL, -1, NULL, "RDP8 graphics pipeline (experimental)" },
+#else
+	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "<RFX>", NULL, NULL, -1, NULL, "RDP8 graphics pipeline (experimental)" },
+#endif
 	{ "gfx-thin-client", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using thin client mode" },
 	{ "gfx-small-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using small cache mode" },
 	{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using progressive codec" },
+#ifdef WITH_GFX_H264
 	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL, "<AVC420|AVC444>", NULL, NULL, -1, NULL, "RDP8.1 graphics pipeline using H264 codec" },
+#endif
 	{ "rfx", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "RemoteFX" },
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "<image|video>", NULL, NULL, -1, NULL, "RemoteFX mode" },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Number of frame acknowledgement" },
@@ -2085,6 +2091,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			if (arg->Value)
 			{
+#ifdef WITH_GFX_H264
 				if (_strnicmp("AVC444", arg->Value, 6) == 0)
 				{
 					settings->GfxH264 = TRUE;
@@ -2094,7 +2101,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				{
 					settings->GfxH264 = TRUE;
 				}
-				else if (_strnicmp("RFX", arg->Value, 3) != 0)
+				else
+#endif
+				if (_strnicmp("RFX", arg->Value, 3) != 0)
 					return COMMAND_LINE_ERROR;
 			}
 		}
@@ -2114,6 +2123,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			settings->GfxThinClient = settings->GfxProgressive ? FALSE : TRUE;
 			settings->SupportGraphicsPipeline = TRUE;
 		}
+#ifdef WITH_GFX_H264
 		CommandLineSwitchCase(arg, "gfx-h264")
 		{
 			settings->SupportGraphicsPipeline = TRUE;
@@ -2129,6 +2139,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					return COMMAND_LINE_ERROR;
 			}
 		}
+#endif
 		CommandLineSwitchCase(arg, "rfx")
 		{
 			settings->RemoteFxCodec = TRUE;

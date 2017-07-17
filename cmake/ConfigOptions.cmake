@@ -41,13 +41,15 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	set(CMAKE_COMPILER_IS_CLANG 1)
 endif()
 
+option(WITH_GFX_H264 "Build GFX H264 support. A backend (OpenH264|FFMPEG|X264|MediaFoundation) must also be compiled in." OFF)
 if(NOT WIN32)
     CMAKE_DEPENDENT_OPTION(WITH_VALGRIND_MEMCHECK "Compile with valgrind helpers." OFF "NOT WITH_SANITIZE_ADDRESS; NOT WITH_SANITIZE_LEAK" OFF)
     CMAKE_DEPENDENT_OPTION(WITH_SANITIZE_ADDRESS "Compile with gcc/clang address sanitizer." OFF "NOT WITH_VALGRIND_MEMCHECK; NOT WITH_SANITIZE_LEAK" OFF)
     CMAKE_DEPENDENT_OPTION(WITH_SANITIZE_LEAK "Compile with gcc/clang leak sanitizer." OFF "NOT WITH_VALGRIND_MEMCHECK; NOT WITH_SANITIZE_ADDRESS" OFF)
 else()
 	if(NOT UWP)
-    	option(WITH_MEDIA_FOUNDATION "Enable H264 media foundation decoder." ON)
+    	CMAKE_DEPENDENT_OPTION(WITH_MEDIA_FOUNDATION "Enable H264 media foundation decoder." ON
+			"WITH_GFX_H264" OFF)
     endif()
 endif()
 
@@ -138,3 +140,4 @@ endif(ANDROID)
 if(IOS)
 include(ConfigOptionsiOS)
 endif(IOS)
+

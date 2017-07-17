@@ -38,6 +38,8 @@
 #include <x264.h>
 #include <freerdp/codec/h264.h>
 
+#error "X264 backend not implemented, please review your configuration!"
+
 struct _H264_CONTEXT_X264
 {
 	void* dummy;
