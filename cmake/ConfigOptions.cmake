@@ -47,8 +47,7 @@ if(NOT WIN32)
 	CMAKE_DEPENDENT_OPTION(WITH_SANITIZE_LEAK "Compile with gcc/clang leak sanitizer." OFF "NOT WITH_VALGRIND_MEMCHECK; NOT WITH_SANITIZE_ADDRESS" OFF)
 else()
 	if(NOT UWP)
-		option(WITH_MEDIA_FOUNDATION "Enable H264 media foundation decoder." ON
-			"WITH_GFX_H264" OFF)
+		option(WITH_MEDIA_FOUNDATION "Enable H264 media foundation decoder." ON)
 	endif()
 endif()
 CMAKE_DEPENDENT_OPTION(WITH_GFX_H264 "Build GFX H264 support. A backend (OpenH264|FFMPEG|X264|MediaFoundation) must also be compiled in." ON
