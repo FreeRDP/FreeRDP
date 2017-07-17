@@ -163,6 +163,7 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	Stream_Read_UINT64(irp->input, allocationSize);
 	if (Stream_GetRemainingLength(irp->input) < allocationSize)
 		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT32(irp->input, FileAttributes);
 	Stream_Read_UINT32(irp->input, SharedAccess);
 	Stream_Read_UINT32(irp->input, CreateDisposition);
@@ -233,9 +234,7 @@ static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 	key = (void*)(size_t) irp->FileId;
 
 	if (!file)
-	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-	}
 	else
 	{
 		ListDictionary_Remove(drive->files, key);
@@ -260,6 +259,7 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 	DRIVE_FILE* file;
 	UINT32 Length;
 	UINT64 Offset;
+
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
@@ -277,24 +277,27 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = drive_map_windows_err(GetLastError());
 		Length = 0;
 	}
+
 	if (!Stream_EnsureRemainingCapacity(irp->output, Length + 4))
 	{
 		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-
-	Stream_Write_UINT32(irp->output, Length);
+	else if (Length == 0)
+		Stream_Write_UINT32(irp->output, 0);
+	else
 	{
-		BYTE* buffer = Stream_Pointer(irp->output);
+		BYTE* buffer = Stream_Pointer(irp->output) + sizeof(UINT32);
 		if (!drive_file_read(file, buffer, &Length))
 		{
 			irp->IoStatus = drive_map_windows_err(GetLastError());
-			Stream_Rewind(irp->output, 4);
 			Stream_Write_UINT32(irp->output, 0);
 		}
-
 		else
+		{
+			Stream_Write_UINT32(irp->output, Length);
 			Stream_Seek(irp->output, Length);
+		}
 	}
 
 	return irp->Complete(irp);
@@ -349,8 +352,10 @@ static UINT drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
 {
 	DRIVE_FILE* file;
 	UINT32 FsInformationClass;
+
 	if (!drive || !irp || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
+
 	Stream_Read_UINT32(irp->input, FsInformationClass);
 	file = drive_get_file_by_id(drive, irp->FileId);
 
@@ -376,8 +381,10 @@ static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 	DRIVE_FILE* file;
 	UINT32 FsInformationClass;
 	UINT32 Length;
+
 	if (!drive || !irp || !irp->Complete || !irp->input || !irp->output)
 		return ERROR_INVALID_PARAMETER;
+
 	Stream_Read_UINT32(irp->input, FsInformationClass);
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Seek(irp->input, 24); /* Padding */
@@ -420,8 +427,10 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 	DWORD lpNumberOfFreeClusters;
 	DWORD lpTotalNumberOfClusters;
 	WIN32_FILE_ATTRIBUTE_DATA wfad;
+
 	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
+
 	Stream_Read_UINT32(irp->input, FsInformationClass);
 	GetDiskFreeSpaceW(drive->path, &lpSectorsPerCluster, &lpBytesPerSector, &lpNumberOfFreeClusters,
 	                  &lpTotalNumberOfClusters);
@@ -550,8 +559,10 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
 {
 	UINT32 FsInformationClass;
+
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
+
 	Stream_Read_UINT32(irp->input, FsInformationClass);
 	Stream_Write_UINT32(irp->output, 0); /* Length */
 	return irp->Complete(irp);
@@ -569,8 +580,10 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 	BYTE InitialQuery;
 	UINT32 PathLength;
 	UINT32 FsInformationClass;
+
 	if (!drive || !irp || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
+
 	Stream_Read_UINT32(irp->input, FsInformationClass);
 	Stream_Read_UINT8(irp->input, InitialQuery);
 	Stream_Read_UINT32(irp->input, PathLength);
@@ -601,6 +614,7 @@ static UINT drive_process_irp_directory_control(DRIVE_DEVICE* drive, IRP* irp)
 {
 	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
+
 	switch (irp->MinorFunction)
 	{
 		case IRP_MN_QUERY_DIRECTORY:
@@ -627,6 +641,7 @@ static UINT drive_process_irp_device_control(DRIVE_DEVICE* drive, IRP* irp)
 {
 	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
+
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
 	return irp->Complete(irp);
 }
@@ -641,6 +656,7 @@ static UINT drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 	UINT error;
 	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
+
 	irp->IoStatus = STATUS_SUCCESS;
 
 	switch (irp->MajorFunction)
@@ -700,6 +716,7 @@ static void* drive_thread_func(void* arg)
 	wMessage message;
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
 	UINT error = CHANNEL_RC_OK;
+
 	if(!drive)
 	{
 		error = ERROR_INVALID_PARAMETER;
@@ -754,6 +771,7 @@ static UINT drive_irp_request(DEVICE* device, IRP* irp)
 
 	if (!drive)
 		return ERROR_INVALID_PARAMETER;
+
 	if (!MessageQueue_Post(drive->IrpQueue, NULL, 0, (void*) irp, NULL))
 	{
 		WLog_ERR(TAG, "MessageQueue_Post failed!");
@@ -790,6 +808,7 @@ static UINT drive_free(DEVICE* device)
 
 	if (!drive)
 		return ERROR_INVALID_PARAMETER;
+
 	if (MessageQueue_PostQuit(drive->IrpQueue, 0)
 	    && (WaitForSingleObject(drive->thread, INFINITE) == WAIT_FAILED))
 	{
