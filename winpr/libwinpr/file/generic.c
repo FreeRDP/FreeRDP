@@ -788,8 +788,8 @@ typedef struct _WIN32_FILE_SEARCH WIN32_FILE_SEARCH;
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
 	LPSTR p;
-	int index;
-	int length;
+	size_t index;
+	size_t length;
 	struct stat fileStat;
 	WIN32_FILE_SEARCH* pFileSearch;
 	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
@@ -960,8 +960,8 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 	WIN32_FILE_SEARCH* pFileSearch;
 	struct stat fileStat;
 	char* fullpath;
-	int pathlen;
-	int namelen;
+	size_t pathlen;
+	size_t namelen;
 	UINT64 ft;
 	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 
