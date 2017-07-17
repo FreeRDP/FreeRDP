@@ -630,6 +630,32 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	{
 		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
 
+		if (currentCaps->version == RDPGFX_CAPVERSION_103)
+		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+#ifndef WITH_GFX_H264
+				settings->GfxH264 = FALSE;
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
+				settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+#endif
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
+
 		if (currentCaps->version == RDPGFX_CAPVERSION_102)
 		{
 			RDPGFX_CAPSET caps = *currentCaps;
