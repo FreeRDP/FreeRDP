@@ -586,7 +586,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 		if ((numCertBlobs - i) == 2)
 		{
-			rdpCertInfo cert_info;
+			rdpCertInfo cert_info = { 0 };
 
 			DEBUG_CERTIFICATE("License Server Certificate");
 			
