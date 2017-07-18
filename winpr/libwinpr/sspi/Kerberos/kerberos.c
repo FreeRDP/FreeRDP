@@ -425,7 +425,10 @@ SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle phCred
 		context->credentials = credentials;
 
 		if (kerberos_SetContextServicePrincipalNameA(context, pszTargetName) < 0)
+		{
+			kerberos_ContextFree(context);
 			return SEC_E_INTERNAL_ERROR;
+		}
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) KRB_PACKAGE_NAME);
