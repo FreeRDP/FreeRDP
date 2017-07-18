@@ -420,29 +420,37 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 	ZeroMemory(subSystems, sizeof(subSystems));
 
 #if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
-	subSystems[i] = &g_Subsystem_MF;
-	i++;
-#endif
-
-#ifdef WITH_FFMPEG
-	extern H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec;
-	subSystems[i] = &g_Subsystem_libavcodec;
-	i++;
+	{
+		subSystems[i] = &g_Subsystem_MF;
+		i++;
+	}
 #endif
 
 #ifdef WITH_OPENH264
-	extern H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264;
-	subSystems[i] = &g_Subsystem_OpenH264;
-	i++;
+	{
+		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264;
+		subSystems[i] = &g_Subsystem_OpenH264;
+		i++;
+	}
+#endif
+
+#ifdef WITH_FFMPEG
+	{
+		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec;
+		subSystems[i] = &g_Subsystem_libavcodec;
+		i++;
+	}
 #endif
 
 #ifdef WITH_X264
-	extern H264_CONTEXT_SUBSYSTEM g_Subsystem_x264;
-	subSystems[i] = &g_Subsystem_x264;
-	i++;
+	{
+		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_x264;
+		subSystems[i] = &g_Subsystem_x264;
+		i++;
+	}
 #endif
 
-	return TRUE;
+	return i > 0;
 }
 
 
