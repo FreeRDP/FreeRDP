@@ -1853,6 +1853,8 @@ void nla_free(rdpNla* nla)
 	if (nla->table)
 	{
 		SECURITY_STATUS status;
+		status = nla->table->FreeCredentialsHandle(&nla->credentials);
+
 		status = nla->table->DeleteSecurityContext(&nla->context);
 
 		if (status != SEC_E_OK)
