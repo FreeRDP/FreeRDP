@@ -1006,9 +1006,9 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	ULONG pfQOP = 0;
 	BYTE* public_key1;
 	BYTE* public_key2;
-	int public_key_length;
+	int public_key_length = 0;
 	int signature_length;
-	SecBuffer Buffers[2];
+	SecBuffer Buffers[2] = { 0 };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 	signature_length = nla->pubKeyAuth.cbBuffer - nla->PublicKey.cbBuffer;
@@ -1042,6 +1042,7 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	{
 		WLog_ERR(TAG, "DecryptMessage failure %s [%08"PRIX32"]",
 		         GetSecurityStatusString(status), status);
+		free(buffer);
 		return status;
 	}
 
@@ -1061,6 +1062,7 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 		winpr_HexDump(TAG, WLOG_ERROR, public_key1, public_key_length);
 		WLog_ERR(TAG, "Actual (length = %d):", public_key_length);
 		winpr_HexDump(TAG, WLOG_ERROR, public_key2, public_key_length);
+		free(buffer);
 		return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
 	}
 
@@ -1215,7 +1217,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 {
 	wStream* s;
 	int length;
-	int ts_password_creds_length;
+	int ts_password_creds_length = 0;
 	BOOL ret;
 	s = Stream_New(ts_credentials->pvBuffer, ts_credentials->cbBuffer);
 
@@ -1394,6 +1396,7 @@ SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 	{
 		WLog_ERR(TAG, "DecryptMessage failure %s [0x%08"PRIX32"]",
 		         GetSecurityStatusString(status), status);
+		free(buffer);
 		return status;
 	}
 
