@@ -50,8 +50,6 @@ else()
 		option(WITH_MEDIA_FOUNDATION "Enable H264 media foundation decoder." ON)
 	endif()
 endif()
-CMAKE_DEPENDENT_OPTION(WITH_GFX_H264 "Build GFX H264 support. A backend (OpenH264|FFMPEG|X264|MediaFoundation) must also be compiled in." ON
-	"WITH_X264 OR WITH_OPENH264 OR WITH_MEDIA_FOUNDATION OR WITH_FFMPEG" OFF)
 
 if(WIN32 AND NOT UWP)
 	option(WITH_NATIVE_SSPI "Use native SSPI modules" ON)
