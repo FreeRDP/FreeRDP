@@ -150,11 +150,9 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext*
 	Stream_Seek_UINT32(s); /* CodePage (4 bytes), MUST be set to zero */
 	Stream_Read_UINT32(s, ComputerNameLen); /* ComputerNameLen (4 bytes) */
 
-	if (UnicodeFlag > 1) /* must be 0x00000000 or 0x00000001 */
-	{
-		WLog_ERR(TAG, "invalid UnicodeFlag value: 0x%08"PRIX32"", UnicodeFlag);
-		return ERROR_INVALID_DATA;
-	}
+	/* UnicodeFlag is either 0 or 1, the other 31 bits must be ignored.
+	 */
+	UnicodeFlag = UnicodeFlag & 0x00000001;
 
 	/**
 	 * Caution: ComputerNameLen is given *bytes*,
