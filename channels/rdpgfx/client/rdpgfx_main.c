@@ -87,26 +87,29 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	if (gfx->SmallCache)
 		capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
+#ifdef WITH_GFX_H264
 	if (gfx->H264)
 		capsSet->flags |= RDPGFX_CAPS_FLAG_AVC420_ENABLED;
+#endif
 
-	if (gfx->AVC444)
-	{
-		capsSet = &capsSets[pdu.capsSetCount++];
-		capsSet->version = RDPGFX_CAPVERSION_10;
-		capsSet->flags = 0;
+	capsSet = &capsSets[pdu.capsSetCount++];
+	capsSet->version = RDPGFX_CAPVERSION_10;
+	capsSet->flags = 0;
 
-		if (gfx->SmallCache)
-			capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
+	if (gfx->SmallCache)
+		capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
-		if (!gfx->H264)
-			capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#ifdef WITH_GFX_H264
+	if (!gfx->AVC444)
+		capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
+	capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#endif
 
-		capsSets[pdu.capsSetCount] = *capsSet;
-		capsSets[pdu.capsSetCount++].version = RDPGFX_CAPVERSION_102;
-		capsSets[pdu.capsSetCount] = *capsSet;
-		capsSets[pdu.capsSetCount++].version = RDPGFX_CAPVERSION_103;
-	}
+	capsSets[pdu.capsSetCount] = *capsSet;
+	capsSets[pdu.capsSetCount++].version = RDPGFX_CAPVERSION_102;
+	capsSets[pdu.capsSetCount] = *capsSet;
+	capsSets[pdu.capsSetCount++].version = RDPGFX_CAPVERSION_103;
 
 	header.pduLength = RDPGFX_HEADER_SIZE + 2 + (pdu.capsSetCount *
 	                   RDPGFX_CAPSET_SIZE);

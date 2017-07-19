@@ -621,7 +621,6 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
         RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
 {
 	UINT16 index;
-	RDPGFX_CAPS_CONFIRM_PDU pdu;
 	rdpSettings* settings = context->rdpcontext->settings;
 	UINT32 flags = 0;
 	/* Request full screen update for new gfx channel */
@@ -629,15 +628,24 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 	for (index = 0; index < capsAdvertise->capsSetCount; index++)
 	{
-		pdu.capsSet = &(capsAdvertise->capsSets[index]);
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
 
-		if (pdu.capsSet->version == RDPGFX_CAPVERSION_102)
+		if (currentCaps->version == RDPGFX_CAPVERSION_103)
 		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
 			if (settings)
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+#ifndef WITH_GFX_H264
+				settings->GfxH264 = FALSE;
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
 				settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+#endif
 			}
 
 			return context->CapsConfirm(context, &pdu);
@@ -646,15 +654,24 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 	for (index = 0; index < capsAdvertise->capsSetCount; index++)
 	{
-		pdu.capsSet = &(capsAdvertise->capsSets[index]);
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
 
-		if (pdu.capsSet->version == RDPGFX_CAPVERSION_10)
+		if (currentCaps->version == RDPGFX_CAPVERSION_102)
 		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
 			if (settings)
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+#ifndef WITH_GFX_H264
+				settings->GfxH264 = FALSE;
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
 				settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+#endif
 			}
 
 			return context->CapsConfirm(context, &pdu);
@@ -663,14 +680,51 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 	for (index = 0; index < capsAdvertise->capsSetCount; index++)
 	{
-		if (pdu.capsSet->version == RDPGFX_CAPVERSION_81)
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_10)
 		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+#ifndef WITH_GFX_H264
+				settings->GfxH264 = FALSE;
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
+				settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+#endif
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_81)
+		{			
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
 			if (settings)
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);				
+#ifndef WITH_GFX_H264
+				settings->GfxH264 = FALSE;
+				pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_AVC420_ENABLED;
+#else
 				settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
+#endif
 			}
 
 			return context->CapsConfirm(context, &pdu);
@@ -679,8 +733,14 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 	for (index = 0; index < capsAdvertise->capsSetCount; index++)
 	{
-		if (pdu.capsSet->version == RDPGFX_CAPVERSION_8)
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_8)
 		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
 			if (settings)
 			{
 				flags = pdu.capsSet->flags;

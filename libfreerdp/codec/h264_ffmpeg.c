@@ -26,6 +26,8 @@
 
 #define TAG FREERDP_TAG("codec")
 
+#warning "FFMPEG does not support H264 encoding (GFX H264 server mode). Please review your configuration!"
+
 /* Fallback support for older libavcodec versions */
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 59, 100)
 #define AV_CODEC_ID_H264 CODEC_ID_H264

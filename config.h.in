@@ -37,7 +37,6 @@
 #cmakedefine WITH_EVENTFD_READ_WRITE
 #cmakedefine HAVE_MATH_C99_LONG_DOUBLE
 
-#cmakedefine WITH_FFMPEG
 #cmakedefine WITH_GSTREAMER_1_0
 #cmakedefine WITH_GSTREAMER_0_10
 #cmakedefine WITH_WINMM
@@ -48,6 +47,10 @@
 #cmakedefine WITH_IOSAUDIO
 #cmakedefine WITH_OPENSLES
 #cmakedefine WITH_GSM
+#cmakedefine WITH_GFX_H264
+#cmakedefine WITH_OPENH264
+#cmakedefine WITH_FFMPEG
+#cmakedefine WITH_X264
 #cmakedefine WITH_MEDIA_FOUNDATION
 
 /* Plugins */

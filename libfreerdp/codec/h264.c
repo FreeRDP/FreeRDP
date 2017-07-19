@@ -34,39 +34,6 @@
 
 #define TAG FREERDP_TAG("codec")
 
-/**
- * Dummy subsystem
- */
-
-static int dummy_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize)
-{
-	return -1;
-}
-
-static int dummy_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
-{
-	//H264_CONTEXT_X264* sys = (H264_CONTEXT_X264*) h264->pSystemData;
-	return -1;
-}
-
-static void dummy_uninit(H264_CONTEXT* h264)
-{
-}
-
-static BOOL dummy_init(H264_CONTEXT* h264)
-{
-	return TRUE;
-}
-
-static H264_CONTEXT_SUBSYSTEM g_Subsystem_dummy =
-{
-	"dummy",
-	dummy_init,
-	dummy_uninit,
-	dummy_decompress,
-	dummy_compress
-};
-
 BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
 {
 	if (!h264)
@@ -127,7 +94,7 @@ static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
 	UINT32 x;
 	BYTE* pDstPoint;
 	prim_size_t roi;
-	int width, height;
+	INT32 width, height;
 	const BYTE* pYUVPoint[3];
 	primitives_t* prims = primitives_get();
 
@@ -453,30 +420,37 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 	ZeroMemory(subSystems, sizeof(subSystems));
 
 #if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
-	subSystems[i] = &g_Subsystem_MF;
-	i++;
-#endif
-
-#ifdef WITH_LIBAVCODEC
-	extern H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec;
-	subSystems[i] = &g_Subsystem_libavcodec;
-	i++;
+	{
+		subSystems[i] = &g_Subsystem_MF;
+		i++;
+	}
 #endif
 
 #ifdef WITH_OPENH264
-	extern H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264;
-	subSystems[i] = &g_Subsystem_OpenH264;
-	i++;
+	{
+		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264;
+		subSystems[i] = &g_Subsystem_OpenH264;
+		i++;
+	}
+#endif
+
+#ifdef WITH_FFMPEG
+	{
+		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec;
+		subSystems[i] = &g_Subsystem_libavcodec;
+		i++;
+	}
 #endif
 
 #ifdef WITH_X264
-	extern H264_CONTEXT_SUBSYSTEM g_Subsystem_x264;
-	subSystems[i] = &g_Subsystem_x264;
-	i++;
+	{
+		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_x264;
+		subSystems[i] = &g_Subsystem_x264;
+		i++;
+	}
 #endif
 
-	subSystems[i] = &g_Subsystem_dummy;
-	return TRUE;
+	return i > 0;
 }
 
 
@@ -484,13 +458,22 @@ BOOL h264_context_init(H264_CONTEXT* h264)
 {
 	int i;
 
+	if (!h264)
+		return FALSE;
+
+	h264->subsystem = NULL;
+
 	InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, NULL, NULL);
 
 	for (i = 0; i < MAX_SUBSYSTEMS; i++)
 	{
-		if (subSystems[i]->Init(h264))
+		H264_CONTEXT_SUBSYSTEM* subsystem = subSystems[i];
+		if (!subsystem->Init)
+			break;
+
+		if (subsystem->Init(h264))
 		{
-			h264->subsystem = subSystems[i];
+			h264->subsystem = subsystem;
 			return TRUE;
 		}
 	}

@@ -784,6 +784,12 @@ if (TARGET_ARCH MATCHES "sparc")
 	set(HAVE_ALIGNED_REQUIRED 1)
 endif()
 
+if (WITH_X264 OR WITH_OPENH264 OR WITH_MEDIA_FOUNDATION OR WITH_FFMPEG)
+	set(WITH_GFX_H264 ON)
+else()
+	set(WITH_GFX_H264 OFF)
+endif()
+
 # Android expects all libraries to be loadable
 # without paths.
 if (ANDROID)
