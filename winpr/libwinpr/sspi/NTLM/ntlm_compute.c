@@ -581,7 +581,7 @@ int ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic,
 	CopyMemory(value, exported_session_key, WINPR_MD5_DIGEST_LENGTH);
 	CopyMemory(&value[WINPR_MD5_DIGEST_LENGTH], sign_magic->pvBuffer, sign_magic->cbBuffer);
 
-	if (!winpr_Digest(WINPR_MD_MD5, value, length, signing_key, WINPR_MD5_DIGEST_LENGTH))
+	if (!winpr_Digest(WINPR_MD_MD5, value, length, signing_key, WINPR_MD5_DIGEST_LENGTH, FALSE))
 	{
 		free(value);
 		return -1;
@@ -639,7 +639,7 @@ int ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic,
 	CopyMemory(p, exported_session_key, WINPR_MD5_DIGEST_LENGTH);
 	CopyMemory(&p[WINPR_MD5_DIGEST_LENGTH], seal_magic->pvBuffer, seal_magic->cbBuffer);
 
-	if (!winpr_Digest(WINPR_MD_MD5, buffer.pvBuffer, buffer.cbBuffer, sealing_key, WINPR_MD5_DIGEST_LENGTH))
+	if (!winpr_Digest(WINPR_MD_MD5, buffer.pvBuffer, buffer.cbBuffer, sealing_key, WINPR_MD5_DIGEST_LENGTH, FALSE))
 	{
 		sspi_SecBufferFree(&buffer);
 		return -1;
@@ -716,7 +716,7 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context)
 	if (!hmac)
 		return;
 
-	if (winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->ExportedSessionKey, WINPR_MD5_DIGEST_LENGTH))
+	if (winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->ExportedSessionKey, WINPR_MD5_DIGEST_LENGTH, FALSE))
 	{
 		winpr_HMAC_Update(hmac, (BYTE*) context->NegotiateMessage.pvBuffer, context->NegotiateMessage.cbBuffer);
 		winpr_HMAC_Update(hmac, (BYTE*) context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);

@@ -643,7 +643,7 @@ extern "C" {
 #endif
 
 WINPR_API WINPR_HMAC_CTX* winpr_HMAC_New(void);
-WINPR_API BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, size_t keylen);
+WINPR_API BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, size_t keylen, BOOL non_fips_allow);
 WINPR_API BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen);
 WINPR_API BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output, size_t ilen);
 WINPR_API void winpr_HMAC_Free(WINPR_HMAC_CTX* ctx);
@@ -665,11 +665,11 @@ extern "C" {
 #endif
 
 WINPR_API WINPR_DIGEST_CTX* winpr_Digest_New(void);
-WINPR_API BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md);
+WINPR_API BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md, BOOL non_fips_allow);
 WINPR_API BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen);
 WINPR_API BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t ilen);
 WINPR_API void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx);
-WINPR_API BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen);
+WINPR_API BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen, BOOL non_fips_allow);
 
 #ifdef __cplusplus
 }
@@ -775,7 +775,7 @@ typedef struct _winpr_cipher_ctx_private_st WINPR_CIPHER_CTX;
 extern "C" {
 #endif
 
-WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BYTE* iv);
+WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BYTE* iv, BOOL non_fips_allow);
 WINPR_API BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen);
 WINPR_API BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen);
 WINPR_API void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx);

@@ -476,7 +476,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
 		                                     WINPR_ENCRYPT,
 		                                     rdp->fips_encrypt_key,
-		                                     fips_ivec);
+		                                     fips_ivec,
+		                                     FALSE);
 		if (!rdp->fips_encrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
@@ -485,7 +486,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
 		                                     WINPR_DECRYPT,
 		                                     rdp->fips_decrypt_key,
-		                                     fips_ivec);
+		                                     fips_ivec,
+		                                     FALSE);
 		if (!rdp->fips_decrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
@@ -608,7 +610,8 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
 						     WINPR_ENCRYPT,
 						     rdp->fips_encrypt_key,
-						     fips_ivec);
+						     fips_ivec,
+						     FALSE);
 		if (!rdp->fips_encrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
@@ -618,7 +621,8 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
 						     WINPR_DECRYPT,
 						     rdp->fips_decrypt_key,
-						     fips_ivec);
+						     fips_ivec,
+						     FALSE);
 		if (!rdp->fips_decrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 decrypt key");

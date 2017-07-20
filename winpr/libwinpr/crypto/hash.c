@@ -169,14 +169,25 @@ WINPR_HMAC_CTX* winpr_HMAC_New(void)
 	return ctx;
 }
 
-BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, size_t keylen)
+BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, size_t keylen, BOOL non_fips_allow)
 {
 #if defined(WITH_OPENSSL)
 	HMAC_CTX* hmac = (HMAC_CTX*) ctx;
-	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
+	const EVP_MD* evp;
 
-	if (!evp || !hmac)
+	if (non_fips_allow)
+	{
+		EVP_add_digest(EVP_md2());
+		EVP_add_digest(EVP_md4());
+		EVP_add_digest(EVP_md5());
+		EVP_add_digest(EVP_sha1());
+	}
+
+	if (!hmac || !(evp = winpr_openssl_get_evp_md(md)))
 		return FALSE;
+
+	if (non_fips_allow)
+		HMAC_CTX_set_flags(hmac, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L)
 	HMAC_Init_ex(hmac, key, keylen, evp, NULL); /* no return value on OpenSSL 0.9.x */
@@ -294,7 +305,7 @@ BOOL winpr_HMAC(WINPR_MD_TYPE md, const BYTE* key, size_t keylen,
 	if (!ctx)
 		return FALSE;
 
-	if (!winpr_HMAC_Init(ctx, md, key, keylen))
+	if (!winpr_HMAC_Init(ctx, md, key, keylen, FALSE))
 		goto out;
 	if (!winpr_HMAC_Update(ctx, input, ilen))
 		goto out;
@@ -335,14 +346,25 @@ WINPR_DIGEST_CTX* winpr_Digest_New(void)
 	return ctx;
 }
 
-BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
+BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md, BOOL non_fips_allow)
 {
 #if defined(WITH_OPENSSL)
 	EVP_MD_CTX* mdctx = (EVP_MD_CTX*) ctx;
-	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
+	const EVP_MD* evp;
 
-	if (!mdctx || !evp)
+	if (non_fips_allow)
+	{
+		EVP_add_digest(EVP_md2());
+		EVP_add_digest(EVP_md4());
+		EVP_add_digest(EVP_md5());
+		EVP_add_digest(EVP_sha1());
+	}
+
+	if (!mdctx || !(evp = winpr_openssl_get_evp_md(md)))
 		return FALSE;
+
+	if (non_fips_allow)
+		EVP_MD_CTX_set_flags(mdctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 
 	if (EVP_DigestInit_ex(mdctx, evp, NULL) != 1)
 		return FALSE;
@@ -423,7 +445,7 @@ void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx)
 #endif
 }
 
-BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen)
+BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen, BOOL non_fips_allow)
 {
 	BOOL result = FALSE;
 	WINPR_DIGEST_CTX *ctx = winpr_Digest_New();
@@ -431,7 +453,7 @@ BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t o
 	if (!ctx)
 		return FALSE;
 
-	if (!winpr_Digest_Init(ctx, md))
+	if (!winpr_Digest_Init(ctx, md, non_fips_allow))
 		goto out;
 	if (!winpr_Digest_Update(ctx, input, ilen))
 		goto out;

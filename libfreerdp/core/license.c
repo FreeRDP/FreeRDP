@@ -348,10 +348,10 @@ BOOL license_generate_keys(rdpLicense* license)
 	if (
 		/* MasterSecret */
 		!security_master_secret(license->PremasterSecret, license->ClientRandom,
-								license->ServerRandom, license->MasterSecret) ||
+								license->ServerRandom, license->MasterSecret, TRUE) ||
 		/* SessionKeyBlob */
 		!security_session_key_blob(license->MasterSecret, license->ClientRandom,
-							  license->ServerRandom, license->SessionKeyBlob))
+							  license->ServerRandom, license->SessionKeyBlob, TRUE))
 	{
 		return FALSE;
 	}
@@ -390,7 +390,7 @@ BOOL license_generate_hwid(rdpLicense* license)
 	ZeroMemory(macAddress, sizeof(macAddress));
 	ZeroMemory(license->HardwareId, HWID_LENGTH);
 
-	if (!winpr_Digest(WINPR_MD_MD5, macAddress, sizeof(macAddress), &license->HardwareId[HWID_PLATFORM_ID_LENGTH], WINPR_MD5_DIGEST_LENGTH))
+	if (!winpr_Digest(WINPR_MD_MD5, macAddress, sizeof(macAddress), &license->HardwareId[HWID_PLATFORM_ID_LENGTH], WINPR_MD5_DIGEST_LENGTH, TRUE))
 		return FALSE;
 
 	return TRUE;
@@ -454,21 +454,22 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 BOOL license_decrypt_platform_challenge(rdpLicense* license)
 {
 	BOOL rc;
-	WINPR_RC4_CTX* rc4;
+	WINPR_CIPHER_CTX* ctx;
+	size_t olen;
 
 	license->PlatformChallenge->data = (BYTE *)malloc(license->EncryptedPlatformChallenge->length);
 	if (!license->PlatformChallenge->data)
 		return FALSE;
 	license->PlatformChallenge->length = license->EncryptedPlatformChallenge->length;
 
-	if ((rc4 = winpr_RC4_New(license->LicensingEncryptionKey,
-				 LICENSING_ENCRYPTION_KEY_LENGTH)) == NULL)
+	if ((ctx = winpr_Cipher_New(WINPR_CIPHER_ARC4_128, WINPR_DECRYPT,
+				    license->LicensingEncryptionKey, NULL, TRUE)) == NULL)
 		return FALSE;
-	rc = winpr_RC4_Update(rc4, license->EncryptedPlatformChallenge->length,
-			   license->EncryptedPlatformChallenge->data,
-			   license->PlatformChallenge->data);
+	rc = winpr_Cipher_Update(ctx, license->EncryptedPlatformChallenge->data,
+				 license->EncryptedPlatformChallenge->length,
+				 license->PlatformChallenge->data, &olen);
 
-	winpr_RC4_Free(rc4);
+	winpr_Cipher_Free(ctx);
 	return rc;
 }
 
@@ -1013,7 +1014,8 @@ BOOL license_send_platform_challenge_response_packet(rdpLicense* license)
 	wStream* s;
 	int length;
 	BYTE* buffer;
-	WINPR_RC4_CTX* rc4;
+	WINPR_CIPHER_CTX* ctx;
+	size_t olen;
 	BYTE mac_data[16];
 	BOOL status;
 
@@ -1028,23 +1030,23 @@ BOOL license_send_platform_challenge_response_packet(rdpLicense* license)
 
 	CopyMemory(buffer, license->PlatformChallenge->data, license->PlatformChallenge->length);
 	CopyMemory(&buffer[license->PlatformChallenge->length], license->HardwareId, HWID_LENGTH);
-	status = security_mac_data(license->MacSaltKey, buffer, length, mac_data);
+	status = security_mac_data(license->MacSaltKey, buffer, length, mac_data, TRUE);
 	free(buffer);
 
 	if (!status)
 		return FALSE;
 
-	rc4 = winpr_RC4_New(license->LicensingEncryptionKey,
-			    LICENSING_ENCRYPTION_KEY_LENGTH);
-	if (!rc4)
+	ctx = winpr_Cipher_New(WINPR_CIPHER_ARC4_128, WINPR_ENCRYPT,
+			       license->LicensingEncryptionKey, NULL, TRUE);
+	if (!ctx)
 		return FALSE;
 
 	buffer = (BYTE*) malloc(HWID_LENGTH);
 	if (!buffer)
 		return FALSE;
 
-	status = winpr_RC4_Update(rc4, HWID_LENGTH, license->HardwareId, buffer);
-	winpr_RC4_Free(rc4);
+	status = winpr_Cipher_Update(ctx, license->HardwareId, HWID_LENGTH, buffer, &olen);
+	winpr_Cipher_Free(ctx);
 	if (!status)
 	{
 		free(buffer);

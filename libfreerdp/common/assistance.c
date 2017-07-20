@@ -92,10 +92,10 @@ int freerdp_assistance_crypt_derive_key_sha1(BYTE* hash, int hashLength, BYTE* k
 	if (!buffer)
 		goto fail;
 
-	if (!winpr_Digest(WINPR_MD_SHA1, pad1, 64, buffer, hashLength))
+	if (!winpr_Digest(WINPR_MD_SHA1, pad1, 64, buffer, hashLength, FALSE))
 		goto fail;
 
-	if (!winpr_Digest(WINPR_MD_SHA1, pad2, 64, &buffer[hashLength], hashLength))
+	if (!winpr_Digest(WINPR_MD_SHA1, pad2, 64, &buffer[hashLength], hashLength, FALSE))
 		goto fail;
 
 	CopyMemory(key, buffer, keyLength);
@@ -556,7 +556,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	cbPasswordW = (status - 1) * 2;
 
-	if (!winpr_Digest(WINPR_MD_MD5, (BYTE*)PasswordW, cbPasswordW, (BYTE*) PasswordHash, sizeof(PasswordHash)))
+	if (!winpr_Digest(WINPR_MD_MD5, (BYTE*)PasswordW, cbPasswordW, (BYTE*) PasswordHash, sizeof(PasswordHash), FALSE))
 	{
 		free (PasswordW);
 		return NULL;
@@ -602,7 +602,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	free(PassStubW);
 
 	rc4Ctx = winpr_Cipher_New(WINPR_CIPHER_ARC4_128, WINPR_ENCRYPT,
-				  PasswordHash, NULL);
+				  PasswordHash, NULL, FALSE);
 	if (!rc4Ctx)
 	{
 		WLog_ERR(TAG,  "EVP_CipherInit_ex failure");
@@ -661,7 +661,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	cbPasswordW = (status - 1) * 2;
 
-	if (!winpr_Digest(WINPR_MD_SHA1, (BYTE*)PasswordW, cbPasswordW, PasswordHash, sizeof(PasswordHash)))
+	if (!winpr_Digest(WINPR_MD_SHA1, (BYTE*)PasswordW, cbPasswordW, PasswordHash, sizeof(PasswordHash), FALSE))
 	{
 		free (PasswordW);
 		return -1;
@@ -679,7 +679,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 	ZeroMemory(InitializationVector, sizeof(InitializationVector));
 
 	aesDec = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_DECRYPT,
-				  DerivedKey, InitializationVector);
+				  DerivedKey, InitializationVector, FALSE);
 	if (!aesDec)
 	{
 		free(PasswordW);

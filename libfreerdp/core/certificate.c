@@ -404,7 +404,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	BYTE encsig[TSSK_KEY_LENGTH + 8];
 	BYTE md5hash[WINPR_MD5_DIGEST_LENGTH];
 
-	if (!winpr_Digest(WINPR_MD_MD5, sigdata, sigdatalen, md5hash, sizeof(md5hash)))
+	if (!winpr_Digest(WINPR_MD_MD5, sigdata, sigdatalen, md5hash, sizeof(md5hash), FALSE))
             return FALSE;
 	Stream_Read(s, encsig, siglen);
 

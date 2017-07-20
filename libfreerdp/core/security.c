@@ -125,7 +125,7 @@ fips_oddparity_table[256] =
 };
 
 static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, int length,
-		const BYTE* salt1, const BYTE* salt2, BYTE* output)
+		const BYTE* salt1, const BYTE* salt2, BYTE* output, BOOL non_fips_allow)
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
@@ -137,7 +137,7 @@ static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, int length
 	/* SHA1_Digest = SHA1(Input + Salt + Salt1 + Salt2) */
 	if (!(sha1 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1, non_fips_allow))
 		goto out;
 	if (!winpr_Digest_Update(sha1, input, length)) /* Input */
 		goto out;
@@ -153,7 +153,7 @@ static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, int length
 	/* SaltedHash(Salt, Input, Salt1, Salt2) = MD5(S + SHA1_Digest) */
 	if (!(md5 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	if (!winpr_Digest_Init(md5, WINPR_MD_MD5, non_fips_allow))
 		goto out;
 	if (!winpr_Digest_Update(md5, salt, 48)) /* Salt (48 bytes) */
 		goto out;
@@ -170,35 +170,35 @@ out:
 }
 
 static BOOL security_premaster_hash(const char* input, int length, const BYTE* premaster_secret,
-		const BYTE* client_random, const BYTE* server_random, BYTE* output)
+		const BYTE* client_random, const BYTE* server_random, BYTE* output, BOOL non_fips_allow)
 {
 	/* PremasterHash(Input) = SaltedHash(PremasterSecret, Input, ClientRandom, ServerRandom) */
-	return security_salted_hash(premaster_secret, (BYTE*)input, length, client_random, server_random, output);
+	return security_salted_hash(premaster_secret, (BYTE*)input, length, client_random, server_random, output, non_fips_allow);
 }
 
 BOOL security_master_secret(const BYTE* premaster_secret, const BYTE* client_random,
-		const BYTE* server_random, BYTE* output)
+		const BYTE* server_random, BYTE* output, BOOL non_fips_allow)
 {
 	/* MasterSecret = PremasterHash('A') + PremasterHash('BB') + PremasterHash('CCC') */
-	return security_premaster_hash("A", 1, premaster_secret, client_random, server_random, &output[0]) &&
-		security_premaster_hash("BB", 2, premaster_secret, client_random, server_random, &output[16]) &&
-		security_premaster_hash("CCC", 3, premaster_secret, client_random, server_random, &output[32]);
+	return security_premaster_hash("A", 1, premaster_secret, client_random, server_random, &output[0], non_fips_allow) &&
+		security_premaster_hash("BB", 2, premaster_secret, client_random, server_random, &output[16], non_fips_allow) &&
+		security_premaster_hash("CCC", 3, premaster_secret, client_random, server_random, &output[32], non_fips_allow);
 }
 
 static BOOL security_master_hash(const char* input, int length, const BYTE* master_secret,
-		const BYTE* client_random, const BYTE* server_random, BYTE* output)
+		const BYTE* client_random, const BYTE* server_random, BYTE* output, BOOL non_fips_allow)
 {
 	/* MasterHash(Input) = SaltedHash(MasterSecret, Input, ServerRandom, ClientRandom) */
-	return security_salted_hash(master_secret, (const BYTE*)input, length, server_random, client_random, output);
+	return security_salted_hash(master_secret, (const BYTE*)input, length, server_random, client_random, output, non_fips_allow);
 }
 
 BOOL security_session_key_blob(const BYTE* master_secret, const BYTE* client_random,
-		const BYTE* server_random, BYTE* output)
+		const BYTE* server_random, BYTE* output, BOOL non_fips_allow)
 {
 	/* MasterHash = MasterHash('A') + MasterHash('BB') + MasterHash('CCC') */
-	return security_master_hash("A", 1, master_secret, client_random, server_random, &output[0]) &&
-		security_master_hash("BB", 2, master_secret, client_random, server_random, &output[16]) &&
-		security_master_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
+	return security_master_hash("A", 1, master_secret, client_random, server_random, &output[0], non_fips_allow) &&
+		security_master_hash("BB", 2, master_secret, client_random, server_random, &output[16], non_fips_allow) &&
+		security_master_hash("CCC", 3, master_secret, client_random, server_random, &output[32], non_fips_allow);
 }
 
 void security_mac_salt_key(const BYTE* session_key_blob, const BYTE* client_random,
@@ -208,14 +208,14 @@ void security_mac_salt_key(const BYTE* session_key_blob, const BYTE* client_rand
 	memcpy(output, session_key_blob, 16);
 }
 
-BOOL security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BYTE* output)
+BOOL security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BYTE* output, BOOL non_fips_allow)
 {
 	WINPR_DIGEST_CTX* md5 = NULL;
 	BOOL result = FALSE;
 
 	if (!(md5 = winpr_Digest_New()))
 		return FALSE;
-	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	if (!winpr_Digest_Init(md5, WINPR_MD_MD5, non_fips_allow))
 		goto out;
 	if (!winpr_Digest_Update(md5, in0, 16))
 		goto out;
@@ -236,7 +236,7 @@ BOOL security_licensing_encryption_key(const BYTE* session_key_blob, const BYTE*
 		const BYTE* server_random, BYTE* output)
 {
 	/* LicensingEncryptionKey = MD5(Second128Bits(SessionKeyBlob) + ClientRandom + ServerRandom)) */
-	return security_md5_16_32_32(&session_key_blob[16], client_random, server_random, output);
+	return security_md5_16_32_32(&session_key_blob[16], client_random, server_random, output, TRUE);
 }
 
 void security_UINT32_le(BYTE* output, UINT32 value)
@@ -248,7 +248,7 @@ void security_UINT32_le(BYTE* output, UINT32 value)
 }
 
 BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length,
-		BYTE* output)
+		BYTE* output, BOOL non_fips_allow)
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
@@ -263,7 +263,7 @@ BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	/* SHA1_Digest = SHA1(MacSaltKey + pad1 + length + data) */
 	if (!(sha1 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1, non_fips_allow))
 		goto out;
 	if (!winpr_Digest_Update(sha1, mac_salt_key, 16)) /* MacSaltKey */
 		goto out;
@@ -279,7 +279,7 @@ BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	/* MacData = MD5(MacSaltKey + pad2 + SHA1_Digest) */
 	if (!(md5 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	if (!winpr_Digest_Init(md5, WINPR_MD_MD5, non_fips_allow))
 		goto out;
 	if (!winpr_Digest_Update(md5, mac_salt_key, 16)) /* MacSaltKey */
 		goto out;
@@ -311,7 +311,7 @@ BOOL security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
 	if (!(sha1 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1, FALSE))
 		goto out;
 	if (!winpr_Digest_Update(sha1, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
 		goto out;
@@ -327,7 +327,7 @@ BOOL security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
 	if (!(md5 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	if (!winpr_Digest_Init(md5, WINPR_MD_MD5, FALSE))
 		goto out;
 	if (!winpr_Digest_Update(md5, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
 		goto out;
@@ -375,7 +375,7 @@ BOOL security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
 	if (!(sha1 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1, FALSE))
 		goto out;
 	if (!winpr_Digest_Update(sha1, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
 		goto out;
@@ -393,7 +393,7 @@ BOOL security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
 	if (!(md5 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	if (!winpr_Digest_Init(md5, WINPR_MD_MD5, FALSE))
 		goto out;
 	if (!winpr_Digest_Update(md5, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
 		goto out;
@@ -416,18 +416,18 @@ static BOOL security_A(BYTE* master_secret, const BYTE* client_random, BYTE* ser
 		BYTE* output)
 {
 	return
-		security_premaster_hash("A", 1, master_secret, client_random, server_random, &output[0]) &&
-		security_premaster_hash("BB", 2, master_secret, client_random, server_random, &output[16]) &&
-		security_premaster_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
+		security_premaster_hash("A", 1, master_secret, client_random, server_random, &output[0], FALSE) &&
+		security_premaster_hash("BB", 2, master_secret, client_random, server_random, &output[16], FALSE) &&
+		security_premaster_hash("CCC", 3, master_secret, client_random, server_random, &output[32], FALSE);
 }
 
 static BOOL security_X(BYTE* master_secret, const BYTE* client_random, BYTE* server_random,
 		BYTE* output)
 {
 	return
-		security_premaster_hash("X", 1, master_secret, client_random, server_random, &output[0]) &&
-		security_premaster_hash("YY", 2, master_secret, client_random, server_random, &output[16]) &&
-		security_premaster_hash("ZZZ", 3, master_secret, client_random, server_random, &output[32]);
+		security_premaster_hash("X", 1, master_secret, client_random, server_random, &output[0], FALSE) &&
+		security_premaster_hash("YY", 2, master_secret, client_random, server_random, &output[16], FALSE) &&
+		security_premaster_hash("ZZZ", 3, master_secret, client_random, server_random, &output[32], FALSE);
 }
 
 static void fips_expand_key_bits(BYTE* in, BYTE* out)
@@ -485,7 +485,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		if (!(sha1 = winpr_Digest_New()))
 			return FALSE;
 
-		if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1) ||
+		if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1, FALSE) ||
 		    !winpr_Digest_Update(sha1, client_random + 16, 16) ||
 		    !winpr_Digest_Update(sha1, server_random + 16, 16) ||
 		    !winpr_Digest_Final(sha1, client_encrypt_key_t, sizeof(client_encrypt_key_t)))
@@ -495,7 +495,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		}
 		client_encrypt_key_t[20] = client_encrypt_key_t[0];
 
-		if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1) ||
+		if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1, FALSE) ||
 		    !winpr_Digest_Update(sha1, client_random, 16) ||
 		    !winpr_Digest_Update(sha1, server_random, 16) ||
 		    !winpr_Digest_Final(sha1, client_decrypt_key_t, sizeof(client_decrypt_key_t)))
@@ -505,7 +505,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		}
 		client_decrypt_key_t[20] = client_decrypt_key_t[0];
 
-		if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1) ||
+		if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1, FALSE) ||
 		    !winpr_Digest_Update(sha1, client_decrypt_key_t, WINPR_SHA1_DIGEST_LENGTH) ||
 		    !winpr_Digest_Update(sha1, client_encrypt_key_t, WINPR_SHA1_DIGEST_LENGTH) ||
 		    !winpr_Digest_Final(sha1, rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH))
@@ -526,6 +526,8 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 			fips_expand_key_bits(client_encrypt_key_t, rdp->fips_encrypt_key);
 			fips_expand_key_bits(client_decrypt_key_t, rdp->fips_decrypt_key);
 		}
+
+		return TRUE;
 	}
 
 	memcpy(pre_master_secret, client_random, 24);
@@ -541,13 +543,13 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 
 	if (rdp->settings->ServerMode)
 	{
-		status = security_md5_16_32_32(&session_key_blob[16], client_random, server_random, rdp->encrypt_key);
-		status &= security_md5_16_32_32(&session_key_blob[32], client_random, server_random, rdp->decrypt_key);
+		status = security_md5_16_32_32(&session_key_blob[16], client_random, server_random, rdp->encrypt_key, FALSE);
+		status &= security_md5_16_32_32(&session_key_blob[32], client_random, server_random, rdp->decrypt_key, FALSE);
 	}
 	else
 	{
-		status = security_md5_16_32_32(&session_key_blob[16], client_random, server_random, rdp->decrypt_key);
-		status &= security_md5_16_32_32(&session_key_blob[32], client_random, server_random, rdp->encrypt_key);
+		status = security_md5_16_32_32(&session_key_blob[16], client_random, server_random, rdp->decrypt_key, FALSE);
+		status &= security_md5_16_32_32(&session_key_blob[32], client_random, server_random, rdp->encrypt_key, FALSE);
 	}
 
 	if (!status)
@@ -594,7 +596,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 
 	if (!(sha1 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1, FALSE))
 		goto out;
 	if (!winpr_Digest_Update(sha1, update_key, key_len))
 		goto out;
@@ -607,7 +609,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 
 	if (!(md5 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	if (!winpr_Digest_Init(md5, WINPR_MD_MD5, FALSE))
 		goto out;
 	if (!winpr_Digest_Update(md5, update_key, key_len))
 		goto out;
@@ -694,7 +696,7 @@ BOOL security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp*
 
 	if (!(hmac = winpr_HMAC_New()))
 		return FALSE;
-	if (!winpr_HMAC_Init(hmac, WINPR_MD_SHA1, rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH))
+	if (!winpr_HMAC_Init(hmac, WINPR_MD_SHA1, rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH, FALSE))
 		goto out;
 	if (!winpr_HMAC_Update(hmac, data, length))
 		goto out;
@@ -740,7 +742,7 @@ BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig
 
 	if (!(hmac = winpr_HMAC_New()))
 		return FALSE;
-	if (!winpr_HMAC_Init(hmac, WINPR_MD_SHA1, rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH))
+	if (!winpr_HMAC_Init(hmac, WINPR_MD_SHA1, rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH, FALSE))
 		goto out;
 	if (!winpr_HMAC_Update(hmac, data, length))
 		goto out;

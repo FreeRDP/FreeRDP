@@ -1011,7 +1011,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	hmac = winpr_HMAC_New();
 
-	if (hmac && winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH))
+	if (hmac && winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH, FALSE))
 	{
 		Data_Write_UINT32(&value, SeqNo);
 		winpr_HMAC_Update(hmac, (void*) &value, 4);
@@ -1107,7 +1107,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	hmac = winpr_HMAC_New();
 
-	if (hmac && winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->RecvSigningKey, WINPR_MD5_DIGEST_LENGTH))
+	if (hmac && winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->RecvSigningKey, WINPR_MD5_DIGEST_LENGTH, FALSE))
 	{
 		Data_Write_UINT32(&value, SeqNo);
 		winpr_HMAC_Update(hmac, (void*) &value, 4);
