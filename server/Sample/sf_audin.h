@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef SF_AUDIN_H
-#define SF_AUDIN_H
+#ifndef FREERDP_SERVER_SAMPLE_SF_AUDIN_H
+#define FREERDP_SERVER_SAMPLE_SF_AUDIN_H
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
@@ -28,5 +28,5 @@
 
 void sf_peer_audin_init(testPeerContext* context);
 
-#endif /* WF_AUDIN_H */
+#endif /* FREERDP_SERVER_SAMPLE_SF_AUDIN_H */
 

@@ -575,7 +575,8 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 	UINT16 length;
 	rdpNego* nego = (rdpNego*) extra;
 
-	length = tpkt_read_header(s);
+	if (!tpkt_read_header(s, &length))
+		return -1;
 
 	if (length == 0)
 		return -1;
@@ -739,8 +740,10 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 {
 	BYTE li;
 	BYTE type;
+	UINT16 length;
 
-	tpkt_read_header(s);
+	if (!tpkt_read_header(s, &length))
+		return FALSE;
 
 	if (!tpdu_read_connection_request(s, &li))
 		return FALSE;

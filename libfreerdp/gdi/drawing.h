@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_GDI_DRAWING_H
-#define FREERDP_GDI_DRAWING_H
+#ifndef FREERDP_LIB_GDI_DRAWING_H
+#define FREERDP_LIB_GDI_DRAWING_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -41,4 +41,4 @@ FREERDP_LOCAL UINT32 gdi_SetTextColor(HGDI_DC hdc, UINT32 crColor);
 }
 #endif
 
-#endif /* FREERDP_GDI_DRAWING_H */
+#endif /* FREERDP_LIB_GDI_DRAWING_H */

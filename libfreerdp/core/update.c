@@ -1898,7 +1898,7 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 	if (Stream_GetRemainingLength(s) < ((size_t) numberOfAreas * 4 * 2))
 		return FALSE;
 
-	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
+	areas = (RECTANGLE_16*) calloc(numberOfAreas, sizeof(RECTANGLE_16));
 
 	if (!areas)
 		return FALSE;
@@ -2103,7 +2103,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 	deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 	deleteList->sIndices = 64;
-	deleteList->indices = malloc(deleteList->sIndices * 2);
+	deleteList->indices = calloc(deleteList->sIndices, 2);
 
 	if (!deleteList->indices)
 		goto error_indices;

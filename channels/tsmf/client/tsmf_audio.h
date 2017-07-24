@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __TSMF_AUDIO_H
-#define __TSMF_AUDIO_H
+#ifndef FREERDP_CHANNEL_TSMF_CLIENT_AUDIO_H
+#define FREERDP_CHANNEL_TSMF_CLIENT_AUDIO_H
 
 #include "tsmf_types.h"
 
@@ -47,5 +47,4 @@ typedef ITSMFAudioDevice* (*TSMF_AUDIO_DEVICE_ENTRY) (void);
 
 ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device);
 
-#endif
-
+#endif /* FREERDP_CHANNEL_TSMF_CLIENT_AUDIO_H */

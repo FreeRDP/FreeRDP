@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_CONSTANTS_H
-#define __RFX_CONSTANTS_H
+#ifndef FREERDP_LIB_CODEC_RFX_CONSTANTS_H
+#define FREERDP_LIB_CODEC_RFX_CONSTANTS_H
 
 /* sync */
 #define WF_MAGIC		0xCACCACCA
@@ -56,5 +56,5 @@
 /* properties.qt */
 #define SCALAR_QUANTIZATION	0x1
 
-#endif /* __RFX_CONSTANTS_H */
+#endif /* FREERDP_LIB_CODEC_RFX_CONSTANTS_H */
 

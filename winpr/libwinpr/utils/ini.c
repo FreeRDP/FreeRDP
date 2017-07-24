@@ -227,7 +227,7 @@ wIniFileSection* IniFile_Section_New(const char* name)
 
 	section->nKeys = 0;
 	section->cKeys = 64;
-	section->keys = (wIniFileKey**) malloc(sizeof(wIniFileKey*) * section->cKeys);
+	section->keys = (wIniFileKey**) calloc(section->cKeys,  sizeof(wIniFileKey*));
 
 	if (!section->keys)
 	{

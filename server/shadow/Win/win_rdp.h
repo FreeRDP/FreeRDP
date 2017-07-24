@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_WIN_RDP_H
-#define FREERDP_SHADOW_SERVER_WIN_RDP_H
+#ifndef FREERDP_SERVER_SHADOW_WIN_RDP_H
+#define FREERDP_SERVER_SHADOW_WIN_RDP_H
 
 #include <freerdp/addin.h>
 #include <freerdp/gdi/gdi.h>
@@ -53,4 +53,4 @@ int win_shadow_rdp_stop(winShadowSubsystem* subsystem);
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_WIN_RDP_H */
+#endif /* FREERDP_SERVER_SHADOW_WIN_RDP_H */

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_REMDESK_H
-#define FREERDP_SHADOW_SERVER_REMDESK_H
+#ifndef FREERDP_SERVER_SHADOW_REMDESK_H
+#define FREERDP_SERVER_SHADOW_REMDESK_H
 
 #include <freerdp/server/shadow.h>
 
@@ -35,4 +35,4 @@ void shadow_client_remdesk_uninit(rdpShadowClient* client);
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_REMDESK_H */
+#endif /* FREERDP_SERVER_SHADOW_REMDESK_H */

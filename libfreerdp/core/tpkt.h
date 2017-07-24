@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __TPKT_H
-#define __TPKT_H
+#ifndef FREERDP_LIB_CORE_TPKT_H
+#define FREERDP_LIB_CORE_TPKT_H
 
 #include "tpdu.h"
 #include "transport.h"
@@ -29,7 +29,7 @@
 #define TPKT_HEADER_LENGTH	4
 
 FREERDP_LOCAL BOOL tpkt_verify_header(wStream* s);
-FREERDP_LOCAL UINT16 tpkt_read_header(wStream* s);
+FREERDP_LOCAL BOOL tpkt_read_header(wStream* s, UINT16* length);
 FREERDP_LOCAL void tpkt_write_header(wStream* s, UINT16 length);
 
-#endif /* __TPKT_H */
+#endif /* FREERDP_LIB_CORE_TPKT_H */

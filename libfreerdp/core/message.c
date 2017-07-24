@@ -115,7 +115,7 @@ static BOOL update_message_BitmapUpdate(rdpContext* context,
 
 	wParam->number = bitmap->number;
 	wParam->count = wParam->number;
-	wParam->rectangles = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * wParam->number);
+	wParam->rectangles = (BITMAP_DATA*) calloc(wParam->number, sizeof(BITMAP_DATA));
 
 	if (!wParam->rectangles)
 	{
@@ -213,7 +213,7 @@ static BOOL update_message_RefreshRect(rdpContext* context, BYTE count,
 	if (!context || !context->update || !areas)
 		return FALSE;
 
-	lParam = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * count);
+	lParam = (RECTANGLE_16*) calloc(count, sizeof(RECTANGLE_16));
 
 	if (!lParam)
 		return FALSE;
@@ -539,7 +539,7 @@ static BOOL update_message_Polyline(rdpContext* context,
 		return FALSE;
 
 	CopyMemory(wParam, polyline, sizeof(POLYLINE_ORDER));
-	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numDeltaEntries);
+	wParam->points = (DELTA_POINT*) calloc(wParam->numDeltaEntries, sizeof(DELTA_POINT));
 
 	if (!wParam->points)
 	{
@@ -692,7 +692,7 @@ static BOOL update_message_PolygonSC(rdpContext* context,
 		return FALSE;
 
 	CopyMemory(wParam, polygonSC, sizeof(POLYGON_SC_ORDER));
-	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numPoints);
+	wParam->points = (DELTA_POINT*) calloc(wParam->numPoints, sizeof(DELTA_POINT));
 
 	if (!wParam->points)
 	{
@@ -718,7 +718,7 @@ static BOOL update_message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* poly
 		return FALSE;
 
 	CopyMemory(wParam, polygonCB, sizeof(POLYGON_CB_ORDER));
-	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numPoints);
+	wParam->points = (DELTA_POINT*) calloc(wParam->numPoints, sizeof(DELTA_POINT));
 
 	if (!wParam->points)
 	{
@@ -947,7 +947,7 @@ static BOOL update_message_CreateOffscreenBitmap(
 	CopyMemory(wParam, createOffscreenBitmap, sizeof(CREATE_OFFSCREEN_BITMAP_ORDER));
 	wParam->deleteList.cIndices = createOffscreenBitmap->deleteList.cIndices;
 	wParam->deleteList.sIndices = wParam->deleteList.cIndices;
-	wParam->deleteList.indices = (UINT16*) malloc(sizeof(UINT16) * wParam->deleteList.cIndices);
+	wParam->deleteList.indices = (UINT16*) calloc(wParam->deleteList.cIndices, sizeof(UINT16));
 
 	if (!wParam->deleteList.indices)
 	{
@@ -1452,7 +1452,7 @@ static BOOL update_message_MonitoredDesktop(rdpContext* context, WINDOW_ORDER_IN
 
 	if (lParam->numWindowIds)
 	{
-		lParam->windowIds = (UINT32*) malloc(sizeof(UINT32) * lParam->numWindowIds);
+		lParam->windowIds = (UINT32*) calloc(lParam->numWindowIds, sizeof(UINT32));
 		CopyMemory(lParam->windowIds, monitoredDesktop->windowIds, lParam->numWindowIds);
 	}
 

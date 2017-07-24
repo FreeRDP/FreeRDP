@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_NEGO_H
-#define FREERDP_CORE_NEGO_H
+#ifndef FREERDP_LIB_CORE_NEGO_H
+#define FREERDP_LIB_CORE_NEGO_H
 
 #include "transport.h"
 
@@ -166,4 +166,4 @@ FREERDP_LOCAL void nego_set_preconnection_id(rdpNego* nego,
 FREERDP_LOCAL void nego_set_preconnection_blob(rdpNego* nego,
         char* PreconnectionBlob);
 
-#endif /* __NEGO_H */
+#endif /* FREERDP_LIB_CORE_NEGO_H */

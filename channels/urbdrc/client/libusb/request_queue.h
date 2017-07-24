@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __REQUEST_QUEUE_H
-#define __REQUEST_QUEUE_H
+#ifndef FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_REQUEST_QUEUE_H
+#define FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_REQUEST_QUEUE_H
 
 #include "urbdrc_types.h"
 
@@ -62,4 +62,4 @@ struct _REQUEST_QUEUE
 REQUEST_QUEUE* request_queue_new(void);
 
 
-#endif /* __REQUEST_QUEUE_H */
+#endif /* FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_REQUEST_QUEUE_H */

@@ -1727,7 +1727,7 @@ LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname)
 		return NULL;
 	}
 
-	ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
+	ServicePrincipalName = (LPTSTR) calloc(SpnLength, sizeof(TCHAR));
 
 	if (!ServicePrincipalName)
 	{

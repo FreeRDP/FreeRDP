@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_CLIENT_REMDESK_H
-#define FREERDP_CHANNEL_CLIENT_REMDESK_H
+#ifndef FREERDP_CHANNEL_REMDESK_CLIENT_REMDESK_H
+#define FREERDP_CHANNEL_REMDESK_CLIENT_REMDESK_H
 
 #include <freerdp/channels/remdesk.h>
 
@@ -34,5 +34,5 @@ struct _remdesk_client_context
 	void* custom;
 };
 
-#endif /* FREERDP_CHANNEL_CLIENT_REMDESK_H */
+#endif /* FREERDP_CHANNEL_REMDESK_CLIENT_REMDESK_H */
 

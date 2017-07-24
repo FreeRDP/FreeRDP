@@ -229,7 +229,7 @@ static void* audin_alsa_thread_func(void* arg)
 	DWORD status;
 	DEBUG_DVC("in");
 	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
-	buffer = (BYTE*) calloc(1, rbytes_per_frame * alsa->frames_per_packet);
+	buffer = (BYTE*) calloc(alsa->frames_per_packet, rbytes_per_frame);
 
 	if (!buffer)
 	{
@@ -410,7 +410,7 @@ static UINT audin_alsa_open(IAudinDevice* device, AudinReceive receive,
 	alsa->receive = receive;
 	alsa->user_data = user_data;
 	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
-	alsa->buffer = (BYTE*) calloc(1, tbytes_per_frame * alsa->frames_per_packet);
+	alsa->buffer = (BYTE*) calloc(alsa->frames_per_packet, tbytes_per_frame);
 
 	if (!alsa->buffer)
 	{

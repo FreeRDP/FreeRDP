@@ -1593,7 +1593,7 @@ static UINT rdpgfx_get_surface_ids(RdpgfxClientContext* context,
 		return CHANNEL_RC_OK;
 	}
 
-	pSurfaceIds = (UINT16*) malloc(count * sizeof(UINT16));
+	pSurfaceIds = (UINT16*) calloc(count, sizeof(UINT16));
 
 	if (!pSurfaceIds)
 	{

@@ -63,7 +63,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s,
 		goto error_out;
 	}
 
-	meta->regionRects = (RECTANGLE_16*) malloc(meta->numRegionRects * sizeof(RECTANGLE_16));
+	meta->regionRects = (RECTANGLE_16*) calloc(meta->numRegionRects, sizeof(RECTANGLE_16));
 
 	if (!meta->regionRects)
 	{
@@ -72,7 +72,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s,
 		goto error_out;
 	}
 
-	meta->quantQualityVals = (RDPGFX_H264_QUANT_QUALITY*) malloc(meta->numRegionRects * sizeof(
+	meta->quantQualityVals = (RDPGFX_H264_QUANT_QUALITY*) calloc(meta->numRegionRects, sizeof(
 	                             RDPGFX_H264_QUANT_QUALITY));
 
 	if (!meta->quantQualityVals)
@@ -182,8 +182,9 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	UINT32 tmp;
 	size_t pos1, pos2;
 	wStream* s;
-	RDPGFX_AVC444_BITMAP_STREAM h264;
+	RDPGFX_AVC444_BITMAP_STREAM h264 = { 0 };
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
+
 	s = Stream_New(cmd->data, cmd->length);
 
 	if (!s)
@@ -193,21 +194,26 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	}
 
 	if (Stream_GetRemainingLength(s) < 4)
-		return ERROR_INVALID_DATA;
-
+	{
+		error = ERROR_INVALID_DATA;
+		goto fail;
+	}
 	Stream_Read_UINT32(s, tmp);
 	h264.cbAvc420EncodedBitstream1 = tmp & 0x3FFFFFFFUL;
 	h264.LC = (tmp >> 30UL) & 0x03UL;
 
 	if (h264.LC == 0x03)
-		return ERROR_INVALID_DATA;
+	{
+		error = ERROR_INVALID_DATA;
+		goto fail;
+	}
 
 	pos1 = Stream_GetPosition(s);
 
 	if ((error = rdpgfx_read_h264_metablock(gfx, s, &(h264.bitstream[0].meta))))
 	{
 		WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %"PRIu32"!", error);
-		return error;
+		goto fail;
 	}
 
 	pos2 = Stream_GetPosition(s);
@@ -218,7 +224,10 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 		tmp = h264.cbAvc420EncodedBitstream1 - pos2 + pos1;
 
 		if (Stream_GetRemainingLength(s) < tmp)
-			return ERROR_INVALID_DATA;
+		{
+			error = ERROR_INVALID_DATA;
+			goto fail;
+		}
 
 		h264.bitstream[0].length = tmp;
 		Stream_Seek(s, tmp);
@@ -226,7 +235,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 		if ((error = rdpgfx_read_h264_metablock(gfx, s, &(h264.bitstream[1].meta))))
 		{
 			WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %"PRIu32"!", error);
-			return error;
+			goto fail;
 		}
 
 		h264.bitstream[1].data = Stream_Pointer(s);
@@ -238,7 +247,6 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 		memset(&h264.bitstream[1], 0, sizeof(h264.bitstream[1]));
 	}
 
-	Stream_Free(s, FALSE);
 	cmd->extra = (void*) &h264;
 
 	if (context)
@@ -249,6 +257,8 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 			WLog_ERR(TAG, "context->SurfaceCommand failed with error %"PRIu32"", error);
 	}
 
+fail:
+	Stream_Free(s, FALSE);
 	free(h264.bitstream[0].meta.regionRects);
 	free(h264.bitstream[0].meta.quantQualityVals);
 	free(h264.bitstream[1].meta.regionRects);

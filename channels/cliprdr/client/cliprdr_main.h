@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __CLIPRDR_MAIN_H
-#define __CLIPRDR_MAIN_H
+#ifndef FREERDP_CHANNEL_CLIPRDR_CLIENT_MAIN_H
+#define FREERDP_CHANNEL_CLIPRDR_CLIENT_MAIN_H
 
 #include <winpr/stream.h>
 
@@ -60,4 +60,4 @@ CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
 #define DEBUG_CLIPRDR(...) do { } while (0)
 #endif
 
-#endif /* __CLIPRDR_MAIN_H */
+#endif /* FREERDP_CHANNEL_CLIPRDR_CLIENT_MAIN_H */

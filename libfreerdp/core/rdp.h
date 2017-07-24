@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __RDP_H
-#define __RDP_H
+#ifndef FREERDP_LIB_CORE_RDP_H
+#define FREERDP_LIB_CORE_RDP_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -177,7 +177,7 @@ struct rdp_rdp
 	BOOL AwaitCapabilities;
 };
 
-FREERDP_LOCAL BOOL rdp_read_security_header(wStream* s, UINT16* flags);
+FREERDP_LOCAL BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length);
 FREERDP_LOCAL void rdp_write_security_header(wStream* s, UINT16 flags);
 
 FREERDP_LOCAL BOOL rdp_read_share_control_header(wStream* s, UINT16* length,
@@ -245,9 +245,9 @@ extern const char* DATA_PDU_TYPE_STRINGS[80];
 #define DEBUG_RDP(...) do { } while (0)
 #endif
 
-BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags);
+BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, INT32 length, UINT16 securityFlags);
 
 BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo);
 BOOL rdp_send_error_info(rdpRdp* rdp);
 
-#endif /* __RDP_H */
+#endif /* FREERDP_LIB_CORE_RDP_H */

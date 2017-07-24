@@ -206,7 +206,7 @@ wStack* Stack_New(BOOL synchronized)
 	stack->synchronized = synchronized;
 
 	stack->capacity = 32;
-	stack->array = (void**) malloc(sizeof(void*) * stack->capacity);
+	stack->array = (void**) calloc(stack->capacity, sizeof(void*));
 	if (!stack->array)
 		goto out_free;
 

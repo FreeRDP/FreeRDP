@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __WF_GRAPHICS_H
-#define __WF_GRAPHICS_H
+#ifndef FREERDP_CLIENT_WIN_GRAPHICS_H
+#define FREERDP_CLIENT_WIN_GRAPHICS_H
 
 #include "wf_client.h"
 
@@ -31,4 +31,4 @@ void wf_image_free(wfBitmap* image);
 BOOL wf_register_pointer(rdpGraphics* graphics);
 BOOL wf_register_graphics(rdpGraphics* graphics);
 
-#endif /* WF_GRAPHICS */
+#endif /* FREERDP_CLIENT_WIN_GRAPHICS_H */

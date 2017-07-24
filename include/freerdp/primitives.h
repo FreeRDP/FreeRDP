@@ -17,8 +17,8 @@
 # pragma once
 #endif
 
-#ifndef __PRIMITIVES_H_INCLUDED__
-#define __PRIMITIVES_H_INCLUDED__
+#ifndef FREERDP_PRIMITIVES_H
+#define FREERDP_PRIMITIVES_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -267,4 +267,4 @@ FREERDP_API primitives_t* primitives_get_generic(void);
 }
 #endif
 
-#endif /* !__PRIMITIVES_H_INCLUDED__ */
+#endif /* FREERDP_PRIMITIVES_H */

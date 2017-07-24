@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __SECURITY_H
-#define __SECURITY_H
+#ifndef FREERDP_LIB_CORE_SECURITY_H
+#define FREERDP_LIB_CORE_SECURITY_H
 
 #include "rdp.h"
 #include <freerdp/crypto/crypto.h>
@@ -45,13 +45,13 @@ FREERDP_LOCAL BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data,
         UINT32 length, BOOL encryption, BYTE* output);
 FREERDP_LOCAL BOOL security_establish_keys(const BYTE* client_random,
         rdpRdp* rdp);
-FREERDP_LOCAL BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp);
-FREERDP_LOCAL BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp);
-FREERDP_LOCAL BOOL security_hmac_signature(const BYTE* data, int length,
+FREERDP_LOCAL BOOL security_encrypt(BYTE* data, size_t length, rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_hmac_signature(const BYTE* data, size_t length,
         BYTE* output, rdpRdp* rdp);
-FREERDP_LOCAL BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp);
-FREERDP_LOCAL BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp);
-FREERDP_LOCAL BOOL security_fips_check_signature(const BYTE* data, int length,
+FREERDP_LOCAL BOOL security_fips_encrypt(BYTE* data, size_t length, rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_fips_check_signature(const BYTE* data, size_t length,
         const BYTE* sig, rdpRdp* rdp);
 
-#endif /* __SECURITY_H */
+#endif /* FREERDP_LIB_CORE_SECURITY_H */

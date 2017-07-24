@@ -1603,8 +1603,7 @@ static UINT xf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate
 
 xfClipboard* xf_clipboard_new(xfContext* xfc)
 {
-	int i;
-	int n;
+	int i, n = 0;
 	rdpChannels* channels;
 	xfClipboard* clipboard;
 
@@ -1663,8 +1662,6 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	WLog_ERR(TAG,
 	         "Warning: Using clipboard redirection without XFIXES extension is strongly discouraged!");
 #endif
-
-	n = 0;
 
 	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "_FREERDP_RAW", False);
 	clipboard->clientFormats[n].formatId = CF_RAW;

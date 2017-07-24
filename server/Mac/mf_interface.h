@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef MF_INTERFACE_H
-#define MF_INTERFACE_H
+#ifndef FREERDP_SERVER_MAC_INTERFACE_H
+#define FREERDP_SERVER_MAC_INTERFACE_H
 
 #include <pthread.h>
 
@@ -102,4 +102,4 @@ struct mf_info
 	BOOL force_all_disconnect;
 };
 
-#endif
+#endif /* FREERDP_SERVER_MAC_INTERFACE_H */

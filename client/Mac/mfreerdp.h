@@ -1,5 +1,5 @@
-#ifndef MFREERDP_H
-#define MFREERDP_H
+#ifndef FREERDP_CLIENT_MAC_FREERDP_H
+#define FREERDP_CLIENT_MAC_FREERDP_H
 
 typedef struct mf_context mfContext;
 
@@ -86,4 +86,4 @@ struct mf_context
 	int yMaxScroll;       // maximum vertical scroll value
 };
 
-#endif // MFREERDP_H
+#endif /* FREERDP_CLIENT_MAC_FREERDP_H */

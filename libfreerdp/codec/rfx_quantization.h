@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_QUANTIZATION_H
-#define __RFX_QUANTIZATION_H
+#ifndef FREERDP_LIB_CODEC_RFX_QUANTIZATION_H
+#define FREERDP_LIB_CODEC_RFX_QUANTIZATION_H
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
@@ -31,4 +31,4 @@ FREERDP_LOCAL void rfx_quantization_encode(INT16* buffer,
 FREERDP_LOCAL void rfx_quantization_decode_block(const primitives_t* prims,
         INT16* buffer, int buffer_size, UINT32 factor);
 
-#endif /* __RFX_QUANTIZATION_H */
+#endif /* FREERDP_LIB_CODEC_RFX_QUANTIZATION_H */

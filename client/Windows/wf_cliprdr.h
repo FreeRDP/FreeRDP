@@ -16,12 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __WF_CLIPRDR_H
-#define __WF_CLIPRDR_H
+#ifndef FREERDP_CLIENT_WIN_CLIPRDR_H
+#define FREERDP_CLIENT_WIN_CLIPRDR_H
 
 #include "wf_client.h"
 
 BOOL wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr);
 BOOL wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr);
 
-#endif /* __WF_CLIPRDR_H */
+#endif /* FREERDP_CLIENT_WIN_CLIPRDR_H */

@@ -735,6 +735,19 @@ static UINT drive_irp_request(DEVICE* device, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
+static void drive_free_resources(DRIVE_DEVICE* drive)
+{
+	if (!drive)
+		return;
+
+	CloseHandle(drive->thread);
+	ListDictionary_Free(drive->files);
+	MessageQueue_Free(drive->IrpQueue);
+	Stream_Free(drive->device.data, TRUE);
+	free(drive->path);
+	free(drive);
+}
+
 /**
  * Function description
  *
@@ -753,12 +766,7 @@ static UINT drive_free(DEVICE* device)
 		return error;
 	}
 
-	CloseHandle(drive->thread);
-	ListDictionary_Free(drive->files);
-	MessageQueue_Free(drive->IrpQueue);
-	Stream_Free(drive->device.data, TRUE);
-	free(drive->path);
-	free(drive);
+	drive_free_resources(drive);
 	return error;
 }
 
@@ -866,7 +874,7 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 
 	return CHANNEL_RC_OK;
 out_error:
-	drive_free((DEVICE*) drive);
+	drive_free_resources(drive);
 	return error;
 }
 

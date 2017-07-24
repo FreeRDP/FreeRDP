@@ -93,7 +93,7 @@ FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPSTR pszName, LPSTR 
 	FREERDP_ADDIN** ppAddins = NULL;
 	STATIC_SUBSYSTEM_ENTRY* subsystems;
 	nAddins = 0;
-	ppAddins = (FREERDP_ADDIN**) calloc(1, sizeof(FREERDP_ADDIN*) * 128);
+	ppAddins = (FREERDP_ADDIN**) calloc(128, sizeof(FREERDP_ADDIN*));
 
 	if (!ppAddins)
 	{
@@ -216,7 +216,7 @@ FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSub
 	hFind = FindFirstFileA(pszSearchPath, &FindData);
 	free(pszSearchPath);
 	nAddins = 0;
-	ppAddins = (FREERDP_ADDIN**) calloc(1, sizeof(FREERDP_ADDIN*) * 128);
+	ppAddins = (FREERDP_ADDIN**) calloc(128, sizeof(FREERDP_ADDIN*));
 
 	if (!ppAddins)
 	{

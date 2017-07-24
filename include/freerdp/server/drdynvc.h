@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_DRDYNVC_H
-#define FREERDP_CHANNEL_SERVER_DRDYNVC_H
+#ifndef FREERDP_CHANNEL_DRDYNVC_SERVER_DRDYNVC_H
+#define FREERDP_CHANNEL_DRDYNVC_SERVER_DRDYNVC_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -57,4 +57,4 @@ FREERDP_API void drdynvc_server_context_free(DrdynvcServerContext* context);
  }
 #endif
 
-#endif /* FREERDP_CHANNEL_SERVER_DRDYNVC_H */
+#endif /* FREERDP_CHANNEL_DRDYNVC_SERVER_DRDYNVC_H */

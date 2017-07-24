@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_X11_H
-#define FREERDP_SHADOW_SERVER_X11_H
+#ifndef FREERDP_SERVER_SHADOW_X11_H
+#define FREERDP_SERVER_SHADOW_X11_H
 
 #include <freerdp/server/shadow.h>
 
@@ -57,17 +57,17 @@ struct x11_shadow_subsystem
 
 	HANDLE thread;
 
-	int bpp;
+	UINT32 bpp;
 	int xfds;
-	int depth;
-	int width;
-	int height;
+	UINT32 depth;
+	UINT32 width;
+	UINT32 height;
 	int number;
 	XImage* image;
 	Screen* screen;
 	Visual* visual;
 	Display* display;
-	int scanline_pad;
+	UINT32 scanline_pad;
 	BOOL composite;
 
 	BOOL use_xshm;
@@ -80,14 +80,14 @@ struct x11_shadow_subsystem
 	Window root_window;
 	XShmSegmentInfo fb_shm_info;
 
-	int cursorHotX;
-	int cursorHotY;
-	int cursorWidth;
-	int cursorHeight;
+	UINT32 cursorHotX;
+	UINT32 cursorHotY;
+	UINT32 cursorWidth;
+	UINT32 cursorHeight;
 	UINT32 cursorId;
 	BYTE* cursorPixels;
-	int cursorMaxWidth;
-	int cursorMaxHeight;
+	UINT32 cursorMaxWidth;
+	UINT32 cursorMaxHeight;
 	rdpShadowClient* lastMouseClient;
 
 #ifdef WITH_XDAMAGE
@@ -112,4 +112,4 @@ extern "C" {
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_X11_H */
+#endif /* FREERDP_SERVER_SHADOW_X11_H */

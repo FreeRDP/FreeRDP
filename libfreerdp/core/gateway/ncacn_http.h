@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_NCACN_HTTP_H
-#define FREERDP_CORE_NCACN_HTTP_H
+#ifndef FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H
+#define FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
@@ -45,4 +45,4 @@ FREERDP_LOCAL int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc,
 FREERDP_LOCAL int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc,
         RpcOutChannel* outChannel, HttpResponse* response);
 
-#endif
+#endif /* FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H */

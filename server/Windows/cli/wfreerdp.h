@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
-#ifndef WFREERDP_H
-#define WFREERDP_H
+#ifndef FREERDP_SERVER_WIN_FREERDP_H
+#define FREERDP_SERVER_WIN_FREERDP_H
 
 #include <freerdp/freerdp.h>
 
-#endif /* WFREERDP_H */
+#endif /* FREERDP_SERVER_WIN_FREERDP_H */

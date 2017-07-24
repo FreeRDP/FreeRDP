@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_CLIPRDR_MAIN_H
-#define FREERDP_CHANNEL_SERVER_CLIPRDR_MAIN_H
+#ifndef FREERDP_CHANNEL_CLIPRDR_SERVER_MAIN_H
+#define FREERDP_CHANNEL_CLIPRDR_SERVER_MAIN_H
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -45,4 +45,4 @@ struct _cliprdr_server_private
 };
 typedef struct _cliprdr_server_private CliprdrServerPrivate;
 
-#endif /* FREERDP_CHANNEL_SERVER_CLIPRDR_MAIN_H */
+#endif /* FREERDP_CHANNEL_CLIPRDR_SERVER_MAIN_H */

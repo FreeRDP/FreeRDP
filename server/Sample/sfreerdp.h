@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef SFREERDP_SERVER_H
-#define SFREERDP_SERVER_H
+#ifndef FREERDP_SERVER_SAMPLE_SFREERDP_SERVER_H
+#define FREERDP_SERVER_SAMPLE_SFREERDP_SERVER_H
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
@@ -60,5 +60,5 @@ struct test_peer_context
 };
 typedef struct test_peer_context testPeerContext;
 
-#endif /* SFREERDP_SERVER_H */
+#endif /* FREERDP_SERVER_SAMPLE_SFREERDP_SERVER_H */
 

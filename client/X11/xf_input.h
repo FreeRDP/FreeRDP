@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __XF_INPUT_H
-#define __XF_INPUT_H
+#ifndef FREERDP_CLIENT_X11_INPUT_H
+#define FREERDP_CLIENT_X11_INPUT_H
 
 #include "xf_client.h"
 #include "xfreerdp.h"
@@ -30,4 +30,4 @@
 int xf_input_init(xfContext* xfc, Window window);
 int xf_input_handle_event(xfContext* xfc, XEvent* event);
 
-#endif
+#endif /* FREERDP_CLIENT_X11_INPUT_H */

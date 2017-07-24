@@ -1,5 +1,5 @@
-#ifndef MRDPVIEW_H
-#define MRDPVIEW_H
+#ifndef FREERDP_CLIENT_MAC_MRDPVIEW_H
+#define FREERDP_CLIENT_MAC_MRDPVIEW_H
 
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
@@ -85,4 +85,4 @@ BOOL mac_post_connect(freerdp*	instance);
 BOOL mac_authenticate(freerdp* instance, char** username, char** password,
                       char** domain);
 
-#endif // MRDPVIEW_H
+#endif /* FREERDP_CLIENT_MAC_MRDPVIEW_H */

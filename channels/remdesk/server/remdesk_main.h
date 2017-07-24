@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_REMDESK_MAIN_H
-#define FREERDP_CHANNEL_SERVER_REMDESK_MAIN_H
+#ifndef FREERDP_CHANNEL_REMDESK_SERVER_MAIN_H
+#define FREERDP_CHANNEL_REMDESK_SERVER_MAIN_H
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -38,5 +38,5 @@ struct _remdesk_server_private
 	UINT32 Version;
 };
 
-#endif /* FREERDP_CHANNEL_SERVER_REMDESK_MAIN_H */
+#endif /* FREERDP_CHANNEL_REMDESK_SERVER_MAIN_H */
 

@@ -86,12 +86,12 @@ static int shadow_encoder_init_grid(rdpShadowEncoder* encoder)
 	                       encoder->maxTileHeight);
 	tileSize = encoder->maxTileWidth * encoder->maxTileHeight * 4;
 	tileCount = encoder->gridWidth * encoder->gridHeight;
-	encoder->gridBuffer = (BYTE*) malloc(tileSize * tileCount);
+	encoder->gridBuffer = (BYTE*) calloc(tileSize, tileCount);
 
 	if (!encoder->gridBuffer)
 		return -1;
 
-	encoder->grid = (BYTE**) malloc(tileCount * sizeof(BYTE*));
+	encoder->grid = (BYTE**) calloc(tileCount, sizeof(BYTE*));
 
 	if (!encoder->grid)
 		return -1;

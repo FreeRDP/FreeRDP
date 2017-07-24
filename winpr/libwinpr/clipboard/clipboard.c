@@ -197,7 +197,7 @@ UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard,
 
 	if (!pFormatIds)
 	{
-		pFormatIds = malloc(clipboard->numFormats * sizeof(UINT32));
+		pFormatIds = calloc(clipboard->numFormats, sizeof(UINT32));
 
 		if (!pFormatIds)
 			return 0;
@@ -340,7 +340,7 @@ UINT32 ClipboardGetFormatIds(wClipboard* clipboard, UINT32** ppFormatIds)
 
 	if (!pFormatIds)
 	{
-		pFormatIds = malloc(count * sizeof(UINT32));
+		pFormatIds = calloc(count, sizeof(UINT32));
 
 		if (!pFormatIds)
 			return 0;

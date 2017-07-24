@@ -79,13 +79,17 @@ const char* DATA_PDU_TYPE_STRINGS[80] =
  * @param flags security flags
  */
 
-BOOL rdp_read_security_header(wStream* s, UINT16* flags)
+BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length)
 {
 	/* Basic Security Header */
-	if (Stream_GetRemainingLength(s) < 4)
+	if ((Stream_GetRemainingLength(s) < 4) || (length && (*length < 4)))
 		return FALSE;
 	Stream_Read_UINT16(s, *flags); /* flags */
 	Stream_Seek(s, 2); /* flagsHi (unused) */
+
+	if (length)
+		*length -= 4;
+
 	return TRUE;
 }
 
@@ -301,7 +305,8 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 
 	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication;
 
-	*length = tpkt_read_header(s);
+	if (!tpkt_read_header(s, length))
+		return FALSE;
 
 	if (!tpdu_read_header(s, &code, &li))
 		return FALSE;
@@ -330,7 +335,10 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 
 	MCSPDU = domainMCSPDU;
 
-	if ((size_t) (*length - 8) > Stream_GetRemainingLength(s))
+	if (*length < 8)
+		return FALSE;
+
+	if ((*length - 8) > Stream_GetRemainingLength(s))
 		return FALSE;
 
 	if (MCSPDU == DomainMCSPDU_DisconnectProviderUltimatum)
@@ -376,8 +384,12 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	if (Stream_GetRemainingLength(s) < 5)
 		return FALSE;
 
-	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
-	per_read_integer16(s, channelId, 0); /* channelId */
+	if (!per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
+		return FALSE;
+
+	if (!per_read_integer16(s, channelId, 0)) /* channelId */
+		return FALSE;
+
 	Stream_Read_UINT8(s, byte); /* dataPriority + Segmentation (0x70) */
 
 	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
@@ -1030,17 +1042,21 @@ void rdp_read_flow_control_pdu(wStream* s, UINT16* type)
  * @param length int
  */
 
-BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
+BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, INT32 length, UINT16 securityFlags)
 {
 	BYTE cmac[8];
 	BYTE wmac[8];
 	BOOL status;
+
+	if (!rdp || !s || (length < 0))
+		return FALSE;
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		UINT16 len;
 		BYTE version, pad;
 		BYTE* sig;
+		INT64 padLength;
 
 		if (Stream_GetRemainingLength(s) < 12)
 			return FALSE;
@@ -1053,6 +1069,9 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 		Stream_Seek(s, 8);	/* signature */
 
 		length -= 12;
+		padLength = length - pad;
+		if ((length <= 0) || (padLength <= 0))
+			return FALSE;
 
 		if (!security_fips_decrypt(Stream_Pointer(s), length, rdp))
 		{
@@ -1070,11 +1089,13 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (Stream_GetRemainingLength(s) < sizeof(wmac))
 		return FALSE;
 
 	Stream_Read(s, wmac, sizeof(wmac));
 	length -= sizeof(wmac);
+	if (length <= 0)
+		return FALSE;
 
 	if (!security_decrypt(Stream_Pointer(s), length, rdp))
 		return FALSE;
@@ -1135,7 +1156,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 	if (rdp->settings->UseRdpSecurityLayer)
 	{
-		if (!rdp_read_security_header(s, &securityFlags))
+		if (!rdp_read_security_header(s, &securityFlags, &length))
 		{
 			WLog_ERR(TAG, "rdp_recv_tpkt_pdu: rdp_read_security_header() fail");
 			return -1;
@@ -1143,7 +1164,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 		if (securityFlags & (SEC_ENCRYPT | SEC_REDIRECTION_PKT))
 		{
-			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+			if (!rdp_decrypt(rdp, s, length, securityFlags))
 			{
 				WLog_ERR(TAG, "rdp_decrypt failed");
 				return -1;
@@ -1216,7 +1237,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	else if (rdp->mcs->messageChannelId && channelId == rdp->mcs->messageChannelId)
 	{
 		if (!rdp->settings->UseRdpSecurityLayer)
-			if (!rdp_read_security_header(s, &securityFlags))
+			if (!rdp_read_security_header(s, &securityFlags, NULL))
 				return -1;
 
 		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);

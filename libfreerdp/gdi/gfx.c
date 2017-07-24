@@ -760,7 +760,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
                               const RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
 	gdiGfxSurface* surface;
-	rdpGdi* gdi = (rdpGdi*) context->custom;
+		rdpGdi* gdi = (rdpGdi*) context->custom;
 	surface = (gdiGfxSurface*) calloc(1, sizeof(gdiGfxSurface));
 
 	if (!surface)
@@ -992,7 +992,7 @@ static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
 	cacheEntry->height = (UINT32)(rect->bottom - rect->top);
 	cacheEntry->format = surface->format;
 	cacheEntry->scanline = gfx_align_scanline(cacheEntry->width * 4, 16);
-	cacheEntry->data = (BYTE*) calloc(1, cacheEntry->scanline * cacheEntry->height);
+	cacheEntry->data = (BYTE*) calloc(cacheEntry->height, cacheEntry->scanline);
 
 	if (!cacheEntry->data)
 	{

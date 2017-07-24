@@ -138,7 +138,7 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 		return -1;
 	}
 
-	lpWideCharStr = (LPWSTR) malloc(cchWideChar * sizeof(WCHAR));
+	lpWideCharStr = (LPWSTR) calloc(cchWideChar, sizeof(WCHAR));
 	if (!lpWideCharStr)
 	{
 		printf("MultiByteToWideChar: unable to allocate memory for test\n");

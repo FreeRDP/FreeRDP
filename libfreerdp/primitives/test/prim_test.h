@@ -13,8 +13,8 @@
  * this code may be covered by patents by HP, Microsoft, or other parties.
  */
 
-#ifndef __PRIMTEST_H_INCLUDED__
-#define __PRIMTEST_H_INCLUDED__
+#ifndef FREERDP_LIB_PRIMTEST_H
+#define FREERDP_LIB_PRIMTEST_H
 
 #include <winpr/crt.h>
 #include <winpr/spec.h>
@@ -57,4 +57,4 @@ BOOL speed_test(const char* name, const char* dsc, UINT32 iterations,
 		speed_test_fkt generic, speed_test_fkt optimized,
 		...);
 
-#endif // !__PRIMTEST_H_INCLUDED__
+#endif /* FREERDP_LIB_PRIMTEST_H */

@@ -429,7 +429,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
 	 * for details
 	 */
-	crypt_client_random = calloc(1, key_len + 8);
+	crypt_client_random = calloc(key_len + 8, 1);
 
 	if (!crypt_client_random)
 		return FALSE;
@@ -542,7 +542,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	if (!rdp_read_security_header(s, &sec_flags))
+	if (!rdp_read_security_header(s, &sec_flags, NULL))
 	{
 		WLog_ERR(TAG, "invalid security header");
 		return FALSE;
@@ -769,12 +769,12 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 			{
 				UINT16 securityFlags = 0;
 
-				if (!rdp_read_security_header(s, &securityFlags))
+				if (!rdp_read_security_header(s, &securityFlags, &length))
 					return FALSE;
 
 				if (securityFlags & SEC_ENCRYPT)
 				{
-					if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+					if (!rdp_decrypt(rdp, s, length, securityFlags))
 					{
 						WLog_ERR(TAG, "rdp_decrypt failed");
 						return FALSE;

@@ -365,7 +365,7 @@ static char* x509_get_default_name(void)
 	    GetLastError() != ERROR_MORE_DATA)
 		goto fallback;
 
-	computerName = (CHAR*)calloc(nSize, 1);
+	computerName = (CHAR*)calloc(1, nSize);
 
 	if (!computerName)
 		goto fallback;
@@ -381,7 +381,7 @@ fallback:
 	    GetLastError() != ERROR_MORE_DATA)
 		return NULL;
 
-	computerName = (CHAR*)calloc(nSize, 1);
+	computerName = (CHAR*)calloc(1, nSize);
 
 	if (!computerName)
 		return NULL;

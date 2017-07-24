@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_RPC_H
-#define FREERDP_CORE_RPC_H
+#ifndef FREERDP_LIB_CORE_GATEWAY_RPC_H
+#define FREERDP_LIB_CORE_GATEWAY_RPC_H
 
 #include <winpr/wtypes.h>
 #include <winpr/stream.h>
@@ -803,4 +803,4 @@ FREERDP_LOCAL BOOL rpc_connect(rdpRpc* rpc, int timeout);
 FREERDP_LOCAL rdpRpc* rpc_new(rdpTransport* transport);
 FREERDP_LOCAL void rpc_free(rdpRpc* rpc);
 
-#endif /* FREERDP_CORE_RPC_H */
+#endif /* FREERDP_LIB_CORE_GATEWAY_RPC_H */

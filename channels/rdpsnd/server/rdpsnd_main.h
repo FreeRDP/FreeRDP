@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_RDPSND_MAIN_H
-#define FREERDP_CHANNEL_SERVER_RDPSND_MAIN_H
+#ifndef FREERDP_CHANNEL_RDPSND_SERVER_MAIN_H
+#define FREERDP_CHANNEL_RDPSND_SERVER_MAIN_H
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -55,4 +55,4 @@ struct _rdpsnd_server_private
 	CRITICAL_SECTION lock; /* Protect out_buffer and related parameters */
 };
 
-#endif /* FREERDP_CHANNEL_SERVER_RDPSND_MAIN_H */
+#endif /* FREERDP_CHANNEL_RDPSND_SERVER_MAIN_H */

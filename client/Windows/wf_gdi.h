@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __WF_GDI_H
-#define __WF_GDI_H
+#ifndef FREERDP_CLIENT_WIN_GDI_H
+#define FREERDP_CLIENT_WIN_GDI_H
 
 #include "wf_client.h"
 
@@ -37,4 +37,4 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update);
 
 void wf_update_canvas_diff(wfContext* wfc);
 
-#endif /* __WF_GDI_H */
+#endif /* FREERDP_CLIENT_WIN_GDI_H */

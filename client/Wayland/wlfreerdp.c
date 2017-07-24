@@ -28,6 +28,7 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/client.h>
 #include <freerdp/utils/signal.h>
+#include <freerdp/locale/keyboard.h>
 
 #include <linux/input.h>
 

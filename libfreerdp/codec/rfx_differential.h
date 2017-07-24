@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_DIFFERENTIAL_H
-#define __RFX_DIFFERENTIAL_H
+#ifndef FREERDP_LIB_CODEC_RFX_DIFFERENTIAL_H
+#define FREERDP_LIB_CODEC_RFX_DIFFERENTIAL_H
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
@@ -48,4 +48,4 @@ static INLINE void rfx_differential_encode(INT16* buffer, int size)
 	}
 }
 
-#endif /* __RFX_DIFFERENTIAL_H */
+#endif /* FREERDP_LIB_CODEC_RFX_DIFFERENTIAL_H */

@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_GDI_BRUSH_H
-#define FREERDP_GDI_BRUSH_H
+#ifndef FREERDP_LIB_GDI_BRUSH_H
+#define FREERDP_LIB_GDI_BRUSH_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -47,4 +47,4 @@ static INLINE UINT32 gdi_GetBrushStyle(HGDI_DC hdc)
 }
 #endif
 
-#endif /* FREERDP_GDI_BRUSH_H */
+#endif /* FREERDP_LIB_GDI_BRUSH_H */

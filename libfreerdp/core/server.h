@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_SERVER_H
-#define FREERDP_CORE_SERVER_H
+#ifndef FREERDP_LIB_CORE_SERVER_H
+#define FREERDP_LIB_CORE_SERVER_H
 
 #include <freerdp/freerdp.h>
 #include <freerdp/api.h>
@@ -247,4 +247,4 @@ FREERDP_LOCAL BOOL WINAPI FreeRDP_WTSLogoffUser(HANDLE hServer);
 FREERDP_LOCAL BOOL WINAPI FreeRDP_WTSLogonUser(HANDLE hServer, LPCSTR username,
         LPCSTR password, LPCSTR domain);
 
-#endif /* FREERDP_CORE_SERVER_H */
+#endif /* FREERDP_LIB_CORE_SERVER_H */

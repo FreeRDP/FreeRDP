@@ -172,7 +172,7 @@ NTSTATUS _RtlAnsiStringToUnicodeString(PUNICODE_STRING DestinationString,
 
 		if (SourceString->MaximumLength)
 		{
-			if (!(wbuf = (PWSTR) malloc(SourceString->MaximumLength * 2)))
+			if (!(wbuf = (PWSTR) calloc(SourceString->MaximumLength, 2)))
 				return STATUS_NO_MEMORY;
 		}
 

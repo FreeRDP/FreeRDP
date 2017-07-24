@@ -814,7 +814,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 		return FALSE;
 	}
 
-	buffer = (char*) malloc((length + 1) * sizeof(char));
+	buffer = (char*) calloc((length + 1), sizeof(char));
 
 	if (freerdp_client_write_rdp_file_buffer(file, buffer, length + 1) != length)
 	{
@@ -1427,7 +1427,7 @@ rdpFile* freerdp_client_rdp_file_new()
 		FillMemory(file, sizeof(rdpFile), 0xFF);
 		file->lineCount = 0;
 		file->lineSize = 32;
-		file->lines = (rdpFileLine*) malloc(file->lineSize * sizeof(rdpFileLine));
+		file->lines = (rdpFileLine*) calloc(file->lineSize, sizeof(rdpFileLine));
 
 		if (!file->lines)
 		{
@@ -1437,7 +1437,7 @@ rdpFile* freerdp_client_rdp_file_new()
 
 		file->argc = 0;
 		file->argSize = 32;
-		file->argv = (char**) malloc(file->argSize * sizeof(char*));
+		file->argv = (char**) calloc(file->argSize, sizeof(char*));
 
 		if (!file->argv)
 		{

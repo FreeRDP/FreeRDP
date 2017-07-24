@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef SF_ENCOMSP_H
-#define SF_ENCOMSP_H
+#ifndef FREERDP_SERVER_SAMPLE_SF_ENCOMSP_H
+#define FREERDP_SERVER_SAMPLE_SF_ENCOMSP_H
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
@@ -28,4 +28,4 @@
 
 BOOL sf_peer_encomsp_init(testPeerContext* context);
 
-#endif /* SF_ENCOMSP_H */
+#endif /* FREERDP_SERVER_SAMPLE_SF_ENCOMSP_H */

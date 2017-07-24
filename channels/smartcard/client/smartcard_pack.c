@@ -981,7 +981,7 @@ LONG smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	Stream_Seek_UINT32(s); /* NdrMaxCount (4 bytes) */
 	Stream_Seek_UINT32(s); /* NdrOffset (4 bytes) */
 	Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
-	call->szReader = (WCHAR*) malloc((count + 1) * 2);
+	call->szReader = (WCHAR*) calloc((count + 1), 2);
 
 	if (!call->szReader)
 	{
@@ -1557,7 +1557,7 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
-			readerState->szReader = (WCHAR*) malloc((count + 1) * 2);
+			readerState->szReader = (WCHAR*) calloc((count + 1), 2);
 
 			if (!readerState->szReader)
 			{

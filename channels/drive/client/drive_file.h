@@ -23,8 +23,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_DRIVE_FILE_H
-#define FREERDP_CHANNEL_DRIVE_FILE_H
+#ifndef FREERDP_CHANNEL_DRIVE_CLIENT_FILE_H
+#define FREERDP_CHANNEL_DRIVE_CLIENT_FILE_H
 
 #include <winpr/stream.h>
 #include <freerdp/channels/log.h>
@@ -68,4 +68,4 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 
 extern UINT sys_code_page;
 
-#endif /* FREERDP_CHANNEL_DRIVE_FILE_H */
+#endif /* FREERDP_CHANNEL_DRIVE_CLIENT_FILE_H */

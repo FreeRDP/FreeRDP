@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __XF_GRAPHICS_H
-#define __XF_GRAPHICS_H
+#ifndef FREERDP_CLIENT_X11_GRAPHICS_H
+#define FREERDP_CLIENT_X11_GRAPHICS_H
 
 #include "xf_client.h"
 #include "xfreerdp.h"
@@ -29,4 +29,4 @@ BOOL xf_register_graphics(rdpGraphics* graphics);
 BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color);
 UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned);
 
-#endif /* __XF_GRAPHICS_H */
+#endif /* FREERDP_CLIENT_X11_GRAPHICS_H */

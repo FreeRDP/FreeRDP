@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __XF_RAIL_H
-#define __XF_RAIL_H
+#ifndef FREERDP_CLIENT_X11_RAIL_H
+#define FREERDP_CLIENT_X11_RAIL_H
 
 #include "xf_client.h"
 #include "xfreerdp.h"
@@ -36,4 +36,4 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc);
 int xf_rail_init(xfContext* xfc, RailClientContext* rail);
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail);
 
-#endif /* __XF_RAIL_H */
+#endif /* FREERDP_CLIENT_X11_RAIL_H */

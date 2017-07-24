@@ -452,7 +452,7 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 
 			pool->size = 0;
 			pool->capacity = 32;
-			pool->array = (void**) malloc(sizeof(void*) * pool->capacity);
+			pool->array = (void**) calloc(pool->capacity, sizeof(void*));
 			if (!pool->array)
 				goto out_error;
 		}
@@ -462,13 +462,13 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 
 			pool->aSize = 0;
 			pool->aCapacity = 32;
-			pool->aArray = (wBufferPoolItem*) malloc(sizeof(wBufferPoolItem) * pool->aCapacity);
+			pool->aArray = (wBufferPoolItem*) calloc(pool->aCapacity, sizeof(wBufferPoolItem));
 			if (!pool->aArray)
 				goto out_error;
 
 			pool->uSize = 0;
 			pool->uCapacity = 32;
-			pool->uArray = (wBufferPoolItem*) malloc(sizeof(wBufferPoolItem) * pool->uCapacity);
+			pool->uArray = (wBufferPoolItem*) calloc(pool->uCapacity, sizeof(wBufferPoolItem));
 			if (!pool->uArray)
 			{
 				free(pool->aArray);
