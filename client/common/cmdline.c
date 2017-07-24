@@ -136,8 +136,10 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "<image|video>", NULL, NULL, -1, NULL, "RemoteFX mode" },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Number of frame acknowledgement" },
 	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "nscodec", "Enable NSCodec" },
+#if defined(WITH_JPEG)
 	{ "jpeg", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Enable JPEG codec" },
 	{ "jpeg-quality", COMMAND_LINE_VALUE_REQUIRED, "<percentage>", NULL, NULL, -1, NULL, "JPEG quality" },
+#endif
 	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable protocol security negotiation" },
 	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "<rdp|tls|nla|ext>", NULL, NULL, -1, NULL, "force specific protocol security" },
 	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "rdp protocol security" },
@@ -2179,6 +2181,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->NSCodec = TRUE;
 		}
+#if defined(WITH_JPEG)
 		CommandLineSwitchCase(arg, "jpeg")
 		{
 			settings->JpegCodec = TRUE;
@@ -2188,6 +2191,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->JpegQuality = atoi(arg->Value) % 100;
 		}
+#endif
 		CommandLineSwitchCase(arg, "nego")
 		{
 			settings->NegotiateSecurityLayer = arg->Value ? TRUE : FALSE;
@@ -2387,6 +2391,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 				settings->NSCodec = TRUE;
 			}
+#if defined(WITH_JPEG)
 			else if (strcmp(arg->Value, "jpeg") == 0)
 			{
 				settings->JpegCodec = TRUE;
@@ -2394,6 +2399,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				if (settings->JpegQuality == 0)
 					settings->JpegQuality = 75;
 			}
+#endif
 		}
 		CommandLineSwitchCase(arg, "fast-path")
 		{
