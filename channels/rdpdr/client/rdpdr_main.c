@@ -431,7 +431,8 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		if (device_ext->path == NULL)
 			continue;
 
-		ConvertFromUnicode(CP_UTF8, 0, device_ext->path, 0, &path, 0, NULL, FALSE);
+		if (ConvertFromUnicode(CP_UTF8, 0, device_ext->path, 0, &path, 0, NULL, FALSE) <= 0)
+			continue;
 
 		/* not plugable device */
 		if (strstr(path, "/Volumes/") == NULL)
