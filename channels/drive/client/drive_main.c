@@ -91,6 +91,14 @@ static DWORD drive_map_windows_err(DWORD fs_errno)
 			rc = STATUS_DEVICE_BUSY;
 			break;
 
+		case ERROR_INVALID_DRIVE:
+			rc = STATUS_NO_SUCH_DEVICE;
+			break;
+
+		case ERROR_NOT_READY:
+			rc = STATUS_NO_SUCH_DEVICE;
+		break;
+
 		case ERROR_FILE_EXISTS:
 		case ERROR_ALREADY_EXISTS:
 			rc  = STATUS_OBJECT_NAME_COLLISION;
@@ -118,7 +126,7 @@ static DWORD drive_map_windows_err(DWORD fs_errno)
 
 		default:
 			rc = STATUS_UNSUCCESSFUL;
-			WLog_ERR(TAG, "Error code not found: %"PRId32"", fs_errno);
+			WLog_ERR(TAG, "Error code not found: %"PRIu32"", fs_errno);
 			break;
 	}
 
