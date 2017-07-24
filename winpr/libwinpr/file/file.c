@@ -593,6 +593,8 @@ UINT32 map_posix_err(int fs_errno)
 			break;
 
 		default:
+			WLog_ERR(TAG, "Missing ERRNO mapping %s [%d]",
+			         strerror(fs_errno), fs_errno);
 			rc = STATUS_UNSUCCESSFUL;
 			break;
 	}
