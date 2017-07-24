@@ -114,6 +114,7 @@ static const GUID CODEC_GUID_IMAGE_REMOTEFX =
 	{ 0x80, 0x3C, 0x0E, 0xCB, 0xEE, 0xA1, 0x9C, 0x54 }
 };
 
+#if defined(WITH_JPEG)
 /* CODEC_GUID_JPEG 0x430C9EED1BAF4CE6869ACB8B37B66237 */
 
 static const GUID CODEC_GUID_JPEG =
@@ -122,6 +123,7 @@ static const GUID CODEC_GUID_JPEG =
 	0x1BAF, 0x4CE6,
 	{ 0x86, 0x9A, 0xCB, 0x8B, 0x37, 0xB6, 0x62, 0x37 }
 };
+#endif
 
 static void rdp_read_capability_set_header(wStream* s, UINT16* length,
         UINT16* type)
@@ -2953,6 +2955,7 @@ static BOOL rdp_write_nsc_client_capability_container(wStream* s,
 	return TRUE;
 }
 
+#if defined(WITH_JPEG)
 static BOOL rdp_write_jpeg_client_capability_container(wStream* s,
         rdpSettings* settings)
 {
@@ -2963,6 +2966,7 @@ static BOOL rdp_write_jpeg_client_capability_container(wStream* s,
 	Stream_Write_UINT8(s, settings->JpegQuality);
 	return TRUE;
 }
+#endif
 
 /**
  * Write RemoteFX Server Capability Container.\n
@@ -3032,8 +3036,10 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s,
 	if (settings->NSCodec)
 		bitmapCodecCount++;
 
+#if defined(WITH_JPEG)
 	if (settings->JpegCodec)
 		bitmapCodecCount++;
+#endif
 
 	if (settings->RemoteFxImageCodec)
 		bitmapCodecCount++;
@@ -3080,6 +3086,7 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s,
 		}
 	}
 
+#if defined(WITH_JPEG)
 	if (settings->JpegCodec)
 	{
 		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_JPEG); /* codecGUID */
@@ -3099,6 +3106,7 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s,
 				return FALSE;
 		}
 	}
+#endif
 
 	if (settings->RemoteFxImageCodec)
 	{
