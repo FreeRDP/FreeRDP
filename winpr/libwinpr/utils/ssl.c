@@ -255,7 +255,7 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 	}
 #endif
 	/* SSL_load_error_strings() is void */
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
 	SSL_load_error_strings();
 	/* SSL_library_init() always returns "1" */
 	SSL_library_init();
@@ -296,7 +296,7 @@ BOOL winpr_CleanupSSL(DWORD flags)
 #ifdef WINPR_OPENSSL_LOCKING_REQUIRED
 		_winpr_openssl_cleanup_locking();
 #endif
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
 		CRYPTO_cleanup_all_ex_data();
 		ERR_free_strings();
 		EVP_cleanup();
@@ -307,7 +307,7 @@ BOOL winpr_CleanupSSL(DWORD flags)
 #ifdef WINPR_OPENSSL_LOCKING_REQUIRED
 	if (flags & WINPR_SSL_CLEANUP_THREAD)
 	{
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
 		ERR_remove_state(0);
 #else
 		ERR_remove_thread_state(NULL);
