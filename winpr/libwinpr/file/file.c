@@ -567,6 +567,7 @@ UINT32 map_posix_err(int fs_errno)
 			rc = ERROR_FILE_NOT_FOUND;
 			break;
 
+		case EROFS:
 		case EPERM:
 		case EACCES:
 			rc = ERROR_ACCESS_DENIED;
