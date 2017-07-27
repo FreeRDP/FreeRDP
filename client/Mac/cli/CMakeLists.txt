@@ -79,7 +79,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(NATIVE_
 set_target_properties(${MODULE_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 
 # Disable transitive linking
-target_link_libraries(${MODULE_NAME} ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${APPKIT_LIBRARY} MacFreeRDP-library)
+target_link_libraries(${MODULE_NAME} ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${APPKIT_LIBRARY} MacFreeRDP-library winpr-utils)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Mac")
 
