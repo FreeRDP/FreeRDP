@@ -830,6 +830,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpSettings* settings)
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
+
 	Stream_Read_UINT32(s, settings->EncryptionMethods); /* encryptionMethod */
 	Stream_Read_UINT32(s, settings->EncryptionLevel); /* encryptionLevel */
 
@@ -844,43 +845,50 @@ BOOL gcc_read_server_security_data(wStream* s, rdpSettings* settings)
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
+
 	Stream_Read_UINT32(s, settings->ServerRandomLength); /* serverRandomLen */
 	Stream_Read_UINT32(s, settings->ServerCertificateLength); /* serverCertLen */
 
-	if (Stream_GetRemainingLength(s) < settings->ServerRandomLength + settings->ServerCertificateLength)
+	if (settings->ServerRandomLength == 0 || settings->ServerCertificateLength == 0)
 		return FALSE;
 
-	if (settings->ServerRandomLength > 0)
-	{
-		/* serverRandom */
-		settings->ServerRandom = (BYTE*) malloc(settings->ServerRandomLength);
-		Stream_Read(s, settings->ServerRandom, settings->ServerRandomLength);
-	}
-	else
-	{
+	if (Stream_GetRemainingLength(s) < settings->ServerRandomLength)
 		return FALSE;
-	}
 
-	if (settings->ServerCertificateLength > 0)
-	{
-		/* serverCertificate */
-		settings->ServerCertificate = (BYTE*) malloc(settings->ServerCertificateLength);
-		Stream_Read(s, settings->ServerCertificate, settings->ServerCertificateLength);
-
-		certificate_free(settings->RdpServerCertificate);
-		settings->RdpServerCertificate = certificate_new();
-		data = settings->ServerCertificate;
-		length = settings->ServerCertificateLength;
-
-		if (certificate_read_server_certificate(settings->RdpServerCertificate, data, length) < 1)
-			return FALSE;
-	}
-	else
-	{
+	/* serverRandom */
+	settings->ServerRandom = (BYTE*) malloc(settings->ServerRandomLength);
+	if (!settings->ServerRandom)
 		return FALSE;
-	}
+	Stream_Read(s, settings->ServerRandom, settings->ServerRandomLength);
+
+	/* serverCertificate */
+	if(Stream_GetRemainingLength(s) < settings->ServerCertificateLength)
+		goto out_fail1;
+	settings->ServerCertificate = (BYTE*) malloc(settings->ServerCertificateLength);
+	if (!settings->ServerCertificate)
+		goto out_fail1;
+
+	Stream_Read(s, settings->ServerCertificate, settings->ServerCertificateLength);
+	certificate_free(settings->RdpServerCertificate);
+	settings->RdpServerCertificate = certificate_new();
+	if (!settings->RdpServerCertificate)
+		goto out_fail2;
+
+	data = settings->ServerCertificate;
+	length = settings->ServerCertificateLength;
+
+	if (certificate_read_server_certificate(settings->RdpServerCertificate, data, length) < 1)
+		goto out_fail2;
 
 	return TRUE;
+
+	out_fail2:
+		free(settings->ServerCertificate);
+		settings->ServerCertificate = NULL;
+	out_fail1:
+		free(settings->ServerRandom);
+		settings->ServerRandom = NULL;
+		return FALSE;
 }
 
 static const BYTE initial_signature[] =

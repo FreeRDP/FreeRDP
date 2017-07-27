@@ -77,13 +77,17 @@ static const char* const DATA_PDU_TYPE_STRINGS[] =
  * @param flags security flags
  */
 
-BOOL rdp_read_security_header(wStream* s, UINT16* flags)
+BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length)
 {
 	/* Basic Security Header */
-	if (Stream_GetRemainingLength(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4 || (length && (*length < 4)))
 		return FALSE;
 	Stream_Read_UINT16(s, *flags); /* flags */
 	Stream_Seek(s, 2); /* flagsHi (unused) */
+
+	if (length)
+		*length -= 4;
+
 	return TRUE;
 }
 
@@ -249,6 +253,9 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id
 			return FALSE;
 	}
 
+	if (*length < 8)
+		return FALSE;
+
 	if (*length - 8 > Stream_GetRemainingLength(s))
 		return FALSE;
 
@@ -273,8 +280,12 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id
 	if (Stream_GetRemainingLength(s) < 5)
 		return FALSE;
 
-	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
-	per_read_integer16(s, channel_id, 0); /* channelId */
+	if (!per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
+		return FALSE;
+
+	if (!per_read_integer16(s, channel_id, 0)) /* channelId */
+		return FALSE;
+
 	Stream_Seek(s, 1); /* dataPriority + Segmentation (0x70) */
 
 	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
@@ -701,16 +712,20 @@ BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
  * @param length int
  */
 
-BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
+BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, INT32 length, UINT16 securityFlags)
 {
 	BYTE cmac[8];
 	BYTE wmac[8];
+
+	if (!rdp || !s || length < 0)
+		return FALSE;
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		UINT16 len;
 		BYTE version, pad;
 		BYTE* sig;
+		INT64 padLength;
 
 		if (Stream_GetRemainingLength(s) < 12)
 			return FALSE;
@@ -723,6 +738,10 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 		Stream_Seek(s, 8);	/* signature */
 
 		length -= 12;
+		padLength = length - pad;
+
+		if (length <= 0 || padLength <= 0)
+			return FALSE;
 
 		if (!security_fips_decrypt(Stream_Pointer(s), length, rdp))
 		{
@@ -741,11 +760,13 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (Stream_GetRemainingLength(s) < sizeof(wmac))
 		return FALSE;
 
 	Stream_Read(s, wmac, sizeof(wmac));
 	length -= sizeof(wmac);
+	if (length <= 0)
+		return FALSE;
 
 	if (!security_decrypt(Stream_Pointer(s), length, rdp))
 		return FALSE;
@@ -795,12 +816,12 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 	if (rdp->settings->DisableEncryption)
 	{
-		if (!rdp_read_security_header(s, &securityFlags))
+		if (!rdp_read_security_header(s, &securityFlags, &length))
 			return -1;
 
 		if (securityFlags & (SEC_ENCRYPT | SEC_REDIRECTION_PKT))
 		{
-			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+			if (!rdp_decrypt(rdp, s, length, securityFlags))
 			{
 				fprintf(stderr, "rdp_decrypt failed\n");
 				return -1;

@@ -475,7 +475,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len)
 	return TRUE;
 }
 
-BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
+BOOL security_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 {
 	if (rdp->encrypt_use_count >= 4096)
 	{
@@ -490,7 +490,7 @@ BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
 	return TRUE;
 }
 
-BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
+BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 {
 	if (rdp->rc4_decrypt_key == NULL)
 		return FALSE;
@@ -507,7 +507,7 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 	return TRUE;
 }
 
-void security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp* rdp)
+void security_hmac_signature(const BYTE* data, size_t length, BYTE* output, rdpRdp* rdp)
 {
 	BYTE buf[20];
 	BYTE use_count_le[4];
@@ -522,20 +522,20 @@ void security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp*
 	memmove(output, buf, 8);
 }
 
-BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp)
+BOOL security_fips_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 {
 	crypto_des3_encrypt(rdp->fips_encrypt, length, data, data);
 	rdp->encrypt_use_count++;
 	return TRUE;
 }
 
-BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp)
+BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 {
 	crypto_des3_decrypt(rdp->fips_decrypt, length, data, data);
 	return TRUE;
 }
 
-BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig, rdpRdp* rdp)
+BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* sig, rdpRdp* rdp)
 {
 	BYTE buf[20];
 	BYTE use_count_le[4];

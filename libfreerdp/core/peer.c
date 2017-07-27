@@ -179,12 +179,12 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (rdp->settings->DisableEncryption)
 	{
-		if (!rdp_read_security_header(s, &securityFlags))
+		if (!rdp_read_security_header(s, &securityFlags, &length))
 			return -1;
 
 		if (securityFlags & SEC_ENCRYPT)
 		{
-			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+			if (!rdp_decrypt(rdp, s, length, securityFlags))
 			{
 				fprintf(stderr, "rdp_decrypt failed\n");
 				return -1;

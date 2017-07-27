@@ -160,7 +160,7 @@ struct rdp_rdp
 	BOOL deactivation_reactivation;
 };
 
-BOOL rdp_read_security_header(wStream* s, UINT16* flags);
+BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length);
 void rdp_write_security_header(wStream* s, UINT16 flags);
 
 BOOL rdp_read_share_control_header(wStream* s, UINT16* length, UINT16* type, UINT16* channel_id);
@@ -202,6 +202,6 @@ void rdp_free(rdpRdp* rdp);
 #define DEBUG_RDP(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags);
+BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, INT32 length, UINT16 securityFlags);
 
 #endif /* __RDP_H */

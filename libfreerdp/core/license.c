@@ -240,12 +240,12 @@ BOOL license_recv(rdpLicense* license, wStream* s)
 		return FALSE;
 	}
 
-	if (!rdp_read_security_header(s, &securityFlags))
+	if (!rdp_read_security_header(s, &securityFlags, &length))
 		return FALSE;
 
 	if (securityFlags & SEC_ENCRYPT)
 	{
-		if (!rdp_decrypt(license->rdp, s, length - 4, securityFlags))
+		if (!rdp_decrypt(license->rdp, s, length, securityFlags))
 		{
 			fprintf(stderr, "rdp_decrypt failed\n");
 			return FALSE;
@@ -474,25 +474,41 @@ BOOL license_read_product_info(wStream* s, PRODUCT_INFO* productInfo)
 
 	Stream_Read_UINT32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < productInfo->cbCompanyName + 4)
+	/* Name must be > 0, but there is no upper limit defined, use UINT32_MAX */
+	if ((productInfo->cbCompanyName < 2) || (productInfo->cbCompanyName % 2 != 0))
+		return FALSE;
+
+	if (Stream_GetRemainingLength(s) < productInfo->cbCompanyName)
 		return FALSE;
 
 	productInfo->pbCompanyName = (BYTE*) malloc(productInfo->cbCompanyName);
+	if (!productInfo->pbCompanyName)
+		return FALSE;
 	Stream_Read(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
+
+	if (Stream_GetRemainingLength(s) < 4)
+		goto out_fail;
 
 	Stream_Read_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
 
+	if ((productInfo->cbProductId < 2) || (productInfo->cbProductId % 2 != 0))
+		goto out_fail;
+
 	if (Stream_GetRemainingLength(s) < productInfo->cbProductId)
-	{
+		goto out_fail;
+
+	productInfo->pbProductId = (BYTE*) malloc(productInfo->cbProductId);
+	if (!productInfo->pbProductId)
+		goto out_fail;
+
+	Stream_Read(s, productInfo->pbProductId, productInfo->cbProductId);
+	return TRUE;
+
+	out_fail:
 		free(productInfo->pbCompanyName);
 		productInfo->pbCompanyName = NULL;
 		return FALSE;
-	}
 
-	productInfo->pbProductId = (BYTE*) malloc(productInfo->cbProductId);
-	Stream_Read(s, productInfo->pbProductId, productInfo->cbProductId);
-
-	return TRUE;
 }
 
 /**
@@ -796,7 +812,10 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 
 	/* EncryptedPlatformChallenge */
 	license->EncryptedPlatformChallenge->type = BB_ANY_BLOB;
-	license_read_binary_blob(s, license->EncryptedPlatformChallenge);
+
+	if (!license_read_binary_blob(s, license->EncryptedPlatformChallenge))
+		return FALSE;
+
 	license->EncryptedPlatformChallenge->type = BB_ENCRYPTED_DATA_BLOB;
 
 	if (Stream_GetRemainingLength(s) < 16)

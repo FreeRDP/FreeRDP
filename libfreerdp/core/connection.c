@@ -77,19 +77,18 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if (settings->GatewayEnabled)
 	{
-        char* user;
+		char* user = NULL;
 		char* domain;
 		char* cookie;
-        int user_length = 0;
+		int user_length = 0;
 		int domain_length;
 		int cookie_length;
 
-
-        if (settings->Username)
-        {
-            user = settings->Username;
-            user_length = strlen(settings->Username);
-        }
+		if (settings->Username)
+		{
+			user = settings->Username;
+			user_length = strlen(settings->Username);
+		}
 
 		if (settings->Domain)
 			domain = settings->Domain;
@@ -365,7 +364,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	if (!rdp_read_security_header(s, &sec_flags))
+	if (!rdp_read_security_header(s, &sec_flags, NULL))
 		return FALSE;
 
 	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)

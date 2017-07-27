@@ -327,10 +327,10 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 	UINT32 keylen;
 	UINT32 bitlen;
 	UINT32 datalen;
-	UINT32 modlen;
 
 	if (Stream_GetRemainingLength(s) < 20)
 		return FALSE;
+
 	Stream_Read(s, magic, 4);
 
 	if (memcmp(magic, "RSA1", 4) != 0)
@@ -343,12 +343,16 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 	Stream_Read_UINT32(s, bitlen);
 	Stream_Read_UINT32(s, datalen);
 	Stream_Read(s, certificate->cert_info.exponent, 4);
-	modlen = keylen - 8;
 
-	if (Stream_GetRemainingLength(s) < modlen + 8)	// count padding
+	if ((keylen <= 8) || (Stream_GetRemainingLength(s) < keylen))
 		return FALSE;
-	certificate->cert_info.ModulusLength = modlen;
+
+	certificate->cert_info.ModulusLength = keylen - 8;
 	certificate->cert_info.Modulus = malloc(certificate->cert_info.ModulusLength);
+
+	if (!certificate->cert_info.Modulus)
+		return FALSE;
+
 	Stream_Read(s, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
 	/* 8 bytes of zero padding */
 	Stream_Seek(s, 8);
@@ -500,7 +504,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, wStream* s)
 {
-	int i;
+	UINT32 i;
 	UINT32 certLength;
 	UINT32 numCertBlobs;
 	BOOL ret;
@@ -513,7 +517,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 	certificate->x509_cert_chain = certificate_new_x509_certificate_chain(numCertBlobs);
 
-	for (i = 0; i < (int) numCertBlobs; i++)
+	for (i = 0; i < numCertBlobs; i++)
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
@@ -562,7 +566,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
  * @param length certificate length
  */
 
-int certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length)
+int certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, size_t length)
 {
 	wStream* s;
 	UINT32 dwVersion;

@@ -37,12 +37,12 @@ void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BOOL encryption, BYTE* output);
 BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp);
 
-BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp);
-BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp);
+BOOL security_encrypt(BYTE* data, size_t length, rdpRdp* rdp);
+BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp);
 
-void security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp* rdp);
-BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp);
-BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp);
-BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig, rdpRdp* rdp);
+void security_hmac_signature(const BYTE* data, size_t length, BYTE* output, rdpRdp* rdp);
+BOOL security_fips_encrypt(BYTE* data, size_t length, rdpRdp* rdp);
+BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp);
+BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* sig, rdpRdp* rdp);
 
 #endif /* __SECURITY_H */

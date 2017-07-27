@@ -85,7 +85,7 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 {
 	BYTE* mark;
 	UINT16 cmdType;
-	UINT32 cmdLength;
+	UINT32 cmdLength = 0;
 
 	while (size > 2)
 	{

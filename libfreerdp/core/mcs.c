@@ -197,7 +197,8 @@ BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU, 
 	BYTE choice;
 	enum DomainMCSPDU MCSPDU;
 
-	*length = tpkt_read_header(s);
+	if (!tpkt_read_header(s, length))
+		return FALSE;
 
 	if (!tpdu_read_data(s, &li))
 		return FALSE;
@@ -332,8 +333,13 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 	UINT16	li;
 	int length;
 	BOOL upwardFlag;
+	UINT16 tlength;
 
-	tpkt_read_header(s);
+	if (!mcs || !s)
+		return FALSE;
+
+	if (!tpkt_read_header(s, &tlength))
+		return FALSE;
 
 	if (!tpdu_read_data(s, &li))
 		return FALSE;
@@ -504,8 +510,13 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 	BYTE result;
 	UINT16 li;
 	UINT32 calledConnectId;
+	UINT16 tlength;
 
-	tpkt_read_header(s);
+	if (!mcs || !s)
+		return FALSE;
+
+	if (!tpkt_read_header(s, &tlength))
+		return FALSE;
 
 	if (!tpdu_read_data(s, &li))
 		return FALSE;

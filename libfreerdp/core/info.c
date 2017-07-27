@@ -441,7 +441,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return FALSE;
 
-	if (!rdp_read_security_header(s, &securityFlags))
+	if (!rdp_read_security_header(s, &securityFlags, &length))
 		return FALSE;
 
 	if ((securityFlags & SEC_INFO_PKT) == 0)
@@ -457,7 +457,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 
 		if (securityFlags & SEC_ENCRYPT)
 		{
-			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+			if (!rdp_decrypt(rdp, s, length, securityFlags))
 			{
 				fprintf(stderr, "rdp_decrypt failed\n");
 				return FALSE;

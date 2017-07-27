@@ -673,7 +673,11 @@ int transport_check_fds(rdpTransport** ptransport)
 				return 0;
 			}
 
-			length = tpkt_read_header(transport->ReceiveBuffer);
+			if (!tpkt_read_header(transport->ReceiveBuffer, &length))
+			{
+				fprintf(stderr, "transport_check_fds: problem reading tpkt header.\n");
+				return -1;
+			}
 		}
 		else if (nla_verify_header(transport->ReceiveBuffer))
 		{
