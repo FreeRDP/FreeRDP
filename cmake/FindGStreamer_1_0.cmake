@@ -59,7 +59,7 @@ macro(FIND_GSTREAMER_COMPONENT _component_prefix _pkgconfig_name _library)
 
     string(REGEX MATCH "(.*)>=(.*)" _dummy "${_pkgconfig_name}")
     if ("${CMAKE_MATCH_2}" STREQUAL "")
-        pkg_check_modules(PC_${_component_prefix} "${_pkgconfig_name} >= ${GStreamer_FIND_VERSION}")
+        pkg_check_modules(PC_${_component_prefix} "${_pkgconfig_name} >= ${GSTREAMER_1_0_MINIMUM_VERSION}")
     else ()
         pkg_check_modules(PC_${_component_prefix} ${_pkgconfig_name})
     endif ()
