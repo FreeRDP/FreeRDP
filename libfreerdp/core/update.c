@@ -42,7 +42,7 @@
 
 #define TAG FREERDP_TAG("core.update")
 
-const char* const UPDATE_TYPE_STRINGS[] =
+static const char* const UPDATE_TYPE_STRINGS[] =
 {
 	"Orders",
 	"Bitmap",
@@ -50,7 +50,7 @@ const char* const UPDATE_TYPE_STRINGS[] =
 	"Synchronize"
 };
 
-BOOL update_recv_orders(rdpUpdate* update, wStream* s)
+static BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 {
 	UINT16 numberOrders;
 
@@ -121,7 +121,7 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s,
 	return TRUE;
 }
 
-BOOL update_write_bitmap_data(rdpUpdate* update, wStream* s,
+static BOOL update_write_bitmap_data(rdpUpdate* update, wStream* s,
                               BITMAP_DATA* bitmapData)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 64 + bitmapData->bitmapLength))
@@ -262,7 +262,7 @@ BOOL update_read_palette(rdpUpdate* update, wStream* s,
 	return TRUE;
 }
 
-void update_read_synchronize(rdpUpdate* update, wStream* s)
+static void update_read_synchronize(rdpUpdate* update, wStream* s)
 {
 	Stream_Seek_UINT16(s); /* pad2Octets (2 bytes) */
 	/**
@@ -271,7 +271,7 @@ void update_read_synchronize(rdpUpdate* update, wStream* s)
 	 */
 }
 
-BOOL update_read_play_sound(wStream* s, PLAY_SOUND_UPDATE* play_sound)
+static BOOL update_read_play_sound(wStream* s, PLAY_SOUND_UPDATE* play_sound)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
@@ -301,7 +301,7 @@ BOOL update_read_pointer_position(wStream* s,
 	return TRUE;
 }
 
-BOOL update_read_pointer_system(wStream* s,
+static BOOL update_read_pointer_system(wStream* s,
                                 POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	if (Stream_GetRemainingLength(s) < 4)
