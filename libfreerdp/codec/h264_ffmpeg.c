@@ -256,7 +256,7 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 
 	do
 	{
-		status = avcodec_encode_video2(sys->codecDecoderContext,
+		status = avcodec_encode_video2(sys->codecEncoderContext,
 		                               &sys->packet,
 		                               sys->videoFrame, &gotFrame);
 	}
