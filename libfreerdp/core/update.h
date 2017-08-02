@@ -40,7 +40,6 @@
 
 FREERDP_LOCAL rdpUpdate* update_new(rdpRdp* rdp);
 FREERDP_LOCAL void update_free(rdpUpdate* update);
-FREERDP_LOCAL void update_free_bitmap(BITMAP_UPDATE* bitmap_update);
 FREERDP_LOCAL void update_reset_state(rdpUpdate* update);
 FREERDP_LOCAL BOOL update_post_connect(rdpUpdate* update);
 FREERDP_LOCAL void update_post_disconnect(rdpUpdate* update);
@@ -53,8 +52,6 @@ FREERDP_LOCAL BOOL update_recv_pointer(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL BOOL update_recv(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL BOOL update_read_pointer_position(wStream* s,
         POINTER_POSITION_UPDATE* pointer_position);
-FREERDP_LOCAL BOOL update_read_pointer_system(wStream* s,
-        POINTER_SYSTEM_UPDATE* pointer_system);
 FREERDP_LOCAL BOOL update_read_pointer_color(wStream* s,
         POINTER_COLOR_UPDATE* pointer_color, int xorBpp);
 FREERDP_LOCAL BOOL update_read_pointer_new(wStream* s,
