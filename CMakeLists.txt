@@ -879,7 +879,7 @@ add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
 
-if (IOS)
+if (IOS AND NOT DEFINED CMAKE_OSX_SYSROOT)
 	set(CMAKE_OSX_DEPLOYMENT_TARGET "")
 	if (IOS_PLATFORM MATCHES "SIMULATOR")
 		set(CMAKE_OSX_SYSROOT "iphonesimulator")
