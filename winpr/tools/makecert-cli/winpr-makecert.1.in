@@ -15,7 +15,7 @@ winpr\-makecert \- A tool to create X.509 certificates.
 [\fB-n\fP common_name]
 [\fB-y\fP years]
 [\fB-m\fP months]
-[\fB-len\fP lenth]
+[\fB-len\fP length]
 [\fB-#\fP serial]
 [\fB-a\fP { \fImd5\fP | \fIsha1\fP | \fIsha256\fP | \fIs384\fP | \fIsha512\fP }]
 [\fB-path\fP outputpath] 
