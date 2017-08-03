@@ -19,6 +19,8 @@
 
 add_subdirectory(common)
 
+add_subdirectory(CSharp)
+
 if(FREERDP_VENDOR AND WITH_CLIENT)
 	if(WIN32 AND NOT UWP)
 		add_subdirectory(Windows)
