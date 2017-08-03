@@ -561,6 +561,7 @@ UINT32 map_posix_err(int fs_errno)
 			rc = STATUS_SUCCESS;
 			break;
 
+		case ENOTCONN:
 		case ENODEV:
 		case ENOTDIR:
 		case ENXIO:
