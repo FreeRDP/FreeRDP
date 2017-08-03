@@ -670,6 +670,27 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 		fp = freopen(pFile->lpFileName, mode, fp);
 	}
+	else
+	{
+		if (stat(pFile->lpFileName, &st) != 0)
+		{
+			SetLastError(map_posix_err(errno));
+			free(pFile->lpFileName);
+			free(pFile);
+			return INVALID_HANDLE_VALUE;
+		}
+
+		/* FIFO (named pipe) would block the following fopen
+		 * call if not connected. This renders the channel unusable,
+		 * therefore abort early. */
+		if (S_ISFIFO(st.st_mode))
+		{
+			SetLastError(ERROR_FILE_NOT_FOUND);
+			free(pFile->lpFileName);
+			free(pFile);
+			return INVALID_HANDLE_VALUE;
+		}
+	}
 
 	if (NULL == fp)
 		fp = fopen(pFile->lpFileName, mode);
