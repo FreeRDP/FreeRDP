@@ -1001,6 +1001,11 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			}
 
 			free(fullpath);
+
+			/* Skip FIFO entries. */
+			if (S_ISFIFO(fileStat.st_mode))
+				continue;
+
 			lpFindFileData->dwFileAttributes = 0;
 
 			if (S_ISDIR(fileStat.st_mode))
