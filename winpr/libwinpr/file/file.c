@@ -122,11 +122,18 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 			PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*) hFile;
-	long offset = lDistanceToMove;
+	INT64 offset;
 	int whence;
 
 	if (!hFile)
 		return INVALID_SET_FILE_POINTER;
+
+	if (lpDistanceToMoveHigh)
+	{
+		offset = (*lpDistanceToMoveHigh << 32) | (UINT32)lDistanceToMove;
+	}
+	else
+		 offset = lDistanceToMove;
 
 	switch(dwMoveMethod)
 	{
@@ -151,6 +158,42 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 	}
 
 	return ftell(pFile->fp);
+}
+
+static BOOL FileSetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove, PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod)
+{
+	WINPR_FILE* pFile = (WINPR_FILE*) hFile;
+	int whence;
+
+	if (!hFile)
+		return FALSE;
+
+	switch(dwMoveMethod)
+	{
+	case FILE_BEGIN:
+		whence = SEEK_SET;
+		break;
+	case FILE_END:
+		whence = SEEK_END;
+		break;
+	case FILE_CURRENT:
+		whence = SEEK_CUR;
+		break;
+	default:
+		return FALSE;
+	}
+
+	if (fseek(pFile->fp, liDistanceToMove.QuadPart, whence))
+	{
+		WLog_ERR(TAG, "fseek(%s) failed with %s [0x%08X]", pFile->lpFileName,
+			 strerror(errno), errno);
+		return FALSE;
+	}
+
+	if (lpNewFilePointer)
+		lpNewFilePointer->QuadPart = ftell(pFile->fp);
+
+	return TRUE;
 }
 
 static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
@@ -550,7 +593,7 @@ static HANDLE_OPS fileOps = {
 	NULL, /*  FlushFileBuffers */
 	FileSetEndOfFile,
 	FileSetFilePointer,
-	NULL, /* SetFilePointerEx */
+	FileSetFilePointerEx,
 	NULL, /* FileLockFile */
 	FileLockFileEx,
 	FileUnlockFile,
