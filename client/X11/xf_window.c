@@ -145,6 +145,9 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	UINT32 height = window->height;
 	window->decorations = xfc->decorations;
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
+	unsigned long nitems, bytes;
+        BYTE* prop;
+        BOOL status;
 
 	if (fullscreen)
 	{
@@ -203,11 +206,14 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		XMoveWindow(xfc->display, window->handle, startX, startY);
 	}
 
-	/* Set the fullscreen state */
-	xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
-	                   fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
-	                   xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
-
+	status = xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display), xfc->_NET_WM_FULLSCREEN_MONITORS, 1, &nitems, &bytes, &prop);
+        if (status)
+        {
+		/* Set the fullscreen state */
+		xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+	        	           fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
+	                	   xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
+	}
 	if (!fullscreen)
 	{
 		/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
