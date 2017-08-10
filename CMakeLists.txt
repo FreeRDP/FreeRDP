@@ -189,6 +189,11 @@ if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
 	add_definitions("-D_FILE_OFFSET_BITS=64")
 endif()
 
+# Use Standard conforming getpwnam_r() on Solaris.
+if("${CMAKE_SYSTEM_NAME}" MATCHES "SunOS")
+	add_definitions("-D_POSIX_PTHREAD_SEMANTICS")
+endif()
+
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i686")
