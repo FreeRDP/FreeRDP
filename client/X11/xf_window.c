@@ -146,8 +146,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	window->decorations = xfc->decorations;
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
 	unsigned long nitems, bytes;
-        BYTE* prop;
-        BOOL status;
+	BYTE* prop;
+	BOOL status;
 
 	if (fullscreen)
 	{
@@ -206,14 +206,17 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		XMoveWindow(xfc->display, window->handle, startX, startY);
 	}
 
-	status = xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display), xfc->_NET_WM_FULLSCREEN_MONITORS, 1, &nitems, &bytes, &prop);
-        if (status)
-        {
+	status = xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display),
+	                              xfc->_NET_WM_FULLSCREEN_MONITORS, 1, &nitems, &bytes, &prop);
+
+	if (status)
+	{
 		/* Set the fullscreen state */
 		xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
-	        	           fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
-	                	   xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
+		                   fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
+		                   xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
 	}
+
 	if (!fullscreen)
 	{
 		/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
@@ -342,13 +345,13 @@ static const char* get_shm_id()
 	return shm_id;
 }
 
-Window xf_CreateDummyWindow(xfContext *xfc)
+Window xf_CreateDummyWindow(xfContext* xfc)
 {
 	return XCreateSimpleWindow(xfc->display, DefaultRootWindow(xfc->display),
-			0, 0, 1, 1, 0, 0, 0);
+	                           0, 0, 1, 1, 0, 0, 0);
 }
 
-void xf_DestroyDummyWindow(xfContext *xfc, Window window)
+void xf_DestroyDummyWindow(xfContext* xfc, Window window)
 {
 	if (window)
 		XDestroyWindow(xfc->display, window);
@@ -964,7 +967,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y,
 {
 	int ax, ay;
 
-        if (appWindow == NULL)
+	if (appWindow == NULL)
 		return;
 
 	ax = x + appWindow->windowOffsetX;
