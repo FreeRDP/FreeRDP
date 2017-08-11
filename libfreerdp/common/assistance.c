@@ -1065,16 +1065,16 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name)
 	BYTE* buffer;
 	FILE* fp = NULL;
 	size_t readSize;
-	long int fileSize;
+	INT64 fileSize;
 
 	fp = fopen(name, "r");
 
 	if (!fp)
 		return -1;
 
-	fseek(fp, 0, SEEK_END);
-	fileSize = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
+	_fseeki64(fp, 0, SEEK_END);
+	fileSize = _ftelli64(fp);
+	_fseeki64(fp, 0, SEEK_SET);
 
 	if (fileSize < 1)
 	{

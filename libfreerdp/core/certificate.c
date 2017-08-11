@@ -748,7 +748,7 @@ out_free:
 rdpRsaKey* key_new(const char* keyfile)
 {
 	FILE* fp = NULL;
-	int length;
+	INT64 length;
 	char* buffer = NULL;
 	rdpRsaKey* key = NULL;
 
@@ -759,11 +759,11 @@ rdpRsaKey* key_new(const char* keyfile)
 		goto out_free;
 	}
 
-	if (fseek(fp, 0, SEEK_END) < 0)
+	if (_fseeki64(fp, 0, SEEK_END) < 0)
 		goto out_free;
-	if ((length = ftell(fp)) < 0)
+	if ((length = _ftelli64(fp)) < 0)
 		goto out_free;
-	if (fseek(fp, 0, SEEK_SET) < 0)
+	if (_fseeki64(fp, 0, SEEK_SET) < 0)
 		goto out_free;
 
 	buffer = (char *)malloc(length + 1);

@@ -1999,13 +1999,13 @@ static UINT64 winpr_windows_gmtime()
 
 static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 {
-	long length;
+	INT64 length;
 	char* tzid = NULL;
 
-	if (fseek(fp, 0, SEEK_END) != 0)
+	if (_fseeki64(fp, 0, SEEK_END) != 0)
 		return NULL;
-	length = ftell(fp);
-	if (fseek(fp, 0, SEEK_SET) != 0)
+	length = _ftelli64(fp);
+	if (_fseeki64(fp, 0, SEEK_SET) != 0)
 		return NULL;
 
 	if (length < 2)

@@ -702,15 +702,15 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 	BYTE* buffer;
 	FILE* fp = NULL;
 	size_t read_size;
-	long int file_size;
+	INT64 file_size;
 	fp = fopen(name, "r");
 
 	if (!fp)
 		return FALSE;
 
-	fseek(fp, 0, SEEK_END);
-	file_size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
+	_fseeki64(fp, 0, SEEK_END);
+	file_size = _ftelli64(fp);
+	_fseeki64(fp, 0, SEEK_SET);
 
 	if (file_size < 1)
 	{
