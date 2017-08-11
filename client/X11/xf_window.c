@@ -223,6 +223,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
 		XMoveWindow(xfc->display, window->handle, startX, startY);
 	}
+
+	free(prop);
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
