@@ -1684,7 +1684,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		if (!gfx->log)
 		{
 			free(gfx);
-			WLog_ERR(TAG, "Failed to aquire reference to WLog %s", TAG);
+			WLog_ERR(TAG, "Failed to acquire reference to WLog %s", TAG);
 			return ERROR_INTERNAL_ERROR;
 		}
 

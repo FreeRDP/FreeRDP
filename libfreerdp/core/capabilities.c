@@ -1280,9 +1280,13 @@ static BOOL rdp_read_input_capability_set(wStream* s, UINT16 length,
 		}
 
 		if (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL)
-		{
 			settings->HasHorizontalWheel = TRUE;
-		}
+
+		if (inputFlags & INPUT_FLAG_UNICODE)
+			settings->UnicodeInput = TRUE;
+
+		if (inputFlags & INPUT_FLAG_MOUSEX)
+			settings->HasExtendedMouseEvent = TRUE;
 	}
 
 	return TRUE;
