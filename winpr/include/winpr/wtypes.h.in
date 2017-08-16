@@ -525,4 +525,9 @@ typedef const BYTE *LPCBYTE;
 
 #include <winpr/user.h>
 
+#ifndef _WIN32
+#define _fseeki64(fp, offset, origin) fseeko(fp, offset, origin)
+#define _ftelli64(fp) ftello(fp)
+#endif
+
 #endif /* WINPR_WTYPES_H */
