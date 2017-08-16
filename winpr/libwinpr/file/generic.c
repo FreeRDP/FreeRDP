@@ -867,7 +867,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 static BOOL ConvertFindDataAToW(LPWIN32_FIND_DATAA lpFindFileDataA,
                                 LPWIN32_FIND_DATAW lpFindFileDataW)
 {
-	int length;
+	size_t length;
 	WCHAR* unicodeFileName;
 
 	if (!lpFindFileDataA || !lpFindFileDataW)
@@ -977,8 +977,8 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 	{
 		if (FilePatternMatchA(pFileSearch->pDirent->d_name, pFileSearch->lpPattern))
 		{
-			strcpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name);
-			namelen = strlen(lpFindFileData->cFileName);
+			strncpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name, MAX_PATH);
+			namelen = strnlen(lpFindFileData->cFileName, MAX_PATH);
 			pathlen = strlen(pFileSearch->lpPath);
 			fullpath = (char*)malloc(pathlen + namelen + 2);
 
@@ -997,7 +997,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			{
 				free(fullpath);
 				SetLastError(map_posix_err(errno));
-				return FALSE;
+				continue;
 			}
 
 			free(fullpath);
@@ -1005,7 +1005,6 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			/* Skip FIFO entries. */
 			if (S_ISFIFO(fileStat.st_mode))
 				continue;
-
 			lpFindFileData->dwFileAttributes = 0;
 
 			if (S_ISDIR(fileStat.st_mode))
