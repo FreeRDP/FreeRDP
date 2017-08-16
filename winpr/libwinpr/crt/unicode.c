@@ -271,11 +271,13 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
                         LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar)
 {
-	BYTE* targetStart;
 #if !defined(WITH_ICU)
 	int length;
 	const WCHAR* sourceStart;
 	ConversionResult result;
+	BYTE* targetStart;
+#else
+	char* targetStart;
 #endif
 
 	/* If cchWideChar is 0, the function fails */
