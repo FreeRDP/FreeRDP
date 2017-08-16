@@ -128,9 +128,11 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 	if (!hFile)
 		return INVALID_SET_FILE_POINTER;
 
+	/* If there is a high part, the sign is contained in that
+	 * and the low integer must be interpreted as unsigned. */
 	if (lpDistanceToMoveHigh)
 	{
-		offset = (*lpDistanceToMoveHigh << 32) | (UINT32)lDistanceToMove;
+		offset = (INT64)(((UINT64)*lpDistanceToMoveHigh << 32U) | (UINT64)lDistanceToMove);
 	}
 	else
 		 offset = lDistanceToMove;
