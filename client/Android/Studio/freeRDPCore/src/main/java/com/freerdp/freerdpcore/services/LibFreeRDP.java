@@ -201,7 +201,7 @@ public class LibFreeRDP {
         args.add(addFlag("glyph-cache", false));
 
         if (!advanced.getRemoteProgram().isEmpty()) {
-            args.add("/app:" + advanced.getRemoteProgram());
+            args.add("/shell:" + advanced.getRemoteProgram());
         }
 
         if (!advanced.getWorkDir().isEmpty()) {
