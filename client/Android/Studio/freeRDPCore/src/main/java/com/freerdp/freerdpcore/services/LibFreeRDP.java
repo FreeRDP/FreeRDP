@@ -127,7 +127,7 @@ public class LibFreeRDP {
 
         final String clientName = ApplicationSettingsActivity.getClientName(context);
         if (!clientName.isEmpty()) {
-            args.add("/client-hostname:\"" + clientName + "\"");
+            args.add("/client-hostname:" + clientName);
         }
         String certName = "";
         if (bookmark.getType() != BookmarkBase.TYPE_MANUAL) {
@@ -252,6 +252,7 @@ public class LibFreeRDP {
             args.add("/microphone");
         }
 
+        args.add("/cert-ignore");
         args.add("/log-level:" + debug.getDebugLevel());
         String[] arrayArgs = args.toArray(new String[args.size()]);
         return freerdp_parse_arguments(inst, arrayArgs);
@@ -269,7 +270,7 @@ public class LibFreeRDP {
 
         final String clientName = ApplicationSettingsActivity.getClientName(context);
         if (!clientName.isEmpty()) {
-            args.add("/client-hostname:\"" + clientName + "\"");
+            args.add("/client-hostname:" + clientName);
         }
 
         // Parse hostname and port. Set to 'v' argument
