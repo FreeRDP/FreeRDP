@@ -33,7 +33,15 @@
 
 #include <winpr/string.h>
 
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+#endif /* __clang__ */
 #include <gst/gst.h>
+#if __clang__
+#pragma clang diagnostic pop
+#endif /* __clang__ */
+
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
 
