@@ -103,6 +103,8 @@ static BOOL wl_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
 	wlfContext* context;
+	UwacOutput *output;
+	UwacSize resolution;
 
 	if (!instance)
 		return FALSE;
@@ -145,6 +147,21 @@ static BOOL wl_pre_connect(freerdp* instance)
 	                                 (pChannelConnectedEventHandler) wlf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    (pChannelDisconnectedEventHandler) wlf_OnChannelDisconnectedEventHandler);
+
+	if (settings->Fullscreen)
+	{
+		// Use the resolution of the first display output
+		output = UwacDisplayGetOutput(context->display, 1);
+		if (output != NULL && UwacOutputGetResolution(output, &resolution) == UWAC_SUCCESS)
+		{
+			settings->DesktopWidth = (UINT32) resolution.width;
+			settings->DesktopHeight = (UINT32) resolution.height;
+		}
+		else
+		{
+			WLog_WARN(TAG, "Failed to get output resolution! Check your display settings");
+		}
+	}
 
 	if (!freerdp_client_load_addins(instance->context->channels,
 	                                instance->settings))
