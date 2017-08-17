@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
 #include <winpr/print.h>

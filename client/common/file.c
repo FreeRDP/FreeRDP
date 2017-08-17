@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
@@ -41,6 +40,7 @@
 #include <unistd.h>
 #endif
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")

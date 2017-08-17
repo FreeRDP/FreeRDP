@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
 

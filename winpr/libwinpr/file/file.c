@@ -23,6 +23,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
 
