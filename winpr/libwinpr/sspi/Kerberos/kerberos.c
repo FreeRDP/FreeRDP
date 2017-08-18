@@ -218,15 +218,14 @@ acquire_cred(krb5_context ctx, krb5_principal client, const char* password)
 	/* Set default options */
 	krb5_get_init_creds_opt_set_forwardable(options, 0);
 	krb5_get_init_creds_opt_set_proxiable(options, 0);
-#ifdef WITH_GSSAPI_MIT
 
+#ifdef WITH_GSSAPI_MIT
 	/* for MIT we specify ccache output using an option */
 	if ((ret = krb5_get_init_creds_opt_set_out_ccache(ctx, options, ccache)))
 	{
 		WLog_ERR(TAG, "error while setting ccache output");
 		goto cleanup;
 	}
-
 #endif
 
 	if ((ret = krb5_init_creds_init(ctx, client, NULL, NULL, starttime, options, &init_ctx)))
@@ -256,20 +255,24 @@ acquire_cred(krb5_context ctx, krb5_principal client, const char* password)
 	}
 
 #ifdef WITH_GSSAPI_HEIMDAL
-
 	/* For Heimdal, we use this function to store credentials */
 	if ((ret = krb5_init_creds_store(ctx, init_ctx, ccache)))
 	{
 		WLog_ERR(TAG, "error while storing credentials");
 		goto cleanup;
 	}
-
 #endif
+
 cleanup:
 	krb5_free_cred_contents(ctx, &creds);
 
+#ifdef HAVE_AT_LEAST_KRB_V1_13
+	/* MIT Kerberos version 1.13 at minimum.
+	 * For releases 1.12 and previous, krb5_get_init_creds_opt structure
+	 * is freed in krb5_init_creds_free() */
 	if (options)
 		krb5_get_init_creds_opt_free(ctx, options);
+#endif
 
 	if (init_ctx)
 		krb5_init_creds_free(ctx, init_ctx);

@@ -72,6 +72,7 @@ if(MBEDTLS_FOUND)
 endif()
 
 if(GSS_FOUND)
+	winpr_include_directory_add(${GSS_INCLUDE_DIR})
 	winpr_library_add(${GSS_LIBRARIES})
 endif()
 
