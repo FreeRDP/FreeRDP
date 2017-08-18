@@ -1317,6 +1317,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		compatibility = freerdp_client_detect_command_line(argc - 1, &argv[1], &flags,
 						allowUnknown);
 
+	settings->ProxyHostname = NULL;
+
 	if (compatibility)
 	{
 		WLog_WARN(TAG, "Using deprecated command-line interface!");
@@ -1819,6 +1821,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "proxy")
 		{
+		        /* initial value */
+		        settings->ProxyType = PROXY_TYPE_HTTP;
+
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
 				p = strstr(arg->Value, "://");
@@ -1831,9 +1836,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					{
 						settings->ProxyType = PROXY_TYPE_HTTP;
 					}
+					else if (!strcmp("socks", arg->Value))
+					{
+						settings->ProxyType = PROXY_TYPE_SOCKS;
+					}
 					else
 					{
-						WLog_ERR(TAG, "Only HTTP proxys supported by now");
+						WLog_ERR(TAG, "Only HTTP and SOCKS proxies supported by now");
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 
@@ -1854,7 +1863,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					settings->ProxyHostname = (char*) malloc(length + 1);
 					strncpy(settings->ProxyHostname, arg->Value, length);
 					settings->ProxyHostname[length] = '\0';
-					settings->ProxyType = PROXY_TYPE_HTTP;
 				}
 			}
 			else
