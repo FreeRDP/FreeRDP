@@ -77,7 +77,7 @@ GSSAPI_FUNCTION_TABLE g_GssApiLink =
 	(fn_sspi_gss_create_empty_oid_set) gss_create_empty_oid_set, /* gss_create_empty_oid_set */
 	(fn_sspi_gss_add_oid_set_member) gss_add_oid_set_member, /* gss_add_oid_set_member */
 	(fn_sspi_gss_test_oid_set_member) gss_test_oid_set_member, /* gss_test_oid_set_member */
-#ifdef WITH_GSSAPI_MIT
+#if 0
 	(fn_sspi_gss_str_to_oid) gss_str_to_oid, /* gss_str_to_oid */
 #else
 	(fn_sspi_gss_str_to_oid) NULL, /* gss_str_to_oid */
@@ -94,7 +94,7 @@ GSSAPI_FUNCTION_TABLE g_GssApiLink =
 	(fn_sspi_gss_canonicalize_name) gss_canonicalize_name, /* gss_canonicalize_name */
 	(fn_sspi_gss_pseudo_random) gss_pseudo_random, /* gss_pseudo_random */
 	(fn_sspi_gss_store_cred) gss_store_cred, /* gss_store_cred */
-#ifdef WITH_GSSAPI_MIT
+#if 0
 	(fn_sspi_gss_set_neg_mechs) gss_set_neg_mechs, /* gss_set_neg_mechs */
 #else
 	(fn_sspi_gss_set_neg_mechs) NULL, /* gss_set_neg_mechs */
