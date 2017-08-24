@@ -1,6 +1,6 @@
 
-set(MODULE_NAME "DevolutionsRDP")
-set(MODULE_PREFIX "DEVOLUTIONSRDP")
+set(MODULE_NAME "DevolutionsRdp")
+set(MODULE_PREFIX "DEVOLUTIONS_RDP")
 
 set(${MODULE_PREFIX}_HDRS
 	../../include/freerdp/api.h
@@ -22,5 +22,6 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP")
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
 
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP")
