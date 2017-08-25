@@ -613,3 +613,14 @@ BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 	xf_keyboard_set_key_state(xfc, led_flags & KBD_SYNC_KANA_LOCK, XK_Kana_Lock);
 	return TRUE;
 }
+
+BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState, UINT32 imeConvMode)
+{
+	if (!context)
+		return FALSE;
+
+	WLog_WARN(TAG, "KeyboardSetImeStatus(unitId=%04"PRIx16", imeState=%08"PRIx32", imeConvMode=%08"PRIx32") ignored",
+	          imeId, imeState, imeConvMode);
+
+	return TRUE;
+}

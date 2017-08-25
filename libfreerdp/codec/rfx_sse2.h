@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_SSE2_H
-#define __RFX_SSE2_H
+#ifndef FREERDP_LIB_CODEC_RFX_SSE2_H
+#define FREERDP_LIB_CODEC_RFX_SSE2_H
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
@@ -31,4 +31,4 @@ FREERDP_LOCAL void rfx_init_sse2(RFX_CONTEXT* context);
 #endif
 #endif
 
-#endif /* __RFX_SSE2_H */
+#endif /* FREERDP_LIB_CODEC_RFX_SSE2_H */

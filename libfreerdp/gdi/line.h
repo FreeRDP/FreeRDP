@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_GDI_LINE_H
-#define FREERDP_GDI_LINE_H
+#ifndef FREERDP_LIB_GDI_LINE_H
+#define FREERDP_LIB_GDI_LINE_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -41,4 +41,4 @@ FREERDP_LOCAL BOOL gdi_MoveToEx(HGDI_DC hdc, UINT32 X, UINT32 Y,
 }
 #endif
 
-#endif /* FREERDP_GDI_LINE_H */
+#endif /* FREERDP_LIB_GDI_LINE_H */

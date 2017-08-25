@@ -10,8 +10,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-#ifndef FREERDP_ANDROID_JNI_CALLBACK_H
-#define FREERDP_ANDROID_JNI_CALLBACK_H
+#ifndef FREERDP_CLIENT_ANDROID_JNI_CALLBACK_H
+#define FREERDP_CLIENT_ANDROID_JNI_CALLBACK_H
 
 #include <jni.h>
 #include <stdarg.h>
@@ -27,5 +27,5 @@ FREERDP_LOCAL jboolean freerdp_callback_bool_result(const char* callback,
 FREERDP_LOCAL jint freerdp_callback_int_result(const char* callback,
         const char* signature, ...);
 
-#endif /* FREERDP_ANDROID_JNI_CALLBACK_H */
+#endif /* FREERDP_CLIENT_ANDROID_JNI_CALLBACK_H */
 

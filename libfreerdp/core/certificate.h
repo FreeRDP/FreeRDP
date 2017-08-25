@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __CERTIFICATE_H
-#define __CERTIFICATE_H
+#ifndef FREERDP_LIB_CORE_CERTIFICATE_H
+#define FREERDP_LIB_CORE_CERTIFICATE_H
 
 #include "rdp.h"
 
@@ -58,7 +58,7 @@ FREERDP_LOCAL BOOL certificate_read_server_proprietary_certificate(
 FREERDP_LOCAL BOOL certificate_read_server_x509_certificate_chain(
     rdpCertificate* certificate, wStream* s);
 FREERDP_LOCAL BOOL certificate_read_server_certificate(rdpCertificate*
-        certificate, BYTE* server_cert, int length);
+        certificate, BYTE* server_cert, size_t length);
 
 FREERDP_LOCAL rdpCertificate* certificate_clone(rdpCertificate* certificate);
 
@@ -77,4 +77,4 @@ FREERDP_LOCAL void key_free(rdpRsaKey* key);
 #define DEBUG_CERTIFICATE(...) do { } while (0)
 #endif
 
-#endif /* __CERTIFICATE_H */
+#endif /* FREERDP_LIB_CORE_CERTIFICATE_H */

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __XF_CLIPRDR_H
-#define __XF_CLIPRDR_H
+#ifndef FREERDP_CLIENT_X11_CLIPRDR_H
+#define FREERDP_CLIENT_X11_CLIPRDR_H
 
 #include "xf_client.h"
 #include "xfreerdp.h"
@@ -33,4 +33,4 @@ void xf_cliprdr_uninit(xfContext* xfc, CliprdrClientContext* cliprdr);
 
 void xf_cliprdr_handle_xevent(xfContext* xfc, XEvent* event);
 
-#endif /* __XF_CLIPRDR_H */
+#endif /* FREERDP_CLIENT_X11_CLIPRDR_H */

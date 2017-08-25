@@ -58,103 +58,103 @@ int TestSynchMultipleThreads(int argc, char *argv[])
 
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
-		return -1;
+		return 1;
 
 	if (WaitForMultipleObjects(THREADS, threads, TRUE, 50) != WAIT_TIMEOUT)
 	{
 		printf("WaitForMultipleObjects bWaitAll, timeout 50 failed\n");
-		rc = -1;
+		rc = 2;
 	}
 
 	if (WaitForMultipleObjects(THREADS, threads, TRUE, INFINITE) != WAIT_OBJECT_0)
 	{
 		printf("WaitForMultipleObjects bWaitAll, INFINITE failed\n");
-		rc = -1;
+		rc = 3;
 	}
 
 	if (close_threads(THREADS, threads))
-		return -1;
+		return 4;
 
 	/* WaitOne, infinite */
 	if (rc)
 		return rc;
 
 	if (start_threads(THREADS, threads))
-		return -1;
+		return 5;
 
 	ev = WaitForMultipleObjects(THREADS, threads, FALSE, INFINITE);
 
 	if ((ev < WAIT_OBJECT_0) || (ev > (WAIT_OBJECT_0 + THREADS)))
 	{
 		printf("WaitForMultipleObjects INFINITE failed\n");
-		rc = -1;
+		rc = 6;
 	}
 
 	if (WaitForMultipleObjects(THREADS, threads, TRUE, INFINITE) != WAIT_OBJECT_0)
 	{
 		printf("WaitForMultipleObjects bWaitAll, INFINITE failed\n");
-		rc = -1;
+		rc = 7;
 	}
 
 	if (close_threads(THREADS, threads))
-		return -1;
+		return 8;
 
 	if (rc)
 		return rc;
 
 	/* WaitOne, timeout */
 	if (start_threads(THREADS, threads))
-		return -1;
+		return 9;
 
 	if (WaitForMultipleObjects(THREADS, threads, FALSE, 50) != WAIT_TIMEOUT)
 	{
 		printf("WaitForMultipleObjects timeout 50 failed\n");
-		rc = -1;
+		rc = 10;
 	}
 
 	if (WaitForMultipleObjects(THREADS, threads, TRUE, INFINITE) != WAIT_OBJECT_0)
 	{
 		printf("WaitForMultipleObjects bWaitAll, INFINITE failed\n");
-		rc = -1;
+		rc = 11;
 	}
 
 	if (close_threads(THREADS, threads))
-		return -1;
+		return 12;
 
-	if (rc < 0)
-		return rc;
+	if (rc)
+		return 13;
 
 	/* WaitOne, timeout, multiple joins */
 	if (start_threads(THREADS, threads))
-		return -1;
+		return 14;
 
-	for (i=0; i<THREADS; i++)
+	for (i = 0; i < THREADS; i++)
 	{
 		if (WaitForMultipleObjects(THREADS, threads, FALSE, 0) != WAIT_TIMEOUT)
 		{
 			printf("WaitForMultipleObjects timeout 50 failed\n");
-			rc = -1;
+			rc = 15;
 		}
 	}
 
 	if (WaitForMultipleObjects(THREADS, threads, TRUE, INFINITE) != WAIT_OBJECT_0)
 	{
 		printf("WaitForMultipleObjects bWaitAll, INFINITE failed\n");
-		rc = -1;
+		rc = 16;
 	}
 
 	if (close_threads(THREADS, threads))
-		return -1;
+		rc = 17;
 
-	if (rc < 0)
+	if (rc)
 		return rc;
 
 	/* Thread detach test */
 	if (start_threads(THREADS, threads))
-		return -1;
+		return 18;
 
 	if (close_threads(THREADS, threads))
-		return -1;
+		return 19;
 
 	return 0;
 }

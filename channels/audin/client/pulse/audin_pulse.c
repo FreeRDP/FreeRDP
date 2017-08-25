@@ -496,7 +496,7 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 	freerdp_dsp_context_reset_adpcm(pulse->dsp_context);
-	pulse->buffer = calloc(1, pulse->bytes_per_frame * pulse->frames_per_packet);
+	pulse->buffer = calloc(pulse->frames_per_packet, pulse->bytes_per_frame);
 
 	if (!pulse->buffer)
 	{

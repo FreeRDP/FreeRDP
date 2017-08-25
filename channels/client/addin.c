@@ -93,7 +93,7 @@ FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPSTR pszName, LPSTR 
 	FREERDP_ADDIN** ppAddins = NULL;
 	STATIC_SUBSYSTEM_ENTRY* subsystems;
 	nAddins = 0;
-	ppAddins = (FREERDP_ADDIN**) calloc(1, sizeof(FREERDP_ADDIN*) * 128);
+	ppAddins = (FREERDP_ADDIN**) calloc(128, sizeof(FREERDP_ADDIN*));
 
 	if (!ppAddins)
 	{
@@ -216,7 +216,7 @@ FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSub
 	hFind = FindFirstFileA(pszSearchPath, &FindData);
 	free(pszSearchPath);
 	nAddins = 0;
-	ppAddins = (FREERDP_ADDIN**) calloc(1, sizeof(FREERDP_ADDIN*) * 128);
+	ppAddins = (FREERDP_ADDIN**) calloc(128, sizeof(FREERDP_ADDIN*));
 
 	if (!ppAddins)
 	{
@@ -365,11 +365,11 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 						if (pszType)
 						{
 							if (strcmp(subsystems[j].type, pszType) == 0)
-								return subsystems[j].entry;
+								return (PVIRTUALCHANNELENTRY) subsystems[j].entry;
 						}
 						else
 						{
-							return subsystems[j].entry;
+							return (PVIRTUALCHANNELENTRY) subsystems[j].entry;
 						}
 					}
 				}
@@ -382,7 +382,7 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 						return NULL;
 				}
 
-				return CLIENT_STATIC_ADDIN_TABLE[i].entry;
+				return (PVIRTUALCHANNELENTRY) CLIENT_STATIC_ADDIN_TABLE[i].entry;
 			}
 		}
 	}

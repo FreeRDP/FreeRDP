@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_WIN_WDS_H
-#define FREERDP_SHADOW_SERVER_WIN_WDS_H
+#ifndef FREERDP_SERVER_SHADOW_WIN_WDS_H
+#define FREERDP_SERVER_SHADOW_WIN_WDS_H
 
 #define WITH_WDS_API	1
 
@@ -44,4 +44,4 @@ int win_shadow_wds_uninit(winShadowSubsystem* subsystem);
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_WIN_WDS_H */
+#endif /* FREERDP_SERVER_SHADOW_WIN_WDS_H */

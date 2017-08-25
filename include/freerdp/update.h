@@ -161,6 +161,7 @@ typedef BOOL (*pSurfaceFrameBits)(rdpContext* context,
 typedef BOOL (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
 
 typedef BOOL (*pSaveSessionInfo)(rdpContext *context, UINT32 type, void *data);
+typedef BOOL (*pSetKeyboardImeStatus)(rdpContext* context, UINT16 imeId, UINT32 imeState, UINT32 imeConvMode);
 
 struct rdp_update
 {
@@ -176,7 +177,8 @@ struct rdp_update
 	pPalette Palette; /* 22 */
 	pPlaySound PlaySound; /* 23 */
 	pSetKeyboardIndicators SetKeyboardIndicators; /* 24 */
-	UINT32 paddingB[32 - 25]; /* 25 */
+	pSetKeyboardImeStatus SetKeyboardImeStatus; /* 25 */
+	UINT32 paddingB[32 - 26]; /* 26 */
 
 	rdpPointerUpdate* pointer; /* 32 */
 	rdpPrimaryUpdate* primary; /* 33 */

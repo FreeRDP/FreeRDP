@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 		return 1;
 
 	scanline = width * 4;
-	buffer = (BYTE*) malloc(scanline * height);
+	buffer = (BYTE*) calloc(height, scanline);
 	if (!buffer)
 		return 1;
 

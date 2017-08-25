@@ -47,7 +47,7 @@ int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 		if (status == 0)
 			return -1;
 
-		pszNameString = (LPTSTR) malloc(status * sizeof(TCHAR));
+		pszNameString = (LPTSTR) calloc(status, sizeof(TCHAR));
 		if (!pszNameString)
 		{
 			printf("Unable to allocate memory\n");

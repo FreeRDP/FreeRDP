@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_RDG_H
-#define FREERDP_CORE_RDG_H
+#ifndef FREERDP_LIB_CORE_GATEWAY_RDG_H
+#define FREERDP_LIB_CORE_GATEWAY_RDG_H
 
 
 #include <winpr/wtypes.h>
@@ -153,4 +153,4 @@ FREERDP_LOCAL DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events,
 FREERDP_LOCAL BOOL rdg_check_event_handles(rdpRdg* rdg);
 
 
-#endif /* FREERDP_CORE_RDG_H */
+#endif /* FREERDP_LIB_CORE_GATEWAY_RDG_H */

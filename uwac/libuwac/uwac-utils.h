@@ -20,8 +20,8 @@
  * OF THIS SOFTWARE.
  */
 
-#ifndef __UWAC_UTILS_H_
-#define __UWAC_UTILS_H_
+#ifndef UWAC_UTILS_H_
+#define UWAC_UTILS_H_
 
 #include <stdlib.h>
 
@@ -50,4 +50,4 @@ char *xstrdup(const char *s);
 
 void *xrealloc(char *p, size_t s);
 
-#endif /* __UWAC_UTILS_H_ */
+#endif /* UWAC_UTILS_H_ */

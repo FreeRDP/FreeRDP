@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_RTS_H
-#define FREERDP_CORE_RTS_H
+#ifndef FREERDP_LIB_CORE_GATEWAY_RTS_H
+#define FREERDP_LIB_CORE_GATEWAY_RTS_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -174,4 +174,4 @@ FREERDP_LOCAL int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer,
 
 #include "rts_signature.h"
 
-#endif /* FREERDP_CORE_RTS_H */
+#endif /* FREERDP_LIB_CORE_GATEWAY_RTS_H */

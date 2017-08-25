@@ -52,7 +52,7 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 	if (!in || !out_c || !out_sse)
 		goto fail;
 
-	winpr_RAND(in, sizeof(in));
+	winpr_RAND(in, size);
 
 	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 	{

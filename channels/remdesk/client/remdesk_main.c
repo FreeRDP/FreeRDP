@@ -33,14 +33,6 @@
 
 #include "remdesk_main.h"
 
-static RemdeskClientContext* remdesk_get_client_interface(
-    remdeskPlugin* remdesk)
-{
-	RemdeskClientContext* pInterface;
-	pInterface = (RemdeskClientContext*) remdesk->channelEntryPoints.pInterface;
-	return pInterface;
-}
-
 /**
  * Function description
  *
@@ -710,35 +702,6 @@ static void remdesk_process_connect(remdeskPlugin* remdesk)
 	remdesk->settings = (rdpSettings*) remdesk->channelEntryPoints.pExtendedData;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT remdesk_send(remdeskPlugin* remdesk, wStream* s)
-{
-	UINT status = 0;
-	remdeskPlugin* plugin = (remdeskPlugin*) remdesk;
-
-	if (!plugin)
-	{
-		status = CHANNEL_RC_BAD_INIT_HANDLE;
-	}
-	else
-	{
-		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(plugin->InitHandle, plugin->OpenHandle,
-		         Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
-	}
-
-	if (status != CHANNEL_RC_OK)
-	{
-		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "pVirtualChannelWriteEx failed with %s [%08"PRIX32"]",
-		         WTSErrorToString(status), status);
-	}
-
-	return status;
-}
 
 /**
  * Function description

@@ -321,6 +321,8 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr,
 	request.msgType = CB_FILECONTENTS_REQUEST;
 	request.msgFlags = flags;
 	request.dataLen = length;
+	request.haveClipDataId = FALSE;
+
 	Stream_Read_UINT32(s, request.streamId); /* streamId (4 bytes) */
 	Stream_Read_UINT32(s, request.listIndex); /* listIndex (4 bytes) */
 	Stream_Read_UINT32(s, request.dwFlags); /* dwFlags (4 bytes) */
@@ -329,9 +331,10 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr,
 	Stream_Read_UINT32(s, request.cbRequested); /* cbRequested (4 bytes) */
 
 	if (Stream_GetRemainingLength(s) >= 4)
+	{
 		Stream_Read_UINT32(s, request.clipDataId); /* clipDataId (4 bytes) */
-	else
-		request.clipDataId = 0;
+		request.haveClipDataId = TRUE;
+	}
 
 	IFCALLRET(context->ServerFileContentsRequest, error, context, &request);
 
@@ -900,20 +903,19 @@ static UINT cliprdr_client_file_contents_request(CliprdrClientContext* context,
 	}
 
 	Stream_Write_UINT32(s, fileContentsRequest->streamId); /* streamId (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    fileContentsRequest->listIndex); /* listIndex (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->listIndex); /* listIndex (4 bytes) */
 	Stream_Write_UINT32(s, fileContentsRequest->dwFlags); /* dwFlags (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    fileContentsRequest->nPositionLow); /* nPositionLow (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    fileContentsRequest->nPositionHigh); /* nPositionHigh (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    fileContentsRequest->cbRequested); /* cbRequested (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    fileContentsRequest->clipDataId); /* clipDataId (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->nPositionLow); /* nPositionLow (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->nPositionHigh); /* nPositionHigh (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->cbRequested); /* cbRequested (4 bytes) */
+
+	if (fileContentsRequest->haveClipDataId)
+		Stream_Write_UINT32(s, fileContentsRequest->clipDataId); /* clipDataId (4 bytes) */
+
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientFileContentsRequest: streamId: 0x%08"PRIX32"",
 	           fileContentsRequest->streamId);
+
 	return cliprdr_packet_send(cliprdr, s);
 }
 
@@ -927,9 +929,6 @@ static UINT cliprdr_client_file_contents_response(CliprdrClientContext* context,
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
-
-	if (fileContentsResponse->dwFlags & FILECONTENTS_SIZE)
-		fileContentsResponse->cbRequested = sizeof(UINT64);
 
 	s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, fileContentsResponse->msgFlags,
 	                       4 + fileContentsResponse->cbRequested);

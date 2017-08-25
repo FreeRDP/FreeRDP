@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef WF_INTERFACE_H
-#define WF_INTERFACE_H
+#ifndef FREERDP_SERVER_WIN_INTERFACE_H
+#define FREERDP_SERVER_WIN_INTERFACE_H
 
 #include <winpr/windows.h>
 
@@ -36,10 +36,10 @@
 #define WITH_DXGI_1_2	1
 #endif
 
-#define WF_SRV_CALLBACK_EVENT_CONNECT 1
-#define WF_SRV_CALLBACK_EVENT_DISCONNECT 2
-#define WF_SRV_CALLBACK_EVENT_ACTIVATE 4
-#define WF_SRV_CALLBACK_EVENT_AUTH 8
+#define FREERDP_SERVER_WIN_SRV_CALLBACK_EVENT_CONNECT 1
+#define FREERDP_SERVER_WIN_SRV_CALLBACK_EVENT_DISCONNECT 2
+#define FREERDP_SERVER_WIN_SRV_CALLBACK_EVENT_ACTIVATE 4
+#define FREERDP_SERVER_WIN_SRV_CALLBACK_EVENT_AUTH 8
 
 typedef struct wf_info wfInfo;
 typedef struct wf_peer_context wfPeerContext;
@@ -137,4 +137,4 @@ FREERDP_API void wfreerdp_server_register_callback_event(cbCallback cb);
 
 void wfreerdp_server_peer_callback_event(int pId, UINT32 eType);
 
-#endif /* WF_INTERFACE_H */
+#endif /* FREERDP_SERVER_WIN_INTERFACE_H */

@@ -675,6 +675,53 @@ SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
 	return SEC_E_OK;
 }
 
+SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT *ntlm, SecBuffer *ntproof)
+{
+	BYTE* blob;
+	SecBuffer* target = &ntlm->ChallengeTargetInfo;
+
+	if (!sspi_SecBufferAlloc(ntproof, 36 + target->cbBuffer))
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	blob = (BYTE *)ntproof->pvBuffer;
+
+	CopyMemory(blob, ntlm->ServerChallenge, 8); /* Server challenge. */
+	blob[8] = 1; /* Response version. */
+	blob[9] = 1; /* Highest response version understood by the client. */
+	/* Reserved 6B. */
+
+	CopyMemory(&blob[16], ntlm->Timestamp, 8); /* Time. */
+	CopyMemory(&blob[24], ntlm->ClientChallenge, 8); /* Client challenge. */
+	/* Reserved 4B. */
+	/* Server name. */
+	CopyMemory(&blob[36], target->pvBuffer, target->cbBuffer);
+
+	return SEC_E_OK;
+
+}
+
+SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT *ntlm, SecBuffer *micvalue)
+{
+	BYTE* blob;
+	ULONG msgSize = ntlm->NegotiateMessage.cbBuffer + ntlm->ChallengeMessage.cbBuffer +
+					ntlm->AuthenticateMessage.cbBuffer;
+
+	if (!sspi_SecBufferAlloc(micvalue, msgSize))
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	blob = (BYTE *) micvalue->pvBuffer;
+	CopyMemory(blob, ntlm->NegotiateMessage.pvBuffer, ntlm->NegotiateMessage.cbBuffer);
+	blob += ntlm->NegotiateMessage.cbBuffer;
+	CopyMemory(blob, ntlm->ChallengeMessage.pvBuffer, ntlm->ChallengeMessage.cbBuffer);
+	blob += ntlm->ChallengeMessage.cbBuffer;
+	CopyMemory(blob, ntlm->AuthenticateMessage.pvBuffer, ntlm->AuthenticateMessage.cbBuffer);
+	blob += ntlm->MessageIntegrityCheckOffset;
+	ZeroMemory(blob, 16);
+
+	return SEC_E_OK;
+}
+
+
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa379337/ */
 
 SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute,
@@ -739,30 +786,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_NTPROOF_VALUE)
 	{
-		BYTE* blob;
-		SecBuffer* ntproof, *target;
-		ntproof = (SecBuffer*)pBuffer;
-		target = &context->ChallengeTargetInfo;
-
-		if (!sspi_SecBufferAlloc(ntproof, 36 + target->cbBuffer))
-			return (SEC_E_INSUFFICIENT_MEMORY);
-
-		blob = (BYTE*)ntproof->pvBuffer;
-		/* Server challenge. */
-		CopyMemory(blob, context->ServerChallenge, 8);
-		/* Response version. */
-		blob[8] = 1;
-		/* Highest response version understood by the client. */
-		blob[9] = 1;
-		/* Reserved 6B. */
-		/* Time. */
-		CopyMemory(&blob[16], context->Timestamp, 8);
-		/* Client challenge. */
-		CopyMemory(&blob[24], context->ClientChallenge, 8);
-		/* Reserved 4B. */
-		/* Server name. */
-		CopyMemory(&blob[36], target->pvBuffer, target->cbBuffer);
-		return (SEC_E_OK);
+		return ntlm_computeProofValue(context, (SecBuffer*)pBuffer);
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_RANDKEY)
 	{
@@ -790,24 +814,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_MIC_VALUE)
 	{
-		BYTE* blob;
-		SecBuffer* micvalue;
-		ULONG msgSize = context->NegotiateMessage.cbBuffer + context->ChallengeMessage.cbBuffer +
-		                context->AuthenticateMessage.cbBuffer;
-		micvalue = (SecBuffer*) pBuffer;
-
-		if (!sspi_SecBufferAlloc(micvalue, msgSize))
-			return (SEC_E_INSUFFICIENT_MEMORY);
-
-		blob = (BYTE*) micvalue->pvBuffer;
-		CopyMemory(blob, context->NegotiateMessage.pvBuffer, context->NegotiateMessage.cbBuffer);
-		blob += context->NegotiateMessage.cbBuffer;
-		CopyMemory(blob, context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
-		blob += context->ChallengeMessage.cbBuffer;
-		CopyMemory(blob, context->AuthenticateMessage.pvBuffer,	context->AuthenticateMessage.cbBuffer);
-		blob += context->MessageIntegrityCheckOffset;
-		ZeroMemory(blob, 16);
-		return (SEC_E_OK);
+		return ntlm_computeMicValue(context, (SecBuffer*) pBuffer);
 	}
 
 	return SEC_E_UNSUPPORTED_FUNCTION;
@@ -933,6 +940,16 @@ SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContext, ULON
 			return SEC_E_INVALID_PARAMETER;
 
 		CopyMemory(context->ServerChallenge, AuthNtlmServerChallenge->ServerChallenge, 8);
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_HASH_CB)
+	{
+		context->HashCallback = (psPeerComputeNtlmHash)pBuffer;
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_HASH_CB_DATA)
+	{
+		context->HashCallbackArg = pBuffer;
 		return SEC_E_OK;
 	}
 

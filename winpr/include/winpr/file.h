@@ -3,6 +3,7 @@
  * File Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,6 +173,13 @@
 #define LOCKFILE_FAIL_IMMEDIATELY 1
 #define LOCKFILE_EXCLUSIVE_LOCK   2
 
+#define MOVEFILE_REPLACE_EXISTING 0x1
+#define MOVEFILE_COPY_ALLOWED 0x2
+#define MOVEFILE_DELAY_UNTIL_REBOOT 0x4
+#define MOVEFILE_WRITE_THROUGH 0x8
+#define MOVEFILE_CREATE_HARDLINK 0x10
+#define MOVEFILE_FAIL_IF_NOT_TRACKABLE 0x20
+
 typedef union _FILE_SEGMENT_ELEMENT
 {
 	PVOID64 Buffer;
@@ -266,6 +274,34 @@ WINPR_API BOOL WriteFileGather(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[
 
 WINPR_API BOOL FlushFileBuffers(HANDLE hFile);
 
+typedef struct _WIN32_FILE_ATTRIBUTE_DATA
+{
+	DWORD    dwFileAttributes;
+	FILETIME ftCreationTime;
+	FILETIME ftLastAccessTime;
+	FILETIME ftLastWriteTime;
+	DWORD    nFileSizeHigh;
+	DWORD    nFileSizeLow;
+} WIN32_FILE_ATTRIBUTE_DATA, *LPWIN32_FILE_ATTRIBUTE_DATA;
+
+typedef enum _GET_FILEEX_INFO_LEVELS
+{
+	GetFileExInfoStandard,
+	GetFileExMaxInfoLevel
+} GET_FILEEX_INFO_LEVELS;
+
+WINPR_API BOOL GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId, LPVOID lpFileInformation);
+
+WINPR_API DWORD GetFileAttributesA(LPCSTR lpFileName);
+
+WINPR_API BOOL GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId, LPVOID lpFileInformation);
+	
+WINPR_API DWORD GetFileAttributesW(LPCWSTR lpFileName);
+
+WINPR_API BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes);
+
+WINPR_API BOOL SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes);
+
 WINPR_API BOOL SetEndOfFile(HANDLE hFile);
 
 WINPR_API DWORD WINAPI GetFileSize(HANDLE hFile, LPDWORD lpFileSizeHigh);
@@ -314,6 +350,20 @@ WINPR_API HANDLE GetStdHandle(DWORD nStdHandle);
 WINPR_API BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle);
 WINPR_API BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle);
 
+WINPR_API BOOL GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
+	LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
+
+WINPR_API BOOL GetDiskFreeSpaceW(LPCWSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
+	LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
+
+WINPR_API BOOL MoveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags);
+
+WINPR_API BOOL MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlags);
+
+WINPR_API BOOL MoveFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName);
+
+WINPR_API BOOL MoveFileW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName);
+
 #ifdef __cplusplus
 }
 #endif
@@ -326,6 +376,12 @@ WINPR_API BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOl
 #define FindNextFile		FindNextFileW
 #define CreateDirectory		CreateDirectoryW
 #define RemoveDirectory		RemoveDirectoryW
+#define GetFileAttributesEx	GetFileAttributesExW
+#define GetFileAttributes	GetFileAttributesW
+#define SetFileAttributes	SetFileAttributesW
+#define GetDiskFreeSpace	GetDiskFreeSpaceW
+#define MoveFileEx		MoveFileExW
+#define MoveFile		MoveFileW
 #else
 #define CreateFile		CreateFileA
 #define DeleteFile		DeleteFileA
@@ -334,6 +390,12 @@ WINPR_API BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOl
 #define FindNextFile		FindNextFileA
 #define CreateDirectory		CreateDirectoryA
 #define RemoveDirectory		RemoveDirectoryA
+#define GetFileAttributesEx	GetFileAttributesExA
+#define GetFileAttributes	GetFileAttributesA
+#define SetFileAttributes	SetFileAttributesA
+#define GetDiskFreeSpace	GetDiskFreeSpaceA
+#define MoveFileEx		MoveFileExA
+#define MoveFile		MoveFileA
 #endif
 
 /* Extra Functions */
@@ -347,6 +409,8 @@ typedef struct _HANDLE_CREATOR
 	pcIsFileHandled IsHandled;
 	pcCreateFileA CreateFileA;
 } HANDLE_CREATOR, *PHANDLE_CREATOR, *LPHANDLE_CREATOR;
+
+WINPR_API BOOL ValidFileNameComponent(LPCWSTR lpFileName);
 
 #endif /* _WIN32 */
 

@@ -223,8 +223,9 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	if (!rdpsnd->NumberOfServerFormats)
 		return;
 
-	rdpsnd->ClientFormats = (AUDIO_FORMAT*) calloc(sizeof(AUDIO_FORMAT),
-	                        rdpsnd->NumberOfServerFormats);
+	rdpsnd->ClientFormats = (AUDIO_FORMAT*) calloc(
+	                        rdpsnd->NumberOfServerFormats,
+				sizeof(AUDIO_FORMAT));
 
 	if (!rdpsnd->ClientFormats)
 		return;

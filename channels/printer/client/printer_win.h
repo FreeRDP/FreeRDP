@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __PRINTER_WIN_H
-#define __PRINTER_WIN_H
+#ifndef FREERDP_CHANNEL_PRINTER_CLIENT_WIN_H
+#define FREERDP_CHANNEL_PRINTER_CLIENT_WIN_H
 
 #include <freerdp/channels/log.h>
 
@@ -31,5 +31,5 @@ rdpPrinterDriver* printer_win_get_driver(void);
 #define DEBUG_WINPR(...) do { } while (0)
 #endif
 
-#endif
+#endif /* FREERDP_CHANNEL_PRINTER_CLIENT_WIN_H */
 

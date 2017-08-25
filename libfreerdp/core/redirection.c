@@ -217,7 +217,7 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 		UINT32 i;
 		freerdp_target_net_addresses_free(settings);
 		settings->TargetNetAddressCount = redirection->TargetNetAddressesCount;
-		settings->TargetNetAddresses = (char**) malloc(sizeof(char*) * settings->TargetNetAddressCount);
+		settings->TargetNetAddresses = (char**) calloc(settings->TargetNetAddressCount, sizeof(char*));
 		if (!settings->TargetNetAddresses)
 		{
 			settings->TargetNetAddressCount = 0;

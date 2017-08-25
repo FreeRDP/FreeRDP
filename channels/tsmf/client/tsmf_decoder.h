@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __TSMF_DECODER_H
-#define __TSMF_DECODER_H
+#ifndef FREERDP_CHANNEL_TSMF_CLIENT_DECODER_H
+#define FREERDP_CHANNEL_TSMF_CLIENT_DECODER_H
 
 #include "tsmf_types.h"
 
@@ -72,5 +72,4 @@ typedef ITSMFDecoder *(*TSMF_DECODER_ENTRY)(void);
 ITSMFDecoder *tsmf_load_decoder(const char *name, TS_AM_MEDIA_TYPE *media_type);
 BOOL tsmf_check_decoder_available(const char* name);
 
-#endif
-
+#endif /* FREERDP_CHANNEL_TSMF_CLIENT_DECODER_H */

@@ -396,7 +396,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 		size_t array_size = data->used * sizeof(char*);
 		size_t lines_size = data->used * line_len;
 		char **vlines = calloc(1, array_size + lines_size);
-		SYMBOL_INFO* symbol = calloc(sizeof(SYMBOL_INFO) + line_len * sizeof(char), 1);
+		SYMBOL_INFO* symbol = calloc(1, sizeof(SYMBOL_INFO) + line_len * sizeof(char));
 		IMAGEHLP_LINE64* line = (IMAGEHLP_LINE64*) calloc(1, sizeof(IMAGEHLP_LINE64));
 
 		if (!vlines || !symbol || !line)

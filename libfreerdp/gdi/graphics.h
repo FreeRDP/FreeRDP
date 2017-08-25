@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_GRAPHICS_H
-#define __GDI_GRAPHICS_H
+#ifndef FREERDP_LIB_GDI_GRAPHICS_H
+#define FREERDP_LIB_GDI_GRAPHICS_H
 
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/graphics.h>
@@ -32,4 +32,4 @@ FREERDP_LOCAL HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 width,
 
 FREERDP_LOCAL BOOL gdi_register_graphics(rdpGraphics* graphics);
 
-#endif /* __GDI_GRAPHICS_H */
+#endif /* FREERDP_LIB_GDI_GRAPHICS_H */

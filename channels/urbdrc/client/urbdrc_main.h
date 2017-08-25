@@ -20,8 +20,8 @@
 
 
 
-#ifndef __URBDRC_MAIN_H
-#define __URBDRC_MAIN_H
+#ifndef FREERDP_CHANNEL_URBDRC_CLIENT_MAIN_H
+#define FREERDP_CHANNEL_URBDRC_CLIENT_MAIN_H
 
 #include "searchman.h"
 #include "isoch_queue.h"
@@ -224,4 +224,4 @@ struct _IUDEVMAN
 	void (*wait_urb) (IUDEVMAN* idevman);
 };
 
-#endif /* __URBDRC_MAIN_H */
+#endif /* FREERDP_CHANNEL_URBDRC_CLIENT_MAIN_H */

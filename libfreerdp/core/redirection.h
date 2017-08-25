@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __REDIRECTION_H
-#define __REDIRECTION_H
+#ifndef FREERDP_LIB_CORE_REDIRECTION_H
+#define FREERDP_LIB_CORE_REDIRECTION_H
 
 typedef struct rdp_redirection rdpRedirection;
 
@@ -65,4 +65,4 @@ FREERDP_LOCAL void redirection_free(rdpRedirection* redirection);
 #define DEBUG_REDIR(...) do { } while (0)
 #endif
 
-#endif /* __REDIRECTION_H */
+#endif /* FREERDP_LIB_CORE_REDIRECTION_H */

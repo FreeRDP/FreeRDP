@@ -103,7 +103,8 @@ FREERDP_API INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
                                     RECTANGLE_16* auxRegionRects, UINT32 numAuxRegionRect,
                                     const BYTE* pAuxSrcData, UINT32 AuxSrcSize,
                                     BYTE* pDstData, DWORD DstFormat,
-                                    UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight);
+                                    UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight,
+                                    UINT32 codecId);
 
 FREERDP_API BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height);
 

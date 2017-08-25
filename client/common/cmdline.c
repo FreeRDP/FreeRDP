@@ -121,17 +121,25 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "themes", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable themes" },
 	{ "wallpaper", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable wallpaper" },
 	{ "gdi", COMMAND_LINE_VALUE_REQUIRED, "<sw|hw>", NULL, NULL, -1, NULL, "GDI rendering" },
+#ifdef WITH_GFX_H264
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "<RFX|AVC420|AVC444>", NULL, NULL, -1, NULL, "RDP8 graphics pipeline (experimental)" },
+#else
+	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "<RFX>", NULL, NULL, -1, NULL, "RDP8 graphics pipeline (experimental)" },
+#endif
 	{ "gfx-thin-client", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using thin client mode" },
 	{ "gfx-small-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using small cache mode" },
 	{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using progressive codec" },
+#ifdef WITH_GFX_H264
 	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL, "<AVC420|AVC444>", NULL, NULL, -1, NULL, "RDP8.1 graphics pipeline using H264 codec" },
+#endif
 	{ "rfx", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "RemoteFX" },
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "<image|video>", NULL, NULL, -1, NULL, "RemoteFX mode" },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Number of frame acknowledgement" },
 	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "nscodec", "Enable NSCodec" },
+#if defined(WITH_JPEG)
 	{ "jpeg", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Enable JPEG codec" },
 	{ "jpeg-quality", COMMAND_LINE_VALUE_REQUIRED, "<percentage>", NULL, NULL, -1, NULL, "JPEG quality" },
+#endif
 	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable protocol security negotiation" },
 	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "<rdp|tls|nla|ext>", NULL, NULL, -1, NULL, "force specific protocol security" },
 	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "rdp protocol security" },
@@ -779,7 +787,7 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(
 
 	p = t;
 
-	if (count)
+	if (*count)
 		MoveMemory(&p[1], p, sizeof(char*)** count);
 
 	(*count)++;
@@ -853,13 +861,24 @@ static int freerdp_client_command_line_post_filter(void* context,
 	}
 	CommandLineSwitchCase(arg, "smartcard")
 	{
-		char** p;
-		int count;
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value,
-		        &count);
-		p[0] = "smartcard";
-		status = freerdp_client_add_device_channel(settings, count, p);
-		free(p);
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			char** p;
+			int count;
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value,
+			        &count);
+			p[0] = "smartcard";
+			status = freerdp_client_add_device_channel(settings, count, p);
+			free(p);
+		}
+		else
+		{
+			char* p[1];
+			int count;
+			count = 1;
+			p[0] = "smartcard";
+			status = freerdp_client_add_device_channel(settings, count, p);
+		}
 	}
 	CommandLineSwitchCase(arg, "printer")
 	{
@@ -1809,14 +1828,21 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
 				p = strstr(arg->Value, "://");
-				if (p) {
+
+				if (p)
+				{
 					*p = '\0';
-					if (!strcmp("http", arg->Value)) {
+
+					if (!strcmp("http", arg->Value))
+					{
 						settings->ProxyType = PROXY_TYPE_HTTP;
-					} else {
+					}
+					else
+					{
 						WLog_ERR(TAG, "Only HTTP proxys supported by now");
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
+
 					arg->Value = p + 3;
 				}
 
@@ -1824,16 +1850,18 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 				if (p)
 				{
-					length = (int) (p - arg->Value);
-					if (!isdigit(p[1])) {
+					length = (int)(p - arg->Value);
+
+					if (!isdigit(p[1]))
+					{
 						WLog_ERR(TAG, "Could not parse proxy port");
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
+
 					settings->ProxyPort = atoi(&p[1]);
 					settings->ProxyHostname = (char*) malloc(length + 1);
 					strncpy(settings->ProxyHostname, arg->Value, length);
 					settings->ProxyHostname[length] = '\0';
-
 					settings->ProxyType = PROXY_TYPE_HTTP;
 				}
 			}
@@ -2085,6 +2113,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			if (arg->Value)
 			{
+#ifdef WITH_GFX_H264
 				if (_strnicmp("AVC444", arg->Value, 6) == 0)
 				{
 					settings->GfxH264 = TRUE;
@@ -2094,7 +2123,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				{
 					settings->GfxH264 = TRUE;
 				}
-				else if (_strnicmp("RFX", arg->Value, 3) != 0)
+				else
+#endif
+				if (_strnicmp("RFX", arg->Value, 3) != 0)
 					return COMMAND_LINE_ERROR;
 			}
 		}
@@ -2114,6 +2145,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			settings->GfxThinClient = settings->GfxProgressive ? FALSE : TRUE;
 			settings->SupportGraphicsPipeline = TRUE;
 		}
+#ifdef WITH_GFX_H264
 		CommandLineSwitchCase(arg, "gfx-h264")
 		{
 			settings->SupportGraphicsPipeline = TRUE;
@@ -2129,6 +2161,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					return COMMAND_LINE_ERROR;
 			}
 		}
+#endif
 		CommandLineSwitchCase(arg, "rfx")
 		{
 			settings->RemoteFxCodec = TRUE;
@@ -2148,6 +2181,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->NSCodec = TRUE;
 		}
+#if defined(WITH_JPEG)
 		CommandLineSwitchCase(arg, "jpeg")
 		{
 			settings->JpegCodec = TRUE;
@@ -2157,6 +2191,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->JpegQuality = atoi(arg->Value) % 100;
 		}
+#endif
 		CommandLineSwitchCase(arg, "nego")
 		{
 			settings->NegotiateSecurityLayer = arg->Value ? TRUE : FALSE;
@@ -2356,6 +2391,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 				settings->NSCodec = TRUE;
 			}
+#if defined(WITH_JPEG)
 			else if (strcmp(arg->Value, "jpeg") == 0)
 			{
 				settings->JpegCodec = TRUE;
@@ -2363,6 +2399,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				if (settings->JpegQuality == 0)
 					settings->JpegQuality = 75;
 			}
+#endif
 		}
 		CommandLineSwitchCase(arg, "fast-path")
 		{
@@ -2432,8 +2469,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->AutoReconnectMaxRetries = atoi(arg->Value);
 
-			if ((settings->AutoReconnectMaxRetries < 0) ||
-				(settings->AutoReconnectMaxRetries > 1000))
+			if (settings->AutoReconnectMaxRetries > 1000)
 				return COMMAND_LINE_ERROR;
 		}
 		CommandLineSwitchCase(arg, "reconnect-cookie")
@@ -2523,7 +2559,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "action-script")
 		{
-			free (settings->ActionScript);
+			free(settings->ActionScript);
+
 			if (!(settings->ActionScript = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
@@ -2537,13 +2574,14 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	if (user)
 	{
 		free(settings->Username);
+
 		if (!settings->Domain && user)
 		{
 			BOOL ret;
 			free(settings->Domain);
-
 			ret = freerdp_parse_username(user, &settings->Username, &settings->Domain);
 			free(user);
+
 			if (!ret)
 				return COMMAND_LINE_ERROR;
 		}
@@ -2560,7 +2598,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			BOOL ret;
 			free(settings->GatewayDomain);
 			ret = freerdp_parse_username(gwUser, &settings->GatewayUsername,
-						     &settings->GatewayDomain);
+			                             &settings->GatewayDomain);
 			free(gwUser);
 
 			if (!ret)
@@ -2700,7 +2738,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->DeviceRedirection)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdpdr",
-			settings))
+		        settings))
 			return FALSE;
 
 		if (!freerdp_static_channel_collection_find(settings, "rdpsnd"))
@@ -2775,14 +2813,14 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->EncomspVirtualChannel)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "encomsp",
-			settings))
+		        settings))
 			return FALSE;
 	}
 
 	if (settings->RemdeskVirtualChannel)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "remdesk",
-			settings))
+		        settings))
 			return FALSE;
 	}
 

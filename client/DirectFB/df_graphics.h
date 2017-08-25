@@ -17,11 +17,11 @@
  * limitations under the License.
  */
 
-#ifndef __DF_GRAPHICS_H
-#define __DF_GRAPHICS_H
+#ifndef FREERDP_CLIENT_DF_GRAPHICS_H
+#define FREERDP_CLIENT_DF_GRAPHICS_H
 
 #include "dfreerdp.h"
 
 void df_register_graphics(rdpGraphics* graphics);
 
-#endif /* __DF_GRAPHICS_H */
+#endif /* FREERDP_CLIENT_DF_GRAPHICS_H */

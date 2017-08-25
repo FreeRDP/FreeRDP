@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_CLIENT_RAIL_H
-#define FREERDP_CHANNEL_CLIENT_RAIL_H
+#ifndef FREERDP_CHANNEL_RAIL_CLIENT_RAIL_H
+#define FREERDP_CHANNEL_RAIL_CLIENT_RAIL_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -83,5 +83,5 @@ struct _rail_client_context
 	pcRailServerGetAppIdResponse ServerGetAppIdResponse;
 };
 
-#endif /* FREERDP_CHANNEL_CLIENT_RAIL_H */
+#endif /* FREERDP_CHANNEL_RAIL_CLIENT_RAIL_H */
 

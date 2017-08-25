@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_RDPGFX_H
-#define FREERDP_CHANNEL_SERVER_RDPGFX_H
+#ifndef FREERDP_CHANNEL_RDPGFX_SERVER_RDPGFX_H
+#define FREERDP_CHANNEL_RDPGFX_SERVER_RDPGFX_H
 
 #include <freerdp/channels/rdpgfx.h>
 
@@ -97,4 +97,4 @@ FREERDP_API UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context);
 }
 #endif
 
-#endif /* FREERDP_CHANNEL_SERVER_RDPGFX_H */
+#endif /* FREERDP_CHANNEL_RDPGFX_SERVER_RDPGFX_H */

@@ -92,6 +92,25 @@ UINT rail_send_channel_data(railPlugin* rail, void* data, size_t length)
 }
 
 /**
+ * used by rail_client_execute() to free RAIL_EXEC_ORDER's
+ * internal malloced memory;
+ */
+static void rail_client_clean_exec_order(RAIL_EXEC_ORDER* exec)
+{
+    if (!exec)
+        return;
+
+    free(exec->exeOrFile.string);
+    exec->exeOrFile.string = NULL;
+
+    free(exec->workingDir.string);
+    exec->workingDir.string = NULL;
+
+    free(exec->arguments.string);
+    exec->arguments.string = NULL;
+}
+
+/**
  * Callback Interface
  */
 
@@ -104,6 +123,7 @@ static UINT rail_client_execute(RailClientContext* context,
                                 RAIL_EXEC_ORDER* exec)
 {
 	char* exeOrFile;
+	UINT error;
 	railPlugin* rail = (railPlugin*) context->handle;
 	exeOrFile = exec->RemoteApplicationProgram;
 
@@ -122,7 +142,9 @@ static UINT rail_client_execute(RailClientContext* context,
 	                              &exec->workingDir); /* ShellWorkingDirectory */
 	rail_string_to_unicode_string(exec->RemoteApplicationArguments,
 	                              &exec->arguments); /* RemoteApplicationCmdLine */
-	return rail_send_client_exec_order(rail, exec);
+	error = rail_send_client_exec_order(rail, exec);
+	rail_client_clean_exec_order(exec);
+	return error;
 }
 
 /**
@@ -614,7 +636,9 @@ static void* rail_virtual_channel_client_thread(void* arg)
 		{
 			data = (wStream*) message.wParam;
 
-			if ((error = rail_order_recv(rail, data)))
+			error = rail_order_recv(rail, data);
+			Stream_Free(data, TRUE);
+			if (error)
 			{
 				WLog_ERR(TAG, "rail_order_recv failed with error %"PRIu32"!", error);
 				break;

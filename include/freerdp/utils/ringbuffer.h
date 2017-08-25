@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RINGBUFFER_H___
-#define __RINGBUFFER_H___
+#ifndef FREERDP_UTILS_RINGBUFFER_H
+#define FREERDP_UTILS_RINGBUFFER_H
 
 #include <winpr/wtypes.h>
 #include <freerdp/api.h>
@@ -125,4 +125,4 @@ FREERDP_API void ringbuffer_commit_read_bytes(RingBuffer *rb, size_t sz);
 }
 #endif
 
-#endif /* __RINGBUFFER_H___ */
+#endif /* FREERDP_UTILS_RINGBUFFER_H */

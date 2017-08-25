@@ -273,7 +273,8 @@ void sspi_SecBufferFree(PSecBuffer SecBuffer)
 	if (!SecBuffer)
 		return;
 
-	memset(SecBuffer->pvBuffer, 0, SecBuffer->cbBuffer);
+	if (SecBuffer->pvBuffer)
+		memset(SecBuffer->pvBuffer, 0, SecBuffer->cbBuffer);
 	free(SecBuffer->pvBuffer);
 	SecBuffer->pvBuffer = NULL;
 	SecBuffer->cbBuffer = 0;
@@ -415,7 +416,7 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDEN
 
 	if (identity->UserLength > 0)
 	{
-		identity->User = (UINT16*) malloc((identity->UserLength + 1) * sizeof(WCHAR));
+		identity->User = (UINT16*) calloc((identity->UserLength + 1), sizeof(WCHAR));
 
 		if (!identity->User)
 			return -1;
@@ -428,7 +429,7 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDEN
 
 	if (identity->DomainLength > 0)
 	{
-		identity->Domain = (UINT16*) malloc((identity->DomainLength + 1) * sizeof(WCHAR));
+		identity->Domain = (UINT16*) calloc((identity->DomainLength + 1), sizeof(WCHAR));
 
 		if (!identity->Domain)
 			return -1;
@@ -444,7 +445,7 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDEN
 
 	if (srcIdentity->Password)
 	{
-		identity->Password = (UINT16*) malloc((identity->PasswordLength + 1) * sizeof(WCHAR));
+		identity->Password = (UINT16*) calloc((identity->PasswordLength + 1), sizeof(WCHAR));
 
 		if (!identity->Password)
 			return -1;

@@ -4,6 +4,7 @@
  *
  * Copyright 2015 Armin Novak <armin.novak@thincast.com>
  * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +55,8 @@ struct winpr_file
 typedef struct winpr_file WINPR_FILE;
 
 HANDLE_CREATOR *GetFileHandleCreator(void);
+
+UINT32 map_posix_err(int fs_errno);
 
 #endif /* _WIN32 */
 

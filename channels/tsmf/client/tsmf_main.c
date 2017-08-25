@@ -79,6 +79,9 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	int status = -1;
 	TSMF_CHANNEL_CALLBACK *callback = (TSMF_CHANNEL_CALLBACK *) pChannelCallback;
 
+	if (!callback) 
+		return FALSE;
+
 	s = Stream_New(NULL, 32);
 	if (!s)
 		return FALSE;
@@ -92,11 +95,11 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 
 	DEBUG_TSMF("ACK response size %"PRIuz"", Stream_GetPosition(s));
 
-	if (!callback || !callback->channel || !callback->channel->Write)
+	if (!callback->channel || !callback->channel->Write)
 	{
-		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p", (void*) callback,
-		         (void*) (callback ? callback->channel : NULL),
-		         (void*) (callback && callback->channel ? callback->channel->Write : NULL));
+		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p", callback,
+		         (callback ? callback->channel : NULL),
+		         (callback && callback->channel ? callback->channel->Write : NULL));
 	}
 	else
 	{

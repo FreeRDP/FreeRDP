@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __TSMF_TYPES_H
-#define __TSMF_TYPES_H
+#ifndef FREERDP_CHANNEL_TSMF_CLIENT_TYPES_H
+#define FREERDP_CHANNEL_TSMF_CLIENT_TYPES_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -57,5 +57,5 @@ typedef struct _TS_AM_MEDIA_TYPE
 	UINT32 ExtraDataSize;
 } TS_AM_MEDIA_TYPE;
 
-#endif
+#endif /* FREERDP_CHANNEL_TSMF_CLIENT_TYPES_H */
 

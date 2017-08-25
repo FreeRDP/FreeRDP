@@ -309,7 +309,7 @@ BOOL android_event_queue_init(freerdp* inst)
 		return FALSE;
 	}
 
-	queue->events = (ANDROID_EVENT**) calloc(sizeof(ANDROID_EVENT*), queue->size);
+	queue->events = (ANDROID_EVENT**) calloc(queue->size, sizeof(ANDROID_EVENT*));
 
 	if (!queue->events)
 	{

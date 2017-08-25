@@ -30,7 +30,7 @@ typedef struct _wClipboardSynthesizer wClipboardSynthesizer;
 struct _wClipboardFormat
 {
 	UINT32 formatId;
-	const char* formatName;
+	char* formatName;
 
 	UINT32 numSynthesizers;
 	wClipboardSynthesizer* synthesizers;
@@ -59,6 +59,13 @@ struct _wClipboard
 	void* data;
 	UINT32 formatId;
 	UINT32 sequenceNumber;
+
+	/* clipboard file handling */
+
+	wArrayList* localFiles;
+	UINT32 fileListSequenceNumber;
+
+	wClipboardDelegate delegate;
 
 	CRITICAL_SECTION lock;
 };

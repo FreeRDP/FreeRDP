@@ -1064,7 +1064,7 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane,
 		if (width * height == 0)
 			return NULL;
 
-		if (!(outPlane = (BYTE*) malloc(width * height)))
+		if (!(outPlane = (BYTE*) calloc(height, width)))
 			return NULL;
 	}
 
@@ -1269,10 +1269,10 @@ BOOL freerdp_bitmap_planar_context_reset(
 	free(context->pTempData);
 	free(context->deltaPlanesBuffer);
 	free(context->rlePlanesBuffer);
-	context->planesBuffer = malloc(context->maxPlaneSize * 4);
-	context->pTempData = malloc(context->maxPlaneSize * 4);
-	context->deltaPlanesBuffer = malloc(context->maxPlaneSize * 4);
-	context->rlePlanesBuffer = malloc(context->maxPlaneSize * 4);
+	context->planesBuffer = calloc(context->maxPlaneSize, 4);
+	context->pTempData = calloc(context->maxPlaneSize, 4);
+	context->deltaPlanesBuffer = calloc(context->maxPlaneSize, 4);
+	context->rlePlanesBuffer = calloc(context->maxPlaneSize, 4);
 
 	if (!context->planesBuffer || !context->pTempData ||
 	    !context->deltaPlanesBuffer || !context->rlePlanesBuffer)

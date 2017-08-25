@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_ENCOMSP_H
-#define FREERDP_CHANNEL_SERVER_ENCOMSP_H
+#ifndef FREERDP_CHANNEL_ENCOMSP_SERVER_ENCOMSP_H
+#define FREERDP_CHANNEL_ENCOMSP_SERVER_ENCOMSP_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -86,4 +86,4 @@ FREERDP_API void encomsp_server_context_free(EncomspServerContext* context);
  }
 #endif
 
-#endif /* FREERDP_CHANNEL_SERVER_ENCOMSP_H */
+#endif /* FREERDP_CHANNEL_ENCOMSP_SERVER_ENCOMSP_H */

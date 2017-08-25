@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __XF_EVENT_H
-#define __XF_EVENT_H
+#ifndef FREERDP_CLIENT_X11_EVENT_H
+#define FREERDP_CLIENT_X11_EVENT_H
 
 #include "xf_keyboard.h"
 
@@ -37,4 +37,4 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window window, BOOL app);
 BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window window, BOOL app);
 
-#endif /* __XF_EVENT_H */
+#endif /* FREERDP_CLIENT_X11_EVENT_H */

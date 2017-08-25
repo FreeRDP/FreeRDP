@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef CODEC_RFX_TYPES_H
-#define CODEC_RFX_TYPES_H
+#ifndef FREERDP_LIB_CODEC_RFX_TYPES_H
+#define FREERDP_LIB_CODEC_RFX_TYPES_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -77,4 +77,4 @@ struct _RFX_CONTEXT_PRIV
 	PROFILER_DEFINE(prof_rfx_encode_format_rgb);
 };
 
-#endif /* __RFX_TYPES_H */
+#endif /* FREERDP_LIB_CODEC_RFX_TYPES_H */

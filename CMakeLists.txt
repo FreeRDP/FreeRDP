@@ -134,7 +134,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(NOT DEFINED BUILD_SHARED_LIBS)
-	if(IOS OR APPLE)
+	if(IOS)
 		set(BUILD_SHARED_LIBS OFF)
 	else()
 		set(BUILD_SHARED_LIBS ON)
@@ -182,6 +182,16 @@ if(MSVC)
 	if(NOT DEFINED CMAKE_SUPPRESS_REGENERATION)
 		set(CMAKE_SUPPRESS_REGENERATION ON)
 	endif()
+endif()
+
+# Enable 64bit file support on linux.
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+	add_definitions("-D_FILE_OFFSET_BITS=64")
+endif()
+
+# Use Standard conforming getpwnam_r() on Solaris.
+if("${CMAKE_SYSTEM_NAME}" MATCHES "SunOS")
+	add_definitions("-D_POSIX_PTHREAD_SEMANTICS")
 endif()
 
 # Compiler-specific flags
@@ -779,6 +789,12 @@ if (TARGET_ARCH MATCHES "sparc")
 	set(HAVE_ALIGNED_REQUIRED 1)
 endif()
 
+if (WITH_X264 OR WITH_OPENH264 OR WITH_MEDIA_FOUNDATION OR WITH_FFMPEG)
+	set(WITH_GFX_H264 ON)
+else()
+	set(WITH_GFX_H264 OFF)
+endif()
+
 # Android expects all libraries to be loadable
 # without paths.
 if (ANDROID)
@@ -816,6 +832,10 @@ set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}:\$ORIGIN/..")
+
+if (BUILD_SHARED_LIBS)
+	set(CMAKE_MACOSX_RPATH ON)
+endif()
 
 # Android profiling
 if(ANDROID)

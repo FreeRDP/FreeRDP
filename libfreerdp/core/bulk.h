@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_BULK_H
-#define FREERDP_CORE_BULK_H
+#ifndef FREERDP_LIB_CORE_BULK_H
+#define FREERDP_LIB_CORE_BULK_H
 
 typedef struct rdp_bulk rdpBulk;
 
@@ -59,4 +59,4 @@ FREERDP_LOCAL void bulk_reset(rdpBulk* bulk);
 FREERDP_LOCAL rdpBulk* bulk_new(rdpContext* context);
 FREERDP_LOCAL void bulk_free(rdpBulk* bulk);
 
-#endif /* FREERDP_CORE_BULK_H */
+#endif /* FREERDP_LIB_CORE_BULK_H */

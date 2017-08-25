@@ -28,6 +28,8 @@
 #include <freerdp/autodetect.h>
 
 #include <winpr/sspi.h>
+#include <winpr/ntlm.h>
+
 
 typedef BOOL (*psPeerContextNew)(freerdp_peer* peer, rdpContext* context);
 typedef void (*psPeerContextFree)(freerdp_peer* peer, rdpContext* context);
@@ -118,6 +120,7 @@ struct rdp_freerdp_peer
 	psPeerGetEventHandles GetEventHandles;
 	psPeerAdjustMonitorsLayout AdjustMonitorsLayout;
 	psPeerClientCapabilities ClientCapabilities;
+	psPeerComputeNtlmHash ComputeNtlmHash;
 };
 
 #ifdef __cplusplus

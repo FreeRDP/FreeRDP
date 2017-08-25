@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_GRAPHICS_H
-#define FREERDP_CORE_GRAPHICS_H
+#ifndef FREERDP_LIB_CORE_GRAPHICS_H
+#define FREERDP_LIB_CORE_GRAPHICS_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
@@ -27,4 +27,4 @@
 
 FREERDP_LOCAL void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap);
 
-#endif /* FREERDP_CORE_GRAPHICS_H */
+#endif /* FREERDP_LIB_CORE_GRAPHICS_H */

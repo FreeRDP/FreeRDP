@@ -104,11 +104,11 @@ BOOL TimerCloseHandle(HANDLE handle) {
 	timer = (WINPR_TIMER*) handle;
 
   if (!TimerIsHandled(handle))
-    return FALSE;
+	return FALSE;
 
 #ifdef __linux__
 
-	if (timer->fd != -1)
+    if (timer->fd != -1)
 		close(timer->fd);
 
 #endif
@@ -121,7 +121,7 @@ BOOL TimerCloseHandle(HANDLE handle) {
 
 static BOOL g_WaitableTimerSignalHandlerInstalled = FALSE;
 
-void WaitableTimerSignalHandler(int signum, siginfo_t* siginfo, void* arg)
+static void WaitableTimerSignalHandler(int signum, siginfo_t* siginfo, void* arg)
 {
 	WINPR_TIMER* timer = siginfo->si_value.sival_ptr;
 
@@ -145,7 +145,7 @@ void WaitableTimerSignalHandler(int signum, siginfo_t* siginfo, void* arg)
 	}
 }
 
-int InstallWaitableTimerSignalHandler()
+static int InstallWaitableTimerSignalHandler(void)
 {
 	if (!g_WaitableTimerSignalHandlerInstalled)
 	{
@@ -153,7 +153,7 @@ int InstallWaitableTimerSignalHandler()
 		sigemptyset(&action.sa_mask);
 		sigaddset(&action.sa_mask, SIGALRM);
 		action.sa_flags = SA_RESTART | SA_SIGINFO;
-		action.sa_sigaction = (void*) &WaitableTimerSignalHandler;
+		action.sa_sigaction = WaitableTimerSignalHandler;
 		sigaction(SIGALRM, &action, NULL);
 		g_WaitableTimerSignalHandlerInstalled = TRUE;
 	}

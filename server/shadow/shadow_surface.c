@@ -40,8 +40,8 @@ rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y,
 	surface->height = height;
 	surface->scanline = ALIGN_SCREEN_SIZE(surface->width, 4) * 4;
 	surface->format = PIXEL_FORMAT_BGRX32;
-	surface->data = (BYTE*) calloc(1,
-	                               surface->scanline * ALIGN_SCREEN_SIZE(surface->height, 4));
+	surface->data = (BYTE*) calloc(ALIGN_SCREEN_SIZE(surface->height, 4),
+	                               surface->scanline);
 
 	if (!surface->data)
 	{

@@ -22,13 +22,6 @@ set(${MODULE_PREFIX}_SRCS
 	drive_file.h
 	drive_main.c)
 
-if(WIN32)
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
-		statvfs.c
-		statvfs.h
-		dirent.h)
-endif()
-
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
 
 

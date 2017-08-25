@@ -338,6 +338,7 @@ static UINT encomsp_server_stop(EncomspServerContext* context)
 	}
 
 	CloseHandle(context->priv->Thread);
+	CloseHandle(context->priv->StopEvent);
 	return error;
 }
 
@@ -368,6 +369,9 @@ void encomsp_server_context_free(EncomspServerContext* context)
 {
 	if (context)
 	{
+		if (context->priv->ChannelHandle != INVALID_HANDLE_VALUE)
+			WTSVirtualChannelClose(context->priv->ChannelHandle);
+		
 		free(context->priv);
 		free(context);
 	}

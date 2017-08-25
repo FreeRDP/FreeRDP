@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_MCEVENT_H
-#define FREERDP_SHADOW_SERVER_MCEVENT_H
+#ifndef FREERDP_SERVER_SHADOW_MCEVENT_H
+#define FREERDP_SERVER_SHADOW_MCEVENT_H
 
 #include <freerdp/server/shadow.h>
 
@@ -62,4 +62,4 @@ HANDLE shadow_multiclient_getevent(void* subscriber);
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_MCEVENT_H */
+#endif /* FREERDP_SERVER_SHADOW_MCEVENT_H */

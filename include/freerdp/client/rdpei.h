@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_CLIENT_RDPEI_H
-#define FREERDP_CHANNEL_CLIENT_RDPEI_H
+#ifndef FREERDP_CHANNEL_RDPEI_CLIENT_RDPEI_H
+#define FREERDP_CHANNEL_RDPEI_CLIENT_RDPEI_H
 
 #include <freerdp/channels/rdpei.h>
 
@@ -57,4 +57,4 @@ struct _rdpei_client_context
 	pcRdpeiResumeTouch ResumeTouch;
 };
 
-#endif /* FREERDP_CHANNEL_CLIENT_RDPEI_H */
+#endif /* FREERDP_CHANNEL_RDPEI_CLIENT_RDPEI_H */

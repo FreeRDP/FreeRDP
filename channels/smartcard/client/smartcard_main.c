@@ -45,7 +45,6 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 	SMARTCARD_OPERATION* operation;
 	UINT error = CHANNEL_RC_OK;
 	smartcard = pContext->smartcard;
-
 	nCount = 0;
 	hEvents[nCount++] = MessageQueue_Event(pContext->IrpQueue);
 
@@ -516,7 +515,6 @@ static void* smartcard_thread_func(void* arg)
 	wMessage message;
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) arg;
 	UINT error = CHANNEL_RC_OK;
-
 	nCount = 0;
 	hEvents[nCount++] = MessageQueue_Event(smartcard->IrpQueue);
 	hEvents[nCount++] = Queue_Event(smartcard->CompletedIrpQueue);
@@ -697,6 +695,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	int ck;
 	RDPDR_SMARTCARD* device;
 	SMARTCARD_DEVICE* smartcard;
+	LONG status;
 	UINT error = CHANNEL_RC_NO_MEMORY;
 	device = (RDPDR_SMARTCARD*) pEntryPoints->device;
 	name = device->Name;
@@ -739,6 +738,14 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			smartcard->path = name;
 		else
 			smartcard->name = name;
+	}
+
+	status = SCardAddReaderName(&smartcard->thread, (LPSTR) name);
+
+	if (status != SCARD_S_SUCCESS)
+	{
+		WLog_ERR(TAG, "Failed to add reader name!");
+		goto error_device_data;
 	}
 
 	smartcard->IrpQueue = MessageQueue_New(NULL);

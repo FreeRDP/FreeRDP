@@ -25,6 +25,7 @@
 #include <winpr/crypto.h>
 
 #ifdef WITH_OPENSSL
+#include <openssl/crypto.h>
 #include <openssl/rand.h>
 #endif
 
@@ -54,17 +55,5 @@ int winpr_RAND(BYTE* output, size_t len)
 
 int winpr_RAND_pseudo(BYTE* output, size_t len)
 {
-#if defined(WITH_OPENSSL)
-	if (RAND_pseudo_bytes(output, len) != 1)
-		return -1;
-#elif defined(WITH_MBEDTLS) && defined(MBEDTLS_HAVEGE_C)
-	mbedtls_havege_state hs;
-	mbedtls_havege_init(&hs);
-
-	if (mbedtls_havege_random(&hs, output, len) != 0)
-		return -1;
-
-	mbedtls_havege_free(&hs);
-#endif
-	return 0;
+	return winpr_RAND(output, len);
 }

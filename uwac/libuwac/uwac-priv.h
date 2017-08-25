@@ -20,8 +20,8 @@
  * OF THIS SOFTWARE.
  */
 
-#ifndef __UWAC_PRIV_H_
-#define __UWAC_PRIV_H_
+#ifndef UWAC_PRIV_H_
+#define UWAC_PRIV_H_
 
 #include "config.h"
 
@@ -234,4 +234,4 @@ void UwacSeatDestroy(UwacSeat *s);
 UwacOutput *UwacCreateOutput(UwacDisplay *d, uint32_t id, uint32_t version);
 int UwacDestroyOutput(UwacOutput *output);
 
-#endif /* __UWAC_PRIV_H_ */
+#endif /* UWAC_PRIV_H_ */

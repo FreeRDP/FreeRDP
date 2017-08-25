@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef MF_INPUT_H
-#define MF_INPUT_H
+#ifndef FREERDP_SERVER_MAC_INPUT_H
+#define FREERDP_SERVER_MAC_INPUT_H
 
 #include "mf_interface.h"
 
@@ -33,4 +33,4 @@ void mf_input_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16
 void mf_input_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 void mf_input_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
-#endif /* MF_INPUT_H */
+#endif /* FREERDP_SERVER_MAC_INPUT_H */

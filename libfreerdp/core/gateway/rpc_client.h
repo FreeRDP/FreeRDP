@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_RPC_CLIENT_H
-#define FREERDP_CORE_RPC_CLIENT_H
+#ifndef FREERDP_LIB_CORE_GATEWAY_RPC_CLIENT_H
+#define FREERDP_LIB_CORE_GATEWAY_RPC_CLIENT_H
 
 #include <freerdp/api.h>
 
@@ -45,4 +45,4 @@ FREERDP_LOCAL int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length,
 FREERDP_LOCAL int rpc_client_new(rdpRpc* rpc);
 FREERDP_LOCAL void rpc_client_free(rdpRpc* rpc);
 
-#endif /* FREERDP_CORE_RPC_CLIENT_H */
+#endif /* FREERDP_LIB_CORE_GATEWAY_RPC_CLIENT_H */

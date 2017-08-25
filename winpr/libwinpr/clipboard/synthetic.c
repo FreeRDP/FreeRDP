@@ -445,7 +445,7 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 		beg = atoi(&begStr[10]);
 		end = atoi(&endStr[8]);
 
-		if ((beg > SrcSize) || (end > SrcSize) || (beg >= end))
+		if (beg < 0 || end < 0 || (beg > SrcSize) || (end > SrcSize) || (beg >= end))
 			return NULL;
 
 		DstSize = end - beg;

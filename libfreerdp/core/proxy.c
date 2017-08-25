@@ -133,7 +133,7 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri)
 		hostnamelen = strlen(hostname);
 	}
 
-	settings->ProxyHostname = calloc(1, hostnamelen + 1);
+	settings->ProxyHostname = calloc(hostnamelen + 1, 1);
 
 	if (!settings->ProxyHostname)
 	{

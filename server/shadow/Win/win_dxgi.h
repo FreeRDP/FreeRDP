@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_WIN_DXGI_H
-#define FREERDP_SHADOW_SERVER_WIN_DXGI_H
+#ifndef FREERDP_SERVER_SHADOW_WIN_DXGI_H
+#define FREERDP_SERVER_SHADOW_WIN_DXGI_H
 
 #if _WIN32_WINNT >= 0x0602
 //#define WITH_DXGI_1_2	1
@@ -57,4 +57,4 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem);
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_WIN_DXGI_H */
+#endif /* FREERDP_SERVER_SHADOW_WIN_DXGI_H */

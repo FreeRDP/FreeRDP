@@ -218,7 +218,7 @@ wPubSub* PubSub_New(BOOL synchronized)
 	pubSub->count = 0;
 	pubSub->size = 64;
 
-	pubSub->events = (wEventType*) calloc(1, sizeof(wEventType) * pubSub->size);
+	pubSub->events = (wEventType*) calloc(pubSub->size, sizeof(wEventType));
 	if (!pubSub->events)
 	{
 		if (pubSub->synchronized)

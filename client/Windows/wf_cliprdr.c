@@ -2508,8 +2508,8 @@ BOOL wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr)
 	      && clipboard->GetUpdatedClipboardFormats))
 		clipboard->legacyApi = TRUE;
 
-	if (!(clipboard->format_mappings = (formatMapping*) calloc(1,
-	                                   sizeof(formatMapping) * clipboard->map_capacity)))
+	if (!(clipboard->format_mappings = (formatMapping*) calloc(clipboard->map_capacity,
+	                                   sizeof(formatMapping))))
 		goto error;
 
 	if (!(clipboard->response_data_event = CreateEvent(NULL, TRUE, FALSE,

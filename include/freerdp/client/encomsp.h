@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_CLIENT_ENCOMSP_H
-#define FREERDP_CHANNEL_CLIENT_ENCOMSP_H
+#ifndef FREERDP_CHANNEL_ENCOMSP_CLIENT_ENCOMSP_H
+#define FREERDP_CHANNEL_ENCOMSP_CLIENT_ENCOMSP_H
 
 #include <freerdp/channels/encomsp.h>
 
@@ -60,4 +60,4 @@ struct _encomsp_client_context
 	pcEncomspGraphicsStreamResumed GraphicsStreamResumed;
 };
 
-#endif /* FREERDP_CHANNEL_CLIENT_ENCOMSP_H */
+#endif /* FREERDP_CHANNEL_ENCOMSP_CLIENT_ENCOMSP_H */

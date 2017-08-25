@@ -244,7 +244,7 @@ BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 	/* test with returned size */
 	if (GetComputerNameExA(format, computerName1, &dwSize) == FALSE)
 	{
-		fprintf(stderr, "%s: (6/%D) GetComputerNameExA failed with error: 0x%08"PRIX32"\n",
+		fprintf(stderr, "%s: (6/%d) GetComputerNameExA failed with error: 0x%08"PRIX32"\n",
 			__FUNCTION__, format, GetLastError());
 		return FALSE;
 	}
