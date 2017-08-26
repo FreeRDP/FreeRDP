@@ -193,6 +193,7 @@ static BOOL wl_post_connect(freerdp* instance)
 
 	UwacWindowSetFullscreenState(window, NULL, instance->context->settings->Fullscreen);
 	UwacWindowSetTitle(window, "FreeRDP");
+	UwacWindowSetOpaqueRegion(context->window, 0, 0, gdi->width, gdi->height);
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
 	memcpy(UwacWindowGetDrawingBuffer(context->window), gdi->primary_buffer,
