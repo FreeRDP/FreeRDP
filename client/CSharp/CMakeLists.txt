@@ -15,7 +15,15 @@ set(${MODULE_PREFIX}_SRCS
 	cursor.c
 	devolutionsrdp.c)
 
-add_library(${MODULE_NAME} MODULE ${${MODULE_PREFIX}_SRCS})
+if(IOS)
+	set(TARGET_TYPE "STATIC")
+elseif(APPLE)
+	set(TARGET_TYPE "MODULE")
+else()
+	set(TARGET_TYPE "SHARED")
+endif()
+
+add_library(${MODULE_NAME} ${TARGET_TYPE} ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
