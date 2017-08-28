@@ -155,6 +155,12 @@ if(WITH_SSE2)
 endif()
 
 if(WITH_NEON)
+	if(CMAKE_COMPILER_IS_GNUCC)
+		if(NOT "${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+			set_source_files_properties(${CODEC_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon")
+		endif()
+	endif()
+
 	set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_NEON_SRCS})
 endif()
 
@@ -239,7 +245,9 @@ if(WITH_SSE2)
 	if(MSVC)
 		set(OPTIMIZATION "${OPTIMIZATION} /arch:SSE2")
 	endif()
-elseif(WITH_NEON)
+endif()
+
+if(WITH_NEON)
 	if(CMAKE_COMPILER_IS_GNUCC)
 		if(NOT "${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
 			set(OPTIMIZATION "${OPTIMIZATION} -mfpu=neon")
