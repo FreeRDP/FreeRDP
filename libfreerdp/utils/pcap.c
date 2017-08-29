@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <freerdp/log.h>
 

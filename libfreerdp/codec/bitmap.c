@@ -435,8 +435,8 @@
 #define TEST_MIX \
 		((last_line == 0 && pixel == mix) || \
 				(last_line != 0 && pixel == (ypixel ^ mix)))
-#define TEST_FOM (TEST_FILL || TEST_MIX)
-#define TEST_COLOR (pixel == last_pixel)
+#define TEST_FOM TEST_FILL || TEST_MIX
+#define TEST_COLOR pixel == last_pixel
 #define TEST_BICOLOR \
 		( \
 				(pixel != last_pixel) && \
@@ -559,7 +559,7 @@ int freerdp_bitmap_compress(const char* srcData, int width, int height,
 					mix_count = 0;
 				}
 
-				if (!TEST_COLOR)
+				if (!(TEST_COLOR))
 				{
 					if (color_count > 3 &&
 							color_count >= fill_count &&
@@ -607,7 +607,7 @@ int freerdp_bitmap_compress(const char* srcData, int width, int height,
 					bicolor_spin = 0;
 				}
 
-				if (!TEST_FOM)
+				if (!(TEST_FOM))
 				{
 					if (fom_count > 3 &&
 							fom_count >= fill_count &&
@@ -852,7 +852,7 @@ int freerdp_bitmap_compress(const char* srcData, int width, int height,
 					mix_count = 0;
 				}
 
-				if (!TEST_COLOR)
+				if (!(TEST_COLOR))
 				{
 					if (color_count > 3 &&
 							color_count >= fill_count &&
@@ -900,7 +900,7 @@ int freerdp_bitmap_compress(const char* srcData, int width, int height,
 					bicolor_spin = 0;
 				}
 
-				if (!TEST_FOM)
+				if (!(TEST_FOM))
 				{
 					if (fom_count > 3 &&
 							fom_count >= fill_count &&

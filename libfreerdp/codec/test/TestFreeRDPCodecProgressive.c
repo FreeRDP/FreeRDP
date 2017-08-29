@@ -1,3 +1,4 @@
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/image.h>
@@ -483,7 +484,7 @@ static int test_progressive_load_files(char* ms_sample_path, EGFX_SAMPLE_FILE fi
 	return 1;
 }
 
-static BYTE* test_progressive_load_bitmap(char* path, char* file, UINT32* size, int quarter)
+static BYTE* test_progressive_load_bitmap(char* path, char* file, size_t* size, int quarter)
 {
 	int status;
 	BYTE* buffer;

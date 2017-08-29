@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/wtypes.h>
 #include <winpr/timezone.h>
 #include <winpr/crt.h>
 #include "../log.h"

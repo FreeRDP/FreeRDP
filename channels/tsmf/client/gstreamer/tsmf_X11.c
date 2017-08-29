@@ -33,7 +33,15 @@
 #include <winpr/thread.h>
 #include <winpr/string.h>
 
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+#endif /* __clang__ */
 #include <gst/gst.h>
+#if __clang__
+#pragma clang diagnostic pop
+#endif /* __clang__ */
+
 #if GST_VERSION_MAJOR > 0
 #include <gst/video/videooverlay.h>
 #else
