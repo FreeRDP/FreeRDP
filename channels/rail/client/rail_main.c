@@ -738,6 +738,7 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 static void rail_virtual_channel_event_terminated(railPlugin* rail)
 {
 	rail->InitHandle = 0;
+	free(rail->context);
 	free(rail);
 }
 

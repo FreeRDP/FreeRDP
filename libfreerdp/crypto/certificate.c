@@ -184,7 +184,9 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 					hostname, pline);
 			else if (strcmp(hostname, certificate_data->hostname) == 0)
 			{
-				match = strcmp(pline, certificate_data->fingerprint);
+				const int diff = strcmp(pline, certificate_data->fingerprint);
+
+				match = (diff == 0) ? 0 : -1;
 				break;
 			}
 		}

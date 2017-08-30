@@ -304,6 +304,15 @@ void* sspi_SecureHandleGetLowerPointer(SecHandle* handle)
 	return pointer;
 }
 
+void sspi_SecureHandleInvalidate(SecHandle* handle)
+{
+	if (!handle)
+		return;
+
+	handle->dwLower = 0;
+	handle->dwUpper = 0;
+}
+
 void sspi_SecureHandleSetLowerPointer(SecHandle* handle, void* pointer)
 {
 	if (!handle)
