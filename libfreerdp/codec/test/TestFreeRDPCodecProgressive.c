@@ -127,7 +127,7 @@
 struct _EGFX_SAMPLE_FILE
 {
 	BYTE* buffer;
-	UINT32 size;
+	size_t size;
 };
 typedef struct _EGFX_SAMPLE_FILE EGFX_SAMPLE_FILE;
 
@@ -265,7 +265,7 @@ static int test_image_fill_unused_quarters(BYTE* pDstData, int nDstStep, int nWi
 	return 1;
 }
 
-static BYTE* test_progressive_load_file(char* path, char* file, UINT32* size)
+static BYTE* test_progressive_load_file(char* path, char* file, size_t* size)
 {
 	FILE* fp;
 	BYTE* buffer;
@@ -281,9 +281,9 @@ static BYTE* test_progressive_load_file(char* path, char* file, UINT32* size)
 	if (!fp)
 		return NULL;
 
-	fseek(fp, 0, SEEK_END);
-	*size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
+	_fseeki64(fp, 0, SEEK_END);
+	*size = _ftelli64(fp);
+	_fseeki64(fp, 0, SEEK_SET);
 	buffer = (BYTE*) malloc(*size);
 
 	if (!buffer)
@@ -741,7 +741,7 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 	for (pass = 0; pass < count; pass++)
 	{
 		status = progressive_decompress(progressive, files[pass].buffer, files[pass].size,
-		                                g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, g_Width, g_Height, 0);
+		                                g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, NULL, 0);
 		printf("ProgressiveDecompress: status: %d pass: %d\n", status, pass + 1);
 		region = &(progressive->region);
 

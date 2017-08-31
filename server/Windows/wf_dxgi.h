@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef WF_DXGI_H
-#define WF_DXGI_H
+#ifndef FREERDP_SERVER_WIN_DXGI_H
+#define FREERDP_SERVER_WIN_DXGI_H
 
 #include "wf_interface.h"
 
@@ -39,4 +39,4 @@ int wf_dxgi_releasePixelData(wfInfo* context);
 int wf_dxgi_getInvalidRegion(RECT* invalid);
 
 
-#endif
+#endif /* FREERDP_SERVER_WIN_DXGI_H */

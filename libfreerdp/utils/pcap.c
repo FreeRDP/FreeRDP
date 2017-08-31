@@ -138,7 +138,7 @@ BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 
 BOOL pcap_has_next_record(rdpPcap* pcap)
 {
-	if (pcap->file_size - (ftell(pcap->fp)) <= 16)
+	if (pcap->file_size - (_ftelli64(pcap->fp)) <= 16)
 		return FALSE;
 
 	return TRUE;
@@ -201,9 +201,9 @@ rdpPcap* pcap_open(char* name, BOOL write)
 	}
 	else
 	{
-		fseek(pcap->fp, 0, SEEK_END);
-		pcap->file_size = (int) ftell(pcap->fp);
-		fseek(pcap->fp, 0, SEEK_SET);
+		_fseeki64(pcap->fp, 0, SEEK_END);
+		pcap->file_size = _ftelli64(pcap->fp);
+		_fseeki64(pcap->fp, 0, SEEK_SET);
 		if (!pcap_read_header(pcap, &pcap->header))
 			goto fail;
 	}

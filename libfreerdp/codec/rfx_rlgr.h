@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_RLGR_H
-#define __RFX_RLGR_H
+#ifndef FREERDP_LIB_CODEC_RFX_RLGR_H
+#define FREERDP_LIB_CODEC_RFX_RLGR_H
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
@@ -29,4 +29,4 @@ FREERDP_LOCAL int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data,
 FREERDP_LOCAL int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize,
                                   INT16* pDstData, UINT32 DstSize);
 
-#endif /* __RFX_RLGR_H */
+#endif /* FREERDP_LIB_CODEC_RFX_RLGR_H */

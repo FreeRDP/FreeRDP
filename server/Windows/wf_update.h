@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef WF_UPDATE_H
-#define WF_UPDATE_H
+#ifndef FREERDP_SERVER_WIN_UPDATE_H
+#define FREERDP_SERVER_WIN_UPDATE_H
 
 #include "wf_interface.h"
 
@@ -34,4 +34,4 @@ void wf_update_end(wfInfo* wfi);
 void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context);
 void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context);
 
-#endif /* WF_UPDATE_H */
+#endif /* FREERDP_SERVER_WIN_UPDATE_H */

@@ -4,6 +4,7 @@
  *
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 Bernhard Miklautz <bernhard.miklautz@thincast.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +44,13 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+
+#ifdef ANDROID
+#include <sys/vfs.h>
+#else
+#include <sys/statvfs.h>
+#endif
+
 
 static BOOL FileIsHandled(HANDLE handle)
 {
@@ -91,16 +99,18 @@ static BOOL FileCloseHandle(HANDLE handle) {
 static BOOL FileSetEndOfFile(HANDLE hFile)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*) hFile;
-	off_t size;
+	INT64 size;
 
 	if (!hFile)
 		return FALSE;
 
-	size = ftell(pFile->fp);
+	size = _ftelli64(pFile->fp);
+
 	if (ftruncate(fileno(pFile->fp), size) < 0)
 	{
 		WLog_ERR(TAG, "ftruncate %s failed with %s [0x%08X]",
 			pFile->lpFileName, strerror(errno), errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 
@@ -112,11 +122,20 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 			PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*) hFile;
-	long offset = lDistanceToMove;
+	INT64 offset;
 	int whence;
 
 	if (!hFile)
 		return INVALID_SET_FILE_POINTER;
+
+	/* If there is a high part, the sign is contained in that
+	 * and the low integer must be interpreted as unsigned. */
+	if (lpDistanceToMoveHigh)
+	{
+		offset = (INT64)(((UINT64)*lpDistanceToMoveHigh << 32U) | (UINT64)lDistanceToMove);
+	}
+	else
+		 offset = lDistanceToMove;
 
 	switch(dwMoveMethod)
 	{
@@ -133,14 +152,50 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 		return INVALID_SET_FILE_POINTER;
 	}
 
-	if (fseek(pFile->fp, offset, whence))
+	if (_fseeki64(pFile->fp, offset, whence))
 	{
-		WLog_ERR(TAG, "fseek(%s) failed with %s [0x%08X]", pFile->lpFileName,
+		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", pFile->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_SET_FILE_POINTER;
 	}
 
-	return ftell(pFile->fp);
+	return _ftelli64(pFile->fp);
+}
+
+static BOOL FileSetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove, PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod)
+{
+	WINPR_FILE* pFile = (WINPR_FILE*) hFile;
+	int whence;
+
+	if (!hFile)
+		return FALSE;
+
+	switch(dwMoveMethod)
+	{
+	case FILE_BEGIN:
+		whence = SEEK_SET;
+		break;
+	case FILE_END:
+		whence = SEEK_END;
+		break;
+	case FILE_CURRENT:
+		whence = SEEK_CUR;
+		break;
+	default:
+		return FALSE;
+	}
+
+	if (_fseeki64(pFile->fp, liDistanceToMove.QuadPart, whence))
+	{
+		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", pFile->lpFileName,
+			 strerror(errno), errno);
+		return FALSE;
+	}
+
+	if (lpNewFilePointer)
+		lpNewFilePointer->QuadPart = _ftelli64(pFile->fp);
+
+	return TRUE;
 }
 
 static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
@@ -161,9 +216,10 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		return FALSE;
 
 	file = (WINPR_FILE *)Object;
-	io_status = fread(lpBuffer, nNumberOfBytesToRead, 1, file->fp);
+	clearerr(file->fp);
+	io_status = fread(lpBuffer, 1, nNumberOfBytesToRead, file->fp);
 
-	if (io_status != 1)
+	if (io_status == 0 && ferror(file->fp))
 	{
 		status = FALSE;
 
@@ -172,11 +228,13 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			case EWOULDBLOCK:
 				SetLastError(ERROR_NO_DATA);
 				break;
+			default:
+				SetLastError(map_posix_err(errno));
 		}
 	}
 
 	if (lpNumberOfBytesRead)
-		*lpNumberOfBytesRead = nNumberOfBytesToRead;
+		*lpNumberOfBytesRead = io_status;
 
 	return status;
 }
@@ -199,52 +257,56 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 
 	file = (WINPR_FILE *)Object;
 
-	io_status = fwrite(lpBuffer, nNumberOfBytesToWrite, 1, file->fp);
-	if (io_status != 1)
+	clearerr(file->fp);
+	io_status = fwrite(lpBuffer, 1, nNumberOfBytesToWrite, file->fp);
+	if (io_status == 0 && ferror(file->fp))
+	{
+		SetLastError(map_posix_err(errno));
 		return FALSE;
+	}
 
-	*lpNumberOfBytesWritten = nNumberOfBytesToWrite;
+	*lpNumberOfBytesWritten = io_status;
 	return TRUE;
 }
 
 static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 {
 	WINPR_FILE* file;
-	long cur, size;
+	INT64 cur, size;
 
 	if (!Object)
 		return 0;
 
 	file = (WINPR_FILE *)Object;
 
-	cur = ftell(file->fp);
+	cur = _ftelli64(file->fp);
 
 	if (cur < 0)
 	{
-		WLog_ERR(TAG, "ftell(%s) failed with %s [0x%08X]", file->lpFileName,
+		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
-	if (fseek(file->fp, 0, SEEK_END) != 0)
+	if (_fseeki64(file->fp, 0, SEEK_END) != 0)
 	{
-		WLog_ERR(TAG, "fseek(%s) failed with %s [0x%08X]", file->lpFileName,
+		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
-	size = ftell(file->fp);
+	size = _ftelli64(file->fp);
 
 	if (size < 0)
 	{
-		WLog_ERR(TAG, "ftell(%s) failed with %s [0x%08X]", file->lpFileName,
+		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
-	if (fseek(file->fp, cur, SEEK_SET) != 0)
+	if (_fseeki64(file->fp, cur, SEEK_SET) != 0)
 	{
-		WLog_ERR(TAG, "ftell(%s) failed with %s [0x%08X]", file->lpFileName,
+		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
@@ -259,7 +321,12 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
 		DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh,
 		LPOVERLAPPED lpOverlapped)
  {
+#ifdef __sun
+	struct flock lock;
+	int lckcmd;
+#else
 	int lock;
+#endif
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 
 	if (lpOverlapped)
@@ -278,6 +345,27 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
 		return FALSE;
 	}
 
+#ifdef __sun
+	lock.l_start = 0;
+	lock.l_len = 0;
+	lock.l_whence = SEEK_SET;
+
+	if (dwFlags & LOCKFILE_EXCLUSIVE_LOCK)
+		lock.l_type = F_WRLCK;
+	else
+		lock.l_type = F_WRLCK;
+
+	if (dwFlags & LOCKFILE_FAIL_IMMEDIATELY)
+		lckcmd = F_SETLK;
+	else
+		lckcmd = F_SETLKW;
+
+	if(fcntl(fileno(pFile->fp), lckcmd, &lock) == -1) {
+		WLog_ERR(TAG, "F_SETLK failed with %s [0x%08X]",
+			 strerror(errno), errno);
+		return FALSE;
+	}
+#else
 	if (dwFlags & LOCKFILE_EXCLUSIVE_LOCK)
 		lock = LOCK_EX;
 	else
@@ -292,6 +380,7 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
 			 strerror(errno), errno);
 		return FALSE;
 	}
+#endif
 
 	pFile->bLocked = TRUE;
 
@@ -302,6 +391,9 @@ static BOOL FileUnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffs
 				DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
+#ifdef __sun
+	struct flock lock;
+#endif
 
 	if (!hFile)
 		return FALSE;
@@ -312,12 +404,26 @@ static BOOL FileUnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffs
 		return FALSE;
 	}
 
+#ifdef __sun
+	lock.l_start = 0;
+	lock.l_len = 0;
+	lock.l_whence = SEEK_SET;
+	lock.l_type = F_UNLCK;
+	if (fcntl(fileno(pFile->fp), F_GETLK, &lock) == -1)
+	{
+		WLog_ERR(TAG, "F_UNLCK on %s failed with %s [0x%08X]",
+			 pFile->lpFileName, strerror(errno), errno);
+		return FALSE;
+	}
+
+#else
 	if (flock(fileno(pFile->fp), LOCK_UN) < 0)
 	{
 		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [0x%08X]",
 			 pFile->lpFileName, strerror(errno), errno);
 		return FALSE;
 	}
+#endif
 
 	return TRUE;
 }
@@ -326,6 +432,9 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 				  DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
+#ifdef __sun
+	struct flock lock;
+#endif
 
 	if (lpOverlapped)
 	{
@@ -343,12 +452,25 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 		return FALSE;
 	}
 
+#ifdef __sun
+	lock.l_start = 0;
+	lock.l_len = 0;
+	lock.l_whence = SEEK_SET;
+	lock.l_type = F_UNLCK;
+	if (fcntl(fileno(pFile->fp), F_GETLK, &lock) == -1)
+	{
+		WLog_ERR(TAG, "F_UNLCK on %s failed with %s [0x%08X]",
+			 pFile->lpFileName, strerror(errno), errno);
+		return FALSE;
+	}
+#else
 	if (flock(fileno(pFile->fp), LOCK_UN) < 0)
 	{
 		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [0x%08X]",
 			 pFile->lpFileName, strerror(errno), errno);
 		return FALSE;
 	}
+#endif
 
 	return TRUE;
 }
@@ -473,7 +595,7 @@ static HANDLE_OPS fileOps = {
 	NULL, /*  FlushFileBuffers */
 	FileSetEndOfFile,
 	FileSetFilePointer,
-	NULL, /* SetFilePointerEx */
+	FileSetFilePointerEx,
 	NULL, /* FileLockFile */
 	FileLockFileEx,
 	FileUnlockFile,
@@ -507,7 +629,7 @@ static HANDLE_OPS shmOps = {
 
 static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDisposition, BOOL* create)
 {
-	BOOL writeable = dwDesiredAccess & GENERIC_WRITE;
+	BOOL writeable = (dwDesiredAccess & (GENERIC_WRITE | STANDARD_RIGHTS_WRITE | FILE_WRITE_DATA | FILE_APPEND_DATA)) != 0;
 
 	switch(dwCreationDisposition)
 	{
@@ -522,7 +644,7 @@ static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDispositio
 		return "rb+";
 	case OPEN_EXISTING:
 		*create = FALSE;
-		return "rb+";
+		return (writeable) ? "rb+" : "rb";
 	case TRUNCATE_EXISTING:
 		*create = FALSE;
 		return "wb+";
@@ -532,14 +654,64 @@ static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDispositio
 	}
 }
 
+UINT32 map_posix_err(int fs_errno)
+{
+	UINT32 rc;
+
+	/* try to return NTSTATUS version of error code */
+
+	switch (fs_errno)
+	{
+		case 0:
+			rc = STATUS_SUCCESS;
+			break;
+
+		case EPERM:
+		case EACCES:
+			rc = ERROR_ACCESS_DENIED;
+			break;
+
+		case ENOENT:
+			rc = ERROR_FILE_NOT_FOUND;
+			break;
+
+		case EBUSY:
+			rc = ERROR_BUSY_DRIVE;
+			break;
+
+		case EEXIST:
+			rc  = ERROR_FILE_EXISTS;
+			break;
+
+		case EISDIR:
+			rc = STATUS_FILE_IS_A_DIRECTORY;
+			break;
+
+		case ENOTEMPTY:
+			rc = STATUS_DIRECTORY_NOT_EMPTY;
+			break;
+
+		default:
+			rc = STATUS_UNSUCCESSFUL;
+			break;
+	}
+	
+	return rc;
+}
+
 static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 				  DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	WINPR_FILE* pFile;
 	BOOL create;
 	const char* mode = FileGetMode(dwDesiredAccess, dwCreationDisposition, &create);
+#ifdef __sun
+	struct flock lock;
+#else
 	int lock = 0;
+#endif
 	FILE* fp = NULL;
+	struct stat st;
 
 	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
 	{
@@ -575,9 +747,21 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 	if (create)
 	{
+		if (dwCreationDisposition == CREATE_NEW)
+		{
+			if (stat(pFile->lpFileName, &st) == 0)
+			{
+				SetLastError(ERROR_FILE_EXISTS);
+				free(pFile->lpFileName);
+				free(pFile);
+				return INVALID_HANDLE_VALUE;
+			}
+		}
+
 		fp = fopen(pFile->lpFileName, "ab");
 		if (!fp)
 		{
+			SetLastError(map_posix_err(errno));
 			free(pFile->lpFileName);
 			free(pFile);
 			return INVALID_HANDLE_VALUE;
@@ -594,6 +778,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	{
 		/* This case can occur when trying to open a
 		 * not existing file without create flag. */
+		SetLastError(map_posix_err(errno));
 		free(pFile->lpFileName);
 		free(pFile);
 		return INVALID_HANDLE_VALUE;
@@ -601,17 +786,37 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 	setvbuf(fp, NULL, _IONBF, 0);
 
+#ifdef __sun
+	lock.l_start = 0;
+	lock.l_len = 0;
+	lock.l_whence = SEEK_SET;
+
+	if (dwShareMode & FILE_SHARE_READ)
+		lock.l_type = F_RDLCK;
+	if (dwShareMode & FILE_SHARE_WRITE)
+		lock.l_type = F_RDLCK;
+#else
 	if (dwShareMode & FILE_SHARE_READ)
 		lock = LOCK_SH;
 	if (dwShareMode & FILE_SHARE_WRITE)
 		lock = LOCK_EX;
+#endif
 
 	if (dwShareMode & (FILE_SHARE_READ | FILE_SHARE_WRITE))
 	{
+#ifdef __sun
+		if (fcntl(fileno(pFile->fp), F_SETLKW, &lock) == -1)
+#else
 		if (flock(fileno(pFile->fp), lock) < 0)
+#endif
 		{
+#ifdef __sun
+			WLog_ERR(TAG, "F_SETLKW failed with %s [0x%08X]",
+#else
 			WLog_ERR(TAG, "flock failed with %s [0x%08X]",
+#endif
 				 strerror(errno), errno);
+			SetLastError(map_posix_err(errno));
 			FileCloseHandle(pFile);
 			return INVALID_HANDLE_VALUE;
 		}
@@ -619,6 +824,13 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		pFile->bLocked = TRUE;
 	}
 
+	if (fstat(fileno(pFile->fp), &st)==0 && dwFlagsAndAttributes & FILE_ATTRIBUTE_READONLY)
+	{
+			st.st_mode &= ~(S_IWUSR|S_IWGRP|S_IWOTH);
+			fchmod(fileno(pFile->fp), st.st_mode);
+	}
+
+	SetLastError(STATUS_SUCCESS);
 	return pFile;
 }
 
@@ -693,6 +905,124 @@ BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle)
 BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle)
 {
 	return FALSE;
+}
+
+BOOL GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
+											 LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters)
+{
+#if defined(ANDROID)
+#define STATVFS statfs
+#else
+#define STATVFS statvfs
+#endif
+
+	struct STATVFS svfst;
+	STATVFS(lpRootPathName, &svfst);
+	*lpSectorsPerCluster = svfst.f_frsize;
+	*lpBytesPerSector = 1;
+	*lpNumberOfFreeClusters = svfst.f_bavail;
+	*lpTotalNumberOfClusters = svfst.f_blocks;
+	return TRUE;
+}
+
+BOOL GetDiskFreeSpaceW(LPCWSTR lpwRootPathName, LPDWORD lpSectorsPerCluster,
+											 LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters)
+{
+	LPSTR lpRootPathName;
+	BOOL ret;
+
+	if (ConvertFromUnicode(CP_UTF8, 0, lpwRootPathName, -1, &lpRootPathName, 0, NULL, NULL) <= 0)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+	ret = GetDiskFreeSpaceA(lpRootPathName, lpSectorsPerCluster, lpBytesPerSector,
+													 lpNumberOfFreeClusters, lpTotalNumberOfClusters);
+	free(lpRootPathName);
+	return ret;
+}
+
+/**
+ * Check if a file name component is valid.
+ *
+ * Some file names are not valid on Windows. See "Naming Files, Paths, and Namespaces":
+ * https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+ */
+BOOL ValidFileNameComponent(LPCWSTR lpFileName)
+{
+	LPCWSTR c = NULL;
+
+	if (!lpFileName)
+		return FALSE;
+
+	/* CON */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'C' || lpFileName[0] == L'c')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'O' || lpFileName[1] == L'o')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'N' || lpFileName[2] == L'n')) &&
+	    (lpFileName[3] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* PRN */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'P' || lpFileName[0] == L'p')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'R' || lpFileName[1] == L'r')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'N' || lpFileName[2] == L'n')) &&
+	    (lpFileName[3] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* AUX */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'A' || lpFileName[0] == L'a')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'U' || lpFileName[1] == L'u')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'X' || lpFileName[2] == L'x')) &&
+	    (lpFileName[3] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* NUL */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'N' || lpFileName[0] == L'n')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'U' || lpFileName[1] == L'u')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'L' || lpFileName[2] == L'l')) &&
+	    (lpFileName[3] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* LPT0-9 */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'L' || lpFileName[0] == L'l')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'P' || lpFileName[1] == L'p')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'T' || lpFileName[2] == L't')) &&
+	    (lpFileName[3] != L'\0' && (L'0' <= lpFileName[3] && lpFileName[3] <= L'9')) &&
+	    (lpFileName[4] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* COM0-9 */
+	if ((lpFileName[0] != L'\0' && (lpFileName[0] == L'C' || lpFileName[0] == L'c')) &&
+	    (lpFileName[1] != L'\0' && (lpFileName[1] == L'O' || lpFileName[1] == L'o')) &&
+	    (lpFileName[2] != L'\0' && (lpFileName[2] == L'M' || lpFileName[2] == L'm')) &&
+	    (lpFileName[3] != L'\0' && (L'0' <= lpFileName[3] && lpFileName[3] <= L'9')) &&
+	    (lpFileName[4] == L'\0'))
+	{
+		return FALSE;
+	}
+
+	/* Reserved characters */
+	for (c = lpFileName; *c; c++)
+	{
+		if ((*c == L'<') || (*c == L'>') || (*c == L':') ||
+		    (*c == L'"') || (*c == L'/') || (*c == L'\\') ||
+		    (*c == L'|') || (*c == L'?') || (*c == L'*'))
+		{
+			return FALSE;
+		}
+	}
+
+	return TRUE;
 }
 
 #endif /* _WIN32 */

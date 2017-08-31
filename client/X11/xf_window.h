@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __XF_WINDOW_H
-#define __XF_WINDOW_H
+#ifndef FREERDP_CLIENT_X11_WINDOW_H
+#define FREERDP_CLIENT_X11_WINDOW_H
 
 #include <X11/Xlib.h>
 
@@ -150,6 +150,9 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height);
 void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window);
 
+Window xf_CreateDummyWindow(xfContext* xfc);
+void xf_DestroyDummyWindow(xfContext* xfc, Window window);
+
 BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int length,
 		unsigned long* nitems, unsigned long* bytes, BYTE** prop);
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...);
@@ -171,4 +174,4 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
 xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
 
-#endif /* __XF_WINDOW_H */
+#endif /* FREERDP_CLIENT_X11_WINDOW_H */

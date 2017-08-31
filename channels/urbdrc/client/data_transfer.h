@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __DATA_TRANSFER_H
-#define __DATA_TRANSFER_H
+#ifndef FREERDP_CHANNEL_URBDRC_CLIENT_DATA_TRANSFER_H
+#define FREERDP_CHANNEL_URBDRC_CLIENT_DATA_TRANSFER_H
 
 #include "urbdrc_main.h"
 
@@ -31,5 +31,5 @@
 
 void *urbdrc_process_udev_data_transfer(void* arg);
 
-#endif
+#endif /* FREERDP_CHANNEL_URBDRC_CLIENT_DATA_TRANSFER_H */
 

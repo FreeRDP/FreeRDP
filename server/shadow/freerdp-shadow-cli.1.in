@@ -1,7 +1,7 @@
 .de URL
 \\$2 \(laURL: \\$1 \(ra\\$3
 ..
-.if \n[.g] .mso www.tmac))
+.if \n[.g] .mso www.tmac
 .TH freerdp\-shadow\-cli 1 2017-01-12 "@FREERDP_VERSION_FULL@" "FreeRDP"
 .SH NAME
 freerdp\-shadow\-cli \- A utility for sharing a X display via RDP.
@@ -49,14 +49,14 @@ Clients may view without prompt.
 Clients may interact without prompt.
 .IP /sec:<rdp|tls|nla|ext>
 Force a specific protocol security
-.IP -sec-rdp (default:on)
-Disable RDP security
-.IP -sec-tls (default:on)
-Disable TLS protocol security
-.IP -sec-nla (default:on)
-Disable NLA protocol security
-.IP +sec-ext (default:off)
-Use NLA extended protocol security
+.IP -sec-rdp
+Disable RDP security (default:on)
+.IP -sec-tls
+Disable TLS protocol security (default:on)
+.IP -sec-nla
+Disable NLA protocol security (default:on)
+.IP +sec-ext
+Use NLA extended protocol security (default:off)
 .IP /sam-file:<file>
 NTLM SAM file for NLA authentication
 .IP /version

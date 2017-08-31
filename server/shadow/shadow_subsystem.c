@@ -44,7 +44,7 @@ static int shadow_subsystem_load_entry_points(RDP_SHADOW_ENTRY_POINTS* pEntryPoi
 	return 1;
 }
 
-rdpShadowSubsystem* shadow_subsystem_new()
+rdpShadowSubsystem* shadow_subsystem_new(void)
 {
 	RDP_SHADOW_ENTRY_POINTS ep;
 	rdpShadowSubsystem* subsystem = NULL;
@@ -165,9 +165,9 @@ int shadow_subsystem_stop(rdpShadowSubsystem* subsystem)
 	return status;
 }
 
-int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
+UINT32 shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 {
-	int numMonitors = 0;
+	UINT32 numMonitors = 0;
 	RDP_SHADOW_ENTRY_POINTS ep;
 
 	if (shadow_subsystem_load_entry_points(&ep) < 0)

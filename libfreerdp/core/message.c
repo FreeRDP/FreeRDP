@@ -115,7 +115,7 @@ static BOOL update_message_BitmapUpdate(rdpContext* context,
 
 	wParam->number = bitmap->number;
 	wParam->count = wParam->number;
-	wParam->rectangles = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * wParam->number);
+	wParam->rectangles = (BITMAP_DATA*) calloc(wParam->number, sizeof(BITMAP_DATA));
 
 	if (!wParam->rectangles)
 	{
@@ -196,6 +196,15 @@ static BOOL update_message_SetKeyboardIndicators(rdpContext* context, UINT16 led
 	                         MakeMessageId(Update, SetKeyboardIndicators), (void*)(size_t)led_flags, NULL);
 }
 
+static BOOL update_message_SetKeyboardImeStatus(rdpContext* context, UINT16 imeId, UINT32 imeState, UINT32 imeConvMode)
+{
+	if (!context || !context->update)
+		return FALSE;
+
+	return MessageQueue_Post(context->update->queue, (void*) context,
+	                         MakeMessageId(Update, SetKeyboardImeStatus), (void*)(size_t)((imeId << 16UL) | imeState), (void*)(size_t) imeConvMode);
+}
+
 static BOOL update_message_RefreshRect(rdpContext* context, BYTE count,
                                        const RECTANGLE_16* areas)
 {
@@ -204,7 +213,7 @@ static BOOL update_message_RefreshRect(rdpContext* context, BYTE count,
 	if (!context || !context->update || !areas)
 		return FALSE;
 
-	lParam = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * count);
+	lParam = (RECTANGLE_16*) calloc(count, sizeof(RECTANGLE_16));
 
 	if (!lParam)
 		return FALSE;
@@ -530,7 +539,7 @@ static BOOL update_message_Polyline(rdpContext* context,
 		return FALSE;
 
 	CopyMemory(wParam, polyline, sizeof(POLYLINE_ORDER));
-	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numDeltaEntries);
+	wParam->points = (DELTA_POINT*) calloc(wParam->numDeltaEntries, sizeof(DELTA_POINT));
 
 	if (!wParam->points)
 	{
@@ -683,7 +692,7 @@ static BOOL update_message_PolygonSC(rdpContext* context,
 		return FALSE;
 
 	CopyMemory(wParam, polygonSC, sizeof(POLYGON_SC_ORDER));
-	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numPoints);
+	wParam->points = (DELTA_POINT*) calloc(wParam->numPoints, sizeof(DELTA_POINT));
 
 	if (!wParam->points)
 	{
@@ -709,7 +718,7 @@ static BOOL update_message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* poly
 		return FALSE;
 
 	CopyMemory(wParam, polygonCB, sizeof(POLYGON_CB_ORDER));
-	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numPoints);
+	wParam->points = (DELTA_POINT*) calloc(wParam->numPoints, sizeof(DELTA_POINT));
 
 	if (!wParam->points)
 	{
@@ -938,7 +947,7 @@ static BOOL update_message_CreateOffscreenBitmap(
 	CopyMemory(wParam, createOffscreenBitmap, sizeof(CREATE_OFFSCREEN_BITMAP_ORDER));
 	wParam->deleteList.cIndices = createOffscreenBitmap->deleteList.cIndices;
 	wParam->deleteList.sIndices = wParam->deleteList.cIndices;
-	wParam->deleteList.indices = (UINT16*) malloc(sizeof(UINT16) * wParam->deleteList.cIndices);
+	wParam->deleteList.indices = (UINT16*) calloc(wParam->deleteList.cIndices, sizeof(UINT16));
 
 	if (!wParam->deleteList.indices)
 	{
@@ -1443,7 +1452,7 @@ static BOOL update_message_MonitoredDesktop(rdpContext* context, WINDOW_ORDER_IN
 
 	if (lParam->numWindowIds)
 	{
-		lParam->windowIds = (UINT32*) malloc(sizeof(UINT32) * lParam->numWindowIds);
+		lParam->windowIds = (UINT32*) calloc(lParam->numWindowIds, sizeof(UINT32));
 		CopyMemory(lParam->windowIds, monitoredDesktop->windowIds, lParam->numWindowIds);
 	}
 
@@ -1706,6 +1715,7 @@ static int update_message_free_update_class(wMessage* msg, int type)
 
 		case Update_SurfaceFrameAcknowledge:
 		case Update_SetKeyboardIndicators:
+		case Update_SetKeyboardImeStatus:
 			break;
 
 		default:
@@ -1786,6 +1796,15 @@ static int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* 
 
 		case Update_SetKeyboardIndicators:
 			IFCALL(proxy->SetKeyboardIndicators, msg->context, (UINT16)(size_t) msg->wParam);
+			break;
+
+		case Update_SetKeyboardImeStatus:
+			{
+				const UINT16 imeId = ((size_t)msg->wParam) >> 16 & 0xFFFF;
+				const UINT32 imeState = ((size_t)msg->wParam) & 0xFFFF;
+				const UINT32 imeConvMode = ((size_t)msg->lParam);
+				IFCALL(proxy->SetKeyboardImeStatus, msg->context, imeId, imeState, imeConvMode);
+			}
 			break;
 
 		default:
@@ -2687,6 +2706,7 @@ static BOOL update_message_register_interface(rdpUpdateProxy* message, rdpUpdate
 	message->Palette = update->Palette;
 	message->PlaySound = update->PlaySound;
 	message->SetKeyboardIndicators = update->SetKeyboardIndicators;
+	message->SetKeyboardImeStatus = update->SetKeyboardImeStatus;
 	message->RefreshRect = update->RefreshRect;
 	message->SuppressOutput = update->SuppressOutput;
 	message->SurfaceCommand = update->SurfaceCommand;
@@ -2702,6 +2722,7 @@ static BOOL update_message_register_interface(rdpUpdateProxy* message, rdpUpdate
 	update->Palette = update_message_Palette;
 	update->PlaySound = update_message_PlaySound;
 	update->SetKeyboardIndicators = update_message_SetKeyboardIndicators;
+	update->SetKeyboardImeStatus = update_message_SetKeyboardImeStatus;
 	update->RefreshRect = update_message_RefreshRect;
 	update->SuppressOutput = update_message_SuppressOutput;
 	update->SurfaceCommand = update_message_SurfaceCommand;

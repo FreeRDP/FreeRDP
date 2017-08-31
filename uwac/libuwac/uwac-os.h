@@ -28,8 +28,8 @@
  * Functions have been renamed just to prevent name clashes.
  */
 
-#ifndef __UWAC_OS_H
-#define __UWAC_OS_H
+#ifndef UWAC_OS_H
+#define UWAC_OS_H
 
 #include <sys/socket.h>
 
@@ -42,4 +42,4 @@ ssize_t uwac_os_recvmsg_cloexec(int sockfd, struct msghdr *msg, int flags);
 int uwac_os_epoll_create_cloexec(void);
 
 int uwac_create_anonymous_file(off_t size);
-#endif /* __UWAC_OS_H */
+#endif /* UWAC_OS_H */

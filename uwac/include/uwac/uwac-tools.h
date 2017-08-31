@@ -20,8 +20,8 @@
  * OF THIS SOFTWARE.
  */
 
-#ifndef __UWAC_TOOLS_H_
-#define __UWAC_TOOLS_H_
+#ifndef UWAC_TOOLS_H_
+#define UWAC_TOOLS_H_
 
 #include <stdbool.h>
 #include <uwac/uwac.h>
@@ -57,4 +57,4 @@ UWAC_API void UwacTouchAutomataReset(UwacTouchAutomata *automata);
  */
 UWAC_API bool UwacTouchAutomataInjectEvent(UwacTouchAutomata *automata, UwacEvent *event);
 
-#endif /* __UWAC_TOOLS_H_ */
+#endif /* UWAC_TOOLS_H_ */

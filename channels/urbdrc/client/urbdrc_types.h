@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __URBDRC_TYPES_H
-#define __URBDRC_TYPES_H
+#ifndef FREERDP_CHANNEL_URBDRC_CLIENT_TYPES_H
+#define FREERDP_CHANNEL_URBDRC_CLIENT_TYPES_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -330,4 +330,4 @@ enum device_descriptor_table
 		_t = (_tp.tv_sec * 1000) + (_tp.tv_usec / 1000); \
 	} while (0)
 
-#endif /* __URBDRC_TYPES_H */
+#endif /* FREERDP_CHANNEL_URBDRC_CLIENT_TYPES_H */

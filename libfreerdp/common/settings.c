@@ -592,7 +592,7 @@ ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel)
 		return NULL;
 
 	_channel->argc = channel->argc;
-	_channel->argv = (char**) malloc(sizeof(char*) * channel->argc);
+	_channel->argv = (char**) calloc(sizeof(char*), channel->argc);
 
 	if (!_channel->argv)
 		goto out_free;
@@ -1631,6 +1631,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_GfxAVC444:
 			settings->GfxAVC444 = param;
+			break;
+
+		case FreeRDP_GfxSendQoeAck:
+			settings->GfxSendQoeAck = param;
 			break;
 
 		case FreeRDP_DrawNineGridEnabled:

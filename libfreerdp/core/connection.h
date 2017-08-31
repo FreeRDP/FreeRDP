@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __CONNECTION_H
-#define __CONNECTION_H
+#ifndef FREERDP_LIB_CORE_CONNECTION_H
+#define FREERDP_LIB_CORE_CONNECTION_H
 
 #include "rdp.h"
 #include "tpkt.h"
@@ -75,4 +75,4 @@ FREERDP_LOCAL BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_server_reactivate(rdpRdp* rdp);
 FREERDP_LOCAL int rdp_server_transition_to_state(rdpRdp* rdp, int state);
 
-#endif /* __CONNECTION_H */
+#endif /* FREERDP_LIB_CORE_CONNECTION_H */

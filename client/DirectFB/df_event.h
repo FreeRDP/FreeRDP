@@ -17,12 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __DF_EVENT_H
-#define __DF_EVENT_H
+#ifndef FREERDP_CLIENT_DF_EVENT_H
+#define FREERDP_CLIENT_DF_EVENT_H
 
 #include "dfreerdp.h"
 
 void df_keyboard_init(void);
 BOOL df_event_process(freerdp* instance, DFBEvent* event);
 
-#endif /* __DF_EVENT_H */
+#endif /* FREERDP_CLIENT_DF_EVENT_H */

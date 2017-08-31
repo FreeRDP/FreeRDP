@@ -3,6 +3,7 @@
  * String Manipulation (CRT)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +59,7 @@ WINPR_API int _wcscmp(const WCHAR* string1, const WCHAR* string2);
 
 WINPR_API size_t _wcslen(const WCHAR* str);
 WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
+WINPR_API WCHAR* _wcsrchr(const WCHAR* str, WCHAR c);
 
 WINPR_API char* strtok_s(char* strToken, const char* strDelimit,
                          char** context);
@@ -69,6 +71,7 @@ WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit,
 #define _wcscmp		wcscmp
 #define _wcslen		wcslen
 #define _wcschr		wcschr
+#define _wcsrchr	wcsrchr
 
 #endif
 

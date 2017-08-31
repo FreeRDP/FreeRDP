@@ -184,7 +184,7 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
 	const WCHAR* name, const WCHAR* drivername, BOOL is_default)
 {
 	rdpWinPrinter* win_printer;
-	DWORD needed;
+	DWORD needed = 0;
 	int status;
 	PRINTER_INFO_2 *prninfo=NULL;
 
@@ -217,7 +217,9 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
 		return NULL;
 	}
 
-	if (!GetPrinter(win_printer->hPrinter, 2, (LPBYTE) prninfo, 0, &needed))
+	/* How many memory should be allocated for printer data */
+	GetPrinter(win_printer->hPrinter, 2, (LPBYTE) prninfo, 0, &needed);
+	if (needed == 0)
 	{
 		free(win_printer->printer.name);
 		free(win_printer);

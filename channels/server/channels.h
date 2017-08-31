@@ -18,9 +18,9 @@
  * limitations under the License.
  */
 
-#ifndef __WTSVC_H
-#define __WTSVC_H
+#ifndef FREERDP_CHANNEL_SERVER_CHANNELS_H
+#define FREERDP_CHANNEL_SERVER_CHANNELS_H
 
 
 
-#endif /* __WTSVC_H */
+#endif /* FREERDP_CHANNEL_SERVER_CHANNELS_H */

@@ -114,6 +114,7 @@ static const GUID CODEC_GUID_IMAGE_REMOTEFX =
 	{ 0x80, 0x3C, 0x0E, 0xCB, 0xEE, 0xA1, 0x9C, 0x54 }
 };
 
+#if defined(WITH_JPEG)
 /* CODEC_GUID_JPEG 0x430C9EED1BAF4CE6869ACB8B37B66237 */
 
 static const GUID CODEC_GUID_JPEG =
@@ -122,6 +123,7 @@ static const GUID CODEC_GUID_JPEG =
 	0x1BAF, 0x4CE6,
 	{ 0x86, 0x9A, 0xCB, 0x8B, 0x37, 0xB6, 0x62, 0x37 }
 };
+#endif
 
 static void rdp_read_capability_set_header(wStream* s, UINT16* length,
         UINT16* type)
@@ -1278,9 +1280,13 @@ static BOOL rdp_read_input_capability_set(wStream* s, UINT16 length,
 		}
 
 		if (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL)
-		{
 			settings->HasHorizontalWheel = TRUE;
-		}
+
+		if (inputFlags & INPUT_FLAG_UNICODE)
+			settings->UnicodeInput = TRUE;
+
+		if (inputFlags & INPUT_FLAG_MOUSEX)
+			settings->HasExtendedMouseEvent = TRUE;
 	}
 
 	return TRUE;
@@ -2039,6 +2045,7 @@ static void rdp_write_gdiplus_image_cache_properties(wStream* s, UINT16 oiccs,
 	Stream_Write_UINT16(s, oicms); /* gdipObjectImageCacheMaxSize (2 bytes) */
 }
 
+
 #ifdef WITH_DEBUG_CAPABILITIES
 static BOOL rdp_print_draw_nine_grid_cache_capability_set(wStream* s,
         UINT16 length)
@@ -2098,8 +2105,7 @@ static BOOL rdp_read_draw_gdiplus_cache_capability_set(wStream* s,
  * @param settings settings
  */
 
-static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s,
-        rdpSettings* settings)
+static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s, rdpSettings* settings)
 {
 	int header;
 	UINT32 drawGDIPlusSupportLevel;
@@ -2953,6 +2959,7 @@ static BOOL rdp_write_nsc_client_capability_container(wStream* s,
 	return TRUE;
 }
 
+#if defined(WITH_JPEG)
 static BOOL rdp_write_jpeg_client_capability_container(wStream* s,
         rdpSettings* settings)
 {
@@ -2963,6 +2970,7 @@ static BOOL rdp_write_jpeg_client_capability_container(wStream* s,
 	Stream_Write_UINT8(s, settings->JpegQuality);
 	return TRUE;
 }
+#endif
 
 /**
  * Write RemoteFX Server Capability Container.\n
@@ -3032,8 +3040,10 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s,
 	if (settings->NSCodec)
 		bitmapCodecCount++;
 
+#if defined(WITH_JPEG)
 	if (settings->JpegCodec)
 		bitmapCodecCount++;
+#endif
 
 	if (settings->RemoteFxImageCodec)
 		bitmapCodecCount++;
@@ -3080,6 +3090,7 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s,
 		}
 	}
 
+#if defined(WITH_JPEG)
 	if (settings->JpegCodec)
 	{
 		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_JPEG); /* codecGUID */
@@ -3099,6 +3110,7 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s,
 				return FALSE;
 		}
 	}
+#endif
 
 	if (settings->RemoteFxImageCodec)
 	{
@@ -3769,12 +3781,12 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 
 	if (rdp->settings->UseRdpSecurityLayer)
 	{
-		if (!rdp_read_security_header(s, &securityFlags))
+		if (!rdp_read_security_header(s, &securityFlags, &length))
 			return FALSE;
 
 		if (securityFlags & SEC_ENCRYPT)
 		{
-			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+			if (!rdp_decrypt(rdp, s, length, securityFlags))
 			{
 				WLog_ERR(TAG,  "rdp_decrypt failed");
 				return FALSE;

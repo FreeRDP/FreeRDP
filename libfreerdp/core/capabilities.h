@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __CAPABILITIES_H
-#define __CAPABILITIES_H
+#ifndef FREERDP_LIB_CORE_CAPABILITIES_H
+#define FREERDP_LIB_CORE_CAPABILITIES_H
 
 #include "rdp.h"
 
@@ -181,4 +181,4 @@ FREERDP_LOCAL BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings);
 FREERDP_LOCAL BOOL rdp_send_confirm_active(rdpRdp* rdp);
 
-#endif /* __CAPABILITIES_H */
+#endif /* FREERDP_LIB_CORE_CAPABILITIES_H */

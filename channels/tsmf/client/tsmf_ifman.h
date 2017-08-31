@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __TSMF_IFMAN_H
-#define __TSMF_IFMAN_H
+#ifndef FREERDP_CHANNEL_TSMF_CLIENT_IFMAN_H
+#define FREERDP_CHANNEL_TSMF_CLIENT_IFMAN_H
 
 #include <freerdp/freerdp.h>
 
@@ -66,5 +66,5 @@ UINT tsmf_ifman_on_playback_restarted(TSMF_IFMAN* ifman);
 UINT tsmf_ifman_on_playback_stopped(TSMF_IFMAN* ifman);
 UINT tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN* ifman);
 
-#endif
+#endif /* FREERDP_CHANNEL_TSMF_CLIENT_IFMAN_H */
 

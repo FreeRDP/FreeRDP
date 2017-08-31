@@ -261,6 +261,34 @@ BOOL cs_end_paint(rdpContext* context)
 	return TRUE;
 }
 
+BOOL cs_desktop_resize(rdpContext* context)
+{
+	rdpGdi* gdi;
+	rdpSettings* settings;
+	csContext* csc;
+	void* newBuffer;
+
+	if (!context || !context->settings)
+		return FALSE;
+
+	gdi = context->gdi;
+	settings = context->settings;
+	csc = (csContext*)context->instance->context;
+
+	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
+		return FALSE;
+
+	if (csc->desktopSizeChanged)
+	{
+		newBuffer = csc->desktopSizeChanged(context->instance, settings->DesktopWidth, settings->DesktopHeight);
+		if(!newBuffer)
+			return FALSE;
+		csc->buffer = newBuffer;
+	}
+
+	return TRUE;
+}
+
 static BOOL cs_post_connect(freerdp* instance)
 {
 	UINT32 gdi_format;
@@ -281,6 +309,7 @@ static BOOL cs_post_connect(freerdp* instance)
 
 	update->BeginPaint = cs_begin_paint;
 	update->EndPaint = cs_end_paint;
+	update->DesktopResize = cs_desktop_resize;
     
 	pointer_cache_register_callbacks(update);
 	cs_register_pointer(context);

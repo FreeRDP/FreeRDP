@@ -26,6 +26,7 @@ freely, subject to the following restrictions:
  * Modifications fixing various errors. */
 
 #include "lodepng.h"
+#include <winpr/wtypes.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -342,7 +343,7 @@ static int lodepng_add32bitInt(ucvector* buffer, unsigned value)
 unsigned lodepng_load_file(unsigned char** out, size_t* outsize, const char* filename)
 {
   FILE* file;
-  long size;
+  INT64 size;
 
   /*provide some proper output values if error will happen*/
   *out = 0;
@@ -352,8 +353,8 @@ unsigned lodepng_load_file(unsigned char** out, size_t* outsize, const char* fil
   if(!file) return 78;
 
   /*get filesize:*/
-  fseek(file , 0 , SEEK_END);
-  size = ftell(file);
+  _fseeki64(file , 0 , SEEK_END);
+  size = _ftelli64(file);
   rewind(file);
 
   /*read contents of the file into the vector*/
@@ -766,8 +767,8 @@ unsigned lodepng_huffman_code_lengths(unsigned* lengths, const unsigned* frequen
     For every symbol, maxbitlen coins will be created*/
 
     coinmem = numpresent * 2; /*max amount of coins needed with the current algo*/
-    coins = (Coin*)malloc(sizeof(Coin) * coinmem);
-    prev_row = (Coin*)malloc(sizeof(Coin) * coinmem);
+    coins = (Coin*)calloc(sizeof(Coin), coinmem);
+    prev_row = (Coin*)calloc(sizeof(Coin), coinmem);
     if(!coins || !prev_row)
     {
       free(coins);
@@ -1353,13 +1354,13 @@ typedef struct Hash
 static unsigned hash_init(Hash* hash, unsigned windowsize)
 {
   unsigned i;
-  hash->head = (int*)malloc(sizeof(int) * HASH_NUM_VALUES);
-  hash->val = (int*)malloc(sizeof(int) * windowsize);
-  hash->chain = (unsigned short*)malloc(sizeof(unsigned short) * windowsize);
+  hash->head = (int*)calloc(sizeof(int), HASH_NUM_VALUES);
+  hash->val = (int*)calloc(sizeof(int), windowsize);
+  hash->chain = (unsigned short*)calloc(sizeof(unsigned short), windowsize);
 
-  hash->zeros = (unsigned short*)malloc(sizeof(unsigned short) * windowsize);
-  hash->headz = (int*)malloc(sizeof(int) * (MAX_SUPPORTED_DEFLATE_LENGTH + 1));
-  hash->chainz = (unsigned short*)malloc(sizeof(unsigned short) * windowsize);
+  hash->zeros = (unsigned short*)calloc(sizeof(unsigned short), windowsize);
+  hash->headz = (int*)calloc(sizeof(int), (MAX_SUPPORTED_DEFLATE_LENGTH + 1));
+  hash->chainz = (unsigned short*)calloc(sizeof(unsigned short), windowsize);
 
   if(!hash->head || !hash->chain || !hash->val  || !hash->headz|| !hash->chainz || !hash->zeros)
   {

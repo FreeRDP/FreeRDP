@@ -17,12 +17,12 @@
    limitations under the License.
 */
 
-#ifndef __ANDROID_FREERDP_JNI_H
-#define __ANDROID_FREERDP_JNI_H
+#ifndef FREERDP_CLIENT_ANDROID_FREERDP_JNI_H
+#define FREERDP_CLIENT_ANDROID_FREERDP_JNI_H
 
 #define JAVA_LIBFREERDP_CLASS "com/freerdp/freerdpcore/services/LibFreeRDP"
 #define JAVA_CONTEXT_CLASS "android/content/Context"
 #define JAVA_FILE_CLASS "java/io/File"
 
-#endif /* __ANDROID_FREERDP_JNI_H */
+#endif /* FREERDP_CLIENT_ANDROID_FREERDP_JNI_H */
 

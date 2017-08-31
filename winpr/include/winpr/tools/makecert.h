@@ -34,7 +34,7 @@ WINPR_API int makecert_context_set_output_file_name(MAKECERT_CONTEXT* context, c
 WINPR_API int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* path);
 WINPR_API int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* path);
 
-WINPR_API MAKECERT_CONTEXT* makecert_context_new();
+WINPR_API MAKECERT_CONTEXT* makecert_context_new(void);
 WINPR_API void makecert_context_free(MAKECERT_CONTEXT* context);
 
 #ifdef __cplusplus

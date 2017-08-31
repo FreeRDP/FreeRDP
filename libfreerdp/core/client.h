@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_CLIENT_H
-#define FREERDP_CORE_CLIENT_H
+#ifndef FREERDP_LIB_CORE_CLIENT_H
+#define FREERDP_LIB_CORE_CLIENT_H
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
@@ -124,4 +124,4 @@ FREERDP_LOCAL UINT freerdp_channels_pre_connect(rdpChannels* channels,
         freerdp* instance);
 FREERDP_LOCAL UINT freerdp_channels_post_connect(rdpChannels* channels,
         freerdp* instance);
-#endif /* FREERDP_CORE_CLIENT_H */
+#endif /* FREERDP_LIB_CORE_CLIENT_H */

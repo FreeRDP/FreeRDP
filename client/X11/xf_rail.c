@@ -43,6 +43,7 @@ static const char* error_code_names[] =
 	"RAIL_EXEC_E_SESSION_LOCKED"
 };
 
+#ifdef WITH_DEBUG_RAIL
 static const char* movetype_names[] =
 {
 	"(invalid)",
@@ -58,13 +59,14 @@ static const char* movetype_names[] =
 	"RAIL_WMSZ_KEYMOVE",
 	"RAIL_WMSZ_KEYSIZE"
 };
+#endif
 
 void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 {
 	if (!xfc->remote_app)
 	{
 		xfc->remote_app = TRUE;
-		xfc->drawable = DefaultRootWindow(xfc->display);
+		xfc->drawable = xf_CreateDummyWindow(xfc);
 		xf_DestroyDesktopWindow(xfc, xfc->window);
 		xfc->window = NULL;
 	}
@@ -75,6 +77,7 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 	if (xfc->remote_app)
 	{
 		xfc->remote_app = FALSE;
+		xf_DestroyDummyWindow(xfc, xfc->drawable);
 		xf_create_window(xfc);
 	}
 }
@@ -223,6 +226,7 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 		}
 	}
 
+	free(pKeys);
 	region16_uninit(&windowInvalidRegion);
 }
 

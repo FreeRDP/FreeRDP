@@ -312,9 +312,12 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 				if (port == certificate_data->port)
 				{
 					found = TRUE;
-					match = (strcmp(certificate_data->fingerprint, fingerprint) == 0) ? 0 : -1;
-					if (fingerprint && fprint)
-						*fprint = _strdup(fingerprint);
+					if (fingerprint)
+					{
+						match = (strcmp(certificate_data->fingerprint, fingerprint) == 0) ? 0 : -1;
+						if (fprint)
+							*fprint = _strdup(fingerprint);
+					}
 					if (subject && psubject)
 						crypto_base64_decode(subject, strlen(subject), (BYTE**)psubject, &outLen);
 					if (issuer && pissuer)

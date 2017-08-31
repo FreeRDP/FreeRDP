@@ -7,6 +7,7 @@
 #include <freerdp/client/cliprdr.h>
 
 typedef void (*fnRegionUpdated)(void* rdp, int x, int y, int width, int height);
+typedef void* (*fnDesktopSizeChanged)(void* rdp, int width, int height);
 typedef void (*fnOnError)(void* context, int code);
 typedef void (*fnOnClipboardUpdate)(void* context, byte* text, int length);
 typedef void (*fnOnNewCursor)(void* context, UINT32 id, BYTE* data, UINT32 x, UINT32 y, UINT32 w, UINT32 h, UINT32 hotX, UINT32 hotY);
@@ -21,6 +22,7 @@ typedef struct csharp_context
 	void* buffer;
 	
 	fnRegionUpdated regionUpdated;
+	fnDesktopSizeChanged desktopSizeChanged;
 	fnOnClipboardUpdate onClipboardUpdate;
 	fnOnNewCursor onNewCursor;
 	fnOnFreeCursor onFreeCursor;

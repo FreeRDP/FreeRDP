@@ -32,6 +32,7 @@
 
 #define TAG FREERDP_TAG("codec")
 
+#ifdef DEBUG_XCRUSH
 static const char* xcrush_get_level_2_compression_flags_string(UINT32 flags)
 {
 	flags &= 0xE0;
@@ -95,6 +96,7 @@ static const char* xcrush_get_level_1_compression_flags_string(UINT32 flags)
 
 	return "L1_UNKNOWN";
 }
+#endif
 
 static UINT32 xcrush_update_hash(BYTE* data, UINT32 size)
 {
@@ -974,7 +976,7 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	Level1ComprFlags |= L1_INNER_COMPRESSION;
 	OriginalData[0] = (BYTE) Level1ComprFlags;
 	OriginalData[1] = (BYTE) Level2ComprFlags;
-#if 0
+#if DEBUG_XCRUSH
 	WLog_DBG(TAG, "XCrushCompress: Level1ComprFlags: %s Level2ComprFlags: %s",
 	         xcrush_get_level_1_compression_flags_string(Level1ComprFlags),
 	         xcrush_get_level_2_compression_flags_string(Level2ComprFlags));

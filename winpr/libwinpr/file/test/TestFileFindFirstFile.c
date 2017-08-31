@@ -21,7 +21,7 @@ int TestFileFindFirstFile(int argc, char* argv[])
 
 #ifdef UNICODE
 	length = MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);
-	BasePath = (WCHAR*) malloc((length + 1) * sizeof(WCHAR));
+	BasePath = (WCHAR*) calloc((length + 1), sizeof(WCHAR));
 	if (!BasePath)
 	{
 		_tprintf(_T("Unable to allocate memory\n"));

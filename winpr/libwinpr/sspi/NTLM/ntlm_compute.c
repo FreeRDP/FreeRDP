@@ -304,9 +304,31 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
 				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2, (BYTE*) hash);
 	}
+	else if (context->HashCallback)
+	{
+		int ret;
+		SecBuffer proofValue, micValue;
+
+		if (ntlm_computeProofValue(context, &proofValue) != SEC_E_OK)
+			return -1;
+
+		if (ntlm_computeMicValue(context, &micValue) != SEC_E_OK)
+		{
+			sspi_SecBufferFree(&proofValue);
+			return -1;
+		}
+
+		ret = context->HashCallback(context->HashCallbackArg, &credentials->identity, &proofValue,
+				context->EncryptedRandomSessionKey, context->MessageIntegrityCheck, &micValue,
+				hash);
+
+		sspi_SecBufferFree(&proofValue);
+		sspi_SecBufferFree(&micValue);
+		return ret ? 1 : -1;
+	}
 	else if (context->UseSamFileDatabase)
 	{
-		ntlm_fetch_ntlm_v2_hash(context, hash);
+		return ntlm_fetch_ntlm_v2_hash(context, hash);
 	}
 
 	return 1;
@@ -373,7 +395,6 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	blob = (BYTE*) ntlm_v2_temp.pvBuffer;
 
 	/* Compute the NTLMv2 hash */
-
 	if (ntlm_compute_ntlm_v2_hash(context, (BYTE*) context->NtlmV2Hash) < 0)
 		return -1;
 

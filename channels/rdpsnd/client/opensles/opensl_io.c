@@ -264,7 +264,7 @@ OPENSL_STREAM* android_OpenAudioDevice(int sr, int outchannels,
                                        int bufferframes)
 {
 	OPENSL_STREAM* p;
-	p = (OPENSL_STREAM*) calloc(sizeof(OPENSL_STREAM), 1);
+	p = (OPENSL_STREAM*) calloc(1, sizeof(OPENSL_STREAM));
 
 	if (!p)
 		return NULL;

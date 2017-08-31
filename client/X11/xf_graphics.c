@@ -34,7 +34,6 @@
 
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/rfx.h>
-#include <freerdp/codec/jpeg.h>
 
 #include "xf_graphics.h"
 #include "xf_gdi.h"

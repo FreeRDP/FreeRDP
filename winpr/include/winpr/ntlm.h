@@ -25,10 +25,15 @@
 #include <string.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/sspi.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef SECURITY_STATUS (*psPeerComputeNtlmHash)(void *client, const SEC_WINNT_AUTH_IDENTITY *authIdentity,
+		const SecBuffer *ntproofvalue, const BYTE *randkey, const BYTE *mic, const SecBuffer *micvalue,
+		BYTE *ntlmhash);
 
 WINPR_API BYTE* NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash);
 WINPR_API BYTE* NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash);

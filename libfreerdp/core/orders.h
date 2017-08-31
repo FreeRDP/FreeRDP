@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __ORDERS_H
-#define __ORDERS_H
+#ifndef FREERDP_LIB_CORE_ORDERS_H
+#define FREERDP_LIB_CORE_ORDERS_H
 
 #include "rdp.h"
 
@@ -299,4 +299,4 @@ FREERDP_LOCAL BOOL update_write_switch_surface_order(
     wStream* s,
     const SWITCH_SURFACE_ORDER* switch_surface);
 
-#endif /* __ORDERS_H */
+#endif /* FREERDP_LIB_CORE_ORDERS_H */

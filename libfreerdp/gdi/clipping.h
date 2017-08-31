@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_GDI_CLIPPING_H
-#define FREERDP_GDI_CLIPPING_H
+#ifndef FREERDP_LIB_GDI_CLIPPING_H
+#define FREERDP_LIB_GDI_CLIPPING_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -40,4 +40,4 @@ FREERDP_LOCAL BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32* x, UINT32* y,
 }
 #endif
 
-#endif /* FREERDP_GDI_CLIPPING_H */
+#endif /* FREERDP_LIB_GDI_CLIPPING_H */

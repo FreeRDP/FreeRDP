@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_CLIENT_TSMF_H
-#define FREERDP_CHANNEL_CLIENT_TSMF_H
+#ifndef FREERDP_CHANNEL_TSMF_CLIENT_TSMF_H
+#define FREERDP_CHANNEL_TSMF_CLIENT_TSMF_H
 
 #include <freerdp/codec/region.h>
 
@@ -61,4 +61,4 @@ struct _tsmf_client_context
 	pcTsmfFrameEvent FrameEvent;
 };
 
-#endif /* FREERDP_CHANNEL_CLIENT_TSMF_H */
+#endif /* FREERDP_CHANNEL_TSMF_CLIENT_TSMF_H */

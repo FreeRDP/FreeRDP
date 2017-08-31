@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef WF_RDPSND_H
-#define WF_RDPSND_H
+#ifndef FREERDP_SERVER_WIN_RDPSND_H
+#define FREERDP_SERVER_WIN_RDPSND_H
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
@@ -31,5 +31,5 @@ int wf_rdpsnd_unlock(void);
 BOOL wf_peer_rdpsnd_init(wfPeerContext* context);
 
 
-#endif /* WF_RDPSND_H */
+#endif /* FREERDP_SERVER_WIN_RDPSND_H */
 

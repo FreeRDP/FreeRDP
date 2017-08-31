@@ -789,9 +789,9 @@ FREERDP_API BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height,
 
 /***
  *
- * @param pDstData  destionation buffer
- * @param DstFormat destionation buffer format
- * @param nDstStep  destionation buffer stride (line in bytes) 0 for default
+ * @param pDstData  destination buffer
+ * @param DstFormat destination buffer format
+ * @param nDstStep  destination buffer stride (line in bytes) 0 for default
  * @param nXDst     destination buffer offset x
  * @param nYDst     destination buffer offset y
  * @param nWidth    width to copy in pixels
@@ -799,7 +799,7 @@ FREERDP_API BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height,
  * @param pSrcData  source buffer, must be (nWidth + 7) / 8 bytes long
  * @param backColor The background color in internal representation format
  * @param foreColor The foreground color in internal representation format
- * @param palette   pallete to use (only used for 8 bit color!)
+ * @param palette   palette to use (only used for 8 bit color!)
  *
  * @return          TRUE if success, FALSE otherwise
  */
@@ -813,9 +813,9 @@ FREERDP_API BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData,
 
 /***
  *
- * @param pDstData      destionation buffer
- * @param DstFormat     destionation buffer format
- * @param nDstStep      destionation buffer stride (line in bytes) 0 for default
+ * @param pDstData      destination buffer
+ * @param DstFormat     destination buffer format
+ * @param nDstStep      destination buffer stride (line in bytes) 0 for default
  * @param nXDst         destination buffer offset x
  * @param nYDst         destination buffer offset y
  * @param nWidth        width to copy in pixels
@@ -825,7 +825,7 @@ FREERDP_API BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData,
  * @param andMask       AND mask buffer
  * @param andMaskLength AND mask length in bytes
  * @param xorBpp        XOR bits per pixel
- * @param palette       pallete to use (only used for 8 bit color!)
+ * @param palette       palette to use (only used for 8 bit color!)
  *
  * @return              TRUE if success, FALSE otherwise
  */
@@ -838,9 +838,9 @@ FREERDP_API BOOL freerdp_image_copy_from_pointer_data(
 
 /***
  *
- * @param pDstData  destionation buffer
- * @param DstFormat destionation buffer format
- * @param nDstStep  destionation buffer stride (line in bytes) 0 for default
+ * @param pDstData  destination buffer
+ * @param DstFormat destination buffer format
+ * @param nDstStep  destination buffer stride (line in bytes) 0 for default
  * @param nXDst     destination buffer offset x
  * @param nYDst     destination buffer offset y
  * @param nWidth    width to copy in pixels
@@ -850,7 +850,7 @@ FREERDP_API BOOL freerdp_image_copy_from_pointer_data(
  * @param nSrcStep  source buffer stride (line in bytes) 0 for default
  * @param nXSrc     source buffer x offset in pixels
  * @param nYSrc     source buffer y offset in pixels
- * @param palette   pallete to use (only used for 8 bit color!)
+ * @param palette   palette to use (only used for 8 bit color!)
  * @param flags     Image flipping flags FREERDP_FLIP_NONE et al
  *
  * @return          TRUE if success, FALSE otherwise

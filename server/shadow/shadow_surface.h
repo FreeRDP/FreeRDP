@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_SURFACE_H
-#define FREERDP_SHADOW_SERVER_SURFACE_H
+#ifndef FREERDP_SERVER_SHADOW_SURFACE_H
+#define FREERDP_SERVER_SHADOW_SURFACE_H
 
 #include <freerdp/server/shadow.h>
 
@@ -36,4 +36,4 @@ BOOL shadow_surface_resize(rdpShadowSurface *surface, int x, int y, int width, i
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_SURFACE_H */
+#endif /* FREERDP_SERVER_SHADOW_SURFACE_H */

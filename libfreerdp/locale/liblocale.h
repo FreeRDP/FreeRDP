@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __LIBLOCALE_H
-#define __LIBLOCALE_H
+#ifndef FREERDP_LIB_LOCALE_LIB_H
+#define FREERDP_LIB_LOCALE_LIB_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -40,4 +40,4 @@
 #define DEBUG_TIMEZONE(...) do { } while (0)
 #endif
 
-#endif /* __LIBLOCALE_H */
+#endif /* FREERDP_LIB_LOCALE_LIB_H */

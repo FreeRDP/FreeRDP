@@ -336,3 +336,181 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	return error;
 }
+
+static UINT64 filetime_to_uint64(FILETIME value)
+{
+	UINT64 converted = 0;
+	converted |= (UINT32) value.dwHighDateTime;
+	converted <<= 32;
+	converted |= (UINT32) value.dwLowDateTime;
+	return converted;
+}
+
+static FILETIME uint64_to_filetime(UINT64 value)
+{
+	FILETIME converted;
+	converted.dwLowDateTime = (UINT32) (value >> 0);
+	converted.dwHighDateTime = (UINT32) (value >> 32);
+	return converted;
+}
+
+#define CLIPRDR_FILEDESCRIPTOR_SIZE (4 + 32 + 4 + 16 + 8 + 8 + 520)
+
+/**
+ * Parse a packed file list.
+ *
+ * The resulting array must be freed with the `free()` function.
+ *
+ * @param [in]  format_data            packed `CLIPRDR_FILELIST` to parse.
+ * @param [in]  format_data_length     length of `format_data` in bytes.
+ * @param [out] file_descriptor_array  parsed array of `FILEDESCRIPTOR` structs.
+ * @param [out] file_descriptor_count  number of elements in `file_descriptor_array`.
+ *
+ * @returns 0 on success, otherwise a Win32 error code.
+ */
+UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
+		FILEDESCRIPTOR** file_descriptor_array, UINT32* file_descriptor_count)
+{
+	UINT result = NO_ERROR;
+	UINT32 i;
+	UINT32 count = 0;
+	wStream* s = NULL;
+
+	if (!format_data || !file_descriptor_array || !file_descriptor_count)
+		return ERROR_BAD_ARGUMENTS;
+
+	s = Stream_New((BYTE*) format_data, format_data_length);
+	if (!s)
+		return ERROR_NOT_ENOUGH_MEMORY;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_ERR(TAG, "invalid packed file list");
+
+		result = ERROR_INCORRECT_SIZE;
+		goto out;
+	}
+
+	Stream_Read_UINT32(s, count); /* cItems (4 bytes) */
+
+	if (Stream_GetRemainingLength(s) / CLIPRDR_FILEDESCRIPTOR_SIZE < count)
+	{
+		WLog_ERR(TAG, "packed file list is too short: expected %"PRIuz", have %"PRIuz,
+			((size_t) count) * CLIPRDR_FILEDESCRIPTOR_SIZE,
+			Stream_GetRemainingLength(s));
+
+		result = ERROR_INCORRECT_SIZE;
+		goto out;
+	}
+
+	*file_descriptor_count = count;
+	*file_descriptor_array = calloc(count, sizeof(FILEDESCRIPTOR));
+	if (!*file_descriptor_array)
+	{
+		result = ERROR_NOT_ENOUGH_MEMORY;
+		goto out;
+	}
+
+	for (i = 0; i < count; i++)
+	{
+		int c;
+		UINT64 lastWriteTime;
+		FILEDESCRIPTOR* file = &((*file_descriptor_array)[i]);
+
+		Stream_Read_UINT32(s, file->dwFlags); /* flags (4 bytes) */
+		Stream_Seek(s, 32); /* reserved1 (32 bytes) */
+		Stream_Read_UINT32(s, file->dwFileAttributes); /* fileAttributes (4 bytes) */
+		Stream_Seek(s, 16); /* reserved2 (16 bytes) */
+		Stream_Read_UINT64(s, lastWriteTime); /* lastWriteTime (8 bytes) */
+		file->ftLastWriteTime = uint64_to_filetime(lastWriteTime);
+		Stream_Read_UINT32(s, file->nFileSizeHigh); /* fileSizeHigh (4 bytes) */
+		Stream_Read_UINT32(s, file->nFileSizeLow); /* fileSizeLow (4 bytes) */
+		for (c = 0; c < 260; c++) /* cFileName (520 bytes) */
+			Stream_Read_UINT16(s, file->cFileName[c]);
+	}
+
+	if (Stream_GetRemainingLength(s) > 0)
+		WLog_WARN(TAG, "packed file list has %"PRIuz" excess bytes",
+			Stream_GetRemainingLength(s));
+out:
+	Stream_Free(s, FALSE);
+
+	return result;
+}
+
+#define CLIPRDR_MAX_FILE_SIZE (2U * 1024 * 1024 * 1024)
+
+/**
+ * Serialize a packed file list.
+ *
+ * The resulting format data must be freed with the `free()` function.
+ *
+ * @param [in]  file_descriptor_array  array of `FILEDESCRIPTOR` structs to serialize.
+ * @param [in]  file_descriptor_count  number of elements in `file_descriptor_array`.
+ * @param [out] format_data            serialized CLIPRDR_FILELIST.
+ * @param [out] format_data_length     length of `format_data` in bytes.
+ *
+ * @returns 0 on success, otherwise a Win32 error code.
+ */
+UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
+		UINT32 file_descriptor_count, BYTE** format_data, UINT32* format_data_length)
+{
+	UINT result = NO_ERROR;
+	UINT32 i;
+	wStream* s = NULL;
+
+	if (!file_descriptor_array || !format_data || !format_data_length)
+		return ERROR_BAD_ARGUMENTS;
+
+	s = Stream_New(NULL, 4 + file_descriptor_count * CLIPRDR_FILEDESCRIPTOR_SIZE);
+	if (!s)
+		return ERROR_NOT_ENOUGH_MEMORY;
+
+	Stream_Write_UINT32(s, file_descriptor_count); /* cItems (4 bytes) */
+
+	for (i = 0; i < file_descriptor_count; i++)
+	{
+		int c;
+		UINT64 lastWriteTime;
+		const FILEDESCRIPTOR* file = &file_descriptor_array[i];
+
+		/*
+		 * There is a known issue with Windows server getting stuck in
+		 * an infinite loop when downloading files that are larger than
+		 * 2 gigabytes. Do not allow clients to send such file lists.
+		 *
+		 * https://support.microsoft.com/en-us/help/2258090
+		 */
+		if ((file->nFileSizeHigh > 0) || (file->nFileSizeLow >= CLIPRDR_MAX_FILE_SIZE))
+		{
+			WLog_ERR(TAG, "cliprdr does not support files over 2 GB");
+			result = ERROR_FILE_TOO_LARGE;
+			goto error;
+		}
+
+		Stream_Write_UINT32(s, file->dwFlags); /* flags (4 bytes) */
+		Stream_Zero(s, 32); /* reserved1 (32 bytes) */
+		Stream_Write_UINT32(s, file->dwFileAttributes); /* fileAttributes (4 bytes) */
+		Stream_Zero(s, 16); /* reserved2 (16 bytes) */
+		lastWriteTime = filetime_to_uint64(file->ftLastWriteTime);
+		Stream_Write_UINT64(s, lastWriteTime); /* lastWriteTime (8 bytes) */
+		Stream_Write_UINT32(s, file->nFileSizeHigh); /* fileSizeHigh (4 bytes) */
+		Stream_Write_UINT32(s, file->nFileSizeLow); /* fileSizeLow (4 bytes) */
+		for (c = 0; c < 260; c++) /* cFileName (520 bytes) */
+			Stream_Write_UINT16(s, file->cFileName[c]);
+	}
+
+	Stream_SealLength(s);
+
+	Stream_GetBuffer(s, *format_data);
+	Stream_GetLength(s, *format_data_length);
+
+	Stream_Free(s, FALSE);
+
+	return result;
+
+error:
+	Stream_Free(s, TRUE);
+
+	return result;
+}

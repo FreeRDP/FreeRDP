@@ -9,8 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-#ifndef FREERDP_ANDROID_EVENT_H
-#define FREERDP_ANDROID_EVENT_H
+#ifndef FREERDP_CLIENT_ANDROID_EVENT_H
+#define FREERDP_CLIENT_ANDROID_EVENT_H
 #include <freerdp/freerdp.h>
 #include <freerdp/api.h>
 
@@ -79,4 +79,4 @@ FREERDP_LOCAL void android_event_free(ANDROID_EVENT* event);
 FREERDP_LOCAL BOOL android_event_queue_init(freerdp* inst);
 FREERDP_LOCAL void android_event_queue_uninit(freerdp* inst);
 
-#endif /* FREERDP_ANDROID_EVENT_H */
+#endif /* FREERDP_CLIENT_ANDROID_EVENT_H */

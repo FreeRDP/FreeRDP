@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_XKB_LAYOUT_IDS_H
-#define __FREERDP_XKB_LAYOUT_IDS_H
+#ifndef FREERDP_LIB_LOCALE_XKB_LAYOUT_IDS_H
+#define FREERDP_LIB_LOCALE_XKB_LAYOUT_IDS_H
 
 #include <freerdp/types.h>
 #include <freerdp/api.h>
@@ -26,4 +26,4 @@
 FREERDP_LOCAL UINT32 find_keyboard_layout_in_xorg_rules(char* layout,
         char* variant);
 
-#endif /* __FREERDP_XKB_LAYOUT_IDS_H */
+#endif /* FREERDP_LIB_LOCALE_XKB_LAYOUT_IDS_H */

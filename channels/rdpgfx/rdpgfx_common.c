@@ -88,6 +88,9 @@ const char* rdpgfx_get_codec_id_string(UINT16 codecId)
 		case RDPGFX_CODECID_AVC444:
 			return "RDPGFX_CODECID_AVC444";
 
+		case RDPGFX_CODECID_AVC444v2:
+			return "RDPGFX_CODECID_AVC444v2";
+
 		case RDPGFX_CODECID_ALPHA:
 			return "RDPGFX_CODECID_ALPHA";
 

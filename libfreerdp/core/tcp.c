@@ -991,6 +991,10 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 	}
 
 #endif
+#ifndef SOL_TCP
+/* "tcp" from /etc/protocols as getprotobyname(3C) */
+#define SOL_TCP 6
+#endif
 #ifdef TCP_KEEPCNT
 	optval = 3;
 	optlen = sizeof(optval);

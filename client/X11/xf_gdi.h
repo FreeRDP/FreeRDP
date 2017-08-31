@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __XF_GDI_H
-#define __XF_GDI_H
+#ifndef FREERDP_CLIENT_X11_GDI_H
+#define FREERDP_CLIENT_X11_GDI_H
 
 #include <freerdp/gdi/gdi.h>
 
@@ -29,4 +29,4 @@
 
 void xf_gdi_register_update_callbacks(rdpUpdate* update);
 
-#endif /* __XF_GDI_H */
+#endif /* FREERDP_CLIENT_X11_GDI_H */

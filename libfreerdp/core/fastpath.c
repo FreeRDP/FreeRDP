@@ -446,20 +446,6 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 	return status;
 }
 
-static const char* fastpath_get_fragmentation_string(BYTE fragmentation)
-{
-	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
-		return "FASTPATH_FRAGMENT_SINGLE";
-	else if (fragmentation == FASTPATH_FRAGMENT_LAST)
-		return "FASTPATH_FRAGMENT_LAST";
-	else if (fragmentation == FASTPATH_FRAGMENT_FIRST)
-		return "FASTPATH_FRAGMENT_FIRST";
-	else if (fragmentation == FASTPATH_FRAGMENT_NEXT)
-		return "FASTPATH_FRAGMENT_NEXT";
-
-	return "FASTPATH_FRAGMENT_UNKNOWN";
-}
-
 static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 {
 	int status;

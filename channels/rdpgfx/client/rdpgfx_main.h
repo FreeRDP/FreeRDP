@@ -71,6 +71,7 @@ struct _RDPGFX_PLUGIN
 	ZGFX_CONTEXT* zgfx;
 	UINT32 UnacknowledgedFrames;
 	UINT32 TotalDecodedFrames;
+	UINT32 StartDecodingTime;
 	BOOL suspendFrameAcks;
 
 	wHashTable* SurfaceTable;
@@ -78,6 +79,10 @@ struct _RDPGFX_PLUGIN
 	UINT16 MaxCacheSlot;
 	void* CacheSlots[25600];
 	rdpContext* rdpcontext;
+
+	wLog* log;
+	RDPGFX_CAPSET ConnectionCaps;
+	BOOL SendQoeAck;
 };
 typedef struct _RDPGFX_PLUGIN RDPGFX_PLUGIN;
 

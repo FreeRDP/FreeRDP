@@ -281,7 +281,7 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	int i;
 
 	num_dests = cupsGetDests(&dests);
-	printers = (rdpPrinter**) calloc(1, sizeof(rdpPrinter*) * (num_dests + 1));
+	printers = (rdpPrinter**) calloc(num_dests + 1, sizeof(rdpPrinter*));
 	if (!printers)
 		return NULL;
 

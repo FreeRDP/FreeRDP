@@ -78,28 +78,39 @@ BOOL tpkt_verify_header(wStream* s)
 /**
  * Read a TPKT header.\n
  * @param s
- * @return length
+ * @param length
+ * @return success
  */
 
-UINT16 tpkt_read_header(wStream* s)
+BOOL tpkt_read_header(wStream* s, UINT16* length)
 {
 	BYTE version;
-	UINT16 length;
+
+	if (Stream_GetRemainingLength(s) < 1)
+		return FALSE;
 
 	Stream_Peek_UINT8(s, version);
 
 	if (version == 3)
 	{
+		UINT16 len;
+		if (Stream_GetRemainingLength(s) < 4)
+			return FALSE;
+
 		Stream_Seek(s, 2);
-		Stream_Read_UINT16_BE(s, length);
+		Stream_Read_UINT16_BE(s, len);
+		if (len < 4)
+			return FALSE;
+
+		*length = len;
 	}
 	else
 	{
 		/* not a TPKT header */
-		length = 0;
+		*length = 0;
 	}
 
-	return length;
+	return TRUE;
 }
 
 /**

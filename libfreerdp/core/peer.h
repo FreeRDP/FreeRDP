@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __PEER
-#define __PEER
+#ifndef FREERDP_LIB_CORE_PEER_H
+#define FREERDP_LIB_CORE_PEER_H
 
 #include "rdp.h"
 #include "mcs.h"
@@ -26,5 +26,5 @@
 
 #include <freerdp/peer.h>
 
-#endif /* __PEER */
+#endif /* FREERDP_LIB_CORE_PEER_H */
 

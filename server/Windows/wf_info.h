@@ -17,13 +17,13 @@
  * limitations under the License.
  */
 
-#ifndef WF_INFO_H
-#define WF_INFO_H
+#ifndef FREERDP_SERVER_WIN_INFO_H
+#define FREERDP_SERVER_WIN_INFO_H
 
 #include "wf_interface.h"
 
-#define WF_INFO_DEFAULT_FPS 24
-#define WF_INFO_MAXPEERS 32
+#define FREERDP_SERVER_WIN_INFO_DEFAULT_FPS 24
+#define FREERDP_SERVER_WIN_INFO_MAXPEERS 32
 
 BOOL wf_info_lock(wfInfo* wfi);
 BOOL wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
@@ -42,4 +42,4 @@ BOOL wf_info_have_invalid_region(wfInfo* wfi);
 void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits, int* pitch);
 BOOL CALLBACK wf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
 
-#endif /* WF_INFO_H */
+#endif /* FREERDP_SERVER_WIN_INFO_H */

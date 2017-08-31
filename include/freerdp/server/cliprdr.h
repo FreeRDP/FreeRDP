@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_CLIPRDR_H
-#define FREERDP_CHANNEL_SERVER_CLIPRDR_H
+#ifndef FREERDP_CHANNEL_CLIPRDR_SERVER_CLIPRDR_H
+#define FREERDP_CHANNEL_CLIPRDR_SERVER_CLIPRDR_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -116,4 +116,4 @@ FREERDP_API void cliprdr_server_context_free(CliprdrServerContext* context);
  }
 #endif
 
-#endif /* FREERDP_CHANNEL_SERVER_CLIPRDR_H */
+#endif /* FREERDP_CHANNEL_CLIPRDR_SERVER_CLIPRDR_H */

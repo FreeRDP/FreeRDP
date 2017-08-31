@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __TSMF_MAIN_H
-#define __TSMF_MAIN_H
+#ifndef FREERDP_CHANNEL_TSMF_CLIENT_MAIN_H
+#define FREERDP_CHANNEL_TSMF_CLIENT_MAIN_H
 
 #include <freerdp/freerdp.h>
 
@@ -68,5 +68,4 @@ BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32
 BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 		UINT32 message_id, UINT64 duration, UINT32 data_size);
 
-#endif
-
+#endif /* FREERDP_CHANNEL_TSMF_CLIENT_MAIN_H */
