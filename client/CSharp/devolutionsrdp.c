@@ -445,6 +445,14 @@ void csharp_freerdp_set_on_region_updated(void* instance, fnRegionUpdated fn)
 	ctxt->regionUpdated = fn;
 }
 
+void csharp_freerdp_set_on_desktop_size_changed(void* instance, fnDesktopSizeChanged fn)
+{
+    freerdp* inst = (freerdp*)instance;
+    csContext* ctxt = (csContext*)inst->context;
+	
+	ctxt->desktopSizeChanged = fn;
+}
+
 BOOL csharp_freerdp_set_gateway_settings(void* instance, const char* hostname, UINT32 port, const char* username, const char* password, const char* domain, BOOL bypassLocal)
 {
     freerdp* inst = (freerdp*)instance;
