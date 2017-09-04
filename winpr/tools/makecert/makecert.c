@@ -1018,6 +1018,12 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		if (!rsa)
 			return -1;
 
+		context->rsa = RSA_new();
+		if (!context->rsa)
+		{
+			BN_clear_free(rsa);
+			return -1;
+		}
 		BN_set_word(rsa, RSA_F4);
 		rc = RSA_generate_key_ex(context->rsa, key_length, rsa, NULL);
 		BN_clear_free(rsa);

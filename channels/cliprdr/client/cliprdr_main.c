@@ -1182,6 +1182,7 @@ static UINT cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* cliprdr)
 static UINT cliprdr_virtual_channel_event_terminated(cliprdrPlugin* cliprdr)
 {
 	cliprdr->InitHandle = 0;
+	free(cliprdr->context);
 	free(cliprdr);
 	return CHANNEL_RC_OK;
 }

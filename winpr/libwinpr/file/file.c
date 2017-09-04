@@ -23,6 +23,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
 
@@ -99,12 +100,12 @@ static BOOL FileCloseHandle(HANDLE handle) {
 static BOOL FileSetEndOfFile(HANDLE hFile)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*) hFile;
-	off_t size;
+	INT64 size;
 
 	if (!hFile)
 		return FALSE;
 
-	size = ftell(pFile->fp);
+	size = _ftelli64(pFile->fp);
 
 	if (ftruncate(fileno(pFile->fp), size) < 0)
 	{
@@ -128,9 +129,11 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 	if (!hFile)
 		return INVALID_SET_FILE_POINTER;
 
+	/* If there is a high part, the sign is contained in that
+	 * and the low integer must be interpreted as unsigned. */
 	if (lpDistanceToMoveHigh)
 	{
-		offset = (*lpDistanceToMoveHigh << 32) | (UINT32)lDistanceToMove;
+		offset = (INT64)(((UINT64)*lpDistanceToMoveHigh << 32U) | (UINT64)lDistanceToMove);
 	}
 	else
 		 offset = lDistanceToMove;
@@ -150,14 +153,14 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 		return INVALID_SET_FILE_POINTER;
 	}
 
-	if (fseek(pFile->fp, offset, whence))
+	if (_fseeki64(pFile->fp, offset, whence))
 	{
-		WLog_ERR(TAG, "fseek(%s) failed with %s [0x%08X]", pFile->lpFileName,
+		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", pFile->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_SET_FILE_POINTER;
 	}
 
-	return ftell(pFile->fp);
+	return _ftelli64(pFile->fp);
 }
 
 static BOOL FileSetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove, PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod)
@@ -183,15 +186,15 @@ static BOOL FileSetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove, P
 		return FALSE;
 	}
 
-	if (fseek(pFile->fp, liDistanceToMove.QuadPart, whence))
+	if (_fseeki64(pFile->fp, liDistanceToMove.QuadPart, whence))
 	{
-		WLog_ERR(TAG, "fseek(%s) failed with %s [0x%08X]", pFile->lpFileName,
+		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", pFile->lpFileName,
 			 strerror(errno), errno);
 		return FALSE;
 	}
 
 	if (lpNewFilePointer)
-		lpNewFilePointer->QuadPart = ftell(pFile->fp);
+		lpNewFilePointer->QuadPart = _ftelli64(pFile->fp);
 
 	return TRUE;
 }
@@ -270,41 +273,41 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 {
 	WINPR_FILE* file;
-	long cur, size;
+	INT64 cur, size;
 
 	if (!Object)
 		return 0;
 
 	file = (WINPR_FILE *)Object;
 
-	cur = ftell(file->fp);
+	cur = _ftelli64(file->fp);
 
 	if (cur < 0)
 	{
-		WLog_ERR(TAG, "ftell(%s) failed with %s [0x%08X]", file->lpFileName,
+		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
-	if (fseek(file->fp, 0, SEEK_END) != 0)
+	if (_fseeki64(file->fp, 0, SEEK_END) != 0)
 	{
-		WLog_ERR(TAG, "fseek(%s) failed with %s [0x%08X]", file->lpFileName,
+		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
-	size = ftell(file->fp);
+	size = _ftelli64(file->fp);
 
 	if (size < 0)
 	{
-		WLog_ERR(TAG, "ftell(%s) failed with %s [0x%08X]", file->lpFileName,
+		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
-	if (fseek(file->fp, cur, SEEK_SET) != 0)
+	if (_fseeki64(file->fp, cur, SEEK_SET) != 0)
 	{
-		WLog_ERR(TAG, "ftell(%s) failed with %s [0x%08X]", file->lpFileName,
+		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}

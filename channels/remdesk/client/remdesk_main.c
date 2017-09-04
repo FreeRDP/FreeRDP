@@ -942,6 +942,7 @@ static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 {
 	remdesk->InitHandle = 0;
+	free(remdesk->context);
 	free(remdesk);
 }
 

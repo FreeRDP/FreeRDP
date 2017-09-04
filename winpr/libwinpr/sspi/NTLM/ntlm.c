@@ -537,11 +537,17 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 		if (context->Workstation.Length < 1)
 		{
 			if (ntlm_SetContextWorkstation(context, NULL) < 0)
+			{
+				ntlm_ContextFree(context);
 				return SEC_E_INTERNAL_ERROR;
+			}
 		}
 
 		if (ntlm_SetContextServicePrincipalNameW(context, pszTargetName) < 0)
+		{
+			ntlm_ContextFree(context);
 			return SEC_E_INTERNAL_ERROR;
+		}
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NTLM_PACKAGE_NAME);

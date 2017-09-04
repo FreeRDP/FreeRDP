@@ -75,19 +75,19 @@ static UINT32 colordist(
 		UINT32 c2)
 {
 	int d, maxd = 0;
-	d = ABS(ALF(c1) - ALF(c2));
+	d = ABS((INT32)(ALF(c1) - ALF(c2)));
 
 	if (d > maxd) maxd = d;
 
-	d = ABS(RED(c1) - RED(c2));
+	d = ABS((INT32)(RED(c1) - RED(c2)));
 
 	if (d > maxd) maxd = d;
 
-	d = ABS(GRN(c1) - GRN(c2));
+	d = ABS((INT32)(GRN(c1) - GRN(c2)));
 
 	if (d > maxd) maxd = d;
 
-	d = ABS(BLU(c1) - BLU(c2));
+	d = ABS((INT32)(BLU(c1) - BLU(c2)));
 
 	if (d > maxd) maxd = d;
 

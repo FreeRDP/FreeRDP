@@ -6,7 +6,6 @@
  * Copyright 2012 HP Development Company, LLC
  * Copyright 2016 Thincast Technologies GmbH
  * Copyright 2016 Armin Novak <armin.novak@thincast.com>
- * Copyright 2017 Kai Harms <kharms@rangee.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,9 +145,6 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	UINT32 height = window->height;
 	window->decorations = xfc->decorations;
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
-	unsigned long nitems, bytes;
-	BYTE* prop;
-	BOOL status;
 
 	if (fullscreen)
 	{
@@ -207,24 +203,16 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		XMoveWindow(xfc->display, window->handle, startX, startY);
 	}
 
-	status = xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display),
-	                              xfc->_NET_WM_FULLSCREEN_MONITORS, 1, &nitems, &bytes, &prop);
-
-	if (status)
-	{
-		/* Set the fullscreen state */
-		xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
-		                   fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
-		                   xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
-	}
+	/* Set the fullscreen state */
+	xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+	                   fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
+	                   xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
 
 	if (!fullscreen)
 	{
 		/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
 		XMoveWindow(xfc->display, window->handle, startX, startY);
 	}
-
-	free(prop);
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */

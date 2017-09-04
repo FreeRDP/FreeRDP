@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
 
@@ -586,7 +587,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 		if ((numCertBlobs - i) == 2)
 		{
-			rdpCertInfo cert_info;
+			rdpCertInfo cert_info = { 0 };
 
 			DEBUG_CERTIFICATE("License Server Certificate");
 			
@@ -748,7 +749,7 @@ out_free:
 rdpRsaKey* key_new(const char* keyfile)
 {
 	FILE* fp = NULL;
-	int length;
+	INT64 length;
 	char* buffer = NULL;
 	rdpRsaKey* key = NULL;
 
@@ -759,11 +760,11 @@ rdpRsaKey* key_new(const char* keyfile)
 		goto out_free;
 	}
 
-	if (fseek(fp, 0, SEEK_END) < 0)
+	if (_fseeki64(fp, 0, SEEK_END) < 0)
 		goto out_free;
-	if ((length = ftell(fp)) < 0)
+	if ((length = _ftelli64(fp)) < 0)
 		goto out_free;
-	if (fseek(fp, 0, SEEK_SET) < 0)
+	if (_fseeki64(fp, 0, SEEK_SET) < 0)
 		goto out_free;
 
 	buffer = (char *)malloc(length + 1);

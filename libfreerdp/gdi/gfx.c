@@ -1155,7 +1155,6 @@ void gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx)
 
 void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx)
 {
-	region16_uninit(&(gdi->invalidRegion));
 	gdi->gfx = NULL;
 	gfx->custom = NULL;
 	PROFILER_PRINT_HEADER;

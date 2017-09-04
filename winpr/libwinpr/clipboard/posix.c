@@ -53,8 +53,8 @@ struct posix_file
 	BOOL is_directory;
 
 	int fd;
-	off_t offset;
-	off_t size;
+	INT64 offset;
+	INT64 size;
 };
 
 static struct posix_file* make_posix_file(const char* local_name, const WCHAR* remote_name)
@@ -626,7 +626,7 @@ error:
 	return FALSE;
 }
 
-static UINT posix_file_get_size(const struct posix_file* file, off_t* size)
+static UINT posix_file_get_size(const struct posix_file* file, INT64* size)
 {
 	struct stat statbuf;
 
@@ -646,7 +646,7 @@ static UINT posix_file_request_size(wClipboardDelegate* delegate,
 		const wClipboardFileSizeRequest* request)
 {
 	UINT error = NO_ERROR;
-	off_t size = 0;
+	INT64 size = 0;
 	struct posix_file* file = NULL;
 
 	if (!delegate || !delegate->clipboard || !request)
