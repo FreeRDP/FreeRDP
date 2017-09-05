@@ -15,8 +15,8 @@ set(${MODULE_PREFIX}_SRCS
 	cursor.c
 	devolutionsrdp.c)
 
-if(APPLE)
-	set(TARGET_TYPE "MODULE")
+if(IOS)
+	set(TARGET_TYPE "STATIC")
 else()
 	set(TARGET_TYPE "SHARED")
 endif()
