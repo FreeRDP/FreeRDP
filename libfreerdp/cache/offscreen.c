@@ -60,7 +60,7 @@ static BOOL update_gdi_create_offscreen_bitmap(rdpContext* context,
 
 	if (!bitmap->New(context, bitmap))
 	{
-		free(bitmap);
+		Bitmap_Free(context, bitmap);
 		return FALSE;
 	}
 
