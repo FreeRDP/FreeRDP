@@ -115,6 +115,7 @@ static int connect_to_sshagent(const char *udspath)
         {
                 WLog_ERR(TAG, "Can't connect to Unix domain socket \"%s\"!",
                          udspath);
+                close(agent_fd);
                 return -1;
         }
 
@@ -293,13 +294,14 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;
 
-	if (!(callback->thread
-              = CreateThread(NULL,
-                             0,
-                             (LPTHREAD_START_ROUTINE) sshagent_read_thread,
-                             (void*) callback,
-                             0,
-                             NULL)))
+	callback->thread
+                = CreateThread(NULL,
+                               0,
+                               (LPTHREAD_START_ROUTINE) sshagent_read_thread,
+                               (void*) callback,
+                               0,
+                               NULL);
+	if (!callback->thread)
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
                 return CHANNEL_RC_INITIALIZATION_ERROR;
