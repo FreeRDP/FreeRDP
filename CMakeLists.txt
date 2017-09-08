@@ -363,6 +363,14 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 	endif()
 endif()
 
+if(ANDROID)
+	# workaround for https://github.com/android-ndk/ndk/issues/243
+	string(REPLACE "-g " "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+	string(REPLACE "-g " "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+endif()
+
 if(MSVC)
 	# Remove previous warning definitions,
 	# NMake is otherwise complaining.
