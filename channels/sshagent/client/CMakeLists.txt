@@ -2,7 +2,7 @@
 # FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
-# Copyright 2012 Ben Cohen
+# Copyright 2017 Ben Cohen
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

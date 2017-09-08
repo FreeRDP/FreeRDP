@@ -66,6 +66,7 @@ struct _SSHAGENT_LISTENER_CALLBACK
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 
+	rdpContext* rdpcontext;
         const char *agent_uds_path;
 };
 
@@ -78,6 +79,7 @@ struct _SSHAGENT_CHANNEL_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
 
+	rdpContext* rdpcontext;
         int agent_fd;
 	HANDLE thread;
 	CRITICAL_SECTION lock;
@@ -89,6 +91,8 @@ struct _SSHAGENT_PLUGIN
 	IWTSPlugin iface;
 
 	SSHAGENT_LISTENER_CALLBACK* listener_callback;
+
+	rdpContext* rdpcontext;
 };
 
 
@@ -174,9 +178,9 @@ static void *sshagent_read_thread(void *data)
 
         close(callback->agent_fd);
 
-        //if (status != CHANNEL_RC_OK)
-        //        setChannelError(rdpei->rdpcontext, status,
-        //                        "sshagent_read_thread reported an error");
+        if (status != CHANNEL_RC_OK)
+                setChannelError(callback->rdpcontext, status,
+                                "sshagent_read_thread reported an error");
 
 	ExitThread(0);
         return NULL;
@@ -289,6 +293,7 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 	callback->plugin = listener_callback->plugin;
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;
+	callback->rdpcontext = listener_callback->rdpcontext;
 
 	callback->thread
                 = CreateThread(NULL,
@@ -325,6 +330,7 @@ static UINT sshagent_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
+	sshagent->listener_callback->rdpcontext = sshagent->rdpcontext;
 	sshagent->listener_callback->iface.OnNewChannelConnection = sshagent_on_new_channel_connection;
 	sshagent->listener_callback->plugin = pPlugin;
 	sshagent->listener_callback->channel_mgr = pChannelMgr;
@@ -386,6 +392,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		sshagent->iface.Connected = NULL;
 		sshagent->iface.Disconnected = NULL;
 		sshagent->iface.Terminated = sshagent_plugin_terminated;
+                sshagent->rdpcontext = ((freerdp*)((rdpSettings*) pEntryPoints->GetRdpSettings(
+		                                    pEntryPoints))->instance)->context;
 
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, "sshagent", (IWTSPlugin*) sshagent);
 	}
