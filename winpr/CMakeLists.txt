@@ -178,11 +178,7 @@ add_subdirectory(include)
 add_subdirectory(libwinpr)
 
 if(NOT DEFINED WITH_WINPR_TOOLS)
-	if(NOT ANDROID AND NOT IOS AND NOT UWP)
-		set(WITH_WINPR_TOOLS 0)
-	else()
-		set(WITH_WINPR_TOOLS 1)
-	endif()
+	set(WITH_WINPR_TOOLS 0)
 endif()
 
 if(WITH_WINPR_TOOLS)
