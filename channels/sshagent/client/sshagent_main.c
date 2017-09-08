@@ -149,9 +149,7 @@ static void *sshagent_read_thread(void *data)
                 }
                 else if (bytes_read < 0)
                 {
-                        if (errno != EAGAIN
-                            && errno != EWOULDBLOCK
-                            && errno != EINTR)
+                        if (errno != EINTR)
                         {
                                 WLog_ERR(TAG,
                                          "Error reading from sshagent, errno=%d",
@@ -205,9 +203,7 @@ static UINT sshagent_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
                                           bytes_to_write);
                 if (bytes_written < 0)
                 {
-                        if (errno != EAGAIN
-                            && errno != EWOULDBLOCK
-                            && errno != EINTR)
+                        if (errno != EINTR)
                         {
                                 WLog_ERR(TAG,
                                          "Error writing to sshagent, errno=%d",
