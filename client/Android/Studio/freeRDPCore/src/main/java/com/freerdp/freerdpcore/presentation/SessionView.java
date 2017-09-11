@@ -294,10 +294,10 @@ public class SessionView extends View {
                     sessionViewListener.onSessionViewLeftTouch((int) mappedEvent.getX(), (int) mappedEvent.getY(), false);
                     break;
                 case MotionEvent.BUTTON_SECONDARY:
-                    LibFreeRDP.sendCursorEvent(currentSession.getInstance(),
-                            (int) mappedEvent.getX(), (int) mappedEvent.getY(), Mouse.getRightButtonEvent(getContext(), true));
-                    LibFreeRDP.sendCursorEvent(currentSession.getInstance(),
-                            (int) mappedEvent.getX(), (int) mappedEvent.getY(), Mouse.getRightButtonEvent(getContext(), false));
+                    sessionViewListener.onSessionViewRightTouch((int) mappedEvent.getX(), (int) mappedEvent.getY(), true);
+                    sessionViewListener.onSessionViewRightTouch((int) mappedEvent.getX(), (int) mappedEvent.getY(), false);
+                    sessionViewListener.onSessionViewLeftTouch((int) mappedEvent.getX(), (int) mappedEvent.getY(), true);
+                    sessionViewListener.onSessionViewLeftTouch((int) mappedEvent.getX(), (int) mappedEvent.getY(), false);
                     break;
             }
             sessionViewListener.onSessionViewEndTouch();
