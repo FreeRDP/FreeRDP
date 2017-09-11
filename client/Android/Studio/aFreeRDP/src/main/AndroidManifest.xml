@@ -7,14 +7,19 @@
     <application
         android:name="com.freerdp.afreerdp.application.GlobalApp"
         android:icon="@drawable/icon_launcher_freerdp"
-        android:label="aFreeRDP">
+        android:label="aFreeRDP"
+        android:resizeableActivity="true">
+
+
 
         <!-- Main activity -->
         <activity
             android:name="com.freerdp.freerdpcore.presentation.HomeActivity"
             android:alwaysRetainTaskState="true"
             android:label="@string/app_title"
-            android:theme="@style/Theme.Main">
+            android:theme="@style/Theme.Main"
+            android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize|density|screenLayout">
+
             <intent-filter android:label="@string/app_title">
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -92,6 +97,8 @@
         <provider
             android:name="com.freerdp.freerdpcore.services.FreeRDPSuggestionProvider"
             android:authorities="com.freerdp.afreerdp.services.freerdpsuggestionprovider"></provider>
+
+        <meta-data android:name="com.samsung.android.keepalive.density" android:value="true"/>
 
     </application>
 

@@ -123,6 +123,7 @@
     <string name="settings_password_empty">no configurado</string>
     <string name="settings_cat_ui">Interfaze Usuario</string>
     <string name="settings_ui_hide_status_bar">Ocultar barra de estado</string>
+    <string name="settings_ui_hide_action_bar">\"Ocultar barra de acción\"</string>
     <string name="settings_ui_hide_zoom_controls">Ocultar controles de zoom</string>
     <string name="settings_ui_swap_mouse_buttons">Intercambiar botones del mouse</string>
     <string name="settings_ui_invert_scrolling">invertir desplazamiento</string>

@@ -1,32 +1,22 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion = rootProject.ext.compileSdk
-    buildToolsVersion = rootProject.ext.buildToolsVersion
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
 
     defaultConfig {
         applicationId "com.freerdp.afreerdp"
-        minSdkVersion rootProject.ext.minSdk
-        targetSdkVersion rootProject.ext.targetSdk
+        minSdkVersion 20
+        targetSdkVersion 25
         vectorDrawables.useSupportLibrary = true
-        versionCode = rootProject.ext.versionCode
-        versionName = rootProject.ext.versionName
+        versionCode 1
+        versionName "1"
     }
 
-    signingConfigs {
-        release {
-            storeFile file(RELEASE_STORE_FILE)
-            storePassword RELEASE_STORE_PASSWORD
-            keyAlias RELEASE_KEY_ALIAS
-            keyPassword RELEASE_KEY_PASSWORD
-            storeType "jks"
-        }
-    }
 
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
         debug {

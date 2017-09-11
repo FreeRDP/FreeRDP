@@ -18,8 +18,8 @@
         android:smallScreens="true"
         android:xlargeScreens="true" />
 
-    <application android:theme="@style/Theme.Main">
-
+    <application android:theme="@style/Theme.Main"  android:resizeableActivity="true" >
+        <meta-data android:name="com.samsung.android.keepalive.density" android:value="true"/>
         <!-- Activity to create shortcuts -->
         <activity
             android:name=".presentation.ShortcutsActivity"
@@ -67,9 +67,10 @@
             android:windowSoftInputMode="stateHidden" />
         <activity
             android:name=".presentation.SessionActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize|keyboard"
             android:theme="@style/Theme.Main"
+            android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize|density|screenLayout"
             android:windowSoftInputMode="adjustResize">
+            <!--android:configChanges="orientation|keyboardHidden|screenSize|keyboard"-->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
