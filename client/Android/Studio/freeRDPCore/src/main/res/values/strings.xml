@@ -163,6 +163,7 @@
     <string name="settings_password_empty">not set</string>
     <string name="settings_cat_ui">User Interface</string>
     <string name="settings_ui_hide_status_bar">Hide Status Bar</string>
+    <string name="settings_ui_hide_action_bar">Hide Action Bar</string>
     <string name="settings_ui_hide_zoom_controls">Hide Zoom Controls</string>
     <string name="settings_ui_swap_mouse_buttons">Swap Mouse Buttons</string>
     <string name="settings_ui_invert_scrolling">Invert Scrolling</string>
@@ -224,6 +225,7 @@
     <string name="preference_key_ui_invert_scrolling" translatable="false">ui.invert_scrolling</string>
     <string name="preference_key_ui_swap_mouse_buttons" translatable="false">ui.swap_mouse_buttons</string>
     <string name="preference_key_ui_hide_zoom_controls" translatable="false">ui.hide_zoom_controls</string>
+    <string name="preference_key_ui_hide_action_bar" translatable="false">ui.hide_action_bar</string>
     <string-array name="debug_array" translatable="false">
         <item>OFF</item>
         <item>FATAL</item>
