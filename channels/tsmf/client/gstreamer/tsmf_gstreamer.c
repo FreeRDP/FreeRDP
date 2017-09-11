@@ -33,7 +33,15 @@
 
 #include <winpr/string.h>
 
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+#endif /* __clang__ */
 #include <gst/gst.h>
+#if __clang__
+#pragma clang diagnostic pop
+#endif /* __clang__ */
+
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
 
@@ -1020,10 +1028,14 @@ ITSMFDecoder* freerdp_tsmf_client_subsystem_entry(void)
 {
 	TSMFGstreamerDecoder *decoder;
 
+#if GST_CHECK_VERSION(0,10,31)
 	if (!gst_is_initialized())
 	{
 		gst_init(NULL, NULL);
 	}
+#else
+	gst_init(NULL, NULL);
+#endif
 
 	decoder = calloc(1, sizeof(TSMFGstreamerDecoder));
 

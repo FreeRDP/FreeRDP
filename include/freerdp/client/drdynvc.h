@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_CLIENT_DRDYNVC_H
-#define FREERDP_CHANNEL_CLIENT_DRDYNVC_H
+#ifndef FREERDP_CHANNEL_DRDYNVC_CLIENT_DRDYNVC_H
+#define FREERDP_CHANNEL_DRDYNVC_CLIENT_DRDYNVC_H
 
 /**
  * Client Interface
@@ -50,4 +50,4 @@ struct _drdynvc_client_context
 	pcDrdynvcOnChannelDetached OnChannelDetached;
 };
 
-#endif /* FREERDP_CHANNEL_CLIENT_DRDYNVC_H */
+#endif /* FREERDP_CHANNEL_DRDYNVC_CLIENT_DRDYNVC_H */

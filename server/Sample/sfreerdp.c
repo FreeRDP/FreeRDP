@@ -64,7 +64,7 @@ BOOL test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 		goto fail_rfx_context;
 
 	context->rfx_context->mode = RLGR3;
-	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_BGRX32);
+	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_RGB24);
 
 	if (!(context->nsc_context = nsc_context_new()))
 		goto fail_nsc_context;
@@ -266,7 +266,7 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	/* Max */
 	fgets(line, sizeof(line), fp);
 
-	if (!(rgb_data = malloc(context->icon_width * context->icon_height * 3)))
+	if (!(rgb_data = calloc(context->icon_height, context->icon_width * 3)))
 		goto out_fail;
 
 	for (i = 0; i < context->icon_width * context->icon_height * 3; i++)
@@ -278,8 +278,7 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	}
 
 	/* background with same size, which will be used to erase the icon from old position */
-	if (!(context->bg_data = malloc(context->icon_width * context->icon_height *
-	                                3)))
+	if (!(context->bg_data = calloc(context->icon_height, context->icon_width * 3)))
 		goto out_fail;
 
 	memset(context->bg_data, 0xA0, context->icon_width * context->icon_height * 3);

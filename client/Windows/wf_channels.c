@@ -27,6 +27,9 @@
 
 #include <freerdp/gdi/gfx.h>
 
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("windows")
+
 void wf_OnChannelConnectedEventHandler(rdpContext* context,
                                        ChannelConnectedEventArgs* e)
 {
@@ -38,8 +41,10 @@ void wf_OnChannelConnectedEventHandler(rdpContext* context,
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
+		if (!settings->SoftwareGdi)
+			WLog_WARN(TAG, "Channel "RDPGFX_DVC_CHANNEL_NAME" does not support hardware acceleration, using fallback.");
+
+		gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -65,9 +70,8 @@ void wf_OnChannelDisconnectedEventHandler(rdpContext* context,
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_uninit(context->gdi,
-			                             (RdpgfxClientContext*) e->pInterface);
+		gdi_graphics_pipeline_uninit(context->gdi,
+			(RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{

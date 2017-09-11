@@ -28,6 +28,7 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/client.h>
 #include <freerdp/utils/signal.h>
+#include <freerdp/locale/keyboard.h>
 
 #include <linux/input.h>
 
@@ -102,6 +103,8 @@ static BOOL wl_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
 	wlfContext* context;
+	UwacOutput *output;
+	UwacSize resolution;
 
 	if (!instance)
 		return FALSE;
@@ -145,6 +148,21 @@ static BOOL wl_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    (pChannelDisconnectedEventHandler) wlf_OnChannelDisconnectedEventHandler);
 
+	if (settings->Fullscreen)
+	{
+		// Use the resolution of the first display output
+		output = UwacDisplayGetOutput(context->display, 1);
+		if (output != NULL && UwacOutputGetResolution(output, &resolution) == UWAC_SUCCESS)
+		{
+			settings->DesktopWidth = (UINT32) resolution.width;
+			settings->DesktopHeight = (UINT32) resolution.height;
+		}
+		else
+		{
+			WLog_WARN(TAG, "Failed to get output resolution! Check your display settings");
+		}
+	}
+
 	if (!freerdp_client_load_addins(instance->context->channels,
 	                                instance->settings))
 		return FALSE;
@@ -173,13 +191,18 @@ static BOOL wl_post_connect(freerdp* instance)
 	if (!window)
 		return FALSE;
 
+	UwacWindowSetFullscreenState(window, NULL, instance->context->settings->Fullscreen);
 	UwacWindowSetTitle(window, "FreeRDP");
+	UwacWindowSetOpaqueRegion(context->window, 0, 0, gdi->width, gdi->height);
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
 	memcpy(UwacWindowGetDrawingBuffer(context->window), gdi->primary_buffer,
 	       gdi->width * gdi->height * 4);
 	UwacWindowAddDamage(context->window, 0, 0, gdi->width, gdi->height);
 	context->haveDamage = TRUE;
+
+	freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
+
 	return wl_update_content(context);
 }
 

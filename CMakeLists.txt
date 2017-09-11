@@ -184,6 +184,16 @@ if(MSVC)
 	endif()
 endif()
 
+# Enable 64bit file support on linux.
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+	add_definitions("-D_FILE_OFFSET_BITS=64")
+endif()
+
+# Use Standard conforming getpwnam_r() on Solaris.
+if("${CMAKE_SYSTEM_NAME}" MATCHES "SunOS")
+	add_definitions("-D_POSIX_PTHREAD_SEMANTICS")
+endif()
+
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i686")
@@ -273,6 +283,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-parameter")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-macros -Wno-padded")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-c11-extensions -Wno-gnu")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-command-line-argument")
 	if(WITH_SSE2)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mssse3")
 	endif()
@@ -777,6 +788,12 @@ endif()
 
 if (TARGET_ARCH MATCHES "sparc")
 	set(HAVE_ALIGNED_REQUIRED 1)
+endif()
+
+if (WITH_X264 OR WITH_OPENH264 OR WITH_MEDIA_FOUNDATION OR WITH_FFMPEG)
+	set(WITH_GFX_H264 ON)
+else()
+	set(WITH_GFX_H264 OFF)
 endif()
 
 # Android expects all libraries to be loadable

@@ -381,7 +381,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_FreeCredentialsHandle(PCredHandle phCredenti
 		return SEC_E_INVALID_HANDLE;
 
 	sspi_CredentialsFree(credentials);
-
+	sspi_SecureHandleInvalidate(phCredential);
 	return SEC_E_OK;
 }
 

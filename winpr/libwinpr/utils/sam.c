@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/sam.h>
 #include <winpr/print.h>
@@ -86,11 +87,11 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 static BOOL SamLookupStart(WINPR_SAM* sam)
 {
 	size_t readSize;
-	long int fileSize;
+	INT64 fileSize;
 
-	fseek(sam->fp, 0, SEEK_END);
-	fileSize = ftell(sam->fp);
-	fseek(sam->fp, 0, SEEK_SET);
+	_fseeki64(sam->fp, 0, SEEK_END);
+	fileSize = _ftelli64(sam->fp);
+	_fseeki64(sam->fp, 0, SEEK_SET);
 
 	if (fileSize < 1)
 		return FALSE;

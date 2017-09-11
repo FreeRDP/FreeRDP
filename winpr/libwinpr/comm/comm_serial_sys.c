@@ -1209,7 +1209,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	if (ioctl(pComm->fd, TIOCGICOUNT, &currentCounters) < 0)
 	{
 		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno, strerror(errno));
-		CommLog_Print(WLOG_WARN, "  coult not read counters.");
+		CommLog_Print(WLOG_WARN, "  could not read counters.");
 		
 		if (pComm->permissive)
 		{

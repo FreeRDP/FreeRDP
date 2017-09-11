@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_TSG_H
-#define FREERDP_CORE_TSG_H
+#ifndef FREERDP_LIB_CORE_GATEWAY_TSG_H
+#define FREERDP_LIB_CORE_GATEWAY_TSG_H
 
 typedef struct rdp_tsg rdpTsg;
 
@@ -332,4 +332,4 @@ FREERDP_LOCAL void tsg_free(rdpTsg* tsg);
 
 FREERDP_LOCAL BIO_METHOD* BIO_s_tsg(void);
 
-#endif /* FREERDP_CORE_TSG_H */
+#endif /* FREERDP_LIB_CORE_GATEWAY_TSG_H */

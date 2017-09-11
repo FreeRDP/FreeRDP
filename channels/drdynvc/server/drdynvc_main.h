@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SERVER_DRDYNVC_MAIN_H
-#define FREERDP_CHANNEL_SERVER_DRDYNVC_MAIN_H
+#ifndef FREERDP_CHANNEL_DRDYNVC_SERVER_MAIN_H
+#define FREERDP_CHANNEL_DRDYNVC_SERVER_MAIN_H
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -34,4 +34,4 @@ struct _drdynvc_server_private
 	void* ChannelHandle;
 };
 
-#endif /* FREERDP_CHANNEL_SERVER_DRDYNVC_MAIN_H */
+#endif /* FREERDP_CHANNEL_DRDYNVC_SERVER_MAIN_H */

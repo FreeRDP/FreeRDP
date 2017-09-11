@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __TRANSPORT_H
-#define __TRANSPORT_H
+#ifndef FREERDP_LIB_CORE_TRANSPORT_H
+#define FREERDP_LIB_CORE_TRANSPORT_H
 
 typedef enum
 {
@@ -123,4 +123,4 @@ FREERDP_LOCAL int transport_receive_pool_return(rdpTransport* transport,
 FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
 FREERDP_LOCAL void transport_free(rdpTransport* transport);
 
-#endif
+#endif /* FREERDP_LIB_CORE_TRANSPORT_H */

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_HTTP_H
-#define FREERDP_CORE_HTTP_H
+#ifndef FREERDP_LIB_CORE_GATEWAY_HTTP_H
+#define FREERDP_LIB_CORE_GATEWAY_HTTP_H
 
 typedef struct _http_context HttpContext;
 typedef struct _http_request HttpRequest;
@@ -117,4 +117,4 @@ FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls);
 FREERDP_LOCAL HttpResponse* http_response_new(void);
 FREERDP_LOCAL void http_response_free(HttpResponse* response);
 
-#endif /* FREERDP_CORE_HTTP_H */
+#endif /* FREERDP_LIB_CORE_GATEWAY_HTTP_H */

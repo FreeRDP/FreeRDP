@@ -336,13 +336,13 @@ static const char* get_shm_id()
 	return shm_id;
 }
 
-Window xf_CreateDummyWindow(xfContext *xfc)
+Window xf_CreateDummyWindow(xfContext* xfc)
 {
 	return XCreateSimpleWindow(xfc->display, DefaultRootWindow(xfc->display),
-			0, 0, 1, 1, 0, 0, 0);
+	                           0, 0, 1, 1, 0, 0, 0);
 }
 
-void xf_DestroyDummyWindow(xfContext *xfc, Window window)
+void xf_DestroyDummyWindow(xfContext* xfc, Window window)
 {
 	if (window)
 		XDestroyWindow(xfc->display, window);
@@ -958,7 +958,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y,
 {
 	int ax, ay;
 
-        if (appWindow == NULL)
+	if (appWindow == NULL)
 		return;
 
 	ax = x + appWindow->windowOffsetX;

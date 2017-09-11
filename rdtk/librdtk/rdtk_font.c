@@ -20,6 +20,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/print.h>
@@ -156,9 +157,9 @@ static char* rdtk_font_load_descriptor_file(const char* filename, int* pSize)
 	if (!fp)
 		return NULL;
 
-	fseek(fp, 0, SEEK_END);
-	fileSize = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
+	_fseeki64(fp, 0, SEEK_END);
+	fileSize = _ftelli64(fp);
+	_fseeki64(fp, 0, SEEK_SET);
 
 	if (fileSize < 1)
 	{

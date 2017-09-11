@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_GCC_H
-#define FREERDP_CORE_GCC_H
+#ifndef FREERDP_LIB_CORE_GCC_H
+#define FREERDP_LIB_CORE_GCC_H
 
 #include "mcs.h"
 
@@ -88,4 +88,4 @@ FREERDP_LOCAL BOOL gcc_read_server_multitransport_channel_data(wStream* s,
 FREERDP_LOCAL void gcc_write_server_multitransport_channel_data(wStream* s,
         rdpMcs* mcs);
 
-#endif /* FREERDP_CORE_GCC_H */
+#endif /* FREERDP_LIB_CORE_GCC_H */

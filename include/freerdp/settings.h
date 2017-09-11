@@ -778,6 +778,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_GfxProgressiveV2				3843
 #define FreeRDP_GfxH264						3844
 #define FreeRDP_GfxAVC444					3845
+#define FreeRDP_GfxSendQoeAck					3846
 #define FreeRDP_BitmapCacheV3CodecId				3904
 #define FreeRDP_DrawNineGridEnabled				3968
 #define FreeRDP_DrawNineGridCacheSize				3969
@@ -1010,7 +1011,7 @@ struct rdp_settings
 	ALIGN64 BOOL RestrictedAdminModeRequired; /* 1097 */
 	ALIGN64 char* AuthenticationServiceClass; /* 1098 */
 	ALIGN64 BOOL DisableCredentialsDelegation; /* 1099 */
-	ALIGN64 BOOL AuthenticationLevel; /* 1100 */
+	ALIGN64 UINT32 AuthenticationLevel; /* 1100 */
 	ALIGN64 char* AllowedTlsCiphers; /* 1101 */
 	ALIGN64 BOOL VmConnectMode; /* 1102 */
 	ALIGN64 char* NtlmSamFile; /* 1103 */
@@ -1237,7 +1238,8 @@ struct rdp_settings
 	ALIGN64 BOOL MultiTouchGestures; /* 2632 */
 	ALIGN64 UINT32 KeyboardHook; /* 2633 */
 	ALIGN64 BOOL HasHorizontalWheel; /* 2634 */
-	UINT64 padding2688[2688 - 2635]; /* 2635 */
+	ALIGN64 BOOL HasExtendedMouseEvent; /* 2635 */
+	UINT64 padding2688[2688 - 2636]; /* 2636 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */
@@ -1334,7 +1336,8 @@ struct rdp_settings
 	ALIGN64 BOOL GfxProgressiveV2; /* 3843 */
 	ALIGN64 BOOL GfxH264; /* 3844 */
 	ALIGN64 BOOL GfxAVC444; /* 3845 */
-	UINT64 padding3904[3904 - 3846]; /* 3846 */
+	ALIGN64 BOOL GfxSendQoeAck; /* 3846 */
+	UINT64 padding3904[3904 - 3847]; /* 3847 */
 
 	/**
 	 * Caches

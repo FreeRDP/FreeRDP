@@ -40,7 +40,7 @@ int TestDsMakeSpn(int argc, char* argv[])
 	}
 
 	/* SpnLength includes null terminator */
-	Spn = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
+	Spn = (LPTSTR) calloc(SpnLength, sizeof(TCHAR));
 	if (!Spn)
 	{
 		_tprintf(_T("DsMakeSpn: Unable to allocate memroy\n"));

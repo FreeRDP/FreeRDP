@@ -19,8 +19,8 @@
  * limitations under the License.
 */
 
-#ifndef _TSMF_PLATFORM_H_
-#define _TSMF_PLATFORM_H_
+#ifndef FREERDP_CHANNEL_TSMF_CLIENT_GST_PLATFORM_H
+#define FREERDP_CHANNEL_TSMF_CLIENT_GST_PLATFORM_H
 
 #include <gst/gst.h>
 #include <tsmf_decoder.h>
@@ -84,4 +84,4 @@ int tsmf_window_unmap(TSMFGstreamerDecoder* decoder);
 BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder* mdecoder);
 void tsmf_gstreamer_remove_pad(TSMFGstreamerDecoder* mdecoder);
 
-#endif
+#endif /* FREERDP_CHANNEL_TSMF_CLIENT_GST_PLATFORM_H */

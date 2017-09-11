@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNELS_CLIENT
-#define FREERDP_CHANNELS_CLIENT
+#ifndef FREERDP_CHANNELS_CLIENT_H
+#define FREERDP_CHANNELS_CLIENT_H
 
 #include <freerdp/api.h>
 #include <freerdp/addin.h>
@@ -38,5 +38,5 @@ FREERDP_API void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins);
 }
 #endif
 
-#endif /* FREERDP_CHANNELS_CLIENT */
+#endif /* FREERDP_CHANNELS_CLIENT_H */
 

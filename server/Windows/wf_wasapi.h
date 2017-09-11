@@ -1,5 +1,5 @@
-#ifndef WF_WASAPI_H
-#define WF_WASAPI_H
+#ifndef FREERDP_SERVER_WIN_WASAPI_H
+#define FREERDP_SERVER_WIN_WASAPI_H
 
 #include <freerdp/server/rdpsnd.h>
 #include "wf_interface.h"
@@ -12,4 +12,4 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr);
 
 DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam);
 
-#endif
+#endif /* FREERDP_SERVER_WIN_WASAPI_H */

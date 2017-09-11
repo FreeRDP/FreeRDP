@@ -164,7 +164,7 @@ static UINT audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, 
 	}
 
 	Stream_Seek_UINT32(s); /* cbSizeFormatsPacket */
-	callback->formats = (audinFormat*) calloc(1, NumFormats * sizeof(audinFormat));
+	callback->formats = (audinFormat*) calloc(NumFormats, sizeof(audinFormat));
 
 	if (!callback->formats)
 	{

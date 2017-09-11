@@ -59,7 +59,7 @@ struct rdp_pcap
 	FILE* fp;
 	char* name;
 	BOOL write;
-	int file_size;
+	INT64 file_size;
 	int record_count;
 	pcap_header header;
 	pcap_record* head;

@@ -129,7 +129,7 @@ wObjectPool* ObjectPool_New(BOOL synchronized)
 	{
 		pool->capacity = 32;
 		pool->size = 0;
-		pool->array = (void**) malloc(sizeof(void*) * pool->capacity);
+		pool->array = (void**) calloc(pool->capacity, sizeof(void*));
 		if (!pool->array)
 		{
 			free(pool);

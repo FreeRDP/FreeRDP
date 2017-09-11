@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __MCS_H
-#define __MCS_H
+#ifndef FREERDP_LIB_CORE_MCS_H
+#define FREERDP_LIB_CORE_MCS_H
 
 typedef struct rdp_mcs rdpMcs;
 
@@ -201,4 +201,4 @@ FREERDP_LOCAL BOOL mcs_client_begin(rdpMcs* mcs);
 FREERDP_LOCAL rdpMcs* mcs_new(rdpTransport* transport);
 FREERDP_LOCAL void mcs_free(rdpMcs* mcs);
 
-#endif /* __MCS_H */
+#endif /* FREERDP_LIB_CORE_MCS_H */

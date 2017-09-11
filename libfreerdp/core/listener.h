@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __LISTENER_H
-#define __LISTENER_H
+#ifndef FREERDP_LIB_CORE_LISTENER_H
+#define FREERDP_LIB_CORE_LISTENER_H
 
 typedef struct rdp_listener rdpListener;
 
@@ -40,5 +40,5 @@ struct rdp_listener
  	HANDLE events[MAX_LISTENER_HANDLES];
 };
 
-#endif
+#endif /* FREERDP_LIB_CORE_LISTENER_H */
 

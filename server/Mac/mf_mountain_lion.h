@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef MF_MLION_H
-#define MF_MLION_H
+#ifndef FREERDP_SERVER_MAC_MLION_H
+#define FREERDP_SERVER_MAC_MLION_H
 
 #include <freerdp/codec/rfx.h>
 
@@ -36,4 +36,4 @@ int mf_mlion_clear_dirty_region(void);
 
 int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE **pxData);
 
-#endif
+#endif /* FREERDP_SERVER_MAC_MLION_H */

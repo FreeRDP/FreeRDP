@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
 #include <winpr/print.h>
@@ -87,7 +88,7 @@ int freerdp_assistance_crypt_derive_key_sha1(BYTE* hash, int hashLength, BYTE* k
 		pad2[i] ^= hash[i];
 	}
 
-	buffer = (BYTE*) calloc(1, hashLength * 2);
+	buffer = (BYTE*) calloc(hashLength, 2);
 
 	if (!buffer)
 		goto fail;
@@ -131,7 +132,7 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 			count++;
 	}
 
-	tokens = (char**) malloc(sizeof(char*) * count);
+	tokens = (char**) calloc(count, sizeof(char*));
 	if (!tokens)
 	{
 		free(str);
@@ -812,7 +813,7 @@ char* freerdp_assistance_bin_to_hex_string(const BYTE* data, int size)
 	int ln, hn;
 	char bin2hex[] = "0123456789ABCDEF";
 
-	p = (char*) malloc((size + 1) * 2);
+	p = (char*) calloc((size + 1), 2);
 	if (!p)
 		return NULL;
 
@@ -1065,16 +1066,16 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name)
 	BYTE* buffer;
 	FILE* fp = NULL;
 	size_t readSize;
-	long int fileSize;
+	INT64 fileSize;
 
 	fp = fopen(name, "r");
 
 	if (!fp)
 		return -1;
 
-	fseek(fp, 0, SEEK_END);
-	fileSize = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
+	_fseeki64(fp, 0, SEEK_END);
+	fileSize = _ftelli64(fp);
+	_fseeki64(fp, 0, SEEK_SET);
 
 	if (fileSize < 1)
 	{

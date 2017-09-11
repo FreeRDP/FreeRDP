@@ -63,7 +63,7 @@ typedef int (*pfnShadowSubsystemUninit)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemStart)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
 
-typedef int (*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, int maxMonitors);
+typedef UINT32 (*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, UINT32 maxMonitors);
 
 typedef int (*pfnShadowAuthenticate)(rdpShadowSubsystem* subsystem,
                                      rdpShadowClient* client,
@@ -311,15 +311,15 @@ FREERDP_API int shadow_server_stop(rdpShadowServer* server);
 FREERDP_API int shadow_server_init(rdpShadowServer* server);
 FREERDP_API int shadow_server_uninit(rdpShadowServer* server);
 
-FREERDP_API int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors);
+FREERDP_API UINT32 shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors);
 
-FREERDP_API rdpShadowServer* shadow_server_new();
+FREERDP_API rdpShadowServer* shadow_server_new(void);
 FREERDP_API void shadow_server_free(rdpShadowServer* server);
 
 FREERDP_API int shadow_capture_align_clip_rect(RECTANGLE_16* rect,
         RECTANGLE_16* clip);
-FREERDP_API int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth,
-                                       int nHeight, BYTE* pData2, int nStep2, RECTANGLE_16* rect);
+FREERDP_API int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth,
+                                       UINT32 nHeight, BYTE* pData2, UINT32 nStep2, RECTANGLE_16* rect);
 
 FREERDP_API void shadow_subsystem_frame_update(rdpShadowSubsystem* subsystem);
 

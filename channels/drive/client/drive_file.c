@@ -59,24 +59,24 @@ static void drive_file_fix_path(WCHAR* path)
 
 	for (i = 0; i < length; i++)
 	{
-		if (path[i] == '\\')
-			path[i] = '/';
+		if (path[i] == L'\\')
+			path[i] = L'/';
 	}
 
 #ifdef WIN32
 
-	if ((length == 3) && (path[1] == ':') && (path[2] == '/'))
+	if ((length == 3) && (path[1] == L':') && (path[2] == L'/'))
 		return;
 
 #else
 
-	if ((length == 1) && (path[0] == '/'))
+	if ((length == 1) && (path[0] == L'/'))
 		return;
 
 #endif
 
-	if ((length > 0) && (path[length - 1] == '/'))
-		path[length - 1] = '\0';
+	if ((length > 0) && (path[length - 1] == L'/'))
+		path[length - 1] = L'\0';
 }
 
 static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* path,
@@ -126,8 +126,8 @@ static BOOL drive_file_remove_dir(const WCHAR* path)
 	}
 
 	CopyMemory(path_slash, path, base_path_length);
-	path_slash[base_path_length / 2] = '/';
-	path_slash[base_path_length / 2 + 1] = '*';
+	path_slash[base_path_length / 2] = L'/';
+	path_slash[base_path_length / 2 + 1] = L'*';
 	DEBUG_WSTR("Search in %s", path_slash);
 	dir = FindFirstFileW(path_slash, &findFileData);
 	path_slash[base_path_length / 2 + 1] = 0;
@@ -142,8 +142,8 @@ static BOOL drive_file_remove_dir(const WCHAR* path)
 	{
 		len = _wcslen(findFileData.cFileName);
 
-		if ((len == 1 && findFileData.cFileName[0] == '.') || (len == 2 &&
-		        findFileData.cFileName[0] == '.' && findFileData.cFileName[1] == '.'))
+		if ((len == 1 && findFileData.cFileName[0] == L'.') || (len == 2 &&
+		        findFileData.cFileName[0] == L'.' && findFileData.cFileName[1] == L'.'))
 		{
 			continue;
 		}
@@ -185,7 +185,7 @@ static void drive_file_set_fullpath(DRIVE_FILE* file, WCHAR* fullpath)
 {
 	free(file->fullpath);
 	file->fullpath = fullpath;
-	file->filename = _wcsrchr(file->fullpath, 0x5c);
+	file->filename = _wcsrchr(file->fullpath, L'/');
 
 	if (file->filename == NULL)
 		file->filename = file->fullpath;
@@ -385,16 +385,13 @@ BOOL drive_file_free(DRIVE_FILE* file)
 
 BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset)
 {
-	LONG lDistHigh;
-	DWORD dwPtrLow;
+	LARGE_INTEGER loffset;
 
 	if (!file)
 		return FALSE;
 
-	lDistHigh = Offset >> 32;
-	DEBUG_WSTR("Seek %s", file->fullpath);
-	dwPtrLow = SetFilePointer(file->file_handle, Offset & 0xFFFFFFFF, &lDistHigh, FILE_BEGIN);
-	return dwPtrLow != INVALID_SET_FILE_POINTER;
+	loffset.QuadPart = Offset;
+	return SetFilePointerEx(file->file_handle, loffset, NULL, FILE_BEGIN);
 }
 
 BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length)
@@ -623,8 +620,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			liSize.QuadPart = size & 0xFFFFFFFF;
 
-			if (SetFilePointer(file->file_handle, liSize.LowPart, &liSize.HighPart,
-			                   FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+			if (!SetFilePointerEx(file->file_handle, liSize, NULL, FILE_BEGIN))
 			{
 				WLog_ERR(TAG, "Unable to truncate %s to %d (%"PRId32")", file->fullpath, size, GetLastError());
 				return FALSE;
@@ -718,7 +714,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
                                 const WCHAR* path, UINT32 PathLength, wStream* output)
 {
-	int length;
+	size_t length;
 	WCHAR* ent_path;
 
 	if (!file || !path || !output)
@@ -788,10 +784,10 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwLowDateTime); /* LastWriteTime */
 			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwHighDateTime); /* ChangeTime */
 			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwLowDateTime); /* ChangeTime */
-			Stream_Write_UINT32(output, file->find_data.nFileSizeHigh); /* EndOfFile */
 			Stream_Write_UINT32(output, file->find_data.nFileSizeLow); /* EndOfFile */
-			Stream_Write_UINT32(output, file->find_data.nFileSizeHigh); /* AllocationSize */
+			Stream_Write_UINT32(output, file->find_data.nFileSizeHigh); /* EndOfFile */
 			Stream_Write_UINT32(output, file->find_data.nFileSizeLow); /* AllocationSize */
+			Stream_Write_UINT32(output, file->find_data.nFileSizeHigh); /* AllocationSize */
 			Stream_Write_UINT32(output, file->find_data.dwFileAttributes); /* FileAttributes */
 			Stream_Write_UINT32(output, length); /* FileNameLength */
 			Stream_Write_UINT32(output, 0); /* EaSize */
@@ -852,7 +848,3 @@ out_fail:
 	Stream_Write_UINT8(output, 0); /* Padding */
 	return FALSE;
 }
-
-#ifdef _WIN32
-#pragma warning(pop)
-#endif

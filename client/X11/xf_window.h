@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __XF_WINDOW_H
-#define __XF_WINDOW_H
+#ifndef FREERDP_CLIENT_X11_WINDOW_H
+#define FREERDP_CLIENT_X11_WINDOW_H
 
 #include <X11/Xlib.h>
 
@@ -174,4 +174,4 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
 xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
 
-#endif /* __XF_WINDOW_H */
+#endif /* FREERDP_CLIENT_X11_WINDOW_H */

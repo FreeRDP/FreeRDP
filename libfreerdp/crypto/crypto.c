@@ -213,7 +213,7 @@ char* crypto_cert_fingerprint(X509* xcert)
 
 	X509_digest(xcert, EVP_sha1(), fp, &fp_len);
 
-	fp_buffer = (char*) calloc(3, fp_len);
+	fp_buffer = (char*) calloc(fp_len, 3);
 	if (!fp_buffer)
 		return NULL;
 
@@ -330,11 +330,11 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 	num_subject_alt_names = sk_GENERAL_NAME_num(subject_alt_names);
 	if (num_subject_alt_names)
 	{
-		strings = (char**) malloc(sizeof(char*) * num_subject_alt_names);
+		strings = (char**) calloc(num_subject_alt_names, sizeof(char*));
 		if (!strings)
 			goto out;
 
-		*lengths = (int*) malloc(sizeof(int) * num_subject_alt_names);
+		*lengths = (int*) calloc(num_subject_alt_names, sizeof(int));
 		if (!*lengths)
 		{
 			free(strings);
@@ -388,7 +388,7 @@ BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 	if (cert_ctx == NULL)
 		goto end;
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	OpenSSL_add_all_algorithms();
 #else
 	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \

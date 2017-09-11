@@ -1,7 +1,7 @@
 .de URL
 \\$2 \(laURL: \\$1 \(ra\\$3
 ..
-.if \n[.g] .mso www.tmac))
+.if \n[.g] .mso www.tmac
 .TH wlfreerdp 1 2017-01-12 "@FREERDP_VERSION_FULL@" "FreeRDP"
 .SH NAME
 wlfreerdp \- FreeRDP wayland client

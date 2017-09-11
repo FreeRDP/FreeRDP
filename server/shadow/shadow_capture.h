@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_CAPTURE_H
-#define FREERDP_SHADOW_SERVER_CAPTURE_H
+#ifndef FREERDP_SERVER_SHADOW_CAPTURE_H
+#define FREERDP_SERVER_SHADOW_CAPTURE_H
 
 #include <freerdp/server/shadow.h>
 
@@ -45,4 +45,4 @@ void shadow_capture_free(rdpShadowCapture* capture);
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_CAPTURE_H */
+#endif /* FREERDP_SERVER_SHADOW_CAPTURE_H */

@@ -26,7 +26,7 @@ using System.Collections.Generic;
 
 /* 
  * this script uses windowsZones.xml which can be obtained at:
- * http://unicode.org/repos/cldr-tmp/trunk/diff/supplemental/zone_tzid.html
+ * http://www.unicode.org/repos/cldr/tags/latest/common/supplemental/windowsZones.xml
  */
 
 namespace WindowsZones

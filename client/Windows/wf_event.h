@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __WF_EVENT_H
-#define __WF_EVENT_H
+#ifndef FREERDP_CLIENT_WIN_EVENT_H
+#define FREERDP_CLIENT_WIN_EVENT_H
 
 #include "wf_client.h"
 #include <freerdp/log.h>
@@ -38,4 +38,4 @@ void wf_event_focus_in(wfContext* wfc);
 #define DEBUG_KBD(...) do { } while (0)
 #endif
 
-#endif /* __WF_EVENT_H */
+#endif /* FREERDP_CLIENT_WIN_EVENT_H */

@@ -17,10 +17,10 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNELS_SERVER
-#define FREERDP_CHANNELS_SERVER
+#ifndef FREERDP_CHANNELS_SERVER_H
+#define FREERDP_CHANNELS_SERVER_H
 
 #include <freerdp/api.h>
 
-#endif /* FREERDP_CHANNELS_SERVER */
+#endif /* FREERDP_CHANNELS_SERVER_H */
 

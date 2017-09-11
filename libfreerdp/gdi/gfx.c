@@ -402,6 +402,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi,
                                       RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
+#ifdef WITH_GFX_H264
 	INT32 rc;
 	UINT status = CHANNEL_RC_OK;
 	UINT32 i;
@@ -416,14 +417,25 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi,
 		return ERROR_NOT_FOUND;
 	}
 
-	bs = (RDPGFX_AVC420_BITMAP_STREAM*) cmd->extra;
+	if (!surface->h264)
+	{
+		surface->h264 = h264_context_new(FALSE);
+		if (!surface->h264)
+		{
+			WLog_ERR(TAG, "%s: unable to create h264 context", __FUNCTION__);
+			return ERROR_NOT_ENOUGH_MEMORY;
+		}
 
+		if (!h264_context_reset(surface->h264, surface->width, surface->height))
+			return ERROR_INTERNAL_ERROR;
+	}
+
+	bs = (RDPGFX_AVC420_BITMAP_STREAM*) cmd->extra;
 	if (!bs)
 		return ERROR_INTERNAL_ERROR;
 
 	meta = &(bs->meta);
-	rc = avc420_decompress(surface->codecs->h264, bs->data, bs->length,
-	                       surface->data, surface->format,
+	rc = avc420_decompress(surface->h264, bs->data, bs->length, surface->data, surface->format,
 	                       surface->scanline, surface->width,
 	                       surface->height, meta->regionRects,
 	                       meta->numRegionRects);
@@ -449,6 +461,9 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi,
 	}
 
 	return status;
+#else
+	return ERROR_NOT_SUPPORTED;
+#endif
 }
 
 /**
@@ -459,6 +474,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi,
 static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
+#ifdef WITH_GFX_H264
 	INT32 rc;
 	UINT status = CHANNEL_RC_OK;
 	UINT32 i;
@@ -477,6 +493,19 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 		return ERROR_NOT_FOUND;
 	}
 
+	if (!surface->h264)
+	{
+		surface->h264 = h264_context_new(FALSE);
+		if (!surface->h264)
+		{
+			WLog_ERR(TAG, "%s: unable to create h264 context", __FUNCTION__);
+			return ERROR_NOT_ENOUGH_MEMORY;
+		}
+
+		if (!h264_context_reset(surface->h264, surface->width, surface->height))
+			return ERROR_INTERNAL_ERROR;
+	}
+
 	bs = (RDPGFX_AVC444_BITMAP_STREAM*) cmd->extra;
 
 	if (!bs)
@@ -486,7 +515,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 	avc2 = &bs->bitstream[1];
 	meta1 = &avc1->meta;
 	meta2 = &avc2->meta;
-	rc = avc444_decompress(surface->codecs->h264, bs->LC,
+	rc = avc444_decompress(surface->h264, bs->LC,
 	                       meta1->regionRects, meta1->numRegionRects,
 	                       avc1->data, avc1->length,
 	                       meta2->regionRects, meta2->numRegionRects,
@@ -503,18 +532,14 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	for (i = 0; i < meta1->numRegionRects; i++)
 	{
-		region16_union_rect(&(surface->invalidRegion),
-		                    &(surface->invalidRegion),
-		                    &(meta1->regionRects[i]));
+		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &(meta1->regionRects[i]));
 	}
 	IFCALL(context->UpdateSurfaceArea, context, surface->surfaceId,
 	       meta1->numRegionRects, meta1->regionRects);
 
 	for (i = 0; i < meta2->numRegionRects; i++)
 	{
-		region16_union_rect(&(surface->invalidRegion),
-		                    &(surface->invalidRegion),
-		                    &(meta2->regionRects[i]));
+		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &(meta2->regionRects[i]));
 	}
 	IFCALL(context->UpdateSurfaceArea, context, surface->surfaceId,
 	       meta2->numRegionRects, meta2->regionRects);
@@ -527,6 +552,9 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	free(regionRects);
 	return status;
+#else
+	return ERROR_NOT_SUPPORTED;
+#endif
 }
 
 /**
@@ -732,7 +760,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
                               const RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
 	gdiGfxSurface* surface;
-	rdpGdi* gdi = (rdpGdi*) context->custom;
+		rdpGdi* gdi = (rdpGdi*) context->custom;
 	surface = (gdiGfxSurface*) calloc(1, sizeof(gdiGfxSurface));
 
 	if (!surface)
@@ -790,11 +818,13 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 {
 	rdpCodecs* codecs = NULL;
 	gdiGfxSurface* surface = NULL;
-	surface = (gdiGfxSurface*) context->GetSurfaceData(context,
-	          deleteSurface->surfaceId);
+	surface = (gdiGfxSurface*) context->GetSurfaceData(context, deleteSurface->surfaceId);
 
 	if (surface)
 	{
+#ifdef WITH_GFX_H264
+		h264_context_free(surface->h264);
+#endif
 		region16_uninit(&surface->invalidRegion);
 		codecs = surface->codecs;
 		_aligned_free(surface->data);
@@ -804,8 +834,7 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 	context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
 
 	if (codecs && codecs->progressive)
-		progressive_delete_surface_context(codecs->progressive,
-		                                   deleteSurface->surfaceId);
+		progressive_delete_surface_context(codecs->progressive, deleteSurface->surfaceId);
 
 	return CHANNEL_RC_OK;
 }
@@ -963,7 +992,7 @@ static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
 	cacheEntry->height = (UINT32)(rect->bottom - rect->top);
 	cacheEntry->format = surface->format;
 	cacheEntry->scanline = gfx_align_scanline(cacheEntry->width * 4, 16);
-	cacheEntry->data = (BYTE*) calloc(1, cacheEntry->scanline * cacheEntry->height);
+	cacheEntry->data = (BYTE*) calloc(cacheEntry->height, cacheEntry->scanline);
 
 	if (!cacheEntry->data)
 	{
@@ -1126,7 +1155,6 @@ void gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx)
 
 void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx)
 {
-	region16_uninit(&(gdi->invalidRegion));
 	gdi->gfx = NULL;
 	gfx->custom = NULL;
 	PROFILER_PRINT_HEADER;

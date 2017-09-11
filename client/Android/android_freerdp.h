@@ -7,8 +7,8 @@
    If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#ifndef __ANDROID_FREERDP_H
-#define __ANDROID_FREERDP_H
+#ifndef FREERDP_CLIENT_ANDROID_FREERDP_H
+#define FREERDP_CLIENT_ANDROID_FREERDP_H
 
 #include <jni.h>
 
@@ -40,6 +40,6 @@ struct android_context
 };
 typedef struct android_context androidContext;
 
-#endif /* __ANDROID_FREERDP_H */
+#endif /* FREERDP_CLIENT_ANDROID_FREERDP_H */
 
 

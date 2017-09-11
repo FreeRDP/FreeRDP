@@ -1767,7 +1767,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 {
 	UINT32 index;
 	UINT32 bits;
-	UINT32 nbits;
+	INT32 nbits;
 	BYTE* SrcPtr;
 	BYTE* SrcEnd;
 	UINT16 Mask;

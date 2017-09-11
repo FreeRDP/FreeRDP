@@ -492,18 +492,6 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 	KeySym keysym;
 	char str[256];
 
-	if (XPending(xfc->display))
-	{
-		ZeroMemory(&nextEvent, sizeof(nextEvent));
-		XPeekEvent(xfc->display, &nextEvent);
-
-		if (nextEvent.type == KeyPress)
-		{
-			if (nextEvent.xkey.keycode == event->xkey.keycode)
-				return TRUE;
-		}
-	}
-
 	XLookupString((XKeyEvent*) event, str, sizeof(str), &keysym, NULL);
 	xf_keyboard_key_release(xfc, event->xkey.keycode, keysym);
 	return TRUE;

@@ -467,6 +467,7 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 	const char delim = PathGetSeparatorA(PATH_STYLE_NATIVE);
 	char* dup;
 	char* p;
+	BOOL result = TRUE;
 
 	/* we only operate on a non-null, absolute path */
 	if (!path || *path != delim)
@@ -482,14 +483,17 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 
 		if (mkdir(dup, 0777) != 0)
 			if (errno != EEXIST)
+			{
+				result = FALSE;
 				break;
+			}
 
 		if (p)
 			*p = delim;
 	}
 
 	free(dup);
-	return (p == NULL);
+	return (result);
 #endif
 }
 

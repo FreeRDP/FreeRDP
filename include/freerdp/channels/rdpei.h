@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_CHANNEL_RDPEI_H_
-#define __FREERDP_CHANNEL_RDPEI_H_
+#ifndef FREERDP_CHANNEL_RDPEI_H
+#define FREERDP_CHANNEL_RDPEI_H
 
 #include <winpr/wtypes.h>
 
@@ -87,5 +87,5 @@ struct _RDPINPUT_TOUCH_EVENT
 typedef struct _RDPINPUT_TOUCH_EVENT RDPINPUT_TOUCH_EVENT;
 
 
-#endif /* __FREERDP_CHANNEL_RDPEI_H_ */
+#endif /* FREERDP_CHANNEL_RDPEI_H */
 

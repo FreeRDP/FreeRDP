@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_RDPGFX_H
-#define FREERDP_SHADOW_SERVER_RDPGFX_H
+#ifndef FREERDP_SERVER_SHADOW_RDPGFX_H
+#define FREERDP_SERVER_SHADOW_RDPGFX_H
 
 #include <freerdp/server/shadow.h>
 
@@ -35,4 +35,4 @@ void shadow_client_rdpgfx_uninit(rdpShadowClient* client);
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_RDPGFX_H */
+#endif /* FREERDP_SERVER_SHADOW_RDPGFX_H */

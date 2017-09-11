@@ -16,8 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __FREERDP_SESSION_H__
-#define __FREERDP_SESSION_H__
+#ifndef FREERDP_SESSION_H
+#define FREERDP_SESSION_H
 
 #include <winpr/wtypes.h>
 
@@ -45,4 +45,4 @@ struct rdp_logon_info_ex {
 };
 typedef struct rdp_logon_info_ex logon_info_ex;
 
-#endif /* __FREERDP_SESSION_H__ */
+#endif /* FREERDP_SESSION_H */

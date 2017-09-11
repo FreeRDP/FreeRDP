@@ -1214,11 +1214,6 @@ static BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* cha
 	return TRUE;
 }
 
-static BOOL TsProxySetupReceivePipeReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
-{
-	WLog_DBG(TAG, "TsProxySetupReceivePipeReadResponse");
-	return TRUE;
-}
 
 int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
 {
@@ -1860,11 +1855,6 @@ void tsg_free(rdpTsg* tsg)
 	}
 }
 
-static long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
-                                       long ret)
-{
-	return 1;
-}
 
 static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 {

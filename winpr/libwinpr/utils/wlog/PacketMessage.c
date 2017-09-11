@@ -27,6 +27,7 @@
 
 #include "wlog/PacketMessage.h"
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
@@ -125,7 +126,7 @@ static BOOL Pcap_Add_Record(wPcap* pcap, void* data, UINT32 length)
 
 static BOOL Pcap_HasNext_Record(wPcap* pcap)
 {
-	if (pcap->file_size - (ftell(pcap->fp)) <= 16)
+	if (pcap->file_size - (_ftelli64(pcap->fp)) <= 16)
 		return FALSE;
 
 	return TRUE;
@@ -220,12 +221,12 @@ wPcap* Pcap_Open(char* name, BOOL write)
 	}
 	else
 	{
-		if (fseek(pcap->fp, 0, SEEK_END) < 0)
+		if (_fseeki64(pcap->fp, 0, SEEK_END) < 0)
 			goto out_fail;
-		pcap->file_size = (int) ftell(pcap->fp);
+		pcap->file_size = _ftelli64(pcap->fp);
 		if (pcap->file_size < 0)
 			goto out_fail;
-		if (fseek(pcap->fp, 0, SEEK_SET) < 0)
+		if (_fseeki64(pcap->fp, 0, SEEK_SET) < 0)
 			goto out_fail;
 		if (!Pcap_Read_Header(pcap, &pcap->header))
 			goto out_fail;

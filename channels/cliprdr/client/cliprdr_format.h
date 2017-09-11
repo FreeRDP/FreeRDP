@@ -20,12 +20,12 @@
  * limitations under the License.
  */
 
-#ifndef __CLIPRDR_FORMAT_H
-#define __CLIPRDR_FORMAT_H
+#ifndef FREERDP_CHANNEL_CLIPRDR_CLIENT_FORMAT_H
+#define FREERDP_CHANNEL_CLIPRDR_CLIENT_FORMAT_H
 
 UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags);
 UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags);
 UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags);
 UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags);
 
-#endif /* __CLIPRDR_FORMAT_H */
+#endif /* FREERDP_CHANNEL_CLIPRDR_CLIENT_FORMAT_H */

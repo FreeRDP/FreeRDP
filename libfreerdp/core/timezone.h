@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __TIMEZONE_H
-#define __TIMEZONE_H
+#ifndef FREERDP_LIB_CORE_TIMEZONE_H
+#define FREERDP_LIB_CORE_TIMEZONE_H
 
 #include "rdp.h"
 
@@ -43,4 +43,4 @@ FREERDP_LOCAL BOOL rdp_write_client_time_zone(wStream* s,
 #define DEBUG_TIMEZONE(...) do { } while (0)
 #endif
 
-#endif /* __TIMEZONE_H */
+#endif /* FREERDP_LIB_CORE_TIMEZONE_H */

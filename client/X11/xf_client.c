@@ -1276,6 +1276,8 @@ static BOOL xf_post_connect(freerdp* instance)
 	pointer_cache_register_callbacks(update);
 	update->PlaySound = xf_play_sound;
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
+	update->SetKeyboardImeStatus = xf_keyboard_set_ime_status;
+
 
 	if (!(xfc->clipboard = xf_clipboard_new(xfc)))
 		return FALSE;
@@ -1284,6 +1286,7 @@ static BOOL xf_post_connect(freerdp* instance)
 	e.width = settings->DesktopWidth;
 	e.height = settings->DesktopHeight;
 	PubSub_OnResizeWindow(context->pubSub, xfc, &e);
+
 	return TRUE;
 }
 

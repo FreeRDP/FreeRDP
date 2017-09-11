@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_CLIENT_DISP_H
-#define FREERDP_CHANNEL_CLIENT_DISP_H
+#ifndef FREERDP_CHANNEL_DISP_CLIENT_DISP_H
+#define FREERDP_CHANNEL_DISP_CLIENT_DISP_H
 
 #define ORIENTATION_LANDSCAPE				0
 #define ORIENTATION_PORTRAIT				90
@@ -62,5 +62,5 @@ struct _disp_client_context
 	pcDispSendMonitorLayout SendMonitorLayout;
 };
 
-#endif /* FREERDP_CHANNEL_CLIENT_DISP_H */
+#endif /* FREERDP_CHANNEL_DISP_CLIENT_DISP_H */
 

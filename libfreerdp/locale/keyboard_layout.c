@@ -229,7 +229,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 	RDP_KEYBOARD_LAYOUT* new;
 
 	num = 0;
-	layouts = (RDP_KEYBOARD_LAYOUT*) malloc((num + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+	layouts = (RDP_KEYBOARD_LAYOUT*) calloc((num + 1), sizeof(RDP_KEYBOARD_LAYOUT));
 	if (!layouts)
 		return NULL;
 

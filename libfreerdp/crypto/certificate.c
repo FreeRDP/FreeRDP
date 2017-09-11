@@ -184,7 +184,9 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 					hostname, pline);
 			else if (strcmp(hostname, certificate_data->hostname) == 0)
 			{
-				match = strcmp(pline, certificate_data->fingerprint);
+				const int diff = strcmp(pline, certificate_data->fingerprint);
+
+				match = (diff == 0) ? 0 : -1;
 				break;
 			}
 		}
@@ -312,9 +314,12 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 				if (port == certificate_data->port)
 				{
 					found = TRUE;
-					match = (strcmp(certificate_data->fingerprint, fingerprint) == 0) ? 0 : -1;
-					if (fingerprint && fprint)
-						*fprint = _strdup(fingerprint);
+					if (fingerprint)
+					{
+						match = (strcmp(certificate_data->fingerprint, fingerprint) == 0) ? 0 : -1;
+						if (fprint)
+							*fprint = _strdup(fingerprint);
+					}
 					if (subject && psubject)
 						crypto_base64_decode(subject, strlen(subject), (BYTE**)psubject, &outLen);
 					if (issuer && pissuer)

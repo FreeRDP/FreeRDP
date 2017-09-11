@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_NTLM_H
-#define FREERDP_CORE_NTLM_H
+#ifndef FREERDP_LIB_CORE_GATEWAY_NTLM_H
+#define FREERDP_LIB_CORE_GATEWAY_NTLM_H
 
 typedef struct rdp_ntlm rdpNtlm;
 
@@ -78,4 +78,4 @@ FREERDP_LOCAL BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass,
 FREERDP_LOCAL rdpNtlm* ntlm_new(void);
 FREERDP_LOCAL void ntlm_free(rdpNtlm* ntlm);
 
-#endif /* FREERDP_CORE_NTLM_H */
+#endif /* FREERDP_LIB_CORE_GATEWAY_NTLM_H */

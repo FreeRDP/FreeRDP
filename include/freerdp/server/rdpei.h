@@ -20,8 +20,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_CHANNEL_RDPEI_SERVER_H__
-#define __FREERDP_CHANNEL_RDPEI_SERVER_H__
+#ifndef FREERDP_CHANNEL_RDPEI_SERVER_H
+#define FREERDP_CHANNEL_RDPEI_SERVER_H
 
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpei.h>
@@ -69,4 +69,4 @@ FREERDP_API UINT rdpei_server_resume(RdpeiServerContext *context);
 
 
 
-#endif /* __FREERDP_CHANNEL_RDPEI_SERVER_H__ */
+#endif /* FREERDP_CHANNEL_RDPEI_SERVER_H */

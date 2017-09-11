@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __MF_CLIENT_H
-#define __MF_CLIENT_H
+#ifndef FREERDP_CLIENT_MAC_CLIENT_H
+#define FREERDP_CLIENT_MAC_CLIENT_H
 
 #include <freerdp/client.h>
 
@@ -40,4 +40,4 @@ FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 }
 #endif
 
-#endif
+#endif /* FREERDP_CLIENT_MAC_CLIENT_H */

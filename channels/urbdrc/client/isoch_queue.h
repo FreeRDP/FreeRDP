@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __ISOCH_QUEUE_H
-#define __ISOCH_QUEUE_H
+#ifndef FREERDP_CHANNEL_URBDRC_CLIENT_ISOCH_QUEUE_H
+#define FREERDP_CHANNEL_URBDRC_CLIENT_ISOCH_QUEUE_H
 
 #include "urbdrc_types.h"
 
@@ -66,4 +66,4 @@ ISOCH_CALLBACK_QUEUE* isoch_queue_new(void);
 
 	
 
-#endif /* __ISOCH_QUEUE_H */
+#endif /* FREERDP_CHANNEL_URBDRC_CLIENT_ISOCH_QUEUE_H */

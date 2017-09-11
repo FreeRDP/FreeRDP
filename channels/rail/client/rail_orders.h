@@ -20,8 +20,8 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_ORDERS_H
-#define	__RAIL_ORDERS_H
+#ifndef FREERDP_CHANNEL_RAIL_CLIENT_ORDERS_H
+#define FREERDP_CHANNEL_RAIL_CLIENT_ORDERS_H
 
 #include <freerdp/channels/log.h>
 
@@ -64,4 +64,4 @@ UINT rail_send_client_window_move_order(railPlugin* rail, RAIL_WINDOW_MOVE_ORDER
 UINT rail_send_client_get_appid_req_order(railPlugin* rail, RAIL_GET_APPID_REQ_ORDER* getAppIdReq);
 UINT rail_send_client_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo);
 
-#endif /* __RAIL_ORDERS_H */
+#endif /* FREERDP_CHANNEL_RAIL_CLIENT_ORDERS_H */
