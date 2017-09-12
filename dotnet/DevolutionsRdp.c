@@ -10,11 +10,11 @@
 #include <freerdp/log.h>
 #include <winpr/environment.h>
 
-#include "devolutionsrdp.h"
+#include "DevolutionsRdp.h"
 #include "clipboard.h"
 #include "cursor.h"
 
-#define TAG "devolutionsrdp"
+#define TAG "DevolutionsRdp"
 
 // PRIVATE FUNCTIONS DECLARATIONS
 /////////////////////////////////

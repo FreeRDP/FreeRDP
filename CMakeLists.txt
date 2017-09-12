@@ -68,6 +68,7 @@ include(CheckCXXCompilerFlag)
 include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 include(InstallFreeRDPMan)
+include(WindowsRC)
 
 # Soname versioning
 set(BUILD_NUMBER 0)
@@ -941,6 +942,8 @@ endif()
 if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
+
+add_subdirectory(dotnet)
 
 # Packaging
 
