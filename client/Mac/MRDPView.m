@@ -1231,6 +1231,10 @@ BOOL mac_desktop_resize(rdpContext* context)
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
 	rdpSettings* settings = context->settings;
+
+	if (!context->gdi)
+		return TRUE;
+
 	/**
 	 * TODO: Fix resizing race condition. We should probably implement a message to be
 	 * put on the update message queue to be able to properly flush pending updates,
