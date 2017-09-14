@@ -88,6 +88,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "serial", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "tty", "Redirect serial device" },
 	{ "parallel", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
 	{ "smartcard", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
+	{ "password-is-pin", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Use smart card authentication with password as smart card PIN"},
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect USB device" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect multitouch input" },
@@ -550,6 +551,10 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 		freerdp_client_add_device_channel(settings, count, p);
 
 		free(p);
+	}
+	CommandLineSwitchCase(arg, "password-is-pin")
+	{
+		settings->PasswordIsSmartcardPin = TRUE;
 	}
 	CommandLineSwitchCase(arg, "printer")
 	{
