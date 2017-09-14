@@ -357,6 +357,9 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 	if (settings->CompressionEnabled)
 		flags |= INFO_COMPRESSION | INFO_PACKET_COMPR_TYPE_64K;
 
+	if (settings->PasswordIsSmartcardPin)
+		flags |= INFO_PASSWORD_IS_SC_PIN;
+
 	if (settings->Domain)
 	{
 		cbDomain = ConvertToUnicode(CP_UTF8, 0, settings->Domain, -1, &domain, 0) * 2;
