@@ -859,7 +859,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 			 */
 		if (vi->red_mask & 0xFF)
 		{
-			xfc->invert = TRUE;
+			xfc->invert = FALSE;
 		}
 
 		/* calculate color shifts required for rdp order color conversion */
