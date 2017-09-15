@@ -854,9 +854,9 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	if (xfc->visual)
 	{
 		/*
-			 * Detect if the server visual has an inverted colormap
-			 * (BGR vs RGB, or red being the least significant byte)
-			 */
+		 * Detect if the server visual has an inverted colormap
+		 * (BGR vs RGB, or red being the least significant byte)
+		 */
 		if (vi->red_mask & 0xFF)
 		{
 			xfc->invert = FALSE;
