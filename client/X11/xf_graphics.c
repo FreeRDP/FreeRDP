@@ -144,9 +144,11 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		xbitmap->image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 		                              ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height,
 		                              xfc->scanline_pad, 0);
-
 		if (!xbitmap->image)
 			goto unlock;
+
+		xbitmap->image->byte_order = LSBFirst;
+		xbitmap->image->bitmap_bit_order = LSBFirst;
 
 		XPutImage(xfc->display, xbitmap->pixmap, xfc->gc, xbitmap->image, 0, 0, 0, 0, bitmap->width,
 		          bitmap->height);
