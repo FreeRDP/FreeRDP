@@ -229,9 +229,9 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		return FALSE;
 
 	if (!xfc->invert)
-		CursorFormat = PIXEL_FORMAT_RGBA32;
+		CursorFormat = (!xfc->big_endian) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_ABGR32;
 	else
-		CursorFormat = PIXEL_FORMAT_BGRA32;
+		CursorFormat = (!xfc->big_endian) ? PIXEL_FORMAT_BGRA32 : PIXEL_FORMAT_ARGB32;
 
 	xf_lock_x11(xfc, FALSE);
 	ZeroMemory(&ci, sizeof(ci));
