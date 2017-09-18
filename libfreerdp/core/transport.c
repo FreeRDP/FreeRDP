@@ -1053,6 +1053,10 @@ int transport_check_fds(rdpTransport* transport)
 		transport->haveMoreBytesToRead = TRUE;
 	}
 
+  if (freerdp_shall_disconnect(transport->context->instance)) {
+      return -1;
+  }
+
 	return 0;
 }
 
