@@ -202,6 +202,10 @@ static BOOL xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
                                  BOOL primary)
 {
 	xfContext* xfc = (xfContext*) context;
+
+	if (!context || (!bitmap && !primary))
+		return FALSE;
+
 	xf_lock_x11(xfc, FALSE);
 
 	if (primary)
