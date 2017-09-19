@@ -507,8 +507,11 @@ static int nla_client_recv(rdpNla* nla)
 		}
 
 		nla_buffer_free(nla);
-		nla->table->FreeCredentialsHandle(&nla->credentials);
-
+		if (SecIsValidHandle(&nla->credentials))
+		{
+			nla->table->FreeCredentialsHandle(&nla->credentials);
+			SecInvalidateHandle(&nla->credentials);
+		}
 		if (nla->status != SEC_E_OK)
 		{
 			WLog_ERR(TAG, "FreeCredentialsHandle status %s [0x%08"PRIX32"]",
@@ -1853,7 +1856,11 @@ void nla_free(rdpNla* nla)
 	if (nla->table)
 	{
 		SECURITY_STATUS status;
-		status = nla->table->FreeCredentialsHandle(&nla->credentials);
+		if (SecIsValidHandle(&nla->credentials))
+		{
+			status = nla->table->FreeCredentialsHandle(&nla->credentials);
+			SecInvalidateHandle(&nla->credentials);
+		}
 
 		status = nla->table->DeleteSecurityContext(&nla->context);
 
