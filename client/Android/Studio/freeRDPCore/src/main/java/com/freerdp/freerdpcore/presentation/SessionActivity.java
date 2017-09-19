@@ -12,6 +12,7 @@ package com.freerdp.freerdpcore.presentation;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.app.UiModeManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -356,6 +357,9 @@ public class SessionActivity extends AppCompatActivity implements
 
         // remove clipboard listener
         mClipboardManager.removeClipboardboardChangedListener(this);
+
+        // FIXME: prevent crashing app in DeX Mode: app crashes with popup window when user manually closes the Window
+        DexFixCloseWin();
 
         // free session
         GlobalApp.freeSession(session.getInstance());
@@ -1361,4 +1365,14 @@ public class SessionActivity extends AppCompatActivity implements
             closeSessionActivity(RESULT_OK);
         }
     }
+
+
+    private void DexFixCloseWin() {
+        UiModeManager uiMode = (UiModeManager) getSystemService(Context.UI_MODE_SERVICE);
+        //Density for mdpi is 160
+        int density = getResources().getDisplayMetrics().densityDpi;
+        boolean isDex = ((uiMode.getCurrentModeType() == Configuration.UI_MODE_TYPE_DESK) && density == 160);
+        if (isDex) { try { Thread.sleep(100); } catch (InterruptedException e) { /* NOP */ } }
+    }
+
 }
