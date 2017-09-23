@@ -1845,6 +1845,12 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 		case FreeRDP_PercentScreen:
 			return settings->PercentScreen;
 
+		case FreeRDP_PercentScreenUseWidth:
+			return settings->PercentScreenUseWidth;
+
+		case FreeRDP_PercentScreenUseHeight:
+			return settings->PercentScreenUseHeight;
+
 		case FreeRDP_GatewayUsageMethod:
 			return settings->GatewayUsageMethod;
 
@@ -2140,6 +2146,14 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_PercentScreen:
 			settings->PercentScreen = param;
+			break;
+
+		case FreeRDP_PercentScreenUseWidth:
+			settings->PercentScreenUseWidth = param;
+			break;
+
+		case FreeRDP_PercentScreenUseHeight:
+			settings->PercentScreenUseHeight = param;
 			break;
 
 		case FreeRDP_GatewayUsageMethod:
