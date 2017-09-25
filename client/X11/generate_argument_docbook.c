@@ -142,9 +142,10 @@ int main(int argc, char *argv[])
 	for(x=0; x<elements - 1; x++)
 	{
 		const COMMAND_LINE_ARGUMENT_A *arg = &args[x];
-		const char *name = tr_esc_str((LPSTR) arg->Name);
-		const char *format = tr_esc_str(arg->Format);
-		const char *text = tr_esc_str((LPSTR) arg->Text);
+		char *name = tr_esc_str((LPSTR) arg->Name);
+		char *format = tr_esc_str(arg->Format);
+		char *text = tr_esc_str((LPSTR) arg->Text);
+
 		fprintf(fp, "\t\t\t<varlistentry>\n");
 
 		fprintf(fp, "\t\t\t\t<term><option>/%s</option>", name);
@@ -166,9 +167,9 @@ int main(int argc, char *argv[])
 			fprintf(fp, "\t\t\t\t</listitem>\n");
 		}
 		fprintf(fp, "\t\t\t</varlistentry>\n");
-		free((void*) name);
-		free((void*) format);
-		free((void*) text);
+		free(name);
+		free(format);
+		free(text);
 	}
 	fprintf(fp, "\t\t</variablelist>\n");
 	fprintf(fp, "\t</refsect1>\n");
