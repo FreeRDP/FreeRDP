@@ -242,18 +242,33 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 		else if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED)
 		         || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 		{
+			BOOL overlong = FALSE;
+
 			printf("    %s", "/");
 
 			if (arg->Format)
 			{
 				length = (int)(strlen(arg->Name) + strlen(arg->Format) + 2);
+				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
+					length += 2;
+
+				if (length >= 20 + 8 + 8)
+				{
+					length += 3 - strlen(arg->Format);
+					overlong = TRUE;
+				}
+
 				str = (char*) calloc(length + 1UL, sizeof(char));
 
 				if (!str)
 					return FALSE;
 
-				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
+				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
+					sprintf_s(str, length + 1, "%s[:%s]", arg->Name, overlong ? "..." : arg->Format);
+				else
+					sprintf_s(str, length + 1, "%s:%s", arg->Name, overlong ? "..." : arg->Format);
 				printf("%-20s", str);
+
 				free(str);
 			}
 			else
@@ -265,18 +280,9 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 		}
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
-			length = (int) strlen(arg->Name) + 32;
-			str = (char*) calloc(length + 1UL, sizeof(char));
-
-			if (!str)
-				return FALSE;
-
-			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
-			          arg->Default ? "on" : "off");
 			printf("    %s", arg->Default ? "-" : "+");
-			printf("%-20s", str);
-			free(str);
-			printf("\t%s\n", arg->Text);
+			printf("%-20s", arg->Name);
+			printf("\t%s (default:%s)\n", arg->Text, arg->Default ? "on" : "off");
 		}
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
