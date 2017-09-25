@@ -130,6 +130,7 @@ option(WITH_DEBUG_RINGBUFFER "Enable Ringbuffer debug messages" ${DEFAULT_DEBUG_
 
 option(WITH_DEBUG_SYMBOLS "Pack debug symbols to installer" OFF)
 option(WITH_CCACHE "Use ccache support if available" ON)
+option(WITH_ICU "Use ICU for unicode conversion" OFF)
 
 if(ANDROID)
 include(ConfigOptionsAndroid)
