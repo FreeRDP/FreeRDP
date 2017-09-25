@@ -37,7 +37,7 @@ if(OPENSSL_FOUND)
 	else()
 		# if ${OPENSSL_LIBRARIES} libssl and libcrypto is linked
 		# therefor explicitly link against libcrypto
-		list(APPEND ${MODULE_PREFIX}_LIBS crypto)
+		list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_CRYPTO_LIBRARIES})
 	endif()
 endif()
 
