@@ -196,6 +196,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "scale-desktop", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor for desktop applications (value between 100 and 500)" },
 	{ "scale-device", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor for app store applications (100, 140, or 180)" },
 	{ "action-script", COMMAND_LINE_VALUE_REQUIRED, "<file name>", "~/.config/freerdp/action.sh", NULL, -1, NULL, "Action script" },
+	{ "password-is-pin", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Use smart card authentication with password as smart card PIN"},
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -999,6 +1000,10 @@ static int freerdp_client_command_line_post_filter(void* context,
 		settings->SupportMultitransport = TRUE;
 		settings->MultitransportFlags = (TRANSPORT_TYPE_UDP_FECR |
 		                                 TRANSPORT_TYPE_UDP_FECL | TRANSPORT_TYPE_UDP_PREFERRED);
+	}
+	CommandLineSwitchCase(arg, "password-is-pin")
+	{
+		settings->PasswordIsSmartcardPin = TRUE;
 	}
 	CommandLineSwitchEnd(arg)
 	return status ? 1 : 0;
