@@ -147,28 +147,39 @@ int main(int argc, char *argv[])
 	{
 		const COMMAND_LINE_ARGUMENT_A *arg = &args[x];
 		char *name = tr_esc_str((LPSTR) arg->Name, FALSE);
+		char *alias = tr_esc_str((LPSTR) arg->Alias, FALSE);
 		char *format = tr_esc_str(arg->Format, TRUE);
 		char *text = tr_esc_str((LPSTR) arg->Text, FALSE);
 
 		fprintf(fp, "\t\t\t<varlistentry>\n");
 
-		fprintf(fp, "\t\t\t\t<term><option>");
-		if (arg->Flags == COMMAND_LINE_VALUE_BOOL)
-			fprintf(fp, "%s", arg->Default ? "-" : "+");
-		else
-			fprintf(fp, "/");
-		fprintf(fp, "%s</option>", name);
-
-		if (format)
+		do
 		{
-			if (arg->Flags == COMMAND_LINE_VALUE_OPTIONAL)
-				fprintf(fp, "[");
-			fprintf(fp, ":%s", format);
-			if (arg->Flags == COMMAND_LINE_VALUE_OPTIONAL)
-				fprintf(fp, "]");
-		}
+			fprintf(fp, "\t\t\t\t<term><option>");
+			if (arg->Flags == COMMAND_LINE_VALUE_BOOL)
+				fprintf(fp, "%s", arg->Default ? "-" : "+");
+			else
+				fprintf(fp, "/");
+			fprintf(fp, "%s</option>", name);
 
-		fprintf(fp, "</term>\n");
+			if (format)
+			{
+				if (arg->Flags == COMMAND_LINE_VALUE_OPTIONAL)
+					fprintf(fp, "[");
+				fprintf(fp, ":%s", format);
+				if (arg->Flags == COMMAND_LINE_VALUE_OPTIONAL)
+					fprintf(fp, "]");
+			}
+
+			fprintf(fp, "</term>\n");
+			
+			if (alias == name)
+				break;
+
+			free (name);
+			name = alias;
+		}
+		while (alias);
 
 		if (text)
 		{
