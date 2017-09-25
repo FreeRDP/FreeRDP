@@ -198,20 +198,34 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	}
 	else if (settings->PercentScreen)
 	{
-		*pMaxWidth = (xfc->workArea.width * settings->PercentScreen) / 100;
-		*pMaxHeight = (xfc->workArea.height * settings->PercentScreen) / 100;
-
 		/* If we have specific monitor information then limit the PercentScreen value
 		 * to only affect the current monitor vs. the entire desktop
 		 */
 		if (vscreen->nmonitors > 0)
 		{
-			*pMaxWidth = ((vscreen->monitors[current_monitor].area.right -
+			*pMaxWidth = vscreen->monitors[current_monitor].area.right -
+				           vscreen->monitors[current_monitor].area.left + 1;
+			*pMaxHeight = vscreen->monitors[current_monitor].area.bottom -
+			              vscreen->monitors[current_monitor].area.top + 1;
+			if(settings->PercentScreenUseWidth)
+				*pMaxWidth = ((vscreen->monitors[current_monitor].area.right -
 			               vscreen->monitors[current_monitor].area.left + 1) * settings->PercentScreen) /
 			             100;
-			*pMaxHeight = ((vscreen->monitors[current_monitor].area.bottom -
+
+			if(settings->PercentScreenUseHeight)
+				*pMaxHeight = ((vscreen->monitors[current_monitor].area.bottom -
 			                vscreen->monitors[current_monitor].area.top + 1) * settings->PercentScreen) /
 			              100;
+		}
+		else
+		{
+			*pMaxWidth = xfc->workArea.width;
+			*pMaxHeight = xfc->workArea.height;
+
+			if(settings->PercentScreenUseWidth)
+				*pMaxWidth = (xfc->workArea.width * settings->PercentScreen) / 100;
+			if(settings->PercentScreenUseHeight)
+				*pMaxHeight = (xfc->workArea.height * settings->PercentScreen) / 100;
 		}
 	}
 
