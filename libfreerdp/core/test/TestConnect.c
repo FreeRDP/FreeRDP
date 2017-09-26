@@ -136,6 +136,7 @@ static int testAbort(int port)
 	}
 
 	WaitForSingleObject(s_sync, INFINITE);
+	Sleep(1000); /* Wait until freerdp_connect has been called */
 	freerdp_abort_connect(instance);
 	status = WaitForSingleObject(instance->context->abortEvent, 0);
 
