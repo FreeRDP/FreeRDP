@@ -9,21 +9,23 @@ static HANDLE s_sync = NULL;
 static int runInstance(int argc, char* argv[], freerdp** inst)
 {
 	int rc = -1;
-	freerdp* instance = freerdp_new();
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
+	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
+	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
+	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
+	clientEntryPoints.ContextSize = sizeof(rdpContext);
+	rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
 
-	if (!instance)
+	if (!context)
 		goto finish;
 
 	if (inst)
-		*inst = instance;
+		*inst = context->instance;
 
-	if (!freerdp_context_new(instance))
+	if (freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE) < 0)
 		goto finish;
 
-	if (freerdp_client_settings_parse_command_line(instance->settings, argc, argv, FALSE) < 0)
-		goto finish;
-
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!freerdp_client_load_addins(context->channels, context->settings))
 		goto finish;
 
 	if (s_sync)
@@ -34,18 +36,17 @@ static int runInstance(int argc, char* argv[], freerdp** inst)
 
 	rc = 1;
 
-	if (!freerdp_connect(instance))
+	if (!freerdp_connect(context->instance))
 		goto finish;
 
 	rc = 2;
 
-	if (!freerdp_disconnect(instance))
+	if (!freerdp_disconnect(context->instance))
 		goto finish;
 
 	rc = 0;
 finish:
-	freerdp_context_free(instance);
-	freerdp_free(instance);
+	freerdp_client_context_free(context);
 	return rc;
 }
 
