@@ -1065,7 +1065,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			format = gdi_get_pixel_format(cmd->bpp);
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-			                        0, 0, cmd->width, cmd->height,
+			                        cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
 			                        pSrcData, format, 0, 0, 0,
 			                        &xfc->context.gdi->palette, FREERDP_FLIP_VERTICAL))
 				goto fail;
