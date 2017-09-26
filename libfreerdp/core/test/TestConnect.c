@@ -154,8 +154,11 @@ static int testAbort(int port)
 	s_sync = NULL;
 	diff = end - start;
 
-	if (diff > 1000)
+	if (diff > 5000)
+	{
+		printf("%s required %"PRIu32"ms for the test\n", __FUNCTION__, diff);
 		return -1;
+	}
 
 	if (WAIT_OBJECT_0 != status)
 		return -1;
@@ -228,7 +231,7 @@ static int testSuccess(int port)
 	}
 
 	// Start sample server locally.
-	commandLineLen = strlen(exe) + strlen(" --port=XXXXX") + 1;
+	commandLineLen = strlen(exe) + strlen("--local-only --port=XXXXX") + 1;
 	commandLine = malloc(commandLineLen);
 
 	if (!commandLine)
@@ -239,7 +242,7 @@ static int testSuccess(int port)
 		return -2;
 	}
 
-	_snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
+	_snprintf(commandLine, commandLineLen, "%s --local-only --port=%d", exe, port);
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 
