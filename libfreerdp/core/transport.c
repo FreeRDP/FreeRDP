@@ -997,8 +997,13 @@ int transport_check_fds(rdpTransport* transport)
 		ResetEvent(transport->rereadEvent);
 	}
 
-	while (!freerdp_shall_disconnect(transport->context->instance) && (now < dueDate))
+	while (now < dueDate)
 	{
+
+		if (freerdp_shall_disconnect(transport->context->instance)) {
+			return -1;
+		}
+
 		/**
 		 * Note: transport_read_pdu tries to read one PDU from
 		 * the transport layer.

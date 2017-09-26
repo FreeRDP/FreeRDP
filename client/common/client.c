@@ -39,13 +39,13 @@
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
-	return pEntryPoints->ClientNew(instance, context);
+	return IFCALLRESULT(TRUE, pEntryPoints->ClientNew, instance, context);
 }
 
 static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
-	pEntryPoints->ClientFree(instance, context);
+	IFCALL(pEntryPoints->ClientFree, instance, context);
 }
 
 /* Common API */

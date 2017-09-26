@@ -2460,7 +2460,7 @@ static BOOL update_read_create_offscreen_bitmap_order(wStream* s,
 		if (deleteList->cIndices > deleteList->sIndices)
 		{
 			UINT16* new_indices;
-			new_indices = (UINT16*)realloc(deleteList->indices, deleteList->sIndices * 2);
+			new_indices = (UINT16*)realloc(deleteList->indices, deleteList->cIndices * 2);
 
 			if (!new_indices)
 				return FALSE;
@@ -3451,7 +3451,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		case ORDER_TYPE_GDIPLUS_END:
-			if (update_read_draw_gdiplus_end_order(s, &(altsec->draw_gdiplus_end)))
+			if (!update_read_draw_gdiplus_end_order(s, &(altsec->draw_gdiplus_end)))
 			{
 				WLog_ERR(TAG,
 				         "ORDER_TYPE_GDIPLUS_END - update_read_draw_gdiplus_end_order() failed");

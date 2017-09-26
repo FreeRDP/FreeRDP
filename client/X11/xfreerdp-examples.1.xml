@@ -8,6 +8,12 @@
 			</listitem>
 		</varlistentry>
 		<varlistentry>
+			<term><command>xfreerdp /u:USER /size:50%h /v:rdp.contoso.com</command></term>
+			<listitem>
+				<para>Connect to host <replaceable>rdp.contoso.com</replaceable> with user <replaceable>USER</replaceable> and a size of <replaceable>50 percent of the height</replaceable>. If width (w) is set instead of height (h) like /size:50%w. 50 percent of the width is used.</para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
 			<term><command>xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com</command></term>
 			<listitem>
 				<para>Connect to host <replaceable>rdp.contoso.com</replaceable> with user <replaceable>CONTOSO\\JohnDoe</replaceable> and password <replaceable>Pwd123!</replaceable></para>

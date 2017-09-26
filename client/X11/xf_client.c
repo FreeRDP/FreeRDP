@@ -381,6 +381,9 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 		goto out;
 	}
 
+	xfc->image->byte_order = LSBFirst;
+	xfc->image->bitmap_bit_order = LSBFirst;
+
 	ret = xf_desktop_resize(context);
 out:
 	xf_unlock_x11(xfc, TRUE);
@@ -628,6 +631,8 @@ BOOL xf_create_window(xfContext* xfc)
 		                          ZPixmap, 0, (char*) gdi->primary_buffer,
 		                          settings->DesktopWidth, settings->DesktopHeight,
 		                          xfc->scanline_pad, gdi->stride);
+		xfc->image->byte_order = LSBFirst;
+		xfc->image->bitmap_bit_order = LSBFirst;
 	}
 
 	return TRUE;
@@ -772,15 +777,6 @@ void xf_unlock_x11(xfContext* xfc, BOOL display)
 	}
 }
 
-static void xf_calculate_color_shifts(UINT32 mask, UINT8* rsh, UINT8* lsh)
-{
-	for (*lsh = 0; !(mask & 1); mask >>= 1)
-		(*lsh)++;
-
-	for (*rsh = 8; mask; mask >>= 1)
-		(*rsh)--;
-}
-
 static BOOL xf_get_pixmap_info(xfContext* xfc)
 {
 	int i;
@@ -849,20 +845,13 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	if (xfc->visual)
 	{
 		/*
-			 * Detect if the server visual has an inverted colormap
-			 * (BGR vs RGB, or red being the least significant byte)
-			 */
+		 * Detect if the server visual has an inverted colormap
+		 * (BGR vs RGB, or red being the least significant byte)
+		 */
 		if (vi->red_mask & 0xFF)
 		{
-			xfc->invert = TRUE;
+			xfc->invert = FALSE;
 		}
-
-		/* calculate color shifts required for rdp order color conversion */
-		xf_calculate_color_shifts(vi->red_mask, &xfc->red_shift_r, &xfc->red_shift_l);
-		xf_calculate_color_shifts(vi->green_mask, &xfc->green_shift_r,
-		                          &xfc->green_shift_l);
-		xf_calculate_color_shifts(vi->blue_mask, &xfc->blue_shift_r,
-		                          &xfc->blue_shift_l);
 	}
 
 	XFree(vis);
@@ -1813,7 +1802,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->screen = ScreenOfDisplay(xfc->display, xfc->screen_number);
 	xfc->depth = DefaultDepthOfScreen(xfc->screen);
 	xfc->big_endian = (ImageByteOrder(xfc->display) == MSBFirst);
-	xfc->invert = (ImageByteOrder(xfc->display) == MSBFirst) ? FALSE : TRUE;
+	xfc->invert = TRUE;
 	xfc->complex_regions = TRUE;
 	xfc->x11event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds,
 	                WINPR_FD_READ);

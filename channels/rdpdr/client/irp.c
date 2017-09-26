@@ -59,13 +59,13 @@ static UINT irp_free(IRP* irp)
  */
 static UINT irp_complete(IRP* irp)
 {
-	int pos;
+	size_t pos;
 	rdpdrPlugin* rdpdr;
 	UINT error;
 
 	rdpdr = (rdpdrPlugin*) irp->devman->plugin;
 
-	pos = (int) Stream_GetPosition(irp->output);
+	pos = Stream_GetPosition(irp->output);
 	Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4);
 	Stream_Write_UINT32(irp->output, irp->IoStatus); /* IoStatus (4 bytes) */
 	Stream_SetPosition(irp->output, pos);

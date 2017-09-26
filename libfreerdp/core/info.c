@@ -675,6 +675,9 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	if (settings->LogonNotify)
 		flags |= INFO_LOGONNOTIFY;
 
+	if (settings->PasswordIsSmartcardPin)
+		flags |= INFO_PASSWORD_IS_SC_PIN;
+
 	if (settings->Domain)
 	{
 		cbDomain = ConvertToUnicode(CP_UTF8, 0, settings->Domain, -1, &domainW, 0) * 2;

@@ -630,7 +630,7 @@ static HANDLE_OPS shmOps = {
 
 static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDisposition, BOOL* create)
 {
-	BOOL writeable = (dwDesiredAccess & (GENERIC_WRITE | STANDARD_RIGHTS_WRITE | FILE_WRITE_DATA | FILE_APPEND_DATA)) != 0;
+	BOOL writeable = (dwDesiredAccess & (GENERIC_WRITE |  FILE_WRITE_DATA | FILE_APPEND_DATA)) != 0;
 
 	switch(dwCreationDisposition)
 	{
@@ -667,6 +667,14 @@ UINT32 map_posix_err(int fs_errno)
 			rc = STATUS_SUCCESS;
 			break;
 
+		case ENOTCONN:
+		case ENODEV:
+		case ENOTDIR:
+		case ENXIO:
+			rc = ERROR_FILE_NOT_FOUND;
+			break;
+
+		case EROFS:
 		case EPERM:
 		case EACCES:
 			rc = ERROR_ACCESS_DENIED;
@@ -693,6 +701,8 @@ UINT32 map_posix_err(int fs_errno)
 			break;
 
 		default:
+			WLog_ERR(TAG, "Missing ERRNO mapping %s [%d]",
+			         strerror(fs_errno), fs_errno);
 			rc = STATUS_UNSUCCESSFUL;
 			break;
 	}
@@ -769,6 +779,27 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		}
 
 		fp = freopen(pFile->lpFileName, mode, fp);
+	}
+	else
+	{
+		if (stat(pFile->lpFileName, &st) != 0)
+		{
+			SetLastError(map_posix_err(errno));
+			free(pFile->lpFileName);
+			free(pFile);
+			return INVALID_HANDLE_VALUE;
+		}
+
+		/* FIFO (named pipe) would block the following fopen
+		 * call if not connected. This renders the channel unusable,
+		 * therefore abort early. */
+		if (S_ISFIFO(st.st_mode))
+		{
+			SetLastError(ERROR_FILE_NOT_FOUND);
+			free(pFile->lpFileName);
+			free(pFile);
+			return INVALID_HANDLE_VALUE;
+		}
 	}
 
 	if (NULL == fp)
