@@ -12,6 +12,7 @@ package com.freerdp.freerdpcore.presentation;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -56,12 +57,16 @@ public class HomeActivity extends AppCompatActivity {
     private PlaceholderBookmark addBookmarkPlaceholder;
     private String sectionLabelBookmarks;
 
+    View mDecor;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         setTitle(R.string.title_home);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.home);
+
+        mDecor = getWindow().getDecorView();
+        mDecor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 
         long heapSize = Runtime.getRuntime().maxMemory();
         Log.i(TAG, "Max HeapSize: " + heapSize);
@@ -147,6 +152,14 @@ public class HomeActivity extends AppCompatActivity {
                 superBarEditText.setText("");
             }
         });
+    }
+
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        // ignore orientation/keyboard change
+        super.onConfigurationChanged(newConfig);
+        mDecor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
     @Override
