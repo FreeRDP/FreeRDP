@@ -753,7 +753,7 @@ rdpRsaKey* key_new(const char* keyfile)
 	char* buffer = NULL;
 	rdpRsaKey* key = NULL;
 
-	fp = fopen(keyfile, "r+b");
+	fp = fopen(keyfile, "rb");
 	if (!fp)
 	{
 		WLog_ERR(TAG, "unable to open RSA key file %s: %s.", keyfile, strerror(errno));
