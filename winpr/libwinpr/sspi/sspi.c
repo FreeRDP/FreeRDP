@@ -35,6 +35,12 @@
 
 static wLog* g_Log = NULL;
 
+#ifdef _WIN32
+#ifndef WITH_NATIVE_SSPI
+#define WITH_NATIVE_SSPI
+#endif
+#endif
+
 static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
 #if defined(WITH_NATIVE_SSPI)
 static HMODULE g_SspiModule = NULL;
