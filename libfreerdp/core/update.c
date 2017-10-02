@@ -562,6 +562,10 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 			update_read_synchronize(update, s);
 			IFCALL(update->Synchronize, context);
 			break;
+
+		default:
+			WLog_ERR(TAG, "unknown update type %"PRIu16"", updateType);
+			break;
 	}
 
 	IFCALL(update->EndPaint, context);
