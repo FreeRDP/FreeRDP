@@ -60,7 +60,7 @@ static BOOL update_gdi_create_offscreen_bitmap(rdpContext* context,
 
 	if (!bitmap->New(context, bitmap))
 	{
-		free(bitmap);
+		Bitmap_Free(context, bitmap);
 		return FALSE;
 	}
 
@@ -101,6 +101,9 @@ static BOOL update_gdi_switch_surface(rdpContext* context,
 	{
 		rdpBitmap* bmp;
 		bmp = offscreen_cache_get(cache->offscreen, switchSurface->bitmapId);
+		if (bmp == NULL)
+			return FALSE;
+
 		bitmap->SetSurface(context, bmp, FALSE);
 	}
 

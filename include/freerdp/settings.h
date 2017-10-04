@@ -662,6 +662,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_YPan						1553
 #define FreeRDP_SmartSizingWidth				1554
 #define FreeRDP_SmartSizingHeight				1555
+#define FreeRDP_PercentScreenUseWidth				1556
+#define FreeRDP_PercentScreenUseHeight				1557
 #define FreeRDP_SoftwareGdi					1601
 #define FreeRDP_LocalConnection					1602
 #define FreeRDP_AuthenticationOnly				1603
@@ -1098,7 +1100,9 @@ struct rdp_settings
 	ALIGN64 int YPan; /* 1553 */
 	ALIGN64 UINT32 SmartSizingWidth; /* 1554 */
 	ALIGN64 UINT32 SmartSizingHeight; /* 1555 */
-	UINT64 padding1601[1601 - 1556]; /* 1556 */
+	ALIGN64 BOOL PercentScreenUseWidth; /* 1556 */
+	ALIGN64 BOOL PercentScreenUseHeight; /* 1557 */
+	UINT64 padding1601[1601 - 1558]; /* 1558 */
 
 	/* Miscellaneous */
 	ALIGN64 BOOL SoftwareGdi; /* 1601 */

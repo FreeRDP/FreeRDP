@@ -293,6 +293,9 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		goto error_surface_image;
 	}
 
+	surface->image->byte_order = LSBFirst;
+	surface->image->bitmap_bit_order = LSBFirst;
+
 	surface->gdi.outputMapped = FALSE;
 	region16_init(&surface->gdi.invalidRegion);
 	if (context->SetSurfaceData(context, surface->gdi.surfaceId, (void*) surface) != CHANNEL_RC_OK)

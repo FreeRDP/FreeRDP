@@ -241,6 +241,8 @@ static Pixmap xf_brush_new(xfContext* xfc, UINT32 width, UINT32 height,
 		                   &xfc->context.gdi->palette, FREERDP_FLIP_NONE);
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 		                     ZPixmap, 0, (char*) cdata, width, height, xfc->scanline_pad, 0);
+		image->byte_order = LSBFirst;
+		image->bitmap_bit_order = LSBFirst;
 		gc = XCreateGC(xfc->display, xfc->drawable, 0, NULL);
 		XPutImage(xfc->display, bitmap, gc, image, 0, 0, 0, 0, width, height);
 		XFree(image);
@@ -264,6 +266,8 @@ static Pixmap xf_mono_bitmap_new(xfContext* xfc, int width, int height,
 	bitmap = XCreatePixmap(xfc->display, xfc->drawable, width, height, 1);
 	image = XCreateImage(xfc->display, xfc->visual, 1,
 	                     ZPixmap, 0, (char*) data, width, height, 8, scanline);
+	image->byte_order = LSBFirst;
+	image->bitmap_bit_order = LSBFirst;
 	XPutImage(xfc->display, bitmap, xfc->gc_mono, image, 0, 0, 0, 0, width, height);
 	XFree(image);
 	return bitmap;
@@ -998,6 +1002,9 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData,
 		if (!image)
 			break;
 
+		image->byte_order = LSBFirst;
+		image->bitmap_bit_order = LSBFirst;
+
 		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0, left, top, width, height);
 		XFree(image);
 		ret = xf_gdi_surface_update_frame(xfc, left, top, width, height);
@@ -1058,7 +1065,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			format = gdi_get_pixel_format(cmd->bpp);
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-			                        0, 0, cmd->width, cmd->height,
+			                        cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
 			                        pSrcData, format, 0, 0, 0,
 			                        &xfc->context.gdi->palette, FREERDP_FLIP_VERTICAL))
 				goto fail;

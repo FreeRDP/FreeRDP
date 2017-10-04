@@ -23,6 +23,7 @@ macro(enable_cmake_compat CMVERSION)
 endmacro()
 
 # Compatibility includes - order does matter!
+enable_cmake_compat(3.7.0)
 enable_cmake_compat(2.8.11)
 enable_cmake_compat(2.8.6)
 enable_cmake_compat(2.8.3)

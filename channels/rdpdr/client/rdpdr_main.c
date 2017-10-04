@@ -420,6 +420,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 
 	for (j = 0; j < count; j++)
 	{
+		char *path = NULL;
 		BOOL dev_found = FALSE;
 		device_ext = (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(
 		                 rdpdr->devman->devices, (void*)keys[j]);
@@ -430,19 +431,26 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		if (device_ext->path == NULL)
 			continue;
 
-		/* not plugable device */
-		if (strstr(device_ext->path, "/Volumes/") == NULL)
+		if (ConvertFromUnicode(CP_UTF8, 0, device_ext->path, 0, &path, 0, NULL, FALSE) <= 0)
 			continue;
+
+		/* not plugable device */
+		if (strstr(path, "/Volumes/") == NULL)
+		{
+			free(path);
+			continue;
+		}
 
 		for (i = 0; i < size; i++)
 		{
-			if (strstr(device_ext->path, dev_array[i].path) != NULL)
+			if (strstr(path, dev_array[i].path) != NULL)
 			{
 				dev_found = TRUE;
 				dev_array[i].to_add = FALSE;
 				break;
 			}
 		}
+		free(path);
 
 		if (!dev_found)
 		{
