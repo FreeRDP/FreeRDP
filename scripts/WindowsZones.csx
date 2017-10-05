@@ -33,9 +33,10 @@ using System.Collections.Generic;
 
 string tzid, windows;
 const string file = @"WindowsZones.txt";
+const string zonesUrl = @"http://www.unicode.org/repos/cldr/tags/latest/common/supplemental/windowsZones.xml";
 List<string> list = new List<string>();
 StreamWriter stream = new StreamWriter(file, false);
-XmlTextReader reader = new XmlTextReader(@"windowsZones.xml");
+XmlTextReader reader = new XmlTextReader(zonesUrl);
 
 stream.WriteLine("struct _WINDOWS_TZID_ENTRY");
 stream.WriteLine("{");
