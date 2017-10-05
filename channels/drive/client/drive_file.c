@@ -561,6 +561,9 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	switch (FsInformationClass)
 	{
 		case FileBasicInformation:
+			if (Stream_GetRemainingLength(input) < 36)
+				return FALSE;
+
 			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
 			Stream_Read_UINT64(input, liCreationTime.QuadPart);
 			Stream_Read_UINT64(input, liLastAccessTime.QuadPart);
@@ -620,6 +623,9 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 		/* http://msdn.microsoft.com/en-us/library/cc232067.aspx */
 		case FileAllocationInformation:
+			if (Stream_GetRemainingLength(input) < 8)
+				return FALSE;
+
 			/* http://msdn.microsoft.com/en-us/library/cc232076.aspx */
 			Stream_Read_INT64(input, size);
 
@@ -656,7 +662,12 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 				break; /* TODO: SetLastError ??? */
 
 			if (Length)
+			{
+				if (Stream_GetRemainingLength(input) < 1)
+					return FALSE;
+
 				Stream_Read_UINT8(input, delete_pending);
+			}
 			else
 				delete_pending = 1;
 
@@ -676,13 +687,19 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			break;
 
 		case FileRenameInformation:
+			if (Stream_GetRemainingLength(input) < 6)
+				return FALSE;
+
 			/* http://msdn.microsoft.com/en-us/library/cc232085.aspx */
 			Stream_Read_UINT8(input, ReplaceIfExists);
 			Stream_Seek_UINT8(input); /* RootDirectory */
 			Stream_Read_UINT32(input, FileNameLength);
+
+			if (Stream_GetRemainingLength(input) < FileNameLength)
+				return FALSE;
+
 			fullpath = drive_file_combine_fullpath(file->basepath, (WCHAR*)Stream_Pointer(input),
 			                                       FileNameLength);
-
 			if (!fullpath)
 			{
 				WLog_ERR(TAG, "drive_file_combine_fullpath failed!");

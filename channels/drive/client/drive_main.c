@@ -167,16 +167,19 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->devman || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
-	Stream_Read_UINT32(irp->input, DesiredAccess);
-	Stream_Read_UINT64(irp->input, allocationSize);
-	if (Stream_GetRemainingLength(irp->input) < allocationSize)
+	if (Stream_GetRemainingLength(irp->input) < 6*4+8)
 		return ERROR_INVALID_DATA;
 
+	Stream_Read_UINT32(irp->input, DesiredAccess);
+	Stream_Read_UINT64(irp->input, allocationSize);
 	Stream_Read_UINT32(irp->input, FileAttributes);
 	Stream_Read_UINT32(irp->input, SharedAccess);
 	Stream_Read_UINT32(irp->input, CreateDisposition);
 	Stream_Read_UINT32(irp->input, CreateOptions);
 	Stream_Read_UINT32(irp->input, PathLength);
+	if (Stream_GetRemainingLength(irp->input) < PathLength)
+		return ERROR_INVALID_DATA;
+
 	path = (WCHAR*) Stream_Pointer(irp->input);
 	FileId = irp->devman->id_sequence++;
 	file = drive_file_new(drive->path, path, PathLength, FileId, DesiredAccess, CreateDisposition,
@@ -271,10 +274,13 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
+	if (Stream_GetRemainingLength(irp->input) < 12)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
-	file = drive_get_file_by_id(drive, irp->FileId);
 
+	file = drive_get_file_by_id(drive, irp->FileId);
 	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -325,11 +331,14 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->input || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
+	if (Stream_GetRemainingLength(irp->input) < 32)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
 	Stream_Seek(irp->input, 20); /* Padding */
-	file = drive_get_file_by_id(drive, irp->FileId);
 
+	file = drive_get_file_by_id(drive, irp->FileId);
 	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -364,9 +373,12 @@ static UINT drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
-	Stream_Read_UINT32(irp->input, FsInformationClass);
-	file = drive_get_file_by_id(drive, irp->FileId);
+	if (Stream_GetRemainingLength(irp->input) < 4)
+		return ERROR_INVALID_DATA;
 
+	Stream_Read_UINT32(irp->input, FsInformationClass);
+
+	file = drive_get_file_by_id(drive, irp->FileId);
 	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -393,11 +405,14 @@ static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->Complete || !irp->input || !irp->output)
 		return ERROR_INVALID_PARAMETER;
 
+	if (Stream_GetRemainingLength(irp->input) < 32)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT32(irp->input, FsInformationClass);
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Seek(irp->input, 24); /* Padding */
-	file = drive_get_file_by_id(drive, irp->FileId);
 
+	file = drive_get_file_by_id(drive, irp->FileId);
 	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -438,6 +453,9 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 
 	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
+
+	if (Stream_GetRemainingLength(irp->input) < 4)
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, FsInformationClass);
 	GetDiskFreeSpaceW(drive->path, &lpSectorsPerCluster, &lpBytesPerSector, &lpNumberOfFreeClusters,
@@ -571,7 +589,11 @@ static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
+	if (Stream_GetRemainingLength(irp->input) < 4)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT32(irp->input, FsInformationClass);
+
 	Stream_Write_UINT32(irp->output, 0); /* Length */
 	return irp->Complete(irp);
 }
@@ -592,13 +614,16 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
+	if (Stream_GetRemainingLength(irp->input) < 32)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT32(irp->input, FsInformationClass);
 	Stream_Read_UINT8(irp->input, InitialQuery);
 	Stream_Read_UINT32(irp->input, PathLength);
 	Stream_Seek(irp->input, 23); /* Padding */
 	path = (WCHAR*) Stream_Pointer(irp->input);
-	file = drive_get_file_by_id(drive, irp->FileId);
 
+	file = drive_get_file_by_id(drive, irp->FileId);
 	if (file == NULL)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -753,11 +778,13 @@ static void* drive_thread_func(void* arg)
 		irp = (IRP*) message.wParam;
 
 		if (irp)
+		{
 			if ((error = drive_process_irp(drive, irp)))
 			{
 				WLog_ERR(TAG, "drive_process_irp failed with error %"PRIu32"!", error);
 				break;
 			}
+		}
 	}
 
 fail:

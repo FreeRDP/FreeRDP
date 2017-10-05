@@ -110,6 +110,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 
 		Stream_Write(s, data, chunkSize);
 
+		WLog_DBG(TAG, "%s: sending data (flags=0x%x size=%d)", __FUNCTION__, flags, size);
 		if (!rdp_send(rdp, s, channelId))
 		{
 			Stream_Release(s);

@@ -592,6 +592,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 	BOOL result = FALSE;
 
+	WLog_DBG(TAG, "updating RDP key");
 	if (!(sha1 = winpr_Digest_New()))
 		goto out;
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
