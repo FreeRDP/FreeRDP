@@ -604,6 +604,7 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
 
+	WLog_DBG(TAG, "%s: sending data (type=0x%x size=%d channelId)", __FUNCTION__, type, Stream_Length(s), channel_id);
 	if (transport_write(rdp->transport, s) < 0)
 		return FALSE;
 
@@ -1224,6 +1225,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 				case PDU_TYPE_FLOW_RESPONSE:
 				case PDU_TYPE_FLOW_STOP:
 				case PDU_TYPE_FLOW_TEST:
+					WLog_DBG(TAG, "flow message 0x%04"PRIX16"", pduType);
 					break;
 
 				default:
