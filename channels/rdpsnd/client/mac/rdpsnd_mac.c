@@ -54,7 +54,8 @@ struct rdpsnd_mac_plugin
 	
 	UINT32 latency;
 	AUDIO_FORMAT format;
-	int audioBufferIndex;
+	size_t lastAudioBufferIndex;
+	size_t audioBufferIndex;
     
 	AudioQueueRef audioQueue;
 	AudioStreamBasicDescription audioFormat;
@@ -70,7 +71,12 @@ typedef struct rdpsnd_mac_plugin rdpsndMacPlugin;
 
 static void mac_audio_queue_output_cb(void* inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer)
 {
-	
+	rdpsndMacPlugin* mac = (rdpsndMacPlugin*)inUserData;
+
+	if (inBuffer == mac->audioBuffers[mac->lastAudioBufferIndex]) {
+		AudioQueuePause(mac->audioQueue);
+		mac->isPlaying = FALSE;
+	}
 }
 
 static BOOL rdpsnd_mac_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
@@ -193,10 +199,16 @@ static void rdpsnd_mac_close(rdpsndDevicePlugin* device)
 	
 	if (mac->isOpen)
 	{
+		size_t index;
 		mac->isOpen = FALSE;
 		
 		AudioQueueStop(mac->audioQueue, true);
 		
+		for (index = 0; index < MAC_AUDIO_QUEUE_NUM_BUFFERS; index++)
+		{
+			AudioQueueFreeBuffer(mac->audioQueue, mac->audioBuffers[index]);
+		}
+
 		AudioQueueDispose(mac->audioQueue, true);
 		mac->audioQueue = NULL;
 		
@@ -338,12 +350,9 @@ static void rdpsnd_mac_waveplay(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	wave->wTimeStampB = wave->wTimeStampA + wave->wLocalTimeB - wave->wLocalTimeA;
 	mac->lastStartTime = outActualStartTime.mSampleTime;
 	
+	mac->lastAudioBufferIndex = mac->audioBufferIndex;
 	mac->audioBufferIndex++;
-
-	if (mac->audioBufferIndex >= MAC_AUDIO_QUEUE_NUM_BUFFERS)
-	{
-		mac->audioBufferIndex = 0;
-	}
+	mac->audioBufferIndex %= MAC_AUDIO_QUEUE_NUM_BUFFERS;
 	
 	device->Start(device);
 }
