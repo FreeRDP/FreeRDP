@@ -202,7 +202,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 
 BOOL freerdp_client_print_version()
 {
-	printf("This is FreeRDP version %s (git %s)\n", FREERDP_VERSION_FULL,
+	printf("This is FreeRDP version %s (%s)\n", FREERDP_VERSION_FULL,
 	       GIT_REVISION);
 	return TRUE;
 }
