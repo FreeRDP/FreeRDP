@@ -2157,6 +2157,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "gfx-thin-client")
 		{
 			settings->GfxThinClient = arg->Value ? TRUE : FALSE;
+			if (settings->GfxThinClient)
+				settings->GfxSmallCache = TRUE;
 			settings->SupportGraphicsPipeline = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gfx-small-cache")
