@@ -976,28 +976,27 @@ static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
 	const RECTANGLE_16* rect;
 	gdiGfxSurface* surface;
 	gdiGfxCacheEntry* cacheEntry;
-	rect = &(surfaceToCache->rectSrc);
-	surface = (gdiGfxSurface*) context->GetSurfaceData(context,
-	          surfaceToCache->surfaceId);
 
+	rect = &(surfaceToCache->rectSrc);
+
+	surface = (gdiGfxSurface*) context->GetSurfaceData(context, surfaceToCache->surfaceId);
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
 	cacheEntry = (gdiGfxCacheEntry*) calloc(1, sizeof(gdiGfxCacheEntry));
-
 	if (!cacheEntry)
-		return ERROR_INTERNAL_ERROR;
+		return ERROR_NOT_ENOUGH_MEMORY;
 
 	cacheEntry->width = (UINT32)(rect->right - rect->left);
 	cacheEntry->height = (UINT32)(rect->bottom - rect->top);
 	cacheEntry->format = surface->format;
 	cacheEntry->scanline = gfx_align_scanline(cacheEntry->width * 4, 16);
-	cacheEntry->data = (BYTE*) calloc(cacheEntry->height, cacheEntry->scanline);
 
+	cacheEntry->data = (BYTE*) calloc(cacheEntry->height, cacheEntry->scanline);
 	if (!cacheEntry->data)
 	{
 		free(cacheEntry);
-		return ERROR_INTERNAL_ERROR;
+		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
 	if (!freerdp_image_copy(cacheEntry->data, cacheEntry->format, cacheEntry->scanline,
@@ -1008,9 +1007,7 @@ static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	context->SetCacheSlotData(context, surfaceToCache->cacheSlot,
-	                          (void*) cacheEntry);
-	return CHANNEL_RC_OK;
+	return context->SetCacheSlotData(context, surfaceToCache->cacheSlot, (void*) cacheEntry);
 }
 
 /**
@@ -1028,10 +1025,9 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 	gdiGfxCacheEntry* cacheEntry;
 	RECTANGLE_16 invalidRect;
 	rdpGdi* gdi = (rdpGdi*) context->custom;
-	surface = (gdiGfxSurface*) context->GetSurfaceData(context,
-	          cacheToSurface->surfaceId);
-	cacheEntry = (gdiGfxCacheEntry*) context->GetCacheSlotData(context,
-	             cacheToSurface->cacheSlot);
+
+	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cacheToSurface->surfaceId);
+	cacheEntry = (gdiGfxCacheEntry*) context->GetCacheSlotData(context, cacheToSurface->cacheSlot);
 
 	if (!surface || !cacheEntry)
 		return ERROR_INTERNAL_ERROR;
