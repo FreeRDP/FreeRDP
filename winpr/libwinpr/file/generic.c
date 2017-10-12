@@ -1029,7 +1029,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			lpFindFileData->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
 			ft = STAT_TIME_TO_FILETIME(fileStat.st_mtime);
 			lpFindFileData->ftLastWriteTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
-			lpFindFileData->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
+			lpFindFileData->ftLastWriteTime.dwLowDateTime = ft & 0xFFFFFFFF;
 			ft = STAT_TIME_TO_FILETIME(fileStat.st_atime);
 			lpFindFileData->ftLastAccessTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
 			lpFindFileData->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
