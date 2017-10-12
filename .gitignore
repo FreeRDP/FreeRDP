@@ -136,6 +136,7 @@ TAGS
 packaging/deb/freerdp-nightly/freerdp-nightly
 packaging/deb/freerdp-nightly/freerdp-nightly-dev
 packaging/deb/freerdp-nightly/freerdp-nightly-dbg
+.source_version
 
 #
 .idea

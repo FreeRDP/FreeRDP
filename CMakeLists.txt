@@ -59,7 +59,6 @@ include(FindPkgConfig)
 include(TestBigEndian)
 
 include(FindFeature)
-include(AutoVersioning)
 include(ConfigOptions)
 include(ComplexLibrary)
 include(FeatureSummary)
@@ -102,7 +101,7 @@ if (FREERDP_EXTERNAL_PATH)
 	get_filename_component (FREERDP_EXTERNAL_PATH "${FREERDP_EXTERNAL_PATH}" ABSOLUTE)
 endif()
 
-# Allow to search the host machine for git
+# Allow to search the host machine for git/ccache
 if(CMAKE_CROSSCOMPILING)
 	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
 endif(CMAKE_CROSSCOMPILING)
@@ -113,15 +112,23 @@ if(CCACHE AND WITH_CCACHE)
 	set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE})
 endif(CCACHE AND WITH_CCACHE)
 
-include(GetGitRevisionDescription)
-git_get_exact_tag(GIT_REVISION --tags --always)
+if(EXISTS "${CMAKE_SOURCE_DIR}/.source_version" )
+	file(READ ${CMAKE_SOURCE_DIR}/.source_version GIT_REVISION)
 
-if (${GIT_REVISION} STREQUAL "n/a")
-	git_rev_parse (GIT_REVISION --short)
+  string(STRIP ${GIT_REVISION} GIT_REVISION)
+else()
+	include(GetGitRevisionDescription)
+	git_get_exact_tag(GIT_REVISION --tags --always)
+
+	if (${GIT_REVISION} STREQUAL "n/a")
+		git_rev_parse (GIT_REVISION --short)
+	endif()
 endif()
+
 if(CMAKE_CROSSCOMPILING)
 	SET (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 endif(CMAKE_CROSSCOMPILING)
+# /Allow to search the host machine for git/ccache
 
 message(STATUS "Git Revision ${GIT_REVISION}")
 
