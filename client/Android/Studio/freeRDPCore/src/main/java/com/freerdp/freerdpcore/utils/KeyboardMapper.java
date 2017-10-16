@@ -271,6 +271,7 @@ public class KeyboardMapper {
         keymapAndroid[KeyEvent.KEYCODE_DEL] = VK_BACK;
         keymapAndroid[KeyEvent.KEYCODE_ENTER] = VK_RETURN;
         keymapAndroid[KeyEvent.KEYCODE_SPACE] = VK_SPACE;
+        keymapAndroid[KeyEvent.KEYCODE_TAB] = VK_TAB;
 //		keymapAndroid[KeyEvent.KEYCODE_SHIFT_LEFT] = VK_LSHIFT;
 //		keymapAndroid[KeyEvent.KEYCODE_SHIFT_RIGHT] = VK_RSHIFT;
 
