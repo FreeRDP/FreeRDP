@@ -517,10 +517,12 @@ static BOOL mf_init(H264_CONTEXT* h264)
 	                         "MFCreateMediaType");
 	sys->MFCreateDXGIDeviceManager = (pfnMFCreateDXGIDeviceManager) GetProcAddress(
 	                                     sys->mfplat, "MFCreateDXGIDeviceManager");
-
+	/**
+	 * Note: MFCreateDXGIDeviceManager is supported starting from Windows 8.
+	 *       Don't fail below if GetProcAddress returned NULL.
+	 */
 	if (!sys->MFStartup || !sys->MFShutdown || !sys->MFCreateSample
-	    || !sys->MFCreateMemoryBuffer ||
-	    !sys->MFCreateMediaType || !sys->MFCreateDXGIDeviceManager)
+	    || !sys->MFCreateMemoryBuffer || !sys->MFCreateMediaType)
 		goto error;
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
