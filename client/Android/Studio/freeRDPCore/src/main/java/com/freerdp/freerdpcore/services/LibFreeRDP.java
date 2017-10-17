@@ -99,7 +99,7 @@ public class LibFreeRDP {
             if (mInstanceState.get(inst, false)) {
                 freerdp_disconnect(inst);
             }
-            while(mInstanceState.get(inst)) {
+            while(mInstanceState.get(inst, false)) {
                 try {
                     mInstanceState.wait();
                 } catch (InterruptedException e) {
@@ -121,7 +121,7 @@ public class LibFreeRDP {
 
     public static boolean disconnect(long inst) {
         synchronized (mInstanceState) {
-            if (mInstanceState.get(inst)) {
+            if (mInstanceState.get(inst, false)) {
                 return freerdp_disconnect(inst);
             }
             return true;
@@ -130,7 +130,7 @@ public class LibFreeRDP {
 
     public static boolean cancelConnection(long inst) {
         synchronized (mInstanceState) {
-            if (mInstanceState.get(inst)) {
+            if (mInstanceState.get(inst, false)) {
                 return freerdp_disconnect(inst);
             }
             return true;
