@@ -451,7 +451,12 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 		            settings->DesktopPosY);
 	}
 
+	const size_t i = strlen(name);
 	XStoreName(xfc->display, window->handle, name);
+	Atom wm_Name = xfc->_NET_WM_NAME;
+	Atom utf8Str = xfc->UTF8_STRING;
+	XChangeProperty(xfc->display, window->handle, wm_Name, utf8Str, 8, PropModeReplace, (unsigned char*)name, i);
+
 	return window;
 }
 
