@@ -23,6 +23,11 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#if defined(__FreeBSD_kernel__) && defined(__GLIBC__)
+#define _GNU_SOURCE
+#define KFREEBSD
+#endif
+
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
@@ -490,7 +495,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
                             const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime)
 {
 	int rc;
-#if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__) || defined(KFREEBSD)
 	struct stat buf;
 	/* OpenBSD, NetBSD and DragonflyBSD support POSIX futimens */
 	struct timeval timevals[2];
@@ -502,7 +507,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	if (!hFile)
 		return FALSE;
 
-#if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__) || defined(KFREEBSD)
 	rc = fstat(fileno(pFile->fp), &buf);
 
 	if (rc < 0)
@@ -512,7 +517,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 
 	if (!lpLastAccessTime)
 	{
-#if defined(__FreeBSD__) || defined(__APPLE__)
+#if defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
 		timevals[0].tv_sec = buf.st_atime;
 #ifdef _POSIX_SOURCE
 		TIMESPEC_TO_TIMEVAL(&timevals[0], &buf.st_atim);
@@ -530,7 +535,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	else
 	{
 		UINT64 tmp = FileTimeToUS(lpLastAccessTime);
-#if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__)
+#if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
 		timevals[0].tv_sec = tmp / 1000000ULL;
 		timevals[0].tv_usec = tmp % 1000000ULL;
 #else
@@ -541,7 +546,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 
 	if (!lpLastWriteTime)
 	{
-#if defined(__FreeBSD__) || defined(__APPLE__)
+#if defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
 		timevals[1].tv_sec = buf.st_mtime;
 #ifdef _POSIX_SOURCE
 		TIMESPEC_TO_TIMEVAL(&timevals[1], &buf.st_mtim);
@@ -559,7 +564,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	else
 	{
 		UINT64 tmp = FileTimeToUS(lpLastWriteTime);
-#if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__)
+#if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
 		timevals[1].tv_sec = tmp / 1000000ULL;
 		timevals[1].tv_usec = tmp % 1000000ULL;
 #else
@@ -569,7 +574,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	}
 
 	// TODO: Creation time can not be handled!
-#if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__)
+#if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
 	rc = utimes(pFile->lpFileName, timevals);
 #else
 	rc = futimens(fileno(pFile->fp), times);
