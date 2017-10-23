@@ -376,6 +376,10 @@ public class LibFreeRDP {
     private static void OnConnectionFailure(long inst) {
         if (listener != null)
             listener.OnConnectionFailure(inst);
+        synchronized (mInstanceState) {
+            mInstanceState.remove(inst);
+            mInstanceState.notifyAll();
+        }
     }
 
     private static void OnPreConnect(long inst) {
@@ -386,15 +390,15 @@ public class LibFreeRDP {
     private static void OnDisconnecting(long inst) {
         if (listener != null)
             listener.OnDisconnecting(inst);
-        synchronized (mInstanceState) {
-            mInstanceState.remove(inst);
-            mInstanceState.notifyAll();
-        }
     }
 
     private static void OnDisconnected(long inst) {
         if (listener != null)
             listener.OnDisconnected(inst);
+        synchronized (mInstanceState) {
+            mInstanceState.remove(inst);
+            mInstanceState.notifyAll();
+        }
     }
 
     private static void OnSettingsChanged(long inst, int width, int height, int bpp) {
