@@ -119,10 +119,10 @@ static BOOL wf_begin_paint(rdpContext* context)
 {
 	HGDI_DC hdc;
 
-	if (!context || !context->gdi || !context->gdi->hdc)
+	if (!context || !context->gdi || !context->gdi->primary || !context->gdi->primary->hdc)
 		return FALSE;
 
-	hdc = context->gdi->hdc;
+	hdc = context->gdi->primary->hdc;
 
 	if (!hdc || !hdc->hwnd || !hdc->hwnd->invalid)
 		return FALSE;
