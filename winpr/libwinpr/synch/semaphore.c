@@ -129,7 +129,7 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 		return NULL;
 
 	semaphore->pipe_fd[0] = -1;
-	semaphore->pipe_fd[0] = -1;
+	semaphore->pipe_fd[1] = -1;
 	semaphore->sem = (winpr_sem_t*) NULL;
 	semaphore->ops = &ops;
 

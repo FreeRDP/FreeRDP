@@ -1473,10 +1473,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess,
 	return (HANDLE)pComm;
 error_handle:
 
-	if (pComm != NULL)
-	{
-		CloseHandle(pComm);
-	}
+	CloseHandle(pComm);
 
 	return INVALID_HANDLE_VALUE;
 }
