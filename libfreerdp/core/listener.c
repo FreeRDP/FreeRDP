@@ -186,8 +186,8 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
 
-	status = _bind(sockfd, (struct sockaddr*) &addr, sizeof(addr));
 	unlink(path);
+	status = _bind(sockfd, (struct sockaddr*) &addr, sizeof(addr));
 
 	if (status != 0)
 	{
