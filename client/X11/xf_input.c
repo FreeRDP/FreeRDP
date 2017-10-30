@@ -269,7 +269,6 @@ static void xf_input_detect_pan(xfContext* xfc)
 				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
 			}
 			px_vector = 0;
-			px_vector = 0;
 			py_vector = 0;
 			z_vector = 0;
 		}
@@ -282,7 +281,6 @@ static void xf_input_detect_pan(xfContext* xfc)
 				e.dy = 0;
 				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
 			}
-			px_vector = 0;
 			px_vector = 0;
 			py_vector = 0;
 			z_vector = 0;
@@ -302,7 +300,6 @@ static void xf_input_detect_pan(xfContext* xfc)
 			}
 			py_vector = 0;
 			px_vector = 0;
-			py_vector = 0;
 			z_vector = 0;
 		}
 		else if (py_vector < -PAN_THRESHOLD)
@@ -316,7 +313,6 @@ static void xf_input_detect_pan(xfContext* xfc)
 			}
 			py_vector = 0;
 			px_vector = 0;
-			py_vector = 0;
 			z_vector = 0;
 		}
 	}
@@ -346,7 +342,6 @@ static void xf_input_detect_pinch(xfContext* xfc)
 		z_vector = 0;
 		px_vector = 0;
 		py_vector = 0;
-		z_vector = 0;
 	}
 	else
 	{
@@ -370,7 +365,6 @@ static void xf_input_detect_pinch(xfContext* xfc)
 			z_vector = 0;
 			px_vector = 0;
 			py_vector = 0;
-			z_vector = 0;
 		}
 
 		if (z_vector < -ZOOM_THRESHOLD)
@@ -381,7 +375,6 @@ static void xf_input_detect_pinch(xfContext* xfc)
 			z_vector = 0;
 			px_vector = 0;
 			py_vector = 0;
-			z_vector = 0;
 		}
 	}
 }
