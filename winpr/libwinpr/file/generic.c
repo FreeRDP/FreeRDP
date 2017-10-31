@@ -882,7 +882,7 @@ static BOOL ConvertFindDataAToW(LPWIN32_FIND_DATAA lpFindFileDataA,
 	lpFindFileDataW->dwReserved0 = lpFindFileDataA->dwReserved0;
 	lpFindFileDataW->dwReserved1 = lpFindFileDataA->dwReserved1;
 	unicodeFileName = NULL;
-	length = ConvertToUnicode(CP_UTF8, 0, lpFindFileDataA->cFileName, -1, &unicodeFileName, 0) * 2;
+	length = ConvertToUnicode(CP_UTF8, 0, lpFindFileDataA->cFileName, -1, &unicodeFileName, 0);
 
 	if (length == 0)
 		return FALSE;
@@ -890,10 +890,10 @@ static BOOL ConvertFindDataAToW(LPWIN32_FIND_DATAA lpFindFileDataA,
 	if (length > MAX_PATH)
 		length = MAX_PATH;
 
-	CopyMemory(lpFindFileDataW->cFileName, unicodeFileName, length);
+	CopyMemory(lpFindFileDataW->cFileName, unicodeFileName, length * sizeof(WCHAR));
 	free(unicodeFileName);
 	length = ConvertToUnicode(CP_UTF8, 0, lpFindFileDataA->cAlternateFileName,
-	                          -1, &unicodeFileName, 0) * 2;
+	                          -1, &unicodeFileName, 0);
 
 	if (length == 0)
 		return TRUE;
@@ -901,7 +901,7 @@ static BOOL ConvertFindDataAToW(LPWIN32_FIND_DATAA lpFindFileDataA,
 	if (length > 14)
 		length = 14;
 
-	CopyMemory(lpFindFileDataW->cAlternateFileName, unicodeFileName, length);
+	CopyMemory(lpFindFileDataW->cAlternateFileName, unicodeFileName, length * sizeof(WCHAR));
 	free(unicodeFileName);
 	return TRUE;
 }
