@@ -158,7 +158,7 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...);
 
 int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
-void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name);
+void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, const char* name);
 void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
 void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state);
 //void xf_SetWindowIcon(xfContext* xfc, xfAppWindow* appWindow, rdpIcon* icon);

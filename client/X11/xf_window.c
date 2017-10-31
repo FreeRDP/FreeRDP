@@ -105,6 +105,16 @@ struct _PropMotifWmHints
 };
 typedef struct _PropMotifWmHints PropMotifWmHints;
 
+static void xf_SetWindowTitleText(xfContext* xfc, Window window, const char* name)
+{
+	const size_t i = strlen(name);
+	XStoreName(xfc->display, window, name);
+	Atom wm_Name = xfc->_NET_WM_NAME;
+	Atom utf8Str = xfc->UTF8_STRING;
+	XChangeProperty(xfc->display, window, wm_Name, utf8Str, 8,
+	                PropModeReplace, (const unsigned char*)name, (int)i);
+}
+
 /**
  * Post an event from the client to the X server
  */
@@ -328,7 +338,7 @@ static void xf_SetWindowPID(xfContext* xfc, Window window, pid_t pid)
 	                32, PropModeReplace, (BYTE*) &pid, 1);
 }
 
-static const char* get_shm_id()
+static const char* get_shm_id(void)
 {
 	static char shm_id[64];
 	sprintf_s(shm_id, sizeof(shm_id), "/com.freerdp.xfreerdp.tsmf_%016X",
@@ -462,7 +472,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 		            settings->DesktopPosY);
 	}
 
-	XStoreName(xfc->display, window->handle, name);
+	xf_SetWindowTitleText(xfc, window->handle, name);
 	return window;
 }
 
@@ -576,17 +586,12 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style,
 	                XA_ATOM, 32, PropModeReplace, (BYTE*) &window_type, 1);
 }
 
-void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name)
+void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, const char* name)
 {
-	const size_t i = strlen(name);
-	XStoreName(xfc->display, appWindow->handle, name);
-	Atom wm_Name = xfc->_NET_WM_NAME;
-	Atom utf8Str = xfc->UTF8_STRING;
-	XChangeProperty(xfc->display, appWindow->handle, wm_Name, utf8Str, 8,
-	                PropModeReplace, (unsigned char*)name, i);
+	xf_SetWindowTitleText(xfc, appWindow->handle, name);
 }
 
-void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width,
+static void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width,
                              int* height)
 {
 	int vscreen_width;
@@ -615,7 +620,7 @@ void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width,
 	{
 		*height = vscreen_height;
 	}
-	
+
 	if (*width < 1)
 	{
 		*width = 1;
