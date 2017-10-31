@@ -122,6 +122,7 @@
     <string name="settings_password_empty">未设置</string>
     <string name="settings_cat_ui">用户界面</string>
     <string name="settings_ui_hide_status_bar">隐藏状态栏</string>
+    <string name="settings_ui_hide_action_bar">隱藏操作欄</string>
     <string name="settings_ui_hide_zoom_controls">隐藏缩放控件</string>
     <string name="settings_ui_swap_mouse_buttons">交换鼠标左右键</string>
     <string name="settings_ui_invert_scrolling">翻转滚动</string>

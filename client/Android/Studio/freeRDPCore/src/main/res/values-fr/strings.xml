@@ -122,6 +122,7 @@
     <string name="settings_password_empty">"Valeur non définie"</string>
     <string name="settings_cat_ui">"Interface utilisateur"</string>
     <string name="settings_ui_hide_status_bar">"Masquer la barre d'état"</string>
+    <string name="settings_ui_hide_action_bar">\"Masquer la barre d\'action\"</string>
     <string name="settings_ui_hide_zoom_controls">"Masquer les contrôles zoom"</string>
     <string name="settings_ui_swap_mouse_buttons">"Inverser les boutons de la souris"</string>
     <string name="settings_ui_invert_scrolling">"Inverser le défilement de la souris"</string>

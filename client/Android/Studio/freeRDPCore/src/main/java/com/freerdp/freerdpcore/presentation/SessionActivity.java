@@ -12,11 +12,13 @@ package com.freerdp.freerdpcore.presentation;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.app.UiModeManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -35,6 +37,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -114,6 +117,7 @@ public class SessionActivity extends AppCompatActivity implements
     private int discardedMoveEvents = 0;
     private ClipboardManagerProxy mClipboardManager;
     private boolean callbackDialogResult;
+    View mDecor;
 
     private void createDialogs() {
         // build verify certificate dialog
@@ -199,7 +203,7 @@ public class SessionActivity extends AppCompatActivity implements
         }
 
         this.setContentView(R.layout.session);
-        if (hasHardwareMenuButton()) {
+        if (hasHardwareMenuButton() || ApplicationSettingsActivity.getHideActionBar(this)) {
             this.getSupportActionBar().hide();
         } else
             this.getSupportActionBar().show();
@@ -297,6 +301,9 @@ public class SessionActivity extends AppCompatActivity implements
 
         mClipboardManager = ClipboardManagerProxy.getClipboardManager(this);
         mClipboardManager.addClipboardChangedListener(this);
+
+        mDecor = getWindow().getDecorView();
+        mDecor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
     @Override
@@ -353,6 +360,7 @@ public class SessionActivity extends AppCompatActivity implements
 
         // free session
         GlobalApp.freeSession(session.getInstance());
+
         session = null;
     }
 
@@ -373,6 +381,8 @@ public class SessionActivity extends AppCompatActivity implements
         // apply loaded keyboards
         keyboardView.setKeyboard(specialkeysKeyboard);
         modifiersKeyboardView.setKeyboard(modifiersKeyboard);
+
+        mDecor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
     private void processIntent(Intent intent) {
@@ -482,6 +492,8 @@ public class SessionActivity extends AppCompatActivity implements
         sessionView.onSurfaceChange(session);
         scrollView.requestLayout();
         keyboardMapper.reset(this);
+        mDecor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+
     }
 
     private void hideSoftInput() {
@@ -1092,6 +1104,23 @@ public class SessionActivity extends AppCompatActivity implements
         scrollView.scrollTo(0, 0);
     }
 
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent e) {
+        super.onGenericMotionEvent(e);
+        switch (e.getAction()) {
+            case MotionEvent.ACTION_SCROLL:
+                final float vScroll = e.getAxisValue(MotionEvent.AXIS_VSCROLL);
+                if (vScroll < 0) {
+                    LibFreeRDP.sendCursorEvent(session.getInstance(), 0, 0, Mouse.getScrollEvent(this, false));
+                }
+                if (vScroll > 0) {
+                    LibFreeRDP.sendCursorEvent(session.getInstance(), 0, 0, Mouse.getScrollEvent(this, true));
+                }
+                break;
+        }
+        return true;
+    }
+
     // ****************************************************************************
     // ClipboardManagerProxy.OnClipboardChangedListener
     @Override
@@ -1333,4 +1362,5 @@ public class SessionActivity extends AppCompatActivity implements
             closeSessionActivity(RESULT_OK);
         }
     }
+
 }

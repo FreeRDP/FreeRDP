@@ -122,6 +122,7 @@
     <string name="settings_password_empty">nicht gesetzt</string>
     <string name="settings_cat_ui">Benutzeroberfläche</string>
     <string name="settings_ui_hide_status_bar">verstecke Statusleiste</string>
+    <string name="settings_ui_hide_action_bar">Aktionsleiste ausblenden</string>
     <string name="settings_ui_hide_zoom_controls">verstecke Zoom Tasten</string>
     <string name="settings_ui_swap_mouse_buttons">Vertausche Maustasten</string>
     <string name="settings_ui_invert_scrolling">Invertiere Bildlauf</string>
