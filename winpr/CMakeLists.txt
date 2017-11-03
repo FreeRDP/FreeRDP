@@ -158,6 +158,10 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
 	set(BUILD_SHARED_LIBS ON)
 endif()
 
+if(BUILD_SHARED_LIBS)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_DLL")
+endif()
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_EXPORTS")
 
 # Enable 64bit file support on linux.
@@ -172,7 +176,11 @@ add_subdirectory(include)
 
 add_subdirectory(libwinpr)
 
-if(NOT ANDROID AND NOT IOS AND NOT UWP)
+if(NOT DEFINED WITH_WINPR_TOOLS)
+	set(WITH_WINPR_TOOLS 0)
+endif()
+
+if(WITH_WINPR_TOOLS)
 	add_subdirectory(tools)
 endif()
 

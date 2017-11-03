@@ -366,7 +366,8 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				pdu->Type = PTYPE_RESPONSE;
 				pdu->CallId = rpc->StubCallId;
 				Stream_SealLength(pdu->s);
-				rpc_client_recv_pdu(rpc, pdu);
+				if(rpc_client_recv_pdu(rpc, pdu) < 0)
+                     return -1;
 				rpc_pdu_reset(pdu);
 				rpc->StubFragCount = 0;
 				rpc->StubCallId = 0;

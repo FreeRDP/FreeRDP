@@ -90,6 +90,9 @@ wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId,
 	{
 		for (index = 0; index < clipboard->numFormats; index++)
 		{
+			if (!clipboard->formats[index].formatName)
+				continue;
+
 			if (strcmp(name, clipboard->formats[index].formatName) == 0)
 			{
 				format = &clipboard->formats[index];

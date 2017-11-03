@@ -116,7 +116,7 @@ static char* GetPath_TEMP(void)
 static char* GetPath_XDG_DATA_HOME(void)
 {
 	char* path = NULL;
-#if defined(WIN32)
+#if defined(WIN32) || defined(__IOS__)
 	path = GetPath_XDG_CONFIG_HOME();
 #else
 	char* home = NULL;
@@ -167,7 +167,7 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 	}
 
 #elif defined(__IOS__)
-	path = GetCombinedPath(GetPath_HOME(), ".freerdp");
+	path = ios_get_data();
 #else
 	char* home = NULL;
 	/**
@@ -221,6 +221,8 @@ static char* GetPath_XDG_CACHE_HOME(void)
 	}
 
 	free(home);
+#elif defined(__IOS__)
+	path = ios_get_cache();
 #else
 	/**
 	 * There is a single base directory relative to which user-specific non-essential (cached) data should be written.

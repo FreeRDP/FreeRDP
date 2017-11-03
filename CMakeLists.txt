@@ -67,6 +67,7 @@ include(CheckCXXCompilerFlag)
 include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 include(InstallFreeRDPMan)
+include(WindowsRC)
 
 # Soname versioning
 set(BUILD_NUMBER 0)
@@ -170,6 +171,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "BSD")
 	endif()
 endif()
 
+if(WINPR_MONO_CONFLICT)
+	add_definitions(-DWINPR_MONO_CONFLICT)
+endif()
+
 # Configure MSVC Runtime
 if(MSVC)
 	include(MSVCRuntime)
@@ -209,6 +214,9 @@ if(CMAKE_COMPILER_IS_GNUCC)
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 		else()
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i686")
+		endif()
+		if(ANDROID)
+			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-warn-shared-textrel")
 		endif()
 	else()
 		if(CMAKE_POSITION_INDEPENDENT_CODE)
@@ -364,6 +372,14 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 	endif()
 endif()
 
+if(ANDROID)
+	# workaround for https://github.com/android-ndk/ndk/issues/243
+	string(REPLACE "-g " "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+	string(REPLACE "-g " "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+endif()
+
 if(MSVC)
 	# Remove previous warning definitions,
 	# NMake is otherwise complaining.
@@ -443,7 +459,7 @@ if(WIN32)
 endif()
 
 if(IOS)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -isysroot ${CMAKE_IOS_SDK_ROOT} -g")
+	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -isysroot ${CMAKE_IOS_SDK_ROOT} -g")
 endif()
 
 add_definitions(-DWINPR_EXPORTS -DFREERDP_EXPORTS)
@@ -559,17 +575,9 @@ if(NOT IOS)
 endif()
 
 if(NOT WIN32)
-	CHECK_SYMBOL_EXISTS(pthread_mutex_timedlock pthread.h HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL)
-	if (NOT HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL)
-		CHECK_LIBRARY_EXISTS(pthread pthread_mutex_timedlock "" HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB)
-	endif (NOT HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL)
-	if (NOT HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB)
-		CHECK_LIBRARY_EXISTS(pthreads pthread_mutex_timedlock "" HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIBS)
-	endif (NOT HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB)
-
-	if (HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL OR HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB OR HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIBS)
-		set(HAVE_PTHREAD_MUTEX_TIMEDLOCK ON)
-	endif (HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL OR HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB OR HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIBS)
+	list(APPEND CMAKE_REQUIRED_LIBRARIES pthread)
+	check_symbol_exists(pthread_mutex_timedlock pthread.h HAVE_PTHREAD_MUTEX_TIMEDLOCK)
+	list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES pthread)
 endif()
 
 if(WITH_VALGRIND_MEMCHECK)
@@ -881,6 +889,10 @@ else()
 	set(PRIVATE_KEYWORD "PRIVATE")
 endif()
 
+if(BUILD_SHARED_LIBS)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_DLL")
+endif()
+
 add_subdirectory(winpr)
 
 # Sub-directories
@@ -896,7 +908,7 @@ add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
 
-if (IOS)
+if (IOS AND NOT DEFINED CMAKE_OSX_SYSROOT)
 	set(CMAKE_OSX_DEPLOYMENT_TARGET "")
 	if (IOS_PLATFORM MATCHES "SIMULATOR")
 		set(CMAKE_OSX_SYSROOT "iphonesimulator")
@@ -938,6 +950,8 @@ endif()
 if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
+
+add_subdirectory(dotnet)
 
 # Packaging
 

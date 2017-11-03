@@ -21,6 +21,7 @@
 
 #include <winpr/platform.h>
 
+#ifdef WINPR_DLL
 #if defined _WIN32 || defined __CYGWIN__
 #ifdef WINPR_EXPORTS
 #ifdef __GNUC__
@@ -42,6 +43,9 @@
 #define WINPR_API
 #endif
 #endif
+#else /* WINPR_DLL */
+#define WINPR_API	
+#endif
 
 /* Thread local storage keyword define */
 #if defined _WIN32 || defined __CYGWIN__
@@ -53,8 +57,8 @@
 #elif !defined(__IOS__)
 #define WINPR_TLS __thread
 #else
-#warning "Target iOS does not support Thread Local Storage!"
-#warning "Multi Instance support is disabled!"
+//#warning "Target iOS does not support Thread Local Storage!"
+//#warning "Multi Instance support is disabled!"
 #define WINPR_TLS
 #endif
 

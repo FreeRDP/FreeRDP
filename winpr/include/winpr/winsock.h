@@ -24,6 +24,10 @@
 #include <winpr/wtypes.h>
 #include <winpr/windows.h>
 
+#ifdef WINPR_MONO_CONFLICT
+#define closesocket winpr_closesocket
+#endif
+
 #ifdef _WIN32
 
 #define _accept			accept

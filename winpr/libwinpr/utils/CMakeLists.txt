@@ -149,6 +149,10 @@ if(WIN32)
 	winpr_library_add(Dbghelp)
 endif()
 
+if(ANDROID)
+	winpr_library_add(log)
+endif()
+
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
