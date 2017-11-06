@@ -999,8 +999,8 @@ int transport_check_fds(rdpTransport* transport)
 
 	while (now < dueDate)
 	{
-
-		if (freerdp_shall_disconnect(transport->context->instance)) {
+		if (freerdp_shall_disconnect(transport->context->instance))
+		{
 			return -1;
 		}
 
@@ -1197,7 +1197,9 @@ static void* transport_client_thread(void* arg)
 		{
 			if (!freerdp_check_event_handles(context))
 			{
-				WLog_Print(transport->log, WLOG_ERROR, "freerdp_check_event_handles()");
+				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
+					WLog_Print(transport->log, WLOG_ERROR, "freerdp_check_event_handles()");
+
 				rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
 				break;
 			}

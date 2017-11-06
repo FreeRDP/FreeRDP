@@ -103,7 +103,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
 	wlfContext* context;
-	UwacOutput *output;
+	UwacOutput* output;
 	UwacSize resolution;
 
 	if (!instance)
@@ -152,6 +152,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 	{
 		// Use the resolution of the first display output
 		output = UwacDisplayGetOutput(context->display, 1);
+
 		if (output != NULL && UwacOutputGetResolution(output, &resolution) == UWAC_SUCCESS)
 		{
 			settings->DesktopWidth = (UINT32) resolution.width;
@@ -200,9 +201,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	       gdi->width * gdi->height * 4);
 	UwacWindowAddDamage(context->window, 0, 0, gdi->width, gdi->height);
 	context->haveDamage = TRUE;
-
 	freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
-
 	return wl_update_content(context);
 }
 
@@ -346,7 +345,9 @@ static int wlfreerdp_run(freerdp* instance)
 		//if (WaitForMultipleObjects(count, &handles[1], FALSE, INFINITE)) {
 		if (freerdp_check_event_handles(instance->context) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
+				printf("Failed to check FreeRDP file descriptor\n");
+
 			break;
 		}
 
