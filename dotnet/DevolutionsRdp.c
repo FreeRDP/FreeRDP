@@ -292,8 +292,10 @@ BOOL cs_desktop_resize(rdpContext* context)
 static BOOL cs_post_connect(freerdp* instance)
 {
 	UINT32 gdi_format;
+	H264_CONTEXT* h264;
 	rdpUpdate* update;
 	rdpContext* context = instance->context;
+	rdpSettings* settings = instance->settings;
 
 	update = instance->context->update;
     
@@ -303,6 +305,13 @@ static BOOL cs_post_connect(freerdp* instance)
 		gdi_format = PIXEL_FORMAT_BGRX32;
 	else
 		gdi_format = PIXEL_FORMAT_BGR16;
+
+	h264 = h264_context_new(FALSE);
+	if(h264)
+	{
+		h264_context_free(h264);
+		settings->GfxH264 = TRUE;
+	}
 
 	if (!gdi_init(instance, gdi_format))
 		return FALSE;

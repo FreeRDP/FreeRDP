@@ -1217,9 +1217,11 @@ BOOL gdi_init(freerdp* instance, UINT32 format)
 BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
                  void (*pfree)(void*))
 {
+	UINT32 flags;
 	UINT32 SrcFormat = gdi_get_pixel_format(instance->settings->ColorDepth);
 	rdpGdi* gdi = (rdpGdi*) calloc(1, sizeof(rdpGdi));
 	rdpContext* context = instance->context;
+	rdpSettings* settings = instance->settings;
 
 	if (!gdi)
 		goto fail;
@@ -1251,7 +1253,11 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	if (!(context->cache = cache_new(instance->settings)))
 		goto fail;
 
-	if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL,
+	flags = FREERDP_CODEC_ALL;
+	if(!settings->GfxH264)
+		flags &= ~(FREERDP_CODEC_AVC420|FREERDP_CODEC_AVC444);
+
+	if (!freerdp_client_codecs_prepare(context->codecs, flags,
 	                                   gdi->width, gdi->height))
 		goto fail;
 
