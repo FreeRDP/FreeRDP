@@ -1772,6 +1772,7 @@ void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs)
 	int i;
 	UINT16 length;
 	UINT32 left, top, right, bottom, flags;
+	INT32 baseX, baseY;
 	rdpSettings* settings = mcs->settings;
 
 	if (settings->MonitorCount > 1)
@@ -1781,13 +1782,23 @@ void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs)
 		Stream_Write_UINT32(s, 0); /* flags */
 		Stream_Write_UINT32(s, settings->MonitorCount); /* monitorCount */
 
+		/* first pass to get the primary monitor coordinates (it is supposed to be
+		 * in (0,0) */
 		for (i = 0; i < settings->MonitorCount; i++)
 		{
-			left = settings->MonitorDefArray[i].x;
-			top = settings->MonitorDefArray[i].y;
-			right = settings->MonitorDefArray[i].x + settings->MonitorDefArray[i].width - 1;
-			bottom = settings->MonitorDefArray[i].y + settings->MonitorDefArray[i].height -
-			         1;
+			if (settings->MonitorDefArray[i].is_primary)
+			{
+				baseX = settings->MonitorDefArray[i].x;
+				baseY = settings->MonitorDefArray[i].y;
+			}
+		}
+
+		for (i = 0; i < settings->MonitorCount; i++)
+		{
+			left = settings->MonitorDefArray[i].x - baseX;
+			top = settings->MonitorDefArray[i].y - baseY;
+			right = left + settings->MonitorDefArray[i].width - 1;
+			bottom = top + settings->MonitorDefArray[i].height - 1;
 			flags = settings->MonitorDefArray[i].is_primary ? MONITOR_PRIMARY : 0;
 			Stream_Write_UINT32(s, left); /* left */
 			Stream_Write_UINT32(s, top); /* top */
