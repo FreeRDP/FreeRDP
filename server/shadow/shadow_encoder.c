@@ -238,7 +238,7 @@ static int shadow_encoder_init_h264(rdpShadowEncoder* encoder)
 	encoder->h264->BitRate = encoder->server->h264BitRate;
 	encoder->h264->FrameRate = encoder->server->h264FrameRate;
 	encoder->h264->QP = encoder->server->h264QP;
-	encoder->codecs |= FREERDP_CODEC_AVC420;
+	encoder->codecs |= FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444;
 	return 1;
 fail:
 	h264_context_free(encoder->h264);
@@ -319,7 +319,7 @@ static int shadow_encoder_uninit_h264(rdpShadowEncoder* encoder)
 		encoder->h264 = NULL;
 	}
 
-	encoder->codecs &= ~FREERDP_CODEC_AVC420;
+	encoder->codecs &= ~(FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444);
 	return 1;
 }
 
@@ -353,7 +353,7 @@ static int shadow_encoder_uninit(rdpShadowEncoder* encoder)
 		shadow_encoder_uninit_interleaved(encoder);
 	}
 
-	if (encoder->codecs & FREERDP_CODEC_AVC420)
+	if (encoder->codecs & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444))
 	{
 		shadow_encoder_uninit_h264(encoder);
 	}
@@ -430,8 +430,8 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 			return -1;
 	}
 
-	if ((codecs & FREERDP_CODEC_AVC420)
-	    && !(encoder->codecs & FREERDP_CODEC_AVC420))
+	if ((codecs & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444))
+	    && !(encoder->codecs & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444)))
 	{
 		status = shadow_encoder_init_h264(encoder);
 

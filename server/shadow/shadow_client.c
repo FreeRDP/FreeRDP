@@ -644,7 +644,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				settings->GfxH264 = FALSE;
 				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 #else
-				settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+				settings->GfxAVC444 = settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 #endif
 			}
 
@@ -670,7 +670,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				settings->GfxH264 = FALSE;
 				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 #else
-				settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+				settings->GfxAVC444 = settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 #endif
 			}
 
@@ -696,7 +696,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				settings->GfxH264 = FALSE;
 				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 #else
-				settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+				settings->GfxAVC444 = settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 #endif
 			}
 
@@ -717,6 +717,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			if (settings)
 			{
 				flags = pdu.capsSet->flags;
+				settings->GfxAVC444 = FALSE;
 				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);				
 #ifndef WITH_GFX_H264
@@ -755,6 +756,15 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	return CHANNEL_RC_UNSUPPORTED_VERSION;
 }
 
+static INLINE UINT32 rdpgfx_estimate_h264_avc420(
+    RDPGFX_AVC420_BITMAP_STREAM* havc420)
+{
+	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
+	return sizeof(UINT32) /* numRegionRects */
+	       + 10 /* regionRects + quantQualityVals */
+	       * havc420->meta.numRegionRects
+	       + havc420->length;
+}
 
 /**
  * Function description
@@ -801,7 +811,50 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 	cmd.data = NULL;
 	cmd.extra = NULL;
 
-	if (settings->GfxH264)
+	if (settings->GfxAVC444)
+	{
+		RDPGFX_AVC444_BITMAP_STREAM avc444;
+		RECTANGLE_16 regionRect;
+		RDPGFX_H264_QUANT_QUALITY quantQualityVal;
+
+		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_AVC444) < 0)
+		{
+			WLog_ERR(TAG, "Failed to prepare encoder FREERDP_CODEC_AVC444");
+			return FALSE;
+		}
+
+		if (avc420_compress(encoder->h264, pSrcData, cmd.format, nSrcStep,
+		                    nWidth, nHeight, &avc444.bitstream[0].data,
+		                    &avc444.bitstream[0].length) < 0)
+			return FALSE;
+
+		regionRect.left = cmd.left;
+		regionRect.top = cmd.top;
+		regionRect.right = cmd.right;
+		regionRect.bottom = cmd.bottom;
+		quantQualityVal.qp = encoder->h264->QP;
+		quantQualityVal.r = 0;
+		quantQualityVal.p = 0;
+		quantQualityVal.qualityVal = 100 - quantQualityVal.qp;
+		avc444.bitstream[0].meta.numRegionRects = 1;
+		avc444.bitstream[0].meta.regionRects = &regionRect;
+		avc444.bitstream[0].meta.quantQualityVals = &quantQualityVal;
+		avc444.LC = 1;
+		avc444.cbAvc420EncodedBitstream1 = rdpgfx_estimate_h264_avc420(&avc444.bitstream[0]);
+
+		cmd.codecId = RDPGFX_CODECID_AVC444;
+		cmd.extra = (void*)&avc444;
+
+		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, &cmd,
+		          &cmdstart, &cmdend);
+
+		if (error)
+		{
+			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %"PRIu32"", error);
+			return FALSE;
+		}
+	}
+	else if (settings->GfxH264)
 	{
 		RDPGFX_AVC420_BITMAP_STREAM avc420;
 		RECTANGLE_16 regionRect;
@@ -813,8 +866,10 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 			return FALSE;
 		}
 
-		avc420_compress(encoder->h264, pSrcData, cmd.format, nSrcStep,
-		                nWidth, nHeight, &avc420.data, &avc420.length);
+		if (avc420_compress(encoder->h264, pSrcData, cmd.format, nSrcStep,
+		                nWidth, nHeight, &avc420.data, &avc420.length) < 0)
+			return FALSE;
+
 		cmd.codecId = RDPGFX_CODECID_AVC420;
 		cmd.extra = (void*)&avc420;
 		regionRect.left = cmd.left;
