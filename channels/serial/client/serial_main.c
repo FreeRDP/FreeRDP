@@ -124,20 +124,27 @@ static UINT32 _GetLastErrorToIoStatus(SERIAL_DEVICE* serial)
 	return STATUS_UNSUCCESSFUL;
 }
 
-static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
+static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
 	DWORD DesiredAccess;
 	DWORD SharedAccess;
 	DWORD CreateDisposition;
 	UINT32 PathLength;
+
+	if (Stream_GetRemainingLength(irp->input) < 32)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT32(irp->input, DesiredAccess);		/* DesiredAccess (4 bytes) */
 	Stream_Seek_UINT64(irp->input);				/* AllocationSize (8 bytes) */
 	Stream_Seek_UINT32(irp->input);				/* FileAttributes (4 bytes) */
 	Stream_Read_UINT32(irp->input, SharedAccess);		/* SharedAccess (4 bytes) */
-	Stream_Read_UINT32(irp->input,
-	                   CreateDisposition);	/* CreateDisposition (4 bytes) */
+	Stream_Read_UINT32(irp->input, CreateDisposition);	/* CreateDisposition (4 bytes) */
 	Stream_Seek_UINT32(irp->input); 			/* CreateOptions (4 bytes) */
 	Stream_Read_UINT32(irp->input, PathLength);		/* PathLength (4 bytes) */
+
+	if (Stream_GetRemainingLength(irp->input) < PathLength)
+		return ERROR_INVALID_DATA;
+
 	Stream_Seek(irp->input, PathLength);			/* Path (variable) */
 	assert(PathLength == 0); /* MS-RDPESP 2.2.2.2 */
 #ifndef _WIN32
@@ -191,18 +198,21 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	/* dcb.fBinary = TRUE; */
 	/* SetCommState(serial->hComm, &dcb); */
 	assert(irp->FileId == 0);
-	irp->FileId =
-	    irp->devman->id_sequence++; /* FIXME: why not ((WINPR_COMM*)hComm)->fd? */
+	irp->FileId = irp->devman->id_sequence++; /* FIXME: why not ((WINPR_COMM*)hComm)->fd? */
 	irp->IoStatus = STATUS_SUCCESS;
 	WLog_Print(serial->log, WLOG_DEBUG, "%s (DeviceId: %"PRIu32", FileId: %"PRIu32") created.",
 	           serial->device.name, irp->device->id, irp->FileId);
 error_handle:
 	Stream_Write_UINT32(irp->output, irp->FileId);	/* FileId (4 bytes) */
 	Stream_Write_UINT8(irp->output, 0);		/* Information (1 byte) */
+	return CHANNEL_RC_OK;
 }
 
-static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
+static UINT serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 {
+	if (Stream_GetRemainingLength(irp->input) < 32)
+		return ERROR_INVALID_DATA;
+
 	Stream_Seek(irp->input, 32); /* Padding (32 bytes) */
 
 	if (!CloseHandle(serial->hComm))
@@ -219,6 +229,7 @@ static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 	irp->IoStatus = STATUS_SUCCESS;
 error_handle:
 	Stream_Zero(irp->output, 5); /* Padding (5 bytes) */
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -232,11 +243,15 @@ static UINT serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	UINT64 Offset;
 	BYTE* buffer = NULL;
 	DWORD nbRead = 0;
+
+	if (Stream_GetRemainingLength(irp->input) < 32)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
 	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
-	buffer = (BYTE*)calloc(Length, sizeof(BYTE));
 
+	buffer = (BYTE*)calloc(Length, sizeof(BYTE));
 	if (buffer == NULL)
 	{
 		irp->IoStatus = STATUS_NO_MEMORY;
@@ -283,11 +298,15 @@ error_handle:
 	return CHANNEL_RC_OK;
 }
 
-static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
+static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT32 Length;
 	UINT64 Offset;
 	DWORD nbWritten = 0;
+
+	if (Stream_GetRemainingLength(irp->input) < 32)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
 	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
@@ -318,6 +337,8 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	           serial->device.name);
 	Stream_Write_UINT32(irp->output, nbWritten); /* Length (4 bytes) */
 	Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
+
+	return CHANNEL_RC_OK;
 }
 
 
@@ -334,14 +355,20 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	UINT32 OutputBufferLength;
 	BYTE*  OutputBuffer = NULL;
 	DWORD  BytesReturned = 0;
-	Stream_Read_UINT32(irp->input,
-	                   OutputBufferLength); /* OutputBufferLength (4 bytes) */
-	Stream_Read_UINT32(irp->input,
-	                   InputBufferLength); /* InputBufferLength (4 bytes) */
+
+	if (Stream_GetRemainingLength(irp->input) < 32)
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(irp->input, OutputBufferLength); /* OutputBufferLength (4 bytes) */
+	Stream_Read_UINT32(irp->input, InputBufferLength); /* InputBufferLength (4 bytes) */
+
 	Stream_Read_UINT32(irp->input, IoControlCode); /* IoControlCode (4 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
-	OutputBuffer = (BYTE*)calloc(OutputBufferLength, sizeof(BYTE));
 
+	if (Stream_GetRemainingLength(irp->input) < InputBufferLength)
+		return ERROR_INVALID_DATA;
+
+	OutputBuffer = (BYTE*)calloc(OutputBufferLength, sizeof(BYTE));
 	if (OutputBuffer == NULL)
 	{
 		irp->IoStatus = STATUS_NO_MEMORY;
@@ -349,7 +376,6 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
 	InputBuffer = (BYTE*)calloc(InputBufferLength, sizeof(BYTE));
-
 	if (InputBuffer == NULL)
 	{
 		irp->IoStatus = STATUS_NO_MEMORY;
@@ -381,8 +407,7 @@ error_handle:
 	 * BytesReturned == OutputBufferLength when
 	 * CommDeviceIoControl returns FALSE */
 	assert(OutputBufferLength == BytesReturned);
-	Stream_Write_UINT32(irp->output,
-	                    BytesReturned); /* OutputBufferLength (4 bytes) */
+	Stream_Write_UINT32(irp->output, BytesReturned); /* OutputBufferLength (4 bytes) */
 
 	if (BytesReturned > 0)
 	{
@@ -425,11 +450,11 @@ static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 	switch (irp->MajorFunction)
 	{
 		case IRP_MJ_CREATE:
-			serial_process_irp_create(serial, irp);
+			error = serial_process_irp_create(serial, irp);
 			break;
 
 		case IRP_MJ_CLOSE:
-			serial_process_irp_close(serial, irp);
+			error = serial_process_irp_close(serial, irp);
 			break;
 
 		case IRP_MJ_READ:
@@ -439,7 +464,7 @@ static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 			break;
 
 		case IRP_MJ_WRITE:
-			serial_process_irp_write(serial, irp);
+			error = serial_process_irp_write(serial, irp);
 			break;
 
 		case IRP_MJ_DEVICE_CONTROL:
