@@ -1797,7 +1797,7 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 	/* get the first interface and first altsetting */
 	interface_temp = config_temp->interface[0].altsetting[0];
 
-	WLog_DBG(TAG,"Regist Device: Vid: 0x%04"PRIX16" Pid: 0x%04"PRIX16""
+	WLog_DBG(TAG,"Registered Device: Vid: 0x%04"PRIX16" Pid: 0x%04"PRIX16""
 		" InterfaceClass = 0x%02"PRIX8"",
 		pdev->devDescriptor->idVendor, 
 		pdev->devDescriptor->idProduct,

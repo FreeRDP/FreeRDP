@@ -471,7 +471,7 @@ static UINT urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char
 			break;
 
 		default:
-			WLog_ERR(TAG, "unknown FunctionId 0x%"PRIX32"", FunctionId);
+			WLog_ERR(TAG, "%s: unknown FunctionId 0x%"PRIX32"", __FUNCTION__, FunctionId);
 			error = ERROR_NOT_FOUND;
 			break;
 	}
@@ -1184,7 +1184,7 @@ static UINT urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callbac
 			break;
 
 		default:
-			WLog_VRB(TAG, "unknown FunctionId 0x%"PRIX32"", FunctionId);
+			WLog_VRB(TAG, "%s: unknown FunctionId 0x%"PRIX32"", __FUNCTION__, FunctionId);
 			error = 1;
 			break;
 	}
