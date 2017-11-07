@@ -115,12 +115,14 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 {
 	int i;
 	int nmonitors = 0;
+	int monitor_index = 0;
 	BOOL primaryMonitorFound = FALSE;
 	VIRTUAL_SCREEN* vscreen;
 	rdpSettings* settings = xfc->context.settings;
 	int mouse_x, mouse_y, _dummy_i;
 	Window _dummy_w;
 	int current_monitor = 0;
+	Screen* screen;
 #ifdef WITH_XINERAMA
 	int major, minor;
 	XineramaScreenInfo* screenInfo = NULL;
@@ -204,27 +206,29 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		if (vscreen->nmonitors > 0)
 		{
 			*pMaxWidth = vscreen->monitors[current_monitor].area.right -
-				           vscreen->monitors[current_monitor].area.left + 1;
+			             vscreen->monitors[current_monitor].area.left + 1;
 			*pMaxHeight = vscreen->monitors[current_monitor].area.bottom -
 			              vscreen->monitors[current_monitor].area.top + 1;
-			if(settings->PercentScreenUseWidth)
-				*pMaxWidth = ((vscreen->monitors[current_monitor].area.right -
-			               vscreen->monitors[current_monitor].area.left + 1) * settings->PercentScreen) /
-			             100;
 
-			if(settings->PercentScreenUseHeight)
+			if (settings->PercentScreenUseWidth)
+				*pMaxWidth = ((vscreen->monitors[current_monitor].area.right -
+				               vscreen->monitors[current_monitor].area.left + 1) * settings->PercentScreen) /
+				             100;
+
+			if (settings->PercentScreenUseHeight)
 				*pMaxHeight = ((vscreen->monitors[current_monitor].area.bottom -
-			                vscreen->monitors[current_monitor].area.top + 1) * settings->PercentScreen) /
-			              100;
+				                vscreen->monitors[current_monitor].area.top + 1) * settings->PercentScreen) /
+				              100;
 		}
 		else
 		{
 			*pMaxWidth = xfc->workArea.width;
 			*pMaxHeight = xfc->workArea.height;
 
-			if(settings->PercentScreenUseWidth)
+			if (settings->PercentScreenUseWidth)
 				*pMaxWidth = (xfc->workArea.width * settings->PercentScreen) / 100;
-			if(settings->PercentScreenUseHeight)
+
+			if (settings->PercentScreenUseHeight)
 				*pMaxHeight = (xfc->workArea.height * settings->PercentScreen) / 100;
 		}
 	}
@@ -263,10 +267,13 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		            vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1,
 		            *pMaxHeight);
 		settings->MonitorDefArray[nmonitors].orig_screen = i;
-		if (i == settings->MonitorIds[0]) {
+
+		if (i == settings->MonitorIds[0])
+		{
 			settings->MonitorDefArray[nmonitors].is_primary = TRUE;
 			primaryMonitorFound = TRUE;
 		}
+
 		nmonitors++;
 	}
 
@@ -343,29 +350,48 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			vscreen->area.bottom = xfc->workArea.height + xfc->workArea.y - 1;
 		}
 
-		/* If there are multiple monitors and we have not selected a primary */
 		if (!primaryMonitorFound)
 		{
-			/* First lets try to see if there is a monitor with a 0,0 coordinate */
-			for (i = 0; i < settings->MonitorCount; i++)
+			/* If we have a command line setting we should use it */
+			if (settings->NumMonitorIds)
 			{
-				if (!primaryMonitorFound && settings->MonitorDefArray[i].x == 0
-				    && settings->MonitorDefArray[i].y == 0)
-				{
-					settings->MonitorDefArray[i].is_primary = TRUE;
-					settings->MonitorLocalShiftX = settings->MonitorDefArray[i].x;
-					settings->MonitorLocalShiftY = settings->MonitorDefArray[i].y;
-					primaryMonitorFound = TRUE;
-				}
+				/* The first monitor is the first in the setting which should be used */
+				monitor_index =  settings->MonitorIds[0];
+			}
+			else
+			{
+				/* This is the same as when we would trust the Xinerama results..
+				   and set the monitor index to zero.
+				   The monitor listed with /monitor-list on index zero is always the primary
+				*/
+				screen = DefaultScreenOfDisplay(xfc->display);
+				monitor_index = XScreenNumberOfScreen(screen);
 			}
 
-			/* If we still do not have a primary monitor then just arbitrarily choose first monitor */
-			if (!primaryMonitorFound)
+			int j = monitor_index;
+
+			/* If the "default" monitor is not 0,0 use it */
+			if (settings->MonitorDefArray[j].x != 0 || settings->MonitorDefArray[j].y != 0)
 			{
-				settings->MonitorDefArray[0].is_primary = TRUE;
-				settings->MonitorLocalShiftX = settings->MonitorDefArray[0].x;
-				settings->MonitorLocalShiftY = settings->MonitorDefArray[0].y;
+				settings->MonitorDefArray[j].is_primary = TRUE;
+				settings->MonitorLocalShiftX = settings->MonitorDefArray[j].x;
+				settings->MonitorLocalShiftY = settings->MonitorDefArray[j].y;
 				primaryMonitorFound = TRUE;
+			}
+			else
+			{
+				/* Lets try to see if there is a monitor with a 0,0 coordinate and use it as a fallback*/
+				for (i = 0; i < settings->MonitorCount; i++)
+				{
+					if (!primaryMonitorFound && settings->MonitorDefArray[i].x == 0
+					    && settings->MonitorDefArray[i].y == 0)
+					{
+						settings->MonitorDefArray[i].is_primary = TRUE;
+						settings->MonitorLocalShiftX = settings->MonitorDefArray[i].x;
+						settings->MonitorLocalShiftY = settings->MonitorDefArray[i].y;
+						primaryMonitorFound = TRUE;
+					}
+				}
 			}
 		}
 
