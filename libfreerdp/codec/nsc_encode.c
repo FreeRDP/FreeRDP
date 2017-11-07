@@ -237,9 +237,13 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data,
 
 	if (context->ChromaSubsamplingLevel && (y % 2) == 1)
 	{
-		CopyMemory(yplane + rw, yplane, rw);
-		CopyMemory(coplane + rw, coplane, rw);
-		CopyMemory(cgplane + rw, cgplane, rw);
+		yplane = context->priv->PlaneBuffers[0] + y * rw;
+		coplane = context->priv->PlaneBuffers[1] + y * rw;
+		cgplane = context->priv->PlaneBuffers[2] + y * rw;
+
+		CopyMemory(yplane, yplane - rw, rw);
+		CopyMemory(coplane, coplane - rw, rw);
+		CopyMemory(cgplane, cgplane - rw, rw);
 	}
 }
 
