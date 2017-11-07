@@ -485,7 +485,11 @@ static void mf_uninit(H264_CONTEXT* h264)
 
 		memset(h264->pYUVData, 0, sizeof(h264->pYUVData));
 		memset(h264->iStride, 0, sizeof(h264->iStride));
-		sys->MFShutdown();
+		if(sys->MFShutdown)
+		{
+			sys->MFShutdown();
+			sys->MFShutdown = NULL;
+		}
 		CoUninitialize();
 		free(sys);
 		h264->pSystemData = NULL;
