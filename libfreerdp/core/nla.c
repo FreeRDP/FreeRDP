@@ -1668,7 +1668,7 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 		    default:
 			    WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: 0x%08"PRIX32"", nla->errorCode);
-				code = FREERDP_ERROR_CONNECT_FAILED;
+				code = FREERDP_ERROR_AUTHENTICATION_FAILED;
 			    break;
 		}
 		freerdp_set_last_error(nla->instance->context, code);
