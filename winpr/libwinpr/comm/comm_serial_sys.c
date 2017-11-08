@@ -316,7 +316,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 
 	if (pSerialChars->XonChar == pSerialChars->XoffChar)
 	{
-		/* http://msdn.microsoft.com/en-us/library/windows/hardware/ff546688%28v=vs.85%29.aspx */
+		/* https://msdn.microsoft.com/en-us/library/windows/hardware/ff546688?v=vs.85.aspx */
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
@@ -360,12 +360,9 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 		result = FALSE; /* but keep on */
 	}
 
-	/* FIXME: could be implemented during read/write I/O. What about ISIG? */
 	if (pSerialChars->EventChar != '\0')
 	{
-		CommLog_Print(WLOG_WARN, "EventChar 0x%02"PRIX8" ('%c') cannot be set\n", pSerialChars->EventChar, (char) pSerialChars->EventChar);
-		SetLastError(ERROR_NOT_SUPPORTED);
-		result = FALSE; /* but keep on */
+		pComm->eventChar = pSerialChars->EventChar;
 	}
 
 	upcomingTermios.c_cc[VSTART] = pSerialChars->XonChar;
@@ -1076,7 +1073,8 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 	if (possibleMask != *pWaitMask)
 	{
-		CommLog_Print(WLOG_WARN, "Not all wait events supported (Serial.sys), requested events= 0x%08"PRIX32", possible events= 0x%08"PRIX32"", *pWaitMask, possibleMask);
+		CommLog_Print(WLOG_WARN, "Not all wait events supported (Serial.sys), requested events= 0x%08"PRIX32", possible events= 0x%08"PRIX32"",
+				*pWaitMask, possibleMask);
 
 		/* FIXME: shall we really set the possibleMask and return FALSE? */
 		pComm->WaitEventMask = possibleMask;
@@ -1310,7 +1308,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 
 	if (currentCounters.rx != pComm->counters.rx)
 	{
-		pComm->PendingEvents |= SERIAL_EV_RXCHAR;
+		pComm->PendingEvents |= SERIAL_EV_RXFLAG;
 	}
 
 	if ((currentCounters.tx != pComm->counters.tx) && /* at least a transmission occurred AND ...*/
@@ -1458,7 +1456,7 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 		 *
 		 * NOTE: previously used a semaphore but used
 		 * sem_timedwait() anyway. Finally preferred a simpler
-		 * solution with Sleep() whithout the burden of the
+		 * solution with Sleep() without the burden of the
 		 * semaphore initialization and destroying.
 		 */
 
