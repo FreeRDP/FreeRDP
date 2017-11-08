@@ -258,7 +258,7 @@ BOOL freerdp_connect(freerdp* instance)
 				Stream_SetLength(s, record.length);
 				Stream_SetPosition(s, 0);
 				update->BeginPaint(update->context);
-				update_recv_surfcmds(update, Stream_Length(s) , s);
+				update_recv_surfcmds(update, Stream_Length(s), s);
 				update->EndPaint(update->context);
 				Stream_Release(s);
 			}
@@ -366,7 +366,9 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 
 	if (!status)
 	{
-		WLog_ERR(TAG, "freerdp_check_fds() failed - %"PRIi32"", status);
+		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
+			WLog_ERR(TAG, "freerdp_check_fds() failed - %"PRIi32"", status);
+
 		return FALSE;
 	}
 
@@ -374,7 +376,9 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 
 	if (!status)
 	{
-		WLog_ERR(TAG, "freerdp_channels_check_fds() failed - %"PRIi32"", status);
+		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
+			WLog_ERR(TAG, "freerdp_channels_check_fds() failed - %"PRIi32"", status);
+
 		return FALSE;
 	}
 
