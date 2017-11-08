@@ -67,6 +67,7 @@ include(CheckCXXCompilerFlag)
 include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 include(InstallFreeRDPMan)
+include(GetGitRevisionDescription)
 
 # Soname versioning
 set(BUILD_NUMBER 0)
@@ -74,10 +75,24 @@ if ($ENV{BUILD_NUMBER})
 	set(BUILD_NUMBER $ENV{BUILD_NUMBER})
 endif()
 set(WITH_LIBRARY_VERSIONING "ON")
-set(FREERDP_VERSION_MAJOR "2")
-set(FREERDP_VERSION_MINOR "0")
-set(FREERDP_VERSION_REVISION "0")
-set(FREERDP_VERSION_SUFFIX "dev")
+
+set(RAW_VERSTION_STRING "2.0.0-dev")
+if(EXISTS "${CMAKE_SOURCE_DIR}/.source_tag")
+	file(READ ${CMAKE_SOURCE_DIR}/.source_tag RAW_VERSTION_STRING)
+elseif(USE_VERSION_FROM_GIT_TAG)
+	git_get_exact_tag(_GIT_TAG --tags --always)
+	if (NOT ${_GIT_TAG} STREQUAL "n/a")
+		set(RAW_VERSTION_STRING ${_GIT_TAG})
+	endif()
+endif()
+string(STRIP ${RAW_VERSTION_STRING} RAW_VERSTION_STRING)
+
+set(VERSION_REGEX "^.?([0-9]+)\\.([0-9]+)\\.([0-9]+)-?(.*)")
+string(REGEX REPLACE "${VERSION_REGEX}" "\\1" FREERDP_VERSION_MAJOR "${RAW_VERSTION_STRING}")
+string(REGEX REPLACE "${VERSION_REGEX}" "\\2" FREERDP_VERSION_MINOR "${RAW_VERSTION_STRING}")
+string(REGEX REPLACE "${VERSION_REGEX}" "\\3" FREERDP_VERSION_REVISION "${RAW_VERSTION_STRING}")
+string(REGEX REPLACE "${VERSION_REGEX}" "\\4" FREERDP_VERSION_SUFFIX "${RAW_VERSTION_STRING}")
+
 set(FREERDP_API_VERSION "${FREERDP_VERSION_MAJOR}")
 set(FREERDP_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}.${FREERDP_VERSION_REVISION}")
 if (FREERDP_VERSION_SUFFIX)
@@ -85,6 +100,8 @@ if (FREERDP_VERSION_SUFFIX)
 else()
 	set(FREERDP_VERSION_FULL "${FREERDP_VERSION}")
 endif()
+message("FREERDP_VERSION=${FREERDP_VERSION_FULL}")
+
 set(FREERDP_INCLUDE_DIR "include/freerdp${FREERDP_VERSION_MAJOR}/")
 
 # Compatibility options
@@ -117,7 +134,6 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/.source_version" )
 
   string(STRIP ${GIT_REVISION} GIT_REVISION)
 else()
-	include(GetGitRevisionDescription)
 	git_get_exact_tag(GIT_REVISION --tags --always)
 
 	if (${GIT_REVISION} STREQUAL "n/a")
