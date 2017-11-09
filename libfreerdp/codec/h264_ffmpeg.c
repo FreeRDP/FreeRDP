@@ -24,12 +24,26 @@
 #include <libavcodec/avcodec.h>
 #include <libavutil/avutil.h>
 #include <libavutil/opt.h>
+#include <libavutil/mem.h>
 
 #define TAG FREERDP_TAG("codec")
 
 /* Fallback support for older libavcodec versions */
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 59, 100)
 #define AV_CODEC_ID_H264 CODEC_ID_H264
+#endif
+
+/* Ubuntu 14.04 ships without the functions provided by avutil,
+ * so define error to string methods here. */
+#if !defined(av_err2str)
+static inline char* error_string(char* errbuf, size_t errbuf_size, int errnum)
+{
+	av_strerror(errnum, errbuf, errbuf_size);
+	return errbuf;
+}
+
+#define av_err2str(errnum) \
+	error_string((char[64]){0}, 64, errnum)
 #endif
 
 struct _H264_CONTEXT_LIBAVCODEC
@@ -116,10 +130,12 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 	sys->codecEncoderContext->width = h264->width;
 	sys->codecEncoderContext->height = h264->height;
 	sys->codecEncoderContext->delay = 0;
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(56, 13, 100)
 	sys->codecEncoderContext->framerate = (AVRational)
 	{
 		h264->FrameRate, 1
 	};
+#endif
 	sys->codecEncoderContext->time_base = (AVRational)
 	{
 		1, h264->FrameRate
@@ -127,6 +143,7 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 	sys->codecEncoderContext->gop_size = 0;
 	sys->codecEncoderContext->max_b_frames = 0;
 	sys->codecEncoderContext->pix_fmt = AV_PIX_FMT_YUV420P;
+	sys->codecEncoderContext->colorspace = AVCOL_SPC_BT709;
 	av_opt_set(sys->codecEncoderContext->priv_data, "preset", "fast", 0);
 	av_opt_set(sys->codecEncoderContext->priv_data, "vprofile", "baseline", 0);
 	av_opt_set(sys->codecEncoderContext->priv_data, "tune", "zerolatency", 0);
@@ -221,7 +238,9 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 	sys->videoFrame->format = sys->codecEncoderContext->pix_fmt;
 	sys->videoFrame->width  = sys->codecEncoderContext->width;
 	sys->videoFrame->height = sys->codecEncoderContext->height;
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 48, 100)
 	sys->videoFrame->colorspace = AVCOL_SPC_BT709;
+#endif
 	sys->videoFrame->data[0] = h264->pYUVData[0];
 	sys->videoFrame->data[1] = h264->pYUVData[1];
 	sys->videoFrame->data[2] = h264->pYUVData[2];
@@ -310,7 +329,6 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 	}
 
 	libavcodec_destroy_encoder(h264);
-
 	free(sys);
 	h264->pSystemData = NULL;
 }
@@ -379,7 +397,6 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 	}
 
 	sys->videoFrame->pts = 0;
-
 	return TRUE;
 EXCEPTION:
 	libavcodec_uninit(h264);
