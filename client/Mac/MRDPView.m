@@ -51,6 +51,7 @@ static void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer);
 static BOOL mf_Pointer_Set(rdpContext* context, const rdpPointer* pointer);
 static BOOL mf_Pointer_SetNull(rdpContext* context);
 static BOOL mf_Pointer_SetDefault(rdpContext* context);
+static BOOL mf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y);
 
 static BOOL mac_begin_paint(rdpContext* context);
 static BOOL mac_end_paint(rdpContext* context);
@@ -194,7 +195,7 @@ DWORD mac_client_thread(void* param)
 		if (settings->AsyncInput)
 		{
 			if (!(inputThread = CreateThread(NULL, 0,
-			                                 (LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL)))
+			(LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL)))
 			{
 				WLog_ERR(TAG,  "failed to create async input thread");
 				goto disconnect;
@@ -308,9 +309,9 @@ DWORD mac_client_thread(void* param)
 		cursors = [[NSMutableArray alloc] initWithCapacity:10];
 		// setup a mouse tracking area
 		NSTrackingArea* trackingArea = [[NSTrackingArea alloc] initWithRect:[self
-		                                visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved |
-		                                NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag |
-		                                NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
+		                                                       visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved |
+		                                                       NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag |
+		                                                       NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
 		[self addTrackingArea:trackingArea];
 		// Set the default cursor
 		currentCursor = [NSCursor arrowCursor];
@@ -807,9 +808,9 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 		self->pasteboard_timer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:self selector:@selector(onPasteboardTimerFired:) userInfo:nil repeats:YES];
 	});
 	NSTrackingArea* trackingArea = [[NSTrackingArea alloc] initWithRect:[self
-	                                visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved |
-	                                NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag |
-	                                NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
+	                                                       visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved |
+	                                                       NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag |
+	                                                       NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
 	[self addTrackingArea:trackingArea];
 	[trackingArea release];
 }
@@ -940,6 +941,7 @@ BOOL mac_post_connect(freerdp* instance)
 	rdp_pointer.Set = mf_Pointer_Set;
 	rdp_pointer.SetNull = mf_Pointer_SetNull;
 	rdp_pointer.SetDefault = mf_Pointer_SetDefault;
+	rdp_pointer.SetPosition = mf_Pointer_SetPosition;
 	settings = instance->settings;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRX32))
@@ -969,21 +971,21 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
 	MRDPView* view = (MRDPView*) mfc->view;
 	PasswordDialog* dialog = [PasswordDialog new];
 	dialog.serverHostname = [NSString stringWithFormat:@"%@:%u",
-	                         [NSString stringWithCString:instance->settings->ServerHostname encoding:
-	                          NSUTF8StringEncoding],
-	                         instance->settings->ServerPort];
+	                                  [NSString stringWithCString:instance->settings->ServerHostname encoding:
+	                                   NSUTF8StringEncoding],
+	                                  instance->settings->ServerPort];
 
 	if (*username)
 		dialog.username = [NSString stringWithCString:*username encoding:
-		                   NSUTF8StringEncoding];
+		                            NSUTF8StringEncoding];
 
 	if (*password)
 		dialog.password = [NSString stringWithCString:*password encoding:
-		                   NSUTF8StringEncoding];
+		                            NSUTF8StringEncoding];
 
 	if (*domain)
 		dialog.domain = [NSString stringWithCString:*domain encoding:
-		                 NSUTF8StringEncoding];
+		                          NSUTF8StringEncoding];
 
 	[dialog performSelectorOnMainThread:@selector(runModal:) withObject:[view
 	        window] waitUntilDone:TRUE];
@@ -992,15 +994,15 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
 	if (ok)
 	{
 		const char* submittedUsername = [dialog.username cStringUsingEncoding:
-		                                 NSUTF8StringEncoding];
+		                                                 NSUTF8StringEncoding];
 		*username = malloc((strlen(submittedUsername) + 1) * sizeof(char));
 		strcpy(*username, submittedUsername);
 		const char* submittedPassword = [dialog.password cStringUsingEncoding:
-		                                 NSUTF8StringEncoding];
+		                                                 NSUTF8StringEncoding];
 		*password = malloc((strlen(submittedPassword) + 1) * sizeof(char));
 		strcpy(*password, submittedPassword);
 		const char* submittedDomain = [dialog.domain cStringUsingEncoding:
-		                               NSUTF8StringEncoding];
+		                                             NSUTF8StringEncoding];
 		*domain = malloc((strlen(submittedDomain) + 1) * sizeof(char));
 		strcpy(*domain, submittedDomain);
 	}
@@ -1058,17 +1060,17 @@ BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 	/* store cursor bitmap image in representation - required by NSImage */
 	bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:
-	          (unsigned char**) &cursor_data
-	          pixelsWide:rect.size.width
-	          pixelsHigh:rect.size.height
-	          bitsPerSample:8
-	          samplesPerPixel:4
-	          hasAlpha:YES
-	          isPlanar:NO
-	          colorSpaceName:NSDeviceRGBColorSpace
-	          bitmapFormat:0
-	          bytesPerRow:rect.size.width * GetBytesPerPixel(format)
-	          bitsPerPixel:0];
+	                                   (unsigned char**) &cursor_data
+	                                   pixelsWide:rect.size.width
+	                                   pixelsHigh:rect.size.height
+	                                   bitsPerSample:8
+	                                   samplesPerPixel:4
+	                                   hasAlpha:YES
+	                                   isPlanar:NO
+	                                   colorSpaceName:NSDeviceRGBColorSpace
+	                                   bitmapFormat:0
+	                                   bytesPerRow:rect.size.width * GetBytesPerPixel(format)
+	                                   bitsPerPixel:0];
 	mrdpCursor->bmiRep = bmiRep;
 	/* create an image using above representation */
 	image = [[NSImage alloc] initWithSize:[bmiRep size]];
@@ -1136,6 +1138,17 @@ BOOL mf_Pointer_SetDefault(rdpContext* context)
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
 	[view setCursor:[NSCursor arrowCursor]];
+	return TRUE;
+}
+
+static BOOL mf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
+{
+	mfContext* mfc = (mfContext*) context;
+
+	if (!mfc)
+		return FALSE;
+
+	/* TODO: Set pointer position */
 	return TRUE;
 }
 
