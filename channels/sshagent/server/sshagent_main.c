@@ -1,9 +1,10 @@
 /**
- * xrdp: A Remote Desktop Protocol server.
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * SSH Agent Virtual Channel Extension
  *
- * Copyright (C) Jay Sorg 2012-2013
- * Copyright (C) Laxmikant Rashinkar 2012-2013
- * Copyright (C) Ben Cohen 2017
+ * Copyright 2012-2013 Jay Sorg
+ * Copyright 2012-2013 Laxmikant Rashinkar
+ * Copyright 2017 Ben Cohen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

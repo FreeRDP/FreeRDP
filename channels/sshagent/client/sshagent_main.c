@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Echo Virtual Channel Extension
+ * SSH Agent Virtual Channel Extension
  *
  * Copyright 2013 Christian Hofstaedtler
  * Copyright 2015 Thincast Technologies GmbH

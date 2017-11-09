@@ -1,10 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Clipboard Virtual Channel Extension
+ * SSH Agent Virtual Channel Extension
  *
- * Copyright 2011 Vic Lee
- * Copyright 2015 Thincast Technologies GmbH
- * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  * Copyright 2017 Ben Cohen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
