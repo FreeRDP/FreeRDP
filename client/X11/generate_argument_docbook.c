@@ -9,10 +9,10 @@
  * the argument struct. */
 #include "../common/cmdline.c"
 
-LPSTR tr_esc_str(LPCSTR arg)
+LPSTR tr_esc_str(LPCSTR arg, bool format)
 {
 	LPSTR tmp = NULL;
-	size_t cs = 0, x, ds;
+	size_t cs = 0, x, ds, len;
 	size_t s;
 	if(NULL == arg)
 		return NULL;
@@ -36,30 +36,34 @@ LPSTR tr_esc_str(LPCSTR arg)
 		switch(arg[x])
 		{
 			case '<':
-				ds += 3;
+				len = format ? 13 : 4;
+				ds += len - 1;
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
 					WLog_ERR(TAG,  "Could not reallocate string buffer.");
 					exit(-3);
 				}
-				tmp[cs++] = '&';
-				tmp[cs++] = 'l';
-				tmp[cs++] = 't';
-				tmp[cs++] = ';';
+				if (format)
+					strncpy (&tmp[cs], "<replaceable>", len);
+				else				
+					strncpy (&tmp[cs], "&lt;", len);
+				cs += len;
 				break;
 			case '>':
-				ds += 3;
+				len = format ? 14 : 4;
+				ds += len - 1;
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
 					WLog_ERR(TAG,  "Could not reallocate string buffer.");
 					exit(-4);
 				}
-				tmp[cs++] = '&';
-				tmp[cs++] = 'g';
-				tmp[cs++] = 't';
-				tmp[cs++] = ';';
+				if (format)
+					strncpy (&tmp[cs], "</replaceable>", len);
+				else				
+					strncpy (&tmp[cs], "&lt;", len);
+				cs += len;
 				break;
 			case '\'':
 				ds += 5;
@@ -142,33 +146,65 @@ int main(int argc, char *argv[])
 	for(x=0; x<elements - 1; x++)
 	{
 		const COMMAND_LINE_ARGUMENT_A *arg = &args[x];
-		const char *name = tr_esc_str((LPSTR) arg->Name);
-		const char *format = tr_esc_str(arg->Format);
-		const char *text = tr_esc_str((LPSTR) arg->Text);
+		char *name = tr_esc_str((LPSTR) arg->Name, FALSE);
+		char *alias = tr_esc_str((LPSTR) arg->Alias, FALSE);
+		char *format = tr_esc_str(arg->Format, TRUE);
+		char *text = tr_esc_str((LPSTR) arg->Text, FALSE);
+
 		fprintf(fp, "\t\t\t<varlistentry>\n");
 
-		fprintf(fp, "\t\t\t\t<term><option>/%s</option>", name);
-		if ((arg->Flags == COMMAND_LINE_VALUE_REQUIRED) && format)
-			fprintf(fp, " <replaceable>%s</replaceable>\n", format);
-		fprintf(fp, "</term>\n");
+		do
+		{
+			fprintf(fp, "\t\t\t\t<term><option>");
+			if (arg->Flags == COMMAND_LINE_VALUE_BOOL)
+				fprintf(fp, "%s", arg->Default ? "-" : "+");
+			else
+				fprintf(fp, "/");
+			fprintf(fp, "%s</option>", name);
 
-		if (format || text)
+			if (format)
+			{
+				if (arg->Flags == COMMAND_LINE_VALUE_OPTIONAL)
+					fprintf(fp, "[");
+				fprintf(fp, ":%s", format);
+				if (arg->Flags == COMMAND_LINE_VALUE_OPTIONAL)
+					fprintf(fp, "]");
+			}
+
+			fprintf(fp, "</term>\n");
+			
+			if (alias == name)
+				break;
+
+			free (name);
+			name = alias;
+		}
+		while (alias);
+
+		if (text)
 		{
 			fprintf(fp, "\t\t\t\t<listitem>\n");
-			fprintf(fp, "\t\t\t\t\t<para>%s\n", format ? format : "");
+			fprintf(fp, "\t\t\t\t\t<para>");
+
 			if (text)
-			{
-				if (format)
-					fprintf(fp, " - ");
 				fprintf(fp, "%s", text);
+
+			if (arg->Flags == COMMAND_LINE_VALUE_BOOL)
+				fprintf(fp, " (default:%s)", arg->Default ? "on" : "off");
+			else if (arg->Default)
+			{
+				char *value = tr_esc_str((LPSTR) arg->Default, FALSE);
+				fprintf(fp, " (default:%s)", value);
+				free (value);
 			}
+
 			fprintf(fp, "</para>\n");
 			fprintf(fp, "\t\t\t\t</listitem>\n");
 		}
 		fprintf(fp, "\t\t\t</varlistentry>\n");
-		free((void*) name);
-		free((void*) format);
-		free((void*) text);
+		free(name);
+		free(format);
+		free(text);
 	}
 	fprintf(fp, "\t\t</variablelist>\n");
 	fprintf(fp, "\t</refsect1>\n");
