@@ -2,7 +2,8 @@
 #define CS_CLIPBOARD_H_
 
 #include <freerdp/client/cliprdr.h>
-#include "devolutionsrdp.h"
+
+#include "DevolutionsRdp.h"
 
 int cs_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
 
