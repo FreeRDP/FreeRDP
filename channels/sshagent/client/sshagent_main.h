@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __SSHAGENT_MAIN_H
-#define __SSHAGENT_MAIN_H
+#ifndef SSHAGENT_MAIN_H
+#define SSHAGENT_MAIN_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -38,5 +38,5 @@
 #define DEBUG_SSHAGENT(...) do { } while (0)
 #endif
 
-#endif /* __SSHAGENT_MAIN_H */
+#endif /* SSHAGENT_MAIN_H */
 
