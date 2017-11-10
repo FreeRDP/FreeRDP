@@ -837,13 +837,13 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		                                     RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU) ? TRUE : FALSE;
 
 	if (settings->SupportStatusInfoPdu)
-		settings->SupportStatusInfoPdu = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_STATUSINFO_PDU) ? TRUE : FALSE;
+		settings->SupportStatusInfoPdu = (earlyCapabilityFlags &
+		                                  RNS_UD_CS_SUPPORT_STATUSINFO_PDU) ? TRUE : FALSE;
 
 	if (!(earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE))
 		connectionType = 0;
 
-	settings->SupportErrorInfoPdu = earlyCapabilityFlags &
-	                                RNS_UD_CS_SUPPORT_ERRINFO_PDU;
+	settings->SupportErrorInfoPdu = earlyCapabilityFlags & RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 	settings->ConnectionType = connectionType;
 	return TRUE;
 }
@@ -1221,15 +1221,15 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 
 	data = settings->ServerCertificate;
 	length = settings->ServerCertificateLength;
+
 	if (!certificate_read_server_certificate(settings->RdpServerCertificate, data,
 	        length))
 		goto fail;
 
 	return TRUE;
-
 fail:
-	free (settings->ServerRandom);
-	free (settings->ServerCertificate);
+	free(settings->ServerRandom);
+	free(settings->ServerCertificate);
 	settings->ServerRandom = NULL;
 	settings->ServerCertificate = NULL;
 	return FALSE;
@@ -1471,10 +1471,12 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	Stream_Write_UINT32(s, serverCertLen); /* serverCertLen */
 	settings->ServerRandomLength = serverRandomLen;
 	settings->ServerRandom = (BYTE*) malloc(serverRandomLen);
+
 	if (!settings->ServerRandom)
 	{
 		return FALSE;
 	}
+
 	winpr_RAND(settings->ServerRandom, serverRandomLen);
 	Stream_Write(s, settings->ServerRandom, serverRandomLen);
 	sigData = Stream_Pointer(s);
@@ -1772,7 +1774,7 @@ void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs)
 	int i;
 	UINT16 length;
 	UINT32 left, top, right, bottom, flags;
-	INT32 baseX, baseY;
+	INT32 baseX = 0, baseY = 0;
 	rdpSettings* settings = mcs->settings;
 
 	if (settings->MonitorCount > 1)
