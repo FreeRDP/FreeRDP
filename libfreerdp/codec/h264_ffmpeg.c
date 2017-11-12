@@ -246,7 +246,11 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 	if (!libavcodec_create_encoder(h264))
 		return -1;
 
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 39, 100)
 	av_packet_unref(&sys->packet);
+#else
+	av_free(sys->packet.data);
+#endif
 	av_init_packet(&sys->packet);
 	sys->packet.data = NULL;
 	sys->packet.size = 0;
@@ -256,7 +260,9 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 48, 100)
 	sys->videoFrame->colorspace = AVCOL_SPC_BT709;
 #endif
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 92, 100)
 	sys->videoFrame->chroma_location = AVCHROMA_LOC_LEFT;
+#endif
 	sys->videoFrame->data[0] = h264->pYUVData[0];
 	sys->videoFrame->data[1] = h264->pYUVData[1];
 	sys->videoFrame->data[2] = h264->pYUVData[2];
