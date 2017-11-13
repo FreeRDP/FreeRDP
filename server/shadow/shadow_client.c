@@ -826,7 +826,10 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 		if (avc420_compress(encoder->h264, pSrcData, cmd.format, nSrcStep,
 		                    nWidth, nHeight, &avc444.bitstream[0].data,
 		                    &avc444.bitstream[0].length) < 0)
+		{
+			WLog_ERR(TAG, "avc420_compress failed for avc444");
 			return FALSE;
+		}
 
 		regionRect.left = cmd.left;
 		regionRect.top = cmd.top;
@@ -868,7 +871,10 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 
 		if (avc420_compress(encoder->h264, pSrcData, cmd.format, nSrcStep,
 		                nWidth, nHeight, &avc420.data, &avc420.length) < 0)
+		{
+			WLog_ERR(TAG, "avc420_compress failed");
 			return FALSE;
+		}
 
 		cmd.codecId = RDPGFX_CODECID_AVC420;
 		cmd.extra = (void*)&avc420;

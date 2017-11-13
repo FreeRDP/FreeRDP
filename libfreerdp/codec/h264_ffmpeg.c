@@ -140,13 +140,28 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 	{
 		1, h264->FrameRate
 	};
-	sys->codecEncoderContext->gop_size = 0;
+
+	av_opt_set(sys->codecEncoderContext, "preset", "veryfast", AV_OPT_SEARCH_CHILDREN);
+	av_opt_set(sys->codecEncoderContext, "tune", "zerolatency", AV_OPT_SEARCH_CHILDREN);
+
+	sys->codecEncoderContext->flags |= CODEC_FLAG_LOOP_FILTER;
+	sys->codecEncoderContext->me_cmp |= 1;
+	sys->codecEncoderContext->me_subpel_quality = 3;
+	sys->codecEncoderContext->me_range = 16;
+	sys->codecEncoderContext->gop_size = 60;
+	sys->codecEncoderContext->keyint_min = 25;
+	sys->codecEncoderContext->i_quant_factor = 0.71;
+	sys->codecEncoderContext->qcompress = 0.6;
+	sys->codecEncoderContext->qmin = 18;
+	sys->codecEncoderContext->qmax = 51;
+	sys->codecEncoderContext->max_qdiff = 4;
 	sys->codecEncoderContext->max_b_frames = 0;
+	sys->codecEncoderContext->refs = 1;
+	sys->codecEncoderContext->trellis = 0;
+	sys->codecEncoderContext->thread_count = 2;
+	sys->codecEncoderContext->level = 31;
+	sys->codecEncoderContext->b_quant_factor = 0;
 	sys->codecEncoderContext->pix_fmt = AV_PIX_FMT_YUV420P;
-	sys->codecEncoderContext->colorspace = AVCOL_SPC_BT709;
-	av_opt_set(sys->codecEncoderContext->priv_data, "preset", "fast", 0);
-	av_opt_set(sys->codecEncoderContext->priv_data, "vprofile", "baseline", 0);
-	av_opt_set(sys->codecEncoderContext->priv_data, "tune", "zerolatency", 0);
 
 	if (avcodec_open2(sys->codecEncoderContext, sys->codecEncoder, NULL) < 0)
 		goto EXCEPTION;
@@ -231,7 +246,11 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 	if (!libavcodec_create_encoder(h264))
 		return -1;
 
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 39, 100)
+	av_packet_unref(&sys->packet);
+#else
 	av_free(sys->packet.data);
+#endif
 	av_init_packet(&sys->packet);
 	sys->packet.data = NULL;
 	sys->packet.size = 0;
@@ -241,6 +260,9 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 48, 100)
 	sys->videoFrame->colorspace = AVCOL_SPC_BT709;
 #endif
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 92, 100)
+	sys->videoFrame->chroma_location = AVCHROMA_LOC_LEFT;
+#endif
 	sys->videoFrame->data[0] = h264->pYUVData[0];
 	sys->videoFrame->data[1] = h264->pYUVData[1];
 	sys->videoFrame->data[2] = h264->pYUVData[2];
@@ -248,7 +270,6 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 	sys->videoFrame->linesize[1] = h264->iStride[1];
 	sys->videoFrame->linesize[2] = h264->iStride[2];
 	sys->videoFrame->pts++;
-	sys->videoFrame->pict_type = AV_PICTURE_TYPE_I;
 	/* avcodec_encode_video2 is deprecated with libavcodec 57.48.101 */
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 48, 101)
 	status = avcodec_send_frame(sys->codecEncoderContext, sys->videoFrame);
@@ -279,7 +300,7 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 		                               &sys->packet,
 		                               sys->videoFrame, &gotFrame);
 	}
-	while ((status >= 0) && (gotFrame != 0));
+	while ((status >= 0) && (gotFrame == 0));
 
 #endif
 
@@ -294,7 +315,10 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 	*pDstSize = sys->packet.size;
 
 	if (!gotFrame)
+	{
+		WLog_ERR(TAG, "Did not get frame! (%s [%d])", av_err2str(status), status);
 		return -2;
+	}
 
 	return 1;
 }
