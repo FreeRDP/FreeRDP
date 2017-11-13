@@ -59,7 +59,7 @@
 
 static void* transport_client_thread(void* arg);
 
-#ifdef WITH_KRB5
+#ifdef WITH_GSSAPI
 
 #include <krb5.h>
 #include <winpr/library.h>
@@ -150,7 +150,7 @@ out:
 	krb5_free_context(context);
 	return ret;
 }
-#endif /* WITH_KRB5 */
+#endif /* WITH_GSSAPI */
 
 static void transport_ssl_cb(SSL* ssl, int where, int ret)
 {
@@ -174,7 +174,7 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 					if (transport->NlaMode)
 					{
 						UINT32 kret = 0;
-#ifdef WITH_KRB5
+#ifdef WITH_GSSAPI
 
 						if ((strlen(transport->settings->Domain) != 0) &&
 						    (strncmp(transport->settings->Domain, ".", 1) != 0))
@@ -184,7 +184,7 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 							                                    transport->settings->Password);
 						}
 						else
-#endif /* WITH_KRB5 */
+#endif /* WITH_GSSAPI */
 							kret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
 
 						if (!freerdp_get_last_error(transport->context))

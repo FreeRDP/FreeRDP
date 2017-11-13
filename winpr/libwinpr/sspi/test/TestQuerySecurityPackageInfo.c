@@ -8,10 +8,8 @@ int TestQuerySecurityPackageInfo(int argc, char* argv[])
 {
 	SECURITY_STATUS status;
 	SecPkgInfo* pPackageInfo;
-
 	sspi_GlobalInit();
-
-	status = QuerySecurityPackageInfo(NTLMSP_NAME, &pPackageInfo);
+	status = QuerySecurityPackageInfo(NTLM_SSP_NAME, &pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
@@ -21,9 +19,7 @@ int TestQuerySecurityPackageInfo(int argc, char* argv[])
 
 	_tprintf(_T("\nQuerySecurityPackageInfo:\n"));
 	_tprintf(_T("\"%s\", \"%s\"\n"), pPackageInfo->Name, pPackageInfo->Comment);
-
 	sspi_GlobalFinish();
-
 	return 0;
 }
 

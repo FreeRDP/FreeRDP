@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Credential Security Support Provider (CredSSP)
+ * Network Level Authentication (NLA)
  *
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -38,12 +38,12 @@ typedef struct rdp_nla rdpNla;
 
 enum _NLA_STATE
 {
-	NLA_STATE_INITIAL,
-	NLA_STATE_NEGO_TOKEN,
-	NLA_STATE_PUB_KEY_AUTH,
-	NLA_STATE_AUTH_INFO,
-	NLA_STATE_POST_NEGO,
-	NLA_STATE_FINAL
+    NLA_STATE_INITIAL,
+    NLA_STATE_NEGO_TOKEN,
+    NLA_STATE_PUB_KEY_AUTH,
+    NLA_STATE_AUTH_INFO,
+    NLA_STATE_POST_NEGO,
+    NLA_STATE_FINAL
 };
 typedef enum _NLA_STATE NLA_STATE;
 
@@ -60,6 +60,7 @@ struct rdp_nla
 	rdpSettings* settings;
 	rdpTransport* transport;
 	UINT32 cbMaxToken;
+	SEC_CHAR* packageName;
 	UINT32 version;
 	UINT32 errorCode;
 	ULONG fContextReq;

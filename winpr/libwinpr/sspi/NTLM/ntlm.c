@@ -681,7 +681,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT *ntlm, SecBuffer *ntproof)
+SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT* ntlm, SecBuffer* ntproof)
 {
 	BYTE* blob;
 	SecBuffer* target = &ntlm->ChallengeTargetInfo;
@@ -689,33 +689,29 @@ SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT *ntlm, SecBuffer *ntproof)
 	if (!sspi_SecBufferAlloc(ntproof, 36 + target->cbBuffer))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	blob = (BYTE *)ntproof->pvBuffer;
-
+	blob = (BYTE*)ntproof->pvBuffer;
 	CopyMemory(blob, ntlm->ServerChallenge, 8); /* Server challenge. */
 	blob[8] = 1; /* Response version. */
 	blob[9] = 1; /* Highest response version understood by the client. */
 	/* Reserved 6B. */
-
 	CopyMemory(&blob[16], ntlm->Timestamp, 8); /* Time. */
 	CopyMemory(&blob[24], ntlm->ClientChallenge, 8); /* Client challenge. */
 	/* Reserved 4B. */
 	/* Server name. */
 	CopyMemory(&blob[36], target->pvBuffer, target->cbBuffer);
-
 	return SEC_E_OK;
-
 }
 
-SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT *ntlm, SecBuffer *micvalue)
+SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue)
 {
 	BYTE* blob;
 	ULONG msgSize = ntlm->NegotiateMessage.cbBuffer + ntlm->ChallengeMessage.cbBuffer +
-					ntlm->AuthenticateMessage.cbBuffer;
+	                ntlm->AuthenticateMessage.cbBuffer;
 
 	if (!sspi_SecBufferAlloc(micvalue, msgSize))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	blob = (BYTE *) micvalue->pvBuffer;
+	blob = (BYTE*) micvalue->pvBuffer;
 	CopyMemory(blob, ntlm->NegotiateMessage.pvBuffer, ntlm->NegotiateMessage.cbBuffer);
 	blob += ntlm->NegotiateMessage.cbBuffer;
 	CopyMemory(blob, ntlm->ChallengeMessage.pvBuffer, ntlm->ChallengeMessage.cbBuffer);
@@ -723,7 +719,6 @@ SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT *ntlm, SecBuffer *micvalue)
 	CopyMemory(blob, ntlm->AuthenticateMessage.pvBuffer, ntlm->AuthenticateMessage.cbBuffer);
 	blob += ntlm->MessageIntegrityCheckOffset;
 	ZeroMemory(blob, 16);
-
 	return SEC_E_OK;
 }
 
@@ -747,9 +742,10 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 	{
 		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
 		ContextSizes->cbMaxToken = 2010;
-		ContextSizes->cbMaxSignature = 16;
-		ContextSizes->cbBlockSize = 0;
-		ContextSizes->cbSecurityTrailer = 16;
+		ContextSizes->cbMaxSignature = 16; /* the size of expected signature is 16 bytes */
+		ContextSizes->cbBlockSize = 0; /* no padding */
+		ContextSizes->cbSecurityTrailer = 16; /* no security trailer appended in NTLM
+									contrary to Kerberos */
 		return SEC_E_OK;
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_IDENTITY)
