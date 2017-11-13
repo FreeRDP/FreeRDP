@@ -53,6 +53,15 @@
 
 #ifdef _WIN32
 #include <wtypes.h>
+
+/* Handle missing ssize_t on Windows */
+#ifdef _WIN64
+typedef long long LONG_PTR;
+#else
+typedef long LONG_PTR;
+#endif
+typedef LONG_PTR SSIZE_T;
+
 #endif
 
 #if defined(__OBJC__) && defined(__APPLE__)
@@ -115,7 +124,7 @@ typedef unsigned long           __uint32;
 #else
 #error "32-bit type not configured"
 #endif
- #if ULONG_MAX == 0xFFFFFFFFFFFFFFFF
+#if ULONG_MAX == 0xFFFFFFFFFFFFFFFF
 typedef long                    __int64;
 typedef unsigned long           __uint64;
 #elif ULLONG_MAX == 0xFFFFFFFFFFFFFFFF
@@ -145,7 +154,7 @@ typedef unsigned long long      __uint64;
 #endif /* WINPR_HAVE_STDINT_H */
 
 
-typedef void *PVOID, *LPVOID, *PVOID64, *LPVOID64;
+typedef void* PVOID, *LPVOID, *PVOID64, *LPVOID64;
 
 #ifndef XMD_H /* X11/Xmd.h typedef collision with BOOL */
 #ifndef __OBJC__ /* objc.h typedef collision with BOOL */
@@ -162,7 +171,7 @@ typedef signed char BOOL;
 #endif /* __OBJC__ */
 #endif /* XMD_H */
 
-typedef BOOL *PBOOL, *LPBOOL;
+typedef BOOL* PBOOL, *LPBOOL;
 
 #ifndef FALSE
 #define FALSE 0
@@ -186,12 +195,12 @@ typedef __int8 CHAR;
 typedef __uint8 UCHAR;
 #endif
 typedef CHAR CCHAR, *PCHAR, *LPCH, *PCH, *PSTR, *LPSTR;
-typedef const CHAR *LPCCH, *PCCH, *LPCSTR, *PCSTR;
-typedef UCHAR *PUCHAR;
+typedef const CHAR* LPCCH, *PCCH, *LPCSTR, *PCSTR;
+typedef UCHAR* PUCHAR;
 
 typedef __uint16 WCHAR;
 typedef WCHAR UNICODE, *PWCHAR, *LPWCH, *PWCH, *BSTR, *LMSTR, *LPWSTR, *PWSTR;
-typedef const WCHAR *LPCWCH, *PCWCH, *LMCSTR, *LPCWSTR, *PCWSTR;
+typedef const WCHAR* LPCWCH, *PCWCH, *LMCSTR, *LPCWSTR, *PCWSTR;
 
 typedef __int16 SHORT, *PSHORT;
 typedef __int32 INT, *PINT, *LPINT;
@@ -209,10 +218,10 @@ typedef __int16 INT16;
 typedef __int32 INT32;
 typedef __int64 INT64;
 #endif
-typedef INT8 *PINT8;
-typedef INT16 *PINT16;
-typedef INT32 *PINT32;
-typedef INT64 *PINT64;
+typedef INT8* PINT8;
+typedef INT16* PINT16;
+typedef INT32* PINT32;
+typedef INT64* PINT64;
 
 typedef __int32 LONG32, *PLONG32;
 #ifndef LONG64 /* X11/Xmd.h uses/defines LONG64 */
@@ -257,7 +266,7 @@ typedef DWORD HCALL;
 typedef ULONG error_status_t;
 typedef LONG HRESULT;
 typedef LONG SCODE;
-typedef SCODE *PSCODE;
+typedef SCODE* PSCODE;
 
 typedef struct _GUID
 {
@@ -344,7 +353,7 @@ typedef struct _SYSTEMTIME
 	WORD wMinute;
 	WORD wSecond;
 	WORD wMilliseconds;
-} SYSTEMTIME,*PSYSTEMTIME,*LPSYSTEMTIME;
+} SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
 
 typedef struct _RPC_SID_IDENTIFIER_AUTHORITY
 {
@@ -406,16 +415,20 @@ typedef void* FARPROC;
 typedef struct tagDEC
 {
 	USHORT wReserved;
-	union {
-		struct {
+	union
+	{
+		struct
+		{
 			BYTE scale;
 			BYTE sign;
 		} DUMMYSTRUCTNAME;
 		USHORT signscale;
 	} DUMMYUNIONNAME;
 	ULONG Hi32;
-	union {
-		struct {
+	union
+	{
+		struct
+		{
 			ULONG Lo32;
 			ULONG Mid32;
 		} DUMMYSTRUCTNAME2;
@@ -423,7 +436,7 @@ typedef struct tagDEC
 	} DUMMYUNIONNAME2;
 } DECIMAL;
 
-typedef DECIMAL *LPDECIMAL;
+typedef DECIMAL* LPDECIMAL;
 
 #define DECIMAL_NEG		((BYTE) 0x80)
 #define DECIMAL_SETZERO(dec)	{ (dec).Lo64 = 0; (dec).Hi32 = 0; (dec).signscale = 0; }
@@ -439,17 +452,17 @@ typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
 
 #ifndef _NTDEF
 typedef LONG NTSTATUS;
-typedef NTSTATUS *PNTSTATUS;
+typedef NTSTATUS* PNTSTATUS;
 #endif
 
 #ifndef _LPCVOID_DEFINED
 #define _LPCVOID_DEFINED
-typedef const VOID *LPCVOID;
+typedef const VOID* LPCVOID;
 #endif
 
 #ifndef _LPCBYTE_DEFINED
 #define _LPCBYTE_DEFINED
-typedef const BYTE *LPCBYTE;
+typedef const BYTE* LPCBYTE;
 #endif
 
 /* integer format specifiers */
