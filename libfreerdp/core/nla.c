@@ -1316,9 +1316,9 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 	ret = ber_read_sequence_tag(s, &length) &&
 	      /* [0] credType (INTEGER) */
 	      ber_read_contextual_tag(s, 0, &length, TRUE) &&
-	      ber_read_integer(s, NULL);
-	/* [1] credentials (OCTET STRING) */
-	ret += ber_read_contextual_tag(s, 1, &length, TRUE) &&
+	      ber_read_integer(s, NULL) &&
+	      /* [1] credentials (OCTET STRING) */
+	      ber_read_contextual_tag(s, 1, &length, TRUE) &&
 	      ber_read_octet_string_tag(s, &ts_password_creds_length) &&
 	      nla_read_ts_password_creds(nla, s);
 	Stream_Free(s, FALSE);
