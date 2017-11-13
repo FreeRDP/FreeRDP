@@ -33,6 +33,10 @@
 #define AV_CODEC_ID_H264 CODEC_ID_H264
 #endif
 
+#if LIBAVUTIL_VERSION_MAJOR < 52
+#define AV_PIX_FMT_YUV420P PIX_FMT_YUV420P
+#endif
+
 /* Ubuntu 14.04 ships without the functions provided by avutil,
  * so define error to string methods here. */
 #if !defined(av_err2str)
