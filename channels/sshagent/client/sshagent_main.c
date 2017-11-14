@@ -255,6 +255,7 @@ static UINT sshagent_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	}
 
 	CloseHandle(callback->thread);
+	LeaveCriticalSection(&callback->lock);
 	DeleteCriticalSection(&callback->lock);
 	free(callback);
 	return CHANNEL_RC_OK;
@@ -287,6 +288,7 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 
 	if (callback->agent_fd == -1)
 	{
+		free(callback);
 		return CHANNEL_RC_INITIALIZATION_ERROR;
 	}
 
@@ -308,6 +310,8 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 	if (!callback->thread)
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
+		DeleteCriticalSection(&callback->lock);
+		free(callback);
 		return CHANNEL_RC_INITIALIZATION_ERROR;
 	}
 
@@ -341,6 +345,8 @@ static UINT sshagent_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 	if (sshagent->listener_callback->agent_uds_path == NULL)
 	{
 		WLog_ERR(TAG, "Environment variable $SSH_AUTH_SOCK undefined!");
+		free(sshagent->listener_callback);
+		sshagent->listener_callback = NULL;
 		return CHANNEL_RC_INITIALIZATION_ERROR;
 	}
 
