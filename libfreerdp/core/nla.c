@@ -391,6 +391,7 @@ int nla_client_begin(rdpNla* nla)
 			nla->packageName = nla->pPackageInfo->Name;
 		}
 	}
+
 	if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 	{
 		if (nla->table->CompleteAuthToken)
@@ -553,11 +554,13 @@ static int nla_client_recv(rdpNla* nla)
 		}
 
 		nla_buffer_free(nla);
+
 		if (SecIsValidHandle(&nla->credentials))
 		{
 			nla->table->FreeCredentialsHandle(&nla->credentials);
 			SecInvalidateHandle(&nla->credentials);
 		}
+
 		if (nla->status != SEC_E_OK)
 		{
 			WLog_ERR(TAG, "FreeCredentialsHandle status %s [0x%08"PRIX32"]",
@@ -781,6 +784,7 @@ static int nla_server_authenticate(rdpNla* nla)
 
 				status = nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB_DATA, peer,
 				         0);
+
 				if (status != SEC_E_OK)
 				{
 					WLog_ERR(TAG, "SetContextAttributesA(hash cb data) status %s [0x%08"PRIX32"]",
@@ -865,21 +869,21 @@ static int nla_server_authenticate(rdpNla* nla)
 			 */
 			switch (GetLastError())
 			{
-			    case ERROR_PASSWORD_MUST_CHANGE:
-				    nla->errorCode = STATUS_PASSWORD_MUST_CHANGE;
-				    break;
+				case ERROR_PASSWORD_MUST_CHANGE:
+					nla->errorCode = STATUS_PASSWORD_MUST_CHANGE;
+					break;
 
-			    case ERROR_PASSWORD_EXPIRED:
-				    nla->errorCode = STATUS_PASSWORD_EXPIRED;
-				    break;
+				case ERROR_PASSWORD_EXPIRED:
+					nla->errorCode = STATUS_PASSWORD_EXPIRED;
+					break;
 
-			    case ERROR_ACCOUNT_DISABLED:
-				    nla->errorCode = STATUS_ACCOUNT_DISABLED;
-				    break;
+				case ERROR_ACCOUNT_DISABLED:
+					nla->errorCode = STATUS_ACCOUNT_DISABLED;
+					break;
 
-			    default:
-				    nla->errorCode = NTSTATUS_FROM_WIN32(GetLastError());
-				    break;
+				default:
+					nla->errorCode = NTSTATUS_FROM_WIN32(GetLastError());
+					break;
 			}
 
 			WLog_ERR(TAG, "AcceptSecurityContext status %s [0x%08"PRIX32"]",
@@ -1006,7 +1010,7 @@ static void ap_integer_decrement_le(BYTE* number, int size)
 
 SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 {
-	SecBuffer Buffers[2];
+	SecBuffer Buffers[2] = { 0 };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 	int public_key_length;
@@ -1060,8 +1064,8 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	int length;
 	BYTE* buffer;
 	ULONG pfQOP = 0;
-	BYTE* public_key1;
-	BYTE* public_key2;
+	BYTE* public_key1 = NULL;
+	BYTE* public_key2 = NULL;
 	int public_key_length = 0;
 	int signature_length;
 	SecBuffer Buffers[2] = { 0 };
@@ -1112,6 +1116,7 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 		Message.ulVersion = SECBUFFER_VERSION;
 		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
+
 	status = nla->table->DecryptMessage(&nla->context, &Message, nla->recvSeqNum++, &pfQOP);
 
 	if (status != SEC_E_OK)
@@ -1140,7 +1145,7 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 		ap_integer_decrement_le(public_key2, public_key_length);
 	}
 
-	if (memcmp(public_key1, public_key2, public_key_length) != 0)
+	if (!public_key1 || !public_key2 || memcmp(public_key1, public_key2, public_key_length) != 0)
 	{
 		WLog_ERR(TAG, "Could not verify server's public key echo");
 		WLog_ERR(TAG, "Expected (length = %d):", public_key_length);
@@ -1304,6 +1309,10 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 	int length;
 	int ts_password_creds_length = 0;
 	BOOL ret;
+
+	if (!ts_credentials || !ts_credentials->pvBuffer)
+		return FALSE;
+
 	s = Stream_New(ts_credentials->pvBuffer, ts_credentials->cbBuffer);
 
 	if (!s)
@@ -1405,7 +1414,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 
 static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 {
-	SecBuffer Buffers[2];
+	SecBuffer Buffers[2] = { 0 };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
@@ -1441,6 +1450,7 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 		Message.ulVersion = SECBUFFER_VERSION;
 		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
+
 	status = nla->table->EncryptMessage(&nla->context, 0, &Message, nla->sendSeqNum++);
 
 	if (status != SEC_E_OK)
@@ -1458,7 +1468,7 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 	int length;
 	BYTE* buffer;
 	ULONG pfQOP;
-	SecBuffer Buffers[2];
+	SecBuffer Buffers[2] = { 0 };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
@@ -1498,6 +1508,7 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 		Message.ulVersion = SECBUFFER_VERSION;
 		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
+
 	status = nla->table->DecryptMessage(&nla->context, &Message, nla->recvSeqNum++, &pfQOP);
 
 	if (status != SEC_E_OK)
@@ -1729,53 +1740,55 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 	if (nla->errorCode)
 	{
 		UINT32 code;
+
 		switch (nla->errorCode)
 		{
-		    case STATUS_PASSWORD_MUST_CHANGE:
-			    code = FREERDP_ERROR_CONNECT_PASSWORD_MUST_CHANGE;
-			    break;
+			case STATUS_PASSWORD_MUST_CHANGE:
+				code = FREERDP_ERROR_CONNECT_PASSWORD_MUST_CHANGE;
+				break;
 
-		    case STATUS_PASSWORD_EXPIRED:
-			    code = FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED;
-			    break;
+			case STATUS_PASSWORD_EXPIRED:
+				code = FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED;
+				break;
 
-		    case STATUS_ACCOUNT_DISABLED:
-			    code = FREERDP_ERROR_CONNECT_ACCOUNT_DISABLED;
-			    break;
+			case STATUS_ACCOUNT_DISABLED:
+				code = FREERDP_ERROR_CONNECT_ACCOUNT_DISABLED;
+				break;
 
-		    case STATUS_LOGON_FAILURE:
-			    code = FREERDP_ERROR_CONNECT_LOGON_FAILURE;
-			    break;
+			case STATUS_LOGON_FAILURE:
+				code = FREERDP_ERROR_CONNECT_LOGON_FAILURE;
+				break;
 
-		    case STATUS_WRONG_PASSWORD:
-			    code = FREERDP_ERROR_CONNECT_WRONG_PASSWORD;
-			    break;
+			case STATUS_WRONG_PASSWORD:
+				code = FREERDP_ERROR_CONNECT_WRONG_PASSWORD;
+				break;
 
-		    case STATUS_ACCESS_DENIED:
-			    code = FREERDP_ERROR_CONNECT_ACCESS_DENIED;
-			    break;
+			case STATUS_ACCESS_DENIED:
+				code = FREERDP_ERROR_CONNECT_ACCESS_DENIED;
+				break;
 
-		    case STATUS_ACCOUNT_RESTRICTION:
-			    code = FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION;
-			    break;
+			case STATUS_ACCOUNT_RESTRICTION:
+				code = FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION;
+				break;
 
-		    case STATUS_ACCOUNT_LOCKED_OUT:
-			    code = FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT;
-			    break;
+			case STATUS_ACCOUNT_LOCKED_OUT:
+				code = FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT;
+				break;
 
-		    case STATUS_ACCOUNT_EXPIRED:
-			    code = FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED;
-			    break;
+			case STATUS_ACCOUNT_EXPIRED:
+				code = FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED;
+				break;
 
-		    case STATUS_LOGON_TYPE_NOT_GRANTED:
-			    code = FREERDP_ERROR_CONNECT_LOGON_TYPE_NOT_GRANTED;
-			    break;
+			case STATUS_LOGON_TYPE_NOT_GRANTED:
+				code = FREERDP_ERROR_CONNECT_LOGON_TYPE_NOT_GRANTED;
+				break;
 
-		    default:
-			    WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: 0x%08"PRIX32"", nla->errorCode);
+			default:
+				WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: 0x%08"PRIX32"", nla->errorCode);
 				code = FREERDP_ERROR_AUTHENTICATION_FAILED;
-			    break;
+				break;
 		}
+
 		freerdp_set_last_error(nla->instance->context, code);
 		return -1;
 	}
@@ -1923,6 +1936,7 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 		return NULL;
 
 	nla->identity = calloc(1, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
 	if (!nla->identity)
 	{
 		free(nla);
@@ -2008,9 +2022,17 @@ void nla_free(rdpNla* nla)
 	if (nla->table)
 	{
 		SECURITY_STATUS status;
+
 		if (SecIsValidHandle(&nla->credentials))
 		{
 			status = nla->table->FreeCredentialsHandle(&nla->credentials);
+
+			if (status != SEC_E_OK)
+			{
+				WLog_WARN(TAG, "FreeCredentialsHandle status %s [0x%08"PRIX32"]",
+				          GetSecurityStatusString(status), status);
+			}
+
 			SecInvalidateHandle(&nla->credentials);
 		}
 
