@@ -1,9 +1,10 @@
 
+#include <errno.h>
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/cmdline.h>
 
-const char* testArgv[] =
+static const char* testArgv[] =
 {
 	"mstsc.exe",
 	"+z",
@@ -17,7 +18,7 @@ const char* testArgv[] =
 	"/v:localhost:3389"
 };
 
-COMMAND_LINE_ARGUMENT_A args[] =
+static COMMAND_LINE_ARGUMENT_A args[] =
 {
 	{ "v", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "destination server" },
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "server port" },
@@ -60,10 +61,9 @@ int TestCmdLine(int argc, char* argv[])
 {
 	int status;
 	DWORD flags;
-	int width = 0;
-	int height = 0;
+	long width = 0;
+	long height = 0;
 	COMMAND_LINE_ARGUMENT_A* arg;
-
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
 	status = CommandLineParseArgumentsA(testArgc, testArgv, args, flags, NULL, NULL, NULL);
 
@@ -146,6 +146,7 @@ int TestCmdLine(int argc, char* argv[])
 	}
 
 	arg = args;
+	errno = 0;
 
 	do
 	{
@@ -153,33 +154,34 @@ int TestCmdLine(int argc, char* argv[])
 			continue;
 
 		printf("Argument: %s\n", arg->Name);
-
 		CommandLineSwitchStart(arg)
-
 		CommandLineSwitchCase(arg, "v")
 		{
-
 		}
 		CommandLineSwitchCase(arg, "w")
 		{
-			width = atoi(arg->Value);
+			width = strtol(arg->Value, NULL, 0);
+
+			if (errno != 0)
+				return -1;
 		}
 		CommandLineSwitchCase(arg, "h")
 		{
-			height = atoi(arg->Value);
+			height = strtol(arg->Value, NULL, 0);
+
+			if (errno != 0)
+				return -1;
 		}
 		CommandLineSwitchDefault(arg)
 		{
-
 		}
-
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
 	if ((width != 1024) || (height != 768))
 	{
-		printf("Unexpected width and height: Actual: (%dx%d), Expected: (1024x768)\n", width, height);
+		printf("Unexpected width and height: Actual: (%ldx%ld), Expected: (1024x768)\n", width, height);
 		return -1;
 	}
 

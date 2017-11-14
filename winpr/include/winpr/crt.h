@@ -32,26 +32,38 @@
 
 #ifndef _WIN32
 
+#ifndef _strtoui64
+#define _strtoui64 strtoull
+#endif
+
+#ifndef _strtoi64
+#define _strtoi64 strtoll
+#endif
+
 #ifndef _rotl
-static INLINE UINT32 _rotl(UINT32 value, int shift) {
+static INLINE UINT32 _rotl(UINT32 value, int shift)
+{
 	return (value << shift) | (value >> (32 - shift));
 }
 #endif
 
 #ifndef _rotl64
-static INLINE UINT64 _rotl64(UINT64 value, int shift) {
+static INLINE UINT64 _rotl64(UINT64 value, int shift)
+{
 	return (value << shift) | (value >> (64 - shift));
 }
 #endif
 
 #ifndef _rotr
-static INLINE UINT32 _rotr(UINT32 value, int shift) {
+static INLINE UINT32 _rotr(UINT32 value, int shift)
+{
 	return (value >> shift) | (value << (32 - shift));
 }
 #endif
 
 #ifndef _rotr64
-static INLINE UINT64 _rotr64(UINT64 value, int shift) {
+static INLINE UINT64 _rotr64(UINT64 value, int shift)
+{
 	return (value >> shift) | (value << (64 - shift));
 }
 #endif
@@ -63,22 +75,24 @@ static INLINE UINT64 _rotr64(UINT64 value, int shift) {
 
 #else
 
-static INLINE UINT32 _byteswap_ulong(UINT32 _val) {
-	return  (((_val) >> 24) | \
-		(((_val) & 0x00FF0000) >> 8) | \
-		(((_val) & 0x0000FF00) << 8) | \
-		((_val) << 24));
+static INLINE UINT32 _byteswap_ulong(UINT32 _val)
+{
+	return (((_val) >> 24) | \
+	        (((_val) & 0x00FF0000) >> 8) | \
+	        (((_val) & 0x0000FF00) << 8) | \
+	        ((_val) << 24));
 }
 
-static INLINE UINT64 _byteswap_uint64(UINT64 _val) {
-	return  (((_val) << 56) | \
-		(((_val) << 40) & 0xFF000000000000) | \
-		(((_val) << 24) & 0xFF0000000000) | \
-		(((_val) << 8)  & 0xFF00000000) | \
-		(((_val) >> 8)  & 0xFF000000) | \
-		(((_val) >> 24) & 0xFF0000) | \
-		(((_val) >> 40) & 0xFF00) | \
-		((_val)  >> 56));
+static INLINE UINT64 _byteswap_uint64(UINT64 _val)
+{
+	return (((_val) << 56) | \
+	        (((_val) << 40) & 0xFF000000000000) | \
+	        (((_val) << 24) & 0xFF0000000000) | \
+	        (((_val) << 8)  & 0xFF00000000) | \
+	        (((_val) >> 8)  & 0xFF000000) | \
+	        (((_val) >> 24) & 0xFF0000) | \
+	        (((_val) >> 40) & 0xFF00) | \
+	        ((_val)  >> 56));
 }
 
 #endif
@@ -89,7 +103,8 @@ static INLINE UINT64 _byteswap_uint64(UINT64 _val) {
 
 #else
 
-static INLINE UINT16 _byteswap_ushort(UINT16 _val) {
+static INLINE UINT16 _byteswap_ushort(UINT16 _val)
+{
 	return (((_val) >> 8) | ((_val) << 8));
 }
 
@@ -128,8 +143,10 @@ WINPR_API void* _aligned_realloc(void* memblock, size_t size, size_t alignment);
 WINPR_API void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment);
 
 WINPR_API void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset);
-WINPR_API void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment, size_t offset);
-WINPR_API void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment, size_t offset);
+WINPR_API void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment,
+                                        size_t offset);
+WINPR_API void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment,
+        size_t offset);
 
 WINPR_API size_t _aligned_msize(void* memblock, size_t alignment, size_t offset);
 

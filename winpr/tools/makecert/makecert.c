@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/cmdline.h>
@@ -441,6 +443,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc,
 	}
 
 	arg = args;
+	errno = 0;
 
 	do
 	{
@@ -515,17 +518,31 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc,
 		}
 		CommandLineSwitchCase(arg, "y")
 		{
+			long val;
+
 			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 				continue;
 
-			context->duration_years = atoi(arg->Value);
+			val = strtol(arg->Value, NULL, 0);
+
+			if ((errno != 0) || (val < 0) || (val > INT32_MAX))
+				return -1;
+
+			context->duration_years = strtol(arg->Value, NULL, 0);
 		}
 		CommandLineSwitchCase(arg, "m")
 		{
+			long val;
+
 			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 				continue;
 
-			context->duration_months = atoi(arg->Value);
+			val = strtol(arg->Value, NULL, 0);
+
+			if ((errno != 0) || (val < 1) || (val > 12))
+				return -1;
+
+			context->duration_months = val;
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -952,7 +969,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 #ifdef WITH_OPENSSL
 	int length;
 	char* entry;
-	int key_length;
+	unsigned long key_length;
 	long serial = 0;
 	X509_NAME* name = NULL;
 	const EVP_MD* md = NULL;
@@ -1005,7 +1022,10 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
-		key_length = atoi(arg->Value);
+		key_length = strtoul(arg->Value, NULL, 0);
+
+		if (errno != 0)
+			return -1;
 	}
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
@@ -1019,11 +1039,13 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 			return -1;
 
 		context->rsa = RSA_new();
+
 		if (!context->rsa)
 		{
 			BN_clear_free(rsa);
 			return -1;
 		}
+
 		BN_set_word(rsa, RSA_F4);
 		rc = RSA_generate_key_ex(context->rsa, key_length, rsa, NULL);
 		BN_clear_free(rsa);
@@ -1041,7 +1063,12 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	arg = CommandLineFindArgumentA(args, "#");
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
-		serial = atoi(arg->Value);
+	{
+		serial = strtol(arg->Value, NULL, 0);
+
+		if (errno != 0)
+			return -1;
+	}
 	else
 		serial = (long) GetTickCount64();
 

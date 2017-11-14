@@ -2964,7 +2964,6 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* planar, const BYTE* srcBitmap,
                           const UINT32 width, const UINT32 height)
 {
 	BOOL rc = FALSE;
-	const UINT32 size = width * height * GetBytesPerPixel(dstFormat);
 	UINT32 dstSize;
 	BYTE* compressedBitmap = freerdp_bitmap_compress_planar(planar,
 	                         srcBitmap, srcFormat, width, height, 0, NULL, &dstSize);

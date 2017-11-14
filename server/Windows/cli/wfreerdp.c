@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
@@ -40,10 +41,9 @@ int IDcount = 0;
 BOOL CALLBACK moncb(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
 	WLog_DBG(TAG, "%d\t(%ld, %ld), (%ld, %ld)",
-			 IDcount, lprcMonitor->left, lprcMonitor->top,
-			 lprcMonitor->right, lprcMonitor->bottom);
+	         IDcount, lprcMonitor->left, lprcMonitor->top,
+	         lprcMonitor->right, lprcMonitor->bottom);
 	IDcount++;
-
 	return TRUE;
 }
 
@@ -52,13 +52,12 @@ int main(int argc, char* argv[])
 	BOOL screen_selected = FALSE;
 	int index;
 	wfServer* server;
-
 	server = wfreerdp_server_new();
-
 	set_screen_id(0);
-
 	//handle args
 	index = 1;
+	errno = 0;
+
 	while (index < argc)
 	{
 		//first the args that will cause the program to terminate
@@ -72,11 +71,11 @@ int main(int argc, char* argv[])
 			WLog_INFO(TAG, "Detecting screens...");
 			WLog_INFO(TAG, "ID\tResolution\t\tName (Interface)");
 
-			for (i=0; ; i++)
+			for (i = 0; ; i++)
 			{
 				if (get_screen_info(i, name, &width, &height, &bpp) != 0)
 				{
-					if ( (width * height * bpp) == 0 )
+					if ((width * height * bpp) == 0)
 						continue;
 
 					WLog_INFO(TAG, "%d\t%dx%dx%d\t", i, width, height, bpp);
@@ -101,24 +100,36 @@ int main(int argc, char* argv[])
 
 			return 0;
 		}
-	
+
 		if (strcmp("--screen", argv[index]) == 0)
 		{
+			UINT32 val;
 			screen_selected = TRUE;
 			index++;
+
 			if (index == argc)
 			{
 				WLog_INFO(TAG, "missing screen id parameter");
 				return 0;
 			}
 
-			set_screen_id(atoi(argv[index]));
+			val = strtoul(argv[index], NULL, 0);
+
+			if ((errno != 0) || (val > UINT32_MAX))
+				return -1;
+
+			set_screen_id(val);
 			index++;
 		}
 
 		if (index == argc - 1)
 		{
-			server->port = (DWORD) atoi(argv[index]);
+			UINT32 val = strtoul(argv[index], NULL, 0);
+
+			if ((errno != 0) || (val > UINT32_MAX))
+				return -1;
+
+			server->port = val;
 			break;
 		}
 	}
@@ -134,11 +145,11 @@ int main(int argc, char* argv[])
 		WLog_INFO(TAG, "Detecting screens...");
 		WLog_INFO(TAG, "ID\tResolution\t\tName (Interface)");
 
-		for (i=0; ; i++)
+		for (i = 0; ; i++)
 		{
 			if (get_screen_info(i, name, &width, &height, &bpp) != 0)
 			{
-				if ( (width * height * bpp) == 0 )
+				if ((width * height * bpp) == 0)
 					continue;
 
 				WLog_INFO(TAG, "%d\t%dx%dx%d\t", i, width, height, bpp);
@@ -155,11 +166,9 @@ int main(int argc, char* argv[])
 
 	WLog_INFO(TAG, "Starting server");
 	wfreerdp_server_start(server);
-
 	WaitForSingleObject(server->thread, INFINITE);
 	WLog_INFO(TAG, "Stopping server");
 	wfreerdp_server_stop(server);
 	wfreerdp_server_free(server);
-
 	return 0;
 }

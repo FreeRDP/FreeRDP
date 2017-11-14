@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include <winpr/ntlm.h>
 
@@ -46,16 +47,16 @@
 
 void usage_and_exit()
 {
-			printf("winpr-hash: NTLM hashing tool\n");
-			printf("Usage: winpr-hash -u <username> -p <password> [-d <domain>] [-f <_default_,sam>] [-v <_1_,2>]\n");
-			exit(1);
+	printf("winpr-hash: NTLM hashing tool\n");
+	printf("Usage: winpr-hash -u <username> -p <password> [-d <domain>] [-f <_default_,sam>] [-v <_1_,2>]\n");
+	exit(1);
 }
 
 int main(int argc, char* argv[])
 {
 	int index = 1;
 	int format = 0;
-	int version = 1;
+	unsigned long version = 1;
 	BYTE NtHash[16];
 	char* User = NULL;
 	UINT32 UserLength;
@@ -63,6 +64,7 @@ int main(int argc, char* argv[])
 	UINT32 DomainLength;
 	char* Password = NULL;
 	UINT32 PasswordLength;
+	errno = 0;
 
 	while (index < argc)
 	{
@@ -112,11 +114,11 @@ int main(int argc, char* argv[])
 				usage_and_exit();
 			}
 
-			version = atoi(argv[index]);
+			version = strtoul(argv[index], NULL, 0);
 
-			if ((version != 1) && (version != 2))
+			if (((version != 1) && (version != 2)) || (errno != 0))
 			{
-				printf("unknown version %d \n\n", version);
+				printf("unknown version %lu \n\n", version);
 				usage_and_exit();
 			}
 		}
@@ -172,6 +174,7 @@ int main(int argc, char* argv[])
 	{
 		for (index = 0; index < 16; index++)
 			printf("%02"PRIx8"", NtHash[index]);
+
 		printf("\n");
 	}
 	else if (format == 1)
