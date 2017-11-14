@@ -196,13 +196,15 @@ static BOOL update_message_SetKeyboardIndicators(rdpContext* context, UINT16 led
 	                         MakeMessageId(Update, SetKeyboardIndicators), (void*)(size_t)led_flags, NULL);
 }
 
-static BOOL update_message_SetKeyboardImeStatus(rdpContext* context, UINT16 imeId, UINT32 imeState, UINT32 imeConvMode)
+static BOOL update_message_SetKeyboardImeStatus(rdpContext* context, UINT16 imeId, UINT32 imeState,
+        UINT32 imeConvMode)
 {
 	if (!context || !context->update)
 		return FALSE;
 
 	return MessageQueue_Post(context->update->queue, (void*) context,
-	                         MakeMessageId(Update, SetKeyboardImeStatus), (void*)(size_t)((imeId << 16UL) | imeState), (void*)(size_t) imeConvMode);
+	                         MakeMessageId(Update, SetKeyboardImeStatus), (void*)(size_t)((imeId << 16UL) | imeState),
+	                         (void*)(size_t) imeConvMode);
 }
 
 static BOOL update_message_RefreshRect(rdpContext* context, BYTE count,
@@ -2632,7 +2634,7 @@ int update_message_queue_process_message(rdpUpdate* update, wMessage* message)
 	update_message_free_class(message, msgClass, msgType);
 
 	if (status < 0)
-		status = -1;
+		return -1;
 
 	return 1;
 }
