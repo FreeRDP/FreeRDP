@@ -809,6 +809,7 @@ int TestGdiLine(int argc, char* argv[])
 		for (x = 0; x < map_size; x++)
 			gdi_DeleteObject((HGDIOBJECT) rop_map[x].bmp);
 
+		gdi_DeleteObject((HGDIOBJECT)hBmp);
 		gdi_DeleteObject((HGDIOBJECT) pen);
 		gdi_DeleteDC(hdc);
 

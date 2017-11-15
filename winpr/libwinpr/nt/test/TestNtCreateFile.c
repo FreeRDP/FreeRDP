@@ -21,10 +21,9 @@ int TestNtCreateFile(int argc, char* argv[])
 	OBJECT_ATTRIBUTES attributes;
 	IO_STATUS_BLOCK ioStatusBlock;
 	int result = -1;
-
 	_RtlInitAnsiString(&aString, TESTFILE);
-
 	ntstatus = _RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
+
 	if (ntstatus != STATUS_SUCCESS)
 	{
 		printf("_RtlAnsiStringToUnicodeString failure: 0x%08"PRIX32"\n", ntstatus);
@@ -33,23 +32,18 @@ int TestNtCreateFile(int argc, char* argv[])
 
 	handle = NULL;
 	ZeroMemory(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
-
 	_InitializeObjectAttributes(&attributes, &uString, 0, NULL, NULL);
-
 	DesiredAccess = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
 	CreateOptions = FILE_DIRECTORY_FILE | FILE_WRITE_THROUGH;
 	CreateDisposition = FILE_OVERWRITE_IF;
-
 	ntstatus = _NtCreateFile(&handle, DesiredAccess, &attributes, &ioStatusBlock,
-		0, 0, CreateDisposition, CreateOptions, 0, 0, 0);
+	                         0, 0, CreateDisposition, CreateOptions, 0, 0, 0);
 
 	if (ntstatus != STATUS_SUCCESS)
 	{
 		printf("_NtCreateFile failure: 0x%08"PRIX32"\n", ntstatus);
 		goto out;
 	}
-
-	_RtlFreeUnicodeString(&uString);
 
 	ntstatus = _NtClose(handle);
 
@@ -60,23 +54,23 @@ int TestNtCreateFile(int argc, char* argv[])
 	}
 
 	result = 0;
-
 out:
-
+	_RtlFreeUnicodeString(&uString);
 #ifndef _WIN32
+
 	if (result == 0)
 	{
 		printf("%s: Error, this test is currently expected not to succeed on this platform.\n",
-			__FUNCTION__);
+		       __FUNCTION__);
 		result = -1;
 	}
 	else
 	{
 		printf("%s: This test is currently expected to fail on this platform.\n",
-			__FUNCTION__);
+		       __FUNCTION__);
 		result = 0;
 	}
-#endif
 
+#endif
 	return result;
 }

@@ -40,7 +40,7 @@ BOOL HashTable_PointerCompare(void* pointer1, void* pointer2)
 
 UINT32 HashTable_PointerHash(void* pointer)
 {
-	return ((UINT32) (UINT_PTR) pointer) >> 4;
+	return ((UINT32)(UINT_PTR) pointer) >> 4;
 }
 
 BOOL HashTable_StringCompare(void* string1, void* string2)
@@ -149,7 +149,7 @@ void HashTable_Rehash(wHashTable* table, int numOfBuckets)
 }
 
 void HashTable_SetIdealRatio(wHashTable* table, float idealRatio,
-		float lowerRehashThreshold, float upperRehashThreshold)
+                             float lowerRehashThreshold, float upperRehashThreshold)
 {
 	table->idealRatio = idealRatio;
 	table->lowerRehashThreshold = lowerRehashThreshold;
@@ -160,9 +160,7 @@ wKeyValuePair* HashTable_Get(wHashTable* table, void* key)
 {
 	UINT32 hashValue;
 	wKeyValuePair* pair;
-
 	hashValue = table->hash(key) % table->numOfBuckets;
-
 	pair = table->bucketArray[hashValue];
 
 	while (pair && !table->keyCompare(key, pair->key))
@@ -238,6 +236,7 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 		{
 			if (table->keyFree)
 				table->keyFree(pair->key);
+
 			pair->key = key;
 		}
 
@@ -245,6 +244,7 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 		{
 			if (table->valueFree)
 				table->valueFree(pair->value);
+
 			pair->value = value;
 		}
 	}
@@ -295,7 +295,6 @@ BOOL HashTable_Remove(wHashTable* table, void* key)
 		EnterCriticalSection(&table->lock);
 
 	hashValue = table->hash(key) % table->numOfBuckets;
-
 	pair = table->bucketArray[hashValue];
 
 	while (pair && !table->keyCompare(key, pair->key))
@@ -322,7 +321,6 @@ BOOL HashTable_Remove(wHashTable* table, void* key)
 			table->bucketArray[hashValue] = pair->next;
 
 		free(pair);
-
 		table->numOfElements--;
 
 		if (table->lowerRehashThreshold > 0.0)
@@ -388,7 +386,12 @@ BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value)
 	if (!pair)
 		status = FALSE;
 	else
+	{
+		if (table->valueClone && table->valueFree)
+			table->valueFree(pair->value);
+
 		pair->value = value;
+	}
 
 	if (table->synchronized)
 		LeaveCriticalSection(&table->lock);
@@ -424,7 +427,6 @@ void HashTable_Clear(wHashTable* table)
 				table->valueFree(pair->value);
 
 			free(pair);
-
 			pair = nextPair;
 		}
 
@@ -482,9 +484,7 @@ int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 		while (pair)
 		{
 			nextPair = pair->next;
-
 			pKeys[iKey++] = (ULONG_PTR) pair->key;
-
 			pair = nextPair;
 		}
 	}
@@ -493,7 +493,6 @@ int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 		LeaveCriticalSection(&table->lock);
 
 	*ppKeys = pKeys;
-
 	return count;
 }
 
@@ -580,18 +579,14 @@ BOOL HashTable_ContainsValue(wHashTable* table, void* value)
 wHashTable* HashTable_New(BOOL synchronized)
 {
 	wHashTable* table;
-
 	table = (wHashTable*) calloc(1, sizeof(wHashTable));
 
 	if (table)
 	{
 		table->synchronized = synchronized;
-
 		InitializeCriticalSectionAndSpinCount(&(table->lock), 4000);
-
 		table->numOfBuckets = 64;
 		table->numOfElements = 0;
-
 		table->bucketArray = (wKeyValuePair**) calloc(table->numOfBuckets, sizeof(wKeyValuePair*));
 
 		if (!table->bucketArray)
@@ -603,7 +598,6 @@ wHashTable* HashTable_New(BOOL synchronized)
 		table->idealRatio = 3.0;
 		table->lowerRehashThreshold = 0.0;
 		table->upperRehashThreshold = 15.0;
-
 		table->hash = HashTable_PointerHash;
 		table->keyCompare = HashTable_PointerCompare;
 		table->valueCompare = HashTable_PointerCompare;
@@ -639,13 +633,11 @@ void HashTable_Free(wHashTable* table)
 					table->valueFree(pair->value);
 
 				free(pair);
-
 				pair = nextPair;
 			}
 		}
 
 		DeleteCriticalSection(&(table->lock));
-
 		free(table->bucketArray);
 		free(table);
 	}

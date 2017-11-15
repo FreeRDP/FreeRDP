@@ -279,6 +279,10 @@ freerdp_connect_finally:
 	EventArgsInit(&e, "freerdp");
 	e.result = status ? 0 : -1;
 	PubSub_OnConnectionResult(instance->context->pubSub, instance->context, &e);
+
+	if (!status)
+		freerdp_disconnect(instance);
+
 	return status;
 }
 

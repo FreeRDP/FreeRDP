@@ -9,12 +9,12 @@
 #define PATH_MAX 4096
 #endif
 
-static void *read_image(const char *src, size_t *size)
+static void* read_image(const char* src, size_t* size)
 {
 	int success = 0;
-	void *a = NULL;
+	void* a = NULL;
 	INT64 src_size;
-	FILE *fsrc = fopen(src, "rb");
+	FILE* fsrc = fopen(src, "rb");
 
 	if (!fsrc)
 	{
@@ -52,22 +52,24 @@ static void *read_image(const char *src, size_t *size)
 
 	success = 1;
 	*size = src_size;
-
 cleanup:
+
 	if (a && !success)
 	{
 		free(a);
 		a = NULL;
 	}
+
 	if (fsrc)
 		fclose(fsrc);
 
 	return a;
 }
 
-static int img_compare(wImage *image, wImage *image2, BOOL ignoreType)
+static int img_compare(wImage* image, wImage* image2, BOOL ignoreType)
 {
 	int rc = -1;
+
 	if ((image->type != image2->type) && !ignoreType)
 	{
 		fprintf(stderr, "Image type mismatch %d:%d\n", image->type, image2->type);
@@ -100,7 +102,8 @@ static int img_compare(wImage *image, wImage *image2, BOOL ignoreType)
 
 	if (image->bytesPerPixel != image2->bytesPerPixel)
 	{
-		fprintf(stderr, "Image bytesPerPixel mismatch %d:%d\n", image->bytesPerPixel, image2->bytesPerPixel);
+		fprintf(stderr, "Image bytesPerPixel mismatch %d:%d\n", image->bytesPerPixel,
+		        image2->bytesPerPixel);
 		goto cleanup;
 	}
 
@@ -113,11 +116,10 @@ cleanup:
 	return rc;
 }
 
-static wImage *get_image(const char *src)
+static wImage* get_image(const char* src)
 {
 	int status;
 	wImage* image = NULL;
-
 	image = winpr_image_new();
 
 	if (!image)
@@ -136,17 +138,16 @@ static wImage *get_image(const char *src)
 	}
 
 cleanup:
-
 	return image;
 }
 
-static int create_test(const char *src, const char *dst_png, const char *dst_bmp)
+static int create_test(const char* src, const char* dst_png, const char* dst_bmp)
 {
 	int rc = -1;
 	int ret = -1;
 	int status;
 	size_t bsize;
-	void *buffer = NULL;
+	void* buffer = NULL;
 	wImage* image = NULL, *image2 = NULL, *image3 = NULL, *image4 = NULL;
 
 	if (!PathFileExistsA(src))
@@ -182,6 +183,7 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 
 	/* Read image from buffer, compare. */
 	buffer = read_image(src, &bsize);
+
 	if (!buffer)
 	{
 		fprintf(stderr, "Failed to read image %s!\n", src);
@@ -205,57 +207,68 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 	}
 
 	rc = img_compare(image, image2, TRUE);
+
 	if (rc)
 		goto cleanup;
 
 	image3 = get_image(dst_png);
+
 	if (!image3)
 		goto cleanup;
 
 	rc = img_compare(image, image3, TRUE);
+
 	if (rc)
 		goto cleanup;
 
 	image4 = get_image(dst_bmp);
+
 	if (!image4)
 		goto cleanup;
 
 	rc = img_compare(image, image4, TRUE);
+
 	if (rc)
 		goto cleanup;
 
 	ret = 0;
 cleanup:
+
 	if (image)
 		winpr_image_free(image, TRUE);
+
 	if (image2)
 		winpr_image_free(image2, TRUE);
+
 	if (image3)
 		winpr_image_free(image3, TRUE);
+
 	if (image4)
 		winpr_image_free(image4, TRUE);
 
 	free(buffer);
-
 	return ret;
 }
 
-int test_image_png_to_bmp()
+static int test_image_png_to_bmp(void)
 {
-	char *buffer = TEST_SOURCE_PATH;
+	char* buffer = TEST_SOURCE_PATH;
 	char src_png[PATH_MAX];
 	char src_bmp[PATH_MAX];
 	char dst_png[PATH_MAX];
 	char dst_bmp[PATH_MAX];
 	char dst_png2[PATH_MAX];
 	char dst_bmp2[PATH_MAX];
-	char *tmp = GetKnownPath(KNOWN_PATH_TEMP);
+	char* tmp = GetKnownPath(KNOWN_PATH_TEMP);
 
 	if (!tmp)
 		return -1;
 
 	if (!buffer)
+	{
+		free(tmp);
 		return -1;
+	}
 
 	sprintf_s(src_png, sizeof(src_png), "%s/lodepng_32bit.png", buffer);
 	sprintf_s(src_bmp, sizeof(src_bmp), "%s/lodepng_32bit.bmp", buffer);
@@ -263,6 +276,7 @@ int test_image_png_to_bmp()
 	sprintf_s(dst_bmp, sizeof(dst_bmp), "%s/lodepng_32bit.bmp", tmp);
 	sprintf_s(dst_png2, sizeof(dst_png2), "%s/lodepng_32bit-2.png", tmp);
 	sprintf_s(dst_bmp2, sizeof(dst_bmp2), "%s/lodepng_32bit-2.bmp", tmp);
+	free(tmp);
 
 	if (create_test(src_png, dst_png, dst_bmp))
 		return -1;
@@ -276,7 +290,6 @@ int test_image_png_to_bmp()
 int TestImage(int argc, char* argv[])
 {
 	int rc = test_image_png_to_bmp();
-
 	return rc;
 }
 

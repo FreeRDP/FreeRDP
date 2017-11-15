@@ -24,13 +24,13 @@
 static int prepare(const char* currentFileV2, const char* legacyFileV2, const char* legacyFile)
 {
 	char* legacy[] = {
-		"someurl ff:11:22:dd\r\n",
-		"otherurl aa:bb:cc:dd\r",
-		"legacyurl aa:bb:cc:dd\n"
+	    "someurl ff:11:22:dd\r\n",
+	    "otherurl aa:bb:cc:dd\r",
+	    "legacyurl aa:bb:cc:dd\n"
 	};
 	char* hosts[] = {
-		"someurl 3389 ff:11:22:dd subject issuer\r\n",
-		"otherurl\t3389\taa:bb:cc:dd\tsubject2\tissuer2\r",
+	    "someurl 3389 ff:11:22:dd subject issuer\r\n",
+	    "otherurl\t3389\taa:bb:cc:dd\tsubject2\tissuer2\r",
 	};
 	FILE* fl = NULL;
 	FILE* fc = NULL;
@@ -47,7 +47,7 @@ static int prepare(const char* currentFileV2, const char* legacyFileV2, const ch
 	for (i=0; i<sizeof(hosts)/sizeof(hosts[0]); i++)
 	{
 		if (fwrite(hosts[i], strlen(hosts[i]), 1, fl) != 1 ||
-			fwrite(hosts[i], strlen(hosts[i]), 1, fc) != 1)
+		    fwrite(hosts[i], strlen(hosts[i]), 1, fc) != 1)
 			goto finish;
 	}
 
@@ -135,7 +135,7 @@ int TestKnownHosts(int argc, char* argv[])
 		goto finish;
 	}
 
- 	store = certificate_store_new(&current);
+	store = certificate_store_new(&current);
 	if (!store)
 	{
 		fprintf(stderr, "Could not create certificate store!\n");
@@ -306,6 +306,8 @@ int TestKnownHosts(int argc, char* argv[])
 	rc = 0;
 
 finish:
+	free(current.ConfigPath);
+	free(legacy.ConfigPath);
 	if (store)
 		certificate_store_free(store);
 	if (data)

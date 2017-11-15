@@ -29,10 +29,10 @@ static int test_ZGfxCompressFox(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	BYTE* pSrcData = NULL;
 	UINT32 SrcSize;
 	UINT32 DstSize;
-	BYTE* pDstData;
+	BYTE* pDstData = NULL;
 	ZGFX_CONTEXT* zgfx;
 	UINT32 expectedSize;
 	zgfx = zgfx_context_new(TRUE);
@@ -70,6 +70,7 @@ static int test_ZGfxCompressFox(void)
 
 	rc = 0;
 fail:
+	free(pDstData);
 	zgfx_context_free(zgfx);
 	return rc;
 }
@@ -82,7 +83,7 @@ static int test_ZGfxDecompressFoxSingle(void)
 	BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
-	BYTE* pDstData;
+	BYTE* pDstData = NULL;
 	ZGFX_CONTEXT* zgfx;
 	UINT32 expectedSize;
 	zgfx = zgfx_context_new(TRUE);
@@ -120,6 +121,7 @@ static int test_ZGfxDecompressFoxSingle(void)
 
 	rc = 0;
 fail:
+	free(pDstData);
 	zgfx_context_free(zgfx);
 	return rc;
 }
@@ -132,7 +134,7 @@ static int test_ZGfxDecompressFoxMultipart(void)
 	BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
-	BYTE* pDstData;
+	BYTE* pDstData = NULL;
 	ZGFX_CONTEXT* zgfx;
 	UINT32 expectedSize;
 	zgfx = zgfx_context_new(TRUE);
@@ -170,6 +172,7 @@ static int test_ZGfxDecompressFoxMultipart(void)
 
 	rc = 0;
 fail:
+	free(pDstData);
 	zgfx_context_free(zgfx);
 	return rc;
 }
@@ -182,9 +185,9 @@ static int test_ZGfxCompressConsistent(void)
 	BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
-	BYTE* pDstData;
+	BYTE* pDstData = NULL;
 	UINT32 DstSize2;
-	BYTE* pDstData2;
+	BYTE* pDstData2 = NULL;
 	ZGFX_CONTEXT* zgfx;
 	UINT32 expectedSize;
 	BYTE BigBuffer[65536];
@@ -240,6 +243,8 @@ static int test_ZGfxCompressConsistent(void)
 
 	rc = 0;
 fail:
+	free(pDstData);
+	free(pDstData2);
 	zgfx_context_free(zgfx);
 	return rc;
 }

@@ -5,15 +5,14 @@
 
 static LONG count = 0;
 
-void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
+static void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
 	int index;
 	BYTE a[1024];
 	BYTE b[1024];
 	BYTE c[1024];
-
 	printf("Hello %s: %03"PRId32" (thread: 0x%08"PRIX32")\n", (char*) context,
-		InterlockedIncrement(&count), GetCurrentThreadId());
+	       InterlockedIncrement(&count), GetCurrentThreadId());
 
 	for (index = 0; index < 100; index++)
 	{
@@ -27,22 +26,17 @@ void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, P
 	}
 }
 
-int TestPoolWork(int argc, char* argv[])
+static BOOL test1(void)
 {
 	int index;
-	PTP_POOL pool;
 	PTP_WORK work;
-	PTP_CLEANUP_GROUP cleanupGroup;
-	TP_CALLBACK_ENVIRON environment;
-
 	printf("Global Thread Pool\n");
-
 	work = CreateThreadpoolWork((PTP_WORK_CALLBACK) test_WorkCallback, "world", NULL);
 
 	if (!work)
 	{
 		printf("CreateThreadpoolWork failure\n");
-		return -1;
+		return FALSE;
 	}
 
 	/**
@@ -55,66 +49,86 @@ int TestPoolWork(int argc, char* argv[])
 
 	WaitForThreadpoolWorkCallbacks(work, FALSE);
 	CloseThreadpoolWork(work);
+	return TRUE;
+}
 
+static BOOL test2(void)
+{
+	BOOL rc = FALSE;
+	int index;
+	PTP_POOL pool;
+	PTP_WORK work;
+	PTP_CLEANUP_GROUP cleanupGroup;
+	TP_CALLBACK_ENVIRON environment;
 	printf("Private Thread Pool\n");
 
 	if (!(pool = CreateThreadpool(NULL)))
 	{
 		printf("CreateThreadpool failure\n");
-		return -1;
+		return FALSE;
 	}
 
 	if (!SetThreadpoolThreadMinimum(pool, 4))
 	{
 		printf("SetThreadpoolThreadMinimum failure\n");
-		return -1;
+		goto fail;
 	}
 
 	SetThreadpoolThreadMaximum(pool, 8);
-
 	InitializeThreadpoolEnvironment(&environment);
 	SetThreadpoolCallbackPool(&environment, pool);
-
 	cleanupGroup = CreateThreadpoolCleanupGroup();
 
 	if (!cleanupGroup)
 	{
 		printf("CreateThreadpoolCleanupGroup failure\n");
-		return -1;
+		goto fail;
 	}
 
 	SetThreadpoolCallbackCleanupGroup(&environment, cleanupGroup, NULL);
-
 	work = CreateThreadpoolWork((PTP_WORK_CALLBACK) test_WorkCallback, "world", &environment);
 
 	if (!work)
 	{
 		printf("CreateThreadpoolWork failure\n");
-		return -1;
+		goto fail;
 	}
 
 	for (index = 0; index < 10; index++)
 		SubmitThreadpoolWork(work);
 
 	WaitForThreadpoolWorkCallbacks(work, FALSE);
+	rc = TRUE;
+fail:
 
-	CloseThreadpoolCleanupGroupMembers(cleanupGroup, TRUE, NULL);
-
-	CloseThreadpoolCleanupGroup(cleanupGroup);
-
-	DestroyThreadpoolEnvironment(&environment);
-
-	/**
-	 * See Remarks at https://msdn.microsoft.com/en-us/library/windows/desktop/ms682043(v=vs.85).aspx
-	 * If there is a cleanup group associated with the work object,
-	 * it is not necessary to call CloseThreadpoolWork !
-	 * calling the CloseThreadpoolCleanupGroupMembers function releases the work, wait,
-	 * and timer objects associated with the cleanup group.
-	 */
-
-	/* CloseThreadpoolWork(work); // this would segfault, see comment above. */
+	if (cleanupGroup)
+	{
+		CloseThreadpoolCleanupGroupMembers(cleanupGroup, TRUE, NULL);
+		CloseThreadpoolCleanupGroup(cleanupGroup);
+		DestroyThreadpoolEnvironment(&environment);
+		/**
+		 * See Remarks at https://msdn.microsoft.com/en-us/library/windows/desktop/ms682043(v=vs.85).aspx
+		 * If there is a cleanup group associated with the work object,
+		 * it is not necessary to call CloseThreadpoolWork !
+		 * calling the CloseThreadpoolCleanupGroupMembers function releases the work, wait,
+		 * and timer objects associated with the cleanup group.
+		 */
+#if 0
+		CloseThreadpoolWork(work); // this would segfault, see comment above. */
+#endif
+	}
 
 	CloseThreadpool(pool);
+	return rc;
+}
+
+int TestPoolWork(int argc, char* argv[])
+{
+	if (!test1())
+		return -1;
+
+	if (!test2())
+		return -1;
 
 	return 0;
 }

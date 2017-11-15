@@ -10,16 +10,17 @@ static const char* test_Password = "Password";
 
 int TestInitializeSecurityContext(int argc, char* argv[])
 {
+	int rc = -1;
 	UINT32 cbMaxLen;
 	UINT32 fContextReq;
-	void* output_buffer;
+	void* output_buffer = NULL;
 	CtxtHandle context;
 	ULONG pfContextAttr;
 	SECURITY_STATUS status;
 	CredHandle credentials;
 	TimeStamp expiration;
 	PSecPkgInfo pPackageInfo;
-	SEC_WINNT_AUTH_IDENTITY identity;
+	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
 	SecurityFunctionTable* table;
 	PSecBuffer p_SecBuffer;
 	SecBuffer output_SecBuffer;
@@ -31,7 +32,7 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	if (status != SEC_E_OK)
 	{
 		printf("QuerySecurityPackageInfo status: 0x%08"PRIX32"\n", status);
-		return -1;
+		goto fail;
 	}
 
 	cbMaxLen = pPackageInfo->cbMaxToken;
@@ -40,13 +41,7 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	identity.Password = (UINT16*) _strdup(test_Password);
 
 	if (!identity.User || !identity.Domain || !identity.Password)
-	{
-		free(identity.User);
-		free(identity.Domain);
-		free(identity.Password);
-		fprintf(stderr, "Memory allocation failed\n");
-		return -1;
-	}
+		goto fail;
 
 	identity.UserLength = strlen(test_User);
 	identity.DomainLength = strlen(test_Domain);
@@ -58,8 +53,7 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	if (status != SEC_E_OK)
 	{
 		printf("AcquireCredentialsHandle status: 0x%08"PRIX32"\n", status);
-		sspi_GlobalFinish();
-		return -1;
+		goto fail;
 	}
 
 	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_CONFIDENTIALITY |
@@ -69,8 +63,7 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	if (!output_buffer)
 	{
 		printf("Memory allocation failed\n");
-		sspi_GlobalFinish();
-		return -1;
+		goto fail;
 	}
 
 	output_SecBuffer_desc.ulVersion = 0;
@@ -85,8 +78,7 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	if (status != SEC_I_CONTINUE_NEEDED)
 	{
 		printf("InitializeSecurityContext status: 0x%08"PRIX32"\n", status);
-		sspi_GlobalFinish();
-		return -1;
+		goto fail;
 	}
 
 	printf("cBuffers: %"PRIu32" ulVersion: %"PRIu32"\n", output_SecBuffer_desc.cBuffers,
@@ -94,9 +86,26 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	p_SecBuffer = &output_SecBuffer_desc.pBuffers[0];
 	printf("BufferType: 0x%08"PRIX32" cbBuffer: %"PRIu32"\n", p_SecBuffer->BufferType,
 	       p_SecBuffer->cbBuffer);
-	table->FreeCredentialsHandle(&credentials);
+	status = table->DeleteSecurityContext(&context);
+
+	if (status != SEC_E_OK)
+	{
+		printf("DeleteSecurityContext status: 0x%08"PRIX32"\n", status);
+		goto fail;
+	}
+
+	rc = 0;
+fail:
+	free(identity.User);
+	free(identity.Domain);
+	free(identity.Password);
+	free(output_buffer);
+
+	if (SecIsValidHandle(&credentials))
+		table->FreeCredentialsHandle(&credentials);
+
 	FreeContextBuffer(pPackageInfo);
 	sspi_GlobalFinish();
-	return 0;
+	return rc;
 }
 

@@ -754,6 +754,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
                                         struct sockaddr* addr,
                                         socklen_t addrlen, int timeout)
 {
+	BOOL rc = FALSE;
 	HANDLE handles[2];
 	int status = 0;
 	int count = 0;
@@ -769,7 +770,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "WSAEventSelect failed with %d", WSAGetLastError());
-		return FALSE;
+		goto fail;
 	}
 
 	handles[count++] = context->abortEvent;
@@ -786,7 +787,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 				break;
 
 			default:
-				return FALSE;
+				goto fail;
 		}
 	}
 
@@ -797,7 +798,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 		if (status == WAIT_OBJECT_0 + 1)
 			freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
 
-		return FALSE;
+		goto fail;
 	}
 
 	status = recv(sockfd, NULL, 0, 0);
@@ -805,22 +806,24 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 	if (status == SOCKET_ERROR)
 	{
 		if (WSAGetLastError() == WSAECONNRESET)
-			return FALSE;
+			goto fail;
 	}
 
 	status = WSAEventSelect(sockfd, handles[0], 0);
-	CloseHandle(handles[0]);
 
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "WSAEventSelect failed with %d", WSAGetLastError());
-		return FALSE;
+		goto fail;
 	}
 
 	if (_ioctlsocket(sockfd, FIONBIO, &arg) != 0)
-		return FALSE;
+		goto fail;
 
-	return TRUE;
+	rc = TRUE;
+fail:
+	CloseHandle(handles[0]);
+	return rc;
 }
 
 static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
