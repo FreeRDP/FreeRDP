@@ -144,10 +144,8 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 	{
 		1, h264->FrameRate
 	};
-
 	av_opt_set(sys->codecEncoderContext, "preset", "veryfast", AV_OPT_SEARCH_CHILDREN);
 	av_opt_set(sys->codecEncoderContext, "tune", "zerolatency", AV_OPT_SEARCH_CHILDREN);
-
 	sys->codecEncoderContext->flags |= CODEC_FLAG_LOOP_FILTER;
 	sys->codecEncoderContext->me_cmp |= 1;
 	sys->codecEncoderContext->me_subpel_quality = 3;
@@ -296,7 +294,7 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 	}
 
 	gotFrame = (status == 0);
-#else
+#elif LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(54, 59, 100)
 
 	do
 	{
@@ -305,6 +303,20 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 		                               sys->videoFrame, &gotFrame);
 	}
 	while ((status >= 0) && (gotFrame == 0));
+
+#else
+	sys->packet.size = avpicture_get_size(sys->codecDecoderContext->pix_fmt,
+	                                      sys->codecDecoderContext->width,
+	                                      sys->codecDecoderContext->height);
+	sys->packet.data = av_malloc(sys->packet.size);
+
+	if (!sys->packet.data)
+		status = -1;
+	else
+	{
+		status = avcodec_encode_video(sys->codecDecoderContext, sys->packet.data,
+		                              sys->packet.size, sys->videoFrame);
+	}
 
 #endif
 
