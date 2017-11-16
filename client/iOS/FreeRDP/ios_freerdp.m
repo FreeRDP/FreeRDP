@@ -21,6 +21,8 @@
 #import "RDPSession.h"
 #import "Utils.h"
 
+#include <errno.h>
+
 #define TAG FREERDP_TAG("iOS")
 
 #pragma mark Connection helpers

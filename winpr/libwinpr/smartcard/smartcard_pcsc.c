@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
@@ -2855,16 +2856,16 @@ WINSCARDAPI LONG WINAPI PCSC_SCardAddReaderName(HANDLE* key, LPSTR readerName)
 }
 
 #ifdef __MACOSX__
-unsigned int determineMacOSXVersion()
+unsigned int determineMacOSXVersion(void)
 {
 	int mib[2];
 	size_t len = 0;
 	char* kernelVersion = NULL;
 	char* tok = NULL;
 	unsigned int version = 0;
-	int majorVersion = 0;
-	int minorVersion = 0;
-	int patchVersion = 0;
+	long majorVersion = 0;
+	long minorVersion = 0;
+	long patchVersion = 0;
 	int count = 0;
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_OSRELEASE;
@@ -2884,21 +2885,34 @@ unsigned int determineMacOSXVersion()
 	}
 
 	tok = strtok(kernelVersion, ".");
+	errno = 0;
 
 	while (tok)
 	{
 		switch (count)
 		{
 			case 0:
-				majorVersion = atoi(tok);
+				majorVersion = strtol(tok, NULL, 0);
+
+				if (errno != 0)
+					goto fail;
+
 				break;
 
 			case 1:
-				minorVersion = atoi(tok);
+				minorVersion = strtol(tok, NULL, 0);
+
+				if (errno != 0)
+					goto fail;
+
 				break;
 
 			case 2:
-				patchVersion = atoi(tok);
+				patchVersion = strtol(tok, NULL, 0);
+
+				if (errno != 0)
+					goto fail;
+
 				break;
 		}
 
@@ -2964,6 +2978,7 @@ unsigned int determineMacOSXVersion()
 		version |= (minorVersion << 8) | (patchVersion);
 	}
 
+fail:
 	free(kernelVersion);
 	return version;
 }

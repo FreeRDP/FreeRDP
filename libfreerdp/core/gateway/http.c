@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <errno.h>
+
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
@@ -52,12 +54,12 @@ static char* string_strnstr(const char* str1, const char* str2, size_t slen)
 				if (slen-- < 1 || (sc = *str1++) == '\0')
 					return NULL;
 			}
-			while(sc != c);
+			while (sc != c);
 
 			if (len > slen)
 				return NULL;
 		}
-		while(strncmp(str1, str2, len) != 0);
+		while (strncmp(str1, str2, len) != 0);
 
 		str1--;
 	}
@@ -258,7 +260,6 @@ char* http_encode_body_line(char* param, char* value)
 {
 	char* line;
 	int length;
-
 	length = strlen(param) + strlen(value) + 2;
 	line = (char*) malloc(length + 1);
 
@@ -274,7 +275,6 @@ char* http_encode_content_length_line(int ContentLength)
 	char* line;
 	int length;
 	char str[32];
-
 	_itoa_s(ContentLength, str, sizeof(str), 10);
 	length = strlen("Content-Length") + strlen(str) + 2;
 	line = (char*) malloc(length + 1);
@@ -290,7 +290,6 @@ char* http_encode_header_line(char* Method, char* URI)
 {
 	char* line;
 	int length;
-
 	length = strlen("HTTP/1.1") + strlen(Method) + strlen(URI) + 2;
 	line = (char*)malloc(length + 1);
 
@@ -305,7 +304,6 @@ char* http_encode_authorization_line(char* AuthScheme, char* AuthParam)
 {
 	char* line;
 	int length;
-
 	length = strlen("Authorization") + strlen(AuthScheme) + strlen(AuthParam) + 3;
 	line = (char*) malloc(length + 1);
 
@@ -322,7 +320,6 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 	int i, count;
 	char** lines;
 	int length = 0;
-
 	count = 0;
 	lines = (char**) calloc(32, sizeof(char*));
 
@@ -409,8 +406,8 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 	Stream_Rewind(s, 1); /* don't include null terminator in length */
 	Stream_SetLength(s, Stream_GetPosition(s));
 	return s;
-
 out_free:
+
 	for (i = 0; i < count; i++)
 		free(lines[i]);
 
@@ -458,7 +455,15 @@ BOOL http_response_parse_header_status_line(HttpResponse* response, char* status
 
 	reason_phrase = separator + 1;
 	*separator = '\0';
-	response->StatusCode = atoi(status_code);
+	errno = 0;
+	{
+		long val = strtol(status_code, NULL, 0);
+
+		if ((errno != 0) || (val < 0) || (val > INT16_MAX))
+			return FALSE;
+
+		response->StatusCode = strtol(status_code, NULL, 0);
+	}
 	response->ReasonPhrase = _strdup(reason_phrase);
 
 	if (!response->ReasonPhrase)
@@ -474,7 +479,14 @@ BOOL http_response_parse_header_field(HttpResponse* response, char* name, char* 
 
 	if (_stricmp(name, "Content-Length") == 0)
 	{
-		response->ContentLength = atoi(value);
+		long val;
+		errno = 0;
+		val = strtol(value, NULL, 0);
+
+		if ((errno != 0) || (val < 0) || (val > INT32_MAX))
+			return FALSE;
+
+		response->ContentLength = val;
 	}
 	else if (_stricmp(name, "Content-Type") == 0)
 	{
@@ -488,7 +500,6 @@ BOOL http_response_parse_header_field(HttpResponse* response, char* name, char* 
 		char* separator = NULL;
 		char* authScheme = NULL;
 		char* authValue = NULL;
-
 		separator = strchr(value, ' ');
 
 		if (separator)
@@ -551,6 +562,7 @@ BOOL http_response_parse_header(HttpResponse* response)
 	for (count = 1; count < response->count; count++)
 	{
 		line = response->lines[count];
+
 		/**
 		 * name         end_of_header
 		 * |            |
@@ -624,18 +636,15 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	int bodyLength;
 	int payloadOffset;
 	HttpResponse* response;
-
 	size = 2048;
 	payload = NULL;
 	payloadOffset = 0;
-
 	s = Stream_New(NULL, size);
 
 	if (!s)
 		goto out_free;
 
 	buffer = (char*) Stream_Buffer(s);
-
 	response = http_response_new();
 
 	if (!response)
@@ -661,13 +670,13 @@ HttpResponse* http_response_recv(rdpTls* tls)
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 			VALGRIND_MAKE_MEM_DEFINED(Stream_Pointer(s), status);
 #endif
-
 			Stream_Seek(s, status);
 
 			if (Stream_GetRemainingLength(s) < 1024)
 			{
 				if (!Stream_EnsureRemainingCapacity(s, 1024))
 					goto out_error;
+
 				buffer = (char*) Stream_Buffer(s);
 				payload = &buffer[payloadOffset];
 			}
@@ -690,7 +699,6 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		{
 			count = 0;
 			line = buffer;
-
 			position = Stream_GetPosition(s);
 
 			while ((line = string_strnstr(line, "\r\n", payloadOffset - (line - buffer) - 2)))
@@ -717,7 +725,6 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			CopyMemory(header, buffer, payloadOffset);
 			header[payloadOffset - 1] = '\0';
 			header[payloadOffset - 2] = '\0';
-
 			count = 0;
 			line = strtok(header, "\r\n");
 
@@ -736,7 +743,6 @@ HttpResponse* http_response_recv(rdpTls* tls)
 				goto out_error;
 
 			response->BodyLength = Stream_GetPosition(s) - payloadOffset;
-
 			bodyLength = 0; /* expected body length */
 
 			if (response->ContentType)
@@ -772,7 +778,6 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 				Stream_Seek(s, status);
 				response->BodyLength += status;
-
 			}
 
 			if (response->BodyLength > 0)
@@ -789,7 +794,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			if (bodyLength != response->BodyLength)
 			{
 				WLog_WARN(TAG, "http_response_recv: %s unexpected body length: actual: %d, expected: %d",
-						response->ContentType, bodyLength, response->BodyLength);
+				          response->ContentType, bodyLength, response->BodyLength);
 			}
 
 			break;
@@ -799,6 +804,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		{
 			if (!Stream_EnsureRemainingCapacity(s, 1024))
 				goto out_error;
+
 			buffer = (char*) Stream_Buffer(s);
 			payload = &buffer[payloadOffset];
 		}
@@ -823,6 +829,7 @@ HttpResponse* http_response_new()
 		return NULL;
 
 	response->Authenticates = ListDictionary_New(FALSE);
+
 	if (!response->Authenticates)
 	{
 		free(response);
@@ -831,10 +838,8 @@ HttpResponse* http_response_new()
 
 	ListDictionary_KeyObject(response->Authenticates)->fnObjectEquals = strings_equals_nocase;
 	ListDictionary_KeyObject(response->Authenticates)->fnObjectFree = string_free;
-
 	ListDictionary_ValueObject(response->Authenticates)->fnObjectEquals = strings_equals_nocase;
 	ListDictionary_ValueObject(response->Authenticates)->fnObjectFree = string_free;
-
 	return response;
 }
 
@@ -851,9 +856,7 @@ void http_response_free(HttpResponse* response)
 
 	free(response->lines);
 	free(response->ReasonPhrase);
-
 	free(response->ContentType);
-
 	ListDictionary_Free(response->Authenticates);
 
 	if (response->BodyContent)

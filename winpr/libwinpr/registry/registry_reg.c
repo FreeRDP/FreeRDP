@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,6 +90,7 @@ static void reg_load_start(Reg* reg)
 		return;
 
 	reg->buffer = (char*) malloc(file_size + 2);
+
 	if (!reg->buffer)
 		return ;
 
@@ -138,16 +140,20 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 	data = p[3] + 1;
 	length = p[1] - p[0];
 	name = (char*) malloc(length + 1);
+
 	if (!name)
 		return NULL;
+
 	memcpy(name, p[0], length);
 	name[length] = '\0';
 	value = (RegVal*) malloc(sizeof(RegVal));
+
 	if (!value)
 	{
 		free(name);
 		return NULL;
 	}
+
 	value->name = name;
 	value->type = REG_NONE;
 	value->next = value->prev = NULL;
@@ -163,13 +169,25 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 
 	if (value->type == REG_DWORD)
 	{
-		value->data.dword = strtoul(data, NULL, 16);
+		unsigned long val;
+		errno = 0;
+		val = strtoul(data, NULL, 16);
+
+		if ((errno != 0) || (val > UINT32_MAX))
+		{
+			free(value);
+			free(name);
+			return NULL;
+		}
+
+		value->data.dword = val;
 	}
 	else if (value->type == REG_SZ)
 	{
 		p[4] = strchr(data, '"');
 		p[4][0] = '\0';
 		value->data.string = _strdup(data);
+
 		if (!value->data.string)
 		{
 			free(value);
@@ -233,8 +251,10 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 	char* save;
 	int length;
 	path = _strdup(subkey->name);
+
 	if (!path)
 		return;
+
 	name = strtok_s(path, "\\", &save);
 
 	while (name != NULL)
@@ -244,6 +264,7 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 			length = strlen(name);
 			name += length + 1;
 			subkey->subname = _strdup(name);
+
 			/* TODO: free allocated memory in error case */
 			if (!subkey->subname)
 			{
@@ -267,17 +288,21 @@ static RegKey* reg_load_key(Reg* reg, RegKey* key)
 	p[0] = reg->line + 1;
 	p[1] = strrchr(p[0], ']');
 	subkey = (RegKey*) malloc(sizeof(RegKey));
+
 	if (!subkey)
 		return NULL;
+
 	subkey->values = NULL;
 	subkey->prev = subkey->next = NULL;
 	length = p[1] - p[0];
 	subkey->name = (char*) malloc(length + 1);
+
 	if (!subkey->name)
 	{
 		free(subkey);
 		return NULL;
 	}
+
 	memcpy(subkey->name, p[0], length);
 	subkey->name[length] = '\0';
 
@@ -393,39 +418,40 @@ Reg* reg_open(BOOL read_only)
 	if (!reg)
 		return NULL;
 
-    reg->read_only = read_only;
-    reg->filename = WINPR_HKLM_HIVE;
+	reg->read_only = read_only;
+	reg->filename = WINPR_HKLM_HIVE;
 
-    if (reg->read_only)
-    {
-        reg->fp = fopen(reg->filename, "r");
-    }
-    else
-    {
-        reg->fp = fopen(reg->filename, "r+");
+	if (reg->read_only)
+	{
+		reg->fp = fopen(reg->filename, "r");
+	}
+	else
+	{
+		reg->fp = fopen(reg->filename, "r+");
 
-        if (!reg->fp)
-            reg->fp = fopen(reg->filename, "w+");
-    }
+		if (!reg->fp)
+			reg->fp = fopen(reg->filename, "w+");
+	}
 
-    if (!reg->fp)
-    {
-        free(reg);
-        return NULL;
-    }
+	if (!reg->fp)
+	{
+		free(reg);
+		return NULL;
+	}
 
-    reg->root_key = (RegKey*) malloc(sizeof(RegKey));
+	reg->root_key = (RegKey*) malloc(sizeof(RegKey));
+
 	if (!reg->root_key)
 	{
 		fclose(reg->fp);
 		free(reg);
 		return NULL;
 	}
-    reg->root_key->values = NULL;
-    reg->root_key->subkeys = NULL;
-    reg->root_key->name = "HKEY_LOCAL_MACHINE";
-    reg_load(reg);
 
+	reg->root_key->values = NULL;
+	reg->root_key->subkeys = NULL;
+	reg->root_key->name = "HKEY_LOCAL_MACHINE";
+	reg_load(reg);
 	return reg;
 }
 

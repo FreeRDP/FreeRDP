@@ -471,6 +471,7 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
 		return ERROR_INVALID_PARAMETER;
 
 	arg = audin_oss_args;
+	errno = 0;
 
 	do
 	{
@@ -488,7 +489,17 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
 				return CHANNEL_RC_NO_MEMORY;
 			}
 
-			oss->dev_unit = strtol(str_num, &eptr, 10);
+			{
+				long val = strtol(str_num, &eptr, 10);
+
+				if ((errno != 0) || (val < INT32_MIN) || (val > INT32_MAX))
+				{
+					free(str_num);
+					return CHANNEL_RC_NULL_DATA;
+				}
+
+				oss->dev_unit = val;
+			}
 
 			if (oss->dev_unit < 0 || *eptr != '\0')
 				oss->dev_unit = -1;
