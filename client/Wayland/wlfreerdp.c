@@ -40,6 +40,9 @@
 
 static BOOL wl_update_content(wlfContext* context_w)
 {
+	if (!context_w)
+		return FALSE;
+
 	if (!context_w->waitingFrameDone && context_w->haveDamage)
 	{
 		UwacWindowSubmitBuffer(context_w->window, true);
@@ -53,7 +56,15 @@ static BOOL wl_update_content(wlfContext* context_w)
 static BOOL wl_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
+
+	if (!context || !context->gdi)
+		return FALSE;
+
 	gdi = context->gdi;
+
+	if (!gdi->primary)
+		return FALSE;
+
 	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	return TRUE;
 }
@@ -66,7 +77,11 @@ static BOOL wl_end_paint(rdpContext* context)
 	wlfContext* context_w;
 	INT32 x, y;
 	UINT32 w, h;
-	int i;
+	UINT32 i;
+
+	if (!context || !context->gdi || !context->gdi->primary)
+		return FALSE;
+
 	gdi = context->gdi;
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
@@ -132,9 +147,9 @@ static BOOL wl_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
 	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
 	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = settings->BitmapCacheEnabled;
 	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = settings->BitmapCacheEnabled;
 	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
 	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
 	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
@@ -176,6 +191,9 @@ static BOOL wl_post_connect(freerdp* instance)
 	rdpGdi* gdi;
 	UwacWindow* window;
 	wlfContext* context;
+
+	if (!instance || !instance->context)
+		return FALSE;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
@@ -245,7 +263,7 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				context = (wlfContext*)instance->context;
 				context->waitingFrameDone = FALSE;
 
-				if (context->haveDamage && !wl_end_paint(instance->context))
+				if (context->haveDamage && !wl_update_content(context))
 					return FALSE;
 
 				break;
@@ -299,7 +317,7 @@ static int wlfreerdp_run(freerdp* instance)
 	wlfContext* context;
 	DWORD count;
 	HANDLE handles[64];
-	DWORD status;
+	DWORD status = WAIT_ABANDONED;
 
 	if (!instance)
 		return -1;
@@ -315,20 +333,18 @@ static int wlfreerdp_run(freerdp* instance)
 		return -1;
 	}
 
-	handle_uwac_events(instance, context->display);
-
 	while (!freerdp_shall_disconnect(instance))
 	{
 		handles[0] = context->displayHandle;
-		count = freerdp_get_event_handles(instance->context, &handles[1], 63);
+		count = freerdp_get_event_handles(instance->context, &handles[1], 63) + 1;
 
-		if (!count)
+		if (count <= 1)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 
-		status = WaitForMultipleObjects(count + 1, handles, FALSE, INFINITE);
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 
 		if (WAIT_FAILED == status)
 		{
@@ -342,7 +358,6 @@ static int wlfreerdp_run(freerdp* instance)
 			break;
 		}
 
-		//if (WaitForMultipleObjects(count, &handles[1], FALSE, INFINITE)) {
 		if (freerdp_check_event_handles(instance->context) != TRUE)
 		{
 			if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
@@ -350,15 +365,13 @@ static int wlfreerdp_run(freerdp* instance)
 
 			break;
 		}
-
-		//}
 	}
 
 	freerdp_disconnect(instance);
-	return 0;
+	return status;
 }
 
-static BOOL wlf_client_global_init()
+static BOOL wlf_client_global_init(void)
 {
 	setlocale(LC_ALL, "");
 
@@ -368,8 +381,22 @@ static BOOL wlf_client_global_init()
 	return TRUE;
 }
 
-static void wlf_client_global_uninit()
+static void wlf_client_global_uninit(void)
 {
+}
+
+static int wlf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
+{
+	wlfContext* wlf;
+	const char* str_data = freerdp_get_logon_error_info_data(data);
+	const char* str_type = freerdp_get_logon_error_info_type(type);
+
+	if (!instance || !instance->context)
+		return -1;
+
+	wlf = (wlfContext*) instance->context;
+	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
+	return 1;
 }
 
 static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
@@ -387,7 +414,7 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	instance->GatewayAuthenticate = client_cli_gw_authenticate;
 	instance->VerifyCertificate = client_cli_verify_certificate;
 	instance->VerifyChangedCertificate = client_cli_verify_changed_certificate;
-	instance->LogonErrorInfo = NULL;
+	instance->LogonErrorInfo = wlf_logon_error_info;
 	wfl->display = UwacOpenDisplay(NULL, &status);
 
 	if (!wfl->display || (status != UWAC_SUCCESS))
@@ -448,8 +475,6 @@ int main(int argc, char* argv[])
 	DWORD status;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	rdpContext* context;
-	//if (!handle_uwac_events(NULL, g_display))
-	//	exit(1);
 	RdpClientEntry(&clientEntryPoints);
 	context = freerdp_client_context_new(&clientEntryPoints);
 

@@ -25,21 +25,29 @@
 
 #include "wlf_input.h"
 
-BOOL wlf_handle_pointer_enter(freerdp *instance, UwacPointerEnterLeaveEvent *ev) {
-	rdpInput* input = instance->input;
+BOOL wlf_handle_pointer_enter(freerdp* instance, UwacPointerEnterLeaveEvent* ev)
+{
+	if (!instance || !ev || !instance->input)
+		return FALSE;
 
-	return input->MouseEvent(input, PTR_FLAGS_MOVE, ev->x, ev->y);
+	return instance->input->MouseEvent(instance->input, PTR_FLAGS_MOVE, ev->x, ev->y);
 }
 
-BOOL wlf_handle_pointer_motion(freerdp *instance, UwacPointerMotionEvent *ev) {
-	rdpInput* input = instance->input;
+BOOL wlf_handle_pointer_motion(freerdp* instance, UwacPointerMotionEvent* ev)
+{
+	if (!instance || !ev || !instance->input)
+		return FALSE;
 
-	return input->MouseEvent(input, PTR_FLAGS_MOVE, ev->x, ev->y);
+	return instance->input->MouseEvent(instance->input, PTR_FLAGS_MOVE, ev->x, ev->y);
 }
 
-BOOL wlf_handle_pointer_buttons(freerdp *instance, UwacPointerButtonEvent *ev) {
+BOOL wlf_handle_pointer_buttons(freerdp* instance, UwacPointerButtonEvent* ev)
+{
 	rdpInput* input;
 	UINT16 flags;
+
+	if (!instance || !ev || !instance->input)
+		return FALSE;
 
 	input = instance->input;
 
@@ -53,12 +61,15 @@ BOOL wlf_handle_pointer_buttons(freerdp *instance, UwacPointerButtonEvent *ev) {
 		case BTN_LEFT:
 			flags |= PTR_FLAGS_BUTTON1;
 			break;
+
 		case BTN_RIGHT:
 			flags |= PTR_FLAGS_BUTTON2;
 			break;
+
 		case BTN_MIDDLE:
 			flags |= PTR_FLAGS_BUTTON3;
 			break;
+
 		default:
 			return TRUE;
 	}
@@ -67,18 +78,22 @@ BOOL wlf_handle_pointer_buttons(freerdp *instance, UwacPointerButtonEvent *ev) {
 }
 
 
-BOOL wlf_handle_pointer_axis(freerdp *instance, UwacPointerAxisEvent *ev) {
+BOOL wlf_handle_pointer_axis(freerdp* instance, UwacPointerAxisEvent* ev)
+{
 	rdpInput* input;
 	UINT16 flags;
 	int direction;
 
-	input = instance->input;
+	if (!instance || !ev || !instance->input)
+		return FALSE;
 
+	input = instance->input;
 	flags = PTR_FLAGS_WHEEL;
 
 	if (ev->axis == WL_POINTER_AXIS_VERTICAL_SCROLL)
 	{
 		direction = wl_fixed_to_int(ev->value);
+
 		if (direction < 0)
 			flags |= 0x0078;
 		else
@@ -88,10 +103,15 @@ BOOL wlf_handle_pointer_axis(freerdp *instance, UwacPointerAxisEvent *ev) {
 	return input->MouseEvent(input, flags, ev->x, ev->y);
 }
 
-BOOL wlf_handle_key(freerdp *instance, UwacKeyEvent *ev) {
-	rdpInput* input = instance->input;
+BOOL wlf_handle_key(freerdp* instance, UwacKeyEvent* ev)
+{
+	rdpInput* input;
 	DWORD rdp_scancode;
 
+	if (!instance || !ev || !instance->input)
+		return FALSE;
+
+	input = instance->input;
 	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(ev->raw_key + 8);
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
@@ -100,10 +120,14 @@ BOOL wlf_handle_key(freerdp *instance, UwacKeyEvent *ev) {
 	return freerdp_input_send_keyboard_event_ex(input, ev->pressed, rdp_scancode);
 }
 
-BOOL wlf_keyboard_enter(freerdp *instance, UwacKeyboardEnterLeaveEvent *ev) {
-	rdpInput* input = instance->input;
+BOOL wlf_keyboard_enter(freerdp* instance, UwacKeyboardEnterLeaveEvent* ev)
+{
+	rdpInput* input;
 
+	if (!instance || !ev || !instance->input)
+		return FALSE;
+
+	input = instance->input;
 	return input->FocusInEvent(input, 0) &&
-			input->MouseEvent(input, PTR_FLAGS_MOVE, 0, 0);
-
+	       input->MouseEvent(input, PTR_FLAGS_MOVE, 0, 0);
 }
