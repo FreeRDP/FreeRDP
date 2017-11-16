@@ -373,7 +373,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 		/* If unicode conversion fails, this might be because the Password field
 		 * might contain a non-unicode cookie value. Simply ignore in this case. */
 		if (ConvertFromUnicode(CP_UTF8, 0,
-			 (WCHAR*) settings->RedirectionPassword, settings->RedirectionPasswordLength,
+			 (WCHAR*) settings->RedirectionPassword, -1,
 			 &password, 0,
 			 NULL, NULL) > 0)
 		{
