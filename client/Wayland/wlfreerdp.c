@@ -245,9 +245,6 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				context = (wlfContext*)instance->context;
 				context->waitingFrameDone = FALSE;
 
-				if (context->haveDamage && !wl_end_paint(instance->context))
-					return FALSE;
-
 				break;
 
 			case UWAC_EVENT_POINTER_ENTER:
