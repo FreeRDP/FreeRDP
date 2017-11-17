@@ -14,12 +14,68 @@ def getVersionName = { ->
     return stdout.toString().trim()
 }
 
+def matchResult = { String input ->
+    String pattern = "^.?(\\d+)\\.(\\d+)\\.(\\d+)(-(rc|alpha|beta)(\\d+))?";
+    java.util.regex.Matcher m = java.util.regex.Pattern.compile(pattern).matcher(input);
+    List<String> result = new ArrayList<>();
+
+    if (m.matches()) {
+        for (int i=1; i<=m.groupCount(); i++) {
+            try {
+                String rc = m.group(i);
+                result.add(rc);
+            } catch(IllegalStateException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    String[] array = new String[result.size()];
+    return result.toArray(array);
+}
+
+def getVersionCode = { ->
+    def name = getVersionName()
+    String[] result = matchResult(name);
+    if (result.length >= 3) {
+        int major = Integer.valueOf(result[0]);
+        int minor = Integer.valueOf(result[1]);
+        int patch = Integer.valueOf(result[2]);
+        int type = 3;
+        int typeId = 0;
+
+        if (result.length >= 6) {
+            if (result[3] != null) {
+                if (result[4] != null) {
+                    if (result[4].equals("rc")) {
+                        type = 2;
+                    }
+                    if (result[4].equals("beta")) {
+                        type = 1;
+                    }
+                    if (result[4].equals("alpha")) {
+                        type = 0;
+                    }
+                }
+                if (result[5] != null) {
+                    typeId = Integer.valueOf(result[5]);
+                }
+            }
+        }
+
+        return (major * 10000 + minor * 100 + patch) * 1000 + type * 100 + typeId;
+    } else {
+        return 1;
+    }
+}
+
 ext {
-    versionCode = properties.get('VERSION', "10").toInteger()
+    versionCode = properties.get('VERSION', String.valueOf(getVersionCode())).toInteger()
     minSdk = properties.get('MIN_SDK', "14").toInteger()
     targetSdk = properties.get('TARGET_SDK', "25").toInteger()
     compileSdk = properties.get('COMPILE_SDK', "25").toInteger()
     buildToolsVersion = properties.get('BUILD_TOOLS', "25.0.2")
+    versionCode = properties.get('VERSION_NAME', getVersionCode())
     versionName = properties.get('VERSION_NAME', getVersionName())
 
     println '----------------- Project configuration -------------------'
