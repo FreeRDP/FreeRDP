@@ -384,9 +384,11 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	if (!DstFormat)
 		return FALSE;
 
-	status = freerdp_image_copy(interleaved->TempBuffer, DstFormat, 0, 0, 0, nWidth,
-	                            nHeight,
-	                            pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE);
+	if (!freerdp_image_copy(interleaved->TempBuffer, DstFormat, 0, 0, 0, nWidth,
+	                        nHeight,
+	                        pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
+		return FALSE;
+
 	s = Stream_New(pDstData, maxSize);
 
 	if (!s)

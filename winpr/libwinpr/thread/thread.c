@@ -282,7 +282,6 @@ static BOOL thread_compare(void* a, void* b)
  * in thread function. */
 static void* thread_launcher(void* arg)
 {
-	DWORD res = 1;
 	void* rc = NULL;
 	WINPR_THREAD* thread = (WINPR_THREAD*) arg;
 	typedef void* (*fkt_t)(void*);
@@ -296,7 +295,7 @@ static void* thread_launcher(void* arg)
 
 	if (!(fkt = (fkt_t)thread->lpStartAddress))
 	{
-		WLog_ERR(TAG, "Thread function argument is %p", (void *)fkt);
+		WLog_ERR(TAG, "Thread function argument is %p", (void*)fkt);
 		goto exit;
 	}
 
@@ -326,7 +325,6 @@ exit:
 			thread->dwExitCode = (DWORD)(size_t)rc;
 
 		set_event(thread);
-		res = thread->dwExitCode;
 
 		if (thread->detached || !thread->started)
 			cleanup_handle(thread);

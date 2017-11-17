@@ -67,7 +67,7 @@ struct _SSHAGENT_LISTENER_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 
 	rdpContext* rdpcontext;
-        const char *agent_uds_path;
+	const char* agent_uds_path;
 };
 
 typedef struct _SSHAGENT_CHANNEL_CALLBACK SSHAGENT_CHANNEL_CALLBACK;
@@ -80,7 +80,7 @@ struct _SSHAGENT_CHANNEL_CALLBACK
 	IWTSVirtualChannel* channel;
 
 	rdpContext* rdpcontext;
-        int agent_fd;
+	int agent_fd;
 	HANDLE thread;
 	CRITICAL_SECTION lock;
 };
@@ -101,29 +101,35 @@ struct _SSHAGENT_PLUGIN
  *
  * @return The fd on success, otherwise -1
  */
-static int connect_to_sshagent(const char *udspath)
+static int connect_to_sshagent(const char* udspath)
 {
-        int agent_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-        if (agent_fd == -1)
-        {
-                WLog_ERR(TAG, "Can't open Unix domain socket!");
-                return -1;
-        }
+	int agent_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
-        struct sockaddr_un addr;
-        memset(&addr, 0, sizeof(addr));
-        addr.sun_family = AF_UNIX;
-        strncpy(addr.sun_path, udspath, sizeof(addr.sun_path) - 1);
-        int rc = connect(agent_fd, (struct sockaddr*)&addr, sizeof(addr));
-        if (rc != 0)
-        {
-                WLog_ERR(TAG, "Can't connect to Unix domain socket \"%s\"!",
-                         udspath);
-                close(agent_fd);
-                return -1;
-        }
+	if (agent_fd == -1)
+	{
+		WLog_ERR(TAG, "Can't open Unix domain socket!");
+		return -1;
+	}
 
-        return agent_fd;
+	struct sockaddr_un addr;
+
+	memset(&addr, 0, sizeof(addr));
+
+	addr.sun_family = AF_UNIX;
+
+	strncpy(addr.sun_path, udspath, sizeof(addr.sun_path) - 1);
+
+	int rc = connect(agent_fd, (struct sockaddr*)&addr, sizeof(addr));
+
+	if (rc != 0)
+	{
+		WLog_ERR(TAG, "Can't connect to Unix domain socket \"%s\"!",
+		         udspath);
+		close(agent_fd);
+		return -1;
+	}
+
+	return agent_fd;
 }
 
 
@@ -133,57 +139,58 @@ static int connect_to_sshagent(const char *udspath)
  *
  * @return NULL
  */
-static void *sshagent_read_thread(void *data)
+static void* sshagent_read_thread(void* data)
 {
-        SSHAGENT_CHANNEL_CALLBACK *callback = (SSHAGENT_CHANNEL_CALLBACK *)data;
-        BYTE buffer[4096];
-        int going = 1;
-        UINT status = CHANNEL_RC_OK;
+	SSHAGENT_CHANNEL_CALLBACK* callback = (SSHAGENT_CHANNEL_CALLBACK*)data;
+	BYTE buffer[4096];
+	int going = 1;
+	UINT status = CHANNEL_RC_OK;
 
-        while (going)
-        {
-                int bytes_read = read(callback->agent_fd,
-                                      buffer,
-                                      sizeof(buffer));
+	while (going)
+	{
+		int bytes_read = read(callback->agent_fd,
+		                      buffer,
+		                      sizeof(buffer));
 
-                if (bytes_read == 0)
-                {
-                        /* Socket closed cleanly at other end */
-                        going = 0;
-                }
-                else if (bytes_read < 0)
-                {
-                        if (errno != EINTR)
-                        {
-                                WLog_ERR(TAG,
-                                         "Error reading from sshagent, errno=%d",
-                                         errno);
-                                status = ERROR_READ_FAULT;
-                                going = 0;
-                        }
-                }
-                else
-                {
-                        /* Something read: forward to virtual channel */
-                        status = callback->channel->Write(callback->channel,
-                                                          bytes_read,
-                                                          buffer,
-                                                          NULL);
-                        if (status != CHANNEL_RC_OK)
-                        {
-                                going = 0;
-                        }
-                }
-        }
+		if (bytes_read == 0)
+		{
+			/* Socket closed cleanly at other end */
+			going = 0;
+		}
+		else if (bytes_read < 0)
+		{
+			if (errno != EINTR)
+			{
+				WLog_ERR(TAG,
+				         "Error reading from sshagent, errno=%d",
+				         errno);
+				status = ERROR_READ_FAULT;
+				going = 0;
+			}
+		}
+		else
+		{
+			/* Something read: forward to virtual channel */
+			status = callback->channel->Write(callback->channel,
+			                                  bytes_read,
+			                                  buffer,
+			                                  NULL);
 
-        close(callback->agent_fd);
+			if (status != CHANNEL_RC_OK)
+			{
+				going = 0;
+			}
+		}
+	}
 
-        if (status != CHANNEL_RC_OK)
-                setChannelError(callback->rdpcontext, status,
-                                "sshagent_read_thread reported an error");
+	close(callback->agent_fd);
+
+	if (status != CHANNEL_RC_OK)
+		setChannelError(callback->rdpcontext, status,
+		                "sshagent_read_thread reported an error");
 
 	ExitThread(0);
-        return NULL;
+	return NULL;
 }
 
 /**
@@ -191,41 +198,41 @@ static void *sshagent_read_thread(void *data)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT sshagent_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
+static UINT sshagent_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	SSHAGENT_CHANNEL_CALLBACK* callback = (SSHAGENT_CHANNEL_CALLBACK*) pChannelCallback;
 	BYTE* pBuffer = Stream_Pointer(data);
 	UINT32 cbSize = Stream_GetRemainingLength(data);
-        BYTE *pos = pBuffer;
+	BYTE* pos = pBuffer;
+	/* Forward what we have received to the ssh agent */
+	UINT32 bytes_to_write = cbSize;
+	errno = 0;
 
-        /* Forward what we have received to the ssh agent */
-        UINT32 bytes_to_write = cbSize;
-        errno = 0;
-        while (bytes_to_write > 0)
-        {
-                int bytes_written = write(callback->agent_fd, pos,
-                                          bytes_to_write);
-                if (bytes_written < 0)
-                {
-                        if (errno != EINTR)
-                        {
-                                WLog_ERR(TAG,
-                                         "Error writing to sshagent, errno=%d",
-                                         errno);
-                                return ERROR_WRITE_FAULT;
-                        }
-                }
-                else
-                {
-                        bytes_to_write -= bytes_written;
-                        pos += bytes_written;
-                }
-        }
+	while (bytes_to_write > 0)
+	{
+		int bytes_written = write(callback->agent_fd, pos,
+		                          bytes_to_write);
 
-        /* Consume stream */
-        Stream_Seek(data, cbSize);
+		if (bytes_written < 0)
+		{
+			if (errno != EINTR)
+			{
+				WLog_ERR(TAG,
+				         "Error writing to sshagent, errno=%d",
+				         errno);
+				return ERROR_WRITE_FAULT;
+			}
+		}
+		else
+		{
+			bytes_to_write -= bytes_written;
+			pos += bytes_written;
+		}
+	}
 
-        return CHANNEL_RC_OK;
+	/* Consume stream */
+	Stream_Seek(data, cbSize);
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -236,11 +243,10 @@ static UINT sshagent_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 static UINT sshagent_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	SSHAGENT_CHANNEL_CALLBACK* callback = (SSHAGENT_CHANNEL_CALLBACK*) pChannelCallback;
-
-        /* Call shutdown() to wake up the read() in sshagent_read_thread(). */
-        shutdown(callback->agent_fd, SHUT_RDWR);
-
+	/* Call shutdown() to wake up the read() in sshagent_read_thread(). */
+	shutdown(callback->agent_fd, SHUT_RDWR);
 	EnterCriticalSection(&callback->lock);
+
 	if (WaitForSingleObject(callback->thread, INFINITE) == WAIT_FAILED)
 	{
 		UINT error = GetLastError();
@@ -248,11 +254,10 @@ static UINT sshagent_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 		return error;
 	}
 
-        CloseHandle(callback->thread);
+	CloseHandle(callback->thread);
+	LeaveCriticalSection(&callback->lock);
 	DeleteCriticalSection(&callback->lock);
-
 	free(callback);
-
 	return CHANNEL_RC_OK;
 }
 
@@ -263,12 +268,11 @@ static UINT sshagent_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-	IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
-	IWTSVirtualChannelCallback** ppCallback)
+        IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
+        IWTSVirtualChannelCallback** ppCallback)
 {
 	SSHAGENT_CHANNEL_CALLBACK* callback;
 	SSHAGENT_LISTENER_CALLBACK* listener_callback = (SSHAGENT_LISTENER_CALLBACK*) pListenerCallback;
-
 	callback = (SSHAGENT_CHANNEL_CALLBACK*) calloc(1, sizeof(SSHAGENT_CHANNEL_CALLBACK));
 
 	if (!callback)
@@ -277,39 +281,41 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-        /* Now open a connection to the local ssh-agent.  Do this for each
-         * connection to the plugin in case we mess up the agent session. */
-        callback->agent_fd
-                = connect_to_sshagent(listener_callback->agent_uds_path);
-        if (callback->agent_fd == -1)
-        {
-                return CHANNEL_RC_INITIALIZATION_ERROR;
-        }
+	/* Now open a connection to the local ssh-agent.  Do this for each
+	 * connection to the plugin in case we mess up the agent session. */
+	callback->agent_fd
+	    = connect_to_sshagent(listener_callback->agent_uds_path);
+
+	if (callback->agent_fd == -1)
+	{
+		free(callback);
+		return CHANNEL_RC_INITIALIZATION_ERROR;
+	}
 
 	InitializeCriticalSection(&callback->lock);
-
 	callback->iface.OnDataReceived = sshagent_on_data_received;
 	callback->iface.OnClose = sshagent_on_close;
 	callback->plugin = listener_callback->plugin;
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;
 	callback->rdpcontext = listener_callback->rdpcontext;
-
 	callback->thread
-                = CreateThread(NULL,
-                               0,
-                               (LPTHREAD_START_ROUTINE) sshagent_read_thread,
-                               (void*) callback,
-                               0,
-                               NULL);
+	    = CreateThread(NULL,
+	                   0,
+	                   (LPTHREAD_START_ROUTINE) sshagent_read_thread,
+	                   (void*) callback,
+	                   0,
+	                   NULL);
+
 	if (!callback->thread)
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
-                return CHANNEL_RC_INITIALIZATION_ERROR;
+		DeleteCriticalSection(&callback->lock);
+		free(callback);
+		return CHANNEL_RC_INITIALIZATION_ERROR;
 	}
 
 	*ppCallback = (IWTSVirtualChannelCallback*) callback;
-
 	return CHANNEL_RC_OK;
 }
 
@@ -321,8 +327,8 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 static UINT sshagent_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
 	SSHAGENT_PLUGIN* sshagent = (SSHAGENT_PLUGIN*) pPlugin;
-
-	sshagent->listener_callback = (SSHAGENT_LISTENER_CALLBACK*) calloc(1, sizeof(SSHAGENT_LISTENER_CALLBACK));
+	sshagent->listener_callback = (SSHAGENT_LISTENER_CALLBACK*) calloc(1,
+	                              sizeof(SSHAGENT_LISTENER_CALLBACK));
 
 	if (!sshagent->listener_callback)
 	{
@@ -334,16 +340,18 @@ static UINT sshagent_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 	sshagent->listener_callback->iface.OnNewChannelConnection = sshagent_on_new_channel_connection;
 	sshagent->listener_callback->plugin = pPlugin;
 	sshagent->listener_callback->channel_mgr = pChannelMgr;
+	sshagent->listener_callback->agent_uds_path = getenv("SSH_AUTH_SOCK");
 
-        sshagent->listener_callback->agent_uds_path = getenv("SSH_AUTH_SOCK");
-        if (sshagent->listener_callback->agent_uds_path == NULL)
-        {
+	if (sshagent->listener_callback->agent_uds_path == NULL)
+	{
 		WLog_ERR(TAG, "Environment variable $SSH_AUTH_SOCK undefined!");
-                return CHANNEL_RC_INITIALIZATION_ERROR;
-        }
+		free(sshagent->listener_callback);
+		sshagent->listener_callback = NULL;
+		return CHANNEL_RC_INITIALIZATION_ERROR;
+	}
 
 	return pChannelMgr->CreateListener(pChannelMgr, "SSHAGENT", 0,
-		(IWTSListenerCallback*) sshagent->listener_callback, NULL);
+	                                   (IWTSListenerCallback*) sshagent->listener_callback, NULL);
 }
 
 /**
@@ -354,9 +362,7 @@ static UINT sshagent_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 static UINT sshagent_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	SSHAGENT_PLUGIN* sshagent = (SSHAGENT_PLUGIN*) pPlugin;
-
 	free(sshagent);
-
 	return CHANNEL_RC_OK;
 }
 
@@ -375,7 +381,6 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT status = CHANNEL_RC_OK;
 	SSHAGENT_PLUGIN* sshagent;
-
 	sshagent = (SSHAGENT_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "sshagent");
 
 	if (!sshagent)
@@ -392,9 +397,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		sshagent->iface.Connected = NULL;
 		sshagent->iface.Disconnected = NULL;
 		sshagent->iface.Terminated = sshagent_plugin_terminated;
-                sshagent->rdpcontext = ((freerdp*)((rdpSettings*) pEntryPoints->GetRdpSettings(
-		                                    pEntryPoints))->instance)->context;
-
+		sshagent->rdpcontext = ((freerdp*)((rdpSettings*) pEntryPoints->GetRdpSettings(
+		                                       pEntryPoints))->instance)->context;
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, "sshagent", (IWTSPlugin*) sshagent);
 	}
 

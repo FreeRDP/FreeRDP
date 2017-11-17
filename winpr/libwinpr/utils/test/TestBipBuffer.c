@@ -5,8 +5,8 @@
 int TestBipBuffer(int argc, char* argv[])
 {
 	BYTE* data;
+	int rc = -1;
 	wBipBuffer* bb;
-
 	bb = BipBuffer_New(1024);
 
 	if (!bb)
@@ -14,9 +14,10 @@ int TestBipBuffer(int argc, char* argv[])
 
 	data = BipBuffer_WriteReserve(bb, 1024 * 2);
 
+	if (data)
+		rc = 0;
+
 	fprintf(stderr, "BipBuffer_BufferSize: %"PRIuz"\n", BipBuffer_BufferSize(bb));
-
 	BipBuffer_Free(bb);
-
-	return 0;
+	return rc;
 }

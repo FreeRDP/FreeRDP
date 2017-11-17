@@ -256,7 +256,6 @@ BOOL gdi_Rectangle(HGDI_DC hdc, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
 		return TRUE;
 
 	color = hdc->textColor;
-	color = GetColor(hdc->format, 0, 0xFF, 0, 0xFF);
 
 	for (y = 0; y < nHeight; y++)
 	{

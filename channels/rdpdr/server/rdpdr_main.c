@@ -149,7 +149,6 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext*
 	Stream_Read_UINT32(s, UnicodeFlag); /* UnicodeFlag (4 bytes) */
 	Stream_Seek_UINT32(s); /* CodePage (4 bytes), MUST be set to zero */
 	Stream_Read_UINT32(s, ComputerNameLen); /* ComputerNameLen (4 bytes) */
-
 	/* UnicodeFlag is either 0 or 1, the other 31 bits must be ignored.
 	 */
 	UnicodeFlag = UnicodeFlag & 0x00000001;
@@ -766,7 +765,6 @@ static UINT rdpdr_server_receive_device_list_announce_request(
 	UINT32 DeviceId;
 	char PreferredDosName[9];
 	UINT32 DeviceDataLength;
-	BYTE* DeviceData;
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -798,7 +796,6 @@ static UINT rdpdr_server_receive_device_list_announce_request(
 			return ERROR_INVALID_DATA;
 		}
 
-		DeviceData = Stream_Pointer(s);
 		WLog_DBG(TAG, "Device %d Name: %s Id: 0x%08"PRIX32" DataLength: %"PRIu32"",
 		         i, PreferredDosName, DeviceId, DeviceDataLength);
 
@@ -1148,7 +1145,6 @@ static void* rdpdr_server_thread(void* arg)
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
-
 	s = Stream_New(NULL, 4096);
 
 	if (!s)
