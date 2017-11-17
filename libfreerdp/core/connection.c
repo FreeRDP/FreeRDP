@@ -32,6 +32,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
+#include <winpr/ssl.h>
 
 #include <freerdp/log.h>
 #include <freerdp/error.h>
@@ -177,6 +178,13 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 {
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
+
+	/* make sure SSL is initialize for earlier enough for crypto, by taking advantage of winpr SSL FIPS flag for openssl initialization */
+	DWORD flags = WINPR_SSL_INIT_DEFAULT;
+
+	if (settings->FIPSMode)
+		flags |= WINPR_SSL_INIT_ENABLE_FIPS;
+	winpr_InitializeSSL(flags);
 
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);

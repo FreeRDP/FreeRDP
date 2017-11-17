@@ -1466,7 +1466,6 @@ rdpTls* tls_new(rdpSettings* settings)
 	if (!tls)
 		return NULL;
 
-	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	tls->settings = settings;
 
 	if (!settings->ServerMode)

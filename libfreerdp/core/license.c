@@ -424,7 +424,10 @@ BOOL license_generate_hwid(rdpLicense* license)
 	ZeroMemory(macAddress, sizeof(macAddress));
 	ZeroMemory(license->HardwareId, HWID_LENGTH);
 
-	if (!winpr_Digest(WINPR_MD_MD5, macAddress, sizeof(macAddress), &license->HardwareId[HWID_PLATFORM_ID_LENGTH], WINPR_MD5_DIGEST_LENGTH))
+	/* Allow FIPS override for use of MD5 here, really this does not have to be MD5 as we are just taking a MD5 hash of the 6 bytes of 0's(macAddress) */
+	/* and filling in the Data1-Data4 fields of the CLIENT_HARDWARE_ID structure(from MS-RDPELE section 2.2.2.3.1). This is for RDP licensing packets */
+	/* which will already be encrypted under FIPS, so the use of MD5 here is not for sensitive data protection. */
+	if (!winpr_Digest_Allow_FIPS(WINPR_MD_MD5, macAddress, sizeof(macAddress), &license->HardwareId[HWID_PLATFORM_ID_LENGTH], WINPR_MD5_DIGEST_LENGTH))
 		return FALSE;
 
 	return TRUE;
@@ -495,7 +498,10 @@ BOOL license_decrypt_platform_challenge(rdpLicense* license)
 		return FALSE;
 	license->PlatformChallenge->length = license->EncryptedPlatformChallenge->length;
 
-	if ((rc4 = winpr_RC4_New(license->LicensingEncryptionKey,
+	/* Allow FIPS override for use of RC4 here, this is only used for decrypting the MACData field of the */
+	/* Server Platform Challenge packet (from MS-RDPELE section 2.2.2.4). This is for RDP licensing packets */
+	/* which will already be encrypted under FIPS, so the use of RC4 here is not for sensitive data protection. */
+	if ((rc4 = winpr_RC4_New_Allow_FIPS(license->LicensingEncryptionKey,
 				 LICENSING_ENCRYPTION_KEY_LENGTH)) == NULL)
 	{
 		free(license->PlatformChallenge->data);
@@ -1089,7 +1095,10 @@ BOOL license_send_platform_challenge_response_packet(rdpLicense* license)
 	if (!status)
 		return FALSE;
 
-	rc4 = winpr_RC4_New(license->LicensingEncryptionKey,
+	/* Allow FIPS override for use of RC4 here, this is only used for encrypting the EncryptedHWID field of the */
+	/* Client Platform Challenge Response packet (from MS-RDPELE section 2.2.2.5). This is for RDP licensing packets */
+	/* which will already be encrypted under FIPS, so the use of RC4 here is not for sensitive data protection. */
+	rc4 = winpr_RC4_New_Allow_FIPS(license->LicensingEncryptionKey,
 			    LICENSING_ENCRYPTION_KEY_LENGTH);
 	if (!rc4)
 		return FALSE;

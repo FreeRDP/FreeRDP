@@ -153,7 +153,10 @@ static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, int length
 	/* SaltedHash(Salt, Input, Salt1, Salt2) = MD5(S + SHA1_Digest) */
 	if (!(md5 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	/* Allow FIPS override for use of MD5 here, this is used for creating hashes of the premaster_secret and master_secret */
+	/* used for RDP licensing as described in MS-RDPELE. This is for RDP licensing packets */
+	/* which will already be encrypted under FIPS, so the use of MD5 here is not for sensitive data protection. */
+	if (!winpr_Digest_Init_Allow_FIPS(md5, WINPR_MD_MD5))
 		goto out;
 	if (!winpr_Digest_Update(md5, salt, 48)) /* Salt (48 bytes) */
 		goto out;
@@ -232,11 +235,38 @@ out:
 	return result;
 }
 
+BOOL security_md5_16_32_32_Allow_FIPS(const BYTE* in0, const BYTE* in1, const BYTE* in2, BYTE* output)
+{
+        WINPR_DIGEST_CTX* md5 = NULL;
+        BOOL result = FALSE;
+
+        if (!(md5 = winpr_Digest_New()))
+                return FALSE;
+        if (!winpr_Digest_Init_Allow_FIPS(md5, WINPR_MD_MD5))
+                goto out;
+        if (!winpr_Digest_Update(md5, in0, 16))
+                goto out;
+        if (!winpr_Digest_Update(md5, in1, 32))
+                goto out;
+        if (!winpr_Digest_Update(md5, in2, 32))
+                goto out;
+        if (!winpr_Digest_Final(md5, output, WINPR_MD5_DIGEST_LENGTH))
+                goto out;
+
+        result = TRUE;
+out:
+        winpr_Digest_Free(md5);
+        return result;
+}
+
 BOOL security_licensing_encryption_key(const BYTE* session_key_blob, const BYTE* client_random,
 		const BYTE* server_random, BYTE* output)
 {
 	/* LicensingEncryptionKey = MD5(Second128Bits(SessionKeyBlob) + ClientRandom + ServerRandom)) */
-	return security_md5_16_32_32(&session_key_blob[16], client_random, server_random, output);
+	/* Allow FIPS use of MD5 here, this is just used for creating the licensing encryption key as described in MS-RDPELE. */
+	/* This is for RDP licensing packets which will already be encrypted under FIPS, so the use of MD5 here is not for 
+	/* sensitive data protection. */
+	return security_md5_16_32_32_Allow_FIPS(&session_key_blob[16], client_random, server_random, output);
 }
 
 void security_UINT32_le(BYTE* output, UINT32 value)
@@ -279,7 +309,10 @@ BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	/* MacData = MD5(MacSaltKey + pad2 + SHA1_Digest) */
 	if (!(md5 = winpr_Digest_New()))
 		goto out;
-	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	/* Allow FIPS override for use of MD5 here, this is only used for creating the MACData field of the */
+	/* Client Platform Challenge Response packet (from MS-RDPELE section 2.2.2.5). This is for RDP licensing packets */
+	/* which will already be encrypted under FIPS, so the use of MD5 here is not for sensitive data protection. */
+	if (!winpr_Digest_Init_Allow_FIPS(md5, WINPR_MD_MD5))
 		goto out;
 	if (!winpr_Digest_Update(md5, mac_salt_key, 16)) /* MacSaltKey */
 		goto out;
@@ -546,8 +579,11 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 	}
 	else
 	{
-		status = security_md5_16_32_32(&session_key_blob[16], client_random, server_random, rdp->decrypt_key);
-		status &= security_md5_16_32_32(&session_key_blob[32], client_random, server_random, rdp->encrypt_key);
+		/* Allow FIPS use of MD5 here, this is just used for generation of the SessionKeyBlob as described in MS-RDPELE. */
+		/* This is for RDP licensing packets which will already be encrypted under FIPS, so the use of MD5 here is not */
+		/* for sensitive data protection. */
+		status = security_md5_16_32_32_Allow_FIPS(&session_key_blob[16], client_random, server_random, rdp->decrypt_key);
+		status &= security_md5_16_32_32_Allow_FIPS(&session_key_blob[32], client_random, server_random, rdp->encrypt_key);
 	}
 
 	if (!status)

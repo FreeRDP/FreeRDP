@@ -43,17 +43,36 @@
  * RC4
  */
 
-WINPR_RC4_CTX* winpr_RC4_New(const BYTE* key, size_t keylen)
+WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOOL override_fips)
 {
 	WINPR_RC4_CTX* ctx = NULL;
+#if defined(WITH_OPENSSL)
+	EVP_CIPHER* evp = NULL;
+#endif
 
 	if (!key || (keylen == 0))
 		return NULL;
 
 #if defined(WITH_OPENSSL)
-	if (!(ctx = (WINPR_RC4_CTX*) calloc(1, sizeof(RC4_KEY))))
+	if (!(ctx = EVP_CIPHER_CTX_new()))
 		return NULL;
-	RC4_set_key((RC4_KEY*) ctx, keylen, key);
+
+	evp = EVP_rc4();
+
+	if (!evp)
+		return NULL;
+
+	EVP_CIPHER_CTX_init((EVP_CIPHER_CTX *) ctx);
+	EVP_EncryptInit_ex((EVP_CIPHER_CTX *) ctx, evp, NULL, NULL, NULL);
+
+	/* EVP_CIPH_FLAG_NON_FIPS_ALLOW does not exist before openssl 1.0.1 */
+#if !(OPENSSL_VERSION_NUMBER < 0x10001000L)
+	if (override_fips == TRUE)
+		EVP_CIPHER_CTX_set_flags((EVP_CIPHER_CTX *) ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
+#endif
+
+	EVP_CIPHER_CTX_set_key_length((EVP_CIPHER_CTX *) ctx, keylen);
+	EVP_EncryptInit_ex((EVP_CIPHER_CTX *) ctx, NULL, NULL, key, NULL);
 
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 	if (!(ctx = (WINPR_RC4_CTX*) calloc(1, sizeof(mbedtls_arc4_context))))
@@ -64,10 +83,21 @@ WINPR_RC4_CTX* winpr_RC4_New(const BYTE* key, size_t keylen)
 	return ctx;
 }
 
+WINPR_RC4_CTX* winpr_RC4_New_Allow_FIPS(const BYTE* key, size_t keylen)
+{
+	return winpr_RC4_New_Internal(key, keylen, TRUE);
+}
+
+WINPR_RC4_CTX* winpr_RC4_New(const BYTE* key, size_t keylen)
+{
+	return winpr_RC4_New_Internal(key, keylen, FALSE);
+}
+
 BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output)
 {
 #if defined(WITH_OPENSSL)
-	RC4((RC4_KEY*) ctx, length, input, output);
+	int outputLength;
+	EVP_CipherUpdate((EVP_CIPHER_CTX *) ctx, output, &outputLength, input, length);
 	return TRUE;
 
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
@@ -83,9 +113,7 @@ void winpr_RC4_Free(WINPR_RC4_CTX* ctx)
 		return;
 
 #if defined(WITH_OPENSSL)
-	memset(ctx, 0, sizeof(RC4_KEY));
-	free(ctx);
-
+	EVP_CIPHER_CTX_free((EVP_CIPHER_CTX *) ctx);
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 	mbedtls_arc4_free((mbedtls_arc4_context*) ctx);
 	free(ctx);
