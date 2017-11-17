@@ -93,7 +93,8 @@ static struct CRYPTO_dynlock_value* _winpr_openssl_dynlock_create(const char* fi
 	return dynlock;
 }
 
-static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* dynlock, const char* file, int line)
+static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* dynlock,
+                                        const char* file, int line)
 {
 	if (mode & CRYPTO_LOCK)
 	{
@@ -105,7 +106,8 @@ static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* d
 	}
 }
 
-static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value* dynlock, const char* file, int line)
+static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value* dynlock, const char* file,
+        int line)
 {
 	CloseHandle(dynlock->mutex);
 	free(dynlock);
@@ -159,8 +161,8 @@ static BOOL _winpr_openssl_initialize_locking(void)
 	/* OpenSSL dynamic locking */
 
 	if (CRYPTO_get_dynlock_create_callback() ||
-			CRYPTO_get_dynlock_lock_callback()   ||
-			CRYPTO_get_dynlock_destroy_callback())
+	    CRYPTO_get_dynlock_lock_callback()   ||
+	    CRYPTO_get_dynlock_destroy_callback())
 	{
 		WLog_WARN(TAG, "dynamic locking callbacks are already set");
 	}
@@ -246,6 +248,7 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 	}
 
 #ifdef WINPR_OPENSSL_LOCKING_REQUIRED
+
 	if (flags & WINPR_SSL_INIT_ENABLE_LOCKING)
 	{
 		if (!_winpr_openssl_initialize_locking())
@@ -253,6 +256,7 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 			return FALSE;
 		}
 	}
+
 #endif
 	/* SSL_load_error_strings() is void */
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
@@ -262,12 +266,14 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 	OpenSSL_add_all_digests();
 	OpenSSL_add_all_ciphers();
 #else
+
 	if (OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS |
-				OPENSSL_INIT_LOAD_CRYPTO_STRINGS |
-				OPENSSL_INIT_ADD_ALL_CIPHERS |
-				OPENSSL_INIT_ADD_ALL_DIGESTS |
-				OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL) != 1)
+	                     OPENSSL_INIT_LOAD_CRYPTO_STRINGS |
+	                     OPENSSL_INIT_ADD_ALL_CIPHERS |
+	                     OPENSSL_INIT_ADD_ALL_DIGESTS |
+	                     OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL) != 1)
 		return FALSE;
+
 #endif
 	g_winpr_openssl_initialized_by_winpr = TRUE;
 
@@ -277,15 +283,18 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 		WLog_ERR(TAG, "Openssl fips mode ENable not available on openssl versions less than 1.0.1!");
 #else
 		WLog_DBG(TAG, "Ensuring openssl fips mode is ENabled");
+
 		if (FIPS_mode() != 1)
 		{
 			if (FIPS_mode_set(1))
-				 WLog_INFO(TAG, "Openssl fips mode ENabled!");
+				WLog_INFO(TAG, "Openssl fips mode ENabled!");
 			else
 				WLog_ERR(TAG, "Openssl fips mode ENable failed!");
 		}
+
 #endif
 	}
+
 	return TRUE;
 }
 
@@ -321,6 +330,7 @@ BOOL winpr_CleanupSSL(DWORD flags)
 	}
 
 #ifdef WINPR_OPENSSL_LOCKING_REQUIRED
+
 	if (flags & WINPR_SSL_CLEANUP_THREAD)
 	{
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
@@ -329,6 +339,7 @@ BOOL winpr_CleanupSSL(DWORD flags)
 		ERR_remove_thread_state(NULL);
 #endif
 	}
+
 #endif
 	return TRUE;
 }
