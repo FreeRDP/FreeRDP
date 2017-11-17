@@ -15,7 +15,7 @@ def getVersionName = { ->
 }
 
 ext {
-    versionCode = properties.get('VERSION', "10").toInteger()
+    versionCode = properties.get('VERSION', "11").toInteger()
     minSdk = properties.get('MIN_SDK', "14").toInteger()
     targetSdk = properties.get('TARGET_SDK', "25").toInteger()
     compileSdk = properties.get('COMPILE_SDK', "25").toInteger()
