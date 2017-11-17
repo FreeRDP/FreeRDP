@@ -1237,7 +1237,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 * Very similar to DevicesToRedirect, but can contain a
 		 * comma-separated list of drive letters to redirect.
 		 */
-		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, TRUE);
+		const BOOL empty = !file->DrivesToRedirect || (strlen(file->DrivesToRedirect) == 0);
+		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, !empty);
 	}
 
 	if (~file->KeyboardHook)
