@@ -104,7 +104,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
-#include <linux/limits.h>
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/resource.h>
