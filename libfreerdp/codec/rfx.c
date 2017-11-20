@@ -1150,7 +1150,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 		REGION16 clippingRects;
 		const RECTANGLE_16* updateRects;
 		const DWORD formatSize = GetBytesPerPixel(context->pixel_format);
-		const UINT32 dstWidth = dstStride / formatSize;
+		const UINT32 dstWidth = dstStride / GetBytesPerPixel(dstFormat);
 		region16_init(&clippingRects);
 
 		for (i = 0; i < message->numRects; i++)
