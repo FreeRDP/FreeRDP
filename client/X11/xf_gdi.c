@@ -369,7 +369,12 @@ static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		case GDI_BS_PATTERN:
 			if (brush->bpp > 1)
 			{
-				Pixmap pattern = xf_brush_new(xfc, 8, 8, brush->bpp, brush->data);
+				UINT32 bpp = brush->bpp;
+
+				if ((bpp == 16) && (context->settings->ColorDepth == 15))
+					bpp = 15;
+
+				Pixmap pattern = xf_brush_new(xfc, 8, 8, bpp, brush->data);
 				XSetFillStyle(xfc->display, xfc->gc, FillTiled);
 				XSetTile(xfc->display, xfc->gc, pattern);
 				XSetTSOrigin(xfc->display, xfc->gc, brush->x, brush->y);
@@ -681,7 +686,12 @@ static BOOL xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		case GDI_BS_PATTERN:
 			if (brush->bpp > 1)
 			{
-				pattern = xf_brush_new(xfc, 8, 8, brush->bpp, brush->data);
+				UINT32 bpp = brush->bpp;
+
+				if ((bpp == 16) && (context->settings->ColorDepth == 15))
+					bpp = 15;
+
+				pattern = xf_brush_new(xfc, 8, 8, bpp, brush->data);
 				XSetFillStyle(xfc->display, xfc->gc, FillTiled);
 				XSetTile(xfc->display, xfc->gc, pattern);
 				XSetTSOrigin(xfc->display, xfc->gc, brush->x, brush->y);
@@ -854,7 +864,12 @@ static BOOL xf_gdi_polygon_cb(rdpContext* context,
 	{
 		if (brush->bpp > 1)
 		{
-			pattern = xf_brush_new(xfc, 8, 8, brush->bpp, brush->data);
+			UINT32 bpp = brush->bpp;
+
+			if ((bpp == 16) && (context->settings->ColorDepth == 15))
+				bpp = 15;
+
+			pattern = xf_brush_new(xfc, 8, 8, bpp, brush->data);
 			XSetFillStyle(xfc->display, xfc->gc, FillTiled);
 			XSetTile(xfc->display, xfc->gc, pattern);
 		}
@@ -996,15 +1011,14 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData,
 		UINT32 width = rects[i].right - rects[i].left;
 		UINT32 height = rects[i].bottom - rects[i].top;
 		const BYTE* src = pSrcData + top * scanline + 4 * left;
-
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 		                     (char*) src, width, height, xfc->scanline_pad, scanline);
+
 		if (!image)
 			break;
 
 		image->byte_order = LSBFirst;
 		image->bitmap_bit_order = LSBFirst;
-
 		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0, left, top, width, height);
 		XFree(image);
 		ret = xf_gdi_surface_update_frame(xfc, left, top, width, height);
@@ -1033,10 +1047,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 	cmdRect.top = cmd->destTop;
 	cmdRect.right = cmdRect.left + cmd->width;
 	cmdRect.bottom = cmdRect.top + cmd->height;
-
-
 	gdi = context->gdi;
-
 	xf_lock_x11(xfc, FALSE);
 
 	switch (cmd->codecID)
