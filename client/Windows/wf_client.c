@@ -620,6 +620,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	BOOL msg_ret;
 	int quit_msg;
 	DWORD nCount;
+	DWORD error;
 	HANDLE handles[64];
 	wfContext* wfc;
 	freerdp* instance;
@@ -634,7 +635,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	wfc = (wfContext*) instance->context;
 
 	if (!freerdp_connect(instance))
-		return 0;
+		goto end;
 
 	channels = instance->context->channels;
 	settings = instance->context->settings;
@@ -753,9 +754,11 @@ disconnect:
 	if (async_input)
 		CloseHandle(input_thread);
 
-	WLog_DBG(TAG, "Main thread exited.");
-	ExitThread(0);
-	return 0;
+end:
+	error = freerdp_get_last_error(instance->context);
+	WLog_DBG(TAG, "Main thread exited with %" PRIu32, error);
+	ExitThread(error);
+	return error;
 }
 
 static DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
