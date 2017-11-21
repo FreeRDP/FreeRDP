@@ -1458,6 +1458,17 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings,
 	return 0;
 }
 
+static BOOL ends_with(const char* str, const char* ext)
+{
+	const size_t strLen = strlen(str);
+	const size_t extLen = strlen(ext);
+
+	if (strLen < extLen)
+		return FALSE;
+
+	return strncmp(&str[strLen - extLen], ext, extLen) == 0;
+}
+
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
         int argc, char** argv, BOOL allowUnknown)
 {
@@ -1487,8 +1498,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 		if (argc > 1)
 		{
-			const char* ext = strstr(argv[1], ".rdp");
-			const char* assist = strstr(argv[1], ".msrcIncident");
+			const BOOL ext = ends_with(argv[1], ".rdp");
+			const BOOL assist = ends_with(argv[1], ".msrcIncident");
 
 			if (ext)
 			{
