@@ -501,7 +501,7 @@ DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name,
 	printf("\tThumbprint: %s\n", fingerprint);
 	printf("The above X.509 certificate could not be verified, possibly because you do not have\n"
 	       "the CA certificate in your certificate store, or the certificate has expired.\n"
-	       "Please look at the documentation on how to create local certificate store for a private CA.\n");
+	       "Please look at the OpenSSL documentation on how to add a private CA to the store.\n");
 	return client_cli_accept_certificate(instance->settings);
 }
 

@@ -450,7 +450,7 @@ static DWORD android_verify_certificate(
 	WLog_DBG(TAG,
 	         "The above X.509 certificate could not be verified, possibly because you do not have "
 	         "the CA certificate in your certificate store, or the certificate has expired."
-	         "Please look at the documentation on how to create local certificate store for a private CA.\n");
+	         "Please look at the OpenSSL documentation on how to add a private CA to the store.\n");
 	JNIEnv* env;
 	jboolean attached = jni_attach_thread(&env);
 	jstring jstr0 = (*env)->NewStringUTF(env, common_name);
