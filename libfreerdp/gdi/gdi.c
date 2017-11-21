@@ -603,7 +603,12 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 				if (brush->bpp > 1)
 				{
-					brushFormat = gdi_get_pixel_format(brush->bpp);
+					UINT32 bpp = brush->bpp;
+
+					if ((bpp == 16) && (context->settings->ColorDepth == 15))
+						bpp = 15;
+
+					brushFormat = gdi_get_pixel_format(bpp);
 
 					if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0,
 					                        8, 8, brush->data, brushFormat, 0, 0, 0,
@@ -848,7 +853,12 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 				if (brush->bpp > 1)
 				{
-					brushFormat = gdi_get_pixel_format(brush->bpp);
+					UINT32 bpp = brush->bpp;
+
+					if ((bpp == 16) && (context->settings->ColorDepth == 15))
+						bpp = 15;
+
+					brushFormat = gdi_get_pixel_format(bpp);
 
 					if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0,
 					                        8, 8, brush->data, brushFormat,
@@ -989,13 +999,11 @@ static BOOL gdi_surface_bits(rdpContext* context,
 	           "bpp %"PRIu32" codecID %"PRIu32" width %"PRIu32" height %"PRIu32" length %"PRIu32"",
 	           cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
 	           cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
-
 	region16_init(&region);
 	cmdRect.left = cmd->destLeft;
 	cmdRect.top = cmd->destTop;
 	cmdRect.right = cmdRect.left + cmd->width;
 	cmdRect.bottom = cmdRect.top + cmd->height;
-
 
 	switch (cmd->codecID)
 	{
@@ -1009,6 +1017,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 				WLog_ERR(TAG, "Failed to process RemoteFX message");
 				goto out;
 			}
+
 			break;
 
 		case RDP_CODEC_ID_NSCODEC:
@@ -1023,6 +1032,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 				WLog_ERR(TAG, "Failed to process NSCodec message");
 				goto out;
 			}
+
 			region16_union_rect(&region, &region, &cmdRect);
 			break;
 
@@ -1037,6 +1047,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 				WLog_ERR(TAG, "Failed to process nocodec message");
 				goto out;
 			}
+
 			region16_union_rect(&region, &region, &cmdRect);
 			break;
 
