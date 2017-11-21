@@ -84,6 +84,8 @@ struct mf_context
 	int yMinScroll;       // minimum vertical scroll value
 	int yCurrentScroll;   // current vertical scroll value
 	int yMaxScroll;       // maximum vertical scroll value
+
+	CGEventFlags kbdFlags;
 };
 
 #endif /* FREERDP_CLIENT_MAC_FREERDP_H */

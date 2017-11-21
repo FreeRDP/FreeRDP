@@ -557,6 +557,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	         "keyDown: keyCode: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s",
 	         keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
+	sync_keyboard_state(instance);
 	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
 }
 
@@ -1340,5 +1341,22 @@ void windows_to_apple_cords(MRDPView* view, NSRect* r)
 	r->origin.y = [view frame].size.height - (r->origin.y + r->size.height);
 }
 
+void sync_keyboard_state(freerdp *instance) {
+	mfContext* context = (mfContext*)instance->context;
+	UINT32 flags = 0;
+	CGEventFlags currentFlags = CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState);
+
+	if (context->kbdFlags != currentFlags)
+	{
+		if (currentFlags & kCGEventFlagMaskAlphaShift)
+			flags |= KBD_SYNC_CAPS_LOCK;
+
+		if (currentFlags & kCGEventFlagMaskNumericPad)
+			flags |= KBD_SYNC_NUM_LOCK;
+
+		freerdp_input_send_synchronize_event(instance->input, flags);
+		context->kbdFlags = currentFlags;
+	}
+}
 
 @end
