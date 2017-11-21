@@ -231,12 +231,12 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 		         || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 		{
 			BOOL overlong = FALSE;
+
 			printf("    %s", "/");
 
 			if (arg->Format)
 			{
 				size_t length = (strlen(arg->Name) + strlen(arg->Format) + 2);
-
 				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
 					length += 2;
 
@@ -314,6 +314,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Multimedia Redirection: /multimedia:sys:alsa\n");
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
 	printf("\n");
+
 	printf("For Gateways, the https_proxy environment variable is respected:\n");
 #ifdef _WIN32
 	printf("    set HTTPS_PROXY=http://proxy.contoso.com:3128/\n");
@@ -322,6 +323,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 #endif
 	printf("    xfreerdp /g:rdp.contoso.com ...\n");
 	printf("\n");
+
 	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
 	return TRUE;
@@ -345,6 +347,7 @@ static int freerdp_client_command_line_pre_filter(void* context, int index,
 				if (!(settings->ConnectionFile = _strdup(argv[index])))
 					return COMMAND_LINE_ERROR_MEMORY;
 
+
 				return 1;
 			}
 		}
@@ -357,6 +360,7 @@ static int freerdp_client_command_line_pre_filter(void* context, int index,
 
 				if (!(settings->AssistanceFile = _strdup(argv[index])))
 					return COMMAND_LINE_ERROR_MEMORY;
+
 
 				return 1;
 			}
@@ -1068,7 +1072,6 @@ BOOL freerdp_parse_hostname(char* hostname, char** host, int* port)
 
 		if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
 			return FALSE;
-
 		*host = (char*) calloc(length + 1UL, sizeof(char));
 
 		if (!(*host))
@@ -1411,7 +1414,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings,
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
-			int i;
+			DWORD i;
 			RDP_KEYBOARD_LAYOUT* layouts;
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
 			//if (!layouts) /* FIXME*/
@@ -1468,7 +1471,6 @@ static BOOL ends_with(const char* str, const char* ext)
 
 	return strncmp(&str[strLen - extLen], ext, extLen) == 0;
 }
-
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
         int argc, char** argv, BOOL allowUnknown)
 {
@@ -1491,6 +1493,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	}
 	else
 	{
+
 		if (allowUnknown)
 		{
 			flags |= COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
@@ -1552,7 +1555,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 					if ((errno != 0) || (val == 0) || (val > UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
 					length = (int)(p - arg->Value);
 					settings->ServerPort = val;
 
@@ -1686,7 +1688,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 						settings->PercentScreenUseWidth = 1;
 						partial = TRUE;
 					}
-
 					if (strchr(p, 'h'))
 					{
 						settings->PercentScreenUseHeight = 1;
@@ -1870,29 +1871,22 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "kbd")
 		{
-			unsigned long id;
-			char* pEnd;
-			id = strtoul(arg->Value, &pEnd, 16);
+			unsigned long id = strtoul(arg->Value, NULL, 0);
 
-			if (pEnd != (arg->Value + strlen(arg->Value)))
-				id = 0;
-
-			if (id == 0)
+			if ((errno != 0) || (id > UINT32_MAX) || (id == 0))
 			{
 				const int rc = freerdp_map_keyboard_layout_name_to_id(arg->Value);
 
-				if (rc < 0)
-					WLog_ERR(TAG, "A problem occurred while mapping the layout name to id");
-				else if (rc == 0)
+				if (rc <= 0)
 				{
 					WLog_ERR(TAG, "Could not identify keyboard layout: %s", arg->Value);
 					WLog_ERR(TAG, "Use /kbd-list to list available layouts");
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
 
-				if (rc <= 0)
-					return COMMAND_LINE_STATUS_PRINT;
-
-				id = rc;
+				/* Found a valid mapping, reset errno */
+				id = (unsigned long)rc;
+				errno = 0;
 			}
 
 			settings->KeyboardLayout = (UINT32) id;
@@ -1956,7 +1950,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 					if ((errno != 0) || (val == 0) || (val > UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
 					length = (int)(p - arg->Value);
 					settings->GatewayPort = val;
 
@@ -2076,7 +2069,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			long type;
 			char* pEnd;
 			type = strtol(arg->Value, &pEnd, 10);
-
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
@@ -2217,7 +2209,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			long type;
 			char* pEnd;
 			type = strtol(arg->Value, &pEnd, 10);
-
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
@@ -2284,7 +2275,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (arg->Value)
 			{
 #ifdef WITH_GFX_H264
-
 				if (_strnicmp("AVC444", arg->Value, 6) == 0)
 				{
 					settings->GfxH264 = TRUE;
@@ -2303,10 +2293,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "gfx-thin-client")
 		{
 			settings->GfxThinClient = arg->Value ? TRUE : FALSE;
-
 			if (settings->GfxThinClient)
 				settings->GfxSmallCache = TRUE;
-
 			settings->SupportGraphicsPipeline = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gfx-small-cache")
@@ -2395,7 +2383,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
 			settings->SendPreconnectionPdu = TRUE;
 			settings->PreconnectionId = val;
 		}
@@ -2586,7 +2573,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 				settings->NSCodec = TRUE;
 			}
-
 #if defined(WITH_JPEG)
 			else if (strcmp(arg->Value, "jpeg") == 0)
 			{
@@ -2595,7 +2581,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				if (settings->JpegQuality == 0)
 					settings->JpegQuality = 75;
 			}
-
 #endif
 		}
 		CommandLineSwitchCase(arg, "fast-path")
