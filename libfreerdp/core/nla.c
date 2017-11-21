@@ -1026,8 +1026,8 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 		Buffers[0].pvBuffer = nla->pubKeyAuth.pvBuffer;
 		CopyMemory(Buffers[0].pvBuffer, nla->PublicKey.pvBuffer, Buffers[0].cbBuffer);
 	}
-	else if ((strcmp(nla->packageName, NEGO_SSP_NAME) != 0) ||
-	         (strcmp(nla->packageName, NTLM_SSP_NAME) != 0))
+	else if ((strcmp(nla->packageName, NEGO_SSP_NAME) == 0) ||
+	         (strcmp(nla->packageName, NTLM_SSP_NAME) == 0))
 	{
 		Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 		Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
