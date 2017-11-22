@@ -38,6 +38,8 @@ extern "C" {
 WINPR_API BOOL winpr_InitializeSSL(DWORD flags);
 WINPR_API BOOL winpr_CleanupSSL(DWORD flags);
 
+WINPR_API BOOL winpr_FIPSMode(void);
+
 #ifdef	__cplusplus
 }
 #endif

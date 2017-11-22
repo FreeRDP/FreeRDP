@@ -346,6 +346,15 @@ BOOL winpr_CleanupSSL(DWORD flags)
 	return TRUE;
 }
 
+BOOL winpr_FIPSMode(void)
+{
+#if (OPENSSL_VERSION_NUMBER < 0x10001000L)
+	return FALSE;
+#else
+	return (FIPS_mode() == 1);
+#endif
+}
+
 #else
 
 BOOL winpr_InitializeSSL(DWORD flags)
@@ -356,6 +365,11 @@ BOOL winpr_InitializeSSL(DWORD flags)
 BOOL winpr_CleanupSSL(DWORD flags)
 {
 	return TRUE;
+}
+
+BOOL winpr_FIPSMode(void)
+{
+	return FALSE;
 }
 
 #endif
