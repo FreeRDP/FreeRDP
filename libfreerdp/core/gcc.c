@@ -1526,7 +1526,7 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	if (blockLength < 4 + mcs->channelCount * 12)
 		return FALSE;
 
-	if (mcs->channelCount > 16)
+	if (mcs->channelCount > CHANNEL_MAX_COUNT)
 		return FALSE;
 
 	/* channelDefArray */
