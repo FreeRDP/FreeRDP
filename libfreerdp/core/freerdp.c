@@ -615,7 +615,6 @@ BOOL freerdp_context_new(freerdp* instance)
 	rdpRdp* rdp;
 	rdpContext* context;
 	BOOL ret = TRUE;
-	DWORD flags = WINPR_SSL_INIT_DEFAULT;
 	instance->context = (rdpContext*) calloc(1, instance->ContextSize);
 
 	if (!instance->context)
