@@ -994,6 +994,7 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData,
 	XImage* image;
 	UINT32 i, nbRects;
 	const RECTANGLE_16* rects;
+	UINT32 bpp;
 
 	if (!xfc || !pSrcData)
 		return FALSE;
@@ -1001,6 +1002,12 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData,
 	if (!(rects = region16_rects(pRegion, &nbRects)))
 		return TRUE;
 
+	if (xfc->depth > 16)
+		bpp = 4;
+	else if (xfc->depth > 8)
+		bpp = 2;
+	else
+		bpp = 1;
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 
@@ -1010,15 +1017,16 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData,
 		UINT32 top = rects[i].top;
 		UINT32 width = rects[i].right - rects[i].left;
 		UINT32 height = rects[i].bottom - rects[i].top;
-		const BYTE* src = pSrcData + top * scanline + 4 * left;
+		const BYTE* src = pSrcData + top * scanline + bpp * left;
+
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 		                     (char*) src, width, height, xfc->scanline_pad, scanline);
-
 		if (!image)
 			break;
 
 		image->byte_order = LSBFirst;
 		image->bitmap_bit_order = LSBFirst;
+
 		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0, left, top, width, height);
 		XFree(image);
 		ret = xf_gdi_surface_update_frame(xfc, left, top, width, height);
@@ -1047,7 +1055,10 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 	cmdRect.top = cmd->destTop;
 	cmdRect.right = cmdRect.left + cmd->width;
 	cmdRect.bottom = cmdRect.top + cmd->height;
+
+
 	gdi = context->gdi;
+
 	xf_lock_x11(xfc, FALSE);
 
 	switch (cmd->codecID)
