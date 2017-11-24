@@ -291,59 +291,59 @@ static const CGKeyCode keymap[256] =
 	0xFF, //0xfe
 };
 
-void mf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL mf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
-	
+	CGEventSourceRef source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
 	BOOL keyDown = TRUE;
 	CGEventRef kbEvent;
 	CGKeyCode kCode = 0xFF;
-	
+
 	if (flags & KBD_FLAGS_RELEASE)
 	{
 		keyDown = FALSE;
 	}
-	
+
 	if (flags & KBD_FLAGS_EXTENDED)
 	{
-		switch (code) {
+		switch (code)
+		{
 			//case 0x52: //insert
 			case 0x53:
 				kCode = kVK_ForwardDelete;
 				break;
-				
+
 			case 0x4B:
 				kCode = kVK_LeftArrow;
 				break;
-				
+
 			case 0x47:
 				kCode = kVK_Home;
 				break;
-				
+
 			case 0x4F:
 				kCode = kVK_End;
 				break;
-				
+
 			case 0x48:
 				kCode = kVK_UpArrow;
 				break;
-				
+
 			case 0x50:
 				kCode = kVK_DownArrow;
 				break;
-				
+
 			case 0x49:
 				kCode = kVK_PageUp;
 				break;
-				
+
 			case 0x51:
 				kCode = kVK_PageDown;
 				break;
-				
+
 			case 0x4D:
 				kCode = kVK_RightArrow;
 				break;
-				
+
 			default:
 				break;
 		}
@@ -352,22 +352,22 @@ void mf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	{
 		kCode = keymap[code];
 	}
-	
+
 	kbEvent = CGEventCreateKeyboardEvent(source, kCode, keyDown);
 	CGEventPost(kCGHIDEventTap, kbEvent);
 	CFRelease(kbEvent);
 	CFRelease(source);
+	return TRUE;
 }
 
-void mf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL mf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-
+	return FALSE;
 }
 
-void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	float width, height;
-
 	CGWheelCount wheelCount = 2;
 	INT32 scroll_x = 0;
 	INT32 scroll_y = 0;
@@ -386,35 +386,29 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 		else
 			scroll_x = scroll;
 
-		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
-		CGEventRef scroll = CGEventCreateScrollWheelEvent(source,
-								  kCGScrollEventUnitLine,
-								  wheelCount,
-								  scroll_y,
-								  scroll_x);
-		CGEventPost(kCGHIDEventTap, scroll);
-
-		CFRelease(scroll);
+		CGEventSourceRef source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
+		CGEventRef scrollEvent = CGEventCreateScrollWheelEvent(source,
+		                         kCGScrollEventUnitLine,
+		                         wheelCount,
+		                         scroll_y,
+		                         scroll_x);
+		CGEventPost(kCGHIDEventTap, scrollEvent);
+		CFRelease(scrollEvent);
 		CFRelease(source);
 	}
 	else
 	{
-
-		mfInfo * mfi;
-		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
+		mfInfo* mfi;
+		CGEventSourceRef source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
 		CGEventType mouseType = kCGEventNull;
 		CGMouseButton mouseButton = kCGMouseButtonLeft;
-
-
 		mfi = mf_info_get_instance();
-
 		//width and height of primary screen (even in multimon setups
 		width = (float) mfi->servscreen_width;
 		height = (float) mfi->servscreen_height;
-		
 		x += mfi->servscreen_xoffset;
 		y += mfi->servscreen_yoffset;
-		
+
 		if (flags & PTR_FLAGS_MOVE)
 		{
 			if (mfi->mouse_down_left == TRUE)
@@ -433,21 +427,20 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 			{
 				mouseType = kCGEventMouseMoved;
 			}
-			
+
 			CGEventRef move = CGEventCreateMouseEvent(source,
-								  mouseType,
-								  CGPointMake(x, y),
-								  mouseButton // ignored for just movement
-								  );
-			
+			                  mouseType,
+			                  CGPointMake(x, y),
+			                  mouseButton // ignored for just movement
+			                                         );
 			CGEventPost(kCGHIDEventTap, move);
-			
 			CFRelease(move);
 		}
-		
+
 		if (flags & PTR_FLAGS_BUTTON1)
 		{
 			mouseButton = kCGMouseButtonLeft;
+
 			if (flags & PTR_FLAGS_DOWN)
 			{
 				mouseType = kCGEventLeftMouseDown;
@@ -462,6 +455,7 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 		else if (flags & PTR_FLAGS_BUTTON2)
 		{
 			mouseButton = kCGMouseButtonRight;
+
 			if (flags & PTR_FLAGS_DOWN)
 			{
 				mouseType = kCGEventRightMouseDown;
@@ -472,11 +466,11 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 				mouseType = kCGEventRightMouseUp;
 				mfi->mouse_down_right = FALSE;
 			}
-			
 		}
 		else if (flags & PTR_FLAGS_BUTTON3)
 		{
 			mouseButton = kCGMouseButtonCenter;
+
 			if (flags & PTR_FLAGS_DOWN)
 			{
 				mouseType = kCGEventOtherMouseDown;
@@ -487,40 +481,43 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 				mouseType = kCGEventOtherMouseUp;
 				mfi->mouse_down_other = FALSE;
 			}
-			
 		}
-		
-		
+
 		CGEventRef mouseEvent = CGEventCreateMouseEvent(source,
-								mouseType,
-								CGPointMake(x, y),
-								mouseButton
-								);
+		                        mouseType,
+		                        CGPointMake(x, y),
+		                        mouseButton
+		                                               );
 		CGEventPost(kCGHIDEventTap, mouseEvent);
-		
 		CFRelease(mouseEvent);
 		CFRelease(source);
 	}
+
+	return TRUE;
 }
 
-void mf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL mf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-
+	return FALSE;
 }
 
 
-void mf_input_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL mf_input_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
 {
+	return FALSE;
 }
 
-void mf_input_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL mf_input_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
 {
+	return FALSE;
 }
 
-void mf_input_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL mf_input_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
+	return FALSE;
 }
 
-void mf_input_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL mf_input_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
+	return FALSE;
 }
