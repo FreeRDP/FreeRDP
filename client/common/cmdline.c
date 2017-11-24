@@ -37,6 +37,7 @@
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/locale/keyboard.h>
 
+#include <freerdp/utils/passphrase.h>
 
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
@@ -94,7 +95,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "fipsmode", COMMAND_LINE_VALUE_BOOL, NULL, NULL, NULL, -1, NULL, "Enable FIPS mode" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Enable smooth fonts (ClearType)" },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Number of frame acknowledgement" },
-	{ "from-stdin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Read credentials from stdin, do not use defaults." },
+	{ "from-stdin", COMMAND_LINE_VALUE_OPTIONAL, "force", NULL, NULL, -1, NULL, "Read credentials from stdin. With <force> the prompt is done before connection, otherwise on server request." },
 	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:<port>]", NULL, NULL, -1, NULL, "Gateway Hostname" },
 	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "direct|detect", NULL, NULL, -1, "gum", "Gateway usage method" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
@@ -1481,6 +1482,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	int length;
 	int status;
 	DWORD flags;
+	BOOL promptForPassword = FALSE;
 	BOOL compatibility;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	compatibility = freerdp_client_detect_command_line(argc, argv, &flags,
@@ -2451,6 +2453,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "from-stdin")
 		{
 			settings->CredentialsFromStdin = TRUE;
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				promptForPassword = (strncmp(arg->Value, "force", 6) == 0);
+
+				if (!promptForPassword)
+					return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "log-level")
 		{
@@ -2833,6 +2842,36 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			settings->GatewayUsername = gwUser;
 	}
 
+	if (promptForPassword)
+	{
+		const size_t size = 512;
+
+		if (!settings->Password)
+		{
+			settings->Password = calloc(size, sizeof(char));
+
+			if (!settings->Password)
+				return COMMAND_LINE_ERROR;
+
+			if (!freerdp_passphrase_read("Password: ", settings->Password, size, 1))
+				return COMMAND_LINE_ERROR;
+		}
+
+		if (settings->GatewayEnabled && !settings->GatewayUseSameCredentials)
+		{
+			if (!settings->GatewayPassword)
+			{
+				settings->GatewayPassword = calloc(size, sizeof(char));
+
+				if (!settings->GatewayPassword)
+					return COMMAND_LINE_ERROR;
+
+				if (!freerdp_passphrase_read("Gateway Password: ", settings->GatewayPassword, size, 1))
+					return COMMAND_LINE_ERROR;
+			}
+		}
+	}
+
 	freerdp_performance_flags_make(settings);
 
 	if (settings->RemoteFxCodec || settings->NSCodec
@@ -3098,7 +3137,6 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		int count;
 		count = 1;
 		p[0] = "echo";
-
 		if (!freerdp_client_add_dynamic_channel(settings, count, p))
 			return FALSE;
 	}
