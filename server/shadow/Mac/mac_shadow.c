@@ -333,7 +333,7 @@ static int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat,
 			R = pSrcPixel[2] + pSrcPixel[6] + pSrcPixel[nSrcStep + 2] + pSrcPixel[nSrcStep +
 			        6];
 			pSrcPixel += 8;
-			color = GetColor(DstFormat, R >> 2, G >> 2, B >> 2, 0xFF);
+			color = FreeRDPGetColor(DstFormat, R >> 2, G >> 2, B >> 2, 0xFF);
 			WriteColor(pDstPixel, DstFormat, color);
 			pDstPixel += dstBytesPerPixel;
 		}
@@ -457,7 +457,6 @@ static int mac_shadow_capture_init(macShadowSubsystem* subsystem)
 	CFDictionaryRef opts;
 	CGDirectDisplayID displayId;
 	displayId = CGMainDisplayID();
-
 	subsystem->captureQueue = dispatch_queue_create("mac.shadow.capture", NULL);
 	keys[0] = (void*) kCGDisplayStreamShowCursor;
 	values[0] = (void*) kCFBooleanFalse;

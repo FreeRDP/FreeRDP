@@ -82,7 +82,7 @@ static INLINE BYTE* writePixelXRGB(BYTE* dst, DWORD formatSize, UINT32 format,
 static INLINE BYTE* writePixelGeneric(BYTE* dst, DWORD formatSize, UINT32 format,
                                       BYTE R, BYTE G, BYTE B, BYTE A)
 {
-	UINT32 color = GetColor(format, R, G, B, A);
+	UINT32 color = FreeRDPGetColor(format, R, G, B, A);
 	WriteColor(dst, format, color);
 	return dst + formatSize;
 }

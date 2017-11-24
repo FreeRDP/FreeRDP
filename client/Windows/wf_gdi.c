@@ -102,7 +102,7 @@ static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor,
 			return FALSE;
 	}
 
-	*color = ConvertColor(srcColor, SrcFormat,
+	*color = FreeRDPConvertColor(srcColor, SrcFormat,
 	                      DstFormat, &gdi->palette);
 	return TRUE;
 }

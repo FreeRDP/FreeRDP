@@ -195,7 +195,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 					else
 					{
 						dstColor = ReadColor(patp, hbr->pattern->format);
-						dstColor = ConvertColor(dstColor, hbr->pattern->format, hdc->format, NULL);
+						dstColor = FreeRDPConvertColor(dstColor, hbr->pattern->format, hdc->format, NULL);
 					}
 
 					if (dstp)

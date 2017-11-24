@@ -258,7 +258,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 				for (x = 0; x < width; x++)
 				{
 					BYTE alpha = *(*ppA)++;
-					UINT32 color = GetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
+					UINT32 color = FreeRDPGetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
 					WriteColor(*ppRgba, DstFormat, color);
 					*ppRgba += GetBytesPerPixel(DstFormat);
 				}
@@ -269,7 +269,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 
 				for (x = 0; x < width; x++)
 				{
-					UINT32 color = GetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
+					UINT32 color = FreeRDPGetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
 					WriteColor(*ppRgba, DstFormat, color);
 					*ppRgba += GetBytesPerPixel(DstFormat);
 				}
@@ -573,7 +573,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 			}
 			else /* NoAlpha */
 			{
-				const UINT32 color = GetColor(TempFormat, 0, 0, 0, 0xFF);
+				const UINT32 color = FreeRDPGetColor(TempFormat, 0, 0, 0, 0xFF);
 
 				if (!freerdp_image_fill(pTempData, TempFormat, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight,
 				                        color))

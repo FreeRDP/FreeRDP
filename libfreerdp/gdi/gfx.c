@@ -579,7 +579,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	WLog_WARN(TAG, "TODO gdi_SurfaceCommand_Alpha: status: %"PRIu32"", status);
 	/* fill with green for now to distinguish from the rest */
-	color = GetColor(surface->format, 0x00, 0xFF, 0x00, 0xFF);
+	color = FreeRDPGetColor(surface->format, 0x00, 0xFF, 0x00, 0xFF);
 
 	if (!freerdp_image_fill(surface->data, surface->format, surface->scanline,
 	                        cmd->left, cmd->top, cmd->width, cmd->height, color))
@@ -690,7 +690,7 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context,
 	           "left=%"PRIu32", top=%"PRIu32", right=%"PRIu32", bottom=%"PRIu32", width=%"PRIu32", height=%"PRIu32" "
 	           "length=%"PRIu32", data=%p, extra=%p",
 	           cmd->surfaceId, cmd->codecId, cmd->contextId,
-	           GetColorFormatName(cmd->format), cmd->left, cmd->top, cmd->right,
+	           FreeRDPGetColorFormatName(cmd->format), cmd->left, cmd->top, cmd->right,
 	           cmd->bottom, cmd->width, cmd->height, cmd->length, (void*) cmd->data, (void*) cmd->extra);
 
 	switch (cmd->codecId)
@@ -868,7 +868,7 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context,
 	/* a = solidFill->fillPixel.XA;
 	 * Ignore alpha channel, this is a solid fill. */
 	a = 0xFF;
-	color = GetColor(surface->format, r, g, b, a);
+	color = FreeRDPGetColor(surface->format, r, g, b, a);
 
 	for (index = 0; index < solidFill->fillRectCount; index++)
 	{

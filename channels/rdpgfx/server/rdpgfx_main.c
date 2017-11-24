@@ -584,7 +584,7 @@ static UINT rdpgfx_write_surface_command(wStream* s,
 			break;
 
 		default:
-			WLog_ERR(TAG, "Format %s not supported!", GetColorFormatName(cmd->format));
+			WLog_ERR(TAG, "Format %s not supported!", FreeRDPGetColorFormatName(cmd->format));
 			return ERROR_INVALID_DATA;
 	}
 

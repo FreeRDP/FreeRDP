@@ -111,7 +111,7 @@ static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2,
 			p2 += GetBytesPerPixel(hBmp2->format);
 
 			if (hBmp1->format != hBmp2->format)
-				colorB = ConvertColor(colorB, hBmp2->format, hBmp1->format, palette);
+				colorB = FreeRDPConvertColor(colorB, hBmp2->format, hBmp1->format, palette);
 
 			if (colorA != colorB)
 				return FALSE;

@@ -700,7 +700,7 @@ int TestGdiLine(int argc, char* argv[])
 		g.format = format;
 
 		for (i = 0; i < 256; i++)
-			g.palette[i] = GetColor(format, i, i, i, 0xFF);
+			g.palette[i] = FreeRDPGetColor(format, i, i, i, 0xFF);
 
 		rc = -1;
 
@@ -712,7 +712,7 @@ int TestGdiLine(int argc, char* argv[])
 
 		hdc->format = format;
 		gdi_SetNullClipRgn(hdc);
-		penColor = GetColor(format, 0xFF, 0xFF, 0xFF, 0xFF);
+		penColor = FreeRDPGetColor(format, 0xFF, 0xFF, 0xFF, 0xFF);
 
 		if (!(pen = gdi_CreatePen(1, 1, penColor, format, hPalette)))
 		{
@@ -780,7 +780,7 @@ int TestGdiLine(int argc, char* argv[])
 		{
 			char name[1024];
 			_snprintf(name, sizeof(name), "%s [%s]", gdi_rop_to_string(rop_map[x].rop),
-			          GetColorFormatName(hdc->format));
+			          FreeRDPGetColorFormatName(hdc->format));
 
 			/* Test Case 13: (0,0) -> (16,16), R2_NOTMERGEPEN */
 			if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS, hPalette))
