@@ -176,8 +176,11 @@ UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callbac
 UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	DISP_PLUGIN* disp;
+	DispClientContext *context;
+	UINT ret = CHANNEL_RC_OK;
 
 	disp = (DISP_PLUGIN*) callback->plugin;
+	context = (DispClientContext *)disp->iface.pInterface;
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
@@ -188,10 +191,11 @@ UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream
 	Stream_Read_UINT32(s, disp->MaxNumMonitors); /* MaxNumMonitors (4 bytes) */
 	Stream_Read_UINT32(s, disp->MaxMonitorAreaFactorA); /* MaxMonitorAreaFactorA (4 bytes) */
 	Stream_Read_UINT32(s, disp->MaxMonitorAreaFactorB); /* MaxMonitorAreaFactorB (4 bytes) */
-	//WLog_ERR(TAG,  "DisplayControlCapsPdu: MaxNumMonitors: %"PRIu32" MaxMonitorAreaFactorA: %"PRIu32" MaxMonitorAreaFactorB: %"PRIu32"",
-	//       disp->MaxNumMonitors, disp->MaxMonitorAreaFactorA, disp->MaxMonitorAreaFactorB);
 
-	return CHANNEL_RC_OK;
+	if (context->DisplayControlCaps)
+		ret = context->DisplayControlCaps(context, disp->MaxNumMonitors, disp->MaxMonitorAreaFactorA, disp->MaxMonitorAreaFactorB);
+
+	return ret;
 }
 
 /**
