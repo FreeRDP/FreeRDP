@@ -448,12 +448,12 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer,
 			beg = line;
 
 			if (freerdp_client_parse_rdp_file_add_line(file, line, index) == -1)
-				return FALSE;
+				goto fail;
 
 			if (beg[0] == '/')
 			{
 				if (!freerdp_client_parse_rdp_file_option(file, line, index))
-					return FALSE;
+					goto fail;
 
 				goto next_line; /* FreeRDP option */
 			}
