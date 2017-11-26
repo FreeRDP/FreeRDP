@@ -921,7 +921,7 @@ static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 			{
 				unsigned long val = strtoul(arg->Value, NULL, 0);
 
-				if ((errno != 0) || (val < INT32_MIN) || (val > INT32_MAX))
+				if ((errno != 0) || (val > INT32_MAX))
 					return CHANNEL_RC_INITIALIZATION_ERROR;
 
 				rdpsnd->latency = val;
