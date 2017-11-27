@@ -132,6 +132,8 @@ option(WITH_DEBUG_SYMBOLS "Pack debug symbols to installer" OFF)
 option(WITH_CCACHE "Use ccache support if available" ON)
 option(WITH_ICU "Use ICU for unicode conversion" OFF)
 
+option(USE_VERSION_FROM_GIT_TAG "Extract FreeRDP version from git tag." OFF)
+
 if(ANDROID)
 include(ConfigOptionsAndroid)
 endif(ANDROID)
