@@ -477,7 +477,7 @@ void crypto_cert_print_info(X509* xcert)
 	WLog_INFO(TAG,  "\tThumbprint: %s", fp);
 	WLog_INFO(TAG,  "The above X.509 certificate could not be verified, possibly because you do not have "
 			"the CA certificate in your certificate store, or the certificate has expired. "
-			"Please look at the documentation on how to create local certificate store for a private CA.");
+			"Please look at the OpenSSL documentation on how to add a private CA to the store.");
 	free(fp);
 out_free_issuer:
 	free(issuer);
