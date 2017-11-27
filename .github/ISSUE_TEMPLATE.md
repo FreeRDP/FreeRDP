@@ -19,4 +19,6 @@
   * if you built it yourself add some notes which branch you have used, also your cmake parameters can help
   * extra information helping us to find the bug
 
+## Please remove this text before submitting your issue!
+
 _Thank you for reporting a bug!_

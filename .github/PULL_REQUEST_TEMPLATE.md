@@ -20,3 +20,4 @@
 * fix issues found during the review phase
 * Joining IRC _#freerdp_ to talk to other developers or help them test your pull might accelerate acceptance
 
+## Please remove this text before submitting your pull!
