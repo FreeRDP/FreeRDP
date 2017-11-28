@@ -1394,7 +1394,8 @@ struct rdp_settings
 	/* Serial and Parallel Port Redirection */
 	ALIGN64 BOOL RedirectSerialPorts; /* 4672 */
 	ALIGN64 BOOL RedirectParallelPorts; /* 4673 */
-	UINT64 padding4800[4800 - 4674]; /* 4674 */
+	ALIGN64 BOOL PreferIPv6OverIPv4; /* 4674 */
+	UINT64 padding4800[4800 - 4675]; /* 4675 */
 
 	/**
 	 * Other Redirection

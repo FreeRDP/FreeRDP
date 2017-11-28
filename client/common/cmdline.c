@@ -119,6 +119,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "heartbeat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support heartbeat PDUs" },
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "Print help" },
 	{ "home-drive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect user home as share" },
+	{ "ipv6", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "6", "Prefer IPv6 AAA record over IPv4 A record"},
 #if defined(WITH_JPEG)
 	{ "jpeg", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Enable JPEG codec" },
 	{ "jpeg-quality", COMMAND_LINE_VALUE_REQUIRED, "<percentage>", NULL, NULL, -1, NULL, "JPEG quality" },
@@ -232,12 +233,12 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 		         || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 		{
 			BOOL overlong = FALSE;
-
 			printf("    %s", "/");
 
 			if (arg->Format)
 			{
 				size_t length = (strlen(arg->Name) + strlen(arg->Format) + 2);
+
 				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
 					length += 2;
 
@@ -315,7 +316,6 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Multimedia Redirection: /multimedia:sys:alsa\n");
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
 	printf("\n");
-
 	printf("For Gateways, the https_proxy environment variable is respected:\n");
 #ifdef _WIN32
 	printf("    set HTTPS_PROXY=http://proxy.contoso.com:3128/\n");
@@ -324,7 +324,6 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 #endif
 	printf("    xfreerdp /g:rdp.contoso.com ...\n");
 	printf("\n");
-
 	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
 	return TRUE;
@@ -348,7 +347,6 @@ static int freerdp_client_command_line_pre_filter(void* context, int index,
 				if (!(settings->ConnectionFile = _strdup(argv[index])))
 					return COMMAND_LINE_ERROR_MEMORY;
 
-
 				return 1;
 			}
 		}
@@ -361,7 +359,6 @@ static int freerdp_client_command_line_pre_filter(void* context, int index,
 
 				if (!(settings->AssistanceFile = _strdup(argv[index])))
 					return COMMAND_LINE_ERROR_MEMORY;
-
 
 				return 1;
 			}
@@ -1073,6 +1070,7 @@ BOOL freerdp_parse_hostname(char* hostname, char** host, int* port)
 
 		if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
 			return FALSE;
+
 		*host = (char*) calloc(length + 1UL, sizeof(char));
 
 		if (!(*host))
@@ -1495,7 +1493,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	}
 	else
 	{
-
 		if (allowUnknown)
 		{
 			flags |= COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
@@ -1557,6 +1554,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 					if ((errno != 0) || (val == 0) || (val > UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
 					length = (int)(p - arg->Value);
 					settings->ServerPort = val;
 
@@ -1690,6 +1688,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 						settings->PercentScreenUseWidth = 1;
 						partial = TRUE;
 					}
+
 					if (strchr(p, 'h'))
 					{
 						settings->PercentScreenUseHeight = 1;
@@ -1952,6 +1951,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 					if ((errno != 0) || (val == 0) || (val > UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
 					length = (int)(p - arg->Value);
 					settings->GatewayPort = val;
 
@@ -2071,6 +2071,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			long type;
 			char* pEnd;
 			type = strtol(arg->Value, &pEnd, 10);
+
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
@@ -2167,6 +2168,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->RedirectHomeDrive = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "ipv6")
+		{
+			settings->PreferIPv6OverIPv4 = TRUE;
+		}
 		CommandLineSwitchCase(arg, "clipboard")
 		{
 			settings->RedirectClipboard = arg->Value ? TRUE : FALSE;
@@ -2211,6 +2216,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			long type;
 			char* pEnd;
 			type = strtol(arg->Value, &pEnd, 10);
+
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
@@ -2277,6 +2283,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (arg->Value)
 			{
 #ifdef WITH_GFX_H264
+
 				if (_strnicmp("AVC444", arg->Value, 6) == 0)
 				{
 					settings->GfxH264 = TRUE;
@@ -2295,8 +2302,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "gfx-thin-client")
 		{
 			settings->GfxThinClient = arg->Value ? TRUE : FALSE;
+
 			if (settings->GfxThinClient)
 				settings->GfxSmallCache = TRUE;
+
 			settings->SupportGraphicsPipeline = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gfx-small-cache")
@@ -2385,6 +2394,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
 			settings->SendPreconnectionPdu = TRUE;
 			settings->PreconnectionId = val;
 		}
@@ -2453,6 +2463,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "from-stdin")
 		{
 			settings->CredentialsFromStdin = TRUE;
+
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
 				promptForPassword = (strncmp(arg->Value, "force", 6) == 0);
@@ -2582,6 +2593,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 				settings->NSCodec = TRUE;
 			}
+
 #if defined(WITH_JPEG)
 			else if (strcmp(arg->Value, "jpeg") == 0)
 			{
@@ -2590,6 +2602,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				if (settings->JpegQuality == 0)
 					settings->JpegQuality = 75;
 			}
+
 #endif
 		}
 		CommandLineSwitchCase(arg, "fast-path")
@@ -3137,6 +3150,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		int count;
 		count = 1;
 		p[0] = "echo";
+
 		if (!freerdp_client_add_dynamic_channel(settings, count, p))
 			return FALSE;
 	}

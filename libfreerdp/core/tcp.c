@@ -664,25 +664,36 @@ BIO_METHOD* BIO_s_buffered_socket(void)
 	return bio_methods;
 }
 
-char* freerdp_tcp_get_ip_address(int sockfd)
+static char* freerdp_tcp_get_ip_address(int sockfd, BOOL* pIPv6)
 {
-	BYTE* ip;
 	socklen_t length;
-	char ipAddress[32];
+	char ipAddress[INET6_ADDRSTRLEN + 1];
 	struct sockaddr_in sockaddr;
 	length = sizeof(sockaddr);
 	ZeroMemory(&sockaddr, length);
 
-	if (getsockname(sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
+	if (getsockname(sockfd, (struct sockaddr*) &sockaddr, &length) != 0)
+		return NULL;
+
+	switch (sockaddr.sin_family)
 	{
-		ip = (BYTE*)(&sockaddr.sin_addr);
-		sprintf_s(ipAddress, sizeof(ipAddress), "%"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"", ip[0], ip[1], ip[2],
-		          ip[3]);
+		case AF_INET:
+		case AF_INET6:
+			if (!inet_ntop(sockaddr.sin_family, &sockaddr.sin_addr, ipAddress, sizeof(ipAddress)))
+				return NULL;
+
+			break;
+
+		case AF_UNIX:
+			strcpy(ipAddress, "127.0.0.1");
+			break;
+
+		default:
+			return NULL;
 	}
-	else
-	{
-		strcpy(ipAddress, "127.0.0.1");
-	}
+
+	if (pIPv6)
+		*pIPv6 = (sockaddr.sin_family == AF_INET6);
 
 	return _strdup(ipAddress);
 }
@@ -813,7 +824,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 }
 
 static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
-                                     UINT32* ports, int count, int port,
+                                     UINT32* ports, UINT32 count, int port,
                                      int timeout)
 {
 	int index;
@@ -992,7 +1003,7 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 
 #endif
 #ifndef SOL_TCP
-/* "tcp" from /etc/protocols as getprotobyname(3C) */
+	/* "tcp" from /etc/protocols as getprotobyname(3C) */
 #define SOL_TCP 6
 #endif
 #ifdef TCP_KEEPCNT
@@ -1110,7 +1121,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 
 			addr = result;
 
-			if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0))
+			if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0) && !settings->PreferIPv6OverIPv4)
 			{
 				while ((addr = addr->ai_next))
 				{
@@ -1143,9 +1154,8 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 		}
 	}
 
-	settings->IPv6Enabled = FALSE;
 	free(settings->ClientAddress);
-	settings->ClientAddress = freerdp_tcp_get_ip_address(sockfd);
+	settings->ClientAddress = freerdp_tcp_get_ip_address(sockfd, &settings->IPv6Enabled);
 
 	if (!settings->ClientAddress)
 	{
