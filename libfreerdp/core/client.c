@@ -662,12 +662,11 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	for (index = 0; index < channels->openDataCount; index++)
 	{
 		pChannelOpenData = &channels->openDataList[index];
-
 		freerdp_channel_remove_open_handle_data(&g_ChannelHandles, pChannelOpenData->OpenHandle);
 
 		if (channels->openHandles)
 			HashTable_Remove(channels->openHandles,
-			(void*)(UINT_PTR)pChannelOpenData->OpenHandle);
+			                 (void*)(UINT_PTR)pChannelOpenData->OpenHandle);
 	}
 
 	channels->openDataCount = 0;
@@ -702,7 +701,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(LPVOID lpUserParam, LPVOID cl
 	if (!channels->can_call_init)
 		return CHANNEL_RC_NOT_IN_VIRTUALCHANNELENTRY;
 
-	if ((channels->openDataCount + channelCount) >= CHANNEL_MAX_COUNT)
+	if ((channels->openDataCount + channelCount) > CHANNEL_MAX_COUNT)
 		return CHANNEL_RC_TOO_MANY_CHANNELS;
 
 	if (!pChannel)
@@ -790,7 +789,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle,
 	if (!channels->can_call_init)
 		return CHANNEL_RC_NOT_IN_VIRTUALCHANNELENTRY;
 
-	if (channels->openDataCount + channelCount >= CHANNEL_MAX_COUNT)
+	if (channels->openDataCount + channelCount > CHANNEL_MAX_COUNT)
 		return CHANNEL_RC_TOO_MANY_CHANNELS;
 
 	if (!pChannel)
@@ -1103,7 +1102,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
 	CHANNEL_ENTRY_POINTS_FREERDP EntryPoints;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 
-	if (channels->clientDataCount + 1 >= CHANNEL_MAX_COUNT)
+	if (channels->clientDataCount + 1 > CHANNEL_MAX_COUNT)
 	{
 		WLog_ERR(TAG,  "error: too many channels");
 		return 1;
@@ -1156,7 +1155,7 @@ int freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings
 	CHANNEL_INIT_DATA* pChannelInitData = NULL;
 	CHANNEL_CLIENT_DATA* pChannelClientData = NULL;
 
-	if (channels->clientDataCount + 1 >= CHANNEL_MAX_COUNT)
+	if (channels->clientDataCount + 1 > CHANNEL_MAX_COUNT)
 	{
 		WLog_ERR(TAG,  "error: too many channels");
 		return 1;
