@@ -1,3 +1,46 @@
+2017-11-28	Version 2.0.0-rc1
+
+FreeRDP 2.0.0-rc1 is the second release candidate for 2.0.0.
+For a complete and detailed change log since the last release candidate run:
+git log 2.0.0-rc0..master
+
+Noteworthy features and improvements:
+
+* support for FIPS mode was added (option +fipsmode)
+* initial client side kerberos support (run cmake with WITH_GSSAPI)
+* support for ssh-agent redirection (as rdp channel)
+* the man page(s) and /help were updated an improved
+* build: support for GNU/kFreeBSD
+* add support for ICU for unicode conversion (-DWITH_ICU=ON)
+* client add option to force password prompt before connection (/from-stdin[:force])
+* add Samsung DeX support
+* extend /size to allow width or height percentages (#4146)
+* add support for "password is pin"
+* clipboard is now enabled per default (use -clipboard to disable)
+
+Fixed github issues (excerpt):
+
+* #4281: Added option to prefer IPv6 over IPv4
+* #3890: Point to OpenSSL doc for private CA
+* #3378: support 31 static channels as described in the spec
+* #1536: fix clipboard on mac
+* #4253: Rfx decode tile width.
+* #3267: fix parsing of drivestoredirect
+* #4257: Proper error checks for /kbd argument
+* #4249: Corruption due to recursive parser
+* #4111: 15bpp color handling for brush.
+* #3509: Added Ctrl+Alt+Enter description
+* #3211: Return freerdp error from main.
+* #3513: add better description for drive redirection
+* #4199: ConvertFindDataAToW string length
+* #4135: client/x11: fix colors on big endian
+* #4089: fix h264 context leak when DeleteSurface
+* #4117: possible segfault
+* #4091: fix a regression with remote program
+
+See https://github.com/FreeRDP/FreeRDP/milestone/7 for a complete list.
+
+
 2012-02-07	Version 1.0.1
 
 FreeRDP 1.0.1 is a maintenance release to address a certain number of
