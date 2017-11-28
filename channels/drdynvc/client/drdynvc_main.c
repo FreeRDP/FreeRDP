@@ -486,7 +486,7 @@ static UINT dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr,
 				          listener->iface.pInterface);
 
 				if (error)
-					WLog_ERR(TAG, "context.ReceiveSamples failed with error %"PRIu32"", error);
+					WLog_ERR(TAG, "context.OnChannelConnected failed with error %"PRIu32"", error);
 
 				return error;
 			}
@@ -520,8 +520,8 @@ static UINT dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr,
 	DVCMAN_CHANNEL* channel;
 	IWTSVirtualChannelCallback* pCallback;
 	UINT error;
-	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
+	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 	if (!channel)
 	{
 		WLog_ERR(TAG, "ChannelId %"PRIu32" not found!", ChannelId);
@@ -948,11 +948,9 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 	WLog_Print(drdynvc->log, WLOG_DEBUG, "process_create_request: ChannelId=%"PRIu32" ChannelName=%s",
 	           ChannelId,
 	           Stream_Pointer(s));
-	channel_status = dvcman_create_channel(drdynvc->channel_mgr, ChannelId,
-	                                       (char*) Stream_Pointer(s));
+	channel_status = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) Stream_Pointer(s));
 	data_out = Stream_New(NULL, pos + 4);
-
-	if (!s)
+	if (!data_out)
 	{
 		WLog_Print(drdynvc->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
@@ -970,12 +968,10 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 	else
 	{
 		WLog_Print(drdynvc->log, WLOG_DEBUG, "no listener");
-		Stream_Write_UINT32(data_out,
-		                    (UINT32) 0xC0000001); /* same code used by mstsc */
+		Stream_Write_UINT32(data_out, (UINT32)0xC0000001); /* same code used by mstsc */
 	}
 
 	status = drdynvc_send(drdynvc, data_out);
-
 	if (status != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "VirtualChannelWriteEx failed with %s [%08"PRIX32"]",
@@ -1063,7 +1059,6 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp,
 	}
 
 	data_out = Stream_New(NULL, 4);
-
 	if (!data_out)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
