@@ -1149,10 +1149,10 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 		                       buffer, pfree);
 	}
 
-	gdi->stride = gdi->primary->bitmap->scanline;
-
 	if (!gdi->primary->bitmap)
 		goto fail_bitmap;
+
+	gdi->stride = gdi->primary->bitmap->scanline;
 
 	gdi_SelectObject(gdi->primary->hdc, (HGDIOBJECT) gdi->primary->bitmap);
 	gdi->primary->org_bitmap = NULL;
