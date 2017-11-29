@@ -94,6 +94,7 @@
 #include "xf_event.h"
 #include "xf_input.h"
 #include "xf_cliprdr.h"
+#include "xf_disp.h"
 #include "xf_monitor.h"
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
@@ -222,8 +223,7 @@ void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h)
 	}
 
 #endif
-	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h,
-	          x, y);
+	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
 }
 
 static BOOL xf_desktop_resize(rdpContext* context)
@@ -259,8 +259,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 
 	if (!xfc->fullscreen)
 	{
-		xf_ResizeDesktopWindow(xfc, xfc->window, settings->DesktopWidth,
-		                       settings->DesktopHeight);
+		xf_ResizeDesktopWindow(xfc, xfc->window, settings->DesktopWidth, settings->DesktopHeight);
 	}
 	else
 	{
@@ -281,6 +280,9 @@ static BOOL xf_desktop_resize(rdpContext* context)
 		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0, xfc->window->width,
 		               xfc->window->height);
 	}
+
+	if (xfc->xfDisp)
+		xf_disp_resized(xfc->xfDisp);
 
 	return TRUE;
 }
@@ -1269,6 +1271,12 @@ static BOOL xf_post_connect(freerdp* instance)
 	if (!(xfc->clipboard = xf_clipboard_new(xfc)))
 		return FALSE;
 
+	if (!(xfc->xfDisp = xf_disp_new(xfc)))
+	{
+		xf_clipboard_free(xfc->clipboard);
+		return FALSE;
+	}
+
 	EventArgsInit(&e, "xfreerdp");
 	e.width = settings->DesktopWidth;
 	e.height = settings->DesktopHeight;
@@ -1292,6 +1300,12 @@ static void xf_post_disconnect(freerdp* instance)
 	{
 		xf_clipboard_free(xfc->clipboard);
 		xfc->clipboard = NULL;
+	}
+
+	if (xfc->xfDisp)
+	{
+		xf_disp_free(xfc->xfDisp);
+		xfc->xfDisp = NULL;
 	}
 
 	xf_window_free(xfc);
@@ -1452,6 +1466,7 @@ static void* xf_client_thread(void* param)
 	HANDLE inputEvent = NULL;
 	HANDLE inputThread = NULL;
 	rdpSettings* settings;
+
 	exit_code = 0;
 	instance = (freerdp*) param;
 	context = instance->context;

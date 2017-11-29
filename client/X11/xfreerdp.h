@@ -81,6 +81,7 @@ struct xf_glyph
 typedef struct xf_glyph xfGlyph;
 
 typedef struct xf_clipboard xfClipboard;
+typedef struct _xfDispContext xfDispContext;
 
 /* Value of the first logical button number in X11 which must be */
 /* subtracted to go from a button number in X11 to an index into */
@@ -171,9 +172,6 @@ struct xf_context
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
 	void* xv_context;
-	TsmfClientContext* tsmf;
-	xfClipboard* clipboard;
-	CliprdrClientContext* cliprdr;
 
 	Atom UTF8_STRING;
 
@@ -209,9 +207,14 @@ struct xf_context
 	Atom WM_DELETE_WINDOW;
 
 	/* Channels */
+	TsmfClientContext* tsmf;
+	xfClipboard* clipboard;
+	CliprdrClientContext* cliprdr;
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
+	xfDispContext *xfDisp;
+	DispClientContext *disp;
 
 	RailClientContext* rail;
 	wHashTable* railWindows;

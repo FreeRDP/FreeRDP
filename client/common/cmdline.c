@@ -88,6 +88,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "drive", COMMAND_LINE_VALUE_REQUIRED, "<name>,<path>", NULL, NULL, -1, NULL, "Redirect directory <path> as named share <name>" },
 	{ "drives", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect all mount points as shares" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, "<channel>[,<options>]", NULL, NULL, -1, NULL, "Dynamic virtual channel" },
+	{ "dynamic-resolution", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Send resolution updates when the window is resized" },
 	{ "echo", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "echo", "Echo channel" },
 	{ "encryption", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Encryption (experimental)" },
 	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "[40,][56,][128,][FIPS]", NULL, NULL, -1, NULL, "RDP standard security encryption methods" },
@@ -1766,8 +1767,24 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->Decorations = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "dynamic-resolution")
+		{
+			if (settings->SmartSizing)
+			{
+				WLog_ERR(TAG, "Smart sizing and dynamic resolution are mutually exclusive options");
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
+			settings->SupportDisplayControl = TRUE;
+			settings->DynamicResolutionUpdate = TRUE;
+		}
 		CommandLineSwitchCase(arg, "smart-sizing")
 		{
+			if (settings->DynamicResolutionUpdate)
+			{
+				WLog_ERR(TAG, "Smart sizing and dynamic resolution are mutually exclusive options");
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
+
 			settings->SmartSizing = TRUE;
 
 			if (arg->Value)

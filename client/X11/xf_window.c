@@ -480,6 +480,7 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width,
                             int height)
 {
 	XSizeHints* size_hints;
+	rdpSettings *settings = xfc->context.settings;
 
 	if (!xfc || !window)
 		return;
@@ -493,13 +494,15 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width,
 	size_hints->max_width = size_hints->max_height = 16384;
 	XSetWMNormalHints(xfc->display, window->handle, size_hints);
 	XResizeWindow(xfc->display, window->handle, width, height);
-#ifdef WITH_XRENDER
 
-	if (!xfc->context.settings->SmartSizing)
+#ifdef WITH_XRENDER
+	if (!settings->SmartSizing)
 #endif
 	{
 		if (!xfc->fullscreen)
 		{
+			/* min == max is an hint for the WM to indicate that the window should
+			 * not be resizable */
 			size_hints->min_width = size_hints->max_width = width;
 			size_hints->min_height = size_hints->max_height = height;
 			XSetWMNormalHints(xfc->display, window->handle, size_hints);

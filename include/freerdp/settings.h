@@ -1105,7 +1105,8 @@ struct rdp_settings
 	ALIGN64 UINT32 SmartSizingHeight; /* 1555 */
 	ALIGN64 BOOL PercentScreenUseWidth; /* 1556 */
 	ALIGN64 BOOL PercentScreenUseHeight; /* 1557 */
-	UINT64 padding1601[1601 - 1558]; /* 1558 */
+	ALIGN64 BOOL DynamicResolutionUpdate; /* 1558 */
+	UINT64 padding1601[1601 - 1559]; /* 1559 */
 
 	/* Miscellaneous */
 	ALIGN64 BOOL SoftwareGdi; /* 1601 */
