@@ -360,11 +360,8 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			/* Select monitors */
 			long val = strtol(arg->Value, NULL, 0);
 
-			if ((val < 0) || (errno != 0))
-				index = 0;
-
-			if (val >= numMonitors)
-				index = 0;
+			if ((val < 0) || (errno != 0) || (val >= numMonitors))
+				status = COMMAND_LINE_STATUS_PRINT;
 
 			server->selectedMonitor = val;
 		}
