@@ -4,31 +4,41 @@
 #include <winpr/cmdline.h>
 #include <winpr/spec.h>
 
-#define TESTCASE(cmd, expected_return) \
-{ \
-	rdpSettings* settings = freerdp_settings_new(0); \
-	status = freerdp_client_settings_parse_command_line(settings, ARRAYSIZE(cmd), cmd, FALSE); \
-	freerdp_settings_free(settings); \
-	if (status != expected_return) { \
-		printf("Test argument %s failed\n", #cmd); \
-		return -1; \
-	} \
-}
-
-#define TESTCASE_SUCCESS(cmd) \
-{ \
-	rdpSettings* settings = freerdp_settings_new(0); \
-	status = freerdp_client_settings_parse_command_line(settings, ARRAYSIZE(cmd), cmd, FALSE); \
-	freerdp_settings_free(settings); \
-	if (status < 0) { \
-		printf("Test argument %s failed\n", #cmd); \
-		return -1; \
-	} \
-}
-
-int TestClientCmdLine(int argc, char* argv[])
+#define TESTCASE(argv, ret_val) TESTCASE_impl(#argv, argv, ARRAYSIZE(argv), ret_val)
+#define TESTCASE_SUCCESS(argv) TESTCASE_impl(#argv, argv, ARRAYSIZE(argv), 0)
+static INLINE BOOL TESTCASE_impl(const char* name, char** argv, size_t argc,
+                                 int expected_return)
 {
 	int status;
+	rdpSettings* settings = freerdp_settings_new(0);
+	printf("Running test %s\n", name);
+
+	if (!settings)
+	{
+		fprintf(stderr, "Test %s could not allocate settings!\n", name);
+		return FALSE;
+	}
+
+	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
+	freerdp_settings_free(settings);
+
+	if (status != expected_return)
+	{
+		fprintf(stderr, "Test %s failed!\n", name);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+#if defined(_WIN32)
+#define DRIVE_REDIRECT_PATH "c:\\Windows"
+#else
+#define DRIVE_REDIRECT_PATH "/tmp"
+#endif
+int TestClientCmdLine(int argc, char* argv[])
+{
+	int rc = -1;
 	char* cmd1[] = {"xfreerdp", "--help"};
 	char* cmd2[] = {"xfreerdp", "/help"};
 	char* cmd3[] = {"xfreerdp", "-help"};
@@ -39,8 +49,8 @@ int TestClientCmdLine(int argc, char* argv[])
 	char* cmd8[] = {"xfreerdp", "-v", "test.freerdp.com"};
 	char* cmd9[] = {"xfreerdp", "--v", "test.freerdp.com"};
 	char* cmd10[] = {"xfreerdp", "/v:test.freerdp.com"};
-	char* cmd11[] = {"xfreerdp", "--plugin", "rdpsnd", "--plugin", "rdpdr", "--data", "disk:media:/tmp", "--", "test.freerdp.com" };
-	char* cmd12[] = {"xfreerdp", "/sound", "/drive:media:/tmp", "/v:test.freerdp.com" };
+	char* cmd11[] = {"xfreerdp", "--plugin", "rdpsnd", "--plugin", "rdpdr", "--data", "disk:media:"DRIVE_REDIRECT_PATH, "--", "test.freerdp.com" };
+	char* cmd12[] = {"xfreerdp", "/sound", "/drive:media,"DRIVE_REDIRECT_PATH, "/v:test.freerdp.com" };
 	char* cmd13[] = {"xfreerdp", "-u", "test", "-p", "test", "test.freerdp.com"};
 	char* cmd14[] = {"xfreerdp", "-u", "test", "-p", "test", "-v", "test.freerdp.com"};
 	char* cmd15[] = {"xfreerdp", "/u:test", "/p:test", "/v:test.freerdp.com"};
@@ -48,60 +58,99 @@ int TestClientCmdLine(int argc, char* argv[])
 	char* cmd17[] = {"xfreerdp", "--invalid"};
 	char* cmd18[] = {"xfreerdp", "/kbd-list"};
 	char* cmd19[] = {"xfreerdp", "/monitor-list"};
+	char* cmd20[] = {"xfreerdp", "/sound", "/drive:media:"DRIVE_REDIRECT_PATH, "/v:test.freerdp.com" };
+	char* cmd21[] = {"xfreerdp", "/sound", "/drive:media,/foo/bar/blabla", "/v:test.freerdp.com" };
 
-	TESTCASE(cmd1, COMMAND_LINE_STATUS_PRINT_HELP);
+	if (!TESTCASE(cmd1, COMMAND_LINE_STATUS_PRINT_HELP))
+		goto fail;
 
-	TESTCASE(cmd2, COMMAND_LINE_STATUS_PRINT_HELP);
+	if (!TESTCASE(cmd2, COMMAND_LINE_STATUS_PRINT_HELP))
+		goto fail;
 
-	TESTCASE(cmd3, COMMAND_LINE_STATUS_PRINT_HELP);
+	if (!TESTCASE(cmd3, COMMAND_LINE_STATUS_PRINT_HELP))
+		goto fail;
 
-	TESTCASE(cmd4, COMMAND_LINE_STATUS_PRINT_VERSION);
+	if (!TESTCASE(cmd4, COMMAND_LINE_STATUS_PRINT_VERSION))
+		goto fail;
 
-	TESTCASE(cmd5, COMMAND_LINE_STATUS_PRINT_VERSION);
+	if (!TESTCASE(cmd5, COMMAND_LINE_STATUS_PRINT_VERSION))
+		goto fail;
 
-	TESTCASE(cmd6, COMMAND_LINE_STATUS_PRINT_VERSION);
+	if (!TESTCASE(cmd6, COMMAND_LINE_STATUS_PRINT_VERSION))
+		goto fail;
 
-	TESTCASE_SUCCESS(cmd7);
+	if (!TESTCASE_SUCCESS(cmd7))
+		goto fail;
 
-	TESTCASE_SUCCESS(cmd8);
+	if (!TESTCASE_SUCCESS(cmd8))
+		goto fail;
 
-	TESTCASE_SUCCESS(cmd9);
+	if (!TESTCASE_SUCCESS(cmd9))
+		goto fail;
 
-	TESTCASE_SUCCESS(cmd10);
+	if (!TESTCASE_SUCCESS(cmd10))
+		goto fail;
 
-	TESTCASE_SUCCESS(cmd11);
+	if (!TESTCASE_SUCCESS(cmd11))
+		goto fail;
 
-	TESTCASE_SUCCESS(cmd12);
+	if (!TESTCASE_SUCCESS(cmd12))
+		goto fail;
 
 	// password gets overwritten therefore it need to be writeable
-	cmd13[4] = calloc(5, sizeof(char));
-	strncpy(cmd13[4], "test", 4);
-	TESTCASE_SUCCESS(cmd13);
+	cmd13[4] = _strdup("test");
+	cmd14[4] = _strdup("test");
+	cmd15[2] = _strdup("/p:test");
+
+	if (!cmd13[4] || !cmd14[4] || !cmd15[2])
+		goto free_arg;
+
+	if (!TESTCASE_SUCCESS(cmd13))
+		goto free_arg;
+
+	if (memcmp(cmd13[4], "****", 4) != 0)
+		goto free_arg;
+
+	if (!TESTCASE_SUCCESS(cmd14))
+		goto free_arg;
+
+	if (memcmp(cmd14[4], "****", 4) != 0)
+		goto free_arg;
+
+	if (!TESTCASE_SUCCESS(cmd15))
+		goto free_arg;
+
+	if (memcmp(cmd15[2], "/p:****", 7) != 0)
+		goto free_arg;
+
+	if (!TESTCASE(cmd16, COMMAND_LINE_ERROR_NO_KEYWORD))
+		goto free_arg;
+
+	if (!TESTCASE(cmd17, COMMAND_LINE_ERROR_NO_KEYWORD))
+		goto free_arg;
+
+	if (!TESTCASE(cmd18, COMMAND_LINE_STATUS_PRINT))
+		goto free_arg;
+
+	if (!TESTCASE(cmd19, COMMAND_LINE_STATUS_PRINT))
+		goto free_arg;
+
+	if (!TESTCASE(cmd20, COMMAND_LINE_ERROR))
+		goto free_arg;
+
+	if (!TESTCASE(cmd21, COMMAND_LINE_ERROR))
+		goto free_arg;
+
+	rc = 0;
+free_arg:
 	free(cmd13[4]);
-
-	cmd14[4] = calloc(5, sizeof(char));
-	strncpy(cmd14[4], "test", 4);
-	TESTCASE_SUCCESS(cmd14);
 	free(cmd14[4]);
-
-	cmd15[2] = calloc(7, sizeof(char));
-	strncpy(cmd15[2], "/p:test", 6);
-	TESTCASE_SUCCESS(cmd15);
 	free(cmd15[2]);
-
-	TESTCASE(cmd16, COMMAND_LINE_ERROR_NO_KEYWORD);
-
-	TESTCASE(cmd17, COMMAND_LINE_ERROR_NO_KEYWORD);
-
-	TESTCASE(cmd18, COMMAND_LINE_STATUS_PRINT);
-
-	TESTCASE(cmd19, COMMAND_LINE_STATUS_PRINT);
-
 #if 0
 	char* cmd20[] = {"-z --plugin cliprdr --plugin rdpsnd --data alsa latency:100 -- --plugin rdpdr --data disk:w7share:/home/w7share -- --plugin drdynvc --data tsmf:decoder:gstreamer -- -u test host.example.com"};
 	TESTCASE(cmd20, COMMAND_LINE_STATUS_PRINT);
 #endif
-
-	return 0;
+fail:
+	return rc;
 }
 
