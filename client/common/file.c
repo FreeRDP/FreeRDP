@@ -50,7 +50,6 @@
 //#define DEBUG_CLIENT_FILE	1
 
 static BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
-static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
 
 #define INVALID_INTEGER_VALUE		0xFFFFFFFF
 
@@ -220,47 +219,7 @@ static int freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, 
 	return standard;
 }
 
-static BOOL freerdp_client_parse_rdp_file_integer_unicode(rdpFile* file, const WCHAR* name,
-        const WCHAR* value, int index)
-{
-	int length;
-	long ivalue;
-	char* nameA;
-	char* valueA;
-	BOOL ret = TRUE;
-	length = (int) _wcslen(name);
-	nameA = (char*) malloc(length + 1);
-
-	if (!nameA)
-		return FALSE;
-
-	WideCharToMultiByte(CP_UTF8, 0, name, length, nameA, length, NULL, NULL);
-	nameA[length] = '\0';
-	length = (int) _wcslen(value);
-	valueA = (char*) malloc(length + 1);
-
-	if (!valueA)
-	{
-		free(nameA);
-		return FALSE;
-	}
-
-	WideCharToMultiByte(CP_UTF8, 0, value, length, valueA, length, NULL, NULL);
-	valueA[length] = '\0';
-	errno = 0;
-	ivalue = strtol(valueA, NULL, 0);
-
-	if ((errno != 0) || (ivalue < INT32_MIN) || (ivalue > INT32_MAX))
-		ret = FALSE;
-	else if (freerdp_client_rdp_file_set_integer(file, nameA, ivalue, index) < 0)
-		ret = FALSE;
-
-	free(nameA);
-	free(valueA);
-	return ret;
-}
-
-static BOOL freerdp_client_parse_rdp_file_integer_ascii(rdpFile* file, const char* name,
+static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* name,
         const char* value, int index)
 {
 	long ivalue;
@@ -425,67 +384,7 @@ static int freerdp_client_parse_rdp_file_add_line(rdpFile* file, char* line, int
 	return index;
 }
 
-static BOOL freerdp_client_parse_rdp_file_add_line_unicode(rdpFile* file, const WCHAR* line,
-        int index)
-{
-	char* lineA = NULL;
-	BOOL ret = TRUE;
-	ConvertFromUnicode(CP_UTF8, 0, line, -1, &lineA, 0, NULL, NULL);
-
-	if (!lineA)
-		return FALSE;
-
-	if (freerdp_client_parse_rdp_file_add_line(file, lineA, index) == -1)
-		ret = FALSE;
-
-	free(lineA);
-	return ret;
-}
-
-static BOOL freerdp_client_parse_rdp_file_add_line_ascii(rdpFile* file, char* line, int index)
-{
-	if (freerdp_client_parse_rdp_file_add_line(file, line, index) == -1)
-		return FALSE;
-
-	return TRUE;
-}
-
-static BOOL freerdp_client_parse_rdp_file_string_unicode(rdpFile* file, const WCHAR* name,
-        const WCHAR* value, int index)
-{
-	int length;
-	char* nameA;
-	char* valueA;
-	BOOL ret = TRUE;
-	length = (int) _wcslen(name);
-	nameA = (char*) malloc(length + 1);
-
-	if (!nameA)
-		return FALSE;
-
-	WideCharToMultiByte(CP_UTF8, 0, name, length, nameA, length, NULL, NULL);
-	nameA[length] = '\0';
-	length = (int) _wcslen(value);
-	valueA = (char*) malloc(length + 1);
-
-	if (!valueA)
-	{
-		free(nameA);
-		return FALSE;
-	}
-
-	WideCharToMultiByte(CP_UTF8, 0, value, length, valueA, length, NULL, NULL);
-	valueA[length] = '\0';
-
-	if (freerdp_client_rdp_file_set_string(file, nameA, valueA, index) == -1)
-		ret = FALSE;
-
-	free(nameA);
-	free(valueA);
-	return ret;
-}
-
-static BOOL freerdp_client_parse_rdp_file_string_ascii(rdpFile* file, char* name, char* value,
+static BOOL freerdp_client_parse_rdp_file_string(rdpFile* file, char* name, char* value,
         int index)
 {
 	BOOL ret = TRUE;
@@ -501,27 +400,12 @@ static BOOL freerdp_client_parse_rdp_file_string_ascii(rdpFile* file, char* name
 	return ret;
 }
 
-static BOOL freerdp_client_parse_rdp_file_option_unicode(rdpFile* file, const WCHAR* option,
-        int index)
-{
-	char* optionA = NULL;
-	BOOL ret;
-	ConvertFromUnicode(CP_UTF8, 0, option, -1, &optionA, 0, NULL, NULL);
-
-	if (!optionA)
-		return FALSE;
-
-	ret = freerdp_client_add_option(file, optionA);
-	free(optionA);
-	return ret;
-}
-
-static BOOL freerdp_client_parse_rdp_file_option_ascii(rdpFile* file, char* option, int index)
+static BOOL freerdp_client_parse_rdp_file_option(rdpFile* file, char* option, int index)
 {
 	return freerdp_client_add_option(file, option);
 }
 
-static BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE* buffer,
+BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer,
         size_t size)
 {
 	BOOL rc = FALSE;
@@ -533,12 +417,25 @@ static BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE
 	char* d1, *d2;
 	char* beg;
 	char* name, *value;
-	char* copy = calloc(1, size + sizeof(BYTE));
+	char* copy = NULL;
 
-	if (!copy)
+	if (size < 2)
 		return FALSE;
 
-	memcpy(copy, buffer, size);
+	if ((buffer[0] == BOM_UTF16_LE[0]) && (buffer[1] == BOM_UTF16_LE[1]))
+	{
+		if (ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR)(&buffer[2]), -1, &copy, 0, NULL, NULL) < 0)
+			return FALSE;
+	}
+	else
+	{	
+		copy = calloc(1, size + sizeof(BYTE));
+		if (!copy)
+			return FALSE;
+
+		memcpy(copy, buffer, size);
+	}
+
 	index = 0;
 	line = strtok_s(copy, "\r\n", &context);
 
@@ -550,13 +447,13 @@ static BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE
 		{
 			beg = line;
 
-			if (!freerdp_client_parse_rdp_file_add_line_ascii(file, line, index))
-				return FALSE;
+			if (freerdp_client_parse_rdp_file_add_line(file, line, index) == -1)
+				goto fail;
 
 			if (beg[0] == '/')
 			{
-				if (!freerdp_client_parse_rdp_file_option_ascii(file, line, index))
-					return FALSE;
+				if (!freerdp_client_parse_rdp_file_option(file, line, index))
+					goto fail;
 
 				goto next_line; /* FreeRDP option */
 			}
@@ -583,13 +480,13 @@ static BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE
 			if (*type == 'i')
 			{
 				/* integer type */
-				if (!freerdp_client_parse_rdp_file_integer_ascii(file, name, value, index))
+				if (!freerdp_client_parse_rdp_file_integer(file, name, value, index))
 					goto fail;
 			}
 			else if (*type == 's')
 			{
 				/* string type */
-				if (!freerdp_client_parse_rdp_file_string_ascii(file, name, value, index))
+				if (!freerdp_client_parse_rdp_file_string(file, name, value, index))
 					goto fail;
 			}
 			else if (*type == 'b')
@@ -607,103 +504,6 @@ static BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE
 fail:
 	free(copy);
 	return rc;
-}
-
-static BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BYTE* buffer,
-        size_t size)
-{
-	BOOL rc = FALSE;
-	int index;
-	int length;
-	const WCHAR* line;
-	WCHAR* type;
-	WCHAR* context;
-	WCHAR* d1, *d2;
-	const WCHAR* name, *value;
-	WCHAR* copy = (WCHAR*)calloc(1, size + sizeof(WCHAR));
-
-	if (!copy)
-		return FALSE;
-
-	memcpy(copy, buffer, size);
-	index = 0;
-	line = wcstok_s(copy, CR_LF_STR_W, &context);
-
-	while (line != NULL)
-	{
-		length = (int) _wcslen(line);
-
-		if (length > 1)
-		{
-			const WCHAR* beg = line;
-
-			if (!freerdp_client_parse_rdp_file_add_line_unicode(file, line, index))
-				goto fail;
-
-			if (beg[0] == '/')
-			{
-				/* FreeRDP option */
-				freerdp_client_parse_rdp_file_option_unicode(file, line, index);
-				goto next_line;
-			}
-
-			d1 = _wcschr(line, ':');
-
-			if (!d1)
-				goto next_line; /* not first delimiter */
-
-			type = &d1[1];
-			d2 = _wcschr(type, ':');
-
-			if (!d2)
-				goto next_line; /* no second delimiter */
-
-			if ((d2 - d1) != 2)
-				goto next_line; /* improper type length */
-
-			*d1 = 0;
-			*d2 = 0;
-			name = beg;
-			value = &d2[1];
-
-			if (*type == 'i')
-			{
-				/* integer type */
-				if (!freerdp_client_parse_rdp_file_integer_unicode(file, name, value, index))
-					goto fail;
-			}
-			else if (*type == 's')
-			{
-				/* string type */
-				if (!freerdp_client_parse_rdp_file_string_unicode(file, name, value, index))
-					goto fail;
-			}
-			else if (*type == 'b')
-			{
-				/* binary type */
-			}
-		}
-
-	next_line:
-		line = wcstok_s(NULL, CR_LF_STR_W, &context);
-		index++;
-	}
-
-	rc = TRUE;
-fail:
-	free(copy);
-	return rc;
-}
-
-BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, size_t size)
-{
-	if (size < 2)
-		return FALSE;
-
-	if ((buffer[0] == BOM_UTF16_LE[0]) && (buffer[1] == BOM_UTF16_LE[1]))
-		return freerdp_client_parse_rdp_file_buffer_unicode(file, &buffer[2], size - 2);
-
-	return freerdp_client_parse_rdp_file_buffer_ascii(file, buffer, size);
 }
 
 BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)

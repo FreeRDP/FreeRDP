@@ -27,6 +27,7 @@
 #include <winpr/library.h>
 #include <winpr/wlog.h>
 #include <winpr/nt.h>
+#include <winpr/endian.h>
 
 #include "../log.h"
 #define TAG WINPR_TAG("nt")
@@ -187,7 +188,7 @@ NTSTATUS _RtlAnsiStringToUnicodeString(PUNICODE_STRING DestinationString,
 
 	for (index = 0; index < SourceString->MaximumLength; index++)
 	{
-		DestinationString->Buffer[index] = (WCHAR) SourceString->Buffer[index];
+		Data_Write_UINT16(&DestinationString->Buffer[index], SourceString->Buffer[index]);
 	}
 
 	DestinationString->Length = SourceString->Length * 2;
