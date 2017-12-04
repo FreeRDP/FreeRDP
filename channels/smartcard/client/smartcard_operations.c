@@ -2039,19 +2039,8 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 	/* Device Control Response */
 	Stream_Write_UINT32(irp->output, outputBufferLength); /* OutputBufferLength (4 bytes) */
 
-	if ((result = smartcard_pack_common_type_header(smartcard,
-	              irp->output))) /* CommonTypeHeader (8 bytes) */
-	{
-		WLog_ERR(TAG, "smartcard_pack_common_type_header failed with error %"PRId32"", result);
-		return result;
-	}
-
-	if ((result = smartcard_pack_private_type_header(smartcard, irp->output,
-	              objectBufferLength))) /* PrivateTypeHeader (8 bytes) */
-	{
-		WLog_ERR(TAG, "smartcard_pack_private_type_header failed with error %"PRId32"", result);
-		return result;
-	}
+	smartcard_pack_common_type_header(smartcard, irp->output); /* CommonTypeHeader (8 bytes) */
+	smartcard_pack_private_type_header(smartcard, irp->output, objectBufferLength); /* PrivateTypeHeader (8 bytes) */
 
 	Stream_Write_UINT32(irp->output, result); /* Result (4 bytes) */
 	Stream_SetPosition(irp->output, Stream_Length(irp->output));
