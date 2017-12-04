@@ -2022,13 +2022,12 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 		          SCardGetErrorString(result), result);
 	}
 
-	irp->IoStatus = 0;
+	irp->IoStatus = STATUS_SUCCESS;
 
 	if ((result & 0xC0000000) == 0xC0000000)
 	{
 		/* NTSTATUS error */
 		irp->IoStatus = (UINT32)result;
-		Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH);
 		WLog_WARN(TAG, "IRP failure: %s (0x%08"PRIX32"), ntstatus: 0x%08"PRIX32"",
 		          smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, result);
 	}
