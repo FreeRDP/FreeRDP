@@ -385,17 +385,17 @@ UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 		asyncIrp = TRUE;
 
-		/**
-		 * The following matches mstsc's behavior of processing
-		 * only certain requests asynchronously while processing
-		 * those expected to return fast synchronously.
-		 */
-
 		switch (operation->ioControlCode)
 		{
 			case SCARD_IOCTL_ESTABLISHCONTEXT:
 			case SCARD_IOCTL_RELEASECONTEXT:
 			case SCARD_IOCTL_ISVALIDCONTEXT:
+			case SCARD_IOCTL_CANCEL:
+			case SCARD_IOCTL_ACCESSSTARTEDEVENT:
+			case SCARD_IOCTL_RELEASESTARTEDEVENT:
+				asyncIrp = FALSE;
+				break;
+
 			case SCARD_IOCTL_LISTREADERGROUPSA:
 			case SCARD_IOCTL_LISTREADERGROUPSW:
 			case SCARD_IOCTL_LISTREADERSA:
@@ -416,21 +416,14 @@ UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			case SCARD_IOCTL_LOCATECARDSW:
 			case SCARD_IOCTL_LOCATECARDSBYATRA:
 			case SCARD_IOCTL_LOCATECARDSBYATRW:
-			case SCARD_IOCTL_CANCEL:
 			case SCARD_IOCTL_READCACHEA:
 			case SCARD_IOCTL_READCACHEW:
 			case SCARD_IOCTL_WRITECACHEA:
 			case SCARD_IOCTL_WRITECACHEW:
 			case SCARD_IOCTL_GETREADERICON:
 			case SCARD_IOCTL_GETDEVICETYPEID:
-				asyncIrp = FALSE;
-				break;
-
 			case SCARD_IOCTL_GETSTATUSCHANGEA:
 			case SCARD_IOCTL_GETSTATUSCHANGEW:
-				asyncIrp = TRUE;
-				break;
-
 			case SCARD_IOCTL_CONNECTA:
 			case SCARD_IOCTL_CONNECTW:
 			case SCARD_IOCTL_RECONNECT:
@@ -446,11 +439,6 @@ UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			case SCARD_IOCTL_SETATTRIB:
 			case SCARD_IOCTL_GETTRANSMITCOUNT:
 				asyncIrp = TRUE;
-				break;
-
-			case SCARD_IOCTL_ACCESSSTARTEDEVENT:
-			case SCARD_IOCTL_RELEASESTARTEDEVENT:
-				asyncIrp = FALSE;
 				break;
 		}
 
