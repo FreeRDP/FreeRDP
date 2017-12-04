@@ -587,22 +587,17 @@ static LONG smartcard_GetStatusChangeA_Call(SMARTCARD_DEVICE* smartcard,
 	LPSCARD_READERSTATEA rgReaderState = NULL;
 	IRP* irp = operation->irp;
 	GetStatusChangeA_Call* call = operation->call;
-	status = ret.ReturnCode = SCardGetStatusChangeA(operation->hContext,
-	                          call->dwTimeOut, call->rgReaderStates, call->cReaders);
-
-	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))
-	{
-		call->cReaders = 0;
-	}
+	ret.ReturnCode = SCardGetStatusChangeA(operation->hContext, call->dwTimeOut, call->rgReaderStates, call->cReaders);
 
 	ret.cReaders = call->cReaders;
 	ret.rgReaderStates = NULL;
 
-	if (ret.cReaders > 0)
-		ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
+	if (ret.cReaders > 0) {
+		ret.rgReaderStates = (ReaderState_Return *) calloc(ret.cReaders, sizeof(ReaderState_Return));
 
-	if (!ret.rgReaderStates)
-		return STATUS_NO_MEMORY;
+		if (!ret.rgReaderStates)
+			return STATUS_NO_MEMORY;
+	}
 
 	for (index = 0; index < ret.cReaders; index++)
 	{
@@ -613,12 +608,7 @@ static LONG smartcard_GetStatusChangeA_Call(SMARTCARD_DEVICE* smartcard,
 	}
 
 	smartcard_trace_get_status_change_return(smartcard, &ret, FALSE);
-
-	if ((status = smartcard_pack_get_status_change_return(smartcard, irp->output, &ret)))
-	{
-		WLog_ERR(TAG, "smartcard_pack_get_status_change_return failed with error %"PRId32"", status);
-		return status;
-	}
+	smartcard_pack_get_status_change_return(smartcard, irp->output, &ret);
 
 	if (call->rgReaderStates)
 	{
@@ -657,28 +647,23 @@ static LONG smartcard_GetStatusChangeW_Decode(SMARTCARD_DEVICE* smartcard,
 static LONG smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard,
         SMARTCARD_OPERATION* operation)
 {
-	LONG status;
 	UINT32 index;
 	GetStatusChange_Return ret;
 	LPSCARD_READERSTATEW rgReaderState = NULL;
 	IRP* irp = operation->irp;
 	GetStatusChangeW_Call* call = operation->call;
-	status = ret.ReturnCode = SCardGetStatusChangeW(operation->hContext, call->dwTimeOut,
+	ret.ReturnCode = SCardGetStatusChangeW(operation->hContext, call->dwTimeOut,
 	                          call->rgReaderStates, call->cReaders);
-
-	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))
-	{
-		call->cReaders = 0;
-	}
 
 	ret.cReaders = call->cReaders;
 	ret.rgReaderStates = NULL;
 
-	if (ret.cReaders > 0)
-		ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
+	if (ret.cReaders > 0) {
+		ret.rgReaderStates = (ReaderState_Return *) calloc(ret.cReaders, sizeof(ReaderState_Return));
 
-	if (!ret.rgReaderStates)
-		return STATUS_NO_MEMORY;
+		if (!ret.rgReaderStates)
+			return STATUS_NO_MEMORY;
+	}
 
 	for (index = 0; index < ret.cReaders; index++)
 	{
@@ -689,12 +674,7 @@ static LONG smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard,
 	}
 
 	smartcard_trace_get_status_change_return(smartcard, &ret, TRUE);
-
-	if ((status = smartcard_pack_get_status_change_return(smartcard, irp->output, &ret)))
-	{
-		WLog_ERR(TAG, "smartcard_pack_get_status_change_return failed with error %"PRId32"", status);
-		return status;
-	}
+	smartcard_pack_get_status_change_return(smartcard, irp->output, &ret);
 
 	if (call->rgReaderStates)
 	{
