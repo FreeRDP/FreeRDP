@@ -41,7 +41,7 @@
 
 #define TAG CLIENT_TAG("common.compatibility")
 
-COMMAND_LINE_ARGUMENT_A old_args[] =
+static COMMAND_LINE_ARGUMENT_A old_args[] =
 {
 	{ "0", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "connect to console session" },
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "set color depth in bits, default is 16" },
@@ -93,7 +93,7 @@ COMMAND_LINE_ARGUMENT_A old_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-BOOL freerdp_client_old_parse_hostname(char* str, char** ServerHostname, UINT32* ServerPort)
+static BOOL freerdp_client_old_parse_hostname(char* str, char** ServerHostname, UINT32* ServerPort)
 {
 	char* p;
 	char* host = NULL;
@@ -152,7 +152,7 @@ BOOL freerdp_client_old_parse_hostname(char* str, char** ServerHostname, UINT32*
 	return TRUE;
 }
 
-int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* args)
+static int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* args)
 {
 	int args_handled = 0;
 
@@ -231,7 +231,8 @@ int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* args)
 
 	return args_handled;
 }
-int freerdp_client_old_command_line_pre_filter(void* context, int index, int argc, LPCSTR* argv)
+static int freerdp_client_old_command_line_pre_filter(void* context, int index, int argc,
+        LPCSTR* argv)
 {
 	rdpSettings* settings = (rdpSettings*) context;
 
@@ -399,7 +400,7 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 
 	return 0;
 }
-int freerdp_client_old_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
+static int freerdp_client_old_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
 	return 0;
 }
@@ -521,7 +522,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 			unsigned long val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > INT8_MAX))
-				return FALSE;
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			settings->ColorDepth = val;
 			WLog_WARN(TAG,  "-a %s -> /bpp:%s", arg->Value, arg->Value);
@@ -571,7 +572,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 				if ((errno != 0) || (w == 0) || (w > UINT16_MAX))
 				{
 					free(str);
-					return FALSE;
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
 
 				h = strtoul(&p[1], NULL, 0);
@@ -579,7 +580,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 				if ((errno != 0) || (h == 0) || (h > UINT16_MAX))
 				{
 					free(str);
-					return FALSE;
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
 
 				*p = '\0';
@@ -862,5 +863,5 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		WLog_WARN(TAG,  " /port:%"PRIu32"", settings->ServerPort);
 
 	WLog_WARN(TAG,  "");
-	return 1;
+	return 0;
 }
