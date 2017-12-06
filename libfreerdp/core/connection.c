@@ -385,22 +385,6 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	if (settings->RedirectionFlags & LB_PASSWORD)
-	{
-		char *password = NULL;
-
-		/* If unicode conversion fails, this might be because the Password field
-		 * might contain a non-unicode cookie value. Simply ignore in this case. */
-		if (ConvertFromUnicode(CP_UTF8, 0,
-			 (WCHAR*) settings->RedirectionPassword, settings->RedirectionPasswordLength,
-			 &password, 0,
-			 NULL, NULL) > 0)
-		{
-			free(settings->Password);
-			settings->Password = password;
-		}
-	}
-
 	status = rdp_client_connect(rdp);
 
 	return status;
