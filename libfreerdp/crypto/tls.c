@@ -735,6 +735,15 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		pollfds.events = POLLIN;
 		pollfds.revents = 0;
 
+		/*
+		 * This is a hotfix for #3602.
+		 * The condition fd == 0 should actually never hold
+		 */
+		if (fd == STDIN_FILENO)
+		{
+			continue;
+		}
+
 		do
 		{
 			status = poll(&pollfds, 1, 10 * 1000);
