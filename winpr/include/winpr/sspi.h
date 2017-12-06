@@ -1134,6 +1134,9 @@ WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
 
 WINPR_API int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user,
                                    const char* domain, const char* password);
+WINPR_API int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity,
+                                                      const char *user, const char *domain,
+                                                      LPWSTR password, ULONG passwordLength);
 WINPR_API int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
                                     SEC_WINNT_AUTH_IDENTITY* srcIdentity);
 

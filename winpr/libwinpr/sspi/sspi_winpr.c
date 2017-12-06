@@ -347,6 +347,21 @@ void sspi_SecureHandleFree(SecHandle* handle)
 int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, const char* domain,
                          const char* password)
 {
+	int unicodePasswordLenW;
+	LPWSTR unicodePassword = NULL;
+
+	unicodePasswordLenW = ConvertToUnicode(CP_UTF8, 0, password, -1, &unicodePassword, 0);
+
+	if (unicodePasswordLenW <= 0)
+		return -1;
+
+	return sspi_SetAuthIdentityWithUnicodePassword(identity, user, domain, unicodePassword,
+	                                               (ULONG)(unicodePasswordLenW - 1));
+}
+
+int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, const char *user,
+                                            const char *domain, LPWSTR password, ULONG passwordLength)
+{
 	int status;
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 	free(identity->User);
@@ -378,18 +393,12 @@ int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, co
 	}
 
 	free(identity->Password);
-	identity->Password = NULL;
-	identity->PasswordLength = 0;
+	identity->Password = (UINT16*) calloc(1, (passwordLength + 1) * sizeof(WCHAR));
+	if (!identity->Password)
+		return -1;
 
-	if (password)
-	{
-		status = ConvertToUnicode(CP_UTF8, 0, password, -1, (LPWSTR*) & (identity->Password), 0);
-
-		if (status <= 0)
-			return -1;
-
-		identity->PasswordLength = (ULONG)(status - 1);
-	}
+	CopyMemory(identity->Password, password, passwordLength * sizeof(WCHAR));
+	identity->PasswordLength = passwordLength;
 
 	return 1;
 }
