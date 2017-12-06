@@ -101,6 +101,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "direct|detect", NULL, NULL, -1, "gum", "Gateway usage method" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
 	{ "gdi", COMMAND_LINE_VALUE_REQUIRED, "sw|hw", NULL, NULL, -1, NULL, "GDI rendering" },
+	{ "geometry", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Geometry tracking channel" },
 	{ "gestures", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Consume multitouch input locally" },
 #ifdef WITH_GFX_H264
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "RFX|AVC420|AVC444", NULL, NULL, -1, NULL, "RDP8 graphics pipeline (experimental)" },
@@ -930,6 +931,10 @@ static int freerdp_client_command_line_post_filter(void* context,
 	CommandLineSwitchCase(arg, "disp")
 	{
 		settings->SupportDisplayControl = TRUE;
+	}
+	CommandLineSwitchCase(arg, "geometry")
+	{
+		settings->SupportGeometryTracking = TRUE;
 	}
 	CommandLineSwitchCase(arg, "sound")
 	{
@@ -3146,6 +3151,17 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		int count;
 		count = 1;
 		p[0] = "disp";
+
+		if (!freerdp_client_add_dynamic_channel(settings, count, p))
+			return FALSE;
+	}
+
+	if (settings->SupportGeometryTracking)
+	{
+		char* p[1];
+		int count;
+		count = 1;
+		p[0] = "geometry";
 
 		if (!freerdp_client_add_dynamic_channel(settings, count, p))
 			return FALSE;
