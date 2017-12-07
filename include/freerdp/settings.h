@@ -1428,7 +1428,8 @@ struct rdp_settings
 	ALIGN64 BOOL SupportDisplayControl; /* 5185 */
 	ALIGN64 BOOL SupportGeometryTracking; /* 5186 */
 	ALIGN64 BOOL SupportSSHAgentChannel; /* 5187 */
-	UINT64 padding5312[5312 - 5188]; /* 5188 */
+	ALIGN64 BOOL SupportVideoOptimized; /* 5188 */
+	UINT64 padding5312[5312 - 5189]; /* 5189 */
 
 	/**
 	 * WARNING: End of ABI stable zone!
