@@ -3870,12 +3870,11 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	/* capabilitySets */
 	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
 	{
-		WLog_ERR(TAG,  "rdp_read_capability_sets failed");
+		WLog_ERR(TAG, "rdp_read_capability_sets failed");
 		return FALSE;
 	}
 
-	rdp->update->secondary->glyph_v2 = (rdp->settings->GlyphSupportLevel >
-	                                    GLYPH_SUPPORT_FULL) ? TRUE : FALSE;
+	rdp->update->secondary->glyph_v2 = (rdp->settings->GlyphSupportLevel > GLYPH_SUPPORT_FULL);
 	return TRUE;
 }
 
