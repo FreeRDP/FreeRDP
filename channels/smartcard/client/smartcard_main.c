@@ -680,7 +680,6 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	size_t length;
 	RDPDR_SMARTCARD* device;
 	SMARTCARD_DEVICE* smartcard;
-	LONG status;
 	UINT error = CHANNEL_RC_NO_MEMORY;
 	device = (RDPDR_SMARTCARD*) pEntryPoints->device;
 	smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));

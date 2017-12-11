@@ -581,7 +581,6 @@ static LONG smartcard_GetStatusChangeA_Decode(SMARTCARD_DEVICE* smartcard,
 static LONG smartcard_GetStatusChangeA_Call(SMARTCARD_DEVICE* smartcard,
         SMARTCARD_OPERATION* operation)
 {
-	LONG status;
 	UINT32 index;
 	GetStatusChange_Return ret;
 	LPSCARD_READERSTATEA rgReaderState = NULL;

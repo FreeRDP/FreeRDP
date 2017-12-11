@@ -309,8 +309,6 @@ out_print_name_error:
 
 		return (RDPDR_DEVICE*) _smartcard;
 
-out_smartc_path_error:
-		free(_smartcard->Name);
 out_smartc_name_error:
 		free(_smartcard);
 		return NULL;
