@@ -233,7 +233,7 @@ wStream* license_send_stream_init(rdpLicense* license)
 
 BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 {
-	int length;
+	size_t length;
 	BYTE flags;
 	UINT16 wMsgSize;
 	rdpRdp* rdp = license->rdp;

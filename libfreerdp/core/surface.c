@@ -30,7 +30,7 @@
 
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT32* length)
 {
-	int pos;
+	size_t pos;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 
 	if (Stream_GetRemainingLength(s) < 20)

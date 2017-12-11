@@ -628,7 +628,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	int size;
 	int count;
 	int status;
-	int position;
+	size_t position;
 	char* line;
 	char* buffer;
 	char* header = NULL;

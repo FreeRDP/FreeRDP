@@ -42,7 +42,7 @@
 UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
 	UINT32 index;
-	UINT32 position;
+	size_t position;
 	BOOL asciiNames;
 	int formatNameLength;
 	char* szFormatName;

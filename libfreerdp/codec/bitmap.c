@@ -470,7 +470,7 @@ int freerdp_bitmap_compress(const char* srcData, int width, int height,
 	int bicolor2;
 	int bicolor_spin;
 	int end;
-	int i;
+	size_t i;
 	int out_count;
 	int ypixel;
 	int last_ypixel;

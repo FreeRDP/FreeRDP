@@ -756,7 +756,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 {
 	BOOL rc;
 	int i, close_cnt;
-	int pos;
+	size_t pos;
 	BYTE quant;
 	RFX_TILE* tile;
 	UINT32* quants;
@@ -999,7 +999,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
                          UINT32 dstStride, UINT32 dstHeight,
                          REGION16* invalidRegion)
 {
-	int pos;
+	size_t pos;
 	REGION16 updateRegion;
 	UINT32 blockLen;
 	UINT32 blockType;

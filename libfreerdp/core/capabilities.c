@@ -141,7 +141,8 @@ static void rdp_write_capability_set_header(wStream* s, UINT16 length,
 
 static int rdp_capability_set_start(wStream* s)
 {
-	int header;
+	size_t header;
+
 	header = Stream_GetPosition(s);
 	Stream_Zero(s, CAPSET_HEADER_LENGTH);
 	return header;
@@ -149,8 +150,9 @@ static int rdp_capability_set_start(wStream* s)
 
 static void rdp_capability_set_finish(wStream* s, int header, UINT16 type)
 {
-	int footer;
+	size_t footer;
 	UINT16 length;
+
 	footer = Stream_GetPosition(s);
 	length = footer - header;
 	Stream_SetPosition(s, header);
@@ -3880,7 +3882,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 {
-	int bm, em, lm;
+	size_t bm, em, lm;
 	UINT16 numberCapabilities;
 	UINT16 lengthCombinedCapabilities;
 
@@ -4034,7 +4036,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 {
-	int bm, em, lm;
+	size_t bm, em, lm;
 	UINT16 numberCapabilities;
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;

@@ -1138,7 +1138,7 @@ static UINT rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callb
  */
 static UINT rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	int beg, end;
+	size_t beg, end;
 	RDPGFX_HEADER header;
 	UINT error;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;

@@ -192,7 +192,7 @@ void ntlm_print_message_fields(NTLM_MESSAGE_FIELDS* fields, const char* name)
 SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	wStream* s;
-	int length;
+	size_t length;
 	NTLM_NEGOTIATE_MESSAGE* message;
 	message = &context->NEGOTIATE_MESSAGE;
 	ZeroMemory(message, sizeof(NTLM_NEGOTIATE_MESSAGE));
@@ -261,7 +261,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	wStream* s;
-	int length;
+	size_t length;
 	NTLM_NEGOTIATE_MESSAGE* message;
 	message = &context->NEGOTIATE_MESSAGE;
 	ZeroMemory(message, sizeof(NTLM_NEGOTIATE_MESSAGE));
@@ -503,7 +503,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	wStream* s;
-	int length;
+	size_t length;
 	UINT32 PayloadOffset;
 	NTLM_CHALLENGE_MESSAGE* message;
 	message = &context->CHALLENGE_MESSAGE;
@@ -593,7 +593,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	wStream* s;
-	int length;
+	size_t length;
 	UINT32 flags;
 	NTLM_AV_PAIR* AvFlags;
 	UINT32 PayloadBufferOffset;
@@ -784,7 +784,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	wStream* s;
-	int length;
+	size_t length;
 	UINT32 PayloadBufferOffset;
 	NTLM_AUTHENTICATE_MESSAGE* message;
 	SSPI_CREDENTIALS* credentials = context->credentials;

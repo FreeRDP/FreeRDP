@@ -89,7 +89,7 @@ static wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags,
  */
 static UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 {
-	UINT32 pos;
+	size_t pos;
 	UINT32 dataLen;
 	UINT status = CHANNEL_RC_OK;
 	pos = Stream_GetPosition(s);

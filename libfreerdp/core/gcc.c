@@ -333,7 +333,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
 {
 	UINT16 type;
 	UINT16 blockLength;
-	int begPos, endPos;
+	size_t begPos, endPos;
 
 	while (length > 0)
 	{
