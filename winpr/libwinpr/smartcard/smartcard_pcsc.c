@@ -156,7 +156,6 @@ static wArrayList* g_Readers = NULL;
 static wListDictionary* g_CardHandles = NULL;
 static wListDictionary* g_CardContexts = NULL;
 static wListDictionary* g_MemoryBlocks = NULL;
-static wListDictionary* g_ReadersNames = NULL;
 
 char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
 
@@ -754,38 +753,6 @@ char* PCSC_GetReaderAliasFromName(char* namePCSC)
 	return nameWinSCard;
 }
 
-int PCSC_RedirectReader(char* readerName)
-{
-	char* name;
-	ULONG_PTR* readers;
-	int i, nbReaders;
-	nbReaders = ListDictionary_GetKeys(g_ReadersNames, &readers);
-
-	for (i = 0; i < nbReaders; i++)
-	{
-		name = ListDictionary_GetItemValue(g_ReadersNames, (void*) readers[i]);
-
-		if (name)
-		{
-			if (strcmp(name, "") == 0)
-			{
-				return 1;
-			}
-
-			if (strncmp(readerName, name, strlen(readerName)) == 0)
-			{
-				return 1;
-			}
-		}
-		else
-		{
-			return 2;
-		}
-	}
-
-	return 0;
-}
-
 char* PCSC_ConvertReaderNamesToWinSCard(const char* names, LPDWORD pcchReaders)
 {
 	int ret = 0;
@@ -813,18 +780,8 @@ char* PCSC_ConvertReaderNamesToWinSCard(const char* names, LPDWORD pcchReaders)
 		if (nameWinSCard)
 		{
 			length = strlen(nameWinSCard);
-			ret = PCSC_RedirectReader(nameWinSCard);
-
-			if (ret == 1)
-			{
-				CopyMemory(q, nameWinSCard, length);
-				endReaderName = TRUE;
-			}
-			else if (ret == 2)
-			{
-				CopyMemory(q, nameWinSCard, length);
-				allReaders = TRUE;
-			}
+			CopyMemory(q, nameWinSCard, length);
+			allReaders = TRUE;
 
 			free(nameWinSCard);
 		}
@@ -2808,27 +2765,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent)
 	return 0;
 }
 
-WINSCARDAPI LONG WINAPI PCSC_SCardAddReaderName(HANDLE* key, LPSTR readerName)
-{
-	LONG status = SCARD_S_SUCCESS;
-	int count = 0;
-
-	if (!g_ReadersNames)
-	{
-		g_ReadersNames = ListDictionary_New(TRUE);
-
-		if (!g_ReadersNames)
-			return SCARD_E_NO_SERVICE;
-	}
-
-	count = ListDictionary_Count(g_ReadersNames);
-
-	if (!ListDictionary_Add(g_ReadersNames, key, readerName))
-		return SCARD_E_NO_SERVICE;
-
-	return status;
-}
-
 #ifdef __MACOSX__
 unsigned int determineMacOSXVersion(void)
 {
@@ -3038,8 +2974,7 @@ SCardApiFunctionTable PCSC_SCardApiFunctionTable =
 	PCSC_SCardGetReaderDeviceInstanceIdW, /* SCardGetReaderDeviceInstanceIdW */
 	PCSC_SCardListReadersWithDeviceInstanceIdA, /* SCardListReadersWithDeviceInstanceIdA */
 	PCSC_SCardListReadersWithDeviceInstanceIdW, /* SCardListReadersWithDeviceInstanceIdW */
-	PCSC_SCardAudit, /* SCardAudit */
-	PCSC_SCardAddReaderName /* SCardAddReaderName */
+	PCSC_SCardAudit /* SCardAudit */
 };
 
 PSCardApiFunctionTable PCSC_GetSCardApiFunctionTable(void)

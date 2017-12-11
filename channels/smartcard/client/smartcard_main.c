@@ -708,14 +708,6 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	Stream_Write(smartcard->device.data, "SCARD", 6);
 
-	status = SCardAddReaderName(&smartcard->thread, (LPSTR) device->Name);
-
-	if (status != SCARD_S_SUCCESS)
-	{
-		WLog_ERR(TAG, "Failed to add reader name!");
-		goto error_device_data;
-	}
-
 	smartcard->IrpQueue = MessageQueue_New(NULL);
 
 	if (!smartcard->IrpQueue)
