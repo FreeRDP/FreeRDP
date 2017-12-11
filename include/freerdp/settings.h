@@ -446,7 +446,6 @@ struct _RDPDR_SMARTCARD
 	UINT32 Id;
 	UINT32 Type;
 	char* Name;
-	char* Path;
 };
 typedef struct _RDPDR_SMARTCARD RDPDR_SMARTCARD;
 

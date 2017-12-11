@@ -677,17 +677,12 @@ static UINT smartcard_irp_request(DEVICE* device, IRP* irp)
  */
 UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
-	char* name;
-	char* path;
 	size_t length;
-	int ck;
 	RDPDR_SMARTCARD* device;
 	SMARTCARD_DEVICE* smartcard;
 	LONG status;
 	UINT error = CHANNEL_RC_NO_MEMORY;
 	device = (RDPDR_SMARTCARD*) pEntryPoints->device;
-	name = device->Name;
-	path = device->Path;
 	smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));
 
 	if (!smartcard)
@@ -712,23 +707,8 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
 
 	Stream_Write(smartcard->device.data, "SCARD", 6);
-	smartcard->name = NULL;
-	smartcard->path = NULL;
 
-	if (path)
-	{
-		smartcard->path = path;
-		smartcard->name = name;
-	}
-	else if (name)
-	{
-		if (1 == sscanf(name, "%d", &ck))
-			smartcard->path = name;
-		else
-			smartcard->name = name;
-	}
-
-	status = SCardAddReaderName(&smartcard->thread, (LPSTR) name);
+	status = SCardAddReaderName(&smartcard->thread, (LPSTR) device->Name);
 
 	if (status != SCARD_S_SUCCESS)
 	{

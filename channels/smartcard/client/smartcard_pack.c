@@ -850,7 +850,7 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 		CopyMemory(mszA, ret->msz, ret->cBytes);
 	}
 
-	for (index = 0; index < length - 2; index++)
+	for (index = 0; index < length - 1; index++)
 	{
 		if (mszA[index] == '\0')
 			mszA[index] = ',';
