@@ -1623,37 +1623,11 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		rgReaderStates[i].dwCurrentState = states[j].dwCurrentState;
 		rgReaderStates[i].cbAtr = states[j].cbAtr;
 		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
-		dwEventState = states[j].dwEventState & ~SCARD_STATE_CHANGED;
-
-		if (dwEventState != rgReaderStates[i].dwCurrentState)
-		{
-			rgReaderStates[i].dwEventState = states[j].dwEventState;
-
-			if (dwEventState & SCARD_STATE_PRESENT)
-			{
-				if (!(dwEventState & SCARD_STATE_EXCLUSIVE))
-					rgReaderStates[i].dwEventState |= SCARD_STATE_INUSE;
-			}
-
-			stateChanged = TRUE;
-		}
-		else
-		{
-			rgReaderStates[i].dwEventState = dwEventState;
-		}
-
-		if (rgReaderStates[i].dwCurrentState & SCARD_STATE_IGNORE)
-			rgReaderStates[i].dwEventState = SCARD_STATE_IGNORE;
+        rgReaderStates[i].dwEventState = states[j].dwEventState;
 	}
 
 	free(map);
 	free(states);
-
-	if ((status == SCARD_S_SUCCESS) && !stateChanged)
-		status = SCARD_E_TIMEOUT;
-	else if ((status == SCARD_E_TIMEOUT) && stateChanged)
-		return SCARD_S_SUCCESS;
-
 	return status;
 }
 
