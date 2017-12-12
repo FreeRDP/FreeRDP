@@ -160,14 +160,9 @@ static int test_gdi_ClipCoords(void)
 	rc = 0;
 fail:
 
-	if (rgn1)
-		gdi_DeleteObject((HGDIOBJECT)rgn1);
-
-	if (rgn2)
-		gdi_DeleteObject((HGDIOBJECT)rgn2);
-
-	if (bmp)
-		gdi_DeleteObject((HGDIOBJECT)bmp);
+	gdi_DeleteObject((HGDIOBJECT)rgn1);
+	gdi_DeleteObject((HGDIOBJECT)rgn2);
+	gdi_DeleteObject((HGDIOBJECT)bmp);
 
 	gdi_DeleteDC(hdc);
 	return rc;
@@ -332,14 +327,9 @@ static int test_gdi_InvalidateRegion(void)
 	rc = 0;
 fail:
 
-	if (rgn1)
-		gdi_DeleteObject((HGDIOBJECT)rgn1);
-
-	if (rgn2)
-		gdi_DeleteObject((HGDIOBJECT)rgn2);
-
-	if (bmp)
-		gdi_DeleteObject((HGDIOBJECT)bmp);
+	gdi_DeleteObject((HGDIOBJECT)rgn1);
+	gdi_DeleteObject((HGDIOBJECT)rgn2);
+	gdi_DeleteObject((HGDIOBJECT)bmp);
 
 	gdi_DeleteDC(hdc);
 	return 0;

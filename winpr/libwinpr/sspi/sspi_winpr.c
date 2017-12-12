@@ -184,12 +184,12 @@ static int sspi_ContextBufferAllocTableGrow(void)
 
 static void sspi_ContextBufferAllocTableFree(void)
 {
-	if (ContextBufferAllocTable.cEntries == 0)
-	{
-		ContextBufferAllocTable.cEntries = ContextBufferAllocTable.cMaxEntries = 0;
-		free(ContextBufferAllocTable.entries);
-		ContextBufferAllocTable.entries = NULL;
-	}
+	if (ContextBufferAllocTable.cEntries != 0)
+		WLog_ERR(TAG, "ContextBufferAllocTable.entries == %"PRIu32, ContextBufferAllocTable.cEntries);
+
+	ContextBufferAllocTable.cEntries = ContextBufferAllocTable.cMaxEntries = 0;
+	free(ContextBufferAllocTable.entries);
+	ContextBufferAllocTable.entries = NULL;
 }
 
 static void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
