@@ -2969,7 +2969,7 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* planar, const BYTE* srcBitmap,
 	                         srcBitmap, srcFormat, width, height, 0, NULL, &dstSize);
 	BYTE* decompressedBitmap = (BYTE*) calloc(height, width * GetBytesPerPixel(dstFormat));
 	printf("%s [%s] --> [%s]: ", __FUNCTION__,
-	       GetColorFormatName(srcFormat), GetColorFormatName(dstFormat));
+	       FreeRDPGetColorFormatName(srcFormat), FreeRDPGetColorFormatName(dstFormat));
 	fflush(stdout);
 	printf("TODO: Skipping unfinished test!");
 	rc = TRUE;
@@ -3009,8 +3009,8 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar,
 {
 	UINT32 i, j, x, y;
 	BOOL rc = FALSE;
-	printf("%s: [%s] --> [%s]: ", __FUNCTION__, GetColorFormatName(srcFormat),
-	       GetColorFormatName(dstFormat));
+	printf("%s: [%s] --> [%s]: ", __FUNCTION__, FreeRDPGetColorFormatName(srcFormat),
+	       FreeRDPGetColorFormatName(dstFormat));
 	fflush(stdout);
 
 	for (j = 0; j < 100; j += 8)
@@ -3019,7 +3019,7 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar,
 		{
 			UINT32 compressedSize;
 			const UINT32 fill = j;
-			const UINT32 color = GetColor(srcFormat, (fill >> 8) & 0xF, (fill >> 4) & 0xF,
+			const UINT32 color = FreeRDPGetColor(srcFormat, (fill >> 8) & 0xF, (fill >> 4) & 0xF,
 			                              (fill) & 0xF, 0xFF);
 			const UINT32 width = i;
 			const UINT32 height = i;

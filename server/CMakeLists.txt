@@ -27,7 +27,7 @@ if(FREERDP_VENDOR)
 
 	if(NOT WIN32)
 		if(APPLE AND (NOT IOS))
-			#add_subdirectory(Mac)
+			add_subdirectory(Mac)
 		endif()
 	else()
 		#add_subdirectory(Windows)

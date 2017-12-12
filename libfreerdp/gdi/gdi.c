@@ -356,7 +356,7 @@ INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor,
 	if (format)
 		*format = gdi->dstFormat;
 
-	*color = ConvertColor(srcColor, SrcFormat, gdi->dstFormat, &gdi->palette);
+	*color = FreeRDPConvertColor(srcColor, SrcFormat, gdi->dstFormat, &gdi->palette);
 	return TRUE;
 }
 
@@ -509,7 +509,7 @@ static BOOL gdi_palette_update(rdpContext* context,
 	{
 		const PALETTE_ENTRY* pe = &(palette->entries[index]);
 		gdi->palette.palette[index] =
-		    GetColor(gdi->dstFormat, pe->red, pe->green, pe->blue, 0xFF);
+		    FreeRDPGetColor(gdi->dstFormat, pe->red, pe->green, pe->blue, 0xFF);
 	}
 
 	return TRUE;
@@ -1247,9 +1247,9 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	gdi->dstFormat = format;
 	/* default internal buffer format */
 	WLog_Print(gdi->log, WLOG_INFO, "Local framebuffer format  %s",
-	           GetColorFormatName(gdi->dstFormat));
+	           FreeRDPGetColorFormatName(gdi->dstFormat));
 	WLog_Print(gdi->log, WLOG_INFO, "Remote framebuffer format %s",
-	           GetColorFormatName(SrcFormat));
+	           FreeRDPGetColorFormatName(SrcFormat));
 
 	if (!(gdi->hdc = gdi_GetDC()))
 		goto fail;

@@ -456,7 +456,7 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 	{
 		pstatus_t rc;
 		const UINT32 DstFormat = formats[x];
-		printf("Testing destination color format %s\n", GetColorFormatName(DstFormat));
+		printf("Testing destination color format %s\n", FreeRDPGetColorFormatName(DstFormat));
 		PROFILER_CREATE(rgbToYUV420, "RGBToYUV420");
 		PROFILER_CREATE(rgbToYUV444, "RGBToYUV444");
 		PROFILER_CREATE(yuv420ToRGB, "YUV420ToRGB");

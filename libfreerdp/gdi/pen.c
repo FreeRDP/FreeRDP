@@ -58,5 +58,5 @@ HGDI_PEN gdi_CreatePen(UINT32 fnPenStyle, UINT32 nWidth, UINT32 crColor,
 
 INLINE UINT32 gdi_GetPenColor(HGDI_PEN pen, UINT32 format)
 {
-	return ConvertColor(pen->color, pen->format, format, pen->palette);
+	return FreeRDPConvertColor(pen->color, pen->format, format, pen->palette);
 }

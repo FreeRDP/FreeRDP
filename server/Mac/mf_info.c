@@ -28,6 +28,9 @@
 #include "mf_info.h"
 #include "mf_mountain_lion.h"
 
+#define MF_INFO_DEFAULT_FPS 30
+#define MF_INFO_MAXPEERS    32
+
 static mfInfo* mfInfoInstance = NULL;
 
 int mf_info_lock(mfInfo* mfi)
@@ -142,7 +145,7 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 			mf_mlion_start_getting_screen_updates();
 		}
 		
-		peerId = NULL;
+		peerId = 0;
 
 		for(i=0; i<MF_INFO_MAXPEERS; ++i)
 		{

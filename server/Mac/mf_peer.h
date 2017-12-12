@@ -22,23 +22,6 @@
 
 #include "mf_interface.h"
 
-BOOL mf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount);
-BOOL mf_peer_check_fds(freerdp_peer* client);
-
-void mf_peer_rfx_update(freerdp_peer* client);
-
-BOOL mf_peer_context_new(freerdp_peer* client, mfPeerContext* context);
-void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context);
-
-BOOL mf_peer_init(freerdp_peer* client);
-
-BOOL mf_peer_post_connect(freerdp_peer* client);
-BOOL mf_peer_activate(freerdp_peer* client);
-
-void mf_peer_synchronize_event(rdpInput* input, UINT32 flags);
-
 BOOL mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
-
-void* mf_peer_main_loop(void* arg);
 
 #endif /* FREERDP_SERVER_MAC_PEER_H */

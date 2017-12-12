@@ -118,7 +118,7 @@ static INLINE DWORD AreColorFormatsEqualNoAlpha(DWORD first, DWORD second)
  *
  * @return A string representation of format
  */
-static const char* GetColorFormatName(UINT32 format)
+static const char* FreeRDPGetColorFormatName(UINT32 format)
 {
 	switch (format)
 	{
@@ -509,7 +509,7 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0x00;
 
-			WLog_ERR(CTAG, "Unsupported format %s", GetColorFormatName(format));
+			WLog_ERR(CTAG, "Unsupported format %s", FreeRDPGetColorFormatName(format));
 			break;
 	}
 }
@@ -527,7 +527,7 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
  * @return       The pixel color in the desired format. Value is in internal
  *               representation.
  */
-static INLINE UINT32 GetColor(UINT32 format, BYTE r, BYTE g, BYTE b, BYTE a)
+static INLINE UINT32 FreeRDPGetColor(UINT32 format, BYTE r, BYTE g, BYTE b, BYTE a)
 {
 	UINT32 _r = r;
 	UINT32 _g = g;
@@ -603,7 +603,7 @@ static INLINE UINT32 GetColor(UINT32 format, BYTE r, BYTE g, BYTE b, BYTE a)
 		/* 1bpp formats */
 		case PIXEL_FORMAT_MONO:
 		default:
-			WLog_ERR(CTAG, "Unsupported format %s", GetColorFormatName(format));
+			WLog_ERR(CTAG, "Unsupported format %s", FreeRDPGetColorFormatName(format));
 			return 0;
 	}
 }
@@ -679,7 +679,7 @@ static INLINE UINT32 ReadColor(const BYTE* src, UINT32 format)
 			break;
 
 		default:
-			WLog_ERR(CTAG, "Unsupported format %s", GetColorFormatName(format));
+			WLog_ERR(CTAG, "Unsupported format %s", FreeRDPGetColorFormatName(format));
 			color = 0;
 			break;
 	}
@@ -732,7 +732,7 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
 			break;
 
 		default:
-			WLog_ERR(CTAG, "Unsupported format %s", GetColorFormatName(format));
+			WLog_ERR(CTAG, "Unsupported format %s", FreeRDPGetColorFormatName(format));
 			return FALSE;
 	}
 
@@ -751,7 +751,7 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
  *
  * @return           The converted pixel color in dstFormat representation
  */
-static INLINE UINT32 ConvertColor(UINT32 color, UINT32 srcFormat,
+static INLINE UINT32 FreeRDPConvertColor(UINT32 color, UINT32 srcFormat,
                                   UINT32 dstFormat, const gdiPalette* palette)
 {
 	BYTE r = 0;
@@ -759,7 +759,7 @@ static INLINE UINT32 ConvertColor(UINT32 color, UINT32 srcFormat,
 	BYTE b = 0;
 	BYTE a = 0;
 	SplitColor(color, srcFormat, &r, &g, &b, &a, palette);
-	return GetColor(dstFormat, r, g, b, a);
+	return FreeRDPGetColor(dstFormat, r, g, b, a);
 }
 
 /***
@@ -872,13 +872,19 @@ FREERDP_API BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
  * @param nWidth    width to copy in pixels
  * @param nHeight   height to copy in pixels
  * @param color     Pixel color in DstFormat (internal representation format,
- *                  use GetColor to create)
+ *                  use FreeRDPGetColor to create)
  *
  * @return          TRUE if success, FALSE otherwise
  */
 FREERDP_API BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat,
                                     UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
                                     UINT32 nWidth, UINT32 nHeight, UINT32 color);
+
+#if !defined(__APPLE__)
+#define GetColorFormatName FreeRDPGetColorFormatName
+#define GetColor FreeRDPGetColor
+#define ConvertColor FreeRDPFreeRDPConvertColor
+#endif
 
 #ifdef __cplusplus
 }

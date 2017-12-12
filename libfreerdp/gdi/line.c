@@ -53,7 +53,7 @@ static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 	switch (rop)
 	{
 		case GDI_R2_BLACK: /* LineTo_BLACK */
-			dstPixel = GetColor(format, 0, 0, 0, 0xFF);
+			dstPixel = FreeRDPGetColor(format, 0, 0, 0, 0xFF);
 			break;
 
 		case GDI_R2_NOTMERGEPEN: /* LineTo_NOTMERGEPEN */
@@ -113,7 +113,7 @@ static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 			break;
 
 		case GDI_R2_WHITE: /* LineTo_WHITE */
-			dstPixel = GetColor(format, 0xFF, 0xFF, 0xFF, 0xFF);
+			dstPixel = FreeRDPGetColor(format, 0xFF, 0xFF, 0xFF, 0xFF);
 			break;
 
 		default:

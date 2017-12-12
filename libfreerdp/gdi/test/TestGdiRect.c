@@ -95,7 +95,7 @@ int test_gdi_FillRect(void)
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
 	ZeroMemory(hBitmap->data, width * height * GetBytesPerPixel(hdc->format));
 	gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
-	color = GetColor(PIXEL_FORMAT_ARGB32, 0xAA, 0xBB, 0xCC, 0xFF);
+	color = FreeRDPGetColor(PIXEL_FORMAT_ARGB32, 0xAA, 0xBB, 0xCC, 0xFF);
 	hBrush = gdi_CreateSolidBrush(color);
 	gdi_FillRect(hdc, hRect, hBrush);
 	badPixels = 0;
@@ -106,7 +106,7 @@ int test_gdi_FillRect(void)
 		for (y = 0; y < height; y++)
 		{
 			rawPixel = gdi_GetPixel(hdc, x, y);
-			pixel = ConvertColor(rawPixel, hdc->format, PIXEL_FORMAT_ARGB32, NULL);
+			pixel = FreeRDPConvertColor(rawPixel, hdc->format, PIXEL_FORMAT_ARGB32, NULL);
 
 			if (gdi_PtInRect(hRect, x, y))
 			{

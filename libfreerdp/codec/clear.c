@@ -176,7 +176,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 		Stream_Read_UINT8(s, b);
 		Stream_Read_UINT8(s, g);
 		Stream_Read_UINT8(s, r);
-		palette[i] = GetColor(DstFormat, r, g, b, 0xFF);
+		palette[i] = FreeRDPGetColor(DstFormat, r, g, b, 0xFF);
 	}
 
 	pixelIndex = 0;
@@ -393,7 +393,7 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear,
 		Stream_Read_UINT8(s, r);
 		Stream_Read_UINT8(s, runLengthFactor);
 		suboffset += 4;
-		color = GetColor(clear->format, r, g, b, 0xFF);
+		color = FreeRDPGetColor(clear->format, r, g, b, 0xFF);
 
 		if (runLengthFactor >= 0xFF)
 		{
@@ -655,7 +655,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 		Stream_Read_UINT8(s, g);
 		Stream_Read_UINT8(s, r);
 		suboffset += 11;
-		colorBkg = GetColor(clear->format, r, g, b, 0xFF);
+		colorBkg = FreeRDPGetColor(clear->format, r, g, b, 0xFF);
 
 		if (xEnd < xStart)
 		{
@@ -766,7 +766,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 					Stream_Read_UINT8(s, b);
 					Stream_Read_UINT8(s, g);
 					Stream_Read_UINT8(s, r);
-					color = GetColor(clear->format, r, g, b, 0xFF);
+					color = FreeRDPGetColor(clear->format, r, g, b, 0xFF);
 
 					if (!WriteColor(dstBuffer, clear->format, color))
 						return FALSE;
@@ -888,7 +888,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 					BYTE* pDstPixel8 = &pDstData[((nYDstRel + y) * nDstStep) +
 					                             ((nXDstRel + i) * GetBytesPerPixel(DstFormat))];
 					UINT32 color = ReadColor(pSrcPixel, clear->format);
-					color = ConvertColor(color, clear->format,
+					color = FreeRDPConvertColor(color, clear->format,
 					                     DstFormat, NULL);
 
 					if (!WriteColor(pDstPixel8, DstFormat, color))

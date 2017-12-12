@@ -230,11 +230,11 @@ static UINT32 process_rop(UINT32 src, UINT32 dst, UINT32 pat, const char* rop,
 		switch (op)
 		{
 			case '0':
-				stack[stackp++] = GetColor(format, 0, 0, 0, 0xFF);
+				stack[stackp++] = FreeRDPGetColor(format, 0, 0, 0, 0xFF);
 				break;
 
 			case '1':
-				stack[stackp++] = GetColor(format, 0xFF, 0xFF, 0xFF, 0xFF);
+				stack[stackp++] = FreeRDPGetColor(format, 0xFF, 0xFF, 0xFF, 0xFF);
 				break;
 
 			case 'D':
@@ -303,7 +303,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
 		}
 
 		colorC = ReadColor(srcp, hdcSrc->format);
-		colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, palette);
+		colorC = FreeRDPConvertColor(colorC, hdcSrc->format, hdcDest->format, palette);
 	}
 
 	if (usePat)

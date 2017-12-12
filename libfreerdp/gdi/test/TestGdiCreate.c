@@ -313,7 +313,7 @@ static BOOL test_gdi_GetPixel(void)
 			for (j = 0; j < width; j++)
 			{
 				UINT32 pixel;
-				const UINT32 color = GetColor(hBitmap->format, rand(), rand(), rand(), rand());
+				const UINT32 color = FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
 				WriteColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format,
 				           color);
 				pixel = gdi_GetPixel(hdc, j, i);
@@ -365,7 +365,7 @@ static BOOL test_gdi_SetPixel(void)
 			for (j = 0; j < width; j++)
 			{
 				UINT32 pixel;
-				const UINT32 color = GetColor(hBitmap->format, rand(), rand(), rand(), rand());
+				const UINT32 color = FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
 				gdi_SetPixel(hdc, j, i, color);
 				pixel = ReadColor(&hBitmap->data[i * hBitmap->scanline + j * bpp],
 				                  hBitmap->format);

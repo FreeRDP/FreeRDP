@@ -117,7 +117,7 @@ int TestGdiEllipse(int argc, char* argv[])
 		g.format = format;
 
 		for (j = 0; j < 256; j++)
-			g.palette[i] = GetColor(format, j, j, j, 0xFF);
+			g.palette[i] = FreeRDPGetColor(format, j, j, j, 0xFF);
 
 		rc = -1;
 
