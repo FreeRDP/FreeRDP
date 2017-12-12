@@ -241,6 +241,12 @@ static int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 	wStream* s;
 	WINPR_BITMAP_FILE_HEADER bf;
 	WINPR_BITMAP_INFO_HEADER bi;
+
+	if (!image || !fp)
+		return -1;
+
+	image->data = NULL;
+
 	s = Stream_New(NULL, sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(WINPR_BITMAP_INFO_HEADER));
 
 	if (!s)
