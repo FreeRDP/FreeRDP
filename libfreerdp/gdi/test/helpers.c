@@ -131,8 +131,8 @@ BOOL test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual,
 	if (!bitmapsEqual)
 	{
 		printf("Testing ROP %s [%s|%s]\n", name,
-		       GetColorFormatName(hBmpActual->format),
-		       GetColorFormatName(hBmpExpected->format));
+		       FreeRDPGetColorFormatName(hBmpActual->format),
+		       FreeRDPGetColorFormatName(hBmpExpected->format));
 		test_dump_bitmap(hBmpActual, "Actual");
 		test_dump_bitmap(hBmpExpected, "Expected");
 		fflush(stdout);
