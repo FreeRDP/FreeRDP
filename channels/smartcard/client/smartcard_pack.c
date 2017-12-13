@@ -1863,32 +1863,34 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	if (unicode)
+	if (ret->mszReaderNames)
 	{
-		length = ret->cBytes / 2;
-
-		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->mszReaderNames, (int)length,
-		                       &mszReaderNamesA, 0, NULL, NULL) < 1)
+		if (unicode)
 		{
-			WLog_ERR(TAG, "ConvertFromUnicode failed");
-			return;
+			length = ret->cBytes / 2;
+
+			if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->mszReaderNames, (int) length,
+			                       &mszReaderNamesA, 0, NULL, NULL) < 1)
+			{
+				WLog_ERR(TAG, "ConvertFromUnicode failed");
+				return;
+			}
+		}
+		else
+		{
+			length = (int) ret->cBytes;
+			mszReaderNamesA = (char*) malloc(length);
+
+			if (!mszReaderNamesA)
+			{
+				WLog_ERR(TAG, "malloc failed!");
+				return;
+			}
+
+			CopyMemory(mszReaderNamesA, ret->mszReaderNames, ret->cBytes);
 		}
 	}
 	else
-	{
-		length = (int) ret->cBytes;
-		mszReaderNamesA = (char*) malloc(length);
-
-		if (!mszReaderNamesA)
-		{
-			WLog_ERR(TAG, "malloc failed!");
-			return;
-		}
-
-		CopyMemory(mszReaderNamesA, ret->mszReaderNames, ret->cBytes);
-	}
-
-	if (!mszReaderNamesA)
 		length = 0;
 
 	if (length > 2)
