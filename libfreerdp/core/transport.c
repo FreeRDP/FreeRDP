@@ -642,7 +642,7 @@ static int transport_read_layer_bytes(rdpTransport* transport, wStream* s,
 int transport_read_pdu(rdpTransport* transport, wStream* s)
 {
 	int status;
-	int position;
+	size_t position;
 	int pduLength;
 	BYTE* header;
 	pduLength = 0;
@@ -767,8 +767,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	if (!Stream_EnsureCapacity(s, Stream_GetPosition(s) + pduLength))
 		return -1;
 
-	status = transport_read_layer_bytes(transport, s,
-	                                    pduLength - Stream_GetPosition(s));
+	status = transport_read_layer_bytes(transport, s, pduLength - Stream_GetPosition(s));
 
 	if (status != 1)
 		return status;
@@ -784,7 +783,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 
 int transport_write(rdpTransport* transport, wStream* s)
 {
-	int length;
+	size_t length;
 	int status = -1;
 	int writtenlength = 0;
 
@@ -1032,8 +1031,7 @@ int transport_check_fds(rdpTransport* transport)
 		 * 	 0: success
 		 * 	 1: redirection
 		 */
-		recv_status = transport->ReceiveCallback(transport, received,
-		              transport->ReceiveExtra);
+		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 		Stream_Release(received);
 
 		/* session redirection or activation */

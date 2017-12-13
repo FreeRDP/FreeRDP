@@ -1193,12 +1193,12 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr,
 {
 	int i;
 	BYTE c;
-	int pos;
+	size_t pos;
 	int index;
 	wStream* s;
 	UINT32 count;
-	int data_len;
-	int count_pos;
+	size_t data_len;
+	size_t count_pos;
 	DEVICE* device;
 	int keyCount;
 	ULONG_PTR* pKeys;
@@ -1212,7 +1212,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr,
 
 	Stream_Write_UINT16(s, RDPDR_CTYP_CORE); /* Component (2 bytes) */
 	Stream_Write_UINT16(s, PAKID_CORE_DEVICELIST_ANNOUNCE); /* PacketId (2 bytes) */
-	count_pos = (int) Stream_GetPosition(s);
+	count_pos = Stream_GetPosition(s);
 	count = 0;
 	Stream_Seek_UINT32(s); /* deviceCount */
 	pKeys = NULL;
@@ -1233,7 +1233,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr,
 		if ((rdpdr->versionMinor == 0x0005) ||
 		    (device->type == RDPDR_DTYP_SMARTCARD) || userLoggedOn)
 		{
-			data_len = (int)(device->data == NULL ? 0 : Stream_GetPosition(device->data));
+			data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
 
 			if (!Stream_EnsureRemainingCapacity(s, 20 + data_len))
 			{
@@ -1267,7 +1267,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr,
 	}
 
 	free(pKeys);
-	pos = (int) Stream_GetPosition(s);
+	pos = Stream_GetPosition(s);
 	Stream_SetPosition(s, count_pos);
 	Stream_Write_UINT32(s, count);
 	Stream_SetPosition(s, pos);

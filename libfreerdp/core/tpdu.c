@@ -161,8 +161,8 @@ void tpdu_write_connection_request(wStream* s, UINT16 length)
 BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 {
 	BYTE code;
-	int position;
-	int bytes_read = 0;
+	size_t position;
+	size_t bytes_read = 0;
 
 	/* save the position to determine the number of bytes read */
 	position = Stream_GetPosition(s);

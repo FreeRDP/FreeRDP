@@ -665,7 +665,7 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 
 	BYTE *str = NULL;
 	UINT16 crlf = 0;
-	int pos, len;
+	size_t pos, len;
 	BOOL result = FALSE;
 	BOOL isToken = FALSE;
 
@@ -808,7 +808,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 {
 	wStream* s;
 	int length;
-	int bm, em;
+	size_t bm, em;
 	BYTE flags = 0;
 	int cookie_length;
 
@@ -834,7 +834,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 				(nego->RoutingToken[nego->RoutingTokenLength - 1] == 0x0A))
 		{
 			WLog_DBG(TAG, "Routing token looks correctly terminated - use verbatim");
-			length +=nego->RoutingTokenLength;
+			length += nego->RoutingTokenLength;
 		}
 		else
 		{
@@ -997,7 +997,7 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 BOOL nego_send_negotiation_response(rdpNego* nego)
 {
 	int length;
-	int bm, em;
+	size_t bm, em;
 	BOOL status;
 	wStream* s;
 	BYTE flags;

@@ -727,7 +727,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
                                const BYTE* data, UINT32 dataSize)
 {
 	wStream* data_out;
-	unsigned long pos;
+	size_t pos;
 	UINT32 cbChId;
 	UINT32 cbLen;
 	unsigned long chunkLength;
@@ -916,7 +916,7 @@ static UINT32 drdynvc_read_variable_uint(wStream* s, int cbLen)
 static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
         int cbChId, wStream* s)
 {
-	unsigned long pos;
+	size_t pos;
 	UINT status;
 	UINT32 ChannelId;
 	wStream* data_out;

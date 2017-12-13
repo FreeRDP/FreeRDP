@@ -2,7 +2,7 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
-static BOOL TestStream_Verify(wStream* s, int mincap, int len, int pos)
+static BOOL TestStream_Verify(wStream* s, int mincap, int len, size_t pos)
 {
 	if (Stream_Buffer(s) == NULL)
 	{

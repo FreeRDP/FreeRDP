@@ -123,7 +123,7 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
  */
 static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
-	int length;
+	size_t length;
 	wStream *input;
 	wStream *output;
 	UINT error = CHANNEL_RC_OK;

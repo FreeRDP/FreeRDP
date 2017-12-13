@@ -482,7 +482,7 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	int num_rects = 0;
 	UINT error = CHANNEL_RC_OK;
 	int i;
-	int pos;
+	size_t pos;
 
 	if (Stream_GetRemainingLength(ifman->input) < GUID_SIZE + 32)
 		return ERROR_INVALID_DATA;

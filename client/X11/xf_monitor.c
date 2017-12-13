@@ -41,6 +41,11 @@
 #ifdef WITH_XRANDR
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/randr.h>
+
+#if (RANDR_MAJOR * 100 + RANDR_MINOR) > 105
+#	define USABLE_XRANDR
+#endif
+
 #endif
 
 #include "xf_monitor.h"
@@ -60,8 +65,9 @@ int xf_list_monitors(xfContext* xfc)
 		return -1;
 	}
 
-#ifdef WITH_XRANDR
-	if (XRRQueryExtension(xfc->display, &major, &minor))
+#if defined(USABLE_XRANDR)
+	if (XRRQueryExtension(xfc->display, &major, &minor) && (XRRQueryVersion(xfc->display, &major, &minor) == True) &&
+		(major * 100 + minor >= 105))
 	{
 		XRRMonitorInfo *monitors = XRRGetMonitors(xfc->display, DefaultRootWindow(xfc->display), 1, &nmonitors);
 
@@ -148,8 +154,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	                   &_dummy_i, &_dummy_i, (void*) &_dummy_i))
 		mouse_x = mouse_y = 0;
 
-#ifdef WITH_XRANDR
-	if (XRRQueryExtension(xfc->display, &major, &minor))
+#if defined(USABLE_XRANDR)
+	if (XRRQueryExtension(xfc->display, &major, &minor) && (XRRQueryVersion(xfc->display, &major, &minor) == True) &&
+			(major * 100 + minor >= 105))
 	{
 		XRRMonitorInfo *monitors = XRRGetMonitors(xfc->display, DefaultRootWindow(xfc->display), 1, &vscreen->nmonitors);
 
