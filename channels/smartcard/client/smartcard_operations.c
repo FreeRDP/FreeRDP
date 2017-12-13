@@ -767,17 +767,20 @@ static LONG smartcard_ConnectA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	if (status)
 	{
 		WLog_ERR(TAG, "SCardConnectA failed with error %"PRId32"", status);
-		return status;
+		goto out_fail;
 	}
 
 	if ((status = smartcard_pack_connect_return(smartcard, irp->output, &ret)))
 	{
 		WLog_ERR(TAG, "smartcard_pack_connect_return failed with error %"PRId32"", status);
-		return status;
+        goto out_fail;
 	}
 
+	status = ret.ReturnCode;
+
+out_fail:
 	free(call->szReader);
-	return ret.ReturnCode;
+	return status;
 }
 
 static LONG smartcard_ConnectW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
@@ -823,17 +826,20 @@ static LONG smartcard_ConnectW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	if (status)
 	{
 		WLog_ERR(TAG, "SCardConnectW failed with error %"PRId32"", status);
-		return status;
+		goto out_fail;
 	}
 
 	if ((status = smartcard_pack_connect_return(smartcard, irp->output, &ret)))
 	{
 		WLog_ERR(TAG, "smartcard_pack_connect_return failed with error %"PRId32"", status);
-		return status;
+		goto out_fail;
 	}
 
+	status = ret.ReturnCode;
+
+out_fail:
 	free(call->szReader);
-	return ret.ReturnCode;
+	return status;
 }
 
 static LONG smartcard_Reconnect_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
