@@ -155,7 +155,6 @@ struct _PCSCFunctionTable
 	                               PCSC_LPDWORD pcbAttrLen);
 	PCSC_LONG(* pfnSCardSetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPCBYTE pbAttr,
 	                               PCSC_DWORD cbAttrLen);
-	PCSC_LONG(* pfnSCardAddReaderName)(HANDLE* key, LPSTR readerName);
 };
 typedef struct _PCSCFunctionTable PCSCFunctionTable;
 

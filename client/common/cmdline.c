@@ -476,41 +476,27 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 		settings->RedirectSmartCards = TRUE;
 		settings->DeviceRedirection = TRUE;
 
-		if (count > 1)
+		smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
+
+		if (!smartcard)
+			return FALSE;
+
+		smartcard->Type = RDPDR_DTYP_SMARTCARD;
+
+		if (count > 1 && strlen(params[1]))
 		{
-			smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
-
-			if (!smartcard)
-				return FALSE;
-
-			smartcard->Type = RDPDR_DTYP_SMARTCARD;
-
-			if (count > 1)
+			if (!(smartcard->Name = _strdup(params[1])))
 			{
-				if (!(smartcard->Name = _strdup(params[1])))
-				{
-					free(smartcard);
-					return FALSE;
-				}
-			}
-
-			if (count > 2)
-			{
-				if (!(smartcard->Path = _strdup(params[2])))
-				{
-					free(smartcard->Name);
-					free(smartcard);
-					return FALSE;
-				}
-			}
-
-			if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard))
-			{
-				free(smartcard->Path);
-				free(smartcard->Name);
 				free(smartcard);
 				return FALSE;
 			}
+		}
+
+		if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard))
+		{
+			free(smartcard->Name);
+			free(smartcard);
+			return FALSE;
 		}
 
 		return TRUE;

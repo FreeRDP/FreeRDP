@@ -452,10 +452,10 @@ void smartcard_scard_handle_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_S
         SCARDHANDLE hCard);
 
 LONG smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
-LONG smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
+void smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
 
 LONG smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
-LONG smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s,
+void smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         UINT32 objectBufferLength);
 
 LONG smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s,

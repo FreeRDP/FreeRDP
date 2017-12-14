@@ -75,13 +75,12 @@ LONG smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s
 	return SCARD_S_SUCCESS;
 }
 
-LONG smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s)
+void smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s)
 {
 	Stream_Write_UINT8(s, 1); /* Version (1 byte) */
 	Stream_Write_UINT8(s, 0x10); /* Endianness (1 byte) */
 	Stream_Write_UINT16(s, 8); /* CommonHeaderLength (2 bytes) */
 	Stream_Write_UINT32(s, 0xCCCCCCCC); /* Filler (4 bytes), should be 0xCCCCCCCC */
-	return SCARD_S_SUCCESS;
 }
 
 LONG smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s)
@@ -116,12 +115,11 @@ LONG smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* 
 	return SCARD_S_SUCCESS;
 }
 
-LONG smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s,
+void smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         UINT32 objectBufferLength)
 {
 	Stream_Write_UINT32(s, objectBufferLength); /* ObjectBufferLength (4 bytes) */
 	Stream_Write_UINT32(s, 0x00000000); /* Filler (4 bytes), should be 0x00000000 */
-	return SCARD_S_SUCCESS;
 }
 
 LONG smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size,
@@ -850,7 +848,7 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 		CopyMemory(mszA, ret->msz, ret->cBytes);
 	}
 
-	for (index = 0; index < length - 2; index++)
+	for (index = 0; index < length - 1; index++)
 	{
 		if (mszA[index] == '\0')
 			mszA[index] = ',';
@@ -1863,32 +1861,34 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	if (unicode)
+	if (ret->mszReaderNames)
 	{
-		length = ret->cBytes / 2;
-
-		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->mszReaderNames, (int)length,
-		                       &mszReaderNamesA, 0, NULL, NULL) < 1)
+		if (unicode)
 		{
-			WLog_ERR(TAG, "ConvertFromUnicode failed");
-			return;
+			length = ret->cBytes / 2;
+
+			if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->mszReaderNames, (int) length,
+			                       &mszReaderNamesA, 0, NULL, NULL) < 1)
+			{
+				WLog_ERR(TAG, "ConvertFromUnicode failed");
+				return;
+			}
+		}
+		else
+		{
+			length = (int) ret->cBytes;
+			mszReaderNamesA = (char*) malloc(length);
+
+			if (!mszReaderNamesA)
+			{
+				WLog_ERR(TAG, "malloc failed!");
+				return;
+			}
+
+			CopyMemory(mszReaderNamesA, ret->mszReaderNames, ret->cBytes);
 		}
 	}
 	else
-	{
-		length = (int) ret->cBytes;
-		mszReaderNamesA = (char*) malloc(length);
-
-		if (!mszReaderNamesA)
-		{
-			WLog_ERR(TAG, "malloc failed!");
-			return;
-		}
-
-		CopyMemory(mszReaderNamesA, ret->mszReaderNames, ret->cBytes);
-	}
-
-	if (!mszReaderNamesA)
 		length = 0;
 
 	if (length > 2)
