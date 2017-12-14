@@ -1135,23 +1135,24 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 	else
 		cchReaderLen = SCARD_AUTOALLOCATE;
 
-	ret.cbAtrLen = call->cbAtrLen;
+	cbAtrLen = call->cbAtrLen;
+
 	ZeroMemory(ret.pbAtr, 32);
 	status = ret.ReturnCode = SCardStatusW(operation->hCard,
 	                                       call->fmszReaderNamesIsNULL ? NULL : (LPWSTR) &mszReaderNames,
 	                                       &cchReaderLen, &ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &cbAtrLen);
-	smartcard_trace_status_return(smartcard, &ret, TRUE);
 
 	if (status == SCARD_S_SUCCESS)
 	{
 		if (!call->fmszReaderNamesIsNULL)
 			ret.mszReaderNames = (BYTE*) mszReaderNames;
 
-		ret.cBytes = cchReaderLen * 2;
+		ret.cBytes = cchReaderLen;
 
 		if (call->cbAtrLen)
 			ret.cbAtrLen = cbAtrLen;
 	}
+	smartcard_trace_status_return(smartcard, &ret, TRUE);
 
 	if ((status = smartcard_pack_status_return(smartcard, irp->output, &ret)))
 	{
