@@ -75,13 +75,12 @@ LONG smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s
 	return SCARD_S_SUCCESS;
 }
 
-LONG smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s)
+void smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s)
 {
 	Stream_Write_UINT8(s, 1); /* Version (1 byte) */
 	Stream_Write_UINT8(s, 0x10); /* Endianness (1 byte) */
 	Stream_Write_UINT16(s, 8); /* CommonHeaderLength (2 bytes) */
 	Stream_Write_UINT32(s, 0xCCCCCCCC); /* Filler (4 bytes), should be 0xCCCCCCCC */
-	return SCARD_S_SUCCESS;
 }
 
 LONG smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s)
@@ -116,12 +115,11 @@ LONG smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* 
 	return SCARD_S_SUCCESS;
 }
 
-LONG smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s,
+void smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         UINT32 objectBufferLength)
 {
 	Stream_Write_UINT32(s, objectBufferLength); /* ObjectBufferLength (4 bytes) */
 	Stream_Write_UINT32(s, 0x00000000); /* Filler (4 bytes), should be 0x00000000 */
-	return SCARD_S_SUCCESS;
 }
 
 LONG smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size,

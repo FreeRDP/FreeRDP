@@ -773,7 +773,7 @@ static LONG smartcard_ConnectA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	if ((status = smartcard_pack_connect_return(smartcard, irp->output, &ret)))
 	{
 		WLog_ERR(TAG, "smartcard_pack_connect_return failed with error %"PRId32"", status);
-        goto out_fail;
+		goto out_fail;
 	}
 
 	status = ret.ReturnCode;
