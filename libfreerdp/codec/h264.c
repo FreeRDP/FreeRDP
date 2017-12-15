@@ -180,7 +180,6 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 		return -1001;
 
 	status = h264->subsystem->Decompress(h264, pSrcData, SrcSize);
-
 	if (status == 0)
 		return 1;
 

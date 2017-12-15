@@ -130,7 +130,8 @@ set(CODEC_SRCS
 	codec/zgfx.c
 	codec/clear.c
 	codec/jpeg.c
-	codec/h264.c)
+	codec/h264.c
+	codec/yuv.c)
 
 set(CODEC_SSE2_SRCS
 	codec/rfx_sse2.c

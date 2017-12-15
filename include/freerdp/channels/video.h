@@ -48,6 +48,7 @@ struct _TSMM_PRESENTATION_REQUEST
 	BYTE PresentationId;
 	BYTE Version;
 	BYTE Command;
+	BYTE FrameRate;
 	UINT32 SourceWidth, SourceHeight;
 	UINT32 ScaledWidth, ScaledHeight;
 	UINT64 hnsTimestampOffset;
@@ -89,12 +90,14 @@ struct _TSMM_VIDEO_DATA
 };
 typedef struct _TSMM_VIDEO_DATA TSMM_VIDEO_DATA;
 
+/** @brief values for NotificationType in TSMM_CLIENT_NOTIFICATION */
 enum
 {
 	TSMM_CLIENT_NOTIFICATION_TYPE_NETWORK_ERROR = 1,
 	TSMM_CLIENT_NOTIFICATION_TYPE_FRAMERATE_OVERRIDE = 2
 };
 
+/** @brief struct used when NotificationType is FRAMERATE_OVERRIDE */
 struct _TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE
 {
 	UINT32 Flags;
@@ -102,6 +105,7 @@ struct _TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE
 };
 typedef struct _TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE;
 
+/** @brief a client to server notification struct */
 struct _TSMM_CLIENT_NOTIFICATION
 {
 	BYTE PresentationId;

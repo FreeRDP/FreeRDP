@@ -31,7 +31,7 @@
 #include "xf_rail.h"
 #include "xf_cliprdr.h"
 #include "xf_disp.h"
-
+#include "xf_video.h"
 
 void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
 {
@@ -68,6 +68,18 @@ void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		xf_disp_init(xfc, (DispClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_video_geometry_init(xfc, (GeometryClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_video_control_init(xfc, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_video_data_init(xfc, (VideoClientContext*)e->pInterface);
 	}
 }
 

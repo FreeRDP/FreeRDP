@@ -82,6 +82,7 @@ typedef struct xf_glyph xfGlyph;
 
 typedef struct xf_clipboard xfClipboard;
 typedef struct _xfDispContext xfDispContext;
+typedef struct _xfVideoContext xfVideoContext;
 
 /* Value of the first logical button number in X11 which must be */
 /* subtracted to go from a button number in X11 to an index into */
@@ -215,6 +216,9 @@ struct xf_context
 	TsmfClientContext* tsmf;
 	xfClipboard* clipboard;
 	CliprdrClientContext* cliprdr;
+	xfVideoContext *xfVideo;
+	GeometryClientContext *geometry;
+	VideoClientContext *video;
 	RdpeiClientContext* rdpei;
 	EncomspClientContext* encomsp;
 	xfDispContext* xfDisp;

@@ -100,7 +100,7 @@ static UINT video_read_tsmm_presentation_req(VideoClientContext *context, wStrea
 	Stream_Read_UINT8(s, req.PresentationId);
 	Stream_Read_UINT8(s, req.Version);
 	Stream_Read_UINT8(s, req.Command);
-	Stream_Seek_UINT8(s); /* FrameRate - reserved and ignored */
+	Stream_Read_UINT8(s, req.FrameRate); /* FrameRate - reserved and ignored */
 
 	Stream_Seek_UINT16(s); /* AverageBitrateKbps reserved and ignored */
 	Stream_Seek_UINT16(s); /* reserved */
