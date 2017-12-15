@@ -20,6 +20,7 @@
 #ifndef FREERDP_CHANNELS_CLIENT_GEOMETRY_H
 #define FREERDP_CHANNELS_CLIENT_GEOMETRY_H
 
+#include <winpr/collections.h>
 #include <freerdp/channels/geometry.h>
 
 /**
@@ -28,14 +29,31 @@
 typedef struct _geometry_client_context GeometryClientContext;
 
 
-typedef UINT (*pcMappedGeometryPacket)(GeometryClientContext* context, MAPPED_GEOMETRY_PACKET *packet);
+typedef struct _MAPPED_GEOMETRY MAPPED_GEOMETRY;
+typedef BOOL (*pcMappedGeometryAdded)(GeometryClientContext* context, MAPPED_GEOMETRY *geometry);
+typedef BOOL (*pcMappedGeometryUpdate)(MAPPED_GEOMETRY *geometry);
+typedef BOOL (*pcMappedGeometryClear)(MAPPED_GEOMETRY *geometry);
+
+struct _MAPPED_GEOMETRY
+{
+	UINT64 mappingId;
+	UINT64 topLevelId;
+	INT32 left, top, right, bottom;
+	INT32 topLevelLeft, topLevelTop, topLevelRight, topLevelBottom;
+	FREERDP_RGNDATA geometry;
+
+	void *custom;
+	pcMappedGeometryUpdate MappedGeometryUpdate;
+	pcMappedGeometryClear MappedGeometryClear;
+};
 
 struct _geometry_client_context
 {
+	wHashTable *geometries;
 	void* handle;
 	void* custom;
 
-	pcMappedGeometryPacket MappedGeometryPacket;
+	pcMappedGeometryAdded MappedGeometryAdded;
 };
 
 #endif /* FREERDP_CHANNELS_CLIENT_GEOMETRY_H */
