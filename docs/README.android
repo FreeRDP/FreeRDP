@@ -52,7 +52,7 @@ They are limited to API level 21 and above.
 If release binaries (and old android API support) are required, build 32 bit architectures with
 ./scripts/android-build-freerdp.sh --ndk <ANDROID_NDK> --sdk <ANDROID_SDK> --conf ./scripts/android-build-32.conf
 and 64 bit architectures with
-./scripts/android-build-freerdp.sh --ndk <ANDROID_NDK> --sdk <ANDROID_SDK> --conf ./scripts/android-build-32.conf
+./scripts/android-build-freerdp.sh --ndk <ANDROID_NDK> --sdk <ANDROID_SDK> --conf ./scripts/android-build-64.conf
 
 Building the APK (Android Studio)
 ================
