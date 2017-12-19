@@ -615,17 +615,11 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 {
 	UINT16 length;
-	UINT32 sec_bytes;
-	size_t sec_hold;
 	UINT32 pad;
 
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	rdp_write_header(rdp, s, length, rdp->mcs->messageChannelId);
-	sec_bytes = rdp_get_sec_bytes(rdp, sec_flags);
-	sec_hold = Stream_GetPosition(s);
-	Stream_Seek(s, sec_bytes);
-	Stream_SetPosition(s, sec_hold);
 
 	if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
 		return FALSE;
