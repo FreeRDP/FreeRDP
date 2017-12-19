@@ -30,6 +30,8 @@
 #include "xf_tsmf.h"
 #include "xf_rail.h"
 #include "xf_cliprdr.h"
+#include "xf_disp.h"
+
 
 void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
 {
@@ -62,6 +64,10 @@ void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
 		xf_encomsp_init(xfc, (EncomspClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_disp_init(xfc, (DispClientContext*)e->pInterface);
 	}
 }
 

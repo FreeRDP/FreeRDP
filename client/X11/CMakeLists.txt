@@ -44,6 +44,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_cliprdr.h
 	xf_monitor.c
 	xf_monitor.h
+	xf_disp.c
+	xf_disp.h
 	xf_graphics.c
 	xf_graphics.h
 	xf_keyboard.c

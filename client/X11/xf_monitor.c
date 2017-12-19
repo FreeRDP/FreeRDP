@@ -297,11 +297,10 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 		settings->MonitorDefArray[nmonitors].x = vscreen->monitors[i].area.left;
 		settings->MonitorDefArray[nmonitors].y = vscreen->monitors[i].area.top;
-		settings->MonitorDefArray[nmonitors].width = MIN(vscreen->monitors[i].area.right
-		        - vscreen->monitors[i].area.left + 1, *pMaxWidth);
-		settings->MonitorDefArray[nmonitors].height = MIN(
-		            vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1,
-		            *pMaxHeight);
+		settings->MonitorDefArray[nmonitors].width =
+			MIN(vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1, *pMaxWidth);
+		settings->MonitorDefArray[nmonitors].height =
+			MIN(vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1, *pMaxHeight);
 		settings->MonitorDefArray[nmonitors].orig_screen = i;
 
 		if (i == settings->MonitorIds[0])

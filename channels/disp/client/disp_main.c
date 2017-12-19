@@ -98,7 +98,6 @@ UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callbac
 	type = DISPLAY_CONTROL_PDU_TYPE_MONITOR_LAYOUT;
 
 	s = Stream_New(NULL, length);
-
 	if(!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
@@ -112,10 +111,9 @@ UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callbac
 		NumMonitors = disp->MaxNumMonitors;
 
 	Stream_Write_UINT32(s, MonitorLayoutSize); /* MonitorLayoutSize (4 bytes) */
-
 	Stream_Write_UINT32(s, NumMonitors); /* NumMonitors (4 bytes) */
 
-	//WLog_ERR(TAG,  "NumMonitors: %"PRIu32"", NumMonitors);
+	WLog_DBG(TAG, "disp_send_display_control_monitor_layout_pdu: NumMonitors=%"PRIu32"", NumMonitors);
 
 	for (index = 0; index < NumMonitors; index++)
 	{
@@ -147,16 +145,11 @@ UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callbac
 		Stream_Write_UINT32(s, Monitors[index].DesktopScaleFactor); /* DesktopScaleFactor (4 bytes) */
 		Stream_Write_UINT32(s, Monitors[index].DeviceScaleFactor); /* DeviceScaleFactor (4 bytes) */
 
-#if 0
-		WLog_DBG(TAG,  "\t: Flags: 0x%08"PRIX32"", Monitors[index].Flags);
-		WLog_DBG(TAG,  "\t: Left: %"PRId32"", Monitors[index].Left);
-		WLog_DBG(TAG,  "\t: Top: %"PRId32"", Monitors[index].Top);
-		WLog_DBG(TAG,  "\t: Width: %"PRIu32"", Monitors[index].Width);
-		WLog_DBG(TAG,  "\t: Height: %"PRIu32"", Monitors[index].Height);
-		WLog_DBG(TAG,  "\t: PhysicalWidth: %"PRIu32"", Monitors[index].PhysicalWidth);
-		WLog_DBG(TAG,  "\t: PhysicalHeight: %"PRIu32"", Monitors[index].PhysicalHeight);
-		WLog_DBG(TAG,  "\t: Orientation: %"PRIu32"", Monitors[index].Orientation);
-#endif
+		WLog_DBG(TAG, "\t%d : Flags: 0x%08"PRIX32" Left/Top: (%"PRId32",%"PRId32") W/H=%"PRIu32"x%"PRIu32")", index,
+				Monitors[index].Flags, Monitors[index].Left, Monitors[index].Top, Monitors[index].Width,
+				Monitors[index].Height);
+		WLog_DBG(TAG, "\t   PhysicalWidth: %"PRIu32" PhysicalHeight: %"PRIu32" Orientation: %"PRIu32"",
+				Monitors[index].PhysicalWidth, Monitors[index].PhysicalHeight, Monitors[index].Orientation);
 	}
 
 	Stream_SealLength(s);
@@ -364,11 +357,9 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	DispClientContext* context;
 
 	disp = (DISP_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "disp");
-
 	if (!disp)
 	{
 		disp = (DISP_PLUGIN*) calloc(1, sizeof(DISP_PLUGIN));
-
 		if (!disp)
 		{
 			WLog_ERR(TAG, "calloc failed!");
@@ -379,9 +370,11 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		disp->iface.Connected = NULL;
 		disp->iface.Disconnected = NULL;
 		disp->iface.Terminated = disp_plugin_terminated;
+		disp->MaxNumMonitors = 16;
+		disp->MaxMonitorAreaFactorA = 8192;
+		disp->MaxMonitorAreaFactorB = 8192;
 
 		context = (DispClientContext*) calloc(1, sizeof(DispClientContext));
-
 		if (!context)
 		{
 			WLog_ERR(TAG, "calloc failed!");
@@ -390,14 +383,9 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		}
 
 		context->handle = (void*) disp;
-
 		context->SendMonitorLayout = disp_send_monitor_layout;
 
 		disp->iface.pInterface = (void*) context;
-
-		disp->MaxNumMonitors = 16;
-		disp->MaxMonitorAreaFactorA = 8192;
-		disp->MaxMonitorAreaFactorB = 8192;
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "disp", (IWTSPlugin*) disp);
 	}
