@@ -1438,7 +1438,15 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			if ((status >= 0) && (rdp->finalize_sc_pdus == FINALIZE_SC_COMPLETE))
 			{
+				ActivatedEventArgs activatedEvent;
+				rdpContext *context = rdp->context;
+
 				rdp_client_transition_to_state(rdp, CONNECTION_STATE_ACTIVE);
+
+				EventArgsInit(&activatedEvent, "xfreerdp");
+				activatedEvent.firstActivation = !rdp->deactivation_reactivation;
+				PubSub_OnActivated(context->pubSub, context, &activatedEvent);
+
 				return 2;
 			}
 			if (status < 0)
