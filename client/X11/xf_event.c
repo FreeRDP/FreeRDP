@@ -673,7 +673,7 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 			alignedHeight = (xfc->window->height / 2) * 2;
 
 			/* ask the server to resize using the display channel */
-			xf_disp_handle_resize(xfc, alignedWidth, alignedHeight);
+			xf_disp_handle_configureNotify(xfc, alignedWidth, alignedHeight);
 		}
 
 		return TRUE;

@@ -17,11 +17,17 @@
  * limitations under the License.
  */
 
+#include <winpr/sysinfo.h>
 #include <X11/Xutil.h>
 
 #ifdef WITH_XRANDR
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/randr.h>
+
+#if (RANDR_MAJOR * 100 + RANDR_MINOR) > 105
+#	define USABLE_XRANDR
+#endif
+
 #endif
 
 #include "xf_disp.h"
@@ -29,16 +35,108 @@
 
 
 #define TAG CLIENT_TAG("x11disp")
+#define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
 struct _xfDispContext
 {
 	xfContext *xfc;
 	BOOL haveXRandr;
 	int eventBase, errorBase;
-	int lastWidth, lastHeight;
+	int lastSentWidth, lastSentHeight;
+	UINT64 lastSentDate;
+	int targetWidth, targetHeight;
 	BOOL activated;
 	BOOL waitingResize;
 };
+
+
+static BOOL xf_disp_sendResize(xfDispContext *xfDisp, int width, int height)
+{
+	DISPLAY_CONTROL_MONITOR_LAYOUT layout;
+	xfContext *xfc = xfDisp->xfc;
+
+	xfDisp->lastSentDate = GetTickCount64();
+	xfDisp->lastSentWidth = width;
+	xfDisp->lastSentHeight = height;
+	xfDisp->waitingResize = TRUE;
+
+	layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
+	layout.Top = layout.Left = 0;
+	layout.Width = width;
+	layout.Height = height;
+	layout.Orientation = ORIENTATION_LANDSCAPE;
+	layout.DesktopScaleFactor = 100;
+	layout.DeviceScaleFactor = 100;
+	layout.PhysicalWidth = width;
+	layout.PhysicalHeight = height;
+
+	return xfc->disp->SendMonitorLayout(xfc->disp, 1, &layout) == CHANNEL_RC_OK;
+}
+
+
+static BOOL xf_disp_set_window_resizable(xfDispContext *xfDisp)
+{
+	XSizeHints *size_hints;
+
+	if (!(size_hints = XAllocSizeHints()))
+		return FALSE;
+
+	size_hints->flags = PMinSize | PMaxSize | PWinGravity;
+	size_hints->win_gravity = NorthWestGravity;
+	size_hints->min_width = size_hints->min_height = 320;
+	size_hints->max_width = size_hints->max_height = 8192;
+	XSetWMNormalHints(xfDisp->xfc->display, xfDisp->xfc->window->handle, size_hints);
+	XFree(size_hints);
+	return TRUE;
+}
+
+
+static void xf_disp_OnActivated(rdpContext* context, ActivatedEventArgs* e)
+{
+	xfContext *xfc = (xfContext *)context;
+	xfDispContext *xfDisp = xfc->xfDisp;
+	rdpSettings *settings = context->settings;
+
+	xfDisp->waitingResize = FALSE;
+
+	if (xfDisp->activated && !settings->Fullscreen)
+	{
+		xf_disp_set_window_resizable(xfDisp);
+
+		if (e->firstActivation)
+			return;
+
+		/* if a resize has been done recently don't do anything and let the timer
+		 * perform the resize */
+		if (GetTickCount64() - xfDisp->lastSentDate < RESIZE_MIN_DELAY)
+			return;
+
+		if ((xfDisp->lastSentWidth != xfDisp->targetWidth) || (xfDisp->lastSentHeight != xfDisp->targetHeight))
+		{
+			WLog_DBG(TAG, "performing delayed resize to %dx%d", xfDisp->targetWidth, xfDisp->targetHeight);
+			xf_disp_sendResize(xfDisp, xfDisp->targetWidth, xfDisp->targetHeight);
+		}
+	}
+}
+
+static void xf_disp_OnTimer(rdpContext* context, TimerEventArgs* e)
+{
+	xfContext *xfc = (xfContext *)context;
+	xfDispContext *xfDisp = xfc->xfDisp;
+	rdpSettings *settings = context->settings;
+
+	if (!xfDisp->activated || settings->Fullscreen)
+		return;
+
+	if (e->now - xfDisp->lastSentDate < RESIZE_MIN_DELAY)
+		return;
+
+	if ((xfDisp->lastSentWidth != xfDisp->targetWidth) || (xfDisp->lastSentHeight != xfDisp->targetHeight))
+	{
+		WLog_DBG(TAG, "timer performing delayed resize to %dx%d", xfDisp->targetWidth, xfDisp->targetHeight);
+		xf_disp_sendResize(xfDisp, xfDisp->targetWidth, xfDisp->targetHeight);
+	}
+}
 
 xfDispContext *xf_disp_new(xfContext* xfc)
 {
@@ -47,20 +145,24 @@ xfDispContext *xf_disp_new(xfContext* xfc)
 		return NULL;
 
 	ret->xfc = xfc;
-#ifdef WITH_XRANDR
+#ifdef USABLE_XRANDR
 	if (XRRQueryExtension(xfc->display, &ret->eventBase, &ret->errorBase))
 	{
 		ret->haveXRandr = TRUE;
 	}
 #endif
-	ret->lastWidth = xfc->context.settings->DesktopWidth;
-	ret->lastHeight = xfc->context.settings->DesktopHeight;
+	ret->lastSentWidth = ret->targetWidth = xfc->context.settings->DesktopWidth;
+	ret->lastSentHeight = ret->targetHeight = xfc->context.settings->DesktopHeight;
 
+	PubSub_SubscribeActivated(xfc->context.pubSub, (pActivatedEventHandler)xf_disp_OnActivated);
+	PubSub_SubscribeTimer(xfc->context.pubSub, (pTimerEventHandler)xf_disp_OnTimer);
 	return ret;
 }
 
 void xf_disp_free(xfDispContext *disp)
 {
+	PubSub_UnsubscribeActivated(disp->xfc->context.pubSub, (pActivatedEventHandler)xf_disp_OnActivated);
+	PubSub_UnsubscribeTimer(disp->xfc->context.pubSub, (pTimerEventHandler)xf_disp_OnTimer);
 	free(disp);
 }
 
@@ -86,7 +188,6 @@ static UINT xf_disp_sendLayout(DispClientContext *disp, rdpMonitor *monitors, in
 		layouts[i].PhysicalHeight = monitors[i].height;
 		layouts[i].DesktopScaleFactor = 100;
 		layouts[i].DeviceScaleFactor = 100;
-
 	}
 
 	ret = disp->SendMonitorLayout(disp, nmonitors, layouts);
@@ -105,7 +206,7 @@ BOOL xf_disp_handle_xevent(xfContext *xfc, XEvent *event)
 	if (!xfDisp->haveXRandr)
 		return TRUE;
 
-#ifdef WITH_XRANDR
+#ifdef USABLE_XRANDR
 	if (event->type != xfDisp->eventBase + RRScreenChangeNotify)
 		return TRUE;
 #endif
@@ -114,61 +215,27 @@ BOOL xf_disp_handle_xevent(xfContext *xfc, XEvent *event)
 	return xf_disp_sendLayout(xfc->disp, settings->MonitorDefArray, settings->MonitorCount) == CHANNEL_RC_OK;
 }
 
-BOOL xf_disp_handle_resize(xfContext *xfc, int width, int height)
+
+BOOL xf_disp_handle_configureNotify(xfContext *xfc, int width, int height)
 {
-	DISPLAY_CONTROL_MONITOR_LAYOUT layout;
 	xfDispContext *xfDisp = xfc->xfDisp;
 
-	if (xfDisp->lastWidth == width && xfDisp->lastHeight == height)
+	if (xfDisp->lastSentWidth == width && xfDisp->lastSentHeight == height)
 		return TRUE;
 
-	if (xfDisp->waitingResize || !xfDisp->activated)
-		return TRUE;
-
-	xfDisp->lastWidth = width;
-	xfDisp->lastHeight = height;
-	xfDisp->waitingResize = TRUE;
-
-	layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
-	layout.Top = layout.Left = 0;
-	layout.Width = width;
-	layout.Height = height;
-	layout.Orientation = ORIENTATION_LANDSCAPE;
-	layout.DesktopScaleFactor = 100;
-	layout.DeviceScaleFactor = 100;
-	layout.PhysicalWidth = width;
-	layout.PhysicalHeight = height;
-
-	return xfc->disp->SendMonitorLayout(xfc->disp, 1, &layout) == CHANNEL_RC_OK;
-}
-
-BOOL xf_disp_set_window_resizable(xfDispContext *xfDisp)
-{
-	XSizeHints *size_hints;
-
-	if (!(size_hints = XAllocSizeHints()))
-			return FALSE;
-
-	size_hints->flags = PMinSize | PMaxSize | PWinGravity;
-	size_hints->win_gravity = NorthWestGravity;
-	size_hints->min_width = size_hints->min_height = 320;
-	size_hints->max_width = size_hints->max_height = 8192;
-	XSetWMNormalHints(xfDisp->xfc->display, xfDisp->xfc->window->handle, size_hints);
-	XFree(size_hints);
-	return TRUE;
-}
-
-void xf_disp_resized(xfDispContext *xfDisp)
-{
-	rdpSettings *settings = xfDisp->xfc->context.settings;
-
-	xfDisp->waitingResize = FALSE;
-
-	if (xfDisp->activated && !settings->Fullscreen)
+	if (xfDisp->waitingResize || !xfDisp->activated ||
+			(GetTickCount64() - xfDisp->lastSentDate < RESIZE_MIN_DELAY))
 	{
-		xf_disp_set_window_resizable(xfDisp);
+		WLog_DBG(TAG, "delaying resize to %dx%d", width, height);
+		xfDisp->targetWidth = width;
+		xfDisp->targetHeight = height;
+		return TRUE;
 	}
+
+	WLog_DBG(TAG, "resizing on ConfigureNotify to %dx%d", width, height);
+	return xf_disp_sendResize(xfDisp, width, height);
 }
+
 
 UINT xf_DisplayControlCaps(DispClientContext *disp, UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB)
 {
@@ -197,7 +264,7 @@ BOOL xf_disp_init(xfContext* xfc, DispClientContext *disp)
 	if (settings->DynamicResolutionUpdate)
 	{
 		disp->DisplayControlCaps = xf_DisplayControlCaps;
-#ifdef WITH_XRANDR
+#ifdef USABLE_XRANDR
 		if (settings->Fullscreen)
 		{
 			/* ask X11 to notify us of screen changes */
