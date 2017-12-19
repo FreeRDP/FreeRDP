@@ -524,9 +524,9 @@ static void fips_expand_key_bits(BYTE* in, BYTE* out)
 		p = b / 8;
 		r = b % 8;
 
-		if (r == 0)
+		if (r <= 1)
 		{
-			out[i] = buf[p] & 0xfe;
+			out[i] = (buf[p] << r) & 0xfe;
 		}
 		else
 		{
