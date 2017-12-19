@@ -309,6 +309,7 @@ void per_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
  * Read PER OBJECT_IDENTIFIER (OID).
  * @param s stream
  * @param oid object identifier (OID)
+ * @warning It works correctly only for limited set of OIDs.
  * @return
  */
 
@@ -328,8 +329,8 @@ BOOL per_read_object_identifier(wStream* s, BYTE oid[6])
 		return FALSE;
 
 	Stream_Read_UINT8(s, t12); /* first two tuples */
-	a_oid[0] = (t12 >> 4);
-	a_oid[1] = (t12 & 0x0F);
+	a_oid[0] = t12 / 40;
+	a_oid[1] = t12 % 40;
 
 	Stream_Read_UINT8(s, a_oid[2]); /* tuple 3 */
 	Stream_Read_UINT8(s, a_oid[3]); /* tuple 4 */
@@ -352,11 +353,12 @@ BOOL per_read_object_identifier(wStream* s, BYTE oid[6])
  * Write PER OBJECT_IDENTIFIER (OID)
  * @param s stream
  * @param oid object identifier (oid)
+ * @warning It works correctly only for limited set of OIDs.
  */
 
 void per_write_object_identifier(wStream* s, BYTE oid[6])
 {
-	BYTE t12 = (oid[0] << 4) & (oid[1] & 0x0F);
+	BYTE t12 = oid[0] * 40 + oid[1];
 	Stream_Write_UINT8(s, 5); /* length */
 	Stream_Write_UINT8(s, t12); /* first two tuples */
 	Stream_Write_UINT8(s, oid[2]); /* tuple 3 */
