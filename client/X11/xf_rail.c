@@ -195,6 +195,10 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 	xfAppWindow* appWindow;
 	const RECTANGLE_16* extents;
 	REGION16 windowInvalidRegion;
+
+	if (!xfc || !xfc->rail || !xfc->railWindows)
+		return;
+
 	region16_init(&windowInvalidRegion);
 	count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
