@@ -32,6 +32,28 @@
 
 #include "rail_orders.h"
 
+static UINT rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* exec_result);
+static UINT rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam);
+static UINT rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* minmaxinfo);
+static UINT rail_read_server_localmovesize_order(wStream* s,
+        RAIL_LOCALMOVESIZE_ORDER* localmovesize);
+static UINT rail_read_server_get_appid_resp_order(wStream* s,
+        RAIL_GET_APPID_RESP_ORDER* get_appid_resp);
+static UINT rail_read_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
+
+static void rail_write_client_status_order(wStream* s, RAIL_CLIENT_STATUS_ORDER* client_status);
+static UINT rail_write_client_exec_order(wStream* s, RAIL_EXEC_ORDER* exec);
+static void rail_write_client_activate_order(wStream* s, RAIL_ACTIVATE_ORDER* activate);
+static void rail_write_client_sysmenu_order(wStream* s, RAIL_SYSMENU_ORDER* sysmenu);
+static void rail_write_client_syscommand_order(wStream* s, RAIL_SYSCOMMAND_ORDER* syscommand);
+static void rail_write_client_notify_event_order(wStream* s, RAIL_NOTIFY_EVENT_ORDER* notify_event);
+static void rail_write_client_window_move_order(wStream* s, RAIL_WINDOW_MOVE_ORDER* window_move);
+static void rail_write_client_get_appid_req_order(wStream* s,
+        RAIL_GET_APPID_REQ_ORDER* get_appid_req);
+static void rail_write_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
+
+static UINT rail_send_client_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam);
+static UINT rail_send_client_sysparams_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam);
 
 /**
  * Function description
@@ -94,7 +116,7 @@ UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_write_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast)
+static UINT rail_write_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast)
 {
 	highContrast->colorSchemeLength = highContrast->colorScheme.length + 2;
 	Stream_Write_UINT32(s, highContrast->flags); /* flags (4 bytes) */
@@ -396,7 +418,7 @@ void rail_write_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbarI
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake, wStream* s)
+static UINT rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	UINT error;
@@ -423,8 +445,8 @@ UINT rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx,
-                                  wStream* s)
+static UINT rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx,
+        wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	UINT error;
@@ -451,7 +473,8 @@ UINT rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* han
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_recv_exec_result_order(railPlugin* rail, RAIL_EXEC_RESULT_ORDER* execResult, wStream* s)
+static UINT rail_recv_exec_result_order(railPlugin* rail, RAIL_EXEC_RESULT_ORDER* execResult,
+                                        wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	UINT error;
@@ -479,7 +502,8 @@ UINT rail_recv_exec_result_order(railPlugin* rail, RAIL_EXEC_RESULT_ORDER* execR
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_recv_server_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam, wStream* s)
+static UINT rail_recv_server_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam,
+        wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	UINT error;
@@ -506,8 +530,8 @@ UINT rail_recv_server_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysp
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_recv_server_minmaxinfo_order(railPlugin* rail, RAIL_MINMAXINFO_ORDER* minMaxInfo,
-                                       wStream* s)
+static UINT rail_recv_server_minmaxinfo_order(railPlugin* rail, RAIL_MINMAXINFO_ORDER* minMaxInfo,
+        wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	UINT error;
@@ -534,7 +558,8 @@ UINT rail_recv_server_minmaxinfo_order(railPlugin* rail, RAIL_MINMAXINFO_ORDER* 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_recv_server_localmovesize_order(railPlugin* rail, RAIL_LOCALMOVESIZE_ORDER* localMoveSize,
+static UINT rail_recv_server_localmovesize_order(railPlugin* rail,
+        RAIL_LOCALMOVESIZE_ORDER* localMoveSize,
         wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
@@ -562,7 +587,7 @@ UINT rail_recv_server_localmovesize_order(railPlugin* rail, RAIL_LOCALMOVESIZE_O
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_recv_server_get_appid_resp_order(railPlugin* rail,
+static UINT rail_recv_server_get_appid_resp_order(railPlugin* rail,
         RAIL_GET_APPID_RESP_ORDER* getAppIdResp, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
@@ -590,8 +615,8 @@ UINT rail_recv_server_get_appid_resp_order(railPlugin* rail,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_recv_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo,
-                                  wStream* s)
+static UINT rail_recv_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo,
+        wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	UINT error;
@@ -688,7 +713,6 @@ UINT rail_order_recv(railPlugin* rail, wStream* s)
 		default:
 			WLog_ERR(TAG,  "Unknown RAIL PDU order reveived.");
 			return ERROR_INVALID_DATA;
-			break;
 	}
 
 	return CHANNEL_RC_OK;
