@@ -6,7 +6,7 @@
 
 int TestIoDevice(int argc, char* argv[])
 {
-#ifndef _WIN32
+#if 0
 	NTSTATUS NtStatus;
 	ANSI_STRING aString;
 	UNICODE_STRING uString;
