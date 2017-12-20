@@ -160,8 +160,9 @@ static int nla_client_init(rdpNla* nla)
 	if (settings->RestrictedAdminModeRequired)
 		settings->DisableCredentialsDelegation = TRUE;
 
-	if ((!settings->Password) || (!settings->Username)
-	    || (!strlen(settings->Password)) || (!strlen(settings->Username)))
+	if ((!settings->Username) || (!strlen(settings->Username))
+	    || (((!settings->Password) || (!strlen(settings->Password)))
+		&& (!settings->RedirectionPassword)))
 	{
 		PromptPassword = TRUE;
 	}
@@ -223,9 +224,19 @@ static int nla_client_init(rdpNla* nla)
 	}
 	else
 	{
-		if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
-		                         settings->Password) < 0)
-			return -1;
+		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
+		{
+			if (sspi_SetAuthIdentityWithUnicodePassword(nla->identity, settings->Username, settings->Domain,
+								    (UINT16*) settings->RedirectionPassword,
+								    settings->RedirectionPasswordLength / sizeof(WCHAR) - 1) < 0)
+				return -1;
+		}
+		else
+		{
+			if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
+						 settings->Password) < 0)
+				return -1;
+		}
 	}
 
 #ifndef _WIN32
