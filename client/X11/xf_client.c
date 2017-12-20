@@ -86,6 +86,7 @@
 #include <winpr/synch.h>
 #include <winpr/file.h>
 #include <winpr/print.h>
+#include <winpr/sysinfo.h>
 #include <X11/XKBlib.h>
 
 #include "xf_gdi.h"
@@ -280,9 +281,6 @@ static BOOL xf_desktop_resize(rdpContext* context)
 		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0, xfc->window->width,
 		               xfc->window->height);
 	}
-
-	if (xfc->xfDisp)
-		xf_disp_resized(xfc->xfDisp);
 
 	return TRUE;
 }
@@ -1114,9 +1112,9 @@ static BOOL xf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
-	                                 (pChannelConnectedEventHandler) xf_OnChannelConnectedEventHandler);
+			(pChannelConnectedEventHandler) xf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-	                                    (pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
+			(pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
 
 	if (!freerdp_client_load_addins(channels, instance->settings))
 		return FALSE;
@@ -1465,8 +1463,12 @@ static void* xf_client_thread(void* param)
 	rdpContext* context;
 	HANDLE inputEvent = NULL;
 	HANDLE inputThread = NULL;
+	HANDLE timer = NULL;
+	LARGE_INTEGER due;
 	rdpSettings* settings;
+	TimerEventArgs timerEvent;
 
+	EventArgsInit(&timerEvent, "xfreerdp");
 	exit_code = 0;
 	instance = (freerdp*) param;
 	context = instance->context;
@@ -1508,10 +1510,24 @@ static void* xf_client_thread(void* param)
 
 	settings = context->settings;
 
+	timer = CreateWaitableTimerA(NULL, FALSE, NULL);
+	if (!timer)
+	{
+		WLog_ERR(TAG, "failed to create timer");
+		goto disconnect;
+	}
+
+	due.QuadPart = 0;
+	if (!SetWaitableTimer(timer, &due, 100, NULL, NULL, FALSE))
+	{
+		goto disconnect;
+	}
+	handles[0] = timer;
+
 	if (!settings->AsyncInput)
 	{
 		inputEvent = xfc->x11event;
-		handles[0] = inputEvent;
+		handles[1] = inputEvent;
 	}
 	else
 	{
@@ -1527,22 +1543,21 @@ static void* xf_client_thread(void* param)
 	while (!freerdp_shall_disconnect(instance))
 	{
 		/*
-			 * win8 and server 2k12 seem to have some timing issue/race condition
-			 * when a initial sync request is send to sync the keyboard indicators
-			 * sending the sync event twice fixed this problem
-			 */
+		 * win8 and server 2k12 seem to have some timing issue/race condition
+		 * when a initial sync request is send to sync the keyboard indicators
+		 * sending the sync event twice fixed this problem
+		 */
 		if (freerdp_focus_required(instance))
 		{
 			xf_keyboard_focus_in(xfc);
 			xf_keyboard_focus_in(xfc);
 		}
 
-		nCount = (settings->AsyncInput) ? 0 : 1;
+		nCount = (settings->AsyncInput) ? 1 : 2;
 
 		if (!settings->AsyncTransport)
 		{
 			DWORD tmp = freerdp_get_event_handles(context, &handles[nCount], 64 - nCount);
-
 			if (tmp == 0)
 			{
 				WLog_ERR(TAG, "freerdp_get_event_handles failed");
@@ -1553,7 +1568,6 @@ static void* xf_client_thread(void* param)
 		}
 
 		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, 100);
-
 		if (waitStatus == WAIT_FAILED)
 			break;
 
@@ -1579,6 +1593,12 @@ static void* xf_client_thread(void* param)
 				break;
 			}
 		}
+
+		if (status != WAIT_TIMEOUT && WaitForSingleObject(timer, 0))
+		{
+			timerEvent.now = GetTickCount64();
+			PubSub_OnTimer(context->pubSub, context, &timerEvent);
+		}
 	}
 
 	if (settings->AsyncInput)
@@ -1591,6 +1611,8 @@ static void* xf_client_thread(void* param)
 		exit_code = freerdp_error_info(instance);
 
 disconnect:
+	if (timer)
+		CloseHandle(timer);
 	freerdp_disconnect(instance);
 	ExitThread(exit_code);
 	return NULL;
