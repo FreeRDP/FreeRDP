@@ -30,6 +30,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/Xatom.h>
 
 #ifdef WITH_XRENDER
 #include <X11/extensions/Xrender.h>
@@ -1738,6 +1739,19 @@ static int xfreerdp_client_stop(rdpContext* context)
 	return 0;
 }
 
+static Atom get_supported_atom(xfContext* xfc, const char* atomName)
+{
+	unsigned long i;
+	const Atom atom = XInternAtom(xfc->display, atomName, False);
+
+	for (i = 0;  i < xfc->supportedAtomCount;  i++)
+	{
+		if (xfc->supportedAtoms[i] == atom)
+			return atom;
+	}
+
+	return None;
+}
 static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) instance->context;
@@ -1792,20 +1806,48 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 		goto fail_create_mutex;
 	}
 
+	xfc->xfds = ConnectionNumber(xfc->display);
+	xfc->screen_number = DefaultScreen(xfc->display);
+	xfc->screen = ScreenOfDisplay(xfc->display, xfc->screen_number);
+	xfc->depth = DefaultDepthOfScreen(xfc->screen);
+	xfc->big_endian = (ImageByteOrder(xfc->display) == MSBFirst);
+	xfc->invert = TRUE;
+	xfc->complex_regions = TRUE;
+	xfc->_NET_SUPPORTED = XInternAtom(xfc->display, "_NET_SUPPORTED", True);
+	xfc->_NET_SUPPORTING_WM_CHECK = XInternAtom(xfc->display, "_NET_SUPPORTING_WM_CHECK", True);
+
+	if ((xfc->_NET_SUPPORTED != None) && (xfc->_NET_SUPPORTING_WM_CHECK != None))
+	{
+		Atom actual_type;
+		int actual_format;
+		unsigned long nitems, after;
+		unsigned char* data = NULL;
+		int status = XGetWindowProperty(xfc->display, RootWindowOfScreen(xfc->screen),
+		                                xfc->_NET_SUPPORTED, 0, 1024, False, XA_ATOM,
+		                                &actual_type, &actual_format, &nitems, &after, &data);
+
+		if ((status == Success) && (actual_type == XA_ATOM) && (actual_format == 32))
+		{
+			xfc->supportedAtomCount = nitems;
+			xfc->supportedAtoms = calloc(nitems, sizeof(Atom));
+			memcpy(xfc->supportedAtoms, data, nitems * sizeof(Atom));
+		}
+
+		if (data)
+			XFree(data);
+	}
 	xfc->_NET_WM_ICON = XInternAtom(xfc->display, "_NET_WM_ICON", False);
 	xfc->_MOTIF_WM_HINTS = XInternAtom(xfc->display, "_MOTIF_WM_HINTS", False);
 	xfc->_NET_CURRENT_DESKTOP = XInternAtom(xfc->display, "_NET_CURRENT_DESKTOP",
 	                                        False);
 	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
-	xfc->_NET_WM_STATE = XInternAtom(xfc->display, "_NET_WM_STATE", False);
-	xfc->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfc->display,
-	                                "_NET_WM_STATE_FULLSCREEN", False);
+	xfc->_NET_WM_STATE = get_supported_atom(xfc, "_NET_WM_STATE");
+	xfc->_NET_WM_STATE_FULLSCREEN = get_supported_atom(xfc, "_NET_WM_STATE_FULLSCREEN");
 	xfc->_NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(xfc->display,
 	                                    "_NET_WM_STATE_MAXIMIZED_HORZ", False);
 	xfc->_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(xfc->display,
 	                                    "_NET_WM_STATE_MAXIMIZED_VERT", False);
-	xfc->_NET_WM_FULLSCREEN_MONITORS = XInternAtom(xfc->display,
-	                                   "_NET_WM_FULLSCREEN_MONITORS", False);
+	xfc->_NET_WM_FULLSCREEN_MONITORS = get_supported_atom(xfc, "_NET_WM_FULLSCREEN_MONITORS");
 	xfc->_NET_WM_NAME = XInternAtom(xfc->display, "_NET_WM_NAME", False);
 	xfc->_NET_WM_PID = XInternAtom(xfc->display, "_NET_WM_PID", False);
 	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE",
@@ -1832,13 +1874,6 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->WM_PROTOCOLS = XInternAtom(xfc->display, "WM_PROTOCOLS", False);
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
 	xfc->WM_STATE = XInternAtom(xfc->display, "WM_STATE", False);
-	xfc->xfds = ConnectionNumber(xfc->display);
-	xfc->screen_number = DefaultScreen(xfc->display);
-	xfc->screen = ScreenOfDisplay(xfc->display, xfc->screen_number);
-	xfc->depth = DefaultDepthOfScreen(xfc->screen);
-	xfc->big_endian = (ImageByteOrder(xfc->display) == MSBFirst);
-	xfc->invert = TRUE;
-	xfc->complex_regions = TRUE;
 	xfc->x11event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds,
 	                WINPR_FD_READ);
 
@@ -1915,6 +1950,8 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 		free(xfc->vscreen.monitors);
 		xfc->vscreen.monitors = NULL;
 	}
+
+	free(xfc->supportedAtoms);
 }
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)

@@ -174,7 +174,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	}
 
 	/* Determine the x,y starting location for the fullscreen window */
-	if (fullscreen && xfc->context.settings->MonitorCount)
+	if (fullscreen)
 	{
 		/* Initialize startX and startY with reasonable values */
 		startX = xfc->context.settings->MonitorDefArray[0].x;
@@ -190,9 +190,12 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		/* Lastly apply any monitor shift(translation from remote to local coordinate system)
 		 *  to startX and startY values
 		 */
-		startX = startX + xfc->context.settings->MonitorLocalShiftX;
-		startY = startY + xfc->context.settings->MonitorLocalShiftY;
+		startX += xfc->context.settings->MonitorLocalShiftX;
+		startY += xfc->context.settings->MonitorLocalShiftY;
+	}
 
+	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None)
+	{
 		/* Set monitor bounds */
 		if (settings->MonitorCount > 1)
 		{
@@ -203,25 +206,119 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 			                   xfc->fullscreenMonitors.right,
 			                   1);
 		}
+
+		xf_ResizeDesktopWindow(xfc, window, width, height);
+
+		if (fullscreen)
+		{
+			/* enter full screen: move the window before adding NET_WM_STATE_FULLSCREEN */
+			XMoveWindow(xfc->display, window->handle, startX, startY);
+		}
+
+		/* Set the fullscreen state */
+		xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+		                   fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
+		                   xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
+
+		if (!fullscreen)
+		{
+			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
+			XMoveWindow(xfc->display, window->handle, startX, startY);
+		}
 	}
-
-	xf_ResizeDesktopWindow(xfc, window, width, height);
-
-	if (fullscreen)
+	else
 	{
-		/* enter full screen: move the window before adding NET_WM_STATE_FULLSCREEN */
-		XMoveWindow(xfc->display, window->handle, startX, startY);
-	}
+		if (fullscreen)
+		{
+			xf_SetWindowDecorations(xfc, window->handle, FALSE);
 
-	/* Set the fullscreen state */
-	xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
-	                   fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
-	                   xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
+			if (xfc->fullscreenMonitors.top)
+			{
+				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+				                   _NET_WM_STATE_ADD,
+				                   xfc->fullscreenMonitors.top, 0, 0);
+			}
+			else
+			{
+				XSetWindowAttributes xswa;
+				xswa.override_redirect = True;
+				XChangeWindowAttributes(xfc->display, window->handle, CWOverrideRedirect, &xswa);
+				XRaiseWindow(xfc->display, window->handle);
+				xswa.override_redirect = False;
+				XChangeWindowAttributes(xfc->display, window->handle, CWOverrideRedirect, &xswa);
+			}
 
-	if (!fullscreen)
-	{
-		/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
-		XMoveWindow(xfc->display, window->handle, startX, startY);
+			/* if window is in maximized state, save and remove */
+			if (xfc->_NET_WM_STATE_MAXIMIZED_VERT != None)
+			{
+				BYTE state;
+				unsigned long nitems;
+				unsigned long bytes;
+				BYTE* prop;
+
+				if (xf_GetWindowProperty(xfc, window->handle, xfc->_NET_WM_STATE, 255, &nitems, &bytes, &prop))
+				{
+					state = 0;
+
+					while (nitems-- > 0)
+					{
+						if (((Atom*) prop)[nitems] == xfc->_NET_WM_STATE_MAXIMIZED_VERT)
+							state |= 0x01;
+
+						if (((Atom*) prop)[nitems] == xfc->_NET_WM_STATE_MAXIMIZED_HORZ)
+							state |= 0x02;
+					}
+
+					if (state)
+					{
+						xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+						                   _NET_WM_STATE_REMOVE, xfc->_NET_WM_STATE_MAXIMIZED_VERT,
+						                   0, 0);
+						xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+						                   _NET_WM_STATE_REMOVE, xfc->_NET_WM_STATE_MAXIMIZED_HORZ,
+						                   0, 0);
+						xfc->savedMaximizedState = state;
+					}
+
+					XFree(prop);
+				}
+			}
+
+			width = xfc->vscreen.area.right - xfc->vscreen.area.left + 1;
+			height = xfc->vscreen.area.bottom - xfc->vscreen.area.top + 1;
+			xf_ResizeDesktopWindow(xfc, window, width, height);
+			XMoveWindow(xfc->display, window->handle, startX, startY);
+		}
+		else
+		{
+			xf_SetWindowDecorations(xfc, window->handle, window->decorations);
+			xf_ResizeDesktopWindow(xfc, window, width, height);
+			XMoveWindow(xfc->display, window->handle, startX, startY);
+
+			if (xfc->fullscreenMonitors.top)
+			{
+				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+				                   _NET_WM_STATE_REMOVE,
+				                   xfc->fullscreenMonitors.top, 0, 0);
+			}
+
+			/* restore maximized state, if the window was maximized before setting fullscreen */
+			if (xfc->savedMaximizedState & 0x01)
+			{
+				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+				                   _NET_WM_STATE_ADD, xfc->_NET_WM_STATE_MAXIMIZED_VERT,
+				                   0, 0);
+			}
+
+			if (xfc->savedMaximizedState & 0x02)
+			{
+				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+				                   _NET_WM_STATE_ADD, xfc->_NET_WM_STATE_MAXIMIZED_HORZ,
+				                   0, 0);
+			}
+
+			xfc->savedMaximizedState = 0;
+		}
 	}
 }
 
@@ -239,7 +336,7 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property,
 		return FALSE;
 
 	status = XGetWindowProperty(xfc->display, window,
-	                            property, 0, length, FALSE, AnyPropertyType,
+	                            property, 0, length, False, AnyPropertyType,
 	                            &actual_type, &actual_format, nitems, bytes, prop);
 
 	if (status != Success)
@@ -480,7 +577,7 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width,
                             int height)
 {
 	XSizeHints* size_hints;
-	rdpSettings *settings = xfc->context.settings;
+	rdpSettings* settings = xfc->context.settings;
 
 	if (!xfc || !window)
 		return;
@@ -494,8 +591,8 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width,
 	size_hints->max_width = size_hints->max_height = 16384;
 	XSetWMNormalHints(xfc->display, window->handle, size_hints);
 	XResizeWindow(xfc->display, window->handle, width, height);
-
 #ifdef WITH_XRENDER
+
 	if (!settings->SmartSizing)
 #endif
 	{
@@ -595,7 +692,7 @@ void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, const char* name)
 }
 
 static void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width,
-                             int* height)
+                                    int* height)
 {
 	int vscreen_width;
 	int vscreen_height;
