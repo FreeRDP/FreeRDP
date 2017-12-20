@@ -265,7 +265,10 @@ static int test_image_png_to_bmp(void)
 		return -1;
 
 	if (!buffer)
+	{
+		free(tmp);
 		return -1;
+	}
 
 	sprintf_s(src_png, sizeof(src_png), "%s/lodepng_32bit.png", buffer);
 	sprintf_s(src_bmp, sizeof(src_bmp), "%s/lodepng_32bit.bmp", buffer);
@@ -273,6 +276,7 @@ static int test_image_png_to_bmp(void)
 	sprintf_s(dst_bmp, sizeof(dst_bmp), "%s/lodepng_32bit.bmp", tmp);
 	sprintf_s(dst_png2, sizeof(dst_png2), "%s/lodepng_32bit-2.png", tmp);
 	sprintf_s(dst_bmp2, sizeof(dst_bmp2), "%s/lodepng_32bit-2.bmp", tmp);
+	free(tmp);
 
 	if (create_test(src_png, dst_png, dst_bmp))
 		return -1;

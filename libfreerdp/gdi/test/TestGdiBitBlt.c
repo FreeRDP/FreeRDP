@@ -530,7 +530,7 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 		goto fail;
 
 	hBmpDstOriginal = test_convert_to_bitmap(bmp_DST, RawFormat, 0, 0, 0,
-	                  DstFormat, 0, 0, 0, 16, 16, hPalette);
+	                  SrcFormat, 0, 0, 0, 16, 16, hPalette);
 
 	if (!hBmpDstOriginal)
 		goto fail;

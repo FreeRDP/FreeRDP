@@ -609,6 +609,7 @@ static int test_r1_inter_r3(void)
 	retCode = 0;
 out:
 	region16_uninit(&region);
+	region16_uninit(&intersection);
 	return retCode;
 }
 

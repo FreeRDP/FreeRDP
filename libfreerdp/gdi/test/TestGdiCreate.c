@@ -34,6 +34,7 @@ static const UINT32 colorFormatCount = sizeof(colorFormatList) / sizeof(
 
 static int test_gdi_GetDC(void)
 {
+	int rc = -1;
 	HGDI_DC hdc;
 
 	if (!(hdc = gdi_GetDC()))
@@ -43,18 +44,22 @@ static int test_gdi_GetDC(void)
 	}
 
 	if (hdc->format != PIXEL_FORMAT_XRGB32)
-		return -1;
+		goto fail;
 
 	if (hdc->drawMode != GDI_R2_BLACK)
-		return -1;
+		goto fail;
 
-	return 0;
+	rc = 0;
+fail:
+	gdi_DeleteDC(hdc);
+	return rc;
 }
 
 static int test_gdi_CreateCompatibleDC(void)
 {
-	HGDI_DC hdc;
-	HGDI_DC chdc;
+	int rc = -1;
+	HGDI_DC hdc = NULL;
+	HGDI_DC chdc = NULL;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -68,25 +73,33 @@ static int test_gdi_CreateCompatibleDC(void)
 	if (!(chdc = gdi_CreateCompatibleDC(hdc)))
 	{
 		printf("gdi_CreateCompatibleDC failed\n");
-		return -1;
+		goto fail;
 	}
 
 	if (chdc->format != hdc->format)
-		return -1;
+		goto fail;
 
 	if (chdc->drawMode != hdc->drawMode)
-		return -1;
+		goto fail;
 
-	return 0;
+	rc = 0;
+fail:
+
+	if (chdc)
+		gdi_DeleteDC(chdc);
+
+	gdi_DeleteDC(hdc);
+	return rc;
 }
 
 static int test_gdi_CreateBitmap(void)
 {
+	int rc = -1;
 	UINT32 format = PIXEL_FORMAT_ARGB32;
 	UINT32 width;
 	UINT32 height;
 	BYTE* data;
-	HGDI_BITMAP hBitmap;
+	HGDI_BITMAP hBitmap = NULL;
 	width = 32;
 	height = 16;
 
@@ -99,34 +112,42 @@ static int test_gdi_CreateBitmap(void)
 	if (!(hBitmap = gdi_CreateBitmap(width, height, format, data)))
 	{
 		printf("gdi_CreateBitmap failed\n");
-		return -1;
+		goto fail;
 	}
 
 	if (hBitmap->objectType != GDIOBJECT_BITMAP)
-		return -1;
+		goto fail;
 
 	if (hBitmap->format != format)
-		return -1;
+		goto fail;
 
 	if (hBitmap->width != width)
-		return -1;
+		goto fail;
 
 	if (hBitmap->height != height)
-		return -1;
+		goto fail;
 
 	if (hBitmap->data != data)
-		return -1;
+		goto fail;
 
-	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-	return 0;
+	rc = 0;
+fail:
+
+	if (hBitmap)
+		gdi_DeleteObject((HGDIOBJECT) hBitmap);
+	else
+		free(data);
+
+	return rc;
 }
 
 static int test_gdi_CreateCompatibleBitmap(void)
 {
+	int rc = -1;
 	HGDI_DC hdc;
 	UINT32 width;
 	UINT32 height;
-	HGDI_BITMAP hBitmap;
+	HGDI_BITMAP hBitmap = NULL;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -140,26 +161,33 @@ static int test_gdi_CreateCompatibleBitmap(void)
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
 
 	if (hBitmap->objectType != GDIOBJECT_BITMAP)
-		return -1;
+		goto fail;
 
 	if (hBitmap->format != hdc->format)
-		return -1;
+		goto fail;
 
 	if (hBitmap->width != width)
-		return -1;
+		goto fail;
 
 	if (hBitmap->height != height)
-		return -1;
+		goto fail;
 
 	if (!hBitmap->data)
-		return -1;
+		goto fail;
 
-	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-	return 0;
+	rc = 0;
+fail:
+
+	if (hBitmap)
+		gdi_DeleteObject((HGDIOBJECT) hBitmap);
+
+	gdi_DeleteDC(hdc);
+	return rc;
 }
 
 static int test_gdi_CreatePen(void)
 {
+	int rc = -1;
 	const UINT32 format = PIXEL_FORMAT_RGBA32;
 	HGDI_PEN hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD,
 	                              format, NULL);
@@ -171,92 +199,116 @@ static int test_gdi_CreatePen(void)
 	}
 
 	if (hPen->style != GDI_PS_SOLID)
-		return -1;
+		goto fail;
 
 	if (hPen->width != 8)
-		return -1;
+		goto fail;
 
 	if (hPen->color != 0xAABBCCDD)
-		return -1;
+		goto fail;
 
+	rc = 0;
+fail:
 	gdi_DeleteObject((HGDIOBJECT) hPen);
-	return 0;
+	return rc;
 }
 
 static int test_gdi_CreateSolidBrush(void)
 {
+	int rc = -1;
 	HGDI_BRUSH hBrush = gdi_CreateSolidBrush(0xAABBCCDD);
 
 	if (hBrush->objectType != GDIOBJECT_BRUSH)
-		return -1;
+		goto fail;
 
 	if (hBrush->style != GDI_BS_SOLID)
-		return -1;
+		goto fail;
 
 	if (hBrush->color != 0xAABBCCDD)
-		return -1;
+		goto fail;
 
+	rc = 0;
+fail:
 	gdi_DeleteObject((HGDIOBJECT) hBrush);
-	return 0;
+	return rc;
 }
 
 static int test_gdi_CreatePatternBrush(void)
 {
+	int rc = -1;
 	HGDI_BRUSH hBrush;
 	HGDI_BITMAP hBitmap;
 	hBitmap = gdi_CreateBitmap(64, 64, 32, NULL);
 	hBrush = gdi_CreatePatternBrush(hBitmap);
 
+	if (!hBitmap || !hBrush)
+		goto fail;
+
 	if (hBrush->objectType != GDIOBJECT_BRUSH)
-		return -1;
+		goto fail;
 
 	if (hBrush->style != GDI_BS_PATTERN)
-		return -1;
+		goto fail;
 
 	if (hBrush->pattern != hBitmap)
-		return -1;
+		goto fail;
 
-	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-	return 0;
+	rc = 0;
+fail:
+
+	if (hBitmap)
+		gdi_DeleteObject((HGDIOBJECT) hBitmap);
+
+	if (hBrush)
+		gdi_DeleteObject((HGDIOBJECT) hBrush);
+
+	return rc;
 }
 
 static int test_gdi_CreateRectRgn(void)
 {
-	int x1 = 32;
-	int y1 = 64;
-	int x2 = 128;
-	int y2 = 256;
+	int rc = -1;
+	UINT32 x1 = 32;
+	UINT32 y1 = 64;
+	UINT32 x2 = 128;
+	UINT32 y2 = 256;
 	HGDI_RGN hRegion = gdi_CreateRectRgn(x1, y1, x2, y2);
 
+	if (!hRegion)
+		return rc;
+
 	if (hRegion->objectType != GDIOBJECT_REGION)
-		return -1;
+		goto fail;
 
 	if (hRegion->x != x1)
-		return -1;
+		goto fail;
 
 	if (hRegion->y != y1)
-		return -1;
+		goto fail;
 
 	if (hRegion->w != x2 - x1 + 1)
-		return -1;
+		goto fail;
 
 	if (hRegion->h != y2 - y1 + 1)
-		return -1;
+		goto fail;
 
 	if (hRegion->null)
-		return -1;
+		goto fail;
 
+	rc = 0;
+fail:
 	gdi_DeleteObject((HGDIOBJECT) hRegion);
-	return 0;
+	return rc;
 }
 
 static int test_gdi_CreateRect(void)
 {
+	int rc = -1;
 	HGDI_RECT hRect;
-	int x1 = 32;
-	int y1 = 64;
-	int x2 = 128;
-	int y2 = 256;
+	UINT32 x1 = 32;
+	UINT32 y1 = 64;
+	UINT32 x2 = 128;
+	UINT32 y2 = 256;
 
 	if (!(hRect = gdi_CreateRect(x1, y1, x2, y2)))
 	{
@@ -265,22 +317,24 @@ static int test_gdi_CreateRect(void)
 	}
 
 	if (hRect->objectType != GDIOBJECT_RECT)
-		return -1;
+		goto fail;
 
 	if (hRect->left != x1)
-		return -1;
+		goto fail;
 
 	if (hRect->top != y1)
-		return -1;
+		goto fail;
 
 	if (hRect->right != x2)
-		return -1;
+		goto fail;
 
 	if (hRect->bottom != y2)
-		return -1;
+		goto fail;
 
+	rc = 0;
+fail:
 	gdi_DeleteObject((HGDIOBJECT) hRect);
-	return 0;
+	return rc;
 }
 
 static BOOL test_gdi_GetPixel(void)
@@ -305,6 +359,13 @@ static BOOL test_gdi_GetPixel(void)
 
 		hdc->format = colorFormatList[x];
 		hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
+
+		if (!hBitmap)
+		{
+			gdi_DeleteDC(hdc);
+			return -1;
+		}
+
 		gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
 		bpp = GetBytesPerPixel(hBitmap->format);
 
@@ -390,6 +451,7 @@ static BOOL test_gdi_SetPixel(void)
 
 static int test_gdi_SetROP2(void)
 {
+	int rc = -1;
 	HGDI_DC hdc;
 
 	if (!(hdc = gdi_GetDC()))
@@ -401,16 +463,20 @@ static int test_gdi_SetROP2(void)
 	gdi_SetROP2(hdc, GDI_R2_BLACK);
 
 	if (hdc->drawMode != GDI_R2_BLACK)
-		return -1;
+		goto fail;
 
-	return 0;
+	rc = 0;
+fail:
+	gdi_DeleteDC(hdc);
+	return rc;
 }
 
 static int test_gdi_MoveToEx(void)
 {
+	int rc = -1;
 	HGDI_DC hdc;
-	HGDI_PEN hPen;
-	HGDI_POINT prevPoint;
+	HGDI_PEN hPen = NULL;
+	HGDI_POINT prevPoint = NULL;
 	const UINT32 format = PIXEL_FORMAT_RGBA32;
 	gdiPalette* palette = NULL;
 
@@ -423,35 +489,43 @@ static int test_gdi_MoveToEx(void)
 	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD, format, palette)))
 	{
 		printf("gdi_CreatePen failed\n");
-		return -1;
+		goto fail;
 	}
 
 	gdi_SelectObject(hdc, (HGDIOBJECT) hPen);
 	gdi_MoveToEx(hdc, 128, 256, NULL);
 
 	if (hdc->pen->posX != 128)
-		return -1;
+		goto fail;
 
 	if (hdc->pen->posY != 256)
-		return -1;
+		goto fail;
 
 	prevPoint = (HGDI_POINT) malloc(sizeof(GDI_POINT));
 	ZeroMemory(prevPoint, sizeof(GDI_POINT));
 	gdi_MoveToEx(hdc, 64, 128, prevPoint);
 
 	if (prevPoint->x != 128)
-		return -1;
+		goto fail;
 
 	if (prevPoint->y != 256)
-		return -1;
+		goto fail;
 
 	if (hdc->pen->posX != 64)
-		return -1;
+		goto fail;
 
 	if (hdc->pen->posY != 128)
-		return -1;
+		goto fail;
 
-	return 0;
+	rc = 0;
+fail:
+
+	if (hPen)
+		gdi_DeleteObject((HGDIOBJECT)hPen);
+
+	free(prevPoint);
+	gdi_DeleteDC(hdc);
+	return rc;
 }
 
 int TestGdiCreate(int argc, char* argv[])

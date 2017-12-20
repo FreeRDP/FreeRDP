@@ -7,43 +7,53 @@
 
 int TestPathShell(int argc, char* argv[])
 {
-	char* path;
+	const int paths[] =
+	{
+		KNOWN_PATH_HOME,
+		KNOWN_PATH_TEMP,
+		KNOWN_PATH_XDG_DATA_HOME,
+		KNOWN_PATH_XDG_CONFIG_HOME,
+		KNOWN_PATH_XDG_CACHE_HOME,
+		KNOWN_PATH_XDG_RUNTIME_DIR,
+		KNOWN_PATH_XDG_CONFIG_HOME
+	};
+	const char* names[] =
+	{
+		"KNOWN_PATH_HOME",
+		"KNOWN_PATH_TEMP",
+		"KNOWN_PATH_XDG_DATA_HOME",
+		"KNOWN_PATH_XDG_CONFIG_HOME",
+		"KNOWN_PATH_XDG_CACHE_HOME",
+		"KNOWN_PATH_XDG_RUNTIME_DIR",
+		"KNOWN_PATH_XDG_CONFIG_HOME"
+	};
+	int rc = 0;
+	size_t x;
 
-	path = GetKnownPath(KNOWN_PATH_HOME);
-	if (!path)
-		return -1;
-	printf("KNOWN_PATH_HOME: %s\n", path);
+	for (x = 0; x < sizeof(paths) / sizeof(paths[0]); x++)
+	{
+		const int id = paths[x];
+		const char* name = names[x];
+		{
+			char* path = GetKnownPath(id);
 
-	path = GetKnownPath(KNOWN_PATH_TEMP);
-	if (!path)
-		return -1;
-	printf("KNOWN_PATH_TEMP: %s\n", path);
+			if (!path)
+				rc = -1;
 
-	path = GetKnownPath(KNOWN_PATH_XDG_DATA_HOME);
-	if (!path)
-		return -1;
-	printf("KNOWN_PATH_DATA: %s\n", path);
+			printf("%s Path: %s\n", name, path);
+			free(path);
+		}
+		{
+			char* path = GetKnownSubPath(id, "freerdp");
 
-	path = GetKnownPath(KNOWN_PATH_XDG_CONFIG_HOME);
-	if (!path)
-		return -1;
-	printf("KNOWN_PATH_CONFIG: %s\n", path);
+			if (!path)
+				rc = -1;
 
-	path = GetKnownPath(KNOWN_PATH_XDG_CACHE_HOME);
-	if (!path)
-		return -1;
-	printf("KNOWN_PATH_CACHE: %s\n", path);
+			printf("%s SubPath: %s\n", name, path);
+			free(path);
+		}
+	}
 
-	path = GetKnownPath(KNOWN_PATH_XDG_RUNTIME_DIR);
-	if (!path)
-		return -1;
-	printf("KNOWN_PATH_RUNTIME: %s\n", path);
-
-	path = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
-	if (!path)
-		return -1;
-	printf("KNOWN_PATH_CONFIG SubPath: %s\n", path);
-
-	return 0;
+	return rc;
 }
 

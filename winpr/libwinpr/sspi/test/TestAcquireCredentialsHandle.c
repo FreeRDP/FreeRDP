@@ -10,6 +10,7 @@ static const char* test_Password = "Password";
 
 int TestAcquireCredentialsHandle(int argc, char* argv[])
 {
+	int rc = -1;
 	SECURITY_STATUS status;
 	CredHandle credentials;
 	TimeStamp expiration;
@@ -23,13 +24,7 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 	identity.Password = (UINT16*) _strdup(test_Password);
 
 	if (!identity.User || !identity.Domain || !identity.Password)
-	{
-		free(identity.User);
-		free(identity.Domain);
-		free(identity.Password);
-		fprintf(stderr, "Memory allocation failed\n");
-		return -1;
-	}
+		goto fail;
 
 	identity.UserLength = strlen(test_User);
 	identity.DomainLength = strlen(test_Domain);
@@ -39,20 +34,23 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 	         SECPKG_CRED_OUTBOUND, NULL, &identity, NULL, NULL, &credentials, &expiration);
 
 	if (status != SEC_E_OK)
-	{
-		sspi_GlobalFinish();
-		return -1;
-	}
+		goto fail;
 
 	status = table->QueryCredentialsAttributes(&credentials, SECPKG_CRED_ATTR_NAMES, &credential_names);
 
 	if (status != SEC_E_OK)
-	{
-		sspi_GlobalFinish();
-		return -1;
-	}
+		goto fail;
 
+	rc = 0;
+fail:
+
+	if (SecIsValidHandle(&credentials))
+		table->FreeCredentialsHandle(&credentials);
+
+	free(identity.User);
+	free(identity.Domain);
+	free(identity.Password);
 	sspi_GlobalFinish();
-	return 0;
+	return rc;
 }
 

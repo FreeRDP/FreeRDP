@@ -16,67 +16,71 @@
 
 static int test_gdi_PtInRect(void)
 {
+	int rc = -1;
 	HGDI_RECT hRect;
-	int left = 20;
-	int top = 40;
-	int right = 60;
-	int bottom = 80;
+	UINT32 left = 20;
+	UINT32 top = 40;
+	UINT32 right = 60;
+	UINT32 bottom = 80;
 
 	if (!(hRect = gdi_CreateRect(left, top, right, bottom)))
 	{
 		printf("gdi_CreateRect failed\n");
-		return -1;
+		return rc;
 	}
 
 	if (gdi_PtInRect(hRect, 0, 0))
-		return -1;
+		goto fail;
 
 	if (gdi_PtInRect(hRect, 500, 500))
-		return -1;
+		goto fail;
 
 	if (gdi_PtInRect(hRect, 40, 100))
-		return -1;
+		goto fail;
 
 	if (gdi_PtInRect(hRect, 10, 40))
-		return -1;
+		goto fail;
 
 	if (!gdi_PtInRect(hRect, 30, 50))
-		return -1;
+		goto fail;
 
 	if (!gdi_PtInRect(hRect, left, top))
-		return -1;
+		goto fail;
 
 	if (!gdi_PtInRect(hRect, right, bottom))
-		return -1;
+		goto fail;
 
 	if (!gdi_PtInRect(hRect, right, 60))
-		return -1;
+		goto fail;
 
 	if (!gdi_PtInRect(hRect, 40, bottom))
-		return -1;
+		goto fail;
 
-	return 0;
+	rc = 0;
+fail:
+	gdi_DeleteObject((HGDIOBJECT)hRect);
+	return rc;
 }
 
 int test_gdi_FillRect(void)
 {
 	int rc = -1;
-	HGDI_DC hdc;
-	HGDI_RECT hRect;
+	HGDI_DC hdc = NULL;
+	HGDI_RECT hRect = NULL;
 	HGDI_BRUSH hBrush = NULL;
 	HGDI_BITMAP hBitmap = NULL;
 	UINT32 color;
 	UINT32 pixel;
 	UINT32 rawPixel;
-	int x, y;
-	int badPixels;
-	int goodPixels;
-	int width = 200;
-	int height = 300;
-	int left = 20;
-	int top = 40;
-	int right = 60;
-	int bottom = 80;
+	UINT32 x, y;
+	UINT32 badPixels;
+	UINT32 goodPixels;
+	UINT32 width = 200;
+	UINT32 height = 300;
+	UINT32 left = 20;
+	UINT32 top = 40;
+	UINT32 right = 60;
+	UINT32 bottom = 80;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -144,6 +148,8 @@ int test_gdi_FillRect(void)
 fail:
 	gdi_DeleteObject((HGDIOBJECT) hBrush);
 	gdi_DeleteObject((HGDIOBJECT) hBitmap);
+	gdi_DeleteObject((HGDIOBJECT)hRect);
+	gdi_DeleteDC(hdc);
 	return rc;
 }
 

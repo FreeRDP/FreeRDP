@@ -107,12 +107,22 @@ BOOL TimerCloseHandle(HANDLE handle)
 	if (!TimerIsHandled(handle))
 		return FALSE;
 
-#ifdef __linux__
+	if (!timer->lpArgToCompletionRoutine)
+	{
+#ifdef HAVE_TIMERFD_H
 
-	if (timer->fd != -1)
-		close(timer->fd);
+		if (timer->fd != -1)
+			close(timer->fd);
 
 #endif
+	}
+	else
+	{
+#ifdef WITH_POSIX_TIMER
+		timer_delete(timer->tid);
+#endif
+	}
+
 	free(timer);
 	return TRUE;
 }
