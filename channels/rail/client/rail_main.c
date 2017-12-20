@@ -38,6 +38,10 @@
 RailClientContext* rail_get_client_interface(railPlugin* rail)
 {
 	RailClientContext* pInterface;
+
+	if (!rail)
+		return NULL;
+
 	pInterface = (RailClientContext*) rail->channelEntryPoints.pInterface;
 	return pInterface;
 }
@@ -52,14 +56,10 @@ static UINT rail_send(railPlugin* rail, wStream* s)
 	UINT status;
 
 	if (!rail)
-	{
-		status = CHANNEL_RC_BAD_INIT_HANDLE;
-	}
-	else
-	{
-		status = rail->channelEntryPoints.pVirtualChannelWriteEx(rail->InitHandle, rail->OpenHandle,
-		         Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
-	}
+		return CHANNEL_RC_BAD_INIT_HANDLE;
+
+	status = rail->channelEntryPoints.pVirtualChannelWriteEx(rail->InitHandle, rail->OpenHandle,
+	         Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -79,6 +79,10 @@ static UINT rail_send(railPlugin* rail, wStream* s)
 UINT rail_send_channel_data(railPlugin* rail, void* data, size_t length)
 {
 	wStream* s = NULL;
+
+	if (!rail || !data)
+		return ERROR_INVALID_PARAMETER;
+
 	s = Stream_New(NULL, length);
 
 	if (!s)
@@ -97,17 +101,15 @@ UINT rail_send_channel_data(railPlugin* rail, void* data, size_t length)
  */
 static void rail_client_clean_exec_order(RAIL_EXEC_ORDER* exec)
 {
-    if (!exec)
-        return;
+	if (!exec)
+		return;
 
-    free(exec->exeOrFile.string);
-    exec->exeOrFile.string = NULL;
-
-    free(exec->workingDir.string);
-    exec->workingDir.string = NULL;
-
-    free(exec->arguments.string);
-    exec->arguments.string = NULL;
+	free(exec->exeOrFile.string);
+	exec->exeOrFile.string = NULL;
+	free(exec->workingDir.string);
+	exec->workingDir.string = NULL;
+	free(exec->arguments.string);
+	exec->arguments.string = NULL;
 }
 
 /**
@@ -124,13 +126,18 @@ static UINT rail_client_execute(RailClientContext* context,
 {
 	char* exeOrFile;
 	UINT error;
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !exec)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	exeOrFile = exec->RemoteApplicationProgram;
 
 	if (!exeOrFile)
 		return ERROR_INVALID_PARAMETER;
 
-	if (strlen(exeOrFile) >= 2)
+	if (strnlen(exeOrFile, MAX_PATH) >= 2)
 	{
 		if (strncmp(exeOrFile, "||", 2) != 0)
 			exec->flags |= RAIL_EXEC_FLAG_FILE;
@@ -155,7 +162,12 @@ static UINT rail_client_execute(RailClientContext* context,
 static UINT rail_client_activate(RailClientContext* context,
                                  RAIL_ACTIVATE_ORDER* activate)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !activate)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	return rail_send_client_activate_order(rail, activate);
 }
 
@@ -168,10 +180,14 @@ static UINT rail_send_client_sysparam(RailClientContext* context,
                                       RAIL_SYSPARAM_ORDER* sysparam)
 {
 	wStream* s;
-	int length;
-	railPlugin* rail = (railPlugin*) context->handle;
+	size_t length = RAIL_SYSPARAM_ORDER_LENGTH;
+	railPlugin* rail;
 	UINT error;
-	length = RAIL_SYSPARAM_ORDER_LENGTH;
+
+	if (!context || !sysparam)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 
 	switch (sysparam->param)
 	{
@@ -230,6 +246,9 @@ static UINT rail_client_system_param(RailClientContext* context,
                                      RAIL_SYSPARAM_ORDER* sysparam)
 {
 	UINT error = CHANNEL_RC_OK;
+
+	if (!context || !sysparam)
+		return ERROR_INVALID_PARAMETER;
 
 	if (sysparam->params & SPI_MASK_SET_HIGH_CONTRAST)
 	{
@@ -319,6 +338,9 @@ static UINT rail_client_system_param(RailClientContext* context,
 static UINT rail_server_system_param(RailClientContext* context,
                                      RAIL_SYSPARAM_ORDER* sysparam)
 {
+	if (!context || !sysparam)
+		return ERROR_INVALID_PARAMETER;
+
 	return CHANNEL_RC_OK; /* stub - should be registered by client */
 }
 
@@ -330,7 +352,12 @@ static UINT rail_server_system_param(RailClientContext* context,
 static UINT rail_client_system_command(RailClientContext* context,
                                        RAIL_SYSCOMMAND_ORDER* syscommand)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !syscommand)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	return rail_send_client_syscommand_order(rail, syscommand);
 }
 
@@ -342,7 +369,12 @@ static UINT rail_client_system_command(RailClientContext* context,
 static UINT rail_client_handshake(RailClientContext* context,
                                   RAIL_HANDSHAKE_ORDER* handshake)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !handshake)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	return rail_send_handshake_order(rail, handshake);
 }
 
@@ -354,6 +386,9 @@ static UINT rail_client_handshake(RailClientContext* context,
 static UINT rail_server_handshake(RailClientContext* context,
                                   RAIL_HANDSHAKE_ORDER* handshake)
 {
+	if (!context || !handshake)
+		return ERROR_INVALID_PARAMETER;
+
 	return CHANNEL_RC_OK; /* stub - should be registered by client */
 }
 
@@ -365,7 +400,12 @@ static UINT rail_server_handshake(RailClientContext* context,
 static UINT rail_client_handshake_ex(RailClientContext* context,
                                      RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !handshakeEx)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	return rail_send_handshake_ex_order(rail, handshakeEx);
 }
 
@@ -377,6 +417,9 @@ static UINT rail_client_handshake_ex(RailClientContext* context,
 static UINT rail_server_handshake_ex(RailClientContext* context,
                                      RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
+	if (!context || !handshakeEx)
+		return ERROR_INVALID_PARAMETER;
+
 	return CHANNEL_RC_OK; /* stub - should be registered by client */
 }
 
@@ -388,7 +431,12 @@ static UINT rail_server_handshake_ex(RailClientContext* context,
 static UINT rail_client_notify_event(RailClientContext* context,
                                      RAIL_NOTIFY_EVENT_ORDER* notifyEvent)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !notifyEvent)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	return rail_send_client_notify_event_order(rail, notifyEvent);
 }
 
@@ -400,7 +448,12 @@ static UINT rail_client_notify_event(RailClientContext* context,
 static UINT rail_client_window_move(RailClientContext* context,
                                     RAIL_WINDOW_MOVE_ORDER* windowMove)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !windowMove)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	return rail_send_client_window_move_order(rail, windowMove);
 }
 
@@ -412,6 +465,9 @@ static UINT rail_client_window_move(RailClientContext* context,
 static UINT rail_server_local_move_size(RailClientContext* context,
                                         RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
+	if (!context || !localMoveSize)
+		return ERROR_INVALID_PARAMETER;
+
 	return CHANNEL_RC_OK; /* stub - should be registered by client */
 }
 
@@ -423,6 +479,9 @@ static UINT rail_server_local_move_size(RailClientContext* context,
 static UINT rail_server_min_max_info(RailClientContext* context,
                                      RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
+	if (!context || !minMaxInfo)
+		return ERROR_INVALID_PARAMETER;
+
 	return CHANNEL_RC_OK; /* stub - should be registered by client */
 }
 
@@ -434,7 +493,12 @@ static UINT rail_server_min_max_info(RailClientContext* context,
 static UINT rail_client_information(RailClientContext* context,
                                     RAIL_CLIENT_STATUS_ORDER* clientStatus)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !clientStatus)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	return rail_send_client_status_order(rail, clientStatus);
 }
 
@@ -446,7 +510,12 @@ static UINT rail_client_information(RailClientContext* context,
 static UINT rail_client_system_menu(RailClientContext* context,
                                     RAIL_SYSMENU_ORDER* sysmenu)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !sysmenu)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	return rail_send_client_sysmenu_order(rail, sysmenu);
 }
 
@@ -458,7 +527,12 @@ static UINT rail_client_system_menu(RailClientContext* context,
 static UINT rail_client_language_bar_info(RailClientContext* context,
         RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !langBarInfo)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	return rail_send_client_langbar_info_order(rail, langBarInfo);
 }
 
@@ -470,6 +544,9 @@ static UINT rail_client_language_bar_info(RailClientContext* context,
 static UINT rail_server_language_bar_info(RailClientContext* context,
         RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
+	if (!context || !langBarInfo)
+		return ERROR_INVALID_PARAMETER;
+
 	return CHANNEL_RC_OK; /* stub - should be registered by client */
 }
 
@@ -481,6 +558,9 @@ static UINT rail_server_language_bar_info(RailClientContext* context,
 static UINT rail_server_execute_result(RailClientContext* context,
                                        RAIL_EXEC_RESULT_ORDER* execResult)
 {
+	if (!context || !execResult)
+		return ERROR_INVALID_PARAMETER;
+
 	return CHANNEL_RC_OK; /* stub - should be registered by client */
 }
 
@@ -492,7 +572,12 @@ static UINT rail_server_execute_result(RailClientContext* context,
 static UINT rail_client_get_appid_request(RailClientContext* context,
         RAIL_GET_APPID_REQ_ORDER* getAppIdReq)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
+	railPlugin* rail;
+
+	if (!context || !getAppIdReq || !context->handle)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
 	return rail_send_client_get_appid_req_order(rail, getAppIdReq);
 }
 
@@ -504,6 +589,9 @@ static UINT rail_client_get_appid_request(RailClientContext* context,
 static UINT rail_server_get_appid_response(RailClientContext* context,
         RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
 {
+	if (!context || !getAppIdResp)
+		return ERROR_INVALID_PARAMETER;
+
 	return CHANNEL_RC_OK; /* stub - should be registered by client */
 }
 
@@ -635,9 +723,9 @@ static void* rail_virtual_channel_client_thread(void* arg)
 		if (message.id == 0)
 		{
 			data = (wStream*) message.wParam;
-
 			error = rail_order_recv(rail, data);
 			Stream_Free(data, TRUE);
+
 			if (error)
 			{
 				WLog_ERR(TAG, "rail_order_recv failed with error %"PRIu32"!", error);
