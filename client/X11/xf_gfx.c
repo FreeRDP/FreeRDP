@@ -25,6 +25,7 @@
 
 #include <freerdp/log.h>
 #include "xf_gfx.h"
+#include "xf_rail.h"
 
 #define TAG CLIENT_TAG("x11")
 
@@ -46,7 +47,6 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	XSetClipMask(xfc->display, xfc->gc, None);
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-
 	region16_intersect_rect(&(surface->gdi.invalidRegion),
 	                        &(surface->gdi.invalidRegion), &surfaceRect);
 
@@ -73,22 +73,31 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 				goto fail;
 		}
 
-#ifdef WITH_XRENDER
-
-		if (xfc->context.settings->SmartSizing
-		    || xfc->context.settings->MultiTouchGestures)
+		if (xfc->remote_app)
 		{
-			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
-			          nXSrc, nYSrc, nXDst, nYDst, width, height);
-			xf_draw_screen(xfc, nXDst, nYDst, width, height);
-		}
-		else
-#endif
-		{
-			XPutImage(xfc->display, xfc->drawable, xfc->gc,
+			XPutImage(xfc->display, xfc->primary, xfc->gc,
 			          surface->image, nXSrc, nYSrc,
 			          nXDst, nYDst, width, height);
+			xf_lock_x11(xfc, FALSE);
+			xf_rail_paint(xfc, nXDst, nYDst, nXDst + width, nYDst + height);
+			xf_unlock_x11(xfc, FALSE);
 		}
+		else
+#ifdef WITH_XRENDER
+			if (xfc->context.settings->SmartSizing
+			    || xfc->context.settings->MultiTouchGestures)
+			{
+				XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
+				          nXSrc, nYSrc, nXDst, nYDst, width, height);
+				xf_draw_screen(xfc, nXDst, nYDst, width, height);
+			}
+			else
+#endif
+			{
+				XPutImage(xfc->display, xfc->drawable, xfc->gc,
+				          surface->image, nXSrc, nYSrc,
+				          nXDst, nYDst, width, height);
+			}
 	}
 
 	rc = CHANNEL_RC_OK;
@@ -215,12 +224,13 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	xfGfxSurface* surface;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 	xfContext* xfc = (xfContext*) gdi->context;
+	surface = (xfGfxSurface*) calloc(1, sizeof(xfGfxSurface));
 
-	surface = (xfGfxSurface *) calloc(1, sizeof(xfGfxSurface));
 	if (!surface)
 		return CHANNEL_RC_NO_MEMORY;
 
 	surface->gdi.codecs = gdi->context->codecs;
+
 	if (!surface->gdi.codecs)
 	{
 		WLog_ERR(TAG, "%s: global GDI codecs aren't set", __FUNCTION__);
@@ -250,13 +260,14 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	surface->gdi.scanline = surface->gdi.width * GetBytesPerPixel(surface->gdi.format);
 	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, xfc->scanline_pad);
 	size = surface->gdi.scanline * surface->gdi.height;
-
 	surface->gdi.data = (BYTE*)_aligned_malloc(size, 16);
+
 	if (!surface->gdi.data)
 	{
 		WLog_ERR(TAG, "%s: unable to allocate GDI data", __FUNCTION__);
 		goto out_free;
 	}
+
 	ZeroMemory(surface->gdi.data, size);
 
 	if (AreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
@@ -272,15 +283,15 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		surface->stageScanline = width * bytes;
 		surface->stageScanline = x11_pad_scanline(surface->stageScanline, xfc->scanline_pad);
 		size = surface->stageScanline * surface->gdi.height;
-
 		surface->stage = (BYTE*) _aligned_malloc(size, 16);
+
 		if (!surface->stage)
 		{
 			WLog_ERR(TAG, "%s: unable to allocate stage buffer", __FUNCTION__);
 			goto out_free_gdidata;
 		}
-		ZeroMemory(surface->stage, size);
 
+		ZeroMemory(surface->stage, size);
 		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 		                              ZPixmap, 0, (char*) surface->stage,
 		                              surface->gdi.width, surface->gdi.height,
@@ -295,16 +306,16 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	surface->image->byte_order = LSBFirst;
 	surface->image->bitmap_bit_order = LSBFirst;
-
 	surface->gdi.outputMapped = FALSE;
 	region16_init(&surface->gdi.invalidRegion);
+
 	if (context->SetSurfaceData(context, surface->gdi.surfaceId, (void*) surface) != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "%s: an error occurred during SetSurfaceData", __FUNCTION__);
 		goto error_set_surface_data;
 	}
-	return CHANNEL_RC_OK;
 
+	return CHANNEL_RC_OK;
 error_set_surface_data:
 	XFree(surface->image);
 error_surface_image:
