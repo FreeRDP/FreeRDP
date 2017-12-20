@@ -86,7 +86,8 @@ static BOOL xf_disp_set_window_resizable(xfDispContext *xfDisp)
 	size_hints->win_gravity = NorthWestGravity;
 	size_hints->min_width = size_hints->min_height = 320;
 	size_hints->max_width = size_hints->max_height = 8192;
-	XSetWMNormalHints(xfDisp->xfc->display, xfDisp->xfc->window->handle, size_hints);
+	if (xfDisp->xfc->window)
+		XSetWMNormalHints(xfDisp->xfc->display, xfDisp->xfc->window->handle, size_hints);
 	XFree(size_hints);
 	return TRUE;
 }
@@ -278,7 +279,7 @@ BOOL xf_disp_handle_configureNotify(xfContext *xfc, int width, int height)
 		return TRUE;
 
 	if (xfDisp->waitingResize || !xfDisp->activated ||
-			(GetTickCount64() - xfDisp->lastSentDate < RESIZE_MIN_DELAY))
+	        (GetTickCount64() - xfDisp->lastSentDate < RESIZE_MIN_DELAY))
 	{
 		WLog_DBG(TAG, "delaying resize to %dx%d", width, height);
 		xfDisp->targetWidth = width;
