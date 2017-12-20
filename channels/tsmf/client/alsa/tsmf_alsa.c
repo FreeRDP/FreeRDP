@@ -72,7 +72,7 @@ static BOOL tsmf_alsa_open(ITSMFAudioDevice *audio, const char *device)
 	}
 	else
 	{
-		strncpy(alsa->device, device, sizeof(alsa->device));
+		strncpy(alsa->device, device, sizeof(alsa->device) - 1);
 	}
 	return tsmf_alsa_open_device(alsa);
 }
