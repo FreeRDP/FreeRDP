@@ -489,10 +489,8 @@ static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
 
 static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
-	XEvent nextEvent;
 	KeySym keysym;
 	char str[256];
-
 	XLookupString((XKeyEvent*) event, str, sizeof(str), &keysym, NULL);
 	xf_keyboard_key_release(xfc, event->xkey.keycode, keysym);
 	return TRUE;
@@ -668,10 +666,8 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 		if (settings->DynamicResolutionUpdate)
 		{
 			int alignedWidth, alignedHeight;
-
 			alignedWidth = (xfc->window->width / 2) * 2;
 			alignedHeight = (xfc->window->height / 2) * 2;
-
 			/* ask the server to resize using the display channel */
 			xf_disp_handle_configureNotify(xfc, alignedWidth, alignedHeight);
 		}
@@ -960,7 +956,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 	BOOL status = TRUE;
 	xfAppWindow* appWindow;
 	xfContext* xfc = (xfContext*) instance->context;
-	rdpSettings *settings = xfc->context.settings;
+	rdpSettings* settings = xfc->context.settings;
 
 	if (xfc->remote_app)
 	{
@@ -1064,13 +1060,12 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		default:
 			if (settings->SupportDisplayControl && xfc->xfDisp)
 				xf_disp_handle_xevent(xfc, event);
+
 			break;
 	}
 
 	xf_cliprdr_handle_xevent(xfc, event);
-
 	xf_input_handle_event(xfc, event);
-
 	XSync(xfc->display, FALSE);
 	return status;
 }
