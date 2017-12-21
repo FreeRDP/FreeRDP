@@ -410,7 +410,7 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer,
 {
 	BOOL rc = FALSE;
 	int index;
-	int length;
+	size_t length;
 	char* line;
 	char* type;
 	char* context;
@@ -424,12 +424,15 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer,
 
 	if ((buffer[0] == BOM_UTF16_LE[0]) && (buffer[1] == BOM_UTF16_LE[1]))
 	{
-		if (ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR)(&buffer[2]), -1, &copy, 0, NULL, NULL) < 0)
+		size = size / 2 - 1;
+
+		if (ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR)(&buffer[2]), size, &copy, 0, NULL, NULL) < 0)
 			return FALSE;
 	}
 	else
-	{	
+	{
 		copy = calloc(1, size + sizeof(BYTE));
+
 		if (!copy)
 			return FALSE;
 
@@ -441,7 +444,7 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer,
 
 	while (line)
 	{
-		length = (int) strlen(line);
+		length = strnlen(line, size);
 
 		if (length > 1)
 		{
