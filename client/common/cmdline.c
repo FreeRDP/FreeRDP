@@ -246,10 +246,7 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 					length += 2;
 
 				if (length >= 20 + 8 + 8)
-				{
-					length += 3 - strlen(arg->Format);
 					overlong = TRUE;
-				}
 
 				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
 					printf("%s[:%s]", arg->Name, overlong ? "..." : arg->Format);
@@ -476,7 +473,6 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 
 		settings->RedirectSmartCards = TRUE;
 		settings->DeviceRedirection = TRUE;
-
 		smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
 
 		if (!smartcard)
@@ -725,7 +721,8 @@ error_argv:
 	return FALSE;
 }
 
-static char** freerdp_command_line_parse_comma_separated_values_ex(const char* name, const char* list,
+static char** freerdp_command_line_parse_comma_separated_values_ex(const char* name,
+        const char* list,
         size_t* count)
 {
 	char** p;
@@ -757,7 +754,8 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 
 	{
 		const char* it = list;
-		while((it = strchr(it, ',')) != NULL)
+
+		while ((it = strchr(it, ',')) != NULL)
 		{
 			it++;
 			nCommas++;
@@ -771,7 +769,7 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 
 	prefix = (nArgs + 1UL) * sizeof(char*);
 	len = strlen(list);
-	p = (char**) calloc(len + prefix + 1, sizeof(char));
+	p = (char**) calloc(len + prefix + 1, sizeof(char*));
 
 	if (!p)
 		return NULL;
@@ -1760,6 +1758,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				WLog_ERR(TAG, "Smart sizing and dynamic resolution are mutually exclusive options");
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
+
 			settings->SupportDisplayControl = TRUE;
 			settings->DynamicResolutionUpdate = TRUE;
 		}

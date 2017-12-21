@@ -80,7 +80,7 @@ PTP_CLEANUP_GROUP winpr_CreateThreadpoolCleanupGroup(void)
 }
 
 VOID winpr_SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEANUP_GROUP ptpcg,
-                                       PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng)
+        PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng)
 {
 	pcbe->CleanupGroup = ptpcg;
 	pcbe->CleanupGroupCancelCallback = pfng;
@@ -128,7 +128,9 @@ VOID winpr_CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
 	if (ptpcg && ptpcg->groups)
 		ArrayList_Free(ptpcg->groups);
 
-	ptpcg->env->CleanupGroup = NULL;
+	if (ptpcg && ptpcg->env)
+		ptpcg->env->CleanupGroup = NULL;
+
 	free(ptpcg);
 #endif
 }

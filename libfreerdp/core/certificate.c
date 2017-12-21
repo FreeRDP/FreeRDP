@@ -430,6 +430,10 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 
 #endif
 	Stream_Read(s, encsig, siglen);
+
+	if (siglen < 8)
+		return FALSE;
+
 	/* Last 8 bytes shall be all zero. */
 #if defined(CERT_VALIDATE_PADDING)
 
@@ -443,10 +447,9 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	}
 
 #endif
-	siglen -= 8;
 #if defined(CERT_VALIDATE_RSA)
 
-	if (crypto_rsa_public_decrypt(encsig, siglen, TSSK_KEY_LENGTH, tssk_modulus, tssk_exponent,
+	if (crypto_rsa_public_decrypt(encsig, siglen - 8, TSSK_KEY_LENGTH, tssk_modulus, tssk_exponent,
 	                              sig) <= 0)
 	{
 		WLog_ERR(TAG, "invalid RSA decrypt");

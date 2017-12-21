@@ -58,7 +58,7 @@ static BOOL test2(void)
 	int index;
 	PTP_POOL pool;
 	PTP_WORK work;
-	PTP_CLEANUP_GROUP cleanupGroup;
+	PTP_CLEANUP_GROUP cleanupGroup = NULL;
 	TP_CALLBACK_ENVIRON environment;
 	printf("Private Thread Pool\n");
 

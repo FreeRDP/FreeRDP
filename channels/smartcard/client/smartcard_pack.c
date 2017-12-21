@@ -2789,7 +2789,7 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if (call->cReaders > 0)
 	{
-		call->rgReaderStates = (ReaderStateA*)calloc(call->cReaders, sizeof(SCARD_READERSTATEA));
+		call->rgReaderStates = (ReaderStateA*)calloc(call->cReaders, sizeof(ReaderStateA));
 
 		if (!call->rgReaderStates)
 		{
