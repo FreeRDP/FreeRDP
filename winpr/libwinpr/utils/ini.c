@@ -366,7 +366,6 @@ int IniFile_Load(wIniFile* ini)
 	char* value;
 	char* separator;
 	char* beg, *end;
-	wIniFileKey* key = NULL;
 	wIniFileSection* section = NULL;
 
 	while (IniFile_Load_HasNextLine(ini))
@@ -417,14 +416,7 @@ int IniFile_Load(wIniFile* ini)
 			value = beg;
 
 			if (!IniFile_AddKey(ini, section, name, value))
-			{
 				return -1;
-			}
-
-			key = NULL;
-
-			if (section && section->keys)
-				key = section->keys[section->nKeys - 1];
 		}
 	}
 

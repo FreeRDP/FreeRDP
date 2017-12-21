@@ -2313,7 +2313,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			if (ncrush_move_encoder_windows(ncrush, &(HistoryBuffer[ncrush->HistoryOffset])) < 0)
 				return -1001;
 
-			HistoryPtr = &HistoryBuffer[32768];
 			ncrush->HistoryPtr = &HistoryBuffer[32768];
 			ncrush->HistoryOffset = 32768;
 			PacketAtFront = TRUE;
