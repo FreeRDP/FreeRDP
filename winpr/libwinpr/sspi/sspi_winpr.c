@@ -65,20 +65,20 @@ extern const SecurityFunctionTableW SCHANNEL_SecurityFunctionTableW;
 
 static const SecPkgInfoA* SecPkgInfoA_LIST[] =
 {
-    &NTLM_SecPkgInfoA,
-    &KERBEROS_SecPkgInfoA,
-    &NEGOTIATE_SecPkgInfoA,
-    &CREDSSP_SecPkgInfoA,
-    &SCHANNEL_SecPkgInfoA
+	&NTLM_SecPkgInfoA,
+	&KERBEROS_SecPkgInfoA,
+	&NEGOTIATE_SecPkgInfoA,
+	&CREDSSP_SecPkgInfoA,
+	&SCHANNEL_SecPkgInfoA
 };
 
 static const SecPkgInfoW* SecPkgInfoW_LIST[] =
 {
-    &NTLM_SecPkgInfoW,
-    &KERBEROS_SecPkgInfoW,
-    &NEGOTIATE_SecPkgInfoW,
-    &CREDSSP_SecPkgInfoW,
-    &SCHANNEL_SecPkgInfoW
+	&NTLM_SecPkgInfoW,
+	&KERBEROS_SecPkgInfoW,
+	&NEGOTIATE_SecPkgInfoW,
+	&CREDSSP_SecPkgInfoW,
+	&SCHANNEL_SecPkgInfoW
 };
 
 static SecurityFunctionTableA winpr_SecurityFunctionTableA;
@@ -100,11 +100,11 @@ typedef struct _SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME;
 
 static const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] =
 {
-    { "NTLM", &NTLM_SecurityFunctionTableA },
-    { "Kerberos", &KERBEROS_SecurityFunctionTableA },
-    { "Negotiate", &NEGOTIATE_SecurityFunctionTableA },
-    { "CREDSSP", &CREDSSP_SecurityFunctionTableA },
-    { "Schannel", &SCHANNEL_SecurityFunctionTableA }
+	{ "NTLM", &NTLM_SecurityFunctionTableA },
+	{ "Kerberos", &KERBEROS_SecurityFunctionTableA },
+	{ "Negotiate", &NEGOTIATE_SecurityFunctionTableA },
+	{ "CREDSSP", &CREDSSP_SecurityFunctionTableA },
+	{ "Schannel", &SCHANNEL_SecurityFunctionTableA }
 };
 
 static const WCHAR NTLM_NAME_W[] = { 'N', 'T', 'L', 'M', '\0' };
@@ -115,11 +115,11 @@ static const WCHAR SCHANNEL_NAME_W[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l',
 
 static const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] =
 {
-    { NTLM_NAME_W, &NTLM_SecurityFunctionTableW },
-    { KERBEROS_NAME_W, &KERBEROS_SecurityFunctionTableW },
-    { NEGOTIATE_NAME_W, &NEGOTIATE_SecurityFunctionTableW },
-    { CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW },
-    { SCHANNEL_NAME_W, &SCHANNEL_SecurityFunctionTableW }
+	{ NTLM_NAME_W, &NTLM_SecurityFunctionTableW },
+	{ KERBEROS_NAME_W, &KERBEROS_SecurityFunctionTableW },
+	{ NEGOTIATE_NAME_W, &NEGOTIATE_SecurityFunctionTableW },
+	{ CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW },
+	{ SCHANNEL_NAME_W, &SCHANNEL_SecurityFunctionTableW }
 };
 
 #define SecHandle_LOWER_MAX	0xFFFFFFFF
@@ -353,18 +353,17 @@ int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, co
 {
 	int unicodePasswordLenW;
 	LPWSTR unicodePassword = NULL;
-
 	unicodePasswordLenW = ConvertToUnicode(CP_UTF8, 0, password, -1, &unicodePassword, 0);
 
 	if (unicodePasswordLenW <= 0)
 		return -1;
 
 	return sspi_SetAuthIdentityWithUnicodePassword(identity, user, domain, unicodePassword,
-	                                               (ULONG)(unicodePasswordLenW - 1));
+	        (ULONG)(unicodePasswordLenW - 1));
 }
 
-int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, const char *user,
-                                            const char *domain, LPWSTR password, ULONG passwordLength)
+int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, const char* user,
+        const char* domain, LPWSTR password, ULONG passwordLength)
 {
 	int status;
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
@@ -398,12 +397,12 @@ int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, c
 
 	free(identity->Password);
 	identity->Password = (UINT16*) calloc(1, (passwordLength + 1) * sizeof(WCHAR));
+
 	if (!identity->Password)
 		return -1;
 
 	CopyMemory(identity->Password, password, passwordLength * sizeof(WCHAR));
 	identity->PasswordLength = passwordLength;
-
 	return 1;
 }
 
@@ -500,7 +499,6 @@ void sspi_GlobalInit(void)
 {
 	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
 	DWORD flags = 0;
-
 	InitOnceExecuteOnce(&once, sspi_init, &flags, NULL);
 }
 
@@ -523,11 +521,6 @@ static SecurityFunctionTableA* sspi_GetSecurityFunctionTableAByNameA(const SEC_C
 		}
 	}
 
-	return NULL;
-}
-
-static SecurityFunctionTableA* sspi_GetSecurityFunctionTableAByNameW(const SEC_WCHAR* Name)
-{
 	return NULL;
 }
 
@@ -583,13 +576,13 @@ static void sspi_ContextBufferFree(void* contextBuffer)
 
 			switch (allocatorIndex)
 			{
-			    case EnumerateSecurityPackagesIndex:
-				    FreeContextBuffer_EnumerateSecurityPackages(contextBuffer);
-				    break;
+				case EnumerateSecurityPackagesIndex:
+					FreeContextBuffer_EnumerateSecurityPackages(contextBuffer);
+					break;
 
-			    case QuerySecurityPackageInfoIndex:
-				    FreeContextBuffer_QuerySecurityPackageInfo(contextBuffer);
-				    break;
+				case QuerySecurityPackageInfoIndex:
+					FreeContextBuffer_QuerySecurityPackageInfo(contextBuffer);
+					break;
 			}
 		}
 	}
@@ -1552,64 +1545,64 @@ static SECURITY_STATUS SEC_ENTRY winpr_VerifySignature(PCtxtHandle phContext,
 
 static SecurityFunctionTableA winpr_SecurityFunctionTableA =
 {
-    1, /* dwVersion */
-    winpr_EnumerateSecurityPackagesA, /* EnumerateSecurityPackages */
-    winpr_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
-    winpr_AcquireCredentialsHandleA, /* AcquireCredentialsHandle */
-    winpr_FreeCredentialsHandle, /* FreeCredentialsHandle */
-    NULL, /* Reserved2 */
-    winpr_InitializeSecurityContextA, /* InitializeSecurityContext */
-    winpr_AcceptSecurityContext, /* AcceptSecurityContext */
-    winpr_CompleteAuthToken, /* CompleteAuthToken */
-    winpr_DeleteSecurityContext, /* DeleteSecurityContext */
-    winpr_ApplyControlToken, /* ApplyControlToken */
-    winpr_QueryContextAttributesA, /* QueryContextAttributes */
-    winpr_ImpersonateSecurityContext, /* ImpersonateSecurityContext */
-    winpr_RevertSecurityContext, /* RevertSecurityContext */
-    winpr_MakeSignature, /* MakeSignature */
-    winpr_VerifySignature, /* VerifySignature */
-    winpr_FreeContextBuffer, /* FreeContextBuffer */
-    winpr_QuerySecurityPackageInfoA, /* QuerySecurityPackageInfo */
-    NULL, /* Reserved3 */
-    NULL, /* Reserved4 */
-    winpr_ExportSecurityContext, /* ExportSecurityContext */
-    winpr_ImportSecurityContextA, /* ImportSecurityContext */
-    NULL, /* AddCredentials */
-    NULL, /* Reserved8 */
-    winpr_QuerySecurityContextToken, /* QuerySecurityContextToken */
-    winpr_EncryptMessage, /* EncryptMessage */
-    winpr_DecryptMessage, /* DecryptMessage */
-    winpr_SetContextAttributesA, /* SetContextAttributes */
+	1, /* dwVersion */
+	winpr_EnumerateSecurityPackagesA, /* EnumerateSecurityPackages */
+	winpr_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
+	winpr_AcquireCredentialsHandleA, /* AcquireCredentialsHandle */
+	winpr_FreeCredentialsHandle, /* FreeCredentialsHandle */
+	NULL, /* Reserved2 */
+	winpr_InitializeSecurityContextA, /* InitializeSecurityContext */
+	winpr_AcceptSecurityContext, /* AcceptSecurityContext */
+	winpr_CompleteAuthToken, /* CompleteAuthToken */
+	winpr_DeleteSecurityContext, /* DeleteSecurityContext */
+	winpr_ApplyControlToken, /* ApplyControlToken */
+	winpr_QueryContextAttributesA, /* QueryContextAttributes */
+	winpr_ImpersonateSecurityContext, /* ImpersonateSecurityContext */
+	winpr_RevertSecurityContext, /* RevertSecurityContext */
+	winpr_MakeSignature, /* MakeSignature */
+	winpr_VerifySignature, /* VerifySignature */
+	winpr_FreeContextBuffer, /* FreeContextBuffer */
+	winpr_QuerySecurityPackageInfoA, /* QuerySecurityPackageInfo */
+	NULL, /* Reserved3 */
+	NULL, /* Reserved4 */
+	winpr_ExportSecurityContext, /* ExportSecurityContext */
+	winpr_ImportSecurityContextA, /* ImportSecurityContext */
+	NULL, /* AddCredentials */
+	NULL, /* Reserved8 */
+	winpr_QuerySecurityContextToken, /* QuerySecurityContextToken */
+	winpr_EncryptMessage, /* EncryptMessage */
+	winpr_DecryptMessage, /* DecryptMessage */
+	winpr_SetContextAttributesA, /* SetContextAttributes */
 };
 
 static SecurityFunctionTableW winpr_SecurityFunctionTableW =
 {
-    1, /* dwVersion */
-    winpr_EnumerateSecurityPackagesW, /* EnumerateSecurityPackages */
-    winpr_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
-    winpr_AcquireCredentialsHandleW, /* AcquireCredentialsHandle */
-    winpr_FreeCredentialsHandle, /* FreeCredentialsHandle */
-    NULL, /* Reserved2 */
-    winpr_InitializeSecurityContextW, /* InitializeSecurityContext */
-    winpr_AcceptSecurityContext, /* AcceptSecurityContext */
-    winpr_CompleteAuthToken, /* CompleteAuthToken */
-    winpr_DeleteSecurityContext, /* DeleteSecurityContext */
-    winpr_ApplyControlToken, /* ApplyControlToken */
-    winpr_QueryContextAttributesW, /* QueryContextAttributes */
-    winpr_ImpersonateSecurityContext, /* ImpersonateSecurityContext */
-    winpr_RevertSecurityContext, /* RevertSecurityContext */
-    winpr_MakeSignature, /* MakeSignature */
-    winpr_VerifySignature, /* VerifySignature */
-    winpr_FreeContextBuffer, /* FreeContextBuffer */
-    winpr_QuerySecurityPackageInfoW, /* QuerySecurityPackageInfo */
-    NULL, /* Reserved3 */
-    NULL, /* Reserved4 */
-    winpr_ExportSecurityContext, /* ExportSecurityContext */
-    winpr_ImportSecurityContextW, /* ImportSecurityContext */
-    NULL, /* AddCredentials */
-    NULL, /* Reserved8 */
-    winpr_QuerySecurityContextToken, /* QuerySecurityContextToken */
-    winpr_EncryptMessage, /* EncryptMessage */
-    winpr_DecryptMessage, /* DecryptMessage */
-    winpr_SetContextAttributesW, /* SetContextAttributes */
+	1, /* dwVersion */
+	winpr_EnumerateSecurityPackagesW, /* EnumerateSecurityPackages */
+	winpr_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
+	winpr_AcquireCredentialsHandleW, /* AcquireCredentialsHandle */
+	winpr_FreeCredentialsHandle, /* FreeCredentialsHandle */
+	NULL, /* Reserved2 */
+	winpr_InitializeSecurityContextW, /* InitializeSecurityContext */
+	winpr_AcceptSecurityContext, /* AcceptSecurityContext */
+	winpr_CompleteAuthToken, /* CompleteAuthToken */
+	winpr_DeleteSecurityContext, /* DeleteSecurityContext */
+	winpr_ApplyControlToken, /* ApplyControlToken */
+	winpr_QueryContextAttributesW, /* QueryContextAttributes */
+	winpr_ImpersonateSecurityContext, /* ImpersonateSecurityContext */
+	winpr_RevertSecurityContext, /* RevertSecurityContext */
+	winpr_MakeSignature, /* MakeSignature */
+	winpr_VerifySignature, /* VerifySignature */
+	winpr_FreeContextBuffer, /* FreeContextBuffer */
+	winpr_QuerySecurityPackageInfoW, /* QuerySecurityPackageInfo */
+	NULL, /* Reserved3 */
+	NULL, /* Reserved4 */
+	winpr_ExportSecurityContext, /* ExportSecurityContext */
+	winpr_ImportSecurityContextW, /* ImportSecurityContext */
+	NULL, /* AddCredentials */
+	NULL, /* Reserved8 */
+	winpr_QuerySecurityContextToken, /* QuerySecurityContextToken */
+	winpr_EncryptMessage, /* EncryptMessage */
+	winpr_DecryptMessage, /* DecryptMessage */
+	winpr_SetContextAttributesW, /* SetContextAttributes */
 };
