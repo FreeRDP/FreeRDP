@@ -162,7 +162,7 @@ static int nla_client_init(rdpNla* nla)
 
 	if ((!settings->Username) || (!strlen(settings->Username))
 	    || (((!settings->Password) || (!strlen(settings->Password)))
-		&& (!settings->RedirectionPassword)))
+	        && (!settings->RedirectionPassword)))
 	{
 		PromptPassword = TRUE;
 	}
@@ -227,14 +227,14 @@ static int nla_client_init(rdpNla* nla)
 		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
 		{
 			if (sspi_SetAuthIdentityWithUnicodePassword(nla->identity, settings->Username, settings->Domain,
-								    (UINT16*) settings->RedirectionPassword,
-								    settings->RedirectionPasswordLength / sizeof(WCHAR) - 1) < 0)
+			        (UINT16*) settings->RedirectionPassword,
+			        settings->RedirectionPasswordLength / sizeof(WCHAR) - 1) < 0)
 				return -1;
 		}
 		else
 		{
 			if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
-						 settings->Password) < 0)
+			                         settings->Password) < 0)
 				return -1;
 		}
 	}
@@ -1021,7 +1021,7 @@ static void ap_integer_decrement_le(BYTE* number, int size)
 
 SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 {
-	SecBuffer Buffers[2] = { 0 };
+	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 	int public_key_length;
@@ -1079,7 +1079,7 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	BYTE* public_key2 = NULL;
 	int public_key_length = 0;
 	int signature_length;
-	SecBuffer Buffers[2] = { 0 };
+	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 	signature_length = nla->pubKeyAuth.cbBuffer - nla->PublicKey.cbBuffer;
@@ -1425,7 +1425,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 
 static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 {
-	SecBuffer Buffers[2] = { 0 };
+	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
@@ -1479,7 +1479,7 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 	int length;
 	BYTE* buffer;
 	ULONG pfQOP;
-	SecBuffer Buffers[2] = { 0 };
+	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
