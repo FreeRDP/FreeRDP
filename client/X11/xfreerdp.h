@@ -173,12 +173,18 @@ struct xf_context
 	VIRTUAL_SCREEN vscreen;
 	void* xv_context;
 
+	Atom* supportedAtoms;
+	unsigned long supportedAtomCount;
+
 	Atom UTF8_STRING;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
 	Atom _NET_CURRENT_DESKTOP;
 	Atom _NET_WORKAREA;
+
+	Atom _NET_SUPPORTED;
+	ATOM _NET_SUPPORTING_WM_CHECK;
 
 	Atom _NET_WM_STATE;
 	Atom _NET_WM_STATE_FULLSCREEN;
@@ -213,8 +219,8 @@ struct xf_context
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
-	xfDispContext *xfDisp;
-	DispClientContext *disp;
+	xfDispContext* xfDisp;
+	DispClientContext* disp;
 
 	RailClientContext* rail;
 	wHashTable* railWindows;
@@ -224,6 +230,7 @@ struct xf_context
 
 	/* value to be sent over wire for each logical client mouse button */
 	int button_map[NUM_BUTTONS_MAPPED];
+	BYTE savedMaximizedState;
 };
 
 BOOL xf_create_window(xfContext* xfc);
