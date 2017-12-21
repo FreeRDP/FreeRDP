@@ -777,7 +777,6 @@ static LONG smartcard_ConnectA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	}
 
 	status = ret.ReturnCode;
-
 out_fail:
 	free(call->szReader);
 	return status;
@@ -836,7 +835,6 @@ static LONG smartcard_ConnectW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	}
 
 	status = ret.ReturnCode;
-
 out_fail:
 	free(call->szReader);
 	return status;
@@ -867,8 +865,8 @@ static LONG smartcard_Reconnect_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	Reconnect_Return ret;
 	IRP* irp = operation->irp;
 	Reconnect_Call* call = operation->call;
-	status = ret.ReturnCode = SCardReconnect(operation->hCard, call->dwShareMode,
-	                          call->dwPreferredProtocols, call->dwInitialization, &ret.dwActiveProtocol);
+	ret.ReturnCode = SCardReconnect(operation->hCard, call->dwShareMode,
+	                                call->dwPreferredProtocols, call->dwInitialization, &ret.dwActiveProtocol);
 	smartcard_trace_reconnect_return(smartcard, &ret);
 
 	if ((status = smartcard_pack_reconnect_return(smartcard, irp->output, &ret)))
@@ -1136,7 +1134,6 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 		cchReaderLen = SCARD_AUTOALLOCATE;
 
 	cbAtrLen = call->cbAtrLen;
-
 	ZeroMemory(ret.pbAtr, 32);
 	status = ret.ReturnCode = SCardStatusW(operation->hCard,
 	                                       call->fmszReaderNamesIsNULL ? NULL : (LPWSTR) &mszReaderNames,
@@ -1152,6 +1149,7 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 		if (call->cbAtrLen)
 			ret.cbAtrLen = cbAtrLen;
 	}
+
 	smartcard_trace_status_return(smartcard, &ret, TRUE);
 
 	if ((status = smartcard_pack_status_return(smartcard, irp->output, &ret)))
@@ -1207,8 +1205,8 @@ static LONG smartcard_Transmit_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	}
 
 	ret.pioRecvPci = call->pioRecvPci;
-	status = ret.ReturnCode = SCardTransmit(operation->hCard, call->pioSendPci, call->pbSendBuffer,
-	                                        call->cbSendLength, ret.pioRecvPci, ret.pbRecvBuffer, &(ret.cbRecvLength));
+	ret.ReturnCode = SCardTransmit(operation->hCard, call->pioSendPci, call->pbSendBuffer,
+	                               call->cbSendLength, ret.pioRecvPci, ret.pbRecvBuffer, &(ret.cbRecvLength));
 	smartcard_trace_transmit_return(smartcard, &ret);
 
 	if ((status = smartcard_pack_transmit_return(smartcard, irp->output, &ret)))
@@ -1255,9 +1253,9 @@ static LONG smartcard_Control_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 	if (!ret.pvOutBuffer)
 		return SCARD_E_NO_MEMORY;
 
-	status = ret.ReturnCode = SCardControl(operation->hCard,
-	                                       call->dwControlCode, call->pvInBuffer, call->cbInBufferSize,
-	                                       ret.pvOutBuffer, call->cbOutBufferSize, &ret.cbOutBufferSize);
+	ret.ReturnCode = SCardControl(operation->hCard,
+	                              call->dwControlCode, call->pvInBuffer, call->cbInBufferSize,
+	                              ret.pvOutBuffer, call->cbOutBufferSize, &ret.cbOutBufferSize);
 	smartcard_trace_control_return(smartcard, &ret);
 
 	if ((status = smartcard_pack_control_return(smartcard, irp->output, &ret)))
@@ -1314,8 +1312,8 @@ static LONG smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	}
 
 	cbAttrLen = call->cbAttrLen;
-	status = ret.ReturnCode = SCardGetAttrib(operation->hCard, call->dwAttrId,
-	                          autoAllocate ? (LPBYTE) & (ret.pbAttr) : ret.pbAttr, &cbAttrLen);
+	ret.ReturnCode = SCardGetAttrib(operation->hCard, call->dwAttrId,
+	                                autoAllocate ? (LPBYTE) & (ret.pbAttr) : ret.pbAttr, &cbAttrLen);
 	ret.cbAttrLen = cbAttrLen;
 	smartcard_trace_get_attrib_return(smartcard, &ret, call->dwAttrId);
 
@@ -1396,7 +1394,6 @@ static LONG smartcard_LocateCardsByATRA_Call(SMARTCARD_DEVICE* smartcard,
         SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	BOOL equal;
 	DWORD i, j, k;
 	GetStatusChange_Return ret;
 	LPSCARD_READERSTATEA state = NULL;
@@ -1429,21 +1426,15 @@ static LONG smartcard_LocateCardsByATRA_Call(SMARTCARD_DEVICE* smartcard,
 	{
 		for (j = 0; j < call->cReaders; j++)
 		{
-			equal = TRUE;
-
 			for (k = 0; k < call->rgAtrMasks[i].cbAtr; k++)
 			{
 				if ((call->rgAtrMasks[i].rgbAtr[k] & call->rgAtrMasks[i].rgbMask[k]) !=
 				    (states[j].rgbAtr[k] & call->rgAtrMasks[i].rgbMask[k]))
 				{
-					equal = FALSE;
 					break;
 				}
 
-				if (equal)
-				{
-					states[j].dwEventState |= SCARD_STATE_ATRMATCH;
-				}
+				states[j].dwEventState |= SCARD_STATE_ATRMATCH;
 			}
 		}
 	}

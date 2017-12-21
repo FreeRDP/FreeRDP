@@ -678,10 +678,8 @@ static UINT smartcard_irp_request(DEVICE* device, IRP* irp)
 UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	size_t length;
-	RDPDR_SMARTCARD* device;
 	SMARTCARD_DEVICE* smartcard;
 	UINT error = CHANNEL_RC_NO_MEMORY;
-	device = (RDPDR_SMARTCARD*) pEntryPoints->device;
 	smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));
 
 	if (!smartcard)
@@ -706,7 +704,6 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
 
 	Stream_Write(smartcard->device.data, "SCARD", 6);
-
 	smartcard->IrpQueue = MessageQueue_New(NULL);
 
 	if (!smartcard->IrpQueue)
