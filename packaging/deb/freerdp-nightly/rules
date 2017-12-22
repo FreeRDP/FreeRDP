@@ -16,10 +16,11 @@ DEB_CMAKE_EXTRA_FLAGS :=  -DCMAKE_SKIP_RPATH=FALSE \
                           -DCHANNEL_URBDRC_CLIENT=ON \
                           -DWITH_SERVER=ON \
                           -DBUILD_TESTING=OFF \
-                          -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
+                          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
                           -DCMAKE_INSTALL_PREFIX=/opt/freerdp-nightly/ \
                           -DCMAKE_INSTALL_INCLUDEDIR=include \
                           -DCMAKE_INSTALL_LIBDIR=lib \
+                          -DWITH_SANITIZE_ADDRESS=ON \
                           $(NULL)
 
 %:
