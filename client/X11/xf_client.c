@@ -1113,9 +1113,9 @@ static BOOL xf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
-			(pChannelConnectedEventHandler) xf_OnChannelConnectedEventHandler);
+	                                 (pChannelConnectedEventHandler) xf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-			(pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
+	                                    (pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
 
 	if (!freerdp_client_load_addins(channels, instance->settings))
 		return FALSE;
@@ -1468,7 +1468,6 @@ static void* xf_client_thread(void* param)
 	LARGE_INTEGER due;
 	rdpSettings* settings;
 	TimerEventArgs timerEvent;
-
 	EventArgsInit(&timerEvent, "xfreerdp");
 	exit_code = 0;
 	instance = (freerdp*) param;
@@ -1476,22 +1475,24 @@ static void* xf_client_thread(void* param)
 	status = freerdp_connect(instance);
 	xfc = (xfContext*) instance->context;
 
+	if (!status)
+	{
+		if (freerdp_get_last_error(instance->context) ==
+		    FREERDP_ERROR_AUTHENTICATION_FAILED)
+			exit_code = XF_EXIT_AUTH_FAILURE;
+		else
+			exit_code = XF_EXIT_CONN_FAILED;
+	}
+	else
+		exit_code = XF_EXIT_SUCCESS;
+
+	if (!status)
+		goto end;
+
 	/* --authonly ? */
 	if (instance->settings->AuthenticationOnly)
 	{
 		WLog_ERR(TAG, "Authentication only, exit status %"PRId32"", !status);
-
-		if (!status)
-		{
-			if (freerdp_get_last_error(instance->context) ==
-			    FREERDP_ERROR_AUTHENTICATION_FAILED)
-				exit_code = XF_EXIT_AUTH_FAILURE;
-			else
-				exit_code = XF_EXIT_CONN_FAILED;
-		}
-		else
-			exit_code = XF_EXIT_SUCCESS;
-
 		goto disconnect;
 	}
 
@@ -1510,8 +1511,8 @@ static void* xf_client_thread(void* param)
 	}
 
 	settings = context->settings;
-
 	timer = CreateWaitableTimerA(NULL, FALSE, NULL);
+
 	if (!timer)
 	{
 		WLog_ERR(TAG, "failed to create timer");
@@ -1519,10 +1520,12 @@ static void* xf_client_thread(void* param)
 	}
 
 	due.QuadPart = 0;
+
 	if (!SetWaitableTimer(timer, &due, 100, NULL, NULL, FALSE))
 	{
 		goto disconnect;
 	}
+
 	handles[0] = timer;
 
 	if (!settings->AsyncInput)
@@ -1559,6 +1562,7 @@ static void* xf_client_thread(void* param)
 		if (!settings->AsyncTransport)
 		{
 			DWORD tmp = freerdp_get_event_handles(context, &handles[nCount], 64 - nCount);
+
 			if (tmp == 0)
 			{
 				WLog_ERR(TAG, "freerdp_get_event_handles failed");
@@ -1569,6 +1573,7 @@ static void* xf_client_thread(void* param)
 		}
 
 		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+
 		if (waitStatus == WAIT_FAILED)
 			break;
 
@@ -1612,9 +1617,12 @@ static void* xf_client_thread(void* param)
 		exit_code = freerdp_error_info(instance);
 
 disconnect:
+
 	if (timer)
 		CloseHandle(timer);
+
 	freerdp_disconnect(instance);
+end:
 	ExitThread(exit_code);
 	return NULL;
 }
@@ -1836,6 +1844,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 		if (data)
 			XFree(data);
 	}
+
 	xfc->_NET_WM_ICON = XInternAtom(xfc->display, "_NET_WM_ICON", False);
 	xfc->_MOTIF_WM_HINTS = XInternAtom(xfc->display, "_MOTIF_WM_HINTS", False);
 	xfc->_NET_CURRENT_DESKTOP = XInternAtom(xfc->display, "_NET_CURRENT_DESKTOP",
