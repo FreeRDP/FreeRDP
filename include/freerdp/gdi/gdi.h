@@ -528,6 +528,9 @@ extern "C" {
 #endif
 
 FREERDP_API DWORD gdi_rop3_code(BYTE code);
+FREERDP_API const char* gdi_rop3_code_string(BYTE code);
+FREERDP_API const char* gdi_rop3_string(DWORD rop);
+
 FREERDP_API UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel);
 FREERDP_API BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor,
                                   UINT32* color, UINT32* format);
