@@ -317,7 +317,10 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 {
 	int status = -1;
 	BYTE descriptor;
+
 	wStream* stream = Stream_New((BYTE*)pSrcData, SrcSize);
+	if (!stream)
+		return -1;
 
 	if (Stream_GetRemainingLength(stream) < 1)
 		goto fail;
