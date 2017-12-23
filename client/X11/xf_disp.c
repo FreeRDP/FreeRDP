@@ -24,7 +24,7 @@
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/randr.h>
 
-#if (RANDR_MAJOR * 100 + RANDR_MINOR) > 105
+#if (RANDR_MAJOR * 100 + RANDR_MINOR) >= 105
 #	define USABLE_XRANDR
 #endif
 
@@ -54,6 +54,7 @@ static BOOL xf_disp_sendResize(xfDispContext *xfDisp, int width, int height)
 {
 	DISPLAY_CONTROL_MONITOR_LAYOUT layout;
 	xfContext *xfc = xfDisp->xfc;
+	rdpSettings *settings = xfc->context.settings;
 
 	xfDisp->lastSentDate = GetTickCount64();
 	xfDisp->lastSentWidth = width;
@@ -65,8 +66,8 @@ static BOOL xf_disp_sendResize(xfDispContext *xfDisp, int width, int height)
 	layout.Width = width;
 	layout.Height = height;
 	layout.Orientation = ORIENTATION_LANDSCAPE;
-	layout.DesktopScaleFactor = 100;
-	layout.DeviceScaleFactor = 100;
+	layout.DesktopScaleFactor = settings->DesktopScaleFactor;
+	layout.DeviceScaleFactor = settings->DeviceScaleFactor;
 	layout.PhysicalWidth = width;
 	layout.PhysicalHeight = height;
 
@@ -171,6 +172,8 @@ static UINT xf_disp_sendLayout(DispClientContext *disp, rdpMonitor *monitors, in
 	UINT ret = CHANNEL_RC_OK;
 	DISPLAY_CONTROL_MONITOR_LAYOUT *layouts;
 	int i;
+	xfDispContext *xfDisp = (xfDispContext *)disp->custom;
+	rdpSettings *settings = xfDisp->xfc->context.settings;
 
 	layouts = calloc(nmonitors, sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
 	if (!layouts)
@@ -184,10 +187,34 @@ static UINT xf_disp_sendLayout(DispClientContext *disp, rdpMonitor *monitors, in
 		layouts[i].Width = monitors[i].width;
 		layouts[i].Height = monitors[i].height;
 		layouts[i].Orientation = ORIENTATION_LANDSCAPE;
-		layouts[i].PhysicalWidth = monitors[i].width;
-		layouts[i].PhysicalHeight = monitors[i].height;
-		layouts[i].DesktopScaleFactor = 100;
-		layouts[i].DeviceScaleFactor = 100;
+		layouts[i].PhysicalWidth = monitors[i].attributes.physicalWidth;
+		layouts[i].PhysicalHeight = monitors[i].attributes.physicalHeight;
+
+		switch(monitors[i].attributes.orientation)
+		{
+		case 90:
+			layouts[i].Orientation = ORIENTATION_PORTRAIT;
+			break;
+		case 180:
+			layouts[i].Orientation = ORIENTATION_LANDSCAPE_FLIPPED;
+			break;
+		case 270:
+			layouts[i].Orientation = ORIENTATION_PORTRAIT_FLIPPED;
+			break;
+		case 0:
+		default:
+			/* MS-RDPEDISP - 2.2.2.2.1:
+			 * Orientation (4 bytes): A 32-bit unsigned integer that specifies the
+			 * orientation of the monitor in degrees. Valid values are 0, 90, 180
+			 * or 270
+			 *
+			 * So we default to ORIENTATION_LANDSCAPE
+			 */
+			layouts[i].Orientation = ORIENTATION_LANDSCAPE;
+			break;
+		}
+		layouts[i].DesktopScaleFactor = settings->DesktopScaleFactor;
+		layouts[i].DeviceScaleFactor = settings->DeviceScaleFactor;
 	}
 
 	ret = disp->SendMonitorLayout(disp, nmonitors, layouts);
