@@ -198,8 +198,8 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	header.cmdId = RDPGFX_CMDID_FRAMEACKNOWLEDGE;
 	header.pduLength = RDPGFX_HEADER_SIZE + 12;
 	WLog_Print(gfx->log, WLOG_DEBUG, "SendFrameAcknowledgePdu: %"PRIu32"", pdu->frameId);
-	s = Stream_New(NULL, header.pduLength);
 
+	s = Stream_New(NULL, header.pduLength);
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
@@ -233,8 +233,8 @@ static UINT rdpgfx_send_qoe_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callb
 	header.cmdId = RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE;
 	header.pduLength = RDPGFX_HEADER_SIZE + 12;
 	WLog_Print(gfx->log, WLOG_DEBUG, "SendQoeFrameAcknowledgePdu: %"PRIu32"", pdu->frameId);
-	s = Stream_New(NULL, header.pduLength);
 
+	s = Stream_New(NULL, header.pduLength);
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
@@ -289,9 +289,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		return ERROR_INVALID_DATA;
 	}
 
-	pdu.monitorDefArray = (MONITOR_DEF*) calloc(pdu.monitorCount,
-	                      sizeof(MONITOR_DEF));
-
+	pdu.monitorDefArray = (MONITOR_DEF*) calloc(pdu.monitorCount, sizeof(MONITOR_DEF));
 	if (!pdu.monitorDefArray)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "calloc failed!");
@@ -403,7 +401,6 @@ static UINT rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback
 	}
 
 	pdu.cacheSlots = (UINT16*) calloc(pdu.importedEntriesCount, sizeof(UINT16));
-
 	if (!pdu.cacheSlots)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "calloc failed!");
@@ -815,8 +812,7 @@ static UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 
-	if ((error = rdpgfx_read_color32(s,
-	                                 &(pdu.fillPixel)))) /* fillPixel (4 bytes) */
+	if ((error = rdpgfx_read_color32(s, &(pdu.fillPixel)))) /* fillPixel (4 bytes) */
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_read_color32 failed with error %"PRIu32"!", error);
 		return error;
@@ -831,7 +827,6 @@ static UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 	}
 
 	pdu.fillRects = (RECTANGLE_16*) calloc(pdu.fillRectCount, sizeof(RECTANGLE_16));
-
 	if (!pdu.fillRects)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "calloc failed!");
@@ -903,9 +898,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK*
 		return ERROR_INVALID_DATA;
 	}
 
-	pdu.destPts = (RDPGFX_POINT16*) calloc(pdu.destPtsCount,
-	                                       sizeof(RDPGFX_POINT16));
-
+	pdu.destPts = (RDPGFX_POINT16*) calloc(pdu.destPtsCount, sizeof(RDPGFX_POINT16));
 	if (!pdu.destPts)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "calloc failed!");
@@ -1151,11 +1144,9 @@ static UINT rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 		return error;
 	}
 
-#if 1
 	WLog_Print(gfx->log, WLOG_DEBUG, "cmdId: %s (0x%04"PRIX16") flags: 0x%04"PRIX16" pduLength: %"PRIu32"",
 	         rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId, header.flags,
 	         header.pduLength);
-#endif
 
 	switch (header.cmdId)
 	{
@@ -1308,8 +1299,8 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback*
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 	UINT error = CHANNEL_RC_OK;
-	status = zgfx_decompress(gfx->zgfx, Stream_Pointer(data),
-	                         Stream_GetRemainingLength(data), &pDstData, &DstSize, 0);
+	status = zgfx_decompress(gfx->zgfx, Stream_Pointer(data), Stream_GetRemainingLength(data),
+							&pDstData, &DstSize, 0);
 
 	if (status < 0)
 	{
@@ -1318,7 +1309,6 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback*
 	}
 
 	s = Stream_New(pDstData, DstSize);
-
 	if (!s)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "calloc failed!");
@@ -1363,6 +1353,7 @@ static UINT rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
+
 	WLog_Print(gfx->log, WLOG_DEBUG, "OnClose");
 	free(callback);
 	gfx->UnacknowledgedFrames = 0;
@@ -1422,11 +1413,9 @@ static UINT rdpgfx_on_new_channel_connection(IWTSListenerCallback*
         IWTSVirtualChannelCallback** ppCallback)
 {
 	RDPGFX_CHANNEL_CALLBACK* callback;
-	RDPGFX_LISTENER_CALLBACK* listener_callback = (RDPGFX_LISTENER_CALLBACK*)
-	        pListenerCallback;
-	callback = (RDPGFX_CHANNEL_CALLBACK*) calloc(1,
-	           sizeof(RDPGFX_CHANNEL_CALLBACK));
+	RDPGFX_LISTENER_CALLBACK* listener_callback = (RDPGFX_LISTENER_CALLBACK*)pListenerCallback;
 
+	callback = (RDPGFX_CHANNEL_CALLBACK*) calloc(1, sizeof(RDPGFX_CHANNEL_CALLBACK));
 	if (!callback)
 	{
 		WLog_ERR(TAG, "calloc failed!");
@@ -1454,17 +1443,15 @@ static UINT rdpgfx_plugin_initialize(IWTSPlugin* pPlugin,
 {
 	UINT error;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) pPlugin;
-	gfx->listener_callback = (RDPGFX_LISTENER_CALLBACK*) calloc(1,
-	                         sizeof(RDPGFX_LISTENER_CALLBACK));
 
+	gfx->listener_callback = (RDPGFX_LISTENER_CALLBACK*) calloc(1, sizeof(RDPGFX_LISTENER_CALLBACK));
 	if (!gfx->listener_callback)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "calloc failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	gfx->listener_callback->iface.OnNewChannelConnection =
-	    rdpgfx_on_new_channel_connection;
+	gfx->listener_callback->iface.OnNewChannelConnection = rdpgfx_on_new_channel_connection;
 	gfx->listener_callback->plugin = pPlugin;
 	gfx->listener_callback->channel_mgr = pChannelMgr;
 	error = pChannelMgr->CreateListener(pChannelMgr, RDPGFX_DVC_CHANNEL_NAME, 0,
