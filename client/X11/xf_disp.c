@@ -120,6 +120,32 @@ static void xf_disp_OnActivated(rdpContext* context, ActivatedEventArgs* e)
 	}
 }
 
+
+static void xf_disp_OnGraphicsReset(rdpContext* context, GraphicsResetEventArgs* e)
+{
+	xfContext *xfc = (xfContext *)context;
+	xfDispContext *xfDisp = xfc->xfDisp;
+	rdpSettings *settings = context->settings;
+
+	xfDisp->waitingResize = FALSE;
+
+	if (xfDisp->activated && !settings->Fullscreen)
+	{
+		xf_disp_set_window_resizable(xfDisp);
+
+		/* if a resize has been done recently don't do anything and let the timer
+		 * perform the resize */
+		if (GetTickCount64() - xfDisp->lastSentDate < RESIZE_MIN_DELAY)
+			return;
+
+		if ((xfDisp->lastSentWidth != xfDisp->targetWidth) || (xfDisp->lastSentHeight != xfDisp->targetHeight))
+		{
+			WLog_DBG(TAG, "performing delayed resize to %dx%d", xfDisp->targetWidth, xfDisp->targetHeight);
+			xf_disp_sendResize(xfDisp, xfDisp->targetWidth, xfDisp->targetHeight);
+		}
+	}
+}
+
 static void xf_disp_OnTimer(rdpContext* context, TimerEventArgs* e)
 {
 	xfContext *xfc = (xfContext *)context;
@@ -156,6 +182,7 @@ xfDispContext *xf_disp_new(xfContext* xfc)
 	ret->lastSentHeight = ret->targetHeight = xfc->context.settings->DesktopHeight;
 
 	PubSub_SubscribeActivated(xfc->context.pubSub, (pActivatedEventHandler)xf_disp_OnActivated);
+	PubSub_SubscribeGraphicsReset(xfc->context.pubSub, (pGraphicsResetEventHandler)xf_disp_OnGraphicsReset);
 	PubSub_SubscribeTimer(xfc->context.pubSub, (pTimerEventHandler)xf_disp_OnTimer);
 	return ret;
 }

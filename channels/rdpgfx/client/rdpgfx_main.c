@@ -272,6 +272,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
+	GraphicsResetEventArgs graphicsReset;
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
@@ -334,6 +335,12 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		if (error)
 			WLog_Print(gfx->log, WLOG_ERROR, "context->ResetGraphics failed with error %"PRIu32"", error);
 	}
+
+	/* some listeners may be interested (namely the display channel) */
+	EventArgsInit(&graphicsReset, "xfreerdp");
+	graphicsReset.width = pdu.width;
+	graphicsReset.height = pdu.height;
+	PubSub_OnGraphicsReset(gfx->rdpcontext->pubSub, gfx->rdpcontext, &graphicsReset);
 
 	free(pdu.monitorDefArray);
 	return error;
@@ -1691,8 +1698,9 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		gfx->iface.Connected = NULL;
 		gfx->iface.Disconnected = NULL;
 		gfx->iface.Terminated = rdpgfx_plugin_terminated;
-		gfx->SurfaceTable = HashTable_New(TRUE);
+		gfx->rdpcontext = ((freerdp *)gfx->settings->instance)->context;
 
+		gfx->SurfaceTable = HashTable_New(TRUE);
 		if (!gfx->SurfaceTable)
 		{
 			free(gfx);
@@ -1712,8 +1720,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			gfx->SmallCache = TRUE;
 
 		gfx->MaxCacheSlot = gfx->SmallCache ? 4096 : 25600;
-		context = (RdpgfxClientContext *)calloc(1, sizeof(RdpgfxClientContext));
 
+		context = (RdpgfxClientContext *)calloc(1, sizeof(RdpgfxClientContext));
 		if (!context)
 		{
 			free(gfx);
