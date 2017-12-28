@@ -184,20 +184,21 @@ INLINE void gdi_RgnToRect(HGDI_RGN rgn, HGDI_RECT rect)
  * @param rect destination rectangle
  */
 
-INLINE void gdi_CRgnToRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h,
+INLINE void gdi_CRgnToRect(INT64 x, INT64 y, UINT32 w, UINT32 h,
                            HGDI_RECT rect)
 {
-	memset(rect, 0, sizeof(GDI_RECT));
-	rect->left = x;
-	rect->top = y;
+	const INT64 r = x + w - 1;
+	const INT64 b = y + h - 1;
+	rect->left = (x > 0) ? x : 0;
+	rect->top = (y > 0) ? y : 0;
 
-	if (w > 0)
-		rect->right = x + w - 1;
+	if (r > 0)
+		rect->right = r;
 	else
 		WLog_ERR(TAG, "Invalid width");
 
-	if (h > 0)
-		rect->bottom = y + h - 1;
+	if (b > 0)
+		rect->bottom = b;
 	else
 		WLog_ERR(TAG, "Invalid height");
 }
