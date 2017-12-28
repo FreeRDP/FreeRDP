@@ -207,8 +207,8 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 		}
 	}
 
-	if (mdecoder->codec->capabilities & CODEC_CAP_TRUNCATED)
-		mdecoder->codec_context->flags |= CODEC_FLAG_TRUNCATED;
+	if (mdecoder->codec->capabilities & AV_CODEC_CAP_TRUNCATED)
+		mdecoder->codec_context->flags |= AV_CODEC_FLAG_TRUNCATED;
 	return TRUE;
 }
 
