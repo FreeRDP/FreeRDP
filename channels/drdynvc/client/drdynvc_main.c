@@ -981,7 +981,8 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 
 	if (channel_status == CHANNEL_RC_OK)
 	{
-		if ((status = dvcman_open_channel(drdynvc->channel_mgr, ChannelId)))
+		status = dvcman_open_channel(drdynvc->channel_mgr, ChannelId);
+		if (status)
 		{
 			WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_open_channel failed with error %"PRIu32"!", status);
 			return status;
@@ -989,7 +990,8 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 	}
 	else
 	{
-		if ((status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId)))
+		status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
+		if (status)
 			WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_close_channel failed with error %"PRIu32"!", status);
 	}
 
