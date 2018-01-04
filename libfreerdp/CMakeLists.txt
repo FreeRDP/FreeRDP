@@ -145,7 +145,7 @@ set(CODEC_NEON_SRCS
 if(WITH_SSE2)
 	set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_SSE2_SRCS})
 
-	if(CMAKE_COMPILER_IS_GNUCC)
+	if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 		set_source_files_properties(${CODEC_SSE2_SRCS} PROPERTIES COMPILE_FLAGS "-msse2" )
 	endif()
 
@@ -210,16 +210,25 @@ set(PRIMITIVES_SRCS
 	primitives/primitives.c
 	primitives/prim_internal.h)
 
-set(PRIMITIVES_OPT_SRCS
-	primitives/prim_add_opt.c
-	primitives/prim_andor_opt.c
-	primitives/prim_alphaComp_opt.c
+set(PRIMITIVES_SSE2_SRCS
 	primitives/prim_colors_opt.c
-	primitives/prim_set_opt.c
-	primitives/prim_shift_opt.c
+	primitives/prim_set_opt.c)
+
+set(PRIMITIVES_SSE3_SRCS
+	primitives/prim_add_opt.c
+	primitives/prim_alphaComp_opt.c
+	primitives/prim_andor_opt.c
+	primitives/prim_shift_opt.c)
+
+set(PRIMITIVES_SSSE3_SRCS
 	primitives/prim_sign_opt.c
-	primitives/prim_YUV_opt.c
-	primitives/prim_YCoCg_opt.c)
+	primitives/prim_YCoCg_opt.c
+	primitives/prim_YUV_opt.c)
+
+set(PRIMITIVES_OPT_SRCS
+	${PRIMITIVES_SSE2_SRCS}
+	${PRIMITIVES_SSE3_SRCS}
+	${PRIMITIVES_SSSE3_SRCS})
 
 freerdp_definition_add(-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 
@@ -233,22 +242,25 @@ if(WITH_IPP)
 endif()
 
 if(WITH_SSE2)
-	if(CMAKE_COMPILER_IS_GNUCC)
-		set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3 -Wdeclaration-after-statement")
+	if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+		set_source_files_properties(${PRIMITIVES_SSE2_SRCS}
+			PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -msse2")
+		set_source_files_properties(${PRIMITIVES_SSE3_SRCS}
+			PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -msse3")
+		set_source_files_properties(${PRIMITIVES_SSSE3_SRCS}
+			PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -mssse3")
 	endif()
 
 	if(MSVC)
-		set(OPTIMIZATION "${OPTIMIZATION} /arch:SSE2")
+		set_source_files_properties(${PRIMITIVES_OPT_SRCS}
+			PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} /arch:SSE2")
 	endif()
 elseif(WITH_NEON)
 	if(CMAKE_COMPILER_IS_GNUCC)
-		set(OPTIMIZATION "${OPTIMIZATION} -mfpu=neon")
+		set_source_files_properties(${PRIMITIVES_OPT_SRCS}
+			PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -mfpu=neon")
 	endif()
 	# TODO: Add MSVC equivalent
-endif()
-
-if(DEFINED OPTIMIZATION)
-	set_source_files_properties(${PRIMITIVES_OPT_SRCS} PROPERTIES COMPILE_FLAGS ${OPTIMIZATION})
 endif()
 
 set(PRIMITIVES_SRCS ${PRIMITIVES_SRCS} ${PRIMITIVES_OPT_SRCS})

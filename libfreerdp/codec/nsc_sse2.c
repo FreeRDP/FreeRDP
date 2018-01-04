@@ -30,6 +30,7 @@
 
 #include <freerdp/codec/color.h>
 #include <winpr/crt.h>
+#include <winpr/sysinfo.h>
 
 #include "nsc_types.h"
 #include "nsc_sse2.h"
@@ -400,6 +401,9 @@ static void nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data,
 
 void nsc_init_sse2(NSC_CONTEXT* context)
 {
+	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+		return;
+
 	IF_PROFILER(context->priv->prof_nsc_encode->name = "nsc_encode_sse2");
 	context->encode = nsc_encode_sse2;
 }
