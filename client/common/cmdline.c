@@ -48,6 +48,7 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
+
 BOOL freerdp_client_print_version(void)
 {
 	printf("This is FreeRDP version %s (%s)\n", FREERDP_VERSION_FULL,
@@ -745,27 +746,27 @@ static int freerdp_client_command_line_post_filter(void* context,
 	}
 	CommandLineSwitchCase(arg, "multitouch")
 	{
-		settings->MultiTouchInput = TRUE;
+		settings->MultiTouchInput = arg->Value ? TRUE : FALSE;
 	}
 	CommandLineSwitchCase(arg, "gestures")
 	{
-		settings->MultiTouchGestures = TRUE;
+		settings->MultiTouchGestures = arg->Value ? TRUE : FALSE;
 	}
 	CommandLineSwitchCase(arg, "echo")
 	{
-		settings->SupportEchoChannel = TRUE;
+		settings->SupportEchoChannel = arg->Value ? TRUE : FALSE;
 	}
 	CommandLineSwitchCase(arg, "ssh-agent")
 	{
-		settings->SupportSSHAgentChannel = TRUE;
+		settings->SupportSSHAgentChannel = arg->Value ? TRUE : FALSE;
 	}
 	CommandLineSwitchCase(arg, "disp")
 	{
-		settings->SupportDisplayControl = TRUE;
+		settings->SupportDisplayControl = arg->Value ? TRUE : FALSE;
 	}
 	CommandLineSwitchCase(arg, "geometry")
 	{
-		settings->SupportGeometryTracking = TRUE;
+		settings->SupportGeometryTracking = arg->Value ? TRUE : FALSE;
 	}
 	CommandLineSwitchCase(arg, "sound")
 	{
@@ -796,17 +797,17 @@ static int freerdp_client_command_line_post_filter(void* context,
 	}
 	CommandLineSwitchCase(arg, "heartbeat")
 	{
-		settings->SupportHeartbeatPdu = TRUE;
+		settings->SupportHeartbeatPdu = arg->Value ? TRUE : FALSE;
 	}
 	CommandLineSwitchCase(arg, "multitransport")
 	{
-		settings->SupportMultitransport = TRUE;
+		settings->SupportMultitransport = arg->Value ? TRUE : FALSE;
 		settings->MultitransportFlags = (TRANSPORT_TYPE_UDP_FECR |
 		                                 TRANSPORT_TYPE_UDP_FECL | TRANSPORT_TYPE_UDP_PREFERRED);
 	}
 	CommandLineSwitchCase(arg, "password-is-pin")
 	{
-		settings->PasswordIsSmartcardPin = TRUE;
+		settings->PasswordIsSmartcardPin = arg->Value ? TRUE : FALSE;
 	}
 	CommandLineSwitchEnd(arg)
 	return status ? 1 : -1;
@@ -1343,7 +1344,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 	do
 	{
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		if (CommandLineIgnoreArgument(arg))
 			continue;
 
 		CommandLineSwitchStart(arg)
@@ -1530,7 +1531,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "f")
 		{
-			settings->Fullscreen = TRUE;
+			settings->Fullscreen = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "multimon")
 		{
@@ -1546,11 +1547,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "span")
 		{
-			settings->SpanMonitors = TRUE;
+			settings->SpanMonitors = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "workarea")
 		{
-			settings->Workarea = TRUE;
+			settings->Workarea = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "monitors")
 		{
@@ -1584,7 +1585,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "monitor-list")
 		{
-			settings->ListMonitors = TRUE;
+			settings->ListMonitors = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "t")
 		{
@@ -1599,24 +1600,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "dynamic-resolution")
 		{
-			if (settings->SmartSizing)
-			{
-				WLog_ERR(TAG, "Smart sizing and dynamic resolution are mutually exclusive options");
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-			}
-
-			settings->SupportDisplayControl = TRUE;
-			settings->DynamicResolutionUpdate = TRUE;
+			settings->SupportDisplayControl = arg->Value ? TRUE : FALSE;
+			settings->DynamicResolutionUpdate = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "smart-sizing")
 		{
-			if (settings->DynamicResolutionUpdate)
-			{
-				WLog_ERR(TAG, "Smart sizing and dynamic resolution are mutually exclusive options");
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-			}
-
-			settings->SmartSizing = TRUE;
+			settings->SmartSizing = arg->Value ? TRUE : FALSE;
 
 			if (arg->Value)
 			{
@@ -1674,12 +1663,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "admin")
 		{
-			settings->ConsoleSession = TRUE;
+			settings->ConsoleSession = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "restricted-admin")
 		{
-			settings->ConsoleSession = TRUE;
-			settings->RestrictedAdminModeRequired = TRUE;
+			settings->ConsoleSession = arg->Value ? TRUE : FALSE;
+			settings->RestrictedAdminModeRequired = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "pth")
 		{
@@ -1997,7 +1986,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "ipv6")
 		{
-			settings->PreferIPv6OverIPv4 = TRUE;
+			settings->PreferIPv6OverIPv4 = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "clipboard")
 		{
@@ -2105,8 +2094,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "gfx")
 		{
-			settings->SupportGraphicsPipeline = TRUE;
-
 			if (arg->Value)
 			{
 #ifdef WITH_GFX_H264
@@ -2126,30 +2113,57 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 						return COMMAND_LINE_ERROR;
 			}
 		}
+		CommandLineSwitchCase(arg, "gfx-caps")
+		{
+			const char* cur;
+			char* delim = NULL;
+			settings->GfxCapsFlags = 0;
+			cur = arg->Value;
+
+			do
+			{
+				if (delim)
+					cur = delim + 1;
+
+				if (strncmp("8.1", cur, 3) == 0)
+					settings->GfxCapsFlags |= GFX_CAPS_81;
+				else if (strncmp("8", cur, 1) == 0)
+					settings->GfxCapsFlags |= GFX_CAPS_8;
+				else if (strncmp("10.3", cur, 4) == 0)
+					settings->GfxCapsFlags |= GFX_CAPS_103;
+				else if (strncmp("10.2", cur, 4) == 0)
+					settings->GfxCapsFlags |= GFX_CAPS_102;
+				else if (strncmp("10", cur, 2) == 0)
+					settings->GfxCapsFlags |= GFX_CAPS_10;
+				else if (strncmp("off", cur, 3) == 0)
+				{
+					settings->GfxCapsFlags = 0;
+					break;
+				}
+
+				delim = strchr(cur, ',');
+			}
+			while (delim != NULL);
+		}
 		CommandLineSwitchCase(arg, "gfx-thin-client")
 		{
 			settings->GfxThinClient = arg->Value ? TRUE : FALSE;
 
 			if (settings->GfxThinClient)
 				settings->GfxSmallCache = TRUE;
-
-			settings->SupportGraphicsPipeline = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gfx-small-cache")
 		{
 			settings->GfxSmallCache = arg->Value ? TRUE : FALSE;
-			settings->SupportGraphicsPipeline = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gfx-progressive")
 		{
 			settings->GfxProgressive = arg->Value ? TRUE : FALSE;
 			settings->GfxThinClient = settings->GfxProgressive ? FALSE : TRUE;
-			settings->SupportGraphicsPipeline = TRUE;
 		}
 #ifdef WITH_GFX_H264
 		CommandLineSwitchCase(arg, "gfx-h264")
 		{
-			settings->SupportGraphicsPipeline = TRUE;
 			settings->GfxH264 = TRUE;
 
 			if (arg->Value)
@@ -2165,7 +2179,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 #endif
 		CommandLineSwitchCase(arg, "rfx")
 		{
-			settings->RemoteFxCodec = TRUE;
+			settings->RemoteFxCodec = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "rfx-mode")
 		{
@@ -2185,12 +2199,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "nsc")
 		{
-			settings->NSCodec = TRUE;
+			settings->NSCodec = arg->Value ? TRUE : FALSE;
 		}
 #if defined(WITH_JPEG)
 		CommandLineSwitchCase(arg, "jpeg")
 		{
-			settings->JpegCodec = TRUE;
+			settings->JpegCodec = arg->Value ? TRUE : FALSE;
 			settings->JpegQuality = 75;
 		}
 		CommandLineSwitchCase(arg, "jpeg-quality")
@@ -2289,7 +2303,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "from-stdin")
 		{
-			settings->CredentialsFromStdin = TRUE;
+			settings->CredentialsFromStdin = arg->Value ? TRUE : FALSE;
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
@@ -2356,11 +2370,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "cert-ignore")
 		{
-			settings->IgnoreCertificate = TRUE;
+			settings->IgnoreCertificate = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "cert-tofu")
 		{
-			settings->AutoAcceptCertificate = TRUE;
+			settings->AutoAcceptCertificate = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "authentication")
 		{
@@ -2629,14 +2643,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "action-script")
 		{
-			free(settings->ActionScript);
+			if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+			{
+				free(settings->ActionScript);
 
-			if (!(settings->ActionScript = _strdup(arg->Value)))
-				return COMMAND_LINE_ERROR_MEMORY;
+				if (!(settings->ActionScript = _strdup(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
 		}
 		CommandLineSwitchCase(arg, "fipsmode")
 		{
-			settings->FIPSMode = TRUE;
+			settings->FIPSMode = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -2644,6 +2661,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	if (settings->SmartSizing && settings->DynamicResolutionUpdate)
+	{
+		WLog_ERR(TAG, "Smart sizing and dynamic resolution are mutually exclusive options");
+		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+	}
+
+	settings->SupportGraphicsPipeline = (settings->GfxCapsFlags != 0);
 
 	if (user)
 	{
