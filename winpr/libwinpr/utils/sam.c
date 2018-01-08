@@ -79,6 +79,9 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 	else
 	{
 		WLog_DBG(TAG, "Could not open SAM file!");
+		fclose(fp);
+		free(sam);
+		return NULL;
 	}
 
 	return sam;
