@@ -439,12 +439,12 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 			return NULL;
 
 		errno = 0;
-		beg = strtol(&begStr[10], NULL, 0);
+		beg = strtol(&begStr[10], NULL, 10);
 
 		if (errno != 0)
 			return NULL;
 
-		end = strtol(&endStr[8], NULL, 0);
+		end = strtol(&endStr[8], NULL, 10);
 
 		if (beg < 0 || end < 0 || (beg > SrcSize) || (end > SrcSize) || (beg >= end) || (errno != 0))
 			return NULL;
