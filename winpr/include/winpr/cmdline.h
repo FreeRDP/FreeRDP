@@ -135,6 +135,22 @@ typedef int (*COMMAND_LINE_POST_FILTER_FN_W)(void* context, COMMAND_LINE_ARGUMEN
 extern "C" {
 #endif
 
+static INLINE BOOL CommandLineIgnoreArgument(const COMMAND_LINE_ARGUMENT_A* arg)
+{
+	if ((arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT) == 0)
+	{
+		if ((arg->Flags & (COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_VALUE_REQUIRED)) &&
+		    (arg->Default != NULL))
+			return FALSE;
+
+		return arg->Flags & (COMMAND_LINE_VALUE_OPTIONAL |
+		                     COMMAND_LINE_VALUE_REQUIRED |
+		                     COMMAND_LINE_VALUE_FLAG);
+	}
+
+	return FALSE;
+}
+
 WINPR_API int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options);
 WINPR_API int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options);
 

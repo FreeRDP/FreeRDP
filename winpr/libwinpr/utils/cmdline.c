@@ -382,6 +382,25 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		}
 	}
 
+	/* copy defaults as value. */
+	{
+		COMMAND_LINE_ARGUMENT_A* iter = options;
+
+		while ((iter != NULL) && (iter->Name != NULL))
+		{
+			if ((iter->Flags & COMMAND_LINE_ARGUMENT_PRESENT) == 0)
+			{
+				if (iter->Flags & COMMAND_LINE_VALUE_BOOL)
+					iter->Value = (LPSTR)iter->Default;
+				else if (iter->Flags & COMMAND_LINE_VALUE_FLAG)
+					iter->Value = FALSE;
+				else if (iter->Default)
+					iter->Value = iter->Default;
+			}
+
+			iter++;
+		}
+	}
 	return status;
 }
 
