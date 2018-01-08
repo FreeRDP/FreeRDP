@@ -108,6 +108,11 @@ DEFINE_EVENT_BEGIN(Timer)
 UINT64 now;
 DEFINE_EVENT_END(Timer)
 
+DEFINE_EVENT_BEGIN(GraphicsReset)
+UINT32 width;
+UINT32 height;
+DEFINE_EVENT_END(GraphicsReset)
+
 #ifdef	__cplusplus
 }
 #endif

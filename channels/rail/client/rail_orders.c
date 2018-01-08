@@ -959,8 +959,8 @@ UINT rail_send_client_activate_order(railPlugin* rail, RAIL_ACTIVATE_ORDER* acti
 {
 	wStream* s;
 	UINT error;
-	s = rail_pdu_init(RAIL_ACTIVATE_ORDER_LENGTH);
 
+	s = rail_pdu_init(RAIL_ACTIVATE_ORDER_LENGTH);
 	if (!s)
 	{
 		WLog_ERR(TAG, "rail_pdu_init failed!");
