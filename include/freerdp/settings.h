@@ -272,6 +272,13 @@ typedef struct _TARGET_NET_ADDRESS TARGET_NET_ADDRESS;
 #define ORIENTATION_LANDSCAPE_FLIPPED	180
 #define ORIENTATION_PORTRAIT_FLIPPED	270
 
+/* GFX capability version flags */
+#define GFX_CAPS_8	0x00000001
+#define GFX_CAPS_81	0x00000002
+#define GFX_CAPS_10	0x00000004
+#define GFX_CAPS_102	0x00000008
+#define GFX_CAPS_103	0x00000010
+
 /* ARC_CS_PRIVATE_PACKET */
 typedef struct
 {
@@ -1345,7 +1352,8 @@ struct rdp_settings
 	ALIGN64 BOOL GfxAVC444; /* 3845 */
 	ALIGN64 BOOL GfxSendQoeAck; /* 3846 */
 	ALIGN64 BOOL GfxAVC444v2; /* 3847 */
-	UINT64 padding3904[3904 - 3848]; /* 3848 */
+	ALIGN64 UINT32 GfxCapsFlags; /* 3848 */
+	UINT64 padding3904[3904 - 3849]; /* 3849 */
 
 	/**
 	 * Caches
