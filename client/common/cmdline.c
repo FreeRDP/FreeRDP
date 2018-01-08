@@ -400,7 +400,11 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 
 		if (count > 2)
 		{
-			if (!PathFileExistsA(params[2]) || !(drive->Path = _strdup(params[2])))
+			const BOOL isPath = PathFileExistsA(params[2]);
+			const BOOL isSpecial = (strncmp(params[2], "*", 2) == 0) ||
+			                       (strncmp(params[2], "%", 2) == 0) ? TRUE : FALSE;
+
+			if ((!isPath && !isSpecial) || !(drive->Path = _strdup(params[2])))
 			{
 				free(drive->Name);
 				free(drive);
@@ -476,7 +480,6 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 
 		settings->RedirectSmartCards = TRUE;
 		settings->DeviceRedirection = TRUE;
-
 		smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
 
 		if (!smartcard)
@@ -725,7 +728,8 @@ error_argv:
 	return FALSE;
 }
 
-static char** freerdp_command_line_parse_comma_separated_values_ex(const char* name, const char* list,
+static char** freerdp_command_line_parse_comma_separated_values_ex(const char* name,
+        const char* list,
         size_t* count)
 {
 	char** p;
@@ -757,7 +761,8 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 
 	{
 		const char* it = list;
-		while((it = strchr(it, ',')) != NULL)
+
+		while ((it = strchr(it, ',')) != NULL)
 		{
 			it++;
 			nCommas++;
@@ -1760,6 +1765,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				WLog_ERR(TAG, "Smart sizing and dynamic resolution are mutually exclusive options");
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
+
 			settings->SupportDisplayControl = TRUE;
 			settings->DynamicResolutionUpdate = TRUE;
 		}
