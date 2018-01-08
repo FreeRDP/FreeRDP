@@ -207,7 +207,7 @@ INLINE void gdi_CRgnToRect(INT64 x, INT64 y, UINT32 w, UINT32 h,
 
 	if (invalid)
 	{
-		WLog_ERR(TAG, "Invisible rectangle %"PRId64"x%"PRId64"-%"PRId64"x%"PRId64,
+		WLog_DBG(TAG, "Invisible rectangle %"PRId64"x%"PRId64"-%"PRId64"x%"PRId64,
 		         x, y, r, b);
 	}
 }
