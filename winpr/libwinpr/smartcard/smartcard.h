@@ -22,29 +22,6 @@
 
 #include <winpr/smartcard.h>
 
-#define SCARDAPI_STUB_CALL_LONG(_name, ...) \
-	if (!g_Initialized) \
-		InitializeSCardApiStubs(); \
-	if (!g_SCardApi || !g_SCardApi->pfn ## _name) \
-		return SCARD_E_NO_SERVICE; \
-	return g_SCardApi->pfn ## _name ( __VA_ARGS__ )
-
-#define SCARDAPI_STUB_CALL_HANDLE(_name, ...) \
-	if (!g_Initialized) \
-		InitializeSCardApiStubs(); \
-	if (!g_SCardApi || !g_SCardApi->pfn ## _name) \
-		return NULL; \
-	return g_SCardApi->pfn ## _name ( __VA_ARGS__ )
-
-#define SCARDAPI_STUB_CALL_VOID(_name, ...) \
-	if (!g_Initialized) \
-		InitializeSCardApiStubs(); \
-	if (!g_SCardApi || !g_SCardApi->pfn ## _name) \
-		return; \
-	g_SCardApi->pfn ## _name ( __VA_ARGS__ )
-
-void InitializeSCardApiStubs(void);
-
 #ifndef _WIN32
 #include "smartcard_pcsc.h"
 #else
