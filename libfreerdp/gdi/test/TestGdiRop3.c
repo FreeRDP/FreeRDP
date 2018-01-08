@@ -93,10 +93,6 @@
  *
  */
 
-static const BYTE rop_P = 0xF0; /* 11110000 */
-static const BYTE rop_S = 0xCC; /* 11001100 */
-static const BYTE rop_D = 0xAA; /* 10101010 */
-
 static char* gdi_convert_postfix_to_infix(const char* postfix)
 {
 	int i;

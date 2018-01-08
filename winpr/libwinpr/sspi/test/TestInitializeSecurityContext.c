@@ -17,7 +17,7 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	CtxtHandle context;
 	ULONG pfContextAttr;
 	SECURITY_STATUS status;
-	CredHandle credentials;
+	CredHandle credentials = { 0 };
 	TimeStamp expiration;
 	PSecPkgInfo pPackageInfo;
 	SEC_WINNT_AUTH_IDENTITY identity = { 0 };

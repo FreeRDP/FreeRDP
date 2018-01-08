@@ -114,11 +114,13 @@ BOOL InitializeSspiModule_Native(void)
 static BOOL CALLBACK InitializeSspiModuleInt(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	BOOL status = FALSE;
+#if defined(WITH_NATIVE_SSPI)
 	DWORD flags = 0;
 
 	if (param)
 		flags = *(DWORD*)param;
 
+#endif
 	sspi_GlobalInit();
 	g_Log = WLog_Get("com.winpr.sspi");
 #if defined(WITH_NATIVE_SSPI)

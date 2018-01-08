@@ -67,12 +67,12 @@ struct _GEOMETRY_PLUGIN
 	IWTSListener* listener;
 	GEOMETRY_LISTENER_CALLBACK* listener_callback;
 
-	GeometryClientContext *context;
+	GeometryClientContext* context;
 };
 typedef struct _GEOMETRY_PLUGIN GEOMETRY_PLUGIN;
 
 
-static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgndata)
+static UINT32 geometry_read_RGNDATA(wStream* s, UINT32 len, FREERDP_RGNDATA* rgndata)
 {
 	UINT32 dwSize, iType;
 	INT32 right, bottom;
@@ -84,13 +84,17 @@ static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgn
 	}
 
 	Stream_Read_UINT32(s, dwSize);
-	if (dwSize != 32) {
+
+	if (dwSize != 32)
+	{
 		WLog_ERR(TAG, "invalid RGNDATA dwSize");
 		return ERROR_INVALID_DATA;
 	}
 
 	Stream_Read_UINT32(s, iType);
-	if (iType != RDH_RECTANGLE) {
+
+	if (iType != RDH_RECTANGLE)
+	{
 		WLog_ERR(TAG, "iType %"PRIu32" for RGNDATA is not supported", iType);
 		return ERROR_UNSUPPORTED_TYPE;
 	}
@@ -101,11 +105,10 @@ static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgn
 	Stream_Read_INT32(s, rgndata->boundingRect.y);
 	Stream_Read_INT32(s, right);
 	Stream_Read_INT32(s, bottom);
-
 	rgndata->boundingRect.width = right - rgndata->boundingRect.x;
 	rgndata->boundingRect.height = bottom - rgndata->boundingRect.y;
-
 	len -= 32;
+
 	if (len / (4 * 4) < rgndata->nRectCount)
 	{
 		WLog_ERR(TAG, "not enough data for region rectangles");
@@ -127,7 +130,6 @@ static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgn
 			Stream_Read_INT32(s, rgndata->rects[i].y);
 			Stream_Read_INT32(s, right);
 			Stream_Read_INT32(s, bottom);
-
 			rgndata->rects[i].width = right - rgndata->rects[i].x;
 			rgndata->rects[i].height = bottom - rgndata->rects[i].y;
 		}
@@ -146,11 +148,10 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 	UINT32 length, cbGeometryBuffer;
 	MAPPED_GEOMETRY_PACKET packet;
 	GEOMETRY_PLUGIN* geometry;
-	GeometryClientContext *context;
+	GeometryClientContext* context;
 	UINT ret;
-
 	geometry = (GEOMETRY_PLUGIN*) callback->plugin;
-	context = (GeometryClientContext *)geometry->iface.pInterface;
+	context = (GeometryClientContext*)geometry->iface.pInterface;
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -159,7 +160,8 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
-	if (length < 73 || Stream_GetRemainingLength(s) < (length-4))
+
+	if (length < 73 || Stream_GetRemainingLength(s) < (length - 4))
 	{
 		WLog_ERR(TAG, "invalid packet length");
 		return ERROR_INVALID_DATA;
@@ -170,20 +172,17 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, packet.updateType);
 	Stream_Seek_UINT32(s); /* flags */
 	Stream_Read_UINT64(s, packet.topLevelId);
-
 	Stream_Read_INT32(s, packet.left);
 	Stream_Read_INT32(s, packet.top);
 	Stream_Read_INT32(s, packet.right);
 	Stream_Read_INT32(s, packet.bottom);
-
 	Stream_Read_INT32(s, packet.topLevelLeft);
 	Stream_Read_INT32(s, packet.topLevelTop);
 	Stream_Read_INT32(s, packet.topLevelRight);
 	Stream_Read_INT32(s, packet.topLevelBottom);
-
 	Stream_Read_UINT32(s, packet.geometryType);
-
 	Stream_Read_UINT32(s, cbGeometryBuffer);
+
 	if (Stream_GetRemainingLength(s) < cbGeometryBuffer)
 	{
 		WLog_ERR(TAG, "invalid packet length");
@@ -191,12 +190,16 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 	}
 
 	ZeroMemory(&packet.geometry, sizeof(packet.geometry));
+
 	if (cbGeometryBuffer)
 	{
 		ret = geometry_read_RGNDATA(s, cbGeometryBuffer, &packet.geometry);
+
 		if (ret != CHANNEL_RC_OK)
 			return ret;
 	}
+	else
+		ret = CHANNEL_RC_OK;
 
 	if (context->MappedGeometryPacket)
 		ret = context->MappedGeometryPacket(context, &packet);
@@ -210,10 +213,9 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT geometry_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
+static UINT geometry_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	GEOMETRY_CHANNEL_CALLBACK* callback = (GEOMETRY_CHANNEL_CALLBACK*) pChannelCallback;
-
 	return geometry_recv_pdu(callback, data);
 }
 
@@ -234,12 +236,11 @@ static UINT geometry_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT geometry_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-	IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
-	IWTSVirtualChannelCallback** ppCallback)
+        IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
+        IWTSVirtualChannelCallback** ppCallback)
 {
 	GEOMETRY_CHANNEL_CALLBACK* callback;
 	GEOMETRY_LISTENER_CALLBACK* listener_callback = (GEOMETRY_LISTENER_CALLBACK*) pListenerCallback;
-
 	callback = (GEOMETRY_CHANNEL_CALLBACK*) calloc(1, sizeof(GEOMETRY_CHANNEL_CALLBACK));
 
 	if (!callback)
@@ -254,9 +255,7 @@ static UINT geometry_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;
 	listener_callback->channel_callback = callback;
-
 	*ppCallback = (IWTSVirtualChannelCallback*) callback;
-
 	return CHANNEL_RC_OK;
 }
 
@@ -269,8 +268,9 @@ static UINT geometry_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 {
 	UINT status;
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*) pPlugin;
+	geometry->listener_callback = (GEOMETRY_LISTENER_CALLBACK*) calloc(1,
+	                              sizeof(GEOMETRY_LISTENER_CALLBACK));
 
-	geometry->listener_callback = (GEOMETRY_LISTENER_CALLBACK*) calloc(1, sizeof(GEOMETRY_LISTENER_CALLBACK));
 	if (!geometry->listener_callback)
 	{
 		WLog_ERR(TAG, "calloc failed!");
@@ -280,12 +280,9 @@ static UINT geometry_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 	geometry->listener_callback->iface.OnNewChannelConnection = geometry_on_new_channel_connection;
 	geometry->listener_callback->plugin = pPlugin;
 	geometry->listener_callback->channel_mgr = pChannelMgr;
-
 	status = pChannelMgr->CreateListener(pChannelMgr, GEOMETRY_DVC_CHANNEL_NAME, 0,
-		(IWTSListenerCallback*) geometry->listener_callback, &(geometry->listener));
-
+	                                     (IWTSListenerCallback*) geometry->listener_callback, &(geometry->listener));
 	geometry->listener->pInterface = geometry->iface.pInterface;
-
 	return status;
 }
 
@@ -324,11 +321,12 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	UINT error = CHANNEL_RC_OK;
 	GEOMETRY_PLUGIN* geometry;
 	GeometryClientContext* context;
-
 	geometry = (GEOMETRY_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "geometry");
+
 	if (!geometry)
 	{
 		geometry = (GEOMETRY_PLUGIN*) calloc(1, sizeof(GEOMETRY_PLUGIN));
+
 		if (!geometry)
 		{
 			WLog_ERR(TAG, "calloc failed!");
@@ -339,8 +337,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		geometry->iface.Connected = NULL;
 		geometry->iface.Disconnected = NULL;
 		geometry->iface.Terminated = geometry_plugin_terminated;
-
 		context = (GeometryClientContext*) calloc(1, sizeof(GeometryClientContext));
+
 		if (!context)
 		{
 			WLog_ERR(TAG, "calloc failed!");
@@ -349,10 +347,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		}
 
 		context->handle = (void*) geometry;
-
 		geometry->iface.pInterface = (void*) context;
 		geometry->context = context;
-
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "geometry", (IWTSPlugin*) geometry);
 	}
 	else

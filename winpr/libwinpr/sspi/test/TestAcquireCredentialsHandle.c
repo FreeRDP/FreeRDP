@@ -12,7 +12,7 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 {
 	int rc = -1;
 	SECURITY_STATUS status;
-	CredHandle credentials;
+	CredHandle credentials = { 0 };
 	TimeStamp expiration;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecurityFunctionTable* table;

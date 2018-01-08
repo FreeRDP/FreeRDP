@@ -246,10 +246,7 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 					length += 2;
 
 				if (length >= 20 + 8 + 8)
-				{
-					length += 3 - strlen(arg->Format);
 					overlong = TRUE;
-				}
 
 				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
 					printf("%s[:%s]", arg->Name, overlong ? "..." : arg->Format);
@@ -776,7 +773,7 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 
 	prefix = (nArgs + 1UL) * sizeof(char*);
 	len = strlen(list);
-	p = (char**) calloc(len + prefix + 1, sizeof(char));
+	p = (char**) calloc(len + prefix + 1, sizeof(char*));
 
 	if (!p)
 		return NULL;

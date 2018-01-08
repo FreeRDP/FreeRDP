@@ -345,10 +345,8 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 		UINT32 segmentSize;
 		UINT16 segmentNumber;
 		UINT16 segmentCount;
-		UINT32 segmentOffset;
 		UINT32 uncompressedSize;
 		BYTE* pConcatenated;
-		segmentOffset = 7;
 
 		if (Stream_GetRemainingLength(stream) < 6)
 			goto fail;

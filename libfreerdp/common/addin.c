@@ -237,15 +237,15 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 {
 	PVIRTUALCHANNELENTRY entry;
 	LPSTR pszFileName;
-	size_t cchFileName = sizeof(FREERDP_SHARED_LIBRARY_PREFIX) + 32;
+	const size_t cchBaseFileName = sizeof(FREERDP_SHARED_LIBRARY_PREFIX) + 32;
 	LPCSTR pszExtension;
 	LPCSTR pszPrefix = FREERDP_SHARED_LIBRARY_PREFIX;
 	pszExtension = PathGetSharedLibraryExtensionA(0);
 
 	if (pszName && pszSubsystem && pszType)
 	{
-		cchFileName += strlen(pszName) + strlen(pszSubsystem) + strlen(
-		                   pszType) + strlen(pszExtension);
+		const size_t cchFileName = cchBaseFileName + strlen(pszName) + strlen(pszSubsystem) + strlen(
+		                                pszType) + strlen(pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
 
 		if (!pszFileName)
@@ -253,11 +253,10 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 
 		sprintf_s(pszFileName, cchFileName, "%s%s-client-%s-%s.%s", pszPrefix, pszName,
 		          pszSubsystem, pszType, pszExtension);
-		cchFileName = strlen(pszFileName);
 	}
 	else if (pszName && pszSubsystem)
 	{
-		cchFileName += strlen(pszName) + strlen(pszSubsystem) + strlen(pszExtension);
+		const size_t cchFileName = cchBaseFileName + strlen(pszName) + strlen(pszSubsystem) + strlen(pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
 
 		if (!pszFileName)
@@ -265,11 +264,10 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 
 		sprintf_s(pszFileName, cchFileName, "%s%s-client-%s.%s", pszPrefix, pszName,
 		          pszSubsystem, pszExtension);
-		cchFileName = strlen(pszFileName);
 	}
 	else if (pszName)
 	{
-		cchFileName += strlen(pszName) + strlen(pszExtension);
+		const size_t cchFileName = cchBaseFileName + strlen(pszName) + strlen(pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
 
 		if (!pszFileName)
@@ -277,7 +275,6 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 
 		sprintf_s(pszFileName, cchFileName, "%s%s-client.%s", pszPrefix, pszName,
 		          pszExtension);
-		cchFileName = strlen(pszFileName);
 	}
 	else
 	{

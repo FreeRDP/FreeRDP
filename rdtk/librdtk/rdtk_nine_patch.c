@@ -30,11 +30,7 @@ int rdtk_image_copy_alpha_blend(BYTE* pDstData, int nDstStep, int nXDst, int nYD
                                 int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc)
 {
 	int x, y;
-	int nSrcPad;
-	int nDstPad;
 	BYTE A, R, G, B;
-	nSrcPad = (nSrcStep - (nWidth * 4));
-	nDstPad = (nDstStep - (nWidth * 4));
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -268,7 +264,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 			}
 		}
 
-		pixel = (UINT32*) &((BYTE*) pixel)[scanline];
+		pixel = (UINT32*) & ((BYTE*) pixel)[scanline];
 	}
 
 	ninePatch->scaleTop = beg - 1;
@@ -323,7 +319,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 			}
 		}
 
-		pixel = (UINT32*) &((BYTE*) pixel)[scanline];
+		pixel = (UINT32*) & ((BYTE*) pixel)[scanline];
 	}
 
 	ninePatch->fillTop = beg - 1;
