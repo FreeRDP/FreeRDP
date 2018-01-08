@@ -61,6 +61,11 @@
 #define AV_CODEC_ID_AC3 CODEC_ID_AC3
 #endif
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(56, 34, 2)
+#define AV_CODEC_CAP_TRUNCATED CODEC_CAP_TRUNCATED
+#define AV_CODEC_FLAG_TRUNCATED CODEC_FLAG_TRUNCATED
+#endif
+
 #if LIBAVUTIL_VERSION_MAJOR < 52
 #define AV_PIX_FMT_YUV420P PIX_FMT_YUV420P
 #endif
@@ -207,8 +212,8 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 		}
 	}
 
-	if (mdecoder->codec->capabilities & CODEC_CAP_TRUNCATED)
-		mdecoder->codec_context->flags |= CODEC_FLAG_TRUNCATED;
+	if (mdecoder->codec->capabilities & AV_CODEC_CAP_TRUNCATED)
+		mdecoder->codec_context->flags |= AV_CODEC_FLAG_TRUNCATED;
 	return TRUE;
 }
 

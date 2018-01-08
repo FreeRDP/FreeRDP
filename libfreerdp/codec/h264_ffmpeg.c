@@ -33,6 +33,12 @@
 #define AV_CODEC_ID_H264 CODEC_ID_H264
 #endif
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(56, 34, 2)
+#define AV_CODEC_FLAG_LOOP_FILTER CODEC_FLAG_LOOP_FILTER
+#define AV_CODEC_CAP_TRUNCATED CODEC_CAP_TRUNCATED
+#define AV_CODEC_FLAG_TRUNCATED CODEC_FLAG_TRUNCATED
+#endif
+
 #if LIBAVUTIL_VERSION_MAJOR < 52
 #define AV_PIX_FMT_YUV420P PIX_FMT_YUV420P
 #endif
@@ -146,7 +152,7 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 	};
 	av_opt_set(sys->codecEncoderContext, "preset", "veryfast", AV_OPT_SEARCH_CHILDREN);
 	av_opt_set(sys->codecEncoderContext, "tune", "zerolatency", AV_OPT_SEARCH_CHILDREN);
-	sys->codecEncoderContext->flags |= CODEC_FLAG_LOOP_FILTER;
+	sys->codecEncoderContext->flags |= AV_CODEC_FLAG_LOOP_FILTER;
 	sys->codecEncoderContext->me_cmp |= 1;
 	sys->codecEncoderContext->me_subpel_quality = 3;
 	sys->codecEncoderContext->me_range = 16;
@@ -404,9 +410,9 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			goto EXCEPTION;
 		}
 
-		if (sys->codecDecoder->capabilities & CODEC_CAP_TRUNCATED)
+		if (sys->codecDecoder->capabilities & AV_CODEC_CAP_TRUNCATED)
 		{
-			sys->codecDecoderContext->flags |= CODEC_FLAG_TRUNCATED;
+			sys->codecDecoderContext->flags |= AV_CODEC_FLAG_TRUNCATED;
 		}
 
 		if (avcodec_open2(sys->codecDecoderContext, sys->codecDecoder, NULL) < 0)
