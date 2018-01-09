@@ -77,6 +77,7 @@ struct _H264_CONTEXT
 	H264_CONTEXT_SUBSYSTEM* subsystem;
 
 	void* lumaData;
+	wLog* log;
 };
 #ifdef __cplusplus
 extern "C" {
