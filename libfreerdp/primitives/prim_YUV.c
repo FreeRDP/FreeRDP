@@ -726,6 +726,73 @@ static INLINE pstatus_t general_RGBToYUV420_BGRX(
 	return PRIMITIVES_SUCCESS;
 }
 
+static INLINE pstatus_t general_RGBToYUV420_RGBX(
+    const BYTE* pSrc, UINT32 srcStep,
+    BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
+{
+	UINT32 x, y, i;
+	size_t x1 = 0, x2 = 4, x3 = srcStep, x4 = srcStep + 4;
+	size_t y1 = 0, y2 = 1, y3 = dstStep[0], y4 = dstStep[0] + 1;
+	UINT32 max_x = roi->width - 1;
+	UINT32 max_y = roi->height - 1;
+
+	for (y = i = 0; y < roi->height; y += 2, i++)
+	{
+		const BYTE* src = pSrc + y * srcStep;
+		BYTE* ydst = pDst[0] + y * dstStep[0];
+		BYTE* udst = pDst[1] + i * dstStep[1];
+		BYTE* vdst = pDst[2] + i * dstStep[2];
+
+		for (x = 0; x < roi->width; x += 2)
+		{
+			BYTE R, G, B;
+			INT32 Ra, Ga, Ba;
+			/* row 1, pixel 1 */
+			Ra = R = *(src + x1 + 0);
+			Ga = G = *(src + x1 + 1);
+			Ba = B = *(src + x1 + 2);
+			ydst[y1] = RGB2Y(R, G, B);
+
+			if (x < max_x)
+			{
+				/* row 1, pixel 2 */
+				Ra += R = *(src + x2 + 0);
+				Ga += G = *(src + x2 + 1);
+				Ba += B = *(src + x2 + 2);
+				ydst[y2] = RGB2Y(R, G, B);
+			}
+
+			if (y < max_y)
+			{
+				/* row 2, pixel 1 */
+				Ra += R = *(src + x3 + 0);
+				Ga += G = *(src + x3 + 1);
+				Ba += B = *(src + x3 + 2);
+				ydst[y3] = RGB2Y(R, G, B);
+
+				if (x < max_x)
+				{
+					/* row 2, pixel 2 */
+					Ra += R = *(src + x4 + 0);
+					Ga += G = *(src + x4 + 1);
+					Ba += B = *(src + x4 + 2);
+					ydst[y4] = RGB2Y(R, G, B);
+				}
+			}
+
+			Ba >>= 2;
+			Ga >>= 2;
+			Ra >>= 2;
+			*udst++ = RGB2U(Ra, Ga, Ba);
+			*vdst++ = RGB2V(Ra, Ga, Ba);
+			ydst += 2;
+			src += 8;
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
 static INLINE pstatus_t general_RGBToYUV420_ANY(
     const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
     BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
@@ -813,6 +880,10 @@ static pstatus_t general_RGBToYUV420_8u_P3AC4R(
 		case PIXEL_FORMAT_BGRX32:
 			return general_RGBToYUV420_BGRX(pSrc, srcStep, pDst, dstStep, roi);
 
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return general_RGBToYUV420_RGBX(pSrc, srcStep, pDst, dstStep, roi);
+
 		default:
 			return general_RGBToYUV420_ANY(pSrc, srcFormat, srcStep, pDst, dstStep, roi);
 	}
@@ -876,6 +947,94 @@ static INLINE pstatus_t general_RGBToAVC444YUV_BGRX(
 				B = src[4];
 				G = src[5];
 				R = src[6];
+				Y2 = RGB2Y(R, G, B);
+				U2 = RGB2U(R, G, B);
+				V2 = RGB2V(R, G, B);
+			}
+
+			*b1++ = Y1;
+			*b1++ = Y2;
+
+			if (evenRow)
+			{
+				*b2++ = U1;
+				*b3++ = V1;
+				*b6++ = U2;
+				*b7++ = V2;
+			}
+			else
+			{
+				*b4++ = U1;
+				*b4++ = U2;
+				*b5++ = V1;
+				*b5++ = V2;
+			}
+
+			src += 8;
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static INLINE pstatus_t general_RGBToAVC444YUV_RGBX(
+    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+    BYTE* pDst1[3], const UINT32 dst1Step[3],
+    BYTE* pDst2[3], const UINT32 dst2Step[3],
+    const prim_size_t* roi)
+{
+	/**
+	 * Note:
+	 * Read information in function general_RGBToAVC444YUV_ANY below !
+	 */
+	UINT32 x, y, n, numRows, numCols;
+	BOOL evenRow = TRUE;
+	BYTE* b1 = NULL;
+	BYTE* b2 = NULL;
+	BYTE* b3 = NULL;
+	BYTE* b4 = NULL;
+	BYTE* b5 = NULL;
+	BYTE* b6 = NULL;
+	BYTE* b7 = NULL;
+	const BYTE* pMaxSrc = pSrc + (roi->height - 1) * srcStep;
+	numRows = (roi->height + 1) & ~1;
+	numCols = (roi->width + 1) & ~1;
+
+	for (y = 0; y < numRows; y++, evenRow = !evenRow)
+	{
+		const BYTE* src = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
+		UINT32 i = y >> 1;
+		b1  = pDst1[0] + y * dst1Step[0];
+
+		if (evenRow)
+		{
+			b2 = pDst1[1] + i * dst1Step[1];
+			b3 = pDst1[2] + i * dst1Step[2];
+			b6 = pDst2[1] + i * dst2Step[1];
+			b7 = pDst2[2] + i * dst2Step[2];
+		}
+		else
+		{
+			n = (i & ~7) + i;
+			b4 = pDst2[0] + dst2Step[0] * n;
+			b5 = b4 + 8 * dst2Step[0];
+		}
+
+		for (x = 0; x < numCols; x += 2)
+		{
+			BYTE R, G, B, Y1, Y2, U1, U2, V1, V2;
+			R = src[0];
+			G = src[1];
+			B = src[2];
+			Y1 = Y2 = RGB2Y(R, G, B);
+			U1 = U2 = RGB2U(R, G, B);
+			V1 = V2 = RGB2V(R, G, B);
+
+			if (x + 1 < roi->width)
+			{
+				R = src[4];
+				G = src[5];
+				B = src[6];
 				Y2 = RGB2Y(R, G, B);
 				U2 = RGB2U(R, G, B);
 				V2 = RGB2V(R, G, B);
@@ -1058,8 +1217,175 @@ static INLINE pstatus_t general_RGBToAVC444YUV(
 		case PIXEL_FORMAT_BGRX32:
 			return general_RGBToAVC444YUV_BGRX(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
 
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return general_RGBToAVC444YUV_RGBX(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+
 		default:
 			return general_RGBToAVC444YUV_ANY(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+	}
+
+	return !PRIMITIVES_SUCCESS;
+}
+
+static INLINE pstatus_t general_RGBToAVC444YUVv2_ANY(
+    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+    BYTE* pDst1[3], const UINT32 dst1Step[3],
+    BYTE* pDst2[3], const UINT32 dst2Step[3],
+    const prim_size_t* roi)
+{
+	/**
+	 * Note: According to [MS-RDPEGFX 2.2.4.4 RFX_AVC420_BITMAP_STREAM] the
+	 * width and height of the MPEG-4 AVC/H.264 codec bitstream MUST be aligned
+	 * to a multiple of 16.
+	 * Hence the passed destination YUV420/CHROMA420 buffers must have been
+	 * allocated accordingly !!
+	 */
+	/**
+	 * [MS-RDPEGFX 3.3.8.3.3 YUV420p Stream Combination for YUV444v2 mode] defines the following "Bx areas":
+	 *
+	 * YUV420 frame (main view):
+	 * B1:  From Y444 all pixels
+	 * B2:  From U444 all pixels in even rows with even rows and columns
+	 * B3:  From V444 all pixels in even rows with even rows and columns
+	 *
+	 * Chroma420 frame (auxillary view):
+	 * B45: From U444 and V444 all pixels from all odd columns
+	 * B67: From U444 and V444 every 4th pixel in odd rows
+	 * B89:  From U444 and V444 every 4th pixel (initial offset of 2) in odd rows
+	 *
+	 * Chroma Bxy areas correspond to the left and right half of the YUV420 plane.
+	 * for (y = 0; y < fullHeight; y++)
+	 * {
+	 *     for (x = 0; x < fullWidth; x++)
+	 *     {
+	 *         B1[x,y] = Y444[x,y];
+	 *     }
+	 *
+	 *     for (x = 0; x < halfWidth; x++)
+	 *     {
+	 *         B4[x,y] = U444[2 * x, 2 * y];
+	 *         B5[x,y] = V444[2 * x, 2 * y];
+	 *     }
+	 *  }
+	 *
+	 * for (y = 0; y < halfHeight; y++)
+	 * {
+	 *     for (x = 0; x < halfWidth; x++)
+	 *     {
+	 *         B2[x,y] = U444[2 * x,     2 * y];
+	 *         B3[x,y] = V444[2 * x,     2 * y];
+	 *         B6[x,y] = U444[4 * x,     2 * y + 1];
+	 *         B7[x,y] = V444[4 * x,     2 * y + 1];
+	 *         B8[x,y] = V444[4 * x + 2, 2 * y + 1];
+	 *         B9[x,y] = V444[4 * x + 2, 2 * y] + 1;
+	 *     }
+	 *  }
+	 *
+	 */
+	UINT32 x, y;
+
+	for (y = 0; y < roi->height; y++)
+	{
+		const BYTE* src = pSrc + y * srcStep;
+		BYTE* b1  = pDst1 ? (pDst1[0] + y * dst1Step[0]) : NULL;
+		BYTE* b4  = pDst2 ? (pDst2[0] + y * dst2Step[0]) : NULL;
+		BYTE* b5  = pDst2 ? (pDst2[0] + y * dst2Step[0] + dst2Step[0] / 2) : NULL;
+
+		for (x = 0; x < roi->width; x++)
+		{
+			const UINT32 color = ReadColor(src, srcFormat);
+			BYTE r, g, b;
+			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
+			src += 4;
+
+			if (b1)
+			{
+				const BYTE y = RGB2Y(r, g, b);
+				*b1++ = y;
+			}
+
+			if (b4 && b5 && ((x & 1) == 1))
+			{
+				const BYTE u = RGB2U(r, g, b);
+				const BYTE v = RGB2V(r, g, b);
+				*b4++ = u;
+				*b5++ = v;
+			}
+		}
+	}
+
+	if (pDst1)
+	{
+		for (y = 0; y < roi->height / 2; y++)
+		{
+			const BYTE* src = pSrc + (2 * y) * srcStep;
+			BYTE* b2  = pDst1[1] + 2 * y * dst1Step[1];
+			BYTE* b3  = pDst1[2] + 2 * y * dst1Step[2];
+
+			for (x = 0; x < roi->width / 2; x++)
+			{
+				const UINT32 color = ReadColor(src, srcFormat);
+				BYTE r, g, b;
+				SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
+				src += 8;
+				{
+					const BYTE u = RGB2U(r, g, b);
+					const BYTE v = RGB2V(r, g, b);
+					*b2++ = u;
+					*b3++ = v;
+				}
+			}
+		}
+	}
+
+	if (pDst2)
+	{
+		for (y = 0; y < roi->height / 2; y++)
+		{
+			const BYTE* src = pSrc + (2 * y + 1) * srcStep;
+			BYTE* b6  = pDst2[1] + y * dst2Step[1];
+			BYTE* b7  = pDst2[1] + y * dst2Step[1] + dst2Step[1] / 2;
+			BYTE* b8  = pDst2[2] + y * dst2Step[2];
+			BYTE* b9  = pDst2[2] + y * dst2Step[2] + dst2Step[2] / 2;
+
+			for (x = 0; x < roi->width / 2; x++)
+			{
+				const UINT32 color = ReadColor(src, srcFormat);
+				BYTE r, g, b, u, v;
+				SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
+				src += 8;
+				u = RGB2U(r, g, b);
+				v = RGB2V(r, g, b);
+
+				if (x & 1)
+				{
+					*b8++ = u;
+					*b9++ = v;
+				}
+				else
+				{
+					*b6++ = u;
+					*b7++ = v;
+				}
+			}
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static INLINE pstatus_t general_RGBToAVC444YUVv2(
+    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+    BYTE* pDst1[3], const UINT32 dst1Step[3],
+    BYTE* pDst2[3], const UINT32 dst2Step[3],
+    const prim_size_t* roi)
+{
+	switch (srcFormat)
+	{
+		default:
+			return general_RGBToAVC444YUVv2_ANY(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step,
+			                                    roi);
 	}
 
 	return !PRIMITIVES_SUCCESS;
@@ -1074,5 +1400,6 @@ void primitives_init_YUV(primitives_t* prims)
 	prims->YUV420CombineToYUV444 = general_YUV420CombineToYUV444;
 	prims->YUV444SplitToYUV420 = general_YUV444SplitToYUV420;
 	prims->RGBToAVC444YUV = general_RGBToAVC444YUV;
+	prims->RGBToAVC444YUVv2 = general_RGBToAVC444YUVv2;
 }
 
