@@ -1054,9 +1054,7 @@ static LONG smartcard_StatusA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 	Status_Call* call = operation->call;
 	ZeroMemory(ret.pbAtr, 32);
 
-	if (call->cbAtrLen > 32)
-		call->cbAtrLen = 32;
-
+	call->cbAtrLen = 32;
 	cbAtrLen = call->cbAtrLen;
 
 	if (call->fmszReaderNamesIsNULL)
