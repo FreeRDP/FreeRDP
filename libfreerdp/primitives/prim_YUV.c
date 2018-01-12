@@ -1320,8 +1320,8 @@ static INLINE pstatus_t general_RGBToAVC444YUVv2_ANY(
 		for (y = 0; y < roi->height / 2; y++)
 		{
 			const BYTE* src = pSrc + (2 * y) * srcStep;
-			BYTE* b2  = pDst1[1] + 2 * y * dst1Step[1];
-			BYTE* b3  = pDst1[2] + 2 * y * dst1Step[2];
+			BYTE* b2  = pDst1[1] + y * dst1Step[1];
+			BYTE* b3  = pDst1[2] + y * dst1Step[2];
 
 			for (x = 0; x < roi->width / 2; x++)
 			{
