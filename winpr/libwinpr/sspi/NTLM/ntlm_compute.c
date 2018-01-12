@@ -281,6 +281,28 @@ int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
 int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 {
 	SSPI_CREDENTIALS* credentials = context->credentials;
+#ifdef WITH_DEBUG_NTLM
+
+	if (credentials)
+	{
+		WLog_DBG(TAG, "Password (length = %"PRIu32")", credentials->identity.PasswordLength * 2);
+		winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.Password,
+		              credentials->identity.PasswordLength * 2);
+		WLog_DBG(TAG, "Username (length = %"PRIu32")", credentials->identity.UserLength * 2);
+		winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.User,
+		              credentials->identity.UserLength * 2);
+		WLog_DBG(TAG, "Domain (length = %"PRIu32")", credentials->identity.DomainLength * 2);
+		winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.Domain,
+		              credentials->identity.DomainLength * 2);
+	}
+	else
+		WLog_DBG(TAG, "Strange, NTLM_CONTEXT is missing valid credentials...");
+
+	WLog_DBG(TAG, "Workstation (length = %"PRIu16")", context->Workstation.Length);
+	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) context->Workstation.Buffer, context->Workstation.Length);
+	WLog_DBG(TAG, "NTOWFv2, NTLMv2 Hash");
+	winpr_HexDump(TAG, WLOG_DEBUG, context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH);
+#endif
 
 	if (memcmp(context->NtlmV2Hash, NTLM_NULL_BUFFER, 16) != 0)
 		return 1;
@@ -400,21 +422,6 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	if (ntlm_compute_ntlm_v2_hash(context, (BYTE*) context->NtlmV2Hash) < 0)
 		return -1;
 
-#ifdef WITH_DEBUG_NTLM
-	WLog_DBG(TAG, "Password (length = %"PRIu32")", credentials->identity.PasswordLength * 2);
-	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.Password,
-	              credentials->identity.PasswordLength * 2);
-	WLog_DBG(TAG, "Username (length = %"PRIu32")", credentials->identity.UserLength * 2);
-	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.User,
-	              credentials->identity.UserLength * 2);
-	WLog_DBG(TAG, "Domain (length = %"PRIu32")", credentials->identity.DomainLength * 2);
-	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.Domain,
-	              credentials->identity.DomainLength * 2);
-	WLog_DBG(TAG, "Workstation (length = %"PRIu16")", context->Workstation.Length);
-	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) context->Workstation.Buffer, context->Workstation.Length);
-	WLog_DBG(TAG, "NTOWFv2, NTLMv2 Hash");
-	winpr_HexDump(TAG, WLOG_DEBUG, context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH);
-#endif
 	/* Construct temp */
 	blob[0] = 1; /* RespType (1 byte) */
 	blob[1] = 1; /* HighRespType (1 byte) */
