@@ -27,9 +27,7 @@
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
-extern const RPC_FAULT_CODE RPC_TSG_FAULT_CODES[];
-
-const RPC_FAULT_CODE RPC_FAULT_CODES[] =
+static const RPC_FAULT_CODE RPC_FAULT_CODES[] =
 {
 	DEFINE_RPC_FAULT_CODE(nca_s_fault_object_not_found)
 	DEFINE_RPC_FAULT_CODE(nca_s_fault_cancel)
@@ -156,10 +154,12 @@ const RPC_FAULT_CODE RPC_FAULT_CODES[] =
 	DEFINE_RPC_FAULT_CODE(RPC_S_GROUP_MEMBER_NOT_FOUND)
 	DEFINE_RPC_FAULT_CODE(EPT_S_CANT_CREATE)
 	DEFINE_RPC_FAULT_CODE(RPC_S_INVALID_OBJECT)
-	{ 0, NULL }
+	{
+		0, NULL
+	}
 };
 
-const RPC_FAULT_CODE RPC_TSG_FAULT_CODES[] =
+static const RPC_FAULT_CODE RPC_TSG_FAULT_CODES[] =
 {
 	DEFINE_RPC_FAULT_CODE(RPC_S_OK)
 	DEFINE_RPC_FAULT_CODE(RPC_S_INVALID_ARG)
@@ -209,7 +209,9 @@ const RPC_FAULT_CODE RPC_TSG_FAULT_CODES[] =
 	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_CONNECTIONABORTED))
 	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_NOCERTAVAILABLE))
 	DEFINE_RPC_FAULT_CODE(__HRESULT_FROM_WIN32(RPC_S_CALL_CANCELLED))
-	{ 0, NULL }
+	{
+		0, NULL
+	}
 };
 
 /**
@@ -217,96 +219,139 @@ const RPC_FAULT_CODE RPC_TSG_FAULT_CODES[] =
  * http://msdn.microsoft.com/en-us/library/ee442005/
  */
 
-UINT32 rpc_map_status_code_to_win32_error_code(UINT32 code)
+static UINT32 rpc_map_status_code_to_win32_error_code(UINT32 code)
 {
 	switch (code)
 	{
 		case nca_s_comm_failure:
 			return RPC_S_COMM_FAILURE;
+
 		case nca_s_op_rng_error:
 			return RPC_S_PROCNUM_OUT_OF_RANGE;
+
 		case nca_s_unk_if:
 			return RPC_S_UNKNOWN_IF;
+
 		case nca_s_wrong_boot_time:
 			return nca_s_wrong_boot_time;
+
 		case nca_s_you_crashed:
 			return RPC_S_CALL_FAILED;
+
 		case nca_s_proto_error:
 			return RPC_S_PROTOCOL_ERROR;
+
 		case nca_s_out_args_too_big:
 			return RPC_S_SERVER_OUT_OF_MEMORY;
+
 		case nca_s_server_too_busy:
 			return RPC_S_SERVER_TOO_BUSY;
+
 		case nca_s_unsupported_type:
 			return RPC_S_UNSUPPORTED_TYPE;
+
 		case nca_s_fault_int_div_by_zero:
 			return RPC_S_ZERO_DIVIDE;
+
 		case nca_s_fault_addr_error:
 			return RPC_S_ADDRESS_ERROR;
+
 		case nca_s_fault_fp_div_zero:
 			return RPC_S_FP_DIV_ZERO;
+
 		case nca_s_fault_fp_underflow:
 			return RPC_S_FP_UNDERFLOW;
+
 		case nca_s_fault_fp_overflow:
 			return RPC_S_FP_OVERFLOW;
+
 		case nca_s_fault_invalid_tag:
 			return RPC_S_INVALID_TAG;
+
 		case nca_s_fault_invalid_bound:
 			return RPC_S_INVALID_BOUND;
+
 		case nca_s_rpc_version_mismatch:
 			return RPC_S_PROTOCOL_ERROR;
+
 		case nca_s_unspec_reject:
 			return RPC_S_CALL_FAILED;
+
 		case nca_s_bad_actid:
 			return RPC_S_CALL_FAILED_DNE;
+
 		case nca_s_who_are_you_failed:
 			return RPC_S_CALL_FAILED;
+
 		case nca_s_manager_not_entered:
 			return RPC_S_CALL_FAILED_DNE;
+
 		case nca_s_fault_cancel:
 			return RPC_S_CALL_CANCELLED;
+
 		case nca_s_fault_ill_inst:
 			return RPC_S_ADDRESS_ERROR;
+
 		case nca_s_fault_fp_error:
 			return RPC_S_FP_OVERFLOW;
+
 		case nca_s_fault_int_overflow:
 			return RPC_S_ADDRESS_ERROR;
+
 		case nca_s_fault_unspec:
 			return RPC_S_CALL_FAILED;
+
 		case nca_s_fault_remote_comm_failure:
 			return nca_s_fault_remote_comm_failure;
+
 		case nca_s_fault_pipe_empty:
 			return RPC_X_PIPE_EMPTY;
+
 		case nca_s_fault_pipe_closed:
 			return RPC_X_PIPE_CLOSED;
+
 		case nca_s_fault_pipe_order:
 			return RPC_X_WRONG_PIPE_ORDER;
+
 		case nca_s_fault_pipe_discipline:
 			return RPC_X_PIPE_DISCIPLINE_ERROR;
+
 		case nca_s_fault_pipe_comm_error:
 			return RPC_S_COMM_FAILURE;
+
 		case nca_s_fault_pipe_memory:
 			return RPC_S_OUT_OF_MEMORY;
+
 		case nca_s_fault_context_mismatch:
 			return RPC_X_SS_CONTEXT_MISMATCH;
+
 		case nca_s_fault_remote_no_memory:
 			return RPC_S_SERVER_OUT_OF_MEMORY;
+
 		case nca_s_invalid_pres_context_id:
 			return RPC_S_PROTOCOL_ERROR;
+
 		case nca_s_unsupported_authn_level:
 			return RPC_S_UNSUPPORTED_AUTHN_LEVEL;
+
 		case nca_s_invalid_checksum:
 			return RPC_S_CALL_FAILED_DNE;
+
 		case nca_s_invalid_crc:
 			return RPC_S_CALL_FAILED_DNE;
+
 		case nca_s_fault_user_defined:
 			return nca_s_fault_user_defined;
+
 		case nca_s_fault_tx_open_failed:
 			return nca_s_fault_tx_open_failed;
+
 		case nca_s_fault_codeset_conv_error:
 			return nca_s_fault_codeset_conv_error;
+
 		case nca_s_fault_object_not_found:
 			return nca_s_fault_object_not_found;
+
 		case nca_s_fault_no_client_stub:
 			return nca_s_fault_no_client_stub;
 	}

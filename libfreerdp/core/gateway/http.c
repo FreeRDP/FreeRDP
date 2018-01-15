@@ -80,7 +80,7 @@ static void string_free(void* obj1)
 	free(obj1);
 }
 
-HttpContext* http_context_new()
+HttpContext* http_context_new(void)
 {
 	return (HttpContext*) calloc(1, sizeof(HttpContext));
 }
@@ -256,7 +256,7 @@ BOOL http_request_set_transfer_encoding(HttpRequest* request, const char* Transf
 	return TRUE;
 }
 
-char* http_encode_body_line(char* param, char* value)
+static char* http_encode_body_line(char* param, char* value)
 {
 	char* line;
 	int length;
@@ -270,7 +270,7 @@ char* http_encode_body_line(char* param, char* value)
 	return line;
 }
 
-char* http_encode_content_length_line(int ContentLength)
+static char* http_encode_content_length_line(int ContentLength)
 {
 	char* line;
 	int length;
@@ -286,7 +286,7 @@ char* http_encode_content_length_line(int ContentLength)
 	return line;
 }
 
-char* http_encode_header_line(char* Method, char* URI)
+static char* http_encode_header_line(char* Method, char* URI)
 {
 	char* line;
 	int length;
@@ -300,7 +300,7 @@ char* http_encode_header_line(char* Method, char* URI)
 	return line;
 }
 
-char* http_encode_authorization_line(char* AuthScheme, char* AuthParam)
+static char* http_encode_authorization_line(char* AuthScheme, char* AuthParam)
 {
 	char* line;
 	int length;
@@ -415,7 +415,7 @@ out_free:
 	return NULL;
 }
 
-HttpRequest* http_request_new()
+HttpRequest* http_request_new(void)
 {
 	return (HttpRequest*) calloc(1, sizeof(HttpRequest));
 }
@@ -435,7 +435,7 @@ void http_request_free(HttpRequest* request)
 	free(request);
 }
 
-BOOL http_response_parse_header_status_line(HttpResponse* response, char* status_line)
+static BOOL http_response_parse_header_status_line(HttpResponse* response, char* status_line)
 {
 	char* separator = NULL;
 	char* status_code;
@@ -473,7 +473,7 @@ BOOL http_response_parse_header_status_line(HttpResponse* response, char* status
 	return TRUE;
 }
 
-BOOL http_response_parse_header_field(HttpResponse* response, char* name, char* value)
+static BOOL http_response_parse_header_field(HttpResponse* response, char* name, char* value)
 {
 	BOOL status = TRUE;
 
@@ -539,7 +539,7 @@ BOOL http_response_parse_header_field(HttpResponse* response, char* name, char* 
 	return status;
 }
 
-BOOL http_response_parse_header(HttpResponse* response)
+static BOOL http_response_parse_header(HttpResponse* response)
 {
 	char c;
 	int count;
@@ -821,7 +821,7 @@ out_free:
 	return NULL;
 }
 
-HttpResponse* http_response_new()
+HttpResponse* http_response_new(void)
 {
 	HttpResponse* response = (HttpResponse*) calloc(1, sizeof(HttpResponse));
 

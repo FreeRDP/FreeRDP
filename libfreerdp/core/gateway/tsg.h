@@ -310,12 +310,6 @@ struct rdp_tsg
 };
 
 FREERDP_LOCAL int tsg_proxy_begin(rdpTsg* tsg);
-FREERDP_LOCAL int tsg_proxy_reauth(rdpTsg* tsg);
-
-FREERDP_LOCAL DWORD TsProxySendToServer(handle_t IDL_handle, BYTE pRpcMessage[],
-                                        UINT32 count, UINT32* lengths);
-
-FREERDP_LOCAL int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state);
 
 FREERDP_LOCAL BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port,
                                int timeout);
@@ -329,7 +323,5 @@ FREERDP_LOCAL DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events,
 
 FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
 FREERDP_LOCAL void tsg_free(rdpTsg* tsg);
-
-FREERDP_LOCAL BIO_METHOD* BIO_s_tsg(void);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_TSG_H */

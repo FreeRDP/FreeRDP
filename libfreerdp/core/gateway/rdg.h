@@ -150,7 +150,6 @@ FREERDP_LOCAL BOOL rdg_connect(rdpRdg* rdg, const char* hostname, UINT16 port,
                                int timeout);
 FREERDP_LOCAL DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events,
         DWORD count);
-FREERDP_LOCAL BOOL rdg_check_event_handles(rdpRdg* rdg);
 
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RDG_H */

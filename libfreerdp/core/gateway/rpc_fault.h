@@ -26,6 +26,5 @@
 #include <freerdp/api.h>
 
 FREERDP_LOCAL int rpc_recv_fault_pdu(rpcconn_hdr_t* header);
-FREERDP_LOCAL UINT32 rpc_map_status_code_to_win32_error_code(UINT32 code);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_FAULT_H */

@@ -314,7 +314,7 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 	}
 }
 
-rdpNtlm* ntlm_new()
+rdpNtlm* ntlm_new(void)
 {
 	rdpNtlm* ntlm;
 	ntlm = (rdpNtlm*) calloc(1, sizeof(rdpNtlm));
