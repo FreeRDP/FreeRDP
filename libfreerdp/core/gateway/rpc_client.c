@@ -539,6 +539,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 					freerdp_set_last_error(rpc->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 			}
 
+			http_response_free(response);
 			return -1;
 		}
 
@@ -738,6 +739,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 			if (rpc_ncacn_http_recv_in_channel_response(rpc, inChannel, response) < 0)
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_recv_in_channel_response failure");
+				http_response_free(response);
 				return -1;
 			}
 
@@ -746,6 +748,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 			if (rpc_ncacn_http_send_in_channel_request(rpc, inChannel) < 0)
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
+				http_response_free(response);
 				return -1;
 			}
 
@@ -758,6 +761,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 			if (rts_send_CONN_B1_pdu(rpc) < 0)
 			{
 				WLog_ERR(TAG, "rpc_send_CONN_B1_pdu error!");
+				http_response_free(response);
 				return -1;
 			}
 

@@ -95,19 +95,20 @@ FREERDP_LOCAL void http_request_free(HttpRequest* request);
 
 struct _http_response
 {
-	int count;
+	size_t count;
 	char** lines;
 
-	int StatusCode;
-	char* ReasonPhrase;
+	long StatusCode;
+	const char* ReasonPhrase;
 
-	int ContentLength;
-	char* ContentType;
+	size_t ContentLength;
+	const char* ContentType;
 
-	int BodyLength;
+	size_t BodyLength;
 	BYTE* BodyContent;
 
 	wListDictionary* Authenticates;
+	wStream* data;
 };
 
 FREERDP_LOCAL void http_response_print(HttpResponse* response);

@@ -607,9 +607,7 @@ static BOOL rdg_out_channel_recv(rdpRdg* rdg)
 			response = http_response_recv(rdg->tlsOut);
 
 			if (!response)
-			{
 				return FALSE;
-			}
 
 			status = rdg_process_out_channel_response(rdg, response);
 			http_response_free(response);
@@ -619,9 +617,7 @@ static BOOL rdg_out_channel_recv(rdpRdg* rdg)
 			response = http_response_recv(rdg->tlsOut);
 
 			if (!response)
-			{
 				return FALSE;
-			}
 
 			status = rdg_process_out_channel_authorization(rdg, response);
 			http_response_free(response);
@@ -1193,12 +1189,12 @@ static BOOL rdg_process_unknown_packet(rdpRdg* rdg, int type)
 	return TRUE;
 }
 
-static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, int packetLength)
+static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLength)
 {
 	wStream* s = NULL;
-	int readCount = 0;
+	size_t readCount = 0;
 	int status;
-	int payloadSize = packetLength - sizeof(RdgPacketHeader);
+	size_t payloadSize = packetLength - sizeof(RdgPacketHeader);
 
 	if (payloadSize)
 	{
@@ -1253,7 +1249,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, int packetLength)
 static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 {
 	RdgPacketHeader header;
-	int readCount = 0;
+	size_t readCount = 0;
 	int readSize;
 	int status;
 	int pending;
@@ -1268,14 +1264,10 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 			if (status <= 0)
 			{
 				if (!BIO_should_retry(rdg->tlsOut->bio))
-				{
 					return -1;
-				}
 
 				if (!readCount)
-				{
 					return 0;
-				}
 
 				BIO_wait_read(rdg->tlsOut->bio, 50);
 				continue;
@@ -1289,9 +1281,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 			status = rdg_process_control_packet(rdg, header.type, header.packetLength);
 
 			if (!status)
-			{
 				return -1;
-			}
 
 			return 0;
 		}
@@ -1305,9 +1295,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 			if (status < 0)
 			{
 				if (!BIO_should_retry(rdg->tlsOut->bio))
-				{
 					return -1;
-				}
 
 				BIO_wait_read(rdg->tlsOut->bio, 50);
 				continue;
@@ -1339,11 +1327,6 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 		ResetEvent(rdg->readEvent);
 
 	return status;
-}
-
-static long rdg_bio_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
-{
-	return 1;
 }
 
 static int rdg_bio_write(BIO* bio, const char* buf, int num)
