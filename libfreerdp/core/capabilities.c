@@ -2633,7 +2633,7 @@ static char* rdp_get_bitmap_codec_guid_name(const GUID* guid)
 	else if (UuidEqual(guid, &CODEC_GUID_IMAGE_REMOTEFX, &rpc_status))
 		return "CODEC_GUID_IMAGE_REMOTEFX";
 
-#if WITH_JPEG
+#if defined(WITH_JPEG)
 	else if (UuidEqual(guid, &CODEC_GUID_JPEG, &rpc_status))
 		return "CODEC_GUID_JPEG";
 
