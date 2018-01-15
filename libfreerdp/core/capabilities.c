@@ -142,7 +142,6 @@ static void rdp_write_capability_set_header(wStream* s, UINT16 length,
 static int rdp_capability_set_start(wStream* s)
 {
 	size_t header;
-
 	header = Stream_GetPosition(s);
 	Stream_Zero(s, CAPSET_HEADER_LENGTH);
 	return header;
@@ -152,7 +151,6 @@ static void rdp_capability_set_finish(wStream* s, int header, UINT16 type)
 {
 	size_t footer;
 	UINT16 length;
-
 	footer = Stream_GetPosition(s);
 	length = footer - header;
 	Stream_SetPosition(s, header);
@@ -198,7 +196,6 @@ static BOOL rdp_read_general_capability_set(wStream* s, UINT16 length,
 	Stream_Seek_UINT16(s); /* generalCompressionLevel (2 bytes) */
 	Stream_Read_UINT8(s, refreshRectSupport); /* refreshRectSupport (1 byte) */
 	Stream_Read_UINT8(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
-
 	settings->NoBitmapCompressionHeader = (extraFlags & NO_BITMAP_COMPRESSION_HDR) ? TRUE : FALSE;
 	settings->LongCredentialsSupported = (extraFlags & LONG_CREDENTIALS_SUPPORTED) ? TRUE : FALSE;
 
@@ -373,7 +370,8 @@ static BOOL rdp_read_bitmap_capability_set(wStream* s, UINT16 length,
 		settings->DrawAllowSkipAlpha = (drawingFlags & DRAW_ALLOW_SKIP_ALPHA) ? TRUE : FALSE;
 
 	if (settings->DrawAllowDynamicColorFidelity)
-		settings->DrawAllowDynamicColorFidelity = (drawingFlags & DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY) ? TRUE : FALSE;
+		settings->DrawAllowDynamicColorFidelity = (drawingFlags & DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY) ?
+		        TRUE : FALSE;
 
 	if (settings->DrawAllowColorSubsampling)
 		settings->DrawAllowColorSubsampling = (drawingFlags & DRAW_ALLOW_COLOR_SUBSAMPLING) ? TRUE : FALSE;
@@ -695,7 +693,8 @@ static BOOL rdp_print_order_capability_set(wStream* s, UINT16 length)
 	WLog_INFO(TAG,  "\t\tGLYPH_INDEX: %"PRIu8"", orderSupport[NEG_GLYPH_INDEX_INDEX]);
 	WLog_INFO(TAG,  "\t\tGLYPH_WEXTTEXTOUT: %"PRIu8"", orderSupport[NEG_GLYPH_WEXTTEXTOUT_INDEX]);
 	WLog_INFO(TAG,  "\t\tGLYPH_WLONGTEXTOUT: %"PRIu8"", orderSupport[NEG_GLYPH_WLONGTEXTOUT_INDEX]);
-	WLog_INFO(TAG,  "\t\tGLYPH_WLONGEXTTEXTOUT: %"PRIu8"", orderSupport[NEG_GLYPH_WLONGEXTTEXTOUT_INDEX]);
+	WLog_INFO(TAG,  "\t\tGLYPH_WLONGEXTTEXTOUT: %"PRIu8"",
+	          orderSupport[NEG_GLYPH_WLONGEXTTEXTOUT_INDEX]);
 	WLog_INFO(TAG,  "\t\tUNUSED31: %"PRIu8"", orderSupport[NEG_UNUSED31_INDEX]);
 	WLog_INFO(TAG,  "\ttextFlags: 0x%04"PRIX16"", textFlags);
 	WLog_INFO(TAG,  "\torderSupportExFlags: 0x%04"PRIX16"", orderSupportExFlags);
@@ -1840,11 +1839,16 @@ static BOOL rdp_write_bitmap_cache_v2_capability_set(wStream* s,
 	Stream_Write_UINT8(s, 0); /* pad2 (1 byte) */
 	Stream_Write_UINT8(s,
 	                   settings->BitmapCacheV2NumCells); /* numCellCaches (1 byte) */
-	rdp_write_bitmap_cache_cell_info(s, &settings->BitmapCacheV2CellInfo[0]); /* bitmapCache0CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(s, &settings->BitmapCacheV2CellInfo[1]); /* bitmapCache1CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(s, &settings->BitmapCacheV2CellInfo[2]); /* bitmapCache2CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(s, &settings->BitmapCacheV2CellInfo[3]); /* bitmapCache3CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(s, &settings->BitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
+	rdp_write_bitmap_cache_cell_info(s,
+	                                 &settings->BitmapCacheV2CellInfo[0]); /* bitmapCache0CellInfo (4 bytes) */
+	rdp_write_bitmap_cache_cell_info(s,
+	                                 &settings->BitmapCacheV2CellInfo[1]); /* bitmapCache1CellInfo (4 bytes) */
+	rdp_write_bitmap_cache_cell_info(s,
+	                                 &settings->BitmapCacheV2CellInfo[2]); /* bitmapCache2CellInfo (4 bytes) */
+	rdp_write_bitmap_cache_cell_info(s,
+	                                 &settings->BitmapCacheV2CellInfo[3]); /* bitmapCache3CellInfo (4 bytes) */
+	rdp_write_bitmap_cache_cell_info(s,
+	                                 &settings->BitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
 	Stream_Zero(s, 12); /* pad3 (12 bytes) */
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CACHE_V2);
 	return TRUE;
@@ -2126,7 +2130,8 @@ static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s, rdpSettings*
 	Stream_Write_UINT32(s, drawGdiplusCacheLevel); /* drawGdiplusCacheLevel (4 bytes) */
 	rdp_write_gdiplus_cache_entries(s, 10, 5, 5, 10, 2); /* GdipCacheEntries (10 bytes) */
 	rdp_write_gdiplus_cache_chunk_size(s, 512, 2048, 1024, 64); /* GdipCacheChunkSize (8 bytes) */
-	rdp_write_gdiplus_image_cache_properties(s, 4096, 256, 128); /* GdipImageCacheProperties (6 bytes) */
+	rdp_write_gdiplus_image_cache_properties(s, 4096, 256,
+	        128); /* GdipImageCacheProperties (6 bytes) */
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_DRAW_GDI_PLUS);
 	return TRUE;
 }
@@ -2607,7 +2612,8 @@ static BOOL rdp_print_surface_commands_capability_set(wStream* s, UINT16 length)
 
 static void rdp_print_bitmap_codec_guid(const GUID* guid)
 {
-	WLog_INFO(TAG,  "%08"PRIX32"%04"PRIX16"%04"PRIX16"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"",
+	WLog_INFO(TAG,
+	          "%08"PRIX32"%04"PRIX16"%04"PRIX16"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"",
 	          guid->Data1, guid->Data2, guid->Data3,
 	          guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
 	          guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
@@ -2626,9 +2632,12 @@ static char* rdp_get_bitmap_codec_guid_name(const GUID* guid)
 		return "CODEC_GUID_IGNORE";
 	else if (UuidEqual(guid, &CODEC_GUID_IMAGE_REMOTEFX, &rpc_status))
 		return "CODEC_GUID_IMAGE_REMOTEFX";
+
+#if WITH_JPEG
 	else if (UuidEqual(guid, &CODEC_GUID_JPEG, &rpc_status))
 		return "CODEC_GUID_JPEG";
 
+#endif
 	return "CODEC_GUID_UNKNOWN";
 }
 #endif
@@ -3043,8 +3052,10 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s,
 		bitmapCodecCount++;
 
 #if defined(WITH_JPEG)
+
 	if (settings->JpegCodec)
 		bitmapCodecCount++;
+
 #endif
 
 	if (settings->RemoteFxImageCodec)
@@ -3093,6 +3104,7 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s,
 	}
 
 #if defined(WITH_JPEG)
+
 	if (settings->JpegCodec)
 	{
 		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_JPEG); /* codecGUID */
@@ -3112,6 +3124,7 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s,
 				return FALSE;
 		}
 	}
+
 #endif
 
 	if (settings->RemoteFxImageCodec)
@@ -3930,7 +3943,7 @@ BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 		numberCapabilities += 2;
 
 		if (!rdp_write_remote_programs_capability_set(s, settings) ||
-			!rdp_write_window_list_capability_set(s, settings))
+		    !rdp_write_window_list_capability_set(s, settings))
 			return FALSE;
 	}
 
