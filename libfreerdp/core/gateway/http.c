@@ -482,7 +482,7 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 	{
 		unsigned long long val;
 		errno = 0;
-		val = strtoull(value, NULL, 0);
+		val = _strtoui64(value, NULL, 0);
 
 		if ((errno != 0) || (val < 0) || (val > INT32_MAX))
 			return FALSE;
