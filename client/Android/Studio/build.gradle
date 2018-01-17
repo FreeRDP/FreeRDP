@@ -15,19 +15,9 @@ def getVersionName = { ->
 }
 
 ext {
-    versionCode = properties.get('VERSION', "12").toInteger()
-    minSdk = properties.get('MIN_SDK', "14").toInteger()
-    targetSdk = properties.get('TARGET_SDK', "25").toInteger()
-    compileSdk = properties.get('COMPILE_SDK', "25").toInteger()
-    buildToolsVersion = properties.get('BUILD_TOOLS', "25.0.2")
     versionName = properties.get('VERSION_NAME', getVersionName())
 
     println '----------------- Project configuration -------------------'
-    println 'VERSION:            ' + versionCode
-    println 'MIN_SDK:            ' + minSdk
-    println 'TARGET_SDK:         ' + targetSdk
-    println 'COMPILE_SDK:        ' + compileSdk
-    println 'BUILD_TOOLS:        ' + buildToolsVersion
     println 'VERSION_NAME:       ' + versionName
     println 'RELEASE_STORE_FILE: '+ RELEASE_STORE_FILE
     println 'RELEASE_KEY_ALIAS:  '+ RELEASE_KEY_ALIAS
@@ -37,14 +27,16 @@ ext {
 buildscript {
     repositories {
         jcenter()
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0'
+        classpath 'com.android.tools.build:gradle:3.0.1'
     }
 }
 
 allprojects {
     repositories {
         jcenter()
+        google()
     }
 }
