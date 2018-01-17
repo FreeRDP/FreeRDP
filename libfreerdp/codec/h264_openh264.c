@@ -44,7 +44,8 @@ typedef struct _H264_CONTEXT_OPENH264 H264_CONTEXT_OPENH264;
 static void openh264_trace_callback(H264_CONTEXT* h264, int level,
                                     const char* message)
 {
-	WLog_Print(h264->log, WLOG_TRACE, "%d - %s", level, message);
+	if (h264)
+		WLog_Print(h264->log, WLOG_TRACE, "%d - %s", level, message);
 }
 
 static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
@@ -420,18 +421,6 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 				}
 
 				status = (*sys->pDecoder)->SetOption(
-				             sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK,
-				             &traceCallback);
-
-				if (status != 0)
-				{
-					WLog_Print(h264->log, WLOG_ERROR,
-					           "Failed to set trace callback option on OpenH264 decoder (status=%ld)",
-					           status);
-					goto EXCEPTION;
-				}
-
-				status = (*sys->pDecoder)->SetOption(
 				             sys->pDecoder,
 				             DECODER_OPTION_TRACE_CALLBACK_CONTEXT,
 				             &h264);
@@ -440,6 +429,18 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 				{
 					WLog_Print(h264->log, WLOG_ERROR,
 					           "Failed to set trace callback context option on OpenH264 decoder (status=%ld)",
+					           status);
+					goto EXCEPTION;
+				}
+
+				status = (*sys->pDecoder)->SetOption(
+				             sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK,
+				             &traceCallback);
+
+				if (status != 0)
+				{
+					WLog_Print(h264->log, WLOG_ERROR,
+					           "Failed to set trace callback option on OpenH264 decoder (status=%ld)",
 					           status);
 					goto EXCEPTION;
 				}
