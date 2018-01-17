@@ -690,6 +690,7 @@ static int nla_server_init(rdpNla* nla)
 	}
 
 	nla->cbMaxToken = nla->pPackageInfo->cbMaxToken;
+	nla->packageName = nla->pPackageInfo->Name;
 	nla->status = nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
 	              SECPKG_CRED_INBOUND, NULL, NULL, NULL, NULL, &nla->credentials, &nla->expiration);
 

@@ -74,7 +74,7 @@ const SecPkgInfoW NEGOTIATE_SecPkgInfoW =
 
 static void negotiate_SetSubPackage(NEGOTIATE_CONTEXT* context, const char* name)
 {
-	if (strcmp(name, KERBEROS_SSP_NAME) == 0)
+	if (strncmp(name, KERBEROS_SSP_NAME, sizeof(KERBEROS_SSP_NAME)) == 0)
 	{
 		context->sspiA = (SecurityFunctionTableA*) &KERBEROS_SecurityFunctionTableA;
 		context->sspiW = (SecurityFunctionTableW*) &KERBEROS_SecurityFunctionTableW;
@@ -99,7 +99,7 @@ static NEGOTIATE_CONTEXT* negotiate_ContextNew(void)
 	context->NegotiateFlags = 0;
 	context->state = NEGOTIATE_STATE_INITIAL;
 	SecInvalidateHandle(&(context->SubContext));
-	negotiate_SetSubPackage(context, (const char*) KERBEROS_SSP_NAME);
+	negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
 	return context;
 }
 
@@ -134,7 +134,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(PCredHandl
 	{
 		if (!pInput)
 		{
-			negotiate_SetSubPackage(context, (const char*) KERBEROS_SSP_NAME);
+			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
 		}
 
 		status = context->sspiW->InitializeSecurityContextW(phCredential, &(context->SubContext),
@@ -192,7 +192,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(PCredHandl
 	{
 		if (!pInput)
 		{
-			negotiate_SetSubPackage(context, (const char*) KERBEROS_SSP_NAME);
+			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
 		}
 
 		status = context->sspiA->InitializeSecurityContextA(phCredential, &(context->SubContext),
