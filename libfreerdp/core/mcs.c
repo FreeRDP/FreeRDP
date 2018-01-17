@@ -300,7 +300,7 @@ static BOOL mcs_init_domain_parameters(DomainParameters* domainParameters,
 
 static BOOL mcs_read_domain_parameters(wStream* s, DomainParameters* domainParameters)
 {
-	int length;
+	size_t length;
 
 	if (!s || !domainParameters)
 		return FALSE;
@@ -508,7 +508,7 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 {
 	UINT16 li;
-	int length;
+	size_t length;
 	BOOL upwardFlag;
 	UINT16 tlength;
 
@@ -575,7 +575,7 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 
 BOOL mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData)
 {
-	int length;
+	size_t length;
 	wStream* tmps;
 	BOOL ret = FALSE;
 
@@ -631,7 +631,7 @@ out:
 
 BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData)
 {
-	int length;
+	size_t length;
 	wStream* tmps;
 	BOOL ret = FALSE;
 
@@ -741,7 +741,7 @@ out:
 
 BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 {
-	int length;
+	size_t length;
 	UINT16 tlength;
 	BYTE result;
 	UINT16 li;

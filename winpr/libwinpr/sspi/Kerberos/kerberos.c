@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,12 +44,56 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.Kerberos")
 
-char* KRB_PACKAGE_NAME = "Kerberos";
+struct _KRB_CONTEXT
+{
+	CtxtHandle context;
+	SSPI_CREDENTIALS* credentials;
+	SEC_WINNT_AUTH_IDENTITY identity;
+
+	/* GSSAPI */
+	UINT32 major_status;
+	UINT32 minor_status;
+	UINT32 actual_time;
+	sspi_gss_cred_id_t cred;
+	sspi_gss_ctx_id_t gss_ctx;
+	sspi_gss_name_t target_name;
+};
+
+static const char* KRB_PACKAGE_NAME = "Kerberos";
+
+const SecPkgInfoA KERBEROS_SecPkgInfoA =
+{
+	0x000F3BBF,		/* fCapabilities */
+	1,			/* wVersion */
+	0x0010,			/* wRPCID */
+	0x0000BB80,		/* cbMaxToken : 48k bytes maximum for Windows Server 2012 */
+	"Kerberos",		/* Name */
+	"Kerberos Security Package" /* Comment */
+};
+
+static const WCHAR KERBEROS_SecPkgInfoW_Name[] = { 'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', '\0' };
+
+static const WCHAR KERBEROS_SecPkgInfoW_Comment[] =
+{
+	'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', ' ',
+	'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ',
+	'P', 'a', 'c', 'k', 'a', 'g', 'e', '\0'
+};
+
+const SecPkgInfoW KERBEROS_SecPkgInfoW =
+{
+	0x000F3BBF,		/* fCapabilities */
+	1,			/* wVersion */
+	0x0010,			/* wRPCID */
+	0x0000BB80,		/* cbMaxToken : 48k bytes maximum for Windows Server 2012 */
+	KERBEROS_SecPkgInfoW_Name,	/* Name */
+	KERBEROS_SecPkgInfoW_Comment	/* Comment */
+};
 
 static sspi_gss_OID_desc g_SSPI_GSS_C_SPNEGO_KRB5 = { 9, (void*) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
-sspi_gss_OID SSPI_GSS_C_SPNEGO_KRB5 = &g_SSPI_GSS_C_SPNEGO_KRB5;
+static sspi_gss_OID SSPI_GSS_C_SPNEGO_KRB5 = &g_SSPI_GSS_C_SPNEGO_KRB5;
 
-KRB_CONTEXT* kerberos_ContextNew()
+static KRB_CONTEXT* kerberos_ContextNew(void)
 {
 	KRB_CONTEXT* context;
 	context = (KRB_CONTEXT*) calloc(1, sizeof(KRB_CONTEXT));
@@ -60,7 +108,7 @@ KRB_CONTEXT* kerberos_ContextNew()
 	return context;
 }
 
-void kerberos_ContextFree(KRB_CONTEXT* context)
+static void kerberos_ContextFree(KRB_CONTEXT* context)
 {
 	UINT32 minor_status;
 
@@ -82,7 +130,7 @@ void kerberos_ContextFree(KRB_CONTEXT* context)
 	free(context);
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal,
+static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal,
         SEC_WCHAR* pszPackage,
         ULONG fCredentialUse, void* pvLogonID, void* pAuthData,
         SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument,
@@ -91,7 +139,7 @@ SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(SEC_WCHAR* pszPrinc
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
+static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
         SEC_CHAR* pszPackage,
         ULONG fCredentialUse, void* pvLogonID, void* pAuthData,
         SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument,
@@ -100,7 +148,7 @@ SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(SEC_CHAR* pszPrinci
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCredential)
+static SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCredential)
 {
 	SSPI_CREDENTIALS* credentials;
 
@@ -116,7 +164,7 @@ SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCredentia
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesW(PCredHandle phCredential,
+static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesW(PCredHandle phCredential,
         ULONG ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
@@ -127,13 +175,13 @@ SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesW(PCredHandle phCre
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandle phCredential,
+static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandle phCredential,
         ULONG ulAttribute, void* pBuffer)
 {
 	return kerberos_QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(PCredHandle phCredential,
+static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(PCredHandle phCredential,
         PCtxtHandle phContext,
         SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1,
         ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
@@ -143,7 +191,8 @@ SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(PCredHandle phCred
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-int kerberos_SetContextServicePrincipalNameA(KRB_CONTEXT* context, SEC_CHAR* ServicePrincipalName)
+static int kerberos_SetContextServicePrincipalNameA(KRB_CONTEXT* context,
+        SEC_CHAR* ServicePrincipalName)
 {
 	char* p;
 	UINT32 major_status;
@@ -184,7 +233,7 @@ int kerberos_SetContextServicePrincipalNameA(KRB_CONTEXT* context, SEC_CHAR* Ser
 }
 
 #ifdef WITH_GSSAPI
-krb5_error_code KRB5_CALLCONV
+static krb5_error_code KRB5_CALLCONV
 acquire_cred(krb5_context ctx, krb5_principal client, const char* password)
 {
 	krb5_error_code ret;
@@ -218,14 +267,15 @@ acquire_cred(krb5_context ctx, krb5_principal client, const char* password)
 	/* Set default options */
 	krb5_get_init_creds_opt_set_forwardable(options, 0);
 	krb5_get_init_creds_opt_set_proxiable(options, 0);
-
 #ifdef WITH_GSSAPI_MIT
+
 	/* for MIT we specify ccache output using an option */
 	if ((ret = krb5_get_init_creds_opt_set_out_ccache(ctx, options, ccache)))
 	{
 		WLog_ERR(TAG, "error while setting ccache output");
 		goto cleanup;
 	}
+
 #endif
 
 	if ((ret = krb5_init_creds_init(ctx, client, NULL, NULL, starttime, options, &init_ctx)))
@@ -255,23 +305,25 @@ acquire_cred(krb5_context ctx, krb5_principal client, const char* password)
 	}
 
 #ifdef WITH_GSSAPI_HEIMDAL
+
 	/* For Heimdal, we use this function to store credentials */
 	if ((ret = krb5_init_creds_store(ctx, init_ctx, ccache)))
 	{
 		WLog_ERR(TAG, "error while storing credentials");
 		goto cleanup;
 	}
-#endif
 
+#endif
 cleanup:
 	krb5_free_cred_contents(ctx, &creds);
-
 #ifdef HAVE_AT_LEAST_KRB_V1_13
+
 	/* MIT Kerberos version 1.13 at minimum.
 	 * For releases 1.12 and previous, krb5_get_init_creds_opt structure
 	 * is freed in krb5_init_creds_free() */
 	if (options)
 		krb5_get_init_creds_opt_free(ctx, options);
+
 #endif
 
 	if (init_ctx)
@@ -283,7 +335,7 @@ cleanup:
 	return ret;
 }
 
-int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, size_t password_len)
+static int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, size_t password_len)
 {
 	krb5_error_code ret = 0;
 	krb5_context ctx = NULL;
@@ -393,7 +445,7 @@ cleanup:
 }
 #endif
 
-SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle phCredential,
+static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle phCredential,
         PCtxtHandle phContext,
         SEC_CHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1,
         ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
@@ -540,7 +592,7 @@ SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle phCred
 	return SEC_E_INTERNAL_ERROR;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_DeleteSecurityContext(PCtxtHandle phContext)
+static SECURITY_STATUS SEC_ENTRY kerberos_DeleteSecurityContext(PCtxtHandle phContext)
 {
 	KRB_CONTEXT* context;
 	context = (KRB_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
@@ -552,13 +604,15 @@ SECURITY_STATUS SEC_ENTRY kerberos_DeleteSecurityContext(PCtxtHandle phContext)
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute,
+static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesW(PCtxtHandle phContext,
+        ULONG ulAttribute,
         void* pBuffer)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute,
+static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext,
+        ULONG ulAttribute,
         void* pBuffer)
 {
 	if (!phContext)
@@ -584,7 +638,7 @@ SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
+static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
         PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	int index;
@@ -629,7 +683,7 @@ SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, ULONG f
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
         PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
 {
 	int index;
@@ -675,13 +729,13 @@ SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext,
         ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
         PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
 {
 	return SEC_E_OK;

@@ -53,39 +53,39 @@
 #define BER_PC(_pc)	(_pc ? BER_CONSTRUCT : BER_PRIMITIVE)
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-FREERDP_API BOOL ber_read_length(wStream* s, int* length);
-FREERDP_API int ber_write_length(wStream* s, int length);
-FREERDP_API int _ber_sizeof_length(int length);
+FREERDP_API BOOL ber_read_length(wStream* s, size_t* length);
+FREERDP_API size_t ber_write_length(wStream* s, size_t length);
+FREERDP_API size_t _ber_sizeof_length(size_t length);
 FREERDP_API BOOL ber_read_universal_tag(wStream* s, BYTE tag, BOOL pc);
-FREERDP_API int ber_write_universal_tag(wStream* s, BYTE tag, BOOL pc);
-FREERDP_API BOOL ber_read_application_tag(wStream* s, BYTE tag, int* length);
-FREERDP_API void ber_write_application_tag(wStream* s, BYTE tag, int length);
+FREERDP_API size_t ber_write_universal_tag(wStream* s, BYTE tag, BOOL pc);
+FREERDP_API BOOL ber_read_application_tag(wStream* s, BYTE tag, size_t* length);
+FREERDP_API void ber_write_application_tag(wStream* s, BYTE tag, size_t length);
 FREERDP_API BOOL ber_read_enumerated(wStream* s, BYTE* enumerated, BYTE count);
 FREERDP_API void ber_write_enumerated(wStream* s, BYTE enumerated, BYTE count);
-FREERDP_API BOOL ber_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc);
-FREERDP_API int ber_write_contextual_tag(wStream* s, BYTE tag, int length, BOOL pc);
-FREERDP_API int ber_sizeof_contextual_tag(int length);
-FREERDP_API BOOL ber_read_sequence_tag(wStream* s, int* length);
-FREERDP_API int ber_write_sequence_tag(wStream* s, int length);
-FREERDP_API int ber_sizeof_sequence(int length);
-FREERDP_API int ber_sizeof_sequence_tag(int length);
-FREERDP_API BOOL ber_read_bit_string(wStream* s, int* length, BYTE* padding);
-FREERDP_API int ber_write_octet_string(wStream* s, const BYTE* oct_str, int length);
-FREERDP_API BOOL ber_read_octet_string_tag(wStream* s, int* length);
-FREERDP_API int ber_write_octet_string_tag(wStream* s, int length);
-FREERDP_API int ber_sizeof_octet_string(int length);
+FREERDP_API BOOL ber_read_contextual_tag(wStream* s, BYTE tag, size_t* length, BOOL pc);
+FREERDP_API size_t ber_write_contextual_tag(wStream* s, BYTE tag, size_t length, BOOL pc);
+FREERDP_API size_t ber_sizeof_contextual_tag(size_t length);
+FREERDP_API BOOL ber_read_sequence_tag(wStream* s, size_t* length);
+FREERDP_API size_t ber_write_sequence_tag(wStream* s, size_t length);
+FREERDP_API size_t ber_sizeof_sequence(size_t length);
+FREERDP_API size_t ber_sizeof_sequence_tag(size_t length);
+FREERDP_API BOOL ber_read_bit_string(wStream* s, size_t* length, BYTE* padding);
+FREERDP_API size_t ber_write_octet_string(wStream* s, const BYTE* oct_str, size_t length);
+FREERDP_API BOOL ber_read_octet_string_tag(wStream* s, size_t* length);
+FREERDP_API size_t ber_write_octet_string_tag(wStream* s, size_t length);
+FREERDP_API size_t ber_sizeof_octet_string(size_t length);
 FREERDP_API BOOL ber_read_BOOL(wStream* s, BOOL* value);
 FREERDP_API void ber_write_BOOL(wStream* s, BOOL value);
 FREERDP_API BOOL ber_read_integer(wStream* s, UINT32* value);
-FREERDP_API int ber_write_integer(wStream* s, UINT32 value);
-FREERDP_API BOOL ber_read_integer_length(wStream* s, int* length);
-FREERDP_API int ber_sizeof_integer(UINT32 value);
+FREERDP_API size_t ber_write_integer(wStream* s, UINT32 value);
+FREERDP_API BOOL ber_read_integer_length(wStream* s, size_t* length);
+FREERDP_API size_t ber_sizeof_integer(UINT32 value);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CRYPTO_BER_H */
