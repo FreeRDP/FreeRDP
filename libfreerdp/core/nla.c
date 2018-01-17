@@ -1024,21 +1024,23 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
-	int public_key_length;
+	size_t public_key_length;
+	const BOOL krb = (strncmp(nla->packageName, KERBEROS_SSP_NAME, sizeof(KERBEROS_SSP_NAME)) == 0);
+	const BOOL nego = (strncmp(nla->packageName, NEGO_SSP_NAME, sizeof(NEGO_SSP_NAME)) == 0);
+	const BOOL ntlm = (strncmp(nla->packageName,  NTLM_SSP_NAME, sizeof(NTLM_SSP_NAME)) == 0);
 	public_key_length = nla->PublicKey.cbBuffer;
 
 	if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, public_key_length + nla->ContextSizes.cbSecurityTrailer))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	if (strcmp(nla->packageName, KERBEROS_SSP_NAME) == 0)
+	if (krb)
 	{
 		Buffers[0].BufferType = SECBUFFER_DATA; /* TLS Public Key */
 		Buffers[0].cbBuffer = public_key_length;
 		Buffers[0].pvBuffer = nla->pubKeyAuth.pvBuffer;
 		CopyMemory(Buffers[0].pvBuffer, nla->PublicKey.pvBuffer, Buffers[0].cbBuffer);
 	}
-	else if ((strcmp(nla->packageName, NEGO_SSP_NAME) == 0) ||
-	         (strcmp(nla->packageName, NTLM_SSP_NAME) == 0))
+	else if (ntlm || nego)
 	{
 		Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 		Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
@@ -1049,7 +1051,7 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 		CopyMemory(Buffers[1].pvBuffer, nla->PublicKey.pvBuffer, Buffers[1].cbBuffer);
 	}
 
-	if ((strcmp(nla->packageName, KERBEROS_SSP_NAME) != 0) && nla->server)
+	if (krb && nla->server)
 	{
 		/* server echos the public key +1 */
 		ap_integer_increment_le((BYTE*) Buffers[1].pvBuffer, Buffers[1].cbBuffer);
@@ -1438,6 +1440,9 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
+	const BOOL krb = (strncmp(nla->packageName, KERBEROS_SSP_NAME, sizeof(KERBEROS_SSP_NAME)) == 0);
+	const BOOL nego = (strncmp(nla->packageName, NEGO_SSP_NAME, sizeof(NEGO_SSP_NAME)) == 0);
+	const BOOL ntlm = (strncmp(nla->packageName,  NTLM_SSP_NAME, sizeof(NTLM_SSP_NAME)) == 0);
 
 	if (!nla_encode_ts_credentials(nla))
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -1446,7 +1451,7 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 	                         nla->tsCredentials.cbBuffer + nla->ContextSizes.cbSecurityTrailer))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	if (strcmp(nla->packageName, KERBEROS_SSP_NAME) == 0)
+	if (krb)
 	{
 		Buffers[0].BufferType = SECBUFFER_DATA; /* TSCredentials */
 		Buffers[0].cbBuffer = nla->tsCredentials.cbBuffer;
@@ -1456,8 +1461,7 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 		Message.ulVersion = SECBUFFER_VERSION;
 		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
-	else if ((strcmp(nla->packageName, NEGO_SSP_NAME) == 0) ||
-	         (strcmp(nla->packageName, NTLM_SSP_NAME) == 0))
+	else if (ntlm || nego)
 	{
 		Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 		Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
@@ -1492,6 +1496,9 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
+	const BOOL krb = (strncmp(nla->packageName, KERBEROS_SSP_NAME, sizeof(KERBEROS_SSP_NAME)) == 0);
+	const BOOL nego = (strncmp(nla->packageName, NEGO_SSP_NAME, sizeof(NEGO_SSP_NAME)) == 0);
+	const BOOL ntlm = (strncmp(nla->packageName,  NTLM_SSP_NAME, sizeof(NTLM_SSP_NAME)) == 0);
 
 	if (nla->authInfo.cbBuffer < 1)
 	{
@@ -1505,7 +1512,7 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 	if (!buffer)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	if (strcmp(nla->packageName, KERBEROS_SSP_NAME) == 0)
+	if (krb)
 	{
 		CopyMemory(buffer, nla->authInfo.pvBuffer, length);
 		Buffers[0].BufferType = SECBUFFER_DATA; /* Wrapped and encrypted TSCredentials */
@@ -1515,8 +1522,7 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 		Message.ulVersion = SECBUFFER_VERSION;
 		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
-	else if ((strcmp(nla->packageName,  NEGO_SSP_NAME) == 0) ||
-	         (strcmp(nla->packageName, NTLM_SSP_NAME) == 0))
+	else if (ntlm || nego)
 	{
 		CopyMemory(buffer, nla->authInfo.pvBuffer, length);
 		Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
