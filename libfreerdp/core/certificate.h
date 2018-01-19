@@ -45,18 +45,6 @@
 #define BB_RSA_KEY_BLOB        		6
 #define BB_RSA_SIGNATURE_BLOB  		8
 
-FREERDP_LOCAL BOOL certificate_read_x509_certificate(rdpCertBlob* cert,
-        rdpCertInfo* info);
-
-FREERDP_LOCAL rdpX509CertChain* certificate_new_x509_certificate_chain(
-    UINT32 count);
-FREERDP_LOCAL void certificate_free_x509_certificate_chain(
-    rdpX509CertChain* x509_cert_chain);
-
-FREERDP_LOCAL BOOL certificate_read_server_proprietary_certificate(
-    rdpCertificate* certificate, wStream* s);
-FREERDP_LOCAL BOOL certificate_read_server_x509_certificate_chain(
-    rdpCertificate* certificate, wStream* s);
 FREERDP_LOCAL BOOL certificate_read_server_certificate(rdpCertificate*
         certificate, BYTE* server_cert, size_t length);
 
