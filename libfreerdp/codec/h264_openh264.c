@@ -25,8 +25,6 @@
 #include "wels/codec_api.h"
 #include "wels/codec_ver.h"
 
-#define TAG FREERDP_TAG("codec")
-
 #if (OPENH264_MAJOR == 1) && (OPENH264_MINOR < 3) || (OPENH264_MAJOR < 1)
 #error "Unsupported OpenH264 version "OPENH264_MAJOR"."OPENH264_MINOR"."OPENH264_REVISION" detected!"
 #elif (OPENH264_MAJOR > 1) || (OPENH264_MINOR > 7)
