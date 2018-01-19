@@ -158,14 +158,14 @@ static const char* certificate_read_errors[] =
  * @param cert X.509 certificate
  */
 
-BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
+static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 {
 	wStream* s;
-	int length;
+	size_t length;
 	BYTE padding;
 	UINT32 version;
-	int modulus_length;
-	int exponent_length;
+	size_t modulus_length;
+	size_t exponent_length;
 	int error = 0;
 
 	if (!cert || !info)
@@ -322,7 +322,7 @@ error1:
  * @return new X.509 certificate chain
  */
 
-rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count)
+static rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count)
 {
 	rdpX509CertChain* x509_cert_chain;
 	x509_cert_chain = (rdpX509CertChain*) malloc(sizeof(rdpX509CertChain));
@@ -347,7 +347,7 @@ rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count)
  * @param x509_cert_chain X.509 certificate chain to be freed
  */
 
-void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
+static void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 {
 	int i;
 
@@ -493,7 +493,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
  * @param s stream
  */
 
-BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, wStream* s)
+static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, wStream* s)
 {
 	UINT32 dwSigAlgId;
 	UINT32 dwKeyAlgId;
@@ -583,7 +583,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
  * @param s stream
  */
 
-BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, wStream* s)
+static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, wStream* s)
 {
 	UINT32 i;
 	BOOL ret;
@@ -921,7 +921,7 @@ out_fail:
  * @return new certificate module
  */
 
-rdpCertificate* certificate_new()
+rdpCertificate* certificate_new(void)
 {
 	return (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
 }
