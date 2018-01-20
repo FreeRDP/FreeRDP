@@ -2506,6 +2506,16 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (!(settings->WmClass = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
+		CommandLineSwitchCase(arg, "wm-skip-taskbar")
+		{
+			settings->WmSkipTaskbarEnabled = TRUE;
+			settings->WmSkipTaskbarForce = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "wm-skip-pager")
+		{
+			settings->WmSkipPagerEnabled = TRUE;
+			settings->WmSkipPagerForce = arg->Value ? TRUE : FALSE;
+		}
 		CommandLineSwitchCase(arg, "play-rfx")
 		{
 			free(settings->PlayRemoteFxFile);

@@ -1445,6 +1445,11 @@ struct rdp_settings
 	 */
 
 	/* Extensions */
+    ALIGN64 BOOL WmSkipTaskbarForce;
+    ALIGN64 BOOL WmSkipPagerForce;
+    ALIGN64 BOOL WmSkipTaskbar;
+    ALIGN64 BOOL WmSkipPager;
+
 	ALIGN64 int num_extensions; /*  */
 	ALIGN64 struct rdp_ext_set extensions[16]; /*  */
 

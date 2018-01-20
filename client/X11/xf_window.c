@@ -417,6 +417,12 @@ void xf_SetWindowDecorations(xfContext* xfc, Window window, BOOL show)
 void xf_SetWindowUnlisted(xfContext* xfc, Window window)
 {
 	Atom window_state[2];
+
+	if(xfc->context.settings->WmSkipTaskbarForce)
+		xfc->_NET_WM_STATE_SKIP_TASKBAR = xfc->context.settings->WmSkipTaskbar;
+	if(xfc->context.settings->WmSkipPagerForce)
+		xfc->_NET_WM_STATE_SKIP_PAGER = xfc->context.settings->WmSkipPager;
+
 	window_state[0] = xfc->_NET_WM_STATE_SKIP_PAGER;
 	window_state[1] = xfc->_NET_WM_STATE_SKIP_TASKBAR;
 	XChangeProperty(xfc->display, window, xfc->_NET_WM_STATE,
