@@ -418,17 +418,28 @@ void xf_SetWindowUnlisted(xfContext* xfc, Window window)
 {
 	Atom window_state[2];
 
-	if(xfc->context.settings->WmSkipTaskbar[0])
-		xfc->_NET_WM_STATE_SKIP_TASKBAR = xfc->context.settings->WmSkipTaskbar[1] ?
-					XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_TASKBAR", False) : 0;
-	if(xfc->context.settings->WmSkipPager[0])
-		xfc->_NET_WM_STATE_SKIP_PAGER = xfc->context.settings->WmSkipPager[1] ?
-					XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False) : 0;
-
-	window_state[0] = xfc->_NET_WM_STATE_SKIP_PAGER;
-	window_state[1] = xfc->_NET_WM_STATE_SKIP_TASKBAR;
+	window_state[0] = xf_SetSkipPager(xfc->context.settings, xfc);
+	window_state[1] = xf_SetSkipTaskbar(xfc->context.settings, xfc);
 	XChangeProperty(xfc->display, window, xfc->_NET_WM_STATE,
 	                XA_ATOM, 32, PropModeReplace, (BYTE*) &window_state, 2);
+}
+
+Atom xf_SetSkipPager(rdpSettings* s, xfContext* xfc)
+{
+	if(s->WmSkipPagerEnabled)
+		xfc->_NET_WM_STATE_SKIP_PAGER = s->WmSkipPager ?
+					XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False) : 0;
+
+	return xfc->_NET_WM_STATE_SKIP_PAGER;
+}
+
+Atom xf_SetSkipTaskbar(rdpSettings* s, xfContext* xfc)
+{
+	if(s->WmSkipTaskbarEnabled)
+		xfc->_NET_WM_STATE_SKIP_TASKBAR = s->WmSkipTaskbar ?
+					XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_TASKBAR", False) : 0;
+
+	return xfc->_NET_WM_STATE_SKIP_TASKBAR;
 }
 
 static void xf_SetWindowPID(xfContext* xfc, Window window, pid_t pid)

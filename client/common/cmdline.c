@@ -2508,13 +2508,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "wm-skip-taskbar")
 		{
-			settings->WmSkipTaskbar[0] = TRUE;
-			settings->WmSkipTaskbar[1] = arg->Value ? TRUE : FALSE;
+			settings->WmSkipTaskbarEnabled = TRUE;
+			settings->WmSkipTaskbar = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "wm-skip-pager")
 		{
-			settings->WmSkipPager[0] = TRUE;
-			settings->WmSkipPager[1] = arg->Value ? TRUE : FALSE;
+			settings->WmSkipPagerEnabled = TRUE;
+			settings->WmSkipPager = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "play-rfx")
 		{
