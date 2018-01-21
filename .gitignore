@@ -81,6 +81,9 @@ RelWithDebInfo
 *.intermediate.manifest*
 version.rc
 
+# KDE
+.directory
+
 # Binaries
 *.a
 *.o

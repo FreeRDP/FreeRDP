@@ -1,41 +1,43 @@
 # Maintainer: Luca Gasperini <info at xsoftware dot eu>
 
-pkgname=freerdp-xs
+pkgname=freerdp-git
 _gitname=FreeRDP
-pkgver=11601.cce068a00
+pkgver=11599.bab902f59
 pkgrel=1
-pkgdesc='Free RDP client - git checkout XSoftware'
+pkgdesc='Free RDP client'
 url='http://www.freerdp.com/'
 arch=('x86_64' 'i686')
 license=('GPL')
 depends=('openssl' 'libxcursor' 'libcups' 'alsa-lib' 'libxext' 'libxdamage'
-         'ffmpeg' 'libxkbfile' 'libxinerama' 'libxv' 'libpulse' 'libxkbfile' 
-         'libxrender' 'libxfixes' 'gst-plugins-base-libs')
+		'ffmpeg' 'libxkbfile' 'libxinerama' 'libxv' 'libpulse' 'libxkbfile' 
+		'libxrender' 'libxfixes' 'gst-plugins-base-libs')
 makedepends=('git' 'krb5' 'cmake' 'damageproto' 'fixesproto' 'renderproto')
-source=('git+https://github.com/Nobel3D/FreeRDP.git#branch=wm_parameters')
+provides=('freerdp')
+conflicts=('freerdp')
+source=('git+https://github.com/FreeRDP/FreeRDP.git')
 md5sums=('SKIP')
 
 pkgver() {
-  cd $_gitname
-  echo "$(git rev-list --count HEAD).$(git rev-parse --short HEAD)"
+	cd $_gitname
+	echo "$(git rev-list --count HEAD).$(git rev-parse --short HEAD)"
 }
 
 build() {
-  cd $_gitname
-  cmake \
+	cd $_gitname
+	cmake \
 		-DCMAKE_INSTALL_PREFIX=/usr \
 		-DCMAKE_INSTALL_LIBDIR=lib \
 		-DWITH_SERVER=ON \
-        -DWITH_PULSE=ON \
-        -DWITH_CUPS=ON \
-        -DWITH_CHANNELS=ON \
-        -DWITH_CLIENT_CHANNELS=ON \
-        -DWITH_SERVER_CHANNELS=ON \
+		-DWITH_PULSE=ON \
+		-DWITH_CUPS=ON \
+		-DWITH_CHANNELS=ON \
+		-DWITH_CLIENT_CHANNELS=ON \
+		-DWITH_SERVER_CHANNELS=ON \
 		.
-    make
+	make
 }
 
 package() {
-    cd $_gitname
-    make DESTDIR="${pkgdir}/" install
+	cd $_gitname
+	make DESTDIR="${pkgdir}/" install
 }
