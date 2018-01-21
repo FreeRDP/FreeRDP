@@ -418,12 +418,12 @@ void xf_SetWindowUnlisted(xfContext* xfc, Window window)
 {
 	Atom window_state[2];
 
-    if(xfc->context.settings->WmSkipTaskbar[0])
-        xfc->_NET_WM_STATE_SKIP_TASKBAR = xfc->context.settings->WmSkipTaskbar[1] ?
-                  XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_TASKBAR", False) : 0;
-    if(xfc->context.settings->WmSkipPager[0])
-        xfc->_NET_WM_STATE_SKIP_PAGER = xfc->context.settings->WmSkipPager[1] ?
-                  XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False) : 0;
+	if(xfc->context.settings->WmSkipTaskbar[0])
+		xfc->_NET_WM_STATE_SKIP_TASKBAR = xfc->context.settings->WmSkipTaskbar[1] ?
+					XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_TASKBAR", False) : 0;
+	if(xfc->context.settings->WmSkipPager[0])
+		xfc->_NET_WM_STATE_SKIP_PAGER = xfc->context.settings->WmSkipPager[1] ?
+					XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False) : 0;
 
 	window_state[0] = xfc->_NET_WM_STATE_SKIP_PAGER;
 	window_state[1] = xfc->_NET_WM_STATE_SKIP_TASKBAR;
