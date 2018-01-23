@@ -105,7 +105,8 @@ based on freerdp and winpr.
         -DCHANNEL_URBDRC_CLIENT=ON \
         -DWITH_SERVER=ON \
         -DBUILD_TESTING=OFF \
-        -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DWITH_SANITIZE_ADDRESS=ON \
         -DCMAKE_INSTALL_PREFIX=%{INSTALL_PREFIX} \
 %if %{defined suse_version}
 	-DCMAKE_NO_BUILTIN_CHRPATH=ON \
