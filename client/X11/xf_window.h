@@ -145,8 +145,6 @@ BOOL xf_GetWorkArea(xfContext* xfc);
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen);
 void xf_SetWindowDecorations(xfContext* xfc, Window window, BOOL show);
 void xf_SetWindowUnlisted(xfContext* xfc, Window window);
-Atom xf_SetSkipPager(rdpSettings* s, xfContext* xfc);
-Atom xf_SetSkipTaskbar(rdpSettings* s, xfContext* xfc);
 
 xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height);
 void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height);
