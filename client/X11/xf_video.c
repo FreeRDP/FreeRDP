@@ -215,6 +215,7 @@ error_frames:
 }
 
 
+
 void xf_video_geometry_init(xfContext *xfc, GeometryClientContext *geom)
 {
 	xfc->geometry = geom;
@@ -611,6 +612,30 @@ static UINT xf_video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA *dat
 	return CHANNEL_RC_OK;
 }
 
+static void xf_video_free(xfVideoContext *xfVideo)
+{
+	xfVideo->xfc->video->VideoData = NULL;
+
+	EnterCriticalSection(&xfVideo->framesLock);
+	while (Queue_Count(xfVideo->frames))
+	{
+		xfVideoFrame *frame = Queue_Dequeue(xfVideo->frames);
+		if (frame)
+			xf_video_frame_free(&frame);
+	}
+
+	Queue_Free(xfVideo->frames);
+	LeaveCriticalSection(&xfVideo->framesLock);
+
+	DeleteCriticalSection(&xfVideo->framesLock);
+
+	if (xfVideo->currentPresentation)
+		xfPresentationContext_unref(xfVideo->currentPresentation);
+
+	BufferPool_Free(xfVideo->surfacePool);
+	free(xfVideo);
+}
+
 
 void xf_video_control_init(xfContext *xfc, VideoClientContext *video)
 {
@@ -619,13 +644,19 @@ void xf_video_control_init(xfContext *xfc, VideoClientContext *video)
 	video->PresentationRequest = xf_video_PresentationRequest;
 }
 
+void xf_video_control_uninit(xfContext *xfc, VideoClientContext *video)
+{
+	xf_video_free(xfc->xfVideo);
+}
+
+
 void xf_video_data_init(xfContext *xfc, VideoClientContext *video)
 {
 	video->VideoData = xf_video_VideoData;
 	PubSub_SubscribeTimer(xfc->context.pubSub, (pTimerEventHandler)xf_video_timer);
 }
 
-void xf_video_data_uninit(xfVideoContext *xfVideo)
+void xf_video_data_uninit(xfContext *xfc, VideoClientContext *context)
 {
-	PubSub_UnsubscribeTimer(xfVideo->xfc->context.pubSub, (pTimerEventHandler)xf_video_timer);
+	PubSub_UnsubscribeTimer(xfc->context.pubSub, (pTimerEventHandler)xf_video_timer);
 }
