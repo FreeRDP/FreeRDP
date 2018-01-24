@@ -351,6 +351,7 @@ void sspi_SecureHandleFree(SecHandle* handle)
 int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, const char* domain,
                          const char* password)
 {
+	int rc;
 	int unicodePasswordLenW;
 	LPWSTR unicodePassword = NULL;
 	unicodePasswordLenW = ConvertToUnicode(CP_UTF8, 0, password, -1, &unicodePassword, 0);
@@ -358,8 +359,10 @@ int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, co
 	if (unicodePasswordLenW <= 0)
 		return -1;
 
-	return sspi_SetAuthIdentityWithUnicodePassword(identity, user, domain, unicodePassword,
+	rc = sspi_SetAuthIdentityWithUnicodePassword(identity, user, domain, unicodePassword,
 	        (ULONG)(unicodePasswordLenW - 1));
+	free(unicodePassword);
+	return rc;
 }
 
 int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, const char* user,
