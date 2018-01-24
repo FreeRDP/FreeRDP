@@ -41,50 +41,144 @@
 
 #define CLAMP_COORDINATES(x, y) if (x < 0) x = 0; if (y < 0) y = 0
 
-static const char* const X11_EVENT_STRINGS[] =
+static const char* x11_event_string(int event)
 {
-	"", "",
-	"KeyPress",
-	"KeyRelease",
-	"ButtonPress",
-	"ButtonRelease",
-	"MotionNotify",
-	"EnterNotify",
-	"LeaveNotify",
-	"FocusIn",
-	"FocusOut",
-	"KeymapNotify",
-	"Expose",
-	"GraphicsExpose",
-	"NoExpose",
-	"VisibilityNotify",
-	"CreateNotify",
-	"DestroyNotify",
-	"UnmapNotify",
-	"MapNotify",
-	"MapRequest",
-	"ReparentNotify",
-	"ConfigureNotify",
-	"ConfigureRequest",
-	"GravityNotify",
-	"ResizeRequest",
-	"CirculateNotify",
-	"CirculateRequest",
-	"PropertyNotify",
-	"SelectionClear",
-	"SelectionRequest",
-	"SelectionNotify",
-	"ColormapNotify",
-	"ClientMessage",
-	"MappingNotify",
-	"GenericEvent",
-};
+	switch (event)
+	{
+		case KeyPress:
+			return "KeyPress";
+
+		case KeyRelease:
+			return "KeyRelease";
+
+		case ButtonPress:
+			return "ButtonPress";
+
+		case ButtonRelease:
+			return "ButtonRelease";
+
+		case MotionNotify:
+			return "MotionNotify";
+
+		case EnterNotify:
+			return "EnterNotify";
+
+		case LeaveNotify:
+			return "LeaveNotify";
+
+		case FocusIn:
+			return "FocusIn";
+
+		case FocusOut:
+			return "FocusOut";
+
+		case KeymapNotify:
+			return "KeymapNotify";
+
+		case Expose:
+			return "Expose";
+
+		case GraphicsExpose:
+			return "GraphicsExpose";
+
+		case NoExpose:
+			return "NoExpose";
+
+		case VisibilityNotify:
+			return "VisibilityNotify";
+
+		case CreateNotify:
+			return "CreateNotify";
+
+		case DestroyNotify:
+			return "DestroyNotify";
+
+		case UnmapNotify:
+			return "UnmapNotify";
+
+		case MapNotify:
+			return "MapNotify";
+
+		case MapRequest:
+			return "MapRequest";
+
+		case ReparentNotify:
+			return "ReparentNotify";
+
+		case ConfigureNotify:
+			return "ConfigureNotify";
+
+		case ConfigureRequest:
+			return "ConfigureRequest";
+
+		case GravityNotify:
+			return "GravityNotify";
+
+		case ResizeRequest:
+			return "ResizeRequest";
+
+		case CirculateNotify:
+			return "CirculateNotify";
+
+		case CirculateRequest:
+			return "CirculateRequest";
+
+		case PropertyNotify:
+			return "PropertyNotify";
+
+		case SelectionClear:
+			return "SelectionClear";
+
+		case SelectionRequest:
+			return "SelectionRequest";
+
+		case SelectionNotify:
+			return "SelectionNotify";
+
+		case ColormapNotify:
+			return "ColormapNotify";
+
+		case ClientMessage:
+			return "ClientMessage";
+
+		case MappingNotify:
+			return "MappingNotify";
+
+		case GenericEvent:
+			return "GenericEvent";
+
+		default:
+			return "UNKNOWN";
+	};
+}
 
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(...) WLog_DBG(TAG, __VA_ARGS__)
 #else
 #define DEBUG_X11(...) do { } while (0)
 #endif
+
+static BOOL xf_send_suppress_output(xfContext* xfc, XEvent* event, BOOL suppress)
+{
+	RECTANGLE_16 rect;
+	rdpSettings* settings;
+	rdpUpdate* update;
+
+	if (!xfc || !xfc->context.settings || !xfc->context.update)
+		return FALSE;
+
+	if (xfc->suppress_output == suppress)
+		return TRUE;
+
+	xfc->suppress_output = suppress;
+	settings = xfc->context.settings;
+	update = xfc->context.update;
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = settings->DesktopWidth;
+	rect.bottom = settings->DesktopHeight;
+	return update->SuppressOutput(&xfc->context, !suppress, &rect);
+}
 
 BOOL xf_event_action_script_init(xfContext* xfc)
 {
@@ -129,7 +223,6 @@ void xf_event_action_script_free(xfContext* xfc)
 		xfc->xevents = NULL;
 	}
 }
-
 static BOOL xf_event_execute_action_script(xfContext* xfc, XEvent* event)
 {
 	int index;
@@ -144,10 +237,10 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, XEvent* event)
 	if (!xfc->actionScriptExists || !xfc->xevents)
 		return FALSE;
 
-	if (event->type > (sizeof(X11_EVENT_STRINGS) / sizeof(const char*)))
+	if (event->type > LASTEvent)
 		return FALSE;
 
-	xeventName = X11_EVENT_STRINGS[event->type];
+	xeventName = x11_event_string(event->type);
 	count = ArrayList_Count(xfc->xevents);
 
 	for (index = 0; index < count; index++)
@@ -179,7 +272,6 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, XEvent* event)
 	pclose(actionScript);
 	return TRUE;
 }
-
 void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 {
 	rdpSettings* settings;
@@ -206,7 +298,6 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 
 	CLAMP_COORDINATES(*x, *y);
 }
-
 static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 {
 	int x, y;
@@ -251,13 +342,11 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 
 	return TRUE;
 }
-
 static BOOL xf_event_VisibilityNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	xfc->unobscured = event->xvisibility.state == VisibilityUnobscured;
 	return TRUE;
 }
-
 BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state,
                              Window window, BOOL app)
 {
@@ -284,7 +373,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state,
 	}
 
 	xf_event_adjust_coordinates(xfc, &x, &y);
-	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
+	freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, x, y);
 
 	if (xfc->fullscreen && !app)
 	{
@@ -294,7 +383,6 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state,
 
 	return TRUE;
 }
-
 static BOOL xf_event_MotionNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (xfc->use_xinput)
@@ -303,7 +391,6 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, XEvent* event, BOOL app)
 	return xf_generic_MotionNotify(xfc, event->xmotion.x, event->xmotion.y,
 	                               event->xmotion.state, event->xmotion.window, app);
 }
-
 BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button,
                             Window window, BOOL app)
 {
@@ -367,7 +454,7 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button,
 	{
 		if (wheel)
 		{
-			input->MouseEvent(input, flags, 0, 0);
+			freerdp_input_send_mouse_event(input, flags, 0, 0);
 		}
 		else
 		{
@@ -386,15 +473,14 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button,
 			xf_event_adjust_coordinates(xfc, &x, &y);
 
 			if (extended)
-				input->ExtendedMouseEvent(input, flags, x, y);
+				freerdp_input_send_extended_mouse_event(input, flags, x, y);
 			else
-				input->MouseEvent(input, flags, x, y);
+				freerdp_input_send_mouse_event(input, flags, x, y);
 		}
 	}
 
 	return TRUE;
 }
-
 static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (xfc->use_xinput)
@@ -403,7 +489,6 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 	return xf_generic_ButtonPress(xfc, event->xbutton.x, event->xbutton.y,
 	                              event->xbutton.button, event->xbutton.window, app);
 }
-
 BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button,
                               Window window, BOOL app)
 {
@@ -461,14 +546,13 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button,
 		xf_event_adjust_coordinates(xfc, &x, &y);
 
 		if (extended)
-			input->ExtendedMouseEvent(input, flags, x, y);
+			freerdp_input_send_extended_mouse_event(input, flags, x, y);
 		else
-			input->MouseEvent(input, flags, x, y);
+			freerdp_input_send_mouse_event(input, flags, x, y);
 	}
 
 	return TRUE;
 }
-
 static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (xfc->use_xinput)
@@ -477,7 +561,6 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
 	return xf_generic_ButtonRelease(xfc, event->xbutton.x, event->xbutton.y,
 	                                event->xbutton.button, event->xbutton.window, app);
 }
-
 static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
 {
 	KeySym keysym;
@@ -486,7 +569,6 @@ static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
 	xf_keyboard_key_press(xfc, event->xkey.keycode, keysym);
 	return TRUE;
 }
-
 static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
 	KeySym keysym;
@@ -495,7 +577,6 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 	xf_keyboard_key_release(xfc, event->xkey.keycode, keysym);
 	return TRUE;
 }
-
 static BOOL xf_event_FocusIn(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (event->xfocus.mode == NotifyGrab)
@@ -523,7 +604,6 @@ static BOOL xf_event_FocusIn(xfContext* xfc, XEvent* event, BOOL app)
 	xf_keyboard_focus_in(xfc);
 	return TRUE;
 }
-
 static BOOL xf_event_FocusOut(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (event->xfocus.mode == NotifyUngrab)
@@ -542,7 +622,6 @@ static BOOL xf_event_FocusOut(xfContext* xfc, XEvent* event, BOOL app)
 
 	return TRUE;
 }
-
 static BOOL xf_event_MappingNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (event->xmapping.request == MappingModifier)
@@ -555,7 +634,6 @@ static BOOL xf_event_MappingNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 	return TRUE;
 }
-
 static BOOL xf_event_ClientMessage(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if ((event->xclient.message_type == xfc->WM_PROTOCOLS)
@@ -582,7 +660,6 @@ static BOOL xf_event_ClientMessage(xfContext* xfc, XEvent* event, BOOL app)
 
 	return TRUE;
 }
-
 static BOOL xf_event_EnterNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (!app)
@@ -612,7 +689,6 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 	return TRUE;
 }
-
 static BOOL xf_event_LeaveNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (!app)
@@ -623,7 +699,6 @@ static BOOL xf_event_LeaveNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 	return TRUE;
 }
-
 static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	Window childWindow;
@@ -711,22 +786,12 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 	return TRUE;
 }
-
 static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
-	RECTANGLE_16 rect;
 	xfAppWindow* appWindow;
-	rdpUpdate* update = xfc->context.update;
-	rdpSettings* settings = xfc->context.settings;
 
 	if (!app)
-	{
-		rect.left = 0;
-		rect.top = 0;
-		rect.right = settings->DesktopWidth;
-		rect.bottom = settings->DesktopHeight;
-		update->SuppressOutput((rdpContext*) xfc, 1, &rect);
-	}
+		xf_send_suppress_output(xfc, event, FALSE);
 	else
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
@@ -745,17 +810,13 @@ static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 	return TRUE;
 }
-
 static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	xfAppWindow* appWindow;
-	rdpUpdate* update = xfc->context.update;
 	xf_keyboard_release_all_keypress(xfc);
 
 	if (!app)
-	{
-		update->SuppressOutput((rdpContext*) xfc, 0, NULL);
-	}
+		xf_send_suppress_output(xfc, event, TRUE);
 	else
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
@@ -768,7 +829,6 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 	return TRUE;
 }
-
 static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	/*
@@ -776,70 +836,72 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	 * when the window has been minimized, maximized, restored locally
 	 * ie. not using the buttons on the rail window itself
 	 */
-	if (app)
+	if ((((Atom) event->xproperty.atom == xfc->_NET_WM_STATE)
+	     && (event->xproperty.state != PropertyDelete)) ||
+	    (((Atom) event->xproperty.atom == xfc->WM_STATE)
+	     && (event->xproperty.state != PropertyDelete)))
 	{
-		xfAppWindow* appWindow;
-		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
+		int i;
+		BOOL status;
+		BOOL maxVert = FALSE;
+		BOOL maxHorz = FALSE;
+		BOOL minimized = FALSE;
+		BOOL minimizedChanged = FALSE;
+		unsigned long nitems;
+		unsigned long bytes;
+		unsigned char* prop;
 
-		if (!appWindow)
-			return TRUE;
-
-		if ((((Atom) event->xproperty.atom == xfc->_NET_WM_STATE)
-		     && (event->xproperty.state != PropertyDelete)) ||
-		    (((Atom) event->xproperty.atom == xfc->WM_STATE)
-		     && (event->xproperty.state != PropertyDelete)))
+		if ((Atom) event->xproperty.atom == xfc->_NET_WM_STATE)
 		{
-			int i;
-			BOOL status;
-			BOOL maxVert = FALSE;
-			BOOL maxHorz = FALSE;
-			BOOL minimized = FALSE;
-			unsigned long nitems;
-			unsigned long bytes;
-			unsigned char* prop;
+			status = xf_GetWindowProperty(xfc, event->xproperty.window,
+			                              xfc->_NET_WM_STATE, 12, &nitems, &bytes, &prop);
 
-			if ((Atom) event->xproperty.atom == xfc->_NET_WM_STATE)
+			if (status)
 			{
-				status = xf_GetWindowProperty(xfc, event->xproperty.window,
-				                              xfc->_NET_WM_STATE, 12, &nitems, &bytes, &prop);
-
-				if (status)
+				for (i = 0; i < nitems; i++)
 				{
-					for (i = 0; i < nitems; i++)
+					if ((Atom)((UINT16**) prop)[i] == XInternAtom(xfc->display,
+					        "_NET_WM_STATE_MAXIMIZED_VERT", False))
 					{
-						if ((Atom)((UINT16**) prop)[i] == XInternAtom(xfc->display,
-						        "_NET_WM_STATE_MAXIMIZED_VERT", False))
-						{
-							maxVert = TRUE;
-						}
-
-						if ((Atom)((UINT16**) prop)[i] == XInternAtom(xfc->display,
-						        "_NET_WM_STATE_MAXIMIZED_HORZ", False))
-						{
-							maxHorz = TRUE;
-						}
+						maxVert = TRUE;
 					}
 
-					XFree(prop);
+					if ((Atom)((UINT16**) prop)[i] == XInternAtom(xfc->display,
+					        "_NET_WM_STATE_MAXIMIZED_HORZ", False))
+					{
+						maxHorz = TRUE;
+					}
 				}
-			}
 
-			if ((Atom) event->xproperty.atom == xfc->WM_STATE)
+				XFree(prop);
+			}
+		}
+
+		if ((Atom) event->xproperty.atom == xfc->WM_STATE)
+		{
+			status = xf_GetWindowProperty(xfc, event->xproperty.window,
+			                              xfc->WM_STATE, 1, &nitems, &bytes, &prop);
+
+			if (status)
 			{
-				status = xf_GetWindowProperty(xfc, event->xproperty.window,
-				                              xfc->WM_STATE, 1, &nitems, &bytes, &prop);
+				/* If the window is in the iconic state */
+				if (((UINT32) *prop == 3))
+					minimized = TRUE;
+				else
+					minimized = FALSE;
 
-				if (status)
-				{
-					/* If the window is in the iconic state */
-					if (((UINT32) *prop == 3))
-						minimized = TRUE;
-					else
-						minimized = FALSE;
-
-					XFree(prop);
-				}
+				minimizedChanged = TRUE;
+				XFree(prop);
 			}
+		}
+
+		if (app)
+		{
+			xfAppWindow* appWindow;
+			appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
+
+			if (!appWindow)
+				return TRUE;
 
 			if (maxVert && maxHorz && !minimized
 			    && (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED))
@@ -859,11 +921,12 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
 			}
 		}
+		else if (minimizedChanged)
+			xf_send_suppress_output(xfc, event, minimized);
 	}
 
 	return TRUE;
 }
-
 static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow,
                                      XEvent* event)
 {
@@ -949,8 +1012,6 @@ static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow,
 
 	return FALSE;
 }
-
-
 BOOL xf_event_process(freerdp* instance, XEvent* event)
 {
 	BOOL status = TRUE;
@@ -975,8 +1036,10 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 	xf_event_execute_action_script(xfc, event);
 
 	if (event->type != MotionNotify)
-		DEBUG_X11("%s Event(%d): wnd=0x%08lX", X11_EVENT_STRINGS[event->type],
+	{
+		DEBUG_X11("%s Event(%d): wnd=0x%08lX", x11_event_string(event->type),
 		          event->type, (unsigned long) event->xany.window);
+	}
 
 	switch (event->type)
 	{
