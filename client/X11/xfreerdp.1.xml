@@ -539,7 +539,7 @@
                       </listitem>
                     </varlistentry>
                     <varlistentry>
-                      <term>smartcard[:<replaceable class="parameter">name</replaceable>]</term>
+                      <term>scard[:<replaceable class="parameter">name</replaceable>]</term>
                       <listitem>
                         <para>
                           Redirect smartcard with <replaceable class="parameter">name</replaceable>.
