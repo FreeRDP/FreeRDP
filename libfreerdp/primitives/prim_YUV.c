@@ -1294,9 +1294,9 @@ static INLINE pstatus_t general_RGBToAVC444YUVv2_ANY(
 
 		for (x = 0; x < roi->width; x++)
 		{
-			const UINT32 color = ReadColor(src, srcFormat);
+			const UINT32 colorA = ReadColor(src, srcFormat);
 			BYTE r, g, b;
-			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
+			SplitColor(colorA, srcFormat, &r, &g, &b, NULL, NULL);
 			src += 4;
 
 			if (b1)
@@ -1325,13 +1325,28 @@ static INLINE pstatus_t general_RGBToAVC444YUVv2_ANY(
 
 			for (x = 0; x < roi->width / 2; x++)
 			{
-				const UINT32 color = ReadColor(src, srcFormat);
+				const UINT32 colorA = ReadColor(src, srcFormat);
+				const UINT32 colorB = ReadColor(src + 4, srcFormat);
+				const UINT32 colorC = ReadColor(src + srcStep, srcFormat);
+				const UINT32 colorD = ReadColor(src + 4 + srcStep, srcFormat);
 				BYTE r, g, b;
-				SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
+				SplitColor(colorA, srcFormat, &r, &g, &b, NULL, NULL);
 				src += 8;
 				{
-					const BYTE u = RGB2U(r, g, b);
-					const BYTE v = RGB2V(r, g, b);
+					BYTE rr, gg, bb;
+					UINT16 u = RGB2U(r, g, b);
+					UINT16 v = RGB2V(r, g, b);
+					SplitColor(colorB, srcFormat, &rr, &gg, &bb, NULL, NULL);
+					u += RGB2U(rr, gg, bb);
+					v += RGB2V(rr, gg, bb);
+					SplitColor(colorC, srcFormat, &rr, &gg, &bb, NULL, NULL);
+					u += RGB2U(rr, gg, bb);
+					v += RGB2V(rr, gg, bb);
+					SplitColor(colorD, srcFormat, &rr, &gg, &bb, NULL, NULL);
+					u += RGB2U(rr, gg, bb);
+					v += RGB2V(rr, gg, bb);
+					u /= 4;
+					v /= 4;
 					*b2++ = u;
 					*b3++ = v;
 				}
@@ -1426,14 +1441,33 @@ static INLINE pstatus_t general_RGBToAVC444YUVv2_BGRX(
 				const BYTE b = *src++;
 				const BYTE g = *src++;
 				const BYTE r = *src++;
-				src++;
+				const BYTE a = *src++;
+				const BYTE* srcB = src;
+				const BYTE* srcC = src - 4 + srcStep;
+				const BYTE* srcD = src + srcStep;
+				BYTE rr, gg, bb;
+				UINT16 u = RGB2U(r, g, b);
+				UINT16 v = RGB2V(r, g, b);
+				bb = *srcB++;
+				gg = *srcB++;
+				rr = *srcB++;
+				u += RGB2U(rr, gg, bb);
+				v += RGB2V(rr, gg, bb);
+				bb = *srcC++;
+				gg = *srcC++;
+				rr = *srcC++;
+				u += RGB2U(rr, gg, bb);
+				v += RGB2V(rr, gg, bb);
+				bb = *srcD++;
+				gg = *srcD++;
+				rr = *srcD++;
+				u += RGB2U(rr, gg, bb);
+				v += RGB2V(rr, gg, bb);
+				u /= 4;
+				v /= 4;
 				src += 4;
-				{
-					const BYTE u = RGB2U(r, g, b);
-					const BYTE v = RGB2V(r, g, b);
-					*b2++ = u;
-					*b3++ = v;
-				}
+				*b2++ = u;
+				*b3++ = v;
 			}
 		}
 	}
