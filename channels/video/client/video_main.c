@@ -204,7 +204,7 @@ static UINT video_control_on_data_received(IWTSVirtualChannelCallback* pChannelC
 
 static UINT video_control_send_client_notification(VideoClientContext *context, TSMM_CLIENT_NOTIFICATION *notif)
 {
-	BYTE buf[30];
+	BYTE buf[100];
 	wStream *s;
 	VIDEO_PLUGIN* video = (VIDEO_PLUGIN *)context->handle;
 	IWTSVirtualChannel* channel;
@@ -240,10 +240,10 @@ static UINT video_control_send_client_notification(VideoClientContext *context, 
 	Stream_SealLength(s);
 	Stream_SetPosition(s, 0);
 	Stream_Write_UINT32(s, cbSize);
+	Stream_Free(s, FALSE);
 
 	channel = video->control_callback->channel_callback->channel;
 	ret = channel->Write(channel, cbSize, buf, NULL);
-	Stream_Free(s, FALSE);
 
 	return ret;
 }
@@ -440,7 +440,9 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	VIDEO_PLUGIN* video = (VIDEO_PLUGIN*) pPlugin;
+
 	free(video->control_callback);
+	free(video->data_callback);
 	free(video->wtsPlugin.pInterface);
 	free(pPlugin);
 	return CHANNEL_RC_OK;

@@ -384,6 +384,11 @@ static UINT geometry_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 static UINT geometry_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*) pPlugin;
+	GeometryClientContext* context = (GeometryClientContext *)geometry->iface.pInterface;
+
+	if (context)
+		HashTable_Free(context->geometries);
+
 	free(geometry->listener_callback);
 	free(geometry->iface.pInterface);
 	free(pPlugin);

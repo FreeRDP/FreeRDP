@@ -115,4 +115,13 @@ void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnect
 	{
 		xf_encomsp_uninit(xfc, (EncomspClientContext*) e->pInterface);
 	}
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_video_control_uninit(xfc, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_video_data_uninit(xfc, (VideoClientContext*)e->pInterface);
+	}
+
 }

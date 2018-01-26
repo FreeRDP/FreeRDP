@@ -315,6 +315,8 @@ static UINT xf_video_PresentationRequest(VideoClientContext* context, TSMM_PRESE
 		}
 
 		xfVideo->currentPresentation = NULL;
+		xfVideo->droppedFrames = 0;
+		xfVideo->publishedFrames = 0;
 		xfPresentationContext_unref(presentation);
 	}
 
@@ -359,9 +361,6 @@ static void xf_video_timer(xfContext *xfc, TimerEventArgs *timer)
 	xfPresentationContext *presentation;
 	xfVideoFrame *peekFrame, *frame = NULL;
 
-	if (!xfVideo->currentPresentation)
-		return;
-
 	EnterCriticalSection(&xfVideo->framesLock);
 	do
 	{
@@ -404,10 +403,14 @@ static void xf_video_timer(xfContext *xfc, TimerEventArgs *timer)
 treat_feedback:
 	if (xfVideo->nextFeedbackTime < timer->now)
 	{
-		/* we can compute some feedback only if we have some published frames */
-		if (xfVideo->publishedFrames)
+		/* we can compute some feedback only if we have some published frames and
+		 * a current presentation
+		 */
+		if (xfVideo->publishedFrames && xfVideo->currentPresentation)
 		{
 			UINT32 computedRate;
+
+			InterlockedIncrement(&xfVideo->currentPresentation->refCounter);
 
 			if (xfVideo->droppedFrames)
 			{
@@ -444,7 +447,7 @@ treat_feedback:
 			if (computedRate != xfVideo->lastSentRate)
 			{
 				TSMM_CLIENT_NOTIFICATION notif;
-				notif.PresentationId = presentation->PresentationId;
+				notif.PresentationId = xfVideo->currentPresentation->PresentationId;
 				notif.NotificationType = TSMM_CLIENT_NOTIFICATION_TYPE_FRAMERATE_OVERRIDE;
 				if (computedRate == XF_VIDEO_UNLIMITED_RATE)
 				{
@@ -463,6 +466,8 @@ treat_feedback:
 				WLog_DBG(TAG, "server notified with rate %d published=%d dropped=%d", xfVideo->lastSentRate,
 						xfVideo->publishedFrames, xfVideo->droppedFrames);
 			}
+
+			xfPresentationContext_unref(xfVideo->currentPresentation);
 		}
 
 		WLog_DBG(TAG, "currentRate=%d published=%d dropped=%d", xfVideo->lastSentRate,
