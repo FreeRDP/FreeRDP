@@ -18,13 +18,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <winpr/wlog.h>
 #include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
 #include <libavcodec/avcodec.h>
-#include <libavutil/avutil.h>
 #include <libavutil/opt.h>
-#include <libavutil/mem.h>
+
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 9, 0)
+#include <libavutil/hwcontext.h>
+#else
+#pragma warning You have asked for VA-API decoding, but your version of libavutil is too old! Disabling.
+#undef WITH_VAAPI
+#endif
 
 #define TAG FREERDP_TAG("codec")
 
@@ -56,6 +65,10 @@ static inline char* error_string(char* errbuf, size_t errbuf_size, int errnum)
 	error_string((char[64]){0}, 64, errnum)
 #endif
 
+#ifdef WITH_VAAPI
+#define VAAPI_DEVICE "/dev/dri/renderD128"
+#endif
+
 struct _H264_CONTEXT_LIBAVCODEC
 {
 	AVCodec* codecDecoder;
@@ -65,6 +78,11 @@ struct _H264_CONTEXT_LIBAVCODEC
 	AVCodecParserContext* codecParser;
 	AVFrame* videoFrame;
 	AVPacket packet;
+#ifdef WITH_VAAPI
+	AVBufferRef* hwctx;
+	AVFrame* hwVideoFrame;
+	enum AVPixelFormat hw_pix_fmt;
+#endif
 };
 typedef struct _H264_CONTEXT_LIBAVCODEC H264_CONTEXT_LIBAVCODEC;
 
@@ -197,20 +215,31 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 
 	if (status < 0)
 	{
-		WLog_ERR(TAG, "Failed to decode video frame (status=%d)", status);
+		WLog_ERR(TAG, "Failed to decode video frame (%s)", av_err2str(status));
 		return -1;
 	}
 
+	sys->videoFrame->format = AV_PIX_FMT_YUV420P;
+
 	do
 	{
+#ifdef WITH_VAAPI
+		status = avcodec_receive_frame(sys->codecDecoderContext, sys->hwVideoFrame);
+#else
 		status = avcodec_receive_frame(sys->codecDecoderContext, sys->videoFrame);
+#endif
 	}
 	while (status == AVERROR(EAGAIN));
 
 	gotFrame = (status == 0);
 #else
+#ifdef WITH_VAAPI
+	status = avcodec_decode_video2(sys->codecDecoderContext, sys->hwVideoFrame, &gotFrame,
+	                               &sys->packet);
+#else
 	status = avcodec_decode_video2(sys->codecDecoderContext, sys->videoFrame, &gotFrame,
 	                               &sys->packet);
+#endif
 #endif
 
 	if (status < 0)
@@ -219,6 +248,28 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 		return -1;
 	}
 
+#ifdef WITH_VAAPI
+
+	if (sys->hwctx)
+	{
+		if (sys->hwVideoFrame->format == sys->hw_pix_fmt)
+		{
+			sys->videoFrame->width = sys->hwVideoFrame->width;
+			sys->videoFrame->height = sys->hwVideoFrame->height;
+			status = av_hwframe_transfer_data(sys->videoFrame, sys->hwVideoFrame, 0);
+		}
+		else
+		{
+			status = av_frame_copy(sys->videoFrame, sys->hwVideoFrame);
+		}
+	}
+	else
+	{
+		status = av_frame_copy(sys->videoFrame, sys->hwVideoFrame);
+	}
+
+	gotFrame = (status == 0);
+#endif
 #if 0
 	WLog_INFO(TAG,
 	          "libavcodec_decompress: frame decoded (status=%d, gotFrame=%d, width=%d, height=%d, Y=[%p,%d], U=[%p,%d], V=[%p,%d])",
@@ -361,6 +412,24 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 #endif
 	}
 
+#ifdef WITH_VAAPI
+
+	if (sys->hwVideoFrame)
+	{
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 18, 102)
+		av_frame_free(&sys->hwVideoFrame);
+#else
+		av_free(sys->hwVideoFrame);
+#endif
+	}
+
+	if (sys->hwctx)
+	{
+		av_buffer_unref(&sys->hwctx);
+	}
+
+#endif
+
 	if (sys->codecParser)
 		av_parser_close(sys->codecParser);
 
@@ -378,6 +447,25 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 	free(sys);
 	h264->pSystemData = NULL;
 }
+
+#ifdef WITH_VAAPI
+static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
+        const enum AVPixelFormat* fmts)
+{
+	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*) ctx->opaque;
+	const enum AVPixelFormat* p;
+
+	for (p = fmts; *p != AV_PIX_FMT_NONE; p++)
+	{
+		if (*p == sys->hw_pix_fmt)
+		{
+			return *p;
+		}
+	}
+
+	return AV_PIX_FMT_NONE;
+}
+#endif
 
 static BOOL libavcodec_init(H264_CONTEXT* h264)
 {
@@ -415,6 +503,25 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			sys->codecDecoderContext->flags |= AV_CODEC_FLAG_TRUNCATED;
 		}
 
+#ifdef WITH_VAAPI
+
+		if (!sys->hwctx)
+		{
+			int ret = av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE, NULL, 0);
+
+			if (ret < 0)
+			{
+				WLog_ERR(TAG, "Could not initialize hw decoder: %s", av_err2str(ret));
+				goto EXCEPTION;
+			}
+		}
+
+		sys->codecDecoderContext->get_format = libavcodec_get_format;
+		sys->hw_pix_fmt = AV_PIX_FMT_VAAPI;
+		sys->codecDecoderContext->hw_device_ctx = av_buffer_ref(sys->hwctx);
+		sys->codecDecoderContext->opaque = (void*) sys;
+#endif
+
 		if (avcodec_open2(sys->codecDecoderContext, sys->codecDecoder, NULL) < 0)
 		{
 			WLog_ERR(TAG, "Failed to open libav codec");
@@ -432,6 +539,9 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 18, 102)
 	sys->videoFrame = av_frame_alloc();
+#ifdef WITH_VAAPI
+	sys->hwVideoFrame = av_frame_alloc();
+#endif
 #else
 	sys->videoFrame = avcodec_alloc_frame();
 #endif
@@ -442,6 +552,15 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 		goto EXCEPTION;
 	}
 
+#ifdef WITH_VAAPI
+
+	if (!sys->hwVideoFrame)
+	{
+		WLog_ERR(TAG, "Failed to allocate libav hw frame");
+		goto EXCEPTION;
+	}
+
+#endif
 	sys->videoFrame->pts = 0;
 	return TRUE;
 EXCEPTION:

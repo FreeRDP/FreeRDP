@@ -75,7 +75,6 @@ struct _H264_CONTEXT
 	void* pSystemData;
 	H264_CONTEXT_SUBSYSTEM* subsystem;
 };
-
 #ifdef __cplusplus
 extern "C" {
 #endif

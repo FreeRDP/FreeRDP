@@ -58,6 +58,8 @@
 #cmakedefine WITH_X264
 #cmakedefine WITH_MEDIA_FOUNDATION
 
+#cmakedefine WITH_VAAPI
+
 /* Plugins */
 #cmakedefine BUILTIN_CHANNELS
 #cmakedefine WITH_RDPDR
