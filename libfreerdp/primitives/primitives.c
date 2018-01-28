@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <winpr/synch.h>
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
@@ -29,11 +30,12 @@
 /* Singleton pointer used throughout the program when requested. */
 static primitives_t pPrimitives = { 0 };
 static primitives_t pPrimitivesGeneric = { 0 };
-static BOOL pPrimitivesInitialized = FALSE;
-static BOOL pPrimitivesGenericInitialized = FALSE;
+static INIT_ONCE generic_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
+static INIT_ONCE primitives_InitOnce = INIT_ONCE_STATIC_INIT;
+
 
 /* ------------------------------------------------------------------------- */
-static void primitives_init_generic(void)
+static BOOL CALLBACK primitives_init_generic(PINIT_ONCE once, PVOID param, PVOID *context)
 {
 	primitives_init_add(&pPrimitivesGeneric);
 	primitives_init_andor(&pPrimitivesGeneric);
@@ -45,10 +47,10 @@ static void primitives_init_generic(void)
 	primitives_init_colors(&pPrimitivesGeneric);
 	primitives_init_YCoCg(&pPrimitivesGeneric);
 	primitives_init_YUV(&pPrimitivesGeneric);
-	pPrimitivesGenericInitialized = TRUE;
+	return TRUE;
 }
 
-static void primitives_init(void)
+static BOOL CALLBACK primitives_init(PINIT_ONCE once, PVOID param, PVOID *context)
 {
 	/* Now call each section's initialization routine. */
 	primitives_init_add_opt(&pPrimitives);
@@ -61,25 +63,21 @@ static void primitives_init(void)
 	primitives_init_colors_opt(&pPrimitives);
 	primitives_init_YCoCg_opt(&pPrimitives);
 	primitives_init_YUV_opt(&pPrimitives);
-	pPrimitivesInitialized = TRUE;
+	return TRUE;
 }
 
 /* ------------------------------------------------------------------------- */
 primitives_t* primitives_get(void)
 {
-	if (!pPrimitivesGenericInitialized)
-		primitives_init_generic();
-
-	if (!pPrimitivesInitialized)
-		primitives_init();
+	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic, NULL, NULL);
+	InitOnceExecuteOnce(&primitives_InitOnce, primitives_init, NULL, NULL);
 
 	return &pPrimitives;
 }
 
 primitives_t* primitives_get_generic(void)
 {
-	if (!pPrimitivesGenericInitialized)
-		primitives_init_generic();
+	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic, NULL, NULL);
 
 	return &pPrimitivesGeneric;
 }
