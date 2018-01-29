@@ -66,6 +66,7 @@
 #cmakedefine WITH_DSP_EXPERIMENTAL
 #cmakedefine WITH_DSP_FFMPEG
 #cmakedefine WITH_X264
+#cmakedefine WITH_OPENCL
 #cmakedefine WITH_MEDIA_FOUNDATION
 
 #cmakedefine WITH_VAAPI
@@ -169,4 +170,5 @@
 #cmakedefine WITH_DEBUG_X11_LOCAL_MOVESIZE
 #cmakedefine WITH_DEBUG_XV
 #cmakedefine WITH_DEBUG_RINGBUFFER
+
 #endif /* FREERDP_CONFIG_H */

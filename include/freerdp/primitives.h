@@ -56,6 +56,13 @@ typedef INT32 pstatus_t;       /* match IppStatus. */
 #define PRIM_ARM_IWMMXT_AVAILABLE (1U << 6)
 #define PRIM_ARM_NEON_AVAILABLE (1U << 7)
 
+/** @brief flags of primitives */
+enum
+{
+	PRIM_FLAGS_HAVE_EXTCPU = (1U << 0), /* primitives are using CPU extensions */
+	PRIM_FLAGS_HAVE_EXTGPU = (1U << 1), /* primitives are using the GPU */
+};
+
 /* Structures compatible with IPP */
 typedef struct
 {
@@ -135,6 +142,8 @@ typedef pstatus_t (*__RGBToAVC444YUV_t)(const BYTE* pSrc, UINT32 srcFormat, UINT
                                         const prim_size_t* roi);
 typedef pstatus_t (*__andC_32u_t)(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len);
 typedef pstatus_t (*__orC_32u_t)(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len);
+typedef pstatus_t (*primitives_uninit_t)(void);
+
 
 typedef struct
 {
@@ -177,7 +186,17 @@ typedef struct
 	__YUV444ToRGB_8u_P3AC4R_t YUV444ToRGB_8u_P3AC4R;
 	__RGBToAVC444YUV_t RGBToAVC444YUV;
 	__RGBToAVC444YUV_t RGBToAVC444YUVv2;
+	/* flags */
+	DWORD flags;
+	primitives_uninit_t uninit;
 } primitives_t;
+
+typedef enum
+{
+	PRIMITIVES_PURE_SOFT,	/** use generic software implementation */
+	PRIMITIVES_ONLY_CPU,	/** use generic software or cpu optimized routines */
+	PRIMITIVES_AUTODETECT	/** detect the best routines */
+} primitive_hints;
 
 #ifdef __cplusplus
 extern "C"
@@ -185,7 +204,13 @@ extern "C"
 #endif
 
 	FREERDP_API primitives_t* primitives_get(void);
+	FREERDP_API void primitives_set_hints(primitive_hints hints);
+	FREERDP_API primitive_hints primitives_get_hints(void);
 	FREERDP_API primitives_t* primitives_get_generic(void);
+	FREERDP_API DWORD primitives_flags(primitives_t *p);
+	FREERDP_API BOOL primitives_init(primitives_t *p, primitive_hints hints);
+	FREERDP_API void primitives_uninit();
+
 
 #ifdef __cplusplus
 }
