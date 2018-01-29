@@ -32,9 +32,14 @@
 #endif
 #endif
 
-#if defined(WITH_SSE2) || defined(WITH_NEON)
+#if defined(WITH_SSE2) || defined(WITH_NEON) || defined(WITH_OPENCL)
 #define HAVE_OPTIMIZED_PRIMITIVES 1
 #endif
+
+#if defined(WITH_SSE2) || defined(WITH_NEON)
+#define HAVE_CPU_OPTIMIZED_PRIMITIVES 1
+#endif
+
 
 #if defined(WITH_SSE2)
 /* Use lddqu for unaligned; load for 16-byte aligned. */
@@ -201,6 +206,32 @@ FREERDP_LOCAL void primitives_init_alphaComp_opt(primitives_t* prims);
 FREERDP_LOCAL void primitives_init_colors_opt(primitives_t* prims);
 FREERDP_LOCAL void primitives_init_YCoCg_opt(primitives_t* prims);
 FREERDP_LOCAL void primitives_init_YUV_opt(primitives_t* prims);
+#endif
+
+#if defined(WITH_OPENCL)
+#ifdef __APPLE__
+#include "OpenCL/opencl.h"
+#else
+#include <CL/cl.h>
+#endif
+
+typedef struct
+{
+	BOOL support;
+	cl_platform_id platformId;
+	cl_device_id deviceId;
+	cl_context context;
+	cl_command_queue commandQueue;
+	cl_program program;
+	__YUV420ToRGB_8u_P3AC4R_t YUV420ToRGB_backup;
+} primitives_opencl_context;
+
+
+FREERDP_LOCAL BOOL primitives_init_opencl(primitives_t* prims);
+FREERDP_LOCAL pstatus_t primitives_uninit_opencl(void);
+FREERDP_LOCAL primitives_opencl_context *primitives_get_opencl_context(void);
+
+FREERDP_LOCAL void primitives_init_YUV_opencl(primitives_t* prims);
 #endif
 
 #endif /* FREERDP_LIB_PRIM_INTERNAL_H */

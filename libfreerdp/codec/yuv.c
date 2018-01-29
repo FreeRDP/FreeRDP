@@ -108,10 +108,10 @@ BOOL yuv_context_decode(YUV_CONTEXT* context, const BYTE* pYUVData[3], UINT32 iS
 	YUV_PROCESS_WORK_PARAM* params;
 	UINT32 waitCount = 0;
 	BOOL ret = TRUE;
+	primitives_t* prims = primitives_get();
 
-	if (!context->useThreads)
+	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU))
 	{
-		primitives_t* prims = primitives_get();
 		prim_size_t roi;
 		roi.width = context->width;
 		roi.height = context->height;

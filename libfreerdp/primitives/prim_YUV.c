@@ -458,9 +458,9 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32
 	}
 }
 /**
- * | R |    ( | 256     0    403 | |    Y    | )
- * | G | = (  | 256   -48   -120 | | U - 128 |  ) >> 8
- * | B |    ( | 256   475      0 | | V - 128 | )
+ * | R |   ( | 256     0    403 | |    Y    | )
+ * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
+ * | B |   ( | 256   475      0 | | V - 128 | )
  */
 static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 srcStep[3],
                                                BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
