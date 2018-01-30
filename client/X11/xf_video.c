@@ -621,9 +621,6 @@ static UINT xf_video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA *dat
 
 void xf_video_free(xfVideoContext *xfVideo)
 {
-	if (xfVideo->xfc->video)
-		xfVideo->xfc->video->VideoData = NULL;
-
 	EnterCriticalSection(&xfVideo->framesLock);
 	while (Queue_Count(xfVideo->frames))
 	{
@@ -654,8 +651,7 @@ void xf_video_control_init(xfContext *xfc, VideoClientContext *video)
 
 void xf_video_control_uninit(xfContext *xfc, VideoClientContext *video)
 {
-	xf_video_free(xfc->xfVideo);
-	xfc->xfVideo = NULL;
+	video->VideoData = NULL;
 }
 
 
