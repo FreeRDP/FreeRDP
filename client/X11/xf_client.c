@@ -1322,6 +1322,12 @@ static void xf_post_disconnect(freerdp* instance)
 		xfc->drawable = NULL;
 	else
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
+	
+	if (xfc->xfVideo)
+	{
+		xf_video_free(xfc->xfVideo);
+		xfc->xfVideo = NULL;
+	}
 
 	xf_window_free(xfc);
 	xf_keyboard_free(xfc);
