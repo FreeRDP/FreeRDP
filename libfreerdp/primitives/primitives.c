@@ -35,7 +35,7 @@ static INIT_ONCE primitives_InitOnce = INIT_ONCE_STATIC_INIT;
 
 
 /* ------------------------------------------------------------------------- */
-static BOOL CALLBACK primitives_init_generic(PINIT_ONCE once, PVOID param, PVOID *context)
+static BOOL CALLBACK primitives_init_generic(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	primitives_init_add(&pPrimitivesGeneric);
 	primitives_init_andor(&pPrimitivesGeneric);
@@ -50,7 +50,8 @@ static BOOL CALLBACK primitives_init_generic(PINIT_ONCE once, PVOID param, PVOID
 	return TRUE;
 }
 
-static BOOL CALLBACK primitives_init(PINIT_ONCE once, PVOID param, PVOID *context)
+#if defined(HAVE_OPTIMIZED_PRIMITIVES)
+static BOOL CALLBACK primitives_init(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	/* Now call each section's initialization routine. */
 	primitives_init_add_opt(&pPrimitives);
@@ -65,20 +66,21 @@ static BOOL CALLBACK primitives_init(PINIT_ONCE once, PVOID param, PVOID *contex
 	primitives_init_YUV_opt(&pPrimitives);
 	return TRUE;
 }
+#endif
 
 /* ------------------------------------------------------------------------- */
 primitives_t* primitives_get(void)
 {
 	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic, NULL, NULL);
+#if defined(HAVE_OPTIMIZED_PRIMITIVES)
 	InitOnceExecuteOnce(&primitives_InitOnce, primitives_init, NULL, NULL);
-
+#endif
 	return &pPrimitives;
 }
 
 primitives_t* primitives_get_generic(void)
 {
 	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic, NULL, NULL);
-
 	return &pPrimitivesGeneric;
 }
 

@@ -222,8 +222,17 @@ set(PRIMITIVES_SSE3_SRCS
 
 set(PRIMITIVES_SSSE3_SRCS
 	primitives/prim_sign_opt.c
-	primitives/prim_YCoCg_opt.c
-	primitives/prim_YUV_opt.c)
+	primitives/prim_YCoCg_opt.c)
+
+if (WITH_SSE2)
+	set(PRIMITIVES_SSSE3_SRCS ${PRIMITIVES_SSSE3_SRCS}
+		primitives/prim_YUV_ssse3.c)
+endif()
+
+if (WITH_NEON)
+	set(PRIMITIVES_SSSE3_SRCS ${PRIMITIVES_SSSE3_SRCS}
+		primitives/prim_YUV_neon.c)
+endif()
 
 set(PRIMITIVES_OPT_SRCS
 	${PRIMITIVES_SSE2_SRCS}
