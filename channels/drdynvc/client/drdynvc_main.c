@@ -706,7 +706,9 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 	switch (status)
 	{
 		case CHANNEL_RC_OK:
+			return CHANNEL_RC_OK;
 		case CHANNEL_RC_NOT_CONNECTED:
+			Stream_Free(s, TRUE);
 			return CHANNEL_RC_OK;
 
 		default:
@@ -839,8 +841,7 @@ static UINT drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	Stream_Write_UINT16(s,
-	                    0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
+	Stream_Write_UINT16(s, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
 	Stream_Write_UINT16(s, drdynvc->version);
 	status = drdynvc_send(drdynvc, s);
 
@@ -1190,6 +1191,7 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 	if (!drdynvc || (drdynvc->OpenHandle != openHandle))
 	{
 		WLog_ERR(TAG, "drdynvc_virtual_channel_open_event: error no match");
+		Stream_Free((wStream*) pData, TRUE);
 		return;
 	}
 
