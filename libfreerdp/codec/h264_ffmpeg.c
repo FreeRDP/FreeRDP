@@ -245,7 +245,8 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 	return 1;
 }
 
-static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
+static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const UINT32* pStride,
+                               BYTE** ppDstData, UINT32* pDstSize)
 {
 	int status;
 	int gotFrame = 0;
@@ -271,12 +272,12 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 92, 100)
 	sys->videoFrame->chroma_location = AVCHROMA_LOC_LEFT;
 #endif
-	sys->videoFrame->data[0] = h264->pYUVData[0];
-	sys->videoFrame->data[1] = h264->pYUVData[1];
-	sys->videoFrame->data[2] = h264->pYUVData[2];
-	sys->videoFrame->linesize[0] = h264->iStride[0];
-	sys->videoFrame->linesize[1] = h264->iStride[1];
-	sys->videoFrame->linesize[2] = h264->iStride[2];
+	sys->videoFrame->data[0] = pSrcYuv[0];
+	sys->videoFrame->data[1] = pSrcYuv[1];
+	sys->videoFrame->data[2] = pSrcYuv[2];
+	sys->videoFrame->linesize[0] = pStride[0];
+	sys->videoFrame->linesize[1] = pStride[1];
+	sys->videoFrame->linesize[2] = pStride[2];
 	sys->videoFrame->pts++;
 	/* avcodec_encode_video2 is deprecated with libavcodec 57.48.101 */
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 48, 101)

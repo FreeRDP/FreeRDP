@@ -508,6 +508,7 @@ static UINT rdpgfx_write_h264_metablock(wStream* s, RDPGFX_H264_METABLOCK* meta)
 	RECTANGLE_16* regionRect;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal;
 	UINT error = CHANNEL_RC_OK;
+	Stream_EnsureRemainingCapacity(s, 4 + meta->numRegionRects * 10);
 	Stream_Write_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
 
 	for (index = 0; index < meta->numRegionRects; index++)
@@ -552,6 +553,7 @@ static INLINE UINT rdpgfx_write_h264_avc420(wStream* s,
 		return error;
 	}
 
+	Stream_EnsureRemainingCapacity(s, havc420->length);
 	Stream_Write(s, havc420->data, havc420->length);
 	return error;
 }
@@ -623,7 +625,7 @@ static UINT rdpgfx_write_surface_command(wStream* s,
 				return error;
 			}
 		}
-		else if (cmd->codecId == RDPGFX_CODECID_AVC444)
+		else if ((cmd->codecId == RDPGFX_CODECID_AVC444) || (cmd->codecId == RDPGFX_CODECID_AVC444v2))
 		{
 			havc444 = (RDPGFX_AVC444_BITMAP_STREAM*)cmd->extra;
 			havc420 = &(havc444->bitstream[0]);			/* avc420EncodedBitstreamInfo (4 bytes) */
@@ -655,7 +657,6 @@ static UINT rdpgfx_write_surface_command(wStream* s,
 			Stream_Write(s, cmd->data, cmd->length);
 		}
 
-		assert(Stream_GetPosition(s) <= Stream_Capacity(s));
 		/* Fill actual bitmap data length */
 		bitmapDataLength = Stream_GetPosition(s) - bitmapDataStart;
 		Stream_SetPosition(s, bitmapDataStart - sizeof(UINT32));
@@ -1332,7 +1333,6 @@ static void* rdpgfx_server_thread_func(void* arg)
 	UINT error = CHANNEL_RC_OK;
 	buffer = NULL;
 	nCount = 0;
-
 	events[nCount++] = priv->stopEvent;
 	events[nCount++] = priv->channelEvent;
 

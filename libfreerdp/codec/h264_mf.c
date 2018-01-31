@@ -28,13 +28,13 @@
 #include <wmcodecdsp.h>
 #include <mftransform.h>
 
+#include "h264.h"
+
 #undef DEFINE_GUID
 #define INITGUID
 #include <initguid.h>
 
 #define TAG FREERDP_TAG("codec")
-
-BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height);
 
 DEFINE_GUID(CLSID_CMSH264DecoderMFT, 0x62CE7E72, 0x4C71, 0x4d20, 0xB1, 0x5D,
             0x45, 0x28, 0x31, 0xA8, 0x7D, 0x9D);
@@ -428,7 +428,7 @@ error:
 	return -1;
 }
 
-static int mf_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
+static int mf_compress(H264_CONTEXT* h264, const BYTE** ppSrcYuv, const UINT32* pStride, BYTE** ppDstData, UINT32* pDstSize)
 {
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*) h264->pSystemData;
 	return 1;
