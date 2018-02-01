@@ -435,6 +435,7 @@ static UINT android_cliprdr_server_format_data_response(
 		formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
 		data = (void*) ClipboardGetData(afc->clipboard, formatId, &size);
 		attached = jni_attach_thread(&env);
+		size = strnlen(data, size);
 		jdata = jniNewStringUTF(env, data, size);
 		freerdp_callback("OnRemoteClipboardChanged", "(JLjava/lang/String;)V", (jlong)instance,
 		                 jdata);
