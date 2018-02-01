@@ -5,6 +5,7 @@ Maintainer: FreeRDP <team@freerdp.com>
 Build-Depends:
  debhelper (>= 9),
  cdbs,
+ dpkg-dev,
  autotools-dev,
  cmake,
  pkg-config,
