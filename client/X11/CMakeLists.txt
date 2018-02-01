@@ -90,8 +90,7 @@ if(WITH_MANPAGES)
 
 		add_executable(generate_argument_docbook generate_argument_docbook.c)
 	
-		set(GAD_LIBS freerdp-client)
-		target_link_libraries(generate_argument_docbook ${GAD_LIBS} freerdp winpr)
+		target_link_libraries(generate_argument_docbook winpr)
 
 		add_custom_command(OUTPUT xfreerdp.1
 					COMMAND generate_argument_docbook

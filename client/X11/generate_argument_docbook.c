@@ -1,14 +1,11 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 
-#include <winpr/cmdline.h>
+#include "../common/cmdline.h"
+#include <freerdp/log.h>
 
-/* We need to include the command line c file to get access to
- * the argument struct. */
-#include "../common/cmdline.c"
-
+#define TAG FREERDP_TAG("generate_argument_docbook")
 LPSTR tr_esc_str(LPCSTR arg, bool format)
 {
 	LPSTR tmp = NULL;
