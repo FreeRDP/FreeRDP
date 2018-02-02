@@ -788,7 +788,7 @@ rdpShadowServer* shadow_server_new(void)
 	server->mayInteract = TRUE;
 	server->rfxMode = RLGR3;
 	server->h264RateControlMode = H264_RATECONTROL_VBR;
-	server->h264BitRate = 1000000;
+	server->h264BitRate = 10000000;
 	server->h264FrameRate = 30;
 	server->h264QP = 0;
 	server->authentication = FALSE;
