@@ -46,6 +46,12 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 	if (stride == 0)
 		stride = width;
 
+	if (stride % 16 != 0)
+		stride += 16 - stride % 16;
+
+	if (height % 16 != 0)
+		height += 16 - height % 16;
+
 	if (!h264->pYUVData[0] || !h264->pYUVData[1] || !h264->pYUVData[2] ||
 	    (width != h264->width) || (height != h264->height) || (stride != h264->iStride[0]))
 	{
@@ -313,6 +319,9 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264,
 			goto fail;
 		}
 	}
+
+	if (!h264->lumaData)
+		goto fail;
 
 	return TRUE;
 fail:
