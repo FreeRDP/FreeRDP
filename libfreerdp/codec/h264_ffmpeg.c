@@ -28,11 +28,13 @@
 #include <libavcodec/avcodec.h>
 #include <libavutil/opt.h>
 
+#ifdef WITH_VAAPI
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 9, 0)
 #include <libavutil/hwcontext.h>
 #else
 #pragma warning You have asked for VA-API decoding, but your version of libavutil is too old! Disabling.
 #undef WITH_VAAPI
+#endif
 #endif
 
 #define TAG FREERDP_TAG("codec")
@@ -224,7 +226,7 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 	do
 	{
 #ifdef WITH_VAAPI
-		status = avcodec_receive_frame(sys->codecDecoderContext, sys->hwVideoFrame);
+		status = avcodec_receive_frame(sys->codecDecoderContext, sys->hwctx ? sys->hwVideoFrame : sys->videoFrame);
 #else
 		status = avcodec_receive_frame(sys->codecDecoderContext, sys->videoFrame);
 #endif
@@ -234,7 +236,7 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 	gotFrame = (status == 0);
 #else
 #ifdef WITH_VAAPI
-	status = avcodec_decode_video2(sys->codecDecoderContext, sys->hwVideoFrame, &gotFrame,
+	status = avcodec_decode_video2(sys->codecDecoderContext, sys->hwctx ? sys->hwVideoFrame : sys->videoFrame, &gotFrame,
 	                               &sys->packet);
 #else
 	status = avcodec_decode_video2(sys->codecDecoderContext, sys->videoFrame, &gotFrame,
@@ -262,10 +264,6 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 		{
 			status = av_frame_copy(sys->videoFrame, sys->hwVideoFrame);
 		}
-	}
-	else
-	{
-		status = av_frame_copy(sys->videoFrame, sys->hwVideoFrame);
 	}
 
 	gotFrame = (status == 0);
@@ -511,8 +509,9 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 			if (ret < 0)
 			{
-				WLog_ERR(TAG, "Could not initialize hw decoder: %s", av_err2str(ret));
-				goto EXCEPTION;
+				WLog_ERR(TAG, "Could not initialize hardware decoder, falling back to software: %s", av_err2str(ret));
+				sys->hwctx = NULL;
+				goto fail_hwdevice_create;
 			}
 		}
 
@@ -520,6 +519,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 		sys->hw_pix_fmt = AV_PIX_FMT_VAAPI;
 		sys->codecDecoderContext->hw_device_ctx = av_buffer_ref(sys->hwctx);
 		sys->codecDecoderContext->opaque = (void*) sys;
+	fail_hwdevice_create:
 #endif
 
 		if (avcodec_open2(sys->codecDecoderContext, sys->codecDecoder, NULL) < 0)
