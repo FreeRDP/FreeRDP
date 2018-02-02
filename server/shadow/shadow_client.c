@@ -641,10 +641,11 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
 #ifndef WITH_GFX_H264
-				settings->GfxH264 = FALSE;
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
 				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 #else
-				settings->GfxAVC444 = settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
+				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
 #endif
 			}
 
@@ -667,10 +668,11 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
 #ifndef WITH_GFX_H264
-				settings->GfxH264 = FALSE;
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
 				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 #else
-				settings->GfxAVC444 = settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
+				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
 #endif
 			}
 
@@ -693,7 +695,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
 #ifndef WITH_GFX_H264
-				settings->GfxH264 = FALSE;
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
 				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 #else
 				settings->GfxAVC444 = settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
@@ -717,8 +719,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			if (settings)
 			{
 				flags = pdu.capsSet->flags;
-				settings->GfxAVC444 = FALSE;
-				settings->GfxAVC444v2 = FALSE;
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxAVC444 = FALSE;
 				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
 #ifndef WITH_GFX_H264
