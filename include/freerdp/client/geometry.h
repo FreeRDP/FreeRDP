@@ -28,12 +28,12 @@
  */
 typedef struct _geometry_client_context GeometryClientContext;
 
-
 typedef struct _MAPPED_GEOMETRY MAPPED_GEOMETRY;
 typedef BOOL (*pcMappedGeometryAdded)(GeometryClientContext* context, MAPPED_GEOMETRY *geometry);
 typedef BOOL (*pcMappedGeometryUpdate)(MAPPED_GEOMETRY *geometry);
 typedef BOOL (*pcMappedGeometryClear)(MAPPED_GEOMETRY *geometry);
 
+/** @brief a geometry record tracked by the geometry channel */
 struct _MAPPED_GEOMETRY
 {
 	UINT64 mappingId;
@@ -47,6 +47,7 @@ struct _MAPPED_GEOMETRY
 	pcMappedGeometryClear MappedGeometryClear;
 };
 
+/** @brief the geometry context for client channel */
 struct _geometry_client_context
 {
 	wHashTable *geometries;

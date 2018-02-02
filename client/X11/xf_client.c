@@ -1280,12 +1280,12 @@ static BOOL xf_post_connect(freerdp* instance)
 		return FALSE;
 	}
 
-	if (!(xfc->xfVideo = xf_video_new(xfc)))
+/*	if (!(xfc->xfVideo = xf_video_new(xfc)))
 	{
 		xf_clipboard_free(xfc->clipboard);
 		xf_disp_free(xfc->xfDisp);
 		return FALSE;
-	}
+	}*/
 
 	EventArgsInit(&e, "xfreerdp");
 	e.width = settings->DesktopWidth;
@@ -1323,12 +1323,6 @@ static void xf_post_disconnect(freerdp* instance)
 	else
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
 	
-	if (xfc->xfVideo)
-	{
-		xf_video_free(xfc->xfVideo);
-		xfc->xfVideo = NULL;
-	}
-
 	xf_window_free(xfc);
 	xf_keyboard_free(xfc);
 }

@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Video Optimized Remoting Virtual Channel Extension
  *
- * Copyright 2017 David Fort <contact@hardening-consulting.com>
+ * Copyright 2018 David Fort <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

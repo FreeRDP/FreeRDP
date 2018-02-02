@@ -20,26 +20,42 @@
 #ifndef FREERDP_CHANNELS_CLIENT_VIDEO_H
 #define FREERDP_CHANNELS_CLIENT_VIDEO_H
 
+#include <freerdp/client/geometry.h>
 #include <freerdp/channels/video.h>
 
-typedef struct _video_client_context VideoClientContext;
+typedef struct _VideoClientContext VideoClientContext;
+typedef struct _VideoClientContextPriv VideoClientContextPriv;
+typedef struct _VideoSurface VideoSurface;
 
-typedef UINT (*pcPresentationRequest)(VideoClientContext* context, TSMM_PRESENTATION_REQUEST *req);
-typedef UINT (*pcPresentationResponse)(VideoClientContext* context, TSMM_PRESENTATION_RESPONSE *resp);
-typedef UINT (*pcVideoClientNotification)(VideoClientContext *context, TSMM_CLIENT_NOTIFICATION *notif);
-typedef UINT (*pcVideoData)(VideoClientContext* context, TSMM_VIDEO_DATA *data);
+
+/** @brief an implementation of surface used by the video channel */
+struct _VideoSurface
+{
+	UINT32 x, y, w, h;
+	BYTE *data;
+};
+
+typedef void (*pcVideoTimer)(VideoClientContext *video, UINT64 now);
+typedef void (*pcVideoSetGeometry)(VideoClientContext *video, GeometryClientContext *geometry);
+typedef VideoSurface *(*pcVideoCreateSurface)(VideoClientContext *video, BYTE *data, UINT32 x, UINT32 y,
+			UINT32 width, UINT32 height);
+typedef BOOL (*pcVideoShowSurface)(VideoClientContext *video, VideoSurface *surface);
+typedef BOOL (*pcVideoDeleteSurface)(VideoClientContext *video, VideoSurface *surface);
 
 /** @brief context for the video (MS-RDPEVOR) channel */
-struct _video_client_context
+struct _VideoClientContext
 {
 	void* handle;
 	void* custom;
+	VideoClientContextPriv *priv;
 
-	pcPresentationRequest PresentationRequest;
-	pcPresentationResponse PresentationResponse;
-	pcVideoClientNotification ClientNotification;
-	pcVideoData VideoData;
+	pcVideoSetGeometry setGeometry;
+	pcVideoTimer timer;
+	pcVideoCreateSurface createSurface;
+	pcVideoShowSurface showSurface;
+	pcVideoDeleteSurface deleteSurface;
 };
+
 
 #endif /* FREERDP_CHANNELS_CLIENT_VIDEO_H */
 
