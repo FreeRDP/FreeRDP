@@ -150,25 +150,9 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 	{
 		1, h264->FrameRate
 	};
-	av_opt_set(sys->codecEncoderContext, "preset", "veryfast", AV_OPT_SEARCH_CHILDREN);
+	av_opt_set(sys->codecEncoderContext, "preset", "medium", AV_OPT_SEARCH_CHILDREN);
 	av_opt_set(sys->codecEncoderContext, "tune", "zerolatency", AV_OPT_SEARCH_CHILDREN);
 	sys->codecEncoderContext->flags |= AV_CODEC_FLAG_LOOP_FILTER;
-	sys->codecEncoderContext->me_cmp |= 1;
-	sys->codecEncoderContext->me_subpel_quality = 3;
-	sys->codecEncoderContext->me_range = 16;
-	sys->codecEncoderContext->gop_size = 60;
-	sys->codecEncoderContext->keyint_min = 25;
-	sys->codecEncoderContext->i_quant_factor = 0.71;
-	sys->codecEncoderContext->qcompress = 0.6;
-	sys->codecEncoderContext->qmin = 18;
-	sys->codecEncoderContext->qmax = 51;
-	sys->codecEncoderContext->max_qdiff = 4;
-	sys->codecEncoderContext->max_b_frames = 0;
-	sys->codecEncoderContext->refs = 1;
-	sys->codecEncoderContext->trellis = 0;
-	sys->codecEncoderContext->thread_count = 2;
-	sys->codecEncoderContext->level = 31;
-	sys->codecEncoderContext->b_quant_factor = 0;
 	sys->codecEncoderContext->pix_fmt = AV_PIX_FMT_YUV420P;
 
 	if (avcodec_open2(sys->codecEncoderContext, sys->codecEncoder, NULL) < 0)
