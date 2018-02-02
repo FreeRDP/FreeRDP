@@ -1360,6 +1360,134 @@ static INLINE pstatus_t general_RGBToAVC444YUV(
 	return !PRIMITIVES_SUCCESS;
 }
 
+static INLINE void general_RGBToAVC444YUVv2_ANY_DOUBLE_ROW(
+    const BYTE* srcEven, const BYTE* srcOdd, UINT32 srcFormat,
+    BYTE* yLumaDstEven, BYTE* yLumaDstOdd,
+    BYTE* uLumaDst, BYTE* vLumaDst,
+    BYTE* yEvenChromaDst1, BYTE* yEvenChromaDst2,
+    BYTE* yOddChromaDst1, BYTE* yOddChromaDst2,
+    BYTE* uChromaDst1, BYTE* uChromaDst2,
+    BYTE* vChromaDst1, BYTE* vChromaDst2,
+    UINT32 width)
+{
+	UINT32 x;
+	const UINT32 bpp = GetBytesPerPixel(srcFormat);
+
+	for (x = 0; x < width; x += 2)
+	{
+		BYTE Ya, Ua, Va;
+		BYTE Yb, Ub, Vb;
+		BYTE Yc, Uc, Vc;
+		BYTE Yd, Ud, Vd;
+		{
+			BYTE b, g, r;
+			const UINT32 color = ReadColor(srcEven, srcFormat);
+			srcEven += bpp;
+			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
+			Ya = RGB2Y(r, g, b);
+			Ua = RGB2U(r, g, b);
+			Va = RGB2V(r, g, b);
+		}
+
+		if (x < width - 1)
+		{
+			BYTE b, g, r;
+			const UINT32 color = ReadColor(srcEven, srcFormat);
+			srcEven += bpp;
+			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
+			Yb = RGB2Y(r, g, b);
+			Ub = RGB2U(r, g, b);
+			Vb = RGB2V(r, g, b);
+		}
+		else
+		{
+			Yb = Ya;
+			Ub = Ua;
+			Vb = Va;
+		}
+
+		if (srcOdd)
+		{
+			BYTE b, g, r;
+			const UINT32 color = ReadColor(srcOdd, srcFormat);
+			srcOdd += bpp;
+			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
+			Yc = RGB2Y(r, g, b);
+			Uc = RGB2U(r, g, b);
+			Vc = RGB2V(r, g, b);
+		}
+		else
+		{
+			Yc = Ya;
+			Uc = Ua;
+			Vc = Va;
+		}
+
+		if (srcOdd && (x < width - 1))
+		{
+			BYTE b, g, r;
+			const UINT32 color = ReadColor(srcOdd, srcFormat);
+			srcOdd += bpp;
+			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
+			Yd = RGB2Y(r, g, b);
+			Ud = RGB2U(r, g, b);
+			Vd = RGB2V(r, g, b);
+		}
+		else
+		{
+			Yd = Ya;
+			Ud = Ua;
+			Vd = Va;
+		}
+
+		/* Y [b1] */
+		*yLumaDstEven++ = Ya;
+
+		if (x < width - 1)
+			*yLumaDstEven++ = Yb;
+
+		if (srcOdd)
+			*yLumaDstOdd++ = Yc;
+
+		if (srcOdd && (x < width - 1))
+			*yLumaDstOdd++ = Yd;
+
+		/* 2x 2y [b2,b3] */
+		*uLumaDst++ = (Ua + Ub + Uc + Ud) / 4;
+		*vLumaDst++ = (Va + Vb + Vc + Vd) / 4;
+
+		/* 2x+1, y [b4,b5] even */
+		if (x < width - 1)
+		{
+			*yEvenChromaDst1++ = Ub;
+			*yEvenChromaDst2++ = Vb;
+		}
+
+		if (srcOdd)
+		{
+			/* 2x+1, y [b4,b5] odd */
+			if (x < width - 1)
+			{
+				*yOddChromaDst1++ = Ud;
+				*yOddChromaDst2++ = Vd;
+			}
+
+			/* 4x 2y+1 [b6, b7] */
+			if (x % 4 == 0)
+			{
+				*uChromaDst1++ = Uc;
+				*uChromaDst2++ = Vc;
+			}
+			/* 4x+2 2y+1 [b8, b9] */
+			else
+			{
+				*vChromaDst1++ = Uc;
+				*vChromaDst2++ = Vc;
+			}
+		}
+	}
+}
+
 static INLINE pstatus_t general_RGBToAVC444YUVv2_ANY(
     const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
     BYTE* pDst1[3], const UINT32 dst1Step[3],
@@ -1415,111 +1543,164 @@ static INLINE pstatus_t general_RGBToAVC444YUVv2_ANY(
 	 *  }
 	 *
 	 */
-	UINT32 x, y;
+	UINT32 y;
 
-	for (y = 0; y < roi->height; y++)
+	if (roi->height < 1 || roi->width < 1)
+		return !PRIMITIVES_SUCCESS;
+
+	for (y = 0; y < roi->height; y += 2)
 	{
-		const BYTE* src = pSrc + y * srcStep;
-		BYTE* b1  = pDst1 ? (pDst1[0] + y * dst1Step[0]) : NULL;
-		BYTE* b4  = pDst2 ? (pDst2[0] + y * dst2Step[0]) : NULL;
-		BYTE* b5  = pDst2 ? (pDst2[0] + y * dst2Step[0] + dst2Step[0] / 2) : NULL;
-
-		for (x = 0; x < roi->width; x++)
-		{
-			const UINT32 colorA = ReadColor(src, srcFormat);
-			BYTE r, g, b;
-			SplitColor(colorA, srcFormat, &r, &g, &b, NULL, NULL);
-			src += 4;
-
-			if (b1)
-			{
-				const BYTE y = RGB2Y(r, g, b);
-				*b1++ = y;
-			}
-
-			if (b4 && b5 && ((x & 1) == 1))
-			{
-				const BYTE u = RGB2U(r, g, b);
-				const BYTE v = RGB2V(r, g, b);
-				*b4++ = u;
-				*b5++ = v;
-			}
-		}
-	}
-
-	if (pDst1)
-	{
-		for (y = 0; y < roi->height / 2; y++)
-		{
-			const BYTE* src = pSrc + (2 * y) * srcStep;
-			BYTE* b2  = pDst1[1] + y * dst1Step[1];
-			BYTE* b3  = pDst1[2] + y * dst1Step[2];
-
-			for (x = 0; x < roi->width / 2; x++)
-			{
-				const UINT32 colorA = ReadColor(src, srcFormat);
-				const UINT32 colorB = ReadColor(src + 4, srcFormat);
-				const UINT32 colorC = ReadColor(src + srcStep, srcFormat);
-				const UINT32 colorD = ReadColor(src + 4 + srcStep, srcFormat);
-				BYTE r, g, b;
-				SplitColor(colorA, srcFormat, &r, &g, &b, NULL, NULL);
-				src += 8;
-				{
-					BYTE rr, gg, bb;
-					UINT16 u = RGB2U(r, g, b);
-					UINT16 v = RGB2V(r, g, b);
-					SplitColor(colorB, srcFormat, &rr, &gg, &bb, NULL, NULL);
-					u += RGB2U(rr, gg, bb);
-					v += RGB2V(rr, gg, bb);
-					SplitColor(colorC, srcFormat, &rr, &gg, &bb, NULL, NULL);
-					u += RGB2U(rr, gg, bb);
-					v += RGB2V(rr, gg, bb);
-					SplitColor(colorD, srcFormat, &rr, &gg, &bb, NULL, NULL);
-					u += RGB2U(rr, gg, bb);
-					v += RGB2V(rr, gg, bb);
-					u /= 4;
-					v /= 4;
-					*b2++ = u;
-					*b3++ = v;
-				}
-			}
-		}
-	}
-
-	if (pDst2)
-	{
-		for (y = 0; y < roi->height / 2; y++)
-		{
-			const BYTE* src = pSrc + (2 * y + 1) * srcStep;
-			BYTE* b6  = pDst2[1] + y * dst2Step[1];
-			BYTE* b7  = pDst2[1] + y * dst2Step[1] + dst2Step[1] / 2;
-			BYTE* b8  = pDst2[2] + y * dst2Step[2];
-			BYTE* b9  = pDst2[2] + y * dst2Step[2] + dst2Step[2] / 2;
-
-			for (x = 0; x < roi->width / 2; x++)
-			{
-				const UINT32 color = ReadColor(src, srcFormat);
-				BYTE r, g, b, u, v;
-				SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
-				src += 8;
-				u = RGB2U(r, g, b);
-				v = RGB2V(r, g, b);
-
-				if (x & 1)
-				{
-					*b8++ = u;
-					*b9++ = v;
-				}
-				else
-				{
-					*b6++ = u;
-					*b7++ = v;
-				}
-			}
-		}
+		const BYTE* srcEven = (pSrc + y * srcStep);
+		const BYTE* srcOdd = (y < roi->height - 1) ? (srcEven + srcStep) : NULL;
+		BYTE* dstLumaYEven = (pDst1[0] + y * dst1Step[0]);
+		BYTE* dstLumaYOdd = (dstLumaYEven + dst1Step[0]);
+		BYTE* dstLumaU = (pDst1[1] + (y / 2) * dst1Step[1]);
+		BYTE* dstLumaV = (pDst1[2] + (y / 2) * dst1Step[2]);
+		BYTE* dstEvenChromaY1 = (pDst2[0] + y * dst2Step[0]);
+		BYTE* dstEvenChromaY2 = dstEvenChromaY1 + roi->width / 2;
+		BYTE* dstOddChromaY1 = dstEvenChromaY1 + dst2Step[0];
+		BYTE* dstOddChromaY2 = dstEvenChromaY2 + dst2Step[0];
+		BYTE* dstChromaU1 = (pDst2[1] + (y / 2) * dst2Step[1]);
+		BYTE* dstChromaV1 = (pDst2[2] + (y / 2) * dst2Step[2]);
+		BYTE* dstChromaU2 = dstChromaU1 + roi->width / 4;
+		BYTE* dstChromaV2 = dstChromaV1 + roi->width / 4;
+		general_RGBToAVC444YUVv2_ANY_DOUBLE_ROW(srcEven, srcOdd, srcFormat, dstLumaYEven,
+		                                        dstLumaYOdd, dstLumaU, dstLumaV,
+		                                        dstEvenChromaY1, dstEvenChromaY2,
+		                                        dstOddChromaY1, dstOddChromaY2,
+		                                        dstChromaU1, dstChromaU2,
+		                                        dstChromaV1, dstChromaV2,
+		                                        roi->width);
 	}
 
 	return PRIMITIVES_SUCCESS;
+}
+
+static INLINE void general_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
+    const BYTE* srcEven, const BYTE* srcOdd,
+    BYTE* yLumaDstEven, BYTE* yLumaDstOdd,
+    BYTE* uLumaDst, BYTE* vLumaDst,
+    BYTE* yEvenChromaDst1, BYTE* yEvenChromaDst2,
+    BYTE* yOddChromaDst1, BYTE* yOddChromaDst2,
+    BYTE* uChromaDst1, BYTE* uChromaDst2,
+    BYTE* vChromaDst1, BYTE* vChromaDst2,
+    UINT32 width)
+{
+	UINT32 x;
+
+	for (x = 0; x < width; x += 2)
+	{
+		BYTE Ya, Ua, Va;
+		BYTE Yb, Ub, Vb;
+		BYTE Yc, Uc, Vc;
+		BYTE Yd, Ud, Vd;
+		{
+			const BYTE b = *srcEven++;
+			const BYTE g = *srcEven++;
+			const BYTE r = *srcEven++;
+			srcEven++;
+			Ya = RGB2Y(r, g, b);
+			Ua = RGB2U(r, g, b);
+			Va = RGB2V(r, g, b);
+		}
+
+		if (x < width - 1)
+		{
+			const BYTE b = *srcEven++;
+			const BYTE g = *srcEven++;
+			const BYTE r = *srcEven++;
+			srcEven++;
+			Yb = RGB2Y(r, g, b);
+			Ub = RGB2U(r, g, b);
+			Vb = RGB2V(r, g, b);
+		}
+		else
+		{
+			Yb = Ya;
+			Ub = Ua;
+			Vb = Va;
+		}
+
+		if (srcOdd)
+		{
+			const BYTE b = *srcOdd++;
+			const BYTE g = *srcOdd++;
+			const BYTE r = *srcOdd++;
+			srcOdd++;
+			Yc = RGB2Y(r, g, b);
+			Uc = RGB2U(r, g, b);
+			Vc = RGB2V(r, g, b);
+		}
+		else
+		{
+			Yc = Ya;
+			Uc = Ua;
+			Vc = Va;
+		}
+
+		if (srcOdd && (x < width - 1))
+		{
+			const BYTE b = *srcOdd++;
+			const BYTE g = *srcOdd++;
+			const BYTE r = *srcOdd++;
+			srcOdd++;
+			Yd = RGB2Y(r, g, b);
+			Ud = RGB2U(r, g, b);
+			Vd = RGB2V(r, g, b);
+		}
+		else
+		{
+			Yd = Ya;
+			Ud = Ua;
+			Vd = Va;
+		}
+
+		/* Y [b1] */
+		*yLumaDstEven++ = Ya;
+
+		if (x < width - 1)
+			*yLumaDstEven++ = Yb;
+
+		if (srcOdd)
+			*yLumaDstOdd++ = Yc;
+
+		if (srcOdd && (x < width - 1))
+			*yLumaDstOdd++ = Yd;
+
+		/* 2x 2y [b2,b3] */
+		*uLumaDst++ = (Ua + Ub + Uc + Ud) / 4;
+		*vLumaDst++ = (Va + Vb + Vc + Vd) / 4;
+
+		/* 2x+1, y [b4,b5] even */
+		if (x < width - 1)
+		{
+			*yEvenChromaDst1++ = Ub;
+			*yEvenChromaDst2++ = Vb;
+		}
+
+		if (srcOdd)
+		{
+			/* 2x+1, y [b4,b5] odd */
+			if (x < width - 1)
+			{
+				*yOddChromaDst1++ = Ud;
+				*yOddChromaDst2++ = Vd;
+			}
+
+			/* 4x 2y+1 [b6, b7] */
+			if (x % 4 == 0)
+			{
+				*uChromaDst1++ = Uc;
+				*uChromaDst2++ = Vc;
+			}
+			/* 4x+2 2y+1 [b8, b9] */
+			else
+			{
+				*vChromaDst1++ = Uc;
+				*vChromaDst2++ = Vc;
+			}
+		}
+	}
 }
 
 static INLINE pstatus_t general_RGBToAVC444YUVv2_BGRX(
@@ -1528,115 +1709,34 @@ static INLINE pstatus_t general_RGBToAVC444YUVv2_BGRX(
     BYTE* pDst2[3], const UINT32 dst2Step[3],
     const prim_size_t* roi)
 {
-	UINT32 x, y;
+	UINT32 y;
 
-	for (y = 0; y < roi->height; y++)
+	if (roi->height < 1 || roi->width < 1)
+		return !PRIMITIVES_SUCCESS;
+
+	for (y = 0; y < roi->height; y += 2)
 	{
-		const BYTE* src = pSrc + y * srcStep;
-		BYTE* b1  = pDst1 ? (pDst1[0] + y * dst1Step[0]) : NULL;
-		BYTE* b4  = pDst2 ? (pDst2[0] + y * dst2Step[0]) : NULL;
-		BYTE* b5  = pDst2 ? (pDst2[0] + y * dst2Step[0] + dst2Step[0] / 2) : NULL;
-
-		for (x = 0; x < roi->width; x++)
-		{
-			const BYTE b = *src++;
-			const BYTE g = *src++;
-			const BYTE r = *src++;
-			src++;
-
-			if (b1)
-			{
-				const BYTE y = RGB2Y(r, g, b);
-				*b1++ = y;
-			}
-
-			if (b4 && b5 && ((x & 1) == 1))
-			{
-				const BYTE u = RGB2U(r, g, b);
-				const BYTE v = RGB2V(r, g, b);
-				*b4++ = u;
-				*b5++ = v;
-			}
-		}
-	}
-
-	if (pDst1)
-	{
-		for (y = 0; y < roi->height / 2; y++)
-		{
-			const BYTE* src = pSrc + (2 * y) * srcStep;
-			BYTE* b2  = pDst1[1] + y * dst1Step[1];
-			BYTE* b3  = pDst1[2] + y * dst1Step[2];
-
-			for (x = 0; x < roi->width / 2; x++)
-			{
-				const BYTE b = *src++;
-				const BYTE g = *src++;
-				const BYTE r = *src++;
-				const BYTE a = *src++;
-				const BYTE* srcB = src;
-				const BYTE* srcC = src - 4 + srcStep;
-				const BYTE* srcD = src + srcStep;
-				BYTE rr, gg, bb;
-				UINT16 u = RGB2U(r, g, b);
-				UINT16 v = RGB2V(r, g, b);
-				bb = *srcB++;
-				gg = *srcB++;
-				rr = *srcB++;
-				u += RGB2U(rr, gg, bb);
-				v += RGB2V(rr, gg, bb);
-				bb = *srcC++;
-				gg = *srcC++;
-				rr = *srcC++;
-				u += RGB2U(rr, gg, bb);
-				v += RGB2V(rr, gg, bb);
-				bb = *srcD++;
-				gg = *srcD++;
-				rr = *srcD++;
-				u += RGB2U(rr, gg, bb);
-				v += RGB2V(rr, gg, bb);
-				u /= 4;
-				v /= 4;
-				src += 4;
-				*b2++ = u;
-				*b3++ = v;
-			}
-		}
-	}
-
-	if (pDst2)
-	{
-		for (y = 0; y < roi->height / 2; y++)
-		{
-			const BYTE* src = pSrc + (2 * y + 1) * srcStep;
-			BYTE* b6  = pDst2[1] + y * dst2Step[1];
-			BYTE* b7  = pDst2[1] + y * dst2Step[1] + dst2Step[1] / 2;
-			BYTE* b8  = pDst2[2] + y * dst2Step[2];
-			BYTE* b9  = pDst2[2] + y * dst2Step[2] + dst2Step[2] / 2;
-
-			for (x = 0; x < roi->width / 2; x++)
-			{
-				BYTE u, v;
-				const BYTE b = *src++;
-				const BYTE g = *src++;
-				const BYTE r = *src++;
-				src++;
-				src += 4;
-				u = RGB2U(r, g, b);
-				v = RGB2V(r, g, b);
-
-				if (x & 1)
-				{
-					*b8++ = u;
-					*b9++ = v;
-				}
-				else
-				{
-					*b6++ = u;
-					*b7++ = v;
-				}
-			}
-		}
+		const BYTE* srcEven = (pSrc + y * srcStep);
+		const BYTE* srcOdd = (y < roi->height - 1) ? (srcEven + srcStep) : NULL;
+		BYTE* dstLumaYEven = (pDst1[0] + y * dst1Step[0]);
+		BYTE* dstLumaYOdd = (dstLumaYEven + dst1Step[0]);
+		BYTE* dstLumaU = (pDst1[1] + (y / 2) * dst1Step[1]);
+		BYTE* dstLumaV = (pDst1[2] + (y / 2) * dst1Step[2]);
+		BYTE* dstEvenChromaY1 = (pDst2[0] + y * dst2Step[0]);
+		BYTE* dstEvenChromaY2 = dstEvenChromaY1 + roi->width / 2;
+		BYTE* dstOddChromaY1 = dstEvenChromaY1 + dst2Step[0];
+		BYTE* dstOddChromaY2 = dstEvenChromaY2 + dst2Step[0];
+		BYTE* dstChromaU1 = (pDst2[1] + (y / 2) * dst2Step[1]);
+		BYTE* dstChromaV1 = (pDst2[2] + (y / 2) * dst2Step[2]);
+		BYTE* dstChromaU2 = dstChromaU1 + roi->width / 4;
+		BYTE* dstChromaV2 = dstChromaV1 + roi->width / 4;
+		general_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(srcEven, srcOdd, dstLumaYEven,
+		        dstLumaYOdd, dstLumaU, dstLumaV,
+		        dstEvenChromaY1, dstEvenChromaY2,
+		        dstOddChromaY1, dstOddChromaY2,
+		        dstChromaU1, dstChromaU2,
+		        dstChromaV1, dstChromaV2,
+		        roi->width);
 	}
 
 	return PRIMITIVES_SUCCESS;
