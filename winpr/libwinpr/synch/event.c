@@ -37,7 +37,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_EVENTFD_H
+#ifdef HAVE_SYS_EVENTFD_H
 #include <sys/eventfd.h>
 #endif
 
@@ -126,7 +126,7 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 	event->pipe_fd[0] = -1;
 	event->pipe_fd[1] = -1;
-#ifdef HAVE_EVENTFD_H
+#ifdef HAVE_SYS_EVENTFD_H
 	event->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
 
 	if (event->pipe_fd[0] < 0)
@@ -176,7 +176,7 @@ HANDLE OpenEventA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 	return NULL;
 }
 
-#ifdef HAVE_EVENTFD_H
+#ifdef HAVE_SYS_EVENTFD_H
 #if !defined(WITH_EVENTFD_READ_WRITE)
 static int eventfd_read(int fd, eventfd_t* value)
 {
@@ -202,7 +202,7 @@ BOOL SetEvent(HANDLE hEvent)
 	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
 	{
 		event = (WINPR_EVENT*) Object;
-#ifdef HAVE_EVENTFD_H
+#ifdef HAVE_SYS_EVENTFD_H
 		eventfd_t val = 1;
 
 		do
@@ -249,7 +249,7 @@ BOOL ResetEvent(HANDLE hEvent)
 	{
 		do
 		{
-#ifdef HAVE_EVENTFD_H
+#ifdef HAVE_SYS_EVENTFD_H
 			eventfd_t value;
 			length = eventfd_read(event->pipe_fd[0], &value);
 #else

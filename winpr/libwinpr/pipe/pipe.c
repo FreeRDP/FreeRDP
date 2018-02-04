@@ -45,11 +45,11 @@
 #include <assert.h>
 #include <unistd.h>
 
-#ifdef HAVE_AIO_H
-#undef HAVE_AIO_H /* disable for now, incomplete */
+#ifdef HAVE_SYS_AIO_H
+#undef HAVE_SYS_AIO_H /* disable for now, incomplete */
 #endif
 
-#ifdef HAVE_AIO_H
+#ifdef HAVE_SYS_AIO_H
 #include <aio.h>
 #endif
 
@@ -327,7 +327,7 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			return FALSE;
 
 		pipe->lpOverlapped = lpOverlapped;
-#ifdef HAVE_AIO_H
+#ifdef HAVE_SYS_AIO_H
 		{
 			int aio_status;
 			struct aiocb cb;
@@ -416,7 +416,7 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 			return FALSE;
 
 		pipe->lpOverlapped = lpOverlapped;
-#ifdef HAVE_AIO_H
+#ifdef HAVE_SYS_AIO_H
 		{
 			struct aiocb cb;
 			ZeroMemory(&cb, sizeof(struct aiocb));

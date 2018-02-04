@@ -109,7 +109,7 @@ BOOL TimerCloseHandle(HANDLE handle)
 
 	if (!timer->lpArgToCompletionRoutine)
 	{
-#ifdef HAVE_TIMERFD_H
+#ifdef HAVE_SYS_TIMERFD_H
 
 		if (timer->fd != -1)
 			close(timer->fd);
@@ -179,7 +179,7 @@ int InitializeWaitableTimer(WINPR_TIMER* timer)
 
 	if (!timer->lpArgToCompletionRoutine)
 	{
-#ifdef HAVE_TIMERFD_H
+#ifdef HAVE_SYS_TIMERFD_H
 		int status;
 		timer->fd = timerfd_create(CLOCK_MONOTONIC, 0);
 
@@ -293,9 +293,9 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 #ifdef WITH_POSIX_TIMER
 	LONGLONG seconds = 0;
 	LONGLONG nanoseconds = 0;
-#ifdef HAVE_TIMERFD_H
+#ifdef HAVE_SYS_TIMERFD_H
 	int status = 0;
-#endif /* HAVE_TIMERFD_H */
+#endif /* HAVE_SYS_TIMERFD_H */
 #endif /* WITH_POSIX_TIMER */
 
 	if (!winpr_Handle_GetInfo(hTimer, &Type, &Object))
@@ -360,7 +360,7 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 
 	if (!timer->pfnCompletionRoutine)
 	{
-#ifdef HAVE_TIMERFD_H
+#ifdef HAVE_SYS_TIMERFD_H
 		status = timerfd_settime(timer->fd, 0, &(timer->timeout), NULL);
 
 		if (status)
