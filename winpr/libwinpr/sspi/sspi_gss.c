@@ -28,7 +28,7 @@
 
 #include "sspi_gss.h"
 
-#include "../../log.h"
+#include "../log.h"
 #define TAG WINPR_TAG("sspi.gss")
 
 static GSSAPI_FUNCTION_TABLE* g_GssApi = NULL;
