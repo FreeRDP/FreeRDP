@@ -308,28 +308,21 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* sr
  * integer factors with 16-bit signed integer intermediate results is:
  *
  * Y = ( ( 27 * R + 92 * G +  9 * B) >> 7 );
- * U = ( (-15 * R - 49 * G + 64 * B) >> 7 ) + 128;
- * V = ( ( 64 * R - 58 * G -  6 * B) >> 7 ) + 128;
+ * U = ( (-29 * R - 99 * G + 128 * B) >> 8 ) + 128;
+ * V = ( ( 128 * R - 116 * G -  12 * B) >> 8 ) + 128;
  *
+ * Due to signed 8bit range being [-128,127] the U and V constants of 128 are
+ * rounded to 127
  */
 
-PRIM_ALIGN_128 static const BYTE bgrx_y_factors[] =
-{
-	9,  92,  27,   0,   9,  92,  27,   0,   9,  92,  27,   0,   9,  92,  27,   0
-};
-PRIM_ALIGN_128 static const BYTE bgrx_u_factors[] =
-{
-	64, -49, -15,   0,  64, -49, -15,   0,  64, -49, -15,   0,  64, -49, -15,   0
-};
-PRIM_ALIGN_128 static const BYTE bgrx_v_factors[] =
-{
-	-6, -58,  64,   0,  -6, -58,  64,   0,  -6, -58,  64,   0,  -6, -58,  64,   0
-};
+#define BGRX_Y_FACTORS _mm_set_epi8(0, 27, 92, 9, 0, 27, 92, 9, 0, 27, 92, 9, 0, 27, 92, 9)
+#define BGRX_U_FACTORS _mm_set_epi8(0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127)
+#define BGRX_V_FACTORS _mm_set_epi8(0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12)
+#define CONST128_FACTORS _mm_set1_epi8(128)
 
-PRIM_ALIGN_128 static const BYTE const_buf_128b[] =
-{
-	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128
-};
+#define Y_SHIFT 7
+#define U_SHIFT 8
+#define V_SHIFT 8
 
 /*
 TODO:
@@ -355,10 +348,10 @@ static INLINE void ssse3_RGBToYUV420_BGRX_Y(
     const BYTE* src, BYTE* dst, UINT32 width)
 {
 	UINT32 x;
-	__m128i y_factors, x0, x1, x2, x3;
+	__m128i x0, x1, x2, x3;
+	const __m128i y_factors = BGRX_Y_FACTORS;
 	const __m128i* argb = (const __m128i*) src;
 	__m128i* ydst = (__m128i*) dst;
-	y_factors = _mm_load_si128((__m128i*)bgrx_y_factors);
 
 	for (x = 0; x < width; x += 16)
 	{
@@ -376,8 +369,8 @@ static INLINE void ssse3_RGBToYUV420_BGRX_Y(
 		x0 = _mm_hadd_epi16(x0, x1);
 		x2 = _mm_hadd_epi16(x2, x3);
 		/* shift the results */
-		x0 = _mm_srli_epi16(x0, 7);
-		x2 = _mm_srli_epi16(x2, 7);
+		x0 = _mm_srli_epi16(x0, Y_SHIFT);
+		x2 = _mm_srli_epi16(x2, Y_SHIFT);
 		/* pack the 16 words into bytes */
 		x0 = _mm_packus_epi16(x0, x2);
 		/* save to y plane */
@@ -392,14 +385,14 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(
     BYTE* dst1, BYTE* dst2, UINT32 width)
 {
 	UINT32 x;
-	__m128i vector128, u_factors, v_factors, x0, x1, x2, x3, x4, x5;
+	const __m128i u_factors = BGRX_U_FACTORS;
+	const __m128i v_factors = BGRX_V_FACTORS;
+	const __m128i vector128 = CONST128_FACTORS;
+	__m128i x0, x1, x2, x3, x4, x5;
 	const __m128i* rgb1 = (const __m128i*)src1;
 	const __m128i* rgb2 = (const __m128i*)src2;
 	__m64* udst = (__m64*)dst1;
 	__m64* vdst = (__m64*)dst2;
-	vector128 = _mm_load_si128((__m128i*)const_buf_128b);
-	u_factors = _mm_load_si128((__m128i*)bgrx_u_factors);
-	v_factors = _mm_load_si128((__m128i*)bgrx_v_factors);
 
 	for (x = 0; x < width; x += 16)
 	{
@@ -437,8 +430,8 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(
 		x0 = _mm_hadd_epi16(x2, x3);
 		x1 = _mm_hadd_epi16(x4, x5);
 		/* shift the results */
-		x0 = _mm_srai_epi16(x0, 7);
-		x1 = _mm_srai_epi16(x1, 7);
+		x0 = _mm_srai_epi16(x0, U_SHIFT);
+		x1 = _mm_srai_epi16(x1, V_SHIFT);
 		/* pack the 16 words into bytes */
 		x0 = _mm_packs_epi16(x0, x1);
 		/* add 128 */
@@ -522,10 +515,10 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 	UINT32 x;
 	const __m128i* argbEven = (const __m128i*) srcEven;
 	const __m128i* argbOdd = (const __m128i*) srcOdd;
-	const __m128i y_factors = _mm_load_si128((__m128i*)bgrx_y_factors);
-	const __m128i u_factors = _mm_load_si128((__m128i*)bgrx_u_factors);
-	const __m128i v_factors = _mm_load_si128((__m128i*)bgrx_v_factors);
-	const __m128i vector128 = _mm_load_si128((__m128i*)const_buf_128b);
+	const __m128i y_factors = BGRX_Y_FACTORS;
+	const __m128i u_factors = BGRX_U_FACTORS;
+	const __m128i v_factors = BGRX_V_FACTORS;
+	const __m128i vector128 = CONST128_FACTORS;
 
 	for (x = 0; x < width; x += 16)
 	{
@@ -541,14 +534,14 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 		{
 			/* Y: multiplications with subtotals and horizontal sums */
 			const __m128i ye1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, y_factors),
-			                                   _mm_maddubs_epi16(xe2, y_factors)), 7);
+			                                   _mm_maddubs_epi16(xe2, y_factors)), Y_SHIFT);
 			const __m128i ye2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, y_factors),
-			                                   _mm_maddubs_epi16(xe4, y_factors)), 7);
+			                                   _mm_maddubs_epi16(xe4, y_factors)), Y_SHIFT);
 			const __m128i ye = _mm_packus_epi16(ye1, ye2);
 			const __m128i yo1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, y_factors),
-			                                   _mm_maddubs_epi16(xo2, y_factors)), 7);
+			                                   _mm_maddubs_epi16(xo2, y_factors)), Y_SHIFT);
 			const __m128i yo2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, y_factors),
-			                                   _mm_maddubs_epi16(xo4, y_factors)), 7);
+			                                   _mm_maddubs_epi16(xo4, y_factors)), Y_SHIFT);
 			const __m128i yo = _mm_packus_epi16(yo1, yo2);
 			/* store y [b1] */
 			_mm_storeu_si128((__m128i*)b1Even, ye);
@@ -570,18 +563,18 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			__m128i ue, uo;
 			{
 				const __m128i ue1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
-				                                   _mm_maddubs_epi16(xe2, u_factors)), 7);
+				                                   _mm_maddubs_epi16(xe2, u_factors)), U_SHIFT);
 				const __m128i ue2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, u_factors),
-				                                   _mm_maddubs_epi16(xe4, u_factors)), 7);
+				                                   _mm_maddubs_epi16(xe4, u_factors)), U_SHIFT);
 				ue = _mm_add_epi8(_mm_packs_epi16(ue1, ue2), vector128);
 			}
 
 			if (b1Odd)
 			{
 				const __m128i uo1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, u_factors),
-				                                   _mm_maddubs_epi16(xo2, u_factors)), 7);
+				                                   _mm_maddubs_epi16(xo2, u_factors)), U_SHIFT);
 				const __m128i uo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, u_factors),
-				                                   _mm_maddubs_epi16(xo4, u_factors)), 7);
+				                                   _mm_maddubs_epi16(xo4, u_factors)), U_SHIFT);
 				uo = _mm_add_epi8(_mm_packs_epi16(uo1, uo2), vector128);
 			}
 
@@ -637,18 +630,18 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			__m128i ve, vo;
 			{
 				const __m128i ve1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
-				                                   _mm_maddubs_epi16(xe2, v_factors)), 7);
+				                                   _mm_maddubs_epi16(xe2, v_factors)), V_SHIFT);
 				const __m128i ve2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, v_factors),
-				                                   _mm_maddubs_epi16(xe4, v_factors)), 7);
+				                                   _mm_maddubs_epi16(xe4, v_factors)), V_SHIFT);
 				ve = _mm_add_epi8(_mm_packs_epi16(ve1, ve2), vector128);
 			}
 
 			if (b1Odd)
 			{
 				const __m128i vo1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, v_factors),
-				                                   _mm_maddubs_epi16(xo2, v_factors)), 7);
+				                                   _mm_maddubs_epi16(xo2, v_factors)), V_SHIFT);
 				const __m128i vo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, v_factors),
-				                                   _mm_maddubs_epi16(xo4, v_factors)), 7);
+				                                   _mm_maddubs_epi16(xo4, v_factors)), V_SHIFT);
 				vo = _mm_add_epi8(_mm_packs_epi16(vo1, vo2), vector128);
 			}
 
@@ -776,10 +769,7 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
     UINT32 width)
 {
 	UINT32 x;
-	const __m128i y_factors = _mm_load_si128((__m128i*)bgrx_y_factors);
-	const __m128i u_factors = _mm_load_si128((__m128i*)bgrx_u_factors);
-	const __m128i v_factors = _mm_load_si128((__m128i*)bgrx_v_factors);
-	const __m128i vector128 = _mm_load_si128((__m128i*)const_buf_128b);
+	const __m128i vector128 = CONST128_FACTORS;
 	const __m128i* argbEven = (const __m128i*) srcEven;
 	const __m128i* argbOdd = (const __m128i*) srcOdd;
 
@@ -798,26 +788,29 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 		const __m128i xo4 = _mm_load_si128(argbOdd++); /* 4th 4 pixels */
 		{
 			/* Y: multiplications with subtotals and horizontal sums */
+			const __m128i y_factors = BGRX_Y_FACTORS;
 			const __m128i ye1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, y_factors),
-			                                   _mm_maddubs_epi16(xe2, y_factors)), 7);
+			                                   _mm_maddubs_epi16(xe2, y_factors)), Y_SHIFT);
 			const __m128i ye2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, y_factors),
-			                                   _mm_maddubs_epi16(xe4, y_factors)), 7);
+			                                   _mm_maddubs_epi16(xe4, y_factors)), Y_SHIFT);
 			const __m128i ye = _mm_packus_epi16(ye1, ye2);
-			const __m128i yo1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, y_factors),
-			                                   _mm_maddubs_epi16(xo2, y_factors)), 7);
-			const __m128i yo2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, y_factors),
-			                                   _mm_maddubs_epi16(xo4, y_factors)), 7);
-			const __m128i yo = _mm_packus_epi16(yo1, yo2);
 			/* store y [b1] */
 			_mm_storeu_si128((__m128i*)yLumaDstEven, ye);
 			yLumaDstEven += 16;
-
-			if (yLumaDstOdd)
-			{
-				_mm_storeu_si128((__m128i*)yLumaDstOdd, yo);
-				yLumaDstOdd += 16;
-			}
 		}
+
+		if (yLumaDstOdd)
+		{
+			const __m128i y_factors = BGRX_Y_FACTORS;
+			const __m128i yo1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, y_factors),
+			                                   _mm_maddubs_epi16(xo2, y_factors)), Y_SHIFT);
+			const __m128i yo2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, y_factors),
+			                                   _mm_maddubs_epi16(xo4, y_factors)), Y_SHIFT);
+			const __m128i yo = _mm_packus_epi16(yo1, yo2);
+			_mm_storeu_si128((__m128i*)yLumaDstOdd, yo);
+			yLumaDstOdd += 16;
+		}
+
 		{
 			/* We have now
 			   * 16 even U values in ue
@@ -828,19 +821,21 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 			/* U: multiplications with subtotals and horizontal sums */
 			__m128i ue, uo, uavg;
 			{
+				const __m128i u_factors = BGRX_U_FACTORS;
 				const __m128i ue1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
-				                                   _mm_maddubs_epi16(xe2, u_factors)), 7);
+				                                   _mm_maddubs_epi16(xe2, u_factors)), U_SHIFT);
 				const __m128i ue2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, u_factors),
-				                                   _mm_maddubs_epi16(xe4, u_factors)), 7);
+				                                   _mm_maddubs_epi16(xe4, u_factors)), U_SHIFT);
 				const __m128i ueavg = _mm_hadd_epi16(ue1, ue2);
 				ue = _mm_add_epi8(_mm_packs_epi16(ue1, ue2), vector128);
 				uavg = ueavg;
 			}
 			{
+				const __m128i u_factors = BGRX_U_FACTORS;
 				const __m128i uo1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, u_factors),
-				                                   _mm_maddubs_epi16(xo2, u_factors)), 7);
+				                                   _mm_maddubs_epi16(xo2, u_factors)), U_SHIFT);
 				const __m128i uo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, u_factors),
-				                                   _mm_maddubs_epi16(xo4, u_factors)), 7);
+				                                   _mm_maddubs_epi16(xo4, u_factors)), U_SHIFT);
 				const __m128i uoavg = _mm_hadd_epi16(uo1, uo2);
 				uo = _mm_add_epi8(_mm_packs_epi16(uo1, uo2), vector128);
 				uavg = _mm_add_epi16(uavg, uoavg);
@@ -857,10 +852,16 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
 				                                  15, 13, 11, 9, 7, 5, 3, 1);
 				const __m128i ude = _mm_shuffle_epi8(ue, mask);
-				const __m128i udo = _mm_shuffle_epi8(uo, mask);
 				_mm_storel_epi64((__m128i*)yEvenChromaDst1, ude);
-				_mm_storel_epi64((__m128i*)yOddChromaDst1, udo);
 				yEvenChromaDst1 += 8;
+			}
+
+			if (yLumaDstOdd)
+			{
+				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+				                                  15, 13, 11, 9, 7, 5, 3, 1);
+				const __m128i udo = _mm_shuffle_epi8(uo, mask);
+				_mm_storel_epi64((__m128i*)yOddChromaDst1, udo);
 				yOddChromaDst1 += 8;
 			}
 
@@ -892,23 +893,26 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				uLumaDst += 8;
 			}
 		}
+
 		{
 			/* V: multiplications with subtotals and horizontal sums */
 			__m128i ve, vo, vavg;
 			{
+				const __m128i v_factors = BGRX_V_FACTORS;
 				const __m128i ve1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
-				                                   _mm_maddubs_epi16(xe2, v_factors)), 7);
+				                                   _mm_maddubs_epi16(xe2, v_factors)), V_SHIFT);
 				const __m128i ve2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, v_factors),
-				                                   _mm_maddubs_epi16(xe4, v_factors)), 7);
+				                                   _mm_maddubs_epi16(xe4, v_factors)), V_SHIFT);
 				const __m128i veavg = _mm_hadd_epi16(ve1, ve2);
 				ve = _mm_add_epi8(_mm_packs_epi16(ve1, ve2), vector128);
 				vavg = veavg;
 			}
 			{
+				const __m128i v_factors = BGRX_V_FACTORS;
 				const __m128i vo1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, v_factors),
-				                                   _mm_maddubs_epi16(xo2, v_factors)), 7);
+				                                   _mm_maddubs_epi16(xo2, v_factors)), V_SHIFT);
 				const __m128i vo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, v_factors),
-				                                   _mm_maddubs_epi16(xo4, v_factors)), 7);
+				                                   _mm_maddubs_epi16(xo4, v_factors)), V_SHIFT);
 				const __m128i voavg = _mm_hadd_epi16(vo1, vo2);
 				vo = _mm_add_epi8(_mm_packs_epi16(vo1, vo2), vector128);
 				vavg = _mm_add_epi16(vavg, voavg);
@@ -925,10 +929,16 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
 				                                  15, 13, 11, 9, 7, 5, 3, 1);
 				__m128i vde = _mm_shuffle_epi8(ve, mask);
-				__m128i vdo = _mm_shuffle_epi8(vo, mask);
 				_mm_storel_epi64((__m128i*)yEvenChromaDst2, vde);
-				_mm_storel_epi64((__m128i*)yOddChromaDst2, vdo);
 				yEvenChromaDst2 += 8;
+			}
+
+			if (yLumaDstOdd)
+			{
+				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+				                                  15, 13, 11, 9, 7, 5, 3, 1);
+				__m128i vdo = _mm_shuffle_epi8(vo, mask);
+				_mm_storel_epi64((__m128i*)yOddChromaDst2, vdo);
 				yOddChromaDst2 += 8;
 			}
 
