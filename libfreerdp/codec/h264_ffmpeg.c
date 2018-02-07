@@ -453,7 +453,8 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
         const enum AVPixelFormat* fmts)
 {
-	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*) ctx->opaque;
+	H264_CONTEXT* h264 = (H264_CONTEXT*) ctx->opaque;
+	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*) h264->subsystem;
 	const enum AVPixelFormat* p;
 
 	for (p = fmts; *p != AV_PIX_FMT_NONE; p++)
@@ -554,7 +555,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 80, 100)
 		sys->codecDecoderContext->hw_device_ctx = av_buffer_ref(sys->hwctx);
 #endif
-		sys->codecDecoderContext->opaque = (void*) sys;
+		sys->codecDecoderContext->opaque = (void*) h264;
 	fail_hwdevice_create:
 #endif
 
