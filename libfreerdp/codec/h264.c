@@ -315,7 +315,7 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264,
 	{
 		if (!ppYUVDstData[x] || (piDstSize[x] == 0) || (piDstStride[x] == 0))
 		{
-			WLog_ERR(TAG, "YUV buffer not initialized! check your decoder settings");
+			WLog_Print(h264->log, WLOG_ERROR, "YUV buffer not initialized! check your decoder settings");
 			goto fail;
 		}
 	}
@@ -471,9 +471,9 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
 			break;
 	}
 
-	WLog_INFO(TAG,
-	          "luma=%"PRIu64" [avg=%lf] chroma=%"PRIu64" [avg=%lf] combined=%"PRIu64" [avg=%lf]",
-	          op1, op1sum, op2, op2sum, op3, op3sum);
+	WLog_Print(h264->log, WLOG_INFO,
+	           "luma=%"PRIu64" [avg=%lf] chroma=%"PRIu64" [avg=%lf] combined=%"PRIu64" [avg=%lf]",
+	           op1, op1sum, op2, op2sum, op3, op3sum);
 #endif
 	return status;
 }
@@ -526,6 +526,11 @@ BOOL h264_context_init(H264_CONTEXT* h264)
 	int i;
 
 	if (!h264)
+		return FALSE;
+
+	h264->log = WLog_Get(TAG);
+
+	if (!h264->log)
 		return FALSE;
 
 	h264->subsystem = NULL;

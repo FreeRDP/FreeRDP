@@ -25,11 +25,9 @@
 #include "wels/codec_api.h"
 #include "wels/codec_ver.h"
 
-#define TAG FREERDP_TAG("codec")
-
 #if (OPENH264_MAJOR == 1) && (OPENH264_MINOR < 3) || (OPENH264_MAJOR < 1)
 #error "Unsupported OpenH264 version "OPENH264_MAJOR"."OPENH264_MINOR"."OPENH264_REVISION" detected!"
-#elif (OPENH264_MAJOR > 1) || (OPENH264_MINOR > 6)
+#elif (OPENH264_MAJOR > 1) || (OPENH264_MINOR > 7)
 #warning "Untested OpenH264 version "OPENH264_MAJOR"."OPENH264_MINOR"."OPENH264_REVISION" detected!"
 #endif
 
@@ -41,12 +39,11 @@ struct _H264_CONTEXT_OPENH264
 };
 typedef struct _H264_CONTEXT_OPENH264 H264_CONTEXT_OPENH264;
 
-static BOOL g_openh264_trace_enabled = FALSE;
-
 static void openh264_trace_callback(H264_CONTEXT* h264, int level,
                                     const char* message)
 {
-	WLog_INFO(TAG, "%d - %s", level, message);
+	if (h264)
+		WLog_Print(h264->log, WLOG_TRACE, "%d - %s", level, message);
 }
 
 static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
@@ -88,8 +85,8 @@ static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 		}
 		else
 		{
-			WLog_WARN(TAG, "DecodeFrame2 state: 0x%04X iBufferStatus: %d", state,
-			          sBufferInfo.iBufferStatus);
+			WLog_Print(h264->log, WLOG_WARN, "DecodeFrame2 state: 0x%04X iBufferStatus: %d", state,
+			           sBufferInfo.iBufferStatus);
 			return -2002;
 		}
 	}
@@ -101,22 +98,22 @@ static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 
 	if (sBufferInfo.iBufferStatus != 1)
 	{
-		WLog_WARN(TAG, "DecodeFrame2 iBufferStatus: %d", sBufferInfo.iBufferStatus);
+		WLog_Print(h264->log, WLOG_WARN, "DecodeFrame2 iBufferStatus: %d", sBufferInfo.iBufferStatus);
 		return 0;
 	}
 
 	if (state != dsErrorFree)
 	{
-		WLog_WARN(TAG, "DecodeFrame2 state: 0x%02X", state);
+		WLog_Print(h264->log, WLOG_WARN, "DecodeFrame2 state: 0x%02X", state);
 		return -2003;
 	}
 
 #if 0
-	WLog_INFO(TAG,
-	          "h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]",
-	          state, (void*) pYUVData[0], (void*) pYUVData[1], (void*) pYUVData[2], sBufferInfo.iBufferStatus,
-	          pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
-	          pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
+	WLog_Print(h264->log, WLOG_INFO,
+	           "h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]",
+	           state, (void*) pYUVData[0], (void*) pYUVData[1], (void*) pYUVData[2], sBufferInfo.iBufferStatus,
+	           pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
+	           pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
 #endif
 
 	if (pSystemBuffer->iFormat != videoFormatI420)
@@ -152,7 +149,7 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 
 		if (status < 0)
 		{
-			WLog_ERR(TAG, "Failed to get OpenH264 default parameters (status=%d)", status);
+			WLog_Print(h264->log, WLOG_ERROR, "Failed to get OpenH264 default parameters (status=%d)", status);
 			return status;
 		}
 
@@ -200,7 +197,7 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 
 		if (status < 0)
 		{
-			WLog_ERR(TAG, "Failed to initialize OpenH264 encoder (status=%d)", status);
+			WLog_Print(h264->log, WLOG_ERROR, "Failed to initialize OpenH264 encoder (status=%d)", status);
 			return status;
 		}
 
@@ -210,8 +207,8 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 
 		if (status < 0)
 		{
-			WLog_ERR(TAG, "Failed to get initial OpenH264 encoder parameters (status=%d)",
-			         status);
+			WLog_Print(h264->log, WLOG_ERROR, "Failed to get initial OpenH264 encoder parameters (status=%d)",
+			           status);
 			return status;
 		}
 	}
@@ -230,7 +227,7 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 
 					if (status < 0)
 					{
-						WLog_ERR(TAG, "Failed to set encoder bitrate (status=%d)", status);
+						WLog_Print(h264->log, WLOG_ERROR, "Failed to set encoder bitrate (status=%d)", status);
 						return status;
 					}
 				}
@@ -243,7 +240,7 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 
 					if (status < 0)
 					{
-						WLog_ERR(TAG, "Failed to set encoder framerate (status=%d)", status);
+						WLog_Print(h264->log, WLOG_ERROR, "Failed to set encoder framerate (status=%d)", status);
 						return status;
 					}
 				}
@@ -260,7 +257,7 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 
 					if (status < 0)
 					{
-						WLog_ERR(TAG, "Failed to set encoder parameters (status=%d)", status);
+						WLog_Print(h264->log, WLOG_ERROR, "Failed to set encoder parameters (status=%d)", status);
 						return status;
 					}
 				}
@@ -284,7 +281,7 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 
 	if (status < 0)
 	{
-		WLog_ERR(TAG, "Failed to encode frame (status=%d)", status);
+		WLog_Print(h264->log, WLOG_ERROR, "Failed to encode frame (status=%d)", status);
 		return status;
 	}
 
@@ -364,7 +361,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 			if (!sys->pEncoder)
 			{
-				WLog_ERR(TAG, "Failed to create OpenH264 encoder");
+				WLog_Print(h264->log, WLOG_ERROR, "Failed to create OpenH264 encoder");
 				goto EXCEPTION;
 			}
 		}
@@ -374,7 +371,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 			if (!sys->pDecoder)
 			{
-				WLog_ERR(TAG, "Failed to create OpenH264 decoder");
+				WLog_Print(h264->log, WLOG_ERROR, "Failed to create OpenH264 decoder");
 				goto EXCEPTION;
 			}
 
@@ -388,8 +385,8 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 			if (status != 0)
 			{
-				WLog_ERR(TAG, "Failed to initialize OpenH264 decoder (status=%ld)",
-				         status);
+				WLog_Print(h264->log, WLOG_ERROR, "Failed to initialize OpenH264 decoder (status=%ld)",
+				           status);
 				goto EXCEPTION;
 			}
 
@@ -401,13 +398,13 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 			if (status != 0)
 			{
-				WLog_ERR(TAG,
-				         "Failed to set data format option on OpenH264 decoder (status=%ld)",
-				         status);
+				WLog_Print(h264->log, WLOG_ERROR,
+				           "Failed to set data format option on OpenH264 decoder (status=%ld)",
+				           status);
 				goto EXCEPTION;
 			}
 
-			if (g_openh264_trace_enabled)
+			if (WLog_GetLogLevel(h264->log) == WLOG_TRACE)
 			{
 				status = (*sys->pDecoder)->SetOption(
 				             sys->pDecoder, DECODER_OPTION_TRACE_LEVEL,
@@ -415,21 +412,9 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 				if (status != 0)
 				{
-					WLog_ERR(TAG,
-					         "Failed to set trace level option on OpenH264 decoder (status=%ld)",
-					         status);
-					goto EXCEPTION;
-				}
-
-				status = (*sys->pDecoder)->SetOption(
-				             sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK,
-				             &traceCallback);
-
-				if (status != 0)
-				{
-					WLog_ERR(TAG,
-					         "Failed to set trace callback option on OpenH264 decoder (status=%ld)",
-					         status);
+					WLog_Print(h264->log, WLOG_ERROR,
+					           "Failed to set trace level option on OpenH264 decoder (status=%ld)",
+					           status);
 					goto EXCEPTION;
 				}
 
@@ -440,9 +425,21 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 				if (status != 0)
 				{
-					WLog_ERR(TAG,
-					         "Failed to set trace callback context option on OpenH264 decoder (status=%ld)",
-					         status);
+					WLog_Print(h264->log, WLOG_ERROR,
+					           "Failed to set trace callback context option on OpenH264 decoder (status=%ld)",
+					           status);
+					goto EXCEPTION;
+				}
+
+				status = (*sys->pDecoder)->SetOption(
+				             sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK,
+				             &traceCallback);
+
+				if (status != 0)
+				{
+					WLog_Print(h264->log, WLOG_ERROR,
+					           "Failed to set trace callback option on OpenH264 decoder (status=%ld)",
+					           status);
 					goto EXCEPTION;
 				}
 			}

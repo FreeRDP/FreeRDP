@@ -20,6 +20,8 @@
 #ifndef FREERDP_CODEC_H264_H
 #define FREERDP_CODEC_H264_H
 
+#include <winpr/wlog.h>
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/channels/rdpgfx.h>
@@ -77,6 +79,7 @@ struct _H264_CONTEXT
 	H264_CONTEXT_SUBSYSTEM* subsystem;
 
 	void* lumaData;
+	wLog* log;
 };
 #ifdef __cplusplus
 extern "C" {
