@@ -420,7 +420,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 
 	for (j = 0; j < count; j++)
 	{
-		char *path = NULL;
+		char* path = NULL;
 		BOOL dev_found = FALSE;
 		device_ext = (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(
 		                 rdpdr->devman->devices, (void*)keys[j]);
@@ -450,6 +450,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 				break;
 			}
 		}
+
 		free(path);
 
 		if (!dev_found)
@@ -1059,18 +1060,23 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	{
 		device = settings->DeviceArray[index];
 
-		if (device->Name && (strcmp(device->Name, "*") == 0))
+		if (device->Type == RDPDR_DTYP_FILESYSTEM)
 		{
-			first_hotplug(rdpdr);
+			RDPDR_DRIVE* drive = (RDPDR_DRIVE*)device;
 
-			if (!(rdpdr->hotplugThread = CreateThread(NULL, 0,
-			                             (LPTHREAD_START_ROUTINE) drive_hotplug_thread_func, rdpdr, 0, NULL)))
+			if (drive->Path && (strcmp(drive->Path, "*") == 0))
 			{
-				WLog_ERR(TAG, "CreateThread failed!");
-				return ERROR_INTERNAL_ERROR;
-			}
+				first_hotplug(rdpdr);
 
-			continue;
+				if (!(rdpdr->hotplugThread = CreateThread(NULL, 0,
+				                             (LPTHREAD_START_ROUTINE) drive_hotplug_thread_func, rdpdr, 0, NULL)))
+				{
+					WLog_ERR(TAG, "CreateThread failed!");
+					return ERROR_INTERNAL_ERROR;
+				}
+
+				continue;
+			}
 		}
 
 		if ((error = devman_load_device_service(rdpdr->devman, device,
