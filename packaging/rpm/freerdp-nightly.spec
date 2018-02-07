@@ -7,6 +7,15 @@
 
 
 %define   INSTALL_PREFIX /opt/freerdp-nightly/
+
+# do not add provides for libs provided by this package
+# or it could possibly mess with system provided packages
+# which depend on freerdp libs
+%global __provides_exclude_from ^%{INSTALL_PREFIX}.*$
+
+# do not require our own libs
+%global __requires_exclude ^(libfreerdp.*|libwinpr).*$
+
 Name:           freerdp-nightly
 Version:        2.0
 Release:        0
@@ -35,6 +44,7 @@ BuildRequires: pcsc-lite-devel
 BuildRequires: uuid-devel
 BuildRequires: libxml2-devel
 BuildRequires: zlib-devel
+BuildRequires: krb5-devel
 
 # (Open)Suse
 %if %{defined suse_version}
@@ -55,7 +65,7 @@ BuildRequires: libjpeg-devel
 BuildRequires: libavutil-devel
 %endif
 # fedora 21+
-%if 0%{?fedora} >= 21
+%if 0%{?fedora} >= 21 || 0%{?rhel} >= 7
 BuildRequires: docbook-style-xsl
 BuildRequires: libxslt
 BuildRequires: pkgconfig
@@ -68,9 +78,12 @@ BuildRequires: systemd-devel
 BuildRequires: dbus-glib-devel
 BuildRequires: gstreamer1-devel
 BuildRequires: gstreamer1-plugins-base-devel
-BuildRequires: libwayland-client-devel
 BuildRequires: libjpeg-turbo-devel
 %endif 
+
+%if 0%{?fedora} >= 21 || 0%{?rhel} >= 8
+BuildRequires: libwayland-client-devel
+%endif
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
@@ -101,6 +114,10 @@ based on freerdp and winpr.
         -DWITH_JPEG=ON \
         -DWITH_GSTREAMER_0_10=ON \
         -DWITH_GSM=ON \
+%if %{defined rhel} && 0%{?rhel} <= 7
+        -DWITH_WAYLAND=OFF \
+%endif
+        -DWITH_GSSAPI=ON \
         -DCHANNEL_URBDRC=ON \
         -DCHANNEL_URBDRC_CLIENT=ON \
         -DWITH_SERVER=ON \
@@ -121,7 +138,7 @@ make %{?_smp_mflags}
 %cmake_install
 %endif
 
-%if %{defined fedora}
+%if %{defined fedora} || %{defined rhel}
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 %endif 
@@ -160,7 +177,7 @@ export NO_BRP_CHECK_RPATH true
 
 
 %changelog
-* Tue Nov 16 2015 FreeRDP Team <team@freerdp.com> - 2.0.0-0
+* Wed Feb 7 2018 FreeRDP Team <team@freerdp.com> - 2.0.0-0
 - Update version information and support for OpenSuse 42.1
 * Tue Feb 03 2015 FreeRDP Team <team@freerdp.com> - 1.2.1-0
 - Update version information
