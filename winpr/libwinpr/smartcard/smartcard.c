@@ -75,6 +75,7 @@ static BOOL CALLBACK InitializeSCardApiStubs(PINIT_ONCE once, PVOID param, PVOID
 #ifdef WITH_SMARTCARD_INSPECT
 	g_SCardApi = Inspect_RegisterSCardApi(g_SCardApi);
 #endif
+	return TRUE;
 }
 
 WINSCARDAPI LONG WINAPI SCardEstablishContext(DWORD dwScope,

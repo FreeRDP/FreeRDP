@@ -613,6 +613,7 @@ static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
 static BOOL CALLBACK InitializeAvCodecs(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	avcodec_register_all();
+	return TRUE;
 }
 
 #ifdef BUILTIN_CHANNELS
