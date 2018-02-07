@@ -883,7 +883,7 @@ FREERDP_API BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat,
 #if !defined(__APPLE__)
 #define GetColorFormatName FreeRDPGetColorFormatName
 #define GetColor FreeRDPGetColor
-#define ConvertColor FreeRDPFreeRDPConvertColor
+#define ConvertColor FreeRDPConvertColor
 #endif
 
 #ifdef __cplusplus
