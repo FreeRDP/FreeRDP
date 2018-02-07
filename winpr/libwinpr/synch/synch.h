@@ -79,7 +79,7 @@ struct winpr_event
 };
 typedef struct winpr_event WINPR_EVENT;
 
-#ifdef HAVE_TIMERFD_H
+#ifdef HAVE_SYS_TIMERFD_H
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>

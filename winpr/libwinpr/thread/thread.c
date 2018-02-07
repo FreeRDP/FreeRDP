@@ -77,7 +77,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_EVENTFD_H
+#ifdef HAVE_SYS_EVENTFD_H
 #include <sys/eventfd.h>
 #endif
 
@@ -215,7 +215,7 @@ static BOOL set_event(WINPR_THREAD* thread)
 {
 	int length;
 	BOOL status = FALSE;
-#ifdef HAVE_EVENTFD_H
+#ifdef HAVE_SYS_EVENTFD_H
 	eventfd_t val = 1;
 
 	do
@@ -247,7 +247,7 @@ static BOOL reset_event(WINPR_THREAD* thread)
 {
 	int length;
 	BOOL status = FALSE;
-#ifdef HAVE_EVENTFD_H
+#ifdef HAVE_SYS_EVENTFD_H
 	eventfd_t value;
 
 	do
@@ -399,7 +399,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes,
 #endif
 	thread->pipe_fd[0] = -1;
 	thread->pipe_fd[1] = -1;
-#ifdef HAVE_EVENTFD_H
+#ifdef HAVE_SYS_EVENTFD_H
 	thread->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
 
 	if (thread->pipe_fd[0] < 0)
