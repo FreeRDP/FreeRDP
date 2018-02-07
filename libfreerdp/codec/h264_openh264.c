@@ -128,8 +128,8 @@ static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 	return 1;
 }
 
-static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
-                             UINT32* pDstSize)
+static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UINT32* iStride,
+                             BYTE** ppDstData, UINT32* pDstSize)
 {
 	int i, j;
 	int status;
@@ -137,8 +137,6 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
 	SSourcePicture pic;
 	SBitrateInfo bitrate;
 	H264_CONTEXT_OPENH264* sys;
-	BYTE** pYUVData = h264->pYUVData;
-	UINT32* iStride = h264->iStride;
 	sys = &((H264_CONTEXT_OPENH264*) h264->pSystemData)[0];
 
 	if (!sys->pEncoder)

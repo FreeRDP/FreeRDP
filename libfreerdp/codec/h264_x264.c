@@ -52,7 +52,7 @@ static int x264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 	return -1;
 }
 
-static int x264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
+static int x264_compress(H264_CONTEXT* h264, const BYTE** ppSrcYuv, const UINT32* pStride, BYTE** ppDstData, UINT32* pDstSize)
 {
 	//H264_CONTEXT_X264* sys = (H264_CONTEXT_X264*) h264->pSystemData;
 	return -1;

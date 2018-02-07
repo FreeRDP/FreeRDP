@@ -1344,7 +1344,8 @@ struct rdp_settings
 	ALIGN64 BOOL GfxH264; /* 3844 */
 	ALIGN64 BOOL GfxAVC444; /* 3845 */
 	ALIGN64 BOOL GfxSendQoeAck; /* 3846 */
-	UINT64 padding3904[3904 - 3847]; /* 3847 */
+	ALIGN64 BOOL GfxAVC444v2; /* 3847 */
+	UINT64 padding3904[3904 - 3848]; /* 3848 */
 
 	/**
 	 * Caches

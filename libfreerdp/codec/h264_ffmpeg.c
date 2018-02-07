@@ -150,25 +150,9 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 	{
 		1, h264->FrameRate
 	};
-	av_opt_set(sys->codecEncoderContext, "preset", "veryfast", AV_OPT_SEARCH_CHILDREN);
+	av_opt_set(sys->codecEncoderContext, "preset", "medium", AV_OPT_SEARCH_CHILDREN);
 	av_opt_set(sys->codecEncoderContext, "tune", "zerolatency", AV_OPT_SEARCH_CHILDREN);
 	sys->codecEncoderContext->flags |= AV_CODEC_FLAG_LOOP_FILTER;
-	sys->codecEncoderContext->me_cmp |= 1;
-	sys->codecEncoderContext->me_subpel_quality = 3;
-	sys->codecEncoderContext->me_range = 16;
-	sys->codecEncoderContext->gop_size = 60;
-	sys->codecEncoderContext->keyint_min = 25;
-	sys->codecEncoderContext->i_quant_factor = 0.71;
-	sys->codecEncoderContext->qcompress = 0.6;
-	sys->codecEncoderContext->qmin = 18;
-	sys->codecEncoderContext->qmax = 51;
-	sys->codecEncoderContext->max_qdiff = 4;
-	sys->codecEncoderContext->max_b_frames = 0;
-	sys->codecEncoderContext->refs = 1;
-	sys->codecEncoderContext->trellis = 0;
-	sys->codecEncoderContext->thread_count = 2;
-	sys->codecEncoderContext->level = 31;
-	sys->codecEncoderContext->b_quant_factor = 0;
 	sys->codecEncoderContext->pix_fmt = AV_PIX_FMT_YUV420P;
 
 	if (avcodec_open2(sys->codecEncoderContext, sys->codecEncoder, NULL) < 0)
@@ -245,7 +229,8 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 	return 1;
 }
 
-static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
+static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const UINT32* pStride,
+                               BYTE** ppDstData, UINT32* pDstSize)
 {
 	int status;
 	int gotFrame = 0;
@@ -271,12 +256,12 @@ static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDs
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 92, 100)
 	sys->videoFrame->chroma_location = AVCHROMA_LOC_LEFT;
 #endif
-	sys->videoFrame->data[0] = h264->pYUVData[0];
-	sys->videoFrame->data[1] = h264->pYUVData[1];
-	sys->videoFrame->data[2] = h264->pYUVData[2];
-	sys->videoFrame->linesize[0] = h264->iStride[0];
-	sys->videoFrame->linesize[1] = h264->iStride[1];
-	sys->videoFrame->linesize[2] = h264->iStride[2];
+	sys->videoFrame->data[0] = pSrcYuv[0];
+	sys->videoFrame->data[1] = pSrcYuv[1];
+	sys->videoFrame->data[2] = pSrcYuv[2];
+	sys->videoFrame->linesize[0] = pStride[0];
+	sys->videoFrame->linesize[1] = pStride[1];
+	sys->videoFrame->linesize[2] = pStride[2];
 	sys->videoFrame->pts++;
 	/* avcodec_encode_video2 is deprecated with libavcodec 57.48.101 */
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 48, 101)
