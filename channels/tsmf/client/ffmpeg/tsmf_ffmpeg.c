@@ -80,12 +80,12 @@ typedef struct _TSMFFFmpegDecoder
 #else
 	enum AVCodecID codec_id;
 #endif
-	AVCodecContext *codec_context;
-	AVCodec *codec;
-	AVFrame *frame;
+	AVCodecContext* codec_context;
+	AVCodec* codec;
+	AVFrame* frame;
 	int prepared;
 
-	BYTE *decoded_data;
+	BYTE* decoded_data;
 	UINT32 decoded_size;
 	UINT32 decoded_size_max;
 } TSMFFFmpegDecoder;
@@ -94,15 +94,17 @@ static BOOL tsmf_ffmpeg_init_context(ITSMFDecoder* decoder)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	mdecoder->codec_context = avcodec_alloc_context3(NULL);
+
 	if (!mdecoder->codec_context)
 	{
 		WLog_ERR(TAG, "avcodec_alloc_context failed.");
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
-static BOOL tsmf_ffmpeg_init_video_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE *media_type)
+static BOOL tsmf_ffmpeg_init_video_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE* media_type)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	mdecoder->codec_context->width = media_type->Width;
@@ -118,7 +120,7 @@ static BOOL tsmf_ffmpeg_init_video_stream(ITSMFDecoder* decoder, const TS_AM_MED
 	return TRUE;
 }
 
-static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE *media_type)
+static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE* media_type)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	mdecoder->codec_context->sample_rate = media_type->SamplesPerSecond.Numerator;
@@ -145,14 +147,14 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 	return TRUE;
 }
 
-static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE *media_type)
+static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE* media_type)
 {
-	BYTE *p;
+	BYTE* p;
 	UINT32 size;
-	const BYTE *s;
+	const BYTE* s;
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
-
 	mdecoder->codec = avcodec_find_decoder(mdecoder->codec_id);
+
 	if (!mdecoder->codec)
 	{
 		WLog_ERR(TAG, "avcodec_find_decoder failed.");
@@ -161,16 +163,21 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 
 	mdecoder->codec_context->codec_id = mdecoder->codec_id;
 	mdecoder->codec_context->codec_type = mdecoder->media_type;
-	switch(mdecoder->media_type)
+
+	switch (mdecoder->media_type)
 	{
 		case AVMEDIA_TYPE_VIDEO:
 			if (!tsmf_ffmpeg_init_video_stream(decoder, media_type))
 				return FALSE;
+
 			break;
+
 		case AVMEDIA_TYPE_AUDIO:
 			if (!tsmf_ffmpeg_init_audio_stream(decoder, media_type))
 				return FALSE;
+
 			break;
+
 		default:
 			WLog_ERR(TAG, "unknown media_type %d", mdecoder->media_type);
 			break;
@@ -181,11 +188,12 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 		/* Add a padding to avoid invalid memory read in some codec */
 		mdecoder->codec_context->extradata_size = media_type->ExtraDataSize + 8;
 		mdecoder->codec_context->extradata = calloc(1, mdecoder->codec_context->extradata_size);
+
 		if (!mdecoder->codec_context->extradata)
 			return FALSE;
 
 		if (media_type->SubType == TSMF_SUB_TYPE_AVC1 &&
-				media_type->FormatType == TSMF_FORMAT_TYPE_MPEG2VIDEOINFO)
+		    media_type->FormatType == TSMF_FORMAT_TYPE_MPEG2VIDEOINFO)
 		{
 			/* The extradata format that FFmpeg uses is following CodecPrivate in Matroska.
 			   See http://haali.su/mkv/codecs.pdf */
@@ -214,60 +222,75 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 
 	if (mdecoder->codec->capabilities & AV_CODEC_CAP_TRUNCATED)
 		mdecoder->codec_context->flags |= AV_CODEC_FLAG_TRUNCATED;
+
 	return TRUE;
 }
 
 static BOOL tsmf_ffmpeg_prepare(ITSMFDecoder* decoder)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
+
 	if (avcodec_open2(mdecoder->codec_context, mdecoder->codec, NULL) < 0)
 	{
 		WLog_ERR(TAG, "avcodec_open2 failed.");
 		return FALSE;
 	}
+
 	mdecoder->prepared = 1;
 	return TRUE;
 }
 
-static BOOL tsmf_ffmpeg_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE *media_type)
+static BOOL tsmf_ffmpeg_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
-	switch(media_type->MajorType)
+
+	switch (media_type->MajorType)
 	{
 		case TSMF_MAJOR_TYPE_VIDEO:
 			mdecoder->media_type = AVMEDIA_TYPE_VIDEO;
 			break;
+
 		case TSMF_MAJOR_TYPE_AUDIO:
 			mdecoder->media_type = AVMEDIA_TYPE_AUDIO;
 			break;
+
 		default:
 			return FALSE;
 	}
-	switch(media_type->SubType)
+
+	switch (media_type->SubType)
 	{
 		case TSMF_SUB_TYPE_WVC1:
 			mdecoder->codec_id = AV_CODEC_ID_VC1;
 			break;
+
 		case TSMF_SUB_TYPE_WMA2:
 			mdecoder->codec_id = AV_CODEC_ID_WMAV2;
 			break;
+
 		case TSMF_SUB_TYPE_WMA9:
 			mdecoder->codec_id = AV_CODEC_ID_WMAPRO;
 			break;
+
 		case TSMF_SUB_TYPE_MP3:
 			mdecoder->codec_id = AV_CODEC_ID_MP3;
 			break;
+
 		case TSMF_SUB_TYPE_MP2A:
 			mdecoder->codec_id = AV_CODEC_ID_MP2;
 			break;
+
 		case TSMF_SUB_TYPE_MP2V:
 			mdecoder->codec_id = AV_CODEC_ID_MPEG2VIDEO;
 			break;
+
 		case TSMF_SUB_TYPE_WMV3:
 			mdecoder->codec_id = AV_CODEC_ID_WMV3;
 			break;
+
 		case TSMF_SUB_TYPE_AAC:
 			mdecoder->codec_id = AV_CODEC_ID_AAC;
+
 			/* For AAC the pFormat is a HEAACWAVEINFO struct, and the codec data
 			   is at the end of it. See
 			   http://msdn.microsoft.com/en-us/library/dd757806.aspx */
@@ -276,32 +299,41 @@ static BOOL tsmf_ffmpeg_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE *medi
 				media_type->ExtraData += 12;
 				media_type->ExtraDataSize -= 12;
 			}
+
 			break;
+
 		case TSMF_SUB_TYPE_H264:
 		case TSMF_SUB_TYPE_AVC1:
 			mdecoder->codec_id = AV_CODEC_ID_H264;
 			break;
+
 		case TSMF_SUB_TYPE_AC3:
 			mdecoder->codec_id = AV_CODEC_ID_AC3;
 			break;
+
 		default:
 			return FALSE;
 	}
+
 	if (!tsmf_ffmpeg_init_context(decoder))
 		return FALSE;
+
 	if (!tsmf_ffmpeg_init_stream(decoder, media_type))
 		return FALSE;
+
 	if (!tsmf_ffmpeg_prepare(decoder))
 		return FALSE;
+
 	return TRUE;
 }
 
-static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE *data, UINT32 data_size, UINT32 extensions)
+static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size,
+                                     UINT32 extensions)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	int decoded;
 	int len;
-	AVFrame *frame;
+	AVFrame* frame;
 	BOOL ret = TRUE;
 #if LIBAVCODEC_VERSION_MAJOR < 52 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR <= 20)
 	len = avcodec_decode_video(mdecoder->codec_context, mdecoder->frame, &decoded, data, data_size);
@@ -309,13 +341,16 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE *data, UI
 	{
 		AVPacket pkt;
 		av_init_packet(&pkt);
-		pkt.data = (BYTE *) data;
+		pkt.data = (BYTE*) data;
 		pkt.size = data_size;
+
 		if (extensions & TSMM_SAMPLE_EXT_CLEANPOINT)
 			pkt.flags |= AV_PKT_FLAG_KEY;
+
 		len = avcodec_decode_video2(mdecoder->codec_context, mdecoder->frame, &decoded, &pkt);
 	}
 #endif
+
 	if (len < 0)
 	{
 		WLog_ERR(TAG, "data_size %"PRIu32", avcodec_decode_video failed (%d)", data_size, len);
@@ -329,14 +364,15 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE *data, UI
 	else
 	{
 		DEBUG_TSMF("linesize[0] %d linesize[1] %d linesize[2] %d linesize[3] %d "
-				   "pix_fmt %d width %d height %d",
-				   mdecoder->frame->linesize[0], mdecoder->frame->linesize[1],
-				   mdecoder->frame->linesize[2], mdecoder->frame->linesize[3],
-				   mdecoder->codec_context->pix_fmt,
-				   mdecoder->codec_context->width, mdecoder->codec_context->height);
+		           "pix_fmt %d width %d height %d",
+		           mdecoder->frame->linesize[0], mdecoder->frame->linesize[1],
+		           mdecoder->frame->linesize[2], mdecoder->frame->linesize[3],
+		           mdecoder->codec_context->pix_fmt,
+		           mdecoder->codec_context->width, mdecoder->codec_context->height);
 		mdecoder->decoded_size = avpicture_get_size(mdecoder->codec_context->pix_fmt,
-								 mdecoder->codec_context->width, mdecoder->codec_context->height);
+		                         mdecoder->codec_context->width, mdecoder->codec_context->height);
 		mdecoder->decoded_data = calloc(1, mdecoder->decoded_size);
+
 		if (!mdecoder->decoded_data)
 			return FALSE;
 
@@ -346,151 +382,172 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE *data, UI
 		frame = av_frame_alloc();
 #endif
 		avpicture_fill((AVPicture*) frame, mdecoder->decoded_data,
-					   mdecoder->codec_context->pix_fmt,
-					   mdecoder->codec_context->width, mdecoder->codec_context->height);
+		               mdecoder->codec_context->pix_fmt,
+		               mdecoder->codec_context->width, mdecoder->codec_context->height);
 		av_picture_copy((AVPicture*) frame, (AVPicture*) mdecoder->frame,
-						mdecoder->codec_context->pix_fmt,
-						mdecoder->codec_context->width, mdecoder->codec_context->height);
+		                mdecoder->codec_context->pix_fmt,
+		                mdecoder->codec_context->width, mdecoder->codec_context->height);
 		av_free(frame);
 	}
 
 	return ret;
 }
 
-static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE *data, UINT32 data_size, UINT32 extensions)
+static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size,
+                                     UINT32 extensions)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	int len;
 	int frame_size;
 	UINT32 src_size;
-	const BYTE *src;
-	BYTE *dst;
+	const BYTE* src;
+	BYTE* dst;
 	int dst_offset;
 #if 0
 	WLog_DBG(TAG, ("tsmf_ffmpeg_decode_audio: data_size %"PRIu32"", data_size));
 	int i;
-	for(i = 0; i < data_size; i++)
+
+	for (i = 0; i < data_size; i++)
 	{
 		WLog_DBG(TAG, ("%02"PRIX8"", data[i]));
+
 		if (i % 16 == 15)
 			WLog_DBG(TAG, ("\n"));
 	}
+
 #endif
+
 	if (mdecoder->decoded_size_max == 0)
 		mdecoder->decoded_size_max = MAX_AUDIO_FRAME_SIZE + 16;
 
 	mdecoder->decoded_data = calloc(1, mdecoder->decoded_size_max);
+
 	if (!mdecoder->decoded_data)
 		return FALSE;
 
 	/* align the memory for SSE2 needs */
-	dst = (BYTE *)(((uintptr_t) mdecoder->decoded_data + 15) & ~ 0x0F);
+	dst = (BYTE*)(((uintptr_t) mdecoder->decoded_data + 15) & ~ 0x0F);
 	dst_offset = dst - mdecoder->decoded_data;
 	src = data;
 	src_size = data_size;
-	while(src_size > 0)
+
+	while (src_size > 0)
 	{
 		/* Ensure enough space for decoding */
 		if (mdecoder->decoded_size_max - mdecoder->decoded_size < MAX_AUDIO_FRAME_SIZE)
 		{
-			BYTE *tmp_data;
-
+			BYTE* tmp_data;
 			tmp_data = realloc(mdecoder->decoded_data, mdecoder->decoded_size_max * 2 + 16);
+
 			if (!tmp_data)
 				return FALSE;
+
 			mdecoder->decoded_size_max = mdecoder->decoded_size_max * 2 + 16;
 			mdecoder->decoded_data = tmp_data;
+			dst = (BYTE*)(((uintptr_t)mdecoder->decoded_data + 15) & ~ 0x0F);
 
-			dst = (BYTE *)(((uintptr_t)mdecoder->decoded_data + 15) & ~ 0x0F);
 			if (dst - mdecoder->decoded_data != dst_offset)
 			{
 				/* re-align the memory if the alignment has changed after realloc */
 				memmove(dst, mdecoder->decoded_data + dst_offset, mdecoder->decoded_size);
 				dst_offset = dst - mdecoder->decoded_data;
 			}
+
 			dst += mdecoder->decoded_size;
 		}
+
 		frame_size = mdecoder->decoded_size_max - mdecoder->decoded_size;
 #if LIBAVCODEC_VERSION_MAJOR < 52 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR <= 20)
 		len = avcodec_decode_audio2(mdecoder->codec_context,
-									(int16_t *) dst, &frame_size, src, src_size);
+		                            (int16_t*) dst, &frame_size, src, src_size);
 #else
 		{
 #if LIBAVCODEC_VERSION_MAJOR < 55
-			AVFrame *decoded_frame = avcodec_alloc_frame();
+			AVFrame* decoded_frame = avcodec_alloc_frame();
 #else
-			AVFrame *decoded_frame = av_frame_alloc();
+			AVFrame* decoded_frame = av_frame_alloc();
 #endif
 			int got_frame = 0;
 			AVPacket pkt;
 			av_init_packet(&pkt);
-			pkt.data = (BYTE *) src;
+			pkt.data = (BYTE*) src;
 			pkt.size = src_size;
 			len = avcodec_decode_audio4(mdecoder->codec_context, decoded_frame, &got_frame, &pkt);
+
 			if (len >= 0 && got_frame)
 			{
 				frame_size = av_samples_get_buffer_size(NULL, mdecoder->codec_context->channels,
-														decoded_frame->nb_samples, mdecoder->codec_context->sample_fmt, 1);
+				                                        decoded_frame->nb_samples, mdecoder->codec_context->sample_fmt, 1);
 				memcpy(dst, decoded_frame->data[0], frame_size);
 			}
 			else
 			{
 				frame_size = 0;
 			}
+
 			av_free(decoded_frame);
 		}
 #endif
+
 		if (len > 0)
 		{
 			src += len;
 			src_size -= len;
 		}
-		if(frame_size > 0)
+
+		if (frame_size > 0)
 		{
 			mdecoder->decoded_size += frame_size;
 			dst += frame_size;
 		}
 	}
+
 	if (mdecoder->decoded_size == 0)
 	{
 		free(mdecoder->decoded_data);
 		mdecoder->decoded_data = NULL;
 	}
-	else
-		if (dst_offset)
-		{
-			/* move the aligned decoded data to original place */
-			memmove(mdecoder->decoded_data, mdecoder->decoded_data + dst_offset, mdecoder->decoded_size);
-		}
+	else if (dst_offset)
+	{
+		/* move the aligned decoded data to original place */
+		memmove(mdecoder->decoded_data, mdecoder->decoded_data + dst_offset, mdecoder->decoded_size);
+	}
+
 	DEBUG_TSMF("data_size %"PRIu32" decoded_size %"PRIu32"",
-			   data_size, mdecoder->decoded_size);
+	           data_size, mdecoder->decoded_size);
 	return TRUE;
 }
 
-static BOOL tsmf_ffmpeg_decode(ITSMFDecoder* decoder, const BYTE *data, UINT32 data_size, UINT32 extensions)
+static BOOL tsmf_ffmpeg_decode(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size,
+                               UINT32 extensions)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
+
 	if (mdecoder->decoded_data)
 	{
 		free(mdecoder->decoded_data);
 		mdecoder->decoded_data = NULL;
 	}
+
 	mdecoder->decoded_size = 0;
-	switch(mdecoder->media_type)
+
+	switch (mdecoder->media_type)
 	{
 		case AVMEDIA_TYPE_VIDEO:
 			return tsmf_ffmpeg_decode_video(decoder, data, data_size, extensions);
+
 		case AVMEDIA_TYPE_AUDIO:
 			return tsmf_ffmpeg_decode_audio(decoder, data, data_size, extensions);
+
 		default:
 			WLog_ERR(TAG, "unknown media type.");
 			return FALSE;
 	}
 }
 
-static BYTE *tsmf_ffmpeg_get_decoded_data(ITSMFDecoder* decoder, UINT32 *size)
+static BYTE* tsmf_ffmpeg_get_decoded_data(ITSMFDecoder* decoder, UINT32* size)
 {
-	BYTE *buf;
+	BYTE* buf;
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	*size = mdecoder->decoded_size;
 	buf = mdecoder->decoded_data;
@@ -507,14 +564,15 @@ static UINT32 tsmf_ffmpeg_get_decoded_format(ITSMFDecoder* decoder)
 	{
 		case AV_PIX_FMT_YUV420P:
 			return RDP_PIXFMT_I420;
+
 		default:
 			WLog_ERR(TAG, "unsupported pixel format %u",
-					 mdecoder->codec_context->pix_fmt);
-			return (UINT32) -1;
+			         mdecoder->codec_context->pix_fmt);
+			return (UINT32) - 1;
 	}
 }
 
-static BOOL tsmf_ffmpeg_get_decoded_dimension(ITSMFDecoder* decoder, UINT32 *width, UINT32 *height)
+static BOOL tsmf_ffmpeg_get_decoded_dimension(ITSMFDecoder* decoder, UINT32* width, UINT32* height)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 
@@ -533,6 +591,7 @@ static BOOL tsmf_ffmpeg_get_decoded_dimension(ITSMFDecoder* decoder, UINT32 *wid
 static void tsmf_ffmpeg_free(ITSMFDecoder* decoder)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
+
 	if (mdecoder->frame)
 		av_free(mdecoder->frame);
 
@@ -546,10 +605,15 @@ static void tsmf_ffmpeg_free(ITSMFDecoder* decoder)
 		free(mdecoder->codec_context->extradata);
 		av_free(mdecoder->codec_context);
 	}
+
 	free(decoder);
 }
 
-static BOOL initialized = FALSE;
+static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
+static BOOL CALLBACK InitializeAvCodecs(PINIT_ONCE once, PVOID param, PVOID* context)
+{
+	avcodec_register_all();
+}
 
 #ifdef BUILTIN_CHANNELS
 #define freerdp_tsmf_client_subsystem_entry	ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry
@@ -560,15 +624,8 @@ static BOOL initialized = FALSE;
 ITSMFDecoder* freerdp_tsmf_client_subsystem_entry(void)
 {
 	TSMFFFmpegDecoder* decoder;
-
-	if (!initialized)
-	{
-		avcodec_register_all();
-		initialized = TRUE;
-	}
-
+	InitOnceExecuteOnce(&g_Initialized, InitializeAvCodecs, NULL, NULL);
 	WLog_DBG(TAG,  "TSMFDecoderEntry FFMPEG");
-
 	decoder = (TSMFFFmpegDecoder*) calloc(1, sizeof(TSMFFFmpegDecoder));
 
 	if (!decoder)
@@ -580,6 +637,5 @@ ITSMFDecoder* freerdp_tsmf_client_subsystem_entry(void)
 	decoder->iface.GetDecodedFormat = tsmf_ffmpeg_get_decoded_format;
 	decoder->iface.GetDecodedDimension = tsmf_ffmpeg_get_decoded_dimension;
 	decoder->iface.Free = tsmf_ffmpeg_free;
-
 	return (ITSMFDecoder*) decoder;
 }

@@ -24,13 +24,32 @@
 #include <winpr/crt.h>
 #include <winpr/library.h>
 #include <winpr/smartcard.h>
+#include <winpr/synch.h>
 
 #include "smartcard.h"
 
 #include "smartcard_inspect.h"
 
-static BOOL g_Initialized = FALSE;
+static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
 static PSCardApiFunctionTable g_SCardApi = NULL;
+
+#define SCARDAPI_STUB_CALL_LONG(_name, ...) \
+	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL); \
+	if (!g_SCardApi || !g_SCardApi->pfn ## _name) \
+		return SCARD_E_NO_SERVICE; \
+	return g_SCardApi->pfn ## _name ( __VA_ARGS__ )
+
+#define SCARDAPI_STUB_CALL_HANDLE(_name, ...) \
+	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL); \
+	if (!g_SCardApi || !g_SCardApi->pfn ## _name) \
+		return NULL; \
+	return g_SCardApi->pfn ## _name ( __VA_ARGS__ )
+
+#define SCARDAPI_STUB_CALL_VOID(_name, ...) \
+	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL); \
+	if (!g_SCardApi || !g_SCardApi->pfn ## _name) \
+		return; \
+	g_SCardApi->pfn ## _name ( __VA_ARGS__ )
 
 /**
  * Standard Windows Smart Card API
@@ -39,6 +58,24 @@ static PSCardApiFunctionTable g_SCardApi = NULL;
 const SCARD_IO_REQUEST g_rgSCardT0Pci = { SCARD_PROTOCOL_T0, 8 };
 const SCARD_IO_REQUEST g_rgSCardT1Pci = { SCARD_PROTOCOL_T1, 8 };
 const SCARD_IO_REQUEST g_rgSCardRawPci = { SCARD_PROTOCOL_RAW, 8 };
+
+static BOOL CALLBACK InitializeSCardApiStubs(PINIT_ONCE once, PVOID param, PVOID* context)
+{
+#ifndef _WIN32
+
+	if (PCSC_InitializeSCardApi() >= 0)
+		g_SCardApi = PCSC_GetSCardApiFunctionTable();
+
+#else
+
+	if (WinSCard_InitializeSCardApi() >= 0)
+		g_SCardApi = WinSCard_GetSCardApiFunctionTable();
+
+#endif
+#ifdef WITH_SMARTCARD_INSPECT
+	g_SCardApi = Inspect_RegisterSCardApi(g_SCardApi);
+#endif
+}
 
 WINSCARDAPI LONG WINAPI SCardEstablishContext(DWORD dwScope,
         LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext)
@@ -1152,27 +1189,4 @@ WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState)
 		strcat(szReaderState, "SCARD_STATE_UNAWARE");
 
 	return szReaderState;
-}
-
-void InitializeSCardApiStubs(void)
-{
-	g_Initialized = TRUE;
-#ifndef _WIN32
-
-	if (PCSC_InitializeSCardApi() >= 0)
-	{
-		g_SCardApi = PCSC_GetSCardApiFunctionTable();
-	}
-
-#else
-
-	if (WinSCard_InitializeSCardApi() >= 0)
-	{
-		g_SCardApi = WinSCard_GetSCardApiFunctionTable();
-	}
-
-#endif
-#ifdef WITH_SMARTCARD_INSPECT
-	g_SCardApi = Inspect_RegisterSCardApi(g_SCardApi);
-#endif
 }
