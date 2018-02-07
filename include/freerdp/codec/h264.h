@@ -78,7 +78,6 @@ struct _H264_CONTEXT
 
 	void* lumaData;
 };
-
 #ifdef __cplusplus
 extern "C" {
 #endif
