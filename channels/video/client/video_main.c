@@ -112,11 +112,13 @@ struct _VideoFrame
 {
 	UINT64 publishTime;
 	UINT64 hnsDuration;
-	UINT32 x, y, w, h;
+	MAPPED_GEOMETRY *geometry;
+	UINT32 w, h;
 	BYTE *surfaceData;
 	PresentationContext *presentation;
 };
 
+/** @brief */
 struct _PresentationContext
 {
 	VideoClientContext *video;
@@ -197,7 +199,7 @@ VideoClientContextPriv *VideoClientContextPriv_new(VideoClientContext *video)
 		goto error_surfacePool;
 	}
 
-	if (!InitializeCriticalSectionAndSpinCount(&ret->framesLock, 4000))
+	if (!InitializeCriticalSectionAndSpinCount(&ret->framesLock, 4 * 1000))
 	{
 		WLog_ERR(TAG, "unable to initialize frames lock");
 		goto error_spinlock;
@@ -286,30 +288,34 @@ error_h264:
 }
 
 
-static void PresentationContext_unref(PresentationContext *c)
+static void PresentationContext_unref(PresentationContext *presentation)
 {
 	VideoClientContextPriv *priv;
+	MAPPED_GEOMETRY *geometry;
 
-	if (!c)
+	if (!presentation)
 		return;
 
-	if (InterlockedDecrement(&c->refCounter) != 0)
+	if (InterlockedDecrement(&presentation->refCounter) != 0)
 		return;
 
-	priv = c->video->priv;
-	if (c->geometry)
+	geometry = presentation->geometry;
+	if (geometry)
 	{
-		c->geometry->MappedGeometryUpdate = NULL;
-		c->geometry->MappedGeometryClear = NULL;
-		c->geometry->custom = NULL;
+		geometry->MappedGeometryUpdate = NULL;
+		geometry->MappedGeometryClear = NULL;
+		geometry->custom = NULL;
+		mappedGeometryUnref(geometry);
 	}
 
-	h264_context_free(c->h264);
-	Stream_Free(c->currentSample, TRUE);
-	c->video->deleteSurface(c->video, c->surface);
-	BufferPool_Return(priv->surfacePool, c->surfaceData);
-	yuv_context_free(c->yuv);
-	free(c);
+	priv = presentation->video->priv;
+
+	h264_context_free(presentation->h264);
+	Stream_Free(presentation->currentSample, TRUE);
+	presentation->video->deleteSurface(presentation->video, presentation->surface);
+	BufferPool_Return(priv->surfacePool, presentation->surfaceData);
+	yuv_context_free(presentation->yuv);
+	free(presentation);
 }
 
 
@@ -317,8 +323,9 @@ static void VideoFrame_free(VideoFrame **pframe)
 {
 	VideoFrame *frame = *pframe;
 
-	PresentationContext_unref(frame->presentation);
+	mappedGeometryUnref(frame->geometry);
 	BufferPool_Return(frame->presentation->video->priv->surfacePool, frame->surfaceData);
+	PresentationContext_unref(frame->presentation);
 	free(frame);
 	*pframe = NULL;
 }
@@ -374,7 +381,21 @@ static UINT video_control_send_presentation_response(VideoClientContext *context
 
 static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY *geometry)
 {
-	WLog_DBG(TAG, "geometry updated");
+	PresentationContext *presentation = (PresentationContext *)geometry->custom;
+	RDP_RECT *r = &geometry->geometry.boundingRect;
+	WLog_DBG(TAG, "geometry updated topGeom=(%d,%d-%dx%d) geom=(%d,%d-%dx%d) rects=(%d,%d-%dx%d)",
+			geometry->topLevelLeft, geometry->topLevelTop,
+			geometry->topLevelRight - geometry->topLevelLeft, geometry->topLevelBottom - geometry->topLevelTop,
+
+			geometry->left, geometry->top,
+			geometry->right - geometry->left, geometry->bottom - geometry->top,
+
+			r->x, r->y, r->width, r->height
+	);
+
+	presentation->surface->x = geometry->topLevelLeft + geometry->left + r->x;
+	presentation->surface->y = geometry->topLevelTop + geometry->top + r->y;
+
 	return TRUE;
 }
 
@@ -382,6 +403,7 @@ static BOOL video_onMappedGeometryClear(MAPPED_GEOMETRY *geometry)
 {
 	PresentationContext *presentation = (PresentationContext *)geometry->custom;
 
+	mappedGeometryUnref(presentation->geometry);
 	presentation->geometry = NULL;
 	return TRUE;
 }
@@ -442,9 +464,11 @@ static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATI
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
+		mappedGeometryRef(geom);
+		presentation->geometry = geom;
+
 		priv->currentPresentation = presentation;
 		presentation->video = video;
-		presentation->geometry = geom;
 		presentation->SourceWidth = req->SourceWidth;
 		presentation->SourceHeight = req->SourceHeight;
 		presentation->ScaledWidth = req->ScaledWidth;
@@ -629,7 +653,6 @@ static void video_timer(VideoClientContext *video, UINT64 now)
 
 		if (frame)
 		{
-			/* free skipped frame */
 			WLog_DBG(TAG, "dropping frame @%"PRIu64, frame->publishTime);
 			priv->droppedFrames++;
 			VideoFrame_free(&frame);
@@ -650,9 +673,7 @@ static void video_timer(VideoClientContext *video, UINT64 now)
 
 	video->showSurface(video, presentation->surface);
 
-	PresentationContext_unref(presentation);
-	BufferPool_Return(priv->surfacePool, frame->surfaceData);
-	free(frame);
+	VideoFrame_free(&frame);
 
 treat_feedback:
 	if (priv->nextFeedbackTime < now)
@@ -823,11 +844,11 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA *data)
 				WLog_ERR(TAG, "unable to create frame");
 				return CHANNEL_RC_NO_MEMORY;
 			}
+			mappedGeometryRef(geom);
 
 			frame->presentation = presentation;
 			frame->publishTime = presentation->lastPublishTime;
-			frame->x = geom->topLevelLeft + geom->left + geom->geometry.boundingRect.x;
-			frame->y = geom->topLevelTop + geom->top + geom->geometry.boundingRect.y;
+			frame->geometry = geom;
 			frame->w = presentation->SourceWidth;
 			frame->h = presentation->SourceHeight;
 
@@ -835,6 +856,7 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA *data)
 			if (!frame->surfaceData)
 			{
 				WLog_ERR(TAG, "unable to allocate frame data");
+				mappedGeometryUnref(geom);
 				free(frame);
 				return CHANNEL_RC_NO_MEMORY;
 			}
@@ -843,6 +865,7 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA *data)
 			{
 				WLog_ERR(TAG, "error during YUV->RGB conversion");
 				BufferPool_Return(priv->surfacePool, frame->surfaceData);
+				mappedGeometryUnref(geom);
 				free(frame);
 				return CHANNEL_RC_NO_MEMORY;
 			}

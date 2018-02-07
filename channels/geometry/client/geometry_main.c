@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/interlocked.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <winpr/cmdline.h>
@@ -82,8 +83,19 @@ static BOOL mappedGeometryKeyCompare(UINT64 *g1, UINT64 *g2)
 	return *g1 == *g2;
 }
 
-static void mappedGeometryFree(MAPPED_GEOMETRY *g)
+void mappedGeometryRef(MAPPED_GEOMETRY *g)
 {
+	InterlockedIncrement(&g->refCounter);
+}
+
+void mappedGeometryUnref(MAPPED_GEOMETRY *g)
+{
+	if (InterlockedDecrement(&g->refCounter))
+		return;
+
+	g->MappedGeometryUpdate = NULL;
+	g->MappedGeometryClear = NULL;
+	g->custom = NULL;
 	free(g->geometry.rects);
 	free(g);
 }
@@ -214,7 +226,8 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 		if (mappedGeometry->MappedGeometryClear && !mappedGeometry->MappedGeometryClear(mappedGeometry))
 			return ERROR_INTERNAL_ERROR;
 
-		HashTable_Remove(context->geometries, &id);
+		if (!HashTable_Remove(context->geometries, &id))
+			WLog_ERR(TAG, "geometry not removed from geometries");
 	}
 	else if (updateType == GEOMETRY_UPDATE)
 	{
@@ -228,6 +241,7 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 			if (!mappedGeometry)
 				return CHANNEL_RC_NO_MEMORY;
 
+			mappedGeometry->refCounter = 1;
 			mappedGeometry->mappingId = id;
 
 			if (HashTable_Add(context->geometries, &(mappedGeometry->mappingId), mappedGeometry) < 0)
@@ -292,7 +306,10 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 		}
 	}
 	else
+	{
+		WLog_ERR(TAG, "unknown updateType=%"PRIu32"", updateType);
 		ret = CHANNEL_RC_OK;
+	}
 
 
 	return ret;
@@ -442,7 +459,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->geometries = HashTable_New(FALSE);
 		context->geometries->hash = (HASH_TABLE_HASH_FN)mappedGeometryHash;
 		context->geometries->keyCompare = (HASH_TABLE_KEY_COMPARE_FN)mappedGeometryKeyCompare;
-		context->geometries->valueFree = (HASH_TABLE_VALUE_FREE_FN)mappedGeometryFree;
+		context->geometries->valueFree = (HASH_TABLE_VALUE_FREE_FN)mappedGeometryUnref;
 
 		context->handle = (void*) geometry;
 		geometry->iface.pInterface = (void*) context;

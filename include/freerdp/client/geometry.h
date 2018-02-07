@@ -36,6 +36,7 @@ typedef BOOL (*pcMappedGeometryClear)(MAPPED_GEOMETRY *geometry);
 /** @brief a geometry record tracked by the geometry channel */
 struct _MAPPED_GEOMETRY
 {
+	volatile LONG refCounter;
 	UINT64 mappingId;
 	UINT64 topLevelId;
 	INT32 left, top, right, bottom;
@@ -47,6 +48,7 @@ struct _MAPPED_GEOMETRY
 	pcMappedGeometryClear MappedGeometryClear;
 };
 
+
 /** @brief the geometry context for client channel */
 struct _geometry_client_context
 {
@@ -56,6 +58,18 @@ struct _geometry_client_context
 
 	pcMappedGeometryAdded MappedGeometryAdded;
 };
+
+#ifdef __cplusplus
+extern "C"
+#endif
+
+void mappedGeometryRef(MAPPED_GEOMETRY *g);
+void mappedGeometryUnref(MAPPED_GEOMETRY *g);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* FREERDP_CHANNELS_CLIENT_GEOMETRY_H */
 
