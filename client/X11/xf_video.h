@@ -27,14 +27,8 @@
 struct _xfVideoContext;
 typedef struct _xfVideoContext xfVideoContext;
 
-void xf_video_geometry_init(xfContext* xfc, GeometryClientContext* geom);
-void xf_video_geometry_uninit(xfContext* xfc, GeometryClientContext* geom);
-
 void xf_video_control_init(xfContext* xfc, VideoClientContext* video);
 void xf_video_control_uninit(xfContext* xfc, VideoClientContext* video);
-
-void xf_video_data_init(xfContext* xfc, VideoClientContext* video);
-void xf_video_data_uninit(xfContext* xfc, VideoClientContext* context);
 
 xfVideoContext* xf_video_new(xfContext* xfc);
 void xf_video_free(xfVideoContext* context);

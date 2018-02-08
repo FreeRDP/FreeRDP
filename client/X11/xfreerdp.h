@@ -216,9 +216,7 @@ struct xf_context
 	TsmfClientContext* tsmf;
 	xfClipboard* clipboard;
 	CliprdrClientContext* cliprdr;
-	xfVideoContext *xfVideo;
-	GeometryClientContext *geometry;
-	VideoClientContext *video;
+	xfVideoContext* xfVideo;
 	RdpeiClientContext* rdpei;
 	EncomspClientContext* encomsp;
 	xfDispContext* xfDisp;

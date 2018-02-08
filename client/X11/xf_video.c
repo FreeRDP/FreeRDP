@@ -20,6 +20,7 @@
 
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
+#include <freerdp/gdi/video.h>
 
 #include "xf_video.h"
 
@@ -30,22 +31,6 @@ typedef struct
 	VideoSurface base;
 	XImage* image;
 } xfVideoSurface;
-
-
-void xf_video_geometry_init(xfContext* xfc, GeometryClientContext* geom)
-{
-	xfc->geometry = geom;
-
-	if (xfc->video)
-	{
-		VideoClientContext* video = xfc->video;
-		video->setGeometry(video, xfc->geometry);
-	}
-}
-
-void xf_video_geometry_uninit(xfContext* xfc, GeometryClientContext* geom)
-{
-}
 
 static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, BYTE* data, UINT32 x, UINT32 y,
         UINT32 width, UINT32 height)
@@ -75,61 +60,51 @@ static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, BYTE* data,
 }
 
 
-static BOOL xfVideoShowSurface(VideoClientContext* video, xfVideoSurface* surface)
+static BOOL xfVideoShowSurface(VideoClientContext* video, VideoSurface* surface)
 {
+	xfVideoSurface* xfSurface = (xfVideoSurface*)surface;
 	xfContext* xfc = video->custom;
 #ifdef WITH_XRENDER
 
 	if (xfc->context.settings->SmartSizing
 	    || xfc->context.settings->MultiTouchGestures)
 	{
-		XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
-		          0, 0, surface->base.x, surface->base.y, surface->base.w, surface->base.h);
-		xf_draw_screen(xfc, surface->base.x, surface->base.y, surface->base.w, surface->base.h);
+		XPutImage(xfc->display, xfc->primary, xfc->gc, xfSurface->image,
+		          0, 0, surface->x, surface->y, surface->w, surface->h);
+		xf_draw_screen(xfc, surface->x, surface->y, surface->w, surface->h);
 	}
 	else
 #endif
 	{
-		XPutImage(xfc->display, xfc->drawable, xfc->gc, surface->image,
+		XPutImage(xfc->display, xfc->drawable, xfc->gc, xfSurface->image,
 		          0, 0,
-		          surface->base.x, surface->base.y, surface->base.w, surface->base.h);
+		          surface->x, surface->y, surface->w, surface->h);
 	}
 
 	return TRUE;
 }
 
-static BOOL xfVideoDeleteSurface(VideoClientContext* video, xfVideoSurface* surface)
+static BOOL xfVideoDeleteSurface(VideoClientContext* video, VideoSurface* surface)
 {
-	XFree(surface->image);
+	xfVideoSurface* xfSurface = (xfVideoSurface*)surface;
+
+	if (xfSurface)
+		XFree(xfSurface->image);
+
 	free(surface);
 	return TRUE;
 }
 void xf_video_control_init(xfContext* xfc, VideoClientContext* video)
 {
-	xfc->video = video;
+	gdi_video_control_init(xfc->context.gdi, video);
 	video->custom = xfc;
 	video->createSurface = xfVideoCreateSurface;
-	video->showSurface = (pcVideoShowSurface)xfVideoShowSurface;
-	video->deleteSurface = (pcVideoDeleteSurface)xfVideoDeleteSurface;
-	video->setGeometry(video, xfc->geometry);
+	video->showSurface = xfVideoShowSurface;
+	video->deleteSurface = xfVideoDeleteSurface;
 }
 
 
 void xf_video_control_uninit(xfContext* xfc, VideoClientContext* video)
 {
-}
-
-static void xf_video_timer(xfContext* xfc, TimerEventArgs* timer)
-{
-	xfc->video->timer(xfc->video, timer->now);
-}
-
-void xf_video_data_init(xfContext* xfc, VideoClientContext* video)
-{
-	PubSub_SubscribeTimer(xfc->context.pubSub, (pTimerEventHandler)xf_video_timer);
-}
-
-void xf_video_data_uninit(xfContext* xfc, VideoClientContext* context)
-{
-	PubSub_UnsubscribeTimer(xfc->context.pubSub, (pTimerEventHandler)xf_video_timer);
+	gdi_video_control_uninit(xfc->context.gdi, video);
 }
