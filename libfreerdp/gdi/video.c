@@ -22,6 +22,7 @@
 #include <freerdp/client/video.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/video.h>
+#include <freerdp/gdi/region.h>
 
 #define TAG FREERDP_TAG("video")
 
@@ -66,10 +67,6 @@ static VideoSurface* gdiVideoCreateSurface(VideoClientContext* video, BYTE* data
 	ret->base.w = width;
 	ret->base.h = height;
 	ret->scanline = width * bpp;
-
-	if (ret->scanline % 16 != 0)
-		ret->scanline += 16 - ret->scanline % 16;
-
 	ret->image = _aligned_malloc(ret->scanline * height, 16);
 
 	if (!ret->image)
@@ -87,29 +84,28 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, VideoSurface* surface
 {
 	rdpGdi* gdi = (rdpGdi*)video->custom;
 	gdiVideoSurface* gdiSurface = (gdiVideoSurface*)surface;
-	UINT32 nXDst, nYDst;
-	UINT32 nXSrc, nYSrc;
-	UINT16 width, height;
 	RECTANGLE_16 surfaceRect;
 	rdpUpdate* update = gdi->context->update;
 	surfaceRect.left = surface->x;
 	surfaceRect.top = surface->y;
 	surfaceRect.right = surface->x + surface->w;
 	surfaceRect.bottom = surface->y + surface->h;
+
 	update->BeginPaint(gdi->context);
 	{
-		nXSrc = surface->x;
-		nYSrc = surface->y;
-		nXDst = nXSrc;
-		nYDst = nYSrc;
-		width = (surface->w + surface->x < gdi->width) ? surface->w : gdi->width - surface->x;
-		height = (surface->h + surface->y < gdi->height) ? surface->h : gdi->height - surface->y;
+		const UINT32 nXSrc = surface->x;
+		const UINT32 nYSrc = surface->y;
+		const UINT32 nXDst = nXSrc;
+		const UINT32 nYDst = nYSrc;
+		const UINT32 width = (surface->w + surface->x < gdi->width) ? surface->w : gdi->width - surface->x;
+		const UINT32 height = (surface->h + surface->y < gdi->height) ? surface->h : gdi->height -
+		                      surface->y;
 
 		if (!freerdp_image_copy(gdi->primary_buffer, gdi->primary->hdc->format,
 		                        gdi->stride,
 		                        nXDst, nYDst, width, height,
 		                        surface->data, gdi->primary->hdc->format,
-		                        gdiSurface->scanline, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
+		                        gdiSurface->scanline, 0, 0, NULL, FREERDP_FLIP_NONE))
 			return CHANNEL_RC_NULL_DATA;
 
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, width, height);
