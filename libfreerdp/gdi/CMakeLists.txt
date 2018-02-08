@@ -33,6 +33,7 @@ set(${MODULE_PREFIX}_SRCS
 	graphics.c
 	graphics.h
 	gfx.c
+	video.c
 	gdi.c
 	gdi.h)
 

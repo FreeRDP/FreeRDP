@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <freerdp/gdi/video.h>
 #include "xf_channels.h"
 
 #include "xf_client.h"
@@ -71,15 +72,24 @@ void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 	}
 	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
 	{
-		xf_video_geometry_init(xfc, (GeometryClientContext*)e->pInterface);
+		if (settings->SoftwareGdi)
+			gdi_video_geometry_init(xfc->context.gdi, (GeometryClientContext*)e->pInterface);
+		else
+			xf_video_geometry_init(xfc, (GeometryClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
 	{
-		xf_video_control_init(xfc, (VideoClientContext*)e->pInterface);
+		if (settings->SoftwareGdi)
+			gdi_video_control_init(xfc->context.gdi, (VideoClientContext*)e->pInterface);
+		else
+			xf_video_control_init(xfc, (VideoClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
 	{
-		xf_video_data_init(xfc, (VideoClientContext*)e->pInterface);
+		if (settings->SoftwareGdi)
+			gdi_video_data_init(xfc->context.gdi, (VideoClientContext*)e->pInterface);
+		else
+			xf_video_data_init(xfc, (VideoClientContext*)e->pInterface);
 	}
 }
 
@@ -115,13 +125,25 @@ void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnect
 	{
 		xf_encomsp_uninit(xfc, (EncomspClientContext*) e->pInterface);
 	}
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		if (settings->SoftwareGdi)
+			gdi_video_geometry_uninit(xfc->context.gdi, (GeometryClientContext*)e->pInterface);
+		else
+			xf_video_geometry_uninit(xfc, (GeometryClientContext*)e->pInterface);
+	}
 	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
 	{
-		xf_video_control_uninit(xfc, (VideoClientContext*)e->pInterface);
+		if (settings->SoftwareGdi)
+			gdi_video_control_uninit(xfc->context.gdi, (VideoClientContext*)e->pInterface);
+		else
+			xf_video_control_uninit(xfc, (VideoClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
 	{
-		xf_video_data_uninit(xfc, (VideoClientContext*)e->pInterface);
+		if (settings->SoftwareGdi)
+			gdi_video_data_uninit(xfc->context.gdi, (VideoClientContext*)e->pInterface);
+		else
+			xf_video_data_uninit(xfc, (VideoClientContext*)e->pInterface);
 	}
-
 }

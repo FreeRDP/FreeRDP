@@ -32,6 +32,8 @@
 #include <freerdp/codec/region.h>
 
 #include <freerdp/client/rdpgfx.h>
+#include <freerdp/client/geometry.h>
+#include <freerdp/client/video.h>
 
 /* For more information, see [MS-RDPEGDI] */
 
@@ -520,6 +522,8 @@ struct rdp_gdi
 	BOOL suppressOutput;
 	UINT16 outputSurfaceId;
 	RdpgfxClientContext* gfx;
+	VideoClientContext* video;
+	GeometryClientContext* geometry;
 
 	wLog* log;
 };

@@ -43,6 +43,10 @@ void xf_video_geometry_init(xfContext* xfc, GeometryClientContext* geom)
 	}
 }
 
+void xf_video_geometry_uninit(xfContext* xfc, GeometryClientContext* geom)
+{
+}
+
 static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, BYTE* data, UINT32 x, UINT32 y,
         UINT32 width, UINT32 height)
 {
