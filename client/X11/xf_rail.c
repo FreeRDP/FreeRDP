@@ -846,14 +846,15 @@ static UINT xf_rail_server_min_max_info(RailClientContext* context,
 	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
 	            (void*)(UINT_PTR) minMaxInfo->windowId);
 
-	if (!appWindow)
-		return ERROR_INTERNAL_ERROR;
+	if (appWindow)
+	{
+		xf_SetWindowMinMaxInfo(xfc, appWindow,
+		                       minMaxInfo->maxWidth, minMaxInfo->maxHeight,
+		                       minMaxInfo->maxPosX, minMaxInfo->maxPosY,
+		                       minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight,
+		                       minMaxInfo->maxTrackWidth, minMaxInfo->maxTrackHeight);
+	}
 
-	xf_SetWindowMinMaxInfo(xfc, appWindow,
-	                       minMaxInfo->maxWidth, minMaxInfo->maxHeight,
-	                       minMaxInfo->maxPosX, minMaxInfo->maxPosY,
-	                       minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight,
-	                       minMaxInfo->maxTrackWidth, minMaxInfo->maxTrackHeight);
 	return CHANNEL_RC_OK;
 }
 
