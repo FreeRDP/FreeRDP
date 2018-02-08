@@ -288,7 +288,6 @@ static BOOL xf_desktop_resize(rdpContext* context)
 
 static BOOL xf_sw_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = context->gdi;
 	return TRUE;
 }
 

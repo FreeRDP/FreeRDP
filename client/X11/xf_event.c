@@ -297,7 +297,7 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 		h = event->xexpose.height;
 	}
 
-	if (xfc->gfx)
+	if (xfc->context.gdi->gfx)
 	{
 		xf_OutputExpose(xfc, x, y, w, h);
 		return TRUE;

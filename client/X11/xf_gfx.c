@@ -147,7 +147,7 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
 	RECTANGLE_16 surfaceRect;
 	RECTANGLE_16 intersection;
 	UINT16* pSurfaceIds = NULL;
-	RdpgfxClientContext* context = xfc->gfx;
+	RdpgfxClientContext* context = xfc->context.gdi->gfx;
 	invalidRect.left = x;
 	invalidRect.top = y;
 	invalidRect.right = x + width;
