@@ -32,6 +32,7 @@
 #include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 
+#include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
 #include <freerdp/gdi/shape.h>
@@ -1328,5 +1329,27 @@ void gdi_free(freerdp* instance)
 	cache_free(context->cache);
 	context->cache = NULL;
 	instance->context->gdi = (rdpGdi*) NULL;
+}
+
+BOOL gdi_send_suppress_output(rdpGdi* gdi, BOOL suppress)
+{
+	RECTANGLE_16 rect;
+	rdpSettings* settings;
+	rdpUpdate* update;
+
+	if (!gdi || !gdi->context->settings || !gdi->context->update)
+		return FALSE;
+
+	if (gdi->suppressOutput == suppress)
+		return TRUE;
+
+	gdi->suppressOutput = suppress;
+	settings = gdi->context->settings;
+	update = gdi->context->update;
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = settings->DesktopWidth;
+	rect.bottom = settings->DesktopHeight;
+	return update->SuppressOutput(gdi->context, !suppress, &rect);
 }
 

@@ -158,7 +158,6 @@ struct xf_context
 	BOOL focused;
 	BOOL use_xinput;
 	BOOL mouse_active;
-	BOOL suppress_output;
 	BOOL fullscreen_toggle;
 	BOOL controlToggle;
 	UINT32 KeyboardLayout;
@@ -217,7 +216,6 @@ struct xf_context
 	xfClipboard* clipboard;
 	CliprdrClientContext* cliprdr;
 	RdpeiClientContext* rdpei;
-	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
 	xfDispContext* xfDisp;
 	DispClientContext* disp;

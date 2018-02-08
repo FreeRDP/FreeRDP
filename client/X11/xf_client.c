@@ -288,9 +288,6 @@ static BOOL xf_desktop_resize(rdpContext* context)
 
 static BOOL xf_sw_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = TRUE;
-	gdi->primary->hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }
 
@@ -303,6 +300,10 @@ static BOOL xf_sw_end_paint(rdpContext* context)
 	HGDI_RGN cinvalid;
 	xfContext* xfc = (xfContext*) context;
 	rdpGdi* gdi = context->gdi;
+
+	if (gdi->suppressOutput)
+		return TRUE;
+
 	x = gdi->primary->hdc->hwnd->invalid->x;
 	y = gdi->primary->hdc->hwnd->invalid->y;
 	w = gdi->primary->hdc->hwnd->invalid->w;
@@ -355,6 +356,8 @@ static BOOL xf_sw_end_paint(rdpContext* context)
 		xf_unlock_x11(xfc, FALSE);
 	}
 
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
+	gdi->primary->hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }
 
@@ -392,9 +395,6 @@ out:
 
 static BOOL xf_hw_begin_paint(rdpContext* context)
 {
-	xfContext* xfc = (xfContext*) context;
-	xfc->hdc->hwnd->invalid->null = TRUE;
-	xfc->hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }
 
@@ -403,6 +403,9 @@ static BOOL xf_hw_end_paint(rdpContext* context)
 	INT32 x, y;
 	UINT32 w, h;
 	xfContext* xfc = (xfContext*) context;
+
+	if (xfc->context.gdi->suppressOutput)
+		return TRUE;
 
 	if (!xfc->remote_app)
 	{
@@ -459,6 +462,8 @@ static BOOL xf_hw_end_paint(rdpContext* context)
 		xf_unlock_x11(xfc, FALSE);
 	}
 
+	xfc->hdc->hwnd->invalid->null = TRUE;
+	xfc->hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }
 
