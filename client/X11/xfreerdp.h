@@ -158,7 +158,6 @@ struct xf_context
 	BOOL focused;
 	BOOL use_xinput;
 	BOOL mouse_active;
-	BOOL suppress_output;
 	BOOL fullscreen_toggle;
 	BOOL controlToggle;
 	UINT32 KeyboardLayout;

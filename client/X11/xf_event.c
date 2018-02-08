@@ -158,28 +158,6 @@ static const char* x11_event_string(int event)
 #define DEBUG_X11(...) do { } while (0)
 #endif
 
-static BOOL xf_send_suppress_output(xfContext* xfc, XEvent* event, BOOL suppress)
-{
-	RECTANGLE_16 rect;
-	rdpSettings* settings;
-	rdpUpdate* update;
-
-	if (!xfc || !xfc->context.settings || !xfc->context.update)
-		return FALSE;
-
-	if (xfc->suppress_output == suppress)
-		return TRUE;
-
-	xfc->suppress_output = suppress;
-	settings = xfc->context.settings;
-	update = xfc->context.update;
-	rect.left = 0;
-	rect.top = 0;
-	rect.right = settings->DesktopWidth;
-	rect.bottom = settings->DesktopHeight;
-	return update->SuppressOutput(&xfc->context, !suppress, &rect);
-}
-
 BOOL xf_event_action_script_init(xfContext* xfc)
 {
 	char* xevent;
@@ -791,7 +769,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 	xfAppWindow* appWindow;
 
 	if (!app)
-		xf_send_suppress_output(xfc, event, FALSE);
+		gdi_send_suppress_output(xfc->context.gdi, FALSE);
 	else
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
@@ -816,7 +794,7 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 	xf_keyboard_release_all_keypress(xfc);
 
 	if (!app)
-		xf_send_suppress_output(xfc, event, TRUE);
+		gdi_send_suppress_output(xfc->context.gdi, TRUE);
 	else
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
@@ -922,7 +900,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 			}
 		}
 		else if (minimizedChanged)
-			xf_send_suppress_output(xfc, event, minimized);
+			gdi_send_suppress_output(xfc->context.gdi, minimized);
 	}
 
 	return TRUE;

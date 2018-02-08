@@ -114,6 +114,9 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 	if (!gdi->graphicsReset)
 		return status;
 
+	if (gdi->suppressOutput)
+		return CHANNEL_RC_OK;
+
 	context->GetSurfaceIds(context, &pSurfaceIds, &count);
 
 	for (index = 0; index < count; index++)

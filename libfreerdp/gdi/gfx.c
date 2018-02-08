@@ -102,6 +102,10 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	const RECTANGLE_16* rects;
 	UINT32 i, nbRects;
 	rdpUpdate* update = gdi->context->update;
+
+	if (gdi->suppressOutput)
+		return CHANNEL_RC_OK;
+
 	surfaceX = surface->outputOriginX;
 	surfaceY = surface->outputOriginY;
 	surfaceRect.left = 0;
