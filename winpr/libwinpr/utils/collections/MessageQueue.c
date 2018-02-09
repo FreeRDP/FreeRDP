@@ -227,6 +227,8 @@ void MessageQueue_Free(wMessageQueue* queue)
 	if (!queue)
 		return;
 
+	MessageQueue_Clear(queue);
+
 	CloseHandle(queue->event);
 	DeleteCriticalSection(&queue->lock);
 
