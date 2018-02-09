@@ -645,12 +645,6 @@ BOOL xf_create_window(xfContext* xfc)
 
 static void xf_window_free(xfContext* xfc)
 {
-	if (xfc->gc_mono)
-	{
-		XFreeGC(xfc->display, xfc->gc_mono);
-		xfc->gc_mono = 0;
-	}
-
 	if (xfc->window)
 	{
 		xf_DestroyDesktopWindow(xfc, xfc->window);
@@ -680,6 +674,12 @@ static void xf_window_free(xfContext* xfc)
 	{
 		XFreePixmap(xfc->display, xfc->bitmap_mono);
 		xfc->bitmap_mono = 0;
+	}
+
+	if (xfc->gc_mono)
+	{
+		XFreeGC(xfc->display, xfc->gc_mono);
+		xfc->gc_mono = 0;
 	}
 
 	if (xfc->primary)
@@ -1311,6 +1311,11 @@ static void xf_post_disconnect(freerdp* instance)
 		xf_disp_free(xfc->xfDisp);
 		xfc->xfDisp = NULL;
 	}
+
+	if (xfc->drawable == xfc->window->handle)
+		xfc->drawable = NULL;
+	else
+		xf_DestroyDummyWindow(xfc, xfc->drawable);
 
 	xf_window_free(xfc);
 	xf_keyboard_free(xfc);
