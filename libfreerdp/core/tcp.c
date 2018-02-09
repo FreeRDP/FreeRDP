@@ -667,19 +667,25 @@ BIO_METHOD* BIO_s_buffered_socket(void)
 static char* freerdp_tcp_get_ip_address(int sockfd, BOOL* pIPv6)
 {
 	socklen_t length;
-	char ipAddress[INET6_ADDRSTRLEN + 1];
-	struct sockaddr_in sockaddr;
-	length = sizeof(sockaddr);
-	ZeroMemory(&sockaddr, length);
+	char ipAddress[INET6_ADDRSTRLEN + 1] = { 0 };
+	struct sockaddr saddr = { 0 };
+	struct sockaddr_in6* sockaddr_ipv6 = (struct sockaddr_in6*)&saddr;
+	struct sockaddr_in* sockaddr_ipv4 = (struct sockaddr_in*)&saddr;
+	length = sizeof(struct sockaddr);
 
-	if (getsockname(sockfd, (struct sockaddr*) &sockaddr, &length) != 0)
+	if (getsockname(sockfd, &saddr, &length) != 0)
 		return NULL;
 
-	switch (sockaddr.sin_family)
+	switch (sockaddr_ipv4->sin_family)
 	{
 		case AF_INET:
+			if (!inet_ntop(sockaddr_ipv4->sin_family, &sockaddr_ipv4->sin_addr, ipAddress, sizeof(ipAddress)))
+				return NULL;
+
+			break;
+
 		case AF_INET6:
-			if (!inet_ntop(sockaddr.sin_family, &sockaddr.sin_addr, ipAddress, sizeof(ipAddress)))
+			if (!inet_ntop(sockaddr_ipv6->sin6_family, &sockaddr_ipv6->sin6_addr, ipAddress, sizeof(ipAddress)))
 				return NULL;
 
 			break;
@@ -693,7 +699,7 @@ static char* freerdp_tcp_get_ip_address(int sockfd, BOOL* pIPv6)
 	}
 
 	if (pIPv6)
-		*pIPv6 = (sockaddr.sin_family == AF_INET6);
+		*pIPv6 = (sockaddr_ipv4->sin_family == AF_INET6);
 
 	return _strdup(ipAddress);
 }
