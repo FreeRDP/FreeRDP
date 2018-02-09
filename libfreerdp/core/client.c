@@ -76,6 +76,32 @@ static rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp,
 	return NULL;
 }
 
+static void channel_queue_free(void* obj)
+{
+	CHANNEL_OPEN_EVENT* ev;
+	wMessage* msg = (wMessage*)obj;
+
+	if (!msg || (msg->id != 0))
+		return;
+
+	ev = (CHANNEL_OPEN_EVENT*)msg->wParam;
+
+	if (ev)
+	{
+		/* Added by FreeRDP_VirtualChannelWriteEx */
+		if (ev->UserData)
+		{
+			wStream* s = (wStream*)ev->UserData;
+			Stream_Free(s, TRUE);
+		}
+		/* Either has no data or added by FreeRDP_VirtualChannelWrite */
+		else
+			free(ev->Data);
+
+		free(ev);
+	}
+}
+
 rdpChannels* freerdp_channels_new(freerdp* instance)
 {
 	rdpChannels* channels;
@@ -93,6 +119,7 @@ rdpChannels* freerdp_channels_new(freerdp* instance)
 	if (!channels->queue)
 		goto error;
 
+	channels->queue->object.fnObjectFree = channel_queue_free;
 	channels->openHandles = HashTable_New(TRUE);
 
 	if (!channels->openHandles)
