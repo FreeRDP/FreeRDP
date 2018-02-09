@@ -110,6 +110,6 @@ fail_server_init:
 fail_parse_command_line:
 	shadow_server_free(server);
 fail_server_new:
-	return status;
+	return winpr_exit(status);
 }
 

@@ -42,7 +42,7 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS winpr-tools)
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} winpr)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
 

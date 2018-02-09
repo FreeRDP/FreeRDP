@@ -70,6 +70,7 @@ WINPR_API const char* winpr_get_version_string(void);
 WINPR_API const char* winpr_get_build_date(void);
 WINPR_API const char* winpr_get_build_revision(void);
 WINPR_API const char* winpr_get_build_config(void);
+WINPR_API int winpr_exit(int status);
 
 #define WINPR_UNUSED(x) (void)(x)
 

@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 	if (!display)
 	{
 		WLog_ERR(TAG, "Cannot open display");
-		exit(1);
+		return winpr_exit(1);
 	}
 
 	x = 10;
@@ -96,12 +96,12 @@ int main(int argc, char** argv)
 
 	engine = rdtk_engine_new();
 	if (!engine)
-		return 1;
+		return winpr_exit(1);
 
 	scanline = width * 4;
 	buffer = (BYTE*) calloc(height, scanline);
 	if (!buffer)
-		return 1;
+		return winpr_exit(1);
 
 	surface = rdtk_surface_new(engine, buffer, width, height, scanline);
 
@@ -150,5 +150,5 @@ int main(int argc, char** argv)
 
 	rdtk_engine_free(engine);
 
-	return 0;
+	return winpr_exit(0);
 }

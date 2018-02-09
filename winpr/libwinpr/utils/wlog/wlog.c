@@ -919,5 +919,6 @@ BOOL WLog_Uninit(void)
 
 	WLog_Free(root);
 	g_RootLog = NULL;
+
 	return TRUE;
 }

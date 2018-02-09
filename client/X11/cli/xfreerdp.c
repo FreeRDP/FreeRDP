@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 
 	context = freerdp_client_context_new(&clientEntryPoints);
 	if (!context)
-		return 1;
+		return winpr_exit(1);
 
 	settings = context->settings;
 	xfc = (xfContext*) context;
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 			xf_list_monitors(xfc);
 
 		freerdp_client_context_free(context);
-		return 0;
+		return winpr_exit(0);
 	}
 
 	freerdp_client_start(context);
@@ -79,5 +79,5 @@ int main(int argc, char* argv[])
 
 	freerdp_client_context_free(context);
 
-	return xf_exit_code_from_disconnect_reason(dwExitCode);
+	return winpr_exit(xf_exit_code_from_disconnect_reason(dwExitCode));
 }
