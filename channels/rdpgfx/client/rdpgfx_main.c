@@ -1595,6 +1595,7 @@ static UINT rdpgfx_get_surface_ids(RdpgfxClientContext* context,
 	if (!pSurfaceIds)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "calloc failed!");
+		free(pKeys);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
