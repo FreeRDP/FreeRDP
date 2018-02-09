@@ -521,16 +521,12 @@ static BOOL xf_rail_window_common(rdpContext* context,
 static BOOL xf_rail_window_delete(rdpContext* context,
                                   WINDOW_ORDER_INFO* orderInfo)
 {
-	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context;
-	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
-	            (void*)(UINT_PTR) orderInfo->windowId);
 
-	if (!appWindow)
-		return TRUE;
+	if (!xfc)
+		return FALSE;
 
 	HashTable_Remove(xfc->railWindows, (void*)(UINT_PTR) orderInfo->windowId);
-	xf_DestroyWindow(xfc, appWindow);
 	return TRUE;
 }
 
@@ -880,9 +876,23 @@ static UINT xf_rail_server_get_appid_response(RailClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
+static void rail_window_free(void* value)
+{
+	xfAppWindow* appWindow = (xfAppWindow*) value;
+
+	if (!appWindow)
+		return;
+
+	xf_DestroyWindow(appWindow->xfc, appWindow);
+}
+
 int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 {
 	rdpContext* context = (rdpContext*) xfc;
+
+	if (!xfc || !rail)
+		return 0;
+
 	xfc->rail = rail;
 	xf_rail_register_update_callbacks(context->update);
 	rail->custom = (void*) xfc;
@@ -899,6 +909,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	if (!xfc->railWindows)
 		return 0;
 
+	xfc->railWindows->valueFree = rail_window_free;
 	return 1;
 }
 
