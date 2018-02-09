@@ -332,7 +332,9 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 		if (!zgfx_decompress_segment(zgfx, stream, Stream_GetRemainingLength(stream)))
 			goto fail;
 
-		*ppDstData = (BYTE*) malloc(zgfx->OutputCount);
+		*ppDstData = NULL;
+		if (zgfx->OutputCount > 0)
+			*ppDstData = (BYTE*) malloc(zgfx->OutputCount);
 
 		if (!*ppDstData)
 			goto fail;
