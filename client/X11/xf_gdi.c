@@ -245,7 +245,7 @@ static Pixmap xf_brush_new(xfContext* xfc, UINT32 width, UINT32 height,
 		image->bitmap_bit_order = LSBFirst;
 		gc = XCreateGC(xfc->display, xfc->drawable, 0, NULL);
 		XPutImage(xfc->display, bitmap, gc, image, 0, 0, 0, 0, width, height);
-		XFree(image);
+		XDestroyImage(image);
 
 		if (cdata != data)
 			_aligned_free(cdata);
@@ -269,7 +269,7 @@ static Pixmap xf_mono_bitmap_new(xfContext* xfc, int width, int height,
 	image->byte_order = LSBFirst;
 	image->bitmap_bit_order = LSBFirst;
 	XPutImage(xfc->display, bitmap, xfc->gc_mono, image, 0, 0, 0, 0, width, height);
-	XFree(image);
+	XDestroyImage(image);
 	return bitmap;
 }
 
@@ -1028,7 +1028,7 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData,
 		image->bitmap_bit_order = LSBFirst;
 
 		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0, left, top, width, height);
-		XFree(image);
+		XDestroyImage(image);
 		ret = xf_gdi_surface_update_frame(xfc, left, top, width, height);
 	}
 
