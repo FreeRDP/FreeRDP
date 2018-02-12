@@ -24,6 +24,7 @@
 #include <rdtk/rdtk.h>
 
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 #define TAG "rdtk.sample"
 
@@ -144,7 +145,6 @@ int main(int argc, char** argv)
 	XFlush(display);
 
 	XDestroyImage(image);
-	XFreePixmap(display, pixmap);
 	XCloseDisplay(display);
 
 	rdtk_surface_free(surface);
