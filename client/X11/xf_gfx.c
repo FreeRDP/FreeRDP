@@ -26,6 +26,8 @@
 #include <freerdp/log.h>
 #include "xf_gfx.h"
 
+#include <X11/Xutil.h>
+
 #define TAG CLIENT_TAG("x11")
 
 static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
@@ -310,6 +312,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	return CHANNEL_RC_OK;
 error_set_surface_data:
+	surface->image->data = NULL;
 	XDestroyImage(surface->image);
 error_surface_image:
 	_aligned_free(surface->stage);
@@ -338,6 +341,7 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 #ifdef WITH_GFX_H264
 		h264_context_free(surface->gdi.h264);
 #endif
+		surface->image->data = NULL;
 		XDestroyImage(surface->image);
 		_aligned_free(surface->gdi.data);
 		_aligned_free(surface->stage);

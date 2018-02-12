@@ -612,14 +612,12 @@ BOOL xf_create_window(xfContext* xfc)
 		                             settings->DesktopHeight, xfc->depth);
 
 	xfc->drawing = xfc->primary;
-
 	if (!xfc->bitmap_mono)
 		xfc->bitmap_mono = XCreatePixmap(xfc->display, xfc->drawable, 8, 8, 1);
 
 	if (!xfc->gc_mono)
 		xfc->gc_mono = XCreateGC(xfc->display, xfc->bitmap_mono, GCGraphicsExposures,
 		                         &gcv);
-
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, BlackPixelOfScreen(xfc->screen));
