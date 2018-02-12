@@ -21,6 +21,7 @@
 #define FREERDP_CHANNELS_CLIENT_GEOMETRY_H
 
 #include <winpr/collections.h>
+#include <freerdp/api.h>
 #include <freerdp/channels/geometry.h>
 
 /**
@@ -63,8 +64,8 @@ struct _geometry_client_context
 extern "C"
 #endif
 
-void mappedGeometryRef(MAPPED_GEOMETRY *g);
-void mappedGeometryUnref(MAPPED_GEOMETRY *g);
+FREERDP_API void mappedGeometryRef(MAPPED_GEOMETRY *g);
+FREERDP_API void mappedGeometryUnref(MAPPED_GEOMETRY *g);
 
 #ifdef __cplusplus
 }
