@@ -142,7 +142,9 @@ int main(int argc, char** argv)
 	}
 
 	XFlush(display);
- 
+
+	XDestroyImage(image);
+	XFreePixmap(display, pixmap);
 	XCloseDisplay(display);
 
 	rdtk_surface_free(surface);
