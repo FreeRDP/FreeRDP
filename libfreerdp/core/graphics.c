@@ -57,14 +57,7 @@ static BOOL Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	if (bitmap)
-	{
 		bitmap->Free(context, bitmap);
-
-		if (bitmap->data)
-			_aligned_free(bitmap->data);
-
-		free(bitmap);
-	}
 }
 
 BOOL Bitmap_SetRectangle(rdpBitmap* bitmap,

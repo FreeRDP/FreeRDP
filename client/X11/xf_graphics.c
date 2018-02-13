@@ -178,11 +178,14 @@ static void xf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 
 	if (xbitmap->image)
 	{
+		xbitmap->image->data = NULL;
 		XDestroyImage(xbitmap->image);
 		xbitmap->image = NULL;
 	}
 
 	xf_unlock_x11(xfc, FALSE);
+	_aligned_free(bitmap->data);
+	free(xbitmap);
 }
 
 static BOOL xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
