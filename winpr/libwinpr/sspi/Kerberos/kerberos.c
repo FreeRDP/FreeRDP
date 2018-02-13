@@ -456,8 +456,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle
 	SSPI_CREDENTIALS* credentials;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
-	sspi_gss_buffer_desc input_tok;
-	sspi_gss_buffer_desc output_tok;
+	sspi_gss_buffer_desc input_tok = { 0 };
+	sspi_gss_buffer_desc output_tok = { 0 };
 	sspi_gss_OID actual_mech;
 	sspi_gss_OID desired_mech;
 	UINT32 actual_services;
