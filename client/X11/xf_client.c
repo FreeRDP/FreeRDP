@@ -1280,13 +1280,6 @@ static BOOL xf_post_connect(freerdp* instance)
 		return FALSE;
 	}
 
-/*	if (!(xfc->xfVideo = xf_video_new(xfc)))
-	{
-		xf_clipboard_free(xfc->clipboard);
-		xf_disp_free(xfc->xfDisp);
-		return FALSE;
-	}*/
-
 	EventArgsInit(&e, "xfreerdp");
 	e.width = settings->DesktopWidth;
 	e.height = settings->DesktopHeight;

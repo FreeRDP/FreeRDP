@@ -140,9 +140,9 @@ void gdi_video_control_uninit(rdpGdi* gdi, VideoClientContext* video)
 	gdi->video = NULL;
 }
 
-static void gdi_video_timer(void* ctx, TimerEventArgs* timer)
+static void gdi_video_timer(rdpContext *ctx, TimerEventArgs* timer)
 {
-	rdpGdi* gdi = (rdpGdi*)ctx;
+	rdpGdi* gdi = ctx->gdi;
 
 	if (gdi && gdi->video)
 		gdi->video->timer(gdi->video, timer->now);
@@ -150,10 +150,10 @@ static void gdi_video_timer(void* ctx, TimerEventArgs* timer)
 
 void gdi_video_data_init(rdpGdi* gdi, VideoClientContext* video)
 {
-	PubSub_SubscribeTimer(gdi->context->pubSub, gdi_video_timer);
+	PubSub_SubscribeTimer(gdi->context->pubSub, (pTimerEventHandler)gdi_video_timer);
 }
 
 void gdi_video_data_uninit(rdpGdi* gdi, VideoClientContext* context)
 {
-	PubSub_UnsubscribeTimer(gdi->context->pubSub, gdi_video_timer);
+	PubSub_UnsubscribeTimer(gdi->context->pubSub, (pTimerEventHandler)gdi_video_timer);
 }
