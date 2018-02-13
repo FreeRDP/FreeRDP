@@ -181,6 +181,17 @@ BOOL http_context_set_rdg_connection_id(HttpContext* context, const char* RdgCon
 	return TRUE;
 }
 
+BOOL http_context_set_rdg_auth_scheme(HttpContext* context, const char* RdgAuthScheme)
+{
+	free(context->RdgAuthScheme);
+	context->RdgAuthScheme = _strdup(RdgAuthScheme);
+
+	if (!context->RdgAuthScheme)
+		return FALSE;
+
+	return TRUE;
+}
+
 void http_context_free(HttpContext* context)
 {
 	if (context)
@@ -194,6 +205,7 @@ void http_context_free(HttpContext* context)
 		free(context->Connection);
 		free(context->Pragma);
 		free(context->RdgConnectionId);
+		free(context->RdgAuthScheme);		
 		free(context);
 	}
 }
@@ -332,7 +344,8 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 	lines[count++] = http_encode_body_line("Pragma", context->Pragma);
 	lines[count++] = http_encode_body_line("Accept", context->Accept);
 	lines[count++] = http_encode_body_line("User-Agent", context->UserAgent);
-	lines[count++] = http_encode_content_length_line(request->ContentLength);
+	if (!context->RdgAuthScheme)
+		lines[count++] = http_encode_content_length_line(request->ContentLength);
 	lines[count++] = http_encode_body_line("Host", context->Host);
 
 	/* check that everything went well */
@@ -345,6 +358,16 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 	if (context->RdgConnectionId)
 	{
 		lines[count] = http_encode_body_line("RDG-Connection-Id", context->RdgConnectionId);
+
+		if (!lines[count])
+			goto out_free;
+
+		count++;
+	}
+
+	if (context->RdgAuthScheme)
+	{
+		lines[count] = http_encode_body_line("RDG-Auth-Scheme", context->RdgAuthScheme);
 
 		if (!lines[count])
 			goto out_free;

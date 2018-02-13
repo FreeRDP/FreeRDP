@@ -112,6 +112,7 @@ struct rdp_nego
 	BOOL RestrictedAdminModeRequired;
 	BOOL GatewayEnabled;
 	BOOL GatewayBypassLocal;
+	char* GatewayAccessToken;	
 
 	rdpTransport* transport;
 };
@@ -150,6 +151,7 @@ FREERDP_LOCAL void nego_set_restricted_admin_mode_required(rdpNego* nego,
 FREERDP_LOCAL void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled);
 FREERDP_LOCAL void nego_set_gateway_bypass_local(rdpNego* nego,
         BOOL GatewayBypassLocal);
+FREERDP_LOCAL void nego_set_gateway_access_token(rdpNego* nego, char* token);
 FREERDP_LOCAL void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
 FREERDP_LOCAL void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 FREERDP_LOCAL void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
