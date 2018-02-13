@@ -115,7 +115,11 @@ static void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 		gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->org_bitmap);
 		gdi_DeleteObject((HGDIOBJECT) gdi_bitmap->bitmap);
 		gdi_DeleteDC(gdi_bitmap->hdc);
+
+		_aligned_free(bitmap->data);
 	}
+
+	free(bitmap);
 }
 
 static BOOL gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
