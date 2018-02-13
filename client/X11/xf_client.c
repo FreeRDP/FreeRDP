@@ -1310,7 +1310,7 @@ static void xf_post_disconnect(freerdp* instance)
 		xfc->xfDisp = NULL;
 	}
 
-	if (xfc->drawable == xfc->window->handle)
+	if ((xfc->window != NULL) && (xfc->drawable == xfc->window->handle))
 		xfc->drawable = NULL;
 	else
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
