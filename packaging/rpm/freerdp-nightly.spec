@@ -25,6 +25,7 @@ Url:            http://www.freerdp.com
 Group:          Productivity/Networking/Other
 Source0:        %{name}-%{version}.tar.bz2
 #Source1:        %{name}-rpmlintrc
+Source1:        source_version
 BuildRequires:   gcc-c++
 BuildRequires:  cmake >= 2.8.12
 BuildRequires: libxkbfile-devel
@@ -102,8 +103,11 @@ based on freerdp and winpr.
 
 %prep
 %setup -q
+cd %{_topdir}/BUILD
+cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
 
 %build
+
 %cmake  -DCMAKE_SKIP_RPATH=FALSE \
         -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
         -DWITH_PULSE=ON \
