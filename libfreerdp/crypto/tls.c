@@ -102,7 +102,7 @@ BOOL tls_connect(rdpTls* tls)
 	int connection_status;
 	char *hostname;
 
-	tls->ctx = SSL_CTX_new(TLSv1_client_method());
+	tls->ctx = SSL_CTX_new(SSLv23_client_method());
 
 	if (tls->ctx == NULL)
 	{
@@ -140,6 +140,12 @@ BOOL tls_connect(rdpTls* tls)
 	 * support empty fragments. This needs to be disabled.
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
+
+	/**
+	 * disable SSLv2 and SSLv3
+	 */
+	options |= SSL_OP_NO_SSLv2;
+	options |= SSL_OP_NO_SSLv3;
 
 	SSL_CTX_set_options(tls->ctx, options);
 
