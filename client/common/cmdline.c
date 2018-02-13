@@ -767,6 +767,11 @@ static int freerdp_client_command_line_post_filter(void* context,
 	{
 		settings->SupportGeometryTracking = TRUE;
 	}
+	CommandLineSwitchCase(arg, "video")
+	{
+		settings->SupportGeometryTracking = TRUE; /* this requires geometry tracking */
+		settings->SupportVideoOptimized = TRUE;
+	}
 	CommandLineSwitchCase(arg, "sound")
 	{
 		char** p;
@@ -3010,6 +3015,17 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		int count;
 		count = 1;
 		p[0] = "geometry";
+
+		if (!freerdp_client_add_dynamic_channel(settings, count, p))
+			return FALSE;
+	}
+
+	if (settings->SupportVideoOptimized)
+	{
+		char* p[1];
+		int count;
+		count = 1;
+		p[0] = "video";
 
 		if (!freerdp_client_add_dynamic_channel(settings, count, p))
 			return FALSE;

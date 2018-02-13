@@ -45,6 +45,7 @@ struct _FREERDP_RGNDATA
 
 typedef struct _FREERDP_RGNDATA FREERDP_RGNDATA;
 
+
 struct _MAPPED_GEOMETRY_PACKET
 {
 	UINT32 version;

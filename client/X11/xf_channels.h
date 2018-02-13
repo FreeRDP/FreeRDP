@@ -29,6 +29,8 @@
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/encomsp.h>
 #include <freerdp/client/disp.h>
+#include <freerdp/client/geometry.h>
+#include <freerdp/client/video.h>
 
 int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
 int xf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface);

@@ -97,6 +97,7 @@
 #include "xf_input.h"
 #include "xf_cliprdr.h"
 #include "xf_disp.h"
+#include "xf_video.h"
 #include "xf_monitor.h"
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
@@ -1279,6 +1280,13 @@ static BOOL xf_post_connect(freerdp* instance)
 		return FALSE;
 	}
 
+/*	if (!(xfc->xfVideo = xf_video_new(xfc)))
+	{
+		xf_clipboard_free(xfc->clipboard);
+		xf_disp_free(xfc->xfDisp);
+		return FALSE;
+	}*/
+
 	EventArgsInit(&e, "xfreerdp");
 	e.width = settings->DesktopWidth;
 	e.height = settings->DesktopHeight;
@@ -1314,7 +1322,7 @@ static void xf_post_disconnect(freerdp* instance)
 		xfc->drawable = NULL;
 	else
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
-
+	
 	xf_window_free(xfc);
 	xf_keyboard_free(xfc);
 }
@@ -1529,7 +1537,7 @@ static void* xf_client_thread(void* param)
 
 	due.QuadPart = 0;
 
-	if (!SetWaitableTimer(timer, &due, 100, NULL, NULL, FALSE))
+	if (!SetWaitableTimer(timer, &due, 20, NULL, NULL, FALSE))
 	{
 		goto disconnect;
 	}

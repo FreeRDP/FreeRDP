@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/interlocked.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <winpr/cmdline.h>
@@ -72,7 +73,40 @@ struct _GEOMETRY_PLUGIN
 typedef struct _GEOMETRY_PLUGIN GEOMETRY_PLUGIN;
 
 
-static UINT32 geometry_read_RGNDATA(wStream* s, UINT32 len, FREERDP_RGNDATA* rgndata)
+static UINT32 mappedGeometryHash(UINT64 *g)
+{
+	return (UINT32)((*g >> 32) + (*g & 0xffffffff));
+}
+
+static BOOL mappedGeometryKeyCompare(UINT64 *g1, UINT64 *g2)
+{
+	return *g1 == *g2;
+}
+
+void mappedGeometryRef(MAPPED_GEOMETRY *g)
+{
+	InterlockedIncrement(&g->refCounter);
+}
+
+void mappedGeometryUnref(MAPPED_GEOMETRY *g)
+{
+	if (InterlockedDecrement(&g->refCounter))
+		return;
+
+	g->MappedGeometryUpdate = NULL;
+	g->MappedGeometryClear = NULL;
+	g->custom = NULL;
+	free(g->geometry.rects);
+	free(g);
+}
+
+
+void freerdp_rgndata_reset(FREERDP_RGNDATA *data)
+{
+	data->nRectCount = 0;
+}
+
+static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgndata)
 {
 	UINT32 dwSize, iType;
 	INT32 right, bottom;
@@ -117,12 +151,14 @@ static UINT32 geometry_read_RGNDATA(wStream* s, UINT32 len, FREERDP_RGNDATA* rgn
 	if (rgndata->nRectCount)
 	{
 		int i;
+		RDP_RECT *tmp = realloc(rgndata->rects, rgndata->nRectCount * sizeof(RDP_RECT));
 
-		if (!(rgndata->rects = calloc(rgndata->nRectCount, sizeof(RDP_RECT))))
+		if (!tmp)
 		{
 			WLog_ERR(TAG, "unable to allocate memory for %"PRIu32" RECTs", rgndata->nRectCount);
 			return CHANNEL_RC_NO_MEMORY;
 		}
+		rgndata->rects = tmp;
 
 		for (i = 0; i < rgndata->nRectCount; i++)
 		{
@@ -146,10 +182,13 @@ static UINT32 geometry_read_RGNDATA(wStream* s, UINT32 len, FREERDP_RGNDATA* rgn
 static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 length, cbGeometryBuffer;
-	MAPPED_GEOMETRY_PACKET packet;
+	MAPPED_GEOMETRY *mappedGeometry;
 	GEOMETRY_PLUGIN* geometry;
-	GeometryClientContext* context;
-	UINT ret;
+	GeometryClientContext *context;
+	UINT ret = CHANNEL_RC_OK;
+	UINT32 version, updateType, geometryType;
+	UINT64 id;
+
 	geometry = (GEOMETRY_PLUGIN*) callback->plugin;
 	context = (GeometryClientContext*)geometry->iface.pInterface;
 
@@ -167,44 +206,112 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT32(s, packet.version);
-	Stream_Read_UINT64(s, packet.mappingId);
-	Stream_Read_UINT32(s, packet.updateType);
+	Stream_Read_UINT32(s, version);
+	Stream_Read_UINT64(s, id);
+	Stream_Read_UINT32(s, updateType);
 	Stream_Seek_UINT32(s); /* flags */
-	Stream_Read_UINT64(s, packet.topLevelId);
-	Stream_Read_INT32(s, packet.left);
-	Stream_Read_INT32(s, packet.top);
-	Stream_Read_INT32(s, packet.right);
-	Stream_Read_INT32(s, packet.bottom);
-	Stream_Read_INT32(s, packet.topLevelLeft);
-	Stream_Read_INT32(s, packet.topLevelTop);
-	Stream_Read_INT32(s, packet.topLevelRight);
-	Stream_Read_INT32(s, packet.topLevelBottom);
-	Stream_Read_UINT32(s, packet.geometryType);
-	Stream_Read_UINT32(s, cbGeometryBuffer);
 
-	if (Stream_GetRemainingLength(s) < cbGeometryBuffer)
+	mappedGeometry = HashTable_GetItemValue(context->geometries, &id);
+
+	if (updateType == GEOMETRY_CLEAR )
 	{
-		WLog_ERR(TAG, "invalid packet length");
-		return ERROR_INVALID_DATA;
+		if (!mappedGeometry)
+		{
+			WLog_ERR(TAG, "geometry 0x%"PRIx64" not found here, ignoring clear command", id);
+			return CHANNEL_RC_OK;
+		}
+
+		WLog_DBG(TAG, "clearing geometry 0x%"PRIx64"", id);
+
+		if (mappedGeometry->MappedGeometryClear && !mappedGeometry->MappedGeometryClear(mappedGeometry))
+			return ERROR_INTERNAL_ERROR;
+
+		if (!HashTable_Remove(context->geometries, &id))
+			WLog_ERR(TAG, "geometry not removed from geometries");
 	}
-
-	ZeroMemory(&packet.geometry, sizeof(packet.geometry));
-
-	if (cbGeometryBuffer)
+	else if (updateType == GEOMETRY_UPDATE)
 	{
-		ret = geometry_read_RGNDATA(s, cbGeometryBuffer, &packet.geometry);
+		BOOL newOne = FALSE;
 
-		if (ret != CHANNEL_RC_OK)
-			return ret;
+		if (!mappedGeometry)
+		{
+			newOne = TRUE;
+			WLog_DBG(TAG, "creating geometry 0x%"PRIx64"", id);
+			mappedGeometry = calloc(1, sizeof(MAPPED_GEOMETRY));
+			if (!mappedGeometry)
+				return CHANNEL_RC_NO_MEMORY;
+
+			mappedGeometry->refCounter = 1;
+			mappedGeometry->mappingId = id;
+
+			if (HashTable_Add(context->geometries, &(mappedGeometry->mappingId), mappedGeometry) < 0)
+			{
+				WLog_ERR(TAG, "unable to register geometry 0x%"PRIx64" in the table", id);
+				free(mappedGeometry);
+				return CHANNEL_RC_NO_MEMORY;
+			}
+		}
+		else
+		{
+			WLog_DBG(TAG, "updating geometry 0x%"PRIx64"", id);
+		}
+
+		Stream_Read_UINT64(s, mappedGeometry->topLevelId);
+
+		Stream_Read_INT32(s, mappedGeometry->left);
+		Stream_Read_INT32(s, mappedGeometry->top);
+		Stream_Read_INT32(s, mappedGeometry->right);
+		Stream_Read_INT32(s, mappedGeometry->bottom);
+
+		Stream_Read_INT32(s, mappedGeometry->topLevelLeft);
+		Stream_Read_INT32(s, mappedGeometry->topLevelTop);
+		Stream_Read_INT32(s, mappedGeometry->topLevelRight);
+		Stream_Read_INT32(s, mappedGeometry->topLevelBottom);
+
+		Stream_Read_UINT32(s, geometryType);
+
+		Stream_Read_UINT32(s, cbGeometryBuffer);
+		if (Stream_GetRemainingLength(s) < cbGeometryBuffer)
+		{
+			WLog_ERR(TAG, "invalid packet length");
+			return ERROR_INVALID_DATA;
+		}
+
+		if (cbGeometryBuffer)
+		{
+			ret = geometry_read_RGNDATA(s, cbGeometryBuffer, &mappedGeometry->geometry);
+			if (ret != CHANNEL_RC_OK)
+				return ret;
+		}
+		else
+		{
+			freerdp_rgndata_reset(&mappedGeometry->geometry);
+		}
+
+		if (newOne)
+		{
+			if (context->MappedGeometryAdded && !context->MappedGeometryAdded(context, mappedGeometry))
+			{
+				WLog_ERR(TAG, "geometry added callback failed");
+				ret = ERROR_INTERNAL_ERROR;
+			}
+		}
+		else
+		{
+			if (mappedGeometry->MappedGeometryUpdate && !mappedGeometry->MappedGeometryUpdate(mappedGeometry))
+			{
+				WLog_ERR(TAG, "geometry update callback failed");
+				ret = ERROR_INTERNAL_ERROR;
+			}
+		}
 	}
 	else
+	{
+		WLog_ERR(TAG, "unknown updateType=%"PRIu32"", updateType);
 		ret = CHANNEL_RC_OK;
+	}
 
-	if (context->MappedGeometryPacket)
-		ret = context->MappedGeometryPacket(context, &packet);
 
-	free(packet.geometry.rects);
 	return ret;
 }
 
@@ -294,6 +401,11 @@ static UINT geometry_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 static UINT geometry_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*) pPlugin;
+	GeometryClientContext* context = (GeometryClientContext *)geometry->iface.pInterface;
+
+	if (context)
+		HashTable_Free(context->geometries);
+
 	free(geometry->listener_callback);
 	free(geometry->iface.pInterface);
 	free(pPlugin);
@@ -303,7 +415,6 @@ static UINT geometry_plugin_terminated(IWTSPlugin* pPlugin)
 /**
  * Channel Client Interface
  */
-
 
 #ifdef BUILTIN_CHANNELS
 #define DVCPluginEntry		geometry_DVCPluginEntry
@@ -342,9 +453,13 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		if (!context)
 		{
 			WLog_ERR(TAG, "calloc failed!");
-			free(geometry);
-			return CHANNEL_RC_NO_MEMORY;
+			goto error_context;
 		}
+
+		context->geometries = HashTable_New(FALSE);
+		context->geometries->hash = (HASH_TABLE_HASH_FN)mappedGeometryHash;
+		context->geometries->keyCompare = (HASH_TABLE_KEY_COMPARE_FN)mappedGeometryKeyCompare;
+		context->geometries->valueFree = (HASH_TABLE_VALUE_FREE_FN)mappedGeometryUnref;
 
 		context->handle = (void*) geometry;
 		geometry->iface.pInterface = (void*) context;
@@ -358,4 +473,9 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	}
 
 	return error;
+
+error_context:
+	free(geometry);
+	return CHANNEL_RC_NO_MEMORY;
+
 }
