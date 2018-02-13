@@ -691,6 +691,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_GatewayRpcTransport				1994
 #define FreeRDP_GatewayHttpTransport				1995
 #define FreeRDP_GatewayUdpTransport				1996
+#define FreeRDP_GatewayAccessToken					1997
 #define FreeRDP_ProxyType					2015
 #define FreeRDP_ProxyHostname					2016
 #define FreeRDP_ProxyPort   					2017
@@ -1449,6 +1450,8 @@ struct rdp_settings
 	ALIGN64 BYTE*
 	SettingsModified; /* byte array marking fields that have been modified from their default value */
 	ALIGN64 char* ActionScript;
+
+	ALIGN64 char* GatewayAccessToken; /* 1997 */
 };
 typedef struct rdp_settings rdpSettings;
 
