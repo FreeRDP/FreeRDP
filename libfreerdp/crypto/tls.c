@@ -78,8 +78,8 @@ struct _BIO_RDP_TLS
 };
 typedef struct _BIO_RDP_TLS BIO_RDP_TLS;
 
-long bio_rdp_tls_callback(BIO* bio, int mode, const char* argp, int argi,
-                          long argl, long ret)
+static long bio_rdp_tls_callback(BIO* bio, int mode, const char* argp, int argi,
+                                 long argl, long ret)
 {
 	return 1;
 }
@@ -508,7 +508,7 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 
 #define BIO_TYPE_RDP_TLS	68
 
-BIO_METHOD* BIO_s_rdp_tls(void)
+static BIO_METHOD* BIO_s_rdp_tls(void)
 {
 	static BIO_METHOD* bio_methods = NULL;
 
@@ -530,7 +530,7 @@ BIO_METHOD* BIO_s_rdp_tls(void)
 	return bio_methods;
 }
 
-BIO* BIO_new_rdp_tls(SSL_CTX* ctx, int client)
+static BIO* BIO_new_rdp_tls(SSL_CTX* ctx, int client)
 {
 	BIO* bio;
 	SSL* ssl;
@@ -596,7 +596,7 @@ static void tls_free_certificate(CryptoCert cert)
 
 #define TLS_SERVER_END_POINT	"tls-server-end-point:"
 
-SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
+static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 {
 	int PrefixLength;
 	BYTE CertificateHash[32];
@@ -681,7 +681,7 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method,
 	return TRUE;
 }
 
-int tls_do_handshake(rdpTls* tls, BOOL clientMode)
+static int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 {
 	CryptoCert cert;
 	int verify_status;
@@ -1052,7 +1052,7 @@ BOOL tls_send_alert(rdpTls* tls)
 	return TRUE;
 }
 
-BIO* findBufferedBio(BIO* front)
+static BIO* findBufferedBio(BIO* front)
 {
 	BIO* ret = front;
 

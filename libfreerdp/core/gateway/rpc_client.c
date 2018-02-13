@@ -47,7 +47,7 @@ static void rpc_pdu_reset(RPC_PDU* pdu)
 	Stream_SetPosition(pdu->s, 0);
 }
 
-RPC_PDU* rpc_pdu_new()
+static RPC_PDU* rpc_pdu_new(void)
 {
 	RPC_PDU* pdu;
 	pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
@@ -76,7 +76,7 @@ static void rpc_pdu_free(RPC_PDU* pdu)
 	free(pdu);
 }
 
-int rpc_client_receive_pipe_write(rdpRpc* rpc, const BYTE* buffer, size_t length)
+static int rpc_client_receive_pipe_write(rdpRpc* rpc, const BYTE* buffer, size_t length)
 {
 	int status = 0;
 	RpcClient* client = rpc->client;
@@ -118,7 +118,7 @@ int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer, size_t length)
 	return status;
 }
 
-int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
+static int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
 {
 	int status = 1;
 	const char* str = "RPC_CLIENT_STATE_UNKNOWN";
@@ -163,7 +163,7 @@ int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
 	return status;
 }
 
-int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
+static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 {
 	int status = -1;
 	rpcconn_rts_hdr_t* rts;
@@ -287,7 +287,7 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 	return status;
 }
 
-int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
+static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 {
 	BYTE* buffer;
 	RPC_PDU* pdu;
@@ -448,7 +448,7 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 	return 1;
 }
 
-int rpc_client_default_out_channel_recv(rdpRpc* rpc)
+static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 {
 	int status = -1;
 	UINT32 statusCode;
@@ -539,6 +539,7 @@ int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 					freerdp_set_last_error(rpc->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 			}
 
+			http_response_free(response);
 			return -1;
 		}
 
@@ -632,7 +633,7 @@ int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 	return status;
 }
 
-int rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
+static int rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 {
 	int status = -1;
 	HttpResponse* response;
@@ -738,6 +739,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 			if (rpc_ncacn_http_recv_in_channel_response(rpc, inChannel, response) < 0)
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_recv_in_channel_response failure");
+				http_response_free(response);
 				return -1;
 			}
 
@@ -746,6 +748,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 			if (rpc_ncacn_http_send_in_channel_request(rpc, inChannel) < 0)
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
+				http_response_free(response);
 				return -1;
 			}
 
@@ -758,6 +761,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 			if (rts_send_CONN_B1_pdu(rpc) < 0)
 			{
 				WLog_ERR(TAG, "rpc_send_CONN_B1_pdu error!");
+				http_response_free(response);
 				return -1;
 			}
 

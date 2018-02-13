@@ -31,19 +31,18 @@
 
 #define TAG FREERDP_TAG("core.gateway.ntlm")
 
-wStream* rpc_ntlm_http_request(rdpRpc* rpc, HttpContext* http, const char* method, int contentLength, SecBuffer* ntlmToken)
+static wStream* rpc_ntlm_http_request(rdpRpc* rpc, HttpContext* http, const char* method,
+                                      int contentLength, SecBuffer* ntlmToken)
 {
 	wStream* s;
 	HttpRequest* request;
 	char* base64NtlmToken = NULL;
-
 	request = http_request_new();
 
 	if (ntlmToken)
 		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, ntlmToken->cbBuffer);
 
 	http_request_set_method(request, method);
-
 	request->ContentLength = contentLength;
 	http_request_set_uri(request, http->URI);
 
@@ -55,9 +54,7 @@ wStream* rpc_ntlm_http_request(rdpRpc* rpc, HttpContext* http, const char* metho
 
 	s = http_request_write(http, request);
 	http_request_free(request);
-
 	free(base64NtlmToken);
-
 	return s;
 }
 
@@ -69,24 +66,20 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc, RpcInChannel* inChannel)
 	BOOL continueNeeded;
 	rdpNtlm* ntlm = inChannel->ntlm;
 	HttpContext* http = inChannel->http;
-
 	continueNeeded = ntlm_authenticate(ntlm);
-
 	contentLength = (continueNeeded) ? 0 : 0x40000000;
-
 	s = rpc_ntlm_http_request(rpc, http, "RPC_IN_DATA", contentLength, &ntlm->outputBuffer[0]);
 
 	if (!s)
 		return -1;
 
 	status = rpc_in_channel_write(inChannel, Stream_Buffer(s), Stream_Length(s));
-
 	Stream_Free(s, TRUE);
-
 	return (status > 0) ? 1 : -1;
 }
 
-int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, RpcInChannel* inChannel, HttpResponse* response)
+int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, RpcInChannel* inChannel,
+        HttpResponse* response)
 {
 	char* token64 = NULL;
 	int ntlmTokenLength = 0;
@@ -121,12 +114,12 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 	freerdp* instance = context->instance;
 
 	if (!settings->GatewayPassword || !settings->GatewayUsername ||
-			!strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
+	    !strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
 	{
 		if (instance->GatewayAuthenticate)
 		{
 			BOOL proceed = instance->GatewayAuthenticate(instance, &settings->GatewayUsername,
-						&settings->GatewayPassword, &settings->GatewayDomain);
+			               &settings->GatewayPassword, &settings->GatewayDomain);
 
 			if (!proceed)
 			{
@@ -139,18 +132,23 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 				if (settings->GatewayUsername)
 				{
 					free(settings->Username);
+
 					if (!(settings->Username = _strdup(settings->GatewayUsername)))
 						return -1;
 				}
+
 				if (settings->GatewayDomain)
 				{
 					free(settings->Domain);
+
 					if (!(settings->Domain = _strdup(settings->GatewayDomain)))
 						return -1;
 				}
+
 				if (settings->GatewayPassword)
 				{
 					free(settings->Password);
+
 					if (!(settings->Password = _strdup(settings->GatewayPassword)))
 						return -1;
 				}
@@ -159,7 +157,7 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 	}
 
 	if (!ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
-			settings->GatewayDomain, settings->GatewayPassword, tls->Bindings))
+	                      settings->GatewayDomain, settings->GatewayPassword, tls->Bindings))
 	{
 		return 0;
 	}
@@ -179,7 +177,8 @@ void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, RpcChannel* channel)
 	channel->ntlm = NULL;
 }
 
-int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChannel, BOOL replacement)
+int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChannel,
+        BOOL replacement)
 {
 	wStream* s;
 	int status;
@@ -187,7 +186,6 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChann
 	BOOL continueNeeded;
 	rdpNtlm* ntlm = outChannel->ntlm;
 	HttpContext* http = outChannel->http;
-
 	continueNeeded = ntlm_authenticate(ntlm);
 
 	if (!replacement)
@@ -201,13 +199,12 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChann
 		return -1;
 
 	status = rpc_out_channel_write(outChannel, Stream_Buffer(s), Stream_Length(s));
-
 	Stream_Free(s, TRUE);
-
 	return (status > 0) ? 1 : -1;
 }
 
-int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, RpcOutChannel* outChannel, HttpResponse* response)
+int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, RpcOutChannel* outChannel,
+        HttpResponse* response)
 {
 	char* token64 = NULL;
 	int ntlmTokenLength = 0;
