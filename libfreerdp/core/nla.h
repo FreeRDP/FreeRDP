@@ -38,12 +38,12 @@ typedef struct rdp_nla rdpNla;
 
 enum _NLA_STATE
 {
-    NLA_STATE_INITIAL,
-    NLA_STATE_NEGO_TOKEN,
-    NLA_STATE_PUB_KEY_AUTH,
-    NLA_STATE_AUTH_INFO,
-    NLA_STATE_POST_NEGO,
-    NLA_STATE_FINAL
+	NLA_STATE_INITIAL,
+	NLA_STATE_NEGO_TOKEN,
+	NLA_STATE_PUB_KEY_AUTH,
+	NLA_STATE_AUTH_INFO,
+	NLA_STATE_POST_NEGO,
+	NLA_STATE_FINAL
 };
 typedef enum _NLA_STATE NLA_STATE;
 
@@ -60,7 +60,11 @@ struct rdp_nla
 	rdpSettings* settings;
 	rdpTransport* transport;
 	UINT32 cbMaxToken;
+#if defined(UNICODE)
+	SEC_WCHAR* packageName;
+#else
 	SEC_CHAR* packageName;
+#endif
 	UINT32 version;
 	UINT32 errorCode;
 	ULONG fContextReq;

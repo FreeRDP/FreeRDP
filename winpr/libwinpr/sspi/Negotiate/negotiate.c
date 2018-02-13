@@ -24,6 +24,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/tchar.h>
 
 #include "negotiate.h"
 
@@ -72,9 +73,9 @@ const SecPkgInfoW NEGOTIATE_SecPkgInfoW =
 	NEGOTIATE_SecPkgInfoW_Comment /* Comment */
 };
 
-static void negotiate_SetSubPackage(NEGOTIATE_CONTEXT* context, const char* name)
+static void negotiate_SetSubPackage(NEGOTIATE_CONTEXT* context, const TCHAR* name)
 {
-	if (strncmp(name, KERBEROS_SSP_NAME, sizeof(KERBEROS_SSP_NAME)) == 0)
+	if (_tcsnccmp(name, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0)
 	{
 		context->sspiA = (SecurityFunctionTableA*) &KERBEROS_SecurityFunctionTableA;
 		context->sspiW = (SecurityFunctionTableW*) &KERBEROS_SecurityFunctionTableW;
@@ -155,7 +156,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(PCredHandl
 		if (!pInput)
 		{
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_SetSubPackage(context, (const char*) NTLM_SSP_NAME);
+			negotiate_SetSubPackage(context, NTLM_SSP_NAME);
 		}
 
 		status = context->sspiW->InitializeSecurityContextW(phCredential, &(context->SubContext),
@@ -213,7 +214,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(PCredHandl
 		if (!pInput)
 		{
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_SetSubPackage(context, (const char*) NTLM_SSP_NAME);
+			negotiate_SetSubPackage(context, NTLM_SSP_NAME);
 		}
 
 		status = context->sspiA->InitializeSecurityContextA(phCredential, &(context->SubContext),
@@ -244,8 +245,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(PCredHandle phC
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NEGO_SSP_NAME);
 	}
 
-	negotiate_SetSubPackage(context,
-	                        (const char*) NTLM_SSP_NAME); /* server-side Kerberos not yet implemented */
+	negotiate_SetSubPackage(context, NTLM_SSP_NAME); /* server-side Kerberos not yet implemented */
 	status = context->sspiA->AcceptSecurityContext(phCredential, &(context->SubContext),
 	         pInput, fContextReq, TargetDataRep, &(context->SubContext),
 	         pOutput, pfContextAttr, ptsTimeStamp);

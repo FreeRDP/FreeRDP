@@ -321,7 +321,7 @@ static int nla_client_init(rdpNla* nla)
 #endif
 	nla->cbMaxToken = nla->pPackageInfo->cbMaxToken;
 	nla->packageName = nla->pPackageInfo->Name;
-	WLog_DBG(TAG, "%s %"PRIu32" : packageName=%s ; cbMaxToken=%d", __FUNCTION__, __LINE__,
+	WLog_DBG(TAG, "%s %"PRIu32" : packageName=%ls ; cbMaxToken=%d", __FUNCTION__, __LINE__,
 	         nla->packageName, nla->cbMaxToken);
 	nla->status = nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
 	              SECPKG_CRED_OUTBOUND, NULL, nla->identity, NULL, NULL, &nla->credentials,
@@ -1026,9 +1026,9 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 	size_t public_key_length;
-	const BOOL krb = (strncmp(nla->packageName, KERBEROS_SSP_NAME, sizeof(KERBEROS_SSP_NAME)) == 0);
-	const BOOL nego = (strncmp(nla->packageName, NEGO_SSP_NAME, sizeof(NEGO_SSP_NAME)) == 0);
-	const BOOL ntlm = (strncmp(nla->packageName,  NTLM_SSP_NAME, sizeof(NTLM_SSP_NAME)) == 0);
+	const BOOL krb = (_tcsncmp(nla->packageName, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0);
+	const BOOL nego = (_tcsncmp(nla->packageName, NEGO_SSP_NAME, ARRAYSIZE(NEGO_SSP_NAME)) == 0);
+	const BOOL ntlm = (_tcsncmp(nla->packageName,  NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0);
 	public_key_length = nla->PublicKey.cbBuffer;
 
 	if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, public_key_length + nla->ContextSizes.cbSecurityTrailer))
@@ -1090,12 +1090,12 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	if (!nla)
 		goto fail;
 
-	krb = (strncmp(nla->packageName, KERBEROS_SSP_NAME, sizeof(KERBEROS_SSP_NAME)) == 0);
-	nego = (strncmp(nla->packageName, NEGO_SSP_NAME, sizeof(NEGO_SSP_NAME)) == 0);
-	ntlm = (strncmp(nla->packageName,  NTLM_SSP_NAME, sizeof(NTLM_SSP_NAME)) == 0);
+	krb = (_tcsncmp(nla->packageName, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0);
+	nego = (_tcsncmp(nla->packageName, NEGO_SSP_NAME, ARRAYSIZE(NEGO_SSP_NAME)) == 0);
+	ntlm = (_tcsncmp(nla->packageName,  NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0);
 	signature_length = nla->pubKeyAuth.cbBuffer - nla->PublicKey.cbBuffer;
 
-	if (signature_length < 0 || signature_length > nla->ContextSizes.cbSecurityTrailer)
+	if ((signature_length < 0) || (signature_length > nla->ContextSizes.cbSecurityTrailer))
 	{
 		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %"PRIu32"", nla->pubKeyAuth.cbBuffer);
 		goto fail;
@@ -1441,9 +1441,9 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
-	const BOOL krb = (strncmp(nla->packageName, KERBEROS_SSP_NAME, sizeof(KERBEROS_SSP_NAME)) == 0);
-	const BOOL nego = (strncmp(nla->packageName, NEGO_SSP_NAME, sizeof(NEGO_SSP_NAME)) == 0);
-	const BOOL ntlm = (strncmp(nla->packageName,  NTLM_SSP_NAME, sizeof(NTLM_SSP_NAME)) == 0);
+	const BOOL krb = (_tcsncmp(nla->packageName, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0);
+	const BOOL nego = (_tcsncmp(nla->packageName, NEGO_SSP_NAME, ARRAYSIZE(NEGO_SSP_NAME)) == 0);
+	const BOOL ntlm = (_tcsncmp(nla->packageName,  NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0);
 
 	if (!nla_encode_ts_credentials(nla))
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -1497,9 +1497,9 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
-	const BOOL krb = (strncmp(nla->packageName, KERBEROS_SSP_NAME, sizeof(KERBEROS_SSP_NAME)) == 0);
-	const BOOL nego = (strncmp(nla->packageName, NEGO_SSP_NAME, sizeof(NEGO_SSP_NAME)) == 0);
-	const BOOL ntlm = (strncmp(nla->packageName,  NTLM_SSP_NAME, sizeof(NTLM_SSP_NAME)) == 0);
+	const BOOL krb = (_tcsncmp(nla->packageName, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0);
+	const BOOL nego = (_tcsncmp(nla->packageName, NEGO_SSP_NAME, ARRAYSIZE(NEGO_SSP_NAME)) == 0);
+	const BOOL ntlm = (_tcsncmp(nla->packageName,  NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0);
 
 	if (nla->authInfo.cbBuffer < 1)
 	{
