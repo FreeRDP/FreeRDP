@@ -144,7 +144,7 @@ static BOOL rdg_send_handshake(rdpRdg* rdg)
 	Stream_Write_UINT8(s, 1); /* VersionMajor (1 byte) */
 	Stream_Write_UINT8(s, 0); /* VersionMinor (1 byte) */
 	Stream_Write_UINT16(s, 0); /* ClientVersion (2 bytes), must be 0 */
-	Stream_Write_UINT16(s, 0); /* ExtendedAuthentication (2 bytes) */
+	Stream_Write_UINT16(s, rdg->extAuth); /* ExtendedAuthentication (2 bytes) */
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
 	Stream_Free(s, TRUE);
@@ -161,20 +161,54 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 {
 	wStream* s;
 	BOOL status;
-	s = Stream_New(NULL, 16);
+	WCHAR* PAACookie = NULL;
+	UINT16 PAACookieLen = 0;
 
-	if (!s)
-		return FALSE;
+	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
+	{
+		PAACookieLen = ConvertToUnicode(CP_UTF8, 0, rdg->settings->GatewayAccessToken, -1, &PAACookie, 0);
+
+		if (!PAACookie)
+			return FALSE;
+
+		s = Stream_New(NULL, 16 + 2 + 2 * PAACookieLen);
+
+		if (!s)
+		{
+			free(PAACookie);
+			return FALSE;
+		}
+	}
+	else
+	{
+		s = Stream_New(NULL, 16);
+
+		if (!s)
+			return FALSE;
+	}
 
 	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_CREATE); /* Type (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
 	Stream_Write_UINT32(s, 16); /* PacketLength (4 bytes) */
 	Stream_Write_UINT32(s, HTTP_CAPABILITY_TYPE_QUAR_SOH); /* CapabilityFlags (4 bytes) */
-	Stream_Write_UINT16(s, 0); /* FieldsPresent (2 bytes) */
-	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
+
+	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
+	{
+		Stream_Write_UINT16(s, 1); /* FieldsPresent (2 bytes) */
+		Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
+		Stream_Write_UINT16(s, PAACookieLen * 2); /* PAA cookie string length */
+		Stream_Write_UTF16_String(s, PAACookie, PAACookieLen);
+	}
+	else
+	{
+		Stream_Write_UINT16(s, 0); /* FieldsPresent (2 bytes) */
+		Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
+	}
+
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
 	Stream_Free(s, TRUE);
+	free(PAACookie);
 
 	if (status)
 	{
@@ -326,6 +360,36 @@ static BOOL rdg_process_out_channel_response(rdpRdg* rdg, HttpResponse* response
 	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm = rdg->ntlm;
 
+	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
+	{
+		if (response->StatusCode == HTTP_STATUS_OK)
+		{
+			rdg->state = RDG_CLIENT_STATE_OUT_CHANNEL_AUTHORIZED;
+			/*
+				packet trace shows additional 10 bytes with value 0xabcdabcdabcdabcdabcd
+				which is not a normal header + data format
+				can't find any documentation on how to handle, chose to just read an extra 10 bytes
+			*/
+			s = Stream_New(NULL, 10);
+
+			if (!s)
+				return FALSE;
+
+			status = BIO_read(rdg->tlsOut->bio, Stream_Pointer(s), 10);
+			Stream_Free(s, TRUE);
+
+			if (status <= 0)
+				return FALSE;
+
+			return TRUE;
+		}
+		else
+		{
+			/* fallback to regular authentication scheme */
+			rdg->extAuth = HTTP_EXTENDED_AUTH_NONE;
+		}
+	}
+
 	if (response->StatusCode != HTTP_STATUS_DENIED)
 	{
 		WLog_DBG(TAG, "RDG not supported");
@@ -392,6 +456,32 @@ static BOOL rdg_process_in_channel_response(rdpRdg* rdg, HttpResponse* response)
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm = rdg->ntlm;
+
+	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
+	{
+		if (response->StatusCode == HTTP_STATUS_OK)
+		{
+			rdg->state = RDG_CLIENT_STATE_IN_CHANNEL_AUTHORIZED;
+			/* send http headers again */
+			s = rdg_build_http_request(rdg, "RDG_IN_DATA");
+
+			if (!s)
+				return FALSE;
+
+			status = tls_write_all(rdg->tlsIn, Stream_Buffer(s), Stream_Length(s));
+			Stream_Free(s, TRUE);
+
+			if (status < 0)
+				return FALSE;
+
+			return TRUE;
+		}
+		else
+		{
+			rdg->extAuth = HTTP_EXTENDED_AUTH_NONE;
+		}
+	}
+
 	WLog_DBG(TAG, "In Channel authorization required");
 
 	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
@@ -791,20 +881,25 @@ static BOOL rdg_send_out_channel_request(rdpRdg* rdg)
 {
 	wStream* s = NULL;
 	int status;
-	rdg->ntlm = ntlm_new();
+	rdg->ntlm = NULL;
 
-	if (!rdg->ntlm)
-		return FALSE;
+	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
+	{
+		rdg->ntlm = ntlm_new();
 
-	status = rdg_ncacn_http_ntlm_init(rdg, rdg->tlsOut);
+		if (!rdg->ntlm)
+			return FALSE;
 
-	if (!status)
-		return FALSE;
+		status = rdg_ncacn_http_ntlm_init(rdg, rdg->tlsOut);
 
-	status = ntlm_authenticate(rdg->ntlm);
+		if (!status)
+			return FALSE;
 
-	if (!status)
-		return FALSE;
+		status = ntlm_authenticate(rdg->ntlm);
+
+		if (!status)
+			return FALSE;
+	}
 
 	s = rdg_build_http_request(rdg, "RDG_OUT_DATA");
 
@@ -825,20 +920,25 @@ static BOOL rdg_send_in_channel_request(rdpRdg* rdg)
 {
 	int status;
 	wStream* s = NULL;
-	rdg->ntlm = ntlm_new();
+	rdg->ntlm = NULL;
 
-	if (!rdg->ntlm)
-		return FALSE;
+	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
+	{
+		rdg->ntlm = ntlm_new();
 
-	status = rdg_ncacn_http_ntlm_init(rdg, rdg->tlsIn);
+		if (!rdg->ntlm)
+			return FALSE;
 
-	if (!status)
-		return FALSE;
+		status = rdg_ncacn_http_ntlm_init(rdg, rdg->tlsIn);
 
-	status = ntlm_authenticate(rdg->ntlm);
+		if (!status)
+			return FALSE;
 
-	if (!status)
-		return FALSE;
+		status = ntlm_authenticate(rdg->ntlm);
+
+		if (!status)
+			return FALSE;
+	}
 
 	s = rdg_build_http_request(rdg, "RDG_IN_DATA");
 
@@ -1501,6 +1601,11 @@ rdpRdg* rdg_new(rdpTransport* transport)
 		rdg->state = RDG_CLIENT_STATE_INITIAL;
 		rdg->context = transport->context;
 		rdg->settings = rdg->context->settings;
+		rdg->extAuth = HTTP_EXTENDED_AUTH_NONE;
+
+		if (rdg->settings->GatewayAccessToken)
+			rdg->extAuth = HTTP_EXTENDED_AUTH_PAA;
+
 		UuidCreate(&rdg->guid);
 		rpcStatus = UuidToStringA(&rdg->guid, &stringUuid);
 
@@ -1538,6 +1643,23 @@ rdpRdg* rdg_new(rdpTransport* transport)
 		    || !rdg->http->Host || !rdg->http->RdgConnectionId)
 		{
 			goto rdg_alloc_error;
+		}
+
+		if (rdg->extAuth != HTTP_EXTENDED_AUTH_NONE)
+		{
+			switch (rdg->extAuth)
+			{
+				case HTTP_EXTENDED_AUTH_PAA:
+					http_context_set_rdg_auth_scheme(rdg->http, "PAA");
+
+					if (!rdg->http->RdgAuthScheme)
+						goto rdg_alloc_error;
+
+					break;
+
+				default:
+					WLog_DBG(TAG, "RDG extended authentication method %d not supported", rdg->extAuth);
+			}
 		}
 
 		rdg->frontBio = BIO_new(BIO_s_rdg());
