@@ -447,6 +447,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 {
 	XF_MODIFIER_KEYS mod = { 0 };
 	xk_keyboard_get_modifier_keys(xfc, &mod);
+	rdpContext* ctx = &xfc->context;
 
 	// remember state of RightCtrl to ungrab keyboard if next action is release of RightCtrl
 	// do not return anything such that the key could be used by client if ungrab is not the goal
@@ -554,7 +555,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 				EventArgsInit(&e, "xfreerdp");
 				e.dx = pdx;
 				e.dy = pdy;
-				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
+				PubSub_OnPanningChange(ctx->pubSub, xfc, &e);
 				return TRUE;
 			}
 
@@ -564,7 +565,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 				EventArgsInit(&e, "xfreerdp");
 				e.dx = zdx;
 				e.dy = zdy;
-				PubSub_OnZoomingChange(((rdpContext*) xfc)->pubSub, xfc, &e);
+				PubSub_OnZoomingChange(ctx->pubSub, xfc, &e);
 				return TRUE;
 			}
 		}
@@ -614,13 +615,14 @@ BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 	return TRUE;
 }
 
-BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState, UINT32 imeConvMode)
+BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
+                                UINT32 imeConvMode)
 {
 	if (!context)
 		return FALSE;
 
-	WLog_WARN(TAG, "KeyboardSetImeStatus(unitId=%04"PRIx16", imeState=%08"PRIx32", imeConvMode=%08"PRIx32") ignored",
+	WLog_WARN(TAG,
+	          "KeyboardSetImeStatus(unitId=%04"PRIx16", imeState=%08"PRIx32", imeConvMode=%08"PRIx32") ignored",
 	          imeId, imeState, imeConvMode);
-
 	return TRUE;
 }

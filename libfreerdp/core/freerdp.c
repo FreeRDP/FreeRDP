@@ -637,7 +637,7 @@ BOOL freerdp_context_new(freerdp* instance)
 		goto fail;
 
 	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events,
-	                     sizeof(FreeRDP_Events) / sizeof(wEventType));
+	                     ARRAYSIZE(FreeRDP_Events));
 	context->metrics = metrics_new(context);
 
 	if (!context->metrics)

@@ -90,7 +90,6 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, VideoSurface* surface
 	surfaceRect.top = surface->y;
 	surfaceRect.right = surface->x + surface->w;
 	surfaceRect.bottom = surface->y + surface->h;
-
 	update->BeginPaint(gdi->context);
 	{
 		const UINT32 nXSrc = surface->x;
@@ -140,9 +139,9 @@ void gdi_video_control_uninit(rdpGdi* gdi, VideoClientContext* video)
 	gdi->video = NULL;
 }
 
-static void gdi_video_timer(void *voidContext, TimerEventArgs* timer)
+static void gdi_video_timer(void* context, TimerEventArgs* timer)
 {
-	rdpContext *ctx = (rdpContext *)voidContext;
+	rdpContext* ctx = (rdpContext*)context;
 	rdpGdi* gdi = ctx->gdi;
 
 	if (gdi && gdi->video)
