@@ -61,6 +61,7 @@ PTP_CLEANUP_GROUP winpr_CreateThreadpoolCleanupGroup(void)
 	if (pCreateThreadpoolCleanupGroup)
 		return pCreateThreadpoolCleanupGroup();
 
+	return cleanupGroup;
 #else
 	cleanupGroup = (PTP_CLEANUP_GROUP) calloc(1, sizeof(TP_CLEANUP_GROUP));
 
