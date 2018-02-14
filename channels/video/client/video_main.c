@@ -82,7 +82,7 @@ typedef struct _VIDEO_PLUGIN VIDEO_PLUGIN;
 
 #define XF_VIDEO_UNLIMITED_RATE 31
 
-BYTE MFVideoFormat_H264[] = {'H', '2', '6', '4',
+static const BYTE MFVideoFormat_H264[] = {'H', '2', '6', '4',
 		0x00, 0x00,
 		0x10, 0x00,
 		0x80, 0x00,
