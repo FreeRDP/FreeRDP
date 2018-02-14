@@ -146,8 +146,9 @@ static void xf_disp_OnGraphicsReset(rdpContext* context, GraphicsResetEventArgs*
 	}
 }
 
-static void xf_disp_OnTimer(rdpContext* context, TimerEventArgs* e)
+static void xf_disp_OnTimer(void* voidContext, TimerEventArgs* e)
 {
+	rdpContext* context = (rdpContext *)voidContext;
 	xfContext *xfc = (xfContext *)context;
 	xfDispContext *xfDisp = xfc->xfDisp;
 	rdpSettings *settings = context->settings;
