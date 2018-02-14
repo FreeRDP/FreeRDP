@@ -623,7 +623,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 {
 	size_t size;
 	size_t position;
-	size_t bodyLength;
+	size_t bodyLength = 0;
 	size_t payloadOffset;
 	HttpResponse* response;
 	size = 2048;

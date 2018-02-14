@@ -613,12 +613,14 @@ BOOL xf_create_window(xfContext* xfc)
 		                             settings->DesktopHeight, xfc->depth);
 
 	xfc->drawing = xfc->primary;
+
 	if (!xfc->bitmap_mono)
 		xfc->bitmap_mono = XCreatePixmap(xfc->display, xfc->drawable, 8, 8, 1);
 
 	if (!xfc->gc_mono)
 		xfc->gc_mono = XCreateGC(xfc->display, xfc->bitmap_mono, GCGraphicsExposures,
 		                         &gcv);
+
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, BlackPixelOfScreen(xfc->screen));
@@ -1117,9 +1119,9 @@ static BOOL xf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
-	                                 (pChannelConnectedEventHandler) xf_OnChannelConnectedEventHandler);
+	                                 xf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-	                                    (pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
+	                                    xf_OnChannelDisconnectedEventHandler);
 
 	if (!freerdp_client_load_addins(channels, instance->settings))
 		return FALSE;
@@ -1315,7 +1317,7 @@ static void xf_post_disconnect(freerdp* instance)
 		xfc->drawable = NULL;
 	else
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
-	
+
 	xf_window_free(xfc);
 	xf_keyboard_free(xfc);
 }
@@ -1654,17 +1656,18 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 	return reason;
 }
 
-static void xf_TerminateEventHandler(rdpContext* context, TerminateEventArgs* e)
+static void xf_TerminateEventHandler(void* context, TerminateEventArgs* e)
 {
-	freerdp_abort_connect(context->instance);
+	rdpContext* ctx = (rdpContext*)context;
+	freerdp_abort_connect(ctx->instance);
 }
 
 #ifdef WITH_XRENDER
-static void xf_ZoomingChangeEventHandler(rdpContext* context,
+static void xf_ZoomingChangeEventHandler(void* context,
         ZoomingChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
-	rdpSettings* settings = context->settings;
+	rdpSettings* settings = xfc->context.settings;
 	int w = xfc->scaledWidth + e->dx;
 	int h = xfc->scaledHeight + e->dy;
 
@@ -1685,11 +1688,11 @@ static void xf_ZoomingChangeEventHandler(rdpContext* context,
 	xf_draw_screen(xfc, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
 }
 
-static void xf_PanningChangeEventHandler(rdpContext* context,
+static void xf_PanningChangeEventHandler(void* context,
         PanningChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
-	rdpSettings* settings = context->settings;
+	rdpSettings* settings = xfc->context.settings;
 
 	if (e->dx == 0 && e->dy == 0)
 		return;
@@ -1786,12 +1789,12 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyChangedCertificate = client_cli_verify_changed_certificate;
 	instance->LogonErrorInfo = xf_logon_error_info;
 	PubSub_SubscribeTerminate(context->pubSub,
-	                          (pTerminateEventHandler) xf_TerminateEventHandler);
+	                          xf_TerminateEventHandler);
 #ifdef WITH_XRENDER
 	PubSub_SubscribeZoomingChange(context->pubSub,
-	                              (pZoomingChangeEventHandler) xf_ZoomingChangeEventHandler);
+	                              xf_ZoomingChangeEventHandler);
 	PubSub_SubscribePanningChange(context->pubSub,
-	                              (pPanningChangeEventHandler) xf_PanningChangeEventHandler);
+	                              xf_PanningChangeEventHandler);
 #endif
 	xfc->UseXThreads = TRUE;
 	//xfc->debug = TRUE;

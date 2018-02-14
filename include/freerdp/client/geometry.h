@@ -61,7 +61,7 @@ struct _geometry_client_context
 };
 
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif
 
 FREERDP_API void mappedGeometryRef(MAPPED_GEOMETRY *g);

@@ -34,10 +34,10 @@
 #include "xf_disp.h"
 #include "xf_video.h"
 
-void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
+void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
-	rdpSettings* settings = context->settings;
+	rdpSettings* settings = xfc->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -50,7 +50,7 @@ void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
+			gdi_graphics_pipeline_init(xfc->context.gdi, (RdpgfxClientContext*) e->pInterface);
 		else
 			xf_graphics_pipeline_init(xfc, (RdpgfxClientContext*) e->pInterface);
 	}
@@ -87,10 +87,10 @@ void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 	}
 }
 
-void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
+void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
-	rdpSettings* settings = context->settings;
+	rdpSettings* settings = xfc->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -103,7 +103,7 @@ void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnect
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
+			gdi_graphics_pipeline_uninit(xfc->context.gdi, (RdpgfxClientContext*) e->pInterface);
 		else
 			xf_graphics_pipeline_uninit(xfc, (RdpgfxClientContext*) e->pInterface);
 	}
