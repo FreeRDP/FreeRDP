@@ -540,8 +540,6 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 
 			if (!authScheme || !authValue)
 				return FALSE;
-
-			*separator = ' ';
 		}
 		else
 		{
@@ -646,7 +644,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 {
 	size_t size;
 	size_t position;
-	size_t bodyLength;
+	size_t bodyLength = 0;
 	size_t payloadOffset;
 	HttpResponse* response;
 	size = 2048;
@@ -673,7 +671,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		}
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
-		VALGRIND_MAKE_MEM_DEFINED(Stream_Pointer(s), status);
+		VALGRIND_MAKE_MEM_DEFINED(Stream_Pointer(response->data), status);
 #endif
 		Stream_Seek(response->data, status);
 

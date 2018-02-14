@@ -28,7 +28,7 @@
 #pragma mark Connection helpers
 
 static void ios_OnChannelConnectedEventHandler(
-    rdpContext* context,
+    void* context,
     ChannelConnectedEventArgs* e)
 {
 	rdpSettings* settings;
@@ -37,18 +37,18 @@ static void ios_OnChannelConnectedEventHandler(
 	if (!context || !e)
 	{
 		WLog_FATAL(TAG, "%s(context=%p, EventArgs=%p",
-		           __FUNCTION__, (void*) context, (void*) e);
+		           __FUNCTION__, context, (void*) e);
 		return;
 	}
 
 	afc = (mfContext*) context;
-	settings = context->settings;
+	settings = afc->_p.settings;
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
 		{
-			gdi_graphics_pipeline_init(context->gdi,
+			gdi_graphics_pipeline_init(afc->_p.gdi,
 			                           (RdpgfxClientContext*) e->pInterface);
 		}
 		else
@@ -60,7 +60,7 @@ static void ios_OnChannelConnectedEventHandler(
 }
 
 static void ios_OnChannelDisconnectedEventHandler(
-    rdpContext* context, ChannelDisconnectedEventArgs* e)
+    void* context, ChannelDisconnectedEventArgs* e)
 {
 	rdpSettings* settings;
 	mfContext* afc;
@@ -68,18 +68,18 @@ static void ios_OnChannelDisconnectedEventHandler(
 	if (!context || !e)
 	{
 		WLog_FATAL(TAG, "%s(context=%p, EventArgs=%p",
-		           __FUNCTION__, (void*) context, (void*) e);
+		           __FUNCTION__, context, (void*) e);
 		return;
 	}
 
 	afc = (mfContext*) context;
-	settings = context->settings;
+	settings = afc->_p.settings;
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
 		{
-			gdi_graphics_pipeline_uninit(context->gdi,
+			gdi_graphics_pipeline_uninit(afc->_p.gdi,
 			                             (RdpgfxClientContext*) e->pInterface);
 		}
 		else
@@ -142,7 +142,6 @@ static BOOL ios_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 	rc = PubSub_SubscribeChannelConnected(
 	         instance->context->pubSub,
-	         (pChannelConnectedEventHandler)
 	         ios_OnChannelConnectedEventHandler);
 
 	if (rc != CHANNEL_RC_OK)
@@ -153,7 +152,6 @@ static BOOL ios_pre_connect(freerdp* instance)
 
 	rc = PubSub_SubscribeChannelDisconnected(
 	         instance->context->pubSub,
-	         (pChannelDisconnectedEventHandler)
 	         ios_OnChannelDisconnectedEventHandler);
 
 	if (rc != CHANNEL_RC_OK)
@@ -262,7 +260,7 @@ static BOOL ios_post_connect(freerdp* instance)
 	instance->update->DesktopResize = ios_ui_resize_window;
 	pointer_cache_register_callbacks(instance->update);
 	[mfi->session performSelectorOnMainThread:@selector(sessionDidConnect)
-	 withObject:nil waitUntilDone:YES];
+	              withObject:nil waitUntilDone:YES];
 	return TRUE;
 }
 
@@ -503,5 +501,5 @@ void ios_uninit_freerdp()
 /* compatibilty functions */
 size_t fwrite$UNIX2003(const void* ptr, size_t size, size_t nmemb, FILE* stream)
 {
-	return fwrite(ptr, size , nmemb, stream);
+	return fwrite(ptr, size, nmemb, stream);
 }

@@ -58,7 +58,7 @@
 #define FREERDP_JNI_VERSION "2.0.0"
 
 static void android_OnChannelConnectedEventHandler(
-    rdpContext* context,
+    void* context,
     ChannelConnectedEventArgs* e)
 {
 	rdpSettings* settings;
@@ -67,18 +67,18 @@ static void android_OnChannelConnectedEventHandler(
 	if (!context || !e)
 	{
 		WLog_FATAL(TAG, "%s(context=%p, EventArgs=%p",
-		           __FUNCTION__, (void*) context, (void*) e);
+		           __FUNCTION__, context, (void*) e);
 		return;
 	}
 
 	afc = (androidContext*) context;
-	settings = context->settings;
+	settings = afc->rdpCtx.settings;
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
 		{
-			gdi_graphics_pipeline_init(context->gdi,
+			gdi_graphics_pipeline_init(afc->rdpCtx.gdi,
 			                           (RdpgfxClientContext*) e->pInterface);
 		}
 		else
@@ -94,7 +94,7 @@ static void android_OnChannelConnectedEventHandler(
 }
 
 static void android_OnChannelDisconnectedEventHandler(
-    rdpContext* context, ChannelDisconnectedEventArgs* e)
+    void* context, ChannelDisconnectedEventArgs* e)
 {
 	rdpSettings* settings;
 	androidContext* afc;
@@ -102,18 +102,18 @@ static void android_OnChannelDisconnectedEventHandler(
 	if (!context || !e)
 	{
 		WLog_FATAL(TAG, "%s(context=%p, EventArgs=%p",
-		           __FUNCTION__, (void*) context, (void*) e);
+		           __FUNCTION__, context, (void*) e);
 		return;
 	}
 
 	afc = (androidContext*) context;
-	settings = context->settings;
+	settings = afc->rdpCtx.settings;
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
 		{
-			gdi_graphics_pipeline_uninit(context->gdi,
+			gdi_graphics_pipeline_uninit(afc->rdpCtx.gdi,
 			                             (RdpgfxClientContext*) e->pInterface);
 		}
 		else
@@ -260,7 +260,6 @@ static BOOL android_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 	rc = PubSub_SubscribeChannelConnected(
 	         instance->context->pubSub,
-	         (pChannelConnectedEventHandler)
 	         android_OnChannelConnectedEventHandler);
 
 	if (rc != CHANNEL_RC_OK)
@@ -271,7 +270,6 @@ static BOOL android_pre_connect(freerdp* instance)
 
 	rc = PubSub_SubscribeChannelDisconnected(
 	         instance->context->pubSub,
-	         (pChannelDisconnectedEventHandler)
 	         android_OnChannelDisconnectedEventHandler);
 
 	if (rc != CHANNEL_RC_OK)

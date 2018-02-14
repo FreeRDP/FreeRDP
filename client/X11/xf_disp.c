@@ -92,11 +92,11 @@ static BOOL xf_disp_set_window_resizable(xfDispContext *xfDisp)
 }
 
 
-static void xf_disp_OnActivated(rdpContext* context, ActivatedEventArgs* e)
+static void xf_disp_OnActivated(void* context, ActivatedEventArgs* e)
 {
 	xfContext *xfc = (xfContext *)context;
 	xfDispContext *xfDisp = xfc->xfDisp;
-	rdpSettings *settings = context->settings;
+	rdpSettings *settings = xfc->context.settings;
 
 	xfDisp->waitingResize = FALSE;
 
@@ -121,11 +121,11 @@ static void xf_disp_OnActivated(rdpContext* context, ActivatedEventArgs* e)
 }
 
 
-static void xf_disp_OnGraphicsReset(rdpContext* context, GraphicsResetEventArgs* e)
+static void xf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
 {
 	xfContext *xfc = (xfContext *)context;
 	xfDispContext *xfDisp = xfc->xfDisp;
-	rdpSettings *settings = context->settings;
+	rdpSettings *settings = xfc->context.settings;
 
 	xfDisp->waitingResize = FALSE;
 
@@ -146,11 +146,11 @@ static void xf_disp_OnGraphicsReset(rdpContext* context, GraphicsResetEventArgs*
 	}
 }
 
-static void xf_disp_OnTimer(rdpContext* context, TimerEventArgs* e)
+static void xf_disp_OnTimer(void* context, TimerEventArgs* e)
 {
 	xfContext *xfc = (xfContext *)context;
 	xfDispContext *xfDisp = xfc->xfDisp;
-	rdpSettings *settings = context->settings;
+	rdpSettings *settings = xfc->context.settings;
 
 	if (!xfDisp->activated || settings->Fullscreen)
 		return;
@@ -181,16 +181,16 @@ xfDispContext *xf_disp_new(xfContext* xfc)
 	ret->lastSentWidth = ret->targetWidth = xfc->context.settings->DesktopWidth;
 	ret->lastSentHeight = ret->targetHeight = xfc->context.settings->DesktopHeight;
 
-	PubSub_SubscribeActivated(xfc->context.pubSub, (pActivatedEventHandler)xf_disp_OnActivated);
-	PubSub_SubscribeGraphicsReset(xfc->context.pubSub, (pGraphicsResetEventHandler)xf_disp_OnGraphicsReset);
-	PubSub_SubscribeTimer(xfc->context.pubSub, (pTimerEventHandler)xf_disp_OnTimer);
+	PubSub_SubscribeActivated(xfc->context.pubSub, xf_disp_OnActivated);
+	PubSub_SubscribeGraphicsReset(xfc->context.pubSub, xf_disp_OnGraphicsReset);
+	PubSub_SubscribeTimer(xfc->context.pubSub, xf_disp_OnTimer);
 	return ret;
 }
 
 void xf_disp_free(xfDispContext *disp)
 {
-	PubSub_UnsubscribeActivated(disp->xfc->context.pubSub, (pActivatedEventHandler)xf_disp_OnActivated);
-	PubSub_UnsubscribeTimer(disp->xfc->context.pubSub, (pTimerEventHandler)xf_disp_OnTimer);
+	PubSub_UnsubscribeActivated(disp->xfc->context.pubSub, xf_disp_OnActivated);
+	PubSub_UnsubscribeTimer(disp->xfc->context.pubSub, xf_disp_OnTimer);
 	free(disp);
 }
 

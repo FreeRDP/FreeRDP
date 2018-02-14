@@ -56,11 +56,11 @@ static void wlf_encomsp_uninit(wlfContext* wlf, EncomspClientContext* encomsp)
 }
 
 
-void wlf_OnChannelConnectedEventHandler(rdpContext* context,
+void wlf_OnChannelConnectedEventHandler(void* context,
                                         ChannelConnectedEventArgs* e)
 {
 	wlfContext* wlf = (wlfContext*) context;
-	rdpSettings* settings = context->settings;
+	rdpSettings* settings = wlf->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -72,7 +72,7 @@ void wlf_OnChannelConnectedEventHandler(rdpContext* context,
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
+			gdi_graphics_pipeline_init(wlf->context.gdi, (RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -86,11 +86,11 @@ void wlf_OnChannelConnectedEventHandler(rdpContext* context,
 	}
 }
 
-void wlf_OnChannelDisconnectedEventHandler(rdpContext* context,
+void wlf_OnChannelDisconnectedEventHandler(void* context,
         ChannelDisconnectedEventArgs* e)
 {
 	wlfContext* wlf = (wlfContext*) context;
-	rdpSettings* settings = context->settings;
+	rdpSettings* settings = wlf->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -102,7 +102,7 @@ void wlf_OnChannelDisconnectedEventHandler(rdpContext* context,
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_uninit(context->gdi,
+			gdi_graphics_pipeline_uninit(wlf->context.gdi,
 			                             (RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
