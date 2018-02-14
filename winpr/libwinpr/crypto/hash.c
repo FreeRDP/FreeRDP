@@ -345,7 +345,7 @@ WINPR_DIGEST_CTX* winpr_Digest_New(void)
 }
 
 #if defined(WITH_OPENSSL)
-BOOL winpr_Digest_Init_Internal(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md, const EVP_MD* evp)
+static BOOL winpr_Digest_Init_Internal(WINPR_DIGEST_CTX* ctx, const EVP_MD* evp)
 {
 	EVP_MD_CTX* mdctx = (EVP_MD_CTX*) ctx;
 
@@ -359,7 +359,7 @@ BOOL winpr_Digest_Init_Internal(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md, const E
 }
 
 #elif defined(WITH_MBEDTLS)
-BOOL winpr_Digest_Init_Internal(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
+static BOOL winpr_Digest_Init_Internal(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 {
 	mbedtls_md_context_t* mdctx = (mbedtls_md_context_t*) ctx;
 	mbedtls_md_type_t md_type = winpr_mbedtls_get_md_type(md);
@@ -394,7 +394,7 @@ BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 		return FALSE;
 
 	EVP_MD_CTX_set_flags(mdctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-	return winpr_Digest_Init_Internal(ctx, md, evp);
+	return winpr_Digest_Init_Internal(ctx, evp);
 #elif defined(WITH_MBEDTLS)
 
 	/* Only MD5 is supported for FIPS allow override */
@@ -409,7 +409,7 @@ BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 {
 #if defined(WITH_OPENSSL)
 	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
-	return winpr_Digest_Init_Internal(ctx, md, evp);
+	return winpr_Digest_Init_Internal(ctx, evp);
 #else
 	return winpr_Digest_Init_Internal(ctx, md);
 #endif
@@ -477,7 +477,7 @@ void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx)
 #endif
 }
 
-BOOL winpr_Digest_Allow_FIPS(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen)
+BOOL winpr_Digest_Allow_FIPS(WINPR_MD_TYPE md, const BYTE* input, size_t ilen, BYTE* output, size_t olen)
 {
 	BOOL result = FALSE;
 	WINPR_DIGEST_CTX* ctx = winpr_Digest_New();
@@ -500,7 +500,7 @@ out:
 	return result;
 }
 
-BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen)
+BOOL winpr_Digest(WINPR_MD_TYPE md, const BYTE* input, size_t ilen, BYTE* output, size_t olen)
 {
 	BOOL result = FALSE;
 	WINPR_DIGEST_CTX* ctx = winpr_Digest_New();
