@@ -140,9 +140,10 @@ void gdi_video_control_uninit(rdpGdi* gdi, VideoClientContext* video)
 	gdi->video = NULL;
 }
 
-static void gdi_video_timer(void* ctx, TimerEventArgs* timer)
+static void gdi_video_timer(void *voidContext, TimerEventArgs* timer)
 {
-	rdpGdi* gdi = (rdpGdi*)ctx;
+	rdpContext *ctx = (rdpContext *)voidContext;
+	rdpGdi* gdi = ctx->gdi;
 
 	if (gdi && gdi->video)
 		gdi->video->timer(gdi->video, timer->now);

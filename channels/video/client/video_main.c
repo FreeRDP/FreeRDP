@@ -393,8 +393,8 @@ static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY *geometry)
 			r->x, r->y, r->width, r->height
 	);
 
-	presentation->surface->x = geometry->left + r->x;
-	presentation->surface->y = geometry->top + r->y;
+	presentation->surface->x = geometry->topLevelLeft + geometry->left;
+	presentation->surface->y = geometry->topLevelTop + geometry->top;
 
 	return TRUE;
 }
@@ -455,8 +455,8 @@ static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATI
 
 		WLog_DBG(TAG, "creating presentation 0x%x", req->PresentationId);
 		presentation = PresentationContext_new(video, req->PresentationId,
-				geom->left + geom->geometry.boundingRect.x,
-				geom->top + geom->geometry.boundingRect.y,
+				geom->topLevelLeft + geom->left,
+				geom->topLevelTop + geom->top,
 				req->SourceWidth, req->SourceHeight);
 		if (!presentation)
 		{
