@@ -531,7 +531,6 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		{
 			WLog_ERR(TAG, "error! Status Code: %"PRIu32"", statusCode);
 			http_response_print(response);
-			http_response_free(response);
 
 			if (statusCode == HTTP_STATUS_DENIED)
 			{

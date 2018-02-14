@@ -517,8 +517,6 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 
 			if (!authScheme || !authValue)
 				return FALSE;
-
-			*separator = ' ';
 		}
 		else
 		{
