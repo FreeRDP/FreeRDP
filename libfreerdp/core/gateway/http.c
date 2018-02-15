@@ -186,10 +186,7 @@ BOOL http_context_set_rdg_auth_scheme(HttpContext* context, const char* RdgAuthS
 	free(context->RdgAuthScheme);
 	context->RdgAuthScheme = _strdup(RdgAuthScheme);
 
-	if (!context->RdgAuthScheme)
-		return FALSE;
-
-	return TRUE;
+	return context->RdgAuthScheme != NULL;
 }
 
 void http_context_free(HttpContext* context)
@@ -344,64 +341,34 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 	lines[count++] = http_encode_body_line("Pragma", context->Pragma);
 	lines[count++] = http_encode_body_line("Accept", context->Accept);
 	lines[count++] = http_encode_body_line("User-Agent", context->UserAgent);
+	lines[count++] = http_encode_body_line("Host", context->Host);
+
 	if (!context->RdgAuthScheme)
 		lines[count++] = http_encode_content_length_line(request->ContentLength);
-	lines[count++] = http_encode_body_line("Host", context->Host);
+
+	if (context->RdgConnectionId)
+		lines[count++] = http_encode_body_line("RDG-Connection-Id", context->RdgConnectionId);
+	
+	if (context->RdgAuthScheme)
+		lines[count++] = http_encode_body_line("RDG-Auth-Scheme", context->RdgAuthScheme);
+		
+	if (request->TransferEncoding)
+		lines[count++] = http_encode_body_line("Transfer-Encoding", request->TransferEncoding);
+
+	if (request->Authorization)
+	{
+		lines[count++] = http_encode_body_line("Authorization", request->Authorization);
+	}
+	else if (request->AuthScheme && request->AuthParam)
+	{
+		lines[count++] = http_encode_authorization_line(request->AuthScheme, request->AuthParam);
+	}
 
 	/* check that everything went well */
 	for (i = 0; i < count; i++)
 	{
 		if (!lines[i])
 			goto out_free;
-	}
-
-	if (context->RdgConnectionId)
-	{
-		lines[count] = http_encode_body_line("RDG-Connection-Id", context->RdgConnectionId);
-
-		if (!lines[count])
-			goto out_free;
-
-		count++;
-	}
-
-	if (context->RdgAuthScheme)
-	{
-		lines[count] = http_encode_body_line("RDG-Auth-Scheme", context->RdgAuthScheme);
-
-		if (!lines[count])
-			goto out_free;
-
-		count++;
-	}
-
-	if (request->TransferEncoding)
-	{
-		lines[count] = http_encode_body_line("Transfer-Encoding", request->TransferEncoding);
-
-		if (!lines[count])
-			goto out_free;
-
-		count++;
-	}
-
-	if (request->Authorization)
-	{
-		lines[count] = http_encode_body_line("Authorization", request->Authorization);
-
-		if (!lines[count])
-			goto out_free;
-
-		count++;
-	}
-	else if (request->AuthScheme && request->AuthParam)
-	{
-		lines[count] = http_encode_authorization_line(request->AuthScheme, request->AuthParam);
-
-		if (!lines[count])
-			goto out_free;
-
-		count++;
 	}
 
 	for (i = 0; i < count; i++)

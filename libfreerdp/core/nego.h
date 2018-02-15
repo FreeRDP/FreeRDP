@@ -112,7 +112,6 @@ struct rdp_nego
 	BOOL RestrictedAdminModeRequired;
 	BOOL GatewayEnabled;
 	BOOL GatewayBypassLocal;
-	char* GatewayAccessToken;	
 
 	rdpTransport* transport;
 };
