@@ -195,5 +195,5 @@ int main(int argc, char* argv[])
 		printf("\n");
 	}
 
-	return 0;
+	return winpr_exit(0);
 }

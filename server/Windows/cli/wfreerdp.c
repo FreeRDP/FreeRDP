@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
 				WLog_INFO(TAG, "Virtual Screen = %dx%d", vscreen_w, vscreen_h);
 			}
 
-			return 0;
+			return winpr_exit(0);
 		}
 
 		if (strcmp("--screen", argv[index]) == 0)
@@ -110,13 +110,13 @@ int main(int argc, char* argv[])
 			if (index == argc)
 			{
 				WLog_INFO(TAG, "missing screen id parameter");
-				return 0;
+				return winpr_exit(0);
 			}
 
 			val = strtoul(argv[index], NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
-				return -1;
+				return winpr_exit(-1);
 
 			set_screen_id(val);
 			index++;
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 			UINT32 val = strtoul(argv[index], NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
-				return -1;
+				return winpr_exit(-1);
 
 			server->port = val;
 			break;
@@ -170,5 +170,5 @@ int main(int argc, char* argv[])
 	WLog_INFO(TAG, "Stopping server");
 	wfreerdp_server_stop(server);
 	wfreerdp_server_free(server);
-	return 0;
+	return winpr_exit(0);
 }

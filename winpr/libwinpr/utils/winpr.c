@@ -30,6 +30,11 @@
 #include <winpr/string.h>
 #include <winpr/winpr.h>
 #include <winpr/version.h>
+#include <winpr/wlog.h>
+
+#if !defined(WIN32)
+#include <pthread.h>
+#endif
 
 void winpr_get_version(int* major, int* minor, int* revision)
 {
@@ -68,4 +73,15 @@ const char* winpr_get_build_config(void)
 		"Target architecture: " TARGET_ARCH "\n";
 
 	return build_config;
+}
+
+int winpr_exit(int status)
+{
+	WLog_Uninit();
+#if defined(WIN32)
+	return status;
+#else
+	pthread_exit(&status);
+	return status;
+#endif
 }

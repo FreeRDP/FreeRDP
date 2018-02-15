@@ -924,14 +924,14 @@ int main(int argc, char* argv[])
 	instance = freerdp_listener_new();
 
 	if (!instance)
-		return -1;
+		return winpr_exit(-1);
 
 	instance->PeerAccepted = test_peer_accepted;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
 		freerdp_listener_free(instance);
-		return -1;
+		return winpr_exit(-1);
 	}
 
 	/* Open the server socket and start listening. */
@@ -942,7 +942,7 @@ int main(int argc, char* argv[])
 	{
 		freerdp_listener_free(instance);
 		WSACleanup();
-		return -1;
+		return winpr_exit(-1);
 	}
 
 	if ((localOnly || instance->Open(instance, NULL, port)) &&
@@ -955,6 +955,6 @@ int main(int argc, char* argv[])
 	free(file);
 	freerdp_listener_free(instance);
 	WSACleanup();
-	return 0;
+	return winpr_exit(0);
 }
 

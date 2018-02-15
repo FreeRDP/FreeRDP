@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 	if(NULL == fp)
 	{
 		WLog_ERR(TAG,  "Could not open '%s' for writing.", fname);
-		return -1;
+		return winpr_exit(-1);
 	}
 	/* The tag used as header in the manpage */
 	fprintf(fp, "<refsect1>\n");
@@ -206,6 +206,6 @@ int main(int argc, char *argv[])
 	fprintf(fp, "\t\t</variablelist>\n");
 	fprintf(fp, "\t</refsect1>\n");
 	fclose(fp);
-	return 0;
+	return winpr_exit(0);
 }
 

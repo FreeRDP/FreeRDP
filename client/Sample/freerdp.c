@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
 	if (!instance)
 	{
 		WLog_ERR(TAG, "Couldn't create instance");
-		exit(1);
+		winpr_exit(1);
 	}
 
 	instance->PreConnect = tf_pre_connect;
@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
 	if (!freerdp_context_new(instance))
 	{
 		WLog_ERR(TAG, "Couldn't create context");
-		exit(1);
+		return winpr_exit(1);
 	}
 
 	status = freerdp_client_settings_parse_command_line(instance->settings, argc,
@@ -189,12 +189,12 @@ int main(int argc, char* argv[])
 
 	if (status < 0)
 	{
-		exit(0);
+		return winpr_exit(0);
 	}
 
 	if (!freerdp_client_load_addins(instance->context->channels,
 	                                instance->settings))
-		exit(-1);
+		return winpr_exit(-1);
 
 	if (!(thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
 	                            tf_client_thread_proc, instance, 0, NULL)))
@@ -208,5 +208,5 @@ int main(int argc, char* argv[])
 
 	freerdp_context_free(instance);
 	freerdp_free(instance);
-	return 0;
+	return winpr_exit(0);
 }
