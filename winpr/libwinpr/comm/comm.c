@@ -1065,7 +1065,7 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName,
 
 	if (_tcsncmp(lpDeviceName, _T("\\\\.\\"), 4) != 0)
 	{
-		if (!_IsReservedCommDeviceName(lpDeviceName))
+		if (_IsReservedCommDeviceName(lpDeviceName))
 		{
 			SetLastError(ERROR_INVALID_DATA);
 			goto error_handle;
@@ -1470,9 +1470,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess,
 
 	return (HANDLE)pComm;
 error_handle:
-
 	CloseHandle(pComm);
-
 	return INVALID_HANDLE_VALUE;
 }
 
