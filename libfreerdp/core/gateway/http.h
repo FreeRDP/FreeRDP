@@ -42,6 +42,7 @@ struct _http_context
 	char* Connection;
 	char* Pragma;
 	char* RdgConnectionId;
+	char* RdgAuthScheme;
 };
 
 FREERDP_LOCAL BOOL http_context_set_method(HttpContext* context,
@@ -61,6 +62,8 @@ FREERDP_LOCAL BOOL http_context_set_pragma(HttpContext* context,
         const char* Pragma);
 FREERDP_LOCAL BOOL http_context_set_rdg_connection_id(HttpContext* context,
         const char* RdgConnectionId);
+FREERDP_LOCAL BOOL http_context_set_rdg_auth_scheme(HttpContext* context,
+        const char* RdgAuthScheme);
 
 HttpContext* http_context_new(void);
 void http_context_free(HttpContext* context);

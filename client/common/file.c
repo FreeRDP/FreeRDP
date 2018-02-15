@@ -288,6 +288,8 @@ static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, c
 		tmp = &file->ShellWorkingDirectory;
 	else if (_stricmp(name, "gatewayhostname") == 0)
 		tmp = &file->GatewayHostname;
+	else if (_stricmp(name, "gatewayaccesstoken") == 0)
+		tmp = &file->GatewayAccessToken;
 	else if (_stricmp(name, "kdcproxyname") == 0)
 		tmp = &file->KdcProxyName;
 	else if (_stricmp(name, "drivestoredirect") == 0)
@@ -598,6 +600,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	}
 
 	SETTING_MODIFIED_SET_STRING(file->GatewayHostname, settings, GatewayHostname);
+	SETTING_MODIFIED_SET_STRING(file->GatewayAccessToken, settings, GatewayAccessToken);
 	SETTING_MODIFIED_SET(file->GatewayUsageMethod, settings, GatewayUsageMethod);
 	SETTING_MODIFIED_SET(file->PromptCredentialOnce, settings, GatewayUseSameCredentials);
 	SETTING_MODIFIED_SET(file->RemoteApplicationMode, settings, RemoteApplicationMode);
@@ -891,6 +894,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			freerdp_set_param_uint32(settings, FreeRDP_GatewayPort, (UINT32) port);
 
 		free(host);
+	}
+
+	if (~((size_t) file->GatewayAccessToken))
+	{
+		if (freerdp_set_param_string(settings, FreeRDP_GatewayAccessToken, file->GatewayAccessToken) != 0)
+			return FALSE;
 	}
 
 	if (~file->GatewayUsageMethod)
@@ -1314,6 +1323,7 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 		freerdp_client_file_string_check_free(file->AlternateShell);
 		freerdp_client_file_string_check_free(file->ShellWorkingDirectory);
 		freerdp_client_file_string_check_free(file->GatewayHostname);
+		freerdp_client_file_string_check_free(file->GatewayAccessToken);
 		freerdp_client_file_string_check_free(file->KdcProxyName);
 		freerdp_client_file_string_check_free(file->DrivesToRedirect);
 		freerdp_client_file_string_check_free(file->DevicesToRedirect);

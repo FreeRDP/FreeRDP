@@ -50,6 +50,7 @@ typedef struct rdp_rdg rdpRdg;
 #define HTTP_EXTENDED_AUTH_NONE 0x0
 #define HTTP_EXTENDED_AUTH_SC 0x1   /* Smart card authentication. */
 #define HTTP_EXTENDED_AUTH_PAA 0x02   /* Pluggable authentication. */
+#define HTTP_EXTENDED_AUTH_SSPI_NTLM 0x04   /* NTLM extended authentication. */
 
 /* HTTP packet types. */
 #define PKT_TYPE_HANDSHAKE_REQUEST 0x1
@@ -140,6 +141,7 @@ struct rdp_rdg
 	int state;
 	UINT16 packetRemainingCount;
 	int timeout;
+	UINT16 extAuth;	
 };
 
 

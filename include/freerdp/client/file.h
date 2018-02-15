@@ -140,6 +140,7 @@ struct rdp_file
 	DWORD GatewayUsageMethod; /* gatewayusagemethod */
 	DWORD GatewayProfileUsageMethod; /* gatewayprofileusagemethod */
 	DWORD GatewayCredentialsSource; /* gatewaycredentialssource */
+	LPSTR GatewayAccessToken; /* gatewayaccesstoken */
 
 	DWORD UseRedirectionServerName; /* use redirection server name */
 
