@@ -162,9 +162,7 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 	wStream* s;
 	BOOL status;
 	WCHAR* PAACookie = NULL;
-    UINT16 PAACookieLen = 0;
-	int i;
-
+	UINT16 PAACookieLen = 0;
 
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
 	{
@@ -197,11 +195,9 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 		Stream_Write_UINT16(s, 1); /* FieldsPresent (2 bytes) */
 		Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
 
-       	Stream_Write_UINT16(s, PAACookieLen * 2); /* PAA cookie string length */
-
-        for (i = 0; i < PAACookieLen; i++)
-                Stream_Write_UINT16(s, PAACookie[i]);
-	} 
+		Stream_Write_UINT16(s, PAACookieLen * 2); /* PAA cookie string length */
+		Stream_Write_UTF16_String(s, PAACookie, PAACookieLen);
+	}
 	else 
 	{
 		Stream_Write_UINT16(s, 0); /* FieldsPresent (2 bytes) */

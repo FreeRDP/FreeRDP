@@ -141,7 +141,7 @@ struct rdp_rdg
 	int state;
 	UINT16 packetRemainingCount;
 	int timeout;
-	int extAuth;	
+	UINT16 extAuth;	
 };
 
 

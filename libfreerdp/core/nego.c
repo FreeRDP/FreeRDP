@@ -1219,11 +1219,6 @@ void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal)
 	nego->GatewayBypassLocal = GatewayBypassLocal;
 }
 
-void nego_set_gateway_access_token(rdpNego* nego, char* token)
-{
-	nego->GatewayAccessToken = _strdup(token);
-
-}
 /**
  * Enable RDP security protocol.
  * @param nego pointer to the negotiation structure
