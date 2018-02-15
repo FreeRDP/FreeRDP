@@ -81,68 +81,68 @@ static const UINT32 rfx_default_quantization_values[] =
 
 static void rfx_profiler_create(RFX_CONTEXT* context)
 {
-	PROFILER_CREATE(context->priv->prof_rfx_decode_rgb, "rfx_decode_rgb");
+	PROFILER_CREATE(context->priv->prof_rfx_decode_rgb, "rfx_decode_rgb")
 	PROFILER_CREATE(context->priv->prof_rfx_decode_component,
-	                "rfx_decode_component");
-	PROFILER_CREATE(context->priv->prof_rfx_rlgr_decode, "rfx_rlgr_decode");
+	                "rfx_decode_component")
+	PROFILER_CREATE(context->priv->prof_rfx_rlgr_decode, "rfx_rlgr_decode")
 	PROFILER_CREATE(context->priv->prof_rfx_differential_decode,
-	                "rfx_differential_decode");
+	                "rfx_differential_decode")
 	PROFILER_CREATE(context->priv->prof_rfx_quantization_decode,
-	                "rfx_quantization_decode");
-	PROFILER_CREATE(context->priv->prof_rfx_dwt_2d_decode, "rfx_dwt_2d_decode");
-	PROFILER_CREATE(context->priv->prof_rfx_ycbcr_to_rgb, "prims->yCbCrToRGB");
-	PROFILER_CREATE(context->priv->prof_rfx_encode_rgb, "rfx_encode_rgb");
+	                "rfx_quantization_decode")
+	PROFILER_CREATE(context->priv->prof_rfx_dwt_2d_decode, "rfx_dwt_2d_decode")
+	PROFILER_CREATE(context->priv->prof_rfx_ycbcr_to_rgb, "prims->yCbCrToRGB")
+	PROFILER_CREATE(context->priv->prof_rfx_encode_rgb, "rfx_encode_rgb")
 	PROFILER_CREATE(context->priv->prof_rfx_encode_component,
-	                "rfx_encode_component");
-	PROFILER_CREATE(context->priv->prof_rfx_rlgr_encode, "rfx_rlgr_encode");
+	                "rfx_encode_component")
+	PROFILER_CREATE(context->priv->prof_rfx_rlgr_encode, "rfx_rlgr_encode")
 	PROFILER_CREATE(context->priv->prof_rfx_differential_encode,
-	                "rfx_differential_encode");
+	                "rfx_differential_encode")
 	PROFILER_CREATE(context->priv->prof_rfx_quantization_encode,
-	                "rfx_quantization_encode");
-	PROFILER_CREATE(context->priv->prof_rfx_dwt_2d_encode, "rfx_dwt_2d_encode");
-	PROFILER_CREATE(context->priv->prof_rfx_rgb_to_ycbcr, "prims->RGBToYCbCr");
+	                "rfx_quantization_encode")
+	PROFILER_CREATE(context->priv->prof_rfx_dwt_2d_encode, "rfx_dwt_2d_encode")
+	PROFILER_CREATE(context->priv->prof_rfx_rgb_to_ycbcr, "prims->RGBToYCbCr")
 	PROFILER_CREATE(context->priv->prof_rfx_encode_format_rgb,
-	                "rfx_encode_format_rgb");
+	                "rfx_encode_format_rgb")
 }
 
 static void rfx_profiler_free(RFX_CONTEXT* context)
 {
-	PROFILER_FREE(context->priv->prof_rfx_decode_rgb);
-	PROFILER_FREE(context->priv->prof_rfx_decode_component);
-	PROFILER_FREE(context->priv->prof_rfx_rlgr_decode);
-	PROFILER_FREE(context->priv->prof_rfx_differential_decode);
-	PROFILER_FREE(context->priv->prof_rfx_quantization_decode);
-	PROFILER_FREE(context->priv->prof_rfx_dwt_2d_decode);
-	PROFILER_FREE(context->priv->prof_rfx_ycbcr_to_rgb);
-	PROFILER_FREE(context->priv->prof_rfx_encode_rgb);
-	PROFILER_FREE(context->priv->prof_rfx_encode_component);
-	PROFILER_FREE(context->priv->prof_rfx_rlgr_encode);
-	PROFILER_FREE(context->priv->prof_rfx_differential_encode);
-	PROFILER_FREE(context->priv->prof_rfx_quantization_encode);
-	PROFILER_FREE(context->priv->prof_rfx_dwt_2d_encode);
-	PROFILER_FREE(context->priv->prof_rfx_rgb_to_ycbcr);
-	PROFILER_FREE(context->priv->prof_rfx_encode_format_rgb);
+	PROFILER_FREE(context->priv->prof_rfx_decode_rgb)
+	PROFILER_FREE(context->priv->prof_rfx_decode_component)
+	PROFILER_FREE(context->priv->prof_rfx_rlgr_decode)
+	PROFILER_FREE(context->priv->prof_rfx_differential_decode)
+	PROFILER_FREE(context->priv->prof_rfx_quantization_decode)
+	PROFILER_FREE(context->priv->prof_rfx_dwt_2d_decode)
+	PROFILER_FREE(context->priv->prof_rfx_ycbcr_to_rgb)
+	PROFILER_FREE(context->priv->prof_rfx_encode_rgb)
+	PROFILER_FREE(context->priv->prof_rfx_encode_component)
+	PROFILER_FREE(context->priv->prof_rfx_rlgr_encode)
+	PROFILER_FREE(context->priv->prof_rfx_differential_encode)
+	PROFILER_FREE(context->priv->prof_rfx_quantization_encode)
+	PROFILER_FREE(context->priv->prof_rfx_dwt_2d_encode)
+	PROFILER_FREE(context->priv->prof_rfx_rgb_to_ycbcr)
+	PROFILER_FREE(context->priv->prof_rfx_encode_format_rgb)
 }
 
 static void rfx_profiler_print(RFX_CONTEXT* context)
 {
-	PROFILER_PRINT_HEADER;
-	PROFILER_PRINT(context->priv->prof_rfx_decode_rgb);
-	PROFILER_PRINT(context->priv->prof_rfx_decode_component);
-	PROFILER_PRINT(context->priv->prof_rfx_rlgr_decode);
-	PROFILER_PRINT(context->priv->prof_rfx_differential_decode);
-	PROFILER_PRINT(context->priv->prof_rfx_quantization_decode);
-	PROFILER_PRINT(context->priv->prof_rfx_dwt_2d_decode);
-	PROFILER_PRINT(context->priv->prof_rfx_ycbcr_to_rgb);
-	PROFILER_PRINT(context->priv->prof_rfx_encode_rgb);
-	PROFILER_PRINT(context->priv->prof_rfx_encode_component);
-	PROFILER_PRINT(context->priv->prof_rfx_rlgr_encode);
-	PROFILER_PRINT(context->priv->prof_rfx_differential_encode);
-	PROFILER_PRINT(context->priv->prof_rfx_quantization_encode);
-	PROFILER_PRINT(context->priv->prof_rfx_dwt_2d_encode);
-	PROFILER_PRINT(context->priv->prof_rfx_rgb_to_ycbcr);
-	PROFILER_PRINT(context->priv->prof_rfx_encode_format_rgb);
-	PROFILER_PRINT_FOOTER;
+	PROFILER_PRINT_HEADER
+	PROFILER_PRINT(context->priv->prof_rfx_decode_rgb)
+	PROFILER_PRINT(context->priv->prof_rfx_decode_component)
+	PROFILER_PRINT(context->priv->prof_rfx_rlgr_decode)
+	PROFILER_PRINT(context->priv->prof_rfx_differential_decode)
+	PROFILER_PRINT(context->priv->prof_rfx_quantization_decode)
+	PROFILER_PRINT(context->priv->prof_rfx_dwt_2d_decode)
+	PROFILER_PRINT(context->priv->prof_rfx_ycbcr_to_rgb)
+	PROFILER_PRINT(context->priv->prof_rfx_encode_rgb)
+	PROFILER_PRINT(context->priv->prof_rfx_encode_component)
+	PROFILER_PRINT(context->priv->prof_rfx_rlgr_encode)
+	PROFILER_PRINT(context->priv->prof_rfx_differential_encode)
+	PROFILER_PRINT(context->priv->prof_rfx_quantization_encode)
+	PROFILER_PRINT(context->priv->prof_rfx_dwt_2d_encode)
+	PROFILER_PRINT(context->priv->prof_rfx_rgb_to_ycbcr)
+	PROFILER_PRINT(context->priv->prof_rfx_encode_format_rgb)
+	PROFILER_PRINT_FOOTER
 }
 
 static void rfx_tile_init(RFX_TILE* tile)

@@ -34,10 +34,10 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	const INT16* ptrs[3];
 	const UINT32 rgbStride = roi.width * 2;
 	const UINT32 dstStride = roi.width * 4;
-	PROFILER_DEFINE(genericProf);
-	PROFILER_DEFINE(optProf);
-	PROFILER_CREATE(genericProf, "RGBToRGB_16s8u_P3AC4R-GENERIC");
-	PROFILER_CREATE(optProf, "RGBToRGB_16s8u_P3AC4R-OPTIMIZED");
+	PROFILER_DEFINE(genericProf)
+	PROFILER_DEFINE(optProf)
+	PROFILER_CREATE(genericProf, "RGBToRGB_16s8u_P3AC4R-GENERIC")
+	PROFILER_CREATE(optProf, "RGBToRGB_16s8u_P3AC4R-OPTIMIZED")
 	r = _aligned_malloc(rgbStride * roi.height, 16);
 	g = _aligned_malloc(rgbStride * roi.height, 16);
 	b = _aligned_malloc(rgbStride * roi.height, 16);
@@ -69,22 +69,22 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	ptrs[0] = r;
 	ptrs[1] = g;
 	ptrs[2] = b;
-	PROFILER_ENTER(genericProf);
+	PROFILER_ENTER(genericProf)
 
 	if (generic->RGBToRGB_16s8u_P3AC4R(ptrs, rgbStride,
 	                                   out1, dstStride, DstFormat,
 	                                   &roi) != PRIMITIVES_SUCCESS)
 		goto fail;
 
-	PROFILER_EXIT(genericProf);
-	PROFILER_ENTER(optProf);
+	PROFILER_EXIT(genericProf)
+	PROFILER_ENTER(optProf)
 
 	if (optimized->RGBToRGB_16s8u_P3AC4R(ptrs, rgbStride,
 	                                     out2, dstStride, DstFormat,
 	                                     &roi) != PRIMITIVES_SUCCESS)
 		goto fail;
 
-	PROFILER_EXIT(optProf);
+	PROFILER_EXIT(optProf)
 
 	if (memcmp(out1, out2, dstStride * roi.height) != 0)
 	{
@@ -103,13 +103,13 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	}
 
 	printf("Results for %"PRIu32"x%"PRIu32" [%s]", roi.width, roi.height, FreeRDPGetColorFormatName(DstFormat));
-	PROFILER_PRINT_HEADER;
-	PROFILER_PRINT(genericProf);
-	PROFILER_PRINT(optProf);
-	PROFILER_PRINT_FOOTER;
+	PROFILER_PRINT_HEADER
+	PROFILER_PRINT(genericProf)
+	PROFILER_PRINT(optProf)
+	PROFILER_PRINT_FOOTER
 fail:
-	PROFILER_FREE(genericProf);
-	PROFILER_FREE(optProf);
+	PROFILER_FREE(genericProf)
+	PROFILER_FREE(optProf)
 	_aligned_free(r);
 	_aligned_free(g);
 	_aligned_free(b);

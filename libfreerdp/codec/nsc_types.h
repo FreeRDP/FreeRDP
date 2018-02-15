@@ -45,10 +45,10 @@ struct _NSC_CONTEXT_PRIV
 	UINT32 PlaneBuffersLength;	/* Lengths of each plane buffer */
 
 	/* profilers */
-	PROFILER_DEFINE(prof_nsc_rle_decompress_data);
-	PROFILER_DEFINE(prof_nsc_decode);
-	PROFILER_DEFINE(prof_nsc_rle_compress_data);
-	PROFILER_DEFINE(prof_nsc_encode);
+	PROFILER_DEFINE(prof_nsc_rle_decompress_data)
+	PROFILER_DEFINE(prof_nsc_decode)
+	PROFILER_DEFINE(prof_nsc_rle_compress_data)
+	PROFILER_DEFINE(prof_nsc_encode)
 };
 
 #endif /* FREERDP_LIB_CODEC_NSC_TYPES_H */

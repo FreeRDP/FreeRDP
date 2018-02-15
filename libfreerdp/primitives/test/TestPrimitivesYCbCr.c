@@ -2167,16 +2167,16 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	const UINT32 dstStride = roi.width * GetBytesPerPixel(format);
 	const UINT32 srcSize = srcStride * roi.height;
 	const UINT32 dstSize = dstStride * roi.height;
-	PROFILER_DEFINE(prof);
-	PROFILER_DEFINE(prof1);
-	PROFILER_DEFINE(prof2);
+	PROFILER_DEFINE(prof)
+	PROFILER_DEFINE(prof1)
+	PROFILER_DEFINE(prof2)
 	//return test_YCbCr_pixels();
 	expected = (BYTE*) TEST_XRGB_IMAGE;
 	actual = _aligned_malloc(dstSize, 16);
 	actual1 = _aligned_malloc(dstSize, 16);
-	PROFILER_CREATE(prof, "yCbCrToRGB_16s8u");
-	PROFILER_CREATE(prof1, "yCbCrToRGB16s16s");
-	PROFILER_CREATE(prof2, "RGBToRGB_16s8u");
+	PROFILER_CREATE(prof, "yCbCrToRGB_16s8u")
+	PROFILER_CREATE(prof1, "yCbCrToRGB16s16s")
+	PROFILER_CREATE(prof2, "RGBToRGB_16s8u")
 
 	if (!actual || !actual1)
 		goto fail;
@@ -2202,14 +2202,14 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	}
 
 	{
-		PROFILER_ENTER(prof);
+		PROFILER_ENTER(prof)
 		status = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pYCbCr, srcStride,
 		                                        actual, dstStride, format,
 		                                        &roi);
 		if (status != PRIMITIVES_SUCCESS)
 			goto fail;
 
-		PROFILER_EXIT(prof);
+		PROFILER_EXIT(prof)
 	}
 
 	{
@@ -2220,18 +2220,18 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 		CopyMemory(pSrcDst[0], pYCbCr[0], srcSize);
 		CopyMemory(pSrcDst[1], pYCbCr[1], srcSize);
 		CopyMemory(pSrcDst[2], pYCbCr[2], srcSize);
-		PROFILER_ENTER(prof1);
+		PROFILER_ENTER(prof1)
 		status = prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, srcStride,
 		                                       pSrcDst, srcStride, &roi);
-		PROFILER_EXIT(prof1);
+		PROFILER_EXIT(prof1)
 
 		if (status != PRIMITIVES_SUCCESS)
 			goto fail2;
 
-		PROFILER_ENTER(prof2);
+		PROFILER_ENTER(prof2)
 		status = prims->RGBToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, srcStride,
 		                                      actual1, dstStride, format, &roi);
-		PROFILER_EXIT(prof2);
+		PROFILER_EXIT(prof2)
 	fail2:
 		_aligned_free(pSrcDst[0]);
 		_aligned_free(pSrcDst[1]);
@@ -2286,20 +2286,20 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 		}
 	}
 
-	PROFILER_PRINT_HEADER;
-	PROFILER_PRINT(prof);
-	PROFILER_PRINT(prof1);
-	PROFILER_PRINT(prof2);
-	PROFILER_PRINT_FOOTER;
+	PROFILER_PRINT_HEADER
+	PROFILER_PRINT(prof)
+	PROFILER_PRINT(prof1)
+	PROFILER_PRINT(prof2)
+	PROFILER_PRINT_FOOTER
 fail:
 	_aligned_free((BYTE*)pYCbCr[0]);
 	_aligned_free((BYTE*)pYCbCr[1]);
 	_aligned_free((BYTE*)pYCbCr[2]);
 	_aligned_free(actual);
 	_aligned_free(actual1);
-	PROFILER_FREE(prof);
-	PROFILER_FREE(prof1);
-	PROFILER_FREE(prof2);
+	PROFILER_FREE(prof)
+	PROFILER_FREE(prof1)
+	PROFILER_FREE(prof2)
 	return status;
 }
 

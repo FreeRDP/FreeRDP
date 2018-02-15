@@ -494,12 +494,12 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, const BYTE* data,
 		context->priv->PlaneBuffers[4] = messages[i].PlaneBuffers[4];
 		dataOffset = (messages[i].y * messages[i].scanline) + (messages[i].x *
 		             BytesPerPixel);
-		PROFILER_ENTER(context->priv->prof_nsc_encode);
+		PROFILER_ENTER(context->priv->prof_nsc_encode)
 		context->encode(context, &data[dataOffset], scanline);
-		PROFILER_EXIT(context->priv->prof_nsc_encode);
-		PROFILER_ENTER(context->priv->prof_nsc_rle_compress_data);
+		PROFILER_EXIT(context->priv->prof_nsc_encode)
+		PROFILER_ENTER(context->priv->prof_nsc_rle_compress_data)
 		nsc_rle_compress_data(context);
-		PROFILER_EXIT(context->priv->prof_nsc_rle_compress_data);
+		PROFILER_EXIT(context->priv->prof_nsc_rle_compress_data)
 		messages[i].LumaPlaneByteCount = context->PlaneByteCount[0];
 		messages[i].OrangeChromaPlaneByteCount = context->PlaneByteCount[1];
 		messages[i].GreenChromaPlaneByteCount = context->PlaneByteCount[2];
@@ -582,13 +582,13 @@ BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data,
 		return FALSE;
 
 	/* ARGB to AYCoCg conversion, chroma subsampling and colorloss reduction */
-	PROFILER_ENTER(context->priv->prof_nsc_encode);
+	PROFILER_ENTER(context->priv->prof_nsc_encode)
 	context->encode(context, data, scanline);
-	PROFILER_EXIT(context->priv->prof_nsc_encode);
+	PROFILER_EXIT(context->priv->prof_nsc_encode)
 	/* RLE encode */
-	PROFILER_ENTER(context->priv->prof_nsc_rle_compress_data);
+	PROFILER_ENTER(context->priv->prof_nsc_rle_compress_data)
 	nsc_rle_compress_data(context);
-	PROFILER_EXIT(context->priv->prof_nsc_rle_compress_data);
+	PROFILER_EXIT(context->priv->prof_nsc_rle_compress_data)
 	message->PlaneBuffers[0] = context->priv->PlaneBuffers[0];
 	message->PlaneBuffers[1] = context->priv->PlaneBuffers[1];
 	message->PlaneBuffers[2] = context->priv->PlaneBuffers[2];

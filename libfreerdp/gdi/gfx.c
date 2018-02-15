@@ -1159,16 +1159,16 @@ void gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx)
 	gfx->MapSurfaceToOutput = gdi_MapSurfaceToOutput;
 	gfx->MapSurfaceToWindow = gdi_MapSurfaceToWindow;
 	gfx->UpdateSurfaces = gdi_UpdateSurfaces;
-	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER");
+	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER")
 }
 
 void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx)
 {
 	gdi->gfx = NULL;
 	gfx->custom = NULL;
-	PROFILER_PRINT_HEADER;
-	PROFILER_PRINT(gfx->SurfaceProfiler);
-	PROFILER_PRINT_FOOTER;
-	PROFILER_FREE(gfx->SurfaceProfiler);
+	PROFILER_PRINT_HEADER
+	PROFILER_PRINT(gfx->SurfaceProfiler)
+	PROFILER_PRINT_FOOTER
+	PROFILER_FREE(gfx->SurfaceProfiler)
 }
 
