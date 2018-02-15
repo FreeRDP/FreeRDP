@@ -274,7 +274,7 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error = CHANNEL_RC_OK;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
-	PROFILER_ENTER(context->SurfaceProfiler);
+	PROFILER_ENTER(context->SurfaceProfiler)
 
 	switch (cmd->codecId)
 	{
@@ -303,6 +303,6 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 			break;
 	}
 
-	PROFILER_EXIT(context->SurfaceProfiler);
+	PROFILER_EXIT(context->SurfaceProfiler)
 	return error;
 }

@@ -43,8 +43,8 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		PIXEL_FORMAT_BGRA32,
 		PIXEL_FORMAT_BGRX32
 	};
-	PROFILER_DEFINE(genericProf);
-	PROFILER_DEFINE(optProf);
+	PROFILER_DEFINE(genericProf)
+	PROFILER_DEFINE(optProf)
 	in = _aligned_malloc(size, 16);
 	out_c = _aligned_malloc(size, 16);
 	out_sse = _aligned_malloc(size, 16);
@@ -59,22 +59,22 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		const UINT32 format = formats[x];
 		const UINT32 dstStride = width * GetBytesPerPixel(format);
 		const char* formatName = FreeRDPGetColorFormatName(format);
-		PROFILER_CREATE(genericProf, "YCoCgRToRGB_8u_AC4R-GENERIC");
-		PROFILER_CREATE(optProf, "YCoCgRToRGB_8u_AC4R-OPT");
-		PROFILER_ENTER(genericProf);
+		PROFILER_CREATE(genericProf, "YCoCgRToRGB_8u_AC4R-GENERIC")
+		PROFILER_CREATE(optProf, "YCoCgRToRGB_8u_AC4R-OPT")
+		PROFILER_ENTER(genericProf)
 		status = generic->YCoCgToRGB_8u_AC4R(
 		             in, srcStride,
 		             out_c, format, dstStride, width, height, 2, TRUE);
-		PROFILER_EXIT(genericProf);
+		PROFILER_EXIT(genericProf)
 
 		if (status != PRIMITIVES_SUCCESS)
 			goto loop_fail;
 
-		PROFILER_ENTER(optProf);
+		PROFILER_ENTER(optProf)
 		status = optimized->YCoCgToRGB_8u_AC4R(
 		             in, srcStride,
 		             out_sse, format, dstStride, width, height, 2, TRUE);
-		PROFILER_EXIT(optProf);
+		PROFILER_EXIT(optProf)
 
 		if (status != PRIMITIVES_SUCCESS)
 			goto loop_fail;
@@ -97,13 +97,13 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 
 		printf("--------------------------- [%s] [%"PRIu32"x%"PRIu32"] ---------------------------\n",
 		       formatName, width, height);
-		PROFILER_PRINT_HEADER;
-		PROFILER_PRINT(genericProf);
-		PROFILER_PRINT(optProf);
-		PROFILER_PRINT_FOOTER;
+		PROFILER_PRINT_HEADER
+		PROFILER_PRINT(genericProf)
+		PROFILER_PRINT(optProf)
+		PROFILER_PRINT_FOOTER
 	loop_fail:
-		PROFILER_FREE(genericProf);
-		PROFILER_FREE(optProf);
+		PROFILER_FREE(genericProf)
+		PROFILER_FREE(optProf)
 
 		if (status != PRIMITIVES_SUCCESS)
 			goto fail;

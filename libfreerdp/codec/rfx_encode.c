@@ -238,20 +238,20 @@ static void rfx_encode_component(RFX_CONTEXT* context,
 {
 	INT16* dwt_buffer;
 	dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
-	PROFILER_ENTER(context->priv->prof_rfx_encode_component);
-	PROFILER_ENTER(context->priv->prof_rfx_dwt_2d_encode);
+	PROFILER_ENTER(context->priv->prof_rfx_encode_component)
+	PROFILER_ENTER(context->priv->prof_rfx_dwt_2d_encode)
 	context->dwt_2d_encode(data, dwt_buffer);
-	PROFILER_EXIT(context->priv->prof_rfx_dwt_2d_encode);
-	PROFILER_ENTER(context->priv->prof_rfx_quantization_encode);
+	PROFILER_EXIT(context->priv->prof_rfx_dwt_2d_encode)
+	PROFILER_ENTER(context->priv->prof_rfx_quantization_encode)
 	context->quantization_encode(data, quantization_values);
-	PROFILER_EXIT(context->priv->prof_rfx_quantization_encode);
-	PROFILER_ENTER(context->priv->prof_rfx_differential_encode);
+	PROFILER_EXIT(context->priv->prof_rfx_quantization_encode)
+	PROFILER_ENTER(context->priv->prof_rfx_differential_encode)
 	rfx_differential_encode(data + 4032, 64);
-	PROFILER_EXIT(context->priv->prof_rfx_differential_encode);
-	PROFILER_ENTER(context->priv->prof_rfx_rlgr_encode);
+	PROFILER_EXIT(context->priv->prof_rfx_differential_encode)
+	PROFILER_ENTER(context->priv->prof_rfx_rlgr_encode)
 	*size = context->rlgr_encode(context->mode, data, 4096, buffer, buffer_size);
-	PROFILER_EXIT(context->priv->prof_rfx_rlgr_encode);
-	PROFILER_EXIT(context->priv->prof_rfx_encode_component);
+	PROFILER_EXIT(context->priv->prof_rfx_rlgr_encode)
+	PROFILER_EXIT(context->priv->prof_rfx_encode_component)
 	BufferPool_Return(context->priv->BufferPool, dwt_buffer);
 }
 
@@ -277,15 +277,15 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 	                                       16])); /* cb_g_buffer */
 	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) +
 	                                       16])); /* cr_b_buffer */
-	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb);
-	PROFILER_ENTER(context->priv->prof_rfx_encode_format_rgb);
+	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb)
+	PROFILER_ENTER(context->priv->prof_rfx_encode_format_rgb)
 	rfx_encode_format_rgb(tile->data, tile->width, tile->height, tile->scanline,
 	                      context->pixel_format, context->palette, pSrcDst[0], pSrcDst[1], pSrcDst[2]);
-	PROFILER_EXIT(context->priv->prof_rfx_encode_format_rgb);
-	PROFILER_ENTER(context->priv->prof_rfx_rgb_to_ycbcr);
+	PROFILER_EXIT(context->priv->prof_rfx_encode_format_rgb)
+	PROFILER_ENTER(context->priv->prof_rfx_rgb_to_ycbcr)
 	prims->RGBToYCbCr_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
 	                              pSrcDst, 64 * sizeof(INT16), &roi_64x64);
-	PROFILER_EXIT(context->priv->prof_rfx_rgb_to_ycbcr);
+	PROFILER_EXIT(context->priv->prof_rfx_rgb_to_ycbcr)
 	/**
 	 * We need to clear the buffers as the RLGR encoder expects it to be initialized to zero.
 	 * This allows simplifying and improving the performance of the encoding process.
@@ -299,6 +299,6 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 	tile->YLen = (UINT16) YLen;
 	tile->CbLen = (UINT16) CbLen;
 	tile->CrLen = (UINT16) CrLen;
-	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb);
+	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb)
 	BufferPool_Return(context->priv->BufferPool, pBuffer);
 }

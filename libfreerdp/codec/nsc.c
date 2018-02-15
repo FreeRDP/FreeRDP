@@ -250,12 +250,12 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 
 static void nsc_profiler_print(NSC_CONTEXT* context)
 {
-	PROFILER_PRINT_HEADER;
-	PROFILER_PRINT(context->priv->prof_nsc_rle_decompress_data);
-	PROFILER_PRINT(context->priv->prof_nsc_decode);
-	PROFILER_PRINT(context->priv->prof_nsc_rle_compress_data);
-	PROFILER_PRINT(context->priv->prof_nsc_encode);
-	PROFILER_PRINT_FOOTER;
+	PROFILER_PRINT_HEADER
+	PROFILER_PRINT(context->priv->prof_nsc_rle_decompress_data)
+	PROFILER_PRINT(context->priv->prof_nsc_decode)
+	PROFILER_PRINT(context->priv->prof_nsc_rle_compress_data)
+	PROFILER_PRINT(context->priv->prof_nsc_encode)
+	PROFILER_PRINT_FOOTER
 }
 
 BOOL nsc_context_reset(NSC_CONTEXT* context, UINT32 width, UINT32 height)
@@ -293,11 +293,11 @@ NSC_CONTEXT* nsc_context_new(void)
 		goto error_PlanePool;
 
 	PROFILER_CREATE(context->priv->prof_nsc_rle_decompress_data,
-	                "nsc_rle_decompress_data");
-	PROFILER_CREATE(context->priv->prof_nsc_decode, "nsc_decode");
+	                "nsc_rle_decompress_data")
+	PROFILER_CREATE(context->priv->prof_nsc_decode, "nsc_decode")
 	PROFILER_CREATE(context->priv->prof_nsc_rle_compress_data,
-	                "nsc_rle_compress_data");
-	PROFILER_CREATE(context->priv->prof_nsc_encode, "nsc_encode");
+	                "nsc_rle_compress_data")
+	PROFILER_CREATE(context->priv->prof_nsc_encode, "nsc_encode")
 	/* Default encoding parameters */
 	context->ColorLossLevel = 3;
 	context->ChromaSubsamplingLevel = 1;
@@ -327,10 +327,10 @@ void nsc_context_free(NSC_CONTEXT* context)
 	free(context->BitmapData);
 	BufferPool_Free(context->priv->PlanePool);
 	nsc_profiler_print(context);
-	PROFILER_FREE(context->priv->prof_nsc_rle_decompress_data);
-	PROFILER_FREE(context->priv->prof_nsc_decode);
-	PROFILER_FREE(context->priv->prof_nsc_rle_compress_data);
-	PROFILER_FREE(context->priv->prof_nsc_encode);
+	PROFILER_FREE(context->priv->prof_nsc_rle_decompress_data)
+	PROFILER_FREE(context->priv->prof_nsc_decode)
+	PROFILER_FREE(context->priv->prof_nsc_rle_compress_data)
+	PROFILER_FREE(context->priv->prof_nsc_encode)
 	free(context->priv);
 	free(context);
 }
@@ -397,13 +397,13 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 		return FALSE;
 
 	/* RLE decode */
-	PROFILER_ENTER(context->priv->prof_nsc_rle_decompress_data);
+	PROFILER_ENTER(context->priv->prof_nsc_rle_decompress_data)
 	nsc_rle_decompress_data(context);
-	PROFILER_EXIT(context->priv->prof_nsc_rle_decompress_data);
+	PROFILER_EXIT(context->priv->prof_nsc_rle_decompress_data)
 	/* Colorloss recover, Chroma supersample and AYCoCg to ARGB Conversion in one step */
-	PROFILER_ENTER(context->priv->prof_nsc_decode);
+	PROFILER_ENTER(context->priv->prof_nsc_decode)
 	context->decode(context);
-	PROFILER_EXIT(context->priv->prof_nsc_decode);
+	PROFILER_EXIT(context->priv->prof_nsc_decode)
 
 	if (!freerdp_image_copy(pDstData, DstFormat, nDstStride, nXDst, nYDst,
 	                        width, height, context->BitmapData,

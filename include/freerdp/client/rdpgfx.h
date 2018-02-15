@@ -111,7 +111,7 @@ struct _rdpgfx_client_context
 	pcRdpgfxUpdateSurfaces UpdateSurfaces;
 	pcRdpgfxUpdateSurfaceArea UpdateSurfaceArea;
 
-	PROFILER_DEFINE(SurfaceProfiler);
+	PROFILER_DEFINE(SurfaceProfiler)
 };
 
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_RDPGFX_H */
