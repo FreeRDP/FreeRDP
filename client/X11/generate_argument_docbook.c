@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "../common/cmdline.h"
-#include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("generate_argument_docbook")
 LPSTR tr_esc_str(LPCSTR arg, bool format)
@@ -23,7 +23,7 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 		tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 	if(NULL == tmp)
 	{
-		WLog_ERR(TAG,  "Could not allocate string buffer.");
+		fprintf(stderr,  "Could not allocate string buffer.\n");
 		exit(-2);
 	}
 	/* Copy character for character and check, if it is necessary to escape. */
@@ -38,7 +38,7 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
-					WLog_ERR(TAG,  "Could not reallocate string buffer.");
+					fprintf(stderr,  "Could not reallocate string buffer.\n");
 					exit(-3);
 				}
 				if (format)
@@ -53,7 +53,7 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
-					WLog_ERR(TAG,  "Could not reallocate string buffer.");
+					fprintf(stderr,  "Could not reallocate string buffer.\n");
 					exit(-4);
 				}
 				if (format)
@@ -67,7 +67,7 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
-					WLog_ERR(TAG,  "Could not reallocate string buffer.");
+					fprintf(stderr,  "Could not reallocate string buffer.\n");
 					exit(-5);
 				}
 				tmp[cs++] = '&';
@@ -82,7 +82,7 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
-					WLog_ERR(TAG,  "Could not reallocate string buffer.");
+					fprintf(stderr,  "Could not reallocate string buffer.\n");
 					exit(-6);
 				}
 				tmp[cs++] = '&';
@@ -97,7 +97,7 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
-					WLog_ERR(TAG,  "Could not reallocate string buffer.");
+					fprintf(stderr,  "Could not reallocate string buffer.\n");
 					exit(-7);
 				}
 				tmp[cs++] = '&';
@@ -126,8 +126,8 @@ int main(int argc, char *argv[])
 	fp = fopen(fname, "w");
 	if(NULL == fp)
 	{
-		WLog_ERR(TAG,  "Could not open '%s' for writing.", fname);
-		return winpr_exit(-1);
+		fprintf(stderr,  "Could not open '%s' for writing.\n", fname);
+		return -1;
 	}
 	/* The tag used as header in the manpage */
 	fprintf(fp, "<refsect1>\n");
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 	 * compatible XML */
 	if(elements < 2)
 	{
-		WLog_ERR(TAG,  "The argument array 'args' is empty, writing an empty file.");
+		fprintf(stderr,  "The argument array 'args' is empty, writing an empty file.\n");
 		elements = 1;
 	}
 	for(x=0; x<elements - 1; x++)
@@ -206,6 +206,6 @@ int main(int argc, char *argv[])
 	fprintf(fp, "\t\t</variablelist>\n");
 	fprintf(fp, "\t</refsect1>\n");
 	fclose(fp);
-	return winpr_exit(0);
+	return 0;
 }
 
