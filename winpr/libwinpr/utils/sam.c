@@ -52,9 +52,7 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 		filename = WINPR_SAM_FILE;
 
 	if (readOnly)
-	{
 		fp = fopen(filename, "r");
-	}
 	else
 	{
 		fp = fopen(filename, "r+");
@@ -79,8 +77,6 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 	else
 	{
 		WLog_DBG(TAG, "Could not open SAM file!");
-		fclose(fp);
-		free(sam);
 		return NULL;
 	}
 
