@@ -90,10 +90,12 @@ if(WITH_MANPAGES)
 
 		configure_file(xfreerdp.1.xml.in xfreerdp.1.xml @ONLY IMMEDIATE)
 
+		# the manpage generator helper tool is called by cmake.
+		# this does not work if we compile with any of the sanitizer options,
+		# therefore remove these from the CFLAGS for this specific target.
+		string(REGEX REPLACE "-fsanitize=[a-z]* " "" CUSTOM_C_FLAGS ${CMAKE_C_FLAGS})
 		add_executable(generate_argument_docbook generate_argument_docbook.c)
-	
-		target_link_libraries(generate_argument_docbook winpr)
-
+		set_property(TARGET generate_argument_docbook PROPERTY CMAKE_C_FLAGS ${CUSTOM_C_FLAGS})
 		add_custom_command(OUTPUT xfreerdp.1
 					COMMAND generate_argument_docbook
 					COMMAND ${CMAKE_COMMAND} -E copy
