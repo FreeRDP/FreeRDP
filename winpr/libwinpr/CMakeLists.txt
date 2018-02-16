@@ -15,12 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (APPLE)
-	# flat_namespace should be avoided, but is required for -undefined warning. Since WinPR currently has
-	# a lot of undefined symbols in use, use this hack until they're filled out.
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-flat_namespace,-undefined,warning")
-endif()
-
 set(WINPR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(WINPR_SRCS "")
 set(WINPR_LIBS "")
@@ -127,9 +121,9 @@ endif()
 
 add_definitions(${WINPR_DEFINITIONS})
 if (WIN32)
-target_link_libraries(${MODULE_NAME} ${PUBLIC_KEYWORD} ${WINPR_LIBS})
+	target_link_libraries(${MODULE_NAME} ${PUBLIC_KEYWORD} ${WINPR_LIBS})
 else()
-target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${WINPR_LIBS})
+	target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${WINPR_LIBS})
 endif(WIN32)
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT WinPRTargets)
 if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
