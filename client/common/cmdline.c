@@ -1294,12 +1294,25 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	char* str;
 	size_t length;
 	int status;
-	DWORD flags;
+	BOOL ext = FALSE;
+	BOOL assist = FALSE;
+	DWORD flags = 0;
 	BOOL promptForPassword = FALSE;
-	BOOL compatibility;
+	BOOL compatibility = FALSE;
 	COMMAND_LINE_ARGUMENT_A* arg;
-	compatibility = freerdp_client_detect_command_line(argc, argv, &flags,
-	                allowUnknown);
+
+	/* Command line detection fails if only a .rdp or .msrcIncident file
+	 * is supplied. Check this case first, only then try to detect
+	 * legacy command line syntax. */
+	if (argc > 1)
+	{
+		ext = ends_with(argv[1], ".rdp");
+		assist = ends_with(argv[1], ".msrcIncident");
+	}
+
+	if (!ext && !assist)
+		compatibility = freerdp_client_detect_command_line(argc, argv, &flags,
+		                allowUnknown);
 
 	if (compatibility)
 	{
@@ -1309,27 +1322,19 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	else
 	{
 		if (allowUnknown)
-		{
 			flags |= COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+
+		if (ext)
+		{
+			if (freerdp_client_settings_parse_connection_file(settings, argv[1]))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 
-		if (argc > 1)
+		if (assist)
 		{
-			const BOOL ext = ends_with(argv[1], ".rdp");
-			const BOOL assist = ends_with(argv[1], ".msrcIncident");
-
-			if (ext)
-			{
-				if (freerdp_client_settings_parse_connection_file(settings, argv[1]))
-					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-			}
-
-			if (assist)
-			{
-				if (freerdp_client_settings_parse_assistance_file(settings,
-				        settings->AssistanceFile) < 0)
-					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-			}
+			if (freerdp_client_settings_parse_assistance_file(settings,
+			        argv[1]) < 0)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 
 		CommandLineClearArgumentsA(args);
