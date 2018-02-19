@@ -1898,6 +1898,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				settings->GatewayHttpTransport = TRUE;
 			}
 		}
+		CommandLineSwitchCase(arg, "gat")
+		{
+			free(settings->GatewayAccessToken);
+
+			if (!(settings->GatewayAccessToken = _strdup(arg->Value)))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
 		CommandLineSwitchCase(arg, "gateway-usage-method")
 		{
 			long type;

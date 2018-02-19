@@ -2503,6 +2503,9 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 		case FreeRDP_GatewayDomain:
 			return settings->GatewayDomain;
 
+		case FreeRDP_GatewayAccessToken:
+			return settings->GatewayAccessToken;
+
 		case FreeRDP_ProxyHostname:
 			return settings->ProxyHostname;
 
@@ -2711,6 +2714,10 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 
 		case FreeRDP_GatewayDomain:
 			tmp = &settings->GatewayDomain;
+			break;
+
+		case FreeRDP_GatewayAccessToken:
+			tmp = &settings->GatewayAccessToken;
 			break;
 
 		case FreeRDP_ProxyHostname:
