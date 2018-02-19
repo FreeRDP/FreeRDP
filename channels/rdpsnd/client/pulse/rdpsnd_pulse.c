@@ -369,6 +369,10 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 		pulse->mainloop = NULL;
 	}
 
+#ifdef WITH_GSM
+	Stream_Free(pulse->gsmBuffer, TRUE);
+#endif
+
 	free(pulse->device_name);
 	freerdp_dsp_context_free(pulse->dsp_context);
 	free(pulse);
