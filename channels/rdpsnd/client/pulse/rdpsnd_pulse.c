@@ -191,6 +191,11 @@ static void rdpsnd_pulse_close(rdpsndDevicePlugin* device)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
 
+#ifdef WITH_GSM
+	if (pulse->gsm_context)
+		gsm_destroy(pulse->gsm_context);
+#endif
+
 	if (!pulse->context || !pulse->stream)
 		return;
 
