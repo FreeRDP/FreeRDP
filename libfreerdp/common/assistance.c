@@ -1057,6 +1057,10 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name)
 	FILE* fp = NULL;
 	size_t readSize;
 	INT64 fileSize;
+
+	if (!name)
+		return -1;
+
 	fp = fopen(name, "r");
 
 	if (!fp)
