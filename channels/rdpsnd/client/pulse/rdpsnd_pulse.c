@@ -191,6 +191,11 @@ static void rdpsnd_pulse_close(rdpsndDevicePlugin* device)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
 
+#ifdef WITH_GSM
+	if (pulse->gsm_context)
+		gsm_destroy(pulse->gsm_context);
+#endif
+
 	if (!pulse->context || !pulse->stream)
 		return;
 
@@ -363,6 +368,10 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 		pa_threaded_mainloop_free(pulse->mainloop);
 		pulse->mainloop = NULL;
 	}
+
+#ifdef WITH_GSM
+	Stream_Free(pulse->gsmBuffer, TRUE);
+#endif
 
 	free(pulse->device_name);
 	freerdp_dsp_context_free(pulse->dsp_context);
