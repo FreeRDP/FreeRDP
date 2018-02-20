@@ -35,9 +35,9 @@
 #include <limits.h>
 #include <unistd.h>
 #if defined(__OpenBSD__)
-    #include <soundcard.h>
+#include <soundcard.h>
 #else
-    #include <sys/soundcard.h>
+#include <sys/soundcard.h>
 #endif
 #include <sys/ioctl.h>
 
@@ -129,7 +129,8 @@ static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 	return TRUE;
 }
 
-static BOOL tsmf_oss_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UINT32 channels, UINT32 bits_per_sample)
+static BOOL tsmf_oss_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UINT32 channels,
+                                UINT32 bits_per_sample)
 {
 	int tmp;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
@@ -161,11 +162,11 @@ static BOOL tsmf_oss_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UIN
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
 
 	DEBUG_TSMF("sample_rate %"PRIu32" channels %"PRIu32" bits_per_sample %"PRIu32"",
-			   sample_rate, channels, bits_per_sample);
+	           sample_rate, channels, bits_per_sample);
 	return TRUE;
 }
 
-static BOOL tsmf_oss_play(ITSMFAudioDevice* audio, BYTE* data, UINT32 data_size)
+static BOOL tsmf_oss_play(ITSMFAudioDevice* audio, const BYTE* data, UINT32 data_size)
 {
 	int status;
 	UINT32 offset;
@@ -176,10 +177,7 @@ static BOOL tsmf_oss_play(ITSMFAudioDevice* audio, BYTE* data, UINT32 data_size)
 		return FALSE;
 
 	if (data == NULL || data_size == 0)
-	{
-		free(data);
 		return TRUE;
-	}
 
 	offset = 0;
 	oss->data_size_last = data_size;
@@ -191,14 +189,12 @@ static BOOL tsmf_oss_play(ITSMFAudioDevice* audio, BYTE* data, UINT32 data_size)
 		if (status < 0)
 		{
 			OSS_LOG_ERR("write fail", errno);
-			free(data);
 			return FALSE;
 		}
 
 		offset += status;
 	}
 
-	free(data);
 	return TRUE;
 }
 

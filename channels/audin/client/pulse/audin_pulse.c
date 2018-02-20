@@ -34,7 +34,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/codec/dsp.h>
+#include <freerdp/codec/audio.h>
 #include <freerdp/client/audin.h>
 
 #include "audin_main.h"
@@ -49,14 +49,10 @@ typedef struct _AudinPulseDevice
 	pa_context* context;
 	pa_sample_spec sample_spec;
 	pa_stream* stream;
-	int format;
-	int block_size;
+	AUDIO_FORMAT format;
 
-	FREERDP_DSP_CONTEXT* dsp_context;
-
-	int bytes_per_frame;
-	BYTE* buffer;
-	int buffer_frames;
+	size_t bytes_per_frame;
+	size_t buffer_frames;
 
 	AudinReceive receive;
 	void* user_data;
@@ -172,12 +168,11 @@ static UINT audin_pulse_free(IAudinDevice* device)
 		pulse->mainloop = NULL;
 	}
 
-	freerdp_dsp_context_free(pulse->dsp_context);
 	free(pulse);
 	return CHANNEL_RC_OK;
 }
 
-static BOOL audin_pulse_format_supported(IAudinDevice* device, audinFormat* format)
+static BOOL audin_pulse_format_supported(IAudinDevice* device, const AUDIO_FORMAT* format)
 {
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
@@ -186,7 +181,7 @@ static BOOL audin_pulse_format_supported(IAudinDevice* device, audinFormat* form
 
 	switch (format->wFormatTag)
 	{
-		case 1: /* PCM */
+		case WAVE_FORMAT_PCM:
 			if (format->cbSize == 0 &&
 			    (format->nSamplesPerSec <= PA_RATE_MAX) &&
 			    (format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
@@ -197,8 +192,8 @@ static BOOL audin_pulse_format_supported(IAudinDevice* device, audinFormat* form
 
 			break;
 
-		case 6: /* A-LAW */
-		case 7: /* U-LAW */
+		case WAVE_FORMAT_ALAW: /* A-LAW */
+		case WAVE_FORMAT_MULAW: /* U-LAW */
 			if (format->cbSize == 0 &&
 			    (format->nSamplesPerSec <= PA_RATE_MAX) &&
 			    (format->wBitsPerSample == 8) &&
@@ -209,15 +204,8 @@ static BOOL audin_pulse_format_supported(IAudinDevice* device, audinFormat* form
 
 			break;
 
-		case 0x11: /* IMA ADPCM */
-			if ((format->nSamplesPerSec <= PA_RATE_MAX) &&
-			    (format->wBitsPerSample == 4) &&
-			    (format->nChannels == 1 || format->nChannels == 2))
-			{
-				return TRUE;
-			}
-
-			break;
+		default:
+			return FALSE;
 	}
 
 	return FALSE;
@@ -228,10 +216,9 @@ static BOOL audin_pulse_format_supported(IAudinDevice* device, audinFormat* form
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_pulse_set_format(IAudinDevice* device, audinFormat* format,
+static UINT audin_pulse_set_format(IAudinDevice* device, const AUDIO_FORMAT* format,
                                    UINT32 FramesPerPacket)
 {
-	int bs;
 	pa_sample_spec sample_spec = { 0 };
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
@@ -239,16 +226,14 @@ static UINT audin_pulse_set_format(IAudinDevice* device, audinFormat* format,
 		return ERROR_INVALID_PARAMETER;
 
 	if (FramesPerPacket > 0)
-	{
 		pulse->frames_per_packet = FramesPerPacket;
-	}
 
 	sample_spec.rate = format->nSamplesPerSec;
 	sample_spec.channels = format->nChannels;
 
 	switch (format->wFormatTag)
 	{
-		case 1: /* PCM */
+		case WAVE_FORMAT_PCM: /* PCM */
 			switch (format->wBitsPerSample)
 			{
 				case 8:
@@ -258,31 +243,27 @@ static UINT audin_pulse_set_format(IAudinDevice* device, audinFormat* format,
 				case 16:
 					sample_spec.format = PA_SAMPLE_S16LE;
 					break;
+
+				default:
+					return ERROR_INTERNAL_ERROR;
 			}
 
 			break;
 
-		case 6: /* A-LAW */
+		case WAVE_FORMAT_ALAW: /* A-LAW */
 			sample_spec.format = PA_SAMPLE_ALAW;
 			break;
 
-		case 7: /* U-LAW */
+		case WAVE_FORMAT_MULAW: /* U-LAW */
 			sample_spec.format = PA_SAMPLE_ULAW;
 			break;
 
-		case 0x11: /* IMA ADPCM */
-			sample_spec.format = PA_SAMPLE_S16LE;
-			bs = (format->nBlockAlign - 4 * format->nChannels) * 4;
-			pulse->frames_per_packet = (pulse->frames_per_packet * format->nChannels * 2 /
-			                            bs + 1) * bs / (format->nChannels * 2);
-			DEBUG_DVC("aligned FramesPerPacket=%"PRIu32"",
-			          pulse->frames_per_packet);
-			break;
+		default:
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	pulse->sample_spec = sample_spec;
-	pulse->format = format->wFormatTag;
-	pulse->block_size = format->nBlockAlign;
+	pulse->format = *format;
 	return CHANNEL_RC_OK;
 }
 
@@ -313,81 +294,15 @@ static void audin_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 
 static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length, void* userdata)
 {
-	int frames;
-	int cframes;
 	const void* data;
-	const BYTE* src;
-	int encoded_size;
-	BYTE* encoded_data;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) userdata;
 	UINT error = CHANNEL_RC_OK;
-
-	/* There is a race condition here where we may receive this callback
-	 * before the buffer has been set up in the main code.  It's probably
-	 * possible to fix with additional locking, but it's easier just to
-	 * ignore input until the buffer is ready.
-	 */
-	if (pulse->buffer == NULL)
-	{
-		/* WLog_ERR(TAG,  "%s: ignoring input, pulse buffer not ready.\n", __func__); */
-		return;
-	}
-
 	pa_stream_peek(stream, &data, &length);
-	frames = length / pulse->bytes_per_frame;
-	DEBUG_DVC("length %"PRIdz" frames %d", length, frames);
-	src = (const BYTE*) data;
-
-	while (frames > 0)
-	{
-		cframes = pulse->frames_per_packet - pulse->buffer_frames;
-
-		if (cframes > frames)
-			cframes = frames;
-
-		memcpy(pulse->buffer + pulse->buffer_frames * pulse->bytes_per_frame,
-		       src, cframes * pulse->bytes_per_frame);
-		pulse->buffer_frames += cframes;
-
-		if (pulse->buffer_frames >= pulse->frames_per_packet)
-		{
-			if (pulse->format == 0x11)
-			{
-				if (!pulse->dsp_context->encode_ima_adpcm(pulse->dsp_context,
-				        pulse->buffer, pulse->buffer_frames * pulse->bytes_per_frame,
-				        pulse->sample_spec.channels, pulse->block_size))
-				{
-					error = ERROR_INTERNAL_ERROR;
-					break;
-				}
-
-				encoded_data = pulse->dsp_context->adpcm_buffer;
-				encoded_size = pulse->dsp_context->adpcm_size;
-			}
-			else
-			{
-				encoded_data = pulse->buffer;
-				encoded_size = pulse->buffer_frames * pulse->bytes_per_frame;
-			}
-
-			DEBUG_DVC("encoded %d [%d] to %d [%X]",
-			          pulse->buffer_frames, pulse->bytes_per_frame, encoded_size,
-			          pulse->format);
-			error = pulse->receive(encoded_data, encoded_size, pulse->user_data);
-			pulse->buffer_frames = 0;
-
-			if (!error)
-				break;
-		}
-
-		src += cframes * pulse->bytes_per_frame;
-		frames -= cframes;
-	}
-
+	error = pulse->receive(&pulse->format, data, length, pulse->user_data);
 	pa_stream_drop(stream);
 
 	if (error && pulse->rdpcontext)
-		setChannelError(pulse->rdpcontext, error, "audin_oss_thread_func reported an error");
+		setChannelError(pulse->rdpcontext, error, "audin_pulse_thread_func reported an error");
 }
 
 
@@ -411,14 +326,6 @@ static UINT audin_pulse_close(IAudinDevice* device)
 
 	pulse->receive = NULL;
 	pulse->user_data = NULL;
-
-	if (pulse->buffer)
-	{
-		free(pulse->buffer);
-		pulse->buffer = NULL;
-		pulse->buffer_frames = 0;
-	}
-
 	return CHANNEL_RC_OK;
 }
 
@@ -439,7 +346,6 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	if (!pulse->sample_spec.rate || pulse->stream)
 		return ERROR_INVALID_PARAMETER;
 
-	pulse->buffer = NULL;
 	pulse->receive = receive;
 	pulse->user_data = user_data;
 	pa_threaded_mainloop_lock(pulse->mainloop);
@@ -496,15 +402,6 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	}
 
 	pa_threaded_mainloop_unlock(pulse->mainloop);
-	freerdp_dsp_context_reset_adpcm(pulse->dsp_context);
-	pulse->buffer = calloc(pulse->frames_per_packet, pulse->bytes_per_frame);
-
-	if (!pulse->buffer)
-	{
-		WLog_ERR(TAG, "calloc failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
 	pulse->buffer_frames = 0;
 	DEBUG_DVC("connected");
 	return CHANNEL_RC_OK;
@@ -594,15 +491,6 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 	if ((error = audin_pulse_parse_addin_args(pulse, args)))
 	{
 		WLog_ERR(TAG, "audin_pulse_parse_addin_args failed with error %"PRIu32"!", error);
-		goto error_out;
-	}
-
-	pulse->dsp_context = freerdp_dsp_context_new();
-
-	if (!pulse->dsp_context)
-	{
-		WLog_ERR(TAG, "freerdp_dsp_context_new failed!");
-		error = CHANNEL_RC_NO_MEMORY;
 		goto error_out;
 	}
 

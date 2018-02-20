@@ -144,17 +144,17 @@ static void rdpsnd_ios_stop(rdpsndDevicePlugin* __unused device)
 	}
 }
 
-static void rdpsnd_ios_play(rdpsndDevicePlugin* device, BYTE* data, int size)
+static UINT rdpsnd_ios_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 {
 	rdpsndIOSPlugin *p = THIS(device);
 
 	const BOOL ok = TPCircularBufferProduceBytes(&p->buffer, data, size);
 	if (!ok)
-	{
-		return;
-	}
+		return 0;
 
 	rdpsnd_ios_start(device);
+
+	return 10; /* TODO: Get real latencry in [ms] */
 }
 
 static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int __unused latency)

@@ -43,6 +43,7 @@ static UINT AudinServerOpening(audin_server_context* context)
 {
 	AUDIO_FORMAT* agreed_format = NULL;
 	int i = 0, j = 0;
+
 	for (i = 0; i < context->num_client_formats; i++)
 	{
 		for (j = 0; j < context->num_server_formats; j++)
@@ -55,9 +56,9 @@ static UINT AudinServerOpening(audin_server_context* context)
 				break;
 			}
 		}
+
 		if (agreed_format != NULL)
 			break;
-
 	}
 
 	if (agreed_format == NULL)
@@ -94,6 +95,7 @@ static UINT AudinServerReceiveSamples(audin_server_context* context, const void*
 
 	if (subsystem->AudinServerReceiveSamples)
 		subsystem->AudinServerReceiveSamples(subsystem, client, buf, nframes);
+
 	return CHANNEL_RC_OK;
 }
 
@@ -101,6 +103,7 @@ int shadow_client_audin_init(rdpShadowClient* client)
 {
 	audin_server_context* audin;
 	audin = client->audin = audin_server_context_new(client->vcm);
+
 	if (!audin)
 	{
 		return 0;
@@ -121,11 +124,9 @@ int shadow_client_audin_init(rdpShadowClient* client)
 	}
 
 	audin->dst_format = audin->server_formats[0];
-
 	audin->Opening = AudinServerOpening;
 	audin->OpenResult = AudinServerOpenResult;
 	audin->ReceiveSamples = AudinServerReceiveSamples;
-
 	return 1;
 }
 

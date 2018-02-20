@@ -20,63 +20,30 @@
 #ifndef FREERDP_CODEC_DSP_H
 #define FREERDP_CODEC_DSP_H
 
-#include <freerdp/api.h>
+#include <winpr/stream.h>
 
-union _ADPCM
-{
-	struct
-	{
-		INT16 last_sample[2];
-		INT16 last_step[2];
-	} ima;
-	struct
-	{
-		BYTE predictor[2];
-		INT32 delta[2];
-		INT32 sample1[2];
-		INT32 sample2[2];
-	} ms;
-};
-typedef union _ADPCM ADPCM;
+#include <freerdp/api.h>
+#include <freerdp/codec/audio.h>
 
 typedef struct _FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
-
-struct _FREERDP_DSP_CONTEXT
-{
-	BYTE* resampled_buffer;
-	UINT32 resampled_size;
-	UINT32 resampled_frames;
-	UINT32 resampled_maxlength;
-
-	BYTE* adpcm_buffer;
-	UINT32 adpcm_size;
-	UINT32 adpcm_maxlength;
-
-	ADPCM adpcm;
-
-	BOOL (*resample)(FREERDP_DSP_CONTEXT* context,
-		const BYTE* src, int bytes_per_sample,
-		UINT32 schan, UINT32 srate, int sframes,
-		UINT32 rchan, UINT32 rrate);
-
-	BOOL (*decode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
-		const BYTE* src, int size, int channels, int block_size);
-	BOOL (*encode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
-		const BYTE* src, int size, int channels, int block_size);
-
-	BOOL (*decode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
-		const BYTE* src, int size, int channels, int block_size);
-	BOOL (*encode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
-		const BYTE* src, int size, int channels, int block_size);
-};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-FREERDP_API FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(void);
+FREERDP_API FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder);
+FREERDP_API BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode);
+FREERDP_API BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context,
+                                    const AUDIO_FORMAT* srcFormat,
+                                    const BYTE* data, size_t length,
+                                    wStream* out);
+FREERDP_API BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* context,
+                                    const AUDIO_FORMAT* srcFormat,
+                                    const BYTE* data, size_t length,
+                                    wStream* out);
 FREERDP_API void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context);
-#define freerdp_dsp_context_reset_adpcm(_c) memset(&_c->adpcm, 0, sizeof(ADPCM))
+FREERDP_API BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context,
+        const AUDIO_FORMAT* targetFormat);
 
 #ifdef __cplusplus
 }

@@ -47,7 +47,6 @@
 #include <sys/ioctl.h>
 
 #include <freerdp/addin.h>
-#include <freerdp/codec/dsp.h>
 #include <freerdp/channels/rdpsnd.h>
 
 #include "audin_main.h"
@@ -56,12 +55,10 @@ typedef struct _AudinOSSDevice
 {
 	IAudinDevice iface;
 
-	FREERDP_DSP_CONTEXT* dsp_context;
-
 	HANDLE thread;
 	HANDLE stopEvent;
 
-	audinFormat format;
+	AUDIO_FORMAT format;
 	UINT32 FramesPerPacket;
 	int dev_unit;
 
@@ -76,7 +73,7 @@ typedef struct _AudinOSSDevice
 		WLog_ERR(TAG, "%s: %i - %s\n", _text, _error, strerror(_error));
 
 
-static int audin_oss_get_format(audinFormat* format)
+static int audin_oss_get_format(const AUDIO_FORMAT* format)
 {
 	switch (format->wFormatTag)
 	{
@@ -94,25 +91,17 @@ static int audin_oss_get_format(audinFormat* format)
 
 		case WAVE_FORMAT_ALAW:
 			return AFMT_A_LAW;
-#if 0 /* This does not work on my desktop. */
 
 		case WAVE_FORMAT_MULAW:
 			return AFMT_MU_LAW;
-#endif
-
-		case WAVE_FORMAT_ADPCM:
-		case WAVE_FORMAT_DVI_ADPCM:
-			return AFMT_S16_LE;
 	}
 
 	return 0;
 }
 
 static BOOL audin_oss_format_supported(IAudinDevice* device,
-                                       audinFormat* format)
+                                       const AUDIO_FORMAT* format)
 {
-	int req_fmt = 0;
-
 	if (device == NULL || format == NULL)
 		return FALSE;
 
@@ -127,20 +116,13 @@ static BOOL audin_oss_format_supported(IAudinDevice* device,
 
 			break;
 
-		case WAVE_FORMAT_ADPCM:
-		case WAVE_FORMAT_DVI_ADPCM:
-			if (format->nSamplesPerSec > 48000 ||
-			    format->wBitsPerSample != 4 ||
-			    (format->nChannels != 1 && format->nChannels != 2))
-				return FALSE;
+		case WAVE_FORMAT_ALAW:
+		case WAVE_FORMAT_MULAW:
+			return TRUE;
 
-			break;
+		default:
+			return FALSE;
 	}
-
-	req_fmt = audin_oss_get_format(format);
-
-	if (req_fmt == 0)
-		return FALSE;
 
 	return TRUE;
 }
@@ -150,7 +132,7 @@ static BOOL audin_oss_format_supported(IAudinDevice* device,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_oss_set_format(IAudinDevice* device, audinFormat* format,
+static UINT audin_oss_set_format(IAudinDevice* device, const AUDIO_FORMAT* format,
                                  UINT32 FramesPerPacket)
 {
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
@@ -159,17 +141,7 @@ static UINT audin_oss_set_format(IAudinDevice* device, audinFormat* format,
 		return ERROR_INVALID_PARAMETER;
 
 	oss->FramesPerPacket = FramesPerPacket;
-	CopyMemory(&(oss->format), format, sizeof(audinFormat));
-
-	switch (format->wFormatTag)
-	{
-		case WAVE_FORMAT_ADPCM:
-		case WAVE_FORMAT_DVI_ADPCM:
-			oss->FramesPerPacket *= 4; /* Compression ratio. */
-			oss->format.wBitsPerSample *= 4;
-			break;
-	}
-
+	oss->format = *format;
 	return CHANNEL_RC_OK;
 }
 
@@ -178,8 +150,9 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 	char dev_name[PATH_MAX] = "/dev/dsp";
 	char mixer_name[PATH_MAX] = "/dev/mixer";
 	int pcm_handle = -1, mixer_handle;
-	BYTE* buffer = NULL, *encoded_data = NULL;
-	int tmp, buffer_size, encoded_size;
+	BYTE* buffer = NULL;
+	int tmp;
+	size_t buffer_size;
 	AudinOSSDevice* oss = (AudinOSSDevice*)arg;
 	UINT error = 0;
 	DWORD status;
@@ -271,8 +244,6 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 		goto err_out;
 	}
 
-	freerdp_dsp_context_reset_adpcm(oss->dsp_context);
-
 	while (1)
 	{
 		status = WaitForSingleObject(oss->stopEvent, 0);
@@ -299,40 +270,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 		if (tmp < buffer_size) /* Not enouth data. */
 			continue;
 
-		/* Process. */
-		switch (oss->format.wFormatTag)
-		{
-			case WAVE_FORMAT_ADPCM:
-				if (!oss->dsp_context->encode_ms_adpcm(oss->dsp_context,
-				                                       buffer, buffer_size, oss->format.nChannels, oss->format.nBlockAlign))
-				{
-					error = ERROR_INTERNAL_ERROR;
-					goto err_out;
-				}
-
-				encoded_data = oss->dsp_context->adpcm_buffer;
-				encoded_size = oss->dsp_context->adpcm_size;
-				break;
-
-			case WAVE_FORMAT_DVI_ADPCM:
-				if (!oss->dsp_context->encode_ima_adpcm(oss->dsp_context,
-				                                        buffer, buffer_size, oss->format.nChannels, oss->format.nBlockAlign))
-				{
-					error = ERROR_INTERNAL_ERROR;
-					goto err_out;
-				}
-
-				encoded_data = oss->dsp_context->adpcm_buffer;
-				encoded_size = oss->dsp_context->adpcm_size;
-				break;
-
-			default:
-				encoded_data = buffer;
-				encoded_size = buffer_size;
-				break;
-		}
-
-		if ((error = oss->receive(encoded_data, encoded_size, oss->user_data)))
+		if ((error = oss->receive(&oss->format, buffer, buffer_size, oss->user_data)))
 		{
 			WLog_ERR(TAG, "oss->receive failed with error %"PRIu32"", error);
 			break;
@@ -438,12 +376,11 @@ static UINT audin_oss_free(IAudinDevice* device)
 		WLog_ERR(TAG, "audin_oss_close failed with error code %d!", error);
 	}
 
-	freerdp_dsp_context_free(oss->dsp_context);
 	free(oss);
 	return CHANNEL_RC_OK;
 }
 
-COMMAND_LINE_ARGUMENT_A audin_oss_args[] =
+static COMMAND_LINE_ARGUMENT_A audin_oss_args[] =
 {
 	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
@@ -552,15 +489,6 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS
 		goto error_out;
 	}
 
-	oss->dsp_context = freerdp_dsp_context_new();
-
-	if (!oss->dsp_context)
-	{
-		WLog_ERR(TAG, "freerdp_dsp_context_new failed!");
-		error = CHANNEL_RC_NO_MEMORY;
-		goto error_out;
-	}
-
 	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin,
 	             (IAudinDevice*) oss)))
 	{
@@ -570,7 +498,6 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS
 
 	return CHANNEL_RC_OK;
 error_out:
-	freerdp_dsp_context_free(oss->dsp_context);
 	free(oss);
 	return error;
 }

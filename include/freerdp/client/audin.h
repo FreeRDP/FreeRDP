@@ -24,38 +24,28 @@
 
 #include <freerdp/channels/audin.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/codec/audio.h>
 
 /**
  * Subsystem Interface
  */
 
-typedef UINT (*AudinReceive) (const BYTE* data, int size, void* userData);
-
-typedef struct audin_format audinFormat;
-struct audin_format
-{
-	UINT16 wFormatTag;
-	UINT16 nChannels;
-	UINT32 nSamplesPerSec;
-	UINT16 nBlockAlign;
-	UINT16 wBitsPerSample;
-	UINT16 cbSize;
-	BYTE* data;
-};
+typedef UINT(*AudinReceive)(const AUDIO_FORMAT* format,
+                            const BYTE* data, size_t size, void* userData);
 
 typedef struct _IAudinDevice IAudinDevice;
 struct _IAudinDevice
 {
-	UINT (*Open) (IAudinDevice* devplugin, AudinReceive receive, void* userData);
-	BOOL (*FormatSupported) (IAudinDevice* devplugin, audinFormat* format);
-	UINT (*SetFormat) (IAudinDevice* devplugin, audinFormat* format, UINT32 FramesPerPacket);
-	UINT (*Close) (IAudinDevice* devplugin);
-	UINT (*Free) (IAudinDevice* devplugin);
+	UINT(*Open)(IAudinDevice* devplugin, AudinReceive receive, void* userData);
+	BOOL (*FormatSupported)(IAudinDevice* devplugin, const AUDIO_FORMAT* format);
+	UINT(*SetFormat)(IAudinDevice* devplugin, const AUDIO_FORMAT* format, UINT32 FramesPerPacket);
+	UINT(*Close)(IAudinDevice* devplugin);
+	UINT(*Free)(IAudinDevice* devplugin);
 };
 
 #define AUDIN_DEVICE_EXPORT_FUNC_NAME "freerdp_audin_client_subsystem_entry"
 
-typedef UINT (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
+typedef UINT(*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
 
 struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS
 {
@@ -67,7 +57,7 @@ struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS
 typedef struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 
-typedef UINT (*PFREERDP_AUDIN_DEVICE_ENTRY)(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints);
+typedef UINT(*PFREERDP_AUDIN_DEVICE_ENTRY)(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints);
 
 #endif /* FREERDP_CHANNEL_AUDIN_CLIENT_AUDIN_H */
 

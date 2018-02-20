@@ -159,8 +159,8 @@ struct _TSMF_SAMPLE
 static wArrayList* presentation_list = NULL;
 static int TERMINATING = 0;
 
-static void _tsmf_presentation_free(TSMF_PRESENTATION* presentation);
-static void _tsmf_stream_free(TSMF_STREAM* stream);
+static void _tsmf_presentation_free(void* obj);
+static void _tsmf_stream_free(void* obj);
 
 static UINT64 get_current_time(void)
 {
@@ -367,7 +367,7 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid,
 		goto error_stream_list;
 
 	ArrayList_Object(presentation->stream_list)->fnObjectFree =
-	    (OBJECT_FREE_FN) _tsmf_stream_free;
+	    _tsmf_stream_free;
 
 	if (ArrayList_Add(presentation_list, presentation) < 0)
 		goto error_add;
@@ -528,6 +528,7 @@ static BOOL tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 	{
 		ret = sample->stream->audio->Play(sample->stream->audio, sample->data,
 		                                  sample->decoded_size);
+		free(sample->data);
 		sample->data = NULL;
 		sample->decoded_size = 0;
 
@@ -1193,14 +1194,19 @@ BOOL tsmf_stream_flush(TSMF_STREAM* stream)
 	return TRUE;
 }
 
-void _tsmf_presentation_free(TSMF_PRESENTATION* presentation)
+void _tsmf_presentation_free(void* obj)
 {
-	tsmf_presentation_stop(presentation);
-	ArrayList_Clear(presentation->stream_list);
-	ArrayList_Free(presentation->stream_list);
-	free(presentation->rects);
-	ZeroMemory(presentation, sizeof(TSMF_PRESENTATION));
-	free(presentation);
+	TSMF_PRESENTATION* presentation = (TSMF_PRESENTATION*)obj;
+
+	if (presentation)
+	{
+		tsmf_presentation_stop(presentation);
+		ArrayList_Clear(presentation->stream_list);
+		ArrayList_Free(presentation->stream_list);
+		free(presentation->rects);
+		ZeroMemory(presentation, sizeof(TSMF_PRESENTATION));
+		free(presentation);
+	}
 }
 
 void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
@@ -1414,8 +1420,10 @@ void tsmf_stream_end(TSMF_STREAM* stream, UINT32 message_id,
 	stream->eos_channel_callback = pChannelCallback;
 }
 
-void _tsmf_stream_free(TSMF_STREAM* stream)
+void _tsmf_stream_free(void* obj)
 {
+	TSMF_STREAM* stream = (TSMF_STREAM*)obj;
+
 	if (!stream)
 		return;
 
@@ -1552,8 +1560,7 @@ BOOL tsmf_media_init(void)
 		if (!presentation_list)
 			return FALSE;
 
-		ArrayList_Object(presentation_list)->fnObjectFree = (OBJECT_FREE_FN)
-		        _tsmf_presentation_free;
+		ArrayList_Object(presentation_list)->fnObjectFree = _tsmf_presentation_free;
 	}
 
 	return TRUE;
