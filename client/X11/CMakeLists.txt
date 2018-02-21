@@ -90,14 +90,19 @@ if(WITH_MANPAGES)
 
 		configure_file(xfreerdp.1.xml.in xfreerdp.1.xml @ONLY IMMEDIATE)
 
-		# the manpage generator helper tool is called by cmake.
-		# this does not work if we compile with any of the sanitizer options,
-		# therefore remove these from the CFLAGS for this specific target.
-		string(REGEX REPLACE "-fsanitize=[a-z]* " "" CUSTOM_C_FLAGS ${CMAKE_C_FLAGS})
-		add_executable(generate_argument_docbook generate_argument_docbook.c)
-		set_property(TARGET generate_argument_docbook PROPERTY CMAKE_C_FLAGS ${CUSTOM_C_FLAGS})
+		# Compile the helper tool with default compiler settings.
+		# We need the include paths though.
+		get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+		set(GENERATE_INCLUDES "")
+		foreach(dir ${dirs})
+			set(GENERATE_INCLUDES ${GENERATE_INCLUDES} -I${dir})
+		endforeach(dir)
+
 		add_custom_command(OUTPUT xfreerdp.1
-					COMMAND generate_argument_docbook
+					COMMAND ${CMAKE_C_COMPILER} ${GENERATE_INCLUDES}
+						${CMAKE_CURRENT_SOURCE_DIR}/generate_argument_docbook.c
+						-o ${CMAKE_CURRENT_BINARY_DIR}/generate_argument_docbook
+					COMMAND ${CMAKE_CURRENT_BINARY_DIR}/generate_argument_docbook
 					COMMAND ${CMAKE_COMMAND} -E copy
 						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml ${CMAKE_CURRENT_BINARY_DIR}
 					COMMAND ${CMAKE_COMMAND} -E copy
@@ -106,12 +111,11 @@ if(WITH_MANPAGES)
 						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-envvar.1.xml ${CMAKE_CURRENT_BINARY_DIR}
 					COMMAND ${XSLTPROC_EXECUTABLE} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl xfreerdp.1.xml
 					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-					DEPENDS 
-						${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1.xml 
-						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml 
-						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml 
-						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-envvar.1.xml
-						generate_argument_docbook)
+					DEPENDS
+						${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1.xml
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-envvar.1.xml)
 
 		add_custom_target(xfreerdp.manpage ALL
 			DEPENDS xfreerdp.1)
