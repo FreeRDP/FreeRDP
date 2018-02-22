@@ -152,11 +152,25 @@ out:
 }
 #endif /* WITH_GSSAPI */
 
-static void transport_ssl_cb(SSL* ssl, int where, int ret)
+static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 {
-	if (where & SSL_CB_ALERT)
+	rdpTransport* transport = (rdpTransport*) SSL_get_app_data(ssl);
+	const char* state = SSL_state_string(ssl);
+	const char* rstate = SSL_rstate_string(ssl);
+	const char* longstate = SSL_state_string_long(ssl);
+	const char* rlongstate = SSL_rstate_string_long(ssl);
+
+	if (where & SSL_CB_LOOP)
+		WLog_Print(transport->log, WLOG_DEBUG, "%s [%s]", longstate, state);
+	else if (where & SSL_CB_ALERT)
 	{
-		rdpTransport* transport = (rdpTransport*) SSL_get_app_data(ssl);
+		const char* type = SSL_alert_type_string(ret);
+		const char* ltype = SSL_alert_type_string_long(ret);
+		const char* alert_string = SSL_alert_desc_string(ret);
+		const char* alert_string_long = SSL_alert_desc_string_long(ret);
+		WLog_Print(transport->log, WLOG_DEBUG,
+		           "SSL alert: [0x%08X, x%08X] type %s [%s] %s [%s] in state %s [%s], rstate %s [%s]",
+		           where, ret, ltype, type, alert_string_long, alert_string, longstate, state, rlongstate, rstate);
 
 		switch (ret)
 		{
@@ -185,7 +199,7 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 						}
 						else
 #endif /* WITH_GSSAPI */
-							kret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
+							kret = FREERDP_ERROR_CONNECT_TRANSPORT_FAILED;
 
 						if (!freerdp_get_last_error(transport->context))
 							freerdp_set_last_error(transport->context, kret);
@@ -202,6 +216,13 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 					break;
 				}
 		}
+	}
+	else if (where & SSL_CB_EXIT)
+	{
+		if (ret == 0)
+			WLog_Print(transport->log, WLOG_DEBUG, "%s [%s]: failed", longstate, state);
+		else if (ret < 0)
+			WLog_Print(transport->log, WLOG_DEBUG, "%s [%s]: error %d", longstate, state, ret);
 	}
 }
 
@@ -291,8 +312,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	}
 
 	transport->frontBio = tls->bio;
-	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK,
-	                  (bio_info_cb*) transport_ssl_cb);
+	SSL_CTX_set_info_callback(tls->ctx, transport_ssl_cb);
 	SSL_set_app_data(tls->ssl, transport);
 
 	if (!transport->frontBio)
