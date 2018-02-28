@@ -258,7 +258,7 @@ BOOL freerdp_connect(freerdp* instance)
 				Stream_SetLength(s, record.length);
 				Stream_SetPosition(s, 0);
 				update->BeginPaint(update->context);
-				update_recv_surfcmds(update, Stream_Length(s), s);
+				update_recv_surfcmds(update, s);
 				update->EndPaint(update->context);
 				Stream_Release(s);
 			}

@@ -194,6 +194,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	}
 
 	memset(rgb_data, 0xA0, size);
+	memset(cmd, 0, sizeof(SURFACE_BITS_COMMAND));
 
 	if (client->settings->RemoteFxCodec)
 	{
@@ -203,24 +204,25 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 			goto out;
 		}
 
-		cmd->codecID = client->settings->RemoteFxCodecId;
+		cmd->bmp.codecID = client->settings->RemoteFxCodecId;
 	}
 	else
 	{
 		nsc_compose_message(context->nsc_context, s,
 		                    rgb_data, rect.width, rect.height, rect.width * 3);
-		cmd->codecID = client->settings->NSCodecId;
+		cmd->bmp.codecID = client->settings->NSCodecId;
 	}
 
 	cmd->destLeft = 0;
 	cmd->destTop = 0;
 	cmd->destRight = rect.width;
 	cmd->destBottom = rect.height;
-	cmd->bpp = 32;
-	cmd->width = rect.width;
-	cmd->height = rect.height;
-	cmd->bitmapDataLength = Stream_GetPosition(s);
-	cmd->bitmapData = Stream_Buffer(s);
+	cmd->bmp.bpp = 32;
+	cmd->bmp.flags = 0;
+	cmd->bmp.width = rect.width;
+	cmd->bmp.height = rect.height;
+	cmd->bmp.bitmapDataLength = Stream_GetPosition(s);
+	cmd->bmp.bitmapData = Stream_Buffer(s);
 	test_peer_begin_frame(client);
 	update->SurfaceBits(update->context, cmd);
 	test_peer_end_frame(client);
@@ -315,6 +317,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	rect.y = 0;
 	rect.width = context->icon_width;
 	rect.height = context->icon_height;
+	memset(cmd, 0, sizeof(SURFACE_BITS_COMMAND));
 
 	if (context->icon_x >= 0)
 	{
@@ -324,24 +327,25 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		{
 			rfx_compose_message(context->rfx_context, s,
 			                    &rect, 1, context->bg_data, rect.width, rect.height, rect.width * 3);
-			cmd->codecID = client->settings->RemoteFxCodecId;
+			cmd->bmp.codecID = client->settings->RemoteFxCodecId;
 		}
 		else
 		{
 			nsc_compose_message(context->nsc_context, s,
 			                    context->bg_data, rect.width, rect.height, rect.width * 3);
-			cmd->codecID = client->settings->NSCodecId;
+			cmd->bmp.codecID = client->settings->NSCodecId;
 		}
 
 		cmd->destLeft = context->icon_x;
 		cmd->destTop = context->icon_y;
 		cmd->destRight = context->icon_x + context->icon_width;
 		cmd->destBottom = context->icon_y + context->icon_height;
-		cmd->bpp = 32;
-		cmd->width = context->icon_width;
-		cmd->height = context->icon_height;
-		cmd->bitmapDataLength = Stream_GetPosition(s);
-		cmd->bitmapData = Stream_Buffer(s);
+		cmd->bmp.bpp = 32;
+		cmd->bmp.flags = 0;
+		cmd->bmp.width = context->icon_width;
+		cmd->bmp.height = context->icon_height;
+		cmd->bmp.bitmapDataLength = Stream_GetPosition(s);
+		cmd->bmp.bitmapData = Stream_Buffer(s);
 		update->SurfaceBits(update->context, cmd);
 	}
 
@@ -351,24 +355,24 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	{
 		rfx_compose_message(context->rfx_context, s,
 		                    &rect, 1, context->icon_data, rect.width, rect.height, rect.width * 3);
-		cmd->codecID = client->settings->RemoteFxCodecId;
+		cmd->bmp.codecID = client->settings->RemoteFxCodecId;
 	}
 	else
 	{
 		nsc_compose_message(context->nsc_context, s,
 		                    context->icon_data, rect.width, rect.height, rect.width * 3);
-		cmd->codecID = client->settings->NSCodecId;
+		cmd->bmp.codecID = client->settings->NSCodecId;
 	}
 
 	cmd->destLeft = x;
 	cmd->destTop = y;
 	cmd->destRight = x + context->icon_width;
 	cmd->destBottom = y + context->icon_height;
-	cmd->bpp = 32;
-	cmd->width = context->icon_width;
-	cmd->height = context->icon_height;
-	cmd->bitmapDataLength = Stream_GetPosition(s);
-	cmd->bitmapData = Stream_Buffer(s);
+	cmd->bmp.bpp = 32;
+	cmd->bmp.width = context->icon_width;
+	cmd->bmp.height = context->icon_height;
+	cmd->bmp.bitmapDataLength = Stream_GetPosition(s);
+	cmd->bmp.bitmapData = Stream_Buffer(s);
 	update->SurfaceBits(update->context, cmd);
 	context->icon_x = x;
 	context->icon_y = y;

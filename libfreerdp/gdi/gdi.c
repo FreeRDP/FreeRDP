@@ -1022,20 +1022,20 @@ static BOOL gdi_surface_bits(rdpContext* context,
 	gdi = context->gdi;
 	WLog_Print(gdi->log, WLOG_DEBUG,
 	           "destLeft %"PRIu32" destTop %"PRIu32" destRight %"PRIu32" destBottom %"PRIu32" "
-	           "bpp %"PRIu32" codecID %"PRIu32" width %"PRIu32" height %"PRIu32" length %"PRIu32"",
+	           "bpp %"PRIu8" flags %"PRIx8" codecID %"PRIu16" width %"PRIu16" height %"PRIu16" length %"PRIu32"",
 	           cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
-	           cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
+			   cmd->bmp.bpp, cmd->bmp.flags, cmd->bmp.codecID, cmd->bmp.width, cmd->bmp.height, cmd->bmp.bitmapDataLength);
 	region16_init(&region);
 	cmdRect.left = cmd->destLeft;
 	cmdRect.top = cmd->destTop;
-	cmdRect.right = cmdRect.left + cmd->width;
-	cmdRect.bottom = cmdRect.top + cmd->height;
+	cmdRect.right = cmdRect.left + cmd->bmp.width;
+	cmdRect.bottom = cmdRect.top + cmd->bmp.height;
 
-	switch (cmd->codecID)
+	switch (cmd->bmp.codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
-			if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
-			                         cmd->bitmapDataLength,
+			if (!rfx_process_message(context->codecs->rfx, cmd->bmp.bitmapData,
+									 cmd->bmp.bitmapDataLength,
 			                         cmd->destLeft, cmd->destTop,
 			                         gdi->primary_buffer, gdi->dstFormat,
 			                         gdi->stride, gdi->height, &region))
@@ -1049,11 +1049,11 @@ static BOOL gdi_surface_bits(rdpContext* context,
 		case RDP_CODEC_ID_NSCODEC:
 			format = gdi->dstFormat;
 
-			if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
-			                         cmd->height, cmd->bitmapData,
-			                         cmd->bitmapDataLength, gdi->primary_buffer,
+			if (!nsc_process_message(context->codecs->nsc, cmd->bmp.bpp, cmd->bmp.width,
+									 cmd->bmp.height, cmd->bmp.bitmapData,
+									 cmd->bmp.bitmapDataLength, gdi->primary_buffer,
 			                         format, gdi->stride, cmd->destLeft, cmd->destTop,
-			                         cmd->width, cmd->height, FREERDP_FLIP_VERTICAL))
+									 cmd->bmp.width, cmd->bmp.height, FREERDP_FLIP_VERTICAL))
 			{
 				WLog_ERR(TAG, "Failed to process NSCodec message");
 				goto out;
@@ -1063,11 +1063,11 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			break;
 
 		case RDP_CODEC_ID_NONE:
-			format = gdi_get_pixel_format(cmd->bpp);
+			format = gdi_get_pixel_format(cmd->bmp.bpp);
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-			                        cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
-			                        cmd->bitmapData, format, 0, 0, 0,
+									cmd->destLeft, cmd->destTop, cmd->bmp.width, cmd->bmp.height,
+									cmd->bmp.bitmapData, format, 0, 0, 0,
 			                        &gdi->palette, FREERDP_FLIP_VERTICAL))
 			{
 				WLog_ERR(TAG, "Failed to process nocodec message");
@@ -1078,7 +1078,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unsupported codecID %"PRIu32"", cmd->codecID);
+			WLog_ERR(TAG, "Unsupported codecID %"PRIu32"", cmd->bmp.codecID);
 			break;
 	}
 

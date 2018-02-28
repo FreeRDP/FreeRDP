@@ -925,7 +925,7 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client,
 	rdpContext* context = (rdpContext*) client;
 	rdpSettings* settings;
 	rdpShadowEncoder* encoder;
-	SURFACE_BITS_COMMAND cmd;
+	SURFACE_BITS_COMMAND cmd = { 0 };
 
 	if (!context || !pSrcData)
 		return FALSE;
@@ -966,14 +966,15 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client,
 			return FALSE;
 		}
 
-		cmd.codecID = settings->RemoteFxCodecId;
+		cmd.bmp.codecID = settings->RemoteFxCodecId;
 		cmd.destLeft = 0;
 		cmd.destTop = 0;
 		cmd.destRight = settings->DesktopWidth;
 		cmd.destBottom = settings->DesktopHeight;
-		cmd.bpp = 32;
-		cmd.width = settings->DesktopWidth;
-		cmd.height = settings->DesktopHeight;
+		cmd.bmp.bpp = 32;
+		cmd.bmp.flags = 0;
+		cmd.bmp.width = settings->DesktopWidth;
+		cmd.bmp.height = settings->DesktopHeight;
 		cmd.skipCompression = TRUE;
 
 		if (numMessages > 0)
@@ -996,8 +997,8 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client,
 			}
 
 			rfx_message_free(encoder->rfx, &messages[i]);
-			cmd.bitmapDataLength = Stream_GetPosition(s);
-			cmd.bitmapData = Stream_Buffer(s);
+			cmd.bmp.bitmapDataLength = Stream_GetPosition(s);
+			cmd.bmp.bitmapData = Stream_Buffer(s);
 			first = (i == 0) ? TRUE : FALSE;
 			last = ((i + 1) == numMessages) ? TRUE : FALSE;
 
@@ -1029,16 +1030,16 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client,
 		Stream_SetPosition(s, 0);
 		pSrcData = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
 		nsc_compose_message(encoder->nsc, s, pSrcData, nWidth, nHeight, nSrcStep);
-		cmd.bpp = 32;
-		cmd.codecID = settings->NSCodecId;
+		cmd.bmp.bpp = 32;
+		cmd.bmp.codecID = settings->NSCodecId;
 		cmd.destLeft = nXSrc;
 		cmd.destTop = nYSrc;
 		cmd.destRight = cmd.destLeft + nWidth;
 		cmd.destBottom = cmd.destTop + nHeight;
-		cmd.width = nWidth;
-		cmd.height = nHeight;
-		cmd.bitmapDataLength = Stream_GetPosition(s);
-		cmd.bitmapData = Stream_Buffer(s);
+		cmd.bmp.width = nWidth;
+		cmd.bmp.height = nHeight;
+		cmd.bmp.bitmapDataLength = Stream_GetPosition(s);
+		cmd.bmp.bitmapData = Stream_Buffer(s);
 		first = TRUE;
 		last = TRUE;
 
