@@ -185,7 +185,7 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->local_move.state = LMS_TERMINATING;
 }
 
-void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
+static void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 {
 	int index;
 	int count;
@@ -195,9 +195,6 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 	xfAppWindow* appWindow;
 	const RECTANGLE_16* extents;
 	REGION16 windowInvalidRegion;
-
-	if (!xfc || !xfc->rail || !xfc->railWindows)
-		return;
 
 	region16_init(&windowInvalidRegion);
 	count = HashTable_GetKeys(xfc->railWindows, &pKeys);
@@ -611,7 +608,7 @@ static BOOL xf_rail_non_monitored_desktop(rdpContext* context,
 	return TRUE;
 }
 
-void xf_rail_register_update_callbacks(rdpUpdate* update)
+static void xf_rail_register_update_callbacks(rdpUpdate* update)
 {
 	rdpWindowUpdate* window = update->window;
 	window->WindowCreate = xf_rail_window_common;
