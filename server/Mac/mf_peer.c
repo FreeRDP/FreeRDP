@@ -113,16 +113,17 @@ static void mf_peer_rfx_update(freerdp_peer* client)
 		return;
 	}
 
+	memset(cmd, 0, sizeof(SURFACE_BITS_COMMAND));
 	cmd->destLeft = x;
 	cmd->destTop = y;
 	cmd->destRight = x + rect.width;
 	cmd->destBottom = y + rect.height;
-	cmd->bpp = 32;
-	cmd->codecID = 3;
-	cmd->width = rect.width;
-	cmd->height = rect.height;
-	cmd->bitmapDataLength = Stream_GetPosition(s);
-	cmd->bitmapData = Stream_Buffer(s);
+	cmd->bmp.bpp = 32;
+	cmd->bmp.codecID = 3;
+	cmd->bmp.width = rect.width;
+	cmd->bmp.height = rect.height;
+	cmd->bmp.bitmapDataLength = Stream_GetPosition(s);
+	cmd->bmp.bitmapData = Stream_Buffer(s);
 	//send
 	update->SurfaceBits(update->context, cmd);
 	//clean up... maybe?

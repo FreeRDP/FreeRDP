@@ -122,7 +122,7 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s,
 }
 
 static BOOL update_write_bitmap_data(rdpUpdate* update, wStream* s,
-                              BITMAP_DATA* bitmapData)
+                                     BITMAP_DATA* bitmapData)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 64 + bitmapData->bitmapLength))
 		return FALSE;
@@ -302,7 +302,7 @@ BOOL update_read_pointer_position(wStream* s,
 }
 
 static BOOL update_read_pointer_system(wStream* s,
-                                POINTER_SYSTEM_UPDATE* pointer_system)
+                                       POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -376,7 +376,8 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color,
 
 		if (scanlineSize * pointer_color->height != pointer_color->lengthXorMask)
 		{
-			WLog_ERR(TAG,  "invalid lengthXorMask: width=%"PRIu32" height=%"PRIu32", %"PRIu32" instead of %"PRIu32"",
+			WLog_ERR(TAG,
+			         "invalid lengthXorMask: width=%"PRIu32" height=%"PRIu32", %"PRIu32" instead of %"PRIu32"",
 			         pointer_color->width, pointer_color->height,
 			         pointer_color->lengthXorMask, scanlineSize * pointer_color->height);
 			return FALSE;
@@ -965,14 +966,8 @@ static BOOL update_send_surface_bits(rdpContext* context,
 	if (!s)
 		return FALSE;
 
-	if (!Stream_EnsureRemainingCapacity(s,
-	                                    SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) surfaceBitsCommand->bitmapDataLength)
-	    ||
-	    !update_write_surfcmd_surface_bits_header(s, surfaceBitsCommand))
+	if (!update_write_surfcmd_surface_bits(s, surfaceBitsCommand))
 		goto out_fail;
-
-	Stream_Write(s, surfaceBitsCommand->bitmapData,
-	             surfaceBitsCommand->bitmapDataLength);
 
 	if (!fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s,
 	                              surfaceBitsCommand->skipCompression))
@@ -1023,10 +1018,6 @@ static BOOL update_send_surface_frame_bits(rdpContext* context,
 	if (!s)
 		return FALSE;
 
-	if (!Stream_EnsureRemainingCapacity(s,
-	                                    SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) cmd->bitmapDataLength + 16))
-		goto out_fail;
-
 	if (first)
 	{
 		if (!update_write_surfcmd_frame_marker(s, SURFACECMD_FRAMEACTION_BEGIN,
@@ -1034,10 +1025,8 @@ static BOOL update_send_surface_frame_bits(rdpContext* context,
 			goto out_fail;
 	}
 
-	if (!update_write_surfcmd_surface_bits_header(s, cmd))
+	if (!update_write_surfcmd_surface_bits(s, cmd))
 		goto out_fail;
-
-	Stream_Write(s, cmd->bitmapData, cmd->bitmapDataLength);
 
 	if (last)
 	{
@@ -2047,17 +2036,15 @@ static void update_free_queued_message(void* obj)
 
 static void update_free_window_state(WINDOW_STATE_ORDER* window_state)
 {
-    if (!window_state)
-        return;
+	if (!window_state)
+		return;
 
-    free(window_state->titleInfo.string);
-    window_state->titleInfo.string = NULL;
-
-    free(window_state->windowRects);
-    window_state->windowRects = NULL;
-
-    free(window_state->visibilityRects);
-    window_state->visibilityRects = NULL;
+	free(window_state->titleInfo.string);
+	window_state->titleInfo.string = NULL;
+	free(window_state->windowRects);
+	window_state->windowRects = NULL;
+	free(window_state->visibilityRects);
+	window_state->visibilityRects = NULL;
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)

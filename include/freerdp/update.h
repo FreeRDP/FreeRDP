@@ -42,6 +42,7 @@ typedef struct rdp_update rdpUpdate;
 #include <freerdp/pointer.h>
 
 /* Bitmap Updates */
+#define EX_COMPRESSED_BITMAP_HEADER_PRESENT 0x01
 
 struct _BITMAP_DATA
 {
@@ -91,6 +92,27 @@ struct _PLAY_SOUND_UPDATE
 typedef struct _PLAY_SOUND_UPDATE PLAY_SOUND_UPDATE;
 
 /* Surface Command Updates */
+struct _TS_COMPRESSED_BITMAP_HEADER_EX
+{
+	UINT32 highUniqueId;
+	UINT32 lowUniqueId;
+	UINT64 tmMilliseconds;
+	UINT64 tmSeconds;
+};
+typedef struct _TS_COMPRESSED_BITMAP_HEADER_EX TS_COMPRESSED_BITMAP_HEADER_EX;
+
+struct _TS_BITMAP_DATA_EX
+{
+	BYTE bpp;
+	BYTE flags;
+	UINT16 codecID;
+	UINT16 width;
+	UINT16 height;
+	UINT32 bitmapDataLength;
+	TS_COMPRESSED_BITMAP_HEADER_EX exBitmapDataHeader;
+	BYTE* bitmapData;
+};
+typedef struct _TS_BITMAP_DATA_EX TS_BITMAP_DATA_EX;
 
 struct _SURFACE_BITS_COMMAND
 {
@@ -99,12 +121,7 @@ struct _SURFACE_BITS_COMMAND
 	UINT32 destTop;
 	UINT32 destRight;
 	UINT32 destBottom;
-	UINT32 bpp;
-	UINT32 codecID;
-	UINT32 width;
-	UINT32 height;
-	UINT32 bitmapDataLength;
-	BYTE* bitmapData;
+	TS_BITMAP_DATA_EX bmp;
 	BOOL skipCompression;
 };
 typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
@@ -148,20 +165,21 @@ typedef BOOL (*pSetKeyboardIndicators)(rdpContext* context, UINT16 led_flags);
 
 typedef BOOL (*pRefreshRect)(rdpContext* context, BYTE count, const RECTANGLE_16* areas);
 typedef BOOL (*pSuppressOutput)(rdpContext* context, BYTE allow, const RECTANGLE_16* area);
-typedef BOOL (*pRemoteMonitors)(rdpContext* context, UINT32 count, const MONITOR_DEF *monitors);
+typedef BOOL (*pRemoteMonitors)(rdpContext* context, UINT32 count, const MONITOR_DEF* monitors);
 
 typedef BOOL (*pSurfaceCommand)(rdpContext* context, wStream* s);
 typedef BOOL (*pSurfaceBits)(rdpContext* context,
-			     const SURFACE_BITS_COMMAND* surfaceBitsCommand);
+                             const SURFACE_BITS_COMMAND* surfaceBitsCommand);
 typedef BOOL (*pSurfaceFrameMarker)(rdpContext* context,
-				    const SURFACE_FRAME_MARKER* surfaceFrameMarker);
+                                    const SURFACE_FRAME_MARKER* surfaceFrameMarker);
 typedef BOOL (*pSurfaceFrameBits)(rdpContext* context,
-				  const SURFACE_BITS_COMMAND* cmd, BOOL first,
-				  BOOL last, UINT32 frameId);
+                                  const SURFACE_BITS_COMMAND* cmd, BOOL first,
+                                  BOOL last, UINT32 frameId);
 typedef BOOL (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
 
-typedef BOOL (*pSaveSessionInfo)(rdpContext *context, UINT32 type, void *data);
-typedef BOOL (*pSetKeyboardImeStatus)(rdpContext* context, UINT16 imeId, UINT32 imeState, UINT32 imeConvMode);
+typedef BOOL (*pSaveSessionInfo)(rdpContext* context, UINT32 type, void* data);
+typedef BOOL (*pSetKeyboardImeStatus)(rdpContext* context, UINT16 imeId, UINT32 imeState,
+                                      UINT32 imeConvMode);
 
 struct rdp_update
 {

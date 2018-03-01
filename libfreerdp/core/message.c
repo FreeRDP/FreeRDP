@@ -280,17 +280,17 @@ static BOOL update_message_SurfaceBits(rdpContext* context,
 
 	CopyMemory(wParam, surfaceBitsCommand, sizeof(SURFACE_BITS_COMMAND));
 #ifdef WITH_STREAM_POOL
-	StreamPool_AddRef(context->rdp->transport->ReceivePool, surfaceBitsCommand->bitmapData);
+	StreamPool_AddRef(context->rdp->transport->ReceivePool, surfaceBitsCommand->bmp.bitmapData);
 #else
-	wParam->bitmapData = (BYTE*) malloc(wParam->bitmapDataLength);
+	wParam->bmp.bitmapData = (BYTE*) malloc(wParam->bmp.bitmapDataLength);
 
-	if (!wParam->bitmapData)
+	if (!wParam->bmp.bitmapData)
 	{
 		free(wParam);
 		return FALSE;
 	}
 
-	CopyMemory(wParam->bitmapData, surfaceBitsCommand->bitmapData, wParam->bitmapDataLength);
+	CopyMemory(wParam->bmp.bitmapData, surfaceBitsCommand->bmp.bitmapData, wParam->bmp.bitmapDataLength);
 #endif
 	return MessageQueue_Post(context->update->queue, (void*) context,
 	                         MakeMessageId(Update, SurfaceBits), (void*) wParam, NULL);
@@ -1702,10 +1702,10 @@ static int update_message_free_update_class(wMessage* msg, int type)
 #ifdef WITH_STREAM_POOL
 				rdpContext* context = (rdpContext*) msg->context;
 				SURFACE_BITS_COMMAND* wParam = (SURFACE_BITS_COMMAND*) msg->wParam;
-				StreamPool_Release(context->rdp->transport->ReceivePool, wParam->bitmapData);
+				StreamPool_Release(context->rdp->transport->ReceivePool, wParam->bmp.bitmapData);
 #else
 				SURFACE_BITS_COMMAND* wParam = (SURFACE_BITS_COMMAND*) msg->wParam;
-				free(wParam->bitmapData);
+				free(wParam->bmp.bitmapData);
 				free(wParam);
 #endif
 			}
