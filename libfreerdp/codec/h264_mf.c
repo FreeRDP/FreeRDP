@@ -494,12 +494,15 @@ static BOOL mf_init(H264_CONTEXT* h264)
 	if (!sys)
 		goto error;
 
-	h264->pSystemData = (void*) sys;
 	/* http://decklink-sdk-delphi.googlecode.com/svn/trunk/Blackmagic%20DeckLink%20SDK%209.7/Win/Samples/Streaming/StreamingPreview/DecoderMF.cpp */
-	sys->mfplat = LoadLibraryA("mfplat.dll");
-
+	sys->mfplat = = LoadLibraryA("mfplat.dll");
 	if (!sys->mfplat)
+	{
+		free(sys);
 		goto error;
+	}
+
+	h264->pSystemData = (void*) sys;
 
 	sys->MFStartup = (pfnMFStartup) GetProcAddress(sys->mfplat, "MFStartup");
 	sys->MFShutdown = (pfnMFShutdown) GetProcAddress(sys->mfplat, "MFShutdown");
