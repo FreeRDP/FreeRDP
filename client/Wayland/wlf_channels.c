@@ -39,9 +39,6 @@ static UINT wlf_encomsp_participant_created(EncomspClientContext* context,
 
 static void wlf_encomsp_init(wlfContext* wlf, EncomspClientContext* encomsp)
 {
-	if (!wlf || !encomsp)
-		return;
-
 	wlf->encomsp = encomsp;
 	encomsp->custom = (void*) wlf;
 	encomsp->ParticipantCreated = wlf_encomsp_participant_created;
@@ -65,9 +62,6 @@ void wlf_OnChannelConnectedEventHandler(void* context,
 {
 	wlfContext* wlf = (wlfContext*) context;
 	rdpSettings* settings;
-
-	if (!wlf || !e || !wlf->context.settings)
-		return;
 
 	settings = wlf->context.settings;
 
@@ -100,9 +94,6 @@ void wlf_OnChannelDisconnectedEventHandler(void* context,
 {
 	wlfContext* wlf = (wlfContext*) context;
 	rdpSettings* settings;
-
-	if (!wlf || !e || !wlf->context.settings)
-		return;
 
 	settings = wlf->context.settings;
 
