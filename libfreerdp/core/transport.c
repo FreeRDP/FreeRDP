@@ -954,7 +954,7 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 		rfds[index] = GetEventWaitObject(events[index]);
 	}
 
-	rfds[nCount + 1] = GetEventWaitObject(transport->rereadEvent);
+	rfds[nCount] = GetEventWaitObject(transport->rereadEvent);
 }
 
 BOOL transport_is_write_blocked(rdpTransport* transport)
