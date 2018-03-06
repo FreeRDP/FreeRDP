@@ -1779,8 +1779,12 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 
 				if (progressive->cTiles < surface->gridSize)
 				{
-					progressive->tiles = (RFX_PROGRESSIVE_TILE**) realloc(progressive->tiles,
+					BYTE* tmpBuf = (RFX_PROGRESSIVE_TILE**) realloc(progressive->tiles,
 					                     surface->gridSize * sizeof(RFX_PROGRESSIVE_TILE*));
+					if (!tmpBuf)
+						return -1025;
+
+					progressive->tiles = tmpBuf;
 					progressive->cTiles = surface->gridSize;
 				}
 
