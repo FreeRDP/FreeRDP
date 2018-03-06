@@ -162,7 +162,7 @@ static const BYTE BPP_CBR23[] =
 
 static const BYTE BMF_BPP[] =
 {
-	0, 1, 0, 8, 16, 24, 32
+	0, 1, 0, 8, 16, 24, 32, 0
 };
 
 static const BYTE BPP_BMF[] =
@@ -566,7 +566,7 @@ static INLINE BOOL update_read_brush(wStream* s, rdpBrush* brush,
 	if (brush->style & CACHED_BRUSH)
 	{
 		brush->index = brush->hatch;
-		brush->bpp = BMF_BPP[brush->style & 0x0F];
+		brush->bpp = BMF_BPP[brush->style & 0x07];
 
 		if (brush->bpp == 0)
 			brush->bpp = 1;
@@ -612,7 +612,7 @@ static INLINE BOOL update_write_brush(wStream* s, rdpBrush* brush,
 	if (brush->style & CACHED_BRUSH)
 	{
 		brush->hatch = brush->index;
-		brush->bpp = BMF_BPP[brush->style & 0x0F];
+		brush->bpp = BMF_BPP[brush->style & 0x07];
 
 		if (brush->bpp == 0)
 			brush->bpp = 1;
