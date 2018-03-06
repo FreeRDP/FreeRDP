@@ -1622,32 +1622,34 @@ skip_encoding_loop:
 	}
 
 	/* when using threads ensure all computations are done */
-	message->tilesDataSize = 0;
-	workObject = context->priv->workObjects;
-
-	for (i = 0; i < message->numTiles; i++)
+	if (success)
 	{
-		tile = message->tiles[i];
+		message->tilesDataSize = 0;
+		workObject = context->priv->workObjects;
 
-		if (context->priv->UseThreads)
+		for (i = 0; i < message->numTiles; i++)
 		{
-			if (*workObject)
+			tile = message->tiles[i];
+
+			if (context->priv->UseThreads)
 			{
-				WaitForThreadpoolWorkCallbacks(*workObject, FALSE);
-				CloseThreadpoolWork(*workObject);
+				if (*workObject)
+				{
+					WaitForThreadpoolWorkCallbacks(*workObject, FALSE);
+					CloseThreadpoolWork(*workObject);
+				}
+
+				workObject++;
 			}
 
-			workObject++;
+			message->tilesDataSize += rfx_tile_length(tile);
 		}
 
-		message->tilesDataSize += rfx_tile_length(tile);
-	}
+		region16_uninit(&tilesRegion);
+		region16_uninit(&rectsRegion);
 
-	region16_uninit(&tilesRegion);
-	region16_uninit(&rectsRegion);
-
-	if (success)
 		return message;
+	}
 
 	WLog_ERR(TAG, "%s: failed", __FUNCTION__);
 	message->freeRects = TRUE;
