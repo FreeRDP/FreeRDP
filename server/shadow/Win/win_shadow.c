@@ -217,10 +217,7 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	surface = server->surface;
 
 	if (ArrayList_Count(server->clients) < 1)
-	{
-		region16_clear(&(surface->invalidRegion));
 		return 1;
-	}
 
 	surfaceRect.left = surface->x;
 	surfaceRect.top = surface->y;
