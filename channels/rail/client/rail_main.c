@@ -606,7 +606,7 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
 	return;
 }
 
-static void* rail_virtual_channel_client_thread(void* arg)
+static DWORD WINAPI rail_virtual_channel_client_thread(LPVOID arg)
 {
 	wStream* data;
 	wMessage message;
@@ -650,8 +650,8 @@ static void* rail_virtual_channel_client_thread(void* arg)
 		setChannelError(rail->rdpcontext, error,
 		                "rail_virtual_channel_client_thread reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -682,7 +682,7 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 	}
 
 	if (!(rail->thread = CreateThread(NULL, 0,
-	                                  (LPTHREAD_START_ROUTINE) rail_virtual_channel_client_thread, (void*) rail, 0,
+									  rail_virtual_channel_client_thread, (void*) rail, 0,
 	                                  NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");

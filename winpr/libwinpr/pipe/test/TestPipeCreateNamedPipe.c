@@ -21,9 +21,9 @@ static HANDLE ReadyEvent;
 static LPTSTR lpszPipeNameMt = _T("\\\\.\\pipe\\winpr_test_pipe_mt");
 static LPTSTR lpszPipeNameSt = _T("\\\\.\\pipe\\winpr_test_pipe_st");
 
-BOOL testFailed = FALSE;
+static BOOL testFailed = FALSE;
 
-static void* named_pipe_client_thread(void* arg)
+static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 {
 	HANDLE hNamedPipe = NULL;
 	BYTE* lpReadBuffer = NULL;
@@ -87,10 +87,11 @@ out:
 	if (!fSuccess)
 		testFailed = TRUE;
 
-	return NULL;
+	ExitThread(0);
+	return 0;
 }
 
-static void* named_pipe_server_thread(void* arg)
+static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 {
 	HANDLE hNamedPipe = NULL;
 	BYTE* lpReadBuffer = NULL;
@@ -179,11 +180,12 @@ out:
 	if (!fSuccess)
 		testFailed = TRUE;
 
-	return NULL;
+	ExitThread(0);
+	return 0;
 }
 
 #define TESTNUMPIPESST 16
-static void* named_pipe_single_thread(void* arg)
+static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 {
 	HANDLE servers[TESTNUMPIPESST];
 	HANDLE clients[TESTNUMPIPESST];
@@ -431,7 +433,7 @@ out:
 	if (!bSuccess)
 		testFailed = TRUE;
 
-	return NULL;
+	return 0;
 }
 
 
@@ -459,17 +461,17 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 		printf("CreateEvent failure: (%"PRIu32")\n", GetLastError());
 		return -1;
 	}
-	if (!(SingleThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_single_thread, NULL, 0, NULL)))
+	if (!(SingleThread = CreateThread(NULL, 0, named_pipe_single_thread, NULL, 0, NULL)))
 	{
 		printf("CreateThread (SingleThread) failure: (%"PRIu32")\n", GetLastError());
 		return -1;
 	}
-	if (!(ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_client_thread, NULL, 0, NULL)))
+	if (!(ClientThread = CreateThread(NULL, 0, named_pipe_client_thread, NULL, 0, NULL)))
 	{
 		printf("CreateThread (ClientThread) failure: (%"PRIu32")\n", GetLastError());
 		return -1;
 	}
-	if (!(ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_server_thread, NULL, 0, NULL)))
+	if (!(ServerThread = CreateThread(NULL, 0, named_pipe_server_thread, NULL, 0, NULL)))
 	{
 		printf("CreateThread (ServerThread) failure: (%"PRIu32")\n", GetLastError());
 		return -1;

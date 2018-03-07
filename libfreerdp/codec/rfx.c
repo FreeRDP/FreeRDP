@@ -949,7 +949,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 			params[i].context = context;
 			params[i].tile = message->tiles[i];
 
-			if (!(work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK)
+			if (!(work_objects[i] = CreateThreadpoolWork(
 			                        rfx_process_message_tile_work_callback,
 			                        (void*) &params[i], &context->priv->ThreadPoolEnv)))
 			{
@@ -1367,7 +1367,7 @@ struct _RFX_TILE_COMPOSE_WORK_PARAM
 	RFX_CONTEXT* context;
 };
 
-void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE
+static void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE
         instance, void* context, PTP_WORK work)
 {
 	RFX_TILE_COMPOSE_WORK_PARAM* param = (RFX_TILE_COMPOSE_WORK_PARAM*) context;
@@ -1580,7 +1580,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 					workParam->tile = tile;
 
 					if (!(*workObject = CreateThreadpoolWork(
-					                        (PTP_WORK_CALLBACK)rfx_compose_message_tile_work_callback,
+					                        rfx_compose_message_tile_work_callback,
 					                        (void*) workParam,
 					                        &context->priv->ThreadPoolEnv)))
 					{

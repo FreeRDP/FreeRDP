@@ -156,7 +156,7 @@ static BOOL shw_post_connect(freerdp* instance)
 	return TRUE;
 }
 
-static void* shw_client_thread(void* arg)
+static DWORD WINAPI shw_client_thread(LPVOID arg)
 {
 	int index;
 	int rcount;
@@ -180,7 +180,7 @@ static void* shw_client_thread(void* arg)
 	if (!bSuccess)
 	{
 		ExitThread(0);
-		return NULL;
+		return 0;
 	}
 
 	channels = instance->context->channels;
@@ -237,7 +237,7 @@ static void* shw_client_thread(void* arg)
 
 	freerdp_free(instance);
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 /**
@@ -259,8 +259,7 @@ static int shw_freerdp_client_start(rdpContext* context)
 	freerdp* instance = context->instance;
 	shw = (shwContext*) context;
 
-	if (!(shw->thread = CreateThread(NULL, 0,
-	                                 (LPTHREAD_START_ROUTINE) shw_client_thread,
+	if (!(shw->thread = CreateThread(NULL, 0, shw_client_thread,
 	                                 instance, 0, NULL)))
 	{
 		WLog_ERR(TAG, "Failed to create thread");

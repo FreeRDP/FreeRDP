@@ -578,7 +578,7 @@ static UINT remdesk_server_receive_pdu(RemdeskServerContext* context,
 	return error;
 }
 
-static void* remdesk_server_thread(void* arg)
+static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 {
 	wStream* s;
 	DWORD status;
@@ -700,8 +700,8 @@ out:
 		setChannelError(context->rdpcontext, error,
 		                "remdesk_server_thread reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -727,7 +727,7 @@ static UINT remdesk_server_start(RemdeskServerContext* context)
 	}
 
 	if (!(context->priv->Thread = CreateThread(NULL, 0,
-	                              (LPTHREAD_START_ROUTINE) remdesk_server_thread, (void*) context, 0, NULL)))
+								  remdesk_server_thread, (void*) context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(context->priv->StopEvent);

@@ -466,7 +466,7 @@ BOOL tf_peer_dump_rfx(freerdp_peer* client)
 	return TRUE;
 }
 
-static void* tf_debug_channel_thread_func(void* arg)
+static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 {
 	void* fd;
 	wStream* s;
@@ -482,7 +482,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 		WTSFreeMemory(buffer);
 
 		if (!(context->event = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd)))
-			return NULL;
+			return 0;
 	}
 
 	s = Stream_New(NULL, 4096);
@@ -584,8 +584,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 			}
 
 			if (!(context->debug_channel_thread = CreateThread(NULL, 0,
-			                                      (LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0,
-			                                      NULL)))
+												  tf_debug_channel_thread_func, (void*) context, 0, NULL)))
 			{
 				WLog_ERR(TAG, "Failed to create debug channel thread");
 				CloseHandle(context->stopEvent);
@@ -752,7 +751,7 @@ static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow,
 	return TRUE;
 }
 
-static void* test_peer_mainloop(void* arg)
+static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 {
 	HANDLE handles[32];
 	DWORD count;
@@ -763,7 +762,7 @@ static void* test_peer_mainloop(void* arg)
 	if (!test_peer_init(client))
 	{
 		freerdp_peer_free(client);
-		return NULL;
+		return 0;
 	}
 
 	/* Initialize the real server settings here */
@@ -776,7 +775,7 @@ static void* test_peer_mainloop(void* arg)
 	{
 		WLog_ERR(TAG, "Memory allocation failed (strdup)");
 		freerdp_peer_free(client);
-		return NULL;
+		return 0;
 	}
 
 	client->settings->RdpSecurity = TRUE;
@@ -840,15 +839,14 @@ static void* test_peer_mainloop(void* arg)
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
-	return NULL;
+	return 0;
 }
 
 static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	HANDLE hThread;
 
-	if (!(hThread = CreateThread(NULL, 0,
-	                             (LPTHREAD_START_ROUTINE) test_peer_mainloop, (void*) client, 0, NULL)))
+	if (!(hThread = CreateThread(NULL, 0, test_peer_mainloop, (void*) client, 0, NULL)))
 		return FALSE;
 
 	CloseHandle(hThread);

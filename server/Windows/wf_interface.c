@@ -88,7 +88,7 @@ void set_screen_id(int id)
 	return;
 }
 
-DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
+static DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 {
 	int i, fds;
 	int rcount;

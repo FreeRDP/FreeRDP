@@ -231,7 +231,7 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
-static void* printer_thread_func(void* arg)
+static DWORD WINAPI printer_thread_func(LPVOID arg)
 {
 	IRP* irp;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*) arg;
@@ -275,8 +275,8 @@ static void* printer_thread_func(void* arg)
 		setChannelError(printer_dev->rdpcontext, error,
 		                "printer_thread_func reported an error");
 
-	ExitThread((DWORD) error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -445,8 +445,7 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		goto error_out;
 	}
 
-	if (!(printer_dev->thread = CreateThread(NULL, 0,
-	                            (LPTHREAD_START_ROUTINE) printer_thread_func, (void*) printer_dev, 0, NULL)))
+	if (!(printer_dev->thread = CreateThread(NULL, 0, printer_thread_func, (void*) printer_dev, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		error = ERROR_INTERNAL_ERROR;

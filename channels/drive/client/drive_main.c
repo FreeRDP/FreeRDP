@@ -743,7 +743,7 @@ static UINT drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 	return error;
 }
 
-static void* drive_thread_func(void* arg)
+static DWORD WINAPI drive_thread_func(LPVOID arg)
 {
 	IRP* irp;
 	wMessage message;
@@ -791,8 +791,8 @@ fail:
 	if (error && drive && drive->rdpcontext)
 		setChannelError(drive->rdpcontext, error, "drive_thread_func reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -947,7 +947,7 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 			goto out_error;
 		}
 
-		if (!(drive->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) drive_thread_func, drive,
+		if (!(drive->thread = CreateThread(NULL, 0, drive_thread_func, drive,
 		                                   CREATE_SUSPENDED, NULL)))
 		{
 			WLog_ERR(TAG, "CreateThread failed!");

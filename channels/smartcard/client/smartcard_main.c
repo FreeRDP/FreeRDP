@@ -34,8 +34,9 @@
 
 #include "smartcard_main.h"
 
-void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
+static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 {
+	SMARTCARD_CONTEXT* pContext = (SMARTCARD_CONTEXT*)arg;
 	DWORD nCount;
 	LONG status = 0;
 	DWORD waitStatus;
@@ -107,8 +108,8 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 		setChannelError(smartcard->rdpcontext, error,
 		                "smartcard_context_thread reported an error");
 
-	ExitThread((DWORD)status);
-	return NULL;
+	ExitThread(status);
+	return error;
 }
 
 SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard,
@@ -134,7 +135,7 @@ SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard,
 	}
 
 	pContext->thread = CreateThread(NULL, 0,
-	                                (LPTHREAD_START_ROUTINE) smartcard_context_thread,
+									smartcard_context_thread,
 	                                pContext, 0, NULL);
 
 	if (!pContext->thread)
@@ -494,7 +495,7 @@ UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
-static void* smartcard_thread_func(void* arg)
+static DWORD WINAPI smartcard_thread_func(LPVOID arg)
 {
 	IRP* irp;
 	DWORD nCount;
@@ -645,8 +646,8 @@ out:
 		setChannelError(smartcard->rdpcontext, error,
 		                "smartcard_thread_func reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -746,7 +747,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
 
 	smartcard->thread = CreateThread(NULL, 0,
-	                                 (LPTHREAD_START_ROUTINE) smartcard_thread_func,
+									 smartcard_thread_func,
 	                                 smartcard, CREATE_SUSPENDED, NULL);
 
 	if (!smartcard->thread)

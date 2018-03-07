@@ -4,11 +4,11 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-static void* thread_func(void* arg)
+static DWORD WINAPI thread_func(LPVOID arg)
 {
 	/* exists of the thread the quickest as possible */
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 int TestThreadExitThread(int argc, char* argv[])
@@ -23,7 +23,7 @@ int TestThreadExitThread(int argc, char* argv[])
 	{
 		thread = CreateThread(NULL,
 				0,
-				(LPTHREAD_START_ROUTINE)thread_func,
+				thread_func,
 				NULL,
 				0,
 				NULL);

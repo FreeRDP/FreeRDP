@@ -389,8 +389,9 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	return status;
 }
 
-static void* shadow_server_thread(rdpShadowServer* server)
+static DWORD WINAPI shadow_server_thread(LPVOID arg)
 {
+	rdpShadowServer* server = (rdpShadowServer*)arg;
 	BOOL running = TRUE;
 	DWORD status;
 	freerdp_listener* listener = server->listener;
@@ -450,7 +451,7 @@ static void* shadow_server_thread(rdpShadowServer* server)
 	}
 
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 int shadow_server_start(rdpShadowServer* server)
@@ -494,8 +495,7 @@ int shadow_server_start(rdpShadowServer* server)
 		return -1;
 	}
 
-	if (!(server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-	                                    shadow_server_thread, (void*) server, 0, NULL)))
+	if (!(server->thread = CreateThread(NULL, 0, shadow_server_thread, (void*) server, 0, NULL)))
 	{
 		return -1;
 	}

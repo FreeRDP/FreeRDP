@@ -159,7 +159,7 @@ BOOL yuv_context_decode(YUV_CONTEXT* context, const BYTE* pYUVData[3], UINT32 iS
 		else
 			params[i].height = context->height % context->heightStep;
 
-		work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK)yuv_process_work_callback,
+		work_objects[i] = CreateThreadpoolWork(yuv_process_work_callback,
 					                        (void*) &params[i], &context->ThreadPoolEnv);
 		if (!work_objects[i])
 		{

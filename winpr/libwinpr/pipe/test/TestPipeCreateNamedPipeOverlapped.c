@@ -13,17 +13,17 @@
 #define PIPE_BUFFER_SIZE	32
 #define PIPE_TIMEOUT_MS		20000	// 20 seconds
 
-BYTE SERVER_MESSAGE[PIPE_BUFFER_SIZE];
-BYTE CLIENT_MESSAGE[PIPE_BUFFER_SIZE];
+static BYTE SERVER_MESSAGE[PIPE_BUFFER_SIZE];
+static BYTE CLIENT_MESSAGE[PIPE_BUFFER_SIZE];
 
-BOOL bClientSuccess = FALSE;
-BOOL bServerSuccess = FALSE;
+static BOOL bClientSuccess = FALSE;
+static BOOL bServerSuccess = FALSE;
 
 static HANDLE serverReadyEvent;
 
 static LPTSTR lpszPipeName = _T("\\\\.\\pipe\\winpr_test_pipe_overlapped");
 
-static void* named_pipe_client_thread(void* arg)
+static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 {
 	DWORD status;
 	HANDLE hEvent = NULL;
@@ -153,10 +153,10 @@ finish:
 	if (hEvent)
 		CloseHandle(hEvent);
 
-	return NULL;
+	return 0;
 }
 
-static void* named_pipe_server_thread(void* arg)
+static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 {
 	DWORD status;
 	HANDLE hEvent = NULL;
@@ -331,7 +331,7 @@ finish:
 	CloseHandle(hNamedPipe);
 	CloseHandle(hEvent);
 	free(lpReadBuffer);
-	return NULL;
+	return 0;
 }
 
 int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
@@ -348,7 +348,7 @@ int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 		printf("CreateEvent failed: %"PRIu32"\n", GetLastError());
 		goto out;
 	}
-	if (!(ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_client_thread, NULL, 0, NULL)))
+	if (!(ClientThread = CreateThread(NULL, 0, named_pipe_client_thread, NULL, 0, NULL)))
 	{
 		printf("CreateThread (client) failed: %"PRIu32"\n", GetLastError());
 		goto out;

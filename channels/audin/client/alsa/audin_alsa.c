@@ -219,7 +219,7 @@ static UINT audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src,
 	return ret;
 }
 
-static void* audin_alsa_thread_func(void* arg)
+static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 {
 	long error;
 	BYTE* buffer;
@@ -300,8 +300,8 @@ out:
 		setChannelError(alsa->rdpcontext, error,
 		                "audin_alsa_thread_func reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -427,7 +427,7 @@ static UINT audin_alsa_open(IAudinDevice* device, AudinReceive receive,
 	}
 
 	if (!(alsa->thread = CreateThread(NULL, 0,
-	                                  (LPTHREAD_START_ROUTINE) audin_alsa_thread_func, alsa, 0, NULL)))
+									  audin_alsa_thread_func, alsa, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		goto error_out;

@@ -10,11 +10,11 @@
 #define TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS 500
 #define TEST_SYNC_CRITICAL_TEST1_RUNS 4
 
-CRITICAL_SECTION critical;
-LONG gTestValueVulnerable = 0;
-LONG gTestValueSerialized = 0;
+static CRITICAL_SECTION critical;
+static LONG gTestValueVulnerable = 0;
+static LONG gTestValueSerialized = 0;
 
-BOOL TestSynchCritical_TriggerAndCheckRaceCondition(HANDLE OwningThread, LONG RecursionCount)
+static BOOL TestSynchCritical_TriggerAndCheckRaceCondition(HANDLE OwningThread, LONG RecursionCount)
 {
 	/* if called unprotected this will hopefully trigger a race condition ... */
 	gTestValueVulnerable++;
@@ -41,7 +41,7 @@ BOOL TestSynchCritical_TriggerAndCheckRaceCondition(HANDLE OwningThread, LONG Re
 }
 
 /* this thread function shall increment the global dwTestValue until the PBOOL passsed in arg is FALSE */
-static PVOID TestSynchCritical_Test1(PVOID arg)
+static DWORD WINAPI TestSynchCritical_Test1(LPVOID arg)
 {
 	int i, j, rc;
 	HANDLE hThread = (HANDLE) (ULONG_PTR) GetCurrentThreadId();
@@ -55,25 +55,25 @@ static PVOID TestSynchCritical_Test1(PVOID arg)
 		rc = 1;
 
 		if (!TestSynchCritical_TriggerAndCheckRaceCondition(hThread, rc))
-			return (PVOID)1;
+			return 1;
 
 		/* add some random recursion level */
 		j = rand()%5;
 		for (i=0; i<j; i++)
 		{
 			if (!TestSynchCritical_TriggerAndCheckRaceCondition(hThread, rc++))
-				return (PVOID)2;
+				return 2;
 			EnterCriticalSection(&critical);
 		}
 		for (i=0; i<j; i++)
 		{
 			if (!TestSynchCritical_TriggerAndCheckRaceCondition(hThread, rc--))
-				return (PVOID)2;
+				return 2;
 			LeaveCriticalSection(&critical);
 		}
 
 		if (!TestSynchCritical_TriggerAndCheckRaceCondition(hThread, rc))
-			return (PVOID)3;
+			return 3;
 
 		LeaveCriticalSection(&critical);
 	}
@@ -82,18 +82,17 @@ static PVOID TestSynchCritical_Test1(PVOID arg)
 }
 
 /* this thread function tries to call TryEnterCriticalSection while the main thread holds the lock */
-static PVOID TestSynchCritical_Test2(PVOID arg)
+static DWORD WINAPI TestSynchCritical_Test2(LPVOID arg)
 {
 	if (TryEnterCriticalSection(&critical)==TRUE)
 	{
 		LeaveCriticalSection(&critical);
-		return (PVOID)1;
+		return 1;
 	}
-	return (PVOID)0;
+	return 0;
 }
 
-
-static PVOID TestSynchCritical_Main(PVOID arg)
+static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 {
 	int i, j;
 	SYSTEM_INFO sysinfo;
@@ -219,7 +218,7 @@ static PVOID TestSynchCritical_Main(PVOID arg)
 		bTest1Running = TRUE;
 		for (i = 0; i < (int) dwThreadCount; i++)
 		{
-			if (!(hThreads[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) TestSynchCritical_Test1, &bTest1Running, 0, NULL)))
+			if (!(hThreads[i] = CreateThread(NULL, 0, TestSynchCritical_Test1, &bTest1Running, 0, NULL)))
 			{
 				printf("CriticalSection failure: Failed to create test_1 thread #%d\n", i);
 				goto fail;
@@ -270,7 +269,7 @@ static PVOID TestSynchCritical_Main(PVOID arg)
 		goto fail;
 	}
 	/* This thread tries to call TryEnterCriticalSection which must fail */
-	if (!(hThread = CreateThread(NULL, 0,  (LPTHREAD_START_ROUTINE) TestSynchCritical_Test2, NULL, 0, NULL)))
+	if (!(hThread = CreateThread(NULL, 0,  TestSynchCritical_Test2, NULL, 0, NULL)))
 	{
 		printf("CriticalSection failure: Failed to create test_2 thread\n");
 		goto fail;
@@ -289,11 +288,11 @@ static PVOID TestSynchCritical_Main(PVOID arg)
 	CloseHandle(hThread);
 
 	*pbThreadTerminated = TRUE; /* requ. for winpr issue, see below */
-	return (PVOID)0;
+	return 0;
 
 fail:
 	*pbThreadTerminated = TRUE; /* requ. for winpr issue, see below */
-	return (PVOID)1;
+	return 1;
 }
 
 
@@ -309,7 +308,7 @@ int TestSynchCritical(int argc, char* argv[])
 
 	printf("Deadlock will be assumed after %"PRIu32" ms.\n", dwDeadLockDetectionTimeMs);
 
-	if (!(hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) TestSynchCritical_Main, &bThreadTerminated, 0, NULL)))
+	if (!(hThread = CreateThread(NULL, 0, TestSynchCritical_Main, &bThreadTerminated, 0, NULL)))
 	{
 		printf("CriticalSection failure: Failed to create main thread\n");
 		return -1;

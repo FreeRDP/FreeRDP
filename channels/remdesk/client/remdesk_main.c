@@ -804,7 +804,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		                "remdesk_virtual_channel_open_event_ex reported an error");
 }
 
-static void* remdesk_virtual_channel_client_thread(void* arg)
+static DWORD WINAPI remdesk_virtual_channel_client_thread(LPVOID arg)
 {
 	wStream* data;
 	wMessage message;
@@ -847,8 +847,8 @@ static void* remdesk_virtual_channel_client_thread(void* arg)
 		setChannelError(remdesk->rdpcontext, error,
 		                "remdesk_virtual_channel_client_thread reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -882,7 +882,7 @@ static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk,
 	}
 
 	remdesk->thread = CreateThread(NULL, 0,
-	                               (LPTHREAD_START_ROUTINE) remdesk_virtual_channel_client_thread, (void*) remdesk,
+								   remdesk_virtual_channel_client_thread, (void*) remdesk,
 	                               0, NULL);
 
 	if (!remdesk->thread)

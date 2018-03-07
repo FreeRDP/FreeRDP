@@ -139,7 +139,7 @@ static int connect_to_sshagent(const char* udspath)
  *
  * @return NULL
  */
-static void* sshagent_read_thread(void* data)
+static DWORD WINAPI sshagent_read_thread(LPVOID data)
 {
 	SSHAGENT_CHANNEL_CALLBACK* callback = (SSHAGENT_CHANNEL_CALLBACK*)data;
 	BYTE buffer[4096];
@@ -189,8 +189,8 @@ static void* sshagent_read_thread(void* data)
 		setChannelError(callback->rdpcontext, status,
 		                "sshagent_read_thread reported an error");
 
-	ExitThread(0);
-	return NULL;
+        ExitThread(status);
+        return status;
 }
 
 /**
@@ -302,7 +302,7 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 	callback->thread
 	    = CreateThread(NULL,
 	                   0,
-	                   (LPTHREAD_START_ROUTINE) sshagent_read_thread,
+                           sshagent_read_thread,
 	                   (void*) callback,
 	                   0,
 	                   NULL);

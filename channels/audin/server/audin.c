@@ -401,7 +401,7 @@ static UINT audin_server_recv_data(audin_server* audin, wStream* s,
 	return success;
 }
 
-static void* audin_server_thread_func(void* arg)
+static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 {
 	wStream* s;
 	void* buffer;
@@ -596,8 +596,8 @@ out:
 		setChannelError(audin->context.rdpcontext, error,
 		                "audin_server_thread_func reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 static BOOL audin_server_open(audin_server_context* context)
@@ -632,8 +632,7 @@ static BOOL audin_server_open(audin_server_context* context)
 			return FALSE;
 		}
 
-		if (!(audin->thread = CreateThread(NULL, 0,
-		                                   (LPTHREAD_START_ROUTINE) audin_server_thread_func, (void*) audin, 0, NULL)))
+		if (!(audin->thread = CreateThread(NULL, 0, audin_server_thread_func, (void*) audin, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
 			CloseHandle(audin->stopEvent);

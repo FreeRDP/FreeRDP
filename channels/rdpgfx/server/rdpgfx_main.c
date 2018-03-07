@@ -1327,7 +1327,7 @@ static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 	return error;
 }
 
-static void* rdpgfx_server_thread_func(void* arg)
+static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 {
 	RdpgfxServerContext* context = (RdpgfxServerContext*) arg;
 	RdpgfxServerPrivate* priv = context->priv;
@@ -1369,8 +1369,8 @@ static void* rdpgfx_server_thread_func(void* arg)
 		setChannelError(context->rdpcontext, error,
 		                "rdpgfx_server_thread_func reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
@@ -1437,7 +1437,6 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 			}
 
 			if (!(priv->thread = CreateThread(NULL, 0,
-			                                  (LPTHREAD_START_ROUTINE)
 			                                  rdpgfx_server_thread_func,
 			                                  (void*) context, 0, NULL)))
 			{

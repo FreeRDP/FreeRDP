@@ -1565,7 +1565,7 @@ static int create_cliprdr_window(wfClipboard* clipboard)
 	return 0;
 }
 
-static void* cliprdr_thread_func(void* arg)
+static DWORD WINAPI cliprdr_thread_func(LPVOID arg)
 {
 	int ret;
 	MSG msg;
@@ -1576,7 +1576,7 @@ static void* cliprdr_thread_func(void* arg)
 	if ((ret = create_cliprdr_window(clipboard)) != 0)
 	{
 		DEBUG_CLIPRDR("error: create clipboard window failed.");
-		return NULL;
+		return 0;
 	}
 
 	while ((mcode = GetMessage(&msg, 0, 0, 0)) != 0)
@@ -1594,7 +1594,7 @@ static void* cliprdr_thread_func(void* arg)
 	}
 
 	OleUninitialize();
-	return NULL;
+	return 0;
 }
 
 static void clear_file_array(wfClipboard* clipboard)
@@ -2520,8 +2520,7 @@ BOOL wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr)
 	                              _T("request_filecontents_event"))))
 		goto error;
 
-	if (!(clipboard->thread = CreateThread(NULL, 0,
-	                                       (LPTHREAD_START_ROUTINE) cliprdr_thread_func, clipboard, 0, NULL)))
+	if (!(clipboard->thread = CreateThread(NULL, 0, cliprdr_thread_func, clipboard, 0, NULL)))
 		goto error;
 
 	cliprdr->MonitorReady = wf_cliprdr_monitor_ready;

@@ -1231,7 +1231,7 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		setChannelError(drdynvc->rdpcontext, error, "drdynvc_virtual_channel_open_event reported an error");
 }
 
-static void* drdynvc_virtual_channel_client_thread(void* arg)
+static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 {
 	wStream* data;
 	wMessage message;
@@ -1241,7 +1241,7 @@ static void* drdynvc_virtual_channel_client_thread(void* arg)
 	if (!drdynvc)
 	{
 		ExitThread((DWORD) CHANNEL_RC_BAD_CHANNEL_HANDLE);
-		return NULL;
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	}
 
 	while (1)
@@ -1298,7 +1298,7 @@ static void* drdynvc_virtual_channel_client_thread(void* arg)
 		                "drdynvc_virtual_channel_client_thread reported an error");
 
 	ExitThread((DWORD) error);
-	return NULL;
+	return error;
 }
 
 static void drdynvc_queue_object_free(void* obj)
@@ -1380,8 +1380,7 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 	drdynvc->state = DRDYNVC_STATE_CAPABILITIES;
 
-	if (!(drdynvc->thread = CreateThread(NULL, 0,
-	                                     (LPTHREAD_START_ROUTINE) drdynvc_virtual_channel_client_thread, (void*) drdynvc,
+	if (!(drdynvc->thread = CreateThread(NULL, 0, drdynvc_virtual_channel_client_thread, (void*) drdynvc,
 	                                     0, NULL)))
 	{
 		error = ERROR_INTERNAL_ERROR;

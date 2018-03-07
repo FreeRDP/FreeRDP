@@ -88,7 +88,7 @@ int wf_directsound_activate(RdpsndServerContext* context)
 	return 0;
 }
 
-DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
+static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 {
 	HRESULT hr;
 	DWORD beg = 0;

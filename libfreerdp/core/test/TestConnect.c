@@ -88,7 +88,7 @@ struct testThreadArgs
 	freerdp** arg;
 };
 
-static void* testThread(void* arg)
+static DWORD WINAPI testThread(LPVOID arg)
 {
 	char arg1[] = "/v:192.0.2.1:XXXXX";
 	char* argv[] =
@@ -107,7 +107,7 @@ static void* testThread(void* arg)
 		ExitThread(-1);
 
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 static int testAbort(int port)
@@ -125,7 +125,7 @@ static int testAbort(int port)
 	args.port = port;
 	args.arg = &instance;
 	start = GetTickCount();
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)testThread,
+	thread = CreateThread(NULL, 0, testThread,
 	                      &args, 0, NULL);
 
 	if (!thread)

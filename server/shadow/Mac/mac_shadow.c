@@ -499,8 +499,9 @@ static int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem,
 	return 1;
 }
 
-static void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
+static DWORD WINAPI mac_shadow_subsystem_thread(LPVOID arg)
 {
+	macShadowSubsystem* subsystem = (macShadowSubsystem*)arg;
 	DWORD status;
 	DWORD nCount;
 	UINT64 cTime;
@@ -543,7 +544,7 @@ static void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
 	}
 
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 static int mac_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
@@ -600,8 +601,7 @@ static int mac_shadow_subsystem_start(macShadowSubsystem* subsystem)
 
 	mac_shadow_capture_start(subsystem);
 
-	if (!(thread = CreateThread(NULL, 0,
-	                            (LPTHREAD_START_ROUTINE) mac_shadow_subsystem_thread,
+	if (!(thread = CreateThread(NULL, 0, mac_shadow_subsystem_thread,
 	                            (void*) subsystem, 0, NULL)))
 	{
 		WLog_ERR(TAG, "Failed to create thread");

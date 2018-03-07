@@ -1011,7 +1011,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 	return;
 }
 
-static void* encomsp_virtual_channel_client_thread(void* arg)
+static DWORD WINAPI encomsp_virtual_channel_client_thread(LPVOID arg)
 {
 	wStream* data;
 	wMessage message;
@@ -1054,8 +1054,8 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 		setChannelError(encomsp->rdpcontext, error,
 		                "encomsp_virtual_channel_client_thread reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -1087,7 +1087,7 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
 	}
 
 	if (!(encomsp->thread = CreateThread(NULL, 0,
-	                                     (LPTHREAD_START_ROUTINE) encomsp_virtual_channel_client_thread, (void*) encomsp,
+										 encomsp_virtual_channel_client_thread, (void*) encomsp,
 	                                     0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");

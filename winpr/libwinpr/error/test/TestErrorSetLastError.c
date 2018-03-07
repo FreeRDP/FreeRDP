@@ -31,7 +31,7 @@ static int status = 0;
 LONG *pLoopCount = NULL;
 BOOL bStopTest = FALSE;
 
-static void* test_error_thread(void* arg)
+static DWORD WINAPI test_error_thread(LPVOID arg)
 {
 	int id;
 	DWORD dwErrorSet;
@@ -53,7 +53,7 @@ static void* test_error_thread(void* arg)
 		InterlockedIncrement(pLoopCount);
 	} while (!status && !bStopTest);
 
-	return NULL;
+	return 0;
 }
 
 int TestErrorSetLastError(int argc, char* argv[])
@@ -88,7 +88,7 @@ int TestErrorSetLastError(int argc, char* argv[])
 
 	for (i = 0; i < 4; i++)
 	{
-		if (!(threads[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_error_thread, (void*) (size_t) 0, 0, NULL)))
+		if (!(threads[i] = CreateThread(NULL, 0, test_error_thread, (void*) (size_t) 0, 0, NULL)))
 		{
 			printf("Failed to create thread #%d\n", i);
 			return -1;

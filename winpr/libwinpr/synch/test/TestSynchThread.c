@@ -3,19 +3,18 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-static void *test_thread(void *arg)
+static DWORD WINAPI test_thread(LPVOID arg)
 {
 	Sleep(1000);
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 int TestSynchThread(int argc, char *argv[])
 {
 	DWORD rc;
 	HANDLE thread;
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)test_thread,
-						  NULL, 0, NULL);
+	thread = CreateThread(NULL, 0, test_thread, NULL, 0, NULL);
 
 	if (!thread)
 	{
@@ -56,8 +55,7 @@ int TestSynchThread(int argc, char *argv[])
 		return -1;
 	}
 
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)test_thread,
-						  NULL, 0, NULL);
+	thread = CreateThread(NULL, 0, test_thread, NULL, 0, NULL);
 
 	if (!thread)
 	{
@@ -99,8 +97,7 @@ int TestSynchThread(int argc, char *argv[])
 	}
 
 	/* Thread detach test */
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)test_thread,
-						  NULL, 0, NULL);
+	thread = CreateThread(NULL, 0, test_thread, NULL, 0, NULL);
 
 	if (!thread)
 	{

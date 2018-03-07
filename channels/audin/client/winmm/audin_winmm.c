@@ -94,7 +94,7 @@ static void CALLBACK waveInProc(HWAVEIN hWaveIn, UINT uMsg, DWORD_PTR dwInstance
 		setChannelError(winmm->rdpcontext, error, "waveInProc reported an error");
 }
 
-static DWORD audin_winmm_thread_func(void* arg)
+static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
 {
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) arg;
 	char *buffer;
@@ -332,8 +332,7 @@ static UINT audin_winmm_open(IAudinDevice* device, AudinReceive receive, void* u
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(winmm->thread = CreateThread(NULL, 0,
-		(LPTHREAD_START_ROUTINE) audin_winmm_thread_func, winmm, 0, NULL)))
+	if (!(winmm->thread = CreateThread(NULL, 0, audin_winmm_thread_func, winmm, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(winmm->stopEvent);

@@ -583,7 +583,7 @@ static BOOL wf_auto_reconnect(freerdp* instance)
 	return FALSE;
 }
 
-static void* wf_input_thread(void* arg)
+static DWORD WINAPI wf_input_thread(LPVOID arg)
 {
 	int status;
 	wMessage message;
@@ -609,7 +609,7 @@ static void* wf_input_thread(void* arg)
 	}
 
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 static DWORD WINAPI wf_client_thread(LPVOID lpParam)
@@ -644,8 +644,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 
 	if (async_input)
 	{
-		if (!(input_thread = CreateThread(NULL, 0,
-		                                  (LPTHREAD_START_ROUTINE) wf_input_thread,
+		if (!(input_thread = CreateThread(NULL, 0, wf_input_thread,
 		                                  instance, 0, NULL)))
 		{
 			WLog_ERR(TAG, "Failed to create async input thread.");

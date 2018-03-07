@@ -857,8 +857,9 @@ static int x11_shadow_subsystem_process_message(x11ShadowSubsystem* subsystem,
 	return 1;
 }
 
-static void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
+static DWORD WINAPI x11_shadow_subsystem_thread(LPVOID arg)
 {
+	x11ShadowSubsystem* subsystem = (x11ShadowSubsystem*)arg;
 	XEvent xevent;
 	DWORD status;
 	DWORD nCount;
@@ -918,7 +919,7 @@ static void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 	}
 
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 static int x11_shadow_subsystem_base_init(x11ShadowSubsystem* subsystem)
@@ -1355,8 +1356,7 @@ static int x11_shadow_subsystem_start(rdpShadowSubsystem* sub)
 	if (!subsystem)
 		return -1;
 
-	if (!(subsystem->thread = CreateThread(NULL, 0,
-	                                       (LPTHREAD_START_ROUTINE) x11_shadow_subsystem_thread,
+	if (!(subsystem->thread = CreateThread(NULL, 0, x11_shadow_subsystem_thread,
 	                                       (void*) subsystem, 0, NULL)))
 	{
 		WLog_ERR(TAG, "Failed to create thread");

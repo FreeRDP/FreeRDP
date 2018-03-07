@@ -60,7 +60,7 @@ static TP_POOL DEFAULT_POOL =
 	NULL, /* wCountdownEvent* WorkComplete */
 };
 
-static void* thread_pool_work_func(void* arg)
+static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 {
 	DWORD status;
 	PTP_POOL pool;
@@ -95,7 +95,7 @@ static void* thread_pool_work_func(void* arg)
 	}
 
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 static void threads_close(void *thread)
@@ -132,7 +132,7 @@ static BOOL InitializeThreadpool(PTP_POOL pool)
 	for (index = 0; index < 4; index++)
 	{
 		if (!(thread = CreateThread(NULL, 0,
-					(LPTHREAD_START_ROUTINE) thread_pool_work_func,
+					thread_pool_work_func,
 					(void*) pool, 0, NULL)))
 		{
 			goto fail_create_threads;
@@ -237,7 +237,7 @@ BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 	while (ArrayList_Count(ptpp->Threads) < ptpp->Minimum)
 	{
 		if (!(thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) thread_pool_work_func,
+				thread_pool_work_func,
 				(void*) ptpp, 0, NULL)))
 		{
 			return FALSE;

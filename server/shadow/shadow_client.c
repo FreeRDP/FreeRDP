@@ -719,7 +719,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			if (settings)
 			{
 				flags = pdu.capsSet->flags;
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxAVC444 = FALSE;
+				settings->GfxAVC444v2 = settings->GfxAVC444 = FALSE;
 				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
 #ifndef WITH_GFX_H264
@@ -1595,8 +1595,9 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client,
 	return 1;
 }
 
-static void* shadow_client_thread(rdpShadowClient* client)
+static DWORD WINAPI shadow_client_thread(LPVOID arg)
 {
+	rdpShadowClient* client = (rdpShadowClient*)arg;
 	DWORD status;
 	DWORD nCount;
 	wMessage message;
@@ -1869,7 +1870,7 @@ out:
 	freerdp_peer_context_free(peer);
 	freerdp_peer_free(peer);
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
@@ -1892,8 +1893,7 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 
 	client = (rdpShadowClient*) peer->context;
 
-	if (!(client->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-	                                    shadow_client_thread, client, 0, NULL)))
+	if (!(client->thread = CreateThread(NULL, 0, shadow_client_thread, client, 0, NULL)))
 	{
 		freerdp_peer_context_free(peer);
 		return FALSE;

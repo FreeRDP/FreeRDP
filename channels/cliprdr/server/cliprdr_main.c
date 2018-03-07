@@ -1319,7 +1319,7 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 	return CHANNEL_RC_OK;
 }
 
-static void* cliprdr_server_thread(void* arg)
+static DWORD WINAPI cliprdr_server_thread(LPVOID arg)
 {
 	DWORD status;
 	DWORD nCount;
@@ -1388,8 +1388,8 @@ out:
 		setChannelError(context->rdpcontext, error,
 		                "cliprdr_server_thread reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -1478,8 +1478,7 @@ static UINT cliprdr_server_start(CliprdrServerContext* context)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(cliprdr->Thread = CreateThread(NULL, 0,
-	                                     (LPTHREAD_START_ROUTINE) cliprdr_server_thread, (void*) context, 0, NULL)))
+	if (!(cliprdr->Thread = CreateThread(NULL, 0, cliprdr_server_thread, (void*) context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(cliprdr->StopEvent);

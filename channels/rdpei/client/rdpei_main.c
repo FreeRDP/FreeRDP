@@ -169,7 +169,7 @@ UINT rdpei_add_frame(RdpeiClientContext* context)
 	return CHANNEL_RC_OK;
 }
 
-static void* rdpei_schedule_thread(void* arg)
+static DWORD WINAPI rdpei_schedule_thread(LPVOID arg)
 {
 	DWORD status;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) arg;
@@ -232,8 +232,8 @@ out:
 		setChannelError(rdpei->rdpcontext, error,
 		                "rdpei_schedule_thread reported an error");
 
-	ExitThread(0);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -653,7 +653,7 @@ static UINT rdpei_plugin_initialize(IWTSPlugin* pPlugin,
 		goto error_out;
 	}
 
-	if (!(rdpei->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+	if (!(rdpei->thread = CreateThread(NULL, 0,
 	                                   rdpei_schedule_thread, (void*) rdpei, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
