@@ -919,7 +919,7 @@ static DWORD WINAPI x11_shadow_subsystem_thread(LPVOID arg)
 	}
 
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 static int x11_shadow_subsystem_base_init(x11ShadowSubsystem* subsystem)

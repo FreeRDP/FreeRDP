@@ -206,8 +206,8 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
 		WTSVirtualChannelClose(echo->echo_channel);
-		ExitThread((DWORD)ERROR_NOT_ENOUGH_MEMORY);
-		return NULL;
+		ExitThread(ERROR_NOT_ENOUGH_MEMORY);
+		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
 	while (ready)

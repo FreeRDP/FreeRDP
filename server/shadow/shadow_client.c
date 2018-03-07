@@ -719,7 +719,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			if (settings)
 			{
 				flags = pdu.capsSet->flags;
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxAVC444 = FALSE;
+				settings->GfxAVC444v2 = settings->GfxAVC444 = FALSE;
 				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
 #ifndef WITH_GFX_H264

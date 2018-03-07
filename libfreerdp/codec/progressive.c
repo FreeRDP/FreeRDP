@@ -1684,7 +1684,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 
 				if (region->numRects > progressive->cRects)
 				{
-					BYTE* tmpBuf = (RFX_RECT*) realloc(progressive->rects,
+					RFX_RECT* tmpBuf = (RFX_RECT*) realloc(progressive->rects,
 					               region->numRects * sizeof(RFX_RECT));
 					if (!tmpBuf)
 						return -1016;
@@ -1713,7 +1713,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 
 				if (region->numQuant > progressive->cQuant)
 				{
-					BYTE* tmpBuf = (RFX_COMPONENT_CODEC_QUANT*) realloc(
+					RFX_COMPONENT_CODEC_QUANT* tmpBuf = (RFX_COMPONENT_CODEC_QUANT*) realloc(
 					                             progressive->quantVals,
 					                             region->numQuant * sizeof(RFX_COMPONENT_CODEC_QUANT));
 					if (!tmpBuf)
@@ -1746,7 +1746,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 
 				if (region->numProgQuant > progressive->cProgQuant)
 				{
-					BYTE* tmpBuf = (RFX_PROGRESSIVE_CODEC_QUANT*) realloc(
+					RFX_PROGRESSIVE_CODEC_QUANT* tmpBuf = (RFX_PROGRESSIVE_CODEC_QUANT*) realloc(
 					                                 progressive->quantProgVals,
 					                                 region->numProgQuant * sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
 					if (!tmpBuf)
@@ -1779,7 +1779,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 
 				if (progressive->cTiles < surface->gridSize)
 				{
-					BYTE* tmpBuf = (RFX_PROGRESSIVE_TILE**) realloc(progressive->tiles,
+					RFX_PROGRESSIVE_TILE** tmpBuf = (RFX_PROGRESSIVE_TILE**) realloc(progressive->tiles,
 					                     surface->gridSize * sizeof(RFX_PROGRESSIVE_TILE*));
 					if (!tmpBuf)
 						return -1025;

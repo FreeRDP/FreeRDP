@@ -55,25 +55,25 @@ static DWORD WINAPI TestSynchCritical_Test1(LPVOID arg)
 		rc = 1;
 
 		if (!TestSynchCritical_TriggerAndCheckRaceCondition(hThread, rc))
-			return (PVOID)1;
+			return 1;
 
 		/* add some random recursion level */
 		j = rand()%5;
 		for (i=0; i<j; i++)
 		{
 			if (!TestSynchCritical_TriggerAndCheckRaceCondition(hThread, rc++))
-				return (PVOID)2;
+				return 2;
 			EnterCriticalSection(&critical);
 		}
 		for (i=0; i<j; i++)
 		{
 			if (!TestSynchCritical_TriggerAndCheckRaceCondition(hThread, rc--))
-				return (PVOID)2;
+				return 2;
 			LeaveCriticalSection(&critical);
 		}
 
 		if (!TestSynchCritical_TriggerAndCheckRaceCondition(hThread, rc))
-			return (PVOID)3;
+			return 3;
 
 		LeaveCriticalSection(&critical);
 	}
@@ -288,11 +288,11 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 	CloseHandle(hThread);
 
 	*pbThreadTerminated = TRUE; /* requ. for winpr issue, see below */
-	return (PVOID)0;
+	return 0;
 
 fail:
 	*pbThreadTerminated = TRUE; /* requ. for winpr issue, see below */
-	return (PVOID)1;
+	return 1;
 }
 
 
