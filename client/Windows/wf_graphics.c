@@ -131,11 +131,8 @@ static void wf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 		DeleteObject(wf_bitmap->bitmap);
 		DeleteDC(wf_bitmap->hdc);
 
-		if (wf_bitmap->_bitmap.data)
-		{
-			_aligned_free(wf_bitmap->_bitmap.data);
-			wf_bitmap->_bitmap.data = NULL;
-		}
+		_aligned_free(wf_bitmap->_bitmap.data);
+		wf_bitmap->_bitmap.data = NULL;
 	}
 }
 
