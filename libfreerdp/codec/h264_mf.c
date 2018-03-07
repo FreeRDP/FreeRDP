@@ -431,6 +431,12 @@ static int mf_compress(H264_CONTEXT* h264, const BYTE** ppSrcYuv, const UINT32* 
 	return 1;
 }
 
+static BOOL mf_plat_loaded(H264_CONTEXT_MF* sys)
+{
+	return sys->MFStartup && sys->MFShutdown && sys->MFCreateSample
+		&& sys->MFCreateMemoryBuffer && sys->MFCreateMediaType;
+}
+
 static void mf_uninit(H264_CONTEXT* h264)
 {
 	UINT32 x;
@@ -470,8 +476,14 @@ static void mf_uninit(H264_CONTEXT* h264)
 
 		if (sys->mfplat)
 		{
+			if (mf_plat_loaded(sys))
+				sys->MFShutdown();
+
 			FreeLibrary(sys->mfplat);
 			sys->mfplat = NULL;
+
+			if (mf_plat_loaded(sys))
+				CoUninitialize();
 		}
 
 		for (x = 0; x < sizeof(h264->pYUVData) / sizeof(h264->pYUVData[0]); x++)
@@ -479,8 +491,7 @@ static void mf_uninit(H264_CONTEXT* h264)
 
 		memset(h264->pYUVData, 0, sizeof(h264->pYUVData));
 		memset(h264->iStride, 0, sizeof(h264->iStride));
-		sys->MFShutdown();
-		CoUninitialize();
+		
 		free(sys);
 		h264->pSystemData = NULL;
 	}
@@ -510,8 +521,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 	sys->MFCreateMediaType = (pfnMFCreateMediaType) GetProcAddress(sys->mfplat,
 	                         "MFCreateMediaType");
 
-	if (!sys->MFStartup || !sys->MFShutdown || !sys->MFCreateSample
-	    || !sys->MFCreateMemoryBuffer || !sys->MFCreateMediaType)
+	if (!mf_plat_loaded(sys))
 		goto error;
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);

@@ -614,9 +614,14 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 	}
 	else /* YCoCg */
 	{
+		UINT32 TempFormat;
 		BYTE* pTempData = planar->pTempData;
 		UINT32 nTempStep = planar->nTempStep;
-		UINT32 TempFormat = PIXEL_FORMAT_BGRA32;
+
+		if (alpha)
+			TempFormat = PIXEL_FORMAT_BGRA32;
+		else
+			TempFormat = PIXEL_FORMAT_BGRX32;
 
 		if (!pTempData)
 			return FALSE;

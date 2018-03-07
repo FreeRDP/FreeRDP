@@ -566,14 +566,6 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam,
 			PostQuitMessage(WM_QUIT);
 			break;
 
-		case WM_SETCURSOR:
-			if (LOWORD(lParam) == HTCLIENT)
-				SetCursor(wfc->hDefaultCursor);
-			else
-				DefWindowProc(hWnd, Msg, wParam, lParam);
-
-			break;
-
 		case WM_SETFOCUS:
 			DEBUG_KBD("getting focus %X", hWnd);
 
