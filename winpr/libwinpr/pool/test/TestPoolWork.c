@@ -31,7 +31,7 @@ static BOOL test1(void)
 	int index;
 	PTP_WORK work;
 	printf("Global Thread Pool\n");
-	work = CreateThreadpoolWork((PTP_WORK_CALLBACK) test_WorkCallback, "world", NULL);
+	work = CreateThreadpoolWork(test_WorkCallback, "world", NULL);
 
 	if (!work)
 	{
@@ -86,7 +86,7 @@ static BOOL test2(void)
 	}
 
 	SetThreadpoolCallbackCleanupGroup(&environment, cleanupGroup, NULL);
-	work = CreateThreadpoolWork((PTP_WORK_CALLBACK) test_WorkCallback, "world", &environment);
+	work = CreateThreadpoolWork(test_WorkCallback, "world", &environment);
 
 	if (!work)
 	{
