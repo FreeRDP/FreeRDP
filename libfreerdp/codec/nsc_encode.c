@@ -50,11 +50,11 @@ static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
 	{
 		for (i = 0; i < 5; i++)
 		{
-			context->priv->PlaneBuffers[i] = (BYTE*) realloc(context->priv->PlaneBuffers[i],
-			                                 length);
-
-			if (!context->priv->PlaneBuffers[i])
+			BYTE* tmp = (BYTE*) realloc(context->priv->PlaneBuffers[i], length);
+			if (!tmp)
 				goto fail;
+
+			context->priv->PlaneBuffers[i] = tmp;
 		}
 
 		context->priv->PlaneBuffersLength = length;

@@ -228,7 +228,7 @@ static void* rdpei_schedule_thread(void* arg)
 
 out:
 
-	if (error && rdpei->rdpcontext)
+	if (error && rdpei && rdpei->rdpcontext)
 		setChannelError(rdpei->rdpcontext, error,
 		                "rdpei_schedule_thread reported an error");
 

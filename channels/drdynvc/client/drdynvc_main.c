@@ -716,6 +716,10 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 		case CHANNEL_RC_NOT_CONNECTED:
 			Stream_Free(s, TRUE);
 			return CHANNEL_RC_OK;
+		case CHANNEL_RC_BAD_CHANNEL_HANDLE:
+			Stream_Free(s, TRUE);
+			WLog_ERR(TAG, "VirtualChannelWriteEx failed with CHANNEL_RC_BAD_CHANNEL_HANDLE");
+			return status;
 
 		default:
 			Stream_Free(s, TRUE);
@@ -1200,7 +1204,7 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 
 	if (!drdynvc || (drdynvc->OpenHandle != openHandle))
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "drdynvc_virtual_channel_open_event: error no match");
+		WLog_ERR(TAG, "drdynvc_virtual_channel_open_event: error no match");
 		Stream_Free((wStream*) pData, TRUE);
 		return;
 	}
@@ -1527,7 +1531,7 @@ static VOID VCAPITYPE drdynvc_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 
 	if (!drdynvc || (drdynvc->InitHandle != pInitHandle))
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "drdynvc_virtual_channel_init_event: error no match");
+		WLog_ERR(TAG, "drdynvc_virtual_channel_init_event: error no match");
 		return;
 	}
 
@@ -1600,7 +1604,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 
 	if (!drdynvc)
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "calloc failed!");
+		WLog_ERR(TAG, "calloc failed!");
 		return FALSE;
 	}
 

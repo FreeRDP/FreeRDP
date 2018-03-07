@@ -1424,7 +1424,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 
 	nla_write_ts_credentials(nla, s);
 
-	if (nla->settings->DisableCredentialsDelegation)
+	if (nla->settings->DisableCredentialsDelegation && nla->identity)
 	{
 		/* TSPasswordCreds */
 		nla->identity->DomainLength = DomainLength;

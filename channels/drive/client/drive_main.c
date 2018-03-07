@@ -788,7 +788,7 @@ static void* drive_thread_func(void* arg)
 	}
 
 fail:
-	if (error && drive->rdpcontext)
+	if (error && drive && drive->rdpcontext)
 		setChannelError(drive->rdpcontext, error, "drive_thread_func reported an error");
 
 	ExitThread((DWORD)error);
