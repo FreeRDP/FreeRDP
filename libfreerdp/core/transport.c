@@ -57,7 +57,7 @@
 
 #define BUFFER_SIZE 16384
 
-static void* transport_client_thread(void* arg);
+static DWORD WINAPI transport_client_thread(LPVOID arg);
 
 #ifdef WITH_GSSAPI
 
@@ -425,8 +425,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 				return FALSE;
 			}
 
-			if (!(transport->thread = CreateThread(NULL, 0,
-			                                       (LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL)))
+			if (!(transport->thread = CreateThread(NULL, 0, transport_client_thread, transport, 0, NULL)))
 			{
 				WLog_Print(transport->log, WLOG_ERROR, "Failed to create transport client thread");
 				CloseHandle(transport->stopEvent);
@@ -1132,7 +1131,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 	return status;
 }
 
-static void* transport_client_thread(void* arg)
+DWORD WINAPI transport_client_thread(LPVOID arg)
 {
 	DWORD dwExitCode = 0;
 	DWORD status;
@@ -1217,7 +1216,7 @@ static void* transport_client_thread(void* arg)
 out:
 	WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
 	ExitThread(dwExitCode);
-	return NULL;
+	return dwExitCode;
 }
 
 rdpTransport* transport_new(rdpContext* context)

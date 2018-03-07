@@ -494,7 +494,7 @@ static DWORD android_verify_changed_certificate(freerdp* instance,
 	return res;
 }
 
-static void* jni_input_thread(void* arg)
+static DWORD WINAPI jni_input_thread(LPVOID arg)
 {
 	HANDLE event[2];
 	wMessageQueue* queue;
@@ -536,7 +536,7 @@ static void* jni_input_thread(void* arg)
 disconnect:
 	MessageQueue_PostQuit(queue, 0);
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 static int android_freerdp_run(freerdp* instance)
@@ -553,8 +553,7 @@ static int android_freerdp_run(freerdp* instance)
 
 	if (async_input)
 	{
-		if (!(inputThread = CreateThread(NULL, 0,
-		                                 (LPTHREAD_START_ROUTINE) jni_input_thread, instance, 0, NULL)))
+		if (!(inputThread = CreateThread(NULL, 0, jni_input_thread, instance, 0, NULL)))
 		{
 			WLog_ERR(TAG, "async input: failed to create input thread");
 			goto disconnect;
@@ -627,7 +626,7 @@ disconnect:
 	return status;
 }
 
-static void* android_thread_func(void* param)
+static DWORD WINAPI android_thread_func(LPVOID param)
 {
 	DWORD status = ERROR_BAD_ARGUMENTS;
 	freerdp* instance = param;
@@ -667,7 +666,7 @@ fail:
 
 	WLog_DBG(TAG, "Quit.");
 	ExitThread(status);
-	return NULL;
+	return status;
 }
 
 static BOOL android_client_new(freerdp* instance, rdpContext* context)
@@ -869,8 +868,7 @@ static jboolean JNICALL jni_freerdp_connect(JNIEnv* env, jclass cls,
 
 	ctx = (androidContext*)inst->context;
 
-	if (!(ctx->thread = CreateThread(
-	                        NULL, 0, (LPTHREAD_START_ROUTINE)android_thread_func,
+	if (!(ctx->thread = CreateThread(NULL, 0, android_thread_func,
 	                        inst, 0, NULL)))
 	{
 		return JNI_FALSE;

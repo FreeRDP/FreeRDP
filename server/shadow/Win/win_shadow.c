@@ -280,8 +280,9 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 
 #if defined(WITH_WDS_API)
 
-void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
+static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 {
+	winShadowSubsystem* subsystem = (winShadowSubsystem*)arg;
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[32];
@@ -309,13 +310,14 @@ void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
 	}
 
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 #elif defined(WITH_DXGI_1_2)
 
-void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
+static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 {
+	winShadowSubsystem* subsystem = (winShadowSubsystem*)arg;
 	int fps;
 	DWORD status;
 	DWORD nCount;
@@ -361,7 +363,7 @@ void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
 	}
 
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 #endif
@@ -438,8 +440,7 @@ int win_shadow_subsystem_start(winShadowSubsystem* subsystem)
 	if (!subsystem)
 		return -1;
 
-	if (!(thread = CreateThread(NULL, 0,
-	                            (LPTHREAD_START_ROUTINE) win_shadow_subsystem_thread,
+	if (!(thread = CreateThread(NULL, 0, win_shadow_subsystem_thread,
 	                            (void*) subsystem, 0, NULL)))
 	{
 		WLog_ERR(TAG, "Failed to create thread");

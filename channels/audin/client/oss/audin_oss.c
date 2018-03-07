@@ -173,7 +173,7 @@ static UINT audin_oss_set_format(IAudinDevice* device, audinFormat* format,
 	return CHANNEL_RC_OK;
 }
 
-static void* audin_oss_thread_func(void* arg)
+static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 {
 	char dev_name[PATH_MAX] = "/dev/dsp";
 	char mixer_name[PATH_MAX] = "/dev/mixer";
@@ -352,8 +352,8 @@ err_out:
 	}
 
 	free(buffer);
-	ExitThread(0);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -374,8 +374,7 @@ static UINT audin_oss_open(IAudinDevice* device, AudinReceive receive,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(oss->thread = CreateThread(NULL, 0,
-	                                 (LPTHREAD_START_ROUTINE)audin_oss_thread_func, oss, 0, NULL)))
+	if (!(oss->thread = CreateThread(NULL, 0, audin_oss_thread_func, oss, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(oss->stopEvent);

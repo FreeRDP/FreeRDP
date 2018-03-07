@@ -483,7 +483,7 @@ static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 }
 
 
-static void* irp_thread_func(void* arg)
+static DWORD WINAPI irp_thread_func(LPVOID arg)
 {
 	IRP_THREAD_DATA* data = (IRP_THREAD_DATA*)arg;
 	UINT error;
@@ -509,8 +509,8 @@ error_out:
 	 * the CompletionId whereas the thread is not yet
 	 * terminated */
 	free(data);
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 
@@ -642,7 +642,7 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 	/* data freed by irp_thread_func */
 	irpThread = CreateThread(NULL,
 	                         0,
-	                         (LPTHREAD_START_ROUTINE)irp_thread_func,
+							 irp_thread_func,
 	                         (void*)data,
 	                         0,
 	                         NULL);
@@ -697,7 +697,7 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE* serial)
 }
 
 
-static void* serial_thread_func(void* arg)
+static DWORD WINAPI serial_thread_func(LPVOID arg)
 {
 	IRP* irp;
 	wMessage message;
@@ -736,8 +736,8 @@ static void* serial_thread_func(void* arg)
 		setChannelError(serial->rdpcontext, error,
 		                "serial_thread_func reported an error");
 
-	ExitThread((DWORD) error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 
@@ -952,7 +952,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		if (!(serial->MainThread = CreateThread(NULL,
 		                                        0,
-		                                        (LPTHREAD_START_ROUTINE) serial_thread_func,
+												serial_thread_func,
 		                                        (void*) serial,
 		                                        0,
 		                                        NULL)))

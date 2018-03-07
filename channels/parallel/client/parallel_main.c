@@ -304,7 +304,7 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
-static void* parallel_thread_func(void* arg)
+static DWORD WINAPI parallel_thread_func(LPVOID arg)
 {
 	IRP* irp;
 	wMessage message;
@@ -343,8 +343,8 @@ static void* parallel_thread_func(void* arg)
 		setChannelError(parallel->rdpcontext, error,
 		                "parallel_thread_func reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -466,7 +466,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		}
 
 		if (!(parallel->thread = CreateThread(NULL, 0,
-		                                      (LPTHREAD_START_ROUTINE) parallel_thread_func, (void*) parallel, 0, NULL)))
+											  parallel_thread_func, (void*) parallel, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
 			error = ERROR_INTERNAL_ERROR;

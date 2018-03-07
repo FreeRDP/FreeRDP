@@ -118,9 +118,9 @@ void first_hotplug(rdpdrPlugin* rdpdr)
 {
 }
 
-static void* drive_hotplug_thread_func(void* arg)
+static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
-	return NULL;
+	return CHANNEL_RC_OK;
 }
 
 static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
@@ -280,7 +280,7 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, Msg, wParam, lParam);
 }
 
-static void* drive_hotplug_thread_func(void* arg)
+static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
 	rdpdrPlugin* rdpdr;
 	WNDCLASSEX wnd_cls;
@@ -331,7 +331,7 @@ static void* drive_hotplug_thread_func(void* arg)
 	}
 
 	UnregisterDeviceNotification(hDevNotify);
-	return NULL;
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -558,7 +558,7 @@ void first_hotplug(rdpdrPlugin* rdpdr)
 	}
 }
 
-static void* drive_hotplug_thread_func(void* arg)
+static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
 	rdpdrPlugin* rdpdr;
 	FSEventStreamRef fsev;
@@ -579,7 +579,7 @@ static void* drive_hotplug_thread_func(void* arg)
 	FSEventStreamStop(fsev);
 	FSEventStreamRelease(fsev);
 	ExitThread(CHANNEL_RC_OK);
-	return NULL;
+	return CHANNEL_RC_OK;
 }
 
 
@@ -923,7 +923,7 @@ static void first_hotplug(rdpdrPlugin* rdpdr)
 	}
 }
 
-static void* drive_hotplug_thread_func(void* arg)
+static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
 	rdpdrPlugin* rdpdr;
 	int mfd;
@@ -994,8 +994,8 @@ out:
 		                "drive_hotplug_thread_func reported an error");
 
 	CloseHandle(rdpdr->stopEvent);
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -1069,7 +1069,7 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 				first_hotplug(rdpdr);
 
 				if (!(rdpdr->hotplugThread = CreateThread(NULL, 0,
-				                             (LPTHREAD_START_ROUTINE) drive_hotplug_thread_func, rdpdr, 0, NULL)))
+								 drive_hotplug_thread_func, rdpdr, 0, NULL)))
 				{
 					WLog_ERR(TAG, "CreateThread failed!");
 					return ERROR_INTERNAL_ERROR;
@@ -1623,7 +1623,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DW
 	return;
 }
 
-static void* rdpdr_virtual_channel_client_thread(void* arg)
+static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
 {
 	wStream* data;
 	wMessage message;
@@ -1633,7 +1633,7 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 	if (!rdpdr)
 	{
 		ExitThread((DWORD) CHANNEL_RC_NULL_DATA);
-		return NULL;
+		return CHANNEL_RC_NULL_DATA;
 	}
 
 	if ((error = rdpdr_process_connect(rdpdr)))
@@ -1644,8 +1644,8 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 			setChannelError(rdpdr->rdpcontext, error,
 			                "rdpdr_virtual_channel_client_thread reported an error");
 
-		ExitThread((DWORD) error);
-		return NULL;
+		ExitThread(error);
+		return error;
 	}
 
 	while (1)
@@ -1671,14 +1671,14 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 						                "rdpdr_virtual_channel_client_thread reported an error");
 
 					ExitThread((DWORD) error);
-					return NULL;
+					return error;
 				}
 			}
 		}
 	}
 
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 /**
@@ -1709,7 +1709,7 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr,
 	}
 
 	if (!(rdpdr->thread = CreateThread(NULL, 0,
-	                                   (LPTHREAD_START_ROUTINE) rdpdr_virtual_channel_client_thread, (void*) rdpdr, 0,
+					   rdpdr_virtual_channel_client_thread, (void*) rdpdr, 0,
 	                                   NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");

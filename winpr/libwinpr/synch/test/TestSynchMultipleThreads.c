@@ -5,14 +5,14 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-static void *test_thread(void *arg)
+static DWORD WINAPI test_thread(LPVOID arg)
 {
 	long timeout = rand();
 	timeout %= 1000;
 	timeout += 100;
 	Sleep(timeout);
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 static int start_threads(DWORD count, HANDLE *threads)
@@ -21,8 +21,7 @@ static int start_threads(DWORD count, HANDLE *threads)
 
 	for (i=0; i<count; i++)
 	{
-		threads[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)test_thread,
-								  NULL, 0, NULL);
+		threads[i] = CreateThread(NULL, 0, test_thread, NULL, 0, NULL);
 
 		if (!threads[i])
 		{

@@ -239,7 +239,7 @@ out_free:
 	return error;
 }
 
-static void* rdpsnd_server_thread(void* arg)
+static DWORD WINAPI rdpsnd_server_thread(LPVOID arg)
 {
 	DWORD nCount, status;
 	HANDLE events[8];
@@ -293,8 +293,8 @@ out:
 		setChannelError(context->rdpcontext, error,
 		                "rdpsnd_server_thread reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -701,7 +701,7 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 		}
 
 		context->priv->Thread = CreateThread(NULL, 0,
-		                                     (LPTHREAD_START_ROUTINE) rdpsnd_server_thread, (void*) context, 0, NULL);
+											 rdpsnd_server_thread, (void*) context, 0, NULL);
 
 		if (!context->priv->Thread)
 		{

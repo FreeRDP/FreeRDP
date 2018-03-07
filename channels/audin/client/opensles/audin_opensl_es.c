@@ -70,7 +70,7 @@ typedef struct _AudinOpenSLESDevice
 	rdpContext* rdpcontext;
 } AudinOpenSLESDevice;
 
-static void* audin_opensles_thread_func(void* arg)
+static DWORD WINAPI audin_opensles_thread_func(LPVOID arg)
 {
 	union
 	{
@@ -173,8 +173,8 @@ out:
 	if (error && opensles->rdpcontext)
 		setChannelError(opensles->rdpcontext, error, "audin_opensles_thread_func reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -356,7 +356,7 @@ static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive,
 		goto error_out;
 	}
 	if (!(opensles->thread = CreateThread(NULL, 0,
-		(LPTHREAD_START_ROUTINE) audin_opensles_thread_func,
+                audin_opensles_thread_func,
 		opensles, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");

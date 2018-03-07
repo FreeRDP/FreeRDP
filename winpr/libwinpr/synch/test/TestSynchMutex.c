@@ -4,7 +4,7 @@
 #include <winpr/thread.h>
 
 
-BOOL test_mutex_basic()
+static BOOL test_mutex_basic(void)
 {
 	HANDLE mutex;
 	DWORD rc;
@@ -42,7 +42,7 @@ BOOL test_mutex_basic()
 	return TRUE;
 }
 
-BOOL test_mutex_recursive()
+static BOOL test_mutex_recursive(void)
 {
 	HANDLE mutex;
 	DWORD rc, i, cnt = 50;
@@ -94,11 +94,11 @@ BOOL test_mutex_recursive()
 }
 
 
-HANDLE thread1_mutex1 = NULL;
-HANDLE thread1_mutex2 = NULL;
-BOOL   thread1_failed = TRUE;
+static HANDLE thread1_mutex1 = NULL;
+static HANDLE thread1_mutex2 = NULL;
+static BOOL   thread1_failed = TRUE;
 
-DWORD WINAPI test_mutex_thread1(LPVOID lpParam)
+static DWORD WINAPI test_mutex_thread1(LPVOID lpParam)
 {
 	HANDLE hStartEvent = (HANDLE)lpParam;
 	DWORD rc = 0;
@@ -143,7 +143,7 @@ DWORD WINAPI test_mutex_thread1(LPVOID lpParam)
 	return 0;
 }
 
-BOOL test_mutex_threading()
+static BOOL test_mutex_threading(void)
 {
 	HANDLE hThread = NULL;
 	HANDLE hStartEvent = NULL;

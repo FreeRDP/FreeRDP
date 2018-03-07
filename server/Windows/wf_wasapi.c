@@ -160,7 +160,7 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 	return 0;
 }
 
-DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
+static DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 {
 	IMMDeviceEnumerator *pEnumerator = NULL;
 	IMMDevice *pDevice = NULL;

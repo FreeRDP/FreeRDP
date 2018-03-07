@@ -33,7 +33,7 @@
 #define TAG CHANNELS_TAG("drdynvc.server")
 
 
-static void* drdynvc_server_thread(void* arg)
+static DWORD WINAPI drdynvc_server_thread(LPVOID arg)
 {
 #if 0
 	wStream* s;
@@ -56,7 +56,7 @@ static void* drdynvc_server_thread(void* arg)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
 		ExitThread((DWORD) CHANNEL_RC_NO_MEMORY);
-		return NULL;
+		return CHANNEL_RC_NO_MEMORY;
 	}
 
 	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle,
@@ -111,7 +111,7 @@ static void* drdynvc_server_thread(void* arg)
 #endif
 	// WTF ... this code only reads data into the stream until there is no more memory
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 /**
@@ -136,8 +136,7 @@ static UINT drdynvc_server_start(DrdynvcServerContext* context)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(context->priv->Thread = CreateThread(NULL, 0,
-	                              (LPTHREAD_START_ROUTINE) drdynvc_server_thread, (void*) context, 0, NULL)))
+	if (!(context->priv->Thread = CreateThread(NULL, 0, drdynvc_server_thread, (void*) context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(context->priv->StopEvent);

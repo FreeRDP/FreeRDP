@@ -113,8 +113,9 @@ static BOOL tf_post_connect(freerdp* instance)
 	return TRUE;
 }
 
-static void* tf_client_thread_proc(freerdp* instance)
+static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 {
+	freerdp* instance = (freerdp*)arg;
 	DWORD nCount;
 	DWORD status;
 	HANDLE handles[64];
@@ -122,7 +123,7 @@ static void* tf_client_thread_proc(freerdp* instance)
 	if (!freerdp_connect(instance))
 	{
 		WLog_ERR(TAG, "connection failure");
-		return NULL;
+		return 0;
 	}
 
 	while (!freerdp_shall_disconnect(instance))
@@ -155,7 +156,7 @@ static void* tf_client_thread_proc(freerdp* instance)
 
 	freerdp_disconnect(instance);
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 int main(int argc, char* argv[])
@@ -196,8 +197,7 @@ int main(int argc, char* argv[])
 	                                instance->settings))
 		return winpr_exit(-1);
 
-	if (!(thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-	                            tf_client_thread_proc, instance, 0, NULL)))
+	if (!(thread = CreateThread(NULL, 0, tf_client_thread_proc, instance, 0, NULL)))
 	{
 		WLog_ERR(TAG, "Failed to create client thread");
 	}

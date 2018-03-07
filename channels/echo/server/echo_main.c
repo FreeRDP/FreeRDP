@@ -105,7 +105,7 @@ static UINT echo_server_open_channel(echo_server* echo)
 	return echo->echo_channel ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static void* echo_server_thread_func(void* arg)
+static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 {
 	wStream* s;
 	void* buffer;
@@ -264,8 +264,8 @@ out:
 		setChannelError(echo->context.rdpcontext, error,
 		                "echo_server_thread_func reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -285,8 +285,7 @@ static UINT echo_server_open(echo_server_context* context)
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		if (!(echo->thread = CreateThread(NULL, 0,
-		                                  (LPTHREAD_START_ROUTINE) echo_server_thread_func, (void*) echo, 0, NULL)))
+		if (!(echo->thread = CreateThread(NULL, 0, echo_server_thread_func, (void*) echo, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			CloseHandle(echo->stopEvent);

@@ -103,7 +103,7 @@ struct rdpsnd_plugin
  */
 static UINT rdpsnd_confirm_wave(rdpsndPlugin* rdpsnd, RDPSND_WAVE* wave);
 
-static void* rdpsnd_schedule_thread(void* arg)
+static DWORD WINAPI rdpsnd_schedule_thread(LPVOID arg)
 {
 	wMessage message;
 	UINT16 wTimeDiff;
@@ -183,8 +183,8 @@ static void* rdpsnd_schedule_thread(void* arg)
 		setChannelError(rdpsnd->rdpcontext, error,
 		                "rdpsnd_schedule_thread reported an error");
 
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -1115,7 +1115,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 		}
 
 		rdpsnd->ScheduleThread = CreateThread(NULL, 0,
-		                                      (LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread,
+											  rdpsnd_schedule_thread,
 		                                      (void*) rdpsnd, 0, NULL);
 
 		if (!rdpsnd->ScheduleThread)
@@ -1271,7 +1271,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, D
 		                "rdpsnd_virtual_channel_open_event_ex reported an error");
 }
 
-static void* rdpsnd_virtual_channel_client_thread(void* arg)
+static DWORD WINAPI rdpsnd_virtual_channel_client_thread(LPVOID arg)
 {
 	wStream* data;
 	wMessage message;
@@ -1322,8 +1322,8 @@ out:
 		                "rdpsnd_virtual_channel_client_thread reported an error");
 
 	rdpsnd_process_disconnect(rdpsnd);
-	ExitThread((DWORD)error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -1355,7 +1355,7 @@ static UINT rdpsnd_virtual_channel_event_connected(rdpsndPlugin* rdpsnd,
 	}
 
 	rdpsnd->thread = CreateThread(NULL, 0,
-	                              (LPTHREAD_START_ROUTINE) rdpsnd_virtual_channel_client_thread, (void*) rdpsnd,
+								  rdpsnd_virtual_channel_client_thread, (void*) rdpsnd,
 	                              0, NULL);
 
 	if (!rdpsnd->thread)

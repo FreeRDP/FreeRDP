@@ -7,16 +7,16 @@
 #define TEST_NUM_THREADS	100
 #define TEST_NUM_FAILURES	10
 
-INIT_ONCE initOnceTest = INIT_ONCE_STATIC_INIT;
+static INIT_ONCE initOnceTest = INIT_ONCE_STATIC_INIT;
 
-HANDLE hStartEvent = NULL;
-LONG *pErrors = NULL;
-LONG *pTestThreadFunctionCalls = NULL;
-LONG *pTestOnceFunctionCalls = NULL;
-LONG *pInitOnceExecuteOnceCalls = NULL;
+static HANDLE hStartEvent = NULL;
+static LONG *pErrors = NULL;
+static LONG *pTestThreadFunctionCalls = NULL;
+static LONG *pTestOnceFunctionCalls = NULL;
+static LONG *pInitOnceExecuteOnceCalls = NULL;
 
 
-BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID *context)
+static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID *context)
 {
 	LONG calls = InterlockedIncrement(pTestOnceFunctionCalls) - 1;
 
@@ -37,7 +37,7 @@ BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID *context)
 	return FALSE;
 }
 
-DWORD WINAPI TestThreadFunction(LPVOID lpParam)
+static DWORD WINAPI TestThreadFunction(LPVOID lpParam)
 {
 	LONG calls;
 	BOOL ok;

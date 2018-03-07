@@ -1332,7 +1332,7 @@ static int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	return 1;
 }
 
-static void* xf_input_thread(void* arg)
+static DWORD WINAPI xf_input_thread(LPVOID arg)
 {
 	BOOL running = TRUE;
 	DWORD status;
@@ -1411,7 +1411,7 @@ static void* xf_input_thread(void* arg)
 
 	MessageQueue_PostQuit(queue, 0);
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 static BOOL xf_auto_reconnect(freerdp* instance)
@@ -1463,10 +1463,10 @@ static BOOL xf_auto_reconnect(freerdp* instance)
 *  @param instance - pointer to the rdp_freerdp structure that contains the session's settings
 *  @return A code from the enum XF_EXIT_CODE (0 if successful)
 */
-static void* xf_client_thread(void* param)
+static DWORD WINAPI xf_client_thread(LPVOID param)
 {
 	BOOL status;
-	int exit_code;
+	DWORD exit_code = 0;
 	DWORD nCount;
 	DWORD waitStatus;
 	HANDLE handles[64];
@@ -1480,7 +1480,6 @@ static void* xf_client_thread(void* param)
 	rdpSettings* settings;
 	TimerEventArgs timerEvent;
 	EventArgsInit(&timerEvent, "xfreerdp");
-	exit_code = 0;
 	instance = (freerdp*) param;
 	context = instance->context;
 	status = freerdp_connect(instance);
@@ -1546,8 +1545,7 @@ static void* xf_client_thread(void* param)
 	}
 	else
 	{
-		if (!(inputThread = CreateThread(NULL, 0,
-		                                 (LPTHREAD_START_ROUTINE) xf_input_thread, instance, 0, NULL)))
+		if (!(inputThread = CreateThread(NULL, 0, xf_input_thread, instance, 0, NULL)))
 		{
 			WLog_ERR(TAG, "async input: failed to create input thread");
 			exit_code = XF_EXIT_UNKNOWN;
@@ -1635,7 +1633,7 @@ disconnect:
 	freerdp_disconnect(instance);
 end:
 	ExitThread(exit_code);
-	return NULL;
+	return exit_code;
 }
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
@@ -1733,8 +1731,7 @@ static int xfreerdp_client_start(rdpContext* context)
 		return -1;
 	}
 
-	if (!(xfc->thread = CreateThread(NULL, 0,
-	                                 (LPTHREAD_START_ROUTINE) xf_client_thread,
+	if (!(xfc->thread = CreateThread(NULL, 0, xf_client_thread,
 	                                 context->instance, 0, NULL)))
 	{
 		WLog_ERR(TAG, "failed to create client thread");

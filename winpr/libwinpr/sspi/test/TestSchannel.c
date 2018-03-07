@@ -12,15 +12,15 @@
 #include <winpr/wlog.h>
 #include <winpr/schannel.h>
 
-BOOL g_ClientWait = FALSE;
-BOOL g_ServerWait = FALSE;
+static BOOL g_ClientWait = FALSE;
+static BOOL g_ServerWait = FALSE;
 
-HANDLE g_ClientReadPipe = NULL;
-HANDLE g_ClientWritePipe = NULL;
-HANDLE g_ServerReadPipe = NULL;
-HANDLE g_ServerWritePipe = NULL;
+static HANDLE g_ClientReadPipe = NULL;
+static HANDLE g_ClientWritePipe = NULL;
+static HANDLE g_ServerReadPipe = NULL;
+static HANDLE g_ServerWritePipe = NULL;
 
-BYTE test_localhost_crt[1029] =
+static const BYTE test_localhost_crt[1029] =
 {
 	0x2D,0x2D,0x2D,0x2D,0x2D,0x42,0x45,0x47,0x49,0x4E,0x20,0x43,0x45,0x52,0x54,
 	0x49,0x46,0x49,0x43,0x41,0x54,0x45,0x2D,0x2D,0x2D,0x2D,0x2D,0x0A,0x4D,0x49,
@@ -93,7 +93,7 @@ BYTE test_localhost_crt[1029] =
 	0x41,0x54,0x45,0x2D,0x2D,0x2D,0x2D,0x2D,0x0A
 };
 
-BYTE test_localhost_key[1704] =
+static const BYTE test_localhost_key[1704] =
 {
 	0x2D,0x2D,0x2D,0x2D,0x2D,0x42,0x45,0x47,0x49,0x4E,0x20,0x50,0x52,0x49,0x56,
 	0x41,0x54,0x45,0x20,0x4B,0x45,0x59,0x2D,0x2D,0x2D,0x2D,0x2D,0x0A,0x4D,0x49,
@@ -211,7 +211,7 @@ BYTE test_localhost_key[1704] =
 	0x4B,0x45,0x59,0x2D,0x2D,0x2D,0x2D,0x2D,0x0A
 };
 
-BYTE test_DummyMessage[64] =
+static const BYTE test_DummyMessage[64] =
 {
 	0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
 	0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB,
@@ -219,7 +219,7 @@ BYTE test_DummyMessage[64] =
 	0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD
 };
 
-BYTE test_LastDummyMessage[64] =
+static const BYTE test_LastDummyMessage[64] =
 {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -227,7 +227,7 @@ BYTE test_LastDummyMessage[64] =
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext, BYTE* buffer, UINT32 length)
+static int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext, BYTE* buffer, UINT32 length)
 {
 	BYTE* ioBuffer;
 	UINT32 ioBufferLength;
@@ -284,7 +284,7 @@ int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	return 0;
 }
 
-int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext)
+static int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext)
 {
 	BYTE* ioBuffer;
 	UINT32 ioBufferLength;
@@ -342,7 +342,7 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	return 0;
 }
 
-static void* schannel_test_server_thread(void* arg)
+static DWORD WINAPI schannel_test_server_thread(LPVOID arg)
 {
 	BOOL extraData;
 	BYTE* lpTokenIn;
@@ -377,7 +377,7 @@ static void* schannel_test_server_thread(void* arg)
 	if (status != SEC_E_OK)
 	{
 		printf("QuerySecurityPackageInfo failure: 0x%08"PRIX32"\n", status);
-		return NULL;
+		return 0;
 	}
 
 	cbMaxToken = pPackageInfo->cbMaxToken;
@@ -406,7 +406,7 @@ static void* schannel_test_server_thread(void* arg)
 	if (!pszNameString)
 	{
 		printf("Memory allocation failed\n");
-		return NULL;
+		return 0;
 	}
 	cchNameString = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, pszNameString, cchNameString);
 	_tprintf(_T("Certificate Name: %s\n"), pszNameString);
@@ -424,7 +424,7 @@ static void* schannel_test_server_thread(void* arg)
 	if (status != SEC_E_OK)
 	{
 		printf("AcquireCredentialsHandle failure: 0x%08"PRIX32"\n", status);
-		return NULL;
+		return 0;
 	}
 
 	extraData = FALSE;
@@ -432,13 +432,13 @@ static void* schannel_test_server_thread(void* arg)
 	if (!(lpTokenIn = (BYTE*) malloc(cbMaxToken)))
 	{
 		printf("Memory allocation failed\n");
-		return NULL;
+		return 0;
 	}
 	if (!(lpTokenOut = (BYTE*) malloc(cbMaxToken)))
 	{
 		printf("Memory allocation failed\n");
 		free(lpTokenIn);
-		return NULL;
+		return 0;
 	}
 	fContextReq = ASC_REQ_STREAM |
 				  ASC_REQ_SEQUENCE_DETECT | ASC_REQ_REPLAY_DETECT |
@@ -544,10 +544,10 @@ static void* schannel_test_server_thread(void* arg)
 	}
 	while (1);
 
-	return NULL;
+	return 0;
 }
 
-int dump_test_certificate_files()
+static int dump_test_certificate_files(void)
 {
 	FILE* fp;
 	char* fullpath = NULL;
@@ -634,7 +634,7 @@ int TestSchannel(int argc, char* argv[])
 		return -1;
 	}
 
-	if (!(thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) schannel_test_server_thread, NULL, 0, NULL)))
+	if (!(thread = CreateThread(NULL, 0, schannel_test_server_thread, NULL, 0, NULL)))
 	{
 		printf("Failed to create server thread\n");
 		return -1;

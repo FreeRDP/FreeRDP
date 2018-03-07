@@ -23,7 +23,7 @@ struct test_params
 };
 
 
-DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
+static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 {
 	BOOL status = FALSE;
 	struct test_params* p = (struct test_params*)lpParam;

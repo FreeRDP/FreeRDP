@@ -1129,7 +1129,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 	return error;
 }
 
-static void* rdpdr_server_thread(void* arg)
+static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 {
 	wStream* s;
 	DWORD status;
@@ -1233,8 +1233,8 @@ out:
 		setChannelError(context->rdpcontext, error,
 		                "rdpdr_server_thread reported an error");
 
-	ExitThread((DWORD) error);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 /**
@@ -1260,7 +1260,7 @@ static UINT rdpdr_server_start(RdpdrServerContext* context)
 	}
 
 	if (!(context->priv->Thread = CreateThread(NULL, 0,
-	                              (LPTHREAD_START_ROUTINE) rdpdr_server_thread, (void*) context, 0, NULL)))
+								  rdpdr_server_thread, (void*) context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(context->priv->StopEvent);

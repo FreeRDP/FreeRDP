@@ -737,7 +737,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 	return ret;
 }
 
-static void* tsmf_stream_ack_func(void* arg)
+static DWORD WINAPI tsmf_stream_ack_func(LPVOID arg)
 {
 	HANDLE hdl[2];
 	TSMF_STREAM* stream = (TSMF_STREAM*) arg;
@@ -817,11 +817,11 @@ static void* tsmf_stream_ack_func(void* arg)
 		                "tsmf_stream_ack_func reported an error");
 
 	DEBUG_TSMF("out %"PRIu32"", stream->stream_id);
-	ExitThread(0);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
-static void* tsmf_stream_playback_func(void* arg)
+static DWORD WINAPI tsmf_stream_playback_func(LPVOID arg)
 {
 	HANDLE hdl[2];
 	TSMF_SAMPLE* sample = NULL;
@@ -907,8 +907,8 @@ static void* tsmf_stream_playback_func(void* arg)
 		                "tsmf_stream_playback_func reported an error");
 
 	DEBUG_TSMF("out %"PRIu32"", stream->stream_id);
-	ExitThread(0);
-	return NULL;
+	ExitThread(error);
+	return error;
 }
 
 static BOOL tsmf_stream_start(TSMF_STREAM* stream)
@@ -1259,13 +1259,13 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 		goto error_sample_ack_list;
 
 	stream->sample_ack_list->object.fnObjectFree = tsmf_sample_free;
-	stream->play_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func,
+	stream->play_thread = CreateThread(NULL, 0, tsmf_stream_playback_func,
 	                                   stream, CREATE_SUSPENDED, NULL);
 
 	if (!stream->play_thread)
 		goto error_play_thread;
 
-	stream->ack_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)tsmf_stream_ack_func, stream,
+	stream->ack_thread = CreateThread(NULL, 0, tsmf_stream_ack_func, stream,
 	                                  CREATE_SUSPENDED, NULL);
 
 	if (!stream->ack_thread)

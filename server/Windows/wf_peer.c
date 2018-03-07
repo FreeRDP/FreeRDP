@@ -167,7 +167,7 @@ BOOL wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 	return TRUE;
 }
 
-DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
+static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 {
 	int i, fds;
 	int rcount;
@@ -239,7 +239,7 @@ BOOL wf_peer_read_settings(freerdp_peer* client)
 	return TRUE;
 }
 
-DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
+static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 {
 	wfInfo* wfi;
 	DWORD nCount;
