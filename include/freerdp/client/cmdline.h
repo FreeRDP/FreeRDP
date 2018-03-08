@@ -44,8 +44,8 @@ FREERDP_API BOOL freerdp_client_print_command_line_help(int argc, char** argv);
 FREERDP_API BOOL freerdp_client_print_command_line_help_ex(
     int argc, char** argv, COMMAND_LINE_ARGUMENT_A* custom);
 
-FREERDP_API BOOL freerdp_parse_username(char* username, char** user, char** domain);
-FREERDP_API BOOL freerdp_parse_hostname(char* hostname, char** host, int* port);
+FREERDP_API BOOL freerdp_parse_username(const char* username, char** user, char** domain);
+FREERDP_API BOOL freerdp_parse_hostname(const char* hostname, char** host, int* port);
 FREERDP_API BOOL freerdp_set_connection_type(rdpSettings* settings, int type);
 
 FREERDP_API BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count, char** params);

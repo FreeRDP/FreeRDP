@@ -817,7 +817,7 @@ static int freerdp_client_command_line_post_filter(void* context,
 	return status ? 1 : -1;
 }
 
-BOOL freerdp_parse_username(char* username, char** user, char** domain)
+BOOL freerdp_parse_username(const char* username, char** user, char** domain)
 {
 	char* p;
 	int length = 0;
@@ -871,7 +871,7 @@ BOOL freerdp_parse_username(char* username, char** user, char** domain)
 	return TRUE;
 }
 
-BOOL freerdp_parse_hostname(char* hostname, char** host, int* port)
+BOOL freerdp_parse_hostname(const char* hostname, char** host, int* port)
 {
 	char* p;
 	p = strrchr(hostname, ':');

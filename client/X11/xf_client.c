@@ -1521,7 +1521,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	}
 
 	settings = context->settings;
-	timer = CreateWaitableTimerA(NULL, FALSE, NULL);
+	timer = CreateWaitableTimerA(NULL, FALSE, "mainloop-periodic-timer");
 
 	if (!timer)
 	{
@@ -1581,7 +1581,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 			nCount += tmp;
 		}
 
-		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (waitStatus == WAIT_FAILED)
 			break;
@@ -1609,7 +1609,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 			}
 		}
 
-		if (status != WAIT_TIMEOUT && WaitForSingleObject(timer, 0))
+		if ((status != WAIT_TIMEOUT) && (waitStatus == WAIT_OBJECT_0))
 		{
 			timerEvent.now = GetTickCount64();
 			PubSub_OnTimer(context->pubSub, context, &timerEvent);
