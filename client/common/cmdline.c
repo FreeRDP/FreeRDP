@@ -1313,6 +1313,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	if (!ext && !assist)
 		compatibility = freerdp_client_detect_command_line(argc, argv, &flags,
 		                allowUnknown);
+	else
+		compatibility = freerdp_client_detect_command_line(argc - 1, &argv[1], &flags,
+						allowUnknown);
 
 	if (compatibility)
 	{
