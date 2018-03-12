@@ -135,7 +135,7 @@ static DWORD mac_client_update_thread(void* param)
 	return 0;
 }
 
-static DWORD mac_client_input_thread(void* param)
+static DWORD WINAPI mac_client_input_thread(LPVOID param)
 {
 	int status;
 	wMessage message;
@@ -194,8 +194,7 @@ DWORD mac_client_thread(void* param)
 
 		if (settings->AsyncInput)
 		{
-			if (!(inputThread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL)))
+			if (!(inputThread = CreateThread(NULL, 0, mac_client_input_thread, context, 0, NULL)))
 			{
 				WLog_ERR(TAG,  "failed to create async input thread");
 				goto disconnect;
@@ -738,7 +737,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 
 - (void) onPasteboardTimerFired :(NSTimer*) timer
 {
-	BYTE* data;
+	const BYTE* data;
 	UINT32 size;
 	UINT32 formatId;
 	BOOL formatMatch;

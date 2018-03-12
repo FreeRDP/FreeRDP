@@ -34,6 +34,12 @@
 #include <unistd.h>
 #endif
 
+#if defined(__APPLE__)
+#include <mach/task.h>
+#include <mach/mach.h>
+#include <mach/semaphore.h>
+#endif
+
 #ifndef _WIN32
 
 #include "../log.h"
@@ -44,7 +50,8 @@ VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 	InitializeCriticalSectionEx(lpCriticalSection, 0, 0);
 }
 
-BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags)
+BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount,
+                                 DWORD Flags)
 {
 	/**
 	 * See http://msdn.microsoft.com/en-us/library/ff541979(v=vs.85).aspx
@@ -67,18 +74,24 @@ BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwS
 	lpCriticalSection->RecursionCount = 0;
 	lpCriticalSection->OwningThread = NULL;
 	lpCriticalSection->LockSemaphore = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
+
 	if (!lpCriticalSection->LockSemaphore)
 		return FALSE;
+
 #if defined(__APPLE__)
-	if (semaphore_create(mach_task_self(), lpCriticalSection->LockSemaphore, SYNC_POLICY_FIFO, 0) != KERN_SUCCESS)
+
+	if (semaphore_create(mach_task_self(), lpCriticalSection->LockSemaphore, SYNC_POLICY_FIFO,
+	                     0) != KERN_SUCCESS)
 		goto out_fail;
+
 #else
-	if(sem_init(lpCriticalSection->LockSemaphore, 0, 0) != 0)
+
+	if (sem_init(lpCriticalSection->LockSemaphore, 0, 0) != 0)
 		goto out_fail;
+
 #endif
 	SetCriticalSectionSpinCount(lpCriticalSection, dwSpinCount);
 	return TRUE;
-
 out_fail:
 	free(lpCriticalSection->LockSemaphore);
 	return FALSE;
@@ -150,7 +163,7 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		}
 
 		/* Failed to get the lock. Let the scheduler know that we're spinning. */
-		if (sched_yield()!=0)
+		if (sched_yield() != 0)
 		{
 			/**
 			 * On some operating systems sched_yield is a stub.
