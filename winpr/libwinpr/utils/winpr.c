@@ -78,10 +78,7 @@ const char* winpr_get_build_config(void)
 int winpr_exit(int status)
 {
 	WLog_Uninit();
-#if defined(WIN32)
+
+	_exit(status);
 	return status;
-#else
-	pthread_exit(&status);
-	return status;
-#endif
 }
