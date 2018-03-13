@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
 	if (!instance)
 	{
 		WLog_ERR(TAG, "Couldn't create instance");
-		winpr_exit(1);
+		return winpr_exit(1);
 	}
 
 	instance->PreConnect = tf_pre_connect;
