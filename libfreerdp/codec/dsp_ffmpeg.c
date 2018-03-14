@@ -53,6 +53,28 @@ struct _FREERDP_DSP_CONTEXT
 	AVAudioResampleContext* rcontext;
 };
 
+static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
+{
+	if (!encoder)
+		return FALSE;
+
+	switch(id)
+	{
+#if !defined(WITH_DSP_EXPERIMENTAL)
+		case AV_CODEC_ID_MP3:
+		case AV_CODEC_ID_GSM_MS:
+		case AV_CODEC_ID_AAC:
+			return TRUE;
+#endif
+
+		case AV_CODEC_ID_NONE:
+			return TRUE;
+
+		default:
+			return FALSE;
+	}
+}
+
 static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 {
 	const char* id;
@@ -189,7 +211,7 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 	layout = av_get_default_channel_layout(format->nChannels);
 	context->id = ffmpeg_get_avcodec(format);
 
-	if (context->id == AV_CODEC_ID_NONE)
+	if (ffmpeg_codec_is_filtered(context->id, context->encoder))
 		goto fail;
 
 	if (context->encoder)
@@ -333,7 +355,7 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in,
 	{
 		const char* err = av_err2str(ret);
 		WLog_ERR(TAG, "Error submitting the packet to the encoder %s [%d]",
-		         err, ret);
+				 err, ret);
 		return FALSE;
 	}
 
@@ -452,7 +474,7 @@ BOOL freerdp_dsp_ffmpeg_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 {
 	enum AVCodecID id = ffmpeg_get_avcodec(format);
 
-	if (id == AV_CODEC_ID_NONE)
+	if (ffmpeg_codec_is_filtered(id, encode))
 		return FALSE;
 
 	if (encode)

@@ -1128,12 +1128,20 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 #if defined(WITH_GSM)
 
 		case WAVE_FORMAT_GSM610:
+#if defined(WITH_DSP_EXPERIMENTAL)
 			return TRUE;
+#else
+			return !encode;
+#endif
 #endif
 #if defined(WITH_LAME)
 
 		case WAVE_FORMAT_MPEGLAYER3:
+#if defined(WITH_DSP_EXPERIMENTAL)
 			return TRUE;
+#else
+			return !encode;
+#endif
 #endif
 
 		case WAVE_FORMAT_AAC_MS:
@@ -1142,7 +1150,7 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 				return TRUE;
 
 #endif
-#if defined(WITH_FAAC)
+#if defined(WITH_FAAC) && defined(WITH_DSP_EXPERIMENTAL)
 
 			if (encode)
 				return TRUE;
