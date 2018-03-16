@@ -49,6 +49,13 @@
 #define MAC_AUDIO_QUEUE_NUM_BUFFERS     100
 #define MAC_AUDIO_QUEUE_BUFFER_SIZE     32768
 
+/* Fix for #4462: Provide type alias if not declared (Mac OS < 10.10)
+ * https://developer.apple.com/documentation/coreaudio/audioformatid
+ */
+#ifndef AudioFormatID
+typedef UInt32 AudioFormatID;
+#endif
+
 typedef struct _AudinMacDevice
 {
 	IAudinDevice iface;
