@@ -24,9 +24,6 @@
 #include <freerdp/channels/geometry.h>
 #include <freerdp/channels/video.h>
 
-struct _xfVideoContext;
-typedef struct _xfVideoContext xfVideoContext;
-
 void xf_video_control_init(xfContext* xfc, VideoClientContext* video);
 void xf_video_control_uninit(xfContext* xfc, VideoClientContext* video);
 

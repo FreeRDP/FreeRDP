@@ -25,8 +25,6 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-typedef struct _xfDispContext xfDispContext;
-
 FREERDP_API BOOL xf_disp_init(xfContext* xfc, DispClientContext *disp);
 
 xfDispContext *xf_disp_new(xfContext* xfc);
