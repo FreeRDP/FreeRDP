@@ -196,17 +196,6 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None)
 	{
-		/* Set monitor bounds */
-		if (settings->MonitorCount > 1)
-		{
-			xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
-			                   xfc->fullscreenMonitors.top,
-			                   xfc->fullscreenMonitors.bottom,
-			                   xfc->fullscreenMonitors.left,
-			                   xfc->fullscreenMonitors.right,
-			                   1);
-		}
-
 		xf_ResizeDesktopWindow(xfc, window, width, height);
 
 		if (fullscreen)
@@ -224,6 +213,17 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		{
 			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
 			XMoveWindow(xfc->display, window->handle, startX, startY);
+		}
+
+		/* Set monitor bounds */
+		if (settings->MonitorCount > 1)
+		{
+			xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
+			                   xfc->fullscreenMonitors.top,
+			                   xfc->fullscreenMonitors.bottom,
+			                   xfc->fullscreenMonitors.left,
+			                   xfc->fullscreenMonitors.right,
+			                   1);
 		}
 	}
 	else
