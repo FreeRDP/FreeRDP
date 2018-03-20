@@ -617,6 +617,7 @@ BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, L
 #define WINPR_MD4_DIGEST_LENGTH        16
 #define WINPR_MD5_DIGEST_LENGTH        16
 #define WINPR_SHA1_DIGEST_LENGTH       20
+#define WINPR_SHA256_DIGEST_LENGTH     32
 
 
 /**

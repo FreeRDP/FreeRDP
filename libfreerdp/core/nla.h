@@ -83,6 +83,7 @@ struct rdp_nla
 	SecBuffer negoToken;
 	SecBuffer pubKeyAuth;
 	SecBuffer authInfo;
+	SecBuffer ClientNonce;
 	SecBuffer PublicKey;
 	SecBuffer tsCredentials;
 	LPTSTR ServicePrincipalName;
