@@ -186,6 +186,7 @@ static BOOL rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMA
 
 	if (format)
 	{
+		alsa->aformat = *format;
 		alsa->actual_rate = format->nSamplesPerSec;
 		alsa->actual_channels = format->nChannels;
 
