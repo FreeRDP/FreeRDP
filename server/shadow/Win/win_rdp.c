@@ -61,7 +61,7 @@ static BOOL shw_end_paint(rdpContext* context)
 	rdpGdi* gdi = context->gdi;
 	shwContext* shw = (shwContext*) context;
 	winShadowSubsystem* subsystem = shw->subsystem;
-	rdpShadowSurface* surface = subsystem->server->surface;
+	rdpShadowSurface* surface = subsystem->base.server->surface;
 	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 

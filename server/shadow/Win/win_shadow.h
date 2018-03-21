@@ -37,7 +37,7 @@ typedef struct win_shadow_subsystem winShadowSubsystem;
 
 struct win_shadow_subsystem
 {
-	RDP_SHADOW_SUBSYSTEM_COMMON();
+	rdpShadowSubsystem base;
 
 	int bpp;
 	int width;
