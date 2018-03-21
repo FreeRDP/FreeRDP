@@ -1,7 +1,4 @@
 opt/freerdp-nightly/lib/*.so.*
 opt/freerdp-nightly/bin
-opt/freerdp-nightly/share/man/man1/freerdp-shadow-cli.1*
-opt/freerdp-nightly/share/man/man1/winpr-makecert.1*
-opt/freerdp-nightly/share/man/man1/winpr-hash.1*
-opt/freerdp-nightly/share/man/man1/xfreerdp.1*
+opt/freerdp-nightly/share/man/man1/*.1*
 opt/freerdp-nightly/share/man/man7/wlog.7*
