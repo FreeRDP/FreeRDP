@@ -115,8 +115,26 @@ static void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity);
 #define ber_sizeof_sequence_octet_string(length) ber_sizeof_contextual_tag(ber_sizeof_octet_string(length)) + ber_sizeof_octet_string(length)
 #define ber_write_sequence_octet_string(stream, context, value, length) ber_write_contextual_tag(stream, context, ber_sizeof_octet_string(length), TRUE) + ber_write_octet_string(stream, value, length)
 
-static const CHAR ClientServerHashMagic[] = "CredSSP Client-To-Server Binding Hash\0";
-static const CHAR ServerClientHashMagic[] = "CredSSP Server-To-Client Binding Hash\0";
+/* CredSSP Client-To-Server Binding Hash\0 */
+static const BYTE ClientServerHashMagic[] =
+{
+	0x43, 0x72, 0x65, 0x64, 0x53, 0x53, 0x50, 0x20,
+	0x43, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x2D, 0x54,
+	0x6F, 0x2D, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x20, 0x42, 0x69, 0x6E, 0x64, 0x69, 0x6E, 0x67,
+	0x20, 0x48, 0x61, 0x73, 0x68, 0x00
+};
+
+/* CredSSP Server-To-Client Binding Hash\0 */
+static const BYTE ServerClientHashMagic[] =
+{
+	0x43, 0x72, 0x65, 0x64, 0x53, 0x53, 0x50, 0x20,
+	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2D, 0x54,
+	0x6F, 0x2D, 0x43, 0x6C, 0x69, 0x65, 0x6E, 0x74,
+	0x20, 0x42, 0x69, 0x6E, 0x64, 0x69, 0x6E, 0x67,
+	0x20, 0x48, 0x61, 0x73, 0x68, 0x00
+};
+
 static const UINT32 NonceLength = 32;
 
 void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
@@ -154,7 +172,7 @@ void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
 static int nla_client_init(rdpNla* nla)
 {
 	char* spn;
-	int length;
+	size_t length;
 	rdpTls* tls = NULL;
 	BOOL PromptPassword = FALSE;
 	freerdp* instance = nla->instance;
@@ -1045,7 +1063,7 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
-	size_t public_key_length;
+	ULONG public_key_length;
 	const BOOL krb = (_tcsncmp(nla->packageName, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0);
 	const BOOL nego = (_tcsncmp(nla->packageName, NEGO_SSP_NAME, ARRAYSIZE(NEGO_SSP_NAME)) == 0);
 	const BOOL ntlm = (_tcsncmp(nla->packageName,  NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0);
@@ -1103,7 +1121,8 @@ SECURITY_STATUS nla_encrypt_public_key_hash(rdpNla* nla)
 	const ULONG auth_data_length = krb ? WINPR_SHA256_DIGEST_LENGTH :
 	                               (nla->ContextSizes.cbSecurityTrailer
 	                                + WINPR_SHA256_DIGEST_LENGTH);
-	const CHAR* hashMagic = nla->server ? ServerClientHashMagic : ClientServerHashMagic;
+	const BYTE* hashMagic = nla->server ? ServerClientHashMagic : ClientServerHashMagic;
+	const size_t hashSize = nla->server ? sizeof(ServerClientHashMagic) : sizeof(ClientServerHashMagic);
 
 	if (!sspi_SecBufferAlloc(&nla->ClientNonce, NonceLength))
 	{
@@ -1129,7 +1148,7 @@ SECURITY_STATUS nla_encrypt_public_key_hash(rdpNla* nla)
 		goto out;
 
 	/* include trailing \0 from hashMagic */
-	if (!winpr_Digest_Update(sha256, hashMagic, strlen(hashMagic) + 1))
+	if (!winpr_Digest_Update(sha256, hashMagic, hashSize))
 		goto out;
 
 	if (!winpr_Digest_Update(sha256, nla->ClientNonce.pvBuffer, nla->ClientNonce.cbBuffer))
@@ -1182,12 +1201,12 @@ out:
 
 SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 {
-	size_t length;
+	ULONG length;
 	BYTE* buffer = NULL;
 	ULONG pfQOP = 0;
 	BYTE* public_key1 = NULL;
 	BYTE* public_key2 = NULL;
-	int public_key_length = 0;
+	ULONG public_key_length = 0;
 	int signature_length;
 	SecBuffer Buffers[2] = { { 0 } };
 	SecBufferDesc Message;
@@ -1210,7 +1229,7 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 
 	if ((nla->PublicKey.cbBuffer + nla->ContextSizes.cbSecurityTrailer) != nla->pubKeyAuth.cbBuffer)
 	{
-		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %"PRIu32"", (int) nla->pubKeyAuth.cbBuffer);
+		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %"PRIu32"", nla->pubKeyAuth.cbBuffer);
 		goto fail;
 	}
 
@@ -1303,7 +1322,8 @@ SECURITY_STATUS nla_decrypt_public_key_hash(rdpNla* nla)
 	BYTE serverClientHash[WINPR_SHA256_DIGEST_LENGTH];
 	SECURITY_STATUS status = SEC_E_INVALID_TOKEN;
 	const BOOL krb = (_tcsncmp(nla->packageName, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0);
-	const CHAR* hashMagic = nla->server ? ClientServerHashMagic : ServerClientHashMagic;
+	const BYTE* hashMagic = nla->server ? ClientServerHashMagic : ServerClientHashMagic;
+	const size_t hashSize = nla->server ? sizeof(ClientServerHashMagic) : sizeof(ServerClientHashMagic);
 	signature_length = nla->pubKeyAuth.cbBuffer - WINPR_SHA256_DIGEST_LENGTH;
 
 	if ((signature_length < 0) || (signature_length > (int)nla->ContextSizes.cbSecurityTrailer))
@@ -1368,7 +1388,7 @@ SECURITY_STATUS nla_decrypt_public_key_hash(rdpNla* nla)
 		goto fail;
 
 	/* include trailing \0 from hashMagic */
-	if (!winpr_Digest_Update(sha256, hashMagic, strlen(hashMagic) + 1))
+	if (!winpr_Digest_Update(sha256, hashMagic, hashSize))
 		goto fail;
 
 	if (!winpr_Digest_Update(sha256, nla->ClientNonce.pvBuffer, nla->ClientNonce.cbBuffer))
@@ -1513,7 +1533,7 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 	return TRUE;
 }
 
-static int nla_write_ts_password_creds(rdpNla* nla, wStream* s)
+static size_t nla_write_ts_password_creds(rdpNla* nla, wStream* s)
 {
 	size_t size = 0;
 	size_t innerSize = nla_sizeof_ts_password_creds(nla);
@@ -1570,11 +1590,11 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 	return ret;
 }
 
-static int nla_write_ts_credentials(rdpNla* nla, wStream* s)
+static size_t nla_write_ts_credentials(rdpNla* nla, wStream* s)
 {
-	int size = 0;
-	int passwordSize;
-	int innerSize = nla_sizeof_ts_credentials(nla);
+	size_t size = 0;
+	size_t passwordSize;
+	size_t innerSize = nla_sizeof_ts_credentials(nla);
 	/* TSCredentials (SEQUENCE) */
 	size += ber_write_sequence_tag(s, innerSize);
 	/* [0] credType (INTEGER) */
@@ -1596,7 +1616,7 @@ static int nla_write_ts_credentials(rdpNla* nla, wStream* s)
 static BOOL nla_encode_ts_credentials(rdpNla* nla)
 {
 	wStream* s;
-	int length;
+	size_t length;
 	int DomainLength = 0;
 	int UserLength = 0;
 	int PasswordLength = 0;
@@ -1863,9 +1883,9 @@ BOOL nla_send(rdpNla* nla)
 	/* [1] negoTokens (NegoData) */
 	if (nego_tokens_length > 0)
 	{
-		int length = ber_write_contextual_tag(s, 1,
-		                                      ber_sizeof_sequence(ber_sizeof_sequence(ber_sizeof_sequence_octet_string(nla->negoToken.cbBuffer))),
-		                                      TRUE); /* NegoData */
+		length = ber_write_contextual_tag(s, 1,
+		                                  ber_sizeof_sequence(ber_sizeof_sequence(ber_sizeof_sequence_octet_string(nla->negoToken.cbBuffer))),
+		                                  TRUE); /* NegoData */
 		length += ber_write_sequence_tag(s,
 		                                 ber_sizeof_sequence(ber_sizeof_sequence_octet_string(
 		                                         nla->negoToken.cbBuffer))); /* SEQUENCE OF NegoDataItem */
