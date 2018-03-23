@@ -679,6 +679,7 @@ static UINT audin_plugin_terminated(IWTSPlugin* pPlugin)
 		audin->device = NULL;
 	}
 
+	freerdp_dsp_context_free(audin->dsp_context);
 	Stream_Free(audin->data, TRUE);
 	free(audin->subsystem);
 	free(audin->device_name);
