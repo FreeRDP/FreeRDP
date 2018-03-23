@@ -993,49 +993,6 @@ BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOverlapped)
 	return FALSE;
 }
 
-
-/* Extended API */
-
-static BOOL _IsReservedCommDeviceName(LPCTSTR lpName)
-{
-	int i;
-
-	if (!CommInitialized())
-		return FALSE;
-
-	/* Serial ports, COM1-9 */
-	for (i = 1; i < 10; i++)
-	{
-		TCHAR genericName[5];
-
-		if (_stprintf_s(genericName, 5, _T("COM%d"), i) < 0)
-		{
-			return FALSE;
-		}
-
-		if (_tcscmp(genericName, lpName) == 0)
-			return TRUE;
-	}
-
-	/* Parallel ports, LPT1-9 */
-	for (i = 1; i < 10; i++)
-	{
-		TCHAR genericName[5];
-
-		if (_stprintf_s(genericName, 5, _T("LPT%d"), i) < 0)
-		{
-			return FALSE;
-		}
-
-		if (_tcscmp(genericName, lpName) == 0)
-			return TRUE;
-	}
-
-	/* FIXME: what about PRN ? */
-	return FALSE;
-}
-
-
 /**
  * Returns TRUE on success, FALSE otherwise. To get extended error
  * information, call GetLastError.
@@ -1061,15 +1018,6 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName,
 	{
 		SetLastError(ERROR_DLL_INIT_FAILED);
 		goto error_handle;
-	}
-
-	if (_tcsncmp(lpDeviceName, _T("\\\\.\\"), 4) != 0)
-	{
-		if (_IsReservedCommDeviceName(lpDeviceName))
-		{
-			SetLastError(ERROR_INVALID_DATA);
-			goto error_handle;
-		}
 	}
 
 	storedDeviceName = _tcsdup(lpDeviceName);
