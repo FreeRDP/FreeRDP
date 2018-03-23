@@ -66,6 +66,7 @@ struct rdp_nla
 	SEC_CHAR* packageName;
 #endif
 	UINT32 version;
+	UINT32 peerVersion;
 	UINT32 errorCode;
 	ULONG fContextReq;
 	ULONG pfContextAttr;
