@@ -535,7 +535,7 @@ static int nla_client_recv(rdpNla* nla)
 				return -1;
 			}
 
-			if (nla->version < 5)
+			if (nla->peerVersion < 5)
 				nla->status = nla_encrypt_public_key_echo(nla);
 			else
 				nla->status = nla_encrypt_public_key_hash(nla);
@@ -565,7 +565,7 @@ static int nla_client_recv(rdpNla* nla)
 	else if (nla->state == NLA_STATE_PUB_KEY_AUTH)
 	{
 		/* Verify Server Public Key Echo */
-		if (nla->version < 5)
+		if (nla->peerVersion < 5)
 			nla->status = nla_decrypt_public_key_echo(nla);
 		else
 			nla->status = nla_decrypt_public_key_hash(nla);
@@ -887,7 +887,7 @@ static int nla_server_authenticate(rdpNla* nla)
 				return -1;
 			}
 
-			if (nla->version < 5)
+			if (nla->peerVersion < 5)
 				nla->status = nla_decrypt_public_key_echo(nla);
 			else
 				nla->status = nla_decrypt_public_key_hash(nla);
@@ -903,7 +903,7 @@ static int nla_server_authenticate(rdpNla* nla)
 			nla->negoToken.pvBuffer = NULL;
 			nla->negoToken.cbBuffer = 0;
 
-			if (nla->version < 5)
+			if (nla->peerVersion < 5)
 				nla->status = nla_encrypt_public_key_echo(nla);
 			else
 				nla->status = nla_encrypt_public_key_hash(nla);
@@ -1857,7 +1857,7 @@ BOOL nla_send(rdpNla* nla)
 	client_nonce_length = (nla->ClientNonce.cbBuffer > 0) ? nla_sizeof_client_nonce(
 	                          nla->ClientNonce.cbBuffer) : 0;
 
-	if (nla->version >= 3 && nla->version != 5 && nla->errorCode != 0)
+	if (nla->peerVersion >= 3 && nla->peerVersion != 5 && nla->errorCode != 0)
 	{
 		error_code_length = ber_sizeof_integer(nla->errorCode);
 		error_code_context_length = ber_sizeof_contextual_tag(error_code_length);
@@ -1948,8 +1948,20 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 		return -1;
 	}
 
-	if (version < nla->version)
-		nla->version = version;
+	if (nla->peerVersion == 0)
+	{
+		WLog_DBG(TAG, "CredSSP protocol support %"PRIu32", peer supports %"PRIu32,
+				 nla->version, version);
+		nla->peerVersion = version;
+	}
+
+	/* if the peer suddenly changed its version - kick it */
+	if (nla->peerVersion != version)
+	{
+		WLog_ERR(TAG, "CredSSP peer changed protocol version from %"PRIu32" to %"PRIu32,
+				 nla->peerVersion, version);
+		return -1;
+	}
 
 	/* [1] negoTokens (NegoData) */
 	if (ber_read_contextual_tag(s, 1, &length, TRUE) != FALSE)
@@ -1999,7 +2011,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	}
 
 	/* [4] errorCode (INTEGER) */
-	if (nla->version >= 3)
+	if (nla->peerVersion >= 3)
 	{
 		if (ber_read_contextual_tag(s, 4, &length, TRUE) != FALSE)
 		{
@@ -2007,7 +2019,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 				return -1;
 		}
 
-		if (nla->version >= 5)
+		if (nla->peerVersion >= 5)
 		{
 			if (ber_read_contextual_tag(s, 5, &length, TRUE) != FALSE)
 			{
