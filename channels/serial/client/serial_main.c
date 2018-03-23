@@ -250,8 +250,8 @@ static UINT serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
 	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
-
 	buffer = (BYTE*)calloc(Length, sizeof(BYTE));
+
 	if (buffer == NULL)
 	{
 		irp->IoStatus = STATUS_NO_MEMORY;
@@ -337,7 +337,6 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	           serial->device.name);
 	Stream_Write_UINT32(irp->output, nbWritten); /* Length (4 bytes) */
 	Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
-
 	return CHANNEL_RC_OK;
 }
 
@@ -361,7 +360,6 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 	Stream_Read_UINT32(irp->input, OutputBufferLength); /* OutputBufferLength (4 bytes) */
 	Stream_Read_UINT32(irp->input, InputBufferLength); /* InputBufferLength (4 bytes) */
-
 	Stream_Read_UINT32(irp->input, IoControlCode); /* IoControlCode (4 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
 
@@ -369,6 +367,7 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 		return ERROR_INVALID_DATA;
 
 	OutputBuffer = (BYTE*)calloc(OutputBufferLength, sizeof(BYTE));
+
 	if (OutputBuffer == NULL)
 	{
 		irp->IoStatus = STATUS_NO_MEMORY;
@@ -376,6 +375,7 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
 	InputBuffer = (BYTE*)calloc(InputBufferLength, sizeof(BYTE));
+
 	if (InputBuffer == NULL)
 	{
 		irp->IoStatus = STATUS_NO_MEMORY;
@@ -642,7 +642,7 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 	/* data freed by irp_thread_func */
 	irpThread = CreateThread(NULL,
 	                         0,
-							 irp_thread_func,
+	                         irp_thread_func,
 	                         (void*)data,
 	                         0,
 	                         NULL);
@@ -852,7 +852,8 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		if (!DefineCommDevice(name /* eg: COM1 */, path /* eg: /dev/ttyS0 */))
 		{
-			WLog_ERR(TAG, "DefineCommDevice failed!");
+			DWORD status = GetLastError();
+			WLog_ERR(TAG, "DefineCommDevice failed with %08"PRIx32, status);
 			return ERROR_INTERNAL_ERROR;
 		}
 
@@ -952,7 +953,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		if (!(serial->MainThread = CreateThread(NULL,
 		                                        0,
-												serial_thread_func,
+		                                        serial_thread_func,
 		                                        (void*) serial,
 		                                        0,
 		                                        NULL)))
