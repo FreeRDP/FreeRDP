@@ -38,18 +38,26 @@ int TestPathShell(int argc, char* argv[])
 			char* path = GetKnownPath(id);
 
 			if (!path)
+			{
 				rc = -1;
-
-			printf("%s Path: %s\n", name, path);
+			}
+			else
+			{
+				printf("%s Path: %s\n", name, path);
+			}
 			free(path);
 		}
 		{
 			char* path = GetKnownSubPath(id, "freerdp");
 
 			if (!path)
+			{
 				rc = -1;
-
-			printf("%s SubPath: %s\n", name, path);
+			}
+			else
+			{
+				printf("%s SubPath: %s\n", name, path);
+			}
 			free(path);
 		}
 	}

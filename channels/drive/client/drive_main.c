@@ -440,7 +440,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
         IRP* irp)
 {
 	UINT32 FsInformationClass;
-	wStream* output = irp->output;
+	wStream* output = NULL;
 	char* volumeLabel = {"FREERDP"};
 	char* diskType = {"FAT32"};
 	WCHAR* outStr = NULL;
@@ -453,6 +453,8 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 
 	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
+
+	output = irp->output;
 
 	if (Stream_GetRemainingLength(irp->input) < 4)
 		return ERROR_INVALID_DATA;
