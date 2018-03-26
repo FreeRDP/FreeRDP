@@ -577,10 +577,12 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width,
                             int height)
 {
 	XSizeHints* size_hints;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings = NULL;
 
 	if (!xfc || !window)
 		return;
+
+	settings = xfc->context.settings;
 
 	if (!(size_hints = XAllocSizeHints()))
 		return;
