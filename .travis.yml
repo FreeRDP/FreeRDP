@@ -1,0 +1,54 @@
+sudo: required
+dist: trusty
+
+os: linux
+
+language: c
+
+compiler:
+  - gcc
+
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+    - os: linux
+      compiler: clang
+  exclude:
+    - compiler: gcc
+
+addons:
+  apt:
+    packages:
+      - gdb
+      - libx11-dev
+      - libxrandr-dev
+      - libxi-dev
+      - libxv-dev
+      - libcups2-dev
+      - libxdamage-dev
+      - libxcursor-dev
+      - libxext-dev
+      - libxinerama-dev
+      - libxkbcommon-dev
+      - libxkbfile-dev
+      - libxml2-dev
+      - libasound2-dev
+      - libgstreamer1.0-dev
+      - libgstreamer-plugins-base1.0-dev
+      - libpulse-dev
+      - libpcsclite-dev
+      - libgsm1-dev
+      - libavcodec-dev
+      - libavutil-dev
+      - libx264-dev
+      - libxext-dev
+
+before_script:
+  - ulimit -c unlimited -S 
+
+script:
+  - sudo hostname travis-ci.local
+  - cmake -G "Unix Makefiles" -C ci/cmake-preloads/config-linux-all.txt -D CMAKE_BUILD_TYPE=Debug -DWITH_LIBSYSTEMD=OFF -DWITH_WAYLAND=OFF .
+  - make
+  - make test
