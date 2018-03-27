@@ -296,7 +296,13 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				{
 					if (options[j].Flags & COMMAND_LINE_VALUE_FLAG)
 					{
-						options[j].Value = (LPSTR) 1;
+						if (sigil[0] == '+')
+							options[j].Value = (LPSTR) 1;
+						else if (sigil[0] == '-')
+							options[j].Value = (LPSTR) 0;
+						else
+							return COMMAND_LINE_ERROR_UNEXPECTED_SIGIL;
+
 						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}
 					else if (options[j].Flags & COMMAND_LINE_VALUE_BOOL)
