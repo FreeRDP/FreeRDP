@@ -1124,21 +1124,11 @@ SECURITY_STATUS nla_encrypt_public_key_hash(rdpNla* nla)
 	const BYTE* hashMagic = nla->server ? ServerClientHashMagic : ClientServerHashMagic;
 	const size_t hashSize = nla->server ? sizeof(ServerClientHashMagic) : sizeof(ClientServerHashMagic);
 
-	if (!sspi_SecBufferAlloc(&nla->ClientNonce, NonceLength))
-	{
-		status = SEC_E_INSUFFICIENT_MEMORY;
-		goto out;
-	}
-
 	if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, auth_data_length))
 	{
 		status = SEC_E_INSUFFICIENT_MEMORY;
 		goto out;
 	}
-
-	/* generate random 32-byte nonce */
-	if (winpr_RAND(nla->ClientNonce.pvBuffer, NonceLength) < 0)
-		goto out;
 
 	/* generate SHA256 of following data: ClientServerHashMagic, Nonce, SubjectPublicKey */
 	if (!(sha256 = winpr_Digest_New()))
@@ -2258,23 +2248,27 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	nla->recvSeqNum = 0;
 	nla->version = 6;
 
+	ZeroMemory(&nla->ClientNonce, sizeof(SecBuffer));
+	ZeroMemory(&nla->negoToken, sizeof(SecBuffer));
+	ZeroMemory(&nla->pubKeyAuth, sizeof(SecBuffer));
+	ZeroMemory(&nla->authInfo, sizeof(SecBuffer));
+	SecInvalidateHandle(&nla->context);
+
 	if (settings->NtlmSamFile)
 	{
 		nla->SamFile = _strdup(settings->NtlmSamFile);
 
 		if (!nla->SamFile)
-		{
-			free(nla->identity);
-			free(nla);
-			return NULL;
-		}
+			goto cleanup;
 	}
 
-	ZeroMemory(&nla->negoToken, sizeof(SecBuffer));
-	ZeroMemory(&nla->pubKeyAuth, sizeof(SecBuffer));
-	ZeroMemory(&nla->authInfo, sizeof(SecBuffer));
-	ZeroMemory(&nla->ClientNonce, sizeof(SecBuffer));
-	SecInvalidateHandle(&nla->context);
+	/* init to 0 or we end up freeing a bad pointer if the alloc fails */
+	if (!sspi_SecBufferAlloc(&nla->ClientNonce, NonceLength))
+		goto cleanup;
+
+	/* generate random 32-byte nonce */
+	if (winpr_RAND(nla->ClientNonce.pvBuffer, NonceLength) < 0)
+		goto cleanup;
 
 	if (nla->server)
 	{
@@ -2301,8 +2295,7 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 		if (!nla->SspiModule)
 		{
 			RegCloseKey(hKey);
-			free(nla);
-			return NULL;
+			goto cleanup;
 		}
 
 		status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType,
@@ -2315,6 +2308,10 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	}
 
 	return nla;
+
+cleanup:
+	nla_free(nla);
+	return NULL;
 }
 
 /**
