@@ -29,19 +29,19 @@
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
-
 #include <freerdp/cache/brush.h>
+
+#include "brush.h"
 
 #define TAG FREERDP_TAG("cache.brush")
 
 static BOOL update_gdi_patblt(rdpContext* context,
-				  PATBLT_ORDER* patblt)
+                              PATBLT_ORDER* patblt)
 {
 	BYTE style;
 	BOOL ret = TRUE;
 	rdpBrush* brush = &patblt->brush;
 	const rdpCache* cache = context->cache;
-
 	style = brush->style;
 
 	if (brush->style & CACHED_BRUSH)
@@ -56,20 +56,19 @@ static BOOL update_gdi_patblt(rdpContext* context,
 }
 
 static BOOL update_gdi_polygon_sc(rdpContext* context,
-				  const POLYGON_SC_ORDER* polygon_sc)
+                                  const POLYGON_SC_ORDER* polygon_sc)
 {
 	rdpCache* cache = context->cache;
 	return IFCALLRESULT(TRUE, cache->brush->PolygonSC, context, polygon_sc);
 }
 
 static BOOL update_gdi_polygon_cb(rdpContext* context,
-				  POLYGON_CB_ORDER* polygon_cb)
+                                  POLYGON_CB_ORDER* polygon_cb)
 {
 	BYTE style;
 	rdpBrush* brush = &polygon_cb->brush;
 	rdpCache* cache = context->cache;
 	BOOL ret = TRUE;
-
 	style = brush->style;
 
 	if (brush->style & CACHED_BRUSH)
@@ -80,24 +79,22 @@ static BOOL update_gdi_polygon_cb(rdpContext* context,
 
 	IFCALLRET(cache->brush->PolygonCB, ret, context, polygon_cb);
 	brush->style = style;
-
 	return ret;
 }
 
 static BOOL update_gdi_cache_brush(rdpContext* context,
-				   const CACHE_BRUSH_ORDER* cacheBrush)
+                                   const CACHE_BRUSH_ORDER* cacheBrush)
 {
 	UINT32 length;
 	void* data = NULL;
 	rdpCache* cache = context->cache;
-
 	length = cacheBrush->bpp * 64 / 8;
-
 	data = malloc(length);
+
 	if (!data)
 		return FALSE;
-	CopyMemory(data, cacheBrush->data, length);
 
+	CopyMemory(data, cacheBrush->data, length);
 	brush_cache_put(cache->brush, cacheBrush->index, data, cacheBrush->bpp);
 	return TRUE;
 }
@@ -156,7 +153,6 @@ void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT3
 		}
 
 		free(brushCache->monoEntries[index].entry);
-
 		brushCache->monoEntries[index].bpp = bpp;
 		brushCache->monoEntries[index].entry = entry;
 	}
@@ -170,7 +166,6 @@ void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT3
 		}
 
 		free(brushCache->entries[index].entry);
-
 		brushCache->entries[index].bpp = bpp;
 		brushCache->entries[index].entry = entry;
 	}
@@ -179,11 +174,9 @@ void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT3
 void brush_cache_register_callbacks(rdpUpdate* update)
 {
 	rdpCache* cache = update->context->cache;
-
 	cache->brush->PatBlt = update->primary->PatBlt;
 	cache->brush->PolygonSC = update->primary->PolygonSC;
 	cache->brush->PolygonCB = update->primary->PolygonCB;
-
 	update->primary->PatBlt = update_gdi_patblt;
 	update->primary->PolygonSC = update_gdi_polygon_sc;
 	update->primary->PolygonCB = update_gdi_polygon_cb;
@@ -193,27 +186,25 @@ void brush_cache_register_callbacks(rdpUpdate* update)
 rdpBrushCache* brush_cache_new(rdpSettings* settings)
 {
 	rdpBrushCache* brushCache;
-
 	brushCache = (rdpBrushCache*) calloc(1, sizeof(rdpBrushCache));
 
 	if (!brushCache)
 		return NULL;
 
 	brushCache->settings = settings;
-
 	brushCache->maxEntries = 64;
 	brushCache->maxMonoEntries = 64;
-
 	brushCache->entries = (BRUSH_ENTRY*)calloc(brushCache->maxEntries, sizeof(BRUSH_ENTRY));
+
 	if (!brushCache->entries)
 		goto error_entries;
 
 	brushCache->monoEntries = (BRUSH_ENTRY*) calloc(brushCache->maxMonoEntries, sizeof(BRUSH_ENTRY));
+
 	if (!brushCache->monoEntries)
 		goto error_mono;
 
 	return brushCache;
-
 error_mono:
 	free(brushCache->entries);
 error_entries:
@@ -245,4 +236,23 @@ void brush_cache_free(rdpBrushCache* brushCache)
 
 		free(brushCache);
 	}
+}
+
+void free_cache_brush_order(rdpContext* context, CACHE_BRUSH_ORDER* order)
+{
+	free(order);
+}
+
+CACHE_BRUSH_ORDER* copy_cache_brush_order(rdpContext* context, const CACHE_BRUSH_ORDER* order)
+{
+	CACHE_BRUSH_ORDER* dst = calloc(1, sizeof(CACHE_BRUSH_ORDER));
+
+	if (!dst || !order)
+		goto fail;
+
+	*dst = *order;
+	return dst;
+fail:
+	free_cache_brush_order(context, dst);
+	return NULL;
 }

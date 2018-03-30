@@ -27,6 +27,8 @@
 
 #include <freerdp/cache/cache.h>
 
+#include "cache.h"
+
 rdpCache* cache_new(rdpSettings* settings)
 {
 	rdpCache* cache;
@@ -89,4 +91,24 @@ void cache_free(rdpCache* cache)
 		nine_grid_cache_free(cache->nine_grid);
 		free(cache);
 	}
+}
+
+CACHE_COLOR_TABLE_ORDER* copy_cache_color_table_order(rdpContext* context,
+        const CACHE_COLOR_TABLE_ORDER* order)
+{
+	CACHE_COLOR_TABLE_ORDER* dst = calloc(1, sizeof(CACHE_COLOR_TABLE_ORDER));
+
+	if (!dst || !order)
+		goto fail;
+
+	*dst = *order;
+	return dst;
+fail:
+	free_cache_color_table_order(context, dst);
+	return NULL;
+}
+
+void free_cache_color_table_order(rdpContext* context, CACHE_COLOR_TABLE_ORDER* order)
+{
+	free(order);
 }

@@ -30,6 +30,7 @@
 #include <freerdp/log.h>
 #include <freerdp/cache/pointer.h>
 
+#include "pointer.h"
 
 #define TAG FREERDP_TAG("cache.pointer")
 
@@ -311,4 +312,157 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 		free(pointer_cache->entries);
 		free(pointer_cache);
 	}
+}
+
+POINTER_COLOR_UPDATE* copy_pointer_color_update(rdpContext* context,
+        const POINTER_COLOR_UPDATE* src)
+{
+	POINTER_COLOR_UPDATE* dst = calloc(1, sizeof(POINTER_COLOR_UPDATE));
+
+	if (!dst || !src)
+		goto fail;
+
+	*dst = *src;
+
+	if (src->lengthAndMask > 0)
+	{
+		dst->andMaskData = calloc(src->lengthAndMask, sizeof(BYTE));
+
+		if (!dst->andMaskData)
+			goto fail;
+
+		memcpy(dst->andMaskData, src->andMaskData, src->lengthAndMask);
+	}
+
+	if (src->lengthXorMask > 0)
+	{
+		dst->xorMaskData = calloc(src->lengthXorMask, sizeof(BYTE));
+
+		if (!dst->xorMaskData)
+			goto fail;
+
+		memcpy(dst->xorMaskData, src->xorMaskData, src->lengthXorMask);
+	}
+
+	return dst;
+fail:
+	free_pointer_color_update(context, dst);
+	return NULL;
+}
+
+void free_pointer_color_update(rdpContext* context, POINTER_COLOR_UPDATE* pointer)
+{
+	if (!pointer)
+		return;
+
+	free(pointer->xorMaskData);
+	free(pointer->andMaskData);
+	free(pointer);
+}
+
+POINTER_NEW_UPDATE* copy_pointer_new_update(rdpContext* context, const POINTER_NEW_UPDATE* src)
+{
+	POINTER_NEW_UPDATE* dst = calloc(1, sizeof(POINTER_NEW_UPDATE));
+
+	if (!dst || !src)
+		goto fail;
+
+	*dst = *src;
+
+	if (src->colorPtrAttr.lengthAndMask > 0)
+	{
+		dst->colorPtrAttr.andMaskData = calloc(src->colorPtrAttr.lengthAndMask, sizeof(BYTE));
+
+		if (!dst->colorPtrAttr.andMaskData)
+			goto fail;
+
+		memcpy(dst->colorPtrAttr.andMaskData, src->colorPtrAttr.andMaskData,
+		       src->colorPtrAttr.lengthAndMask);
+	}
+
+	if (src->colorPtrAttr.lengthXorMask > 0)
+	{
+		dst->colorPtrAttr.xorMaskData = calloc(src->colorPtrAttr.lengthXorMask, sizeof(BYTE));
+
+		if (!dst->colorPtrAttr.xorMaskData)
+			goto fail;
+
+		memcpy(dst->colorPtrAttr.xorMaskData, src->colorPtrAttr.xorMaskData,
+		       src->colorPtrAttr.lengthXorMask);
+	}
+
+	return dst;
+fail:
+	free_pointer_new_update(context, dst);
+	return NULL;
+}
+
+void free_pointer_new_update(rdpContext* context, POINTER_NEW_UPDATE* pointer)
+{
+	if (!pointer)
+		return;
+
+	free(pointer->colorPtrAttr.xorMaskData);
+	free(pointer->colorPtrAttr.andMaskData);
+	free(pointer);
+}
+
+POINTER_CACHED_UPDATE* copy_pointer_cached_update(rdpContext* context,
+        const POINTER_CACHED_UPDATE* pointer)
+{
+	POINTER_CACHED_UPDATE* dst = calloc(1, sizeof(POINTER_CACHED_UPDATE));
+
+	if (!dst)
+		goto fail;
+
+	*dst = *pointer;
+	return dst;
+fail:
+	free_pointer_cached_update(context, dst);
+	return NULL;
+}
+
+void free_pointer_cached_update(rdpContext* context, POINTER_CACHED_UPDATE* pointer)
+{
+	free(pointer);
+}
+
+void free_pointer_position_update(rdpContext* context, POINTER_POSITION_UPDATE* pointer)
+{
+	free(pointer);
+}
+
+POINTER_POSITION_UPDATE* copy_pointer_position_update(rdpContext* context,
+        const POINTER_POSITION_UPDATE* pointer)
+{
+	POINTER_POSITION_UPDATE* dst = calloc(1, sizeof(POINTER_POSITION_UPDATE));
+
+	if (!dst || !pointer)
+		goto fail;
+
+	*dst = *pointer;
+	return dst;
+fail:
+	free_pointer_position_update(context, dst);
+	return NULL;
+}
+
+void free_pointer_system_update(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer)
+{
+	free(pointer);
+}
+
+POINTER_SYSTEM_UPDATE* copy_pointer_system_update(rdpContext* context,
+        const POINTER_SYSTEM_UPDATE* pointer)
+{
+	POINTER_SYSTEM_UPDATE* dst = calloc(1, sizeof(POINTER_SYSTEM_UPDATE));
+
+	if (!dst || !pointer)
+		goto fail;
+
+	*dst = *pointer;
+	return dst;
+fail:
+	free_pointer_system_update(context, dst);
+	return NULL;
 }

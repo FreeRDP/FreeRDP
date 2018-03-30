@@ -28,6 +28,8 @@
 #include <freerdp/log.h>
 #include <freerdp/cache/palette.h>
 
+#include "palette.h"
+
 #define TAG FREERDP_TAG("cache.palette")
 
 static void* palette_cache_get(rdpPaletteCache* palette, UINT32 index);
@@ -35,16 +37,16 @@ static void* palette_cache_get(rdpPaletteCache* palette, UINT32 index);
 static void palette_cache_put(rdpPaletteCache* palette, UINT32 index, void* entry);
 
 static BOOL update_gdi_cache_color_table(rdpContext* context,
-					 const CACHE_COLOR_TABLE_ORDER* cacheColorTable)
+        const CACHE_COLOR_TABLE_ORDER* cacheColorTable)
 {
 	UINT32* colorTable;
 	rdpCache* cache = context->cache;
-
 	colorTable = (UINT32*) malloc(sizeof(UINT32) * 256);
+
 	if (!colorTable)
 		return FALSE;
-	CopyMemory(colorTable, cacheColorTable->colorTable, sizeof(UINT32) * 256);
 
+	CopyMemory(colorTable, cacheColorTable->colorTable, sizeof(UINT32) * 256);
 	palette_cache_put(cache->palette, cacheColorTable->cacheIndex, (void*) colorTable);
 	return TRUE;
 }
@@ -80,7 +82,6 @@ void palette_cache_put(rdpPaletteCache* paletteCache, UINT32 index, void* entry)
 	}
 
 	free(paletteCache->entries[index].entry);
-
 	paletteCache->entries[index].entry = entry;
 }
 
@@ -92,14 +93,14 @@ void palette_cache_register_callbacks(rdpUpdate* update)
 rdpPaletteCache* palette_cache_new(rdpSettings* settings)
 {
 	rdpPaletteCache* paletteCache;
-
 	paletteCache = (rdpPaletteCache*) calloc(1, sizeof(rdpPaletteCache));
 
 	if (paletteCache)
 	{
 		paletteCache->settings = settings;
 		paletteCache->maxEntries = 6;
-		paletteCache->entries = (PALETTE_TABLE_ENTRY*) calloc(paletteCache->maxEntries, sizeof(PALETTE_TABLE_ENTRY));
+		paletteCache->entries = (PALETTE_TABLE_ENTRY*) calloc(paletteCache->maxEntries,
+		                        sizeof(PALETTE_TABLE_ENTRY));
 	}
 
 	return paletteCache;
@@ -111,10 +112,29 @@ void palette_cache_free(rdpPaletteCache* paletteCache)
 	{
 		UINT32 i;
 
-		for (i = 0; i< paletteCache->maxEntries; i++)
+		for (i = 0; i < paletteCache->maxEntries; i++)
 			free(paletteCache->entries[i].entry);
 
 		free(paletteCache->entries);
 		free(paletteCache);
 	}
+}
+
+void free_palette_update(rdpContext* context, PALETTE_UPDATE* pointer)
+{
+	free(pointer);
+}
+
+PALETTE_UPDATE* copy_palette_update(rdpContext* context, const PALETTE_UPDATE* pointer)
+{
+	PALETTE_UPDATE* dst = calloc(1, sizeof(PALETTE_UPDATE));
+
+	if (!dst || !pointer)
+		goto fail;
+
+	*dst = *pointer;
+	return dst;
+fail:
+	free_palette_update(context, dst);
+	return NULL;
 }

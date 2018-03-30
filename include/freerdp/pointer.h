@@ -93,14 +93,6 @@ struct rdp_pointer_update
 	pPointerNew PointerNew; /* 19 */
 	pPointerCached PointerCached; /* 20 */
 	UINT32 paddingB[32 - 21]; /* 21 */
-
-	/* internal */
-
-	POINTER_POSITION_UPDATE pointer_position;
-	POINTER_SYSTEM_UPDATE pointer_system;
-	POINTER_COLOR_UPDATE pointer_color;
-	POINTER_NEW_UPDATE pointer_new;
-	POINTER_CACHED_UPDATE pointer_cached;
 };
 typedef struct rdp_pointer_update rdpPointerUpdate;
 

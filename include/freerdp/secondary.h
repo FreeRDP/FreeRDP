@@ -137,7 +137,7 @@ struct _CACHE_GLYPH_ORDER
 	UINT32 cacheId;
 	UINT32 cGlyphs;
 	GLYPH_DATA glyphData[256];
-	BYTE* unicodeCharacters;
+	WCHAR* unicodeCharacters;
 };
 typedef struct _CACHE_GLYPH_ORDER CACHE_GLYPH_ORDER;
 
@@ -147,7 +147,7 @@ struct _CACHE_GLYPH_V2_ORDER
 	UINT32 flags;
 	UINT32 cGlyphs;
 	GLYPH_DATA_V2 glyphData[256];
-	BYTE* unicodeCharacters;
+	WCHAR* unicodeCharacters;
 };
 typedef struct _CACHE_GLYPH_V2_ORDER CACHE_GLYPH_V2_ORDER;
 
@@ -164,19 +164,19 @@ struct _CACHE_BRUSH_ORDER
 typedef struct _CACHE_BRUSH_ORDER CACHE_BRUSH_ORDER;
 
 typedef BOOL (*pCacheBitmap)(rdpContext* context,
-			     const CACHE_BITMAP_ORDER* cache_bitmap_order);
+                             const CACHE_BITMAP_ORDER* cache_bitmap_order);
 typedef BOOL (*pCacheBitmapV2)(rdpContext* context,
-			       CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
+                               CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
 typedef BOOL (*pCacheBitmapV3)(rdpContext* context,
-			       CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
+                               CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
 typedef BOOL (*pCacheColorTable)(rdpContext* context,
-				 const CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
+                                 const CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
 typedef BOOL (*pCacheGlyph)(rdpContext* context,
-			    const CACHE_GLYPH_ORDER* cache_glyph_order);
+                            const CACHE_GLYPH_ORDER* cache_glyph_order);
 typedef BOOL (*pCacheGlyphV2)(rdpContext* context,
-			      const CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
+                              const CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
 typedef BOOL (*pCacheBrush)(rdpContext* context,
-			    const CACHE_BRUSH_ORDER* cache_brush_order);
+                            const CACHE_BRUSH_ORDER* cache_brush_order);
 
 struct rdp_secondary_update
 {
@@ -195,13 +195,6 @@ struct rdp_secondary_update
 	/* internal */
 
 	BOOL glyph_v2;
-	CACHE_BITMAP_ORDER cache_bitmap_order;
-	CACHE_BITMAP_V2_ORDER cache_bitmap_v2_order;
-	CACHE_BITMAP_V3_ORDER cache_bitmap_v3_order;
-	CACHE_COLOR_TABLE_ORDER cache_color_table_order;
-	CACHE_GLYPH_ORDER cache_glyph_order;
-	CACHE_GLYPH_V2_ORDER cache_glyph_v2_order;
-	CACHE_BRUSH_ORDER cache_brush_order;
 };
 typedef struct rdp_secondary_update rdpSecondaryUpdate;
 
