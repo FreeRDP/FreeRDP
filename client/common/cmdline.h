@@ -122,7 +122,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect multitouch input" },
 	{ "multitransport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support multitransport protocol" },
 	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable protocol security negotiation" },
-	{ "network", COMMAND_LINE_VALUE_REQUIRED, "modem|broadband|broadband-low|broadband-higg|wan|lan|auto", NULL, NULL, -1, NULL, "Network connection type" },
+	{ "network", COMMAND_LINE_VALUE_REQUIRED, "modem|broadband|broadband-low|broadband-high|wan|lan|auto", NULL, NULL, -1, NULL, "Network connection type" },
 	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "nscodec", "Enable NSCodec" },
 	{ "offscreen-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable offscreen bitmap cache" },
 	{ "orientation", COMMAND_LINE_VALUE_REQUIRED, "0|90|180|270", NULL, NULL, -1, NULL, "Orientation of display in degrees" },
