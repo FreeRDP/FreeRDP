@@ -78,6 +78,10 @@ static int WLog_ParseLogLevel(LPCSTR level);
 static BOOL WLog_ParseFilter(wLogFilter* filter, LPCSTR name);
 static BOOL WLog_ParseFilters(void);
 
+#if !defined(_WIN32)
+static void WLog_Uninit_(void) __attribute__((destructor));
+#endif
+
 static void WLog_Uninit_(void)
 {
 	DWORD index;
@@ -152,7 +156,9 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 	if (!WLog_SetLogAppenderType(g_RootLog, logAppenderType))
 		goto fail;
 
+#if defined(_WIN32)
 	atexit(WLog_Uninit_);
+#endif
 	return TRUE;
 fail:
 	free(g_RootLog);
