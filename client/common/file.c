@@ -298,6 +298,8 @@ static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, c
 		tmp = &file->DevicesToRedirect;
 	else if (_stricmp(name, "winposstr") == 0)
 		tmp = &file->WinPosStr;
+	else if (_stricmp(name, "pcb") == 0)
+		tmp = &file->PreconnectionBlob;
 	else
 		standard = 1;
 
@@ -612,6 +614,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	SETTING_MODIFIED_SET_STRING(file->RemoteApplicationCmdLine, settings, RemoteApplicationCmdLine);
 	SETTING_MODIFIED_SET(file->SpanMonitors, settings, SpanMonitors);
 	SETTING_MODIFIED_SET(file->UseMultiMon, settings, UseMultimon);
+	SETTING_MODIFIED_SET_STRING(file->PreconnectionBlob, settings, PreconnectionBlob);
 	return TRUE;
 }
 
@@ -1056,6 +1059,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->KeyboardHook)
 	{
 		freerdp_set_param_uint32(settings, FreeRDP_KeyboardHook, file->KeyboardHook);
+	}
+
+	if (~((size_t) file->PreconnectionBlob))
+	{
+		freerdp_set_param_string(settings, FreeRDP_PreconnectionBlob, file->PreconnectionBlob);
+		freerdp_set_param_bool(settings, FreeRDP_SendPreconnectionPdu, TRUE);
+		freerdp_set_param_bool(settings, FreeRDP_VmConnectMode, TRUE);
 	}
 
 	if (file->argc > 1)

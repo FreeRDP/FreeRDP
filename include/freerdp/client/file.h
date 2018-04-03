@@ -151,6 +151,8 @@ struct rdp_file
 	LPSTR DevicesToRedirect; /* devicestoredirect */
 	LPSTR WinPosStr; /* winposstr */
 
+	LPSTR PreconnectionBlob; /* pcb */
+
 	int lineCount;
 	int lineSize;
 	rdpFileLine* lines;
