@@ -170,10 +170,10 @@ static void xf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 
 	xf_lock_x11(xfc, FALSE);
 
-	if (xbitmap->pixmap != NULL)
+	if (xbitmap->pixmap != 0)
 	{
 		XFreePixmap(xfc->display, xbitmap->pixmap);
-		xbitmap->pixmap = NULL;
+		xbitmap->pixmap = 0;
 	}
 
 	if (xbitmap->image)
