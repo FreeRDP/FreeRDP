@@ -281,7 +281,6 @@ NSC_CONTEXT* nsc_context_new(void)
 	if (!context->priv)
 		goto error_priv;
 
-	WLog_Init();
 	context->priv->log = WLog_Get("com.freerdp.codec.nsc");
 	WLog_OpenAppender(context->priv->log);
 	context->BitmapData = NULL;

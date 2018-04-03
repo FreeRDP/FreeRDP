@@ -688,7 +688,6 @@ rdpGlyphCache* glyph_cache_new(rdpSettings* settings)
 	if (!glyphCache)
 		return NULL;
 
-	WLog_Init();
 	glyphCache->log = WLog_Get("com.freerdp.cache.glyph");
 	glyphCache->settings = settings;
 	glyphCache->context = ((freerdp*) settings->instance)->update->context;

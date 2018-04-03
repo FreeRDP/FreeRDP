@@ -21,8 +21,6 @@ int TestWLog(int argc, char* argv[])
 		goto out;
         }
 
-	WLog_Init();
-
 	root = WLog_GetRoot();
 
 	WLog_SetLogAppenderType(root, WLOG_APPENDER_BINARY);
@@ -55,8 +53,6 @@ int TestWLog(int argc, char* argv[])
 	WLog_Print(logB, WLOG_TRACE, "leaving a trace behind");
 
 	WLog_CloseAppender(root);
-
-	WLog_Uninit();
 
 	if ((wlog_file = GetCombinedPath(tmp_path, "test_w.log")))
 		DeleteFileA(wlog_file);

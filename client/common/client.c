@@ -58,7 +58,6 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	if (!pEntryPoints)
 		return NULL;
 
-	WLog_Init();
 	IFCALL(pEntryPoints->GlobalInit);
 	instance = freerdp_new();
 
@@ -116,7 +115,6 @@ void freerdp_client_context_free(rdpContext* context)
 		free(instance->pClientEntryPoints);
 		freerdp_free(instance);
 	}
-	WLog_Uninit();
 }
 
 int freerdp_client_start(rdpContext* context)

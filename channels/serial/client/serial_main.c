@@ -840,7 +840,6 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	if ((name && name[0]) && (path && path[0]))
 	{
 		wLog* log;
-		WLog_Init();
 		log = WLog_Get("com.freerdp.channel.serial.client");
 		WLog_Print(log, WLOG_DEBUG, "initializing");
 #ifndef __linux__ /* to be removed */
