@@ -38,7 +38,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("ScardEstablishedContext: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 
 	err = SCardListReaders(hContext, "SCard$AllReaders", NULL, &cchReaders);
@@ -46,7 +46,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != 0)
 	{
 		printf("ScardListReaders: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 
 	mszReaders = calloc(cchReaders, sizeof(char));
@@ -54,7 +54,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (!mszReaders)
 	{
 		printf("calloc\n");
-		return winpr_exit(-1);
+		return -1;
 	}
 
 	err = SCardListReaders(hContext, "SCard$AllReaders", mszReaders, &cchReaders);
@@ -62,7 +62,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("ScardListReaders: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 
 	printf("Reader: %s\n", mszReaders);
@@ -72,7 +72,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("ScardConnect: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 
 	free(mszReaders);
@@ -83,7 +83,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 	printf("reader name length: %u\n", len);
 
@@ -93,7 +93,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 	printf("Reader name: %s (%ld)\n", name, strlen(name));
 
@@ -103,7 +103,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 	printf("Reader name: %s (%ld/len %u)\n", name, strlen(name), len);
 	printf("status: 0x%08X\n", status);
@@ -117,7 +117,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 	printf("Reader name: %s (%ld/%u)\n", aname, strlen(aname), len);
 	printf("status: 0x%08X\n", status);
@@ -132,7 +132,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 	printf("status: 0x%08X\n", status);
 	printf("proto: 0x%08X\n", protocol);
@@ -144,7 +144,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 	printf("atrlen: %u\n", atrlen);
 	SCardFreeMemory(hContext, aatr);
@@ -156,11 +156,11 @@ int TestSmartCardStatus(int argc, char* argv[])
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
-		return winpr_exit(-1);
+		return -1;
 	}
 	printf("atrlen: %u\n", atrlen);
 	SCardDisconnect(hCard, SCARD_LEAVE_CARD);
 	SCardReleaseContext(hContext);
 
-	return winpr_exit(0);
+	return 0;
 }

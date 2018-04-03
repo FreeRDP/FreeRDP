@@ -474,5 +474,5 @@ int main(int argc, char* argv[])
 
 fail:
 	freerdp_client_context_free(context);
-	return winpr_exit(rc);
+	return rc;
 }
