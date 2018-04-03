@@ -306,11 +306,11 @@ static BOOL update_read_play_sound(wStream* s, PLAY_SOUND_UPDATE* play_sound)
 
 BOOL update_recv_play_sound(rdpUpdate* update, wStream* s)
 {
-	if (!update_read_play_sound(s, &update->play_sound))
+	PLAY_SOUND_UPDATE play_sound;
+	if (!update_read_play_sound(s, &play_sound))
 		return FALSE;
 
-	IFCALL(update->PlaySound, update->context, &update->play_sound);
-	return TRUE;
+	return IFCALLRESULT(FALSE, update->PlaySound, update->context, &play_sound);
 }
 
 POINTER_POSITION_UPDATE* update_read_pointer_position(rdpUpdate* update, wStream* s)
@@ -647,7 +647,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 					return FALSE;
 				}
 
-				rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, &update->bitmap_update);
+				rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, bitmap_update);
 				free_bitmap_update(update->context, bitmap_update);
 			}
 			break;
@@ -2173,44 +2173,38 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		return NULL;
 
 	update->log = WLog_Get("com.freerdp.core.update");
-	update->bitmap_update.count = 64;
-	update->bitmap_update.rectangles = (BITMAP_DATA*) calloc(
-	                                       update->bitmap_update.count, sizeof(BITMAP_DATA));
-
-	if (!update->bitmap_update.rectangles)
-		goto error_rectangles;
 
 	update->pointer = (rdpPointerUpdate*) calloc(1, sizeof(rdpPointerUpdate));
 
 	if (!update->pointer)
-		goto error_pointer;
+		goto fail;
 
 	update->primary = (rdpPrimaryUpdate*) calloc(1, sizeof(rdpPrimaryUpdate));
 
 	if (!update->primary)
-		goto error_primary;
+		goto fail;
 
 	update->secondary = (rdpSecondaryUpdate*) calloc(1, sizeof(rdpSecondaryUpdate));
 
 	if (!update->secondary)
-		goto error_secondary;
+		goto fail;
 
 	update->altsec = (rdpAltSecUpdate*) calloc(1, sizeof(rdpAltSecUpdate));
 
 	if (!update->altsec)
-		goto error_altsec;
+		goto fail;
 
 	update->window = (rdpWindowUpdate*) calloc(1, sizeof(rdpWindowUpdate));
 
 	if (!update->window)
-		goto error_window;
+		goto fail;
 
 	deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 	deleteList->sIndices = 64;
 	deleteList->indices = calloc(deleteList->sIndices, 2);
 
 	if (!deleteList->indices)
-		goto error_indices;
+		goto fail;
 
 	deleteList->cIndices = 0;
 	update->SuppressOutput = update_send_suppress_output;
@@ -2218,25 +2212,11 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	update->queue = MessageQueue_New(&cb);
 
 	if (!update->queue)
-		goto error_queue;
+		goto fail;
 
 	return update;
-error_queue:
-	free(deleteList->indices);
-error_indices:
-	free(update->window);
-error_window:
-	free(update->altsec);
-error_altsec:
-	free(update->secondary);
-error_secondary:
-	free(update->primary);
-error_primary:
-	free(update->pointer);
-error_pointer:
-	free(update->bitmap_update.rectangles);
-error_rectangles:
-	free(update);
+fail:
+	update_free(update);
 	return NULL;
 }
 
@@ -2247,7 +2227,6 @@ void update_free(rdpUpdate* update)
 		OFFSCREEN_DELETE_LIST* deleteList;
 		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 		free(deleteList->indices);
-		free(update->bitmap_update.rectangles);
 		free(update->pointer);
 		free(update->primary->polyline.points);
 		free(update->primary->polygon_sc.points);

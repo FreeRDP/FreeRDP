@@ -244,26 +244,11 @@ static BOOL update_message_SurfaceBits(rdpContext* context,
 	if (!context || !context->update || !surfaceBitsCommand)
 		return FALSE;
 
-	wParam = (SURFACE_BITS_COMMAND*) malloc(sizeof(SURFACE_BITS_COMMAND));
+	wParam = copy_surface_bits_command(context, surfaceBitsCommand);
 
 	if (!wParam)
 		return FALSE;
 
-	CopyMemory(wParam, surfaceBitsCommand, sizeof(SURFACE_BITS_COMMAND));
-#ifdef WITH_STREAM_POOL
-	StreamPool_AddRef(context->rdp->transport->ReceivePool, surfaceBitsCommand->bmp.bitmapData);
-#else
-	wParam->bmp.bitmapData = (BYTE*) malloc(wParam->bmp.bitmapDataLength);
-
-	if (!wParam->bmp.bitmapData)
-	{
-		free(wParam);
-		return FALSE;
-	}
-
-	CopyMemory(wParam->bmp.bitmapData, surfaceBitsCommand->bmp.bitmapData,
-	           wParam->bmp.bitmapDataLength);
-#endif
 	return MessageQueue_Post(context->update->queue, (void*) context,
 	                         MakeMessageId(Update, SurfaceBits), (void*) wParam, NULL);
 }

@@ -227,13 +227,6 @@ struct rdp_update
 	rdpPcap* pcap_rfx;
 	BOOL initialState;
 
-	BITMAP_UPDATE bitmap_update;
-	PALETTE_UPDATE palette_update;
-	PLAY_SOUND_UPDATE play_sound;
-
-	SURFACE_BITS_COMMAND surface_bits_command;
-	SURFACE_FRAME_MARKER surface_frame_marker;
-
 	BOOL asynchronous;
 	rdpUpdateProxy* proxy;
 	wMessageQueue* queue;

@@ -112,3 +112,33 @@ void free_cache_color_table_order(rdpContext* context, CACHE_COLOR_TABLE_ORDER* 
 {
 	free(order);
 }
+
+SURFACE_BITS_COMMAND* copy_surface_bits_command(rdpContext* context, const SURFACE_BITS_COMMAND* order)
+{
+	SURFACE_BITS_COMMAND* dst = calloc(1, sizeof(SURFACE_BITS_COMMAND));
+	if (!dst || !order)
+		goto fail;
+
+	*dst = *order;
+
+	dst->bmp.bitmapData = (BYTE*) malloc(order->bmp.bitmapDataLength);
+
+	if (!dst->bmp.bitmapData)
+		goto fail;
+
+	CopyMemory(dst->bmp.bitmapData, order->bmp.bitmapData,
+			   order->bmp.bitmapDataLength);
+
+	return dst;
+
+	fail:
+	free_surface_bits_command(context, dst);
+	return NULL;
+}
+
+void free_surface_bits_command(rdpContext* context, SURFACE_BITS_COMMAND* order)
+{
+	if (order)
+		free(order->bmp.bitmapData);
+	free(order);
+}

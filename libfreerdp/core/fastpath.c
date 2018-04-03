@@ -322,7 +322,7 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
 				if (!bitmap_update)
 					return FALSE;
 
-				rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, &update->bitmap_update);
+				rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, bitmap_update);
 				free_bitmap_update(context, bitmap_update);
 			}
 			break;
@@ -334,7 +334,7 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
 				if (!palette_update)
 					return FALSE;
 
-				rc = IFCALLRESULT(FALSE, update->Palette, context, &update->palette_update);
+				rc = IFCALLRESULT(FALSE, update->Palette, context, palette_update);
 				free_palette_update(context, palette_update);
 			}
 			break;
