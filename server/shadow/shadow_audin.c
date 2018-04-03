@@ -49,8 +49,8 @@ static UINT AudinServerOpening(audin_server_context* context)
 		for (j = 0; j < context->num_server_formats; j++)
 		{
 			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
-					(context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
-					(context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
+			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
+			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
 			{
 				agreed_format = (AUDIO_FORMAT*) &context->server_formats[j];
 				break;
@@ -87,7 +87,7 @@ static UINT AudinServerOpenResult(audin_server_context* context, UINT32 result)
  */
 static UINT AudinServerReceiveSamples(audin_server_context* context, const void* buf, int nframes)
 {
-	rdpShadowClient* client = (rdpShadowClient* )context->data;
+	rdpShadowClient* client = (rdpShadowClient*)context->data;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 
 	if (!client->mayInteract)
@@ -120,7 +120,8 @@ int shadow_client_audin_init(rdpShadowClient* client)
 	{
 		/* Set default audio formats. */
 		audin->server_formats = default_supported_audio_formats;
-		audin->num_server_formats = sizeof(default_supported_audio_formats) / sizeof(default_supported_audio_formats[0]);
+		audin->num_server_formats = sizeof(default_supported_audio_formats) / sizeof(
+		                                default_supported_audio_formats[0]);
 	}
 
 	audin->dst_format = audin->server_formats[0];

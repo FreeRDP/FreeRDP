@@ -267,19 +267,15 @@ static UINT rdpsnd_mac_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 		return 0;
 
 	audioBuffer = mac->audioBuffers[mac->audioBufferIndex];
-
 	length = size > audioBuffer->mAudioDataBytesCapacity ? audioBuffer->mAudioDataBytesCapacity : size;
-
 	CopyMemory(audioBuffer->mAudioData, data, length);
 	audioBuffer->mAudioDataByteSize = length;
 	audioBuffer->mUserData = mac;
-
-	AudioQueueEnqueueBufferWithParameters(mac->audioQueue, audioBuffer, 0, 0, 0, 0, 0, NULL, NULL, &outActualStartTime);
-
+	AudioQueueEnqueueBufferWithParameters(mac->audioQueue, audioBuffer, 0, 0, 0, 0, 0, NULL, NULL,
+	                                      &outActualStartTime);
 	mac->lastAudioBufferIndex = mac->audioBufferIndex;
 	mac->audioBufferIndex++;
 	mac->audioBufferIndex %= MAC_AUDIO_QUEUE_NUM_BUFFERS;
-
 	rdpsnd_mac_start(device);
 	return 10; /* TODO: Get real latencry in [ms] */
 }

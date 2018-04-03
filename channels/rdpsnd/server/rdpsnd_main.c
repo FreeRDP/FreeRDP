@@ -416,7 +416,6 @@ static UINT rdpsnd_server_send_audio_pdu(RdpsndServerContext* context,
 	wStream* s = context->priv->rdpsnd_pdu;
 	UINT error = CHANNEL_RC_OK;
 	format = &context->client_formats[context->selected_client_format];
-
 	/* WaveInfo PDU */
 	Stream_SetPosition(s, 0);
 	Stream_Write_UINT8(s, SNDC_WAVE); /* msgType */
@@ -651,7 +650,7 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 		}
 
 		context->priv->Thread = CreateThread(NULL, 0,
-											 rdpsnd_server_thread, (void*) context, 0, NULL);
+		                                     rdpsnd_server_thread, (void*) context, 0, NULL);
 
 		if (!context->priv->Thread)
 		{

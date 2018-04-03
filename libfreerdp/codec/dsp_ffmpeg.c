@@ -58,9 +58,10 @@ static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
 	if (!encoder)
 		return FALSE;
 
-	switch(id)
+	switch (id)
 	{
 #if !defined(WITH_DSP_EXPERIMENTAL)
+
 		case AV_CODEC_ID_MP3:
 		case AV_CODEC_ID_GSM_MS:
 		case AV_CODEC_ID_AAC:
@@ -227,12 +228,13 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 	if (!context->context)
 		goto fail;
 
-	switch(context->id)
+	switch (context->id)
 	{
 		/* We need support for multichannel and sample rates != 8000 */
 		case AV_CODEC_ID_GSM_MS:
 			context->context->strict_std_compliance = FF_COMPLIANCE_UNOFFICIAL;
 			break;
+
 		default:
 			break;
 	}
@@ -355,7 +357,7 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in,
 	{
 		const char* err = av_err2str(ret);
 		WLog_ERR(TAG, "Error submitting the packet to the encoder %s [%d]",
-				 err, ret);
+		         err, ret);
 		return FALSE;
 	}
 

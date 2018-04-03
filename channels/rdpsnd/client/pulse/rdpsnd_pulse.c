@@ -448,7 +448,6 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 		latency = 0;
 
 	pa_threaded_mainloop_unlock(pulse->mainloop);
-
 	return latency / 1000;
 }
 

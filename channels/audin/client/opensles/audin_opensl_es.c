@@ -286,7 +286,7 @@ static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive,
 	}
 
 	if (!(opensles->thread = CreateThread(NULL, 0,
-		audin_opensles_thread_func, opensles, 0, NULL)))
+	                                      audin_opensles_thread_func, opensles, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		goto error_out;

@@ -191,7 +191,6 @@ static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	UINT16 length;
 	UINT32 dwVolume;
 	UINT16 wNumberOfFormats;
-
 	dwVolume = IFCALLRESULT(0, rdpsnd->device->GetVolume, rdpsnd->device);
 	wNumberOfFormats = rdpsnd->NumberOfClientFormats;
 	length = 4 + 20;
@@ -509,7 +508,8 @@ static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 		else if (freerdp_dsp_decode(rdpsnd->dsp_context, format, data, size, pcmData))
 		{
 			Stream_SealLength(pcmData);
-			latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device, Stream_Buffer(pcmData), Stream_Length(pcmData));
+			latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device, Stream_Buffer(pcmData),
+			                       Stream_Length(pcmData));
 			status = CHANNEL_RC_OK;
 		}
 

@@ -403,9 +403,8 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 
 	format = *audin->format;
 	supported = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
-
 	WLog_DBG(TAG, "microphone uses %s codec",
-		rdpsnd_get_audio_tag_string(format.wFormatTag));
+	         rdpsnd_get_audio_tag_string(format.wFormatTag));
 
 	if (!supported)
 	{

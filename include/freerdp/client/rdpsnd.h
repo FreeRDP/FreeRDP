@@ -32,7 +32,7 @@ typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 
 typedef BOOL (*pcFormatSupported)(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format);
 typedef BOOL (*pcOpen)(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency);
-typedef UINT32(*pcGetVolume)(rdpsndDevicePlugin* device);
+typedef UINT32 (*pcGetVolume)(rdpsndDevicePlugin* device);
 typedef BOOL (*pcSetVolume)(rdpsndDevicePlugin* device, UINT32 value);
 typedef UINT (*pcPlay)(rdpsndDevicePlugin* device, const BYTE* data, size_t size);
 typedef void (*pcStart)(rdpsndDevicePlugin* device);

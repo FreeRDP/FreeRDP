@@ -270,7 +270,6 @@ static UINT rdpsnd_winmm_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	}
 
 	WaitForSingleObject(winmm->next, INFINITE);
-
 	return 10; /* TODO: Get real latencry in [ms] */
 }
 

@@ -144,9 +144,10 @@ static int rdpsnd_alsa_set_sw_params(rdpsndAlsaPlugin* alsa)
 	status = snd_pcm_sw_params_current(alsa->pcm_handle, sw_params);
 	SND_PCM_CHECK("snd_pcm_sw_params_current", status);
 	status = snd_pcm_sw_params_set_avail_min(alsa->pcm_handle, sw_params,
-			 (alsa->aformat.nChannels * alsa->actual_channels));
+	         (alsa->aformat.nChannels * alsa->actual_channels));
 	SND_PCM_CHECK("snd_pcm_sw_params_set_avail_min", status);
-	status = snd_pcm_sw_params_set_start_threshold(alsa->pcm_handle, sw_params, alsa->aformat.nBlockAlign);
+	status = snd_pcm_sw_params_set_start_threshold(alsa->pcm_handle, sw_params,
+	         alsa->aformat.nBlockAlign);
 	SND_PCM_CHECK("snd_pcm_sw_params_set_start_threshold", status);
 	status = snd_pcm_sw_params(alsa->pcm_handle, sw_params);
 	SND_PCM_CHECK("snd_pcm_sw_params", status);

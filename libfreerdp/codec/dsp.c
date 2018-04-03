@@ -297,6 +297,7 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* context,
 		int rc;
 		gsm_signal gsmBlockBuffer[160] = { 0 };
 		rc = gsm_decode(context->gsm, (gsm_byte*) &src[offset], gsmBlockBuffer);
+
 		if (rc < 0)
 			return FALSE;
 
@@ -327,10 +328,12 @@ static BOOL freerdp_dsp_encode_gsm610(FREERDP_DSP_CONTEXT* context,
 			return FALSE;
 
 		gsm_encode(context->gsm, signal, Stream_Pointer(out));
+
 		if ((offset % 65) == 0)
 			Stream_Seek(out, 33);
 		else
 			Stream_Seek(out, 32);
+
 		offset += 160;
 	}
 
@@ -933,7 +936,6 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder)
 	{
 		int rc;
 		int val = 1;
-
 		rc = gsm_option(context->gsm, GSM_OPT_WAV49, &val);
 
 		if (rc < 0)
