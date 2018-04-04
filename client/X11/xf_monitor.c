@@ -77,7 +77,7 @@ int xf_list_monitors(xfContext* xfc)
 
 		for (i = 0; i < nmonitors; i++)
 		{
-			printf("      %s [%d] %hdx%hd\t+%hd+%hd\n",
+			printf("      %s [%d] %dx%d\t+%d+%d\n",
 			       monitors[i].primary ? "*" : " ", i,
 			       monitors[i].width, monitors[i].height,
 			       monitors[i].x, monitors[i].y);
