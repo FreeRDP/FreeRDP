@@ -318,7 +318,7 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* sr
 #define BGRX_Y_FACTORS _mm_set_epi8(0, 27, 92, 9, 0, 27, 92, 9, 0, 27, 92, 9, 0, 27, 92, 9)
 #define BGRX_U_FACTORS _mm_set_epi8(0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127)
 #define BGRX_V_FACTORS _mm_set_epi8(0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12)
-#define CONST128_FACTORS _mm_set1_epi8(128)
+#define CONST128_FACTORS _mm_set1_epi8(-128)
 
 #define Y_SHIFT 7
 #define U_SHIFT 8
@@ -435,7 +435,7 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(
 		/* pack the 16 words into bytes */
 		x0 = _mm_packs_epi16(x0, x1);
 		/* add 128 */
-		x0 = _mm_add_epi8(x0, vector128);
+		x0 = _mm_sub_epi8(x0, vector128);
 		/* the lower 8 bytes go to the u plane */
 		_mm_storel_pi(udst++, _mm_castsi128_ps(x0));
 		/* the upper 8 bytes go to the v plane */
@@ -566,7 +566,7 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 				                                   _mm_maddubs_epi16(xe2, u_factors)), U_SHIFT);
 				const __m128i ue2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, u_factors),
 				                                   _mm_maddubs_epi16(xe4, u_factors)), U_SHIFT);
-				ue = _mm_add_epi8(_mm_packs_epi16(ue1, ue2), vector128);
+				ue = _mm_sub_epi8(_mm_packs_epi16(ue1, ue2), vector128);
 			}
 
 			if (b1Odd)
@@ -575,7 +575,7 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 				                                   _mm_maddubs_epi16(xo2, u_factors)), U_SHIFT);
 				const __m128i uo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, u_factors),
 				                                   _mm_maddubs_epi16(xo4, u_factors)), U_SHIFT);
-				uo = _mm_add_epi8(_mm_packs_epi16(uo1, uo2), vector128);
+				uo = _mm_sub_epi8(_mm_packs_epi16(uo1, uo2), vector128);
 			}
 
 			/* Now we need the following storage distribution:
@@ -633,7 +633,7 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 				                                   _mm_maddubs_epi16(xe2, v_factors)), V_SHIFT);
 				const __m128i ve2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, v_factors),
 				                                   _mm_maddubs_epi16(xe4, v_factors)), V_SHIFT);
-				ve = _mm_add_epi8(_mm_packs_epi16(ve1, ve2), vector128);
+				ve = _mm_sub_epi8(_mm_packs_epi16(ve1, ve2), vector128);
 			}
 
 			if (b1Odd)
@@ -642,7 +642,7 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 				                                   _mm_maddubs_epi16(xo2, v_factors)), V_SHIFT);
 				const __m128i vo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, v_factors),
 				                                   _mm_maddubs_epi16(xo4, v_factors)), V_SHIFT);
-				vo = _mm_add_epi8(_mm_packs_epi16(vo1, vo2), vector128);
+				vo = _mm_sub_epi8(_mm_packs_epi16(vo1, vo2), vector128);
 			}
 
 			/* Now we need the following storage distribution:
@@ -827,7 +827,7 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				const __m128i ue2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, u_factors),
 				                                   _mm_maddubs_epi16(xe4, u_factors)), U_SHIFT);
 				const __m128i ueavg = _mm_hadd_epi16(ue1, ue2);
-				ue = _mm_add_epi8(_mm_packs_epi16(ue1, ue2), vector128);
+				ue = _mm_sub_epi8(_mm_packs_epi16(ue1, ue2), vector128);
 				uavg = ueavg;
 			}
 			{
@@ -837,11 +837,11 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				const __m128i uo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, u_factors),
 				                                   _mm_maddubs_epi16(xo4, u_factors)), U_SHIFT);
 				const __m128i uoavg = _mm_hadd_epi16(uo1, uo2);
-				uo = _mm_add_epi8(_mm_packs_epi16(uo1, uo2), vector128);
+				uo = _mm_sub_epi8(_mm_packs_epi16(uo1, uo2), vector128);
 				uavg = _mm_add_epi16(uavg, uoavg);
 				uavg = _mm_srai_epi16(uavg, 2);
 				uavg = _mm_packs_epi16(uavg, uoavg);
-				uavg = _mm_add_epi8(uavg, vector128);
+				uavg = _mm_sub_epi8(uavg, vector128);
 			}
 			/* Now we need the following storage distribution:
 			 * 2x   2y    -> uLumaDst
@@ -904,7 +904,7 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				const __m128i ve2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, v_factors),
 				                                   _mm_maddubs_epi16(xe4, v_factors)), V_SHIFT);
 				const __m128i veavg = _mm_hadd_epi16(ve1, ve2);
-				ve = _mm_add_epi8(_mm_packs_epi16(ve1, ve2), vector128);
+				ve = _mm_sub_epi8(_mm_packs_epi16(ve1, ve2), vector128);
 				vavg = veavg;
 			}
 			{
@@ -914,11 +914,11 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				const __m128i vo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, v_factors),
 				                                   _mm_maddubs_epi16(xo4, v_factors)), V_SHIFT);
 				const __m128i voavg = _mm_hadd_epi16(vo1, vo2);
-				vo = _mm_add_epi8(_mm_packs_epi16(vo1, vo2), vector128);
+				vo = _mm_sub_epi8(_mm_packs_epi16(vo1, vo2), vector128);
 				vavg = _mm_add_epi16(vavg, voavg);
 				vavg = _mm_srai_epi16(vavg, 2);
 				vavg = _mm_packs_epi16(vavg, voavg);
-				vavg = _mm_add_epi8(vavg, vector128);
+				vavg = _mm_sub_epi8(vavg, vector128);
 			}
 			/* Now we need the following storage distribution:
 			 * 2x   2y    -> vLumaDst
