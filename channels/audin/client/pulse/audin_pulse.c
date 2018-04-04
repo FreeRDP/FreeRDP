@@ -400,14 +400,15 @@ static UINT audin_pulse_close(IAudinDevice* device)
 {
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
-	if (!pulse->context || !pulse->stream)
-		return ERROR_INVALID_PARAMETER;
+	if (pulse->stream)
+	{
+		pa_threaded_mainloop_lock(pulse->mainloop);
+		pa_stream_disconnect(pulse->stream);
+		pa_stream_unref(pulse->stream);
+		pulse->stream = NULL;
+		pa_threaded_mainloop_unlock(pulse->mainloop);
+	}
 
-	pa_threaded_mainloop_lock(pulse->mainloop);
-	pa_stream_disconnect(pulse->stream);
-	pa_stream_unref(pulse->stream);
-	pulse->stream = NULL;
-	pa_threaded_mainloop_unlock(pulse->mainloop);
 	pulse->receive = NULL;
 	pulse->user_data = NULL;
 
