@@ -289,7 +289,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 				if (value)
 				{
-					options[j].Value = value;
+					options[j].Value = (char*)value;
 					options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 				}
 				else
