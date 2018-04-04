@@ -34,12 +34,12 @@ int main(int argc, char* argv[])
 
 	context = makecert_context_new();
 	if (!context)
-		return winpr_exit(1);
+		return 1;
 
 	if (makecert_context_process(context, argc, argv) < 0)
 		ret = 1;
 
 	makecert_context_free(context);
 
-	return winpr_exit(ret);
+	return ret;
 }

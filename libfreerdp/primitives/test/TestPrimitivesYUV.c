@@ -879,7 +879,6 @@ int TestPrimitivesYUV(int argc, char* argv[])
 	int rc = -1;
 	prim_test_setup(FALSE);
 	primitives_t* prims = primitives_get();
-	WLog_Init();
 
 	for (x = 0; x < 10; x++)
 	{
@@ -974,7 +973,6 @@ int TestPrimitivesYUV(int argc, char* argv[])
 
 	rc = 0;
 end:
-	WLog_Uninit();
 	return rc;
 }
 
