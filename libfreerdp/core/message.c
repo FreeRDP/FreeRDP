@@ -44,7 +44,6 @@
 #include "../cache/cache.h"
 
 #define TAG FREERDP_TAG("core.message")
-#define WITH_STREAM_POOL	1
 
 /* Update */
 
@@ -1553,15 +1552,8 @@ static BOOL update_message_free_update_class(wMessage* msg, int type)
 
 		case Update_SurfaceBits:
 			{
-#ifdef WITH_STREAM_POOL
-				rdpContext* context = (rdpContext*) msg->context;
 				SURFACE_BITS_COMMAND* wParam = (SURFACE_BITS_COMMAND*) msg->wParam;
-				StreamPool_Release(context->rdp->transport->ReceivePool, wParam->bmp.bitmapData);
-#else
-				SURFACE_BITS_COMMAND* wParam = (SURFACE_BITS_COMMAND*) msg->wParam;
-				free(wParam->bmp.bitmapData);
-				free(wParam);
-#endif
+				free_surface_bits_command(context, wParam);
 			}
 			break;
 
