@@ -32,7 +32,7 @@ static BOOL TestStream_Verify(wStream* s, int mincap, int len, size_t pos)
 	}
 	if (Stream_GetPosition(s) != pos)
 	{
-		printf("stream has unexpected position (%"PRIuz" instead of %d)\n",
+		printf("stream has unexpected position (%"PRIuz" instead of %"PRIuz")\n",
 			Stream_GetPosition(s), pos);
 		return FALSE;
 	}
@@ -56,7 +56,7 @@ static BOOL TestStream_Verify(wStream* s, int mincap, int len, size_t pos)
 	}
 	if (Stream_GetRemainingLength(s) != len - pos)
 	{
-		printf("stream remaining length (%"PRIuz" instead of %d)\n",
+		printf("stream remaining length (%"PRIuz" instead of %"PRIuz")\n",
 			Stream_GetRemainingLength(s), len - pos);
 		return FALSE;
 	}
