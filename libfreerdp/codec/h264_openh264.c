@@ -268,15 +268,15 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 
 	memset(&info, 0, sizeof(SFrameBSInfo));
 	memset(&pic, 0, sizeof(SSourcePicture));
-	pic.iPicWidth = h264->width;
-	pic.iPicHeight = h264->height;
+	pic.iPicWidth = (int)h264->width;
+	pic.iPicHeight = (int)h264->height;
 	pic.iColorFormat = videoFormatI420;
-	pic.iStride[0] = iStride[0];
-	pic.iStride[1] = iStride[1];
-	pic.iStride[2] = iStride[2];
-	pic.pData[0] = pYUVData[0];
-	pic.pData[1] = pYUVData[1];
-	pic.pData[2] = pYUVData[2];
+	pic.iStride[0] = (int)iStride[0];
+	pic.iStride[1] = (int)iStride[1];
+	pic.iStride[2] = (int)iStride[2];
+	pic.pData[0] = (unsigned char*)pYUVData[0];
+	pic.pData[1] = (unsigned char*)pYUVData[1];
+	pic.pData[2] = (unsigned char*)pYUVData[2];
 	status = (*sys->pEncoder)->EncodeFrame(sys->pEncoder, &pic, &info);
 
 	if (status < 0)

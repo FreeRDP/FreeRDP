@@ -257,7 +257,8 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 
 	if (status < 0)
 	{
-		WLog_Print(h264->log, WLOG_ERROR, "Failed to transfer video frame (status=%d) (%s)", status, av_err2str(status));
+		WLog_Print(h264->log, WLOG_ERROR, "Failed to transfer video frame (status=%d) (%s)", status,
+		           av_err2str(status));
 		return -1;
 	}
 
@@ -315,12 +316,12 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 92, 100)
 	sys->videoFrame->chroma_location = AVCHROMA_LOC_LEFT;
 #endif
-	sys->videoFrame->data[0] = pSrcYuv[0];
-	sys->videoFrame->data[1] = pSrcYuv[1];
-	sys->videoFrame->data[2] = pSrcYuv[2];
-	sys->videoFrame->linesize[0] = pStride[0];
-	sys->videoFrame->linesize[1] = pStride[1];
-	sys->videoFrame->linesize[2] = pStride[2];
+	sys->videoFrame->data[0] = (uint8_t*)pSrcYuv[0];
+	sys->videoFrame->data[1] = (uint8_t*)pSrcYuv[1];
+	sys->videoFrame->data[2] = (uint8_t*)pSrcYuv[2];
+	sys->videoFrame->linesize[0] = (int)pStride[0];
+	sys->videoFrame->linesize[1] = (int)pStride[1];
+	sys->videoFrame->linesize[2] = (int)pStride[2];
 	sys->videoFrame->pts++;
 	/* avcodec_encode_video2 is deprecated with libavcodec 57.48.101 */
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 48, 101)
@@ -543,8 +544,9 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 			if (ret < 0)
 			{
-				WLog_Print(h264->log, WLOG_ERROR, "Could not initialize hardware decoder, falling back to software: %s",
-				         av_err2str(ret));
+				WLog_Print(h264->log, WLOG_ERROR,
+				           "Could not initialize hardware decoder, falling back to software: %s",
+				           av_err2str(ret));
 				sys->hwctx = NULL;
 				goto fail_hwdevice_create;
 			}
