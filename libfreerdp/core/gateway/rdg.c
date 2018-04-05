@@ -305,12 +305,32 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	return status;
 }
 
+static BOOL rdg_set_ntlm_auth_header(rdpNtlm* ntlm, HttpRequest* request)
+{
+	SecBuffer* ntlmToken = ntlm->outputBuffer;
+	char* base64NtlmToken = NULL;
+
+	if (ntlmToken)
+		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, ntlmToken->cbBuffer);
+
+	if (base64NtlmToken)
+	{
+		http_request_set_auth_scheme(request, "NTLM");
+		http_request_set_auth_param(request, base64NtlmToken);
+		free(base64NtlmToken);
+
+		if (!request->AuthScheme || !request->AuthParam)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method)
 {
 	wStream* s;
 	HttpRequest* request = NULL;
-	SecBuffer* ntlmToken = NULL;
-	char* base64NtlmToken = NULL;
+
 	assert(method != NULL);
 	request = http_request_new();
 
@@ -325,20 +345,8 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method)
 
 	if (rdg->ntlm)
 	{
-		ntlmToken = rdg->ntlm->outputBuffer;
-
-		if (ntlmToken)
-			base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, ntlmToken->cbBuffer);
-
-		if (base64NtlmToken)
-		{
-			http_request_set_auth_scheme(request, "NTLM");
-			http_request_set_auth_param(request, base64NtlmToken);
-			free(base64NtlmToken);
-
-			if (!request->AuthScheme || !request->AuthParam)
-				return NULL;
-		}
+		if (!rdg_set_ntlm_auth_header(rdg->ntlm, request))
+			return NULL;
 	}
 
 	if (rdg->state == RDG_CLIENT_STATE_IN_CHANNEL_AUTHORIZED)
@@ -355,14 +363,34 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method)
 	return s;
 }
 
+static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
+{
+	char* token64 = NULL;
+	int ntlmTokenLength = 0;
+	BYTE* ntlmTokenData = NULL;
+
+	token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
+
+	if (!token64)
+		return FALSE;
+
+	crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
+
+	if (ntlmTokenData && ntlmTokenLength)
+	{
+		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
+		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
+	}
+
+	ntlm_authenticate(ntlm);
+
+	return TRUE;
+}
+
 static BOOL rdg_process_out_channel_response(rdpRdg* rdg, HttpResponse* response)
 {
 	int status;
 	wStream* s;
-	char* token64 = NULL;
-	int ntlmTokenLength = 0;
-	BYTE* ntlmTokenData = NULL;
-	rdpNtlm* ntlm = rdg->ntlm;
 
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
 	{
@@ -403,25 +431,9 @@ static BOOL rdg_process_out_channel_response(rdpRdg* rdg, HttpResponse* response
 
 	WLog_DBG(TAG, "Out Channel authorization required");
 
-	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
-	{
-		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
+	if (!rdg_handle_ntlm_challenge(rdg->ntlm, response))
+		return FALSE;
 
-		if (!token64)
-		{
-			return FALSE;
-		}
-
-		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
-	}
-
-	if (ntlmTokenData && ntlmTokenLength)
-	{
-		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
-		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
-	}
-
-	ntlm_authenticate(ntlm);
 	s = rdg_build_http_request(rdg, "RDG_OUT_DATA");
 
 	if (!s)
@@ -478,10 +490,6 @@ static BOOL rdg_process_in_channel_response(rdpRdg* rdg, HttpResponse* response)
 {
 	int status;
 	wStream* s;
-	char* token64 = NULL;
-	int ntlmTokenLength = 0;
-	BYTE* ntlmTokenData = NULL;
-	rdpNtlm* ntlm = rdg->ntlm;
 
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
 	{
@@ -510,25 +518,9 @@ static BOOL rdg_process_in_channel_response(rdpRdg* rdg, HttpResponse* response)
 
 	WLog_DBG(TAG, "In Channel authorization required");
 
-	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
-	{
-		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
+	if (!rdg_handle_ntlm_challenge(rdg->ntlm, response))
+		return FALSE;
 
-		if (!token64)
-		{
-			return FALSE;
-		}
-
-		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
-	}
-
-	if (ntlmTokenData && ntlmTokenLength)
-	{
-		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
-		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
-	}
-
-	ntlm_authenticate(ntlm);
 	s = rdg_build_http_request(rdg, "RDG_IN_DATA");
 
 	if (!s)
@@ -834,10 +826,8 @@ static BOOL rdg_check_event_handles(rdpRdg* rdg)
 	return TRUE;
 }
 
-static BOOL rdg_ncacn_http_ntlm_init(rdpRdg* rdg, rdpTls* tls)
+static BOOL rdg_get_gateway_credentials(rdpContext* context)
 {
-	rdpNtlm* ntlm = rdg->ntlm;
-	rdpContext* context = rdg->context;
 	rdpSettings* settings = context->settings;
 	freerdp* instance = context->instance;
 
@@ -884,16 +874,31 @@ static BOOL rdg_ncacn_http_ntlm_init(rdpRdg* rdg, rdpTls* tls)
 		}
 	}
 
-	if (!ntlm_client_init(ntlm, TRUE, settings->GatewayUsername, settings->GatewayDomain,
-	                      settings->GatewayPassword, tls->Bindings))
-	{
-		return FALSE;
-	}
+	return TRUE;
+}
 
-	if (!ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname))
-	{
+static BOOL rdg_ntlm_init(rdpRdg* rdg, rdpTls* tls)
+{
+	rdpContext* context = rdg->context;
+	rdpSettings* settings = context->settings;
+
+	rdg->ntlm = ntlm_new();
+
+	if (!rdg->ntlm)
 		return FALSE;
-	}
+
+	if (!rdg_get_gateway_credentials(context))
+		return FALSE;
+
+	if (!ntlm_client_init(rdg->ntlm, TRUE, settings->GatewayUsername, settings->GatewayDomain,
+	                      settings->GatewayPassword, tls->Bindings))
+		return FALSE;
+
+	if (!ntlm_client_make_spn(rdg->ntlm, _T("HTTP"), settings->GatewayHostname))
+		return FALSE;
+
+	if (!ntlm_authenticate(rdg->ntlm))
+		return FALSE;
 
 	return TRUE;
 }
@@ -902,19 +907,10 @@ static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method)
 {
 	wStream* s = NULL;
 	int status;
-	rdg->ntlm = NULL;
 
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
 	{
-		rdg->ntlm = ntlm_new();
-
-		if (!rdg->ntlm)
-			return FALSE;
-
-		if (!rdg_ncacn_http_ntlm_init(rdg, tls))
-			return FALSE;
-
-		if (!ntlm_authenticate(rdg->ntlm))
+		if (!rdg_ntlm_init(rdg, tls))
 			return FALSE;
 	}
 
