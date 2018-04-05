@@ -439,6 +439,25 @@ static BOOL rdg_process_out_channel_response(rdpRdg* rdg, HttpResponse* response
 	return TRUE;
 }
 
+static BOOL rdg_skip_seed_payload(rdpTls* tls, int lastResponseLength)
+{
+	BYTE seed_payload[10];
+
+	/* Per [MS-TSGU] 3.3.5.1 step 4, after final OK response RDG server sends
+	 * random "seed" payload of limited size. In practice it's 10 bytes.
+	 */
+	if (lastResponseLength < sizeof(seed_payload))
+	{
+		if (!rdg_read_all(tls, seed_payload,
+				sizeof(seed_payload) - lastResponseLength))
+		{
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 static BOOL rdg_process_out_channel_authorization(rdpRdg* rdg, HttpResponse* response)
 {
 	if (response->StatusCode != HTTP_STATUS_OK)
@@ -446,6 +465,9 @@ static BOOL rdg_process_out_channel_authorization(rdpRdg* rdg, HttpResponse* res
 		rdg->state = RDG_CLIENT_STATE_CLOSED;
 		return FALSE;
 	}
+
+	if (!rdg_skip_seed_payload(rdg->tlsOut, response->BodyLength))
+		return FALSE;
 
 	WLog_DBG(TAG, "Out Channel authorization complete");
 	rdg->state = RDG_CLIENT_STATE_OUT_CHANNEL_AUTHORIZED;
