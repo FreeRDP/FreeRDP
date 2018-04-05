@@ -165,6 +165,8 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 {
 	wStream* s;
 	BOOL status;
+	UINT32 packetSize = 16;
+	UINT16 fieldsPresent = 0;
 	WCHAR* PAACookie = NULL;
 	UINT16 PAACookieLen = 0;
 
@@ -175,38 +177,30 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 		if (!PAACookie)
 			return FALSE;
 
-		s = Stream_New(NULL, 16 + 2 + 2 * PAACookieLen);
-
-		if (!s)
-		{
-			free(PAACookie);
-			return FALSE;
-		}
+		packetSize += 2 + PAACookieLen * sizeof(WCHAR);
+		fieldsPresent = HTTP_TUNNEL_PACKET_FIELD_PAA_COOKIE;
 	}
-	else
-	{
-		s = Stream_New(NULL, 16);
 
-		if (!s)
-			return FALSE;
+	s = Stream_New(NULL, packetSize);
+
+	if (!s)
+	{
+		free(PAACookie);
+		return FALSE;
 	}
 
 	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_CREATE); /* Type (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
-	Stream_Write_UINT32(s, 16); /* PacketLength (4 bytes) */
-	Stream_Write_UINT32(s, HTTP_CAPABILITY_TYPE_QUAR_SOH); /* CapabilityFlags (4 bytes) */
+	Stream_Write_UINT32(s, packetSize); /* PacketLength (4 bytes) */
 
-	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
+	Stream_Write_UINT32(s, HTTP_CAPABILITY_TYPE_QUAR_SOH); /* CapabilityFlags (4 bytes) */
+	Stream_Write_UINT16(s, fieldsPresent); /* FieldsPresent (2 bytes) */
+	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
+
+	if (PAACookie)
 	{
-		Stream_Write_UINT16(s, 1); /* FieldsPresent (2 bytes) */
-		Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
 		Stream_Write_UINT16(s, PAACookieLen * 2); /* PAA cookie string length */
 		Stream_Write_UTF16_String(s, PAACookie, PAACookieLen);
-	}
-	else
-	{
-		Stream_Write_UINT16(s, 0); /* FieldsPresent (2 bytes) */
-		Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
 	}
 
 	Stream_SealLength(s);
