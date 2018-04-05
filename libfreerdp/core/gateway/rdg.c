@@ -930,7 +930,7 @@ static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method)
 	return (status >= 0);
 }
 
-static BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
+static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, int timeout)
 {
 	int sockfd = 0;
 	int status = 0;
@@ -940,8 +940,9 @@ static BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, 
 	const char* peerHostname = settings->GatewayHostname;
 	UINT16 peerPort = settings->GatewayPort;
 	BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, TRUE);
-	assert(hostname != NULL);
-	sockfd = freerdp_tcp_connect(rdg->context, settings, peerHostname,
+
+	sockfd = freerdp_tcp_connect(rdg->context, settings,
+	                             peerAddress ? peerAddress : peerHostname,
 	                             peerPort, timeout);
 
 	if (sockfd < 1)
@@ -981,114 +982,12 @@ static BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, 
 		return FALSE;
 	}
 
-	rdg->tlsOut->hostname = settings->GatewayHostname;
-	rdg->tlsOut->port = settings->GatewayPort;
-	rdg->tlsOut->isGatewayTransport = TRUE;
-	status = tls_connect(rdg->tlsOut, bufferedBio);
+	tls->hostname = settings->GatewayHostname;
+	tls->port = settings->GatewayPort;
+	tls->isGatewayTransport = TRUE;
+	status = tls_connect(tls, bufferedBio);
 
-	if (status < 1)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-static BOOL rdg_tls_in_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
-{
-	int sockfd = 0;
-	int status = 0;
-	BIO* socketBio = NULL;
-	BIO* bufferedBio = NULL;
-	rdpSettings* settings = rdg->settings;
-	const char* peerHostname = settings->GatewayHostname;
-	UINT16 peerPort = settings->GatewayPort;
-	BOOL isProxyConnection = FALSE;
-	int outChannelSocket = 0;
-	char* gatewayAddress = NULL;
-	assert(hostname != NULL);
-
-	if (settings->ProxyType)
-	{
-		peerHostname = settings->ProxyHostname;
-		peerPort = settings->ProxyPort;
-		isProxyConnection = TRUE;
-	}
-	else
-	{
-		/**
-		 * if settings->GatewayHostname is a name, it may be mapped to more than one
-		 * IP address (thus potentially multiple gateway servers) - to avoid openning
-		 * the IN channel with one server and the OUT channel with another server
-		 * we want to use the same IP when connecting to both IN and OUT channels
-		 * below we get the peer ip address in use by the OUT channel and use it
-		 * when opening the connection for the IN channel
-		*/
-		BIO_get_socket(rdg->tlsOut->underlying, &outChannelSocket);
-		gatewayAddress = freerdp_tcp_get_peer_address(outChannelSocket);
-
-		if (gatewayAddress == NULL)
-		{
-			WLog_DBG(TAG,
-			         "RDG out channel was created but gateway IP couldn't be resolved. Falling back to resolving gateway hostname again for IN channel.");
-		}
-		else
-		{
-			WLog_DBG(TAG, "Gateway hostname %s resolved to IP %s.", peerHostname, gatewayAddress);
-			peerHostname = gatewayAddress;
-		}
-	}
-
-	sockfd = freerdp_tcp_connect(rdg->context, settings, peerHostname,
-	                             peerPort, timeout);
-
-	if (sockfd < 1)
-	{
-		free(gatewayAddress);
-		return FALSE;
-	}
-
-	socketBio = BIO_new(BIO_s_simple_socket());
-
-	if (!socketBio)
-	{
-		free(gatewayAddress);
-		closesocket(sockfd);
-		return FALSE;
-	}
-
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
-
-	if (!bufferedBio)
-	{
-		free(gatewayAddress);
-		BIO_free(socketBio);
-		return FALSE;
-	}
-
-	bufferedBio = BIO_push(bufferedBio, socketBio);
-	status = BIO_set_nonblock(bufferedBio, TRUE);
-
-	if (!status)
-	{
-		free(gatewayAddress);
-		BIO_free_all(bufferedBio);
-		return FALSE;
-	}
-
-	rdg->tlsIn->hostname = settings->GatewayHostname;
-	rdg->tlsIn->port = settings->GatewayPort;
-	rdg->tlsIn->isGatewayTransport = TRUE;
-	status = tls_connect(rdg->tlsIn, bufferedBio);
-
-	if (status < 1)
-	{
-		free(gatewayAddress);
-		return FALSE;
-	}
-
-	return TRUE;
+	return (status >= 1);
 }
 
 static BOOL rdg_out_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
@@ -1097,7 +996,8 @@ static BOOL rdg_out_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 po
 	DWORD nCount;
 	HANDLE events[8];
 	assert(hostname != NULL);
-	status = rdg_tls_out_connect(rdg, hostname, port, timeout);
+
+	status = rdg_tls_connect(rdg, rdg->tlsOut, NULL, timeout);
 
 	if (!status)
 		return FALSE;
@@ -1129,11 +1029,22 @@ static BOOL rdg_out_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 po
 
 static BOOL rdg_in_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
 {
+	int outConnSocket = 0;
+	char* peerAddress = NULL;
 	BOOL status;
 	DWORD nCount;
 	HANDLE events[8];
 	assert(hostname != NULL);
-	status = rdg_tls_in_connect(rdg, hostname, port, timeout);
+
+	/* Establish IN connection with the same peer/server as OUT connection,
+	 * even when server hostname resolves to different IP addresses.
+	 */
+	BIO_get_socket(rdg->tlsOut->underlying, &outConnSocket);
+	peerAddress = freerdp_tcp_get_peer_address(outConnSocket);
+
+	status = rdg_tls_connect(rdg, rdg->tlsIn, peerAddress, timeout);
+
+	free(peerAddress);
 
 	if (!status)
 		return FALSE;
