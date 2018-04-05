@@ -113,7 +113,8 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 		return NULL;
 	}
 
-	packetLength = ((RdgPacketHeader*)Stream_Buffer(s))->packetLength;
+	Stream_Seek(s, 4);
+	Stream_Read_UINT32(s, packetLength);
 
 	if (!Stream_EnsureCapacity(s, packetLength))
 	{
