@@ -886,7 +886,7 @@ int TestPrimitivesYUV(int argc, char* argv[])
 
 		if (argc > 1)
 		{
-			int rc = sscanf(argv[1], "%l"PRIu32"x%"PRIu32, &roi.width, &roi.height);
+			int rc = sscanf(argv[1], "%"PRIu32"x%"PRIu32, &roi.width, &roi.height);
 
 			if (rc != 2)
 			{
