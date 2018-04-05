@@ -305,7 +305,7 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	return status;
 }
 
-static wStream* rdg_build_http_request(rdpRdg* rdg, char* method)
+static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method)
 {
 	wStream* s;
 	HttpRequest* request = NULL;
@@ -903,7 +903,7 @@ static BOOL rdg_ncacn_http_ntlm_init(rdpRdg* rdg, rdpTls* tls)
 	return TRUE;
 }
 
-static BOOL rdg_send_out_channel_request(rdpRdg* rdg)
+static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method)
 {
 	wStream* s = NULL;
 	int status;
@@ -916,69 +916,23 @@ static BOOL rdg_send_out_channel_request(rdpRdg* rdg)
 		if (!rdg->ntlm)
 			return FALSE;
 
-		status = rdg_ncacn_http_ntlm_init(rdg, rdg->tlsOut);
-
-		if (!status)
+		if (!rdg_ncacn_http_ntlm_init(rdg, tls))
 			return FALSE;
 
-		status = ntlm_authenticate(rdg->ntlm);
-
-		if (!status)
+		if (!ntlm_authenticate(rdg->ntlm))
 			return FALSE;
 	}
 
-	s = rdg_build_http_request(rdg, "RDG_OUT_DATA");
+	s = rdg_build_http_request(rdg, method);
 
 	if (!s)
 		return FALSE;
 
-	status = tls_write_all(rdg->tlsOut, Stream_Buffer(s), Stream_Length(s));
+	status = tls_write_all(tls, Stream_Buffer(s), Stream_Length(s));
+
 	Stream_Free(s, TRUE);
 
-	if (status < 0)
-		return FALSE;
-
-	rdg->state = RDG_CLIENT_STATE_OUT_CHANNEL_REQUEST;
-	return TRUE;
-}
-
-static BOOL rdg_send_in_channel_request(rdpRdg* rdg)
-{
-	int status;
-	wStream* s = NULL;
-	rdg->ntlm = NULL;
-
-	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
-	{
-		rdg->ntlm = ntlm_new();
-
-		if (!rdg->ntlm)
-			return FALSE;
-
-		status = rdg_ncacn_http_ntlm_init(rdg, rdg->tlsIn);
-
-		if (!status)
-			return FALSE;
-
-		status = ntlm_authenticate(rdg->ntlm);
-
-		if (!status)
-			return FALSE;
-	}
-
-	s = rdg_build_http_request(rdg, "RDG_IN_DATA");
-
-	if (!s)
-		return FALSE;
-
-	status = tls_write_all(rdg->tlsIn, Stream_Buffer(s), Stream_Length(s));
-	Stream_Free(s, TRUE);
-
-	if (status < 0)
-		return FALSE;
-
-	rdg->state = RDG_CLIENT_STATE_IN_CHANNEL_REQUEST;
-	return TRUE;
+	return (status >= 0);
 }
 
 static BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
@@ -1153,10 +1107,10 @@ static BOOL rdg_out_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 po
 	if (!status)
 		return FALSE;
 
-	status = rdg_send_out_channel_request(rdg);
-
-	if (!status)
+	if (!rdg_send_http_request(rdg, rdg->tlsOut, "RDG_OUT_DATA"))
 		return FALSE;
+
+	rdg->state = RDG_CLIENT_STATE_OUT_CHANNEL_REQUEST;
 
 	nCount = rdg_get_event_handles(rdg, events, 8);
 
@@ -1189,10 +1143,10 @@ static BOOL rdg_in_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 por
 	if (!status)
 		return FALSE;
 
-	status = rdg_send_in_channel_request(rdg);
-
-	if (!status)
+	if (!rdg_send_http_request(rdg, rdg->tlsIn, "RDG_IN_DATA"))
 		return FALSE;
+
+	rdg->state = RDG_CLIENT_STATE_IN_CHANNEL_REQUEST;
 
 	nCount = rdg_get_event_handles(rdg, events, 8);
 
