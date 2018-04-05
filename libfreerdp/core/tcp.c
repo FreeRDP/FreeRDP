@@ -668,10 +668,10 @@ static char* freerdp_tcp_get_ip_address(int sockfd, BOOL* pIPv6)
 {
 	socklen_t length;
 	char ipAddress[INET6_ADDRSTRLEN + 1] = { 0 };
-	struct sockaddr saddr = { 0 };
+	struct sockaddr_storage saddr = { 0 };
 	struct sockaddr_in6* sockaddr_ipv6 = (struct sockaddr_in6*)&saddr;
 	struct sockaddr_in* sockaddr_ipv4 = (struct sockaddr_in*)&saddr;
-	length = sizeof(struct sockaddr);
+	length = sizeof(struct sockaddr_storage);
 
 	if (getsockname(sockfd, &saddr, &length) != 0)
 		return NULL;
