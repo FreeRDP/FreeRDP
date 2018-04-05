@@ -328,7 +328,7 @@ static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, wStream* s)
 	return TRUE;
 }
 
-static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 size, wStream* s)
+static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream* s)
 {
 	int status = 0;
 	rdpUpdate* update;
@@ -346,9 +346,9 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 	context = update->context;
 	pointer = update->pointer;
 #ifdef WITH_DEBUG_RDP
-	DEBUG_RDP("recv Fast-Path %s Update (0x%02"PRIX8"), length:%"PRIu32"",
+	DEBUG_RDP("recv Fast-Path %s Update (0x%02"PRIX8"), length:%"PRIuz"",
 	          updateCode < ARRAYSIZE(FASTPATH_UPDATETYPE_STRINGS) ? FASTPATH_UPDATETYPE_STRINGS[updateCode] :
-	          "???", updateCode, size);
+			  "???", updateCode, Stream_GetLength(s));
 #endif
 
 	switch (updateCode)
@@ -451,10 +451,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	int status;
 	UINT16 size;
 	rdpRdp* rdp;
-	size_t next_pos;
-	wStream* cs;
 	int bulkStatus;
-	UINT32 totalSize;
 	BYTE updateCode;
 	BYTE fragmentation;
 	BYTE compression;
@@ -501,10 +498,9 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		return -1;
 	}
 
-	cs = s;
-	next_pos = Stream_GetPosition(s) + size;
 	bulkStatus = bulk_decompress(rdp->bulk, Stream_Pointer(s), size, &pDstData, &DstSize,
 	                             compressionFlags);
+	Stream_Seek(s, size);
 
 	if (bulkStatus < 0)
 	{
@@ -512,19 +508,10 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		return -1;
 	}
 
-	if (bulkStatus > 0)
-	{
-		/* data was compressed, copy from decompression buffer */
-		size = DstSize;
+	if (!Stream_EnsureRemainingCapacity(fastpath->updateData, DstSize))
+		return -1;
 
-		if (!(cs = StreamPool_Take(transport->ReceivePool, DstSize)))
-			return -1;
-
-		Stream_SetPosition(cs, 0);
-		Stream_Write(cs, pDstData, DstSize);
-		Stream_SealLength(cs);
-		Stream_SetPosition(cs, 0);
-	}
+	Stream_Write(fastpath->updateData, pDstData, DstSize);
 
 	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
 	{
@@ -534,8 +521,10 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			goto out_fail;
 		}
 
-		totalSize = size;
-		status = fastpath_recv_update(fastpath, updateCode, totalSize, cs);
+		Stream_SealLength(fastpath->updateData);
+		Stream_SetPosition(fastpath->updateData, 0);
+		status = fastpath_recv_update(fastpath, updateCode, fastpath->updateData);
+		Stream_SetPosition(fastpath->updateData, 0);
 
 		if (status < 0)
 		{
@@ -545,6 +534,14 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	}
 	else
 	{
+		const size_t totalSize = Stream_GetPosition(fastpath->updateData);
+		if (totalSize > transport->settings->MultifragMaxRequestSize)
+		{
+			WLog_ERR(TAG, "Total size (%"PRIuz") exceeds MultifragMaxRequestSize (%"PRIu32")",
+					 totalSize, transport->settings->MultifragMaxRequestSize);
+			goto out_fail;
+		}
+
 		if (fragmentation == FASTPATH_FRAGMENT_FIRST)
 		{
 			if (fastpath->fragmentation != -1)
@@ -554,20 +551,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			}
 
 			fastpath->fragmentation = FASTPATH_FRAGMENT_FIRST;
-			totalSize = size;
 
-			if (totalSize > transport->settings->MultifragMaxRequestSize)
-			{
-				WLog_ERR(TAG, "Total size (%"PRIu32") exceeds MultifragMaxRequestSize (%"PRIu32")",
-				         totalSize, transport->settings->MultifragMaxRequestSize);
-				goto out_fail;
-			}
-
-			if (!(fastpath->updateData = StreamPool_Take(transport->ReceivePool, size)))
-				goto out_fail;
-
-			Stream_SetPosition(fastpath->updateData, 0);
-			Stream_Copy(cs, fastpath->updateData, size);
+			
 		}
 		else if (fragmentation == FASTPATH_FRAGMENT_NEXT)
 		{
@@ -579,22 +564,6 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			}
 
 			fastpath->fragmentation = FASTPATH_FRAGMENT_NEXT;
-			totalSize = Stream_GetPosition(fastpath->updateData) + size;
-
-			if (totalSize > transport->settings->MultifragMaxRequestSize)
-			{
-				WLog_ERR(TAG, "Total size (%"PRIu32") exceeds MultifragMaxRequestSize (%"PRIu32")",
-				         totalSize, transport->settings->MultifragMaxRequestSize);
-				goto out_fail;
-			}
-
-			if (!Stream_EnsureCapacity(fastpath->updateData, totalSize))
-			{
-				WLog_ERR(TAG,  "Couldn't re-allocate memory for stream");
-				goto out_fail;
-			}
-
-			Stream_Copy(cs, fastpath->updateData, size);
 		}
 		else if (fragmentation == FASTPATH_FRAGMENT_LAST)
 		{
@@ -606,26 +575,11 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			}
 
 			fastpath->fragmentation = -1;
-			totalSize = Stream_GetPosition(fastpath->updateData) + size;
 
-			if (totalSize > transport->settings->MultifragMaxRequestSize)
-			{
-				WLog_ERR(TAG, "Total size (%"PRIu32") exceeds MultifragMaxRequestSize (%"PRIu32")",
-				         totalSize, transport->settings->MultifragMaxRequestSize);
-				goto out_fail;
-			}
-
-			if (!Stream_EnsureCapacity(fastpath->updateData, totalSize))
-			{
-				WLog_ERR(TAG,  "Couldn't re-allocate memory for stream");
-				goto out_fail;
-			}
-
-			Stream_Copy(cs, fastpath->updateData, size);
 			Stream_SealLength(fastpath->updateData);
 			Stream_SetPosition(fastpath->updateData, 0);
-			status = fastpath_recv_update(fastpath, updateCode, totalSize, fastpath->updateData);
-			Stream_Release(fastpath->updateData);
+			status = fastpath_recv_update(fastpath, updateCode, fastpath->updateData);
+			Stream_SetPosition(fastpath->updateData, 0);
 
 			if (status < 0)
 			{
@@ -635,18 +589,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		}
 	}
 
-	Stream_SetPosition(s, next_pos);
-
-	if (cs != s)
-		Stream_Release(cs);
-
 	return status;
 out_fail:
-
-	if (cs != s)
-	{
-		Stream_Release(cs);
-	}
 
 	return -1;
 }
@@ -1244,13 +1188,14 @@ rdpFastPath* fastpath_new(rdpRdp* rdp)
 	fastpath->rdp = rdp;
 	fastpath->fragmentation = -1;
 	fastpath->fs = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
+	fastpath->updateData = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
 
-	if (!fastpath->fs)
+	if (!fastpath->fs || !fastpath->updateData)
 		goto out_free;
 
 	return fastpath;
 out_free:
-	free(fastpath);
+	fastpath_free(fastpath);
 	return NULL;
 }
 
@@ -1258,6 +1203,7 @@ void fastpath_free(rdpFastPath* fastpath)
 {
 	if (fastpath)
 	{
+		Stream_Free(fastpath->updateData, TRUE);
 		Stream_Free(fastpath->fs, TRUE);
 		free(fastpath);
 	}
