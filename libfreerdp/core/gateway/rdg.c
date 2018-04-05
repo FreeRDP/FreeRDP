@@ -788,11 +788,6 @@ DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count)
 	DWORD nCount = 0;
 	assert(rdg != NULL);
 
-	if (events && (nCount < count))
-		events[nCount++] = rdg->readEvent;
-	else
-		return 0;
-
 	if (rdg->tlsOut && rdg->tlsOut->bio)
 	{
 		if (events && (nCount < count))
@@ -1365,7 +1360,6 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 	size_t readCount = 0;
 	int readSize;
 	int status;
-	int pending;
 
 	if (!rdg->packetRemainingCount)
 	{
@@ -1432,12 +1426,6 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 	}
 
 	rdg->packetRemainingCount -= status;
-	pending = BIO_pending(rdg->tlsOut->bio);
-
-	if (pending > 0)
-		SetEvent(rdg->readEvent);
-	else
-		ResetEvent(rdg->readEvent);
 
 	return status;
 }
@@ -1681,10 +1669,6 @@ rdpRdg* rdg_new(rdpTransport* transport)
 			goto rdg_alloc_error;
 
 		BIO_set_data(rdg->frontBio, rdg);
-		rdg->readEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-		if (!rdg->readEvent)
-			goto rdg_alloc_error;
 
 		InitializeCriticalSection(&rdg->writeSection);
 	}
@@ -1722,12 +1706,6 @@ void rdg_free(rdpRdg* rdg)
 	{
 		ntlm_free(rdg->ntlm);
 		rdg->ntlm = NULL;
-	}
-
-	if (rdg->readEvent)
-	{
-		CloseHandle(rdg->readEvent);
-		rdg->readEvent = NULL;
 	}
 
 	DeleteCriticalSection(&rdg->writeSection);
