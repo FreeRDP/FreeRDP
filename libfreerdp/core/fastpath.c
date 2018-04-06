@@ -348,7 +348,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 #ifdef WITH_DEBUG_RDP
 	DEBUG_RDP("recv Fast-Path %s Update (0x%02"PRIX8"), length:%"PRIuz"",
 	          updateCode < ARRAYSIZE(FASTPATH_UPDATETYPE_STRINGS) ? FASTPATH_UPDATETYPE_STRINGS[updateCode] :
-			  "???", updateCode, Stream_GetLength(s));
+			  "???", updateCode, Stream_Length(s));
 #endif
 
 	switch (updateCode)
