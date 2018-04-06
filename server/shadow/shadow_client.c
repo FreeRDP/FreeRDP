@@ -230,21 +230,6 @@ static void shadow_client_context_free(freerdp_peer* peer,
 	DeleteCriticalSection(&(client->lock));
 }
 
-static void shadow_client_message_free(wMessage* message)
-{
-	switch (message->id)
-	{
-		case SHADOW_MSG_IN_REFRESH_REQUEST_ID:
-			/* Refresh request do not have message to free */
-			break;
-
-		default:
-			WLog_ERR(TAG, "Unknown message id: %"PRIu32"", message->id);
-			free(message->wParam);
-			break;
-	}
-}
-
 static INLINE void shadow_client_mark_invalid(rdpShadowClient* client,
         int numRects, const RECTANGLE_16* rects)
 {

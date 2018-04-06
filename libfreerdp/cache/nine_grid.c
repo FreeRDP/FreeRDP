@@ -35,10 +35,6 @@
 
 #define TAG FREERDP_TAG("cache.nine_grid")
 
-static void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index);
-static void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry);
-
-
 static BOOL update_gdi_draw_nine_grid(rdpContext* context,
 					  const DRAW_NINE_GRID_ORDER* draw_nine_grid)
 {
@@ -62,39 +58,6 @@ void nine_grid_cache_register_callbacks(rdpUpdate* update)
 
 	update->primary->DrawNineGrid = update_gdi_draw_nine_grid;
 	update->primary->MultiDrawNineGrid = update_gdi_multi_draw_nine_grid;
-}
-
-void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
-{
-	void* entry;
-
-	if (index >= nine_grid->maxEntries)
-	{
-		WLog_ERR(TAG,  "invalid NineGrid index: 0x%08"PRIX32"", index);
-		return NULL;
-	}
-
-	entry = nine_grid->entries[index].entry;
-
-	if (entry == NULL)
-	{
-		WLog_ERR(TAG,  "invalid NineGrid at index: 0x%08"PRIX32"", index);
-		return NULL;
-	}
-
-	return entry;
-}
-
-void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry)
-{
-	if (index >= nine_grid->maxEntries)
-	{
-		WLog_ERR(TAG,  "invalid NineGrid index: 0x%08"PRIX32"", index);
-		return;
-	}
-
-	free(nine_grid->entries[index].entry);
-	nine_grid->entries[index].entry = entry;
 }
 
 rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings)

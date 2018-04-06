@@ -110,20 +110,6 @@ static int ntlm_SetContextServicePrincipalNameW(NTLM_CONTEXT* context, LPWSTR Se
 	return 1;
 }
 
-static int ntlm_SetContextServicePrincipalNameA(NTLM_CONTEXT* context, char* ServicePrincipalName)
-{
-	int status;
-	context->ServicePrincipalName.Buffer = NULL;
-	status = ConvertToUnicode(CP_UTF8, 0, ServicePrincipalName, -1,
-	                          &context->ServicePrincipalName.Buffer, 0);
-
-	if (status <= 0)
-		return -1;
-
-	context->ServicePrincipalName.Length = (USHORT)((status - 1) * 2);
-	return 1;
-}
-
 static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
 	int status;
