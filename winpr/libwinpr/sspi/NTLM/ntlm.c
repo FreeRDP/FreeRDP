@@ -52,8 +52,7 @@ static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 
 	if (!Workstation)
 	{
-		if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || (GetLastError() != ERROR_MORE_DATA) ||
-		    (nSize < 2))
+		if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || GetLastError() != ERROR_MORE_DATA)
 			return -1;
 
 		computerName = calloc(nSize, sizeof(CHAR));
@@ -133,8 +132,7 @@ static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 
 	if (!name)
 	{
-		if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || (GetLastError() != ERROR_MORE_DATA) ||
-		    (nSize < 2))
+		if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || GetLastError() != ERROR_MORE_DATA)
 			return -1;
 
 		computerName = calloc(nSize, sizeof(CHAR));
