@@ -346,8 +346,9 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 		}
 
 		ret = context->HashCallback(context->HashCallbackArg, &credentials->identity, &proofValue,
-		                            context->EncryptedRandomSessionKey, context->MessageIntegrityCheck, &micValue,
-		                            hash);
+		                            context->EncryptedRandomSessionKey,
+					    (&context->AUTHENTICATE_MESSAGE)->MessageIntegrityCheck,
+					    &micValue, hash);
 		sspi_SecBufferFree(&proofValue);
 		sspi_SecBufferFree(&micValue);
 		return ret ? 1 : -1;
