@@ -481,7 +481,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			client->settings->NlaSecurity = (rdp->nego->SelectedProtocol & PROTOCOL_NLA) ? TRUE : FALSE;
 			client->settings->TlsSecurity = (rdp->nego->SelectedProtocol & PROTOCOL_TLS) ? TRUE : FALSE;
-			client->settings->RdpSecurity = (rdp->nego->SelectedProtocol & PROTOCOL_RDP) ? TRUE : FALSE;
+			client->settings->RdpSecurity = (rdp->nego->SelectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE;
 
 			if (rdp->nego->SelectedProtocol & PROTOCOL_NLA)
 			{
