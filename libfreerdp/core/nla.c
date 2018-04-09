@@ -1090,7 +1090,7 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 		CopyMemory(Buffers[1].pvBuffer, nla->PublicKey.pvBuffer, Buffers[1].cbBuffer);
 	}
 
-	if (krb && nla->server)
+	if (!krb && nla->server)
 	{
 		/* server echos the public key +1 */
 		ap_integer_increment_le((BYTE*) Buffers[1].pvBuffer, Buffers[1].cbBuffer);
