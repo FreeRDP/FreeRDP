@@ -500,10 +500,6 @@ BOOL freerdp_disconnect(freerdp* instance)
 		MessageQueue_PostQuit(inputQueue, 0);
 	}
 
-	if (freerdp_channels_disconnect(instance->context->channels,
-	                                instance) != CHANNEL_RC_OK)
-		rc = FALSE;
-
 	IFCALL(instance->PostDisconnect, instance);
 
 	if (instance->update->pcap_rfx)
@@ -516,6 +512,12 @@ BOOL freerdp_disconnect(freerdp* instance)
 	codecs_free(instance->context->codecs);
 	freerdp_channels_close(instance->context->channels, instance);
 	return rc;
+}
+
+BOOL freerdp_disconnect_before_reconnect(freerdp* instance)
+{
+	rdpRdp* rdp = instance->context->rdp;
+	return rdp_client_disconnect(rdp);
 }
 
 BOOL freerdp_reconnect(freerdp* instance)
