@@ -333,7 +333,17 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 BOOL rdp_client_redirect(rdpRdp* rdp)
 {
 	BOOL status;
+	BOOL reconnect_channels = FALSE;
 	rdpSettings* settings = rdp->settings;
+
+	/* Ensure existing channels are disconnected */
+	rdpContext* context = rdp->context;
+	rdpChannels* channels = context->channels;
+	if (channels->connected)
+	{
+		reconnect_channels = TRUE;
+		freerdp_channels_disconnect(channels, context->instance);
+	}
 
 	rdp_client_disconnect(rdp);
 	if (rdp_redirection_apply_settings(rdp) != 0)
@@ -386,6 +396,12 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	}
 
 	status = rdp_client_connect(rdp);
+
+	/* Reconnect channels */
+	if (status && reconnect_channels)
+	{
+		status = (freerdp_channels_post_connect(channels, context->instance) == CHANNEL_RC_OK);
+	}
 
 	return status;
 }

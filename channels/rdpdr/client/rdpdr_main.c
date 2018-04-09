@@ -1728,6 +1728,13 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 {
 	UINT error;
 
+	/* Remove all dependent devices before tearing down resources */
+	if (rdpdr->devman)
+	{
+		devman_free(rdpdr->devman);
+		rdpdr->devman = NULL;
+	}
+
 	if (MessageQueue_PostQuit(rdpdr->queue, 0)
 	    && (WaitForSingleObject(rdpdr->thread, INFINITE) == WAIT_FAILED))
 	{
@@ -1761,12 +1768,6 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 	{
 		Stream_Free(rdpdr->data_in, TRUE);
 		rdpdr->data_in = NULL;
-	}
-
-	if (rdpdr->devman)
-	{
-		devman_free(rdpdr->devman);
-		rdpdr->devman = NULL;
 	}
 
 	return error;
