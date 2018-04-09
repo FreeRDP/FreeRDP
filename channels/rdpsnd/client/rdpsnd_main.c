@@ -837,6 +837,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 #if defined(WITH_WINMM)
 		{ "winmm", ""},
 #endif
+		{ "fake", "" }
 	};
 	ADDIN_ARGV* args;
 	UINT status = ERROR_INTERNAL_ERROR;
@@ -853,9 +854,6 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 
 	if (rdpsnd->subsystem)
 	{
-		if (strcmp(rdpsnd->subsystem, "fake") == 0)
-			return CHANNEL_RC_OK;
-
 		if ((status = rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args)))
 		{
 			WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %"PRIu32"",
