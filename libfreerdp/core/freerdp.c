@@ -235,14 +235,15 @@ BOOL freerdp_connect(freerdp* instance)
 			pcap_record record;
 			update = instance->update;
 			update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
-
 			status = FALSE;
+
 			if (!update->pcap_rfx)
 				goto freerdp_connect_finally;
 			else
 				update->play_rfx = TRUE;
 
 			status = TRUE;
+
 			while (pcap_has_next_record(update->pcap_rfx) && status)
 			{
 				pcap_get_next_record_header(update->pcap_rfx, &record);
@@ -481,8 +482,15 @@ BOOL freerdp_disconnect(freerdp* instance)
 {
 	BOOL rc = TRUE;
 	rdpRdp* rdp;
+
+	if (!instance || !instance->context || !instance->context->rdp)
+		return FALSE;
+
 	rdp = instance->context->rdp;
-	rdp_client_disconnect(rdp);
+
+	if (!rdp_client_disconnect(rdp))
+		rc = FALSE;
+
 	update_post_disconnect(instance->update);
 
 	if (instance->settings->AsyncInput)
