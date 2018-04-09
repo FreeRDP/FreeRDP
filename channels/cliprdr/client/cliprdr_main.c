@@ -239,7 +239,7 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s,
 		Stream_Read_UINT16(s, capabilitySetType); /* capabilitySetType (2 bytes) */
 		Stream_Read_UINT16(s, lengthCapability); /* lengthCapability (2 bytes) */
 
-		if (lengthCapability < 4 || Stream_GetRemainingLength(s) < lengthCapability-4)
+		if (lengthCapability < 4 || Stream_GetRemainingLength(s) < lengthCapability - 4)
 			return ERROR_INVALID_DATA;
 
 		switch (capabilitySetType)
@@ -337,7 +337,6 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr,
 	request.msgFlags = flags;
 	request.dataLen = length;
 	request.haveClipDataId = FALSE;
-
 	Stream_Read_UINT32(s, request.streamId); /* streamId (4 bytes) */
 	Stream_Read_UINT32(s, request.listIndex); /* listIndex (4 bytes) */
 	Stream_Read_UINT32(s, request.dwFlags); /* dwFlags (4 bytes) */
@@ -633,6 +632,7 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
 	}
 
 	length = ConvertToUnicode(CP_UTF8, 0, tempDirectory->szTempDir, -1, &wszTempDir, 0);
+
 	if (length < 0)
 		return ERROR_INTERNAL_ERROR;
 
@@ -924,7 +924,6 @@ static UINT cliprdr_client_file_contents_request(CliprdrClientContext* context,
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientFileContentsRequest: streamId: 0x%08"PRIX32"",
 	           fileContentsRequest->streamId);
-
 	return cliprdr_packet_send(cliprdr, s);
 }
 
@@ -938,7 +937,6 @@ static UINT cliprdr_client_file_contents_response(CliprdrClientContext* context,
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
-
 	s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, fileContentsResponse->msgFlags,
 	                       4 + fileContentsResponse->cbRequested);
 
@@ -1131,7 +1129,8 @@ static UINT cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr,
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
-	if (!(cliprdr->thread = CreateThread(NULL, 0, cliprdr_virtual_channel_client_thread, (void*) cliprdr,
+	if (!(cliprdr->thread = CreateThread(NULL, 0, cliprdr_virtual_channel_client_thread,
+	                                     (void*) cliprdr,
 	                                     0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
@@ -1151,6 +1150,9 @@ static UINT cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr,
 static UINT cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* cliprdr)
 {
 	UINT rc;
+
+	if (cliprdr->OpenHandle == 0)
+		return CHANNEL_RC_OK;
 
 	if (MessageQueue_PostQuit(cliprdr->queue, 0)
 	    && (WaitForSingleObject(cliprdr->thread, INFINITE) == WAIT_FAILED))
