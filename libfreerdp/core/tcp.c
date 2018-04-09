@@ -673,7 +673,7 @@ static char* freerdp_tcp_get_ip_address(int sockfd, BOOL* pIPv6)
 	struct sockaddr_in* sockaddr_ipv4 = (struct sockaddr_in*)&saddr;
 	length = sizeof(struct sockaddr_storage);
 
-	if (getsockname(sockfd, &saddr, &length) != 0)
+	if (getsockname(sockfd, (struct sockaddr*)&saddr, &length) != 0)
 		return NULL;
 
 	switch (sockaddr_ipv4->sin_family)
