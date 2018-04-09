@@ -75,6 +75,7 @@ struct rdpsnd_plugin
 	UINT16 NumberOfClientFormats;
 
 	BOOL attached;
+	BOOL connected;
 
 	BOOL expectingWave;
 	BYTE waveData[4];
@@ -98,6 +99,9 @@ struct rdpsnd_plugin
 	wQueue* queue;
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
+
+static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd);
+static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd);
 
 /**
  * Function description
@@ -408,10 +412,7 @@ static UINT rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, wStream* s,
 	{
 		BOOL rc;
 		AUDIO_FORMAT deviceFormat = *format;
-
-		if (rdpsnd->isOpen)
-			IFCALL(rdpsnd->device->Close, rdpsnd->device);
-
+		rdpsnd_recv_close_pdu(rdpsnd);
 		rc = IFCALLRESULT(FALSE, rdpsnd->device->FormatSupported, rdpsnd->device, format);
 
 		if (!rc)
@@ -894,6 +895,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 
 static void rdpsnd_process_disconnect(rdpsndPlugin* rdpsnd)
 {
+	rdpsnd_recv_close_pdu(rdpsnd);
 }
 
 /**
@@ -1058,6 +1060,20 @@ static void rdpsnd_queue_free(void* data)
 	Stream_Free(s, TRUE);
 }
 
+static UINT rdpsnd_virtual_channel_event_initialized(rdpsndPlugin* rdpsnd,
+        LPVOID pData, UINT32 dataLength)
+{
+	rdpsnd->stopEvent = CreateEventA(NULL, TRUE, FALSE, "rdpsnd->stopEvent");
+
+	if (!rdpsnd->stopEvent)
+		goto fail;
+
+	return CHANNEL_RC_OK;
+fail:
+	rdpsnd_virtual_channel_event_terminated(rdpsnd);
+	return ERROR_INTERNAL_ERROR;
+}
+
 /**
  * Function description
  *
@@ -1094,11 +1110,7 @@ static UINT rdpsnd_virtual_channel_event_connected(rdpsndPlugin* rdpsnd,
 	if (!rdpsnd->pool)
 		goto fail;
 
-	rdpsnd->stopEvent = CreateEventA(NULL, TRUE, FALSE, "rdpsnd->stopEvent");
-
-	if (!rdpsnd->stopEvent)
-		goto fail;
-
+	ResetEvent(rdpsnd->stopEvent);
 	rdpsnd->thread = CreateThread(NULL, 0,
 	                              rdpsnd_virtual_channel_client_thread, (void*) rdpsnd,
 	                              0, NULL);
@@ -1129,6 +1141,10 @@ fail:
 static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 {
 	UINT error;
+
+	if (rdpsnd->OpenHandle == 0)
+		return CHANNEL_RC_OK;
+
 	SetEvent(rdpsnd->stopEvent);
 
 	if (WaitForSingleObject(rdpsnd->thread, INFINITE) == WAIT_FAILED)
@@ -1139,7 +1155,6 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	}
 
 	CloseHandle(rdpsnd->thread);
-	CloseHandle(rdpsnd->stopEvent);
 	error = rdpsnd->channelEntryPoints.pVirtualChannelCloseEx(rdpsnd->InitHandle, rdpsnd->OpenHandle);
 
 	if (CHANNEL_RC_OK != error)
@@ -1167,15 +1182,18 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 		rdpsnd->device = NULL;
 	}
 
-	free(rdpsnd->subsystem);
-	free(rdpsnd->device_name);
 	return CHANNEL_RC_OK;
 }
 
 static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 {
 	if (rdpsnd)
+	{
+		free(rdpsnd->subsystem);
+		free(rdpsnd->device_name);
+		CloseHandle(rdpsnd->stopEvent);
 		rdpsnd->InitHandle = 0;
+	}
 
 	free(rdpsnd);
 }
@@ -1194,6 +1212,13 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 
 	switch (event)
 	{
+		case CHANNEL_EVENT_INITIALIZED:
+			if ((error = rdpsnd_virtual_channel_event_initialized(plugin, pData, dataLength)))
+				WLog_ERR(TAG, "rdpsnd_virtual_channel_event_initialized failed with error %"PRIu32"!",
+				         error);
+
+			break;
+
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = rdpsnd_virtual_channel_event_connected(plugin, pData, dataLength)))
 				WLog_ERR(TAG, "rdpsnd_virtual_channel_event_connected failed with error %"PRIu32"!",
