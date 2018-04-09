@@ -882,7 +882,7 @@ static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk,
 	}
 
 	remdesk->thread = CreateThread(NULL, 0,
-								   remdesk_virtual_channel_client_thread, (void*) remdesk,
+	                               remdesk_virtual_channel_client_thread, (void*) remdesk,
 	                               0, NULL);
 
 	if (!remdesk->thread)
@@ -907,6 +907,9 @@ error_out:
 static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 {
 	UINT rc;
+
+	if (remdesk->OpenHandle == 0)
+		return CHANNEL_RC_OK;
 
 	if (MessageQueue_PostQuit(remdesk->queue, 0)
 	    && (WaitForSingleObject(remdesk->thread, INFINITE) == WAIT_FAILED))
