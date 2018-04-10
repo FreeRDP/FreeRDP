@@ -228,20 +228,22 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 	}
 	else
 	{
+		UINT32 srcFormat;
 		BYTE* pdata = (BYTE*) _aligned_malloc(pointer->lengthAndMask, 16);
-		// currently color xorBpp is only 24 per [T128] section 8.14.3
-		UINT32 srcFormat = gdi_get_pixel_format(pointer->xorBpp);
 
 		if (!pdata)
-			goto fail;
-
-		if (!srcFormat)
 			goto fail;
 
 		flip_bitmap(pointer->andMaskData, pdata, (pointer->width + 7) / 8,
 			pointer->height);
 		info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, pdata);
 		_aligned_free(pdata);
+
+		/* currently color xorBpp is only 24 per [T128] section 8.14.3 */
+		srcFormat = gdi_get_pixel_format(pointer->xorBpp);
+
+		if (!srcFormat)
+			goto fail;
 
 		info.hbmColor = wf_create_dib((wfContext*)context, pointer->width, pointer->height, srcFormat, NULL, &pdata);
 
