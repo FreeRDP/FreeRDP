@@ -228,33 +228,35 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 	}
 	else
 	{
+		UINT32 srcFormat;
 		BYTE* pdata = (BYTE*) _aligned_malloc(pointer->lengthAndMask, 16);
 
 		if (!pdata)
 			goto fail;
 
 		flip_bitmap(pointer->andMaskData, pdata, (pointer->width + 7) / 8,
-		            pointer->height);
+			pointer->height);
 		info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, pdata);
 		_aligned_free(pdata);
-		pdata = (BYTE*) _aligned_malloc(pointer->width * pointer->height *
-		                                GetBitsPerPixel(gdi->dstFormat), 16);
 
-		if (!pdata)
+		/* currently color xorBpp is only 24 per [T128] section 8.14.3 */
+		srcFormat = gdi_get_pixel_format(pointer->xorBpp);
+
+		if (!srcFormat)
+			goto fail;
+
+		info.hbmColor = wf_create_dib((wfContext*)context, pointer->width, pointer->height, srcFormat, NULL, &pdata);
+
+		if (!info.hbmColor)
 			goto fail;
 
 		if (!freerdp_image_copy_from_pointer_data(pdata, gdi->dstFormat, 0, 0, 0,
-		        pointer->width, pointer->height,
-		        pointer->xorMaskData, pointer->lengthXorMask,
-		        pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp, &gdi->palette))
+			pointer->width, pointer->height,
+			pointer->xorMaskData, pointer->lengthXorMask,
+			pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp, &gdi->palette))
 		{
-			_aligned_free(pdata);
 			goto fail;
 		}
-
-		info.hbmColor = CreateBitmap(pointer->width, pointer->height, 1,
-		                             GetBitsPerPixel(gdi->dstFormat), pdata);
-		_aligned_free(pdata);
 	}
 
 	hCur = CreateIconIndirect(&info);
