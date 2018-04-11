@@ -107,6 +107,7 @@ ELSEIF(WIN32 AND NOT CYGWIN)
       NAMES
         "libeay32${MSVC_RUNTIME_SUFFIX}d"
         libeay32
+        libcrypto
       ${_OPENSSL_ROOT_HINTS_AND_PATHS}
       PATH_SUFFIXES
         ${MSVC_RUNTIME_PATH_SUFFIX}
@@ -119,6 +120,7 @@ ELSEIF(WIN32 AND NOT CYGWIN)
       NAMES
         "libeay32${MSVC_RUNTIME_SUFFIX}"
         libeay32
+        libcrypto
       ${_OPENSSL_ROOT_HINTS_AND_PATHS}
       PATH_SUFFIXES
         ${MSVC_RUNTIME_PATH_SUFFIX}
@@ -132,6 +134,7 @@ ELSEIF(WIN32 AND NOT CYGWIN)
         "ssleay32${MSVC_RUNTIME_SUFFIX}d"
         ssleay32
         ssl
+        libssl
       ${_OPENSSL_ROOT_HINTS_AND_PATHS}
       PATH_SUFFIXES
         ${MSVC_RUNTIME_PATH_SUFFIX}
@@ -145,6 +148,7 @@ ELSEIF(WIN32 AND NOT CYGWIN)
         "ssleay32${MSVC_RUNTIME_SUFFIX}"
         ssleay32
         ssl
+        libssl
       ${_OPENSSL_ROOT_HINTS_AND_PATHS}
       PATH_SUFFIXES
         ${MSVC_RUNTIME_PATH_SUFFIX}
@@ -164,6 +168,7 @@ ELSEIF(WIN32 AND NOT CYGWIN)
     FIND_LIBRARY(LIB_EAY
       NAMES
         libeay32
+        libcrypto
       ${_OPENSSL_ROOT_HINTS_AND_PATHS}
       PATH_SUFFIXES
         "lib"
@@ -173,6 +178,7 @@ ELSEIF(WIN32 AND NOT CYGWIN)
     FIND_LIBRARY(SSL_EAY
       NAMES
         ssleay32
+        libssl
       ${_OPENSSL_ROOT_HINTS_AND_PATHS}
       PATH_SUFFIXES
         "lib"
@@ -186,6 +192,7 @@ ELSEIF(WIN32 AND NOT CYGWIN)
     FIND_LIBRARY(LIB_EAY
       NAMES
         libeay32
+        libcrypto
       HINTS
         ${_OPENSSL_LIBDIR}
       ${_OPENSSL_ROOT_HINTS_AND_PATHS}
@@ -196,6 +203,7 @@ ELSEIF(WIN32 AND NOT CYGWIN)
     FIND_LIBRARY(SSL_EAY
       NAMES
         ssleay32
+        libssl
       HINTS
         ${_OPENSSL_LIBDIR}
       ${_OPENSSL_ROOT_HINTS_AND_PATHS}
