@@ -55,9 +55,7 @@ void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_st
 {
 	WCHAR* buffer = NULL;
 	int length = 0;
-
 	free(unicode_string->string);
-
 	unicode_string->string = NULL;
 	unicode_string->length = 0;
 
@@ -65,7 +63,6 @@ void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_st
 		return;
 
 	length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0) * 2;
-
 	unicode_string->string = (BYTE*) buffer;
 	unicode_string->length = (UINT16) length;
 }
@@ -77,12 +74,14 @@ void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_st
  */
 UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
 {
+	if (!s || !orderType || !orderLength)
+		return ERROR_INVALID_PARAMETER;
+
 	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, *orderType); /* orderType (2 bytes) */
 	Stream_Read_UINT16(s, *orderLength); /* orderLength (2 bytes) */
-
 	return CHANNEL_RC_OK;
 }
 
@@ -96,8 +95,10 @@ wStream* rail_pdu_init(size_t length)
 {
 	wStream* s;
 	s = Stream_New(NULL, length + RAIL_PDU_HEADER_LENGTH);
+
 	if (!s)
 		return NULL;
+
 	Stream_Seek(s, RAIL_PDU_HEADER_LENGTH);
 	return s;
 }
@@ -113,7 +114,6 @@ UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
-
 	return CHANNEL_RC_OK;
 }
 
@@ -134,7 +134,6 @@ UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshake
 
 	Stream_Read_UINT32(s, handshakeEx->buildNumber); /* buildNumber (4 bytes) */
 	Stream_Read_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
-
 	return CHANNEL_RC_OK;
 }
 

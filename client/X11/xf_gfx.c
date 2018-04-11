@@ -25,6 +25,7 @@
 
 #include <freerdp/log.h>
 #include "xf_gfx.h"
+#include "xf_rail.h"
 
 #include <X11/Xutil.h>
 
@@ -74,22 +75,31 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 				goto fail;
 		}
 
-#ifdef WITH_XRENDER
-
-		if (xfc->context.settings->SmartSizing
-		    || xfc->context.settings->MultiTouchGestures)
+		if (xfc->remote_app)
 		{
-			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
-			          nXSrc, nYSrc, nXDst, nYDst, width, height);
-			xf_draw_screen(xfc, nXDst, nYDst, width, height);
-		}
-		else
-#endif
-		{
-			XPutImage(xfc->display, xfc->drawable, xfc->gc,
+			XPutImage(xfc->display, xfc->primary, xfc->gc,
 			          surface->image, nXSrc, nYSrc,
 			          nXDst, nYDst, width, height);
+			xf_lock_x11(xfc, FALSE);
+			xf_rail_paint(xfc, nXDst, nYDst, nXDst + width, nYDst + height);
+			xf_unlock_x11(xfc, FALSE);
 		}
+		else
+#ifdef WITH_XRENDER
+			if (xfc->context.settings->SmartSizing
+			    || xfc->context.settings->MultiTouchGestures)
+			{
+				XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
+				          nXSrc, nYSrc, nXDst, nYDst, width, height);
+				xf_draw_screen(xfc, nXDst, nYDst, width, height);
+			}
+			else
+#endif
+			{
+				XPutImage(xfc->display, xfc->drawable, xfc->gc,
+				          surface->image, nXSrc, nYSrc,
+				          nXDst, nYDst, width, height);
+			}
 	}
 
 	rc = CHANNEL_RC_OK;

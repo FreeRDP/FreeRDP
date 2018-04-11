@@ -185,7 +185,7 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->local_move.state = LMS_TERMINATING;
 }
 
-void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
+static void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 {
 	int index;
 	int count;
@@ -195,6 +195,7 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 	xfAppWindow* appWindow;
 	const RECTANGLE_16* extents;
 	REGION16 windowInvalidRegion;
+
 	region16_init(&windowInvalidRegion);
 	count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
@@ -517,16 +518,12 @@ static BOOL xf_rail_window_common(rdpContext* context,
 static BOOL xf_rail_window_delete(rdpContext* context,
                                   WINDOW_ORDER_INFO* orderInfo)
 {
-	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context;
-	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
-	            (void*)(UINT_PTR) orderInfo->windowId);
 
-	if (!appWindow)
-		return TRUE;
+	if (!xfc)
+		return FALSE;
 
 	HashTable_Remove(xfc->railWindows, (void*)(UINT_PTR) orderInfo->windowId);
-	xf_DestroyWindow(xfc, appWindow);
 	return TRUE;
 }
 
@@ -611,7 +608,7 @@ static BOOL xf_rail_non_monitored_desktop(rdpContext* context,
 	return TRUE;
 }
 
-void xf_rail_register_update_callbacks(rdpUpdate* update)
+static void xf_rail_register_update_callbacks(rdpUpdate* update)
 {
 	rdpWindowUpdate* window = update->window;
 	window->WindowCreate = xf_rail_window_common;
@@ -842,14 +839,15 @@ static UINT xf_rail_server_min_max_info(RailClientContext* context,
 	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
 	            (void*)(UINT_PTR) minMaxInfo->windowId);
 
-	if (!appWindow)
-		return ERROR_INTERNAL_ERROR;
+	if (appWindow)
+	{
+		xf_SetWindowMinMaxInfo(xfc, appWindow,
+		                       minMaxInfo->maxWidth, minMaxInfo->maxHeight,
+		                       minMaxInfo->maxPosX, minMaxInfo->maxPosY,
+		                       minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight,
+		                       minMaxInfo->maxTrackWidth, minMaxInfo->maxTrackHeight);
+	}
 
-	xf_SetWindowMinMaxInfo(xfc, appWindow,
-	                       minMaxInfo->maxWidth, minMaxInfo->maxHeight,
-	                       minMaxInfo->maxPosX, minMaxInfo->maxPosY,
-	                       minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight,
-	                       minMaxInfo->maxTrackWidth, minMaxInfo->maxTrackHeight);
 	return CHANNEL_RC_OK;
 }
 
@@ -875,9 +873,23 @@ static UINT xf_rail_server_get_appid_response(RailClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
+static void rail_window_free(void* value)
+{
+	xfAppWindow* appWindow = (xfAppWindow*) value;
+
+	if (!appWindow)
+		return;
+
+	xf_DestroyWindow(appWindow->xfc, appWindow);
+}
+
 int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 {
 	rdpContext* context = (rdpContext*) xfc;
+
+	if (!xfc || !rail)
+		return 0;
+
 	xfc->rail = rail;
 	xf_rail_register_update_callbacks(context->update);
 	rail->custom = (void*) xfc;
@@ -894,6 +906,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	if (!xfc->railWindows)
 		return 0;
 
+	xfc->railWindows->valueFree = rail_window_free;
 	return 1;
 }
 
