@@ -88,11 +88,11 @@ static BOOL update_pointer_system(rdpContext* context,
 	switch (pointer_system->type)
 	{
 		case SYSPTR_NULL:
-			pointer->SetNull(context);
+			IFCALL(pointer->SetNull, context);
 			break;
 
 		case SYSPTR_DEFAULT:
-			pointer->SetDefault(context);
+			IFCALL(pointer->SetDefault, context);
 			break;
 
 		default:
