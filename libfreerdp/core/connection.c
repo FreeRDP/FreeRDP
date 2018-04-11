@@ -331,7 +331,19 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 	if (freerdp_channels_disconnect(context->channels, context->instance) != CHANNEL_RC_OK)
 		return FALSE;
 
-	freerdp_set_last_error(context, FREERDP_ERROR_SUCCESS);
+	return TRUE;
+}
+
+BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
+{
+	rdpContext* context;
+
+	if (!rdp_client_disconnect(rdp))
+		return FALSE;
+
+	context = rdp->context;
+
+	context->LastError = FREERDP_ERROR_SUCCESS;
 	clearChannelError(context);
 	ResetEvent(context->abortEvent);
 	return TRUE;
@@ -343,7 +355,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	rdpSettings* settings;
 	rdpContext* context;
 
-	if (!rdp_client_disconnect(rdp))
+	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
 
 	settings = rdp->settings;
@@ -417,7 +429,7 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 	rdpContext* context = rdp->context;
 	rdpChannels* channels = context->channels;
 
-	if (!rdp_client_disconnect(rdp))
+	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
 
 	status = rdp_client_connect(rdp);

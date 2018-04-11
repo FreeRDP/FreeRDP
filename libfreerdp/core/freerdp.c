@@ -158,7 +158,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
-	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);
+	instance->context->LastError = FREERDP_ERROR_SUCCESS;
 	clearChannelError(instance->context);
 	ResetEvent(instance->context->abortEvent);
 	rdp = instance->context->rdp;
@@ -517,7 +517,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 BOOL freerdp_disconnect_before_reconnect(freerdp* instance)
 {
 	rdpRdp* rdp = instance->context->rdp;
-	return rdp_client_disconnect(rdp);
+	return rdp_client_disconnect_and_clear(rdp);
 }
 
 BOOL freerdp_reconnect(freerdp* instance)
