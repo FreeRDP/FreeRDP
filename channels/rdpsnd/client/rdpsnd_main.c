@@ -497,7 +497,7 @@ static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave: cBlockNo: %"PRIu8" wTimeStamp: %"PRIu16"",
 	           rdpsnd->cBlockNo, rdpsnd->wTimeStamp);
 
-	if (rdpsnd->device)
+	if (rdpsnd->device && rdpsnd->attached)
 	{
 		wStream* pcmData = StreamPool_Take(rdpsnd->pool, 4096);
 
@@ -587,11 +587,6 @@ static UINT rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	Stream_Read_UINT8(s, msgType); /* msgType */
 	Stream_Seek_UINT8(s); /* bPad */
 	Stream_Read_UINT16(s, BodySize);
-
-	if (!rdpsnd->attached)
-		goto out;
-
-	//WLog_ERR(TAG,  "msgType %"PRIu8" BodySize %"PRIu16"", msgType, BodySize);
 
 	switch (msgType)
 	{
