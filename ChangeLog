@@ -1,4 +1,43 @@
-2017-11-28	Version 2.0.0-rc1
+# 2017-11-28	Version 2.0.0-rc2
+
+FreeRDP 2.0.0-rc2 is the third release candidate for 2.0.0.
+For a complete and detailed change log since the last release candidate run:
+git log 2.0.0-rc1..2.0.0-rc2
+
+Noteworthy features and improvements:
+
+* IMPORTANT: add support CredSSP v6 - this fixes KB4088776 see #4449, #4488
+* basic support for the "Video Optimized Remoting Virtual Channel Extension" (MS-RDPEVOR) was added
+* many smart card related fixes and cleanups #4312
+* fix ccache support
+* fix OpenSSL 1.1.0 detection on Windows
+* fix IPv6 handling on Windows
+* add support for memory and thread sanitizer
+* support for dynamic resloution changes was added in xfreerdp #4313
+* support for gateway access token (command line option /gat) was added
+* initial support for travis-ci.org was added
+* SSE optimization version of RGB to AVC444 frame split was added
+* build: -msse2/-msse3 are not enabled globally anymore
+
+Fixed github issues (excerpt):
+
+* #4227 Convert settings->Password to binary blob
+* #4231 freerdp-2.0.0_rc0: 5 tests failed out of 184 on ppc
+* #4276 Big endian fixes
+* #4291 xfreerdp “Segmentation fault” when connecting to freerdp-shadow-cli
+* #4293 [X11] shadow server memory corruption with /monitors:2 #4293
+* #4296 drive redirection - raise an error if the directory can't be founde
+* #4306 Cannot connect to shadow server with NLA auth: SEC_E_OUT_OF_SEQUENCE
+* #4447 Apple rpath namespace fixes
+* #4457 Fix /size: /w: /h: with /monitors: (Fix custom sizes)
+* #4527 pre-connection blob (pcb) support in .rdp files
+* #4552 Fix Windows 10 cursors drawing as black
+* smartcard related: #3521, #3431, #3474, #3488, #775, #1424
+
+See https://github.com/FreeRDP/FreeRDP/milestone/8 for a complete list.
+
+
+# 2017-11-28	Version 2.0.0-rc1
 
 FreeRDP 2.0.0-rc1 is the second release candidate for 2.0.0.
 For a complete and detailed change log since the last release candidate run:
