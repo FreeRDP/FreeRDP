@@ -855,8 +855,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 * 2: If server authentication fails, show a warning and allow me to connect or refuse the connection (Warn me).
 		 * 3: No authentication requirement is specified.
 		 */
-		freerdp_set_param_bool(settings, FreeRDP_IgnoreCertificate,
-		                       (file->AuthenticationLevel == 0) ? TRUE : FALSE);
+		settings->AuthenticationLevel = file->AuthenticationLevel;
 	}
 
 	if (~file->ConnectionType)

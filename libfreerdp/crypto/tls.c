@@ -1245,6 +1245,9 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 	if (tls->settings->IgnoreCertificate)
 		return 1;  /* success! */
 
+	if (!tls->isGatewayTransport && tls->settings->AuthenticationLevel == 0)
+		return 1;  /* success! */
+
 	/* if user explicitly specified a certificate name, use it instead of the hostname */
 	if (!tls->isGatewayTransport && tls->settings->CertificateName)
 		hostname = tls->settings->CertificateName;
