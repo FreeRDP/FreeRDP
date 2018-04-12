@@ -828,6 +828,15 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 		unsigned long nitems;
 		unsigned long bytes;
 		unsigned char* prop;
+		xfAppWindow* appWindow = NULL;
+
+		if (app)
+		{
+			appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
+
+			if (!appWindow)
+				return TRUE;
+		}
 
 		if ((Atom) event->xproperty.atom == xfc->_NET_WM_STATE)
 		{
@@ -875,12 +884,6 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 		if (app)
 		{
-			xfAppWindow* appWindow;
-			appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
-
-			if (!appWindow)
-				return TRUE;
-
 			if (maxVert && maxHorz && !minimized
 			    && (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED))
 			{
