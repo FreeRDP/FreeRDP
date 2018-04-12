@@ -664,17 +664,16 @@ BIO_METHOD* BIO_s_buffered_socket(void)
 	return bio_methods;
 }
 
-static char* freerdp_tcp_get_ip_address(int sockfd, BOOL* pIPv6)
+static char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6)
 {
-	socklen_t length;
 	char ipAddress[INET6_ADDRSTRLEN + 1] = { 0 };
-	struct sockaddr_storage saddr = { 0 };
-	struct sockaddr_in6* sockaddr_ipv6 = (struct sockaddr_in6*)&saddr;
-	struct sockaddr_in* sockaddr_ipv4 = (struct sockaddr_in*)&saddr;
-	length = sizeof(struct sockaddr_storage);
+	struct sockaddr_in6* sockaddr_ipv6 = (struct sockaddr_in6*)addr;
+	struct sockaddr_in* sockaddr_ipv4 = (struct sockaddr_in*)addr;
 
-	if (getsockname(sockfd, (struct sockaddr*)&saddr, &length) != 0)
+	if (addr == NULL)
+	{
 		return NULL;
+	}
 
 	switch (sockaddr_ipv4->sin_family)
 	{
@@ -698,10 +697,38 @@ static char* freerdp_tcp_get_ip_address(int sockfd, BOOL* pIPv6)
 			return NULL;
 	}
 
-	if (pIPv6)
+	if (pIPv6 != NULL)
+	{
 		*pIPv6 = (sockaddr_ipv4->sin_family == AF_INET6);
+	}
 
 	return _strdup(ipAddress);
+}
+
+static char* freerdp_tcp_get_ip_address(int sockfd, BOOL* pIPv6)
+{
+	struct sockaddr_storage saddr = { 0 };
+	socklen_t length = sizeof(struct sockaddr_storage);
+
+	if (getsockname(sockfd, (struct sockaddr*)&saddr, &length) != 0)
+	{
+		return NULL;
+	}
+
+	return freerdp_tcp_address_to_string(&saddr, pIPv6);
+}
+
+char* freerdp_tcp_get_peer_address(int sockfd)
+{
+	struct sockaddr_storage saddr = { 0 };
+	socklen_t length = sizeof(struct sockaddr_storage);
+
+	if (getpeername(sockfd, (struct sockaddr*)&saddr, &length) != 0)
+	{
+		return NULL;
+	}
+
+	return freerdp_tcp_address_to_string(&saddr, NULL);
 }
 
 static int freerdp_uds_connect(const char* path)
@@ -1110,6 +1137,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 		if (sockfd <= 0)
 		{
 			char port_str[16];
+			char* peerAddress;
 			struct addrinfo hints;
 			struct addrinfo* addr;
 			struct addrinfo* result;
@@ -1148,6 +1176,12 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 			{
 				freeaddrinfo(result);
 				return -1;
+			}
+
+			if ((peerAddress = freerdp_tcp_address_to_string(addr->ai_addr, NULL)) != NULL)
+			{
+				WLog_DBG(TAG, "connecting to peer %s", peerAddress);
+				free(peerAddress);
 			}
 
 			if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr,

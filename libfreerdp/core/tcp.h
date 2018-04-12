@@ -67,4 +67,6 @@ FREERDP_LOCAL int freerdp_tcp_connect(rdpContext* context,
                                       rdpSettings* settings,
                                       const char* hostname, int port, int timeout);
 
+FREERDP_LOCAL char* freerdp_tcp_get_peer_address(int sockfd);
+
 #endif /* FREERDP_LIB_CORE_TCP_H */
