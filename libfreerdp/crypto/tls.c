@@ -1246,7 +1246,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 		return 1;  /* success! */
 
 	/* if user explicitly specified a certificate name, use it instead of the hostname */
-	if (tls->settings->CertificateName)
+	if (!tls->isGatewayTransport && tls->settings->CertificateName)
 		hostname = tls->settings->CertificateName;
 
 	/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
