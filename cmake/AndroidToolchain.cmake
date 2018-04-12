@@ -1369,6 +1369,10 @@ if( ANDROID_COMPILER_IS_CLANG )
  if( BUILD_WITH_ANDROID_NDK )
   set( ANDROID_CXX_FLAGS "-gcc-toolchain ${ANDROID_TOOLCHAIN_ROOT} ${ANDROID_CXX_FLAGS}" )
  endif()
+else()
+  if( BUILD_WITH_ANDROID_NDK )
+    set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} --sysroot=${ANDROID_SYSROOT}" )
+  endif()
 endif()
 
 # cache flags
