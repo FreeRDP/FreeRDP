@@ -1052,21 +1052,6 @@ BOOL tls_send_alert(rdpTls* tls)
 	return TRUE;
 }
 
-static BIO* findBufferedBio(BIO* front)
-{
-	BIO* ret = front;
-
-	while (ret)
-	{
-		if (BIO_method_type(ret) == BIO_TYPE_BUFFERED)
-			return ret;
-
-		ret = BIO_next(ret);
-	}
-
-	return ret;
-}
-
 int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 {
 	int status;

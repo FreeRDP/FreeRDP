@@ -160,23 +160,6 @@ static int rts_connection_timeout_command_read(rdpRpc* rpc, BYTE* buffer, UINT32
 	return 4;
 }
 
-static int rts_connection_timeout_command_write(BYTE* buffer, UINT32 ConnectionTimeout)
-{
-	if (buffer)
-	{
-		*((UINT32*) &buffer[0]) = RTS_CMD_CONNECTION_TIMEOUT; /* CommandType (4 bytes) */
-		*((UINT32*) &buffer[4]) = ConnectionTimeout; /* ConnectionTimeout (4 bytes) */
-	}
-
-	return 8;
-}
-
-static int rts_cookie_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
-{
-	/* Cookie (16 bytes) */
-	return 16;
-}
-
 static int rts_cookie_command_write(BYTE* buffer, BYTE* Cookie)
 {
 	if (buffer)
@@ -188,12 +171,6 @@ static int rts_cookie_command_write(BYTE* buffer, BYTE* Cookie)
 	return 20;
 }
 
-static int rts_channel_lifetime_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
-{
-	/* ChannelLifetime (4 bytes) */
-	return 4;
-}
-
 static int rts_channel_lifetime_command_write(BYTE* buffer, UINT32 ChannelLifetime)
 {
 	if (buffer)
@@ -203,12 +180,6 @@ static int rts_channel_lifetime_command_write(BYTE* buffer, UINT32 ChannelLifeti
 	}
 
 	return 8;
-}
-
-static int rts_client_keepalive_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
-{
-	/* ClientKeepalive (4 bytes) */
-	return 4;
 }
 
 static int rts_client_keepalive_command_write(BYTE* buffer, UINT32 ClientKeepalive)
@@ -244,11 +215,6 @@ static int rts_version_command_write(BYTE* buffer)
 	return 8;
 }
 
-static int rts_empty_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
-{
-	return 0;
-}
-
 static int rts_empty_command_write(BYTE* buffer)
 {
 	if (buffer)
@@ -265,48 +231,6 @@ static int rts_padding_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	ConformanceCount = *((UINT32*) &buffer[0]); /* ConformanceCount (4 bytes) */
 	/* Padding (variable) */
 	return ConformanceCount + 4;
-}
-
-static int rts_padding_command_write(BYTE* buffer, UINT32 ConformanceCount)
-{
-	if (buffer)
-	{
-		*((UINT32*) &buffer[0]) = RTS_CMD_PADDING; /* CommandType (4 bytes) */
-		*((UINT32*) &buffer[4]) = ConformanceCount; /* ConformanceCount (4 bytes) */
-		ZeroMemory(&buffer[8], ConformanceCount); /* Padding (variable) */
-	}
-
-	return 8 + ConformanceCount;
-}
-
-static int rts_negative_ance_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
-{
-	return 0;
-}
-
-static int rts_negative_ance_command_write(BYTE* buffer)
-{
-	if (buffer)
-	{
-		*((UINT32*) &buffer[0]) = RTS_CMD_NEGATIVE_ANCE; /* CommandType (4 bytes) */
-	}
-
-	return 4;
-}
-
-static int rts_ance_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
-{
-	return 0;
-}
-
-static int rts_ance_command_write(BYTE* buffer)
-{
-	if (buffer)
-	{
-		*((UINT32*) &buffer[0]) = RTS_CMD_ANCE; /* CommandType (4 bytes) */
-	}
-
-	return 4;
 }
 
 static int rts_client_address_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
@@ -326,42 +250,6 @@ static int rts_client_address_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 len
 		/* padding (12 bytes) */
 		return 4 + 16 + 12;
 	}
-}
-
-static int rts_client_address_command_write(BYTE* buffer, UINT32 AddressType, BYTE* ClientAddress)
-{
-	if (buffer)
-	{
-		*((UINT32*) &buffer[0]) = RTS_CMD_CLIENT_ADDRESS; /* CommandType (4 bytes) */
-		*((UINT32*) &buffer[4]) = AddressType; /* AddressType (4 bytes) */
-	}
-
-	if (AddressType == 0)
-	{
-		if (buffer)
-		{
-			CopyMemory(&buffer[8], ClientAddress, 4); /* ClientAddress (4 bytes) */
-			ZeroMemory(&buffer[12], 12); /* padding (12 bytes) */
-		}
-
-		return 24;
-	}
-	else
-	{
-		if (buffer)
-		{
-			CopyMemory(&buffer[8], ClientAddress, 16); /* ClientAddress (16 bytes) */
-			ZeroMemory(&buffer[24], 12); /* padding (12 bytes) */
-		}
-
-		return 36;
-	}
-}
-
-static int rts_association_group_id_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
-{
-	/* AssociationGroupId (16 bytes) */
-	return 16;
 }
 
 static int rts_association_group_id_command_write(BYTE* buffer, BYTE* AssociationGroupId)
@@ -390,23 +278,6 @@ static int rts_destination_command_write(BYTE* buffer, UINT32 Destination)
 	{
 		*((UINT32*) &buffer[0]) = RTS_CMD_DESTINATION; /* CommandType (4 bytes) */
 		*((UINT32*) &buffer[4]) = Destination; /* Destination (4 bytes) */
-	}
-
-	return 8;
-}
-
-static int rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
-{
-	/* PingTrafficSent (4 bytes) */
-	return 4;
-}
-
-static int rts_ping_traffic_sent_notify_command_write(BYTE* buffer, UINT32 PingTrafficSent)
-{
-	if (buffer)
-	{
-		*((UINT32*) &buffer[0]) = RTS_CMD_PING_TRAFFIC_SENT_NOTIFY; /* CommandType (4 bytes) */
-		*((UINT32*) &buffer[4]) = PingTrafficSent; /* PingTrafficSent (4 bytes) */
 	}
 
 	return 8;
@@ -528,32 +399,6 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 }
 
 /* Out-of-Sequence PDUs */
-
-static int rts_send_keep_alive_pdu(rdpRpc* rpc)
-{
-	int status;
-	BYTE* buffer;
-	UINT32 length;
-	rpcconn_rts_hdr_t header;
-	RpcInChannel* inChannel = rpc->VirtualConnection->DefaultInChannel;
-	rts_pdu_header_init(&header);
-	header.frag_length = 28;
-	header.Flags = RTS_FLAG_OTHER_CMD;
-	header.NumberOfCommands = 1;
-	WLog_DBG(TAG, "Sending Keep-Alive RTS PDU");
-	buffer = (BYTE*) malloc(header.frag_length);
-
-	if (!buffer)
-		return -1;
-
-	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
-	rts_client_keepalive_command_write(&buffer[20],
-	                                   rpc->CurrentKeepAliveInterval); /* ClientKeepAlive (8 bytes) */
-	length = header.frag_length;
-	status = rpc_in_channel_write(inChannel, buffer, length);
-	free(buffer);
-	return (status > 0) ? 1 : -1;
-}
 
 int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {

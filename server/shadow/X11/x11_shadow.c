@@ -553,28 +553,6 @@ static int x11_shadow_handle_xevent(x11ShadowSubsystem* subsystem,
 	return 1;
 }
 
-static void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x,
-                                       int y,
-                                       int width, int height)
-{
-	XRectangle region;
-
-	if (!subsystem->use_xfixes || !subsystem->use_xdamage)
-		return;
-
-	region.x = x;
-	region.y = y;
-	region.width = width;
-	region.height = height;
-#ifdef WITH_XFIXES
-	XLockDisplay(subsystem->display);
-	XFixesSetRegion(subsystem->display, subsystem->xdamage_region, &region, 1);
-	XDamageSubtract(subsystem->display, subsystem->xdamage,
-	                subsystem->xdamage_region, None);
-	XUnlockDisplay(subsystem->display);
-#endif
-}
-
 static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 {
 	int x, y;
