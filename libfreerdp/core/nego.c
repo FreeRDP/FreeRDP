@@ -157,7 +157,8 @@ BOOL nego_connect(rdpNego* nego)
 
 			if (nego->state == NEGO_STATE_FAIL)
 			{
-				WLog_ERR(TAG, "Protocol Security Negotiation Failure");
+				if (freerdp_get_last_error(nego->transport->context) == FREERDP_ERROR_SUCCESS)
+					WLog_ERR(TAG, "Protocol Security Negotiation Failure");
 				nego->state = NEGO_STATE_FINAL;
 				return FALSE;
 			}
