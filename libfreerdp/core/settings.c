@@ -255,8 +255,7 @@ BOOL settings_get_computer_name(rdpSettings* settings)
 	DWORD nSize = 0;
 	CHAR* computerName;
 
-	if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || (GetLastError() != ERROR_MORE_DATA) ||
-	    (nSize < 2))
+	if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || GetLastError() != ERROR_MORE_DATA)
 		return FALSE;
 
 	computerName = calloc(nSize, sizeof(CHAR));
