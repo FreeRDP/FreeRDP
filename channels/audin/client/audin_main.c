@@ -135,14 +135,15 @@ static UINT audin_channel_write_and_free(AUDIN_CHANNEL_CALLBACK* callback, wStre
 static UINT audin_process_version(IWTSVirtualChannelCallback* pChannelCallback, wStream* s)
 {
 	wStream* out;
-	UINT32 Version;
+	const UINT32 ClientVersion = 0x01;
+	UINT32 ServerVersion;
 	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*) pChannelCallback;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, Version);
-	DEBUG_DVC("Version=%"PRIu32"", Version);
+	Stream_Read_UINT32(s, ServerVersion);
+	DEBUG_DVC("ServerVersion=%"PRIu32", ClientVersion=%"PRIu32, ServerVersion, ClientVersion);
 	out = Stream_New(NULL, 5);
 
 	if (!out)
@@ -152,7 +153,7 @@ static UINT audin_process_version(IWTSVirtualChannelCallback* pChannelCallback, 
 	}
 
 	Stream_Write_UINT8(out, MSG_SNDIN_VERSION);
-	Stream_Write_UINT32(out, Version);
+	Stream_Write_UINT32(out, ClientVersion);
 	return audin_channel_write_and_free(callback, out, TRUE);
 }
 
