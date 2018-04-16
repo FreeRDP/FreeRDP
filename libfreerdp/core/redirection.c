@@ -156,14 +156,14 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 		if (!settings->RedirectionTargetFQDN)
 			return -1;
 	}
-	else if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 	{
 		free(settings->TargetNetAddress);
 		settings->TargetNetAddress = _strdup(redirection->TargetNetAddress);
 		if (!settings->TargetNetAddress)
 			return -1;
 	}
-	else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
+	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 	{
 		free(settings->RedirectionTargetNetBiosName);
 		settings->RedirectionTargetNetBiosName = _strdup(redirection->TargetNetBiosName);

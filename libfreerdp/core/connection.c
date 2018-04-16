@@ -371,18 +371,18 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	}
 	else
 	{
-		if (settings->RedirectionFlags & LB_TARGET_FQDN)
+        if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
+			settings->ServerHostname = _strdup(settings->TargetNetAddress);
 
 			if (!settings->ServerHostname)
 				return FALSE;
 		}
-		else if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+		else if (settings->RedirectionFlags & LB_TARGET_FQDN)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->TargetNetAddress);
+			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
 
 			if (!settings->ServerHostname)
 				return FALSE;
