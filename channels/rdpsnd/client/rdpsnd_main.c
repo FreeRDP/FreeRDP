@@ -219,7 +219,7 @@ static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	Stream_Write_UINT16(pdu, 0); /* wDGramPort */
 	Stream_Write_UINT16(pdu, wNumberOfFormats); /* wNumberOfFormats */
 	Stream_Write_UINT8(pdu, 0); /* cLastBlockConfirmed */
-	Stream_Write_UINT16(pdu, 6); /* wVersion */
+	Stream_Write_UINT16(pdu, 0x8); /* wVersion */
 	Stream_Write_UINT8(pdu, 0); /* bPad */
 
 	for (index = 0; index < wNumberOfFormats; index++)
@@ -469,12 +469,7 @@ static UINT rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd,
 	return rdpsnd_virtual_channel_write(rdpsnd, pdu);
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
+static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	size_t size;
 	BYTE* data;
@@ -483,19 +478,12 @@ static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	DWORD end;
 	DWORD diffMS;
 	UINT latency = 0;
-	rdpsnd->expectingWave = FALSE;
-	/**
-	 * The Wave PDU is a special case: it is always sent after a Wave Info PDU,
-	 * and we do not process its header. Instead, the header is pad that needs
-	 * to be filled with the first four bytes of the audio sample data sent as
-	 * part of the preceding Wave Info PDU.
-	 */
-	CopyMemory(Stream_Buffer(s), rdpsnd->waveData, 4);
-	data = Stream_Buffer(s);
-	size = Stream_Length(s);
+
+	data = Stream_Pointer(s);
+	size = Stream_GetRemainingLength(s);
 	format = &rdpsnd->ClientFormats[rdpsnd->wCurrentFormatNo];
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave: cBlockNo: %"PRIu8" wTimeStamp: %"PRIu16"",
-	           rdpsnd->cBlockNo, rdpsnd->wTimeStamp);
+			   rdpsnd->cBlockNo, rdpsnd->wTimeStamp);
 
 	if (rdpsnd->device && rdpsnd->attached)
 	{
@@ -510,7 +498,7 @@ static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 		{
 			Stream_SealLength(pcmData);
 			latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device, Stream_Buffer(pcmData),
-			                       Stream_Length(pcmData));
+								   Stream_Length(pcmData));
 			status = CHANNEL_RC_OK;
 		}
 
@@ -523,6 +511,80 @@ static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	end = GetTickCount();
 	diffMS = end - rdpsnd->wArrivalTime + latency;
 	return rdpsnd_send_wave_confirm_pdu(rdpsnd, rdpsnd->wTimeStamp + diffMS, rdpsnd->cBlockNo);
+}
+
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
+{
+	rdpsnd->expectingWave = FALSE;
+	/**
+	 * The Wave PDU is a special case: it is always sent after a Wave Info PDU,
+	 * and we do not process its header. Instead, the header is pad that needs
+	 * to be filled with the first four bytes of the audio sample data sent as
+	 * part of the preceding Wave Info PDU.
+	 */
+	CopyMemory(Stream_Buffer(s), rdpsnd->waveData, 4);
+	return rdpsnd_treat_wave(rdpsnd, s);
+}
+
+static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodySize)
+{
+	UINT16 wFormatNo;
+	AUDIO_FORMAT* format;
+	UINT32 dwAudioTimeStamp;
+
+	if (Stream_GetRemainingLength(s) < 16)
+		return ERROR_BAD_LENGTH;
+
+	Stream_Read_UINT16(s, rdpsnd->wTimeStamp);
+	Stream_Read_UINT16(s, wFormatNo);
+	Stream_Read_UINT8(s, rdpsnd->cBlockNo);
+	Stream_Seek(s, 3); /* bPad */
+	Stream_Read_UINT32(s, dwAudioTimeStamp);
+	rdpsnd->waveDataSize = BodySize - 16;
+
+	format = &rdpsnd->ClientFormats[wFormatNo];
+	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave2PDU: cBlockNo: %"PRIu8" wFormatNo: %"PRIu16"",
+	           rdpsnd->cBlockNo, wFormatNo);
+
+
+	if (!rdpsnd->isOpen || (wFormatNo != rdpsnd->wCurrentFormatNo))
+	{
+		BOOL rc;
+		AUDIO_FORMAT deviceFormat = *format;
+		rdpsnd_recv_close_pdu(rdpsnd);
+		rc = IFCALLRESULT(FALSE, rdpsnd->device->FormatSupported, rdpsnd->device, format);
+
+		if (!rc)
+		{
+			deviceFormat.wFormatTag = WAVE_FORMAT_PCM;
+			deviceFormat.wBitsPerSample = 16;
+			deviceFormat.cbSize = 0;
+		}
+
+		rc = IFCALLRESULT(FALSE, rdpsnd->device->Open, rdpsnd->device, &deviceFormat, rdpsnd->latency);
+
+		if (!rc)
+			return CHANNEL_RC_INITIALIZATION_ERROR;
+
+		rc = IFCALLRESULT(FALSE, rdpsnd->device->FormatSupported, rdpsnd->device, format);
+
+		if (!rc)
+		{
+			if (!freerdp_dsp_context_reset(rdpsnd->dsp_context, format))
+				return CHANNEL_RC_INITIALIZATION_ERROR;
+		}
+
+		rdpsnd->isOpen = TRUE;
+		rdpsnd->wCurrentFormatNo = wFormatNo;
+	}
+
+	return rdpsnd_treat_wave(rdpsnd, s);
 }
 
 static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
@@ -608,6 +670,10 @@ static UINT rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 
 		case SNDC_SETVOLUME:
 			status = rdpsnd_recv_volume_pdu(rdpsnd, s);
+			break;
+
+		case SNDC_WAVE2:
+			status = rdpsnd_recv_wave2_pdu(rdpsnd, s, BodySize);
 			break;
 
 		default:
