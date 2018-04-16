@@ -78,12 +78,6 @@ struct _BIO_RDP_TLS
 };
 typedef struct _BIO_RDP_TLS BIO_RDP_TLS;
 
-static long bio_rdp_tls_callback(BIO* bio, int mode, const char* argp, int argi,
-                                 long argl, long ret)
-{
-	return 1;
-}
-
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
 	int error;
@@ -1050,21 +1044,6 @@ BOOL tls_send_alert(rdpTls* tls)
 
 #endif
 	return TRUE;
-}
-
-static BIO* findBufferedBio(BIO* front)
-{
-	BIO* ret = front;
-
-	while (ret)
-	{
-		if (BIO_method_type(ret) == BIO_TYPE_BUFFERED)
-			return ret;
-
-		ret = BIO_next(ret);
-	}
-
-	return ret;
 }
 
 int tls_write_all(rdpTls* tls, const BYTE* data, int length)
