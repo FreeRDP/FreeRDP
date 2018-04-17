@@ -36,6 +36,7 @@
 
 #include <freerdp/addin.h>
 #include <freerdp/primitives.h>
+#include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/codec/h264.h>
