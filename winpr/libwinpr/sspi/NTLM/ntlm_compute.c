@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include "ntlm.h"
 #include "../sspi.h"
 
@@ -721,13 +723,15 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 	}
 }
 
-void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context)
+void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE *mic, UINT32 size)
 {
 	/*
 	 * Compute the HMAC-MD5 hash of ConcatenationOf(NEGOTIATE_MESSAGE,
 	 * CHALLENGE_MESSAGE, AUTHENTICATE_MESSAGE) using the ExportedSessionKey
 	 */
 	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
+
+	assert(size >= WINPR_MD5_DIGEST_LENGTH);
 
 	if (!hmac)
 		return;
@@ -740,7 +744,7 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context)
 		                  context->ChallengeMessage.cbBuffer);
 		winpr_HMAC_Update(hmac, (BYTE*) context->AuthenticateMessage.pvBuffer,
 		                  context->AuthenticateMessage.cbBuffer);
-		winpr_HMAC_Final(hmac, context->MessageIntegrityCheck, WINPR_MD5_DIGEST_LENGTH);
+		winpr_HMAC_Final(hmac, mic, WINPR_MD5_DIGEST_LENGTH);
 	}
 
 	winpr_HMAC_Free(hmac);
