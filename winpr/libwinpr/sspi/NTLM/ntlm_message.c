@@ -917,9 +917,9 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->UseMIC)
 	{
 		/* Message Integrity Check */
-		ntlm_compute_message_integrity_check(context);
+		ntlm_compute_message_integrity_check(context, message->MessageIntegrityCheck, 16);
 		Stream_SetPosition(s, context->MessageIntegrityCheckOffset);
-		Stream_Write(s, context->MessageIntegrityCheck, 16);
+		Stream_Write(s, message->MessageIntegrityCheck, 16);
 		Stream_SetPosition(s, length);
 	}
 
@@ -947,7 +947,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->UseMIC)
 	{
 		WLog_DBG(TAG, "MessageIntegrityCheck (length = 16)");
-		winpr_HexDump(TAG, WLOG_DEBUG, context->MessageIntegrityCheck, 16);
+		winpr_HexDump(TAG, WLOG_DEBUG, message->MessageIntegrityCheck, 16);
 	}
 
 #endif
@@ -961,6 +961,7 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	UINT32 flags = 0;
 	NTLM_AV_PAIR* AvFlags = NULL;
 	NTLM_AUTHENTICATE_MESSAGE* message;
+	BYTE messageIntegrityCheck[16];
 
 	if (context->state != NTLM_STATE_COMPLETION)
 		return SEC_E_OUT_OF_SEQUENCE;
@@ -988,15 +989,15 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	{
 		ZeroMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
 		           16);
-		ntlm_compute_message_integrity_check(context);
+		ntlm_compute_message_integrity_check(context, &messageIntegrityCheck, sizeof(messageIntegrityCheck));
 		CopyMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
 		           message->MessageIntegrityCheck, 16);
 
-		if (memcmp(context->MessageIntegrityCheck, message->MessageIntegrityCheck, 16) != 0)
+		if (memcmp(messageIntegrityCheck, message->MessageIntegrityCheck, 16) != 0)
 		{
 			WLog_ERR(TAG, "Message Integrity Check (MIC) verification failed!");
 			WLog_ERR(TAG, "Expected MIC:");
-			winpr_HexDump(TAG, WLOG_ERROR, context->MessageIntegrityCheck, 16);
+			winpr_HexDump(TAG, WLOG_ERROR, messageIntegrityCheck, 16);
 			WLog_ERR(TAG, "Actual MIC:");
 			winpr_HexDump(TAG, WLOG_ERROR, message->MessageIntegrityCheck, 16);
 			return SEC_E_MESSAGE_ALTERED;

@@ -250,6 +250,7 @@ struct _NTLM_CONTEXT
 	NTLM_NEGOTIATE_MESSAGE NEGOTIATE_MESSAGE;
 	NTLM_CHALLENGE_MESSAGE CHALLENGE_MESSAGE;
 	NTLM_AUTHENTICATE_MESSAGE AUTHENTICATE_MESSAGE;
+	UINT32 MessageIntegrityCheckOffset;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
 	SecBuffer AuthenticateMessage;
@@ -272,8 +273,6 @@ struct _NTLM_CONTEXT
 	BYTE ClientSealingKey[16];
 	BYTE ServerSigningKey[16];
 	BYTE ServerSealingKey[16];
-	BYTE MessageIntegrityCheck[16];
-	UINT32 MessageIntegrityCheckOffset;
 	psPeerComputeNtlmHash HashCallback;
 	void* HashCallbackArg;
 };
