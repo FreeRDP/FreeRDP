@@ -737,9 +737,13 @@ static int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 
 		do
 		{
-			status = poll(&pollfds, 1, 10 * 1000);
+			status = poll(&pollfds, 1, 10);
 		}
 		while ((status < 0) && (errno == EINTR));
+
+		if (status == 0) {
+			status = WAIT_TIMEOUT;
+		}
 
 #elif !defined(_WIN32)
 		FD_ZERO(&rset);
