@@ -733,7 +733,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 }
 
 static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
-		const char* method, const char* peerAddress, int timeout)
+		const char* method, const char* peerAddress, int timeout, BOOL* rpcFallback)
 {
 	HttpResponse* response = NULL;
 	int statusCode;
@@ -753,6 +753,14 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 		response = http_response_recv(tls);
 		if (!response)
 			return FALSE;
+
+		if (response->StatusCode == HTTP_STATUS_NOT_FOUND)
+		{
+			WLog_INFO(TAG, "RD Gateway does not support HTTP transport.");
+			if (rpcFallback) *rpcFallback = TRUE;
+			http_response_free(response);
+			return FALSE;
+		}
 
 		if (!rdg_handle_ntlm_challenge(rdg->ntlm, response))
 		{
@@ -824,7 +832,7 @@ static BOOL rdg_tunnel_connect(rdpRdg* rdg)
 	return TRUE;
 }
 
-BOOL rdg_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
+BOOL rdg_connect(rdpRdg* rdg, int timeout, BOOL* rpcFallback)
 {
 	BOOL status;
 	int outConnSocket = 0;
@@ -832,7 +840,7 @@ BOOL rdg_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
 	assert(rdg != NULL);
 
 	status = rdg_establish_data_connection(
-			rdg, rdg->tlsOut, "RDG_OUT_DATA", NULL, timeout);
+			rdg, rdg->tlsOut, "RDG_OUT_DATA", NULL, timeout, rpcFallback);
 
 	if (status)
 	{
@@ -843,7 +851,7 @@ BOOL rdg_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
 		peerAddress = freerdp_tcp_get_peer_address(outConnSocket);
 
 		status = rdg_establish_data_connection(
-				rdg, rdg->tlsIn, "RDG_IN_DATA", peerAddress, timeout);
+				rdg, rdg->tlsIn, "RDG_IN_DATA", peerAddress, timeout, NULL);
 
 		free(peerAddress);
 	}

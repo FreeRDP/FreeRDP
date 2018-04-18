@@ -138,8 +138,7 @@ struct rdp_rdg
 FREERDP_LOCAL rdpRdg* rdg_new(rdpTransport* transport);
 FREERDP_LOCAL void rdg_free(rdpRdg* rdg);
 
-FREERDP_LOCAL BOOL rdg_connect(rdpRdg* rdg, const char* hostname, UINT16 port,
-                               int timeout);
+FREERDP_LOCAL BOOL rdg_connect(rdpRdg* rdg, int timeout, BOOL* rpcFallback);
 FREERDP_LOCAL DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events,
         DWORD count);
 
