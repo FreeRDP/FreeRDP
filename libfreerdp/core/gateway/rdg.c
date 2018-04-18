@@ -1592,7 +1592,7 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		 *
 		 * See issue #3602
 		 */
-		return BIO_get_fd(tlsOut->bio, NULL);
+		status = BIO_ctrl(tlsOut->bio, cmd, arg1, arg2);
 	}
 
 	return status;
