@@ -1583,6 +1583,17 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		else
 			status = 1;
 	}
+	else if (cmd == BIO_C_GET_FD)
+	{
+		/*
+		 * Even if two FDs are part of RDG, only one FD can be returned here.
+		 *
+		 * In FreeRDP, BIO FDs are only used for polling, so it is safe to use the outgoing FD only
+		 *
+		 * See issue #3602
+		 */
+		return BIO_get_fd(tlsOut->bio, NULL);
+	}
 
 	return status;
 }
