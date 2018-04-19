@@ -75,57 +75,62 @@ static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
 	return TRUE;
 }
 
-static wStream* rdg_receive_packet(rdpRdg* rdg)
+static BOOL rdg_read_all(rdpTls* tls, BYTE* buffer, int size)
 {
 	int status;
+	int readCount = 0;
+
+	while (readCount < size)
+	{
+		status = BIO_read(tls->bio, buffer, size - readCount);
+
+		if (status <= 0)
+		{
+			if (!BIO_should_retry(tls->bio))
+				return FALSE;
+
+			continue;
+		}
+
+		readCount += status;
+	}
+	return TRUE;
+}
+
+static wStream* rdg_receive_packet(rdpRdg* rdg)
+{
 	wStream* s;
-	RdgPacketHeader* packet;
-	UINT32 readCount = 0;
+	size_t packetLength;
+
 	s = Stream_New(NULL, 1024);
 
 	if (!s)
 		return NULL;
 
-	packet = (RdgPacketHeader*) Stream_Buffer(s);
-
-	while (readCount < sizeof(RdgPacketHeader))
+	if (!rdg_read_all(rdg->tlsOut, Stream_Buffer(s), sizeof(RdgPacketHeader)))
 	{
-		status = BIO_read(rdg->tlsOut->bio, Stream_Pointer(s), sizeof(RdgPacketHeader) - readCount);
-
-		if (status < 0)
-		{
-			continue;
-		}
-
-		readCount += status;
-		Stream_Seek(s, readCount);
+		Stream_Free(s, TRUE);
+		return NULL;
 	}
 
-	if (Stream_Capacity(s) < packet->packetLength)
-	{
-		if (!Stream_EnsureCapacity(s, packet->packetLength))
-		{
-			Stream_Free(s, TRUE);
-			return NULL;
-		}
+	Stream_Seek(s, 4);
+	Stream_Read_UINT32(s, packetLength);
 
-		packet = (RdgPacketHeader*) Stream_Buffer(s);
+	if (!Stream_EnsureCapacity(s, packetLength))
+	{
+		Stream_Free(s, TRUE);
+		return NULL;
 	}
 
-	while (readCount < packet->packetLength)
+	if (!rdg_read_all(rdg->tlsOut, Stream_Buffer(s) + sizeof(RdgPacketHeader),
+			packetLength - sizeof(RdgPacketHeader)))
 	{
-		status = BIO_read(rdg->tlsOut->bio, Stream_Pointer(s), packet->packetLength - readCount);
-
-		if (status < 0)
-		{
-			continue;
-		}
-
-		readCount += status;
-		Stream_Seek(s, readCount);
+		Stream_Free(s, TRUE);
+		return NULL;
 	}
 
-	Stream_SealLength(s);
+	Stream_SetLength(s, packetLength);
+
 	return s;
 }
 
@@ -161,6 +166,8 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 {
 	wStream* s;
 	BOOL status;
+	UINT32 packetSize = 16;
+	UINT16 fieldsPresent = 0;
 	WCHAR* PAACookie = NULL;
 	UINT16 PAACookieLen = 0;
 
@@ -171,38 +178,30 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 		if (!PAACookie)
 			return FALSE;
 
-		s = Stream_New(NULL, 16 + 2 + 2 * PAACookieLen);
-
-		if (!s)
-		{
-			free(PAACookie);
-			return FALSE;
-		}
+		packetSize += 2 + PAACookieLen * sizeof(WCHAR);
+		fieldsPresent = HTTP_TUNNEL_PACKET_FIELD_PAA_COOKIE;
 	}
-	else
-	{
-		s = Stream_New(NULL, 16);
 
-		if (!s)
-			return FALSE;
+	s = Stream_New(NULL, packetSize);
+
+	if (!s)
+	{
+		free(PAACookie);
+		return FALSE;
 	}
 
 	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_CREATE); /* Type (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
-	Stream_Write_UINT32(s, 16); /* PacketLength (4 bytes) */
-	Stream_Write_UINT32(s, HTTP_CAPABILITY_TYPE_QUAR_SOH); /* CapabilityFlags (4 bytes) */
+	Stream_Write_UINT32(s, packetSize); /* PacketLength (4 bytes) */
 
-	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
+	Stream_Write_UINT32(s, HTTP_CAPABILITY_TYPE_QUAR_SOH); /* CapabilityFlags (4 bytes) */
+	Stream_Write_UINT16(s, fieldsPresent); /* FieldsPresent (2 bytes) */
+	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
+
+	if (PAACookie)
 	{
-		Stream_Write_UINT16(s, 1); /* FieldsPresent (2 bytes) */
-		Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
 		Stream_Write_UINT16(s, PAACookieLen * 2); /* PAA cookie string length */
 		Stream_Write_UTF16_String(s, PAACookie, PAACookieLen);
-	}
-	else
-	{
-		Stream_Write_UINT16(s, 0); /* FieldsPresent (2 bytes) */
-		Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
 	}
 
 	Stream_SealLength(s);
@@ -301,12 +300,33 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	return status;
 }
 
-static wStream* rdg_build_http_request(rdpRdg* rdg, char* method)
+static BOOL rdg_set_ntlm_auth_header(rdpNtlm* ntlm, HttpRequest* request)
+{
+	SecBuffer* ntlmToken = ntlm->outputBuffer;
+	char* base64NtlmToken = NULL;
+
+	if (ntlmToken)
+		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, ntlmToken->cbBuffer);
+
+	if (base64NtlmToken)
+	{
+		http_request_set_auth_scheme(request, "NTLM");
+		http_request_set_auth_param(request, base64NtlmToken);
+		free(base64NtlmToken);
+
+		if (!request->AuthScheme || !request->AuthParam)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
+		const char* transferEncoding)
 {
 	wStream* s;
 	HttpRequest* request = NULL;
-	SecBuffer* ntlmToken = NULL;
-	char* base64NtlmToken = NULL;
+
 	assert(method != NULL);
 	request = http_request_new();
 
@@ -321,25 +341,13 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, char* method)
 
 	if (rdg->ntlm)
 	{
-		ntlmToken = rdg->ntlm->outputBuffer;
-
-		if (ntlmToken)
-			base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, ntlmToken->cbBuffer);
-
-		if (base64NtlmToken)
-		{
-			http_request_set_auth_scheme(request, "NTLM");
-			http_request_set_auth_param(request, base64NtlmToken);
-			free(base64NtlmToken);
-
-			if (!request->AuthScheme || !request->AuthParam)
-				return NULL;
-		}
+		if (!rdg_set_ntlm_auth_header(rdg->ntlm, request))
+			return NULL;
 	}
 
-	if (rdg->state == RDG_CLIENT_STATE_IN_CHANNEL_AUTHORIZED)
+	if (transferEncoding)
 	{
-		http_request_set_transfer_encoding(request, "chunked");
+		http_request_set_transfer_encoding(request, transferEncoding);
 	}
 
 	s = http_request_write(rdg->http, request);
@@ -351,65 +359,25 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, char* method)
 	return s;
 }
 
-static BOOL rdg_process_out_channel_response(rdpRdg* rdg, HttpResponse* response)
+static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 {
-	int status;
-	wStream* s;
 	char* token64 = NULL;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
-	rdpNtlm* ntlm = rdg->ntlm;
-
-	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
-	{
-		if (response->StatusCode == HTTP_STATUS_OK)
-		{
-			rdg->state = RDG_CLIENT_STATE_OUT_CHANNEL_AUTHORIZED;
-			/*
-				packet trace shows additional 10 bytes with value 0xabcdabcdabcdabcdabcd
-				which is not a normal header + data format
-				can't find any documentation on how to handle, chose to just read an extra 10 bytes
-			*/
-			s = Stream_New(NULL, 10);
-
-			if (!s)
-				return FALSE;
-
-			status = BIO_read(rdg->tlsOut->bio, Stream_Pointer(s), 10);
-			Stream_Free(s, TRUE);
-
-			if (status <= 0)
-				return FALSE;
-
-			return TRUE;
-		}
-		else
-		{
-			/* fallback to regular authentication scheme */
-			rdg->extAuth = HTTP_EXTENDED_AUTH_NONE;
-		}
-	}
 
 	if (response->StatusCode != HTTP_STATUS_DENIED)
 	{
-		WLog_DBG(TAG, "RDG not supported");
-		rdg->state = RDG_CLIENT_STATE_NOT_FOUND;
+		WLog_DBG(TAG, "Unexpected NTLM challenge HTTP status: %d",
+			response->StatusCode);
 		return FALSE;
 	}
 
-	WLog_DBG(TAG, "Out Channel authorization required");
+	token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
 
-	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
-	{
-		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
+	if (!token64)
+		return FALSE;
 
-		if (!token64)
-		{
-			return FALSE;
-		}
-
-		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
-	}
+	crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
 
 	if (ntlmTokenData && ntlmTokenLength)
 	{
@@ -418,131 +386,25 @@ static BOOL rdg_process_out_channel_response(rdpRdg* rdg, HttpResponse* response
 	}
 
 	ntlm_authenticate(ntlm);
-	s = rdg_build_http_request(rdg, "RDG_OUT_DATA");
 
-	if (!s)
-		return FALSE;
-
-	status = tls_write_all(rdg->tlsOut, Stream_Buffer(s), Stream_Length(s));
-	Stream_Free(s, TRUE);
-	ntlm_free(rdg->ntlm);
-	rdg->ntlm = NULL;
-
-	if (status < 0)
-		return FALSE;
-
-	rdg->state = RDG_CLIENT_STATE_OUT_CHANNEL_AUTHORIZE;
 	return TRUE;
 }
 
-static BOOL rdg_process_out_channel_authorization(rdpRdg* rdg, HttpResponse* response)
+static BOOL rdg_skip_seed_payload(rdpTls* tls, int lastResponseLength)
 {
-	if (response->StatusCode != HTTP_STATUS_OK)
+	BYTE seed_payload[10];
+
+	/* Per [MS-TSGU] 3.3.5.1 step 4, after final OK response RDG server sends
+	 * random "seed" payload of limited size. In practice it's 10 bytes.
+	 */
+	if (lastResponseLength < sizeof(seed_payload))
 	{
-		rdg->state = RDG_CLIENT_STATE_CLOSED;
-		return FALSE;
-	}
-
-	WLog_DBG(TAG, "Out Channel authorization complete");
-	rdg->state = RDG_CLIENT_STATE_OUT_CHANNEL_AUTHORIZED;
-	return TRUE;
-}
-
-static BOOL rdg_process_in_channel_response(rdpRdg* rdg, HttpResponse* response)
-{
-	int status;
-	wStream* s;
-	char* token64 = NULL;
-	int ntlmTokenLength = 0;
-	BYTE* ntlmTokenData = NULL;
-	rdpNtlm* ntlm = rdg->ntlm;
-
-	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
-	{
-		if (response->StatusCode == HTTP_STATUS_OK)
-		{
-			rdg->state = RDG_CLIENT_STATE_IN_CHANNEL_AUTHORIZED;
-			/* send http headers again */
-			s = rdg_build_http_request(rdg, "RDG_IN_DATA");
-
-			if (!s)
-				return FALSE;
-
-			status = tls_write_all(rdg->tlsIn, Stream_Buffer(s), Stream_Length(s));
-			Stream_Free(s, TRUE);
-
-			if (status < 0)
-				return FALSE;
-
-			return TRUE;
-		}
-		else
-		{
-			rdg->extAuth = HTTP_EXTENDED_AUTH_NONE;
-		}
-	}
-
-	WLog_DBG(TAG, "In Channel authorization required");
-
-	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
-	{
-		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
-
-		if (!token64)
+		if (!rdg_read_all(tls, seed_payload,
+				sizeof(seed_payload) - lastResponseLength))
 		{
 			return FALSE;
 		}
-
-		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
 	}
-
-	if (ntlmTokenData && ntlmTokenLength)
-	{
-		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
-		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
-	}
-
-	ntlm_authenticate(ntlm);
-	s = rdg_build_http_request(rdg, "RDG_IN_DATA");
-
-	if (!s)
-		return FALSE;
-
-	status = tls_write_all(rdg->tlsIn, Stream_Buffer(s), Stream_Length(s));
-	Stream_Free(s, TRUE);
-	ntlm_free(rdg->ntlm);
-	rdg->ntlm = NULL;
-
-	if (status < 0)
-		return FALSE;
-
-	rdg->state = RDG_CLIENT_STATE_IN_CHANNEL_AUTHORIZE;
-	return TRUE;
-}
-
-static BOOL rdg_process_in_channel_authorization(rdpRdg* rdg, HttpResponse* response)
-{
-	wStream* s;
-	int status;
-
-	if (response->StatusCode != HTTP_STATUS_OK)
-	{
-		rdg->state = RDG_CLIENT_STATE_CLOSED;
-		return FALSE;
-	}
-
-	WLog_DBG(TAG, "In Channel authorization complete");
-	rdg->state = RDG_CLIENT_STATE_IN_CHANNEL_AUTHORIZED;
-	s = rdg_build_http_request(rdg, "RDG_IN_DATA");
-
-	if (!s)
-		return FALSE;
-
-	status = tls_write_all(rdg->tlsIn, Stream_Buffer(s), Stream_Length(s));
-	Stream_Free(s, TRUE);
-
-	if (status <= 0)
-		return FALSE;
 
 	return TRUE;
 }
@@ -685,87 +547,10 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 	return status;
 }
 
-static BOOL rdg_out_channel_recv(rdpRdg* rdg)
-{
-	wStream* s;
-	BOOL status = TRUE;
-	HttpResponse* response = NULL;
-
-	switch (rdg->state)
-	{
-		case RDG_CLIENT_STATE_OUT_CHANNEL_REQUEST:
-			response = http_response_recv(rdg->tlsOut);
-
-			if (!response)
-				return FALSE;
-
-			status = rdg_process_out_channel_response(rdg, response);
-			http_response_free(response);
-			break;
-
-		case RDG_CLIENT_STATE_OUT_CHANNEL_AUTHORIZE:
-			response = http_response_recv(rdg->tlsOut);
-
-			if (!response)
-				return FALSE;
-
-			status = rdg_process_out_channel_authorization(rdg, response);
-			http_response_free(response);
-			break;
-
-		default:
-			s = rdg_receive_packet(rdg);
-
-			if (s)
-			{
-				status = rdg_process_packet(rdg, s);
-				Stream_Free(s, TRUE);
-			}
-	}
-
-	return status;
-}
-
-static BOOL rdg_in_channel_recv(rdpRdg* rdg)
-{
-	BOOL status = TRUE;
-	HttpResponse* response = NULL;
-
-	switch (rdg->state)
-	{
-		case RDG_CLIENT_STATE_IN_CHANNEL_REQUEST:
-			response = http_response_recv(rdg->tlsIn);
-
-			if (!response)
-				return FALSE;
-
-			status = rdg_process_in_channel_response(rdg, response);
-			http_response_free(response);
-			break;
-
-		case RDG_CLIENT_STATE_IN_CHANNEL_AUTHORIZE:
-			response = http_response_recv(rdg->tlsIn);
-
-			if (!response)
-				return FALSE;
-
-			status = rdg_process_in_channel_authorization(rdg, response);
-			http_response_free(response);
-			break;
-	}
-
-	return status;
-}
-
 DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count)
 {
 	DWORD nCount = 0;
 	assert(rdg != NULL);
-
-	if (events && (nCount < count))
-		events[nCount++] = rdg->readEvent;
-	else
-		return 0;
 
 	if (rdg->tlsOut && rdg->tlsOut->bio)
 	{
@@ -792,31 +577,8 @@ DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count)
 	return nCount;
 }
 
-static BOOL rdg_check_event_handles(rdpRdg* rdg)
+static BOOL rdg_get_gateway_credentials(rdpContext* context)
 {
-	HANDLE event = NULL;
-	assert(rdg != NULL);
-	BIO_get_event(rdg->tlsOut->bio, &event);
-
-	if (WaitForSingleObject(event, 0) == WAIT_OBJECT_0)
-	{
-		return rdg_out_channel_recv(rdg);
-	}
-
-	BIO_get_event(rdg->tlsIn->bio, &event);
-
-	if (WaitForSingleObject(event, 0) == WAIT_OBJECT_0)
-	{
-		return rdg_in_channel_recv(rdg);
-	}
-
-	return TRUE;
-}
-
-static BOOL rdg_ncacn_http_ntlm_init(rdpRdg* rdg, rdpTls* tls)
-{
-	rdpNtlm* ntlm = rdg->ntlm;
-	rdpContext* context = rdg->context;
 	rdpSettings* settings = context->settings;
 	freerdp* instance = context->instance;
 
@@ -863,99 +625,54 @@ static BOOL rdg_ncacn_http_ntlm_init(rdpRdg* rdg, rdpTls* tls)
 		}
 	}
 
-	if (!ntlm_client_init(ntlm, TRUE, settings->GatewayUsername, settings->GatewayDomain,
+	return TRUE;
+}
+
+static BOOL rdg_ntlm_init(rdpRdg* rdg, rdpTls* tls)
+{
+	rdpContext* context = rdg->context;
+	rdpSettings* settings = context->settings;
+
+	rdg->ntlm = ntlm_new();
+
+	if (!rdg->ntlm)
+		return FALSE;
+
+	if (!rdg_get_gateway_credentials(context))
+		return FALSE;
+
+	if (!ntlm_client_init(rdg->ntlm, TRUE, settings->GatewayUsername, settings->GatewayDomain,
 	                      settings->GatewayPassword, tls->Bindings))
-	{
 		return FALSE;
-	}
 
-	if (!ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname))
-	{
+	if (!ntlm_client_make_spn(rdg->ntlm, _T("HTTP"), settings->GatewayHostname))
 		return FALSE;
-	}
+
+	if (!ntlm_authenticate(rdg->ntlm))
+		return FALSE;
 
 	return TRUE;
 }
 
-static BOOL rdg_send_out_channel_request(rdpRdg* rdg)
+static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
+		const char* transferEncoding)
 {
 	wStream* s = NULL;
 	int status;
-	rdg->ntlm = NULL;
 
-	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
-	{
-		rdg->ntlm = ntlm_new();
-
-		if (!rdg->ntlm)
-			return FALSE;
-
-		status = rdg_ncacn_http_ntlm_init(rdg, rdg->tlsOut);
-
-		if (!status)
-			return FALSE;
-
-		status = ntlm_authenticate(rdg->ntlm);
-
-		if (!status)
-			return FALSE;
-	}
-
-	s = rdg_build_http_request(rdg, "RDG_OUT_DATA");
+	s = rdg_build_http_request(rdg, method, transferEncoding);
 
 	if (!s)
 		return FALSE;
 
-	status = tls_write_all(rdg->tlsOut, Stream_Buffer(s), Stream_Length(s));
+	status = tls_write_all(tls, Stream_Buffer(s), Stream_Length(s));
+
 	Stream_Free(s, TRUE);
 
-	if (status < 0)
-		return FALSE;
-
-	rdg->state = RDG_CLIENT_STATE_OUT_CHANNEL_REQUEST;
-	return TRUE;
+	return (status >= 0);
 }
 
-static BOOL rdg_send_in_channel_request(rdpRdg* rdg)
-{
-	int status;
-	wStream* s = NULL;
-	rdg->ntlm = NULL;
-
-	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
-	{
-		rdg->ntlm = ntlm_new();
-
-		if (!rdg->ntlm)
-			return FALSE;
-
-		status = rdg_ncacn_http_ntlm_init(rdg, rdg->tlsIn);
-
-		if (!status)
-			return FALSE;
-
-		status = ntlm_authenticate(rdg->ntlm);
-
-		if (!status)
-			return FALSE;
-	}
-
-	s = rdg_build_http_request(rdg, "RDG_IN_DATA");
-
-	if (!s)
-		return FALSE;
-
-	status = tls_write_all(rdg->tlsIn, Stream_Buffer(s), Stream_Length(s));
-	Stream_Free(s, TRUE);
-
-	if (status < 0)
-		return FALSE;
-
-	rdg->state = RDG_CLIENT_STATE_IN_CHANNEL_REQUEST;
-	return TRUE;
-}
-
-static BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
+static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, int timeout)
 {
 	int sockfd = 0;
 	int status = 0;
@@ -965,8 +682,9 @@ static BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, 
 	const char* peerHostname = settings->GatewayHostname;
 	UINT16 peerPort = settings->GatewayPort;
 	BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, TRUE);
-	assert(hostname != NULL);
-	sockfd = freerdp_tcp_connect(rdg->context, settings, peerHostname,
+
+	sockfd = freerdp_tcp_connect(rdg->context, settings,
+	                             peerAddress ? peerAddress : peerHostname,
 	                             peerPort, timeout);
 
 	if (sockfd < 1)
@@ -1006,183 +724,73 @@ static BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, 
 		return FALSE;
 	}
 
-	rdg->tlsOut->hostname = settings->GatewayHostname;
-	rdg->tlsOut->port = settings->GatewayPort;
-	rdg->tlsOut->isGatewayTransport = TRUE;
-	status = tls_connect(rdg->tlsOut, bufferedBio);
+	tls->hostname = settings->GatewayHostname;
+	tls->port = settings->GatewayPort;
+	tls->isGatewayTransport = TRUE;
+	status = tls_connect(tls, bufferedBio);
 
-	if (status < 1)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
+	return (status >= 1);
 }
 
-static BOOL rdg_tls_in_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
+static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
+		const char* method, const char* peerAddress, int timeout)
 {
-	int sockfd = 0;
-	int status = 0;
-	BIO* socketBio = NULL;
-	BIO* bufferedBio = NULL;
-	rdpSettings* settings = rdg->settings;
-	const char* peerHostname = settings->GatewayHostname;
-	UINT16 peerPort = settings->GatewayPort;
-	BOOL isProxyConnection = FALSE;
-	int outChannelSocket = 0;
-	char* gatewayAddress = NULL;
-	assert(hostname != NULL);
+	HttpResponse* response = NULL;
+	int statusCode;
+	int bodyLength;
 
-	if (settings->ProxyType)
+	if (!rdg_tls_connect(rdg, tls, peerAddress, timeout))
+		return FALSE;
+
+	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
 	{
-		peerHostname = settings->ProxyHostname;
-		peerPort = settings->ProxyPort;
-		isProxyConnection = TRUE;
+		if (!rdg_ntlm_init(rdg, tls))
+			return FALSE;
+
+		if (!rdg_send_http_request(rdg, tls, method, NULL))
+			return FALSE;
+
+		response = http_response_recv(tls);
+		if (!response)
+			return FALSE;
+
+		if (!rdg_handle_ntlm_challenge(rdg->ntlm, response))
+		{
+			http_response_free(response);
+			return FALSE;
+		}
+
+		http_response_free(response);
+	}
+
+	if (!rdg_send_http_request(rdg, tls, method, NULL))
+		return FALSE;
+
+	ntlm_free(rdg->ntlm);
+	rdg->ntlm = NULL;
+
+	response = http_response_recv(tls);
+	if (!response)
+		return FALSE;
+
+	statusCode = response->StatusCode;
+	bodyLength = response->BodyLength;
+	http_response_free(response);
+
+	WLog_DBG(TAG, "%s authorization result: %d", method, statusCode);
+
+	if (statusCode != HTTP_STATUS_OK)
+		return FALSE;
+
+	if (strcmp(method, "RDG_OUT_DATA") == 0)
+	{
+		if (!rdg_skip_seed_payload(tls, bodyLength))
+			return FALSE;
 	}
 	else
 	{
-		/**
-		 * if settings->GatewayHostname is a name, it may be mapped to more than one
-		 * IP address (thus potentially multiple gateway servers) - to avoid openning
-		 * the IN channel with one server and the OUT channel with another server
-		 * we want to use the same IP when connecting to both IN and OUT channels
-		 * below we get the peer ip address in use by the OUT channel and use it
-		 * when opening the connection for the IN channel
-		*/
-		BIO_get_socket(rdg->tlsOut->underlying, &outChannelSocket);
-		gatewayAddress = freerdp_tcp_get_peer_address(outChannelSocket);
-
-		if (gatewayAddress == NULL)
-		{
-			WLog_DBG(TAG,
-			         "RDG out channel was created but gateway IP couldn't be resolved. Falling back to resolving gateway hostname again for IN channel.");
-		}
-		else
-		{
-			WLog_DBG(TAG, "Gateway hostname %s resolved to IP %s.", peerHostname, gatewayAddress);
-			peerHostname = gatewayAddress;
-		}
-	}
-
-	sockfd = freerdp_tcp_connect(rdg->context, settings, peerHostname,
-	                             peerPort, timeout);
-
-	if (sockfd < 1)
-	{
-		free(gatewayAddress);
-		return FALSE;
-	}
-
-	socketBio = BIO_new(BIO_s_simple_socket());
-
-	if (!socketBio)
-	{
-		free(gatewayAddress);
-		closesocket(sockfd);
-		return FALSE;
-	}
-
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
-
-	if (!bufferedBio)
-	{
-		free(gatewayAddress);
-		BIO_free(socketBio);
-		return FALSE;
-	}
-
-	bufferedBio = BIO_push(bufferedBio, socketBio);
-	status = BIO_set_nonblock(bufferedBio, TRUE);
-
-	if (!status)
-	{
-		free(gatewayAddress);
-		BIO_free_all(bufferedBio);
-		return FALSE;
-	}
-
-	rdg->tlsIn->hostname = settings->GatewayHostname;
-	rdg->tlsIn->port = settings->GatewayPort;
-	rdg->tlsIn->isGatewayTransport = TRUE;
-	status = tls_connect(rdg->tlsIn, bufferedBio);
-
-	if (status < 1)
-	{
-		free(gatewayAddress);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-static BOOL rdg_out_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
-{
-	BOOL status;
-	DWORD nCount;
-	HANDLE events[8];
-	assert(hostname != NULL);
-	status = rdg_tls_out_connect(rdg, hostname, port, timeout);
-
-	if (!status)
-		return FALSE;
-
-	status = rdg_send_out_channel_request(rdg);
-
-	if (!status)
-		return FALSE;
-
-	nCount = rdg_get_event_handles(rdg, events, 8);
-
-	if (nCount == 0)
-		return FALSE;
-
-	while (rdg->state <= RDG_CLIENT_STATE_OUT_CHANNEL_AUTHORIZE)
-	{
-		WaitForMultipleObjects(nCount, events, FALSE, 100);
-		status = rdg_check_event_handles(rdg);
-
-		if (!status)
-		{
-			rdg->context->rdp->transport->layer = TRANSPORT_LAYER_CLOSED;
+		if (!rdg_send_http_request(rdg, tls, method, "chunked"))
 			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
-static BOOL rdg_in_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
-{
-	BOOL status;
-	DWORD nCount;
-	HANDLE events[8];
-	assert(hostname != NULL);
-	status = rdg_tls_in_connect(rdg, hostname, port, timeout);
-
-	if (!status)
-		return FALSE;
-
-	status = rdg_send_in_channel_request(rdg);
-
-	if (!status)
-		return FALSE;
-
-	nCount = rdg_get_event_handles(rdg, events, 8);
-
-	if (nCount == 0)
-		return FALSE;
-
-	while (rdg->state <= RDG_CLIENT_STATE_IN_CHANNEL_AUTHORIZE)
-	{
-		WaitForMultipleObjects(nCount, events, FALSE, 100);
-		status = rdg_check_event_handles(rdg);
-
-		if (!status)
-		{
-			rdg->context->rdp->transport->layer = TRANSPORT_LAYER_CLOSED;
-			return FALSE;
-		}
 	}
 
 	return TRUE;
@@ -1191,18 +799,20 @@ static BOOL rdg_in_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 por
 static BOOL rdg_tunnel_connect(rdpRdg* rdg)
 {
 	BOOL status;
-	DWORD nCount;
-	HANDLE events[8];
-	rdg_send_handshake(rdg);
-	nCount = rdg_get_event_handles(rdg, events, 8);
+	wStream* s;
 
-	if (nCount == 0)
-		return FALSE;
+	rdg_send_handshake(rdg);
 
 	while (rdg->state < RDG_CLIENT_STATE_OPENED)
 	{
-		WaitForMultipleObjects(nCount, events, FALSE, 100);
-		status = rdg_check_event_handles(rdg);
+		status = FALSE;
+		s = rdg_receive_packet(rdg);
+
+		if (s)
+		{
+			status = rdg_process_packet(rdg, s);
+			Stream_Free(s, TRUE);
+		}
 
 		if (!status)
 		{
@@ -1217,16 +827,32 @@ static BOOL rdg_tunnel_connect(rdpRdg* rdg)
 BOOL rdg_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
 {
 	BOOL status;
+	int outConnSocket = 0;
+	char* peerAddress = NULL;
 	assert(rdg != NULL);
-	status = rdg_out_channel_connect(rdg, hostname, port, timeout);
+
+	status = rdg_establish_data_connection(
+			rdg, rdg->tlsOut, "RDG_OUT_DATA", NULL, timeout);
+
+	if (status)
+	{
+		/* Establish IN connection with the same peer/server as OUT connection,
+		 * even when server hostname resolves to different IP addresses.
+		 */
+		BIO_get_socket(rdg->tlsOut->underlying, &outConnSocket);
+		peerAddress = freerdp_tcp_get_peer_address(outConnSocket);
+
+		status = rdg_establish_data_connection(
+				rdg, rdg->tlsIn, "RDG_IN_DATA", peerAddress, timeout);
+
+		free(peerAddress);
+	}
 
 	if (!status)
+	{
+		rdg->context->rdp->transport->layer = TRANSPORT_LAYER_CLOSED;
 		return FALSE;
-
-	status = rdg_in_channel_connect(rdg, hostname, port, timeout);
-
-	if (!status)
-		return FALSE;
+	}
 
 	status = rdg_tunnel_connect(rdg);
 
@@ -1385,7 +1011,6 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 	size_t readCount = 0;
 	int readSize;
 	int status;
-	int pending;
 
 	if (!rdg->packetRemainingCount)
 	{
@@ -1452,12 +1077,6 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 	}
 
 	rdg->packetRemainingCount -= status;
-	pending = BIO_pending(rdg->tlsOut->bio);
-
-	if (pending > 0)
-		SetEvent(rdg->readEvent);
-	else
-		ResetEvent(rdg->readEvent);
 
 	return status;
 }
@@ -1701,10 +1320,6 @@ rdpRdg* rdg_new(rdpTransport* transport)
 			goto rdg_alloc_error;
 
 		BIO_set_data(rdg->frontBio, rdg);
-		rdg->readEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-		if (!rdg->readEvent)
-			goto rdg_alloc_error;
 
 		InitializeCriticalSection(&rdg->writeSection);
 	}
@@ -1742,12 +1357,6 @@ void rdg_free(rdpRdg* rdg)
 	{
 		ntlm_free(rdg->ntlm);
 		rdg->ntlm = NULL;
-	}
-
-	if (rdg->readEvent)
-	{
-		CloseHandle(rdg->readEvent);
-		rdg->readEvent = NULL;
 	}
 
 	DeleteCriticalSection(&rdg->writeSection);
