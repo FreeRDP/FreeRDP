@@ -70,8 +70,8 @@ static BOOL update_pointer_position(rdpContext* context,
 		return FALSE;
 
 	pointer = context->graphics->Pointer_Prototype;
-	return pointer->SetPosition(context, pointer_position->xPos,
-	                            pointer_position->yPos);
+	return IFCALLRESULT(TRUE, pointer->SetPosition, context,
+			    pointer_position->xPos, pointer_position->yPos);
 }
 
 static BOOL update_pointer_system(rdpContext* context,
