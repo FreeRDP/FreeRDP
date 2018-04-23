@@ -259,6 +259,43 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 	return TRUE;
 }
 
+static int recv_socks_reply(BIO* bufferedBio, BYTE * buf, int len, char* reason)
+{
+	int status;
+
+	ZeroMemory(buf, len);
+	for(;;) {
+	  status = BIO_read(bufferedBio, buf, len);
+	  if (status > 0) break;
+	  else if (status < 0)
+	  {
+	    /* Error? */
+	    if (BIO_should_retry(bufferedBio))
+	    {
+	      USleep(100);
+	      continue;
+	    }
+
+	    WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (Status %d)", reason, status);
+	    return -1;
+	  }
+	  else if (status == 0)
+	  {
+	    /* Error? */
+	    WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (BIO_read returned zero)", reason);
+	    return -1;
+	  }
+	}
+	
+	if (buf[0] != 5)
+	{
+	  WLog_ERR(TAG, "SOCKS Proxy version is not 5 (%s)", reason);
+	  return -1;
+	}
+
+	return status;
+}
+
 /* SOCKS Proxy auth methods by rfc1928 */
 #define AUTH_M_NO_AUTH   0
 #define AUTH_M_GSSAPI    1
@@ -267,7 +304,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 static BOOL socks_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 {
 	int status;
-	BYTE buf[280], hostnlen = 0xff & strlen(hostname);
+	BYTE buf[280], hostnlen = strlen(hostname) & 0xff;
 	/* CONN REQ replies in enum. order */
 	static const char *rplstat[] = {
 	  "succeeded",
@@ -293,36 +330,8 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 p
 		return FALSE;
 	}
 
-	/* Read result SOCK reply */
-	memset(buf, '\0', sizeof(buf));
-	for(;;) {
-	  status = BIO_read(bufferedBio, buf, sizeof(buf));
-	  if (status > 0) break;
-	  else if (status < 0)
-	  {
-	    /* Error? */
-	    if (BIO_should_retry(bufferedBio))
-	    {
-	      USleep(100);
-	      continue;
-	    }
-
-	    WLog_ERR(TAG, "Failed reading AUTH reply from SOCKS proxy (Status %d)", status);
-	    return FALSE;
-	  }
-	  else if (status == 0)
-	  {
-	    /* Error? */
-	    WLog_ERR(TAG, "Failed reading AUTH reply from SOCKS proxy (BIO_read returned zero)");
-	    return FALSE;
-	  }
-	}
-
-	if (buf[0] != 5)
-	{
-	  WLog_ERR(TAG, "SOCKS Proxy version is not 5 (AUTH)");
-	  return FALSE;
-	}
+	status = recv_socks_reply(bufferedBio, buf, sizeof(buf), "AUTH REQ");
+	if (status < 0) return FALSE;
 
 	if (buf[1] != AUTH_M_NO_AUTH)
 	{
@@ -348,36 +357,8 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 p
 		return FALSE;
 	}
 
-	/* Read result SOCK reply */
-	memset(buf, '\0', sizeof(buf));
-	for(;;) {
-	  status = BIO_read(bufferedBio, buf, sizeof(buf));
-	  if (status > 0) break;
-	  else if (status < 0)
-	  {
-	    /* Error? */
-	    if (BIO_should_retry(bufferedBio))
-	    {
-	      USleep(100);
-	      continue;
-	    }
-
-	    WLog_ERR(TAG, "Failed reading reply from SOCKS proxy (Status %d)", status);
-	    return FALSE;
-	  }
-	  else if (status == 0)
-	  {
-	    /* Error? */
-	    WLog_ERR(TAG, "Failed reading reply from SOCKS proxy (BIO_read returned zero)");
-	    return FALSE;
-	  }
-	}
-
-	if (buf[0] != 5)
-	{
-	  WLog_ERR(TAG, "SOCKS Proxy version is not 5 (CONN REQ)");
-	  return FALSE;
-	}
+	status = recv_socks_reply(bufferedBio, buf, sizeof(buf), "CONN REQ");
+	if (status < 0) return FALSE;
 
 	if (buf[1] == 0)
 	{

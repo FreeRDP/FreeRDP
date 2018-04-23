@@ -1836,13 +1836,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					{
 						settings->ProxyType = PROXY_TYPE_HTTP;
 					}
-					else if (!strcmp("socks", arg->Value))
+					else if (!strcmp("socks5", arg->Value))
 					{
 						settings->ProxyType = PROXY_TYPE_SOCKS;
 					}
 					else
 					{
-						WLog_ERR(TAG, "Only HTTP and SOCKS proxies supported by now");
+						WLog_ERR(TAG, "Only HTTP and SOCKS5 proxies supported by now");
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 
