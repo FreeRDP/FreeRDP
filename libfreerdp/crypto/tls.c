@@ -741,10 +741,6 @@ static int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		}
 		while ((status < 0) && (errno == EINTR));
 
-		if (status == 0) {
-			status = WAIT_TIMEOUT;
-		}
-
 #elif !defined(_WIN32)
 		FD_ZERO(&rset);
 		FD_SET(fd, &rset);
