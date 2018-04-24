@@ -673,7 +673,7 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	str = Stream_Pointer(s);
 	pos = Stream_GetPosition(s);
 
-	/* minimum length for cookie is 15 */
+	/* minimum length for token is 15 */
 	if (Stream_GetRemainingLength(s) < 15)
 		return TRUE;
 
@@ -684,7 +684,7 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	}
 	else
 	{
-		/* not a cookie, minimum length for token is 19 */
+		/* not a token, minimum length for cookie is 19 */
 		if (Stream_GetRemainingLength(s) < 19)
 			return TRUE;
 
