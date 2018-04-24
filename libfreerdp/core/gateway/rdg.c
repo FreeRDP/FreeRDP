@@ -1526,7 +1526,7 @@ static int rdg_bio_gets(BIO* bio, char* str, int size)
 
 static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
-	int status = 0;
+	int status = -1;
 	rdpRdg* rdg = (rdpRdg*) BIO_get_data(bio);
 	rdpTls* tlsOut = rdg->tlsOut;
 	rdpTls* tlsIn = rdg->tlsIn;
@@ -1536,14 +1536,6 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		(void)BIO_flush(tlsOut->bio);
 		(void)BIO_flush(tlsIn->bio);
 		status = 1;
-	}
-	else if (cmd == BIO_C_GET_EVENT)
-	{
-		if (arg2)
-		{
-			BIO_get_event(rdg->tlsOut->bio, arg2);
-			status = 1;
-		}
 	}
 	else if (cmd == BIO_C_SET_NONBLOCK)
 	{
@@ -1583,9 +1575,10 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		else
 			status = 1;
 	}
-	else if (cmd == BIO_C_GET_FD)
+	else if (cmd == BIO_C_GET_EVENT || cmd == BIO_C_GET_FD)
 	{
 		/*
+		 * A note about BIO_C_GET_FD:
 		 * Even if two FDs are part of RDG, only one FD can be returned here.
 		 *
 		 * In FreeRDP, BIO FDs are only used for polling, so it is safe to use the outgoing FD only
