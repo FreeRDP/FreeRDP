@@ -1142,7 +1142,13 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 		if (!call->fmszReaderNamesIsNULL)
 			ret.mszReaderNames = (BYTE*) mszReaderNames;
 
+		// WinScard returns the number of CHARACTERS whereas pcsc-lite returns the
+		// number of BYTES.
+#ifdef _WIN32
+		ret.cBytes = cchReaderLen * 2;
+#else
 		ret.cBytes = cchReaderLen;
+#endif
 
 		if (call->cbAtrLen)
 			ret.cbAtrLen = cbAtrLen;
