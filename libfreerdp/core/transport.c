@@ -353,8 +353,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
 	rdpContext* context = transport->context;
-	transport->async = settings->AsyncTransport;
 	BOOL rpcFallback = !settings->GatewayHttpTransport;
+	transport->async = settings->AsyncTransport;
 
 	if (transport->GatewayEnabled)
 	{
