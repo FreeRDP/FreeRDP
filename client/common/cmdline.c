@@ -1373,8 +1373,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 				if (p)
 				{
+					unsigned long val;
 					errno = 0;
-					unsigned long val = strtoul(&p[1], NULL, 0);
+					val = strtoul(&p[1], NULL, 0);
 
 					if ((errno != 0) || (val == 0) || (val > UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1411,8 +1412,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 				if (*(p2 + 1) == ':')
 				{
+					unsigned long val;
 					errno = 0;
-					unsigned long val = strtoul(&p2[2], NULL, 0);
+					val = strtoul(&p2[2], NULL, 0);
 
 					if ((errno != 0) || (val == 0) || (val > UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1451,8 +1453,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "w")
 		{
+			long val;
 			errno = 0;
-			long val = strtol(arg->Value, NULL, 0);
+			val = strtol(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1461,8 +1464,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "h")
 		{
+			long val;
 			errno = 0;
-			long val = strtol(arg->Value, NULL, 0);
+			val = strtol(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1480,8 +1484,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 				*p = '\0';
 				{
+					long val;
 					errno = 0;
-					long val = strtol(str, NULL, 0);
+					val = strtol(str, NULL, 0);
 
 					if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
 					{
@@ -1492,8 +1497,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					settings->DesktopWidth = val;
 				}
 				{
+					long val;
 					errno = 0;
-					long val = strtol(&p[1], NULL, 0);
+					val = strtol(&p[1], NULL, 0);
 
 					if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
 					{
@@ -1532,8 +1538,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 					*p = '\0';
 					{
+						long val;
 						errno = 0;
-						long val = strtol(str, NULL, 0);
+						val = strtol(str, NULL, 0);
 
 						if ((errno != 0) || (val < 0) || (val > 100))
 						{
@@ -1591,8 +1598,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 				for (i = 0; i < settings->NumMonitorIds; i++)
 				{
+					unsigned long val;
 					errno = 0;
-					unsigned long val = strtoul(p[i], NULL, 0);
+					val = strtoul(p[i], NULL, 0);
 
 					if ((errno != 0) || (val > UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1675,8 +1683,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "bpp")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1723,8 +1732,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "kbd")
 		{
+			unsigned long id;
 			errno = 0;
-			unsigned long id = strtoul(arg->Value, NULL, 0);
+			id = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (id > UINT32_MAX) || (id == 0))
 			{
@@ -1746,8 +1756,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "kbd-type")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1756,8 +1767,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "kbd-subtype")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1766,8 +1778,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "kbd-fn-key")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1802,8 +1815,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 				if (p)
 				{
+					unsigned long val;
 					errno = 0;
-					unsigned long val = strtoul(&p[1], NULL, 0);
+					val = strtoul(&p[1], NULL, 0);
 
 					if ((errno != 0) || (val == 0) || (val > UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1860,8 +1874,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 				if (p)
 				{
+					unsigned long val;
 					errno = 0;
-					unsigned long val = strtoul(&p[1], NULL, 0);
+					val = strtoul(&p[1], NULL, 0);
 
 					if ((errno != 0) || (val == 0) || (val > UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2018,8 +2033,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "compression-level")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtol(arg->Value, NULL, 0);
+			val = strtol(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2058,8 +2074,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "audio-mode")
 		{
+			long mode;
 			errno = 0;
-			long mode = strtol(arg->Value, NULL, 0);
+			mode = strtol(arg->Value, NULL, 0);
 
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2217,8 +2234,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "frame-ack")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2237,8 +2255,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "jpeg-quality")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > 100))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2260,8 +2279,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "pcid")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2432,8 +2452,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "parent-window")
 		{
+			UINT64 val;
 			errno = 0;
-			UINT64 val = _strtoui64(arg->Value, NULL, 0);
+			val = _strtoui64(arg->Value, NULL, 0);
 
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2484,8 +2505,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "max-fast-path-size")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2494,8 +2516,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "max-loop-time")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2555,8 +2578,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "auto-reconnect-max-retries")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2597,8 +2621,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "pwidth")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2607,8 +2632,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "pheight")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2617,8 +2643,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "orientation")
 		{
+			unsigned long val;
 			errno = 0;
-			unsigned long val = strtoul(arg->Value, NULL, 0);
+			val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > INT16_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2627,8 +2654,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "scale")
 		{
+			unsigned long scaleFactor;
 			errno = 0;
-			unsigned long scaleFactor = strtoul(arg->Value, NULL, 0);
+			scaleFactor = strtoul(arg->Value, NULL, 0);
 
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2646,8 +2674,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "scale-desktop")
 		{
+			unsigned long desktopScaleFactor;
 			errno = 0;
-			unsigned long desktopScaleFactor = strtoul(arg->Value, NULL, 0);
+			desktopScaleFactor = strtoul(arg->Value, NULL, 0);
 
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2664,8 +2693,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "scale-device")
 		{
+			unsigned long deviceScaleFactor;
 			errno = 0;
-			unsigned long deviceScaleFactor = strtoul(arg->Value, NULL, 0);
+			deviceScaleFactor = strtoul(arg->Value, NULL, 0);
 
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2781,8 +2811,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
+		unsigned long val;
 		errno = 0;
-		unsigned long val = strtoul(arg->Value, NULL, 0);
+		val = strtoul(arg->Value, NULL, 0);
 
 		if ((errno != 0) || (val == 0) || (val > UINT16_MAX))
 			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
