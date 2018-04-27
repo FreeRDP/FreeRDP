@@ -1937,7 +1937,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			errno = 0;
 			type = strtol(arg->Value, &pEnd, 10);
 
-			if (errno != 0)
+			if ((errno != 0) && (errno != EINVAL))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			if (type == 0)
@@ -2085,7 +2085,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			errno = 0;
 			type = strtol(arg->Value, &pEnd, 10);
 
-			if (errno != 0)
+			if ((errno != 0) && (errno != EINVAL))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			if (type == 0)
