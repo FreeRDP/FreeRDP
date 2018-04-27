@@ -158,7 +158,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
-	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);
+	instance->context->LastError = FREERDP_ERROR_SUCCESS;
 	clearChannelError(instance->context);
 	ResetEvent(instance->context->abortEvent);
 	rdp = instance->context->rdp;
@@ -235,14 +235,15 @@ BOOL freerdp_connect(freerdp* instance)
 			pcap_record record;
 			update = instance->update;
 			update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
-
 			status = FALSE;
+
 			if (!update->pcap_rfx)
 				goto freerdp_connect_finally;
 			else
 				update->play_rfx = TRUE;
 
 			status = TRUE;
+
 			while (pcap_has_next_record(update->pcap_rfx) && status)
 			{
 				pcap_get_next_record_header(update->pcap_rfx, &record);
@@ -481,8 +482,15 @@ BOOL freerdp_disconnect(freerdp* instance)
 {
 	BOOL rc = TRUE;
 	rdpRdp* rdp;
+
+	if (!instance || !instance->context || !instance->context->rdp)
+		return FALSE;
+
 	rdp = instance->context->rdp;
-	rdp_client_disconnect(rdp);
+
+	if (!rdp_client_disconnect(rdp))
+		rc = FALSE;
+
 	update_post_disconnect(instance->update);
 
 	if (instance->settings->AsyncInput)
@@ -491,10 +499,6 @@ BOOL freerdp_disconnect(freerdp* instance)
 		                            FREERDP_INPUT_MESSAGE_QUEUE);
 		MessageQueue_PostQuit(inputQueue, 0);
 	}
-
-	if (freerdp_channels_disconnect(instance->context->channels,
-	                                instance) != CHANNEL_RC_OK)
-		rc = FALSE;
 
 	IFCALL(instance->PostDisconnect, instance);
 
@@ -508,6 +512,12 @@ BOOL freerdp_disconnect(freerdp* instance)
 	codecs_free(instance->context->codecs);
 	freerdp_channels_close(instance->context->channels, instance);
 	return rc;
+}
+
+BOOL freerdp_disconnect_before_reconnect(freerdp* instance)
+{
+	rdpRdp* rdp = instance->context->rdp;
+	return rdp_client_disconnect_and_clear(rdp);
 }
 
 BOOL freerdp_reconnect(freerdp* instance)

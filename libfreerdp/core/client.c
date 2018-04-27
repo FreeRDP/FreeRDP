@@ -48,7 +48,7 @@ static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(
 	{
 		pChannelOpenData = &channels->openDataList[index];
 
-		if (strcmp(name, pChannelOpenData->name) == 0)
+		if (strncmp(name, pChannelOpenData->name, CHANNEL_NAME_LEN) == 0)
 			return pChannelOpenData;
 	}
 
@@ -67,7 +67,7 @@ static rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp,
 	{
 		channel = &mcs->channels[index];
 
-		if (strcmp(name, channel->Name) == 0)
+		if (strncmp(name, channel->Name, CHANNEL_NAME_LEN) == 0)
 		{
 			return channel;
 		}
@@ -255,7 +255,6 @@ UINT freerdp_channels_attach(freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
 	int index;
-	char* name = NULL;
 	char* hostname;
 	int hostnameLength;
 	rdpChannels* channels;
@@ -285,26 +284,13 @@ UINT freerdp_channels_attach(freerdp* instance)
 			goto fail;
 
 		pChannelOpenData = &channels->openDataList[index];
-		name = (char*) malloc(9);
-
-		if (!name)
-		{
-			error = CHANNEL_RC_NO_MEMORY;
-			goto fail;
-		}
-
-		CopyMemory(name, pChannelOpenData->name, 8);
-		name[8] = '\0';
 		EventArgsInit(&e, "freerdp");
-		e.name = name;
+		e.name =  pChannelOpenData->name;
 		e.pInterface = pChannelOpenData->pInterface;
 		PubSub_OnChannelAttached(instance->context->pubSub, instance->context, &e);
-		free(name);
-		name = NULL;
 	}
 
 fail:
-	free(name);
 	return error;
 }
 
@@ -312,7 +298,6 @@ UINT freerdp_channels_detach(freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
 	int index;
-	char* name = NULL;
 	char* hostname;
 	int hostnameLength;
 	rdpChannels* channels;
@@ -342,26 +327,13 @@ UINT freerdp_channels_detach(freerdp* instance)
 			goto fail;
 
 		pChannelOpenData = &channels->openDataList[index];
-		name = (char*) malloc(9);
-
-		if (!name)
-		{
-			error = CHANNEL_RC_NO_MEMORY;
-			goto fail;
-		}
-
-		CopyMemory(name, pChannelOpenData->name, 8);
-		name[8] = '\0';
 		EventArgsInit(&e, "freerdp");
-		e.name = name;
+		e.name =  pChannelOpenData->name;
 		e.pInterface = pChannelOpenData->pInterface;
 		PubSub_OnChannelDetached(instance->context->pubSub, instance->context, &e);
-		free(name);
-		name = NULL;
 	}
 
 fail:
-	free(name);
 	return error;
 }
 
@@ -373,8 +345,7 @@ fail:
 UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
-	int index;
-	char* name = NULL;
+	UINT index;
 	char* hostname;
 	int hostnameLength;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
@@ -403,22 +374,10 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 			goto fail;
 
 		pChannelOpenData = &channels->openDataList[index];
-		name = (char*) malloc(9);
-
-		if (!name)
-		{
-			error = CHANNEL_RC_NO_MEMORY;
-			goto fail;
-		}
-
-		CopyMemory(name, pChannelOpenData->name, 8);
-		name[8] = '\0';
 		EventArgsInit(&e, "freerdp");
-		e.name = name;
+		e.name = pChannelOpenData->name;
 		e.pInterface = pChannelOpenData->pInterface;
 		PubSub_OnChannelConnected(instance->context->pubSub, instance->context, &e);
-		free(name);
-		name = NULL;
 	}
 
 	channels->drdynvc = (DrdynvcClientContext*)
@@ -435,7 +394,6 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	}
 
 fail:
-	free(name);
 	return error;
 }
 
@@ -628,7 +586,6 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 	/* tell all libraries we are shutting down */
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
-		char name[9];
 		ChannelDisconnectedEventArgs e;
 		pChannelClientData = &channels->clientDataList[index];
 
@@ -647,10 +604,8 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 			continue;
 
 		pChannelOpenData = &channels->openDataList[index];
-		CopyMemory(name, pChannelOpenData->name, 8);
-		name[8] = '\0';
 		EventArgsInit(&e, "freerdp");
-		e.name = name;
+		e.name = pChannelOpenData->name;
 		e.pInterface = pChannelOpenData->pInterface;
 		PubSub_OnChannelDisconnected(instance->context->pubSub, instance->context, &e);
 	}

@@ -51,6 +51,7 @@ enum CONNECTION_STATE
 
 FREERDP_LOCAL BOOL rdp_client_connect(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_disconnect(rdpRdp* rdp);
+FREERDP_LOCAL BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_reconnect(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_redirect(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp,

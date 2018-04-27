@@ -1069,7 +1069,7 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 				first_hotplug(rdpdr);
 
 				if (!(rdpdr->hotplugThread = CreateThread(NULL, 0,
-								 drive_hotplug_thread_func, rdpdr, 0, NULL)))
+				                             drive_hotplug_thread_func, rdpdr, 0, NULL)))
 				{
 					WLog_ERR(TAG, "CreateThread failed!");
 					return ERROR_INTERNAL_ERROR;
@@ -1709,7 +1709,7 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr,
 	}
 
 	if (!(rdpdr->thread = CreateThread(NULL, 0,
-					   rdpdr_virtual_channel_client_thread, (void*) rdpdr, 0,
+	                                   rdpdr_virtual_channel_client_thread, (void*) rdpdr, 0,
 	                                   NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
@@ -1727,6 +1727,9 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr,
 static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 {
 	UINT error;
+
+	if (rdpdr->OpenHandle == 0)
+		return CHANNEL_RC_OK;
 
 	if (MessageQueue_PostQuit(rdpdr->queue, 0)
 	    && (WaitForSingleObject(rdpdr->thread, INFINITE) == WAIT_FAILED))

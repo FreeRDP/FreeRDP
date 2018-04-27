@@ -1087,7 +1087,7 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
 	}
 
 	if (!(encomsp->thread = CreateThread(NULL, 0,
-										 encomsp_virtual_channel_client_thread, (void*) encomsp,
+	                                     encomsp_virtual_channel_client_thread, (void*) encomsp,
 	                                     0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
@@ -1106,6 +1106,9 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
 static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 {
 	UINT rc;
+
+	if (encomsp->OpenHandle == 0)
+		return CHANNEL_RC_OK;
 
 	if (MessageQueue_PostQuit(encomsp->queue, 0)
 	    && (WaitForSingleObject(encomsp->thread, INFINITE) == WAIT_FAILED))

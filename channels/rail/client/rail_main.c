@@ -770,7 +770,7 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 	}
 
 	if (!(rail->thread = CreateThread(NULL, 0,
-									  rail_virtual_channel_client_thread, (void*) rail, 0,
+	                                  rail_virtual_channel_client_thread, (void*) rail, 0,
 	                                  NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
@@ -790,6 +790,9 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 {
 	UINT rc;
+
+	if (rail->OpenHandle == 0)
+		return CHANNEL_RC_OK;
 
 	if (MessageQueue_PostQuit(rail->queue, 0)
 	    && (WaitForSingleObject(rail->thread, INFINITE) == WAIT_FAILED))
