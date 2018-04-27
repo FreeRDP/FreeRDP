@@ -444,6 +444,7 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 		if (errno != 0)
 			return NULL;
 
+		errno = 0;
 		end = strtol(&endStr[8], NULL, 10);
 
 		if (beg < 0 || end < 0 || (beg > SrcSize) || (end > SrcSize) || (beg >= end) || (errno != 0))
