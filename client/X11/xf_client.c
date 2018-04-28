@@ -707,6 +707,16 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	WindowStateChangeEventArgs e;
 	rdpContext* context = (rdpContext*) xfc;
 	rdpSettings* settings = context->settings;
+
+	/*
+	  when debugging, ungrab keyboard when toggling fullscreen
+	  to allow keyboard usage on the debugger
+	*/
+	if (xfc->debug)
+	{
+		XUngrabKeyboard(xfc->display, CurrentTime);
+	}
+
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
 	xfc->decorations = (xfc->fullscreen) ? FALSE : settings->Decorations;
 	xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
@@ -1794,7 +1804,8 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	                              xf_PanningChangeEventHandler);
 #endif
 	xfc->UseXThreads = TRUE;
-	//xfc->debug = TRUE;
+	/* uncomment below if debugging to prevent keyboard grap */
+	/* xfc->debug = TRUE; */
 
 	if (xfc->UseXThreads)
 	{
