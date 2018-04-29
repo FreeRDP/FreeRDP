@@ -1318,6 +1318,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 						allowUnknown);
 
 	settings->ProxyHostname = NULL;
+	settings->ProxyUsername = NULL;
+	settings->ProxyPassword = NULL;
 
 	if (compatibility)
 	{
@@ -1821,11 +1823,14 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "proxy")
 		{
-		        /* initial value */
-		        settings->ProxyType = PROXY_TYPE_HTTP;
+			/* initial value */
+			settings->ProxyType = PROXY_TYPE_HTTP;
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
+				char *atPtr;
+
+				/* value is [scheme://][user:password@]hostname:port */
 				p = strstr(arg->Value, "://");
 
 				if (p)
@@ -1847,6 +1852,43 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					}
 
 					arg->Value = p + 3;
+				}
+
+				/* arg->Value is now [user:password@]hostname:port */
+				atPtr = strrchr(arg->Value, '@');
+				if (atPtr)
+				{
+					/* got a login / password,
+					 *               atPtr
+					 *               v
+					 * [user:password@]hostname:port
+					 *      ^
+					 *      colonPtr
+					 */
+					char *colonPtr = strchr(arg->Value, ':');
+					if (!colonPtr || (colonPtr > atPtr))
+					{
+						WLog_ERR(TAG, "invalid syntax for proxy, expected syntax is user:password@host:port");
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+
+					*colonPtr = '\0';
+					settings->ProxyUsername = _strdup(arg->Value);
+					if (!settings->ProxyUsername)
+					{
+						WLog_ERR(TAG, "unable to allocate proxy username");
+						return COMMAND_LINE_ERROR_MEMORY;
+					}
+
+					*atPtr = '\0';
+					settings->ProxyPassword = _strdup(colonPtr + 1);
+					if (!settings->ProxyPassword)
+					{
+						WLog_ERR(TAG, "unable to allocate proxy password");
+						return COMMAND_LINE_ERROR_MEMORY;
+					}
+
+					arg->Value = atPtr + 1;
 				}
 
 				p = strchr(arg->Value, ':');

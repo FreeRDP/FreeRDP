@@ -406,11 +406,13 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 	else
 	{
 		UINT16 peerPort;
-		const char *peerHostname;
-		BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, TRUE);
+		const char *proxyHostname, *proxyUsername, *proxyPassword;
+
+		BOOL isProxyConnection = proxy_prepare(settings, &proxyHostname, &peerPort,
+				&proxyUsername,	&proxyPassword);
 
 		if (isProxyConnection)
-		  sockfd = freerdp_tcp_connect(context, settings, peerHostname, peerPort, timeout);
+		  sockfd = freerdp_tcp_connect(context, settings, proxyHostname, peerPort, timeout);
 		else
 		  sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout);
 
@@ -421,8 +423,10 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 			return FALSE;
 
 		if (isProxyConnection)
-		  if (!proxy_connect(settings, transport->frontBio, hostname, port))
-		    return FALSE;
+		{
+			if (!proxy_connect(settings, transport->frontBio, proxyUsername, proxyPassword, hostname, port))
+				return FALSE;
+		}
 
 		status = TRUE;
 	}
