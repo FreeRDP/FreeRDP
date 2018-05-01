@@ -28,7 +28,7 @@
 
 #include <winpr/synch.h>
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 #define WITH_POSIX_TIMER	1
 #endif
 
