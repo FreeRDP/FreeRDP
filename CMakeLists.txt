@@ -68,6 +68,7 @@ include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 include(InstallFreeRDPMan)
 include(GetGitRevisionDescription)
+include(SetFreeRDPCMakeInstallDir)
 
 # Soname versioning
 set(BUILD_NUMBER 0)
