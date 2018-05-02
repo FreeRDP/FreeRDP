@@ -198,6 +198,11 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "BSD")
 	endif()
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "DragonFly")
+	set(BSD TRUE)
+	set(FREEBSD TRUE)
+endif()
+
 # Configure MSVC Runtime
 if(MSVC)
 	include(MSVCRuntime)
