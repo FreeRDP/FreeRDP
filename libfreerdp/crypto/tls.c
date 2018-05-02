@@ -737,7 +737,7 @@ static int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 
 		do
 		{
-			status = poll(&pollfds, 1, 10 * 1000);
+			status = poll(&pollfds, 1, 10);
 		}
 		while ((status < 0) && (errno == EINTR));
 
