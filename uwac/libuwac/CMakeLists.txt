@@ -40,6 +40,9 @@ generate_protocol_file(xdg-shell)
 generate_protocol_file(ivi-application)
 generate_protocol_file(fullscreen-shell)
 
+if(FREEBSD)
+	include_directories(${EPOLLSHIM_INCLUDE_DIR})
+endif()
 include_directories(${WAYLAND_INCLUDE_DIR})
 include_directories(${XKBCOMMON_INCLUDE_DIR})
 include_directories("${CMAKE_SOURCE_DIR}/uwac/include")
@@ -69,7 +72,7 @@ if (WITH_LIBRARY_VERSIONING)
 	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${UWAC_VERSION} SOVERSION ${UWAC_API_VERSION})
 endif()
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} ${PRIVATE_KEYWORD} ${WAYLAND_LIBS} ${XKBCOMMON_LIBS} freerdp)
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} ${PRIVATE_KEYWORD} ${WAYLAND_LIBS} ${XKBCOMMON_LIBS} ${EPOLLSHIM_LIBS} freerdp)
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT uwac)
 
