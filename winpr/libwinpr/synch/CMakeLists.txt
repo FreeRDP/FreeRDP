@@ -35,10 +35,6 @@ if(FREEBSD)
 	winpr_library_add(${EPOLLSHIM_LIBS})
 endif()
 
-if((NOT WIN32) AND (NOT APPLE) AND (NOT ANDROID) AND (NOT OPENBSD))
-	winpr_library_add(rt)
-endif()
-
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()

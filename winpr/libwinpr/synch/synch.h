@@ -28,10 +28,6 @@
 
 #include <winpr/synch.h>
 
-#ifdef __linux__
-#define WITH_POSIX_TIMER	1
-#endif
-
 #include "../handle/handle.h"
 
 #ifndef _WIN32

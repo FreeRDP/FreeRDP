@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(CheckFunctionExists)
+
 set(WINPR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(WINPR_SRCS "")
 set(WINPR_LIBS "")
@@ -66,6 +68,16 @@ macro (winpr_definition_add)
     endforeach()
      set (WINPR_DEFINITIONS ${WINPR_DEFINITIONS} PARENT_SCOPE)
 endmacro()
+
+set(CMAKE_REQUIRED_LIBRARIES rt)
+check_function_exists(timer_create TIMER_CREATE)
+check_function_exists(timer_delete TIMER_DELETE)
+check_function_exists(timer_settime TIMER_SETTIME)
+check_function_exists(timer_gettime TIMER_GETTIME)
+if (TIMER_CREATE AND TIMER_DELETE AND TIMER_SETTIME AND TIMER_GETTIME)
+    add_definitions(-DWITH_POSIX_TIMER)
+	winpr_library_add(rt)
+endif()
 
 if (ANDROID)
     winpr_library_add(log)
