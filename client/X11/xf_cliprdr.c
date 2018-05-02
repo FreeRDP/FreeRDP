@@ -1422,6 +1422,14 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 		DstSize = 0;
 		pDstData = (BYTE*) ClipboardGetData(clipboard->system, dstFormatId, &DstSize);
 
+		if (!pDstData)
+		{
+			WLog_ERR(TAG, "failed to get clipboard data in format %s [source format %s]",
+			         ClipboardGetFormatName(clipboard, dstFormatId),
+			         ClipboardGetFormatName(clipboard, srcFormatId));
+			return ERROR_INTERNAL_ERROR;
+		}
+
 		if (nullTerminated)
 		{
 			while (DstSize > 0 && pDstData[DstSize - 1] == '\0')
