@@ -137,7 +137,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "print-reconnect-cookie", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Print base64 reconnect cookie after connecting" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<driver>]", NULL, NULL, -1, NULL, "Redirect printer device" },
-	{ "proxy", COMMAND_LINE_VALUE_REQUIRED, "[<proto>://]<host>:<port>", NULL, NULL, -1, NULL, "Proxy (see also environment variable below)" },
+	{ "proxy", COMMAND_LINE_VALUE_REQUIRED, "[<proto>://][<user>:<password>@]<host>:<port>", NULL, NULL, -1, NULL, "Proxy settings: override env.var (see also environment variable below).\n\tProtocol \"socks5\" should be given explicitly where \"http\" is default.\n\tNote: socks proxy is not supported by env. variable" },
 	{ "pth", COMMAND_LINE_VALUE_REQUIRED, "<password-hash>", NULL, NULL, -1, "pass-the-hash", "Pass the hash (restricted admin mode)" },
 	{ "pwidth", COMMAND_LINE_VALUE_REQUIRED, "<width>", NULL, NULL, -1, NULL, "Physical width of display (in millimeters)" },
 	{ "reconnect-cookie", COMMAND_LINE_VALUE_REQUIRED, "<base64-cookie>", NULL, NULL, -1, NULL, "Pass base64 reconnect cookie to the connection" },

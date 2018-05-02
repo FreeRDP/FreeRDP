@@ -471,6 +471,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 
 #define PROXY_TYPE_NONE		0
 #define PROXY_TYPE_HTTP		1
+#define PROXY_TYPE_SOCKS	2
 
 /* Settings */
 
@@ -1164,7 +1165,9 @@ struct rdp_settings
 	ALIGN64 UINT32 ProxyType; 	/* 2015 */
 	ALIGN64 char* ProxyHostname;	/* 2016 */
 	ALIGN64 UINT16 ProxyPort;	/* 2017 */
-	UINT64 padding2112[2112 - 2018]; /* 2018 */
+	ALIGN64 char* ProxyUsername; /* 2018 */
+	ALIGN64 char* ProxyPassword; /* 2019 */
+	UINT64 padding2112[2112 - 2020]; /* 2020 */
 
 	/**
 	 * RemoteApp

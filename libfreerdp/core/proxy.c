@@ -29,11 +29,50 @@
 #define CRLF "\r\n"
 #define TAG FREERDP_TAG("core.proxy")
 
-BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port);
+/* SOCKS Proxy auth methods by rfc1928 */
+enum
+{
+	AUTH_M_NO_AUTH = 0,
+	AUTH_M_GSSAPI = 1,
+	AUTH_M_USR_PASS = 2
+};
+
+enum
+{
+	SOCKS_CMD_CONNECT = 1,
+	SOCKS_CMD_BIND = 2,
+	SOCKS_CMD_UDP_ASSOCIATE = 3
+};
+
+enum
+{
+	SOCKS_ADDR_IPV4 = 1,
+	SOCKS_ADDR_FQDN = 3,
+	SOCKS_ADDR_IPV6 = 4,
+};
+
+/* CONN REQ replies in enum. order */
+static const char *rplstat[] =
+{
+	"succeeded",
+	"general SOCKS server failure",
+	"connection not allowed by ruleset",
+	"Network unreachable",
+	"Host unreachable",
+	"Connection refused",
+	"TTL expired",
+	"Command not supported",
+	"Address type not supported"
+};
+
+
+
+static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port);
+static BOOL socks_proxy_connect(BIO* bufferedBio, const char *proxyUsername, const char *proxyPassword, const char* hostname, UINT16 port);
 void proxy_read_environment(rdpSettings* settings, char* envname);
 
 BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* lpPeerPort,
-                   BOOL isHTTPS)
+		const char** lpProxyUsername, const char** lpProxyPassword)
 {
 	/* For TSGateway, find the system HTTPS proxy automatically */
 	if (!settings->ProxyType)
@@ -46,6 +85,8 @@ BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* l
 	{
 		*lpPeerHostname = settings->ProxyHostname;
 		*lpPeerPort = settings->ProxyPort;
+		*lpProxyUsername = settings->ProxyUsername;
+		*lpProxyPassword = settings->ProxyPassword;
 		return TRUE;
 	}
 
@@ -150,7 +191,8 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri)
 	return TRUE;
 }
 
-BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* hostname, UINT16 port)
+BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char *proxyUsername, const char *proxyPassword,
+		const char* hostname, UINT16 port)
 {
 	switch (settings->ProxyType)
 	{
@@ -160,13 +202,16 @@ BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* hostname
 		case PROXY_TYPE_HTTP:
 			return http_proxy_connect(bufferedBio, hostname, port);
 
+		case PROXY_TYPE_SOCKS:
+			return socks_proxy_connect(bufferedBio, proxyUsername, proxyPassword, hostname, port);
+
 		default:
 			WLog_ERR(TAG, "Invalid internal proxy configuration");
 			return FALSE;
 	}
 }
 
-BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
+static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 {
 	int status;
 	wStream* s;
@@ -255,3 +300,166 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 	return TRUE;
 }
 
+static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, BYTE checkVer)
+{
+	int status;
+
+	for(;;)
+	{
+		status = BIO_read(bufferedBio, buf, len);
+		if (status > 0)
+			break;
+
+		if (status < 0)
+		{
+			/* Error? */
+			if (BIO_should_retry(bufferedBio))
+			{
+				USleep(100);
+				continue;
+			}
+
+			WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (Status %d)", reason, status);
+			return -1;
+		}
+
+		if (status == 0)
+		{
+			/* Error? */
+			WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (BIO_read returned zero)", reason);
+			return -1;
+		}
+	}
+	
+	if (status < 2)
+	{
+		WLog_ERR(TAG, "SOCKS Proxy reply packet too short (%s)", reason);
+		return -1;
+	}
+
+	if (buf[0] != checkVer)
+	{
+		WLog_ERR(TAG, "SOCKS Proxy version is not 5 (%s)", reason);
+		return -1;
+	}
+
+	return status;
+}
+
+static BOOL socks_proxy_connect(BIO* bufferedBio, const char *proxyUsername, const char *proxyPassword,
+		const char* hostname, UINT16 port)
+{
+	int status;
+	int nauthMethods = 1, writeLen = 3;
+	BYTE buf[3 + 255 + 255]; /* biggest packet is user/pass auth */
+	size_t hostnlen = strnlen(hostname, 255);
+
+	if (proxyUsername && proxyPassword)
+	{
+		nauthMethods++;
+		writeLen++;
+	}
+
+	/* select auth. method */
+	buf[0] = 5; /* SOCKS version */
+	buf[1] = nauthMethods; /* #of methods offered */
+	buf[2] = AUTH_M_NO_AUTH;
+	if (nauthMethods > 1)
+		buf[3] = AUTH_M_USR_PASS;
+
+	status = BIO_write(bufferedBio, buf, writeLen);
+	if (status != writeLen)
+	{
+		WLog_ERR(TAG, "SOCKS proxy: failed to write AUTH METHOD request");
+		return FALSE;
+	}
+
+	status = recv_socks_reply(bufferedBio, buf, 2, "AUTH REQ", 5);
+	if (status <= 0)
+		return FALSE;
+
+	switch(buf[1])
+	{
+	case AUTH_M_NO_AUTH:
+		WLog_DBG(TAG, "SOCKS Proxy: (NO AUTH) method was selected");
+		break;
+	case AUTH_M_USR_PASS:
+	{
+		int usernameLen = strnlen(proxyUsername, 255);
+		int userpassLen = strnlen(proxyPassword, 255);
+		BYTE *ptr;
+
+		if (nauthMethods < 2)
+		{
+			WLog_ERR(TAG, "SOCKS Proxy: USER/PASS method was not proposed to server");
+			return FALSE;
+		}
+
+		/* user/password v1 method */
+		ptr = buf + 2;
+		buf[0] = 1;
+		buf[1] = usernameLen;
+		memcpy(ptr, proxyUsername, usernameLen);
+		ptr += usernameLen;
+		*ptr = userpassLen;
+		ptr++;
+		memcpy(ptr, proxyPassword, userpassLen);
+
+		status = BIO_write(bufferedBio, buf, 3 + usernameLen + userpassLen);
+		if (status != 3 + usernameLen + userpassLen)
+		{
+			WLog_ERR(TAG, "SOCKS Proxy: error writing user/password request");
+			return FALSE;
+		}
+
+		status = recv_socks_reply(bufferedBio, buf, 2, "AUTH REQ", 1);
+		if (status < 2)
+			return FALSE;
+
+		if (buf[1] != 0x00)
+		{
+			WLog_ERR(TAG, "SOCKS Proxy: invalid user/password");
+			return FALSE;
+		}
+		break;
+	}
+	default:
+		WLog_ERR(TAG, "SOCKS Proxy: unknown method 0x%x was selected by proxy", buf[1]);
+		return FALSE;
+	}
+
+	/* CONN request */
+	buf[0] = 5; /* SOCKS version */
+	buf[1] = SOCKS_CMD_CONNECT; /* command */
+	buf[2] = 0; /* 3rd octet is reserved x00 */
+	buf[3] = SOCKS_ADDR_FQDN; /* addr.type */
+	buf[4] = hostnlen; /* DST.ADDR */
+	memcpy(buf + 5, hostname, hostnlen);
+	/* follows DST.PORT in netw. format */
+	buf[hostnlen + 5] = (port >> 8) & 0xff;
+	buf[hostnlen + 6] = port & 0xff;
+
+	status = BIO_write(bufferedBio, buf, hostnlen + 7);
+	if (status != (hostnlen + 7))
+	{
+		WLog_ERR(TAG, "SOCKS proxy: failed to write CONN REQ");
+		return FALSE;
+	}
+
+	status = recv_socks_reply(bufferedBio, buf, sizeof(buf), "CONN REQ", 5);
+	if (status < 4)
+		return FALSE;
+
+	if (buf[1] == 0)
+	{
+		WLog_INFO(TAG, "Successfully connected to %s:%d", hostname, port);
+		return TRUE;
+	}
+
+	if (buf[1] > 0 && buf[1] < 9)
+	  WLog_INFO(TAG, "SOCKS Proxy replied: %s", rplstat[buf[1]]);
+	else
+	  WLog_INFO(TAG, "SOCKS Proxy replied: %d status not listed in rfc1928", buf[1]);
+
+	return FALSE;
+}

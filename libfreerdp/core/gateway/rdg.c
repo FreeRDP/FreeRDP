@@ -681,7 +681,8 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	rdpSettings* settings = rdg->settings;
 	const char* peerHostname = settings->GatewayHostname;
 	UINT16 peerPort = settings->GatewayPort;
-	BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, TRUE);
+	const char *proxyUsername, *proxyPassword;
+	BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 
 	sockfd = freerdp_tcp_connect(rdg->context, settings,
 	                             peerAddress ? peerAddress : peerHostname,
@@ -714,7 +715,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 
 	if (isProxyConnection)
 	{
-		if (!proxy_connect(settings, bufferedBio, settings->GatewayHostname, settings->GatewayPort))
+		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword, settings->GatewayHostname, settings->GatewayPort))
 			return FALSE;
 	}
 
