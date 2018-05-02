@@ -58,7 +58,7 @@ struct CRYPTO_dynlock_value
 };
 
 
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
 static unsigned long _winpr_openssl_id(void)
 {
 	return (unsigned long)GetCurrentThreadId();
@@ -174,7 +174,7 @@ static BOOL _winpr_openssl_initialize_locking(void)
 	}
 
 	/* Use the deprecated CRYPTO_get_id_callback() if building against OpenSSL < 1.0.0 */
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
 
 	if (CRYPTO_get_id_callback())
 	{
@@ -224,7 +224,7 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 		CRYPTO_set_dynlock_destroy_callback(NULL);
 	}
 
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
 
 	if (CRYPTO_get_id_callback() == _winpr_openssl_id)
 	{
