@@ -52,6 +52,7 @@
 #include "fastpath.h"
 #include "transport.h"
 #include "rdp.h"
+#include "proxy.h"
 
 #define TAG FREERDP_TAG("core.transport")
 
@@ -404,13 +405,24 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 	}
 	else
 	{
-		sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout);
+		UINT16 peerPort;
+		const char *peerHostname;
+		BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, TRUE);
+
+		if (isProxyConnection)
+		  sockfd = freerdp_tcp_connect(context, settings, peerHostname, peerPort, timeout);
+		else
+		  sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout);
 
 		if (sockfd < 1)
 			return FALSE;
 
 		if (!transport_attach(transport, sockfd))
 			return FALSE;
+
+		if (isProxyConnection)
+		  if (!proxy_connect(settings, transport->frontBio, hostname, port))
+		    return FALSE;
 
 		status = TRUE;
 	}

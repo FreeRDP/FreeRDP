@@ -29,7 +29,8 @@
 #define CRLF "\r\n"
 #define TAG FREERDP_TAG("core.proxy")
 
-BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port);
+static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port);
+static BOOL socks_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port);
 void proxy_read_environment(rdpSettings* settings, char* envname);
 
 BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* lpPeerPort,
@@ -160,13 +161,16 @@ BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* hostname
 		case PROXY_TYPE_HTTP:
 			return http_proxy_connect(bufferedBio, hostname, port);
 
+		case PROXY_TYPE_SOCKS:
+			return socks_proxy_connect(bufferedBio, hostname, port);
+
 		default:
 			WLog_ERR(TAG, "Invalid internal proxy configuration");
 			return FALSE;
 	}
 }
 
-BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
+static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 {
 	int status;
 	wStream* s;
@@ -255,3 +259,117 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 	return TRUE;
 }
 
+static int recv_socks_reply(BIO* bufferedBio, BYTE * buf, int len, char* reason)
+{
+	int status;
+
+	ZeroMemory(buf, len);
+	for(;;) {
+	  status = BIO_read(bufferedBio, buf, len);
+	  if (status > 0) break;
+	  else if (status < 0)
+	  {
+	    /* Error? */
+	    if (BIO_should_retry(bufferedBio))
+	    {
+	      USleep(100);
+	      continue;
+	    }
+
+	    WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (Status %d)", reason, status);
+	    return -1;
+	  }
+	  else if (status == 0)
+	  {
+	    /* Error? */
+	    WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (BIO_read returned zero)", reason);
+	    return -1;
+	  }
+	}
+	
+	if (buf[0] != 5)
+	{
+	  WLog_ERR(TAG, "SOCKS Proxy version is not 5 (%s)", reason);
+	  return -1;
+	}
+
+	return status;
+}
+
+/* SOCKS Proxy auth methods by rfc1928 */
+#define AUTH_M_NO_AUTH   0
+#define AUTH_M_GSSAPI    1
+#define AUTH_M_USR_PASS  2
+
+static BOOL socks_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
+{
+	int status;
+	BYTE buf[280], hostnlen = strlen(hostname) & 0xff;
+	/* CONN REQ replies in enum. order */
+	static const char *rplstat[] = {
+	  "succeeded",
+	  "general SOCKS server failure",
+	  "connection not allowed by ruleset",
+	  "Network unreachable",
+	  "Host unreachable",
+	  "Connection refused",
+	  "TTL expired",
+	  "Command not supported",
+	  "Address type not supported"
+	};
+
+	/* select auth. method */
+	memset(buf, '\0', sizeof(buf));
+	buf[0] = 5; /* SOCKS version */
+	buf[1] = 1; /* #of methods offered */
+	buf[2] = AUTH_M_NO_AUTH;
+	status = BIO_write(bufferedBio, buf, 3);
+	if (status != 3)
+	{
+		WLog_ERR(TAG, "SOCKS proxy: failed to write AUTH METHOD request");
+		return FALSE;
+	}
+
+	status = recv_socks_reply(bufferedBio, buf, sizeof(buf), "AUTH REQ");
+	if (status < 0) return FALSE;
+
+	if (buf[1] != AUTH_M_NO_AUTH)
+	{
+	  WLog_ERR(TAG, "SOCKS Proxy: (NO AUTH) method was not selected by proxy");
+	  return FALSE;
+	}
+
+	/* CONN request */
+	memset(buf, '\0', sizeof(buf));
+	buf[0] = 5; /* SOCKS version */
+	buf[1] = 1; /* command = connect */
+	/* 3rd octet is reserved x00 */
+	buf[3] = 3; /* addr.type = FQDN */
+	buf[4] = hostnlen; /* DST.ADDR */
+	memcpy(buf +5, hostname, hostnlen);
+	/* follows DST.PORT in netw. format */
+	buf[hostnlen +5] = 0xff & (port >> 8);
+	buf[hostnlen +6] = 0xff & port;
+	status = BIO_write(bufferedBio, buf, hostnlen +7);
+	if (status != (hostnlen +7))
+	{
+		WLog_ERR(TAG, "SOCKS proxy: failed to write CONN REQ");
+		return FALSE;
+	}
+
+	status = recv_socks_reply(bufferedBio, buf, sizeof(buf), "CONN REQ");
+	if (status < 0) return FALSE;
+
+	if (buf[1] == 0)
+	{
+	  WLog_INFO(TAG, "Successfully connected to %s:%d", hostname, port);
+	  return TRUE;
+	}
+
+	if (buf[1] > 0 && buf[1] < 9)
+	  WLog_INFO(TAG, "SOCKS Proxy replied: %s", rplstat[buf[1]]);
+	else
+	  WLog_INFO(TAG, "SOCKS Proxy replied: %d status not listed in rfc1928", buf[1]);
+
+	return FALSE;
+}

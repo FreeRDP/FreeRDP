@@ -32,6 +32,10 @@
 #define WITH_POSIX_TIMER	1
 #endif
 
+#ifdef __sun
+#define WITH_POSIX_TIMER	1
+#endif
+
 #include "../handle/handle.h"
 
 #ifndef _WIN32
