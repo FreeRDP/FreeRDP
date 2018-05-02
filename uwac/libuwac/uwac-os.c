@@ -29,8 +29,15 @@
 
 #define _GNU_SOURCE
 
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+#define USE_SHM
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
+#ifdef USE_SHM
+#include <sys/mman.h>
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -153,7 +160,9 @@ static int create_tmpfile_cloexec(char *tmpname)
 {
 	int fd;
 
-#ifdef HAVE_MKOSTEMP
+#ifdef USE_SHM
+	fd = shm_open(SHM_ANON, O_CREAT | O_RDWR, 0600);
+#elif defined(HAVE_MKOSTEMP)
 	fd = mkostemp(tmpname, O_CLOEXEC);
 	if (fd >= 0)
 		unlink(tmpname);

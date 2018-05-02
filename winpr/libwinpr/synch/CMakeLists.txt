@@ -30,6 +30,11 @@ winpr_module_add(
 	timer.c
 	wait.c)
 
+if(FREEBSD)
+	winpr_include_directory_add(${EPOLLSHIM_INCLUDE_DIR})
+	winpr_library_add(${EPOLLSHIM_LIBS})
+endif()
+
 if((NOT WIN32) AND (NOT APPLE) AND (NOT ANDROID) AND (NOT OPENBSD))
 	winpr_library_add(rt)
 endif()
