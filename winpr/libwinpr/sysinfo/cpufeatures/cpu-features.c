@@ -659,6 +659,7 @@ get_elf_hwcap_from_proc_cpuinfo(const char* cpuinfo, int cpuinfo_len)
 
 	if (cpuArch)
 	{
+		errno = 0;
 		architecture = strtol(cpuArch, NULL, 10);
 		free(cpuArch);
 
@@ -817,6 +818,7 @@ android_cpuInit(void)
 			int    hasARMv7 = 0;
 			D("found cpuArch = '%s'\n", cpuArch);
 			/* read the initial decimal number, ignore the rest */
+			errno = 0;
 			archNumber = strtol(cpuArch, &end, 10);
 
 			/* Note that ARMv8 is upwards compatible with ARMv7. */

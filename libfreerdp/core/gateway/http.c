@@ -454,6 +454,7 @@ static BOOL http_response_parse_header_status_line(HttpResponse* response, char*
 		if ((errno != 0) || (val < 0) || (val > INT16_MAX))
 			return FALSE;
 
+		errno = 0;
 		response->StatusCode = strtol(status_code, NULL, 0);
 	}
 	response->ReasonPhrase = reason_phrase;

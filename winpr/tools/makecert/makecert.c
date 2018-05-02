@@ -1022,6 +1022,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
+		errno = 0;
 		key_length = strtoul(arg->Value, NULL, 0);
 
 		if (errno != 0)
@@ -1064,6 +1065,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
+		errno = 0;
 		serial = strtol(arg->Value, NULL, 0);
 
 		if (errno != 0)
