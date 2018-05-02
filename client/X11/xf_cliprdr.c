@@ -1425,8 +1425,8 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 		if (!pDstData)
 		{
 			WLog_ERR(TAG, "failed to get clipboard data in format %s [source format %s]",
-			         ClipboardGetFormatName(clipboard, dstFormatId),
-			         ClipboardGetFormatName(clipboard, srcFormatId));
+			         ClipboardGetFormatName(clipboard->system, dstFormatId),
+			         ClipboardGetFormatName(clipboard->system, srcFormatId));
 			return ERROR_INTERNAL_ERROR;
 		}
 
