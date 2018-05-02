@@ -4,6 +4,19 @@ File file = new File('release.properties')
 if (file.canRead()) {
     properties.load(new FileInputStream(file))
 }
+   
+if (!hasProperty('RELEASE_STORE_FILE')) {
+    ext.RELEASE_STORE_FILE=''
+}
+if (!hasProperty('RELEASE_KEY_ALIAS')) {
+    ext.RELEASE_KEY_ALIAS=''
+}
+if (!hasProperty('RELEASE_KEY_ALIAS')) {
+    ext.RELEASE_KEY_ALIAS=''
+}
+if (!hasProperty('RELEASE_KEY_PASSWORD')) {
+    ext.RELEASE_KEY_PASSWORD=''
+}
 
 def getVersionName = { ->
     def stdout = new ByteArrayOutputStream()
