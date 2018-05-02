@@ -57,8 +57,6 @@
  * two less significant bits of the first byte.
  */
 
-
-#ifdef WITH_DEBUG_RDP
 static const char* const FASTPATH_UPDATETYPE_STRINGS[] =
 {
 	"Orders",									/* 0x0 */
@@ -74,7 +72,6 @@ static const char* const FASTPATH_UPDATETYPE_STRINGS[] =
 	"Cached Pointer",					/* 0xA */
 	"New Pointer",						/* 0xB */
 };
-#endif
 
 static const char* fastpath_update_to_string(UINT8 update)
 {
@@ -354,7 +351,7 @@ static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, wStream* s)
 	return TRUE;
 }
 
-static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 size, wStream* s)
+static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream* s)
 {
 	BOOL rc = FALSE;
 	int status = 0;
