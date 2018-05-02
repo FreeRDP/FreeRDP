@@ -88,7 +88,7 @@
 # endif
 #endif
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
 # define TRIO_PLATFORM_UNIX
 #endif
 
