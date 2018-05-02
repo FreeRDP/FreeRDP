@@ -32,7 +32,7 @@ if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 
 	export(PACKAGE uwac)
 
-	set(UWAC_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/uwac${UWAC_VERSION_MAJOR}")
+	SetFreeRDPCMakeInstallDir(UWAC_CMAKE_INSTALL_DIR "uwac${UWAC_VERSION_MAJOR}")
 
 
 	configure_package_config_file(uwacConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/uwacConfig.cmake
