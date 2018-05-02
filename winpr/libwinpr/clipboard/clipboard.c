@@ -436,6 +436,7 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 	if (!pSize)
 		return NULL;
 
+	*pSize = 0;
 	format = ClipboardFindFormat(clipboard, clipboard->formatId, NULL);
 
 	if (!format)
