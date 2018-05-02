@@ -1965,23 +1965,22 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "gateway-usage-method")
 		{
-			long type;
+			long type = 0;
 			char* pEnd;
-			type = strtol(arg->Value, &pEnd, 10);
 
-			if (errno != 0)
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-			if (type == 0)
+			if (_stricmp(arg->Value, "none") == 0)
+				type = TSC_PROXY_MODE_NONE_DIRECT;
+			else if (_stricmp(arg->Value, "direct") == 0)
+				type = TSC_PROXY_MODE_DIRECT;
+			else if (_stricmp(arg->Value, "detect") == 0)
+				type = TSC_PROXY_MODE_DETECT;
+			else if (_stricmp(arg->Value, "default") == 0)
+				type = TSC_PROXY_MODE_DEFAULT;
+			else
 			{
-				if (_stricmp(arg->Value, "none") == 0)
-					type = TSC_PROXY_MODE_NONE_DIRECT;
-				else if (_stricmp(arg->Value, "direct") == 0)
-					type = TSC_PROXY_MODE_DIRECT;
-				else if (_stricmp(arg->Value, "detect") == 0)
-					type = TSC_PROXY_MODE_DETECT;
-				else if (_stricmp(arg->Value, "default") == 0)
-					type = TSC_PROXY_MODE_DEFAULT;
+				type = strtol(arg->Value, &pEnd, 10);
+				if (errno != 0)
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 
 			freerdp_set_gateway_usage_method(settings, (UINT32) type);
@@ -2110,33 +2109,33 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "network")
 		{
-			long type;
+			long type = 0;
 			char* pEnd;
-			type = strtol(arg->Value, &pEnd, 10);
 
-			if (errno != 0)
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-			if (type == 0)
+			if (_stricmp(arg->Value, "modem") == 0)
+				type = CONNECTION_TYPE_MODEM;
+			else if (_stricmp(arg->Value, "broadband") == 0)
+				type = CONNECTION_TYPE_BROADBAND_HIGH;
+			else if (_stricmp(arg->Value, "broadband-low") == 0)
+				type = CONNECTION_TYPE_BROADBAND_LOW;
+			else if (_stricmp(arg->Value, "broadband-high") == 0)
+				type = CONNECTION_TYPE_BROADBAND_HIGH;
+			else if (_stricmp(arg->Value, "wan") == 0)
+				type = CONNECTION_TYPE_WAN;
+			else if (_stricmp(arg->Value, "lan") == 0)
+				type = CONNECTION_TYPE_LAN;
+			else if ((_stricmp(arg->Value, "autodetect") == 0) ||
+					 (_stricmp(arg->Value, "auto") == 0) ||
+					 (_stricmp(arg->Value, "detect") == 0))
 			{
-				if (_stricmp(arg->Value, "modem") == 0)
-					type = CONNECTION_TYPE_MODEM;
-				else if (_stricmp(arg->Value, "broadband") == 0)
-					type = CONNECTION_TYPE_BROADBAND_HIGH;
-				else if (_stricmp(arg->Value, "broadband-low") == 0)
-					type = CONNECTION_TYPE_BROADBAND_LOW;
-				else if (_stricmp(arg->Value, "broadband-high") == 0)
-					type = CONNECTION_TYPE_BROADBAND_HIGH;
-				else if (_stricmp(arg->Value, "wan") == 0)
-					type = CONNECTION_TYPE_WAN;
-				else if (_stricmp(arg->Value, "lan") == 0)
-					type = CONNECTION_TYPE_LAN;
-				else if ((_stricmp(arg->Value, "autodetect") == 0) ||
-				         (_stricmp(arg->Value, "auto") == 0) ||
-				         (_stricmp(arg->Value, "detect") == 0))
-				{
-					type = CONNECTION_TYPE_AUTODETECT;
-				}
+				type = CONNECTION_TYPE_AUTODETECT;
+			}
+			else
+			{
+				type = strtol(arg->Value, &pEnd, 10);
+
+				if (errno != 0)
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 
 			if (!freerdp_set_connection_type(settings, type))
