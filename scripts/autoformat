@@ -1,10 +1,82 @@
 #!/bin/bash
-MY_PATH="`dirname \"$0\"`"              # relative
-MY_PATH="`( cd \"$MY_PATH\" && pwd )`"  # absolutized and normalized
-CHANGESET=`git status | cut -d ':' -f 2 | grep -vE "#|no" | grep -E "*\.h|*\.c"` # get filenames from git status
 
-for f in $CHANGESET; do
-	if [ -e $f ]; then
-        $MY_PATH/format_code $f
-	fi
-done
+function define_my_path(){
+    my_path="$1"
+    # resolve symlinks, absolutize and canonicalize too.
+    if type -p readlink >/dev/null 2>&1 ; then
+
+        # Darwin readlink -f exits with status 1.
+        if readlink -f "${my_path}" >/dev/null 2>&1 ; then
+            my_path="$(readlink -f "${my_path}")"
+        else
+            my_path="$(readlink "${my_path}")"
+            local dire
+            local file
+            dire="$(dirname  "${my_path}")"
+            file="$(basename "${my_path}")"
+            if cd "$dire" ; then
+                my_path="$(pwd -L)/${file}"
+            else
+                printf 'Inexistant directory in symbolic-link chain: %s\n' "${my_path}" 1>&2
+                exit 1
+            fi
+        fi
+
+    else
+
+        # Gets the real path of a link, following all links
+        function myreadlink(){
+            local c
+            local i
+            if [ -z "$2" ] ; then
+                c=1
+                i="$1"
+            else
+                c=$(( $2 + 1 ))
+                i="$3"
+            fi
+            if [ "$c" -gt 14 ] ; then
+                printf 'Symbolic-link chain too long from %s\n' "$i" 1>&2
+                exit 1
+            fi
+            if [ -h "$1" ] ; then
+                (
+                    dire="$(dirname "$1")"
+                    file="$(basename "$1")"
+                    if cd "$dire" ; then
+                        link="$(expr "$(command ls -ld -- "${file}")" : '.* -> \(.*\)$')"
+                        myreadlink "${link}" "${c}" "${i}" | sed "s|^\([^/].*\)\$|$(pwd -L)/\1|"
+                    else
+                        printf 'Inexistant directory in symbolic-link chain: %s\n' "${dire}" 1>&2
+                        exit 1
+                    fi
+                ) || exit $?
+            else
+                echo "$1"
+            fi
+        }
+
+        my_path="$(myreadlink "${my_path}")"
+
+    fi
+
+    my_path="$(dirname "${my_path}")"
+}
+
+function main(){
+    # get filenames from git status:
+    git status \
+        | cut -d ':' -f 2 \
+        | grep -vE "#|no" \
+        | grep -E "*\.h|*\.c" \
+        | while read source_file ; do
+	    if [ -e "${source_file}" ]; then
+            "${my_path}/format_code" "${source_file}"
+	    fi
+    done
+    exit 0
+}
+
+
+define_my_path "$0"
+main "$@"
