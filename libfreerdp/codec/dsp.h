@@ -1,9 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Audio Output Virtual Channel
+ * Digital Sound Processing - backend
  *
- * Copyright 2010-2011 Vic Lee
- * Copyright 2012-2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2018 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2018 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,17 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_RDPSND_CLIENT_MAIN_H
-#define FREERDP_CHANNEL_RDPSND_CLIENT_MAIN_H
+#ifndef FREERDP_LIB_CODEC_DSP_H
+#define FREERDP_LIB_CODEC_DSP_H
 
 #include <freerdp/api.h>
-#include <freerdp/svc.h>
-#include <freerdp/addin.h>
-#include <freerdp/client/rdpsnd.h>
-#include <freerdp/channels/log.h>
+#include <freerdp/codec/audio.h>
+#include <freerdp/codec/dsp.h>
 
-#define TAG CHANNELS_TAG("rdpsnd.client")
+struct _FREERDP_DSP_COMMON_CONTEXT
+{
+	wStream* buffer;
+	wStream* resample;
+};
 
-#if defined(WITH_DEBUG_SND)
-#define DEBUG_SND(...) WLog_DBG(TAG, __VA_ARGS__)
-#else
-#define DEBUG_SND(...) do { } while (0)
-#endif
-
-#endif /* FREERDP_CHANNEL_RDPSND_CLIENT_MAIN_H */
+#endif /* FREERDP_LIB_CODEC_DSP_H */

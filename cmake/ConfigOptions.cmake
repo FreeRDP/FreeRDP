@@ -137,6 +137,11 @@ option(WITH_DEBUG_SYMBOLS "Pack debug symbols to installer" OFF)
 option(WITH_CCACHE "Use ccache support if available" ON)
 option(WITH_ICU "Use ICU for unicode conversion" OFF)
 
+option(WITH_DSP_EXPERIMENTAL "Enable experimental sound encoder/decoder formats" OFF)
+if (WITH_FFMPEG)
+    option(WITH_DSP_FFMPEG "Use FFMPEG for audio encoding/decoding" OFF)
+endif(WITH_FFMPEG)
+
 option(USE_VERSION_FROM_GIT_TAG "Extract FreeRDP version from git tag." OFF)
 
 if(ANDROID)

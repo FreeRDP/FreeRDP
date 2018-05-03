@@ -28,7 +28,7 @@
 
 #define TAG FREERDP_TAG("codec")
 
-UINT32 rdpsnd_compute_audio_time_length(AUDIO_FORMAT* format, int size)
+UINT32 rdpsnd_compute_audio_time_length(const AUDIO_FORMAT* format, size_t size)
 {
 	UINT32 mstime;
 	UINT32 wSamples;
@@ -54,7 +54,6 @@ UINT32 rdpsnd_compute_audio_time_length(AUDIO_FORMAT* format, int size)
 			if ((format->cbSize == 2) && (format->data))
 			{
 				nSamplesPerBlock = *((UINT16*) format->data);
-
 				wSamples = (size / format->nBlockAlign) * nSamplesPerBlock;
 				mstime = (((wSamples * 1000) / format->nSamplesPerSec) / format->nChannels);
 			}
@@ -113,25 +112,25 @@ char* rdpsnd_get_audio_tag_string(UINT16 wFormatTag)
 	return "WAVE_FORMAT_UNKNOWN";
 }
 
-void rdpsnd_print_audio_format(AUDIO_FORMAT* format)
+void rdpsnd_print_audio_format(const AUDIO_FORMAT* format)
 {
 	WLog_INFO(TAG,  "%s:\t wFormatTag: 0x%04"PRIX16" nChannels: %"PRIu16" nSamplesPerSec: %"PRIu32" "
-	        "nAvgBytesPerSec: %"PRIu32" nBlockAlign: %"PRIu16" wBitsPerSample: %"PRIu16" cbSize: %"PRIu16"",
-			 rdpsnd_get_audio_tag_string(format->wFormatTag), format->wFormatTag,
-			 format->nChannels, format->nSamplesPerSec, format->nAvgBytesPerSec,
-			 format->nBlockAlign, format->wBitsPerSample, format->cbSize);
+	          "nAvgBytesPerSec: %"PRIu32" nBlockAlign: %"PRIu16" wBitsPerSample: %"PRIu16" cbSize: %"PRIu16"",
+	          rdpsnd_get_audio_tag_string(format->wFormatTag), format->wFormatTag,
+	          format->nChannels, format->nSamplesPerSec, format->nAvgBytesPerSec,
+	          format->nBlockAlign, format->wBitsPerSample, format->cbSize);
 }
 
-void rdpsnd_print_audio_formats(AUDIO_FORMAT* formats, UINT16 count)
+void rdpsnd_print_audio_formats(const AUDIO_FORMAT* formats, UINT16 count)
 {
-	int index;
-	AUDIO_FORMAT* format;
+	UINT16 index;
+	const AUDIO_FORMAT* format;
 
 	if (formats)
 	{
 		WLog_INFO(TAG,  "AUDIO_FORMATS (%"PRIu16") ={", count);
 
-		for (index = 0; index < (int) count; index++)
+		for (index = 0; index < count; index++)
 		{
 			format = &formats[index];
 			WLog_ERR(TAG,  "\t");
@@ -144,17 +143,14 @@ void rdpsnd_print_audio_formats(AUDIO_FORMAT* formats, UINT16 count)
 
 void rdpsnd_free_audio_formats(AUDIO_FORMAT* formats, UINT16 count)
 {
-	int index;
-	AUDIO_FORMAT* format;
+	UINT16 index;
 
 	if (formats)
 	{
-		for (index = 0; index < (int) count; index++)
+		for (index = 0; index < count; index++)
 		{
-			format = &formats[index];
-
-			if (format->cbSize)
-				free(format->data);
+			AUDIO_FORMAT* format = &formats[index];
+			free(format->data);
 		}
 
 		free(formats);

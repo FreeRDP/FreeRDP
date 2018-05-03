@@ -36,7 +36,6 @@
 #include <winpr/collections.h>
 
 #include <freerdp/types.h>
-#include <freerdp/codec/dsp.h>
 #include <freerdp/channels/log.h>
 
 #include "opensl_io.h"
@@ -48,7 +47,7 @@ struct rdpsnd_opensles_plugin
 {
 	rdpsndDevicePlugin device;
 
-	int latency;
+	UINT32 latency;
 	int wformat;
 	int block_size;
 	char* device_name;
@@ -60,7 +59,6 @@ struct rdpsnd_opensles_plugin
 	UINT32 rate;
 	UINT32 channels;
 	int format;
-	FREERDP_DSP_CONTEXT* dsp_context;
 };
 
 static int rdpsnd_opensles_volume_to_millibel(unsigned short level, int max)
@@ -91,9 +89,6 @@ static bool rdpsnd_opensles_check_handle(const rdpsndopenslesPlugin* hdl)
 		rc = false;
 	else
 	{
-		if (!hdl->dsp_context)
-			rc = false;
-
 		if (!hdl->stream)
 			rc = false;
 	}
@@ -120,11 +115,11 @@ static int rdpsnd_opensles_set_params(rdpsndopenslesPlugin* opensles)
 }
 
 static BOOL rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
-                                       AUDIO_FORMAT* format, int latency)
+                                       const AUDIO_FORMAT* format, UINT32 latency)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 	rdpsnd_opensles_check_handle(opensles);
-	DEBUG_SND("opensles=%p format=%p, latency=%d", (void*) opensles, (void*) format, latency);
+	DEBUG_SND("opensles=%p format=%p, latency=%"PRIu32, (void*) opensles, (void*) format, latency);
 
 	if (format)
 	{
@@ -143,11 +138,11 @@ static BOOL rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
 }
 
 static BOOL rdpsnd_opensles_open(rdpsndDevicePlugin* device,
-                                 AUDIO_FORMAT* format, int latency)
+                                 const AUDIO_FORMAT* format, UINT32 latency)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
-	DEBUG_SND("opensles=%p format=%p, latency=%d, rate=%"PRIu32"",
-			(void*) opensles, (void*) format, latency, opensles->rate);
+	DEBUG_SND("opensles=%p format=%p, latency=%"PRIu32", rate=%"PRIu32"",
+	          (void*) opensles, (void*) format, latency, opensles->rate);
 
 	if (rdpsnd_opensles_check_handle(opensles))
 		return TRUE;
@@ -161,8 +156,7 @@ static BOOL rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 	else
 		rdpsnd_opensles_set_volume(device, opensles->volume);
 
-	rdpsnd_opensles_set_format(device, format, latency);
-	return TRUE;
+	return rdpsnd_opensles_set_format(device, format, latency);
 }
 
 static void rdpsnd_opensles_close(rdpsndDevicePlugin* device)
@@ -184,13 +178,11 @@ static void rdpsnd_opensles_free(rdpsndDevicePlugin* device)
 	assert(opensles);
 	assert(opensles->device_name);
 	free(opensles->device_name);
-	assert(opensles->dsp_context);
-	freerdp_dsp_context_free(opensles->dsp_context);
 	free(opensles);
 }
 
 static BOOL rdpsnd_opensles_format_supported(rdpsndDevicePlugin* device,
-        AUDIO_FORMAT* format)
+        const AUDIO_FORMAT* format)
 {
 	DEBUG_SND("format=%"PRIu16", cbsize=%"PRIu16", samples=%"PRIu32", bits=%"PRIu16", channels=%"PRIu16", align=%"PRIu16"",
 	          format->wFormatTag, format->cbSize, format->nSamplesPerSec,
@@ -211,20 +203,6 @@ static BOOL rdpsnd_opensles_format_supported(rdpsndDevicePlugin* device,
 
 			break;
 
-		case WAVE_FORMAT_ADPCM:
-		case WAVE_FORMAT_DVI_ADPCM:
-			if (format->nSamplesPerSec <= 48000 &&
-			    format->wBitsPerSample == 4 &&
-			    (format->nChannels == 1 || format->nChannels == 2))
-			{
-				return TRUE;
-			}
-
-			break;
-
-		case WAVE_FORMAT_ALAW:
-		case WAVE_FORMAT_MULAW:
-		case WAVE_FORMAT_GSM610:
 		default:
 			break;
 	}
@@ -283,46 +261,22 @@ static BOOL rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 	return TRUE;
 }
 
-static void rdpsnd_opensles_play(rdpsndDevicePlugin* device,
-                                 BYTE* data, int size)
+static UINT rdpsnd_opensles_play(rdpsndDevicePlugin* device,
+                                 const BYTE* data, size_t size)
 {
 	union
 	{
-		BYTE* b;
-		short* s;
+		const BYTE* b;
+		const short* s;
 	} src;
 	int ret;
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 	DEBUG_SND("opensles=%p, data=%p, size=%d", (void*) opensles, (void*) data, size);
 
 	if (!rdpsnd_opensles_check_handle(opensles))
-		return;
+		return 0;
 
-	if (opensles->format == WAVE_FORMAT_ADPCM)
-	{
-		DEBUG_SND("dsp_context=%p, channels=%"PRIu32", block_size=%d",
-		          (void*) opensles->dsp_context, opensles->channels, opensles->block_size);
-
-		opensles->dsp_context->decode_ms_adpcm(opensles->dsp_context,
-		                                       data, size, opensles->channels, opensles->block_size);
-		size = opensles->dsp_context->adpcm_size;
-		src.b = opensles->dsp_context->adpcm_buffer;
-	}
-	else if (opensles->format == WAVE_FORMAT_DVI_ADPCM)
-	{
-		DEBUG_SND("dsp_context=%p, channels=%"PRIu32", block_size=%d",
-		          (void*) opensles->dsp_context, opensles->channels, opensles->block_size);
-
-		opensles->dsp_context->decode_ima_adpcm(opensles->dsp_context,
-		                                        data, size, opensles->channels, opensles->block_size);
-		size = opensles->dsp_context->adpcm_size;
-		src.b = opensles->dsp_context->adpcm_buffer;
-	}
-	else
-	{
-		src.b = data;
-	}
-
+	src.b = data;
 	DEBUG_SND("size=%d, src=%p", size, (void*) src.b);
 	assert(0 == size % 2);
 	assert(size > 0);
@@ -331,6 +285,8 @@ static void rdpsnd_opensles_play(rdpsndDevicePlugin* device,
 
 	if (ret < 0)
 		WLog_ERR(TAG, "android_AudioOut failed (%d)", ret);
+
+	return 10; /* TODO: Get real latencry in [ms] */
 }
 
 static void rdpsnd_opensles_start(rdpsndDevicePlugin* device)
@@ -416,7 +372,6 @@ UINT freerdp_rdpsnd_client_subsystem_entry(
 
 	opensles->device.Open = rdpsnd_opensles_open;
 	opensles->device.FormatSupported = rdpsnd_opensles_format_supported;
-	opensles->device.SetFormat = rdpsnd_opensles_set_format;
 	opensles->device.GetVolume = rdpsnd_opensles_get_volume;
 	opensles->device.SetVolume = rdpsnd_opensles_set_volume;
 	opensles->device.Start = rdpsnd_opensles_start;
@@ -440,20 +395,10 @@ UINT freerdp_rdpsnd_client_subsystem_entry(
 	opensles->rate = 44100;
 	opensles->channels = 2;
 	opensles->format = WAVE_FORMAT_ADPCM;
-	opensles->dsp_context = freerdp_dsp_context_new();
-
-	if (!opensles->dsp_context)
-	{
-		error = CHANNEL_RC_NO_MEMORY;
-		goto out_dsp_new;
-	}
-
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd,
 	                                    (rdpsndDevicePlugin*) opensles);
 	DEBUG_SND("success");
 	return CHANNEL_RC_OK;
-out_dsp_new:
-	free(opensles->device_name);
 outstrdup:
 	free(opensles);
 	return error;

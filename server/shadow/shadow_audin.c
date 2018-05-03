@@ -43,21 +43,22 @@ static UINT AudinServerOpening(audin_server_context* context)
 {
 	AUDIO_FORMAT* agreed_format = NULL;
 	int i = 0, j = 0;
+
 	for (i = 0; i < context->num_client_formats; i++)
 	{
 		for (j = 0; j < context->num_server_formats; j++)
 		{
 			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
-					(context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
-					(context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
+			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
+			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
 			{
 				agreed_format = (AUDIO_FORMAT*) &context->server_formats[j];
 				break;
 			}
 		}
+
 		if (agreed_format != NULL)
 			break;
-
 	}
 
 	if (agreed_format == NULL)
@@ -86,7 +87,7 @@ static UINT AudinServerOpenResult(audin_server_context* context, UINT32 result)
  */
 static UINT AudinServerReceiveSamples(audin_server_context* context, const void* buf, int nframes)
 {
-	rdpShadowClient* client = (rdpShadowClient* )context->data;
+	rdpShadowClient* client = (rdpShadowClient*)context->data;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 
 	if (!client->mayInteract)
@@ -94,6 +95,7 @@ static UINT AudinServerReceiveSamples(audin_server_context* context, const void*
 
 	if (subsystem->AudinServerReceiveSamples)
 		subsystem->AudinServerReceiveSamples(subsystem, client, buf, nframes);
+
 	return CHANNEL_RC_OK;
 }
 
@@ -101,6 +103,7 @@ int shadow_client_audin_init(rdpShadowClient* client)
 {
 	audin_server_context* audin;
 	audin = client->audin = audin_server_context_new(client->vcm);
+
 	if (!audin)
 	{
 		return 0;
@@ -117,15 +120,14 @@ int shadow_client_audin_init(rdpShadowClient* client)
 	{
 		/* Set default audio formats. */
 		audin->server_formats = default_supported_audio_formats;
-		audin->num_server_formats = sizeof(default_supported_audio_formats) / sizeof(default_supported_audio_formats[0]);
+		audin->num_server_formats = sizeof(default_supported_audio_formats) / sizeof(
+		                                default_supported_audio_formats[0]);
 	}
 
 	audin->dst_format = audin->server_formats[0];
-
 	audin->Opening = AudinServerOpening;
 	audin->OpenResult = AudinServerOpenResult;
 	audin->ReceiveSamples = AudinServerReceiveSamples;
-
 	return 1;
 }
 

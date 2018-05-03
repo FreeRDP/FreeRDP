@@ -48,12 +48,12 @@ typedef struct rdpsnd_ios_plugin
 #define THIS(__ptr) ((rdpsndIOSPlugin*)__ptr)
 
 static OSStatus rdpsnd_ios_render_cb(
-		void *inRefCon,
-		AudioUnitRenderActionFlags __unused *ioActionFlags,
-		const AudioTimeStamp __unused *inTimeStamp,
-		UInt32 inBusNumber,
-		UInt32 __unused inNumberFrames,
-		AudioBufferList *ioData
+    void* inRefCon,
+    AudioUnitRenderActionFlags __unused* ioActionFlags,
+    const AudioTimeStamp __unused* inTimeStamp,
+    UInt32 inBusNumber,
+    UInt32 __unused inNumberFrames,
+    AudioBufferList* ioData
 )
 {
 	unsigned int i;
@@ -63,21 +63,19 @@ static OSStatus rdpsnd_ios_render_cb(
 		return noErr;
 	}
 
-	rdpsndIOSPlugin *p = THIS(inRefCon);
+	rdpsndIOSPlugin* p = THIS(inRefCon);
 
 	for (i = 0; i < ioData->mNumberBuffers; i++)
 	{
 		AudioBuffer* target_buffer = &ioData->mBuffers[i];
-
 		int32_t available_bytes = 0;
-		const void *buffer = TPCircularBufferTail(&p->buffer, &available_bytes);
+		const void* buffer = TPCircularBufferTail(&p->buffer, &available_bytes);
+
 		if (buffer != NULL && available_bytes > 0)
 		{
 			const int bytes_to_copy = MIN((int32_t)target_buffer->mDataByteSize, available_bytes);
-
 			memcpy(target_buffer->mData, buffer, bytes_to_copy);
 			target_buffer->mDataByteSize = bytes_to_copy;
-
 			TPCircularBufferConsume(&p->buffer, bytes_to_copy);
 		}
 		else
@@ -97,10 +95,12 @@ static BOOL rdpsnd_ios_format_supported(rdpsndDevicePlugin* __unused device, AUD
 	{
 		return 1;
 	}
+
 	return 0;
 }
 
-static BOOL rdpsnd_ios_set_format(rdpsndDevicePlugin* __unused device, AUDIO_FORMAT* __unused format, int __unused latency)
+static BOOL rdpsnd_ios_set_format(rdpsndDevicePlugin* __unused device,
+                                  AUDIO_FORMAT* __unused format, int __unused latency)
 {
 	return TRUE;
 }
@@ -112,7 +112,7 @@ static BOOL rdpsnd_ios_set_volume(rdpsndDevicePlugin* __unused device, UINT32 __
 
 static void rdpsnd_ios_start(rdpsndDevicePlugin* device)
 {
-	rdpsndIOSPlugin *p = THIS(device);
+	rdpsndIOSPlugin* p = THIS(device);
 
 	/* If this device is not playing... */
 	if (!p->is_playing)
@@ -120,6 +120,7 @@ static void rdpsnd_ios_start(rdpsndDevicePlugin* device)
 		/* Start the device. */
 		int32_t available_bytes = 0;
 		TPCircularBufferTail(&p->buffer, &available_bytes);
+
 		if (available_bytes > 0)
 		{
 			p->is_playing = 1;
@@ -130,7 +131,7 @@ static void rdpsnd_ios_start(rdpsndDevicePlugin* device)
 
 static void rdpsnd_ios_stop(rdpsndDevicePlugin* __unused device)
 {
-	rdpsndIOSPlugin *p = THIS(device);
+	rdpsndIOSPlugin* p = THIS(device);
 
 	/* If the device is playing... */
 	if (p->is_playing)
@@ -138,28 +139,26 @@ static void rdpsnd_ios_stop(rdpsndDevicePlugin* __unused device)
 		/* Stop the device. */
 		AudioOutputUnitStop(p->audio_unit);
 		p->is_playing = 0;
-
 		/* Free all buffers. */
 		TPCircularBufferClear(&p->buffer);
 	}
 }
 
-static void rdpsnd_ios_play(rdpsndDevicePlugin* device, BYTE* data, int size)
+static UINT rdpsnd_ios_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 {
-	rdpsndIOSPlugin *p = THIS(device);
-
+	rdpsndIOSPlugin* p = THIS(device);
 	const BOOL ok = TPCircularBufferProduceBytes(&p->buffer, data, size);
+
 	if (!ok)
-	{
-		return;
-	}
+		return 0;
 
 	rdpsnd_ios_start(device);
+	return 10; /* TODO: Get real latencry in [ms] */
 }
 
 static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int __unused latency)
 {
-	rdpsndIOSPlugin *p = THIS(device);
+	rdpsndIOSPlugin* p = THIS(device);
 
 	if (p->is_opened)
 		return TRUE;
@@ -171,13 +170,14 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	desc.componentSubType = kAudioUnitSubType_RemoteIO;
 	desc.componentFlags = 0;
 	desc.componentFlagsMask = 0;
-
 	AudioComponent audioComponent = AudioComponentFindNext(NULL, &desc);
+
 	if (audioComponent == NULL)
 		return FALSE;
 
 	/* Open the audio unit. */
 	OSStatus status = AudioComponentInstanceNew(audioComponent, &p->audio_unit);
+
 	if (status != 0)
 		return FALSE;
 
@@ -191,14 +191,14 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	audioFormat.mBitsPerChannel   = format->wBitsPerSample;
 	audioFormat.mBytesPerFrame    = (format->wBitsPerSample * format->nChannels) / 8;
 	audioFormat.mBytesPerPacket   = audioFormat.mBytesPerFrame * audioFormat.mFramesPerPacket;
-
 	status = AudioUnitSetProperty(
-			p->audio_unit,
-			kAudioUnitProperty_StreamFormat,
-			kAudioUnitScope_Input,
-			0,
-			&audioFormat,
-			sizeof(audioFormat));
+	             p->audio_unit,
+	             kAudioUnitProperty_StreamFormat,
+	             kAudioUnitScope_Input,
+	             0,
+	             &audioFormat,
+	             sizeof(audioFormat));
+
 	if (status != 0)
 	{
 		AudioComponentInstanceDispose(p->audio_unit);
@@ -211,12 +211,13 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	callbackStruct.inputProc = rdpsnd_ios_render_cb;
 	callbackStruct.inputProcRefCon = p;
 	status = AudioUnitSetProperty(
-			p->audio_unit,
-			kAudioUnitProperty_SetRenderCallback,
-			kAudioUnitScope_Input,
-			0,
-			&callbackStruct,
-			sizeof(callbackStruct));
+	             p->audio_unit,
+	             kAudioUnitProperty_SetRenderCallback,
+	             kAudioUnitScope_Input,
+	             0,
+	             &callbackStruct,
+	             sizeof(callbackStruct));
+
 	if (status != 0)
 	{
 		AudioComponentInstanceDispose(p->audio_unit);
@@ -226,6 +227,7 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 
 	/* Initialize the AudioUnit. */
 	status = AudioUnitInitialize(p->audio_unit);
+
 	if (status != 0)
 	{
 		AudioComponentInstanceDispose(p->audio_unit);
@@ -235,6 +237,7 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 
 	/* Allocate the circular buffer. */
 	const BOOL ok = TPCircularBufferInit(&p->buffer, CIRCULAR_BUFFER_SIZE);
+
 	if (!ok)
 	{
 		AudioUnitUninitialize(p->audio_unit);
@@ -249,8 +252,7 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 
 static void rdpsnd_ios_close(rdpsndDevicePlugin* device)
 {
-	rdpsndIOSPlugin *p = THIS(device);
-
+	rdpsndIOSPlugin* p = THIS(device);
 	/* Make sure the device is stopped. */
 	rdpsnd_ios_stop(device);
 
@@ -262,7 +264,6 @@ static void rdpsnd_ios_close(rdpsndDevicePlugin* device)
 		AudioComponentInstanceDispose(p->audio_unit);
 		p->audio_unit = NULL;
 		p->is_opened = 0;
-
 		/* Destroy the circular buffer. */
 		TPCircularBufferCleanup(&p->buffer);
 	}
@@ -270,11 +271,9 @@ static void rdpsnd_ios_close(rdpsndDevicePlugin* device)
 
 static void rdpsnd_ios_free(rdpsndDevicePlugin* device)
 {
-	rdpsndIOSPlugin *p = THIS(device);
-
+	rdpsndIOSPlugin* p = THIS(device);
 	/* Ensure the device is closed. */
 	rdpsnd_ios_close(device);
-
 	/* Free memory associated with the device. */
 	free(p);
 }
@@ -305,8 +304,6 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	p->device.Start = rdpsnd_ios_start;
 	p->device.Close = rdpsnd_ios_close;
 	p->device.Free = rdpsnd_ios_free;
-
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)p);
-
 	return CHANNEL_RC_OK;
 }

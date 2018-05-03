@@ -26,43 +26,18 @@
 /**
  * Subsystem Interface
  */
-
-struct _RDPSND_WAVE
-{
-	BYTE* data;
-	int length;
-
-	BYTE cBlockNo;
-	UINT16 wFormatNo;
-	UINT16 wTimeStampA;
-	UINT16 wTimeStampB;
-
-	UINT16 wAudioLength;
-
-	UINT32 wLocalTimeA;
-	UINT32 wLocalTimeB;
-
-	BOOL AutoConfirm;
-};
-typedef struct _RDPSND_WAVE RDPSND_WAVE;
-
 typedef struct rdpsnd_plugin rdpsndPlugin;
 
 typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 
-typedef BOOL (*pcFormatSupported) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format);
-typedef BOOL (*pcOpen) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
-typedef BOOL (*pcSetFormat) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
-typedef UINT32 (*pcGetVolume) (rdpsndDevicePlugin* device);
-typedef BOOL (*pcSetVolume) (rdpsndDevicePlugin* device, UINT32 value);
-typedef void (*pcPlay) (rdpsndDevicePlugin* device, BYTE* data, int size);
-typedef void (*pcStart) (rdpsndDevicePlugin* device);
-typedef void (*pcClose) (rdpsndDevicePlugin* device);
-typedef void (*pcFree) (rdpsndDevicePlugin* device);
-
-typedef BOOL (*pcWaveDecode) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
-typedef void (*pcWavePlay) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
-typedef UINT (*pcWaveConfirm) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
+typedef BOOL (*pcFormatSupported)(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format);
+typedef BOOL (*pcOpen)(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency);
+typedef UINT32 (*pcGetVolume)(rdpsndDevicePlugin* device);
+typedef BOOL (*pcSetVolume)(rdpsndDevicePlugin* device, UINT32 value);
+typedef UINT (*pcPlay)(rdpsndDevicePlugin* device, const BYTE* data, size_t size);
+typedef void (*pcStart)(rdpsndDevicePlugin* device);
+typedef void (*pcClose)(rdpsndDevicePlugin* device);
+typedef void (*pcFree)(rdpsndDevicePlugin* device);
 
 struct rdpsnd_device_plugin
 {
@@ -70,19 +45,12 @@ struct rdpsnd_device_plugin
 
 	pcFormatSupported FormatSupported;
 	pcOpen Open;
-	pcSetFormat SetFormat;
 	pcGetVolume GetVolume;
 	pcSetVolume SetVolume;
 	pcPlay Play;
 	pcStart Start;
 	pcClose Close;
 	pcFree Free;
-
-	pcWaveDecode WaveDecode;
-	pcWavePlay WavePlay;
-	pcWaveConfirm WaveConfirm;
-
-	BOOL DisableConfirmThread;
 };
 
 #define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"
@@ -98,7 +66,7 @@ struct _FREERDP_RDPSND_DEVICE_ENTRY_POINTS
 typedef struct _FREERDP_RDPSND_DEVICE_ENTRY_POINTS FREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 typedef FREERDP_RDPSND_DEVICE_ENTRY_POINTS* PFREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 
-typedef UINT (*PFREERDP_RDPSND_DEVICE_ENTRY)(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints);
+typedef UINT(*PFREERDP_RDPSND_DEVICE_ENTRY)(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints);
 
 #endif /* FREERDP_CHANNEL_RDPSND_CLIENT_RDPSND_H */
 

@@ -27,23 +27,24 @@ typedef struct _ITSMFAudioDevice ITSMFAudioDevice;
 struct _ITSMFAudioDevice
 {
 	/* Open the audio device. */
-	BOOL (*Open) (ITSMFAudioDevice* audio, const char* device);
+	BOOL (*Open)(ITSMFAudioDevice* audio, const char* device);
 	/* Set the audio data format. */
-	BOOL (*SetFormat) (ITSMFAudioDevice* audio, UINT32 sample_rate, UINT32 channels, UINT32 bits_per_sample);
+	BOOL (*SetFormat)(ITSMFAudioDevice* audio, UINT32 sample_rate, UINT32 channels,
+	                  UINT32 bits_per_sample);
 	/* Play audio data. */
-	BOOL (*Play) (ITSMFAudioDevice* audio, BYTE* data, UINT32 data_size);
+	BOOL (*Play)(ITSMFAudioDevice* audio, const BYTE* data, UINT32 data_size);
 	/* Get the latency of the last written sample, in 100ns */
-	UINT64 (*GetLatency) (ITSMFAudioDevice* audio);
+	UINT64(*GetLatency)(ITSMFAudioDevice* audio);
 	/* Change the playback volume level */
-	BOOL (*ChangeVolume) (ITSMFAudioDevice* audio, UINT32 newVolume, UINT32 muted);
+	BOOL (*ChangeVolume)(ITSMFAudioDevice* audio, UINT32 newVolume, UINT32 muted);
 	/* Flush queued audio data */
-	BOOL (*Flush) (ITSMFAudioDevice* audio);
+	BOOL (*Flush)(ITSMFAudioDevice* audio);
 	/* Free the audio device */
-	void (*Free) (ITSMFAudioDevice* audio);
+	void (*Free)(ITSMFAudioDevice* audio);
 };
 
 #define TSMF_AUDIO_DEVICE_EXPORT_FUNC_NAME "TSMFAudioDeviceEntry"
-typedef ITSMFAudioDevice* (*TSMF_AUDIO_DEVICE_ENTRY) (void);
+typedef ITSMFAudioDevice* (*TSMF_AUDIO_DEVICE_ENTRY)(void);
 
 ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device);
 
