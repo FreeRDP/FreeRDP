@@ -21,6 +21,10 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
 	${${MODULE_PREFIX}_TESTS})
 
+if(FREEBSD)
+	include_directories(${EPOLLSHIM_INCLUDE_DIR})
+endif()
+
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 target_link_libraries(${MODULE_NAME} winpr)
