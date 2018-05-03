@@ -235,22 +235,13 @@ static int InitializeWaitableTimer(WINPR_TIMER* timer)
 	{
 #ifdef HAVE_SYS_TIMERFD_H
 		int status;
-		timer->fd = timerfd_create(CLOCK_MONOTONIC, 0);
+		timer->fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 
 		if (timer->fd <= 0)
 		{
 			free(timer);
 			return -1;
 		}
-
-		status = fcntl(timer->fd, F_SETFL, O_NONBLOCK);
-
-		if (status)
-		{
-			close(timer->fd);
-			return -1;
-		}
-
 #elif defined(__APPLE__)
 #else
 		WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
