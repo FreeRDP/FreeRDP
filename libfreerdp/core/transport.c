@@ -354,6 +354,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
 	rdpContext* context = transport->context;
+	BOOL rpcFallback = !settings->GatewayHttpTransport;
 	transport->async = settings->AsyncTransport;
 
 	if (transport->GatewayEnabled)
@@ -365,7 +366,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 			if (!transport->rdg)
 				return FALSE;
 
-			status = rdg_connect(transport->rdg, hostname, port, timeout);
+			status = rdg_connect(transport->rdg, timeout, &rpcFallback);
 
 			if (status)
 			{
@@ -381,7 +382,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 			}
 		}
 
-		if (!status && settings->GatewayRpcTransport)
+		if (!status && settings->GatewayRpcTransport && rpcFallback)
 		{
 			transport->tsg = tsg_new(transport);
 
