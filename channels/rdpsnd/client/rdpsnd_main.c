@@ -469,9 +469,8 @@ static UINT rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd,
 	return rdpsnd_virtual_channel_write(rdpsnd, pdu);
 }
 
-static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s)
+static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 {
-	size_t size;
 	BYTE* data;
 	AUDIO_FORMAT* format;
 	UINT status;
@@ -479,11 +478,13 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s)
 	DWORD diffMS;
 	UINT latency = 0;
 
+	if (Stream_GetRemainingLength(s) < size)
+		return ERROR_BAD_LENGTH;
+
 	data = Stream_Pointer(s);
-	size = Stream_GetRemainingLength(s);
 	format = &rdpsnd->ClientFormats[rdpsnd->wCurrentFormatNo];
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave: cBlockNo: %"PRIu8" wTimeStamp: %"PRIu16"",
-			   rdpsnd->cBlockNo, rdpsnd->wTimeStamp);
+	           rdpsnd->cBlockNo, rdpsnd->wTimeStamp);
 
 	if (rdpsnd->device && rdpsnd->attached)
 	{
@@ -498,7 +499,7 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s)
 		{
 			Stream_SealLength(pcmData);
 			latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device, Stream_Buffer(pcmData),
-								   Stream_Length(pcmData));
+			                       Stream_Length(pcmData));
 			status = CHANNEL_RC_OK;
 		}
 
@@ -529,7 +530,7 @@ static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	 * part of the preceding Wave Info PDU.
 	 */
 	CopyMemory(Stream_Buffer(s), rdpsnd->waveData, 4);
-	return rdpsnd_treat_wave(rdpsnd, s);
+	return rdpsnd_treat_wave(rdpsnd, s, rdpsnd->waveDataSize);
 }
 
 static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodySize)
@@ -538,7 +539,7 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 	AUDIO_FORMAT* format;
 	UINT32 dwAudioTimeStamp;
 
-	if (Stream_GetRemainingLength(s) < 16)
+	if (Stream_GetRemainingLength(s) < 12)
 		return ERROR_BAD_LENGTH;
 
 	Stream_Read_UINT16(s, rdpsnd->wTimeStamp);
@@ -546,12 +547,10 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 	Stream_Read_UINT8(s, rdpsnd->cBlockNo);
 	Stream_Seek(s, 3); /* bPad */
 	Stream_Read_UINT32(s, dwAudioTimeStamp);
-	rdpsnd->waveDataSize = BodySize - 16;
-
+	rdpsnd->waveDataSize = BodySize - 12;
 	format = &rdpsnd->ClientFormats[wFormatNo];
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave2PDU: cBlockNo: %"PRIu8" wFormatNo: %"PRIu16"",
 	           rdpsnd->cBlockNo, wFormatNo);
-
 
 	if (!rdpsnd->isOpen || (wFormatNo != rdpsnd->wCurrentFormatNo))
 	{
@@ -584,7 +583,7 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 		rdpsnd->wCurrentFormatNo = wFormatNo;
 	}
 
-	return rdpsnd_treat_wave(rdpsnd, s);
+	return rdpsnd_treat_wave(rdpsnd, s, rdpsnd->waveDataSize);
 }
 
 static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
