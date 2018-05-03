@@ -5,7 +5,7 @@
 ## Preparations before creating a pull
 * Rebase your branch to current master, no merges allowed!
 * Try to clean up your commit history, group changes to commits
-* Check your formatting! A _astyle_ script can be found at ```./scripts/format_code.sh```
+* Check your formatting! A _astyle_ script can be found at ```./scripts/format_code```
 * Optional (but higly recommended)
   * Run a clang scanbuild before and after your changes to avoid introducing new bugs
   * Run your compiler at pedantic level to check for new warnings

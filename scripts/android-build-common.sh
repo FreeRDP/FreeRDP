@@ -1,4 +1,4 @@
-#!/bin/bash
+# This is a bash library.
 
 SCRIPT_PATH=$(dirname "${BASH_SOURCE[0]}")
 SCRIPT_PATH=$(realpath "$SCRIPT_PATH")

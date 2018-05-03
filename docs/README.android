@@ -28,7 +28,7 @@ However, any other static builds should work as well.
 Build native libraries:
 ======================
 From the project root run the build script
-./scripts/android-build-freerdp.sh --ndk <ANDROID_NDK> --sdk <ANDROID_SDK>
+./scripts/android-build-freerdp --ndk <ANDROID_NDK> --sdk <ANDROID_SDK>
 Set ANDROID_NDK and ANDROID_SDK to the absolute paths on your machine.
 This will fetch sources from git and build OpenSSL, OpenH264, libJPEG.
 The native FreeRDP libraries will also be build.
@@ -50,9 +50,9 @@ The default configuration build configuration can be found in
 They are limited to API level 21 and above.
 
 If release binaries (and old android API support) are required, build 32 bit architectures with
-./scripts/android-build-freerdp.sh --ndk <ANDROID_NDK> --sdk <ANDROID_SDK> --conf ./scripts/android-build-32.conf
+./scripts/android-build-freerdp --ndk <ANDROID_NDK> --sdk <ANDROID_SDK> --conf ./scripts/android-build-32.conf
 and 64 bit architectures with
-./scripts/android-build-freerdp.sh --ndk <ANDROID_NDK> --sdk <ANDROID_SDK> --conf ./scripts/android-build-64.conf
+./scripts/android-build-freerdp --ndk <ANDROID_NDK> --sdk <ANDROID_SDK> --conf ./scripts/android-build-64.conf
 
 Building the APK (Android Studio)
 ================

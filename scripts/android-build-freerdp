@@ -93,7 +93,7 @@ do
     then
         if [ $BUILD_DEPS -ne 0 ];
         then
-            common_run bash $SCRIPT_PATH/android-build-jpeg.sh \
+            common_run $SCRIPT_PATH/android-build-jpeg \
                 --src $BUILD_SRC/jpeg --dst $BUILD_DST \
                 --ndk $ANDROID_NDK \
                 --arch $ARCH \
@@ -108,7 +108,7 @@ do
     then
         if [ $BUILD_DEPS -ne 0 ];
         then
-            common_run bash $SCRIPT_PATH/android-build-openh264.sh \
+            common_run $SCRIPT_PATH/android-build-openh264 \
                 --src $BUILD_SRC/openh264 --dst $BUILD_DST \
                 --ndk $ANDROID_NDK \
                 --arch $ARCH \
@@ -123,7 +123,7 @@ do
     then
         if [ $BUILD_DEPS -ne 0 ];
         then
-            common_run bash $SCRIPT_PATH/android-build-openssl.sh \
+            common_run $SCRIPT_PATH/android-build-openssl \
                 --src $BUILD_SRC/openssl --dst $BUILD_DST \
                 --ndk $ANDROID_NDK \
                 --arch $ARCH \

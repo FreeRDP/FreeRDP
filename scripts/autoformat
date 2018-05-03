@@ -5,6 +5,6 @@ CHANGESET=`git status | cut -d ':' -f 2 | grep -vE "#|no" | grep -E "*\.h|*\.c"`
 
 for f in $CHANGESET; do
 	if [ -e $f ]; then
-		sh $MY_PATH/format_code.sh $f
+        $MY_PATH/format_code $f
 	fi
 done
