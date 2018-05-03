@@ -201,7 +201,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		if (!BIO_get_init(bio) || !arg2)
 			return 0;
 
-		*((ULONG_PTR*) arg2) = (ULONG_PTR) ptr->socket;
+		*((SOCKET*) arg2) = ptr->socket;
 		return 1;
 	}
 	else if (cmd == BIO_C_GET_EVENT)
@@ -209,7 +209,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		if (!BIO_get_init(bio) || !arg2)
 			return 0;
 
-		*((ULONG_PTR*) arg2) = (ULONG_PTR) ptr->hEvent;
+		*((HANDLE*) arg2) = ptr->hEvent;
 		return 1;
 	}
 	else if (cmd == BIO_C_SET_NONBLOCK)
@@ -718,7 +718,7 @@ static char* freerdp_tcp_get_ip_address(int sockfd, BOOL* pIPv6)
 	return freerdp_tcp_address_to_string(&saddr, pIPv6);
 }
 
-char* freerdp_tcp_get_peer_address(int sockfd)
+char* freerdp_tcp_get_peer_address(SOCKET sockfd)
 {
 	struct sockaddr_storage saddr = { 0 };
 	socklen_t length = sizeof(struct sockaddr_storage);

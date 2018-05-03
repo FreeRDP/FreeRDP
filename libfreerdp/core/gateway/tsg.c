@@ -1936,7 +1936,7 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	{
 		if (arg2)
 		{
-			*((ULONG_PTR*) arg2) = (ULONG_PTR) tsg->rpc->client->PipeEvent;
+			*((HANDLE*) arg2) = tsg->rpc->client->PipeEvent;
 			status = 1;
 		}
 	}

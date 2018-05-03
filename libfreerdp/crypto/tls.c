@@ -687,7 +687,7 @@ static int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		int status;
 		struct pollfd pollfds;
 #elif !defined(_WIN32)
-		int fd;
+		SOCKET fd;
 		int status;
 		fd_set rset;
 		struct timeval tv;
