@@ -836,7 +836,7 @@ static BOOL rdg_tunnel_connect(rdpRdg* rdg)
 BOOL rdg_connect(rdpRdg* rdg, int timeout, BOOL* rpcFallback)
 {
 	BOOL status;
-	int outConnSocket = 0;
+	SOCKET outConnSocket = 0;
 	char* peerAddress = NULL;
 	assert(rdg != NULL);
 
