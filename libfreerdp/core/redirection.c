@@ -357,7 +357,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		if (Stream_GetRemainingLength(s) < redirection->PasswordLength)
 			return -1;
 
-		if (redirection->PasswordLength > 512)
+		if (redirection->PasswordLength > LB_PASSWORD_MAX_LENGTH)
 			return -1;
 
 		redirection->Password = (BYTE*) calloc(1, redirection->PasswordLength + sizeof(WCHAR));

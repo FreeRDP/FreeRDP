@@ -150,7 +150,12 @@ void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
 
 		if (identity->Password)
 		{
-			memset(identity->Password, 0, identity->PasswordLength * 2);
+			size_t len = identity->PasswordLength;
+
+			if (len > LB_PASSWORD_MAX_LENGTH) /* [pth] Password hash */
+				len -= LB_PASSWORD_MAX_LENGTH;
+
+			memset(identity->Password, 0, len * 2);
 			free(identity->Password);
 		}
 
@@ -286,7 +291,7 @@ static int nla_client_init(rdpNla* nla)
 					 * Multiply password hash length by 64 to obtain a length exceeding
 					 * the maximum (256) and use it this for hash identification in WinPR.
 					 */
-					identity->PasswordLength = 32 * 64; /* 2048 */
+					identity->PasswordLength += LB_PASSWORD_MAX_LENGTH;
 				}
 			}
 		}
@@ -1941,7 +1946,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	if (nla->peerVersion == 0)
 	{
 		WLog_DBG(TAG, "CredSSP protocol support %"PRIu32", peer supports %"PRIu32,
-				 nla->version, version);
+		         nla->version, version);
 		nla->peerVersion = version;
 	}
 
@@ -1949,7 +1954,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	if (nla->peerVersion != version)
 	{
 		WLog_ERR(TAG, "CredSSP peer changed protocol version from %"PRIu32" to %"PRIu32,
-				 nla->peerVersion, version);
+		         nla->peerVersion, version);
 		return -1;
 	}
 
@@ -2247,7 +2252,6 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	nla->sendSeqNum = 0;
 	nla->recvSeqNum = 0;
 	nla->version = 6;
-
 	ZeroMemory(&nla->ClientNonce, sizeof(SecBuffer));
 	ZeroMemory(&nla->negoToken, sizeof(SecBuffer));
 	ZeroMemory(&nla->pubKeyAuth, sizeof(SecBuffer));
@@ -2308,7 +2312,6 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	}
 
 	return nla;
-
 cleanup:
 	nla_free(nla);
 	return NULL;

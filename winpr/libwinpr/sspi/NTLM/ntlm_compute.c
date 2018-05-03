@@ -259,8 +259,8 @@ int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
 	char* PasswordHash = NULL;
 	UINT32 PasswordHashLength = 0;
 	SSPI_CREDENTIALS* credentials = context->credentials;
-	/* Password contains a password hash of length (PasswordLength / SSPI_CREDENTIALS_HASH_LENGTH_FACTOR) */
-	PasswordHashLength = credentials->identity.PasswordLength / SSPI_CREDENTIALS_HASH_LENGTH_FACTOR;
+	/* Password contains a password hash of length (PasswordLength - SSPI_CREDENTIALS_HASH_LENGTH_OFFSET) */
+	PasswordHashLength = credentials->identity.PasswordLength - SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
 	status = ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR) credentials->identity.Password,
 	                            PasswordHashLength, &PasswordHash, 0, NULL, NULL);
 
@@ -280,7 +280,7 @@ int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
 	return 1;
 }
 
-int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
+static int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 {
 	SSPI_CREDENTIALS* credentials = context->credentials;
 #ifdef WITH_DEBUG_NTLM
@@ -316,7 +316,7 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 		                 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
 		                 (BYTE*) hash);
 	}
-	else if (credentials->identity.PasswordLength > 256)
+	else if (credentials->identity.PasswordLength > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET)
 	{
 		/* Special case for WinPR: password hash */
 		if (ntlm_convert_password_hash(context, context->NtlmHash) < 0)
@@ -349,8 +349,8 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 
 		ret = context->HashCallback(context->HashCallbackArg, &credentials->identity, &proofValue,
 		                            context->EncryptedRandomSessionKey,
-					    (&context->AUTHENTICATE_MESSAGE)->MessageIntegrityCheck,
-					    &micValue, hash);
+		                            (&context->AUTHENTICATE_MESSAGE)->MessageIntegrityCheck,
+		                            &micValue, hash);
 		sspi_SecBufferFree(&proofValue);
 		sspi_SecBufferFree(&micValue);
 		return ret ? 1 : -1;
@@ -723,14 +723,13 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 	}
 }
 
-void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE *mic, UINT32 size)
+void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT32 size)
 {
 	/*
 	 * Compute the HMAC-MD5 hash of ConcatenationOf(NEGOTIATE_MESSAGE,
 	 * CHALLENGE_MESSAGE, AUTHENTICATE_MESSAGE) using the ExportedSessionKey
 	 */
 	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
-
 	assert(size >= WINPR_MD5_DIGEST_LENGTH);
 
 	if (!hmac)

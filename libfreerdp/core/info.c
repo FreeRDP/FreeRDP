@@ -517,7 +517,7 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 		 * This size excludes (!) the length of the mandatory null terminator.
 		 * Maximum value including the mandatory null terminator: 512
 		 */
-		if ((cbPassword % 2) || cbPassword > 512)
+		if ((cbPassword % 2) || cbPassword > LB_PASSWORD_MAX_LENGTH)
 		{
 			WLog_ERR(TAG, "protocol error: invalid cbPassword value: %"PRIu16"", cbPassword);
 			return FALSE;
@@ -639,11 +639,11 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	BOOL usedPasswordCookie = FALSE;
 	rdpSettings* settings = rdp->settings;
 	flags = INFO_MOUSE |
-		INFO_UNICODE |
-		INFO_LOGONERRORS |
-		INFO_MAXIMIZESHELL |
-		INFO_ENABLEWINDOWSKEY |
-		INFO_DISABLECTRLALTDEL;
+	        INFO_UNICODE |
+	        INFO_LOGONERRORS |
+	        INFO_MAXIMIZESHELL |
+	        INFO_ENABLEWINDOWSKEY |
+	        INFO_DISABLECTRLALTDEL;
 
 	if (settings->AudioCapture)
 		flags |= INFO_AUDIOCAPTURE;
