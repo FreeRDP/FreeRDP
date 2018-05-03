@@ -230,8 +230,8 @@ if(MSVC)
 	endif()
 endif()
 
-# Enable 64bit file support on linux.
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+# Enable 64bit file support on linux and FreeBSD.
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux" OR FREEBSD)
 	add_definitions("-D_FILE_OFFSET_BITS=64")
 endif()
 
