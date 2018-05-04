@@ -262,41 +262,37 @@ static int nla_client_init(rdpNla* nla)
 		}
 		else
 		{
-			if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
-			                         settings->Password) < 0)
-				return -1;
-		}
-	}
+			BOOL usePassword = TRUE;
 
-#ifndef _WIN32
-	{
-		SEC_WINNT_AUTH_IDENTITY* identity = nla->identity;
-
-		if (!identity)
-		{
-			WLog_ERR(TAG, "NLA identity=%p", (void*) identity);
-			return -1;
-		}
-
-		if (settings->RestrictedAdminModeRequired)
-		{
-			if (settings->PasswordHash)
+			if (settings->RestrictedAdminModeRequired)
 			{
-				if (strlen(settings->PasswordHash) == 32)
+				if (settings->PasswordHash)
 				{
-					free(identity->Password);
-					identity->PasswordLength = ConvertToUnicode(CP_UTF8, 0,
-					                           settings->PasswordHash, -1, &identity->Password, 0) - 1;
-					/**
-					 * Multiply password hash length by 64 to obtain a length exceeding
-					 * the maximum (256) and use it this for hash identification in WinPR.
-					 */
-					identity->PasswordLength += LB_PASSWORD_MAX_LENGTH;
+					if (strlen(settings->PasswordHash) == 32)
+					{
+						if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
+						                         settings->PasswordHash) < 0)
+							return -1;
+
+						/**
+						 * Increase password hash length by LB_PASSWORD_MAX_LENGTH to obtain a length exceeding
+						 * the maximum (LB_PASSWORD_MAX_LENGTH) and use it this for hash identification in WinPR.
+						 */
+						nla->identity->PasswordLength += LB_PASSWORD_MAX_LENGTH;
+						usePassword = FALSE;
+					}
 				}
+			}
+
+			if (usePassword)
+			{
+				if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
+				                         settings->Password) < 0)
+					return -1;
 			}
 		}
 	}
-#endif
+
 	tls = nla->transport->tls;
 
 	if (!tls)
