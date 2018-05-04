@@ -522,7 +522,7 @@ POINTER_CACHED_UPDATE* update_read_pointer_cached(rdpUpdate* update, wStream* s)
 		goto fail;
 
 	if (Stream_GetRemainingLength(s) < 2)
-		return FALSE;
+		goto fail;
 
 	Stream_Read_UINT16(s, pointer->cacheIndex); /* cacheIndex (2 bytes) */
 	return pointer;
