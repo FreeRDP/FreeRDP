@@ -753,7 +753,7 @@ UINT rail_order_recv(railPlugin* rail, wStream* s)
 
 		case RDP_RAIL_ORDER_EXEC_RESULT:
 			{
-				RAIL_EXEC_RESULT_ORDER execResult;
+				RAIL_EXEC_RESULT_ORDER execResult = { 0 };
 				error = rail_recv_exec_result_order(rail, &execResult, s);
 				free(execResult.exeOrFile.string);
 				return error;
