@@ -473,7 +473,6 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 {
 	BYTE* data;
 	AUDIO_FORMAT* format;
-	UINT status;
 	DWORD end;
 	DWORD diffMS;
 	UINT latency = 0;
@@ -488,20 +487,19 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 
 	if (rdpsnd->device && rdpsnd->attached)
 	{
+		UINT status = CHANNEL_RC_OK;
 		wStream* pcmData = StreamPool_Take(rdpsnd->pool, 4096);
 
 		if (rdpsnd->device->FormatSupported(rdpsnd->device, format))
-		{
 			latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device, data, size);
-			status = CHANNEL_RC_OK;
-		}
 		else if (freerdp_dsp_decode(rdpsnd->dsp_context, format, data, size, pcmData))
 		{
 			Stream_SealLength(pcmData);
 			latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device, Stream_Buffer(pcmData),
 			                       Stream_Length(pcmData));
-			status = CHANNEL_RC_OK;
 		}
+		else
+			status = ERROR_INTERNAL_ERROR;
 
 		StreamPool_Return(rdpsnd->pool, pcmData);
 
@@ -1128,7 +1126,6 @@ static UINT rdpsnd_virtual_channel_event_initialized(rdpsndPlugin* rdpsnd,
 
 	return CHANNEL_RC_OK;
 fail:
-	rdpsnd_virtual_channel_event_terminated(rdpsnd);
 	return ERROR_INTERNAL_ERROR;
 }
 
