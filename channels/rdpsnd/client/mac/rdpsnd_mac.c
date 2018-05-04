@@ -85,8 +85,10 @@ static BOOL rdpsnd_mac_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT
 	mac->audioFormat.mFramesPerPacket = 1;
 	mac->audioFormat.mChannelsPerFrame = format->nChannels;
 	mac->audioFormat.mBitsPerChannel = format->wBitsPerSample;
-	mac->audioFormat.mBytesPerFrame = (format->wBitsPerSample * format->nChannels) / 8;
-	mac->audioFormat.mBytesPerPacket = format->nBlockAlign;
+	mac->audioFormat.mBytesPerFrame = mac->audioFormat.mBitsPerChannel *
+	                                  mac->audioFormat.mChannelsPerFrame / 8;
+	mac->audioFormat.mBytesPerPacket = mac->audioFormat.mBytesPerFrame *
+	                                   mac->audioFormat.mFramesPerPacket;
 	mac->audioFormat.mReserved = 0;
 
 	switch (format->wFormatTag)
@@ -104,11 +106,68 @@ static BOOL rdpsnd_mac_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT
 			break;
 
 		default:
-			break;
+			return FALSE;
 	}
 
 	rdpsnd_print_audio_format(format);
 	return TRUE;
+}
+
+static char* FormatError(OSStatus st)
+{
+	switch (st)
+	{
+		case kAudioFileUnspecifiedError:
+			return "kAudioFileUnspecifiedError";
+
+		case kAudioFileUnsupportedFileTypeError:
+			return "kAudioFileUnsupportedFileTypeError";
+
+		case kAudioFileUnsupportedDataFormatError:
+			return "kAudioFileUnsupportedDataFormatError";
+
+		case kAudioFileUnsupportedPropertyError:
+			return "kAudioFileUnsupportedPropertyError";
+
+		case kAudioFileBadPropertySizeError:
+			return "kAudioFileBadPropertySizeError";
+
+		case kAudioFilePermissionsError:
+			return "kAudioFilePermissionsError";
+
+		case kAudioFileNotOptimizedError:
+			return "kAudioFileNotOptimizedError";
+
+		case kAudioFileInvalidChunkError:
+			return "kAudioFileInvalidChunkError";
+
+		case kAudioFileDoesNotAllow64BitDataSizeError:
+			return "kAudioFileDoesNotAllow64BitDataSizeError";
+
+		case kAudioFileInvalidPacketOffsetError:
+			return "kAudioFileInvalidPacketOffsetError";
+
+		case kAudioFileInvalidFileError:
+			return "kAudioFileInvalidFileError";
+
+		case kAudioFileOperationNotSupportedError:
+			return "kAudioFileOperationNotSupportedError";
+
+		case kAudioFileNotOpenError:
+			return "kAudioFileNotOpenError";
+
+		case kAudioFileEndOfFileError:
+			return "kAudioFileEndOfFileError";
+
+		case kAudioFilePositionError:
+			return "kAudioFilePositionError";
+
+		case kAudioFileFileNotFoundError:
+			return "kAudioFileFileNotFoundError";
+
+		default:
+			return "unknown error";
+	}
 }
 
 static BOOL rdpsnd_mac_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency)
@@ -131,7 +190,8 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 
 	if (status != 0)
 	{
-		WLog_ERR(TAG, "AudioQueueNewOutput failure\n");
+		const char* err = FormatError(status);
+		WLog_ERR(TAG, "AudioQueueNewOutput failure %s", err);
 		return FALSE;
 	}
 
@@ -199,14 +259,11 @@ static BOOL rdpsnd_mac_format_supported(rdpsndDevicePlugin* device, const AUDIO_
 		case WAVE_FORMAT_PCM:
 		case WAVE_FORMAT_ALAW:
 		case WAVE_FORMAT_MULAW:
-		case WAVE_FORMAT_GSM610:
 			return TRUE;
 
 		default:
 			return FALSE;
 	}
-
-	return FALSE;
 }
 
 static BOOL rdpsnd_mac_set_volume(rdpsndDevicePlugin* device, UINT32 value)
