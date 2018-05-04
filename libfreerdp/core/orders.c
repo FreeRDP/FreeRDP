@@ -1688,9 +1688,14 @@ static BOOL update_read_ellipse_cb_order(wStream* s, ORDER_INFO* orderInfo,
 static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wStream* s,
         BOOL compressed, UINT16 flags)
 {
-	CACHE_BITMAP_ORDER* cache_bitmap = calloc(1, sizeof(CACHE_BITMAP_ORDER));
+	CACHE_BITMAP_ORDER* cache_bitmap;
 
-	if (!cache_bitmap || !update || !s)
+	if (!update || !s)
+		return NULL;
+
+	cache_bitmap = calloc(1, sizeof(CACHE_BITMAP_ORDER));
+
+	if (!cache_bitmap)
 		goto fail;
 
 	if (Stream_GetRemainingLength(s) < 9)
@@ -1792,9 +1797,14 @@ static CACHE_BITMAP_V2_ORDER* update_read_cache_bitmap_v2_order(rdpUpdate* updat
         BOOL compressed, UINT16 flags)
 {
 	BYTE bitsPerPixelId;
-	CACHE_BITMAP_V2_ORDER* cache_bitmap_v2 = calloc(1, sizeof(CACHE_BITMAP_V2_ORDER));
+	CACHE_BITMAP_V2_ORDER* cache_bitmap_v2;
 
-	if (!cache_bitmap_v2 || !update || !s)
+	if (!update || !s)
+		return NULL;
+
+	cache_bitmap_v2 = calloc(1, sizeof(CACHE_BITMAP_V2_ORDER));
+
+	if (!cache_bitmap_v2)
 		goto fail;
 
 	cache_bitmap_v2->cacheId = flags & 0x0003;
@@ -1956,9 +1966,14 @@ static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* updat
 	BITMAP_DATA_EX* bitmapData;
 	UINT32 new_len;
 	BYTE* new_data;
-	CACHE_BITMAP_V3_ORDER* cache_bitmap_v3 = calloc(1, sizeof(CACHE_BITMAP_V3_ORDER));
+	CACHE_BITMAP_V3_ORDER* cache_bitmap_v3;
 
-	if (!cache_bitmap_v3 || !update || !s)
+	if (!update || !s)
+		return NULL;
+
+	cache_bitmap_v3 = calloc(1, sizeof(CACHE_BITMAP_V3_ORDER));
+
+	if (!cache_bitmap_v3)
 		goto fail;
 
 	cache_bitmap_v3->cacheId = flags & 0x00000003;

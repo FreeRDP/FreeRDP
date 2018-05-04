@@ -307,6 +307,7 @@ static BOOL update_read_play_sound(wStream* s, PLAY_SOUND_UPDATE* play_sound)
 BOOL update_recv_play_sound(rdpUpdate* update, wStream* s)
 {
 	PLAY_SOUND_UPDATE play_sound;
+
 	if (!update_read_play_sound(s, &play_sound))
 		return FALSE;
 
@@ -2173,7 +2174,6 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		return NULL;
 
 	update->log = WLog_Get("com.freerdp.core.update");
-
 	update->pointer = (rdpPointerUpdate*) calloc(1, sizeof(rdpPointerUpdate));
 
 	if (!update->pointer)
@@ -2224,20 +2224,32 @@ void update_free(rdpUpdate* update)
 {
 	if (update != NULL)
 	{
-		OFFSCREEN_DELETE_LIST* deleteList;
-		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
-		free(deleteList->indices);
+		OFFSCREEN_DELETE_LIST* deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
+
+		if (deleteList)
+			free(deleteList->indices);
+
 		free(update->pointer);
-		free(update->primary->polyline.points);
-		free(update->primary->polygon_sc.points);
-		free(update->primary->fast_glyph.glyphData.aj);
-		free(update->primary);
+
+		if (update->primary)
+		{
+			free(update->primary->polyline.points);
+			free(update->primary->polygon_sc.points);
+			free(update->primary->fast_glyph.glyphData.aj);
+			free(update->primary);
+		}
+
 		free(update->secondary);
 		free(update->altsec);
-		free(update->window->monitored_desktop.windowIds);
-		update_free_window_state(&update->window->window_state);
-		update_free_window_icon_info(update->window->window_icon.iconInfo);
-		free(update->window);
+
+		if (update->window)
+		{
+			free(update->window->monitored_desktop.windowIds);
+			update_free_window_state(&update->window->window_state);
+			update_free_window_icon_info(update->window->window_icon.iconInfo);
+			free(update->window);
+		}
+
 		MessageQueue_Free(update->queue);
 		free(update);
 	}
