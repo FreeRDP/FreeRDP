@@ -242,6 +242,9 @@ void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 	domainLength = credentials->identity.DomainLength;
 	passwordLength = credentials->identity.PasswordLength;
 
+	if (passwordLength > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET) /* [pth] */
+		passwordLength -= SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
+
 	if (credentials->identity.Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE)
 	{
 		userLength *= 2;
@@ -413,7 +416,7 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDEN
 {
 	int status;
 
-	if (srcIdentity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
+	if (srcIdentity->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
 	{
 		status = sspi_SetAuthIdentity(identity, (char*) srcIdentity->User,
 		                              (char*) srcIdentity->Domain, (char*) srcIdentity->Password);
@@ -421,11 +424,12 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDEN
 		if (status <= 0)
 			return -1;
 
-		identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+		identity->Flags &= ~SEC_WINNT_AUTH_IDENTITY_ANSI;
+		identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
 		return 1;
 	}
 
-	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+	identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
 	/* login/password authentication */
 	identity->User = identity->Domain = identity->Password = NULL;
 	identity->UserLength = srcIdentity->UserLength;
@@ -456,8 +460,8 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDEN
 
 	identity->PasswordLength = srcIdentity->PasswordLength;
 
-	if (identity->PasswordLength > 256)
-		identity->PasswordLength /= SSPI_CREDENTIALS_HASH_LENGTH_FACTOR;
+	if (identity->PasswordLength > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET)
+		identity->PasswordLength -= SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
 
 	if (srcIdentity->Password)
 	{
@@ -470,6 +474,7 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDEN
 		identity->Password[identity->PasswordLength] = 0;
 	}
 
+	identity->PasswordLength = srcIdentity->PasswordLength;
 	/* End of login/password authentication */
 	return 1;
 }

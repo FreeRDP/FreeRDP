@@ -165,6 +165,7 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 				{
 					if (!freerdp_get_last_error(transport->context))
 					{
+						WLog_Print(transport->log, WLOG_ERROR, "%s: ACCESS DENIED", __FUNCTION__);
 						freerdp_set_last_error(transport->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 					}
 				}
@@ -336,6 +337,8 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 	if (nla_client_begin(rdp->nla) < 0)
 	{
+		WLog_Print(transport->log, WLOG_ERROR, "NLA begin failed");
+
 		if (!freerdp_get_last_error(context))
 			freerdp_set_last_error(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 
@@ -407,15 +410,14 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 	else
 	{
 		UINT16 peerPort;
-		const char *proxyHostname, *proxyUsername, *proxyPassword;
-
+		const char* proxyHostname, *proxyUsername, *proxyPassword;
 		BOOL isProxyConnection = proxy_prepare(settings, &proxyHostname, &peerPort,
-				&proxyUsername,	&proxyPassword);
+		                                       &proxyUsername,	&proxyPassword);
 
 		if (isProxyConnection)
-		  sockfd = freerdp_tcp_connect(context, settings, proxyHostname, peerPort, timeout);
+			sockfd = freerdp_tcp_connect(context, settings, proxyHostname, peerPort, timeout);
 		else
-		  sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout);
+			sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout);
 
 		if (sockfd < 1)
 			return FALSE;
