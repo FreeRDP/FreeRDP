@@ -419,9 +419,6 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	status = rdp_client_connect(rdp);
 
-	if (status)
-		status = (freerdp_channels_post_connect(context->channels, context->instance) == CHANNEL_RC_OK);
-
 	return status;
 }
 
