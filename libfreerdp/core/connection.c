@@ -276,9 +276,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		if (!freerdp_get_last_error(rdp->context))
 		{
 			freerdp_set_last_error(rdp->context, FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED);
-
 			WLog_ERR(TAG, "Error: protocol security negotiation or connection failure");
 		}
+
 		return FALSE;
 	}
 
@@ -327,6 +327,7 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 
 	if (!nego_disconnect(rdp->nego))
 		return FALSE;
+
 	rdp_reset(rdp);
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL);
 
@@ -344,7 +345,6 @@ BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 		return FALSE;
 
 	context = rdp->context;
-
 	context->LastError = FREERDP_ERROR_SUCCESS;
 	clearChannelError(context);
 	ResetEvent(context->abortEvent);
@@ -356,12 +356,19 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	BOOL status;
 	rdpSettings* settings;
 	rdpContext* context;
+	rdpChannels* channels;
+	BOOL connected;
 
-	if (!rdp_client_disconnect_and_clear(rdp))
+	if (!rdp || !rdp->context || !rdp->context->channels)
 		return FALSE;
 
 	settings = rdp->settings;
 	context = rdp->context;
+	channels = context->channels;
+	connected = channels->connected;
+
+	if (!rdp_client_disconnect_and_clear(rdp))
+		return FALSE;
 
 	if (rdp_redirection_apply_settings(rdp) != 0)
 		return FALSE;
@@ -373,7 +380,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	}
 	else
 	{
-        if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+		if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->TargetNetAddress);
@@ -419,7 +426,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	status = rdp_client_connect(rdp);
 
-	if (status)
+	if (status && connected)
 		status = (freerdp_channels_post_connect(context->channels, context->instance) == CHANNEL_RC_OK);
 
 	return status;
@@ -428,15 +435,23 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 BOOL rdp_client_reconnect(rdpRdp* rdp)
 {
 	BOOL status;
-	rdpContext* context = rdp->context;
-	rdpChannels* channels = context->channels;
+	rdpContext* context;
+	rdpChannels* channels;
+	BOOL connected;
+
+	if (!rdp || !rdp->context || !rdp->context->channels)
+		return FALSE;
+
+	context = rdp->context;
+	channels = context->channels;
+	connected = channels->connected;
 
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
 
 	status = rdp_client_connect(rdp);
 
-	if (status)
+	if (status && connected)
 		status = (freerdp_channels_post_connect(channels, context->instance) == CHANNEL_RC_OK);
 
 	return status;
