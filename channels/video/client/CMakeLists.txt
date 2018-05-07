@@ -25,7 +25,9 @@ include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
-
+if (NOT CHANNEL_GEOMETRY OR NOT CHANNEL_GEOMETRY_CLIENT)
+    message(FATAL_ERROR "Video channel requires geometry channel. Add -DCHANNEL_GEOMETRY=ON -DCHANNEL_GEOMETRY_CLIENT=ON")
+endif (NOT CHANNEL_GEOMETRY OR NOT CHANNEL_GEOMETRY_CLIENT)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 
