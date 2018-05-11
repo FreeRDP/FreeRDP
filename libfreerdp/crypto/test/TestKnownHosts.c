@@ -29,8 +29,10 @@ static int prepare(const char* currentFileV2, const char* legacyFileV2, const ch
 	    "legacyurl aa:bb:cc:dd\n"
 	};
 	char* hosts[] = {
-	    "someurl 3389 ff:11:22:dd subject issuer\r\n",
-	    "otherurl\t3389\taa:bb:cc:dd\tsubject2\tissuer2\r",
+		"#somecomment\r\n"
+		"someurl 3389 ff:11:22:dd subject issuer\r\n"
+		" \t#anothercomment\r\n"
+	    "otherurl\t3389\taa:bb:cc:dd\tsubject2\tissuer2\r"
 	};
 	FILE* fl = NULL;
 	FILE* fc = NULL;

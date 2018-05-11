@@ -48,6 +48,29 @@ static const char certificate_legacy_hosts_file[] = "known_hosts";
 static BOOL certificate_split_line(char* line, char** host, UINT16* port,
 					 char**subject, char**issuer,
 					 char** fingerprint);
+static BOOL certificate_line_is_comment(const char* line, size_t length)
+{
+	while(length > 0)
+	{
+		switch(*line)
+		{
+		case ' ':
+		case '\t':
+			line++;
+			length--;
+			break;
+		case '#':
+			return TRUE;
+		default:
+			return FALSE;
+		}
+	}
+
+	if (length < 1)
+		return TRUE;
+
+	return FALSE;
+}
 
 BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 {
@@ -303,7 +326,10 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 
 		if (length > 0)
 		{
-			if (!certificate_split_line(pline, &hostname, &port,
+			if (certificate_line_is_comment(pline, length))
+			{
+			}
+			else if (!certificate_split_line(pline, &hostname, &port,
 								&subject, &issuer, &fingerprint))
 				WLog_WARN(TAG, "Invalid %s entry %s!",
 						certificate_known_hosts_file, pline);
@@ -446,7 +472,10 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 			char* issuer = NULL;
 			char* tdata;
 
-			if (!certificate_split_line(pline, &hostname, &port, &subject, &issuer, &fingerprint))
+			if (certificate_line_is_comment(pline, length))
+			{
+			}
+			else if (!certificate_split_line(pline, &hostname, &port, &subject, &issuer, &fingerprint))
 				WLog_WARN(TAG, "Skipping invalid %s entry %s!",
 						certificate_known_hosts_file, pline);
 			else
