@@ -53,7 +53,6 @@ libusb.h
     PATHS
       /usr/include
       /usr/local/include
-      /opt/local/include
       /sw/include
 PATH_SUFFIXES
 libusb-1.0
@@ -65,7 +64,6 @@ libusb-1.0
     PATHS
       /usr/lib
       /usr/local/lib
-      /opt/local/lib
       /sw/lib
   )
 
