@@ -248,13 +248,13 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 	return TRUE;
 }
 
-static void nsc_profiler_print(NSC_CONTEXT* context)
+static void nsc_profiler_print(NSC_CONTEXT_PRIV* priv)
 {
 	PROFILER_PRINT_HEADER
-	PROFILER_PRINT(context->priv->prof_nsc_rle_decompress_data)
-	PROFILER_PRINT(context->priv->prof_nsc_decode)
-	PROFILER_PRINT(context->priv->prof_nsc_rle_compress_data)
-	PROFILER_PRINT(context->priv->prof_nsc_encode)
+	PROFILER_PRINT(priv->prof_nsc_rle_decompress_data)
+	PROFILER_PRINT(priv->prof_nsc_decode)
+	PROFILER_PRINT(priv->prof_nsc_rle_compress_data)
+	PROFILER_PRINT(priv->prof_nsc_encode)
 	PROFILER_PRINT_FOOTER
 }
 
@@ -279,7 +279,7 @@ NSC_CONTEXT* nsc_context_new(void)
 	context->priv = (NSC_CONTEXT_PRIV*) calloc(1, sizeof(NSC_CONTEXT_PRIV));
 
 	if (!context->priv)
-		goto error_priv;
+		goto error;
 
 	context->priv->log = WLog_Get("com.freerdp.codec.nsc");
 	WLog_OpenAppender(context->priv->log);
@@ -289,7 +289,7 @@ NSC_CONTEXT* nsc_context_new(void)
 	context->priv->PlanePool = BufferPool_New(TRUE, 0, 16);
 
 	if (!context->priv->PlanePool)
-		goto error_PlanePool;
+		goto error;
 
 	PROFILER_CREATE(context->priv->prof_nsc_rle_decompress_data,
 	                "nsc_rle_decompress_data")
@@ -303,34 +303,33 @@ NSC_CONTEXT* nsc_context_new(void)
 	/* init optimized methods */
 	NSC_INIT_SIMD(context);
 	return context;
-error_PlanePool:
-	free(context->priv);
-error_priv:
-	free(context);
+error:
+	nsc_context_free(context);
 	return NULL;
 }
 
 void nsc_context_free(NSC_CONTEXT* context)
 {
-	int i;
+	size_t i;
 
-	for (i = 0; i < 4; i++)
+	if (!context)
+		return;
+
+	if (context->priv)
 	{
-		if (context->priv->PlaneBuffers[i])
-		{
+		for (i = 0; i < 4; i++)
 			free(context->priv->PlaneBuffers[i]);
-			context->priv->PlaneBuffers[i] = NULL;
-		}
+
+		BufferPool_Free(context->priv->PlanePool);
+		nsc_profiler_print(context->priv);
+		PROFILER_FREE(context->priv->prof_nsc_rle_decompress_data)
+		PROFILER_FREE(context->priv->prof_nsc_decode)
+		PROFILER_FREE(context->priv->prof_nsc_rle_compress_data)
+		PROFILER_FREE(context->priv->prof_nsc_encode)
+		free(context->priv);
 	}
 
 	free(context->BitmapData);
-	BufferPool_Free(context->priv->PlanePool);
-	nsc_profiler_print(context);
-	PROFILER_FREE(context->priv->prof_nsc_rle_decompress_data)
-	PROFILER_FREE(context->priv->prof_nsc_decode)
-	PROFILER_FREE(context->priv->prof_nsc_rle_compress_data)
-	PROFILER_FREE(context->priv->prof_nsc_encode)
-	free(context->priv);
 	free(context);
 }
 
