@@ -51,7 +51,9 @@ PROFILER* profiler_create(char* name)
 
 void profiler_free(PROFILER* profiler)
 {
-	stopwatch_free(profiler->stopwatch);
+	if (profiler)
+		stopwatch_free(profiler->stopwatch);
+
 	free(profiler);
 }
 
@@ -76,9 +78,8 @@ void profiler_print(PROFILER* profiler)
 {
 	double s = stopwatch_get_elapsed_time_in_seconds(profiler->stopwatch);
 	double avg = profiler->stopwatch->count == 0 ? 0 : s / profiler->stopwatch->count;
-
 	WLog_INFO(TAG, "%-30s | %10u | %10.4fs | %8.6fs | %6.0f",
-		profiler->name, profiler->stopwatch->count, s, avg, profiler->stopwatch->count / s);
+	          profiler->name, profiler->stopwatch->count, s, avg, profiler->stopwatch->count / s);
 }
 
 void profiler_print_footer(void)
