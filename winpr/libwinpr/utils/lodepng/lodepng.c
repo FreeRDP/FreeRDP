@@ -5567,28 +5567,33 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
       && (info.color.palettesize == 0 || info.color.palettesize > 256))
   {
     state->error = 68; /*invalid palette size, it is only allowed to be 1-256*/
-    return state->error;
+    goto fail;
   }
 
   if(state->encoder.auto_convert)
   {
     state->error = lodepng_auto_choose_color(&info.color, image, w, h, &state->info_raw);
   }
-  if(state->error) return state->error;
+  if(state->error)
+    goto fail;
 
   if(state->encoder.zlibsettings.btype > 2)
   {
-    CERROR_RETURN_ERROR(state->error, 61); /*error: unexisting btype*/
+    state->error = 61; /*error: unexisting btype*/
+    goto fail;
   }
   if(state->info_png.interlace_method > 1)
   {
-    CERROR_RETURN_ERROR(state->error, 71); /*error: unexisting interlace mode*/
+    state->error = 71; /*error: unexisting interlace mode*/
+    goto fail;
   }
 
   state->error = checkColorValidity(info.color.colortype, info.color.bitdepth);
-  if(state->error) return state->error; /*error: unexisting color type given*/
+  if(state->error)
+    goto fail; /*error: unexisting color type given*/
   state->error = checkColorValidity(state->info_raw.colortype, state->info_raw.bitdepth);
-  if(state->error) return state->error; /*error: unexisting color type given*/
+  if(state->error)
+    goto fail; /*error: unexisting color type given*/
 
   if(!lodepng_color_mode_equal(&state->info_raw, &info.color))
   {
@@ -5730,12 +5735,13 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
     break; /*this isn't really a while loop; no error happened so break out now!*/
   }
 
-  lodepng_info_cleanup(&info);
-  free(data);
   /*instead of cleaning the vector up, give it to the output*/
   *out = outv.data;
   *outsize = outv.size;
 
+  fail:
+  lodepng_info_cleanup(&info);
+  free(data);
   return state->error;
 }
 
