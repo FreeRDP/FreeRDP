@@ -989,7 +989,7 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	{
 		ZeroMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
 		           16);
-		ntlm_compute_message_integrity_check(context, &messageIntegrityCheck, sizeof(messageIntegrityCheck));
+		ntlm_compute_message_integrity_check(context, messageIntegrityCheck, sizeof(messageIntegrityCheck));
 		CopyMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
 		           message->MessageIntegrityCheck, 16);
 

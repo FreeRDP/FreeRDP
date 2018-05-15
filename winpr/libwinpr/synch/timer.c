@@ -234,7 +234,6 @@ static int InitializeWaitableTimer(WINPR_TIMER* timer)
 	if (!timer->lpArgToCompletionRoutine)
 	{
 #ifdef HAVE_SYS_TIMERFD_H
-		int status;
 		timer->fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 
 		if (timer->fd <= 0)
@@ -330,9 +329,11 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 	}
 
 	return handle;
+#if defined(__APPLE__)
 fail:
 	TimerCloseHandle(handle);
 	return NULL;
+#endif
 }
 
 HANDLE CreateWaitableTimerW(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManualReset,
