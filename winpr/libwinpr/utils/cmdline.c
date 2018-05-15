@@ -427,6 +427,10 @@ COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* optio
 COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* argument)
 {
 	COMMAND_LINE_ARGUMENT_A* nextArgument;
+
+	if (!argument || !argument->Name)
+		return NULL;
+
 	nextArgument = &argument[1];
 
 	if (nextArgument->Name == NULL)
