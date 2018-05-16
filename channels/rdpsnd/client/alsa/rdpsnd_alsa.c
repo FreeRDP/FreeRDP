@@ -420,6 +420,7 @@ static BOOL rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 
 static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {
+	UINT latency;
 	size_t offset;
 	int frame_size;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
@@ -431,16 +432,10 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 		snd_pcm_sframes_t status = snd_pcm_writei(alsa->pcm_handle, &data[offset],
 		                           (size - offset) / frame_size);
 
-		if (status == -EPIPE)
-		{
-			snd_pcm_recover(alsa->pcm_handle, status, 0);
-			status = 0;
-		}
-		else if (status == -EAGAIN)
-		{
-			status = 0;
-		}
-		else if (status < 0)
+		if (status < 0)
+			status = snd_pcm_recover(alsa->pcm_handle, status, 0);
+
+		if (status < 0)
 		{
 			WLog_ERR(TAG,  "status: %d\n", status);
 			snd_pcm_close(alsa->pcm_handle);
@@ -452,7 +447,19 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 		offset += status * frame_size;
 	}
 
-	return 10; /* TODO: Get real latency in [ms] */
+	{
+		snd_pcm_sframes_t available, delay;
+		int rc = snd_pcm_avail_delay(alsa->pcm_handle, &available, &delay);
+
+		if (rc != 0)
+			latency = 0;
+		else if (available == 0) /* Get [ms] from number of samples */
+			latency = delay * 1000 / alsa->actual_rate;
+		else
+			latency = 0;
+	}
+
+	return latency + alsa->latency;
 }
 
 static COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
