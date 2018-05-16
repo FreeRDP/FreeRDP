@@ -28,10 +28,12 @@
 #include "prim_internal.h"
 
 /* Singleton pointer used throughout the program when requested. */
-static primitives_t pPrimitives = { 0 };
 static primitives_t pPrimitivesGeneric = { 0 };
 static INIT_ONCE generic_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
+#if defined(HAVE_OPTIMIZED_PRIMITIVES)
+static primitives_t pPrimitives = { 0 };
 static INIT_ONCE primitives_InitOnce = INIT_ONCE_STATIC_INIT;
+#endif
 
 
 /* ------------------------------------------------------------------------- */
@@ -74,8 +76,10 @@ primitives_t* primitives_get(void)
 	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic, NULL, NULL);
 #if defined(HAVE_OPTIMIZED_PRIMITIVES)
 	InitOnceExecuteOnce(&primitives_InitOnce, primitives_init, NULL, NULL);
-#endif
 	return &pPrimitives;
+#else
+	return &pPrimitivesGeneric;
+#endif
 }
 
 primitives_t* primitives_get_generic(void)
