@@ -61,6 +61,7 @@ struct _RDPGFX_PLUGIN
 
 	rdpSettings* settings;
 
+	BOOL CapsFlags;
 	BOOL ThinClient;
 	BOOL SmallCache;
 	BOOL Progressive;
