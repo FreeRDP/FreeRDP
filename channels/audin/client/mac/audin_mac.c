@@ -341,7 +341,7 @@ static UINT audin_mac_parse_addin_args(AudinMacDevice* device, ADDIN_ARGV* args)
 		return CHANNEL_RC_OK;
 
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**)args->argv, audin_mac_args, flags,
+	status = CommandLineParseArgumentsA(args->argc, args->argv, audin_mac_args, flags,
 	                                    mac, NULL, NULL);
 
 	if (status < 0)

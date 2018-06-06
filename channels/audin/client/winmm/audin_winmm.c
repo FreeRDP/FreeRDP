@@ -400,7 +400,7 @@ static UINT audin_winmm_parse_addin_args(AudinWinmmDevice* device, ADDIN_ARGV* a
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_winmm_args, flags,
+	status = CommandLineParseArgumentsA(args->argc, args->argv, audin_winmm_args, flags,
 	                                    winmm, NULL, NULL);
 	arg = audin_winmm_args;
 

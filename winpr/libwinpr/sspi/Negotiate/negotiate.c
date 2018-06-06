@@ -54,9 +54,9 @@ const SecPkgInfoA NEGOTIATE_SecPkgInfoA =
 	"Microsoft Package Negotiator" /* Comment */
 };
 
-static const WCHAR NEGOTIATE_SecPkgInfoW_Name[] = { 'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', '\0' };
+static WCHAR NEGOTIATE_SecPkgInfoW_Name[] = { 'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', '\0' };
 
-static const WCHAR NEGOTIATE_SecPkgInfoW_Comment[] =
+static WCHAR NEGOTIATE_SecPkgInfoW_Comment[] =
 {
 	'M', 'i', 'c', 'r', 'o', 's', 'o', 'f', 't', ' ',
 	'P', 'a', 'c', 'k', 'a', 'g', 'e', ' ',

@@ -402,7 +402,7 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* a
 	COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**)args->argv, rdpsnd_oss_args, flags,
+	status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_oss_args, flags,
 	                                    oss, NULL, NULL);
 
 	if (status < 0)
