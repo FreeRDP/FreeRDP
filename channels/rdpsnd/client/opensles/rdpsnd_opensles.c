@@ -317,7 +317,7 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 	DEBUG_SND("opensles=%p, args=%p", (void*) opensles, (void*) args);
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON |
 	        COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+	status = CommandLineParseArgumentsA(args->argc, args->argv,
 	                                    rdpsnd_opensles_args, flags, opensles, NULL, NULL);
 
 	if (status < 0)

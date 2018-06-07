@@ -425,7 +425,7 @@ static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* a
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_pulse_args, flags,
+	status = CommandLineParseArgumentsA(args->argc, args->argv, audin_pulse_args, flags,
 	                                    pulse, NULL, NULL);
 
 	if (status < 0)
