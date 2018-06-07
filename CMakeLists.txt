@@ -881,6 +881,16 @@ find_feature(FAAC ${FAAC_FEATURE_TYPE} ${FAAC_FEATURE_PURPOSE} ${FAAC_FEATURE_DE
 
 find_feature(GSSAPI ${GSSAPI_FEATURE_TYPE} ${GSSAPI_FEATURE_PURPOSE} ${GSSAPI_FEATURE_DESCRIPTION})
 
+if (WITH_FFMPEG AND NOT FFMPEG_FOUND)
+	message(FATAL_ERROR "FFMPEG support requested but not detected")
+endif()
+set(WITH_FFMPEG ${FFMPEG_FOUND})
+
+if (WITH_OPENH264 AND NOT OPENH264_FOUND)
+	message(FATAL_ERROR "OpenH264 support requested but not detected")
+endif()
+set(WITH_OPENH264 ${OPENH264_FOUND})
+
 if ( (WITH_GSSAPI) AND (NOT GSS_FOUND))
 	message(WARNING "-DWITH_GSSAPI=ON is set, but not GSSAPI implementation was found, disabling")
 elseif(WITH_GSSAPI)
