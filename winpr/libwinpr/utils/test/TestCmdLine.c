@@ -64,9 +64,12 @@ int TestCmdLine(int argc, char* argv[])
 	long width = 0;
 	long height = 0;
 	COMMAND_LINE_ARGUMENT_A* arg;
+        int testArgc;
+        char** command_line;
+
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
-	int testArgc = string_list_length(testArgv);
-	char** command_line = string_list_copy(testArgv);
+        testArgc = string_list_length(testArgv);
+	command_line = string_list_copy(testArgv);
 	status = CommandLineParseArgumentsA(testArgc, command_line, args, flags, NULL, NULL, NULL);
 
 	if (status != 0)
