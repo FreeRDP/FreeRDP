@@ -596,7 +596,7 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
 		{
 			xf_toggle_control(xfc);
 		}
-
+		xfc->mouse_active = FALSE;
 		XUngrabKeyboard(xfc->display, CurrentTime);
 	}
 
