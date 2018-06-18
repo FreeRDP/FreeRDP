@@ -32,9 +32,6 @@
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 
-int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
-int xf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface);
-
 void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e);
 void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e);
 

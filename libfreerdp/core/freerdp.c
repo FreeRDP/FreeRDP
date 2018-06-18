@@ -165,6 +165,7 @@ BOOL freerdp_connect(freerdp* instance)
 	settings = instance->settings;
 	instance->context->codecs = codecs_new(instance->context);
 	IFCALLRET(instance->PreConnect, status, instance);
+	instance->ConnectionCallbackState++;
 
 	if (status)
 		status2 = freerdp_channels_pre_connect(instance->context->channels,
@@ -212,6 +213,7 @@ BOOL freerdp_connect(freerdp* instance)
 		}
 
 		IFCALLRET(instance->PostConnect, status, instance);
+		instance->ConnectionCallbackState++;
 
 		if (status)
 			status2 = freerdp_channels_post_connect(instance->context->channels, instance);
@@ -501,6 +503,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 	}
 
 	IFCALL(instance->PostDisconnect, instance);
+	instance->ConnectionCallbackState++;
 
 	if (instance->update->pcap_rfx)
 	{
