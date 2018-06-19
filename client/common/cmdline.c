@@ -585,17 +585,15 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 	{
 		if (name)
 		{
-			p = (char**) calloc(1UL, sizeof(char*));
+			size_t len = strlen(name);
+			p = (char**) calloc(1UL + len, sizeof(char*));
 
 			if (p)
 			{
-				p[0] = strdup(name);
+				char* dst = (char*)&p[1];
+				p[0] = dst;
 
-				if (!p[0])
-				{
-					free(p);
-					return NULL;
-				}
+				strncpy(dst, name, len);
 
 				*count = 1;
 				return p;
