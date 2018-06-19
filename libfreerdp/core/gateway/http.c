@@ -660,7 +660,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 		if (position >= 4)
 		{
-			char* buffer = Stream_Buffer(response->data);
+			char* buffer = (char*)Stream_Buffer(response->data);
 			const char* line = string_strnstr(buffer, "\r\n\r\n", position);
 
 			if (line)
@@ -671,8 +671,8 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	if (payloadOffset)
 	{
 		size_t count = 0;
-		char* buffer = Stream_Buffer(response->data);
-		char* line = Stream_Buffer(response->data);
+		char* buffer = (char*)Stream_Buffer(response->data);
+		char* line = (char*) Stream_Buffer(response->data);
 
 		while ((line = string_strnstr(line, "\r\n", payloadOffset - (line - buffer) - 2)))
 		{

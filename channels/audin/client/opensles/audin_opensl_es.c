@@ -367,7 +367,7 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device,
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
 	DEBUG_DVC("device=%p, args=%p", (void*) device, (void*) args);
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+	status = CommandLineParseArgumentsA(args->argc, args->argv,
 	                                    audin_opensles_args, flags, opensles, NULL, NULL);
 
 	if (status < 0)

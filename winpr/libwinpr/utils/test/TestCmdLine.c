@@ -1,8 +1,8 @@
-
 #include <errno.h>
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/cmdline.h>
+#include <winpr/strlst.h>
 
 static const char* testArgv[] =
 {
@@ -15,7 +15,8 @@ static const char* testArgv[] =
 	"/multimon",
 	"+fonts",
 	"-wallpaper",
-	"/v:localhost:3389"
+	"/v:localhost:3389",
+	0
 };
 
 static COMMAND_LINE_ARGUMENT_A args[] =
@@ -55,7 +56,6 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-#define testArgc (sizeof(testArgv) / sizeof(testArgv[0]))
 
 int TestCmdLine(int argc, char* argv[])
 {
@@ -64,8 +64,13 @@ int TestCmdLine(int argc, char* argv[])
 	long width = 0;
 	long height = 0;
 	COMMAND_LINE_ARGUMENT_A* arg;
+        int testArgc;
+        char** command_line;
+
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
-	status = CommandLineParseArgumentsA(testArgc, testArgv, args, flags, NULL, NULL, NULL);
+        testArgc = string_list_length(testArgv);
+	command_line = string_list_copy(testArgv);
+	status = CommandLineParseArgumentsA(testArgc, command_line, args, flags, NULL, NULL, NULL);
 
 	if (status != 0)
 	{

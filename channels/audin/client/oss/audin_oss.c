@@ -400,7 +400,7 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON |
 	        COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**)args->argv,
+	status = CommandLineParseArgumentsA(args->argc, args->argv,
 	                                    audin_oss_args, flags, oss, NULL, NULL);
 
 	if (status < 0)

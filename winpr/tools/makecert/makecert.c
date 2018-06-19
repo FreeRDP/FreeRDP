@@ -433,7 +433,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc,
 	 */
 	CommandLineClearArgumentsA(args);
 	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SIGIL_DASH;
-	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, context,
+	status = CommandLineParseArgumentsA(argc, argv, args, flags, context,
 	                                    (COMMAND_LINE_PRE_FILTER_FN_A) command_line_pre_filter, NULL);
 
 	if (status & COMMAND_LINE_STATUS_PRINT_HELP)
