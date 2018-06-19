@@ -424,7 +424,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	status = rdp_client_connect(rdp);
 
-	if (status && (context->instance->ConnectionCallbackState == 2))
+	if (status && (context->instance->ConnectionCallbackState == CLIENT_STATE_POSTCONNECT_PASSED))
 		status = (freerdp_channels_post_connect(context->channels, context->instance) == CHANNEL_RC_OK);
 
 	return status;
@@ -447,7 +447,7 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 
 	status = rdp_client_connect(rdp);
 
-	if (status && (context->instance->ConnectionCallbackState == 2))
+	if (status && (context->instance->ConnectionCallbackState == CLIENT_STATE_POSTCONNECT_PASSED))
 		status = (freerdp_channels_post_connect(channels, context->instance) == CHANNEL_RC_OK);
 
 	return status;
