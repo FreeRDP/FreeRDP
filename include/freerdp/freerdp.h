@@ -242,7 +242,7 @@ struct rdp_freerdp
 								   Must be set to NULL if not needed. */
 	UINT64 paddingC[47 - 35]; /* 35 */
 
-	ALIGN64 ConnectionCallbackState; /* 48 */
+	ALIGN64 UINT ConnectionCallbackState; /* 47 */
 
 	ALIGN64 pPreConnect PreConnect; /**< (offset 48)
 								 Callback for pre-connect operations.
