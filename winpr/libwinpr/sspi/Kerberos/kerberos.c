@@ -71,9 +71,9 @@ const SecPkgInfoA KERBEROS_SecPkgInfoA =
 	"Kerberos Security Package" /* Comment */
 };
 
-static const WCHAR KERBEROS_SecPkgInfoW_Name[] = { 'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', '\0' };
+static WCHAR KERBEROS_SecPkgInfoW_Name[] = { 'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', '\0' };
 
-static const WCHAR KERBEROS_SecPkgInfoW_Comment[] =
+static WCHAR KERBEROS_SecPkgInfoW_Comment[] =
 {
 	'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', ' ',
 	'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ',

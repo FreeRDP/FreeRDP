@@ -66,7 +66,7 @@ static int func_hardware_id_format(IUDEVICE* pdev, char(*HardwareIds)[DEVICE_HAR
 }
 
 static int func_compat_id_format(IUDEVICE* pdev,
-                                 char (*CompatibilityIds)[DEVICE_COMPATIBILITY_ID_SIZE])
+                                 char(*CompatibilityIds)[DEVICE_COMPATIBILITY_ID_SIZE])
 {
 	char str[DEVICE_COMPATIBILITY_ID_SIZE];
 	UINT8 bDeviceClass, bDeviceSubClass, bDeviceProtocol;
@@ -1522,7 +1522,7 @@ static UINT urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+	status = CommandLineParseArgumentsA(args->argc, args->argv,
 	                                    urbdrc_args, flags, urbdrc, NULL, NULL);
 
 	if (status < 0)

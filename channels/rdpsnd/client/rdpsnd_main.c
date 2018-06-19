@@ -766,7 +766,7 @@ static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 	if (args->argc > 1)
 	{
 		flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
-		status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+		status = CommandLineParseArgumentsA(args->argc, args->argv,
 		                                    rdpsnd_args, flags, rdpsnd, NULL, NULL);
 
 		if (status < 0)

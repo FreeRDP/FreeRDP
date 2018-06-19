@@ -1243,9 +1243,9 @@ const SecPkgInfoA NTLM_SecPkgInfoA =
 	"NTLM Security Package" /* Comment */
 };
 
-static const WCHAR NTLM_SecPkgInfoW_Name[] = { 'N', 'T', 'L', 'M', '\0' };
+static WCHAR NTLM_SecPkgInfoW_Name[] = { 'N', 'T', 'L', 'M', '\0' };
 
-static const WCHAR NTLM_SecPkgInfoW_Comment[] =
+static WCHAR NTLM_SecPkgInfoW_Comment[] =
 {
 	'N', 'T', 'L', 'M', ' ',
 	'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ',

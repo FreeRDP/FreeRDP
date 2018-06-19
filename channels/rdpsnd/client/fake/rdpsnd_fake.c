@@ -48,7 +48,6 @@ static BOOL rdpsnd_fake_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* for
 
 static void rdpsnd_fake_close(rdpsndDevicePlugin* device)
 {
-
 }
 
 static BOOL rdpsnd_fake_set_volume(rdpsndDevicePlugin* device, UINT32 value)
@@ -71,7 +70,8 @@ static BOOL rdpsnd_fake_format_supported(rdpsndDevicePlugin* device, const AUDIO
 	return TRUE;
 }
 
-static BOOL rdpsnd_fake_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_fake_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
+                                   int latency)
 {
 	return TRUE;
 }
@@ -83,7 +83,6 @@ static UINT rdpsnd_fake_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 
 static void rdpsnd_fake_start(rdpsndDevicePlugin* device)
 {
-
 }
 
 static COMMAND_LINE_ARGUMENT_A rdpsnd_fake_args[] =
@@ -101,22 +100,21 @@ static UINT rdpsnd_fake_parse_addin_args(rdpsndFakePlugin* fake, ADDIN_ARGV* arg
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
-
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+	status = CommandLineParseArgumentsA(args->argc, args->argv,
+	                                    rdpsnd_fake_args, flags, fake, NULL, NULL);
 
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
-			rdpsnd_fake_args, flags, fake, NULL, NULL);
 	if (status < 0)
 		return ERROR_INVALID_DATA;
 
 	arg = rdpsnd_fake_args;
+
 	do
 	{
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 			continue;
 
 		CommandLineSwitchStart(arg)
-
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
@@ -140,8 +138,8 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	ADDIN_ARGV* args;
 	rdpsndFakePlugin* fake;
 	UINT ret;
-
 	fake = (rdpsndFakePlugin*) calloc(1, sizeof(rdpsndFakePlugin));
+
 	if (!fake)
 		return CHANNEL_RC_NO_MEMORY;
 
@@ -152,11 +150,12 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	fake->device.Start = rdpsnd_fake_start;
 	fake->device.Close = rdpsnd_fake_close;
 	fake->device.Free = rdpsnd_fake_free;
-
 	args = pEntryPoints->args;
+
 	if (args->argc > 1)
 	{
 		ret = rdpsnd_fake_parse_addin_args(fake, args);
+
 		if (ret != CHANNEL_RC_OK)
 		{
 			WLog_ERR(TAG, "error parsing arguments");
@@ -165,10 +164,8 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	}
 
 	ret = CHANNEL_RC_NO_MEMORY;
-
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, &fake->device);
 	return CHANNEL_RC_OK;
-
 error:
 	rdpsnd_fake_free(&fake->device);
 	return ret;

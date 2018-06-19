@@ -826,7 +826,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
 		return TRUE;
 
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+	status = CommandLineParseArgumentsA(args->argc, args->argv,
 	                                    audin_args, flags, audin, NULL, NULL);
 
 	if (status != 0)

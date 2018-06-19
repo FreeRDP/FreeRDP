@@ -167,7 +167,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	CommandLineClearArgumentsA(shadow_args);
 	flags = COMMAND_LINE_SEPARATOR_COLON;
 	flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
-	status = CommandLineParseArgumentsA(argc, (const char**) argv, shadow_args, flags, server, NULL,
+	status = CommandLineParseArgumentsA(argc, argv, shadow_args, flags, server, NULL,
 	                                    NULL);
 
 	if (status < 0)
