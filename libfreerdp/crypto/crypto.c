@@ -389,7 +389,6 @@ static void map_subject_alt_name(X509* x509, int general_name_type, general_name
 	}
 
 	num = sk_GENERAL_NAME_num(gens);
-
 	for (i = 0; (i < num); i++)
 	{
 		GENERAL_NAME* name = sk_GENERAL_NAME_value(gens, i);

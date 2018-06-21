@@ -94,7 +94,19 @@ void* LinkedList_Last(wLinkedList* list)
  * Determines whether the LinkedList contains a specific value.
  */
 
-BOOL LinkedList_Contains(wLinkedList* list, void* value)
+typedef BOOL (*EqualPr)(void* a, void* b);
+
+BOOL Pointer_Equal(void* a, void* b)
+{
+	return a == b;
+}
+
+BOOL String_Equal(void* a, void* b)
+{
+	return 0 == strcmp(a, b);
+}
+
+BOOL LinkedList_ContainsWithEqual(wLinkedList* list, void* value, EqualPr equal)
 {
 	wLinkedListNode* item;
 	OBJECT_EQUALS_FN keyEquals;
