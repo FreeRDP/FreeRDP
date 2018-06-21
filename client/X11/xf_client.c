@@ -1122,7 +1122,7 @@ static BOOL xf_pre_connect(freerdp* instance)
 	if (!freerdp_client_load_addins(channels, instance->settings))
 		return FALSE;
 
-	if (!settings->Username && !settings->CredentialsFromStdin)
+	if (!settings->Username && !settings->CredentialsFromStdin && !settings->SmartcardLogon)
 	{
 		char* login_name = getlogin();
 

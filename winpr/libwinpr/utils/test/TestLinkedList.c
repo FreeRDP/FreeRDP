@@ -3,6 +3,7 @@
 #include <winpr/tchar.h>
 #include <winpr/collections.h>
 
+#define printref()  printf("%s:%d: %s() ",  __FILE__, __LINE__, __FUNCTION__)
 int TestLinkedList(int argc, char* argv[])
 {
 	int count;
@@ -15,6 +16,21 @@ int TestLinkedList(int argc, char* argv[])
 
 	if (count != 3)
 	{
+		printref();
+		printf("LinkedList_Count: expected 3, actual: %d\n", count);
+		return -1;
+	}
+
+	LinkedList_Free(list);
+	list = LinkedList_New();
+	LinkedList_AddLast(list, (void*)(size_t) 1);
+	LinkedList_AddLast(list, (void*)(size_t) 2);
+	LinkedList_AddLast(list, (void*)(size_t) 3);
+	count = LinkedList_Count(list);
+
+	if (count != 3)
+	{
+		printref();
 		printf("LinkedList_Count: expected 3, actual: %d\n", count);
 		return -1;
 	}
@@ -35,6 +51,7 @@ int TestLinkedList(int argc, char* argv[])
 
 	if (count != 1)
 	{
+		printref();
 		printf("LinkedList_Count: expected 1, actual: %d\n", count);
 		return -1;
 	}
@@ -55,6 +72,7 @@ int TestLinkedList(int argc, char* argv[])
 
 	if (count != 0)
 	{
+		printref();
 		printf("LinkedList_Count: expected 0, actual: %d\n", count);
 		return -1;
 	}
@@ -66,6 +84,7 @@ int TestLinkedList(int argc, char* argv[])
 
 	if (count != 3)
 	{
+		printref();
 		printf("LinkedList_Count: expected 3, actual: %d\n", count);
 		return -1;
 	}
@@ -99,6 +118,7 @@ int TestLinkedList(int argc, char* argv[])
 
 	while (LinkedList_Enumerator_MoveNext(list))
 	{
+		printref();
 		printf("\terror: %"PRIuz"\n", (size_t) LinkedList_Enumerator_Current(list));
 	}
 

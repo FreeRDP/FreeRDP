@@ -1,23 +1,21 @@
 
-set(MODULE_NAME "TestFreeRDPCrypto")
-set(MODULE_PREFIX "TEST_FREERDP_CRYPTO")
+set(MODULE_NAME "TestChannelSmartcardClient")
+set(MODULE_PREFIX "TEST_CHANNEL_SMARTCARD_CLIENT")
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestKnownHosts.c
-    TestBase64.c
-    Test_x509_cert_info.c)
+	TestStr.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
 	${${MODULE_PREFIX}_TESTS})
 
-include_directories(${OPENSSL_INCLUDE_DIR})
-
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-target_link_libraries(${MODULE_NAME} freerdp winpr ${OPENSSL_LIBRARIES})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client freerdp )
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} smartcard-client)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
@@ -26,5 +24,5 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 	add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 endforeach()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Test")
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Channel/Smartcard/Client/Test")
 
