@@ -1116,9 +1116,9 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 	int index;
 	char* common_name = NULL;
 	int common_name_length = 0;
-	char** alt_names = NULL;
-	int alt_names_count = 0;
-	int* alt_names_lengths = NULL;
+	char** dns_names = NULL;
+	int dns_names_count = 0;
+	int* dns_names_lengths = NULL;
 	BOOL certificate_status;
 	BOOL hostname_match = FALSE;
 	BOOL verification_status = FALSE;
@@ -1238,8 +1238,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 	certificate_data = crypto_get_certificate_data(cert->px509, hostname, port);
 	/* extra common name and alternative names */
 	common_name = crypto_cert_subject_common_name(cert->px509, &common_name_length);
-	alt_names = crypto_cert_subject_alt_name(cert->px509, &alt_names_count,
-	            &alt_names_lengths);
+	dns_names = crypto_cert_get_dns_names(cert->px509, &dns_names_count,
+	                                      &dns_names_lengths);
 
 	/* compare against common name */
 
@@ -1251,11 +1251,11 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 
 	/* compare against alternative names */
 
-	if (alt_names)
+	if (dns_names)
 	{
-		for (index = 0; index < alt_names_count; index++)
+		for (index = 0; index < dns_names_count; index++)
 		{
-			if (tls_match_hostname(alt_names[index], alt_names_lengths[index], hostname))
+			if (tls_match_hostname(dns_names[index], dns_names_lengths[index], hostname))
 			{
 				hostname_match = TRUE;
 				break;
@@ -1287,8 +1287,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 			if (!hostname_match)
 				tls_print_certificate_name_mismatch_error(
 				    hostname, port,
-				    common_name, alt_names,
-				    alt_names_count);
+				    common_name, dns_names,
+				    dns_names_count);
 
 			/* Automatically accept certificate on first use */
 			if (tls->settings->AutoAcceptCertificate)
@@ -1380,9 +1380,9 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 	certificate_data_free(certificate_data);
 	free(common_name);
 
-	if (alt_names)
-		crypto_cert_subject_alt_name_free(alt_names_count, alt_names_lengths,
-		                                  alt_names);
+	if (dns_names)
+		crypto_cert_dns_names_free(dns_names_count, dns_names_lengths,
+		                           dns_names);
 
 	return (verification_status == 0) ? 0 : 1;
 }

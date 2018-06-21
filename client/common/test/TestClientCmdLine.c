@@ -86,6 +86,22 @@ static INLINE BOOL testcase(const char* name, char** argv, size_t argc,
 #define DRIVE_REDIRECT_PATH "/tmp"
 #endif
 
+/*
+ LinkedList_ContainsString(list, string)
+
+ list is a wLinkedList of char strings.
+ string is either a char or wide char string.
+
+ string is 0-terminated.
+
+ LinkedList_ContainsString returns whether it contains a string that is
+ strcmp equal to string.
+*/
+static BOOL LinkedList_ContainsString(wLinkedList* list, const char* string)
+{
+	return LinkedList_ContainsWithEqual(list, (void*)string, String_Equal);
+}
+
 static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 {
 	BOOL result = TRUE;
@@ -104,6 +120,140 @@ static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 
 	return result;
 }
+
+static const char* smartcard_device_name_one = "Xiring";
+static const char* smartcard_device_name_two = "NeoWave";
+
+void LinkedList_PrintStrings(wLinkedList* list);
+
+static BOOL expect_smartcard_device_filter_contains(rdpSettings* settings, const char* filter)
+{
+	RDPDR_SMARTCARD* device = (RDPDR_SMARTCARD*)freerdp_device_collection_find_type(settings,
+	                          RDPDR_DTYP_SMARTCARD);
+
+	if (!device)
+	{
+		FAILURE("Expected to find smartcard device record, but found none!\n");
+		return FALSE;
+	}
+
+	if (!device->deviceFilter)
+	{
+		FAILURE("Device filter list not initialized!\n");
+		return FALSE;
+	}
+
+	if (!LinkedList_ContainsString(device->deviceFilter, filter))
+	{
+		FAILURE("Device filter list does not contain \"%s\"\n", filter);
+		FAILURE("deviceFilter = ");
+		LinkedList_PrintStrings(device->deviceFilter);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL expect_one_smartcard_device(rdpSettings* settings)
+{
+	UINT32 count;
+	BOOL result = TRUE;
+	count = freerdp_device_collection_count_type(settings, RDPDR_DTYP_SMARTCARD);
+
+	if (1 != count)
+	{
+		FAILURE("Expected ONE smartcard device, but found %d!\n", count);
+		result = FALSE;
+	}
+
+	if (1 <= count)
+	{
+		if (!freerdp_device_collection_find_type(settings, RDPDR_DTYP_SMARTCARD))
+		{
+			FAILURE("Expected ONE smartcard device record, but found none!\n");
+			result = FALSE;
+		}
+	}
+
+	return result;
+}
+
+
+static BOOL check_settings_smartcard_redirect_all(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (!settings->RedirectSmartCards)
+	{
+		FAILURE("Expected RedirectSmartCards = TRUE,  but RedirectSmartCards = FALSE!\n");
+		result = FALSE;
+	}
+
+	if (!expect_one_smartcard_device(settings))
+	{
+		result = FALSE;
+	}
+
+	if (!expect_smartcard_device_filter_contains(settings, ""))
+	{
+		result = FALSE;
+	}
+
+	return result;
+}
+
+static BOOL check_settings_smartcard_redirect_one(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (!settings->RedirectSmartCards)
+	{
+		FAILURE("Expected RedirectSmartCards = TRUE,  but RedirectSmartCards = FALSE!\n");
+		result = FALSE;
+	}
+
+	if (!expect_one_smartcard_device(settings))
+	{
+		result = FALSE;
+	}
+
+	if (!expect_smartcard_device_filter_contains(settings, smartcard_device_name_one))
+	{
+		result = FALSE;
+	}
+
+	return result;
+}
+
+static BOOL check_settings_smartcard_redirect_two(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (!settings->RedirectSmartCards)
+	{
+		FAILURE("Expected RedirectSmartCards = TRUE,  but RedirectSmartCards = FALSE!\n");
+		result = FALSE;
+	}
+
+	if (!expect_one_smartcard_device(settings))
+	{
+		result = FALSE;
+	}
+
+	if (!expect_smartcard_device_filter_contains(settings, smartcard_device_name_one))
+	{
+		result = FALSE;
+	}
+
+	if (!expect_smartcard_device_filter_contains(settings, smartcard_device_name_two))
+	{
+		result = FALSE;
+	}
+
+	return result;
+}
+
+
 
 typedef struct
 {
@@ -224,6 +374,41 @@ static test tests[] =
 		{"xfreerdp", "/sound", "/drive:media,/foo/bar/blabla", "/v:test.freerdp.com", 0},
 		{{0}}
 	},
+	{
+		0,  check_settings_smartcard_redirect_all,
+		{"xfreerdp", "/smartcard", "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
+		0, check_settings_smartcard_redirect_all,
+		{"xfreerdp", "/smartcard", "/smartcard:Xiring",  "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
+		0, check_settings_smartcard_redirect_all,
+		{"xfreerdp",  "/smartcard:Xiring", "/smartcard", "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
+		0,  check_settings_smartcard_redirect_one,
+		{"xfreerdp", "/smartcard:Xiring",  "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
+		0,  check_settings_smartcard_redirect_one,
+		{"xfreerdp", "/smartcard:Xiring", "/smartcard:Xiring",  "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
+		0,  check_settings_smartcard_redirect_two,
+		{"xfreerdp", "/smartcard:Xiring", "/smartcard:NeoWave" ,  "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
+		0,  check_settings_smartcard_redirect_two,
+		{"xfreerdp", "/smartcard:Xiring", "/smartcard:NeoWave", "/smartcard:Xiring", "/smartcard:NeoWave", "/v:test.freerdp.com", 0},
+		{{0}}
+	},
 
 #if 0
 	{
@@ -247,9 +432,8 @@ void check_modified_arguments(test* test, char** command_line, int* rc)
 
 		if (0 != strcmp(actual_argument, expected_argument))
 		{
-			printref();
-			printf("Failure: overridden argument %d is %s but it should be %s\n",
-			       index, actual_argument, expected_argument);
+			FAILURE("Failure: overridden argument %d is %s but it should be %s\n",
+			        index, actual_argument, expected_argument);
 			fflush(stdout);
 			* rc = -1;
 		}

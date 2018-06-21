@@ -322,6 +322,16 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}
+					else
+					{
+						/*
+						We need to reset the option Value and Flag
+						to process correctly the cases where the same
+						option is given several times like: /foo:bar /foo
+						*/
+						options[j].Value = NULL;
+						options[j].Flags &= ~ COMMAND_LINE_VALUE_PRESENT;
+					}
 				}
 
 				if (postFilter)

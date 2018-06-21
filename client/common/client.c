@@ -422,6 +422,12 @@ fail:
 BOOL client_cli_authenticate(freerdp* instance, char** username,
                              char** password, char** domain)
 {
+	if (instance->settings->SmartcardLogon)
+	{
+		WLog_INFO(TAG, "Authentication via smartcard");
+		return TRUE;
+	}
+
 	return client_cli_authenticate_raw(instance, FALSE, username, password, domain);
 }
 

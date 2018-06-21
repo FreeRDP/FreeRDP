@@ -22,6 +22,8 @@
 
 #include <winpr/cmdline.h>
 
+#define MAX_OPTION_NAME_LENGTH (80) /* let's have no args[]->Name that long… */
+
 static COMMAND_LINE_ARGUMENT_A args[] =
 {
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, "<addin>[,<options>]", NULL, NULL, -1, "addin", "Addin" },
@@ -110,6 +112,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info-string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<tag>:<level>[,<tag>:<level>[,...]]", NULL, NULL, -1, NULL, "Set logger filters, see wLog(7) for details" },
 	{ "log-level", COMMAND_LINE_VALUE_REQUIRED, "OFF|FATAL|ERROR|WARN|INFO|DEBUG|TRACE", NULL, NULL, -1, NULL, "Set the default log level, see wLog(7) for details" },
+	{ "logon-card", COMMAND_LINE_VALUE_REQUIRED, "<name>[,<path>]", NULL, NULL, -1, NULL, "Indicates the smartcard device to use for smartcard-logon" },
 	{ "max-fast-path-size", COMMAND_LINE_VALUE_REQUIRED, "<size>", NULL, NULL, -1, NULL, "Specify maximum fast-path update size" },
 	{ "max-loop-time", COMMAND_LINE_VALUE_REQUIRED, "<time>", NULL, NULL, -1, NULL, "Specify maximum time in milliseconds spend treating packets"},
 	{ "menu-anims", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Enable menu animations" },
@@ -133,6 +136,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "pcb", COMMAND_LINE_VALUE_REQUIRED, "<blob>", NULL, NULL, -1, NULL, "Preconnection Blob" },
 	{ "pcid", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL, "Preconnection Id" },
 	{ "pheight", COMMAND_LINE_VALUE_REQUIRED, "<height>", NULL, NULL, -1, NULL, "Physical height of display (in millimeters)" },
+	{ "pin", COMMAND_LINE_VALUE_REQUIRED, "<code>", NULL, NULL, -1, NULL, "Specifies the PIN code for the smartcard-logon (for smartcard readers without a PIN keyboard)" },
 	{ "play-rfx", COMMAND_LINE_VALUE_REQUIRED, "<pcap-file>", NULL, NULL, -1, NULL, "Replay rfx pcap file" },
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "print-reconnect-cookie", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Print base64 reconnect cookie after connecting" },
@@ -158,6 +162,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "size", COMMAND_LINE_VALUE_REQUIRED, "<width>x<height> or <percent>%[wh]", "1024x768", NULL, -1, NULL, "Screen size" },
 	{ "smart-sizing", COMMAND_LINE_VALUE_OPTIONAL, "<width>x<height>", NULL, NULL, -1, NULL, "Scale remote desktop to window size" },
 	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<path>]", NULL, NULL, -1, NULL, "Redirect smartcard device" },
+	{ "smartcard-logon", COMMAND_LINE_VALUE_OPTIONAL, "[rdp]", NULL, NULL, -1, NULL, "Selects Smartcard Logon authentication (thru rdp)" },
 	{ "sound", COMMAND_LINE_VALUE_OPTIONAL, "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>,][latency:<latency>,][quality:<quality>]", NULL, NULL, -1, "audio", "Audio output (sound)" },
 	{ "span", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Span screen over multiple monitors" },
 	{ "spn-class", COMMAND_LINE_VALUE_REQUIRED, "<service-class>", NULL, NULL, -1, NULL, "SPN authentication service class" },

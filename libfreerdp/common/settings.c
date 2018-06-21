@@ -37,7 +37,7 @@
 int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument)
 {
 	int i;
-	char **new_argv;
+	char** new_argv;
 
 	for (i = 0; i < args->argc; i++)
 	{
@@ -48,10 +48,13 @@ int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument)
 	}
 
 	new_argv = (char**) realloc(args->argv, sizeof(char*) * (args->argc + 1));
+
 	if (!new_argv)
 		return -1;
+
 	args->argv = new_argv;
 	args->argc++;
+
 	if (!(args->argv[args->argc - 1] = _strdup(argument)))
 		return -1;
 
@@ -61,13 +64,14 @@ int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument)
 int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous, char* argument)
 {
 	int i;
-	char **new_argv;
+	char** new_argv;
 
 	for (i = 0; i < args->argc; i++)
 	{
 		if (strcmp(args->argv[i], previous) == 0)
 		{
 			free(args->argv[i]);
+
 			if (!(args->argv[i] = _strdup(argument)))
 				return -1;
 
@@ -76,10 +80,13 @@ int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous, char* argum
 	}
 
 	new_argv = (char**) realloc(args->argv, sizeof(char*) * (args->argc + 1));
+
 	if (!new_argv)
 		return -1;
+
 	args->argv = new_argv;
 	args->argc++;
+
 	if (!(args->argv[args->argc - 1] = _strdup(argument)))
 		return -1;
 
@@ -92,12 +99,13 @@ int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value
 	char* p;
 	char* str;
 	int length;
-	char **new_argv;
-
+	char** new_argv;
 	length = strlen(option) + strlen(value) + 1;
 	str = (char*) malloc(length + 1);
+
 	if (!str)
 		return -1;
+
 	sprintf_s(str, length + 1, "%s:%s", option, value);
 
 	for (i = 0; i < args->argc; i++)
@@ -110,13 +118,13 @@ int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value
 			{
 				free(args->argv[i]);
 				args->argv[i] = str;
-
 				return 1;
 			}
 		}
 	}
 
 	new_argv = (char**) realloc(args->argv, sizeof(char*) * (args->argc + 1));
+
 	if (!new_argv)
 	{
 		free(str);
@@ -126,21 +134,22 @@ int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value
 	args->argv = new_argv;
 	args->argc++;
 	args->argv[args->argc - 1] = str;
-
 	return 0;
 }
 
-int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char* option, char* value)
+int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char* option,
+        char* value)
 {
 	int i;
 	char* str;
 	int length;
-	char **new_argv;
-
+	char** new_argv;
 	length = strlen(option) + strlen(value) + 1;
 	str = (char*) malloc(length + 1);
+
 	if (!str)
 		return -1;
+
 	sprintf_s(str, length + 1, "%s:%s", option, value);
 
 	for (i = 0; i < args->argc; i++)
@@ -149,21 +158,21 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char*
 		{
 			free(args->argv[i]);
 			args->argv[i] = str;
-
 			return 1;
 		}
 	}
 
 	new_argv = (char**) realloc(args->argv, sizeof(char*) * (args->argc + 1));
+
 	if (!new_argv)
 	{
 		free(str);
 		return -1;
 	}
+
 	args->argv = new_argv;
 	args->argc++;
 	args->argv[args->argc - 1] = str;
-
 	return 0;
 }
 
@@ -175,13 +184,14 @@ BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 	if (settings->DeviceArraySize < (settings->DeviceCount + 1))
 	{
 		UINT32 new_size;
-		RDPDR_DEVICE **new_array;
-
+		RDPDR_DEVICE** new_array;
 		new_size = settings->DeviceArraySize * 2;
 		new_array = (RDPDR_DEVICE**)
-				realloc(settings->DeviceArray, new_size * sizeof(RDPDR_DEVICE*));
+		            realloc(settings->DeviceArray, new_size * sizeof(RDPDR_DEVICE*));
+
 		if (!new_array)
 			return FALSE;
+
 		settings->DeviceArray = new_array;
 		settings->DeviceArraySize = new_size;
 	}
@@ -192,18 +202,20 @@ BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 
 RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name)
 {
+	/*
+	Return the first device with the same name (no anonymous device,
+	cf. freerdp_device_collection_find_type_and_name)
+	*/
 	UINT32 index;
-	RDPDR_DEVICE* device;
 
 	for (index = 0; index < settings->DeviceCount; index++)
 	{
-		device = (RDPDR_DEVICE*) settings->DeviceArray[index];
+		RDPDR_DEVICE* device = (RDPDR_DEVICE*) settings->DeviceArray[index];
 
-		if (!device->Name)
-			continue;
-
-		if (strcmp(device->Name, name) == 0)
+		if (name &&  device->Name && (strcmp(device->Name, name) == 0))
+		{
 			return device;
+		}
 	}
 
 	return NULL;
@@ -212,187 +224,238 @@ RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* 
 RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 type)
 {
 	UINT32 index;
-	RDPDR_DEVICE* device;
 
 	for (index = 0; index < settings->DeviceCount; index++)
 	{
-		device = (RDPDR_DEVICE*) settings->DeviceArray[index];
+		RDPDR_DEVICE* device = (RDPDR_DEVICE*) settings->DeviceArray[index];
 
 		if (device->Type == type)
+		{
 			return device;
+		}
 	}
 
 	return NULL;
 }
 
+RDPDR_DEVICE* freerdp_device_collection_find_type_and_name(rdpSettings* settings, UINT32 type,
+        const char* name)
+{
+	/*
+	Return the first device that has the given type
+	and the same name, or no name if name is null.
+	*/
+	UINT32 index;
+
+	for (index = 0; index < settings->DeviceCount; index++)
+	{
+		RDPDR_DEVICE* device = (RDPDR_DEVICE*) settings->DeviceArray[index];
+
+		if ((device->Type == type)
+		    && ((name == device->Name)
+		        || (name &&  device->Name && (strcmp(device->Name, name) == 0))))
+		{
+			return device;
+		}
+	}
+
+	return NULL;
+}
+
+UINT32 freerdp_device_collection_count_type(rdpSettings* settings, UINT32 type)
+{
+	UINT32 count = 0;
+	UINT32 index;
+
+	for (index = 0; index < settings->DeviceCount; index++)
+	{
+		RDPDR_DEVICE* device = (RDPDR_DEVICE*) settings->DeviceArray[index];
+
+		if (device->Type == type)
+		{
+			count ++ ;
+		}
+	}
+
+	return count;
+}
+
 RDPDR_DEVICE* freerdp_device_clone(RDPDR_DEVICE* device)
 {
-	if (device->Type == RDPDR_DTYP_FILESYSTEM)
+	switch (device->Type)
 	{
-		RDPDR_DRIVE* drive = (RDPDR_DRIVE*) device;
-		RDPDR_DRIVE* _drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
+		case RDPDR_DTYP_FILESYSTEM:
+			{
+				RDPDR_DRIVE* drive = (RDPDR_DRIVE*) device;
+				RDPDR_DRIVE* _drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
 
-		if (!_drive)
+				if (!_drive)
+					return NULL;
+
+				_drive->Id = drive->Id;
+				_drive->Type = drive->Type;
+				_drive->Name = _strdup(drive->Name);
+
+				if (!_drive->Name)
+					goto out_fs_name_error;
+
+				_drive->Path = _strdup(drive->Path);
+
+				if (!_drive->Path)
+					goto out_fs_path_error;
+
+				return (RDPDR_DEVICE*) _drive;
+			out_fs_path_error:
+				free(_drive->Name);
+			out_fs_name_error:
+				free(_drive);
+				return NULL;
+			}
+
+		case RDPDR_DTYP_PRINT:
+			{
+				RDPDR_PRINTER* printer = (RDPDR_PRINTER*) device;
+				RDPDR_PRINTER* _printer = (RDPDR_PRINTER*) calloc(1, sizeof(RDPDR_PRINTER));
+
+				if (!_printer)
+					return NULL;
+
+				_printer->Id = printer->Id;
+				_printer->Type = printer->Type;
+
+				if (printer->Name)
+				{
+					_printer->Name = _strdup(printer->Name);
+
+					if (!_printer->Name)
+						goto out_print_name_error;
+				}
+
+				if (printer->DriverName)
+				{
+					_printer->DriverName = _strdup(printer->DriverName);
+
+					if (!_printer->DriverName)
+						goto out_print_path_error;
+				}
+
+				return (RDPDR_DEVICE*) _printer;
+			out_print_path_error:
+				free(_printer->Name);
+			out_print_name_error:
+				free(_printer);
+				return NULL;
+			}
+
+		case RDPDR_DTYP_SMARTCARD:
+			{
+				RDPDR_SMARTCARD* smartcard = (RDPDR_SMARTCARD*) device;
+				RDPDR_SMARTCARD* _smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
+
+				if (!_smartcard)
+					return NULL;
+
+				_smartcard->Id = smartcard->Id;
+				_smartcard->Type = smartcard->Type;
+
+				if (smartcard->Name)
+				{
+					_smartcard->Name = _strdup(smartcard->Name);
+
+					if (!_smartcard->Name)
+						goto out_smartc_name_error;
+				}
+
+				return (RDPDR_DEVICE*) _smartcard;
+			out_smartc_name_error:
+				free(_smartcard);
+				return NULL;
+			}
+
+		case RDPDR_DTYP_SERIAL:
+			{
+				RDPDR_SERIAL* serial = (RDPDR_SERIAL*) device;
+				RDPDR_SERIAL* _serial = (RDPDR_SERIAL*) calloc(1, sizeof(RDPDR_SERIAL));
+
+				if (!_serial)
+					return NULL;
+
+				_serial->Id = serial->Id;
+				_serial->Type = serial->Type;
+
+				if (serial->Name)
+				{
+					_serial->Name = _strdup(serial->Name);
+
+					if (!_serial->Name)
+						goto out_serial_name_error;
+				}
+
+				if (serial->Path)
+				{
+					_serial->Path = _strdup(serial->Path);
+
+					if (!_serial->Path)
+						goto out_serial_path_error;
+				}
+
+				if (serial->Driver)
+				{
+					_serial->Driver = _strdup(serial->Driver);
+
+					if (!_serial->Driver)
+						goto out_serial_driver_error;
+				}
+
+				return (RDPDR_DEVICE*) _serial;
+			out_serial_driver_error:
+				free(_serial->Path);
+			out_serial_path_error:
+				free(_serial->Name);
+			out_serial_name_error:
+				free(_serial);
+				return NULL;
+			}
+
+		case RDPDR_DTYP_PARALLEL:
+			{
+				RDPDR_PARALLEL* parallel = (RDPDR_PARALLEL*) device;
+				RDPDR_PARALLEL* _parallel = (RDPDR_PARALLEL*) calloc(1, sizeof(RDPDR_PARALLEL));
+
+				if (!_parallel)
+					return NULL;
+
+				_parallel->Id = parallel->Id;
+				_parallel->Type = parallel->Type;
+
+				if (parallel->Name)
+				{
+					_parallel->Name = _strdup(parallel->Name);
+
+					if (!_parallel->Name)
+						goto out_parallel_name_error;
+				}
+
+				if (parallel->Path)
+				{
+					_parallel->Path = _strdup(parallel->Path);
+
+					if (!_parallel->Path)
+						goto out_parallel_path_error;
+				}
+
+				return (RDPDR_DEVICE*) _parallel;
+			out_parallel_path_error:
+				free(_parallel->Name);
+			out_parallel_name_error:
+				free(_parallel);
+				return NULL;
+			}
+
+		default:
+			WLog_ERR(TAG, "unknown device type %"PRIu32"", device->Type);
 			return NULL;
-
-		_drive->Id = drive->Id;
-		_drive->Type = drive->Type;
-
-		_drive->Name = _strdup(drive->Name);
-		if (!_drive->Name)
-			goto out_fs_name_error;
-
-		_drive->Path = _strdup(drive->Path);
-		if (!_drive->Path)
-			goto out_fs_path_error;
-
-		return (RDPDR_DEVICE*) _drive;
-
-out_fs_path_error:
-		free(_drive->Name);
-out_fs_name_error:
-		free(_drive);
-		return NULL;
 	}
-
-	if (device->Type == RDPDR_DTYP_PRINT)
-	{
-		RDPDR_PRINTER* printer = (RDPDR_PRINTER*) device;
-		RDPDR_PRINTER* _printer = (RDPDR_PRINTER*) calloc(1, sizeof(RDPDR_PRINTER));
-
-		if (!_printer)
-			return NULL;
-
-		_printer->Id = printer->Id;
-		_printer->Type = printer->Type;
-
-		if (printer->Name)
-		{
-			_printer->Name = _strdup(printer->Name);
-			if (!_printer->Name)
-				goto out_print_name_error;
-		}
-
-		if (printer->DriverName)
-		{
-			_printer->DriverName = _strdup(printer->DriverName);
-			if (!_printer->DriverName)
-				goto out_print_path_error;
-		}
-
-		return (RDPDR_DEVICE*) _printer;
-
-out_print_path_error:
-		free(_printer->Name);
-out_print_name_error:
-		free(_printer);
-		return NULL;
-	}
-
-	if (device->Type == RDPDR_DTYP_SMARTCARD)
-	{
-		RDPDR_SMARTCARD* smartcard = (RDPDR_SMARTCARD*) device;
-		RDPDR_SMARTCARD* _smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
-
-		if (!_smartcard)
-			return NULL;
-
-		_smartcard->Id = smartcard->Id;
-		_smartcard->Type = smartcard->Type;
-
-		if (smartcard->Name)
-		{
-			_smartcard->Name = _strdup(smartcard->Name);
-			if (!_smartcard->Name)
-				goto out_smartc_name_error;
-		}
-
-		return (RDPDR_DEVICE*) _smartcard;
-
-out_smartc_name_error:
-		free(_smartcard);
-		return NULL;
-	}
-
-	if (device->Type == RDPDR_DTYP_SERIAL)
-	{
-		RDPDR_SERIAL* serial = (RDPDR_SERIAL*) device;
-		RDPDR_SERIAL* _serial = (RDPDR_SERIAL*) calloc(1, sizeof(RDPDR_SERIAL));
-
-		if (!_serial)
-			return NULL;
-
-		_serial->Id = serial->Id;
-		_serial->Type = serial->Type;
-
-		if (serial->Name)
-		{
-			_serial->Name = _strdup(serial->Name);
-			if (!_serial->Name)
-				goto out_serial_name_error;
-		}
-
-		if (serial->Path)
-		{
-			_serial->Path = _strdup(serial->Path);
-			if (!_serial->Path)
-				goto out_serial_path_error;
-		}
-
-		if (serial->Driver)
-		{
-			_serial->Driver = _strdup(serial->Driver);
-			if (!_serial->Driver)
-				goto out_serial_driver_error;
-		}
-
-		return (RDPDR_DEVICE*) _serial;
-
-out_serial_driver_error:
-		free(_serial->Path);
-out_serial_path_error:
-		free(_serial->Name);
-out_serial_name_error:
-		free(_serial);
-		return NULL;
-	}
-
-	if (device->Type == RDPDR_DTYP_PARALLEL)
-	{
-		RDPDR_PARALLEL* parallel = (RDPDR_PARALLEL*) device;
-		RDPDR_PARALLEL* _parallel = (RDPDR_PARALLEL*) calloc(1, sizeof(RDPDR_PARALLEL));
-
-		if (!_parallel)
-			return NULL;
-
-		_parallel->Id = parallel->Id;
-		_parallel->Type = parallel->Type;
-
-		if (parallel->Name)
-		{
-			_parallel->Name = _strdup(parallel->Name);
-			if (!_parallel->Name)
-				goto out_parallel_name_error;
-		}
-
-		if (parallel->Path)
-		{
-			_parallel->Path = _strdup(parallel->Path);
-			if (!_parallel->Path)
-				goto out_parallel_path_error;
-		}
-
-		return (RDPDR_DEVICE*) _parallel;
-out_parallel_path_error:
-		free(_parallel->Name);
-out_parallel_name_error:
-		free(_parallel);
-		return NULL;
-
-	}
-
-	WLog_ERR(TAG, "unknown device type %"PRIu32"", device->Type);
-	return NULL;
 }
 
 void freerdp_device_collection_free(rdpSettings* settings)
@@ -415,11 +478,9 @@ void freerdp_device_collection_free(rdpSettings* settings)
 		}
 		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_PRINT)
 		{
-
 		}
 		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_SMARTCARD)
 		{
-
 		}
 		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_SERIAL)
 		{
@@ -435,10 +496,54 @@ void freerdp_device_collection_free(rdpSettings* settings)
 	}
 
 	free(settings->DeviceArray);
-
 	settings->DeviceArraySize = 0;
 	settings->DeviceArray = NULL;
 	settings->DeviceCount = 0;
+}
+
+static const char* device_type_label(UINT32 type)
+{
+	switch (type)
+	{
+		case RDPDR_DTYP_SERIAL:
+			return "serial";
+
+		case RDPDR_DTYP_PARALLEL:
+			return "parallel";
+
+		case RDPDR_DTYP_PRINT:
+			return "printer";
+
+		case RDPDR_DTYP_FILESYSTEM:
+			return "filesystem";
+
+		case RDPDR_DTYP_SMARTCARD:
+			return "smartcard";
+
+		default:
+			{
+				static char buffer[80];
+				sprintf(buffer, "unknown device type %d", type);
+				return buffer;
+			}
+	}
+}
+
+void freerdp_device_print(RDPDR_DEVICE* device, UINT32 index, const char* fname, UINT32 lino)
+{
+	WLog_DBG(TAG, "%s:%u: device[%d] = { id = %d,  type = %s, name = %s }",
+	         fname, lino, index, device->Id, device_type_label(device->Type),
+	         (device->Name ? device->Name : "(null)"));
+}
+
+void freerdp_device_print_all(rdpSettings* settings, const char* fname, UINT32 lino)
+{
+	UINT32 index;
+
+	for (index = 0; index < settings->DeviceCount; index++)
+	{
+		freerdp_device_print((RDPDR_DEVICE*) settings->DeviceArray[index], index, fname, lino);
+	}
 }
 
 BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
@@ -449,13 +554,14 @@ BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 	if (settings->StaticChannelArraySize < (settings->StaticChannelCount + 1))
 	{
 		UINT32 new_size;
-		ADDIN_ARGV **new_array;
-
+		ADDIN_ARGV** new_array;
 		new_size = settings->StaticChannelArraySize * 2;
 		new_array = (ADDIN_ARGV**)
-				realloc(settings->StaticChannelArray, new_size * sizeof(ADDIN_ARGV*));
+		            realloc(settings->StaticChannelArray, new_size * sizeof(ADDIN_ARGV*));
+
 		if (!new_array)
 			return FALSE;
+
 		settings->StaticChannelArray = new_array;
 		settings->StaticChannelArraySize = new_size;
 	}
@@ -484,28 +590,31 @@ ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel)
 {
 	int index;
 	ADDIN_ARGV* _channel = NULL;
-
 	_channel = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+
 	if (!_channel)
 		return NULL;
 
 	_channel->argc = channel->argc;
 	_channel->argv = (char**) calloc(channel->argc, sizeof(char*));
+
 	if (!_channel->argv)
 		goto out_free;
 
 	for (index = 0; index < _channel->argc; index++)
 	{
 		_channel->argv[index] = _strdup(channel->argv[index]);
+
 		if (!_channel->argv[index])
 			goto out_release_args;
 	}
 
 	return _channel;
-
 out_release_args:
+
 	for (index = 0; _channel->argv[index]; index++)
 		free(_channel->argv[index]);
+
 out_free:
 	free(_channel);
 	return NULL;
@@ -529,7 +638,6 @@ void freerdp_static_channel_collection_free(rdpSettings* settings)
 	}
 
 	free(settings->StaticChannelArray);
-
 	settings->StaticChannelArraySize = 0;
 	settings->StaticChannelArray = NULL;
 	settings->StaticChannelCount = 0;
@@ -542,9 +650,10 @@ BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 
 	if (settings->DynamicChannelArraySize < (settings->DynamicChannelCount + 1))
 	{
-		ADDIN_ARGV **new_array;
+		ADDIN_ARGV** new_array;
+		new_array = realloc(settings->DynamicChannelArray,
+		                    settings->DynamicChannelArraySize * sizeof(ADDIN_ARGV*) * 2);
 
-		new_array = realloc(settings->DynamicChannelArray, settings->DynamicChannelArraySize * sizeof(ADDIN_ARGV*) * 2);
 		if (!new_array)
 			return FALSE;
 
@@ -576,7 +685,6 @@ ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel)
 {
 	int index;
 	ADDIN_ARGV* _channel = NULL;
-
 	_channel = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
 
 	if (!_channel)
@@ -597,10 +705,11 @@ ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel)
 	}
 
 	return _channel;
-
 out_release_args:
+
 	for (index = 0; _channel->argv[index]; index++)
 		free(_channel->argv[index]);
+
 out_free:
 	free(_channel);
 	return NULL;
@@ -624,7 +733,6 @@ void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
 	}
 
 	free(settings->DynamicChannelArray);
-
 	settings->DynamicChannelArraySize = 0;
 	settings->DynamicChannelArray = NULL;
 	settings->DynamicChannelCount = 0;
@@ -639,7 +747,6 @@ void freerdp_target_net_addresses_free(rdpSettings* settings)
 
 	free(settings->TargetNetAddresses);
 	free(settings->TargetNetPorts);
-
 	settings->TargetNetAddressCount = 0;
 	settings->TargetNetAddresses = NULL;
 	settings->TargetNetPorts = NULL;
@@ -670,16 +777,15 @@ void freerdp_performance_flags_make(rdpSettings* settings)
 
 void freerdp_performance_flags_split(rdpSettings* settings)
 {
-	settings->AllowFontSmoothing = (settings->PerformanceFlags & PERF_ENABLE_FONT_SMOOTHING) ? TRUE : FALSE;
-
-	settings->AllowDesktopComposition = (settings->PerformanceFlags & PERF_ENABLE_DESKTOP_COMPOSITION) ? TRUE : FALSE;
-
+	settings->AllowFontSmoothing = (settings->PerformanceFlags & PERF_ENABLE_FONT_SMOOTHING) ? TRUE :
+	                               FALSE;
+	settings->AllowDesktopComposition = (settings->PerformanceFlags & PERF_ENABLE_DESKTOP_COMPOSITION) ?
+	                                    TRUE : FALSE;
 	settings->DisableWallpaper = (settings->PerformanceFlags & PERF_DISABLE_WALLPAPER) ? TRUE : FALSE;
-
-	settings->DisableFullWindowDrag = (settings->PerformanceFlags & PERF_DISABLE_FULLWINDOWDRAG) ? TRUE : FALSE;
-
-	settings->DisableMenuAnims = (settings->PerformanceFlags & PERF_DISABLE_MENUANIMATIONS) ? TRUE : FALSE;
-
+	settings->DisableFullWindowDrag = (settings->PerformanceFlags & PERF_DISABLE_FULLWINDOWDRAG) ? TRUE
+	                                  : FALSE;
+	settings->DisableMenuAnims = (settings->PerformanceFlags & PERF_DISABLE_MENUANIMATIONS) ? TRUE :
+	                             FALSE;
 	settings->DisableThemes = (settings->PerformanceFlags & PERF_DISABLE_THEMING) ? TRUE : FALSE;
 }
 
@@ -719,7 +825,8 @@ void freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsage
 	}
 }
 
-void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEnabled, UINT32 GatewayBypassLocal)
+void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEnabled,
+        UINT32 GatewayBypassLocal)
 {
 	UINT32 GatewayUsageMethod = 0;
 
@@ -1136,6 +1243,9 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 
 		case FreeRDP_RedirectClipboard:
 			return settings->RedirectClipboard;
+
+		case FreeRDP_SmartcardLogon:
+			return  settings->SmartcardLogon;
 
 		default:
 			WLog_ERR(TAG,  "freerdp_get_param_bool: unknown id: %d", id);
@@ -1679,6 +1789,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->RedirectClipboard = param;
 			break;
 
+		case FreeRDP_SmartcardLogon:
+			settings->SmartcardLogon = param;
+			break;
+
 		default:
 			WLog_ERR(TAG,  "freerdp_set_param_bool: unknown id %d (param = %"PRId32")", id, param);
 			return -1;
@@ -1686,7 +1800,6 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 	/* Mark field as modified */
 	settings->SettingsModified[id] = 1;
-
 	return -1;
 }
 
@@ -1724,7 +1837,6 @@ int freerdp_set_param_int(rdpSettings* settings, int id, int param)
 	}
 
 	settings->SettingsModified[id] = 1;
-
 	return 0;
 }
 
@@ -2337,7 +2449,6 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 	/* Mark field as modified */
 	settings->SettingsModified[id] = 1;
-
 	return 0;
 }
 
@@ -2369,7 +2480,6 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 
 	/* Mark field as modified */
 	settings->SettingsModified[id] = 1;
-
 	return 0;
 }
 
@@ -2541,7 +2651,7 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 
 int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 {
-	char **tmp = NULL;
+	char** tmp = NULL;
 
 	if (!param)
 		return -1;
@@ -2762,11 +2872,11 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 	}
 
 	free(*tmp);
+
 	if (!(*tmp = _strdup(param)))
 		return -1;
 
 	/* Mark field as modified */
 	settings->SettingsModified[id] = 1;
-
 	return 0;
 }

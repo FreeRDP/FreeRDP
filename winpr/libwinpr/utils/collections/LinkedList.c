@@ -75,7 +75,19 @@ void* LinkedList_Last(wLinkedList* list)
  * Determines whether the LinkedList contains a specific value.
  */
 
-BOOL LinkedList_Contains(wLinkedList* list, void* value)
+typedef BOOL (*EqualPr)(void* a, void* b);
+
+BOOL Pointer_Equal(void* a, void* b)
+{
+	return a == b;
+}
+
+BOOL String_Equal(void* a, void* b)
+{
+	return 0 == strcmp(a, b);
+}
+
+BOOL LinkedList_ContainsWithEqual(wLinkedList* list, void* value, EqualPr equal)
 {
 	wLinkedListNode* item;
 
@@ -86,7 +98,7 @@ BOOL LinkedList_Contains(wLinkedList* list, void* value)
 
 	while (item)
 	{
-		if (item->value == value)
+		if (equal(item->value, value))
 			break;
 
 		item = item->next;
@@ -94,6 +106,12 @@ BOOL LinkedList_Contains(wLinkedList* list, void* value)
 
 	return (item) ? TRUE : FALSE;
 }
+
+BOOL LinkedList_Contains(wLinkedList* list, void* value)
+{
+	return LinkedList_ContainsWithEqual(list, value, Pointer_Equal);
+}
+
 
 /**
  * Removes all entries from the LinkedList.
@@ -127,10 +145,11 @@ void LinkedList_Clear(wLinkedList* list)
 BOOL LinkedList_AddFirst(wLinkedList* list, void* value)
 {
 	wLinkedListNode* node;
-
 	node = (wLinkedListNode*) malloc(sizeof(wLinkedListNode));
+
 	if (!node)
 		return FALSE;
+
 	node->prev = node->next = NULL;
 	node->value = value;
 
@@ -156,10 +175,11 @@ BOOL LinkedList_AddFirst(wLinkedList* list, void* value)
 BOOL LinkedList_AddLast(wLinkedList* list, void* value)
 {
 	wLinkedListNode* node;
-
 	node = (wLinkedListNode*) malloc(sizeof(wLinkedListNode));
+
 	if (!node)
 		return FALSE;
+
 	node->prev = node->next = NULL;
 	node->value = value;
 
@@ -185,7 +205,6 @@ BOOL LinkedList_AddLast(wLinkedList* list, void* value)
 BOOL LinkedList_Remove(wLinkedList* list, void* value)
 {
 	wLinkedListNode* node;
-
 	node = list->head;
 
 	while (node)
@@ -205,13 +224,13 @@ BOOL LinkedList_Remove(wLinkedList* list, void* value)
 				list->tail = node->prev;
 
 			free(node);
-
 			list->count--;
 			return TRUE;
 		}
 
 		node = node->next;
 	}
+
 	return FALSE;
 }
 
@@ -226,7 +245,6 @@ void LinkedList_RemoveFirst(wLinkedList* list)
 	if (list->head)
 	{
 		node = list->head;
-
 		list->head = list->head->next;
 
 		if (!list->head)
@@ -239,7 +257,6 @@ void LinkedList_RemoveFirst(wLinkedList* list)
 		}
 
 		free(node);
-
 		list->count--;
 	}
 }
@@ -255,7 +272,6 @@ void LinkedList_RemoveLast(wLinkedList* list)
 	if (list->tail)
 	{
 		node = list->tail;
-
 		list->tail = list->tail->prev;
 
 		if (!list->tail)
@@ -268,7 +284,6 @@ void LinkedList_RemoveLast(wLinkedList* list)
 		}
 
 		free(node);
-
 		list->count--;
 	}
 }
@@ -322,9 +337,7 @@ BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list)
 wLinkedList* LinkedList_New()
 {
 	wLinkedList* list = NULL;
-
 	list = (wLinkedList*) calloc(1, sizeof(wLinkedList));
-
 	return list;
 }
 
