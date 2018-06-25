@@ -357,7 +357,6 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	rdpSettings* settings;
 	rdpContext* context;
 	rdpChannels* channels;
-	BOOL connected;
 
 	if (!rdp || !rdp->context || !rdp->context->channels)
 		return FALSE;
@@ -365,7 +364,6 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	settings = rdp->settings;
 	context = rdp->context;
 	channels = context->channels;
-	connected = channels->connected;
 
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
@@ -426,7 +424,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	status = rdp_client_connect(rdp);
 
-	if (status && connected)
+	if (status && (context->instance->ConnectionCallbackState == CLIENT_STATE_POSTCONNECT_PASSED))
 		status = (freerdp_channels_post_connect(context->channels, context->instance) == CHANNEL_RC_OK);
 
 	return status;
@@ -437,21 +435,19 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 	BOOL status;
 	rdpContext* context;
 	rdpChannels* channels;
-	BOOL connected;
 
 	if (!rdp || !rdp->context || !rdp->context->channels)
 		return FALSE;
 
 	context = rdp->context;
 	channels = context->channels;
-	connected = channels->connected;
 
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
 
 	status = rdp_client_connect(rdp);
 
-	if (status && connected)
+	if (status && (context->instance->ConnectionCallbackState == CLIENT_STATE_POSTCONNECT_PASSED))
 		status = (freerdp_channels_post_connect(channels, context->instance) == CHANNEL_RC_OK);
 
 	return status;

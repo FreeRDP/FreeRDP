@@ -240,7 +240,9 @@ struct rdp_freerdp
 								   Callback for context deallocation
 								   Can be set before calling freerdp_context_free() to have it executed before deallocation.
 								   Must be set to NULL if not needed. */
-	UINT64 paddingC[48 - 35]; /* 35 */
+	UINT64 paddingC[47 - 35]; /* 35 */
+
+	ALIGN64 UINT ConnectionCallbackState; /* 47 */
 
 	ALIGN64 pPreConnect PreConnect; /**< (offset 48)
 								 Callback for pre-connect operations.
