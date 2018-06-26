@@ -106,7 +106,7 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 		{
 			printf("    %s", arg->Default ? "-" : "+");
 			printf("%-20s", arg->Name);
-			printf("\t%s (default:%s)\n", arg->Text, arg->Default ? "on" : "off");
+			printf("\t%s %s\n", arg->Default ? "Disable" : "Enable", arg->Text);
 		}
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
