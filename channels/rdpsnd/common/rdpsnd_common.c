@@ -18,3 +18,8 @@
  * limitations under the License.
  */
 #include "rdpsnd_common.h"
+
+/* Prevent this compilation unit from being empty */
+void placeholder(void)
+{
+}
