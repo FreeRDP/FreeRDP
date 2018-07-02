@@ -1,7 +1,8 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2018 Armin Novak <armin.novak@thincast.com>
+# Copyright 2018 Thincast Technologies GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,15 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel("rdpsnd")
+set(SRCS
+        rdpsnd_common.h
+        rdpsnd_common.c)
 
-include_directories(common)
-add_subdirectory(common)
-
-if(WITH_CLIENT_CHANNELS)
-	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
-
-if(WITH_SERVER_CHANNELS)
-	add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
+add_library(rdpsnd-common STATIC ${SRCS})
