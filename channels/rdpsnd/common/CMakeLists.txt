@@ -20,4 +20,5 @@ set(SRCS
         rdpsnd_common.h
         rdpsnd_common.c)
 
-add_library(rdpsnd-common STATIC ${SRCS})
+# Library currently header only
+#add_library(rdpsnd-common STATIC ${SRCS})

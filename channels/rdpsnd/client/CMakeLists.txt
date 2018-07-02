@@ -25,7 +25,6 @@ add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE
 
 target_link_libraries(${MODULE_NAME}
     winpr freerdp ${CMAKE_THREAD_LIBS_INIT}
-    ${CMAKE_CURRENT_BINARY_DIR}/../common/rdpsnd-common${CMAKE_STATIC_LIBRARY_SUFFIX}
 )
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
