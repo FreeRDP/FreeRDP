@@ -37,22 +37,23 @@ static const AUDIO_FORMAT default_supported_audio_formats[] =
 static void rdpsnd_activated(RdpsndServerContext* context)
 {
 	AUDIO_FORMAT* agreed_format = NULL;
-	int i = 0, j = 0;
+	UINT16 i = 0, j = 0;
+
 	for (i = 0; i < context->num_client_formats; i++)
 	{
 		for (j = 0; j < context->num_server_formats; j++)
 		{
 			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
-					(context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
-					(context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
+			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
+			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
 			{
 				agreed_format = (AUDIO_FORMAT*) &context->server_formats[j];
 				break;
 			}
 		}
+
 		if (agreed_format != NULL)
 			break;
-
 	}
 
 	if (agreed_format == NULL)
@@ -67,8 +68,8 @@ static void rdpsnd_activated(RdpsndServerContext* context)
 int shadow_client_rdpsnd_init(rdpShadowClient* client)
 {
 	RdpsndServerContext* rdpsnd;
-
 	rdpsnd = client->rdpsnd = rdpsnd_server_context_new(client->vcm);
+
 	if (!rdpsnd)
 	{
 		return 0;
@@ -86,17 +87,13 @@ int shadow_client_rdpsnd_init(rdpShadowClient* client)
 		/* Set default audio formats. */
 		rdpsnd->server_formats = default_supported_audio_formats;
 		rdpsnd->num_server_formats =
-			sizeof(default_supported_audio_formats) / sizeof(default_supported_audio_formats[0]);
+		    sizeof(default_supported_audio_formats) / sizeof(default_supported_audio_formats[0]);
 	}
 
 	rdpsnd->src_format = rdpsnd->server_formats[0];
-
 	rdpsnd->Activated = rdpsnd_activated;
-
 	rdpsnd->Initialize(rdpsnd, TRUE);
-
 	return 1;
-
 }
 
 void shadow_client_rdpsnd_uninit(rdpShadowClient* client)
