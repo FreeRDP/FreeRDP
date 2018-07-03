@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+
+# This scripts reads include/freerdp/settings.h and scans the
+# rdp_settings structure for all the fields until the /END of ABI
+# stable zone/ comment.	 It then generates a set of #define one per
+# non-padding field, valued as the index of the field, taking into
+# account padding fields.  These field #defines are updated in that
+# same file.
+#
+# Usage:
+#
+#	 cd $freerdp_source_directory
+#	 scripts/update-rdpSettings
+
+set -eu
+
+srcroot=$(dirname $(dirname "${BASH_SOURCE[0]}"))
+srcroot=$(realpath "${srcroot}")
+file="${srcroot}/include/freerdp/settings.h"
+
+(
+	set -eu
+	head='This is generated with a script parsing the rdpSettings data structure'
+	tail='FreeRDP Settings Data Structure'
+	sed -n -e "1,/${head}/p" < "${file}"
+	printf ' */\n\n'
+	(
+		set -eu
+		i=0
+		sed -e '1,/struct rdp_settings/d' -e '/^{/d' -e '/};/,$d' \
+			| sed -e '/End of ABI stable zone/,$d' \
+			| sed -e '$a\
+x*/' \
+			| tr -d '\012' \
+			| sed -e  's-/\*\([^*]\|\*[^/]\)*\*/--g' -e 's/[ 	][ 	]*/ /g' \
+			| tr ';' '\012' \
+			| sed -e 's/^[ 	]*\([A-Za-z_][A-Za-z_0-9]*[* 	]*\)*[* 	]\([A-Za-z_][A-Za-z_0-9]*\)/\2/' \
+			      -e 's/padding[0-9]*[ 	]*\[\(.*\)\]/$((\1))/' \
+			| while read line ; do
+			case "$line" in
+			(*-*)	i=$(( i + $(eval echo "$line") )) ;;
+			(*)	printf '#define FreeRDP_%-50s (%4d)\n' "$line" "$i" ; i=$(( i + 1 )) ;;
+			esac
+		done
+	) < "${file}"
+	printf '\n\n/**\n'
+	sed -n -e '/'"$tail"'/,$p' < "${file}"
+) > "${file}.new" \
+	&& cp -v "${file}" "${file}.old" \
+	&& mv -v "${file}.new" "${file}"
