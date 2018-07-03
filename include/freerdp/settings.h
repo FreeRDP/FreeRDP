@@ -846,12 +846,12 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 struct rdp_settings
 {
 	/**
-        * WARNING: this data structure is carefully padded for ABI stability!
-        * Keeping this area clean is particularly challenging, so unless you are
-        * a trusted developer you should NOT take the liberty of adding your own
-        * options straight into the ABI stable zone. Instead, append them to the
-        * very end of this data structure, in the zone marked as ABI unstable.
-        */
+	 * WARNING: this data structure is carefully padded for ABI stability!
+	 * Keeping this area clean is particularly challenging, so unless you are
+	 * a trusted developer you should NOT take the liberty of adding your own
+	 * options straight into the ABI stable zone. Instead, append them to the
+	 * very end of this data structure, in the zone marked as ABI unstable.
+	 */
 
 	ALIGN64 void* instance; /* 0 */
 	UINT64 padding001[16 - 1]; /* 1 */
