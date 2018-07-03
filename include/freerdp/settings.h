@@ -872,8 +872,8 @@ struct rdp_settings
 	UINT64 padding0128[128 - 64]; /* 64 */
 
 	/**
-        * GCC User Data Blocks
-        */
+	 * GCC User Data Blocks
+	 */
 
 	/* Client/Server Core Data */
 	ALIGN64 UINT32 RdpVersion;              /* 128 */
@@ -953,8 +953,8 @@ struct rdp_settings
 	UINT64 padding0640[640 - 576]; /* 576 */
 
 	/*
-        * Client Info
-        */
+	 * Client Info
+	 */
 
 	/* Client Info (Shell) */
 	ALIGN64 char* AlternateShell;        /* 640 */
@@ -1026,8 +1026,8 @@ struct rdp_settings
 	UINT64 padding1088[1088 - 1032]; /* 1032 */
 
 	/**
-        * X.224 Connection Request/Confirm
-        */
+	 * X.224 Connection Request/Confirm
+	 */
 
 	/* Protocol Security */
 	ALIGN64 BOOL   TlsSecurity;                  /* 1088 */
@@ -1076,8 +1076,8 @@ struct rdp_settings
 	UINT64 padding1280[1280 - 1231]; /* 1231 */
 
 	/**
-        * Security
-        */
+	 * Security
+	 */
 
 	/* Credentials Cache */
 	ALIGN64 BYTE*  Password51;       /* 1280 */
@@ -1106,8 +1106,8 @@ struct rdp_settings
 	UINT64 padding1536[1536 - 1472]; /* 1472 */
 
 	/**
-        * User Interface
-        */
+	 * User Interface
+	 */
 
 	/* Window Settings */
 	ALIGN64 BOOL   Workarea;                /* 1536 */
@@ -1167,8 +1167,8 @@ struct rdp_settings
 	UINT64 padding1984[1984 - 1920]; /* 1920 */
 
 	/**
-        * Gateway
-        */
+	 * Gateway
+	 */
 
 	/* Gateway */
 	ALIGN64 UINT32 GatewayUsageMethod;        /* 1984 */
@@ -1196,8 +1196,8 @@ struct rdp_settings
 	UINT64 padding2112[2112 - 2020]; /* 2020 */
 
 	/**
-        * RemoteApp
-        */
+	 * RemoteApp
+	 */
 
 	/* RemoteApp */
 	ALIGN64 BOOL   RemoteApplicationMode;             /* 2112 */
@@ -1217,8 +1217,8 @@ struct rdp_settings
 	UINT64 padding2240[2240 - 2176]; /* 2176 */
 
 	/**
-        * Mandatory Capabilities
-        */
+	 * Mandatory Capabilities
+	 */
 
 	/* Capabilities */
 	ALIGN64 BYTE*  ReceivedCapabilities;     /* 2240 */
@@ -1306,8 +1306,8 @@ struct rdp_settings
 	UINT64 padding3072[3072 - 3008]; /* 3008 */
 
 	/**
-        * Optional Capabilities
-        */
+	 * Optional Capabilities
+	 */
 
 	/* Bitmap Cache Host Capabilities */
 	UINT64 padding3136[3136 - 3072]; /* 3072 */
@@ -1341,8 +1341,8 @@ struct rdp_settings
 	UINT64 padding3648[3648 - 3584]; /* 3584 */
 
 	/*
-        * Bitmap Codecs Capabilities
-        */
+	 * Bitmap Codecs Capabilities
+	 */
 
 	/* RemoteFX */
 	ALIGN64 BOOL   RemoteFxOnly;         /* 3648 */
@@ -1379,8 +1379,8 @@ struct rdp_settings
 	UINT64 padding3904[3904 - 3848]; /* 3848 */
 
 	/**
-        * Caches
-        */
+	 * Caches
+	 */
 
 	/* Bitmap Cache V3 */
 	ALIGN64 UINT32 BitmapCacheV3CodecId; /* 3904 */
@@ -1399,8 +1399,8 @@ struct rdp_settings
 	UINT64 padding4160[4160 - 4096]; /* 4096 */
 
 	/**
-        * Device Redirection
-        */
+	 * Device Redirection
+	 */
 
 	/* Device Redirection */
 	ALIGN64 BOOL           DeviceRedirection; /* 4160 */
@@ -1430,15 +1430,15 @@ struct rdp_settings
 	UINT64 padding4800[4800 - 4675]; /* 4675 */
 
 	/**
-        * Other Redirection
-        */
+	 * Other Redirection
+	 */
 
 	ALIGN64 BOOL RedirectClipboard; /* 4800 */
 	UINT64 padding4928[4928 - 4801]; /* 4801 */
 
 	/**
-        * Static Virtual Channels
-        */
+	 * Static Virtual Channels
+	 */
 
 	ALIGN64 UINT32       StaticChannelCount;     /* 4928 */
 	ALIGN64 UINT32       StaticChannelArraySize; /* 4929 */
@@ -1446,14 +1446,14 @@ struct rdp_settings
 	UINT64 padding5056[5056 - 4931]; /* 4931 */
 
 	/**
-        * Dynamic Virtual Channels
-        */
+	 * Dynamic Virtual Channels
+	 */
 
 	ALIGN64 UINT32       DynamicChannelCount;     /* 5056 */
 	ALIGN64 UINT32       DynamicChannelArraySize; /* 5057 */
 	ALIGN64 ADDIN_ARGV** DynamicChannelArray;     /* 5058 */
 	ALIGN64 BOOL         SupportDynamicChannels;  /* 5059 */
-        UINT64 padding5184[5184 - 5060]; /* 5060 */
+	UINT64 padding5184[5184 - 5060]; /* 5060 */
 
 	ALIGN64 BOOL SupportEchoChannel;      /* 5184 */
 	ALIGN64 BOOL SupportDisplayControl;   /* 5185 */
@@ -1463,22 +1463,22 @@ struct rdp_settings
 	UINT64 padding5312[5312 - 5189]; /* 5189 */
 
 	/**
-        * WARNING: End of ABI stable zone!
-        *
-        * The zone below this point is ABI unstable, and
-        * is therefore potentially subject to ABI breakage.
-        */
+	 * WARNING: End of ABI stable zone!
+	 *
+	 * The zone below this point is ABI unstable, and
+	 * is therefore potentially subject to ABI breakage.
+	 */
 
 	/*
-        * Extensions
-        */
+	 * Extensions
+	 */
 
 	/* Extensions */
 	ALIGN64 int num_extensions; /*  */
 	ALIGN64 struct rdp_ext_set extensions[16]; /*  */
 
 	ALIGN64 BYTE*
-	SettingsModified; /* byte array marking fields that have been modified from their default value */
+	SettingsModified;  /* byte array marking fields that have been modified from their default value */
 	ALIGN64 char* ActionScript;
 
 };
@@ -1501,7 +1501,7 @@ FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument);
 FREERDP_API int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous, char* argument);
 FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value);
 FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char* option,
-        char* value);
+	char* value);
 
 FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
 FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name);
@@ -1511,13 +1511,13 @@ FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 
 FREERDP_API BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
 FREERDP_API ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings,
-        const char* name);
+	const char* name);
 FREERDP_API ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel);
 FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
 
 FREERDP_API BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
 FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings,
-        const char* name);
+	const char* name);
 FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel);
 FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 
@@ -1528,7 +1528,7 @@ FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);
 
 FREERDP_API void freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsageMethod);
 FREERDP_API void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEnabled,
-        UINT32 GatewayBypassLocal);
+	UINT32 GatewayBypassLocal);
 
 FREERDP_API BOOL freerdp_get_param_bool(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param);
