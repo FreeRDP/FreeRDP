@@ -131,7 +131,7 @@ SURFACE_BITS_COMMAND* copy_surface_bits_command(rdpContext* context, const SURFA
 
 	return dst;
 
-	fail:
+fail:
 	free_surface_bits_command(context, dst);
 	return NULL;
 }
