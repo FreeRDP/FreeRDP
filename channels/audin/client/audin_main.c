@@ -183,7 +183,6 @@ static UINT audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, 
 	UINT error;
 	wStream* out;
 	UINT32 NumFormats;
-	AUDIO_FORMAT format;
 	UINT32 cbSizeFormatsPacket;
 
 	if (Stream_GetRemainingLength(s) < 8)
@@ -221,12 +220,11 @@ static UINT audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, 
 	/* SoundFormats (variable) */
 	for (i = 0; i < NumFormats; i++)
 	{
-		BYTE* fm;
+		AUDIO_FORMAT format = { 0 };
 
 		if (Stream_GetRemainingLength(s) < 18)
 			return ERROR_INVALID_DATA;
 
-		Stream_GetPointer(s, fm);
 		Stream_Read_UINT16(s, format.wFormatTag);
 		Stream_Read_UINT16(s, format.nChannels);
 		Stream_Read_UINT32(s, format.nSamplesPerSec);
@@ -234,12 +232,21 @@ static UINT audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, 
 		Stream_Read_UINT16(s, format.nBlockAlign);
 		Stream_Read_UINT16(s, format.wBitsPerSample);
 		Stream_Read_UINT16(s, format.cbSize);
-		format.data = Stream_Pointer(s);
 
 		if (Stream_GetRemainingLength(s) < format.cbSize)
 			return ERROR_INVALID_DATA;
 
-		Stream_Seek(s, format.cbSize);
+		if (format.cbSize > 0)
+		{
+			format.data = malloc(format.cbSize);
+
+			if (!format.data)
+				return ERROR_OUTOFMEMORY;
+
+			memcpy(format.data, Stream_Pointer(s), format.cbSize);
+			Stream_Seek(s, format.cbSize);
+		}
+
 		DEBUG_DVC("wFormatTag=%"PRIu16" nChannels=%"PRIu16" nSamplesPerSec=%"PRIu32" "
 		          "nBlockAlign=%"PRIu16" wBitsPerSample=%"PRIu16" cbSize=%"PRIu16"",
 		          format.wFormatTag, format.nChannels, format.nSamplesPerSec,
@@ -268,7 +275,12 @@ static UINT audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, 
 				goto out;
 			}
 
-			Stream_Write(out, fm, 18 + format.cbSize);
+			Stream_Write(out, &format, 18);
+			Stream_Write(out, format.data, format.cbSize);
+		}
+		else
+		{
+			free(format.data);
 		}
 	}
 
@@ -289,8 +301,16 @@ out:
 
 	if (error != CHANNEL_RC_OK)
 	{
-		free(callback->formats);
-		callback->formats = NULL;
+		size_t x;
+
+		if (callback->formats)
+		{
+			for (x = 0; x < NumFormats; x++)
+				free(callback->formats[x].data);
+
+			free(callback->formats);
+			callback->formats = NULL;
+		}
 	}
 
 	return error;
@@ -504,7 +524,7 @@ static UINT audin_process_format_change(IWTSVirtualChannelCallback* pChannelCall
 	Stream_Read_UINT32(s, NewFormat);
 	DEBUG_DVC("NewFormat=%"PRIu32"", NewFormat);
 
-	if (NewFormat >= (UINT32) callback->formats_count)
+	if (NewFormat >= callback->formats_count)
 	{
 		WLog_ERR(TAG, "invalid format index %"PRIu32" (total %d)",
 		         NewFormat, callback->formats_count);
@@ -583,6 +603,7 @@ static UINT audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
  */
 static UINT audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
+	size_t x;
 	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*) pChannelCallback;
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) callback->plugin;
 	UINT error = CHANNEL_RC_OK;
@@ -597,7 +618,18 @@ static UINT audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	}
 
 	audin->format = NULL;
-	free(callback->formats);
+
+	if (callback->formats)
+	{
+		for (x = 0; x < callback->formats_count; x++)
+		{
+			AUDIO_FORMAT* format = &callback->formats[x];
+			free(format->data);
+		}
+
+		free(callback->formats);
+	}
+
 	free(callback);
 	return error;
 }

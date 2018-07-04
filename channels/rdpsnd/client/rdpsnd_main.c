@@ -47,6 +47,7 @@
 #include <freerdp/addin.h>
 #include <freerdp/codec/dsp.h>
 
+#include "rdpsnd_common.h"
 #include "rdpsnd_main.h"
 
 struct rdpsnd_plugin
@@ -219,7 +220,7 @@ static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	Stream_Write_UINT16(pdu, 0); /* wDGramPort */
 	Stream_Write_UINT16(pdu, wNumberOfFormats); /* wNumberOfFormats */
 	Stream_Write_UINT8(pdu, 0); /* cLastBlockConfirmed */
-	Stream_Write_UINT16(pdu, 0x8); /* wVersion */
+	Stream_Write_UINT16(pdu, CHANNEL_VERSION_WIN_MAX); /* wVersion */
 	Stream_Write_UINT8(pdu, 0); /* bPad */
 
 	for (index = 0; index < wNumberOfFormats; index++)
@@ -318,7 +319,7 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd,
 
 	if (ret == CHANNEL_RC_OK)
 	{
-		if (wVersion >= 6)
+		if (wVersion >= CHANNEL_VERSION_WIN_7)
 			ret = rdpsnd_send_quality_mode_pdu(rdpsnd);
 	}
 
