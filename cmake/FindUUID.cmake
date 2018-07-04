@@ -37,7 +37,6 @@ else (UUID_LIBRARIES AND UUID_INCLUDE_DIRS)
 			/usr/include
 			/usr/include/gdal
 			/sw/include # Fink
-			/opt/local/include # DarwinPorts
 			/opt/csw/include # Blastwave
 			/opt/include
 			[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session\ Manager\\Environment;OSG_ROOT]/include
@@ -61,7 +60,6 @@ else (UUID_LIBRARIES AND UUID_INCLUDE_DIRS)
 			/usr/local/lib
 			/usr/lib
 			/sw/lib
-			/opt/local/lib
 			/opt/csw/lib
 			/opt/lib
 			/usr/freeware/lib64
@@ -84,7 +82,6 @@ else (UUID_LIBRARIES AND UUID_INCLUDE_DIRS)
 			/usr/local/lib
 			/usr/lib
 			/sw/lib
-			/opt/local/lib
 			/opt/csw/lib
 			/opt/lib
 			/usr/freeware/lib64

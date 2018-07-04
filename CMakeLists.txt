@@ -560,11 +560,6 @@ if(APPLE)
 		if(NOT DEFINED CMAKE_OSX_ARCHITECTURES)
 			set(CMAKE_OSX_ARCHITECTURES i386 x86_64)
 		endif()
-
-		if(IS_DIRECTORY /opt/local/include)
-			include_directories(/opt/local/include)
-			link_directories(/opt/local/lib)
-		endif()
 	endif(IOS)
 
 # Temporarily disabled, causes the cmake script to be reexecuted, causing the compilation to fail.
