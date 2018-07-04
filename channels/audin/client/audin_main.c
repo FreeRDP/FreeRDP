@@ -238,13 +238,13 @@ static UINT audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, 
 
 		if (format.cbSize > 0)
 		{
-			Stream_Seek(s, format.cbSize);
 			format.data = malloc(format.cbSize);
 
 			if (!format.data)
 				return ERROR_OUTOFMEMORY;
 
 			memcpy(format.data, Stream_Pointer(s), format.cbSize);
+			Stream_Seek(s, format.cbSize);
 		}
 
 		DEBUG_DVC("wFormatTag=%"PRIu16" nChannels=%"PRIu16" nSamplesPerSec=%"PRIu32" "
