@@ -27,6 +27,8 @@
 
 #include <freerdp/cache/cache.h>
 
+#include "cache.h"
+
 rdpCache* cache_new(rdpSettings* settings)
 {
 	rdpCache* cache;
@@ -89,4 +91,54 @@ void cache_free(rdpCache* cache)
 		nine_grid_cache_free(cache->nine_grid);
 		free(cache);
 	}
+}
+
+CACHE_COLOR_TABLE_ORDER* copy_cache_color_table_order(rdpContext* context,
+        const CACHE_COLOR_TABLE_ORDER* order)
+{
+	CACHE_COLOR_TABLE_ORDER* dst = calloc(1, sizeof(CACHE_COLOR_TABLE_ORDER));
+
+	if (!dst || !order)
+		goto fail;
+
+	*dst = *order;
+	return dst;
+fail:
+	free_cache_color_table_order(context, dst);
+	return NULL;
+}
+
+void free_cache_color_table_order(rdpContext* context, CACHE_COLOR_TABLE_ORDER* order)
+{
+	free(order);
+}
+
+SURFACE_BITS_COMMAND* copy_surface_bits_command(rdpContext* context, const SURFACE_BITS_COMMAND* order)
+{
+	SURFACE_BITS_COMMAND* dst = calloc(1, sizeof(SURFACE_BITS_COMMAND));
+	if (!dst || !order)
+		goto fail;
+
+	*dst = *order;
+
+	dst->bmp.bitmapData = (BYTE*) malloc(order->bmp.bitmapDataLength);
+
+	if (!dst->bmp.bitmapData)
+		goto fail;
+
+	CopyMemory(dst->bmp.bitmapData, order->bmp.bitmapData,
+			   order->bmp.bitmapDataLength);
+
+	return dst;
+
+fail:
+	free_surface_bits_command(context, dst);
+	return NULL;
+}
+
+void free_surface_bits_command(rdpContext* context, SURFACE_BITS_COMMAND* order)
+{
+	if (order)
+		free(order->bmp.bitmapData);
+	free(order);
 }

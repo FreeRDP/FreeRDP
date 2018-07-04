@@ -35,6 +35,11 @@
 
 #include "orders.h"
 
+#include "../cache/glyph.h"
+#include "../cache/bitmap.h"
+#include "../cache/brush.h"
+#include "../cache/cache.h"
+
 #define TAG FREERDP_TAG("core.orders")
 
 static const char* const PRIMARY_DRAWING_ORDER_STRINGS[] =
@@ -173,6 +178,14 @@ static const BYTE BPP_BMF[] =
 	5, 0, 0, 0, 0, 0, 0, 0,
 	6, 0, 0, 0, 0, 0, 0, 0
 };
+
+static const char* update_secondary_order_to_string(BYTE order)
+{
+	if (order >= ARRAYSIZE(SECONDARY_DRAWING_ORDER_STRINGS))
+		return "UNKNOWN";
+
+	return SECONDARY_DRAWING_ORDER_STRINGS[order];
+}
 
 static INLINE BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
 {
@@ -1672,12 +1685,21 @@ static BOOL update_read_ellipse_cb_order(wStream* s, ORDER_INFO* orderInfo,
 	return update_read_brush(s, &ellipse_cb->brush, orderInfo->fieldFlags >> 8);
 }
 /* Secondary Drawing Orders */
-static BOOL update_read_cache_bitmap_order(wStream* s,
-        CACHE_BITMAP_ORDER* cache_bitmap,
+static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wStream* s,
         BOOL compressed, UINT16 flags)
 {
+	CACHE_BITMAP_ORDER* cache_bitmap;
+
+	if (!update || !s)
+		return NULL;
+
+	cache_bitmap = calloc(1, sizeof(CACHE_BITMAP_ORDER));
+
+	if (!cache_bitmap)
+		goto fail;
+
 	if (Stream_GetRemainingLength(s) < 9)
-		return FALSE;
+		goto fail;
 
 	Stream_Read_UINT8(s, cache_bitmap->cacheId); /* cacheId (1 byte) */
 	Stream_Seek_UINT8(s); /* pad1Octet (1 byte) */
@@ -1688,7 +1710,7 @@ static BOOL update_read_cache_bitmap_order(wStream* s,
 	if ((cache_bitmap->bitmapBpp < 1) || (cache_bitmap->bitmapBpp > 32))
 	{
 		WLog_ERR(TAG, "invalid bitmap bpp %"PRIu32"", cache_bitmap->bitmapBpp);
-		return FALSE;
+		goto fail;
 	}
 
 	Stream_Read_UINT16(s, cache_bitmap->bitmapLength); /* bitmapLength (2 bytes) */
@@ -1701,29 +1723,27 @@ static BOOL update_read_cache_bitmap_order(wStream* s,
 			BYTE* bitmapComprHdr = (BYTE*) & (cache_bitmap->bitmapComprHdr);
 
 			if (Stream_GetRemainingLength(s) < 8)
-				return FALSE;
+				goto fail;
 
 			Stream_Read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
 			cache_bitmap->bitmapLength -= 8;
 		}
-
-		if (Stream_GetRemainingLength(s) < cache_bitmap->bitmapLength)
-			return FALSE;
-
-		Stream_GetPointer(s, cache_bitmap->bitmapDataStream);
-		Stream_Seek(s, cache_bitmap->bitmapLength);
-	}
-	else
-	{
-		if (Stream_GetRemainingLength(s) < cache_bitmap->bitmapLength)
-			return FALSE;
-
-		Stream_GetPointer(s, cache_bitmap->bitmapDataStream);
-		Stream_Seek(s, cache_bitmap->bitmapLength); /* bitmapDataStream */
 	}
 
+	if (Stream_GetRemainingLength(s) < cache_bitmap->bitmapLength)
+		goto fail;
+
+	cache_bitmap->bitmapDataStream = malloc(cache_bitmap->bitmapLength);
+
+	if (!cache_bitmap->bitmapDataStream)
+		goto fail;
+
+	Stream_Read(s, cache_bitmap->bitmapDataStream, cache_bitmap->bitmapLength);
 	cache_bitmap->compressed = compressed;
-	return TRUE;
+	return cache_bitmap;
+fail:
+	free_cache_bitmap_order(update->context, cache_bitmap);
+	return NULL;
 }
 int update_approximate_cache_bitmap_order(const CACHE_BITMAP_ORDER*
         cache_bitmap,
@@ -1773,11 +1793,20 @@ BOOL update_write_cache_bitmap_order(wStream* s,
 
 	return TRUE;
 }
-static BOOL update_read_cache_bitmap_v2_order(wStream* s,
-        CACHE_BITMAP_V2_ORDER* cache_bitmap_v2,
+static CACHE_BITMAP_V2_ORDER* update_read_cache_bitmap_v2_order(rdpUpdate* update, wStream* s,
         BOOL compressed, UINT16 flags)
 {
 	BYTE bitsPerPixelId;
+	CACHE_BITMAP_V2_ORDER* cache_bitmap_v2;
+
+	if (!update || !s)
+		return NULL;
+
+	cache_bitmap_v2 = calloc(1, sizeof(CACHE_BITMAP_V2_ORDER));
+
+	if (!cache_bitmap_v2)
+		goto fail;
+
 	cache_bitmap_v2->cacheId = flags & 0x0003;
 	cache_bitmap_v2->flags = (flags & 0xFF80) >> 7;
 	bitsPerPixelId = (flags & 0x0078) >> 3;
@@ -1786,7 +1815,7 @@ static BOOL update_read_cache_bitmap_v2_order(wStream* s,
 	if (cache_bitmap_v2->flags & CBR2_PERSISTENT_KEY_PRESENT)
 	{
 		if (Stream_GetRemainingLength(s) < 8)
-			return FALSE;
+			goto fail;
 
 		Stream_Read_UINT32(s, cache_bitmap_v2->key1); /* key1 (4 bytes) */
 		Stream_Read_UINT32(s, cache_bitmap_v2->key2); /* key2 (4 bytes) */
@@ -1796,7 +1825,7 @@ static BOOL update_read_cache_bitmap_v2_order(wStream* s,
 	{
 		if (!update_read_2byte_unsigned(s,
 		                                &cache_bitmap_v2->bitmapWidth)) /* bitmapWidth */
-			return FALSE;
+			goto fail;
 
 		cache_bitmap_v2->bitmapHeight = cache_bitmap_v2->bitmapWidth;
 	}
@@ -1806,13 +1835,13 @@ static BOOL update_read_cache_bitmap_v2_order(wStream* s,
 		    || /* bitmapWidth */
 		    !update_read_2byte_unsigned(s,
 		                                &cache_bitmap_v2->bitmapHeight)) /* bitmapHeight */
-			return FALSE;
+			goto fail;
 	}
 
 	if (!update_read_4byte_unsigned(s, &cache_bitmap_v2->bitmapLength)
 	    || /* bitmapLength */
 	    !update_read_2byte_unsigned(s, &cache_bitmap_v2->cacheIndex)) /* cacheIndex */
-		return FALSE;
+		goto fail;
 
 	if (cache_bitmap_v2->flags & CBR2_DO_NOT_CACHE)
 		cache_bitmap_v2->cacheIndex = BITMAP_CACHE_WAITING_LIST_INDEX;
@@ -1822,7 +1851,7 @@ static BOOL update_read_cache_bitmap_v2_order(wStream* s,
 		if (!(cache_bitmap_v2->flags & CBR2_NO_BITMAP_COMPRESSION_HDR))
 		{
 			if (Stream_GetRemainingLength(s) < 8)
-				return FALSE;
+				goto fail;
 
 			Stream_Read_UINT16(s,
 			                   cache_bitmap_v2->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
@@ -1833,24 +1862,22 @@ static BOOL update_read_cache_bitmap_v2_order(wStream* s,
 			                   cache_bitmap_v2->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
 			cache_bitmap_v2->bitmapLength = cache_bitmap_v2->cbCompMainBodySize;
 		}
-
-		if (Stream_GetRemainingLength(s) < cache_bitmap_v2->bitmapLength)
-			return FALSE;
-
-		Stream_GetPointer(s, cache_bitmap_v2->bitmapDataStream);
-		Stream_Seek(s, cache_bitmap_v2->bitmapLength);
-	}
-	else
-	{
-		if (Stream_GetRemainingLength(s) < cache_bitmap_v2->bitmapLength)
-			return FALSE;
-
-		Stream_GetPointer(s, cache_bitmap_v2->bitmapDataStream);
-		Stream_Seek(s, cache_bitmap_v2->bitmapLength);
 	}
 
+	if (Stream_GetRemainingLength(s) < cache_bitmap_v2->bitmapLength)
+		goto fail;
+
+	cache_bitmap_v2->bitmapDataStream = malloc(cache_bitmap_v2->bitmapLength);
+
+	if (!cache_bitmap_v2->bitmapDataStream)
+		goto fail;
+
+	Stream_Read(s, cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapLength);
 	cache_bitmap_v2->compressed = compressed;
-	return TRUE;
+	return cache_bitmap_v2;
+fail:
+	free_cache_bitmap_v2_order(update->context, cache_bitmap_v2);
+	return NULL;
 }
 int update_approximate_cache_bitmap_v2_order(CACHE_BITMAP_V2_ORDER*
         cache_bitmap_v2, BOOL compressed, UINT16* flags)
@@ -1932,21 +1959,30 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s,
 	cache_bitmap_v2->compressed = compressed;
 	return TRUE;
 }
-static BOOL update_read_cache_bitmap_v3_order(wStream* s,
-        CACHE_BITMAP_V3_ORDER* cache_bitmap_v3,
+static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* update, wStream* s,
         UINT16 flags)
 {
 	BYTE bitsPerPixelId;
 	BITMAP_DATA_EX* bitmapData;
 	UINT32 new_len;
 	BYTE* new_data;
+	CACHE_BITMAP_V3_ORDER* cache_bitmap_v3;
+
+	if (!update || !s)
+		return NULL;
+
+	cache_bitmap_v3 = calloc(1, sizeof(CACHE_BITMAP_V3_ORDER));
+
+	if (!cache_bitmap_v3)
+		goto fail;
+
 	cache_bitmap_v3->cacheId = flags & 0x00000003;
 	cache_bitmap_v3->flags = (flags & 0x0000FF80) >> 7;
 	bitsPerPixelId = (flags & 0x00000078) >> 3;
 	cache_bitmap_v3->bpp = CBR23_BPP[bitsPerPixelId];
 
 	if (Stream_GetRemainingLength(s) < 21)
-		return FALSE;
+		goto fail;
 
 	Stream_Read_UINT16(s, cache_bitmap_v3->cacheIndex); /* cacheIndex (2 bytes) */
 	Stream_Read_UINT32(s, cache_bitmap_v3->key1); /* key1 (4 bytes) */
@@ -1957,7 +1993,7 @@ static BOOL update_read_cache_bitmap_v3_order(wStream* s,
 	if ((bitmapData->bpp < 1) || (bitmapData->bpp > 32))
 	{
 		WLog_ERR(TAG, "invalid bpp value %"PRIu32"", bitmapData->bpp);
-		return FALSE;
+		goto fail;
 	}
 
 	Stream_Seek_UINT8(s); /* reserved1 (1 byte) */
@@ -1968,18 +2004,22 @@ static BOOL update_read_cache_bitmap_v3_order(wStream* s,
 	Stream_Read_UINT32(s, new_len); /* length (4 bytes) */
 
 	if (Stream_GetRemainingLength(s) < new_len)
-		return FALSE;
+		goto fail;
 
 	new_data = (BYTE*) realloc(bitmapData->data, new_len);
 
 	if (!new_data)
-		return FALSE;
+		goto fail;
 
 	bitmapData->data = new_data;
 	bitmapData->length = new_len;
 	Stream_Read(s, bitmapData->data, bitmapData->length);
-	return TRUE;
+	return cache_bitmap_v3;
+fail:
+	free_cache_bitmap_v3_order(update->context, cache_bitmap_v3);
+	return NULL;
 }
+
 int update_approximate_cache_bitmap_v3_order(CACHE_BITMAP_V3_ORDER*
         cache_bitmap_v3, UINT16* flags)
 {
@@ -2014,15 +2054,18 @@ BOOL update_write_cache_bitmap_v3_order(wStream* s,
 	Stream_Write(s, bitmapData->data, bitmapData->length);
 	return TRUE;
 }
-static BOOL update_read_cache_color_table_order(wStream* s,
-        CACHE_COLOR_TABLE_ORDER* cache_color_table,
+static CACHE_COLOR_TABLE_ORDER* update_read_cache_color_table_order(rdpUpdate* update, wStream* s,
         UINT16 flags)
 {
 	int i;
 	UINT32* colorTable;
+	CACHE_COLOR_TABLE_ORDER* cache_color_table = calloc(1, sizeof(CACHE_COLOR_TABLE_ORDER));
+
+	if (!cache_color_table)
+		goto fail;
 
 	if (Stream_GetRemainingLength(s) < 3)
-		return FALSE;
+		goto fail;
 
 	Stream_Read_UINT8(s, cache_color_table->cacheIndex); /* cacheIndex (1 byte) */
 	Stream_Read_UINT16(s,
@@ -2031,19 +2074,23 @@ static BOOL update_read_cache_color_table_order(wStream* s,
 	if (cache_color_table->numberColors != 256)
 	{
 		/* This field MUST be set to 256 */
-		return FALSE;
+		goto fail;
 	}
 
 	if (Stream_GetRemainingLength(s) < cache_color_table->numberColors * 4)
-		return FALSE;
+		goto fail;
 
 	colorTable = (UINT32*) &cache_color_table->colorTable;
 
 	for (i = 0; i < (int) cache_color_table->numberColors; i++)
 		update_read_color_quad(s, &colorTable[i]);
 
-	return TRUE;
+	return cache_color_table;
+fail:
+	free_cache_color_table_order(update->context, cache_color_table);
+	return NULL;
 }
+
 int update_approximate_cache_color_table_order(
     const CACHE_COLOR_TABLE_ORDER* cache_color_table, UINT16* flags)
 {
@@ -2076,14 +2123,16 @@ BOOL update_write_cache_color_table_order(wStream* s,
 
 	return TRUE;
 }
-static BOOL update_read_cache_glyph_order(wStream* s,
-        CACHE_GLYPH_ORDER* cache_glyph_order,
-        UINT16 flags)
+static CACHE_GLYPH_ORDER* update_read_cache_glyph_order(rdpUpdate* update, wStream* s, UINT16 flags)
 {
 	UINT32 i;
+	CACHE_GLYPH_ORDER* cache_glyph_order = calloc(1, sizeof(CACHE_GLYPH_ORDER));
+
+	if (!cache_glyph_order || !update || !s)
+		goto fail;
 
 	if (Stream_GetRemainingLength(s) < 2)
-		return FALSE;
+		goto fail;
 
 	Stream_Read_UINT8(s, cache_glyph_order->cacheId); /* cacheId (1 byte) */
 	Stream_Read_UINT8(s, cache_glyph_order->cGlyphs); /* cGlyphs (1 byte) */
@@ -2093,7 +2142,7 @@ static BOOL update_read_cache_glyph_order(wStream* s,
 		GLYPH_DATA* glyph = &cache_glyph_order->glyphData[i];
 
 		if (Stream_GetRemainingLength(s) < 10)
-			return FALSE;
+			goto fail;
 
 		Stream_Read_UINT16(s, glyph->cacheIndex);
 		Stream_Read_INT16(s, glyph->x);
@@ -2104,23 +2153,35 @@ static BOOL update_read_cache_glyph_order(wStream* s,
 		glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
 
 		if (Stream_GetRemainingLength(s) < glyph->cb)
-			return FALSE;
+			goto fail;
 
 		glyph->aj = (BYTE*) malloc(glyph->cb);
 
 		if (!glyph->aj)
-			return FALSE;
+			goto fail;
 
 		Stream_Read(s, glyph->aj, glyph->cb);
 	}
 
-	if (flags & CG_GLYPH_UNICODE_PRESENT)
+	if ((flags & CG_GLYPH_UNICODE_PRESENT) && (cache_glyph_order->cGlyphs > 0))
 	{
-		return Stream_SafeSeek(s, cache_glyph_order->cGlyphs * 2);
+		cache_glyph_order->unicodeCharacters = calloc(cache_glyph_order->cGlyphs, sizeof(WCHAR));
+
+		if (!cache_glyph_order->unicodeCharacters)
+			goto fail;
+
+		if (Stream_GetRemainingLength(s) < sizeof(WCHAR) * cache_glyph_order->cGlyphs)
+			goto fail;
+
+		Stream_Read_UTF16_String(s, cache_glyph_order->unicodeCharacters, cache_glyph_order->cGlyphs);
 	}
 
-	return TRUE;
+	return cache_glyph_order;
+fail:
+	free_cache_glyph_order(update->context, cache_glyph_order);
+	return NULL;
 }
+
 int update_approximate_cache_glyph_order(
     const CACHE_GLYPH_ORDER* cache_glyph, UINT16* flags)
 {
@@ -2164,11 +2225,15 @@ BOOL update_write_cache_glyph_order(wStream* s,
 
 	return TRUE;
 }
-static BOOL update_read_cache_glyph_v2_order(wStream* s,
-        CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
+static CACHE_GLYPH_V2_ORDER* update_read_cache_glyph_v2_order(rdpUpdate* update, wStream* s,
         UINT16 flags)
 {
 	UINT32 i;
+	CACHE_GLYPH_V2_ORDER* cache_glyph_v2 = calloc(1, sizeof(CACHE_GLYPH_V2_ORDER));
+
+	if (!cache_glyph_v2)
+		goto fail;
+
 	cache_glyph_v2->cacheId = (flags & 0x000F);
 	cache_glyph_v2->flags = (flags & 0x00F0) >> 4;
 	cache_glyph_v2->cGlyphs = (flags & 0xFF00) >> 8;
@@ -2178,7 +2243,7 @@ static BOOL update_read_cache_glyph_v2_order(wStream* s,
 		GLYPH_DATA_V2* glyph = &cache_glyph_v2->glyphData[i];
 
 		if (Stream_GetRemainingLength(s) < 1)
-			return FALSE;
+			goto fail;
 
 		Stream_Read_UINT8(s, glyph->cacheIndex);
 
@@ -2187,33 +2252,48 @@ static BOOL update_read_cache_glyph_v2_order(wStream* s,
 		    !update_read_2byte_unsigned(s, &glyph->cx) ||
 		    !update_read_2byte_unsigned(s, &glyph->cy))
 		{
-			return FALSE;
+			goto fail;
 		}
 
 		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
 		glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
 
 		if (Stream_GetRemainingLength(s) < glyph->cb)
-			return FALSE;
+			goto fail;
 
 		glyph->aj = (BYTE*) malloc(glyph->cb);
 
 		if (!glyph->aj)
-			return FALSE;
+			goto fail;
 
 		Stream_Read(s, glyph->aj, glyph->cb);
 	}
 
-	if (flags & CG_GLYPH_UNICODE_PRESENT)
-		return Stream_SafeSeek(s, cache_glyph_v2->cGlyphs * 2);
+	if ((flags & CG_GLYPH_UNICODE_PRESENT) && (cache_glyph_v2->cGlyphs > 0))
+	{
+		cache_glyph_v2->unicodeCharacters = calloc(cache_glyph_v2->cGlyphs, sizeof(WCHAR));
 
-	return TRUE;
+		if (!cache_glyph_v2->unicodeCharacters)
+			goto fail;
+
+		if (Stream_GetRemainingLength(s) < sizeof(WCHAR) * cache_glyph_v2->cGlyphs)
+			goto fail;
+
+		Stream_Read_UTF16_String(s, cache_glyph_v2->unicodeCharacters, cache_glyph_v2->cGlyphs);
+	}
+
+	return cache_glyph_v2;
+fail:
+	free_cache_glyph_v2_order(update->context, cache_glyph_v2);
+	return NULL;
 }
+
 int update_approximate_cache_glyph_v2_order(
     const CACHE_GLYPH_V2_ORDER* cache_glyph_v2, UINT16* flags)
 {
 	return 8 + cache_glyph_v2->cGlyphs * 32;
 }
+
 BOOL update_write_cache_glyph_v2_order(wStream* s,
                                        const CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
                                        UINT16* flags)
@@ -2290,16 +2370,18 @@ static BOOL update_compress_brush(wStream* s, const BYTE* input, BYTE bpp)
 {
 	return FALSE;
 }
-static BOOL update_read_cache_brush_order(wStream* s,
-        CACHE_BRUSH_ORDER* cache_brush,
-        UINT16 flags)
+static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStream* s, UINT16 flags)
 {
 	int i;
 	BYTE iBitmapFormat;
 	BOOL compressed = FALSE;
+	CACHE_BRUSH_ORDER* cache_brush = calloc(1, sizeof(CACHE_BRUSH_ORDER));
+
+	if (!cache_brush)
+		goto fail;
 
 	if (Stream_GetRemainingLength(s) < 6)
-		return FALSE;
+		goto fail;
 
 	Stream_Read_UINT8(s, cache_brush->index); /* cacheEntry (1 byte) */
 	Stream_Read_UINT8(s, iBitmapFormat); /* iBitmapFormat (1 byte) */
@@ -2316,12 +2398,12 @@ static BOOL update_read_cache_brush_order(wStream* s,
 			if (cache_brush->length != 8)
 			{
 				WLog_ERR(TAG,  "incompatible 1bpp brush of length:%"PRIu32"", cache_brush->length);
-				return TRUE; // should be FALSE ?
+				goto fail;
 			}
 
 			/* rows are encoded in reverse order */
 			if (Stream_GetRemainingLength(s) < 8)
-				return FALSE;
+				goto fail;
 
 			for (i = 7; i >= 0; i--)
 			{
@@ -2341,7 +2423,7 @@ static BOOL update_read_cache_brush_order(wStream* s,
 			{
 				/* compressed brush */
 				if (!update_decompress_brush(s, cache_brush->data, cache_brush->bpp))
-					return FALSE;
+					goto fail;
 			}
 			else
 			{
@@ -2349,7 +2431,7 @@ static BOOL update_read_cache_brush_order(wStream* s,
 				UINT32 scanline = (cache_brush->bpp / 8) * 8;
 
 				if (Stream_GetRemainingLength(s) < scanline * 8)
-					return FALSE;
+					goto fail;
 
 				for (i = 7; i >= 0; i--)
 				{
@@ -2359,7 +2441,10 @@ static BOOL update_read_cache_brush_order(wStream* s,
 		}
 	}
 
-	return TRUE;
+	return cache_brush;
+fail:
+	free_cache_brush_order(update->context, cache_brush);
+	return NULL;
 }
 int update_approximate_cache_brush_order(
     const CACHE_BRUSH_ORDER* cache_brush, UINT16* flags)
@@ -3252,6 +3337,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
                                         BYTE flags)
 {
+	BOOL rc = FALSE;
 	BYTE* next;
 	BYTE orderType;
 	UINT16 extraFlags;
@@ -3269,135 +3355,111 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 	Stream_Read_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	Stream_Read_UINT8(s, orderType); /* orderType (1 byte) */
 	next = Stream_Pointer(s) + ((INT16) orderLength) + 7;
-
-	if (orderType < SECONDARY_DRAWING_ORDER_COUNT)
-		WLog_Print(update->log, WLOG_DEBUG,  "%s Secondary Drawing Order (0x%02"PRIX8")",
-		           SECONDARY_DRAWING_ORDER_STRINGS[orderType], orderType);
-	else
-		WLog_Print(update->log, WLOG_DEBUG,  "Unknown Secondary Drawing Order (0x%02"PRIX8")",
-		           orderType);
+	WLog_Print(update->log, WLOG_DEBUG,  "%s Secondary Drawing Order (0x%02"PRIX8")",
+	           update_secondary_order_to_string(orderType), orderType);
 
 	switch (orderType)
 	{
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
-			if (!update_read_cache_bitmap_order(s, &(secondary->cache_bitmap_order), FALSE,
-			                                    extraFlags))
-			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_BITMAP_UNCOMPRESSED - update_read_cache_bitmap_order() failed");
-				return FALSE;
-			}
-
-			IFCALL(secondary->CacheBitmap, context, &(secondary->cache_bitmap_order));
-			break;
-
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
-			if (!update_read_cache_bitmap_order(s, &(secondary->cache_bitmap_order), TRUE,
-			                                    extraFlags))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_CACHE_BITMAP_COMPRESSED - update_read_cache_bitmap_order() failed");
-				return FALSE;
-			}
+				const BOOL compressed = (orderType == ORDER_TYPE_CACHE_BITMAP_COMPRESSED);
+				CACHE_BITMAP_ORDER* order = update_read_cache_bitmap_order(update, s, compressed, extraFlags);
 
-			IFCALL(secondary->CacheBitmap, context, &(secondary->cache_bitmap_order));
+				if (order)
+				{
+					rc = IFCALLRESULT(FALSE, secondary->CacheBitmap, context, order);
+					free_cache_bitmap_order(context, order);
+				}
+			}
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
-			if (!update_read_cache_bitmap_v2_order(s, &(secondary->cache_bitmap_v2_order),
-			                                       FALSE, extraFlags))
-			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_BITMAP_UNCOMPRESSED_V2 - update_read_cache_bitmap_v2_order() failed");
-				return FALSE;
-			}
-
-			IFCALL(secondary->CacheBitmapV2, context, &(secondary->cache_bitmap_v2_order));
-			break;
-
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
-			if (!update_read_cache_bitmap_v2_order(s, &(secondary->cache_bitmap_v2_order),
-			                                       TRUE, extraFlags))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_BITMAP_COMPRESSED_V2 - update_read_cache_bitmap_v2_order() failed");
-				return FALSE;
-			}
+				const BOOL compressed = (orderType == ORDER_TYPE_BITMAP_COMPRESSED_V2);
+				CACHE_BITMAP_V2_ORDER* order = update_read_cache_bitmap_v2_order(update, s, compressed, extraFlags);
 
-			IFCALL(secondary->CacheBitmapV2, context, &(secondary->cache_bitmap_v2_order));
+				if (order)
+				{
+					rc = IFCALLRESULT(FALSE, secondary->CacheBitmapV2, context, order);
+					free_cache_bitmap_v2_order(context, order);
+				}
+			}
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
-			if (!update_read_cache_bitmap_v3_order(s, &(secondary->cache_bitmap_v3_order),
-			                                       extraFlags))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_BITMAP_COMPRESSED_V3 - update_read_cache_bitmap_v3_order() failed");
-				return FALSE;
-			}
+				CACHE_BITMAP_V3_ORDER* order = update_read_cache_bitmap_v3_order(update, s, extraFlags);
 
-			IFCALL(secondary->CacheBitmapV3, context, &(secondary->cache_bitmap_v3_order));
+				if (order)
+				{
+					rc = IFCALLRESULT(FALSE, secondary->CacheBitmapV3, context, order);
+					free_cache_bitmap_v3_order(context, order);
+				}
+			}
 			break;
 
 		case ORDER_TYPE_CACHE_COLOR_TABLE:
-			if (!update_read_cache_color_table_order(s,
-			        &(secondary->cache_color_table_order), extraFlags))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_CACHE_COLOR_TABLE - update_read_cache_color_table_order() failed");
-				return FALSE;
-			}
+				CACHE_COLOR_TABLE_ORDER* order = update_read_cache_color_table_order(update, s, extraFlags);
 
-			IFCALL(secondary->CacheColorTable, context,
-			       &(secondary->cache_color_table_order));
+				if (order)
+				{
+					rc = IFCALLRESULT(FALSE, secondary->CacheColorTable, context, order);
+					free_cache_color_table_order(context, order);
+				}
+			}
 			break;
 
 		case ORDER_TYPE_CACHE_GLYPH:
 			if (secondary->glyph_v2)
 			{
-				if (!update_read_cache_glyph_v2_order(s, &(secondary->cache_glyph_v2_order),
-				                                      extraFlags))
-				{
-					WLog_ERR(TAG,
-					         "ORDER_TYPE_CACHE_GLYPH - update_read_cache_glyph_v2_order() failed");
-					return FALSE;
-				}
+				CACHE_GLYPH_V2_ORDER* order = update_read_cache_glyph_v2_order(update, s, extraFlags);
 
-				IFCALL(secondary->CacheGlyphV2, context, &(secondary->cache_glyph_v2_order));
+				if (order)
+				{
+					rc = IFCALLRESULT(FALSE, secondary->CacheGlyphV2, context, order);
+					free_cache_glyph_v2_order(context, order);
+				}
 			}
 			else
 			{
-				if (!update_read_cache_glyph_order(s, &(secondary->cache_glyph_order),
-				                                   extraFlags))
-				{
-					WLog_ERR(TAG,
-					         "ORDER_TYPE_CACHE_GLYPH - update_read_cache_glyph_order() failed");
-					return FALSE;
-				}
+				CACHE_GLYPH_ORDER* order = update_read_cache_glyph_order(update, s, extraFlags);
 
-				IFCALL(secondary->CacheGlyph, context, &(secondary->cache_glyph_order));
+				if (order)
+				{
+					rc = IFCALLRESULT(FALSE, secondary->CacheGlyph, context, order);
+					free_cache_glyph_order(context, order);
+				}
 			}
 
 			break;
 
 		case ORDER_TYPE_CACHE_BRUSH:
-			if (!update_read_cache_brush_order(s, &(secondary->cache_brush_order),
-			                                   extraFlags))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_CACHE_BRUSH - update_read_cache_brush_order() failed");
-				return FALSE;
-			}
+				CACHE_BRUSH_ORDER* order = update_read_cache_brush_order(update, s, extraFlags);
 
-			IFCALL(secondary->CacheBrush, context, &(secondary->cache_brush_order));
+				if (order)
+				{
+					rc = IFCALLRESULT(FALSE, secondary->CacheBrush, context, order);
+					free_cache_brush_order(context, order);
+				}
+			}
 			break;
 
 		default:
 			break;
 	}
 
+	if (!rc)
+	{
+		WLog_ERR(TAG, "SECONDARY ORDER %s [%"PRIx16"] failed", update_secondary_order_to_string(orderType),
+		         orderType);
+	}
+
 	Stream_SetPointer(s, next);
-	return TRUE;
+	return rc;
 }
 static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
                                      BYTE flags)

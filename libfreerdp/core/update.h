@@ -43,21 +43,21 @@ FREERDP_LOCAL void update_free(rdpUpdate* update);
 FREERDP_LOCAL void update_reset_state(rdpUpdate* update);
 FREERDP_LOCAL BOOL update_post_connect(rdpUpdate* update);
 FREERDP_LOCAL void update_post_disconnect(rdpUpdate* update);
-FREERDP_LOCAL BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s,
-        BITMAP_UPDATE* bitmapUpdate);
-FREERDP_LOCAL BOOL update_read_palette(rdpUpdate* update, wStream* s,
-                                       PALETTE_UPDATE* palette_update);
+
 FREERDP_LOCAL BOOL update_recv_play_sound(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL BOOL update_recv_pointer(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL BOOL update_recv(rdpUpdate* update, wStream* s);
-FREERDP_LOCAL BOOL update_read_pointer_position(wStream* s,
-        POINTER_POSITION_UPDATE* pointer_position);
-FREERDP_LOCAL BOOL update_read_pointer_color(wStream* s,
-        POINTER_COLOR_UPDATE* pointer_color, int xorBpp);
-FREERDP_LOCAL BOOL update_read_pointer_new(wStream* s,
-        POINTER_NEW_UPDATE* pointer_new);
-FREERDP_LOCAL BOOL update_read_pointer_cached(wStream* s,
-        POINTER_CACHED_UPDATE* pointer_cached);
+
+FREERDP_LOCAL BITMAP_UPDATE* update_read_bitmap_update(rdpUpdate* update, wStream* s);
+FREERDP_LOCAL PALETTE_UPDATE* update_read_palette(rdpUpdate* update, wStream* s);
+
+FREERDP_LOCAL POINTER_SYSTEM_UPDATE* update_read_pointer_system(rdpUpdate* update, wStream* s);
+FREERDP_LOCAL POINTER_POSITION_UPDATE* update_read_pointer_position(rdpUpdate* update, wStream* s);
+FREERDP_LOCAL POINTER_COLOR_UPDATE* update_read_pointer_color(rdpUpdate* update, wStream* s,
+        BYTE xorBpp);
+FREERDP_LOCAL POINTER_NEW_UPDATE* update_read_pointer_new(rdpUpdate* update, wStream* s);
+FREERDP_LOCAL POINTER_CACHED_UPDATE* update_read_pointer_cached(rdpUpdate* update, wStream* s);
+
 FREERDP_LOCAL BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL BOOL update_read_suppress_output(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL void update_register_server_callbacks(rdpUpdate* update);

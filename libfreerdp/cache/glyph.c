@@ -31,6 +31,8 @@
 #include <freerdp/log.h>
 #include <freerdp/cache/glyph.h>
 
+#include "glyph.h"
+
 #define TAG FREERDP_TAG("cache.glyph")
 
 static rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, UINT32 id,
@@ -760,4 +762,121 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 		free(glyphCache->fragCache.entries);
 		free(glyphCache);
 	}
+}
+
+CACHE_GLYPH_ORDER* copy_cache_glyph_order(rdpContext* context, const CACHE_GLYPH_ORDER* glyph)
+{
+	size_t x;
+	CACHE_GLYPH_ORDER* dst = calloc(1, sizeof(CACHE_GLYPH_ORDER));
+
+	if (!dst || !glyph)
+		goto fail;
+
+	*dst = *glyph;
+
+	for (x = 0; x < glyph->cGlyphs; x++)
+	{
+		const GLYPH_DATA* src = &glyph->glyphData[x];
+		GLYPH_DATA* data = &dst->glyphData[x];
+
+		if (src->aj)
+		{
+			const size_t size = src->cb;
+			data->aj = malloc(size);
+
+			if (!data->aj)
+				goto fail;
+
+			memcpy(data->aj, src->aj, size);
+		}
+	}
+
+	if (glyph->unicodeCharacters)
+	{
+		dst->unicodeCharacters = calloc(glyph->cGlyphs, sizeof(WCHAR));
+
+		if (!dst->unicodeCharacters)
+			goto fail;
+
+		memcpy(dst->unicodeCharacters, glyph->unicodeCharacters, sizeof(WCHAR) * glyph->cGlyphs);
+	}
+
+	return dst;
+fail:
+	free_cache_glyph_order(context, dst);
+	return NULL;
+}
+
+void free_cache_glyph_order(rdpContext* context, CACHE_GLYPH_ORDER* glyph)
+{
+	if (glyph)
+	{
+		size_t x;
+
+		for (x = 0; x < ARRAYSIZE(glyph->glyphData); x++)
+			free(glyph->glyphData[x].aj);
+
+		free(glyph->unicodeCharacters);
+	}
+
+	free(glyph);
+}
+
+CACHE_GLYPH_V2_ORDER* copy_cache_glyph_v2_order(rdpContext* context,
+        const CACHE_GLYPH_V2_ORDER* glyph)
+{
+	size_t x;
+	CACHE_GLYPH_V2_ORDER* dst = calloc(1, sizeof(CACHE_GLYPH_V2_ORDER));
+
+	if (!dst || !glyph)
+		goto fail;
+
+	*dst = *glyph;
+
+	for (x = 0; x < glyph->cGlyphs; x++)
+	{
+		const GLYPH_DATA_V2* src = &glyph->glyphData[x];
+		GLYPH_DATA_V2* data = &dst->glyphData[x];
+
+		if (src->aj)
+		{
+			const size_t size = src->cb;
+			data->aj = malloc(size);
+
+			if (!data->aj)
+				goto fail;
+
+			memcpy(data->aj, src->aj, size);
+		}
+	}
+
+	if (glyph->unicodeCharacters)
+	{
+		dst->unicodeCharacters = calloc(glyph->cGlyphs, sizeof(WCHAR));
+
+		if (!dst->unicodeCharacters)
+			goto fail;
+
+		memcpy(dst->unicodeCharacters, glyph->unicodeCharacters, sizeof(WCHAR) * glyph->cGlyphs);
+	}
+
+	return dst;
+fail:
+	free_cache_glyph_v2_order(context, dst);
+	return NULL;
+}
+
+void free_cache_glyph_v2_order(rdpContext* context, CACHE_GLYPH_V2_ORDER* glyph)
+{
+	if (glyph)
+	{
+		size_t x;
+
+		for (x = 0; x < ARRAYSIZE(glyph->glyphData); x++)
+			free(glyph->glyphData[x].aj);
+
+		free(glyph->unicodeCharacters);
+	}
+
+	free(glyph);
 }

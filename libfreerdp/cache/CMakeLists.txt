@@ -20,11 +20,17 @@ set(MODULE_PREFIX "FREERDP_CACHE")
 
 freerdp_module_add(
 	brush.c
+	brush.h
 	pointer.c
+	pointer.h
 	bitmap.c
+	bitmap.h
 	nine_grid.c
 	offscreen.c
 	palette.c
+	palette.h
 	glyph.c
-	cache.c)
+	glyph.h
+	cache.c
+	cache.h)
 

@@ -85,39 +85,45 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s)
 {
-	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
+	SURFACE_BITS_COMMAND* cmd = calloc(1, sizeof(SURFACE_BITS_COMMAND));
+
+	if (!cmd)
+		return FALSE;
 
 	if (Stream_GetRemainingLength(s) < 8)
-		return FALSE;
+		goto fail;
 
 	Stream_Read_UINT16(s, cmd->destLeft);
 	Stream_Read_UINT16(s, cmd->destTop);
 	Stream_Read_UINT16(s, cmd->destRight);
 	Stream_Read_UINT16(s, cmd->destBottom);
 	if (!update_recv_surfcmd_bitmap_ex(s, &cmd->bmp))
-		return FALSE;
+		goto fail;
 
 	if (!update->SurfaceBits)
 	{
 		WLog_ERR(TAG, "Missing callback update->SurfaceBits");
-		return FALSE;
+		goto fail;
 	}
 
 	return update->SurfaceBits(update->context, cmd);
+	fail:
+	free_surface_bits_command(update->context, cmd);
+	return FALSE;
 }
 
 static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 {
-	SURFACE_FRAME_MARKER* marker = &update->surface_frame_marker;
+	SURFACE_FRAME_MARKER marker;
 
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
-	Stream_Read_UINT16(s, marker->frameAction);
-	Stream_Read_UINT32(s, marker->frameId);
+	Stream_Read_UINT16(s, marker.frameAction);
+	Stream_Read_UINT32(s, marker.frameId);
 	WLog_Print(update->log, WLOG_DEBUG, "SurfaceFrameMarker: action: %s (%"PRIu32") id: %"PRIu32"",
-	           (!marker->frameAction) ? "Begin" : "End",
-	           marker->frameAction, marker->frameId);
+			   (!marker.frameAction) ? "Begin" : "End",
+			   marker.frameAction, marker.frameId);
 
 	if (!update->SurfaceFrameMarker)
 	{
@@ -125,7 +131,7 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 		return FALSE;
 	}
 
-	return update->SurfaceFrameMarker(update->context, marker);
+	return update->SurfaceFrameMarker(update->context, &marker);
 }
 
 int update_recv_surfcmds(rdpUpdate* update, wStream* s)
