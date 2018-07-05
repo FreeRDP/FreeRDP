@@ -240,7 +240,7 @@ static int nla_client_init(rdpNla* nla)
 
 			if (!proceed)
 			{
-				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
+				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return 0;
 			}
 		}
