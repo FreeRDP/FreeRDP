@@ -397,12 +397,20 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 	status = checkChannelErrorEvent(context);
 
 	if (!status)
+	{
+		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
+			WLog_ERR(TAG, "checkChannelErrorEvent() failed - %"PRIi32"", status);
 		return FALSE;
+	}
 
 	if (context->settings->AsyncInput)
 	{
-		status = freerdp_message_queue_process_pending_messages(
+		int rc = freerdp_message_queue_process_pending_messages(
 		             context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		if (rc < 0)
+			return FALSE;
+		else
+			status = TRUE;
 	}
 
 	return status;
