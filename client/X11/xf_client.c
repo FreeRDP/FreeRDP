@@ -1487,6 +1487,12 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 
 	if (!status)
 	{
+		if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_CONNECT_TRANSPORT_FAILED)
+			status = freerdp_reconnect(instance);
+	}
+
+	if (!status)
+	{
 		if (freerdp_get_last_error(instance->context) ==
 		    FREERDP_ERROR_AUTHENTICATION_FAILED)
 			exit_code = XF_EXIT_AUTH_FAILURE;
