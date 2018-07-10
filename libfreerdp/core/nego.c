@@ -63,6 +63,12 @@ static const char PROTOCOL_SECURITY_STRINGS[9][4] =
 static BOOL nego_transport_connect(rdpNego* nego);
 static BOOL nego_transport_disconnect(rdpNego* nego);
 static BOOL nego_security_connect(rdpNego* nego);
+static BOOL nego_send_preconnection_pdu(rdpNego* nego);
+static BOOL nego_recv_response(rdpNego* nego);
+static void nego_send(rdpNego* nego);
+static void nego_process_negotiation_request(rdpNego* nego, wStream* s);
+static void nego_process_negotiation_response(rdpNego* nego, wStream* s);
+static void nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 
 /**
  * Negotiate protocol security and connect.
@@ -369,7 +375,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
  * @param nego
  */
 
-void nego_attempt_ext(rdpNego* nego)
+static void nego_attempt_ext(rdpNego* nego)
 {
 	nego->RequestedProtocols = PROTOCOL_NLA | PROTOCOL_TLS | PROTOCOL_EXT;
 	WLog_DBG(TAG, "Attempting NLA extended security");
@@ -414,7 +420,7 @@ void nego_attempt_ext(rdpNego* nego)
  * @param nego
  */
 
-void nego_attempt_nla(rdpNego* nego)
+static void nego_attempt_nla(rdpNego* nego)
 {
 	nego->RequestedProtocols = PROTOCOL_NLA | PROTOCOL_TLS;
 	WLog_DBG(TAG, "Attempting NLA security");
@@ -457,7 +463,7 @@ void nego_attempt_nla(rdpNego* nego)
  * @param nego
  */
 
-void nego_attempt_tls(rdpNego* nego)
+static void nego_attempt_tls(rdpNego* nego)
 {
 	nego->RequestedProtocols = PROTOCOL_TLS;
 	WLog_DBG(TAG, "Attempting TLS security");
@@ -496,7 +502,7 @@ void nego_attempt_tls(rdpNego* nego)
  * @param nego
  */
 
-void nego_attempt_rdp(rdpNego* nego)
+static void nego_attempt_rdp(rdpNego* nego)
 {
 	nego->RequestedProtocols = PROTOCOL_RDP;
 	WLog_DBG(TAG, "Attempting RDP security");

@@ -66,7 +66,7 @@ static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 #define GLYPH_CACHE_KEY CLIENT_KEY "\\GlyphCache"
 #define POINTER_CACHE_KEY CLIENT_KEY "\\PointerCache"
 
-void settings_client_load_hkey_local_machine(rdpSettings* settings)
+static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 {
 	HKEY hKey;
 	LONG status;
@@ -218,7 +218,7 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 	}
 }
 
-void settings_server_load_hkey_local_machine(rdpSettings* settings)
+static void settings_server_load_hkey_local_machine(rdpSettings* settings)
 {
 	HKEY hKey;
 	LONG status;
@@ -242,7 +242,7 @@ void settings_server_load_hkey_local_machine(rdpSettings* settings)
 	RegCloseKey(hKey);
 }
 
-void settings_load_hkey_local_machine(rdpSettings* settings)
+static void settings_load_hkey_local_machine(rdpSettings* settings)
 {
 	if (settings->ServerMode)
 		settings_server_load_hkey_local_machine(settings);
@@ -250,7 +250,7 @@ void settings_load_hkey_local_machine(rdpSettings* settings)
 		settings_client_load_hkey_local_machine(settings);
 }
 
-BOOL settings_get_computer_name(rdpSettings* settings)
+static BOOL settings_get_computer_name(rdpSettings* settings)
 {
 	DWORD nSize = 0;
 	CHAR* computerName;

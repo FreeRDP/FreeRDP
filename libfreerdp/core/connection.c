@@ -167,6 +167,8 @@
  *	and server-side applications).
  */
 
+static int rdp_client_connect_finalize(rdpRdp* rdp);
+
 /**
  * Establish RDP Connection based on the settings given in the 'rdp' parameter.
  * @msdn{cc240452}
@@ -482,7 +484,7 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 	return status;
 }
 
-static BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
+static const BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
