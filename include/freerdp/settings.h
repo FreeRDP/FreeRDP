@@ -868,7 +868,9 @@ struct rdp_settings
 	ALIGN64 char*  PasswordHash;             /* 24 */
 	ALIGN64 BOOL   WaitForOutputBufferFlush; /* 25 */
 	ALIGN64 UINT32 MaxTimeInCheckLoop;       /* 26 */
-	UINT64 padding0064[64 - 27]; /* 27 */
+	ALIGN64 char*  AcceptedCert;             /* 27 */
+	ALIGN64 UINT32 AcceptedCertLength;       /* 28 */
+	UINT64 padding0064[64 - 29]; /* 29 */
 	UINT64 padding0128[128 - 64]; /* 64 */
 
 	/**
@@ -1073,7 +1075,9 @@ struct rdp_settings
 	ALIGN64 UINT32  TargetNetAddressCount;        /* 1228 */
 	ALIGN64 char**  TargetNetAddresses;           /* 1229 */
 	ALIGN64 UINT32* TargetNetPorts;               /* 1230 */
-	UINT64 padding1280[1280 - 1231]; /* 1231 */
+	ALIGN64 char*   RedirectionAcceptedCert;      /* 1231 */
+	ALIGN64 UINT32  RedirectionAcceptedCertLength;/* 1232 */
+	UINT64 padding1280[1280 - 1233]; /* 1233 */
 
 	/**
 	 * Security
@@ -1185,7 +1189,9 @@ struct rdp_settings
 	ALIGN64 BOOL   GatewayHttpTransport;      /* 1995 */
 	ALIGN64 BOOL   GatewayUdpTransport;       /* 1996 */
 	ALIGN64 char*  GatewayAccessToken;        /* 1997 */
-	UINT64 padding2015[2015 - 1998]; /* 1998 */
+	ALIGN64 char*  GatewayAcceptedCert;       /* 1998 */
+	ALIGN64 UINT32 GatewayAcceptedCertLength; /* 1999 */
+	UINT64 padding2015[2015 - 2000]; /* 2000 */
 
 	/* Proxy */
 	ALIGN64 UINT32 ProxyType; 	 /* 2015 */
@@ -1501,7 +1507,7 @@ FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument);
 FREERDP_API int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous, char* argument);
 FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value);
 FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char* option,
-	char* value);
+        char* value);
 
 FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
 FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name);
@@ -1511,13 +1517,13 @@ FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 
 FREERDP_API BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
 FREERDP_API ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings,
-	const char* name);
+        const char* name);
 FREERDP_API ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel);
 FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
 
 FREERDP_API BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
 FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings,
-	const char* name);
+        const char* name);
 FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel);
 FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 
@@ -1528,7 +1534,7 @@ FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);
 
 FREERDP_API void freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsageMethod);
 FREERDP_API void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEnabled,
-	UINT32 GatewayBypassLocal);
+        UINT32 GatewayBypassLocal);
 
 FREERDP_API BOOL freerdp_get_param_bool(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param);

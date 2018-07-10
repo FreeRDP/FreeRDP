@@ -120,22 +120,10 @@ typedef struct rdp_nego rdpNego;
 FREERDP_LOCAL BOOL nego_connect(rdpNego* nego);
 FREERDP_LOCAL BOOL nego_disconnect(rdpNego* nego);
 
-FREERDP_LOCAL BOOL nego_send_preconnection_pdu(rdpNego* nego);
-
-FREERDP_LOCAL void nego_attempt_ext(rdpNego* nego);
-FREERDP_LOCAL void nego_attempt_nla(rdpNego* nego);
-FREERDP_LOCAL void nego_attempt_tls(rdpNego* nego);
-FREERDP_LOCAL void nego_attempt_rdp(rdpNego* nego);
-
-FREERDP_LOCAL void nego_send(rdpNego* nego);
 FREERDP_LOCAL int nego_recv(rdpTransport* transport, wStream* s, void* extra);
-FREERDP_LOCAL BOOL nego_recv_response(rdpNego* nego);
 FREERDP_LOCAL BOOL nego_read_request(rdpNego* nego, wStream* s);
 
 FREERDP_LOCAL BOOL nego_send_negotiation_request(rdpNego* nego);
-FREERDP_LOCAL void nego_process_negotiation_request(rdpNego* nego, wStream* s);
-FREERDP_LOCAL void nego_process_negotiation_response(rdpNego* nego, wStream* s);
-FREERDP_LOCAL void nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 FREERDP_LOCAL BOOL nego_send_negotiation_response(rdpNego* nego);
 
 FREERDP_LOCAL rdpNego* nego_new(rdpTransport* transport);

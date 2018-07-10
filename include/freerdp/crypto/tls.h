@@ -85,24 +85,24 @@ struct rdp_tls
 };
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-FREERDP_API int tls_connect(rdpTls* tls, BIO *underlying);
-FREERDP_API BOOL tls_accept(rdpTls* tls, BIO *underlying, rdpSettings *settings);
+FREERDP_API int tls_connect(rdpTls* tls, BIO* underlying);
+FREERDP_API BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings);
 FREERDP_API BOOL tls_send_alert(rdpTls* tls);
 
 FREERDP_API int tls_write_all(rdpTls* tls, const BYTE* data, int length);
 
 FREERDP_API int tls_set_alert_code(rdpTls* tls, int level, int description);
 
-FREERDP_API BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname);
+FREERDP_API BOOL tls_match_hostname(char* pattern, int pattern_length, char* hostname);
 FREERDP_API int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int port);
 FREERDP_API void tls_print_certificate_error(char* hostname, UINT16 port,
-                                             char* fingerprint, char* hosts_file);
+        char* fingerprint, char* hosts_file);
 FREERDP_API void tls_print_certificate_name_mismatch_error(
-        char* hostname, UINT16 port, char* common_name, char** alt_names,
-        int alt_names_count);
+    char* hostname, UINT16 port, char* common_name, char** alt_names,
+    int alt_names_count);
 
 FREERDP_API BOOL tls_print_error(char* func, SSL* connection, int value);
 
@@ -110,7 +110,7 @@ FREERDP_API rdpTls* tls_new(rdpSettings* settings);
 FREERDP_API void tls_free(rdpTls* tls);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CRYPTO_TLS_H */

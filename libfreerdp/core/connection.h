@@ -53,8 +53,7 @@ enum CLIENT_CONNECTION_STATE
 {
 	CLIENT_STATE_INITIAL,
 	CLIENT_STATE_PRECONNECT_PASSED,
-	CLIENT_STATE_POSTCONNECT_PASSED,
-	CLIENT_STATE_POSTDISCONNECT_PASSED
+	CLIENT_STATE_POSTCONNECT_PASSED
 };
 
 FREERDP_LOCAL BOOL rdp_client_connect(rdpRdp* rdp);
@@ -67,7 +66,6 @@ FREERDP_LOCAL BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp,
 FREERDP_LOCAL BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_connect_license(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s);
-FREERDP_LOCAL int rdp_client_connect_finalize(rdpRdp* rdp);
 FREERDP_LOCAL int rdp_client_transition_to_state(rdpRdp* rdp, int state);
 
 FREERDP_LOCAL BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s);

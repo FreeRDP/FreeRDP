@@ -66,7 +66,7 @@ static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 #define GLYPH_CACHE_KEY CLIENT_KEY "\\GlyphCache"
 #define POINTER_CACHE_KEY CLIENT_KEY "\\PointerCache"
 
-void settings_client_load_hkey_local_machine(rdpSettings* settings)
+static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 {
 	HKEY hKey;
 	LONG status;
@@ -218,7 +218,7 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 	}
 }
 
-void settings_server_load_hkey_local_machine(rdpSettings* settings)
+static void settings_server_load_hkey_local_machine(rdpSettings* settings)
 {
 	HKEY hKey;
 	LONG status;
@@ -242,7 +242,7 @@ void settings_server_load_hkey_local_machine(rdpSettings* settings)
 	RegCloseKey(hKey);
 }
 
-void settings_load_hkey_local_machine(rdpSettings* settings)
+static void settings_load_hkey_local_machine(rdpSettings* settings)
 {
 	if (settings->ServerMode)
 		settings_server_load_hkey_local_machine(settings);
@@ -250,7 +250,7 @@ void settings_load_hkey_local_machine(rdpSettings* settings)
 		settings_client_load_hkey_local_machine(settings);
 }
 
-BOOL settings_get_computer_name(rdpSettings* settings)
+static BOOL settings_get_computer_name(rdpSettings* settings)
 {
 	DWORD nSize = 0;
 	CHAR* computerName;
@@ -653,6 +653,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CHECKED_STRDUP(Password); /* 22 */
 		CHECKED_STRDUP(Domain); /* 23 */
 		CHECKED_STRDUP(PasswordHash); /* 24 */
+		CHECKED_STRDUP(AcceptedCert); /* 27 */
 		_settings->ClientHostname = NULL; /* 134 */
 		_settings->ClientProductId = NULL; /* 135 */
 		CHECKED_STRDUP(AlternateShell); /* 640 */
@@ -668,6 +669,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CHECKED_STRDUP(AllowedTlsCiphers); /* 1101 */
 		CHECKED_STRDUP(NtlmSamFile); /* 1103 */
 		CHECKED_STRDUP(PreconnectionBlob); /* 1155 */
+		CHECKED_STRDUP(RedirectionAcceptedCert); /* 1231 */
 		CHECKED_STRDUP(KerberosKdc); /* 1344 */
 		CHECKED_STRDUP(KerberosRealm); /* 1345 */
 		CHECKED_STRDUP(CertificateName); /* 1409 */
@@ -692,6 +694,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CHECKED_STRDUP(GatewayPassword); /* 1988 */
 		CHECKED_STRDUP(GatewayDomain); /* 1989 */
 		CHECKED_STRDUP(GatewayAccessToken); /* 1997 */
+		CHECKED_STRDUP(GatewayAcceptedCert); /* 1998 */
 		CHECKED_STRDUP(ProxyHostname); /* 2016 */
 		CHECKED_STRDUP(RemoteApplicationName); /* 2113 */
 		CHECKED_STRDUP(RemoteApplicationIcon); /* 2114 */
@@ -772,7 +775,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		if (_settings->ChannelDefArraySize > 0)
 		{
 			_settings->ChannelDefArray = (CHANNEL_DEF*) calloc(settings->ChannelDefArraySize,
-									sizeof(CHANNEL_DEF));
+			                             sizeof(CHANNEL_DEF));
 
 			if (!_settings->ChannelDefArray)
 				goto out_fail;
@@ -789,7 +792,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		if (_settings->MonitorDefArraySize > 0)
 		{
 			_settings->MonitorDefArray = (rdpMonitor*) calloc(settings->MonitorDefArraySize,
-									sizeof(rdpMonitor));
+			                             sizeof(rdpMonitor));
 
 			if (!_settings->MonitorDefArray)
 				goto out_fail;
@@ -1032,6 +1035,7 @@ void freerdp_settings_free(rdpSettings* settings)
 	free(settings->Password);
 	free(settings->Domain);
 	free(settings->PasswordHash);
+	free(settings->AcceptedCert);
 	free(settings->AlternateShell);
 	free(settings->ShellWorkingDirectory);
 	free(settings->ComputerName);
@@ -1076,6 +1080,7 @@ void freerdp_settings_free(rdpSettings* settings)
 	free(settings->RedirectionDomain);
 	free(settings->RedirectionPassword);
 	free(settings->RedirectionTsvUrl);
+	free(settings->RedirectionAcceptedCert);
 	free(settings->RemoteAssistanceSessionId);
 	free(settings->RemoteAssistancePassword);
 	free(settings->RemoteAssistancePassStub);
@@ -1086,6 +1091,7 @@ void freerdp_settings_free(rdpSettings* settings)
 	free(settings->GatewayPassword);
 	free(settings->GatewayDomain);
 	free(settings->GatewayAccessToken);
+	free(settings->GatewayAcceptedCert);
 	free(settings->CertificateName);
 	free(settings->DynamicDSTTimeZoneKeyName);
 	free(settings->PreconnectionBlob);
