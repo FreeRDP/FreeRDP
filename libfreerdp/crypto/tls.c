@@ -1185,6 +1185,99 @@ static BOOL accept_cert(rdpTls* tls, const BYTE* pem, size_t length)
 	return TRUE;
 }
 
+static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength)
+{
+	BIO* bio;
+	int status;
+	size_t offset;
+	int length = 0;
+	BOOL rc = FALSE;
+	BYTE* pemCert = NULL;
+
+	if (!PublicKey || !PublicKeyLength)
+		return FALSE;
+
+	*PublicKey = NULL;
+	*PublicKeyLength = 0;
+	/**
+	 * Don't manage certificates internally, leave it up entirely to the external client implementation
+	 */
+	bio = BIO_new(BIO_s_mem());
+
+	if (!bio)
+	{
+		WLog_ERR(TAG, "BIO_new() failure");
+		return FALSE;
+	}
+
+	status = PEM_write_bio_X509(bio, cert->px509);
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
+		goto fail;
+	}
+
+	offset = 0;
+	length = 2048;
+	pemCert = (BYTE*) malloc(length + 1);
+
+	if (!pemCert)
+	{
+		WLog_ERR(TAG, "error allocating pemCert");
+		goto fail;
+	}
+
+	status = BIO_read(bio, pemCert, length);
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "failed to read certificate");
+		goto fail;
+	}
+
+	offset += status;
+
+	while (offset >= length)
+	{
+		int new_len;
+		BYTE* new_cert;
+		new_len = length * 2;
+		new_cert = (BYTE*) realloc(pemCert, new_len + 1);
+
+		if (!new_cert)
+			goto fail;
+
+		length = new_len;
+		pemCert = new_cert;
+		status = BIO_read(bio, &pemCert[offset], length);
+
+		if (status < 0)
+			break;
+
+		offset += status;
+	}
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "failed to read certificate");
+		goto fail;
+	}
+
+	length = offset;
+	pemCert[length] = '\0';
+	*PublicKey = pemCert;
+	*PublicKeyLength = length;
+	rc = TRUE;
+fail:
+
+	if (!rc)
+		free(pemCert);
+
+	BIO_free(bio);
+	return rc;
+}
+
 int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
                            int port)
 {
@@ -1203,7 +1296,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 	DWORD length;
 	BYTE* pemCert;
 
-	if (!crypto_cert_get_public_key(cert, &pemCert, &length))
+	if (!tls_extract_pem(cert, &pemCert, &length))
 		return -1;
 
 	/* Check, if we already accepted this key. */
