@@ -197,82 +197,82 @@ BOOL freerdp_connect(freerdp* instance)
 		goto freerdp_connect_finally;
 	}
 
-	if (!status)
-		goto freerdp_connect_finally;
+	if (instance->settings->DumpRemoteFx)
+	{
+		instance->update->pcap_rfx = pcap_open(instance->settings->DumpRemoteFxFile,
+		                                       TRUE);
+
+		if (instance->update->pcap_rfx)
+			instance->update->dump_rfx = TRUE;
+	}
 
 	if (status)
 	{
-		UINT status2;
-
-		if (instance->settings->DumpRemoteFx)
-		{
-			instance->update->pcap_rfx = pcap_open(instance->settings->DumpRemoteFxFile,
-			                                       TRUE);
-
-			if (instance->update->pcap_rfx)
-				instance->update->dump_rfx = TRUE;
-		}
-
 		IFCALLRET(instance->PostConnect, status, instance);
 		instance->ConnectionCallbackState = CLIENT_STATE_POSTCONNECT_PASSED;
 
 		if (status)
 			status2 = freerdp_channels_post_connect(instance->context->channels, instance);
+	}
+	else
+	{
+		if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_CONNECT_TRANSPORT_FAILED)
+			status = freerdp_reconnect(instance);
+	}
 
-		if (!status || (status2 != CHANNEL_RC_OK)
-		    || !update_post_connect(instance->update))
-		{
-			WLog_ERR(TAG, "freerdp_post_connect failed");
+	if (!status || (status2 != CHANNEL_RC_OK)
+	    || !update_post_connect(instance->update))
+	{
+		WLog_ERR(TAG, "freerdp_post_connect failed");
 
-			if (!freerdp_get_last_error(rdp->context))
-				freerdp_set_last_error(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
+		if (!freerdp_get_last_error(rdp->context))
+			freerdp_set_last_error(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
 
-			status = FALSE;
+		status = FALSE;
+		goto freerdp_connect_finally;
+	}
+
+	if (instance->settings->PlayRemoteFx)
+	{
+		wStream* s;
+		rdpUpdate* update;
+		pcap_record record;
+		update = instance->update;
+		update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
+		status = FALSE;
+
+		if (!update->pcap_rfx)
 			goto freerdp_connect_finally;
+		else
+			update->play_rfx = TRUE;
+
+		status = TRUE;
+
+		while (pcap_has_next_record(update->pcap_rfx) && status)
+		{
+			pcap_get_next_record_header(update->pcap_rfx, &record);
+
+			if (!(s = StreamPool_Take(rdp->transport->ReceivePool, record.length)))
+				break;
+
+			record.data = Stream_Buffer(s);
+			pcap_get_next_record_content(update->pcap_rfx, &record);
+			Stream_SetLength(s, record.length);
+			Stream_SetPosition(s, 0);
+
+			if (!update->BeginPaint(update->context))
+				status = FALSE;
+			else if (update_recv_surfcmds(update, s) < 0)
+				status = FALSE;
+			else if (!update->EndPaint(update->context))
+				status = FALSE;
+
+			Stream_Release(s);
 		}
 
-		if (instance->settings->PlayRemoteFx)
-		{
-			wStream* s;
-			rdpUpdate* update;
-			pcap_record record;
-			update = instance->update;
-			update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
-			status = FALSE;
-
-			if (!update->pcap_rfx)
-				goto freerdp_connect_finally;
-			else
-				update->play_rfx = TRUE;
-
-			status = TRUE;
-
-			while (pcap_has_next_record(update->pcap_rfx) && status)
-			{
-				pcap_get_next_record_header(update->pcap_rfx, &record);
-
-				if (!(s = StreamPool_Take(rdp->transport->ReceivePool, record.length)))
-					break;
-
-				record.data = Stream_Buffer(s);
-				pcap_get_next_record_content(update->pcap_rfx, &record);
-				Stream_SetLength(s, record.length);
-				Stream_SetPosition(s, 0);
-
-				if (!update->BeginPaint(update->context))
-					status = FALSE;
-				else if (update_recv_surfcmds(update, s) < 0)
-					status = FALSE;
-				else if (!update->EndPaint(update->context))
-					status = FALSE;
-
-				Stream_Release(s);
-			}
-
-			pcap_close(update->pcap_rfx);
-			update->pcap_rfx = NULL;
-			goto freerdp_connect_finally;
-		}
+		pcap_close(update->pcap_rfx);
+		update->pcap_rfx = NULL;
+		goto freerdp_connect_finally;
 	}
 
 	if (rdp->errorInfo == ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES)
