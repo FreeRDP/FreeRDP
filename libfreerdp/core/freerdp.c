@@ -400,6 +400,7 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 	{
 		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
 			WLog_ERR(TAG, "checkChannelErrorEvent() failed - %"PRIi32"", status);
+
 		return FALSE;
 	}
 
@@ -407,6 +408,7 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 	{
 		int rc = freerdp_message_queue_process_pending_messages(
 		             context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+
 		if (rc < 0)
 			return FALSE;
 		else
@@ -512,7 +514,6 @@ BOOL freerdp_disconnect(freerdp* instance)
 	}
 
 	IFCALL(instance->PostDisconnect, instance);
-	instance->ConnectionCallbackState = CLIENT_STATE_POSTDISCONNECT_PASSED;
 
 	if (instance->update->pcap_rfx)
 	{

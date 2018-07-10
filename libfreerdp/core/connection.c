@@ -351,6 +351,35 @@ BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 	return TRUE;
 }
 
+static BOOL rdp_client_reconnect_channels(rdpRdp* rdp)
+{
+	BOOL status;
+	rdpContext* context;
+	rdpChannels* channels;
+
+	if (!rdp || !rdp->context || !rdp->context->channels)
+		return FALSE;
+
+	context = rdp->context;
+	channels = context->channels;
+
+	if (context->instance->ConnectionCallbackState == CLIENT_STATE_INITIAL)
+		return FALSE;
+
+	if (context->instance->ConnectionCallbackState == CLIENT_STATE_PRECONNECT_PASSED)
+	{
+		if (!IFCALLRESULT(FALSE, context->instance->PostConnect, context->instance))
+			return FALSE;
+
+		context->instance->ConnectionCallbackState = CLIENT_STATE_POSTCONNECT_PASSED;
+	}
+
+	if (context->instance->ConnectionCallbackState == CLIENT_STATE_POSTCONNECT_PASSED)
+		status = (freerdp_channels_post_connect(context->channels, context->instance) == CHANNEL_RC_OK);
+
+	return status;
+}
+
 BOOL rdp_client_redirect(rdpRdp* rdp)
 {
 	BOOL status;
@@ -424,8 +453,8 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	status = rdp_client_connect(rdp);
 
-	if (status && (context->instance->ConnectionCallbackState == CLIENT_STATE_POSTCONNECT_PASSED))
-		status = (freerdp_channels_post_connect(context->channels, context->instance) == CHANNEL_RC_OK);
+	if (status)
+		status = rdp_client_reconnect_channels(rdp);
 
 	return status;
 }
@@ -447,8 +476,8 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 
 	status = rdp_client_connect(rdp);
 
-	if (status && (context->instance->ConnectionCallbackState == CLIENT_STATE_POSTCONNECT_PASSED))
-		status = (freerdp_channels_post_connect(channels, context->instance) == CHANNEL_RC_OK);
+	if (status)
+		status = rdp_client_reconnect_channels(rdp);
 
 	return status;
 }
