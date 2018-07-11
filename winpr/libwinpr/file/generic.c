@@ -785,6 +785,52 @@ struct _WIN32_FILE_SEARCH
 };
 typedef struct _WIN32_FILE_SEARCH WIN32_FILE_SEARCH;
 
+static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
+                             LPWIN32_FIND_DATAA lpFindFileData)
+{
+	UINT64 ft;
+	char* lastSep;
+	lpFindFileData->dwFileAttributes = 0;
+
+	if (S_ISDIR(fileStat->st_mode))
+		lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+
+	if (lpFindFileData->dwFileAttributes == 0)
+		lpFindFileData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+
+	lastSep = strrchr(path, '/');
+
+	if (lastSep)
+	{
+		const char* name = lastSep + 1;
+		const size_t namelen = strlen(name);
+
+		if (name[0] == '.' && namelen != 1 &&
+		    (name[1] != '.' && namelen != 2))
+			lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+	}
+
+	if (!(fileStat->st_mode & S_IWUSR))
+		lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+
+#ifdef _DARWIN_FEATURE_64_BIT_INODE
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_birthtime);
+#else
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_ctime);
+#endif
+	lpFindFileData->ftCreationTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFindFileData->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_mtime);
+	lpFindFileData->ftLastWriteTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFindFileData->ftLastWriteTime.dwLowDateTime = ft & 0xFFFFFFFF;
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_atime);
+	lpFindFileData->ftLastAccessTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFindFileData->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
+	lpFindFileData->nFileSizeHigh = ((UINT64)fileStat->st_size) >> 32ULL;
+	lpFindFileData->nFileSizeLow = fileStat->st_size & 0xFFFFFFFF;
+	return TRUE;
+}
+
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
 	LPSTR p;
@@ -839,11 +885,13 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	if (stat(pFileSearch->lpPath, &fileStat) < 0)
 	{
 		FindClose(pFileSearch);
+		WLog_ERR(TAG, "%s stat error %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
 		return INVALID_HANDLE_VALUE; /* stat error */
 	}
 
 	if (S_ISDIR(fileStat.st_mode) == 0)
 	{
+		WLog_ERR(TAG, "%s not a dir %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
 		FindClose(pFileSearch);
 		return INVALID_HANDLE_VALUE; /* not a directory */
 	}
@@ -853,6 +901,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 
 	if (!pFileSearch->pDir)
 	{
+		WLog_ERR(TAG, "%s dir open failed %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
 		FindClose(pFileSearch);
 		return INVALID_HANDLE_VALUE; /* failed to open directory */
 	}
@@ -977,6 +1026,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 	{
 		if (FilePatternMatchA(pFileSearch->pDirent->d_name, pFileSearch->lpPattern))
 		{
+			BOOL success;
 			strncpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name, MAX_PATH);
 			namelen = strnlen(lpFindFileData->cFileName, MAX_PATH);
 			pathlen = strlen(pFileSearch->lpPath);
@@ -995,47 +1045,22 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 
 			if (stat(fullpath, &fileStat) != 0)
 			{
+				WLog_ERR(TAG, "%s stat failed %s [%d]", fullpath, strerror(errno), errno);
 				free(fullpath);
 				SetLastError(map_posix_err(errno));
 				continue;
 			}
 
-			free(fullpath);
-
 			/* Skip FIFO entries. */
 			if (S_ISFIFO(fileStat.st_mode))
+			{
+				free(fullpath);
 				continue;
-			lpFindFileData->dwFileAttributes = 0;
+			}
 
-			if (S_ISDIR(fileStat.st_mode))
-				lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
-
-			if (lpFindFileData->dwFileAttributes == 0)
-				lpFindFileData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
-
-			if (pFileSearch->pDirent->d_name[0] == '.' && namelen != 1 &&
-			    (pFileSearch->pDirent->d_name[1] != '.' && namelen != 2))
-				lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
-
-			if (!(fileStat.st_mode & S_IWUSR))
-				lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
-
-#ifdef _DARWIN_FEATURE_64_BIT_INODE
-			ft = STAT_TIME_TO_FILETIME(fileStat.st_birthtime);
-#else
-			ft = STAT_TIME_TO_FILETIME(fileStat.st_ctime);
-#endif
-			lpFindFileData->ftCreationTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
-			lpFindFileData->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
-			ft = STAT_TIME_TO_FILETIME(fileStat.st_mtime);
-			lpFindFileData->ftLastWriteTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
-			lpFindFileData->ftLastWriteTime.dwLowDateTime = ft & 0xFFFFFFFF;
-			ft = STAT_TIME_TO_FILETIME(fileStat.st_atime);
-			lpFindFileData->ftLastAccessTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
-			lpFindFileData->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
-			lpFindFileData->nFileSizeHigh = ((UINT64)fileStat.st_size) >> 32ULL;
-			lpFindFileData->nFileSizeLow = fileStat.st_size & 0xFFFFFFFF;
-			return TRUE;
+			success = FindDataFromStat(fullpath, &fileStat, lpFindFileData);
+			free(fullpath);
+			return success;
 		}
 	}
 
