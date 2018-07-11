@@ -507,7 +507,7 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 		/* Set stream size */
 		end = Stream_GetPosition(s);
 		Stream_SetPosition(s, 2);
-		Stream_Write_UINT16(s, end);
+		Stream_Write_UINT16(s, end - 4);
 		Stream_SetPosition(s, end);
 		Stream_SealLength(s);
 		context->block_no = (context->block_no + 1) % 256;
