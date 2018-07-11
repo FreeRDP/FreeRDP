@@ -805,8 +805,7 @@ static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
 		const char* name = lastSep + 1;
 		const size_t namelen = strlen(name);
 
-		if (name[0] == '.' && namelen != 1 &&
-		    (name[1] != '.' && namelen != 2))
+		if ((namelen > 1) && (name[0] == '.') && (name[1] != '.'))
 			lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
 	}
 
@@ -833,7 +832,6 @@ static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
 
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
-	int oldErrno;
 	BOOL isDir = FALSE;
 	struct stat fileStat;
 	WIN32_FILE_SEARCH* pFileSearch;
@@ -846,14 +844,12 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	oldErrno = errno;
-
 	if (stat(lpFileName, &fileStat) >= 0)
 	{
 		isDir = (S_ISDIR(fileStat.st_mode) != 0);
 	}
-
-	errno = oldErrno;
+	else
+		errno = 0;
 
 	if (isDir)
 	{
@@ -904,6 +900,8 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		{
 			FindClose(pFileSearch);
 			WLog_ERR(TAG, "%s stat error %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
+			SetLastError(map_posix_err(errno));
+			errno = 0;
 			return INVALID_HANDLE_VALUE; /* stat error */
 		}
 
@@ -922,6 +920,8 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	{
 		WLog_ERR(TAG, "%s dir open failed %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
 		FindClose(pFileSearch);
+		SetLastError(map_posix_err(errno));
+		errno = 0;
 		return INVALID_HANDLE_VALUE; /* failed to open directory */
 	}
 
@@ -1067,6 +1067,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 				WLog_ERR(TAG, "%s stat failed %s [%d]", fullpath, strerror(errno), errno);
 				free(fullpath);
 				SetLastError(map_posix_err(errno));
+				errno = 0;
 				continue;
 			}
 
