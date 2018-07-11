@@ -899,7 +899,6 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		if (stat(pFileSearch->lpPath, &fileStat) < 0)
 		{
 			FindClose(pFileSearch);
-			WLog_ERR(TAG, "%s stat error %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
 			SetLastError(map_posix_err(errno));
 			errno = 0;
 			return INVALID_HANDLE_VALUE; /* stat error */
@@ -907,7 +906,6 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 
 		if (S_ISDIR(fileStat.st_mode) == 0)
 		{
-			WLog_ERR(TAG, "%s not a dir %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
 			FindClose(pFileSearch);
 			return INVALID_HANDLE_VALUE; /* not a directory */
 		}
@@ -918,7 +916,6 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 
 	if (!pFileSearch->pDir)
 	{
-		WLog_ERR(TAG, "%s dir open failed %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
 		FindClose(pFileSearch);
 		SetLastError(map_posix_err(errno));
 		errno = 0;
@@ -1030,7 +1027,6 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 	char* fullpath;
 	size_t pathlen;
 	size_t namelen;
-	UINT64 ft;
 	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 
 	if (!hFindFile)
@@ -1064,7 +1060,6 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 
 			if (stat(fullpath, &fileStat) != 0)
 			{
-				WLog_ERR(TAG, "%s stat failed %s [%d]", fullpath, strerror(errno), errno);
 				free(fullpath);
 				SetLastError(map_posix_err(errno));
 				errno = 0;
