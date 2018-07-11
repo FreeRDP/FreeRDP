@@ -833,9 +833,8 @@ static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
 
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
-	LPSTR p;
-	size_t index;
-	size_t length;
+	int oldErrno;
+	BOOL isDir = FALSE;
 	struct stat fileStat;
 	WIN32_FILE_SEARCH* pFileSearch;
 	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
@@ -847,53 +846,73 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	/* Separate lpFileName into path and pattern components */
-	p = strrchr(lpFileName, '/');
+	oldErrno = errno;
 
-	if (!p)
-		p = strrchr(lpFileName, '\\');
-
-	index = (p - lpFileName);
-	length = (p - lpFileName) + 1;
-	pFileSearch->lpPath = (LPSTR) malloc(length + 1);
-
-	if (!pFileSearch->lpPath)
+	if (stat(lpFileName, &fileStat) >= 0)
 	{
-		free(pFileSearch);
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return INVALID_HANDLE_VALUE;
+		isDir = (S_ISDIR(fileStat.st_mode) != 0);
 	}
 
-	CopyMemory(pFileSearch->lpPath, lpFileName, length);
-	pFileSearch->lpPath[length] = '\0';
-	length = strlen(lpFileName) - index;
-	pFileSearch->lpPattern = (LPSTR) malloc(length + 1);
+	errno = oldErrno;
 
-	if (!pFileSearch->lpPattern)
+	if (isDir)
 	{
-		free(pFileSearch->lpPath);
-		free(pFileSearch);
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return INVALID_HANDLE_VALUE;
+		pFileSearch->lpPath = _strdup(lpFileName);
+		pFileSearch->lpPattern = _strdup("*");
 	}
-
-	CopyMemory(pFileSearch->lpPattern, &lpFileName[index + 1], length);
-	pFileSearch->lpPattern[length] = '\0';
-
-	/* Check if the path is a directory */
-
-	if (stat(pFileSearch->lpPath, &fileStat) < 0)
+	else
 	{
-		FindClose(pFileSearch);
-		WLog_ERR(TAG, "%s stat error %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
-		return INVALID_HANDLE_VALUE; /* stat error */
-	}
+		LPSTR p;
+		size_t index;
+		size_t length;
+		/* Separate lpFileName into path and pattern components */
+		p = strrchr(lpFileName, '/');
 
-	if (S_ISDIR(fileStat.st_mode) == 0)
-	{
-		WLog_ERR(TAG, "%s not a dir %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
-		FindClose(pFileSearch);
-		return INVALID_HANDLE_VALUE; /* not a directory */
+		if (!p)
+			p = strrchr(lpFileName, '\\');
+
+		index = (p - lpFileName);
+		length = (p - lpFileName) + 1;
+		pFileSearch->lpPath = (LPSTR) malloc(length + 1);
+
+		if (!pFileSearch->lpPath)
+		{
+			free(pFileSearch);
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			return INVALID_HANDLE_VALUE;
+		}
+
+		CopyMemory(pFileSearch->lpPath, lpFileName, length);
+		pFileSearch->lpPath[length] = '\0';
+		length = strlen(lpFileName) - index;
+		pFileSearch->lpPattern = (LPSTR) malloc(length + 1);
+
+		if (!pFileSearch->lpPattern)
+		{
+			free(pFileSearch->lpPath);
+			free(pFileSearch);
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			return INVALID_HANDLE_VALUE;
+		}
+
+		CopyMemory(pFileSearch->lpPattern, &lpFileName[index + 1], length);
+		pFileSearch->lpPattern[length] = '\0';
+
+		/* Check if the path is a directory */
+
+		if (stat(pFileSearch->lpPath, &fileStat) < 0)
+		{
+			FindClose(pFileSearch);
+			WLog_ERR(TAG, "%s stat error %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
+			return INVALID_HANDLE_VALUE; /* stat error */
+		}
+
+		if (S_ISDIR(fileStat.st_mode) == 0)
+		{
+			WLog_ERR(TAG, "%s not a dir %s [%d]", pFileSearch->lpPath, strerror(errno), errno);
+			FindClose(pFileSearch);
+			return INVALID_HANDLE_VALUE; /* not a directory */
+		}
 	}
 
 	/* Open directory for reading */
