@@ -218,6 +218,8 @@ BOOL freerdp_connect(freerdp* instance)
 	{
 		if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_CONNECT_TRANSPORT_FAILED)
 			status = freerdp_reconnect(instance);
+		else
+			goto freerdp_connect_finally;
 	}
 
 	if (!status || (status2 != CHANNEL_RC_OK)

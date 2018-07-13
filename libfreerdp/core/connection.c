@@ -353,7 +353,7 @@ BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 	return TRUE;
 }
 
-static BOOL rdp_client_reconnect_channels(rdpRdp* rdp)
+static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 {
 	BOOL status;
 	rdpContext* context;
@@ -370,6 +370,9 @@ static BOOL rdp_client_reconnect_channels(rdpRdp* rdp)
 
 	if (context->instance->ConnectionCallbackState == CLIENT_STATE_PRECONNECT_PASSED)
 	{
+		if (redirect)
+			return TRUE;
+
 		if (!IFCALLRESULT(FALSE, context->instance->PostConnect, context->instance))
 			return FALSE;
 
@@ -456,7 +459,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	status = rdp_client_connect(rdp);
 
 	if (status)
-		status = rdp_client_reconnect_channels(rdp);
+		status = rdp_client_reconnect_channels(rdp, TRUE);
 
 	return status;
 }
@@ -479,7 +482,7 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 	status = rdp_client_connect(rdp);
 
 	if (status)
-		status = rdp_client_reconnect_channels(rdp);
+		status = rdp_client_reconnect_channels(rdp, FALSE);
 
 	return status;
 }
