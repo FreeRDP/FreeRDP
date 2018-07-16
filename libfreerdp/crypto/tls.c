@@ -1109,6 +1109,16 @@ BOOL tls_match_hostname(char* pattern, int pattern_length, char* hostname)
 	return FALSE;
 }
 
+static BOOL is_redirected(rdpTls* tls)
+{
+	rdpSettings* settings = tls->settings;
+
+	if (LB_NOREDIRECT & settings->RedirectionFlags)
+		return FALSE;
+
+	return settings->RedirectionFlags != 0;
+}
+
 static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
 {
 	rdpSettings* settings = tls->settings;
@@ -1120,7 +1130,7 @@ static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
 		AccpetedKey = settings->GatewayAcceptedCert;
 		AcceptedKeyLength = settings->GatewayAcceptedCertLength;
 	}
-	else if (settings->RedirectionFlags != 0)
+	else if (is_redirected(tls))
 	{
 		AccpetedKey = settings->RedirectionAcceptedCert;
 		AcceptedKeyLength = settings->RedirectionAcceptedCertLength;
@@ -1146,7 +1156,7 @@ static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
 		settings->GatewayAcceptedCert = NULL;
 		settings->GatewayAcceptedCertLength = 0;
 	}
-	else if (settings->RedirectionFlags != 0)
+	else if (is_redirected(tls))
 	{
 		free(settings->RedirectionAcceptedCert);
 		settings->RedirectionAcceptedCert = NULL;
@@ -1171,7 +1181,7 @@ static BOOL accept_cert(rdpTls* tls, const BYTE* pem, size_t length)
 		settings->GatewayAcceptedCert = pem;
 		settings->GatewayAcceptedCertLength = length;
 	}
-	else if (settings->RedirectionFlags != 0)
+	else if (is_redirected(tls))
 	{
 		settings->RedirectionAcceptedCert = pem;
 		settings->RedirectionAcceptedCertLength = length;
@@ -1312,7 +1322,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 
 		if (instance->VerifyX509Certificate)
 			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
-			         port, tls->isGatewayTransport);
+			         port, tls->isGatewayTransport | is_redirected(tls) ? 2 : 0);
 		else
 			WLog_ERR(TAG, "No VerifyX509Certificate callback registered!");
 
