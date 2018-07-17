@@ -390,6 +390,7 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format,
 	           rdpsnd_get_audio_tag_string(audin->format->wFormatTag),
 	           audin->format->nChannels, audin->format->nSamplesPerSec, audin->format->nAvgBytesPerSec,
 	           audin->format->nBlockAlign, audin->format->wBitsPerSample, audin->format->cbSize, size);
+	Stream_SetPosition(audin->data, 0);
 
 	if (!Stream_EnsureRemainingCapacity(audin->data, 1))
 		return CHANNEL_RC_NO_MEMORY;

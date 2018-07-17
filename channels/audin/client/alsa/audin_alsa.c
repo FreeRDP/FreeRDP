@@ -56,6 +56,7 @@ typedef struct _AudinALSADevice
 
 	rdpContext* rdpcontext;
 	wLog* log;
+	int bytes_per_frame;
 } AudinALSADevice;
 
 static snd_pcm_format_t audin_alsa_format(UINT32 wFormatTag, UINT32 bitPerChannel)
@@ -113,6 +114,7 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa,
 	snd_pcm_hw_params_free(hw_params);
 	snd_pcm_prepare(capture_handle);
 	alsa->aformat.nChannels = channels;
+	alsa->bytes_per_frame = snd_pcm_format_size(format, 1) * channels;
 	return TRUE;
 }
 
@@ -122,17 +124,9 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 	BYTE* buffer;
 	snd_pcm_t* capture_handle = NULL;
 	AudinALSADevice* alsa = (AudinALSADevice*) arg;
-	const size_t rbytes_per_frame = alsa->aformat.nChannels * 4;
 	DWORD status;
+	size_t rest = 0;
 	WLog_Print(alsa->log, WLOG_DEBUG, "in");
-	buffer = (BYTE*) calloc(alsa->frames_per_packet, rbytes_per_frame);
-
-	if (!buffer)
-	{
-		WLog_Print(alsa->log, WLOG_ERROR, "calloc failed!");
-		error = CHANNEL_RC_NO_MEMORY;
-		goto out;
-	}
 
 	if ((error = snd_pcm_open(&capture_handle, alsa->device_name,
 	                          SND_PCM_STREAM_CAPTURE, 0)) < 0)
@@ -148,8 +142,18 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 		goto out;
 	}
 
+	buffer = (BYTE*) calloc(alsa->frames_per_packet + alsa->aformat.nBlockAlign, alsa->bytes_per_frame);
+
+	if (!buffer)
+	{
+		WLog_Print(alsa->log, WLOG_ERROR, "calloc failed!");
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out;
+	}
+
 	while (1)
 	{
+		size_t frames = alsa->frames_per_packet;
 		status = WaitForSingleObject(alsa->stopEvent, 0);
 
 		if (status == WAIT_FAILED)
@@ -162,7 +166,18 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 		if (status == WAIT_OBJECT_0)
 			break;
 
-		error = snd_pcm_readi(capture_handle, buffer, alsa->frames_per_packet);
+		if (rest > 0)
+		{
+			frames += rest;
+			rest = 0;
+		}
+		else
+		{
+			rest = frames % alsa->aformat.nBlockAlign;
+			frames -= rest;
+		}
+
+		error = snd_pcm_readi(capture_handle, buffer, frames);
 
 		if (error == -EPIPE)
 		{
@@ -176,7 +191,7 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 		}
 
 		error = alsa->receive(&alsa->aformat,
-		                      buffer, error, alsa->user_data);
+		                      buffer, error * alsa->bytes_per_frame, alsa->user_data);
 
 		if (error)
 		{
