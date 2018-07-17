@@ -607,13 +607,15 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	BYTE encoded;
 	UINT32 out_size;
 	out_size = size / 2;
+	size_t align;
 
 	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;
 
 	start = dst = Stream_Pointer(out);
+	align = (context->format.nChannels > 1) ? 32 : 4;
 
-	while (size > 0)
+	while (size > align)
 	{
 		if ((dst - start) % context->format.nBlockAlign == 0)
 		{
