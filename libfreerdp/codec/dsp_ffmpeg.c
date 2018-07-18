@@ -104,7 +104,7 @@ static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 			}
 
 		case WAVE_FORMAT_DVI_ADPCM:
-			return AV_CODEC_ID_ADPCM_MS;
+			return AV_CODEC_ID_ADPCM_IMA_WAV;
 
 		case WAVE_FORMAT_ADPCM:
 			return AV_CODEC_ID_ADPCM_MS;
