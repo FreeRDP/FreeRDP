@@ -213,6 +213,7 @@ xfDispContext* xf_disp_new(xfContext* xfc)
 void xf_disp_free(xfDispContext* disp)
 {
 	PubSub_UnsubscribeActivated(disp->xfc->context.pubSub, xf_disp_OnActivated);
+	PubSub_UnsubscribeGraphicsReset(disp->xfc->context.pubSub, xf_disp_OnGraphicsReset);
 	PubSub_UnsubscribeTimer(disp->xfc->context.pubSub, xf_disp_OnTimer);
 	free(disp);
 }
