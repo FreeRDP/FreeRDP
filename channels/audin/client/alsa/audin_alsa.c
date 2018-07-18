@@ -125,7 +125,6 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 	snd_pcm_t* capture_handle = NULL;
 	AudinALSADevice* alsa = (AudinALSADevice*) arg;
 	DWORD status;
-	size_t rest = 0;
 	WLog_Print(alsa->log, WLOG_DEBUG, "in");
 
 	if ((error = snd_pcm_open(&capture_handle, alsa->device_name,
@@ -165,17 +164,6 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 
 		if (status == WAIT_OBJECT_0)
 			break;
-
-		if (rest > 0)
-		{
-			frames += rest;
-			rest = 0;
-		}
-		else
-		{
-			rest = frames % alsa->aformat.nBlockAlign;
-			frames -= rest;
-		}
 
 		error = snd_pcm_readi(capture_handle, buffer, frames);
 
