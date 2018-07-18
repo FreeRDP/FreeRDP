@@ -372,7 +372,11 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	buffer_attr.prebuf = (UINT32) - 1;
 	buffer_attr.minreq = (UINT32) - 1;
 	/* 500ms latency */
-	buffer_attr.fragsize = pulse->bytes_per_frame * pulse->frames_per_packet * pulse->format.nChannels;
+	buffer_attr.fragsize = pulse->bytes_per_frame * pulse->frames_per_packet;
+
+	if (buffer_attr.fragsize % pulse->format.nBlockAlign)
+		buffer_attr.fragsize += pulse->format.nBlockAlign - buffer_attr.fragsize %
+		                        pulse->format.nBlockAlign;
 
 	if (pa_stream_connect_record(pulse->stream,
 	                             pulse->device_name,

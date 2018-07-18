@@ -97,6 +97,7 @@ struct _AUDIN_PLUGIN
 	rdpContext* rdpcontext;
 	BOOL attached;
 	wStream* data;
+	wStream* buffer;
 	AUDIO_FORMAT* format;
 	UINT32 FramesPerPacket;
 
@@ -404,8 +405,32 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format,
 
 		Stream_Write(audin->data, data, size);
 	}
-	else if (!freerdp_dsp_encode(audin->dsp_context, format, data, size, audin->data))
-		return ERROR_INTERNAL_ERROR;
+	else
+	{
+		size_t block = audin->FramesPerPacket;
+		size_t rest = audin->FramesPerPacket % audin->format->nBlockAlign;
+
+		if (rest > 0)
+			block += audin->format->nBlockAlign - rest;
+
+		block *= format->wBitsPerSample / 8 * format->nChannels;
+
+		if (block < size)
+			size = block;
+
+		Stream_SetPosition(audin->buffer, 0);
+
+		if (!Stream_EnsureRemainingCapacity(audin->buffer, 2 * block))
+			return CHANNEL_RC_NO_MEMORY;
+
+		Stream_Write(audin->buffer, data, size);
+		Stream_Zero(audin->buffer, block - size);
+		Stream_SealLength(audin->buffer);
+
+		if (!freerdp_dsp_encode(audin->dsp_context, format, Stream_Buffer(audin->buffer),
+		                        Stream_Length(audin->buffer), audin->data))
+			return ERROR_INTERNAL_ERROR;
+	}
 
 	if (Stream_GetPosition(audin->data) <= 1)
 		return CHANNEL_RC_OK;
@@ -449,7 +474,7 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 		return FALSE;
 	}
 
-	if (!audin->device->FormatSupported(audin->device, audin->format))
+	if (!supported)
 	{
 		if (!freerdp_dsp_context_reset(audin->dsp_context, audin->format))
 			return FALSE;
@@ -732,6 +757,7 @@ static UINT audin_plugin_terminated(IWTSPlugin* pPlugin)
 
 	freerdp_dsp_context_free(audin->dsp_context);
 	Stream_Free(audin->data, TRUE);
+	Stream_Free(audin->buffer, TRUE);
 	free(audin->subsystem);
 	free(audin->device_name);
 	free(audin->listener_callback);
@@ -1005,8 +1031,9 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	audin->log = WLog_Get(TAG);
 	audin->data = Stream_New(NULL, 4096);
+	audin->buffer = Stream_New(NULL, 4096);
 
-	if (!audin->data)
+	if (!audin->data || !audin->buffer)
 		goto out;
 
 	audin->dsp_context = freerdp_dsp_context_new(TRUE);
