@@ -1299,6 +1299,10 @@ static void xf_post_disconnect(freerdp* instance)
 
 	context = instance->context;
 	xfc = (xfContext*) context;
+	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
+	                                   xf_OnChannelConnectedEventHandler);
+	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
+	                                      xf_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
 
 	if (xfc->clipboard)
@@ -1945,6 +1949,15 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 
 	if (!context)
 		return;
+
+	PubSub_UnsubscribeTerminate(context->pubSub,
+	                            xf_TerminateEventHandler);
+#ifdef WITH_XRENDER
+	PubSub_UnsubscribeZoomingChange(context->pubSub,
+	                                xf_ZoomingChangeEventHandler);
+	PubSub_UnsubscribePanningChange(context->pubSub,
+	                                xf_PanningChangeEventHandler);
+#endif
 
 	if (xfc->display)
 	{

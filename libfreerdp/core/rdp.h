@@ -213,7 +213,7 @@ FREERDP_LOCAL int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channelId);
 
 FREERDP_LOCAL int rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId,
-                                        BYTE* data, int size);
+                                        const BYTE* data, int size);
 
 FREERDP_LOCAL wStream* rdp_message_channel_pdu_init(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s,

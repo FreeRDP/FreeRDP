@@ -49,7 +49,7 @@
 
 #define TAG FREERDP_TAG("core.channels")
 
-BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
+BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, int size)
 {
 	DWORD i;
 	int left;

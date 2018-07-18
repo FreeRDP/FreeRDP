@@ -582,7 +582,6 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 			if (!rdp->AwaitCapabilities)
 			{
-
 				if (client->Capabilities && !client->Capabilities(client))
 					return -1;
 
@@ -675,7 +674,7 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 	transport_disconnect(transport);
 }
 
-static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, BYTE* data,
+static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, const BYTE* data,
         int size)
 {
 	return rdp_send_channel_data(client->context->rdp, channelId, data, size);
