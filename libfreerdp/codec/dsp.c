@@ -606,8 +606,8 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	INT16 sample;
 	BYTE encoded;
 	UINT32 out_size;
-	out_size = size / 2;
 	size_t align;
+	out_size = size / 2;
 
 	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;
