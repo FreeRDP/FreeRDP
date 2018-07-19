@@ -385,12 +385,6 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format,
 	if (!audin->attached)
 		return CHANNEL_RC_OK;
 
-	WLog_Print(audin->log, WLOG_TRACE,
-	           "%s: nChannels: %"PRIu16" nSamplesPerSec: %"PRIu32" "
-	           "nAvgBytesPerSec: %"PRIu32" nBlockAlign: %"PRIu16" wBitsPerSample: %"PRIu16" cbSize: %"PRIu16" [%"PRIdz"]",
-	           rdpsnd_get_audio_tag_string(audin->format->wFormatTag),
-	           audin->format->nChannels, audin->format->nSamplesPerSec, audin->format->nAvgBytesPerSec,
-	           audin->format->nBlockAlign, audin->format->wBitsPerSample, audin->format->cbSize, size);
 	Stream_SetPosition(audin->data, 0);
 
 	if (!Stream_EnsureRemainingCapacity(audin->data, 1))
@@ -407,33 +401,21 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format,
 	}
 	else
 	{
-		size_t block = audin->FramesPerPacket;
-		size_t rest = audin->FramesPerPacket % audin->format->nBlockAlign;
-
-		if (rest > 0)
-			block += audin->format->nBlockAlign - rest;
-
-		block *= format->wBitsPerSample / 8 * format->nChannels;
-
-		if (block < size)
-			size = block;
-
-		Stream_SetPosition(audin->buffer, 0);
-
-		if (!Stream_EnsureRemainingCapacity(audin->buffer, 2 * block))
-			return CHANNEL_RC_NO_MEMORY;
-
-		Stream_Write(audin->buffer, data, size);
-		Stream_Zero(audin->buffer, block - size);
-		Stream_SealLength(audin->buffer);
-
-		if (!freerdp_dsp_encode(audin->dsp_context, format, Stream_Buffer(audin->buffer),
-		                        Stream_Length(audin->buffer), audin->data))
+		if (!freerdp_dsp_encode(audin->dsp_context, format, data, size, audin->data))
 			return ERROR_INTERNAL_ERROR;
 	}
 
+	/* Did not encode anything, skip this, the codec is not ready for output. */
 	if (Stream_GetPosition(audin->data) <= 1)
 		return CHANNEL_RC_OK;
+
+	WLog_Print(audin->log, WLOG_TRACE,
+	           "%s: nChannels: %"PRIu16" nSamplesPerSec: %"PRIu32" "
+	           "nAvgBytesPerSec: %"PRIu32" nBlockAlign: %"PRIu16" wBitsPerSample: %"PRIu16" cbSize: %"PRIu16" [%"PRIdz"/%"PRIdz"]",
+	           rdpsnd_get_audio_tag_string(audin->format->wFormatTag),
+	           audin->format->nChannels, audin->format->nSamplesPerSec, audin->format->nAvgBytesPerSec,
+	           audin->format->nBlockAlign, audin->format->wBitsPerSample, audin->format->cbSize, size,
+	           Stream_GetPosition(audin->data) - 1);
 
 	if ((error = audin_send_incoming_data_pdu(callback)))
 	{
