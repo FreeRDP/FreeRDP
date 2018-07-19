@@ -55,16 +55,14 @@ struct _FREERDP_DSP_CONTEXT
 
 static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
 {
-	if (!encoder)
-		return FALSE;
-
 	switch (id)
 	{
 #if !defined(WITH_DSP_EXPERIMENTAL)
 
+		case AV_CODEC_ID_ADPCM_IMA_OKI:
 		case AV_CODEC_ID_MP3:
-		case AV_CODEC_ID_ADPCM_IMA_WAV:
 		case AV_CODEC_ID_ADPCM_MS:
+		case AV_CODEC_ID_G723_1:
 			return TRUE;
 #endif
 
@@ -104,7 +102,7 @@ static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 			}
 
 		case WAVE_FORMAT_DVI_ADPCM:
-			return AV_CODEC_ID_ADPCM_IMA_WAV;
+			return AV_CODEC_ID_ADPCM_IMA_OKI;
 
 		case WAVE_FORMAT_ADPCM:
 			return AV_CODEC_ID_ADPCM_MS;
@@ -117,6 +115,9 @@ static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 
 		case WAVE_FORMAT_GSM610:
 			return AV_CODEC_ID_GSM_MS;
+
+		case WAVE_FORMAT_MSG723:
+			return AV_CODEC_ID_G723_1;
 
 		case WAVE_FORMAT_AAC_MS:
 			return AV_CODEC_ID_AAC;
@@ -152,6 +153,7 @@ static int ffmpeg_sample_format(const AUDIO_FORMAT* format)
 		case WAVE_FORMAT_AAC_MS:
 			return AV_SAMPLE_FMT_FLTP;
 
+		case WAVE_FORMAT_MSG723:
 		case WAVE_FORMAT_GSM610:
 			return AV_SAMPLE_FMT_S16P;
 
