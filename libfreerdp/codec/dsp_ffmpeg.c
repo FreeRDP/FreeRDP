@@ -553,22 +553,21 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 	}
 	else
 	{
-		int samples, rest;
-		rest = samples = context->resampled->nb_samples;
+		int copied = 0;
+		int rest = context->resampled->nb_samples;
 
 		do
 		{
-			int restSamples;
-			int inSamples = samples;
+			int inSamples = rest;
 
-			if (samples + context->bufferedSamples > context->context->frame_size)
+			if (inSamples + context->bufferedSamples > context->context->frame_size)
 				inSamples = context->context->frame_size - context->bufferedSamples;
 
-			restSamples = samples - inSamples;
 			rc = av_samples_copy(context->buffered->extended_data, context->resampled->extended_data,
-			                     context->bufferedSamples, 0, inSamples,
+			                     context->bufferedSamples, copied, inSamples,
 			                     context->context->channels, context->context->sample_fmt);
 			rest -= inSamples;
+			copied += inSamples;
 			context->bufferedSamples += inSamples;
 
 			if (context->context->frame_size <= context->bufferedSamples)
@@ -579,15 +578,6 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 					return FALSE;
 
 				context->bufferedSamples = 0;
-			}
-
-			if (restSamples > 0)
-			{
-				rc = av_samples_copy(context->buffered->extended_data, context->resampled->extended_data,
-				                     context->bufferedSamples, inSamples, restSamples,
-				                     context->context->channels, context->context->sample_fmt);
-				rest -= restSamples;
-				context->bufferedSamples += restSamples;
 			}
 		}
 		while (rest > 0);

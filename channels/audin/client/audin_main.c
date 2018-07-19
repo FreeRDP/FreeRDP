@@ -97,7 +97,6 @@ struct _AUDIN_PLUGIN
 	rdpContext* rdpcontext;
 	BOOL attached;
 	wStream* data;
-	wStream* buffer;
 	AUDIO_FORMAT* format;
 	UINT32 FramesPerPacket;
 
@@ -739,7 +738,6 @@ static UINT audin_plugin_terminated(IWTSPlugin* pPlugin)
 
 	freerdp_dsp_context_free(audin->dsp_context);
 	Stream_Free(audin->data, TRUE);
-	Stream_Free(audin->buffer, TRUE);
 	free(audin->subsystem);
 	free(audin->device_name);
 	free(audin->listener_callback);
@@ -1013,9 +1011,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	audin->log = WLog_Get(TAG);
 	audin->data = Stream_New(NULL, 4096);
-	audin->buffer = Stream_New(NULL, 4096);
 
-	if (!audin->data || !audin->buffer)
+	if (!audin->data)
 		goto out;
 
 	audin->dsp_context = freerdp_dsp_context_new(TRUE);
