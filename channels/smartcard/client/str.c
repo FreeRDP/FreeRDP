@@ -29,126 +29,98 @@
 
 #define TAG FREERDP_TAG("str")
 
-struct string_funs string_funs[2] =
+WCHAR * towide(BYTE* string)
 {
-	{asize, aref, aset, alen, ainc, aconvert},
-	{wsize, wref, wset, wlen, winc, wconvert}
-};
-
-int asize()
-{
-	return sizeof(BYTE);
-}
-
-int aref(BYTE* string, int index)
-{
-	return string[index];
-}
-
-void aset(BYTE* string, int index, int character)
-{
-	string[index] = character;
-}
-
-int alen(BYTE* string)
-{
-	return lstrlenA((LPCSTR)string);
-}
-
-BYTE* ainc(BYTE* string, int increment)
-{
-	return string + sizeof(BYTE) * increment;
-}
-
-char*	aconvert(BYTE* string)
-{
-	return strdup((char*)string);
-}
-
-int wsize()
-{
-	return sizeof(WCHAR);
-}
-
-int wref(BYTE* string, int index)
-{
-	return ((WCHAR*)string)[index];
-}
-
-void wset(BYTE* string, int index, int character)
-{
-	((WCHAR*)string)[index] = character;
-}
-
-int wlen(BYTE* string)
-{
-	return lstrlenW((LPCWSTR)string);
-}
-
-BYTE* winc(BYTE* string, int increment)
-{
-	return string + sizeof(WCHAR) * increment;
-}
-
-char*	wconvert(BYTE* string)
-{
-	char*	utf8 = 0;
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)string, -1, (CHAR**) &utf8, 0, NULL, NULL);
-	return utf8;
+	WCHAR * wstring = 0;
+	ConvertToUnicode(CP_UTF8, 0, string, -1, &wstring, 0, NULL, NULL);
+	return wstring;
 }
 
 
-int compare(struct string_funs* funs, BYTE* string, BYTE* other_string)
-{
-	int i = 0;
 
-	while (1)
+int compareA(BYTE* string, BYTE* other_string)
+{
+	return strcmp((char *)string, (char *)other_string);
+}
+
+int compareW(BYTE* string, BYTE* other_string)
+{
+	return strcmp((char *)string, (char *)other_string);
+}
+
+int compare(BOOL widechar, BYTE* string, BYTE* other_string)
+{
+	if (widechar)
 	{
-		if (funs->ref(string, i) == 0)
+		WCHAR * wother = towide(other_string);
+		if (wother)
 		{
-			return (other_string[i] == 0) ? 0 : -1;
+			int result =  compareW((WCHAR *)string, wother);
+			free(wother);
+			return result;
 		}
-
-		if (other_string[i] == 0)
+		else
 		{
-			return 1;
+			return -1;
 		}
-
-		if (funs->ref(string, i) != other_string[i])
-		{
-			return (funs->ref(string, i) <	other_string[i]) ? -1 : 1;
-		}
-
-		i ++ ;
+	}
+	else
+	{
+		return compareA(string, other_string);
 	}
 }
 
-int ncompare(struct string_funs* funs, BYTE* string, BYTE* other_string, int max)
+int ncompareA(BYTE* string, BYTE* other_string, int max)
 {
+	return strncmp((char *)string, (char *)other_string, max);
+}
+
+int ncompareW(WCHAR * string, WCHAR * other_string, int max)
+{
+	return wcsncmp(string, other_string, max;)
+}
+
+int ncompare(BOOL widechar, BYTE* string, BYTE* other_string, int max)
+{
+	if (widechar)
+	{
+		WCHAR * wother = towide(other_string);
+		if (wother)
+		{
+			int result = ncompareW((WCHAR *)string, wother, max);
+			free(wother);
+			return result;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	else
+	{
+		return ncompareA(string, other_string, max);
+	}
+}
+
+BOOL containsA(BYTE* string, BYTE* substring)
+{
+	int wlen = funs->len(string);
+	int slen = strlen((char*)substring);
+	int end = wlen - slen;
 	int i = 0;
 
-	for (i = 0; i < max; i ++)
+	for (i = 0; i <= end; i ++)
 	{
-		if (funs->ref(string, i) == 0)
+		if (ncompare(funs, funs->inc(string, i), substring, slen) == 0)
 		{
-			return (other_string[i] == 0) ? 0 : -1;
-		}
-
-		if (other_string[i] == 0)
-		{
-			return 1;
-		}
-
-		if (funs->ref(string, i) != other_string[i])
-		{
-			return (funs->ref(string, i) <	other_string[i]) ? -1 : 1;
+			return TRUE;
 		}
 	}
 
-	return 0;
+	return FALSE;
 }
 
-BOOL contains(struct string_funs* funs, BYTE* string, BYTE* substring)
+BOOL contains(BOOL widechar, BYTE* string, BYTE* substring)
 {
 	int wlen = funs->len(string);
 	int slen = strlen((char*)substring);
@@ -167,7 +139,7 @@ BOOL contains(struct string_funs* funs, BYTE* string, BYTE* substring)
 }
 
 
-void ncopy(struct string_funs* funs, BYTE* destination, BYTE* source, int count)
+void ncopy(BOOL widechar, BYTE* destination, BYTE* source, int count)
 {
 	int i;
 
@@ -177,7 +149,7 @@ void ncopy(struct string_funs* funs, BYTE* destination, BYTE* source, int count)
 	}
 }
 
-BOOL LinkedList_StringHasSubstring(struct string_funs* funs, BYTE* string, wLinkedList* list)
+BOOL LinkedList_StringHasSubstring(BOOL widechar, BYTE* string, wLinkedList* list)
 {
 	LinkedList_Enumerator_Reset(list);
 
@@ -194,7 +166,7 @@ BOOL LinkedList_StringHasSubstring(struct string_funs* funs, BYTE* string, wLink
 
 void mszFilterStrings(BOOL widechar, void*   mszStrings, DWORD* cchReaders, wLinkedList* substrings)
 {
-	struct string_funs* funs = & string_funs[widechar ? 1 : 0];
+	BOOL widechar = & string_funs[widechar ? 1 : 0];
 	BYTE* current = (BYTE*)mszStrings;
 	BYTE* destination = current;
 
@@ -246,7 +218,7 @@ void* mszStrings_Enumerator_Current(mszStrings_Enumerator*  enumerator)
 
 void mszStringsPrint(FILE* output, BOOL widechar, void* mszStrings)
 {
-	struct string_funs* funs = & string_funs[widechar ? 1 : 0];
+	BOOL widechar = & string_funs[widechar ? 1 : 0];
 	mszStrings_Enumerator enumerator;
 	mszStrings_Enumerator_Reset(&enumerator, widechar, mszStrings);
 
@@ -261,7 +233,7 @@ void mszStringsPrint(FILE* output, BOOL widechar, void* mszStrings)
 
 void mszStringsLog(const char* prefix, BOOL widechar, void* mszStrings)
 {
-	struct string_funs* funs = & string_funs[widechar ? 1 : 0];
+	BOOL widechar = & string_funs[widechar ? 1 : 0];
 	mszStrings_Enumerator enumerator;
 
 	if (prefix == 0)
@@ -283,7 +255,6 @@ void mszStringsLog(const char* prefix, BOOL widechar, void* mszStrings)
 int mszSize(BOOL widechar, void* mszStrings)
 {
 	int size = 0;
-	struct string_funs* funs = & string_funs[widechar ? 1 : 0];
 	mszStrings_Enumerator enumerator;
 	mszStrings_Enumerator_Reset(&enumerator, widechar, mszStrings);
 
