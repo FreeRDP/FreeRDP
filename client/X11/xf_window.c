@@ -209,12 +209,6 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		                   fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
 		                   xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
 
-		if (!fullscreen)
-		{
-			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
-			XMoveWindow(xfc->display, window->handle, startX, startY);
-		}
-
 		/* Set monitor bounds */
 		if (settings->MonitorCount > 1)
 		{
