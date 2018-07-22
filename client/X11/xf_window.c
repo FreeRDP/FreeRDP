@@ -591,11 +591,10 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width,
 	size_hints->win_gravity = NorthWestGravity;
 	size_hints->min_width = size_hints->min_height = 1;
 	size_hints->max_width = size_hints->max_height = 16384;
-	XSetWMNormalHints(xfc->display, window->handle, size_hints);
 	XResizeWindow(xfc->display, window->handle, width, height);
 #ifdef WITH_XRENDER
 
-	if (!settings->SmartSizing)
+	if (!settings->SmartSizing && !settings->DynamicResolutionUpdate)
 #endif
 	{
 		if (!xfc->fullscreen)
@@ -604,9 +603,10 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width,
 			 * not be resizable */
 			size_hints->min_width = size_hints->max_width = width;
 			size_hints->min_height = size_hints->max_height = height;
-			XSetWMNormalHints(xfc->display, window->handle, size_hints);
 		}
 	}
+
+	XSetWMNormalHints(xfc->display, window->handle, size_hints);
 
 	XFree(size_hints);
 }
