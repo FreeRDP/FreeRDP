@@ -82,6 +82,12 @@ static UINT audin_server_select_format(audin_server_context* context,
 	}
 
 	context->selected_client_format = client_format_index;
+	if (!freerdp_dsp_context_reset(audin->dsp_context,
+								   &audin->context.client_formats[client_format_index]))
+	{
+		WLog_ERR(TAG, "Failed to reset dsp context format!");
+		return ERROR_INTERNAL_ERROR;
+	}
 
 	if (audin->opened)
 	{
@@ -368,6 +374,8 @@ static UINT audin_server_recv_data(audin_server* audin, wStream* s,
 		if (success)
 			WLog_ERR(TAG, "context.ReceiveSamples failed with error %"PRIu32"", success);
 	}
+	else
+		WLog_ERR(TAG, "freerdp_dsp_decode failed!");
 
 	Stream_Free(out, TRUE);
 	return success;
