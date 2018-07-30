@@ -482,6 +482,9 @@ BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfo
 	WIN32_FIND_DATAA findFileData;
 	HANDLE hFind;
 
+	if (!fd)
+		return FALSE;
+
 	if ((hFind = FindFirstFileA(lpFileName, &findFileData)) == INVALID_HANDLE_VALUE)
 		return FALSE;
 
@@ -835,6 +838,13 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	BOOL isDir = FALSE;
 	struct stat fileStat;
 	WIN32_FILE_SEARCH* pFileSearch;
+
+	if (!lpFindFileData || !lpFileName)
+	{
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		return INVALID_HANDLE_VALUE;
+	}
+
 	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 	pFileSearch = (WIN32_FILE_SEARCH*) calloc(1, sizeof(WIN32_FILE_SEARCH));
 
@@ -1027,14 +1037,14 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 	char* fullpath;
 	size_t pathlen;
 	size_t namelen;
-	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 
-	if (!hFindFile)
+	if (!hFindFile || !lpFindFileData)
 		return FALSE;
 
 	if (hFindFile == INVALID_HANDLE_VALUE)
 		return FALSE;
 
+	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 	pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
 
 	while ((pFileSearch->pDirent = readdir(pFileSearch->pDir)) != NULL)
