@@ -1041,7 +1041,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
-		error = drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
+		error = drive_register_drive_path(pEntryPoints, drive->Name, drive->Path, drive->automount);
 	}
 	else if (strcmp(drive->Path, "*") == 0)
 	{
@@ -1072,7 +1072,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 					return CHANNEL_RC_NO_MEMORY;
 				}
 
-				if ((error = drive_register_drive_path(pEntryPoints, bufdup, devdup)))
+				if ((error = drive_register_drive_path(pEntryPoints, bufdup, devdup, TRUE)))
 				{
 					break;
 				}
@@ -1081,7 +1081,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
 	else
 	{
-		error = drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
+		error = drive_register_drive_path(pEntryPoints, drive->Name, drive->Path, drive->automount);
 	}
 
 #endif
