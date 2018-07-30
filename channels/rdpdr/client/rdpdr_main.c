@@ -68,11 +68,12 @@
 #include "rdpdr_main.h"
 
 typedef struct _DEVICE_DRIVE_EXT DEVICE_DRIVE_EXT;
-
+/* IMPORTANT: Keep in sync with DRIVE_DEVICE */
 struct _DEVICE_DRIVE_EXT
 {
 	DEVICE device;
 	WCHAR* path;
+	BOOL automount;
 };
 
 /**
@@ -823,7 +824,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		DEVICE_DRIVE_EXT* device_ext = (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(
 		                                   rdpdr->devman->devices, (void*)keys[j]);
 
-		if (!device_ext || !device_ext->path)
+		if (!device_ext || !device_ext->path || !device_ext->automount)
 			continue;
 
 		ConvertFromUnicode(CP_UTF8, 0, device_ext->path, -1, &path, 0, NULL, NULL);
@@ -880,6 +881,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 
 			drive->Type = RDPDR_DTYP_FILESYSTEM;
 			drive->Path = dev_array[i].path;
+			drive->automount = TRUE;
 			dev_array[i].path = NULL;
 			name = strrchr(drive->Path, '/') + 1;
 			drive->Name = _strdup(name);
