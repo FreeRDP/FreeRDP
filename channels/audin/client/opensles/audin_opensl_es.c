@@ -145,6 +145,10 @@ out:
 static UINT audin_opensles_free(IAudinDevice* device)
 {
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
+
+	if (!opensles)
+		return ERROR_INVALID_PARAMETER;
+
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p", (void*) device);
 
 	/* The function may have been called out of order,
@@ -163,6 +167,10 @@ static BOOL audin_opensles_format_supported(IAudinDevice* device,
         const AUDIO_FORMAT* format)
 {
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
+
+	if (!opensles || !format)
+		return FALSE;
+
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, format=%p", (void*) opensles, (void*) format);
 	assert(format);
 
@@ -198,6 +206,10 @@ static UINT audin_opensles_set_format(IAudinDevice* device,
                                       const AUDIO_FORMAT* format, UINT32 FramesPerPacket)
 {
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
+
+	if (!opensles || !format)
+		return ERROR_INVALID_PARAMETER;
+
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, format=%p, FramesPerPacket=%"PRIu32"",
 	           (void*) device, (void*) format, FramesPerPacket);
 	assert(format);
@@ -255,6 +267,10 @@ static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive,
                                 void* user_data)
 {
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
+
+	if (!opensles || !receive || !user_data)
+		return ERROR_INVALID_PARAMETER;
+
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, receive=%p, user_data=%p", (void*) device,
 	           (void*) receive,
 	           (void*) user_data);

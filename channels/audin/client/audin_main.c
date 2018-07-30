@@ -696,6 +696,13 @@ static UINT audin_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 static UINT audin_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) pPlugin;
+
+	if (!audin)
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	if (!pChannelMgr)
+		return ERROR_INVALID_PARAMETER;
+
 	WLog_Print(audin->log, WLOG_TRACE, "...");
 	audin->listener_callback = (AUDIN_LISTENER_CALLBACK*) calloc(1, sizeof(AUDIN_LISTENER_CALLBACK));
 
@@ -721,6 +728,10 @@ static UINT audin_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) pPlugin;
 	UINT error = CHANNEL_RC_OK;
+
+	if (!audin)
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
 	WLog_Print(audin->log, WLOG_TRACE, "...");
 
 	if (audin->device)

@@ -215,7 +215,10 @@ out:
 static UINT audin_alsa_free(IAudinDevice* device)
 {
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
-	free(alsa->device_name);
+
+	if (alsa)
+		free(alsa->device_name);
+
 	free(alsa);
 	return CHANNEL_RC_OK;
 }
@@ -223,6 +226,9 @@ static UINT audin_alsa_free(IAudinDevice* device)
 static BOOL audin_alsa_format_supported(IAudinDevice* device,
                                         const AUDIO_FORMAT* format)
 {
+	if (!device || !format)
+		return FALSE;
+
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
@@ -256,6 +262,10 @@ static UINT audin_alsa_set_format(IAudinDevice* device, const AUDIO_FORMAT* form
                                   UINT32 FramesPerPacket)
 {
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
+
+	if (!alsa || !format)
+		return ERROR_INVALID_PARAMETER;
+
 	alsa->aformat = *format;
 	alsa->frames_per_packet = FramesPerPacket;
 
@@ -274,6 +284,10 @@ static UINT audin_alsa_open(IAudinDevice* device, AudinReceive receive,
                             void* user_data)
 {
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
+
+	if (!device || !receive || !user_data)
+		return ERROR_INVALID_PARAMETER;
+
 	alsa->receive = receive;
 	alsa->user_data = user_data;
 
@@ -306,6 +320,9 @@ static UINT audin_alsa_close(IAudinDevice* device)
 {
 	UINT error = CHANNEL_RC_OK;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
+
+	if (!alsa)
+		return ERROR_INVALID_PARAMETER;
 
 	if (alsa->stopEvent)
 	{

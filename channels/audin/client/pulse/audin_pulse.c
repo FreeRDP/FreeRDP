@@ -178,6 +178,9 @@ static BOOL audin_pulse_format_supported(IAudinDevice* device, const AUDIO_FORMA
 {
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
+	if (!pulse || !format)
+		return FALSE;
+
 	if (!pulse->context)
 		return 0;
 
@@ -223,6 +226,9 @@ static UINT audin_pulse_set_format(IAudinDevice* device, const AUDIO_FORMAT* for
 {
 	pa_sample_spec sample_spec = { 0 };
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
+
+	if (!pulse || !format)
+		return ERROR_INVALID_PARAMETER;
 
 	if (!pulse->context)
 		return ERROR_INVALID_PARAMETER;
@@ -317,6 +323,9 @@ static UINT audin_pulse_close(IAudinDevice* device)
 {
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
+	if (!pulse)
+		return ERROR_INVALID_PARAMETER;
+
 	if (pulse->stream)
 	{
 		pa_threaded_mainloop_lock(pulse->mainloop);
@@ -341,6 +350,9 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	pa_stream_state_t state;
 	pa_buffer_attr buffer_attr = { 0 };
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
+
+	if (!pulse || !receive || !user_data)
+		return ERROR_INVALID_PARAMETER;
 
 	if (!pulse->context)
 		return ERROR_INVALID_PARAMETER;

@@ -242,6 +242,9 @@ static UINT audin_winmm_free(IAudinDevice* device)
 	UINT32 i;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
 
+	if (!winmm)
+		return ERROR_INVALID_PARAMETER;
+
 	for (i = 0; i < winmm->cFormats; i++)
 	{
 		free(winmm->ppwfx[i]);
@@ -263,6 +266,10 @@ static UINT audin_winmm_close(IAudinDevice* device)
 	DWORD status;
 	UINT error = CHANNEL_RC_OK;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
+
+	if (!winmm)
+		return ERROR_INVALID_PARAMETER;
+
 	SetEvent(winmm->stopEvent);
 	status = WaitForSingleObject(winmm->thread, INFINITE);
 
@@ -292,6 +299,10 @@ static UINT audin_winmm_set_format(IAudinDevice* device, const AUDIO_FORMAT* for
 {
 	UINT32 i;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
+
+	if (!winmm || !format)
+		return ERROR_INVALID_PARAMETER;
+
 	winmm->frames_per_packet = FramesPerPacket;
 
 	for (i = 0; i < winmm->cFormats; i++)
@@ -313,6 +324,10 @@ static BOOL audin_winmm_format_supported(IAudinDevice* device, const AUDIO_FORMA
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
 	PWAVEFORMATEX pwfx;
 	BYTE* data;
+
+	if (!winmm || !format)
+		return FALSE;
+
 	pwfx = (PWAVEFORMATEX)malloc(sizeof(WAVEFORMATEX) + format->cbSize);
 
 	if (!pwfx)
@@ -362,6 +377,10 @@ static BOOL audin_winmm_format_supported(IAudinDevice* device, const AUDIO_FORMA
 static UINT audin_winmm_open(IAudinDevice* device, AudinReceive receive, void* user_data)
 {
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
+
+	if (!winmm || !receive || !user_data)
+		return ERROR_INVALID_PARAMETER;
+
 	winmm->receive = receive;
 	winmm->user_data = user_data;
 
