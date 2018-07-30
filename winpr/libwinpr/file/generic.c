@@ -482,6 +482,9 @@ BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfo
 	WIN32_FIND_DATAA findFileData;
 	HANDLE hFind;
 
+	if (!fd)
+		return FALSE;
+
 	if ((hFind = FindFirstFileA(lpFileName, &findFileData)) == INVALID_HANDLE_VALUE)
 		return FALSE;
 
@@ -785,13 +788,63 @@ struct _WIN32_FILE_SEARCH
 };
 typedef struct _WIN32_FILE_SEARCH WIN32_FILE_SEARCH;
 
+static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
+                             LPWIN32_FIND_DATAA lpFindFileData)
+{
+	UINT64 ft;
+	char* lastSep;
+	lpFindFileData->dwFileAttributes = 0;
+
+	if (S_ISDIR(fileStat->st_mode))
+		lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+
+	if (lpFindFileData->dwFileAttributes == 0)
+		lpFindFileData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+
+	lastSep = strrchr(path, '/');
+
+	if (lastSep)
+	{
+		const char* name = lastSep + 1;
+		const size_t namelen = strlen(name);
+
+		if ((namelen > 1) && (name[0] == '.') && (name[1] != '.'))
+			lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+	}
+
+	if (!(fileStat->st_mode & S_IWUSR))
+		lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+
+#ifdef _DARWIN_FEATURE_64_BIT_INODE
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_birthtime);
+#else
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_ctime);
+#endif
+	lpFindFileData->ftCreationTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFindFileData->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_mtime);
+	lpFindFileData->ftLastWriteTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFindFileData->ftLastWriteTime.dwLowDateTime = ft & 0xFFFFFFFF;
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_atime);
+	lpFindFileData->ftLastAccessTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFindFileData->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
+	lpFindFileData->nFileSizeHigh = ((UINT64)fileStat->st_size) >> 32ULL;
+	lpFindFileData->nFileSizeLow = fileStat->st_size & 0xFFFFFFFF;
+	return TRUE;
+}
+
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
-	LPSTR p;
-	size_t index;
-	size_t length;
+	BOOL isDir = FALSE;
 	struct stat fileStat;
 	WIN32_FILE_SEARCH* pFileSearch;
+
+	if (!lpFindFileData || !lpFileName)
+	{
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		return INVALID_HANDLE_VALUE;
+	}
+
 	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 	pFileSearch = (WIN32_FILE_SEARCH*) calloc(1, sizeof(WIN32_FILE_SEARCH));
 
@@ -801,51 +854,71 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	/* Separate lpFileName into path and pattern components */
-	p = strrchr(lpFileName, '/');
-
-	if (!p)
-		p = strrchr(lpFileName, '\\');
-
-	index = (p - lpFileName);
-	length = (p - lpFileName) + 1;
-	pFileSearch->lpPath = (LPSTR) malloc(length + 1);
-
-	if (!pFileSearch->lpPath)
+	if (stat(lpFileName, &fileStat) >= 0)
 	{
-		free(pFileSearch);
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return INVALID_HANDLE_VALUE;
+		isDir = (S_ISDIR(fileStat.st_mode) != 0);
 	}
+	else
+		errno = 0;
 
-	CopyMemory(pFileSearch->lpPath, lpFileName, length);
-	pFileSearch->lpPath[length] = '\0';
-	length = strlen(lpFileName) - index;
-	pFileSearch->lpPattern = (LPSTR) malloc(length + 1);
-
-	if (!pFileSearch->lpPattern)
+	if (isDir)
 	{
-		free(pFileSearch->lpPath);
-		free(pFileSearch);
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return INVALID_HANDLE_VALUE;
+		pFileSearch->lpPath = _strdup(lpFileName);
+		pFileSearch->lpPattern = _strdup("*");
 	}
-
-	CopyMemory(pFileSearch->lpPattern, &lpFileName[index + 1], length);
-	pFileSearch->lpPattern[length] = '\0';
-
-	/* Check if the path is a directory */
-
-	if (stat(pFileSearch->lpPath, &fileStat) < 0)
+	else
 	{
-		FindClose(pFileSearch);
-		return INVALID_HANDLE_VALUE; /* stat error */
-	}
+		LPSTR p;
+		size_t index;
+		size_t length;
+		/* Separate lpFileName into path and pattern components */
+		p = strrchr(lpFileName, '/');
 
-	if (S_ISDIR(fileStat.st_mode) == 0)
-	{
-		FindClose(pFileSearch);
-		return INVALID_HANDLE_VALUE; /* not a directory */
+		if (!p)
+			p = strrchr(lpFileName, '\\');
+
+		index = (p - lpFileName);
+		length = (p - lpFileName) + 1;
+		pFileSearch->lpPath = (LPSTR) malloc(length + 1);
+
+		if (!pFileSearch->lpPath)
+		{
+			free(pFileSearch);
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			return INVALID_HANDLE_VALUE;
+		}
+
+		CopyMemory(pFileSearch->lpPath, lpFileName, length);
+		pFileSearch->lpPath[length] = '\0';
+		length = strlen(lpFileName) - index;
+		pFileSearch->lpPattern = (LPSTR) malloc(length + 1);
+
+		if (!pFileSearch->lpPattern)
+		{
+			free(pFileSearch->lpPath);
+			free(pFileSearch);
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			return INVALID_HANDLE_VALUE;
+		}
+
+		CopyMemory(pFileSearch->lpPattern, &lpFileName[index + 1], length);
+		pFileSearch->lpPattern[length] = '\0';
+
+		/* Check if the path is a directory */
+
+		if (stat(pFileSearch->lpPath, &fileStat) < 0)
+		{
+			FindClose(pFileSearch);
+			SetLastError(map_posix_err(errno));
+			errno = 0;
+			return INVALID_HANDLE_VALUE; /* stat error */
+		}
+
+		if (S_ISDIR(fileStat.st_mode) == 0)
+		{
+			FindClose(pFileSearch);
+			return INVALID_HANDLE_VALUE; /* not a directory */
+		}
 	}
 
 	/* Open directory for reading */
@@ -854,6 +927,8 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	if (!pFileSearch->pDir)
 	{
 		FindClose(pFileSearch);
+		SetLastError(map_posix_err(errno));
+		errno = 0;
 		return INVALID_HANDLE_VALUE; /* failed to open directory */
 	}
 
@@ -962,21 +1037,21 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 	char* fullpath;
 	size_t pathlen;
 	size_t namelen;
-	UINT64 ft;
-	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 
-	if (!hFindFile)
+	if (!hFindFile || !lpFindFileData)
 		return FALSE;
 
 	if (hFindFile == INVALID_HANDLE_VALUE)
 		return FALSE;
 
+	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 	pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
 
 	while ((pFileSearch->pDirent = readdir(pFileSearch->pDir)) != NULL)
 	{
 		if (FilePatternMatchA(pFileSearch->pDirent->d_name, pFileSearch->lpPattern))
 		{
+			BOOL success;
 			strncpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name, MAX_PATH);
 			namelen = strnlen(lpFindFileData->cFileName, MAX_PATH);
 			pathlen = strlen(pFileSearch->lpPath);
@@ -997,45 +1072,20 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			{
 				free(fullpath);
 				SetLastError(map_posix_err(errno));
+				errno = 0;
 				continue;
 			}
 
-			free(fullpath);
-
 			/* Skip FIFO entries. */
 			if (S_ISFIFO(fileStat.st_mode))
+			{
+				free(fullpath);
 				continue;
-			lpFindFileData->dwFileAttributes = 0;
+			}
 
-			if (S_ISDIR(fileStat.st_mode))
-				lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
-
-			if (lpFindFileData->dwFileAttributes == 0)
-				lpFindFileData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
-
-			if (pFileSearch->pDirent->d_name[0] == '.' && namelen != 1 &&
-			    (pFileSearch->pDirent->d_name[1] != '.' && namelen != 2))
-				lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
-
-			if (!(fileStat.st_mode & S_IWUSR))
-				lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
-
-#ifdef _DARWIN_FEATURE_64_BIT_INODE
-			ft = STAT_TIME_TO_FILETIME(fileStat.st_birthtime);
-#else
-			ft = STAT_TIME_TO_FILETIME(fileStat.st_ctime);
-#endif
-			lpFindFileData->ftCreationTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
-			lpFindFileData->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
-			ft = STAT_TIME_TO_FILETIME(fileStat.st_mtime);
-			lpFindFileData->ftLastWriteTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
-			lpFindFileData->ftLastWriteTime.dwLowDateTime = ft & 0xFFFFFFFF;
-			ft = STAT_TIME_TO_FILETIME(fileStat.st_atime);
-			lpFindFileData->ftLastAccessTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
-			lpFindFileData->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
-			lpFindFileData->nFileSizeHigh = ((UINT64)fileStat.st_size) >> 32ULL;
-			lpFindFileData->nFileSizeLow = fileStat.st_size & 0xFFFFFFFF;
-			return TRUE;
+			success = FindDataFromStat(fullpath, &fileStat, lpFindFileData);
+			free(fullpath);
+			return success;
 		}
 	}
 
