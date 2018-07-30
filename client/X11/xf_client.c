@@ -50,10 +50,6 @@
 #include <X11/extensions/Xinerama.h>
 #endif
 
-#ifdef WITH_XI
-#include <X11/extensions/XInput2.h>
-#endif
-
 #include <X11/XKBlib.h>
 
 #include <errno.h>
