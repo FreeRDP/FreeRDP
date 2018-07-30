@@ -163,6 +163,7 @@ void first_hotplug(rdpdrPlugin* rdpdr)
 				drive->Path = _strdup(drive_path);
 				drive_path[1] = '\0';
 				drive->Name = _strdup(drive_path);
+				drive->automount = TRUE;
 				devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE*)drive,
 				                           rdpdr->rdpcontext);
 			}
@@ -207,6 +208,7 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 									drive->Type = RDPDR_DTYP_FILESYSTEM;
 									drive->Path = _strdup(drive_path);
 									drive_path[1] = '\0';
+									drive->automount = TRUE;
 									drive->Name = _strdup(drive_path);
 									devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE*)drive,
 									                           rdpdr->rdpcontext);
@@ -247,17 +249,20 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 									if (device_ext->path[0] == drive_name_upper
 									    || device_ext->path[0] == drive_name_lower)
 									{
-										devman_unregister_device(rdpdr->devman, (void*)keys[j]);
-										ids[0] = keys[j];
-
-										if ((error = rdpdr_send_device_list_remove_request(rdpdr, 1, ids)))
+										if (device_ext->automount)
 										{
-											// dont end on error, just report ?
-											WLog_ERR(TAG, "rdpdr_send_device_list_remove_request failed with error %"PRIu32"!",
-											         error);
-										}
+											devman_unregister_device(rdpdr->devman, (void*)keys[j]);
+											ids[0] = keys[j];
 
-										break;
+											if ((error = rdpdr_send_device_list_remove_request(rdpdr, 1, ids)))
+											{
+												// dont end on error, just report ?
+												WLog_ERR(TAG, "rdpdr_send_device_list_remove_request failed with error %"PRIu32"!",
+												         error);
+											}
+
+											break;
+										}
 									}
 								}
 							}
@@ -426,7 +431,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		device_ext = (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(
 		                 rdpdr->devman->devices, (void*)keys[j]);
 
-		if (!device_ext)
+		if (!device_ext || !device_ext->automount)
 			continue;
 
 		if (device_ext->path == NULL)
@@ -487,6 +492,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 
 			drive->Type = RDPDR_DTYP_FILESYSTEM;
 			drive->Path = dev_array[i].path;
+			drive->automount = TRUE;
 			dev_array[i].path = NULL;
 			name = strrchr(drive->Path, '/') + 1;
 			drive->Name = _strdup(name);
