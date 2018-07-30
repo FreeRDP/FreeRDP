@@ -76,10 +76,9 @@ static rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp,
 	return NULL;
 }
 
-static void channel_queue_free(void* obj)
+static void channel_queue_message_free(wMessage* msg)
 {
 	CHANNEL_OPEN_EVENT* ev;
-	wMessage* msg = (wMessage*)obj;
 
 	if (!msg || (msg->id != 0))
 		return;
@@ -100,6 +99,12 @@ static void channel_queue_free(void* obj)
 
 		free(ev);
 	}
+}
+
+static void channel_queue_free(void* obj)
+{
+	wMessage* msg = (wMessage*)obj;
+	channel_queue_message_free(msg);
 }
 
 rdpChannels* freerdp_channels_new(freerdp* instance)
@@ -493,9 +498,9 @@ static int freerdp_channels_process_sync(rdpChannels* channels,
 				        pChannelOpenData->OpenHandle, CHANNEL_EVENT_WRITE_COMPLETE, item->UserData, item->DataLength,
 				        item->DataLength, 0);
 			}
-
-			free(item);
 		}
+
+		IFCALL(message.Free, &message);
 	}
 
 	return status;
@@ -954,6 +959,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 	CHANNEL_INIT_DATA* pChannelInitData = NULL;
 	CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 	CHANNEL_OPEN_EVENT* pChannelOpenEvent = NULL;
+	wMessage message;
 
 	if (!pInitHandle)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
@@ -990,10 +996,15 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 	pChannelOpenEvent->DataLength = dataLength;
 	pChannelOpenEvent->UserData = pUserData;
 	pChannelOpenEvent->pChannelOpenData = pChannelOpenData;
+	message.context = channels;
+	message.id = 0;
+	message.wParam = pChannelOpenEvent;
+	message.lParam = NULL;
+	message.Free = channel_queue_message_free;
 
-	if (!MessageQueue_Post(channels->queue, (void*) channels, 0, (void*) pChannelOpenEvent, NULL))
+	if (!MessageQueue_Dispatch(channels->queue, &message))
 	{
-		free(pChannelOpenEvent);
+		channel_queue_message_free(&message);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -1003,6 +1014,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 static UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle,
         LPVOID pData, ULONG dataLength, LPVOID pUserData)
 {
+	wMessage message;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_OPEN_EVENT* pChannelOpenEvent;
 	rdpChannels* channels = (rdpChannels*) freerdp_channel_get_open_handle_data(&g_ChannelHandles,
@@ -1037,10 +1049,15 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle,
 	pChannelOpenEvent->DataLength = dataLength;
 	pChannelOpenEvent->UserData = pUserData;
 	pChannelOpenEvent->pChannelOpenData = pChannelOpenData;
+	message.context = channels;
+	message.id = 0;
+	message.wParam = pChannelOpenEvent;
+	message.lParam = NULL;
+	message.Free = channel_queue_message_free;
 
-	if (!MessageQueue_Post(channels->queue, (void*) channels, 0, (void*) pChannelOpenEvent, NULL))
+	if (!MessageQueue_Dispatch(channels->queue, &message))
 	{
-		free(pChannelOpenEvent);
+		channel_queue_message_free(&message);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 

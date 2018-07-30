@@ -1295,6 +1295,10 @@ static void xf_post_disconnect(freerdp* instance)
 
 	context = instance->context;
 	xfc = (xfContext*) context;
+	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
+	                                   xf_OnChannelConnectedEventHandler);
+	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
+	                                      xf_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
 
 	if (xfc->clipboard)
@@ -1532,12 +1536,9 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		goto disconnect;
 	}
 
-	handles[0] = timer;
-
 	if (!settings->AsyncInput)
 	{
 		inputEvent = xfc->x11event;
-		handles[1] = inputEvent;
 	}
 	else
 	{
@@ -1551,6 +1552,12 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 
 	while (!freerdp_shall_disconnect(instance))
 	{
+		nCount = 0;
+		handles[nCount++] = timer;
+
+		if (!settings->AsyncInput)
+			handles[nCount++] = inputEvent;
+
 		/*
 		 * win8 and server 2k12 seem to have some timing issue/race condition
 		 * when a initial sync request is send to sync the keyboard indicators
@@ -1562,11 +1569,9 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 			xf_keyboard_focus_in(xfc);
 		}
 
-		nCount = (settings->AsyncInput) ? 1 : 2;
-
 		if (!settings->AsyncTransport)
 		{
-			DWORD tmp = freerdp_get_event_handles(context, &handles[nCount], 64 - nCount);
+			DWORD tmp = freerdp_get_event_handles(context, &handles[nCount], ARRAYSIZE(handles) - nCount);
 
 			if (tmp == 0)
 			{
@@ -1940,6 +1945,15 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 
 	if (!context)
 		return;
+
+	PubSub_UnsubscribeTerminate(context->pubSub,
+	                            xf_TerminateEventHandler);
+#ifdef WITH_XRENDER
+	PubSub_UnsubscribeZoomingChange(context->pubSub,
+	                                xf_ZoomingChangeEventHandler);
+	PubSub_UnsubscribePanningChange(context->pubSub,
+	                                xf_PanningChangeEventHandler);
+#endif
 
 	if (xfc->display)
 	{
