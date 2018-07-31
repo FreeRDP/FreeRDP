@@ -431,6 +431,7 @@ struct _RDPDR_DRIVE
 	UINT32 Type;
 	char* Name;
 	char* Path;
+	BOOL automount;
 };
 typedef struct _RDPDR_DRIVE RDPDR_DRIVE;
 
