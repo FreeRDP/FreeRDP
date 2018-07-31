@@ -157,8 +157,8 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 static const INT16 ima_step_index_table[] =
 {
 	-1, -1, -1, -1, 2, 4, 6, 8,
-	-1, -1, -1, -1, 2, 4, 6, 8
-};
+	    -1, -1, -1, -1, 2, 4, 6, 8
+    };
 
 static const INT16 ima_step_size_table[] =
 {
@@ -226,7 +226,7 @@ static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	if (!Stream_EnsureCapacity(out, out_size))
 		return FALSE;
 
-	dst = Stream_Buffer(out);
+	dst = Stream_Pointer(out);
 
 	while (size > 0)
 	{
@@ -602,19 +602,22 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 {
 	int i;
 	BYTE* dst;
+	BYTE* start;
 	INT16 sample;
 	BYTE encoded;
 	UINT32 out_size;
+	size_t align;
 	out_size = size / 2;
 
-	if (!Stream_EnsureRemainingCapacity(out, out_size))
+	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;
 
-	dst = Stream_Buffer(out);
+	start = dst = Stream_Pointer(out);
+	align = (context->format.nChannels > 1) ? 32 : 4;
 
-	while (size > 0)
+	while (size > align)
 	{
-		if ((dst - Stream_Buffer(out)) % context->format.nBlockAlign == 0)
+		if ((dst - start) % context->format.nBlockAlign == 0)
 		{
 			*dst++ = context->adpcm.ima.last_sample[0] & 0xFF;
 			*dst++ = (context->adpcm.ima.last_sample[0] >> 8) & 0xFF;
@@ -720,7 +723,7 @@ static BOOL freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 	if (!Stream_EnsureCapacity(out, out_size))
 		return FALSE;
 
-	dst = Stream_Buffer(out);
+	dst = Stream_Pointer(out);
 
 	while (size > 0)
 	{
@@ -837,15 +840,16 @@ static BOOL freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE
                                         wStream* out)
 {
 	BYTE* dst;
+	BYTE* start;
 	INT32 sample;
 	UINT32 out_size;
 	const size_t step = 8 + (context->format.nChannels > 1) ? 4 : 0;
 	out_size = size / 2;
 
-	if (!Stream_EnsureRemainingCapacity(out, out_size))
+	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;
 
-	dst = Stream_Buffer(out);
+	start = dst = Stream_Pointer(out);
 
 	if (context->adpcm.ms.delta[0] < 16)
 		context->adpcm.ms.delta[0] = 16;
@@ -855,7 +859,7 @@ static BOOL freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE
 
 	while (size >= step)
 	{
-		if ((dst - Stream_Buffer(out)) % context->format.nBlockAlign == 0)
+		if ((dst - start) % context->format.nBlockAlign == 0)
 		{
 			if (context->format.nChannels > 1)
 			{

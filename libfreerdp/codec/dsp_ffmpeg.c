@@ -55,16 +55,14 @@ struct _FREERDP_DSP_CONTEXT
 
 static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
 {
-	if (!encoder)
-		return FALSE;
-
 	switch (id)
 	{
 #if !defined(WITH_DSP_EXPERIMENTAL)
 
+		case AV_CODEC_ID_ADPCM_IMA_OKI:
 		case AV_CODEC_ID_MP3:
-		case AV_CODEC_ID_GSM_MS:
-		case AV_CODEC_ID_AAC:
+		case AV_CODEC_ID_ADPCM_MS:
+		case AV_CODEC_ID_G723_1:
 			return TRUE;
 #endif
 
@@ -104,7 +102,7 @@ static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 			}
 
 		case WAVE_FORMAT_DVI_ADPCM:
-			return AV_CODEC_ID_ADPCM_MS;
+			return AV_CODEC_ID_ADPCM_IMA_OKI;
 
 		case WAVE_FORMAT_ADPCM:
 			return AV_CODEC_ID_ADPCM_MS;
@@ -117,6 +115,9 @@ static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 
 		case WAVE_FORMAT_GSM610:
 			return AV_CODEC_ID_GSM_MS;
+
+		case WAVE_FORMAT_MSG723:
+			return AV_CODEC_ID_G723_1;
 
 		case WAVE_FORMAT_AAC_MS:
 			return AV_CODEC_ID_AAC;
@@ -152,6 +153,7 @@ static int ffmpeg_sample_format(const AUDIO_FORMAT* format)
 		case WAVE_FORMAT_AAC_MS:
 			return AV_SAMPLE_FMT_FLTP;
 
+		case WAVE_FORMAT_MSG723:
 		case WAVE_FORMAT_GSM610:
 			return AV_SAMPLE_FMT_S16P;
 
@@ -195,6 +197,7 @@ static void ffmpeg_close_context(FREERDP_DSP_CONTEXT* context)
 		context->rcontext = NULL;
 	}
 }
+
 static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 {
 	int ret;
@@ -233,6 +236,10 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 		/* We need support for multichannel and sample rates != 8000 */
 		case AV_CODEC_ID_GSM_MS:
 			context->context->strict_std_compliance = FF_COMPLIANCE_UNOFFICIAL;
+			break;
+
+		case AV_CODEC_ID_AAC:
+			context->context->profile = FF_PROFILE_AAC_MAIN;
 			break;
 
 		default:
@@ -366,7 +373,7 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in,
 	{
 		ret = avcodec_receive_packet(context, packet);
 
-		if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+		if ((ret == AVERROR(EAGAIN)) || (ret == AVERROR_EOF))
 			return TRUE;
 		else if (ret < 0)
 		{
@@ -522,7 +529,6 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
                                const BYTE* data, size_t length, wStream* out)
 {
 	int rc;
-	int samples, rest;
 
 	if (!context || !format || !data || !out || !context->encoder)
 		return FALSE;
@@ -547,18 +553,22 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 	}
 	else
 	{
-		rest = samples = context->resampled->nb_samples;
+		int copied = 0;
+		int rest = context->resampled->nb_samples;
 
 		do
 		{
-			if (samples + context->bufferedSamples > context->context->frame_size)
-				samples = context->context->frame_size - context->bufferedSamples;
+			int inSamples = rest;
+
+			if (inSamples + context->bufferedSamples > context->context->frame_size)
+				inSamples = context->context->frame_size - context->bufferedSamples;
 
 			rc = av_samples_copy(context->buffered->extended_data, context->resampled->extended_data,
-			                     context->bufferedSamples, 0, samples,
+			                     context->bufferedSamples, copied, inSamples,
 			                     context->context->channels, context->context->sample_fmt);
-			rest -= samples;
-			context->bufferedSamples += samples;
+			rest -= inSamples;
+			copied += inSamples;
+			context->bufferedSamples += inSamples;
 
 			if (context->context->frame_size <= context->bufferedSamples)
 			{

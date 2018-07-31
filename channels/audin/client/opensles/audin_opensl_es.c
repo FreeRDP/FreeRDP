@@ -62,6 +62,7 @@ typedef struct _AudinOpenSLESDevice
 	void* user_data;
 
 	rdpContext* rdpcontext;
+	wLog* log;
 } AudinOpenSLESDevice;
 
 static DWORD WINAPI audin_opensles_thread_func(LPVOID arg)
@@ -77,7 +78,7 @@ static DWORD WINAPI audin_opensles_thread_func(LPVOID arg)
 	int rc = CHANNEL_RC_OK;
 	UINT error = CHANNEL_RC_OK;
 	DWORD status;
-	DEBUG_DVC("opensles=%p", (void*) opensles);
+	WLog_Print(opensles->log, WLOG_DEBUG, "opensles=%p", (void*) opensles);
 	assert(opensles);
 	assert(opensles->frames_per_packet > 0);
 	assert(opensles->stopEvent);
@@ -87,7 +88,7 @@ static DWORD WINAPI audin_opensles_thread_func(LPVOID arg)
 	if (!buffer.v)
 	{
 		error = CHANNEL_RC_NO_MEMORY;
-		WLog_ERR(TAG, "calloc failed!");
+		WLog_Print(opensles->log, WLOG_ERROR, "calloc failed!");
 
 		if (opensles->rdpcontext)
 			setChannelError(opensles->rdpcontext, CHANNEL_RC_NO_MEMORY,
@@ -103,7 +104,7 @@ static DWORD WINAPI audin_opensles_thread_func(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
+			WLog_Print(opensles->log, WLOG_ERROR, "WaitForSingleObject failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -114,7 +115,7 @@ static DWORD WINAPI audin_opensles_thread_func(LPVOID arg)
 
 		if (rc < 0)
 		{
-			WLog_ERR(TAG, "android_RecIn %d", rc);
+			WLog_Print(opensles->log, WLOG_ERROR, "android_RecIn %d", rc);
 			continue;
 		}
 
@@ -127,7 +128,7 @@ static DWORD WINAPI audin_opensles_thread_func(LPVOID arg)
 
 	free(buffer.v);
 out:
-	DEBUG_DVC("thread shutdown.");
+	WLog_Print(opensles->log, WLOG_DEBUG, "thread shutdown.");
 
 	if (error && opensles->rdpcontext)
 		setChannelError(opensles->rdpcontext, error, "audin_opensles_thread_func reported an error");
@@ -144,7 +145,11 @@ out:
 static UINT audin_opensles_free(IAudinDevice* device)
 {
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
-	DEBUG_DVC("device=%p", (void*) device);
+
+	if (!opensles)
+		return ERROR_INVALID_PARAMETER;
+
+	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p", (void*) device);
 
 	/* The function may have been called out of order,
 	 * ignore duplicate requests. */
@@ -161,10 +166,12 @@ static UINT audin_opensles_free(IAudinDevice* device)
 static BOOL audin_opensles_format_supported(IAudinDevice* device,
         const AUDIO_FORMAT* format)
 {
-#ifdef WITH_DEBUG_DVC
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
-#endif
-	DEBUG_DVC("device=%p, format=%p", (void*) opensles, (void*) format);
+
+	if (!opensles || !format)
+		return FALSE;
+
+	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, format=%p", (void*) opensles, (void*) format);
 	assert(format);
 
 	switch (format->wFormatTag)
@@ -181,9 +188,9 @@ static BOOL audin_opensles_format_supported(IAudinDevice* device,
 			break;
 
 		default:
-			DEBUG_DVC("Encoding '%s' [0x%04X"PRIX16"] not supported",
-			          rdpsnd_get_audio_tag_string(format->wFormatTag),
-			          format->wFormatTag);
+			WLog_Print(opensles->log, WLOG_DEBUG, "Encoding '%s' [0x%04X"PRIX16"] not supported",
+			           rdpsnd_get_audio_tag_string(format->wFormatTag),
+			           format->wFormatTag);
 			break;
 	}
 
@@ -199,8 +206,12 @@ static UINT audin_opensles_set_format(IAudinDevice* device,
                                       const AUDIO_FORMAT* format, UINT32 FramesPerPacket)
 {
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
-	DEBUG_DVC("device=%p, format=%p, FramesPerPacket=%"PRIu32"",
-	          (void*) device, (void*) format, FramesPerPacket);
+
+	if (!opensles || !format)
+		return ERROR_INVALID_PARAMETER;
+
+	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, format=%p, FramesPerPacket=%"PRIu32"",
+	           (void*) device, (void*) format, FramesPerPacket);
 	assert(format);
 
 	/* The function may have been called out of order, ignore
@@ -236,14 +247,14 @@ static UINT audin_opensles_set_format(IAudinDevice* device,
 			break;
 
 		default:
-			WLog_ERR(TAG, "Encoding '%"PRIu16"' [%04"PRIX16"] not supported",
-			         format->wFormatTag,
-			         format->wFormatTag);
+			WLog_Print(opensles->log, WLOG_ERROR, "Encoding '%"PRIu16"' [%04"PRIX16"] not supported",
+			           format->wFormatTag,
+			           format->wFormatTag);
 			return ERROR_UNSUPPORTED_TYPE;
 	}
 
-	DEBUG_DVC("aligned frames_per_packet=%"PRIu32", block_size=%"PRIu32"",
-	          opensles->frames_per_packet, opensles->block_size);
+	WLog_Print(opensles->log, WLOG_DEBUG, "frames_per_packet=%"PRIu32,
+	           opensles->frames_per_packet);
 	return CHANNEL_RC_OK;
 }
 
@@ -256,8 +267,13 @@ static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive,
                                 void* user_data)
 {
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
-	DEBUG_DVC("device=%p, receive=%p, user_data=%p", (void*) device, (void*) receive,
-	          (void*) user_data);
+
+	if (!opensles || !receive || !user_data)
+		return ERROR_INVALID_PARAMETER;
+
+	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, receive=%p, user_data=%p", (void*) device,
+	           (void*) receive,
+	           (void*) user_data);
 	assert(opensles);
 
 	/* The function may have been called out of order,
@@ -272,7 +288,7 @@ static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive,
 	                             opensles->frames_per_packet,
 	                             opensles->format.wBitsPerSample)))
 	{
-		WLog_ERR(TAG, "android_OpenRecDevice failed!");
+		WLog_Print(opensles->log, WLOG_ERROR, "android_OpenRecDevice failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -281,14 +297,14 @@ static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive,
 
 	if (!(opensles->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		WLog_ERR(TAG, "CreateEvent failed!");
+		WLog_Print(opensles->log, WLOG_ERROR, "CreateEvent failed!");
 		goto error_out;
 	}
 
 	if (!(opensles->thread = CreateThread(NULL, 0,
 	                                      audin_opensles_thread_func, opensles, 0, NULL)))
 	{
-		WLog_ERR(TAG, "CreateThread failed!");
+		WLog_Print(opensles->log, WLOG_ERROR, "CreateThread failed!");
 		goto error_out;
 	}
 
@@ -310,14 +326,14 @@ static UINT audin_opensles_close(IAudinDevice* device)
 {
 	UINT error;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
-	DEBUG_DVC("device=%p", (void*) device);
+	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p", (void*) device);
 	assert(opensles);
 
 	/* The function may have been called out of order,
 	 * ignore duplicate requests. */
 	if (!opensles->stopEvent)
 	{
-		WLog_ERR(TAG, "[ERROR] function called without matching open.");
+		WLog_Print(opensles->log, WLOG_ERROR, "[ERROR] function called without matching open.");
 		return ERROR_REQUEST_OUT_OF_SEQUENCE;
 	}
 
@@ -329,7 +345,7 @@ static UINT audin_opensles_close(IAudinDevice* device)
 	if (WaitForSingleObject(opensles->thread, INFINITE) == WAIT_FAILED)
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
+		WLog_Print(opensles->log, WLOG_ERROR, "WaitForSingleObject failed with error %"PRIu32"", error);
 		return error;
 	}
 
@@ -365,7 +381,7 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device,
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
-	DEBUG_DVC("device=%p, args=%p", (void*) device, (void*) args);
+	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, args=%p", (void*) device, (void*) args);
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv,
 	                                    audin_opensles_args, flags, opensles, NULL, NULL);
@@ -387,7 +403,7 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device,
 
 			if (!opensles->device_name)
 			{
-				WLog_ERR(TAG, "_strdup failed!");
+				WLog_Print(opensles->log, WLOG_ERROR, "_strdup failed!");
 				return CHANNEL_RC_NO_MEMORY;
 			}
 		}
@@ -417,7 +433,6 @@ UINT freerdp_audin_client_subsystem_entry(
 	ADDIN_ARGV* args;
 	AudinOpenSLESDevice* opensles;
 	UINT error;
-	DEBUG_DVC("pEntryPoints=%p", (void*) pEntryPoints);
 	opensles = (AudinOpenSLESDevice*) calloc(1, sizeof(AudinOpenSLESDevice));
 
 	if (!opensles)
@@ -426,6 +441,7 @@ UINT freerdp_audin_client_subsystem_entry(
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
+	opensles->log = WLog_Get(TAG);
 	opensles->iface.Open = audin_opensles_open;
 	opensles->iface.FormatSupported = audin_opensles_format_supported;
 	opensles->iface.SetFormat = audin_opensles_set_format;
@@ -436,13 +452,14 @@ UINT freerdp_audin_client_subsystem_entry(
 
 	if ((error = audin_opensles_parse_addin_args(opensles, args)))
 	{
-		WLog_ERR(TAG, "audin_opensles_parse_addin_args failed with errorcode %"PRIu32"!", error);
+		WLog_Print(opensles->log, WLOG_ERROR,
+		           "audin_opensles_parse_addin_args failed with errorcode %"PRIu32"!", error);
 		goto error_out;
 	}
 
 	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*) opensles)))
 	{
-		WLog_ERR(TAG, "RegisterAudinDevice failed with error %"PRIu32"!", error);
+		WLog_Print(opensles->log, WLOG_ERROR, "RegisterAudinDevice failed with error %"PRIu32"!", error);
 		goto error_out;
 	}
 
