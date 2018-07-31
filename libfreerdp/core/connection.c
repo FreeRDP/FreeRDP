@@ -355,7 +355,7 @@ BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 
 static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 {
-	BOOL status;
+	BOOL status = FALSE;
 	rdpContext* context;
 	rdpChannels* channels;
 
