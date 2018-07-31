@@ -1,3 +1,32 @@
+# 2018-08-01	Version 2.0.0-rc3
+
+FreeRDP 2.0.0-rc3 is the fourth release candidate for 2.0.0.
+For a complete and detailed change log since the last release candidate run:
+git log 2.0.0-rc2..2.0.0-rc3
+
+Noteworthy features and improvements:
+
+* Updated and improved sound and microphone redirection format support (AAC)
+* Improved reliability of reconnect and redirection support
+* Fixed memory leaks with +async-update
+* Improved connection error reporting
+* Improved gateway support (various fixes for HTTP and RDG)
+* SOCKS proxy support (all clients)
+* More reliable resolution switching with /dynamic-resolution (MS-RDPEVOR) (xfreerdp)
+
+Fixed github issues (excerpt):
+
+* #1924, #4132, #4511 Fixed redirection
+* #4165 AAC and MP3 codec support for sound and microphone redirection
+* #4222 Gateway connections prefer IP to hostname
+* #4550 Fixed issues with +async-update
+* #4634 Comment support in known_hosts file
+* #4684 /drive and +drives don't work togehter
+* #4735 Automatically reconnect if connection timed out waiting for user interaction
+
+See https://github.com/FreeRDP/FreeRDP/milestone/9 for a complete list.
+
+
 # 2017-11-28	Version 2.0.0-rc2
 
 FreeRDP 2.0.0-rc2 is the third release candidate for 2.0.0.
