@@ -255,14 +255,13 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 		           rdpsnd_get_audio_tag_string(format.wFormatTag), format.nChannels, format.nSamplesPerSec,
 		           format.nBlockAlign, format.wBitsPerSample, format.cbSize);
 
-		if (audin->fixed_format > 0 && audin->fixed_format != format.wFormatTag)
+		if ((audin->fixed_format > 0 && audin->fixed_format != format.wFormatTag) ||
+		    (audin->fixed_channel > 0 && audin->fixed_channel != format.nChannels) ||
+		    (audin->fixed_rate > 0 && audin->fixed_rate != format.nSamplesPerSec))
+		{
+			free(format.data);
 			continue;
-
-		if (audin->fixed_channel > 0 && audin->fixed_channel != format.nChannels)
-			continue;
-
-		if (audin->fixed_rate > 0 && audin->fixed_rate != format.nSamplesPerSec)
-			continue;
+		}
 
 		if (freerdp_dsp_supports_format(&format, TRUE) ||
 		    audin->device->FormatSupported(audin->device, &format))
