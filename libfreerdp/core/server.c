@@ -363,7 +363,7 @@ static BOOL wts_write_drdynvc_create_request(wStream* s, UINT32 ChannelId,
 }
 
 static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId,
-                                  BYTE* data, int size, int flags, int totalSize)
+                                  const BYTE* data, int size, int flags, int totalSize)
 {
 	BOOL ret = TRUE;
 
@@ -401,7 +401,7 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId,
 }
 
 static int WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId,
-                                 BYTE* data, int size, int flags, int totalSize)
+                                 const BYTE* data, int size, int flags, int totalSize)
 {
 	UINT32 i;
 	BOOL status = FALSE;

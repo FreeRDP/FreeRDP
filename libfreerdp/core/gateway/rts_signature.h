@@ -184,7 +184,7 @@ FREERDP_LOCAL BOOL rts_match_pdu_signature(rdpRpc* rpc,
 FREERDP_LOCAL int rts_extract_pdu_signature(rdpRpc* rpc,
         RtsPduSignature* signature, rpcconn_rts_hdr_t* rts);
 FREERDP_LOCAL UINT32 rts_identify_pdu_signature(rdpRpc* rpc,
-        RtsPduSignature* signature, RTS_PDU_SIGNATURE_ENTRY** entry);
+        RtsPduSignature* signature, const RTS_PDU_SIGNATURE_ENTRY** entry);
 FREERDP_LOCAL int rts_print_pdu_signature(rdpRpc* rpc,
         RtsPduSignature* signature);
 
