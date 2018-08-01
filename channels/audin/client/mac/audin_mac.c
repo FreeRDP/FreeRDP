@@ -47,7 +47,6 @@
 #include "audin_main.h"
 
 #define MAC_AUDIO_QUEUE_NUM_BUFFERS     100
-#define MAC_AUDIO_QUEUE_BUFFER_SIZE     32768
 
 /* Fix for #4462: Provide type alias if not declared (Mac OS < 10.10)
  * https://developer.apple.com/documentation/coreaudio/audioformatid
@@ -85,30 +84,16 @@ static AudioFormatID audin_mac_get_format(const AUDIO_FORMAT* format)
 	{
 		case WAVE_FORMAT_PCM:
 			return kAudioFormatLinearPCM;
-			/*
-			case WAVE_FORMAT_GSM610:
-			    return kAudioFormatMicrosoftGSM;
-			case WAVE_FORMAT_ALAW:
-			    return kAudioFormatALaw;
-			case WAVE_FORMAT_MULAW:
-			    return kAudioFormatULaw;
-			case WAVE_FORMAT_AAC_MS:
-			    return kAudioFormatMPEG4AAC;
-			case WAVE_FORMAT_ADPCM:
-			case WAVE_FORMAT_DVI_ADPCM:
-			    return kAudioFormatLinearPCM;
-			    */
-	}
 
-	return 0;
+		default:
+			return 0;
+	}
 }
 
 static AudioFormatFlags audin_mac_get_flags_for_format(const AUDIO_FORMAT* format)
 {
 	switch (format->wFormatTag)
 	{
-		case WAVE_FORMAT_DVI_ADPCM:
-		case WAVE_FORMAT_ADPCM:
 		case WAVE_FORMAT_PCM:
 			return kAudioFormatFlagIsSignedInteger;
 
@@ -150,26 +135,19 @@ static UINT audin_mac_set_format(IAudinDevice* device, const AUDIO_FORMAT* forma
 	WLog_INFO(TAG, "Audio Format %s [channels=%d, samples=%d, bits=%d]",
 	          rdpsnd_get_audio_tag_string(format->wFormatTag),
 	          format->nChannels, format->nSamplesPerSec, format->wBitsPerSample);
+	mac->audioFormat.mBitsPerChannel = format->wBitsPerSample;
 
-	switch (format->wFormatTag)
-	{
-		case WAVE_FORMAT_ADPCM:
-		case WAVE_FORMAT_DVI_ADPCM:
-			mac->FramesPerPacket *= 4; /* Compression ratio. */
-			mac->format.wBitsPerSample *= 4;
-			break;
-	}
+	if (format->wBitsPerSample == 0)
+		mac->audioFormat.mBitsPerChannel = 16;
 
-	mac->audioFormat.mBitsPerChannel = mac->format.wBitsPerSample;
+	mac->audioFormat.mBytesPerFrame = 0;
+	mac->audioFormat.mBytesPerPacket = 0;
 	mac->audioFormat.mChannelsPerFrame = mac->format.nChannels;
 	mac->audioFormat.mFormatFlags = audin_mac_get_flags_for_format(format);
 	mac->audioFormat.mFormatID = audin_mac_get_format(format);
 	mac->audioFormat.mFramesPerPacket = 1;
+	mac->audioFormat.mReserved = 0;
 	mac->audioFormat.mSampleRate = mac->format.nSamplesPerSec;
-	mac->audioFormat.mBytesPerFrame =
-	    mac->audioFormat.mChannelsPerFrame *  mac->audioFormat.mBitsPerChannel / 8;
-	mac->audioFormat.mBytesPerPacket =
-	    mac->audioFormat.mBytesPerFrame * mac->audioFormat.mFramesPerPacket;
 	return CHANNEL_RC_OK;
 }
 
@@ -181,7 +159,7 @@ static void mac_audio_queue_input_cb(void* aqData,
                                      const AudioStreamPacketDescription* inPacketDesc)
 {
 	AudinMacDevice* mac = (AudinMacDevice*)aqData;
-	UINT error;
+	UINT error = CHANNEL_RC_OK;
 	const BYTE* buffer = inBuffer->mAudioData;
 	int buffer_size = inBuffer->mAudioDataByteSize;
 	(void)inAQ;
@@ -189,11 +167,14 @@ static void mac_audio_queue_input_cb(void* aqData,
 	(void)inNumPackets;
 	(void)inPacketDesc;
 
-	if ((error = mac->receive(&mac->format, buffer, buffer_size, mac->user_data)))
+	if (buffer_size > 0)
+		error = mac->receive(&mac->format, buffer, buffer_size, mac->user_data);
+	AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
+
+	if (error)
 	{
 		WLog_ERR(TAG, "mac->receive failed with error %"PRIu32"", error);
 		SetLastError(ERROR_INTERNAL_ERROR);
-		return;
 	}
 }
 
@@ -262,7 +243,8 @@ static UINT audin_mac_open(IAudinDevice* device, AudinReceive receive, void* use
 
 	for (index = 0; index < MAC_AUDIO_QUEUE_NUM_BUFFERS; index++)
 	{
-		devStat = AudioQueueAllocateBuffer(mac->audioQueue, MAC_AUDIO_QUEUE_BUFFER_SIZE,
+		devStat = AudioQueueAllocateBuffer(mac->audioQueue,
+		                                   mac->FramesPerPacket * 2 * mac->format.nChannels,
 		                                   &mac->audioBuffers[index]);
 
 		if (devStat != 0)
