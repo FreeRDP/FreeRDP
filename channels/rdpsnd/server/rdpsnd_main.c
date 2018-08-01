@@ -411,7 +411,6 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context,
 	size_t length;
 	size_t start, end = 0;
 	const BYTE* src;
-	BOOL status;
 	AUDIO_FORMAT* format;
 	ULONG written;
 	wStream* s = context->priv->rdpsnd_pdu;
@@ -431,7 +430,7 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context,
 	length = context->priv->out_pending_frames * context->priv->src_bytes_per_frame;
 
 	if (!freerdp_dsp_encode(context->priv->dsp_context, format, src, length, s))
-		status = ERROR_INTERNAL_ERROR;
+		error = ERROR_INTERNAL_ERROR;
 	else
 	{
 		/* Set stream size */
@@ -440,11 +439,16 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context,
 		Stream_Write_UINT16(s, end - start + 8);
 		Stream_SetPosition(s, end);
 		context->block_no = (context->block_no + 1) % 256;
-		status = WTSVirtualChannelWrite(context->priv->ChannelHandle,
-		                                (PCHAR) Stream_Buffer(s), start + 4, &written);
+
+		if (!WTSVirtualChannelWrite(context->priv->ChannelHandle,
+		                            (PCHAR) Stream_Buffer(s), start + 4, &written))
+		{
+			WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
+			error = ERROR_INTERNAL_ERROR;
+		}
 	}
 
-	if (status != CHANNEL_RC_OK)
+	if (error != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -454,10 +458,9 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context,
 	Stream_SetPosition(s, start);
 	Stream_Write_UINT32(s, 0); /* bPad */
 	Stream_SetPosition(s, start);
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle,
-	                                (PCHAR) Stream_Pointer(s), end - start, &written);
 
-	if (!status)
+	if (!WTSVirtualChannelWrite(context->priv->ChannelHandle,
+	                            (PCHAR) Stream_Pointer(s), end - start, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -481,7 +484,6 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 	size_t length;
 	size_t end = 0;
 	const BYTE* src;
-	BOOL status;
 	AUDIO_FORMAT* format;
 	ULONG written;
 	wStream* s = context->priv->rdpsnd_pdu;
@@ -501,7 +503,7 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 	length = context->priv->out_pending_frames * context->priv->src_bytes_per_frame;
 
 	if (!freerdp_dsp_encode(context->priv->dsp_context, format, src, length, s))
-		status = ERROR_INTERNAL_ERROR;
+		error = ERROR_INTERNAL_ERROR;
 	else
 	{
 		/* Set stream size */
@@ -511,14 +513,13 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 		Stream_SetPosition(s, end);
 		Stream_SealLength(s);
 		context->block_no = (context->block_no + 1) % 256;
-		status = WTSVirtualChannelWrite(context->priv->ChannelHandle,
-		                                (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
-	}
 
-	if (!status)
-	{
-		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
-		error = ERROR_INTERNAL_ERROR;
+		if (!WTSVirtualChannelWrite(context->priv->ChannelHandle,
+		                            (PCHAR) Stream_Buffer(s), Stream_Length(s), &written))
+		{
+			WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
+			error = ERROR_INTERNAL_ERROR;
+		}
 	}
 
 out:
