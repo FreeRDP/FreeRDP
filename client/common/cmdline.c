@@ -172,7 +172,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 }
 
 static int freerdp_client_command_line_pre_filter(void* context, int index,
-        int argc, LPCSTR* argv)
+        int argc, LPSTR* argv)
 {
 	if (index == 1)
 	{
@@ -592,9 +592,7 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 			{
 				char* dst = (char*)&p[1];
 				p[0] = dst;
-
 				strncpy(dst, name, len);
-
 				*count = 1;
 				return p;
 			}
