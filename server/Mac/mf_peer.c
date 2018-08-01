@@ -91,10 +91,9 @@ static void mf_peer_rfx_update(freerdp_peer* client)
 	RFX_RECT rect;
 	rdpUpdate* update;
 	mfPeerContext* mfp;
-	SURFACE_BITS_COMMAND* cmd;
+	SURFACE_BITS_COMMAND cmd = { 0 };
 	update = client->update;
 	mfp = (mfPeerContext*) client->context;
-	cmd = &update->surface_bits_command;
 	s = mfp->s;
 	Stream_Clear(s);
 	Stream_SetPosition(s, 0);
@@ -113,19 +112,18 @@ static void mf_peer_rfx_update(freerdp_peer* client)
 		return;
 	}
 
-	memset(cmd, 0, sizeof(SURFACE_BITS_COMMAND));
-	cmd->destLeft = x;
-	cmd->destTop = y;
-	cmd->destRight = x + rect.width;
-	cmd->destBottom = y + rect.height;
-	cmd->bmp.bpp = 32;
-	cmd->bmp.codecID = 3;
-	cmd->bmp.width = rect.width;
-	cmd->bmp.height = rect.height;
-	cmd->bmp.bitmapDataLength = Stream_GetPosition(s);
-	cmd->bmp.bitmapData = Stream_Buffer(s);
+	cmd.destLeft = x;
+	cmd.destTop = y;
+	cmd.destRight = x + rect.width;
+	cmd.destBottom = y + rect.height;
+	cmd.bmp.bpp = 32;
+	cmd.bmp.codecID = 3;
+	cmd.bmp.width = rect.width;
+	cmd.bmp.height = rect.height;
+	cmd.bmp.bitmapDataLength = Stream_GetPosition(s);
+	cmd.bmp.bitmapData = Stream_Buffer(s);
 	//send
-	update->SurfaceBits(update->context, cmd);
+	update->SurfaceBits(update->context, &cmd);
 	//clean up... maybe?
 }
 

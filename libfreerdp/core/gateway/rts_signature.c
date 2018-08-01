@@ -352,7 +352,7 @@ int rts_extract_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_r
 }
 
 UINT32 rts_identify_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature,
-                                  RTS_PDU_SIGNATURE_ENTRY** entry)
+                                  const RTS_PDU_SIGNATURE_ENTRY** entry)
 {
 	int i, j;
 	RtsPduSignature* pSignature;
@@ -388,7 +388,7 @@ UINT32 rts_identify_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature,
 int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
 {
 	UINT32 SignatureId;
-	RTS_PDU_SIGNATURE_ENTRY* entry;
+	const RTS_PDU_SIGNATURE_ENTRY* entry;
 	WLog_INFO(TAG,  "RTS PDU Signature: Flags: 0x%04"PRIX16" NumberOfCommands: %"PRIu16"",
 	          signature->Flags, signature->NumberOfCommands);
 	SignatureId = rts_identify_pdu_signature(rpc, signature, &entry);
