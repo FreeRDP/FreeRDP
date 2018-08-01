@@ -40,13 +40,13 @@ static void* read_image(const char* src, size_t* size)
 
 	if (!a)
 	{
-		fprintf(stderr, "Failed malloc %ld bytes\n", src_size);
+		fprintf(stderr, "Failed malloc %"PRId64" bytes\n", src_size);
 		goto cleanup;
 	}
 
 	if (fread(a, sizeof(char), src_size, fsrc) != src_size)
 	{
-		fprintf(stderr, "Failed read %ld bytes\n", src_size);
+		fprintf(stderr, "Failed read %"PRId64" bytes\n", src_size);
 		goto cleanup;
 	}
 
