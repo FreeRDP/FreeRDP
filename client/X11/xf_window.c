@@ -146,6 +146,11 @@ void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom,
 	va_end(argp);
 }
 
+void xf_SetWindowMinimized(xfContext* xfc, xfWindow* window)
+{
+	XIconifyWindow(xfc->display, window->handle, xfc->screen_number);
+}
+
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 {
 	int i;
@@ -211,6 +216,9 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 		if (!fullscreen)
 		{
+			if(startX == 0) 
+				startX = 1;	
+			
 			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
@@ -569,6 +577,11 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 		            settings->DesktopPosY);
 	}
 
+	// TODO: MAY ADD A NEW OPTION TO DISABLE THE FLOATBAR
+	// TODO: DISABLE IF NOT FULL SCREEN
+	// TODO: IS THIS OK FOR REMOTE APP?
+	window->floatbar = xf_floatbar_new(xfc, window->handle, window->width);
+	
 	xf_SetWindowTitleText(xfc, window->handle, name);
 	return window;
 }

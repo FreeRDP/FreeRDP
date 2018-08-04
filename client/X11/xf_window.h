@@ -30,6 +30,7 @@ typedef struct xf_localmove xfLocalMove;
 typedef struct xf_window xfWindow;
 
 #include "xf_client.h"
+#include "xf_floatbar.h"
 #include "xfreerdp.h"
 
 // Extended ICCM flags http://standards.freedesktop.org/wm-spec/wm-spec-latest.html
@@ -80,6 +81,7 @@ struct xf_window
 	int shmid;
 	Window handle;
 	Window* xfwin;
+	xfFloatbar* floatbar;
 	BOOL decorations;
 	BOOL is_mapped;
 	BOOL is_transient;
@@ -143,6 +145,7 @@ BOOL xf_GetCurrentDesktop(xfContext* xfc);
 BOOL xf_GetWorkArea(xfContext* xfc);
 
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen);
+void xf_SetWindowMinimized(xfContext* xfc, xfWindow* window);
 void xf_SetWindowDecorations(xfContext* xfc, Window window, BOOL show);
 void xf_SetWindowUnlisted(xfContext* xfc, Window window);
 
