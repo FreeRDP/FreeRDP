@@ -199,12 +199,25 @@ static xfFloatbarButton* xf_floatbar_new_button(xfContext* xfc, xfFloatbar* floa
 	return button;
 }
 
-xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, int width)
+xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window)
 {
 	xfFloatbar* floatbar;
+	XWindowAttributes attr;
+	int i, width;
 	floatbar = (xfFloatbar*) calloc(1, sizeof(xfFloatbar));
 	floatbar->locked = TRUE;
-	floatbar->x = width / 2 - FLOATBAR_DEFAULT_WIDTH / 2;
+
+	XGetWindowAttributes(xfc->display, window, &attr);
+
+	for(i = 0; i < xfc->vscreen.nmonitors; i++)
+	{
+		if(attr.x >= xfc->vscreen.monitors[i].area.left && attr.x <= xfc->vscreen.monitors[i].area.right) 
+		{
+			width = xfc->vscreen.monitors[i].area.right - xfc->vscreen.monitors[i].area.left;
+			floatbar->x = width / 2 + xfc->vscreen.monitors[i].area.left - FLOATBAR_DEFAULT_WIDTH / 2;
+		}
+	}
+
 	floatbar->y = 0;
 	floatbar->handle = XCreateWindow(xfc->display, window, floatbar->x, 0, FLOATBAR_DEFAULT_WIDTH,
 	                                 FLOATBAR_HEIGHT, 0,

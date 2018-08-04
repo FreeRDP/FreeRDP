@@ -23,7 +23,7 @@ typedef struct xf_floatbar xfFloatbar;
 #include "xfreerdp.h"
 
 typedef void(*OnClick)(xfContext*);
-xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, int width);
+xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window);
 BOOL xf_floatbar_event_process(xfContext* xfc, XEvent* event);
 BOOL xf_floatbar_check_event(xfContext* xfc, XEvent* event);
 void xf_floatbar_toggle_visibility(xfContext* xfc, bool visible);

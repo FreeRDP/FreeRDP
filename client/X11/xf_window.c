@@ -220,7 +220,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		if (!fullscreen)
 		{
 			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
-			XMoveWindow(xfc->display, window->handle, startX, startY);
+			XMoveWindow(xfc->display, window->handle, 1, 1);
 		}
 
 		/* Set monitor bounds */
@@ -577,7 +577,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 		            settings->DesktopPosY);
 	}
 
-	window->floatbar = xf_floatbar_new(xfc, window->handle, xfc->workArea.width);
+	window->floatbar = xf_floatbar_new(xfc, window->handle);
 	xf_SetWindowTitleText(xfc, window->handle, name);
 	return window;
 }
