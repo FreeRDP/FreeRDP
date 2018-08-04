@@ -61,5 +61,6 @@ struct xf_floatbar_button
 
 xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, int width);
 void xf_floatbar_event_process(xfContext* xfc, XEvent* event);
+void xf_floatbar_toggle_visibility(xfContext* xfc, bool visible);
 
 #endif /* FREERDP_CLIENT_X11_FLOATBAR_H */

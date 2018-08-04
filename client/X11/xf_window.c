@@ -160,6 +160,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	UINT32 height = window->height;
 	window->decorations = xfc->decorations;
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
+	xf_floatbar_toggle_visibility(xfc, fullscreen);
 
 	if (fullscreen)
 	{
@@ -577,9 +578,8 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 		            settings->DesktopPosY);
 	}
 
-	// TODO: MAY ADD A NEW OPTION TO DISABLE THE FLOATBAR
-	// TODO: DISABLE IF NOT FULL SCREEN
 	// TODO: IS THIS OK FOR REMOTE APP?
+	// TODO: MULTI MONITOR SUPPORT?
 	window->floatbar = xf_floatbar_new(xfc, window->handle, window->width);
 	
 	xf_SetWindowTitleText(xfc, window->handle, name);

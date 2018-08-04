@@ -63,6 +63,27 @@ void xf_floatbar_button_onClick_restore(xfContext* xfc) {
 	xf_toggle_fullscreen(xfc);
 }
 
+void xf_floatbar_toggle_visibility(xfContext* xfc, bool visible) {
+	xfFloatbar* floatbar;
+	int i, size;
+
+	floatbar = xfc->window->floatbar;
+	
+	if(visible) {
+		XMapWindow(xfc->display, floatbar->handle);
+
+		size = sizeof(floatbar->buttons) / sizeof(floatbar->buttons[0]);
+				
+		for(i=0; i<size; i++)
+		{
+			XMapWindow(xfc->display, floatbar->buttons[i]->handle);
+		}
+	} else {
+		XUnmapSubwindows(xfc->display, floatbar->handle);
+		XUnmapWindow(xfc->display, floatbar->handle);
+	}
+}
+
 xfFloatbarButton* xf_floatbar_new_button(xfContext* xfc, xfFloatbar* floatbar, int type) {
 	// TODO: Free Part?
 	xfFloatbarButton* button;
@@ -98,7 +119,7 @@ xfFloatbarButton* xf_floatbar_new_button(xfContext* xfc, xfFloatbar* floatbar, i
 	XSelectInput(xfc->display, button->handle, ExposureMask | ButtonPressMask | ButtonReleaseMask | 
 				FocusChangeMask | LeaveWindowMask | EnterWindowMask | StructureNotifyMask);
 
-	XMapWindow(xfc->display, button->handle);
+	// XMapWindow(xfc->display, button->handle);
 
 	return button;
 }
@@ -122,7 +143,7 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, int width) {
 	XSelectInput(xfc->display, floatbar->handle, ExposureMask | ButtonPressMask | ButtonReleaseMask | 
 				PointerMotionMask | FocusChangeMask | LeaveWindowMask | EnterWindowMask | StructureNotifyMask | PropertyChangeMask);
 	
-	XMapWindow(xfc->display, floatbar->handle);
+	// XMapWindow(xfc->display, floatbar->handle);
 
 	return floatbar;
 }
@@ -207,7 +228,6 @@ void xf_floatbar_event_Expose(xfContext* xfc, XEvent* event) {
 
 xfFloatbarButton* xf_floatbar_button_getButton(xfContext* xfc, XEvent* event) {
 	xfFloatbar* floatbar;
-	xfFloatbarButton* button;
 	int i, size;
 	
 	size = sizeof(floatbar->buttons) / sizeof(floatbar->buttons[0]);
