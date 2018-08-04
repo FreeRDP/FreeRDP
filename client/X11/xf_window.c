@@ -146,6 +146,11 @@ void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom,
 	va_end(argp);
 }
 
+void xf_SetWindowMinimized(xfContext* xfc, xfWindow* window)
+{
+	XIconifyWindow(xfc->display, window->handle, xfc->screen_number);
+}
+
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 {
 	int i;
@@ -155,6 +160,9 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	UINT32 height = window->height;
 	window->decorations = xfc->decorations;
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
+
+	if (xfc->floatbar)
+		xf_floatbar_toggle_visibility(xfc, fullscreen);
 
 	if (fullscreen)
 	{
@@ -212,7 +220,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		if (!fullscreen)
 		{
 			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
-			XMoveWindow(xfc->display, window->handle, startX, startY);
+			XMoveWindow(xfc->display, window->handle, 1, 1);
 		}
 
 		/* Set monitor bounds */
@@ -569,6 +577,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 		            settings->DesktopPosY);
 	}
 
+	window->floatbar = xf_floatbar_new(xfc, window->handle);
 	xf_SetWindowTitleText(xfc, window->handle, name);
 	return window;
 }
@@ -618,6 +627,9 @@ void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window)
 
 	if (xfc->window == window)
 		xfc->window = NULL;
+
+	if (window->floatbar)
+		xf_floatbar_free(xfc, window, window->floatbar);
 
 	if (window->gc)
 		XFreeGC(xfc->display, window->gc);
