@@ -1014,7 +1014,8 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		}
 	}
 
-	// TODO: CHECK IF WE CAN RETURN HERE OR IF WE NEED TO DO THAT LATER
+	/* Forward event to the floatbar event handler, if the window 
+	   causing the event is not the client's window */
 	if(event->xany.window != xfc->window->handle) {
 		xf_floatbar_event_process(xfc, event);
 		return TRUE;
