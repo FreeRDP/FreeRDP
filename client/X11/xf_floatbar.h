@@ -35,12 +35,9 @@ struct xf_floatbar
 	int width;
 	int height;
 	int mode;
-	int last_motion_x;
 	int last_motion_x_root;
 	bool locked;
 	xfFloatbarButton* buttons[3];
-	// xfFloatbarButton* minimize_button;
-	// xfFloatbarButton* restore_button;
 	Window handle;
 };
 

@@ -1,5 +1,7 @@
 // TODO: RETURN VALUES
 // TODO: CHECK FOR BUILD ERRORS
+// TODO: ARE CODING GUIDELINES FULLFILLED
+// TODO: ADD COMMENTS TO CODE WHERE IT IS NOT CLEAR WHAT HAPPENS
 
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
@@ -26,6 +28,7 @@
 #include <X11/cursorfont.h>
 
 #define TAG CLIENT_TAG("x11")
+
 #define FLOATBAR_HEIGHT				26
 #define FLOATBAR_DEFAULT_WIDTH		576
 #define FLOATBAR_MIN_WIDTH			200
@@ -436,7 +439,6 @@ int xf_floatbar_event_MotionNotify(xfContext* xfc, XEvent* event) {
 	}
 	
 	xfc->window->floatbar->last_motion_x_root = event->xmotion.x_root;
-	xfc->window->floatbar->last_motion_x = event->xmotion.x;
 
 	return 0;
 }
