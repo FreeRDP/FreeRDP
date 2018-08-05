@@ -1,8 +1,5 @@
-// TODO: ADD COMMENTS TO CODE WHERE IT IS NOT CLEAR WHAT HAPPENS
 // TODO: CHECK FOR NECESSARY ERROR HANDLING ON XLIB CALLS
 // TODO: CHECK FOR BAD EVENT LOOPS
-// TODO: CHECK IF PROCESSOR USAGE IS AS BEFORE
-// TODO: SEPERATE GET COLOR AND MAKE COLORS STATIC
 
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
@@ -67,6 +64,16 @@ void xf_floatbar_button_onclick_restore(xfContext* xfc)
 	xf_toggle_fullscreen(xfc);
 }
 
+void xf_floatbar_button_onclick_locked(xfContext* xfc)
+{
+	// TODO: IMPLEMENTATION
+}
+
+void xf_floatbar_button_onclick_unlocked(xfContext* xfc)
+{
+	// TODO: IMPLEMENTATION
+}
+
 void xf_floatbar_toggle_visibility(xfContext* xfc, bool visible)
 {
 	xfFloatbar* floatbar;
@@ -92,7 +99,6 @@ void xf_floatbar_toggle_visibility(xfContext* xfc, bool visible)
 
 xfFloatbarButton* xf_floatbar_new_button(xfContext* xfc, xfFloatbar* floatbar, int type)
 {
-	// TODO: Free Part?
 	xfFloatbarButton* button;
 	button = (xfFloatbarButton*) calloc(1, sizeof(xfFloatbarButton));
 	button->type = type;
@@ -116,12 +122,12 @@ xfFloatbarButton* xf_floatbar_new_button(xfContext* xfc, xfFloatbar* floatbar, i
 
 		case XF_FLOATBAR_BUTTON_LOCKED:
 			button->x = floatbar->x + FLOATBAR_BORDER;
-			// TODO: BUTTON ON CLICK
+			button->onclick = xf_floatbar_button_onclick_locked;
 			break;
 
 		case XF_FLOATBAR_BUTTON_UNLOCKED:
 			button->x = floatbar->x + FLOATBAR_BORDER;
-			// TODO: BUTTON ON CLICK
+			button->onclick = xf_floatbar_button_onclick_unlocked;
 			break;
 
 		default:
@@ -168,6 +174,7 @@ unsigned long xf_floatbar_get_color(xfContext* xfc, char* rgb_value)
 	cmap = DefaultColormap(xfc->display, XDefaultScreen(xfc->display));
 	XParseColor(xfc->display, cmap, rgb_value, &color);
 	XAllocColor(xfc->display, cmap, &color);
+	XFreeColormap(xfc->display, cmap);
 	return color.pixel;
 }
 
@@ -291,11 +298,8 @@ void xf_floatbar_button_event_expose(xfContext* xfc, XEvent* event)
 	static unsigned char* bits;
 	GC gc;
 	Pixmap pattern;
-	Colormap cmap;
-	XColor color;
 	button = xf_floatbar_get_button(xfc, event);
 	gc = XCreateGC(xfc->display, button->handle, 0, 0);
-	cmap = DefaultColormap(xfc->display, XDefaultScreen(xfc->display));
 
 	switch (button->type)
 	{
@@ -337,6 +341,8 @@ void xf_floatbar_button_event_expose(xfContext* xfc, XEvent* event)
 	XCopyPlane(xfc->display, pattern, button->handle, gc, 0, 0, FLOATBAR_BUTTON_WIDTH,
 	           FLOATBAR_BUTTON_WIDTH, 0, 0, 1);
 	XSync(xfc->display, False);
+	XFreePixmap(xfc->display, pattern);
+	XFreeGC(xfc->display, gc);
 }
 
 void xf_floatbar_button_event_buttonpress(xfContext* xfc, XEvent* event)
@@ -443,6 +449,7 @@ void xf_floatbar_event_motionnotify(xfContext* xfc, XEvent* event)
 {
 	int mode;
 	xfFloatbar* floatbar;
+	Cursor cursor;
 	mode = xfc->window->floatbar->mode;
 	floatbar = xfc->window->floatbar;
 
@@ -458,21 +465,13 @@ void xf_floatbar_event_motionnotify(xfContext* xfc, XEvent* event)
 	{
 		if (event->xmotion.x <= FLOATBAR_BORDER ||
 		    event->xmotion.x >= xfc->window->floatbar->width - FLOATBAR_BORDER)
-		{
-			Cursor cursor;
 			cursor = XCreateFontCursor(xfc->display, XC_sb_h_double_arrow);
-			XDefineCursor(xfc->display, xfc->window->handle, cursor);
-			XFreeCursor(xfc->display, cursor);
-		}
 		else
-		{
-			Cursor cursor;
 			cursor = XCreateFontCursor(xfc->display, XC_arrow);
-			XDefineCursor(xfc->display, xfc->window->handle, cursor);
-			XFreeCursor(xfc->display, cursor);
-		}
 	}
 
+	XDefineCursor(xfc->display, xfc->window->handle, cursor);
+	XFreeCursor(xfc->display, cursor);
 	xfc->window->floatbar->last_motion_x_root = event->xmotion.x_root;
 }
 
@@ -567,6 +566,12 @@ void xf_floatbar_event_process(xfContext* xfc, XEvent* event)
 		default:
 			break;
 	}
+}
+
+void xf_floatbar_button_free(xfFloatbarButton* button)
+{
+	// TODO: how to free it?
+	// TODO: did i miss any frees?
 }
 
 void xf_floatbar_free(xfFloatbar* floatbar)
