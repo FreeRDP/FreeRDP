@@ -1,5 +1,3 @@
-// TODO: RETURN VALUES
-// TODO: CHECK FOR BUILD ERRORS
 // TODO: ARE CODING GUIDELINES FULLFILLED
 // TODO: ADD COMMENTS TO CODE WHERE IT IS NOT CLEAR WHAT HAPPENS
 // TODO: CHECK FOR NECESSARY ERROR HANDLING ON XLIB CALLS
@@ -73,7 +71,7 @@ void xf_floatbar_toggle_visibility(xfContext* xfc, bool visible) {
 		XMapWindow(xfc->display, floatbar->handle);
 
 		size = sizeof(floatbar->buttons) / sizeof(floatbar->buttons[0]);
-				
+
 		for(i=0; i<size; i++)
 		{
 			XMapWindow(xfc->display, floatbar->buttons[i]->handle);
@@ -104,8 +102,13 @@ xfFloatbarButton* xf_floatbar_new_button(xfContext* xfc, xfFloatbar* floatbar, i
 			button->x = floatbar->width-FLOATBAR_BORDER-FLOATBAR_BUTTON_WIDTH*type;
 			button->onClick = xf_floatbar_button_onClick_minimize;
 			break;
-		case XF_FLOATBAR_BUTTON_LOCK:
+		case XF_FLOATBAR_BUTTON_LOCKED:
 			button->x = floatbar->x+FLOATBAR_BORDER;
+			// TODO: BUTTON ON CLICK
+			break;
+		case XF_FLOATBAR_BUTTON_UNLOCKED:
+			button->x = floatbar->x+FLOATBAR_BORDER;
+			// TODO: BUTTON ON CLICK
 			break;
 		default:
 			break;
@@ -118,8 +121,6 @@ xfFloatbarButton* xf_floatbar_new_button(xfContext* xfc, xfFloatbar* floatbar, i
 
 	XSelectInput(xfc->display, button->handle, ExposureMask | ButtonPressMask | ButtonReleaseMask | 
 				FocusChangeMask | LeaveWindowMask | EnterWindowMask | StructureNotifyMask);
-
-	// XMapWindow(xfc->display, button->handle);
 
 	return button;
 }
@@ -139,11 +140,11 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, int width) {
 	floatbar->buttons[0] = xf_floatbar_new_button(xfc, floatbar, XF_FLOATBAR_BUTTON_CLOSE);
 	floatbar->buttons[1] = xf_floatbar_new_button(xfc, floatbar, XF_FLOATBAR_BUTTON_RESTORE);
 	floatbar->buttons[2] = xf_floatbar_new_button(xfc, floatbar, XF_FLOATBAR_BUTTON_MINIMIZE);
+	floatbar->buttons[3] = xf_floatbar_new_button(xfc, floatbar, XF_FLOATBAR_BUTTON_LOCKED);
+	floatbar->buttons[4] = xf_floatbar_new_button(xfc, floatbar, XF_FLOATBAR_BUTTON_UNLOCKED);
 	
 	XSelectInput(xfc->display, floatbar->handle, ExposureMask | ButtonPressMask | ButtonReleaseMask | 
 				PointerMotionMask | FocusChangeMask | LeaveWindowMask | EnterWindowMask | StructureNotifyMask | PropertyChangeMask);
-	
-	// XMapWindow(xfc->display, floatbar->handle);
 
 	return floatbar;
 }
@@ -265,7 +266,8 @@ void xf_floatbar_button_updatePositon(xfContext* xfc, XEvent* event) {
 			case XF_FLOATBAR_BUTTON_MINIMIZE:
 				button->x = floatbar->width-FLOATBAR_BORDER-FLOATBAR_BUTTON_WIDTH*button->type;
 				break;
-			case XF_FLOATBAR_BUTTON_LOCK:
+			case XF_FLOATBAR_BUTTON_UNLOCKED:
+			case XF_FLOATBAR_BUTTON_LOCKED:
 				button->x = floatbar->x+FLOATBAR_BORDER;
 				break;
 			default:
@@ -292,23 +294,27 @@ void xf_floatbar_button_event_Expose(xfContext* xfc, XEvent* event) {
 
 	switch(button->type) {
 		case XF_FLOATBAR_BUTTON_CLOSE:
-			bits = &close_bits;
+			bits = close_bits;
 			break;
 		case XF_FLOATBAR_BUTTON_RESTORE:
-			bits = &restore_bits;
+			bits = restore_bits;
 			break;
 		case XF_FLOATBAR_BUTTON_MINIMIZE:
-			bits = &minimize_bits;	
+			bits = minimize_bits;	
 			break;
-		case XF_FLOATBAR_BUTTON_LOCK:
+		case XF_FLOATBAR_BUTTON_LOCKED:
 			// TODO: ACTIVE/INACTIVE
-			bits = &lock_bits;	
+			bits = lock_bits;	
+			break;
+		case XF_FLOATBAR_BUTTON_UNLOCKED:
+			// TODO: ACTIVE/INACTIVE
+			bits = unlock_bits;	
 			break;
 		default:
 			break;
 	}
 
-	pattern = XCreateBitmapFromData(xfc->display, button->handle, bits, FLOATBAR_BUTTON_WIDTH, FLOATBAR_BUTTON_WIDTH);
+	pattern = XCreateBitmapFromData(xfc->display, button->handle, (const char*)bits, FLOATBAR_BUTTON_WIDTH, FLOATBAR_BUTTON_WIDTH);
 
 	if(!(button->focus)) {
 		XSetForeground(xfc->display, gc, WhitePixel(xfc->display, DefaultScreen(xfc->display)));		

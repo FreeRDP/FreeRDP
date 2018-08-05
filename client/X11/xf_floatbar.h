@@ -37,16 +37,17 @@ struct xf_floatbar
 	int mode;
 	int last_motion_x_root;
 	bool locked;
-	xfFloatbarButton* buttons[3];
+	xfFloatbarButton* buttons[5];
 	Window handle;
 };
 
 #define XF_FLOATBAR_BUTTON_CLOSE 1
 #define XF_FLOATBAR_BUTTON_RESTORE 2
 #define XF_FLOATBAR_BUTTON_MINIMIZE 3
-#define XF_FLOATBAR_BUTTON_LOCK 4
+#define XF_FLOATBAR_BUTTON_LOCKED 4
+#define XF_FLOATBAR_BUTTON_UNLOCKED 5
 
-typedef bool(*OnClick)(xfContext* xfc);
+typedef void(*OnClick)(xfContext*);
 
 struct xf_floatbar_button
 {
