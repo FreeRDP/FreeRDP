@@ -2,6 +2,7 @@
 // TODO: CHECK FOR NECESSARY ERROR HANDLING ON XLIB CALLS
 // TODO: CHECK FOR BAD EVENT LOOPS
 // TODO: CHECK IF PROCESSOR USAGE IS AS BEFORE
+// TODO: SEPERATE GET COLOR AND MAKE COLORS STATIC
 
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
@@ -34,6 +35,9 @@
 #define FLOATBAR_MIN_WIDTH			200
 #define FLOATBAR_BORDER				24
 #define FLOATBAR_BUTTON_WIDTH		24
+#define FLOATBAR_COLOR_BACKGROUND "RGB:31/6c/a9"
+#define FLOATBAR_COLOR_BORDER "RGB:75/9a/c8"
+#define FLOATBAR_COLOR_FOREGROUND "RGB:FF/FF/FF"
 
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(...) WLog_DBG(TAG, __VA_ARGS__)
@@ -157,64 +161,67 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, int width)
 	return floatbar;
 }
 
+unsigned long xf_floatbar_get_color(xfContext* xfc, char* rgb_value)
+{
+	Colormap cmap;
+	XColor color;
+	cmap = DefaultColormap(xfc->display, XDefaultScreen(xfc->display));
+	XParseColor(xfc->display, cmap, rgb_value, &color);
+	XAllocColor(xfc->display, cmap, &color);
+	return color.pixel;
+}
+
 void xf_floatbar_event_expose(xfContext* xfc, XEvent* event)
 {
 	GC gc, shape_gc;
-	Colormap cmap;
 	Pixmap pmap;
-	XColor color;
-	XPoint poly[5], poly1[5];
+	XPoint shape[5], border[5];
 	xfFloatbar* floatbar;
 	floatbar = xfc->window->floatbar;
 	/* create the pixmap that we'll use for shaping the window */
 	pmap = XCreatePixmap(xfc->display, floatbar->handle, floatbar->width, floatbar->height, 1);
-	poly[0].x = 0;
-	poly[0].y = 0;
-	poly[1].x = floatbar->width;
-	poly[1].y = 0;
-	poly[2].x = poly[1].x - FLOATBAR_BORDER;
-	poly[2].y = FLOATBAR_HEIGHT;
-	poly[3].x = poly[0].x + FLOATBAR_BORDER;
-	poly[3].y = FLOATBAR_HEIGHT;
-	poly[4].x = poly[0].x;
-	poly[4].y = poly[0].y;
-	poly1[0].x = poly[0].x;
-	poly1[0].y = poly[0].y - 1;
-	poly1[1].x = poly[1].x - 1;
-	poly1[1].y = poly[1].y - 1;
-	poly1[2].x = poly[2].x;
-	poly1[2].y = poly[2].y - 1;
-	poly1[3].x = poly[3].x - 1;
-	poly1[3].y = poly[3].y - 1;
-	poly1[4].x = poly1[0].x;
-	poly1[4].y = poly1[0].y;
 	gc = XCreateGC(xfc->display, floatbar->handle, 0, 0);
 	shape_gc = XCreateGC(xfc->display, pmap, 0, 0);
-	cmap = DefaultColormap(xfc->display, XDefaultScreen(xfc->display));
+	/* points for drawing the floatbar */
+	shape[0].x = 0;
+	shape[0].y = 0;
+	shape[1].x = floatbar->width;
+	shape[1].y = 0;
+	shape[2].x = shape[1].x - FLOATBAR_BORDER;
+	shape[2].y = FLOATBAR_HEIGHT;
+	shape[3].x = shape[0].x + FLOATBAR_BORDER;
+	shape[3].y = FLOATBAR_HEIGHT;
+	shape[4].x = shape[0].x;
+	shape[4].y = shape[0].y;
+	/* points for drawing the border of the floatbar */
+	border[0].x = shape[0].x;
+	border[0].y = shape[0].y - 1;
+	border[1].x = shape[1].x - 1;
+	border[1].y = shape[1].y - 1;
+	border[2].x = shape[2].x;
+	border[2].y = shape[2].y - 1;
+	border[3].x = shape[3].x - 1;
+	border[3].y = shape[3].y - 1;
+	border[4].x = border[0].x;
+	border[4].y = border[0].y;
 	/* Fill all pixels with 0 */
 	XSetForeground(xfc->display, shape_gc, 0);
 	XFillRectangle(xfc->display, pmap, shape_gc, 0, 0, floatbar->width,
 	               floatbar->height);
 	/* Fill all pixels which should be shown with 1 */
 	XSetForeground(xfc->display, shape_gc, 1);
-	XFillPolygon(xfc->display, pmap, shape_gc, poly, 5, 0, CoordModeOrigin);
+	XFillPolygon(xfc->display, pmap, shape_gc, shape, 5, 0, CoordModeOrigin);
 	XShapeCombineMask(xfc->display, floatbar->handle, ShapeBounding, 0, 0, pmap, ShapeSet);
 	XSync(xfc->display, False);
 	/* draw the float bar */
-	XParseColor(xfc->display, cmap, "RGB:31/6c/a9", &color);
-	XAllocColor(xfc->display, cmap, &color);
-	XSetForeground(xfc->display, gc, color.pixel);
-	XFillPolygon(xfc->display, floatbar->handle, gc, poly, 4, 0, CoordModeOrigin);
+	XSetForeground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_BACKGROUND));
+	XFillPolygon(xfc->display, floatbar->handle, gc, shape, 4, 0, CoordModeOrigin);
 	/* draw an border for the floatbar */
-	XParseColor(xfc->display, cmap, "RGB:75/9a/c8", &color);
-	XAllocColor(xfc->display, cmap, &color);
-	XSetForeground(xfc->display, gc, color.pixel);
-	XDrawLines(xfc->display, floatbar->handle, gc, poly1, 5, CoordModeOrigin);
+	XSetForeground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_BORDER));
+	XDrawLines(xfc->display, floatbar->handle, gc, border, 5, CoordModeOrigin);
 	/* draw the host name connected to */
-	XParseColor(xfc->display, cmap, "RGB:FF/FF/FF", &color);
-	XAllocColor(xfc->display, cmap, &color);
-	XSetForeground(xfc->display, gc, color.pixel);
 	int len = strlen(xfc->context.settings->ServerHostname);
+	XSetForeground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_FOREGROUND));
 	XDrawString(xfc->display, floatbar->handle, gc, floatbar->width / 2 - len * 2, 15,
 	            xfc->context.settings->ServerHostname, len);
 	XFlush(xfc->display);
@@ -322,22 +329,11 @@ void xf_floatbar_button_event_expose(xfContext* xfc, XEvent* event)
 	                                FLOATBAR_BUTTON_WIDTH, FLOATBAR_BUTTON_WIDTH);
 
 	if (!(button->focus))
-	{
-		XSetForeground(xfc->display, gc, WhitePixel(xfc->display, DefaultScreen(xfc->display)));
-		XParseColor(xfc->display, cmap, "RGB:31/6c/a9", &color);
-		XAllocColor(xfc->display, cmap, &color);
-		XSetForeground(xfc->display, gc, color.pixel);
-	}
+		XSetForeground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_BACKGROUND));
 	else
-	{
-		XParseColor(xfc->display, cmap, "RGB:75/9a/c8", &color);
-		XAllocColor(xfc->display, cmap, &color);
-		XSetForeground(xfc->display, gc, color.pixel);
-	}
+		XSetForeground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_BORDER));
 
-	XParseColor(xfc->display, cmap, "RGB:FF/FF/FF", &color);
-	XAllocColor(xfc->display, cmap, &color);
-	XSetBackground(xfc->display, gc, color.pixel);
+	XSetBackground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_FOREGROUND));
 	XCopyPlane(xfc->display, pattern, button->handle, gc, 0, 0, FLOATBAR_BUTTON_WIDTH,
 	           FLOATBAR_BUTTON_WIDTH, 0, 0, 1);
 	XSync(xfc->display, False);
