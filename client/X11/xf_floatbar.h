@@ -56,7 +56,7 @@ struct xf_floatbar_button
 	int type;
 	bool focus;
 	bool clicked;
-	OnClick onClick;
+	OnClick onclick;
 	Window handle;
 };
 
