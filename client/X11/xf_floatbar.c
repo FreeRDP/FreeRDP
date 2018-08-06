@@ -121,12 +121,12 @@ xfFloatbarButton* xf_floatbar_new_button(xfContext* xfc, xfFloatbar* floatbar, i
 			break;
 
 		case XF_FLOATBAR_BUTTON_LOCKED:
-			button->x = floatbar->x + FLOATBAR_BORDER;
+			button->x = FLOATBAR_BORDER;
 			button->onclick = xf_floatbar_button_onclick_locked;
 			break;
 
 		case XF_FLOATBAR_BUTTON_UNLOCKED:
-			button->x = floatbar->x + FLOATBAR_BORDER;
+			button->x = FLOATBAR_BORDER;
 			button->onclick = xf_floatbar_button_onclick_unlocked;
 			break;
 
@@ -276,11 +276,6 @@ void xf_floatbar_button_update_positon(xfContext* xfc, XEvent* event)
 
 			case XF_FLOATBAR_BUTTON_MINIMIZE:
 				button->x = floatbar->width - FLOATBAR_BORDER - FLOATBAR_BUTTON_WIDTH * button->type;
-				break;
-
-			case XF_FLOATBAR_BUTTON_UNLOCKED:
-			case XF_FLOATBAR_BUTTON_LOCKED:
-				button->x = floatbar->x + FLOATBAR_BORDER;
 				break;
 
 			default:
