@@ -452,6 +452,7 @@ void xf_floatbar_event_motionnotify(xfContext* xfc, XEvent* event)
 	Cursor cursor;
 	mode = xfc->window->floatbar->mode;
 	floatbar = xfc->window->floatbar;
+	cursor = XCreateFontCursor(xfc->display, XC_arrow);
 
 	if (event->xmotion.state && Button1Mask && mode > XF_FLOATBAR_MODE_DRAGGING)
 	{
@@ -464,14 +465,12 @@ void xf_floatbar_event_motionnotify(xfContext* xfc, XEvent* event)
 	else
 	{
 		if (event->xmotion.x <= FLOATBAR_BORDER ||
-		    event->xmotion.x >= xfc->window->floatbar->width - FLOATBAR_BORDER)
+		    event->xmotion.x >= xfc->window->floatbar->width - FLOATBAR_BORDER) 
 			cursor = XCreateFontCursor(xfc->display, XC_sb_h_double_arrow);
-		else
-			cursor = XCreateFontCursor(xfc->display, XC_arrow);
 	}
 
 	XDefineCursor(xfc->display, xfc->window->handle, cursor);
-	XFreeCursor(xfc->display, cursor);
+	// XFreeCursor(xfc->display, cursor);
 	xfc->window->floatbar->last_motion_x_root = event->xmotion.x_root;
 }
 
