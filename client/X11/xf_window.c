@@ -634,6 +634,9 @@ void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window)
 	if (xfc->window == window)
 		xfc->window = NULL;
 
+	if (window->floatbar)
+		xf_floatbar_free(xfc, window, window->floatbar);
+
 	if (window->gc)
 		XFreeGC(xfc->display, window->gc);
 

@@ -64,14 +64,27 @@ void xf_floatbar_button_onclick_restore(xfContext* xfc)
 	xf_toggle_fullscreen(xfc);
 }
 
-void xf_floatbar_button_onclick_locked(xfContext* xfc)
+void xf_floatbar_button_toggle_locked(xfContext* xfc)
 {
-	// TODO: IMPLEMENTATION
+	xfFloatbar* floatbar;
+	floatbar = xfc->window->floatbar;
+	if(floatbar->locked) 
+	{
+		// TODO: IMPLEMENTATION
+	}
+	else
+	{
+		// TODO: IMPLEMENTATION
+	}
 }
 
-void xf_floatbar_button_onclick_unlocked(xfContext* xfc)
+void xf_floatbar_button_onclick_locked(xfContext* xfc)
 {
-	// TODO: IMPLEMENTATION
+	xfFloatbar* floatbar;
+	floatbar = xfc->window->floatbar;
+
+	floatbar->locked = (floatbar->locked) ? FALSE : TRUE;
+	xf_floatbar_button_toggle_locked(xfc);
 }
 
 void xf_floatbar_toggle_visibility(xfContext* xfc, bool visible)
@@ -125,11 +138,6 @@ xfFloatbarButton* xf_floatbar_new_button(xfContext* xfc, xfFloatbar* floatbar, i
 			button->onclick = xf_floatbar_button_onclick_locked;
 			break;
 
-		case XF_FLOATBAR_BUTTON_UNLOCKED:
-			button->x = FLOATBAR_BORDER;
-			button->onclick = xf_floatbar_button_onclick_unlocked;
-			break;
-
 		default:
 			break;
 	}
@@ -160,7 +168,6 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, int width)
 	floatbar->buttons[1] = xf_floatbar_new_button(xfc, floatbar, XF_FLOATBAR_BUTTON_RESTORE);
 	floatbar->buttons[2] = xf_floatbar_new_button(xfc, floatbar, XF_FLOATBAR_BUTTON_MINIMIZE);
 	floatbar->buttons[3] = xf_floatbar_new_button(xfc, floatbar, XF_FLOATBAR_BUTTON_LOCKED);
-	floatbar->buttons[4] = xf_floatbar_new_button(xfc, floatbar, XF_FLOATBAR_BUTTON_UNLOCKED);
 	XSelectInput(xfc->display, floatbar->handle, ExposureMask | ButtonPressMask | ButtonReleaseMask |
 	             PointerMotionMask | FocusChangeMask | LeaveWindowMask | EnterWindowMask | StructureNotifyMask |
 	             PropertyChangeMask);
@@ -289,12 +296,14 @@ void xf_floatbar_button_update_positon(xfContext* xfc, XEvent* event)
 
 void xf_floatbar_button_event_expose(xfContext* xfc, XEvent* event)
 {
+	xfFloatbar* floatbar;
 	xfFloatbarButton* button;
 	static unsigned char* bits;
 	GC gc;
 	Pixmap pattern;
 	button = xf_floatbar_get_button(xfc, event);
 	gc = XCreateGC(xfc->display, button->handle, 0, 0);
+	floatbar = xfc->window->floatbar;
 
 	switch (button->type)
 	{
@@ -311,13 +320,10 @@ void xf_floatbar_button_event_expose(xfContext* xfc, XEvent* event)
 			break;
 
 		case XF_FLOATBAR_BUTTON_LOCKED:
-			// TODO: ACTIVE/INACTIVE
-			bits = lock_bits;
-			break;
-
-		case XF_FLOATBAR_BUTTON_UNLOCKED:
-			// TODO: ACTIVE/INACTIVE
-			bits = unlock_bits;
+			if(floatbar->locked) 
+				bits = lock_bits;
+			else
+				bits = unlock_bits;	
 			break;
 
 		default:
@@ -562,14 +568,42 @@ void xf_floatbar_event_process(xfContext* xfc, XEvent* event)
 	}
 }
 
-void xf_floatbar_button_free(xfFloatbarButton* button)
+void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button)
 {
-	// TODO: how to free it?
-	// TODO: did i miss any frees?
+	if (!button)
+		return;
+	
+	if (button->handle)
+	{
+		XUnmapWindow(xfc->display, button->handle);
+		XDestroyWindow(xfc->display, button->handle);
+	}
+
+	free(button);
 }
 
-void xf_floatbar_free(xfFloatbar* floatbar)
-{
-	// TODO: how to free it?
-	// TODO: did i miss any frees?
+void xf_floatbar_free(xfContext* xfc, xfWindow* window, xfFloatbar* floatbar)
+{	
+	int i, size;
+	size = sizeof(floatbar->buttons) / sizeof(floatbar->buttons[0]);
+
+	if (!floatbar)
+		return;
+
+	if (window->floatbar == floatbar)
+		window->floatbar = NULL;
+
+	for (i = 0; i < size; i++)
+	{
+		xf_floatbar_button_free(xfc, floatbar->buttons[i]);
+		floatbar->buttons[i] = NULL;
+	}
+	
+	if (floatbar->handle)
+	{
+		XUnmapWindow(xfc->display, floatbar->handle);
+		XDestroyWindow(xfc->display, floatbar->handle);
+	}
+
+	free(floatbar);
 }

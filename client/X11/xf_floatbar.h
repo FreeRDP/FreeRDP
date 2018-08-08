@@ -37,7 +37,7 @@ struct xf_floatbar
 	int mode;
 	int last_motion_x_root;
 	bool locked;
-	xfFloatbarButton* buttons[5];
+	xfFloatbarButton* buttons[4];
 	Window handle;
 };
 
@@ -45,7 +45,6 @@ struct xf_floatbar
 #define XF_FLOATBAR_BUTTON_RESTORE 2
 #define XF_FLOATBAR_BUTTON_MINIMIZE 3
 #define XF_FLOATBAR_BUTTON_LOCKED 4
-#define XF_FLOATBAR_BUTTON_UNLOCKED 5
 
 typedef void(*OnClick)(xfContext*);
 
@@ -63,5 +62,6 @@ struct xf_floatbar_button
 xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, int width);
 void xf_floatbar_event_process(xfContext* xfc, XEvent* event);
 void xf_floatbar_toggle_visibility(xfContext* xfc, bool visible);
+void xf_floatbar_free(xfContext* xfc, xfWindow* window, xfFloatbar* floatbar);
 
 #endif /* FREERDP_CLIENT_X11_FLOATBAR_H */
