@@ -1437,13 +1437,38 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "redirect-prefer")
 		{
-			if (_strnicmp(arg->Value, "fqdn", 5) == 0)
-				settings->RedirectionPreferType = 0x06;
-			else if (_strnicmp(arg->Value, "ip", 3) == 0)
-				settings->RedirectionPreferType = 0x05;
-			else if (_strnicmp(arg->Value, "netbios", 8) == 0)
-				settings->RedirectionPreferType = 0x03;
-			else
+			size_t count = 0;
+			char* cur = arg->Value;
+			settings->RedirectionPreferType = 0;
+
+			do
+			{
+				UINT32 mask;
+				char* next = strchr(cur, ',');
+
+				if (next)
+				{
+					*next = '\0';
+					next++;
+				}
+
+				if (_strnicmp(cur, "fqdn", 5) == 0)
+					mask = 0x06U;
+				else if (_strnicmp(cur, "ip", 3) == 0)
+					mask = 0x05U;
+				else if (_strnicmp(cur, "netbios", 8) == 0)
+					mask = 0x03U;
+				else
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+				cur = next;
+				mask = (mask & 0x07);
+				settings->RedirectionPreferType |= mask << (count * 3);
+				count++;
+			}
+			while (cur != NULL);
+
+			if (count > 3)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 		CommandLineSwitchCase(arg, "credentials-delegation")
