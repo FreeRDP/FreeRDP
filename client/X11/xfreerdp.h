@@ -160,6 +160,7 @@ struct xf_context
 	BOOL use_xinput;
 	BOOL mouse_active;
 	BOOL fullscreen_toggle;
+	BOOL floatbar;
 	BOOL controlToggle;
 	UINT32 KeyboardLayout;
 	BOOL KeyboardState[256];

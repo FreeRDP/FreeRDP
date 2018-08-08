@@ -1127,6 +1127,7 @@ struct rdp_settings
 	ALIGN64 BOOL   AsyncChannels;           /* 1546 */
 	ALIGN64 BOOL   AsyncTransport;          /* 1547 */
 	ALIGN64 BOOL   ToggleFullscreen;        /* 1548 */
+	ALIGN64 BOOL   Floatbar;        
 	ALIGN64 char*  WmClass;                 /* 1549 */
 	ALIGN64 BOOL   EmbeddedWindow;          /* 1550 */
 	ALIGN64 BOOL   SmartSizing;             /* 1551 */

@@ -1182,6 +1182,7 @@ static BOOL xf_pre_connect(freerdp* instance)
 	xfc->decorations = settings->Decorations;
 	xfc->grab_keyboard = settings->GrabKeyboard;
 	xfc->fullscreen_toggle = settings->ToggleFullscreen;
+	xfc->floatbar = settings->Floatbar;
 	xf_button_map_init(xfc);
 	return TRUE;
 }

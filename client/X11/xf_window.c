@@ -160,7 +160,9 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	UINT32 height = window->height;
 	window->decorations = xfc->decorations;
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
-	xf_floatbar_toggle_visibility(xfc, fullscreen);
+	
+	if(xfc->floatbar)
+		xf_floatbar_toggle_visibility(xfc, fullscreen);
 
 	if (fullscreen)
 	{
