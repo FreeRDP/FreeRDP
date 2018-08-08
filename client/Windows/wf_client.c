@@ -217,6 +217,7 @@ static BOOL wf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 	wfc->fullscreen = settings->Fullscreen;
+	wfc->floatbar = settings->Floatbar;
 
 	if (wfc->fullscreen)
 		wfc->fs_toggle = 1;
