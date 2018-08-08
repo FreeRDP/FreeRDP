@@ -412,29 +412,48 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	}
 	else
 	{
-		if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
-		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->TargetNetAddress);
+		BOOL useFQDN = FALSE;
 
-			if (!settings->ServerHostname)
-				return FALSE;
+		if (settings->RedirectionFlags & LB_TARGET_FQDN)
+		{
+			int status;
+			struct addrinfo hints = { 0 };
+			struct addrinfo* result = NULL;
+			hints.ai_family = AF_UNSPEC;
+			hints.ai_socktype = SOCK_STREAM;
+			status = getaddrinfo(settings->RedirectionTargetFQDN, NULL, &hints, &result);
+
+			if (status == 0)
+			{
+				freeaddrinfo(result);
+				free(settings->ServerHostname);
+				settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
+
+				if (!settings->ServerHostname)
+					return FALSE;
+
+				useFQDN = TRUE;
+			}
 		}
-		else if (settings->RedirectionFlags & LB_TARGET_FQDN)
-		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
 
-			if (!settings->ServerHostname)
-				return FALSE;
-		}
-		else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
+		if (!useFQDN)
 		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
+			if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+			{
+				free(settings->ServerHostname);
+				settings->ServerHostname = _strdup(settings->TargetNetAddress);
 
-			if (!settings->ServerHostname)
-				return FALSE;
+				if (!settings->ServerHostname)
+					return FALSE;
+			}
+			else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
+			{
+				free(settings->ServerHostname);
+				settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
+
+				if (!settings->ServerHostname)
+					return FALSE;
+			}
 		}
 	}
 
