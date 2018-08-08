@@ -1078,7 +1078,8 @@ struct rdp_settings
 	ALIGN64 UINT32* TargetNetPorts;               /* 1230 */
 	ALIGN64 char*   RedirectionAcceptedCert;      /* 1231 */
 	ALIGN64 UINT32  RedirectionAcceptedCertLength;/* 1232 */
-	UINT64 padding1280[1280 - 1233]; /* 1233 */
+	ALIGN64 UINT32  RedirectionPreferType;        /* 1233 */
+	UINT64 padding1280[1280 - 1234]; /* 1234 */
 
 	/**
 	 * Security

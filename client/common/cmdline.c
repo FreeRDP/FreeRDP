@@ -1435,6 +1435,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (!(settings->AuthenticationServiceClass = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
+		CommandLineSwitchCase(arg, "redirect-prefer")
+		{
+			if (_strnicmp(arg->Value, "fqdn", 5) == 0)
+				settings->RedirectionPreferType = 0x06;
+			else if (_strnicmp(arg->Value, "ip", 3) == 0)
+				settings->RedirectionPreferType = 0x05;
+			else if (_strnicmp(arg->Value, "netbios", 8) == 0)
+				settings->RedirectionPreferType = 0x03;
+			else
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+		}
 		CommandLineSwitchCase(arg, "credentials-delegation")
 		{
 			settings->DisableCredentialsDelegation = arg->Value ? FALSE : TRUE;
@@ -2187,18 +2198,18 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 #ifdef WITH_GFX_H264
 
-				if (_strnicmp("AVC444", arg->Value, 6) == 0)
+				if (_strnicmp("AVC444", arg->Value, 7) == 0)
 				{
 					settings->GfxH264 = TRUE;
 					settings->GfxAVC444 = TRUE;
 				}
-				else if (_strnicmp("AVC420", arg->Value, 6) == 0)
+				else if (_strnicmp("AVC420", arg->Value, 7) == 0)
 				{
 					settings->GfxH264 = TRUE;
 				}
 				else
 #endif
-					if (_strnicmp("RFX", arg->Value, 3) != 0)
+					if (_strnicmp("RFX", arg->Value, 4) != 0)
 						return COMMAND_LINE_ERROR;
 			}
 		}
@@ -2230,11 +2241,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			if (arg->Value)
 			{
-				if (_strnicmp("AVC444", arg->Value, 6) == 0)
+				if (_strnicmp("AVC444", arg->Value, 7) == 0)
 				{
 					settings->GfxAVC444 = TRUE;
 				}
-				else if (_strnicmp("AVC420", arg->Value, 6) != 0)
+				else if (_strnicmp("AVC420", arg->Value, 7) != 0)
 					return COMMAND_LINE_ERROR;
 			}
 		}

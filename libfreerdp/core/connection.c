@@ -412,9 +412,12 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	}
 	else
 	{
+		const BOOL tryFQDN = (settings->RedirectionPreferType & 0x01) == 0;
+		const BOOL tryNetAddress = (settings->RedirectionPreferType & 0x02) == 0;
+		const BOOL tryNetbios = (settings->RedirectionPreferType & 0x04) == 0;
 		BOOL useFQDN = FALSE;
 
-		if (settings->RedirectionFlags & LB_TARGET_FQDN)
+		if (tryFQDN && (settings->RedirectionFlags & LB_TARGET_FQDN))
 		{
 			int status;
 			struct addrinfo hints = { 0 };
@@ -438,7 +441,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 		if (!useFQDN)
 		{
-			if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+			if (tryNetAddress && (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS))
 			{
 				free(settings->ServerHostname);
 				settings->ServerHostname = _strdup(settings->TargetNetAddress);
@@ -446,7 +449,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 				if (!settings->ServerHostname)
 					return FALSE;
 			}
-			else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
+			else if (tryNetbios && (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME))
 			{
 				free(settings->ServerHostname);
 				settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
