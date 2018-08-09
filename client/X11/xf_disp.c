@@ -47,10 +47,13 @@ struct _xfDispContext
 	int targetWidth, targetHeight;
 	BOOL activated;
 	BOOL waitingResize;
+	BOOL fullscreen;
 	UINT16 lastSentDesktopOrientation;
 	UINT32 lastSentDesktopScaleFactor;
 	UINT32 lastSentDeviceScaleFactor;
 };
+
+static UINT xf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, int nmonitors);
 
 static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 {
@@ -72,6 +75,9 @@ static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 	if (xfDisp->lastSentDeviceScaleFactor != settings->DeviceScaleFactor)
 		return TRUE;
 
+	if (xfDisp->fullscreen != xfDisp->xfc->fullscreen)
+		return TRUE;
+
 	return FALSE;
 }
 
@@ -83,6 +89,7 @@ static BOOL xf_update_last_sent(xfDispContext* xfDisp)
 	xfDisp->lastSentDesktopOrientation = settings->DesktopOrientation;
 	xfDisp->lastSentDesktopScaleFactor = settings->DesktopScaleFactor;
 	xfDisp->lastSentDeviceScaleFactor = settings->DeviceScaleFactor;
+	xfDisp->fullscreen = xfDisp->xfc->fullscreen;
 	return TRUE;
 }
 
@@ -103,19 +110,28 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 	if (!xf_disp_settings_changed(xfDisp))
 		return TRUE;
 
-	xfDisp->waitingResize = TRUE;
-	layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
-	layout.Top = layout.Left = 0;
-	layout.Width = xfDisp->targetWidth;
-	layout.Height = xfDisp->targetHeight;
-	layout.Orientation = settings->DesktopOrientation;
-	layout.DesktopScaleFactor = settings->DesktopScaleFactor;
-	layout.DeviceScaleFactor = settings->DeviceScaleFactor;
-	layout.PhysicalWidth = xfDisp->targetWidth;
-	layout.PhysicalHeight = xfDisp->targetHeight;
+	if (xfc->fullscreen)
+	{
+		if (xf_disp_sendLayout(xfc->disp, settings->MonitorDefArray,
+		                       settings->MonitorCount) != CHANNEL_RC_OK)
+			return FALSE;
+	}
+	else
+	{
+		xfDisp->waitingResize = TRUE;
+		layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
+		layout.Top = layout.Left = 0;
+		layout.Width = xfDisp->targetWidth;
+		layout.Height = xfDisp->targetHeight;
+		layout.Orientation = settings->DesktopOrientation;
+		layout.DesktopScaleFactor = settings->DesktopScaleFactor;
+		layout.DeviceScaleFactor = settings->DeviceScaleFactor;
+		layout.PhysicalWidth = xfDisp->targetWidth;
+		layout.PhysicalHeight = xfDisp->targetHeight;
 
-	if (xfc->disp->SendMonitorLayout(xfc->disp, 1, &layout) != CHANNEL_RC_OK)
-		return FALSE;
+		if (xfc->disp->SendMonitorLayout(xfc->disp, 1, &layout) != CHANNEL_RC_OK)
+			return FALSE;
+	}
 
 	return xf_update_last_sent(xfDisp);
 }
