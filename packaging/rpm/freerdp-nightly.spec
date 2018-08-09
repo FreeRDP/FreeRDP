@@ -55,7 +55,6 @@ BuildRequires: pkg-config
 BuildRequires: libopenssl-devel
 BuildRequires: alsa-devel
 BuildRequires: libpulse-devel
-BuildRequires: libgsm-devel
 BuildRequires: libusb-1_0-devel
 BuildRequires: libudev-devel
 BuildRequires: dbus-1-glib-devel
@@ -64,6 +63,8 @@ BuildRequires: gstreamer-plugins-base-devel
 BuildRequires: wayland-devel
 BuildRequires: libjpeg-devel
 BuildRequires: libavutil-devel
+BuildRequires: libavcodec-devel
+BuildRequires: libavresample-devel
 %endif
 # fedora 21+
 %if 0%{?fedora} >= 21 || 0%{?rhel} >= 7
@@ -73,13 +74,13 @@ BuildRequires: pkgconfig
 BuildRequires: openssl-devel
 BuildRequires: alsa-lib-devel
 BuildRequires: pulseaudio-libs-devel
-BuildRequires: gsm-devel
 BuildRequires: libusbx-devel
 BuildRequires: systemd-devel
 BuildRequires: dbus-glib-devel
 BuildRequires: gstreamer1-devel
 BuildRequires: gstreamer1-plugins-base-devel
 BuildRequires: libjpeg-turbo-devel
+BuildRequires: ffmpeg-devel
 %endif 
 
 %if 0%{?fedora} >= 21 || 0%{?rhel} >= 8
@@ -117,7 +118,8 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
         -DWITH_PCSC=ON \
         -DWITH_JPEG=ON \
         -DWITH_GSTREAMER_0_10=ON \
-        -DWITH_GSM=ON \
+        -DWITH_FFMPEG=ON \
+        -DWITH_DSP_FFMPEG=ON \
 %if %{defined rhel} && 0%{?rhel} <= 7
         -DWITH_WAYLAND=OFF \
 %endif
@@ -166,6 +168,10 @@ export NO_BRP_CHECK_RPATH true
 %{INSTALL_PREFIX}/share/man/man1/winpr-makecert.1*
 %{INSTALL_PREFIX}/share/man/man1/winpr-hash.1*
 %{INSTALL_PREFIX}/share/man/man7/wlog.7*
+
+%if 0%{?fedora} >= 21 || 0%{?rhel} >= 8 || %{defined suse_version}
+%{INSTALL_PREFIX}/share/man/man1/wlfreerdp.1*
+%endif
 
 %files devel
 %defattr(-,root,root)
