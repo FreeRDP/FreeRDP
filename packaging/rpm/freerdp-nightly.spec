@@ -80,10 +80,10 @@ BuildRequires: dbus-glib-devel
 BuildRequires: gstreamer1-devel
 BuildRequires: gstreamer1-plugins-base-devel
 BuildRequires: libjpeg-turbo-devel
-BuildRequires: ffmpeg-devel
+#BuildRequires: ffmpeg-devel
 %endif 
 
-%if 0%{?fedora} >= 21 || 0%{?rhel} >= 8
+%if 0%{?fedora} >= 21 || 0%{?rhel} >= 8 || %{defined suse_version}
 BuildRequires: libwayland-client-devel
 %endif
 
@@ -118,8 +118,11 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
         -DWITH_PCSC=ON \
         -DWITH_JPEG=ON \
         -DWITH_GSTREAMER_0_10=ON \
+%if %{defined suse_version}
         -DWITH_FFMPEG=ON \
         -DWITH_DSP_FFMPEG=ON \
+%endif
+
 %if %{defined rhel} && 0%{?rhel} <= 7
         -DWITH_WAYLAND=OFF \
 %endif
