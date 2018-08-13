@@ -360,6 +360,7 @@ DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 Pat
 BOOL drive_file_free(DRIVE_FILE* file)
 {
 	BOOL rc = FALSE;
+
 	if (!file)
 		return FALSE;
 
@@ -387,7 +388,6 @@ BOOL drive_file_free(DRIVE_FILE* file)
 	}
 
 	rc = TRUE;
-
 fail:
 	DEBUG_WSTR("Free %s", file->fullpath);
 	free(file->fullpath);
@@ -447,30 +447,14 @@ BOOL drive_file_write(DRIVE_FILE* file, BYTE* buffer, UINT32 Length)
 
 BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, wStream* output)
 {
-	WIN32_FIND_DATAW findFileData;
-	HANDLE hFind;
+	WIN32_FILE_ATTRIBUTE_DATA fileAttributes;
 	DEBUG_WSTR("FindFirstFile %s", file->fullpath);
 
 	if (!file || !output)
 		return FALSE;
 
-	if ((hFind = FindFirstFileW(file->fullpath, &findFileData)) == INVALID_HANDLE_VALUE)
-	{
-#ifdef WIN32
-		ZeroMemory(&findFileData, sizeof(findFileData));
-		findFileData.dwFileAttributes = GetFileAttributesW(file->fullpath);
-
-		if (findFileData.dwFileAttributes == INVALID_FILE_ATTRIBUTES)
-		{
-			goto out_fail;
-		}
-
-#else
+	if (!GetFileAttributesExW(file->fullpath, GetFileExInfoStandard, &fileAttributes))
 		goto out_fail;
-#endif
-	}
-
-	FindClose(hFind);
 
 	switch (FsInformationClass)
 	{
@@ -481,15 +465,15 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 				goto out_fail;
 
 			Stream_Write_UINT32(output, 36); /* Length */
-			Stream_Write_UINT32(output, findFileData.ftCreationTime.dwLowDateTime); /* CreationTime */
-			Stream_Write_UINT32(output, findFileData.ftCreationTime.dwHighDateTime); /* CreationTime */
-			Stream_Write_UINT32(output, findFileData.ftLastAccessTime.dwLowDateTime); /* LastAccessTime */
-			Stream_Write_UINT32(output, findFileData.ftLastAccessTime.dwHighDateTime); /* LastAccessTime */
-			Stream_Write_UINT32(output, findFileData.ftLastWriteTime.dwLowDateTime); /* LastWriteTime */
-			Stream_Write_UINT32(output, findFileData.ftLastWriteTime.dwHighDateTime); /* LastWriteTime */
-			Stream_Write_UINT32(output, findFileData.ftLastWriteTime.dwLowDateTime); /* ChangeTime */
-			Stream_Write_UINT32(output, findFileData.ftLastWriteTime.dwHighDateTime); /* ChangeTime */
-			Stream_Write_UINT32(output, findFileData.dwFileAttributes); /* FileAttributes */
+			Stream_Write_UINT32(output, fileAttributes.ftCreationTime.dwLowDateTime); /* CreationTime */
+			Stream_Write_UINT32(output, fileAttributes.ftCreationTime.dwHighDateTime); /* CreationTime */
+			Stream_Write_UINT32(output, fileAttributes.ftLastAccessTime.dwLowDateTime); /* LastAccessTime */
+			Stream_Write_UINT32(output, fileAttributes.ftLastAccessTime.dwHighDateTime); /* LastAccessTime */
+			Stream_Write_UINT32(output, fileAttributes.ftLastWriteTime.dwLowDateTime); /* LastWriteTime */
+			Stream_Write_UINT32(output, fileAttributes.ftLastWriteTime.dwHighDateTime); /* LastWriteTime */
+			Stream_Write_UINT32(output, fileAttributes.ftLastWriteTime.dwLowDateTime); /* ChangeTime */
+			Stream_Write_UINT32(output, fileAttributes.ftLastWriteTime.dwHighDateTime); /* ChangeTime */
+			Stream_Write_UINT32(output, fileAttributes.dwFileAttributes); /* FileAttributes */
 			/* Reserved(4), MUST NOT be added! */
 			break;
 
@@ -500,13 +484,13 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 				goto out_fail;
 
 			Stream_Write_UINT32(output, 22); /* Length */
-			Stream_Write_UINT32(output, findFileData.nFileSizeLow); /* AllocationSize */
-			Stream_Write_UINT32(output, findFileData.nFileSizeHigh); /* AllocationSize */
-			Stream_Write_UINT32(output, findFileData.nFileSizeLow); /* EndOfFile */
-			Stream_Write_UINT32(output, findFileData.nFileSizeHigh); /* EndOfFile */
+			Stream_Write_UINT32(output, fileAttributes.nFileSizeLow); /* AllocationSize */
+			Stream_Write_UINT32(output, fileAttributes.nFileSizeHigh); /* AllocationSize */
+			Stream_Write_UINT32(output, fileAttributes.nFileSizeLow); /* EndOfFile */
+			Stream_Write_UINT32(output, fileAttributes.nFileSizeHigh); /* EndOfFile */
 			Stream_Write_UINT32(output, 0); /* NumberOfLinks */
 			Stream_Write_UINT8(output, file->delete_pending ? 1 : 0); /* DeletePending */
-			Stream_Write_UINT8(output, findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? TRUE :
+			Stream_Write_UINT8(output, fileAttributes.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? TRUE :
 			                   FALSE); /* Directory */
 			/* Reserved(2), MUST NOT be added! */
 			break;
@@ -518,7 +502,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 				goto out_fail;
 
 			Stream_Write_UINT32(output, 8); /* Length */
-			Stream_Write_UINT32(output, findFileData.dwFileAttributes); /* FileAttributes */
+			Stream_Write_UINT32(output, fileAttributes.dwFileAttributes); /* FileAttributes */
 			Stream_Write_UINT32(output, 0); /* ReparseTag */
 			break;
 
@@ -700,6 +684,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			fullpath = drive_file_combine_fullpath(file->basepath, (WCHAR*)Stream_Pointer(input),
 			                                       FileNameLength);
+
 			if (!fullpath)
 			{
 				WLog_ERR(TAG, "drive_file_combine_fullpath failed!");
