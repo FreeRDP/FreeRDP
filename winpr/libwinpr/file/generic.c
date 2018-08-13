@@ -864,7 +864,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	if (isDir)
 	{
 		pFileSearch->lpPath = _strdup(lpFileName);
-		pFileSearch->lpPattern = _strdup("*");
+		pFileSearch->lpPattern = _strdup(".");
 	}
 	else
 	{
