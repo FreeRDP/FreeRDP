@@ -377,10 +377,12 @@ UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 			if (!Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp))
 			{
+				free(operation);
 				WLog_ERR(TAG, "Queue_Enqueue failed!");
 				return ERROR_INTERNAL_ERROR;
 			}
 
+			free(operation);
 			return CHANNEL_RC_OK;
 		}
 
@@ -460,6 +462,7 @@ UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 			if (!Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp))
 			{
+				free(operation);
 				WLog_ERR(TAG, "Queue_Enqueue failed!");
 				return ERROR_INTERNAL_ERROR;
 			}
