@@ -910,15 +910,16 @@ UINT rail_send_client_exec_order(railPlugin* rail, RAIL_EXEC_ORDER* exec)
 	if ((error = rail_write_client_exec_order(s, exec)))
 	{
 		WLog_ERR(TAG, "rail_write_client_exec_order failed with error %"PRIu32"!", error);
-		return error;
+		goto out;
 	}
 
 	if ((error = rail_send_pdu(rail, s, RDP_RAIL_ORDER_EXEC)))
 	{
 		WLog_ERR(TAG, "rail_send_pdu failed with error %"PRIu32"!", error);
-		return error;
+		goto out;
 	}
 
+out:
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -972,15 +973,16 @@ static UINT rail_send_client_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDE
 	if ((error = rail_write_client_sysparam_order(s, sysparam)))
 	{
 		WLog_ERR(TAG, "rail_write_client_sysparam_order failed with error %"PRIu32"!", error);
-		return error;
+		goto out;
 	}
 
 	if ((error = rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSPARAM)))
 	{
 		WLog_ERR(TAG, "rail_send_pdu failed with error %"PRIu32"!", error);
-		return error;
+		goto out;
 	}
 
+out:
 	Stream_Free(s, TRUE);
 	return error;
 }
