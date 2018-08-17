@@ -120,7 +120,7 @@ static BOOL update_pointer_color(rdpContext* context,
 		pointer->lengthAndMask = pointer_color->lengthAndMask;
 		pointer->lengthXorMask = pointer_color->lengthXorMask;
 
-		if (pointer->lengthAndMask && pointer_color->xorMaskData)
+		if (pointer->lengthAndMask && pointer_color->andMaskData)
 		{
 			pointer->andMaskData = (BYTE*) malloc(pointer->lengthAndMask);
 
