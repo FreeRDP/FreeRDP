@@ -1218,7 +1218,10 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 	len *= 2;
 
 	if (len > 52)
+	{
+		free(wString);
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, len);
 	Stream_Write(s, wString, len);
@@ -1233,7 +1236,10 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 	len *= 2;
 
 	if (len > 512)
+	{
+		free(wString);
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, len);
 	Stream_Write(s, wString, len);
