@@ -1740,7 +1740,7 @@ static UINT rdpdr_server_drive_create_directory(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_create_directory_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, path, sizeof(irp->PathName));
+	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
@@ -1851,7 +1851,7 @@ static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_delete_directory_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, path, sizeof(irp->PathName));
+	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
@@ -2019,7 +2019,7 @@ static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_query_directory_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, path, sizeof(irp->PathName));
+	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
@@ -2093,7 +2093,7 @@ static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_open_file_callback;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, path, sizeof(irp->PathName));
+	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
@@ -2420,7 +2420,7 @@ static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_delete_file_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, path, sizeof(irp->PathName));
+	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
@@ -2570,8 +2570,8 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_rename_file_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, oldPath, sizeof(irp->PathName));
-	strncpy(irp->ExtraBuffer, newPath, sizeof(irp->ExtraBuffer));
+	strncpy(irp->PathName, oldPath, sizeof(irp->PathName) - 1);
+	strncpy(irp->ExtraBuffer, newPath, sizeof(irp->ExtraBuffer) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 	rdpdr_server_convert_slashes(irp->ExtraBuffer, sizeof(irp->ExtraBuffer));
 
