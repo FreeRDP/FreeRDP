@@ -2596,7 +2596,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "reconnect-cookie")
 		{
-			BYTE* base64;
+			BYTE* base64 = NULL;
 			int length;
 			crypto_base64_decode((const char*)(arg->Value), (int) strlen(arg->Value),
 			                     &base64, &length);
@@ -2604,12 +2604,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if ((base64 != NULL) && (length == sizeof(ARC_SC_PRIVATE_PACKET)))
 			{
 				memcpy(settings->ServerAutoReconnectCookie, base64, length);
-				free(base64);
 			}
 			else
 			{
 				WLog_ERR(TAG, "reconnect-cookie:  invalid base64 '%s'", arg->Value);
 			}
+
+			free(base64);
 		}
 		CommandLineSwitchCase(arg, "print-reconnect-cookie")
 		{
