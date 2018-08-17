@@ -149,6 +149,7 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 
 	if ((error = rdpgfx_read_h264_metablock(gfx, s, &(h264.meta))))
 	{
+		Stream_Free(s, FALSE);
 		WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %"PRIu32"!", error);
 		return error;
 	}
