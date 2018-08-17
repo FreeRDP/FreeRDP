@@ -349,7 +349,10 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	buffer = (BYTE*) malloc(auth_3_pdu->frag_length);
 
 	if (!buffer)
+	{
+		free(auth_3_pdu);
 		return -1;
+	}
 
 	CopyMemory(buffer, auth_3_pdu, 20);
 	offset = 20;

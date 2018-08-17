@@ -740,7 +740,7 @@ static int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	sockfd = freerdp_tcp_connect(context, settings, peerHostname,
 	                             peerPort, timeout);
 
-	if (sockfd < 1)
+	if (sockfd < 0)
 		return -1;
 
 	socketBio = BIO_new(BIO_s_simple_socket());
