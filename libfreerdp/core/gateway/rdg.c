@@ -322,7 +322,7 @@ static BOOL rdg_set_ntlm_auth_header(rdpNtlm* ntlm, HttpRequest* request)
 static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
                                        const char* transferEncoding)
 {
-	wStream* s;
+	wStream* s = NULL;
 	HttpRequest* request = NULL;
 	assert(method != NULL);
 	request = http_request_new();
@@ -334,12 +334,12 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 	http_request_set_uri(request, rdg->http->URI);
 
 	if (!request->Method || !request->URI)
-		return NULL;
+		goto out;
 
 	if (rdg->ntlm)
 	{
 		if (!rdg_set_ntlm_auth_header(rdg->ntlm, request))
-			return NULL;
+			goto out;
 	}
 
 	if (transferEncoding)
@@ -348,6 +348,7 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 	}
 
 	s = http_request_write(rdg->http, request);
+out:
 	http_request_free(request);
 
 	if (s)
@@ -680,7 +681,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	                             peerAddress ? peerAddress : peerHostname,
 	                             peerPort, timeout);
 
-	if (sockfd < 1)
+	if (sockfd < 0)
 	{
 		return FALSE;
 	}
@@ -698,6 +699,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 
 	if (!bufferedBio)
 	{
+		closesocket(sockfd);
 		BIO_free(socketBio);
 		return FALSE;
 	}
