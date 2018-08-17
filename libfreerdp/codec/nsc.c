@@ -383,6 +383,7 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 			break;
 
 		default:
+			Stream_Free(s, TRUE);
 			return FALSE;
 	}
 
