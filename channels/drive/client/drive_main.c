@@ -527,6 +527,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 
 			if (!Stream_EnsureRemainingCapacity(output, 12 + length))
 			{
+				free(outStr);
 				WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 				return CHANNEL_RC_NO_MEMORY;
 			}
