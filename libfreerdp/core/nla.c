@@ -1886,7 +1886,10 @@ BOOL nla_send(rdpNla* nla)
 		          nla->negoToken.cbBuffer);  /* OCTET STRING */
 
 		if (length != nego_tokens_length)
+		{
+			Stream_Free(s, TRUE);
 			return FALSE;
+		}
 	}
 
 	/* [2] authInfo (OCTET STRING) */
@@ -1894,7 +1897,10 @@ BOOL nla_send(rdpNla* nla)
 	{
 		if (ber_write_sequence_octet_string(s, 2, nla->authInfo.pvBuffer,
 		                                    nla->authInfo.cbBuffer) != auth_info_length)
+		{
+			Stream_Free(s, TRUE);
 			return FALSE;
+		}
 	}
 
 	/* [3] pubKeyAuth (OCTET STRING) */
@@ -1902,7 +1908,10 @@ BOOL nla_send(rdpNla* nla)
 	{
 		if (ber_write_sequence_octet_string(s, 3, nla->pubKeyAuth.pvBuffer,
 		                                    nla->pubKeyAuth.cbBuffer) != pub_key_auth_length)
+		{
+			Stream_Free(s, TRUE);
 			return FALSE;
+		}
 	}
 
 	/* [4] errorCode (INTEGER) */
@@ -1917,7 +1926,10 @@ BOOL nla_send(rdpNla* nla)
 	{
 		if (ber_write_sequence_octet_string(s, 5, nla->ClientNonce.pvBuffer,
 		                                    nla->ClientNonce.cbBuffer) != client_nonce_length)
+		{
+			Stream_Free(s, TRUE);
 			return FALSE;
+		}
 	}
 
 	Stream_SealLength(s);
