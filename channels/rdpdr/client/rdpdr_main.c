@@ -229,7 +229,7 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 						DWORD unitmask = lpdbv->dbcv_unitmask;
 						int i, j, count;
 						char drive_name_upper, drive_name_lower;
-						ULONG_PTR* keys;
+						ULONG_PTR* keys = NULL;
 						DEVICE_DRIVE_EXT* device_ext;
 						UINT32 ids[1];
 
@@ -265,6 +265,8 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 										}
 									}
 								}
+
+								free(keys);
 							}
 
 							unitmask = unitmask >> 1;
@@ -384,7 +386,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	hotplug_dev dev_array[MAX_USB_DEVICES];
 	int count;
 	DEVICE_DRIVE_EXT* device_ext;
-	ULONG_PTR* keys;
+	ULONG_PTR* keys = NULL;
 	int i, j;
 	int size = 0;
 	UINT error;
@@ -520,6 +522,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	}
 
 cleanup:
+	free(keys);
 
 	for (i = 0; i < size; i++)
 		free(dev_array[i].path);
@@ -699,7 +702,10 @@ static char* next_line(FILE* fd, size_t* len)
 		c = fgetc(fd);
 
 		if (ferror(fd))
+		{
+			free(newbuf);
 			return NULL;
+		}
 
 		if (c == EOF)
 		{
@@ -788,7 +794,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	int i, j;
 	int size = 0;
 	int count;
-	ULONG_PTR* keys;
+	ULONG_PTR* keys = NULL;
 	UINT32 ids[1];
 	UINT error = 0;
 	memset(dev_array, 0, sizeof(dev_array));
@@ -914,6 +920,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	}
 
 cleanup:
+	free(keys);
 
 	for (i = 0; i < size; i++)
 		free(dev_array[i].path);
@@ -1155,6 +1162,7 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 
 	if (!s)
 	{
+		free(computerNameW);
 		WLog_ERR(TAG, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
@@ -1215,7 +1223,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr,
 	size_t count_pos;
 	DEVICE* device;
 	int keyCount;
-	ULONG_PTR* pKeys;
+	ULONG_PTR* pKeys = NULL;
 	s = Stream_New(NULL, 256);
 
 	if (!s)
@@ -1251,6 +1259,8 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr,
 
 			if (!Stream_EnsureRemainingCapacity(s, 20 + data_len))
 			{
+				free(pKeys);
+				Stream_Free(s, TRUE);
 				WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 				return ERROR_INVALID_DATA;
 			}
@@ -1324,7 +1334,7 @@ static UINT rdpdr_process_init(rdpdrPlugin* rdpdr)
 	int index;
 	int keyCount;
 	DEVICE* device;
-	ULONG_PTR* pKeys;
+	ULONG_PTR* pKeys = NULL;
 	UINT error = CHANNEL_RC_OK;
 	pKeys = NULL;
 	keyCount = ListDictionary_GetKeys(rdpdr->devman->devices, &pKeys);

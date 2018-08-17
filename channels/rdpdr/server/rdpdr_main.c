@@ -563,7 +563,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 	{
 		WLog_ERR(TAG,
 		         "rdpdr_server_write_general_capability_set failed with error %"PRIu32"!", error);
-		return error;
+		goto out;
 	}
 
 	if (context->supportsDrives)
@@ -572,7 +572,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		{
 			WLog_ERR(TAG, "rdpdr_server_write_drive_capability_set failed with error %"PRIu32"!",
 			         error);
-			return error;
+			goto out;
 		}
 	}
 
@@ -582,7 +582,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		{
 			WLog_ERR(TAG, "rdpdr_server_write_port_capability_set failed with error %"PRIu32"!",
 			         error);
-			return error;
+			goto out;
 		}
 	}
 
@@ -592,7 +592,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		{
 			WLog_ERR(TAG,
 			         "rdpdr_server_write_printer_capability_set failed with error %"PRIu32"!", error);
-			return error;
+			goto out;
 		}
 	}
 
@@ -602,7 +602,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		{
 			WLog_ERR(TAG,
 			         "rdpdr_server_write_printer_capability_set failed with error %"PRIu32"!", error);
-			return error;
+			goto out;
 		}
 	}
 
@@ -612,6 +612,9 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 	                                (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 	Stream_Free(s, TRUE);
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
+out:
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
