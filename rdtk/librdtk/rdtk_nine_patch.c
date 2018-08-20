@@ -390,6 +390,8 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 
 			if (ninePatch)
 				rdtk_nine_patch_set_image(ninePatch, image);
+			else
+				winpr_image_free(image, TRUE);
 		}
 	}
 
@@ -414,6 +416,8 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 
 			if (ninePatch)
 				rdtk_nine_patch_set_image(ninePatch, image);
+			else
+				winpr_image_free(image, TRUE);
 		}
 	}
 
