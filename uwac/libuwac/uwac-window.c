@@ -331,6 +331,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 
 	if (!pool)
 	{
+		munmap(data, allocSize * nbuffers);
 		ret = UWAC_ERROR_NOMEMORY;
 		goto error_mmap;
 	}
@@ -500,7 +501,7 @@ UwacReturnCode UwacDestroyWindow(UwacWindow** pwindow)
 		wl_region_destroy(w->opaque_region);
 
 	if (w->input_region)
-		wl_region_destroy(w->opaque_region);
+		wl_region_destroy(w->input_region);
 
 	wl_surface_destroy(w->surface);
 	wl_list_remove(&w->link);
