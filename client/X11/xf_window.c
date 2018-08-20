@@ -219,9 +219,6 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 		if (!fullscreen)
 		{
-			if (startX == 0)
-				startX = 1;
-
 			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
