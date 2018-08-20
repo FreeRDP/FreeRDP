@@ -244,6 +244,7 @@ int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	}
 	else
 	{
+		SamClose(sam);
 		WLog_ERR(TAG, "Error: Could not find user in SAM database");
 		return 0;
 	}
