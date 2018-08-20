@@ -419,7 +419,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 		else
 			sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout);
 
-		if (sockfd < 1)
+		if (sockfd < 0)
 			return FALSE;
 
 		if (!transport_attach(transport, sockfd))
