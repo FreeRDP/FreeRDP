@@ -23,10 +23,10 @@ typedef struct xf_floatbar_button xfFloatbarButton;
 
 #include "xfreerdp.h"
 
-#define XF_FLOATBAR_MODE_NONE 0
-#define XF_FLOATBAR_MODE_DRAGGING 1
-#define XF_FLOATBAR_MODE_RESIZE_LEFT 2
-#define XF_FLOATBAR_MODE_RESIZE_RIGHT 3
+#define XF_FLOATBAR_MODE_NONE 			0
+#define XF_FLOATBAR_MODE_DRAGGING 		1
+#define XF_FLOATBAR_MODE_RESIZE_LEFT 	2
+#define XF_FLOATBAR_MODE_RESIZE_RIGHT 	3
 
 struct xf_floatbar
 {
@@ -36,15 +36,16 @@ struct xf_floatbar
 	int height;
 	int mode;
 	int last_motion_x_root;
+	int last_motion_y_root;
 	bool locked;
 	xfFloatbarButton* buttons[4];
 	Window handle;
 };
 
-#define XF_FLOATBAR_BUTTON_CLOSE 1
-#define XF_FLOATBAR_BUTTON_RESTORE 2
+#define XF_FLOATBAR_BUTTON_CLOSE 	1
+#define XF_FLOATBAR_BUTTON_RESTORE 	2
 #define XF_FLOATBAR_BUTTON_MINIMIZE 3
-#define XF_FLOATBAR_BUTTON_LOCKED 4
+#define XF_FLOATBAR_BUTTON_LOCKED 	4
 
 typedef void(*OnClick)(xfContext*);
 
@@ -63,5 +64,6 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, int width);
 void xf_floatbar_event_process(xfContext* xfc, XEvent* event);
 void xf_floatbar_toggle_visibility(xfContext* xfc, bool visible);
 void xf_floatbar_free(xfContext* xfc, xfWindow* window, xfFloatbar* floatbar);
+void xf_floatbar_hide_and_show(xfContext* xfc);
 
 #endif /* FREERDP_CLIENT_X11_FLOATBAR_H */

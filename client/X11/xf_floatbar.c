@@ -1,5 +1,4 @@
 // TODO: CHECK FOR NECESSARY ERROR HANDLING ON XLIB CALLS
-// TODO: CHECK FOR BAD EVENT LOOPS
 
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
@@ -32,9 +31,9 @@
 #define FLOATBAR_MIN_WIDTH			200
 #define FLOATBAR_BORDER				24
 #define FLOATBAR_BUTTON_WIDTH		24
-#define FLOATBAR_COLOR_BACKGROUND "RGB:31/6c/a9"
-#define FLOATBAR_COLOR_BORDER "RGB:75/9a/c8"
-#define FLOATBAR_COLOR_FOREGROUND "RGB:FF/FF/FF"
+#define FLOATBAR_COLOR_BACKGROUND 	"RGB:31/6c/a9"
+#define FLOATBAR_COLOR_BORDER 		"RGB:75/9a/c8"
+#define FLOATBAR_COLOR_FOREGROUND 	"RGB:FF/FF/FF"
 
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(...) WLog_DBG(TAG, __VA_ARGS__)
@@ -64,27 +63,31 @@ void xf_floatbar_button_onclick_restore(xfContext* xfc)
 	xf_toggle_fullscreen(xfc);
 }
 
-void xf_floatbar_button_toggle_locked(xfContext* xfc)
-{
-	xfFloatbar* floatbar;
-	floatbar = xfc->window->floatbar;
-	if(floatbar->locked) 
-	{
-		// TODO: IMPLEMENTATION
-	}
-	else
-	{
-		// TODO: IMPLEMENTATION
-	}
-}
-
 void xf_floatbar_button_onclick_locked(xfContext* xfc)
 {
 	xfFloatbar* floatbar;
 	floatbar = xfc->window->floatbar;
-
 	floatbar->locked = (floatbar->locked) ? FALSE : TRUE;
-	xf_floatbar_button_toggle_locked(xfc);
+}
+
+void xf_floatbar_hide_and_show(xfContext* xfc)
+{
+	xfFloatbar* floatbar;
+	floatbar = xfc->window->floatbar;
+
+	if (!floatbar->locked)
+	{
+		if (floatbar->mode == 0 && floatbar->last_motion_y_root > 10 && floatbar->y > (FLOATBAR_HEIGHT * -1))
+		{
+			floatbar->y = floatbar->y - 1;
+			XMoveWindow(xfc->display, floatbar->handle, floatbar->x, floatbar->y);
+		}
+		else if (floatbar->y < 0)
+		{
+			floatbar->y = floatbar->y + 1;
+			XMoveWindow(xfc->display, floatbar->handle, floatbar->x, floatbar->y);
+		}
+	}
 }
 
 void xf_floatbar_toggle_visibility(xfContext* xfc, bool visible)
@@ -191,6 +194,7 @@ void xf_floatbar_event_expose(xfContext* xfc, XEvent* event)
 	Pixmap pmap;
 	XPoint shape[5], border[5];
 	xfFloatbar* floatbar;
+	int len;
 	floatbar = xfc->window->floatbar;
 	/* create the pixmap that we'll use for shaping the window */
 	pmap = XCreatePixmap(xfc->display, floatbar->handle, floatbar->width, floatbar->height, 1);
@@ -234,7 +238,7 @@ void xf_floatbar_event_expose(xfContext* xfc, XEvent* event)
 	XSetForeground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_BORDER));
 	XDrawLines(xfc->display, floatbar->handle, gc, border, 5, CoordModeOrigin);
 	/* draw the host name connected to */
-	int len = strlen(xfc->context.settings->ServerHostname);
+	len = strlen(xfc->context.settings->ServerHostname);
 	XSetForeground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_FOREGROUND));
 	XDrawString(xfc->display, floatbar->handle, gc, floatbar->width / 2 - len * 2, 15,
 	            xfc->context.settings->ServerHostname, len);
@@ -320,10 +324,11 @@ void xf_floatbar_button_event_expose(xfContext* xfc, XEvent* event)
 			break;
 
 		case XF_FLOATBAR_BUTTON_LOCKED:
-			if(floatbar->locked) 
+			if (floatbar->locked)
 				bits = lock_bits;
 			else
-				bits = unlock_bits;	
+				bits = unlock_bits;
+
 			break;
 
 		default:
@@ -466,12 +471,12 @@ void xf_floatbar_event_motionnotify(xfContext* xfc, XEvent* event)
 	else
 	{
 		if (event->xmotion.x <= FLOATBAR_BORDER ||
-		    event->xmotion.x >= xfc->window->floatbar->width - FLOATBAR_BORDER) 
+		    event->xmotion.x >= xfc->window->floatbar->width - FLOATBAR_BORDER)
 			cursor = XCreateFontCursor(xfc->display, XC_sb_h_double_arrow);
 	}
 
 	XDefineCursor(xfc->display, xfc->window->handle, cursor);
-	// XFreeCursor(xfc->display, cursor);
+	XFreeCursor(xfc->display, cursor);
 	xfc->window->floatbar->last_motion_x_root = event->xmotion.x_root;
 }
 
@@ -572,7 +577,7 @@ void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button)
 {
 	if (!button)
 		return;
-	
+
 	if (button->handle)
 	{
 		XUnmapWindow(xfc->display, button->handle);
@@ -583,7 +588,7 @@ void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button)
 }
 
 void xf_floatbar_free(xfContext* xfc, xfWindow* window, xfFloatbar* floatbar)
-{	
+{
 	int i, size;
 	size = sizeof(floatbar->buttons) / sizeof(floatbar->buttons[0]);
 
@@ -598,7 +603,7 @@ void xf_floatbar_free(xfContext* xfc, xfWindow* window, xfFloatbar* floatbar)
 		xf_floatbar_button_free(xfc, floatbar->buttons[i]);
 		floatbar->buttons[i] = NULL;
 	}
-	
+
 	if (floatbar->handle)
 	{
 		XUnmapWindow(xfc->display, floatbar->handle);

@@ -160,8 +160,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	UINT32 height = window->height;
 	window->decorations = xfc->decorations;
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
-	
-	if(xfc->floatbar)
+
+	if (xfc->floatbar)
 		xf_floatbar_toggle_visibility(xfc, fullscreen);
 
 	if (fullscreen)
@@ -219,9 +219,9 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 		if (!fullscreen)
 		{
-			if(startX == 0) 
-				startX = 1;	
-			
+			if (startX == 0)
+				startX = 1;
+
 			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
@@ -580,10 +580,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 		            settings->DesktopPosY);
 	}
 
-	// TODO: IS THIS OK FOR REMOTE APP?
-	// TODO: MULTI MONITOR SUPPORT?
 	window->floatbar = xf_floatbar_new(xfc, window->handle, window->width);
-	
 	xf_SetWindowTitleText(xfc, window->handle, name);
 	return window;
 }
