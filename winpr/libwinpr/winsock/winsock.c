@@ -1225,7 +1225,7 @@ SOCKET _socket(int af, int type, int protocol)
 	SOCKET s;
 	fd = socket(af, type, protocol);
 
-	if (fd < 1)
+	if (fd < 0)
 		return INVALID_SOCKET;
 
 	s = (SOCKET) fd;
