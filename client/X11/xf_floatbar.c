@@ -1,5 +1,3 @@
-// TODO: CHECK FOR NECESSARY ERROR HANDLING ON XLIB CALLS
-
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 Windows
@@ -230,7 +228,6 @@ void xf_floatbar_event_expose(xfContext* xfc, XEvent* event)
 	XSetForeground(xfc->display, shape_gc, 1);
 	XFillPolygon(xfc->display, pmap, shape_gc, shape, 5, 0, CoordModeOrigin);
 	XShapeCombineMask(xfc->display, floatbar->handle, ShapeBounding, 0, 0, pmap, ShapeSet);
-	XSync(xfc->display, False);
 	/* draw the float bar */
 	XSetForeground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_BACKGROUND));
 	XFillPolygon(xfc->display, floatbar->handle, gc, shape, 4, 0, CoordModeOrigin);
@@ -242,7 +239,6 @@ void xf_floatbar_event_expose(xfContext* xfc, XEvent* event)
 	XSetForeground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_FOREGROUND));
 	XDrawString(xfc->display, floatbar->handle, gc, floatbar->width / 2 - len * 2, 15,
 	            xfc->context.settings->ServerHostname, len);
-	XFlush(xfc->display);
 }
 
 xfFloatbarButton* xf_floatbar_get_button(xfContext* xfc, XEvent* event)
@@ -346,7 +342,6 @@ void xf_floatbar_button_event_expose(xfContext* xfc, XEvent* event)
 	XSetBackground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_FOREGROUND));
 	XCopyPlane(xfc->display, pattern, button->handle, gc, 0, 0, FLOATBAR_BUTTON_WIDTH,
 	           FLOATBAR_BUTTON_WIDTH, 0, 0, 1);
-	XSync(xfc->display, False);
 	XFreePixmap(xfc->display, pattern);
 	XFreeGC(xfc->display, gc);
 }
