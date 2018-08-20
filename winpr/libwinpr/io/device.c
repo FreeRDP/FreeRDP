@@ -106,7 +106,7 @@ char* GetDeviceFileUnixDomainSocketFilePathA(LPCSTR lpName)
 
 	if (!lpFileName)
 	{
-		free(lpFilePath);
+		free(lpPipePath);
 		return NULL;
 	}
 
