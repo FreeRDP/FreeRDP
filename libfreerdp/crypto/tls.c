@@ -1260,7 +1260,7 @@ static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyL
 
 		length = new_len;
 		pemCert = new_cert;
-		status = BIO_read(bio, &pemCert[offset], length);
+		status = BIO_read(bio, &pemCert[offset], length - offset);
 
 		if (status < 0)
 			break;
