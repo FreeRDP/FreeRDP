@@ -28,21 +28,6 @@ WCHAR * towide(BYTE* string);
 char *  tochar(WCHAR* string);
 
 /**
-compare(str, string, other_string)
-
-str is the string_funs for the given string.
-string is either a char or wide char string.
-other_string is a char string.
-
-Both strings are 0-terminated.
-Strings are compared case sensitively.
-
-compare returns -1,  0 or 1 depending on whether string is less,
-equal or greater than other_string in lexical order.
- */
-int compare(BOOL widechar, void* string, void* other_string);
-
-/**
 ncompare(str, string, other_string, max)
 
 str is the string_funs for the given string.
@@ -143,16 +128,6 @@ void mszStrings_Enumerator_Reset(mszStrings_Enumerator* enumerator, BOOL widecha
 BOOL mszStrings_Enumerator_MoveNext(mszStrings_Enumerator*  enumerator);
 void* mszStrings_Enumerator_Current(mszStrings_Enumerator*  enumerator);
 
-/**
-mszStringsPrint(output,widechar,mszStrings)
-
-output is an output FILE.
-widechar indicates whether mszStrings contains char strings or wide char strings.
-mszStrings is a double null-terminated list of strings,  either char or wide char,  according to widechar.
-
-mszStringsPrint prints each string in the mszStrings list on its own line.
-*/
-void mszStringsPrint(FILE* output, BOOL widechar, void* mszStrings);
 
 /**
 mszStringsLog(prefix,widechar,mszStrings)

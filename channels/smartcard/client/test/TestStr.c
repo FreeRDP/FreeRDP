@@ -44,99 +44,6 @@
 #define no_free(p)		  (void)p
 #define convert_to_utf8(src, dst) ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)src, -1,(CHAR * *) &dst, 0, NULL, NULL)
 
-static struct
-{
-	BYTE  astring[32];
-	WCHAR wstring[32];
-	struct
-	{
-		int expected;
-		BYTE target[32];
-	} tests[16];
-} compares[] =
-{
-	{
-		"hello world",
-		{'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', 0},
-		{
-			{1, ""},
-			{1, "h"},
-			{1, "hello worl"},
-			{0, "hello world"},
-			{ -1, "hello world how do you do"},
-			{1, "hello aaaaa"},
-			{ -1, "hello zzzzz"},
-			{ -2, "done"}
-		}
-	},
-	{
-		"m",
-		{'m', 0},
-		{
-			{1, ""},
-			{1, "h"},
-			{1, "hh"},
-			{0, "m"},
-			{ -1, "mm"},
-			{ -1, "z"},
-			{ -2, "done"}
-		}
-	},
-	{
-		"",
-		{0},
-		{
-			{0, ""},
-			{ -1, "h"},
-			{ -1, "hh"},
-			{ -1, "m"},
-			{ -1, "mm"},
-			{ -1, "z"},
-			{ -2, "done"}
-		}
-	}
-};
-
-BOOL test_compare()
-{
-	BOOL success = TRUE;
-	int i;
-	int j;
-	BOOL widechar = FALSE;
-#define test_compare_loop(string, convert, free)                                                                        \
-	do                                                                                                              \
-	{                                                                                                               \
-		for (i = 0;i < countof(compares);i ++ )                                                                 \
-		{                                                                                                       \
-			BYTE * string = (BYTE *)compares[i].string;                                                     \
-			for(j = 0;compares[i].tests[j].expected != -2;j ++ )                                            \
-			{                                                                                               \
-				int expected = compares[i].tests[j].expected;                                           \
-				BYTE * target =(BYTE *)compares[i].tests[j].target;                                     \
-				int result = compare(widechar, string, target);                                             \
-				if (! (result == expected))                                                             \
-				{                                                                                       \
-					BYTE *  cstr = 0;                                                               \
-					BYTE *  ctgt = 0;                                                               \
-					convert(string, cstr);                                                          \
-					convert(target, ctgt);                                                          \
-					FAILURE("compare(char, %s, %s) failed!\n it resulted in %d,  expected % d\n",   \
-					        cstr, ctgt, result, expected);                                          \
-					free(cstr);                                                                     \
-					free(ctgt);                                                                     \
-					success = FALSE;                                                                \
-				}                                                                                       \
-			}                                                                                               \
-		}                                                                                                       \
-	}while(0)
-	widechar = 0;
-	test_compare_loop(astring, no_convert,	    no_free);
-	widechar = 1;
-	test_compare_loop(wstring, convert_to_utf8, free);
-	return success;
-}
-
-
 
 static struct
 {
@@ -1225,7 +1132,6 @@ BOOL test_mszStrings_Enumerator()
 int TestStr(int argc, char* argv[])
 {
 	BOOL success = TRUE;
-	success &= test_compare();
 	success &= test_ncompare();
 	success &= test_ncopy();
 	success &= test_contains();
