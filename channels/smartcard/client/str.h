@@ -23,48 +23,9 @@
 #include <winpr/wtypes.h>
 #include <winpr/collections.h>
 
-/*
 
-We want to process strings and string lists that are stored in BYTE
-arrays, either as char strings or as wide char strings.  To implement
-functions that can work on either narrow or wide char strings,  we
-will go thru a structure of primitives:
-
-    ref(string, index)->character
-    len(string)->length
-    inc(string, index)->string
-
-string_funs[0] contains the functions for char strings, while
-string_funs[1] contains the functions for wide char strings.
-
-*/
-
-
-int asize();
-int aref(BYTE* string, int index);
-void aset(BYTE* string, int index, int character);
-int alen(BYTE* string);
-BYTE* ainc(BYTE* string, int increment);
-char* aconvert(BYTE* string);
-int wsize();
-int wref(BYTE* string, int index);
-void wset(BYTE* string, int index, int character);
-int wlen(BYTE* string);
-BYTE* winc(BYTE* string, int increment);
-char* wconvert(BYTE* string);
-
-struct string_funs
-{
-	int (*size)(); /* return the character size (sizeof(BYTE) or sizeof(WCHAR)) */
-	int (*ref)(BYTE*, int);
-	void (*set)(BYTE*, int, int);
-	int (*len)(BYTE*);
-	BYTE* (*inc)(BYTE*, int);
-	char* (*convert)(BYTE*);
-};
-
-struct string_funs string_funs[2];
-
+WCHAR * towide(BYTE* string);
+char *  tochar(WCHAR* string);
 
 /**
 compare(str, string, other_string)
@@ -79,7 +40,7 @@ Strings are compared case sensitively.
 compare returns -1,  0 or 1 depending on whether string is less,
 equal or greater than other_string in lexical order.
  */
-int compare(struct string_funs* funs, BYTE* string, BYTE* other_string);
+int compare(BOOL widechar, void* string, void* other_string);
 
 /**
 ncompare(str, string, other_string, max)
@@ -96,19 +57,7 @@ ncompare  returns -1,  0 or  1 depending  on whether  string (or  it's
 max-long prefix) is  less, equal or greater than  other_string (or its
 max-long prefix) in lexical order.
 */
-int ncompare(struct string_funs* funs, BYTE* string, BYTE* other_string, int max);
-
-/**
-ncopy(str, destination, source, count)
-
-str is the string_funs for the given string.
-destination is either a char or wide char string, same as source.
-source is either a char or wide char string.
-
-ncopy copies exactly count characters  (char or wide char) from source
-to destination, including null characters if any, and beyond.  No null is added.
-*/
-void ncopy(struct string_funs* funs, BYTE* destination, BYTE* source, int count);
+int ncompare(BOOL widechar, void* string, void* other_string, int max);
 
 
 /**
@@ -123,7 +72,7 @@ Strings are compared case sensitively.
 
 contains returns whether substring is a substring of string.
  */
-BOOL contains(struct string_funs* funs, BYTE* string, BYTE* substring);
+BOOL contains(BOOL widechar, void* string, char* substring);
 
 
 
@@ -140,7 +89,7 @@ Strings are compared case sensitively.
 LinkedList_StringHasSubstring returns whether at least one of the
 strings in the list is a substring of string.
  */
-BOOL LinkedList_StringHasSubstring(struct string_funs* funs, BYTE* string, wLinkedList* list);
+BOOL LinkedList_StringHasSubstring(BOOL widechar, void* string, wLinkedList* list);
 
 
 /**

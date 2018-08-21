@@ -828,7 +828,7 @@ static LONG smartcard_ConnectW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	}
 
 	{
-		char*   name = wconvert((void*)call->szReader);
+		char*   name = tochar((void*)call->szReader);
 		WLog_DBG(TAG, "SCardConnectW %s", name);
 		free(name);
 	}
