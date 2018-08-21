@@ -1876,7 +1876,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					*p = '\0';
 
 					if (_stricmp("no_proxy", arg->Value) == 0)
-						settings->ProxyType = PROXY_TYPE_NONE;
+						settings->ProxyType = PROXY_TYPE_IGNORE;
 
 					if (_stricmp("http", arg->Value) == 0)
 						settings->ProxyType = PROXY_TYPE_HTTP;

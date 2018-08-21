@@ -75,20 +75,23 @@ void proxy_read_environment(rdpSettings* settings, char* envname);
 BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* lpPeerPort,
                    const char** lpProxyUsername, const char** lpProxyPassword)
 {
+	if (settings->ProxyType == PROXY_TYPE_IGNORE)
+		return FALSE;
+
 	/* For TSGateway, find the system HTTPS proxy automatically */
-	if (!settings->ProxyType)
+	if (settings->ProxyType == PROXY_TYPE_NONE)
 		proxy_read_environment(settings, "https_proxy");
 
-	if (!settings->ProxyType)
+	if (settings->ProxyType == PROXY_TYPE_NONE)
 		proxy_read_environment(settings, "HTTPS_PROXY");
 
-	if (settings->ProxyType)
+	if (settings->ProxyType != PROXY_TYPE_NONE)
 		proxy_read_environment(settings, "no_proxy");
 
-	if (settings->ProxyType)
+	if (settings->ProxyType != PROXY_TYPE_NONE)
 		proxy_read_environment(settings, "NO_PROXY");
 
-	if (settings->ProxyType)
+	if (settings->ProxyType != PROXY_TYPE_NONE)
 	{
 		*lpPeerHostname = settings->ProxyHostname;
 		*lpPeerPort = settings->ProxyPort;
@@ -163,7 +166,7 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 						if (!strncmp(current, settings->ServerHostname, currentlen))
 							result = TRUE; /* left-aligned match for IPs */
 					}
-                    else if (current[0] == '.') /* Only compare if the no_proxy variable contains a whole domain. */
+					else if (current[0] == '.') /* Only compare if the no_proxy variable contains a whole domain. */
 					{
 						if (host_len >= currentlen)
 						{
@@ -204,7 +207,7 @@ void proxy_read_environment(rdpSettings* settings, char* envname)
 
 	if (GetEnvironmentVariableA(envname, env, envlen) == envlen - 1)
 	{
-        if (_strnicmp("NO_PROXY", envname, 9) == 0)
+		if (_strnicmp("NO_PROXY", envname, 9) == 0)
 		{
 			if (check_no_proxy(settings, env))
 			{
@@ -303,6 +306,7 @@ BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* proxyUse
 	switch (settings->ProxyType)
 	{
 		case PROXY_TYPE_NONE:
+		case PROXY_TYPE_IGNORE:
 			return TRUE;
 
 		case PROXY_TYPE_HTTP:

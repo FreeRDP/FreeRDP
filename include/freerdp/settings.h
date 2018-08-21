@@ -475,6 +475,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define PROXY_TYPE_NONE		0
 #define PROXY_TYPE_HTTP		1
 #define PROXY_TYPE_SOCKS	2
+#define PROXY_TYPE_IGNORE	0xFFFF
 
 /* Settings */
 
