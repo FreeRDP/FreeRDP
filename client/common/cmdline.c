@@ -1875,14 +1875,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				{
 					*p = '\0';
 
-					if (!strcmp("http", arg->Value))
-					{
+					if (_stricmp("no_proxy", arg->Value) == 0)
+						settings->ProxyType = PROXY_TYPE_NONE;
+
+					if (_stricmp("http", arg->Value) == 0)
 						settings->ProxyType = PROXY_TYPE_HTTP;
-					}
-					else if (!strcmp("socks5", arg->Value))
-					{
+					else if (_stricmp("socks5", arg->Value) == 0)
 						settings->ProxyType = PROXY_TYPE_SOCKS;
-					}
 					else
 					{
 						WLog_ERR(TAG, "Only HTTP and SOCKS5 proxies supported by now");
