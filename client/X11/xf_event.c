@@ -1014,14 +1014,6 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		}
 	}
 
-	/* Forward event to the floatbar event handler, if the window
-	   causing the event is not the client's window */
-	if (event->xany.window != xfc->window->handle)
-	{
-		xf_floatbar_event_process(xfc, event);
-		return TRUE;
-	}
-
 	xf_event_execute_action_script(xfc, event);
 
 	if (event->type != MotionNotify)
@@ -1042,10 +1034,6 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 
 		case MotionNotify:
 			status = xf_event_MotionNotify(xfc, event, xfc->remote_app);
-
-			if (xfc->floatbar)
-				xfc->window->floatbar->last_motion_y_root = event->xmotion.y;
-
 			break;
 
 		case ButtonPress:
@@ -1122,6 +1110,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 
 	xf_cliprdr_handle_xevent(xfc, event);
 	xf_input_handle_event(xfc, event);
+	xf_floatbar_event_process(xfc, event);
 	XSync(xfc->display, FALSE);
 	return status;
 }
