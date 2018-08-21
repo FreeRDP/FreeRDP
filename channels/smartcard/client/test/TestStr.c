@@ -38,107 +38,6 @@
 
 
 
-BOOL test_ref(struct string_funs* funs,  BYTE* string)
-{
-	check(funs->ref(string, 0), == , 'h', "%d");
-	check(funs->ref(string, 1), == , 'e', "%d");
-	check(funs->ref(string, 2), == , 'l', "%d");
-	check(funs->ref(string, 3), == , 'l', "%d");
-	check(funs->ref(string, 4), == , 'o', "%d");
-	check(funs->ref(string, 5), == ,	 0,  "%d");
-	return TRUE;
-}
-
-BOOL test_aref()
-{
-	BYTE string[] = "hello";
-	return test_ref(& string_funs[0], string);
-}
-
-BOOL test_wref()
-{
-	WCHAR string[] = { 'h', 'e', 'l', 'l', 'o', 0 };
-	return test_ref(& string_funs[1], (BYTE*)string);
-}
-
-
-BOOL test_set(struct string_funs* funs,  BYTE* string)
-{
-	funs->set(string, 2, 'w');
-	check(funs->ref(string, 0), == , 'h', "%d");
-	check(funs->ref(string, 1), == , 'e', "%d");
-	check(funs->ref(string, 2), == , 'w', "%d");
-	check(funs->ref(string, 3), == , 'l', "%d");
-	check(funs->ref(string, 4), == , 'o', "%d");
-	check(funs->ref(string, 5), == , 0, "%d");
-	return TRUE;
-}
-
-BOOL test_aset()
-{
-	BYTE string[] = "hello";
-	return test_ref(& string_funs[0], string);
-}
-
-
-BOOL test_wset()
-{
-	WCHAR string[] = { 'h', 'e', 'l', 'l', 'o', 0 };
-	return test_ref(& string_funs[1], (BYTE*)string);
-}
-
-
-BOOL test_len(struct string_funs* funs,  BYTE* empty, BYTE* shortstr, BYTE* longstr)
-{
-	check(funs->len(empty), == , 0, "%d");
-	check(funs->len(shortstr), == , 5, "%d");
-	check(funs->len(longstr), == , 27, "%d");
-	return TRUE;
-}
-
-BOOL test_alen()
-{
-	BYTE empty[] = "";
-	BYTE shortstr[] = "hello";
-	BYTE longstr[] = "hello world! how do you do?";
-	return test_len(& string_funs[0], empty, shortstr, longstr);
-}
-
-
-BOOL test_wlen()
-{
-	WCHAR empty[] = {0};
-	WCHAR shortstr[] = { 'h', 'e', 'l', 'l', 'o', 0 };
-	WCHAR longstr[] = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!', ' ', 'h', 'o', 'w', ' ', 'd', 'o', ' ', 'y', 'o', 'u', ' ', 'd', 'o', '?', 0};
-	return test_len(& string_funs[1], (BYTE*)empty, (BYTE*)shortstr, (BYTE*)longstr);
-}
-
-BOOL test_inc(struct string_funs* funs,  BYTE* string)
-{
-	BYTE* next = funs->inc(string, 0);
-	check(next, == , string, "%s");
-	check(funs->ref(next, 0), == , 'h', "%d");
-	next = funs->inc(next, 6);
-	check(funs->ref(next, 0), == , 'w', "%d");
-	next = funs->inc(next, 7);
-	check(funs->ref(next, 0), == , 'h', "%d");
-	return TRUE;
-}
-
-BOOL test_ainc()
-{
-	BYTE string[] = "hello world! how do youwcompares do?";
-	return test_inc(& string_funs[0], string);
-}
-
-
-BOOL test_winc()
-{
-	WCHAR string[] = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!', ' ', 'h', 'o', 'w', ' ', 'd', 'o', ' ', 'y', 'o', 'u', ' ', 'd', 'o', '?', 0};
-	return test_inc(& string_funs[1], (BYTE*)string);
-}
-
-
 
 #define countof(a)  (sizeof (a) / sizeof (a[0]))
 #define no_convert(src, dst)	  dst = (BYTE *)src
@@ -203,7 +102,7 @@ BOOL test_compare()
 	BOOL success = TRUE;
 	int i;
 	int j;
-	struct string_funs* funs;
+	BOOL widechar = FALSE;
 #define test_compare_loop(string, convert, free)                                                                        \
 	do                                                                                                              \
 	{                                                                                                               \
@@ -214,7 +113,7 @@ BOOL test_compare()
 			{                                                                                               \
 				int expected = compares[i].tests[j].expected;                                           \
 				BYTE * target =(BYTE *)compares[i].tests[j].target;                                     \
-				int result = compare(funs, string, target);                                             \
+				int result = compare(widechar, string, target);                                             \
 				if (! (result == expected))                                                             \
 				{                                                                                       \
 					BYTE *  cstr = 0;                                                               \
@@ -230,9 +129,9 @@ BOOL test_compare()
 			}                                                                                               \
 		}                                                                                                       \
 	}while(0)
-	funs =	& string_funs[0];
+	widechar = 0;
 	test_compare_loop(astring, no_convert,	    no_free);
-	funs =	& string_funs[1];
+	widechar = 1;
 	test_compare_loop(wstring, convert_to_utf8, free);
 	return success;
 }
@@ -354,7 +253,7 @@ BOOL test_ncompare()
 	BOOL success = TRUE;
 	int i;
 	int j;
-	struct string_funs* funs;
+	BOOL widechar = FALSE;
 #define test_ncompare_loop(string, convert, free)                                                                               \
 	do                                                                                                                      \
 	{                                                                                                                       \
@@ -366,25 +265,23 @@ BOOL test_ncompare()
 				int expected = ncompares[i].tests[j].expected;                                                  \
 				BYTE * target =(BYTE *)ncompares[i].tests[j].target;                                            \
 				int max = ncompares[i].tests[j].max;                                                            \
-				int result = ncompare(funs, string, target, max);                                               \
+				int result = ncompare(widechar, string, target, max);						\
 				if (! (result == expected))                                                                     \
 				{                                                                                               \
 					BYTE *  cstr = 0;                                                                       \
-					BYTE *  ctgt = 0;                                                                       \
 					convert(string, cstr);                                                                  \
-					convert(target, ctgt);                                                                  \
 					FAILURE("ncompare(char, %s, %s, %d) failed!\n it resulted in %d,  expected % d\n",      \
-					        cstr, ctgt, max, result, expected );                                            \
+					        cstr, target, max, result, expected );						\
+					result = ncompare(widechar, string, target, max);					\
 					free(cstr);                                                                             \
-					free(ctgt);                                                                             \
 					success = FALSE;                                                                        \
 				}                                                                                               \
 			}                                                                                                       \
 		}                                                                                                               \
 	} while(0)
-	funs =	& string_funs[0];
+	widechar = 0;
 	test_ncompare_loop(astring, no_convert,	     no_free);
-	funs =	& string_funs[1];
+	widechar = 1;
 	test_ncompare_loop(wstring, convert_to_utf8, free);
 	return success;
 }
@@ -454,6 +351,8 @@ void memdump(void* pointer, int size)
 	}
 }
 
+void ncopy(BOOL widechar, void* destination, void* source, int count);
+
 BOOL test_ncopy()
 {
 	BOOL success = TRUE;
@@ -465,7 +364,6 @@ BOOL test_ncopy()
 		int width = (widechar ? 2 : 1);
 		int srclen = ncopies[i].srclen;
 		int dstlen = ncopies[i].dstlen;
-		struct string_funs* funs = & string_funs[widechar];
 		BYTE* source = (widechar
 		                ? (BYTE*)ncopies[i].strings.wchars.source
 		                : ncopies[i].strings.bytes.source);
@@ -479,7 +377,7 @@ BOOL test_ncopy()
 		                  ? (BYTE*)ncopies[i].strings.wchars.expected
 		                  : ncopies[i].strings.bytes.expected);
 		memcpy(mestination, destination, width * dstlen);
-		ncopy(funs, mestination, source, srclen);
+		ncopy(widechar, mestination, source, srclen);
 
 		if (0 != memcmp(mestination, expected, width * dstlen))
 		{
@@ -554,7 +452,6 @@ BOOL test_contains()
 	for (i = 0; i < countof(contains_tests); i ++)
 	{
 		int widechar = contains_tests[i].widechar;
-		struct string_funs* funs = & string_funs[widechar];
 		BOOL expected = contains_tests[i].expected;
 		BYTE* string = (widechar
 		                ? (BYTE*)contains_tests[i].strings.wchars.string
@@ -562,7 +459,7 @@ BOOL test_contains()
 		BYTE* substring = (widechar
 		                   ? (BYTE*)contains_tests[i].strings.wchars.substring
 		                   : contains_tests[i].strings.bytes.substring);
-		BOOL result = contains(funs, string, substring);
+		BOOL result = contains(widechar, string, (char *) substring);
 
 		if ((result &&	!expected) || (!result && expected))
 		{
@@ -664,7 +561,6 @@ BOOL test_stringhassubstrings()
 	for (i = 0; i < countof(stringhassubstrings); i ++)
 	{
 		int widechar = stringhassubstrings[i].widechar;
-		struct string_funs* funs = & string_funs[widechar];
 		BOOL expected = stringhassubstrings[i].expected;
 		BYTE* string = (widechar
 		                ? (BYTE*)stringhassubstrings[i].string.wchars
@@ -677,7 +573,7 @@ BOOL test_stringhassubstrings()
 			return FALSE;
 		}
 
-		result = LinkedList_StringHasSubstring(funs, string, list);
+		result = LinkedList_StringHasSubstring(widechar, string, list);
 
 		if ((result &&	!expected) || (!result && expected))
 		{
@@ -729,21 +625,35 @@ string_array_count_strings returns the position of the first empty string, or th
 
 */
 
-int string_array_count_strings(struct string_funs* funs, BYTE* data, int string_count,
-                               int string_size)
+int string_array_count_strings(BOOL widechar, BYTE* data, int string_count, int string_size)
 {
 	int count = 0;
 
 	while (count < string_count)
 	{
-		if (funs->ref(data, 0))
+		if (widechar)
 		{
-			count ++;
-			data = funs->inc(data, string_size);
+			if (*(WCHAR *)data != 0)
+			{
+				count ++;
+				data = (BYTE *)((WCHAR *)data + string_size);
+			}
+			else
+			{
+				return count;
+			}
 		}
 		else
 		{
-			return count;
+			if (*data != 0)
+			{
+				count ++;
+				data += string_size;
+			}
+			else
+			{
+				return count;
+			}
 		}
 	}
 
@@ -751,11 +661,11 @@ int string_array_count_strings(struct string_funs* funs, BYTE* data, int string_
 }
 
 
-BYTE** string_array_to_string_list(struct string_funs* funs, BYTE* data, int string_count,
+BYTE** string_array_to_string_list(BOOL widechar, BYTE* data, int string_count,
                                    int string_size)
 {
 	int i;
-	int count = string_array_count_strings(funs, data, string_count, string_size);
+	int count = string_array_count_strings(widechar, data, string_count, string_size);
 	BYTE** list = calloc(count + 1, sizeof(list[0]));
 
 	if (!list)
@@ -767,7 +677,14 @@ BYTE** string_array_to_string_list(struct string_funs* funs, BYTE* data, int str
 	for (i = 0; i < count; i ++)
 	{
 		list[i] = data;
-		data = funs->inc(data, string_size);
+		if (widechar)
+		{
+			data = (BYTE *)((WCHAR *)data + string_size);
+		}
+		else
+		{
+			data += string_size;
+		}
 	}
 
 	list[i] = 0;
@@ -793,18 +710,31 @@ the string list as a Microsoft double-null-terminated string list.
 It's the sum of the size of all the strings (included the terminating null)
 in the list (plus the final terminating null).
 */
-int string_list_size(struct string_funs* funs, BYTE** list)
+int string_list_size(BOOL widechar, BYTE** list)
 {
 	int size = 0;
 	int i;
 
-	for (i = 0; list[i]; i ++)
+	if (widechar)
 	{
-		size += 1 + funs->len(list[i]);
+		for (i = 0; list[i]; i ++)
+		{
+			size += 1 + lstrlenW((WCHAR *)list[i]);
+		}
+
+		size ++ ;
+		size *= sizeof(WCHAR);
+	}
+	else
+	{
+		for (i = 0; list[i]; i ++)
+		{
+			size += 1 + strlen((char *)list[i]);
+		}
+
+		size ++ ;
 	}
 
-	size ++ ;
-	size *= funs->size();
 	return size;
 }
 
@@ -821,26 +751,31 @@ int convert_from_unicode(void* source, void** destination)
 typedef int (* convert_pr)(void* source, void** destination);
 typedef int (*length_pr)(void*);
 
-BOOL string_list_to_msz(struct string_funs* funs, BYTE** list, BOOL widechar, LPSTR*   mszString,
+int no_conversion(void * source, void ** destination)
+{
+	*destination = strdup(source);
+	return strlen(source);
+}
+
+BOOL string_list_to_msz(BOOL input_widechar, BYTE** list, BOOL output_widechar, LPSTR*   mszString,
                         DWORD* cchStrings)
 {
 	int count = string_list_length((const char * const*)list);
 	int total_size;
-	int input_width = funs->size();
-	int output_width = widechar ? sizeof(WCHAR) : sizeof(BYTE);
-	convert_pr convert = widechar ? convert_to_unicode : convert_from_unicode;;
+	int input_width = input_widechar ? sizeof(WCHAR) : sizeof(BYTE);
+	int output_width = output_widechar ? sizeof(WCHAR) : sizeof(BYTE);
+	convert_pr convert = output_widechar ? convert_to_unicode : no_conversion;
 	BOOL templist_allocated = FALSE;
 	void** templist = 0;
-	length_pr templen = widechar ? (length_pr)lstrlenW : (length_pr)lstrlenA;
+	length_pr templen = output_widechar ? (length_pr)lstrlenW : (length_pr)lstrlenA;
 	LPSTR mszDest;
 	LPSTR current;
 	int i;
 
 	if (output_width == input_width)
 	{
-		total_size = string_list_size(funs, list);
+		total_size = string_list_size(input_widechar, list);
 		templist = (void**)list;
-		templen = (length_pr)funs->len;
 	}
 	else
 	{
@@ -889,7 +824,7 @@ BOOL string_list_to_msz(struct string_funs* funs, BYTE** list, BOOL widechar, LP
 	}
 
 	(*mszString) = mszDest;
-	(*cchStrings) = 1 + (current - mszDest) / funs->size();
+	(*cchStrings) = 1 + (current - mszDest) / output_width;
 	return TRUE;
 }
 
@@ -1037,7 +972,6 @@ BOOL test_mszfilterstrings()
 	for (i = 0; i < countof(mszfilterstrings); i ++)
 	{
 		int widechar = mszfilterstrings[i].widechar;
-		struct string_funs* funs = & string_funs[widechar];
 		char** filter_list = (char**)mszfilterstrings[i].filter_list;
 		DWORD cchInput = 0;
 		BYTE* input;
@@ -1054,7 +988,7 @@ BOOL test_mszfilterstrings()
 		if (widechar)
 		{
 			BYTE** list;
-			list = string_array_to_string_list(funs, (BYTE*)&mszfilterstrings[i].input.wchars,
+			list = string_array_to_string_list(widechar, (BYTE*)&mszfilterstrings[i].input.wchars,
 			                                   mszfilterstrings_string_count, mszfilterstrings_string_size);
 
 			if (!list)
@@ -1062,9 +996,9 @@ BOOL test_mszfilterstrings()
 				return FALSE;
 			}
 
-			string_list_to_msz(funs, list, widechar, (LPSTR*)& input, & cchInput);
+			string_list_to_msz(widechar, list, widechar, (LPSTR*)& input, & cchInput);
 			free(list);
-			list = string_array_to_string_list(funs, (BYTE*)&mszfilterstrings[i].output.wchars,
+			list = string_array_to_string_list(widechar, (BYTE*)&mszfilterstrings[i].output.wchars,
 			                                   mszfilterstrings_string_count, mszfilterstrings_string_size);
 
 			if (!list)
@@ -1072,13 +1006,13 @@ BOOL test_mszfilterstrings()
 				return FALSE;
 			}
 
-			string_list_to_msz(funs, list, widechar, (LPSTR*)& output, & cchOutput);
+			string_list_to_msz(widechar, list, widechar, (LPSTR*)& output, & cchOutput);
 			free(list);
 		}
 		else
 		{
 			BYTE** list;
-			list = string_array_to_string_list(funs, (BYTE*)&mszfilterstrings[i].input.bytes,
+			list = string_array_to_string_list(widechar, (BYTE*)&mszfilterstrings[i].input.bytes,
 			                                   mszfilterstrings_string_count, mszfilterstrings_string_size);
 
 			if (!list)
@@ -1086,9 +1020,9 @@ BOOL test_mszfilterstrings()
 				return FALSE;
 			}
 
-			string_list_to_msz(funs, list, widechar, (LPSTR*)& input, & cchInput);
+			string_list_to_msz(widechar, list, widechar, (LPSTR*)& input, & cchInput);
 			free(list);
-			list = string_array_to_string_list(funs, (BYTE*)&mszfilterstrings[i].output.bytes,
+			list = string_array_to_string_list(widechar, (BYTE*)&mszfilterstrings[i].output.bytes,
 			                                   mszfilterstrings_string_count, mszfilterstrings_string_size);
 
 			if (!list)
@@ -1096,17 +1030,17 @@ BOOL test_mszfilterstrings()
 				return FALSE;
 			}
 
-			string_list_to_msz(funs, list, widechar, (LPSTR*)& output, & cchOutput);
+			string_list_to_msz(widechar, list, widechar, (LPSTR*)& output, & cchOutput);
 			free(list);
 		}
 
 		mszFilterStrings(widechar, (LPSTR)input, & cchInput, list);
 		size = mszSize(widechar, input);
 
-		if (cchInput != size / funs->size())
+		if (cchInput != size / (widechar?sizeof (WCHAR):sizeof (char)))
 		{
-			FAILURE("[%d] after mszFilterStrings,  cchInput = %d should be	equal to mszSize(widechar, input) / funs->size() = %d\n",
-			        i, cchInput, size / funs->size());
+			FAILURE("[%d] after mszFilterStrings,  cchInput = %d should be	equal to mszSize(widechar, input) / (widechar?sizeof(WCHAR):sizeof(char)) = %d\n",
+			        i, cchInput, size / (widechar?sizeof (WCHAR):sizeof (char)));
 		}
 
 		if (cchInput != cchOutput)
@@ -1223,7 +1157,6 @@ BOOL test_mszStrings_Enumerator()
 	{
 		int widechar = mszstring_enumerator_tests[i].widechar;
 		int count = mszstring_enumerator_tests[i].count;
-		struct string_funs* funs = & string_funs[widechar];
 		DWORD cchString = 0;
 		BYTE* mszString;
 		mszStrings_Enumerator enumerator;
@@ -1233,13 +1166,13 @@ BOOL test_mszStrings_Enumerator()
 
 		if (widechar)
 		{
-			list = string_array_to_string_list(funs, (BYTE*)&mszstring_enumerator_tests[i].string.wchars,
+			list = string_array_to_string_list(widechar, (BYTE*)&mszstring_enumerator_tests[i].string.wchars,
 			                                   mszstring_enumerator_string_count,
 			                                   mszstring_enumerator_string_size);
 		}
 		else
 		{
-			list = string_array_to_string_list(funs, (BYTE*)&mszstring_enumerator_tests[i].string.bytes,
+			list = string_array_to_string_list(widechar, (BYTE*)&mszstring_enumerator_tests[i].string.bytes,
 			                                   mszstring_enumerator_string_count,
 			                                   mszstring_enumerator_string_size);
 		}
@@ -1249,13 +1182,13 @@ BOOL test_mszStrings_Enumerator()
 			return FALSE;
 		}
 
-		string_list_to_msz(funs, list, widechar, (LPSTR*)& mszString, & cchString);
+		string_list_to_msz(widechar, list, widechar, (LPSTR*)& mszString, & cchString);
 		size = mszSize(widechar, mszString);
 
-		if (cchString != size / funs->size())
+		if (cchString != size / (widechar?sizeof (WCHAR):sizeof (char)))
 		{
-			FAILURE("[%d] after string_list_to_msz,	 cchString = %d should be  equal to mszSize(widechar, mszString) / funs->size() = %d\n",
-			        i, cchString, size / funs->size());
+			FAILURE("[%d] after string_list_to_msz,	 cchString = %d should be  equal to mszSize(widechar, mszString) / (widechar?sizeof(WCHAR):sizeof(char)) = %d\n",
+			        i, cchString, size / (widechar?sizeof (WCHAR):sizeof (char)));
 		}
 
 		mszStrings_Enumerator_Reset(&enumerator, widechar, mszString);
@@ -1292,14 +1225,6 @@ BOOL test_mszStrings_Enumerator()
 int TestStr(int argc, char* argv[])
 {
 	BOOL success = TRUE;
-	success &= test_aref();
-	success &= test_wref();
-	success &= test_aset();
-	success &= test_wset();
-	success &= test_alen();
-	success &= test_wlen();
-	success &= test_ainc();
-	success &= test_winc();
 	success &= test_compare();
 	success &= test_ncompare();
 	success &= test_ncopy();
