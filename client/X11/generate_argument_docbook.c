@@ -52,8 +52,10 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 				}
 
 				if (format)
+					/* coverity[buffer_size] */
 					strncpy(&tmp[cs], "<replaceable>", len);
 				else
+					/* coverity[buffer_size] */
 					strncpy(&tmp[cs], "&lt;", len);
 
 				cs += len;
@@ -71,8 +73,10 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 				}
 
 				if (format)
+					/* coverity[buffer_size] */
 					strncpy(&tmp[cs], "</replaceable>", len);
 				else
+					/* coverity[buffer_size] */
 					strncpy(&tmp[cs], "&lt;", len);
 
 				cs += len;
