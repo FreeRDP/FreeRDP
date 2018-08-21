@@ -577,7 +577,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 		            settings->DesktopPosY);
 	}
 
-	window->floatbar = xf_floatbar_new(xfc, window->handle, window->width);
+	window->floatbar = xf_floatbar_new(xfc, window->handle, xfc->workArea.width);
 	xf_SetWindowTitleText(xfc, window->handle, name);
 	return window;
 }
