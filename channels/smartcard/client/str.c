@@ -47,37 +47,6 @@ char*	tochar(WCHAR* string)
 }
 
 
-int compare(BOOL widechar, void* string, void* other_string)
-{
-	if (widechar)
-	{
-		WCHAR * wother = towide(other_string);
-		if (wother)
-		{
-			WCHAR * a = (WCHAR *)string;
-			WCHAR * b = wother;
-			int result;
-			while ((*a != 0) && (*a == *b))
-			{
-				a ++;
-				b ++;
-			}
-			result = (*a == *b)? 0 : ((*a < *b)? -1 : +1);
-			free(wother);
-			return result;
-		}
-		else
-		{
-			return -1;
-		}
-	}
-	else
-	{
-		int result = strcmp((char *)string, (char *)other_string);
-		return (result == 0)? 0 : ((result < 0)? -1 : +1);
-	}
-}
-
 int ncompare(BOOL widechar, void* string, void* other_string, int max)
 {
 	if (widechar)
@@ -262,28 +231,6 @@ BOOL mszStrings_Enumerator_MoveNext(mszStrings_Enumerator*  enumerator)
 void* mszStrings_Enumerator_Current(mszStrings_Enumerator*  enumerator)
 {
 	return enumerator->state;
-}
-
-void mszStringsPrint(FILE* output, BOOL widechar, void* mszStrings)
-{
-	mszStrings_Enumerator enumerator;
-	mszStrings_Enumerator_Reset(&enumerator, widechar, mszStrings);
-
-	while (mszStrings_Enumerator_MoveNext(& enumerator))
-	{
-		void* 	current = mszStrings_Enumerator_Current(& enumerator);
-
-		if (widechar)
-		{
-			char* printable = tochar(current);
-			fprintf(output, "%s\n", printable);
-			free(printable);
-		}
-		else
-		{
-			fprintf(output, "%s\n", current);
-		}
-	}
 }
 
 void mszStringsLog(const char* prefix, BOOL widechar, void* mszStrings)
