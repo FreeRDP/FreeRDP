@@ -81,6 +81,7 @@ static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 
 	memcpy(&udpAppender->targetAddr, result->ai_addr, result->ai_addrlen);
 	udpAppender->targetAddrLen = (int) result->ai_addrlen;
+	freeaddrinfo(result);
 	return TRUE;
 }
 
