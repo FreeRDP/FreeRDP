@@ -545,6 +545,29 @@ static void xf_floatbar_event_focusout(xfContext* xfc, XEvent* event)
 	XFreeCursor(xfc->display, cursor);
 }
 
+BOOL xf_floatbar_check_event(xfContext* xfc, XEvent* event)
+{
+	xfFloatbar* floatbar;
+	xfFloatbarButton* button;
+	int i, size;
+	floatbar = xfc->window->floatbar;
+
+	if (event->xany.window == floatbar->handle)
+		return TRUE;
+
+	size = ARRAYSIZE(floatbar->buttons);
+
+	for (i = 0; i < size; i++)
+	{
+		button = floatbar->buttons[i];
+
+		if (event->xany.window == button->handle)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 BOOL xf_floatbar_event_process(xfContext* xfc, XEvent* event)
 {
 	xfFloatbar* floatbar;

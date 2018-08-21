@@ -1014,6 +1014,12 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		}
 	}
 
+	if (xfc->floatbar && xf_floatbar_check_event(xfc, event))
+	{
+		xf_floatbar_event_process(xfc, event);
+		return TRUE;
+	}
+
 	xf_event_execute_action_script(xfc, event);
 
 	if (event->type != MotionNotify)
@@ -1110,7 +1116,6 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 
 	xf_cliprdr_handle_xevent(xfc, event);
 	xf_input_handle_event(xfc, event);
-	xf_floatbar_event_process(xfc, event);
 	XSync(xfc->display, FALSE);
 	return status;
 }
