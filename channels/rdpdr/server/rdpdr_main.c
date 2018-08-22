@@ -1263,7 +1263,7 @@ static UINT rdpdr_server_start(RdpdrServerContext* context)
 	}
 
 	if (!(context->priv->Thread = CreateThread(NULL, 0,
-								  rdpdr_server_thread, (void*) context, 0, NULL)))
+	                              rdpdr_server_thread, (void*) context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(context->priv->StopEvent);
