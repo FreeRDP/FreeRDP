@@ -684,11 +684,12 @@ UwacReturnCode UwacWindowSetFullscreenState(UwacWindow* window, UwacOutput* outp
 	}
 	else if (window->shell_surface)
 	{
-		if (isFullscreen) {
+		if (isFullscreen)
+		{
 			wl_shell_surface_set_fullscreen(window->shell_surface,
-							WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT,
-							0,
-							output ? output->output : NULL);
+			                                WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT,
+			                                0,
+			                                output ? output->output : NULL);
 		}
 		else
 		{
