@@ -73,6 +73,17 @@ struct xf_floatbar
 	Window handle;
 };
 
+struct xf_floatbar_button
+{
+	int x;
+	int y;
+	int type;
+	bool focus;
+	bool clicked;
+	OnClick onclick;
+	Window handle;
+};
+
 static void xf_floatbar_button_onclick_close(xfContext* xfc)
 {
 	ExitProcess(EXIT_SUCCESS);
@@ -95,6 +106,14 @@ static void xf_floatbar_button_onclick_locked(xfContext* xfc)
 	floatbar->locked = (floatbar->locked) ? FALSE : TRUE;
 }
 
+void xf_floatbar_set_root_y(xfContext* xfc, int y)
+{
+	xfFloatbar* floatbar;
+	floatbar = xfc->window->floatbar;
+
+	floatbar->last_motion_y_root = y;
+}
+
 void xf_floatbar_hide_and_show(xfContext* xfc)
 {
 	xfFloatbar* floatbar;
@@ -103,7 +122,7 @@ void xf_floatbar_hide_and_show(xfContext* xfc)
 	if (!floatbar->locked)
 	{
 		if ((floatbar->mode == 0) && (floatbar->last_motion_y_root > 10) &&
-		    (floatbar->y < (FLOATBAR_HEIGHT * -1)))
+		    (floatbar->y > (FLOATBAR_HEIGHT * -1)))
 		{
 			floatbar->y = floatbar->y - 1;
 			XMoveWindow(xfc->display, floatbar->handle, floatbar->x, floatbar->y);

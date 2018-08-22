@@ -366,6 +366,9 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, XEvent* event, BOOL app)
 	if (xfc->use_xinput)
 		return TRUE;
 
+	if(xfc->floatbar && !(app))
+		xf_floatbar_set_root_y(xfc, event->xmotion.y);
+
 	return xf_generic_MotionNotify(xfc, event->xmotion.x, event->xmotion.y,
 	                               event->xmotion.state, event->xmotion.window, app);
 }
