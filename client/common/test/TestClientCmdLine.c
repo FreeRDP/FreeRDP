@@ -386,7 +386,17 @@ static test tests[] =
 	},
 	{
 		0, check_settings_smartcard_redirect_all,
+		{"xfreerdp", "/smartcard:,Xiring",  "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
+		0, check_settings_smartcard_redirect_all,
 		{"xfreerdp",  "/smartcard:Xiring", "/smartcard", "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
+		0, check_settings_smartcard_redirect_all,
+		{"xfreerdp", "/smartcard:Xiring,",  "/v:test.freerdp.com", 0},
 		{{0}}
 	},
 	{
@@ -400,13 +410,28 @@ static test tests[] =
 		{{0}}
 	},
 	{
+		0,  check_settings_smartcard_redirect_one,
+		{"xfreerdp", "/smartcard:Xiring,Xiring",  "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
 		0,  check_settings_smartcard_redirect_two,
 		{"xfreerdp", "/smartcard:Xiring", "/smartcard:NeoWave" ,  "/v:test.freerdp.com", 0},
 		{{0}}
 	},
 	{
 		0,  check_settings_smartcard_redirect_two,
+		{"xfreerdp", "/smartcard:Xiring,NeoWave" ,  "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
+		0,  check_settings_smartcard_redirect_two,
 		{"xfreerdp", "/smartcard:Xiring", "/smartcard:NeoWave", "/smartcard:Xiring", "/smartcard:NeoWave", "/v:test.freerdp.com", 0},
+		{{0}}
+	},
+	{
+		0,  check_settings_smartcard_redirect_two,
+		{"xfreerdp", "/smartcard:Xiring,NeoWave,Xiring,NeoWave", "/v:test.freerdp.com", 0},
 		{{0}}
 	},
 
