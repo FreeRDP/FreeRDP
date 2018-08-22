@@ -17,7 +17,7 @@
 	do{								\
 		printref();						\
 		printf(" FAILURE ");					\
-		printf(format, __VA_ARGS__);				\
+		printf(format, ##__VA_ARGS__);				\
 		fflush(stdout);						\
 	}while(0)
 
@@ -39,7 +39,7 @@
 
 
 
-#define countof(a)  (sizeof (a) / sizeof (a[0]))
+#define countof(a)                (sizeof (a) / sizeof (a[0]))
 #define no_convert(src, dst)	  dst = (BYTE *)src
 #define no_free(p)		  (void)p
 #define convert_to_utf8(src, dst) ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)src, -1,(CHAR * *) &dst, 0, NULL, NULL)
@@ -731,7 +731,7 @@ BOOL string_list_to_msz(BOOL input_widechar, BYTE** list, BOOL output_widechar, 
 	}
 
 	(*mszString) = mszDest;
-	(*cchStrings) = 1 + (current - mszDest) / output_width;
+	(*cchStrings) = (current - mszDest) + output_width;
 	return TRUE;
 }
 
@@ -784,16 +784,16 @@ static struct
 		{ "82", "42", 0},
 		{
 			.wchars = { {'X', 'i', 'r', 'i', 'n', 'g', ' ', '8', '2', '8', '2', 0},
-				{'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
-				{'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
-				{0}
-			}
+				    {'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
+				    {'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
+				    {0}
+			} //  size = 76
 		},
 		{
 			.wchars = { {'X', 'i', 'r', 'i', 'n', 'g', ' ', '8', '2', '8', '2', 0},
-				{'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
-				{0}
-			}
+				    {'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
+				    {0}
+			} // size = 52
 		}
 	},
 	{
@@ -801,16 +801,16 @@ static struct
 		{ "Xiring", 0},
 		{
 			.wchars = { {'X', 'i', 'r', 'i', 'n', 'g', ' ', '8', '2', '8', '2', 0},
-				{'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
-				{'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
-				{0}
-			}
+				    {'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
+				    {'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
+				    {0}
+			} //  size = 76
 		},
 		{
 			.wchars = { {'X', 'i', 'r', 'i', 'n', 'g', ' ', '8', '2', '8', '2', 0},
-				{'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
-				{0}
-			}
+				    {'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
+				    {0}
+			} // size = 50
 		}
 	},
 	{
@@ -818,14 +818,14 @@ static struct
 		{ "NeoWave", 0},
 		{
 			.wchars = { {'X', 'i', 'r', 'i', 'n', 'g', ' ', '8', '2', '8', '2', 0},
-				{'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
-				{'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
-				{0}
+				    {'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
+				    {'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
+				    {0}
 			}
 		},
 		{
 			.wchars = { {'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
-				{0}
+				    {0}
 			}
 		}
 	},
@@ -834,14 +834,14 @@ static struct
 		{ "5555", 0},
 		{
 			.wchars = { {'X', 'i', 'r', 'i', 'n', 'g', ' ', '8', '2', '8', '2', 0},
-				{'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
-				{'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
-				{0}
+				    {'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
+				    {'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
+				    {0}
 			}
 		},
 		{
 			.wchars = { {'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
-				{0}
+				    {0}
 			}
 		}
 	},
@@ -850,16 +850,16 @@ static struct
 		{ "", 0},
 		{
 			.wchars = { {'X', 'i', 'r', 'i', 'n', 'g', ' ', '8', '2', '8', '2', 0},
-				{'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
-				{'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
-				{0}
+				    {'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
+				    {'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
+				    {0}
 			}
 		},
 		{
 			.wchars = { {'X', 'i', 'r', 'i', 'n', 'g', ' ', '8', '2', '8', '2', 0},
-				{'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
-				{'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
-				{0}
+				    {'X', 'i', 'r', 'i', 'n', 'g', ' ', '5', '5', '5', '5', 0},
+				    {'N', 'e', 'o', 'W', 'a', 'v', 'e', ' ', '4', '2', '4', '2', 0},
+				    {0}
 			}
 		}
 	}
@@ -941,13 +941,14 @@ BOOL test_mszfilterstrings()
 			free(list);
 		}
 
+		cchInput = mszSize(widechar, input);
 		mszFilterStrings(widechar, (LPSTR)input, & cchInput, list);
 		size = mszSize(widechar, input);
 
-		if (cchInput != size / (widechar?sizeof (WCHAR):sizeof (char)))
+		if (cchInput != size)
 		{
-			FAILURE("[%d] after mszFilterStrings,  cchInput = %d should be	equal to mszSize(widechar, input) / (widechar?sizeof(WCHAR):sizeof(char)) = %d\n",
-			        i, cchInput, size / (widechar?sizeof (WCHAR):sizeof (char)));
+			FAILURE("[%d] after mszFilterStrings,  cchInput = %d should be	equal to mszSize(widechar, input) = %d\n",
+			        i, cchInput, size);
 		}
 
 		if (cchInput != cchOutput)
@@ -1054,6 +1055,39 @@ static struct
 	}
 };
 
+static int len(BOOL widechar, void * string)
+{
+	if (widechar)
+	{
+		return lstrlenW(string);
+	}
+	else
+	{
+		return strlen(string);
+	}
+}
+
+int cmp(BOOL widechar, void* astring, void* bstring)
+{
+	if (widechar)
+	{
+		WCHAR * a = (WCHAR *)astring;
+		WCHAR * b = (WCHAR *)bstring;
+		int result;
+		while ((*a != 0) && (*a == *b))
+		{
+			a ++;
+			b ++;
+		}
+		result = ((*a == *b)) ? 0 : ((*a < *b)? -1 : +1);
+		return result;
+	}
+	else
+	{
+		int result = strcmp(astring, bstring);
+		return (result == 0)? 0 : ((result < 0)? -1 : +1);
+	}
+}
 
 BOOL test_mszStrings_Enumerator()
 {
@@ -1092,10 +1126,10 @@ BOOL test_mszStrings_Enumerator()
 		string_list_to_msz(widechar, list, widechar, (LPSTR*)& mszString, & cchString);
 		size = mszSize(widechar, mszString);
 
-		if (cchString != size / (widechar?sizeof (WCHAR):sizeof (char)))
+		if (cchString != size)
 		{
-			FAILURE("[%d] after string_list_to_msz,	 cchString = %d should be  equal to mszSize(widechar, mszString) / (widechar?sizeof(WCHAR):sizeof(char)) = %d\n",
-			        i, cchString, size / (widechar?sizeof (WCHAR):sizeof (char)));
+			FAILURE("[%d] after string_list_to_msz,	 cchString = %d should be  equal to mszSize(widechar, mszString) = %d\n",
+			        i, cchString, size);
 		}
 
 		mszStrings_Enumerator_Reset(&enumerator, widechar, mszString);
@@ -1103,9 +1137,11 @@ BOOL test_mszStrings_Enumerator()
 
 		while (mszStrings_Enumerator_MoveNext(& enumerator))
 		{
-			if (list[k] != mszStrings_Enumerator_Current(& enumerator))
+			if (cmp(widechar, list[k], mszStrings_Enumerator_Current(& enumerator))!= 0)
 			{
 				FAILURE("[%d] mszString[ %d ] != list[ %d ]\n", i, k, k);
+				printf(" mszString[ %d ] =  ", k); memdump(mszStrings_Enumerator_Current(& enumerator), len(widechar, mszStrings_Enumerator_Current(& enumerator))); printf("\n");
+				printf("      list[ %d ] =  ", k); memdump(list[k], len(widechar, list[k])); printf("\n");
 			}
 
 			k ++ ;
@@ -1126,6 +1162,49 @@ BOOL test_mszStrings_Enumerator()
 }
 
 
+static struct
+{
+	WCHAR msz[32];
+	int msz_size;
+	char expected[32];
+	int expected_size;
+}   convert_from_unicode_on_msz_test =
+{
+	.msz = {'H', 'e', 'l', 'l', 'o', 0, 'W', 'o', 'r', 'l', 'd', 0, 0},
+	.msz_size = 13,
+	.expected = "Hello\0World\0",
+	.expected_size = 13,
+};
+
+BOOL test_ConvertFromUnicode_on_msz()
+{
+	char * result;
+	int result_size = ConvertFromUnicode(CP_UTF8, 0,
+		(WCHAR*)convert_from_unicode_on_msz_test.msz,
+		convert_from_unicode_on_msz_test.msz_size * sizeof(WCHAR),
+		&result, 0, NULL, NULL);
+	int actual_result_size = mszSize(false, result);
+	if (actual_result_size != convert_from_unicode_on_msz_test.expected_size)
+	{
+		FAILURE("actual_result_size == %d != %d == expected_size\n",
+			actual_result_size,
+			convert_from_unicode_on_msz_test.expected_size);
+	}
+	else
+	{
+		if (0 != memcmp(convert_from_unicode_on_msz_test.expected, result, actual_result_size))
+		{
+			FAILURE("result differs from expected");
+			printf("\nmsz:      "); memdump(convert_from_unicode_on_msz_test.msz,convert_from_unicode_on_msz_test.msz_size * sizeof(WCHAR));
+			printf("\nresult:   "); memdump(result, result_size);
+			printf("\nresult:   "); memdump(result, actual_result_size);
+			printf("\nexpected: "); memdump(convert_from_unicode_on_msz_test.expected,convert_from_unicode_on_msz_test.expected_size);
+			printf("\n");
+		}
+	}
+
+	return TRUE;
+}
 
 
 
@@ -1138,5 +1217,6 @@ int TestStr(int argc, char* argv[])
 	success &= test_stringhassubstrings();
 	success &= test_mszfilterstrings();
 	success &= test_mszStrings_Enumerator();
+	success &= test_ConvertFromUnicode_on_msz();
 	return success ? 0 : -1;
 }

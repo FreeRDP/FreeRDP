@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include <string.h>
 #include <winpr/string.h>
 #include <freerdp/log.h>
@@ -45,7 +47,6 @@ char*	tochar(WCHAR* string)
 	ConvertFromUnicode(CP_UTF8, 0, string, -1, (CHAR**) &utf8, 0, NULL, NULL);
 	return utf8;
 }
-
 
 int ncompare(BOOL widechar, void* string, void* other_string, int max)
 {
@@ -105,7 +106,6 @@ BOOL contains(BOOL widechar, void* string, char* substring)
 	}
 }
 
-
 void ncopy(BOOL widechar, void* destination, void* source, int count)
 {
 	if (widechar)
@@ -145,53 +145,80 @@ BOOL LinkedList_StringHasSubstring(BOOL widechar, void* string, wLinkedList* lis
 	return FALSE;
 }
 
-void mszFilterStrings(BOOL widechar, void*  mszStrings, DWORD* cchReaders, wLinkedList* substrings)
+static int siz(BOOL widechar)
 {
 	if (widechar)
 	{
-		WCHAR* current = mszStrings;
-		WCHAR* destination = current;
-
-		while (* current != 0)
-		{
-			int size = lstrlenW(current) + 1;
-
-			if (LinkedList_StringHasSubstring(widechar, (BYTE *)current, substrings))
-			{
-				/* Keep it */
-				ncopy(widechar, destination, current, size);
-				destination += size;
-			}
-
-			current += size;
-		}
-
-		ncopy(widechar, destination, current, 1);
-		* cchReaders = 1 + (destination - (WCHAR*)mszStrings);
+		return sizeof(WCHAR);
 	}
 	else
 	{
-		char* current = (char*)mszStrings;
-		char* destination = current;
-
-		while (* current != 0)
-		{
-			int size = strlen(current) + 1;
-
-			if (LinkedList_StringHasSubstring(widechar, (BYTE *)current, substrings))
-			{
-				/* Keep it */
-				ncopy(widechar, destination, current, size);
-				destination += size;
-			}
-
-			current += size;
-		}
-
-		ncopy(widechar, destination, current, 1);
-		* cchReaders = 1 + (destination - (char*)mszStrings);
+		return sizeof(CHAR);
 	}
 }
+
+static int ref(BOOL widechar, void * string)
+{
+	if (widechar)
+	{
+		return *(WCHAR *)string;
+	}
+	else
+	{
+		return *(CHAR *)string;
+	}
+}
+
+static int len(BOOL widechar, void * string)
+{
+	if (widechar)
+	{
+		return lstrlenW(string);
+	}
+	else
+	{
+		return strlen(string);
+	}
+}
+
+void mszFilterStrings(BOOL widechar, void*  mszStrings, DWORD* cchReaders, wLinkedList* substrings)
+{
+	void* current = mszStrings;
+	void* destination = current;
+	int csize =  siz(widechar);
+	while (ref(widechar, current) != 0)
+	{
+		int size = len(widechar, current) + 1;
+
+		if (LinkedList_StringHasSubstring(widechar, current, substrings))
+		{
+			/* Keep it */
+			ncopy(widechar, destination, current, size);
+			destination = (char *)destination + csize * size;
+		}
+
+		current = (char *)current + csize * size;
+	}
+
+	ncopy(widechar, destination, current, 1);
+	* cchReaders = ((char *)destination - (char *)mszStrings) + csize;
+	assert(*cchReaders == mszSize(widechar, mszStrings));
+}
+
+
+int mszSize(BOOL widechar, void* mszStrings)
+{
+	int size = 0;
+	mszStrings_Enumerator enumerator;
+	mszStrings_Enumerator_Reset(&enumerator, widechar, mszStrings);
+	while (mszStrings_Enumerator_MoveNext(& enumerator))
+	{
+		size += len(widechar, mszStrings_Enumerator_Current(& enumerator)) + 1;
+	}
+
+	return (1 + size) * siz(widechar);
+}
+
 
 void mszStrings_Enumerator_Reset(mszStrings_Enumerator* enumerator, BOOL widechar, void* mszStrings)
 {
@@ -202,30 +229,15 @@ void mszStrings_Enumerator_Reset(mszStrings_Enumerator* enumerator, BOOL widecha
 
 BOOL mszStrings_Enumerator_MoveNext(mszStrings_Enumerator*  enumerator)
 {
-	if (enumerator->widechar)
+	if (enumerator->state == 0)
 	{
-		if (enumerator->state == 0)
-		{
-			enumerator->state = enumerator->mszStrings;
-		}
-		else
-		{
-			enumerator->state = ((WCHAR *)enumerator->state) + wcslen(enumerator->state) + 1;
-		}
-		return *((WCHAR *)enumerator->state);
+		enumerator->state = enumerator->mszStrings;
 	}
 	else
 	{
-		if (enumerator->state == 0)
-		{
-			enumerator->state = enumerator->mszStrings;
-		}
-		else
-		{
-			enumerator->state = ((char *)enumerator->state) + strlen(enumerator->state) + 1;
-		}
-		return *((char *)enumerator->state);
+		enumerator->state = ((char *)enumerator->state) + siz(enumerator->widechar) * (len(enumerator->widechar, enumerator->state) + 1);
 	}
+	return 0 != ref(enumerator->widechar, enumerator->state);
 }
 
 void* mszStrings_Enumerator_Current(mszStrings_Enumerator*  enumerator)
@@ -258,30 +270,3 @@ void mszStringsLog(const char* prefix, BOOL widechar, void* mszStrings)
 		}
 	}
 }
-
-int mszSize(BOOL widechar, void* mszStrings)
-{
-	int size = 0;
-	mszStrings_Enumerator enumerator;
-	mszStrings_Enumerator_Reset(&enumerator, widechar, mszStrings);
-
-	if (widechar)
-	{
-		while (mszStrings_Enumerator_MoveNext(& enumerator))
-		{
-			size += wcslen(mszStrings_Enumerator_Current(& enumerator)) + 1;
-		}
-
-		return size * sizeof(WCHAR);
-	}
-	else
-	{
-		while (mszStrings_Enumerator_MoveNext(& enumerator))
-		{
-			size += strlen(mszStrings_Enumerator_Current(& enumerator)) + 1;
-		}
-
-		return size;
-	}
-}
-
