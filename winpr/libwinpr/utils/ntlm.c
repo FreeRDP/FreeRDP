@@ -42,7 +42,8 @@ BYTE* NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 	if (!NtHash && !(NtHash = malloc(WINPR_MD4_DIGEST_LENGTH)))
 		return NULL;
 
-	if (!winpr_Digest(WINPR_MD_MD4, (BYTE*) Password, (size_t) PasswordLength, NtHash, WINPR_MD4_DIGEST_LENGTH))
+	if (!winpr_Digest(WINPR_MD_MD4, (BYTE*) Password, (size_t) PasswordLength, NtHash,
+	                  WINPR_MD4_DIGEST_LENGTH))
 	{
 		if (allocate)
 		{
@@ -62,11 +63,8 @@ BYTE* NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 		return NULL;
 
 	MultiByteToWideChar(CP_ACP, 0, Password, PasswordLength, PasswordW, PasswordLength);
-
 	NtHash = NTOWFv1W(PasswordW, PasswordLength * 2, NtHash);
-
 	free(PasswordW);
-
 	return NtHash;
 }
 
@@ -78,7 +76,7 @@ BYTE* NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash)
  */
 
 BYTE* NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User,
-		UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash)
+               UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash)
 {
 	BYTE* buffer;
 	BYTE NtHashV1[16];
@@ -103,27 +101,25 @@ BYTE* NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User,
 	}
 
 	/* Concatenate(UpperCase(User), Domain) */
-
 	CopyMemory(buffer, User, UserLength);
 	CharUpperBuffW((LPWSTR) buffer, UserLength / 2);
 	CopyMemory(&buffer[UserLength], Domain, DomainLength);
 
 	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
-	if (!winpr_HMAC(WINPR_MD_MD5, NtHashV1, 16, buffer, UserLength + DomainLength, NtHash, WINPR_MD4_DIGEST_LENGTH))
+	if (!winpr_HMAC(WINPR_MD_MD5, NtHashV1, 16, buffer, UserLength + DomainLength, NtHash,
+	                WINPR_MD4_DIGEST_LENGTH))
 		result = NULL;
 
 	free(buffer);
-
 	return result;
 }
 
 BYTE* NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User,
-		UINT32 UserLength, LPSTR Domain, UINT32 DomainLength, BYTE* NtHash)
+               UINT32 UserLength, LPSTR Domain, UINT32 DomainLength, BYTE* NtHash)
 {
 	LPWSTR UserW = NULL;
 	LPWSTR DomainW = NULL;
 	LPWSTR PasswordW = NULL;
-
 	UserW = (LPWSTR) calloc(UserLength, 2);
 	DomainW = (LPWSTR) calloc(DomainLength, 2);
 	PasswordW = (LPWSTR) calloc(PasswordLength, 2);
@@ -134,18 +130,17 @@ BYTE* NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User,
 	MultiByteToWideChar(CP_ACP, 0, User, UserLength, UserW, UserLength);
 	MultiByteToWideChar(CP_ACP, 0, Domain, DomainLength, DomainW, DomainLength);
 	MultiByteToWideChar(CP_ACP, 0, Password, PasswordLength, PasswordW, PasswordLength);
-
-	NtHash = NTOWFv2W(PasswordW, PasswordLength * 2, UserW, UserLength * 2, DomainW, DomainLength * 2, NtHash);
-
+	NtHash = NTOWFv2W(PasswordW, PasswordLength * 2, UserW, UserLength * 2, DomainW, DomainLength * 2,
+	                  NtHash);
 out_fail:
 	free(UserW);
 	free(DomainW);
 	free(PasswordW);
-
 	return NtHash;
 }
 
-BYTE* NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash)
+BYTE* NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Domain,
+                       UINT32 DomainLength, BYTE* NtHash)
 {
 	BYTE* buffer;
 	BYTE* result = NtHash;
@@ -163,7 +158,6 @@ BYTE* NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Do
 	}
 
 	/* Concatenate(UpperCase(User), Domain) */
-
 	CopyMemory(buffer, User, UserLength);
 	CharUpperBuffW((LPWSTR) buffer, UserLength / 2);
 
@@ -173,19 +167,19 @@ BYTE* NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Do
 	}
 
 	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
-	if (!winpr_HMAC(WINPR_MD_MD5, NtHashV1, 16, buffer, UserLength + DomainLength, NtHash, WINPR_MD4_DIGEST_LENGTH))
+	if (!winpr_HMAC(WINPR_MD_MD5, NtHashV1, 16, buffer, UserLength + DomainLength, NtHash,
+	                WINPR_MD4_DIGEST_LENGTH))
 		result = NULL;
 
 	free(buffer);
-
 	return result;
 }
 
-BYTE* NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength, LPSTR Domain, UINT32 DomainLength, BYTE* NtHash)
+BYTE* NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength, LPSTR Domain,
+                       UINT32 DomainLength, BYTE* NtHash)
 {
 	LPWSTR UserW = NULL;
 	LPWSTR DomainW = NULL;
-
 	UserW = (LPWSTR) calloc(UserLength, 2);
 	DomainW = (LPWSTR) calloc(DomainLength, 2);
 
@@ -194,12 +188,9 @@ BYTE* NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength, LPSTR Doma
 
 	MultiByteToWideChar(CP_ACP, 0, User, UserLength, UserW, UserLength);
 	MultiByteToWideChar(CP_ACP, 0, Domain, DomainLength, DomainW, DomainLength);
-
 	NtHash = NTOWFv2FromHashW(NtHashV1, UserW, UserLength * 2, DomainW, DomainLength * 2, NtHash);
-
 out_fail:
 	free(UserW);
 	free(DomainW);
-
 	return NtHash;
 }
