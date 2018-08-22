@@ -139,8 +139,8 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	wStream* s;
 	RDPGFX_AVC420_BITMAP_STREAM h264;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
-
 	s = Stream_New(cmd->data, cmd->length);
+
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
@@ -184,8 +184,8 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	wStream* s;
 	RDPGFX_AVC444_BITMAP_STREAM h264 = { 0 };
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
-
 	s = Stream_New(cmd->data, cmd->length);
+
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
@@ -197,6 +197,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 		error = ERROR_INVALID_DATA;
 		goto fail;
 	}
+
 	Stream_Read_UINT32(s, tmp);
 	h264.cbAvc420EncodedBitstream1 = tmp & 0x3FFFFFFFUL;
 	h264.LC = (tmp >> 30UL) & 0x03UL;
