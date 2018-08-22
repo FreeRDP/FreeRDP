@@ -292,7 +292,6 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyX509Certificate = shw_verify_x509_certificate;
 	settings = instance->settings;
 	shw->settings = instance->context->settings;
-	settings->AsyncTransport = FALSE;
 	settings->AsyncChannels = FALSE;
 	settings->AsyncUpdate = FALSE;
 	settings->AsyncInput = FALSE;

@@ -2554,10 +2554,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->AsyncChannels = arg->Value ? TRUE : FALSE;
 		}
-		CommandLineSwitchCase(arg, "async-transport")
-		{
-			settings->AsyncTransport = arg->Value ? TRUE : FALSE;
-		}
 		CommandLineSwitchCase(arg, "wm-class")
 		{
 			free(settings->WmClass);

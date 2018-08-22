@@ -217,8 +217,6 @@ DWORD mac_client_thread(void* param)
 		while (!freerdp_shall_disconnect(instance))
 		{
 			nCount = nCountBase;
-
-			if (!settings->AsyncTransport)
 			{
 				if (!(nCountTmp = freerdp_get_event_handles(context, &events[nCount],
 				                  16 - nCount)))
@@ -229,7 +227,6 @@ DWORD mac_client_thread(void* param)
 
 				nCount += nCountTmp;
 			}
-
 			status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 			if (status >= (WAIT_OBJECT_0 + nCount))
@@ -252,7 +249,6 @@ DWORD mac_client_thread(void* param)
 				}
 			}
 
-			if (!settings->AsyncTransport)
 			{
 				if (!freerdp_check_event_handles(context))
 				{

@@ -29,9 +29,6 @@
             android:key="bookmark.async_channel"
             android:title="@string/settings_async_channel" />
         <CheckBoxPreference
-            android:key="bookmark.async_transport"
-            android:title="@string/settings_async_transport" />
-        <CheckBoxPreference
             android:key="bookmark.async_update"
             android:title="@string/settings_async_update" />
         <CheckBoxPreference

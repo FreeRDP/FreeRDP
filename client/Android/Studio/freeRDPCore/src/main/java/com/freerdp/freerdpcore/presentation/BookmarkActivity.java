@@ -514,7 +514,6 @@ public class BookmarkActivity extends PreferenceActivity implements
     private void initDebugSettings(SharedPreferences sharedPreferences) {
         debugSettingsChanged(sharedPreferences, "bookmark.debug_level");
         debugSettingsChanged(sharedPreferences, "bookmark.async_channel");
-        debugSettingsChanged(sharedPreferences, "bookmark.async_transport");
         debugSettingsChanged(sharedPreferences, "bookmark.async_update");
         debugSettingsChanged(sharedPreferences, "bookmark.async_input");
     }
@@ -536,10 +535,6 @@ public class BookmarkActivity extends PreferenceActivity implements
         } else if (key.equals("bookmark.async_channel")) {
             boolean enabled = sharedPreferences.getBoolean(key, false);
             Preference pref = findPreference("bookmark.async_channel");
-            pref.setDefaultValue(enabled);
-        } else if (key.equals("bookmark.async_transport")) {
-            boolean enabled = sharedPreferences.getBoolean(key, false);
-            Preference pref = findPreference("bookmark.async_transport");
             pref.setDefaultValue(enabled);
         } else if (key.equals("bookmark.async_update")) {
             boolean enabled = sharedPreferences.getBoolean(key, false);
