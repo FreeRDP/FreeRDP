@@ -135,7 +135,7 @@ SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard,
 	}
 
 	pContext->thread = CreateThread(NULL, 0,
-									smartcard_context_thread,
+	                                smartcard_context_thread,
 	                                pContext, 0, NULL);
 
 	if (!pContext->thread)
@@ -747,7 +747,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
 
 	smartcard->thread = CreateThread(NULL, 0,
-									 smartcard_thread_func,
+	                                 smartcard_thread_func,
 	                                 smartcard, CREATE_SUSPENDED, NULL);
 
 	if (!smartcard->thread)
