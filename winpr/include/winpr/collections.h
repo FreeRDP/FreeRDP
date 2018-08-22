@@ -35,7 +35,9 @@
 extern "C" {
 #endif
 
-typedef void* (*OBJECT_NEW_FN)(void);
+/* We don't know if the new function will require an argument.
+ * Leave the braces empty, C defines that as variable arguments. */
+typedef void* (*OBJECT_NEW_FN)();
 typedef void (*OBJECT_INIT_FN)(void* obj);
 typedef void (*OBJECT_UNINIT_FN)(void* obj);
 typedef void (*OBJECT_FREE_FN)(void* obj);
@@ -222,23 +224,6 @@ WINPR_API void ListDictionary_Free(wListDictionary* listDictionary);
 
 /* System.Collections.Generic.LinkedList<T> */
 
-typedef struct _wLinkedListItem wLinkedListNode;
-
-struct _wLinkedListItem
-{
-	void* value;
-	wLinkedListNode* prev;
-	wLinkedListNode* next;
-};
-
-struct _wLinkedList
-{
-	int count;
-	int initial;
-	wLinkedListNode* head;
-	wLinkedListNode* tail;
-	wLinkedListNode* current;
-};
 typedef struct _wLinkedList wLinkedList;
 
 WINPR_API int LinkedList_Count(wLinkedList* list);
@@ -261,6 +246,8 @@ WINPR_API BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list);
 
 WINPR_API wLinkedList* LinkedList_New(void);
 WINPR_API void LinkedList_Free(wLinkedList* list);
+
+WINPR_API wObject* LinkedList_Object(wLinkedList* list);
 
 /* System.Collections.Generic.KeyValuePair<TKey,TValue> */
 
@@ -299,7 +286,8 @@ typedef struct _wReferenceTable wReferenceTable;
 WINPR_API UINT32 ReferenceTable_Add(wReferenceTable* referenceTable, void* ptr);
 WINPR_API UINT32 ReferenceTable_Release(wReferenceTable* referenceTable, void* ptr);
 
-WINPR_API wReferenceTable* ReferenceTable_New(BOOL synchronized, void* context, REFERENCE_FREE ReferenceFree);
+WINPR_API wReferenceTable* ReferenceTable_New(BOOL synchronized, void* context,
+        REFERENCE_FREE ReferenceFree);
 WINPR_API void ReferenceTable_Free(wReferenceTable* referenceTable);
 
 /* Countdown Event */
@@ -327,7 +315,7 @@ WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
 
 /* Hash Table */
 
-typedef UINT32 (*HASH_TABLE_HASH_FN)(void* key);
+typedef UINT32(*HASH_TABLE_HASH_FN)(void* key);
 typedef BOOL (*HASH_TABLE_KEY_COMPARE_FN)(void* key1, void* key2);
 typedef BOOL (*HASH_TABLE_VALUE_COMPARE_FN)(void* value1, void* value2);
 typedef void* (*HASH_TABLE_KEY_CLONE_FN)(void* key);
@@ -478,7 +466,8 @@ WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
 WINPR_API int MessageQueue_Size(wMessageQueue* queue);
 
 WINPR_API BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message);
-WINPR_API BOOL MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam);
+WINPR_API BOOL MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam,
+                                 void* lParam);
 WINPR_API BOOL MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
 
 WINPR_API int MessageQueue_Get(wMessageQueue* queue, wMessage* message);
@@ -494,7 +483,7 @@ WINPR_API int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL re
  *
  *  \return 0 in case of success or a error code otherwise.
  */
-WINPR_API int MessageQueue_Clear(wMessageQueue *queue);
+WINPR_API int MessageQueue_Clear(wMessageQueue* queue);
 
 /*! \brief Creates a new message queue.
  * 				 If 'callback' is null, no custom cleanup will be done
@@ -508,7 +497,7 @@ WINPR_API int MessageQueue_Clear(wMessageQueue *queue);
  *
  * \return A pointer to a newly allocated MessageQueue or NULL.
  */
-WINPR_API wMessageQueue* MessageQueue_New(const wObject *callback);
+WINPR_API wMessageQueue* MessageQueue_New(const wObject* callback);
 
 /*! \brief Frees resources allocated by a message queue.
  * 				 This function will only free resources allocated
@@ -581,7 +570,7 @@ typedef struct _wEventType wEventType;
 
 #define DEFINE_EVENT_BEGIN(_name) \
 	typedef struct _ ## _name ## EventArgs { \
-	wEventArgs e;
+		wEventArgs e;
 
 #define DEFINE_EVENT_END(_name) \
 	} _name ## EventArgs; \
@@ -592,77 +581,78 @@ typedef struct _wEventType wEventType;
 
 #define DEFINE_EVENT_ENTRY(_name) \
 	{ #_name, { sizeof( _name ## EventArgs) }, 0, { \
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL } },
+		        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
+		        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
+		        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
+		        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL } },
 
-struct _wPubSub
-{
-	CRITICAL_SECTION lock;
-	BOOL synchronized;
+	struct _wPubSub
+	{
+		CRITICAL_SECTION lock;
+		BOOL synchronized;
 
-	int size;
-	int count;
-	wEventType* events;
-};
-typedef struct _wPubSub wPubSub;
+		int size;
+		int count;
+		wEventType* events;
+	};
+	typedef struct _wPubSub wPubSub;
 
-WINPR_API void PubSub_Lock(wPubSub* pubSub);
-WINPR_API void PubSub_Unlock(wPubSub* pubSub);
+	WINPR_API void PubSub_Lock(wPubSub* pubSub);
+	WINPR_API void PubSub_Unlock(wPubSub* pubSub);
 
-WINPR_API wEventType* PubSub_GetEventTypes(wPubSub* pubSub, int* count);
-WINPR_API void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, int count);
-WINPR_API wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName);
+	WINPR_API wEventType* PubSub_GetEventTypes(wPubSub* pubSub, int* count);
+	WINPR_API void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, int count);
+	WINPR_API wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName);
 
-WINPR_API int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler);
-WINPR_API int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler);
+	WINPR_API int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler);
+	WINPR_API int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName,
+	                                 pEventHandler EventHandler);
 
-WINPR_API int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEventArgs* e);
+	WINPR_API int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEventArgs* e);
 
-WINPR_API wPubSub* PubSub_New(BOOL synchronized);
-WINPR_API void PubSub_Free(wPubSub* pubSub);
+	WINPR_API wPubSub* PubSub_New(BOOL synchronized);
+	WINPR_API void PubSub_Free(wPubSub* pubSub);
 
-/* BipBuffer */
+	/* BipBuffer */
 
-struct _wBipBlock
-{
-	size_t index;
-	size_t size;
-};
-typedef struct _wBipBlock wBipBlock;
+	struct _wBipBlock
+	{
+		size_t index;
+		size_t size;
+	};
+	typedef struct _wBipBlock wBipBlock;
 
-struct _wBipBuffer
-{
-	size_t size;
-	BYTE* buffer;
-	size_t pageSize;
-	wBipBlock blockA;
-	wBipBlock blockB;
-	wBipBlock readR;
-	wBipBlock writeR;
-};
-typedef struct _wBipBuffer wBipBuffer;
+	struct _wBipBuffer
+	{
+		size_t size;
+		BYTE* buffer;
+		size_t pageSize;
+		wBipBlock blockA;
+		wBipBlock blockB;
+		wBipBlock readR;
+		wBipBlock writeR;
+	};
+	typedef struct _wBipBuffer wBipBuffer;
 
-WINPR_API BOOL BipBuffer_Grow(wBipBuffer* bb, size_t size);
-WINPR_API void BipBuffer_Clear(wBipBuffer* bb);
+	WINPR_API BOOL BipBuffer_Grow(wBipBuffer* bb, size_t size);
+	WINPR_API void BipBuffer_Clear(wBipBuffer* bb);
 
-WINPR_API size_t BipBuffer_UsedSize(wBipBuffer* bb);
-WINPR_API size_t BipBuffer_BufferSize(wBipBuffer* bb);
+	WINPR_API size_t BipBuffer_UsedSize(wBipBuffer* bb);
+	WINPR_API size_t BipBuffer_BufferSize(wBipBuffer* bb);
 
-WINPR_API BYTE* BipBuffer_WriteReserve(wBipBuffer* bb, size_t size);
-WINPR_API BYTE* BipBuffer_WriteTryReserve(wBipBuffer* bb, size_t size, size_t* reserved);
-WINPR_API void BipBuffer_WriteCommit(wBipBuffer* bb, size_t size);
+	WINPR_API BYTE* BipBuffer_WriteReserve(wBipBuffer* bb, size_t size);
+	WINPR_API BYTE* BipBuffer_WriteTryReserve(wBipBuffer* bb, size_t size, size_t* reserved);
+	WINPR_API void BipBuffer_WriteCommit(wBipBuffer* bb, size_t size);
 
-WINPR_API BYTE* BipBuffer_ReadReserve(wBipBuffer* bb, size_t size);
-WINPR_API BYTE* BipBuffer_ReadTryReserve(wBipBuffer* bb, size_t size, size_t* reserved);
-WINPR_API void BipBuffer_ReadCommit(wBipBuffer* bb, size_t size);
+	WINPR_API BYTE* BipBuffer_ReadReserve(wBipBuffer* bb, size_t size);
+	WINPR_API BYTE* BipBuffer_ReadTryReserve(wBipBuffer* bb, size_t size, size_t* reserved);
+	WINPR_API void BipBuffer_ReadCommit(wBipBuffer* bb, size_t size);
 
-WINPR_API int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size);
-WINPR_API int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size);
+	WINPR_API int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size);
+	WINPR_API int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size);
 
-WINPR_API wBipBuffer* BipBuffer_New(size_t size);
-WINPR_API void BipBuffer_Free(wBipBuffer* bb);
+	WINPR_API wBipBuffer* BipBuffer_New(size_t size);
+	WINPR_API void BipBuffer_Free(wBipBuffer* bb);
 
 #ifdef __cplusplus
 }

@@ -23,6 +23,25 @@
 
 #include <winpr/collections.h>
 
+typedef struct _wLinkedListItem wLinkedListNode;
+
+struct _wLinkedListItem
+{
+	void* value;
+	wLinkedListNode* prev;
+	wLinkedListNode* next;
+};
+
+struct _wLinkedList
+{
+	int count;
+	int initial;
+	wLinkedListNode* head;
+	wLinkedListNode* tail;
+	wLinkedListNode* current;
+	wObject object;
+};
+
 /**
  * C equivalent of the C# LinkedList<T> Class:
  * http://msdn.microsoft.com/en-us/library/he2s3bh7.aspx
@@ -78,21 +97,51 @@ void* LinkedList_Last(wLinkedList* list)
 BOOL LinkedList_Contains(wLinkedList* list, void* value)
 {
 	wLinkedListNode* item;
+	OBJECT_EQUALS_FN keyEquals;
 
 	if (!list->head)
 		return FALSE;
 
 	item = list->head;
+	keyEquals = list->object.fnObjectEquals;
 
 	while (item)
 	{
-		if (item->value == value)
+		if (keyEquals(item->value, value))
 			break;
 
 		item = item->next;
 	}
 
 	return (item) ? TRUE : FALSE;
+}
+
+static wLinkedListNode* LinkedList_FreeNode(wLinkedList* list, wLinkedListNode* node)
+{
+	wLinkedListNode* next = node->next;
+	wLinkedListNode* prev = node->prev;
+
+	if (prev)
+		prev->next = next;
+
+	if (next)
+		next->prev = prev;
+
+	if (node == list->head)
+		list->head = node->next;
+
+	if (node == list->tail)
+		list->tail = node->prev;
+
+	if (list->object.fnObjectUninit)
+		list->object.fnObjectUninit(node);
+
+	if (list->object.fnObjectFree)
+		list->object.fnObjectFree(node);
+
+	free(node);
+	list->count--;
+	return next;
 }
 
 /**
@@ -102,7 +151,6 @@ BOOL LinkedList_Contains(wLinkedList* list, void* value)
 void LinkedList_Clear(wLinkedList* list)
 {
 	wLinkedListNode* node;
-	wLinkedListNode* nextNode;
 
 	if (!list->head)
 		return;
@@ -110,29 +158,39 @@ void LinkedList_Clear(wLinkedList* list)
 	node = list->head;
 
 	while (node)
-	{
-		nextNode = node->next;
-		free(node);
-		node = nextNode;
-	}
+		node = LinkedList_FreeNode(list, node);
 
 	list->head = list->tail = NULL;
 	list->count = 0;
 }
 
+static wLinkedListNode* LinkedList_Create(wLinkedList* list, void* value)
+{
+	wLinkedListNode* node = (wLinkedListNode*) calloc(1, sizeof(wLinkedListNode));
+
+	if (!node)
+		return NULL;
+
+	if (list->object.fnObjectNew)
+		node->value = list->object.fnObjectNew(value);
+	else
+		node->value = value;
+
+	if (list->object.fnObjectInit)
+		list->object.fnObjectInit(node);
+
+	return node;
+}
 /**
  * Adds a new node containing the specified value at the start of the LinkedList.
  */
 
 BOOL LinkedList_AddFirst(wLinkedList* list, void* value)
 {
-	wLinkedListNode* node;
+	wLinkedListNode* node = LinkedList_Create(list, value);
 
-	node = (wLinkedListNode*) malloc(sizeof(wLinkedListNode));
 	if (!node)
 		return FALSE;
-	node->prev = node->next = NULL;
-	node->value = value;
 
 	if (!list->head)
 	{
@@ -155,13 +213,10 @@ BOOL LinkedList_AddFirst(wLinkedList* list, void* value)
 
 BOOL LinkedList_AddLast(wLinkedList* list, void* value)
 {
-	wLinkedListNode* node;
+	wLinkedListNode* node = LinkedList_Create(list, value);
 
-	node = (wLinkedListNode*) malloc(sizeof(wLinkedListNode));
 	if (!node)
 		return FALSE;
-	node->prev = node->next = NULL;
-	node->value = value;
 
 	if (!list->tail)
 	{
@@ -185,33 +240,21 @@ BOOL LinkedList_AddLast(wLinkedList* list, void* value)
 BOOL LinkedList_Remove(wLinkedList* list, void* value)
 {
 	wLinkedListNode* node;
-
+	OBJECT_EQUALS_FN keyEquals;
+	keyEquals = list->object.fnObjectEquals;
 	node = list->head;
 
 	while (node)
 	{
-		if (node->value == value)
+		if (keyEquals(node->value, value))
 		{
-			if (node->prev)
-				node->prev->next = node->next;
-
-			if (node->next)
-				node->next->prev = node->prev;
-
-			if (node == list->head)
-				list->head = node->next;
-
-			if (node == list->tail)
-				list->tail = node->prev;
-
-			free(node);
-
-			list->count--;
+			LinkedList_FreeNode(list, node);
 			return TRUE;
 		}
 
 		node = node->next;
 	}
+
 	return FALSE;
 }
 
@@ -221,27 +264,8 @@ BOOL LinkedList_Remove(wLinkedList* list, void* value)
 
 void LinkedList_RemoveFirst(wLinkedList* list)
 {
-	wLinkedListNode* node;
-
 	if (list->head)
-	{
-		node = list->head;
-
-		list->head = list->head->next;
-
-		if (!list->head)
-		{
-			list->tail = NULL;
-		}
-		else
-		{
-			list->head->prev = NULL;
-		}
-
-		free(node);
-
-		list->count--;
-	}
+		LinkedList_FreeNode(list, list->head);
 }
 
 /**
@@ -250,27 +274,8 @@ void LinkedList_RemoveFirst(wLinkedList* list)
 
 void LinkedList_RemoveLast(wLinkedList* list)
 {
-	wLinkedListNode* node;
-
 	if (list->tail)
-	{
-		node = list->tail;
-
-		list->tail = list->tail->prev;
-
-		if (!list->tail)
-		{
-			list->head = NULL;
-		}
-		else
-		{
-			list->tail->next = NULL;
-		}
-
-		free(node);
-
-		list->count--;
-	}
+		LinkedList_FreeNode(list, list->tail);
 }
 
 /**
@@ -315,15 +320,24 @@ BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list)
 	return TRUE;
 }
 
+static BOOL default_equal_function(void* objA, void* objB)
+{
+	return objA == objB;
+}
+
 /**
  * Construction, Destruction
  */
 
-wLinkedList* LinkedList_New()
+wLinkedList* LinkedList_New(void)
 {
 	wLinkedList* list = NULL;
-
 	list = (wLinkedList*) calloc(1, sizeof(wLinkedList));
+
+	if (list)
+	{
+		list->object.fnObjectEquals = default_equal_function;
+	}
 
 	return list;
 }
@@ -337,3 +351,10 @@ void LinkedList_Free(wLinkedList* list)
 	}
 }
 
+wObject* LinkedList_Object(wLinkedList* list)
+{
+	if (!list)
+		return NULL;
+
+	return &list->object;
+}
