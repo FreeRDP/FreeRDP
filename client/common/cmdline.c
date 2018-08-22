@@ -319,7 +319,6 @@ BOOL redirect_smartcard_device(rdpSettings* settings, const char* name)
 {
 	RDPDR_SMARTCARD* smartcard = 0;
 	char*   filter;
-	printf("%s:%d: %s(\"%s\")\n", __FILE__, __LINE__, __FUNCTION__, name);
 
 	if (all_smartcard_devices_are_redirected(settings))
 	{
@@ -376,12 +375,8 @@ BOOL redirect_smartcard_device(rdpSettings* settings, const char* name)
 
 BOOL redirect_all_smartcard_devices(rdpSettings* settings)
 {
-	printf("%s:%d: %s()\n", __FILE__, __LINE__, __FUNCTION__);
 	return redirect_smartcard_device(settings, "");
 }
-
-
-
 
 BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
                                        char** params)
@@ -497,9 +492,13 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 		}
 		else
 		{
-			if (!redirect_smartcard_device(settings, params[1]))
+			int i;
+			for (i = 1;i < count;i ++ )
 			{
-				return FALSE;
+				if (!redirect_smartcard_device(settings, params[i]))
+				{
+					return FALSE;
+				}
 			}
 		}
 
@@ -755,7 +754,7 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 			{
 				char* dst = (char*)&p[1];
 				p[0] = dst;
-				strncpy(dst, name, len);
+				strcpy(dst, name);
 				*count = 1;
 				return p;
 			}
@@ -909,18 +908,10 @@ static int freerdp_client_command_line_post_filter(void* context,
 	}
 	CommandLineSwitchCase(arg, "smartcard")
 	{
-		/*  /smartcard takes a single optional substring as argument.  */
-		char* p[3] = {0};
-		size_t count = 0;
-		char name[MAX_OPTION_NAME_LENGTH];
-		strcpy(name, arg->Name);
-		p[count++] = name;
-
-		if (arg->Value)
-		{
-			p[count++] = arg->Value;
-		}
-
+		/*  /smartcard takes a possibly empty list of possibly empty strings as argument.  */
+		char** p;
+		size_t count;
+		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Name, arg->Value, &count);
 		status = freerdp_client_add_device_channel(settings, count, p);
 	}
 	CommandLineSwitchCase(arg, "multitouch")
