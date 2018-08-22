@@ -1511,6 +1511,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 	if (dns_names)
 		crypto_cert_dns_names_free(dns_names_count, dns_names_lengths,
 		                           dns_names);
+<<<<<<< HEAD
 
 	if (verification_status > 0)
 	{
@@ -1520,6 +1521,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 	{
 		free(pemCert);
 	}
+=======
+>>>>>>> 0f42fb2d2017402c055cd98ceea5f53d817512fe
 
 	return (verification_status == 0) ? 0 : 1;
 }
