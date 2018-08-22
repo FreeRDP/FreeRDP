@@ -27,14 +27,15 @@
 WCHAR * towide(BYTE* string);
 char *  tochar(WCHAR* string);
 
+
 /**
 ncompare(str, string, other_string, max)
 
 str is the string_funs for the given string.
 string is either a char or wide char string.
 other_string is a char string.
-ringt
-Both  strings are  0-terminated, however  the comparison  ends at  the
+
+Both  strings are  0-terminated, however the comparison ends at the
 index max if the strings are longer.
 Strings are compared case sensitively.
 
@@ -91,7 +92,7 @@ Strings are compared case sensitively.
 mszFilterStrings modifies mszStrings,  removing any string that does not contain at least one of the substrings.
 The total size pointed to by cchStrings is updated.
  */
-void mszFilterStrings(BOOL widechar, void*   mszStrings, DWORD* cchStrings,
+void mszFilterStrings(BOOL widechar, void* mszStrings, DWORD* cchStrings,
                       wLinkedList* substrings);
 
 
