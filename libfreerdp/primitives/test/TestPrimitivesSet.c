@@ -19,23 +19,17 @@
 #include <winpr/sysinfo.h>
 #include "prim_test.h"
 
-static const int MEMSET8_PRETEST_ITERATIONS = 100000000;
-static const int MEMSET32_PRETEST_ITERATIONS = 40000000;
-static const float TEST_TIME = 1.0;
-
-static const int set_sizes[] = { 1, 4, 16, 32, 64, 256, 1024, 4096 };
-#define NUM_SET_SIZES (sizeof(set_sizes)/sizeof(int))
-
 /* ------------------------------------------------------------------------- */
 static BOOL check8(const BYTE* src, UINT32 length, UINT32 offset, BYTE value)
 {
 	UINT32 i;
+
 	for (i = 0; i < length; ++i)
 	{
 		if (src[offset + i] != value)
 		{
 			printf("SET8U FAILED: off=%"PRIu32" len=%"PRIu32" dest[%"PRIu32"]=0x%02"PRIx8"\n",
-				   offset, length, i + offset, src[i + offset]);
+			       offset, length, i + offset, src[i + offset]);
 			return FALSE;
 		}
 	}
@@ -52,11 +46,12 @@ static BOOL test_set8u_func(void)
 	for (off = 0; off < 16; ++off)
 	{
 		UINT32 len;
-
 		memset(dest, 3, sizeof(dest));
+
 		for (len = 1; len < 48 - off; ++len)
 		{
 			status = generic->set_8u(0xa5, dest + off, len);
+
 			if (status != PRIMITIVES_SUCCESS)
 				return FALSE;
 
@@ -68,11 +63,12 @@ static BOOL test_set8u_func(void)
 	for (off = 0; off < 16; ++off)
 	{
 		UINT32 len;
-
 		memset(dest, 3, sizeof(dest));
+
 		for (len = 1; len < 48 - off; ++len)
 		{
 			status = optimized->set_8u(0xa5, dest + off, len);
+
 			if (status != PRIMITIVES_SUCCESS)
 				return FALSE;
 
@@ -91,13 +87,14 @@ static BOOL test_set8u_speed(void)
 	BYTE value;
 	UINT32 x;
 
-	for (x=0; x<16; x++)
+	for (x = 0; x < 16; x++)
 	{
 		winpr_RAND(&value, sizeof(value));
+
 		if (!speed_test("set_8u", "", g_Iterations,
-				(speed_test_fkt)generic->set_8u,
-				(speed_test_fkt)optimized->set_8u,
-				value, dest + x, x))
+		                (speed_test_fkt)generic->set_8u,
+		                (speed_test_fkt)optimized->set_8u,
+		                value, dest + x, x))
 			return FALSE;
 	}
 
@@ -107,12 +104,13 @@ static BOOL test_set8u_speed(void)
 static BOOL check32s(const INT32* src, UINT32 length, UINT32 offset, INT32 value)
 {
 	UINT32 i;
+
 	for (i = 0; i < length; ++i)
 	{
 		if (src[offset + i] != value)
 		{
 			printf("SET8U FAILED: off=%"PRIu32" len=%"PRIu32" dest[%"PRIu32"]=0x%08"PRIx32"\n",
-				   offset, length, i + offset, src[i + offset]);
+			       offset, length, i + offset, src[i + offset]);
 			return FALSE;
 		}
 	}
@@ -131,11 +129,12 @@ static BOOL test_set32s_func(void)
 	for (off = 0; off < 16; ++off)
 	{
 		UINT32 len;
-
 		memset(dest, 0, sizeof(dest));
+
 		for (len = 1; len < 48 - off; ++len)
 		{
 			status = generic->set_32s(value, dest + off, len);
+
 			if (status != PRIMITIVES_SUCCESS)
 				return FALSE;
 
@@ -147,11 +146,12 @@ static BOOL test_set32s_func(void)
 	for (off = 0; off < 16; ++off)
 	{
 		UINT32 len;
-
 		memset(dest, 0, sizeof(dest));
+
 		for (len = 1; len < 48 - off; ++len)
 		{
 			status = optimized->set_32s(value, dest + off, len);
+
 			if (status != PRIMITIVES_SUCCESS)
 				return FALSE;
 
@@ -166,12 +166,13 @@ static BOOL test_set32s_func(void)
 static BOOL check32u(const UINT32* src, UINT32 length, UINT32 offset, UINT32 value)
 {
 	UINT32 i;
+
 	for (i = 0; i < length; ++i)
 	{
 		if (src[offset + i] != value)
 		{
 			printf("SET8U FAILED: off=%"PRIu32" len=%"PRIu32" dest[%"PRIu32"]=0x%08"PRIx32"\n",
-				   offset, length, i + offset, src[i + offset]);
+			       offset, length, i + offset, src[i + offset]);
 			return FALSE;
 		}
 	}
@@ -190,11 +191,12 @@ static BOOL test_set32u_func(void)
 	for (off = 0; off < 16; ++off)
 	{
 		UINT32 len;
-
 		memset(dest, 0, sizeof(dest));
+
 		for (len = 1; len < 48 - off; ++len)
 		{
 			status = generic->set_32u(value, dest + off, len);
+
 			if (status != PRIMITIVES_SUCCESS)
 				return FALSE;
 
@@ -206,11 +208,12 @@ static BOOL test_set32u_func(void)
 	for (off = 0; off < 16; ++off)
 	{
 		UINT32 len;
-
 		memset(dest, 0, sizeof(dest));
+
 		for (len = 1; len < 48 - off; ++len)
 		{
 			status = optimized->set_32u(value, dest + off, len);
+
 			if (status != PRIMITIVES_SUCCESS)
 				return FALSE;
 
@@ -229,13 +232,14 @@ static BOOL test_set32u_speed(void)
 	BYTE value;
 	UINT32 x;
 
-	for (x=0; x<16; x++)
+	for (x = 0; x < 16; x++)
 	{
 		winpr_RAND(&value, sizeof(value));
+
 		if (!speed_test("set_32u", "", g_Iterations,
-				(speed_test_fkt)generic->set_32u,
-				(speed_test_fkt)optimized->set_32u,
-				value, dest + x, x))
+		                (speed_test_fkt)generic->set_32u,
+		                (speed_test_fkt)optimized->set_32u,
+		                value, dest + x, x))
 			return FALSE;
 	}
 
@@ -249,13 +253,14 @@ static BOOL test_set32s_speed(void)
 	BYTE value;
 	UINT32 x;
 
-	for (x=0; x<16; x++)
+	for (x = 0; x < 16; x++)
 	{
 		winpr_RAND(&value, sizeof(value));
+
 		if (!speed_test("set_32s", "", g_Iterations,
-				(speed_test_fkt)generic->set_32s,
-				(speed_test_fkt)optimized->set_32s,
-				value, dest + x, x))
+		                (speed_test_fkt)generic->set_32s,
+		                (speed_test_fkt)optimized->set_32s,
+		                value, dest + x, x))
 			return FALSE;
 	}
 
@@ -268,8 +273,10 @@ int TestPrimitivesSet(int argc, char* argv[])
 
 	if (!test_set8u_func())
 		return -1;
+
 	if (!test_set32s_func())
 		return -1;
+
 	if (!test_set32u_func())
 		return -1;
 
@@ -277,8 +284,10 @@ int TestPrimitivesSet(int argc, char* argv[])
 	{
 		if (!test_set8u_speed())
 			return -1;
+
 		if (!test_set32s_speed())
 			return -1;
+
 		if (!test_set32u_speed())
 			return -1;
 	}

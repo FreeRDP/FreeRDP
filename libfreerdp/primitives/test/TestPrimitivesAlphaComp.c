@@ -19,11 +19,6 @@
 
 #include "prim_test.h"
 
-static const int ALPHA_PRETEST_ITERATIONS = 5000000;
-static const float TEST_TIME = 5.0;
-
-static const int block_size[] = { 4, 64, 256 };
-#define NUM_BLOCK_SIZES (sizeof(block_size)/sizeof(int))
 #define MAX_BLOCK_SIZE 256
 #define SIZE_SQUARED (MAX_BLOCK_SIZE*MAX_BLOCK_SIZE)
 
@@ -36,7 +31,6 @@ static const int block_size[] = { 4, 64, 256 };
 static inline const UINT32* PIXEL(const BYTE* _addr_, UINT32 _bytes_, UINT32 _x_, UINT32 _y_)
 {
 	const BYTE* addr = _addr_ + _x_ * sizeof(UINT32) + _y_ * _bytes_;
-
 	return (const UINT32*)addr;
 }
 
@@ -51,8 +45,8 @@ static inline const UINT32* PIXEL(const BYTE* _addr_, UINT32 _bytes_, UINT32 _x_
 
 /* ------------------------------------------------------------------------- */
 static UINT32 alpha_add(
-		UINT32 c1,
-		UINT32 c2)
+    UINT32 c1,
+    UINT32 c2)
 {
 	UINT32 a1 = ALF(c1);
 	UINT32 r1 = RED(c1);
@@ -71,8 +65,8 @@ static UINT32 alpha_add(
 
 /* ------------------------------------------------------------------------- */
 static UINT32 colordist(
-		UINT32 c1,
-		UINT32 c2)
+    UINT32 c1,
+    UINT32 c2)
 {
 	int d, maxd = 0;
 	d = ABS((INT32)(ALF(c1) - ALF(c2)));
@@ -96,11 +90,12 @@ static UINT32 colordist(
 
 /* ------------------------------------------------------------------------- */
 static BOOL check(const BYTE* pSrc1,  UINT32 src1Step,
-		  const BYTE* pSrc2,  UINT32 src2Step,
-		  BYTE* pDst,  UINT32 dstStep,
-		  UINT32 width,  UINT32 height)
+                  const BYTE* pSrc2,  UINT32 src2Step,
+                  BYTE* pDst,  UINT32 dstStep,
+                  UINT32 width,  UINT32 height)
 {
 	UINT32 x, y;
+
 	for (y = 0; y < height; ++y)
 	{
 		for (x = 0; x < width; ++x)
@@ -130,41 +125,39 @@ static BOOL test_alphaComp_func(void)
 	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT * 4]);
 	UINT32* ptr;
 	UINT32 i;
-
 	winpr_RAND((BYTE*)src1, sizeof(src1));
-
 	/* Special-case the first two values */
 	src1[0] &= 0x00FFFFFFU;
 	src1[1] |= 0xFF000000U;
 	winpr_RAND((BYTE*)src2, sizeof(src2));
-
 	/* Set the second operand to fully-opaque. */
 	ptr = (UINT32*)src2;
 
 	for (i = 0; i < sizeof(src2) / 4; ++i) *ptr++ |= 0xFF000000U;
 
 	memset(dst1, 0, sizeof(dst1));
-
 	status = generic->alphaComp_argb(src1, 4 * SRC1_WIDTH,
-					 src2, 4 * SRC2_WIDTH,
-					 dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
+	                                 src2, 4 * SRC2_WIDTH,
+	                                 dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
+
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
 	if (!check(src1, 4 * SRC1_WIDTH,
-		   src2, 4 * SRC2_WIDTH,
-		   dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT))
+	           src2, 4 * SRC2_WIDTH,
+	           dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT))
 		return FALSE;
 
 	status = optimized->alphaComp_argb((const BYTE*) src1, 4 * SRC1_WIDTH,
-					   (const BYTE*) src2, 4 * SRC2_WIDTH,
-					   (BYTE*) dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
+	                                   (const BYTE*) src2, 4 * SRC2_WIDTH,
+	                                   (BYTE*) dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
+
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
 	if (!check(src1, 4 * SRC1_WIDTH,
-		   src2, 4 * SRC2_WIDTH,
-		   dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT))
+	           src2, 4 * SRC2_WIDTH,
+	           dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT))
 		return FALSE;
 
 	return TRUE;
@@ -184,7 +177,6 @@ static int test_alphaComp_speed(void)
 	src1[0] &= 0x00FFFFFFU;
 	src1[1] |= 0xFF000000U;
 	winpr_RAND((BYTE*)src2, sizeof(src2));
-
 	/* Set the second operand to fully-opaque. */
 	ptr = (UINT32*)src2;
 
@@ -193,11 +185,11 @@ static int test_alphaComp_speed(void)
 	memset(dst1, 0, sizeof(dst1));
 
 	if (!speed_test("add16s", "aligned", g_Iterations,
-			(speed_test_fkt)generic->alphaComp_argb,
-			(speed_test_fkt)optimized->alphaComp_argb,
-			src1, 4 * SRC1_WIDTH,
-			src2, 4 * SRC2_WIDTH,
-			dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT))
+	                (speed_test_fkt)generic->alphaComp_argb,
+	                (speed_test_fkt)optimized->alphaComp_argb,
+	                src1, 4 * SRC1_WIDTH,
+	                src2, 4 * SRC2_WIDTH,
+	                dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT))
 		return FALSE;
 
 	return TRUE;
@@ -206,6 +198,7 @@ static int test_alphaComp_speed(void)
 int TestPrimitivesAlphaComp(int argc, char* argv[])
 {
 	prim_test_setup(FALSE);
+
 	if (!test_alphaComp_func())
 		return -1;
 
