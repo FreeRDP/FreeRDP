@@ -522,7 +522,6 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 		}
 	}
 
-out:
 	Stream_SetPosition(s, 0);
 	context->priv->out_pending_frames = 0;
 	return error;
