@@ -936,7 +936,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	{
 		if (isDir)
 		{
-			char* name =  strrchr(lpFileName, '/');
+			const char* name =  strrchr(lpFileName, '/');
 
 			if (!name)
 				name = lpFileName;
