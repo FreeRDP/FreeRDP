@@ -34,25 +34,6 @@
 
 #define TAG FREERDP_TAG("core.gateway.rts")
 
-static const char* const RTS_CMD_STRINGS[] =
-{
-	"ReceiveWindowSize",
-	"FlowControlAck",
-	"ConnectionTimeout",
-	"Cookie",
-	"ChannelLifetime",
-	"ClientKeepalive",
-	"Version",
-	"Empty",
-	"Padding",
-	"NegativeANCE",
-	"ANCE",
-	"ClientAddress",
-	"AssociationGroupId",
-	"Destination",
-	"PingTrafficSentNotify"
-};
-
 /**
  * RTS PDU Header
  *
