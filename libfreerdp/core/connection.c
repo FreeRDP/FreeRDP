@@ -385,6 +385,79 @@ static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 	return status;
 }
 
+static BOOL rdp_client_redirect_resolvable(const char* host)
+{
+	int status;
+	struct addrinfo hints = { 0 };
+	struct addrinfo* result = NULL;
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	status = getaddrinfo(host, NULL, &hints, &result);
+	errno = 0;
+
+	if (status == 0)
+	{
+		freeaddrinfo(result);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
+{
+	if (settings->RedirectionFlags & LB_TARGET_FQDN)
+	{
+		if (rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
+		{
+			free(settings->ServerHostname);
+			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
+
+			if (!settings->ServerHostname)
+				return FALSE;
+
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+static BOOL rdp_client_redirect_try_ip(rdpSettings* settings)
+{
+	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+	{
+		free(settings->ServerHostname);
+		settings->ServerHostname = _strdup(settings->TargetNetAddress);
+
+		if (!settings->ServerHostname)
+			return FALSE;
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
+{
+	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
+	{
+		if (rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
+		{
+			free(settings->ServerHostname);
+			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
+
+			if (!settings->ServerHostname)
+				return FALSE;
+
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
 BOOL rdp_client_redirect(rdpRdp* rdp)
 {
 	BOOL status;
@@ -412,30 +485,27 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	}
 	else
 	{
-		if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
-		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->TargetNetAddress);
+		BOOL haveRedirectAddress = FALSE;
+		UINT32 redirectionMask = settings->RedirectionPreferType;
 
-			if (!settings->ServerHostname)
-				return FALSE;
-		}
-		else if (settings->RedirectionFlags & LB_TARGET_FQDN)
+		do
 		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
+			const BOOL tryFQDN = (redirectionMask & 0x01) == 0;
+			const BOOL tryNetAddress = (redirectionMask & 0x02) == 0;
+			const BOOL tryNetbios = (redirectionMask & 0x04) == 0;
 
-			if (!settings->ServerHostname)
-				return FALSE;
-		}
-		else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
-		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
+			if (tryFQDN && !haveRedirectAddress)
+				haveRedirectAddress = rdp_client_redirect_try_fqdn(settings);
 
-			if (!settings->ServerHostname)
-				return FALSE;
+			if (tryNetAddress && !haveRedirectAddress)
+				haveRedirectAddress = rdp_client_redirect_try_ip(settings);
+
+			if (tryNetbios && !haveRedirectAddress)
+				haveRedirectAddress = rdp_client_redirect_try_netbios(settings);
+
+			redirectionMask >>= 3;
 		}
+		while (!haveRedirectAddress && (redirectionMask != 0));
 	}
 
 	if (settings->RedirectionFlags & LB_USERNAME)

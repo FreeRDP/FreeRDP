@@ -141,6 +141,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "pth", COMMAND_LINE_VALUE_REQUIRED, "<password-hash>", NULL, NULL, -1, "pass-the-hash", "Pass the hash (restricted admin mode)" },
 	{ "pwidth", COMMAND_LINE_VALUE_REQUIRED, "<width>", NULL, NULL, -1, NULL, "Physical width of display (in millimeters)" },
 	{ "reconnect-cookie", COMMAND_LINE_VALUE_REQUIRED, "<base64-cookie>", NULL, NULL, -1, NULL, "Pass base64 reconnect cookie to the connection" },
+	{ "redirect-prefer", COMMAND_LINE_VALUE_REQUIRED, "<FQDN|IP|NETBIOS>[,<FQDN|IP|NETBIOS>[,<FQDN|IP|NETBIOS>]]", NULL, NULL, -1, NULL, "Override the preferred redirection order" },
 	{ "restricted-admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "restrictedAdmin", "Restricted admin mode" },
 	{ "rfx", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "RemoteFX" },
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "image|video", NULL, NULL, -1, NULL, "RemoteFX mode" },
