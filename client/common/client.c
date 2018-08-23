@@ -306,6 +306,7 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings,
         const char* filename)
 {
 	int status;
+	int ret = -1;
 	rdpAssistanceFile* file;
 	file = freerdp_assistance_file_new();
 
@@ -315,15 +316,17 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings,
 	status = freerdp_assistance_parse_file(file, filename);
 
 	if (status < 0)
-		return -1;
+		goto out;
 
 	status = freerdp_client_populate_settings_from_assistance_file(file, settings);
 
 	if (status < 0)
-		return -1;
+		goto out;
 
+	ret = 0;
+out:
 	freerdp_assistance_file_free(file);
-	return 0;
+	return ret;
 }
 
 /** Callback set in the rdp_freerdp structure, and used to get the user's password,

@@ -612,7 +612,6 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 
 	strcpy(fontDescriptorFile, fontBaseFile);
 	strcpy(&fontDescriptorFile[length], ".xml");
-	free(fontBaseFile);
 
 	if (!PathFileExistsA(fontImageFile))
 		goto cleanup;
@@ -641,10 +640,12 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 	if (status < 0)
 		goto cleanup;
 
+	free(fontBaseFile);
 	free(fontImageFile);
 	free(fontDescriptorFile);
 	return font;
 cleanup:
+	free(fontBaseFile);
 	free(fontImageFile);
 	free(fontDescriptorFile);
 

@@ -33,7 +33,7 @@
 
 #define TAG FREERDP_TAG("codec")
 
-static INLINE BYTE* freerdp_bitmap_planar_compress_plane_rle(
+static INLINE BOOL freerdp_bitmap_planar_compress_plane_rle(
     const BYTE* plane, UINT32 width, UINT32 height,
     BYTE* outPlane, UINT32* dstSize);
 static INLINE BYTE* freerdp_bitmap_planar_delta_encode_plane(
@@ -948,7 +948,7 @@ static INLINE UINT32 freerdp_bitmap_planar_encode_rle_bytes(const BYTE* pInBuffe
 	return nTotalBytesWritten;
 }
 
-BYTE* freerdp_bitmap_planar_compress_plane_rle(const BYTE* inPlane,
+BOOL freerdp_bitmap_planar_compress_plane_rle(const BYTE* inPlane,
         UINT32 width, UINT32 height,
         BYTE* outPlane, UINT32* dstSize)
 {
@@ -960,25 +960,12 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(const BYTE* inPlane,
 	UINT32 nTotalBytesWritten;
 
 	if (!outPlane)
-	{
-		outBufferSize = width * height;
-
-		if (outBufferSize == 0)
-			return NULL;
-
-		outPlane = malloc(outBufferSize);
-
-		if (!outPlane)
-			return NULL;
-	}
-	else
-	{
-		outBufferSize = *dstSize;
-	}
+		return FALSE;
 
 	index = 0;
 	pInput = inPlane;
 	pOutput = outPlane;
+	outBufferSize = *dstSize;
 	nTotalBytesWritten = 0;
 
 	while (outBufferSize)
@@ -987,7 +974,7 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(const BYTE* inPlane,
 		                    pInput, width, pOutput, outBufferSize);
 
 		if ((!nBytesWritten) || (nBytesWritten > outBufferSize))
-			return NULL;
+			return FALSE;
 
 		outBufferSize -= nBytesWritten;
 		nTotalBytesWritten += nBytesWritten;
@@ -1000,7 +987,7 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(const BYTE* inPlane,
 	}
 
 	*dstSize = nTotalBytesWritten;
-	return outPlane;
+	return TRUE;
 }
 
 static INLINE BOOL freerdp_bitmap_planar_compress_planes_rle(

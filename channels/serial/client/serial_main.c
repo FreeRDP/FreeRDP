@@ -575,6 +575,8 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 			           serial->IrpThreadToBeTerminatedCount);
 			Sleep(1); /* 1 ms */
 		}
+
+		free(ids);
 	}
 
 	LeaveCriticalSection(&serial->TerminatingIrpThreadsLock);
@@ -694,6 +696,7 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE* serial)
 	}
 
 	ListDictionary_Clear(serial->IrpThreads);
+	free(ids);
 }
 
 

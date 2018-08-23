@@ -1330,15 +1330,15 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 		{
 			accept_cert(tls, pemCert, length);
 		}
-		else
-			free(pemCert);
-
-		if (status < 0)
+		else if (status < 0)
 		{
 			WLog_ERR(TAG, "VerifyX509Certificate failed: (length = %d) status: [%d] %s",
 			         length, status, pemCert);
+			free(pemCert);
 			return -1;
 		}
+		else
+			free(pemCert);
 
 		return (status == 0) ? 0 : 1;
 	}

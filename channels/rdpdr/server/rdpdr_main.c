@@ -563,7 +563,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 	{
 		WLog_ERR(TAG,
 		         "rdpdr_server_write_general_capability_set failed with error %"PRIu32"!", error);
-		return error;
+		goto out;
 	}
 
 	if (context->supportsDrives)
@@ -572,7 +572,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		{
 			WLog_ERR(TAG, "rdpdr_server_write_drive_capability_set failed with error %"PRIu32"!",
 			         error);
-			return error;
+			goto out;
 		}
 	}
 
@@ -582,7 +582,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		{
 			WLog_ERR(TAG, "rdpdr_server_write_port_capability_set failed with error %"PRIu32"!",
 			         error);
-			return error;
+			goto out;
 		}
 	}
 
@@ -592,7 +592,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		{
 			WLog_ERR(TAG,
 			         "rdpdr_server_write_printer_capability_set failed with error %"PRIu32"!", error);
-			return error;
+			goto out;
 		}
 	}
 
@@ -602,7 +602,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		{
 			WLog_ERR(TAG,
 			         "rdpdr_server_write_printer_capability_set failed with error %"PRIu32"!", error);
-			return error;
+			goto out;
 		}
 	}
 
@@ -612,6 +612,9 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 	                                (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 	Stream_Free(s, TRUE);
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
+out:
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
@@ -1260,7 +1263,7 @@ static UINT rdpdr_server_start(RdpdrServerContext* context)
 	}
 
 	if (!(context->priv->Thread = CreateThread(NULL, 0,
-								  rdpdr_server_thread, (void*) context, 0, NULL)))
+	                              rdpdr_server_thread, (void*) context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(context->priv->StopEvent);
@@ -1737,7 +1740,7 @@ static UINT rdpdr_server_drive_create_directory(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_create_directory_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, path, sizeof(irp->PathName));
+	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
@@ -1848,7 +1851,7 @@ static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_delete_directory_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, path, sizeof(irp->PathName));
+	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
@@ -2016,7 +2019,7 @@ static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_query_directory_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, path, sizeof(irp->PathName));
+	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
@@ -2090,7 +2093,7 @@ static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_open_file_callback;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, path, sizeof(irp->PathName));
+	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
@@ -2417,7 +2420,7 @@ static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_delete_file_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, path, sizeof(irp->PathName));
+	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
@@ -2567,8 +2570,8 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context,
 	irp->Callback = rdpdr_server_drive_rename_file_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
-	strncpy(irp->PathName, oldPath, sizeof(irp->PathName));
-	strncpy(irp->ExtraBuffer, newPath, sizeof(irp->ExtraBuffer));
+	strncpy(irp->PathName, oldPath, sizeof(irp->PathName) - 1);
+	strncpy(irp->ExtraBuffer, newPath, sizeof(irp->ExtraBuffer) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 	rdpdr_server_convert_slashes(irp->ExtraBuffer, sizeof(irp->ExtraBuffer));
 

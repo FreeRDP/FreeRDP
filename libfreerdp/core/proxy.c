@@ -234,6 +234,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 
 	if (status != Stream_GetPosition(s))
 	{
+		Stream_Free(s, TRUE);
 		WLog_ERR(TAG, "HTTP proxy: failed to write CONNECT request");
 		return FALSE;
 	}

@@ -31,22 +31,23 @@
 extern "C" {
 #endif
 
-typedef SECURITY_STATUS (*psPeerComputeNtlmHash)(void *client, const SEC_WINNT_AUTH_IDENTITY *authIdentity,
-		const SecBuffer *ntproofvalue, const BYTE *randkey, const BYTE *mic, const SecBuffer *micvalue,
-		BYTE *ntlmhash);
+typedef SECURITY_STATUS(*psPeerComputeNtlmHash)(void* client,
+        const SEC_WINNT_AUTH_IDENTITY* authIdentity,
+        const SecBuffer* ntproofvalue, const BYTE* randkey, const BYTE* mic, const SecBuffer* micvalue,
+        BYTE* ntlmhash);
 
-WINPR_API BYTE* NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash);
-WINPR_API BYTE* NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash);
+WINPR_API BOOL NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash);
+WINPR_API BOOL NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash);
 
-WINPR_API BYTE* NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User,
-		UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash);
-WINPR_API BYTE* NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User,
-		UINT32 UserLength, LPSTR Domain, UINT32 DomainLength, BYTE* NtHash);
+WINPR_API BOOL NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User,
+                        UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash);
+WINPR_API BOOL NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User,
+                        UINT32 UserLength, LPSTR Domain, UINT32 DomainLength, BYTE* NtHash);
 
-WINPR_API BYTE* NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength,
-		LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash);
-WINPR_API BYTE* NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength,
-		LPSTR Domain, UINT32 DomainLength, BYTE* NtHash);
+WINPR_API BOOL NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength,
+                                LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash);
+WINPR_API BOOL NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength,
+                                LPSTR Domain, UINT32 DomainLength, BYTE* NtHash);
 
 #ifdef __cplusplus
 }

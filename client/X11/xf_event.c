@@ -183,6 +183,7 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 
 		if (!xevent || ArrayList_Add(xfc->xevents, xevent) < 0)
 		{
+			pclose(actionScript);
 			ArrayList_Free(xfc->xevents);
 			xfc->xevents = NULL;
 			return FALSE;

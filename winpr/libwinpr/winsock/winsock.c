@@ -47,7 +47,7 @@
 
 /**
  * ws2_32.dll:
- * 
+ *
  * __WSAFDIsSet
  * accept
  * bind
@@ -239,23 +239,21 @@ PCSTR winpr_inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBuf
 	if (Family == AF_INET)
 	{
 		struct sockaddr_in in;
-
 		memset(&in, 0, sizeof(in));
 		in.sin_family = AF_INET;
 		memcpy(&in.sin_addr, pAddr, sizeof(struct in_addr));
-		getnameinfo((struct sockaddr*) &in, sizeof(struct sockaddr_in), pStringBuf, StringBufSize, NULL, 0, NI_NUMERICHOST);
-
+		getnameinfo((struct sockaddr*) &in, sizeof(struct sockaddr_in), pStringBuf, StringBufSize, NULL, 0,
+		            NI_NUMERICHOST);
 		return pStringBuf;
 	}
 	else if (Family == AF_INET6)
 	{
 		struct sockaddr_in6 in;
-
 		memset(&in, 0, sizeof(in));
 		in.sin6_family = AF_INET6;
 		memcpy(&in.sin6_addr, pAddr, sizeof(struct in_addr6));
-		getnameinfo((struct sockaddr*) &in, sizeof(struct sockaddr_in6), pStringBuf, StringBufSize, NULL, 0, NI_NUMERICHOST);
-
+		getnameinfo((struct sockaddr*) &in, sizeof(struct sockaddr_in6), pStringBuf, StringBufSize, NULL, 0,
+		            NI_NUMERICHOST);
 		return pStringBuf;
 	}
 
@@ -270,7 +268,8 @@ INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf)
 	if ((Family != AF_INET) && (Family != AF_INET6))
 		return -1;
 
-	if (WSAStringToAddressA((char*) pszAddrString, Family, NULL, (struct sockaddr*) &addr, &addr_len) != 0)
+	if (WSAStringToAddressA((char*) pszAddrString, Family, NULL, (struct sockaddr*) &addr,
+	                        &addr_len) != 0)
 		return 0;
 
 	if (Family == AF_INET)
@@ -305,10 +304,8 @@ INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf)
 int WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData)
 {
 	ZeroMemory(lpWSAData, sizeof(WSADATA));
-
 	lpWSAData->wVersion = wVersionRequired;
 	lpWSAData->wHighVersion = MAKEWORD(2, 2);
-
 	return 0; /* success */
 }
 
@@ -322,22 +319,26 @@ void WSASetLastError(int iError)
 	switch (iError)
 	{
 		/* Base error codes */
-
 		case WSAEINTR:
 			errno = EINTR;
 			break;
+
 		case WSAEBADF:
 			errno = EBADF;
 			break;
+
 		case WSAEACCES:
 			errno = EACCES;
 			break;
+
 		case WSAEFAULT:
 			errno = EFAULT;
 			break;
+
 		case WSAEINVAL:
 			errno = EINVAL;
 			break;
+
 		case WSAEMFILE:
 			errno = EMFILE;
 			break;
@@ -347,113 +348,149 @@ void WSASetLastError(int iError)
 		case WSAEWOULDBLOCK:
 			errno = EWOULDBLOCK;
 			break;
+
 		case WSAEINPROGRESS:
 			errno = EINPROGRESS;
 			break;
+
 		case WSAEALREADY:
 			errno = EALREADY;
 			break;
+
 		case WSAENOTSOCK:
 			errno = ENOTSOCK;
 			break;
+
 		case WSAEDESTADDRREQ:
 			errno = EDESTADDRREQ;
 			break;
+
 		case WSAEMSGSIZE:
 			errno = EMSGSIZE;
 			break;
+
 		case WSAEPROTOTYPE:
 			errno = EPROTOTYPE;
 			break;
+
 		case WSAENOPROTOOPT:
 			errno = ENOPROTOOPT;
 			break;
+
 		case WSAEPROTONOSUPPORT:
 			errno = EPROTONOSUPPORT;
 			break;
+
 		case WSAESOCKTNOSUPPORT:
 			errno = ESOCKTNOSUPPORT;
 			break;
+
 		case WSAEOPNOTSUPP:
 			errno = EOPNOTSUPP;
 			break;
+
 		case WSAEPFNOSUPPORT:
 			errno = EPFNOSUPPORT;
 			break;
+
 		case WSAEAFNOSUPPORT:
 			errno = EAFNOSUPPORT;
 			break;
+
 		case WSAEADDRINUSE:
 			errno = EADDRINUSE;
 			break;
+
 		case WSAEADDRNOTAVAIL:
 			errno = EADDRNOTAVAIL;
 			break;
+
 		case WSAENETDOWN:
 			errno = ENETDOWN;
 			break;
+
 		case WSAENETUNREACH:
 			errno = ENETUNREACH;
 			break;
+
 		case WSAENETRESET:
 			errno = ENETRESET;
 			break;
+
 		case WSAECONNABORTED:
 			errno = ECONNABORTED;
 			break;
+
 		case WSAECONNRESET:
 			errno = ECONNRESET;
 			break;
+
 		case WSAENOBUFS:
 			errno = ENOBUFS;
 			break;
+
 		case WSAEISCONN:
 			errno = EISCONN;
 			break;
+
 		case WSAENOTCONN:
 			errno = ENOTCONN;
 			break;
+
 		case WSAESHUTDOWN:
 			errno = ESHUTDOWN;
 			break;
+
 		case WSAETOOMANYREFS:
 			errno = ETOOMANYREFS;
 			break;
+
 		case WSAETIMEDOUT:
 			errno = ETIMEDOUT;
 			break;
+
 		case WSAECONNREFUSED:
 			errno = ECONNREFUSED;
 			break;
+
 		case WSAELOOP:
 			errno = ELOOP;
 			break;
+
 		case WSAENAMETOOLONG:
 			errno = ENAMETOOLONG;
 			break;
+
 		case WSAEHOSTDOWN:
 			errno = EHOSTDOWN;
 			break;
+
 		case WSAEHOSTUNREACH:
 			errno = EHOSTUNREACH;
 			break;
+
 		case WSAENOTEMPTY:
 			errno = ENOTEMPTY;
 			break;
 #ifdef EPROCLIM
+
 		case WSAEPROCLIM:
 			errno = EPROCLIM;
 			break;
 #endif
+
 		case WSAEUSERS:
 			errno = EUSERS;
 			break;
+
 		case WSAEDQUOT:
 			errno = EDQUOT;
 			break;
+
 		case WSAESTALE:
 			errno = ESTALE;
 			break;
+
 		case WSAEREMOTE:
 			errno = EREMOTE;
 			break;
@@ -467,22 +504,26 @@ int WSAGetLastError(void)
 	switch (errno)
 	{
 		/* Base error codes */
-
 		case EINTR:
 			iError = WSAEINTR;
 			break;
+
 		case EBADF:
 			iError = WSAEBADF;
 			break;
+
 		case EACCES:
 			iError = WSAEACCES;
 			break;
+
 		case EFAULT:
 			iError = WSAEFAULT;
 			break;
+
 		case EINVAL:
 			iError = WSAEINVAL;
 			break;
+
 		case EMFILE:
 			iError = WSAEMFILE;
 			break;
@@ -492,126 +533,161 @@ int WSAGetLastError(void)
 		case EWOULDBLOCK:
 			iError = WSAEWOULDBLOCK;
 			break;
+
 		case EINPROGRESS:
 			iError = WSAEINPROGRESS;
 			break;
+
 		case EALREADY:
 			iError = WSAEALREADY;
 			break;
+
 		case ENOTSOCK:
 			iError = WSAENOTSOCK;
 			break;
+
 		case EDESTADDRREQ:
 			iError = WSAEDESTADDRREQ;
 			break;
+
 		case EMSGSIZE:
 			iError = WSAEMSGSIZE;
 			break;
+
 		case EPROTOTYPE:
 			iError = WSAEPROTOTYPE;
 			break;
+
 		case ENOPROTOOPT:
 			iError = WSAENOPROTOOPT;
 			break;
+
 		case EPROTONOSUPPORT:
 			iError = WSAEPROTONOSUPPORT;
 			break;
+
 		case ESOCKTNOSUPPORT:
 			iError = WSAESOCKTNOSUPPORT;
 			break;
+
 		case EOPNOTSUPP:
 			iError = WSAEOPNOTSUPP;
 			break;
+
 		case EPFNOSUPPORT:
 			iError = WSAEPFNOSUPPORT;
 			break;
+
 		case EAFNOSUPPORT:
 			iError = WSAEAFNOSUPPORT;
 			break;
+
 		case EADDRINUSE:
 			iError = WSAEADDRINUSE;
 			break;
+
 		case EADDRNOTAVAIL:
 			iError = WSAEADDRNOTAVAIL;
 			break;
+
 		case ENETDOWN:
 			iError = WSAENETDOWN;
 			break;
+
 		case ENETUNREACH:
 			iError = WSAENETUNREACH;
 			break;
+
 		case ENETRESET:
 			iError = WSAENETRESET;
 			break;
+
 		case ECONNABORTED:
 			iError = WSAECONNABORTED;
 			break;
+
 		case ECONNRESET:
 			iError = WSAECONNRESET;
 			break;
+
 		case ENOBUFS:
 			iError = WSAENOBUFS;
 			break;
+
 		case EISCONN:
 			iError = WSAEISCONN;
 			break;
+
 		case ENOTCONN:
 			iError = WSAENOTCONN;
 			break;
+
 		case ESHUTDOWN:
 			iError = WSAESHUTDOWN;
 			break;
+
 		case ETOOMANYREFS:
 			iError = WSAETOOMANYREFS;
 			break;
+
 		case ETIMEDOUT:
 			iError = WSAETIMEDOUT;
 			break;
+
 		case ECONNREFUSED:
 			iError = WSAECONNREFUSED;
 			break;
+
 		case ELOOP:
 			iError = WSAELOOP;
 			break;
+
 		case ENAMETOOLONG:
 			iError = WSAENAMETOOLONG;
 			break;
+
 		case EHOSTDOWN:
 			iError = WSAEHOSTDOWN;
 			break;
+
 		case EHOSTUNREACH:
 			iError = WSAEHOSTUNREACH;
 			break;
+
 		case ENOTEMPTY:
 			iError = WSAENOTEMPTY;
 			break;
 #ifdef EPROCLIM
+
 		case EPROCLIM:
 			iError = WSAEPROCLIM;
 			break;
 #endif
+
 		case EUSERS:
 			iError = WSAEUSERS;
 			break;
+
 		case EDQUOT:
 			iError = WSAEDQUOT;
 			break;
+
 		case ESTALE:
 			iError = WSAESTALE;
 			break;
+
 		case EREMOTE:
 			iError = WSAEREMOTE;
 			break;
-
-		/* Special cases */
-
+			/* Special cases */
 #if (EAGAIN != EWOULDBLOCK)
+
 		case EAGAIN:
 			iError = WSAEWOULDBLOCK;
 			break;
 #endif
-
 #if defined(EPROTO)
+
 		case EPROTO:
 			iError = WSAECONNRESET;
 			break;
@@ -637,7 +713,6 @@ int WSAGetLastError(void)
 	 * WSA_E_CANCELLED
 	 * WSAEREFUSED
 	 */
-
 	return iError;
 }
 
@@ -661,7 +736,6 @@ BOOL WSAResetEvent(HANDLE hEvent)
 BOOL WSACloseEvent(HANDLE hEvent)
 {
 	BOOL status;
-
 	status = CloseHandle(hEvent);
 
 	if (!status)
@@ -683,6 +757,7 @@ int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents)
 
 	if (lNetworkEvents & FD_READ)
 		mode |= WINPR_FD_READ;
+
 	if (lNetworkEvents & FD_WRITE)
 		mode |= WINPR_FD_WRITE;
 
@@ -692,29 +767,30 @@ int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents)
 	return 0;
 }
 
-DWORD WSAWaitForMultipleEvents(DWORD cEvents, const HANDLE* lphEvents, BOOL fWaitAll, DWORD dwTimeout, BOOL fAlertable)
+DWORD WSAWaitForMultipleEvents(DWORD cEvents, const HANDLE* lphEvents, BOOL fWaitAll,
+                               DWORD dwTimeout, BOOL fAlertable)
 {
 	return WaitForMultipleObjectsEx(cEvents, lphEvents, fWaitAll, dwTimeout, fAlertable);
 }
 
-SOCKET WSASocketA(int af, int type, int protocol, LPWSAPROTOCOL_INFOA lpProtocolInfo, GROUP g, DWORD dwFlags)
+SOCKET WSASocketA(int af, int type, int protocol, LPWSAPROTOCOL_INFOA lpProtocolInfo, GROUP g,
+                  DWORD dwFlags)
 {
 	SOCKET s;
-
 	s = _socket(af, type, protocol);
-
 	return s;
 }
 
-SOCKET WSASocketW(int af, int type, int protocol, LPWSAPROTOCOL_INFOW lpProtocolInfo, GROUP g, DWORD dwFlags)
+SOCKET WSASocketW(int af, int type, int protocol, LPWSAPROTOCOL_INFOW lpProtocolInfo, GROUP g,
+                  DWORD dwFlags)
 {
 	return WSASocketA(af, type, protocol, (LPWSAPROTOCOL_INFOA) lpProtocolInfo, g, dwFlags);
 }
 
 int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
-		DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-		LPDWORD lpcbBytesReturned, LPWSAOVERLAPPED lpOverlapped,
-		LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+             DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+             LPDWORD lpcbBytesReturned, LPWSAOVERLAPPED lpOverlapped,
+             LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
 	int fd;
 	int index;
@@ -736,7 +812,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 	struct sockaddr_in* pNetmask;
 
 	if ((dwIoControlCode != SIO_GET_INTERFACE_LIST) ||
-		(!lpvOutBuffer || !cbOutBuffer || !lpcbBytesReturned))
+	    (!lpvOutBuffer || !cbOutBuffer || !lpcbBytesReturned))
 	{
 		WSASetLastError(WSAEINVAL);
 		return SOCKET_ERROR;
@@ -745,7 +821,6 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 	fd = (int) s;
 	pInterfaces = (INTERFACE_INFO*) lpvOutBuffer;
 	maxNumInterfaces = cbOutBuffer / sizeof(INTERFACE_INFO);
-
 #ifdef WSAIOCTL_IFADDRS
 	{
 		struct ifaddrs* ifa = NULL;
@@ -766,7 +841,6 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 			pAddress = (struct sockaddr_in*) &pInterface->iiAddress;
 			pBroadcast = (struct sockaddr_in*) &pInterface->iiBroadcastAddress;
 			pNetmask = (struct sockaddr_in*) &pInterface->iiNetmask;
-
 			nFlags = 0;
 
 			if (ifa->ifa_flags & IFF_UP)
@@ -792,8 +866,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 					continue;
 
 				getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr),
-						address, sizeof(address), 0, 0, NI_NUMERICHOST);
-
+				            address, sizeof(address), 0, 0, NI_NUMERICHOST);
 				inet_pton(ifa->ifa_addr->sa_family, address, (void*) &pAddress->sin_addr);
 			}
 			else
@@ -807,8 +880,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 					continue;
 
 				getnameinfo(ifa->ifa_dstaddr, sizeof(struct sockaddr),
-						broadcast, sizeof(broadcast), 0, 0, NI_NUMERICHOST);
-
+				            broadcast, sizeof(broadcast), 0, 0, NI_NUMERICHOST);
 				inet_pton(ifa->ifa_dstaddr->sa_family, broadcast, (void*) &pBroadcast->sin_addr);
 			}
 			else
@@ -822,8 +894,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 					continue;
 
 				getnameinfo(ifa->ifa_netmask, sizeof(struct sockaddr),
-						netmask, sizeof(netmask), 0, 0, NI_NUMERICHOST);
-
+				            netmask, sizeof(netmask), 0, 0, NI_NUMERICHOST);
 				inet_pton(ifa->ifa_netmask->sa_family, netmask, (void*) &pNetmask->sin_addr);
 			}
 			else
@@ -835,14 +906,11 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 			index++;
 		}
 
-		*lpcbBytesReturned = (DWORD) (numInterfaces * sizeof(INTERFACE_INFO));
-
+		*lpcbBytesReturned = (DWORD)(numInterfaces * sizeof(INTERFACE_INFO));
 		freeifaddrs(ifap);
-
 		return 0;
 	}
 #endif
-
 	ifconf.ifc_len = sizeof(buffer);
 	ifconf.ifc_buf = buffer;
 
@@ -893,8 +961,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 			goto next_ifreq;
 
 		getnameinfo(&ifreq->ifr_addr, sizeof(ifreq->ifr_addr),
-				address, sizeof(address), 0, 0, NI_NUMERICHOST);
-
+		            address, sizeof(address), 0, 0, NI_NUMERICHOST);
 		inet_pton(ifreq->ifr_addr.sa_family, address, (void*) &pAddress->sin_addr);
 
 		if (ioctl(fd, SIOCGIFBRDADDR, ifreq) != 0)
@@ -904,8 +971,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 			goto next_ifreq;
 
 		getnameinfo(&ifreq->ifr_addr, sizeof(ifreq->ifr_addr),
-				broadcast, sizeof(broadcast), 0, 0, NI_NUMERICHOST);
-
+		            broadcast, sizeof(broadcast), 0, 0, NI_NUMERICHOST);
 		inet_pton(ifreq->ifr_addr.sa_family, broadcast, (void*) &pBroadcast->sin_addr);
 
 		if (ioctl(fd, SIOCGIFNETMASK, ifreq) != 0)
@@ -915,27 +981,21 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 			goto next_ifreq;
 
 		getnameinfo(&ifreq->ifr_addr, sizeof(ifreq->ifr_addr),
-				netmask, sizeof(netmask), 0, 0, NI_NUMERICHOST);
-
+		            netmask, sizeof(netmask), 0, 0, NI_NUMERICHOST);
 		inet_pton(ifreq->ifr_addr.sa_family, netmask, (void*) &pNetmask->sin_addr);
-
 		numInterfaces++;
-
-next_ifreq:
-
+	next_ifreq:
 #if !defined(__linux__) && !defined(__sun__) && !defined(__CYGWIN__)
 		ifreq_len = IFNAMSIZ + ifreq->ifr_addr.sa_len;
 #else
 		ifreq_len = sizeof(*ifreq);
 #endif
-
-		ifreq = (struct ifreq*) &((BYTE*) ifreq)[ifreq_len];
+		ifreq = (struct ifreq*) & ((BYTE*) ifreq)[ifreq_len];
 		offset += ifreq_len;
 		index++;
 	}
 
-	*lpcbBytesReturned = (DWORD) (numInterfaces * sizeof(INTERFACE_INFO));
-
+	*lpcbBytesReturned = (DWORD)(numInterfaces * sizeof(INTERFACE_INFO));
 	return 0;
 }
 
@@ -943,11 +1003,9 @@ SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen)
 {
 	int status;
 	int fd = (int) s;
-	socklen_t s_addrlen = (socklen_t) *addrlen;
-
+	socklen_t s_addrlen = (socklen_t) * addrlen;
 	status = accept(fd, addr, &s_addrlen);
 	*addrlen = (socklen_t) s_addrlen;
-
 	return status;
 }
 
@@ -955,7 +1013,6 @@ int _bind(SOCKET s, const struct sockaddr* addr, int namelen)
 {
 	int status;
 	int fd = (int) s;
-
 	status = bind(fd, addr, (socklen_t) namelen);
 
 	if (status < 0)
@@ -968,9 +1025,7 @@ int closesocket(SOCKET s)
 {
 	int status;
 	int fd = (int) s;
-
 	status = close(fd);
-
 	return status;
 }
 
@@ -978,7 +1033,6 @@ int _connect(SOCKET s, const struct sockaddr* name, int namelen)
 {
 	int status;
 	int fd = (int) s;
-
 	status = connect(fd, name, (socklen_t) namelen);
 
 	if (status < 0)
@@ -1016,11 +1070,9 @@ int _getpeername(SOCKET s, struct sockaddr* name, int* namelen)
 {
 	int status;
 	int fd = (int) s;
-	socklen_t s_namelen = (socklen_t) *namelen;
-
+	socklen_t s_namelen = (socklen_t) * namelen;
 	status = getpeername(fd, name, &s_namelen);
 	*namelen = (int) s_namelen;
-
 	return status;
 }
 
@@ -1028,11 +1080,9 @@ int _getsockname(SOCKET s, struct sockaddr* name, int* namelen)
 {
 	int status;
 	int fd = (int) s;
-	socklen_t s_namelen = (socklen_t) *namelen;
-
+	socklen_t s_namelen = (socklen_t) * namelen;
 	status = getsockname(fd, name, &s_namelen);
 	*namelen = (int) s_namelen;
-
 	return status;
 }
 
@@ -1040,11 +1090,9 @@ int _getsockopt(SOCKET s, int level, int optname, char* optval, int* optlen)
 {
 	int status;
 	int fd = (int) s;
-	socklen_t s_optlen = (socklen_t) *optlen;
-
+	socklen_t s_optlen = (socklen_t) * optlen;
 	status = getsockopt(fd, level, optname, (void*) optval, &s_optlen);
 	*optlen = (socklen_t) s_optlen;
-
 	return status;
 }
 
@@ -1072,9 +1120,7 @@ int _listen(SOCKET s, int backlog)
 {
 	int status;
 	int fd = (int) s;
-
 	status = listen(fd, backlog);
-
 	return status;
 }
 
@@ -1092,9 +1138,7 @@ int _recv(SOCKET s, char* buf, int len, int flags)
 {
 	int status;
 	int fd = (int) s;
-
 	status = (int) recv(fd, (void*) buf, (size_t) len, flags);
-
 	return status;
 }
 
@@ -1102,15 +1146,14 @@ int _recvfrom(SOCKET s, char* buf, int len, int flags, struct sockaddr* from, in
 {
 	int status;
 	int fd = (int) s;
-	socklen_t s_fromlen = (socklen_t) *fromlen;
-
+	socklen_t s_fromlen = (socklen_t) * fromlen;
 	status = (int) recvfrom(fd, (void*) buf, (size_t) len, flags, from, &s_fromlen);
 	*fromlen = (int) s_fromlen;
-
 	return status;
 }
 
-int _select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, const struct timeval* timeout)
+int _select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
+            const struct timeval* timeout)
 {
 	int status;
 
@@ -1127,11 +1170,8 @@ int _send(SOCKET s, const char* buf, int len, int flags)
 {
 	int status;
 	int fd = (int) s;
-
 	flags |= MSG_NOSIGNAL;
-
 	status = (int) send(fd, (void*) buf, (size_t) len, flags);
-
 	return status;
 }
 
@@ -1139,9 +1179,7 @@ int _sendto(SOCKET s, const char* buf, int len, int flags, const struct sockaddr
 {
 	int status;
 	int fd = (int) s;
-
 	status = (int) sendto(fd, (void*) buf, (size_t) len, flags, to, (socklen_t) tolen);
-
 	return status;
 }
 
@@ -1149,9 +1187,7 @@ int _setsockopt(SOCKET s, int level, int optname, const char* optval, int optlen
 {
 	int status;
 	int fd = (int) s;
-
 	status = setsockopt(fd, level, optname, (void*) optval, (socklen_t) optlen);
-
 	return status;
 }
 
@@ -1180,7 +1216,6 @@ int _shutdown(SOCKET s, int how)
 		return SOCKET_ERROR;
 
 	status = shutdown(fd, s_how);
-
 	return status;
 }
 
@@ -1188,77 +1223,61 @@ SOCKET _socket(int af, int type, int protocol)
 {
 	int fd;
 	SOCKET s;
-
 	fd = socket(af, type, protocol);
 
-	if (fd < 1)
+	if (fd < 0)
 		return INVALID_SOCKET;
 
 	s = (SOCKET) fd;
-
 	return s;
 }
 
 struct hostent* _gethostbyaddr(const char* addr, int len, int type)
 {
 	struct hostent* host;
-
 	host = gethostbyaddr((void*) addr, (socklen_t) len, type);
-
 	return host;
 }
 
 struct hostent* _gethostbyname(const char* name)
 {
 	struct hostent* host;
-
 	host = gethostbyname(name);
-
 	return host;
 }
 
 int _gethostname(char* name, int namelen)
 {
 	int status;
-
 	status = gethostname(name, (size_t) namelen);
-
 	return status;
 }
 
 struct servent* _getservbyport(int port, const char* proto)
 {
 	struct servent* serv;
-
 	serv = getservbyport(port, proto);
-
 	return serv;
 }
 
 struct servent* _getservbyname(const char* name, const char* proto)
 {
 	struct servent* serv;
-
 	serv = getservbyname(name, proto);
-
 	return serv;
 }
 
 struct protoent* _getprotobynumber(int number)
 {
 	struct protoent* proto;
-
 	proto = getprotobynumber(number);
-
 	return proto;
 }
 
 struct protoent* _getprotobyname(const char* name)
 {
 	struct protoent* proto;
-
 	proto = getprotobyname(name);
-
 	return proto;
 }
 

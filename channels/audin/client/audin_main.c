@@ -225,7 +225,10 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 		AUDIO_FORMAT format = { 0 };
 
 		if (Stream_GetRemainingLength(s) < 18)
-			return ERROR_INVALID_DATA;
+		{
+			error = ERROR_INVALID_DATA;
+			goto out;
+		}
 
 		Stream_Read_UINT16(s, format.wFormatTag);
 		Stream_Read_UINT16(s, format.nChannels);
@@ -236,14 +239,20 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 		Stream_Read_UINT16(s, format.cbSize);
 
 		if (Stream_GetRemainingLength(s) < format.cbSize)
-			return ERROR_INVALID_DATA;
+		{
+			error = ERROR_INVALID_DATA;
+			goto out;
+		}
 
 		if (format.cbSize > 0)
 		{
 			format.data = malloc(format.cbSize);
 
 			if (!format.data)
-				return ERROR_OUTOFMEMORY;
+			{
+				error = ERROR_OUTOFMEMORY;
+				goto out;
+			}
 
 			memcpy(format.data, Stream_Pointer(s), format.cbSize);
 			Stream_Seek(s, format.cbSize);
@@ -298,7 +307,7 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	Stream_Write_UINT32(out, callback->formats_count); /* NumFormats (4 bytes) */
 	Stream_Write_UINT32(out, cbSizeFormatsPacket); /* cbSizeFormatsPacket (4 bytes) */
 	Stream_SetPosition(out, cbSizeFormatsPacket);
-	error = audin_channel_write_and_free(callback, out, TRUE);
+	error = audin_channel_write_and_free(callback, out, FALSE);
 out:
 
 	if (error != CHANNEL_RC_OK)
@@ -315,6 +324,7 @@ out:
 		}
 	}
 
+	Stream_Free(out, TRUE);
 	return error;
 }
 

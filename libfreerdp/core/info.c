@@ -1218,13 +1218,17 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 	len *= 2;
 
 	if (len > 52)
+	{
+		free(wString);
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, len);
 	Stream_Write(s, wString, len);
 	Stream_Seek(s, 52 - len);
 	free(wString);
 	/* username */
+	wString = NULL;
 	len = ConvertToUnicode(CP_UTF8, 0, info->username, -1, &wString, 0);
 
 	if (len < 0)
@@ -1233,7 +1237,10 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 	len *= 2;
 
 	if (len > 512)
+	{
+		free(wString);
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, len);
 	Stream_Write(s, wString, len);
@@ -1268,6 +1275,7 @@ static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 
 	Stream_Write(s, wString, len * 2);
 	free(wString);
+	wString = NULL;
 	len = ConvertToUnicode(CP_UTF8, 0, info->username, -1, &wString, 0);
 
 	if (len < 0)

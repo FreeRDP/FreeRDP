@@ -75,7 +75,6 @@ char* GetDeviceFileNameWithoutPrefixA(LPCSTR lpName)
 		return NULL;
 
 	lpFileName = _strdup(&lpName[strlen(DEVICE_FILE_PREFIX_PATH)]);
-
 	return lpFileName;
 }
 
@@ -83,14 +82,13 @@ char* GetDeviceFileUnixDomainSocketBaseFilePathA()
 {
 	char* lpTempPath;
 	char* lpPipePath;
-
 	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
+
 	if (!lpTempPath)
 		return NULL;
+
 	lpPipePath = GetCombinedPath(lpTempPath, ".device");
-
 	free(lpTempPath);
-
 	return lpPipePath;
 }
 
@@ -99,23 +97,22 @@ char* GetDeviceFileUnixDomainSocketFilePathA(LPCSTR lpName)
 	char* lpPipePath = NULL;
 	char* lpFileName = NULL;
 	char* lpFilePath = NULL;
-
 	lpPipePath = GetDeviceFileUnixDomainSocketBaseFilePathA();
+
 	if (!lpPipePath)
 		return NULL;
 
 	lpFileName = GetDeviceFileNameWithoutPrefixA(lpName);
+
 	if (!lpFileName)
 	{
-		free(lpFilePath);
+		free(lpPipePath);
 		return NULL;
 	}
 
 	lpFilePath = GetCombinedPath(lpPipePath, (char*) lpFileName);
-
 	free(lpPipePath);
 	free(lpFileName);
-
 	return lpFilePath;
 }
 
@@ -124,13 +121,14 @@ char* GetDeviceFileUnixDomainSocketFilePathA(LPCSTR lpName)
  * http://msdn.microsoft.com/en-us/library/windows/hardware/ff548397/
  */
 
-NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtensionSize, PUNICODE_STRING DeviceName,
-		DEVICE_TYPE DeviceType, ULONG DeviceCharacteristics, BOOLEAN Exclusive, PDEVICE_OBJECT_EX* DeviceObject)
+NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtensionSize,
+                           PUNICODE_STRING DeviceName,
+                           DEVICE_TYPE DeviceType, ULONG DeviceCharacteristics, BOOLEAN Exclusive,
+                           PDEVICE_OBJECT_EX* DeviceObject)
 {
 	int status;
 	char* DeviceBasePath;
 	DEVICE_OBJECT_EX* pDeviceObjectEx;
-
 	DeviceBasePath = GetDeviceFileUnixDomainSocketBaseFilePathA();
 
 	if (!DeviceBasePath)
@@ -144,21 +142,25 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 			return STATUS_ACCESS_DENIED;
 		}
 	}
-	free(DeviceBasePath);
 
+	free(DeviceBasePath);
 	pDeviceObjectEx = (DEVICE_OBJECT_EX*) calloc(1, sizeof(DEVICE_OBJECT_EX));
 
 	if (!pDeviceObjectEx)
 		return STATUS_NO_MEMORY;
 
-	ConvertFromUnicode(CP_UTF8, 0, DeviceName->Buffer, DeviceName->Length / 2, &(pDeviceObjectEx->DeviceName), 0, NULL, NULL);
+	ConvertFromUnicode(CP_UTF8, 0, DeviceName->Buffer, DeviceName->Length / 2,
+	                   &(pDeviceObjectEx->DeviceName), 0, NULL, NULL);
+
 	if (!pDeviceObjectEx->DeviceName)
 	{
 		free(pDeviceObjectEx);
 		return STATUS_NO_MEMORY;
 	}
 
-	pDeviceObjectEx->DeviceFileName = GetDeviceFileUnixDomainSocketFilePathA(pDeviceObjectEx->DeviceName);
+	pDeviceObjectEx->DeviceFileName = GetDeviceFileUnixDomainSocketFilePathA(
+	                                      pDeviceObjectEx->DeviceName);
+
 	if (!pDeviceObjectEx->DeviceFileName)
 	{
 		free(pDeviceObjectEx->DeviceName);
@@ -175,35 +177,40 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 			free(pDeviceObjectEx);
 			return STATUS_ACCESS_DENIED;
 		}
-
 	}
 
 	status = mkfifo(pDeviceObjectEx->DeviceFileName, 0666);
+
 	if (status != 0)
 	{
 		free(pDeviceObjectEx->DeviceName);
 		free(pDeviceObjectEx->DeviceFileName);
 		free(pDeviceObjectEx);
+
 		switch (errno)
 		{
 			case EACCES:
 				return STATUS_ACCESS_DENIED;
+
 			case EEXIST:
 				return STATUS_OBJECT_NAME_EXISTS;
+
 			case ENAMETOOLONG:
 				return STATUS_NAME_TOO_LONG;
+
 			case ENOENT:
 			case ENOTDIR:
 				return STATUS_NOT_A_DIRECTORY;
+
 			case ENOSPC:
 				return STATUS_DISK_FULL;
+
 			default:
 				return STATUS_INTERNAL_ERROR;
 		}
 	}
 
-	*((ULONG_PTR*) (DeviceObject)) = (ULONG_PTR) pDeviceObjectEx;
-
+	*((ULONG_PTR*)(DeviceObject)) = (ULONG_PTR) pDeviceObjectEx;
 	return STATUS_SUCCESS;
 }
 
@@ -215,17 +222,14 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 VOID _IoDeleteDeviceEx(PDEVICE_OBJECT_EX DeviceObject)
 {
 	DEVICE_OBJECT_EX* pDeviceObjectEx;
-
 	pDeviceObjectEx = (DEVICE_OBJECT_EX*) DeviceObject;
 
 	if (!pDeviceObjectEx)
 		return;
 
 	unlink(pDeviceObjectEx->DeviceFileName);
-
 	free(pDeviceObjectEx->DeviceName);
 	free(pDeviceObjectEx->DeviceFileName);
-
 	free(pDeviceObjectEx);
 }
 

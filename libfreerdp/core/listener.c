@@ -160,7 +160,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 #ifndef _WIN32
 	int status;
 	int sockfd;
-	struct sockaddr_un addr;
+	struct sockaddr_un addr = { 0 };
 	rdpListener* listener = (rdpListener*) instance->listener;
 	HANDLE hevent;
 
@@ -180,7 +180,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	fcntl(sockfd, F_SETFL, O_NONBLOCK);
 	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+	strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
 	unlink(path);
 	status = _bind(sockfd, (struct sockaddr*) &addr, sizeof(addr));
 

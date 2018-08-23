@@ -168,7 +168,8 @@ fail:
 
 static BOOL log_recursion(LPCSTR file, LPCSTR fkt, int line)
 {
-	char** msg;
+	BOOL status = FALSE;
+	char** msg = NULL;
 	size_t used, i;
 	void* bt = winpr_backtrace(20);
 #if defined(ANDROID)
@@ -181,37 +182,39 @@ static BOOL log_recursion(LPCSTR file, LPCSTR fkt, int line)
 	msg = winpr_backtrace_symbols(bt, &used);
 
 	if (!msg)
-		return FALSE;
+		goto out;
 
 #if defined(ANDROID)
 
 	if (__android_log_print(ANDROID_LOG_FATAL, tag, "Recursion detected!!!") < 0)
-		return FALSE;
+		goto out;
 
 	if (__android_log_print(ANDROID_LOG_FATAL, tag, "Check %s [%s:%d]", fkt, file,
 	                        line) < 0)
-		return FALSE;
+		goto out;
 
 	for (i = 0; i < used; i++)
 		if (__android_log_print(ANDROID_LOG_FATAL, tag, "%zd: %s", i, msg[i]) < 0)
-			return FALSE;
+			goto out;
 
 #else
 
 	if (fprintf(stderr, "[%s]: Recursion detected!\n", fkt) < 0)
-		return FALSE;
+		goto out;
 
 	if (fprintf(stderr, "[%s]: Check %s:%d\n", fkt, file, line) < 0)
-		return FALSE;
+		goto out;
 
 	for (i = 0; i < used; i++)
 		if (fprintf(stderr, "%s: %"PRIuz": %s\n", fkt, i, msg[i]) < 0)
-			return FALSE;
+			goto out;
 
 #endif
+	status = TRUE;
+out:
 	free(msg);
 	winpr_backtrace_free(bt);
-	return TRUE;
+	return status;
 }
 
 static BOOL WLog_Write(wLog* log, wLogMessage* message)

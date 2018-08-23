@@ -220,6 +220,7 @@ FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSub
 
 	if (!ppAddins)
 	{
+		FindClose(hFind);
 		WLog_ERR(TAG, "calloc failed!");
 		return NULL;
 	}
@@ -298,6 +299,7 @@ FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSub
 	ppAddins[nAddins] = NULL;
 	return ppAddins;
 error_out:
+	FindClose(hFind);
 	freerdp_channels_addin_list_free(ppAddins);
 	return NULL;
 }

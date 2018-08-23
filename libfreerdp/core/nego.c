@@ -342,6 +342,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 
 	if (!s)
 	{
+		free(wszPCB);
 		WLog_ERR(TAG, "Stream_New failed!");
 		return FALSE;
 	}

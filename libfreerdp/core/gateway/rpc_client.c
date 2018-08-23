@@ -476,6 +476,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 			/* Receive OUT Channel Response */
 			if (rpc_ncacn_http_recv_out_channel_response(rpc, outChannel, response) < 0)
 			{
+				http_response_free(response);
 				WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
 				return -1;
 			}
@@ -484,6 +485,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 			if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel, FALSE) < 0)
 			{
+				http_response_free(response);
 				WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 				return -1;
 			}
@@ -496,6 +498,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 			if (rts_send_CONN_A1_pdu(rpc) < 0)
 			{
+				http_response_free(response);
 				WLog_ERR(TAG, "rpc_send_CONN_A1_pdu error!");
 				return -1;
 			}

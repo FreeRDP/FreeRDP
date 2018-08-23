@@ -736,7 +736,7 @@ static int freerdp_uds_connect(const char* path)
 #ifndef _WIN32
 	int status;
 	int sockfd;
-	struct sockaddr_un addr;
+	struct sockaddr_un addr = { 0 };
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 
 	if (sockfd == -1)
@@ -746,7 +746,7 @@ static int freerdp_uds_connect(const char* path)
 	}
 
 	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+	strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
 	status = connect(sockfd, (struct sockaddr*) &addr, sizeof(addr));
 
 	if (status < 0)
@@ -1191,7 +1191,8 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 				return -1;
 			}
 
-			if ((peerAddress = freerdp_tcp_address_to_string((struct sockaddr_storage*)addr->ai_addr, NULL)) != NULL)
+			if ((peerAddress = freerdp_tcp_address_to_string((struct sockaddr_storage*)addr->ai_addr,
+			                   NULL)) != NULL)
 			{
 				WLog_DBG(TAG, "connecting to peer %s", peerAddress);
 				free(peerAddress);

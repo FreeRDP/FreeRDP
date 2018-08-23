@@ -109,6 +109,7 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 	}
 
 	remdesk->ExpertBlob = freerdp_assistance_construct_expert_blob(name, pass);
+	free(pass);
 
 	if (!remdesk->ExpertBlob)
 	{
