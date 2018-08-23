@@ -42,7 +42,6 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
 
-#include "compatibility.h"
 #include "cmdline.h"
 
 #include <freerdp/log.h>
@@ -1154,8 +1153,6 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 static BOOL freerdp_client_detect_command_line(int argc, char** argv,
         DWORD* flags, BOOL ignoreUnknown)
 {
-	int old_cli_status;
-	int old_cli_count;
 	int posix_cli_status;
 	size_t posix_cli_count;
 	int windows_cli_status;
@@ -1165,8 +1162,6 @@ static BOOL freerdp_client_detect_command_line(int argc, char** argv,
 	                     argv, &windows_cli_count, ignoreUnknown);
 	posix_cli_status = freerdp_detect_posix_style_command_line_syntax(argc, argv,
 	                   &posix_cli_count, ignoreUnknown);
-	old_cli_status = freerdp_detect_old_command_line_syntax(argc, argv,
-	                 &old_cli_count);
 	/* Default is POSIX syntax */
 	*flags = COMMAND_LINE_SEPARATOR_SPACE;
 	*flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
@@ -1183,21 +1178,10 @@ static BOOL freerdp_client_detect_command_line(int argc, char** argv,
 		*flags = COMMAND_LINE_SEPARATOR_COLON;
 		*flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 	}
-	else if (old_cli_status >= 0)
-	{
-		/* Ignore legacy parsing in case there is an error in the command line. */
-		if ((old_cli_status == 1) || ((old_cli_count > posix_cli_count)
-		                              && (old_cli_status != -1)))
-		{
-			*flags = COMMAND_LINE_SEPARATOR_SPACE;
-			*flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
-			compatibility = TRUE;
-		}
-	}
 
-	WLog_DBG(TAG, "windows: %d/%d posix: %d/%d compat: %d/%d", windows_cli_status,
+	WLog_DBG(TAG, "windows: %d/%d posix: %d/%d", windows_cli_status,
 	         windows_cli_count,
-	         posix_cli_status, posix_cli_count, old_cli_status, old_cli_count);
+	         posix_cli_status, posix_cli_count);
 	return compatibility;
 }
 
@@ -1301,7 +1285,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	BOOL assist = FALSE;
 	DWORD flags = 0;
 	BOOL promptForPassword = FALSE;
-	BOOL compatibility = FALSE;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
 	/* Command line detection fails if only a .rdp or .msrcIncident file
@@ -1314,48 +1297,40 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	}
 
 	if (!ext && !assist)
-		compatibility = freerdp_client_detect_command_line(argc, argv, &flags,
-		                allowUnknown);
+		freerdp_client_detect_command_line(argc, argv, &flags,
+		                                   allowUnknown);
 	else
-		compatibility = freerdp_client_detect_command_line(argc - 1, &argv[1], &flags,
-		                allowUnknown);
+		freerdp_client_detect_command_line(argc - 1, &argv[1], &flags,
+		                                   allowUnknown);
 
 	settings->ProxyHostname = NULL;
 	settings->ProxyUsername = NULL;
 	settings->ProxyPassword = NULL;
 
-	if (compatibility)
+	if (allowUnknown)
+		flags |= COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+
+	if (ext)
 	{
-		WLog_WARN(TAG, "Using deprecated command-line interface!");
-		return freerdp_client_parse_old_command_line_arguments(argc, argv, settings);
+		if (freerdp_client_settings_parse_connection_file(settings, argv[1]))
+			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	}
-	else
+
+	if (assist)
 	{
-		if (allowUnknown)
-			flags |= COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-
-		if (ext)
-		{
-			if (freerdp_client_settings_parse_connection_file(settings, argv[1]))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		}
-
-		if (assist)
-		{
-			if (freerdp_client_settings_parse_assistance_file(settings,
-			        argv[1]) < 0)
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		}
-
-		CommandLineClearArgumentsA(args);
-		status = CommandLineParseArgumentsA(argc, argv, args, flags,
-		                                    settings,
-		                                    freerdp_client_command_line_pre_filter,
-		                                    freerdp_client_command_line_post_filter);
-
-		if (status < 0)
-			return status;
+		if (freerdp_client_settings_parse_assistance_file(settings,
+		        argv[1]) < 0)
+			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	}
+
+	CommandLineClearArgumentsA(args);
+	status = CommandLineParseArgumentsA(argc, argv, args, flags,
+	                                    settings,
+	                                    freerdp_client_command_line_pre_filter,
+	                                    freerdp_client_command_line_post_filter);
+
+	if (status < 0)
+		return status;
 
 	CommandLineFindArgumentA(args, "v");
 	arg = args;
