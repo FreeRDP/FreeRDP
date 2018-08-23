@@ -110,7 +110,7 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 	if (!xf_disp_settings_changed(xfDisp))
 		return TRUE;
 
-	if (xfc->fullscreen)
+	if (xfc->fullscreen && (settings->MonitorCount > 0))
 	{
 		if (xf_disp_sendLayout(xfc->disp, settings->MonitorDefArray,
 		                       settings->MonitorCount) != CHANNEL_RC_OK)
