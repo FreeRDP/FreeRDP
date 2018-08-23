@@ -53,8 +53,8 @@
 
 static void drive_file_fix_path(WCHAR* path)
 {
-	int i;
-	int length;
+	size_t i;
+	size_t length;
 	length = (int) _wcslen(path);
 
 	for (i = 0; i < length; i++)
