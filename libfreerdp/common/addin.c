@@ -188,7 +188,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName,
 		if (!pszRelativeFilePath)
 			goto fail;
 
-		sprintf_s(pszRelativeFilePath, relPathLen, "%s", pszRelativeFilePath);
+		sprintf_s(pszRelativeFilePath, relPathLen, "%s", pszPath);
 		NativePathCchAppendA(pszRelativeFilePath, relPathLen, pszAddinFile);
 	}
 	else
@@ -245,7 +245,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 	if (pszName && pszSubsystem && pszType)
 	{
 		const size_t cchFileName = cchBaseFileName + strlen(pszName) + strlen(pszSubsystem) + strlen(
-		                                pszType) + strlen(pszExtension);
+		                               pszType) + strlen(pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
 
 		if (!pszFileName)
@@ -256,7 +256,8 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 	}
 	else if (pszName && pszSubsystem)
 	{
-		const size_t cchFileName = cchBaseFileName + strlen(pszName) + strlen(pszSubsystem) + strlen(pszExtension);
+		const size_t cchFileName = cchBaseFileName + strlen(pszName) + strlen(pszSubsystem) + strlen(
+		                               pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
 
 		if (!pszFileName)
