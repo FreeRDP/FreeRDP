@@ -59,10 +59,19 @@ FREERDP_API char* crypto_cert_subject_common_name(X509* xcert, int* length);
 FREERDP_API char** crypto_cert_get_dns_names(X509* xcert, int* count, int** lengths);
 FREERDP_API char* crypto_cert_get_email(X509* x509);
 FREERDP_API char* crypto_cert_get_upn(X509* x509);
-FREERDP_API void crypto_cert_dns_names_free(int count, int* lengths, char** dns_name);
+FREERDP_API void crypto_cert_dns_names_free(int count, int* lengths, char** dns_names);
 FREERDP_API char* crypto_cert_issuer(X509* xcert);
 FREERDP_API void crypto_cert_print_info(X509* xcert);
 FREERDP_API void crypto_cert_free(CryptoCert cert);
+
+/*
+Deprecated function names; use crypto_cert_get_dns_names and crypto_cert_dns_names_free instead.
+Kept for now for compatibility of FREERDP_API;
+Note: email and upn amongst others are also alt_names;
+but the old crypto_cert_get_alt_names returned only the dns_names
+*/
+FREERDP_API char** crypto_cert_get_alt_names(X509* xcert, int* count, int** lengths);
+FREERDP_API void crypto_cert_alt_names_free(int count, int* lengths, char** alt_names);
 
 FREERDP_API BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path);
 FREERDP_API rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname,

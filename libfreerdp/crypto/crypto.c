@@ -674,6 +674,10 @@ char* crypto_cert_get_upn(X509* x509)
 	return result;
 }
 
+void crypto_cert_alt_names_free(int count, int* lengths, char** alt_names)
+{
+	crypto_cert_dns_names_free(count, lengths, alt_names);
+}
 
 void crypto_cert_dns_names_free(int count, int* lengths,
                                 char** dns_names)
@@ -694,6 +698,11 @@ void crypto_cert_dns_names_free(int count, int* lengths,
 
 		free(dns_names);
 	}
+}
+
+char** crypto_cert_get_alt_names(X509* x509, int* count, int** lengths)
+{
+	return crypto_cert_get_dns_names(x509, count, lengths);
 }
 
 char** crypto_cert_get_dns_names(X509* x509, int* count, int** lengths)
