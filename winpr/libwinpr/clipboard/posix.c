@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <winpr/crt.h>
 #include <winpr/clipboard.h>
 #include <winpr/collections.h>
 #include <winpr/file.h>

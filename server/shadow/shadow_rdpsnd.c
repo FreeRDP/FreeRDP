@@ -20,6 +20,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
 #include <freerdp/log.h>
 #include <freerdp/codec/dsp.h>
 

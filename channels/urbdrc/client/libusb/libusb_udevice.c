@@ -27,6 +27,7 @@
 #endif
 
 #include <errno.h>
+#include <winpr/crt.h>
 
 #include "libusb_udevice.h"
 
