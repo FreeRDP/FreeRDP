@@ -49,7 +49,7 @@ static int mfreerdp_client_start(rdpContext* context)
 	{
 		// view not specified beforehand. Create view dynamically
 		mfc->view = [[MRDPView alloc] initWithFrame : NSMakeRect(0, 0,
-		             context->settings->DesktopWidth, context->settings->DesktopHeight)];
+		                              context->settings->DesktopWidth, context->settings->DesktopHeight)];
 		mfc->view_ownership = TRUE;
 	}
 
@@ -90,7 +90,6 @@ static BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
 	context->instance->PostConnect = mac_post_connect;
 	context->instance->Authenticate = mac_authenticate;
 	settings = instance->settings;
-	settings->AsyncTransport = FALSE;
 	settings->AsyncUpdate = TRUE;
 	settings->AsyncInput = TRUE;
 	return TRUE;

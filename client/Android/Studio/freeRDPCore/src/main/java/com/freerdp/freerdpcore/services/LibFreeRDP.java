@@ -239,7 +239,6 @@ public class LibFreeRDP {
         }
 
         args.add(addFlag("async-channels", debug.getAsyncChannel()));
-        //args.add(addFlag("async-transport", debug.getAsyncTransport()));
         args.add(addFlag("async-input", debug.getAsyncInput()));
         args.add(addFlag("async-update", debug.getAsyncUpdate()));
 

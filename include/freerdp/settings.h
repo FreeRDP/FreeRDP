@@ -505,6 +505,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_PasswordHash                                       (  24)
 #define FreeRDP_WaitForOutputBufferFlush                           (  25)
 #define FreeRDP_MaxTimeInCheckLoop                                 (  26)
+#define FreeRDP_AcceptedCert                                       (  27)
+#define FreeRDP_AcceptedCertLength                                 (  28)
 #define FreeRDP_RdpVersion                                         ( 128)
 #define FreeRDP_DesktopWidth                                       ( 129)
 #define FreeRDP_DesktopHeight                                      ( 130)
@@ -644,6 +646,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_TargetNetAddressCount                              (1228)
 #define FreeRDP_TargetNetAddresses                                 (1229)
 #define FreeRDP_TargetNetPorts                                     (1230)
+#define FreeRDP_RedirectionAcceptedCert                            (1231)
+#define FreeRDP_RedirectionAcceptedCertLength                      (1232)
 #define FreeRDP_Password51                                         (1280)
 #define FreeRDP_Password51Length                                   (1281)
 #define FreeRDP_KerberosKdc                                        (1344)
@@ -671,7 +675,6 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_AsyncInput                                         (1544)
 #define FreeRDP_AsyncUpdate                                        (1545)
 #define FreeRDP_AsyncChannels                                      (1546)
-#define FreeRDP_AsyncTransport                                     (1547)
 #define FreeRDP_ToggleFullscreen                                   (1548)
 #define FreeRDP_WmClass                                            (1549)
 #define FreeRDP_EmbeddedWindow                                     (1550)
@@ -712,6 +715,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_GatewayHttpTransport                               (1995)
 #define FreeRDP_GatewayUdpTransport                                (1996)
 #define FreeRDP_GatewayAccessToken                                 (1997)
+#define FreeRDP_GatewayAcceptedCert                                (1998)
+#define FreeRDP_GatewayAcceptedCertLength                          (1999)
 #define FreeRDP_ProxyType                                          (2015)
 #define FreeRDP_ProxyHostname                                      (2016)
 #define FreeRDP_ProxyPort                                          (2017)
@@ -1127,7 +1132,7 @@ struct rdp_settings
 	ALIGN64 BOOL   AsyncInput;              /* 1544 */
 	ALIGN64 BOOL   AsyncUpdate;             /* 1545 */
 	ALIGN64 BOOL   AsyncChannels;           /* 1546 */
-	ALIGN64 BOOL   AsyncTransport;          /* 1547 */
+	UINT64 padding1548[1548 - 1547];        /* 1547 */
 	ALIGN64 BOOL   ToggleFullscreen;        /* 1548 */
 	ALIGN64 char*  WmClass;                 /* 1549 */
 	ALIGN64 BOOL   EmbeddedWindow;          /* 1550 */
@@ -1147,7 +1152,7 @@ struct rdp_settings
 	ALIGN64 BOOL AuthenticationOnly;   /* 1603 */
 	ALIGN64 BOOL CredentialsFromStdin; /* 1604 */
 	ALIGN64 BOOL UnmapButtons;         /* 1605 */
-	UINT64 padding1664[1664 - 1606]; /* 1606 */
+	UINT64 padding1664[1664 - 1606];   /* 1606 */
 
 	/* Names */
 	ALIGN64 char* ComputerName; /* 1664 */

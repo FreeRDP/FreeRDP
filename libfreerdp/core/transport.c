@@ -58,8 +58,6 @@
 
 #define BUFFER_SIZE 16384
 
-static DWORD WINAPI transport_client_thread(LPVOID arg);
-
 #ifdef WITH_GSSAPI
 
 #include <krb5.h>
@@ -358,7 +356,6 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 	rdpSettings* settings = transport->settings;
 	rdpContext* context = transport->context;
 	BOOL rpcFallback = !settings->GatewayHttpTransport;
-	transport->async = settings->AsyncTransport;
 
 	if (transport->GatewayEnabled)
 	{
@@ -432,26 +429,6 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 		}
 
 		status = TRUE;
-	}
-
-	if (status)
-	{
-		if (transport->async)
-		{
-			if (!(transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-			{
-				WLog_Print(transport->log, WLOG_ERROR, "Failed to create transport stop event");
-				return FALSE;
-			}
-
-			if (!(transport->thread = CreateThread(NULL, 0, transport_client_thread, transport, 0, NULL)))
-			{
-				WLog_Print(transport->log, WLOG_ERROR, "Failed to create transport client thread");
-				CloseHandle(transport->stopEvent);
-				transport->stopEvent = NULL;
-				return FALSE;
-			}
-		}
 	}
 
 	return status;
@@ -1097,30 +1074,12 @@ void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode)
 	transport->NlaMode = NlaMode;
 }
 
-void transport_stop(rdpTransport* transport)
-{
-	if (transport->async)
-	{
-		if (transport->stopEvent)
-		{
-			SetEvent(transport->stopEvent);
-			WaitForSingleObject(transport->thread, INFINITE);
-			CloseHandle(transport->thread);
-			CloseHandle(transport->stopEvent);
-			transport->thread = NULL;
-			transport->stopEvent = NULL;
-		}
-	}
-}
-
 BOOL transport_disconnect(rdpTransport* transport)
 {
 	BOOL status = TRUE;
 
 	if (!transport)
 		return FALSE;
-
-	transport_stop(transport);
 
 	if (transport->tls)
 	{
@@ -1148,94 +1107,6 @@ BOOL transport_disconnect(rdpTransport* transport)
 	transport->frontBio = NULL;
 	transport->layer = TRANSPORT_LAYER_TCP;
 	return status;
-}
-
-DWORD WINAPI transport_client_thread(LPVOID arg)
-{
-	DWORD dwExitCode = 0;
-	DWORD status;
-	DWORD nCount;
-	DWORD nCountTmp;
-	HANDLE handles[64];
-	rdpTransport* transport = (rdpTransport*) arg;
-	rdpContext* context = transport->context;
-	rdpRdp* rdp = context->rdp;
-	WLog_Print(transport->log, WLOG_DEBUG, "Asynchronous transport thread started");
-	nCount = 0;
-	handles[nCount++] = transport->stopEvent;
-	handles[nCount++] = transport->connectedEvent;
-	status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
-
-	switch (status)
-	{
-		case WAIT_OBJECT_0:
-			WLog_Print(transport->log, WLOG_DEBUG, "stopEvent triggered");
-			goto out;
-
-		case WAIT_OBJECT_0 + 1:
-			WLog_Print(transport->log, WLOG_DEBUG, "connectedEvent event triggered");
-			break;
-
-		default:
-			WLog_Print(transport->log, WLOG_ERROR, "WaitForMultipleObjects failed with status 0x%08"PRIX32"",
-			           status);
-			dwExitCode = 1;
-			goto out;
-	}
-
-	while (1)
-	{
-		nCount = 1; /* transport->stopEvent */
-
-		if (!(nCountTmp = freerdp_get_event_handles(context, &handles[nCount],
-		                  64 - nCount)))
-		{
-			WLog_Print(transport->log, WLOG_ERROR, "freerdp_get_event_handles failed");
-			break;
-		}
-
-		nCount += nCountTmp;
-		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
-
-		if (transport->layer == TRANSPORT_LAYER_CLOSED)
-		{
-			WLog_Print(transport->log, WLOG_DEBUG, "TRANSPORT_LAYER_CLOSED");
-			rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
-			break;
-		}
-
-		if (status == WAIT_OBJECT_0)
-		{
-			WLog_Print(transport->log, WLOG_DEBUG, "stopEvent triggered");
-			break;
-		}
-		else if (status > WAIT_OBJECT_0 && status < (WAIT_OBJECT_0 + nCount))
-		{
-			if (!freerdp_check_event_handles(context))
-			{
-				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-					WLog_Print(transport->log, WLOG_ERROR, "freerdp_check_event_handles()");
-
-				rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
-				break;
-			}
-		}
-		else
-		{
-			if (status == WAIT_TIMEOUT)
-				WLog_Print(transport->log, WLOG_ERROR, "WaitForMultipleObjects returned WAIT_TIMEOUT");
-			else
-				WLog_Print(transport->log, WLOG_ERROR, "WaitForMultipleObjects returned 0x%08"PRIX32"", status);
-
-			dwExitCode = 1;
-			break;
-		}
-	}
-
-out:
-	WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
-	ExitThread(dwExitCode);
-	return dwExitCode;
 }
 
 rdpTransport* transport_new(rdpContext* context)
