@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef str_h
-#define str_h
+#ifndef channels_smartcard_client_str_h
+#define channels_smartcard_client_str_h
 
 #include <winpr/wtypes.h>
 #include <winpr/collections.h>
