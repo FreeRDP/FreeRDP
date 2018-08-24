@@ -54,7 +54,6 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 	struct passwd pwd;
 	struct passwd* pw = NULL;
 	WINPR_ACCESS_TOKEN* token;
-
 	token = (WINPR_ACCESS_TOKEN*) hToken;
 
 	if (!token || (token->Type != HANDLE_TYPE_ACCESS_TOKEN) || !lpcchSize)
@@ -78,7 +77,7 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 	if ((status != 0) || !pw)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
-		free (buf);
+		free(buf);
 		return FALSE;
 	}
 
@@ -93,10 +92,9 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 	}
 
 	ZeroMemory(lpProfileDir, *lpcchSize);
-	strcpy(lpProfileDir, pw->pw_dir);
+	sprintf_s(lpProfileDir, *lpcchSize, "%s", pw->pw_dir);
 	*lpcchSize = cchDirSize;
 	free(buf);
-
 	return TRUE;
 }
 
@@ -139,7 +137,6 @@ BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchS
 	}
 
 	*lpcchSize = cchSizeA;
-	
 	return bStatus;
 }
 

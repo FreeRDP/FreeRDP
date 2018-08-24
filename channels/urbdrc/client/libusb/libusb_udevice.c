@@ -661,8 +661,7 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 			}
 			while (p1 != NULL);
 
-			memset(pdev->path, 0, 17);
-			strcpy(pdev->path, p2);
+			_snprintf(pdev->path, ARRAYSIZE(pdev->path), "%s", p2);
 			WLog_DBG(TAG, "  DevPath: %s", pdev->path);
 			/* query parent hub info */
 			dev = udev_device_get_parent(dev);

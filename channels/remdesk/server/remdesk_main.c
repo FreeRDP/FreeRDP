@@ -152,7 +152,7 @@ static UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader,
                                        UINT32 msgType, UINT32 msgSize)
 {
 	ctlHeader->msgType = msgType;
-	strcpy(ctlHeader->ChannelName, REMDESK_CHANNEL_CTL_NAME);
+	sprintf_s(ctlHeader->ChannelName, ARRAYSIZE(ctlHeader->ChannelName), REMDESK_CHANNEL_CTL_NAME);
 	ctlHeader->DataLength = 4 + msgSize;
 	return CHANNEL_RC_OK;
 }
@@ -592,7 +592,6 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 	RemdeskServerContext* context;
 	UINT error;
 	context = (RemdeskServerContext*) arg;
-
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
@@ -727,7 +726,7 @@ static UINT remdesk_server_start(RemdeskServerContext* context)
 	}
 
 	if (!(context->priv->Thread = CreateThread(NULL, 0,
-								  remdesk_server_thread, (void*) context, 0, NULL)))
+	                              remdesk_server_thread, (void*) context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(context->priv->StopEvent);
@@ -790,7 +789,7 @@ void remdesk_server_context_free(RemdeskServerContext* context)
 	{
 		if (context->priv->ChannelHandle != INVALID_HANDLE_VALUE)
 			WTSVirtualChannelClose(context->priv->ChannelHandle);
-		
+
 		free(context->priv);
 		free(context);
 	}

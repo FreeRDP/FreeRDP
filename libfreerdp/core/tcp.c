@@ -690,7 +690,7 @@ static char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, 
 			break;
 
 		case AF_UNIX:
-			strcpy(ipAddress, "127.0.0.1");
+			sprintf_s(ipAddress, ARRAYSIZE(ipAddress), "127.0.0.1");
 			break;
 
 		default:

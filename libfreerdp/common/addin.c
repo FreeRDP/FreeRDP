@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/string.h>
 #include <winpr/library.h>
 
 #include <freerdp/addin.h>

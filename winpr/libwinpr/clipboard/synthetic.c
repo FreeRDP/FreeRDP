@@ -331,7 +331,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 	{
 		char* body;
 		BYTE bom[2];
-		char num[11];
+		char num[20];
 		WCHAR* wstr;
 
 		if (SrcSize > 2)
@@ -369,12 +369,12 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 			return NULL;
 		}
 
-		strcpy(pDstData,
-		       "Version:0.9\r\n"
-		       "StartHTML:0000000000\r\n"
-		       "EndHTML:0000000000\r\n"
-		       "StartFragment:0000000000\r\n"
-		       "EndFragment:0000000000\r\n");
+		sprintf_s(pDstData, SrcSize + 200,
+		          "Version:0.9\r\n"
+		          "StartHTML:0000000000\r\n"
+		          "EndHTML:0000000000\r\n"
+		          "StartFragment:0000000000\r\n"
+		          "EndFragment:0000000000\r\n");
 		body = strstr(pSrcData, "<body");
 
 		if (!body)
