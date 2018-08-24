@@ -19,7 +19,36 @@ char*   crypto_cert_subject_common_name_wo_length(X509* xcert)
 	return crypto_cert_subject_common_name(xcert, & length);
 }
 
-const char* certificate_path = "Test_x509_cert_info.pem";
+const char* certificate_path()
+{
+	/*
+	Assume the .pem file is in the same directory as this source file.
+	Assume that __FILE__ will be a valid path to this file, even from the current working directory where the tests are run.
+	(ie. no chdir occurs between compilation and test running, or __FILE__ is an absolute path).
+	*/
+
+#if defined(_WIN32)
+	static const char dirsep = '\\';
+#else
+	static const char dirsep = '/';
+#endif
+	static const char * filename = "Test_x509_cert_info.pem";
+	const char * file = __FILE__;
+	const char * last_dirsep = strrchr(file, dirsep);
+	if (last_dirsep)
+	{
+		char * result = malloc(last_dirsep - file + 1 + strlen(filename) + 1);
+		strncpy(result, file, (last_dirsep - file + 1));
+		strcpy(result + (last_dirsep - file + 1), filename);
+		return result;
+	}
+	else
+	{
+		/* No dirsep => relative path in same directory */
+		return filename;
+	}
+}
+
 const certificate_test_t certificate_tests[] =
 {
 
@@ -135,6 +164,6 @@ fail:
 
 int Test_x509_cert_info(int argc, char* argv[])
 {
-	return TestCertificateFile(certificate_path, certificate_tests, ARRAYSIZE(certificate_tests));
+	return TestCertificateFile(certificate_path(), certificate_tests, ARRAYSIZE(certificate_tests));
 }
 
