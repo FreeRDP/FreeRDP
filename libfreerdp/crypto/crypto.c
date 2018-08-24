@@ -457,13 +457,13 @@ static void string_list_allocate(string_list* list, int allocate_count)
 
 static void string_list_free(string_list* list)
 {
-	// Note: we don't free the contents of the strings array: this
-	// is handled by the caller,  either by returning this
-	// content,  or freeing it itself.
+	/* Note: we don't free the contents of the strings array: this */
+	/* is handled by the caller,  either by returning this */
+	/* content,  or freeing it itself. */
 	free(list->strings);
 }
 
-int extract_string(GENERAL_NAME* name, void* data, int index, int count)
+static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 {
 	string_list*   list = data;
 	unsigned char* cstring = 0;
@@ -565,7 +565,7 @@ static char* object_string(ASN1_TYPE* object)
 	char* result;
 	unsigned char* utf8String;
 	int length;
-	// TODO: check that object.type is a string type.
+	/* TODO: check that object.type is a string type. */
 	length = ASN1_STRING_to_UTF8(& utf8String, object->value.asn1_string);
 
 	if (length < 0)
@@ -583,7 +583,7 @@ static void object_list_free(object_list* list)
 	free(list->strings);
 }
 
-int extract_othername_object_as_string(GENERAL_NAME* name, void* data, int index, int count)
+static int extract_othername_object_as_string(GENERAL_NAME* name, void* data, int index, int count)
 {
 	object_list*   list = data;
 
@@ -619,14 +619,9 @@ int extract_othername_object_as_string(GENERAL_NAME* name, void* data, int index
 	return 1;
 }
 
-
-
-
 /*
-
 crypto_cert_get_email returns a dynamically allocated copy of the
 first email found in the subjectAltNames (use free to free it).
-
 */
 
 char* crypto_cert_get_email(X509* x509)
