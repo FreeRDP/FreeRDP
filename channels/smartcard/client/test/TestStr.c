@@ -39,7 +39,7 @@
 
 
 
-#define countof(a)                (sizeof (a) / sizeof (a[0]))
+
 #define no_convert(src, dst)	  dst = (BYTE *)src
 #define no_free(p)		  (void)p
 #define convert_to_utf8(src, dst) ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)src, -1,(CHAR * *) &dst, 0, NULL, NULL)
@@ -164,7 +164,7 @@ BOOL test_ncompare()
 #define test_ncompare_loop(string, convert, free)                                                                               \
 	do                                                                                                                      \
 	{                                                                                                                       \
-		for (i = 0;i < countof(ncompares);i ++ )                                                                        \
+		for (i = 0;i < ARRAYSIZE(ncompares);i ++ )                                                                        \
 		{                                                                                                               \
 			BYTE * string = (BYTE *)ncompares[i].string;                                                            \
 			for(j = 0;ncompares[i].tests[j].expected != -2;j ++ )                                                   \
@@ -265,7 +265,7 @@ BOOL test_ncopy()
 	BOOL success = TRUE;
 	int i;
 
-	for (i = 0; i < countof(ncopies); i ++)
+	for (i = 0; i < ARRAYSIZE(ncopies); i ++)
 	{
 		int widechar = ncopies[i].widechar;
 		int width = (widechar ? 2 : 1);
@@ -356,7 +356,7 @@ BOOL test_contains()
 	BOOL success = TRUE;
 	int i;
 
-	for (i = 0; i < countof(contains_tests); i ++)
+	for (i = 0; i < ARRAYSIZE(contains_tests); i ++)
 	{
 		int widechar = contains_tests[i].widechar;
 		BOOL expected = contains_tests[i].expected;
@@ -465,7 +465,7 @@ BOOL test_stringhassubstrings()
 	BOOL success = TRUE;
 	int i;
 
-	for (i = 0; i < countof(stringhassubstrings); i ++)
+	for (i = 0; i < ARRAYSIZE(stringhassubstrings); i ++)
 	{
 		int widechar = stringhassubstrings[i].widechar;
 		BOOL expected = stringhassubstrings[i].expected;
@@ -876,7 +876,7 @@ BOOL test_mszfilterstrings()
 	BOOL success = TRUE;
 	int i;
 
-	for (i = 0; i < countof(mszfilterstrings); i ++)
+	for (i = 0; i < ARRAYSIZE(mszfilterstrings); i ++)
 	{
 		int widechar = mszfilterstrings[i].widechar;
 		char** filter_list = (char**)mszfilterstrings[i].filter_list;
@@ -1094,7 +1094,7 @@ BOOL test_mszStrings_Enumerator()
 	BOOL success = TRUE;
 	int i;
 
-	for (i = 0; i < countof(mszstring_enumerator_tests); i ++)
+	for (i = 0; i < ARRAYSIZE(mszstring_enumerator_tests); i ++)
 	{
 		int widechar = mszstring_enumerator_tests[i].widechar;
 		int count = mszstring_enumerator_tests[i].count;
