@@ -56,7 +56,7 @@
 #define PROFILER_START(_prefix_)  \
 	do {  \
 		char _path[PATH_MAX];  \
-		sprintf(_path, "./%s.prof", (_prefix_));  \
+		sprintf_s(_path, sizeof(_path), "./%s.prof", (_prefix_));  \
 		ProfilerStart(_path);  \
 	} while (0);
 # define PROFILER_STOP  \

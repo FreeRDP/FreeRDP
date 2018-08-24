@@ -484,7 +484,7 @@ static void urbdrc_udevman_register_devices(UDEVMAN* udevman, char* devices)
 		dev_number = 0;
 		idVendor = 0;
 		idProduct = 0;
-		_snprintf(hardware_id, ARRAYSIZE(hardware_id), "%s", token);
+		sprintf_s(hardware_id, ARRAYSIZE(hardware_id), "%s", token);
 		token = strtok(NULL, "#");
 
 		if (udevman->flags & UDEVMAN_FLAG_ADD_BY_VID_PID)

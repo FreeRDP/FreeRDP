@@ -212,7 +212,7 @@ void crypto_reverse(BYTE* data, int length)
 
 char* crypto_cert_fingerprint(X509* xcert)
 {
-	int i = 0;
+	size_t i = 0;
 	char* p;
 	char* fp_buffer;
 	UINT32 fp_len;
@@ -225,13 +225,13 @@ char* crypto_cert_fingerprint(X509* xcert)
 
 	p = fp_buffer;
 
-	for (i = 0; i < (int)(fp_len - 1); i++)
+	for (i = 0; i < (fp_len - 1); i++)
 	{
-		sprintf(p, "%02"PRIx8":", fp[i]);
+		sprintf_s(p, fp_len * 3 - i, "%02"PRIx8":", fp[i]);
 		p = &fp_buffer[(i + 1) * 3];
 	}
 
-	sprintf(p, "%02"PRIx8"", fp[i]);
+	sprintf_s(p, fp_len * 3 - i,  "%02"PRIx8"", fp[i]);
 	return fp_buffer;
 }
 

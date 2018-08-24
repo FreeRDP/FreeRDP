@@ -112,13 +112,10 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 		return NULL;
 
 	hModule = LoadPackagedLibrary(filenameW, 0);
-
 	free(filenameW);
-
 	return hModule;
 #else
 	HMODULE library;
-
 	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
 	if (!library)
@@ -144,7 +141,6 @@ HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
 #if !defined(_UWP)
 	HMODULE library;
-
 	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
 	if (!library)
@@ -228,7 +224,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 	if (!hModule)
 	{
 		char buffer[4096];
-		sprintf(path, "/proc/%d/exe", getpid());
+		sprintf_s(path, ARRAYSIZE(path), "/proc/%d/exe", getpid());
 		status = readlink(path, buffer, sizeof(buffer));
 
 		if (status < 0)

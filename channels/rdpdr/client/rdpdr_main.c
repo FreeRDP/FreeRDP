@@ -403,7 +403,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	{
 		if (pDirent->d_name[0] != '.')
 		{
-			sprintf(fullpath, "%s/%s", szdir, pDirent->d_name);
+			sprintf_s(fullpath, ARRAYSIZE(fullpath), "%s/%s", szdir, pDirent->d_name);
 			lstat(fullpath, &buf);
 
 			if (S_ISDIR(buf.st_mode))
