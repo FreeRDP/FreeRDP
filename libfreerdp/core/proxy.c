@@ -75,14 +75,23 @@ void proxy_read_environment(rdpSettings* settings, char* envname);
 BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* lpPeerPort,
                    const char** lpProxyUsername, const char** lpProxyPassword)
 {
+	if (settings->ProxyType == PROXY_TYPE_IGNORE)
+		return FALSE;
+
 	/* For TSGateway, find the system HTTPS proxy automatically */
-	if (!settings->ProxyType)
+	if (settings->ProxyType == PROXY_TYPE_NONE)
 		proxy_read_environment(settings, "https_proxy");
 
-	if (!settings->ProxyType)
+	if (settings->ProxyType == PROXY_TYPE_NONE)
 		proxy_read_environment(settings, "HTTPS_PROXY");
 
-	if (settings->ProxyType)
+	if (settings->ProxyType != PROXY_TYPE_NONE)
+		proxy_read_environment(settings, "no_proxy");
+
+	if (settings->ProxyType != PROXY_TYPE_NONE)
+		proxy_read_environment(settings, "NO_PROXY");
+
+	if (settings->ProxyType != PROXY_TYPE_NONE)
 	{
 		*lpPeerHostname = settings->ProxyHostname;
 		*lpPeerPort = settings->ProxyPort;
@@ -92,6 +101,91 @@ BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* l
 	}
 
 	return FALSE;
+}
+
+static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
+{
+	const char* delimiter = ",";
+	BOOL result = FALSE;
+	char* current;
+	char* copy;
+	size_t host_len;
+
+	if (!no_proxy || !settings)
+		return FALSE;
+
+	host_len = strlen(settings->ServerHostname);
+	copy = _strdup(no_proxy);
+
+	if (!copy)
+		return FALSE;
+
+	current = strtok(copy, delimiter);
+
+	while (current && !result)
+	{
+		const size_t currentlen = strlen(current);
+
+		if (currentlen > 0)
+		{
+			WLog_DBG(TAG, "%s => %s (%"PRIdz")", settings->ServerHostname, current, currentlen);
+
+			/* detect left and right "*" wildcard */
+			if (current[0] == '*')
+			{
+				if (host_len >= currentlen)
+				{
+					const size_t offset = host_len + 1 - currentlen;
+
+					if (strncmp(current + 1, settings->ServerHostname + offset, currentlen - 1) == 0)
+						result = TRUE;
+				}
+			}
+			else if (current[currentlen - 1] == '*')
+			{
+				if (strncmp(current, settings->ServerHostname, currentlen - 1) == 0)
+					result = TRUE;
+			}
+			else
+			{
+				if (strcmp(current, settings->ServerHostname) == 0)
+					result = TRUE; /* exact match */
+				else
+				{
+					struct sockaddr_in sa4;
+					struct sockaddr_in6 sa6;
+					BOOL is_ip = FALSE;
+
+					if (inet_pton(AF_INET, settings->ServerHostname, &sa4.sin_addr) == 1)
+						is_ip = TRUE;
+					else if (inet_pton(AF_INET6, settings->ServerHostname, &sa6.sin6_addr) == 1)
+						is_ip = TRUE;
+
+					if (is_ip)
+					{
+						if (!strncmp(current, settings->ServerHostname, currentlen))
+							result = TRUE; /* left-aligned match for IPs */
+					}
+					else if (current[0] == '.') /* Only compare if the no_proxy variable contains a whole domain. */
+					{
+						if (host_len >= currentlen)
+						{
+							const size_t offset = host_len - currentlen;
+
+							if (!strncmp(current, settings->ServerHostname + offset,
+							             currentlen))
+								result = TRUE; /* right-aligned match for host names */
+						}
+					}
+				}
+			}
+		}
+
+		current = strtok(NULL, delimiter);
+	}
+
+	free(copy);
+	return result;
 }
 
 void proxy_read_environment(rdpSettings* settings, char* envname)
@@ -112,7 +206,20 @@ void proxy_read_environment(rdpSettings* settings, char* envname)
 	}
 
 	if (GetEnvironmentVariableA(envname, env, envlen) == envlen - 1)
-		proxy_parse_uri(settings, env);
+	{
+		if (_strnicmp("NO_PROXY", envname, 9) == 0)
+		{
+			if (check_no_proxy(settings, env))
+			{
+				WLog_INFO(TAG, "deactivating proxy: %s [%s=%s]", settings->ServerHostname, envname, env);
+				settings->ProxyType = PROXY_TYPE_NONE;
+			}
+		}
+		else
+		{
+			proxy_parse_uri(settings, env);
+		}
+	}
 
 	free(env);
 }
@@ -199,6 +306,7 @@ BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* proxyUse
 	switch (settings->ProxyType)
 	{
 		case PROXY_TYPE_NONE:
+		case PROXY_TYPE_IGNORE:
 			return TRUE;
 
 		case PROXY_TYPE_HTTP:
