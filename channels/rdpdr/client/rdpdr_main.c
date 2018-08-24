@@ -1072,10 +1072,6 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 		strncpy(rdpdr->computerName, settings->ComputerName,
 		        sizeof(rdpdr->computerName) - 1);
 
-#ifndef NDEBUG
-	freerdp_device_print_all(settings, __FUNCTION__, __LINE__);
-#endif
-
 	for (index = 0; index < settings->DeviceCount; index++)
 	{
 		device = settings->DeviceArray[index];
