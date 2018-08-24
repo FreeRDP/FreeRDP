@@ -182,12 +182,6 @@ UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext
 			return ERROR_INVALID_NAME;
 	}
 
-	if (!ServiceName)
-	{
-		WLog_INFO(TAG, "ServiceName %s did not match!", ServiceName);
-		return ERROR_INVALID_NAME;
-	}
-
 	if (device->Name)
 		WLog_INFO(TAG,  "Loading device service %s [%s] (static)", ServiceName, device->Name);
 	else
