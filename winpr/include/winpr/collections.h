@@ -226,23 +226,11 @@ WINPR_API void ListDictionary_Free(wListDictionary* listDictionary);
 
 typedef struct _wLinkedList wLinkedList;
 
-typedef BOOL (*EqualPr)(void* a, void* b);
-/**
-Pointer_Equal returns whether a ==  b.
-*/
-WINPR_API BOOL Pointer_Equal(void* a, void* b);
-
-/**
-String_Equal returns whether 0 == strcmp(a, b)
-*/
-WINPR_API BOOL String_Equal(void* a, void* b);
-
 WINPR_API int LinkedList_Count(wLinkedList* list);
 WINPR_API void* LinkedList_First(wLinkedList* list);
 WINPR_API void* LinkedList_Last(wLinkedList* list);
 
 WINPR_API BOOL LinkedList_Contains(wLinkedList* list, void* value);
-WINPR_API BOOL LinkedList_ContainsWithEqual(wLinkedList* list, void* value, EqualPr equal);
 WINPR_API void LinkedList_Clear(wLinkedList* list);
 
 WINPR_API BOOL LinkedList_AddFirst(wLinkedList* list, void* value);

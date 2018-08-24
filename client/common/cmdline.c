@@ -151,7 +151,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Clipboard Redirection: +clipboard\n");
 	printf("\n");
 	printf("Drive Redirection: /drive:home,/home/user\n");
-	printf("Smartcard Redirection: /smartcard[:<device>]\n");
+	printf("Smartcard Redirection: /smartcard[:<string>[,<string>]…\n");
 	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
 	printf("Parallel Port Redirection: /parallel:<name>,<device>\n");
@@ -219,6 +219,31 @@ static int freerdp_client_command_line_pre_filter(void* context, int index,
 }
 
 
+BOOL String_Equal(void * a, void * b)
+{
+	const char *  stringa = a;
+	const char *  stringb = b;
+	return (0 == strcmp(stringa, stringb));
+}
+
+
+/*
+ LinkedList_ContainsString(list, string)
+
+ list is a wLinkedList of char strings.
+ string is either a char or wide char string.
+
+ string is 0-terminated.
+
+ LinkedList_ContainsString returns whether it contains a string that is
+ strcmp equal to string.
+*/
+BOOL LinkedList_ContainsString(wLinkedList* list, const char* string)
+{
+	LinkedList_Object(list)->fnObjectEquals = String_Equal;
+	return LinkedList_Contains(list, (void*)string);
+}
+
 /*
 BOOL redirect_all_smartcard_devices(rdpSettings* settings);
 BOOL redirect_smartcard_device(rdpSettings* settings, const char * name);
@@ -233,7 +258,7 @@ BOOL LinkedList_StringIsMember(wLinkedList* list, const char* string)
 		return FALSE;
 	}
 
-	return LinkedList_ContainsWithEqual(list, (void*) string, String_Equal);
+	return LinkedList_ContainsString(list, (void*) string);
 }
 
 

@@ -86,21 +86,7 @@ static INLINE BOOL testcase(const char* name, char** argv, size_t argc,
 #define DRIVE_REDIRECT_PATH "/tmp"
 #endif
 
-/*
- LinkedList_ContainsString(list, string)
-
- list is a wLinkedList of char strings.
- string is either a char or wide char string.
-
- string is 0-terminated.
-
- LinkedList_ContainsString returns whether it contains a string that is
- strcmp equal to string.
-*/
-static BOOL LinkedList_ContainsString(wLinkedList* list, const char* string)
-{
-	return LinkedList_ContainsWithEqual(list, (void*)string, String_Equal);
-}
+BOOL LinkedList_ContainsString(wLinkedList* list, const char* string);
 
 static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 {
