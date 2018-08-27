@@ -180,6 +180,7 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 		return -1001;
 
 	status = h264->subsystem->Decompress(h264, pSrcData, SrcSize);
+
 	if (status == 0)
 		return 1;
 
@@ -216,7 +217,10 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	                                 &roi) != PRIMITIVES_SUCCESS)
 		return -1;
 
-	return h264->subsystem->Compress(h264, h264->pYUVData, h264->iStride, ppDstData, pDstSize);
+	{
+		const BYTE* pYUVData[3] = {h264->pYUVData[0], h264->pYUVData[1], h264->pYUVData[2]};
+		return h264->subsystem->Compress(h264, pYUVData, h264->iStride, ppDstData, pDstSize);
+	}
 }
 
 INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
@@ -264,16 +268,22 @@ INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 			return -1;
 	}
 
-	if (h264->subsystem->Compress(h264, h264->pYUV444Data, h264->iStride, &coded, &codedSize) < 0)
-		return -1;
+	{
+		const BYTE* pYUV444Data[3] = {h264->pYUV444Data[0], h264->pYUV444Data[1], h264->pYUV444Data[2]};
+
+		if (h264->subsystem->Compress(h264, pYUV444Data, h264->iStride, &coded, &codedSize) < 0)
+			return -1;
+	}
 
 	memcpy(h264->lumaData, coded, codedSize);
 	*ppDstData = h264->lumaData;
 	*pDstSize = codedSize;
+	{
+		const BYTE* pYUVData[3] = {h264->pYUVData[0], h264->pYUVData[1], h264->pYUVData[2]};
 
-	if (h264->subsystem->Compress(h264, h264->pYUVData, h264->iStride, &coded, &codedSize) < 0)
-		return -1;
-
+		if (h264->subsystem->Compress(h264, pYUVData, h264->iStride, &coded, &codedSize) < 0)
+			return -1;
+	}
 	*ppAuxDstData = coded;
 	*pAuxDstSize = codedSize;
 	*op = 0;

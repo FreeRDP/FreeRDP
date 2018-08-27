@@ -325,7 +325,7 @@ struct _DEVICE
 	UINT32 id;
 
 	UINT32 type;
-	char* name;
+	const char* name;
 	wStream* data;
 
 	pcIRPRequest IRPRequest;

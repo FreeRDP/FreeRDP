@@ -426,7 +426,7 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* context,
 	if (!Stream_EnsureRemainingCapacity(out, context->faacMaxOutputBytes))
 		return FALSE;
 
-	outSamples = Stream_Buffer(context->buffer);
+	outSamples = (int32_t*)Stream_Buffer(context->buffer);
 
 	for (x = 0; x < nrSamples * context->format.nChannels; x++)
 		outSamples[x] = inSamples[x];

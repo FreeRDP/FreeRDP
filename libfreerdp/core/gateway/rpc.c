@@ -49,11 +49,6 @@
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
-/* Security Verification Trailer Signature */
-
-static const rpc_sec_verification_trailer RPC_SEC_VERIFICATION_TRAILER =
-{ { 0x8a, 0xe3, 0x13, 0x71, 0x02, 0xf4, 0x36, 0x71 } };
-
 static const char* PTYPE_STRINGS[] =
 {
 	"PTYPE_REQUEST",
@@ -78,17 +73,6 @@ static const char* PTYPE_STRINGS[] =
 	"PTYPE_ORPHANED",
 	"PTYPE_RTS",
 	""
-};
-
-static const RPC_SECURITY_PROVIDER_INFO RPC_SECURITY_PROVIDER_INFO_TABLE[] =
-{
-	{ RPC_C_AUTHN_NONE, TRUE, -1 },
-	{ RPC_C_AUTHN_GSS_NEGOTIATE, TRUE, -1 },
-	{ RPC_C_AUTHN_WINNT, FALSE, 3 },
-	{ RPC_C_AUTHN_GSS_SCHANNEL, TRUE, -1 },
-	{ RPC_C_AUTHN_GSS_KERBEROS, TRUE, -1 },
-	{ RPC_C_AUTHN_DEFAULT, -1, -1 },
-	{ 0, -1, -1 }
 };
 
 /**

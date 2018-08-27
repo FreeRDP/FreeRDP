@@ -447,7 +447,6 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 {
 	XF_MODIFIER_KEYS mod = { 0 };
 	xk_keyboard_get_modifier_keys(xfc, &mod);
-	rdpContext* ctx = &xfc->context;
 
 	// remember state of RightCtrl to ungrab keyboard if next action is release of RightCtrl
 	// do not return anything such that the key could be used by client if ungrab is not the goal
@@ -500,6 +499,8 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 	if (!xfc->remote_app && xfc->settings->MultiTouchGestures)
 	{
+		rdpContext* ctx = &xfc->context;
+
 		if (mod.Ctrl && mod.Alt)
 		{
 			int pdx = 0;
@@ -596,6 +597,7 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
 		{
 			xf_toggle_control(xfc);
 		}
+
 		xfc->mouse_active = FALSE;
 		XUngrabKeyboard(xfc->display, CurrentTime);
 	}
