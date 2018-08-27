@@ -42,12 +42,12 @@
 
 struct crypto_cert_struct
 {
-	X509 * px509;
-	STACK_OF(X509) *px509chain;
+	X509* px509;
+	STACK_OF(X509)* px509chain;
 };
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 typedef struct crypto_cert_struct* CryptoCert;
@@ -56,34 +56,51 @@ FREERDP_API CryptoCert crypto_cert_read(BYTE* data, UINT32 length);
 FREERDP_API char* crypto_cert_fingerprint(X509* xcert);
 FREERDP_API char* crypto_cert_subject(X509* xcert);
 FREERDP_API char* crypto_cert_subject_common_name(X509* xcert, int* length);
-FREERDP_API char** crypto_cert_subject_alt_name(X509* xcert, int* count,
-		int** lengths);
-FREERDP_API void crypto_cert_subject_alt_name_free(int count, int *lengths,
-		char** alt_name);
+FREERDP_API char** crypto_cert_get_dns_names(X509* xcert, int* count, int** lengths);
+FREERDP_API char* crypto_cert_get_email(X509* x509);
+FREERDP_API char* crypto_cert_get_upn(X509* x509);
+FREERDP_API void crypto_cert_dns_names_free(int count, int* lengths, char** dns_names);
 FREERDP_API char* crypto_cert_issuer(X509* xcert);
 FREERDP_API void crypto_cert_print_info(X509* xcert);
 FREERDP_API void crypto_cert_free(CryptoCert cert);
 
+/*
+Deprecated function names: crypto_cert_subject_alt_name and crypto_cert_subject_alt_name_free.
+Use crypto_cert_get_dns_names and crypto_cert_dns_names_free instead.
+(old names kept for now for compatibility of FREERDP_API).
+Note: email and upn amongst others are also alt_names,
+but the old crypto_cert_get_alt_names returned only the dns_names
+*/
+FREERDP_API char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths);
+FREERDP_API void crypto_cert_subject_alt_name_free(int count, int *lengths, char** alt_names);
+
 FREERDP_API BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path);
-FREERDP_API rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname, UINT16 port);
-FREERDP_API BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength);
+FREERDP_API rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname,
+        UINT16 port);
+FREERDP_API BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey,
+        DWORD* PublicKeyLength);
 
 #define	TSSK_KEY_LENGTH	64
 extern const BYTE tssk_modulus[];
 extern const BYTE tssk_privateExponent[];
 extern const BYTE tssk_exponent[];
 
-FREERDP_API int crypto_rsa_public_encrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output);
-FREERDP_API int crypto_rsa_public_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output);
-FREERDP_API int crypto_rsa_private_encrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output);
-FREERDP_API int crypto_rsa_private_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output);
+FREERDP_API int crypto_rsa_public_encrypt(const BYTE* input, int length, UINT32 key_length,
+        const BYTE* modulus, const BYTE* exponent, BYTE* output);
+FREERDP_API int crypto_rsa_public_decrypt(const BYTE* input, int length, UINT32 key_length,
+        const BYTE* modulus, const BYTE* exponent, BYTE* output);
+FREERDP_API int crypto_rsa_private_encrypt(const BYTE* input, int length, UINT32 key_length,
+        const BYTE* modulus, const BYTE* private_exponent, BYTE* output);
+FREERDP_API int crypto_rsa_private_decrypt(const BYTE* input, int length, UINT32 key_length,
+        const BYTE* modulus, const BYTE* private_exponent, BYTE* output);
 FREERDP_API void crypto_reverse(BYTE* data, int length);
 
 FREERDP_API char* crypto_base64_encode(const BYTE* data, int length);
-FREERDP_API void crypto_base64_decode(const char* enc_data, int length, BYTE** dec_data, int* res_length);
+FREERDP_API void crypto_base64_decode(const char* enc_data, int length, BYTE** dec_data,
+                                      int* res_length);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CRYPTO_H */
