@@ -218,7 +218,7 @@ char* crypto_cert_fingerprint(X509* xcert)
 	UINT32 fp_len;
 	BYTE fp[EVP_MAX_MD_SIZE];
 	X509_digest(xcert, EVP_sha1(), fp, &fp_len);
-	fp_buffer = (char*) calloc(fp_len, 3);
+	fp_buffer = (char*) calloc(fp_len + 1, 3);
 
 	if (!fp_buffer)
 		return NULL;
@@ -227,11 +227,11 @@ char* crypto_cert_fingerprint(X509* xcert)
 
 	for (i = 0; i < (fp_len - 1); i++)
 	{
-		sprintf_s(p, fp_len * 3 - i, "%02"PRIx8":", fp[i]);
+		sprintf_s(p, (fp_len - i) * 3, "%02"PRIx8":", fp[i]);
 		p = &fp_buffer[(i + 1) * 3];
 	}
 
-	sprintf_s(p, fp_len * 3 - i,  "%02"PRIx8"", fp[i]);
+	sprintf_s(p, (fp_len - i) * 3,  "%02"PRIx8"", fp[i]);
 	return fp_buffer;
 }
 

@@ -130,7 +130,7 @@ FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPSTR pszName, LPSTR 
 			}
 
 			sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", CLIENT_STATIC_ADDIN_TABLE[i].name);
-			_snprintf(pAddin->cSubsystem, ARRAYSIZE(pAddin->cSubsystem), "%s", subsystems[j].name);
+			sprintf_s(pAddin->cSubsystem, ARRAYSIZE(pAddin->cSubsystem), "%s", subsystems[j].name);
 			pAddin->dwFlags = FREERDP_ADDIN_CLIENT;
 			pAddin->dwFlags |= FREERDP_ADDIN_STATIC;
 			pAddin->dwFlags |= FREERDP_ADDIN_NAME;
