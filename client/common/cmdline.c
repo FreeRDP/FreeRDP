@@ -592,7 +592,7 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 			{
 				char* dst = (char*)&p[1];
 				p[0] = dst;
-				sprintf_s(dst, len, "%s", name);
+				sprintf_s(dst, len + 1, "%s", name);
 				*count = 1;
 				return p;
 			}
