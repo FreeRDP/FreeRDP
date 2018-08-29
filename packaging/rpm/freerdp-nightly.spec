@@ -119,7 +119,7 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
         -DWITH_FFMPEG=ON \
         -DWITH_DSP_FFMPEG=ON \
 %endif
-%if %{defined rhel} && 0%{?rhel} <= 7
+%if 0%{?fedora} < 21 || 0%{?rhel} < 8
         -DWITH_WAYLAND=OFF \
 %endif
         -DWITH_GSSAPI=ON \
@@ -167,10 +167,6 @@ export NO_BRP_CHECK_RPATH true
 %{INSTALL_PREFIX}/share/man/man1/winpr-makecert.1*
 %{INSTALL_PREFIX}/share/man/man1/winpr-hash.1*
 %{INSTALL_PREFIX}/share/man/man7/wlog.7*
-
-%if 0%{?fedora} >= 21 || 0%{?rhel} >= 8
-%{INSTALL_PREFIX}/share/man/man1/wlfreerdp.1*
-%endif
 
 %files devel
 %defattr(-,root,root)
