@@ -866,7 +866,7 @@ static struct
 };
 
 
-inline int min(int a, int b)
+inline int minimum(int a, int b)
 {
 	return a < b ? a : b;
 }
@@ -964,7 +964,7 @@ BOOL test_mszfilterstrings()
 			success = FALSE;
 		}
 
-		if (0 != memcmp(input, output, min(cchInput, cchOutput)))
+		if (0 != memcmp(input, output, minimum(cchInput, cchOutput)))
 		{
 			FAILURE("[%d] after mszFilterStrings the mszString is different from expected:", i);
 			printf("\nresult:   ");
