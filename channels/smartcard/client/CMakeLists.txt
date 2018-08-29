@@ -18,6 +18,8 @@
 define_channel_client("smartcard")
 
 set(${MODULE_PREFIX}_SRCS
+	str.c
+	str.h
 	smartcard_main.c
 	smartcard_main.h
 	smartcard_pack.c
@@ -26,6 +28,9 @@ set(${MODULE_PREFIX}_SRCS
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DeviceServiceEntry")
 
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
 
 
 target_link_libraries(${MODULE_NAME} winpr freerdp)

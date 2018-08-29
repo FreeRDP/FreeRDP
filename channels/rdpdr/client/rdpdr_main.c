@@ -37,6 +37,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/settings.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -1244,7 +1245,9 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr,
 	{
 		device = (DEVICE*) ListDictionary_GetItemValue(rdpdr->devman->devices,
 		         (void*) pKeys[index]);
-
+		WLog_DBG(TAG, "%s:%u: userLoggedOn = %s",  __FUNCTION__, __LINE__,
+		         (userLoggedOn ? "TRUE" : "FALSE"));
+		freerdp_device_print((RDPDR_DEVICE*)device, index, __FUNCTION__, __LINE__);
 		/**
 		 * 1. versionMinor 0x0005 doesn't send PAKID_CORE_USER_LOGGEDON
 		 *    so all devices should be sent regardless of user_loggedon

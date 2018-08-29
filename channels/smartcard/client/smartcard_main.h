@@ -109,7 +109,7 @@ typedef struct _SMARTCARD_CONTEXT SMARTCARD_CONTEXT;
 struct _SMARTCARD_DEVICE
 {
 	DEVICE device;
-
+	wLinkedList* filter; /* a list of substring for redirected smartcard reader names */
 	HANDLE thread;
 	HANDLE StartedEvent;
 	wMessageQueue* IrpQueue;
@@ -125,7 +125,8 @@ void smartcard_context_free(SMARTCARD_CONTEXT* pContext);
 UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
-LONG smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
+LONG smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard,
+        SMARTCARD_OPERATION* operation);
 LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
 
 #include "smartcard_pack.h"

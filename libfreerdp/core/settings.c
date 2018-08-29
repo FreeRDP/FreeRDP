@@ -611,6 +611,10 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 
 	settings->ActionScript = _strdup("~/.config/freerdp/action.sh");
+	settings->SmartcardLogon = FALSE;
+	settings->LogonReaderName = NULL;
+	settings->Pin = NULL;
+	settings->PinPadIsPresent = FALSE;
 	return settings;
 out_fail:
 	free(settings->HomePath);
@@ -670,6 +674,8 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CHECKED_STRDUP(NtlmSamFile); /* 1103 */
 		CHECKED_STRDUP(PreconnectionBlob); /* 1155 */
 		CHECKED_STRDUP(RedirectionAcceptedCert); /* 1231 */
+		CHECKED_STRDUP(LogonReaderName);     /* 1283 */
+		CHECKED_STRDUP(Pin);                 /* 1284 */
 		CHECKED_STRDUP(KerberosKdc); /* 1344 */
 		CHECKED_STRDUP(KerberosRealm); /* 1345 */
 		CHECKED_STRDUP(CertificateName); /* 1409 */
@@ -1093,6 +1099,8 @@ void freerdp_settings_free(rdpSettings* settings)
 	free(settings->GatewayAccessToken);
 	free(settings->GatewayAcceptedCert);
 	free(settings->CertificateName);
+	free(settings->Pin);
+	free(settings->LogonReaderName);
 	free(settings->DynamicDSTTimeZoneKeyName);
 	free(settings->PreconnectionBlob);
 	free(settings->KerberosKdc);

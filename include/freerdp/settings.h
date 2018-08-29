@@ -23,6 +23,7 @@
 #define FREERDP_SETTINGS_H
 
 #include <winpr/timezone.h>
+#include <winpr/collections.h>
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -449,6 +450,7 @@ struct _RDPDR_SMARTCARD
 	UINT32 Id;
 	UINT32 Type;
 	char* Name;
+	wLinkedList* deviceFilter;
 };
 typedef struct _RDPDR_SMARTCARD RDPDR_SMARTCARD;
 
@@ -649,201 +651,207 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_TargetNetPorts                                     (1230)
 #define FreeRDP_RedirectionAcceptedCert                            (1231)
 #define FreeRDP_RedirectionAcceptedCertLength                      (1232)
+#define FreeRDP_RedirectionPreferType                              (1233)
 #define FreeRDP_Password51                                         (1280)
 #define FreeRDP_Password51Length                                   (1281)
-#define FreeRDP_KerberosKdc                                        (1344)
-#define FreeRDP_KerberosRealm                                      (1345)
-#define FreeRDP_IgnoreCertificate                                  (1408)
-#define FreeRDP_CertificateName                                    (1409)
-#define FreeRDP_CertificateFile                                    (1410)
-#define FreeRDP_PrivateKeyFile                                     (1411)
-#define FreeRDP_RdpKeyFile                                         (1412)
-#define FreeRDP_RdpServerRsaKey                                    (1413)
-#define FreeRDP_RdpServerCertificate                               (1414)
-#define FreeRDP_ExternalCertificateManagement                      (1415)
-#define FreeRDP_CertificateContent                                 (1416)
-#define FreeRDP_PrivateKeyContent                                  (1417)
-#define FreeRDP_RdpKeyContent                                      (1418)
-#define FreeRDP_AutoAcceptCertificate                              (1419)
-#define FreeRDP_Workarea                                           (1536)
-#define FreeRDP_Fullscreen                                         (1537)
-#define FreeRDP_PercentScreen                                      (1538)
-#define FreeRDP_GrabKeyboard                                       (1539)
-#define FreeRDP_Decorations                                        (1540)
-#define FreeRDP_MouseMotion                                        (1541)
-#define FreeRDP_WindowTitle                                        (1542)
-#define FreeRDP_ParentWindowId                                     (1543)
-#define FreeRDP_AsyncInput                                         (1544)
-#define FreeRDP_AsyncUpdate                                        (1545)
-#define FreeRDP_AsyncChannels                                      (1546)
-#define FreeRDP_ToggleFullscreen                                   (1548)
-#define FreeRDP_WmClass                                            (1549)
-#define FreeRDP_EmbeddedWindow                                     (1550)
-#define FreeRDP_SmartSizing                                        (1551)
-#define FreeRDP_XPan                                               (1552)
-#define FreeRDP_YPan                                               (1553)
-#define FreeRDP_SmartSizingWidth                                   (1554)
-#define FreeRDP_SmartSizingHeight                                  (1555)
-#define FreeRDP_PercentScreenUseWidth                              (1556)
-#define FreeRDP_PercentScreenUseHeight                             (1557)
-#define FreeRDP_DynamicResolutionUpdate                            (1558)
-#define FreeRDP_SoftwareGdi                                        (1601)
-#define FreeRDP_LocalConnection                                    (1602)
-#define FreeRDP_AuthenticationOnly                                 (1603)
-#define FreeRDP_CredentialsFromStdin                               (1604)
-#define FreeRDP_UnmapButtons                                       (1605)
-#define FreeRDP_ComputerName                                       (1664)
-#define FreeRDP_ConnectionFile                                     (1728)
-#define FreeRDP_AssistanceFile                                     (1729)
-#define FreeRDP_HomePath                                           (1792)
-#define FreeRDP_ConfigPath                                         (1793)
-#define FreeRDP_CurrentPath                                        (1794)
-#define FreeRDP_DumpRemoteFx                                       (1856)
-#define FreeRDP_PlayRemoteFx                                       (1857)
-#define FreeRDP_DumpRemoteFxFile                                   (1858)
-#define FreeRDP_PlayRemoteFxFile                                   (1859)
-#define FreeRDP_GatewayUsageMethod                                 (1984)
-#define FreeRDP_GatewayPort                                        (1985)
-#define FreeRDP_GatewayHostname                                    (1986)
-#define FreeRDP_GatewayUsername                                    (1987)
-#define FreeRDP_GatewayPassword                                    (1988)
-#define FreeRDP_GatewayDomain                                      (1989)
-#define FreeRDP_GatewayCredentialsSource                           (1990)
-#define FreeRDP_GatewayUseSameCredentials                          (1991)
-#define FreeRDP_GatewayEnabled                                     (1992)
-#define FreeRDP_GatewayBypassLocal                                 (1993)
-#define FreeRDP_GatewayRpcTransport                                (1994)
-#define FreeRDP_GatewayHttpTransport                               (1995)
-#define FreeRDP_GatewayUdpTransport                                (1996)
-#define FreeRDP_GatewayAccessToken                                 (1997)
-#define FreeRDP_GatewayAcceptedCert                                (1998)
-#define FreeRDP_GatewayAcceptedCertLength                          (1999)
-#define FreeRDP_ProxyType                                          (2015)
-#define FreeRDP_ProxyHostname                                      (2016)
-#define FreeRDP_ProxyPort                                          (2017)
-#define FreeRDP_ProxyUsername                                      (2018)
-#define FreeRDP_ProxyPassword                                      (2019)
-#define FreeRDP_RemoteApplicationMode                              (2112)
-#define FreeRDP_RemoteApplicationName                              (2113)
-#define FreeRDP_RemoteApplicationIcon                              (2114)
-#define FreeRDP_RemoteApplicationProgram                           (2115)
-#define FreeRDP_RemoteApplicationFile                              (2116)
-#define FreeRDP_RemoteApplicationGuid                              (2117)
-#define FreeRDP_RemoteApplicationCmdLine                           (2118)
-#define FreeRDP_RemoteApplicationExpandCmdLine                     (2119)
-#define FreeRDP_RemoteApplicationExpandWorkingDir                  (2120)
-#define FreeRDP_DisableRemoteAppCapsCheck                          (2121)
-#define FreeRDP_RemoteAppNumIconCaches                             (2122)
-#define FreeRDP_RemoteAppNumIconCacheEntries                       (2123)
-#define FreeRDP_RemoteAppLanguageBarSupported                      (2124)
-#define FreeRDP_ReceivedCapabilities                               (2240)
-#define FreeRDP_ReceivedCapabilitiesSize                           (2241)
-#define FreeRDP_OsMajorType                                        (2304)
-#define FreeRDP_OsMinorType                                        (2305)
-#define FreeRDP_RefreshRect                                        (2306)
-#define FreeRDP_SuppressOutput                                     (2307)
-#define FreeRDP_FastPathOutput                                     (2308)
-#define FreeRDP_SaltedChecksum                                     (2309)
-#define FreeRDP_LongCredentialsSupported                           (2310)
-#define FreeRDP_NoBitmapCompressionHeader                          (2311)
-#define FreeRDP_BitmapCompressionDisabled                          (2312)
-#define FreeRDP_DesktopResize                                      (2368)
-#define FreeRDP_DrawAllowDynamicColorFidelity                      (2369)
-#define FreeRDP_DrawAllowColorSubsampling                          (2370)
-#define FreeRDP_DrawAllowSkipAlpha                                 (2371)
-#define FreeRDP_OrderSupport                                       (2432)
-#define FreeRDP_BitmapCacheV3Enabled                               (2433)
-#define FreeRDP_AltSecFrameMarkerSupport                           (2434)
-#define FreeRDP_BitmapCacheEnabled                                 (2497)
-#define FreeRDP_BitmapCacheVersion                                 (2498)
-#define FreeRDP_AllowCacheWaitingList                              (2499)
-#define FreeRDP_BitmapCachePersistEnabled                          (2500)
-#define FreeRDP_BitmapCacheV2NumCells                              (2501)
-#define FreeRDP_BitmapCacheV2CellInfo                              (2502)
-#define FreeRDP_ColorPointerFlag                                   (2560)
-#define FreeRDP_PointerCacheSize                                   (2561)
-#define FreeRDP_KeyboardLayout                                     (2624)
-#define FreeRDP_KeyboardType                                       (2625)
-#define FreeRDP_KeyboardSubType                                    (2626)
-#define FreeRDP_KeyboardFunctionKey                                (2627)
-#define FreeRDP_ImeFileName                                        (2628)
-#define FreeRDP_UnicodeInput                                       (2629)
-#define FreeRDP_FastPathInput                                      (2630)
-#define FreeRDP_MultiTouchInput                                    (2631)
-#define FreeRDP_MultiTouchGestures                                 (2632)
-#define FreeRDP_KeyboardHook                                       (2633)
-#define FreeRDP_HasHorizontalWheel                                 (2634)
-#define FreeRDP_HasExtendedMouseEvent                              (2635)
-#define FreeRDP_BrushSupportLevel                                  (2688)
-#define FreeRDP_GlyphSupportLevel                                  (2752)
-#define FreeRDP_GlyphCache                                         (2753)
-#define FreeRDP_FragCache                                          (2754)
-#define FreeRDP_OffscreenSupportLevel                              (2816)
-#define FreeRDP_OffscreenCacheSize                                 (2817)
-#define FreeRDP_OffscreenCacheEntries                              (2818)
-#define FreeRDP_VirtualChannelCompressionFlags                     (2880)
-#define FreeRDP_VirtualChannelChunkSize                            (2881)
-#define FreeRDP_SoundBeepsEnabled                                  (2944)
-#define FreeRDP_MultifragMaxRequestSize                            (3328)
-#define FreeRDP_LargePointerFlag                                   (3392)
-#define FreeRDP_CompDeskSupportLevel                               (3456)
-#define FreeRDP_SurfaceCommandsEnabled                             (3520)
-#define FreeRDP_FrameMarkerCommandEnabled                          (3521)
-#define FreeRDP_SurfaceFrameMarkerEnabled                          (3522)
-#define FreeRDP_RemoteFxOnly                                       (3648)
-#define FreeRDP_RemoteFxCodec                                      (3649)
-#define FreeRDP_RemoteFxCodecId                                    (3650)
-#define FreeRDP_RemoteFxCodecMode                                  (3651)
-#define FreeRDP_RemoteFxImageCodec                                 (3652)
-#define FreeRDP_RemoteFxCaptureFlags                               (3653)
-#define FreeRDP_NSCodec                                            (3712)
-#define FreeRDP_NSCodecId                                          (3713)
-#define FreeRDP_FrameAcknowledge                                   (3714)
-#define FreeRDP_NSCodecColorLossLevel                              (3715)
-#define FreeRDP_NSCodecAllowSubsampling                            (3716)
-#define FreeRDP_NSCodecAllowDynamicColorFidelity                   (3717)
-#define FreeRDP_JpegCodec                                          (3776)
-#define FreeRDP_JpegCodecId                                        (3777)
-#define FreeRDP_JpegQuality                                        (3778)
-#define FreeRDP_GfxThinClient                                      (3840)
-#define FreeRDP_GfxSmallCache                                      (3841)
-#define FreeRDP_GfxProgressive                                     (3842)
-#define FreeRDP_GfxProgressiveV2                                   (3843)
-#define FreeRDP_GfxH264                                            (3844)
-#define FreeRDP_GfxAVC444                                          (3845)
-#define FreeRDP_GfxSendQoeAck                                      (3846)
-#define FreeRDP_GfxAVC444v2                                        (3847)
-#define FreeRDP_BitmapCacheV3CodecId                               (3904)
-#define FreeRDP_DrawNineGridEnabled                                (3968)
-#define FreeRDP_DrawNineGridCacheSize                              (3969)
-#define FreeRDP_DrawNineGridCacheEntries                           (3970)
-#define FreeRDP_DrawGdiPlusEnabled                                 (4032)
-#define FreeRDP_DrawGdiPlusCacheEnabled                            (4033)
-#define FreeRDP_DeviceRedirection                                  (4160)
-#define FreeRDP_DeviceCount                                        (4161)
-#define FreeRDP_DeviceArraySize                                    (4162)
-#define FreeRDP_DeviceArray                                        (4163)
-#define FreeRDP_RedirectDrives                                     (4288)
-#define FreeRDP_RedirectHomeDrive                                  (4289)
-#define FreeRDP_DrivesToRedirect                                   (4290)
-#define FreeRDP_RedirectSmartCards                                 (4416)
-#define FreeRDP_RedirectPrinters                                   (4544)
-#define FreeRDP_RedirectSerialPorts                                (4672)
-#define FreeRDP_RedirectParallelPorts                              (4673)
-#define FreeRDP_PreferIPv6OverIPv4                                 (4674)
-#define FreeRDP_RedirectClipboard                                  (4800)
-#define FreeRDP_StaticChannelCount                                 (4928)
-#define FreeRDP_StaticChannelArraySize                             (4929)
-#define FreeRDP_StaticChannelArray                                 (4930)
-#define FreeRDP_DynamicChannelCount                                (5056)
-#define FreeRDP_DynamicChannelArraySize                            (5057)
-#define FreeRDP_DynamicChannelArray                                (5058)
-#define FreeRDP_SupportDynamicChannels                             (5059)
-#define FreeRDP_SupportEchoChannel                                 (5184)
-#define FreeRDP_SupportDisplayControl                              (5185)
-#define FreeRDP_SupportGeometryTracking                            (5186)
-#define FreeRDP_SupportSSHAgentChannel                             (5187)
-#define FreeRDP_SupportVideoOptimized                              (5188)
+#define FreeRDP_SmartcardLogon                                     (1282)
+#define FreeRDP_LogonReaderName                                    (1283)
+#define FreeRDP_Pin                                                (1284)
+#define FreeRDP_PinLoginRequired                                   (1285)
+#define FreeRDP_PinPadIsPresent                                    (1286)
+#define FreeRDP_KerberosKdc                                        (1343)
+#define FreeRDP_KerberosRealm                                      (1344)
+#define FreeRDP_IgnoreCertificate                                  (1407)
+#define FreeRDP_CertificateName                                    (1408)
+#define FreeRDP_CertificateFile                                    (1409)
+#define FreeRDP_PrivateKeyFile                                     (1410)
+#define FreeRDP_RdpKeyFile                                         (1411)
+#define FreeRDP_RdpServerRsaKey                                    (1412)
+#define FreeRDP_RdpServerCertificate                               (1413)
+#define FreeRDP_ExternalCertificateManagement                      (1414)
+#define FreeRDP_CertificateContent                                 (1415)
+#define FreeRDP_PrivateKeyContent                                  (1416)
+#define FreeRDP_RdpKeyContent                                      (1417)
+#define FreeRDP_AutoAcceptCertificate                              (1418)
+#define FreeRDP_Workarea                                           (1535)
+#define FreeRDP_Fullscreen                                         (1536)
+#define FreeRDP_PercentScreen                                      (1537)
+#define FreeRDP_GrabKeyboard                                       (1538)
+#define FreeRDP_Decorations                                        (1539)
+#define FreeRDP_MouseMotion                                        (1540)
+#define FreeRDP_WindowTitle                                        (1541)
+#define FreeRDP_ParentWindowId                                     (1542)
+#define FreeRDP_AsyncInput                                         (1543)
+#define FreeRDP_AsyncUpdate                                        (1544)
+#define FreeRDP_AsyncChannels                                      (1545)
+#define FreeRDP_ToggleFullscreen                                   (1547)
+#define FreeRDP_WmClass                                            (1548)
+#define FreeRDP_EmbeddedWindow                                     (1549)
+#define FreeRDP_SmartSizing                                        (1550)
+#define FreeRDP_XPan                                               (1551)
+#define FreeRDP_YPan                                               (1552)
+#define FreeRDP_SmartSizingWidth                                   (1553)
+#define FreeRDP_SmartSizingHeight                                  (1554)
+#define FreeRDP_PercentScreenUseWidth                              (1555)
+#define FreeRDP_PercentScreenUseHeight                             (1556)
+#define FreeRDP_DynamicResolutionUpdate                            (1557)
+#define FreeRDP_SoftwareGdi                                        (1600)
+#define FreeRDP_LocalConnection                                    (1601)
+#define FreeRDP_AuthenticationOnly                                 (1602)
+#define FreeRDP_CredentialsFromStdin                               (1603)
+#define FreeRDP_UnmapButtons                                       (1604)
+#define FreeRDP_ComputerName                                       (1663)
+#define FreeRDP_ConnectionFile                                     (1727)
+#define FreeRDP_AssistanceFile                                     (1728)
+#define FreeRDP_HomePath                                           (1791)
+#define FreeRDP_ConfigPath                                         (1792)
+#define FreeRDP_CurrentPath                                        (1793)
+#define FreeRDP_DumpRemoteFx                                       (1855)
+#define FreeRDP_PlayRemoteFx                                       (1856)
+#define FreeRDP_DumpRemoteFxFile                                   (1857)
+#define FreeRDP_PlayRemoteFxFile                                   (1858)
+#define FreeRDP_GatewayUsageMethod                                 (1983)
+#define FreeRDP_GatewayPort                                        (1984)
+#define FreeRDP_GatewayHostname                                    (1985)
+#define FreeRDP_GatewayUsername                                    (1986)
+#define FreeRDP_GatewayPassword                                    (1987)
+#define FreeRDP_GatewayDomain                                      (1988)
+#define FreeRDP_GatewayCredentialsSource                           (1989)
+#define FreeRDP_GatewayUseSameCredentials                          (1990)
+#define FreeRDP_GatewayEnabled                                     (1991)
+#define FreeRDP_GatewayBypassLocal                                 (1992)
+#define FreeRDP_GatewayRpcTransport                                (1993)
+#define FreeRDP_GatewayHttpTransport                               (1994)
+#define FreeRDP_GatewayUdpTransport                                (1995)
+#define FreeRDP_GatewayAccessToken                                 (1996)
+#define FreeRDP_GatewayAcceptedCert                                (1997)
+#define FreeRDP_GatewayAcceptedCertLength                          (1998)
+#define FreeRDP_ProxyType                                          (2014)
+#define FreeRDP_ProxyHostname                                      (2015)
+#define FreeRDP_ProxyPort                                          (2016)
+#define FreeRDP_ProxyUsername                                      (2017)
+#define FreeRDP_ProxyPassword                                      (2018)
+#define FreeRDP_RemoteApplicationMode                              (2111)
+#define FreeRDP_RemoteApplicationName                              (2112)
+#define FreeRDP_RemoteApplicationIcon                              (2113)
+#define FreeRDP_RemoteApplicationProgram                           (2114)
+#define FreeRDP_RemoteApplicationFile                              (2115)
+#define FreeRDP_RemoteApplicationGuid                              (2116)
+#define FreeRDP_RemoteApplicationCmdLine                           (2117)
+#define FreeRDP_RemoteApplicationExpandCmdLine                     (2118)
+#define FreeRDP_RemoteApplicationExpandWorkingDir                  (2119)
+#define FreeRDP_DisableRemoteAppCapsCheck                          (2120)
+#define FreeRDP_RemoteAppNumIconCaches                             (2121)
+#define FreeRDP_RemoteAppNumIconCacheEntries                       (2122)
+#define FreeRDP_RemoteAppLanguageBarSupported                      (2123)
+#define FreeRDP_ReceivedCapabilities                               (2239)
+#define FreeRDP_ReceivedCapabilitiesSize                           (2240)
+#define FreeRDP_OsMajorType                                        (2303)
+#define FreeRDP_OsMinorType                                        (2304)
+#define FreeRDP_RefreshRect                                        (2305)
+#define FreeRDP_SuppressOutput                                     (2306)
+#define FreeRDP_FastPathOutput                                     (2307)
+#define FreeRDP_SaltedChecksum                                     (2308)
+#define FreeRDP_LongCredentialsSupported                           (2309)
+#define FreeRDP_NoBitmapCompressionHeader                          (2310)
+#define FreeRDP_BitmapCompressionDisabled                          (2311)
+#define FreeRDP_DesktopResize                                      (2367)
+#define FreeRDP_DrawAllowDynamicColorFidelity                      (2368)
+#define FreeRDP_DrawAllowColorSubsampling                          (2369)
+#define FreeRDP_DrawAllowSkipAlpha                                 (2370)
+#define FreeRDP_OrderSupport                                       (2431)
+#define FreeRDP_BitmapCacheV3Enabled                               (2432)
+#define FreeRDP_AltSecFrameMarkerSupport                           (2433)
+#define FreeRDP_BitmapCacheEnabled                                 (2496)
+#define FreeRDP_BitmapCacheVersion                                 (2497)
+#define FreeRDP_AllowCacheWaitingList                              (2498)
+#define FreeRDP_BitmapCachePersistEnabled                          (2499)
+#define FreeRDP_BitmapCacheV2NumCells                              (2500)
+#define FreeRDP_BitmapCacheV2CellInfo                              (2501)
+#define FreeRDP_ColorPointerFlag                                   (2559)
+#define FreeRDP_PointerCacheSize                                   (2560)
+#define FreeRDP_KeyboardLayout                                     (2623)
+#define FreeRDP_KeyboardType                                       (2624)
+#define FreeRDP_KeyboardSubType                                    (2625)
+#define FreeRDP_KeyboardFunctionKey                                (2626)
+#define FreeRDP_ImeFileName                                        (2627)
+#define FreeRDP_UnicodeInput                                       (2628)
+#define FreeRDP_FastPathInput                                      (2629)
+#define FreeRDP_MultiTouchInput                                    (2630)
+#define FreeRDP_MultiTouchGestures                                 (2631)
+#define FreeRDP_KeyboardHook                                       (2632)
+#define FreeRDP_HasHorizontalWheel                                 (2633)
+#define FreeRDP_HasExtendedMouseEvent                              (2634)
+#define FreeRDP_BrushSupportLevel                                  (2687)
+#define FreeRDP_GlyphSupportLevel                                  (2751)
+#define FreeRDP_GlyphCache                                         (2752)
+#define FreeRDP_FragCache                                          (2753)
+#define FreeRDP_OffscreenSupportLevel                              (2815)
+#define FreeRDP_OffscreenCacheSize                                 (2816)
+#define FreeRDP_OffscreenCacheEntries                              (2817)
+#define FreeRDP_VirtualChannelCompressionFlags                     (2879)
+#define FreeRDP_VirtualChannelChunkSize                            (2880)
+#define FreeRDP_SoundBeepsEnabled                                  (2943)
+#define FreeRDP_MultifragMaxRequestSize                            (3327)
+#define FreeRDP_LargePointerFlag                                   (3391)
+#define FreeRDP_CompDeskSupportLevel                               (3455)
+#define FreeRDP_SurfaceCommandsEnabled                             (3519)
+#define FreeRDP_FrameMarkerCommandEnabled                          (3520)
+#define FreeRDP_SurfaceFrameMarkerEnabled                          (3521)
+#define FreeRDP_RemoteFxOnly                                       (3647)
+#define FreeRDP_RemoteFxCodec                                      (3648)
+#define FreeRDP_RemoteFxCodecId                                    (3649)
+#define FreeRDP_RemoteFxCodecMode                                  (3650)
+#define FreeRDP_RemoteFxImageCodec                                 (3651)
+#define FreeRDP_RemoteFxCaptureFlags                               (3652)
+#define FreeRDP_NSCodec                                            (3711)
+#define FreeRDP_NSCodecId                                          (3712)
+#define FreeRDP_FrameAcknowledge                                   (3713)
+#define FreeRDP_NSCodecColorLossLevel                              (3714)
+#define FreeRDP_NSCodecAllowSubsampling                            (3715)
+#define FreeRDP_NSCodecAllowDynamicColorFidelity                   (3716)
+#define FreeRDP_JpegCodec                                          (3775)
+#define FreeRDP_JpegCodecId                                        (3776)
+#define FreeRDP_JpegQuality                                        (3777)
+#define FreeRDP_GfxThinClient                                      (3839)
+#define FreeRDP_GfxSmallCache                                      (3840)
+#define FreeRDP_GfxProgressive                                     (3841)
+#define FreeRDP_GfxProgressiveV2                                   (3842)
+#define FreeRDP_GfxH264                                            (3843)
+#define FreeRDP_GfxAVC444                                          (3844)
+#define FreeRDP_GfxSendQoeAck                                      (3845)
+#define FreeRDP_GfxAVC444v2                                        (3846)
+#define FreeRDP_BitmapCacheV3CodecId                               (3903)
+#define FreeRDP_DrawNineGridEnabled                                (3967)
+#define FreeRDP_DrawNineGridCacheSize                              (3968)
+#define FreeRDP_DrawNineGridCacheEntries                           (3969)
+#define FreeRDP_DrawGdiPlusEnabled                                 (4031)
+#define FreeRDP_DrawGdiPlusCacheEnabled                            (4032)
+#define FreeRDP_DeviceRedirection                                  (4159)
+#define FreeRDP_DeviceCount                                        (4160)
+#define FreeRDP_DeviceArraySize                                    (4161)
+#define FreeRDP_DeviceArray                                        (4162)
+#define FreeRDP_RedirectDrives                                     (4287)
+#define FreeRDP_RedirectHomeDrive                                  (4288)
+#define FreeRDP_DrivesToRedirect                                   (4289)
+#define FreeRDP_RedirectSmartCards                                 (4415)
+#define FreeRDP_RedirectPrinters                                   (4543)
+#define FreeRDP_RedirectSerialPorts                                (4671)
+#define FreeRDP_RedirectParallelPorts                              (4672)
+#define FreeRDP_PreferIPv6OverIPv4                                 (4673)
+#define FreeRDP_RedirectClipboard                                  (4799)
+#define FreeRDP_StaticChannelCount                                 (4927)
+#define FreeRDP_StaticChannelArraySize                             (4928)
+#define FreeRDP_StaticChannelArray                                 (4929)
+#define FreeRDP_DynamicChannelCount                                (5055)
+#define FreeRDP_DynamicChannelArraySize                            (5056)
+#define FreeRDP_DynamicChannelArray                                (5057)
+#define FreeRDP_SupportDynamicChannels                             (5058)
+#define FreeRDP_SupportEchoChannel                                 (5183)
+#define FreeRDP_SupportDisplayControl                              (5184)
+#define FreeRDP_SupportGeometryTracking                            (5185)
+#define FreeRDP_SupportSSHAgentChannel                             (5186)
+#define FreeRDP_SupportVideoOptimized                              (5187)
 
 
 /**
@@ -853,12 +861,12 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 struct rdp_settings
 {
 	/**
-	 * WARNING: this data structure is carefully padded for ABI stability!
-	 * Keeping this area clean is particularly challenging, so unless you are
-	 * a trusted developer you should NOT take the liberty of adding your own
-	 * options straight into the ABI stable zone. Instead, append them to the
-	 * very end of this data structure, in the zone marked as ABI unstable.
-	 */
+	     * WARNING: this data structure is carefully padded for ABI stability!
+	     * Keeping this area clean is particularly challenging, so unless you are
+	     * a trusted developer you should NOT take the liberty of adding your own
+	     * options straight into the ABI stable zone. Instead, append them to the
+	     * very end of this data structure, in the zone marked as ABI unstable.
+	     */
 
 	ALIGN64 void* instance; /* 0 */
 	UINT64 padding001[16 - 1]; /* 1 */
@@ -881,8 +889,8 @@ struct rdp_settings
 	UINT64 padding0128[128 - 64]; /* 64 */
 
 	/**
-	 * GCC User Data Blocks
-	 */
+	     * GCC User Data Blocks
+	     */
 
 	/* Client/Server Core Data */
 	ALIGN64 UINT32 RdpVersion;              /* 128 */
@@ -962,8 +970,8 @@ struct rdp_settings
 	UINT64 padding0640[640 - 576]; /* 576 */
 
 	/*
-	 * Client Info
-	 */
+	     * Client Info
+	     */
 
 	/* Client Info (Shell) */
 	ALIGN64 char* AlternateShell;        /* 640 */
@@ -1035,8 +1043,8 @@ struct rdp_settings
 	UINT64 padding1088[1088 - 1032]; /* 1032 */
 
 	/**
-	 * X.224 Connection Request/Confirm
-	 */
+	     * X.224 Connection Request/Confirm
+	     */
 
 	/* Protocol Security */
 	ALIGN64 BOOL   TlsSecurity;                  /* 1088 */
@@ -1088,13 +1096,18 @@ struct rdp_settings
 	UINT64 padding1280[1280 - 1234]; /* 1234 */
 
 	/**
-	 * Security
-	 */
+	     * Security
+	     */
 
 	/* Credentials Cache */
-	ALIGN64 BYTE*  Password51;       /* 1280 */
-	ALIGN64 UINT32 Password51Length; /* 1281 */
-	UINT64 padding1344[1344 - 1282]; /* 1282 */
+	ALIGN64 BYTE*  Password51;          /* 1280 */
+	ALIGN64 UINT32 Password51Length;    /* 1281 */
+	ALIGN64 BOOL   SmartcardLogon;      /* 1282 */
+	ALIGN64 char*  LogonReaderName;     /* 1283 */
+	ALIGN64 char*  Pin;                 /* 1284 */
+	ALIGN64 BOOL   PinLoginRequired;    /* 1285 */
+	ALIGN64 BOOL   PinPadIsPresent;     /* 1286 */
+	UINT64  padding1344[1344 - 1288];   /* 1288 */
 
 	/* Kerberos Authentication */
 	ALIGN64 char* KerberosKdc;   /* 1344 */
@@ -1118,8 +1131,8 @@ struct rdp_settings
 	UINT64 padding1536[1536 - 1472]; /* 1472 */
 
 	/**
-	 * User Interface
-	 */
+	     * User Interface
+	     */
 
 	/* Window Settings */
 	ALIGN64 BOOL   Workarea;                /* 1536 */
@@ -1179,8 +1192,8 @@ struct rdp_settings
 	UINT64 padding1984[1984 - 1920]; /* 1920 */
 
 	/**
-	 * Gateway
-	 */
+	     * Gateway
+	     */
 
 	/* Gateway */
 	ALIGN64 UINT32 GatewayUsageMethod;        /* 1984 */
@@ -1210,8 +1223,8 @@ struct rdp_settings
 	UINT64 padding2112[2112 - 2020]; /* 2020 */
 
 	/**
-	 * RemoteApp
-	 */
+	     * RemoteApp
+	     */
 
 	/* RemoteApp */
 	ALIGN64 BOOL   RemoteApplicationMode;             /* 2112 */
@@ -1231,8 +1244,8 @@ struct rdp_settings
 	UINT64 padding2240[2240 - 2176]; /* 2176 */
 
 	/**
-	 * Mandatory Capabilities
-	 */
+	     * Mandatory Capabilities
+	     */
 
 	/* Capabilities */
 	ALIGN64 BYTE*  ReceivedCapabilities;     /* 2240 */
@@ -1320,8 +1333,8 @@ struct rdp_settings
 	UINT64 padding3072[3072 - 3008]; /* 3008 */
 
 	/**
-	 * Optional Capabilities
-	 */
+	     * Optional Capabilities
+	     */
 
 	/* Bitmap Cache Host Capabilities */
 	UINT64 padding3136[3136 - 3072]; /* 3072 */
@@ -1355,8 +1368,8 @@ struct rdp_settings
 	UINT64 padding3648[3648 - 3584]; /* 3584 */
 
 	/*
-	 * Bitmap Codecs Capabilities
-	 */
+	     * Bitmap Codecs Capabilities
+	     */
 
 	/* RemoteFX */
 	ALIGN64 BOOL   RemoteFxOnly;         /* 3648 */
@@ -1393,8 +1406,8 @@ struct rdp_settings
 	UINT64 padding3904[3904 - 3848]; /* 3848 */
 
 	/**
-	 * Caches
-	 */
+	     * Caches
+	     */
 
 	/* Bitmap Cache V3 */
 	ALIGN64 UINT32 BitmapCacheV3CodecId; /* 3904 */
@@ -1413,8 +1426,8 @@ struct rdp_settings
 	UINT64 padding4160[4160 - 4096]; /* 4096 */
 
 	/**
-	 * Device Redirection
-	 */
+	     * Device Redirection
+	     */
 
 	/* Device Redirection */
 	ALIGN64 BOOL           DeviceRedirection; /* 4160 */
@@ -1444,15 +1457,15 @@ struct rdp_settings
 	UINT64 padding4800[4800 - 4675]; /* 4675 */
 
 	/**
-	 * Other Redirection
-	 */
+	     * Other Redirection
+	     */
 
 	ALIGN64 BOOL RedirectClipboard; /* 4800 */
 	UINT64 padding4928[4928 - 4801]; /* 4801 */
 
 	/**
-	 * Static Virtual Channels
-	 */
+	     * Static Virtual Channels
+	     */
 
 	ALIGN64 UINT32       StaticChannelCount;     /* 4928 */
 	ALIGN64 UINT32       StaticChannelArraySize; /* 4929 */
@@ -1460,8 +1473,8 @@ struct rdp_settings
 	UINT64 padding5056[5056 - 4931]; /* 4931 */
 
 	/**
-	 * Dynamic Virtual Channels
-	 */
+	     * Dynamic Virtual Channels
+	     */
 
 	ALIGN64 UINT32       DynamicChannelCount;     /* 5056 */
 	ALIGN64 UINT32       DynamicChannelArraySize; /* 5057 */
@@ -1477,15 +1490,15 @@ struct rdp_settings
 	UINT64 padding5312[5312 - 5189]; /* 5189 */
 
 	/**
-	 * WARNING: End of ABI stable zone!
-	 *
-	 * The zone below this point is ABI unstable, and
-	 * is therefore potentially subject to ABI breakage.
-	 */
+	     * WARNING: End of ABI stable zone!
+	     *
+	     * The zone below this point is ABI unstable, and
+	     * is therefore potentially subject to ABI breakage.
+	     */
 
 	/*
-	 * Extensions
-	 */
+	     * Extensions
+	     */
 
 	/* Extensions */
 	ALIGN64 int num_extensions; /*  */
@@ -1520,9 +1533,14 @@ FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* pre
 FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
 FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name);
 FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 type);
+FREERDP_API UINT32 freerdp_device_collection_count_type(rdpSettings* settings, UINT32 type);
+FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find_type_and_name(rdpSettings* settings,
+        UINT32 type, const char* name);
 FREERDP_API RDPDR_DEVICE* freerdp_device_clone(RDPDR_DEVICE* device);
 FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
-
+FREERDP_API void freerdp_device_print(RDPDR_DEVICE* device, UINT32 index, const char* fname,
+                                      UINT32 lino);
+FREERDP_API void freerdp_device_print_all(rdpSettings* settings, const char* fname, UINT32 lino);
 FREERDP_API BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
 FREERDP_API ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings,
         const char* name);
