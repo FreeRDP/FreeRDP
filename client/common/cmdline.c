@@ -585,8 +585,11 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 	{
 		if (name)
 		{
-			size_t len = strlen(name);
-			p = (char**) calloc(2UL + len, sizeof(char*));
+                        /* To avoid a memory leak, we allocate the mutable copy of name
+                           in the same block as the p array.
+                           We allocate space for one pointer and one string of length len. */
+ 			size_t len = strlen(name);
+			p = (char**) malloc(1 * sizeof(char *) + (len + 1) * sizeof(char));
 
 			if (p)
 			{
