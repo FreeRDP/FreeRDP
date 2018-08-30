@@ -359,7 +359,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc,
 	BOOL match = FALSE;
 	char* keyCombination;
 	char buffer[1024] = { 0 };
-	char command[1024] = { 0 };
+	char command[2048] = { 0 };
 	char combination[1024] = { 0 };
 
 	if (!xfc->actionScriptExists)

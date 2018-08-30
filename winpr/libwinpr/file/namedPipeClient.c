@@ -58,13 +58,13 @@ static BOOL NamedPipeClientIsHandled(HANDLE handle)
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
 BOOL NamedPipeClientCloseHandle(HANDLE handle)
 {
 	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*) handle;
-
 
 	if (!NamedPipeClientIsHandled(handle))
 		return FALSE;
@@ -88,13 +88,12 @@ BOOL NamedPipeClientCloseHandle(HANDLE handle)
 	free(pNamedPipe->lpFilePath);
 	free(pNamedPipe->name);
 	free(pNamedPipe);
-
 	return TRUE;
 }
 
 static int NamedPipeClientGetFd(HANDLE handle)
 {
-	WINPR_NAMED_PIPE *file = (WINPR_NAMED_PIPE *)handle;
+	WINPR_NAMED_PIPE* file = (WINPR_NAMED_PIPE*)handle;
 
 	if (!NamedPipeClientIsHandled(handle))
 		return -1;
@@ -105,31 +104,33 @@ static int NamedPipeClientGetFd(HANDLE handle)
 		return file->clientfd;
 }
 
-static HANDLE_OPS ops = {
-		NamedPipeClientIsHandled,
-		NamedPipeClientCloseHandle,
-		NamedPipeClientGetFd,
-		NULL, /* CleanupHandle */
-		NamedPipeRead,
-		NULL, /* FileReadEx */
-		NULL, /* FileReadScatter */
-		NamedPipeWrite,
-		NULL, /* FileWriteEx */
-		NULL, /* FileWriteGather */
-		NULL, /* FileGetFileSize */
-		NULL, /*  FlushFileBuffers */
-		NULL, /* FileSetEndOfFile */
-		NULL, /* FileSetFilePointer */
-		NULL, /* SetFilePointerEx */
-		NULL, /* FileLockFile */
-		NULL, /* FileLockFileEx */
-		NULL, /* FileUnlockFile */
-		NULL, /* FileUnlockFileEx */
-		NULL  /* SetFileTime */
+static HANDLE_OPS ops =
+{
+	NamedPipeClientIsHandled,
+	NamedPipeClientCloseHandle,
+	NamedPipeClientGetFd,
+	NULL, /* CleanupHandle */
+	NamedPipeRead,
+	NULL, /* FileReadEx */
+	NULL, /* FileReadScatter */
+	NamedPipeWrite,
+	NULL, /* FileWriteEx */
+	NULL, /* FileWriteGather */
+	NULL, /* FileGetFileSize */
+	NULL, /*  FlushFileBuffers */
+	NULL, /* FileSetEndOfFile */
+	NULL, /* FileSetFilePointer */
+	NULL, /* SetFilePointerEx */
+	NULL, /* FileLockFile */
+	NULL, /* FileLockFileEx */
+	NULL, /* FileUnlockFile */
+	NULL, /* FileUnlockFileEx */
+	NULL  /* SetFileTime */
 };
 
-static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-				   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess,
+        DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+        DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	char* name;
 	int status;
@@ -157,6 +158,7 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 
 	free(name);
 	pNamedPipe = (WINPR_NAMED_PIPE*) calloc(1, sizeof(WINPR_NAMED_PIPE));
+
 	if (!pNamedPipe)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -166,12 +168,14 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	hNamedPipe = (HANDLE) pNamedPipe;
 	WINPR_HANDLE_SET_TYPE_AND_MODE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE, WINPR_FD_READ);
 	pNamedPipe->name = _strdup(lpFileName);
+
 	if (!pNamedPipe->name)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		free(pNamedPipe);
 		return INVALID_HANDLE_VALUE;
 	}
+
 	pNamedPipe->dwOpenMode = 0;
 	pNamedPipe->dwPipeMode = 0;
 	pNamedPipe->nMaxInstances = 0;
@@ -180,30 +184,31 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	pNamedPipe->nDefaultTimeOut = 0;
 	pNamedPipe->dwFlagsAndAttributes = dwFlagsAndAttributes;
 	pNamedPipe->lpFileName = GetNamedPipeNameWithoutPrefixA(lpFileName);
+
 	if (!pNamedPipe->lpFileName)
 	{
-		free((void *)pNamedPipe->name);
+		free((void*)pNamedPipe->name);
 		free(pNamedPipe);
 		return INVALID_HANDLE_VALUE;
-
 	}
+
 	pNamedPipe->lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpFileName);
+
 	if (!pNamedPipe->lpFilePath)
 	{
-		free((void *)pNamedPipe->lpFileName);
-		free((void *)pNamedPipe->name);
+		free((void*)pNamedPipe->lpFileName);
+		free((void*)pNamedPipe->name);
 		free(pNamedPipe);
 		return INVALID_HANDLE_VALUE;
-
 	}
+
 	pNamedPipe->clientfd = socket(PF_LOCAL, SOCK_STREAM, 0);
 	pNamedPipe->serverfd = -1;
 	pNamedPipe->ServerMode = FALSE;
 	ZeroMemory(&s, sizeof(struct sockaddr_un));
 	s.sun_family = AF_UNIX;
-	strcpy(s.sun_path, pNamedPipe->lpFilePath);
+	sprintf_s(s.sun_path, ARRAYSIZE(s.sun_path), "%s", pNamedPipe->lpFilePath);
 	status = connect(pNamedPipe->clientfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
-
 	pNamedPipe->ops = &ops;
 
 	if (status != 0)
@@ -230,7 +235,7 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	return hNamedPipe;
 }
 
-HANDLE_CREATOR *GetNamedPipeClientHandleCreator(void)
+HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void)
 {
 	_NamedPipeClientHandleCreator.IsHandled = IsNamedPipeFileNameA;
 	_NamedPipeClientHandleCreator.CreateFileA = NamedPipeClientCreateFileA;
@@ -270,8 +275,10 @@ char* GetNamedPipeUnixDomainSocketBaseFilePathA()
 	char* lpTempPath;
 	char* lpPipePath;
 	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
+
 	if (!lpTempPath)
 		return NULL;
+
 	lpPipePath = GetCombinedPath(lpTempPath, ".pipe");
 	free(lpTempPath);
 	return lpPipePath;

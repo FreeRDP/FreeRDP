@@ -403,7 +403,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	{
 		if (pDirent->d_name[0] != '.')
 		{
-			sprintf(fullpath, "%s/%s", szdir, pDirent->d_name);
+			sprintf_s(fullpath, ARRAYSIZE(fullpath), "%s/%s", szdir, pDirent->d_name);
 			lstat(fullpath, &buf);
 
 			if (S_ISDIR(buf.st_mode))
@@ -1866,7 +1866,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	    CHANNEL_OPTION_INITIALIZED |
 	    CHANNEL_OPTION_ENCRYPT_RDP |
 	    CHANNEL_OPTION_COMPRESS_RDP;
-	strcpy(rdpdr->channelDef.name, "rdpdr");
+	sprintf_s(rdpdr->channelDef.name, ARRAYSIZE(rdpdr->channelDef.name), "rdpdr");
 	rdpdr->sequenceId = 0;
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*) pEntryPoints;
 

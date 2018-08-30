@@ -551,16 +551,26 @@ BOOL xf_create_window(xfContext* xfc)
 		}
 		else if (settings->ServerPort == 3389)
 		{
-			windowTitle = malloc(1 + sizeof("FreeRDP: ") + strlen(
-			                         settings->ServerHostname));
-			sprintf(windowTitle, "FreeRDP: %s", settings->ServerHostname);
+			size_t size = 1 + sizeof("FreeRDP: ") + strlen(
+			                  settings->ServerHostname);
+			windowTitle = malloc(size);
+
+			if (!windowTitle)
+				return FALSE;
+
+			sprintf_s(windowTitle, size, "FreeRDP: %s", settings->ServerHostname);
 		}
 		else
 		{
-			windowTitle = malloc(1 + sizeof("FreeRDP: ") + strlen(settings->ServerHostname)
-			                     + sizeof(":00000"));
-			sprintf(windowTitle, "FreeRDP: %s:%i", settings->ServerHostname,
-			        settings->ServerPort);
+			size_t size = 1 + sizeof("FreeRDP: ") + strlen(settings->ServerHostname)
+			              + sizeof(":00000");
+			windowTitle = malloc(size);
+
+			if (!windowTitle)
+				return FALSE;
+
+			sprintf_s(windowTitle, size, "FreeRDP: %s:%i", settings->ServerHostname,
+			          settings->ServerPort);
 		}
 
 #ifdef WITH_XRENDER

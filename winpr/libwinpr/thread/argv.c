@@ -197,6 +197,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 	if (!buffer)
 	{
+		free(lpEscapedCmdLine);
 		free(lpEscapedChars);
 		return NULL;
 	}

@@ -26,6 +26,7 @@
 #include <errno.h>
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/sspi.h>
 #include <winpr/ssl.h>
 
@@ -622,9 +623,9 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	ChannelBindings->dwApplicationDataOffset = sizeof(SEC_CHANNEL_BINDINGS);
 	ChannelBindingToken = &((BYTE*)
 	                        ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
-	strcpy((char*) ChannelBindingToken, TLS_SERVER_END_POINT);
-	CopyMemory(&ChannelBindingToken[PrefixLength], CertificateHash,
-	           CertificateHashLength);
+	sprintf_s((char*) ChannelBindingToken,
+	          ContextBindings->BindingsLength - ChannelBindings->dwApplicationDataOffset, "%s%s",
+	          TLS_SERVER_END_POINT, CertificateHash);
 	return ContextBindings;
 out_free:
 	free(ContextBindings);

@@ -212,26 +212,26 @@ void crypto_reverse(BYTE* data, int length)
 
 char* crypto_cert_fingerprint(X509* xcert)
 {
-	int i = 0;
+	size_t i = 0;
 	char* p;
 	char* fp_buffer;
 	UINT32 fp_len;
 	BYTE fp[EVP_MAX_MD_SIZE];
 	X509_digest(xcert, EVP_sha1(), fp, &fp_len);
-	fp_buffer = (char*) calloc(fp_len, 3);
+	fp_buffer = (char*) calloc(fp_len + 1, 3);
 
 	if (!fp_buffer)
 		return NULL;
 
 	p = fp_buffer;
 
-	for (i = 0; i < (int)(fp_len - 1); i++)
+	for (i = 0; i < (fp_len - 1); i++)
 	{
-		sprintf(p, "%02"PRIx8":", fp[i]);
+		sprintf_s(p, (fp_len - i) * 3, "%02"PRIx8":", fp[i]);
 		p = &fp_buffer[(i + 1) * 3];
 	}
 
-	sprintf(p, "%02"PRIx8"", fp[i]);
+	sprintf_s(p, (fp_len - i) * 3,  "%02"PRIx8"", fp[i]);
 	return fp_buffer;
 }
 

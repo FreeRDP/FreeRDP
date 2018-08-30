@@ -580,6 +580,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 	int offset;
 	char* filename = NULL;
 	char* fullpath = NULL;
+	char* ext;
 	int ret = -1;
 	BIO* bio = NULL;
 	BYTE* x509_str = NULL;
@@ -604,14 +605,16 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 	if (!filename)
 		return -1;
 
-	strcpy(filename, context->output_file);
-
 	if (context->crtFormat)
-		strcpy(&filename[length], ".crt");
+		ext = "crt";
 	else if (context->pemFormat)
-		strcpy(&filename[length], ".pem");
+		ext = "pem";
 	else if (context->pfxFormat)
-		strcpy(&filename[length], ".pfx");
+		ext = "pfx";
+	else
+		return -1;
+
+	sprintf_s(filename, length + 8, "%s.%s", context->output_file, ext);
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);
@@ -877,8 +880,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 	if (!filename)
 		return -1;
 
-	strcpy(filename, context->output_file);
-	strcpy(&filename[length], ".key");
+	sprintf_s(filename, length + 8, "%s.key", context->output_file);
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);

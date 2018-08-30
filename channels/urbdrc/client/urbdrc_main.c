@@ -59,9 +59,9 @@ static int func_hardware_id_format(IUDEVICE* pdev, char(*HardwareIds)[DEVICE_HAR
 	idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
 	bcdDevice = (UINT16)pdev->query_device_descriptor(pdev, BCD_DEVICE);
 	sprintf_s(str, sizeof(str), "USB\\VID_%04"PRIX16"&PID_%04"PRIX16"", idVendor, idProduct);
-	strcpy(HardwareIds[1], str);
+	strncpy(HardwareIds[1], str, DEVICE_HARDWARE_ID_SIZE);
 	sprintf_s(str, sizeof(str), "%s&REV_%04"PRIX16"", HardwareIds[1], bcdDevice);
-	strcpy(HardwareIds[0], str);
+	strncpy(HardwareIds[0], str, DEVICE_HARDWARE_ID_SIZE);
 	return 0;
 }
 
@@ -77,20 +77,20 @@ static int func_compat_id_format(IUDEVICE* pdev,
 	if (!(pdev->isCompositeDevice(pdev)))
 	{
 		sprintf_s(str, sizeof(str), "USB\\Class_%02"PRIX8"", bDeviceClass);
-		strcpy(CompatibilityIds[2], str);
+		strncpy(CompatibilityIds[2], str, DEVICE_COMPATIBILITY_ID_SIZE);
 		sprintf_s(str, sizeof(str), "%s&SubClass_%02"PRIX8"", CompatibilityIds[2], bDeviceSubClass);
-		strcpy(CompatibilityIds[1], str);
+		strncpy(CompatibilityIds[1], str, DEVICE_COMPATIBILITY_ID_SIZE);
 		sprintf_s(str, sizeof(str), "%s&Prot_%02"PRIX8"", CompatibilityIds[1], bDeviceProtocol);
-		strcpy(CompatibilityIds[0], str);
+		strncpy(CompatibilityIds[0], str, DEVICE_COMPATIBILITY_ID_SIZE);
 	}
 	else
 	{
 		sprintf_s(str, sizeof(str), "USB\\DevClass_00");
-		strcpy(CompatibilityIds[2], str);
+		strncpy(CompatibilityIds[2], str, DEVICE_COMPATIBILITY_ID_SIZE);
 		sprintf_s(str, sizeof(str), "%s&SubClass_00", CompatibilityIds[2]);
-		strcpy(CompatibilityIds[1], str);
+		strncpy(CompatibilityIds[1], str, DEVICE_COMPATIBILITY_ID_SIZE);
 		sprintf_s(str, sizeof(str), "%s&Prot_00", CompatibilityIds[1]);
-		strcpy(CompatibilityIds[0], str);
+		strncpy(CompatibilityIds[0], str, DEVICE_COMPATIBILITY_ID_SIZE);
 	}
 
 	return 0;

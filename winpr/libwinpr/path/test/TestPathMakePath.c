@@ -16,6 +16,7 @@ int TestPathMakePath(int argc, char* argv[])
 	char* cur;
 	char delim = PathGetSeparatorA(0);
 	char* base = GetKnownPath(KNOWN_PATH_TEMP);
+
 	if (!base)
 	{
 		fprintf(stderr, "Failed to get temporary directory!\n");
@@ -24,11 +25,13 @@ int TestPathMakePath(int argc, char* argv[])
 
 	baseLen = strlen(base);
 	srand(time(NULL));
-	for (x=0; x<5; x++)
+
+	for (x = 0; x < 5; x++)
 	{
-		sprintf(tmp, "%08X", rand());
+		sprintf_s(tmp, ARRAYSIZE(tmp), "%08X", rand());
 		path = GetCombinedPath(base, tmp);
 		free(base);
+
 		if (!path)
 		{
 			fprintf(stderr, "GetCombinedPath failed!\n");
@@ -40,18 +43,20 @@ int TestPathMakePath(int argc, char* argv[])
 
 	printf("Creating path %s\n", path);
 	success = PathMakePathA(path, NULL);
+
 	if (!success)
 	{
 		fprintf(stderr, "MakePath failed!\n");
-		free (path);
+		free(path);
 		return -1;
 	}
 
 	success = PathFileExistsA(path);
+
 	if (!success)
 	{
 		fprintf(stderr, "MakePath lied about success!\n");
-		free (path);
+		free(path);
 		return -1;
 	}
 
@@ -60,15 +65,17 @@ int TestPathMakePath(int argc, char* argv[])
 		if (!RemoveDirectoryA(path))
 		{
 			fprintf(stderr, "RemoveDirectoryA %s failed!\n", path);
-			free (path);
+			free(path);
 			return -1;
 		}
+
 		cur = strrchr(path, delim);
+
 		if (cur)
 			*cur = '\0';
 	}
 
-	free (path);
+	free(path);
 	printf("%s success!\n", __FUNCTION__);
 	return 0;
 }

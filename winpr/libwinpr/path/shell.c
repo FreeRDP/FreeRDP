@@ -115,6 +115,7 @@ static char* GetPath_TEMP(void)
 
 static char* GetPath_XDG_DATA_HOME(void)
 {
+	size_t size;
 	char* path = NULL;
 #if defined(WIN32)
 	path = GetPath_XDG_CONFIG_HOME();
@@ -137,7 +138,8 @@ static char* GetPath_XDG_DATA_HOME(void)
 	if (!home)
 		return NULL;
 
-	path = (char*) malloc(strlen(home) + strlen("/.local/share") + 1);
+	size = strlen(home) + strlen("/.local/share") + 1;
+	path = (char*) malloc(size);
 
 	if (!path)
 	{
@@ -145,7 +147,7 @@ static char* GetPath_XDG_DATA_HOME(void)
 		return NULL;
 	}
 
-	sprintf(path, "%s%s", home, "/.local/share");
+	sprintf_s(path, size, "%s%s", home, "/.local/share");
 	free(home);
 #endif
 	return path;
@@ -153,6 +155,7 @@ static char* GetPath_XDG_DATA_HOME(void)
 
 static char* GetPath_XDG_CONFIG_HOME(void)
 {
+	size_t size;
 	char* path = NULL;
 #if defined(WIN32) && !defined(_UWP)
 	path = calloc(MAX_PATH, sizeof(char));
@@ -190,7 +193,8 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 	if (!home)
 		return NULL;
 
-	path = (char*) malloc(strlen(home) + strlen("/.config") + 1);
+	size = strlen(home) + strlen("/.config") + 1;
+	path = (char*) malloc(size);
 
 	if (!path)
 	{
@@ -198,7 +202,7 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 		return NULL;
 	}
 
-	sprintf(path, "%s%s", home, "/.config");
+	sprintf_s(path, size, "%s%s", home, "/.config");
 	free(home);
 #endif
 	return path;
@@ -206,6 +210,7 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 
 static char* GetPath_XDG_CACHE_HOME(void)
 {
+	size_t size;
 	char* path = NULL;
 	char* home = NULL;
 #if defined(WIN32)
@@ -239,7 +244,8 @@ static char* GetPath_XDG_CACHE_HOME(void)
 	if (!home)
 		return NULL;
 
-	path = (char*) malloc(strlen(home) + strlen("/.cache") + 1);
+	size = strlen(home) + strlen("/.cache") + 1;
+	path = (char*) malloc(size);
 
 	if (!path)
 	{
@@ -247,7 +253,7 @@ static char* GetPath_XDG_CACHE_HOME(void)
 		return NULL;
 	}
 
-	sprintf(path, "%s%s", home, "/.cache");
+	sprintf_s(path, size, "%s%s", home, "/.cache");
 	free(home);
 #endif
 	return path;
@@ -518,27 +524,28 @@ BOOL PathFileExistsW(LPCWSTR pszPath)
 		return FALSE;
 
 	ret = PathFileExistsA(lpFileNameA);
-	free (lpFileNameA);
-
+	free(lpFileNameA);
 	return ret;
 }
 
 BOOL PathIsDirectoryEmptyA(LPCSTR pszPath)
 {
-	struct dirent *dp;
+	struct dirent* dp;
 	int empty = 1;
+	DIR* dir = opendir(pszPath);
 
-	DIR *dir = opendir(pszPath);
 	if (dir == NULL) /* Not a directory or doesn't exist */
 		return 1;
 
-	while ((dp = readdir(dir)) != NULL) {
+	while ((dp = readdir(dir)) != NULL)
+	{
 		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
 			continue;    /* Skip . and .. */
 
 		empty = 0;
 		break;
 	}
+
 	closedir(dir);
 	return empty;
 }
@@ -553,8 +560,7 @@ BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath)
 		return FALSE;
 
 	ret = PathIsDirectoryEmptyA(lpFileNameA);
-	free (lpFileNameA);
-
+	free(lpFileNameA);
 	return ret;
 }
 

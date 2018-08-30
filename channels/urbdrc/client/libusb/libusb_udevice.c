@@ -27,6 +27,7 @@
 #endif
 
 #include <errno.h>
+#include <winpr/crt.h>
 
 #include "libusb_udevice.h"
 
@@ -532,7 +533,7 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 		error = 0;
 		WLog_DBG(TAG, "  Port: %d", pdev->port_number);
 		/* gen device path */
-		sprintf(pdev->path, "ugen%"PRIu16".%"PRIu16"", bus_number, dev_number);
+		sprintf_s(pdev->path, ARRAYSIZE(pdev->path), "ugen%"PRIu16".%"PRIu16"", bus_number, dev_number);
 		WLog_DBG(TAG, "  DevPath: %s", pdev->path);
 		break;
 	}
@@ -661,8 +662,7 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 			}
 			while (p1 != NULL);
 
-			memset(pdev->path, 0, 17);
-			strcpy(pdev->path, p2);
+			sprintf_s(pdev->path, ARRAYSIZE(pdev->path), "%s", p2);
 			WLog_DBG(TAG, "  DevPath: %s", pdev->path);
 			/* query parent hub info */
 			dev = udev_device_get_parent(dev);
@@ -1036,7 +1036,8 @@ static int libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextType
 		case DeviceTextLocationInformation:
 			bus_number = libusb_get_bus_number(pdev->libusb_dev);
 			device_address = libusb_get_device_address(pdev->libusb_dev);
-			sprintf(deviceLocation, "Port_#%04"PRIu8".Hub_#%04"PRIu8"", device_address, bus_number);
+			sprintf_s(deviceLocation, ARRAYSIZE(deviceLocation), "Port_#%04"PRIu8".Hub_#%04"PRIu8"",
+			          device_address, bus_number);
 
 			for (i = 0; i < strlen(deviceLocation); i++)
 			{

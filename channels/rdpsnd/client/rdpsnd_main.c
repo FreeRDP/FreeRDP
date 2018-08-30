@@ -1331,7 +1331,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	rdpsnd->channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED |
 	    CHANNEL_OPTION_ENCRYPT_RDP;
-	strcpy(rdpsnd->channelDef.name, "rdpsnd");
+	sprintf_s(rdpsnd->channelDef.name, ARRAYSIZE(rdpsnd->channelDef.name), "rdpsnd");
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*) pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&

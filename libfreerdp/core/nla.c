@@ -314,7 +314,7 @@ static int nla_client_init(rdpNla* nla)
 	if (!spn)
 		return -1;
 
-	sprintf(spn, "%s%s", TERMSRV_SPN_PREFIX, settings->ServerHostname);
+	sprintf_s(spn, length + 1, "%s%s", TERMSRV_SPN_PREFIX, settings->ServerHostname);
 #ifdef UNICODE
 	nla->ServicePrincipalName = NULL;
 	ConvertToUnicode(CP_UTF8, 0, spn, -1, &nla->ServicePrincipalName, 0);

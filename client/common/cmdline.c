@@ -586,13 +586,13 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 		if (name)
 		{
 			size_t len = strlen(name);
-			p = (char**) calloc(1UL + len, sizeof(char*));
+			p = (char**) calloc(2UL + len, sizeof(char*));
 
 			if (p)
 			{
 				char* dst = (char*)&p[1];
 				p[0] = dst;
-				strncpy(dst, name, len);
+				sprintf_s(dst, len + 1, "%s", name);
 				*count = 1;
 				return p;
 			}

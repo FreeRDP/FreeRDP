@@ -34,6 +34,7 @@
 
 #include <assert.h>
 
+#include <winpr/crt.h>
 #include <winpr/string.h>
 #include <winpr/stream.h>
 #include <winpr/wtsapi.h>
