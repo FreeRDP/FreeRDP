@@ -73,7 +73,6 @@ static struct
 FREERDP_LOCAL char* rdp_info_package_flags_description(UINT32 flags)
 {
 	char* result;
-	char* current;
 	size_t maximum_size = 0;
 	size_t i;
 
@@ -89,24 +88,16 @@ FREERDP_LOCAL char* rdp_info_package_flags_description(UINT32 flags)
 		return 0;
 	}
 
-	current = result;
-
+	result[0] = '\0';
 	for (i = 0; i < ARRAYSIZE(info_flags); i ++)
 	{
 		if (info_flags[i].flag & flags)
 		{
-			strcpy(current, info_flags[i].label);
-			current += strlen(info_flags[i].label);
-			* current = '|';
-			current ++ ;
+			strcat(result, info_flags[i].label);
+			strcat(result, "|");
 		}
 	}
-
-	if (current != result)
-	{
-		current[-1] = '\0';
-	}
-
+	result[strlen(result) - 1] = '\0'; /* remove last "|" */
 	return result;
 }
 
