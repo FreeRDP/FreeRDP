@@ -536,7 +536,7 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	mszFilterStrings(TRUE, mszReaders, & cchReaders, smartcard->filter);
 	mszStringsLog("Readers AFTER  filtering: ", TRUE, mszReaders);
 	ret.msz = (BYTE*) mszReaders;
-	ret.cBytes = cchReaders * 2;
+	ret.cBytes = cchReaders;
 
 	if (call->mszGroups)
 	{
