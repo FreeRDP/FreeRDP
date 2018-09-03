@@ -269,7 +269,7 @@ static SMARTCARD_DEVICE* checked_smartcard_device(DEVICE* device, const char* fu
 	return (SMARTCARD_DEVICE*)device;
 }
 
-#define CHECKED_SMARTCARD_DEVICE(smartcard,device)					\
+#define VALIDATE_SMARTCARD_DEVICE_OR_RETURN(smartcard,device)					\
 	SMARTCARD_DEVICE* smartcard = checked_smartcard_device(device, __FUNCTION__);	\
 	do										\
 	{										\
@@ -315,7 +315,7 @@ static RDPDR_SMARTCARD* checked_rdpdr_smartcard_device(RDPDR_DEVICE* device, con
 static UINT smartcard_free(DEVICE* device)
 {
 	UINT error;
-	CHECKED_SMARTCARD_DEVICE(smartcard, device);
+	VALIDATE_SMARTCARD_DEVICE_OR_RETURN(smartcard, device);
 	WLog_DBG(TAG, "smartcard_free(%s)", device->name);
 	/**
 	 * Calling smartcard_release_all_contexts to unblock all operations waiting for transactions
@@ -373,7 +373,7 @@ static UINT smartcard_free(DEVICE* device)
  */
 static UINT smartcard_init(DEVICE* device)
 {
-	CHECKED_SMARTCARD_DEVICE(smartcard, device);
+	VALIDATE_SMARTCARD_DEVICE_OR_RETURN(smartcard, device);
 	WLog_DBG(TAG, "smartcard_init(%s)", device->name);
 	smartcard_release_all_contexts(smartcard);
 	return CHANNEL_RC_OK;
@@ -719,7 +719,7 @@ out:
  */
 static UINT smartcard_irp_request(DEVICE* device, IRP* irp)
 {
-	CHECKED_SMARTCARD_DEVICE(smartcard, device);
+	VALIDATE_SMARTCARD_DEVICE_OR_RETURN(smartcard, device);
 
 	if (!MessageQueue_Post(smartcard->IrpQueue, NULL, 0, (void*) irp, NULL))
 	{
@@ -743,7 +743,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	size_t length;
 	SMARTCARD_DEVICE* smartcard;
 	UINT error = CHANNEL_RC_NO_MEMORY;
-	CHECKED_RDPDR_SMARTCARD_DEVICE(smartcard_rdpdr, pEntryPoints->device);
+	VALIDATE_RDPDR_SMARTCARD_DEVICE_OR_RETURN(smartcard_rdpdr, pEntryPoints->device);
 	smartcard = calloc(1, sizeof(SMARTCARD_DEVICE));
 
 	if (!smartcard)

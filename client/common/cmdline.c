@@ -49,7 +49,7 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
-#define CHECK_MEMORY(p) if (!(p)) return COMMAND_LINE_ERROR_MEMORY
+#define VALIDATE_MEMORY_OR_RETURN(p) if (!(p)) return COMMAND_LINE_ERROR_MEMORY
 static char* copy_string(char** destination, const char* source)
 {
 	free(*destination);
@@ -1633,7 +1633,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "spn-class")
 		{
-			CHECK_MEMORY(copy_string(&settings->AuthenticationServiceClass, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->AuthenticationServiceClass, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "redirect-prefer")
 		{
@@ -1684,7 +1684,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
 				settings->SendPreconnectionPdu = TRUE;
-				CHECK_MEMORY(copy_string(&settings->PreconnectionBlob, arg->Value));
+				VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->PreconnectionBlob, arg->Value));
 			}
 		}
 		CommandLineSwitchCase(arg, "w")
@@ -1841,7 +1841,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "t")
 		{
-			CHECK_MEMORY(copy_string(&settings->WindowTitle, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->WindowTitle, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "decorations")
 		{
@@ -1935,11 +1935,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->ConsoleSession = TRUE;
 			settings->RestrictedAdminModeRequired = TRUE;
-			CHECK_MEMORY(copy_string(&settings->PasswordHash, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->PasswordHash, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "client-hostname")
 		{
-			CHECK_MEMORY(copy_string(&settings->ClientHostname, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->ClientHostname, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "kbd")
 		{
@@ -1996,11 +1996,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "d")
 		{
-			CHECK_MEMORY(copy_string(&settings->Domain, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->Domain, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "p")
 		{
-			CHECK_MEMORY(copy_string(&settings->Password, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->Password, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "g")
 		{
@@ -2138,17 +2138,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
-			CHECK_MEMORY(copy_string(&gwUser, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&gwUser, arg->Value));
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gd")
 		{
-			CHECK_MEMORY(copy_string(&settings->GatewayDomain, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->GatewayDomain, arg->Value));
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gp")
 		{
-			CHECK_MEMORY(copy_string(&settings->GatewayPassword, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->GatewayPassword, arg->Value));
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gt")
@@ -2171,7 +2171,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "gat")
 		{
-			CHECK_MEMORY(copy_string(&settings->GatewayAccessToken, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->GatewayAccessToken, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "gateway-usage-method")
 		{
@@ -2198,7 +2198,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "app")
 		{
-			CHECK_MEMORY(copy_string(&settings->RemoteApplicationProgram, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->RemoteApplicationProgram, arg->Value));
 			settings->RemoteApplicationMode = TRUE;
 			settings->RemoteAppLanguageBarSupported = TRUE;
 			settings->Workarea = TRUE;
@@ -2207,28 +2207,28 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "load-balance-info")
 		{
-			CHECK_MEMORY(copy_string((char**)&settings->LoadBalanceInfo, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string((char**)&settings->LoadBalanceInfo, arg->Value));
 			settings->LoadBalanceInfoLength = (UINT32) strlen((char*)settings->LoadBalanceInfo);
 		}
 		CommandLineSwitchCase(arg, "app-name")
 		{
-			CHECK_MEMORY(copy_string(&settings->RemoteApplicationName, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->RemoteApplicationName, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "app-icon")
 		{
-			CHECK_MEMORY(copy_string(&settings->RemoteApplicationIcon, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->RemoteApplicationIcon, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "app-cmd")
 		{
-			CHECK_MEMORY(copy_string(&settings->RemoteApplicationCmdLine, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->RemoteApplicationCmdLine, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "app-file")
 		{
-			CHECK_MEMORY(copy_string(&settings->RemoteApplicationFile, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->RemoteApplicationFile, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "app-guid")
 		{
-			CHECK_MEMORY(copy_string(&settings->RemoteApplicationGuid, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->RemoteApplicationGuid, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "compression")
 		{
@@ -2261,11 +2261,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "shell")
 		{
-			CHECK_MEMORY(copy_string(&settings->AlternateShell, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->AlternateShell, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "shell-dir")
 		{
-			CHECK_MEMORY(copy_string(&settings->ShellWorkingDirectory, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->ShellWorkingDirectory, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "audio-mode")
 		{
@@ -2460,7 +2460,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "pcb")
 		{
 			settings->SendPreconnectionPdu = TRUE;
-			CHECK_MEMORY(copy_string(&settings->PreconnectionBlob, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->PreconnectionBlob, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "pcid")
 		{
@@ -2587,11 +2587,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				tlsCiphers = "AES128-SHA";
 			}
 
-			CHECK_MEMORY(copy_string(&settings->AllowedTlsCiphers, tlsCiphers));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->AllowedTlsCiphers, tlsCiphers));
 		}
 		CommandLineSwitchCase(arg, "cert-name")
 		{
-			CHECK_MEMORY(copy_string(&settings->CertificateName, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->CertificateName, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "cert-ignore")
 		{
@@ -2719,11 +2719,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "wm-class")
 		{
-			CHECK_MEMORY(copy_string(&settings->WmClass, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->WmClass, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "play-rfx")
 		{
-			CHECK_MEMORY(copy_string(&settings->PlayRemoteFxFile, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->PlayRemoteFxFile, arg->Value));
 			settings->PlayRemoteFx = TRUE;
 		}
 		CommandLineSwitchCase(arg, "auth-only")
@@ -2771,7 +2771,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "assistance")
 		{
 			settings->RemoteAssistanceMode = TRUE;
-			CHECK_MEMORY(copy_string(&settings->RemoteAssistancePassword, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->RemoteAssistancePassword, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "pwidth")
 		{
@@ -2855,7 +2855,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "action-script")
 		{
-			CHECK_MEMORY(copy_string(&settings->ActionScript, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->ActionScript, arg->Value));
 		}
 		CommandLineSwitchCase(arg, "fipsmode")
 		{
@@ -2900,7 +2900,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "pin")
 		{
-			CHECK_MEMORY(copy_string(&settings->Pin, arg->Value));
+			VALIDATE_MEMORY_OR_RETURN(copy_string(&settings->Pin, arg->Value));
 			FillMemory(arg->Value, strlen(arg->Value), '*');
 
 			if (!settings->SmartcardLogon)
