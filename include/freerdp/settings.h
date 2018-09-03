@@ -418,12 +418,6 @@ typedef struct rdp_monitor rdpMonitor;
 #define RDPDR_DTYP_FILESYSTEM		0x00000008
 #define RDPDR_DTYP_SMARTCARD		0x00000020
 
-/* TODO: OUTCH! cf. https://github.com/FreeRDP/FreeRDP/issues/4833
-This is still quite bad,  because there is no relationship between the
-structure SMARTCARD_DEVICE and the structure DEVICE.  At the very
-least,  the substructure should include the super structure,  or a
-macro should be defined to include the same fields as header! */
-
 struct _RDPDR_DEVICE
 {
 	UINT32 Id;
@@ -1113,7 +1107,7 @@ struct rdp_settings
 	ALIGN64 char*  Pin;                 /* 1284 */
 	ALIGN64 BOOL   PinLoginRequired;    /* 1285 */
 	ALIGN64 BOOL   PinPadIsPresent;     /* 1286 */
-	UINT64  padding1344[1344 - 1288];   /* 1288 */
+	UINT64  padding1344[1344 - 1287];   /* 1287 */
 
 	/* Kerberos Authentication */
 	ALIGN64 char* KerberosKdc;   /* 1344 */
