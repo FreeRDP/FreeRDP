@@ -295,7 +295,7 @@ static RDPDR_SMARTCARD* checked_rdpdr_smartcard_device(RDPDR_DEVICE* device, con
 	return (RDPDR_SMARTCARD*)device;
 }
 
-#define CHECKED_RDPDR_SMARTCARD_DEVICE(smartcard,device)					\
+#define VALIDATE_RDPDR_SMARTCARD_DEVICE_OR_RETURN(smartcard,device)				\
 	RDPDR_SMARTCARD* smartcard = checked_rdpdr_smartcard_device(device, __FUNCTION__);	\
 	do											\
 	{											\
