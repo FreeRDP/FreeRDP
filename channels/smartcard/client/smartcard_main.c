@@ -117,6 +117,7 @@ SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard,
 {
 	SMARTCARD_CONTEXT* pContext;
 	pContext = (SMARTCARD_CONTEXT*) calloc(1, sizeof(SMARTCARD_CONTEXT));
+	WLog_DBG(TAG, "smartcard_context_new(%s)", smartcard->device.name);
 
 	if (!pContext)
 	{
@@ -157,6 +158,7 @@ void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
 	if (!pContext)
 		return;
 
+	WLog_DBG(TAG, "smartcard_context_free(%s)", pContext->smartcard->device.name);
 	/* cancel blocking calls like SCardGetStatusChange */
 	SCardCancel(pContext->hContext);
 
@@ -250,6 +252,61 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 }
 
 
+
+static SMARTCARD_DEVICE* checked_smartcard_device(DEVICE* device, const char* function)
+{
+	/* Assuming the same encoding for DEVICE type and RDPDR_DEVICE Type fields! */
+	if (device->type != RDPDR_DTYP_SMARTCARD)
+	{
+		WLog_ERR(TAG, "%s cannot be applied on device of type %s (%d) such as %s",
+		         function,
+		         /* Assuming the same encoding for DEVICE type and RDPDR_DEVICE Type fields! */
+		         freerdp_device_type_label(device->type),
+		         device->type, device->name);
+		return 0;
+	}
+
+	return (SMARTCARD_DEVICE*)device;
+}
+
+#define CHECKED_SMARTCARD_DEVICE(smartcard,device)					\
+	SMARTCARD_DEVICE* smartcard = checked_smartcard_device(device, __FUNCTION__);	\
+	do										\
+	{										\
+		if (!smartcard)								\
+		{									\
+			return STATUS_INVALID_DEVICE_REQUEST;				\
+		}									\
+	}while(0)
+
+
+
+static RDPDR_SMARTCARD* checked_rdpdr_smartcard_device(RDPDR_DEVICE* device, const char* function)
+{
+	if (device->Type != RDPDR_DTYP_SMARTCARD)
+	{
+		WLog_ERR(TAG, "%s cannot be applied on rdpdr device of type %s (%d) such as %s",
+		         function,
+		         freerdp_device_type_label(device->Type),
+		         device->Type, device->Name);
+		return 0;
+	}
+
+	return (RDPDR_SMARTCARD*)device;
+}
+
+#define CHECKED_RDPDR_SMARTCARD_DEVICE(smartcard,device)					\
+	RDPDR_SMARTCARD* smartcard = checked_rdpdr_smartcard_device(device, __FUNCTION__);	\
+	do											\
+	{											\
+		if (!smartcard)									\
+		{										\
+			return STATUS_INVALID_DEVICE_REQUEST;					\
+		}										\
+	}while(0)
+
+
+
 /**
  * Function description
  *
@@ -258,7 +315,8 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 static UINT smartcard_free(DEVICE* device)
 {
 	UINT error;
-	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
+	CHECKED_SMARTCARD_DEVICE(smartcard, device);
+	WLog_DBG(TAG, "smartcard_free(%s)", device->name);
 	/**
 	 * Calling smartcard_release_all_contexts to unblock all operations waiting for transactions
 	 * to unlock.
@@ -315,7 +373,8 @@ static UINT smartcard_free(DEVICE* device)
  */
 static UINT smartcard_init(DEVICE* device)
 {
-	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
+	CHECKED_SMARTCARD_DEVICE(smartcard, device);
+	WLog_DBG(TAG, "smartcard_init(%s)", device->name);
 	smartcard_release_all_contexts(smartcard);
 	return CHANNEL_RC_OK;
 }
@@ -660,7 +719,7 @@ out:
  */
 static UINT smartcard_irp_request(DEVICE* device, IRP* irp)
 {
-	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
+	CHECKED_SMARTCARD_DEVICE(smartcard, device);
 
 	if (!MessageQueue_Post(smartcard->IrpQueue, NULL, 0, (void*) irp, NULL))
 	{
@@ -684,7 +743,8 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	size_t length;
 	SMARTCARD_DEVICE* smartcard;
 	UINT error = CHANNEL_RC_NO_MEMORY;
-	smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));
+	CHECKED_RDPDR_SMARTCARD_DEVICE(smartcard_rdpdr, pEntryPoints->device);
+	smartcard = calloc(1, sizeof(SMARTCARD_DEVICE));
 
 	if (!smartcard)
 	{
@@ -694,12 +754,15 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	smartcard->device.type = RDPDR_DTYP_SMARTCARD;
 	smartcard->device.name = "SCARD";
+	smartcard->filter = smartcard_rdpdr->deviceFilter;
 	smartcard->device.IRPRequest = smartcard_irp_request;
 	smartcard->device.Init = smartcard_init;
 	smartcard->device.Free = smartcard_free;
 	smartcard->rdpcontext = pEntryPoints->rdpcontext;
 	length = strlen(smartcard->device.name);
 	smartcard->device.data = Stream_New(NULL, length + 1);
+	WLog_DBG(TAG, "smartcard_DeviceServiceEntry(%s -> %s)",
+	         pEntryPoints->device->Name, smartcard->device.name);
 
 	if (!smartcard->device.data)
 	{
