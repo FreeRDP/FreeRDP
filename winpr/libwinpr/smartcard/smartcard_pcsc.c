@@ -1595,6 +1595,19 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 	status = (LONG) g_PCSC.pfnSCardStatus(hCard, NULL, &pcsc_cchReaderLen, NULL, NULL, NULL,
 	                                      &pcsc_cbAtrLen);
 
+	WLog_DBG(TAG, "after  g_PCSC.pfnSCardStatus  status            = %d", status);
+	WLog_DBG(TAG, "                              pcsc_cchReaderLen = %d", pcsc_cchReaderLen);
+	WLog_DBG(TAG, "                              pcsc_cbAtrLen     = %d", pcsc_cbAtrLen);
+	if (pcchReaderLen)
+	{
+		WLog_DBG(TAG, "                              *pcchReaderLen    = %d", *pcchReaderLen);
+	}
+	if (pcbAtrLen)
+	{
+		WLog_DBG(TAG, "                              *pcbAtrLen        = %d", *pcbAtrLen);
+	}
+	WLog_DBG(TAG, "                              unicode           = %d", unicode);
+
 	if (status != STATUS_SUCCESS)
 		return PCSC_MapErrorCodeToWinSCard(status);
 
@@ -1658,9 +1671,12 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 		atr = tATR;
 	}
 
+	WLog_DBG(TAG, "before g_PCSC.pfnSCardStatus  pcsc_cchReaderLen = %d", pcsc_cchReaderLen);
+	WLog_DBG(TAG, "                              pcsc_cbAtrLen     = %d", pcsc_cbAtrLen);
 	status = (LONG) g_PCSC.pfnSCardStatus(hCard, readerNames, &pcsc_cchReaderLen, &pcsc_dwState,
 	                                      &pcsc_dwProtocol, atr,
 	                                      &pcsc_cbAtrLen);
+	WLog_DBG(TAG, "after                         status            = %d", status);
 
 	if (status != STATUS_SUCCESS)
 		goto out_fail;
