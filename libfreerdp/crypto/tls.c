@@ -593,16 +593,14 @@ static void tls_free_certificate(CryptoCert cert)
 
 static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 {
-	int PrefixLength;
-	BYTE CertificateHash[32];
 	UINT32 CertificateHashLength;
 	BYTE* ChannelBindingToken;
 	UINT32 ChannelBindingTokenLength;
 	SEC_CHANNEL_BINDINGS* ChannelBindings;
 	SecPkgContext_Bindings* ContextBindings;
-	ZeroMemory(CertificateHash, sizeof(CertificateHash));
+	const size_t PrefixLength = strnlen(TLS_SERVER_END_POINT, ARRAYSIZE(TLS_SERVER_END_POINT));
+	BYTE CertificateHash[32] = { 0 };
 	X509_digest(cert, EVP_sha256(), CertificateHash, &CertificateHashLength);
-	PrefixLength = strlen(TLS_SERVER_END_POINT);
 	ChannelBindingTokenLength = PrefixLength + CertificateHashLength;
 	ContextBindings = (SecPkgContext_Bindings*) calloc(1,
 	                  sizeof(SecPkgContext_Bindings));
@@ -623,9 +621,8 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	ChannelBindings->dwApplicationDataOffset = sizeof(SEC_CHANNEL_BINDINGS);
 	ChannelBindingToken = &((BYTE*)
 	                        ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
-	sprintf_s((char*) ChannelBindingToken,
-	          ContextBindings->BindingsLength - ChannelBindings->dwApplicationDataOffset, "%s%s",
-	          TLS_SERVER_END_POINT, CertificateHash);
+	memcpy(ChannelBindingToken, TLS_SERVER_END_POINT, PrefixLength);
+	memcpy(ChannelBindingToken + PrefixLength, CertificateHash, CertificateHashLength);
 	return ContextBindings;
 out_free:
 	free(ContextBindings);
