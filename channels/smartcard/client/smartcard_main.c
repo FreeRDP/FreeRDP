@@ -269,7 +269,7 @@ static SMARTCARD_DEVICE* checked_smartcard_device(DEVICE* device, const char* fu
 	return (SMARTCARD_DEVICE*)device;
 }
 
-#define VALIDATE_SMARTCARD_DEVICE_OR_RETURN(smartcard,device)					\
+#define VALIDATE_SMARTCARD_DEVICE_OR_RETURN(smartcard,device)				\
 	SMARTCARD_DEVICE* smartcard = checked_smartcard_device(device, __FUNCTION__);	\
 	do										\
 	{										\
