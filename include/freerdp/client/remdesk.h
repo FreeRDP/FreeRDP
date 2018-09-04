@@ -36,3 +36,4 @@ struct _remdesk_client_context
 
 #endif /* FREERDP_CHANNEL_REMDESK_CLIENT_REMDESK_H */
 
+

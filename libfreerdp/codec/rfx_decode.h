@@ -29,3 +29,4 @@ FREERDP_LOCAL BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile,
 
 #endif /* FREERDP_LIB_CODEC_RFX_DECODE_H */
 
+

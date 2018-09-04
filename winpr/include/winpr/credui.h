@@ -99,27 +99,31 @@ extern "C" {
 #endif
 
 WINPR_API DWORD CredUIPromptForCredentialsW(PCREDUI_INFOW pUiInfo, PCWSTR pszTargetName,
-		PCtxtHandle pContext, DWORD dwAuthError, PWSTR pszUserName, ULONG ulUserNameBufferSize,
-		PWSTR pszPassword, ULONG ulPasswordBufferSize, BOOL* save, DWORD dwFlags);
+        PCtxtHandle pContext, DWORD dwAuthError, PWSTR pszUserName, ULONG ulUserNameBufferSize,
+        PWSTR pszPassword, ULONG ulPasswordBufferSize, BOOL* save, DWORD dwFlags);
 WINPR_API DWORD CredUIPromptForCredentialsA(PCREDUI_INFOA pUiInfo, PCSTR pszTargetName,
-		PCtxtHandle pContext, DWORD dwAuthError, PSTR pszUserName, ULONG ulUserNameBufferSize,
-		PSTR pszPassword, ULONG ulPasswordBufferSize, BOOL* save, DWORD dwFlags);
+        PCtxtHandle pContext, DWORD dwAuthError, PSTR pszUserName, ULONG ulUserNameBufferSize,
+        PSTR pszPassword, ULONG ulPasswordBufferSize, BOOL* save, DWORD dwFlags);
 
-WINPR_API DWORD CredUIParseUserNameW(CONST WCHAR* UserName, WCHAR* user, ULONG userBufferSize, WCHAR* domain, ULONG domainBufferSize);
-WINPR_API DWORD CredUIParseUserNameA(CONST CHAR* userName, CHAR* user, ULONG userBufferSize, CHAR* domain, ULONG domainBufferSize);
+WINPR_API DWORD CredUIParseUserNameW(CONST WCHAR* UserName, WCHAR* user, ULONG userBufferSize,
+                                     WCHAR* domain, ULONG domainBufferSize);
+WINPR_API DWORD CredUIParseUserNameA(CONST CHAR* userName, CHAR* user, ULONG userBufferSize,
+                                     CHAR* domain, ULONG domainBufferSize);
 
 WINPR_API DWORD CredUICmdLinePromptForCredentialsW(PCWSTR pszTargetName, PCtxtHandle pContext,
-		DWORD dwAuthError, PWSTR UserName, ULONG ulUserBufferSize, PWSTR pszPassword,
-		ULONG ulPasswordBufferSize, PBOOL pfSave, DWORD dwFlags);
+        DWORD dwAuthError, PWSTR UserName, ULONG ulUserBufferSize, PWSTR pszPassword,
+        ULONG ulPasswordBufferSize, PBOOL pfSave, DWORD dwFlags);
 WINPR_API DWORD CredUICmdLinePromptForCredentialsA(PCSTR pszTargetName, PCtxtHandle pContext,
-		DWORD dwAuthError, PSTR UserName, ULONG ulUserBufferSize, PSTR pszPassword,
-		ULONG ulPasswordBufferSize, PBOOL pfSave, DWORD dwFlags);
+        DWORD dwAuthError, PSTR UserName, ULONG ulUserBufferSize, PSTR pszPassword,
+        ULONG ulPasswordBufferSize, PBOOL pfSave, DWORD dwFlags);
 
 WINPR_API DWORD CredUIConfirmCredentialsW(PCWSTR pszTargetName, BOOL bConfirm);
 WINPR_API DWORD CredUIConfirmCredentialsA(PCSTR pszTargetName, BOOL bConfirm);
 
-WINPR_API DWORD CredUIStoreSSOCredW(PCWSTR pszRealm, PCWSTR pszUsername, PCWSTR pszPassword, BOOL bPersist);
-WINPR_API DWORD CredUIStoreSSOCredA(PCSTR pszRealm, PCSTR pszUsername, PCSTR pszPassword, BOOL bPersist);
+WINPR_API DWORD CredUIStoreSSOCredW(PCWSTR pszRealm, PCWSTR pszUsername, PCWSTR pszPassword,
+                                    BOOL bPersist);
+WINPR_API DWORD CredUIStoreSSOCredA(PCSTR pszRealm, PCSTR pszUsername, PCSTR pszPassword,
+                                    BOOL bPersist);
 
 WINPR_API DWORD CredUIReadSSOCredW(PCWSTR pszRealm, PWSTR* ppszUsername);
 WINPR_API DWORD CredUIReadSSOCredA(PCSTR pszRealm, PSTR* ppszUsername);
@@ -147,4 +151,5 @@ WINPR_API DWORD CredUIReadSSOCredA(PCSTR pszRealm, PSTR* ppszUsername);
 #endif
 
 #endif /* WINPR_CREDUI_H */
+
 

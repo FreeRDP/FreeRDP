@@ -631,3 +631,4 @@ static INLINE void RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 		}
 	}
 }
+

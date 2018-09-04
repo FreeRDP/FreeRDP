@@ -33,3 +33,4 @@ DWORD ios_ui_verify_changed_certificate(freerdp* instance,
                                         const char* old_fingerprint);
 
 void ios_allocate_display_buffer(mfInfo* mfi);
+

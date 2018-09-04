@@ -26,3 +26,4 @@
 PSCardApiFunctionTable Inspect_RegisterSCardApi(PSCardApiFunctionTable pSCardApi);
 
 #endif /* WINPR_SMARTCARD_INSPECT_PRIVATE_H */
+

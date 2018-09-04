@@ -642,3 +642,4 @@ void HashTable_Free(wHashTable* table)
 		free(table);
 	}
 }
+

@@ -1645,3 +1645,4 @@ void tls_free(rdpTls* tls)
 
 	free(tls);
 }
+

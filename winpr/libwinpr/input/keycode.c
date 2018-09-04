@@ -580,7 +580,6 @@ DWORD KEYCODE_TO_VKCODE_EVDEV[256] =
 DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags)
 {
 	DWORD vkcode;
-
 	vkcode = VK_NONE;
 
 	if (dwFlags & KEYCODE_TYPE_APPLE)
@@ -630,3 +629,4 @@ DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, DWORD dwFlags)
 
 	return keycode;
 }
+

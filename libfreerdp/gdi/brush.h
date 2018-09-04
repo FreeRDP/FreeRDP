@@ -48,3 +48,4 @@ static INLINE UINT32 gdi_GetBrushStyle(HGDI_DC hdc)
 #endif
 
 #endif /* FREERDP_LIB_GDI_BRUSH_H */
+

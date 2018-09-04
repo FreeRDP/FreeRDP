@@ -202,3 +202,4 @@ FREERDP_LOCAL rdpMcs* mcs_new(rdpTransport* transport);
 FREERDP_LOCAL void mcs_free(rdpMcs* mcs);
 
 #endif /* FREERDP_LIB_CORE_MCS_H */
+

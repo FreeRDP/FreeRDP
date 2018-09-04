@@ -23,3 +23,4 @@
 BOOL WLog_ImageMessage_Write(char* filename, void* data, int width, int height, int bpp);
 
 #endif /* WINPR_WLOG_IMAGE_MESSAGE_PRIVATE_H */
+

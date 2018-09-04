@@ -14,11 +14,8 @@ int TestPathIsUNCEx(int argc, char* argv[])
 	BOOL status;
 	LPTSTR Server;
 	TCHAR Path[PATHCCH_MAX_CCH];
-
 	/* Path is UNC */
-
 	_tcscpy(Path, testPathUNC);
-
 	status = PathIsUNCEx(Path, (LPCTSTR*) &Server);
 
 	if (!status)
@@ -34,9 +31,7 @@ int TestPathIsUNCEx(int argc, char* argv[])
 	}
 
 	/* Path is not UNC */
-
 	_tcscpy(Path, testPathNotUNC);
-
 	status = PathIsUNCEx(Path, (LPCTSTR*) &Server);
 
 	if (status)
@@ -47,4 +42,5 @@ int TestPathIsUNCEx(int argc, char* argv[])
 
 	return 0;
 }
+
 

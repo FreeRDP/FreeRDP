@@ -51,3 +51,4 @@ FREERDP_API BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context,
 
 #endif /* FREERDP_CODEC_DSP_H */
 
+

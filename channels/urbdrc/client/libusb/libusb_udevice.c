@@ -2002,3 +2002,4 @@ IUDEVICE* udev_new_by_addr(int bus_number, int dev_number)
 
 	return udev_init(pDev, bus_number, dev_number);
 }
+

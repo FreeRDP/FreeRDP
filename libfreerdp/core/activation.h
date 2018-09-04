@@ -65,3 +65,4 @@ FREERDP_LOCAL BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp,
         wStream* s);
 
 #endif /* FREERDP_LIB_CORE_ACTIVATION_H */
+

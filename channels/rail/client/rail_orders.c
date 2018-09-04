@@ -1288,3 +1288,4 @@ UINT rail_send_client_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORD
 	Stream_Free(s, TRUE);
 	return error;
 }
+

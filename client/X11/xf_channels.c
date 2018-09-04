@@ -135,3 +135,4 @@ void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEven
 		gdi_video_data_uninit(xfc->context.gdi, (VideoClientContext*)e->pInterface);
 	}
 }
+

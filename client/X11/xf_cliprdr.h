@@ -34,3 +34,4 @@ void xf_cliprdr_uninit(xfContext* xfc, CliprdrClientContext* cliprdr);
 void xf_cliprdr_handle_xevent(xfContext* xfc, XEvent* event);
 
 #endif /* FREERDP_CLIENT_X11_CLIPRDR_H */
+

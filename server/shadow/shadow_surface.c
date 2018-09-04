@@ -104,3 +104,4 @@ BOOL shadow_surface_resize(rdpShadowSurface* surface, int x, int y, int width,
 
 	return FALSE;
 }
+

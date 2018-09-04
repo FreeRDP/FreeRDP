@@ -205,3 +205,4 @@ FREERDP_API void rdpsnd_free_audio_formats(AUDIO_FORMAT* formats, UINT16 count);
 #endif
 
 #endif /* FREERDP_CODEC_AUDIO_H */
+

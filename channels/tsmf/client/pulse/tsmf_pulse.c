@@ -431,3 +431,4 @@ FREERDP_API ITSMFAudioDevice* freerdp_tsmf_client_audio_subsystem_entry(void)
 	return (ITSMFAudioDevice*) pulse;
 }
 
+

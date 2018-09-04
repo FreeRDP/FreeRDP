@@ -252,3 +252,4 @@ ITSMFAudioDevice* freerdp_tsmf_client_audio_subsystem_entry(void)
 	oss->pcm_handle = -1;
 	return (ITSMFAudioDevice*)oss;
 }
+

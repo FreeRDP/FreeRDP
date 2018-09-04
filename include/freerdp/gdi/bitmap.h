@@ -56,3 +56,4 @@ typedef BOOL (*p_BitBlt)(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 #endif
 
 #endif /* FREERDP_GDI_BITMAP_H */
+

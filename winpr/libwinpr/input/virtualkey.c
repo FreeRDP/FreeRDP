@@ -419,8 +419,8 @@ XKB_KEYNAME XKB_KEYNAME_TABLE[] =
 	{ "MUHE",       VK_NONCONVERT },
 	{ "HKTG",       VK_HKTG },
 
-//	{ "AE13",	VK_BACKSLASH_JP }, // JP
-//	{ "LVL3",	0x54}
+	//	{ "AE13",	VK_BACKSLASH_JP }, // JP
+	//	{ "LVL3",	0x54}
 };
 
 char* GetVirtualKeyName(DWORD vkcode)
@@ -467,3 +467,4 @@ DWORD GetVirtualKeyCodeFromXkbKeyName(const char* xkbname)
 
 	return VK_NONE;
 }
+

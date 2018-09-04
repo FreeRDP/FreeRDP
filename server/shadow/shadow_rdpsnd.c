@@ -121,3 +121,4 @@ void shadow_client_rdpsnd_uninit(rdpShadowClient* client)
 		client->rdpsnd = NULL;
 	}
 }
+

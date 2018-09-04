@@ -40,7 +40,7 @@ struct _FREERDP_RGNDATA
 {
 	RDP_RECT boundingRect;
 	UINT32 nRectCount;
-	RDP_RECT *rects;
+	RDP_RECT* rects;
 };
 
 typedef struct _FREERDP_RGNDATA FREERDP_RGNDATA;
@@ -62,3 +62,4 @@ struct _MAPPED_GEOMETRY_PACKET
 typedef struct _MAPPED_GEOMETRY_PACKET MAPPED_GEOMETRY_PACKET;
 
 #endif /* FREERDP_CHANNEL_GEOMETRY_H */
+

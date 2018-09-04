@@ -169,6 +169,7 @@ static void mac_audio_queue_input_cb(void* aqData,
 
 	if (buffer_size > 0)
 		error = mac->receive(&mac->format, buffer, buffer_size, mac->user_data);
+
 	AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
 
 	if (error)
@@ -412,3 +413,4 @@ error_out:
 	free(mac);
 	return error;
 }
+

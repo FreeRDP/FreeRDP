@@ -206,3 +206,4 @@ int WinSCard_InitializeSCardApi(void)
 }
 
 #endif
+

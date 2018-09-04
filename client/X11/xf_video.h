@@ -32,3 +32,4 @@ void xf_video_free(xfVideoContext* context);
 
 
 #endif /* CLIENT_X11_XF_VIDEO_H_ */
+

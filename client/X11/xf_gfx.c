@@ -383,3 +383,4 @@ void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
 	rdpGdi* gdi = xfc->context.gdi;
 	gdi_graphics_pipeline_uninit(gdi, gfx);
 }
+

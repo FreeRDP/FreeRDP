@@ -31,15 +31,14 @@ int shadow_client_rdpgfx_init(rdpShadowClient* client)
 {
 	RdpgfxServerContext* rdpgfx;
 	rdpgfx = client->rdpgfx = rdpgfx_server_context_new(client->vcm);
+
 	if (!rdpgfx)
 	{
 		return 0;
 	}
 
 	rdpgfx->rdpcontext = &client->context;
-
 	rdpgfx->custom = client;
-
 	return 1;
 }
 
@@ -51,3 +50,4 @@ void shadow_client_rdpgfx_uninit(rdpShadowClient* client)
 		client->rdpgfx = NULL;
 	}
 }
+

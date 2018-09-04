@@ -32,7 +32,8 @@ PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair);
 int ntlm_av_pair_get_next_offset(NTLM_AV_PAIR* pAvPair);
 NTLM_AV_PAIR* ntlm_av_pair_get_next_pointer(NTLM_AV_PAIR* pAvPair);
 NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, NTLM_AV_ID AvId);
-NTLM_AV_PAIR* ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, NTLM_AV_ID AvId, PBYTE Value, UINT16 AvLen);
+NTLM_AV_PAIR* ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, NTLM_AV_ID AvId, PBYTE Value,
+                               UINT16 AvLen);
 NTLM_AV_PAIR* ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, NTLM_AV_PAIR* pAvPair);
 
 static INLINE UINT16 ntlm_av_pair_get_id(NTLM_AV_PAIR* pAvPair)
@@ -56,3 +57,4 @@ int ntlm_construct_challenge_target_info(NTLM_CONTEXT* context);
 int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context);
 
 #endif /* WINPR_SSPI_NTLM_AV_PAIRS_H */
+

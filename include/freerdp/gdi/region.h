@@ -66,3 +66,4 @@ FREERDP_API BOOL gdi_InvalidateRegion(HGDI_DC hdc, UINT32 x, UINT32 y,
 #endif
 
 #endif /* FREERDP_GDI_REGION_H */
+

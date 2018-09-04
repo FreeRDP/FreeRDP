@@ -1066,3 +1066,4 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ClientStop = wfreerdp_client_stop;
 	return 0;
 }
+

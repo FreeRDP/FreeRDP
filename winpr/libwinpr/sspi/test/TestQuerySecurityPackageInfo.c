@@ -26,3 +26,4 @@ int TestQuerySecurityPackageInfo(int argc, char* argv[])
 	return rc;
 }
 
+

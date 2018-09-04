@@ -317,8 +317,8 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 {
 	int status = -1;
 	BYTE descriptor;
-
 	wStream* stream = Stream_New((BYTE*)pSrcData, SrcSize);
+
 	if (!stream)
 		return -1;
 
@@ -333,6 +333,7 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 			goto fail;
 
 		*ppDstData = NULL;
+
 		if (zgfx->OutputCount > 0)
 			*ppDstData = (BYTE*) malloc(zgfx->OutputCount);
 
@@ -527,4 +528,5 @@ void zgfx_context_free(ZGFX_CONTEXT* zgfx)
 {
 	free(zgfx);
 }
+
 

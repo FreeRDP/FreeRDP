@@ -46,3 +46,4 @@ void primitives_init_sign(
 	/* Start with the default. */
 	prims->sign_16s = general_sign_16s;
 }
+

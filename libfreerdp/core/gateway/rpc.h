@@ -801,3 +801,4 @@ FREERDP_LOCAL rdpRpc* rpc_new(rdpTransport* transport);
 FREERDP_LOCAL void rpc_free(rdpRpc* rpc);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_H */
+

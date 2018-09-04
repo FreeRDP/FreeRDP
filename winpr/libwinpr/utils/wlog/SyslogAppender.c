@@ -35,20 +35,25 @@ static int getSyslogLevel(DWORD level)
 {
 	switch (level)
 	{
-	case WLOG_TRACE:
-	case WLOG_DEBUG:
-		return LOG_DEBUG;
-	case WLOG_INFO:
-		return LOG_INFO;
-	case WLOG_WARN:
-		return LOG_WARNING;
-	case WLOG_ERROR:
-		return LOG_ERR;
-	case WLOG_FATAL:
-		return LOG_CRIT;
-	case WLOG_OFF:
-	default:
-		return -1;
+		case WLOG_TRACE:
+		case WLOG_DEBUG:
+			return LOG_DEBUG;
+
+		case WLOG_INFO:
+			return LOG_INFO;
+
+		case WLOG_WARN:
+			return LOG_WARNING;
+
+		case WLOG_ERROR:
+			return LOG_ERR;
+
+		case WLOG_FATAL:
+			return LOG_CRIT;
+
+		case WLOG_OFF:
+		default:
+			return -1;
 	}
 }
 
@@ -68,7 +73,8 @@ static BOOL WLog_SyslogAppender_Close(wLog* log, wLogAppender* appender)
 	return TRUE;
 }
 
-static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
+static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogAppender* appender,
+        wLogMessage* message)
 {
 	int syslogLevel;
 
@@ -76,13 +82,15 @@ static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogAppender* appender, 
 		return FALSE;
 
 	syslogLevel = getSyslogLevel(message->Level);
+
 	if (syslogLevel >= 0)
 		syslog(syslogLevel, "%s", message->TextString);
-	
+
 	return TRUE;
 }
 
-static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
+static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
+        wLogMessage* message)
 {
 	int syslogLevel;
 
@@ -90,13 +98,15 @@ static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogAppender* append
 		return FALSE;
 
 	syslogLevel = getSyslogLevel(message->Level);
+
 	if (syslogLevel >= 0)
 		syslog(syslogLevel, "skipped data message of %d bytes", message->Length);
 
 	return TRUE;
 }
 
-static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
+static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
+        wLogMessage* message)
 {
 	int syslogLevel;
 
@@ -104,33 +114,34 @@ static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogAppender* appen
 		return FALSE;
 
 	syslogLevel = getSyslogLevel(message->Level);
+
 	if (syslogLevel >= 0)
-		syslog(syslogLevel, "skipped image (%dx%dx%d)", message->ImageWidth, message->ImageHeight, message->ImageBpp);
+		syslog(syslogLevel, "skipped image (%dx%dx%d)", message->ImageWidth, message->ImageHeight,
+		       message->ImageBpp);
 
 	return TRUE;
 }
 
 void WLog_SyslogAppender_Free(wLogAppender* appender)
 {
-		free(appender);
+	free(appender);
 }
 
 wLogAppender* WLog_SyslogAppender_New(wLog* log)
 {
 	wLogSyslogAppender* appender;
-
 	appender = (wLogSyslogAppender*) calloc(1, sizeof(wLogSyslogAppender));
+
 	if (!appender)
 		return NULL;
 
 	appender->Type = WLOG_APPENDER_SYSLOG;
-
 	appender->Open = WLog_SyslogAppender_Open;
 	appender->Close = WLog_SyslogAppender_Close;
 	appender->WriteMessage = WLog_SyslogAppender_WriteMessage;
 	appender->WriteDataMessage = WLog_SyslogAppender_WriteDataMessage;
 	appender->WriteImageMessage = WLog_SyslogAppender_WriteImageMessage;
 	appender->Free = WLog_SyslogAppender_Free;
-
 	return (wLogAppender*)appender;
 }
+

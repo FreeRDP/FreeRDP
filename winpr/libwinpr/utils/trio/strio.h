@@ -27,10 +27,11 @@
 #endif
 #include "triostr.h"
 
-enum {
-  STRIO_HASH_NONE = TRIO_HASH_NONE,
-  STRIO_HASH_PLAIN = TRIO_HASH_PLAIN,
-  STRIO_HASH_TWOSIGNED = TRIO_HASH_TWOSIGNED
+enum
+{
+	STRIO_HASH_NONE = TRIO_HASH_NONE,
+	STRIO_HASH_PLAIN = TRIO_HASH_PLAIN,
+	STRIO_HASH_TWOSIGNED = TRIO_HASH_TWOSIGNED
 };
 
 #define StrAlloc(n) trio_create(n)
@@ -71,3 +72,4 @@ enum {
 #define StrToUpper(x) trio_upper(x)
 
 #endif /* TRIO_STRIO_H */
+

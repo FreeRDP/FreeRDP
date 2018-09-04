@@ -928,3 +928,4 @@ int TestFreeRDPRegion(int argc, char* argv[])
 
 	return retCode;
 }
+

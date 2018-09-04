@@ -885,9 +885,10 @@
 #ifndef __cplusplus
 #define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 #else
-extern "C++" {
-template <typename _CountofType, size_t _SizeOfArray>
-char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
+extern "C++"
+{
+	template <typename _CountofType, size_t _SizeOfArray>
+	char (*__countof_helper(_CountofType(&_Array)[_SizeOfArray]))[_SizeOfArray];
 #define _countof(_Array) sizeof(*__countof_helper(_Array))
 }
 #endif
@@ -938,8 +939,8 @@ char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
 
 #define RTL_PADDING_BETWEEN_FIELDS(T, F1, F2) \
 	((FIELD_OFFSET(T, F2) > FIELD_OFFSET(T, F1)) \
-	? (FIELD_OFFSET(T, F2) - FIELD_OFFSET(T, F1) - RTL_FIELD_SIZE(T, F1)) \
-	: (FIELD_OFFSET(T, F1) - FIELD_OFFSET(T, F2) - RTL_FIELD_SIZE(T, F2)))
+	 ? (FIELD_OFFSET(T, F2) - FIELD_OFFSET(T, F1) - RTL_FIELD_SIZE(T, F1)) \
+	 : (FIELD_OFFSET(T, F1) - FIELD_OFFSET(T, F2) - RTL_FIELD_SIZE(T, F2)))
 
 #if defined(__cplusplus)
 #define RTL_CONST_CAST(type) const_cast<type>
@@ -957,22 +958,23 @@ char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-  #ifdef __GNUC__
-    #define DECLSPEC_EXPORT __attribute__((dllexport))
-    #define DECLSPEC_IMPORT __attribute__((dllimport))
-  #else
-    #define DECLSPEC_EXPORT __declspec(dllexport)
-    #define DECLSPEC_IMPORT __declspec(dllimport)
-  #endif
+#ifdef __GNUC__
+#define DECLSPEC_EXPORT __attribute__((dllexport))
+#define DECLSPEC_IMPORT __attribute__((dllimport))
 #else
-  #if defined(__GNUC__) && __GNUC__ >= 4
-    #define DECLSPEC_EXPORT __attribute__ ((visibility("default")))
-    #define DECLSPEC_IMPORT
-  #else
-    #define DECLSPEC_EXPORT
-    #define DECLSPEC_IMPORT
-  #endif
+#define DECLSPEC_EXPORT __declspec(dllexport)
+#define DECLSPEC_IMPORT __declspec(dllimport)
+#endif
+#else
+#if defined(__GNUC__) && __GNUC__ >= 4
+#define DECLSPEC_EXPORT __attribute__ ((visibility("default")))
+#define DECLSPEC_IMPORT
+#else
+#define DECLSPEC_EXPORT
+#define DECLSPEC_IMPORT
+#endif
 #endif
 
 #endif /* WINPR_SPEC_H */
+
 

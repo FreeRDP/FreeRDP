@@ -49,6 +49,7 @@ int TestHandflow(int argc, char* argv[])
 	}
 
 	result = DefineCommDevice("COM1", "/dev/ttyS0");
+
 	if (!result)
 	{
 		fprintf(stderr, "DefineCommDevice failure: 0x%x\n", GetLastError());
@@ -56,8 +57,9 @@ int TestHandflow(int argc, char* argv[])
 	}
 
 	hComm = CreateFile("COM1",
-			GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+	                   GENERIC_READ | GENERIC_WRITE,
+	                   0, NULL, OPEN_EXISTING, 0, NULL);
+
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());
@@ -65,6 +67,7 @@ int TestHandflow(int argc, char* argv[])
 	}
 
 	_comm_setServerSerialDriver(hComm, SerialDriverSerialSys);
+
 	if (!test_SerialSys(hComm))
 	{
 		fprintf(stderr, "test_SerCxSys failure\n");
@@ -85,7 +88,6 @@ int TestHandflow(int argc, char* argv[])
 	/* 	return EXIT_FAILURE; */
 	/* } */
 
-
 	if (!CloseHandle(hComm))
 	{
 		fprintf(stderr, "CloseHandle failure, GetLastError()=%08x\n", GetLastError());
@@ -94,3 +96,4 @@ int TestHandflow(int argc, char* argv[])
 
 	return EXIT_SUCCESS;
 }
+

@@ -37,17 +37,14 @@
 
 VOID InitializeSRWLock(PSRWLOCK SRWLock)
 {
-
 }
 
 VOID AcquireSRWLockExclusive(PSRWLOCK SRWLock)
 {
-
 }
 
 VOID AcquireSRWLockShared(PSRWLOCK SRWLock)
 {
-
 }
 
 BOOL TryAcquireSRWLockExclusive(PSRWLOCK SRWLock)
@@ -62,12 +59,11 @@ BOOL TryAcquireSRWLockShared(PSRWLOCK SRWLock)
 
 VOID ReleaseSRWLockExclusive(PSRWLOCK SRWLock)
 {
-
 }
 
 VOID ReleaseSRWLockShared(PSRWLOCK SRWLock)
 {
-
 }
 
 #endif
+

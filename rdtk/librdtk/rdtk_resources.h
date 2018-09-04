@@ -35,3 +35,4 @@ int rdtk_get_embedded_resource_file(const char* filename, BYTE** pData);
 
 #endif /* RDTK_RESOURCES_PRIVATE_H */
 
+

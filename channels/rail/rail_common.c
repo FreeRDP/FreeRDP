@@ -142,3 +142,4 @@ void rail_write_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshak
 	Stream_Write_UINT32(s, handshakeEx->buildNumber); /* buildNumber (4 bytes) */
 	Stream_Write_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
 }
+

@@ -82,8 +82,9 @@ static UINT audin_server_select_format(audin_server_context* context,
 	}
 
 	context->selected_client_format = client_format_index;
+
 	if (!freerdp_dsp_context_reset(audin->dsp_context,
-								   &audin->context.client_formats[client_format_index]))
+	                               &audin->context.client_formats[client_format_index]))
 	{
 		WLog_ERR(TAG, "Failed to reset dsp context format!");
 		return ERROR_INTERNAL_ERROR;
@@ -697,3 +698,4 @@ void audin_server_context_free(audin_server_context* context)
 	free(audin->context.client_formats);
 	free(audin);
 }
+

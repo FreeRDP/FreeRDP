@@ -60,7 +60,7 @@ typedef enum
 	/* The fully qualified distinguished name (for example, CN=Jeff Smith,OU=Users,DC=Engineering,DC=Microsoft,DC=Com) */
 	NameFullyQualifiedDN = 1,
 
-	/* 
+	/*
 	 * A legacy account name (for example, Engineering\JSmith).
 	 * The domain-only version includes trailing backslashes (\\)
 	 */
@@ -75,7 +75,7 @@ typedef enum
 	/* A GUID string that the IIDFromString function returns (for example, {4fa050f0-f561-11cf-bdd9-00aa003a77b6}) */
 	NameUniqueId = 6,
 
-	/* 
+	/*
 	 * The complete canonical name (for example, engineering.microsoft.com/software/someone).
 	 * The domain-only version includes a trailing forward slash (/)
 	 */
@@ -84,7 +84,7 @@ typedef enum
 	/* The user principal name (for example, someone@example.com) */
 	NameUserPrincipal = 8,
 
-	/* 
+	/*
 	 * The same as NameCanonical except that the rightmost forward slash (/)
 	 * is replaced with a new line character (\n), even in a domain-only case
 	 * (for example, engineering.microsoft.com/software\nJSmith)
@@ -104,18 +104,18 @@ extern "C" {
 #endif
 
 WINPR_API BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
-		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken);
+                          DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken);
 
 WINPR_API BOOL LogonUserW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
-		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken);
+                          DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken);
 
 WINPR_API BOOL LogonUserExA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
-		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid,
-		PVOID* ppProfileBuffer, LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits);
+                            DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid,
+                            PVOID* ppProfileBuffer, LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits);
 
 WINPR_API BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
-		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid,
-		PVOID* ppProfileBuffer, LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits);
+                            DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid,
+                            PVOID* ppProfileBuffer, LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits);
 
 WINPR_API BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize);
 WINPR_API BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize);
@@ -137,4 +137,5 @@ WINPR_API BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuff
 #endif
 
 #endif /* WINPR_SSPICLI_H */
+
 

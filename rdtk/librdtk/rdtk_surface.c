@@ -25,22 +25,19 @@
 int rdtk_surface_fill(rdtkSurface* surface, int x, int y, int width, int height, UINT32 color)
 {
 	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32,
-			surface->scanline, x, y, width, height, color);
-
+	                   surface->scanline, x, y, width, height, color);
 	return 1;
 }
 
 rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int height, int scanline)
 {
 	rdtkSurface* surface;
-
 	surface = (rdtkSurface*) calloc(1, sizeof(rdtkSurface));
 
 	if (!surface)
 		return NULL;
 
 	surface->engine = engine;
-
 	surface->width = width;
 	surface->height = height;
 
@@ -48,14 +45,12 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int hei
 		scanline = width * 4;
 
 	surface->scanline = scanline;
-
 	surface->data = data;
 	surface->owner = FALSE;
 
 	if (!data)
 	{
 		surface->scanline = (surface->width + (surface->width % 4)) * 4;
-
 		surface->data = (BYTE*) calloc(surface->height, surface->scanline);
 
 		if (!surface->data)
@@ -65,7 +60,6 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int hei
 		}
 
 		ZeroMemory(surface->data, surface->scanline * surface->height);
-
 		surface->owner = TRUE;
 	}
 
@@ -82,4 +76,5 @@ void rdtk_surface_free(rdtkSurface* surface)
 
 	free(surface);
 }
+
 

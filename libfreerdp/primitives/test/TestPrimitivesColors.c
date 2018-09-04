@@ -102,7 +102,8 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 		}
 	}
 
-	printf("Results for %"PRIu32"x%"PRIu32" [%s]", roi.width, roi.height, FreeRDPGetColorFormatName(DstFormat));
+	printf("Results for %"PRIu32"x%"PRIu32" [%s]", roi.width, roi.height,
+	       FreeRDPGetColorFormatName(DstFormat));
 	PROFILER_PRINT_HEADER
 	PROFILER_PRINT(genericProf)
 	PROFILER_PRINT(optProf)
@@ -303,3 +304,4 @@ int TestPrimitivesColors(int argc, char* argv[])
 
 	return 0;
 }
+

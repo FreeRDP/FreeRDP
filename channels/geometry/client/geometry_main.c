@@ -73,22 +73,22 @@ struct _GEOMETRY_PLUGIN
 typedef struct _GEOMETRY_PLUGIN GEOMETRY_PLUGIN;
 
 
-static UINT32 mappedGeometryHash(UINT64 *g)
+static UINT32 mappedGeometryHash(UINT64* g)
 {
 	return (UINT32)((*g >> 32) + (*g & 0xffffffff));
 }
 
-static BOOL mappedGeometryKeyCompare(UINT64 *g1, UINT64 *g2)
+static BOOL mappedGeometryKeyCompare(UINT64* g1, UINT64* g2)
 {
 	return *g1 == *g2;
 }
 
-void mappedGeometryRef(MAPPED_GEOMETRY *g)
+void mappedGeometryRef(MAPPED_GEOMETRY* g)
 {
 	InterlockedIncrement(&g->refCounter);
 }
 
-void mappedGeometryUnref(MAPPED_GEOMETRY *g)
+void mappedGeometryUnref(MAPPED_GEOMETRY* g)
 {
 	if (InterlockedDecrement(&g->refCounter))
 		return;
@@ -101,12 +101,12 @@ void mappedGeometryUnref(MAPPED_GEOMETRY *g)
 }
 
 
-void freerdp_rgndata_reset(FREERDP_RGNDATA *data)
+void freerdp_rgndata_reset(FREERDP_RGNDATA* data)
 {
 	data->nRectCount = 0;
 }
 
-static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgndata)
+static UINT32 geometry_read_RGNDATA(wStream* s, UINT32 len, FREERDP_RGNDATA* rgndata)
 {
 	UINT32 dwSize, iType;
 	INT32 right, bottom;
@@ -151,13 +151,14 @@ static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgn
 	if (rgndata->nRectCount)
 	{
 		int i;
-		RDP_RECT *tmp = realloc(rgndata->rects, rgndata->nRectCount * sizeof(RDP_RECT));
+		RDP_RECT* tmp = realloc(rgndata->rects, rgndata->nRectCount * sizeof(RDP_RECT));
 
 		if (!tmp)
 		{
 			WLog_ERR(TAG, "unable to allocate memory for %"PRIu32" RECTs", rgndata->nRectCount);
 			return CHANNEL_RC_NO_MEMORY;
 		}
+
 		rgndata->rects = tmp;
 
 		for (i = 0; i < rgndata->nRectCount; i++)
@@ -182,13 +183,12 @@ static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgn
 static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 length, cbGeometryBuffer;
-	MAPPED_GEOMETRY *mappedGeometry;
+	MAPPED_GEOMETRY* mappedGeometry;
 	GEOMETRY_PLUGIN* geometry;
-	GeometryClientContext *context;
+	GeometryClientContext* context;
 	UINT ret = CHANNEL_RC_OK;
 	UINT32 version, updateType, geometryType;
 	UINT64 id;
-
 	geometry = (GEOMETRY_PLUGIN*) callback->plugin;
 	context = (GeometryClientContext*)geometry->iface.pInterface;
 
@@ -210,10 +210,9 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT64(s, id);
 	Stream_Read_UINT32(s, updateType);
 	Stream_Seek_UINT32(s); /* flags */
-
 	mappedGeometry = HashTable_GetItemValue(context->geometries, &id);
 
-	if (updateType == GEOMETRY_CLEAR )
+	if (updateType == GEOMETRY_CLEAR)
 	{
 		if (!mappedGeometry)
 		{
@@ -238,6 +237,7 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 			newOne = TRUE;
 			WLog_DBG(TAG, "creating geometry 0x%"PRIx64"", id);
 			mappedGeometry = calloc(1, sizeof(MAPPED_GEOMETRY));
+
 			if (!mappedGeometry)
 				return CHANNEL_RC_NO_MEMORY;
 
@@ -257,20 +257,17 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 		}
 
 		Stream_Read_UINT64(s, mappedGeometry->topLevelId);
-
 		Stream_Read_INT32(s, mappedGeometry->left);
 		Stream_Read_INT32(s, mappedGeometry->top);
 		Stream_Read_INT32(s, mappedGeometry->right);
 		Stream_Read_INT32(s, mappedGeometry->bottom);
-
 		Stream_Read_INT32(s, mappedGeometry->topLevelLeft);
 		Stream_Read_INT32(s, mappedGeometry->topLevelTop);
 		Stream_Read_INT32(s, mappedGeometry->topLevelRight);
 		Stream_Read_INT32(s, mappedGeometry->topLevelBottom);
-
 		Stream_Read_UINT32(s, geometryType);
-
 		Stream_Read_UINT32(s, cbGeometryBuffer);
+
 		if (Stream_GetRemainingLength(s) < cbGeometryBuffer)
 		{
 			WLog_ERR(TAG, "invalid packet length");
@@ -280,6 +277,7 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 		if (cbGeometryBuffer)
 		{
 			ret = geometry_read_RGNDATA(s, cbGeometryBuffer, &mappedGeometry->geometry);
+
 			if (ret != CHANNEL_RC_OK)
 				return ret;
 		}
@@ -310,7 +308,6 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 		WLog_ERR(TAG, "unknown updateType=%"PRIu32"", updateType);
 		ret = CHANNEL_RC_OK;
 	}
-
 
 	return ret;
 }
@@ -401,7 +398,7 @@ static UINT geometry_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 static UINT geometry_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*) pPlugin;
-	GeometryClientContext* context = (GeometryClientContext *)geometry->iface.pInterface;
+	GeometryClientContext* context = (GeometryClientContext*)geometry->iface.pInterface;
 
 	if (context)
 		HashTable_Free(context->geometries);
@@ -460,7 +457,6 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->geometries->hash = (HASH_TABLE_HASH_FN)mappedGeometryHash;
 		context->geometries->keyCompare = (HASH_TABLE_KEY_COMPARE_FN)mappedGeometryKeyCompare;
 		context->geometries->valueFree = (HASH_TABLE_VALUE_FREE_FN)mappedGeometryUnref;
-
 		context->handle = (void*) geometry;
 		geometry->iface.pInterface = (void*) context;
 		geometry->context = context;
@@ -473,9 +469,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	}
 
 	return error;
-
 error_context:
 	free(geometry);
 	return CHANNEL_RC_NO_MEMORY;
-
 }
+

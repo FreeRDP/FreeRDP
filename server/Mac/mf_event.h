@@ -52,7 +52,7 @@ struct mf_event_queue
 struct mf_event_region
 {
 	int type;
-	
+
 	int x;
 	int y;
 	int width;
@@ -73,3 +73,4 @@ mfEventQueue* mf_event_queue_new(void);
 void mf_event_queue_free(mfEventQueue* event_queue);
 
 #endif /* FREERDP_SERVER_MAC_EVENT_H */
+

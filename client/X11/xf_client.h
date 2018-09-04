@@ -51,3 +51,4 @@ FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 #endif
 
 #endif /* FREERDP_CLIENT_X11_CLIENT_H */
+

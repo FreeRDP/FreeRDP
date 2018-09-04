@@ -582,7 +582,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 			}
 
 			if (!(context->debug_channel_thread = CreateThread(NULL, 0,
-												  tf_debug_channel_thread_func, (void*) context, 0, NULL)))
+			                                      tf_debug_channel_thread_func, (void*) context, 0, NULL)))
 			{
 				WLog_ERR(TAG, "Failed to create debug channel thread");
 				CloseHandle(context->stopEvent);
@@ -957,4 +957,5 @@ int main(int argc, char* argv[])
 	WSACleanup();
 	return 0;
 }
+
 

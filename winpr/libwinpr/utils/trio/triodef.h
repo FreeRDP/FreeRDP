@@ -221,7 +221,7 @@
 # define TRIO_VOLATILE
 # define TRIO_SIGNED
 typedef double trio_long_double_t;
-typedef char * trio_pointer_t;
+typedef char* trio_pointer_t;
 # define TRIO_SUFFIX_LONG(x) x
 # define TRIO_PROTO(x) ()
 # define TRIO_NOARGS
@@ -245,7 +245,7 @@ typedef char * trio_pointer_t;
 # define TRIO_VOLATILE volatile
 # define TRIO_SIGNED signed
 typedef long double trio_long_double_t;
-typedef void * trio_pointer_t;
+typedef void* trio_pointer_t;
 # define TRIO_SUFFIX_LONG(x) x ## L
 # define TRIO_PROTO(x) x
 # define TRIO_NOARGS void
@@ -322,3 +322,4 @@ typedef void * trio_pointer_t;
 #endif
 
 #endif /* TRIO_TRIODEF_H */
+

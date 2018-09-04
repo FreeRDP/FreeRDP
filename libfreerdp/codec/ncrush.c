@@ -2701,3 +2701,4 @@ void ncrush_context_free(NCRUSH_CONTEXT* ncrush)
 {
 	free(ncrush);
 }
+

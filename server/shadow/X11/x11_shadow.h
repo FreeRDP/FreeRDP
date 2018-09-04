@@ -113,3 +113,4 @@ extern "C" {
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_X11_H */
+

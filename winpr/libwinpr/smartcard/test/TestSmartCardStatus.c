@@ -76,91 +76,91 @@ int TestSmartCardStatus(int argc, char* argv[])
 	}
 
 	free(mszReaders);
-
-
 	printf("# test 1 - get reader length\n");
 	err = SCardStatus(hCard, NULL, &len, NULL, NULL, NULL, NULL);
+
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
 		return -1;
 	}
+
 	printf("reader name length: %u\n", len);
-
-
 	printf("# test 2 - get reader name value\n");
 	err = SCardStatus(hCard, name, &len, NULL, NULL, NULL, NULL);
+
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
 		return -1;
 	}
+
 	printf("Reader name: %s (%ld)\n", name, strlen(name));
-
-
 	printf("# test 3 - get all values - pre allocated\n");
 	err = SCardStatus(hCard, name, &len, &status, &protocol, atr, &atrlen);
+
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
 		return -1;
 	}
+
 	printf("Reader name: %s (%ld/len %u)\n", name, strlen(name), len);
 	printf("status: 0x%08X\n", status);
 	printf("proto: 0x%08X\n", protocol);
 	printf("atrlen: %u\n", atrlen);
-
-
 	printf("# test 4 - get all values - auto allocate\n");
 	len = atrlen = SCARD_AUTOALLOCATE;
 	err = SCardStatus(hCard, (LPSTR)&aname, &len, &status, &protocol, (LPBYTE)&aatr, &atrlen);
+
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
 		return -1;
 	}
+
 	printf("Reader name: %s (%ld/%u)\n", aname, strlen(aname), len);
 	printf("status: 0x%08X\n", status);
 	printf("proto: 0x%08X\n", protocol);
 	printf("atrlen: %u\n", atrlen);
 	SCardFreeMemory(hContext, aname);
 	SCardFreeMemory(hContext, aatr);
-
-
 	printf("# test 5 - get status and protocol only\n");
 	err = SCardStatus(hCard, NULL, NULL, &status, &protocol, NULL, NULL);
+
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
 		return -1;
 	}
+
 	printf("status: 0x%08X\n", status);
 	printf("proto: 0x%08X\n", protocol);
-
-
 	printf("# test 6 - get atr only auto allocated\n");
 	atrlen = SCARD_AUTOALLOCATE;
 	err = SCardStatus(hCard, NULL, NULL, NULL, NULL, (LPBYTE)&aatr, &atrlen);
+
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
 		return -1;
 	}
+
 	printf("atrlen: %u\n", atrlen);
 	SCardFreeMemory(hContext, aatr);
-
-
 	printf("# test 7 - get atr only pre allocated\n");
 	atrlen = 32;
 	err = SCardStatus(hCard, NULL, NULL, NULL, NULL, atr, &atrlen);
+
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
 		return -1;
 	}
+
 	printf("atrlen: %u\n", atrlen);
 	SCardDisconnect(hCard, SCARD_LEAVE_CARD);
 	SCardReleaseContext(hContext);
-
 	return 0;
 }
+

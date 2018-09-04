@@ -51,3 +51,4 @@ struct _drdynvc_client_context
 };
 
 #endif /* FREERDP_CHANNEL_DRDYNVC_CLIENT_DRDYNVC_H */
+

@@ -36,82 +36,81 @@ static mfInfo* mfInfoInstance = NULL;
 int mf_info_lock(mfInfo* mfi)
 {
 	int status = pthread_mutex_lock(&mfi->mutex);
-	
+
 	switch (status)
 	{
 		case 0:
 			return TRUE;
 			break;
-			
+
 		default:
 			return -1;
 			break;
 	}
-	
+
 	return 1;
 }
 
 int mf_info_try_lock(mfInfo* mfi, UINT32 ms)
 {
 	int status = pthread_mutex_trylock(&mfi->mutex);
-	
+
 	switch (status)
 	{
 		case 0:
 			return TRUE;
 			break;
-			
+
 		case EBUSY:
 			return FALSE;
 			break;
-			
+
 		default:
 			return -1;
 			break;
 	}
-	
+
 	return 1;
 }
 
 int mf_info_unlock(mfInfo* mfi)
 {
 	int status = pthread_mutex_unlock(&mfi->mutex);
-	
+
 	switch (status)
 	{
 		case 0:
 			return TRUE;
 			break;
-			
+
 		default:
 			return -1;
 			break;
 	}
-	
+
 	return 1;
 }
 
 mfInfo* mf_info_init()
 {
 	mfInfo* mfi;
-	
 	mfi = (mfInfo*) calloc(1, sizeof(mfInfo));
-	
+
 	if (mfi != NULL)
 	{
 		pthread_mutex_init(&mfi->mutex, NULL);
-		
 		mfi->peers = (freerdp_peer**) calloc(MF_INFO_MAXPEERS, sizeof(freerdp_peer*));
+
 		if (!mfi->peers)
 		{
 			free(mfi);
 			return NULL;
 		}
-		
+
 		mfi->framesPerSecond = MF_INFO_DEFAULT_FPS;
 		mfi->input_disabled = FALSE;
 	}
-	
+
 	return mfi;
 }
 
@@ -119,7 +118,7 @@ mfInfo* mf_info_get_instance()
 {
 	if (mfInfoInstance == NULL)
 		mfInfoInstance = mf_info_init();
-	
+
 	return mfInfoInstance;
 }
 
@@ -129,25 +128,25 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 	{
 		int i;
 		int peerId;
-		
+
 		if (mfi->peerCount == MF_INFO_MAXPEERS)
 		{
 			mf_info_unlock(mfi);
 			return;
 		}
-		
+
 		context->info = mfi;
-		
+
 		if (mfi->peerCount == 0)
 		{
 			mf_mlion_display_info(&mfi->servscreen_width, &mfi->servscreen_height, &mfi->scale);
 			mf_mlion_screen_updates_init();
 			mf_mlion_start_getting_screen_updates();
 		}
-		
+
 		peerId = 0;
 
-		for(i=0; i<MF_INFO_MAXPEERS; ++i)
+		for (i = 0; i < MF_INFO_MAXPEERS; ++i)
 		{
 			//empty index will be our peer id
 			if (mfi->peers[i] == NULL)
@@ -156,11 +155,10 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 				break;
 			}
 		}
-		
+
 		mfi->peers[peerId] = ((rdpContext*) context)->peer;
 		mfi->peers[peerId]->pId = peerId;
 		mfi->peerCount++;
-		
 		mf_info_unlock(mfi);
 	}
 }
@@ -170,11 +168,10 @@ void mf_info_peer_unregister(mfInfo* mfi, mfPeerContext* context)
 	if (mf_info_lock(mfi) > 0)
 	{
 		int peerId;
-		
 		peerId = ((rdpContext*) context)->peer->pId;
 		mfi->peers[peerId] = NULL;
 		mfi->peerCount--;
-		
+
 		if (mfi->peerCount == 0)
 			mf_mlion_stop_getting_screen_updates();
 
@@ -184,15 +181,14 @@ void mf_info_peer_unregister(mfInfo* mfi, mfPeerContext* context)
 
 BOOL mf_info_have_updates(mfInfo* mfi)
 {
-	if(mfi->framesWaiting == 0)
+	if (mfi->framesWaiting == 0)
 		return FALSE;
-	
+
 	return TRUE;
 }
 
 void mf_info_update_changes(mfInfo* mfi)
 {
-
 }
 
 void mf_info_find_invalid_region(mfInfo* mfi)
@@ -228,9 +224,8 @@ void mf_info_getScreenData(mfInfo* mfi, long* width, long* height, BYTE** pBits,
 	*width = mfi->invalid.width / mfi->scale;
 	*height = mfi->invalid.height / mfi->scale;
 	*pitch = mfi->servscreen_width * mfi->scale * 4;
-	
-	mf_mlion_get_pixelData(mfi->invalid.x / mfi->scale, mfi->invalid.y / mfi->scale, *width, *height, pBits);
-	
+	mf_mlion_get_pixelData(mfi->invalid.x / mfi->scale, mfi->invalid.y / mfi->scale, *width, *height,
+	                       pBits);
 	*pBits = *pBits + (mfi->invalid.x * 4) + (*pitch * mfi->invalid.y);
-	
 }
+

@@ -29,3 +29,4 @@ FREERDP_LOCAL jint freerdp_callback_int_result(const char* callback,
 
 #endif /* FREERDP_CLIENT_ANDROID_JNI_CALLBACK_H */
 
+

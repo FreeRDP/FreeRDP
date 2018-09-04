@@ -141,3 +141,4 @@ BOOL test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual,
 
 	return bitmapsEqual;
 }
+

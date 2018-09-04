@@ -33,8 +33,8 @@
 typedef struct _drdynvc_client_context DrdynvcServerContext;
 typedef struct _drdynvc_server_private DrdynvcServerPrivate;
 
-typedef UINT (*psDrdynvcStart)(DrdynvcServerContext* context);
-typedef UINT (*psDrdynvcStop)(DrdynvcServerContext* context);
+typedef UINT(*psDrdynvcStart)(DrdynvcServerContext* context);
+typedef UINT(*psDrdynvcStop)(DrdynvcServerContext* context);
 
 struct _drdynvc_client_context
 {
@@ -47,14 +47,15 @@ struct _drdynvc_client_context
 };
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 FREERDP_API DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm);
 FREERDP_API void drdynvc_server_context_free(DrdynvcServerContext* context);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CHANNEL_DRDYNVC_SERVER_DRDYNVC_H */
+

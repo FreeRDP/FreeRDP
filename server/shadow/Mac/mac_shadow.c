@@ -659,3 +659,4 @@ FREERDP_API int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->EnumMonitors = (pfnShadowEnumMonitors) mac_shadow_enum_monitors;
 	return 1;
 }
+

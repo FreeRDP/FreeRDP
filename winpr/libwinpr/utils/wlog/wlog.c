@@ -943,3 +943,4 @@ BOOL WLog_Uninit(void)
 	return TRUE;
 }
 
+

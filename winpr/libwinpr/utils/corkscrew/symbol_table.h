@@ -24,15 +24,17 @@
 extern "C" {
 #endif
 
-typedef struct {
-    uintptr_t start;
-    uintptr_t end;
-    char* name;
+typedef struct
+{
+	uintptr_t start;
+	uintptr_t end;
+	char* name;
 } symbol_t;
 
-typedef struct {
-    symbol_t* symbols;
-    size_t num_symbols;
+typedef struct
+{
+	symbol_t* symbols;
+	size_t num_symbols;
 } symbol_table_t;
 
 /*
@@ -57,3 +59,4 @@ const symbol_t* find_symbol(const symbol_table_t* table, uintptr_t addr);
 #endif
 
 #endif // _CORKSCREW_SYMBOL_TABLE_H
+

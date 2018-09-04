@@ -628,3 +628,4 @@ BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeSta
 	          imeId, imeState, imeConvMode);
 	return TRUE;
 }
+

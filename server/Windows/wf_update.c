@@ -238,3 +238,4 @@ void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context)
 		wf_info_unlock(wfi);
 	}
 }
+

@@ -38,3 +38,4 @@
 
 #endif /* FREERDP_CODEC_BULK_H */
 
+

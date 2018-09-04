@@ -72,3 +72,4 @@ FREERDP_API void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT*
 
 #endif /* FREERDP_CODEC_INTERLEAVED_H */
 
+

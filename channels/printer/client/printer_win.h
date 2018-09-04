@@ -33,3 +33,4 @@ rdpPrinterDriver* printer_win_get_driver(void);
 
 #endif /* FREERDP_CHANNEL_PRINTER_CLIENT_WIN_H */
 
+

@@ -39,7 +39,6 @@ int TestString(int argc, char* argv[])
 	size_t pos;
 	size_t length;
 	WCHAR* context;
-
 #ifdef __BIG_ENDIAN__
 	/* Be sure that we always use LE encoded string */
 	ByteSwapUnicode(testStringW, testStringW_Length);
@@ -49,19 +48,17 @@ int TestString(int argc, char* argv[])
 	ByteSwapUnicode(testTokensW, testTokensW_Length);
 	ByteSwapUnicode(testDelimiter, testDelimiter_Length);
 #endif
-
 	/* _wcslen */
-
 	length = _wcslen(testStringW);
 
 	if (length != testStringW_Length)
 	{
-		printf("_wcslen error: length mismatch: Actual: %"PRIuz", Expected: %"PRIuz"\n", length, testStringW_Length);
+		printf("_wcslen error: length mismatch: Actual: %"PRIuz", Expected: %"PRIuz"\n", length,
+		       testStringW_Length);
 		return -1;
 	}
 
 	/* _wcschr */
-
 	p = _wcschr(testStringW, 'r');
 	pos = (p - testStringW);
 
@@ -89,7 +86,6 @@ int TestString(int argc, char* argv[])
 	}
 
 	/* wcstok_s */
-
 	p = wcstok_s(testTokensW, testDelimiter, &context);
 
 	if (memcmp(p, testToken1W, sizeof(testToken1W)) != 0)
@@ -124,4 +120,5 @@ int TestString(int argc, char* argv[])
 
 	return 0;
 }
+
 

@@ -1289,3 +1289,4 @@ void mcs_free(rdpMcs* mcs)
 		free(mcs);
 	}
 }
+

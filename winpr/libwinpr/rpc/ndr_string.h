@@ -24,9 +24,12 @@
 
 #ifndef _WIN32
 
-void NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
-void NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+void NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                   PFORMAT_STRING pFormat);
+void NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                      PFORMAT_STRING pFormat);
 
 #endif
 
 #endif /* WINPR_RPC_NDR_STRING_H */
+

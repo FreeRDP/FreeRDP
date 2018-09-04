@@ -12,3 +12,4 @@ int FunctionB(int a, int b)
 {
 	return (a / b); /* divide */
 }
+

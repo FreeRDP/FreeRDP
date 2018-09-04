@@ -156,3 +156,4 @@ void rdpsnd_free_audio_formats(AUDIO_FORMAT* formats, UINT16 count)
 		free(formats);
 	}
 }
+

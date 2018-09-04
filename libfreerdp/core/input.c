@@ -183,7 +183,8 @@ static BOOL input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT
 	{
 		if (flags & PTR_FLAGS_HWHEEL)
 		{
-			WLog_WARN(TAG, "skip mouse event %"PRIu16"x%"PRIu16" flags=0x%04"PRIX16", no horizontal mouse wheel supported",
+			WLog_WARN(TAG,
+			          "skip mouse event %"PRIu16"x%"PRIu16" flags=0x%04"PRIX16", no horizontal mouse wheel supported",
 			          x, y, flags);
 			return TRUE;
 		}
@@ -206,7 +207,7 @@ static void input_write_extended_mouse_event(wStream* s, UINT16 flags, UINT16 x,
 }
 
 static BOOL input_send_extended_mouse_event(rdpInput* input, UINT16 flags,
-                                            UINT16 x, UINT16 y)
+        UINT16 x, UINT16 y)
 {
 	wStream* s;
 	rdpRdp* rdp;
@@ -216,7 +217,8 @@ static BOOL input_send_extended_mouse_event(rdpInput* input, UINT16 flags,
 
 	if (!input->context->settings->HasExtendedMouseEvent)
 	{
-		WLog_WARN(TAG, "skip extended mouse event %"PRIu16"x%"PRIu16" flags=0x%04"PRIX16", no extended mouse events supported",
+		WLog_WARN(TAG,
+		          "skip extended mouse event %"PRIu16"x%"PRIu16" flags=0x%04"PRIX16", no extended mouse events supported",
 		          x, y, flags);
 		return TRUE;
 	}
@@ -338,7 +340,7 @@ static BOOL input_send_fastpath_unicode_keyboard_event(rdpInput* input, UINT16 f
 }
 
 static BOOL input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags,
-                                            UINT16 x, UINT16 y)
+        UINT16 x, UINT16 y)
 {
 	wStream* s;
 	rdpRdp* rdp;
@@ -352,7 +354,8 @@ static BOOL input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags,
 	{
 		if (flags & PTR_FLAGS_HWHEEL)
 		{
-			WLog_WARN(TAG, "skip mouse event %"PRIu16"x%"PRIu16" flags=0x%04"PRIX16", no horizontal mouse wheel supported",
+			WLog_WARN(TAG,
+			          "skip mouse event %"PRIu16"x%"PRIu16" flags=0x%04"PRIX16", no horizontal mouse wheel supported",
 			          x, y, flags);
 			return TRUE;
 		}
@@ -368,7 +371,7 @@ static BOOL input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags,
 }
 
 static BOOL input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 flags,
-                                                     UINT16 x, UINT16 y)
+        UINT16 x, UINT16 y)
 {
 	wStream* s;
 	rdpRdp* rdp;
@@ -378,7 +381,8 @@ static BOOL input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 fla
 
 	if (!input->context->settings->HasExtendedMouseEvent)
 	{
-		WLog_WARN(TAG, "skip extended mouse event %"PRIu16"x%"PRIu16" flags=0x%04"PRIX16", no extended mouse events supported",
+		WLog_WARN(TAG,
+		          "skip extended mouse event %"PRIu16"x%"PRIu16" flags=0x%04"PRIX16", no extended mouse events supported",
 		          x, y, flags);
 		return TRUE;
 	}
@@ -783,3 +787,4 @@ void input_free(rdpInput* input)
 		free(input);
 	}
 }
+

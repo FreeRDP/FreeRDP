@@ -43,3 +43,4 @@ int shadow_subsystem_stop(rdpShadowSubsystem* subsystem);
 
 #endif /* FREERDP_SERVER_SHADOW_SUBSYSTEM_H */
 
+

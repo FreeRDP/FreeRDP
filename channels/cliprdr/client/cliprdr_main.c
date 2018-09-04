@@ -1315,3 +1315,4 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	cliprdr->channelEntryPoints.pInterface = context;
 	return TRUE;
 }
+

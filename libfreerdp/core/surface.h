@@ -44,3 +44,4 @@ FREERDP_LOCAL BOOL update_write_surfcmd_frame_marker(wStream* s,
 
 #endif /* FREERDP_LIB_CORE_SURFACE_H */
 
+

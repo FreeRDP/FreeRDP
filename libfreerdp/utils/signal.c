@@ -134,3 +134,4 @@ int freerdp_handle_signals(void)
 }
 
 #endif
+

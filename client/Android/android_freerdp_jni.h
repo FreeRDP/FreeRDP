@@ -26,3 +26,4 @@
 
 #endif /* FREERDP_CLIENT_ANDROID_FREERDP_JNI_H */
 
+

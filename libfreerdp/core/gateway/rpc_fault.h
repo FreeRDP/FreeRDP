@@ -28,3 +28,4 @@
 FREERDP_LOCAL int rpc_recv_fault_pdu(rpcconn_hdr_t* header);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_FAULT_H */
+

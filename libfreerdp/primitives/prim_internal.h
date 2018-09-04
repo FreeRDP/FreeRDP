@@ -198,3 +198,4 @@ FREERDP_LOCAL void primitives_init_YUV_opt(primitives_t* prims);
 #endif
 
 #endif /* FREERDP_LIB_PRIM_INTERNAL_H */
+

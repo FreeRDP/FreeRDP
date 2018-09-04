@@ -45,18 +45,16 @@ static int searchman_has_next(USB_SEARCHMAN* searchman)
 static USB_SEARCHDEV* searchman_get_next(USB_SEARCHMAN* searchman)
 {
 	USB_SEARCHDEV* search;
-
 	search = searchman->idev;
 	searchman->idev = (USB_SEARCHDEV*) searchman->idev->next;
-
 	return search;
 }
 
 static BOOL searchman_list_add(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct)
 {
 	USB_SEARCHDEV*	search;
-
 	search = (USB_SEARCHDEV*) calloc(1, sizeof(USB_SEARCHDEV));
+
 	if (!search)
 		return FALSE;
 
@@ -76,8 +74,8 @@ static BOOL searchman_list_add(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16
 		search->prev = (void*)searchman->tail;
 		searchman->tail = search;
 	}
-	searchman->usb_numbers += 1;
 
+	searchman->usb_numbers += 1;
 	return TRUE;
 }
 
@@ -85,7 +83,6 @@ static int searchman_list_remove(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT
 {
 	USB_SEARCHDEV* search;
 	USB_SEARCHDEV* point;
-
 	searchman_rewind(searchman);
 
 	while (searchman_has_next(searchman) != 0)
@@ -96,8 +93,8 @@ static int searchman_list_remove(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT
 		    point->idProduct == idProduct)
 		{
 			/* set previous device to point to next device */
-
 			search = point;
+
 			if (search->prev != NULL)
 			{
 				/* unregistered device is not the head */
@@ -123,10 +120,9 @@ static int searchman_list_remove(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT
 				/* unregistered device is the tail, update tail */
 				searchman->tail = (USB_SEARCHDEV*)search->prev;
 			}
+
 			searchman->usb_numbers--;
-
 			free(search);
-
 			return 1; /* unregistration successful */
 		}
 	}
@@ -162,6 +158,7 @@ static void searchman_list_show(USB_SEARCHMAN* self)
 	USB_SEARCHDEV* usb;
 	WLog_DBG(TAG,  "=========== Usb Search List =========");
 	self->rewind(self);
+
 	while (self->has_next(self))
 	{
 		usb = self->get_next(self);
@@ -175,12 +172,12 @@ static void searchman_list_show(USB_SEARCHMAN* self)
 
 void searchman_free(USB_SEARCHMAN* self)
 {
-	USB_SEARCHDEV * dev;
+	USB_SEARCHDEV* dev;
 
 	while (self->head != NULL)
 	{
-		dev = (USB_SEARCHDEV *)self->head;
-		self->remove (self, dev->idVendor, dev->idProduct);
+		dev = (USB_SEARCHDEV*)self->head;
+		self->remove(self, dev->idVendor, dev->idProduct);
 	}
 
 	/* free searchman */
@@ -189,19 +186,19 @@ void searchman_free(USB_SEARCHMAN* self)
 	free(self);
 }
 
-USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
+USB_SEARCHMAN* searchman_new(void* urbdrc, UINT32 UsbDevice)
 {
 	int ret;
 	USB_SEARCHMAN* searchman;
-
 	searchman = (USB_SEARCHMAN*) calloc(1, sizeof(USB_SEARCHMAN));
+
 	if (!searchman)
 		return NULL;
 
 	searchman->urbdrc = urbdrc;
 	searchman->UsbDevice = UsbDevice;
-
 	ret = pthread_mutex_init(&searchman->mutex, NULL);
+
 	if (ret != 0)
 	{
 		WLog_ERR(TAG, "searchman mutex initialization: searchman->mutex failed");
@@ -218,9 +215,9 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 	searchman->start = searchman_start;
 	searchman->close = searchman_close;
 	searchman->free = searchman_free;
-
 	searchman->started = 0;
 	searchman->term_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
 	if (!searchman->term_event)
 		goto out_error_event;
 
@@ -228,7 +225,6 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 		goto out_error_sem;
 
 	return searchman;
-
 out_error_sem:
 	CloseHandle(searchman->term_event);
 out_error_event:
@@ -237,3 +233,4 @@ out_error_mutex:
 	free(searchman);
 	return NULL;
 }
+

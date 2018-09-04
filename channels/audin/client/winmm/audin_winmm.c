@@ -522,3 +522,4 @@ error_out:
 	free(winmm);
 	return error;
 }
+

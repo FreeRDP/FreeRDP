@@ -109,3 +109,4 @@ FREERDP_LOCAL BOOL android_SetOutputVolume(OPENSL_STREAM* p, int level);
 #endif
 
 #endif /* FREERDP_CHANNEL_RDPSND_CLIENT_OPENSL_IO_H */
+

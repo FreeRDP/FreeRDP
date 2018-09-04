@@ -56,3 +56,4 @@ struct _rdpsnd_server_private
 };
 
 #endif /* FREERDP_CHANNEL_RDPSND_SERVER_MAIN_H */
+

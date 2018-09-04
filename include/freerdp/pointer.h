@@ -97,3 +97,4 @@ struct rdp_pointer_update
 typedef struct rdp_pointer_update rdpPointerUpdate;
 
 #endif /* FREERDP_UPDATE_POINTER_H */
+

@@ -25,3 +25,4 @@
 wLogAppender* WLog_CallbackAppender_New(wLog* log);
 
 #endif /* WINPR_WLOG_CALLBACK_APPENDER_PRIVATE_H */
+

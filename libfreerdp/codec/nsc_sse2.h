@@ -32,3 +32,4 @@ FREERDP_LOCAL void nsc_init_sse2(NSC_CONTEXT* context);
 #endif
 
 #endif /* FREERDP_LIB_CODEC_NSC_SSE2_H */
+

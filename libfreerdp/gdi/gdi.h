@@ -93,3 +93,4 @@ static INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 }
 
 #endif /* FREERDP_LIB_GDI_CORE_H */
+

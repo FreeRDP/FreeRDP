@@ -29,28 +29,23 @@ void df_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	DFBResult result;
 	dfPointer* df_pointer;
 	DFBSurfaceDescription dsc;
-
 	dfi = ((dfContext*) context)->dfi;
 	df_pointer = (dfPointer*) pointer;
-
 	dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
 	dsc.caps = DSCAPS_SYSTEMONLY;
 	dsc.width = pointer->width;
 	dsc.height = pointer->height;
 	dsc.pixelformat = DSPF_ARGB;
-
 	result = dfi->dfb->CreateSurface(dfi->dfb, &dsc, &(df_pointer->surface));
 
 	if (result == DFB_OK)
 	{
 		int pitch;
 		BYTE* point = NULL;
-
 		df_pointer->xhot = pointer->xPos;
 		df_pointer->yhot = pointer->yPos;
-
 		result = df_pointer->surface->Lock(df_pointer->surface,
-				DSLF_WRITE, (void**) &point, &pitch);
+		                                   DSLF_WRITE, (void**) &point, &pitch);
 
 		if (result != DFB_OK)
 		{
@@ -61,7 +56,7 @@ void df_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		if ((pointer->andMaskData != 0) && (pointer->xorMaskData != 0))
 		{
 			freerdp_alpha_cursor_convert(point, pointer->xorMaskData, pointer->andMaskData,
-					pointer->width, pointer->height, pointer->xorBpp, dfi->clrconv);
+			                             pointer->width, pointer->height, pointer->xorBpp, dfi->clrconv);
 		}
 
 		if (pointer->xorBpp > 24)
@@ -84,18 +79,15 @@ void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	dfInfo* dfi;
 	DFBResult result;
 	dfPointer* df_pointer;
-
 	dfi = ((dfContext*) context)->dfi;
 	df_pointer = (dfPointer*) pointer;
-
 	dfi->layer->SetCooperativeLevel(dfi->layer, DLSCL_ADMINISTRATIVE);
+	dfi->layer->SetCursorOpacity(dfi->layer, df_pointer ? 255 : 0);
 
-	dfi->layer->SetCursorOpacity(dfi->layer, df_pointer ? 255: 0);
-
-	if(df_pointer != NULL)
+	if (df_pointer != NULL)
 	{
 		result = dfi->layer->SetCursorShape(dfi->layer,
-			df_pointer->surface, df_pointer->xhot, df_pointer->yhot);
+		                                    df_pointer->surface, df_pointer->xhot, df_pointer->yhot);
 
 		if (result != DFB_OK)
 		{
@@ -114,7 +106,6 @@ void df_Pointer_SetNull(rdpContext* context)
 
 void df_Pointer_SetDefault(rdpContext* context)
 {
-
 }
 
 /* Graphics Module */
@@ -122,18 +113,16 @@ void df_Pointer_SetDefault(rdpContext* context)
 void df_register_graphics(rdpGraphics* graphics)
 {
 	rdpPointer* pointer;
-
 	pointer = (rdpPointer*) malloc(sizeof(rdpPointer));
 	ZeroMemory(pointer, sizeof(rdpPointer));
 	pointer->size = sizeof(dfPointer);
-
 	pointer->New = df_Pointer_New;
 	pointer->Free = df_Pointer_Free;
 	pointer->Set = df_Pointer_Set;
 	pointer->SetNull = df_Pointer_SetNull;
 	pointer->SetDefault = df_Pointer_SetDefault;
-
 	graphics_register_pointer(graphics, pointer);
 	free(pointer);
 }
+
 

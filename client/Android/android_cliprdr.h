@@ -34,3 +34,4 @@ FREERDP_LOCAL BOOL android_cliprdr_uninit(androidContext* afc,
         CliprdrClientContext* cliprdr);
 
 #endif /* FREERDP_CLIENT_ANDROID_CLIPRDR_H */
+

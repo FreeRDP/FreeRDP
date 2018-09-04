@@ -139,3 +139,4 @@ void shadow_client_audin_uninit(rdpShadowClient* client)
 		client->audin = NULL;
 	}
 }
+

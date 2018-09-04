@@ -36,3 +36,4 @@
 #endif
 
 #endif /* FREERDP_CHANNEL_RDPSND_CLIENT_MAIN_H */
+

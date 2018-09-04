@@ -32,3 +32,4 @@ struct _FREERDP_DSP_COMMON_CONTEXT
 };
 
 #endif /* FREERDP_LIB_CODEC_DSP_H */
+

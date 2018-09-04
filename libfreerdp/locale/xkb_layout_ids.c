@@ -910,7 +910,8 @@ UINT32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 	{
 		if (strcmp(xkbLayouts[i].layout, layout) == 0)
 		{
-			const XKB_VARIANT *variants = xkbLayouts[i].variants;
+			const XKB_VARIANT* variants = xkbLayouts[i].variants;
+
 			if (variants)
 			{
 				for (j = 0; variants[j].variant != NULL && strlen(variants[j].variant) > 0; j++)
@@ -926,3 +927,4 @@ UINT32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 
 	return 0;
 }
+

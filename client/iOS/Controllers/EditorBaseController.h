@@ -1,9 +1,9 @@
 /*
  Basic interface for settings editors
- 
+
  Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
- 
- This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+
+ This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
@@ -25,14 +25,14 @@ extern NSString* TableCellIdentifierMultiChoice;
 extern NSString* TableCellIdentifierButton;
 
 @interface EditorBaseController : UITableViewController <UITextFieldDelegate>
-{   
-@private    
-    IBOutlet EditTextTableViewCell* _textTableViewCell;
-    IBOutlet EditSecretTextTableViewCell* _secretTextTableViewCell;
-    IBOutlet EditFlagTableViewCell* _flagTableViewCell;
-    IBOutlet EditSelectionTableViewCell* _selectionTableViewCell;
-    IBOutlet EditSubEditTableViewCell* _subEditTableViewCell;
-    IBOutlet EditButtonTableViewCell* _buttonTableViewCell;
+{
+@private
+	IBOutlet EditTextTableViewCell* _textTableViewCell;
+	IBOutlet EditSecretTextTableViewCell* _secretTextTableViewCell;
+	IBOutlet EditFlagTableViewCell* _flagTableViewCell;
+	IBOutlet EditSelectionTableViewCell* _selectionTableViewCell;
+	IBOutlet EditSubEditTableViewCell* _subEditTableViewCell;
+	IBOutlet EditButtonTableViewCell* _buttonTableViewCell;
 }
 
 // returns one of the requested table view cells
@@ -42,3 +42,4 @@ extern NSString* TableCellIdentifierButton;
 - (void)adjustEditTextTableViewCell:(EditTextTableViewCell*)cell;
 
 @end
+

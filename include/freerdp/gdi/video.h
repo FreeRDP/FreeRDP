@@ -41,3 +41,4 @@ FREERDP_API void gdi_video_free(gdiVideoContext* context);
 
 
 #endif /* FREERDP_GDI_VIDEO_H_ */
+

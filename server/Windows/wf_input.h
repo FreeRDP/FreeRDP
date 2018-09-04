@@ -34,3 +34,4 @@ void wf_peer_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y
 void wf_peer_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
 #endif /* FREERDP_SERVER_WIN_INPUT_H */
+

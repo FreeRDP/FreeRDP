@@ -135,7 +135,7 @@ typedef struct _SERIAL_TIMEOUTS
 	ULONG ReadTotalTimeoutConstant;
 	ULONG WriteTotalTimeoutMultiplier;
 	ULONG WriteTotalTimeoutConstant;
-} SERIAL_TIMEOUTS,*PSERIAL_TIMEOUTS;
+} SERIAL_TIMEOUTS, *PSERIAL_TIMEOUTS;
 
 
 #define SERIAL_MSR_DCTS     0x01
@@ -198,42 +198,42 @@ typedef struct _SERIAL_STATUS
 typedef struct _SERIAL_DRIVER
 {
 	SERIAL_DRIVER_ID id;
-	TCHAR *name;
-	BOOL (*set_baud_rate)(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate);
-	BOOL (*get_baud_rate)(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate);
-	BOOL (*get_properties)(WINPR_COMM *pComm, COMMPROP *pProperties);
-	BOOL (*set_serial_chars)(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChars);
-	BOOL (*get_serial_chars)(WINPR_COMM *pComm, SERIAL_CHARS *pSerialChars);
-	BOOL (*set_line_control)(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLineControl);
-	BOOL (*get_line_control)(WINPR_COMM *pComm, SERIAL_LINE_CONTROL *pLineControl);
-	BOOL (*set_handflow)(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow);
-	BOOL (*get_handflow)(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow);
-	BOOL (*set_timeouts)(WINPR_COMM *pComm, const SERIAL_TIMEOUTS *pTimeouts);
-	BOOL (*get_timeouts)(WINPR_COMM *pComm, SERIAL_TIMEOUTS *pTimeouts);
-	BOOL (*set_dtr)(WINPR_COMM *pComm);
-	BOOL (*clear_dtr)(WINPR_COMM *pComm);
-	BOOL (*set_rts)(WINPR_COMM *pComm);
-	BOOL (*clear_rts)(WINPR_COMM *pComm);
-	BOOL (*get_modemstatus)(WINPR_COMM *pComm, ULONG *pRegister);
-	BOOL (*set_wait_mask)(WINPR_COMM *pComm, const ULONG *pWaitMask);
-	BOOL (*get_wait_mask)(WINPR_COMM *pComm, ULONG *pWaitMask);
-	BOOL (*wait_on_mask)(WINPR_COMM *pComm, ULONG *pOutputMask);
-	BOOL (*set_queue_size)(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSize);
-	BOOL (*purge)(WINPR_COMM *pComm, const ULONG *pPurgeMask);
-	BOOL (*get_commstatus)(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus);
-	BOOL (*set_break_on)(WINPR_COMM *pComm);
-	BOOL (*set_break_off)(WINPR_COMM *pComm);
-	BOOL (*set_xoff)(WINPR_COMM *pComm);
-	BOOL (*set_xon)(WINPR_COMM *pComm);
-	BOOL (*get_dtrrts)(WINPR_COMM *pComm, ULONG *pMask);
-	BOOL (*config_size)(WINPR_COMM *pComm, ULONG *pSize);
-	BOOL (*immediate_char)(WINPR_COMM *pComm, const UCHAR *pChar);
-	BOOL (*reset_device)(WINPR_COMM *pComm);
+	TCHAR* name;
+	BOOL (*set_baud_rate)(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate);
+	BOOL (*get_baud_rate)(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate);
+	BOOL (*get_properties)(WINPR_COMM* pComm, COMMPROP* pProperties);
+	BOOL (*set_serial_chars)(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChars);
+	BOOL (*get_serial_chars)(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars);
+	BOOL (*set_line_control)(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLineControl);
+	BOOL (*get_line_control)(WINPR_COMM* pComm, SERIAL_LINE_CONTROL* pLineControl);
+	BOOL (*set_handflow)(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow);
+	BOOL (*get_handflow)(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow);
+	BOOL (*set_timeouts)(WINPR_COMM* pComm, const SERIAL_TIMEOUTS* pTimeouts);
+	BOOL (*get_timeouts)(WINPR_COMM* pComm, SERIAL_TIMEOUTS* pTimeouts);
+	BOOL (*set_dtr)(WINPR_COMM* pComm);
+	BOOL (*clear_dtr)(WINPR_COMM* pComm);
+	BOOL (*set_rts)(WINPR_COMM* pComm);
+	BOOL (*clear_rts)(WINPR_COMM* pComm);
+	BOOL (*get_modemstatus)(WINPR_COMM* pComm, ULONG* pRegister);
+	BOOL (*set_wait_mask)(WINPR_COMM* pComm, const ULONG* pWaitMask);
+	BOOL (*get_wait_mask)(WINPR_COMM* pComm, ULONG* pWaitMask);
+	BOOL (*wait_on_mask)(WINPR_COMM* pComm, ULONG* pOutputMask);
+	BOOL (*set_queue_size)(WINPR_COMM* pComm, const SERIAL_QUEUE_SIZE* pQueueSize);
+	BOOL (*purge)(WINPR_COMM* pComm, const ULONG* pPurgeMask);
+	BOOL (*get_commstatus)(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus);
+	BOOL (*set_break_on)(WINPR_COMM* pComm);
+	BOOL (*set_break_off)(WINPR_COMM* pComm);
+	BOOL (*set_xoff)(WINPR_COMM* pComm);
+	BOOL (*set_xon)(WINPR_COMM* pComm);
+	BOOL (*get_dtrrts)(WINPR_COMM* pComm, ULONG* pMask);
+	BOOL (*config_size)(WINPR_COMM* pComm, ULONG* pSize);
+	BOOL (*immediate_char)(WINPR_COMM* pComm, const UCHAR* pChar);
+	BOOL (*reset_device)(WINPR_COMM* pComm);
 
 } SERIAL_DRIVER;
 
 
-int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *termios_p);
+int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p);
 
 #ifdef __cplusplus
 }
@@ -242,3 +242,4 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 #endif /* __linux__ */
 
 #endif /* WINPR_COMM_IOCTL_H_ */
+

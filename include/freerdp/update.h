@@ -239,3 +239,4 @@ struct rdp_update
 };
 
 #endif /* FREERDP_UPDATE_H */
+

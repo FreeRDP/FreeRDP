@@ -939,3 +939,4 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	return status;
 }
+

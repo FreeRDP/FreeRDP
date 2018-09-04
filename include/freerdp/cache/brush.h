@@ -76,3 +76,4 @@ FREERDP_API void brush_cache_free(rdpBrushCache* brush);
 #endif
 
 #endif /* FREERDP_BRUSH_CACHE_H */
+

@@ -87,14 +87,10 @@ static int test_command_line_parsing_case(const char* line, const char** list)
 	int i;
 	LPSTR* pArgs;
 	int numArgs;
-
 	pArgs = NULL;
 	numArgs = 0;
-
 	printf("Parsing: %s\n", line);
-
 	pArgs = CommandLineToArgvA(line, &numArgs);
-
 	printf("pNumArgs: %d\n", numArgs);
 
 	for (i = 0; i < numArgs; i++)
@@ -103,7 +99,6 @@ static int test_command_line_parsing_case(const char* line, const char** list)
 	}
 
 	HeapFree(GetProcessHeap(), 0, pArgs);
-
 	return 0;
 }
 
@@ -116,7 +111,7 @@ int TestThreadCommandLineToArgv(int argc, char* argv[])
 	test_command_line_parsing_case(test_args_line_5, test_args_list_5);
 	test_command_line_parsing_case(test_args_line_6, test_args_list_6);
 	test_command_line_parsing_case(test_args_line_7, test_args_list_7);
-
 	return 0;
 }
+
 

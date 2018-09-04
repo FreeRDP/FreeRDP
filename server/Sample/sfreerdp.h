@@ -62,3 +62,4 @@ typedef struct test_peer_context testPeerContext;
 
 #endif /* FREERDP_SERVER_SAMPLE_SFREERDP_SERVER_H */
 
+

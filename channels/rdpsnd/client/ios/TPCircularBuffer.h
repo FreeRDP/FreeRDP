@@ -10,7 +10,7 @@
 //  This implementation makes use of a virtual memory mapping technique that inserts a virtual copy
 //  of the buffer memory directly after the buffer's end, negating the need for any buffer wrap-around
 //  logic. Clients can simply use the returned memory address as if it were contiguous space.
-//  
+//
 //  The implementation is thread-safe in the case of a single producer and single consumer.
 //
 //  Virtual memory technique originally proposed by Philip Howard (http://vrb.slashusr.org/), and
@@ -49,13 +49,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
-typedef struct {
-    void             *buffer;
-    int32_t           length;
-    int32_t           tail;
-    int32_t           head;
-    volatile int32_t  fillCount;
+
+typedef struct
+{
+	void*             buffer;
+	int32_t           length;
+	int32_t           tail;
+	int32_t           head;
+	volatile int32_t  fillCount;
 } TPCircularBuffer;
 
 /*!
@@ -68,24 +69,24 @@ typedef struct {
  * @param buffer Circular buffer
  * @param length Length of buffer
  */
-bool  TPCircularBufferInit(TPCircularBuffer *buffer, int32_t length);
+bool  TPCircularBufferInit(TPCircularBuffer* buffer, int32_t length);
 
 /*!
  * Cleanup buffer
  *
  *  Releases buffer resources.
  */
-void  TPCircularBufferCleanup(TPCircularBuffer *buffer);
+void  TPCircularBufferCleanup(TPCircularBuffer* buffer);
 
 /*!
  * Clear buffer
  *
  *  Resets buffer to original, empty state.
  *
- *  This is safe for use by consumer while producer is accessing 
+ *  This is safe for use by consumer while producer is accessing
  *  buffer.
  */
-void  TPCircularBufferClear(TPCircularBuffer *buffer);
+void  TPCircularBufferClear(TPCircularBuffer* buffer);
 
 // Reading (consuming)
 
@@ -99,10 +100,14 @@ void  TPCircularBufferClear(TPCircularBuffer *buffer);
  * @param availableBytes On output, the number of bytes ready for reading
  * @return Pointer to the first bytes ready for reading, or NULL if buffer is empty
  */
-static __inline__ __attribute__((always_inline)) void* TPCircularBufferTail(TPCircularBuffer *buffer, int32_t* availableBytes) {
-    *availableBytes = buffer->fillCount;
-    if ( *availableBytes == 0 ) return NULL;
-    return (void*)((char*)buffer->buffer + buffer->tail);
+static __inline__ __attribute__((always_inline)) void* TPCircularBufferTail(
+    TPCircularBuffer* buffer, int32_t* availableBytes)
+{
+	*availableBytes = buffer->fillCount;
+
+	if (*availableBytes == 0) return NULL;
+
+	return (void*)((char*)buffer->buffer + buffer->tail);
 }
 
 /*!
@@ -113,19 +118,23 @@ static __inline__ __attribute__((always_inline)) void* TPCircularBufferTail(TPCi
  * @param buffer Circular buffer
  * @param amount Number of bytes to consume
  */
-static __inline__ __attribute__((always_inline)) void TPCircularBufferConsume(TPCircularBuffer *buffer, int32_t amount) {
-    buffer->tail = (buffer->tail + amount) % buffer->length;
-    OSAtomicAdd32Barrier(-amount, &buffer->fillCount);
-    assert(buffer->fillCount >= 0);
+static __inline__ __attribute__((always_inline)) void TPCircularBufferConsume(
+    TPCircularBuffer* buffer, int32_t amount)
+{
+	buffer->tail = (buffer->tail + amount) % buffer->length;
+	OSAtomicAdd32Barrier(-amount, &buffer->fillCount);
+	assert(buffer->fillCount >= 0);
 }
 
 /*!
  * Version of TPCircularBufferConsume without the memory barrier, for more optimal use in single-threaded contexts
  */
-static __inline__ __attribute__((always_inline)) void TPCircularBufferConsumeNoBarrier(TPCircularBuffer *buffer, int32_t amount) {
-    buffer->tail = (buffer->tail + amount) % buffer->length;
-    buffer->fillCount -= amount;
-    assert(buffer->fillCount >= 0);
+static __inline__ __attribute__((always_inline)) void TPCircularBufferConsumeNoBarrier(
+    TPCircularBuffer* buffer, int32_t amount)
+{
+	buffer->tail = (buffer->tail + amount) % buffer->length;
+	buffer->fillCount -= amount;
+	assert(buffer->fillCount >= 0);
 }
 
 /*!
@@ -138,12 +147,16 @@ static __inline__ __attribute__((always_inline)) void TPCircularBufferConsumeNoB
  * @param availableBytes On output, the number of bytes ready for writing
  * @return Pointer to the first bytes ready for writing, or NULL if buffer is full
  */
-static __inline__ __attribute__((always_inline)) void* TPCircularBufferHead(TPCircularBuffer *buffer, int32_t* availableBytes) {
-    *availableBytes = (buffer->length - buffer->fillCount);
-    if ( *availableBytes == 0 ) return NULL;
-    return (void*)((char*)buffer->buffer + buffer->head);
+static __inline__ __attribute__((always_inline)) void* TPCircularBufferHead(
+    TPCircularBuffer* buffer, int32_t* availableBytes)
+{
+	*availableBytes = (buffer->length - buffer->fillCount);
+
+	if (*availableBytes == 0) return NULL;
+
+	return (void*)((char*)buffer->buffer + buffer->head);
 }
-    
+
 // Writing (producing)
 
 /*!
@@ -154,19 +167,23 @@ static __inline__ __attribute__((always_inline)) void* TPCircularBufferHead(TPCi
  * @param buffer Circular buffer
  * @param amount Number of bytes to produce
  */
-static __inline__ __attribute__((always_inline)) void TPCircularBufferProduce(TPCircularBuffer *buffer, int amount) {
-    buffer->head = (buffer->head + amount) % buffer->length;
-    OSAtomicAdd32Barrier(amount, &buffer->fillCount);
-    assert(buffer->fillCount <= buffer->length);
+static __inline__ __attribute__((always_inline)) void TPCircularBufferProduce(
+    TPCircularBuffer* buffer, int amount)
+{
+	buffer->head = (buffer->head + amount) % buffer->length;
+	OSAtomicAdd32Barrier(amount, &buffer->fillCount);
+	assert(buffer->fillCount <= buffer->length);
 }
 
 /*!
  * Version of TPCircularBufferProduce without the memory barrier, for more optimal use in single-threaded contexts
  */
-static __inline__ __attribute__((always_inline)) void TPCircularBufferProduceNoBarrier(TPCircularBuffer *buffer, int amount) {
-    buffer->head = (buffer->head + amount) % buffer->length;
-    buffer->fillCount += amount;
-    assert(buffer->fillCount <= buffer->length);
+static __inline__ __attribute__((always_inline)) void TPCircularBufferProduceNoBarrier(
+    TPCircularBuffer* buffer, int amount)
+{
+	buffer->head = (buffer->head + amount) % buffer->length;
+	buffer->fillCount += amount;
+	assert(buffer->fillCount <= buffer->length);
 }
 
 /*!
@@ -179,13 +196,17 @@ static __inline__ __attribute__((always_inline)) void TPCircularBufferProduceNoB
  * @param len Number of bytes in source buffer
  * @return true if bytes copied, false if there was insufficient space
  */
-static __inline__ __attribute__((always_inline)) bool TPCircularBufferProduceBytes(TPCircularBuffer *buffer, const void* src, int32_t len) {
-    int32_t space;
-    void *ptr = TPCircularBufferHead(buffer, &space);
-    if ( space < len ) return false;
-    memcpy(ptr, src, len);
-    TPCircularBufferProduce(buffer, len);
-    return true;
+static __inline__ __attribute__((always_inline)) bool TPCircularBufferProduceBytes(
+    TPCircularBuffer* buffer, const void* src, int32_t len)
+{
+	int32_t space;
+	void* ptr = TPCircularBufferHead(buffer, &space);
+
+	if (space < len) return false;
+
+	memcpy(ptr, src, len);
+	TPCircularBufferProduce(buffer, len);
+	return true;
 }
 
 #ifdef __cplusplus
@@ -193,3 +214,4 @@ static __inline__ __attribute__((always_inline)) bool TPCircularBufferProduceByt
 #endif
 
 #endif
+

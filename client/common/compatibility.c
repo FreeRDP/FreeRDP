@@ -865,3 +865,4 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 	WLog_WARN(TAG,  "");
 	return 0;
 }
+

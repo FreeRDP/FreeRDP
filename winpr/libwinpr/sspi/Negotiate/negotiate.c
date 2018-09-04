@@ -614,3 +614,4 @@ const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW =
 	negotiate_SetContextAttributesW, /* SetContextAttributes */
 };
 
+

@@ -308,3 +308,4 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 	PROFILER_EXIT(context->SurfaceProfiler)
 	return error;
 }
+

@@ -246,7 +246,6 @@ static int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 		return -1;
 
 	image->data = NULL;
-
 	s = Stream_New(NULL, sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(WINPR_BITMAP_INFO_HEADER));
 
 	if (!s)
@@ -471,3 +470,4 @@ void winpr_image_free(wImage* image, BOOL bFreeBuffer)
 
 	free(image);
 }
+

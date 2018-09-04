@@ -25,21 +25,23 @@
 
 
 /** @brief ring buffer meta data */
-struct _RingBuffer {
+struct _RingBuffer
+{
 	size_t initialSize;
 	size_t freeSize;
 	size_t size;
 	size_t readPtr;
 	size_t writePtr;
-	BYTE *buffer;
+	BYTE* buffer;
 };
 typedef struct _RingBuffer RingBuffer;
 
 
 /** @brief a piece of data in the ring buffer, exactly like a glibc iovec */
-struct _DataChunk {
+struct _DataChunk
+{
 	size_t size;
-	const BYTE *data;
+	const BYTE* data;
 };
 typedef struct _DataChunk DataChunk;
 
@@ -51,24 +53,24 @@ extern "C" {
  * @param initialSize the initial capacity of the ringBuffer
  * @return if the initialisation was successful
  */
-FREERDP_API BOOL ringbuffer_init(RingBuffer *rb, size_t initialSize);
+FREERDP_API BOOL ringbuffer_init(RingBuffer* rb, size_t initialSize);
 
 /** destroys internal data used by this ringbuffer
  * @param ringbuffer
  */
-FREERDP_API void ringbuffer_destroy(RingBuffer *ringbuffer);
+FREERDP_API void ringbuffer_destroy(RingBuffer* ringbuffer);
 
 /** computes the space used in this ringbuffer
  * @param ringbuffer
  * @return the number of bytes stored in that ringbuffer
  */
-FREERDP_API size_t ringbuffer_used(const RingBuffer *ringbuffer);
+FREERDP_API size_t ringbuffer_used(const RingBuffer* ringbuffer);
 
 /** returns the capacity of the ring buffer
  * @param ringbuffer
  * @return the capacity of this ring buffer
  */
-FREERDP_API size_t ringbuffer_capacity(const RingBuffer *ringbuffer);
+FREERDP_API size_t ringbuffer_capacity(const RingBuffer* ringbuffer);
 
 /** writes some bytes in the ringbuffer, if the data doesn't fit, the ringbuffer
  * is resized automatically
@@ -78,7 +80,7 @@ FREERDP_API size_t ringbuffer_capacity(const RingBuffer *ringbuffer);
  * @param sz the size of the data to add
  * @return if the operation was successful, it could fail in case of OOM during realloc()
  */
-FREERDP_API BOOL ringbuffer_write(RingBuffer *rb, const BYTE *ptr, size_t sz);
+FREERDP_API BOOL ringbuffer_write(RingBuffer* rb, const BYTE* ptr, size_t sz);
 
 
 /** ensures that we have sz bytes available at the write head, and return a pointer
@@ -88,7 +90,7 @@ FREERDP_API BOOL ringbuffer_write(RingBuffer *rb, const BYTE *ptr, size_t sz);
  * @param sz the size to ensure
  * @return a pointer on the write head, or NULL in case of OOM
  */
-FREERDP_API BYTE *ringbuffer_ensure_linear_write(RingBuffer *rb, size_t sz);
+FREERDP_API BYTE* ringbuffer_ensure_linear_write(RingBuffer* rb, size_t sz);
 
 /** move ahead the write head in case some byte were written directly by using
  * a pointer retrieved via ringbuffer_ensure_linear_write(). This function is
@@ -99,7 +101,7 @@ FREERDP_API BYTE *ringbuffer_ensure_linear_write(RingBuffer *rb, size_t sz);
  * @param sz the number of bytes that have been written
  * @return if the operation was successful, FALSE is sz is too big
  */
-FREERDP_API BOOL ringbuffer_commit_written_bytes(RingBuffer *rb, size_t sz);
+FREERDP_API BOOL ringbuffer_commit_written_bytes(RingBuffer* rb, size_t sz);
 
 
 /** peeks the buffer chunks for sz bytes and returns how many chunks are filled.
@@ -110,7 +112,7 @@ FREERDP_API BOOL ringbuffer_commit_written_bytes(RingBuffer *rb, size_t sz);
  * @param sz the requested size
  * @return the number of chunks used for reading sz bytes
  */
-FREERDP_API int ringbuffer_peek(const RingBuffer *rb, DataChunk chunks[2], size_t sz);
+FREERDP_API int ringbuffer_peek(const RingBuffer* rb, DataChunk chunks[2], size_t sz);
 
 /** move ahead the read head in case some byte were read using ringbuffer_peek()
  * This function is used to commit the bytes that were effectively consumed.
@@ -118,7 +120,7 @@ FREERDP_API int ringbuffer_peek(const RingBuffer *rb, DataChunk chunks[2], size_
  * @param rb the ring buffer
  * @param sz the
  */
-FREERDP_API void ringbuffer_commit_read_bytes(RingBuffer *rb, size_t sz);
+FREERDP_API void ringbuffer_commit_read_bytes(RingBuffer* rb, size_t sz);
 
 
 #ifdef __cplusplus
@@ -126,3 +128,4 @@ FREERDP_API void ringbuffer_commit_read_bytes(RingBuffer *rb, size_t sz);
 #endif
 
 #endif /* FREERDP_UTILS_RINGBUFFER_H */
+

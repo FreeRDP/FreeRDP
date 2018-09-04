@@ -227,3 +227,4 @@ struct rdp_altsec_update
 typedef struct rdp_altsec_update rdpAltSecUpdate;
 
 #endif /* FREERDP_UPDATE_ALTSEC_H */
+

@@ -61,3 +61,4 @@ FREERDP_API void offscreen_cache_free(rdpOffscreenCache* offscreen);
 #endif
 
 #endif /* FREERDP_OFFSCREEN_CACHE_H */
+

@@ -16,9 +16,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 {
 	HRESULT status;
 	LPTSTR PathOut;
-
 	/* Base Path: Backslash, More Path: No Backslash */
-
 	status = PathAllocCombine(testBasePathBackslash, testMorePathNoBackslash, 0, &PathOut);
 
 	if (status != S_OK)
@@ -34,9 +32,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 	}
 
 	HeapFree(GetProcessHeap(), 0, PathOut);
-
 	/* Base Path: Backslash, More Path: Backslash */
-
 	status = PathAllocCombine(testBasePathBackslash, testMorePathBackslash, 0, &PathOut);
 
 	if (status != S_OK)
@@ -52,9 +48,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 	}
 
 	HeapFree(GetProcessHeap(), 0, PathOut);
-
 	/* Base Path: No Backslash, More Path: Backslash */
-
 	status = PathAllocCombine(testBasePathNoBackslash, testMorePathBackslash, 0, &PathOut);
 
 	if (status != S_OK)
@@ -70,9 +64,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 	}
 
 	HeapFree(GetProcessHeap(), 0, PathOut);
-
 	/* Base Path: No Backslash, More Path: No Backslash */
-
 	status = PathAllocCombine(testBasePathNoBackslash, testMorePathNoBackslash, 0, &PathOut);
 
 	if (status != S_OK)
@@ -88,7 +80,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 	}
 
 	HeapFree(GetProcessHeap(), 0, PathOut);
-
 	return 0;
 }
+
 

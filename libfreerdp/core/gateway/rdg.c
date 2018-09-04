@@ -1365,3 +1365,4 @@ void rdg_free(rdpRdg* rdg)
 	DeleteCriticalSection(&rdg->writeSection);
 	free(rdg);
 }
+

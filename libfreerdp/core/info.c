@@ -43,6 +43,67 @@ static const char* const INFO_TYPE_LOGON_STRINGS[4] =
 	"Logon Extended Info"
 };
 
+static struct
+{
+	UINT32      flag;
+	const char* label;
+}  const info_flags[] =
+{
+	{INFO_MOUSE,                  "INFO_MOUSE"},
+	{INFO_DISABLECTRLALTDEL,      "INFO_DISABLECTRLALTDEL"},
+	{INFO_AUTOLOGON,              "INFO_AUTOLOGON"},
+	{INFO_UNICODE,                "INFO_UNICODE"},
+	{INFO_MAXIMIZESHELL,          "INFO_MAXIMIZESHELL"},
+	{INFO_LOGONNOTIFY,            "INFO_LOGONNOTIFY"},
+	{INFO_COMPRESSION,            "INFO_COMPRESSION"},
+	{INFO_ENABLEWINDOWSKEY,       "INFO_ENABLEWINDOWSKEY"},
+	{INFO_REMOTECONSOLEAUDIO,     "INFO_REMOTECONSOLEAUDIO"},
+	{INFO_FORCE_ENCRYPTED_CS_PDU, "INFO_FORCE_ENCRYPTED_CS_PDU"},
+	{INFO_RAIL,                   "INFO_RAIL"},
+	{INFO_LOGONERRORS,            "INFO_LOGONERRORS"},
+	{INFO_MOUSE_HAS_WHEEL,        "INFO_MOUSE_HAS_WHEEL"},
+	{INFO_PASSWORD_IS_SC_PIN,     "INFO_PASSWORD_IS_SC_PIN"},
+	{INFO_NOAUDIOPLAYBACK,        "INFO_NOAUDIOPLAYBACK"},
+	{INFO_USING_SAVED_CREDS,      "INFO_USING_SAVED_CREDS"},
+	{INFO_AUDIOCAPTURE,           "INFO_AUDIOCAPTURE"},
+	{INFO_VIDEO_DISABLE,          "INFO_VIDEO_DISABLE"},
+	{INFO_HIDEF_RAIL_SUPPORTED,   "INFO_HIDEF_RAIL_SUPPORTED"},
+};
+
+FREERDP_LOCAL char* rdp_info_package_flags_description(UINT32 flags)
+{
+	char* result;
+	size_t maximum_size = 0;
+	size_t i;
+
+	for (i = 0; i < ARRAYSIZE(info_flags); i ++)
+	{
+		maximum_size += strlen(info_flags[i].label) + 1;
+	}
+
+	result = malloc(maximum_size);
+
+	if (!result)
+	{
+		return 0;
+	}
+
+	result[0] = '\0';
+
+	for (i = 0; i < ARRAYSIZE(info_flags); i ++)
+	{
+		if (info_flags[i].flag & flags)
+		{
+			strcat(result, info_flags[i].label);
+			strcat(result, "|");
+		}
+	}
+
+	result[strlen(result) - 1] = '\0'; /* remove last "|" */
+	return result;
+}
+
+
 static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 {
 	BYTE ClientRandom[32];
@@ -421,6 +482,10 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 	settings->RemoteConsoleAudio = ((flags & INFO_REMOTECONSOLEAUDIO) ? TRUE : FALSE);
 	settings->CompressionEnabled = ((flags & INFO_COMPRESSION) ? TRUE : FALSE);
 	settings->LogonNotify = ((flags & INFO_LOGONNOTIFY) ? TRUE : FALSE);
+	settings->MouseHasWheel = ((flags & INFO_MOUSE_HAS_WHEEL) ? TRUE : FALSE);
+	settings->DisableCtrlAltDel = ((flags & INFO_DISABLECTRLALTDEL) ? TRUE : FALSE);
+	settings->ForceEncryptedCsPdu = ((flags & INFO_FORCE_ENCRYPTED_CS_PDU) ? TRUE : FALSE);
+	settings->PasswordIsSmartcardPin = ((flags & INFO_PASSWORD_IS_SC_PIN) ? TRUE : FALSE);
 
 	if (flags & INFO_COMPRESSION)
 	{
@@ -643,7 +708,15 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	        INFO_LOGONERRORS |
 	        INFO_MAXIMIZESHELL |
 	        INFO_ENABLEWINDOWSKEY |
-	        INFO_DISABLECTRLALTDEL;
+	        INFO_DISABLECTRLALTDEL |
+	        INFO_MOUSE_HAS_WHEEL |
+	        INFO_FORCE_ENCRYPTED_CS_PDU;
+
+	if (settings->SmartcardLogon)
+	{
+		flags |= INFO_AUTOLOGON;
+		flags |= INFO_PASSWORD_IS_SC_PIN;
+	}
 
 	if (settings->AudioCapture)
 		flags |= INFO_AUDIOCAPTURE;
@@ -677,6 +750,16 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (settings->PasswordIsSmartcardPin)
 		flags |= INFO_PASSWORD_IS_SC_PIN;
+
+	{
+		char* flags_description = rdp_info_package_flags_description(flags);
+
+		if (flags_description)
+		{
+			WLog_DBG(TAG, "Client Info Packet Flags = %s", flags_description);
+			free(flags_description);
+		}
+	}
 
 	if (settings->Domain)
 	{
@@ -1381,3 +1464,4 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 
 	return status;
 }
+

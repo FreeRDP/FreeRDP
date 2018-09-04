@@ -58,7 +58,8 @@ extern "C" {
 #endif
 
 int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image);
-int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight, rdtkNinePatch* ninePatch);
+int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
+                         rdtkNinePatch* ninePatch);
 
 int rdtk_nine_patch_engine_init(rdtkEngine* engine);
 int rdtk_nine_patch_engine_uninit(rdtkEngine* engine);
@@ -71,4 +72,5 @@ void rdtk_nine_patch_free(rdtkNinePatch* ninePatch);
 #endif
 
 #endif /* RDTK_NINE_PATCH_PRIVATE_H */
+
 

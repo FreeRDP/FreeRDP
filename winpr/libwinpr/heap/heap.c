@@ -50,9 +50,7 @@ LPVOID HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes)
 LPVOID HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes)
 {
 	LPVOID lpNewMem;
-
 	lpNewMem = realloc(lpMem, dwBytes);
-
 	return lpNewMem;
 }
 
@@ -63,3 +61,4 @@ BOOL HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem)
 }
 
 #endif
+

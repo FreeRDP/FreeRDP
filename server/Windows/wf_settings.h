@@ -26,3 +26,4 @@ BOOL wf_settings_read_dword(HKEY key, LPCSTR subkey, LPTSTR name, DWORD* value);
 BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** value);
 
 #endif /* FREERDP_SERVER_WIN_SETTINGS_H */
+

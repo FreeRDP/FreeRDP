@@ -587,3 +587,4 @@ void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard,
 
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_PACK_H */
+

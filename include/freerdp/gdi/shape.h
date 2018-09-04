@@ -42,3 +42,4 @@ FREERDP_API BOOL gdi_Rectangle(HGDI_DC hdc, UINT32 nXDst, UINT32 nYDst,
 #endif
 
 #endif /* FREERDP_GDI_SHAPE_H */
+

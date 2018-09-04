@@ -1773,3 +1773,4 @@ void xf_cliprdr_uninit(xfContext* xfc, CliprdrClientContext* cliprdr)
 	if (xfc->clipboard)
 		xfc->clipboard->context = NULL;
 }
+

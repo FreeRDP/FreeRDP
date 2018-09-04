@@ -617,7 +617,7 @@ static UINT rdpei_plugin_initialize(IWTSPlugin* pPlugin,
 {
 	UINT error;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) pPlugin;
-	rdpei->listener_callback = (RDPEI_LISTENER_CALLBACK*) calloc(1 ,
+	rdpei->listener_callback = (RDPEI_LISTENER_CALLBACK*) calloc(1,
 	                           sizeof(RDPEI_LISTENER_CALLBACK));
 
 	if (!rdpei->listener_callback)
@@ -1013,3 +1013,4 @@ error_out:
 	free(rdpei);
 	return error;
 }
+

@@ -78,3 +78,4 @@ struct _RFX_CONTEXT_PRIV
 };
 
 #endif /* FREERDP_LIB_CODEC_RFX_TYPES_H */
+

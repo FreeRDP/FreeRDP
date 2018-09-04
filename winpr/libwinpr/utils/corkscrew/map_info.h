@@ -27,15 +27,16 @@
 extern "C" {
 #endif
 
-typedef struct map_info {
-    struct map_info* next;
-    uintptr_t start;
-    uintptr_t end;
-    bool is_readable;
-    bool is_writable;
-    bool is_executable;
-    void* data; // arbitrary data associated with the map by the user, initially NULL
-    char name[];
+typedef struct map_info
+{
+	struct map_info* next;
+	uintptr_t start;
+	uintptr_t end;
+	bool is_readable;
+	bool is_writable;
+	bool is_executable;
+	void* data; // arbitrary data associated with the map by the user, initially NULL
+	char name[];
 } map_info_t;
 
 /* Loads memory map from /proc/<tid>/maps. */
@@ -72,3 +73,4 @@ void flush_my_map_info_list();
 #endif
 
 #endif // _CORKSCREW_MAP_INFO_H
+

@@ -940,3 +940,4 @@ void certificate_free(rdpCertificate* certificate)
 	free(certificate->cert_info.Modulus);
 	free(certificate);
 }
+

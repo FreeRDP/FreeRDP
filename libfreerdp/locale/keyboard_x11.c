@@ -48,7 +48,7 @@ int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 
 	/* We start by looking for _XKB_RULES_NAMES_BACKUP which appears to be used by libxklavier */
 
-    if (!(xprop = popen("xprop -root _XKB_RULES_NAMES_BACKUP", "r")))
+	if (!(xprop = popen("xprop -root _XKB_RULES_NAMES_BACKUP", "r")))
 		return 0;
 
 	/* Sample output for "Canadian Multilingual Standard"
@@ -67,32 +67,24 @@ int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 			/* "rules" */
 			pch = strchr(&buffer[34], ','); /* We assume it is xorg */
 			pch += 1;
-
 			/* "type" */
 			pch = strchr(pch, ',');
-
 			/* "layout" */
 			beg = strchr(pch + 1, '"');
 			beg += 1;
-
 			end = strchr(beg, '"');
 			*end = '\0';
-
 			layout = beg;
-
 			/* "variant" */
 			beg = strchr(end + 1, '"');
 			beg += 1;
-
 			end = strchr(beg, '"');
 			*end = '\0';
-
 			variant = beg;
 		}
 	}
 
 	pclose(xprop);
-
 	DEBUG_KBD("_XKB_RULES_NAMES_BACKUP layout: %s, variant: %s", layout, variant);
 	*keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
 
@@ -111,32 +103,24 @@ int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 			/* "rules" */
 			pch = strchr(&buffer[27], ','); // We assume it is xorg
 			pch += 1;
-
 			/* "type" */
 			pch = strchr(pch, ',');
-
 			/* "layout" */
 			beg = strchr(pch + 1, '"');
 			beg += 1;
-
 			end = strchr(beg, '"');
 			*end = '\0';
-
 			layout = beg;
-
 			/* "variant" */
 			beg = strchr(end + 1, '"');
 			beg += 1;
-
 			end = strchr(beg, '"');
 			*end = '\0';
-
 			variant = beg;
 		}
 	}
 
 	pclose(xprop);
-
 	DEBUG_KBD("_XKB_RULES_NAMES layout: %s, variant: %s", layout, variant);
 	*keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
 
@@ -155,7 +139,6 @@ char* freerdp_detect_keymap_from_xkb()
 	FILE* setxkbmap;
 	char buffer[1024];
 	char* keymap = NULL;
-
 	/* this tells us about the current XKB configuration, if XKB is available */
 	setxkbmap = popen("setxkbmap -print", "r");
 
@@ -184,10 +167,11 @@ char* freerdp_detect_keymap_from_xkb()
 
 				end = strcspn(beg + 1, "\"") + beg + 1;
 				*end = '\0';
-
 				length = (end - beg);
 				keymap = (char*) malloc(length + 1);
-				if (keymap) {
+
+				if (keymap)
+				{
 					strncpy(keymap, beg, length);
 					keymap[length] = '\0';
 				}
@@ -198,6 +182,6 @@ char* freerdp_detect_keymap_from_xkb()
 	}
 
 	pclose(setxkbmap);
-
 	return keymap;
 }
+

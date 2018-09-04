@@ -57,20 +57,21 @@ struct rdp_codecs
 };
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 FREERDP_API BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags,
-					     UINT32 width, UINT32 height);
+        UINT32 width, UINT32 height);
 FREERDP_API BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags,
-					     UINT32 width, UINT32 height);
+        UINT32 width, UINT32 height);
 
 FREERDP_API rdpCodecs* codecs_new(rdpContext* context);
 FREERDP_API void codecs_free(rdpCodecs* codecs);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CODECS_H */
+
 

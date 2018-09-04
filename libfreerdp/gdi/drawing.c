@@ -139,3 +139,4 @@ UINT32 gdi_SetTextColor(HGDI_DC hdc, UINT32 crColor)
 	hdc->textColor = crColor;
 	return previousTextColor;
 }
+

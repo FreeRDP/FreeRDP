@@ -1471,3 +1471,4 @@ android_setCpuArm(int cpu_count, uint64_t cpu_features, uint32_t cpu_id)
  * ARCH_NEON_FP16 (+EXT_FP16)
  *
  */
+

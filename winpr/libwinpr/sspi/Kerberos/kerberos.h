@@ -35,3 +35,4 @@
 typedef struct _KRB_CONTEXT KRB_CONTEXT;
 
 #endif /* FREERDP_SSPI_KERBEROS_PRIVATE_H */
+

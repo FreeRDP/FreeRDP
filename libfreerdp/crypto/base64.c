@@ -35,9 +35,9 @@ char* crypto_base64_encode(const BYTE* data, int length)
 	char* ret;
 	int i = 0;
 	int blocks;
-
 	q = data;
 	p = ret = (char*) malloc((length + 3) * 4 / 3 + 1);
+
 	if (!p)
 		return NULL;
 
@@ -52,13 +52,12 @@ char* crypto_base64_encode(const BYTE* data, int length)
 	 *
 	 * c1, c2, c3, c4 are output chars in base64
 	 */
-
 	/* first treat complete blocks */
 	blocks = length - (length % 3);
+
 	for (i = 0; i < blocks; i += 3, q += 3)
 	{
 		c = (q[0] << 16) + (q[1] << 8) + q[2];
-
 		*p++ = base64[(c & 0x00FC0000) >> 18];
 		*p++ = base64[(c & 0x0003F000) >> 12];
 		*p++ = base64[(c & 0x00000FC0) >> 6];
@@ -68,26 +67,27 @@ char* crypto_base64_encode(const BYTE* data, int length)
 	/* then remainder */
 	switch (length % 3)
 	{
-	case 0:
-		break;
-	case 1:
-		c = (q[0] << 16);
-		*p++ = base64[(c & 0x00FC0000) >> 18];
-		*p++ = base64[(c & 0x0003F000) >> 12];
-		*p++ = '=';
-		*p++ = '=';
-		break;
-	case 2:
-		c = (q[0] << 16) + (q[1] << 8);
-		*p++ = base64[(c & 0x00FC0000) >> 18];
-		*p++ = base64[(c & 0x0003F000) >> 12];
-		*p++ = base64[(c & 0x00000FC0) >> 6];
-		*p++ = '=';
-		break;
+		case 0:
+			break;
+
+		case 1:
+			c = (q[0] << 16);
+			*p++ = base64[(c & 0x00FC0000) >> 18];
+			*p++ = base64[(c & 0x0003F000) >> 12];
+			*p++ = '=';
+			*p++ = '=';
+			break;
+
+		case 2:
+			c = (q[0] << 16) + (q[1] << 8);
+			*p++ = base64[(c & 0x00FC0000) >> 18];
+			*p++ = base64[(c & 0x0003F000) >> 12];
+			*p++ = base64[(c & 0x00000FC0) >> 6];
+			*p++ = '=';
+			break;
 	}
 
 	*p = 0;
-
 	return ret;
 }
 
@@ -125,6 +125,7 @@ static void* base64_decode(const char* s, int length, int* data_len)
 		return NULL;
 
 	q = data = (BYTE*) malloc(length / 4 * 3 + 1);
+
 	if (!q)
 		return NULL;
 
@@ -132,7 +133,7 @@ static void* base64_decode(const char* s, int length, int* data_len)
 	nBlocks = (length / 4);
 	outputLen = 0;
 
-	for (i = 0; i < nBlocks-1; i++, q += 3)
+	for (i = 0; i < nBlocks - 1; i++, q += 3)
 	{
 		n[0] = base64_decode_char(*s++);
 		n[1] = base64_decode_char(*s++);
@@ -151,17 +152,19 @@ static void* base64_decode(const char* s, int length, int* data_len)
 	/* treat last block */
 	n[0] = base64_decode_char(*s++);
 	n[1] = base64_decode_char(*s++);
+
 	if ((n[0] == -1) || (n[1] == -1))
 		goto out_free;
 
 	n[2] = base64_decode_char(*s++);
 	n[3] = base64_decode_char(*s++);
-
 	q[0] = (n[0] << 2) + (n[1] >> 4);
+
 	if (n[2] == -1)
 	{
 		/* XX== */
 		outputLen += 1;
+
 		if (n[3] != -1)
 			goto out_free;
 
@@ -185,7 +188,6 @@ static void* base64_decode(const char* s, int length, int* data_len)
 
 	*data_len = outputLen;
 	data[outputLen] = '\0';
-
 	return data;
 out_free:
 	free(data);
@@ -196,3 +198,4 @@ void crypto_base64_decode(const char* enc_data, int length, BYTE** dec_data, int
 {
 	*dec_data = base64_decode(enc_data, length, res_length);
 }
+

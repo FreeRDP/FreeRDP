@@ -33,3 +33,4 @@ FREERDP_LOCAL int freerdp_keyboard_load_map_from_xkbfile(void* display,
         DWORD x11_keycode_to_rdp_scancode[256]);
 
 #endif /* FREERDP_LIB_LOCALE_KEYBOARD_XKB_H */
+

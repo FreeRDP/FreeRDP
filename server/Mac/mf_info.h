@@ -48,3 +48,4 @@ void mf_info_getScreenData(mfInfo* mfi, long* width, long* height, BYTE** pBits,
 //BOOL CALLBACK mf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
 
 #endif /* FREERDP_SERVER_MAC_INFO_H */
+

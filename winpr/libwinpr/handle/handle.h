@@ -50,35 +50,35 @@ typedef BOOL (*pcCloseHandle)(HANDLE handle);
 typedef int (*pcGetFd)(HANDLE handle);
 typedef DWORD (*pcCleanupHandle)(HANDLE handle);
 typedef BOOL (*pcReadFile)(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+                           LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
 typedef BOOL (*pcReadFileEx)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-		LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+                             LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
 typedef BOOL (*pcReadFileScatter)(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[],
-		DWORD nNumberOfBytesToRead, LPDWORD lpReserved, LPOVERLAPPED lpOverlapped);
+                                  DWORD nNumberOfBytesToRead, LPDWORD lpReserved, LPOVERLAPPED lpOverlapped);
 typedef BOOL (*pcWriteFile)(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
-		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+                            LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 typedef BOOL (*pcWriteFileEx)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
-		LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+                              LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
 typedef BOOL (*pcWriteFileGather)(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[],
-		DWORD nNumberOfBytesToWrite, LPDWORD lpReserved, LPOVERLAPPED lpOverlapped);
+                                  DWORD nNumberOfBytesToWrite, LPDWORD lpReserved, LPOVERLAPPED lpOverlapped);
 typedef DWORD (*pcGetFileSize)(HANDLE handle, LPDWORD lpFileSizeHigh);
 typedef BOOL (*pcFlushFileBuffers)(HANDLE hFile);
 typedef BOOL (*pcSetEndOfFile)(HANDLE handle);
 typedef DWORD(*pcSetFilePointer)(HANDLE handle, LONG lDistanceToMove,
-		PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
+                                 PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
 typedef BOOL (*pcSetFilePointerEx)(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
-		PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod);
+                                   PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod);
 typedef BOOL (*pcLockFile)(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
-		DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh);
+                           DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh);
 typedef BOOL (*pcLockFileEx)(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
-		DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh,
-		LPOVERLAPPED lpOverlapped);
+                             DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh,
+                             LPOVERLAPPED lpOverlapped);
 typedef BOOL (*pcUnlockFile)(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
-		DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh);
+                             DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh);
 typedef BOOL (*pcUnlockFileEx)(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLow,
-		DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped);
-typedef BOOL (*pcSetFileTime)(HANDLE hFile, const FILETIME *lpCreationTime,
-		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime);
+                               DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped);
+typedef BOOL (*pcSetFileTime)(HANDLE hFile, const FILETIME* lpCreationTime,
+                              const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime);
 
 typedef struct _HANDLE_OPS
 {
@@ -111,10 +111,9 @@ struct winpr_handle
 typedef struct winpr_handle WINPR_HANDLE;
 
 static INLINE void WINPR_HANDLE_SET_TYPE_AND_MODE(void* _handle,
-						 ULONG _type, ULONG _mode)
+        ULONG _type, ULONG _mode)
 {
 	WINPR_HANDLE* hdl = (WINPR_HANDLE*)_handle;
-
 	hdl->Type = _type;
 	hdl->Mode = _mode;
 }
@@ -127,16 +126,14 @@ static INLINE BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, WINPR_HANDL
 		return FALSE;
 
 	wHandle = (WINPR_HANDLE*) handle;
-
 	*pType = wHandle->Type;
 	*pObject = handle;
-
 	return TRUE;
 }
 
 static INLINE int winpr_Handle_getFd(HANDLE handle)
 {
-	WINPR_HANDLE *hdl;
+	WINPR_HANDLE* hdl;
 	ULONG type;
 
 	if (!winpr_Handle_GetInfo(handle, &type, &hdl))
@@ -150,7 +147,7 @@ static INLINE int winpr_Handle_getFd(HANDLE handle)
 
 static INLINE DWORD winpr_Handle_cleanup(HANDLE handle)
 {
-	WINPR_HANDLE *hdl;
+	WINPR_HANDLE* hdl;
 	ULONG type;
 
 	if (!winpr_Handle_GetInfo(handle, &type, &hdl))
@@ -167,3 +164,4 @@ static INLINE DWORD winpr_Handle_cleanup(HANDLE handle)
 }
 
 #endif /* WINPR_HANDLE_PRIVATE_H */
+

@@ -290,3 +290,4 @@ const SecPkgInfoW CREDSSP_SecPkgInfoW =
 	CREDSSP_SecPkgInfoW_Name, /* Name */
 	CREDSSP_SecPkgInfoW_Comment /* Comment */
 };
+

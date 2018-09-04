@@ -180,11 +180,15 @@ WINPR_API BOOL CredReadA(LPCSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIAL
 WINPR_API BOOL CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD* Count, PCREDENTIALW** Credential);
 WINPR_API BOOL CredEnumerateA(LPCSTR Filter, DWORD Flags, DWORD* Count, PCREDENTIALA** Credential);
 
-WINPR_API BOOL CredWriteDomainCredentialsW(PCREDENTIAL_TARGET_INFORMATIONW TargetInfo, PCREDENTIALW Credential, DWORD Flags);
-WINPR_API BOOL CredWriteDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInfo, PCREDENTIALA Credential, DWORD Flags);
+WINPR_API BOOL CredWriteDomainCredentialsW(PCREDENTIAL_TARGET_INFORMATIONW TargetInfo,
+        PCREDENTIALW Credential, DWORD Flags);
+WINPR_API BOOL CredWriteDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInfo,
+        PCREDENTIALA Credential, DWORD Flags);
 
-WINPR_API BOOL CredReadDomainCredentialsW(PCREDENTIAL_TARGET_INFORMATIONW TargetInfo, DWORD Flags, DWORD* Count, PCREDENTIALW** Credential);
-WINPR_API BOOL CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInfo, DWORD Flags, DWORD* Count, PCREDENTIALA** Credential);
+WINPR_API BOOL CredReadDomainCredentialsW(PCREDENTIAL_TARGET_INFORMATIONW TargetInfo, DWORD Flags,
+        DWORD* Count, PCREDENTIALW** Credential);
+WINPR_API BOOL CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInfo, DWORD Flags,
+        DWORD* Count, PCREDENTIALA** Credential);
 
 WINPR_API BOOL CredDeleteW(LPCWSTR TargetName, DWORD Type, DWORD Flags);
 WINPR_API BOOL CredDeleteA(LPCSTR TargetName, DWORD Type, DWORD Flags);
@@ -192,33 +196,43 @@ WINPR_API BOOL CredDeleteA(LPCSTR TargetName, DWORD Type, DWORD Flags);
 WINPR_API BOOL CredRenameW(LPCWSTR OldTargetName, LPCWSTR NewTargetName, DWORD Type, DWORD Flags);
 WINPR_API BOOL CredRenameA(LPCSTR OldTargetName, LPCSTR NewTargetName, DWORD Type, DWORD Flags);
 
-WINPR_API BOOL CredGetTargetInfoW(LPCWSTR TargetName, DWORD Flags, PCREDENTIAL_TARGET_INFORMATIONW* TargetInfo);
-WINPR_API BOOL CredGetTargetInfoA(LPCSTR TargetName, DWORD Flags, PCREDENTIAL_TARGET_INFORMATIONA* TargetInfo);
+WINPR_API BOOL CredGetTargetInfoW(LPCWSTR TargetName, DWORD Flags,
+                                  PCREDENTIAL_TARGET_INFORMATIONW* TargetInfo);
+WINPR_API BOOL CredGetTargetInfoA(LPCSTR TargetName, DWORD Flags,
+                                  PCREDENTIAL_TARGET_INFORMATIONA* TargetInfo);
 
-WINPR_API BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential, LPWSTR* MarshaledCredential);
-WINPR_API BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential, LPSTR* MarshaledCredential);
+WINPR_API BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential,
+                                      LPWSTR* MarshaledCredential);
+WINPR_API BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
+                                      LPSTR* MarshaledCredential);
 
-WINPR_API BOOL CredUnmarshalCredentialW(LPCWSTR MarshaledCredential, PCRED_MARSHAL_TYPE CredType, PVOID* Credential);
-WINPR_API BOOL CredUnmarshalCredentialA(LPCSTR MarshaledCredential, PCRED_MARSHAL_TYPE CredType, PVOID* Credential);
+WINPR_API BOOL CredUnmarshalCredentialW(LPCWSTR MarshaledCredential, PCRED_MARSHAL_TYPE CredType,
+                                        PVOID* Credential);
+WINPR_API BOOL CredUnmarshalCredentialA(LPCSTR MarshaledCredential, PCRED_MARSHAL_TYPE CredType,
+                                        PVOID* Credential);
 
 WINPR_API BOOL CredIsMarshaledCredentialW(LPCWSTR MarshaledCredential);
 WINPR_API BOOL CredIsMarshaledCredentialA(LPCSTR MarshaledCredential);
 
 WINPR_API BOOL CredProtectW(BOOL fAsSelf, LPWSTR pszCredentials, DWORD cchCredentials,
-		LPWSTR pszProtectedCredentials, DWORD* pcchMaxChars, CRED_PROTECTION_TYPE* ProtectionType);
+                            LPWSTR pszProtectedCredentials, DWORD* pcchMaxChars, CRED_PROTECTION_TYPE* ProtectionType);
 WINPR_API BOOL CredProtectA(BOOL fAsSelf, LPSTR pszCredentials, DWORD cchCredentials,
-		LPSTR pszProtectedCredentials, DWORD* pcchMaxChars, CRED_PROTECTION_TYPE* ProtectionType);
+                            LPSTR pszProtectedCredentials, DWORD* pcchMaxChars, CRED_PROTECTION_TYPE* ProtectionType);
 
 WINPR_API BOOL CredUnprotectW(BOOL fAsSelf, LPWSTR pszProtectedCredentials,
-		DWORD cchCredentials, LPWSTR pszCredentials, DWORD* pcchMaxChars);
+                              DWORD cchCredentials, LPWSTR pszCredentials, DWORD* pcchMaxChars);
 WINPR_API BOOL CredUnprotectA(BOOL fAsSelf, LPSTR pszProtectedCredentials,
-		DWORD cchCredentials, LPSTR pszCredentials, DWORD* pcchMaxChars);
+                              DWORD cchCredentials, LPSTR pszCredentials, DWORD* pcchMaxChars);
 
-WINPR_API BOOL CredIsProtectedW(LPWSTR pszProtectedCredentials, CRED_PROTECTION_TYPE* pProtectionType);
-WINPR_API BOOL CredIsProtectedA(LPSTR pszProtectedCredentials, CRED_PROTECTION_TYPE* pProtectionType);
+WINPR_API BOOL CredIsProtectedW(LPWSTR pszProtectedCredentials,
+                                CRED_PROTECTION_TYPE* pProtectionType);
+WINPR_API BOOL CredIsProtectedA(LPSTR pszProtectedCredentials,
+                                CRED_PROTECTION_TYPE* pProtectionType);
 
-WINPR_API BOOL CredFindBestCredentialW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW* Credential);
-WINPR_API BOOL CredFindBestCredentialA(LPCSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALA* Credential);
+WINPR_API BOOL CredFindBestCredentialW(LPCWSTR TargetName, DWORD Type, DWORD Flags,
+                                       PCREDENTIALW* Credential);
+WINPR_API BOOL CredFindBestCredentialA(LPCSTR TargetName, DWORD Type, DWORD Flags,
+                                       PCREDENTIALA* Credential);
 
 WINPR_API BOOL CredGetSessionTypes(DWORD MaximumPersistCount, LPDWORD MaximumPersist);
 
@@ -265,4 +279,5 @@ WINPR_API VOID CredFree(PVOID Buffer);
 #endif
 
 #endif /* WINPR_CREDENTIALS_H */
+
 

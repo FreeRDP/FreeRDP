@@ -140,3 +140,4 @@ FREERDP_API void freerdp_peer_free(freerdp_peer* client);
 #endif
 
 #endif /* FREERDP_PEER_H */
+

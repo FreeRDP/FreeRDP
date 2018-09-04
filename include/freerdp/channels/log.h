@@ -26,3 +26,4 @@
 #define CHANNELS_TAG(tag) FREERDP_TAG("channels.") tag
 
 #endif /* FREERDP_UTILS_DEBUG_H */
+

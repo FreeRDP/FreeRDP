@@ -289,3 +289,4 @@ void bulk_free(rdpBulk* bulk)
 	xcrush_context_free(bulk->xcrushSend);
 	free(bulk);
 }
+

@@ -86,3 +86,4 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
                       char** domain);
 
 #endif /* FREERDP_CLIENT_MAC_MRDPVIEW_H */
+

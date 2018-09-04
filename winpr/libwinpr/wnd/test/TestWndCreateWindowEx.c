@@ -30,10 +30,10 @@ static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if (wParam && (wParam < 13))
 			{
 				PWTSSESSION_NOTIFICATION pNotification = (PWTSSESSION_NOTIFICATION) lParam;
-
 				printf("WM_WTSSESSION_CHANGE: %s SessionId: %"PRIu32"\n",
-						WM_WTS_STRINGS[wParam], (int) pNotification->dwSessionId);
+				       WM_WTS_STRINGS[wParam], (int) pNotification->dwSessionId);
 			}
+
 			break;
 
 		default:
@@ -52,9 +52,7 @@ int TestWndCreateWindowEx(int argc, char* argv[])
 	HINSTANCE hInstance;
 	WNDCLASSEX wndClassEx;
 	WTSSESSION_NOTIFICATION wtsSessionNotification;
-
 	hModule = GetModuleHandle(NULL);
-
 	ZeroMemory(&wndClassEx, sizeof(WNDCLASSEX));
 	wndClassEx.cbSize = sizeof(WNDCLASSEX);
 	wndClassEx.style = 0;
@@ -76,9 +74,8 @@ int TestWndCreateWindowEx(int argc, char* argv[])
 	}
 
 	hInstance = wndClassEx.hInstance;
-
 	hWnd = CreateWindowEx(0, wndClassEx.lpszClassName,
-		0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInstance, NULL);
+	                      0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInstance, NULL);
 
 	if (!hWnd)
 	{
@@ -88,11 +85,9 @@ int TestWndCreateWindowEx(int argc, char* argv[])
 
 	wtsSessionNotification.cbSize = sizeof(WTSSESSION_NOTIFICATION);
 	wtsSessionNotification.dwSessionId = 123;
-
 	SendMessage(hWnd, WM_WTSSESSION_CHANGE, WTS_SESSION_LOGON, (LPARAM) &wtsSessionNotification);
-
 	DestroyWindow(hWnd);
-
 	return 0;
 }
+
 

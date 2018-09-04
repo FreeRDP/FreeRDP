@@ -511,3 +511,4 @@ void primitives_init_colors(primitives_t* prims)
 	prims->RGBToYCbCr_16s16s_P3P3 = general_RGBToYCbCr_16s16s_P3P3;
 	prims->RGBToRGB_16s8u_P3AC4R  = general_RGBToRGB_16s8u_P3AC4R;
 }
+

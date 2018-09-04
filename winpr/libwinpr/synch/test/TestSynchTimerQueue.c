@@ -30,15 +30,11 @@ VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 		return;
 
 	apcData = (APC_DATA*) lpParam;
-
 	TimerTime = CurrentTime - apcData->StartTime;
 	expectedTime = apcData->DueTime + (apcData->Period * apcData->FireCount);
-
 	apcData->FireCount++;
-
 	printf("TimerRoutine: TimerId: %"PRIu32" FireCount: %"PRIu32" ActualTime: %"PRIu32" ExpectedTime: %"PRIu32" Discrepancy: %"PRIu32"\n",
-			apcData->TimerId, apcData->FireCount, TimerTime, expectedTime, TimerTime - expectedTime);
-
+	       apcData->TimerId, apcData->FireCount, TimerTime, expectedTime, TimerTime - expectedTime);
 	Sleep(50);
 
 	if (apcData->FireCount == apcData->MaxFireCount)
@@ -53,7 +49,6 @@ int TestSynchTimerQueue(int argc, char* argv[])
 	HANDLE hTimerQueue;
 	HANDLE hTimers[TIMER_COUNT];
 	APC_DATA apcData[TIMER_COUNT];
-
 	hTimerQueue = CreateTimerQueue();
 
 	if (!hTimerQueue)
@@ -78,7 +73,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		}
 
 		if (!CreateTimerQueueTimer(&hTimers[index], hTimerQueue, (WAITORTIMERCALLBACK) TimerRoutine,
-				&apcData[index], apcData[index].DueTime, apcData[index].Period, 0))
+		                           &apcData[index], apcData[index].DueTime, apcData[index].Period, 0))
 		{
 			printf("CreateTimerQueueTimer failed (%"PRIu32")\n", GetLastError());
 			return -1;
@@ -105,6 +100,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 			printf("DeleteTimerQueueTimer failed (%"PRIu32")\n", GetLastError());
 			return -1;
 		}
+
 		CloseHandle(apcData[index].CompletionEvent);
 	}
 
@@ -116,3 +112,4 @@ int TestSynchTimerQueue(int argc, char* argv[])
 
 	return 0;
 }
+

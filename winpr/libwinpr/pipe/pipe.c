@@ -921,3 +921,4 @@ BOOL GetNamedPipeClientComputerNameW(HANDLE Pipe, LPCWSTR ClientComputerName,
 }
 
 #endif
+

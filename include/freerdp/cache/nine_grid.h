@@ -67,3 +67,4 @@ FREERDP_API void nine_grid_cache_free(rdpNineGridCache* nine_grid);
 #endif
 
 #endif /* FREERDP_NINE_GRID_CACHE_H */
+

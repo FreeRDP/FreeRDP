@@ -42,3 +42,4 @@ void shadow_client_channels_free(rdpShadowClient* client);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_CHANNELS_H */
+

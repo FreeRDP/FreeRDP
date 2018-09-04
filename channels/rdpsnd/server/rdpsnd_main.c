@@ -969,3 +969,4 @@ UINT rdpsnd_server_handle_messages(RdpsndServerContext* context)
 	Stream_SetPosition(s, 0);
 	return ret;
 }
+

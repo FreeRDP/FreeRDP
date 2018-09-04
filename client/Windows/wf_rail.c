@@ -1038,3 +1038,4 @@ void wf_rail_uninit(wfContext* wfc, RailClientContext* rail)
 	rail->custom = NULL;
 	HashTable_Free(wfc->railWindows);
 }
+

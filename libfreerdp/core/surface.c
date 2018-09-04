@@ -248,3 +248,4 @@ BOOL update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction, UINT32 fr
 	Stream_Write_UINT32(s, frameId);
 	return TRUE;
 }
+

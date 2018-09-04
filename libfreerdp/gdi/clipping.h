@@ -41,3 +41,4 @@ FREERDP_LOCAL BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32* x, UINT32* y,
 #endif
 
 #endif /* FREERDP_LIB_GDI_CLIPPING_H */
+

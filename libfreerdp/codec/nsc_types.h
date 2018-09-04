@@ -52,3 +52,4 @@ struct _NSC_CONTEXT_PRIV
 };
 
 #endif /* FREERDP_LIB_CODEC_NSC_TYPES_H */
+

@@ -1340,3 +1340,4 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 		free(file);
 	}
 }
+

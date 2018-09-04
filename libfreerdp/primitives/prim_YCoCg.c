@@ -78,3 +78,4 @@ void primitives_init_YCoCg(primitives_t* prims)
 {
 	prims->YCoCgToRGB_8u_AC4R = general_YCoCgToRGB_8u_AC4R;
 }
+

@@ -40,3 +40,4 @@ void WLog_Layout_Free(wLog* log, wLogLayout* layout);
 
 #endif /* WINPR_WLOG_LAYOUT_PRIVATE_H */
 
+

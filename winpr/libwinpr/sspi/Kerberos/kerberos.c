@@ -805,3 +805,4 @@ const SecurityFunctionTableW KERBEROS_SecurityFunctionTableW =
 	kerberos_DecryptMessage,	/* DecryptMessage */
 	NULL,			/* SetContextAttributes */
 };
+

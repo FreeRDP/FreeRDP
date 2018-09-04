@@ -129,5 +129,6 @@ BOOL wlf_keyboard_enter(freerdp* instance, UwacKeyboardEnterLeaveEvent* ev)
 
 	input = instance->input;
 	return freerdp_input_send_focus_in_event(input, 0) &&
-		   freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, 0, 0);
+	       freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, 0, 0);
 }
+

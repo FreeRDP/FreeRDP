@@ -53,12 +53,12 @@
 #define LOGE(...) do { WLog_Print(WLog_Get(TAG), WLOG_ERROR, __VA_ARGS__); } while(0)
 #define LOGF(...) do { WLog_Print(WLog_Get(TAG), WLOG_FATAL, __VA_ARGS__); } while(0)
 
-static const char *support_msg = "Invalid stacktrace buffer! check if platform is supported!";
+static const char* support_msg = "Invalid stacktrace buffer! check if platform is supported!";
 
 #if defined(HAVE_EXECINFO_H)
 typedef struct
 {
-	void **buffer;
+	void** buffer;
 	size_t max;
 	size_t used;
 } t_execinfo;
@@ -67,9 +67,9 @@ typedef struct
 #if defined(_WIN32) || defined(_WIN64)
 typedef struct
 {
-		PVOID* stack;
-		ULONG used;
-		ULONG max;
+	PVOID* stack;
+	ULONG used;
+	ULONG max;
 } t_win_stack;
 #endif
 
@@ -80,31 +80,31 @@ typedef struct
 
 typedef struct
 {
-	backtrace_frame_t *buffer;
+	backtrace_frame_t* buffer;
 	size_t max;
 	size_t used;
 } t_corkscrew_data;
 
 typedef struct
 {
-	void *hdl;
-	ssize_t (*unwind_backtrace)(backtrace_frame_t *backtrace, size_t ignore_depth, size_t max_depth);
-	ssize_t (*unwind_backtrace_thread)(pid_t tid, backtrace_frame_t *backtrace,
-									   size_t ignore_depth, size_t max_depth);
-	ssize_t (*unwind_backtrace_ptrace)(pid_t tid, const ptrace_context_t *context,
-									   backtrace_frame_t *backtrace, size_t ignore_depth, size_t max_depth);
-	void (*get_backtrace_symbols)(const backtrace_frame_t *backtrace, size_t frames,
-								  backtrace_symbol_t *backtrace_symbols);
-	void (*get_backtrace_symbols_ptrace)(const ptrace_context_t *context,
-										 const backtrace_frame_t *backtrace, size_t frames,
-										 backtrace_symbol_t *backtrace_symbols);
-	void (*free_backtrace_symbols)(backtrace_symbol_t *backtrace_symbols, size_t frames);
-	void (*format_backtrace_line)(unsigned frameNumber, const backtrace_frame_t *frame,
-								  const backtrace_symbol_t *symbol, char *buffer, size_t bufferSize);
+	void* hdl;
+	ssize_t (*unwind_backtrace)(backtrace_frame_t* backtrace, size_t ignore_depth, size_t max_depth);
+	ssize_t (*unwind_backtrace_thread)(pid_t tid, backtrace_frame_t* backtrace,
+	                                   size_t ignore_depth, size_t max_depth);
+	ssize_t (*unwind_backtrace_ptrace)(pid_t tid, const ptrace_context_t* context,
+	                                   backtrace_frame_t* backtrace, size_t ignore_depth, size_t max_depth);
+	void (*get_backtrace_symbols)(const backtrace_frame_t* backtrace, size_t frames,
+	                              backtrace_symbol_t* backtrace_symbols);
+	void (*get_backtrace_symbols_ptrace)(const ptrace_context_t* context,
+	                                     const backtrace_frame_t* backtrace, size_t frames,
+	                                     backtrace_symbol_t* backtrace_symbols);
+	void (*free_backtrace_symbols)(backtrace_symbol_t* backtrace_symbols, size_t frames);
+	void (*format_backtrace_line)(unsigned frameNumber, const backtrace_frame_t* frame,
+	                              const backtrace_symbol_t* symbol, char* buffer, size_t bufferSize);
 } t_corkscrew;
 
 static pthread_once_t initialized = PTHREAD_ONCE_INIT;
-static t_corkscrew *fkt = NULL;
+static t_corkscrew* fkt = NULL;
 
 void load_library(void)
 {
@@ -189,14 +189,16 @@ fail:
 
 #if defined(_WIN32) && (NTDDI_VERSION <= NTDDI_WINXP)
 
-typedef USHORT (WINAPI * PRTL_CAPTURE_STACK_BACK_TRACE_FN)(ULONG FramesToSkip, ULONG FramesToCapture, PVOID* BackTrace, PULONG BackTraceHash);
+typedef USHORT(WINAPI* PRTL_CAPTURE_STACK_BACK_TRACE_FN)(ULONG FramesToSkip, ULONG FramesToCapture,
+        PVOID* BackTrace, PULONG BackTraceHash);
 
 static HMODULE g_NTDLL_Library = NULL;
 static BOOL g_RtlCaptureStackBackTrace_Detected = FALSE;
 static BOOL g_RtlCaptureStackBackTrace_Available = FALSE;
 static PRTL_CAPTURE_STACK_BACK_TRACE_FN g_pRtlCaptureStackBackTrace = NULL;
 
-USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID* BackTrace, PULONG BackTraceHash)
+USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID* BackTrace,
+                                PULONG BackTraceHash)
 {
 	if (!g_RtlCaptureStackBackTrace_Detected)
 	{
@@ -204,7 +206,8 @@ USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID
 
 		if (g_NTDLL_Library)
 		{
-			g_pRtlCaptureStackBackTrace = (PRTL_CAPTURE_STACK_BACK_TRACE_FN) GetProcAddress(g_NTDLL_Library, "RtlCaptureStackBackTrace");
+			g_pRtlCaptureStackBackTrace = (PRTL_CAPTURE_STACK_BACK_TRACE_FN) GetProcAddress(g_NTDLL_Library,
+			                              "RtlCaptureStackBackTrace");
 			g_RtlCaptureStackBackTrace_Available = (g_pRtlCaptureStackBackTrace) ? TRUE : FALSE;
 		}
 		else
@@ -235,19 +238,15 @@ void winpr_backtrace_free(void* buffer)
 
 #if defined(HAVE_EXECINFO_H)
 	t_execinfo* data = (t_execinfo*) buffer;
-
 	free(data->buffer);
-
 	free(data);
 #elif defined(ANDROID)
-	t_corkscrew_data *data = (t_corkscrew_data *)buffer;
-
+	t_corkscrew_data* data = (t_corkscrew_data*)buffer;
 	free(data->buffer);
-
 	free(data);
 #elif defined(_WIN32) || defined(_WIN64)
 	{
-		t_win_stack *data = (t_win_stack*)buffer;
+		t_win_stack* data = (t_win_stack*)buffer;
 		free(data->stack);
 		free(data);
 	}
@@ -311,7 +310,6 @@ void* winpr_backtrace(DWORD size)
 
 	SymInitialize(process, NULL, TRUE);
 	data->used = RtlCaptureStackBackTrace(2, size, data->stack, NULL);
-
 	return data;
 #else
 	LOGF(support_msg);
@@ -359,8 +357,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 		size_t i;
 		size_t array_size = data->used * sizeof(char*);
 		size_t lines_size = data->used * line_len;
-		char **vlines = calloc(1, array_size + lines_size);
-
+		char** vlines = calloc(1, array_size + lines_size);
 		backtrace_symbol_t* symbols = calloc(data->used, sizeof(backtrace_symbol_t));
 
 		if (!vlines || !symbols)
@@ -376,7 +373,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 
 		fkt->get_backtrace_symbols(data->buffer, data->used, symbols);
 
-		for (i = 0; i <data->used; i++)
+		for (i = 0; i < data->used; i++)
 			fkt->format_backtrace_line(i, &data->buffer[i], &symbols[i], vlines[i], line_len);
 
 		fkt->free_backtrace_symbols(symbols, data->used);
@@ -387,6 +384,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 
 		return vlines;
 	}
+
 #elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
 	{
 		size_t i;
@@ -395,16 +393,16 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 		t_win_stack* data = (t_win_stack*) buffer;
 		size_t array_size = data->used * sizeof(char*);
 		size_t lines_size = data->used * line_len;
-		char **vlines = calloc(1, array_size + lines_size);
+		char** vlines = calloc(1, array_size + lines_size);
 		SYMBOL_INFO* symbol = calloc(1, sizeof(SYMBOL_INFO) + line_len * sizeof(char));
 		IMAGEHLP_LINE64* line = (IMAGEHLP_LINE64*) calloc(1, sizeof(IMAGEHLP_LINE64));
 
 		if (!vlines || !symbol || !line)
 		{
-				free(vlines);
-				free(symbol);
-				free(line);
-				return NULL;
+			free(vlines);
+			free(symbol);
+			free(line);
+			return NULL;
 		}
 
 		line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
@@ -419,24 +417,23 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 		{
 			DWORD64 address = (DWORD64)(data->stack[i]);
 			DWORD displacement;
-
 			SymFromAddr(process, address, 0, symbol);
 
 			if (SymGetLineFromAddr64(process, address, &displacement, line))
 			{
-				sprintf_s(vlines[i], line_len, "%016"PRIx64": %s in %s:%"PRIu32, symbol->Address, symbol->Name, line->FileName, line->LineNumber);
+				sprintf_s(vlines[i], line_len, "%016"PRIx64": %s in %s:%"PRIu32, symbol->Address, symbol->Name,
+				          line->FileName, line->LineNumber);
 			}
 			else
 				sprintf_s(vlines[i], line_len, "%016"PRIx64": %s", symbol->Address, symbol->Name);
-			}
+		}
 
-			if (used)
-				*used = data->used;
+		if (used)
+			*used = data->used;
 
-			free(symbol);
-			free(line);
-
-			return vlines;
+		free(symbol);
+		free(line);
+		return vlines;
 	}
 #else
 	LOGF(support_msg);
@@ -464,7 +461,6 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 		DWORD i;
 		size_t used;
 		char** lines;
-
 		lines = winpr_backtrace_symbols(buffer, &used);
 
 		if (lines)
@@ -481,8 +477,8 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 {
 	size_t used, x;
-	char **msg;
-	void *stack = winpr_backtrace(20);
+	char** msg;
+	void* stack = winpr_backtrace(20);
 
 	if (!stack)
 	{
@@ -492,11 +488,13 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 	}
 
 	msg = winpr_backtrace_symbols(stack, &used);
+
 	if (msg)
 	{
-		for (x=0; x<used; x++)
+		for (x = 0; x < used; x++)
 			WLog_LVL(tag, level, "%"PRIuz": %s\n", x, msg[x]);
 	}
+
 	winpr_backtrace_free(stack);
 }
 
@@ -508,38 +506,38 @@ char* winpr_strerror(DWORD dw, char* dmsg, size_t size)
 	DWORD dwFlags = 0;
 	LPTSTR msg = NULL;
 	BOOL alloc = FALSE;
-
 	dwFlags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-
 #ifdef FORMAT_MESSAGE_ALLOCATE_BUFFER
 	alloc = TRUE;
 	dwFlags |= FORMAT_MESSAGE_ALLOCATE_BUFFER;
 #else
-	nSize = (DWORD) (size * 2);
+	nSize = (DWORD)(size * 2);
 	msg = (LPTSTR) calloc(nSize, sizeof(TCHAR));
 #endif
-
 	rc = FormatMessage(dwFlags, NULL, dw, 0, alloc ? (LPTSTR) &msg : msg, nSize, NULL);
 
-	if (rc) {
+	if (rc)
+	{
 #if defined(UNICODE)
 		WideCharToMultiByte(CP_ACP, 0, msg, rc, dmsg, size - 1, NULL, NULL);
 #else /* defined(UNICODE) */
 		memcpy(dmsg, msg, min(rc, size - 1));
 #endif /* defined(UNICODE) */
 		dmsg[min(rc, size - 1)] = 0;
-
 #ifdef FORMAT_MESSAGE_ALLOCATE_BUFFER
 		LocalFree(msg);
 #else
 		free(msg);
 #endif
-	} else {
+	}
+	else
+	{
 		_snprintf(dmsg, size, "FAILURE: 0x%08"PRIX32"", GetLastError());
 	}
+
 #else /* defined(_WIN32) */
 	_snprintf(dmsg, size, "%s", strerror(dw));
 #endif /* defined(_WIN32) */
-
 	return dmsg;
 }
+

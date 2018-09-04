@@ -12,10 +12,9 @@ int TestInterlockedAccess(int argc, char* argv[])
 	LONG* Destination;
 	LONGLONG oldValue64;
 	LONGLONG* Destination64;
-
 	/* InterlockedIncrement */
-
 	Addend = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+
 	if (!Addend)
 	{
 		printf("Failed to allocate memory\n");
@@ -45,7 +44,6 @@ int TestInterlockedAccess(int argc, char* argv[])
 	}
 
 	/* InterlockedExchange */
-
 	Target = _aligned_malloc(sizeof(LONG), sizeof(LONG));
 
 	if (!Target)
@@ -55,7 +53,6 @@ int TestInterlockedAccess(int argc, char* argv[])
 	}
 
 	*Target = 0xAA;
-
 	oldValue = InterlockedExchange(Target, 0xFF);
 
 	if (oldValue != 0xAA)
@@ -71,9 +68,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 	}
 
 	/* InterlockedExchangeAdd */
-
 	*Addend = 25;
-
 	oldValue = InterlockedExchangeAdd(Addend, 100);
 
 	if (oldValue != 25)
@@ -89,8 +84,8 @@ int TestInterlockedAccess(int argc, char* argv[])
 	}
 
 	/* InterlockedCompareExchange (*Destination == Comparand) */
-
 	Destination = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+
 	if (!Destination)
 	{
 		printf("Failed to allocate memory\n");
@@ -98,42 +93,43 @@ int TestInterlockedAccess(int argc, char* argv[])
 	}
 
 	*Destination = 0xAABBCCDD;
-
 	oldValue = InterlockedCompareExchange(Destination, 0xCCDDEEFF, 0xAABBCCDD);
 
 	if (oldValue != 0xAABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xAABBCCDD\n", oldValue);
+		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xAABBCCDD\n",
+		       oldValue);
 		return -1;
 	}
 
 	if (*Destination != 0xCCDDEEFF)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xCCDDEEFF\n", *Destination);
+		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xCCDDEEFF\n",
+		       *Destination);
 		return -1;
 	}
 
 	/* InterlockedCompareExchange (*Destination != Comparand) */
-
 	*Destination = 0xAABBCCDD;
-
 	oldValue = InterlockedCompareExchange(Destination, 0xCCDDEEFF, 0x66778899);
 
 	if (oldValue != 0xAABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xAABBCCDD\n", oldValue);
+		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xAABBCCDD\n",
+		       oldValue);
 		return -1;
 	}
 
 	if (*Destination != 0xAABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xAABBCCDD\n", *Destination);
+		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xAABBCCDD\n",
+		       *Destination);
 		return -1;
 	}
 
 	/* InterlockedCompareExchange64 (*Destination == Comparand) */
-
 	Destination64 = _aligned_malloc(sizeof(LONGLONG), sizeof(LONGLONG));
+
 	if (!Destination64)
 	{
 		printf("Failed to allocate memory\n");
@@ -141,36 +137,37 @@ int TestInterlockedAccess(int argc, char* argv[])
 	}
 
 	*Destination64 = 0x66778899AABBCCDD;
-
 	oldValue64 = InterlockedCompareExchange64(Destination64, 0x8899AABBCCDDEEFF, 0x66778899AABBCCDD);
 
 	if (oldValue64 != 0x66778899AABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x66778899AABBCCDD\n", oldValue64);
+		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x66778899AABBCCDD\n",
+		       oldValue64);
 		return -1;
 	}
 
 	if (*Destination64 != 0x8899AABBCCDDEEFF)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x8899AABBCCDDEEFF\n", *Destination64);
+		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x8899AABBCCDDEEFF\n",
+		       *Destination64);
 		return -1;
 	}
 
 	/* InterlockedCompareExchange64 (*Destination != Comparand) */
-
 	*Destination64 = 0x66778899AABBCCDD;
-
 	oldValue64 = InterlockedCompareExchange64(Destination64, 0x8899AABBCCDDEEFF, 12345);
 
 	if (oldValue64 != 0x66778899AABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x66778899AABBCCDD\n", oldValue64);
+		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x66778899AABBCCDD\n",
+		       oldValue64);
 		return -1;
 	}
 
 	if (*Destination64 != 0x66778899AABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x66778899AABBCCDD\n", *Destination64);
+		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x66778899AABBCCDD\n",
+		       *Destination64);
 		return -1;
 	}
 
@@ -178,6 +175,6 @@ int TestInterlockedAccess(int argc, char* argv[])
 	_aligned_free(Target);
 	_aligned_free(Destination);
 	_aligned_free(Destination64);
-
 	return 0;
 }
+

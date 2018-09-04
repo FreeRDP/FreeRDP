@@ -749,3 +749,4 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT
 
 	winpr_HMAC_Free(hmac);
 }
+

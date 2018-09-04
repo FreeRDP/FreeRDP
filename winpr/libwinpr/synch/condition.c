@@ -37,27 +37,27 @@
 
 VOID InitializeConditionVariable(PCONDITION_VARIABLE ConditionVariable)
 {
-
 }
 
-BOOL SleepConditionVariableCS(PCONDITION_VARIABLE ConditionVariable, PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds)
+BOOL SleepConditionVariableCS(PCONDITION_VARIABLE ConditionVariable,
+                              PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds)
 {
 	return TRUE;
 }
 
-BOOL SleepConditionVariableSRW(PCONDITION_VARIABLE ConditionVariable, PSRWLOCK SRWLock, DWORD dwMilliseconds, ULONG Flags)
+BOOL SleepConditionVariableSRW(PCONDITION_VARIABLE ConditionVariable, PSRWLOCK SRWLock,
+                               DWORD dwMilliseconds, ULONG Flags)
 {
 	return TRUE;
 }
 
 VOID WakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable)
 {
-
 }
 
 VOID WakeConditionVariable(PCONDITION_VARIABLE ConditionVariable)
 {
-
 }
 
 #endif
+

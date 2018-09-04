@@ -155,3 +155,4 @@ FREERDP_LOCAL void nego_set_preconnection_blob(rdpNego* nego,
         char* PreconnectionBlob);
 
 #endif /* FREERDP_LIB_CORE_NEGO_H */
+

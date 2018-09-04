@@ -157,3 +157,4 @@ void gdi_video_data_uninit(rdpGdi* gdi, VideoClientContext* context)
 {
 	PubSub_UnsubscribeTimer(gdi->context->pubSub, gdi_video_timer);
 }
+

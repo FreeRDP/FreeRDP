@@ -601,3 +601,4 @@ int TestGdiBitBlt(int argc, char* argv[])
 
 	return rc;
 }
+

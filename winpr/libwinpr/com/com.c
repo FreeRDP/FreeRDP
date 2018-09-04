@@ -118,7 +118,7 @@ HRESULT CoInitializeEx(LPVOID pvReserved, DWORD dwCoInit)
 
 void CoUninitialize(void)
 {
-
 }
 
 #endif
+

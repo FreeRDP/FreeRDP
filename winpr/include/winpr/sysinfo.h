@@ -342,3 +342,4 @@ WINPR_API BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature);
 #endif
 
 #endif /* WINPR_SYSINFO_H */
+

@@ -385,3 +385,4 @@ void android_event_free(ANDROID_EVENT* event)
 			break;
 	}
 }
+

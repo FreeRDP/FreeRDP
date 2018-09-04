@@ -35,8 +35,10 @@
  * This part is an adaptation of client/window.c from the weston project.
  */
 
-void *fail_on_null(void *p) {
-	if (p == NULL) {
+void* fail_on_null(void* p)
+{
+	if (p == NULL)
+	{
 		fprintf(stderr, "out of memory\n");
 		exit(EXIT_FAILURE);
 	}
@@ -44,20 +46,25 @@ void *fail_on_null(void *p) {
 	return p;
 }
 
-void *xmalloc(size_t s) {
+void* xmalloc(size_t s)
+{
 	return fail_on_null(malloc(s));
 }
 
-void *xzalloc(size_t s) {
+void* xzalloc(size_t s)
+{
 	return fail_on_null(zalloc(s));
 }
 
-char *xstrdup(const char *s) {
+char* xstrdup(const char* s)
+{
 	return fail_on_null(strdup(s));
 }
 
-void *xrealloc(char *p, size_t s) {
+void* xrealloc(char* p, size_t s)
+{
 	return fail_on_null(realloc(p, s));
 }
+
 
 

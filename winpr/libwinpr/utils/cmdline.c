@@ -47,7 +47,9 @@
 
 int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* options,
                                DWORD flags,
-                               void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter, COMMAND_LINE_POST_FILTER_FN_A postFilter)
+                               void* context,
+                               COMMAND_LINE_PRE_FILTER_FN_A preFilter,
+                               COMMAND_LINE_POST_FILTER_FN_A postFilter)
 {
 	int i, j;
 	int status;
@@ -322,6 +324,16 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}
+					else
+					{
+						/*
+						We need to reset the option Value and Flag
+						to process correctly the cases where the same
+						option is given several times like: /foo:bar /foo
+						*/
+						options[j].Value = NULL;
+						options[j].Flags &= ~ COMMAND_LINE_VALUE_PRESENT;
+					}
 				}
 
 				if (postFilter)
@@ -355,7 +367,9 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 int CommandLineParseArgumentsW(int argc, LPWSTR* argv, COMMAND_LINE_ARGUMENT_W* options,
                                DWORD flags,
-                               void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter, COMMAND_LINE_POST_FILTER_FN_W postFilter)
+                               void* context,
+                               COMMAND_LINE_PRE_FILTER_FN_W preFilter,
+                               COMMAND_LINE_POST_FILTER_FN_W postFilter)
 {
 	return 0;
 }
@@ -438,3 +452,4 @@ COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* a
 
 	return nextArgument;
 }
+

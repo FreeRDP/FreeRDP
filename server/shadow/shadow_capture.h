@@ -46,3 +46,4 @@ void shadow_capture_free(rdpShadowCapture* capture);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_CAPTURE_H */
+

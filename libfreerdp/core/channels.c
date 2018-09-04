@@ -270,3 +270,4 @@ PWtsApiFunctionTable FreeRDP_InitWtsApi(void)
 {
 	return (PWtsApiFunctionTable)&FreeRDP_WtsApiFunctionTable;
 }
+

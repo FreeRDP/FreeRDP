@@ -38,3 +38,4 @@ WINPR_API void MIDL_user_free(void* p);
 #endif
 
 #endif /* WINPR_RPC_MIDL_H */
+

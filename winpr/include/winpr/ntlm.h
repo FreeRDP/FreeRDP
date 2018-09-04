@@ -65,3 +65,4 @@ WINPR_API BOOL NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength,
 
 #endif /* WINPR_UTILS_NTLM_H */
 
+

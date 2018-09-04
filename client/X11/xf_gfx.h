@@ -54,3 +54,4 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx);
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx);
 
 #endif /* FREERDP_CLIENT_X11_GFX_H */
+

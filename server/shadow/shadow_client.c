@@ -2009,3 +2009,4 @@ int shadow_client_boardcast_quit(rdpShadowServer* server, int nExitCode)
 	ArrayList_Unlock(server->clients);
 	return count;
 }
+

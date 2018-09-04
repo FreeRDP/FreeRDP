@@ -57,7 +57,7 @@
 #define ER_PC(_pc)	(_pc ? ER_CONSTRUCT : ER_PRIMITIVE)
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 FREERDP_API void er_read_length(wStream* s, int* length);
@@ -91,7 +91,8 @@ FREERDP_API BOOL er_read_integer_length(wStream* s, int* length);
 FREERDP_API int er_skip_integer(INT32 value);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CRYPTO_ER_H */
+

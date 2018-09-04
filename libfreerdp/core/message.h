@@ -167,3 +167,4 @@ FREERDP_LOCAL rdpInputProxy* input_message_proxy_new(rdpInput* input);
 FREERDP_LOCAL void input_message_proxy_free(rdpInputProxy* proxy);
 
 #endif /* FREERDP_LIB_CORE_MESSAGE_H */
+

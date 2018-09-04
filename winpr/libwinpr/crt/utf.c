@@ -860,3 +860,4 @@ ConversionResult ConvertUTF8toUTF32(
     similarly unrolled loops.
 
    --------------------------------------------------------------------- */
+

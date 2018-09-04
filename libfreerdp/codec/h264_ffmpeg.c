@@ -615,3 +615,4 @@ H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec =
 	libavcodec_decompress,
 	libavcodec_compress
 };
+

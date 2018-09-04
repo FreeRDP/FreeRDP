@@ -275,6 +275,7 @@ wLogAppender* WLog_FileAppender_New(wLog* log)
 
 		if (GetEnvironmentVariableA(name, env, nSize) == nSize - 1)
 			status = WLog_FileAppender_SetOutputFileName(FileAppender, env);
+
 		free(env);
 
 		if (!status)
@@ -288,3 +289,4 @@ error_free:
 	free(FileAppender);
 	return NULL;
 }
+

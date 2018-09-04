@@ -27,3 +27,4 @@
 #define CLIENT_TAG(tag) FREERDP_TAG("client.") tag
 
 #endif /* FREERDP_UTILS_DEBUG_H */
+

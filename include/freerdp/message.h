@@ -364,3 +364,4 @@
 
 #endif /* FREERDP_CORE_MESSAGE_H */
 
+

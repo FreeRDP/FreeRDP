@@ -49,3 +49,4 @@ typedef ITSMFAudioDevice* (*TSMF_AUDIO_DEVICE_ENTRY)(void);
 ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device);
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_AUDIO_H */
+

@@ -287,3 +287,4 @@ DWORD freerdp_detect_solaris_keyboard_layout()
 
 	return 0;
 }
+

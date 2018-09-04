@@ -103,7 +103,7 @@ static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor,
 	}
 
 	*color = FreeRDPConvertColor(srcColor, SrcFormat,
-	                      DstFormat, &gdi->palette);
+	                             DstFormat, &gdi->palette);
 	return TRUE;
 }
 
@@ -351,6 +351,7 @@ void wf_resize_window(wfContext* wfc)
 	else if (!wfc->context.settings->Decorations)
 	{
 		SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_CHILD);
+
 		if (settings->EmbeddedWindow)
 		{
 			wf_update_canvas_diff(wfc);
@@ -359,10 +360,10 @@ void wf_resize_window(wfContext* wfc)
 		{
 			/* Now resize to get full canvas size and room for caption and borders */
 			SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, settings->DesktopWidth,
-				settings->DesktopHeight, SWP_FRAMECHANGED);
+			             settings->DesktopHeight, SWP_FRAMECHANGED);
 			wf_update_canvas_diff(wfc);
 			SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1, settings->DesktopWidth + wfc->diff.x,
-				settings->DesktopHeight + wfc->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
+			             settings->DesktopHeight + wfc->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
 		}
 	}
 	else
@@ -833,3 +834,4 @@ void wf_update_canvas_diff(wfContext* wfc)
 		wfc->diff.y = dy;
 	}
 }
+

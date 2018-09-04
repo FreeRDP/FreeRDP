@@ -1239,3 +1239,4 @@ void fastpath_free(rdpFastPath* fastpath)
 		free(fastpath);
 	}
 }
+

@@ -248,3 +248,4 @@ FREERDP_LOCAL BOOL WINAPI FreeRDP_WTSLogonUser(HANDLE hServer, LPCSTR username,
         LPCSTR password, LPCSTR domain);
 
 #endif /* FREERDP_LIB_CORE_SERVER_H */
+

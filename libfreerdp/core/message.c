@@ -3028,3 +3028,4 @@ void input_message_proxy_free(rdpInputProxy* proxy)
 {
 	free(proxy);
 }
+

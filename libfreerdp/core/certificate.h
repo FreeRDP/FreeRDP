@@ -66,3 +66,4 @@ FREERDP_LOCAL void key_free(rdpRsaKey* key);
 #endif
 
 #endif /* FREERDP_LIB_CORE_CERTIFICATE_H */
+

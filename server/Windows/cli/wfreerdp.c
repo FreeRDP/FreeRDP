@@ -172,3 +172,4 @@ int main(int argc, char* argv[])
 	wfreerdp_server_free(server);
 	return 0;
 }
+

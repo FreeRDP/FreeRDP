@@ -1310,3 +1310,4 @@ int UnixChangeFileMode(const char* filename, int flags)
 	return rc;
 #endif
 }
+

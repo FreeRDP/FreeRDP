@@ -80,3 +80,4 @@ FREERDP_LOCAL BOOL android_event_queue_init(freerdp* inst);
 FREERDP_LOCAL void android_event_queue_uninit(freerdp* inst);
 
 #endif /* FREERDP_CLIENT_ANDROID_EVENT_H */
+

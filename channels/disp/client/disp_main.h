@@ -40,3 +40,4 @@
 
 #endif /* FREERDP_CHANNEL_DISP_CLIENT_MAIN_H */
 
+

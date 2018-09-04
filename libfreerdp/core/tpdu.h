@@ -53,3 +53,4 @@ FREERDP_LOCAL BOOL tpdu_read_data(wStream* s, UINT16* li);
 FREERDP_LOCAL void tpdu_write_data(wStream* s);
 
 #endif /* FREERDP_LIB_CORE_TPDU_H */
+

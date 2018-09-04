@@ -867,3 +867,4 @@ HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp)
 	return hBrush;
 }
 
+

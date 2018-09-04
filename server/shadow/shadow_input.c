@@ -34,6 +34,7 @@ BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 	{
 		subsystem->SynchronizeEvent(subsystem, client, flags);
 	}
+
 	return TRUE;
 }
 
@@ -44,11 +45,12 @@ BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 	if (!client->mayInteract)
 		return TRUE;
-	
+
 	if (subsystem->KeyboardEvent)
 	{
 		subsystem->KeyboardEvent(subsystem, client, flags, code);
 	}
+
 	return TRUE;
 }
 
@@ -64,6 +66,7 @@ BOOL shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 c
 	{
 		subsystem->UnicodeKeyboardEvent(subsystem, client, flags, code);
 	}
+
 	return TRUE;
 }
 
@@ -84,7 +87,7 @@ BOOL shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 		client->pointerY = y;
 
 		if ((client->pointerX == subsystem->pointerX) &&
-				(client->pointerY == subsystem->pointerY))
+		    (client->pointerY == subsystem->pointerY))
 		{
 			flags &= ~PTR_FLAGS_MOVE;
 
@@ -100,6 +103,7 @@ BOOL shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	{
 		subsystem->MouseEvent(subsystem, client, flags, x, y);
 	}
+
 	return TRUE;
 }
 
@@ -124,6 +128,7 @@ BOOL shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, 
 	{
 		subsystem->ExtendedMouseEvent(subsystem, client, flags, x, y);
 	}
+
 	return TRUE;
 }
 
@@ -135,3 +140,4 @@ void shadow_input_register_callbacks(rdpInput* input)
 	input->MouseEvent = shadow_input_mouse_event;
 	input->ExtendedMouseEvent = shadow_input_extended_mouse_event;
 }
+

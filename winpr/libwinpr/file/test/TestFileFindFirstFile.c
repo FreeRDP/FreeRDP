@@ -66,3 +66,4 @@ int TestFileFindFirstFile(int argc, char* argv[])
 	FindClose(hFind);
 	return 0;
 }
+

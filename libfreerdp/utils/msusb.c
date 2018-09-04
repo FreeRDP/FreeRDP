@@ -388,3 +388,4 @@ void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 
 	WLog_INFO(TAG,  "==================================================");
 }
+

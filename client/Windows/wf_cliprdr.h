@@ -25,3 +25,4 @@ BOOL wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr);
 BOOL wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr);
 
 #endif /* FREERDP_CLIENT_WIN_CLIPRDR_H */
+

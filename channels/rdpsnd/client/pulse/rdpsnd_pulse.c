@@ -573,3 +573,4 @@ error:
 	rdpsnd_pulse_free((rdpsndDevicePlugin*)pulse);
 	return ret;
 }
+

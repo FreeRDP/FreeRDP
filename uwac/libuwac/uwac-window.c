@@ -708,3 +708,4 @@ void UwacWindowSetTitle(UwacWindow* window, const char* name)
 	else if (window->shell_surface)
 		wl_shell_surface_set_title(window->shell_surface, name);
 }
+

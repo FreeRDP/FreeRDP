@@ -35,16 +35,14 @@
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_change_participant_control_level(EncomspServerContext* context,
-		ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
+        ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
 {
 	BOOL inLobby;
 	BOOL mayView;
 	BOOL mayInteract;
 	rdpShadowClient* client = (rdpShadowClient*) context->custom;
-
 	WLog_INFO(TAG, "ChangeParticipantControlLevel: ParticipantId: %"PRIu32" Flags: 0x%04"PRIX16"",
-			pdu->ParticipantId, pdu->Flags);
-
+	          pdu->ParticipantId, pdu->Flags);
 	mayView = (pdu->Flags & ENCOMSP_MAY_VIEW) ? TRUE : FALSE;
 	mayInteract = (pdu->Flags & ENCOMSP_MAY_INTERACT) ? TRUE : FALSE;
 
@@ -103,13 +101,9 @@ static UINT encomsp_change_participant_control_level(EncomspServerContext* conte
 int shadow_client_encomsp_init(rdpShadowClient* client)
 {
 	EncomspServerContext* encomsp;
-
 	encomsp = client->encomsp = encomsp_server_context_new(client->vcm);
-
 	encomsp->rdpcontext = &client->context;
-
 	encomsp->custom = (void*) client;
-
 	encomsp->ChangeParticipantControlLevel = encomsp_change_participant_control_level;
 
 	if (client->encomsp)
@@ -120,9 +114,11 @@ int shadow_client_encomsp_init(rdpShadowClient* client)
 
 void shadow_client_encomsp_uninit(rdpShadowClient* client)
 {
-	if (client->encomsp) {
+	if (client->encomsp)
+	{
 		client->encomsp->Stop(client->encomsp);
 		encomsp_server_context_free(client->encomsp);
 		client->encomsp = NULL;
 	}
 }
+

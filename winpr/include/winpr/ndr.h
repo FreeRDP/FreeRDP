@@ -151,7 +151,7 @@ typedef struct _MIDL_STUB_MESSAGE
 	ULONG_PTR MaxCount;
 	ULONG Offset;
 	ULONG ActualCount;
-	void *(*pfnAllocate)(size_t);
+	void* (*pfnAllocate)(size_t);
 	void (*pfnFree)(void*);
 	unsigned char* StackTop;
 	unsigned char* pPresentedType;
@@ -210,7 +210,7 @@ typedef struct _XMIT_ROUTINE_QUINTUPLE
 	XMIT_HELPER_ROUTINE pfnFreeInst;
 } XMIT_ROUTINE_QUINTUPLE, *PXMIT_ROUTINE_QUINTUPLE;
 
-typedef ULONG (*USER_MARSHAL_SIZING_ROUTINE)(ULONG*, ULONG, void*);
+typedef ULONG(*USER_MARSHAL_SIZING_ROUTINE)(ULONG*, ULONG, void*);
 typedef unsigned char* (*USER_MARSHAL_MARSHALLING_ROUTINE)(ULONG*, unsigned char*, void*);
 typedef unsigned char* (*USER_MARSHAL_UNMARSHALLING_ROUTINE)(ULONG*, unsigned char*, void*);
 typedef void (*USER_MARSHAL_FREEING_ROUTINE)(ULONG*, void*);
@@ -249,24 +249,24 @@ struct _MIDL_STUB_DESC
 		handle_t* pAutoHandle;
 		handle_t* pPrimitiveHandle;
 		PGENERIC_BINDING_INFO pGenericBindingInfo;
-        } IMPLICIT_HANDLE_INFO;
+	} IMPLICIT_HANDLE_INFO;
 
-        const NDR_RUNDOWN* apfnNdrRundownRoutines;
-        const GENERIC_BINDING_ROUTINE_PAIR* aGenericBindingRoutinePairs;
-        const EXPR_EVAL* apfnExprEval;
-        const XMIT_ROUTINE_QUINTUPLE* aXmitQuintuple;
-        const unsigned char* pFormatTypes;
+	const NDR_RUNDOWN* apfnNdrRundownRoutines;
+	const GENERIC_BINDING_ROUTINE_PAIR* aGenericBindingRoutinePairs;
+	const EXPR_EVAL* apfnExprEval;
+	const XMIT_ROUTINE_QUINTUPLE* aXmitQuintuple;
+	const unsigned char* pFormatTypes;
 
-        int fCheckBounds;
-        ULONG Version;
-        MALLOC_FREE_STRUCT* pMallocFreeStruct;
+	int fCheckBounds;
+	ULONG Version;
+	MALLOC_FREE_STRUCT* pMallocFreeStruct;
 
-        long MIDLVersion;
-        const COMM_FAULT_OFFSETS* CommFaultOffsets;
-        const USER_MARSHAL_ROUTINE_QUADRUPLE* aUserMarshalQuadruple;
+	long MIDLVersion;
+	const COMM_FAULT_OFFSETS* CommFaultOffsets;
+	const USER_MARSHAL_ROUTINE_QUADRUPLE* aUserMarshalQuadruple;
 
-        const NDR_NOTIFY_ROUTINE* NotifyRoutineTable;
-        ULONG_PTR mFlags;
+	const NDR_NOTIFY_ROUTINE* NotifyRoutineTable;
+	ULONG_PTR mFlags;
 	const NDR_CS_ROUTINES* CsRoutineTables;
 	void* ProxyServerInfo;
 	const NDR_EXPR_DESC* pExprInfo;
@@ -516,18 +516,23 @@ typedef enum _NDR_PHASE
 #define NdrFcShort(s)	(byte)(s & 0xFF), (byte)(s >> 8)
 
 #define NdrFcLong(s)	(byte)(s & 0xFF), (byte)((s & 0x0000FF00) >> 8), \
-                        (byte)((s & 0x00FF0000) >> 16), (byte)(s >> 24)
+	(byte)((s & 0x00FF0000) >> 16), (byte)(s >> 24)
 
-typedef void (*NDR_TYPE_SIZE_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
-typedef void (*NDR_TYPE_MARSHALL_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar);
-typedef void (*NDR_TYPE_UNMARSHALL_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar);
-typedef void (*NDR_TYPE_FREE_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+typedef void (*NDR_TYPE_SIZE_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                      PFORMAT_STRING pFormat);
+typedef void (*NDR_TYPE_MARSHALL_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+        unsigned char FormatChar);
+typedef void (*NDR_TYPE_UNMARSHALL_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+        unsigned char FormatChar);
+typedef void (*NDR_TYPE_FREE_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                      PFORMAT_STRING pFormat);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-WINPR_API CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ...);
+WINPR_API CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat,
+        ...);
 
 #ifdef __cplusplus
 }
@@ -536,3 +541,4 @@ WINPR_API CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFO
 #endif
 
 #endif /* WINPR_RPC_NDR_H */
+

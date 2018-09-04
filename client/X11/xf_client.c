@@ -1122,7 +1122,7 @@ static BOOL xf_pre_connect(freerdp* instance)
 	if (!freerdp_client_load_addins(channels, instance->settings))
 		return FALSE;
 
-	if (!settings->Username && !settings->CredentialsFromStdin)
+	if (!settings->Username && !settings->CredentialsFromStdin && !settings->SmartcardLogon)
 	{
 		char* login_name = getlogin();
 
@@ -1991,3 +1991,4 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ClientStop = xfreerdp_client_stop;
 	return 0;
 }
+

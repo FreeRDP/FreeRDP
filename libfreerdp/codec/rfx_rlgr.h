@@ -30,3 +30,4 @@ FREERDP_LOCAL int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 S
                                   INT16* pDstData, UINT32 DstSize);
 
 #endif /* FREERDP_LIB_CODEC_RFX_RLGR_H */
+

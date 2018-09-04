@@ -55,7 +55,6 @@ int main(int argc, char** argv)
 	unsigned long background;
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
- 
 	display = XOpenDisplay(NULL);
 
 	if (!display)
@@ -68,7 +67,6 @@ int main(int argc, char** argv)
 	y = 10;
 	width = 640;
 	height = 480;
-
 	screen_number = DefaultScreen(display);
 	screen = ScreenOfDisplay(display, screen_number);
 	visual = DefaultVisual(display, screen_number);
@@ -77,9 +75,7 @@ int main(int argc, char** argv)
 	root_window = RootWindow(display, screen_number);
 	border = BlackPixel(display, screen_number);
 	background = WhitePixel(display, screen_number);
-
 	scanline_pad = 0;
-
 	pfs = XListPixmapFormats(display, &pf_count);
 
 	for (index = 0; index < pf_count; index++)
@@ -94,37 +90,32 @@ int main(int argc, char** argv)
 	}
 
 	XFree(pfs);
-
 	engine = rdtk_engine_new();
+
 	if (!engine)
 		return 1;
 
 	scanline = width * 4;
 	buffer = (BYTE*) calloc(height, scanline);
+
 	if (!buffer)
 		return 1;
 
 	surface = rdtk_surface_new(engine, buffer, width, height, scanline);
-
 	rdtk_surface_fill(surface, 0, 0, width, height, 0x3BB9FF);
 	rdtk_label_draw(surface, 16, 16, 128, 32, NULL, "label", 0, 0);
 	rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button");
 	rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field");
-
 	window = XCreateSimpleWindow(display, root_window,
-			x, y, width, height, 1, border, background);
-
+	                             x, y, width, height, 1, border, background);
 	XSelectInput(display, window, ExposureMask | KeyPressMask);
 	XMapWindow(display, window);
-
 	XSetFunction(display, gc, GXcopy);
 	XSetFillStyle(display, gc, FillSolid);
-
 	pixmap = XCreatePixmap(display, window, width, height, depth);
-
 	image = XCreateImage(display, visual, depth, ZPixmap, 0,
-			(char*) buffer, width, height, scanline_pad, 0);
- 
+	                     (char*) buffer, width, height, scanline_pad, 0);
+
 	while (1)
 	{
 		XNextEvent(display, &event);
@@ -143,14 +134,11 @@ int main(int argc, char** argv)
 	}
 
 	XFlush(display);
-
 	XDestroyImage(image);
 	XCloseDisplay(display);
-
 	rdtk_surface_free(surface);
 	free(buffer);
-
 	rdtk_engine_free(engine);
-
 	return 0;
 }
+

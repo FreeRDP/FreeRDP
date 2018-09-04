@@ -20,7 +20,7 @@
 
 #define TAG CLIENT_TAG("android.utils")
 
-JavaVM *g_JavaVm;
+JavaVM* g_JavaVm;
 
 JavaVM* getJavaVM()
 {
@@ -30,35 +30,37 @@ JavaVM* getJavaVM()
 JNIEnv* getJNIEnv()
 {
 	JNIEnv* env = NULL;
+
 	if ((*g_JavaVm)->GetEnv(g_JavaVm, (void**) &env, JNI_VERSION_1_4) != JNI_OK)
 	{
 		WLog_FATAL(TAG, "Failed to obtain JNIEnv");
 		return NULL;
 	}
+
 	return env;
 }
 
-jobject create_string_builder(JNIEnv *env, char* initialStr)
+jobject create_string_builder(JNIEnv* env, char* initialStr)
 {
 	jclass cls;
 	jmethodID methodId;
 	jobject obj;
-
 	// get class
 	cls = (*env)->FindClass(env, "java/lang/StringBuilder");
-	if(!cls)
+
+	if (!cls)
 		return NULL;
 
-	if(initialStr)
+	if (initialStr)
 	{
 		// get method id for constructor
 		methodId = (*env)->GetMethodID(env, cls, "<init>", "(Ljava/lang/String;)V");
-		if(!methodId)
+
+		if (!methodId)
 			return NULL;
 
 		// create string that holds our initial string
 		jstring jstr = (*env)->NewStringUTF(env, initialStr);
-
 		// construct new StringBuilder
 		obj = (*env)->NewObject(env, cls, methodId, jstr);
 	}
@@ -66,7 +68,8 @@ jobject create_string_builder(JNIEnv *env, char* initialStr)
 	{
 		// get method id for constructor
 		methodId = (*env)->GetMethodID(env, cls, "<init>", "()V");
-		if(!methodId)
+
+		if (!methodId)
 			return NULL;
 
 		// construct new StringBuilder
@@ -83,27 +86,28 @@ char* get_string_from_string_builder(JNIEnv* env, jobject strBuilder)
 	jstring strObj;
 	const jbyte* native_str;
 	char* result;
-
 	// get class
 	cls = (*env)->FindClass(env, "java/lang/StringBuilder");
-	if(!cls)
+
+	if (!cls)
 		return NULL;
 
 	// get method id for constructor
 	methodId = (*env)->GetMethodID(env, cls, "toString", "()Ljava/lang/String;");
-	if(!methodId)
+
+	if (!methodId)
 		return NULL;
 
 	// get jstring representation of our buffer
 	strObj = (*env)->CallObjectMethod(env, strBuilder, methodId);
-
 	// read string
 	native_str = (*env)->GetStringUTFChars(env, strObj, NULL);
+
 	if (!native_str)
 		return NULL;
+
 	result = strdup(native_str);
 	(*env)->ReleaseStringUTFChars(env, strObj, native_str);
-
 	return result;
 }
 
@@ -119,19 +123,22 @@ jstring jniNewStringUTF(JNIEnv* env, const char* in, int len)
 	{
 		return NULL;
 	}
+
 	if (len < 0)
 		len = strlen(in);
 
 	unicode = (jchar*)malloc(sizeof(jchar) * (len + 1));
+
 	if (!unicode)
 	{
 		return NULL;
 	}
 
-	for(i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 	{
 		unsigned char one = utf8[i];
-		switch(one >> 4)
+
+		switch (one >> 4)
 		{
 			case 0x00:
 			case 0x01:
@@ -143,54 +150,63 @@ jstring jniNewStringUTF(JNIEnv* env, const char* in, int len)
 			case 0x07:
 				unicode[result_size++] = one;
 				break;
+
 			case 0x08:
 			case 0x09:
 			case 0x0a:
 			case 0x0b:
-			//case 0x0f:
+				//case 0x0f:
 				/*
-		 * Bit pattern 10xx or 1111, which are illegal start bytes.
-		 * Note: 1111 is valid for normal UTF-8, but not the
-		 * modified UTF-8 used here.
-		 */
+				* Bit pattern 10xx or 1111, which are illegal start bytes.
+				* Note: 1111 is valid for normal UTF-8, but not the
+				* modified UTF-8 used here.
+				*/
 				break;
+
 			case 0x0f:
 			case 0x0e:
+
 				// Bit pattern 111x, so there are two additional bytes.
 				if (i < (len - 2))
 				{
-					unsigned char two = utf8[i+1];
-					unsigned char three = utf8[i+2];
+					unsigned char two = utf8[i + 1];
+					unsigned char three = utf8[i + 2];
+
 					if ((two & 0xc0) == 0x80 && (three & 0xc0) == 0x80)
 					{
 						i += 2;
 						unicode[result_size++] =
-								((one & 0x0f) << 12)
-							  | ((two & 0x3f) << 6)
-							  | (three & 0x3f);
+						    ((one & 0x0f) << 12)
+						    | ((two & 0x3f) << 6)
+						    | (three & 0x3f);
 					}
 				}
+
 				break;
+
 			case 0x0c:
 			case 0x0d:
+
 				// Bit pattern 110x, so there is one additional byte.
 				if (i < (len - 1))
 				{
-					unsigned char two = utf8[i+1];
+					unsigned char two = utf8[i + 1];
+
 					if ((two & 0xc0) == 0x80)
 					{
 						i += 1;
 						unicode[result_size++] =
-								((one & 0x1f) << 6)
-							  | (two & 0x3f);
+						    ((one & 0x1f) << 6)
+						    | (two & 0x3f);
 					}
 				}
+
 				break;
 		}
 	}
 
 	out = (*env)->NewString(env, unicode, result_size);
 	free(unicode);
-
 	return out;
 }
+

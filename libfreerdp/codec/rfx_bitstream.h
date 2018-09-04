@@ -32,54 +32,55 @@ struct _RFX_BITSTREAM
 typedef struct _RFX_BITSTREAM RFX_BITSTREAM;
 
 #define rfx_bitstream_attach(bs, _buffer, _nbytes) do { \
-	bs->buffer = (BYTE*) (_buffer); \
-	bs->nbytes = (_nbytes); \
-	bs->byte_pos = 0; \
-	bs->bits_left = 8; } while (0)
+		bs->buffer = (BYTE*) (_buffer); \
+		bs->nbytes = (_nbytes); \
+		bs->byte_pos = 0; \
+		bs->bits_left = 8; } while (0)
 
 #define rfx_bitstream_get_bits(bs, _nbits, _r) do { \
-	int nbits = _nbits; \
-	int b; \
-	UINT16 n = 0; \
-	while (bs->byte_pos < bs->nbytes && nbits > 0) \
-	{ \
-		b = nbits; \
-		if (b > bs->bits_left) \
-			b = bs->bits_left; \
-		if (n) \
-			n <<= b; \
-		n |= (bs->buffer[bs->byte_pos] >> (bs->bits_left - b)) & ((1 << b) - 1); \
-		bs->bits_left -= b; \
-		nbits -= b; \
-		if (bs->bits_left == 0) \
+		int nbits = _nbits; \
+		int b; \
+		UINT16 n = 0; \
+		while (bs->byte_pos < bs->nbytes && nbits > 0) \
 		{ \
-			bs->bits_left = 8; \
-			bs->byte_pos++; \
+			b = nbits; \
+			if (b > bs->bits_left) \
+				b = bs->bits_left; \
+			if (n) \
+				n <<= b; \
+			n |= (bs->buffer[bs->byte_pos] >> (bs->bits_left - b)) & ((1 << b) - 1); \
+			bs->bits_left -= b; \
+			nbits -= b; \
+			if (bs->bits_left == 0) \
+			{ \
+				bs->bits_left = 8; \
+				bs->byte_pos++; \
+			} \
 		} \
-	} \
-	_r = n; } while (0)
+		_r = n; } while (0)
 
 #define rfx_bitstream_put_bits(bs, _bits, _nbits) do { \
-	UINT16 bits = (_bits); \
-	int nbits = (_nbits); \
-	int b; \
-	while (bs->byte_pos < bs->nbytes && nbits > 0) \
-	{ \
-		b = nbits; \
-		if (b > bs->bits_left) \
-			b = bs->bits_left; \
-		bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1)) << (bs->bits_left - b); \
-		bs->bits_left -= b; \
-		nbits -= b; \
-		if (bs->bits_left == 0) \
+		UINT16 bits = (_bits); \
+		int nbits = (_nbits); \
+		int b; \
+		while (bs->byte_pos < bs->nbytes && nbits > 0) \
 		{ \
-			bs->bits_left = 8; \
-			bs->byte_pos++; \
-		} \
-	} } while (0)
+			b = nbits; \
+			if (b > bs->bits_left) \
+				b = bs->bits_left; \
+			bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1)) << (bs->bits_left - b); \
+			bs->bits_left -= b; \
+			nbits -= b; \
+			if (bs->bits_left == 0) \
+			{ \
+				bs->bits_left = 8; \
+				bs->byte_pos++; \
+			} \
+		} } while (0)
 
 #define rfx_bitstream_eos(_bs) ((_bs)->byte_pos >= (_bs)->nbytes)
 #define rfx_bitstream_left(_bs) ((_bs)->byte_pos >= (_bs)->nbytes ? 0 : ((_bs)->nbytes - (_bs)->byte_pos - 1) * 8 + (_bs)->bits_left)
 #define rfx_bitstream_get_processed_bytes(_bs) ((_bs)->bits_left < 8 ? (_bs)->byte_pos + 1 : (_bs)->byte_pos)
 
 #endif /* FREERDP_LIB_CODEC_RFX_BITSTREAM_H */
+

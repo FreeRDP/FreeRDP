@@ -87,3 +87,4 @@ FREERDP_API void pcap_flush(rdpPcap* pcap);
 #endif
 
 #endif /* FREERDP_UTILS_PCAP_H */
+

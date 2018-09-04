@@ -27,14 +27,15 @@
 
 @interface OrderedDictionary : NSMutableDictionary
 {
-	NSMutableDictionary *dictionary;
-	NSMutableArray *array;
+	NSMutableDictionary* dictionary;
+	NSMutableArray* array;
 }
 
 - (void)insertObject:(id)anObject forKey:(id)aKey atIndex:(NSUInteger)anIndex;
 - (id)keyAtIndex:(NSUInteger)anIndex;
 - (NSUInteger)indexForValue:(id)value;
 - (NSUInteger)indexForKey:(id)key;
-- (NSEnumerator *)reverseKeyEnumerator;
+- (NSEnumerator*)reverseKeyEnumerator;
 
 @end
+

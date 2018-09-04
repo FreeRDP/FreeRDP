@@ -572,3 +572,4 @@ BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath)
 #endif
 
 #endif
+

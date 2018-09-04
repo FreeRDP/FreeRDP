@@ -50,3 +50,4 @@ WINPR_API BOOL HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
 
 #endif /* WINPR_HEAP_H */
 
+

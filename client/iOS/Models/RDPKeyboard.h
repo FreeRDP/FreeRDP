@@ -1,9 +1,9 @@
 /*
- RDP Keyboard helper 
- 
+ RDP Keyboard helper
+
  Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
- 
- This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+
+ This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
@@ -19,27 +19,24 @@
 @end
 
 
-@interface RDPKeyboard : NSObject {
-
-    RDPSession* _session;
-    
+@interface RDPKeyboard : NSObject
+{
+	RDPSession* _session;
 	int _virtual_key_map[256];
-    int _unicode_map[256];
-    NSDictionary* _special_keys;
-
-    NSObject<RDPKeyboardDelegate>* _delegate;
-    
+	int _unicode_map[256];
+	NSDictionary* _special_keys;
+	NSObject<RDPKeyboardDelegate>* _delegate;
 	BOOL _ctrl_pressed;
-    BOOL _alt_pressed;
-    BOOL _shift_pressed;
-    BOOL _win_pressed;
+	BOOL _alt_pressed;
+	BOOL _shift_pressed;
+	BOOL _win_pressed;
 }
 
-@property (assign) id <RDPKeyboardDelegate> delegate;
-@property (readonly) BOOL ctrlPressed;
-@property (readonly) BOOL altPressed;
-@property (readonly) BOOL shiftPressed;
-@property (readonly) BOOL winPressed;
+@property(assign) id <RDPKeyboardDelegate> delegate;
+@property(readonly) BOOL ctrlPressed;
+@property(readonly) BOOL altPressed;
+@property(readonly) BOOL shiftPressed;
+@property(readonly) BOOL winPressed;
 
 // returns a keyboard instance
 + (RDPKeyboard*)getSharedRDPKeyboard;
@@ -74,3 +71,4 @@
 - (void)sendBackspaceKeyStroke;
 
 @end
+

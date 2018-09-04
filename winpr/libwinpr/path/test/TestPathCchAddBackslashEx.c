@@ -14,17 +14,13 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 	LPTSTR pszEnd;
 	size_t cchRemaining;
 	TCHAR Path[PATHCCH_MAX_CCH];
-
 	/**
 	 * PathCchAddBackslashEx returns S_OK if the function was successful,
 	 * S_FALSE if the path string already ends in a backslash,
 	 * or an error code otherwise.
 	 */
-
 	_tcscpy(Path, testPathNoBackslash);
-
 	/* Add a backslash to a path without a trailing backslash, expect S_OK */
-
 	status = PathCchAddBackslashEx(Path, sizeof(Path) / sizeof(TCHAR), &pszEnd, &cchRemaining);
 
 	if (status != S_OK)
@@ -40,9 +36,7 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 	}
 
 	/* Add a backslash to a path with a trailing backslash, expect S_FALSE */
-
 	_tcscpy(Path, testPathBackslash);
-
 	status = PathCchAddBackslashEx(Path, sizeof(Path) / sizeof(TCHAR), &pszEnd, &cchRemaining);
 
 	if (status != S_FALSE)
@@ -58,31 +52,28 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 	}
 
 	/* Use NULL PSTR, expect FAILED(status) */
-
 	status = PathCchAddBackslashEx(NULL, PATHCCH_MAX_CCH, NULL, NULL);
 
 	if (SUCCEEDED(status))
 	{
-		_tprintf(_T("PathCchAddBackslashEx unexpectedly succeded with null buffer. Status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAddBackslashEx unexpectedly succeded with null buffer. Status: 0x%08")_T(
+		             PRIX32)_T("\n"), status);
 		return -1;
 	}
 
 	/* Use insufficient size value, expect FAILED(status)  */
-
 	_tcscpy(Path, _T("C:\\tmp"));
-
 	status = PathCchAddBackslashEx(Path, 7, NULL, NULL);
 
 	if (SUCCEEDED(status))
 	{
-		_tprintf(_T("PathCchAddBackslashEx unexpectedly succeded with insufficient buffer size. Status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAddBackslashEx unexpectedly succeded with insufficient buffer size. Status: 0x%08")
+		         _T(PRIX32)_T("\n"), status);
 		return -1;
 	}
 
 	/* Use minimum required size value, expect S_OK  */
-
 	_tcscpy(Path, _T("C:\\tmp"));
-
 	status = PathCchAddBackslashEx(Path, 8, NULL, NULL);
 
 	if (status != S_OK)
@@ -91,7 +82,7 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 		return -1;
 	}
 
-
 	return 0;
 }
+
 

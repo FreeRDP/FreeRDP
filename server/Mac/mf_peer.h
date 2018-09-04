@@ -25,3 +25,4 @@
 BOOL mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
 
 #endif /* FREERDP_SERVER_MAC_PEER_H */
+

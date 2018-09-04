@@ -32,3 +32,4 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context);
 
 #endif /* WINPR_SSPI_NTLM_MESSAGE_H */
+

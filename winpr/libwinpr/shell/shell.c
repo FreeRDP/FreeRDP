@@ -142,3 +142,4 @@ BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchS
 
 #endif
 
+

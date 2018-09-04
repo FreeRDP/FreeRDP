@@ -543,3 +543,4 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 
 	return 1;
 }
+

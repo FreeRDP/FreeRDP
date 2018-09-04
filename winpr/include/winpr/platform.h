@@ -292,3 +292,4 @@
 #endif /* __BYTE_ORDER */
 
 #endif /* WINPR_PLATFORM_H */
+

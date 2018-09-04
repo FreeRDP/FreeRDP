@@ -350,3 +350,4 @@ FREERDP_API const char* freerdp_get_error_connect_name(UINT32 code);
 #endif
 
 #endif	/* FREERDP_ERROR_H */
+

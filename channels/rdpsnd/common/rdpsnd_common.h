@@ -41,3 +41,4 @@ typedef enum
 } RdpSndChannelVersion;
 
 #endif /* FREERDP_CHANNEL_RDPSND_COMMON_MAIN_H */
+

@@ -25,3 +25,4 @@
 void df_register_graphics(rdpGraphics* graphics);
 
 #endif /* FREERDP_CLIENT_DF_GRAPHICS_H */
+

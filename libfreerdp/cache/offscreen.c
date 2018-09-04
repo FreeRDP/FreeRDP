@@ -90,6 +90,7 @@ static BOOL update_gdi_switch_surface(rdpContext* context,
 
 	cache = context->cache;
 	bitmap = context->graphics->Bitmap_Prototype;
+
 	if (!bitmap)
 		return FALSE;
 
@@ -101,6 +102,7 @@ static BOOL update_gdi_switch_surface(rdpContext* context,
 	{
 		rdpBitmap* bmp;
 		bmp = offscreen_cache_get(cache->offscreen, switchSurface->bitmapId);
+
 		if (bmp == NULL)
 			return FALSE;
 
@@ -213,3 +215,4 @@ void offscreen_cache_free(rdpOffscreenCache* offscreenCache)
 		free(offscreenCache);
 	}
 }
+

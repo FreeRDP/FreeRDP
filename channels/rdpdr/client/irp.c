@@ -47,7 +47,6 @@ static UINT irp_free(IRP* irp)
 
 	Stream_Free(irp->input, TRUE);
 	Stream_Free(irp->output, TRUE);
-
 	_aligned_free(irp);
 	return CHANNEL_RC_OK;
 }
@@ -62,17 +61,13 @@ static UINT irp_complete(IRP* irp)
 	size_t pos;
 	rdpdrPlugin* rdpdr;
 	UINT error;
-
 	rdpdr = (rdpdrPlugin*) irp->devman->plugin;
-
 	pos = Stream_GetPosition(irp->output);
 	Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4);
 	Stream_Write_UINT32(irp->output, irp->IoStatus); /* IoStatus (4 bytes) */
 	Stream_SetPosition(irp->output, pos);
-
 	error = rdpdr_send(rdpdr, irp->output);
 	irp->output = NULL;
-
 	irp_free(irp);
 	return error;
 }
@@ -87,6 +82,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 	{
 		if (error)
 			*error = ERROR_INVALID_DATA;
+
 		return NULL;
 	}
 
@@ -96,6 +92,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 	if (!device)
 	{
 		WLog_WARN(TAG, "devman_get_device_by_id failed!");
+
 		if (error)
 			*error = CHANNEL_RC_OK;
 
@@ -107,41 +104,41 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 	if (!irp)
 	{
 		WLog_ERR(TAG, "_aligned_malloc failed!");
+
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
+
 		return NULL;
 	}
 
-
 	ZeroMemory(irp, sizeof(IRP));
-
 	irp->input = s;
 	irp->device = device;
 	irp->devman = devman;
-
 	Stream_Read_UINT32(s, irp->FileId); /* FileId (4 bytes) */
 	Stream_Read_UINT32(s, irp->CompletionId); /* CompletionId (4 bytes) */
 	Stream_Read_UINT32(s, irp->MajorFunction); /* MajorFunction (4 bytes) */
 	Stream_Read_UINT32(s, irp->MinorFunction); /* MinorFunction (4 bytes) */
-
 	irp->output = Stream_New(NULL, 256);
+
 	if (!irp->output)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
 		_aligned_free(irp);
+
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
+
 		return NULL;
 	}
+
 	Stream_Write_UINT16(irp->output, RDPDR_CTYP_CORE); /* Component (2 bytes) */
 	Stream_Write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION); /* PacketId (2 bytes) */
 	Stream_Write_UINT32(irp->output, DeviceId); /* DeviceId (4 bytes) */
 	Stream_Write_UINT32(irp->output, irp->CompletionId); /* CompletionId (4 bytes) */
 	Stream_Write_UINT32(irp->output, 0); /* IoStatus (4 bytes) */
-
 	irp->Complete = irp_complete;
 	irp->Discard = irp_free;
-
 	irp->thread = NULL;
 	irp->cancelled = FALSE;
 
@@ -150,3 +147,4 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 
 	return irp;
 }
+

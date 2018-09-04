@@ -11,15 +11,14 @@ int TestClipboardFormats(int argc, char* argv[])
 	const char* formatName;
 	wClipboard* clipboard;
 	UINT32 utf8StringFormatId;
-
 	clipboard = ClipboardCreate();
+
 	if (!clipboard)
 		return -1;
 
 	ClipboardRegisterFormat(clipboard, "text/html");
 	ClipboardRegisterFormat(clipboard, "image/bmp");
 	ClipboardRegisterFormat(clipboard, "image/png");
-
 	utf8StringFormatId = ClipboardRegisterFormat(clipboard, "UTF8_STRING");
 	pFormatIds = NULL;
 	count = ClipboardGetRegisteredFormatIds(clipboard, &pFormatIds);
@@ -85,4 +84,5 @@ int TestClipboardFormats(int argc, char* argv[])
 	ClipboardDestroy(clipboard);
 	return 0;
 }
+
 

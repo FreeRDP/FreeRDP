@@ -14,20 +14,18 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 	DWORD sessionId;
 	DWORD bytesReturned;
 	PWTS_SESSION_INFOA pSessionInfo;
-
 #ifndef _WIN32
+
 	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0))
 	{
 		printf("%s: No RDS environment detected, skipping test\n", __FUNCTION__);
 		return 0;
 	}
+
 #endif
-
 	hServer = WTS_CURRENT_SERVER_HANDLE;
-
 	count = 0;
 	pSessionInfo = NULL;
-
 	bSuccess = WTSEnumerateSessionsA(hServer, 0, 1, &pSessionInfo, &count);
 
 	if (!bSuccess)
@@ -50,21 +48,16 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 		PWTS_CLIENT_DISPLAY ClientDisplay;
 		PWTS_CLIENT_ADDRESS ClientAddress;
 		WTS_CONNECTSTATE_CLASS ConnectState;
-
 		pBuffer = NULL;
 		bytesReturned = 0;
-
 		sessionId = pSessionInfo[index].SessionId;
-
 		printf("[%"PRIu32"] SessionId: %"PRIu32" State: %s (%u) WinstationName: '%s'\n",
-				index,
-				pSessionInfo[index].SessionId,
-				WTSSessionStateToString(pSessionInfo[index].State),
-				pSessionInfo[index].State,
-				pSessionInfo[index].pWinStationName);
-
+		       index,
+		       pSessionInfo[index].SessionId,
+		       WTSSessionStateToString(pSessionInfo[index].State),
+		       pSessionInfo[index].State,
+		       pSessionInfo[index].pWinStationName);
 		/* WTSUserName */
-
 		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSUserName, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
@@ -75,9 +68,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		Username = (char*) pBuffer;
 		printf("\tWTSUserName: '%s'\n", Username);
-
 		/* WTSDomainName */
-
 		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSDomainName, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
@@ -88,10 +79,9 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		Domain = (char*) pBuffer;
 		printf("\tWTSDomainName: '%s'\n", Domain);
-
 		/* WTSConnectState */
-
-		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSConnectState, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSConnectState, &pBuffer,
+		                                       &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -101,10 +91,9 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		ConnectState = *((WTS_CONNECTSTATE_CLASS*) pBuffer);
 		printf("\tWTSConnectState: %u (%s)\n", ConnectState, WTSSessionStateToString(ConnectState));
-
 		/* WTSClientBuildNumber */
-
-		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientBuildNumber, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientBuildNumber, &pBuffer,
+		                                       &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -114,9 +103,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		ClientBuildNumber = *((ULONG*) pBuffer);
 		printf("\tWTSClientBuildNumber: %"PRIu32"\n", ClientBuildNumber);
-
 		/* WTSClientName */
-
 		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientName, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
@@ -127,10 +114,9 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		ClientName = (char*) pBuffer;
 		printf("\tWTSClientName: '%s'\n", ClientName);
-
 		/* WTSClientProductId */
-
-		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientProductId, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientProductId, &pBuffer,
+		                                       &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -140,10 +126,9 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		ClientProductId = *((USHORT*) pBuffer);
 		printf("\tWTSClientProductId: %"PRIu16"\n", ClientProductId);
-
 		/* WTSClientHardwareId */
-
-		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientHardwareId, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientHardwareId, &pBuffer,
+		                                       &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -153,10 +138,9 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		ClientHardwareId = *((ULONG*) pBuffer);
 		printf("\tWTSClientHardwareId: %"PRIu32"\n", ClientHardwareId);
-
 		/* WTSClientAddress */
-
-		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientAddress, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientAddress, &pBuffer,
+		                                       &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -166,15 +150,15 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		ClientAddress = (PWTS_CLIENT_ADDRESS) pBuffer;
 		printf("\tWTSClientAddress: AddressFamily: %"PRIu32" Address: ",
-				ClientAddress->AddressFamily);
+		       ClientAddress->AddressFamily);
+
 		for (i = 0; i < sizeof(ClientAddress->Address); i++)
 			printf("%02"PRIX8"", ClientAddress->Address[i]);
+
 		printf("\n");
-
-
 		/* WTSClientDisplay */
-
-		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientDisplay, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientDisplay, &pBuffer,
+		                                       &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -184,12 +168,11 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		ClientDisplay = (PWTS_CLIENT_DISPLAY) pBuffer;
 		printf("\tWTSClientDisplay: HorizontalResolution: %"PRIu32" VerticalResolution: %"PRIu32" ColorDepth: %"PRIu32"\n",
-				ClientDisplay->HorizontalResolution, ClientDisplay->VerticalResolution,
-				ClientDisplay->ColorDepth);
-
+		       ClientDisplay->HorizontalResolution, ClientDisplay->VerticalResolution,
+		       ClientDisplay->ColorDepth);
 		/* WTSClientProtocolType */
-
-		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientProtocolType, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientProtocolType, &pBuffer,
+		                                       &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -202,6 +185,6 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 	}
 
 	WTSFreeMemory(pSessionInfo);
-
 	return 0;
 }
+

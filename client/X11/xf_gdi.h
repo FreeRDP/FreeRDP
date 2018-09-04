@@ -30,3 +30,4 @@
 void xf_gdi_register_update_callbacks(rdpUpdate* update);
 
 #endif /* FREERDP_CLIENT_X11_GDI_H */
+

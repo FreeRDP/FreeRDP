@@ -404,3 +404,4 @@ void nsc_init_sse2(NSC_CONTEXT* context)
 	IF_PROFILER(context->priv->prof_nsc_encode->name = "nsc_encode_sse2");
 	context->encode = nsc_encode_sse2;
 }
+

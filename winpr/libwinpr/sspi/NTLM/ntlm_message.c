@@ -1187,3 +1187,4 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	ntlm_free_message_fields_buffer(&(message->EncryptedRandomSessionKey));
 	return SEC_E_OK;
 }
+

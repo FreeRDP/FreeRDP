@@ -246,3 +246,4 @@ void shadow_capture_free(rdpShadowCapture* capture)
 	free(capture);
 }
 
+

@@ -735,3 +735,4 @@ UwacReturnCode UwacNextEvent(UwacDisplay* display, UwacEvent* event)
 
 	return UWAC_SUCCESS;
 }
+

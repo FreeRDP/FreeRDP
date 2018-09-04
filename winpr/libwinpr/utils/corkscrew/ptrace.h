@@ -32,49 +32,53 @@ extern "C" {
 
 /* Stores information about a process that is used for several different
  * ptrace() based operations. */
-typedef struct {
-    map_info_t* map_info_list;
+typedef struct
+{
+	map_info_t* map_info_list;
 } ptrace_context_t;
 
 /* Describes how to access memory from a process. */
-typedef struct {
-    pid_t tid;
-    const map_info_t* map_info_list;
+typedef struct
+{
+	pid_t tid;
+	const map_info_t* map_info_list;
 } memory_t;
 
 #if __i386__
 /* ptrace() register context. */
-typedef struct pt_regs_x86 {
-    uint32_t ebx;
-    uint32_t ecx;
-    uint32_t edx;
-    uint32_t esi;
-    uint32_t edi;
-    uint32_t ebp;
-    uint32_t eax;
-    uint32_t xds;
-    uint32_t xes;
-    uint32_t xfs;
-    uint32_t xgs;
-    uint32_t orig_eax;
-    uint32_t eip;
-    uint32_t xcs;
-    uint32_t eflags;
-    uint32_t esp;
-    uint32_t xss;
+typedef struct pt_regs_x86
+{
+	uint32_t ebx;
+	uint32_t ecx;
+	uint32_t edx;
+	uint32_t esi;
+	uint32_t edi;
+	uint32_t ebp;
+	uint32_t eax;
+	uint32_t xds;
+	uint32_t xes;
+	uint32_t xfs;
+	uint32_t xgs;
+	uint32_t orig_eax;
+	uint32_t eip;
+	uint32_t xcs;
+	uint32_t eflags;
+	uint32_t esp;
+	uint32_t xss;
 } pt_regs_x86_t;
 #endif
 
 #if __mips__
 /* ptrace() GET_REGS context. */
-typedef struct pt_regs_mips {
-    uint64_t regs[32];
-    uint64_t lo;
-    uint64_t hi;
-    uint64_t cp0_epc;
-    uint64_t cp0_badvaddr;
-    uint64_t cp0_status;
-    uint64_t cp0_cause;
+typedef struct pt_regs_mips
+{
+	uint64_t regs[32];
+	uint64_t lo;
+	uint64_t hi;
+	uint64_t cp0_epc;
+	uint64_t cp0_badvaddr;
+	uint64_t cp0_status;
+	uint64_t cp0_cause;
 } pt_regs_mips_t;
 #endif
 
@@ -125,10 +129,11 @@ void free_ptrace_context(ptrace_context_t* context);
  * NULL if one or the other is not available.
  */
 void find_symbol_ptrace(const ptrace_context_t* context,
-        uintptr_t addr, const map_info_t** out_map_info, const symbol_t** out_symbol);
+                        uintptr_t addr, const map_info_t** out_map_info, const symbol_t** out_symbol);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif // _CORKSCREW_PTRACE_H
+

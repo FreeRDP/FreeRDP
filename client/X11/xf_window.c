@@ -607,7 +607,6 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width,
 	}
 
 	XSetWMNormalHints(xfc->display, window->handle, size_hints);
-
 	XFree(size_hints);
 }
 
@@ -1143,3 +1142,4 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 	free(pKeys);
 	return NULL;
 }
+

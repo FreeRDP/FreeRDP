@@ -349,13 +349,14 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		}
 
 		*lpNumberOfBytesRead = nbRead;
-
 		EnterCriticalSection(&pComm->EventsLock);
+
 		if (pComm->PendingEvents & SERIAL_EV_FREERDP_WAITING)
 		{
 			if (pComm->eventChar != '\0' && memchr(lpBuffer, pComm->eventChar, nbRead))
-					pComm->PendingEvents |= SERIAL_EV_RXCHAR;
+				pComm->PendingEvents |= SERIAL_EV_RXCHAR;
 		}
+
 		LeaveCriticalSection(&pComm->EventsLock);
 		goto return_true;
 	}
@@ -558,11 +559,9 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer,
 	 * DesiredAccess=0x0012019F. The printer worked fine with
 	 * mstsc. */
 	tcdrain(pComm->fd_write);
-
 return_true:
 	LeaveCriticalSection(&pComm->WriteLock);
 	return TRUE;
-
 return_false:
 	LeaveCriticalSection(&pComm->WriteLock);
 	return FALSE;
@@ -570,3 +569,4 @@ return_false:
 
 
 #endif /* __linux__ */
+

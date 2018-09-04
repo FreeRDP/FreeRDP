@@ -638,7 +638,6 @@ BOOL freerdp_get_system_language_and_country_codes(char* language, char* country
 	int underscore;
 	char* env_lang = NULL;
 	LPCSTR lang = "LANG";
-
 	/* LANG = <language>_<country>.<encoding> */
 	nSize = GetEnvironmentVariableA(lang, NULL, 0);
 
@@ -650,9 +649,10 @@ BOOL freerdp_get_system_language_and_country_codes(char* language, char* country
 	if (!env_lang)
 		return FALSE;
 
-	if (GetEnvironmentVariableA(lang, env_lang, nSize) != nSize - 1) /* Get locale from environment variable LANG */
+	if (GetEnvironmentVariableA(lang, env_lang,
+	                            nSize) != nSize - 1) /* Get locale from environment variable LANG */
 	{
-		free (env_lang);
+		free(env_lang);
 		return FALSE;
 	}
 
@@ -694,12 +694,12 @@ SYSTEM_LOCALE* freerdp_detect_system_locale()
 	char language[4];
 	char country[10];
 	SYSTEM_LOCALE* locale = NULL;
-
 	freerdp_get_system_language_and_country_codes(language, country);
 
 	for (i = 0; i < ARRAYSIZE(SYSTEM_LOCALE_TABLE); i++)
 	{
-		if ((strcmp(language, SYSTEM_LOCALE_TABLE[i].language) == 0) && (strcmp(country, SYSTEM_LOCALE_TABLE[i].country) == 0))
+		if ((strcmp(language, SYSTEM_LOCALE_TABLE[i].language) == 0) &&
+		    (strcmp(country, SYSTEM_LOCALE_TABLE[i].country) == 0))
 		{
 			locale = (SYSTEM_LOCALE*) &SYSTEM_LOCALE_TABLE[i];
 			break;
@@ -712,7 +712,6 @@ SYSTEM_LOCALE* freerdp_detect_system_locale()
 DWORD freerdp_get_system_locale_id()
 {
 	SYSTEM_LOCALE* locale;
-
 	locale = freerdp_detect_system_locale();
 
 	if (locale != NULL)
@@ -740,7 +739,6 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 	char language[4];
 	char country[10];
 	SYSTEM_LOCALE* locale;
-
 	freerdp_get_system_language_and_country_codes(language, country);
 
 	if ((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))
@@ -761,7 +759,6 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 		if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].locale == locale->code)
 		{
 			/* Locale found in list of default keyboard layouts */
-
 			for (j = 0; j < 5; j++)
 			{
 				if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j] == ENGLISH_UNITED_STATES)
@@ -798,3 +795,4 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 
 	return -1; /* Could not detect the current keyboard layout from locale */
 }
+

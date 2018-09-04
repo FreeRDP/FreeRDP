@@ -47,16 +47,13 @@ BOOL sf_peer_rdpsnd_init(testPeerContext* context)
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->rdpcontext = &context->_p;
 	context->rdpsnd->data = context;
-
 	context->rdpsnd->server_formats = test_audio_formats;
 	context->rdpsnd->num_server_formats =
-			sizeof(test_audio_formats) / sizeof(test_audio_formats[0]);
-
+	    sizeof(test_audio_formats) / sizeof(test_audio_formats[0]);
 	context->rdpsnd->src_format.wFormatTag = 1;
 	context->rdpsnd->src_format.nChannels = 2;
 	context->rdpsnd->src_format.nSamplesPerSec = 44100;
 	context->rdpsnd->src_format.wBitsPerSample = 16;
-
 	context->rdpsnd->Activated = sf_peer_rdpsnd_activated;
 
 	if (context->rdpsnd->Initialize(context->rdpsnd, TRUE) != CHANNEL_RC_OK)
@@ -66,3 +63,4 @@ BOOL sf_peer_rdpsnd_init(testPeerContext* context)
 
 	return TRUE;
 }
+

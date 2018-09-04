@@ -1189,3 +1189,4 @@ void freerdp_assistance_file_free(rdpAssistanceFile* file)
 	free(file->MachinePorts);
 	free(file);
 }
+

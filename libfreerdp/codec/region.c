@@ -815,3 +815,4 @@ void region16_uninit(REGION16* region)
 		region->data = NULL;
 	}
 }
+

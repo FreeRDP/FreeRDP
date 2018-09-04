@@ -43,3 +43,4 @@ typedef struct _WINPR_CERTSTORE WINPR_CERTSTORE;
 #endif
 
 #endif /* WINPR_CRYPTO_PRIVATE_H */
+

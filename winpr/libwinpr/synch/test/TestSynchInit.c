@@ -10,16 +10,15 @@
 static INIT_ONCE initOnceTest = INIT_ONCE_STATIC_INIT;
 
 static HANDLE hStartEvent = NULL;
-static LONG *pErrors = NULL;
-static LONG *pTestThreadFunctionCalls = NULL;
-static LONG *pTestOnceFunctionCalls = NULL;
-static LONG *pInitOnceExecuteOnceCalls = NULL;
+static LONG* pErrors = NULL;
+static LONG* pTestThreadFunctionCalls = NULL;
+static LONG* pTestOnceFunctionCalls = NULL;
+static LONG* pInitOnceExecuteOnceCalls = NULL;
 
 
-static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID *context)
+static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	LONG calls = InterlockedIncrement(pTestOnceFunctionCalls) - 1;
-
 	/* simulate execution time */
 	Sleep(100 + rand() % 400);
 
@@ -28,10 +27,12 @@ static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID *conte
 		/* simulated error */
 		return FALSE;
 	}
+
 	if (calls == TEST_NUM_FAILURES)
 	{
 		return TRUE;
 	}
+
 	fprintf(stderr, "%s: error: called again after success\n", __FUNCTION__);
 	InterlockedIncrement(pErrors);
 	return FALSE;
@@ -42,6 +43,7 @@ static DWORD WINAPI TestThreadFunction(LPVOID lpParam)
 	LONG calls;
 	BOOL ok;
 	InterlockedIncrement(pTestThreadFunctionCalls);
+
 	if (WaitForSingleObject(hStartEvent, INFINITE) != WAIT_OBJECT_0)
 	{
 		fprintf(stderr, "%s: error: failed to wait for start event\n", __FUNCTION__);
@@ -51,11 +53,13 @@ static DWORD WINAPI TestThreadFunction(LPVOID lpParam)
 
 	ok = InitOnceExecuteOnce(&initOnceTest, TestOnceFunction, NULL, NULL);
 	calls = InterlockedIncrement(pInitOnceExecuteOnceCalls);
+
 	if (!ok && calls > TEST_NUM_FAILURES)
 	{
 		fprintf(stderr, "%s: InitOnceExecuteOnce failed unexpectedly\n", __FUNCTION__);
 		InterlockedIncrement(pErrors);
 	}
+
 	return 0;
 }
 
@@ -65,7 +69,6 @@ int TestSynchInit(int argc, char* argv[])
 	DWORD dwCreatedThreads = 0;
 	DWORD i;
 	BOOL result = FALSE;
-
 	pErrors = _aligned_malloc(sizeof(LONG), sizeof(LONG));
 	pTestThreadFunctionCalls = _aligned_malloc(sizeof(LONG), sizeof(LONG));
 	pTestOnceFunctionCalls = _aligned_malloc(sizeof(LONG), sizeof(LONG));
@@ -97,6 +100,7 @@ int TestSynchInit(int argc, char* argv[])
 			InterlockedIncrement(pErrors);
 			goto out;
 		}
+
 		dwCreatedThreads++;
 	}
 
@@ -114,9 +118,9 @@ int TestSynchInit(int argc, char* argv[])
 	}
 
 	if (*pErrors == 0 &&
-		*pTestThreadFunctionCalls == TEST_NUM_THREADS &&
-		*pInitOnceExecuteOnceCalls == TEST_NUM_THREADS &&
-		*pTestOnceFunctionCalls == TEST_NUM_FAILURES + 1)
+	    *pTestThreadFunctionCalls == TEST_NUM_THREADS &&
+	    *pInitOnceExecuteOnceCalls == TEST_NUM_THREADS &&
+	    *pTestOnceFunctionCalls == TEST_NUM_FAILURES + 1)
 	{
 		result = TRUE;
 	}
@@ -125,17 +129,17 @@ out:
 	fprintf(stderr, "Test result:              %s\n", result ? "OK" : "ERROR");
 	fprintf(stderr, "Error count:              %"PRId32"\n", pErrors ? *pErrors : -1);
 	fprintf(stderr, "Threads created:          %"PRIu32"\n", dwCreatedThreads);
-	fprintf(stderr, "TestThreadFunctionCalls:  %"PRId32"\n", pTestThreadFunctionCalls ? *pTestThreadFunctionCalls : -1);
-	fprintf(stderr, "InitOnceExecuteOnceCalls: %"PRId32"\n", pInitOnceExecuteOnceCalls ? *pInitOnceExecuteOnceCalls : -1);
-	fprintf(stderr, "TestOnceFunctionCalls:    %"PRId32"\n", pTestOnceFunctionCalls ? *pTestOnceFunctionCalls : -1);
-
+	fprintf(stderr, "TestThreadFunctionCalls:  %"PRId32"\n",
+	        pTestThreadFunctionCalls ? *pTestThreadFunctionCalls : -1);
+	fprintf(stderr, "InitOnceExecuteOnceCalls: %"PRId32"\n",
+	        pInitOnceExecuteOnceCalls ? *pInitOnceExecuteOnceCalls : -1);
+	fprintf(stderr, "TestOnceFunctionCalls:    %"PRId32"\n",
+	        pTestOnceFunctionCalls ? *pTestOnceFunctionCalls : -1);
 	_aligned_free(pErrors);
 	_aligned_free(pTestThreadFunctionCalls);
 	_aligned_free(pTestOnceFunctionCalls);
 	_aligned_free(pInitOnceExecuteOnceCalls);
-
 	CloseHandle(hStartEvent);
-
 
 	for (i = 0; i < dwCreatedThreads; i++)
 	{
@@ -144,3 +148,4 @@ out:
 
 	return (result ? 0 : 1);
 }
+

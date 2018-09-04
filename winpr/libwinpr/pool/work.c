@@ -185,3 +185,4 @@ VOID winpr_WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallb
 }
 
 #endif /* WINPR_THREAD_POOL defined */
+

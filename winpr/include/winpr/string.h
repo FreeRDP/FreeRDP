@@ -215,3 +215,4 @@ WINPR_API INT64 GetLine(char** lineptr, size_t* size, FILE* stream);
 #endif
 
 #endif /* WINPR_CRT_STRING_H */
+

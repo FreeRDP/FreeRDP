@@ -68,3 +68,4 @@ struct df_info
 };
 
 #endif /* FREERDP_CLIENT_DF_FREERDP_H */
+

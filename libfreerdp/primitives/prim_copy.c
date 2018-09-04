@@ -187,3 +187,4 @@ void primitives_init_copy_opt(
 	/* This is just an alias with void* parameters */
 	prims->copy    = (__copy_t)(prims->copy_8u);
 }
+

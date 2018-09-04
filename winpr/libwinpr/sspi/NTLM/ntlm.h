@@ -286,3 +286,4 @@ SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue);
 #endif
 
 #endif /* FREERDP_SSPI_NTLM_PRIVATE_H */
+

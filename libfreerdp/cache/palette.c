@@ -138,3 +138,4 @@ fail:
 	free_palette_update(context, dst);
 	return NULL;
 }
+

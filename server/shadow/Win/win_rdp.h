@@ -54,3 +54,4 @@ int win_shadow_rdp_stop(winShadowSubsystem* subsystem);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_WIN_RDP_H */
+

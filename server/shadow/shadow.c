@@ -45,9 +45,7 @@ int main(int argc, char** argv)
 	DWORD dwExitCode;
 	rdpSettings* settings;
 	rdpShadowServer* server;
-
 	shadow_subsystem_set_entry_builtin(NULL);
-
 	server = shadow_server_new();
 
 	if (!server)
@@ -58,11 +56,9 @@ int main(int argc, char** argv)
 	}
 
 	settings = server->settings;
-
 	settings->NlaSecurity = FALSE;
 	settings->TlsSecurity = TRUE;
 	settings->RdpSecurity = TRUE;
-
 #ifdef WITH_SHADOW_X11
 	server->authentication = TRUE;
 #else
@@ -112,4 +108,5 @@ fail_parse_command_line:
 fail_server_new:
 	return status;
 }
+
 

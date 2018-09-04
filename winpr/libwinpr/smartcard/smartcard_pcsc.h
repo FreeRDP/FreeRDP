@@ -164,3 +164,4 @@ PSCardApiFunctionTable PCSC_GetSCardApiFunctionTable(void);
 #endif
 
 #endif /* WINPR_SMARTCARD_PCSC_PRIVATE_H */
+

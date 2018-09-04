@@ -89,3 +89,4 @@ FREERDP_API size_t ber_sizeof_integer(UINT32 value);
 #endif
 
 #endif /* FREERDP_CRYPTO_BER_H */
+

@@ -30,9 +30,9 @@ struct _wBitStream
 {
 	const BYTE* buffer;
 	BYTE* pointer;
-        UINT32 position;
-        UINT32 length;
-        UINT32 capacity;
+	UINT32 position;
+	UINT32 length;
+	UINT32 capacity;
 	UINT32 mask;
 	UINT32 offset;
 	UINT32 prefetch;
@@ -138,7 +138,8 @@ extern "C" {
 #define BitStream_GetRemainingLength(_bs) \
 	(_bs->length - _bs->position)
 
-WINPR_API void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, UINT32 flags);
+WINPR_API void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length,
+                       UINT32 flags);
 WINPR_API UINT32 ReverseBits32(UINT32 bits, UINT32 nbits);
 
 WINPR_API void BitStream_Attach(wBitStream* bs, const BYTE* buffer, UINT32 capacity);
@@ -151,3 +152,4 @@ WINPR_API void BitStream_Free(wBitStream* bs);
 #endif
 
 #endif /* WINPR_UTILS_BITSTREAM_H */
+

@@ -46,7 +46,7 @@ int win_shadow_dxgi_init(winShadowSubsystem* subsystem);
 int win_shadow_dxgi_uninit(winShadowSubsystem* subsystem);
 
 int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem,
-	BYTE** ppDstData, int* pnDstStep, int x, int y, int width, int height);
+                                     BYTE** ppDstData, int* pnDstStep, int x, int y, int width, int height);
 
 int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem);
 int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem);
@@ -58,3 +58,4 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_WIN_DXGI_H */
+

@@ -1055,3 +1055,4 @@ void rpc_client_free(rdpRpc* rpc)
 	free(client);
 	rpc->client = NULL;
 }
+

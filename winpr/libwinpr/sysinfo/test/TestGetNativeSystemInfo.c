@@ -5,9 +5,7 @@
 int TestGetNativeSystemInfo(int argc, char* argv[])
 {
 	SYSTEM_INFO sysinfo;
-
 	GetNativeSystemInfo(&sysinfo);
-
 	printf("SystemInfo:\n");
 	printf("\twProcessorArchitecture: %"PRIu16"\n", sysinfo.wProcessorArchitecture);
 	printf("\twReserved: %"PRIu16"\n", sysinfo.wReserved);
@@ -21,6 +19,6 @@ int TestGetNativeSystemInfo(int argc, char* argv[])
 	printf("\twProcessorLevel: %"PRIu16"\n", sysinfo.wProcessorLevel);
 	printf("\twProcessorRevision: %"PRIu16"\n", sysinfo.wProcessorRevision);
 	printf("\n");
-
 	return 0;
 }
+

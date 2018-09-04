@@ -21,3 +21,4 @@ int TestBipBuffer(int argc, char* argv[])
 	BipBuffer_Free(bb);
 	return rc;
 }
+

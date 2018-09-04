@@ -189,3 +189,4 @@ FREERDP_LOCAL int rts_print_pdu_signature(rdpRpc* rpc,
         RtsPduSignature* signature);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RTS_SIGNATURE_H */
+

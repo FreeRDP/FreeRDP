@@ -937,3 +937,4 @@ int TestFreeRDPCodecProgressive(int argc, char* argv[])
 	free(ms_sample_path);
 	return 0;
 }
+

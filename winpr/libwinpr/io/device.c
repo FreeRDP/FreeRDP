@@ -254,3 +254,4 @@ NTSTATUS _IoDeleteSymbolicLinkEx(PUNICODE_STRING SymbolicLinkName)
 }
 
 #endif
+

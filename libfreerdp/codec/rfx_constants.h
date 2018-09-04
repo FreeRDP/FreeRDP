@@ -58,3 +58,4 @@
 
 #endif /* FREERDP_LIB_CODEC_RFX_CONSTANTS_H */
 
+

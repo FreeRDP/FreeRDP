@@ -54,3 +54,4 @@ struct encomsp_plugin
 typedef struct encomsp_plugin encomspPlugin;
 
 #endif /* FREERDP_CHANNEL_ENCOMSP_CLIENT_MAIN_H */
+

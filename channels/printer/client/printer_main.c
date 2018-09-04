@@ -445,7 +445,8 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		goto error_out;
 	}
 
-	if (!(printer_dev->thread = CreateThread(NULL, 0, printer_thread_func, (void*) printer_dev, 0, NULL)))
+	if (!(printer_dev->thread = CreateThread(NULL, 0, printer_thread_func, (void*) printer_dev, 0,
+	                            NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -538,3 +539,4 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	return CHANNEL_RC_OK;
 }
+

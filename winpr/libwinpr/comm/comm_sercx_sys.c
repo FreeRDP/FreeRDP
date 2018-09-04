@@ -30,20 +30,18 @@
 #include "comm_serial_sys.h"
 
 
-static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
+static BOOL _set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 {
 	SERIAL_HANDFLOW SerCxHandflow;
 	BOOL result = TRUE;
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
-
 	memcpy(&SerCxHandflow, pHandflow, sizeof(SERIAL_HANDFLOW));
-
 	/* filter out unsupported bits by SerCx.sys
 	 *
 	 * http://msdn.microsoft.com/en-us/library/windows/hardware/jj680685%28v=vs.85%29.aspx
 	 */
-
-	SerCxHandflow.ControlHandShake = pHandflow->ControlHandShake & (SERIAL_DTR_CONTROL | SERIAL_DTR_HANDSHAKE | SERIAL_CTS_HANDSHAKE | SERIAL_DSR_HANDSHAKE);
+	SerCxHandflow.ControlHandShake = pHandflow->ControlHandShake & (SERIAL_DTR_CONTROL |
+	                                 SERIAL_DTR_HANDSHAKE | SERIAL_CTS_HANDSHAKE | SERIAL_DSR_HANDSHAKE);
 	SerCxHandflow.FlowReplace = pHandflow->FlowReplace & (SERIAL_RTS_CONTROL | SERIAL_RTS_HANDSHAKE);
 
 	if (SerCxHandflow.ControlHandShake != pHandflow->ControlHandShake)
@@ -110,53 +108,50 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 }
 
 
-static BOOL _get_handflow(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow)
+static BOOL _get_handflow(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow)
 {
 	BOOL result;
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
-
 	result = pSerialSys->get_handflow(pComm, pHandflow);
-
 	/* filter out unsupported bits by SerCx.sys
 	 *
 	 * http://msdn.microsoft.com/en-us/library/windows/hardware/jj680685%28v=vs.85%29.aspx
 	 */
-
-	pHandflow->ControlHandShake = pHandflow->ControlHandShake & (SERIAL_DTR_CONTROL | SERIAL_DTR_HANDSHAKE | SERIAL_CTS_HANDSHAKE | SERIAL_DSR_HANDSHAKE);
+	pHandflow->ControlHandShake = pHandflow->ControlHandShake & (SERIAL_DTR_CONTROL |
+	                              SERIAL_DTR_HANDSHAKE | SERIAL_CTS_HANDSHAKE | SERIAL_DSR_HANDSHAKE);
 	pHandflow->FlowReplace = pHandflow->FlowReplace & (SERIAL_RTS_CONTROL | SERIAL_RTS_HANDSHAKE);
-
 	return result;
 }
 
 
 /* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439605%28v=vs.85%29.aspx */
 static const ULONG _SERCX_SYS_SUPPORTED_EV_MASK =
-	SERIAL_EV_RXCHAR   |
-	/* SERIAL_EV_RXFLAG   | */
-	SERIAL_EV_TXEMPTY  |
-	SERIAL_EV_CTS      |
-	SERIAL_EV_DSR      |
-	SERIAL_EV_RLSD     |
-	SERIAL_EV_BREAK    |
-	SERIAL_EV_ERR      |
-	SERIAL_EV_RING    /* |
+    SERIAL_EV_RXCHAR   |
+    /* SERIAL_EV_RXFLAG   | */
+    SERIAL_EV_TXEMPTY  |
+    SERIAL_EV_CTS      |
+    SERIAL_EV_DSR      |
+    SERIAL_EV_RLSD     |
+    SERIAL_EV_BREAK    |
+    SERIAL_EV_ERR      |
+    SERIAL_EV_RING    /* |
 	SERIAL_EV_PERR     |
 	SERIAL_EV_RX80FULL |
 	SERIAL_EV_EVENT1   |
 	SERIAL_EV_EVENT2*/;
 
 
-static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
+static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 {
 	ULONG possibleMask;
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
-
 	possibleMask = *pWaitMask & _SERCX_SYS_SUPPORTED_EV_MASK;
 
 	if (possibleMask != *pWaitMask)
 	{
-		CommLog_Print(WLOG_WARN, "Not all wait events supported (SerCx.sys), requested events= 0x%08"PRIX32", possible events= 0x%08"PRIX32"", *pWaitMask, possibleMask);
-
+		CommLog_Print(WLOG_WARN,
+		              "Not all wait events supported (SerCx.sys), requested events= 0x%08"PRIX32", possible events= 0x%08"PRIX32"",
+		              *pWaitMask, possibleMask);
 		/* FIXME: shall we really set the possibleMask and return FALSE? */
 		pComm->WaitEventMask = possibleMask;
 		return FALSE;
@@ -210,50 +205,34 @@ SERIAL_DRIVER* SerCxSys_s()
 {
 	/* _SerCxSys completed with inherited functions from SerialSys */
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
-
 	_SerCxSys.set_baud_rate    = pSerialSys->set_baud_rate;
 	_SerCxSys.get_baud_rate    = pSerialSys->get_baud_rate;
-
 	_SerCxSys.get_properties = pSerialSys->get_properties;
-
 	_SerCxSys.set_serial_chars = pSerialSys->set_serial_chars;
 	_SerCxSys.get_serial_chars = pSerialSys->get_serial_chars;
 	_SerCxSys.set_line_control = pSerialSys->set_line_control;
 	_SerCxSys.get_line_control = pSerialSys->get_line_control;
-
 	_SerCxSys.set_timeouts = pSerialSys->set_timeouts;
 	_SerCxSys.get_timeouts = pSerialSys->get_timeouts;
-
 	_SerCxSys.set_dtr = pSerialSys->set_dtr;
 	_SerCxSys.clear_dtr = pSerialSys->clear_dtr;
-
 	_SerCxSys.set_rts = pSerialSys->set_rts;
 	_SerCxSys.clear_rts = pSerialSys->clear_rts;
-
 	_SerCxSys.get_modemstatus = pSerialSys->get_modemstatus;
-
 	_SerCxSys.set_wait_mask = pSerialSys->set_wait_mask;
 	_SerCxSys.get_wait_mask = pSerialSys->get_wait_mask;
 	_SerCxSys.wait_on_mask  = pSerialSys->wait_on_mask;
-
 	_SerCxSys.set_queue_size = pSerialSys->set_queue_size;
-
 	_SerCxSys.purge = pSerialSys->purge;
-
 	_SerCxSys.get_commstatus = pSerialSys->get_commstatus;
-
 	_SerCxSys.set_break_on  = pSerialSys->set_break_on;
 	_SerCxSys.set_break_off = pSerialSys->set_break_off;
-
-
 	_SerCxSys.set_xoff = pSerialSys->set_xoff;
 	_SerCxSys.set_xon  = pSerialSys->set_xon;
-
 	_SerCxSys.get_dtrrts  = pSerialSys->get_dtrrts;
-
 	_SerCxSys.immediate_char = pSerialSys->immediate_char;
-
 	return &_SerCxSys;
 }
 
 #endif /* __linux__ */
+

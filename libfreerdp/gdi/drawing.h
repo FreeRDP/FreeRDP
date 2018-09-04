@@ -42,3 +42,4 @@ FREERDP_LOCAL UINT32 gdi_SetTextColor(HGDI_DC hdc, UINT32 crColor);
 #endif
 
 #endif /* FREERDP_LIB_GDI_DRAWING_H */
+

@@ -1,8 +1,8 @@
 /*
  * Copyright 2001-2004 Unicode, Inc.
- * 
+ *
  * Disclaimer
- * 
+ *
  * This source code is provided as is by Unicode, Inc. No claims are
  * made as to fitness for any particular purpose. No warranties of any
  * kind are expressed or implied. The recipient agrees to determine
@@ -10,9 +10,9 @@
  * purchased on magnetic or optical media from Unicode, Inc., the
  * sole remedy for any claim will be exchange of defective media
  * within 90 days of receipt.
- * 
+ *
  * Limitations on Rights to Redistribute This Code
- * 
+ *
  * Unicode, Inc. hereby grants the right to freely use the information
  * supplied in this file in the creation of products supporting the
  * Unicode Standard, and to make copies of this file in any form
@@ -33,7 +33,7 @@
 
     Each routine converts the text between *sourceStart and sourceEnd,
     putting the result into the buffer between *targetStart and
-    targetEnd. Note: the end pointers are *after* the last item: e.g. 
+    targetEnd. Note: the end pointers are *after* the last item: e.g.
     *(sourceEnd - 1) is the last item.
 
     The return result indicates whether the conversion was successful,
@@ -71,7 +71,7 @@
     sequence is malformed.  When "sourceIllegal" is returned, the source
     value will point to the illegal value that caused the problem. E.g.,
     in UTF-8 when a sequence is malformed, it points to the start of the
-    malformed sequence.  
+    malformed sequence.
 
     Author: Mark E. Davis, 1994.
     Rev History: Rick McGowan, fixes & updates May 2001.
@@ -101,7 +101,7 @@
 
 typedef enum
 {
- 	conversionOK,   /* conversion successful */
+	conversionOK,   /* conversion successful */
 	sourceExhausted, /* partial character in source, but hit end */
 	targetExhausted, /* insuff. room in target for conversion */
 	sourceIllegal  /* source sequence is illegal/malformed */
@@ -119,34 +119,35 @@ extern "C" {
 #endif
 
 ConversionResult ConvertUTF8toUTF16(
-	const BYTE** sourceStart, const BYTE* sourceEnd,
-	WCHAR** targetStart, WCHAR* targetEnd, ConversionFlags flags);
+    const BYTE** sourceStart, const BYTE* sourceEnd,
+    WCHAR** targetStart, WCHAR* targetEnd, ConversionFlags flags);
 
 ConversionResult ConvertUTF16toUTF8(
-	const WCHAR** sourceStart, const WCHAR* sourceEnd,
-	BYTE** targetStart, BYTE* targetEnd, ConversionFlags flags);
+    const WCHAR** sourceStart, const WCHAR* sourceEnd,
+    BYTE** targetStart, BYTE* targetEnd, ConversionFlags flags);
 
 ConversionResult ConvertUTF8toUTF32(
-	const BYTE** sourceStart, const BYTE* sourceEnd,
-	DWORD** targetStart, DWORD* targetEnd, ConversionFlags flags);
+    const BYTE** sourceStart, const BYTE* sourceEnd,
+    DWORD** targetStart, DWORD* targetEnd, ConversionFlags flags);
 
 ConversionResult ConvertUTF32toUTF8(
-	const DWORD** sourceStart, const DWORD* sourceEnd,
-	BYTE** targetStart, BYTE* targetEnd, ConversionFlags flags);
+    const DWORD** sourceStart, const DWORD* sourceEnd,
+    BYTE** targetStart, BYTE* targetEnd, ConversionFlags flags);
 
 ConversionResult ConvertUTF16toUTF32(
-	const WCHAR** sourceStart, const WCHAR* sourceEnd,
-	DWORD** targetStart, DWORD* targetEnd, ConversionFlags flags);
+    const WCHAR** sourceStart, const WCHAR* sourceEnd,
+    DWORD** targetStart, DWORD* targetEnd, ConversionFlags flags);
 
 ConversionResult ConvertUTF32toUTF16(
-	const DWORD** sourceStart, const DWORD* sourceEnd,
-	WCHAR** targetStart, WCHAR* targetEnd, ConversionFlags flags);
+    const DWORD** sourceStart, const DWORD* sourceEnd,
+    WCHAR** targetStart, WCHAR* targetEnd, ConversionFlags flags);
 
-BOOL isLegalUTF8Sequence(const BYTE *source, const BYTE *sourceEnd);
+BOOL isLegalUTF8Sequence(const BYTE* source, const BYTE* sourceEnd);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* FREERDP_UNICODE_CONVERT_UTF_H */
+
 

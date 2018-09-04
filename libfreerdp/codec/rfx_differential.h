@@ -49,3 +49,4 @@ static INLINE void rfx_differential_encode(INT16* buffer, int size)
 }
 
 #endif /* FREERDP_LIB_CODEC_RFX_DIFFERENTIAL_H */
+

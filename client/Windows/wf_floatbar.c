@@ -115,7 +115,7 @@ static int button_hit(Button* button)
 			break;
 
 		case BUTTON_CLOSE:
-			SendMessage(floatbar->parent, WM_DESTROY, 0 , 0);
+			SendMessage(floatbar->parent, WM_DESTROY, 0, 0);
 			break;
 
 		default:
@@ -478,3 +478,4 @@ void floatbar_window_create(wfContext* wfc)
 
 	ShowWindow(barWnd, SW_SHOWNORMAL);
 }
+

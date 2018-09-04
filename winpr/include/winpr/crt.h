@@ -169,3 +169,4 @@ WINPR_API errno_t wmemmove_s(WCHAR* dest, size_t numberOfElements, const WCHAR* 
 #endif
 
 #endif /* WINPR_CRT_H */
+

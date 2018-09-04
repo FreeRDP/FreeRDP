@@ -1665,3 +1665,4 @@ UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 
 	return ret;
 }
+

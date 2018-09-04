@@ -114,3 +114,4 @@ FREERDP_API void tls_free(rdpTls* tls);
 #endif
 
 #endif /* FREERDP_CRYPTO_TLS_H */
+

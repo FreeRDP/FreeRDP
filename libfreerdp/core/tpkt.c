@@ -66,7 +66,6 @@
 BOOL tpkt_verify_header(wStream* s)
 {
 	BYTE version;
-
 	Stream_Peek_UINT8(s, version);
 
 	if (version == 3)
@@ -94,11 +93,13 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 	if (version == 3)
 	{
 		UINT16 len;
+
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 
 		Stream_Seek(s, 2);
 		Stream_Read_UINT16_BE(s, len);
+
 		if (len < 4)
 			return FALSE;
 
@@ -125,3 +126,4 @@ void tpkt_write_header(wStream* s, UINT16 length)
 	Stream_Write_UINT8(s, 0); /* reserved */
 	Stream_Write_UINT16_BE(s, length); /* length */
 }
+

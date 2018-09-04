@@ -38,3 +38,4 @@ HANDLE CreateNoneHandle();
 #endif /*_WIN32*/
 
 #endif /* WINPR_NONE_HANDLE_PRIVATE_H */
+

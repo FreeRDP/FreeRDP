@@ -1634,3 +1634,4 @@ BOOL WINAPI FreeRDP_WTSLogonUser(HANDLE hServer, LPCSTR username,
 {
 	return FALSE;
 }
+

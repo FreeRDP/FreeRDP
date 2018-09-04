@@ -210,3 +210,4 @@ int main(int argc, char* argv[])
 	freerdp_free(instance);
 	return 0;
 }
+

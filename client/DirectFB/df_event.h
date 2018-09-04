@@ -26,3 +26,4 @@ void df_keyboard_init(void);
 BOOL df_event_process(freerdp* instance, DFBEvent* event);
 
 #endif /* FREERDP_CLIENT_DF_EVENT_H */
+

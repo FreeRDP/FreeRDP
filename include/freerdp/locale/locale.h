@@ -231,7 +231,7 @@
 #define ZULU						0x0435
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 FREERDP_API DWORD freerdp_get_system_locale_id(void);
@@ -239,7 +239,8 @@ FREERDP_API const char* freerdp_get_system_locale_name_from_id(DWORD localeId);
 FREERDP_API int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_LOCALE_H */
+

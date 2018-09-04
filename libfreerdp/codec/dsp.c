@@ -1210,3 +1210,4 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 	return TRUE;
 #endif
 }
+

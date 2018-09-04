@@ -108,3 +108,4 @@ void xf_video_control_uninit(xfContext* xfc, VideoClientContext* video)
 {
 	gdi_video_control_uninit(xfc->context.gdi, video);
 }
+

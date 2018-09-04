@@ -34,3 +34,4 @@ typedef struct _ERRINFO ERRINFO;
 FREERDP_LOCAL void rdp_print_errinfo(UINT32 code);
 
 #endif /* FREERDP_LIB_CORE_ERRINFO_H */
+

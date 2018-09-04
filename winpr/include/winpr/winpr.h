@@ -74,3 +74,4 @@ WINPR_API const char* winpr_get_build_config(void);
 #define WINPR_UNUSED(x) (void)(x)
 
 #endif /* WINPR_H */
+

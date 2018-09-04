@@ -92,9 +92,9 @@ extern "C" {
 #endif
 
 FREERDP_API UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
-		FILEDESCRIPTOR** file_descriptor_array, UINT32* file_descriptor_count);
+        FILEDESCRIPTOR** file_descriptor_array, UINT32* file_descriptor_count);
 FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
-		UINT32 file_descriptor_count, BYTE** format_data, UINT32* format_data_length);
+        UINT32 file_descriptor_count, BYTE** format_data, UINT32* format_data_length);
 
 #ifdef __cplusplus
 }
@@ -234,4 +234,5 @@ struct _CLIPRDR_FILE_CONTENTS_RESPONSE
 typedef struct _CLIPRDR_FILE_CONTENTS_RESPONSE CLIPRDR_FILE_CONTENTS_RESPONSE;
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_H */
+
 

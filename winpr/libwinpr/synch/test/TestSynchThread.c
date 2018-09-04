@@ -10,7 +10,7 @@ static DWORD WINAPI test_thread(LPVOID arg)
 	return 0;
 }
 
-int TestSynchThread(int argc, char *argv[])
+int TestSynchThread(int argc, char* argv[])
 {
 	DWORD rc;
 	HANDLE thread;
@@ -113,4 +113,5 @@ int TestSynchThread(int argc, char *argv[])
 
 	return 0;
 }
+
 

@@ -5,27 +5,28 @@
 
 #import <UIKit/UIKit.h>
 
-@interface BlockAlertView : NSObject {
+@interface BlockAlertView : NSObject
+{
 @protected
-    UIView *_view;
-    NSMutableArray *_blocks;
-    CGFloat _height;
-    NSString *_title;
-    NSString *_message;
-    BOOL _shown;
-    BOOL _cancelBounce;
+	UIView* _view;
+	NSMutableArray* _blocks;
+	CGFloat _height;
+	NSString* _title;
+	NSString* _message;
+	BOOL _shown;
+	BOOL _cancelBounce;
 }
 
-+ (BlockAlertView *)alertWithTitle:(NSString *)title message:(NSString *)message;
++ (BlockAlertView*)alertWithTitle:(NSString*)title message:(NSString*)message;
 
-+ (void)showInfoAlertWithTitle:(NSString *)title message:(NSString *)message;
-+ (void)showErrorAlert:(NSError *)error;
++ (void)showInfoAlertWithTitle:(NSString*)title message:(NSString*)message;
++ (void)showErrorAlert:(NSError*)error;
 
-- (id)initWithTitle:(NSString *)title message:(NSString *)message;
+- (id)initWithTitle:(NSString*)title message:(NSString*)message;
 
-- (void)setDestructiveButtonWithTitle:(NSString *)title block:(void (^)())block;
-- (void)setCancelButtonWithTitle:(NSString *)title block:(void (^)())block;
-- (void)addButtonWithTitle:(NSString *)title block:(void (^)())block;
+- (void)setDestructiveButtonWithTitle:(NSString*)title block:(void (^)())block;
+- (void)setCancelButtonWithTitle:(NSString*)title block:(void (^)())block;
+- (void)addButtonWithTitle:(NSString*)title block:(void (^)())block;
 
 - (void)addComponents:(CGRect)frame;
 
@@ -34,8 +35,9 @@
 
 - (void)setupDisplay;
 
-@property (nonatomic, retain) UIImage *backgroundImage;
-@property (nonatomic, readonly) UIView *view;
-@property (nonatomic, readwrite) BOOL vignetteBackground;
+@property(nonatomic, retain) UIImage* backgroundImage;
+@property(nonatomic, readonly) UIView* view;
+@property(nonatomic, readwrite) BOOL vignetteBackground;
 
 @end
+

@@ -32,22 +32,23 @@ typedef struct _VideoSurface VideoSurface;
 struct _VideoSurface
 {
 	UINT32 x, y, w, h;
-	BYTE *data;
+	BYTE* data;
 };
 
-typedef void (*pcVideoTimer)(VideoClientContext *video, UINT64 now);
-typedef void (*pcVideoSetGeometry)(VideoClientContext *video, GeometryClientContext *geometry);
-typedef VideoSurface *(*pcVideoCreateSurface)(VideoClientContext *video, BYTE *data, UINT32 x, UINT32 y,
-			UINT32 width, UINT32 height);
-typedef BOOL (*pcVideoShowSurface)(VideoClientContext *video, VideoSurface *surface);
-typedef BOOL (*pcVideoDeleteSurface)(VideoClientContext *video, VideoSurface *surface);
+typedef void (*pcVideoTimer)(VideoClientContext* video, UINT64 now);
+typedef void (*pcVideoSetGeometry)(VideoClientContext* video, GeometryClientContext* geometry);
+typedef VideoSurface* (*pcVideoCreateSurface)(VideoClientContext* video, BYTE* data, UINT32 x,
+        UINT32 y,
+        UINT32 width, UINT32 height);
+typedef BOOL (*pcVideoShowSurface)(VideoClientContext* video, VideoSurface* surface);
+typedef BOOL (*pcVideoDeleteSurface)(VideoClientContext* video, VideoSurface* surface);
 
 /** @brief context for the video (MS-RDPEVOR) channel */
 struct _VideoClientContext
 {
 	void* handle;
 	void* custom;
-	VideoClientContextPriv *priv;
+	VideoClientContextPriv* priv;
 
 	pcVideoSetGeometry setGeometry;
 	pcVideoTimer timer;
@@ -58,4 +59,5 @@ struct _VideoClientContext
 
 
 #endif /* FREERDP_CHANNELS_CLIENT_VIDEO_H */
+
 

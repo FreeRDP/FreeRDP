@@ -28,9 +28,9 @@
 #ifndef _WIN32
 
 ASN1module_t ASN1_CreateModule(ASN1uint32_t nVersion, ASN1encodingrule_e eRule,
-	ASN1uint32_t dwFlags, ASN1uint32_t cPDU, const ASN1GenericFun_t apfnEncoder[],
-	const ASN1GenericFun_t apfnDecoder[], const ASN1FreeFun_t apfnFreeMemory[],
-	const ASN1uint32_t acbStructSize[], ASN1magic_t nModuleName)
+                               ASN1uint32_t dwFlags, ASN1uint32_t cPDU, const ASN1GenericFun_t apfnEncoder[],
+                               const ASN1GenericFun_t apfnDecoder[], const ASN1FreeFun_t apfnFreeMemory[],
+                               const ASN1uint32_t acbStructSize[], ASN1magic_t nModuleName)
 {
 	ASN1module_t module = NULL;
 
@@ -64,7 +64,7 @@ void ASN1_CloseModule(ASN1module_t pModule)
 }
 
 ASN1error_e ASN1_CreateEncoder(ASN1module_t pModule, ASN1encoding_t* ppEncoderInfo,
-	ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize, ASN1encoding_t pParent)
+                               ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize, ASN1encoding_t pParent)
 {
 	ASN1error_e status;
 	ASN1encoding_t encoder;
@@ -108,7 +108,7 @@ ASN1error_e ASN1_CreateEncoder(ASN1module_t pModule, ASN1encoding_t* ppEncoderIn
 
 			if (!pParent)
 			{
-LABEL_ENCODER_COMPLETE:
+			LABEL_ENCODER_COMPLETE:
 				*ppEncoderInfo = encoder;
 				return ASN1_SUCCESS;
 			}
@@ -119,13 +119,14 @@ LABEL_ENCODER_COMPLETE:
 				{
 					if (encoder->buf)
 						*encoder->buf = 0;
-LABEL_SET_BUFFER:
+
+				LABEL_SET_BUFFER:
+
 					if (pParent)
 						pParent[1].version = (ASN1uint32_t) encoder;
 
 					goto LABEL_ENCODER_COMPLETE;
 				}
-
 				status = ASN1_ERR_MEMORY;
 			}
 			else
@@ -149,7 +150,7 @@ LABEL_SET_BUFFER:
 }
 
 ASN1error_e ASN1_Encode(ASN1encoding_t pEncoderInfo, void* pDataStruct, ASN1uint32_t nPduNum,
-	ASN1uint32_t dwFlags, ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize)
+                        ASN1uint32_t dwFlags, ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize)
 {
 	int flags;
 	ASN1error_e status;
@@ -190,7 +191,6 @@ ASN1error_e ASN1_Encode(ASN1encoding_t pEncoderInfo, void* pDataStruct, ASN1uint
 
 	pEncoderInfo->len = 0;
 	pEncoderInfo->bit = 0;
-
 LABEL_MODULE:
 	module = pEncoderInfo->module;
 
@@ -207,7 +207,7 @@ LABEL_MODULE:
 
 	if (!pfnEncoder)
 	{
-LABEL_BAD_PDU:
+	LABEL_BAD_PDU:
 		status = ASN1_ERR_BADPDU;
 		return ASN1EncSetError(pEncoderInfo, status);
 	}
@@ -258,14 +258,12 @@ ASN1error_e ASN1EncSetError(ASN1encoding_t enc, ASN1error_e err)
 	ASN1error_e status;
 	ASN1encoding_t encoder;
 	ASN1encoding_t nextEncoder;
-
 	status = err;
 	encoder = enc;
 
 	while (encoder)
 	{
 		nextEncoder = (ASN1encoding_t) &encoder[1];
-
 		encoder->err = err;
 
 		if (encoder == nextEncoder)
@@ -282,14 +280,12 @@ ASN1error_e ASN1DecSetError(ASN1decoding_t dec, ASN1error_e err)
 	ASN1error_e status;
 	ASN1decoding_t decoder;
 	ASN1decoding_t nextDecoder;
-
 	status = err;
 	decoder = dec;
 
 	while (decoder)
 	{
 		nextDecoder = (ASN1decoding_t) &decoder[1];
-
 		decoder->err = err;
 
 		if (decoder == nextDecoder)
@@ -312,14 +308,16 @@ void ASN1_FreeDecoded(ASN1decoding_t pDecoderInfo, void* pDataStruct, ASN1uint32
 }
 
 ASN1error_e ASN1_CreateDecoder(ASN1module_t pModule, ASN1decoding_t* ppDecoderInfo,
-        ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize, ASN1decoding_t pParent)
+                               ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize, ASN1decoding_t pParent)
 {
-        return ASN1_ERR_BADARGS;
+	return ASN1_ERR_BADARGS;
 }
 
-ASN1error_e ASN1_Decode(ASN1decoding_t pDecoderInfo,void **ppDataStruct,ASN1uint32_t nPduNum,ASN1uint32_t dwFlags,ASN1octet_t *pbBuf,ASN1uint32_t cbBufSize)
+ASN1error_e ASN1_Decode(ASN1decoding_t pDecoderInfo, void** ppDataStruct, ASN1uint32_t nPduNum,
+                        ASN1uint32_t dwFlags, ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize)
 {
-    return ASN1_ERR_BADARGS;
+	return ASN1_ERR_BADARGS;
 }
 
 #endif
+

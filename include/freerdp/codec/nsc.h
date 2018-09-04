@@ -116,3 +116,4 @@ FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
 #endif
 
 #endif /* FREERDP_CODEC_NSCODEC_H */
+

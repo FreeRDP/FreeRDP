@@ -33,3 +33,4 @@ FREERDP_LOCAL HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 width,
 FREERDP_LOCAL BOOL gdi_register_graphics(rdpGraphics* graphics);
 
 #endif /* FREERDP_LIB_GDI_GRAPHICS_H */
+

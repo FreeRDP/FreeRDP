@@ -32,3 +32,4 @@ void mf_peer_audin_init(mfPeerContext* context);
 
 #endif /* FREERDP_SERVER_MAC_AUDIN_H */
 
+

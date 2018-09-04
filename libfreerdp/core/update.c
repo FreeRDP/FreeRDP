@@ -2263,3 +2263,4 @@ void update_free(rdpUpdate* update)
 		free(update);
 	}
 }
+

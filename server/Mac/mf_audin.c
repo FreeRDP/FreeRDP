@@ -84,3 +84,4 @@ void mf_peer_audin_init(mfPeerContext* context)
 	context->audin->OpenResult = mf_peer_audin_open_result;
 	context->audin->ReceiveSamples = mf_peer_audin_receive_samples;
 }
+

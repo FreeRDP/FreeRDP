@@ -25,3 +25,4 @@
 wLogAppender* WLog_BinaryAppender_New(wLog* log);
 
 #endif /* WINPR_WLOG_BINARY_APPENDER_PRIVATE_H */
+

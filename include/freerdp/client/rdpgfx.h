@@ -78,7 +78,7 @@ typedef void* (*pcRdpgfxGetCacheSlotData)(RdpgfxClientContext* context,
 typedef UINT(*pcRdpgfxUpdateSurfaces)(RdpgfxClientContext* context);
 
 typedef UINT(*pcRdpgfxUpdateSurfaceArea)(RdpgfxClientContext* context, UINT16 surfaceId,
-                                         UINT32 nrRects, const RECTANGLE_16* rects);
+        UINT32 nrRects, const RECTANGLE_16* rects);
 
 struct _rdpgfx_client_context
 {
@@ -115,3 +115,4 @@ struct _rdpgfx_client_context
 };
 
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_RDPGFX_H */
+

@@ -35,3 +35,4 @@ struct _drdynvc_server_private
 };
 
 #endif /* FREERDP_CHANNEL_DRDYNVC_SERVER_MAIN_H */
+

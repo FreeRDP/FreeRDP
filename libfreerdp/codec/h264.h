@@ -25,7 +25,8 @@
 #include <freerdp/codec/h264.h>
 
 FREERDP_LOCAL BOOL avc420_ensure_buffer(H264_CONTEXT* h264,
-	UINT32 stride, UINT32 width, UINT32 height);
+                                        UINT32 stride, UINT32 width, UINT32 height);
 
 #endif /* FREERDP_LIB_CODEC_H264_H */
+
 

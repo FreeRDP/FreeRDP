@@ -89,3 +89,4 @@ FREERDP_LOCAL void gcc_write_server_multitransport_channel_data(wStream* s,
         rdpMcs* mcs);
 
 #endif /* FREERDP_LIB_CORE_GCC_H */
+

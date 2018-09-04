@@ -102,7 +102,7 @@ extern "C" {
 #if !defined(TRIO_UNIX98)
 # define TRIO_UNIX98 1
 #endif
-  
+
 /*
  * TRIO_MICROSOFT (=0 or =1)
  *
@@ -157,7 +157,7 @@ extern "C" {
 # define TRIO_EMBED_NAN 1
 # define TRIO_EMBED_STRING 1
 #endif
-  
+
 /*
  * TRIO_FEATURE_SCANF (=0 or =1)
  *
@@ -167,7 +167,7 @@ extern "C" {
 #if !defined(TRIO_FEATURE_SCANF)
 # define TRIO_FEATURE_SCANF 1
 #endif
-  
+
 /*
  * TRIO_FEATURE_FILE (=0 or =1)
  *
@@ -212,7 +212,7 @@ extern "C" {
 /*
  * TRIO_FEATURE_DYNAMICSTRING (=0 or =1)
  *
- * Define this to 0 to disable compilation of the trio_aprintf() 
+ * Define this to 0 to disable compilation of the trio_aprintf()
  * family of functions, or define to 1 to enable them.
  *
  * If you define both this and TRIO_MINIMAL to 0, then Trio will never
@@ -330,7 +330,7 @@ extern "C" {
 #  define TRIO_EMBED_STRING
 # endif
 #endif
-  
+
 /* Does not work yet. Do not enable */
 #ifndef TRIO_FEATURE_WIDECHAR
 # define TRIO_FEATURE_WIDECHAR 0
@@ -363,7 +363,7 @@ extern "C" {
 #if !defined(TRIO_FEATURE_SIZE_T_UPPER)
 # define TRIO_FEATURE_SIZE_T_UPPER TRIO_GNU
 #endif
-  
+
 #if !defined(TRIO_FEATURE_PTRDIFF_T)
 # define TRIO_FEATURE_PTRDIFF_T TRIO_C99
 #endif
@@ -391,11 +391,11 @@ extern "C" {
 #if !defined(TRIO_FEATURE_QUOTE)
 # define TRIO_FEATURE_QUOTE TRIO_EXTENSION
 #endif
-  
+
 #if !defined(TRIO_FEATURE_STICKY)
 # define TRIO_FEATURE_STICKY TRIO_EXTENSION
 #endif
-  
+
 #if !defined(TRIO_FEATURE_VARSIZE)
 # define TRIO_FEATURE_VARSIZE TRIO_EXTENSION
 #endif
@@ -403,7 +403,7 @@ extern "C" {
 #if !defined(TRIO_FEATURE_ROUNDING)
 # define TRIO_FEATURE_ROUNDING TRIO_EXTENSION
 #endif
-  
+
 /*************************************************************************
  * Memory handling
  */
@@ -424,10 +424,10 @@ extern "C" {
 
 typedef int (*trio_callback_t) TRIO_PROTO((trio_pointer_t));
 
-trio_pointer_t trio_register TRIO_PROTO((trio_callback_t callback, const char *name));
+trio_pointer_t trio_register TRIO_PROTO((trio_callback_t callback, const char* name));
 void trio_unregister TRIO_PROTO((trio_pointer_t handle));
 
-TRIO_CONST char *trio_get_format TRIO_PROTO((trio_pointer_t ref));
+TRIO_CONST char* trio_get_format TRIO_PROTO((trio_pointer_t ref));
 TRIO_CONST trio_pointer_t trio_get_argument TRIO_PROTO((trio_pointer_t ref));
 
 /* Modifiers */
@@ -477,16 +477,16 @@ void trio_set_size TRIO_PROTO((trio_pointer_t ref, int is_size));
 #endif
 
 /* Printing */
-int trio_print_ref TRIO_PROTO((trio_pointer_t ref, const char *format, ...));
-int trio_vprint_ref TRIO_PROTO((trio_pointer_t ref, const char *format, va_list args));
-int trio_printv_ref TRIO_PROTO((trio_pointer_t ref, const char *format, trio_pointer_t *args));
+int trio_print_ref TRIO_PROTO((trio_pointer_t ref, const char* format, ...));
+int trio_vprint_ref TRIO_PROTO((trio_pointer_t ref, const char* format, va_list args));
+int trio_printv_ref TRIO_PROTO((trio_pointer_t ref, const char* format, trio_pointer_t* args));
 
 void trio_print_int TRIO_PROTO((trio_pointer_t ref, int number));
 void trio_print_uint TRIO_PROTO((trio_pointer_t ref, unsigned int number));
 /*  void trio_print_long TRIO_PROTO((trio_pointer_t ref, long number)); */
 /*  void trio_print_ulong TRIO_PROTO((trio_pointer_t ref, unsigned long number)); */
 void trio_print_double TRIO_PROTO((trio_pointer_t ref, double number));
-void trio_print_string TRIO_PROTO((trio_pointer_t ref, TRIO_CONST char *string));
+void trio_print_string TRIO_PROTO((trio_pointer_t ref, TRIO_CONST char* string));
 void trio_print_pointer TRIO_PROTO((trio_pointer_t ref, trio_pointer_t pointer));
 
 #ifdef __cplusplus
@@ -494,3 +494,4 @@ void trio_print_pointer TRIO_PROTO((trio_pointer_t ref, trio_pointer_t pointer))
 #endif
 
 #endif /* TRIO_TRIOP_H */
+

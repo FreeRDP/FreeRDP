@@ -170,3 +170,4 @@ error:
 	rdpsnd_fake_free(&fake->device);
 	return ret;
 }
+

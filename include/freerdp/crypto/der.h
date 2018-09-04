@@ -23,7 +23,7 @@
 #include <freerdp/crypto/er.h>
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 FREERDP_API int _der_skip_length(int length);
@@ -37,7 +37,8 @@ FREERDP_API int der_write_contextual_tag(wStream* s, BYTE tag, int length, BOOL 
 FREERDP_API void der_write_octet_string(wStream* s, BYTE* oct_str, int length);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CRYPTO_DER_H */
+

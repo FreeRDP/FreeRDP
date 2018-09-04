@@ -206,3 +206,4 @@ typedef struct _wLogCallbacks wLogCallbacks;
 #endif
 
 #endif /* WINPR_WLOG_H */
+

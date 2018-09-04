@@ -23,3 +23,4 @@
 #include <freerdp/freerdp.h>
 
 #endif /* FREERDP_SERVER_WIN_FREERDP_H */
+

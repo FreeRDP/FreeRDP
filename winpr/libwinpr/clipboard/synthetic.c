@@ -636,3 +636,4 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 
 	return TRUE;
 }
+

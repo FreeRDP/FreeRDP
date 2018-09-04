@@ -300,3 +300,4 @@ FREERDP_LOCAL BOOL update_write_switch_surface_order(
     const SWITCH_SURFACE_ORDER* switch_surface);
 
 #endif /* FREERDP_LIB_CORE_ORDERS_H */
+

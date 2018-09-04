@@ -47,3 +47,4 @@ void schannel_ContextFree(SCHANNEL_CONTEXT* context);
 
 #endif /* WINPR_SSPI_SCHANNEL_PRIVATE_H */
 
+

@@ -27,9 +27,9 @@ int TestRdTkNinePatch(int argc, char* argv[])
 		printf("%s: error creating auto-allocated surface (%"PRIu32")\n", __FUNCTION__, GetLastError());
 		goto out;
 	}
+
 	rdtk_surface_free(surface);
 	surface = NULL;
-
 
 	/* test self-allocated buffer */
 	if (!(data = calloc(height, scanline)))
@@ -45,11 +45,10 @@ int TestRdTkNinePatch(int argc, char* argv[])
 	}
 
 	ret = 0;
-
 out:
 	rdtk_surface_free(surface);
 	rdtk_engine_free(engine);
 	free(data);
-
 	return ret;
 }
+

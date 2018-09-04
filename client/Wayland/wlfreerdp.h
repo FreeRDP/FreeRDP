@@ -52,3 +52,4 @@ struct wlf_context
 
 #endif /* FREERDP_CLIENT_WAYLAND_FREERDP_H */
 
+

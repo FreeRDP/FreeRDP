@@ -163,7 +163,6 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 	BYTE code;
 	size_t position;
 	size_t bytes_read = 0;
-
 	/* save the position to determine the number of bytes read */
 	position = Stream_GetPosition(s);
 
@@ -175,6 +174,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 		WLog_ERR(TAG,  "Error: expected X224_TPDU_CONNECTION_CONFIRM");
 		return FALSE;
 	}
+
 	/*
 	 * To ensure that there are enough bytes remaining for processing
 	 * check against the length indicator (li). Already read bytes need
@@ -183,8 +183,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 	 * For reference see ITU-T Rec. X.224 - 13.2.1
 	 */
 	bytes_read = (Stream_GetPosition(s) - position) - 1;
-
-	return (Stream_GetRemainingLength(s) >= (size_t) (*li - bytes_read));
+	return (Stream_GetRemainingLength(s) >= (size_t)(*li - bytes_read));
 }
 
 /**
@@ -236,6 +235,6 @@ BOOL tpdu_read_data(wStream* s, UINT16* LI)
 		return FALSE;
 
 	*LI = li;
-
 	return TRUE;
 }
+

@@ -1328,7 +1328,6 @@ static DWORD WINAPI cliprdr_server_thread(LPVOID arg)
 	CliprdrServerContext* context = (CliprdrServerContext*) arg;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	UINT error;
-
 	ChannelEvent = context->GetEventHandle(context);
 	nCount = 0;
 	events[nCount++] = cliprdr->StopEvent;
@@ -1605,3 +1604,4 @@ void cliprdr_server_context_free(CliprdrServerContext* context)
 	free(context->handle);
 	free(context);
 }
+

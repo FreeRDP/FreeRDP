@@ -29,77 +29,86 @@
 
 #define TARGET_OUTPUT_INTERFACE 2
 
-static void output_handle_geometry(void *data, struct wl_output *wl_output, int x, int y,
-			int physical_width, int physical_height, int subpixel,
-			const char *make, const char *model, int transform)
+static void output_handle_geometry(void* data, struct wl_output* wl_output, int x, int y,
+                                   int physical_width, int physical_height, int subpixel,
+                                   const char* make, const char* model, int transform)
 {
-	UwacOutput *output = data;
-
-/*	output->allocation.x = x;
-	output->allocation.y = y;*/
+	UwacOutput* output = data;
+	/*	output->allocation.x = x;
+		output->allocation.y = y;*/
 	output->transform = transform;
 
 	if (output->make)
 		free(output->make);
+
 	output->make = strdup(make);
-	if (!output->make) {
-		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY, "%s: unable to strdup make\n", __FUNCTION__));
+
+	if (!output->make)
+	{
+		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY, "%s: unable to strdup make\n",
+		                        __FUNCTION__));
 	}
 
 	if (output->model)
 		free(output->model);
+
 	output->model = strdup(model);
-	if (!output->model) {
-		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY, "%s: unable to strdup model\n", __FUNCTION__));
+
+	if (!output->model)
+	{
+		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY, "%s: unable to strdup model\n",
+		                        __FUNCTION__));
 	}
 }
 
-static void output_handle_done(void *data, struct wl_output *wl_output)
+static void output_handle_done(void* data, struct wl_output* wl_output)
 {
-	UwacOutput *output = data;
-
+	UwacOutput* output = data;
 	output->doneReceived = true;
 }
 
-static void output_handle_scale(void *data, struct wl_output *wl_output, int32_t scale)
+static void output_handle_scale(void* data, struct wl_output* wl_output, int32_t scale)
 {
-	UwacOutput *output = data;
-
+	UwacOutput* output = data;
 	output->scale = scale;
 }
 
-static void output_handle_mode(void *data, struct wl_output *wl_output, uint32_t flags,
-		    int width, int height, int refresh)
+static void output_handle_mode(void* data, struct wl_output* wl_output, uint32_t flags,
+                               int width, int height, int refresh)
 {
-	UwacOutput *output = data;
+	UwacOutput* output = data;
 	//UwacDisplay *display = output->display;
 
-	if (output->doneNeeded && output->doneReceived) {
+	if (output->doneNeeded && output->doneReceived)
+	{
 		/* TODO: we should clear the mode list */
 	}
 
-	if (flags & WL_OUTPUT_MODE_CURRENT) {
+	if (flags & WL_OUTPUT_MODE_CURRENT)
+	{
 		output->resolution.width = width;
 		output->resolution.height = height;
-	/*	output->allocation.width = width;
-		output->allocation.height = height;
-		if (display->output_configure_handler)
-			(*display->output_configure_handler)(
-						output, display->user_data);*/
+		/*	output->allocation.width = width;
+			output->allocation.height = height;
+			if (display->output_configure_handler)
+				(*display->output_configure_handler)(
+							output, display->user_data);*/
 	}
 }
 
-static const struct wl_output_listener output_listener = {
+static const struct wl_output_listener output_listener =
+{
 	output_handle_geometry,
 	output_handle_mode,
 	output_handle_done,
 	output_handle_scale
 };
 
-UwacOutput *UwacCreateOutput(UwacDisplay *d, uint32_t id, uint32_t version) {
-	UwacOutput *o;
+UwacOutput* UwacCreateOutput(UwacDisplay* d, uint32_t id, uint32_t version)
+{
+	UwacOutput* o;
+	o = zalloc(sizeof * o);
 
-	o = zalloc(sizeof *o);
 	if (!o)
 		return NULL;
 
@@ -107,20 +116,20 @@ UwacOutput *UwacCreateOutput(UwacDisplay *d, uint32_t id, uint32_t version) {
 	o->server_output_id = id;
 	o->doneNeeded = (version > 1);
 	o->doneReceived = false;
-	o->output = wl_registry_bind(d->registry, id, &wl_output_interface, min(TARGET_OUTPUT_INTERFACE, version));
+	o->output = wl_registry_bind(d->registry, id, &wl_output_interface, min(TARGET_OUTPUT_INTERFACE,
+	                             version));
 	wl_output_add_listener(o->output, &output_listener, o);
-
 	wl_list_insert(d->outputs.prev, &o->link);
 	return o;
 }
 
-int UwacDestroyOutput(UwacOutput *output) {
+int UwacDestroyOutput(UwacOutput* output)
+{
 	free(output->make);
 	free(output->model);
-
 	wl_output_destroy(output->output);
 	wl_list_remove(&output->link);
 	free(output);
-
 	return UWAC_SUCCESS;
 }
+

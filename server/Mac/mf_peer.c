@@ -445,3 +445,4 @@ BOOL mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 
 	return FALSE;
 }
+

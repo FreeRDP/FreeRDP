@@ -41,3 +41,4 @@
 #endif
 
 #endif /* FREERDP_LIB_LOCALE_LIB_H */
+

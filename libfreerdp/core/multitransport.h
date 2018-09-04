@@ -40,3 +40,4 @@ FREERDP_LOCAL rdpMultitransport* multitransport_new(void);
 FREERDP_LOCAL void multitransport_free(rdpMultitransport* multitransport);
 
 #endif /* FREERDP_LIB_CORE_MULTITRANSPORT_H */
+

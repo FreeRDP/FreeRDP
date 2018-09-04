@@ -28,11 +28,15 @@
 
 typedef BOOL (*WLOG_APPENDER_OPEN_FN)(wLog* log, wLogAppender* appender);
 typedef BOOL (*WLOG_APPENDER_CLOSE_FN)(wLog* log, wLogAppender* appender);
-typedef BOOL (*WLOG_APPENDER_WRITE_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
-typedef BOOL (*WLOG_APPENDER_WRITE_DATA_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
-typedef BOOL (*WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
-typedef BOOL (*WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
-typedef BOOL (*WLOG_APPENDER_SET)(wLogAppender* appender, const char *setting, void *value);
+typedef BOOL (*WLOG_APPENDER_WRITE_MESSAGE_FN)(wLog* log, wLogAppender* appender,
+        wLogMessage* message);
+typedef BOOL (*WLOG_APPENDER_WRITE_DATA_MESSAGE_FN)(wLog* log, wLogAppender* appender,
+        wLogMessage* message);
+typedef BOOL (*WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN)(wLog* log, wLogAppender* appender,
+        wLogMessage* message);
+typedef BOOL (*WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN)(wLog* log, wLogAppender* appender,
+        wLogMessage* message);
+typedef BOOL (*WLOG_APPENDER_SET)(wLogAppender* appender, const char* setting, void* value);
 typedef void (*WLOG_APPENDER_FREE)(wLogAppender* appender);
 
 #define WLOG_APPENDER_COMMON() \
@@ -85,3 +89,4 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 
 
 #endif /* WINPR_WLOG_PRIVATE_H */
+

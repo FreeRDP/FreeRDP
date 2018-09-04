@@ -260,3 +260,4 @@ VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 }
 
 #endif
+

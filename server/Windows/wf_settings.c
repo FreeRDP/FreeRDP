@@ -33,20 +33,17 @@ BOOL wf_settings_read_dword(HKEY key, LPCSTR subkey, LPTSTR name, DWORD* value)
 	DWORD dwType;
 	DWORD dwSize;
 	DWORD dwValue;
-
 	status = RegOpenKeyExA(key, subkey, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status == ERROR_SUCCESS)
 	{
 		dwSize = sizeof(DWORD);
-
 		status = RegQueryValueEx(hKey, name, NULL, &dwType, (BYTE*) &dwValue, &dwSize);
 
 		if (status == ERROR_SUCCESS)
 			*value = dwValue;
 
 		RegCloseKey(hKey);
-
 		return (status == ERROR_SUCCESS) ? TRUE : FALSE;
 	}
 
@@ -62,7 +59,6 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** 
 	DWORD dwSize;
 	char* strA;
 	TCHAR* strX = NULL;
-
 	status = RegOpenKeyExA(key, subkey, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status != ERROR_SUCCESS)
@@ -73,8 +69,10 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** 
 	if (status == ERROR_SUCCESS)
 	{
 		strX = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
+
 		if (!strX)
 			return FALSE;
+
 		status = RegQueryValueEx(hKey, name, NULL, &dwType, (BYTE*) strX, &dwSize);
 
 		if (status != ERROR_SUCCESS)
@@ -102,3 +100,4 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** 
 
 	return FALSE;
 }
+

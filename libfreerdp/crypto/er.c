@@ -31,22 +31,23 @@
 void er_read_length(wStream* s, int* length)
 {
 	BYTE byte;
-
 	Stream_Read_UINT8(s, byte);
 
 	if (!length)
 		return;
-	
+
 	*length = 0;
+
 	if (!s)
 		return;
-	
+
 	if (byte & 0x80)
 	{
 		byte &= ~(0x80);
 
 		if (byte == 1)
 			Stream_Read_UINT8(s, *length);
+
 		if (byte == 2)
 			Stream_Read_UINT16_BE(s, *length);
 	}
@@ -96,7 +97,6 @@ int er_get_content_length(int length)
 BOOL er_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
 {
 	BYTE byte;
-
 	Stream_Read_UINT8(s, byte);
 
 	if (byte != (ER_CLASS_UNIV | ER_PC(pc) | (ER_TAG_MASK & tag)))
@@ -180,7 +180,6 @@ void er_write_application_tag(wStream* s, BYTE tag, int length, BOOL flag)
 BOOL er_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc)
 {
 	BYTE byte;
-
 	Stream_Read_UINT8(s, byte);
 
 	if (byte != ((ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag)))
@@ -190,7 +189,6 @@ BOOL er_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc)
 	}
 
 	er_read_length(s, length);
-
 	return TRUE;
 }
 
@@ -208,14 +206,12 @@ int er_skip_contextual_tag(int length)
 BOOL er_read_sequence_tag(wStream* s, int* length)
 {
 	BYTE byte;
-
 	Stream_Read_UINT8(s, byte);
 
 	if (byte != ((ER_CLASS_UNIV | ER_CONSTRUCT) | (ER_TAG_SEQUENCE_OF)))
 		return FALSE;
 
 	er_read_length(s, length);
-
 	return TRUE;
 }
 
@@ -244,7 +240,6 @@ int er_skip_sequence_tag(int length)
 BOOL er_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 {
 	int length = 0;
-
 	er_read_universal_tag(s, ER_TAG_ENUMERATED, FALSE);
 	er_read_length(s, &length);
 
@@ -272,7 +267,6 @@ BOOL er_read_bit_string(wStream* s, int* length, BYTE* padding)
 	er_read_universal_tag(s, ER_TAG_BIT_STRING, FALSE);
 	er_read_length(s, length);
 	Stream_Read_UINT8(s, *padding);
-
 	return TRUE;
 }
 
@@ -286,10 +280,10 @@ BOOL er_write_bit_string_tag(wStream* s, UINT32 length, BYTE padding, BOOL flag)
 
 BOOL er_read_octet_string(wStream* s, int* length)
 {
-	if(!er_read_universal_tag(s, ER_TAG_OCTET_STRING, FALSE))
+	if (!er_read_universal_tag(s, ER_TAG_OCTET_STRING, FALSE))
 		return FALSE;
-	er_read_length(s, length);
 
+	er_read_length(s, length);
 	return TRUE;
 }
 
@@ -332,9 +326,12 @@ BOOL er_read_BOOL(wStream* s, BOOL* value)
 
 	if (!er_read_universal_tag(s, ER_TAG_BOOLEAN, FALSE))
 		return FALSE;
+
 	er_read_length(s, &length);
+
 	if (length != 1)
 		return FALSE;
+
 	Stream_Read_UINT8(s, v);
 	*value = (v ? TRUE : FALSE);
 	return TRUE;
@@ -356,7 +353,6 @@ void er_write_BOOL(wStream* s, BOOL value)
 BOOL er_read_integer(wStream* s, UINT32* value)
 {
 	int length = 0;
-
 	er_read_universal_tag(s, ER_TAG_INTEGER, FALSE);
 	er_read_length(s, &length);
 
@@ -449,3 +445,4 @@ BOOL er_read_integer_length(wStream* s, int* length)
 	er_read_length(s, length);
 	return TRUE;
 }
+

@@ -47,3 +47,4 @@
 - (BOOL) runModal:(NSWindow*)mainWindow;
 
 @end
+

@@ -2370,3 +2370,4 @@ void nla_free(rdpNla* nla)
 	nla_identity_free(nla->identity);
 	free(nla);
 }
+

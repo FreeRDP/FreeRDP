@@ -1158,3 +1158,4 @@ WINPR_API SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceExA(DWORD flags
 #endif
 
 #endif /* WINPR_SSPI_H */
+

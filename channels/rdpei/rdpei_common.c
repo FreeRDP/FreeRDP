@@ -85,9 +85,7 @@ BOOL rdpei_read_2byte_signed(wStream* s, INT32* value)
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
-
 	negative = (byte & 0x40) ? TRUE : FALSE;
-
 	*value = (byte & 0x3F);
 
 	if (byte & 0x80)
@@ -152,7 +150,6 @@ BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value)
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
-
 	count = (byte & 0xC0) >> 6;
 
 	if (Stream_GetRemainingLength(s) < count)
@@ -248,7 +245,6 @@ BOOL rdpei_read_4byte_signed(wStream* s, INT32* value)
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
-
 	count = (byte & 0xC0) >> 6;
 	negative = (byte & 0x20);
 
@@ -371,7 +367,6 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
-
 	count = (byte & 0xE0) >> 5;
 
 	if (Stream_GetRemainingLength(s) < count)
@@ -408,7 +403,7 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 4:
-			*value = ((UINT64) (byte & 0x1F)) << 32;
+			*value = ((UINT64)(byte & 0x1F)) << 32;
 			Stream_Read_UINT8(s, byte);
 			*value |= (byte << 24);
 			Stream_Read_UINT8(s, byte);
@@ -420,7 +415,7 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 5:
-			*value = ((UINT64) (byte & 0x1F)) << 40;
+			*value = ((UINT64)(byte & 0x1F)) << 40;
 			Stream_Read_UINT8(s, byte);
 			*value |= (((UINT64) byte) << 32);
 			Stream_Read_UINT8(s, byte);
@@ -434,7 +429,7 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 6:
-			*value = ((UINT64) (byte & 0x1F)) << 48;
+			*value = ((UINT64)(byte & 0x1F)) << 48;
 			Stream_Read_UINT8(s, byte);
 			*value |= (((UINT64) byte) << 40);
 			Stream_Read_UINT8(s, byte);
@@ -450,7 +445,7 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 7:
-			*value = ((UINT64) (byte & 0x1F)) << 56;
+			*value = ((UINT64)(byte & 0x1F)) << 56;
 			Stream_Read_UINT8(s, byte);
 			*value |= (((UINT64) byte) << 48);
 			Stream_Read_UINT8(s, byte);
@@ -589,7 +584,7 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 	return TRUE;
 }
 
-void touch_event_reset(RDPINPUT_TOUCH_EVENT *event)
+void touch_event_reset(RDPINPUT_TOUCH_EVENT* event)
 {
 	int i;
 
@@ -602,9 +597,10 @@ void touch_event_reset(RDPINPUT_TOUCH_EVENT *event)
 }
 
 
-void touch_frame_reset(RDPINPUT_TOUCH_FRAME *frame)
+void touch_frame_reset(RDPINPUT_TOUCH_FRAME* frame)
 {
 	free(frame->contacts);
 	frame->contacts = NULL;
 	frame->contactCount = 0;
 }
+

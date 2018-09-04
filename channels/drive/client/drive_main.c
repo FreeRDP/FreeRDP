@@ -1073,3 +1073,4 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 #endif
 	return error;
 }
+

@@ -57,3 +57,4 @@ FREERDP_API void cache_free(rdpCache* cache);
 #endif
 
 #endif /* FREERDP_CACHE_H */
+

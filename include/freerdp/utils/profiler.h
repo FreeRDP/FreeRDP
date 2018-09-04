@@ -72,3 +72,4 @@ FREERDP_API void profiler_print_footer(void);
 #endif
 
 #endif /* FREERDP_UTILS_PROFILER_H */
+

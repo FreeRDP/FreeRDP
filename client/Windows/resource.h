@@ -11,3 +11,4 @@
 #define IDB_CLOSE_ACT                   100
 #define IDB_RESTORE                     111
 #define IDB_RESTORE_ACT                 112
+

@@ -238,3 +238,4 @@ void graphics_free(rdpGraphics* graphics)
 		free(graphics);
 	}
 }
+

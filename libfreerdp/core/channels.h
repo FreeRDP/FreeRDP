@@ -31,3 +31,4 @@ FREERDP_LOCAL BOOL freerdp_channel_peer_process(freerdp_peer* client,
         wStream* s, UINT16 channelId);
 
 #endif /* FREERDP_LIB_CORE_CHANNELS_H */
+

@@ -66,3 +66,4 @@ FREERDP_LOCAL void redirection_free(rdpRedirection* redirection);
 #endif
 
 #endif /* FREERDP_LIB_CORE_REDIRECTION_H */
+

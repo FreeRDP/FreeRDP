@@ -252,3 +252,4 @@ ITSMFAudioDevice* freerdp_tsmf_client_audio_subsystem_entry(void)
 	alsa->iface.Free = tsmf_alsa_free;
 	return (ITSMFAudioDevice*) alsa;
 }
+

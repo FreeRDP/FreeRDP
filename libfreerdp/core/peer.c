@@ -834,3 +834,4 @@ void freerdp_peer_free(freerdp_peer* client)
 
 	free(client);
 }
+

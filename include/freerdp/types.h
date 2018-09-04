@@ -80,3 +80,4 @@ typedef struct _RECTANGLE_16 RECTANGLE_16;
 #include <winpr/collections.h>
 
 #endif /* __RDP_TYPES_H */
+

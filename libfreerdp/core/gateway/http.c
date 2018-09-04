@@ -813,3 +813,4 @@ void http_response_free(HttpResponse* response)
 	Stream_Free(response->data, TRUE);
 	free(response);
 }
+

@@ -38,3 +38,4 @@ SERIAL_DRIVER* SerialSys_s();
 #endif /* __linux__ */
 
 #endif /* COMM_SERIAL_SYS_H */
+
