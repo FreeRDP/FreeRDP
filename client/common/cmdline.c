@@ -1288,6 +1288,18 @@ static BOOL ends_with(const char* str, const char* ext)
 
 	return strncmp(&str[strLen - extLen], ext, extLen) == 0;
 }
+
+static void activate_smartcard_logon_rdp(rdpSettings* settings)
+{
+	settings->SmartcardLogon = TRUE;
+	settings->RdpSecurity = TRUE;
+	settings->TlsSecurity = FALSE;
+	settings->NlaSecurity = FALSE;
+	settings->ExtSecurity = FALSE;
+	/* TODO: why not? settings->UseRdpSecurityLayer = TRUE; */
+	freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
+}
+
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
         int argc, char** argv, BOOL allowUnknown)
 {
@@ -2745,6 +2757,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "fipsmode")
 		{
 			settings->FIPSMode = TRUE;
+		}
+		CommandLineSwitchCase(arg, "smartcard-logon")
+		{
+			if (!((0 == arg->Value) || (0 == strcmp(arg->Value, "rdp")) || (0 == strcmp(arg->Value, ""))))
+			{
+				/* Later,  we may implement --smartcard-logon:kerberos-sso or other variants. */
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
+
+			if (!settings->SmartcardLogon)
+				activate_smartcard_logon_rdp(settings);
 		}
 		CommandLineSwitchDefault(arg)
 		{
