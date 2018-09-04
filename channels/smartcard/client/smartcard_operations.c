@@ -460,6 +460,7 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	ListReaders_Return ret;
 	LPSTR mszReaders = NULL;
 	DWORD cchReaders = 0;
+	DWORD nBytes = 0;
 	IRP* irp = operation->irp;
 	ListReaders_Call* call = operation->call;
 	cchReaders = SCARD_AUTOALLOCATE;
@@ -467,10 +468,10 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	                          (LPSTR) &mszReaders, &cchReaders);
 	mszStringsLog("Readers BEFORE filtering: ", FALSE, mszReaders);
 	/* Remove the card readers that are not specified on the command line */
-	mszFilterStrings(FALSE, mszReaders, & cchReaders, smartcard->filter);
+	mszFilterStrings(FALSE, mszReaders, & nBytes, smartcard->filter);
 	mszStringsLog("Readers AFTER  filtering: ", FALSE, mszReaders);
 	ret.msz = (BYTE*) mszReaders;
-	ret.cBytes = cchReaders;
+	ret.cBytes = nBytes;
 
 	if (call->mszGroups)
 	{
@@ -526,6 +527,7 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	ListReaders_Return ret;
 	LPWSTR mszReaders = NULL;
 	DWORD cchReaders = 0;
+	DWORD nBytes = 0;
 	IRP* irp = operation->irp;
 	ListReaders_Call* call = operation->call;
 	cchReaders = SCARD_AUTOALLOCATE;
@@ -533,10 +535,10 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	                          (LPCWSTR) call->mszGroups, (LPWSTR) &mszReaders, &cchReaders);
 	mszStringsLog("Readers BEFORE filtering: ", TRUE, mszReaders);
 	/* Remove the card readers that are not specified on the command line */
-	mszFilterStrings(TRUE, mszReaders, & cchReaders, smartcard->filter);
+	mszFilterStrings(TRUE, mszReaders, & nBytes, smartcard->filter);
 	mszStringsLog("Readers AFTER  filtering: ", TRUE, mszReaders);
 	ret.msz = (BYTE*) mszReaders;
-	ret.cBytes = cchReaders;
+	ret.cBytes = nBytes;
 
 	if (call->mszGroups)
 	{
