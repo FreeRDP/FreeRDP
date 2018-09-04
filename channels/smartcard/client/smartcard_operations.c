@@ -501,6 +501,7 @@ static DWORD filter_device_by_name_w(wLinkedList* list, LPWSTR* mszReaders, DWOR
 		return 0;
 
 	free(*mszReaders);
+	*mszReaders = NULL;
 	rc = filter_device_by_name_a(list, &readers, cchReaders);
 
 	if (ConvertToUnicode(CP_UTF8, 0, &readers, rc, mszReaders, 0) != rc)
