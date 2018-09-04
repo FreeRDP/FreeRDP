@@ -152,3 +152,4 @@ mszSize returns the total number of bytes used by mszStrings (if widechar then i
 int mszSize(BOOL widechar, void* mszString);
 
 #endif
+

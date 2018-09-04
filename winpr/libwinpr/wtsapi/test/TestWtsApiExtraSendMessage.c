@@ -12,10 +12,9 @@ int TestWtsApiExtraSendMessage(int argc, char* argv[])
 	BOOL bSuccess;
 	HANDLE hServer;
 	DWORD result;
-
 	hServer = WTS_CURRENT_SERVER_HANDLE;
-
-	bSuccess = WTSSendMessageA(hServer, WTS_CURRENT_SESSION,TITLE,strlen(TITLE) + 1, MESSAGE, strlen(MESSAGE) + 1, MB_CANCELTRYCONTINUE, 3 , &result,TRUE);
+	bSuccess = WTSSendMessageA(hServer, WTS_CURRENT_SESSION, TITLE, strlen(TITLE) + 1, MESSAGE,
+	                           strlen(MESSAGE) + 1, MB_CANCELTRYCONTINUE, 3, &result, TRUE);
 
 	if (!bSuccess)
 	{
@@ -24,6 +23,6 @@ int TestWtsApiExtraSendMessage(int argc, char* argv[])
 	}
 
 	printf("WTSSendMessage got result: %"PRIu32"\n", result);
-
 	return 0;
 }
+

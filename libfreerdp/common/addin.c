@@ -351,3 +351,4 @@ PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(LPCSTR pszName,
 
 	return entry;
 }
+

@@ -869,7 +869,7 @@ static jboolean JNICALL jni_freerdp_connect(JNIEnv* env, jclass cls,
 	ctx = (androidContext*)inst->context;
 
 	if (!(ctx->thread = CreateThread(NULL, 0, android_thread_func,
-	                        inst, 0, NULL)))
+	                                 inst, 0, NULL)))
 	{
 		return JNI_FALSE;
 	}
@@ -1233,3 +1233,4 @@ void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved)
 	if (gJavaActivityClass)
 		(*env)->DeleteGlobalRef(env, gJavaActivityClass);
 }
+

@@ -403,3 +403,4 @@ outstrdup:
 	free(opensles);
 	return error;
 }
+

@@ -56,7 +56,7 @@ INLINE UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdc->selectedObject;
 	BYTE* data = &(hBmp->data[(nYPos * hBmp->scanline) + nXPos * GetBytesPerPixel(
-	                              hBmp->format)]);
+	                                                       hBmp->format)]);
 	return ReadColor(data, hBmp->format);
 }
 
@@ -80,7 +80,7 @@ static INLINE UINT32 gdi_SetPixelBmp(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y,
                                      UINT32 crColor)
 {
 	BYTE* p = &hBmp->data[(Y * hBmp->scanline) + X * GetBytesPerPixel(
-	                          hBmp->format)];
+	                                               hBmp->format)];
 	WriteColor(p, hBmp->format, crColor);
 	return crColor;
 }
@@ -515,3 +515,4 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 
 	return TRUE;
 }
+

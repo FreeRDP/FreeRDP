@@ -880,3 +880,4 @@ void free_cache_glyph_v2_order(rdpContext* context, CACHE_GLYPH_V2_ORDER* glyph)
 
 	free(glyph);
 }
+

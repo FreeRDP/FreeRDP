@@ -59,3 +59,4 @@ struct rdp_autodetect
 
 
 #endif /* FREERDP_AUTODETECT_H */
+

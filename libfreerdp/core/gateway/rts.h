@@ -101,3 +101,4 @@ FREERDP_LOCAL int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer,
 #include "rts_signature.h"
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RTS_H */
+

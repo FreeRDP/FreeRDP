@@ -40,3 +40,4 @@ char* demangle_symbol_name(const char* name);
 #endif
 
 #endif // _CORKSCREW_DEMANGLE_H
+

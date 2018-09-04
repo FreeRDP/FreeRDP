@@ -201,3 +201,4 @@ void NdrSimpleTypeFree(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
 }
 
 #endif
+

@@ -25,7 +25,7 @@
 #include <winpr/stream.h>
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 FREERDP_API BOOL per_read_length(wStream* s, UINT16* length);
@@ -52,7 +52,8 @@ FREERDP_API BOOL per_read_numeric_string(wStream* s, int min);
 FREERDP_API void per_write_numeric_string(wStream* s, BYTE* num_str, int length, int min);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CRYPTO_PER_H */
+

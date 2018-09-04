@@ -10,14 +10,15 @@ int TestWtsApiExtraStartRemoteSessionEx(int argc, char* argv[])
 	BOOL bSuccess;
 	ULONG logonId = 0;
 	char logonIdStr[10];
-
 	bSuccess = GetEnvironmentVariableA("TEST_SESSION_LOGON_ID", logonIdStr, 10);
-	if(bSuccess)
+
+	if (bSuccess)
 	{
 		sscanf(logonIdStr, "%u\n", &logonId);
 	}
 
-	bSuccess = WTSStartRemoteControlSessionEx(NULL, logonId, VK_F10, REMOTECONTROL_KBDSHIFT_HOTKEY|REMOTECONTROL_KBDCTRL_HOTKEY, REMOTECONTROL_FLAG_DISABLE_INPUT);
+	bSuccess = WTSStartRemoteControlSessionEx(NULL, logonId, VK_F10,
+	           REMOTECONTROL_KBDSHIFT_HOTKEY | REMOTECONTROL_KBDCTRL_HOTKEY, REMOTECONTROL_FLAG_DISABLE_INPUT);
 
 	if (!bSuccess)
 	{
@@ -27,3 +28,4 @@ int TestWtsApiExtraStartRemoteSessionEx(int argc, char* argv[])
 
 	return 0;
 }
+

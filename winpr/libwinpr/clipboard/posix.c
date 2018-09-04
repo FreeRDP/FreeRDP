@@ -866,3 +866,4 @@ BOOL ClipboardInitPosixFileSubsystem(wClipboard* clipboard)
 	setup_delegate(&clipboard->delegate);
 	return TRUE;
 }
+

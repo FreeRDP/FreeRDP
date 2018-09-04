@@ -58,3 +58,4 @@ FREERDP_API BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, int c
 #endif
 
 #endif /* FREERDP_CLIENT_CMDLINE_H */
+

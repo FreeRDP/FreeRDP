@@ -63,7 +63,7 @@ typedef int (*pfnShadowSubsystemUninit)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemStart)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
 
-typedef UINT32 (*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, UINT32 maxMonitors);
+typedef UINT32(*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, UINT32 maxMonitors);
 
 typedef int (*pfnShadowAuthenticate)(rdpShadowSubsystem* subsystem,
                                      rdpShadowClient* client,
@@ -253,7 +253,7 @@ struct _SHADOW_MSG_OUT_POINTER_POSITION_UPDATE
 	UINT32 yPos;
 };
 typedef struct _SHADOW_MSG_OUT_POINTER_POSITION_UPDATE
-		SHADOW_MSG_OUT_POINTER_POSITION_UPDATE;
+	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE;
 
 struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
 {
@@ -268,7 +268,7 @@ struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
 	BYTE* andMaskData;
 };
 typedef struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
-		SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE;
+	SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE;
 
 struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES
 {
@@ -279,7 +279,7 @@ struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES
 	UINT16 wTimestamp;
 };
 typedef struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES
-		SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES;
+	SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES;
 
 struct _SHADOW_MSG_OUT_AUDIO_OUT_VOLUME
 {
@@ -340,4 +340,5 @@ FREERDP_API BOOL shadow_screen_resize(rdpShadowScreen* screen);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_H */
+
 

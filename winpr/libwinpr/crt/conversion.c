@@ -31,16 +31,15 @@
 errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
 {
 	int length;
-
 	length = sprintf_s(NULL, 0, "%d", value);
 
 	if (sizeInCharacters < length)
 		return -1;
 
 	sprintf_s(buffer, length + 1, "%d", value);
-
 	return 0;
 }
 
 #endif
+
 

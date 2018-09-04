@@ -384,3 +384,4 @@ FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
 #endif
 
 #endif /* FREERDP_H */
+

@@ -81,3 +81,4 @@ struct rdpdr_plugin
 UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H */
+

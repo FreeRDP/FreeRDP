@@ -934,7 +934,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Aleutian Standard Time", 600, TRUE, "(UTC-10:00) Aleutian Islands",
 		"Aleutian Standard Time", "Aleutian Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_2, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_2, 2
 	},
 	{
 		"Hawaiian Standard Time", 600, FALSE, "(UTC-10:00) Hawaii",
@@ -949,7 +949,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Alaskan Standard Time", 540, TRUE, "(UTC-09:00) Alaska",
 		"Alaskan Standard Time", "Alaskan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_5, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_5, 2
 	},
 	{
 		"UTC-09", 540, FALSE, "(UTC-09:00) Coordinated Universal Time-09",
@@ -959,7 +959,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Pacific Standard Time (Mexico)", 480, TRUE, "(UTC-08:00) Baja California",
 		"Pacific Standard Time (Mexico)", "Pacific Daylight Time (Mexico)",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_7, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_7, 2
 	},
 	{
 		"UTC-08", 480, FALSE, "(UTC-08:00) Coordinated Universal Time-08",
@@ -969,7 +969,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Pacific Standard Time", 480, TRUE, "(UTC-08:00) Pacific Time (US & Canada)",
 		"Pacific Standard Time", "Pacific Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_9, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_9, 2
 	},
 	{
 		"US Mountain Standard Time", 420, FALSE, "(UTC-07:00) Arizona",
@@ -979,12 +979,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Mountain Standard Time (Mexico)", 420, TRUE, "(UTC-07:00) Chihuahua, La Paz, Mazatlan",
 		"Mountain Standard Time (Mexico)", "Mountain Daylight Time (Mexico)",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_11, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_11, 1
 	},
 	{
 		"Mountain Standard Time", 420, TRUE, "(UTC-07:00) Mountain Time (US & Canada)",
 		"Mountain Standard Time", "Mountain Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_12, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_12, 2
 	},
 	{
 		"Central America Standard Time", 360, FALSE, "(UTC-06:00) Central America",
@@ -994,17 +994,17 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Central Standard Time", 360, TRUE, "(UTC-06:00) Central Time (US & Canada)",
 		"Central Standard Time", "Central Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_14, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_14, 2
 	},
 	{
 		"Easter Island Standard Time", 360, TRUE, "(UTC-06:00) Easter Island",
 		"Easter Island Standard Time", "Easter Island Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_15, 10
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_15, 10
 	},
 	{
 		"Central Standard Time (Mexico)", 360, TRUE, "(UTC-06:00) Guadalajara, Mexico City, Monterrey",
 		"Central Standard Time (Mexico)", "Central Daylight Time (Mexico)",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_16, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_16, 1
 	},
 	{
 		"Canada Central Standard Time", 360, FALSE, "(UTC-06:00) Saskatchewan",
@@ -1019,52 +1019,52 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Eastern Standard Time (Mexico)", 300, TRUE, "(UTC-05:00) Chetumal",
 		"Eastern Standard Time (Mexico)", "Eastern Daylight Time (Mexico)",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_19, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_19, 2
 	},
 	{
 		"Eastern Standard Time", 300, TRUE, "(UTC-05:00) Eastern Time (US & Canada)",
 		"Eastern Standard Time", "Eastern Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_20, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_20, 2
 	},
 	{
 		"Haiti Standard Time", 300, TRUE, "(UTC-05:00) Haiti",
 		"Haiti Standard Time", "Haiti Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_21, 6
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_21, 6
 	},
 	{
 		"Cuba Standard Time", 300, TRUE, "(UTC-05:00) Havana",
 		"Cuba Standard Time", "Cuba Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_22, 11
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_22, 11
 	},
 	{
 		"US Eastern Standard Time", 300, TRUE, "(UTC-05:00) Indiana (East)",
 		"US Eastern Standard Time", "US Eastern Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_23, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_23, 2
 	},
 	{
 		"Turks And Caicos Standard Time", 300, TRUE, "(UTC-05:00) Turks and Caicos",
 		"Turks and Caicos Standard Time", "Turks and Caicos Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_24, 6
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_24, 6
 	},
 	{
 		"Paraguay Standard Time", 240, TRUE, "(UTC-04:00) Asuncion",
 		"Paraguay Standard Time", "Paraguay Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_25, 14
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_25, 14
 	},
 	{
 		"Atlantic Standard Time", 240, TRUE, "(UTC-04:00) Atlantic Time (Canada)",
 		"Atlantic Standard Time", "Atlantic Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_26, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_26, 2
 	},
 	{
 		"Venezuela Standard Time", 240, TRUE, "(UTC-04:00) Caracas",
 		"Venezuela Standard Time", "Venezuela Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_27, 10
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_27, 10
 	},
 	{
 		"Central Brazilian Standard Time", 240, TRUE, "(UTC-04:00) Cuiaba",
 		"Central Brazilian Standard Time", "Central Brazilian Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_28, 37
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_28, 37
 	},
 	{
 		"SA Western Standard Time", 240, FALSE, "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan",
@@ -1074,22 +1074,22 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Pacific SA Standard Time", 240, TRUE, "(UTC-04:00) Santiago",
 		"Pacific SA Standard Time", "Pacific SA Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_30, 10
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_30, 10
 	},
 	{
 		"Newfoundland Standard Time", 210, TRUE, "(UTC-03:30) Newfoundland",
 		"Newfoundland Standard Time", "Newfoundland Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_31, 7
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_31, 7
 	},
 	{
 		"Tocantins Standard Time", 180, TRUE, "(UTC-03:00) Araguaina",
 		"Tocantins Standard Time", "Tocantins Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_32, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_32, 2
 	},
 	{
 		"E. South America Standard Time", 180, TRUE, "(UTC-03:00) Brasilia",
 		"E. South America Standard Time", "E. South America Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_33, 37
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_33, 37
 	},
 	{
 		"SA Eastern Standard Time", 180, FALSE, "(UTC-03:00) Cayenne, Fortaleza",
@@ -1099,32 +1099,32 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Argentina Standard Time", 180, TRUE, "(UTC-03:00) City of Buenos Aires",
 		"Argentina Standard Time", "Argentina Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_35, 3
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_35, 3
 	},
 	{
 		"Greenland Standard Time", 180, TRUE, "(UTC-03:00) Greenland",
 		"Greenland Standard Time", "Greenland Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_36, 18
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_36, 18
 	},
 	{
 		"Montevideo Standard Time", 180, TRUE, "(UTC-03:00) Montevideo",
 		"Montevideo Standard Time", "Montevideo Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_37, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_37, 2
 	},
 	{
 		"Magallanes Standard Time", 180, TRUE, "(UTC-03:00) Punta Arenas",
 		"Magallanes Standard Time", "Magallanes Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_38, 9
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_38, 9
 	},
 	{
 		"Saint Pierre Standard Time", 180, TRUE, "(UTC-03:00) Saint Pierre and Miquelon",
 		"Saint Pierre Standard Time", "Saint Pierre Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_39, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_39, 2
 	},
 	{
 		"Bahia Standard Time", 180, TRUE, "(UTC-03:00) Salvador",
 		"Bahia Standard Time", "Bahia Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_40, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_40, 2
 	},
 	{
 		"UTC-02", 120, FALSE, "(UTC-02:00) Coordinated Universal Time-02",
@@ -1134,12 +1134,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Mid-Atlantic Standard Time", 120, TRUE, "(UTC-02:00) Mid-Atlantic - Old",
 		"Mid-Atlantic Standard Time", "Mid-Atlantic Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_42, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_42, 1
 	},
 	{
 		"Azores Standard Time", 60, TRUE, "(UTC-01:00) Azores",
 		"Azores Standard Time", "Azores Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_43, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_43, 1
 	},
 	{
 		"Cape Verde Standard Time", 60, FALSE, "(UTC-01:00) Cabo Verde Is.",
@@ -1154,12 +1154,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Morocco Standard Time", 0, TRUE, "(UTC+00:00) Casablanca",
 		"Morocco Standard Time", "Morocco Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_46, 12
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_46, 12
 	},
 	{
 		"GMT Standard Time", 0, TRUE, "(UTC+00:00) Dublin, Edinburgh, Lisbon, London",
 		"GMT Standard Time", "GMT Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_47, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_47, 1
 	},
 	{
 		"Greenwich Standard Time", 0, FALSE, "(UTC+00:00) Monrovia, Reykjavik",
@@ -1169,27 +1169,27 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"W. Europe Standard Time", -60, TRUE, "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna",
 		"W. Europe Standard Time", "W. Europe Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_49, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_49, 1
 	},
 	{
 		"Central Europe Standard Time", -60, TRUE, "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague",
 		"Central Europe Standard Time", "Central Europe Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_50, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_50, 1
 	},
 	{
 		"Romance Standard Time", -60, TRUE, "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris",
 		"Romance Standard Time", "Romance Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_51, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_51, 1
 	},
 	{
 		"Sao Tome Standard Time", -60, TRUE, "(UTC+01:00) Sao Tome",
 		"Sao Tome Standard Time", "Sao Tome Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_52, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_52, 2
 	},
 	{
 		"Central European Standard Time", -60, TRUE, "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
 		"Central European Standard Time", "Central European Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_53, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_53, 1
 	},
 	{
 		"W. Central Africa Standard Time", -60, FALSE, "(UTC+01:00) West Central Africa",
@@ -1199,37 +1199,37 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Jordan Standard Time", -120, TRUE, "(UTC+02:00) Amman",
 		"Jordan Standard Time", "Jordan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_55, 4
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_55, 4
 	},
 	{
 		"GTB Standard Time", -120, TRUE, "(UTC+02:00) Athens, Bucharest",
 		"GTB Standard Time", "GTB Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_56, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_56, 1
 	},
 	{
 		"Middle East Standard Time", -120, TRUE, "(UTC+02:00) Beirut",
 		"Middle East Standard Time", "Middle East Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_57, 13
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_57, 13
 	},
 	{
 		"Egypt Standard Time", -120, TRUE, "(UTC+02:00) Cairo",
 		"Egypt Standard Time", "Egypt Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_58, 7
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_58, 7
 	},
 	{
 		"E. Europe Standard Time", -120, TRUE, "(UTC+02:00) Chisinau",
 		"E. Europe Standard Time", "E. Europe Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_59, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_59, 1
 	},
 	{
 		"Syria Standard Time", -120, TRUE, "(UTC+02:00) Damascus",
 		"Syria Standard Time", "Syria Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_60, 17
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_60, 17
 	},
 	{
 		"West Bank Standard Time", -120, TRUE, "(UTC+02:00) Gaza, Hebron",
 		"West Bank Gaza Standard Time", "West Bank Gaza Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_61, 6
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_61, 6
 	},
 	{
 		"South Africa Standard Time", -120, FALSE, "(UTC+02:00) Harare, Pretoria",
@@ -1239,42 +1239,42 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"FLE Standard Time", -120, TRUE, "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius",
 		"FLE Standard Time", "FLE Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_63, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_63, 1
 	},
 	{
 		"Israel Standard Time", -120, TRUE, "(UTC+02:00) Jerusalem",
 		"Jerusalem Standard Time", "Jerusalem Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_64, 20
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_64, 20
 	},
 	{
 		"Kaliningrad Standard Time", -120, TRUE, "(UTC+02:00) Kaliningrad",
 		"Russia TZ 1 Standard Time", "Russia TZ 1 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_65, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_65, 5
 	},
 	{
 		"Sudan Standard Time", -120, TRUE, "(UTC+02:00) Khartoum",
 		"Sudan Standard Time", "Sudan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_66, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_66, 2
 	},
 	{
 		"Libya Standard Time", -120, TRUE, "(UTC+02:00) Tripoli",
 		"Libya Standard Time", "Libya Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_67, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_67, 2
 	},
 	{
 		"Namibia Standard Time", -120, TRUE, "(UTC+02:00) Windhoek",
 		"Namibia Standard Time", "Namibia Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_68, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_68, 1
 	},
 	{
 		"Arabic Standard Time", -180, TRUE, "(UTC+03:00) Baghdad",
 		"Arabic Standard Time", "Arabic Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_69, 4
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_69, 4
 	},
 	{
 		"Turkey Standard Time", -180, TRUE, "(UTC+03:00) Istanbul",
 		"Turkey Standard Time", "Turkey Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_70, 7
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_70, 7
 	},
 	{
 		"Arab Standard Time", -180, FALSE, "(UTC+03:00) Kuwait, Riyadh",
@@ -1284,12 +1284,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Belarus Standard Time", -180, TRUE, "(UTC+03:00) Minsk",
 		"Belarus Standard Time", "Belarus Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_72, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_72, 2
 	},
 	{
 		"Russian Standard Time", -180, TRUE, "(UTC+03:00) Moscow, St. Petersburg, Volgograd",
 		"Russia TZ 2 Standard Time", "Russia TZ 2 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_73, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_73, 5
 	},
 	{
 		"E. Africa Standard Time", -180, FALSE, "(UTC+03:00) Nairobi",
@@ -1299,7 +1299,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Iran Standard Time", -210, TRUE, "(UTC+03:30) Tehran",
 		"Iran Standard Time", "Iran Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_75, 19
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_75, 19
 	},
 	{
 		"Arabian Standard Time", -240, FALSE, "(UTC+04:00) Abu Dhabi, Muscat",
@@ -1309,27 +1309,27 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Astrakhan Standard Time", -240, TRUE, "(UTC+04:00) Astrakhan, Ulyanovsk",
 		"Astrakhan Standard Time", "Astrakhan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_77, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_77, 5
 	},
 	{
 		"Azerbaijan Standard Time", -240, TRUE, "(UTC+04:00) Baku",
 		"Azerbaijan Standard Time", "Azerbaijan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_78, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_78, 1
 	},
 	{
 		"Russia Time Zone 3", -240, TRUE, "(UTC+04:00) Izhevsk, Samara",
 		"Russia TZ 3 Standard Time", "Russia TZ 3 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_79, 3
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_79, 3
 	},
 	{
 		"Mauritius Standard Time", -240, TRUE, "(UTC+04:00) Port Louis",
 		"Mauritius Standard Time", "Mauritius Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_80, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_80, 2
 	},
 	{
 		"Saratov Standard Time", -240, TRUE, "(UTC+04:00) Saratov",
 		"Saratov Standard Time", "Saratov Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_81, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_81, 5
 	},
 	{
 		"Georgian Standard Time", -240, FALSE, "(UTC+04:00) Tbilisi",
@@ -1339,7 +1339,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Caucasus Standard Time", -240, TRUE, "(UTC+04:00) Yerevan",
 		"Caucasus Standard Time", "Caucasus Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_83, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_83, 1
 	},
 	{
 		"Afghanistan Standard Time", -270, FALSE, "(UTC+04:30) Kabul",
@@ -1354,12 +1354,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Ekaterinburg Standard Time", -300, TRUE, "(UTC+05:00) Ekaterinburg",
 		"Russia TZ 4 Standard Time", "Russia TZ 4 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_86, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_86, 5
 	},
 	{
 		"Pakistan Standard Time", -300, TRUE, "(UTC+05:00) Islamabad, Karachi",
 		"Pakistan Standard Time", "Pakistan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_87, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_87, 2
 	},
 	{
 		"India Standard Time", -330, FALSE, "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi",
@@ -1384,12 +1384,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Bangladesh Standard Time", -360, TRUE, "(UTC+06:00) Dhaka",
 		"Bangladesh Standard Time", "Bangladesh Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_92, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_92, 1
 	},
 	{
 		"Omsk Standard Time", -360, TRUE, "(UTC+06:00) Omsk",
 		"Omsk Standard Time", "Omsk Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_93, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_93, 5
 	},
 	{
 		"Myanmar Standard Time", -390, FALSE, "(UTC+06:30) Yangon (Rangoon)",
@@ -1404,27 +1404,27 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Altai Standard Time", -420, TRUE, "(UTC+07:00) Barnaul, Gorno-Altaysk",
 		"Altai Standard Time", "Altai Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_96, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_96, 5
 	},
 	{
 		"W. Mongolia Standard Time", -420, TRUE, "(UTC+07:00) Hovd",
 		"W. Mongolia Standard Time", "W. Mongolia Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_97, 3
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_97, 3
 	},
 	{
 		"North Asia Standard Time", -420, TRUE, "(UTC+07:00) Krasnoyarsk",
 		"Russia TZ 6 Standard Time", "Russia TZ 6 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_98, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_98, 5
 	},
 	{
 		"N. Central Asia Standard Time", -420, TRUE, "(UTC+07:00) Novosibirsk",
 		"Novosibirsk Standard Time", "Novosibirsk Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_99, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_99, 5
 	},
 	{
 		"Tomsk Standard Time", -420, TRUE, "(UTC+07:00) Tomsk",
 		"Tomsk Standard Time", "Tomsk Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_100, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_100, 5
 	},
 	{
 		"China Standard Time", -480, FALSE, "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi",
@@ -1434,7 +1434,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"North Asia East Standard Time", -480, TRUE, "(UTC+08:00) Irkutsk",
 		"Russia TZ 7 Standard Time", "Russia TZ 7 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_102, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_102, 5
 	},
 	{
 		"Singapore Standard Time", -480, FALSE, "(UTC+08:00) Kuala Lumpur, Singapore",
@@ -1444,7 +1444,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"W. Australia Standard Time", -480, TRUE, "(UTC+08:00) Perth",
 		"W. Australia Standard Time", "W. Australia Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_104, 4
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_104, 4
 	},
 	{
 		"Taipei Standard Time", -480, FALSE, "(UTC+08:00) Taipei",
@@ -1454,12 +1454,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Ulaanbaatar Standard Time", -480, TRUE, "(UTC+08:00) Ulaanbaatar",
 		"Ulaanbaatar Standard Time", "Ulaanbaatar Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_106, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_106, 2
 	},
 	{
 		"North Korea Standard Time", -510, TRUE, "(UTC+08:30) Pyongyang",
 		"North Korea Standard Time", "North Korea Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_107, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_107, 2
 	},
 	{
 		"Aus Central W. Standard Time", -525, FALSE, "(UTC+08:45) Eucla",
@@ -1469,7 +1469,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Transbaikal Standard Time", -540, TRUE, "(UTC+09:00) Chita",
 		"Transbaikal Standard Time", "Transbaikal Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_109, 7
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_109, 7
 	},
 	{
 		"Tokyo Standard Time", -540, FALSE, "(UTC+09:00) Osaka, Sapporo, Tokyo",
@@ -1484,12 +1484,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Yakutsk Standard Time", -540, TRUE, "(UTC+09:00) Yakutsk",
 		"Russia TZ 8 Standard Time", "Russia TZ 8 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_112, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_112, 5
 	},
 	{
 		"Cen. Australia Standard Time", -570, TRUE, "(UTC+09:30) Adelaide",
 		"Cen. Australia Standard Time", "Cen. Australia Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_113, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_113, 2
 	},
 	{
 		"AUS Central Standard Time", -570, FALSE, "(UTC+09:30) Darwin",
@@ -1504,7 +1504,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"AUS Eastern Standard Time", -600, TRUE, "(UTC+10:00) Canberra, Melbourne, Sydney",
 		"AUS Eastern Standard Time", "AUS Eastern Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_116, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_116, 2
 	},
 	{
 		"West Pacific Standard Time", -600, FALSE, "(UTC+10:00) Guam, Port Moresby",
@@ -1514,42 +1514,42 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Tasmania Standard Time", -600, TRUE, "(UTC+10:00) Hobart",
 		"Tasmania Standard Time", "Tasmania Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_118, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_118, 2
 	},
 	{
 		"Vladivostok Standard Time", -600, TRUE, "(UTC+10:00) Vladivostok",
 		"Russia TZ 9 Standard Time", "Russia TZ 9 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_119, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_119, 5
 	},
 	{
 		"Lord Howe Standard Time", -630, TRUE, "(UTC+10:30) Lord Howe Island",
 		"Lord Howe Standard Time", "Lord Howe Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_120, 4
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_120, 4
 	},
 	{
 		"Bougainville Standard Time", -660, TRUE, "(UTC+11:00) Bougainville Island",
 		"Bougainville Standard Time", "Bougainville Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_121, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_121, 2
 	},
 	{
 		"Russia Time Zone 10", -660, TRUE, "(UTC+11:00) Chokurdakh",
 		"Russia TZ 10 Standard Time", "Russia TZ 10 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_122, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_122, 5
 	},
 	{
 		"Magadan Standard Time", -660, TRUE, "(UTC+11:00) Magadan",
 		"Magadan Standard Time", "Magadan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_123, 7
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_123, 7
 	},
 	{
 		"Norfolk Standard Time", -660, TRUE, "(UTC+11:00) Norfolk Island",
 		"Norfolk Standard Time", "Norfolk Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_124, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_124, 2
 	},
 	{
 		"Sakhalin Standard Time", -660, TRUE, "(UTC+11:00) Sakhalin",
 		"Sakhalin Standard Time", "Sakhalin Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_125, 5
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_125, 5
 	},
 	{
 		"Central Pacific Standard Time", -660, FALSE, "(UTC+11:00) Solomon Is., New Caledonia",
@@ -1559,12 +1559,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Russia Time Zone 11", -720, TRUE, "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky",
 		"Russia TZ 11 Standard Time", "Russia TZ 11 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_127, 3
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_127, 3
 	},
 	{
 		"New Zealand Standard Time", -720, TRUE, "(UTC+12:00) Auckland, Wellington",
 		"New Zealand Standard Time", "New Zealand Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_128, 3
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_128, 3
 	},
 	{
 		"UTC+12", -720, FALSE, "(UTC+12:00) Coordinated Universal Time+12",
@@ -1574,17 +1574,17 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Fiji Standard Time", -720, TRUE, "(UTC+12:00) Fiji",
 		"Fiji Standard Time", "Fiji Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_130, 10
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_130, 10
 	},
 	{
 		"Kamchatka Standard Time", -720, TRUE, "(UTC+12:00) Petropavlovsk-Kamchatsky - Old",
 		"Kamchatka Standard Time", "Kamchatka Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_131, 1
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_131, 1
 	},
 	{
 		"Chatham Islands Standard Time", -765, TRUE, "(UTC+12:45) Chatham Islands",
 		"Chatham Islands Standard Time", "Chatham Islands Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_132, 3
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_132, 3
 	},
 	{
 		"UTC+13", -780, FALSE, "(UTC+13:00) Coordinated Universal Time+13",
@@ -1594,12 +1594,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Tonga Standard Time", -780, TRUE, "(UTC+13:00) Nuku'alofa",
 		"Tonga Standard Time", "Tonga Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_134, 2
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_134, 2
 	},
 	{
 		"Samoa Standard Time", -780, TRUE, "(UTC+13:00) Samoa",
 		"Samoa Standard Time", "Samoa Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_135, 4
+		(TIME_ZONE_RULE_ENTRY*)& TimeZoneRuleTable_135, 4
 	},
 	{
 		"Line Islands Standard Time", -840, FALSE, "(UTC+14:00) Kiritimati Island",
@@ -2021,12 +2021,10 @@ static UINT64 winpr_windows_gmtime()
 {
 	time_t unix_time;
 	UINT64 windows_time;
-
 	time(&unix_time);
 	windows_time = unix_time;
 	windows_time *= 10000000;
 	windows_time += 621355968000000000ULL;
-
 	return windows_time;
 }
 
@@ -2037,7 +2035,9 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 
 	if (_fseeki64(fp, 0, SEEK_END) != 0)
 		return NULL;
+
 	length = _ftelli64(fp);
+
 	if (_fseeki64(fp, 0, SEEK_SET) != 0)
 		return NULL;
 
@@ -2045,6 +2045,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 		return NULL;
 
 	tzid = (char*) malloc(length + 1);
+
 	if (!tzid)
 		return NULL;
 
@@ -2055,6 +2056,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 	}
 
 	tzid[length] = '\0';
+
 	if (tzid[length - 1] == '\n')
 		tzid[length - 1] = '\0';
 
@@ -2080,7 +2082,7 @@ static char* winpr_get_timezone_from_link(void)
 	 * Some distributions do have to symlink at /etc/TZ.
 	 */
 
-	for (x=0; x<sizeof(links) / sizeof(links[0]); x++)
+	for (x = 0; x < sizeof(links) / sizeof(links[0]); x++)
 	{
 		const char* link = links[x];
 
@@ -2088,7 +2090,6 @@ static char* winpr_get_timezone_from_link(void)
 		{
 			int num = 0;
 			int pos = len;
-
 			buf[len] = '\0';
 
 			/* find the position of the 2nd to last "/" */
@@ -2105,11 +2106,11 @@ static char* winpr_get_timezone_from_link(void)
 			}
 
 			tzid = (char*) malloc(len - pos + 1);
+
 			if (!tzid)
 				return NULL;
 
 			strncpy(tzid, buf + pos + 1, len - pos);
-
 			return tzid;
 		}
 	}
@@ -2121,7 +2122,6 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 {
 	FILE* fp;
 	char* tzid = NULL;
-
 #if defined(ANDROID)
 	fp = popen("getprop persist.sys.timezone", "r");
 #elif defined(__FreeBSD__) || defined(__OpenBSD__)
@@ -2130,11 +2130,10 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 	fp = fopen("/etc/timezone", "r");
 #endif
 
-	if (NULL == fp )
+	if (NULL == fp)
 		return NULL;
 
 	tzid = winpr_read_unix_timezone_identifier_from_file(fp);
-
 #if defined(ANDROID)
 	pclose(fp) ;
 #else
@@ -2148,8 +2147,8 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 {
 	char* p;
 	char* list_copy;
-
 	list_copy = _strdup(list);
+
 	if (!list_copy)
 		return FALSE;
 
@@ -2167,7 +2166,6 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 	}
 
 	free(list_copy);
-
 	return FALSE;
 }
 
@@ -2176,7 +2174,6 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 	int i, j;
 	char* tzid;
 	TIME_ZONE_ENTRY* timezone;
-
 	tzid = winpr_get_unix_timezone_identifier_from_file();
 
 	if (tzid == NULL)
@@ -2195,10 +2192,11 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 			if (winpr_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
 			{
 				free(tzid);
-
 				timezone = (TIME_ZONE_ENTRY*) malloc(sizeof(TIME_ZONE_ENTRY));
+
 				if (!timezone)
 					return NULL;
+
 				memcpy((void*) timezone, (void*) &TimeZoneTable[i], sizeof(TIME_ZONE_ENTRY));
 				return timezone;
 			}
@@ -2210,11 +2208,11 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 	return NULL;
 }
 
-static TIME_ZONE_RULE_ENTRY* winpr_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* rules, UINT32 count)
+static TIME_ZONE_RULE_ENTRY* winpr_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* rules,
+        UINT32 count)
 {
 	int i;
 	UINT64 windows_time;
-
 	windows_time = winpr_windows_gmtime();
 
 	for (i = 0; i < (int) count; i++)
@@ -2236,36 +2234,30 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 	struct tm* local_time;
 	TIME_ZONE_ENTRY* dtz;
 	LPTIME_ZONE_INFORMATION tz = lpTimeZoneInformation;
-
 	lpTimeZoneInformation->StandardBias = 0;
-
 	time(&t);
 	local_time = localtime(&t);
-
 	memset(tz, 0, sizeof(TIME_ZONE_INFORMATION));
-
 #ifdef HAVE_TM_GMTOFF
 	tz->Bias = -(local_time->tm_gmtoff / 60);
 #else
 	tz->Bias = 0;
 #endif
-
 	dtz = winpr_detect_windows_time_zone();
 
-	if (dtz!= NULL)
+	if (dtz != NULL)
 	{
 		int status;
 		WLog_DBG(TAG, "tz: Bias=%"PRId32" sn='%s' dln='%s'",
-			dtz->Bias, dtz->StandardName, dtz->DaylightName);
-
+		         dtz->Bias, dtz->StandardName, dtz->DaylightName);
 		tz->Bias = dtz->Bias;
 		tz->StandardBias = 0;
 		tz->DaylightBias = 0;
-
 		ZeroMemory(tz->StandardName, sizeof(tz->StandardName));
 		ZeroMemory(tz->DaylightName, sizeof(tz->DaylightName));
 		status = MultiByteToWideChar(CP_UTF8, 0, dtz->StandardName, -1, tz->StandardName,
-									 sizeof(tz->StandardName)/sizeof(WCHAR)-1);
+		                             sizeof(tz->StandardName) / sizeof(WCHAR) - 1);
+
 		if (status < 1)
 		{
 			WLog_ERR(TAG, "StandardName conversion failed - using default");
@@ -2273,7 +2265,8 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 		}
 
 		status = MultiByteToWideChar(CP_UTF8, 0, dtz->DaylightName, -1, tz->DaylightName,
-									 sizeof(tz->DaylightName)/sizeof(WCHAR)-1);
+		                             sizeof(tz->DaylightName) / sizeof(WCHAR) - 1);
+
 		if (status < 1)
 		{
 			WLog_ERR(TAG, "DaylightName conversion failed - using default");
@@ -2288,13 +2281,12 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 			if (rule != NULL)
 			{
 				tz->DaylightBias = -rule->DaylightDelta;
-
 				tz->StandardDate = rule->StandardDate;
 				tz->DaylightDate = rule->DaylightDate;
 			}
 		}
-		free(dtz);
 
+		free(dtz);
 		/* 1 ... TIME_ZONE_ID_STANDARD
 		 * 2 ... TIME_ZONE_ID_DAYLIGHT */
 		return local_time->tm_isdst ? 2 : 1;
@@ -2319,19 +2311,19 @@ BOOL SystemTimeToFileTime(const SYSTEMTIME* lpSystemTime, LPFILETIME lpFileTime)
 	return FALSE;
 }
 
-BOOL FileTimeToSystemTime(const FILETIME *lpFileTime, LPSYSTEMTIME lpSystemTime)
+BOOL FileTimeToSystemTime(const FILETIME* lpFileTime, LPSYSTEMTIME lpSystemTime)
 {
 	return FALSE;
 }
 
 BOOL SystemTimeToTzSpecificLocalTime(LPTIME_ZONE_INFORMATION lpTimeZone,
-		LPSYSTEMTIME lpUniversalTime, LPSYSTEMTIME lpLocalTime)
+                                     LPSYSTEMTIME lpUniversalTime, LPSYSTEMTIME lpLocalTime)
 {
 	return FALSE;
 }
 
 BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
-		LPSYSTEMTIME lpLocalTime, LPSYSTEMTIME lpUniversalTime)
+                                     LPSYSTEMTIME lpLocalTime, LPSYSTEMTIME lpUniversalTime)
 {
 	return FALSE;
 }
@@ -2354,7 +2346,8 @@ BOOL SetDynamicTimeZoneInformation(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZo
 	return FALSE;
 }
 
-BOOL GetTimeZoneInformationForYear(USHORT wYear, PDYNAMIC_TIME_ZONE_INFORMATION pdtzi, LPTIME_ZONE_INFORMATION ptzi)
+BOOL GetTimeZoneInformationForYear(USHORT wYear, PDYNAMIC_TIME_ZONE_INFORMATION pdtzi,
+                                   LPTIME_ZONE_INFORMATION ptzi)
 {
 	return FALSE;
 }
@@ -2364,13 +2357,13 @@ BOOL GetTimeZoneInformationForYear(USHORT wYear, PDYNAMIC_TIME_ZONE_INFORMATION 
 #if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601)) /* Windows 7 */
 
 BOOL SystemTimeToTzSpecificLocalTimeEx(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation,
-		const SYSTEMTIME* lpUniversalTime, LPSYSTEMTIME lpLocalTime)
+                                       const SYSTEMTIME* lpUniversalTime, LPSYSTEMTIME lpLocalTime)
 {
 	return FALSE;
 }
 
 BOOL TzSpecificLocalTimeToSystemTimeEx(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation,
-		const SYSTEMTIME* lpLocalTime, LPSYSTEMTIME lpUniversalTime)
+                                       const SYSTEMTIME* lpLocalTime, LPSYSTEMTIME lpUniversalTime)
 {
 	return FALSE;
 }
@@ -2379,15 +2372,18 @@ BOOL TzSpecificLocalTimeToSystemTimeEx(const DYNAMIC_TIME_ZONE_INFORMATION* lpTi
 
 #if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602)) /* Windows 8 */
 
-DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex, PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation)
+DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
+                                     PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
 	return 0;
 }
 
-DWORD GetDynamicTimeZoneInformationEffectiveYears(const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation,
-		LPDWORD FirstYear, LPDWORD LastYear)
+DWORD GetDynamicTimeZoneInformationEffectiveYears(const PDYNAMIC_TIME_ZONE_INFORMATION
+        lpTimeZoneInformation,
+        LPDWORD FirstYear, LPDWORD LastYear)
 {
 	return 0;
 }
 
 #endif
+

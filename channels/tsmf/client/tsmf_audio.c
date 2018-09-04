@@ -31,8 +31,8 @@ static ITSMFAudioDevice* tsmf_load_audio_device_by_name(const char* name, const 
 {
 	ITSMFAudioDevice* audio;
 	TSMF_AUDIO_DEVICE_ENTRY entry;
-
-	entry = (TSMF_AUDIO_DEVICE_ENTRY) freerdp_load_channel_addin_entry("tsmf", (LPSTR) name, "audio", 0);
+	entry = (TSMF_AUDIO_DEVICE_ENTRY) freerdp_load_channel_addin_entry("tsmf", (LPSTR) name, "audio",
+	        0);
 
 	if (!entry)
 		return NULL;
@@ -70,21 +70,25 @@ ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device)
 	else
 	{
 #if defined(WITH_PULSE)
+
 		if (!audio)
 			audio = tsmf_load_audio_device_by_name("pulse", device);
-#endif
 
+#endif
 #if defined(WITH_OSS)
+
 		if (!audio)
 			audio = tsmf_load_audio_device_by_name("oss", device);
-#endif
 
+#endif
 #if defined(WITH_ALSA)
+
 		if (!audio)
 			audio = tsmf_load_audio_device_by_name("alsa", device);
+
 #endif
 	}
-	
+
 	if (audio == NULL)
 	{
 		WLog_ERR(TAG, "no sound device.");
@@ -96,4 +100,5 @@ ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device)
 
 	return audio;
 }
+
 

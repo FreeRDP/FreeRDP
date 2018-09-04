@@ -509,3 +509,4 @@ void ByteSwapUnicode(WCHAR* wstr, int length)
 		wstr++;
 	}
 }
+

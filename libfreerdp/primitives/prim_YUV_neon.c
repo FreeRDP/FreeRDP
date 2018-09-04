@@ -769,3 +769,4 @@ void primitives_init_YUV_opt(primitives_t* prims)
 		prims->YUV420CombineToYUV444 = neon_YUV420CombineToYUV444;
 	}
 }
+

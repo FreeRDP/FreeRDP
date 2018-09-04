@@ -1477,3 +1477,4 @@ int rdp_server_transition_to_state(rdpRdp* rdp, int state)
 
 	return status;
 }
+

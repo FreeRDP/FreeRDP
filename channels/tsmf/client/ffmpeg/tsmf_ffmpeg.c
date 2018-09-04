@@ -640,3 +640,4 @@ ITSMFDecoder* freerdp_tsmf_client_subsystem_entry(void)
 	decoder->iface.Free = tsmf_ffmpeg_free;
 	return (ITSMFDecoder*) decoder;
 }
+

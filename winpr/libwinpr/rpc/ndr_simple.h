@@ -41,3 +41,4 @@ int NdrGetTypeFlags(unsigned char FormatChar);
 #endif
 
 #endif /* WINPR_RPC_NDR_SIMPLE_H */
+

@@ -88,7 +88,6 @@ static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* na
 void shadow_subsystem_set_entry_builtin(const char* name)
 {
 	pfnShadowSubsystemEntry entry;
-
 	entry = shadow_subsystem_load_static_entry(name);
 
 	if (entry)
@@ -96,3 +95,4 @@ void shadow_subsystem_set_entry_builtin(const char* name)
 
 	return;
 }
+

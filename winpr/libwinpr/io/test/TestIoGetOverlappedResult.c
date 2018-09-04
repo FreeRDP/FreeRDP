@@ -8,3 +8,4 @@ int TestIoGetOverlappedResult(int argc, char* argv[])
 {
 	return 0;
 }
+

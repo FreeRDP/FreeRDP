@@ -124,3 +124,4 @@ DEFINE_EVENT_END(GraphicsReset)
 #endif
 
 #endif	/* FREERDP_EVENT_H */
+

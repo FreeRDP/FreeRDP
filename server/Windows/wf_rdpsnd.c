@@ -52,9 +52,7 @@ static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 {
 	wfInfo* wfi;
 	int i, j;
-
 	wfi = wf_info_get_instance();
-
 	wfi->agreed_format = NULL;
 	WLog_DBG(TAG, "Client supports the following %d formats:", context->num_client_formats);
 
@@ -72,56 +70,48 @@ static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 				break;
 			}
 		}
+
 		if (wfi->agreed_format != NULL)
 			break;
-		
 	}
-	
+
 	if (wfi->agreed_format == NULL)
 	{
 		WLog_ERR(TAG, "Could not agree on a audio format with the server");
 		return;
 	}
-	
+
 	context->SelectFormat(context, i);
 	context->SetVolume(context, 0x7FFF, 0x7FFF);
-
 #ifdef WITH_RDPSND_DSOUND
-
 	wf_directsound_activate(context);
-
 #else
-
 	wf_wasapi_activate(context);
-
 #endif
-	
 }
 
 int wf_rdpsnd_lock()
 {
 	DWORD dRes;
 	wfInfo* wfi;
-
 	wfi = wf_info_get_instance();
-
 	dRes = WaitForSingleObject(wfi->snd_mutex, INFINITE);
 
 	switch (dRes)
 	{
-	case WAIT_ABANDONED:
-	case WAIT_OBJECT_0:
-		return TRUE;
-		break;
+		case WAIT_ABANDONED:
+		case WAIT_OBJECT_0:
+			return TRUE;
+			break;
 
-	case WAIT_TIMEOUT:
-		return FALSE;
-		break;
+		case WAIT_TIMEOUT:
+			return FALSE;
+			break;
 
-	case WAIT_FAILED:
-		WLog_ERR(TAG, "wf_rdpsnd_lock failed with 0x%08lX", GetLastError());
-		return -1;
-		break;
+		case WAIT_FAILED:
+			WLog_ERR(TAG, "wf_rdpsnd_lock failed with 0x%08lX", GetLastError());
+			return -1;
+			break;
 	}
 
 	return -1;
@@ -130,7 +120,6 @@ int wf_rdpsnd_lock()
 int wf_rdpsnd_unlock()
 {
 	wfInfo* wfi;
-
 	wfi = wf_info_get_instance();
 
 	if (ReleaseMutex(wfi->snd_mutex) == 0)
@@ -145,7 +134,7 @@ int wf_rdpsnd_unlock()
 BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 {
 	wfInfo* wfi = wf_info_get_instance();
-	
+
 	if (!wfi)
 		return FALSE;
 
@@ -155,23 +144,18 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->rdpcontext = &context->_p;
 	context->rdpsnd->data = context;
-
 	context->rdpsnd->server_formats = supported_audio_formats;
 	context->rdpsnd->num_server_formats =
-			sizeof(supported_audio_formats) / sizeof(supported_audio_formats[0]);
-
+	    sizeof(supported_audio_formats) / sizeof(supported_audio_formats[0]);
 	context->rdpsnd->src_format.wFormatTag = 1;
 	context->rdpsnd->src_format.nChannels = 2;
 	context->rdpsnd->src_format.nSamplesPerSec = 44100;
 	context->rdpsnd->src_format.wBitsPerSample = 16;
-
 	context->rdpsnd->Activated = wf_peer_rdpsnd_activated;
-
 	context->rdpsnd->Initialize(context->rdpsnd, TRUE);
-
 	wf_rdpsnd_set_latest_peer(context);
-
 	wfi->snd_stop = FALSE;
 	return TRUE;
 }
+
 

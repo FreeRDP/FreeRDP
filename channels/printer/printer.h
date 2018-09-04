@@ -35,3 +35,4 @@
 
 
 #endif /* FREERDP_CHANNEL_PRINTER_PRINTER_H */
+

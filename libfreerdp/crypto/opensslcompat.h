@@ -63,3 +63,4 @@ void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM
 #endif /* WITH_OPENSSL */
 
 #endif /* FREERDP_LIB_CRYPTO_OPENSSLCOMPAT_H */
+

@@ -659,3 +659,4 @@ typedef struct _wEventType wEventType;
 #endif
 
 #endif /* WINPR_COLLECTIONS_H */
+

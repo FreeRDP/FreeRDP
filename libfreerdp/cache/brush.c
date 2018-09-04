@@ -256,3 +256,4 @@ fail:
 	free_cache_brush_order(context, dst);
 	return NULL;
 }
+

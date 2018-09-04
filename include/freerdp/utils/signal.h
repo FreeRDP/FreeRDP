@@ -44,3 +44,4 @@ FREERDP_API int freerdp_handle_signals(void);
 #endif
 
 #endif /* FREERDP_UTILS_SIGNAL_H */
+

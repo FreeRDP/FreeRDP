@@ -48,7 +48,6 @@ static void my_init_source(j_decompress_ptr cinfo)
 static boolean my_fill_input_buffer(j_decompress_ptr cinfo)
 {
 	struct mydata_decomp* md;
-
 	md = (struct mydata_decomp*)(cinfo->client_data);
 	cinfo->src->next_input_byte = (unsigned char*)(md->data);
 	cinfo->src->bytes_in_buffer = md->data_bytes;
@@ -82,11 +81,9 @@ do_decompress(char* comp_data, int comp_data_bytes,
 	struct jpeg_source_mgr src_mgr;
 	struct mydata_decomp md;
 	JSAMPROW row_pointer[1];
-
 	memset(&cinfo, 0, sizeof(cinfo));
 	cinfo.err = jpeg_std_error(&jerr);
 	jpeg_create_decompress(&cinfo);
-
 	memset(&src_mgr, 0, sizeof(src_mgr));
 	cinfo.src = &src_mgr;
 	src_mgr.init_source = my_init_source;
@@ -94,30 +91,26 @@ do_decompress(char* comp_data, int comp_data_bytes,
 	src_mgr.skip_input_data = my_skip_input_data;
 	src_mgr.resync_to_restart = my_resync_to_restart;
 	src_mgr.term_source = my_term_source;
-
 	memset(&md, 0, sizeof(md));
 	md.data = comp_data;
 	md.data_bytes = comp_data_bytes;
 	cinfo.client_data = &md;
-
 	jpeg_read_header(&cinfo, 1);
-
 	cinfo.out_color_space = JCS_RGB;
-
 	*width = cinfo.image_width;
 	*height = cinfo.image_height;
 	*bpp = cinfo.num_components * 8;
-
 	jpeg_start_decompress(&cinfo);
 
-	while(cinfo.output_scanline < cinfo.image_height)
+	while (cinfo.output_scanline < cinfo.image_height)
 	{
 		row_pointer[0] = (JSAMPROW) decomp_data;
 		jpeg_read_scanlines(&cinfo, row_pointer, 1);
 		decomp_data += cinfo.image_width * cinfo.num_components;
 	}
+
 	*decomp_data_bytes = cinfo.output_width *
-			cinfo.output_height * cinfo.num_components;
+	                     cinfo.output_height * cinfo.num_components;
 	jpeg_finish_decompress(&cinfo);
 	jpeg_destroy_decompress(&cinfo);
 	return 0;
@@ -135,16 +128,19 @@ BOOL jpeg_decompress(BYTE* input, BYTE* output, int width, int height, int size,
 	{
 		return 0;
 	}
+
 	if (do_decompress((char*)input, size,
-			&lwidth, &lheight, &lbpp,
-			(char*)output, &ldecomp_data_bytes) != 0)
+	                  &lwidth, &lheight, &lbpp,
+	                  (char*)output, &ldecomp_data_bytes) != 0)
 	{
 		return 0;
 	}
+
 	if (lwidth != width || lheight != height || lbpp != bpp)
 	{
 		return 0;
 	}
+
 	return 1;
 }
 
@@ -156,3 +152,4 @@ BOOL jpeg_decompress(BYTE* input, BYTE* output, int width, int height, int size,
 }
 
 #endif
+

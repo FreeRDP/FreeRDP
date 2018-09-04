@@ -469,3 +469,4 @@ error_out:
 	free(alsa);
 	return error;
 }
+

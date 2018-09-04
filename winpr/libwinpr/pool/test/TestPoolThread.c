@@ -31,8 +31,7 @@ int TestPoolThread(int argc, char* argv[])
 	}
 
 	SetThreadpoolThreadMaximum(pool, 64); /* default is 500 */
-
 	CloseThreadpool(pool);
-
 	return 0;
 }
+

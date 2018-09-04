@@ -45,9 +45,9 @@ static pstatus_t general_alphaComp_argb(
 
 	for (y = 0; y < height; y++)
 	{
-		const UINT32* sptr1 = (const UINT32*) (pSrc1 + y * src1Step);
-		const UINT32* sptr2 = (const UINT32*) (pSrc2 + y * src2Step);
-		UINT32* dptr = (UINT32*) (pDst + y * dstStep);
+		const UINT32* sptr1 = (const UINT32*)(pSrc1 + y * src1Step);
+		const UINT32* sptr2 = (const UINT32*)(pSrc2 + y * src2Step);
+		UINT32* dptr = (UINT32*)(pDst + y * dstStep);
 		UINT32 x;
 
 		for (x = 0; x < width; x++)
@@ -98,4 +98,5 @@ void primitives_init_alphaComp(primitives_t* prims)
 {
 	prims->alphaComp_argb = general_alphaComp_argb;
 }
+
 

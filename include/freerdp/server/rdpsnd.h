@@ -137,3 +137,4 @@ FREERDP_API UINT rdpsnd_server_handle_messages(RdpsndServerContext* context);
 #endif
 
 #endif /* FREERDP_CHANNEL_RDPSND_SERVER_H */
+

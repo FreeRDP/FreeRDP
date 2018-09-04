@@ -501,3 +501,4 @@ fail:
 	freerdp_client_context_free(context);
 	return rc;
 }
+

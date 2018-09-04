@@ -66,3 +66,4 @@ typedef CHAR TCHAR;
 #endif
 
 #endif /* WINPR_TCHAR_H */
+

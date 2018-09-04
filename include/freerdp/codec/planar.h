@@ -130,3 +130,4 @@ FREERDP_API BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 
 #endif /* FREERDP_CODEC_PLANAR_H */
 
+

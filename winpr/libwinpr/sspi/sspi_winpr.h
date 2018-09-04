@@ -26,3 +26,4 @@ SecurityFunctionTableW* SEC_ENTRY winpr_InitSecurityInterfaceW(void);
 SecurityFunctionTableA* SEC_ENTRY winpr_InitSecurityInterfaceA(void);
 
 #endif /* WINPR_SSPI_WINPR_H */
+

@@ -13,7 +13,7 @@ static DWORD WINAPI message_echo_pipe_client_thread(LPVOID arg)
 		wMessage message;
 		int count;
 
-		if (!MessageQueue_Post(pipe->In, NULL, 0, (void*) (size_t) index, NULL))
+		if (!MessageQueue_Post(pipe->In, NULL, 0, (void*)(size_t) index, NULL))
 			break;
 
 		if (!MessageQueue_Wait(pipe->Out))
@@ -25,7 +25,7 @@ static DWORD WINAPI message_echo_pipe_client_thread(LPVOID arg)
 		if (message.id == WMQ_QUIT)
 			break;
 
-		count = (int) (size_t) message.wParam;
+		count = (int)(size_t) message.wParam;
 
 		if (count != index)
 			printf("Echo count mismatch: Actual: %d, Expected: %d\n", count, index);
@@ -34,7 +34,6 @@ static DWORD WINAPI message_echo_pipe_client_thread(LPVOID arg)
 	}
 
 	MessageQueue_PostQuit(pipe->In, 0);
-
 	return 0;
 }
 
@@ -42,7 +41,6 @@ static DWORD WINAPI message_echo_pipe_server_thread(LPVOID arg)
 {
 	wMessage message;
 	wMessagePipe* pipe;
-
 	pipe = (wMessagePipe*) arg;
 
 	while (MessageQueue_Wait(pipe->In))
@@ -73,13 +71,15 @@ int TestMessagePipe(int argc, char* argv[])
 		goto out;
 	}
 
-	if (!(ClientThread = CreateThread(NULL, 0, message_echo_pipe_client_thread, (void*) EchoPipe, 0, NULL)))
+	if (!(ClientThread = CreateThread(NULL, 0, message_echo_pipe_client_thread, (void*) EchoPipe, 0,
+	                                  NULL)))
 	{
 		printf("failed to create client thread\n");
 		goto out;
 	}
 
-	if (!(ServerThread = CreateThread(NULL, 0, message_echo_pipe_server_thread, (void*) EchoPipe, 0, NULL)))
+	if (!(ServerThread = CreateThread(NULL, 0, message_echo_pipe_server_thread, (void*) EchoPipe, 0,
+	                                  NULL)))
 	{
 		printf("failed to create server thread\n");
 		goto out;
@@ -87,16 +87,18 @@ int TestMessagePipe(int argc, char* argv[])
 
 	WaitForSingleObject(ClientThread, INFINITE);
 	WaitForSingleObject(ServerThread, INFINITE);
-
 	ret = 0;
-
 out:
+
 	if (EchoPipe)
 		MessagePipe_Free(EchoPipe);
+
 	if (ClientThread)
 		CloseHandle(ClientThread);
+
 	if (ServerThread)
 		CloseHandle(ServerThread);
 
 	return ret;
 }
+

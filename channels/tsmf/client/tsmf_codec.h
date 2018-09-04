@@ -27,3 +27,4 @@ BOOL tsmf_codec_check_media_type(const char* decoder_name, wStream* s);
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_CODEC_H */
 
+

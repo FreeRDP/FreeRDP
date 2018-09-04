@@ -175,3 +175,4 @@ FREERDP_API void graphics_free(rdpGraphics* graphics);
 #endif
 
 #endif /* FREERDP_GRAPHICS_H */
+

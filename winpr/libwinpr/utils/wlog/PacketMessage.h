@@ -118,3 +118,4 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags
 
 #endif /* WINPR_WLOG_PACKET_MESSAGE_PRIVATE_H */
 
+

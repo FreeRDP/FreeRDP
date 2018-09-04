@@ -25,3 +25,4 @@
 BOOL ClipboardInitPosixFileSubsystem(wClipboard* clipboard);
 
 #endif /* WINPR_CLIPBOARD_POSIX_H */
+

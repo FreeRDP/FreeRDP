@@ -2920,3 +2920,4 @@ void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard,
 
 	WLog_DBG(TAG, "}");
 }
+

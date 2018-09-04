@@ -28,3 +28,4 @@
 FREERDP_LOCAL void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap);
 
 #endif /* FREERDP_LIB_CORE_GRAPHICS_H */
+

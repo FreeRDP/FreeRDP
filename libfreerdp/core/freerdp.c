@@ -1034,3 +1034,4 @@ void setChannelError(rdpContext* context, UINT errorNum, char* description)
 	strncpy(context->errorDescription, description, 499);
 	SetEvent(context->channelErrorEvent);
 }
+

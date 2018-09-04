@@ -151,3 +151,4 @@ struct winpr_timer_queue_timer
 #endif
 
 #endif /* WINPR_SYNCH_PRIVATE_H */
+

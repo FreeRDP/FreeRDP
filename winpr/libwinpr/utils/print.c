@@ -63,7 +63,7 @@ void winpr_HexDump(const char* tag, UINT32 level, const BYTE* data, int length)
 
 		for (i = 0; i < line; i++)
 			pos += trio_snprintf(&buffer[pos], blen - pos, "%c",
-							(p[i] >= 0x20 && p[i] < 0x7F) ? (char) p[i] : '.');
+			                     (p[i] >= 0x20 && p[i] < 0x7F) ? (char) p[i] : '.');
 
 		WLog_LVL(tag, level, "%s", buffer);
 		offset += line;
@@ -117,6 +117,7 @@ char* winpr_BinToHexString(const BYTE* data, int length, BOOL space)
 	char bin2hex[] = "0123456789ABCDEF";
 	n = space ? 3 : 2;
 	p = (char*) malloc((length + 1) * n);
+
 	if (!p)
 		return NULL;
 
@@ -154,3 +155,4 @@ int wvsnprintfx(char* buffer, size_t bufferSize, const char* fmt, va_list args)
 {
 	return trio_vsnprintf(buffer, bufferSize, fmt, args);
 }
+

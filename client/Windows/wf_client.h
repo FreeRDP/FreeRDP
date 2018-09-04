@@ -149,3 +149,4 @@ FREERDP_API void wf_size_scrollbars(wfContext* wfc, UINT32 client_width,
 #endif
 
 #endif /* FREERDP_CLIENT_WIN_INTERFACE_H */
+

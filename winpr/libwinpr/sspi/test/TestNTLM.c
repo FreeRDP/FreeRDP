@@ -677,3 +677,4 @@ int TestNTLM(int argc, char* argv[])
 	test_ntlm_server_free(server);
 	return 0;
 }
+

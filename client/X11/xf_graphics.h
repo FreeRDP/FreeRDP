@@ -30,3 +30,4 @@ BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color);
 UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned);
 
 #endif /* FREERDP_CLIENT_X11_GRAPHICS_H */
+

@@ -1000,3 +1000,4 @@ SecurityFunctionTableW sspi_SecurityFunctionTableW =
 	sspi_DecryptMessage, /* DecryptMessage */
 	sspi_SetContextAttributesW, /* SetContextAttributes */
 };
+

@@ -863,3 +863,4 @@ out_fail:
 	Stream_Write_UINT8(output, 0); /* Padding */
 	return FALSE;
 }
+

@@ -47,3 +47,4 @@ extern const char* FC_TYPE_STRINGS[];
 #endif
 
 #endif /* WINPR_RPC_NDR_PRIVATE_H */
+

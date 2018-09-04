@@ -52,7 +52,8 @@ static int x264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 	return -1;
 }
 
-static int x264_compress(H264_CONTEXT* h264, const BYTE** ppSrcYuv, const UINT32* pStride, BYTE** ppDstData, UINT32* pDstSize)
+static int x264_compress(H264_CONTEXT* h264, const BYTE** ppSrcYuv, const UINT32* pStride,
+                         BYTE** ppDstData, UINT32* pDstSize)
 {
 	//H264_CONTEXT_X264* sys = (H264_CONTEXT_X264*) h264->pSystemData;
 	return -1;
@@ -121,3 +122,4 @@ H264_CONTEXT_SUBSYSTEM g_Subsystem_x264 =
 #undef NAL_PRIORITY_LOW
 #undef NAL_PRIORITY_HIGH
 #undef NAL_PRIORITY_HIGHEST
+

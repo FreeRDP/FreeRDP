@@ -15,14 +15,17 @@ int TestCryptoProtectMemory(int argc, char* argv[])
 	BYTE* pCipherText;
 	pPlainText = (char*) SECRET_PASSWORD_TEST;
 	cbPlainText = strlen(pPlainText) + 1;
-	cbCipherText = cbPlainText + (CRYPTPROTECTMEMORY_BLOCK_SIZE - (cbPlainText % CRYPTPROTECTMEMORY_BLOCK_SIZE));
+	cbCipherText = cbPlainText + (CRYPTPROTECTMEMORY_BLOCK_SIZE - (cbPlainText %
+	                              CRYPTPROTECTMEMORY_BLOCK_SIZE));
 	printf("cbPlainText: %d cbCipherText: %d\n", cbPlainText, cbCipherText);
 	pCipherText = (BYTE*) malloc(cbCipherText);
+
 	if (!pCipherText)
 	{
 		printf("Unable to allocate memory\n");
 		return -1;
 	}
+
 	CopyMemory(pCipherText, pPlainText, cbPlainText);
 	ZeroMemory(&pCipherText[cbPlainText], (cbCipherText - cbPlainText));
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
@@ -33,7 +36,8 @@ int TestCryptoProtectMemory(int argc, char* argv[])
 		return -1;
 	}
 
-	printf("PlainText: %s (cbPlainText = %d, cbCipherText = %d)\n", pPlainText, cbPlainText, cbCipherText);
+	printf("PlainText: %s (cbPlainText = %d, cbCipherText = %d)\n", pPlainText, cbPlainText,
+	       cbCipherText);
 	winpr_HexDump("crypto.test", WLOG_DEBUG, pCipherText, cbCipherText);
 
 	if (!CryptUnprotectMemory(pCipherText, cbCipherText, CRYPTPROTECTMEMORY_SAME_PROCESS))
@@ -47,3 +51,4 @@ int TestCryptoProtectMemory(int argc, char* argv[])
 	free(pCipherText);
 	return 0;
 }
+

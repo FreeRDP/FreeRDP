@@ -34,3 +34,4 @@ struct _encomsp_server_private
 };
 
 #endif /* FREERDP_CHANNEL_ENCOMSP_SERVER_MAIN_H */
+

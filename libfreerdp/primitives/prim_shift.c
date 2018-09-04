@@ -116,3 +116,4 @@ void primitives_init_shift(
 	prims->shiftC_16s  = general_shiftC_16s;
 	prims->shiftC_16u  = general_shiftC_16u;
 }
+

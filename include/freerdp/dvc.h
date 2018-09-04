@@ -165,3 +165,4 @@ void add_callback_by_name(const char* name, void* fkt, void* context);
 void remove_callback_by_name(const char* name, void* context);
 
 #endif /* FREERDP_DVC_H */
+

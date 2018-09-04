@@ -49,16 +49,19 @@ STOPWATCH* stopwatch_create()
 {
 	STOPWATCH* sw;
 #ifdef _WIN32
-	if (stopwatch_freq.QuadPart == 0) {
+
+	if (stopwatch_freq.QuadPart == 0)
+	{
 		QueryPerformanceFrequency(&stopwatch_freq);
 	}
-#endif
 
+#endif
 	sw = (STOPWATCH*) malloc(sizeof(STOPWATCH));
+
 	if (!sw)
 		return NULL;
-	stopwatch_reset(sw);
 
+	stopwatch_reset(sw);
 	return sw;
 }
 
@@ -89,7 +92,7 @@ void stopwatch_reset(STOPWATCH* stopwatch)
 
 double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch)
 {
-	return (stopwatch->elapsed/1000000.0);
+	return (stopwatch->elapsed / 1000000.0);
 }
 
 void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, UINT32* sec, UINT32* usec)
@@ -97,4 +100,5 @@ void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, UINT32* sec, U
 	*sec = (UINT32) stopwatch->elapsed / 1000000;
 	*usec = (UINT32) stopwatch->elapsed % 1000000;
 }
+
 

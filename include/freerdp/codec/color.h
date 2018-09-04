@@ -752,7 +752,7 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
  * @return           The converted pixel color in dstFormat representation
  */
 static INLINE UINT32 FreeRDPConvertColor(UINT32 color, UINT32 srcFormat,
-                                  UINT32 dstFormat, const gdiPalette* palette)
+        UINT32 dstFormat, const gdiPalette* palette)
 {
 	BYTE r = 0;
 	BYTE g = 0;
@@ -891,3 +891,4 @@ FREERDP_API BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat,
 #endif
 
 #endif /* FREERDP_CODEC_COLOR_H */
+

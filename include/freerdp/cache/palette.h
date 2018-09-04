@@ -61,3 +61,4 @@ FREERDP_API void palette_cache_free(rdpPaletteCache* palette_cache);
 #endif
 
 #endif /* FREERDP_PALETTE_CACHE_H */
+

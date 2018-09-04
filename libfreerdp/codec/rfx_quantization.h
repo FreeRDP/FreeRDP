@@ -32,3 +32,4 @@ FREERDP_LOCAL void rfx_quantization_decode_block(const primitives_t* prims,
         INT16* buffer, int buffer_size, UINT32 factor);
 
 #endif /* FREERDP_LIB_CODEC_RFX_QUANTIZATION_H */
+

@@ -36,3 +36,4 @@ void shadow_client_audin_uninit(rdpShadowClient* client);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_AUDIN_H */
+

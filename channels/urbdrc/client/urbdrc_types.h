@@ -331,3 +331,4 @@ enum device_descriptor_table
 	} while (0)
 
 #endif /* FREERDP_CHANNEL_URBDRC_CLIENT_TYPES_H */
+

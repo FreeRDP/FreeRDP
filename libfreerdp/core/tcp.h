@@ -70,3 +70,4 @@ FREERDP_LOCAL int freerdp_tcp_connect(rdpContext* context,
 FREERDP_LOCAL char* freerdp_tcp_get_peer_address(SOCKET sockfd);
 
 #endif /* FREERDP_LIB_CORE_TCP_H */
+

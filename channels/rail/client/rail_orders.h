@@ -48,3 +48,4 @@ UINT rail_send_client_get_appid_req_order(railPlugin* rail, RAIL_GET_APPID_REQ_O
 UINT rail_send_client_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo);
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_ORDERS_H */
+

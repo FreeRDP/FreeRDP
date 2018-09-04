@@ -1284,3 +1284,4 @@ void makecert_context_free(MAKECERT_CONTEXT* context)
 		free(context);
 	}
 }
+

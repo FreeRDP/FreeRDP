@@ -29,7 +29,6 @@
 void wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	INPUT keyboard_event;
-
 	keyboard_event.type = INPUT_KEYBOARD;
 	keyboard_event.ki.wVk = 0;
 	keyboard_event.ki.wScan = code;
@@ -49,7 +48,6 @@ void wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 void wf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	INPUT keyboard_event;
-
 	keyboard_event.type = INPUT_KEYBOARD;
 	keyboard_event.ki.wVk = 0;
 	keyboard_event.ki.wScan = code;
@@ -67,7 +65,6 @@ void wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	INPUT mouse_event;
 	float width, height;
-
 	ZeroMemory(&mouse_event, sizeof(INPUT));
 	mouse_event.type = INPUT_MOUSE;
 
@@ -83,21 +80,19 @@ void wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	}
 	else
 	{
-		wfInfo * wfi;
-		
+		wfInfo* wfi;
 		wfi = wf_info_get_instance();
+
 		if (!wfi)
 			return;
 
 		//width and height of primary screen (even in multimon setups
 		width = (float) GetSystemMetrics(SM_CXSCREEN);
 		height = (float) GetSystemMetrics(SM_CYSCREEN);
-
 		x += wfi->servscreen_xoffset;
 		y += wfi->servscreen_yoffset;
-
-		mouse_event.mi.dx = (LONG) ((float) x * (65535.0f / width));
-		mouse_event.mi.dy = (LONG) ((float) y * (65535.0f / height));
+		mouse_event.mi.dx = (LONG)((float) x * (65535.0f / width));
+		mouse_event.mi.dy = (LONG)((float) y * (65535.0f / height));
 		mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
 
 		if (flags & PTR_FLAGS_MOVE)
@@ -144,28 +139,25 @@ void wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 	{
 		INPUT mouse_event;
 		ZeroMemory(&mouse_event, sizeof(INPUT));
-
 		mouse_event.type = INPUT_MOUSE;
 
 		if (flags & PTR_FLAGS_MOVE)
 		{
 			float width, height;
-			wfInfo * wfi;
-
+			wfInfo* wfi;
 			wfi = wf_info_get_instance();
+
 			if (!wfi)
 				return;
+
 			//width and height of primary screen (even in multimon setups
 			width = (float) GetSystemMetrics(SM_CXSCREEN);
 			height = (float) GetSystemMetrics(SM_CYSCREEN);
-
 			x += wfi->servscreen_xoffset;
 			y += wfi->servscreen_yoffset;
-
-			mouse_event.mi.dx = (LONG) ((float) x * (65535.0f / width));
-			mouse_event.mi.dy = (LONG) ((float) y * (65535.0f / height));
+			mouse_event.mi.dx = (LONG)((float) x * (65535.0f / width));
+			mouse_event.mi.dy = (LONG)((float) y * (65535.0f / height));
 			mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-
 			SendInput(1, &mouse_event, sizeof(INPUT));
 		}
 
@@ -205,3 +197,4 @@ void wf_peer_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y
 void wf_peer_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 }
+

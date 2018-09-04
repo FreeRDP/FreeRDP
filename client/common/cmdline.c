@@ -3303,3 +3303,4 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	return TRUE;
 }
 
+

@@ -1261,3 +1261,4 @@ const SecPkgInfoW NTLM_SecPkgInfoW =
 	NTLM_SecPkgInfoW_Name, /* Name */
 	NTLM_SecPkgInfoW_Comment /* Comment */
 };
+

@@ -113,7 +113,7 @@ struct wf_server
 };
 typedef struct wf_server wfServer;
 
-typedef void (__stdcall* cbCallback) (int, UINT32);
+typedef void (__stdcall* cbCallback)(int, UINT32);
 
 FREERDP_API int get_screen_info(int id, _TCHAR* name, int* w, int* h, int* b);
 FREERDP_API void set_screen_id(int id);
@@ -127,7 +127,7 @@ FREERDP_API void wfreerdp_server_free(wfServer* server);
 FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server);
 
 FREERDP_API UINT32 wfreerdp_server_num_peers(void);
-FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr);
+FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t* dstStr);
 FREERDP_API BOOL wfreerdp_server_peer_is_local(int pId);
 FREERDP_API BOOL wfreerdp_server_peer_is_connected(int pId);
 FREERDP_API BOOL wfreerdp_server_peer_is_activated(int pId);
@@ -138,3 +138,4 @@ FREERDP_API void wfreerdp_server_register_callback_event(cbCallback cb);
 void wfreerdp_server_peer_callback_event(int pId, UINT32 eType);
 
 #endif /* FREERDP_SERVER_WIN_INTERFACE_H */
+

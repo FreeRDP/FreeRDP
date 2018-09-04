@@ -832,3 +832,4 @@ UINT tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN* ifman)
 	ifman->output_interface_id = TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY;
 	return CHANNEL_RC_OK;
 }
+

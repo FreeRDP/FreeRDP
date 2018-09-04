@@ -184,8 +184,9 @@ WINPR_API VOID winpr_WaitForThreadpoolIoCallbacks(PTP_IO pio, BOOL fCancelPendin
 
 /* Clean-up Group */
 
-WINPR_API VOID winpr_SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEANUP_GROUP ptpcg,
-                                       PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng);
+WINPR_API VOID winpr_SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe,
+        PTP_CLEANUP_GROUP ptpcg,
+        PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng);
 WINPR_API PTP_CLEANUP_GROUP winpr_CreateThreadpoolCleanupGroup(void);
 WINPR_API VOID winpr_CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg,
         BOOL fCancelPendingCallbacks, PVOID pvCleanupContext);
@@ -272,3 +273,4 @@ WINPR_API VOID winpr_DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE
 #endif
 
 #endif /* WINPR_POOL_H */
+

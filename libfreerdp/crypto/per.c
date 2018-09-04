@@ -254,7 +254,6 @@ BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
 		return FALSE;
 
 	*integer += min;
-
 	return TRUE;
 }
 
@@ -331,15 +330,14 @@ BOOL per_read_object_identifier(wStream* s, BYTE oid[6])
 	Stream_Read_UINT8(s, t12); /* first two tuples */
 	a_oid[0] = t12 / 40;
 	a_oid[1] = t12 % 40;
-
 	Stream_Read_UINT8(s, a_oid[2]); /* tuple 3 */
 	Stream_Read_UINT8(s, a_oid[3]); /* tuple 4 */
 	Stream_Read_UINT8(s, a_oid[4]); /* tuple 5 */
 	Stream_Read_UINT8(s, a_oid[5]); /* tuple 6 */
 
 	if ((a_oid[0] == oid[0]) && (a_oid[1] == oid[1]) &&
-		(a_oid[2] == oid[2]) && (a_oid[3] == oid[3]) &&
-		(a_oid[4] == oid[4]) && (a_oid[5] == oid[5]))
+	    (a_oid[2] == oid[2]) && (a_oid[3] == oid[3]) &&
+	    (a_oid[4] == oid[4]) && (a_oid[5] == oid[5]))
 	{
 		return TRUE;
 	}
@@ -430,9 +428,7 @@ void per_write_octet_string(wStream* s, BYTE* oct_str, int length, int min)
 {
 	int i;
 	int mlength;
-
 	mlength = (length - min >= 0) ? length - min : min;
-
 	per_write_length(s, mlength);
 
 	for (i = 0; i < length; i++)
@@ -477,20 +473,17 @@ void per_write_numeric_string(wStream* s, BYTE* num_str, int length, int min)
 	int i;
 	int mlength;
 	BYTE num, c1, c2;
-
 	mlength = (length - min >= 0) ? length - min : min;
-
 	per_write_length(s, mlength);
 
 	for (i = 0; i < length; i += 2)
 	{
 		c1 = num_str[i];
 		c2 = ((i + 1) < length) ? num_str[i + 1] : 0x30;
-
 		c1 = (c1 - 0x30) % 10;
 		c2 = (c2 - 0x30) % 10;
 		num = (c1 << 4) | c2;
-
 		Stream_Write_UINT8(s, num); /* string */
 	}
 }
+

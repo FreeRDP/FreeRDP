@@ -35,3 +35,4 @@ void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context);
 void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context);
 
 #endif /* FREERDP_SERVER_WIN_UPDATE_H */
+

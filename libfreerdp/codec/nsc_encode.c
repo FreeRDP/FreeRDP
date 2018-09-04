@@ -51,6 +51,7 @@ static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
 		for (i = 0; i < 5; i++)
 		{
 			BYTE* tmp = (BYTE*) realloc(context->priv->PlaneBuffers[i], length);
+
 			if (!tmp)
 				goto fail;
 
@@ -601,3 +602,4 @@ BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data,
 	message->ChromaSubsamplingLevel = context->ChromaSubsamplingLevel;
 	return nsc_write_message(context, s, message);
 }
+

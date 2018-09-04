@@ -33,8 +33,8 @@ struct _TRANSFER_REQUEST
 	void*	next;
 
 	UINT32	RequestId;
-	BYTE	endpoint;  
-	struct libusb_transfer *transfer;
+	BYTE	endpoint;
+	struct libusb_transfer* transfer;
 	int		submit;
 };
 
@@ -49,13 +49,13 @@ struct _REQUEST_QUEUE
 	pthread_mutex_t request_loading;
 
 	/* request queue manager service */
-	void (*rewind) (REQUEST_QUEUE *queue);
-	int (*has_next) (REQUEST_QUEUE* queue);
-	int (*unregister_request) (REQUEST_QUEUE *queue, UINT32 RequestId);
-	TRANSFER_REQUEST *(*get_next) (REQUEST_QUEUE* queue);
-	TRANSFER_REQUEST *(*get_request_by_ep) (REQUEST_QUEUE *queue, BYTE ep);
-	TRANSFER_REQUEST *(*register_request) (REQUEST_QUEUE* queue, 
-		UINT32 RequestId, struct libusb_transfer * transfer, BYTE endpoint);
+	void (*rewind)(REQUEST_QUEUE* queue);
+	int (*has_next)(REQUEST_QUEUE* queue);
+	int (*unregister_request)(REQUEST_QUEUE* queue, UINT32 RequestId);
+	TRANSFER_REQUEST* (*get_next)(REQUEST_QUEUE* queue);
+	TRANSFER_REQUEST* (*get_request_by_ep)(REQUEST_QUEUE* queue, BYTE ep);
+	TRANSFER_REQUEST* (*register_request)(REQUEST_QUEUE* queue,
+	                                      UINT32 RequestId, struct libusb_transfer* transfer, BYTE endpoint);
 };
 
 
@@ -63,3 +63,4 @@ REQUEST_QUEUE* request_queue_new(void);
 
 
 #endif /* FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_REQUEST_QUEUE_H */
+

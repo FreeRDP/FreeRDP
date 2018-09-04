@@ -1513,3 +1513,4 @@ WINPR_API const CHAR* WTSSessionStateToString(WTS_CONNECTSTATE_CLASS state);
 
 #endif /* WINPR_WTSAPI_H */
 
+

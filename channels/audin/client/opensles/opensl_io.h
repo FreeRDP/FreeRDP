@@ -94,3 +94,4 @@ FREERDP_LOCAL int android_RecIn(OPENSL_STREAM* p, short* buffer, int size);
 #endif
 
 #endif /* FREERDP_CHANNEL_AUDIN_CLIENT_OPENSL_IO_H */
+

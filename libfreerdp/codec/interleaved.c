@@ -452,3 +452,4 @@ void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved)
 	Stream_Free(interleaved->bts, TRUE);
 	free(interleaved);
 }
+

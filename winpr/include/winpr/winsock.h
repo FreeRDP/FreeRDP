@@ -151,11 +151,11 @@ typedef struct WSAData
 	unsigned short iMaxSockets;
 	unsigned short iMaxUdpDg;
 	char* lpVendorInfo;
-	char szDescription[WSADESCRIPTION_LEN+1];
-	char szSystemStatus[WSASYS_STATUS_LEN+1];
+	char szDescription[WSADESCRIPTION_LEN + 1];
+	char szSystemStatus[WSASYS_STATUS_LEN + 1];
 #else
-	char szDescription[WSADESCRIPTION_LEN+1];
-	char szSystemStatus[WSASYS_STATUS_LEN+1];
+	char szDescription[WSADESCRIPTION_LEN + 1];
+	char szSystemStatus[WSASYS_STATUS_LEN + 1];
 	unsigned short iMaxSockets;
 	unsigned short iMaxUdpDg;
 	char* lpVendorInfo;
@@ -232,7 +232,7 @@ typedef struct _WSAPROTOCOL_INFOA
 	int iSecurityScheme;
 	DWORD dwMessageSize;
 	DWORD dwProviderReserved;
-	CHAR szProtocol[WSAPROTOCOL_LEN+1];
+	CHAR szProtocol[WSAPROTOCOL_LEN + 1];
 }
 WSAPROTOCOL_INFOA, *LPWSAPROTOCOL_INFOA;
 
@@ -257,12 +257,12 @@ typedef struct _WSAPROTOCOL_INFOW
 	int iSecurityScheme;
 	DWORD dwMessageSize;
 	DWORD dwProviderReserved;
-	WCHAR szProtocol[WSAPROTOCOL_LEN+1];
+	WCHAR szProtocol[WSAPROTOCOL_LEN + 1];
 }
 WSAPROTOCOL_INFOW, *LPWSAPROTOCOL_INFOW;
 
-typedef void (CALLBACK * LPWSAOVERLAPPED_COMPLETION_ROUTINE)(DWORD dwError,
-		DWORD cbTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags);
+typedef void (CALLBACK* LPWSAOVERLAPPED_COMPLETION_ROUTINE)(DWORD dwError,
+        DWORD cbTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags);
 
 typedef UINT32 GROUP;
 #define SG_UNCONSTRAINED_GROUP		0x01
@@ -301,15 +301,17 @@ WINPR_API BOOL WSACloseEvent(HANDLE hEvent);
 WINPR_API int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents);
 
 WINPR_API DWORD WSAWaitForMultipleEvents(DWORD cEvents,
-		const HANDLE* lphEvents, BOOL fWaitAll, DWORD dwTimeout, BOOL fAlertable);
+        const HANDLE* lphEvents, BOOL fWaitAll, DWORD dwTimeout, BOOL fAlertable);
 
-WINPR_API SOCKET WSASocketA(int af, int type, int protocol, LPWSAPROTOCOL_INFOA lpProtocolInfo, GROUP g, DWORD dwFlags);
-WINPR_API SOCKET WSASocketW(int af, int type, int protocol, LPWSAPROTOCOL_INFOW lpProtocolInfo, GROUP g, DWORD dwFlags);
+WINPR_API SOCKET WSASocketA(int af, int type, int protocol, LPWSAPROTOCOL_INFOA lpProtocolInfo,
+                            GROUP g, DWORD dwFlags);
+WINPR_API SOCKET WSASocketW(int af, int type, int protocol, LPWSAPROTOCOL_INFOW lpProtocolInfo,
+                            GROUP g, DWORD dwFlags);
 
 WINPR_API int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
-		DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-		LPDWORD lpcbBytesReturned, LPWSAOVERLAPPED lpOverlapped,
-		LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+                       DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+                       LPDWORD lpcbBytesReturned, LPWSAOVERLAPPED lpOverlapped,
+                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
 
 WINPR_API SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen);
 WINPR_API int _bind(SOCKET s, const struct sockaddr* addr, int namelen);
@@ -327,10 +329,13 @@ WINPR_API int _listen(SOCKET s, int backlog);
 WINPR_API u_long _ntohl(u_long netlong);
 WINPR_API u_short _ntohs(u_short netshort);
 WINPR_API int _recv(SOCKET s, char* buf, int len, int flags);
-WINPR_API int _recvfrom(SOCKET s, char* buf, int len, int flags, struct sockaddr* from, int* fromlen);
-WINPR_API int _select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, const struct timeval* timeout);
+WINPR_API int _recvfrom(SOCKET s, char* buf, int len, int flags, struct sockaddr* from,
+                        int* fromlen);
+WINPR_API int _select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
+                      const struct timeval* timeout);
 WINPR_API int _send(SOCKET s, const char* buf, int len, int flags);
-WINPR_API int _sendto(SOCKET s, const char* buf, int len, int flags, const struct sockaddr* to, int tolen);
+WINPR_API int _sendto(SOCKET s, const char* buf, int len, int flags, const struct sockaddr* to,
+                      int tolen);
 WINPR_API int _setsockopt(SOCKET s, int level, int optname, const char* optval, int optlen);
 WINPR_API int _shutdown(SOCKET s, int how);
 WINPR_API SOCKET _socket(int af, int type, int protocol);
@@ -355,4 +360,5 @@ WINPR_API struct protoent* _getprotobyname(const char* name);
 #endif /* _WIN32 */
 
 #endif /* WINPR_WINSOCK_H */
+
 

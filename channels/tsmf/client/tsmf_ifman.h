@@ -68,3 +68,4 @@ UINT tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN* ifman);
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_IFMAN_H */
 
+

@@ -466,7 +466,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		}
 
 		if (!(parallel->thread = CreateThread(NULL, 0,
-											  parallel_thread_func, (void*) parallel, 0, NULL)))
+		                                      parallel_thread_func, (void*) parallel, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
 			error = ERROR_INTERNAL_ERROR;
@@ -481,3 +481,4 @@ error_out:
 	free(parallel);
 	return error;
 }
+

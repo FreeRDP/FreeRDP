@@ -1,9 +1,9 @@
 /*
- RDP Touch Pointer View 
- 
+ RDP Touch Pointer View
+
  Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
- 
- This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+
+ This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
@@ -32,32 +32,28 @@
 
 @interface TouchPointerView : UIView
 {
-    // transformation and image currently drawn
-    CGAffineTransform _pointer_transformation;
-    UIImage* _cur_pointer_img;
-
-    // action images
-    UIImage* _default_pointer_img;
-    UIImage* _active_pointer_img;
-    UIImage* _lclick_pointer_img;
-    UIImage* _rclick_pointer_img;
-    UIImage* _scroll_pointer_img;
-    UIImage* _extkeyboard_pointer_img;
-    UIImage* _keyboard_pointer_img;
-    UIImage* _reset_pointer_img;
-
-    // predefined areas for all actions
-    CGRect _pointer_areas[9]; 
-    
-    // scroll/drag n drop handling
-    CGPoint _prev_touch_location;
-    BOOL _pointer_moving;
-    BOOL _pointer_scrolling;
-    
-    NSObject<TouchPointerDelegate>* _delegate;
+	// transformation and image currently drawn
+	CGAffineTransform _pointer_transformation;
+	UIImage* _cur_pointer_img;
+	// action images
+	UIImage* _default_pointer_img;
+	UIImage* _active_pointer_img;
+	UIImage* _lclick_pointer_img;
+	UIImage* _rclick_pointer_img;
+	UIImage* _scroll_pointer_img;
+	UIImage* _extkeyboard_pointer_img;
+	UIImage* _keyboard_pointer_img;
+	UIImage* _reset_pointer_img;
+	// predefined areas for all actions
+	CGRect _pointer_areas[9];
+	// scroll/drag n drop handling
+	CGPoint _prev_touch_location;
+	BOOL _pointer_moving;
+	BOOL _pointer_scrolling;
+	NSObject<TouchPointerDelegate>* _delegate;
 }
 
-@property (assign) IBOutlet NSObject<TouchPointerDelegate>* delegate;
+@property(assign) IBOutlet NSObject<TouchPointerDelegate>* delegate;
 
 // positions the pointer on screen if it got offscreen after an orentation change or after displaying the keyboard
 -(void)ensurePointerIsVisible;
@@ -71,3 +67,4 @@
 - (int)getPointerHeight;
 
 @end
+

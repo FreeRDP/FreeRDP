@@ -26,7 +26,7 @@
 #include <winpr/collections.h>
 
 /*
- * This file implemented a model that an event is consumed 
+ * This file implemented a model that an event is consumed
  * by multiple clients. All clients should wait others before continue
  * Server should wait for all clients before continue
  */
@@ -63,3 +63,4 @@ HANDLE shadow_multiclient_getevent(void* subscriber);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_MCEVENT_H */
+

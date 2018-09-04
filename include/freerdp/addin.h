@@ -73,3 +73,4 @@ FREERDP_API PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(
 
 #endif /* FREERDP_COMMON_ADDIN_H */
 
+

@@ -404,3 +404,4 @@ WINPR_API void StreamPool_Free(wStreamPool* pool);
 #endif
 
 #endif /* WINPR_UTILS_STREAM_H */
+

@@ -43,3 +43,4 @@ FREERDP_LOCAL void heartbeat_free(rdpHeartbeat* heartbeat);
 #define HEARTBEAT_TAG FREERDP_TAG("core.heartbeat")
 
 #endif /* FREERDP_LIB_CORE_HEARTBEET_H */
+

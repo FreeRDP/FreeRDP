@@ -52,15 +52,17 @@ static HMODULE g_Kernel32 = NULL;
 static BOOL g_NativeBarrier = FALSE;
 static INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT;
 
-typedef BOOL (WINAPI * fnInitializeSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
-typedef BOOL (WINAPI * fnEnterSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
-typedef BOOL (WINAPI * fnDeleteSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier);
+typedef BOOL (WINAPI* fnInitializeSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier,
+        LONG lTotalThreads, LONG lSpinCount);
+typedef BOOL (WINAPI* fnEnterSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier,
+        DWORD dwFlags);
+typedef BOOL (WINAPI* fnDeleteSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier);
 
 static fnInitializeSynchronizationBarrier pfnInitializeSynchronizationBarrier = NULL;
 static fnEnterSynchronizationBarrier pfnEnterSynchronizationBarrier = NULL;
 static fnDeleteSynchronizationBarrier pfnDeleteSynchronizationBarrier = NULL;
 
-static BOOL CALLBACK InitOnce_Barrier(PINIT_ONCE once, PVOID param, PVOID *context)
+static BOOL CALLBACK InitOnce_Barrier(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	g_Kernel32 = LoadLibraryA("kernel32.dll");
 
@@ -68,16 +70,14 @@ static BOOL CALLBACK InitOnce_Barrier(PINIT_ONCE once, PVOID param, PVOID *conte
 		return TRUE;
 
 	pfnInitializeSynchronizationBarrier = (fnInitializeSynchronizationBarrier)
-			GetProcAddress(g_Kernel32, "InitializeSynchronizationBarrier");
-
+	                                      GetProcAddress(g_Kernel32, "InitializeSynchronizationBarrier");
 	pfnEnterSynchronizationBarrier = (fnEnterSynchronizationBarrier)
-			GetProcAddress(g_Kernel32, "EnterSynchronizationBarrier");
-
+	                                 GetProcAddress(g_Kernel32, "EnterSynchronizationBarrier");
 	pfnDeleteSynchronizationBarrier = (fnDeleteSynchronizationBarrier)
-			GetProcAddress(g_Kernel32, "DeleteSynchronizationBarrier");
+	                                  GetProcAddress(g_Kernel32, "DeleteSynchronizationBarrier");
 
 	if (pfnInitializeSynchronizationBarrier && pfnEnterSynchronizationBarrier
-			&& pfnDeleteSynchronizationBarrier)
+	    && pfnDeleteSynchronizationBarrier)
 	{
 		g_NativeBarrier = TRUE;
 	}
@@ -87,17 +87,18 @@ static BOOL CALLBACK InitOnce_Barrier(PINIT_ONCE once, PVOID param, PVOID *conte
 
 #endif
 
-BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount)
+BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier,
+        LONG lTotalThreads, LONG lSpinCount)
 {
 	SYSTEM_INFO sysinfo;
 	HANDLE hEvent0;
 	HANDLE hEvent1;
-
 #ifdef _WIN32
 	InitOnceExecuteOnce(&g_InitOnce, InitOnce_Barrier, NULL, NULL);
 
 	if (g_NativeBarrier)
 		return pfnInitializeSynchronizationBarrier(lpBarrier, lTotalThreads, lSpinCount);
+
 #endif
 
 	if (!lpBarrier || lTotalThreads < 1 || lSpinCount < -1)
@@ -121,14 +122,12 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 	}
 
 	GetNativeSystemInfo(&sysinfo);
-
 	lpBarrier->Reserved1 = lTotalThreads;
 	lpBarrier->Reserved2 = lTotalThreads;
 	lpBarrier->Reserved3[0] = (ULONG_PTR)hEvent0;
 	lpBarrier->Reserved3[1] = (ULONG_PTR)hEvent1;
 	lpBarrier->Reserved4 = sysinfo.dwNumberOfProcessors;
 	lpBarrier->Reserved5 = lSpinCount;
-
 	return TRUE;
 }
 
@@ -137,10 +136,11 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 	LONG remainingThreads;
 	HANDLE hCurrentEvent;
 	HANDLE hDormantEvent;
-
 #ifdef _WIN32
+
 	if (g_NativeBarrier)
 		return pfnEnterSynchronizationBarrier(lpBarrier, dwFlags);
+
 #endif
 
 	if (!lpBarrier)
@@ -165,12 +165,9 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 	 * flag; otherwise, the flag is ignored. This flag should be used only
 	 * if the barrier will never be deleted.
 	 */
-
 	hCurrentEvent = (HANDLE)lpBarrier->Reserved3[0];
 	hDormantEvent = (HANDLE)lpBarrier->Reserved3[1];
-
 	remainingThreads = InterlockedDecrement((LONG*)&lpBarrier->Reserved1);
-
 	assert(remainingThreads >= 0);
 
 	if (remainingThreads > 0)
@@ -198,6 +195,7 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 			 * can change between the iterations in the loop below
 			 */
 			volatile ULONG_PTR* cmp = &lpBarrier->Reserved3[0];
+
 			/* we spin until the last thread _completed_ the event switch */
 			while ((block = (*cmp == (ULONG_PTR)hCurrentEvent)))
 				if (!spinOnly && ++sp > dwSpinCount)
@@ -212,25 +210,23 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 
 	/* reset the dormant event first */
 	ResetEvent(hDormantEvent);
-
 	/* reset the remaining counter */
 	lpBarrier->Reserved1 = lpBarrier->Reserved2;
-
 	/* switch events - this will also unblock the spinning threads */
 	lpBarrier->Reserved3[1] = (ULONG_PTR)hCurrentEvent;
 	lpBarrier->Reserved3[0] = (ULONG_PTR)hDormantEvent;
-
 	/* signal the blocked threads */
 	SetEvent(hCurrentEvent);
-
 	return TRUE;
 }
 
 BOOL WINAPI winpr_DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
 {
 #ifdef _WIN32
+
 	if (g_NativeBarrier)
 		return pfnDeleteSynchronizationBarrier(lpBarrier);
+
 #endif
 
 	/**
@@ -252,8 +248,8 @@ BOOL WINAPI winpr_DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarri
 		CloseHandle((HANDLE)lpBarrier->Reserved3[1]);
 
 	ZeroMemory(lpBarrier, sizeof(SYNCHRONIZATION_BARRIER));
-
 	return TRUE;
 }
 
 #endif
+

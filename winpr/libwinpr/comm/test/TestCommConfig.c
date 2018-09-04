@@ -34,14 +34,14 @@ int TestCommConfig(int argc, char* argv[])
 	LPCSTR lpFileName = "\\\\.\\COM1";
 	COMMPROP commProp;
 	struct stat statbuf;
-
 	hComm = CreateFileA(lpFileName,
-			GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+	                    GENERIC_READ | GENERIC_WRITE,
+	                    0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (hComm && (hComm != INVALID_HANDLE_VALUE))
 	{
-		fprintf(stderr, "CreateFileA failure: could create a handle on a not yet defined device: %s\n", lpFileName);
+		fprintf(stderr, "CreateFileA failure: could create a handle on a not yet defined device: %s\n",
+		        lpFileName);
 		return EXIT_FAILURE;
 	}
 
@@ -52,29 +52,31 @@ int TestCommConfig(int argc, char* argv[])
 	}
 
 	success = DefineCommDevice(lpFileName, "/dev/ttyS0");
-	if(!success)
+
+	if (!success)
 	{
 		fprintf(stderr, "DefineCommDevice failure: %s\n", lpFileName);
 		return EXIT_FAILURE;
 	}
 
 	hComm = CreateFileA(lpFileName,
-			GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_WRITE, /* invalid parmaeter */
-			NULL,
-			CREATE_NEW, /* invalid parameter */
-			0,
-			(HANDLE)1234); /* invalid parmaeter */
+	                    GENERIC_READ | GENERIC_WRITE,
+	                    FILE_SHARE_WRITE, /* invalid parmaeter */
+	                    NULL,
+	                    CREATE_NEW, /* invalid parameter */
+	                    0,
+	                    (HANDLE)1234); /* invalid parmaeter */
+
 	if (hComm != INVALID_HANDLE_VALUE)
 	{
-		fprintf(stderr, "CreateFileA failure: could create a handle with some invalid parameters %s\n", lpFileName);
+		fprintf(stderr, "CreateFileA failure: could create a handle with some invalid parameters %s\n",
+		        lpFileName);
 		return EXIT_FAILURE;
 	}
 
-
 	hComm = CreateFileA(lpFileName,
-			GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+	                    GENERIC_READ | GENERIC_WRITE,
+	                    0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (!hComm || (hComm == INVALID_HANDLE_VALUE))
 	{
@@ -84,10 +86,10 @@ int TestCommConfig(int argc, char* argv[])
 
 	/* TODO: a second call to CreateFileA should failed and
 	 * GetLastError should return ERROR_SHARING_VIOLATION */
-
 	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
 	success = GetCommState(hComm, &dcb);
+
 	if (!success)
 	{
 		fprintf(stderr, "GetCommState failure: GetLastError() = Ox%x\n", GetLastError());
@@ -95,9 +97,9 @@ int TestCommConfig(int argc, char* argv[])
 	}
 
 	fprintf(stderr, "BaudRate: %"PRIu32" ByteSize: %"PRIu8" Parity: %"PRIu8" StopBits: %"PRIu8"\n",
-		dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
-
+	        dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
 	ZeroMemory(&commProp, sizeof(COMMPROP));
+
 	if (!GetCommProperties(hComm, &commProp))
 	{
 		fprintf(stderr, "GetCommProperties failure: GetLastError(): 0x%08x\n", GetLastError());
@@ -120,7 +122,6 @@ int TestCommConfig(int argc, char* argv[])
 	dcb.ByteSize = 8;
 	dcb.Parity = NOPARITY;
 	dcb.StopBits = ONESTOPBIT;
-
 	success = SetCommState(hComm, &dcb);
 
 	if (!success)
@@ -137,13 +138,15 @@ int TestCommConfig(int argc, char* argv[])
 		return 0;
 	}
 
-	if ((dcb.BaudRate != CBR_57600) || (dcb.ByteSize != 8) || (dcb.Parity != NOPARITY) || (dcb.StopBits != ONESTOPBIT))
+	if ((dcb.BaudRate != CBR_57600) || (dcb.ByteSize != 8) || (dcb.Parity != NOPARITY) ||
+	    (dcb.StopBits != ONESTOPBIT))
 	{
-		fprintf(stderr, "Got an unexpeted value among: BaudRate: %"PRIu32" ByteSize: %"PRIu8" Parity: %"PRIu8" StopBits: %"PRIu8"\n",
-			dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
+		fprintf(stderr,
+		        "Got an unexpeted value among: BaudRate: %"PRIu32" ByteSize: %"PRIu8" Parity: %"PRIu8" StopBits: %"PRIu8"\n",
+		        dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
 	}
 
 	CloseHandle(hComm);
-
 	return 0;
 }
+

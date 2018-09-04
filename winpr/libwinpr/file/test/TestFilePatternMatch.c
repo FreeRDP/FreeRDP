@@ -7,7 +7,6 @@
 int TestFilePatternMatch(int argc, char* argv[])
 {
 	/* '*' expression */
-
 	if (!FilePatternMatchA("document.txt", "*"))
 	{
 		printf("FilePatternMatchA error: FileName: %s Pattern: %s\n", "document.txt", "*");
@@ -174,7 +173,7 @@ int TestFilePatternMatch(int argc, char* argv[])
 		return -1;
 	}
 
-
 	return 0;
 }
+
 

@@ -62,3 +62,4 @@ struct _tsmf_client_context
 };
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_TSMF_H */
+

@@ -477,7 +477,8 @@ void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx)
 #endif
 }
 
-BOOL winpr_Digest_Allow_FIPS(WINPR_MD_TYPE md, const BYTE* input, size_t ilen, BYTE* output, size_t olen)
+BOOL winpr_Digest_Allow_FIPS(WINPR_MD_TYPE md, const BYTE* input, size_t ilen, BYTE* output,
+                             size_t olen)
 {
 	BOOL result = FALSE;
 	WINPR_DIGEST_CTX* ctx = winpr_Digest_New();
@@ -522,3 +523,4 @@ out:
 	winpr_Digest_Free(ctx);
 	return result;
 }
+

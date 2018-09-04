@@ -484,3 +484,4 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, UINT32 x, UINT32 y, UINT32 w,
 	gdi_RectToRgn(&inv, invalid);
 	return TRUE;
 }
+

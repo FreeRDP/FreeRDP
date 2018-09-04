@@ -33,3 +33,4 @@ BOOL shadow_client_accepted(freerdp_listener* instance, freerdp_peer* client);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_CLIENT_H */
+

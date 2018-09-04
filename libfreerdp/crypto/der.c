@@ -105,3 +105,4 @@ int der_write_sequence_tag(wStream* s, int length)
 	return der_write_length(s, length) + 1;
 }
 
+

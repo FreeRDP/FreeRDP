@@ -440,3 +440,4 @@ int rdtk_nine_patch_engine_uninit(rdtkEngine* engine)
 
 	return 1;
 }
+

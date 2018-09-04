@@ -37,7 +37,6 @@ int rdp_recv_multitransport_packet(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, requestedProtocol); /* requestedProtocol (2 bytes) */
 	Stream_Read_UINT16(s, reserved); /* reserved (2 bytes) */
 	Stream_Read(s, securityCookie, 16); /* securityCookie (16 bytes) */
-
 	return 0;
 }
 
@@ -50,3 +49,4 @@ void multitransport_free(rdpMultitransport* multitransport)
 {
 	free(multitransport);
 }
+

@@ -71,3 +71,4 @@ void tsmf_stream_start_threads(TSMF_STREAM* stream);
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_MEDIA_H */
 
+

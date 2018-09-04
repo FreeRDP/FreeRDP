@@ -335,3 +335,4 @@ void ntlm_free(rdpNtlm* ntlm)
 	ntlm_client_uninit(ntlm);
 	free(ntlm);
 }
+

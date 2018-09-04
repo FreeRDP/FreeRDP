@@ -37,3 +37,4 @@ BOOL test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual,
                                const gdiPalette* palette);
 
 #endif /* __GDI_CORE_H */
+

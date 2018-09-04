@@ -14,7 +14,6 @@ int TestFileCreateFile(int argc, char* argv[])
 	const char buffer[] = "Some random text\r\njust want it done.";
 	char cmp[sizeof(buffer)];
 	LPSTR name = GetKnownSubPath(KNOWN_PATH_TEMP, "CreateFile.testfile");
-
 	int rc = 0;
 
 	if (!name)
@@ -23,11 +22,13 @@ int TestFileCreateFile(int argc, char* argv[])
 	/* On windows we would need '\\' or '/' as seperator.
 	 * Single '\' do not work. */
 	hr = PathCchConvertStyleA(name, strlen(name), PATH_STYLE_UNIX);
+
 	if (FAILED(hr))
 		rc = -1;
 
 	handle = CreateFileA(name, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-			CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	                     CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+
 	if (!handle)
 	{
 		free(name);
@@ -77,6 +78,6 @@ int TestFileCreateFile(int argc, char* argv[])
 		rc = -1;
 
 	free(name);
-
 	return rc;
 }
+

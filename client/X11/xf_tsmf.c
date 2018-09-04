@@ -129,7 +129,6 @@ int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT
 			y = event->y + event->visibleRects[i].top;
 			width = event->visibleRects[i].right - event->visibleRects[i].left;
 			height = event->visibleRects[i].bottom - event->visibleRects[i].top;
-
 			xrects[i].x = x;
 			xrects[i].y = y;
 			xrects[i].width = width;
@@ -192,7 +191,7 @@ int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT
 	}
 
 	image = XvShmCreateImage(xfc->display, xv->xv_port,
-		xvpixfmt, 0, event->frameWidth, event->frameHeight, &shminfo);
+	                         xvpixfmt, 0, event->frameWidth, event->frameHeight, &shminfo);
 
 	if (xv->xv_image_size != image->data_size)
 	{
@@ -225,81 +224,81 @@ int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT
 	{
 		case RDP_PIXFMT_I420:
 		case RDP_PIXFMT_YV12:
+
 			/* Y */
 			if (image->pitches[0] == event->frameWidth)
 			{
 				CopyMemory(image->data + image->offsets[0],
-					event->frameData,
-					event->frameWidth * event->frameHeight);
+				           event->frameData,
+				           event->frameWidth * event->frameHeight);
 			}
 			else
 			{
 				for (i = 0; i < event->frameHeight; i++)
 				{
 					CopyMemory(image->data + image->offsets[0] + i * image->pitches[0],
-						event->frameData + i * event->frameWidth,
-						event->frameWidth);
+					           event->frameData + i * event->frameWidth,
+					           event->frameWidth);
 				}
 			}
+
 			/* UV */
 			/* Conversion between I420 and YV12 is to simply swap U and V */
 			if (!converti420yv12)
 			{
 				data1 = event->frameData + event->frameWidth * event->frameHeight;
 				data2 = event->frameData + event->frameWidth * event->frameHeight +
-					event->frameWidth * event->frameHeight / 4;
+				        event->frameWidth * event->frameHeight / 4;
 			}
 			else
 			{
 				data2 = event->frameData + event->frameWidth * event->frameHeight;
 				data1 = event->frameData + event->frameWidth * event->frameHeight +
-					event->frameWidth * event->frameHeight / 4;
+				        event->frameWidth * event->frameHeight / 4;
 				image->id = pixfmt == RDP_PIXFMT_I420 ? RDP_PIXFMT_YV12 : RDP_PIXFMT_I420;
 			}
 
 			if (image->pitches[1] * 2 == event->frameWidth)
 			{
 				CopyMemory(image->data + image->offsets[1],
-					data1,
-					event->frameWidth * event->frameHeight / 4);
+				           data1,
+				           event->frameWidth * event->frameHeight / 4);
 				CopyMemory(image->data + image->offsets[2],
-					data2,
-					event->frameWidth * event->frameHeight / 4);
+				           data2,
+				           event->frameWidth * event->frameHeight / 4);
 			}
 			else
 			{
 				for (i = 0; i < event->frameHeight / 2; i++)
 				{
 					CopyMemory(image->data + image->offsets[1] + i * image->pitches[1],
-						data1 + i * event->frameWidth / 2,
-						event->frameWidth / 2);
+					           data1 + i * event->frameWidth / 2,
+					           event->frameWidth / 2);
 					CopyMemory(image->data + image->offsets[2] + i * image->pitches[2],
-						data2 + i * event->frameWidth / 2,
-						event->frameWidth / 2);
+					           data2 + i * event->frameWidth / 2,
+					           event->frameWidth / 2);
 				}
 			}
+
 			break;
 
 		default:
 			CopyMemory(image->data, event->frameData, image->data_size <= event->frameSize ?
-				image->data_size : event->frameSize);
+			           image->data_size : event->frameSize);
 			break;
 	}
 
 	XvShmPutImage(xfc->display, xv->xv_port, xfc->window->handle, xfc->gc,
-			image, 0, 0, image->width, image->height,
-			event->x, event->y, event->width, event->height, FALSE);
+	              image, 0, 0, image->width, image->height,
+	              event->x, event->y, event->width, event->height, FALSE);
 
 	if (xv->xv_colorkey_atom == None)
 		XSetClipMask(xfc->display, xfc->gc, None);
 
 	XSync(xfc->display, FALSE);
-
 	XShmDetach(xfc->display, &shminfo);
 	XFree(image);
-
 	free(xrects);
-
 	return 1;
 }
 
@@ -327,7 +326,6 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 		return -1;
 
 	xfc->xv_context = xv;
-
 	xv->xv_colorkey_atom = None;
 	xv->xv_image_size = 0;
 	xv->xv_port = xv_port;
@@ -347,9 +345,8 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	}
 
 	WLog_DBG(TAG, "version %u release %u", version, release);
-
 	ret = XvQueryAdaptors(xfc->display, DefaultRootWindow(xfc->display),
-		&num_adaptors, &ai);
+	                      &num_adaptors, &ai);
 
 	if (ret != Success)
 	{
@@ -360,7 +357,7 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	for (i = 0; i < num_adaptors; i++)
 	{
 		WLog_DBG(TAG, "adapter port %lu-%lu (%s)", ai[i].base_id,
-			ai[i].base_id + ai[i].num_ports - 1, ai[i].name);
+		         ai[i].base_id + ai[i].num_ports - 1, ai[i].name);
 
 		if (xv->xv_port == 0 && i == num_adaptors - 1)
 			xv->xv_port = ai[i].base_id;
@@ -374,8 +371,8 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 		WLog_DBG(TAG, "no adapter selected, video frames will not be processed.");
 		return -1;
 	}
-	WLog_DBG(TAG, "selected %ld", xv->xv_port);
 
+	WLog_DBG(TAG, "selected %ld", xv->xv_port);
 	attr = XvQueryPortAttributes(xfc->display, xv->xv_port, &ret);
 
 	for (i = 0; i < (unsigned int)ret; i++)
@@ -387,10 +384,9 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 			break;
 		}
 	}
+
 	XFree(attr);
-
 	WLog_DBG(TAG, "xf_tsmf_init: pixel format ");
-
 	fo = XvListImageFormats(xfc->display, xv->xv_port, &ret);
 
 	if (ret > 0)
@@ -401,17 +397,18 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 		{
 			xv->xv_pixfmts[i] = fo[i].id;
 			WLog_DBG(TAG, "%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0], ((char*)(xv->xv_pixfmts + i))[1],
-					 ((char*)(xv->xv_pixfmts + i))[2], ((char*)(xv->xv_pixfmts + i))[3]);
+			         ((char*)(xv->xv_pixfmts + i))[2], ((char*)(xv->xv_pixfmts + i))[3]);
 		}
+
 		xv->xv_pixfmts[i] = 0;
 	}
+
 	XFree(fo);
 
 	if (tsmf)
 	{
 		xfc->tsmf = tsmf;
 		tsmf->custom = (void*) xfc;
-
 		tsmf->FrameEvent = xf_tsmf_xv_video_frame_event;
 	}
 
@@ -429,11 +426,13 @@ int xf_tsmf_xv_uninit(xfContext* xfc, TsmfClientContext* tsmf)
 			shmdt(xv->xv_shmaddr);
 			shmctl(xv->xv_shmid, IPC_RMID, NULL);
 		}
+
 		if (xv->xv_pixfmts)
 		{
 			free(xv->xv_pixfmts);
 			xv->xv_pixfmts = NULL;
 		}
+
 		free(xv);
 		xfc->xv_context = NULL;
 	}
@@ -454,7 +453,6 @@ int xf_tsmf_init(xfContext* xfc, TsmfClientContext* tsmf)
 #ifdef WITH_XV
 	return xf_tsmf_xv_init(xfc, tsmf);
 #endif
-
 	return 1;
 }
 
@@ -463,7 +461,7 @@ int xf_tsmf_uninit(xfContext* xfc, TsmfClientContext* tsmf)
 #ifdef WITH_XV
 	return xf_tsmf_xv_uninit(xfc, tsmf);
 #endif
-
 	return 1;
 }
+
 

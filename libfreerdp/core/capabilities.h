@@ -182,3 +182,4 @@ FREERDP_LOCAL BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings);
 FREERDP_LOCAL BOOL rdp_send_confirm_active(rdpRdp* rdp);
 
 #endif /* FREERDP_LIB_CORE_CAPABILITIES_H */
+

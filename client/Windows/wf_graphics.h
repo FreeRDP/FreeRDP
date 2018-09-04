@@ -32,3 +32,4 @@ BOOL wf_register_pointer(rdpGraphics* graphics);
 BOOL wf_register_graphics(rdpGraphics* graphics);
 
 #endif /* FREERDP_CLIENT_WIN_GRAPHICS_H */
+

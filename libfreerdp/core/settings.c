@@ -1130,3 +1130,4 @@ void freerdp_settings_free(rdpSettings* settings)
 #pragma warning(pop)
 #endif
 
+

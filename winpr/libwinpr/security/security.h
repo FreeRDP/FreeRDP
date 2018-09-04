@@ -41,3 +41,4 @@ typedef struct winpr_access_token WINPR_ACCESS_TOKEN;
 #endif
 
 #endif /* WINPR_SECURITY_PRIVATE_H */
+

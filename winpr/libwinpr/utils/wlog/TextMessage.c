@@ -25,3 +25,4 @@ void wlog_TextMessage_dummy()
 {
 	/* avoid no symbol ranlib warning */
 }
+

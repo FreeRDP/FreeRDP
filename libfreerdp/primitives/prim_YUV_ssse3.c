@@ -1461,3 +1461,4 @@ void primitives_init_YUV_opt(primitives_t* prims)
 		prims->YUV420CombineToYUV444 = ssse3_YUV420CombineToYUV444;
 	}
 }
+

@@ -121,3 +121,4 @@ FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
 FREERDP_LOCAL void transport_free(rdpTransport* transport);
 
 #endif /* FREERDP_LIB_CORE_TRANSPORT_H */
+

@@ -1552,3 +1552,4 @@ void primitives_init_colors_opt(primitives_t* prims)
 #endif /* WITH_SSE2 */
 }
 
+

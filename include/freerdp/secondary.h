@@ -199,3 +199,4 @@ struct rdp_secondary_update
 typedef struct rdp_secondary_update rdpSecondaryUpdate;
 
 #endif /* FREERDP_UPDATE_SECONDARY_H */
+

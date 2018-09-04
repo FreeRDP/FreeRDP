@@ -487,10 +487,10 @@ extern "C" {
 #endif
 
 DWORD WINAPI FormatMessageA(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, DWORD dwLanguageId,
-			   LPSTR lpBuffer, DWORD nSize, va_list* Arguments);
+                            LPSTR lpBuffer, DWORD nSize, va_list* Arguments);
 
 DWORD WINAPI FormatMessageW(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, DWORD dwLanguageId,
-			   LPWSTR lpBuffer, DWORD nSize, va_list* Arguments);
+                            LPWSTR lpBuffer, DWORD nSize, va_list* Arguments);
 
 #ifdef UNICODE
 #define FormatMessage	FormatMessageW
@@ -505,4 +505,5 @@ DWORD WINAPI FormatMessageW(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, 
 #endif
 
 #endif /* WINPR_LOCALE_H */
+
 

@@ -32,7 +32,6 @@ BOOL WLog_DataMessage_Write(char* filename, void* data, int length)
 {
 	FILE* fp;
 	BOOL ret = TRUE;
-
 	fp = fopen(filename, "w+b");
 
 	if (!fp)
@@ -43,6 +42,8 @@ BOOL WLog_DataMessage_Write(char* filename, void* data, int length)
 
 	if (fwrite(data, length, 1, fp) != 1)
 		ret = FALSE;
+
 	fclose(fp);
 	return ret;
 }
+

@@ -528,3 +528,4 @@ void free_cache_bitmap_v3_order(rdpContext* context, CACHE_BITMAP_V3_ORDER* orde
 
 	free(order);
 }
+

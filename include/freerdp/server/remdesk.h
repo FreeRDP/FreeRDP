@@ -35,8 +35,8 @@
 typedef struct _remdesk_server_context RemdeskServerContext;
 typedef struct _remdesk_server_private RemdeskServerPrivate;
 
-typedef UINT (*psRemdeskStart)(RemdeskServerContext* context);
-typedef UINT (*psRemdeskStop)(RemdeskServerContext* context);
+typedef UINT(*psRemdeskStart)(RemdeskServerContext* context);
+typedef UINT(*psRemdeskStop)(RemdeskServerContext* context);
 
 struct _remdesk_server_context
 {
@@ -51,15 +51,16 @@ struct _remdesk_server_context
 };
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 FREERDP_API RemdeskServerContext* remdesk_server_context_new(HANDLE vcm);
 FREERDP_API void remdesk_server_context_free(RemdeskServerContext* context);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CHANNEL_REMDESK_SERVER_REMDESK_H */
+
 

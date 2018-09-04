@@ -1031,3 +1031,4 @@ UINT32 SSPI_GSSAPI sspi_gss_set_neg_mechs(
 	         GetSecurityStatusString(status), status);
 	return status;
 }
+

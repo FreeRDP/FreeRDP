@@ -591,3 +591,4 @@ void primitives_init_YCoCg_opt(primitives_t* prims)
 
 #endif /* WITH_SSE2 */
 }
+

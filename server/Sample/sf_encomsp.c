@@ -38,3 +38,4 @@ BOOL sf_peer_encomsp_init(testPeerContext* context)
 
 	return TRUE;
 }
+

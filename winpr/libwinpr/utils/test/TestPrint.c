@@ -24,21 +24,20 @@ int TestPrint(int argc, char* argv[])
 {
 	int a, b;
 	float c, d;
-
 	/**
 	 * 7
 	 *   7
 	 * 007
 	 * 5.10
 	 */
-
 	a = 15;
 	b = a / 2;
-	_printf("%d\n",b);
-	_printf("%3d\n",b);
-	_printf("%03d\n",b);
-	c = 15.3f; d = c / 3;
-	_printf("%3.2f\n",d);
+	_printf("%d\n", b);
+	_printf("%3d\n", b);
+	_printf("%03d\n", b);
+	c = 15.3f;
+	d = c / 3;
+	_printf("%3.2f\n", d);
 
 	/**
 	 *   0 -17.778
@@ -73,7 +72,6 @@ int TestPrint(int argc, char* argv[])
 	 * Unsigned value: 150
 	 * Just print the percentage sign %
 	 */
-
 	_printf("The color: %s\n", "blue");
 	_printf("First number: %d\n", 12345);
 	_printf("Second number: %04d\n", 25);
@@ -83,7 +81,6 @@ int TestPrint(int argc, char* argv[])
 	_printf("Octal: %o\n", 255);
 	_printf("Unsigned value: %u\n", 150);
 	_printf("Just print the percentage sign %%\n", 10);
-
 	/**
 	 * :Hello, world!:
 	 * :  Hello, world!:
@@ -94,7 +91,6 @@ int TestPrint(int argc, char* argv[])
 	 * :     Hello, wor:
 	 * :Hello, wor     :
 	 */
-
 	_printf(":%s:\n", "Hello, world!");
 	_printf(":%15s:\n", "Hello, world!");
 	_printf(":%.10s:\n", "Hello, world!");
@@ -103,6 +99,6 @@ int TestPrint(int argc, char* argv[])
 	_printf(":%.15s:\n", "Hello, world!");
 	_printf(":%15.10s:\n", "Hello, world!");
 	_printf(":%-15.10s:\n", "Hello, world!");
-
 	return 0;
 }
+

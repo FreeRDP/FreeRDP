@@ -33,3 +33,4 @@ FREERDP_LOCAL CACHE_GLYPH_V2_ORDER* copy_cache_glyph_v2_order(rdpContext* contex
 FREERDP_LOCAL void free_cache_glyph_v2_order(rdpContext* context, CACHE_GLYPH_V2_ORDER* glyph);
 
 #endif /* FREERDP_LIB_CACHE_GLYPH_H */
+

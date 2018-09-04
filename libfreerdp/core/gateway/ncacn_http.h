@@ -46,3 +46,4 @@ FREERDP_LOCAL int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc,
         RpcOutChannel* outChannel, HttpResponse* response);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H */
+

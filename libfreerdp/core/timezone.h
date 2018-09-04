@@ -44,3 +44,4 @@ FREERDP_LOCAL BOOL rdp_write_client_time_zone(wStream* s,
 #endif
 
 #endif /* FREERDP_LIB_CORE_TIMEZONE_H */
+

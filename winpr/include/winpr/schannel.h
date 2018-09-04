@@ -94,7 +94,7 @@ typedef struct _SCHANNEL_CRED
 	HCERTSTORE hRootStore;
 
 	DWORD cMappers;
-	struct _HMAPPER **aphMappers;
+	struct _HMAPPER** aphMappers;
 
 	DWORD cSupportedAlgs;
 	ALG_ID* palgSupportedAlgs;
@@ -125,11 +125,11 @@ typedef struct _SCHANNEL_CERT_HASH
 
 typedef struct _SCHANNEL_CERT_HASH_STORE
 {
-    DWORD dwLength;
-    DWORD dwFlags;
-    HCRYPTPROV hProv;
-    BYTE ShaHash[20];
-    WCHAR pwszStoreName[SCH_CRED_MAX_STORE_NAME_SIZE];
+	DWORD dwLength;
+	DWORD dwFlags;
+	HCRYPTPROV hProv;
+	BYTE ShaHash[20];
+	WCHAR pwszStoreName[SCH_CRED_MAX_STORE_NAME_SIZE];
 } SCHANNEL_CERT_HASH_STORE, *PSCHANNEL_CERT_HASH_STORE;
 
 #define SCH_MACHINE_CERT_HASH				0x00000001
@@ -285,3 +285,4 @@ typedef struct _SCHANNEL_CLIENT_SIGNATURE
 #endif
 
 #endif /* WINPR_SSPI_SCHANNEL_H */
+

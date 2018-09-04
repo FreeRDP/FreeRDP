@@ -11,3 +11,4 @@ int wf_directsound_activate(RdpsndServerContext* context);
 DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam);
 
 #endif /* FREERDP_SERVER_WIN_DSOUND_H */
+

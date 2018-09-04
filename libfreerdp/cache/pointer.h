@@ -47,3 +47,4 @@ FREERDP_LOCAL void free_pointer_system_update(rdpContext* context,
         POINTER_SYSTEM_UPDATE* pointer);
 
 #endif /* FREERDP_LIB_CACHE_POINTER_H */
+

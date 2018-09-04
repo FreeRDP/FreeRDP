@@ -66,3 +66,4 @@ void primitives_init_andor(
 	prims->andC_32u = general_andC_32u;
 	prims->orC_32u  = general_orC_32u;
 }
+

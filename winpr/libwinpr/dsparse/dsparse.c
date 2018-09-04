@@ -46,25 +46,25 @@
 #if !defined(_WIN32) || defined(_UWP)
 
 DWORD DsCrackSpnW(LPCWSTR pszSpn, DWORD* pcServiceClass, LPWSTR ServiceClass, DWORD* pcServiceName,
-		LPWSTR ServiceName, DWORD* pcInstanceName, LPWSTR InstanceName, USHORT* pInstancePort)
+                  LPWSTR ServiceName, DWORD* pcInstanceName, LPWSTR InstanceName, USHORT* pInstancePort)
 {
 	return 0;
 }
 
 DWORD DsCrackSpnA(LPCSTR pszSpn, LPDWORD pcServiceClass, LPSTR ServiceClass, LPDWORD pcServiceName,
-		LPSTR ServiceName, LPDWORD pcInstanceName, LPSTR InstanceName, USHORT* pInstancePort)
+                  LPSTR ServiceName, LPDWORD pcInstanceName, LPSTR InstanceName, USHORT* pInstancePort)
 {
 	return 0;
 }
 
 DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName,
-		USHORT InstancePort, LPCWSTR Referrer, DWORD* pcSpnLength, LPWSTR pszSpn)
+                 USHORT InstancePort, LPCWSTR Referrer, DWORD* pcSpnLength, LPWSTR pszSpn)
 {
 	return 0;
 }
 
 DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName,
-		USHORT InstancePort, LPCSTR Referrer, DWORD* pcSpnLength, LPSTR pszSpn)
+                 USHORT InstancePort, LPCSTR Referrer, DWORD* pcSpnLength, LPSTR pszSpn)
 {
 	DWORD SpnLength;
 	DWORD ServiceClassLength;
@@ -75,7 +75,6 @@ DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName,
 
 	ServiceClassLength = (DWORD) strlen(ServiceClass);
 	ServiceNameLength = (DWORD) strlen(ServiceName);
-
 	SpnLength = ServiceClassLength + 1 + ServiceNameLength + 1;
 
 	if ((*pcSpnLength == 0) || (*pcSpnLength < SpnLength))
@@ -85,8 +84,8 @@ DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName,
 	}
 
 	sprintf_s(pszSpn, *pcSpnLength, "%s/%s", ServiceClass, ServiceName);
-
 	return ERROR_SUCCESS;
 }
 
 #endif
+

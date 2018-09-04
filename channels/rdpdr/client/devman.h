@@ -33,3 +33,4 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr);
 void devman_free(DEVMAN* devman);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H */
+

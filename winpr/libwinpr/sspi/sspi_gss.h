@@ -884,3 +884,4 @@ extern "C" {
 #endif
 
 #endif /* FREERDP_SSPI_GSS_PRIVATE_H */
+

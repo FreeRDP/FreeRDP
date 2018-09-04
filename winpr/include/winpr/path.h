@@ -55,11 +55,15 @@ WINPR_API HRESULT PathCchAddBackslashW(PWSTR pszPath, size_t cchPath);
 WINPR_API HRESULT PathCchRemoveBackslashA(PSTR pszPath, size_t cchPath);
 WINPR_API HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath);
 
-WINPR_API HRESULT PathCchAddBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining);
-WINPR_API HRESULT PathCchAddBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining);
+WINPR_API HRESULT PathCchAddBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
+        size_t* pcchRemaining);
+WINPR_API HRESULT PathCchAddBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
+        size_t* pcchRemaining);
 
-WINPR_API HRESULT PathCchRemoveBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining);
-WINPR_API HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining);
+WINPR_API HRESULT PathCchRemoveBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
+        size_t* pcchRemaining);
+WINPR_API HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
+        size_t* pcchRemaining);
 
 WINPR_API HRESULT PathCchAddExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt);
 WINPR_API HRESULT PathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt);
@@ -67,26 +71,37 @@ WINPR_API HRESULT PathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR psz
 WINPR_API HRESULT PathCchAppendA(PSTR pszPath, size_t cchPath, PCSTR pszMore);
 WINPR_API HRESULT PathCchAppendW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore);
 
-WINPR_API HRESULT PathCchAppendExA(PSTR pszPath, size_t cchPath, PCSTR pszMore, unsigned long dwFlags);
-WINPR_API HRESULT PathCchAppendExW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore, unsigned long dwFlags);
+WINPR_API HRESULT PathCchAppendExA(PSTR pszPath, size_t cchPath, PCSTR pszMore,
+                                   unsigned long dwFlags);
+WINPR_API HRESULT PathCchAppendExW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore,
+                                   unsigned long dwFlags);
 
 WINPR_API HRESULT PathCchCanonicalizeA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn);
 WINPR_API HRESULT PathCchCanonicalizeW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn);
 
-WINPR_API HRESULT PathCchCanonicalizeExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, unsigned long dwFlags);
-WINPR_API HRESULT PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, unsigned long dwFlags);
+WINPR_API HRESULT PathCchCanonicalizeExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
+        unsigned long dwFlags);
+WINPR_API HRESULT PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
+        unsigned long dwFlags);
 
 WINPR_API HRESULT PathAllocCanonicalizeA(PCSTR pszPathIn, unsigned long dwFlags, PSTR* ppszPathOut);
-WINPR_API HRESULT PathAllocCanonicalizeW(PCWSTR pszPathIn, unsigned long dwFlags, PWSTR* ppszPathOut);
+WINPR_API HRESULT PathAllocCanonicalizeW(PCWSTR pszPathIn, unsigned long dwFlags,
+        PWSTR* ppszPathOut);
 
-WINPR_API HRESULT PathCchCombineA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, PCSTR pszMore);
-WINPR_API HRESULT PathCchCombineW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, PCWSTR pszMore);
+WINPR_API HRESULT PathCchCombineA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
+                                  PCSTR pszMore);
+WINPR_API HRESULT PathCchCombineW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
+                                  PCWSTR pszMore);
 
-WINPR_API HRESULT PathCchCombineExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags);
-WINPR_API HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags);
+WINPR_API HRESULT PathCchCombineExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
+                                    PCSTR pszMore, unsigned long dwFlags);
+WINPR_API HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
+                                    PCWSTR pszMore, unsigned long dwFlags);
 
-WINPR_API HRESULT PathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags, PSTR* ppszPathOut);
-WINPR_API HRESULT PathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags, PWSTR* ppszPathOut);
+WINPR_API HRESULT PathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags,
+                                    PSTR* ppszPathOut);
+WINPR_API HRESULT PathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags,
+                                    PWSTR* ppszPathOut);
 
 WINPR_API HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt);
 WINPR_API HRESULT PathCchFindExtensionW(PCWSTR pszPath, size_t cchPath, PCWSTR* ppszExt);
@@ -168,8 +183,10 @@ WINPR_API HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath);
 WINPR_API HRESULT PathCchAddSlashA(PSTR pszPath, size_t cchPath);
 WINPR_API HRESULT PathCchAddSlashW(PWSTR pszPath, size_t cchPath);
 
-WINPR_API HRESULT PathCchAddSlashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining);
-WINPR_API HRESULT PathCchAddSlashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining);
+WINPR_API HRESULT PathCchAddSlashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
+                                     size_t* pcchRemaining);
+WINPR_API HRESULT PathCchAddSlashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
+                                     size_t* pcchRemaining);
 
 WINPR_API HRESULT UnixPathCchAddExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt);
 WINPR_API HRESULT UnixPathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt);
@@ -177,8 +194,10 @@ WINPR_API HRESULT UnixPathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR
 WINPR_API HRESULT UnixPathCchAppendA(PSTR pszPath, size_t cchPath, PCSTR pszMore);
 WINPR_API HRESULT UnixPathCchAppendW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore);
 
-WINPR_API HRESULT UnixPathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags, PSTR* ppszPathOut);
-WINPR_API HRESULT UnixPathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags, PWSTR* ppszPathOut);
+WINPR_API HRESULT UnixPathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags,
+                                        PSTR* ppszPathOut);
+WINPR_API HRESULT UnixPathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags,
+                                        PWSTR* ppszPathOut);
 
 #ifdef UNICODE
 #define PathCchAddSlash			PathCchAddSlashW
@@ -199,8 +218,10 @@ WINPR_API HRESULT UnixPathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsign
 WINPR_API HRESULT PathCchAddSeparatorA(PSTR pszPath, size_t cchPath);
 WINPR_API HRESULT PathCchAddSeparatorW(PWSTR pszPath, size_t cchPath);
 
-WINPR_API HRESULT PathCchAddSeparatorExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining);
-WINPR_API HRESULT PathCchAddSeparatorExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining);
+WINPR_API HRESULT PathCchAddSeparatorExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
+        size_t* pcchRemaining);
+WINPR_API HRESULT PathCchAddSeparatorExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
+        size_t* pcchRemaining);
 
 WINPR_API HRESULT NativePathCchAddExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt);
 WINPR_API HRESULT NativePathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt);
@@ -208,8 +229,10 @@ WINPR_API HRESULT NativePathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWS
 WINPR_API HRESULT NativePathCchAppendA(PSTR pszPath, size_t cchPath, PCSTR pszMore);
 WINPR_API HRESULT NativePathCchAppendW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore);
 
-WINPR_API HRESULT NativePathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags, PSTR* ppszPathOut);
-WINPR_API HRESULT NativePathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags, PWSTR* ppszPathOut);
+WINPR_API HRESULT NativePathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags,
+        PSTR* ppszPathOut);
+WINPR_API HRESULT NativePathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags,
+        PWSTR* ppszPathOut);
 
 #ifdef UNICODE
 #define PathCchAddSeparator		PathCchAddSeparatorW
@@ -313,3 +336,4 @@ WINPR_API BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath);
 #endif
 
 #endif /* WINPR_PATH_H */
+

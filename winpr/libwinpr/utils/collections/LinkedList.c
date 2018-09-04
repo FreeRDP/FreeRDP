@@ -358,3 +358,4 @@ wObject* LinkedList_Object(wLinkedList* list)
 
 	return &list->object;
 }
+

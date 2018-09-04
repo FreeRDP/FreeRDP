@@ -138,3 +138,4 @@ struct drdynvc_plugin
 };
 
 #endif /* FREERDP_CHANNEL_DRDYNVC_CLIENT_MAIN_H */
+

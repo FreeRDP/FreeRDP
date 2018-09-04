@@ -668,7 +668,7 @@ int no_conversion(void* source, void** destination)
 BOOL string_list_to_msz(BOOL input_widechar, BYTE** list, BOOL output_widechar, LPSTR*   mszString,
                         DWORD* cchStrings)
 {
-	int count = string_list_length((const char * const*)list);
+	int count = string_list_length((const char* const*)list);
 	int total_size;
 	int input_width = input_widechar ? sizeof(WCHAR) : sizeof(BYTE);
 	int output_width = output_widechar ? sizeof(WCHAR) : sizeof(BYTE);
@@ -1234,3 +1234,4 @@ int TestStr(int argc, char* argv[])
 	success &= test_ConvertFromUnicode_on_msz();
 	return success ? 0 : -1;
 }
+

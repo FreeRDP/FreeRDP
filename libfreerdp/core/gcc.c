@@ -2005,3 +2005,4 @@ void gcc_write_server_multitransport_channel_data(wStream* s, rdpMcs* mcs)
 	gcc_write_user_data_header(s, SC_MULTITRANSPORT, 8);
 	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
 }
+

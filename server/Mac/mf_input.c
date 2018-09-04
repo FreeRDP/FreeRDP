@@ -521,3 +521,4 @@ BOOL mf_input_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x
 {
 	return FALSE;
 }
+

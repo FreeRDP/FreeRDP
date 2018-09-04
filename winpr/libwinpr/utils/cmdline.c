@@ -452,3 +452,4 @@ COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* a
 
 	return nextArgument;
 }
+

@@ -222,3 +222,4 @@ int TestGdiRop3(int argc, char* argv[])
 
 	return 0;
 }
+

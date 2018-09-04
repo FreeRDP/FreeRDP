@@ -67,3 +67,4 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
                                 const WCHAR* path, UINT32 PathLength, wStream* output);
 
 #endif /* FREERDP_CHANNEL_DRIVE_FILE_H */
+

@@ -325,3 +325,4 @@ FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
 FREERDP_LOCAL void tsg_free(rdpTsg* tsg);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_TSG_H */
+

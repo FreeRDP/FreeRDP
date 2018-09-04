@@ -42,3 +42,4 @@ PVOID SecureZeroMemory(PVOID ptr, SIZE_T cnt)
 }
 
 #endif
+

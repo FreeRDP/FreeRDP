@@ -61,3 +61,4 @@ FREERDP_API PWtsApiFunctionTable FreeRDP_InitWtsApi(void);
 #endif
 
 #endif /* FREERDP_CHANNELS_H */
+

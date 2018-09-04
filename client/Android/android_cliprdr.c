@@ -526,3 +526,4 @@ BOOL android_cliprdr_uninit(androidContext* afc, CliprdrClientContext* cliprdr)
 	CloseHandle(afc->clipboardRequestEvent);
 	return TRUE;
 }
+

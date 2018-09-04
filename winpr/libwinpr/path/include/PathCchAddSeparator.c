@@ -23,7 +23,6 @@ HRESULT PATH_CCH_ADD_SEPARATOR(PWSTR pszPath, size_t cchPath)
 	{
 		pszPath[pszPathLength] = _PATH_SEPARATOR_CHR;
 		pszPath[pszPathLength + 1] = '\0';
-
 		return S_OK;
 	}
 
@@ -48,7 +47,6 @@ HRESULT PATH_CCH_ADD_SEPARATOR(PSTR pszPath, size_t cchPath)
 	{
 		pszPath[pszPathLength] = _PATH_SEPARATOR_CHR;
 		pszPath[pszPathLength + 1] = '\0';
-
 		return S_OK;
 	}
 
@@ -62,4 +60,5 @@ HRESULT PATH_CCH_ADD_SEPARATOR(PSTR pszPath, size_t cchPath)
 #undef _PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR
 */
+
 

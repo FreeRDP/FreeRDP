@@ -37,3 +37,4 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_LOBBY_H */
+

@@ -72,3 +72,4 @@ FREERDP_API void bitmap_cache_free(rdpBitmapCache* bitmap_cache);
 #endif
 
 #endif /* FREERDP_BITMAP_V2_CACHE_H */
+

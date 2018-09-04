@@ -73,3 +73,4 @@ struct _wClipboard
 BOOL ClipboardInitSynthesizers(wClipboard* clipboard);
 
 #endif /* WINPR_CLIPBOARD_PRIVATE_H */
+

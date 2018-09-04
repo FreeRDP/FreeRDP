@@ -50,3 +50,4 @@ void shadow_screen_free(rdpShadowScreen* screen);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_SCREEN_H */
+

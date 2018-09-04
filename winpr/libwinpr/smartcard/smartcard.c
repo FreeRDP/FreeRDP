@@ -1191,3 +1191,4 @@ WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState)
 
 	return szReaderState;
 }
+

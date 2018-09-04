@@ -222,6 +222,7 @@ static void WaitableTimerHandler(void* arg)
 	{
 		if (timer->running)
 			dispatch_suspend(timer->source);
+
 		timer->running = FALSE;
 	}
 }
@@ -241,6 +242,7 @@ static int InitializeWaitableTimer(WINPR_TIMER* timer)
 			free(timer);
 			return -1;
 		}
+
 #elif defined(__APPLE__)
 #else
 		WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
@@ -323,8 +325,10 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 		dispatch_set_context(timer->source, timer);
 		dispatch_source_set_event_handler_f(timer->source, WaitableTimerHandler);
 		timer->fd = timer->pipe[0];
+
 		if (fcntl(timer->fd, F_SETFL, O_NONBLOCK) < 0)
 			goto fail;
+
 #endif
 	}
 
@@ -491,17 +495,20 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 		return FALSE;
 	}
 
-	{ /* Clean out old data from FD */
+	{
+		/* Clean out old data from FD */
 		BYTE buffer[32];
 
 		while (read(timer->fd, buffer, sizeof(buffer)) > 0);
 	}
+
 	{
 		if (timer->running)
 			dispatch_suspend(timer->source);
 
 		dispatch_time_t start = dispatch_time(DISPATCH_TIME_NOW, nanoseconds);
 		uint64_t interval = DISPATCH_TIME_FOREVER;
+
 		if (lPeriod > 0)
 			interval = lPeriod * 1000000;
 
@@ -546,8 +553,10 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 
 	timer = (WINPR_TIMER*)Object;
 #if defined(__APPLE__)
+
 	if (timer->running)
 		dispatch_suspend(timer->source);
+
 	timer->running = FALSE;
 #endif
 	return TRUE;
@@ -949,3 +958,4 @@ BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE CompletionEve
 }
 
 #endif
+

@@ -28,3 +28,4 @@ int floatbar_show(FloatBar* floatbar);
 int floatbar_hide(FloatBar* floatbar);
 
 #endif /* FREERDP_CLIENT_WIN_FLOATBAR_H */
+

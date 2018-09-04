@@ -39,8 +39,10 @@
 int winpr_RAND(BYTE* output, size_t len)
 {
 #if defined(WITH_OPENSSL)
+
 	if (RAND_bytes(output, len) != 1)
 		return -1;
+
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_HAVEGE_C)
 	mbedtls_havege_state hs;
 	mbedtls_havege_init(&hs);
@@ -57,3 +59,4 @@ int winpr_RAND_pseudo(BYTE* output, size_t len)
 {
 	return winpr_RAND(output, len);
 }
+

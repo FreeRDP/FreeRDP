@@ -949,8 +949,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 			params[i].tile = message->tiles[i];
 
 			if (!(work_objects[i] = CreateThreadpoolWork(
-			                        rfx_process_message_tile_work_callback,
-			                        (void*) &params[i], &context->priv->ThreadPoolEnv)))
+			                            rfx_process_message_tile_work_callback,
+			                            (void*) &params[i], &context->priv->ThreadPoolEnv)))
 			{
 				WLog_ERR(TAG, "CreateThreadpoolWork failed.");
 				rc = FALSE;
@@ -1646,7 +1646,6 @@ skip_encoding_loop:
 
 		region16_uninit(&tilesRegion);
 		region16_uninit(&rectsRegion);
-
 		return message;
 	}
 
@@ -1879,3 +1878,4 @@ BOOL rfx_compose_message(RFX_CONTEXT* context, wStream* s,
 	rfx_message_free(context, message);
 	return ret;
 }
+

@@ -34,7 +34,7 @@ enum
 enum
 {
 	DMF_ESCAPE_BASE_1_VB = 1030,
-	DMF_ESCAPE_BASE_2_VB = 1026, 
+	DMF_ESCAPE_BASE_2_VB = 1026,
 	DMF_ESCAPE_BASE_3_VB = 24
 };
 
@@ -45,8 +45,8 @@ enum
 enum
 {
 	DMF_ESCAPE_BASE_1 = CLIENT_64BIT | DMF_ESCAPE_BASE_1_VB,
-	DMF_ESCAPE_BASE_2 = CLIENT_64BIT | DMF_ESCAPE_BASE_2_VB, 
-	DMF_ESCAPE_BASE_3 = CLIENT_64BIT | DMF_ESCAPE_BASE_3_VB, 
+	DMF_ESCAPE_BASE_2 = CLIENT_64BIT | DMF_ESCAPE_BASE_2_VB,
+	DMF_ESCAPE_BASE_3 = CLIENT_64BIT | DMF_ESCAPE_BASE_3_VB,
 };
 
 #else
@@ -54,8 +54,8 @@ enum
 enum
 {
 	DMF_ESCAPE_BASE_1 = DMF_ESCAPE_BASE_1_VB,
-	DMF_ESCAPE_BASE_2 = DMF_ESCAPE_BASE_2_VB, 
-	DMF_ESCAPE_BASE_3 = DMF_ESCAPE_BASE_3_VB, 
+	DMF_ESCAPE_BASE_2 = DMF_ESCAPE_BASE_2_VB,
+	DMF_ESCAPE_BASE_3 = DMF_ESCAPE_BASE_3_VB,
 };
 
 #endif
@@ -123,8 +123,8 @@ typedef struct
 
 typedef struct
 {
-	 CHANGES_BUF* buffer;
-	 PVOID Userbuffer;
+	CHANGES_BUF* buffer;
+	PVOID Userbuffer;
 } GETCHANGESBUF;
 
 #define	dmf_sprb_ERRORMASK			0x07FF
@@ -219,3 +219,4 @@ BOOL wf_mirror_driver_activate(wfInfo* wfi);
 void wf_mirror_driver_deactivate(wfInfo* wfi);
 
 #endif /* FREERDP_SERVER_WIN_MIRAGE_H */
+

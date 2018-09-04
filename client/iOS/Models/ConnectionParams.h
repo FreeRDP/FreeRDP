@@ -1,9 +1,9 @@
 /*
  Connection Parameters abstraction
- 
+
  Copyright 2013 Thincast Technologies GmbH, Author: Dorian Johnson
- 
- This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+
+ This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
@@ -13,7 +13,7 @@
 @interface ConnectionParams : NSObject
 {
 @private
-    NSMutableDictionary* _connection_params;
+	NSMutableDictionary* _connection_params;
 }
 
 // Designated initializer.
@@ -22,7 +22,7 @@
 
 // Getting/setting values
 - (NSArray*)allKeys;
-- (void)setValue:(id)value forKey:(NSString *)key;
+- (void)setValue:(id)value forKey:(NSString*)key;
 - (id)valueForKey:(NSString*)key;
 - (BOOL)hasValueForKey:(NSString*)key;
 - (void)setInt:(int)integer forKey:(NSString*)key;
@@ -45,3 +45,4 @@
 - (BOOL)boolForKey:(NSString*)key with3GEnabled:(BOOL)enabled;
 
 @end
+

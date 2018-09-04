@@ -76,3 +76,4 @@ FREERDP_API void glyph_cache_free(rdpGlyphCache* glyph);
 #endif
 
 #endif /* FREERDP_GLYPH_CACHE_H */
+

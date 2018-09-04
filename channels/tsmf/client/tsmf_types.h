@@ -59,3 +59,4 @@ typedef struct _TS_AM_MEDIA_TYPE
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_TYPES_H */
 
+

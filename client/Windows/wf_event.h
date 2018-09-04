@@ -39,3 +39,4 @@ void wf_event_focus_in(wfContext* wfc);
 #endif
 
 #endif /* FREERDP_CLIENT_WIN_EVENT_H */
+

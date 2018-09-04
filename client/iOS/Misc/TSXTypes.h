@@ -1,9 +1,9 @@
 /*
  Basic type defines for TSX RDC
- 
+
  Copyright 2013 Thincast Technologies GmbH, Authors: Martin Fleisz, Dorian Johnson
- 
- This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+
+ This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
@@ -16,7 +16,7 @@
 typedef enum _TSXConnectionState
 {
 	TSXConnectionClosed = 0,       // Session either hasn't begun connecting, or its connection has finished disconnecting.
-    TSXConnectionConnecting = 1,   // Session is in the process of establishing an RDP connection. A TCP or SSL connection might be established, but the RDP initialization sequence isn't finished.
+	TSXConnectionConnecting = 1,   // Session is in the process of establishing an RDP connection. A TCP or SSL connection might be established, but the RDP initialization sequence isn't finished.
 	TSXConnectionConnected = 2,    // Session has a full RDP connection established; though if the windows computer doesn't support NLA, a login screen might be shown in the session.
 	TSXConnectionDisconnected = 3  // Session is disconnected at the RDP layer. TSX RDC might still be disposing of resources, however.
 } TSXConnectionState;
@@ -47,3 +47,4 @@ typedef enum _TSXProtocolSecurityOptions
 } TSXProtocolSecurityOptions;
 
 #endif
+

@@ -468,3 +468,4 @@ error_out:
 	free(opensles);
 	return error;
 }
+

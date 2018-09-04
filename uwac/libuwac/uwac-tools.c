@@ -25,69 +25,79 @@
 #include <uwac/uwac-tools.h>
 
 /** @brief */
-struct uwac_touch_automata {
+struct uwac_touch_automata
+{
 	struct wl_array tp;
 };
 
-void UwacTouchAutomataInit(UwacTouchAutomata *automata) {
+void UwacTouchAutomataInit(UwacTouchAutomata* automata)
+{
 	wl_array_init(&automata->tp);
 }
 
-void UwacTouchAutomataReset(UwacTouchAutomata *automata) {
+void UwacTouchAutomataReset(UwacTouchAutomata* automata)
+{
 	automata->tp.size = 0;
 }
 
-bool UwacTouchAutomataInjectEvent(UwacTouchAutomata *automata, UwacEvent *event) {
+bool UwacTouchAutomataInjectEvent(UwacTouchAutomata* automata, UwacEvent* event)
+{
+	UwacTouchPoint* tp;
 
-	UwacTouchPoint *tp;
+	switch (event->type)
+	{
+		case UWAC_EVENT_TOUCH_FRAME_BEGIN:
+			break;
 
-	switch (event->type) {
-	case UWAC_EVENT_TOUCH_FRAME_BEGIN:
-		break;
+		case UWAC_EVENT_TOUCH_UP:
+			{
+				UwacTouchUp* touchUp = &event->touchUp;
+				int toMove = automata->tp.size - sizeof(UwacTouchPoint);
+				wl_array_for_each(tp, &automata->tp)
+				{
+					if (tp->id == touchUp->id)
+					{
+						if (toMove)
+							memmove(tp, tp + 1, toMove);
 
-	case UWAC_EVENT_TOUCH_UP: {
-		UwacTouchUp *touchUp = &event->touchUp;
-		int toMove = automata->tp.size - sizeof(UwacTouchPoint);
+						return true;
+					}
 
-		wl_array_for_each(tp, &automata->tp) {
-			if (tp->id == touchUp->id) {
-				if (toMove)
-					memmove(tp, tp+1, toMove);
-				return true;
+					toMove -= sizeof(UwacTouchPoint);
+				}
+				break;
 			}
 
-			toMove -= sizeof(UwacTouchPoint);
-		}
-		break;
-	}
+		case UWAC_EVENT_TOUCH_DOWN:
+			{
+				UwacTouchDown* touchDown = &event->touchDown;
+				wl_array_for_each(tp, &automata->tp)
+				{
+					if (tp->id == touchDown->id)
+					{
+						tp->x = touchDown->x;
+						tp->y = touchDown->y;
+						return true;
+					}
+				}
+				tp = wl_array_add(&automata->tp, sizeof(UwacTouchPoint));
 
-	case UWAC_EVENT_TOUCH_DOWN: {
-		UwacTouchDown *touchDown = &event->touchDown;
+				if (!tp)
+					return false;
 
-		wl_array_for_each(tp, &automata->tp) {
-			if (tp->id == touchDown->id) {
+				tp->id = touchDown->id;
 				tp->x = touchDown->x;
 				tp->y = touchDown->y;
-				return true;
+				break;
 			}
-		}
 
-		tp = wl_array_add(&automata->tp, sizeof(UwacTouchPoint));
-		if (!tp)
-			return false;
+		case UWAC_EVENT_TOUCH_FRAME_END:
+			break;
 
-		tp->id = touchDown->id;
-		tp->x = touchDown->x;
-		tp->y = touchDown->y;
-		break;
-	}
-
-	case UWAC_EVENT_TOUCH_FRAME_END:
-		break;
-
-	default:
-		break;
+		default:
+			break;
 	}
 
 	return true;
 }
+

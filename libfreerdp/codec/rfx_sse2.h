@@ -32,3 +32,4 @@ FREERDP_LOCAL void rfx_init_sse2(RFX_CONTEXT* context);
 #endif
 
 #endif /* FREERDP_LIB_CODEC_RFX_SSE2_H */
+

@@ -33,7 +33,6 @@ BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 		size_t old_capacity;
 		size_t new_capacity;
 		BYTE* new_buf;
-
 		old_capacity = s->capacity;
 		new_capacity = old_capacity;
 
@@ -43,19 +42,19 @@ BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 		}
 		while (new_capacity < size);
 
-
 		position = Stream_GetPosition(s);
-
 		new_buf = (BYTE*) realloc(s->buffer, new_capacity);
+
 		if (!new_buf)
 			return FALSE;
+
 		s->buffer = new_buf;
 		s->capacity = new_capacity;
 		s->length = new_capacity;
 		ZeroMemory(&s->buffer[old_capacity], s->capacity - old_capacity);
-
 		Stream_SetPosition(s, position);
 	}
+
 	return TRUE;
 }
 
@@ -63,6 +62,7 @@ BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size)
 {
 	if (Stream_GetPosition(s) + size > Stream_Capacity(s))
 		return Stream_EnsureCapacity(s, Stream_Capacity(s) + size);
+
 	return TRUE;
 }
 
@@ -78,7 +78,6 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	if (!s)
 		return NULL;
 
-
 	if (buffer)
 		s->buffer = buffer;
 	else
@@ -93,10 +92,8 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	s->pointer = s->buffer;
 	s->capacity = size;
 	s->length = size;
-
 	s->pool = NULL;
 	s->count = 0;
-
 	return s;
 }
 
@@ -110,3 +107,4 @@ void Stream_Free(wStream* s, BOOL bFreeBuffer)
 		free(s);
 	}
 }
+

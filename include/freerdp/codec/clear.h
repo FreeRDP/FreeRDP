@@ -52,3 +52,4 @@ FREERDP_API void clear_context_free(CLEAR_CONTEXT* clear);
 
 #endif /* FREERDP_CODEC_CLEAR_H */
 
+

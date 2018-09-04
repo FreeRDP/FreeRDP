@@ -122,3 +122,4 @@ FREERDP_LOCAL HttpResponse* http_response_new(void);
 FREERDP_LOCAL void http_response_free(HttpResponse* response);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_HTTP_H */
+

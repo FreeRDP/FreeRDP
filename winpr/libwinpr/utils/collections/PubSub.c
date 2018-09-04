@@ -81,12 +81,13 @@ void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, int count)
 	while (pubSub->count + count >= pubSub->size)
 	{
 		int new_size;
-		wEventType *new_event;
-
+		wEventType* new_event;
 		new_size = pubSub->size * 2;
 		new_event = (wEventType*) realloc(pubSub->events, new_size * sizeof(wEventType));
+
 		if (!new_event)
 			return;
+
 		pubSub->size = new_size;
 		pubSub->events = new_event;
 	}
@@ -151,7 +152,7 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler Eve
 				event->EventHandlers[index] = NULL;
 				event->EventHandlerCount--;
 				MoveMemory(&event->EventHandlers[index], &event->EventHandlers[index + 1],
-				        (MAX_EVENT_HANDLERS - index - 1) * sizeof(pEventHandler));
+				           (MAX_EVENT_HANDLERS - index - 1) * sizeof(pEventHandler));
 				status = 1;
 			}
 		}
@@ -201,7 +202,6 @@ int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEvent
 wPubSub* PubSub_New(BOOL synchronized)
 {
 	wPubSub* pubSub = NULL;
-
 	pubSub = (wPubSub*) malloc(sizeof(wPubSub));
 
 	if (!pubSub)
@@ -217,12 +217,13 @@ wPubSub* PubSub_New(BOOL synchronized)
 
 	pubSub->count = 0;
 	pubSub->size = 64;
-
 	pubSub->events = (wEventType*) calloc(pubSub->size, sizeof(wEventType));
+
 	if (!pubSub->events)
 	{
 		if (pubSub->synchronized)
 			DeleteCriticalSection(&pubSub->lock);
+
 		free(pubSub);
 		return NULL;
 	}
@@ -241,3 +242,4 @@ void PubSub_Free(wPubSub* pubSub)
 		free(pubSub);
 	}
 }
+

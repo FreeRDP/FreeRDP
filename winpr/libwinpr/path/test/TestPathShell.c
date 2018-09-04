@@ -45,6 +45,7 @@ int TestPathShell(int argc, char* argv[])
 			{
 				printf("%s Path: %s\n", name, path);
 			}
+
 			free(path);
 		}
 		{
@@ -58,10 +59,12 @@ int TestPathShell(int argc, char* argv[])
 			{
 				printf("%s SubPath: %s\n", name, path);
 			}
+
 			free(path);
 		}
 	}
 
 	return rc;
 }
+
 

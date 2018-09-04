@@ -406,3 +406,4 @@ int win_shadow_rdp_uninit(winShadowSubsystem* subsystem)
 	win_shadow_rdp_stop(subsystem);
 	return 1;
 }
+

@@ -18,7 +18,7 @@ static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 					break;
 
 				printf("WM_COPYDATA: cbData: %"PRIu32" dwData: %"PRIu32"\n",
-						(int) pCopyData->cbData, (int) pCopyData->dwData);
+				       (int) pCopyData->cbData, (int) pCopyData->dwData);
 			}
 			break;
 
@@ -41,9 +41,7 @@ int TestWndWmCopyData(int argc, char* argv[])
 	HMODULE hModule;
 	HINSTANCE hInstance;
 	WNDCLASSEX wndClassEx;
-
 	hModule = GetModuleHandle(NULL);
-
 	ZeroMemory(&wndClassEx, sizeof(WNDCLASSEX));
 	wndClassEx.cbSize = sizeof(WNDCLASSEX);
 	wndClassEx.style = 0;
@@ -65,9 +63,8 @@ int TestWndWmCopyData(int argc, char* argv[])
 	}
 
 	hInstance = wndClassEx.hInstance;
-
 	hWnd = CreateWindowEx(0, wndClassEx.lpszClassName,
-		0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInstance, NULL);
+	                      0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInstance, NULL);
 
 	if (!hWnd)
 	{
@@ -76,9 +73,8 @@ int TestWndWmCopyData(int argc, char* argv[])
 	}
 
 	SendMessage(hWnd, WM_CLOSE, 0, 0);
-
 	DestroyWindow(hWnd);
-
 	return 0;
 }
+
 

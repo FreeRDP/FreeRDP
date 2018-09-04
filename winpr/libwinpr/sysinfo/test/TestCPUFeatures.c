@@ -46,3 +46,4 @@ int TestCPUFeatures(int argc, char* argv[])
 	printf("\n");
 	return 0;
 }
+

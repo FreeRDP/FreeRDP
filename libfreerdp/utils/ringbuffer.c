@@ -291,3 +291,4 @@ void ringbuffer_commit_read_bytes(RingBuffer* rb, size_t sz)
 	    && (ringbuffer_used(rb) < rb->initialSize / 2))
 		ringbuffer_realloc(rb, rb->initialSize);
 }
+

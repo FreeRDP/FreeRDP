@@ -60,3 +60,4 @@ FREERDP_LOCAL rdpBulk* bulk_new(rdpContext* context);
 FREERDP_LOCAL void bulk_free(rdpBulk* bulk);
 
 #endif /* FREERDP_LIB_CORE_BULK_H */
+

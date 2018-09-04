@@ -326,3 +326,4 @@ extern int android_setCpuArm(int      cpu_count,
 __END_DECLS
 
 #endif /* CPU_FEATURES_H */
+

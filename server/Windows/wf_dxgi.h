@@ -40,3 +40,4 @@ int wf_dxgi_getInvalidRegion(RECT* invalid);
 
 
 #endif /* FREERDP_SERVER_WIN_DXGI_H */
+

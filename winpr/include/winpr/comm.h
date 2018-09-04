@@ -207,20 +207,20 @@ typedef struct _DCB
 {
 	DWORD DCBlength;
 	DWORD BaudRate;
-	DWORD fBinary:1;
-	DWORD fParity:1;
-	DWORD fOutxCtsFlow:1;
-	DWORD fOutxDsrFlow:1;
-	DWORD fDtrControl:2;
-	DWORD fDsrSensitivity:1;
-	DWORD fTXContinueOnXoff:1;
-	DWORD fOutX:1;
-	DWORD fInX:1;
-	DWORD fErrorChar:1;
-	DWORD fNull:1;
-	DWORD fRtsControl:2;
-	DWORD fAbortOnError:1;
-	DWORD fDummy2:17;
+	DWORD fBinary: 1;
+	DWORD fParity: 1;
+	DWORD fOutxCtsFlow: 1;
+	DWORD fOutxDsrFlow: 1;
+	DWORD fDtrControl: 2;
+	DWORD fDsrSensitivity: 1;
+	DWORD fTXContinueOnXoff: 1;
+	DWORD fOutX: 1;
+	DWORD fInX: 1;
+	DWORD fErrorChar: 1;
+	DWORD fNull: 1;
+	DWORD fRtsControl: 2;
+	DWORD fAbortOnError: 1;
+	DWORD fDummy2: 17;
 	WORD wReserved;
 	WORD XonLim;
 	WORD XoffLim;
@@ -280,14 +280,14 @@ typedef struct _COMMTIMEOUTS
 
 typedef struct _COMSTAT
 {
-	DWORD fCtsHold:1;
-	DWORD fDsrHold:1;
-	DWORD fRlsdHold:1;
-	DWORD fXoffHold:1;
-	DWORD fXoffSent:1;
-	DWORD fEof:1;
-	DWORD fTxim:1;
-	DWORD fReserved:25;
+	DWORD fCtsHold: 1;
+	DWORD fDsrHold: 1;
+	DWORD fRlsdHold: 1;
+	DWORD fXoffHold: 1;
+	DWORD fXoffSent: 1;
+	DWORD fEof: 1;
+	DWORD fTxim: 1;
+	DWORD fReserved: 25;
 	DWORD cbInQue;
 	DWORD cbOutQue;
 } COMSTAT, *LPCOMSTAT;
@@ -391,8 +391,9 @@ WINPR_API BOOL IsCommDevice(LPCTSTR lpDeviceName);
  * also ensures that CommCreateFileA() has been registered through
  * RegisterHandleCreator().
  */
-WINPR_API HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-				DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+WINPR_API HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+                                 LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+                                 DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 
 
 
@@ -515,7 +516,7 @@ static const _SERIAL_IOCTL_NAME _SERIAL_IOCTL_NAMES[] =
 	// {IOCTL_PAR_QUERY_RAW_DEVICE_ID, "IOCTL_PAR_QUERY_RAW_DEVICE_ID"},
 	// {IOCTL_PAR_IS_PORT_FREE,	"IOCTL_PAR_IS_PORT_FREE"},
 
-        {IOCTL_USBPRINT_GET_1284_ID,	"IOCTL_USBPRINT_GET_1284_ID"},
+	{IOCTL_USBPRINT_GET_1284_ID,	"IOCTL_USBPRINT_GET_1284_ID"},
 
 	{0, NULL}
 };
@@ -541,20 +542,21 @@ WINPR_API BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive);
 /**
  * FIXME: to be moved in comm_ioctl.h
  */
-WINPR_API BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
-			LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
+WINPR_API BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
+                                   DWORD nInBufferSize,
+                                   LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 
 /**
  * FIXME: to be moved in comm_io.h
  */
 WINPR_API BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+                            LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
 
 /**
  * FIXME: to be moved in comm_io.h
  */
 WINPR_API BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
-		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+                             LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 
 #ifdef __cplusplus
 }
@@ -563,4 +565,5 @@ WINPR_API BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBy
 #endif /* __linux__ */
 
 #endif /* WINPR_COMM_H */
+
 

@@ -31,7 +31,8 @@
 
 #if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 
-BOOL winpr_InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext)
+BOOL winpr_InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending,
+                                   LPVOID* lpContext)
 {
 	WLog_ERR(TAG, "not implemented");
 	return FALSE;
@@ -48,7 +49,8 @@ VOID winpr_InitOnceInitialize(PINIT_ONCE InitOnce)
 	WLog_ERR(TAG, "not implemented");
 }
 
-BOOL winpr_InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter, LPVOID* Context)
+BOOL winpr_InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter,
+                               LPVOID* Context)
 {
 	for (;;)
 	{
@@ -93,3 +95,4 @@ BOOL winpr_InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID 
 }
 
 #endif
+

@@ -740,3 +740,4 @@ void IniFile_Free(wIniFile* ini)
 	free(ini->sections);
 	free(ini);
 }
+

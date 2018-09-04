@@ -269,3 +269,4 @@ FREERDP_API primitives_t* primitives_get_generic(void);
 #endif
 
 #endif /* FREERDP_PRIMITIVES_H */
+

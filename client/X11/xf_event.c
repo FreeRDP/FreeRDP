@@ -1114,3 +1114,4 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 	XSync(xfc->display, FALSE);
 	return status;
 }
+

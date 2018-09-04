@@ -394,7 +394,7 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		}
 
 		SrcPtr = &HistoryBuffer[(HistoryPtr - HistoryBuffer - CopyOffset) & (CompressionLevel ? 0xFFFF :
-		                        0x1FFF)];
+		                                                                  0x1FFF)];
 
 		do
 		{
@@ -805,3 +805,4 @@ void mppc_context_free(MPPC_CONTEXT* mppc)
 		free(mppc);
 	}
 }
+

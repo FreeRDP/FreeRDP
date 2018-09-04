@@ -53,3 +53,4 @@ FREERDP_LOCAL BOOL autodetect_send_connecttime_bandwidth_measure_stop(
 #define AUTODETECT_TAG FREERDP_TAG("core.autodetect")
 
 #endif /* FREERDP_LIB_CORE_AUTODETECT_H */
+

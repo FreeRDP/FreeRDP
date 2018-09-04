@@ -568,7 +568,6 @@ static DWORD KBD7X[128] =
 DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 {
 	DWORD codeIndex;
-
 	codeIndex = scancode & 0xFF;
 
 	if (codeIndex > 127)
@@ -594,7 +593,6 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 	int i;
 	DWORD scancode;
 	DWORD codeIndex;
-
 	scancode = 0;
 	codeIndex = vkcode & 0xFF;
 
@@ -654,3 +652,4 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 
 	return scancode;
 }
+

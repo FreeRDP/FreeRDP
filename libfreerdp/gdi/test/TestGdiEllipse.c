@@ -183,3 +183,4 @@ int TestGdiEllipse(int argc, char* argv[])
 	return rc;
 }
 
+

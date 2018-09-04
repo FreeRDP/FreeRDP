@@ -29,3 +29,4 @@
 #endif
 
 #endif /* WINPR_SMARTCARD_PRIVATE_H */
+

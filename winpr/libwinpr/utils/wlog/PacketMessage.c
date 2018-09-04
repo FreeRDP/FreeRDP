@@ -55,6 +55,7 @@ static BOOL Pcap_Read_Header(wPcap* pcap, wPcapHeader* header)
 {
 	if (pcap && pcap->fp && fread((void*) header, sizeof(wPcapHeader), 1, pcap->fp) == 1)
 		return TRUE;
+
 	return FALSE;
 }
 
@@ -64,6 +65,7 @@ static BOOL Pcap_Read_RecordHeader(wPcap* pcap, wPcapRecordHeader* record)
 {
 	if (pcap && pcap->fp && (fread((void*) record, sizeof(wPcapRecordHeader), 1, pcap->fp) == 1))
 		return TRUE;
+
 	return FALSE;
 }
 
@@ -73,10 +75,13 @@ static BOOL Pcap_Read_Record(wPcap* pcap, wPcapRecord* record)
 	{
 		if (!Pcap_Read_RecordHeader(pcap, &record->header))
 			return FALSE;
+
 		record->length = record->header.incl_len;
 		record->data = malloc(record->length);
+
 		if (!record->data)
 			return FALSE;
+
 		if (fread(record->data, record->length, 1, pcap->fp) != 1)
 		{
 			free(record->data);
@@ -85,6 +90,7 @@ static BOOL Pcap_Read_Record(wPcap* pcap, wPcapRecord* record)
 			return FALSE;
 		}
 	}
+
 	return TRUE;
 }
 
@@ -96,8 +102,10 @@ static BOOL Pcap_Add_Record(wPcap* pcap, void* data, UINT32 length)
 	if (!pcap->tail)
 	{
 		pcap->tail = (wPcapRecord*) calloc(1, sizeof(wPcapRecord));
+
 		if (!pcap->tail)
 			return FALSE;
+
 		pcap->head = pcap->tail;
 		pcap->record = pcap->head;
 		record = pcap->tail;
@@ -105,8 +113,10 @@ static BOOL Pcap_Add_Record(wPcap* pcap, void* data, UINT32 length)
 	else
 	{
 		record = (wPcapRecord*) calloc(1, sizeof(wPcapRecord));
+
 		if (!record)
 			return FALSE;
+
 		pcap->tail->next = record;
 		pcap->tail = record;
 	}
@@ -163,13 +173,15 @@ static BOOL Pcap_Write_Header(wPcap* pcap, wPcapHeader* header)
 {
 	if (pcap && pcap->fp && fwrite((void*) header, sizeof(wPcapHeader), 1, pcap->fp) == 1)
 		return TRUE;
+
 	return FALSE;
 }
 
 static BOOL Pcap_Write_RecordHeader(wPcap* pcap, wPcapRecordHeader* record)
 {
-	if (pcap && pcap->fp && fwrite((void *) record, sizeof(wPcapRecordHeader), 1, pcap->fp) == 1)
+	if (pcap && pcap->fp && fwrite((void*) record, sizeof(wPcapRecordHeader), 1, pcap->fp) == 1)
 		return TRUE;
+
 	return FALSE;
 }
 
@@ -177,13 +189,14 @@ static BOOL Pcap_Write_RecordContent(wPcap* pcap, wPcapRecord* record)
 {
 	if (pcap && pcap->fp && fwrite(record->data, record->length, 1, pcap->fp) == 1)
 		return TRUE;
+
 	return FALSE;
 }
 
 static BOOL Pcap_Write_Record(wPcap* pcap, wPcapRecord* record)
 {
 	return Pcap_Write_RecordHeader(pcap, &record->header) &&
-		Pcap_Write_RecordContent(pcap, record);
+	       Pcap_Write_RecordContent(pcap, record);
 }
 
 wPcap* Pcap_Open(char* name, BOOL write)
@@ -193,7 +206,7 @@ wPcap* Pcap_Open(char* name, BOOL write)
 
 	if (!pcap_fp)
 	{
-		WLog_ERR(TAG,"opening pcap file");
+		WLog_ERR(TAG, "opening pcap file");
 		return NULL;
 	}
 
@@ -216,6 +229,7 @@ wPcap* Pcap_Open(char* name, BOOL write)
 		pcap->header.sigfigs = 0;
 		pcap->header.snaplen = 0xFFFFFFFF;
 		pcap->header.network = 1; /* ethernet */
+
 		if (!Pcap_Write_Header(pcap, &pcap->header))
 			goto out_fail;
 	}
@@ -223,17 +237,20 @@ wPcap* Pcap_Open(char* name, BOOL write)
 	{
 		if (_fseeki64(pcap->fp, 0, SEEK_END) < 0)
 			goto out_fail;
+
 		pcap->file_size = _ftelli64(pcap->fp);
+
 		if (pcap->file_size < 0)
 			goto out_fail;
+
 		if (_fseeki64(pcap->fp, 0, SEEK_SET) < 0)
 			goto out_fail;
+
 		if (!Pcap_Read_Header(pcap, &pcap->header))
 			goto out_fail;
 	}
 
 	return pcap;
-
 out_fail:
 	fclose(pcap_fp);
 	free(pcap);
@@ -249,6 +266,7 @@ void Pcap_Flush(wPcap* pcap)
 	{
 		if (!Pcap_Write_Record(pcap, pcap->record))
 			return;
+
 		pcap->record = pcap->record->next;
 	}
 
@@ -276,13 +294,17 @@ static BOOL WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader
 		return FALSE;
 
 	s = Stream_New(buffer, 14);
+
 	if (!s)
 		return FALSE;
+
 	Stream_Write(s, ethernet->Destination, 6);
 	Stream_Write(s, ethernet->Source, 6);
 	Stream_Write_UINT16_BE(s, ethernet->Type);
+
 	if (fwrite(buffer, 14, 1, pcap->fp) != 1)
 		ret = FALSE;
+
 	Stream_Free(s, FALSE);
 	return ret;
 }
@@ -319,8 +341,10 @@ static BOOL WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 		return FALSE;
 
 	s = Stream_New(buffer, 20);
+
 	if (!s)
 		return FALSE;
+
 	Stream_Write_UINT8(s, (ipv4->Version << 4) | ipv4->InternetHeaderLength);
 	Stream_Write_UINT8(s, ipv4->TypeOfService);
 	Stream_Write_UINT16_BE(s, ipv4->TotalLength);
@@ -335,8 +359,10 @@ static BOOL WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 	Stream_Rewind(s, 10);
 	Stream_Write_UINT16(s, ipv4->HeaderChecksum);
 	Stream_Seek(s, 8);
+
 	if (fwrite(buffer, 20, 1, pcap->fp) != 1)
 		ret = FALSE;
+
 	Stream_Free(s, FALSE);
 	return ret;
 }
@@ -351,8 +377,10 @@ static BOOL WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 		return FALSE;
 
 	s = Stream_New(buffer, 20);
+
 	if (!s)
 		return FALSE;
+
 	Stream_Write_UINT16_BE(s, tcp->SourcePort);
 	Stream_Write_UINT16_BE(s, tcp->DestinationPort);
 	Stream_Write_UINT32_BE(s, tcp->SequenceNumber);
@@ -475,12 +503,15 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags
 	gettimeofday(&tp, 0);
 	record.header.ts_sec = tp.tv_sec;
 	record.header.ts_usec = tp.tv_usec;
+
 	if (!Pcap_Write_RecordHeader(pcap, &record.header) ||
-		!WLog_PacketMessage_Write_EthernetHeader(pcap, &ethernet) ||
-		!WLog_PacketMessage_Write_IPv4Header(pcap, &ipv4) ||
-		!WLog_PacketMessage_Write_TcpHeader(pcap, &tcp) ||
-		!Pcap_Write_RecordContent(pcap, &record))
+	    !WLog_PacketMessage_Write_EthernetHeader(pcap, &ethernet) ||
+	    !WLog_PacketMessage_Write_IPv4Header(pcap, &ipv4) ||
+	    !WLog_PacketMessage_Write_TcpHeader(pcap, &tcp) ||
+	    !Pcap_Write_RecordContent(pcap, &record))
 		return FALSE;
+
 	fflush(pcap->fp);
 	return TRUE;
 }
+

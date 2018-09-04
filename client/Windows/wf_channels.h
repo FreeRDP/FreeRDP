@@ -34,3 +34,4 @@ void wf_OnChannelDisconnectedEventHandler(void* context,
         ChannelDisconnectedEventArgs* e);
 
 #endif /* FREERDP_CLIENT_WIN_CHANNELS_H */
+

@@ -36,9 +36,10 @@ struct rdp_listener
 	freerdp_listener* instance;
 
 	int num_sockfds;
- 	int sockfds[MAX_LISTENER_HANDLES];
- 	HANDLE events[MAX_LISTENER_HANDLES];
+	int sockfds[MAX_LISTENER_HANDLES];
+	HANDLE events[MAX_LISTENER_HANDLES];
 };
 
 #endif /* FREERDP_LIB_CORE_LISTENER_H */
+
 

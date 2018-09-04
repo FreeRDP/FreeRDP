@@ -89,3 +89,4 @@ struct mf_context
 };
 
 #endif /* FREERDP_CLIENT_MAC_FREERDP_H */
+

@@ -656,3 +656,4 @@ int xf_input_handle_event(xfContext* xfc, XEvent* event)
 #endif
 	return 0;
 }
+

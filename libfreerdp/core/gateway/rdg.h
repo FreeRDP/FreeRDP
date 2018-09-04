@@ -144,3 +144,4 @@ FREERDP_LOCAL DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events,
 
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RDG_H */
+

@@ -32,11 +32,10 @@
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
 
-static ITSMFDecoder* tsmf_load_decoder_by_name(const char *name)
+static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name)
 {
 	ITSMFDecoder* decoder;
 	TSMF_DECODER_ENTRY entry;
-
 	entry = (TSMF_DECODER_ENTRY) freerdp_load_channel_addin_entry("tsmf", (LPSTR) name, "decoder", 0);
 
 	if (!entry)
@@ -53,7 +52,7 @@ static ITSMFDecoder* tsmf_load_decoder_by_name(const char *name)
 	return decoder;
 }
 
-static BOOL tsmf_decoder_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE* media_type)
+static BOOL tsmf_decoder_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type)
 {
 	if (decoder->SetFormat(decoder, media_type))
 		return TRUE;
@@ -71,13 +70,16 @@ ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type)
 	}
 
 #if defined(WITH_GSTREAMER_1_0) || defined(WITH_GSTREAMER_0_10)
+
 	if (!decoder)
 		decoder = tsmf_load_decoder_by_name("gstreamer");
-#endif
 
+#endif
 #if defined(WITH_FFMPEG)
+
 	if (!decoder)
 		decoder = tsmf_load_decoder_by_name("ffmpeg");
+
 #endif
 
 	if (decoder)
@@ -101,14 +103,18 @@ BOOL tsmf_check_decoder_available(const char* name)
 	{
 		decoder = tsmf_load_decoder_by_name(name);
 	}
-#if defined(WITH_GSTREAMER_1_0) || defined(WITH_GSTREAMER_0_10)
-        if (!decoder)
-                decoder = tsmf_load_decoder_by_name("gstreamer");
-#endif
 
+#if defined(WITH_GSTREAMER_1_0) || defined(WITH_GSTREAMER_0_10)
+
+	if (!decoder)
+		decoder = tsmf_load_decoder_by_name("gstreamer");
+
+#endif
 #if defined(WITH_FFMPEG)
+
 	if (!decoder)
 		decoder = tsmf_load_decoder_by_name("ffmpeg");
+
 #endif
 
 	if (decoder)
@@ -120,4 +126,5 @@ BOOL tsmf_check_decoder_available(const char* name)
 
 	return retValue;
 }
+
 

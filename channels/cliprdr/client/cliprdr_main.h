@@ -61,3 +61,4 @@ CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
 #endif
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_CLIENT_MAIN_H */
+

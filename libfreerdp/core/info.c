@@ -89,6 +89,7 @@ FREERDP_LOCAL char* rdp_info_package_flags_description(UINT32 flags)
 	}
 
 	result[0] = '\0';
+
 	for (i = 0; i < ARRAYSIZE(info_flags); i ++)
 	{
 		if (info_flags[i].flag & flags)
@@ -97,6 +98,7 @@ FREERDP_LOCAL char* rdp_info_package_flags_description(UINT32 flags)
 			strcat(result, "|");
 		}
 	}
+
 	result[strlen(result) - 1] = '\0'; /* remove last "|" */
 	return result;
 }
@@ -1462,3 +1464,4 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 
 	return status;
 }
+

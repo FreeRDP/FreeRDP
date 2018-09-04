@@ -251,3 +251,4 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo);
 BOOL rdp_send_error_info(rdpRdp* rdp);
 
 #endif /* FREERDP_LIB_CORE_RDP_H */
+

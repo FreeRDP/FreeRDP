@@ -198,13 +198,15 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 #undef _PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR_EX
 
-HRESULT PathCchRemoveBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining)
+HRESULT PathCchRemoveBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
+                                  size_t* pcchRemaining)
 {
 	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining)
+HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
+                                  size_t* pcchRemaining)
 {
 	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
 	return E_NOTIMPL;
@@ -374,13 +376,15 @@ HRESULT PathCchCanonicalizeW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPath
  * PathCchCanonicalizeEx
  */
 
-HRESULT PathCchCanonicalizeExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, unsigned long dwFlags)
+HRESULT PathCchCanonicalizeExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
+                               unsigned long dwFlags)
 {
 	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, unsigned long dwFlags)
+HRESULT PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
+                               unsigned long dwFlags)
 {
 	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
 	return E_NOTIMPL;
@@ -422,13 +426,15 @@ HRESULT PathCchCombineW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, P
  * PathCchCombineEx
  */
 
-HRESULT PathCchCombineExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags)
+HRESULT PathCchCombineExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, PCSTR pszMore,
+                          unsigned long dwFlags)
 {
 	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags)
+HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, PCWSTR pszMore,
+                          unsigned long dwFlags)
 {
 	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
 	return E_NOTIMPL;
@@ -683,7 +689,7 @@ HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 		return E_INVALIDARG;
 
 	hasPrefix = ((pszPath[0] == '\\') && (pszPath[1] == '\\') &&
-		(pszPath[2] == '?') && (pszPath[3] == '\\')) ? TRUE : FALSE;
+	             (pszPath[2] == '?') && (pszPath[3] == '\\')) ? TRUE : FALSE;
 
 	if (hasPrefix)
 	{
@@ -716,7 +722,7 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 		return E_INVALIDARG;
 
 	hasPrefix = ((pszPath[0] == '\\') && (pszPath[1] == '\\') &&
-		(pszPath[2] == '?') && (pszPath[3] == '\\')) ? TRUE : FALSE;
+	             (pszPath[2] == '?') && (pszPath[3] == '\\')) ? TRUE : FALSE;
 
 	if (hasPrefix)
 	{
@@ -790,7 +796,6 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 		if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
 		{
 			/* Unix-style to Windows-style */
-
 			for (index = 0; index < cchPath; index++)
 			{
 				if (pszPath[index] == PATH_SLASH_CHR)
@@ -800,7 +805,6 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 		else if (PATH_SEPARATOR_CHR == PATH_SLASH_CHR)
 		{
 			/* Windows-style to Unix-style */
-
 			for (index = 0; index < cchPath; index++)
 			{
 				if (pszPath[index] == PATH_BACKSLASH_CHR)
@@ -847,7 +851,6 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 		if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
 		{
 			/* Unix-style to Windows-style */
-
 			for (index = 0; index < cchPath; index++)
 			{
 				if (pszPath[index] == PATH_SLASH_CHR)
@@ -857,7 +860,6 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 		else if (PATH_SEPARATOR_CHR == PATH_SLASH_CHR)
 		{
 			/* Windows-style to Unix-style */
-
 			for (index = 0; index < cchPath; index++)
 			{
 				if (pszPath[index] == PATH_BACKSLASH_CHR)
@@ -925,17 +927,17 @@ static const CHAR SharedLibraryExtensionDllA[] = "dll";
 static const CHAR SharedLibraryExtensionSoA[] = "so";
 static const CHAR SharedLibraryExtensionDylibA[] = "dylib";
 
-static const WCHAR SharedLibraryExtensionDllW[] = { 'd','l','l','\0' };
-static const WCHAR SharedLibraryExtensionSoW[] = { 's','o','\0' };
-static const WCHAR SharedLibraryExtensionDylibW[] = { 'd','y','l','i','b','\0' };
+static const WCHAR SharedLibraryExtensionDllW[] = { 'd', 'l', 'l', '\0' };
+static const WCHAR SharedLibraryExtensionSoW[] = { 's', 'o', '\0' };
+static const WCHAR SharedLibraryExtensionDylibW[] = { 'd', 'y', 'l', 'i', 'b', '\0' };
 
 static const CHAR SharedLibraryExtensionDotDllA[] = ".dll";
 static const CHAR SharedLibraryExtensionDotSoA[] = ".so";
 static const CHAR SharedLibraryExtensionDotDylibA[] = ".dylib";
 
-static const WCHAR SharedLibraryExtensionDotDllW[] = { '.','d','l','l','\0' };
-static const WCHAR SharedLibraryExtensionDotSoW[] = { '.','s','o','\0' };
-static const WCHAR SharedLibraryExtensionDotDylibW[] = { '.','d','y','l','i','b','\0' };
+static const WCHAR SharedLibraryExtensionDotDllW[] = { '.', 'd', 'l', 'l', '\0' };
+static const WCHAR SharedLibraryExtensionDotSoW[] = { '.', 's', 'o', '\0' };
+static const WCHAR SharedLibraryExtensionDotDylibW[] = { '.', 'd', 'y', 'l', 'i', 'b', '\0' };
 
 PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 {
@@ -970,10 +972,12 @@ PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 #ifdef _WIN32
 		return SharedLibraryExtensionDotDllA;
 #elif defined(__APPLE__)
+
 		if (dwFlags & PATH_SHARED_LIB_EXT_APPLE_SO)
 			return SharedLibraryExtensionDotSoA;
 		else
 			return SharedLibraryExtensionDotDylibA;
+
 #else
 		return SharedLibraryExtensionDotSoA;
 #endif
@@ -983,10 +987,12 @@ PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 #ifdef _WIN32
 		return SharedLibraryExtensionDllA;
 #elif defined(__APPLE__)
+
 		if (dwFlags & PATH_SHARED_LIB_EXT_APPLE_SO)
 			return SharedLibraryExtensionSoA;
 		else
 			return SharedLibraryExtensionDylibA;
+
 #else
 		return SharedLibraryExtensionSoA;
 #endif
@@ -1028,10 +1034,12 @@ PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 #ifdef _WIN32
 		return SharedLibraryExtensionDotDllW;
 #elif defined(__APPLE__)
+
 		if (dwFlags & PATH_SHARED_LIB_EXT_APPLE_SO)
 			return SharedLibraryExtensionDotSoW;
 		else
 			return SharedLibraryExtensionDotDylibW;
+
 #else
 		return SharedLibraryExtensionDotSoW;
 #endif
@@ -1041,10 +1049,12 @@ PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 #ifdef _WIN32
 		return SharedLibraryExtensionDllW;
 #elif defined(__APPLE__)
+
 		if (dwFlags & PATH_SHARED_LIB_EXT_APPLE_SO)
 			return SharedLibraryExtensionSoW;
 		else
 			return SharedLibraryExtensionDylibW;
+
 #else
 		return SharedLibraryExtensionSoW;
 #endif
@@ -1052,3 +1062,4 @@ PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 
 	return NULL;
 }
+

@@ -36,3 +36,4 @@ BOOL wlf_handle_key(freerdp* instance, UwacKeyEvent* ev);
 BOOL wlf_keyboard_enter(freerdp* instance, UwacKeyboardEnterLeaveEvent* ev);
 
 #endif /* FREERDP_CLIENT_WAYLAND_INPUT_H */
+

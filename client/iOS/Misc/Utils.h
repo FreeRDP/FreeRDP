@@ -1,9 +1,9 @@
 /*
  Utility functions
- 
+
  Copyright 2013 Thincast Technologies GmbH, Authors: Martin Fleisz, Dorian Johnson
- 
- This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+
+ This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
@@ -54,10 +54,10 @@ void SetSwapMouseButtonsFlag(BOOL swapped);
 // set invert scrolling flag
 void SetInvertScrollingFlag(BOOL invert);
 
-// return event value for left mouse button 
+// return event value for left mouse button
 int GetLeftMouseButtonClickEvent(BOOL down);
 
-// return event value for right mouse button 
+// return event value for right mouse button
 int GetRightMouseButtonClickEvent(BOOL down);
 
 // return event value for mouse move event
@@ -76,5 +76,6 @@ void WakeUpWWAN(void);
 #pragma mark System Info functions
 NSString* TSXGetPlatform(void);
 BOOL TSXDeviceHasJailBreak(void);
-NSString* TSXGetPrimaryMACAddress(NSString *sep);
+NSString* TSXGetPrimaryMACAddress(NSString* sep);
+
 

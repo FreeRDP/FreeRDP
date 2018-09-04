@@ -122,3 +122,4 @@ FREERDP_API void h264_context_free(H264_CONTEXT* h264);
 
 #endif /* FREERDP_CODEC_H264_H */
 
+

@@ -25,3 +25,4 @@
 #define WINPR_TAG(tag) "com.winpr." tag
 
 #endif /* FREERDP_UTILS_DEBUG_H */
+

@@ -27,14 +27,16 @@
 #define INFO_TYPE_LOGON_PLAIN_NOTIFY	0x00000002
 #define INFO_TYPE_LOGON_EXTENDED_INF	0x00000003
 
-struct rdp_logon_info {
+struct rdp_logon_info
+{
 	UINT32 sessionId;
-	char *username;
-	char *domain;
+	char* username;
+	char* domain;
 };
 typedef struct rdp_logon_info logon_info;
 
-struct rdp_logon_info_ex {
+struct rdp_logon_info_ex
+{
 	BOOL haveCookie;
 	UINT32 LogonId;
 	BYTE ArcRandomBits[16];
@@ -46,3 +48,4 @@ struct rdp_logon_info_ex {
 typedef struct rdp_logon_info_ex logon_info_ex;
 
 #endif /* FREERDP_SESSION_H */
+

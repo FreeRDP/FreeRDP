@@ -1213,3 +1213,4 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 
 	return freerdp_channels_client_load(channels, settings, entry, data);
 }
+

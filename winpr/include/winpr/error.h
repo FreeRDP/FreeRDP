@@ -130,7 +130,7 @@
 #define HRESULT_FROM_NT(x)	((HRESULT) ((x) | FACILITY_NT_BIT))
 
 #define __HRESULT_FROM_WIN32(x)		((HRESULT) (x) <= 0 ? ((HRESULT) (x)) : \
-		((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
+                                     ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
 #define HRESULT_FROM_WIN32(x)		__HRESULT_FROM_WIN32(x)
 
 #define HRESULT_SEVERITY(hr)	(((hr) >> 31) & 0x1)
@@ -140,14 +140,14 @@
 #define IS_ERROR(Status)	(((unsigned long) (Status)) >> 31 == SEVERITY_ERROR)
 
 #define MAKE_HRESULT(sev, fac, code) \
-		((HRESULT) (((unsigned long) (sev) << 31) | ((unsigned long) (fac) << 16) | ((unsigned long) (code)))
+	((HRESULT) (((unsigned long) (sev) << 31) | ((unsigned long) (fac) << 16) | ((unsigned long) (code)))
 
 #define SCODE_CODE(sc)		((sc) & 0xFFFF)
 #define SCODE_FACILITY(sc)	(((sc) >> 16) & 0x1FFF)
 #define SCODE_SEVERITY(sc)	(((sc) >> 31) & 0x1)
 
 #define MAKE_SCODE(sev,fac,code) \
-		((SCODE) (((unsigned long) (sev) << 31) | ((unsigned long) (fac) << 16) | ((unsigned long) (code))))
+	((SCODE) (((unsigned long) (sev) << 31) | ((unsigned long) (fac) << 16) | ((unsigned long) (code))))
 
 #define S_OK										((HRESULT) 0L)
 #define S_FALSE										((HRESULT) 1L)
@@ -2975,7 +2975,7 @@
 #define EXCEPTION_MAXIMUM_PARAMETERS							15
 
 typedef struct _EXCEPTION_RECORD EXCEPTION_RECORD;
-typedef struct _EXCEPTION_RECORD *PEXCEPTION_RECORD;
+typedef struct _EXCEPTION_RECORD* PEXCEPTION_RECORD;
 
 struct _EXCEPTION_RECORD
 {
@@ -2995,10 +2995,10 @@ typedef struct _EXCEPTION_POINTERS
 	PCONTEXT ContextRecord;
 } EXCEPTION_POINTERS, *PEXCEPTION_POINTERS;
 
-typedef LONG (*PTOP_LEVEL_EXCEPTION_FILTER)(PEXCEPTION_POINTERS ExceptionInfo);
+typedef LONG(*PTOP_LEVEL_EXCEPTION_FILTER)(PEXCEPTION_POINTERS ExceptionInfo);
 typedef PTOP_LEVEL_EXCEPTION_FILTER LPTOP_LEVEL_EXCEPTION_FILTER;
 
-typedef LONG (*PVECTORED_EXCEPTION_HANDLER)(PEXCEPTION_POINTERS ExceptionInfo);
+typedef LONG(*PVECTORED_EXCEPTION_HANDLER)(PEXCEPTION_POINTERS ExceptionInfo);
 
 #ifdef __cplusplus
 extern "C" {
@@ -3014,11 +3014,13 @@ WINPR_API VOID SetLastError(DWORD dwErrCode);
 
 WINPR_API VOID RestoreLastError(DWORD dwErrCode);
 
-WINPR_API VOID RaiseException(DWORD dwExceptionCode, DWORD dwExceptionFlags, DWORD nNumberOfArguments, CONST ULONG_PTR* lpArguments);
+WINPR_API VOID RaiseException(DWORD dwExceptionCode, DWORD dwExceptionFlags,
+                              DWORD nNumberOfArguments, CONST ULONG_PTR* lpArguments);
 
 WINPR_API LONG UnhandledExceptionFilter(PEXCEPTION_POINTERS ExceptionInfo);
 
-WINPR_API LPTOP_LEVEL_EXCEPTION_FILTER SetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
+WINPR_API LPTOP_LEVEL_EXCEPTION_FILTER SetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER
+        lpTopLevelExceptionFilter);
 
 WINPR_API PVOID AddVectoredExceptionHandler(ULONG First, PVECTORED_EXCEPTION_HANDLER Handler);
 
@@ -3035,4 +3037,5 @@ WINPR_API ULONG RemoveVectoredContinueHandler(PVOID Handle);
 #endif
 
 #endif /* WINPR_ERROR_H */
+
 

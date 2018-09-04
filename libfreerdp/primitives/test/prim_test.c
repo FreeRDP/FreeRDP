@@ -80,16 +80,17 @@ void _floatprint(float t, char* output)
 	else if (i == 0) sprintf(output, "%d", (int)(t + 0.5));
 	else if (t < 1e+3) sprintf(output, "%3d", i);
 	else if (t < 1e+6) sprintf(output, "%3d,%03d",
-					   i / 1000, i % 1000);
+		                           i / 1000, i % 1000);
 	else if (t < 1e+9) sprintf(output, "%3d,%03d,000",
-					   i / 1000000, (i % 1000000) / 1000);
+		                           i / 1000000, (i % 1000000) / 1000);
 	else if (t < 1e+12) sprintf(output, "%3d,%03d,000,000",
-					    i / 1000000000, (i % 1000000000) / 1000000);
+		                            i / 1000000000, (i % 1000000000) / 1000000);
 	else sprintf(output, "%f", t);
 }
 
 
-void prim_test_setup(BOOL performance) {
+void prim_test_setup(BOOL performance)
+{
 	generic = primitives_get_generic();
 	optimized = primitives_get();
 	g_TestPrimitivesPerformance = performance;
@@ -97,17 +98,17 @@ void prim_test_setup(BOOL performance) {
 
 
 BOOL speed_test(const char* name, const char* dsc, UINT32 iterations,
-		pstatus_t(*generic)(), pstatus_t(*optimised)(), ...)
+                pstatus_t(*generic)(), pstatus_t(*optimised)(), ...)
 {
 	UINT32 i;
 
 	if (!name || !generic || !optimised || (iterations == 0))
 		return FALSE;
 
-	for (i=0; i<iterations; i++)
+	for (i = 0; i < iterations; i++)
 	{
-
 	}
 
 	return TRUE;
 }
+

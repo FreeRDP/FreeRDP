@@ -1436,3 +1436,4 @@ FREERDP_API int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->EnumMonitors = x11_shadow_enum_monitors;
 	return 1;
 }
+

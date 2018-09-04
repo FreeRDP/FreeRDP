@@ -36,3 +36,4 @@ void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e);
 
 #endif /* FREERDP_CLIENT_X11_CHANNELS_H */
+

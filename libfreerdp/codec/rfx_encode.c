@@ -302,3 +302,4 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb)
 	BufferPool_Return(context->priv->BufferPool, pBuffer);
 }
+

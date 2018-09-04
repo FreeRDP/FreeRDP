@@ -7,9 +7,7 @@ int TestWtsApiExtraLogoffSession(int argc, char* argv[])
 {
 	BOOL bSuccess;
 	HANDLE hServer;
-
 	hServer = WTS_CURRENT_SERVER_HANDLE;
-
 	bSuccess = WTSLogoffSession(hServer, WTS_CURRENT_SESSION, FALSE);
 
 	if (!bSuccess)
@@ -20,3 +18,4 @@ int TestWtsApiExtraLogoffSession(int argc, char* argv[])
 
 	return 0;
 }
+

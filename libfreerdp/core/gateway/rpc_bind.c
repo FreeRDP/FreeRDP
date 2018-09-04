@@ -372,3 +372,4 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	free(buffer);
 	return (status > 0) ? 1 : -1;
 }
+

@@ -88,3 +88,4 @@ void freerdp_channels_dummy()
 /**
  * end of ugly symbols import workaround
  */
+

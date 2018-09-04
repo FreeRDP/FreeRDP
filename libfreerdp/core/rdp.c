@@ -1771,3 +1771,4 @@ void rdp_free(rdpRdp* rdp)
 	}
 }
 
+

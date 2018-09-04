@@ -4208,3 +4208,4 @@ BOOL rdp_send_confirm_active(rdpRdp* rdp)
 	Stream_Free(s, TRUE);
 	return status;
 }
+

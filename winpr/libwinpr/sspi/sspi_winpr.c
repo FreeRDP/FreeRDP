@@ -1614,3 +1614,4 @@ static SecurityFunctionTableW winpr_SecurityFunctionTableW =
 	winpr_DecryptMessage, /* DecryptMessage */
 	winpr_SetContextAttributesW, /* SetContextAttributes */
 };
+

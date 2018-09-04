@@ -464,3 +464,4 @@ void rfx_init_sse2(RFX_CONTEXT* context)
 	context->dwt_2d_decode = rfx_dwt_2d_decode_sse2;
 	context->dwt_2d_encode = rfx_dwt_2d_encode_sse2;
 }
+

@@ -57,3 +57,4 @@ FREERDP_API void pointer_cache_free(rdpPointerCache* pointer_cache);
 #endif
 
 #endif /* FREERDP_POINTER_CACHE_H */
+

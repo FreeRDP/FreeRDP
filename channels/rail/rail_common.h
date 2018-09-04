@@ -55,3 +55,4 @@ UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength);
 void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength);
 
 #endif /* FREERDP_CHANNEL_RAIL_COMMON_H */
+

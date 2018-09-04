@@ -507,3 +507,4 @@ FREERDP_API int Win_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->EnumMonitors = win_shadow_enum_monitors;
 	return 1;
 }
+

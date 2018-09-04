@@ -598,3 +598,4 @@ BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 	return ffmpeg_decode(context->context, context->packet, context->frame,
 	                     context->rcontext, context->resampled, out);
 }
+

@@ -39,3 +39,4 @@ WINPR_API void string_list_print(FILE* out, const char* const* string_list);
 #endif
 
 #endif /* WINPR_UTILS_STRLST_H */
+

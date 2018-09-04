@@ -83,3 +83,4 @@ FREERDP_LOCAL BOOL rdp_server_reactivate(rdpRdp* rdp);
 FREERDP_LOCAL int rdp_server_transition_to_state(rdpRdp* rdp, int state);
 
 #endif /* FREERDP_LIB_CORE_CONNECTION_H */
+

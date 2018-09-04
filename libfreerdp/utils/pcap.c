@@ -80,6 +80,7 @@ static BOOL pcap_read_record(rdpPcap* pcap, pcap_record* record)
 
 	record->length = record->header.incl_len;
 	record->data = malloc(record->length);
+
 	if (!record->data)
 		return FALSE;
 
@@ -89,13 +90,14 @@ static BOOL pcap_read_record(rdpPcap* pcap, pcap_record* record)
 		record->data = NULL;
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
 static BOOL pcap_write_record(rdpPcap* pcap, pcap_record* record)
 {
 	return pcap_write_record_header(pcap, &record->header) &&
-			(fwrite(record->data, record->length, 1, pcap->fp) == 1);
+	       (fwrite(record->data, record->length, 1, pcap->fp) == 1);
 }
 
 BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
@@ -106,6 +108,7 @@ BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 	if (pcap->tail == NULL)
 	{
 		pcap->tail = (pcap_record*) calloc(1, sizeof(pcap_record));
+
 		if (!pcap->tail)
 			return FALSE;
 
@@ -116,6 +119,7 @@ BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 	else
 	{
 		record = (pcap_record*) calloc(1, sizeof(pcap_record));
+
 		if (!record)
 			return FALSE;
 
@@ -130,7 +134,6 @@ BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 	record->length = length;
 	record->header.incl_len = length;
 	record->header.orig_len = length;
-
 	gettimeofday(&tp, 0);
 	record->header.ts_sec = tp.tv_sec;
 	record->header.ts_usec = tp.tv_usec;
@@ -152,7 +155,6 @@ BOOL pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
 
 	pcap_read_record_header(pcap, &record->header);
 	record->length = record->header.incl_len;
-
 	return TRUE;
 }
 
@@ -164,13 +166,12 @@ BOOL pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record)
 BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 {
 	return pcap_has_next_record(pcap) &&
-			pcap_read_record(pcap, record);
+	       pcap_read_record(pcap, record);
 }
 
 rdpPcap* pcap_open(char* name, BOOL write)
 {
 	rdpPcap* pcap;
-
 	FILE* pcap_fp = fopen(name, write ? "w+b" : "rb");
 
 	if (pcap_fp == NULL)
@@ -180,6 +181,7 @@ rdpPcap* pcap_open(char* name, BOOL write)
 	}
 
 	pcap = (rdpPcap*) calloc(1, sizeof(rdpPcap));
+
 	if (!pcap)
 		goto fail_close;
 
@@ -197,6 +199,7 @@ rdpPcap* pcap_open(char* name, BOOL write)
 		pcap->header.sigfigs = 0;
 		pcap->header.snaplen = 0xFFFFFFFF;
 		pcap->header.network = 0;
+
 		if (!pcap_write_header(pcap, &pcap->header))
 			goto fail;
 	}
@@ -205,12 +208,12 @@ rdpPcap* pcap_open(char* name, BOOL write)
 		_fseeki64(pcap->fp, 0, SEEK_END);
 		pcap->file_size = _ftelli64(pcap->fp);
 		_fseeki64(pcap->fp, 0, SEEK_SET);
+
 		if (!pcap_read_header(pcap, &pcap->header))
 			goto fail;
 	}
 
 	return pcap;
-
 fail:
 	free(pcap);
 fail_close:
@@ -239,3 +242,4 @@ void pcap_close(rdpPcap* pcap)
 
 	free(pcap);
 }
+

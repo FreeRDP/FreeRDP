@@ -78,7 +78,6 @@ BOOL Dictionary_IsSynchronized(wDictionary* dictionary)
 
 void Dictionary_Add(wDictionary* dictionary, void* key, void* value)
 {
-
 }
 
 /**
@@ -87,7 +86,6 @@ void Dictionary_Add(wDictionary* dictionary, void* key, void* value)
 
 void Dictionary_Clear(wDictionary* dictionary)
 {
-
 }
 
 /**
@@ -105,7 +103,6 @@ BOOL Dictionary_Contains(wDictionary* dictionary, void* key)
 
 void Dictionary_Remove(wDictionary* dictionary, void* key)
 {
-
 }
 
 /**
@@ -115,7 +112,6 @@ void Dictionary_Remove(wDictionary* dictionary, void* key)
 wDictionary* Dictionary_New(BOOL synchronized)
 {
 	wDictionary* dictionary = NULL;
-
 	dictionary = (wDictionary*) malloc(sizeof(wDictionary));
 
 	if (dictionary)
@@ -133,4 +129,5 @@ void Dictionary_Free(wDictionary* dictionary)
 
 	free(dictionary);
 }
+
 

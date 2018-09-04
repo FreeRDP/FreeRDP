@@ -68,11 +68,14 @@ WINPR_API int IniFile_WriteFile(wIniFile* ini, const char* filename);
 WINPR_API char** IniFile_GetSectionNames(wIniFile* ini, int* count);
 WINPR_API char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, int* count);
 
-WINPR_API const char* IniFile_GetKeyValueString(wIniFile* ini, const char* section, const char* key);
+WINPR_API const char* IniFile_GetKeyValueString(wIniFile* ini, const char* section,
+        const char* key);
 WINPR_API int IniFile_GetKeyValueInt(wIniFile* ini, const char* section, const char* key);
 
-WINPR_API int IniFile_SetKeyValueString(wIniFile* ini, const char* section, const char* key, const char* value);
-WINPR_API int IniFile_SetKeyValueInt(wIniFile* ini, const char* section, const char* key, int value);
+WINPR_API int IniFile_SetKeyValueString(wIniFile* ini, const char* section, const char* key,
+                                        const char* value);
+WINPR_API int IniFile_SetKeyValueInt(wIniFile* ini, const char* section, const char* key,
+                                     int value);
 
 WINPR_API wIniFile* IniFile_New();
 WINPR_API void IniFile_Free(wIniFile* ini);
@@ -82,4 +85,5 @@ WINPR_API void IniFile_Free(wIniFile* ini);
 #endif
 
 #endif /* WINPR_UTILS_INI_H */
+
 

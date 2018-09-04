@@ -40,3 +40,4 @@ void wlf_OnChannelDisconnectedEventHandler(void* context,
         ChannelDisconnectedEventArgs* e);
 
 #endif /* FREERDP_CLIENT_WAYLAND_CHANNELS_H */
+

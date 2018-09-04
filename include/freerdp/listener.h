@@ -35,7 +35,8 @@ typedef BOOL (*psListenerOpen)(freerdp_listener* instance, const char* bind_addr
 typedef BOOL (*psListenerOpenLocal)(freerdp_listener* instance, const char* path);
 typedef BOOL (*psListenerOpenFromSocket)(freerdp_listener* instance, int fd);
 typedef BOOL (*psListenerGetFileDescriptor)(freerdp_listener* instance, void** rfds, int* rcount);
-typedef DWORD (*psListenerGetEventHandles)(freerdp_listener* instance, HANDLE* events, DWORD nCount);
+typedef DWORD (*psListenerGetEventHandles)(freerdp_listener* instance, HANDLE* events,
+        DWORD nCount);
 typedef BOOL (*psListenerCheckFileDescriptor)(freerdp_listener* instance);
 typedef void (*psListenerClose)(freerdp_listener* instance);
 typedef BOOL (*psPeerAccepted)(freerdp_listener* instance, freerdp_peer* client);
@@ -68,3 +69,4 @@ FREERDP_API void freerdp_listener_free(freerdp_listener* instance);
 #endif
 
 #endif /* FREERDP_LISTENER_H */
+

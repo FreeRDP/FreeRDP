@@ -1190,3 +1190,4 @@ void transport_free(rdpTransport* transport)
 	DeleteCriticalSection(&(transport->WriteLock));
 	free(transport);
 }
+

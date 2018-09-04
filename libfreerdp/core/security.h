@@ -55,3 +55,4 @@ FREERDP_LOCAL BOOL security_fips_check_signature(const BYTE* data, size_t length
         const BYTE* sig, rdpRdp* rdp);
 
 #endif /* FREERDP_LIB_CORE_SECURITY_H */
+

@@ -62,7 +62,7 @@ pstatus_t sse2_alphaComp_argb(
 	if (width < 4)     /* pointless if too small */
 	{
 		return generic->alphaComp_argb(pSrc1, src1Step, pSrc2, src2Step,
-					       pDst, dstStep, width, height);
+		                               pDst, dstStep, width, height);
 	}
 
 	dptr = (UINT32*) pDst;
@@ -110,8 +110,9 @@ pstatus_t sse2_alphaComp_argb(
 		{
 			pstatus_t status;
 			status = generic->alphaComp_argb((const BYTE*) sptr1,
-						src1Step, (const BYTE*) sptr2, src2Step,
-						(BYTE*) dptr, dstStep, leadIn, 1);
+			                                 src1Step, (const BYTE*) sptr2, src2Step,
+			                                 (BYTE*) dptr, dstStep, leadIn, 1);
+
 			if (status != PRIMITIVES_SUCCESS)
 				return status;
 
@@ -187,8 +188,9 @@ pstatus_t sse2_alphaComp_argb(
 		{
 			pstatus_t status;
 			status = generic->alphaComp_argb((const BYTE*) sptr1, src1Step,
-						(const BYTE*) sptr2, src2Step,
-						(BYTE*) dptr, dstStep, pixels, 1);
+			                                 (const BYTE*) sptr2, src2Step,
+			                                 (BYTE*) dptr, dstStep, pixels, 1);
+
 			if (status != PRIMITIVES_SUCCESS)
 				return status;
 
@@ -220,7 +222,7 @@ static pstatus_t ipp_alphaComp_argb(
 	sz.width  = width;
 	sz.height = height;
 	return ippiAlphaComp_8u_AC4R(pSrc1, src1Step, pSrc2, src2Step,
-				     pDst, dstStep, sz, ippAlphaOver);
+	                             pDst, dstStep, sz, ippAlphaOver);
 }
 #endif
 
@@ -241,4 +243,5 @@ void primitives_init_alphaComp_opt(primitives_t* prims)
 
 #endif
 }
+
 

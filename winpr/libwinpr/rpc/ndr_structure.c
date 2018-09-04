@@ -34,7 +34,8 @@
 
 /* Structures: http://msdn.microsoft.com/en-us/library/windows/desktop/aa378695/ */
 
-void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                               PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_STRUCT
@@ -67,7 +68,8 @@ void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	WLog_ERR(TAG, "warning: NdrSimpleStructBufferSize unimplemented");
 }
 
-void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                   PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_CSTRUCT alignment<1>
@@ -86,7 +88,8 @@ void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* p
 	WLog_ERR(TAG, "warning: NdrConformantStructBufferSize unimplemented");
 }
 
-void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+        PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_CVSTRUCT alignment<1>
@@ -203,7 +206,8 @@ ULONG NdrComplexStructMemberSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFo
 	return size;
 }
 
-void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_BOGUS_STRUCT
@@ -300,3 +304,4 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 }
 
 #endif
+

@@ -7,7 +7,6 @@ static DWORD WINAPI message_queue_consumer_thread(LPVOID arg)
 {
 	wMessage message;
 	wMessageQueue* queue;
-
 	queue = (wMessageQueue*) arg;
 
 	while (MessageQueue_Wait(queue))
@@ -43,14 +42,14 @@ int TestMessageQueue(int argc, char* argv[])
 	}
 
 	if (!MessageQueue_Post(queue, NULL, 123, NULL, NULL) ||
-			!MessageQueue_Post(queue, NULL, 456, NULL, NULL) ||
-			!MessageQueue_Post(queue, NULL, 789, NULL, NULL) ||
-			!MessageQueue_PostQuit(queue, 0) ||
-			WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0)
+	    !MessageQueue_Post(queue, NULL, 456, NULL, NULL) ||
+	    !MessageQueue_Post(queue, NULL, 789, NULL, NULL) ||
+	    !MessageQueue_PostQuit(queue, 0) ||
+	    WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0)
 		return -1;
 
 	MessageQueue_Free(queue);
 	CloseHandle(thread);
-
 	return 0;
 }
+

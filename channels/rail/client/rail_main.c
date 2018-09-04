@@ -965,3 +965,4 @@ error_out:
 	free(rail);
 	return FALSE;
 }
+

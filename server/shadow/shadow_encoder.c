@@ -473,3 +473,4 @@ void shadow_encoder_free(rdpShadowEncoder* encoder)
 	shadow_encoder_uninit(encoder);
 	free(encoder);
 }
+

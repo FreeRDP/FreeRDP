@@ -67,7 +67,8 @@ static UINT sf_peer_audin_open_result(audin_server_context* context, UINT32 resu
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT sf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
+static UINT sf_peer_audin_receive_samples(audin_server_context* context, const void* buf,
+        int nframes)
 {
 	WLog_DBG(TAG, "AUDIN receive %d frames.", nframes);
 	return CHANNEL_RC_OK;
@@ -78,17 +79,15 @@ void sf_peer_audin_init(testPeerContext* context)
 	context->audin = audin_server_context_new(context->vcm);
 	context->audin->rdpcontext = &context->_p;
 	context->audin->data = context;
-
 	context->audin->server_formats = test_audio_formats;
 	context->audin->num_server_formats =
-			sizeof(test_audio_formats) / sizeof(test_audio_formats[0]);
-
+	    sizeof(test_audio_formats) / sizeof(test_audio_formats[0]);
 	context->audin->dst_format.wFormatTag = 1;
 	context->audin->dst_format.nChannels = 2;
 	context->audin->dst_format.nSamplesPerSec = 44100;
 	context->audin->dst_format.wBitsPerSample = 16;
-
 	context->audin->Opening = sf_peer_audin_opening;
 	context->audin->OpenResult = sf_peer_audin_open_result;
 	context->audin->ReceiveSamples = sf_peer_audin_receive_samples;
 }
+

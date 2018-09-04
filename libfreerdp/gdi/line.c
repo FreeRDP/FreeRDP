@@ -310,3 +310,4 @@ BOOL gdi_MoveToEx(HGDI_DC hdc, UINT32 X, UINT32 Y, HGDI_POINT lpPoint)
 	hdc->pen->posY = Y;
 	return TRUE;
 }
+

@@ -387,3 +387,4 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 	WLog_ERR(TAG,  "status: %s (0x%08"PRIX32")", "UNKNOWN", code);
 	return 0;
 }
+

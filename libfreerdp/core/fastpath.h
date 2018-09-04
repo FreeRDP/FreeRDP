@@ -175,3 +175,4 @@ FREERDP_LOCAL rdpFastPath* fastpath_new(rdpRdp* rdp);
 FREERDP_LOCAL void fastpath_free(rdpFastPath* fastpath);
 
 #endif /* FREERDP_LIB_CORE_FASTPATH_H */
+

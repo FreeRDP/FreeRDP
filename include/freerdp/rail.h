@@ -388,3 +388,4 @@ FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unico
 
 
 #endif /* FREERDP_RAIL_GLOBAL_H */
+

@@ -25,3 +25,4 @@ enum APPLE_KEYBOARD_TYPE
 };
 
 enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type();
+

@@ -31,8 +31,8 @@ int main(int argc, char* argv[])
 {
 	MAKECERT_CONTEXT* context;
 	int ret = 0;
-
 	context = makecert_context_new();
+
 	if (!context)
 		return 1;
 
@@ -40,6 +40,6 @@ int main(int argc, char* argv[])
 		ret = 1;
 
 	makecert_context_free(context);
-
 	return ret;
 }
+

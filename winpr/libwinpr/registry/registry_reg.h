@@ -64,6 +64,7 @@ struct _reg_key
 };
 
 Reg* reg_open(BOOL read_only);
-void reg_close(Reg *reg);
+void reg_close(Reg* reg);
 
 #endif
+

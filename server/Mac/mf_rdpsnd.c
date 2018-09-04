@@ -224,3 +224,4 @@ void mf_rdpsnd_derive_buffer_size(AudioQueueRef                audioQueue,
 	*outBufferSize = (UInt32)(numBytesForTime < maxBufferSize ? numBytesForTime : maxBufferSize);
 }
 
+

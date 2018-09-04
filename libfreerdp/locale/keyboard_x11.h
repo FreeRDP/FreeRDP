@@ -26,3 +26,4 @@ FREERDP_LOCAL int freerdp_detect_keyboard_layout_from_xkb(
     DWORD* keyboardLayoutId);
 
 #endif /* FREERDP_LOCALE_KEYBOARD_X11_H */
+

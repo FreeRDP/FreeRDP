@@ -9,13 +9,12 @@ int TestSmartCardListReaders(int argc, char* argv[])
 	SCARDCONTEXT hSC;
 	LPSTR mszReaders = NULL;
 	DWORD cchReaders = SCARD_AUTOALLOCATE;
-
 	lStatus = SCardEstablishContext(SCARD_SCOPE_USER, NULL, NULL, &hSC);
 
 	if (lStatus != SCARD_S_SUCCESS)
 	{
 		printf("SCardEstablishContext failure: %s (0x%08"PRIX32")\n",
-				SCardGetErrorString(lStatus), lStatus);
+		       SCardGetErrorString(lStatus), lStatus);
 		return 0;
 	}
 
@@ -45,7 +44,7 @@ int TestSmartCardListReaders(int argc, char* argv[])
 	}
 
 	SCardReleaseContext(hSC);
-
 	return 0;
 }
+
 

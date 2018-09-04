@@ -61,3 +61,4 @@ struct remdesk_plugin
 typedef struct remdesk_plugin remdeskPlugin;
 
 #endif /* FREERDP_CHANNEL_REMDESK_CLIENT_MAIN_H */
+

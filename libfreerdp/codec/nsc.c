@@ -411,3 +411,4 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 
 	return TRUE;
 }
+

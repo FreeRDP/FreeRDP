@@ -26,3 +26,4 @@
 #define TSMF_DVC_CHANNEL_NAME	"TSMF"
 
 #endif /* FREERDP_CHANNEL_TSMF_H */
+

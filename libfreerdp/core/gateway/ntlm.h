@@ -79,3 +79,4 @@ FREERDP_LOCAL rdpNtlm* ntlm_new(void);
 FREERDP_LOCAL void ntlm_free(rdpNtlm* ntlm);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_NTLM_H */
+

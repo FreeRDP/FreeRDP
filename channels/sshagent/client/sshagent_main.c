@@ -189,8 +189,8 @@ static DWORD WINAPI sshagent_read_thread(LPVOID data)
 		setChannelError(callback->rdpcontext, status,
 		                "sshagent_read_thread reported an error");
 
-        ExitThread(status);
-        return status;
+	ExitThread(status);
+	return status;
 }
 
 /**
@@ -302,7 +302,7 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 	callback->thread
 	    = CreateThread(NULL,
 	                   0,
-                           sshagent_read_thread,
+	                   sshagent_read_thread,
 	                   (void*) callback,
 	                   0,
 	                   NULL);
@@ -406,3 +406,4 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 }
 
 /* vim: set sw=8:ts=8:noet: */
+

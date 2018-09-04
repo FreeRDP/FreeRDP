@@ -433,3 +433,4 @@ const SecPkgInfoW SCHANNEL_SecPkgInfoW =
 	SCHANNEL_SecPkgInfoW_Name, /* Name */
 	SCHANNEL_SecPkgInfoW_Comment /* Comment */
 };
+

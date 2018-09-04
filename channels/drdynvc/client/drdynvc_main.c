@@ -1658,3 +1658,4 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 	return TRUE;
 }
 
+

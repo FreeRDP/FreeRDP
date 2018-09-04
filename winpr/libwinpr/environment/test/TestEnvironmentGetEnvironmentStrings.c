@@ -9,9 +9,7 @@ int TestEnvironmentGetEnvironmentStrings(int argc, char* argv[])
 	TCHAR* p;
 	int length;
 	LPTCH lpszEnvironmentBlock;
-
 	lpszEnvironmentBlock = GetEnvironmentStrings();
-
 	p = (TCHAR*) lpszEnvironmentBlock;
 
 	while (p[0] && p[1])
@@ -22,7 +20,7 @@ int TestEnvironmentGetEnvironmentStrings(int argc, char* argv[])
 	}
 
 	FreeEnvironmentStrings(lpszEnvironmentBlock);
-
 	return 0;
 }
+
 

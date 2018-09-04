@@ -11,15 +11,13 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 	ULONG cPackages;
 	SECURITY_STATUS status;
 	SecPkgInfo* pPackageInfo;
-
 	sspi_GlobalInit();
-
 	status = EnumerateSecurityPackages(&cPackages, &pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
 		sspi_GlobalFinish();
-		return -1;	
+		return -1;
 	}
 
 	_tprintf(_T("\nEnumerateSecurityPackages (%")_T(PRIu32)_T("):\n"), cPackages);
@@ -31,7 +29,7 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 
 	FreeContextBuffer(pPackageInfo);
 	sspi_GlobalFinish();
-
 	return 0;
 }
+
 

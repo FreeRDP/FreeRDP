@@ -34,15 +34,15 @@ int wf_directsound_activate(RdpsndServerContext* context)
 	HRESULT hr;
 	wfInfo* wfi;
 	HANDLE hThread;
-	
 	LPDIRECTSOUNDCAPTUREBUFFER  pDSCB;
-
 	wfi = wf_info_get_instance();
+
 	if (!wfi)
 	{
 		WLog_ERR(TAG, "Failed to wfi instance");
 		return 1;
 	}
+
 	WLog_DBG(TAG, "RDPSND (direct sound) Activated");
 	hr = DirectSoundCaptureCreate8(NULL, &cap, NULL);
 
@@ -60,7 +60,6 @@ int wf_directsound_activate(RdpsndServerContext* context)
 	dscbd.lpwfxFormat = wfi->agreed_format;
 	dscbd.dwFXCount = 0;
 	dscbd.lpDSCFXDesc = NULL;
-
 	hr = cap->lpVtbl->CreateCaptureBuffer(cap, &dscbd, &pDSCB, NULL);
 
 	if (FAILED(hr))
@@ -70,10 +69,12 @@ int wf_directsound_activate(RdpsndServerContext* context)
 
 	WLog_INFO(TAG, "Created capture buffer");
 	hr = pDSCB->lpVtbl->QueryInterface(pDSCB, &IID_IDirectSoundCaptureBuffer8, (LPVOID*)&capBuf);
+
 	if (FAILED(hr))
 	{
 		WLog_ERR(TAG, "Failed to QI capture buffer");
 	}
+
 	WLog_INFO(TAG, "Created IDirectSoundCaptureBuffer8");
 	pDSCB->lpVtbl->Release(pDSCB);
 	lastPos = 0;
@@ -83,8 +84,8 @@ int wf_directsound_activate(RdpsndServerContext* context)
 		WLog_ERR(TAG, "Failed to create direct sound thread");
 		return 1;
 	}
-	CloseHandle(hThread);
 
+	CloseHandle(hThread);
 	return 0;
 }
 
@@ -96,7 +97,6 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 	DWORD diff, rate;
 	wfPeerContext* context;
 	wfInfo* wfi;
-
 	VOID* pbCaptureData  = NULL;
 	DWORD dwCaptureLength = 0;
 	VOID* pbCaptureData2 = NULL;
@@ -104,8 +104,8 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 	VOID* pbPlayData   = NULL;
 	DWORD dwReadPos = 0;
 	LONG lLockSize = 0;
-
 	wfi = wf_info_get_instance();
+
 	if (!wfi)
 	{
 		WLog_ERR(TAG, "Failed get instance");
@@ -116,15 +116,16 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 	rate = 1000 / 24;
 	WLog_INFO(TAG, "Trying to start capture");
 	hr = capBuf->lpVtbl->Start(capBuf, DSCBSTART_LOOPING);
+
 	if (FAILED(hr))
 	{
 		WLog_ERR(TAG, "Failed to start capture");
 	}
+
 	WLog_INFO(TAG, "Capture started");
 
 	while (1)
 	{
-
 		end = GetTickCount();
 		diff = end - beg;
 
@@ -145,6 +146,7 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 			}
 
 			hr = capBuf->lpVtbl->GetCurrentPosition(capBuf, NULL, &dwReadPos);
+
 			if (FAILED(hr))
 			{
 				WLog_ERR(TAG, "Failed to get read pos");
@@ -153,6 +155,7 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 			}
 
 			lLockSize = dwReadPos - lastPos;//dscbd.dwBufferBytes;
+
 			if (lLockSize < 0) lLockSize += dscbd.dwBufferBytes;
 
 			//WLog_DBG(TAG, "Last, read, lock = [%"PRIu32", %"PRIu32", %"PRId32"]\n", lastPos, dwReadPos, lLockSize);
@@ -163,8 +166,9 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 				continue;
 			}
 
-			
-			hr = capBuf->lpVtbl->Lock(capBuf, lastPos, lLockSize, &pbCaptureData, &dwCaptureLength, &pbCaptureData2, &dwCaptureLength2, 0L);
+			hr = capBuf->lpVtbl->Lock(capBuf, lastPos, lLockSize, &pbCaptureData, &dwCaptureLength,
+			                          &pbCaptureData2, &dwCaptureLength2, 0L);
+
 			if (FAILED(hr))
 			{
 				WLog_ERR(TAG, "Failed to lock sound capture buffer");
@@ -174,14 +178,14 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 
 			//fwrite(pbCaptureData, 1, dwCaptureLength, pFile);
 			//fwrite(pbCaptureData2, 1, dwCaptureLength2, pFile);
-
 			//FIXME: frames = bytes/(bytespersample * channels)
-		
-			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData, dwCaptureLength/4, (UINT16)(beg & 0xffff));
-			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData2, dwCaptureLength2/4, (UINT16)(beg & 0xffff));
+			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData, dwCaptureLength / 4,
+			                             (UINT16)(beg & 0xffff));
+			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData2, dwCaptureLength2 / 4,
+			                             (UINT16)(beg & 0xffff));
+			hr = capBuf->lpVtbl->Unlock(capBuf, pbCaptureData, dwCaptureLength, pbCaptureData2,
+			                            dwCaptureLength2);
 
-
-			hr = capBuf->lpVtbl->Unlock(capBuf, pbCaptureData, dwCaptureLength, pbCaptureData2, dwCaptureLength2);
 			if (FAILED(hr))
 			{
 				WLog_ERR(TAG, "Failed to unlock sound capture buffer");
@@ -194,15 +198,13 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 			lastPos %= dscbd.dwBufferBytes;
 			lastPos += dwCaptureLength2;
 			lastPos %= dscbd.dwBufferBytes;
-
 			wf_rdpsnd_unlock();
 		}
-
-		
 	}
 
 	WLog_INFO(TAG, "Trying to stop sound capture");
 	hr = capBuf->lpVtbl->Stop(capBuf);
+
 	if (FAILED(hr))
 	{
 		WLog_ERR(TAG, "Failed to stop capture");
@@ -211,8 +213,7 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 	WLog_INFO(TAG, "Capture stopped");
 	capBuf->lpVtbl->Release(capBuf);
 	cap->lpVtbl->Release(cap);
-
 	lastPos = 0;
-
 	return 0;
 }
+

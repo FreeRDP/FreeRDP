@@ -40,3 +40,4 @@ FREERDP_LOCAL int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer,
 FREERDP_LOCAL int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_BIND_H */
+

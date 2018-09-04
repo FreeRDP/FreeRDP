@@ -173,15 +173,11 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	pMemBlock->pData = pData;
 	pMemBlock->cbData = cbData;
 	pMemBlock->dwFlags = dwFlags;
-
 	winpr_RAND(pMemBlock->salt, 8);
 	winpr_RAND(randomKey, sizeof(randomKey));
-
 	winpr_Cipher_BytesToKey(WINPR_CIPHER_AES_256_CBC, WINPR_MD_SHA1,
-			pMemBlock->salt, randomKey, sizeof(randomKey), 4, pMemBlock->key, pMemBlock->iv);
-
+	                        pMemBlock->salt, randomKey, sizeof(randomKey), 4, pMemBlock->key, pMemBlock->iv);
 	SecureZeroMemory(randomKey, sizeof(randomKey));
-
 	cbOut = pMemBlock->cbData + 16 - 1;
 	pCipherText = (BYTE*) malloc(cbOut);
 
@@ -189,23 +185,23 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 		goto out;
 
 	if ((enc = winpr_Cipher_New(WINPR_CIPHER_AES_256_CBC, WINPR_ENCRYPT,
-				    pMemBlock->key, pMemBlock->iv)) == NULL)
+	                            pMemBlock->key, pMemBlock->iv)) == NULL)
 		goto out;
+
 	if (!winpr_Cipher_Update(enc, pMemBlock->pData, pMemBlock->cbData, pCipherText, &cbOut))
 		goto out;
+
 	if (!winpr_Cipher_Final(enc, pCipherText + cbOut, &cbFinal))
 		goto out;
-	winpr_Cipher_Free(enc);
 
+	winpr_Cipher_Free(enc);
 	CopyMemory(pMemBlock->pData, pCipherText, pMemBlock->cbData);
 	free(pCipherText);
-
 	return ListDictionary_Add(g_ProtectedMemoryBlocks, pData, pMemBlock);
 out:
-	free (pMemBlock);
-	free (pCipherText);
+	free(pMemBlock);
+	free(pCipherText);
 	winpr_Cipher_Free(enc);
-
 	return FALSE;
 }
 
@@ -222,37 +218,35 @@ BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	if (!g_ProtectedMemoryBlocks)
 		return FALSE;
 
-	pMemBlock = (WINPR_PROTECTED_MEMORY_BLOCK*) ListDictionary_GetItemValue(g_ProtectedMemoryBlocks, pData);
+	pMemBlock = (WINPR_PROTECTED_MEMORY_BLOCK*) ListDictionary_GetItemValue(g_ProtectedMemoryBlocks,
+	            pData);
 
 	if (!pMemBlock)
 		goto out;
 
 	cbOut = pMemBlock->cbData + 16 - 1;
-
 	pPlainText = (BYTE*) malloc(cbOut);
 
 	if (!pPlainText)
 		goto out;
 
 	if ((dec = winpr_Cipher_New(WINPR_CIPHER_AES_256_CBC, WINPR_DECRYPT,
-				    pMemBlock->key, pMemBlock->iv)) == NULL)
+	                            pMemBlock->key, pMemBlock->iv)) == NULL)
 		goto out;
+
 	if (!winpr_Cipher_Update(dec, pMemBlock->pData, pMemBlock->cbData, pPlainText, &cbOut))
 		goto out;
+
 	if (!winpr_Cipher_Final(dec, pPlainText + cbOut, &cbFinal))
 		goto out;
-	winpr_Cipher_Free(dec);
 
+	winpr_Cipher_Free(dec);
 	CopyMemory(pMemBlock->pData, pPlainText, pMemBlock->cbData);
 	SecureZeroMemory(pPlainText, pMemBlock->cbData);
 	free(pPlainText);
-
 	ListDictionary_Remove(g_ProtectedMemoryBlocks, pData);
-
 	free(pMemBlock);
-
 	return TRUE;
-
 out:
 	free(pPlainText);
 	free(pMemBlock);
@@ -261,37 +255,40 @@ out:
 }
 
 BOOL CryptProtectData(DATA_BLOB* pDataIn, LPCWSTR szDataDescr, DATA_BLOB* pOptionalEntropy,
-		PVOID pvReserved, CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut)
+                      PVOID pvReserved, CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut)
 {
 	return TRUE;
 }
 
 BOOL CryptUnprotectData(DATA_BLOB* pDataIn, LPWSTR* ppszDataDescr, DATA_BLOB* pOptionalEntropy,
-		PVOID pvReserved, CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut)
+                        PVOID pvReserved, CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut)
 {
 	return TRUE;
 }
 
 BOOL CryptStringToBinaryW(LPCWSTR pszString, DWORD cchString, DWORD dwFlags, BYTE* pbBinary,
-		DWORD* pcbBinary, DWORD* pdwSkip, DWORD* pdwFlags)
+                          DWORD* pcbBinary, DWORD* pdwSkip, DWORD* pdwFlags)
 {
 	return TRUE;
 }
 
 BOOL CryptStringToBinaryA(LPCSTR pszString, DWORD cchString, DWORD dwFlags, BYTE* pbBinary,
-		DWORD* pcbBinary, DWORD* pdwSkip, DWORD* pdwFlags)
+                          DWORD* pcbBinary, DWORD* pdwSkip, DWORD* pdwFlags)
 {
 	return TRUE;
 }
 
-BOOL CryptBinaryToStringW(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPWSTR pszString, DWORD* pcchString)
+BOOL CryptBinaryToStringW(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPWSTR pszString,
+                          DWORD* pcchString)
 {
 	return TRUE;
 }
 
-BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPSTR pszString, DWORD* pcchString)
+BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPSTR pszString,
+                          DWORD* pcchString)
 {
 	return TRUE;
 }
 
 #endif
+

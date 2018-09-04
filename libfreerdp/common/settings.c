@@ -2873,3 +2873,4 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 	settings->SettingsModified[id] = 1;
 	return 0;
 }
+

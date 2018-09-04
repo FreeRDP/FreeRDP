@@ -105,3 +105,4 @@ FREERDP_LOCAL rdpNla* nla_new(freerdp* instance, rdpTransport* transport,
 FREERDP_LOCAL void nla_free(rdpNla* nla);
 
 #endif /* FREERDP_LIB_CORE_NLA_H */
+

@@ -676,7 +676,7 @@ char* crypto_cert_get_upn(X509* x509)
 
 
 /* Deprecated name.*/
-void crypto_cert_subject_alt_name_free(int count, int *lengths, char** alt_names)
+void crypto_cert_subject_alt_name_free(int count, int* lengths, char** alt_names)
 {
 	crypto_cert_dns_names_free(count, lengths, alt_names);
 }
@@ -856,3 +856,4 @@ out_free_issuer:
 	free(issuer);
 	free(subject);
 }
+

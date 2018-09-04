@@ -1286,3 +1286,4 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 
 	return sockfd;
 }
+

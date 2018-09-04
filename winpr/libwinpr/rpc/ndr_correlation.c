@@ -41,7 +41,8 @@
  *
  */
 
-PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat, ULONG_PTR* pCount)
+PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                PFORMAT_STRING pFormat, ULONG_PTR* pCount)
 {
 	LPVOID ptr = NULL;
 	ULONG_PTR data = 0;
@@ -142,7 +143,7 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 			break;
 
 		case FC_HYPER:
-			data = (ULONG_PTR) *(ULONGLONG*) ptr;
+			data = (ULONG_PTR) * (ULONGLONG*) ptr;
 			break;
 	}
 
@@ -181,12 +182,14 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	return pFormat;
 }
 
-PFORMAT_STRING NdrpComputeConformance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+PFORMAT_STRING NdrpComputeConformance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                      PFORMAT_STRING pFormat)
 {
 	return NdrpComputeCount(pStubMsg, pMemory, pFormat, &pStubMsg->MaxCount);
 }
 
-PFORMAT_STRING NdrpComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+PFORMAT_STRING NdrpComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                   PFORMAT_STRING pFormat)
 {
 	ULONG_PTR ActualCount = pStubMsg->ActualCount;
 	pFormat = NdrpComputeCount(pStubMsg, pMemory, pFormat, &ActualCount);
@@ -195,3 +198,4 @@ PFORMAT_STRING NdrpComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* p
 }
 
 #endif
+

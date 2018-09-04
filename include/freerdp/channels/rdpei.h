@@ -29,7 +29,8 @@
 #define RDPEI_DVC_CHANNEL_NAME	"Microsoft::Windows::RDS::Input"
 
 /** @brief protocol version */
-enum {
+enum
+{
 	RDPINPUT_PROTOCOL_V10 = 0x00010000,
 	RDPINPUT_PROTOCOL_V101 = 0x00010001
 };
@@ -88,4 +89,5 @@ typedef struct _RDPINPUT_TOUCH_EVENT RDPINPUT_TOUCH_EVENT;
 
 
 #endif /* FREERDP_CHANNEL_RDPEI_H */
+
 

@@ -219,3 +219,4 @@ FREERDP_API DWORD freerdp_keyboard_get_x11_keycode_from_rdp_scancode(DWORD scanc
 #endif
 
 #endif /* FREERDP_LOCALE_KEYBOARD_H */
+

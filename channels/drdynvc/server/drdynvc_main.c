@@ -49,7 +49,6 @@ static DWORD WINAPI drdynvc_server_thread(LPVOID arg)
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
-
 	s = Stream_New(NULL, 4096);
 
 	if (!s)
@@ -136,7 +135,8 @@ static UINT drdynvc_server_start(DrdynvcServerContext* context)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(context->priv->Thread = CreateThread(NULL, 0, drdynvc_server_thread, (void*) context, 0, NULL)))
+	if (!(context->priv->Thread = CreateThread(NULL, 0, drdynvc_server_thread, (void*) context, 0,
+	                              NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(context->priv->StopEvent);
@@ -203,3 +203,4 @@ void drdynvc_server_context_free(DrdynvcServerContext* context)
 		free(context);
 	}
 }
+

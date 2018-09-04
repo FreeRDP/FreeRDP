@@ -951,3 +951,4 @@ void rpc_free(rdpRpc* rpc)
 		free(rpc);
 	}
 }
+

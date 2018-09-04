@@ -808,3 +808,4 @@ void shadow_server_free(rdpShadowServer* server)
 	free(server);
 }
 
+

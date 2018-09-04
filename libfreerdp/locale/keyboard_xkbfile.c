@@ -314,7 +314,6 @@ XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] =
 void* freerdp_keyboard_xkb_init()
 {
 	int status;
-
 	Display* display = XOpenDisplay(NULL);
 
 	if (!display)
@@ -331,9 +330,7 @@ void* freerdp_keyboard_xkb_init()
 int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_rdp_scancode[256])
 {
 	void* display;
-
 	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(DWORD) * 256);
-
 	display = freerdp_keyboard_xkb_init();
 
 	if (!display)
@@ -345,13 +342,12 @@ int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_
 	if (*keyboardLayoutId == 0)
 	{
 		detect_keyboard_layout_from_xkbfile(display, keyboardLayoutId);
-		DEBUG_KBD("detect_keyboard_layout_from_xkb: %"PRIu32" (0x%08X"PRIX32")", *keyboardLayoutId, *keyboardLayoutId);
+		DEBUG_KBD("detect_keyboard_layout_from_xkb: %"PRIu32" (0x%08X"PRIX32")", *keyboardLayoutId,
+		          *keyboardLayoutId);
 	}
 
 	freerdp_keyboard_load_map_from_xkbfile(display, x11_keycode_to_rdp_scancode);
-
 	XCloseDisplay(display);
-
 	return 0;
 }
 
@@ -372,7 +368,7 @@ static char* comma_substring(char* s, int n)
 	}
 
 	if ((p = strchr(s, ',')))
-		*p = 0;
+		* p = 0;
 
 	return s;
 }
@@ -385,29 +381,23 @@ int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 	XkbStateRec state;
 	XKeyboardState coreKbdState;
 	XkbRF_VarDefsRec rules_names;
-
 	DEBUG_KBD("display: %p", display);
 
 	if (display && XkbRF_GetNamesProp(display, NULL, &rules_names))
 	{
 		DEBUG_KBD("layouts: %s", rules_names.layout ? rules_names.layout : "");
 		DEBUG_KBD("variants: %s", rules_names.variant ? rules_names.variant : "");
-
 		XGetKeyboardControl(display, &coreKbdState);
 
 		if (XkbGetState(display, XkbUseCoreKbd, &state) == Success)
 			group = state.group;
 
 		DEBUG_KBD("group: %u", state.group);
-
 		layout = comma_substring(rules_names.layout, group);
 		variant = comma_substring(rules_names.variant, group);
-
 		DEBUG_KBD("layout: %s", layout ? layout : "");
 		DEBUG_KBD("variant: %s", variant ? variant : "");
-
 		*keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
-
 		free(rules_names.model);
 		free(rules_names.layout);
 		free(rules_names.variant);
@@ -443,7 +433,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD x11_keycode_to_r
 					if (!strcmp(xkb_keyname, XKB_KEY_NAME_SCANCODE_TABLE[j].xkb_keyname))
 					{
 						DEBUG_KBD("%4s: keycode: 0x%02X -> rdp scancode: 0x%08"PRIX32"",
-								xkb_keyname, i, XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode);
+						          xkb_keyname, i, XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode);
 
 						if (found)
 						{
@@ -469,3 +459,4 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD x11_keycode_to_r
 
 	return status;
 }
+

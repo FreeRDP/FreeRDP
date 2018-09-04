@@ -287,3 +287,4 @@ BOOL gdi_Rectangle(HGDI_DC hdc, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
 
 	return FALSE;
 }
+

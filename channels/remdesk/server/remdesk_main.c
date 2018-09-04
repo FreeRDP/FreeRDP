@@ -794,3 +794,4 @@ void remdesk_server_context_free(RemdeskServerContext* context)
 		free(context);
 	}
 }
+

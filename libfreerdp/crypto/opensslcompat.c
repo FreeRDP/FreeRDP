@@ -24,8 +24,10 @@
 BIO_METHOD* BIO_meth_new(int type, const char* name)
 {
 	BIO_METHOD* m;
+
 	if (!(m = calloc(1, sizeof(BIO_METHOD))))
 		return NULL;
+
 	m->type = type;
 	m->name = name;
 	return m;
@@ -35,10 +37,13 @@ void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM
 {
 	if (n != NULL)
 		*n = r->n;
+
 	if (e != NULL)
 		*e = r->e;
+
 	if (d != NULL)
 		*d = r->d;
 }
 
 #endif /* OPENSSL < 1.1.0 || LIBRESSL */
+

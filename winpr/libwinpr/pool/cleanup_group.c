@@ -138,3 +138,4 @@ VOID winpr_CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
 
 #endif /* WINPR_THREAD_POOL defined */
 
+

@@ -38,3 +38,4 @@
 
 #endif /* FREERDP_CHANNEL_ECHO_CLIENT_MAIN_H */
 
+

@@ -37,3 +37,4 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail);
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail);
 
 #endif /* FREERDP_CLIENT_X11_RAIL_H */
+

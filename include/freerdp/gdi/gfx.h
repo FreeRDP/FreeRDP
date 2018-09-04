@@ -27,7 +27,7 @@ struct gdi_gfx_surface
 {
 	UINT16 surfaceId;
 	rdpCodecs* codecs;
-	H264_CONTEXT *h264;
+	H264_CONTEXT* h264;
 	UINT32 width;
 	UINT32 height;
 	BYTE* data;
@@ -63,4 +63,5 @@ FREERDP_API void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* 
 #endif
 
 #endif /* FREERDP_GDI_GFX_H */
+
 

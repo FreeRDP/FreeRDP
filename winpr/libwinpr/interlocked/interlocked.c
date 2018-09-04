@@ -44,20 +44,18 @@ VOID InitializeSListHead(WINPR_PSLIST_HEADER ListHead)
 #endif
 }
 
-WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead, WINPR_PSLIST_ENTRY ListEntry)
+WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead,
+        WINPR_PSLIST_ENTRY ListEntry)
 {
-    WINPR_SLIST_HEADER old;
-    WINPR_SLIST_HEADER newHeader;
-
+	WINPR_SLIST_HEADER old;
+	WINPR_SLIST_HEADER newHeader;
 #ifdef _WIN64
 	newHeader.HeaderX64.NextEntry = (((ULONG_PTR) ListEntry) >> 4);
 
 	while (1)
 	{
 		old = *ListHead;
-
-		ListEntry->Next = (PSLIST_ENTRY) (((ULONG_PTR) old.HeaderX64.NextEntry) << 4);
-
+		ListEntry->Next = (PSLIST_ENTRY)(((ULONG_PTR) old.HeaderX64.NextEntry) << 4);
 		newHeader.HeaderX64.Depth = old.HeaderX64.Depth + 1;
 		newHeader.HeaderX64.Sequence = old.HeaderX64.Sequence + 1;
 
@@ -68,7 +66,7 @@ WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead, WINPR
 		}
 	}
 
-	return (PSLIST_ENTRY) ((ULONG_PTR) old.HeaderX64.NextEntry << 4);
+	return (PSLIST_ENTRY)((ULONG_PTR) old.HeaderX64.NextEntry << 4);
 #else
 	newHeader.s.Next.Next = ListEntry;
 
@@ -79,34 +77,33 @@ WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead, WINPR
 		newHeader.s.Depth = old.s.Depth + 1;
 		newHeader.s.Sequence = old.s.Sequence + 1;
 	}
-	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment, old.Alignment) != old.Alignment);
+	while (InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment,
+	                                    old.Alignment) != old.Alignment);
 
 	return old.s.Next.Next;
 #endif
 }
 
-WINPR_PSLIST_ENTRY InterlockedPushListSListEx(WINPR_PSLIST_HEADER ListHead, WINPR_PSLIST_ENTRY List, WINPR_PSLIST_ENTRY ListEnd, ULONG Count)
+WINPR_PSLIST_ENTRY InterlockedPushListSListEx(WINPR_PSLIST_HEADER ListHead, WINPR_PSLIST_ENTRY List,
+        WINPR_PSLIST_ENTRY ListEnd, ULONG Count)
 {
 #ifdef _WIN64
-
 #else
-
 #endif
 	return NULL;
 }
 
 WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 {
-    WINPR_SLIST_HEADER old;
-    WINPR_SLIST_HEADER newHeader;
-    WINPR_PSLIST_ENTRY entry;
-
+	WINPR_SLIST_HEADER old;
+	WINPR_SLIST_HEADER newHeader;
+	WINPR_PSLIST_ENTRY entry;
 #ifdef _WIN64
+
 	while (1)
 	{
 		old = *ListHead;
-
-		entry = (PSLIST_ENTRY) (((ULONG_PTR) old.HeaderX64.NextEntry) << 4);
+		entry = (PSLIST_ENTRY)(((ULONG_PTR) old.HeaderX64.NextEntry) << 4);
 
 		if (!entry)
 			return NULL;
@@ -121,11 +118,12 @@ WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 			break;
 		}
 	}
+
 #else
+
 	do
 	{
 		old = *ListHead;
-
 		entry = old.s.Next.Next;
 
 		if (!entry)
@@ -135,15 +133,17 @@ WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 		newHeader.s.Depth = old.s.Depth - 1;
 		newHeader.s.Sequence = old.s.Sequence + 1;
 	}
-	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment, old.Alignment) != old.Alignment);
+	while (InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment,
+	                                    old.Alignment) != old.Alignment);
+
 #endif
 	return entry;
 }
 
 WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead)
 {
-    WINPR_SLIST_HEADER old;
-    WINPR_SLIST_HEADER newHeader;
+	WINPR_SLIST_HEADER old;
+	WINPR_SLIST_HEADER newHeader;
 
 	if (!QueryDepthSList(ListHead))
 		return NULL;
@@ -165,7 +165,7 @@ WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead)
 		}
 	}
 
-	return (PSLIST_ENTRY) (((ULONG_PTR) old.HeaderX64.NextEntry) << 4);
+	return (PSLIST_ENTRY)(((ULONG_PTR) old.HeaderX64.NextEntry) << 4);
 #else
 	newHeader.Alignment = 0;
 
@@ -174,7 +174,8 @@ WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead)
 		old = *ListHead;
 		newHeader.s.Sequence = old.s.Sequence + 1;
 	}
-	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment, old.Alignment) != old.Alignment);
+	while (InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment,
+	                                    old.Alignment) != old.Alignment);
 
 	return old.s.Next.Next;
 #endif
@@ -189,7 +190,7 @@ USHORT QueryDepthSList(WINPR_PSLIST_HEADER ListHead)
 #endif
 }
 
-LONG InterlockedIncrement(LONG volatile *Addend)
+LONG InterlockedIncrement(LONG volatile* Addend)
 {
 #ifdef __GNUC__
 	return __sync_add_and_fetch(Addend, 1);
@@ -198,7 +199,7 @@ LONG InterlockedIncrement(LONG volatile *Addend)
 #endif
 }
 
-LONG InterlockedDecrement(LONG volatile *Addend)
+LONG InterlockedDecrement(LONG volatile* Addend)
 {
 #ifdef __GNUC__
 	return __sync_sub_and_fetch(Addend, 1);
@@ -207,7 +208,7 @@ LONG InterlockedDecrement(LONG volatile *Addend)
 #endif
 }
 
-LONG InterlockedExchange(LONG volatile *Target, LONG Value)
+LONG InterlockedExchange(LONG volatile* Target, LONG Value)
 {
 #ifdef __GNUC__
 	return __sync_val_compare_and_swap(Target, *Target, Value);
@@ -216,7 +217,7 @@ LONG InterlockedExchange(LONG volatile *Target, LONG Value)
 #endif
 }
 
-LONG InterlockedExchangeAdd(LONG volatile *Addend, LONG Value)
+LONG InterlockedExchangeAdd(LONG volatile* Addend, LONG Value)
 {
 #ifdef __GNUC__
 	return __sync_fetch_and_add(Addend, Value);
@@ -225,7 +226,7 @@ LONG InterlockedExchangeAdd(LONG volatile *Addend, LONG Value)
 #endif
 }
 
-LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG Comperand)
+LONG InterlockedCompareExchange(LONG volatile* Destination, LONG Exchange, LONG Comperand)
 {
 #ifdef __GNUC__
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
@@ -234,7 +235,8 @@ LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG 
 #endif
 }
 
-PVOID InterlockedCompareExchangePointer(PVOID volatile *Destination, PVOID Exchange, PVOID Comperand)
+PVOID InterlockedCompareExchangePointer(PVOID volatile* Destination, PVOID Exchange,
+                                        PVOID Comperand)
 {
 #ifdef __GNUC__
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
@@ -269,11 +271,11 @@ BOOL static_mutex_lock(volatile HANDLE* static_mutex)
 	return (WaitForSingleObject(*static_mutex, INFINITE) == WAIT_OBJECT_0);
 }
 
-LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
+LONGLONG InterlockedCompareExchange64(LONGLONG volatile* Destination, LONGLONG Exchange,
+                                      LONGLONG Comperand)
 {
 	LONGLONG previousValue = 0;
 	BOOL locked = static_mutex_lock(&mutex);
-
 	previousValue = *Destination;
 
 	if (*Destination == Comperand)
@@ -293,25 +295,24 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
 
 static pthread_mutex_t mutex;
 
-LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
+LONGLONG InterlockedCompareExchange64(LONGLONG volatile* Destination, LONGLONG Exchange,
+                                      LONGLONG Comperand)
 {
 	LONGLONG previousValue = 0;
-
 	pthread_mutex_lock(&mutex);
-
 	previousValue = *Destination;
 
 	if (*Destination == Comperand)
 		*Destination = Exchange;
 
 	pthread_mutex_unlock(&mutex);
-
 	return previousValue;
 }
 
 #else
 
-LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
+LONGLONG InterlockedCompareExchange64(LONGLONG volatile* Destination, LONGLONG Exchange,
+                                      LONGLONG Comperand)
 {
 #ifdef __GNUC__
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
@@ -339,26 +340,23 @@ VOID InitializeListHead(WINPR_PLIST_ENTRY ListHead)
 
 BOOL IsListEmpty(const WINPR_LIST_ENTRY* ListHead)
 {
-	return (BOOL) (ListHead->Flink == ListHead);
+	return (BOOL)(ListHead->Flink == ListHead);
 }
 
 BOOL RemoveEntryList(WINPR_PLIST_ENTRY Entry)
 {
-    WINPR_PLIST_ENTRY OldFlink;
-    WINPR_PLIST_ENTRY OldBlink;
-
+	WINPR_PLIST_ENTRY OldFlink;
+	WINPR_PLIST_ENTRY OldBlink;
 	OldFlink = Entry->Flink;
 	OldBlink = Entry->Blink;
 	OldFlink->Blink = OldBlink;
 	OldBlink->Flink = OldFlink;
-
-	return (BOOL) (OldFlink == OldBlink);
+	return (BOOL)(OldFlink == OldBlink);
 }
 
 VOID InsertHeadList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry)
 {
-    WINPR_PLIST_ENTRY OldFlink;
-
+	WINPR_PLIST_ENTRY OldFlink;
 	OldFlink = ListHead->Flink;
 	Entry->Flink = OldFlink;
 	Entry->Blink = ListHead;
@@ -368,21 +366,18 @@ VOID InsertHeadList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry)
 
 WINPR_PLIST_ENTRY RemoveHeadList(WINPR_PLIST_ENTRY ListHead)
 {
-    WINPR_PLIST_ENTRY Flink;
-    WINPR_PLIST_ENTRY Entry;
-
+	WINPR_PLIST_ENTRY Flink;
+	WINPR_PLIST_ENTRY Entry;
 	Entry = ListHead->Flink;
 	Flink = Entry->Flink;
 	ListHead->Flink = Flink;
 	Flink->Blink = ListHead;
-
 	return Entry;
 }
 
 VOID InsertTailList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry)
 {
-    WINPR_PLIST_ENTRY OldBlink;
-
+	WINPR_PLIST_ENTRY OldBlink;
 	OldBlink = ListHead->Blink;
 	Entry->Flink = ListHead;
 	Entry->Blink = OldBlink;
@@ -392,21 +387,18 @@ VOID InsertTailList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry)
 
 WINPR_PLIST_ENTRY RemoveTailList(WINPR_PLIST_ENTRY ListHead)
 {
-    WINPR_PLIST_ENTRY Blink;
-    WINPR_PLIST_ENTRY Entry;
-
+	WINPR_PLIST_ENTRY Blink;
+	WINPR_PLIST_ENTRY Entry;
 	Entry = ListHead->Blink;
 	Blink = Entry->Blink;
 	ListHead->Blink = Blink;
 	Blink->Flink = ListHead;
-
 	return Entry;
 }
 
 VOID AppendTailList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY ListToAppend)
 {
-    WINPR_PLIST_ENTRY ListEnd = ListHead->Blink;
-
+	WINPR_PLIST_ENTRY ListEnd = ListHead->Blink;
 	ListHead->Blink->Flink = ListToAppend;
 	ListHead->Blink = ListToAppend->Blink;
 	ListToAppend->Blink->Flink = ListHead;
@@ -421,8 +413,7 @@ VOID PushEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead, WINPR_PSINGLE_LIST_ENTRY E
 
 WINPR_PSINGLE_LIST_ENTRY PopEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead)
 {
-    WINPR_PSINGLE_LIST_ENTRY FirstEntry;
-
+	WINPR_PSINGLE_LIST_ENTRY FirstEntry;
 	FirstEntry = ListHead->Next;
 
 	if (FirstEntry != NULL)
@@ -430,4 +421,5 @@ WINPR_PSINGLE_LIST_ENTRY PopEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead)
 
 	return FirstEntry;
 }
+
 

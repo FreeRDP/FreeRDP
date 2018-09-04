@@ -1348,3 +1348,4 @@ void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT* context)
 	free(context->rlePlanesBuffer);
 	free(context);
 }
+

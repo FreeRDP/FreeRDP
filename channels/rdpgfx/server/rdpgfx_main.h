@@ -38,3 +38,4 @@ struct _rdpgfx_server_private
 };
 
 #endif /* FREERDP_CHANNEL_RDPGFX_SERVER_MAIN_H */
+

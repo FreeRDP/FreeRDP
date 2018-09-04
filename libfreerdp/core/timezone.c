@@ -149,3 +149,4 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	return TRUE;
 }
 
+

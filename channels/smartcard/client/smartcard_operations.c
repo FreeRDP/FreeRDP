@@ -2077,3 +2077,4 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 	return SCARD_S_SUCCESS;
 }
 
+

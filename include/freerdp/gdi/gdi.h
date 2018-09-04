@@ -556,3 +556,4 @@ FREERDP_API BOOL gdi_send_suppress_output(rdpGdi* gdi, BOOL suppress);
 #endif
 
 #endif /* FREERDP_GDI_H */
+

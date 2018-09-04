@@ -39,3 +39,4 @@ FREERDP_LOCAL CACHE_BITMAP_V3_ORDER* copy_cache_bitmap_v3_order(rdpContext* cont
 FREERDP_LOCAL void free_cache_bitmap_v3_order(rdpContext* context, CACHE_BITMAP_V3_ORDER* order);
 
 #endif /* FREERDP_LIB_CACHE_BITMAP_H */
+

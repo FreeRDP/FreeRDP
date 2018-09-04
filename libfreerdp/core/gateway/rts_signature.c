@@ -398,3 +398,4 @@ int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
 
 	return 0;
 }
+

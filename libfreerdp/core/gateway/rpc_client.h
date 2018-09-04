@@ -46,3 +46,4 @@ FREERDP_LOCAL int rpc_client_new(rdpRpc* rpc);
 FREERDP_LOCAL void rpc_client_free(rdpRpc* rpc);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_CLIENT_H */
+

@@ -32,3 +32,4 @@ void shadow_input_register_callbacks(rdpInput* input);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_INPUT_H */
+

@@ -26,12 +26,11 @@ int TestLibraryLoadLibrary(int argc, char* argv[])
 		printf("%s: Error identifying module directory path\n", __FUNCTION__);
 		return -1;
 	}
-	*p = 0;
 
+	*p = 0;
 	NativePathCchAppendA(LibraryPath, PATHCCH_MAX_CCH, "TestLibraryA");
 	SharedLibraryExtension = PathGetSharedLibraryExtensionA(PATH_SHARED_LIB_EXT_WITH_DOT);
 	NativePathCchAddExtensionA(LibraryPath, PATHCCH_MAX_CCH, SharedLibraryExtension);
-
 	printf("%s: Loading Library: '%s'\n", __FUNCTION__, LibraryPath);
 
 	if (!(library = LoadLibraryA(LibraryPath)))
@@ -48,3 +47,4 @@ int TestLibraryLoadLibrary(int argc, char* argv[])
 
 	return 0;
 }
+

@@ -45,3 +45,4 @@ int win_shadow_wds_uninit(winShadowSubsystem* subsystem);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_WIN_WDS_H */
+

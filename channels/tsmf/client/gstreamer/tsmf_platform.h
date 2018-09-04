@@ -34,13 +34,13 @@ typedef struct _TSMFGstreamerDecoder
 	gint64 duration;
 
 	GstState state;
-	GstCaps *gst_caps;
+	GstCaps* gst_caps;
 
-	GstElement *pipe;
-	GstElement *src;
-	GstElement *queue;
-	GstElement *outsink;
-	GstElement *volume;
+	GstElement* pipe;
+	GstElement* src;
+	GstElement* queue;
+	GstElement* outsink;
+	GstElement* volume;
 
 	BOOL ready;
 	BOOL paused;
@@ -55,11 +55,11 @@ typedef struct _TSMFGstreamerDecoder
 	int pipeline_start_time_valid; /* We've set the start time and have not reset the pipeline */
 	int shutdown; /* The decoder stream is shutting down */
 
-	void *platform;
+	void* platform;
 
-	BOOL (*ack_cb)(void *,BOOL);
-	void (*sync_cb)(void *);
-	void *stream;
+	BOOL (*ack_cb)(void*, BOOL);
+	void (*sync_cb)(void*);
+	void* stream;
 
 } TSMFGstreamerDecoder;
 
@@ -75,7 +75,7 @@ int tsmf_platform_free(TSMFGstreamerDecoder* decoder);
 
 int tsmf_window_create(TSMFGstreamerDecoder* decoder);
 int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y,
-					   int width, int height, int nr_rect, RDP_RECT *visible);
+                       int width, int height, int nr_rect, RDP_RECT* visible);
 int tsmf_window_destroy(TSMFGstreamerDecoder* decoder);
 
 int tsmf_window_map(TSMFGstreamerDecoder* decoder);
@@ -85,3 +85,4 @@ BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder* mdecoder);
 void tsmf_gstreamer_remove_pad(TSMFGstreamerDecoder* mdecoder);
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_GST_PLATFORM_H */
+

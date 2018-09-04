@@ -25,3 +25,4 @@
 #include "wf_interface.h"
 
 #endif /* FREERDP_CLIENT_WIN_FREERDP_H */
+

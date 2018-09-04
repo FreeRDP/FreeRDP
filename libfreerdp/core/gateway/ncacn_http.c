@@ -229,3 +229,4 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, RpcOutChannel* outChan
 
 	return 1;
 }
+

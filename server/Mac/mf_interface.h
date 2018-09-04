@@ -49,7 +49,7 @@ typedef struct mf_peer_context mfPeerContext;
 struct mf_peer_context
 {
 	rdpContext _p;
-	
+
 	mfInfo* info;
 	wStream* s;
 	BOOL activated;
@@ -57,14 +57,14 @@ struct mf_peer_context
 	BOOL audin_open;
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
-	
+
 	//#ifdef WITH_SERVER_CHANNELS
 	HANDLE vcm;
 	//#endif
 	//#ifdef CHANNEL_AUDIN_SERVER
 	audin_server_context* audin;
 	//#endif
-	
+
 	//#ifdef CHANNEL_RDPSND_SERVER
 	RdpsndServerContext* rdpsnd;
 	//#endif
@@ -74,7 +74,7 @@ struct mf_peer_context
 struct mf_info
 {
 	//STREAM* s;
-	
+
 	//screen and monitor info
 	UINT32 screenID;
 	UINT32 virtscreen_width;
@@ -83,7 +83,7 @@ struct mf_info
 	UINT32 servscreen_height;
 	UINT32 servscreen_xoffset;
 	UINT32 servscreen_yoffset;
-	
+
 	int bitsPerPixel;
 	int peerCount;
 	int activePeerCount;
@@ -91,10 +91,10 @@ struct mf_info
 	freerdp_peer** peers;
 	unsigned int framesWaiting;
 	UINT32 scale;
-	
+
 	RFX_RECT invalid;
 	pthread_mutex_t mutex;
-	
+
 	BOOL mouse_down_left;
 	BOOL mouse_down_right;
 	BOOL mouse_down_other;
@@ -103,3 +103,4 @@ struct mf_info
 };
 
 #endif /* FREERDP_SERVER_MAC_INTERFACE_H */
+

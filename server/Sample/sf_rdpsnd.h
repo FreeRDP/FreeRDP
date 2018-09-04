@@ -30,3 +30,4 @@ BOOL sf_peer_rdpsnd_init(testPeerContext* context);
 
 #endif /* FREERDP_SERVER_SAMPLE_SF_RDPSND_H */
 
+

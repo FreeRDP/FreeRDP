@@ -104,37 +104,55 @@ typedef LPSTARTUPINFOA	LPSTARTUPINFO;
 #define LOGON_NETCREDENTIALS_ONLY		0x00000002
 #define LOGON_ZERO_PASSWORD_BUFFER		0x80000000
 
-WINPR_API BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+WINPR_API BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine,
+                              LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                              LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                              LPVOID lpEnvironment,
+                              LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
+                              LPPROCESS_INFORMATION lpProcessInformation);
 
-WINPR_API BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+WINPR_API BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+                              LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                              LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                              LPVOID lpEnvironment,
+                              LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                              LPPROCESS_INFORMATION lpProcessInformation);
 
-WINPR_API BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+WINPR_API BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName, LPSTR lpCommandLine,
+                                    LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                                    LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                                    LPVOID lpEnvironment,
+                                    LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
+                                    LPPROCESS_INFORMATION lpProcessInformation);
 
-WINPR_API BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+WINPR_API BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+                                    LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                                    LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                                    LPVOID lpEnvironment,
+                                    LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                                    LPPROCESS_INFORMATION lpProcessInformation);
 
-WINPR_API BOOL CreateProcessWithLogonA(LPCSTR lpUsername, LPCSTR lpDomain, LPCSTR lpPassword, DWORD dwLogonFlags,
-		LPCSTR lpApplicationName, LPSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+WINPR_API BOOL CreateProcessWithLogonA(LPCSTR lpUsername, LPCSTR lpDomain, LPCSTR lpPassword,
+                                       DWORD dwLogonFlags,
+                                       LPCSTR lpApplicationName, LPSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
+                                       LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
+                                       LPPROCESS_INFORMATION lpProcessInformation);
 
-WINPR_API BOOL CreateProcessWithLogonW(LPCWSTR lpUsername, LPCWSTR lpDomain, LPCWSTR lpPassword, DWORD dwLogonFlags,
-		LPCWSTR lpApplicationName, LPWSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+WINPR_API BOOL CreateProcessWithLogonW(LPCWSTR lpUsername, LPCWSTR lpDomain, LPCWSTR lpPassword,
+                                       DWORD dwLogonFlags,
+                                       LPCWSTR lpApplicationName, LPWSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
+                                       LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                                       LPPROCESS_INFORMATION lpProcessInformation);
 
 WINPR_API BOOL CreateProcessWithTokenA(HANDLE hToken, DWORD dwLogonFlags,
-		LPCSTR lpApplicationName, LPSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+                                       LPCSTR lpApplicationName, LPSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
+                                       LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
+                                       LPPROCESS_INFORMATION lpProcessInformation);
 
 WINPR_API BOOL CreateProcessWithTokenW(HANDLE hToken, DWORD dwLogonFlags,
-		LPCWSTR lpApplicationName, LPWSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+                                       LPCWSTR lpApplicationName, LPWSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
+                                       LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                                       LPPROCESS_INFORMATION lpProcessInformation);
 
 #ifdef UNICODE
 #define CreateProcess		CreateProcessW
@@ -172,10 +190,13 @@ WINPR_API LPWSTR* CommandLineToArgvW(LPCWSTR lpCmdLine, int* pNumArgs);
 #define STACK_SIZE_PARAM_IS_A_RESERVATION		0x00010000
 
 WINPR_API HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
-	LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
+                              LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags,
+                              LPDWORD lpThreadId);
 
-WINPR_API HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
-		LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
+WINPR_API HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                                    SIZE_T dwStackSize,
+                                    LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags,
+                                    LPDWORD lpThreadId);
 
 WINPR_API DECLSPEC_NORETURN VOID ExitThread(DWORD dwExitCode);
 WINPR_API BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode);
@@ -214,7 +235,7 @@ WINPR_API BOOL TlsFree(DWORD dwTlsIndex);
 
 /* CommandLineToArgvA is not present in the original Windows API, WinPR always exports it */
 
-WINPR_API LPSTR *CommandLineToArgvA(LPCSTR lpCmdLine, int *pNumArgs);
+WINPR_API LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs);
 
 #if defined(WITH_DEBUG_THREADS)
 WINPR_API VOID DumpThreadHandles(void);
@@ -225,4 +246,5 @@ WINPR_API VOID DumpThreadHandles(void);
 #endif
 
 #endif /* WINPR_THREAD_H */
+
 

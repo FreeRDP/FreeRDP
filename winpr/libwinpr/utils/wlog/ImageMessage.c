@@ -29,7 +29,6 @@
 BOOL WLog_ImageMessage_Write(char* filename, void* data, int width, int height, int bpp)
 {
 	int status;
-
 	status = winpr_bitmap_write(filename, data, width, height, bpp);
 
 	if (status < 0)
@@ -37,3 +36,4 @@ BOOL WLog_ImageMessage_Write(char* filename, void* data, int width, int height, 
 
 	return TRUE;
 }
+

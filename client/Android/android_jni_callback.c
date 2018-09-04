@@ -228,3 +228,4 @@ jint freerdp_callback_int_result(const char* callback, const char* signature,
 	va_end(vl);
 	return res;
 }
+

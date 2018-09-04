@@ -10,46 +10,50 @@ int TestLibraryGetModuleFileName(int argc, char* argv[])
 {
 	char ModuleFileName[4096];
 	DWORD len;
-
 	/* Test insufficient buffer size behaviour */
 	SetLastError(ERROR_SUCCESS);
 	len = GetModuleFileNameA(NULL, ModuleFileName, 2);
+
 	if (len != 2)
 	{
 		printf("%s: GetModuleFileNameA unexpectedly returned %"PRIu32" instead of 2\n",
-			__FUNCTION__, len);
+		       __FUNCTION__, len);
 		return -1;
 	}
+
 	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
 		printf("%s: Invalid last error value: 0x%08"PRIX32". Expected 0x%08X (ERROR_INSUFFICIENT_BUFFER)\n",
-			__FUNCTION__, GetLastError(), ERROR_INSUFFICIENT_BUFFER);
+		       __FUNCTION__, GetLastError(), ERROR_INSUFFICIENT_BUFFER);
 		return -1;
 	}
 
 	/* Test with real/sufficient buffer size */
 	SetLastError(ERROR_SUCCESS);
 	len = GetModuleFileNameA(NULL, ModuleFileName, sizeof(ModuleFileName));
+
 	if (len == 0)
 	{
 		printf("%s: GetModuleFileNameA failed with error 0x%08"PRIX32"\n",
-			__FUNCTION__, GetLastError());
+		       __FUNCTION__, GetLastError());
 		return -1;
 	}
+
 	if (len == sizeof(ModuleFileName))
 	{
 		printf("%s: GetModuleFileNameA unexpectedly returned nSize\n",
-			__FUNCTION__);
+		       __FUNCTION__);
 		return -1;
 	}
+
 	if (GetLastError() != ERROR_SUCCESS)
 	{
 		printf("%s: Invalid last error value: 0x%08"PRIX32". Expected 0x%08X (ERROR_SUCCESS)\n",
-			__FUNCTION__, GetLastError(), ERROR_SUCCESS);
+		       __FUNCTION__, GetLastError(), ERROR_SUCCESS);
 		return -1;
 	}
 
 	printf("GetModuleFileNameA: %s\n", ModuleFileName);
-
 	return 0;
 }
+

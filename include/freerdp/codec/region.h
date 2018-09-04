@@ -154,3 +154,4 @@ FREERDP_API void region16_uninit(REGION16* region);
 #endif
 
 #endif /* FREERDP_CODEC_REGION_H */
+

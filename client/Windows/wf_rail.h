@@ -47,3 +47,4 @@ void wf_rail_uninit(wfContext* wfc, RailClientContext* rail);
 void wf_rail_invalidate_region(wfContext* wfc, REGION16* invalidRegion);
 
 #endif /* FREERDP_CLIENT_WIN_RAIL_H */
+

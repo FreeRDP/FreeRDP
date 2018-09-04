@@ -1289,8 +1289,8 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 
 	for (index = 0; index < numFormats; index++)
 	{
-		if(GetClipboardFormatNameA(formats[index].formatId, formatName,
-		                        sizeof(formatName)))
+		if (GetClipboardFormatNameA(formats[index].formatId, formatName,
+		                            sizeof(formatName)))
 		{
 			formats[index].formatName = _strdup(formatName);
 		}
@@ -2046,7 +2046,7 @@ static BOOL wf_cliprdr_process_filename(wfClipboard* clipboard,
 	if (!wf_cliprdr_add_to_file_arrays(clipboard, wFileName, pathLen))
 		return FALSE;
 
-	if ((clipboard->fileDescriptor[clipboard->nFiles - 1]->dwFileAttributes &
+	if ((clipboard->fileDescriptor[clipboard->nFiles - 1]->dwFileAttributes&
 	     FILE_ATTRIBUTE_DIRECTORY) != 0)
 	{
 		/* this is a directory */
@@ -2579,3 +2579,4 @@ BOOL wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr)
 	free(clipboard);
 	return TRUE;
 }
+

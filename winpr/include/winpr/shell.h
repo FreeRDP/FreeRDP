@@ -36,7 +36,8 @@
 
 /* Shell clipboard formats */
 
-struct _FILEDESCRIPTOR {
+struct _FILEDESCRIPTOR
+{
 	DWORD    dwFlags;
 	BYTE     clsid[16];
 	BYTE     sizel[8];
@@ -86,3 +87,4 @@ WINPR_API BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDW
 #endif
 
 #endif /* WINPR_SHELL_H */
+

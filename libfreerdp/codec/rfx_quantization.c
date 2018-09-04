@@ -43,7 +43,8 @@
  * LL3		4032		8x8		64
  */
 
-void rfx_quantization_decode_block(const primitives_t *prims, INT16* buffer, int buffer_size, UINT32 factor)
+void rfx_quantization_decode_block(const primitives_t* prims, INT16* buffer, int buffer_size,
+                                   UINT32 factor)
 {
 	if (factor == 0)
 		return;
@@ -54,7 +55,6 @@ void rfx_quantization_decode_block(const primitives_t *prims, INT16* buffer, int
 void rfx_quantization_decode(INT16* buffer, const UINT32* quantVals)
 {
 	const primitives_t* prims = primitives_get();
-
 	rfx_quantization_decode_block(prims, &buffer[0], 1024, quantVals[8] - 1); /* HL1 */
 	rfx_quantization_decode_block(prims, &buffer[1024], 1024, quantVals[7] - 1); /* LH1 */
 	rfx_quantization_decode_block(prims, &buffer[2048], 1024, quantVals[9] - 1); /* HH1 */
@@ -76,6 +76,7 @@ static void rfx_quantization_encode_block(INT16* buffer, int buffer_size, UINT32
 		return;
 
 	half = (1 << (factor - 1));
+
 	/* Could probably use prims->rShiftC_16s(dst+half, factor, dst, buffer_size); */
 	for (dst = buffer; buffer_size > 0; dst++, buffer_size--)
 	{
@@ -95,7 +96,7 @@ void rfx_quantization_encode(INT16* buffer, const UINT32* quantization_values)
 	rfx_quantization_encode_block(buffer + 3904, 64, quantization_values[1] - 6); /* LH3 */
 	rfx_quantization_encode_block(buffer + 3968, 64, quantization_values[3] - 6); /* HH3 */
 	rfx_quantization_encode_block(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
-
 	/* The coefficients are scaled by << 5 at RGB->YCbCr phase, so we round it back here */
 	rfx_quantization_encode_block(buffer, 4096, 5);
 }
+

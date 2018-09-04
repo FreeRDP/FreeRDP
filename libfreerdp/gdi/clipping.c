@@ -165,3 +165,4 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32* x, UINT32* y, UINT32* w, UINT32* h,
 	gdi_RectToCRgn(&coords, x, y, w, h);
 	return draw;
 }
+

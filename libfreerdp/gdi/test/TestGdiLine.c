@@ -777,3 +777,4 @@ int TestGdiLine(int argc, char* argv[])
 
 	return rc;
 }
+

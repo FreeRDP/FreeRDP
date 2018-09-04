@@ -157,10 +157,9 @@
 #include "crypto.h"
 
 HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingType,
-		HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags, const void* pvPara)
+                         HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags, const void* pvPara)
 {
 	WINPR_CERTSTORE* certstore;
-
 	certstore = (WINPR_CERTSTORE*) calloc(1, sizeof(WINPR_CERTSTORE));
 
 	if (certstore)
@@ -175,9 +174,7 @@ HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingTyp
 HCERTSTORE CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv, LPCWSTR szSubsystemProtocol)
 {
 	HCERTSTORE hCertStore;
-
 	hCertStore = CertOpenStore(CERT_STORE_PROV_FILE, X509_ASN_ENCODING, hProv, 0, NULL);
-
 	return hCertStore;
 }
 
@@ -189,16 +186,13 @@ HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv, LPCSTR szSubsystemProto
 BOOL CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
 	WINPR_CERTSTORE* certstore;
-
 	certstore = (WINPR_CERTSTORE*) hCertStore;
-
 	free(certstore);
-
 	return TRUE;
 }
 
 PCCERT_CONTEXT CertFindCertificateInStore(HCERTSTORE hCertStore, DWORD dwCertEncodingType,
-		DWORD dwFindFlags, DWORD dwFindType, const void* pvFindPara, PCCERT_CONTEXT pPrevCertContext)
+        DWORD dwFindFlags, DWORD dwFindType, const void* pvFindPara, PCCERT_CONTEXT pPrevCertContext)
 {
 	return (PCCERT_CONTEXT) 1;
 }
@@ -209,16 +203,17 @@ PCCERT_CONTEXT CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT
 }
 
 DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
-		DWORD dwFlags, void* pvTypePara, LPWSTR pszNameString, DWORD cchNameString)
+                         DWORD dwFlags, void* pvTypePara, LPWSTR pszNameString, DWORD cchNameString)
 {
 	return 0;
 }
 
 DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
-		DWORD dwFlags, void* pvTypePara, LPSTR pszNameString, DWORD cchNameString)
+                         DWORD dwFlags, void* pvTypePara, LPSTR pszNameString, DWORD cchNameString)
 {
 	return 0;
 }
 
 #endif
+
 

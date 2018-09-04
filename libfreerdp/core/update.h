@@ -65,3 +65,4 @@ FREERDP_LOCAL void update_register_client_callbacks(rdpUpdate* update);
 FREERDP_LOCAL int update_process_messages(rdpUpdate* update);
 
 #endif /* FREERDP_LIB_CORE_UPDATE_H */
+

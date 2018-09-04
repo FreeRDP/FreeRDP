@@ -10,14 +10,15 @@ int TestBufferPool(int argc, char* argv[])
 	wBufferPool* pool;
 	BYTE* Buffers[10];
 	DWORD DefaultSize = 1234;
-
 	pool = BufferPool_New(TRUE, -1, 16);
+
 	if (!pool)
 		return -1;
 
 	Buffers[0] = BufferPool_Take(pool, DefaultSize);
 	Buffers[1] = BufferPool_Take(pool, DefaultSize);
 	Buffers[2] = BufferPool_Take(pool, 2048);
+
 	if (!Buffers[0] || !Buffers[1] || !Buffers[2])
 		return -1;
 
@@ -25,7 +26,8 @@ int TestBufferPool(int argc, char* argv[])
 
 	if (BufferSize != DefaultSize)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %"PRIu32"\n", BufferSize, DefaultSize);
+		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %"PRIu32"\n", BufferSize,
+		       DefaultSize);
 		return -1;
 	}
 
@@ -33,7 +35,8 @@ int TestBufferPool(int argc, char* argv[])
 
 	if (BufferSize != DefaultSize)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %"PRIu32"\n", BufferSize, DefaultSize);
+		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %"PRIu32"\n", BufferSize,
+		       DefaultSize);
 		return -1;
 	}
 
@@ -46,7 +49,6 @@ int TestBufferPool(int argc, char* argv[])
 	}
 
 	BufferPool_Return(pool, Buffers[1]);
-
 	PoolSize = BufferPool_GetPoolSize(pool);
 
 	if (PoolSize != 2)
@@ -56,9 +58,8 @@ int TestBufferPool(int argc, char* argv[])
 	}
 
 	BufferPool_Clear(pool);
-
 	BufferPool_Free(pool);
-
 	return 0;
 }
+
 

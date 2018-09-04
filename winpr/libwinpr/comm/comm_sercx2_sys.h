@@ -37,3 +37,4 @@ SERIAL_DRIVER* SerCx2Sys_s();
 #endif /* __linux__ */
 
 #endif /* COMM_SERCX2_SYS_H */
+

@@ -28,8 +28,8 @@
 
 typedef struct _sshagent_client_context
 {
-  int ProtocolVersion;
-  int MaxConnections;
+	int ProtocolVersion;
+	int MaxConnections;
 } SSHAgentClientContext;
 
 
@@ -51,7 +51,7 @@ typedef struct _sshagent_client_context
  *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
  *
  * Send data:
- * 
+ *
  *    INT32  SA_TAG_WRITE
  *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
  *    INT32  Data length
@@ -61,7 +61,7 @@ typedef struct _sshagent_client_context
  *
  *    INT32  SA_TAG_CLOSE
  *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
- *      
+ *
  * Client to server commands
  * -------------------------
  *
@@ -72,7 +72,7 @@ typedef struct _sshagent_client_context
  *    INT32  SSHAGENT_MAX_CONNECTIONS
  *
  * Send data:
- * 
+ *
  *    INT32  SA_TAG_WRITE
  *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
  *    INT32  Data length
@@ -85,3 +85,4 @@ typedef struct _sshagent_client_context
  */
 
 #endif /* FREERDP_CHANNEL_CLIENT_SSHAGENT_H */
+

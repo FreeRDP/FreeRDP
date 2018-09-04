@@ -554,3 +554,4 @@ DWORD client_cli_verify_changed_certificate(freerdp* instance,
 }
 
 
+

@@ -217,3 +217,4 @@ FREERDP_LOCAL void license_free(rdpLicense* license);
 #endif
 
 #endif /* FREERDP_LIB_CORE_LICENSE_H */
+

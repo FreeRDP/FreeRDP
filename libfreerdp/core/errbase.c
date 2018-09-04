@@ -40,15 +40,14 @@
 
 static const ERRINFO ERRBASE_CODES[] =
 {
-		ERRBASE_DEFINE(SUCCESS),
+	ERRBASE_DEFINE(SUCCESS),
 
-		ERRBASE_DEFINE(NONE)
+	ERRBASE_DEFINE(NONE)
 };
 
 const char* freerdp_get_error_base_string(UINT32 code)
 {
 	const ERRINFO* errInfo;
-
 	errInfo = &ERRBASE_CODES[0];
 
 	while (errInfo->code != ERRBASE_NONE)
@@ -67,7 +66,6 @@ const char* freerdp_get_error_base_string(UINT32 code)
 const char* freerdp_get_error_base_name(UINT32 code)
 {
 	const ERRINFO* errInfo;
-
 	errInfo = &ERRBASE_CODES[0];
 
 	while (errInfo->code != ERRBASE_NONE)
@@ -82,4 +80,5 @@ const char* freerdp_get_error_base_name(UINT32 code)
 
 	return "ERRBASE_UNKNOWN";
 }
+
 

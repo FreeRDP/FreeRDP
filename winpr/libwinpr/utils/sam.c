@@ -438,3 +438,4 @@ void SamClose(WINPR_SAM* sam)
 		free(sam);
 	}
 }
+

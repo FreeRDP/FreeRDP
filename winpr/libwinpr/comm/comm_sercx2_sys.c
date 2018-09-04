@@ -57,32 +57,32 @@ static BOOL _get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
 /* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439605%28v=vs.85%29.aspx */
 /* FIXME: only using the Serial.sys' events, complete the support of the remaining events */
 static const ULONG _SERCX2_SYS_SUPPORTED_EV_MASK =
-	SERIAL_EV_RXCHAR   |
-	SERIAL_EV_RXFLAG   |
-	SERIAL_EV_TXEMPTY  |
-	SERIAL_EV_CTS      |
-	SERIAL_EV_DSR      |
-	SERIAL_EV_RLSD     |
-	SERIAL_EV_BREAK    |
-	SERIAL_EV_ERR      |
-	SERIAL_EV_RING     |
-	/* SERIAL_EV_PERR     | */
-	SERIAL_EV_RX80FULL /*|
+    SERIAL_EV_RXCHAR   |
+    SERIAL_EV_RXFLAG   |
+    SERIAL_EV_TXEMPTY  |
+    SERIAL_EV_CTS      |
+    SERIAL_EV_DSR      |
+    SERIAL_EV_RLSD     |
+    SERIAL_EV_BREAK    |
+    SERIAL_EV_ERR      |
+    SERIAL_EV_RING     |
+    /* SERIAL_EV_PERR     | */
+    SERIAL_EV_RX80FULL /*|
 	SERIAL_EV_EVENT1   |
 	SERIAL_EV_EVENT2*/;
 
 /* use Serial.sys for basis (not SerCx.sys) */
-static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
+static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 {
 	ULONG possibleMask;
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
-
 	possibleMask = *pWaitMask & _SERCX2_SYS_SUPPORTED_EV_MASK;
 
 	if (possibleMask != *pWaitMask)
 	{
-		CommLog_Print(WLOG_WARN, "Not all wait events supported (SerCx2.sys), requested events= 0x%08"PRIX32", possible events= 0x%08"PRIX32"", *pWaitMask, possibleMask);
-
+		CommLog_Print(WLOG_WARN,
+		              "Not all wait events supported (SerCx2.sys), requested events= 0x%08"PRIX32", possible events= 0x%08"PRIX32"",
+		              *pWaitMask, possibleMask);
 		/* FIXME: shall we really set the possibleMask and return FALSE? */
 		pComm->WaitEventMask = possibleMask;
 		return FALSE;
@@ -93,7 +93,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 }
 
 
-static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
+static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 {
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
@@ -106,14 +106,12 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 		return FALSE;
 	}
 
-
 	if ((*pPurgeMask & SERIAL_PURGE_TXCLEAR) && !(*pPurgeMask & SERIAL_PURGE_TXABORT))
 	{
 		CommLog_Print(WLOG_WARN, "Expecting SERIAL_PURGE_TXABORT since SERIAL_PURGE_TXCLEAR is set");
 		SetLastError(ERROR_INVALID_DEVICE_OBJECT_PARAMETER);
 		return FALSE;
 	}
-
 
 	return pSerialSys->purge(pComm, pPurgeMask);
 }
@@ -162,46 +160,33 @@ SERIAL_DRIVER* SerCx2Sys_s()
 	/* _SerCx2Sys completed with inherited functions from SerialSys or SerCxSys */
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 	SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
-
 	_SerCx2Sys.set_baud_rate    = pSerialSys->set_baud_rate;
 	_SerCx2Sys.get_baud_rate    = pSerialSys->get_baud_rate;
-
 	_SerCx2Sys.get_properties   = pSerialSys->get_properties;
-
 	_SerCx2Sys.set_line_control = pSerCxSys->set_line_control;
 	_SerCx2Sys.get_line_control = pSerCxSys->get_line_control;
-
 	/* Only SERIAL_CTS_HANDSHAKE, SERIAL_RTS_CONTROL and SERIAL_RTS_HANDSHAKE flags are really required by SerCx2.sys
 	 * http://msdn.microsoft.com/en-us/library/jj680685%28v=vs.85%29.aspx
 	 */
 	_SerCx2Sys.set_handflow = pSerialSys->set_handflow;
 	_SerCx2Sys.get_handflow = pSerialSys->get_handflow;
-
 	_SerCx2Sys.set_timeouts = pSerialSys->set_timeouts;
 	_SerCx2Sys.get_timeouts = pSerialSys->get_timeouts;
-
 	_SerCx2Sys.set_dtr   = pSerialSys->set_dtr;
 	_SerCx2Sys.clear_dtr = pSerialSys->clear_dtr;
-
 	_SerCx2Sys.set_rts   = pSerialSys->set_rts;
 	_SerCx2Sys.clear_rts = pSerialSys->clear_rts;
-
 	_SerCx2Sys.get_modemstatus = pSerialSys->get_modemstatus;
-
 	_SerCx2Sys.set_wait_mask = pSerialSys->set_wait_mask;
 	_SerCx2Sys.get_wait_mask = pSerialSys->get_wait_mask;
 	_SerCx2Sys.wait_on_mask  = pSerialSys->wait_on_mask;
-
 	_SerCx2Sys.set_queue_size = pSerialSys->set_queue_size;
-
 	_SerCx2Sys.get_commstatus = pSerialSys->get_commstatus;
-
 	_SerCx2Sys.set_break_on  = pSerialSys->set_break_on;
 	_SerCx2Sys.set_break_off = pSerialSys->set_break_off;
-
 	_SerCx2Sys.get_dtrrts = pSerialSys->get_dtrrts;
-
 	return &_SerCx2Sys;
 }
 
 #endif /* __linux__ */
+

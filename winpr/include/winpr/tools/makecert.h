@@ -42,3 +42,4 @@ WINPR_API void makecert_context_free(MAKECERT_CONTEXT* context);
 #endif
 
 #endif /* MAKECERT_TOOL_H */
+

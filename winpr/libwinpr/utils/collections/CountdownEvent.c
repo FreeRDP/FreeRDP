@@ -90,7 +90,6 @@ HANDLE CountdownEvent_WaitHandle(wCountdownEvent* countdown)
 void CountdownEvent_AddCount(wCountdownEvent* countdown, DWORD signalCount)
 {
 	EnterCriticalSection(&countdown->lock);
-
 	countdown->count += signalCount;
 
 	if (countdown->count > 0)
@@ -108,9 +107,7 @@ BOOL CountdownEvent_Signal(wCountdownEvent* countdown, DWORD signalCount)
 	BOOL status;
 	BOOL newStatus;
 	BOOL oldStatus;
-
 	status = newStatus = oldStatus = FALSE;
-
 	EnterCriticalSection(&countdown->lock);
 
 	if (WaitForSingleObject(countdown->event, 0) == WAIT_OBJECT_0)
@@ -131,7 +128,6 @@ BOOL CountdownEvent_Signal(wCountdownEvent* countdown, DWORD signalCount)
 	}
 
 	LeaveCriticalSection(&countdown->lock);
-
 	return status;
 }
 
@@ -169,14 +165,12 @@ wCountdownEvent* CountdownEvent_New(DWORD initialCount)
 			goto fail_set_event;
 
 	return countdown;
-
 fail_set_event:
 	CloseHandle(countdown->event);
 fail_create_event:
 	DeleteCriticalSection(&countdown->lock);
 fail_critical_section:
 	free(countdown);
-
 	return NULL;
 }
 
@@ -187,6 +181,6 @@ void CountdownEvent_Free(wCountdownEvent* countdown)
 
 	DeleteCriticalSection(&countdown->lock);
 	CloseHandle(countdown->event);
-
 	free(countdown);
 }
+

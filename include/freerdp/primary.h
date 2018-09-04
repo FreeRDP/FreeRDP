@@ -533,3 +533,4 @@ struct rdp_primary_update
 typedef struct rdp_primary_update rdpPrimaryUpdate;
 
 #endif /* FREERDP_UPDATE_PRIMARY_H */
+

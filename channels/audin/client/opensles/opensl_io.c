@@ -394,3 +394,4 @@ int android_RecIn(OPENSL_STREAM* p, short* buffer, int size)
 	return rc;
 }
 
+

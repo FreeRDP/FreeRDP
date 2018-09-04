@@ -16,11 +16,8 @@ int TestPathCchAppend(int argc, char* argv[])
 	HRESULT status;
 	TCHAR Path[PATHCCH_MAX_CCH];
 	size_t i;
-
 	/* Base Path: Backslash, More Path: No Backslash */
-
 	_tcscpy(Path, testBasePathBackslash);
-
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, testMorePathNoBackslash);
 
 	if (status != S_OK)
@@ -36,9 +33,7 @@ int TestPathCchAppend(int argc, char* argv[])
 	}
 
 	/* Base Path: Backslash, More Path: Backslash */
-
 	_tcscpy(Path, testBasePathBackslash);
-
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, testMorePathBackslash);
 
 	if (status != S_OK)
@@ -54,9 +49,7 @@ int TestPathCchAppend(int argc, char* argv[])
 	}
 
 	/* Base Path: No Backslash, More Path: Backslash */
-
 	_tcscpy(Path, testBasePathNoBackslash);
-
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, testMorePathBackslash);
 
 	if (status != S_OK)
@@ -72,9 +65,7 @@ int TestPathCchAppend(int argc, char* argv[])
 	}
 
 	/* Base Path: No Backslash, More Path: No Backslash */
-
 	_tcscpy(Path, testBasePathNoBackslash);
-
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, testMorePathNoBackslash);
 
 	if (status != S_OK)
@@ -91,34 +82,43 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	/* According to msdn a NULL Path is an invalid argument */
 	status = PathCchAppend(NULL, PATHCCH_MAX_CCH, testMorePathNoBackslash);
+
 	if (status != E_INVALIDARG)
 	{
-		_tprintf(_T("PathCchAppend with NULL path unexpectedly returned status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAppend with NULL path unexpectedly returned status: 0x%08")_T(PRIX32)_T("\n"),
+		         status);
 		return -1;
 	}
 
 	/* According to msdn a NULL pszMore is an invalid argument (although optional !?) */
 	_tcscpy(Path, testBasePathNoBackslash);
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, NULL);
+
 	if (status != E_INVALIDARG)
 	{
-		_tprintf(_T("PathCchAppend with NULL pszMore unexpectedly returned status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAppend with NULL pszMore unexpectedly returned status: 0x%08")_T(
+		             PRIX32)_T("\n"), status);
 		return -1;
 	}
 
 	/* According to msdn cchPath must be > 0 and <= PATHCCH_MAX_CCH */
 	_tcscpy(Path, testBasePathNoBackslash);
 	status = PathCchAppend(Path, 0, testMorePathNoBackslash);
+
 	if (status != E_INVALIDARG)
 	{
-		_tprintf(_T("PathCchAppend with cchPath value 0 unexpectedly returned status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAppend with cchPath value 0 unexpectedly returned status: 0x%08")_T(
+		             PRIX32)_T("\n"), status);
 		return -1;
 	}
+
 	_tcscpy(Path, testBasePathNoBackslash);
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH + 1, testMorePathNoBackslash);
+
 	if (status != E_INVALIDARG)
 	{
-		_tprintf(_T("PathCchAppend with cchPath value > PATHCCH_MAX_CCH unexpectedly returned status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAppend with cchPath value > PATHCCH_MAX_CCH unexpectedly returned status: 0x%08")
+		         _T(PRIX32)_T("\n"), status);
 		return -1;
 	}
 
@@ -128,8 +128,8 @@ int TestPathCchAppend(int argc, char* argv[])
 		Path[i] = _T('X');
 
 	Path[PATHCCH_MAX_CCH - 1] = 0;
-
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, _T("\\This cannot be appended to Path"));
+
 	if (SUCCEEDED(status))
 	{
 		_tprintf(_T("PathCchAppend unexepectedly succeeded with status: 0x%08")_T(PRIX32)_T("\n"), status);
@@ -138,4 +138,5 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	return 0;
 }
+
 

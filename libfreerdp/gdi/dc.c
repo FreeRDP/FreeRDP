@@ -257,3 +257,4 @@ BOOL gdi_DeleteDC(HGDI_DC hdc)
 
 	return TRUE;
 }
+

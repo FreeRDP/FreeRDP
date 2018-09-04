@@ -509,3 +509,4 @@ BOOL ber_read_integer_length(wStream* s, size_t* length)
 	    ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) &&
 	    ber_read_length(s, length);
 }
+

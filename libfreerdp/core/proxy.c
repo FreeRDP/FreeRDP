@@ -587,3 +587,4 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 
 	return FALSE;
 }
+

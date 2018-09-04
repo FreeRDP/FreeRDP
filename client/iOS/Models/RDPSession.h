@@ -1,9 +1,9 @@
 /*
- RDP Session object 
- 
+ RDP Session object
+
  Copyright 2013 Thincast Technologies GmbH, Authors: Martin Fleisz, Dorian Johnson
- 
- This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+
+ This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
@@ -40,34 +40,27 @@ extern NSString* TSXSessionDidFailToConnectNotification;
 @end
 
 // rdp session
-@interface RDPSession : NSObject 
+@interface RDPSession : NSObject
 {
 @private
 	freerdp* _freerdp;
-
-    ComputerBookmark* _bookmark;
-    
+	ComputerBookmark* _bookmark;
 	ConnectionParams* _params;
-	
 	NSObject<RDPSessionDelegate>* _delegate;
-    
-    NSCondition* _ui_request_completed;
-    
-    NSString* _name;
-    
-    // flag if the session is suspended
-    BOOL _suspended;
-    
+	NSCondition* _ui_request_completed;
+	NSString* _name;
+	// flag if the session is suspended
+	BOOL _suspended;
 	// flag that specifies whether the RDP toolbar is visible
-	BOOL _toolbar_visible;  
+	BOOL _toolbar_visible;
 }
 
-@property (readonly) ConnectionParams* params;
-@property (readonly) ComputerBookmark* bookmark;
-@property (assign) id <RDPSessionDelegate> delegate;
-@property (assign) BOOL toolbarVisible;
-@property (readonly) CGContextRef bitmapContext;
-@property (readonly) NSCondition* uiRequestCompleted;
+@property(readonly) ConnectionParams* params;
+@property(readonly) ComputerBookmark* bookmark;
+@property(assign) id <RDPSessionDelegate> delegate;
+@property(assign) BOOL toolbarVisible;
+@property(readonly) CGContextRef bitmapContext;
+@property(readonly) NSCondition* uiRequestCompleted;
 
 
 // initialize a new session with the given bookmark
@@ -106,3 +99,4 @@ extern NSString* TSXSessionDidFailToConnectNotification;
 - (NSString*)sessionName;
 
 @end
+

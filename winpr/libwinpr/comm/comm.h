@@ -108,3 +108,4 @@ int eventfd_write(int fd, eventfd_t value);
 #endif /* __linux__ */
 
 #endif /* WINPR_COMM_PRIVATE_H */
+

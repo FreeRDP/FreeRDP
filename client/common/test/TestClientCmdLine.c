@@ -402,12 +402,12 @@ static test tests[] =
 	},
 	{
 		0,  check_settings_smartcard_redirect_two,
-		{"xfreerdp", "/smartcard:Xiring", "/smartcard:NeoWave" ,  "/v:test.freerdp.com", 0},
+		{"xfreerdp", "/smartcard:Xiring", "/smartcard:NeoWave",  "/v:test.freerdp.com", 0},
 		{{0}}
 	},
 	{
 		0,  check_settings_smartcard_redirect_two,
-		{"xfreerdp", "/smartcard:Xiring,NeoWave" ,  "/v:test.freerdp.com", 0},
+		{"xfreerdp", "/smartcard:Xiring,NeoWave",  "/v:test.freerdp.com", 0},
 		{{0}}
 	},
 	{
@@ -462,7 +462,7 @@ int TestClientCmdLine(int argc, char* argv[])
 		char** command_line = string_list_copy(tests[i].command_line);
 
 		if (!testcase(__FUNCTION__,
-		              command_line, string_list_length((const char * const*)command_line),
+		              command_line, string_list_length((const char* const*)command_line),
 		              tests[i].expected_status, tests[i].validate_settings))
 		{
 			FAILURE("parsing arguments.\n");
@@ -473,7 +473,7 @@ int TestClientCmdLine(int argc, char* argv[])
 
 		if (failure)
 		{
-			string_list_print(stdout, (const char * const*)command_line);
+			string_list_print(stdout, (const char* const*)command_line);
 			rc = -1;
 		}
 
@@ -482,3 +482,4 @@ int TestClientCmdLine(int argc, char* argv[])
 
 	return rc;
 }
+

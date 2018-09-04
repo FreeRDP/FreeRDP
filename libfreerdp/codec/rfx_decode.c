@@ -100,3 +100,4 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, BYTE* rgb_buffer,
 	BufferPool_Return(context->priv->BufferPool, pBuffer);
 	return rc;
 }
+

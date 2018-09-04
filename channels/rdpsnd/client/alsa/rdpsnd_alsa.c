@@ -577,3 +577,4 @@ error_parse_args:
 	free(alsa);
 	return error;
 }
+

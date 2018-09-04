@@ -29,3 +29,4 @@
 BOOL sf_peer_encomsp_init(testPeerContext* context);
 
 #endif /* FREERDP_SERVER_SAMPLE_SF_ENCOMSP_H */
+

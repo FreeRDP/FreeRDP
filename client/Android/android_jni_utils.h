@@ -35,3 +35,4 @@ FREERDP_LOCAL extern JavaVM* g_JavaVm;
 #endif
 
 #endif /* FREERDP_CLIENT_ANDROID_JNI_UTILS_H */
+

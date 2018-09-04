@@ -39,3 +39,4 @@ FREERDP_LOCAL BOOL update_recv_altsec_window_order(rdpUpdate* update,
 #endif
 
 #endif /* FREERDP_LIB_CORE_WINDOW_H */
+

@@ -190,3 +190,4 @@ const char* freerdp_get_error_connect_name(UINT32 code)
 	return "ERRCONNECT_UNKNOWN";
 }
 
+

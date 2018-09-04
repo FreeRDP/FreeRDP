@@ -3653,3 +3653,4 @@ BOOL update_recv_order(rdpUpdate* update, wStream* s)
 
 	return TRUE;
 }
+

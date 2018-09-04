@@ -46,3 +46,4 @@ struct _cliprdr_server_private
 typedef struct _cliprdr_server_private CliprdrServerPrivate;
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_SERVER_MAIN_H */
+

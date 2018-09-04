@@ -168,7 +168,7 @@ struct tagASN1open_t
 	ASN1uint32_t length;
 
 	union
-	{ 
+	{
 		void* encoded;
 		void* value;
 	};
@@ -310,33 +310,36 @@ enum
 
 
 WINPR_API ASN1module_t ASN1_CreateModule(ASN1uint32_t nVersion, ASN1encodingrule_e eRule,
-	ASN1uint32_t dwFlags, ASN1uint32_t cPDU, const ASN1GenericFun_t apfnEncoder[],
-	const ASN1GenericFun_t apfnDecoder[], const ASN1FreeFun_t apfnFreeMemory[],
-	const ASN1uint32_t acbStructSize[], ASN1magic_t nModuleName);
+        ASN1uint32_t dwFlags, ASN1uint32_t cPDU, const ASN1GenericFun_t apfnEncoder[],
+        const ASN1GenericFun_t apfnDecoder[], const ASN1FreeFun_t apfnFreeMemory[],
+        const ASN1uint32_t acbStructSize[], ASN1magic_t nModuleName);
 
 WINPR_API void ASN1_CloseModule(ASN1module_t pModule);
 
 WINPR_API ASN1error_e ASN1_CreateEncoder(ASN1module_t pModule, ASN1encoding_t* ppEncoderInfo,
-	ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize, ASN1encoding_t pParent);
+        ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize, ASN1encoding_t pParent);
 
-WINPR_API ASN1error_e ASN1_Encode(ASN1encoding_t pEncoderInfo, void* pDataStruct, ASN1uint32_t nPduNum,
-	ASN1uint32_t dwFlags, ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize);
+WINPR_API ASN1error_e ASN1_Encode(ASN1encoding_t pEncoderInfo, void* pDataStruct,
+                                  ASN1uint32_t nPduNum,
+                                  ASN1uint32_t dwFlags, ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize);
 
 WINPR_API void ASN1_CloseEncoder(ASN1encoding_t pEncoderInfo);
 
 WINPR_API void ASN1_CloseEncoder2(ASN1encoding_t pEncoderInfo);
 
 WINPR_API ASN1error_e ASN1_CreateDecoder(ASN1module_t pModule, ASN1decoding_t* ppDecoderInfo,
-	ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize, ASN1decoding_t pParent);
+        ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize, ASN1decoding_t pParent);
 
-WINPR_API ASN1error_e ASN1_Decode(ASN1decoding_t pDecoderInfo, void** ppDataStruct, ASN1uint32_t nPduNum,
-	ASN1uint32_t dwFlags, ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize);
+WINPR_API ASN1error_e ASN1_Decode(ASN1decoding_t pDecoderInfo, void** ppDataStruct,
+                                  ASN1uint32_t nPduNum,
+                                  ASN1uint32_t dwFlags, ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize);
 
 WINPR_API void ASN1_CloseDecoder(ASN1decoding_t pDecoderInfo);
 
 WINPR_API void ASN1_FreeEncoded(ASN1encoding_t pEncoderInfo, void* pBuf);
 
-WINPR_API void ASN1_FreeDecoded(ASN1decoding_t pDecoderInfo, void* pDataStruct, ASN1uint32_t nPduNum);
+WINPR_API void ASN1_FreeDecoded(ASN1decoding_t pDecoderInfo, void* pDataStruct,
+                                ASN1uint32_t nPduNum);
 
 enum tagASN1option_e
 {
@@ -369,11 +372,15 @@ struct tagASN1optionparam_t
 typedef struct tagASN1optionparam_t ASN1optionparam_t;
 typedef struct tagASN1optionparam_t ASN1optionparam_s;
 
-WINPR_API ASN1error_e ASN1_SetEncoderOption(ASN1encoding_t pEncoderInfo, ASN1optionparam_t* pOptParam);
-WINPR_API ASN1error_e ASN1_GetEncoderOption(ASN1encoding_t pEncoderInfo, ASN1optionparam_t* pOptParam);
+WINPR_API ASN1error_e ASN1_SetEncoderOption(ASN1encoding_t pEncoderInfo,
+        ASN1optionparam_t* pOptParam);
+WINPR_API ASN1error_e ASN1_GetEncoderOption(ASN1encoding_t pEncoderInfo,
+        ASN1optionparam_t* pOptParam);
 
-WINPR_API ASN1error_e ASN1_SetDecoderOption(ASN1decoding_t pDecoderInfo, ASN1optionparam_t* pOptParam);
-WINPR_API ASN1error_e ASN1_GetDecoderOption(ASN1decoding_t pDecoderInfo, ASN1optionparam_t* pOptParam);
+WINPR_API ASN1error_e ASN1_SetDecoderOption(ASN1decoding_t pDecoderInfo,
+        ASN1optionparam_t* pOptParam);
+WINPR_API ASN1error_e ASN1_GetDecoderOption(ASN1decoding_t pDecoderInfo,
+        ASN1optionparam_t* pOptParam);
 
 WINPR_API void ASN1bitstring_free(ASN1bitstring_t* bitstring);
 WINPR_API void ASN1octetstring_free(ASN1octetstring_t* octetstring);
@@ -406,7 +413,8 @@ WINPR_API ASN1uint32_t ASN1uint32_uoctets(ASN1uint32_t val);
 
 WINPR_API int ASN1intx_cmp(ASN1intx_t* intx1, ASN1intx_t* intx2);
 WINPR_API int ASN1objectidentifier_cmp(ASN1objectidentifier_t* oid1, ASN1objectidentifier_t* oid2);
-WINPR_API int ASN1objectidentifier2_cmp(ASN1objectidentifier2_t* oid1, ASN1objectidentifier2_t* oid2);
+WINPR_API int ASN1objectidentifier2_cmp(ASN1objectidentifier2_t* oid1,
+                                        ASN1objectidentifier2_t* oid2);
 WINPR_API int ASN1bitstring_cmp(ASN1bitstring_t* str1, ASN1bitstring_t* str2, int length);
 WINPR_API int ASN1octetstring_cmp(ASN1octetstring_t* str1, ASN1octetstring_t* str2);
 WINPR_API int ASN1charstring_cmp(ASN1charstring_t* str1, ASN1charstring_t* str2);
@@ -419,34 +427,53 @@ WINPR_API int ASN1open_cmp(ASN1open_t* open1, ASN1open_t* open2);
 WINPR_API int ASN1generalizedtime_cmp(ASN1generalizedtime_t* t1, ASN1generalizedtime_t* t2);
 WINPR_API int ASN1utctime_cmp(ASN1utctime_t* t1, ASN1utctime_t* t2);
 
-WINPR_API int ASN1BEREncCharString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len, ASN1char_t* val);
-WINPR_API int ASN1DEREncCharString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len, ASN1char_t* val);
-WINPR_API int ASN1BEREncChar16String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len, ASN1char16_t* val);
-WINPR_API int ASN1DEREncChar16String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len, ASN1char16_t* val);
-WINPR_API int ASN1BEREncChar32String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len, ASN1char32_t* val);
-WINPR_API int ASN1DEREncChar32String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len, ASN1char32_t* val);
-WINPR_API int ASN1BEREncOctetString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len, ASN1octet_t* val);
-WINPR_API int ASN1DEREncOctetString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len, ASN1octet_t* val);
-WINPR_API int ASN1BEREncBitString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t bitlen, ASN1octet_t* val);
-WINPR_API int ASN1DEREncBitString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t bitlen, ASN1octet_t* val);
-WINPR_API int ASN1BEREncGeneralizedTime(ASN1encoding_t enc, ASN1uint32_t tag, ASN1generalizedtime_t* val);
-WINPR_API int ASN1DEREncGeneralizedTime(ASN1encoding_t enc, ASN1uint32_t tag, ASN1generalizedtime_t* val);
+WINPR_API int ASN1BEREncCharString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len,
+                                   ASN1char_t* val);
+WINPR_API int ASN1DEREncCharString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len,
+                                   ASN1char_t* val);
+WINPR_API int ASN1BEREncChar16String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len,
+                                     ASN1char16_t* val);
+WINPR_API int ASN1DEREncChar16String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len,
+                                     ASN1char16_t* val);
+WINPR_API int ASN1BEREncChar32String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len,
+                                     ASN1char32_t* val);
+WINPR_API int ASN1DEREncChar32String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len,
+                                     ASN1char32_t* val);
+WINPR_API int ASN1BEREncOctetString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len,
+                                    ASN1octet_t* val);
+WINPR_API int ASN1DEREncOctetString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t len,
+                                    ASN1octet_t* val);
+WINPR_API int ASN1BEREncBitString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t bitlen,
+                                  ASN1octet_t* val);
+WINPR_API int ASN1DEREncBitString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t bitlen,
+                                  ASN1octet_t* val);
+WINPR_API int ASN1BEREncGeneralizedTime(ASN1encoding_t enc, ASN1uint32_t tag,
+                                        ASN1generalizedtime_t* val);
+WINPR_API int ASN1DEREncGeneralizedTime(ASN1encoding_t enc, ASN1uint32_t tag,
+                                        ASN1generalizedtime_t* val);
 WINPR_API int ASN1BEREncS32(ASN1encoding_t enc, ASN1uint32_t tag, ASN1int32_t val);
 WINPR_API int ASN1BEREncSX(ASN1encoding_t enc, ASN1uint32_t tag, ASN1intx_t* val);
-WINPR_API int ASN1BEREncZeroMultibyteString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1ztcharstring_t val);
-WINPR_API int ASN1DEREncZeroMultibyteString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1ztcharstring_t val);
-WINPR_API int ASN1BEREncMultibyteString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1charstring_t* val);
-WINPR_API int ASN1DEREncMultibyteString(ASN1encoding_t enc, ASN1uint32_t tag, ASN1charstring_t* val);
+WINPR_API int ASN1BEREncZeroMultibyteString(ASN1encoding_t enc, ASN1uint32_t tag,
+        ASN1ztcharstring_t val);
+WINPR_API int ASN1DEREncZeroMultibyteString(ASN1encoding_t enc, ASN1uint32_t tag,
+        ASN1ztcharstring_t val);
+WINPR_API int ASN1BEREncMultibyteString(ASN1encoding_t enc, ASN1uint32_t tag,
+                                        ASN1charstring_t* val);
+WINPR_API int ASN1DEREncMultibyteString(ASN1encoding_t enc, ASN1uint32_t tag,
+                                        ASN1charstring_t* val);
 WINPR_API int ASN1BEREncNull(ASN1encoding_t enc, ASN1uint32_t tag);
-WINPR_API int ASN1BEREncObjectIdentifier(ASN1encoding_t enc, ASN1uint32_t tag, ASN1objectidentifier_t* val);
-WINPR_API int ASN1BEREncObjectIdentifier2(ASN1encoding_t enc, ASN1uint32_t tag, ASN1objectidentifier2_t* val);
-WINPR_API int ASN1BEREncRemoveZeroBits(ASN1uint32_t* nbits,ASN1octet_t* val);
-WINPR_API int ASN1BEREncRemoveZeroBits2(ASN1uint32_t* nbits,ASN1octet_t* val,ASN1uint32_t minlen);
+WINPR_API int ASN1BEREncObjectIdentifier(ASN1encoding_t enc, ASN1uint32_t tag,
+        ASN1objectidentifier_t* val);
+WINPR_API int ASN1BEREncObjectIdentifier2(ASN1encoding_t enc, ASN1uint32_t tag,
+        ASN1objectidentifier2_t* val);
+WINPR_API int ASN1BEREncRemoveZeroBits(ASN1uint32_t* nbits, ASN1octet_t* val);
+WINPR_API int ASN1BEREncRemoveZeroBits2(ASN1uint32_t* nbits, ASN1octet_t* val, ASN1uint32_t minlen);
 WINPR_API int ASN1BEREncUTCTime(ASN1encoding_t enc, ASN1uint32_t tag, ASN1utctime_t* val);
 WINPR_API int ASN1DEREncUTCTime(ASN1encoding_t enc, ASN1uint32_t tag, ASN1utctime_t* val);
 WINPR_API int ASN1BEREncFlush(ASN1encoding_t enc);
 WINPR_API int ASN1BEREncOpenType(ASN1encoding_t enc, ASN1open_t* val);
-WINPR_API int ASN1BERDecExplicitTag(ASN1decoding_t dec, ASN1uint32_t tag, ASN1decoding_t* dd, ASN1octet_t* *ppBufEnd);
+WINPR_API int ASN1BERDecExplicitTag(ASN1decoding_t dec, ASN1uint32_t tag, ASN1decoding_t* dd,
+                                    ASN1octet_t * *ppBufEnd);
 
 WINPR_API int ASN1BERDecEndOfContents(ASN1decoding_t dec, ASN1decoding_t dd, ASN1octet_t* pBufEnd);
 WINPR_API int ASN1BERDecOctetString(ASN1decoding_t dec, ASN1uint32_t tag, ASN1octetstring_t* val);
@@ -456,12 +483,17 @@ WINPR_API int ASN1BERDecBitString2(ASN1decoding_t dec, ASN1uint32_t tag, ASN1bit
 WINPR_API int ASN1BERDecChar16String(ASN1decoding_t dec, ASN1uint32_t tag, ASN1char16string_t* val);
 WINPR_API int ASN1BERDecChar32String(ASN1decoding_t dec, ASN1uint32_t tag, ASN1char32string_t* val);
 WINPR_API int ASN1BERDecCharString(ASN1decoding_t dec, ASN1uint32_t tag, ASN1charstring_t* val);
-WINPR_API int ASN1BERDecGeneralizedTime(ASN1decoding_t dec, ASN1uint32_t tag, ASN1generalizedtime_t* val);
-WINPR_API int ASN1BERDecZeroMultibyteString(ASN1decoding_t dec, ASN1uint32_t tag, ASN1ztcharstring_t* val);
-WINPR_API int ASN1BERDecMultibyteString(ASN1decoding_t dec, ASN1uint32_t tag, ASN1charstring_t* val);
+WINPR_API int ASN1BERDecGeneralizedTime(ASN1decoding_t dec, ASN1uint32_t tag,
+                                        ASN1generalizedtime_t* val);
+WINPR_API int ASN1BERDecZeroMultibyteString(ASN1decoding_t dec, ASN1uint32_t tag,
+        ASN1ztcharstring_t* val);
+WINPR_API int ASN1BERDecMultibyteString(ASN1decoding_t dec, ASN1uint32_t tag,
+                                        ASN1charstring_t* val);
 WINPR_API int ASN1BERDecNull(ASN1decoding_t dec, ASN1uint32_t tag);
-WINPR_API int ASN1BERDecObjectIdentifier(ASN1decoding_t dec, ASN1uint32_t tag, ASN1objectidentifier_t* val);
-WINPR_API int ASN1BERDecObjectIdentifier2(ASN1decoding_t dec, ASN1uint32_t tag, ASN1objectidentifier2_t* val);
+WINPR_API int ASN1BERDecObjectIdentifier(ASN1decoding_t dec, ASN1uint32_t tag,
+        ASN1objectidentifier_t* val);
+WINPR_API int ASN1BERDecObjectIdentifier2(ASN1decoding_t dec, ASN1uint32_t tag,
+        ASN1objectidentifier2_t* val);
 WINPR_API int ASN1BERDecS8Val(ASN1decoding_t dec, ASN1uint32_t tag, ASN1int8_t* val);
 WINPR_API int ASN1BERDecS16Val(ASN1decoding_t dec, ASN1uint32_t tag, ASN1int16_t* val);
 WINPR_API int ASN1BERDecS32Val(ASN1decoding_t dec, ASN1uint32_t tag, ASN1int32_t* val);
@@ -470,9 +502,12 @@ WINPR_API int ASN1BERDecU8Val(ASN1decoding_t dec, ASN1uint32_t tag, ASN1uint8_t*
 WINPR_API int ASN1BERDecU16Val(ASN1decoding_t dec, ASN1uint32_t tag, ASN1uint16_t* val);
 WINPR_API int ASN1BERDecU32Val(ASN1decoding_t dec, ASN1uint32_t tag, ASN1uint32_t* val);
 WINPR_API int ASN1BERDecUTCTime(ASN1decoding_t dec, ASN1uint32_t tag, ASN1utctime_t* val);
-WINPR_API int ASN1BERDecZeroCharString(ASN1decoding_t dec, ASN1uint32_t tag, ASN1ztcharstring_t* val);
-WINPR_API int ASN1BERDecZeroChar16String(ASN1decoding_t dec, ASN1uint32_t tag, ASN1ztchar16string_t* val);
-WINPR_API int ASN1BERDecZeroChar32String(ASN1decoding_t dec, ASN1uint32_t tag, ASN1ztchar32string_t* val);
+WINPR_API int ASN1BERDecZeroCharString(ASN1decoding_t dec, ASN1uint32_t tag,
+                                       ASN1ztcharstring_t* val);
+WINPR_API int ASN1BERDecZeroChar16String(ASN1decoding_t dec, ASN1uint32_t tag,
+        ASN1ztchar16string_t* val);
+WINPR_API int ASN1BERDecZeroChar32String(ASN1decoding_t dec, ASN1uint32_t tag,
+        ASN1ztchar32string_t* val);
 WINPR_API int ASN1BERDecSkip(ASN1decoding_t dec);
 WINPR_API int ASN1BERDecFlush(ASN1decoding_t dec);
 WINPR_API int ASN1BERDecOpenType(ASN1decoding_t dec, ASN1open_t* val);
@@ -498,8 +533,10 @@ WINPR_API int ASN1BERDecEoid(ASN1decoding_t dec, ASN1uint32_t tag, ASN1encodedOI
 WINPR_API int ASN1BERDotVal2Eoid(ASN1encoding_t enc, char* pszDotVal, ASN1encodedOID_t* pOut);
 WINPR_API int ASN1BEREoid2DotVal(ASN1decoding_t dec, ASN1encodedOID_t* pIn, char** ppszDotVal);
 WINPR_API void ASN1BEREoid_free(ASN1encodedOID_t* val);
-WINPR_API int ASN1BEREncUTF8String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t length, WCHAR* value);
-WINPR_API int ASN1DEREncUTF8String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t length, WCHAR* value);
+WINPR_API int ASN1BEREncUTF8String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t length,
+                                   WCHAR* value);
+WINPR_API int ASN1DEREncUTF8String(ASN1encoding_t enc, ASN1uint32_t tag, ASN1uint32_t length,
+                                   WCHAR* value);
 WINPR_API int ASN1BERDecUTF8String(ASN1decoding_t dec, ASN1uint32_t tag, ASN1wstring_t* val);
 WINPR_API int ASN1DEREncBeginBlk(ASN1encoding_t enc, ASN1blocktype_e eBlkType, void** ppBlk);
 WINPR_API int ASN1DEREncNewBlkElement(void* pBlk, ASN1encoding_t* enc2);
@@ -511,4 +548,5 @@ WINPR_API int ASN1DEREncEndBlk(void* pBlk);
 #endif
 
 #endif /* WINPR_ASN1_H */
+
 

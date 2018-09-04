@@ -132,3 +132,4 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 #include "smartcard_pack.h"
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H */
+

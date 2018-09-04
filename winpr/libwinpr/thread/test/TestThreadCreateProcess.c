@@ -31,17 +31,13 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	DWORD read_bytes;
 	int ret = 0;
 	SECURITY_ATTRIBUTES saAttr;
-
 	lpszEnvironmentBlock = GetEnvironmentStrings();
-
 	lpApplicationName = NULL;
-
 #ifdef _WIN32
 	lpCommandLine = _T("cmd /C set");
 #else
 	lpCommandLine = _T("printenv");
 #endif
-
 	lpProcessAttributes = NULL;
 	lpThreadAttributes = NULL;
 	bInheritHandles = FALSE;
@@ -54,17 +50,16 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	ZeroMemory(&StartupInfo, sizeof(STARTUPINFO));
 	StartupInfo.cb = sizeof(STARTUPINFO);
 	ZeroMemory(&ProcessInformation, sizeof(PROCESS_INFORMATION));
-
 	status = CreateProcess(lpApplicationName,
-			lpCommandLine,
-			lpProcessAttributes,
-			lpThreadAttributes,
-			bInheritHandles,
-			dwCreationFlags,
-			lpEnvironment,
-			lpCurrentDirectory,
-			&StartupInfo,
-			&ProcessInformation);
+	                       lpCommandLine,
+	                       lpProcessAttributes,
+	                       lpThreadAttributes,
+	                       bInheritHandles,
+	                       dwCreationFlags,
+	                       lpEnvironment,
+	                       lpCurrentDirectory,
+	                       &StartupInfo,
+	                       &ProcessInformation);
 
 	if (!status)
 	{
@@ -80,17 +75,12 @@ int TestThreadCreateProcess(int argc, char* argv[])
 
 	exitCode = 0;
 	status = GetExitCodeProcess(ProcessInformation.hProcess, &exitCode);
-
 	printf("GetExitCodeProcess status: %"PRId32"\n", status);
 	printf("Process exited with code: 0x%08"PRIX32"\n", exitCode);
-
 	CloseHandle(ProcessInformation.hProcess);
 	CloseHandle(ProcessInformation.hThread);
 	FreeEnvironmentStrings(lpszEnvironmentBlock);
-
-
 	/* Test stdin,stdout,stderr redirection */
-
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	saAttr.bInheritHandle = TRUE;
 	saAttr.lpSecurityDescriptor = NULL;
@@ -102,13 +92,11 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	}
 
 	bInheritHandles = TRUE;
-
 	ZeroMemory(&StartupInfo, sizeof(STARTUPINFO));
 	StartupInfo.cb = sizeof(STARTUPINFO);
 	StartupInfo.hStdOutput = pipe_write;
 	StartupInfo.hStdError = pipe_write;
 	StartupInfo.dwFlags = STARTF_USESTDHANDLES;
-
 	ZeroMemory(&ProcessInformation, sizeof(PROCESS_INFORMATION));
 
 	if (!(lpEnvironment = calloc(1, sizeof(TESTENV_T) + sizeof(TCHAR))))
@@ -116,20 +104,18 @@ int TestThreadCreateProcess(int argc, char* argv[])
 		printf("Failed to allocate environment buffer. error=%"PRIu32"\n", GetLastError());
 		return 1;
 	}
+
 	memcpy(lpEnvironment, (void*)TESTENV_T, sizeof(TESTENV_T));
-
-
 	status = CreateProcess(lpApplicationName,
-						   lpCommandLine,
-						   lpProcessAttributes,
-						   lpThreadAttributes,
-						   bInheritHandles,
-						   dwCreationFlags,
-						   lpEnvironment,
-						   lpCurrentDirectory,
-						   &StartupInfo,
-						   &ProcessInformation);
-
+	                       lpCommandLine,
+	                       lpProcessAttributes,
+	                       lpThreadAttributes,
+	                       bInheritHandles,
+	                       dwCreationFlags,
+	                       lpEnvironment,
+	                       lpCurrentDirectory,
+	                       &StartupInfo,
+	                       &ProcessInformation);
 	free(lpEnvironment);
 
 	if (!status)
@@ -147,7 +133,8 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	}
 
 	ZeroMemory(buf, sizeof(buf));
-	ReadFile(pipe_read, buf, sizeof(buf)-1, &read_bytes, NULL);
+	ReadFile(pipe_read, buf, sizeof(buf) - 1, &read_bytes, NULL);
+
 	if (!strstr((const char*)buf, TESTENV_A))
 	{
 		printf("No or unexpected data read from pipe\n");
@@ -156,16 +143,13 @@ int TestThreadCreateProcess(int argc, char* argv[])
 
 	CloseHandle(pipe_read);
 	CloseHandle(pipe_write);
-
 	exitCode = 0;
 	status = GetExitCodeProcess(ProcessInformation.hProcess, &exitCode);
-
 	printf("GetExitCodeProcess status: %"PRId32"\n", status);
 	printf("Process exited with code: 0x%08"PRIX32"\n", exitCode);
-
 	CloseHandle(ProcessInformation.hProcess);
 	CloseHandle(ProcessInformation.hThread);
-
 	return ret;
 }
+
 

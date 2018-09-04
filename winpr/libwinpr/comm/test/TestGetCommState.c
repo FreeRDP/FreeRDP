@@ -29,19 +29,19 @@ static BOOL test_generic(HANDLE hComm)
 {
 	DCB dcb, *pDcb;
 	BOOL result;
-
 	ZeroMemory(&dcb, sizeof(DCB));
 	result = GetCommState(hComm, &dcb);
+
 	if (result)
 	{
 		printf("GetCommState failure, should have returned false because dcb.DCBlength has been let uninitialized\n");
 		return FALSE;
 	}
 
-
 	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB) / 2; /* improper value */
 	result = GetCommState(hComm, &dcb);
+
 	if (result)
 	{
 		printf("GetCommState failure, should have return false because dcb.DCBlength was not correctly initialized\n");
@@ -51,6 +51,7 @@ static BOOL test_generic(HANDLE hComm)
 	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
 	result = GetCommState(hComm, &dcb);
+
 	if (!result)
 	{
 		printf("GetCommState failure: Ox%x, with adjusted DCBlength\n", GetLastError());
@@ -58,12 +59,15 @@ static BOOL test_generic(HANDLE hComm)
 	}
 
 	pDcb = (DCB*)calloc(2, sizeof(DCB));
+
 	if (!pDcb)
 		return FALSE;
+
 	pDcb->DCBlength = sizeof(DCB) * 2;
 	result = GetCommState(hComm, pDcb);
 	result = result && (pDcb->DCBlength == sizeof(DCB) * 2);
 	free(pDcb);
+
 	if (!result)
 	{
 		printf("GetCommState failure: 0x%x, with bigger DCBlength\n", GetLastError());
@@ -86,6 +90,7 @@ int TestGetCommState(int argc, char* argv[])
 	}
 
 	result = DefineCommDevice("COM1", "/dev/ttyS0");
+
 	if (!result)
 	{
 		printf("DefineCommDevice failure: 0x%x\n", GetLastError());
@@ -93,8 +98,8 @@ int TestGetCommState(int argc, char* argv[])
 	}
 
 	hComm = CreateFileA("COM1",
-			GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+	                    GENERIC_READ | GENERIC_WRITE,
+	                    0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
@@ -109,6 +114,7 @@ int TestGetCommState(int argc, char* argv[])
 	}
 
 	_comm_setServerSerialDriver(hComm, SerialDriverSerialSys);
+
 	if (!test_generic(hComm))
 	{
 		printf("test_generic failure (SerialDriverSerialSys)\n");
@@ -116,6 +122,7 @@ int TestGetCommState(int argc, char* argv[])
 	}
 
 	_comm_setServerSerialDriver(hComm, SerialDriverSerCxSys);
+
 	if (!test_generic(hComm))
 	{
 		printf("test_generic failure (SerialDriverSerCxSys)\n");
@@ -123,6 +130,7 @@ int TestGetCommState(int argc, char* argv[])
 	}
 
 	_comm_setServerSerialDriver(hComm, SerialDriverSerCx2Sys);
+
 	if (!test_generic(hComm))
 	{
 		printf("test_generic failure (SerialDriverSerCx2Sys)\n");
@@ -137,3 +145,4 @@ int TestGetCommState(int argc, char* argv[])
 
 	return EXIT_SUCCESS;
 }
+

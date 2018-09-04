@@ -39,3 +39,4 @@ struct _WINPR_WND
 typedef struct _WINPR_WND WINPR_WND;
 
 #endif /* WINPR_WND_PRIVATE_H */
+

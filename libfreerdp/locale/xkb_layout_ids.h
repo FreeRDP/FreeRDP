@@ -27,3 +27,4 @@ FREERDP_LOCAL UINT32 find_keyboard_layout_in_xorg_rules(char* layout,
         char* variant);
 
 #endif /* FREERDP_LIB_LOCALE_XKB_LAYOUT_IDS_H */
+

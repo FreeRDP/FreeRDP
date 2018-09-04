@@ -49,3 +49,4 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam);
 
 
 #endif /* FREERDP_SERVER_WIN_PEER_H */
+

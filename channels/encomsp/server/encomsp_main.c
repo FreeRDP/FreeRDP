@@ -187,7 +187,6 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 	UINT error = CHANNEL_RC_OK;
 	DWORD status;
 	context = (EncomspServerContext*) arg;
-
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
@@ -309,7 +308,7 @@ static UINT encomsp_server_start(EncomspServerContext* context)
 	}
 
 	if (!(context->priv->Thread = CreateThread(NULL, 0,
-								  encomsp_server_thread, (void*) context, 0, NULL)))
+	                              encomsp_server_thread, (void*) context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(context->priv->StopEvent);
@@ -371,8 +370,9 @@ void encomsp_server_context_free(EncomspServerContext* context)
 	{
 		if (context->priv->ChannelHandle != INVALID_HANDLE_VALUE)
 			WTSVirtualChannelClose(context->priv->ChannelHandle);
-		
+
 		free(context->priv);
 		free(context);
 	}
 }
+

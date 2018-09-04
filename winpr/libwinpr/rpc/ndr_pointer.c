@@ -120,7 +120,8 @@ PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat)
  * offset_to_complex_description<2>
  */
 
-void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL_STUB_MESSAGE pStubMsg)
+void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat,
+                           PMIDL_STUB_MESSAGE pStubMsg)
 {
 	unsigned char type;
 	unsigned char attributes;
@@ -139,13 +140,14 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 	{
 		case FC_RP: /* Reference Pointer */
 			break;
+
 		case FC_UP: /* Unique Pointer */
 		case FC_OP: /* Unique Pointer in an object interface */
-
 			if (!pMemory)
 				return;
 
 			break;
+
 		case FC_FP: /* Full Pointer */
 			WLog_ERR(TAG, "warning: FC_FP unimplemented");
 			break;
@@ -160,7 +162,8 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 		pfnSizeRoutine(pStubMsg, pMemory, pNextFormat);
 }
 
-PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat, unsigned char** ppMemory)
+PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
+        unsigned char* pMemory, PFORMAT_STRING pFormat, unsigned char** ppMemory)
 {
 	ULONG_PTR MaxCount;
 	unsigned char* Memory;
@@ -239,7 +242,8 @@ PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, 
 	return pFormat;
 }
 
-PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+        PFORMAT_STRING pFormat)
 {
 	ULONG_PTR MaxCount;
 	unsigned long Offset;
@@ -296,7 +300,8 @@ PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsign
 	return pFormat;
 }
 
-void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                          PFORMAT_STRING pFormat)
 {
 	if (*pFormat != FC_RP)
 	{
@@ -307,9 +312,11 @@ void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, P
 	NdrpPointerBufferSize(pMemory, pFormat, pStubMsg);
 }
 
-void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                   PFORMAT_STRING pFormat)
 {
 	WLog_ERR(TAG, "warning: NdrByteCountPointerBufferSize unimplemented");
 }
 
 #endif
+

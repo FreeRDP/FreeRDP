@@ -63,3 +63,4 @@ extern "C" {
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_MAC_SHADOW_H */
+

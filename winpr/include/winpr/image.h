@@ -97,3 +97,4 @@ WINPR_API void winpr_image_free(wImage* image, BOOL bFreeBuffer);
 #endif
 
 #endif /* WINPR_IMAGE_H */
+

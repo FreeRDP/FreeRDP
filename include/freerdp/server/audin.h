@@ -28,13 +28,14 @@
 
 typedef struct _audin_server_context audin_server_context;
 
-typedef UINT (*psAudinServerSelectFormat)(audin_server_context* context, int client_format_index);
+typedef UINT(*psAudinServerSelectFormat)(audin_server_context* context, int client_format_index);
 typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
 typedef BOOL (*psAudinServerClose)(audin_server_context* context);
 
-typedef UINT (*psAudinServerOpening)(audin_server_context* context);
-typedef UINT (*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
-typedef UINT (*psAudinServerReceiveSamples)(audin_server_context* context, const void* buf, int nframes);
+typedef UINT(*psAudinServerOpening)(audin_server_context* context);
+typedef UINT(*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
+typedef UINT(*psAudinServerReceiveSamples)(audin_server_context* context, const void* buf,
+        int nframes);
 
 struct _audin_server_context
 {
@@ -106,3 +107,4 @@ FREERDP_API void audin_server_context_free(audin_server_context* context);
 #endif
 
 #endif /* FREERDP_CHANNEL_AUDIN_SERVER_H */
+

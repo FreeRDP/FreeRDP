@@ -75,3 +75,4 @@ void shadow_encoder_free(rdpShadowEncoder* encoder);
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_ENCODER_H */
+
