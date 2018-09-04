@@ -283,11 +283,6 @@ static BOOL xf_desktop_resize(rdpContext* context)
 	return TRUE;
 }
 
-static BOOL xf_sw_begin_paint(rdpContext* context)
-{
-	return TRUE;
-}
-
 static BOOL xf_sw_end_paint(rdpContext* context)
 {
 	int i;
@@ -388,11 +383,6 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 out:
 	xf_unlock_x11(xfc, TRUE);
 	return ret;
-}
-
-static BOOL xf_hw_begin_paint(rdpContext* context)
-{
-	return TRUE;
 }
 
 static BOOL xf_hw_end_paint(rdpContext* context)
@@ -1263,13 +1253,11 @@ static BOOL xf_post_connect(freerdp* instance)
 
 	if (settings->SoftwareGdi)
 	{
-		update->BeginPaint = xf_sw_begin_paint;
 		update->EndPaint = xf_sw_end_paint;
 		update->DesktopResize = xf_sw_desktop_resize;
 	}
 	else
 	{
-		update->BeginPaint = xf_hw_begin_paint;
 		update->EndPaint = xf_hw_end_paint;
 		update->DesktopResize = xf_hw_desktop_resize;
 	}
