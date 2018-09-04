@@ -1,21 +1,21 @@
 /**
- * WinPR: Windows Portable Runtime
- * Smart Card API
- *
- * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* WinPR: Windows Portable Runtime
+* Smart Card API
+*
+* Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -48,66 +48,66 @@
 #define TAG WINPR_TAG("smartcard")
 
 /**
- * PC/SC transactions:
- * http://developersblog.wwpass.com/?p=180
- */
+* PC/SC transactions:
+* http://developersblog.wwpass.com/?p=180
+*/
 
 /**
- * Smart Card Logon on Windows Vista:
- * http://blogs.msdn.com/b/shivaram/archive/2007/02/26/smart-card-logon-on-windows-vista.aspx
- */
+* Smart Card Logon on Windows Vista:
+* http://blogs.msdn.com/b/shivaram/archive/2007/02/26/smart-card-logon-on-windows-vista.aspx
+*/
 
 /**
- * The Smart Card Cryptographic Service Provider Cookbook:
- * http://msdn.microsoft.com/en-us/library/ms953432.aspx
- *
- * SCARDCONTEXT
- *
- * The context is a communication channel with the smart card resource manager and
- * all calls to the resource manager must go through this link.
- *
- * All functions that take a context as a parameter or a card handle as parameter,
- * which is indirectly associated with a particular context, may be blocking calls.
- * Examples of these are SCardGetStatusChange and SCardBeginTransaction, which takes
- * a card handle as a parameter. If such a function blocks then all operations wanting
- * to use the context are blocked as well. So, it is recommended that a CSP using
- * monitoring establishes at least two contexts with the resource manager; one for
- * monitoring (with SCardGetStatusChange) and one for other operations.
- *
- * If multiple cards are present, it is recommended that a separate context or pair
- * of contexts be established for each card to prevent operations on one card from
- * blocking operations on another.
- *
- * Example one
- *
- * The example below shows what can happen if a CSP using SCardGetStatusChange for
- * monitoring does not establish two contexts with the resource manager.
- * The context becomes unusable until SCardGetStatusChange unblocks.
- *
- * In this example, there is one process running called P1.
- * P1 calls SCardEstablishContext, which returns the context hCtx.
- * P1 calls SCardConnect (with the hCtx context) which returns a handle to the card, hCard.
- * P1 calls SCardGetStatusChange (with the hCtx context) which blocks because
- * there are no status changes to report.
- * Until the thread running SCardGetStatusChange unblocks, another thread in P1 trying to
- * perform an operation using the context hCtx (or the card hCard) will also be blocked.
- *
- * Example two
- *
- * The example below shows how transaction control ensures that operations meant to be
- * performed without interruption can do so safely within a transaction.
- *
- * In this example, there are two different processes running; P1 and P2.
- * P1 calls SCardEstablishContext, which returns the context hCtx1.
- * P2 calls SCardEstablishContext, which returns the context hCtx2.
- * P1 calls SCardConnect (with the hCtx1 context) which returns a handle to the card, hCard1.
- * P2 calls SCardConnect (with the hCtx2 context) which returns a handle to the same card, hCard2.
- * P1 calls SCardBeginTransaction (with the hCard 1 context).
- * Until P1 calls SCardEndTransaction (with the hCard1 context),
- * any operation using hCard2 will be blocked.
- * Once an operation using hCard2 is blocked and until it's returning,
- * any operation using hCtx2 (and hCard2) will also be blocked.
- */
+* The Smart Card Cryptographic Service Provider Cookbook:
+* http://msdn.microsoft.com/en-us/library/ms953432.aspx
+*
+* SCARDCONTEXT
+*
+* The context is a communication channel with the smart card resource manager and
+* all calls to the resource manager must go through this link.
+*
+* All functions that take a context as a parameter or a card handle as parameter,
+* which is indirectly associated with a particular context, may be blocking calls.
+* Examples of these are SCardGetStatusChange and SCardBeginTransaction, which takes
+* a card handle as a parameter. If such a function blocks then all operations wanting
+* to use the context are blocked as well. So, it is recommended that a CSP using
+* monitoring establishes at least two contexts with the resource manager; one for
+* monitoring (with SCardGetStatusChange) and one for other operations.
+*
+* If multiple cards are present, it is recommended that a separate context or pair
+* of contexts be established for each card to prevent operations on one card from
+* blocking operations on another.
+*
+* Example one
+*
+* The example below shows what can happen if a CSP using SCardGetStatusChange for
+* monitoring does not establish two contexts with the resource manager.
+* The context becomes unusable until SCardGetStatusChange unblocks.
+*
+* In this example, there is one process running called P1.
+* P1 calls SCardEstablishContext, which returns the context hCtx.
+* P1 calls SCardConnect (with the hCtx context) which returns a handle to the card, hCard.
+* P1 calls SCardGetStatusChange (with the hCtx context) which blocks because
+* there are no status changes to report.
+* Until the thread running SCardGetStatusChange unblocks, another thread in P1 trying to
+* perform an operation using the context hCtx (or the card hCard) will also be blocked.
+*
+* Example two
+*
+* The example below shows how transaction control ensures that operations meant to be
+* performed without interruption can do so safely within a transaction.
+*
+* In this example, there are two different processes running; P1 and P2.
+* P1 calls SCardEstablishContext, which returns the context hCtx1.
+* P2 calls SCardEstablishContext, which returns the context hCtx2.
+* P1 calls SCardConnect (with the hCtx1 context) which returns a handle to the card, hCard1.
+* P2 calls SCardConnect (with the hCtx2 context) which returns a handle to the same card, hCard2.
+* P1 calls SCardBeginTransaction (with the hCard 1 context).
+* Until P1 calls SCardEndTransaction (with the hCard1 context),
+* any operation using hCard2 will be blocked.
+* Once an operation using hCard2 is blocked and until it's returning,
+* any operation using hCtx2 (and hCard2) will also be blocked.
+*/
 
 //#define DISABLE_PCSC_SCARD_AUTOALLOCATE
 
@@ -162,13 +162,13 @@ WINSCARDAPI LONG WINAPI PCSC_SCardReleaseContext_Internal(SCARDCONTEXT hContext)
 static LONG PCSC_MapErrorCodeToWinSCard(LONG errorCode)
 {
 	/**
-	 * pcsc-lite returns SCARD_E_UNEXPECTED when it
-	 * should return SCARD_E_UNSUPPORTED_FEATURE.
-	 *
-	 * Additionally, the pcsc-lite headers incorrectly
-	 * define SCARD_E_UNSUPPORTED_FEATURE to 0x8010001F,
-	 * when the real value should be 0x80100022.
-	 */
+	* pcsc-lite returns SCARD_E_UNEXPECTED when it
+	* should return SCARD_E_UNSUPPORTED_FEATURE.
+	*
+	* Additionally, the pcsc-lite headers incorrectly
+	* define SCARD_E_UNSUPPORTED_FEATURE to 0x8010001F,
+	* when the real value should be 0x80100022.
+	*/
 	if (errorCode == SCARD_E_UNEXPECTED)
 		errorCode = SCARD_E_UNSUPPORTED_FEATURE;
 
@@ -178,21 +178,21 @@ static LONG PCSC_MapErrorCodeToWinSCard(LONG errorCode)
 static DWORD PCSC_ConvertCardStateToWinSCard(DWORD dwCardState, LONG status)
 {
 	/**
-	 * pcsc-lite's SCardStatus returns a bit-field, not an enumerated value.
-	 *
-	 *         State             WinSCard           pcsc-lite
-	 *
-	 *      SCARD_UNKNOWN           0                0x0001
-	 *      SCARD_ABSENT            1                0x0002
-	 *      SCARD_PRESENT           2                0x0004
-	 *      SCARD_SWALLOWED         3                0x0008
-	 *      SCARD_POWERED           4                0x0010
-	 *      SCARD_NEGOTIABLE        5                0x0020
-	 *      SCARD_SPECIFIC          6                0x0040
-	 *
-	 * pcsc-lite also never sets SCARD_SPECIFIC,
-	 * which is expected by some windows applications.
-	 */
+	* pcsc-lite's SCardStatus returns a bit-field, not an enumerated value.
+	*
+	*         State             WinSCard           pcsc-lite
+	*
+	*      SCARD_UNKNOWN           0                0x0001
+	*      SCARD_ABSENT            1                0x0002
+	*      SCARD_PRESENT           2                0x0004
+	*      SCARD_SWALLOWED         3                0x0008
+	*      SCARD_POWERED           4                0x0010
+	*      SCARD_NEGOTIABLE        5                0x0020
+	*      SCARD_SPECIFIC          6                0x0040
+	*
+	* pcsc-lite also never sets SCARD_SPECIFIC,
+	* which is expected by some windows applications.
+	*/
 	if (status == SCARD_S_SUCCESS)
 	{
 		if ((dwCardState & PCSC_SCARD_NEGOTIABLE) || (dwCardState & PCSC_SCARD_SPECIFIC))
@@ -226,9 +226,9 @@ static DWORD PCSC_ConvertCardStateToWinSCard(DWORD dwCardState, LONG status)
 static DWORD PCSC_ConvertProtocolsToWinSCard(DWORD dwProtocols)
 {
 	/**
-	 * pcsc-lite uses a different value for SCARD_PROTOCOL_RAW,
-	 * and also has SCARD_PROTOCOL_T15 which is not in WinSCard.
-	 */
+	* pcsc-lite uses a different value for SCARD_PROTOCOL_RAW,
+	* and also has SCARD_PROTOCOL_T15 which is not in WinSCard.
+	*/
 	if (dwProtocols & PCSC_SCARD_PROTOCOL_RAW)
 	{
 		dwProtocols &= ~PCSC_SCARD_PROTOCOL_RAW;
@@ -246,9 +246,9 @@ static DWORD PCSC_ConvertProtocolsToWinSCard(DWORD dwProtocols)
 static DWORD PCSC_ConvertProtocolsFromWinSCard(DWORD dwProtocols)
 {
 	/**
-	 * pcsc-lite uses a different value for SCARD_PROTOCOL_RAW,
-	 * and it does not define WinSCard's SCARD_PROTOCOL_DEFAULT.
-	 */
+	* pcsc-lite uses a different value for SCARD_PROTOCOL_RAW,
+	* and it does not define WinSCard's SCARD_PROTOCOL_DEFAULT.
+	*/
 	if (dwProtocols & SCARD_PROTOCOL_RAW)
 	{
 		dwProtocols &= ~SCARD_PROTOCOL_RAW;
@@ -580,8 +580,8 @@ static void* PCSC_RemoveMemoryBlock(SCARDCONTEXT hContext, void* pvMem)
 }
 
 /**
- * Standard Windows Smart Card API (PCSC)
- */
+* Standard Windows Smart Card API (PCSC)
+*/
 
 WINSCARDAPI LONG WINAPI PCSC_SCardEstablishContext_Internal(DWORD dwScope,
         LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext)
@@ -1167,18 +1167,18 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 	/* pcsc-lite interprets value 0 as INFINITE, work around the problem by using value 1 */
 	pcsc_dwTimeout = pcsc_dwTimeout ? pcsc_dwTimeout : 1;
 	/**
-	 * Apple's SmartCard Services (not vanilla pcsc-lite) appears to have trouble with the
-	 * "\\\\?PnP?\\Notification" reader name. I am always getting EXC_BAD_ACCESS with it.
-	 *
-	 * The SmartCard Services tarballs can be found here:
-	 * http://opensource.apple.com/tarballs/SmartCardServices/
-	 *
-	 * The "\\\\?PnP?\\Notification" string cannot be found anywhere in the sources,
-	 * while this string is present in the vanilla pcsc-lite sources.
-	 *
-	 * To work around this apparent lack of "\\\\?PnP?\\Notification" support,
-	 * we have to filter rgReaderStates to exclude the special PnP reader name.
-	 */
+	* Apple's SmartCard Services (not vanilla pcsc-lite) appears to have trouble with the
+	* "\\\\?PnP?\\Notification" reader name. I am always getting EXC_BAD_ACCESS with it.
+	*
+	* The SmartCard Services tarballs can be found here:
+	* http://opensource.apple.com/tarballs/SmartCardServices/
+	*
+	* The "\\\\?PnP?\\Notification" string cannot be found anywhere in the sources,
+	* while this string is present in the vanilla pcsc-lite sources.
+	*
+	* To work around this apparent lack of "\\\\?PnP?\\Notification" support,
+	* we have to filter rgReaderStates to exclude the special PnP reader name.
+	*/
 	map = (int*) calloc(pcsc_cReaders, sizeof(int));
 
 	if (!map)
@@ -1344,10 +1344,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnect_Internal(SCARDCONTEXT hContext,
 	szReaderPCSC = (char*) szReader;
 
 	/**
-	 * As stated here : https://pcsclite.alioth.debian.org/api/group__API.html#ga4e515829752e0a8dbc4d630696a8d6a5
-	 * SCARD_PROTOCOL_UNDEFINED is valid for dwPreferredProtocols (only) if dwShareMode == SCARD_SHARE_DIRECT
-	 * and allows to send control commands to the reader (with SCardControl()) even if a card is not present in the reader
-	 */
+	* As stated here : https://pcsclite.alioth.debian.org/api/group__API.html#ga4e515829752e0a8dbc4d630696a8d6a5
+	* SCARD_PROTOCOL_UNDEFINED is valid for dwPreferredProtocols (only) if dwShareMode == SCARD_SHARE_DIRECT
+	* and allows to send control commands to the reader (with SCardControl()) even if a card is not present in the reader
+	*/
 	if (pcsc_dwShareMode == SCARD_SHARE_DIRECT && dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED)
 		pcsc_dwPreferredProtocols = SCARD_PROTOCOL_UNDEFINED;
 	else
@@ -1557,9 +1557,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardState(SCARDHANDLE hCard,
 }
 
 /*
- * PCSC returns a string but Windows SCardStatus requires the return to be a multi string.
- * Therefore extra length checks and additional buffer allocation is required
- */
+* PCSC returns a string but Windows SCardStatus requires the return to be a multi string.
+* Therefore extra length checks and additional buffer allocation is required
+*/
 WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
         LPSTR mszReaderNames, LPDWORD pcchReaderLen, LPDWORD pdwState,
         LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen, BOOL unicode)
@@ -1594,18 +1594,20 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 
 	status = (LONG) g_PCSC.pfnSCardStatus(hCard, NULL, &pcsc_cchReaderLen, NULL, NULL, NULL,
 	                                      &pcsc_cbAtrLen);
-
 	WLog_DBG(TAG, "after  g_PCSC.pfnSCardStatus  status            = %d", status);
 	WLog_DBG(TAG, "                              pcsc_cchReaderLen = %d", pcsc_cchReaderLen);
 	WLog_DBG(TAG, "                              pcsc_cbAtrLen     = %d", pcsc_cbAtrLen);
+
 	if (pcchReaderLen)
 	{
 		WLog_DBG(TAG, "                              *pcchReaderLen    = %d", *pcchReaderLen);
 	}
+
 	if (pcbAtrLen)
 	{
 		WLog_DBG(TAG, "                              *pcbAtrLen        = %d", *pcbAtrLen);
 	}
+
 	WLog_DBG(TAG, "                              unicode           = %d", unicode);
 
 	if (status != STATUS_SUCCESS)
@@ -1641,8 +1643,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 #ifdef __MACOSX__
 
 		/**
-		     * Workaround for SCardStatus Bug in MAC OS X Yosemite
-		     */
+		* Workaround for SCardStatus Bug in MAC OS X Yosemite
+		*/
 		if (OSXVersion == 0x10100000)
 			pcsc_cchReaderLen++;
 
@@ -1807,9 +1809,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard,
 		PCSC_DWORD dwProtocol = 0;
 		PCSC_DWORD cchReaderLen = 0;
 		/**
-		 * pcsc-lite cannot have a null pioSendPci parameter, unlike WinSCard.
-		 * Query the current protocol and use default SCARD_IO_REQUEST for it.
-		 */
+		* pcsc-lite cannot have a null pioSendPci parameter, unlike WinSCard.
+		* Query the current protocol and use default SCARD_IO_REQUEST for it.
+		*/
 		status = (LONG) g_PCSC.pfnSCardStatus(hCard, NULL, &cchReaderLen, &dwState, &dwProtocol, NULL,
 		                                      &cbAtrLen);
 
@@ -1917,15 +1919,15 @@ WINSCARDAPI LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard,
 
 	PCSC_WaitForCardAccess(0, hCard, pCard->shared);
 	/**
-	 * PCSCv2 Part 10:
-	 * http://www.pcscworkgroup.com/specifications/files/pcsc10_v2.02.09.pdf
-	 *
-	 * Smart Card Driver IOCTLs:
-	 * http://msdn.microsoft.com/en-us/library/windows/hardware/ff548988/
-	 *
-	 * Converting Windows Feature Request IOCTL code to the pcsc-lite control code:
-	 * http://musclecard.996296.n3.nabble.com/Converting-Windows-Feature-Request-IOCTL-code-to-the-pcsc-lite-control-code-td4906.html
-	 */
+	* PCSCv2 Part 10:
+	* http://www.pcscworkgroup.com/specifications/files/pcsc10_v2.02.09.pdf
+	*
+	* Smart Card Driver IOCTLs:
+	* http://msdn.microsoft.com/en-us/library/windows/hardware/ff548988/
+	*
+	* Converting Windows Feature Request IOCTL code to the pcsc-lite control code:
+	* http://musclecard.996296.n3.nabble.com/Converting-Windows-Feature-Request-IOCTL-code-to-the-pcsc-lite-control-code-td4906.html
+	*/
 	IoCtlMethod = METHOD_FROM_CTL_CODE(dwControlCode);
 	IoCtlFunction = FUNCTION_FROM_CTL_CODE(dwControlCode);
 	IoCtlAccess = ACCESS_FROM_CTL_CODE(dwControlCode);
@@ -2164,9 +2166,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 	else
 	{
 		/**
-		 * pcsc-lite returns SCARD_E_INSUFFICIENT_BUFFER if the given
-		 * buffer size is larger than PCSC_MAX_BUFFER_SIZE (264)
-		 */
+		* pcsc-lite returns SCARD_E_INSUFFICIENT_BUFFER if the given
+		* buffer size is larger than PCSC_MAX_BUFFER_SIZE (264)
+		*/
 		if (*pcbAttrLen > PCSC_MAX_BUFFER_SIZE)
 			*pcbAttrLen = PCSC_MAX_BUFFER_SIZE;
 	}
@@ -2192,9 +2194,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 			const char* vendorName;
 
 			/**
-			 * pcsc-lite adds a null terminator to the vendor name,
-			 * while WinSCard doesn't. Strip the null terminator.
-			 */
+			* pcsc-lite adds a null terminator to the vendor name,
+			* while WinSCard doesn't. Strip the null terminator.
+			*/
 
 			if (pcbAttrLenAlloc)
 				vendorName = (char*) *pPbAttr;
@@ -2502,8 +2504,8 @@ unsigned int determineMacOSXVersion(void)
 	}
 
 	/**
-	 * Source : http://en.wikipedia.org/wiki/Darwin_(operating_system)
-	 **/
+	* Source : http://en.wikipedia.org/wiki/Darwin_(operating_system)
+	**/
 	if (majorVersion < 5)
 	{
 		if (minorVersion < 4)
