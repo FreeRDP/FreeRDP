@@ -565,10 +565,11 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	else
 	{
 		const size_t totalSize = Stream_GetPosition(fastpath->updateData);
+
 		if (totalSize > transport->settings->MultifragMaxRequestSize)
 		{
 			WLog_ERR(TAG, "Total size (%"PRIuz") exceeds MultifragMaxRequestSize (%"PRIu32")",
-					 totalSize, transport->settings->MultifragMaxRequestSize);
+			         totalSize, transport->settings->MultifragMaxRequestSize);
 			goto out_fail;
 		}
 
@@ -581,8 +582,6 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			}
 
 			fastpath->fragmentation = FASTPATH_FRAGMENT_FIRST;
-
-			
 		}
 		else if (fragmentation == FASTPATH_FRAGMENT_NEXT)
 		{
@@ -605,7 +604,6 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			}
 
 			fastpath->fragmentation = -1;
-
 			Stream_SealLength(fastpath->updateData);
 			Stream_SetPosition(fastpath->updateData, 0);
 			status = fastpath_recv_update(fastpath, updateCode, fastpath->updateData);
@@ -621,7 +619,6 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 	return status;
 out_fail:
-
 	return -1;
 }
 
@@ -634,7 +631,7 @@ int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
 
 	update = fastpath->rdp->update;
 
-	if (!IFCALLRESULT(FALSE, update->BeginPaint, update->context))
+	if (!IFCALLRESULT(TRUE, update->BeginPaint, update->context))
 		return -2;
 
 	while (Stream_GetRemainingLength(s) >= 3)
