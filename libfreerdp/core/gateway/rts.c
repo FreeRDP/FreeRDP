@@ -240,10 +240,9 @@ static int rts_empty_command_write(BYTE* buffer)
 	return 4;
 }
 
-static int rts_padding_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+static int rts_padding_command_read(rdpRpc* rpc, const BYTE* buffer, UINT32 length)
 {
-	UINT32 ConformanceCount;
-	ConformanceCount = *((UINT32*) &buffer[0]); /* ConformanceCount (4 bytes) */
+	const UINT32 ConformanceCount = *((UINT32*) &buffer[0]); /* ConformanceCount (4 bytes) */
 	/* Padding (variable) */
 	return ConformanceCount + 4;
 }
@@ -290,10 +289,9 @@ static int rts_ance_command_write(BYTE* buffer)
 	return 4;
 }
 
-static int rts_client_address_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+static int rts_client_address_command_read(rdpRpc* rpc, const BYTE* buffer, UINT32 length)
 {
-	UINT32 AddressType;
-	AddressType = *((UINT32*) &buffer[0]); /* AddressType (4 bytes) */
+	UINT32 AddressType = *((UINT32*) &buffer[0]); /* AddressType (4 bytes) */
 
 	if (AddressType == 0)
 	{
@@ -647,7 +645,7 @@ static int rts_send_ping_pdu(rdpRpc* rpc)
 	return (status > 0) ? 1 : -1;
 }
 
-int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 length)
+int rts_command_length(rdpRpc* rpc, UINT32 CommandType, const BYTE* buffer, UINT32 length)
 {
 	int CommandLength = 0;
 

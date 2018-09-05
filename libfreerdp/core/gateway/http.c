@@ -40,6 +40,50 @@
 
 #define RESPONSE_SIZE_LIMIT 64 * 1024 * 1024
 
+struct _http_context
+{
+	char* Method;
+	char* URI;
+	char* UserAgent;
+	char* Host;
+	char* Accept;
+	char* CacheControl;
+	char* Connection;
+	char* Pragma;
+	char* RdgConnectionId;
+	char* RdgAuthScheme;
+};
+
+struct _http_request
+{
+	char* Method;
+	char* URI;
+	char* AuthScheme;
+	char* AuthParam;
+	char* Authorization;
+	size_t ContentLength;
+	char* Content;
+	char* TransferEncoding;
+};
+
+struct _http_response
+{
+	size_t count;
+	char** lines;
+
+	long StatusCode;
+	const char* ReasonPhrase;
+
+	size_t ContentLength;
+	const char* ContentType;
+
+	size_t BodyLength;
+	BYTE* BodyContent;
+
+	wListDictionary* Authenticates;
+	wStream* data;
+};
+
 static char* string_strnstr(const char* str1, const char* str2, size_t slen)
 {
 	char c, sc;
@@ -91,6 +135,14 @@ BOOL http_context_set_method(HttpContext* context, const char* Method)
 		return FALSE;
 
 	return TRUE;
+}
+
+const char* http_context_get_uri(HttpContext* context)
+{
+	if (!context)
+		return NULL;
+
+	return context->URI;
 }
 
 BOOL http_context_set_uri(HttpContext* context, const char* URI)
@@ -520,7 +572,7 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			authValue = NULL;
 		}
 
-		status = ListDictionary_Add(response->Authenticates, (void*)authScheme, (void*)authValue);
+		status = ListDictionary_Add(response->Authenticates, authScheme, authValue);
 	}
 
 	return status;
@@ -812,4 +864,56 @@ void http_response_free(HttpResponse* response)
 	ListDictionary_Free(response->Authenticates);
 	Stream_Free(response->data, TRUE);
 	free(response);
+}
+
+const char* http_request_get_uri(HttpRequest* request)
+{
+	if (!request)
+		return NULL;
+
+	return request->URI;
+}
+
+SSIZE_T http_request_get_content_length(HttpRequest* request)
+{
+	if (!request)
+		return -1;
+
+	return request->ContentLength;
+}
+
+BOOL http_request_set_content_length(HttpRequest* request, size_t length)
+{
+	if (!request)
+		return FALSE;
+
+	request->ContentLength = length;
+	return TRUE;
+}
+
+long http_response_get_status_code(HttpResponse* response)
+{
+	if (!response)
+		return -1;
+
+	return response->StatusCode;
+}
+
+SSIZE_T http_response_get_body_length(HttpResponse* response)
+{
+	if (!response)
+		return -1;
+
+	return response->BodyLength;
+}
+
+const char* http_response_get_auth_token(HttpResponse* respone, const char* method)
+{
+	if (!respone || !method)
+		return NULL;
+
+	if (!ListDictionary_Contains(respone->Authenticates, method))
+		return NULL;
+
+	return ListDictionary_GetItemValue(respone->Authenticates, method);
 }

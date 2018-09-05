@@ -173,8 +173,16 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 		return -1;
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) bind_pdu);
-	bind_pdu->auth_length = (UINT16) rpc->ntlm->outputBuffer[0].cbBuffer;
-	bind_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer[0].pvBuffer;
+	{
+		const SecBuffer* out = ntlm_client_get_output_buffer(rpc->ntlm);
+
+		if (!out)
+			return -1;
+
+		bind_pdu->auth_length = out->cbBuffer;
+		bind_pdu->auth_verifier.auth_value = out->pvBuffer;
+	}
+
 	bind_pdu->ptype = PTYPE_BIND;
 	bind_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_SUPPORT_HEADER_SIGN | PFC_CONC_MPX;
 	bind_pdu->call_id = 2;
@@ -287,24 +295,21 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
  * abstract GSS_Init_sec_context call, which returns an auth_token and continue status in this example.
  */
 
-int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+SSIZE_T rpc_recv_bind_ack_pdu(rdpRpc* rpc, const BYTE* buffer, size_t length)
 {
-	BYTE* auth_data;
-	rpcconn_hdr_t* header;
-	header = (rpcconn_hdr_t*) buffer;
+	const rpcconn_hdr_t* header = (rpcconn_hdr_t*) buffer;
+	const BYTE* auth_data = buffer + (header->common.frag_length - header->common.auth_length);
 	WLog_DBG(TAG, "Receiving BindAck PDU");
 	rpc->max_recv_frag = header->bind_ack.max_xmit_frag;
 	rpc->max_xmit_frag = header->bind_ack.max_recv_frag;
-	rpc->ntlm->inputBuffer[0].cbBuffer = header->common.auth_length;
-	rpc->ntlm->inputBuffer[0].pvBuffer = malloc(header->common.auth_length);
 
-	if (!rpc->ntlm->inputBuffer[0].pvBuffer)
+	if (!ntlm_client_set_input_buffer(rpc->ntlm, TRUE, auth_data, header->common.auth_length))
 		return -1;
 
-	auth_data = buffer + (header->common.frag_length - header->common.auth_length);
-	CopyMemory(rpc->ntlm->inputBuffer[0].pvBuffer, auth_data, header->common.auth_length);
-	ntlm_authenticate(rpc->ntlm);
-	return (int) length;
+	if (!ntlm_authenticate(rpc->ntlm))
+		return -1;
+
+	return length;
 }
 
 /**
@@ -331,8 +336,15 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 		return -1;
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) auth_3_pdu);
-	auth_3_pdu->auth_length = (UINT16) rpc->ntlm->outputBuffer[0].cbBuffer;
-	auth_3_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer[0].pvBuffer;
+	{
+		const SecBuffer* out = ntlm_client_get_output_buffer(rpc->ntlm);
+
+		if (!out)
+			return -1;
+
+		auth_3_pdu->auth_length = out->cbBuffer;
+		auth_3_pdu->auth_verifier.auth_value = out->pvBuffer;
+	}
 	auth_3_pdu->ptype = PTYPE_RPC_AUTH_3;
 	auth_3_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;
 	auth_3_pdu->call_id = 2;

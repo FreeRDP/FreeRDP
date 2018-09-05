@@ -75,6 +75,18 @@ static const char* PTYPE_STRINGS[] =
 	""
 };
 
+static int cast_from_size_(size_t size, const char* fkt, const char* file, int line)
+{
+	if (size > INT_MAX)
+	{
+		WLog_ERR(TAG, "[%s %s:%d] Size %"PRIdz" is larger than INT_MAX %d", fkt, file, line, size, INT_MAX);
+		return -1;
+	}
+
+	return (int)size;
+}
+#define cast_from_size(size) cast_from_size_(size, __FUNCTION__, __FILE__, __LINE__)
+
 /**
  * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
  * http://msdn.microsoft.com/en-us/library/cc243950/
@@ -102,7 +114,7 @@ static const char* PTYPE_STRINGS[] =
  *
  */
 
-void rpc_pdu_header_print(rpcconn_hdr_t* header)
+void rpc_pdu_header_print(const rpcconn_hdr_t* header)
 {
 	WLog_INFO(TAG,  "rpc_vers: %"PRIu8"", header->common.rpc_vers);
 	WLog_INFO(TAG,  "rpc_vers_minor: %"PRIu8"", header->common.rpc_vers_minor);
@@ -252,17 +264,17 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
  *
  */
 
-BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* length)
+BOOL rpc_get_stub_data_info(rdpRpc* rpc, const BYTE* buffer, UINT32* offset, UINT32* length)
 {
 	UINT32 alloc_hint = 0;
-	rpcconn_hdr_t* header;
+	const rpcconn_hdr_t* header;
 	UINT32 frag_length;
 	UINT32 auth_length;
 	UINT32 auth_pad_length;
 	UINT32 sec_trailer_offset;
-	rpc_sec_trailer* sec_trailer;
+	const rpc_sec_trailer* sec_trailer;
 	*offset = RPC_COMMON_FIELDS_LENGTH;
-	header = ((rpcconn_hdr_t*) buffer);
+	header = ((const rpcconn_hdr_t*) buffer);
 
 	switch (header->common.ptype)
 	{
@@ -301,7 +313,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	frag_length = header->common.frag_length;
 	auth_length = header->common.auth_length;
 	sec_trailer_offset = frag_length - auth_length - 8;
-	sec_trailer = (rpc_sec_trailer*) &buffer[sec_trailer_offset];
+	sec_trailer = (const rpc_sec_trailer*) &buffer[sec_trailer_offset];
 	auth_pad_length = sec_trailer->auth_pad_length;
 #if 0
 	WLog_DBG(TAG,
@@ -327,10 +339,15 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	return TRUE;
 }
 
-int rpc_out_channel_read(RpcOutChannel* outChannel, BYTE* data, int length)
+int rpc_out_channel_read(RpcOutChannel* outChannel, BYTE* data, size_t length)
 {
 	int status;
-	status = BIO_read(outChannel->tls->bio, data, length);
+	const int s = cast_from_size(length);
+
+	if (s < 0)
+		return -1;
+
+	status = BIO_read(outChannel->tls->bio, data, s);
 
 	if (status > 0)
 	{
@@ -346,17 +363,27 @@ int rpc_out_channel_read(RpcOutChannel* outChannel, BYTE* data, int length)
 	return -1;
 }
 
-int rpc_in_channel_write(RpcInChannel* inChannel, const BYTE* data, int length)
+int rpc_in_channel_write(RpcInChannel* inChannel, const BYTE* data, size_t length)
 {
 	int status;
-	status = tls_write_all(inChannel->tls, data, length);
+	const int s = cast_from_size(length);
+
+	if (s < 0)
+		return -1;
+
+	status = tls_write_all(inChannel->tls, data, s);
 	return status;
 }
 
-int rpc_out_channel_write(RpcOutChannel* outChannel, const BYTE* data, int length)
+int rpc_out_channel_write(RpcOutChannel* outChannel, const BYTE* data, size_t length)
 {
 	int status;
-	status = tls_write_all(outChannel->tls, data, length);
+	const int s = cast_from_size(length);
+
+	if (s < 0)
+		return -1;
+
+	status = tls_write_all(outChannel->tls, data, s);
 	return status;
 }
 

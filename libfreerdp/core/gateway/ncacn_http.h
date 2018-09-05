@@ -20,14 +20,7 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H
 #define FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H
 
-#include <freerdp/types.h>
-#include <freerdp/settings.h>
-
-#include <freerdp/crypto/tls.h>
-#include <freerdp/crypto/crypto.h>
 #include <freerdp/api.h>
-
-#include <winpr/stream.h>
 
 #include "rpc.h"
 #include "http.h"

@@ -1520,7 +1520,7 @@ int rdp_check_fds(rdpRdp* rdp)
 			return -1;
 		}
 
-		if (tsg->state != TSG_STATE_PIPE_CREATED)
+		if (tsg_get_state(tsg) != TSG_STATE_PIPE_CREATED)
 			return status;
 	}
 

@@ -370,7 +370,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 
 			if (status)
 			{
-				transport->frontBio = transport->rdg->frontBio;
+				transport->frontBio = rdg_get_bio(transport->rdg);
 				BIO_set_nonblock(transport->frontBio, 0);
 				transport->layer = TRANSPORT_LAYER_TSG;
 				status = TRUE;
@@ -393,7 +393,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 
 			if (status)
 			{
-				transport->frontBio = transport->tsg->bio;
+				transport->frontBio = tsg_get_bio(transport->tsg);
 				transport->layer = TRANSPORT_LAYER_TSG;
 				status = TRUE;
 			}

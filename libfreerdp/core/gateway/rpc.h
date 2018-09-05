@@ -765,22 +765,22 @@ struct rdp_rpc
 	RpcVirtualConnection* VirtualConnection;
 };
 
-FREERDP_LOCAL void rpc_pdu_header_print(rpcconn_hdr_t* header);
+FREERDP_LOCAL void rpc_pdu_header_print(const rpcconn_hdr_t* header);
 FREERDP_LOCAL void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);
 
 FREERDP_LOCAL UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment);
 FREERDP_LOCAL UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
 
-FREERDP_LOCAL BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header,
+FREERDP_LOCAL BOOL rpc_get_stub_data_info(rdpRpc* rpc, const BYTE* header,
         UINT32* offset, UINT32* length);
 
 FREERDP_LOCAL int rpc_in_channel_write(RpcInChannel* inChannel,
-                                       const BYTE* data, int length);
+                                       const BYTE* data, size_t length);
 
 FREERDP_LOCAL int rpc_out_channel_read(RpcOutChannel* outChannel, BYTE* data,
-                                       int length);
+                                       size_t length);
 FREERDP_LOCAL int rpc_out_channel_write(RpcOutChannel* outChannel,
-                                        const BYTE* data, int length);
+                                        const BYTE* data, size_t length);
 
 FREERDP_LOCAL RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc);
 FREERDP_LOCAL int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel,

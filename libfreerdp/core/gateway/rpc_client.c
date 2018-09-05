@@ -324,7 +324,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				TerminateEventArgs e;
 				rpc->result = *((UINT32*) &buffer[StubOffset]);
 				freerdp_abort_connect(rpc->context->instance);
-				rpc->transport->tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
+				tsg_set_state(rpc->transport->tsg, TSG_STATE_TUNNEL_CLOSE_PENDING);
 				EventArgsInit(&e, "freerdp");
 				e.code = 0;
 				PubSub_OnTerminate(rpc->context->pubSub, rpc->context, &e);
@@ -451,7 +451,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 {
 	int status = -1;
-	UINT32 statusCode;
+	long statusCode = -1;
 	HttpResponse* response;
 	RpcInChannel* inChannel;
 	RpcOutChannel* outChannel;
@@ -528,11 +528,11 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		if (!response)
 			return -1;
 
-		statusCode = response->StatusCode;
+		statusCode = http_response_get_status_code(response);
 
 		if (statusCode != HTTP_STATUS_OK)
 		{
-			WLog_ERR(TAG, "error! Status Code: %"PRIu32"", statusCode);
+			WLog_ERR(TAG, "error! Status Code: %ld", statusCode);
 			http_response_print(response);
 
 			if (statusCode == HTTP_STATUS_DENIED)
@@ -872,34 +872,19 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length
 
 int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 {
-	SECURITY_STATUS status;
 	UINT32 offset;
 	BYTE* buffer = NULL;
 	UINT32 stub_data_pad;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
 	RpcClientCall* clientCall;
-	rdpNtlm* ntlm = rpc->ntlm;
-	SECURITY_STATUS encrypt_status;
 	rpcconn_request_hdr_t* request_pdu = NULL;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	RpcInChannel* inChannel = connection->DefaultInChannel;
+	SSIZE_T size = ntlm_client_query_auth_size(rpc->ntlm);
 
-	if (!ntlm || !ntlm->table)
-	{
-		WLog_ERR(TAG, "invalid ntlm context");
+	if (size < 0)
 		return -1;
-	}
-
-	status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES,
-	         &ntlm->ContextSizes);
-
-	if (status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08"PRIX32"]",
-		         GetSecurityStatusString(status), status);
-		return -1;
-	}
 
 	ZeroMemory(&Buffers, sizeof(Buffers));
 	request_pdu = (rpcconn_request_hdr_t*) calloc(1, sizeof(rpcconn_request_hdr_t));
@@ -910,7 +895,7 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) request_pdu);
 	request_pdu->ptype = PTYPE_REQUEST;
 	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	request_pdu->auth_length = (UINT16) ntlm->ContextSizes.cbMaxSignature;
+	request_pdu->auth_length = size;
 	request_pdu->call_id = rpc->CallId++;
 	request_pdu->alloc_hint = length;
 	request_pdu->p_cont_id = 0x0000;
@@ -954,7 +939,7 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	Buffers[1].BufferType = SECBUFFER_TOKEN; /* signature */
 	Buffers[0].pvBuffer = buffer;
 	Buffers[0].cbBuffer = offset;
-	Buffers[1].cbBuffer = ntlm->ContextSizes.cbMaxSignature;
+	Buffers[1].cbBuffer = size;
 	Buffers[1].pvBuffer = calloc(1, Buffers[1].cbBuffer);
 
 	if (!Buffers[1].pvBuffer)
@@ -963,14 +948,9 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
-	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, rpc->SendSeqNum++);
 
-	if (encrypt_status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "EncryptMessage status %s [0x%08"PRIX32"]",
-		         GetSecurityStatusString(encrypt_status), encrypt_status);
+	if (!ntlm_client_encrypt(rpc->ntlm, 0, &Message, rpc->SendSeqNum++))
 		goto out_free_pdu;
-	}
 
 	CopyMemory(&buffer[offset], Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 	offset += Buffers[1].cbBuffer;

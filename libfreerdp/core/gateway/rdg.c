@@ -28,6 +28,7 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <winpr/winsock.h>
+#include <winpr/winhttp.h>
 
 #include <freerdp/log.h>
 #include <freerdp/error.h>
@@ -38,7 +39,103 @@
 #include "../rdp.h"
 #include "../../crypto/opensslcompat.h"
 
+#include "http.h"
+#include "ntlm.h"
+
 #define TAG FREERDP_TAG("core.gateway.rdg")
+
+
+/* HTTP channel response fields present flags. */
+#define HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID 0x1
+#define HTTP_CHANNEL_RESPONSE_OPTIONAL 0x2
+#define HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT 0x4
+
+/* HTTP extended auth. */
+#define HTTP_EXTENDED_AUTH_NONE 0x0
+#define HTTP_EXTENDED_AUTH_SC 0x1   /* Smart card authentication. */
+#define HTTP_EXTENDED_AUTH_PAA 0x02   /* Pluggable authentication. */
+#define HTTP_EXTENDED_AUTH_SSPI_NTLM 0x04   /* NTLM extended authentication. */
+
+/* HTTP packet types. */
+#define PKT_TYPE_HANDSHAKE_REQUEST 0x1
+#define PKT_TYPE_HANDSHAKE_RESPONSE 0x2
+#define PKT_TYPE_EXTENDED_AUTH_MSG 0x3
+#define PKT_TYPE_TUNNEL_CREATE 0x4
+#define PKT_TYPE_TUNNEL_RESPONSE 0x5
+#define PKT_TYPE_TUNNEL_AUTH 0x6
+#define PKT_TYPE_TUNNEL_AUTH_RESPONSE 0x7
+#define PKT_TYPE_CHANNEL_CREATE 0x8
+#define PKT_TYPE_CHANNEL_RESPONSE 0x9
+#define PKT_TYPE_DATA 0xA
+#define PKT_TYPE_SERVICE_MESSAGE 0xB
+#define PKT_TYPE_REAUTH_MESSAGE 0xC
+#define PKT_TYPE_KEEPALIVE 0xD
+#define PKT_TYPE_CLOSE_CHANNEL 0x10
+#define PKT_TYPE_CLOSE_CHANNEL_RESPONSE 0x11
+
+/* HTTP tunnel auth fields present flags. */
+#define HTTP_TUNNEL_AUTH_FIELD_SOH 0x1
+
+/* HTTP tunnel auth response fields present flags. */
+#define HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS 0x1
+#define HTTP_TUNNEL_AUTH_RESPONSE_FIELD_IDLE_TIMEOUT 0x2
+#define HTTP_TUNNEL_AUTH_RESPONSE_FIELD_SOH_RESPONSE 0x4
+
+/* HTTP tunnel packet fields present flags. */
+#define HTTP_TUNNEL_PACKET_FIELD_PAA_COOKIE 0x1
+#define HTTP_TUNNEL_PACKET_FIELD_REAUTH 0x2
+
+/* HTTP tunnel redir flags. */
+#define HTTP_TUNNEL_REDIR_ENABLE_ALL 0x80000000
+#define HTTP_TUNNEL_REDIR_DISABLE_ALL 0x40000000
+#define HTTP_TUNNEL_REDIR_DISABLE_DRIVE 0x1
+#define HTTP_TUNNEL_REDIR_DISABLE_PRINTER 0x2
+#define HTTP_TUNNEL_REDIR_DISABLE_PORT 0x4
+#define HTTP_TUNNEL_REDIR_DISABLE_CLIPBOARD 0x8
+#define HTTP_TUNNEL_REDIR_DISABLE_PNP 0x10
+
+/* HTTP tunnel response fields present flags. */
+#define HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID 0x1
+#define HTTP_TUNNEL_RESPONSE_FIELD_CAPS 0x2
+#define HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ 0x4
+#define HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG 0x10
+
+/* HTTP capability type enumeration. */
+#define HTTP_CAPABILITY_TYPE_QUAR_SOH 0x1
+#define HTTP_CAPABILITY_IDLE_TIMEOUT 0x2
+#define HTTP_CAPABILITY_MESSAGING_CONSENT_SIGN 0x4
+#define HTTP_CAPABILITY_MESSAGING_SERVICE_MSG 0x8
+#define HTTP_CAPABILITY_REAUTH 0x10
+#define HTTP_CAPABILITY_UDP_TRANSPORT 0x20
+
+enum
+{
+	RDG_CLIENT_STATE_INITIAL,
+	RDG_CLIENT_STATE_HANDSHAKE,
+	RDG_CLIENT_STATE_TUNNEL_CREATE,
+	RDG_CLIENT_STATE_TUNNEL_AUTHORIZE,
+	RDG_CLIENT_STATE_CHANNEL_CREATE,
+	RDG_CLIENT_STATE_OPENED,
+};
+
+struct rdp_rdg
+{
+	rdpContext* context;
+	rdpSettings* settings;
+	BIO* frontBio;
+	rdpTls* tlsIn;
+	rdpTls* tlsOut;
+	rdpNtlm* ntlm;
+	HttpContext* http;
+	CRITICAL_SECTION writeSection;
+
+	UUID guid;
+
+	int state;
+	UINT16 packetRemainingCount;
+	int timeout;
+	UINT16 extAuth;
+};
 
 #pragma pack(push, 1)
 
@@ -300,7 +397,7 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 
 static BOOL rdg_set_ntlm_auth_header(rdpNtlm* ntlm, HttpRequest* request)
 {
-	SecBuffer* ntlmToken = ntlm->outputBuffer;
+	const SecBuffer* ntlmToken = ntlm_client_get_output_buffer(ntlm);
 	char* base64NtlmToken = NULL;
 
 	if (ntlmToken)
@@ -308,11 +405,10 @@ static BOOL rdg_set_ntlm_auth_header(rdpNtlm* ntlm, HttpRequest* request)
 
 	if (base64NtlmToken)
 	{
-		http_request_set_auth_scheme(request, "NTLM");
-		http_request_set_auth_param(request, base64NtlmToken);
+		BOOL rc = http_request_set_auth_param(request, base64NtlmToken);
 		free(base64NtlmToken);
 
-		if (!request->AuthScheme || !request->AuthParam)
+		if (!rc || !http_request_set_auth_scheme(request, "NTLM"))
 			return FALSE;
 	}
 
@@ -330,11 +426,15 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 	if (!request)
 		return NULL;
 
-	http_request_set_method(request, method);
-	http_request_set_uri(request, rdg->http->URI);
+	{
+		const char* uri = http_context_get_uri(rdg->http);
 
-	if (!request->Method || !request->URI)
-		goto out;
+		if (!http_request_set_method(request, method))
+			goto out;
+
+		if (!http_request_set_uri(request, uri))
+			goto out;
+	}
 
 	if (rdg->ntlm)
 	{
@@ -359,18 +459,17 @@ out:
 
 static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 {
-	char* token64 = NULL;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
+	const long StatusCode = http_response_get_status_code(response);
+	const char* token64 = http_response_get_auth_token(response, "NTLM");
 
-	if (response->StatusCode != HTTP_STATUS_DENIED)
+	if (StatusCode != HTTP_STATUS_DENIED)
 	{
 		WLog_DBG(TAG, "Unexpected NTLM challenge HTTP status: %d",
-		         response->StatusCode);
+		         StatusCode);
 		return FALSE;
 	}
-
-	token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
 
 	if (!token64)
 		return FALSE;
@@ -379,15 +478,15 @@ static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 
 	if (ntlmTokenData && ntlmTokenLength)
 	{
-		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
-		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
+		if (!ntlm_client_set_input_buffer(ntlm, FALSE, ntlmTokenData, ntlmTokenLength))
+			return FALSE;
 	}
 
 	ntlm_authenticate(ntlm);
 	return TRUE;
 }
 
-static BOOL rdg_skip_seed_payload(rdpTls* tls, int lastResponseLength)
+static BOOL rdg_skip_seed_payload(rdpTls* tls, size_t lastResponseLength)
 {
 	BYTE seed_payload[10];
 
@@ -668,7 +767,7 @@ static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
 static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, int timeout)
 {
 	int sockfd = 0;
-	int status = 0;
+	long status = 0;
 	BIO* socketBio = NULL;
 	BIO* bufferedBio = NULL;
 	rdpSettings* settings = rdg->settings;
@@ -731,8 +830,8 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
         const char* method, const char* peerAddress, int timeout, BOOL* rpcFallback)
 {
 	HttpResponse* response = NULL;
-	int statusCode;
-	int bodyLength;
+	long StatusCode = -1;
+	SSIZE_T bodyLength;
 
 	if (!rdg_tls_connect(rdg, tls, peerAddress, timeout))
 		return FALSE;
@@ -750,7 +849,9 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 		if (!response)
 			return FALSE;
 
-		if (response->StatusCode == HTTP_STATUS_NOT_FOUND)
+		StatusCode = http_response_get_status_code(response);
+
+		if (StatusCode == HTTP_STATUS_NOT_FOUND)
 		{
 			WLog_INFO(TAG, "RD Gateway does not support HTTP transport.");
 
@@ -779,12 +880,11 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 	if (!response)
 		return FALSE;
 
-	statusCode = response->StatusCode;
-	bodyLength = response->BodyLength;
+	bodyLength = http_response_get_body_length(response);
 	http_response_free(response);
-	WLog_DBG(TAG, "%s authorization result: %d", method, statusCode);
+	WLog_DBG(TAG, "%s authorization result: %ld", method, StatusCode);
 
-	if (statusCode != HTTP_STATUS_OK)
+	if (StatusCode != HTTP_STATUS_OK)
 		return FALSE;
 
 	if (strcmp(method, "RDG_OUT_DATA") == 0)
@@ -1285,30 +1385,22 @@ rdpRdg* rdg_new(rdpTransport* transport)
 		if (!rdg->http)
 			goto rdg_alloc_error;
 
-		http_context_set_uri(rdg->http, "/remoteDesktopGateway/");
-		http_context_set_accept(rdg->http, "*/*");
-		http_context_set_cache_control(rdg->http, "no-cache");
-		http_context_set_pragma(rdg->http, "no-cache");
-		http_context_set_connection(rdg->http, "Keep-Alive");
-		http_context_set_user_agent(rdg->http, "MS-RDGateway/1.0");
-		http_context_set_host(rdg->http, rdg->settings->GatewayHostname);
-		http_context_set_rdg_connection_id(rdg->http, bracedUuid);
-
-		if (!rdg->http->URI || !rdg->http->Accept || !rdg->http->CacheControl ||
-		    !rdg->http->Pragma || !rdg->http->Connection || !rdg->http->UserAgent
-		    || !rdg->http->Host || !rdg->http->RdgConnectionId)
-		{
+		if (!http_context_set_uri(rdg->http, "/remoteDesktopGateway/") ||
+		    !http_context_set_accept(rdg->http, "*/*") ||
+		    !http_context_set_cache_control(rdg->http, "no-cache") ||
+		    !http_context_set_pragma(rdg->http, "no-cache") ||
+		    !http_context_set_connection(rdg->http, "Keep-Alive") ||
+		    !http_context_set_user_agent(rdg->http, "MS-RDGateway/1.0") ||
+		    !http_context_set_host(rdg->http, rdg->settings->GatewayHostname) ||
+		    !http_context_set_rdg_connection_id(rdg->http, bracedUuid))
 			goto rdg_alloc_error;
-		}
 
 		if (rdg->extAuth != HTTP_EXTENDED_AUTH_NONE)
 		{
 			switch (rdg->extAuth)
 			{
 				case HTTP_EXTENDED_AUTH_PAA:
-					http_context_set_rdg_auth_scheme(rdg->http, "PAA");
-
-					if (!rdg->http->RdgAuthScheme)
+					if (!http_context_set_rdg_auth_scheme(rdg->http, "PAA"))
 						goto rdg_alloc_error;
 
 					break;
@@ -1364,4 +1456,12 @@ void rdg_free(rdpRdg* rdg)
 
 	DeleteCriticalSection(&rdg->writeSection);
 	free(rdg);
+}
+
+BIO* rdg_get_bio(rdpRdg* rdg)
+{
+	if (!rdg)
+		return NULL;
+
+	return rdg->frontBio;
 }
