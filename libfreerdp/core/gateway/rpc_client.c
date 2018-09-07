@@ -444,8 +444,6 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 		WLog_ERR(TAG, "unexpected RPC PDU type 0x%02"PRIX8"", header->common.ptype);
 		return -1;
 	}
-
-	return 1;
 }
 
 static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
@@ -474,7 +472,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		if (outChannel->State == CLIENT_OUT_CHANNEL_STATE_SECURITY)
 		{
 			/* Receive OUT Channel Response */
-			if (rpc_ncacn_http_recv_out_channel_response(rpc, outChannel, response) < 0)
+			if (!rpc_ncacn_http_recv_out_channel_response(outChannel, response))
 			{
 				http_response_free(response);
 				WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
@@ -483,7 +481,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 			/* Send OUT Channel Request */
 
-			if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel, FALSE) < 0)
+			if (!rpc_ncacn_http_send_out_channel_request(outChannel, FALSE))
 			{
 				http_response_free(response);
 				WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
@@ -653,11 +651,13 @@ static int rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 	{
 		if (nextOutChannel->State == CLIENT_OUT_CHANNEL_STATE_SECURITY)
 		{
-			status = rpc_ncacn_http_recv_out_channel_response(rpc, nextOutChannel, response);
+			const BOOL rc = rpc_ncacn_http_recv_out_channel_response(nextOutChannel, response);
+			status = (rc) ? 1 : -1;
 
 			if (status >= 0)
 			{
-				status = rpc_ncacn_http_send_out_channel_request(rpc, nextOutChannel, TRUE);
+				const BOOL rc = rpc_ncacn_http_send_out_channel_request(nextOutChannel, TRUE);
+				status = (rc) ? 1 : -1;
 
 				if (status >= 0)
 				{
@@ -738,7 +738,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 		if (inChannel->State == CLIENT_IN_CHANNEL_STATE_SECURITY)
 		{
-			if (rpc_ncacn_http_recv_in_channel_response(rpc, inChannel, response) < 0)
+			if (!rpc_ncacn_http_recv_in_channel_response(inChannel, response))
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_recv_in_channel_response failure");
 				http_response_free(response);
@@ -747,7 +747,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 			/* Send IN Channel Request */
 
-			if (rpc_ncacn_http_send_in_channel_request(rpc, inChannel) < 0)
+			if (!rpc_ncacn_http_send_in_channel_request(inChannel))
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
 				http_response_free(response);

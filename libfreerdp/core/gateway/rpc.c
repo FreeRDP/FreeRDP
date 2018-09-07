@@ -794,17 +794,17 @@ static int rpc_in_channel_connect(RpcInChannel* inChannel, int timeout)
 
 	/* Connect IN Channel */
 
-	if (rpc_channel_tls_connect(inChannel, timeout) < 0)
+	if (rpc_channel_tls_connect(&inChannel->common, timeout) < 0)
 		return -1;
 
 	rpc_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_CONNECTED);
 
-	if (rpc_ncacn_http_ntlm_init(rpc,  inChannel) < 0)
+	if (!rpc_ncacn_http_ntlm_init(rpc->context, &inChannel->common))
 		return -1;
 
 	/* Send IN Channel Request */
 
-	if (rpc_ncacn_http_send_in_channel_request(rpc, inChannel) < 0)
+	if (!rpc_ncacn_http_send_in_channel_request(inChannel))
 	{
 		WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
 		return -1;
@@ -820,17 +820,17 @@ static int rpc_out_channel_connect(RpcOutChannel* outChannel, int timeout)
 
 	/* Connect OUT Channel */
 
-	if (rpc_channel_tls_connect(outChannel, timeout) < 0)
+	if (rpc_channel_tls_connect(&outChannel->common, timeout) < 0)
 		return -1;
 
 	rpc_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
 
-	if (rpc_ncacn_http_ntlm_init(rpc,  outChannel) < 0)
+	if (!rpc_ncacn_http_ntlm_init(rpc->context, &outChannel->common))
 		return FALSE;
 
 	/* Send OUT Channel Request */
 
-	if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel, FALSE) < 0)
+	if (!rpc_ncacn_http_send_out_channel_request(outChannel, FALSE))
 	{
 		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 		return FALSE;
@@ -846,17 +846,17 @@ int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout)
 
 	/* Connect OUT Channel */
 
-	if (rpc_channel_tls_connect(outChannel, timeout) < 0)
+	if (rpc_channel_tls_connect(&outChannel->common, timeout) < 0)
 		return -1;
 
 	rpc_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
 
-	if (rpc_ncacn_http_ntlm_init(rpc,  outChannel) < 0)
+	if (!rpc_ncacn_http_ntlm_init(rpc->context,  &outChannel->common))
 		return FALSE;
 
 	/* Send OUT Channel Request */
 
-	if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel, TRUE) < 0)
+	if (!rpc_ncacn_http_send_out_channel_request(outChannel, TRUE))
 	{
 		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 		return FALSE;
