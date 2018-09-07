@@ -387,9 +387,8 @@ int rpc_out_channel_write(RpcOutChannel* outChannel, const BYTE* data, size_t le
 	return status;
 }
 
-int rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state)
+BOOL rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state)
 {
-	int status = 1;
 	const char* str = "CLIENT_IN_CHANNEL_STATE_UNKNOWN";
 
 	switch (state)
@@ -421,11 +420,14 @@ int rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNE
 		case CLIENT_IN_CHANNEL_STATE_FINAL:
 			str = "CLIENT_IN_CHANNEL_STATE_FINAL";
 			break;
+
+		default:
+			return FALSE;
 	}
 
 	inChannel->State = state;
 	WLog_DBG(TAG, "%s", str);
-	return status;
+	return TRUE;
 }
 
 static BOOL rpc_channel_rpch_init(const rdpSettings* settings, RpcChannel* channel)
@@ -522,9 +524,8 @@ fail:
 }
 
 
-int rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state)
+BOOL rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state)
 {
-	int status = 1;
 	const char* str = "CLIENT_OUT_CHANNEL_STATE_UNKNOWN";
 
 	switch (state)
@@ -568,11 +569,14 @@ int rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CH
 		case CLIENT_OUT_CHANNEL_STATE_FINAL:
 			str = "CLIENT_OUT_CHANNEL_STATE_FINAL";
 			break;
+
+		default:
+			return FALSE;
 	}
 
 	outChannel->State = state;
 	WLog_DBG(TAG, "%s", str);
-	return status;
+	return TRUE;
 }
 
 static int rpc_out_channel_rpch_init(rdpRpc* rpc, RpcOutChannel* outChannel)
@@ -635,10 +639,9 @@ fail:
 	return NULL;
 }
 
-int rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
-        RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state)
+BOOL rpc_virtual_connection_transition_to_state(RpcVirtualConnection* connection,
+        VIRTUAL_CONNECTION_STATE state)
 {
-	int status = 1;
 	const char* str = "VIRTUAL_CONNECTION_STATE_UNKNOWN";
 
 	switch (state)
@@ -666,11 +669,14 @@ int rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
 		case VIRTUAL_CONNECTION_STATE_FINAL:
 			str = "VIRTUAL_CONNECTION_STATE_FINAL";
 			break;
+
+		default:
+			return FALSE;
 	}
 
 	connection->State = state;
 	WLog_DBG(TAG, "%s", str);
-	return status;
+	return TRUE;
 }
 
 static RpcVirtualConnection* rpc_virtual_connection_new(rdpRpc* rpc)
@@ -879,7 +885,7 @@ BOOL rpc_connect(rdpRpc* rpc, int timeout)
 	connection = rpc->VirtualConnection;
 	inChannel = connection->DefaultInChannel;
 	outChannel = connection->DefaultOutChannel;
-	rpc_virtual_connection_transition_to_state(rpc, connection, VIRTUAL_CONNECTION_STATE_INITIAL);
+	rpc_virtual_connection_transition_to_state(connection, VIRTUAL_CONNECTION_STATE_INITIAL);
 
 	if (rpc_in_channel_connect(inChannel, timeout) < 0)
 		return FALSE;

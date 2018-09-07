@@ -196,8 +196,8 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 					return -1;
 				}
 
-				rpc_virtual_connection_transition_to_state(rpc,
-				        rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_WAIT_C2);
+				rpc_virtual_connection_transition_to_state(rpc->VirtualConnection,
+				        VIRTUAL_CONNECTION_STATE_WAIT_C2);
 				status = 1;
 				break;
 
@@ -218,8 +218,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 					return -1;
 				}
 
-				rpc_virtual_connection_transition_to_state(rpc,
-				        rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OPENED);
+				rpc_virtual_connection_transition_to_state(rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OPENED);
 				rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_ESTABLISHED);
 
 				if (rpc_send_bind_pdu(rpc) < 0)
@@ -506,8 +505,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 			if (inChannel->State == CLIENT_IN_CHANNEL_STATE_OPENED)
 			{
-				rpc_virtual_connection_transition_to_state(rpc,
-				        connection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
+				rpc_virtual_connection_transition_to_state(connection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
 			}
 
 			status = 1;
@@ -544,8 +542,8 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		}
 
 		http_response_free(response);
-		rpc_virtual_connection_transition_to_state(rpc,
-		        rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_WAIT_A3W);
+		rpc_virtual_connection_transition_to_state(rpc->VirtualConnection,
+		        VIRTUAL_CONNECTION_STATE_WAIT_A3W);
 		status = 1;
 	}
 	else
@@ -620,7 +618,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 					connection->DefaultOutChannel = connection->NonDefaultOutChannel;
 					connection->NonDefaultOutChannel = NULL;
 					rpc_out_channel_transition_to_state(connection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED);
-					rpc_virtual_connection_transition_to_state(rpc, connection,
+					rpc_virtual_connection_transition_to_state(connection,
 					        VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
 					return 0;
 				}
@@ -772,8 +770,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 			if (outChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED)
 			{
-				rpc_virtual_connection_transition_to_state(rpc,
-				        connection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
+				rpc_virtual_connection_transition_to_state(connection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
 			}
 
 			status = 1;
