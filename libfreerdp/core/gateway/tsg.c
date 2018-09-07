@@ -1785,44 +1785,44 @@ DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count)
 	else
 		return 0;
 
-	if (connection->DefaultInChannel && connection->DefaultInChannel->tls)
+	if (connection->DefaultInChannel && connection->DefaultInChannel->common.tls)
 	{
 		if (events && (nCount < count))
 		{
-			BIO_get_event(connection->DefaultInChannel->tls->bio, &events[nCount]);
+			BIO_get_event(connection->DefaultInChannel->common.tls->bio, &events[nCount]);
 			nCount++;
 		}
 		else
 			return 0;
 	}
 
-	if (connection->NonDefaultInChannel && connection->NonDefaultInChannel->tls)
+	if (connection->NonDefaultInChannel && connection->NonDefaultInChannel->common.tls)
 	{
 		if (events && (nCount < count))
 		{
-			BIO_get_event(connection->NonDefaultInChannel->tls->bio, &events[nCount]);
+			BIO_get_event(connection->NonDefaultInChannel->common.tls->bio, &events[nCount]);
 			nCount++;
 		}
 		else
 			return 0;
 	}
 
-	if (connection->DefaultOutChannel && connection->DefaultOutChannel->tls)
+	if (connection->DefaultOutChannel && connection->DefaultOutChannel->common.tls)
 	{
 		if (events && (nCount < count))
 		{
-			BIO_get_event(connection->DefaultOutChannel->tls->bio, &events[nCount]);
+			BIO_get_event(connection->DefaultOutChannel->common.tls->bio, &events[nCount]);
 			nCount++;
 		}
 		else
 			return 0;
 	}
 
-	if (connection->NonDefaultOutChannel && connection->NonDefaultOutChannel->tls)
+	if (connection->NonDefaultOutChannel && connection->NonDefaultOutChannel->common.tls)
 	{
 		if (events && (nCount < count))
 		{
-			BIO_get_event(connection->NonDefaultOutChannel->tls->bio, &events[nCount]);
+			BIO_get_event(connection->NonDefaultOutChannel->common.tls->bio, &events[nCount]);
 			nCount++;
 		}
 		else
@@ -2118,8 +2118,8 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 	if (cmd == BIO_CTRL_FLUSH)
 	{
-		(void)BIO_flush(inChannel->tls->bio);
-		(void)BIO_flush(outChannel->tls->bio);
+		(void)BIO_flush(inChannel->common.tls->bio);
+		(void)BIO_flush(outChannel->common.tls->bio);
 		status = 1;
 	}
 	else if (cmd == BIO_C_GET_EVENT)
@@ -2136,18 +2136,18 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_READ_BLOCKED)
 	{
-		BIO* bio = outChannel->bio;
+		BIO* bio = outChannel->common.bio;
 		status = BIO_read_blocked(bio);
 	}
 	else if (cmd == BIO_C_WRITE_BLOCKED)
 	{
-		BIO* bio = inChannel->bio;
+		BIO* bio = inChannel->common.bio;
 		status = BIO_write_blocked(bio);
 	}
 	else if (cmd == BIO_C_WAIT_READ)
 	{
 		int timeout = (int) arg1;
-		BIO* bio = outChannel->bio;
+		BIO* bio = outChannel->common.bio;
 
 		if (BIO_read_blocked(bio))
 			return BIO_wait_read(bio, timeout);
@@ -2159,7 +2159,7 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	else if (cmd == BIO_C_WAIT_WRITE)
 	{
 		int timeout = (int) arg1;
-		BIO* bio = inChannel->bio;
+		BIO* bio = inChannel->common.bio;
 
 		if (BIO_write_blocked(bio))
 			status = BIO_wait_write(bio, timeout);

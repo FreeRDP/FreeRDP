@@ -585,17 +585,14 @@ struct rpc_client_call
 };
 typedef struct rpc_client_call RpcClientCall;
 
-#define RPC_CHANNEL_COMMON() \
-	rdpRpc* rpc; \
-	BIO* bio; \
-	rdpTls* tls; \
-	rdpNtlm* ntlm; \
-	HttpContext* http; \
-	BYTE Cookie[16]
-
 struct rpc_channel
 {
-	RPC_CHANNEL_COMMON();
+	rdpRpc* rpc;
+	BIO* bio;
+	rdpTls* tls;
+	rdpNtlm* ntlm;
+	HttpContext* http;
+	BYTE Cookie[16];
 };
 typedef struct rpc_channel RpcChannel;
 
@@ -627,7 +624,7 @@ struct rpc_in_channel
 {
 	/* Sending Channel */
 
-	RPC_CHANNEL_COMMON();
+	RpcChannel common;
 
 	CLIENT_IN_CHANNEL_STATE State;
 
@@ -664,7 +661,7 @@ struct rpc_out_channel
 {
 	/* Receiving Channel */
 
-	RPC_CHANNEL_COMMON();
+	RpcChannel common;
 
 	CLIENT_OUT_CHANNEL_STATE State;
 

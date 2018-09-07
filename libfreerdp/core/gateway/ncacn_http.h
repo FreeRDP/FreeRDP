@@ -26,7 +26,7 @@
 #include "http.h"
 
 FREERDP_LOCAL int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel);
-FREERDP_LOCAL void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, RpcChannel* channel);
+FREERDP_LOCAL void rpc_ncacn_http_ntlm_uninit(RpcChannel* channel);
 
 FREERDP_LOCAL int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc,
         RpcInChannel* inChannel);

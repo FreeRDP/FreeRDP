@@ -72,8 +72,8 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc, RpcInChannel* inChannel)
 	int status;
 	int contentLength;
 	BOOL continueNeeded;
-	rdpNtlm* ntlm = inChannel->ntlm;
-	HttpContext* http = inChannel->http;
+	rdpNtlm* ntlm = inChannel->common.ntlm;
+	HttpContext* http = inChannel->common.http;
 	const SecBuffer* out = ntlm_client_get_output_buffer(ntlm);
 
 	if (!out)
@@ -96,7 +96,7 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, RpcInChannel* inChannel
 {
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
-	rdpNtlm* ntlm = inChannel->ntlm;
+	rdpNtlm* ntlm = inChannel->common.ntlm;
 	const char* token64 = http_response_get_auth_token(response, "NTLM");
 
 	if (!token64)
@@ -178,11 +178,14 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 	return 1;
 }
 
-void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, RpcChannel* channel)
+void rpc_ncacn_http_ntlm_uninit(RpcChannel* channel)
 {
-	ntlm_client_uninit(channel->ntlm);
-	ntlm_free(channel->ntlm);
-	channel->ntlm = NULL;
+	if (channel)
+	{
+		ntlm_client_uninit(channel->ntlm);
+		ntlm_free(channel->ntlm);
+		channel->ntlm = NULL;
+	}
 }
 
 int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChannel,
@@ -192,8 +195,8 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChann
 	int status;
 	int contentLength;
 	BOOL continueNeeded;
-	rdpNtlm* ntlm = outChannel->ntlm;
-	HttpContext* http = outChannel->http;
+	rdpNtlm* ntlm = outChannel->common.ntlm;
+	HttpContext* http = outChannel->common.http;
 	continueNeeded = ntlm_authenticate(ntlm);
 
 	if (!replacement)
@@ -222,7 +225,7 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, RpcOutChannel* outChan
 {
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
-	rdpNtlm* ntlm = outChannel->ntlm;
+	rdpNtlm* ntlm = outChannel->common.ntlm;
 	const char* token64 = http_response_get_auth_token(response, "NTLM");
 
 	if (!token64)

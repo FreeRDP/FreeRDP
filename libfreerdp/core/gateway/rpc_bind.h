@@ -25,13 +25,13 @@
 #include <winpr/wtypes.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL const p_uuid_t TSGU_UUID;
+FREERDP_LOCAL extern const p_uuid_t TSGU_UUID;
 #define TSGU_SYNTAX_IF_VERSION	0x00030001
 
-FREERDP_LOCAL const p_uuid_t NDR_UUID;
+FREERDP_LOCAL extern const p_uuid_t NDR_UUID;
 #define NDR_SYNTAX_IF_VERSION	0x00000002
 
-FREERDP_LOCAL const p_uuid_t BTFN_UUID;
+FREERDP_LOCAL extern const p_uuid_t BTFN_UUID;
 #define BTFN_SYNTAX_IF_VERSION	0x00000001
 
 FREERDP_LOCAL int rpc_send_bind_pdu(rdpRpc* rpc);
