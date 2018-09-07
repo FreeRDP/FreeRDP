@@ -361,7 +361,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 	{
 		if (!status && settings->GatewayHttpTransport)
 		{
-			transport->rdg = rdg_new(transport);
+			transport->rdg = rdg_new(context);
 
 			if (!transport->rdg)
 				return FALSE;

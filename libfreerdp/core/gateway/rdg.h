@@ -23,12 +23,11 @@
 #include <freerdp/api.h>
 
 #include <freerdp/types.h>
+#include <freerdp/crypto/tls.h>
 
 typedef struct rdp_rdg rdpRdg;
 
-#include "../transport.h"
-
-FREERDP_LOCAL rdpRdg* rdg_new(rdpTransport* transport);
+FREERDP_LOCAL rdpRdg* rdg_new(rdpContext* context);
 FREERDP_LOCAL void rdg_free(rdpRdg* rdg);
 
 FREERDP_LOCAL BOOL rdg_connect(rdpRdg* rdg, int timeout, BOOL* rpcFallback);
