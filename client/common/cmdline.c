@@ -979,6 +979,10 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, int type)
 		settings->DisableThemes = FALSE;
 		settings->NetworkAutoDetect = TRUE;
 	}
+	else
+	{
+		return FALSE;
+	}
 
 	return TRUE;
 }
