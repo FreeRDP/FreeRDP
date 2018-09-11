@@ -308,7 +308,7 @@ static BOOL wf_post_connect(freerdp* instance)
 	rdpCache* cache;
 	wfContext* wfc;
 	rdpContext* context;
-	WCHAR lpWindowName[64];
+	WCHAR lpWindowName[512];
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
 	const UINT32 format = PIXEL_FORMAT_BGRX32;
@@ -330,12 +330,12 @@ static BOOL wf_post_connect(freerdp* instance)
 	}
 
 	if (settings->WindowTitle != NULL)
-		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"%S", settings->WindowTitle);
+		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"%S", settings->WindowTitle);
 	else if (settings->ServerPort == 3389)
-		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S",
+		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"FreeRDP: %S",
 		           settings->ServerHostname);
 	else
-		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S:%u",
+		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"FreeRDP: %S:%u",
 		           settings->ServerHostname, settings->ServerPort);
 
 	if (settings->EmbeddedWindow)
