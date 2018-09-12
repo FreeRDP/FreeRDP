@@ -1589,6 +1589,13 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 			{
 				if (xf_auto_reconnect(instance))
 					continue;
+				else
+				{
+					// Indicate an unsuccessful connection attempt if reconnect
+					// did not succeed, but did not give some other reason.
+					if (freerdp_error_info(instance) == 0)
+						exit_code = XF_EXIT_CONN_FAILED;
+				}
 
 				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
 					WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
