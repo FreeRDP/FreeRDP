@@ -1488,6 +1488,8 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		if (freerdp_get_last_error(instance->context) ==
 		    FREERDP_ERROR_AUTHENTICATION_FAILED)
 			exit_code = XF_EXIT_AUTH_FAILURE;
+		else if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED)
+			exit_code = XF_EXIT_NEGO_FAILURE;
 		else
 			exit_code = XF_EXIT_CONN_FAILED;
 	}
@@ -1591,8 +1593,10 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 					continue;
 				else
 				{
-					// Indicate an unsuccessful connection attempt if reconnect
-					// did not succeed, but did not give some other reason.
+					/*
+					 * Indicate an unsuccessful connection attempt if reconnect
+					 * did not succeed and no other error was specified.
+					 */
 					if (freerdp_error_info(instance) == 0)
 						exit_code = XF_EXIT_CONN_FAILED;
 				}
@@ -1643,7 +1647,7 @@ end:
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 {
 	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS
-	                    && reason <= XF_EXIT_AUTH_FAILURE))
+	                    && reason <= XF_EXIT_NEGO_FAILURE))
 		return reason;
 	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)
