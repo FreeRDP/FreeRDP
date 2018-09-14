@@ -218,9 +218,6 @@ typedef struct _RAIL_CLIENT_STATUS_ORDER RAIL_CLIENT_STATUS_ORDER;
 struct _RAIL_EXEC_ORDER
 {
 	UINT16 flags;
-	RAIL_UNICODE_STRING exeOrFile;
-	RAIL_UNICODE_STRING workingDir;
-	RAIL_UNICODE_STRING arguments;
 	char* RemoteApplicationProgram;
 	char* RemoteApplicationWorkingDir;
 	char* RemoteApplicationArguments;

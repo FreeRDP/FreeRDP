@@ -51,7 +51,7 @@ const char* const RAIL_ORDER_TYPE_STRINGS[] =
 	""
 };
 
-void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_string)
+BOOL rail_string_to_unicode_string(const char* string, RAIL_UNICODE_STRING* unicode_string)
 {
 	WCHAR* buffer = NULL;
 	int length = 0;
@@ -60,11 +60,19 @@ void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_st
 	unicode_string->length = 0;
 
 	if (!string || strlen(string) < 1)
-		return;
+		return FALSE;
 
 	length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0) * 2;
+
+	if ((length < 0) || ((size_t)length * sizeof(WCHAR) > UINT16_MAX))
+	{
+		free(buffer);
+		return FALSE;
+	}
+
 	unicode_string->string = (BYTE*) buffer;
-	unicode_string->length = (UINT16) length;
+	unicode_string->length = (UINT16) length * sizeof(WCHAR);
+	return TRUE;
 }
 
 /**
@@ -117,7 +125,7 @@ UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 	return CHANNEL_RC_OK;
 }
 
-void rail_write_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
+void rail_write_handshake_order(wStream* s, const RAIL_HANDSHAKE_ORDER* handshake)
 {
 	Stream_Write_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
 }
@@ -137,7 +145,7 @@ UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshake
 	return CHANNEL_RC_OK;
 }
 
-void rail_write_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+void rail_write_handshake_ex_order(wStream* s, const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
 	Stream_Write_UINT32(s, handshakeEx->buildNumber); /* buildNumber (4 bytes) */
 	Stream_Write_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
