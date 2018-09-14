@@ -373,6 +373,14 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 			else
 				rdp_set_error_info(rdp, ERRINFO_RPC_INITIATED_DISCONNECT);
 		}
+		else if ((rdp->errorInfo == ERRINFO_RPC_INITIATED_DISCONNECT) && (reason == MCS_Reason_user_requested))
+		{
+			/*
+			 * This situation might be limited to Windows XP.
+			 */
+			WLog_INFO(TAG, "Error info says user did not initiate but MCS ultimatum sa they did; treat this as a user logoff");
+			rdp_set_error_info(rdp, ERRINFO_LOGOFF_BY_USER);
+		}
 
 		WLog_DBG(TAG, "DisconnectProviderUltimatum: reason: %d", reason);
 		freerdp_abort_connect(rdp->instance);
