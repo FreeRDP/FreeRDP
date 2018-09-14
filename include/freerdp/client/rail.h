@@ -35,26 +35,45 @@
 
 typedef struct _rail_client_context RailClientContext;
 
-typedef UINT (*pcRailClientExecute)(RailClientContext* context, RAIL_EXEC_ORDER* exec);
-typedef UINT (*pcRailClientActivate)(RailClientContext* context, RAIL_ACTIVATE_ORDER* activate);
-typedef UINT (*pcRailClientSystemParam)(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam);
-typedef UINT (*pcRailServerSystemParam)(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam);
-typedef UINT (*pcRailClientSystemCommand)(RailClientContext* context, RAIL_SYSCOMMAND_ORDER* syscommand);
-typedef UINT (*pcRailClientHandshake)(RailClientContext* context, RAIL_HANDSHAKE_ORDER* handshake);
-typedef UINT (*pcRailServerHandshake)(RailClientContext* context, RAIL_HANDSHAKE_ORDER* handshake);
-typedef UINT (*pcRailClientHandshakeEx)(RailClientContext* context, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
-typedef UINT (*pcRailServerHandshakeEx)(RailClientContext* context, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
-typedef UINT (*pcRailClientNotifyEvent)(RailClientContext* context, RAIL_NOTIFY_EVENT_ORDER* notifyEvent);
-typedef UINT (*pcRailClientWindowMove)(RailClientContext* context, RAIL_WINDOW_MOVE_ORDER* windowMove);
-typedef UINT (*pcRailServerLocalMoveSize)(RailClientContext* context, RAIL_LOCALMOVESIZE_ORDER* localMoveSize);
-typedef UINT (*pcRailServerMinMaxInfo)(RailClientContext* context, RAIL_MINMAXINFO_ORDER* minMaxInfo);
-typedef UINT (*pcRailClientInformation)(RailClientContext* context, RAIL_CLIENT_STATUS_ORDER* clientStatus);
-typedef UINT (*pcRailClientSystemMenu)(RailClientContext* context, RAIL_SYSMENU_ORDER* sysmenu);
-typedef UINT (*pcRailClientLanguageBarInfo)(RailClientContext* context, RAIL_LANGBAR_INFO_ORDER* langBarInfo);
-typedef UINT (*pcRailServerLanguageBarInfo)(RailClientContext* context, RAIL_LANGBAR_INFO_ORDER* langBarInfo);
-typedef UINT (*pcRailServerExecuteResult)(RailClientContext* context, RAIL_EXEC_RESULT_ORDER* execResult);
-typedef UINT (*pcRailClientGetAppIdRequest)(RailClientContext* context, RAIL_GET_APPID_REQ_ORDER* getAppIdReq);
-typedef UINT (*pcRailServerGetAppIdResponse)(RailClientContext* context, RAIL_GET_APPID_RESP_ORDER* getAppIdResp);
+typedef UINT(*pcRailClientExecute)(RailClientContext* context, const RAIL_EXEC_ORDER* exec);
+typedef UINT(*pcRailClientActivate)(RailClientContext* context,
+                                    const RAIL_ACTIVATE_ORDER* activate);
+typedef UINT(*pcRailClientSystemParam)(RailClientContext* context,
+                                       const RAIL_SYSPARAM_ORDER* sysparam);
+typedef UINT(*pcRailServerSystemParam)(RailClientContext* context,
+                                       const RAIL_SYSPARAM_ORDER* sysparam);
+typedef UINT(*pcRailClientSystemCommand)(RailClientContext* context,
+        const RAIL_SYSCOMMAND_ORDER* syscommand);
+typedef UINT(*pcRailClientHandshake)(RailClientContext* context,
+                                     const RAIL_HANDSHAKE_ORDER* handshake);
+typedef UINT(*pcRailServerHandshake)(RailClientContext* context,
+                                     const RAIL_HANDSHAKE_ORDER* handshake);
+typedef UINT(*pcRailClientHandshakeEx)(RailClientContext* context,
+                                       const RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
+typedef UINT(*pcRailServerHandshakeEx)(RailClientContext* context,
+                                       const RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
+typedef UINT(*pcRailClientNotifyEvent)(RailClientContext* context,
+                                       const RAIL_NOTIFY_EVENT_ORDER* notifyEvent);
+typedef UINT(*pcRailClientWindowMove)(RailClientContext* context,
+                                      const RAIL_WINDOW_MOVE_ORDER* windowMove);
+typedef UINT(*pcRailServerLocalMoveSize)(RailClientContext* context,
+        const RAIL_LOCALMOVESIZE_ORDER* localMoveSize);
+typedef UINT(*pcRailServerMinMaxInfo)(RailClientContext* context,
+                                      const RAIL_MINMAXINFO_ORDER* minMaxInfo);
+typedef UINT(*pcRailClientInformation)(RailClientContext* context,
+                                       const RAIL_CLIENT_STATUS_ORDER* clientStatus);
+typedef UINT(*pcRailClientSystemMenu)(RailClientContext* context,
+                                      const RAIL_SYSMENU_ORDER* sysmenu);
+typedef UINT(*pcRailClientLanguageBarInfo)(RailClientContext* context,
+        const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
+typedef UINT(*pcRailServerLanguageBarInfo)(RailClientContext* context,
+        const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
+typedef UINT(*pcRailServerExecuteResult)(RailClientContext* context,
+        const RAIL_EXEC_RESULT_ORDER* execResult);
+typedef UINT(*pcRailClientGetAppIdRequest)(RailClientContext* context,
+        const RAIL_GET_APPID_REQ_ORDER* getAppIdReq);
+typedef UINT(*pcRailServerGetAppIdResponse)(RailClientContext* context,
+        const RAIL_GET_APPID_RESP_ORDER* getAppIdResp);
 
 struct _rail_client_context
 {
