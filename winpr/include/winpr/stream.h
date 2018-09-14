@@ -70,12 +70,12 @@ static INLINE void Stream_Rewind(wStream* s, size_t _offset)
 #define _stream_read_n16_le(_t, _s, _v, _p) do { \
 		_v = \
 		     (_t)(*_s->pointer) + \
-		     (((_t)(*(_s->pointer + 1))) << 8); \
+		     (_t)(((_t)(*(_s->pointer + 1))) << 8); \
 		if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
 #define _stream_read_n16_be(_t, _s, _v, _p) do { \
 		_v = \
-		     (((_t)(*_s->pointer)) << 8) + \
+		     (_t)(((_t)(*_s->pointer)) << 8) + \
 		     (_t)(*(_s->pointer + 1)); \
 		if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
