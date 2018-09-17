@@ -341,15 +341,25 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 
 BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 {
+	rdpSettings* settings;
 	rdpContext* context;
 
 	if (!rdp_client_disconnect(rdp))
 		return FALSE;
 
 	context = rdp->context;
+	settings = context->settings;
 	context->LastError = FREERDP_ERROR_SUCCESS;
 	clearChannelError(context);
 	ResetEvent(context->abortEvent);
+
+	if (context->codecs)
+	{
+		if (!freerdp_client_codecs_reset(context->codecs, FREERDP_CODEC_ALL,
+		                                 settings->DesktopWidth, settings->DesktopHeight))
+			return FALSE;
+	}
+
 	return TRUE;
 }
 
