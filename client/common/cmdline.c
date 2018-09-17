@@ -1292,6 +1292,14 @@ static BOOL ends_with(const char* str, const char* ext)
 
 	return strncmp(&str[strLen - extLen], ext, extLen) == 0;
 }
+
+static void activate_smartcard_logon_rdp(rdpSettings* settings)
+{
+	settings->SmartcardLogon = TRUE;
+	/* TODO: why not? settings->UseRdpSecurityLayer = TRUE; */
+	freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
+}
+
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
         int argc, char** argv, BOOL allowUnknown)
 {
@@ -2749,6 +2757,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "fipsmode")
 		{
 			settings->FIPSMode = TRUE;
+		}
+		CommandLineSwitchCase(arg, "smartcard-logon")
+		{
+			if (!settings->SmartcardLogon)
+				activate_smartcard_logon_rdp(settings);
 		}
 		CommandLineSwitchDefault(arg)
 		{

@@ -65,4 +65,6 @@ FREERDP_LOCAL BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type,
         void* data);
 
+FREERDP_LOCAL char* rdp_info_package_flags_description(UINT32 flags);
+
 #endif /* FREERDP_LIB_CORE_INFO_H */

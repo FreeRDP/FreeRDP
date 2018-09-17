@@ -1147,6 +1147,9 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 		case FreeRDP_RedirectClipboard:
 			return settings->RedirectClipboard;
 
+		case FreeRDP_SmartcardLogon:
+			return  settings->SmartcardLogon;
+
 		default:
 			WLog_ERR(TAG,  "freerdp_get_param_bool: unknown id: %d", id);
 			return -1;
@@ -1683,6 +1686,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_RedirectClipboard:
 			settings->RedirectClipboard = param;
+			break;
+
+		case FreeRDP_SmartcardLogon:
+			settings->SmartcardLogon = param;
 			break;
 
 		default:
