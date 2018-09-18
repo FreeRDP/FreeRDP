@@ -140,3 +140,6 @@ packaging/deb/freerdp-nightly/freerdp-nightly-dbg
 
 #
 .idea
+
+# VisualStudio Code
+.vscode
