@@ -68,6 +68,7 @@ struct _PRINTER_DEVICE
 
 	HANDLE thread;
 	rdpContext* rdpcontext;
+	char port[64];
 };
 
 /**
@@ -322,7 +323,6 @@ static UINT printer_free(DEVICE* device)
 	if (printer_dev->printer)
 		printer_dev->printer->Free(printer_dev->printer);
 
-	free(printer_dev->device.name);
 	Stream_Free(printer_dev->device.data, TRUE);
 	free(printer_dev);
 	return CHANNEL_RC_OK;
@@ -336,7 +336,6 @@ static UINT printer_free(DEVICE* device)
 UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
                       rdpPrinter* printer)
 {
-	char* port;
 	UINT32 Flags;
 	int DriverNameLen;
 	WCHAR* DriverName = NULL;
@@ -346,26 +345,17 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 	BYTE* CachedPrinterConfigData;
 	PRINTER_DEVICE* printer_dev;
 	UINT error;
-	port = malloc(10);
-
-	if (!port)
-	{
-		WLog_ERR(TAG, "malloc failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	sprintf_s(port, 10, "PRN%d", printer->id);
 	printer_dev = (PRINTER_DEVICE*) calloc(1, sizeof(PRINTER_DEVICE));
 
 	if (!printer_dev)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		free(port);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
+	sprintf_s(printer_dev->port, sizeof(printer_dev->port), "PRN%d", printer->id);
 	printer_dev->device.type = RDPDR_DTYP_PRINT;
-	printer_dev->device.name = port;
+	printer_dev->device.name = printer_dev->port;
 	printer_dev->device.IRPRequest = printer_irp_request;
 	printer_dev->device.Free = printer_free;
 	printer_dev->rdpcontext = pEntryPoints->rdpcontext;
@@ -445,7 +435,8 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		goto error_out;
 	}
 
-	if (!(printer_dev->thread = CreateThread(NULL, 0, printer_thread_func, (void*) printer_dev, 0, NULL)))
+	if (!(printer_dev->thread = CreateThread(NULL, 0, printer_thread_func, (void*) printer_dev, 0,
+	                            NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -454,12 +445,7 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 
 	return CHANNEL_RC_OK;
 error_out:
-	CloseHandle(printer_dev->stopEvent);
-	CloseHandle(printer_dev->event);
-	_aligned_free(printer_dev->pIrpList);
-	Stream_Free(printer_dev->device.data, TRUE);
-	free(printer_dev);
-	free(port);
+	printer_free(&printer_dev->device);
 	return error;
 }
 
