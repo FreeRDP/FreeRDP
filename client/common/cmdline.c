@@ -2505,6 +2505,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->ToggleFullscreen = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "floatbar")
+		{
+			settings->Floatbar = arg->Value ? TRUE : FALSE;
+		}
 		CommandLineSwitchCase(arg, "mouse-motion")
 		{
 			settings->MouseMotion = arg->Value ? TRUE : FALSE;

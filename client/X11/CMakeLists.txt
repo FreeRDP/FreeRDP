@@ -36,6 +36,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_input.h
 	xf_event.c
 	xf_event.h
+	xf_floatbar.c
+	xf_floatbar.h
 	xf_input.c
 	xf_input.h
 	xf_channels.c

@@ -404,7 +404,7 @@ void wf_toggle_fullscreen(wfContext* wfc)
 		wfc->disablewindowtracking = TRUE;
 	}
 
-	if (wfc->fullscreen)
+	if (wfc->fullscreen && wfc->floatbar_active)
 		floatbar_show(wfc->floatbar);
 	else
 		floatbar_hide(wfc->floatbar);
