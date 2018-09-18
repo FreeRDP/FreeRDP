@@ -127,7 +127,7 @@ void xf_floatbar_hide_and_show(xfContext* xfc)
 			floatbar->y = floatbar->y - 1;
 			XMoveWindow(xfc->display, floatbar->handle, floatbar->x, floatbar->y);
 		}
-		else if (floatbar->y < 0)
+		else if (floatbar->y < 0 && (floatbar->last_motion_y_root < 10))
 		{
 			floatbar->y = floatbar->y + 1;
 			XMoveWindow(xfc->display, floatbar->handle, floatbar->x, floatbar->y);
