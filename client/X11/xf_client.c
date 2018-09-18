@@ -71,6 +71,13 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 
+/*
+ * X11/Xlib.h defines Status, but winpr/rpc.h, which is eventually included by
+ * mcs.h, declares a few functions that have a parameter named Status.
+ */
+#undef Status
+#include <libfreerdp/core/mcs.h>
+
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/client/cliprdr.h>
@@ -100,6 +107,7 @@
 #include "xf_input.h"
 #include "xf_channels.h"
 #include "xfreerdp.h"
+
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
@@ -1631,7 +1639,17 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	}
 
 	if (!exit_code)
+	{
 		exit_code = freerdp_error_info(instance);
+
+		if (exit_code == XF_EXIT_DISCONNECT && freerdp_get_dpu_reason(context) == MCS_Reason_user_requested)
+		{
+			/* This situation might be limited to Windows XP. */
+			WLog_INFO(TAG,
+			          "Error info says user did not initiate but MCS ultimatum says they did; treat this as a user logoff");
+			exit_code = XF_EXIT_LOGOFF;
+		}
+	}
 
 disconnect:
 

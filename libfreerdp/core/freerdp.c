@@ -658,6 +658,7 @@ BOOL freerdp_context_new(freerdp* instance)
 	context->instance = instance;
 	context->ServerMode = FALSE;
 	context->settings = instance->settings;
+	context->dpuReason = 0;
 	context->pubSub = PubSub_New(TRUE);
 
 	if (!context->pubSub)
@@ -758,6 +759,16 @@ void freerdp_context_free(freerdp* instance)
 	freerdp_channels_free(instance->context->channels);
 	free(instance->context);
 	instance->context = NULL;
+}
+
+void freerdp_set_dpu_reason(rdpContext* context, int reason)
+{
+	context->dpuReason = reason;
+}
+
+int freerdp_get_dpu_reason(rdpContext* context)
+{
+	return context->dpuReason;
 }
 
 UINT32 freerdp_error_info(freerdp* instance)
