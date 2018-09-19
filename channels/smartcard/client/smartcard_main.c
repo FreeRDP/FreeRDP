@@ -811,7 +811,9 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	else
 		smartcard = sSmartcard;
 
-	LinkedList_AddLast(smartcard->names, pEntryPoints->device->Name);
+	if (pEntryPoints->device->Name)
+		LinkedList_AddLast(smartcard->names, pEntryPoints->device->Name);
+
 	sSmartcard = smartcard;
 	return CHANNEL_RC_OK;
 fail:
