@@ -1024,7 +1024,8 @@ static BOOL gdi_surface_bits(rdpContext* context,
 	           "destLeft %"PRIu32" destTop %"PRIu32" destRight %"PRIu32" destBottom %"PRIu32" "
 	           "bpp %"PRIu8" flags %"PRIx8" codecID %"PRIu16" width %"PRIu16" height %"PRIu16" length %"PRIu32"",
 	           cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
-			   cmd->bmp.bpp, cmd->bmp.flags, cmd->bmp.codecID, cmd->bmp.width, cmd->bmp.height, cmd->bmp.bitmapDataLength);
+	           cmd->bmp.bpp, cmd->bmp.flags, cmd->bmp.codecID, cmd->bmp.width, cmd->bmp.height,
+	           cmd->bmp.bitmapDataLength);
 	region16_init(&region);
 	cmdRect.left = cmd->destLeft;
 	cmdRect.top = cmd->destTop;
@@ -1035,7 +1036,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 	{
 		case RDP_CODEC_ID_REMOTEFX:
 			if (!rfx_process_message(context->codecs->rfx, cmd->bmp.bitmapData,
-									 cmd->bmp.bitmapDataLength,
+			                         cmd->bmp.bitmapDataLength,
 			                         cmd->destLeft, cmd->destTop,
 			                         gdi->primary_buffer, gdi->dstFormat,
 			                         gdi->stride, gdi->height, &region))
@@ -1050,10 +1051,10 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			format = gdi->dstFormat;
 
 			if (!nsc_process_message(context->codecs->nsc, cmd->bmp.bpp, cmd->bmp.width,
-									 cmd->bmp.height, cmd->bmp.bitmapData,
-									 cmd->bmp.bitmapDataLength, gdi->primary_buffer,
+			                         cmd->bmp.height, cmd->bmp.bitmapData,
+			                         cmd->bmp.bitmapDataLength, gdi->primary_buffer,
 			                         format, gdi->stride, cmd->destLeft, cmd->destTop,
-									 cmd->bmp.width, cmd->bmp.height, FREERDP_FLIP_VERTICAL))
+			                         cmd->bmp.width, cmd->bmp.height, FREERDP_FLIP_VERTICAL))
 			{
 				WLog_ERR(TAG, "Failed to process NSCodec message");
 				goto out;
@@ -1066,8 +1067,8 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			format = gdi_get_pixel_format(cmd->bmp.bpp);
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-									cmd->destLeft, cmd->destTop, cmd->bmp.width, cmd->bmp.height,
-									cmd->bmp.bitmapData, format, 0, 0, 0,
+			                        cmd->destLeft, cmd->destTop, cmd->bmp.width, cmd->bmp.height,
+			                        cmd->bmp.bitmapData, format, 0, 0, 0,
 			                        &gdi->palette, FREERDP_FLIP_VERTICAL))
 			{
 				WLog_ERR(TAG, "Failed to process nocodec message");
@@ -1285,10 +1286,6 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 		goto fail;
 
 	if (!(context->cache = cache_new(instance->settings)))
-		goto fail;
-
-	if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL,
-	                                   gdi->width, gdi->height))
 		goto fail;
 
 	gdi_register_update_callbacks(instance->update);

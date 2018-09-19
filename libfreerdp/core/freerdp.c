@@ -165,7 +165,6 @@ BOOL freerdp_connect(freerdp* instance)
 	ResetEvent(instance->context->abortEvent);
 	rdp = instance->context->rdp;
 	settings = instance->settings;
-	instance->context->codecs = codecs_new(instance->context);
 	IFCALLRET(instance->PreConnect, status, instance);
 	instance->ConnectionCallbackState = CLIENT_STATE_PRECONNECT_PASSED;
 
@@ -525,7 +524,6 @@ BOOL freerdp_disconnect(freerdp* instance)
 		instance->update->pcap_rfx = NULL;
 	}
 
-	codecs_free(instance->context->codecs);
 	freerdp_channels_close(instance->context->channels, instance);
 	return rc;
 }
