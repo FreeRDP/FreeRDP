@@ -878,7 +878,10 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 			{
 				WLog_ERR(TAG, "vBarEntry->count %"PRIu32" != vBarHeight %"PRIu32"", vBarEntry->count,
 				         vBarHeight);
-				return FALSE;
+				vBarEntry->count = vBarHeight;
+
+				if (!resize_vbar_entry(clear, vBarEntry))
+					return FALSE;
 			}
 
 			nXDstRel = nXDst + xStart;
@@ -1182,13 +1185,6 @@ BOOL clear_context_reset(CLEAR_CONTEXT* clear)
 		return FALSE;
 
 	clear->seqNumber = 0;
-	clear->VBarStorageCursor = 0;
-	clear->ShortVBarStorageCursor = 0;
-
-	if (clear->nsc)
-		nsc_context_reset(clear->nsc, clear->nsc->width, clear->nsc->height);
-
-	memset(clear->TempBuffer, 0, clear->TempSize);
 	return TRUE;
 }
 CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
