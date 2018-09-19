@@ -658,7 +658,7 @@ BOOL freerdp_context_new(freerdp* instance)
 	context->instance = instance;
 	context->ServerMode = FALSE;
 	context->settings = instance->settings;
-	context->dpuReason = 0;
+	context->disconnectUltimatum = 0;
 	context->pubSub = PubSub_New(TRUE);
 
 	if (!context->pubSub)
@@ -761,14 +761,9 @@ void freerdp_context_free(freerdp* instance)
 	instance->context = NULL;
 }
 
-void freerdp_set_dpu_reason(rdpContext* context, int reason)
+int freerdp_get_disconnect_ultimatum(rdpContext* context)
 {
-	context->dpuReason = reason;
-}
-
-int freerdp_get_dpu_reason(rdpContext* context)
-{
-	return context->dpuReason;
+	return context->disconnectUltimatum;
 }
 
 UINT32 freerdp_error_info(freerdp* instance)
