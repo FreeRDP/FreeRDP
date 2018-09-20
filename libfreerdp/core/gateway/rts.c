@@ -771,7 +771,7 @@ static int rts_send_OUT_R2_C1_pdu(rdpRpc* rpc)
 	return (status > 0) ? 1 : -1;
 }
 
-int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
+BOOL rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 {
 	int status;
 	BYTE* buffer;
@@ -795,7 +795,7 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	buffer = (BYTE*) malloc(header.frag_length);
 
 	if (!buffer)
-		return -1;
+		return FALSE;
 
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 	rts_version_command_write(&buffer[20]); /* Version (8 bytes) */
@@ -809,7 +809,7 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	                                      ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 	status = rpc_out_channel_write(nextOutChannel, buffer, header.frag_length);
 	free(buffer);
-	return (status > 0) ? 1 : -1;
+	return (status > 0) ? TRUE : FALSE;
 }
 
 static int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
