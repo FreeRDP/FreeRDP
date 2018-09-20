@@ -676,7 +676,7 @@ char* crypto_cert_get_upn(X509* x509)
 
 
 /* Deprecated name.*/
-void crypto_cert_subject_alt_name_free(int count, int *lengths, char** alt_names)
+void crypto_cert_subject_alt_name_free(int count, int* lengths, char** alt_names)
 {
 	crypto_cert_dns_names_free(count, lengths, alt_names);
 }
@@ -720,7 +720,7 @@ char** crypto_cert_get_dns_names(X509* x509, int* count, int** lengths)
 	if (list.count == 0)
 	{
 		string_list_free(&list);
-		return 0;
+		return NULL;
 	}
 
 	/* lengths are not useful,  since we converted the
@@ -730,11 +730,12 @@ char** crypto_cert_get_dns_names(X509* x509, int* count, int** lengths)
 
 	if (!result || !(*lengths))
 	{
+		string_list_free(&list);
 		free(result);
 		free(*lengths);
 		(*lengths) = 0;
 		(*count) = 0;
-		return result;
+		return NULL;
 	}
 
 	for (i = 0; i < list.count; i ++)
