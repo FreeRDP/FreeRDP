@@ -658,6 +658,7 @@ BOOL freerdp_context_new(freerdp* instance)
 	context->instance = instance;
 	context->ServerMode = FALSE;
 	context->settings = instance->settings;
+	context->disconnectUltimatum = 0;
 	context->pubSub = PubSub_New(TRUE);
 
 	if (!context->pubSub)
@@ -758,6 +759,11 @@ void freerdp_context_free(freerdp* instance)
 	freerdp_channels_free(instance->context->channels);
 	free(instance->context);
 	instance->context = NULL;
+}
+
+int freerdp_get_disconnect_ultimatum(rdpContext* context)
+{
+	return context->disconnectUltimatum;
 }
 
 UINT32 freerdp_error_info(freerdp* instance)

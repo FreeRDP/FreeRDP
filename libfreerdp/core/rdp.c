@@ -358,6 +358,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 			return FALSE;
 
 		context = rdp->instance->context;
+		context->disconnectUltimatum = reason;
 
 		if (rdp->errorInfo == ERRINFO_SUCCESS)
 		{
@@ -366,9 +367,9 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 			 * when the user logs off like they should. Map DisconnectProviderUltimatum
 			 * to a ERRINFO_LOGOFF_BY_USER when the errinfo code is ERRINFO_SUCCESS.
 			 */
-			if (reason == MCS_Reason_provider_initiated)
+			if (reason == Disconnect_Ultimatum_provider_initiated)
 				rdp_set_error_info(rdp, ERRINFO_RPC_INITIATED_DISCONNECT);
-			else if (reason == MCS_Reason_user_requested)
+			else if (reason == Disconnect_Ultimatum_user_requested)
 				rdp_set_error_info(rdp, ERRINFO_LOGOFF_BY_USER);
 			else
 				rdp_set_error_info(rdp, ERRINFO_RPC_INITIATED_DISCONNECT);

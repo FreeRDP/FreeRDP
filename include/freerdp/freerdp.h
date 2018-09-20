@@ -179,10 +179,25 @@ struct rdp_context
 	ALIGN64 rdpCodecs* codecs; /* 42 */
 	ALIGN64 rdpAutoDetect* autodetect; /* 43 */
 	ALIGN64 HANDLE abortEvent; /* 44 */
-	UINT64 paddingC[64 - 45]; /* 45 */
+	ALIGN64 int  disconnectUltimatum; /* 45 */
+	UINT64 paddingC[64 - 46]; /* 46 */
 
 	UINT64 paddingD[96 - 64]; /* 64 */
 	UINT64 paddingE[128 - 96]; /* 96 */
+};
+
+/**
+ *  Defines the possible disconnect reasons in the MCS Disconnect Provider
+ *  Ultimatum PDU
+ */
+
+enum Disconnect_Ultimatum
+{
+	Disconnect_Ultimatum_domain_disconnected = 0,
+	Disconnect_Ultimatum_provider_initiated = 1,
+	Disconnect_Ultimatum_token_purged = 2,
+	Disconnect_Ultimatum_user_requested = 3,
+	Disconnect_Ultimatum_channel_purged = 4
 };
 
 #include <freerdp/client.h>
@@ -359,6 +374,8 @@ FREERDP_API void freerdp_free(freerdp* instance);
 
 FREERDP_API BOOL freerdp_focus_required(freerdp* instance);
 FREERDP_API void freerdp_set_focus(freerdp* instance);
+
+FREERDP_API int freerdp_get_disconnect_ultimatum(rdpContext* context);
 
 FREERDP_API UINT32 freerdp_get_last_error(rdpContext* context);
 FREERDP_API const char* freerdp_get_last_error_name(UINT32 error);

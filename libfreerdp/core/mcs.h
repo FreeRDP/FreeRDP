@@ -56,15 +56,6 @@ enum MCS_Result
 	MCS_Result_enum_length = 16
 };
 
-enum MCS_Reason
-{
-	MCS_Reason_domain_disconnected = 0,
-	MCS_Reason_provider_initiated = 1,
-	MCS_Reason_token_purged = 2,
-	MCS_Reason_user_requested = 3,
-	MCS_Reason_channel_purged = 4
-};
-
 enum DomainMCSPDU
 {
 	DomainMCSPDU_PlumbDomainIndication = 0,

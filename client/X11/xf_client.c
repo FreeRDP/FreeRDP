@@ -101,6 +101,7 @@
 #include "xf_channels.h"
 #include "xfreerdp.h"
 
+
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
@@ -1631,7 +1632,18 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	}
 
 	if (!exit_code)
+	{
 		exit_code = freerdp_error_info(instance);
+
+		if (exit_code == XF_EXIT_DISCONNECT &&
+		    freerdp_get_disconnect_ultimatum(context) == Disconnect_Ultimatum_user_requested)
+		{
+			/* This situation might be limited to Windows XP. */
+			WLog_INFO(TAG,
+			          "Error info says user did not initiate but disconnect ultimatum says they did; treat this as a user logoff");
+			exit_code = XF_EXIT_LOGOFF;
+		}
+	}
 
 disconnect:
 
