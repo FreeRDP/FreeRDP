@@ -34,7 +34,7 @@ FREERDP_LOCAL extern const p_uuid_t NDR_UUID;
 FREERDP_LOCAL extern const p_uuid_t BTFN_UUID;
 #define BTFN_SYNTAX_IF_VERSION	0x00000001
 
-FREERDP_LOCAL int rpc_send_bind_pdu(rdpRpc* rpc);
+FREERDP_LOCAL BOOL rpc_send_bind_pdu(rdpRpc* rpc);
 FREERDP_LOCAL SSIZE_T rpc_recv_bind_ack_pdu(rdpRpc* rpc, const BYTE* buffer,
         size_t length);
 FREERDP_LOCAL int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc);

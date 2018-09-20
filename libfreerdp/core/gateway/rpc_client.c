@@ -221,7 +221,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 				rpc_virtual_connection_transition_to_state(rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OPENED);
 				rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_ESTABLISHED);
 
-				if (rpc_send_bind_pdu(rpc) < 0)
+				if (!rpc_send_bind_pdu(rpc))
 				{
 					WLog_ERR(TAG, "rpc_send_bind_pdu failure");
 					return -1;
@@ -824,7 +824,7 @@ void rpc_client_call_free(RpcClientCall* clientCall)
 	free(clientCall);
 }
 
-int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length)
+BOOL rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length)
 {
 	int status;
 	RpcClientCall* clientCall;
@@ -833,7 +833,7 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length
 	status = rpc_in_channel_write(inChannel, buffer, length);
 
 	if (status <= 0)
-		return -1;
+		return FALSE;
 
 	header = (rpcconn_common_hdr_t*) buffer;
 	clientCall = rpc_client_call_find_by_id(rpc, header->call_id);
@@ -852,7 +852,7 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length
 		inChannel->SenderAvailableWindow -= status;
 	}
 
-	return status;
+	return TRUE;
 }
 
 int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
