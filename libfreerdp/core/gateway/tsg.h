@@ -122,7 +122,7 @@ typedef enum _TSG_STATE TSG_STATE;
 FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
 FREERDP_LOCAL void tsg_free(rdpTsg* tsg);
 
-FREERDP_LOCAL int tsg_proxy_begin(rdpTsg* tsg);
+FREERDP_LOCAL BOOL tsg_proxy_begin(rdpTsg* tsg);
 
 FREERDP_LOCAL BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port,
                                int timeout);

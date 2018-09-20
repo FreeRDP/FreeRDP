@@ -1407,7 +1407,7 @@ static BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* cha
 }
 
 
-static int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
+static BOOL tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
 {
 	const char* str = "TSG_STATE_UNKNOWN";
 
@@ -1448,10 +1448,10 @@ static int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
 
 	tsg->state = state;
 	WLog_DBG(TAG, "%s", str);
-	return 1;
+	return TRUE;
 }
 
-int tsg_proxy_begin(rdpTsg* tsg)
+BOOL tsg_proxy_begin(rdpTsg* tsg)
 {
 	TSG_PACKET tsgPacket;
 	PTSG_CAPABILITY_NAP tsgCapNap;
@@ -1486,11 +1486,10 @@ int tsg_proxy_begin(rdpTsg* tsg)
 	{
 		WLog_ERR(TAG, "TsProxyCreateTunnel failure");
 		tsg->state = TSG_STATE_FINAL;
-		return -1;
+		return FALSE;
 	}
 
-	tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
-	return 1;
+	return tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
 }
 
 static int tsg_proxy_reauth(rdpTsg* tsg)

@@ -265,7 +265,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 
 			rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_CONTEXT_NEGOTIATED);
 
-			if (tsg_proxy_begin(tsg) < 0)
+			if (!tsg_proxy_begin(tsg))
 			{
 				WLog_ERR(TAG, "tsg_proxy_begin failure");
 				return -1;
