@@ -1754,20 +1754,20 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 	return rc;
 }
 
-int tsg_check_event_handles(rdpTsg* tsg)
+BOOL tsg_check_event_handles(rdpTsg* tsg)
 {
 	int status;
 	status = rpc_client_in_channel_recv(tsg->rpc);
 
 	if (status < 0)
-		return -1;
+		return FALSE;
 
 	status = rpc_client_out_channel_recv(tsg->rpc);
 
 	if (status < 0)
-		return -1;
+		return FALSE;
 
-	return status;
+	return TRUE;
 }
 
 DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count)
@@ -1878,7 +1878,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 	{
 		WaitForMultipleObjects(nCount, events, FALSE, 250);
 
-		if (tsg_check_event_handles(tsg) < 0)
+		if (!tsg_check_event_handles(tsg))
 		{
 			WLog_ERR(TAG, "tsg_check failure");
 			transport->layer = TRANSPORT_LAYER_CLOSED;
@@ -1979,7 +1979,7 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		{
 			while (WaitForSingleObject(rpc->client->PipeEvent, 0) != WAIT_OBJECT_0)
 			{
-				if (tsg_check_event_handles(tsg) < 0)
+				if (!tsg_check_event_handles(tsg))
 					return -1;
 
 				WaitForSingleObject(rpc->client->PipeEvent, 100);

@@ -130,7 +130,7 @@ FREERDP_LOCAL BOOL tsg_disconnect(rdpTsg* tsg);
 
 FREERDP_LOCAL BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu);
 
-FREERDP_LOCAL int tsg_check_event_handles(rdpTsg* tsg);
+FREERDP_LOCAL BOOL tsg_check_event_handles(rdpTsg* tsg);
 FREERDP_LOCAL DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events,
         DWORD count);
 

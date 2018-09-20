@@ -1512,7 +1512,7 @@ int rdp_check_fds(rdpRdp* rdp)
 	if (transport->tsg)
 	{
 		rdpTsg* tsg = transport->tsg;
-		status = tsg_check_event_handles(tsg);
+		status = tsg_check_event_handles(tsg) ? 1 : -1;
 
 		if (status < 0)
 		{
