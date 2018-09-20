@@ -1525,9 +1525,9 @@ static int tsg_proxy_reauth(rdpTsg* tsg)
 	return 1;
 }
 
-int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
+BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 {
-	int status = -1;
+	BOOL rc = FALSE;
 	RpcClientCall* call;
 	rdpRpc* rpc = tsg->rpc;
 
@@ -1541,7 +1541,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyCreateTunnelReadResponse(tsg, pdu, TunnelContext, &tsg->TunnelId))
 				{
 					WLog_ERR(TAG, "TsProxyCreateTunnelReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
 				tsg_transition_to_state(tsg, TSG_STATE_CONNECTED);
@@ -1549,10 +1549,10 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyAuthorizeTunnelWriteRequest(tsg, TunnelContext))
 				{
 					WLog_ERR(TAG, "TsProxyAuthorizeTunnel failure");
-					return -1;
+					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 			break;
 
@@ -1564,7 +1564,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
 				{
 					WLog_ERR(TAG, "TsProxyAuthorizeTunnelReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
 				tsg_transition_to_state(tsg, TSG_STATE_AUTHORIZED);
@@ -1574,17 +1574,17 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					if (!TsProxyMakeTunnelCallWriteRequest(tsg, TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST))
 					{
 						WLog_ERR(TAG, "TsProxyMakeTunnelCall failure");
-						return -1;
+						return FALSE;
 					}
 				}
 
 				if (!TsProxyCreateChannelWriteRequest(tsg, TunnelContext))
 				{
 					WLog_ERR(TAG, "TsProxyCreateChannel failure");
-					return -1;
+					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 			break;
 
@@ -1592,17 +1592,17 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			call = rpc_client_call_find_by_id(rpc, pdu->CallId);
 
 			if (!call)
-				return -1;
+				return FALSE;
 
 			if (call->OpNum == TsProxyMakeTunnelCallOpnum)
 			{
 				if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
 				{
 					WLog_ERR(TAG, "TsProxyMakeTunnelCallReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 			else if (call->OpNum == TsProxyCreateChannelOpnum)
 			{
@@ -1611,7 +1611,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyCreateChannelReadResponse(tsg, pdu, &ChannelContext, &tsg->ChannelId))
 				{
 					WLog_ERR(TAG, "TsProxyCreateChannelReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
 				if (!tsg->reauthSequence)
@@ -1626,7 +1626,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					if (!TsProxySetupReceivePipeWriteRequest(tsg, &tsg->ChannelContext))
 					{
 						WLog_ERR(TAG, "TsProxySetupReceivePipe failure");
-						return -1;
+						return FALSE;
 					}
 				}
 				else
@@ -1634,19 +1634,19 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					if (!TsProxyCloseChannelWriteRequest(tsg, &tsg->NewChannelContext))
 					{
 						WLog_ERR(TAG, "TsProxyCloseChannelWriteRequest failure");
-						return -1;
+						return FALSE;
 					}
 
 					if (!TsProxyCloseTunnelWriteRequest(tsg, &tsg->NewTunnelContext))
 					{
 						WLog_ERR(TAG, "TsProxyCloseTunnelWriteRequest failure");
-						return -1;
+						return FALSE;
 					}
 				}
 
 				tsg_transition_to_state(tsg, TSG_STATE_PIPE_CREATED);
 				tsg->reauthSequence = FALSE;
-				status = 1;
+				rc = TRUE;
 			}
 			else
 			{
@@ -1662,20 +1662,20 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			call = rpc_client_call_find_by_id(rpc, pdu->CallId);
 
 			if (!call)
-				return -1;
+				return FALSE;
 
 			if (call->OpNum == TsProxyMakeTunnelCallOpnum)
 			{
 				if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
 				{
 					WLog_ERR(TAG, "TsProxyMakeTunnelCallReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
 				if (tsg->ReauthTunnelContext)
 					tsg_proxy_reauth(tsg);
 
-				status = 1;
+				rc = TRUE;
 			}
 			else if (call->OpNum == TsProxyCloseChannelOpnum)
 			{
@@ -1684,10 +1684,10 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyCloseChannelReadResponse(tsg, pdu, &ChannelContext))
 				{
 					WLog_ERR(TAG, "TsProxyCloseChannelReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 			else if (call->OpNum == TsProxyCloseTunnelOpnum)
 			{
@@ -1696,10 +1696,10 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyCloseTunnelReadResponse(tsg, pdu, &TunnelContext))
 				{
 					WLog_ERR(TAG, "TsProxyCloseTunnelReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 
 			break;
@@ -1729,7 +1729,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 			break;
 
@@ -1744,7 +1744,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				}
 
 				tsg_transition_to_state(tsg, TSG_STATE_FINAL);
-				status = 1;
+				rc = TRUE;
 			}
 			break;
 
@@ -1752,7 +1752,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 	}
 
-	return status;
+	return rc;
 }
 
 int tsg_check_event_handles(rdpTsg* tsg)
