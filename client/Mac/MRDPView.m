@@ -881,7 +881,6 @@ BOOL mac_pre_connect(freerdp* instance)
 		return -1;
 	}
 
-	settings->SoftwareGdi = TRUE;
 	settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
 	settings->OsMinorType = OSMINORTYPE_MACINTOSH;
 	ZeroMemory(settings->OrderSupport, 32);

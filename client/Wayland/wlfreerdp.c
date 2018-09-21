@@ -132,7 +132,6 @@ static BOOL wl_pre_connect(freerdp* instance)
 
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_WAYLAND;
-	settings->SoftwareGdi = TRUE;
 	ZeroMemory(settings->OrderSupport, 32);
 	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
