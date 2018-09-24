@@ -169,6 +169,24 @@
 
 static int rdp_client_connect_finalize(rdpRdp* rdp);
 
+
+static BOOL rdp_client_reset_codecs(rdpContext* context)
+{
+	rdpSettings* settings;
+
+	if (!context || !context->settings)
+		return FALSE;
+
+	settings = context->settings;
+	context->codecs = codecs_new(context);
+
+	if (!context->codecs)
+		return FALSE;
+
+	return freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL,
+	                                     settings->DesktopWidth, settings->DesktopHeight);
+}
+
 /**
  * Establish RDP Connection based on the settings given in the 'rdp' parameter.
  * @msdn{cc240452}
@@ -182,6 +200,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	rdpSettings* settings = rdp->settings;
 	/* make sure SSL is initialize for earlier enough for crypto, by taking advantage of winpr SSL FIPS flag for openssl initialization */
 	DWORD flags = WINPR_SSL_INIT_DEFAULT;
+
+	if (!rdp_client_reset_codecs(rdp->context))
+		return FALSE;
 
 	if (settings->FIPSMode)
 		flags |= WINPR_SSL_INIT_ENABLE_FIPS;
@@ -336,6 +357,7 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 	if (freerdp_channels_disconnect(context->channels, context->instance) != CHANNEL_RC_OK)
 		return FALSE;
 
+	codecs_free(context->codecs);
 	return TRUE;
 }
 

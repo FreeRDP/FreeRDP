@@ -634,7 +634,6 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 		UINT16 yEnd;
 		UINT32 colorBkg;
 		UINT16 vBarHeader;
-		UINT16 vBarIndex;
 		UINT16 vBarYOn;
 		UINT16 vBarYOff;
 		UINT32 vBarCount;
@@ -697,7 +696,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 
 			if ((vBarHeader & 0xC000) == 0x4000) /* SHORT_VBAR_CACHE_HIT */
 			{
-				vBarIndex = (vBarHeader & 0x3FFF);
+				const UINT16 vBarIndex = (vBarHeader & 0x3FFF);
 				vBarShortEntry = &(clear->ShortVBarStorage[vBarIndex]);
 
 				if (!vBarShortEntry)
@@ -779,8 +778,18 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 			}
 			else if ((vBarHeader & 0x8000) == 0x8000) /* VBAR_CACHE_HIT */
 			{
-				vBarIndex = (vBarHeader & 0x7FFF);
+				const UINT16 vBarIndex = (vBarHeader & 0x7FFF);
 				vBarEntry = &(clear->VBarStorage[vBarIndex]);
+
+				/* If the cache was reset we need to fill in some dummy data. */
+				if (vBarEntry->size == 0)
+				{
+					WLog_WARN(TAG, "Empty cache index %"PRIu16", filling dummy data", vBarIndex);
+					vBarEntry->count = vBarHeight;
+
+					if (!resize_vbar_entry(clear, vBarEntry))
+						return FALSE;
+				}
 			}
 			else
 			{
@@ -869,7 +878,10 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 			{
 				WLog_ERR(TAG, "vBarEntry->count %"PRIu32" != vBarHeight %"PRIu32"", vBarEntry->count,
 				         vBarHeight);
-				return FALSE;
+				vBarEntry->count = vBarHeight;
+
+				if (!resize_vbar_entry(clear, vBarEntry))
+					return FALSE;
 			}
 
 			nXDstRel = nXDst + xStart;
@@ -1173,13 +1185,6 @@ BOOL clear_context_reset(CLEAR_CONTEXT* clear)
 		return FALSE;
 
 	clear->seqNumber = 0;
-	clear->VBarStorageCursor = 0;
-	clear->ShortVBarStorageCursor = 0;
-
-	if (clear->nsc)
-		nsc_context_reset(clear->nsc, clear->nsc->width, clear->nsc->height);
-
-	memset(clear->TempBuffer, 0, clear->TempSize);
 	return TRUE;
 }
 CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
