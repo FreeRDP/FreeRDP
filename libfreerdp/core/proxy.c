@@ -149,9 +149,18 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 	char* current;
 	char* copy;
 	size_t host_len;
+	struct sockaddr_in sa4;
+	struct sockaddr_in6 sa6;
+	BOOL is_ipv4 = FALSE;
+	BOOL is_ipv6 = FALSE;
 
 	if (!no_proxy || !settings)
 		return FALSE;
+
+	if (inet_pton(AF_INET, settings->ServerHostname, &sa4.sin_addr) == 1)
+		is_ipv4 = TRUE;
+	else if (inet_pton(AF_INET6, settings->ServerHostname, &sa6.sin6_addr) == 1)
+		is_ipv6 = TRUE;
 
 	host_len = strlen(settings->ServerHostname);
 	copy = _strdup(no_proxy);
@@ -175,8 +184,9 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 				if (host_len >= currentlen)
 				{
 					const size_t offset = host_len + 1 - currentlen;
+					const char* name = settings->ServerHostname + offset;
 
-					if (strncmp(current + 1, settings->ServerHostname + offset, currentlen - 1) == 0)
+					if (strncmp(current + 1, name, currentlen - 1) == 0)
 						result = TRUE;
 				}
 			}
@@ -185,70 +195,54 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 				if (strncmp(current, settings->ServerHostname, currentlen - 1) == 0)
 					result = TRUE;
 			}
-			else
+			else if (current[0] == '.') /* Only compare if the no_proxy variable contains a whole domain. */
 			{
-				if (strcmp(current, settings->ServerHostname) == 0)
-					result = TRUE; /* exact match */
-				else
+				if (host_len > currentlen)
 				{
-					struct sockaddr_in sa4;
-					struct sockaddr_in6 sa6;
-					BOOL is_ipv4 = FALSE;
-					BOOL is_ipv6 = FALSE;
+					const size_t offset = host_len - currentlen;
+					const char* name = settings->ServerHostname + offset;
 
-					if (inet_pton(AF_INET, settings->ServerHostname, &sa4.sin_addr) == 1)
-						is_ipv4 = TRUE;
-					else if (inet_pton(AF_INET6, settings->ServerHostname, &sa6.sin6_addr) == 1)
-						is_ipv6 = TRUE;
-
-					if (is_ipv4 || is_ipv6)
-					{
-						char* rangedelim = strchr(current, '/');
-
-						/* Check for IP ranges */
-						if (rangedelim != NULL)
-						{
-							const char* range = rangedelim + 1;
-							int sub;
-							int rc = sscanf(range, "%u", &sub);
-
-							if ((rc == 1) && (rc >= 0))
-							{
-								*rangedelim = '\0';
-
-								if (is_ipv4)
-								{
-									struct sockaddr_in mask;
-
-									if (inet_pton(AF_INET, current, &mask.sin_addr))
-										result = cidr4_match(&sa4.sin_addr, &mask.sin_addr, sub);
-								}
-								else if (is_ipv6)
-								{
-									struct sockaddr_in6 mask;
-
-									if (inet_pton(AF_INET6, current, &mask.sin6_addr))
-										result = cidr6_match(&sa6.sin6_addr, &mask.sin6_addr, sub);
-								}
-							}
-							else
-								WLog_WARN(TAG, "NO_PROXY invalid entry %s", current);
-						}
-						else if (!strncmp(current, settings->ServerHostname, currentlen))
-							result = TRUE; /* left-aligned match for IPs */
-					}
-					else if (current[0] == '.') /* Only compare if the no_proxy variable contains a whole domain. */
-					{
-						if (host_len >= currentlen)
-						{
-							const size_t offset = host_len - currentlen;
-
-							if (!strncmp(current, settings->ServerHostname + offset,
-							             currentlen))
-								result = TRUE; /* right-aligned match for host names */
-						}
-					}
+					if (strncmp(current, name, currentlen) == 0)
+						result = TRUE; /* right-aligned match for host names */
 				}
+			}
+			else if (strcmp(current, settings->ServerHostname) == 0)
+				result = TRUE; /* exact match */
+			else if (is_ipv4 || is_ipv6)
+			{
+				char* rangedelim = strchr(current, '/');
+
+				/* Check for IP ranges */
+				if (rangedelim != NULL)
+				{
+					const char* range = rangedelim + 1;
+					int sub;
+					int rc = sscanf(range, "%u", &sub);
+
+					if ((rc == 1) && (rc >= 0))
+					{
+						*rangedelim = '\0';
+
+						if (is_ipv4)
+						{
+							struct sockaddr_in mask;
+
+							if (inet_pton(AF_INET, current, &mask.sin_addr))
+								result = cidr4_match(&sa4.sin_addr, &mask.sin_addr, sub);
+						}
+						else if (is_ipv6)
+						{
+							struct sockaddr_in6 mask;
+
+							if (inet_pton(AF_INET6, current, &mask.sin6_addr))
+								result = cidr6_match(&sa6.sin6_addr, &mask.sin6_addr, sub);
+						}
+					}
+					else
+						WLog_WARN(TAG, "NO_PROXY invalid entry %s", current);
+				}
+				else if (strncmp(current, settings->ServerHostname, currentlen) == 0)
+					result = TRUE; /* left-aligned match for IPs */
 			}
 		}
 
