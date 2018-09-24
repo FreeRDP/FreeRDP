@@ -58,6 +58,10 @@ static UINT xf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, in
 static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 {
 	rdpSettings* settings;
+
+	if (!xfDisp || !xfDisp->xfc || !xfDisp->xfc->context.settings)
+		return FALSE;
+
 	settings = xfDisp->xfc->context.settings;
 
 	if (xfDisp->lastSentWidth != xfDisp->targetWidth)
@@ -83,7 +87,16 @@ static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 
 static BOOL xf_update_last_sent(xfDispContext* xfDisp)
 {
-	rdpSettings* settings = xfDisp->xfc->context.settings;
+	rdpSettings* settings;
+
+	if (!xfDisp || !xfDisp->xfc)
+		return FALSE;
+
+	settings = xfDisp->xfc->context.settings;
+
+	if (!settings)
+		return FALSE;
+
 	xfDisp->lastSentWidth = xfDisp->targetWidth;
 	xfDisp->lastSentHeight = xfDisp->targetHeight;
 	xfDisp->lastSentDesktopOrientation = settings->DesktopOrientation;
@@ -96,8 +109,17 @@ static BOOL xf_update_last_sent(xfDispContext* xfDisp)
 static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 {
 	DISPLAY_CONTROL_MONITOR_LAYOUT layout;
-	xfContext* xfc = xfDisp->xfc;
-	rdpSettings* settings = xfc->context.settings;
+	xfContext* xfc;
+	rdpSettings* settings;
+
+	if (!xfDisp || !xfDisp->xfc)
+		return FALSE;
+
+	xfc = xfDisp->xfc;
+	settings = xfc->context.settings;
+
+	if (!settings)
+		return FALSE;
 
 	if (!xfDisp->activated)
 		return TRUE;
@@ -129,7 +151,8 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 		layout.PhysicalWidth = xfDisp->targetWidth;
 		layout.PhysicalHeight = xfDisp->targetHeight;
 
-		if (xfc->disp->SendMonitorLayout(xfc->disp, 1, &layout) != CHANNEL_RC_OK)
+		if (IFCALLRESULT(CHANNEL_RC_OK, xfc->disp->SendMonitorLayout, xfc->disp, 1,
+		                 &layout) != CHANNEL_RC_OK)
 			return FALSE;
 	}
 
@@ -288,16 +311,29 @@ static UINT xf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, in
 		layouts[i].DeviceScaleFactor = settings->DeviceScaleFactor;
 	}
 
-	ret = disp->SendMonitorLayout(disp, nmonitors, layouts);
+	ret = IFCALLRESULT(CHANNEL_RC_OK, disp->SendMonitorLayout, disp, nmonitors, layouts);
 	free(layouts);
 	return ret;
 }
 
 BOOL xf_disp_handle_xevent(xfContext* xfc, XEvent* event)
 {
-	xfDispContext* xfDisp = xfc->xfDisp;
-	rdpSettings* settings = xfc->context.settings;
+	xfDispContext* xfDisp;
+	rdpSettings* settings;
 	UINT32 maxWidth, maxHeight;
+
+	if (!xfc || !event)
+		return FALSE;
+
+	xfDisp = xfc->xfDisp;
+
+	if (!xfDisp)
+		return FALSE;
+
+	settings = xfc->context.settings;
+
+	if (!settings)
+		return FALSE;
 
 	if (!xfDisp->haveXRandr)
 		return TRUE;
@@ -316,7 +352,12 @@ BOOL xf_disp_handle_xevent(xfContext* xfc, XEvent* event)
 
 BOOL xf_disp_handle_configureNotify(xfContext* xfc, int width, int height)
 {
-	xfDispContext* xfDisp = xfc->xfDisp;
+	xfDispContext* xfDisp;
+
+	if (!xfc || !xfc->disp)
+		return FALSE;
+
+	xfDisp = xfc->xfDisp;
 	xfDisp->targetWidth = width;
 	xfDisp->targetHeight = height;
 	return xf_disp_sendResize(xfDisp);
