@@ -333,10 +333,10 @@ static BOOL wf_post_connect(freerdp* instance)
 		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"%S", settings->WindowTitle);
 	else if (settings->ServerPort == 3389)
 		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"FreeRDP: %S",
-		           settings->ServerHostname);
+		             settings->ServerHostname);
 	else
 		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"FreeRDP: %S:%u",
-		           settings->ServerHostname, settings->ServerPort);
+		             settings->ServerHostname, settings->ServerPort);
 
 	if (settings->EmbeddedWindow)
 		settings->Decorations = FALSE;
@@ -541,48 +541,6 @@ static DWORD wf_verify_changed_certificate(freerdp* instance,
 	return 0;
 }
 
-
-static BOOL wf_auto_reconnect(freerdp* instance)
-{
-	wfContext* wfc = (wfContext*)instance->context;
-	UINT32 num_retries = 0;
-	UINT32 max_retries = instance->settings->AutoReconnectMaxRetries;
-
-	/* Only auto reconnect on network disconnects. */
-	if (freerdp_error_info(instance) != 0)
-		return FALSE;
-
-	/* A network disconnect was detected */
-	WLog_ERR(TAG, "Network disconnect!");
-
-	if (!instance->settings->AutoReconnectionEnabled)
-	{
-		/* No auto-reconnect - just quit */
-		return FALSE;
-	}
-
-	/* Perform an auto-reconnect. */
-	for (;;)
-	{
-		/* Quit retrying if max retries has been exceeded */
-		if (num_retries++ >= max_retries)
-			return FALSE;
-
-		/* Attempt the next reconnect */
-		WLog_INFO(TAG,  "Attempting reconnect (%lu of %lu)", num_retries, max_retries);
-
-		if (freerdp_reconnect(instance))
-		{
-			return TRUE;
-		}
-
-		Sleep(5000);
-	}
-
-	WLog_ERR(TAG, "Maximum reconnect retries exceeded");
-	return FALSE;
-}
-
 static DWORD WINAPI wf_input_thread(LPVOID arg)
 {
 	int status;
@@ -683,7 +641,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		{
 			if (!freerdp_check_event_handles(context))
 			{
-				if (wf_auto_reconnect(instance))
+				if (client_auto_reconnect(instance))
 					continue;
 
 				WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
