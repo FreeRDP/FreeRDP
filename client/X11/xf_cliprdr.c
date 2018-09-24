@@ -1358,7 +1358,7 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 	UINT32 dstFormatId;
 	BOOL nullTerminated = FALSE;
 	UINT32 size = formatDataResponse->dataLen;
-	BYTE* data = formatDataResponse->requestedFormatData;
+	const BYTE* data = formatDataResponse->requestedFormatData;
 	xfClipboard* clipboard = (xfClipboard*) context->custom;
 	xfContext* xfc = clipboard->xfc;
 
@@ -1411,6 +1411,9 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 				srcFormatId = CF_DIB;
 				dstFormatId = ClipboardGetFormatId(clipboard->system, "image/bmp");
 				break;
+
+			default:
+				break;
 		}
 	}
 
@@ -1419,6 +1422,12 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 
 	if (bSuccess)
 	{
+		if (SrcSize == 0)
+		{
+			WLog_INFO(TAG, "skipping, empty data detected!!!");
+			return CHANNEL_RC_OK;
+		}
+
 		DstSize = 0;
 		pDstData = (BYTE*) ClipboardGetData(clipboard->system, dstFormatId, &DstSize);
 
