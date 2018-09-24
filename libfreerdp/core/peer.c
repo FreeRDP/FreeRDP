@@ -467,6 +467,7 @@ static int peer_recv_pdu(freerdp_peer* client, wStream* s)
 
 static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
+	UINT32 selectedProtocol;
 	freerdp_peer* client = (freerdp_peer*) extra;
 	rdpRdp* rdp = client->context->rdp;
 
@@ -479,16 +480,21 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				return -1;
 			}
 
-			client->settings->NlaSecurity = (rdp->nego->SelectedProtocol & PROTOCOL_NLA) ? TRUE : FALSE;
-			client->settings->TlsSecurity = (rdp->nego->SelectedProtocol & PROTOCOL_TLS) ? TRUE : FALSE;
-			client->settings->RdpSecurity = (rdp->nego->SelectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE;
+			selectedProtocol = nego_get_selected_protocols(rdp->nego);
+			client->settings->NlaSecurity = (selectedProtocol & PROTOCOL_NLA) ? TRUE : FALSE;
+			client->settings->TlsSecurity = (selectedProtocol & PROTOCOL_TLS) ? TRUE : FALSE;
+			client->settings->RdpSecurity = (selectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE;
 
-			if (rdp->nego->SelectedProtocol & PROTOCOL_NLA)
+			if (selectedProtocol & PROTOCOL_NLA)
 			{
-				sspi_CopyAuthIdentity(&client->identity, rdp->nego->transport->nla->identity);
+				SEC_WINNT_AUTH_IDENTITY* identity = nego_get_auth_identity(rdp->nego);
+
+				if (!identity)
+					return -1;
+
+				sspi_CopyAuthIdentity(&client->identity,  identity);
 				IFCALLRET(client->Logon, client->authenticated, client, &client->identity, TRUE);
-				nla_free(rdp->nego->transport->nla);
-				rdp->nego->transport->nla = NULL;
+				nego_free_nla(rdp->nego);
 			}
 			else
 			{
@@ -646,10 +652,17 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 static BOOL freerdp_peer_close(freerdp_peer* client)
 {
+	UINT32 selectedProtocol;
+
+	if (!client || !client->context || !client->context->rail)
+		return FALSE;
+
+	selectedProtocol = nego_get_selected_protocols(client->context->rdp->nego);
+
 	/** if negotiation has failed, we're not MCS connected. So don't
 	 * 	send anything else, or some mstsc will consider that as an error
 	 */
-	if (client->context->rdp->nego->SelectedProtocol & PROTOCOL_FAILED_NEGO)
+	if (selectedProtocol & PROTOCOL_FAILED_NEGO)
 		return TRUE;
 
 	/**

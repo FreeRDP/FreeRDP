@@ -36,6 +36,35 @@
 
 #define TAG FREERDP_TAG("core.nego")
 
+struct rdp_nego
+{
+	int port;
+	UINT32 flags;
+	char* hostname;
+	char* cookie;
+	BYTE* RoutingToken;
+	DWORD RoutingTokenLength;
+	BOOL SendPreconnectionPdu;
+	UINT32 PreconnectionId;
+	char* PreconnectionBlob;
+
+	NEGO_STATE state;
+	BOOL TcpConnected;
+	BOOL SecurityConnected;
+	UINT32 CookieMaxLength;
+
+	BOOL sendNegoData;
+	UINT32 SelectedProtocol;
+	UINT32 RequestedProtocols;
+	BOOL NegotiateSecurityLayer;
+	BYTE EnabledProtocols[16];
+	BOOL RestrictedAdminModeRequired;
+	BOOL GatewayEnabled;
+	BOOL GatewayBypassLocal;
+
+	rdpTransport* transport;
+};
+
 static const char* const NEGO_STATE_STRINGS[] =
 {
 	"NEGO_STATE_INITIAL",
@@ -1335,4 +1364,72 @@ void nego_set_preconnection_id(rdpNego* nego, UINT32 PreconnectionId)
 void nego_set_preconnection_blob(rdpNego* nego, char* PreconnectionBlob)
 {
 	nego->PreconnectionBlob = PreconnectionBlob;
+}
+
+NEGO_STATE nego_get_state(rdpNego* nego)
+{
+	if (!nego)
+		return NEGO_STATE_FAIL;
+
+	return nego->state;
+}
+
+BOOL nego_set_state(rdpNego* nego, NEGO_STATE state)
+{
+	if (!nego)
+		return FALSE;
+
+	nego->state = state;
+	return TRUE;
+}
+
+UINT32 nego_get_selected_protocols(rdpNego* nego)
+{
+	if (!nego)
+		return 0;
+
+	return nego->SelectedProtocol;
+}
+
+BOOL nego_set_selected_protocols(rdpNego* nego, UINT32 protocols)
+{
+	if (!nego)
+		return FALSE;
+
+	nego->SelectedProtocol = protocols;
+	return TRUE;
+}
+
+UINT32 nego_get_requested_protocols(rdpNego* nego)
+{
+	if (!nego)
+		return 0;
+
+	return nego->RequestedProtocols;
+}
+
+BOOL nego_set_requested_protocols(rdpNego* nego, UINT32 protocols)
+{
+	if (!nego)
+		return FALSE;
+
+	nego->RequestedProtocols = protocols;
+	return TRUE;
+}
+
+SEC_WINNT_AUTH_IDENTITY* nego_get_auth_identity(rdpNego* nego)
+{
+	if (!nego || !nego->transport || !nego->transport->nla)
+		return NULL;
+
+	return nego->transport->nla->identity;
+}
+
+void nego_free_nla(rdpNego* nego)
+{
+	if (!nego || !nego->transport || !nego->transport->nla)
+		return;
+
+	nla_free(nego->transport->nla);
+	nego->transport->nla = NULL;
 }
