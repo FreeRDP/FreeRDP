@@ -107,7 +107,18 @@ static void nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 
 BOOL nego_connect(rdpNego* nego)
 {
-	rdpSettings* settings = nego->transport->settings;
+	rdpContext* context;
+	rdpSettings* settings;
+
+	if (!nego || !nego->transport)
+		return FALSE;
+
+	context = transport_get_context(nego->transport);
+
+	if (!context || !context->settings)
+		return FALSE;
+
+	settings = context->settings;
 
 	if (nego->state == NEGO_STATE_INITIAL)
 	{
@@ -190,7 +201,9 @@ BOOL nego_connect(rdpNego* nego)
 
 			if (nego->state == NEGO_STATE_FAIL)
 			{
-				if (freerdp_get_last_error(nego->transport->context) == FREERDP_ERROR_SUCCESS)
+				rdpContext* context = transport_get_context(nego->transport);
+
+				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
 					WLog_ERR(TAG, "Protocol Security Negotiation Failure");
 
 				nego->state = NEGO_STATE_FINAL;
@@ -1017,9 +1030,19 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	BOOL status;
 	wStream* s;
 	BYTE flags;
+	rdpContext* context;
 	rdpSettings* settings;
+
+	if (!nego || !nego->transport)
+		return FALSE;
+
+	context = transport_get_context(nego->transport);
+
+	if (!context || !context->settings)
+		return FALSE;
+
 	status = TRUE;
-	settings = nego->transport->settings;
+	settings = context->settings;
 	s = Stream_New(NULL, 512);
 
 	if (!s)
@@ -1419,17 +1442,23 @@ BOOL nego_set_requested_protocols(rdpNego* nego, UINT32 protocols)
 
 SEC_WINNT_AUTH_IDENTITY* nego_get_auth_identity(rdpNego* nego)
 {
-	if (!nego || !nego->transport || !nego->transport->nla)
+	rdpNla* nla;
+
+	if (!nego || !nego->transport)
 		return NULL;
 
-	return nla_get_auth_identity(nego->transport->nla);
+	nla = transport_get_nla(nego->transport);
+
+	if (!nla)
+		return NULL;
+
+	return nla_get_auth_identity(nla);
 }
 
 void nego_free_nla(rdpNego* nego)
 {
-	if (!nego || !nego->transport || !nego->transport->nla)
+	if (!nego || !nego->transport)
 		return;
 
-	nla_free(nego->transport->nla);
-	nego->transport->nla = NULL;
+	transport_free_nla(nego->transport);
 }

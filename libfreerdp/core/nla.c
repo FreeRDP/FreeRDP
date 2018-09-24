@@ -339,7 +339,7 @@ static int nla_client_init(rdpNla* nla)
 		}
 	}
 
-	tls = nla->transport->tls;
+	tls = transport_get_tls(nla->transport);
 
 	if (!tls)
 	{
@@ -724,7 +724,15 @@ static int nla_client_authenticate(rdpNla* nla)
 
 static int nla_server_init(rdpNla* nla)
 {
-	rdpTls* tls = nla->transport->tls;
+	rdpTls* tls;
+
+	if (!nla || !nla->transport)
+		return -1;
+
+	tls = transport_get_nla(nla->transport);
+
+	if (!tls)
+		return -1;
 
 	if (!sspi_SecBufferAlloc(&nla->PublicKey, tls->PublicKeyLength))
 	{

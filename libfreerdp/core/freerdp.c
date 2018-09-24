@@ -253,8 +253,9 @@ BOOL freerdp_connect(freerdp* instance)
 		while (pcap_has_next_record(update->pcap_rfx) && status)
 		{
 			pcap_get_next_record_header(update->pcap_rfx, &record);
+			s = transport_receive_pool_take(rdp->transport, record.length);
 
-			if (!(s = StreamPool_Take(rdp->transport->ReceivePool, record.length)))
+			if (!s)
 				break;
 
 			record.data = Stream_Buffer(s);
@@ -281,7 +282,9 @@ BOOL freerdp_connect(freerdp* instance)
 		freerdp_set_last_error(instance->context,
 		                       FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
 
-	SetEvent(rdp->transport->connectedEvent);
+	if (!transport_set_connected(rdp->transport))
+		status = FALSE;
+
 freerdp_connect_finally:
 	EventArgsInit(&e, "freerdp");
 	e.result = status ? 0 : -1;
@@ -985,12 +988,10 @@ void freerdp_free(freerdp* instance)
 
 ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount)
 {
-	ULONG written = context->rdp->transport->written;
+	if (!context || !context->rdp)
+		return FALSE;
 
-	if (resetCount)
-		context->rdp->transport->written = 0;
-
-	return written;
+	return transport_get_sent_bytes(context->rdp->transport, resetCount);
 }
 
 HANDLE getChannelErrorEventHandle(rdpContext* context)

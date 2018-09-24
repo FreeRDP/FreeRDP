@@ -110,7 +110,7 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 	rdpTls* tls = channel->tls;
 	rdpNtlm* ntlm = channel->ntlm;
 	rdpContext* context = rpc->context;
-	rdpSettings* settings = rpc->settings;
+	rdpSettings* settings = context->settings;
 	freerdp* instance = context->instance;
 
 	if (!settings->GatewayPassword || !settings->GatewayUsername ||

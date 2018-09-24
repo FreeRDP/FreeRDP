@@ -58,6 +58,31 @@
 
 #define BUFFER_SIZE 16384
 
+struct rdp_transport
+{
+	TRANSPORT_LAYER layer;
+	BIO* frontBio;
+	rdpRdg* rdg;
+	rdpTsg* tsg;
+	rdpTls* tls;
+	rdpContext* context;
+	rdpNla* nla;
+	void* ReceiveExtra;
+	wStream* ReceiveBuffer;
+	TransportRecv ReceiveCallback;
+	wStreamPool* ReceivePool;
+	HANDLE connectedEvent;
+	BOOL NlaMode;
+	BOOL blocking;
+	BOOL GatewayEnabled;
+	CRITICAL_SECTION ReadLock;
+	CRITICAL_SECTION WriteLock;
+	ULONG written;
+	HANDLE rereadEvent;
+	BOOL haveMoreBytesToRead;
+	wLog* log;
+};
+
 #ifdef WITH_GSSAPI
 
 #include <krb5.h>
@@ -155,7 +180,13 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 {
 	if (where & SSL_CB_ALERT)
 	{
+		rdpSettings* settings;
 		rdpTransport* transport = (rdpTransport*) SSL_get_app_data(ssl);
+
+		if (!transport || !transport->context || !transport->context->settings)
+			return;
+
+		settings = transport->context->settings;
 
 		switch (ret)
 		{
@@ -176,12 +207,12 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 						UINT32 kret = 0;
 #ifdef WITH_GSSAPI
 
-						if ((strlen(transport->settings->Domain) != 0) &&
-						    (strncmp(transport->settings->Domain, ".", 1) != 0))
+						if ((strlen(settings->Domain) != 0) &&
+						    (strncmp(settings->Domain, ".", 1) != 0))
 						{
-							kret = transport_krb5_check_account(transport, transport->settings->Username,
-							                                    transport->settings->Domain,
-							                                    transport->settings->Password);
+							kret = transport_krb5_check_account(transport, settings->Username,
+							                                    settings->Domain,
+							                                    settings->Password);
 						}
 						else
 #endif /* WITH_GSSAPI */
@@ -252,18 +283,23 @@ BOOL transport_connect_tls(rdpTransport* transport)
 {
 	int tlsStatus;
 	rdpTls* tls = NULL;
-	rdpContext* context = transport->context;
-	rdpSettings* settings = transport->settings;
+	rdpContext* context;
+	rdpSettings* settings;
+
+	if (!transport || !transport->context || !transport->context->settings)
+		return FALSE;
+
+	context = transport->context;
+	settings = context->settings;
 
 	if (!(tls = tls_new(settings)))
 		return FALSE;
 
 	transport->tls = tls;
 
-	if (transport->GatewayEnabled)
-		transport->layer = TRANSPORT_LAYER_TSG_TLS;
-	else
-		transport->layer = TRANSPORT_LAYER_TLS;
+	if (!transport_set_layer_state(transport,
+	                               transport->GatewayEnabled ? TRANSPORT_LAYER_TSG_TLS : TRANSPORT_LAYER_TLS))
+		return FALSE;
 
 	tls->hostname = settings->ServerHostname;
 	tls->port = settings->ServerPort;
@@ -306,10 +342,18 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 BOOL transport_connect_nla(rdpTransport* transport)
 {
-	rdpContext* context = transport->context;
-	rdpSettings* settings = context->settings;
-	freerdp* instance = context->instance;
-	rdpRdp* rdp = context->rdp;
+	rdpContext* context;
+	rdpSettings* settings;
+	freerdp* instance ;
+	rdpRdp* rdp;
+
+	if (!transport || !transport->context)
+		return FALSE;
+
+	context = transport->context;
+	settings = context->settings;
+	instance = context->instance;
+	rdp = context->rdp;
 
 	if (!transport_connect_tls(transport))
 		return FALSE;
@@ -351,9 +395,16 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 {
 	int sockfd;
 	BOOL status = FALSE;
-	rdpSettings* settings = transport->settings;
-	rdpContext* context = transport->context;
-	BOOL rpcFallback = !settings->GatewayHttpTransport;
+	rdpSettings* settings;
+	rdpContext* context;
+	BOOL rpcFallback;
+
+	if (!transport || !transport->context || !transport->context->settings)
+		return FALSE;
+
+	context = transport->context;
+	settings = context->settings;
+	rpcFallback = !settings->GatewayHttpTransport;
 
 	if (transport->GatewayEnabled)
 	{
@@ -370,8 +421,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 			{
 				transport->frontBio = transport->rdg->frontBio;
 				BIO_set_nonblock(transport->frontBio, 0);
-				transport->layer = TRANSPORT_LAYER_TSG;
-				status = TRUE;
+				status = transport_set_layer_state(transport, TRANSPORT_LAYER_TSG);
 			}
 			else
 			{
@@ -392,8 +442,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 			if (status)
 			{
 				transport->frontBio = transport->tsg->bio;
-				transport->layer = TRANSPORT_LAYER_TSG;
-				status = TRUE;
+				status = transport_set_layer_state(transport, TRANSPORT_LAYER_TSG);
 			}
 			else
 			{
@@ -440,12 +489,18 @@ BOOL transport_accept_rdp(rdpTransport* transport)
 
 BOOL transport_accept_tls(rdpTransport* transport)
 {
-	rdpSettings* settings = transport->settings;
+	rdpSettings* settings;
+
+	if (!transport || !transport->context || !transport->context->settings)
+		return FALSE;
+
+	settings = transport->context->settings;
 
 	if (!transport->tls)
-		transport->tls = tls_new(transport->settings);
+		transport->tls = tls_new(transport->context->settings);
 
-	transport->layer = TRANSPORT_LAYER_TLS;
+	if (!transport_set_layer_state(transport, TRANSPORT_LAYER_TLS))
+		return FALSE;
 
 	if (!tls_accept(transport->tls, transport->frontBio, settings))
 		return FALSE;
@@ -456,13 +511,20 @@ BOOL transport_accept_tls(rdpTransport* transport)
 
 BOOL transport_accept_nla(rdpTransport* transport)
 {
-	rdpSettings* settings = transport->settings;
-	freerdp* instance = (freerdp*) settings->instance;
+	freerdp* instance;
+	rdpSettings* settings;
+
+	if (!transport || !transport->context || !transport->context->settings)
+		return FALSE;
+
+	settings = transport->context->settings;
+	instance = transport->context->instance;
 
 	if (!transport->tls)
-		transport->tls = tls_new(transport->settings);
+		transport->tls = tls_new(settings);
 
-	transport->layer = TRANSPORT_LAYER_TLS;
+	if (!transport_set_layer_state(transport, TRANSPORT_LAYER_TLS))
+		return FALSE;
 
 	if (!tls_accept(transport->tls, transport->frontBio, settings))
 		return FALSE;
@@ -484,8 +546,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	{
 		WLog_Print(transport->log, WLOG_ERROR, "client authentication failure");
 		transport_set_nla_mode(transport, FALSE);
-		nla_free(transport->nla);
-		transport->nla = NULL;
+		transport_free_nla(transport);
 		tls_set_alert_code(transport->tls, TLS_ALERT_LEVEL_FATAL,
 		                   TLS_ALERT_DESCRIPTION_ACCESS_DENIED);
 		tls_send_alert(transport->tls);
@@ -538,14 +599,14 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 	}
 }
 
-int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
+static int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 {
 	int read = 0;
 	int status = -1;
 
 	if (!transport->frontBio)
 	{
-		transport->layer = TRANSPORT_LAYER_CLOSED;
+		transport_set_layer_state(transport, TRANSPORT_LAYER_CLOSED);
 		return -1;
 	}
 
@@ -565,7 +626,7 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 				}
 
 				WLog_ERR_BIO(transport, "BIO_read", transport->frontBio);
-				transport->layer = TRANSPORT_LAYER_CLOSED;
+				transport_set_layer_state(transport, TRANSPORT_LAYER_CLOSED);
 				return -1;
 			}
 
@@ -785,7 +846,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 	if (!transport->frontBio)
 	{
-		transport->layer = TRANSPORT_LAYER_CLOSED;
+		transport_set_layer_state(transport, TRANSPORT_LAYER_CLOSED);
 		return -1;
 	}
 
@@ -833,7 +894,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 			continue;
 		}
 
-		if (transport->blocking || transport->settings->WaitForOutputBufferFlush)
+		if (transport->blocking || transport->context->settings->WaitForOutputBufferFlush)
 		{
 			while (BIO_write_blocked(transport->frontBio))
 			{
@@ -863,7 +924,7 @@ out_cleanup:
 	if (status < 0)
 	{
 		/* A write error indicates that the peer has dropped the connection */
-		transport->layer = TRANSPORT_LAYER_CLOSED;
+		transport_set_layer_state(transport, TRANSPORT_LAYER_CLOSED);
 	}
 
 	Stream_Release(s);
@@ -978,10 +1039,10 @@ int transport_check_fds(rdpTransport* transport)
 	DWORD now = GetTickCount();
 	DWORD dueDate = 0;
 
-	if (!transport)
+	if (!transport || !transport->context || !transport->context->settings)
 		return -1;
 
-	dueDate = now + transport->settings->MaxTimeInCheckLoop;
+	dueDate = now + transport->context->settings->MaxTimeInCheckLoop;
 
 	if (transport->haveMoreBytesToRead)
 	{
@@ -1103,7 +1164,10 @@ BOOL transport_disconnect(rdpTransport* transport)
 	}
 
 	transport->frontBio = NULL;
-	transport->layer = TRANSPORT_LAYER_TCP;
+
+	if (!transport_set_layer_state(transport, TRANSPORT_LAYER_TCP))
+		status = FALSE;
+
 	return status;
 }
 
@@ -1118,56 +1182,47 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->log = WLog_Get(TAG);
 
 	if (!transport->log)
-		goto out_free_transport;
+		goto fail;
 
 	transport->context = context;
-	transport->settings = context->settings;
 	transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
 
 	if (!transport->ReceivePool)
-		goto out_free_transport;
+		goto fail;
 
 	/* receive buffer for non-blocking read. */
 	transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
 
 	if (!transport->ReceiveBuffer)
-		goto out_free_receivepool;
+		goto fail;
 
 	transport->connectedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if (!transport->connectedEvent
 	    || transport->connectedEvent == INVALID_HANDLE_VALUE)
-		goto out_free_receivebuffer;
+		goto fail;
 
 	transport->rereadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if (!transport->rereadEvent || transport->rereadEvent == INVALID_HANDLE_VALUE)
-		goto out_free_connectedEvent;
+		goto fail;
 
 	transport->haveMoreBytesToRead = FALSE;
 	transport->blocking = TRUE;
 	transport->GatewayEnabled = FALSE;
-	transport->layer = TRANSPORT_LAYER_TCP;
+
+	if (!transport_set_layer_state(transport, TRANSPORT_LAYER_TCP))
+		goto fail;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(transport->ReadLock), 4000))
-		goto out_free_rereadEvent;
+		goto fail;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(transport->WriteLock), 4000))
-		goto out_free_readlock;
+		goto fail;
 
 	return transport;
-out_free_readlock:
-	DeleteCriticalSection(&(transport->ReadLock));
-out_free_rereadEvent:
-	CloseHandle(transport->rereadEvent);
-out_free_connectedEvent:
-	CloseHandle(transport->connectedEvent);
-out_free_receivebuffer:
-	StreamPool_Return(transport->ReceivePool, transport->ReceiveBuffer);
-out_free_receivepool:
-	StreamPool_Free(transport->ReceivePool);
-out_free_transport:
-	free(transport);
+fail:
+	transport_free(transport);
 	return NULL;
 }
 
@@ -1187,4 +1242,127 @@ void transport_free(rdpTransport* transport)
 	DeleteCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->WriteLock));
 	free(transport);
+}
+
+rdpContext* transport_get_context(rdpTransport* transport)
+{
+	if (!transport)
+		return NULL;
+
+	return transport->context;
+}
+
+BIO* transport_get_bio(rdpTransport* transport)
+{
+	if (!transport)
+		return NULL;
+
+	return transport->frontBio;
+}
+
+rdpNla* transport_get_nla(rdpTransport* transport)
+{
+	if (!transport)
+		return NULL;
+
+	return transport->nla;
+}
+
+void transport_free_nla(rdpTransport* transport)
+{
+	if (transport)
+	{
+		nla_free(transport->nla);
+		transport->nla = NULL;
+	}
+}
+
+BOOL transport_set_recv_callback(rdpTransport* transport, TransportRecv cb, void* extra)
+{
+	if (!transport)
+		return FALSE;
+
+	transport->ReceiveCallback = cb;
+	transport->ReceiveExtra = extra;
+	return transport->ReceiveCallback != NULL;
+}
+
+rdpTls* transport_get_tls(rdpTransport* transport)
+{
+	if (!transport)
+		return NULL;
+
+	return transport->tls;
+}
+
+BOOL transport_set_connected(rdpTransport* transport)
+{
+	if (!transport)
+		return FALSE;
+
+	return SetEvent(transport->connectedEvent);
+}
+
+SSIZE_T transport_get_sent_bytes(rdpTransport* transport, BOOL reset)
+{
+	SSIZE_T bytes;
+
+	if (!transport)
+		return -1;
+
+	bytes = transport->written;
+
+	if (reset)
+		transport->written = 0;
+
+	return bytes;
+}
+
+TRANSPORT_LAYER transport_get_layer_state(rdpTransport* transport)
+{
+	if (!transport)
+		return TRANSPORT_LAYER_CLOSED;
+
+	return transport->layer;
+}
+
+BOOL transport_set_layer_state(rdpTransport* transport, TRANSPORT_LAYER state)
+{
+	if (!transport)
+		return FALSE;
+
+	transport->layer = state;
+	return TRUE;
+}
+
+BOOL transport_is_blocking(rdpTransport* transport)
+{
+	if (!transport)
+		return FALSE;
+
+	return transport->blocking;
+}
+
+rdpTsg* transport_get_tsg(rdpTransport* transport)
+{
+	if (!transport)
+		return NULL;
+
+	return transport->tsg;
+}
+
+BOOL transport_has_more_bytes_to_read(rdpTransport* transport)
+{
+	if (!transport)
+		return FALSE;
+
+	return transport->haveMoreBytesToRead;
+}
+
+wStream* transport_receive_pool_take(rdpTransport* transport, size_t size)
+{
+	if (!transport)
+		return NULL;
+
+	return StreamPool_Take(transport->ReceivePool, size);
 }

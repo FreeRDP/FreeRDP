@@ -55,32 +55,6 @@ typedef struct rdp_transport rdpTransport;
 typedef int (*TransportRecv)(rdpTransport* transport, wStream* stream,
                              void* extra);
 
-struct rdp_transport
-{
-	TRANSPORT_LAYER layer;
-	BIO* frontBio;
-	rdpRdg* rdg;
-	rdpTsg* tsg;
-	rdpTls* tls;
-	rdpContext* context;
-	rdpNla* nla;
-	rdpSettings* settings;
-	void* ReceiveExtra;
-	wStream* ReceiveBuffer;
-	TransportRecv ReceiveCallback;
-	wStreamPool* ReceivePool;
-	HANDLE connectedEvent;
-	BOOL NlaMode;
-	BOOL blocking;
-	BOOL GatewayEnabled;
-	CRITICAL_SECTION ReadLock;
-	CRITICAL_SECTION WriteLock;
-	ULONG written;
-	HANDLE rereadEvent;
-	BOOL haveMoreBytesToRead;
-	wLog* log;
-};
-
 FREERDP_LOCAL wStream* transport_send_stream_init(rdpTransport* transport,
         int size);
 FREERDP_LOCAL BOOL transport_connect(rdpTransport* transport,
@@ -113,9 +87,28 @@ FREERDP_LOCAL void transport_set_nla_mode(rdpTransport* transport,
 FREERDP_LOCAL BOOL transport_is_write_blocked(rdpTransport* transport);
 FREERDP_LOCAL int transport_drain_output_buffer(rdpTransport* transport);
 
-FREERDP_LOCAL wStream* transport_receive_pool_take(rdpTransport* transport);
-FREERDP_LOCAL int transport_receive_pool_return(rdpTransport* transport,
-        wStream* pdu);
+FREERDP_LOCAL wStream* transport_receive_pool_take(rdpTransport* transport, size_t size);
+
+FREERDP_LOCAL rdpContext* transport_get_context(rdpTransport* transport);
+FREERDP_LOCAL BIO* transport_get_bio(rdpTransport* transport);
+FREERDP_LOCAL rdpTsg* transport_get_tsg(rdpTransport* transport);
+
+FREERDP_LOCAL rdpNla* transport_get_nla(rdpTransport* transport);
+FREERDP_LOCAL void transport_free_nla(rdpTransport* transport);
+
+FREERDP_LOCAL BOOL transport_set_recv_callback(rdpTransport* transport, TransportRecv cb,
+        void* extra);
+FREERDP_LOCAL rdpTls* transport_get_tls(rdpTransport* transport);
+
+FREERDP_LOCAL BOOL transport_set_connected(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_has_more_bytes_to_read(rdpTransport* transport);
+
+FREERDP_LOCAL TRANSPORT_LAYER transport_get_layer_state(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_set_layer_state(rdpTransport* transport, TRANSPORT_LAYER state);
+
+FREERDP_LOCAL SSIZE_T transport_get_sent_bytes(rdpTransport* transport, BOOL reset);
+
+FREERDP_LOCAL BOOL transport_is_blocking(rdpTransport* transport);
 
 FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
 FREERDP_LOCAL void transport_free(rdpTransport* transport);

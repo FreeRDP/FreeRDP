@@ -798,7 +798,9 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 
 		if (bulk_decompress(rdp->bulk, Stream_Pointer(s), SrcSize, &pDstData, &DstSize, compressedType))
 		{
-			if (!(cs = StreamPool_Take(rdp->transport->ReceivePool, DstSize)))
+			cs = transport_receive_pool_take(rdp->transport, DstSize);
+
+			if (!cs)
 			{
 				WLog_ERR(TAG, "Couldn't take stream from pool");
 				return -1;
@@ -1518,10 +1520,10 @@ int rdp_check_fds(rdpRdp* rdp)
 {
 	int status;
 	rdpTransport* transport = rdp->transport;
+	rdpTsg* tsg = transport_get_tsg(transport);
 
-	if (transport->tsg)
+	if (tsg)
 	{
-		rdpTsg* tsg = transport->tsg;
 		status = tsg_check_event_handles(tsg);
 
 		if (status < 0)
@@ -1744,7 +1746,7 @@ void rdp_reset(rdpRdp* rdp)
 	rdp->license = license_new(rdp);
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
-	rdp->transport->layer = TRANSPORT_LAYER_TCP;
+	transport_set_layer_state(rdp->transport, TRANSPORT_LAYER_TCP);
 	rdp->errorInfo = 0;
 	rdp->deactivation_reactivation = 0;
 	rdp->finalize_sc_pdus = 0;

@@ -115,7 +115,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	p_cont_elem_t* p_cont_elem;
 	rpcconn_bind_hdr_t* bind_pdu;
 	BOOL promptPassword = FALSE;
-	rdpSettings* settings = rpc->settings;
+	rdpSettings* settings = rpc->context->settings;
 	freerdp* instance = (freerdp*) settings->instance;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	RpcInChannel* inChannel = connection->DefaultInChannel;

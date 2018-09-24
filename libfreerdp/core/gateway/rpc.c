@@ -404,6 +404,15 @@ int rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNE
 static int rpc_in_channel_rpch_init(rdpRpc* rpc, RpcInChannel* inChannel)
 {
 	HttpContext* http;
+	rdpSettings* settings;
+
+	if (!rpc || !inChannel)
+		return -1;
+
+	if (!rpc->context || !rpc->context->settings)
+		return -1;
+
+	settings = rpc->context->settings;
 	inChannel->ntlm = ntlm_new();
 
 	if (!inChannel->ntlm)
@@ -421,7 +430,7 @@ static int rpc_in_channel_rpch_init(rdpRpc* rpc, RpcInChannel* inChannel)
 	http_context_set_cache_control(http, "no-cache");
 	http_context_set_connection(http, "Keep-Alive");
 	http_context_set_user_agent(http, "MSRPC");
-	http_context_set_host(http, rpc->settings->GatewayHostname);
+	http_context_set_host(http, settings->GatewayHostname);
 	http_context_set_pragma(http, "ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
 	return 1;
 }
@@ -541,7 +550,16 @@ int rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CH
 
 static int rpc_out_channel_rpch_init(rdpRpc* rpc, RpcOutChannel* outChannel)
 {
+	rdpSettings* settings;
 	HttpContext* http;
+
+	if (!rpc || !outChannel)
+		return -1;
+
+	if (!rpc->context || !rpc->context->settings)
+		return -1;
+
+	settings = rpc->context->settings;
 	outChannel->ntlm = ntlm_new();
 
 	if (!outChannel->ntlm)
@@ -559,7 +577,7 @@ static int rpc_out_channel_rpch_init(rdpRpc* rpc, RpcOutChannel* outChannel)
 	http_context_set_cache_control(http, "no-cache");
 	http_context_set_connection(http, "Keep-Alive");
 	http_context_set_user_agent(http, "MSRPC");
-	http_context_set_host(http, rpc->settings->GatewayHostname);
+	http_context_set_host(http, settings->GatewayHostname);
 	http_context_set_pragma(http,
 	                        "ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
 	                        "SessionId=fbd9c34f-397d-471d-a109-1b08cc554624");
@@ -891,8 +909,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 	rpc->State = RPC_CLIENT_STATE_INITIAL;
 	rpc->transport = transport;
-	rpc->settings = transport->settings;
-	rpc->context = transport->context;
+	rpc->context = transport_get_context(transport);
 	rpc->SendSeqNum = 0;
 	rpc->ntlm = ntlm_new();
 

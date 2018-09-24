@@ -820,7 +820,7 @@ static BOOL rdg_tunnel_connect(rdpRdg* rdg)
 
 		if (!status)
 		{
-			rdg->context->rdp->transport->layer = TRANSPORT_LAYER_CLOSED;
+			transport_set_layer_state(rdg->context->rdp->transport, TRANSPORT_LAYER_CLOSED);
 			return FALSE;
 		}
 	}
@@ -851,7 +851,7 @@ BOOL rdg_connect(rdpRdg* rdg, int timeout, BOOL* rpcFallback)
 
 	if (!status)
 	{
-		rdg->context->rdp->transport->layer = TRANSPORT_LAYER_CLOSED;
+		transport_set_layer_state(rdg->context->rdp->transport, TRANSPORT_LAYER_CLOSED);
 		return FALSE;
 	}
 
@@ -1255,7 +1255,7 @@ rdpRdg* rdg_new(rdpTransport* transport)
 	if (rdg)
 	{
 		rdg->state = RDG_CLIENT_STATE_INITIAL;
-		rdg->context = transport->context;
+		rdg->context = transport_get_context(transport);
 		rdg->settings = rdg->context->settings;
 		rdg->extAuth = HTTP_EXTENDED_AUTH_NONE;
 

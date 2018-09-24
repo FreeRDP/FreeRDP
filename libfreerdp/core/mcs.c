@@ -1220,7 +1220,7 @@ BOOL mcs_client_begin(rdpMcs* mcs)
 	if (!mcs || !mcs->transport)
 		return FALSE;
 
-	context = mcs->transport->context;
+	context = transport_get_context(mcs->transport);
 
 	if (!context)
 		return FALSE;
@@ -1247,8 +1247,14 @@ BOOL mcs_client_begin(rdpMcs* mcs)
 rdpMcs* mcs_new(rdpTransport* transport)
 {
 	rdpMcs* mcs;
+	rdpContext* context;
 
 	if (!transport)
+		return NULL;
+
+	context = transport_get_context(transport);
+
+	if (!context || !context->settings)
 		return NULL;
 
 	mcs = (rdpMcs*) calloc(1, sizeof(rdpMcs));
@@ -1257,7 +1263,7 @@ rdpMcs* mcs_new(rdpTransport* transport)
 		return NULL;
 
 	mcs->transport = transport;
-	mcs->settings = transport->settings;
+	mcs->settings = context->settings;
 	mcs_init_domain_parameters(&mcs->targetParameters, 34, 2, 0, 0xFFFF);
 	mcs_init_domain_parameters(&mcs->minimumParameters, 1, 1, 1, 0x420);
 	mcs_init_domain_parameters(&mcs->maximumParameters, 0xFFFF, 0xFC17, 0xFFFF, 0xFFFF);

@@ -316,8 +316,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	}
 
 	/* everything beyond this point is event-driven and non blocking */
-	rdp->transport->ReceiveCallback = rdp_recv_callback;
-	rdp->transport->ReceiveExtra = rdp;
+	if (!transport_set_recv_callback(rdp->transport, rdp_recv_callback, rdp))
+		return FALSE;
+
 	transport_set_blocking_mode(rdp->transport, FALSE);
 
 	if (rdp->state != CONNECTION_STATE_NLA)

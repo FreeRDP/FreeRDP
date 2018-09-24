@@ -247,9 +247,16 @@ static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 
 static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 {
+	BIO* bio;
 	HANDLE hEvent = NULL;
-	rdpTransport* transport = client->context->rdp->transport;
-	BIO_get_event(transport->frontBio, &hEvent);
+	rdpTransport* transport;
+
+	if (!client || !client->context || !client->context->rdp)
+		return NULL;
+
+	transport = client->context->rdp->transport;
+	bio = transport_get_bio(transport);
+	BIO_get_event(bio, &hEvent);
 	return hEvent;
 }
 
@@ -571,7 +578,6 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
 			return peer_recv_callback(transport, NULL, extra);
-			break;
 
 		case CONNECTION_STATE_LICENSING:
 			if (!license_send_valid_client_error_packet(rdp->license))
@@ -583,7 +589,6 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
 			return peer_recv_callback(transport, NULL, extra);
-			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 			if (!rdp->AwaitCapabilities)
@@ -707,7 +712,7 @@ static int freerdp_peer_drain_output_buffer(freerdp_peer* peer)
 
 static BOOL freerdp_peer_has_more_to_read(freerdp_peer* peer)
 {
-	return peer->context->rdp->transport->haveMoreBytesToRead;
+	return transport_has_more_bytes_to_read(peer->context->rdp->transport);
 }
 
 BOOL freerdp_peer_context_new(freerdp_peer* client)
@@ -757,9 +762,12 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	if (!transport_attach(rdp->transport, client->sockfd))
 		goto fail_transport_attach;
 
-	rdp->transport->ReceiveCallback = peer_recv_callback;
-	rdp->transport->ReceiveExtra = client;
-	transport_set_blocking_mode(rdp->transport, FALSE);
+	if (!transport_set_recv_callback(rdp->transport, peer_recv_callback, client))
+		goto fail_transport_attach;
+
+	if (!transport_set_blocking_mode(rdp->transport, FALSE))
+		goto fail_transport_attach;
+
 	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
 	client->HasMoreToRead = freerdp_peer_has_more_to_read;
