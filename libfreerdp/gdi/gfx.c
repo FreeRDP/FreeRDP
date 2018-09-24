@@ -94,6 +94,7 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 
 static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 {
+	UINT rc = ERROR_INTERNAL_ERROR;
 	UINT32 nXDst, nYDst;
 	UINT32 nXSrc, nYSrc;
 	UINT16 width, height;
@@ -118,7 +119,8 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	if (!(rects = region16_rects(&surface->invalidRegion, &nbRects)) || !nbRects)
 		return CHANNEL_RC_OK;
 
-	update->BeginPaint(gdi->context);
+	if (!IFCALLRESULT(TRUE, update->BeginPaint, gdi->context))
+		goto fail;
 
 	for (i = 0; i < nbRects; i++)
 	{
@@ -139,9 +141,13 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, width, height);
 	}
 
-	update->EndPaint(gdi->context);
+	if (!IFCALLRESULT(FALSE, update->EndPaint, gdi->context))
+		goto fail;
+
+	rc = CHANNEL_RC_OK;
+fail:
 	region16_clear(&(surface->invalidRegion));
-	return CHANNEL_RC_OK;
+	return rc;
 }
 
 static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
