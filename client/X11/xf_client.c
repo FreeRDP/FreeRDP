@@ -1413,48 +1413,6 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 	return 0;
 }
 
-static BOOL xf_auto_reconnect(freerdp* instance)
-{
-	UINT32 maxRetries;
-	UINT32 numRetries = 0;
-	rdpSettings* settings = instance->settings;
-	maxRetries = settings->AutoReconnectMaxRetries;
-
-	/* Only auto reconnect on network disconnects. */
-	if (freerdp_error_info(instance) != 0)
-		return FALSE;
-
-	/* A network disconnect was detected */
-	WLog_INFO(TAG, "Network disconnect!");
-
-	if (!settings->AutoReconnectionEnabled)
-	{
-		/* No auto-reconnect - just quit */
-		return FALSE;
-	}
-
-	/* Perform an auto-reconnect. */
-	while (TRUE)
-	{
-		/* Quit retrying if max retries has been exceeded */
-		if ((maxRetries > 0) && (numRetries++ >= maxRetries))
-		{
-			return FALSE;
-		}
-
-		/* Attempt the next reconnect */
-		WLog_INFO(TAG, "Attempting reconnect (%"PRIu32" of %"PRIu32")", numRetries, maxRetries);
-
-		if (freerdp_reconnect(instance))
-			return TRUE;
-
-		sleep(5);
-	}
-
-	WLog_ERR(TAG, "Maximum reconnect retries exceeded");
-	return FALSE;
-}
-
 /** Main loop for the rdp connection.
 *  It will be run from the thread's entry point (thread_func()).
 *  It initiates the connection, and will continue to run until the session ends,
@@ -1590,7 +1548,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		{
 			if (!freerdp_check_event_handles(context))
 			{
-				if (xf_auto_reconnect(instance))
+				if (client_auto_reconnect(instance))
 					continue;
 				else
 				{

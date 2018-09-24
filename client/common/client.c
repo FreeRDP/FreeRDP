@@ -553,4 +553,51 @@ DWORD client_cli_verify_changed_certificate(freerdp* instance,
 	return client_cli_accept_certificate(instance->settings);
 }
 
+BOOL client_auto_reconnect(freerdp* instance)
+{
+	UINT32 maxRetries;
+	UINT32 numRetries = 0;
+	rdpSettings* settings;
+
+	if (!instance || !instance->settings)
+		return FALSE;
+
+	settings = instance->settings;
+	maxRetries = settings->AutoReconnectMaxRetries;
+
+	/* Only auto reconnect on network disconnects. */
+	if (freerdp_error_info(instance) != 0)
+		return FALSE;
+
+	/* A network disconnect was detected */
+	WLog_INFO(TAG, "Network disconnect!");
+
+	if (!settings->AutoReconnectionEnabled)
+	{
+		/* No auto-reconnect - just quit */
+		return FALSE;
+	}
+
+	/* Perform an auto-reconnect. */
+	while (TRUE)
+	{
+		/* Quit retrying if max retries has been exceeded */
+		if ((maxRetries > 0) && (numRetries++ >= maxRetries))
+		{
+			return FALSE;
+		}
+
+		/* Attempt the next reconnect */
+		WLog_INFO(TAG, "Attempting reconnect (%"PRIu32" of %"PRIu32")", numRetries, maxRetries);
+
+		if (freerdp_reconnect(instance))
+			return TRUE;
+
+		Sleep(5000);
+	}
+
+	WLog_ERR(TAG, "Maximum reconnect retries exceeded");
+	return FALSE;
+}
+
 
