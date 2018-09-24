@@ -103,6 +103,45 @@ BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* l
 	return FALSE;
 }
 
+static BOOL cidr4_match(const struct in_addr* addr, const struct in_addr* net, BYTE bits)
+{
+	uint32_t mask, amask, nmask;
+
+	if (bits == 0)
+		return TRUE;
+
+	mask = htonl(0xFFFFFFFFu << (32 - bits));
+	amask = addr->s_addr & mask;
+	nmask = net->s_addr & mask;
+	return amask == nmask;
+}
+
+static BOOL cidr6_match(const struct in6_addr* address, const struct in6_addr* network,
+                        uint8_t bits)
+{
+	const uint32_t* a = (const uint32_t*)address;
+	const uint32_t* n = (const uint32_t*)network;
+	size_t bits_whole, bits_incomplete;
+	bits_whole = bits >> 5;
+	bits_incomplete = bits & 0x1F;
+
+	if (bits_whole)
+	{
+		if (memcmp(a, n, bits_whole << 2) != 0)
+			return FALSE;
+	}
+
+	if (bits_incomplete)
+	{
+		uint32_t mask = htonl((0xFFFFFFFFu) << (32 - bits_incomplete));
+
+		if ((a[bits_whole] ^ n[bits_whole]) & mask)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 {
 	const char* delimiter = ",";
@@ -154,16 +193,48 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 				{
 					struct sockaddr_in sa4;
 					struct sockaddr_in6 sa6;
-					BOOL is_ip = FALSE;
+					BOOL is_ipv4 = FALSE;
+					BOOL is_ipv6 = FALSE;
 
 					if (inet_pton(AF_INET, settings->ServerHostname, &sa4.sin_addr) == 1)
-						is_ip = TRUE;
+						is_ipv4 = TRUE;
 					else if (inet_pton(AF_INET6, settings->ServerHostname, &sa6.sin6_addr) == 1)
-						is_ip = TRUE;
+						is_ipv6 = TRUE;
 
-					if (is_ip)
+					if (is_ipv4 || is_ipv6)
 					{
-						if (!strncmp(current, settings->ServerHostname, currentlen))
+						char* rangedelim = strchr(current, '/');
+
+						/* Check for IP ranges */
+						if (rangedelim != NULL)
+						{
+							const char* range = rangedelim + 1;
+							int sub;
+							int rc = sscanf(range, "%u", &sub);
+
+							if ((rc == 1) && (rc >= 0))
+							{
+								*rangedelim = '\0';
+
+								if (is_ipv4)
+								{
+									struct sockaddr_in mask;
+
+									if (inet_pton(AF_INET, current, &mask.sin_addr))
+										result = cidr4_match(&sa4.sin_addr, &mask.sin_addr, sub);
+								}
+								else if (is_ipv6)
+								{
+									struct sockaddr_in6 mask;
+
+									if (inet_pton(AF_INET6, current, &mask.sin6_addr))
+										result = cidr6_match(&sa6.sin6_addr, &mask.sin6_addr, sub);
+								}
+							}
+							else
+								WLog_WARN(TAG, "NO_PROXY invalid entry %s", current);
+						}
+						else if (!strncmp(current, settings->ServerHostname, currentlen))
 							result = TRUE; /* left-aligned match for IPs */
 					}
 					else if (current[0] == '.') /* Only compare if the no_proxy variable contains a whole domain. */
