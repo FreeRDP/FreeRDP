@@ -30,11 +30,6 @@ typedef struct rdp_heartbeat rdpHeartbeat;
 
 #include <winpr/stream.h>
 
-struct rdp_heartbeat
-{
-	UINT32 placeholder;
-};
-
 int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s);
 
 FREERDP_LOCAL rdpHeartbeat* heartbeat_new(void);

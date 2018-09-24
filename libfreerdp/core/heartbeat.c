@@ -25,6 +25,11 @@
 
 #include "heartbeat.h"
 
+struct rdp_heartbeat
+{
+	UINT32 placeholder;
+};
+
 int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 {
 	BYTE reserved;
@@ -39,9 +44,9 @@ int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT8(s, period); /* period (1 byte) */
 	Stream_Read_UINT8(s, count1); /* count1 (1 byte) */
 	Stream_Read_UINT8(s, count2); /* count2 (1 byte) */
-
-	WLog_DBG(HEARTBEAT_TAG, "received Heartbeat PDU -> period=%"PRIu8", count1=%"PRIu8", count2=%"PRIu8"", period, count1, count2);
-
+	WLog_DBG(HEARTBEAT_TAG,
+	         "received Heartbeat PDU -> period=%"PRIu8", count1=%"PRIu8", count2=%"PRIu8"", period, count1,
+	         count2);
 	return 0;
 }
 
@@ -51,9 +56,8 @@ rdpHeartbeat* heartbeat_new(void)
 
 	if (heartbeat)
 	{
-
 	}
-	
+
 	return heartbeat;
 }
 
