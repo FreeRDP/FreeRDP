@@ -52,6 +52,53 @@
 #define SERVER_KEY "Software\\"FREERDP_VENDOR_STRING"\\" \
 	FREERDP_PRODUCT_STRING"\\Server"
 
+
+struct rdp_nla
+{
+	BOOL server;
+	NLA_STATE state;
+	int sendSeqNum;
+	int recvSeqNum;
+	freerdp* instance;
+	CtxtHandle context;
+	LPTSTR SspiModule;
+	char* SamFile;
+	rdpSettings* settings;
+	rdpTransport* transport;
+	UINT32 cbMaxToken;
+#if defined(UNICODE)
+	SEC_WCHAR* packageName;
+#else
+	SEC_CHAR* packageName;
+#endif
+	UINT32 version;
+	UINT32 peerVersion;
+	UINT32 errorCode;
+	ULONG fContextReq;
+	ULONG pfContextAttr;
+	BOOL haveContext;
+	BOOL haveInputBuffer;
+	BOOL havePubKeyAuth;
+	SECURITY_STATUS status;
+	CredHandle credentials;
+	TimeStamp expiration;
+	PSecPkgInfo pPackageInfo;
+	SecBuffer inputBuffer;
+	SecBuffer outputBuffer;
+	SecBufferDesc inputBufferDesc;
+	SecBufferDesc outputBufferDesc;
+	SecBuffer negoToken;
+	SecBuffer pubKeyAuth;
+	SecBuffer authInfo;
+	SecBuffer ClientNonce;
+	SecBuffer PublicKey;
+	SecBuffer tsCredentials;
+	LPTSTR ServicePrincipalName;
+	SEC_WINNT_AUTH_IDENTITY* identity;
+	PSecurityFunctionTable table;
+	SecPkgContext_Sizes ContextSizes;
+};
+
 /**
  * TSRequest ::= SEQUENCE {
  * 	version    [0] INTEGER,
@@ -2368,4 +2415,38 @@ void nla_free(rdpNla* nla)
 	free(nla->ServicePrincipalName);
 	nla_identity_free(nla->identity);
 	free(nla);
+}
+
+BOOL nla_set_service_principal_name(rdpNla* nla, const char* service, const char* host)
+{
+	if (!nla)
+		return FALSE;
+
+	nla->ServicePrincipalName = nla_make_spn(service, host);
+	return nla->ServicePrincipalName != NULL;
+}
+
+SEC_WINNT_AUTH_IDENTITY* nla_get_auth_identity(rdpNla* nla)
+{
+	if (!nla)
+		return NULL;
+
+	return nla->identity;
+}
+
+NLA_STATE nla_get_state(rdpNla* nla)
+{
+	if (!nla)
+		return NLA_STATE_INITIAL;
+
+	return nla->state;
+}
+
+BOOL nla_set_state(rdpNla* nla, NLA_STATE state)
+{
+	if (!nla)
+		return FALSE;
+
+	nla->state = state;
+	return TRUE;
 }

@@ -326,10 +326,8 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 	if (settings->AuthenticationServiceClass)
 	{
-		rdp->nla->ServicePrincipalName =
-		    nla_make_spn(settings->AuthenticationServiceClass, settings->ServerHostname);
-
-		if (!rdp->nla->ServicePrincipalName)
+		if (!nla_set_service_principal_name(rdp->nla, settings->AuthenticationServiceClass,
+		                                    settings->ServerHostname))
 			return FALSE;
 	}
 

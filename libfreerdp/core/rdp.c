@@ -1329,7 +1329,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 	switch (rdp->state)
 	{
 		case CONNECTION_STATE_NLA:
-			if (rdp->nla->state < NLA_STATE_AUTH_INFO)
+			if (nla_get_state(rdp->nla) < NLA_STATE_AUTH_INFO)
 			{
 				if (nla_recv_pdu(rdp->nla, s) < 1)
 				{
@@ -1337,7 +1337,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 					return -1;
 				}
 			}
-			else if (rdp->nla->state == NLA_STATE_POST_NEGO)
+			else if (nla_get_state(rdp->nla) == NLA_STATE_POST_NEGO)
 			{
 				nego_recv(rdp->transport, s, (void*) rdp->nego);
 
@@ -1347,10 +1347,11 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 					return -1;
 				}
 
-				rdp->nla->state = NLA_STATE_FINAL;
+				if (!nla_set_state(rdp->nla, NLA_STATE_FINAL))
+					return -1;
 			}
 
-			if (rdp->nla->state == NLA_STATE_AUTH_INFO)
+			if (nla_get_state(rdp->nla) == NLA_STATE_AUTH_INFO)
 			{
 				transport_set_nla_mode(rdp->transport, FALSE);
 
@@ -1365,15 +1366,17 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 					if (!nego_send_negotiation_request(rdp->nego))
 						return -1;
 
-					rdp->nla->state = NLA_STATE_POST_NEGO;
+					if (!nla_set_state(rdp->nla, NLA_STATE_POST_NEGO))
+						return -1;
 				}
 				else
 				{
-					rdp->nla->state = NLA_STATE_FINAL;
+					if (!nla_set_state(rdp->nla, NLA_STATE_FINAL))
+						return -1;
 				}
 			}
 
-			if (rdp->nla->state == NLA_STATE_FINAL)
+			if (nla_get_state(rdp->nla) == NLA_STATE_FINAL)
 			{
 				nla_free(rdp->nla);
 				rdp->nla = NULL;

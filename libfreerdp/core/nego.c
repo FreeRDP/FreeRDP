@@ -1422,7 +1422,7 @@ SEC_WINNT_AUTH_IDENTITY* nego_get_auth_identity(rdpNego* nego)
 	if (!nego || !nego->transport || !nego->transport->nla)
 		return NULL;
 
-	return nego->transport->nla->identity;
+	return nla_get_auth_identity(nego->transport->nla);
 }
 
 void nego_free_nla(rdpNego* nego)
