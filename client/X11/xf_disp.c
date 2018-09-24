@@ -40,6 +40,7 @@
 struct _xfDispContext
 {
 	xfContext* xfc;
+	DispClientContext* disp;
 	BOOL haveXRandr;
 	int eventBase, errorBase;
 	int lastSentWidth, lastSentHeight;
@@ -121,7 +122,7 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 	if (!settings)
 		return FALSE;
 
-	if (!xfDisp->activated)
+	if (!xfDisp->activated || !xfDisp->disp)
 		return TRUE;
 
 	if (GetTickCount64() - xfDisp->lastSentDate < RESIZE_MIN_DELAY)
@@ -134,7 +135,7 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 
 	if (xfc->fullscreen && (settings->MonitorCount > 0))
 	{
-		if (xf_disp_sendLayout(xfc->disp, settings->MonitorDefArray,
+		if (xf_disp_sendLayout(xfDisp->disp, settings->MonitorDefArray,
 		                       settings->MonitorCount) != CHANNEL_RC_OK)
 			return FALSE;
 	}
@@ -151,7 +152,7 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 		layout.PhysicalWidth = xfDisp->targetWidth;
 		layout.PhysicalHeight = xfDisp->targetHeight;
 
-		if (IFCALLRESULT(CHANNEL_RC_OK, xfc->disp->SendMonitorLayout, xfc->disp, 1,
+		if (IFCALLRESULT(CHANNEL_RC_OK, xfDisp->disp->SendMonitorLayout, xfDisp->disp, 1,
 		                 &layout) != CHANNEL_RC_OK)
 			return FALSE;
 	}
@@ -335,7 +336,7 @@ BOOL xf_disp_handle_xevent(xfContext* xfc, XEvent* event)
 	if (!settings)
 		return FALSE;
 
-	if (!xfDisp->haveXRandr)
+	if (!xfDisp->haveXRandr || !xfDisp->disp)
 		return TRUE;
 
 #ifdef USABLE_XRANDR
@@ -345,7 +346,7 @@ BOOL xf_disp_handle_xevent(xfContext* xfc, XEvent* event)
 
 #endif
 	xf_detect_monitors(xfc, &maxWidth, &maxHeight);
-	return xf_disp_sendLayout(xfc->disp, settings->MonitorDefArray,
+	return xf_disp_sendLayout(xfDisp->disp, settings->MonitorDefArray,
 	                          settings->MonitorCount) == CHANNEL_RC_OK;
 }
 
@@ -354,7 +355,7 @@ BOOL xf_disp_handle_configureNotify(xfContext* xfc, int width, int height)
 {
 	xfDispContext* xfDisp;
 
-	if (!xfc || !xfc->disp)
+	if (!xfc)
 		return FALSE;
 
 	xfDisp = xfc->xfDisp;
@@ -382,11 +383,16 @@ UINT xf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
 	return xf_disp_set_window_resizable(xfDisp) ? CHANNEL_RC_OK : CHANNEL_RC_NO_MEMORY;
 }
 
-BOOL xf_disp_init(xfContext* xfc, DispClientContext* disp)
+BOOL xf_disp_init(xfDispContext* xfDisp, DispClientContext* disp)
 {
-	rdpSettings* settings = xfc->context.settings;
-	xfc->disp = disp;
-	disp->custom = (void*) xfc->xfDisp;
+	rdpSettings* settings;
+
+	if (!xfDisp || !xfDisp->xfc || !disp)
+		return FALSE;
+
+	settings = xfDisp->xfc->context.settings;
+	xfDisp->disp = disp;
+	disp->custom = (void*) xfDisp;
 
 	if (settings->DynamicResolutionUpdate)
 	{
@@ -396,7 +402,8 @@ BOOL xf_disp_init(xfContext* xfc, DispClientContext* disp)
 		if (settings->Fullscreen)
 		{
 			/* ask X11 to notify us of screen changes */
-			XRRSelectInput(xfc->display, DefaultRootWindow(xfc->display), RRScreenChangeNotifyMask);
+			XRRSelectInput(xfDisp->xfc->display, DefaultRootWindow(xfDisp->xfc->display),
+			               RRScreenChangeNotifyMask);
 		}
 
 #endif
@@ -405,3 +412,10 @@ BOOL xf_disp_init(xfContext* xfc, DispClientContext* disp)
 	return TRUE;
 }
 
+BOOL xf_disp_uninit(xfDispContext* xfDisp, DispClientContext* disp)
+{
+	if (!xfDisp || !disp)
+		return FALSE;
+
+	xfDisp->disp = NULL;
+}

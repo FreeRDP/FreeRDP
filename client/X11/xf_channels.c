@@ -68,7 +68,7 @@ void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
-		xf_disp_init(xfc, (DispClientContext*)e->pInterface);
+		xf_disp_init(xfc->xfDisp, (DispClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
 	{
@@ -95,6 +95,10 @@ void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEven
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		xfc->rdpei = NULL;
+	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_disp_uninit(xfc->xfDisp, (DispClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
 	{
