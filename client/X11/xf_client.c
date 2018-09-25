@@ -1179,6 +1179,7 @@ static BOOL xf_pre_connect(freerdp* instance)
 	xfc->decorations = settings->Decorations;
 	xfc->grab_keyboard = settings->GrabKeyboard;
 	xfc->fullscreen_toggle = settings->ToggleFullscreen;
+	xfc->floatbar = settings->Floatbar;
 	xf_button_map_init(xfc);
 	return TRUE;
 }
@@ -1539,6 +1540,9 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 
 			nCount += tmp;
 		}
+
+		if (xfc->floatbar && xfc->fullscreen)
+			xf_floatbar_hide_and_show(xfc);
 
 		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
