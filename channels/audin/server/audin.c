@@ -82,8 +82,9 @@ static UINT audin_server_select_format(audin_server_context* context,
 	}
 
 	context->selected_client_format = client_format_index;
+
 	if (!freerdp_dsp_context_reset(audin->dsp_context,
-								   &audin->context.client_formats[client_format_index]))
+	                               &audin->context.client_formats[client_format_index]))
 	{
 		WLog_ERR(TAG, "Failed to reset dsp context format!");
 		return ERROR_INTERNAL_ERROR;
@@ -627,6 +628,16 @@ static BOOL audin_server_open(audin_server_context* context)
 	return FALSE;
 }
 
+static BOOL audin_server_is_open(audin_server_context* context)
+{
+	audin_server* audin = (audin_server*) context;
+
+	if (!audin)
+		return FALSE;
+
+	return audin->thread != NULL;
+}
+
 static BOOL audin_server_close(audin_server_context* context)
 {
 	audin_server* audin = (audin_server*) context;
@@ -673,6 +684,7 @@ audin_server_context* audin_server_context_new(HANDLE vcm)
 	audin->context.frames_per_packet = 4096;
 	audin->context.SelectFormat = audin_server_select_format;
 	audin->context.Open = audin_server_open;
+	audin->context.IsOpen = audin_server_is_open;
 	audin->context.Close = audin_server_close;
 	audin->dsp_context = freerdp_dsp_context_new(FALSE);
 

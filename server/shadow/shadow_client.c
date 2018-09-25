@@ -1655,7 +1655,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 			if (tmp == 0)
 			{
 				WLog_ERR(TAG, "Failed to get FreeRDP transport event handles");
-				break;
+				goto fail;
 			}
 
 			nCount += tmp;
@@ -1665,7 +1665,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
-			break;
+			goto fail;
 
 		if (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -1720,41 +1720,57 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		if (!peer->CheckFileDescriptor(peer))
 		{
 			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
-			break;
+			goto fail;
 		}
 		else
 		{
 			if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, "drdynvc"))
 			{
-				/* Dynamic channel status may have been changed after processing */
-				if (WTSVirtualChannelManagerGetDrdynvcState(client->vcm) == DRDYNVC_STATE_NONE)
+				switch (WTSVirtualChannelManagerGetDrdynvcState(client->vcm))
 				{
-					/* Call this routine to Initialize drdynvc channel */
-					if (!WTSVirtualChannelManagerCheckFileDescriptor(client->vcm))
-					{
-						WLog_ERR(TAG, "Failed to initialize drdynvc channel");
-						break;
-					}
-				}
-				else if (WTSVirtualChannelManagerGetDrdynvcState(client->vcm) ==
-				         DRDYNVC_STATE_READY)
-				{
-					/* Init RDPGFX dynamic channel */
-					if (settings->SupportGraphicsPipeline && client->rdpgfx &&
-					    !gfxstatus.gfxOpened)
-					{
-						client->rdpgfx->FrameAcknowledge = shadow_client_rdpgfx_frame_acknowledge;
-						client->rdpgfx->CapsAdvertise = shadow_client_rdpgfx_caps_advertise;
+					/* Dynamic channel status may have been changed after processing */
+					case DRDYNVC_STATE_NONE:
 
-						if (!client->rdpgfx->Open(client->rdpgfx))
+						/* Call this routine to Initialize drdynvc channel */
+						if (!WTSVirtualChannelManagerCheckFileDescriptor(client->vcm))
 						{
-							WLog_WARN(TAG, "Failed to open GraphicsPipeline");
-							settings->SupportGraphicsPipeline = FALSE;
+							WLog_ERR(TAG, "Failed to initialize drdynvc channel");
+							goto fail;
 						}
 
-						gfxstatus.gfxOpened = TRUE;
-						WLog_INFO(TAG, "Gfx Pipeline Opened");
-					}
+						break;
+
+					case DRDYNVC_STATE_READY:
+						if (client->audin && !IFCALLRESULT(TRUE, client->audin->IsOpen, client->audin))
+						{
+							if (!IFCALLRESULT(FALSE, client->audin->Open, client->audin))
+							{
+								WLog_ERR(TAG, "Failed to initialize audin channel");
+								goto fail;
+							}
+						}
+
+						/* Init RDPGFX dynamic channel */
+						if (settings->SupportGraphicsPipeline && client->rdpgfx &&
+						    !gfxstatus.gfxOpened)
+						{
+							client->rdpgfx->FrameAcknowledge = shadow_client_rdpgfx_frame_acknowledge;
+							client->rdpgfx->CapsAdvertise = shadow_client_rdpgfx_caps_advertise;
+
+							if (!client->rdpgfx->Open(client->rdpgfx))
+							{
+								WLog_WARN(TAG, "Failed to open GraphicsPipeline");
+								settings->SupportGraphicsPipeline = FALSE;
+							}
+
+							gfxstatus.gfxOpened = TRUE;
+							WLog_INFO(TAG, "Gfx Pipeline Opened");
+						}
+
+						break;
+
+					default:
+						break;
 				}
 			}
 		}
@@ -1764,7 +1780,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 			if (!WTSVirtualChannelManagerCheckFileDescriptor(client->vcm))
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelManagerCheckFileDescriptor failure");
-				break;
+				goto fail;
 			}
 		}
 
@@ -1817,7 +1833,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 				shadow_client_free_queued_message(&pointerPositionMsg);
 				shadow_client_free_queued_message(&pointerAlphaMsg);
 				shadow_client_free_queued_message(&audioVolumeMsg);
-				break;
+				goto fail;
 			}
 			else
 			{
@@ -1840,7 +1856,17 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		}
 	}
 
+fail:
+
 	/* Free channels early because we establish channels in post connect */
+	if (client->audin && !IFCALLRESULT(TRUE, client->audin->IsOpen, client->audin))
+	{
+		if (!IFCALLRESULT(FALSE, client->audin->Close, client->audin))
+		{
+			WLog_WARN(TAG, "AUDIN shutdown failure!");
+		}
+	}
+
 	if (gfxstatus.gfxOpened)
 	{
 		if (gfxstatus.gfxSurfaceCreated)
