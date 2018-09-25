@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-int shadow_client_audin_init(rdpShadowClient* client);
+BOOL shadow_client_audin_init(rdpShadowClient* client);
 void shadow_client_audin_uninit(rdpShadowClient* client);
 
 #ifdef __cplusplus

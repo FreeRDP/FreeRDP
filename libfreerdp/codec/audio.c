@@ -112,32 +112,33 @@ char* audio_format_get_tag_string(UINT16 wFormatTag)
 	return "WAVE_FORMAT_UNKNOWN";
 }
 
-void audio_format_print(const AUDIO_FORMAT* format)
+void audio_format_print(wLog* log, DWORD level, const AUDIO_FORMAT* format)
 {
-	WLog_INFO(TAG,  "%s:\t wFormatTag: 0x%04"PRIX16" nChannels: %"PRIu16" nSamplesPerSec: %"PRIu32" "
-	          "nAvgBytesPerSec: %"PRIu32" nBlockAlign: %"PRIu16" wBitsPerSample: %"PRIu16" cbSize: %"PRIu16"",
-	          audio_format_get_tag_string(format->wFormatTag), format->wFormatTag,
-	          format->nChannels, format->nSamplesPerSec, format->nAvgBytesPerSec,
-	          format->nBlockAlign, format->wBitsPerSample, format->cbSize);
+	WLog_Print(log, level,
+	           "%s:\t wFormatTag: 0x%04"PRIX16" nChannels: %"PRIu16" nSamplesPerSec: %"PRIu32" "
+	           "nAvgBytesPerSec: %"PRIu32" nBlockAlign: %"PRIu16" wBitsPerSample: %"PRIu16" cbSize: %"PRIu16"",
+	           audio_format_get_tag_string(format->wFormatTag), format->wFormatTag,
+	           format->nChannels, format->nSamplesPerSec, format->nAvgBytesPerSec,
+	           format->nBlockAlign, format->wBitsPerSample, format->cbSize);
 }
 
-void audio_format_prints(const AUDIO_FORMAT* formats, UINT16 count)
+void audio_formats_print(wLog* log, DWORD level, const AUDIO_FORMAT* formats, UINT16 count)
 {
 	UINT16 index;
 	const AUDIO_FORMAT* format;
 
 	if (formats)
 	{
-		WLog_INFO(TAG,  "AUDIO_FORMATS (%"PRIu16") ={", count);
+		WLog_Print(log, level,  "AUDIO_FORMATS (%"PRIu16") ={", count);
 
 		for (index = 0; index < count; index++)
 		{
 			format = &formats[index];
-			WLog_ERR(TAG,  "\t");
-			audio_format_print(format);
+			WLog_Print(log, level,  "\t");
+			audio_format_print(log, level, format);
 		}
 
-		WLog_ERR(TAG,  "}");
+		WLog_Print(log, level,  "}");
 	}
 }
 
@@ -217,24 +218,63 @@ BOOL audio_format_copy(const AUDIO_FORMAT* srcFormat, AUDIO_FORMAT* dstFormat)
 	return TRUE;
 }
 
-BOOL audio_format_compatible(const AUDIO_FORMAT* formatA, const AUDIO_FORMAT* formatB)
+BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what)
 {
-	if (!formatA || !formatB)
+	if (!with || !what)
 		return FALSE;
 
-	if (formatA->wFormatTag != formatB->wFormatTag)
+	if (with->wFormatTag != WAVE_FORMAT_UNKNOWN)
+	{
+		if (with->wFormatTag != what->wFormatTag)
+			return FALSE;
+	}
+
+	if (with->nChannels != 0)
+	{
+		if (with->nChannels != what->nChannels)
+			return FALSE;
+	}
+
+	if (with->nSamplesPerSec != 0)
+	{
+		if (with->nSamplesPerSec != what->nSamplesPerSec)
+			return FALSE;
+	}
+
+	if (with->wBitsPerSample != 0)
+	{
+		if (with->wBitsPerSample != what->wBitsPerSample)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL audio_format_valid(const AUDIO_FORMAT* format)
+{
+	if (!format)
 		return FALSE;
 
-	if (formatA->nChannels != formatB->nChannels)
+	if (format->nChannels == 0)
 		return FALSE;
 
-	if (formatA->nSamplesPerSec != formatB->nSamplesPerSec)
+	if (format->nSamplesPerSec == 0)
 		return FALSE;
 
 	return TRUE;
 }
 
-void rdpsnd_free_audio_format(AUDIO_FORMAT* format)
+AUDIO_FORMAT* audio_format_new(void)
+{
+	return audio_formats_new(1);
+}
+
+AUDIO_FORMAT* audio_formats_new(size_t count)
+{
+	return calloc(count, sizeof(AUDIO_FORMAT));
+}
+
+void audio_format_free(AUDIO_FORMAT* format)
 {
 	if (format)
 		free(format->data);
@@ -249,7 +289,7 @@ void audio_formats_free(AUDIO_FORMAT* formats, size_t count)
 		for (index = 0; index < count; index++)
 		{
 			AUDIO_FORMAT* format = &formats[index];
-			rdpsnd_free_audio_format(format);
+			audio_format_free(format);
 		}
 
 		free(formats);

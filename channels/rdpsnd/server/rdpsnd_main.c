@@ -172,8 +172,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	context->client_formats = (AUDIO_FORMAT*)calloc(context->num_client_formats,
-	                          sizeof(AUDIO_FORMAT));
+	context->client_formats = audio_formats_new(context->num_client_formats);
 
 	if (!context->client_formats)
 	{

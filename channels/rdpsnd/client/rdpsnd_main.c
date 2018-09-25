@@ -86,9 +86,7 @@ struct rdpsnd_plugin
 
 	UINT32 latency;
 	BOOL isOpen;
-	UINT16 fixedFormat;
-	UINT16 fixedChannel;
-	UINT32 fixedRate;
+	AUDIO_FORMAT* fixed_format;
 
 	char* subsystem;
 	char* device_name;
@@ -146,9 +144,7 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	if (!rdpsnd->NumberOfServerFormats)
 		return;
 
-	rdpsnd->ClientFormats = (AUDIO_FORMAT*) calloc(
-	                            rdpsnd->NumberOfServerFormats,
-	                            sizeof(AUDIO_FORMAT));
+	rdpsnd->ClientFormats = audio_formats_new(rdpsnd->NumberOfServerFormats);
 
 	if (!rdpsnd->ClientFormats)
 		return;
@@ -157,16 +153,7 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	{
 		const AUDIO_FORMAT* serverFormat = &rdpsnd->ServerFormats[index];
 
-		if ((rdpsnd->fixedFormat > 0) &&
-		    (rdpsnd->fixedFormat != serverFormat->wFormatTag))
-			continue;
-
-		if ((rdpsnd->fixedChannel > 0) &&
-		    (rdpsnd->fixedChannel != serverFormat->nChannels))
-			continue;
-
-		if ((rdpsnd->fixedRate > 0) &&
-		    (rdpsnd->fixedRate != serverFormat->nSamplesPerSec))
+		if (!audio_format_compatible(rdpsnd->fixed_format, serverFormat))
 			continue;
 
 		if (freerdp_dsp_supports_format(serverFormat, FALSE) ||
@@ -265,8 +252,7 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd,
 	if (Stream_GetRemainingLength(s) / 14 < wNumberOfFormats)
 		return ERROR_BAD_LENGTH;
 
-	rdpsnd->ServerFormats = (AUDIO_FORMAT*) calloc(wNumberOfFormats,
-	                        sizeof(AUDIO_FORMAT));
+	rdpsnd->ServerFormats = audio_formats_new(wNumberOfFormats);
 
 	if (!rdpsnd->ServerFormats)
 		return CHANNEL_RC_NO_MEMORY;
@@ -765,7 +751,7 @@ static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 				if ((errno != 0) || (val > UINT16_MAX))
 					return CHANNEL_RC_INITIALIZATION_ERROR;
 
-				rdpsnd->fixedFormat = val;
+				rdpsnd->fixed_format->wFormatTag = val;
 			}
 			CommandLineSwitchCase(arg, "rate")
 			{
@@ -774,7 +760,7 @@ static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 				if ((errno != 0) || (val > UINT32_MAX))
 					return CHANNEL_RC_INITIALIZATION_ERROR;
 
-				rdpsnd->fixedRate = val;
+				rdpsnd->fixed_format->nSamplesPerSec = val;
 			}
 			CommandLineSwitchCase(arg, "channel")
 			{
@@ -783,7 +769,7 @@ static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 				if ((errno != 0) || (val > UINT16_MAX))
 					return CHANNEL_RC_INITIALIZATION_ERROR;
 
-				rdpsnd->fixedChannel = val;
+				rdpsnd->fixed_format->nChannels = val;
 			}
 			CommandLineSwitchCase(arg, "latency")
 			{
@@ -1211,6 +1197,7 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 {
 	if (rdpsnd)
 	{
+		audio_format_free(rdpsnd->fixed_format);
 		free(rdpsnd->subsystem);
 		free(rdpsnd->device_name);
 		CloseHandle(rdpsnd->stopEvent);
@@ -1304,6 +1291,14 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		rdpsnd->rdpcontext = pEntryPointsEx->context;
+	}
+
+	rdpsnd->fixed_format = audio_format_new();
+
+	if (!rdpsnd->fixed_format)
+	{
+		free(rdpsnd);
+		return FALSE;
 	}
 
 	rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");

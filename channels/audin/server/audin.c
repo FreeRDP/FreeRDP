@@ -188,7 +188,7 @@ static UINT audin_server_send_formats(audin_server* audin, wStream* s)
 static UINT audin_server_recv_formats(audin_server* audin, wStream* s,
                                       UINT32 length)
 {
-	int i;
+	size_t i;
 	UINT success = CHANNEL_RC_OK;
 
 	if (length < 8)
@@ -210,8 +210,7 @@ static UINT audin_server_recv_formats(audin_server* audin, wStream* s,
 		return ERROR_INVALID_DATA;
 	}
 
-	audin->context.client_formats = calloc(audin->context.num_client_formats,
-	                                       sizeof(AUDIO_FORMAT));
+	audin->context.client_formats = audio_formats_new(audin->context.num_client_formats);
 
 	if (!audin->context.client_formats)
 		return ERROR_NOT_ENOUGH_MEMORY;
@@ -227,6 +226,8 @@ static UINT audin_server_recv_formats(audin_server* audin, wStream* s,
 			WLog_ERR(TAG, "expected length at least 18, but got %"PRIu32"", length);
 			return ERROR_INVALID_DATA;
 		}
+
+		audio_format_print(WLog_Get(TAG), WLOG_DEBUG, format);
 	}
 
 	IFCALLRET(audin->context.Opening, success, &audin->context);

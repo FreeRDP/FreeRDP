@@ -43,14 +43,14 @@ static AUDIO_FORMAT supported_audio_formats[ARRAYSIZE(default_supported_audio_fo
 
 static void rdpsnd_activated(RdpsndServerContext* context)
 {
-	AUDIO_FORMAT* agreed_format = NULL;
+	const AUDIO_FORMAT* agreed_format = NULL;
 	UINT16 i = 0, j = 0;
 
 	for (i = 0; i < context->num_client_formats; i++)
 	{
 		for (j = 0; j < context->num_server_formats; j++)
 		{
-			if (audio_format_compatible(&context->client_formats[i], &context->server_formats[j]))
+			if (audio_format_compatible(&context->server_formats[j], &context->client_formats[i]))
 			{
 				agreed_format = &context->server_formats[j];
 				break;

@@ -58,7 +58,7 @@ struct _audin_server_context
 	/* Client supported formats. */
 	AUDIO_FORMAT* client_formats;
 	size_t num_client_formats;
-	size_t selected_client_format;
+	SSIZE_T selected_client_format;
 
 	/*** APIs called by the server. ***/
 	/**

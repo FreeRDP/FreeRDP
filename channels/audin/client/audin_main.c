@@ -85,9 +85,7 @@ struct _AUDIN_PLUGIN
 	AUDIN_LISTENER_CALLBACK* listener_callback;
 
 	/* Parsed plugin data */
-	UINT16 fixed_format;
-	UINT16 fixed_channel;
-	UINT32 fixed_rate;
+	AUDIO_FORMAT* fixed_format;
 	char* subsystem;
 	char* device_name;
 
@@ -200,7 +198,7 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	}
 
 	Stream_Seek_UINT32(s); /* cbSizeFormatsPacket */
-	callback->formats = (AUDIO_FORMAT*) calloc(NumFormats, sizeof(AUDIO_FORMAT));
+	callback->formats = audio_formats_new(NumFormats);
 
 	if (!callback->formats)
 	{
@@ -230,17 +228,11 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 			goto out;
 		}
 
-		WLog_Print(audin->log, WLOG_DEBUG,
-		           "wFormatTag=%s nChannels=%"PRIu16" nSamplesPerSec=%"PRIu32" "
-		           "nBlockAlign=%"PRIu16" wBitsPerSample=%"PRIu16" cbSize=%"PRIu16"",
-		           audio_format_get_tag_string(format.wFormatTag), format.nChannels, format.nSamplesPerSec,
-		           format.nBlockAlign, format.wBitsPerSample, format.cbSize);
+		audio_format_print(audin->log, WLOG_DEBUG, &format);
 
-		if ((audin->fixed_format > 0 && audin->fixed_format != format.wFormatTag) ||
-		    (audin->fixed_channel > 0 && audin->fixed_channel != format.nChannels) ||
-		    (audin->fixed_rate > 0 && audin->fixed_rate != format.nSamplesPerSec))
+		if (!audio_format_compatible(audin->fixed_format, &format))
 		{
-			rdpsnd_free_audio_format(&format);
+			audio_format_free(&format);
 			continue;
 		}
 
@@ -259,7 +251,7 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 		}
 		else
 		{
-			rdpsnd_free_audio_format(&format);
+			audio_format_free(&format);
 		}
 	}
 
@@ -591,7 +583,6 @@ static UINT audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
  */
 static UINT audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
-	size_t x;
 	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*) pChannelCallback;
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) callback->plugin;
 	UINT error = CHANNEL_RC_OK;
@@ -691,6 +682,7 @@ static UINT audin_plugin_terminated(IWTSPlugin* pPlugin)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
 	WLog_Print(audin->log, WLOG_TRACE, "...");
+	audio_format_free(audin->fixed_format);
 
 	if (audin->device)
 	{
@@ -891,7 +883,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
 			if ((errno != 0) || (val > UINT16_MAX))
 				return FALSE;
 
-			audin->fixed_format = val;
+			audin->fixed_format->wFormatTag = val;
 		}
 		CommandLineSwitchCase(arg, "rate")
 		{
@@ -900,14 +892,14 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
 			if ((errno != 0) || (val < INT32_MIN) || (val > INT32_MAX))
 				return FALSE;
 
-			audin->fixed_rate = val;
+			audin->fixed_format->nSamplesPerSec = val;
 		}
 		CommandLineSwitchCase(arg, "channel")
 		{
 			unsigned long val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT16_MAX))
-				audin->fixed_channel = val;
+				audin->fixed_format->nChannels = val;
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -980,6 +972,10 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	audin->log = WLog_Get(TAG);
 	audin->data = Stream_New(NULL, 4096);
+	audin->fixed_format = audio_format_new();
+
+	if (!audin->fixed_format)
+		goto out;
 
 	if (!audin->data)
 		goto out;
