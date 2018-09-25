@@ -141,9 +141,12 @@ size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats)
 	{
 		{ WAVE_FORMAT_AAC_MS, 2, 44100, 176400, 4, 16, 0, NULL },
 		{ WAVE_FORMAT_MPEGLAYER3, 2, 44100, 176400, 4, 16, 0, NULL },
+		{ WAVE_FORMAT_MSG723, 2, 44100, 176400, 4, 16, 0, NULL },
 		{ WAVE_FORMAT_GSM610, 2, 44100, 176400, 4, 16, 0, NULL },
+		{ WAVE_FORMAT_ADPCM, 2, 44100, 176400, 4, 16, 0, NULL },
 		{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
 		{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL },
+		{ WAVE_FORMAT_MULAW, 2, 22050, 44100, 2, 8, 0, NULL },
 	};
 	AUDIO_FORMAT* supported_audio_formats = audio_formats_new(ARRAYSIZE(
 	        default_supported_audio_formats));
