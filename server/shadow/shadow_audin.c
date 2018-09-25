@@ -126,7 +126,7 @@ BOOL shadow_client_audin_init(rdpShadowClient* client)
 	if (audin->num_server_formats < 1)
 		goto fail;
 
-	audin->dst_format = audin->server_formats[0];
+	audin->dst_format = &audin->server_formats[0];
 	audin->Opening = AudinServerOpening;
 	audin->OpenResult = AudinServerOpenResult;
 	audin->ReceiveSamples = AudinServerReceiveSamples;
