@@ -60,7 +60,7 @@ BOOL rail_string_to_unicode_string(const char* string, RAIL_UNICODE_STRING* unic
 	unicode_string->length = 0;
 
 	if (!string || strlen(string) < 1)
-		return FALSE;
+		return TRUE;
 
 	length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0) * 2;
 
