@@ -369,12 +369,8 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format,
 	if (Stream_GetPosition(audin->data) <= 1)
 		return CHANNEL_RC_OK;
 
-	WLog_Print(audin->log, WLOG_TRACE,
-	           "%s: nChannels: %"PRIu16" nSamplesPerSec: %"PRIu32" "
-	           "nAvgBytesPerSec: %"PRIu32" nBlockAlign: %"PRIu16" wBitsPerSample: %"PRIu16" cbSize: %"PRIu16" [%"PRIdz"/%"PRIdz"]",
-	           audio_format_get_tag_string(audin->format->wFormatTag),
-	           audin->format->nChannels, audin->format->nSamplesPerSec, audin->format->nAvgBytesPerSec,
-	           audin->format->nBlockAlign, audin->format->wBitsPerSample, audin->format->cbSize, size,
+	audio_format_print(audin->log, WLOG_TRACE, audin->format);
+	WLog_Print(audin->log, WLOG_TRACE, "[%"PRIdz"/%"PRIdz"]", size,
 	           Stream_GetPosition(audin->data) - 1);
 
 	if ((error = audin_send_incoming_data_pdu(callback)))
