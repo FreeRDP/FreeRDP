@@ -26,8 +26,8 @@
 #include "mfreerdp.h"
 
 #include "mf_audin.h"
-#include "../common/server.h"
 
+#include <freerdp/server/server-common.h>
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("mac")
 

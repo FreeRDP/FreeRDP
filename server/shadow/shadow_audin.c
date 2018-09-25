@@ -25,7 +25,7 @@
 #include "shadow.h"
 
 #include "shadow_audin.h"
-#include "../common/server.h"
+#include <freerdp/server/server-common.h>
 
 #define TAG SERVER_TAG("shadow")
 

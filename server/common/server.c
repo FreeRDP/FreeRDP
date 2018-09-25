@@ -25,7 +25,7 @@
 #include <freerdp/codec/audio.h>
 #include <freerdp/codec/dsp.h>
 
-#include "server.h"
+#include <freerdp/server/server-common.h>
 
 size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats)
 {
