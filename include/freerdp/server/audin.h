@@ -46,8 +46,8 @@ struct _audin_server_context
 	void* data;
 
 	/* Server supported formats. Set by server. */
-	const AUDIO_FORMAT* server_formats;
-	int num_server_formats;
+	AUDIO_FORMAT* server_formats;
+	size_t num_server_formats;
 
 	/* Server destination PCM audio format. Set by server. */
 	AUDIO_FORMAT dst_format;
@@ -57,8 +57,8 @@ struct _audin_server_context
 
 	/* Client supported formats. */
 	AUDIO_FORMAT* client_formats;
-	int num_client_formats;
-	int selected_client_format;
+	size_t num_client_formats;
+	size_t selected_client_format;
 
 	/*** APIs called by the server. ***/
 	/**

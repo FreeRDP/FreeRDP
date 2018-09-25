@@ -133,7 +133,7 @@ static UINT audin_mac_set_format(IAudinDevice* device, const AUDIO_FORMAT* forma
 	mac->FramesPerPacket = FramesPerPacket;
 	mac->format = *format;
 	WLog_INFO(TAG, "Audio Format %s [channels=%d, samples=%d, bits=%d]",
-	          rdpsnd_get_audio_tag_string(format->wFormatTag),
+	          audio_format_get_tag_string(format->wFormatTag),
 	          format->nChannels, format->nSamplesPerSec, format->wBitsPerSample);
 	mac->audioFormat.mBitsPerChannel = format->wBitsPerSample;
 
@@ -169,6 +169,7 @@ static void mac_audio_queue_input_cb(void* aqData,
 
 	if (buffer_size > 0)
 		error = mac->receive(&mac->format, buffer, buffer_size, mac->user_data);
+
 	AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
 
 	if (error)

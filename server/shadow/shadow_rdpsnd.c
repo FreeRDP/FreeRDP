@@ -50,11 +50,9 @@ static void rdpsnd_activated(RdpsndServerContext* context)
 	{
 		for (j = 0; j < context->num_server_formats; j++)
 		{
-			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
-			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
-			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
+			if (audio_format_compatible(&context->client_formats[i], &context->server_formats[j]))
 			{
-				agreed_format = (AUDIO_FORMAT*) &context->server_formats[j];
+				agreed_format = &context->server_formats[j];
 				break;
 			}
 		}

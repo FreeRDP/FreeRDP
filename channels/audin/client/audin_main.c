@@ -224,51 +224,23 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	{
 		AUDIO_FORMAT format = { 0 };
 
-		if (Stream_GetRemainingLength(s) < 18)
+		if (!audio_format_read(s, &format))
 		{
 			error = ERROR_INVALID_DATA;
 			goto out;
-		}
-
-		Stream_Read_UINT16(s, format.wFormatTag);
-		Stream_Read_UINT16(s, format.nChannels);
-		Stream_Read_UINT32(s, format.nSamplesPerSec);
-		Stream_Read_UINT32(s, format.nAvgBytesPerSec);
-		Stream_Read_UINT16(s, format.nBlockAlign);
-		Stream_Read_UINT16(s, format.wBitsPerSample);
-		Stream_Read_UINT16(s, format.cbSize);
-
-		if (Stream_GetRemainingLength(s) < format.cbSize)
-		{
-			error = ERROR_INVALID_DATA;
-			goto out;
-		}
-
-		if (format.cbSize > 0)
-		{
-			format.data = malloc(format.cbSize);
-
-			if (!format.data)
-			{
-				error = ERROR_OUTOFMEMORY;
-				goto out;
-			}
-
-			memcpy(format.data, Stream_Pointer(s), format.cbSize);
-			Stream_Seek(s, format.cbSize);
 		}
 
 		WLog_Print(audin->log, WLOG_DEBUG,
 		           "wFormatTag=%s nChannels=%"PRIu16" nSamplesPerSec=%"PRIu32" "
 		           "nBlockAlign=%"PRIu16" wBitsPerSample=%"PRIu16" cbSize=%"PRIu16"",
-		           rdpsnd_get_audio_tag_string(format.wFormatTag), format.nChannels, format.nSamplesPerSec,
+		           audio_format_get_tag_string(format.wFormatTag), format.nChannels, format.nSamplesPerSec,
 		           format.nBlockAlign, format.wBitsPerSample, format.cbSize);
 
 		if ((audin->fixed_format > 0 && audin->fixed_format != format.wFormatTag) ||
 		    (audin->fixed_channel > 0 && audin->fixed_channel != format.nChannels) ||
 		    (audin->fixed_rate > 0 && audin->fixed_rate != format.nSamplesPerSec))
 		{
-			free(format.data);
+			rdpsnd_free_audio_format(&format);
 			continue;
 		}
 
@@ -278,20 +250,16 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 			/* Store the agreed format in the corresponding index */
 			callback->formats[callback->formats_count++] = format;
 
-			/* Put the format to output buffer */
-			if (!Stream_EnsureRemainingCapacity(out, 18 + format.cbSize))
+			if (!audio_format_write(out, &format))
 			{
 				error = CHANNEL_RC_NO_MEMORY;
 				WLog_Print(audin->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
 				goto out;
 			}
-
-			Stream_Write(out, &format, 18);
-			Stream_Write(out, format.data, format.cbSize);
 		}
 		else
 		{
-			free(format.data);
+			rdpsnd_free_audio_format(&format);
 		}
 	}
 
@@ -312,16 +280,8 @@ out:
 
 	if (error != CHANNEL_RC_OK)
 	{
-		size_t x;
-
-		if (callback->formats)
-		{
-			for (x = 0; x < NumFormats; x++)
-				free(callback->formats[x].data);
-
-			free(callback->formats);
-			callback->formats = NULL;
-		}
+		audio_formats_free(callback->formats, NumFormats);
+		callback->formats = NULL;
 	}
 
 	Stream_Free(out, TRUE);
@@ -420,7 +380,7 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format,
 	WLog_Print(audin->log, WLOG_TRACE,
 	           "%s: nChannels: %"PRIu16" nSamplesPerSec: %"PRIu32" "
 	           "nAvgBytesPerSec: %"PRIu32" nBlockAlign: %"PRIu16" wBitsPerSample: %"PRIu16" cbSize: %"PRIu16" [%"PRIdz"/%"PRIdz"]",
-	           rdpsnd_get_audio_tag_string(audin->format->wFormatTag),
+	           audio_format_get_tag_string(audin->format->wFormatTag),
 	           audin->format->nChannels, audin->format->nSamplesPerSec, audin->format->nAvgBytesPerSec,
 	           audin->format->nBlockAlign, audin->format->wBitsPerSample, audin->format->cbSize, size,
 	           Stream_GetPosition(audin->data) - 1);
@@ -446,7 +406,7 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 	format = *audin->format;
 	supported = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
 	WLog_Print(audin->log, WLOG_DEBUG, "microphone uses %s codec",
-	           rdpsnd_get_audio_tag_string(format.wFormatTag));
+	           audio_format_get_tag_string(format.wFormatTag));
 
 	if (!supported)
 	{
@@ -646,18 +606,7 @@ static UINT audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	}
 
 	audin->format = NULL;
-
-	if (callback->formats)
-	{
-		for (x = 0; x < callback->formats_count; x++)
-		{
-			AUDIO_FORMAT* format = &callback->formats[x];
-			free(format->data);
-		}
-
-		free(callback->formats);
-	}
-
+	audio_formats_free(callback->formats, callback->formats_count);
 	free(callback);
 	return error;
 }

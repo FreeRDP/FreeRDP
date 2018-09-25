@@ -45,7 +45,7 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 {
 	size_t pos;
 	UINT16 i;
-	BOOL status;
+	BOOL status = FALSE;
 	ULONG written;
 	Stream_Write_UINT8(s, SNDC_FORMATS);
 	Stream_Write_UINT8(s, 0);
@@ -61,25 +61,12 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 
 	for (i = 0; i < context->num_server_formats; i++)
 	{
-		Stream_Write_UINT16(s,
-		                    context->server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
-		Stream_Write_UINT16(s, context->server_formats[i].nChannels); /* nChannels */
-		Stream_Write_UINT32(s,
-		                    context->server_formats[i].nSamplesPerSec); /* nSamplesPerSec */
-		Stream_Write_UINT32(s, context->server_formats[i].nSamplesPerSec*
-		                    context->server_formats[i].nChannels*
-		                    context->server_formats[i].wBitsPerSample / 8); /* nAvgBytesPerSec */
-		Stream_Write_UINT16(s,
-		                    context->server_formats[i].nBlockAlign); /* nBlockAlign */
-		Stream_Write_UINT16(s,
-		                    context->server_formats[i].wBitsPerSample); /* wBitsPerSample */
-		Stream_Write_UINT16(s, context->server_formats[i].cbSize); /* cbSize */
+		AUDIO_FORMAT format = context->server_formats[i];
+		// TODO: Eliminate this!!!
+		format.nAvgBytesPerSec = format.nSamplesPerSec * format.nChannels * format.wBitsPerSample / 8;
 
-		if (context->server_formats[i].cbSize > 0)
-		{
-			Stream_Write(s, context->server_formats[i].data,
-			             context->server_formats[i].cbSize);
-		}
+		if (!audio_format_write(s, &format))
+			goto fail;
 	}
 
 	pos = Stream_GetPosition(s);
@@ -89,6 +76,7 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle,
 	                                (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
 	Stream_SetPosition(s, 0);
+fail:
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
