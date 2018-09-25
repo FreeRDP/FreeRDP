@@ -32,7 +32,7 @@
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("sample")
 
-static const AUDIO_FORMAT test_audio_formats[] =
+static AUDIO_FORMAT test_audio_formats[] =
 {
 	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
 	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL }

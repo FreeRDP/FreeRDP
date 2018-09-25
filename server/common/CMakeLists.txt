@@ -26,6 +26,7 @@ if(POLICY CMP0022)
 endif()
 
 set(${MODULE_PREFIX}_SRCS
+	server.h
 	server.c)
 
 foreach(FREERDP_CHANNELS_SERVER_SRC ${FREERDP_CHANNELS_SERVER_SRCS})
