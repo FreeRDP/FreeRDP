@@ -21,4 +21,9 @@
 #ifndef FREERDP_SERVER_COMMON_SERVER_H
 #define FREERDP_SERVER_COMMON_SERVER_H
 
+#include <winpr/wtypes.h>
+#include <freerdp/codec/audio.h>
+
+size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats);
+
 #endif /* FREERDP_SERVER_COMMON_SERVER_H */

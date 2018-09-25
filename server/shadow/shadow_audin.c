@@ -25,6 +25,7 @@
 #include "shadow.h"
 
 #include "shadow_audin.h"
+#include "../common/server.h"
 
 #define TAG SERVER_TAG("shadow")
 
@@ -119,95 +120,7 @@ BOOL shadow_client_audin_init(rdpShadowClient* client)
 	}
 	else
 	{
-		/* Default supported audio formats */
-		BYTE adpcm_data_7[] =
-		{
-			0xf4, 0x07, 0x07, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00,
-			0xff, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x00, 0x40, 0x00, 0xf0, 0x00,
-			0x00, 0x00, 0xcc, 0x01, 0x30, 0xff, 0x88, 0x01, 0x18, 0xff
-		};
-		BYTE adpcm_data_3[] =
-		{
-			0xf4, 0x03, 0x07, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00,
-			0xff, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x00, 0x40, 0x00, 0xf0, 0x00,
-			0x00, 0x00, 0xcc, 0x01, 0x30, 0xff, 0x88, 0x01, 0x18, 0xff
-		};
-		BYTE adpcm_data_1[] =
-		{
-			0xf4, 0x01, 0x07, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00,
-			0xff, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x00, 0x40, 0x00, 0xf0, 0x00,
-			0x00, 0x00, 0xcc, 0x01, 0x30, 0xff, 0x88, 0x01, 0x18, 0xff
-		};
-		BYTE adpcm_dvi_data_7[] = { 0xf9, 0x07 };
-		BYTE adpcm_dvi_data_3[] = { 0xf9, 0x03 };
-		BYTE adpcm_dvi_data_1[] = { 0xf9, 0x01 };
-		BYTE gsm610_data[] = { 0x40, 0x01 };
-		const AUDIO_FORMAT default_supported_audio_formats[] =
-		{
-			/* Formats sent by windows 10 server */
-			{ WAVE_FORMAT_AAC_MS,    2, 44100,  24000,    4, 16,  0, NULL },
-			{ WAVE_FORMAT_AAC_MS,    2, 44100,  20000,    4, 16,  0, NULL },
-			{ WAVE_FORMAT_AAC_MS,    2, 44100,  16000,    4, 16,  0, NULL },
-			{ WAVE_FORMAT_AAC_MS,    2, 44100,  12000,    4, 16,  0, NULL },
-			{ WAVE_FORMAT_PCM,       2, 44100, 176400,    4, 16,  0, NULL },
-			{ WAVE_FORMAT_ADPCM,     2, 44100,  44359, 2048,  4, 32, adpcm_data_7 },
-			{ WAVE_FORMAT_DVI_ADPCM, 2, 44100,  44251, 2048,  4,  2, adpcm_dvi_data_7 },
-			{ WAVE_FORMAT_ALAW,      2, 22050,  44100,    2,  8,  0, NULL },
-			{ WAVE_FORMAT_ADPCM,     2, 22050,  22311, 1024,  4, 32, adpcm_data_3 },
-			{ WAVE_FORMAT_DVI_ADPCM, 2, 22050,  22201, 1024,  4,  2, adpcm_dvi_data_3 },
-			{ WAVE_FORMAT_ADPCM,     1, 44100,  22179, 1024,  4, 32, adpcm_data_7 },
-			{ WAVE_FORMAT_DVI_ADPCM, 1, 44100,  22125, 1024,  4,  2, adpcm_dvi_data_7 },
-			{ WAVE_FORMAT_ADPCM,     2, 11025,  11289,  512,  4, 32, adpcm_data_1 },
-			{ WAVE_FORMAT_DVI_ADPCM, 2, 11025,  11177,  512,  4,  2, adpcm_dvi_data_1 },
-			{ WAVE_FORMAT_ADPCM,     1, 22050,  11155,  512,  4, 32, adpcm_data_3 },
-			{ WAVE_FORMAT_DVI_ADPCM, 1, 22050,  11100,  512,  4,  2, adpcm_dvi_data_3 },
-			{ WAVE_FORMAT_GSM610,    1, 44100,   8957,   65,  0,  2, gsm610_data },
-			{ WAVE_FORMAT_ADPCM,     2,  8000,   8192,  512,  4, 32, adpcm_data_1 },
-			{ WAVE_FORMAT_DVI_ADPCM, 2,  8000,   8110,  512,  4,  2, adpcm_dvi_data_1 },
-			{ WAVE_FORMAT_ADPCM,     1, 11025,   5644,  256,  4, 32, adpcm_data_1 },
-			{ WAVE_FORMAT_DVI_ADPCM, 1, 11025,   5588,  256,  4,  2, adpcm_dvi_data_1 },
-			{ WAVE_FORMAT_GSM610,    1, 22050,   4478,   65,  0,  2, gsm610_data },
-			{ WAVE_FORMAT_ADPCM,     1,  8000,   4096,  256,  4, 32, adpcm_data_1 },
-			{ WAVE_FORMAT_DVI_ADPCM, 1,  8000,   4055,  256,  4,  2, adpcm_dvi_data_1 },
-			{ WAVE_FORMAT_GSM610,    1, 11025,   2239,   65,  0,  2, gsm610_data },
-			{ WAVE_FORMAT_GSM610,    1,  8000,   1625,   65,  0,  2, gsm610_data },
-			/* Formats added for others */
-
-			{ WAVE_FORMAT_MSG723, 2, 44100, 0, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_MSG723, 2, 22050, 0, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_MSG723, 1, 44100, 0, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_MSG723, 1, 22050, 0, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_PCM, 2, 22050, 88200, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_PCM, 1, 44100, 88200, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_PCM, 1, 22050, 44100, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_MULAW, 2, 44100, 88200, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_MULAW, 2, 22050, 44100, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_MULAW, 1, 44100, 44100, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_MULAW, 1, 22050, 22050, 4, 16, 0, NULL },
-			{ WAVE_FORMAT_ALAW, 2, 44100, 88200, 2, 8, 0, NULL },
-			{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL },
-			{ WAVE_FORMAT_ALAW, 1, 44100, 44100, 2, 8, 0, NULL },
-			{ WAVE_FORMAT_ALAW, 1, 22050, 22050, 2, 8, 0, NULL }
-		};
-		const size_t nrDefaultFormatsMax = ARRAYSIZE(default_supported_audio_formats);
-		size_t x;
-		audin->server_formats = audio_formats_new(nrDefaultFormatsMax);
-
-		if (!audin->server_formats)
-			goto fail;
-
-		/* Set default audio formats. */
-		for (x = 0; x < nrDefaultFormatsMax; x++)
-		{
-			const AUDIO_FORMAT* format = &default_supported_audio_formats[x];
-
-			if (freerdp_dsp_supports_format(format, FALSE))
-			{
-				AUDIO_FORMAT* dst = &audin->server_formats[audin->num_server_formats++];
-				audio_format_copy(format, dst);
-			}
-		}
+		audin->num_server_formats = server_audin_get_formats(&audin->server_formats);
 	}
 
 	if (audin->num_server_formats < 1)
