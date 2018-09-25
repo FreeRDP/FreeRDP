@@ -70,7 +70,7 @@ typedef struct _audin_server
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT audin_server_select_format(audin_server_context* context,
-                                       int client_format_index)
+                                       size_t client_format_index)
 {
 	audin_server* audin = (audin_server*) context;
 
@@ -81,7 +81,7 @@ static UINT audin_server_select_format(audin_server_context* context,
 		return ERROR_INVALID_DATA;
 	}
 
-	context->selected_client_format = client_format_index;
+	context->selected_client_format = (SSIZE_T)client_format_index;
 
 	if (!freerdp_dsp_context_reset(audin->dsp_context,
 	                               &audin->context.client_formats[client_format_index]))

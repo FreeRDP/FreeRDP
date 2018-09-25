@@ -60,8 +60,7 @@ static UINT AudinServerOpening(audin_server_context* context)
 		return CHANNEL_RC_OK;
 	}
 
-	context->SelectFormat(context, i);
-	return CHANNEL_RC_OK;
+	return IFCALLRESULT(ERROR_CALL_NOT_IMPLEMENTED, context->SelectFormat, context, i);
 }
 /**
  * Function description
