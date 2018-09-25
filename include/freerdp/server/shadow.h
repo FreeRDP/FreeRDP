@@ -229,13 +229,11 @@ struct rdp_shadow_subsystem
 typedef struct _SHADOW_MSG_OUT SHADOW_MSG_OUT;
 typedef void (*MSG_OUT_FREE_FN)(UINT32 id,
                                 SHADOW_MSG_OUT* msg); /* function to free SHADOW_MSG_OUT */
-#define RDP_SHADOW_MSG_OUT_COMMON() \
-	int refCount; \
-	MSG_OUT_FREE_FN Free
 
 struct _SHADOW_MSG_OUT
 {
-	RDP_SHADOW_MSG_OUT_COMMON();
+	int refCount;
+	MSG_OUT_FREE_FN Free;
 };
 
 #define SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID		2001
@@ -245,7 +243,7 @@ struct _SHADOW_MSG_OUT
 
 struct _SHADOW_MSG_OUT_POINTER_POSITION_UPDATE
 {
-	RDP_SHADOW_MSG_OUT_COMMON();
+	SHADOW_MSG_OUT common;
 	UINT32 xPos;
 	UINT32 yPos;
 };
@@ -254,7 +252,7 @@ typedef struct _SHADOW_MSG_OUT_POINTER_POSITION_UPDATE
 
 struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
 {
-	RDP_SHADOW_MSG_OUT_COMMON();
+	SHADOW_MSG_OUT common;
 	UINT32 xHot;
 	UINT32 yHot;
 	UINT32 width;
@@ -269,8 +267,8 @@ typedef struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
 
 struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES
 {
-	RDP_SHADOW_MSG_OUT_COMMON();
-	AUDIO_FORMAT audio_format;
+	SHADOW_MSG_OUT common;
+	AUDIO_FORMAT* audio_format;
 	void* buf;
 	int nFrames;
 	UINT16 wTimestamp;
@@ -280,7 +278,7 @@ typedef struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES
 
 struct _SHADOW_MSG_OUT_AUDIO_OUT_VOLUME
 {
-	RDP_SHADOW_MSG_OUT_COMMON();
+	SHADOW_MSG_OUT common;
 	int left;
 	int right;
 };

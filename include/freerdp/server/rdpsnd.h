@@ -57,7 +57,7 @@ struct _rdpsnd_server_context
 	void* data;
 
 	/* Server supported formats. Set by server. */
-	const AUDIO_FORMAT* server_formats;
+	AUDIO_FORMAT* server_formats;
 	size_t num_server_formats;
 
 	/* Server source PCM audio format. Set by server. */

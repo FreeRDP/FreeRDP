@@ -83,7 +83,7 @@ int shadow_client_rdpsnd_init(rdpShadowClient* client)
 	}
 
 	if (rdpsnd->num_server_formats > 0)
-		rdpsnd->src_format = rdpsnd->server_formats[0];
+		rdpsnd->src_format = &rdpsnd->server_formats[0];
 
 	rdpsnd->Activated = rdpsnd_activated;
 	rdpsnd->Initialize(rdpsnd, TRUE);

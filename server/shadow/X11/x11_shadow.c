@@ -424,7 +424,7 @@ static int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 
 	templateMsg.xPos = subsystem->common.pointerX;
 	templateMsg.yPos = subsystem->common.pointerY;
-	templateMsg.Free = x11_shadow_message_free;
+	templateMsg.common.Free = x11_shadow_message_free;
 	server = subsystem->common.server;
 	ArrayList_Lock(server->clients);
 
@@ -478,7 +478,7 @@ static int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	msg->Free = x11_shadow_message_free;
+	msg->common.Free = x11_shadow_message_free;
 	return shadow_client_boardcast_msg(subsystem->common.server, NULL, msgId,
 	                                   (SHADOW_MSG_OUT*) msg, NULL) ? 1 : -1;
 }
