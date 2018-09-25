@@ -86,9 +86,9 @@ typedef BOOL (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem,
 typedef BOOL (*pfnShadowExtendedMouseEvent)(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y);
 
-typedef void (*pfnShadowChannelAudinServerReceiveSamples)(
-    rdpShadowSubsystem* subsystem, rdpShadowClient* client, const void* buf,
-    int nframes);
+typedef BOOL (*pfnShadowChannelAudinServerReceiveSamples)(
+    rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+    const AUDIO_FORMAT* format, wStream* buf, size_t nframes);
 
 struct rdp_shadow_client
 {

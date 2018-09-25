@@ -335,11 +335,15 @@ static UINT audin_server_recv_data(audin_server* audin, wStream* s,
 
 	if (freerdp_dsp_decode(audin->dsp_context, format, Stream_Pointer(s), length, out))
 	{
+		AUDIO_FORMAT dformat = *format;
+		dformat.wFormatTag = WAVE_FORMAT_PCM;
+		dformat.wBitsPerSample = 16;
 		Stream_SealLength(out);
+		Stream_SetPosition(out, 0);
 		sbytes_per_sample = format->wBitsPerSample / 8;
 		sbytes_per_frame = format->nChannels * sbytes_per_sample;
 		frames = Stream_Length(out) / sbytes_per_frame;
-		IFCALLRET(audin->context.ReceiveSamples, success, &audin->context, Stream_Buffer(out), frames);
+		IFCALLRET(audin->context.ReceiveSamples, success, &audin->context, &dformat, out, frames);
 
 		if (success)
 			WLog_ERR(TAG, "context.ReceiveSamples failed with error %"PRIu32"", success);

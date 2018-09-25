@@ -78,7 +78,8 @@ static UINT AudinServerOpenResult(audin_server_context* context, UINT32 result)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT AudinServerReceiveSamples(audin_server_context* context, const void* buf, int nframes)
+static UINT AudinServerReceiveSamples(audin_server_context* context, const AUDIO_FORMAT* format,
+                                      wStream* buf, size_t nframes)
 {
 	rdpShadowClient* client = (rdpShadowClient*)context->data;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
@@ -86,8 +87,9 @@ static UINT AudinServerReceiveSamples(audin_server_context* context, const void*
 	if (!client->mayInteract)
 		return CHANNEL_RC_OK;
 
-	if (subsystem->AudinServerReceiveSamples)
-		subsystem->AudinServerReceiveSamples(subsystem, client, buf, nframes);
+	if (!IFCALLRESULT(TRUE, subsystem->AudinServerReceiveSamples, subsystem, client, format, buf,
+	                  nframes))
+		return ERROR_INTERNAL_ERROR;
 
 	return CHANNEL_RC_OK;
 }
