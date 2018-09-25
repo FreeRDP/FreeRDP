@@ -75,15 +75,15 @@ typedef void (*pfnShadowClientDisconnect)(rdpShadowSubsystem* subsystem,
 typedef BOOL (*pfnShadowClientCapabilities)(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client);
 
-typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem,
+typedef BOOL (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT32 flags);
-typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem,
-                                      rdpShadowClient* client, UINT16 flags, UINT16 code);
-typedef int (*pfnShadowUnicodeKeyboardEvent)(rdpShadowSubsystem* subsystem,
+typedef BOOL (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem,
+                                       rdpShadowClient* client, UINT16 flags, UINT16 code);
+typedef BOOL (*pfnShadowUnicodeKeyboardEvent)(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 code);
-typedef int (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem,
-                                   rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y);
-typedef int (*pfnShadowExtendedMouseEvent)(rdpShadowSubsystem* subsystem,
+typedef BOOL (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem,
+                                    rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y);
+typedef BOOL (*pfnShadowExtendedMouseEvent)(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y);
 
 typedef void (*pfnShadowChannelAudinServerReceiveSamples)(
@@ -184,46 +184,43 @@ struct _RDP_SHADOW_ENTRY_POINTS
 	pfnShadowEnumMonitors EnumMonitors;
 };
 
-#define RDP_SHADOW_SUBSYSTEM_COMMON() \
-	RDP_SHADOW_ENTRY_POINTS ep; \
-	HANDLE event; \
-	int numMonitors; \
-	int captureFrameRate; \
-	int selectedMonitor; \
-	MONITOR_DEF monitors[16]; \
-	MONITOR_DEF virtualScreen; \
-	\
-	/* This event indicates that we have graphic change */ \
-	/* such as screen update and resize. It should not be */ \
-	/* used by subsystem implementation directly */ \
-	rdpShadowMultiClientEvent* updateEvent; \
-	\
-	wMessagePipe* MsgPipe; \
-	UINT32 pointerX; \
-	UINT32 pointerY; \
-	\
-	const AUDIO_FORMAT* rdpsndFormats; \
-	size_t nRdpsndFormats; \
-	const AUDIO_FORMAT* audinFormats; \
-	size_t nAudinFormats; \
-	\
-	pfnShadowSynchronizeEvent SynchronizeEvent; \
-	pfnShadowKeyboardEvent KeyboardEvent; \
-	pfnShadowUnicodeKeyboardEvent UnicodeKeyboardEvent; \
-	pfnShadowMouseEvent MouseEvent; \
-	pfnShadowExtendedMouseEvent ExtendedMouseEvent; \
-	pfnShadowChannelAudinServerReceiveSamples AudinServerReceiveSamples; \
-	\
-	pfnShadowAuthenticate Authenticate; \
-	pfnShadowClientConnect ClientConnect; \
-	pfnShadowClientDisconnect ClientDisconnect; \
-	pfnShadowClientCapabilities ClientCapabilities; \
-	\
-	rdpShadowServer* server
-
 struct rdp_shadow_subsystem
 {
-	RDP_SHADOW_SUBSYSTEM_COMMON();
+	RDP_SHADOW_ENTRY_POINTS ep;
+	HANDLE event;
+	int numMonitors;
+	int captureFrameRate;
+	int selectedMonitor;
+	MONITOR_DEF monitors[16];
+	MONITOR_DEF virtualScreen;
+
+	/* This event indicates that we have graphic change */
+	/* such as screen update and resize. It should not be */
+	/* used by subsystem implementation directly */
+	rdpShadowMultiClientEvent* updateEvent;
+
+	wMessagePipe* MsgPipe;
+	UINT32 pointerX;
+	UINT32 pointerY;
+
+	AUDIO_FORMAT* rdpsndFormats;
+	size_t nRdpsndFormats;
+	AUDIO_FORMAT* audinFormats;
+	size_t nAudinFormats;
+
+	pfnShadowSynchronizeEvent SynchronizeEvent;
+	pfnShadowKeyboardEvent KeyboardEvent;
+	pfnShadowUnicodeKeyboardEvent UnicodeKeyboardEvent;
+	pfnShadowMouseEvent MouseEvent;
+	pfnShadowExtendedMouseEvent ExtendedMouseEvent;
+	pfnShadowChannelAudinServerReceiveSamples AudinServerReceiveSamples;
+
+	pfnShadowAuthenticate Authenticate;
+	pfnShadowClientConnect ClientConnect;
+	pfnShadowClientDisconnect ClientDisconnect;
+	pfnShadowClientCapabilities ClientCapabilities;
+
+	rdpShadowServer* server;
 };
 
 /* Definition of message between subsystem and clients */

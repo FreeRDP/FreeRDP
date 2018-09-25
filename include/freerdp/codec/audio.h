@@ -20,6 +20,8 @@
 #ifndef FREERDP_CODEC_AUDIO_H
 #define FREERDP_CODEC_AUDIO_H
 
+#include <winpr/wlog.h>
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
