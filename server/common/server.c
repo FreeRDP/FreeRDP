@@ -131,3 +131,41 @@ fail:
 	audio_formats_free(formats, nrDefaultFormatsMax);
 	return 0;
 }
+
+
+size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats)
+{
+	size_t x, y = 0;
+	/* Default supported audio formats */
+	static const AUDIO_FORMAT default_supported_audio_formats[] =
+	{
+		{ WAVE_FORMAT_AAC_MS, 2, 44100, 176400, 4, 16, 0, NULL },
+		{ WAVE_FORMAT_MPEGLAYER3, 2, 44100, 176400, 4, 16, 0, NULL },
+		{ WAVE_FORMAT_GSM610, 2, 44100, 176400, 4, 16, 0, NULL },
+		{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
+		{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL },
+	};
+	AUDIO_FORMAT* supported_audio_formats = audio_formats_new(ARRAYSIZE(
+	        default_supported_audio_formats));
+
+	if (!supported_audio_formats)
+		goto fail;
+
+	for (x = 0; x < ARRAYSIZE(default_supported_audio_formats); x++)
+	{
+		const AUDIO_FORMAT* format = &default_supported_audio_formats[x];
+
+		if (freerdp_dsp_supports_format(format, TRUE))
+			supported_audio_formats[y++] = *format;
+	}
+
+	/* Set default audio formats. */
+	*dst_formats = supported_audio_formats;
+fail:
+	audio_formats_free(supported_audio_formats, ARRAYSIZE(default_supported_audio_formats));
+
+	if (dst_formats)
+		*dst_formats = NULL;
+
+	return 0;
+}

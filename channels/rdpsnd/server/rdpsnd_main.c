@@ -309,17 +309,18 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context,
 	AUDIO_FORMAT* format;
 	UINT error = CHANNEL_RC_OK;
 
-	if (client_format_index < 0
-	    || client_format_index >= context->num_client_formats)
+	if ((client_format_index < 0)
+	    || (client_format_index >= context->num_client_formats)
+	    || (!context->src_format))
 	{
 		WLog_ERR(TAG,  "index %d is not correct.", client_format_index);
 		return ERROR_INVALID_DATA;
 	}
 
 	EnterCriticalSection(&context->priv->lock);
-	context->priv->src_bytes_per_sample = context->src_format.wBitsPerSample / 8;
+	context->priv->src_bytes_per_sample = context->src_format->wBitsPerSample / 8;
 	context->priv->src_bytes_per_frame = context->priv->src_bytes_per_sample *
-	                                     context->src_format.nChannels;
+	                                     context->src_format->nChannels;
 	context->selected_client_format = client_format_index;
 	format = &context->client_formats[client_format_index];
 
@@ -333,7 +334,7 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context,
 	if (context->latency <= 0)
 		context->latency = 50;
 
-	context->priv->out_frames = context->src_format.nSamplesPerSec *
+	context->priv->out_frames = context->src_format->nSamplesPerSec *
 	                            context->latency / 1000;
 
 	if (context->priv->out_frames < 1)
