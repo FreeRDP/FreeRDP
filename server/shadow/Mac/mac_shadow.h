@@ -37,7 +37,7 @@ typedef struct mac_shadow_subsystem macShadowSubsystem;
 
 struct mac_shadow_subsystem
 {
-	RDP_SHADOW_SUBSYSTEM_COMMON();
+	rdpShadowSubsystem common;
 
 	int width;
 	int height;
