@@ -1003,7 +1003,7 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 			id = layouts[i].code;
 	}
 
-	free(layouts);
+	freerdp_keyboard_layouts_free(layouts);
 
 	if (id)
 		return id;
@@ -1019,7 +1019,7 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 			id = layouts[i].code;
 	}
 
-	free(layouts);
+	freerdp_keyboard_layouts_free(layouts);
 
 	if (id)
 		return id;
@@ -1035,7 +1035,7 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 			id = layouts[i].code;
 	}
 
-	free(layouts);
+	freerdp_keyboard_layouts_free(layouts);
 
 	if (id)
 		return id;
@@ -1244,7 +1244,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings,
 			for (i = 0; layouts[i].code; i++)
 				printf("0x%08"PRIX32"\t%s\n", layouts[i].code, layouts[i].name);
 
-			free(layouts);
+			freerdp_keyboard_layouts_free(layouts);
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
 			//if (!layouts) /* FIXME*/
 			printf("\nKeyboard Layout Variants\n");
@@ -1252,7 +1252,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings,
 			for (i = 0; layouts[i].code; i++)
 				printf("0x%08"PRIX32"\t%s\n", layouts[i].code, layouts[i].name);
 
-			free(layouts);
+			freerdp_keyboard_layouts_free(layouts);
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
 			//if (!layouts) /* FIXME*/
 			printf("\nKeyboard Input Method Editors (IMEs)\n");
@@ -1260,7 +1260,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings,
 			for (i = 0; layouts[i].code; i++)
 				printf("0x%08"PRIX32"\t%s\n", layouts[i].code, layouts[i].name);
 
-			free(layouts);
+			freerdp_keyboard_layouts_free(layouts);
 			printf("\n");
 		}
 
