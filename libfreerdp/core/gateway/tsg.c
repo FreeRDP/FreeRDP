@@ -39,6 +39,196 @@
 
 #define TAG FREERDP_TAG("core.gateway.tsg")
 
+typedef WCHAR* RESOURCENAME;
+
+typedef struct _tsendpointinfo
+{
+	RESOURCENAME* resourceName;
+	UINT32 numResourceNames;
+	RESOURCENAME* alternateResourceNames;
+	UINT16 numAlternateResourceNames;
+	UINT32 Port;
+} TSENDPOINTINFO, *PTSENDPOINTINFO;
+
+typedef struct _TSG_PACKET_HEADER
+{
+	UINT16 ComponentId;
+	UINT16 PacketId;
+} TSG_PACKET_HEADER, *PTSG_PACKET_HEADER;
+
+typedef struct _TSG_CAPABILITY_NAP
+{
+	UINT32 capabilities;
+} TSG_CAPABILITY_NAP, *PTSG_CAPABILITY_NAP;
+
+typedef union
+{
+	TSG_CAPABILITY_NAP tsgCapNap;
+} TSG_CAPABILITIES_UNION, *PTSG_CAPABILITIES_UNION;
+
+typedef struct _TSG_PACKET_CAPABILITIES
+{
+	UINT32 capabilityType;
+	TSG_CAPABILITIES_UNION tsgPacket;
+} TSG_PACKET_CAPABILITIES, *PTSG_PACKET_CAPABILITIES;
+
+typedef struct _TSG_PACKET_VERSIONCAPS
+{
+	TSG_PACKET_HEADER tsgHeader;
+	PTSG_PACKET_CAPABILITIES tsgCaps;
+	UINT32 numCapabilities;
+	UINT16 majorVersion;
+	UINT16 minorVersion;
+	UINT16 quarantineCapabilities;
+} TSG_PACKET_VERSIONCAPS, *PTSG_PACKET_VERSIONCAPS;
+
+typedef struct _TSG_PACKET_QUARCONFIGREQUEST
+{
+	UINT32 flags;
+} TSG_PACKET_QUARCONFIGREQUEST, *PTSG_PACKET_QUARCONFIGREQUEST;
+
+typedef struct _TSG_PACKET_QUARREQUEST
+{
+	UINT32 flags;
+	WCHAR* machineName;
+	UINT32 nameLength;
+	BYTE* data;
+	UINT32 dataLen;
+} TSG_PACKET_QUARREQUEST, *PTSG_PACKET_QUARREQUEST;
+
+typedef struct _TSG_REDIRECTION_FLAGS
+{
+	BOOL enableAllRedirections;
+	BOOL disableAllRedirections;
+	BOOL driveRedirectionDisabled;
+	BOOL printerRedirectionDisabled;
+	BOOL portRedirectionDisabled;
+	BOOL reserved;
+	BOOL clipboardRedirectionDisabled;
+	BOOL pnpRedirectionDisabled;
+} TSG_REDIRECTION_FLAGS, *PTSG_REDIRECTION_FLAGS;
+
+typedef struct _TSG_PACKET_RESPONSE
+{
+	UINT32 flags;
+	UINT32 reserved;
+	BYTE* responseData;
+	UINT32 responseDataLen;
+	TSG_REDIRECTION_FLAGS redirectionFlags;
+} TSG_PACKET_RESPONSE,	*PTSG_PACKET_RESPONSE;
+
+typedef struct _TSG_PACKET_QUARENC_RESPONSE
+{
+	UINT32 flags;
+	UINT32 certChainLen;
+	WCHAR* certChainData;
+	GUID nonce;
+	PTSG_PACKET_VERSIONCAPS versionCaps;
+} TSG_PACKET_QUARENC_RESPONSE, *PTSG_PACKET_QUARENC_RESPONSE;
+
+typedef struct TSG_PACKET_STRING_MESSAGE
+{
+	INT32 isDisplayMandatory;
+	INT32 isConsentMandatory;
+	UINT32 msgBytes;
+	WCHAR* msgBuffer;
+} TSG_PACKET_STRING_MESSAGE, *PTSG_PACKET_STRING_MESSAGE;
+
+typedef struct TSG_PACKET_REAUTH_MESSAGE
+{
+	UINT64 tunnelContext;
+} TSG_PACKET_REAUTH_MESSAGE, *PTSG_PACKET_REAUTH_MESSAGE;
+
+typedef union
+{
+	PTSG_PACKET_STRING_MESSAGE consentMessage;
+	PTSG_PACKET_STRING_MESSAGE serviceMessage;
+	PTSG_PACKET_REAUTH_MESSAGE reauthMessage;
+} TSG_PACKET_TYPE_MESSAGE_UNION, *PTSG_PACKET_TYPE_MESSAGE_UNION;
+
+typedef struct _TSG_PACKET_MSG_RESPONSE
+{
+	UINT32 msgID;
+	UINT32 msgType;
+	INT32 isMsgPresent;
+	TSG_PACKET_TYPE_MESSAGE_UNION messagePacket;
+} TSG_PACKET_MSG_RESPONSE, *PTSG_PACKET_MSG_RESPONSE;
+
+typedef struct TSG_PACKET_CAPS_RESPONSE
+{
+	TSG_PACKET_QUARENC_RESPONSE pktQuarEncResponse;
+	TSG_PACKET_MSG_RESPONSE pktConsentMessage;
+} TSG_PACKET_CAPS_RESPONSE, *PTSG_PACKET_CAPS_RESPONSE;
+
+typedef struct TSG_PACKET_MSG_REQUEST
+{
+	UINT32 maxMessagesPerBatch;
+} TSG_PACKET_MSG_REQUEST, *PTSG_PACKET_MSG_REQUEST;
+
+typedef struct _TSG_PACKET_AUTH
+{
+	TSG_PACKET_VERSIONCAPS tsgVersionCaps;
+	UINT32 cookieLen;
+	BYTE* cookie;
+} TSG_PACKET_AUTH, *PTSG_PACKET_AUTH;
+
+typedef union
+{
+	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
+	PTSG_PACKET_AUTH packetAuth;
+} TSG_INITIAL_PACKET_TYPE_UNION, *PTSG_INITIAL_PACKET_TYPE_UNION;
+
+typedef struct TSG_PACKET_REAUTH
+{
+	UINT64 tunnelContext;
+	UINT32 packetId;
+	TSG_INITIAL_PACKET_TYPE_UNION tsgInitialPacket;
+} TSG_PACKET_REAUTH, *PTSG_PACKET_REAUTH;
+
+typedef union
+{
+	PTSG_PACKET_HEADER packetHeader;
+	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
+	PTSG_PACKET_QUARCONFIGREQUEST packetQuarConfigRequest;
+	PTSG_PACKET_QUARREQUEST packetQuarRequest;
+	PTSG_PACKET_RESPONSE packetResponse;
+	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse;
+	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse;
+	PTSG_PACKET_MSG_REQUEST packetMsgRequest;
+	PTSG_PACKET_MSG_RESPONSE packetMsgResponse;
+	PTSG_PACKET_AUTH packetAuth;
+	PTSG_PACKET_REAUTH packetReauth;
+} TSG_PACKET_TYPE_UNION;
+
+typedef struct _TSG_PACKET
+{
+	UINT32 packetId;
+	TSG_PACKET_TYPE_UNION tsgPacket;
+} TSG_PACKET, *PTSG_PACKET;
+
+struct rdp_tsg
+{
+	BIO* bio;
+	rdpRpc* rpc;
+	UINT16 Port;
+	LPWSTR Hostname;
+	LPWSTR MachineName;
+	TSG_STATE state;
+	UINT32 TunnelId;
+	UINT32 ChannelId;
+	BOOL reauthSequence;
+	rdpSettings* settings;
+	rdpTransport* transport;
+	UINT64 ReauthTunnelContext;
+	CONTEXT_HANDLE TunnelContext;
+	CONTEXT_HANDLE ChannelContext;
+	CONTEXT_HANDLE NewTunnelContext;
+	CONTEXT_HANDLE NewChannelContext;
+	TSG_PACKET_REAUTH packetReauth;
+	TSG_PACKET_CAPABILITIES tsgCaps;
+	TSG_PACKET_VERSIONCAPS packetVersionCaps;
+};
+
 static BIO_METHOD* BIO_s_tsg(void);
 /**
  * RPC Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa378623/
@@ -1217,7 +1407,7 @@ static BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* cha
 }
 
 
-static int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
+static BOOL tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
 {
 	const char* str = "TSG_STATE_UNKNOWN";
 
@@ -1258,10 +1448,10 @@ static int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
 
 	tsg->state = state;
 	WLog_DBG(TAG, "%s", str);
-	return 1;
+	return TRUE;
 }
 
-int tsg_proxy_begin(rdpTsg* tsg)
+BOOL tsg_proxy_begin(rdpTsg* tsg)
 {
 	TSG_PACKET tsgPacket;
 	PTSG_CAPABILITY_NAP tsgCapNap;
@@ -1296,11 +1486,10 @@ int tsg_proxy_begin(rdpTsg* tsg)
 	{
 		WLog_ERR(TAG, "TsProxyCreateTunnel failure");
 		tsg->state = TSG_STATE_FINAL;
-		return -1;
+		return FALSE;
 	}
 
-	tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
-	return 1;
+	return tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
 }
 
 static int tsg_proxy_reauth(rdpTsg* tsg)
@@ -1335,9 +1524,9 @@ static int tsg_proxy_reauth(rdpTsg* tsg)
 	return 1;
 }
 
-int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
+BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 {
-	int status = -1;
+	BOOL rc = FALSE;
 	RpcClientCall* call;
 	rdpRpc* rpc = tsg->rpc;
 
@@ -1351,7 +1540,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyCreateTunnelReadResponse(tsg, pdu, TunnelContext, &tsg->TunnelId))
 				{
 					WLog_ERR(TAG, "TsProxyCreateTunnelReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
 				tsg_transition_to_state(tsg, TSG_STATE_CONNECTED);
@@ -1359,10 +1548,10 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyAuthorizeTunnelWriteRequest(tsg, TunnelContext))
 				{
 					WLog_ERR(TAG, "TsProxyAuthorizeTunnel failure");
-					return -1;
+					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 			break;
 
@@ -1374,7 +1563,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
 				{
 					WLog_ERR(TAG, "TsProxyAuthorizeTunnelReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
 				tsg_transition_to_state(tsg, TSG_STATE_AUTHORIZED);
@@ -1384,17 +1573,17 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					if (!TsProxyMakeTunnelCallWriteRequest(tsg, TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST))
 					{
 						WLog_ERR(TAG, "TsProxyMakeTunnelCall failure");
-						return -1;
+						return FALSE;
 					}
 				}
 
 				if (!TsProxyCreateChannelWriteRequest(tsg, TunnelContext))
 				{
 					WLog_ERR(TAG, "TsProxyCreateChannel failure");
-					return -1;
+					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 			break;
 
@@ -1402,17 +1591,17 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			call = rpc_client_call_find_by_id(rpc, pdu->CallId);
 
 			if (!call)
-				return -1;
+				return FALSE;
 
 			if (call->OpNum == TsProxyMakeTunnelCallOpnum)
 			{
 				if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
 				{
 					WLog_ERR(TAG, "TsProxyMakeTunnelCallReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 			else if (call->OpNum == TsProxyCreateChannelOpnum)
 			{
@@ -1421,7 +1610,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyCreateChannelReadResponse(tsg, pdu, &ChannelContext, &tsg->ChannelId))
 				{
 					WLog_ERR(TAG, "TsProxyCreateChannelReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
 				if (!tsg->reauthSequence)
@@ -1436,7 +1625,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					if (!TsProxySetupReceivePipeWriteRequest(tsg, &tsg->ChannelContext))
 					{
 						WLog_ERR(TAG, "TsProxySetupReceivePipe failure");
-						return -1;
+						return FALSE;
 					}
 				}
 				else
@@ -1444,19 +1633,19 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					if (!TsProxyCloseChannelWriteRequest(tsg, &tsg->NewChannelContext))
 					{
 						WLog_ERR(TAG, "TsProxyCloseChannelWriteRequest failure");
-						return -1;
+						return FALSE;
 					}
 
 					if (!TsProxyCloseTunnelWriteRequest(tsg, &tsg->NewTunnelContext))
 					{
 						WLog_ERR(TAG, "TsProxyCloseTunnelWriteRequest failure");
-						return -1;
+						return FALSE;
 					}
 				}
 
 				tsg_transition_to_state(tsg, TSG_STATE_PIPE_CREATED);
 				tsg->reauthSequence = FALSE;
-				status = 1;
+				rc = TRUE;
 			}
 			else
 			{
@@ -1472,20 +1661,20 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			call = rpc_client_call_find_by_id(rpc, pdu->CallId);
 
 			if (!call)
-				return -1;
+				return FALSE;
 
 			if (call->OpNum == TsProxyMakeTunnelCallOpnum)
 			{
 				if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
 				{
 					WLog_ERR(TAG, "TsProxyMakeTunnelCallReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
 				if (tsg->ReauthTunnelContext)
 					tsg_proxy_reauth(tsg);
 
-				status = 1;
+				rc = TRUE;
 			}
 			else if (call->OpNum == TsProxyCloseChannelOpnum)
 			{
@@ -1494,10 +1683,10 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyCloseChannelReadResponse(tsg, pdu, &ChannelContext))
 				{
 					WLog_ERR(TAG, "TsProxyCloseChannelReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 			else if (call->OpNum == TsProxyCloseTunnelOpnum)
 			{
@@ -1506,10 +1695,10 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				if (!TsProxyCloseTunnelReadResponse(tsg, pdu, &TunnelContext))
 				{
 					WLog_ERR(TAG, "TsProxyCloseTunnelReadResponse failure");
-					return -1;
+					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 
 			break;
@@ -1539,7 +1728,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					return FALSE;
 				}
 
-				status = 1;
+				rc = TRUE;
 			}
 			break;
 
@@ -1554,7 +1743,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				}
 
 				tsg_transition_to_state(tsg, TSG_STATE_FINAL);
-				status = 1;
+				rc = TRUE;
 			}
 			break;
 
@@ -1562,23 +1751,18 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 	}
 
-	return status;
+	return rc;
 }
 
-int tsg_check_event_handles(rdpTsg* tsg)
+BOOL tsg_check_event_handles(rdpTsg* tsg)
 {
-	int status;
-	status = rpc_client_in_channel_recv(tsg->rpc);
+	if (!rpc_client_in_channel_recv(tsg->rpc))
+		return FALSE;
 
-	if (status < 0)
-		return -1;
+	if (!rpc_client_out_channel_recv(tsg->rpc))
+		return FALSE;
 
-	status = rpc_client_out_channel_recv(tsg->rpc);
-
-	if (status < 0)
-		return -1;
-
-	return status;
+	return TRUE;
 }
 
 DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count)
@@ -1595,44 +1779,44 @@ DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count)
 	else
 		return 0;
 
-	if (connection->DefaultInChannel && connection->DefaultInChannel->tls)
+	if (connection->DefaultInChannel && connection->DefaultInChannel->common.tls)
 	{
 		if (events && (nCount < count))
 		{
-			BIO_get_event(connection->DefaultInChannel->tls->bio, &events[nCount]);
+			BIO_get_event(connection->DefaultInChannel->common.tls->bio, &events[nCount]);
 			nCount++;
 		}
 		else
 			return 0;
 	}
 
-	if (connection->NonDefaultInChannel && connection->NonDefaultInChannel->tls)
+	if (connection->NonDefaultInChannel && connection->NonDefaultInChannel->common.tls)
 	{
 		if (events && (nCount < count))
 		{
-			BIO_get_event(connection->NonDefaultInChannel->tls->bio, &events[nCount]);
+			BIO_get_event(connection->NonDefaultInChannel->common.tls->bio, &events[nCount]);
 			nCount++;
 		}
 		else
 			return 0;
 	}
 
-	if (connection->DefaultOutChannel && connection->DefaultOutChannel->tls)
+	if (connection->DefaultOutChannel && connection->DefaultOutChannel->common.tls)
 	{
 		if (events && (nCount < count))
 		{
-			BIO_get_event(connection->DefaultOutChannel->tls->bio, &events[nCount]);
+			BIO_get_event(connection->DefaultOutChannel->common.tls->bio, &events[nCount]);
 			nCount++;
 		}
 		else
 			return 0;
 	}
 
-	if (connection->NonDefaultOutChannel && connection->NonDefaultOutChannel->tls)
+	if (connection->NonDefaultOutChannel && connection->NonDefaultOutChannel->common.tls)
 	{
 		if (events && (nCount < count))
 		{
-			BIO_get_event(connection->NonDefaultOutChannel->tls->bio, &events[nCount]);
+			BIO_get_event(connection->NonDefaultOutChannel->common.tls->bio, &events[nCount]);
 			nCount++;
 		}
 		else
@@ -1689,7 +1873,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 	{
 		WaitForMultipleObjects(nCount, events, FALSE, 250);
 
-		if (tsg_check_event_handles(tsg) < 0)
+		if (!tsg_check_event_handles(tsg))
 		{
 			WLog_ERR(TAG, "tsg_check failure");
 			transport->layer = TRANSPORT_LAYER_CLOSED;
@@ -1790,7 +1974,7 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		{
 			while (WaitForSingleObject(rpc->client->PipeEvent, 0) != WAIT_OBJECT_0)
 			{
-				if (tsg_check_event_handles(tsg) < 0)
+				if (!tsg_check_event_handles(tsg))
 					return -1;
 
 				WaitForSingleObject(rpc->client->PipeEvent, 100);
@@ -1928,8 +2112,8 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 	if (cmd == BIO_CTRL_FLUSH)
 	{
-		(void)BIO_flush(inChannel->tls->bio);
-		(void)BIO_flush(outChannel->tls->bio);
+		(void)BIO_flush(inChannel->common.tls->bio);
+		(void)BIO_flush(outChannel->common.tls->bio);
 		status = 1;
 	}
 	else if (cmd == BIO_C_GET_EVENT)
@@ -1946,18 +2130,18 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_READ_BLOCKED)
 	{
-		BIO* bio = outChannel->bio;
+		BIO* bio = outChannel->common.bio;
 		status = BIO_read_blocked(bio);
 	}
 	else if (cmd == BIO_C_WRITE_BLOCKED)
 	{
-		BIO* bio = inChannel->bio;
+		BIO* bio = inChannel->common.bio;
 		status = BIO_write_blocked(bio);
 	}
 	else if (cmd == BIO_C_WAIT_READ)
 	{
 		int timeout = (int) arg1;
-		BIO* bio = outChannel->bio;
+		BIO* bio = outChannel->common.bio;
 
 		if (BIO_read_blocked(bio))
 			return BIO_wait_read(bio, timeout);
@@ -1969,7 +2153,7 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	else if (cmd == BIO_C_WAIT_WRITE)
 	{
 		int timeout = (int) arg1;
-		BIO* bio = inChannel->bio;
+		BIO* bio = inChannel->common.bio;
 
 		if (BIO_write_blocked(bio))
 			status = BIO_wait_write(bio, timeout);
@@ -2013,4 +2197,29 @@ BIO_METHOD* BIO_s_tsg(void)
 	}
 
 	return bio_methods;
+}
+
+TSG_STATE tsg_get_state(rdpTsg* tsg)
+{
+	if (!tsg)
+		return TSG_STATE_INITIAL;
+
+	return tsg->state;
+}
+
+BIO* tsg_get_bio(rdpTsg* tsg)
+{
+	if (!tsg)
+		return NULL;
+
+	return tsg->bio;
+}
+
+BOOL tsg_set_state(rdpTsg* tsg, TSG_STATE state)
+{
+	if (!tsg)
+		return FALSE;
+
+	tsg->state = state;
+	return TRUE;
 }

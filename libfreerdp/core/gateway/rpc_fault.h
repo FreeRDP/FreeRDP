@@ -25,6 +25,6 @@
 #include <winpr/wtypes.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL int rpc_recv_fault_pdu(rpcconn_hdr_t* header);
+FREERDP_LOCAL BOOL rpc_recv_fault_pdu(rpcconn_hdr_t* header);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_FAULT_H */

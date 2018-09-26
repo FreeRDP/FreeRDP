@@ -359,10 +359,14 @@ static UINT32 rpc_map_status_code_to_win32_error_code(UINT32 code)
 	return code;
 }
 
-int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
+BOOL rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 {
-	int index;
+	size_t index;
 	UINT32 code;
+
+	if (!header)
+		return FALSE;
+
 	WLog_ERR(TAG,  "RPC Fault PDU:");
 	code = rpc_map_status_code_to_win32_error_code(header->fault.status);
 
@@ -371,7 +375,7 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 		if (RPC_FAULT_CODES[index].code == code)
 		{
 			WLog_ERR(TAG,  "status: %s (0x%08"PRIX32")", RPC_FAULT_CODES[index].name, code);
-			return 0;
+			return TRUE;
 		}
 	}
 
@@ -380,10 +384,10 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 		if (RPC_TSG_FAULT_CODES[index].code == code)
 		{
 			WLog_ERR(TAG,  "status: %s (0x%08"PRIX32")", RPC_TSG_FAULT_CODES[index].name, code);
-			return 0;
+			return TRUE;
 		}
 	}
 
 	WLog_ERR(TAG,  "status: %s (0x%08"PRIX32")", "UNKNOWN", code);
-	return 0;
+	return TRUE;
 }

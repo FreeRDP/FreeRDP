@@ -80,7 +80,7 @@
 FREERDP_LOCAL void rts_generate_cookie(BYTE* cookie);
 
 FREERDP_LOCAL int rts_command_length(rdpRpc* rpc, UINT32 CommandType,
-                                     BYTE* buffer, UINT32 length);
+                                     const BYTE* buffer, UINT32 length);
 
 FREERDP_LOCAL int rts_send_CONN_A1_pdu(rdpRpc* rpc);
 FREERDP_LOCAL int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer,
@@ -91,7 +91,7 @@ FREERDP_LOCAL int rts_send_CONN_B1_pdu(rdpRpc* rpc);
 FREERDP_LOCAL int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer,
                                        UINT32 length);
 
-FREERDP_LOCAL int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc);
+FREERDP_LOCAL BOOL rts_send_OUT_R1_A3_pdu(rdpRpc* rpc);
 
 FREERDP_LOCAL int rts_send_flow_control_ack_pdu(rdpRpc* rpc);
 

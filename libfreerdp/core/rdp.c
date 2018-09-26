@@ -1513,7 +1513,7 @@ int rdp_check_fds(rdpRdp* rdp)
 	if (transport->tsg)
 	{
 		rdpTsg* tsg = transport->tsg;
-		status = tsg_check_event_handles(tsg);
+		status = tsg_check_event_handles(tsg) ? 1 : -1;
 
 		if (status < 0)
 		{
@@ -1521,7 +1521,7 @@ int rdp_check_fds(rdpRdp* rdp)
 			return -1;
 		}
 
-		if (tsg->state != TSG_STATE_PIPE_CREATED)
+		if (tsg_get_state(tsg) != TSG_STATE_PIPE_CREATED)
 			return status;
 	}
 
