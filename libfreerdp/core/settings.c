@@ -1105,7 +1105,6 @@ void freerdp_settings_free(rdpSettings* settings)
 	free(settings->RemoteApplicationName);
 	free(settings->RemoteApplicationIcon);
 	free(settings->RemoteApplicationProgram);
-	free(settings->RemoteApplicationFile);
 	free(settings->RemoteApplicationGuid);
 	free(settings->RemoteApplicationCmdLine);
 	free(settings->ImeFileName);
