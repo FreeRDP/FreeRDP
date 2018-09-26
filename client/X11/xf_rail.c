@@ -91,6 +91,11 @@ void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 	if (!appWindow)
 		return;
 
+	if (enabled)
+		xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
+	else
+		xf_SetWindowStyle(xfc, appWindow, 0, 0);
+
 	activate.windowId = appWindow->windowId;
 	activate.enabled = enabled;
 	xfc->rail->ClientActivate(xfc->rail, &activate);
