@@ -729,7 +729,6 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_RemoteApplicationName                              (2113)
 #define FreeRDP_RemoteApplicationIcon                              (2114)
 #define FreeRDP_RemoteApplicationProgram                           (2115)
-#define FreeRDP_RemoteApplicationFile                              (2116)
 #define FreeRDP_RemoteApplicationGuid                              (2117)
 #define FreeRDP_RemoteApplicationCmdLine                           (2118)
 #define FreeRDP_RemoteApplicationExpandCmdLine                     (2119)
@@ -1221,7 +1220,7 @@ struct rdp_settings
 	ALIGN64 char*  RemoteApplicationName;             /* 2113 */
 	ALIGN64 char*  RemoteApplicationIcon;             /* 2114 */
 	ALIGN64 char*  RemoteApplicationProgram;          /* 2115 */
-	ALIGN64 char*  RemoteApplicationFile;             /* 2116 */
+	UINT64 padding2116[2116 - 2115];                  /* 2116 */
 	ALIGN64 char*  RemoteApplicationGuid;             /* 2117 */
 	ALIGN64 char*  RemoteApplicationCmdLine;          /* 2118 */
 	ALIGN64 UINT32 RemoteApplicationExpandCmdLine;    /* 2119 */

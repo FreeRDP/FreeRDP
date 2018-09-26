@@ -2083,13 +2083,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (!(settings->RemoteApplicationCmdLine = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
-		CommandLineSwitchCase(arg, "app-file")
-		{
-			free(settings->RemoteApplicationFile);
-
-			if (!(settings->RemoteApplicationFile = _strdup(arg->Value)))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
 		CommandLineSwitchCase(arg, "app-guid")
 		{
 			free(settings->RemoteApplicationGuid);

@@ -2527,9 +2527,6 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 		case FreeRDP_RemoteApplicationProgram:
 			return settings->RemoteApplicationProgram;
 
-		case FreeRDP_RemoteApplicationFile:
-			return settings->RemoteApplicationFile;
-
 		case FreeRDP_RemoteApplicationGuid:
 			return settings->RemoteApplicationGuid;
 
@@ -2743,10 +2740,6 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 
 		case FreeRDP_RemoteApplicationProgram:
 			tmp = &settings->RemoteApplicationProgram;
-			break;
-
-		case FreeRDP_RemoteApplicationFile:
-			tmp = &settings->RemoteApplicationFile;
 			break;
 
 		case FreeRDP_RemoteApplicationGuid:
