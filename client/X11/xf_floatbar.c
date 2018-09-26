@@ -110,7 +110,6 @@ void xf_floatbar_set_root_y(xfContext* xfc, int y)
 {
 	xfFloatbar* floatbar;
 	floatbar = xfc->window->floatbar;
-
 	floatbar->last_motion_y_root = y;
 }
 
@@ -206,12 +205,11 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window)
 	int i, width;
 	floatbar = (xfFloatbar*) calloc(1, sizeof(xfFloatbar));
 	floatbar->locked = TRUE;
-
 	XGetWindowAttributes(xfc->display, window, &attr);
 
-	for(i = 0; i < xfc->vscreen.nmonitors; i++)
+	for (i = 0; i < xfc->vscreen.nmonitors; i++)
 	{
-		if(attr.x >= xfc->vscreen.monitors[i].area.left && attr.x <= xfc->vscreen.monitors[i].area.right) 
+		if (attr.x >= xfc->vscreen.monitors[i].area.left && attr.x <= xfc->vscreen.monitors[i].area.right)
 		{
 			width = xfc->vscreen.monitors[i].area.right - xfc->vscreen.monitors[i].area.left;
 			floatbar->x = width / 2 + xfc->vscreen.monitors[i].area.left - FLOATBAR_DEFAULT_WIDTH / 2;
@@ -581,7 +579,11 @@ BOOL xf_floatbar_check_event(xfContext* xfc, XEvent* event)
 {
 	xfFloatbar* floatbar;
 	xfFloatbarButton* button;
-	int i, size;
+	size_t i, size;
+
+	if (!xfc || !event || !xfc->window)
+		return FALSE;
+
 	floatbar = xfc->window->floatbar;
 
 	if (event->xany.window == floatbar->handle)
@@ -603,6 +605,10 @@ BOOL xf_floatbar_check_event(xfContext* xfc, XEvent* event)
 BOOL xf_floatbar_event_process(xfContext* xfc, XEvent* event)
 {
 	xfFloatbar* floatbar;
+
+	if (!xfc || !xfc->window || !event)
+		return FALSE;
+
 	floatbar = xfc->window->floatbar;
 
 	switch (event->type)
@@ -686,7 +692,7 @@ static void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button)
 
 void xf_floatbar_free(xfContext* xfc, xfWindow* window, xfFloatbar* floatbar)
 {
-	int i, size;
+	size_t i, size;
 	size = ARRAYSIZE(floatbar->buttons);
 
 	if (!floatbar)
