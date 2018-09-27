@@ -34,25 +34,35 @@
 static wStream* rpc_ntlm_http_request(rdpRpc* rpc, HttpContext* http, const char* method,
                                       int contentLength, SecBuffer* ntlmToken)
 {
-	wStream* s;
+	wStream* s = NULL;
 	HttpRequest* request;
 	char* base64NtlmToken = NULL;
+	const char* uri;
+
+	if (!rpc || !http || !method || !ntlmToken)
+		goto fail;
+
 	request = http_request_new();
 
 	if (ntlmToken)
 		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, ntlmToken->cbBuffer);
 
-	http_request_set_method(request, method);
-	request->ContentLength = contentLength;
-	http_request_set_uri(request, http->URI);
+	uri = http_context_get_uri(http);
+
+	if (!http_request_set_method(request, method) ||
+	    !http_request_set_content_length(request, contentLength) ||
+	    !http_request_set_uri(request, uri))
+		return NULL;
 
 	if (base64NtlmToken)
 	{
-		http_request_set_auth_scheme(request, "NTLM");
-		http_request_set_auth_param(request, base64NtlmToken);
+		if (!http_request_set_auth_scheme(request, "NTLM") ||
+		    !http_request_set_auth_param(request, base64NtlmToken))
+			goto fail;
 	}
 
 	s = http_request_write(http, request);
+fail:
 	http_request_free(request);
 	free(base64NtlmToken);
 	return s;
@@ -85,16 +95,10 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, RpcInChannel* inChannel
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm = inChannel->ntlm;
+	token64 = http_response_get_auth_token(response, "NTLM");
 
-	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
-	{
-		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
-
-		if (!token64)
-			return -1;
-
+	if (token64)
 		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
-	}
 
 	if (ntlmTokenData && ntlmTokenLength)
 	{
@@ -210,16 +214,10 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, RpcOutChannel* outChan
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm = outChannel->ntlm;
+	token64 = http_response_get_auth_token(response, "NTLM");
 
-	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
-	{
-		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
-
-		if (!token64)
-			return -1;
-
+	if (token64)
 		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
-	}
 
 	if (ntlmTokenData && ntlmTokenLength)
 	{

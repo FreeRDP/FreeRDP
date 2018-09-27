@@ -308,11 +308,11 @@ static BOOL rdg_set_ntlm_auth_header(rdpNtlm* ntlm, HttpRequest* request)
 
 	if (base64NtlmToken)
 	{
-		http_request_set_auth_scheme(request, "NTLM");
-		http_request_set_auth_param(request, base64NtlmToken);
+		BOOL rc = http_request_set_auth_scheme(request, "NTLM") &&
+		          http_request_set_auth_param(request, base64NtlmToken);
 		free(base64NtlmToken);
 
-		if (!request->AuthScheme || !request->AuthParam)
+		if (!rc)
 			return FALSE;
 	}
 
@@ -324,16 +324,19 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 {
 	wStream* s = NULL;
 	HttpRequest* request = NULL;
-	assert(method != NULL);
+	const char* uri;
+
+	if (!rdg || !method || !transferEncoding)
+		return NULL;
+
+	uri = http_context_get_uri(rdg->http);
 	request = http_request_new();
 
 	if (!request)
 		return NULL;
 
-	http_request_set_method(request, method);
-	http_request_set_uri(request, rdg->http->URI);
-
-	if (!request->Method || !request->URI)
+	if (!http_request_set_method(request, method) ||
+	    !http_request_set_uri(request, uri))
 		goto out;
 
 	if (rdg->ntlm)
@@ -362,15 +365,21 @@ static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 	char* token64 = NULL;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
+	long StatusCode;
 
-	if (response->StatusCode != HTTP_STATUS_DENIED)
+	if (!ntlm || !response)
+		return FALSE;
+
+	StatusCode = http_response_get_status_code(response);
+
+	if (StatusCode != HTTP_STATUS_DENIED)
 	{
-		WLog_DBG(TAG, "Unexpected NTLM challenge HTTP status: %d",
-		         response->StatusCode);
+		WLog_DBG(TAG, "Unexpected NTLM challenge HTTP status: %ld",
+		         StatusCode);
 		return FALSE;
 	}
 
-	token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
+	token64 = http_response_get_auth_token(response, "NTLM");
 
 	if (!token64)
 		return FALSE;
@@ -733,6 +742,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 	HttpResponse* response = NULL;
 	int statusCode;
 	int bodyLength;
+	long StatusCode;
 
 	if (!rdg_tls_connect(rdg, tls, peerAddress, timeout))
 		return FALSE;
@@ -750,7 +760,9 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 		if (!response)
 			return FALSE;
 
-		if (response->StatusCode == HTTP_STATUS_NOT_FOUND)
+		StatusCode = http_response_get_status_code(response);
+
+		if (StatusCode == HTTP_STATUS_NOT_FOUND)
 		{
 			WLog_INFO(TAG, "RD Gateway does not support HTTP transport.");
 
@@ -779,8 +791,8 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 	if (!response)
 		return FALSE;
 
-	statusCode = response->StatusCode;
-	bodyLength = response->BodyLength;
+	statusCode = http_response_get_status_code(response);
+	bodyLength = http_response_get_body_length(response);
 	http_response_free(response);
 	WLog_DBG(TAG, "%s authorization result: %d", method, statusCode);
 
@@ -1285,18 +1297,14 @@ rdpRdg* rdg_new(rdpTransport* transport)
 		if (!rdg->http)
 			goto rdg_alloc_error;
 
-		http_context_set_uri(rdg->http, "/remoteDesktopGateway/");
-		http_context_set_accept(rdg->http, "*/*");
-		http_context_set_cache_control(rdg->http, "no-cache");
-		http_context_set_pragma(rdg->http, "no-cache");
-		http_context_set_connection(rdg->http, "Keep-Alive");
-		http_context_set_user_agent(rdg->http, "MS-RDGateway/1.0");
-		http_context_set_host(rdg->http, rdg->settings->GatewayHostname);
-		http_context_set_rdg_connection_id(rdg->http, bracedUuid);
-
-		if (!rdg->http->URI || !rdg->http->Accept || !rdg->http->CacheControl ||
-		    !rdg->http->Pragma || !rdg->http->Connection || !rdg->http->UserAgent
-		    || !rdg->http->Host || !rdg->http->RdgConnectionId)
+		if (!http_context_set_uri(rdg->http, "/remoteDesktopGateway/") ||
+		    !http_context_set_accept(rdg->http, "*/*") ||
+		    !http_context_set_cache_control(rdg->http, "no-cache") ||
+		    !http_context_set_pragma(rdg->http, "no-cache") ||
+		    !http_context_set_connection(rdg->http, "Keep-Alive") ||
+		    !http_context_set_user_agent(rdg->http, "MS-RDGateway/1.0") ||
+		    !http_context_set_host(rdg->http, rdg->settings->GatewayHostname) ||
+		    !http_context_set_rdg_connection_id(rdg->http, bracedUuid))
 		{
 			goto rdg_alloc_error;
 		}
@@ -1306,9 +1314,7 @@ rdpRdg* rdg_new(rdpTransport* transport)
 			switch (rdg->extAuth)
 			{
 				case HTTP_EXTENDED_AUTH_PAA:
-					http_context_set_rdg_auth_scheme(rdg->http, "PAA");
-
-					if (!rdg->http->RdgAuthScheme)
+					if (!http_context_set_rdg_auth_scheme(rdg->http, "PAA"))
 						goto rdg_alloc_error;
 
 					break;

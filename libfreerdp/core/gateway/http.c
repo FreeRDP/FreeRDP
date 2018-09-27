@@ -40,6 +40,50 @@
 
 #define RESPONSE_SIZE_LIMIT 64 * 1024 * 1024
 
+struct _http_context
+{
+	char* Method;
+	char* URI;
+	char* UserAgent;
+	char* Host;
+	char* Accept;
+	char* CacheControl;
+	char* Connection;
+	char* Pragma;
+	char* RdgConnectionId;
+	char* RdgAuthScheme;
+};
+
+struct _http_request
+{
+	char* Method;
+	char* URI;
+	char* AuthScheme;
+	char* AuthParam;
+	char* Authorization;
+	size_t ContentLength;
+	char* Content;
+	char* TransferEncoding;
+};
+
+struct _http_response
+{
+	size_t count;
+	char** lines;
+
+	long StatusCode;
+	const char* ReasonPhrase;
+
+	size_t ContentLength;
+	const char* ContentType;
+
+	size_t BodyLength;
+	BYTE* BodyContent;
+
+	wListDictionary* Authenticates;
+	wStream* data;
+};
+
 static char* string_strnstr(const char* str1, const char* str2, size_t slen)
 {
 	char c, sc;
@@ -84,6 +128,9 @@ HttpContext* http_context_new(void)
 
 BOOL http_context_set_method(HttpContext* context, const char* Method)
 {
+	if (!context || !Method)
+		return FALSE;
+
 	free(context->Method);
 	context->Method = _strdup(Method);
 
@@ -93,8 +140,19 @@ BOOL http_context_set_method(HttpContext* context, const char* Method)
 	return TRUE;
 }
 
+const char* http_context_get_uri(HttpContext* context)
+{
+	if (!context)
+		return NULL;
+
+	return context->URI;
+}
+
 BOOL http_context_set_uri(HttpContext* context, const char* URI)
 {
+	if (!context || !URI)
+		return FALSE;
+
 	free(context->URI);
 	context->URI = _strdup(URI);
 
@@ -106,6 +164,9 @@ BOOL http_context_set_uri(HttpContext* context, const char* URI)
 
 BOOL http_context_set_user_agent(HttpContext* context, const char* UserAgent)
 {
+	if (!context || !UserAgent)
+		return FALSE;
+
 	free(context->UserAgent);
 	context->UserAgent = _strdup(UserAgent);
 
@@ -117,6 +178,9 @@ BOOL http_context_set_user_agent(HttpContext* context, const char* UserAgent)
 
 BOOL http_context_set_host(HttpContext* context, const char* Host)
 {
+	if (!context || !Host)
+		return FALSE;
+
 	free(context->Host);
 	context->Host = _strdup(Host);
 
@@ -128,6 +192,9 @@ BOOL http_context_set_host(HttpContext* context, const char* Host)
 
 BOOL http_context_set_accept(HttpContext* context, const char* Accept)
 {
+	if (!context || !Accept)
+		return FALSE;
+
 	free(context->Accept);
 	context->Accept = _strdup(Accept);
 
@@ -139,6 +206,9 @@ BOOL http_context_set_accept(HttpContext* context, const char* Accept)
 
 BOOL http_context_set_cache_control(HttpContext* context, const char* CacheControl)
 {
+	if (!context || !CacheControl)
+		return FALSE;
+
 	free(context->CacheControl);
 	context->CacheControl = _strdup(CacheControl);
 
@@ -150,6 +220,9 @@ BOOL http_context_set_cache_control(HttpContext* context, const char* CacheContr
 
 BOOL http_context_set_connection(HttpContext* context, const char* Connection)
 {
+	if (!context || !Connection)
+		return FALSE;
+
 	free(context->Connection);
 	context->Connection = _strdup(Connection);
 
@@ -161,6 +234,9 @@ BOOL http_context_set_connection(HttpContext* context, const char* Connection)
 
 BOOL http_context_set_pragma(HttpContext* context, const char* Pragma)
 {
+	if (!context || !Pragma)
+		return FALSE;
+
 	free(context->Pragma);
 	context->Pragma = _strdup(Pragma);
 
@@ -172,6 +248,9 @@ BOOL http_context_set_pragma(HttpContext* context, const char* Pragma)
 
 BOOL http_context_set_rdg_connection_id(HttpContext* context, const char* RdgConnectionId)
 {
+	if (!context || !RdgConnectionId)
+		return FALSE;
+
 	free(context->RdgConnectionId);
 	context->RdgConnectionId = _strdup(RdgConnectionId);
 
@@ -183,6 +262,9 @@ BOOL http_context_set_rdg_connection_id(HttpContext* context, const char* RdgCon
 
 BOOL http_context_set_rdg_auth_scheme(HttpContext* context, const char* RdgAuthScheme)
 {
+	if (!context || !RdgAuthScheme)
+		return FALSE;
+
 	free(context->RdgAuthScheme);
 	context->RdgAuthScheme = _strdup(RdgAuthScheme);
 	return context->RdgAuthScheme != NULL;
@@ -208,6 +290,9 @@ void http_context_free(HttpContext* context)
 
 BOOL http_request_set_method(HttpRequest* request, const char* Method)
 {
+	if (!request || !Method)
+		return FALSE;
+
 	free(request->Method);
 	request->Method = _strdup(Method);
 
@@ -219,6 +304,9 @@ BOOL http_request_set_method(HttpRequest* request, const char* Method)
 
 BOOL http_request_set_uri(HttpRequest* request, const char* URI)
 {
+	if (!request || !URI)
+		return FALSE;
+
 	free(request->URI);
 	request->URI = _strdup(URI);
 
@@ -230,6 +318,9 @@ BOOL http_request_set_uri(HttpRequest* request, const char* URI)
 
 BOOL http_request_set_auth_scheme(HttpRequest* request, const char* AuthScheme)
 {
+	if (!request || !AuthScheme)
+		return FALSE;
+
 	free(request->AuthScheme);
 	request->AuthScheme = _strdup(AuthScheme);
 
@@ -241,6 +332,9 @@ BOOL http_request_set_auth_scheme(HttpRequest* request, const char* AuthScheme)
 
 BOOL http_request_set_auth_param(HttpRequest* request, const char* AuthParam)
 {
+	if (!request || !AuthParam)
+		return FALSE;
+
 	free(request->AuthParam);
 	request->AuthParam = _strdup(AuthParam);
 
@@ -252,6 +346,9 @@ BOOL http_request_set_auth_param(HttpRequest* request, const char* AuthParam)
 
 BOOL http_request_set_transfer_encoding(HttpRequest* request, const char* TransferEncoding)
 {
+	if (!request || !TransferEncoding)
+		return FALSE;
+
 	free(request->TransferEncoding);
 	request->TransferEncoding = _strdup(TransferEncoding);
 
@@ -261,149 +358,125 @@ BOOL http_request_set_transfer_encoding(HttpRequest* request, const char* Transf
 	return TRUE;
 }
 
-static char* http_encode_body_line(const char* param, const char* value)
+static BOOL http_encode_print(wStream* s, const char* fmt, ...)
 {
-	char* line;
-	int length;
-	length = strlen(param) + strlen(value) + 2;
-	line = (char*) malloc(length + 1);
+	char* str;
+	va_list ap;
+	size_t length, used;
 
-	if (!line)
-		return NULL;
+	if (!s || !fmt)
+		return FALSE;
 
-	sprintf_s(line, length + 1, "%s: %s", param, value);
-	return line;
+	va_start(ap, fmt);
+	length = vsnprintf(NULL, 0, fmt, ap) + 1;
+	va_end(ap);
+
+	if (!Stream_EnsureRemainingCapacity(s, length))
+		return FALSE;
+
+	str = Stream_Pointer(s);
+	va_start(ap, fmt);
+	used = vsnprintf(str, length, fmt, ap);
+	va_end(ap);
+
+	/* Strip the trailing '\0' from the string. */
+	if ((used + 1) != length)
+		return FALSE;
+
+	Stream_Seek(s, used);
+	return TRUE;
 }
 
-static char* http_encode_content_length_line(int ContentLength)
+static BOOL http_encode_body_line(wStream* s, const char* param, const char* value)
 {
-	const char* key = "Content-Length:";
-	char* line;
-	int length;
-	char str[32];
-	_itoa_s(ContentLength, str, sizeof(str), 10);
-	length = strlen(key) + strlen(str) + 2;
-	line = (char*) malloc(length + 1);
+	if (!s || !param || !value)
+		return FALSE;
 
-	if (!line)
-		return NULL;
-
-	sprintf_s(line, length + 1, "%s %s", key, str);
-	return line;
+	return http_encode_print(s, "%s: %s\r\n", param, value);
 }
 
-static char* http_encode_header_line(const char* Method, const char* URI)
+static BOOL http_encode_content_length_line(wStream* s, size_t ContentLength)
 {
-	const char* key = "HTTP/1.1";
-	char* line;
-	int length;
-	length = strlen(key) + strlen(Method) + strlen(URI) + 2;
-	line = (char*)malloc(length + 1);
-
-	if (!line)
-		return NULL;
-
-	sprintf_s(line, length + 1, "%s %s %s", Method, URI, key);
-	return line;
+	return http_encode_print(s, "Content-Length: %"PRIdz"\r\n", ContentLength);
 }
 
-static char* http_encode_authorization_line(const char* AuthScheme, const char* AuthParam)
+static BOOL http_encode_header_line(wStream* s, const char* Method, const char* URI)
 {
-	const char* key = "Authorization:";
-	char* line;
-	int length;
-	length = strlen(key) + strlen(AuthScheme) + strlen(AuthParam) + 3;
-	line = (char*) malloc(length + 1);
+	if (!s || !Method || !URI)
+		return FALSE;
 
-	if (!line)
-		return NULL;
+	return http_encode_print(s, "%s %s HTTP/1.1\r\n", Method, URI);
+}
 
-	sprintf_s(line, length + 1, "%s %s %s", key, AuthScheme, AuthParam);
-	return line;
+static BOOL http_encode_authorization_line(wStream* s, const char* AuthScheme,
+        const char* AuthParam)
+{
+	if (!s || !AuthScheme || !AuthParam)
+		return FALSE;
+
+	return http_encode_print(s, "Authorization: %s %s\r\n", AuthScheme, AuthParam);
 }
 
 wStream* http_request_write(HttpContext* context, HttpRequest* request)
 {
 	wStream* s;
-	int i, count;
-	char** lines;
-	int length = 0;
-	count = 0;
-	lines = (char**) calloc(32, sizeof(char*));
 
-	if (!lines)
+	if (!context || !request)
 		return NULL;
 
-	lines[count++] = http_encode_header_line(request->Method, request->URI);
-	lines[count++] = http_encode_body_line("Cache-Control", context->CacheControl);
-	lines[count++] = http_encode_body_line("Connection", context->Connection);
-	lines[count++] = http_encode_body_line("Pragma", context->Pragma);
-	lines[count++] = http_encode_body_line("Accept", context->Accept);
-	lines[count++] = http_encode_body_line("User-Agent", context->UserAgent);
-	lines[count++] = http_encode_body_line("Host", context->Host);
+	s = Stream_New(NULL, 1024);
+
+	if (!s)
+		return NULL;
+
+	if (!http_encode_header_line(s, request->Method, request->URI) ||
+	    !http_encode_body_line(s, "Cache-Control", context->CacheControl) ||
+	    !http_encode_body_line(s, "Connection", context->Connection) ||
+	    !http_encode_body_line(s, "Pragma", context->Pragma) ||
+	    !http_encode_body_line(s, "Accept", context->Accept) ||
+	    !http_encode_body_line(s, "User-Agent", context->UserAgent) ||
+	    !http_encode_body_line(s, "Host", context->Host))
+		goto fail;
 
 	if (context->RdgConnectionId)
-		lines[count++] = http_encode_body_line("RDG-Connection-Id", context->RdgConnectionId);
+	{
+		if (!http_encode_body_line(s, "RDG-Connection-Id", context->RdgConnectionId))
+			goto fail;
+	}
 
 	if (context->RdgAuthScheme)
-		lines[count++] = http_encode_body_line("RDG-Auth-Scheme", context->RdgAuthScheme);
+	{
+		if (!http_encode_body_line(s, "RDG-Auth-Scheme", context->RdgAuthScheme))
+			goto fail;
+	}
 
 	if (request->TransferEncoding)
 	{
-		lines[count++] = http_encode_body_line("Transfer-Encoding", request->TransferEncoding);
+		if (!http_encode_body_line(s, "Transfer-Encoding", request->TransferEncoding))
+			goto fail;
 	}
 	else
 	{
-		lines[count++] = http_encode_content_length_line(request->ContentLength);
+		if (!http_encode_content_length_line(s, request->ContentLength))
+			goto fail;
 	}
 
 	if (request->Authorization)
 	{
-		lines[count++] = http_encode_body_line("Authorization", request->Authorization);
+		if (!http_encode_body_line(s, "Authorization", request->Authorization))
+			goto fail;
 	}
 	else if (request->AuthScheme && request->AuthParam)
 	{
-		lines[count++] = http_encode_authorization_line(request->AuthScheme, request->AuthParam);
-	}
-
-	/* check that everything went well */
-	for (i = 0; i < count; i++)
-	{
-		if (!lines[i])
-			goto out_free;
-	}
-
-	for (i = 0; i < count; i++)
-	{
-		length += (strlen(lines[i]) + 2); /* add +2 for each '\r\n' character */
-	}
-
-	length += 2; /* empty line "\r\n" at end of header */
-	length += 1; /* null terminator */
-	s = Stream_New(NULL, length);
-
-	if (!s)
-		goto out_free;
-
-	for (i = 0; i < count; i++)
-	{
-		Stream_Write(s, lines[i], strlen(lines[i]));
-		Stream_Write(s, "\r\n", 2);
-		free(lines[i]);
+		if (!http_encode_authorization_line(s, request->AuthScheme, request->AuthParam))
+			goto fail;
 	}
 
 	Stream_Write(s, "\r\n", 2);
-	free(lines);
-	Stream_Write(s, "\0", 1); /* append null terminator */
-	Stream_Rewind(s, 1); /* don't include null terminator in length */
-	Stream_SetLength(s, Stream_GetPosition(s));
+	Stream_SealLength(s);
 	return s;
-out_free:
-
-	for (i = 0; i < count; i++)
-		free(lines[i]);
-
-	free(lines);
+fail:
+	Stream_Free(s, TRUE);
 	return NULL;
 }
 
@@ -432,6 +505,9 @@ static BOOL http_response_parse_header_status_line(HttpResponse* response, char*
 	char* separator = NULL;
 	char* status_code;
 	char* reason_phrase;
+
+	if (!response)
+		return FALSE;
 
 	if (status_line)
 		separator = strchr(status_line, ' ');
@@ -469,6 +545,9 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
         const char* value)
 {
 	BOOL status = TRUE;
+
+	if (!response || !name)
+		return FALSE;
 
 	if (_stricmp(name, "Content-Length") == 0)
 	{
@@ -520,7 +599,7 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			authValue = NULL;
 		}
 
-		status = ListDictionary_Add(response->Authenticates, (void*)authScheme, (void*)authValue);
+		status = ListDictionary_Add(response->Authenticates, authScheme, authValue);
 	}
 
 	return status;
@@ -599,14 +678,17 @@ static BOOL http_response_parse_header(HttpResponse* response)
 	return TRUE;
 }
 
-void http_response_print(HttpResponse* response)
+BOOL http_response_print(HttpResponse* response)
 {
-	int i;
+	size_t i;
+
+	if (!response)
+		return FALSE;
 
 	for (i = 0; i < response->count; i++)
-	{
 		WLog_ERR(TAG, "%s", response->lines[i]);
-	}
+
+	return TRUE;
 }
 
 HttpResponse* http_response_recv(rdpTls* tls)
@@ -812,4 +894,56 @@ void http_response_free(HttpResponse* response)
 	ListDictionary_Free(response->Authenticates);
 	Stream_Free(response->data, TRUE);
 	free(response);
+}
+
+const char* http_request_get_uri(HttpRequest* request)
+{
+	if (!request)
+		return NULL;
+
+	return request->URI;
+}
+
+SSIZE_T http_request_get_content_length(HttpRequest* request)
+{
+	if (!request)
+		return -1;
+
+	return request->ContentLength;
+}
+
+BOOL http_request_set_content_length(HttpRequest* request, size_t length)
+{
+	if (!request)
+		return FALSE;
+
+	request->ContentLength = length;
+	return TRUE;
+}
+
+long http_response_get_status_code(HttpResponse* response)
+{
+	if (!response)
+		return -1;
+
+	return response->StatusCode;
+}
+
+SSIZE_T http_response_get_body_length(HttpResponse* response)
+{
+	if (!response)
+		return -1;
+
+	return response->BodyLength;
+}
+
+const char* http_response_get_auth_token(HttpResponse* respone, const char* method)
+{
+	if (!respone || !method)
+		return NULL;
+
+	if (!ListDictionary_Contains(respone->Authenticates, method))
+		return NULL;
+
+	return ListDictionary_GetItemValue(respone->Authenticates, method);
 }
