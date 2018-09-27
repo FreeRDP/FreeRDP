@@ -20,6 +20,7 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_RPC_CLIENT_H
 #define FREERDP_LIB_CORE_GATEWAY_RPC_CLIENT_H
 
+#include <winpr/wtypes.h>
 #include <freerdp/api.h>
 
 #include "rpc.h"
@@ -42,7 +43,7 @@ FREERDP_LOCAL int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer,
 FREERDP_LOCAL int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length,
                                         UINT16 opnum);
 
-FREERDP_LOCAL RpcClient* rpc_client_new(rdpSettings* settings, UINT32 max_recv_frag);
+FREERDP_LOCAL RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag);
 FREERDP_LOCAL void rpc_client_free(RpcClient* client);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_CLIENT_H */

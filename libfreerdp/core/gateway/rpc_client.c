@@ -36,6 +36,7 @@
 #include "rpc_fault.h"
 #include "rpc_client.h"
 #include "../rdp.h"
+#include "../proxy.h"
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
@@ -839,14 +840,13 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length
 	int status;
 	RpcClientCall* clientCall;
 	rpcconn_common_hdr_t* header;
-	rdpRpc* rpc = inChannel->common.rpc;
 	status = rpc_channel_write(&inChannel->common, buffer, length);
 
 	if (status <= 0)
 		return -1;
 
 	header = (rpcconn_common_hdr_t*) buffer;
-	clientCall = rpc_client_call_find_by_id(rpc->client, header->call_id);
+	clientCall = rpc_client_call_find_by_id(inChannel->common.client, header->call_id);
 	clientCall->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
 
 	/*
@@ -986,11 +986,44 @@ out_free_pdu:
 	return -1;
 }
 
-RpcClient* rpc_client_new(rdpSettings* settings, UINT32 max_recv_frag)
+static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT16* port,
+                                       BOOL* isProxy)
+{
+	struct addrinfo* result;
+
+	if (!settings || !host || !port || !isProxy)
+		return FALSE;
+	else
+	{
+		const char* peerHostname = settings->GatewayHostname;
+		const char* proxyUsername = settings->ProxyUsername;
+		const char* proxyPassword = settings->ProxyPassword;
+		*port = settings->GatewayPort;
+		*isProxy = proxy_prepare(settings, &peerHostname, port, &proxyUsername, &proxyPassword);
+		result = freerdp_tcp_resolve_host(peerHostname, *port, 0);
+
+		if (!result)
+			return FALSE;
+
+		*host = freerdp_tcp_address_to_string(result->ai_addr, NULL);
+		freeaddrinfo(result);
+		return TRUE;
+	}
+}
+
+RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 {
 	RpcClient* client = (RpcClient*) calloc(1, sizeof(RpcClient));
 
-	if (!client || !settings)
+	if (!client)
+		return NULL;
+
+	if (!rpc_client_resolve_gateway(context->settings, &client->host, &client->port, &client->isProxy))
+		goto fail;
+
+	client->context = context;
+
+	if (!client->context)
 		goto fail;
 
 	client->pdu = rpc_pdu_new();
@@ -1019,7 +1052,7 @@ RpcClient* rpc_client_new(rdpSettings* settings, UINT32 max_recv_frag)
 	if (!client->ClientCallList)
 		goto fail;
 
-	ArrayList_Object(client->ClientCallList)->fnObjectFree = (OBJECT_FREE_FN) rpc_client_call_free;
+	ArrayList_Object(client->ClientCallList)->fnObjectFree = rpc_client_call_free;
 	return client;
 fail:
 	rpc_client_free(client);
@@ -1030,6 +1063,8 @@ void rpc_client_free(RpcClient* client)
 {
 	if (!client)
 		return;
+
+	free(client->host);
 
 	if (client->ReceiveFragment)
 		Stream_Free(client->ReceiveFragment, TRUE);

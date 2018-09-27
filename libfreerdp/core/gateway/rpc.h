@@ -585,9 +585,24 @@ struct rpc_client_call
 };
 typedef struct rpc_client_call RpcClientCall;
 
+struct rpc_client
+{
+	rdpContext* context;
+	RPC_PDU* pdu;
+	HANDLE PipeEvent;
+	RingBuffer ReceivePipe;
+	wStream* ReceiveFragment;
+	CRITICAL_SECTION PipeLock;
+	wArrayList* ClientCallList;
+	char* host;
+	UINT16 port;
+	BOOL isProxy;
+};
+typedef struct rpc_client RpcClient;
+
 struct rpc_channel
 {
-	rdpRpc* rpc;
+	RpcClient* client;
 	BIO* bio;
 	rdpTls* tls;
 	rdpNtlm* ntlm;
@@ -713,17 +728,6 @@ struct rpc_virtual_connection_cookie_entry
 };
 typedef struct rpc_virtual_connection_cookie_entry
 	RpcVirtualConnectionCookieEntry;
-
-struct rpc_client
-{
-	RPC_PDU* pdu;
-	HANDLE PipeEvent;
-	RingBuffer ReceivePipe;
-	wStream* ReceiveFragment;
-	CRITICAL_SECTION PipeLock;
-	wArrayList* ClientCallList;
-};
-typedef struct rpc_client RpcClient;
 
 struct rdp_rpc
 {
