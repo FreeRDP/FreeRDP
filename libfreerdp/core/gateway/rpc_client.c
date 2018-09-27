@@ -76,11 +76,14 @@ static void rpc_pdu_free(RPC_PDU* pdu)
 	free(pdu);
 }
 
-static int rpc_client_receive_pipe_write(rdpRpc* rpc, const BYTE* buffer, size_t length)
+static int rpc_client_receive_pipe_write(RpcClient* client, const BYTE* buffer, size_t length)
 {
 	int status = 0;
-	RpcClient* client = rpc->client;
-	EnterCriticalSection(&(rpc->client->PipeLock));
+
+	if (!client || !buffer)
+		return -1;
+
+	EnterCriticalSection(&(client->PipeLock));
 
 	if (ringbuffer_write(&(client->ReceivePipe), buffer, length))
 		status += (int) length;
@@ -88,17 +91,20 @@ static int rpc_client_receive_pipe_write(rdpRpc* rpc, const BYTE* buffer, size_t
 	if (ringbuffer_used(&(client->ReceivePipe)) > 0)
 		SetEvent(client->PipeEvent);
 
-	LeaveCriticalSection(&(rpc->client->PipeLock));
+	LeaveCriticalSection(&(client->PipeLock));
 	return status;
 }
 
-int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer, size_t length)
+int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer, size_t length)
 {
 	int index = 0;
 	int status = 0;
 	int nchunks = 0;
 	DataChunk chunks[2];
-	RpcClient* client = rpc->client;
+
+	if (!client || !buffer)
+		return -1;
+
 	EnterCriticalSection(&(client->PipeLock));
 	nchunks = ringbuffer_peek(&(client->ReceivePipe), chunks, length);
 
@@ -347,7 +353,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			         rpc->StubCallId, header->common.call_id, rpc->StubFragCount);
 		}
 
-		call = rpc_client_call_find_by_id(rpc, rpc->StubCallId);
+		call = rpc_client_call_find_by_id(rpc->client, rpc->StubCallId);
 
 		if (!call)
 			return -1;
@@ -374,7 +380,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 		}
 		else
 		{
-			rpc_client_receive_pipe_write(rpc, &buffer[StubOffset], (size_t) StubLength);
+			rpc_client_receive_pipe_write(rpc->client, &buffer[StubOffset], (size_t) StubLength);
 			rpc->StubFragCount++;
 
 			if (header->response.alloc_hint == StubLength)
@@ -785,23 +791,27 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
  * http://msdn.microsoft.com/en-us/library/gg593159/
  */
 
-RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc, UINT32 CallId)
+RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId)
 {
 	int index;
 	int count;
 	RpcClientCall* clientCall = NULL;
-	ArrayList_Lock(rpc->client->ClientCallList);
-	count = ArrayList_Count(rpc->client->ClientCallList);
+
+	if (!client)
+		return NULL;
+
+	ArrayList_Lock(client->ClientCallList);
+	count = ArrayList_Count(client->ClientCallList);
 
 	for (index = 0; index < count; index++)
 	{
-		clientCall = (RpcClientCall*) ArrayList_GetItem(rpc->client->ClientCallList, index);
+		clientCall = (RpcClientCall*) ArrayList_GetItem(client->ClientCallList, index);
 
 		if (clientCall->CallId == CallId)
 			break;
 	}
 
-	ArrayList_Unlock(rpc->client->ClientCallList);
+	ArrayList_Unlock(client->ClientCallList);
 	return clientCall;
 }
 
@@ -836,7 +846,7 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length
 		return -1;
 
 	header = (rpcconn_common_hdr_t*) buffer;
-	clientCall = rpc_client_call_find_by_id(rpc, header->call_id);
+	clientCall = rpc_client_call_find_by_id(rpc->client, header->call_id);
 	clientCall->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
 
 	/*
@@ -976,49 +986,48 @@ out_free_pdu:
 	return -1;
 }
 
-int rpc_client_new(rdpRpc* rpc)
+RpcClient* rpc_client_new(rdpSettings* settings, UINT32 max_recv_frag)
 {
-	RpcClient* client;
-	client = (RpcClient*) calloc(1, sizeof(RpcClient));
-	rpc->client = client;
+	RpcClient* client = (RpcClient*) calloc(1, sizeof(RpcClient));
 
-	if (!client)
-		return -1;
+	if (!client || !settings)
+		goto fail;
 
 	client->pdu = rpc_pdu_new();
 
 	if (!client->pdu)
-		return -1;
+		goto fail;
 
-	client->ReceiveFragment = Stream_New(NULL, rpc->max_recv_frag);
+	client->ReceiveFragment = Stream_New(NULL, max_recv_frag);
 
 	if (!client->ReceiveFragment)
-		return -1;
+		goto fail;
 
 	client->PipeEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if (!client->PipeEvent)
-		return -1;
+		goto fail;
 
 	if (!ringbuffer_init(&(client->ReceivePipe), 4096))
-		return -1;
+		goto fail;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(client->PipeLock), 4000))
-		return -1;
+		goto fail;
 
 	client->ClientCallList = ArrayList_New(TRUE);
 
 	if (!client->ClientCallList)
-		return -1;
+		goto fail;
 
 	ArrayList_Object(client->ClientCallList)->fnObjectFree = (OBJECT_FREE_FN) rpc_client_call_free;
-	return 1;
+	return client;
+fail:
+	rpc_client_free(client);
+	return NULL;
 }
 
-void rpc_client_free(rdpRpc* rpc)
+void rpc_client_free(RpcClient* client)
 {
-	RpcClient* client = rpc->client;
-
 	if (!client)
 		return;
 
@@ -1038,5 +1047,4 @@ void rpc_client_free(rdpRpc* rpc)
 		ArrayList_Free(client->ClientCallList);
 
 	free(client);
-	rpc->client = NULL;
 }

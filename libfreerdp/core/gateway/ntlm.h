@@ -70,7 +70,6 @@ FREERDP_LOCAL BOOL ntlm_authenticate(rdpNtlm* ntlm);
 FREERDP_LOCAL BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality,
                                     char* user,
                                     char* domain, char* password, SecPkgContext_Bindings* Bindings);
-FREERDP_LOCAL void ntlm_client_uninit(rdpNtlm* ntlm);
 
 FREERDP_LOCAL BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass,
                                         char* hostname);

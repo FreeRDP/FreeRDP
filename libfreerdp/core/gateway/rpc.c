@@ -855,15 +855,14 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	rpc->CurrentKeepAliveInterval = rpc->KeepAliveInterval;
 	rpc->CurrentKeepAliveTime = 0;
 	rpc->CallId = 2;
+	rpc->client = rpc_client_new(rpc->settings, rpc->max_recv_frag);
 
-	if (rpc_client_new(rpc) < 0)
-		goto out_free_rpc_client;
+	if (!rpc->client)
+		goto out_free;
 
 	return rpc;
-out_free_rpc_client:
-	rpc_client_free(rpc);
 out_free:
-	free(rpc);
+	rpc_free(rpc);
 	return NULL;
 }
 
@@ -871,21 +870,9 @@ void rpc_free(rdpRpc* rpc)
 {
 	if (rpc)
 	{
-		rpc_client_free(rpc);
-
-		if (rpc->ntlm)
-		{
-			ntlm_client_uninit(rpc->ntlm);
-			ntlm_free(rpc->ntlm);
-			rpc->ntlm = NULL;
-		}
-
-		if (rpc->VirtualConnection)
-		{
-			rpc_virtual_connection_free(rpc->VirtualConnection);
-			rpc->VirtualConnection = NULL;
-		}
-
+		rpc_client_free(rpc->client);
+		ntlm_free(rpc->ntlm);
+		rpc_virtual_connection_free(rpc->VirtualConnection);
 		free(rpc);
 	}
 }

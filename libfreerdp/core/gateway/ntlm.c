@@ -272,7 +272,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 	return (status == SEC_I_CONTINUE_NEEDED) ? TRUE : FALSE;
 }
 
-void ntlm_client_uninit(rdpNtlm* ntlm)
+static void ntlm_client_uninit(rdpNtlm* ntlm)
 {
 	free(ntlm->identity.User);
 	ntlm->identity.User = NULL;

@@ -1399,7 +1399,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 
 		case TSG_STATE_AUTHORIZED:
-			call = rpc_client_call_find_by_id(rpc, pdu->CallId);
+			call = rpc_client_call_find_by_id(rpc->client, pdu->CallId);
 
 			if (!call)
 				return -1;
@@ -1469,7 +1469,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 
 		case TSG_STATE_PIPE_CREATED:
-			call = rpc_client_call_find_by_id(rpc, pdu->CallId);
+			call = rpc_client_call_find_by_id(rpc->client, pdu->CallId);
 
 			if (!call)
 				return -1;
@@ -1769,7 +1769,7 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 	do
 	{
-		status = rpc_client_receive_pipe_read(rpc, data, (size_t) length);
+		status = rpc_client_receive_pipe_read(rpc->client, data, (size_t) length);
 
 		if (status < 0)
 			return -1;

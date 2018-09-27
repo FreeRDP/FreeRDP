@@ -200,7 +200,6 @@ void rpc_ncacn_http_ntlm_uninit(RpcChannel* channel)
 	if (!channel)
 		return;
 
-	ntlm_client_uninit(channel->ntlm);
 	ntlm_free(channel->ntlm);
 	channel->ntlm = NULL;
 }
