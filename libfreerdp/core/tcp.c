@@ -664,7 +664,7 @@ BIO_METHOD* BIO_s_buffered_socket(void)
 	return bio_methods;
 }
 
-static char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6)
+char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6)
 {
 	char ipAddress[INET6_ADDRSTRLEN + 1] = { 0 };
 	struct sockaddr_in6* sockaddr_ipv6 = (struct sockaddr_in6*)addr;
@@ -762,16 +762,39 @@ static int freerdp_uds_connect(const char* path)
 #endif
 }
 
-static BOOL freerdp_tcp_resolve_hostname(rdpContext* context, const char* hostname)
+struct addrinfo* freerdp_tcp_resolve_host(const char* hostname, int port, int ai_flags)
 {
+	char* service = NULL;
+	char port_str[16];
 	int status;
 	struct addrinfo hints = { 0 };
 	struct addrinfo* result = NULL;
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	status = getaddrinfo(hostname, NULL, &hints, &result);
+	hints.ai_flags = ai_flags;
+
+	if (port >= 0)
+	{
+		sprintf_s(port_str, sizeof(port_str) - 1, "%d", port);
+		service = port_str;
+	}
+
+	status = getaddrinfo(hostname, service, &hints, &result);
 
 	if (status)
+	{
+		freeaddrinfo(result);
+		return NULL;
+	}
+
+	return result;
+}
+
+static BOOL freerdp_tcp_is_hostname_resolvable(rdpContext* context, const char* hostname)
+{
+	struct addrinfo* result = freerdp_tcp_resolve_host(hostname, -1, 0);
+
+	if (!result)
 	{
 		if (!freerdp_get_last_error(context))
 			freerdp_set_last_error(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
@@ -870,13 +893,10 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 	SOCKET* sockfds;
 	HANDLE* events;
 	DWORD waitStatus;
-	char port_str[16];
-	struct addrinfo hints;
 	struct addrinfo* addr;
 	struct addrinfo* result;
 	struct addrinfo** addrs;
 	struct addrinfo** results;
-	sprintf_s(port_str, sizeof(port_str) - 1, "%d", port);
 	sockfds = (SOCKET*) calloc(count, sizeof(SOCKET));
 	events = (HANDLE*) calloc(count + 1, sizeof(HANDLE));
 	addrs = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
@@ -893,19 +913,15 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 
 	for (index = 0; index < count; index++)
 	{
-		ZeroMemory(&hints, sizeof(hints));
-		hints.ai_family = AF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
+		int port = -1;
 
 		if (ports)
-			sprintf_s(port_str, sizeof(port_str) - 1, "%"PRIu32"", ports[index]);
+			port = ports[index];
 
-		status = getaddrinfo(hostnames[index], port_str, &hints, &result);
+		result = freerdp_tcp_resolve_host(hostnames[index], port, 0);
 
-		if (status)
-		{
+		if (!result)
 			continue;
-		}
 
 		addr = result;
 
@@ -1089,7 +1105,6 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
                         const char* hostname, int port, int timeout)
 {
-	int status;
 	int sockfd;
 	UINT32 optval;
 	socklen_t optlen;
@@ -1130,7 +1145,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 
 		if (!settings->GatewayEnabled)
 		{
-			if (!freerdp_tcp_resolve_hostname(context, hostname) || settings->RemoteAssistanceMode)
+			if (!freerdp_tcp_is_hostname_resolvable(context, hostname) || settings->RemoteAssistanceMode)
 			{
 				if (settings->TargetNetAddressCount > 0)
 				{
@@ -1146,23 +1161,16 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 
 		if (sockfd <= 0)
 		{
-			char port_str[16];
 			char* peerAddress;
-			struct addrinfo hints;
 			struct addrinfo* addr;
 			struct addrinfo* result;
-			ZeroMemory(&hints, sizeof(hints));
-			hints.ai_family = AF_UNSPEC;
-			hints.ai_socktype = SOCK_STREAM;
-			sprintf_s(port_str, sizeof(port_str) - 1, "%d", port);
-			status = getaddrinfo(hostname, port_str, &hints, &result);
+			result = freerdp_tcp_resolve_host(hostname, port, 0);
 
-			if (status)
+			if (!result)
 			{
 				if (!freerdp_get_last_error(context))
 					freerdp_set_last_error(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
 
-				WLog_ERR(TAG, "getaddrinfo: %s", gai_strerror(status));
 				return -1;
 			}
 
