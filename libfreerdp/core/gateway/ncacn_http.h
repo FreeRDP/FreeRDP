@@ -28,13 +28,13 @@
 FREERDP_LOCAL BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel);
 FREERDP_LOCAL void rpc_ncacn_http_ntlm_uninit(RpcChannel* channel);
 
-FREERDP_LOCAL BOOL rpc_ncacn_http_send_in_channel_request(RpcInChannel* inChannel);
-FREERDP_LOCAL BOOL rpc_ncacn_http_recv_in_channel_response(RpcInChannel* inChannel,
+FREERDP_LOCAL BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel);
+FREERDP_LOCAL BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel,
         HttpResponse* response);
 
-FREERDP_LOCAL BOOL rpc_ncacn_http_send_out_channel_request(RpcOutChannel* outChannel,
+FREERDP_LOCAL BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel,
         BOOL replacement);
-FREERDP_LOCAL BOOL rpc_ncacn_http_recv_out_channel_response(RpcOutChannel* outChannel,
+FREERDP_LOCAL BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel,
         HttpResponse* response);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H */

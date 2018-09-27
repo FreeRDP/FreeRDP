@@ -459,14 +459,14 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	inChannel = connection->DefaultInChannel;
 	outChannel = connection->DefaultOutChannel;
-	BIO_get_event(outChannel->tls->bio, &outChannelEvent);
+	BIO_get_event(outChannel->common.tls->bio, &outChannelEvent);
 
 	if (outChannel->State < CLIENT_OUT_CHANNEL_STATE_OPENED)
 	{
 		if (WaitForSingleObject(outChannelEvent, 0) != WAIT_OBJECT_0)
 			return 1;
 
-		response = http_response_recv(outChannel->tls);
+		response = http_response_recv(outChannel->common.tls);
 
 		if (!response)
 			return -1;
@@ -474,7 +474,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		if (outChannel->State == CLIENT_OUT_CHANNEL_STATE_SECURITY)
 		{
 			/* Receive OUT Channel Response */
-			if (!rpc_ncacn_http_recv_out_channel_response(outChannel, response))
+			if (!rpc_ncacn_http_recv_out_channel_response(&outChannel->common, response))
 			{
 				http_response_free(response);
 				WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
@@ -483,14 +483,14 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 			/* Send OUT Channel Request */
 
-			if (!rpc_ncacn_http_send_out_channel_request(outChannel, FALSE))
+			if (!rpc_ncacn_http_send_out_channel_request(&outChannel->common, FALSE))
 			{
 				http_response_free(response);
 				WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 				return -1;
 			}
 
-			rpc_ncacn_http_ntlm_uninit((RpcChannel*)outChannel);
+			rpc_ncacn_http_ntlm_uninit(&outChannel->common);
 			rpc_out_channel_transition_to_state(outChannel,
 			                                    CLIENT_OUT_CHANNEL_STATE_NEGOTIATED);
 
@@ -523,7 +523,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		if (WaitForSingleObject(outChannelEvent, 0) != WAIT_OBJECT_0)
 			return 1;
 
-		response = http_response_recv(outChannel->tls);
+		response = http_response_recv(outChannel->common.tls);
 
 		if (!response)
 			return -1;
@@ -560,20 +560,15 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		{
 			while (Stream_GetPosition(fragment) < RPC_COMMON_FIELDS_LENGTH)
 			{
-				status = rpc_out_channel_read(outChannel, Stream_Pointer(fragment),
-				                              RPC_COMMON_FIELDS_LENGTH - Stream_GetPosition(fragment));
+				status = rpc_channel_read(&outChannel->common, fragment,
+				                          RPC_COMMON_FIELDS_LENGTH - Stream_GetPosition(fragment));
 
 				if (status < 0)
 					return -1;
 
-				if (!status)
+				if (Stream_GetPosition(fragment) < RPC_COMMON_FIELDS_LENGTH)
 					return 0;
-
-				Stream_Seek(fragment, status);
 			}
-
-			if (Stream_GetPosition(fragment) < RPC_COMMON_FIELDS_LENGTH)
-				return status;
 
 			header = (rpcconn_common_hdr_t*)Stream_Buffer(fragment);
 
@@ -587,8 +582,8 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 			while (Stream_GetPosition(fragment) < header->frag_length)
 			{
-				status = rpc_out_channel_read(outChannel, Stream_Pointer(fragment),
-				                              header->frag_length - Stream_GetPosition(fragment));
+				status = rpc_channel_read(&outChannel->common, fragment,
+				                          header->frag_length - Stream_GetPosition(fragment));
 
 				if (status < 0)
 				{
@@ -596,16 +591,10 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 					return -1;
 				}
 
-				if (!status)
+				if (Stream_GetPosition(fragment) < header->frag_length)
 					return 0;
-
-				Stream_Seek(fragment, status);
 			}
 
-			if (status < 0)
-				return -1;
-
-			if (Stream_GetPosition(fragment) >= header->frag_length)
 			{
 				/* complete fragment received */
 				Stream_SealLength(fragment);
@@ -618,7 +607,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 				/* channel recycling may update channel pointers */
 				if (outChannel->State == CLIENT_OUT_CHANNEL_STATE_RECYCLED && connection->NonDefaultOutChannel)
 				{
-					rpc_out_channel_free(connection->DefaultOutChannel);
+					rpc_channel_free(&connection->DefaultOutChannel->common);
 					connection->DefaultOutChannel = connection->NonDefaultOutChannel;
 					connection->NonDefaultOutChannel = NULL;
 					rpc_out_channel_transition_to_state(connection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED);
@@ -642,22 +631,22 @@ static int rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 	RpcOutChannel* nextOutChannel;
 	HANDLE nextOutChannelEvent = NULL;
 	nextOutChannel = rpc->VirtualConnection->NonDefaultOutChannel;
-	BIO_get_event(nextOutChannel->tls->bio, &nextOutChannelEvent);
+	BIO_get_event(nextOutChannel->common.tls->bio, &nextOutChannelEvent);
 
 	if (WaitForSingleObject(nextOutChannelEvent, 0) != WAIT_OBJECT_0)
 		return 1;
 
-	response = http_response_recv(nextOutChannel->tls);
+	response = http_response_recv(nextOutChannel->common.tls);
 
 	if (response)
 	{
 		if (nextOutChannel->State == CLIENT_OUT_CHANNEL_STATE_SECURITY)
 		{
-			if (rpc_ncacn_http_recv_out_channel_response(nextOutChannel, response))
+			if (rpc_ncacn_http_recv_out_channel_response(&nextOutChannel->common, response))
 			{
-				if (rpc_ncacn_http_send_out_channel_request(nextOutChannel, TRUE))
+				if (rpc_ncacn_http_send_out_channel_request(&nextOutChannel->common, TRUE))
 				{
-					rpc_ncacn_http_ntlm_uninit((RpcChannel*) nextOutChannel);
+					rpc_ncacn_http_ntlm_uninit(&nextOutChannel->common);
 					status = rts_send_OUT_R1_A3_pdu(rpc);
 
 					if (status >= 0)
@@ -720,21 +709,21 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	inChannel = connection->DefaultInChannel;
 	outChannel = connection->DefaultOutChannel;
-	BIO_get_event(inChannel->tls->bio, &InChannelEvent);
+	BIO_get_event(inChannel->common.tls->bio, &InChannelEvent);
 
 	if (WaitForSingleObject(InChannelEvent, 0) != WAIT_OBJECT_0)
 		return 1;
 
 	if (inChannel->State < CLIENT_IN_CHANNEL_STATE_OPENED)
 	{
-		response = http_response_recv(inChannel->tls);
+		response = http_response_recv(inChannel->common.tls);
 
 		if (!response)
 			return -1;
 
 		if (inChannel->State == CLIENT_IN_CHANNEL_STATE_SECURITY)
 		{
-			if (!rpc_ncacn_http_recv_in_channel_response(inChannel, response))
+			if (!rpc_ncacn_http_recv_in_channel_response(&inChannel->common, response))
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_recv_in_channel_response failure");
 				http_response_free(response);
@@ -743,14 +732,14 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 			/* Send IN Channel Request */
 
-			if (!rpc_ncacn_http_send_in_channel_request(inChannel))
+			if (!rpc_ncacn_http_send_in_channel_request(&inChannel->common))
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
 				http_response_free(response);
 				return -1;
 			}
 
-			rpc_ncacn_http_ntlm_uninit((RpcChannel*) inChannel);
+			rpc_ncacn_http_ntlm_uninit(&inChannel->common);
 			rpc_in_channel_transition_to_state(inChannel,
 			                                   CLIENT_IN_CHANNEL_STATE_NEGOTIATED);
 
@@ -779,7 +768,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 	}
 	else
 	{
-		response = http_response_recv(inChannel->tls);
+		response = http_response_recv(inChannel->common.tls);
 
 		if (!response)
 			return -1;
@@ -840,8 +829,8 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length
 	int status;
 	RpcClientCall* clientCall;
 	rpcconn_common_hdr_t* header;
-	rdpRpc* rpc = inChannel->rpc;
-	status = rpc_in_channel_write(inChannel, buffer, length);
+	rdpRpc* rpc = inChannel->common.rpc;
+	status = rpc_channel_write(&inChannel->common, buffer, length);
 
 	if (status <= 0)
 		return -1;

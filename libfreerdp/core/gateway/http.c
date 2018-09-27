@@ -374,7 +374,7 @@ static BOOL http_encode_print(wStream* s, const char* fmt, ...)
 	if (!Stream_EnsureRemainingCapacity(s, length))
 		return FALSE;
 
-	str = Stream_Pointer(s);
+	str = (char*)Stream_Pointer(s);
 	va_start(ap, fmt);
 	used = vsnprintf(str, length, fmt, ap);
 	va_end(ap);
@@ -724,7 +724,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 		VALGRIND_MAKE_MEM_DEFINED(Stream_Pointer(response->data), status);
 #endif
-		Stream_Seek(response->data, status);
+		Stream_Seek(response->data, (size_t)status);
 
 		if (Stream_GetRemainingLength(response->data) < 1024)
 		{
@@ -831,7 +831,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 				continue;
 			}
 
-			Stream_Seek(response->data, status);
+			Stream_Seek(response->data, (size_t)status);
 			response->BodyLength += status;
 
 			if (response->BodyLength > RESPONSE_SIZE_LIMIT)
@@ -909,7 +909,7 @@ SSIZE_T http_request_get_content_length(HttpRequest* request)
 	if (!request)
 		return -1;
 
-	return request->ContentLength;
+	return (SSIZE_T)request->ContentLength;
 }
 
 BOOL http_request_set_content_length(HttpRequest* request, size_t length)
@@ -934,7 +934,7 @@ SSIZE_T http_response_get_body_length(HttpResponse* response)
 	if (!response)
 		return -1;
 
-	return response->BodyLength;
+	return (SSIZE_T)response->BodyLength;
 }
 
 const char* http_response_get_auth_token(HttpResponse* respone, const char* method)

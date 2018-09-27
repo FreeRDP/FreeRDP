@@ -585,17 +585,14 @@ struct rpc_client_call
 };
 typedef struct rpc_client_call RpcClientCall;
 
-#define RPC_CHANNEL_COMMON() \
-	rdpRpc* rpc; \
-	BIO* bio; \
-	rdpTls* tls; \
-	rdpNtlm* ntlm; \
-	HttpContext* http; \
-	BYTE Cookie[16]
-
 struct rpc_channel
 {
-	RPC_CHANNEL_COMMON();
+	rdpRpc* rpc;
+	BIO* bio;
+	rdpTls* tls;
+	rdpNtlm* ntlm;
+	HttpContext* http;
+	BYTE Cookie[16];
 };
 typedef struct rpc_channel RpcChannel;
 
@@ -627,7 +624,7 @@ struct rpc_in_channel
 {
 	/* Sending Channel */
 
-	RPC_CHANNEL_COMMON();
+	RpcChannel common;
 
 	CLIENT_IN_CHANNEL_STATE State;
 
@@ -664,7 +661,7 @@ struct rpc_out_channel
 {
 	/* Receiving Channel */
 
-	RPC_CHANNEL_COMMON();
+	RpcChannel common;
 
 	CLIENT_OUT_CHANNEL_STATE State;
 
@@ -774,25 +771,24 @@ FREERDP_LOCAL UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
 FREERDP_LOCAL BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header,
         UINT32* offset, UINT32* length);
 
-FREERDP_LOCAL int rpc_in_channel_write(RpcInChannel* inChannel,
-                                       const BYTE* data, int length);
+FREERDP_LOCAL SSIZE_T rpc_channel_write(RpcChannel* channel,
+                                        const BYTE* data, size_t length);
 
-FREERDP_LOCAL int rpc_out_channel_read(RpcOutChannel* outChannel, BYTE* data,
-                                       int length);
-FREERDP_LOCAL int rpc_out_channel_write(RpcOutChannel* outChannel,
-                                        const BYTE* data, int length);
+FREERDP_LOCAL SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s,
+                                       size_t length);
+
+FREERDP_LOCAL void rpc_channel_free(RpcChannel* channel);
 
 FREERDP_LOCAL RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc);
 FREERDP_LOCAL int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel,
         int timeout);
-FREERDP_LOCAL void rpc_out_channel_free(RpcOutChannel* outChannel);
 
-FREERDP_LOCAL int rpc_in_channel_transition_to_state(RpcInChannel* inChannel,
+FREERDP_LOCAL BOOL rpc_in_channel_transition_to_state(RpcInChannel* inChannel,
         CLIENT_IN_CHANNEL_STATE state);
-FREERDP_LOCAL int rpc_out_channel_transition_to_state(RpcOutChannel* outChannel,
+FREERDP_LOCAL BOOL rpc_out_channel_transition_to_state(RpcOutChannel* outChannel,
         CLIENT_OUT_CHANNEL_STATE state);
 
-FREERDP_LOCAL int rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
+FREERDP_LOCAL BOOL rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
         RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state);
 
 FREERDP_LOCAL BOOL rpc_connect(rdpRpc* rpc, int timeout);

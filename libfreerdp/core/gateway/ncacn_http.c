@@ -68,7 +68,7 @@ fail:
 	return s;
 }
 
-BOOL rpc_ncacn_http_send_in_channel_request(RpcInChannel* inChannel)
+BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 {
 	wStream* s;
 	int status;
@@ -89,15 +89,15 @@ BOOL rpc_ncacn_http_send_in_channel_request(RpcInChannel* inChannel)
 	if (!s)
 		return -1;
 
-	status = rpc_in_channel_write(inChannel, Stream_Buffer(s), Stream_Length(s));
+	status = rpc_channel_write(inChannel, Stream_Buffer(s), Stream_Length(s));
 	Stream_Free(s, TRUE);
 	return (status > 0) ? 1 : -1;
 }
 
-BOOL rpc_ncacn_http_recv_in_channel_response(RpcInChannel* inChannel,
+BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel,
         HttpResponse* response)
 {
-	char* token64 = NULL;
+	const char* token64 = NULL;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm;
@@ -205,12 +205,11 @@ void rpc_ncacn_http_ntlm_uninit(RpcChannel* channel)
 	channel->ntlm = NULL;
 }
 
-BOOL rpc_ncacn_http_send_out_channel_request(RpcOutChannel* outChannel,
+BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel,
         BOOL replacement)
 {
 	BOOL rc = TRUE;
 	wStream* s;
-	int status;
 	int contentLength;
 	BOOL continueNeeded;
 	rdpNtlm* ntlm;
@@ -233,17 +232,17 @@ BOOL rpc_ncacn_http_send_out_channel_request(RpcOutChannel* outChannel,
 	if (!s)
 		return -1;
 
-	if (rpc_out_channel_write(outChannel, Stream_Buffer(s), Stream_Length(s)) < 0)
+	if (rpc_channel_write(outChannel, Stream_Buffer(s), Stream_Length(s)) < 0)
 		rc = FALSE;
 
 	Stream_Free(s, TRUE);
 	return rc;
 }
 
-BOOL rpc_ncacn_http_recv_out_channel_response(RpcOutChannel* outChannel,
+BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel,
         HttpResponse* response)
 {
-	char* token64 = NULL;
+	const char* token64 = NULL;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm;

@@ -362,7 +362,7 @@ out:
 
 static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 {
-	char* token64 = NULL;
+	const char* token64 = NULL;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
 	long StatusCode;
