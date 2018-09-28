@@ -189,7 +189,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 			case VIRTUAL_CONNECTION_STATE_WAIT_A3W:
 				rts = (rpcconn_rts_hdr_t*) Stream_Buffer(pdu->s);
 
-				if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
+				if (!rts_match_pdu_signature(&RTS_PDU_CONN_A3_SIGNATURE, rts))
 				{
 					WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/A3");
 					return -1;
@@ -211,7 +211,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 			case VIRTUAL_CONNECTION_STATE_WAIT_C2:
 				rts = (rpcconn_rts_hdr_t*) Stream_Buffer(pdu->s);
 
-				if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
+				if (!rts_match_pdu_signature(&RTS_PDU_CONN_C2_SIGNATURE, rts))
 				{
 					WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/C2");
 					return -1;
