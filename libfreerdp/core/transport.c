@@ -393,7 +393,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 
 			if (status)
 			{
-				transport->frontBio = transport->tsg->bio;
+				transport->frontBio = tsg_get_bio(transport->tsg);
 				transport->layer = TRANSPORT_LAYER_TSG;
 				status = TRUE;
 			}

@@ -764,6 +764,8 @@ static int rpc_out_channel_connect(RpcOutChannel* outChannel, int timeout)
 	if (!outChannel || !outChannel->common.client || !outChannel->common.client->context)
 		return -1;
 
+	context = outChannel->common.client->context;
+
 	/* Connect OUT Channel */
 
 	if (rpc_channel_tls_connect(&outChannel->common, timeout) < 0)
@@ -792,6 +794,8 @@ int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout)
 
 	if (!outChannel || !outChannel->common.client || !outChannel->common.client->context)
 		return -1;
+
+	context = outChannel->common.client->context;
 
 	/* Connect OUT Channel */
 

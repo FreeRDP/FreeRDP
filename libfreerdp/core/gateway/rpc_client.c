@@ -273,7 +273,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 
 			rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_CONTEXT_NEGOTIATED);
 
-			if (tsg_proxy_begin(tsg) < 0)
+			if (!tsg_proxy_begin(tsg))
 			{
 				WLog_ERR(TAG, "tsg_proxy_begin failure");
 				return -1;
@@ -288,7 +288,10 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 	}
 	else if (rpc->State >= RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
-		status = tsg_recv_pdu(tsg, pdu);
+		if (!tsg_recv_pdu(tsg, pdu))
+			status = -1;
+		else
+			status = 1;
 	}
 
 	return status;
@@ -331,7 +334,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				TerminateEventArgs e;
 				rpc->result = *((UINT32*) &buffer[StubOffset]);
 				freerdp_abort_connect(rpc->context->instance);
-				rpc->transport->tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
+				tsg_set_state(rpc->transport->tsg, TSG_STATE_TUNNEL_CLOSE_PENDING);
 				EventArgsInit(&e, "freerdp");
 				e.code = 0;
 				PubSub_OnTerminate(rpc->context->pubSub, rpc->context, &e);
@@ -865,7 +868,7 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length
 	return status;
 }
 
-int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
+BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 {
 	SECURITY_STATUS status;
 	UINT32 offset;
@@ -873,19 +876,36 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	UINT32 stub_data_pad;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
-	RpcClientCall* clientCall;
-	rdpNtlm* ntlm = rpc->ntlm;
+	RpcClientCall* clientCall = NULL;
+	rdpNtlm* ntlm;
 	SECURITY_STATUS encrypt_status;
 	rpcconn_request_hdr_t* request_pdu = NULL;
-	RpcVirtualConnection* connection = rpc->VirtualConnection;
-	RpcInChannel* inChannel = connection->DefaultInChannel;
+	RpcVirtualConnection* connection;
+	RpcInChannel* inChannel;
+	size_t length;
+
+	if (!s || !rpc)
+		return FALSE;
+
+	ntlm = rpc->ntlm;
+	connection = rpc->VirtualConnection;
 
 	if (!ntlm || !ntlm->table)
 	{
 		WLog_ERR(TAG, "invalid ntlm context");
-		return -1;
+		return FALSE;
 	}
 
+	if (!connection)
+		return FALSE;
+
+	inChannel = connection->DefaultInChannel;
+
+	if (!inChannel)
+		return FALSE;
+
+	Stream_SealLength(s);
+	length = Stream_Length(s);
 	status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES,
 	         &ntlm->ContextSizes);
 
@@ -893,14 +913,14 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	{
 		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08"PRIX32"]",
 		         GetSecurityStatusString(status), status);
-		return -1;
+		return FALSE;
 	}
 
 	ZeroMemory(&Buffers, sizeof(Buffers));
 	request_pdu = (rpcconn_request_hdr_t*) calloc(1, sizeof(rpcconn_request_hdr_t));
 
 	if (!request_pdu)
-		return -1;
+		return FALSE;
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) request_pdu);
 	request_pdu->ptype = PTYPE_REQUEST;
@@ -913,15 +933,15 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	clientCall = rpc_client_call_new(request_pdu->call_id, request_pdu->opnum);
 
 	if (!clientCall)
-		goto out_free_pdu;
+		goto fail;
 
 	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) < 0)
-		goto out_free_clientCall;
+		goto fail;
 
 	if (request_pdu->opnum == TsProxySetupReceivePipeOpnum)
 		rpc->PipeCallId = request_pdu->call_id;
 
-	request_pdu->stub_data = data;
+	request_pdu->stub_data = Stream_Buffer(s);
 	offset = 24;
 	stub_data_pad = rpc_offset_align(&offset, 8);
 	offset += length;
@@ -935,7 +955,7 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	buffer = (BYTE*) calloc(1, request_pdu->frag_length);
 
 	if (!buffer)
-		goto out_free_pdu;
+		goto fail;
 
 	CopyMemory(buffer, request_pdu, 24);
 	offset = 24;
@@ -953,7 +973,7 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	Buffers[1].pvBuffer = calloc(1, Buffers[1].cbBuffer);
 
 	if (!Buffers[1].pvBuffer)
-		goto out_free_pdu;
+		goto fail;
 
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
@@ -964,7 +984,7 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	{
 		WLog_ERR(TAG, "EncryptMessage status %s [0x%08"PRIX32"]",
 		         GetSecurityStatusString(encrypt_status), encrypt_status);
-		goto out_free_pdu;
+		goto fail;
 	}
 
 	CopyMemory(&buffer[offset], Buffers[1].pvBuffer, Buffers[1].cbBuffer);
@@ -972,18 +992,19 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	free(Buffers[1].pvBuffer);
 
 	if (rpc_in_channel_send_pdu(inChannel, buffer, request_pdu->frag_length) < 0)
-		length = -1;
+		goto fail;
 
 	free(request_pdu);
 	free(buffer);
-	return length;
-out_free_clientCall:
+	Stream_Free(s, TRUE);
+	return TRUE;
+fail:
 	rpc_client_call_free(clientCall);
-out_free_pdu:
 	free(buffer);
 	free(Buffers[1].pvBuffer);
 	free(request_pdu);
-	return -1;
+	Stream_Free(s, TRUE);
+	return FALSE;
 }
 
 static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT16* port,
