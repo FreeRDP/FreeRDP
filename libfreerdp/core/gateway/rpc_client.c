@@ -878,11 +878,11 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	SecBufferDesc Message;
 	RpcClientCall* clientCall = NULL;
 	rdpNtlm* ntlm;
-	SECURITY_STATUS encrypt_status;
 	rpcconn_request_hdr_t* request_pdu = NULL;
 	RpcVirtualConnection* connection;
 	RpcInChannel* inChannel;
 	size_t length;
+	SSIZE_T size;
 
 	if (!s || !rpc)
 		return FALSE;
@@ -890,7 +890,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	ntlm = rpc->ntlm;
 	connection = rpc->VirtualConnection;
 
-	if (!ntlm || !ntlm->table)
+	if (!ntlm)
 	{
 		WLog_ERR(TAG, "invalid ntlm context");
 		return FALSE;
@@ -906,10 +906,8 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 
 	Stream_SealLength(s);
 	length = Stream_Length(s);
-	status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES,
-	         &ntlm->ContextSizes);
 
-	if (status != SEC_E_OK)
+	if (ntlm_client_query_auth_size(ntlm) < 0)
 	{
 		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08"PRIX32"]",
 		         GetSecurityStatusString(status), status);
@@ -922,10 +920,15 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	if (!request_pdu)
 		return FALSE;
 
+	size = ntlm_client_get_context_max_size(ntlm);
+
+	if (size < 0)
+		goto fail;
+
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) request_pdu);
 	request_pdu->ptype = PTYPE_REQUEST;
 	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	request_pdu->auth_length = (UINT16) ntlm->ContextSizes.cbMaxSignature;
+	request_pdu->auth_length = (UINT16) size;
 	request_pdu->call_id = rpc->CallId++;
 	request_pdu->alloc_hint = length;
 	request_pdu->p_cont_id = 0x0000;
@@ -969,7 +972,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	Buffers[1].BufferType = SECBUFFER_TOKEN; /* signature */
 	Buffers[0].pvBuffer = buffer;
 	Buffers[0].cbBuffer = offset;
-	Buffers[1].cbBuffer = ntlm->ContextSizes.cbMaxSignature;
+	Buffers[1].cbBuffer = size;
 	Buffers[1].pvBuffer = calloc(1, Buffers[1].cbBuffer);
 
 	if (!Buffers[1].pvBuffer)
@@ -978,14 +981,9 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
-	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, rpc->SendSeqNum++);
 
-	if (encrypt_status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "EncryptMessage status %s [0x%08"PRIX32"]",
-		         GetSecurityStatusString(encrypt_status), encrypt_status);
+	if (!ntlm_client_encrypt(ntlm, 0, &Message, rpc->SendSeqNum++))
 		goto fail;
-	}
 
 	CopyMemory(&buffer[offset], Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 	offset += Buffers[1].cbBuffer;

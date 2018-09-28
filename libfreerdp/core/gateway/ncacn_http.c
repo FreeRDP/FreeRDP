@@ -76,6 +76,7 @@ BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 	BOOL continueNeeded;
 	rdpNtlm* ntlm;
 	HttpContext* http;
+	const SecBuffer* buffer;
 
 	if (!inChannel || !inChannel->ntlm || !inChannel->http)
 		return FALSE;
@@ -84,7 +85,8 @@ BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 	http = inChannel->http;
 	continueNeeded = ntlm_authenticate(ntlm);
 	contentLength = (continueNeeded) ? 0 : 0x40000000;
-	s = rpc_ntlm_http_request(http, "RPC_IN_DATA", contentLength, &ntlm->outputBuffer[0]);
+	buffer = ntlm_client_get_output_buffer(ntlm);
+	s = rpc_ntlm_http_request(http, "RPC_IN_DATA", contentLength, buffer);
 
 	if (!s)
 		return -1;
@@ -112,10 +114,7 @@ BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel,
 		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
 
 	if (ntlmTokenData && ntlmTokenLength)
-	{
-		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
-		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
-	}
+		return ntlm_client_set_input_buffer(ntlm, FALSE, ntlmTokenData, ntlmTokenLength);
 
 	return TRUE;
 }
@@ -213,6 +212,7 @@ BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel,
 	BOOL continueNeeded;
 	rdpNtlm* ntlm;
 	HttpContext* http;
+	const SecBuffer* buffer;
 
 	if (!outChannel || !outChannel->ntlm || !outChannel->http)
 		return FALSE;
@@ -226,7 +226,8 @@ BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel,
 	else
 		contentLength = (continueNeeded) ? 0 : 120;
 
-	s = rpc_ntlm_http_request(http, "RPC_OUT_DATA", contentLength, &ntlm->outputBuffer[0]);
+	buffer = ntlm_client_get_output_buffer(ntlm);
+	s = rpc_ntlm_http_request(http, "RPC_OUT_DATA", contentLength, buffer);
 
 	if (!s)
 		return -1;
@@ -256,10 +257,7 @@ BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel,
 		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
 
 	if (ntlmTokenData && ntlmTokenLength)
-	{
-		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
-		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
-	}
+		return ntlm_client_set_input_buffer(ntlm, FALSE, ntlmTokenData, ntlmTokenLength);
 
 	return TRUE;
 }

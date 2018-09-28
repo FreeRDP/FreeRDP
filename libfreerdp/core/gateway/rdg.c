@@ -300,7 +300,7 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 
 static BOOL rdg_set_ntlm_auth_header(rdpNtlm* ntlm, HttpRequest* request)
 {
-	SecBuffer* ntlmToken = ntlm->outputBuffer;
+	const SecBuffer* ntlmToken = ntlm_client_get_output_buffer(ntlm);
 	char* base64NtlmToken = NULL;
 
 	if (ntlmToken)
@@ -388,8 +388,8 @@ static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 
 	if (ntlmTokenData && ntlmTokenLength)
 	{
-		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
-		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
+		if (!ntlm_client_set_input_buffer(ntlm, FALSE, ntlmTokenData, ntlmTokenLength))
+			return FALSE;
 	}
 
 	ntlm_authenticate(ntlm);
