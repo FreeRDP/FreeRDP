@@ -203,6 +203,9 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window)
 	xfFloatbar* floatbar;
 	XWindowAttributes attr;
 	int i, width;
+	if (!xfc)
+		return NULL;
+
 	floatbar = (xfFloatbar*) calloc(1, sizeof(xfFloatbar));
 	floatbar->locked = TRUE;
 	XGetWindowAttributes(xfc->display, window, &attr);
@@ -297,6 +300,8 @@ static void xf_floatbar_event_expose(xfContext* xfc, XEvent* event)
 	XSetForeground(xfc->display, gc, xf_floatbar_get_color(xfc, FLOATBAR_COLOR_FOREGROUND));
 	XDrawString(xfc->display, floatbar->handle, gc, floatbar->width / 2 - len * 2, 15,
 	            xfc->context.settings->ServerHostname, len);
+	XFreeGC(xfc->display, gc);
+	XFreeGC(xfc->display, shape_gc);
 }
 
 static xfFloatbarButton* xf_floatbar_get_button(xfContext* xfc, XEvent* event)
