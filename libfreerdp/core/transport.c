@@ -782,13 +782,16 @@ int transport_write(rdpTransport* transport, wStream* s)
 	int status = -1;
 	int writtenlength = 0;
 
-	if (!transport)
+	if (!s)
 		return -1;
+
+	if (!transport)
+		goto fail;
 
 	if (!transport->frontBio)
 	{
 		transport->layer = TRANSPORT_LAYER_CLOSED;
-		return -1;
+		goto fail;
 	}
 
 	EnterCriticalSection(&(transport->WriteLock));
@@ -868,8 +871,9 @@ out_cleanup:
 		transport->layer = TRANSPORT_LAYER_CLOSED;
 	}
 
-	Stream_Release(s);
 	LeaveCriticalSection(&(transport->WriteLock));
+fail:
+	Stream_Release(s);
 	return status;
 }
 
