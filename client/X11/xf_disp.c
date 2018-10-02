@@ -58,12 +58,7 @@ static UINT xf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, in
 
 static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 {
-	rdpSettings* settings;
-
-	if (!xfDisp || !xfDisp->xfc || !xfDisp->xfc->context.settings)
-		return FALSE;
-
-	settings = xfDisp->xfc->context.settings;
+	rdpSettings* settings = xfDisp->xfc->context.settings;
 
 	if (xfDisp->lastSentWidth != xfDisp->targetWidth)
 		return TRUE;
@@ -88,16 +83,7 @@ static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 
 static BOOL xf_update_last_sent(xfDispContext* xfDisp)
 {
-	rdpSettings* settings;
-
-	if (!xfDisp || !xfDisp->xfc)
-		return FALSE;
-
-	settings = xfDisp->xfc->context.settings;
-
-	if (!settings)
-		return FALSE;
-
+	rdpSettings* settings = xfDisp->xfc->context.settings;
 	xfDisp->lastSentWidth = xfDisp->targetWidth;
 	xfDisp->lastSentHeight = xfDisp->targetHeight;
 	xfDisp->lastSentDesktopOrientation = settings->DesktopOrientation;
@@ -160,7 +146,6 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 	return xf_update_last_sent(xfDisp);
 }
 
-
 static BOOL xf_disp_set_window_resizable(xfDispContext* xfDisp)
 {
 	XSizeHints* size_hints;
@@ -180,12 +165,37 @@ static BOOL xf_disp_set_window_resizable(xfDispContext* xfDisp)
 	return TRUE;
 }
 
+static BOOL xf_disp_check_context(void* context, xfContext** ppXfc, xfDispContext** ppXfDisp,
+                                  rdpSettings** ppSettings)
+{
+	xfContext* xfc;
+
+	if (!context)
+		return FALSE;
+
+	xfc = (xfContext*)context;
+
+	if (!(xfc->xfDisp))
+		return FALSE;
+
+	if (!xfc->context.settings)
+		return FALSE;
+
+	*ppXfc = xfc;
+	*ppXfDisp = xfc->xfDisp;
+	*ppSettings = xfc->context.settings;
+	return TRUE;
+}
 
 static void xf_disp_OnActivated(void* context, ActivatedEventArgs* e)
 {
-	xfContext* xfc = (xfContext*)context;
-	xfDispContext* xfDisp = xfc->xfDisp;
-	rdpSettings* settings = xfc->context.settings;
+	xfContext* xfc;
+	xfDispContext* xfDisp;
+	rdpSettings* settings;
+
+	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
+		return;
+
 	xfDisp->waitingResize = FALSE;
 
 	if (xfDisp->activated && !settings->Fullscreen)
@@ -199,12 +209,15 @@ static void xf_disp_OnActivated(void* context, ActivatedEventArgs* e)
 	}
 }
 
-
 static void xf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
 {
-	xfContext* xfc = (xfContext*)context;
-	xfDispContext* xfDisp = xfc->xfDisp;
-	rdpSettings* settings = xfc->context.settings;
+	xfContext* xfc;
+	xfDispContext* xfDisp;
+	rdpSettings* settings;
+
+	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
+		return;
+
 	xfDisp->waitingResize = FALSE;
 
 	if (xfDisp->activated && !settings->Fullscreen)
@@ -216,9 +229,12 @@ static void xf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
 
 static void xf_disp_OnTimer(void* context, TimerEventArgs* e)
 {
-	xfContext* xfc = (xfContext*)context;
-	xfDispContext* xfDisp = xfc->xfDisp;
-	rdpSettings* settings = xfc->context.settings;
+	xfContext* xfc;
+	xfDispContext* xfDisp;
+	rdpSettings* settings;
+
+	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
+		return;
 
 	if (!xfDisp->activated || settings->Fullscreen)
 		return;
@@ -228,7 +244,12 @@ static void xf_disp_OnTimer(void* context, TimerEventArgs* e)
 
 xfDispContext* xf_disp_new(xfContext* xfc)
 {
-	xfDispContext* ret = calloc(1, sizeof(xfDispContext));
+	xfDispContext* ret;
+
+	if (!xfc || !xfc->context.settings || !xfc->context.pubSub)
+		return NULL;
+
+	ret = calloc(1, sizeof(xfDispContext));
 
 	if (!ret)
 		return NULL;
@@ -252,13 +273,20 @@ xfDispContext* xf_disp_new(xfContext* xfc)
 
 void xf_disp_free(xfDispContext* disp)
 {
-	PubSub_UnsubscribeActivated(disp->xfc->context.pubSub, xf_disp_OnActivated);
-	PubSub_UnsubscribeGraphicsReset(disp->xfc->context.pubSub, xf_disp_OnGraphicsReset);
-	PubSub_UnsubscribeTimer(disp->xfc->context.pubSub, xf_disp_OnTimer);
+	if (!disp)
+		return;
+
+	if (disp->xfc)
+	{
+		PubSub_UnsubscribeActivated(disp->xfc->context.pubSub, xf_disp_OnActivated);
+		PubSub_UnsubscribeGraphicsReset(disp->xfc->context.pubSub, xf_disp_OnGraphicsReset);
+		PubSub_UnsubscribeTimer(disp->xfc->context.pubSub, xf_disp_OnTimer);
+	}
+
 	free(disp);
 }
 
-static UINT xf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, int nmonitors)
+UINT xf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, int nmonitors)
 {
 	UINT ret = CHANNEL_RC_OK;
 	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts;
@@ -350,7 +378,6 @@ BOOL xf_disp_handle_xevent(xfContext* xfc, XEvent* event)
 	                          settings->MonitorCount) == CHANNEL_RC_OK;
 }
 
-
 BOOL xf_disp_handle_configureNotify(xfContext* xfc, int width, int height)
 {
 	xfDispContext* xfDisp;
@@ -359,14 +386,17 @@ BOOL xf_disp_handle_configureNotify(xfContext* xfc, int width, int height)
 		return FALSE;
 
 	xfDisp = xfc->xfDisp;
+
+	if (!xfDisp)
+		return FALSE;
+
 	xfDisp->targetWidth = width;
 	xfDisp->targetHeight = height;
 	return xf_disp_sendResize(xfDisp);
 }
 
-
-UINT xf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
-                           UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB)
+static UINT xf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
+                                  UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB)
 {
 	/* we're called only if dynamic resolution update is activated */
 	xfDispContext* xfDisp = (xfDispContext*)disp->custom;
@@ -391,6 +421,10 @@ BOOL xf_disp_init(xfDispContext* xfDisp, DispClientContext* disp)
 		return FALSE;
 
 	settings = xfDisp->xfc->context.settings;
+
+	if (!settings)
+		return FALSE;
+
 	xfDisp->disp = disp;
 	disp->custom = (void*) xfDisp;
 
