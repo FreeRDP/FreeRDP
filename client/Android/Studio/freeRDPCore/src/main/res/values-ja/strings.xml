@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Button labels -->
+    <string name="yes">はい</string>
+    <string name="no">いいえ</string>
+    <string name="cancel">キャンセル</string>
+    <string name="cont">続行</string>
+    <string name="login">ログイン</string>
+    <string name="logout">ログアウト</string>
+    <!-- Home menu items -->
+    <string name="menu_exit">終了</string>
+    <string name="menu_about">aFreeRDPについて</string>
+    <string name="menu_help">ヘルプ</string>
+    <string name="menu_new_bookmark">新しい接続</string>
+    <string name="menu_app_settings">設定</string>
+    <!-- Bookmark menu items -->
+    <string name="menu_title_bookmark">接続</string>
+    <string name="menu_connect">接続する</string>
+    <string name="menu_edit">編集</string>
+    <string name="menu_delete">削除</string>
+    <!-- Session menu items -->
+    <string name="menu_sys_keyboard">キーボード</string>
+    <string name="menu_ext_keyboard">ファンクションキー</string>
+    <string name="menu_touch_pointer">ポインター</string>
+    <string name="menu_home">ホーム</string>
+    <string name="menu_disconnect">切断</string>
+    <!-- List section headers -->
+    <string name="section_bookmarks">手動で接続</string>
+    <string name="section_active_sessions">アクティブなセッション</string>
+    <!-- Search strings -->
+    <string name="search_hint">コンピュータに接続する</string>
+    <!-- List placeholder labels -->
+    <string name="list_placeholder_login">ログイン</string>
+    <string name="list_placeholder_no_servers">サーバーがありません</string>
+    <string name="list_placeholder_connecting">接続中 &#8230;</string>
+    <string name="list_placeholder_disconnecting">切断中 &#8230;</string>
+    <string name="list_placeholder_connection_error">接続できませんでした</string>
+    <string name="list_placeholder_wrong_password">パスワードが違います</string>
+    <string name="list_placeholder_invalid_username">無効なユーザー名です</string>
+    <string name="list_placeholder_add_bookmark">接続を追加</string>
+    <!-- Bookmark settings strings -->
+    <string name="settings_cat_host">ホスト</string>
+    <string name="settings_label">ラベル</string>
+    <string name="settings_hostname">ホスト</string>
+    <string name="settings_port">ポート</string>
+    <string name="settings_cat_credentials">認証情報</string>
+    <string name="settings_credentials">認証情報</string>
+    <string name="settings_username">ユーザー名</string>
+    <string name="settings_password">パスワード</string>
+    <string name="settings_domain">ドメイン</string>
+    <string name="settings_cat_settings">設定</string>
+    <string name="settings_screen">画面</string>
+    <string name="settings_cat_screen">画面設定</string>
+    <string name="settings_colors">色</string>
+    <string-array name="colors_array">
+        <item>Palette (8 Bit)</item>
+        <item>High Color (15 Bit)</item>
+        <item>High Color (16 Bit)</item>
+        <item>True Color (24 Bit)</item>
+        <item>Highest Quality (32 Bit)</item>
+    </string-array>
+    <string name="settings_resolution">解像度</string>
+    <string name="resolution_automatic">自動</string>
+    <string name="resolution_fit">画面に合わせる</string>
+    <string name="resolution_custom">カスタム</string>
+    <string-array name="resolutions_array">
+        <item>自動</item>
+        <item>画面に合わせる</item>
+        <item>カスタム</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <string name="settings_width">幅</string>
+    <string name="settings_height">高さ</string>
+    <string name="settings_performance">パフォーマンス</string>
+    <string name="settings_cat_performance">パフォーマンスの設定</string>
+    <string name="settings_perf_remotefx">RemoteFX</string>
+    <string name="settings_perf_wallpaper">デスクトップの背景</string>
+    <string name="settings_perf_font_smoothing">フォントを滑らかにする</string>
+    <string name="settings_perf_desktop_composition">デスクトップの構成</string>
+    <string name="settings_perf_full_window_drag">ドラッグ中のウィンドウ</string>
+    <string name="settings_perf_menu_animation">メニューのアニメーション</string>
+    <string name="settings_perf_theming">視覚設定</string>
+    <string name="settings_advanced">高度な設定</string>
+    <string name="settings_cat_advanced">高度な設定</string>
+    <string name="settings_enable_3g_settings">3G 設定</string>
+    <string name="settings_screen_3g">3G 画面</string>
+    <string name="settings_performance_3g">3G パフォーマンス</string>
+    <string name="settings_cat_gateway">ゲートウェイ</string>
+    <string name="settings_enable_gateway_settings">ゲートウェイを有効にする</string>
+    <string name="settings_gateway_settings">ゲートウェイの設定</string>
+    <string name="settings_redirect_sdcard">Redirect SDCard</string>
+    <string name="settings_redirect_sound">音声のリダイレクト</string>
+    <string-array name="redirect_sound_array">
+        <item>再生しない</item>
+        <item>サーバー側で再生する</item>
+        <item>デバイス側で再生する</item>
+    </string-array>
+    <string name="settings_redirect_microphone">マイクのリダイレクト</string>
+    <string name="settings_security">セキュリティ</string>
+    <string-array name="security_array">
+        <item>自動</item>
+        <item>RDP</item>
+        <item>TLS</item>
+        <item>NLA</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string name="settings_remote_program">遠隔実行するプログラム</string>
+    <string name="settings_work_dir">作業フォルダ</string>
+    <string name="settings_async_channel">Async channel</string>
+    <string name="settings_async_transport">Async transport</string>
+    <string name="settings_async_input">Async input</string>
+    <string name="settings_async_update">Async update</string>
+    <string name="settings_console_mode">コンソールモード</string>
+    <!-- App settings strings -->
+    <string name="settings_password_present">*******</string>
+    <string name="settings_password_empty">入力されていません</string>
+    <string name="settings_cat_ui">ユーザーインターフェース</string>
+    <string name="settings_ui_hide_status_bar">ステータスバーを隠す</string>
+    <string name="settings_ui_hide_action_bar">アクションバーを隠す</string>
+    <string name="settings_ui_hide_zoom_controls">ズームコントローラーを隠す</string>
+    <string name="settings_ui_swap_mouse_buttons">マウスのボタンを交換する</string>
+    <string name="settings_ui_invert_scrolling">Invert Scrolling</string>
+    <string name="settings_ui_auto_scroll_touchpointer">Touch Pointer Auto Scroll</string>
+    <string name="settings_ui_ask_on_exit">Show Dialog on Exit</string>
+    <string name="settings_cat_power">Power Saving</string>
+    <string name="settings_cat_client">Client</string>
+    <string name="settings_power_disconnect_timeout">Close idle Connections</string>
+    <string name="settings_cat_security">Security</string>
+    <string name="settings_security_accept_certificates">Accept all Certificates</string>
+    <string name="settings_security_clear_certificate_cache">Clear Certificate Cache</string>
+    <string name="settings_description_after_minutes">After %1$d Minutes</string>
+    <string name="settings_description_disabled">Disabled</string>
+    <!-- Activity titles -->
+    <string name="title_bookmark_settings">接続設定</string>
+    <string name="title_application_settings">設定</string>
+    <string name="title_home">aFreeRDP - FreeRDP for Android</string>
+    <string name="title_create_shortcut">RDP Connections</string>
+    <string name="title_help">ヘルプ</string>
+    <string name="title_about">aFreeRDPについて</string>
+    <!-- Error message strings -->
+    <string name="error_bookmark_incomplete_title">保存せずに戻りますか?</string>
+    <string name="error_bookmark_incomplete">保存せずに終了する場合は「キャンセル」を押してください。\n続行する場合は「続行」を押して、必要な項目を入力してください。</string>
+    <string name="error_connection_failure">サーバーとの接続を確立できませんでした。</string>
+    <!-- Info message strings -->
+    <string name="info_capabilities_changed">あなたの指定した画面設定はサーバーが対応していないため変更されました。</string>
+    <string name="info_reset_success">認証情報のキャッシュを削除しました。</string>
+    <string name="info_reset_failed">認証情報のキャッシュを削除できませんでした。</string>
+    <!-- Dialog strings -->
+    <string name="dlg_title_verify_certificate">認証情報の検証</string>
+    <string name="dlg_msg_verify_certificate">リモートコンピューターの認証情報が検証できません。接続しますか？</string>
+    <string name="dlg_title_credentials">認証情報を入力してください。</string>
+    <string name="dlg_title_create_shortcut">ショートカットを作成</string>
+    <string name="dlg_msg_create_shortcut">ショートカットの名前:</string>
+    <string name="dlg_msg_connecting">接続中 &#8230;</string>
+    <string name="dlg_msg_logging_in">ログイン中 &#8230;</string>
+    <string name="dlg_title_about">aFreeRDPについて</string>
+    <string name="dlg_title_create_bookmark_after_qc">接続設定を保存しますか？</string>
+    <string name="dlg_msg_create_bookmark_after_qc">接続設定は保存されていません。保存しますか？</string>
+    <string name="dlg_title_save_bookmark">接続設定を保存しますか？</string>
+    <string name="dlg_save_bookmark">接続設定の変更を保存しますか？</string>
+    <string name="dlg_dont_show_again">次回から表示しない</string>
+    <string name="dlg_title_exit">アプリを終了しますか？</string>
+    <string name="dlg_msg_exit">本当にアプリを終了しますか？</string>
+    <string name="dlg_title_clear_cert_cache">認証情報を削除しますか？</string>
+    <string name="dlg_msg_clear_cert_cache">本当にすべてのキャッシュされた認証情報を削除しますか？</string>
+    <string name="debug_level">デバッグレベル</string>
+    <string name="settings_debug">デバッグの設定</string>
+    <string name="preference_title_client">クライアント</string>
+    <string name="preference_title_client_name">クライアントの名前</string>
+</resources>
