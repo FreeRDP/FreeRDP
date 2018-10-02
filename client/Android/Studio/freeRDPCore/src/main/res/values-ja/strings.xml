@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Button labels -->
     <string name="yes">はい</string>
@@ -106,7 +107,7 @@
     <string name="settings_perf_remotefx">RemoteFX</string>
     <string name="settings_perf_gfx" translatable="false">GFX</string>
     <string name="settings_perf_gfx_h264" translatable="false">H264</string>
-    <string name="settings_perf_wallpaper">デスクトップの背景/string>
+    <string name="settings_perf_wallpaper">デスクトップの背景</string>
     <string name="settings_perf_font_smoothing">フォントを滑らかにする</string>
     <string name="settings_perf_desktop_composition">デスクトップの構成</string>
     <string name="settings_perf_full_window_drag">ドラッグ中のウィンドウ</string>
