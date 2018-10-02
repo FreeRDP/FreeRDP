@@ -289,6 +289,9 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 				if (value)
 				{
+					if (options[j].Flags & (COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_VALUE_BOOL))
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
 					options[j].Value = value;
 					options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 				}
