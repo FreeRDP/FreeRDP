@@ -3966,17 +3966,16 @@ BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 
 BOOL rdp_send_demand_active(rdpRdp* rdp)
 {
-	wStream* s;
+	wStream* s = rdp_send_stream_pdu_init(rdp);
 	BOOL status;
 
-	if (!(s = Stream_New(NULL, 4096)))
+	if (!s)
 		return FALSE;
 
-	rdp_init_stream_pdu(rdp, s);
 	rdp->settings->ShareId = 0x10000 + rdp->mcs->userId;
 	status = rdp_write_demand_active(s, rdp->settings) &&
 	         rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->userId);
-	Stream_Free(s, TRUE);
+	Stream_Release(s);
 	return status;
 }
 
@@ -4196,15 +4195,14 @@ BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 
 BOOL rdp_send_confirm_active(rdpRdp* rdp)
 {
-	wStream* s;
+	wStream* s = rdp_send_stream_pdu_init(rdp);
 	BOOL status;
 
-	if (!(s = Stream_New(NULL, 4096)))
+	if (!s)
 		return FALSE;
 
-	rdp_init_stream_pdu(rdp, s);
 	status = rdp_write_confirm_active(s, rdp->settings) &&
 	         rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->userId);
-	Stream_Free(s, TRUE);
+	Stream_Release(s);
 	return status;
 }

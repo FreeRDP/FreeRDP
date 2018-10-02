@@ -171,10 +171,7 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 		Stream_Write(s, buffer, chunkSize);
 
 		if (!rdp_send(rdp, s, peerChannel->channelId))
-		{
-			Stream_Release(s);
 			return -1;
-		}
 
 		buffer += chunkSize;
 		length -= chunkSize;

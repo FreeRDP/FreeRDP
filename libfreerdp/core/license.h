@@ -202,7 +202,6 @@ struct rdp_license
 };
 
 FREERDP_LOCAL int license_recv(rdpLicense* license, wStream* s);
-FREERDP_LOCAL BOOL license_send(rdpLicense* license, wStream* s, BYTE type);
 
 FREERDP_LOCAL BOOL license_send_valid_client_error_packet(rdpLicense* license);
 
