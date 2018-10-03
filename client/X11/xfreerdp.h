@@ -221,7 +221,6 @@ struct xf_context
 	RdpeiClientContext* rdpei;
 	EncomspClientContext* encomsp;
 	xfDispContext* xfDisp;
-	DispClientContext* disp;
 
 	RailClientContext* rail;
 	wHashTable* railWindows;

@@ -1414,6 +1414,27 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 	return 0;
 }
 
+static BOOL handle_window_events(freerdp* instance)
+{
+	rdpSettings* settings;
+
+	if (!instance || !instance->settings)
+		return FALSE;
+
+	settings = instance->settings;
+
+	if (!settings->AsyncInput)
+	{
+		if (!xf_process_x_events(instance))
+		{
+			WLog_INFO(TAG, "Closed from X11");
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 /** Main loop for the rdp connection.
 *  It will be run from the thread's entry point (thread_func()).
 *  It initiates the connection, and will continue to run until the session ends,
@@ -1552,7 +1573,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		{
 			if (!freerdp_check_event_handles(context))
 			{
-				if (client_auto_reconnect(instance))
+				if (client_auto_reconnect_ex(instance, handle_window_events))
 					continue;
 				else
 				{
@@ -1571,14 +1592,8 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 			}
 		}
 
-		if (!settings->AsyncInput)
-		{
-			if (!xf_process_x_events(instance))
-			{
-				WLog_INFO(TAG, "Closed from X11");
-				break;
-			}
-		}
+		if (!handle_window_events(instance))
+			break;
 
 		if ((status != WAIT_TIMEOUT) && (waitStatus == WAIT_OBJECT_0))
 		{

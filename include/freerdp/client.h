@@ -113,6 +113,8 @@ FREERDP_API DWORD client_cli_verify_changed_certificate(freerdp* instance, const
         const char* old_subject, const char* old_issuer,
         const char* old_fingerprint);
 FREERDP_API BOOL client_auto_reconnect(freerdp* instance);
+FREERDP_API BOOL client_auto_reconnect_ex(freerdp* instance,
+        BOOL(*window_events)(freerdp* instance));
 
 #ifdef __cplusplus
 }

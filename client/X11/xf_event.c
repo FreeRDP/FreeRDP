@@ -1112,7 +1112,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 			break;
 
 		default:
-			if (settings->SupportDisplayControl && xfc->xfDisp)
+			if (settings->SupportDisplayControl)
 				xf_disp_handle_xevent(xfc, event);
 
 			break;

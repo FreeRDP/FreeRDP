@@ -555,6 +555,11 @@ DWORD client_cli_verify_changed_certificate(freerdp* instance,
 
 BOOL client_auto_reconnect(freerdp* instance)
 {
+	return client_auto_reconnect_ex(instance, NULL);
+}
+
+BOOL client_auto_reconnect_ex(freerdp* instance, BOOL(*window_events)(freerdp* instance))
+{
 	UINT32 maxRetries;
 	UINT32 numRetries = 0;
 	rdpSettings* settings;
@@ -581,6 +586,8 @@ BOOL client_auto_reconnect(freerdp* instance)
 	/* Perform an auto-reconnect. */
 	while (TRUE)
 	{
+		UINT32 x;
+
 		/* Quit retrying if max retries has been exceeded */
 		if ((maxRetries > 0) && (numRetries++ >= maxRetries))
 		{
@@ -593,7 +600,13 @@ BOOL client_auto_reconnect(freerdp* instance)
 		if (freerdp_reconnect(instance))
 			return TRUE;
 
-		Sleep(5000);
+		for (x = 0; x < 50; x++)
+		{
+			if (!IFCALLRESULT(TRUE, window_events, instance))
+				return FALSE;
+
+			Sleep(100);
+		}
 	}
 
 	WLog_ERR(TAG, "Maximum reconnect retries exceeded");
