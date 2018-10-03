@@ -593,7 +593,7 @@ BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 		return FALSE;
 
 	av_init_packet(context->packet);
-	context->packet->data = data;
+	context->packet->data = (uint8_t*)data;
 	context->packet->size = length;
 	return ffmpeg_decode(context->context, context->packet, context->frame,
 	                     context->rcontext, context->resampled, out);

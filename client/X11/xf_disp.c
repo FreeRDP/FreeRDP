@@ -452,4 +452,5 @@ BOOL xf_disp_uninit(xfDispContext* xfDisp, DispClientContext* disp)
 		return FALSE;
 
 	xfDisp->disp = NULL;
+	return TRUE;
 }
