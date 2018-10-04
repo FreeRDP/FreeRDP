@@ -110,8 +110,8 @@
 
 #define _PATH_DEVNULL  "/dev/null"
 
-char socket_name[PATH_MAX];
-char socket_dir[PATH_MAX];
+static char socket_name[PATH_MAX];
+static char socket_dir[PATH_MAX];
 static int sa_uds_fd = -1;
 static int is_going = 1;
 
@@ -156,7 +156,7 @@ setup_ssh_agent(struct sockaddr_un* addr)
 		exit(1);
 	}
 
-	snprintf(socket_name, sizeof socket_name, "%s/agent.%ld", socket_dir,
+	snprintf(socket_name, sizeof(socket_name), "%s/agent.%ld", socket_dir,
 	         (long)getpid());
 	/* Create unix domain socket */
 	unlink(socket_name);

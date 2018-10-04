@@ -984,7 +984,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	pos = Stream_GetPosition(s);
-	name = Stream_Pointer(s);
+	name = (char*)Stream_Pointer(s);
 	length = Stream_GetRemainingLength(s);
 
 	if (strnlen(name, length) >= length)
