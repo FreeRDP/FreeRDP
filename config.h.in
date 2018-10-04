@@ -27,6 +27,8 @@
 
 /* Features */
 #cmakedefine HAVE_ALIGNED_REQUIRED
+#cmakedefine SWRESAMPLE_FOUND
+#cmakedefine AVRESAMPLE_FOUND
 
 /* Options */
 #cmakedefine WITH_PROFILER

@@ -63,7 +63,7 @@ BuildRequires: wayland-devel
 BuildRequires: libjpeg-devel
 BuildRequires: libavutil-devel
 BuildRequires: libavcodec-devel
-BuildRequires: libswresample-devel
+BuildRequires: libswresample-devel || libavresample-devel
 %endif
 # fedora 21+
 %if 0%{?fedora} >= 21 || 0%{?rhel} >= 7
