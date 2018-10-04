@@ -27,7 +27,7 @@
 #include <libavcodec/avcodec.h>
 #include <libavutil/avutil.h>
 #include <libavutil/opt.h>
-#include <libavresample/avresample.h>
+#include <libswresample/swresample.h>
 
 #include "dsp.h"
 #include "dsp_ffmpeg.h"
@@ -50,7 +50,7 @@ struct _FREERDP_DSP_CONTEXT
 	AVFrame* resampled;
 	AVFrame* buffered;
 	AVPacket* packet;
-	AVAudioResampleContext* rcontext;
+	SwrContext* rcontext;
 };
 
 static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
@@ -185,7 +185,7 @@ static void ffmpeg_close_context(FREERDP_DSP_CONTEXT* context)
 			av_packet_free(&context->packet);
 
 		if (context->rcontext)
-			avresample_free(&context->rcontext);
+			swr_free(&context->rcontext);
 
 		context->id = AV_CODEC_ID_NONE;
 		context->codec = NULL;
@@ -281,7 +281,7 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 	if (!context->buffered)
 		goto fail;
 
-	context->rcontext = avresample_alloc_context();
+	context->rcontext = swr_alloc;
 
 	if (!context->rcontext)
 		goto fail;
@@ -322,21 +322,21 @@ fail:
 	ffmpeg_close_context(context);
 	return FALSE;
 }
-static BOOL ffmpeg_resample_frame(AVAudioResampleContext* context,
+static BOOL ffmpeg_resample_frame(SwrContext* context,
                                   AVFrame* in, AVFrame* out)
 {
 	int ret;
 
-	if (!avresample_is_open(context))
+	if (!swr_is_initialized(context))
 	{
-		if ((ret = avresample_config(context, out, in)) < 0)
+		if ((ret = swr_config_frame(context, out, in)) < 0)
 		{
 			const char* err = av_err2str(ret);
 			WLog_ERR(TAG, "Error during resampling %s [%d]", err, ret);
 			return FALSE;
 		}
 
-		if ((ret = (avresample_open(context))) < 0)
+		if ((ret = (swr_init(context))) < 0)
 		{
 			const char* err = av_err2str(ret);
 			WLog_ERR(TAG, "Error during resampling %s [%d]", err, ret);
@@ -344,7 +344,7 @@ static BOOL ffmpeg_resample_frame(AVAudioResampleContext* context,
 		}
 	}
 
-	if ((ret = avresample_convert_frame(context, out, in)) < 0)
+	if ((ret = swr_convert_frame(context, out, in)) < 0)
 	{
 		const char* err = av_err2str(ret);
 		WLog_ERR(TAG, "Error during resampling %s [%d]", err, ret);
@@ -416,7 +416,7 @@ static BOOL ffmpeg_fill_frame(AVFrame* frame, const AUDIO_FORMAT* inputFormat,
 }
 static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt,
                           AVFrame* frame,
-                          AVAudioResampleContext* resampleContext,
+                          SwrContext* resampleContext,
                           AVFrame* resampled, wStream* out)
 {
 	int ret;
@@ -445,16 +445,16 @@ static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt,
 			return FALSE;
 		}
 
-		if (!avresample_is_open(resampleContext))
+		if (!swr_is_initialized(resampleContext))
 		{
-			if ((ret = avresample_config(resampleContext, resampled, frame)) < 0)
+			if ((ret = swr_config_frame(resampleContext, resampled, frame)) < 0)
 			{
 				const char* err = av_err2str(ret);
 				WLog_ERR(TAG, "Error during resampling %s [%d]", err, ret);
 				return FALSE;
 			}
 
-			if ((ret = (avresample_open(resampleContext))) < 0)
+			if ((ret = (swr_init(resampleContext))) < 0)
 			{
 				const char* err = av_err2str(ret);
 				WLog_ERR(TAG, "Error during resampling %s [%d]", err, ret);
@@ -462,7 +462,7 @@ static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt,
 			}
 		}
 
-		if ((ret = avresample_convert_frame(resampleContext, resampled, frame)) < 0)
+		if ((ret = swr_convert_frame(resampleContext, resampled, frame)) < 0)
 		{
 			const char* err = av_err2str(ret);
 			WLog_ERR(TAG, "Error during resampling %s [%d]", err, ret);
