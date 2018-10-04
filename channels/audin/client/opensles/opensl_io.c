@@ -34,6 +34,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONV16BIT 32768
 #define CONVMYFLT (1./32768.)
 
+typedef struct
+{
+	size_t size;
+	void* data;
+} queue_element;
+
+struct opensl_stream
+{
+	// engine interfaces
+	SLObjectItf engineObject;
+	SLEngineItf engineEngine;
+
+	// device interfaces
+	SLDeviceVolumeItf deviceVolume;
+
+	// recorder interfaces
+	SLObjectItf recorderObject;
+	SLRecordItf recorderRecord;
+	SLAndroidSimpleBufferQueueItf recorderBufferQueue;
+
+	unsigned int inchannels;
+	unsigned int sr;
+	unsigned int buffersize;
+	unsigned int bits_per_sample;
+
+	queue_element* prep;
+	queue_element* next;
+
+	void* context;
+	opensl_receive_t receive;
+};
+
+
 static void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void* context);
 
 // creates the OpenSL ES audio engine
@@ -236,42 +269,84 @@ static void openSLDestroyEngine(OPENSL_STREAM* p)
 	}
 }
 
+static queue_element* opensles_queue_element_new(size_t size)
+{
+	queue_element* q = calloc(1, sizeof(queue_element));
+
+	if (!q)
+		goto fail;
+
+	q->size = size;
+	q->data = malloc(size);
+
+	if (!q->data)
+		goto fail;
+
+	return q;
+fail:
+	free(q);
+	return NULL;
+}
+
+static void opensles_queue_element_free(void* obj)
+{
+	queue_element* e = (queue_element*)obj;
+
+	if (e)
+		free(e->data);
+
+	free(e);
+}
 
 // open the android audio device for input
-OPENSL_STREAM* android_OpenRecDevice(char* name, int sr, int inchannels,
+OPENSL_STREAM* android_OpenRecDevice(void* context, opensl_receive_t receive,
+                                     int sr,
+                                     int inchannels,
                                      int bufferframes, int bits_per_sample)
 {
 	OPENSL_STREAM* p;
+
+	if (!context || !receive)
+		return NULL;
+
 	p = (OPENSL_STREAM*) calloc(1, sizeof(OPENSL_STREAM));
 
 	if (!p)
 		return NULL;
 
+	p->context = context;
+	p->receive = receive;
 	p->inchannels = inchannels;
 	p->sr = sr;
-	p->queue = Queue_New(TRUE, -1, -1);
 	p->buffersize = bufferframes;
 	p->bits_per_sample = bits_per_sample;
 
 	if ((p->bits_per_sample != 8) && (p->bits_per_sample != 16))
-	{
-		android_CloseRecDevice(p);
-		return NULL;
-	}
+		goto fail;
 
 	if (openSLCreateEngine(p) != SL_RESULT_SUCCESS)
-	{
-		android_CloseRecDevice(p);
-		return NULL;
-	}
+		goto fail;
 
 	if (openSLRecOpen(p) != SL_RESULT_SUCCESS)
-	{
-		android_CloseRecDevice(p);
-		return NULL;
-	}
+		goto fail;
 
+	/* Create receive buffers, prepare them and start recording */
+	p->prep = opensles_queue_element_new(p->buffersize * p->bits_per_sample / 8);
+	p->next = opensles_queue_element_new(p->buffersize * p->bits_per_sample / 8);
+
+	if (!p->prep || !p->next)
+		goto fail;
+
+	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,
+	                                   p->next->data, p->next->size);
+	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,
+	                                   p->prep->data, p->prep->size);
+	(*p->recorderRecord)->SetRecordState(p->recorderRecord,
+	                                     SL_RECORDSTATE_RECORDING);
 	return p;
+fail:
+	android_CloseRecDevice(p);
+	return NULL;
 }
 
 // close the android audio device
@@ -280,30 +355,8 @@ void android_CloseRecDevice(OPENSL_STREAM* p)
 	if (p == NULL)
 		return;
 
-	if (p->queue)
-	{
-		while (Queue_Count(p->queue) > 0)
-		{
-			queue_element* e = Queue_Dequeue(p->queue);
-			free(e->data);
-			free(e);
-		}
-
-		Queue_Free(p->queue);
-	}
-
-	if (p->next)
-	{
-		free(p->next->data);
-		free(p->next);
-	}
-
-	if (p->prep)
-	{
-		free(p->prep->data);
-		free(p->prep);
-	}
-
+	opensles_queue_element_free(p->next);
+	opensles_queue_element_free(p->prep);
 	openSLDestroyEngine(p);
 	free(p);
 }
@@ -311,86 +364,25 @@ void android_CloseRecDevice(OPENSL_STREAM* p)
 // this callback handler is called every time a buffer finishes recording
 static void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void* context)
 {
-	queue_element* e;
 	OPENSL_STREAM* p = (OPENSL_STREAM*) context;
-	assert(p);
-	assert(p->next);
-	assert(p->prep);
-	assert(p->queue);
-	e = calloc(1, sizeof(queue_element));
+	queue_element* e;
+
+	if (!p)
+		return;
+
+	e = p->next;
 
 	if (!e)
 		return;
 
-	e->data = calloc(p->buffersize, p->bits_per_sample / 8);
+	if (!p->context || !p->receive)
+		WLog_WARN(TAG, "Missing receive callback=%p, context=%p", p->receive, p->context);
+	else
+		p->receive(p->context, e->data, e->size);
 
-	if (!e->data)
-	{
-		free(e);
-		return;
-	}
-
-	e->size = p->buffersize * p->bits_per_sample / 8;
-	Queue_Enqueue(p->queue, p->next);
 	p->next = p->prep;
 	p->prep = e;
 	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,
 	                                   e->data, e->size);
-}
-
-// gets a buffer of size samples from the device
-int android_RecIn(OPENSL_STREAM* p, short* buffer, int size)
-{
-	queue_element* e;
-	int rc;
-	DWORD status;
-	assert(p);
-	assert(buffer);
-	assert(size > 0);
-
-	/* Initial trigger for the queue. */
-	if (!p->prep)
-	{
-		p->prep = calloc(1, sizeof(queue_element));
-		p->prep->data = calloc(p->buffersize, p->bits_per_sample / 8);
-		p->prep->size = p->buffersize * p->bits_per_sample / 8;
-		p->next = calloc(1, sizeof(queue_element));
-		p->next->data = calloc(p->buffersize, p->bits_per_sample / 8);
-		p->next->size = p->buffersize * p->bits_per_sample / 8;
-		(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,
-		                                   p->next->data, p->next->size);
-		(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,
-		                                   p->prep->data, p->prep->size);
-		(*p->recorderRecord)->SetRecordState(p->recorderRecord,
-		                                     SL_RECORDSTATE_RECORDING);
-	}
-
-	/* Wait for queue to be filled... */
-	if (!Queue_Count(p->queue))
-	{
-		status = WaitForSingleObject(p->queue->event, INFINITE);
-
-		if (status == WAIT_FAILED)
-		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", GetLastError());
-			return -1;
-		}
-	}
-
-	e = Queue_Dequeue(p->queue);
-
-	if (!e)
-	{
-		WLog_ERR(TAG, "[ERROR] got e=NULL from queue");
-		return -1;
-	}
-
-	rc = (e->size < size) ? e->size : size;
-	assert(size == e->size);
-	assert(p->buffersize * p->bits_per_sample / 8 == size);
-	memcpy(buffer, e->data, rc);
-	free(e->data);
-	free(e);
-	return rc;
 }
 
