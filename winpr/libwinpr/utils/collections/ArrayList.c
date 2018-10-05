@@ -305,7 +305,7 @@ BOOL ArrayList_Remove(wArrayList *arrayList, void *obj)
 
 	for (index = 0; index < arrayList->size; index++)
 	{
-		if (arrayList->array[index] == obj)
+		if (arrayList->object.fnObjectEquals(arrayList->array[index], obj))
 		{
 			found = TRUE;
 			break;
