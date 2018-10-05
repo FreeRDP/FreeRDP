@@ -1074,6 +1074,7 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 
 	if (krb)
 	{
+		Message.cBuffers = 1;
 		Buffers[0].BufferType = SECBUFFER_DATA; /* TLS Public Key */
 		Buffers[0].cbBuffer = public_key_length;
 		Buffers[0].pvBuffer = nla->pubKeyAuth.pvBuffer;
@@ -1081,6 +1082,7 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	}
 	else if (ntlm || nego)
 	{
+		Message.cBuffers = 2;
 		Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 		Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
 		Buffers[0].pvBuffer = nla->pubKeyAuth.pvBuffer;
@@ -1096,7 +1098,6 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 		ap_integer_increment_le((BYTE*) Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 	}
 
-	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
 	status = nla->table->EncryptMessage(&nla->context, 0, &Message, nla->sendSeqNum++);
@@ -1106,6 +1107,13 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 		WLog_ERR(TAG, "EncryptMessage status %s [0x%08"PRIX32"]",
 		         GetSecurityStatusString(status), status);
 		return status;
+	}
+
+	if (Message.cBuffers == 2 && Buffers[0].cbBuffer < nla->ContextSizes.cbSecurityTrailer)
+	{
+		/* IMPORTANT: EncryptMessage may not use all the signature space, so we need to shrink the excess between the buffers */
+		MoveMemory(((BYTE*)Buffers[0].pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer, Buffers[1].cbBuffer);
+		nla->pubKeyAuth.cbBuffer = Buffers[0].cbBuffer + Buffers[1].cbBuffer;
 	}
 
 	return status;
@@ -1148,9 +1156,6 @@ SECURITY_STATUS nla_encrypt_public_key_hash(rdpNla* nla)
 	if (!winpr_Digest_Update(sha256, nla->PublicKey.pvBuffer, nla->PublicKey.cbBuffer))
 		goto out;
 
-	Message.pBuffers = (PSecBuffer)&Buffers;
-	Message.ulVersion = SECBUFFER_VERSION;
-
 	if (krb)
 	{
 		Message.cBuffers = 1;
@@ -1175,13 +1180,22 @@ SECURITY_STATUS nla_encrypt_public_key_hash(rdpNla* nla)
 			goto out;
 	}
 
-	/* encrypt message */
+	Message.pBuffers = (PSecBuffer) &Buffers;
+	Message.ulVersion = SECBUFFER_VERSION;
 	status = nla->table->EncryptMessage(&nla->context, 0, &Message, nla->sendSeqNum++);
 
 	if (status != SEC_E_OK)
 	{
 		WLog_ERR(TAG, "EncryptMessage status %s [0x%08"PRIX32"]",
 		         GetSecurityStatusString(status), status);
+		goto out;
+	}
+
+	if (Message.cBuffers == 2 && Buffers[0].cbBuffer < nla->ContextSizes.cbSecurityTrailer)
+	{
+		/* IMPORTANT: EncryptMessage may not use all the signature space, so we need to shrink the excess between the buffers */
+		MoveMemory(((BYTE*)Buffers[0].pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer, Buffers[1].cbBuffer);
+		nla->pubKeyAuth.cbBuffer = Buffers[0].cbBuffer + Buffers[1].cbBuffer;
 	}
 
 out:
@@ -1217,12 +1231,6 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 		goto fail;
 	}
 
-	if ((nla->PublicKey.cbBuffer + nla->ContextSizes.cbSecurityTrailer) != nla->pubKeyAuth.cbBuffer)
-	{
-		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %"PRIu32"", nla->pubKeyAuth.cbBuffer);
-		goto fail;
-	}
-
 	length = nla->pubKeyAuth.cbBuffer;
 	buffer = (BYTE*) malloc(length);
 
@@ -1239,8 +1247,6 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 		Buffers[0].cbBuffer = length;
 		Buffers[0].pvBuffer = buffer;
 		Message.cBuffers = 1;
-		Message.ulVersion = SECBUFFER_VERSION;
-		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
 	else if (ntlm || nego)
 	{
@@ -1253,10 +1259,10 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 		Buffers[1].cbBuffer = length - signature_length;
 		Buffers[1].pvBuffer = buffer + signature_length;
 		Message.cBuffers = 2;
-		Message.ulVersion = SECBUFFER_VERSION;
-		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
 
+	Message.ulVersion = SECBUFFER_VERSION;
+	Message.pBuffers = (PSecBuffer)&Buffers;
 	status = nla->table->DecryptMessage(&nla->context, &Message, nla->recvSeqNum++, &pfQOP);
 
 	if (status != SEC_E_OK)
@@ -1322,12 +1328,6 @@ SECURITY_STATUS nla_decrypt_public_key_hash(rdpNla* nla)
 		goto fail;
 	}
 
-	if ((nla->ContextSizes.cbSecurityTrailer + WINPR_SHA256_DIGEST_LENGTH) != nla->pubKeyAuth.cbBuffer)
-	{
-		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %"PRIu32"", (int)nla->pubKeyAuth.cbBuffer);
-		goto fail;
-	}
-
 	length = nla->pubKeyAuth.cbBuffer;
 	buffer = (BYTE*)malloc(length);
 
@@ -1344,8 +1344,6 @@ SECURITY_STATUS nla_decrypt_public_key_hash(rdpNla* nla)
 		Buffers[0].cbBuffer = length;
 		Buffers[0].pvBuffer = buffer;
 		Message.cBuffers = 1;
-		Message.ulVersion = SECBUFFER_VERSION;
-		Message.pBuffers = (PSecBuffer)&Buffers;
 	}
 	else
 	{
@@ -1357,10 +1355,10 @@ SECURITY_STATUS nla_decrypt_public_key_hash(rdpNla* nla)
 		Buffers[1].cbBuffer = WINPR_SHA256_DIGEST_LENGTH;
 		Buffers[1].pvBuffer = buffer + signature_length;
 		Message.cBuffers = 2;
-		Message.ulVersion = SECBUFFER_VERSION;
-		Message.pBuffers = (PSecBuffer)&Buffers;
 	}
 
+	Message.ulVersion = SECBUFFER_VERSION;
+	Message.pBuffers = (PSecBuffer) &Buffers;
 	status = nla->table->DecryptMessage(&nla->context, &Message, nla->recvSeqNum++, &pfQOP);
 
 	if (status != SEC_E_OK)
@@ -1681,8 +1679,6 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 		Buffers[0].pvBuffer = nla->authInfo.pvBuffer;
 		CopyMemory(Buffers[0].pvBuffer, nla->tsCredentials.pvBuffer, Buffers[0].cbBuffer);
 		Message.cBuffers = 1;
-		Message.ulVersion = SECBUFFER_VERSION;
-		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
 	else if (ntlm || nego)
 	{
@@ -1695,10 +1691,10 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 		Buffers[1].pvBuffer = &((BYTE*) nla->authInfo.pvBuffer)[Buffers[0].cbBuffer];
 		CopyMemory(Buffers[1].pvBuffer, nla->tsCredentials.pvBuffer, Buffers[1].cbBuffer);
 		Message.cBuffers = 2;
-		Message.ulVersion = SECBUFFER_VERSION;
-		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
 
+	Message.ulVersion = SECBUFFER_VERSION;
+	Message.pBuffers = (PSecBuffer) &Buffers;
 	status = nla->table->EncryptMessage(&nla->context, 0, &Message, nla->sendSeqNum++);
 
 	if (status != SEC_E_OK)
@@ -1706,6 +1702,13 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 		WLog_ERR(TAG, "EncryptMessage failure %s [0x%08"PRIX32"]",
 		         GetSecurityStatusString(status), status);
 		return status;
+	}
+
+	if (Message.cBuffers == 2 && Buffers[0].cbBuffer < nla->ContextSizes.cbSecurityTrailer)
+	{
+		/* IMPORTANT: EncryptMessage may not use all the signature space, so we need to shrink the excess between the buffers */
+		MoveMemory(((BYTE*)Buffers[0].pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer, Buffers[1].cbBuffer);
+		nla->authInfo.cbBuffer = Buffers[0].cbBuffer + Buffers[1].cbBuffer;
 	}
 
 	return SEC_E_OK;
@@ -1742,8 +1745,6 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 		Buffers[0].cbBuffer = length;
 		Buffers[0].pvBuffer = buffer;
 		Message.cBuffers = 1;
-		Message.ulVersion = SECBUFFER_VERSION;
-		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
 	else if (ntlm || nego)
 	{
@@ -1755,10 +1756,10 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 		Buffers[1].cbBuffer = length - nla->ContextSizes.cbSecurityTrailer;
 		Buffers[1].pvBuffer = &buffer[ Buffers[0].cbBuffer ];
 		Message.cBuffers = 2;
-		Message.ulVersion = SECBUFFER_VERSION;
-		Message.pBuffers = (PSecBuffer) &Buffers;
 	}
 
+	Message.ulVersion = SECBUFFER_VERSION;
+	Message.pBuffers = (PSecBuffer) &Buffers;
 	status = nla->table->DecryptMessage(&nla->context, &Message, nla->recvSeqNum++, &pfQOP);
 
 	if (status != SEC_E_OK)
