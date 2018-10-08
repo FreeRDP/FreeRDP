@@ -146,6 +146,16 @@ static UINT audin_process_version(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	Stream_Read_UINT32(s, ServerVersion);
 	WLog_Print(audin->log, WLOG_DEBUG, "ServerVersion=%"PRIu32", ClientVersion=%"PRIu32, ServerVersion,
 	           ClientVersion);
+
+	/* Do not answer server packet, we do not support the channel version. */
+	if (ServerVersion != ClientVersion)
+	{
+		WLog_Print(audin->log, WLOG_WARN,
+		           "Incompatible channel version server=%"PRIu32", client supports version=%"PRIu32, ServerVersion,
+		           ClientVersion);
+		return CHANNEL_RC_OK;
+	}
+
 	out = Stream_New(NULL, 5);
 
 	if (!out)
@@ -869,7 +879,7 @@ static UINT audin_set_subsystem(AUDIN_PLUGIN* audin, const char* subsystem)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_set_device_name(AUDIN_PLUGIN* audin, char* device_name)
+static UINT audin_set_device_name(AUDIN_PLUGIN* audin, const char* device_name)
 {
 	free(audin->device_name);
 	audin->device_name = _strdup(device_name);

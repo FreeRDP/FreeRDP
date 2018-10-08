@@ -29,8 +29,6 @@
 #include <string.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
 #include <winpr/cmdline.h>
 
 #include <freerdp/addin.h>
@@ -56,85 +54,29 @@ typedef struct _AudinOpenSLESDevice
 
 	AudinReceive receive;
 
-	HANDLE thread;
-	HANDLE stopEvent;
-
 	void* user_data;
 
 	rdpContext* rdpcontext;
 	wLog* log;
 } AudinOpenSLESDevice;
 
-static DWORD WINAPI audin_opensles_thread_func(LPVOID arg)
+static UINT audin_opensles_close(IAudinDevice* device);
+
+static void audin_receive(void* context, const void* data, size_t size)
 {
-	union
+	UINT error;
+	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) context;
+
+	if (!opensles || !data)
 	{
-		void* v;
-		short* s;
-		BYTE* b;
-	} buffer;
-	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) arg;
-	const size_t raw_size = opensles->frames_per_packet * opensles->bytes_per_channel;
-	int rc = CHANNEL_RC_OK;
-	UINT error = CHANNEL_RC_OK;
-	DWORD status;
-	WLog_Print(opensles->log, WLOG_DEBUG, "opensles=%p", (void*) opensles);
-	assert(opensles);
-	assert(opensles->frames_per_packet > 0);
-	assert(opensles->stopEvent);
-	assert(opensles->stream);
-	buffer.v = calloc(1, raw_size);
-
-	if (!buffer.v)
-	{
-		error = CHANNEL_RC_NO_MEMORY;
-		WLog_Print(opensles->log, WLOG_ERROR, "calloc failed!");
-
-		if (opensles->rdpcontext)
-			setChannelError(opensles->rdpcontext, CHANNEL_RC_NO_MEMORY,
-			                "audin_opensles_thread_func reported an error");
-
-		goto out;
+		WLog_ERR(TAG, "[%s] Invalid arguments context=%p, data=%p", __FUNCTION__, opensles, data);
+		return;
 	}
 
-	while (1)
-	{
-		status = WaitForSingleObject(opensles->stopEvent, 0);
-
-		if (status == WAIT_FAILED)
-		{
-			error = GetLastError();
-			WLog_Print(opensles->log, WLOG_ERROR, "WaitForSingleObject failed with error %"PRIu32"!", error);
-			break;
-		}
-
-		if (status == WAIT_OBJECT_0)
-			break;
-
-		rc = android_RecIn(opensles->stream, buffer.s, raw_size);
-
-		if (rc < 0)
-		{
-			WLog_Print(opensles->log, WLOG_ERROR, "android_RecIn %d", rc);
-			continue;
-		}
-
-		error = opensles->receive(&opensles->format,
-		                          buffer.v, raw_size, opensles->user_data);
-
-		if (error)
-			break;
-	}
-
-	free(buffer.v);
-out:
-	WLog_Print(opensles->log, WLOG_DEBUG, "thread shutdown.");
+	error = opensles->receive(&opensles->format, data, size, opensles->user_data);
 
 	if (error && opensles->rdpcontext)
-		setChannelError(opensles->rdpcontext, error, "audin_opensles_thread_func reported an error");
-
-	ExitThread(error);
-	return error;
+		setChannelError(opensles->rdpcontext, error, "audin_receive reported an error");
 }
 
 /**
@@ -156,8 +98,6 @@ static UINT audin_opensles_free(IAudinDevice* device)
 	if (!opensles)
 		return CHANNEL_RC_OK;
 
-	assert(opensles);
-	assert(!opensles->stream);
 	free(opensles->device_name);
 	free(opensles);
 	return CHANNEL_RC_OK;
@@ -274,46 +214,26 @@ static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive,
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, receive=%p, user_data=%p", (void*) device,
 	           (void*) receive,
 	           (void*) user_data);
-	assert(opensles);
 
-	/* The function may have been called out of order,
-	 * ignore duplicate open requests. */
 	if (opensles->stream)
-		return CHANNEL_RC_OK;
+		goto error_out;
 
 	if (!(opensles->stream = android_OpenRecDevice(
-	                             opensles->device_name,
+	                             opensles, audin_receive,
 	                             opensles->format.nSamplesPerSec,
 	                             opensles->format.nChannels,
 	                             opensles->frames_per_packet,
 	                             opensles->format.wBitsPerSample)))
 	{
 		WLog_Print(opensles->log, WLOG_ERROR, "android_OpenRecDevice failed!");
-		return ERROR_INTERNAL_ERROR;
+		goto error_out;
 	}
 
 	opensles->receive = receive;
 	opensles->user_data = user_data;
-
-	if (!(opensles->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-	{
-		WLog_Print(opensles->log, WLOG_ERROR, "CreateEvent failed!");
-		goto error_out;
-	}
-
-	if (!(opensles->thread = CreateThread(NULL, 0,
-	                                      audin_opensles_thread_func, opensles, 0, NULL)))
-	{
-		WLog_Print(opensles->log, WLOG_ERROR, "CreateThread failed!");
-		goto error_out;
-	}
-
 	return CHANNEL_RC_OK;
 error_out:
-	android_CloseRecDevice(opensles->stream);
-	opensles->stream = NULL;
-	CloseHandle(opensles->stopEvent);
-	opensles->stopEvent = NULL;
+	audin_opensles_close(opensles);
 	return ERROR_INTERNAL_ERROR;
 }
 
@@ -322,38 +242,15 @@ error_out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_opensles_close(IAudinDevice* device)
+UINT audin_opensles_close(IAudinDevice* device)
 {
-	UINT error;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
+
+	if (!opensles)
+		return ERROR_INVALID_PARAMETER;
+
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p", (void*) device);
-	assert(opensles);
-
-	/* The function may have been called out of order,
-	 * ignore duplicate requests. */
-	if (!opensles->stopEvent)
-	{
-		WLog_Print(opensles->log, WLOG_ERROR, "[ERROR] function called without matching open.");
-		return ERROR_REQUEST_OUT_OF_SEQUENCE;
-	}
-
-	assert(opensles->stopEvent);
-	assert(opensles->thread);
-	assert(opensles->stream);
-	SetEvent(opensles->stopEvent);
-
-	if (WaitForSingleObject(opensles->thread, INFINITE) == WAIT_FAILED)
-	{
-		error = GetLastError();
-		WLog_Print(opensles->log, WLOG_ERROR, "WaitForSingleObject failed with error %"PRIu32"", error);
-		return error;
-	}
-
-	CloseHandle(opensles->stopEvent);
-	CloseHandle(opensles->thread);
 	android_CloseRecDevice(opensles->stream);
-	opensles->stopEvent = NULL;
-	opensles->thread = NULL;
 	opensles->receive = NULL;
 	opensles->user_data = NULL;
 	opensles->stream = NULL;
