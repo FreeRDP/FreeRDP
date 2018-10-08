@@ -129,7 +129,7 @@ static BOOL audin_opensles_format_supported(IAudinDevice* device,
 
 		default:
 			WLog_Print(opensles->log, WLOG_DEBUG, "Encoding '%s' [0x%04X"PRIX16"] not supported",
-			           rdpsnd_get_audio_tag_string(format->wFormatTag),
+			           audio_format_get_tag_string(format->wFormatTag),
 			           format->wFormatTag);
 			break;
 	}

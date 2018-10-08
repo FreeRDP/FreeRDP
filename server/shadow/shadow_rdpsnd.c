@@ -23,6 +23,7 @@
 #include <winpr/crt.h>
 #include <freerdp/log.h>
 #include <freerdp/codec/dsp.h>
+#include <freerdp/server/server-common.h>
 
 #include "shadow.h"
 
@@ -30,31 +31,18 @@
 
 #define TAG SERVER_TAG("shadow")
 
-/* Default supported audio formats */
-static const AUDIO_FORMAT default_supported_audio_formats[] =
-{
-	{ WAVE_FORMAT_AAC_MS, 2, 44100, 176400, 4, 16, 0, NULL },
-	{ WAVE_FORMAT_MPEGLAYER3, 2, 44100, 176400, 4, 16, 0, NULL },
-	{ WAVE_FORMAT_GSM610, 2, 44100, 176400, 4, 16, 0, NULL },
-	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
-	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL },
-};
-static AUDIO_FORMAT supported_audio_formats[ARRAYSIZE(default_supported_audio_formats)] = { 0 };
-
 static void rdpsnd_activated(RdpsndServerContext* context)
 {
-	AUDIO_FORMAT* agreed_format = NULL;
+	const AUDIO_FORMAT* agreed_format = NULL;
 	UINT16 i = 0, j = 0;
 
 	for (i = 0; i < context->num_client_formats; i++)
 	{
 		for (j = 0; j < context->num_server_formats; j++)
 		{
-			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
-			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
-			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
+			if (audio_format_compatible(&context->server_formats[j], &context->client_formats[i]))
 			{
-				agreed_format = (AUDIO_FORMAT*) &context->server_formats[j];
+				agreed_format = &context->server_formats[j];
 				break;
 			}
 		}
@@ -91,22 +79,12 @@ int shadow_client_rdpsnd_init(rdpShadowClient* client)
 	}
 	else
 	{
-		size_t x, y = 0;
-
-		for (x = 0; x < ARRAYSIZE(default_supported_audio_formats); x++)
-		{
-			const AUDIO_FORMAT* format = &default_supported_audio_formats[x];
-
-			if (freerdp_dsp_supports_format(format, TRUE))
-				supported_audio_formats[y++] = *format;
-		}
-
-		/* Set default audio formats. */
-		rdpsnd->server_formats = supported_audio_formats;
-		rdpsnd->num_server_formats = y;
+		rdpsnd->num_server_formats = server_rdpsnd_get_formats(&rdpsnd->server_formats);
 	}
 
-	rdpsnd->src_format = rdpsnd->server_formats[0];
+	if (rdpsnd->num_server_formats > 0)
+		rdpsnd->src_format = &rdpsnd->server_formats[0];
+
 	rdpsnd->Activated = rdpsnd_activated;
 	rdpsnd->Initialize(rdpsnd, TRUE);
 	return 1;

@@ -21,18 +21,13 @@
 #endif
 
 #include <freerdp/log.h>
+#include <freerdp/codec/dsp.h>
 #include "shadow.h"
 
 #include "shadow_audin.h"
+#include <freerdp/server/server-common.h>
 
 #define TAG SERVER_TAG("shadow")
-
-/* Default supported audio formats */
-static const AUDIO_FORMAT default_supported_audio_formats[] =
-{
-	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
-	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL }
-};
 
 /**
  * Function description
@@ -42,17 +37,15 @@ static const AUDIO_FORMAT default_supported_audio_formats[] =
 static UINT AudinServerOpening(audin_server_context* context)
 {
 	AUDIO_FORMAT* agreed_format = NULL;
-	int i = 0, j = 0;
+	size_t i = 0, j = 0;
 
 	for (i = 0; i < context->num_client_formats; i++)
 	{
 		for (j = 0; j < context->num_server_formats; j++)
 		{
-			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
-			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
-			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
+			if (audio_format_compatible(&context->server_formats[j], &context->client_formats[i]))
 			{
-				agreed_format = (AUDIO_FORMAT*) &context->server_formats[j];
+				agreed_format = &context->server_formats[j];
 				break;
 			}
 		}
@@ -67,8 +60,7 @@ static UINT AudinServerOpening(audin_server_context* context)
 		return CHANNEL_RC_OK;
 	}
 
-	context->SelectFormat(context, i);
-	return CHANNEL_RC_OK;
+	return IFCALLRESULT(ERROR_CALL_NOT_IMPLEMENTED, context->SelectFormat, context, i);
 }
 /**
  * Function description
@@ -85,7 +77,8 @@ static UINT AudinServerOpenResult(audin_server_context* context, UINT32 result)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT AudinServerReceiveSamples(audin_server_context* context, const void* buf, int nframes)
+static UINT AudinServerReceiveSamples(audin_server_context* context, const AUDIO_FORMAT* format,
+                                      wStream* buf, size_t nframes)
 {
 	rdpShadowClient* client = (rdpShadowClient*)context->data;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
@@ -93,42 +86,56 @@ static UINT AudinServerReceiveSamples(audin_server_context* context, const void*
 	if (!client->mayInteract)
 		return CHANNEL_RC_OK;
 
-	if (subsystem->AudinServerReceiveSamples)
-		subsystem->AudinServerReceiveSamples(subsystem, client, buf, nframes);
+	if (!IFCALLRESULT(TRUE, subsystem->AudinServerReceiveSamples, subsystem, client, format, buf,
+	                  nframes))
+		return ERROR_INTERNAL_ERROR;
 
 	return CHANNEL_RC_OK;
 }
 
-int shadow_client_audin_init(rdpShadowClient* client)
+BOOL shadow_client_audin_init(rdpShadowClient* client)
 {
 	audin_server_context* audin;
 	audin = client->audin = audin_server_context_new(client->vcm);
 
 	if (!audin)
-	{
-		return 0;
-	}
+		return FALSE;
 
 	audin->data = client;
 
 	if (client->subsystem->audinFormats)
 	{
-		audin->server_formats = client->subsystem->audinFormats;
+		size_t x;
+		audin->server_formats = audio_formats_new(client->subsystem->nAudinFormats);
+
+		if (!audin->server_formats)
+			goto fail;
+
+		for (x = 0; x < client->subsystem->nAudinFormats; x++)
+		{
+			if (!audio_format_copy(&client->subsystem->audinFormats[x], &audin->server_formats[x]))
+				goto fail;
+		}
+
 		audin->num_server_formats = client->subsystem->nAudinFormats;
 	}
 	else
 	{
-		/* Set default audio formats. */
-		audin->server_formats = default_supported_audio_formats;
-		audin->num_server_formats = sizeof(default_supported_audio_formats) / sizeof(
-		                                default_supported_audio_formats[0]);
+		audin->num_server_formats = server_audin_get_formats(&audin->server_formats);
 	}
 
-	audin->dst_format = audin->server_formats[0];
+	if (audin->num_server_formats < 1)
+		goto fail;
+
+	audin->dst_format = &audin->server_formats[0];
 	audin->Opening = AudinServerOpening;
 	audin->OpenResult = AudinServerOpenResult;
 	audin->ReceiveSamples = AudinServerReceiveSamples;
-	return 1;
+	return TRUE;
+fail:
+	audin_server_context_free(audin);
+	client->audin = NULL;
+	return FALSE;
 }
 
 void shadow_client_audin_uninit(rdpShadowClient* client)

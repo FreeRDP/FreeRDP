@@ -63,7 +63,7 @@ typedef int (*pfnShadowSubsystemUninit)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemStart)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
 
-typedef UINT32 (*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, UINT32 maxMonitors);
+typedef UINT32(*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, UINT32 maxMonitors);
 
 typedef int (*pfnShadowAuthenticate)(rdpShadowSubsystem* subsystem,
                                      rdpShadowClient* client,
@@ -75,20 +75,20 @@ typedef void (*pfnShadowClientDisconnect)(rdpShadowSubsystem* subsystem,
 typedef BOOL (*pfnShadowClientCapabilities)(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client);
 
-typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem,
+typedef BOOL (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT32 flags);
-typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem,
-                                      rdpShadowClient* client, UINT16 flags, UINT16 code);
-typedef int (*pfnShadowUnicodeKeyboardEvent)(rdpShadowSubsystem* subsystem,
+typedef BOOL (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem,
+                                       rdpShadowClient* client, UINT16 flags, UINT16 code);
+typedef BOOL (*pfnShadowUnicodeKeyboardEvent)(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 code);
-typedef int (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem,
-                                   rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y);
-typedef int (*pfnShadowExtendedMouseEvent)(rdpShadowSubsystem* subsystem,
+typedef BOOL (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem,
+                                    rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y);
+typedef BOOL (*pfnShadowExtendedMouseEvent)(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y);
 
-typedef void (*pfnShadowChannelAudinServerReceiveSamples)(
-    rdpShadowSubsystem* subsystem, rdpShadowClient* client, const void* buf,
-    int nframes);
+typedef BOOL (*pfnShadowChannelAudinServerReceiveSamples)(
+    rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+    const AUDIO_FORMAT* format, wStream* buf, size_t nframes);
 
 struct rdp_shadow_client
 {
@@ -184,46 +184,43 @@ struct _RDP_SHADOW_ENTRY_POINTS
 	pfnShadowEnumMonitors EnumMonitors;
 };
 
-#define RDP_SHADOW_SUBSYSTEM_COMMON() \
-	RDP_SHADOW_ENTRY_POINTS ep; \
-	HANDLE event; \
-	int numMonitors; \
-	int captureFrameRate; \
-	int selectedMonitor; \
-	MONITOR_DEF monitors[16]; \
-	MONITOR_DEF virtualScreen; \
-	\
-	/* This event indicates that we have graphic change */ \
-	/* such as screen update and resize. It should not be */ \
-	/* used by subsystem implementation directly */ \
-	rdpShadowMultiClientEvent* updateEvent; \
-	\
-	wMessagePipe* MsgPipe; \
-	UINT32 pointerX; \
-	UINT32 pointerY; \
-	\
-	const AUDIO_FORMAT* rdpsndFormats; \
-	int nRdpsndFormats; \
-	const AUDIO_FORMAT* audinFormats; \
-	int nAudinFormats; \
-	\
-	pfnShadowSynchronizeEvent SynchronizeEvent; \
-	pfnShadowKeyboardEvent KeyboardEvent; \
-	pfnShadowUnicodeKeyboardEvent UnicodeKeyboardEvent; \
-	pfnShadowMouseEvent MouseEvent; \
-	pfnShadowExtendedMouseEvent ExtendedMouseEvent; \
-	pfnShadowChannelAudinServerReceiveSamples AudinServerReceiveSamples; \
-	\
-	pfnShadowAuthenticate Authenticate; \
-	pfnShadowClientConnect ClientConnect; \
-	pfnShadowClientDisconnect ClientDisconnect; \
-	pfnShadowClientCapabilities ClientCapabilities; \
-	\
-	rdpShadowServer* server
-
 struct rdp_shadow_subsystem
 {
-	RDP_SHADOW_SUBSYSTEM_COMMON();
+	RDP_SHADOW_ENTRY_POINTS ep;
+	HANDLE event;
+	int numMonitors;
+	int captureFrameRate;
+	int selectedMonitor;
+	MONITOR_DEF monitors[16];
+	MONITOR_DEF virtualScreen;
+
+	/* This event indicates that we have graphic change */
+	/* such as screen update and resize. It should not be */
+	/* used by subsystem implementation directly */
+	rdpShadowMultiClientEvent* updateEvent;
+
+	wMessagePipe* MsgPipe;
+	UINT32 pointerX;
+	UINT32 pointerY;
+
+	AUDIO_FORMAT* rdpsndFormats;
+	size_t nRdpsndFormats;
+	AUDIO_FORMAT* audinFormats;
+	size_t nAudinFormats;
+
+	pfnShadowSynchronizeEvent SynchronizeEvent;
+	pfnShadowKeyboardEvent KeyboardEvent;
+	pfnShadowUnicodeKeyboardEvent UnicodeKeyboardEvent;
+	pfnShadowMouseEvent MouseEvent;
+	pfnShadowExtendedMouseEvent ExtendedMouseEvent;
+	pfnShadowChannelAudinServerReceiveSamples AudinServerReceiveSamples;
+
+	pfnShadowAuthenticate Authenticate;
+	pfnShadowClientConnect ClientConnect;
+	pfnShadowClientDisconnect ClientDisconnect;
+	pfnShadowClientCapabilities ClientCapabilities;
+
+	rdpShadowServer* server;
 };
 
 /* Definition of message between subsystem and clients */
@@ -232,13 +229,11 @@ struct rdp_shadow_subsystem
 typedef struct _SHADOW_MSG_OUT SHADOW_MSG_OUT;
 typedef void (*MSG_OUT_FREE_FN)(UINT32 id,
                                 SHADOW_MSG_OUT* msg); /* function to free SHADOW_MSG_OUT */
-#define RDP_SHADOW_MSG_OUT_COMMON() \
-	int refCount; \
-	MSG_OUT_FREE_FN Free
 
 struct _SHADOW_MSG_OUT
 {
-	RDP_SHADOW_MSG_OUT_COMMON();
+	int refCount;
+	MSG_OUT_FREE_FN Free;
 };
 
 #define SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID		2001
@@ -248,16 +243,16 @@ struct _SHADOW_MSG_OUT
 
 struct _SHADOW_MSG_OUT_POINTER_POSITION_UPDATE
 {
-	RDP_SHADOW_MSG_OUT_COMMON();
+	SHADOW_MSG_OUT common;
 	UINT32 xPos;
 	UINT32 yPos;
 };
 typedef struct _SHADOW_MSG_OUT_POINTER_POSITION_UPDATE
-		SHADOW_MSG_OUT_POINTER_POSITION_UPDATE;
+	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE;
 
 struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
 {
-	RDP_SHADOW_MSG_OUT_COMMON();
+	SHADOW_MSG_OUT common;
 	UINT32 xHot;
 	UINT32 yHot;
 	UINT32 width;
@@ -268,22 +263,22 @@ struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
 	BYTE* andMaskData;
 };
 typedef struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
-		SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE;
+	SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE;
 
 struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES
 {
-	RDP_SHADOW_MSG_OUT_COMMON();
-	AUDIO_FORMAT audio_format;
+	SHADOW_MSG_OUT common;
+	AUDIO_FORMAT* audio_format;
 	void* buf;
 	int nFrames;
 	UINT16 wTimestamp;
 };
 typedef struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES
-		SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES;
+	SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES;
 
 struct _SHADOW_MSG_OUT_AUDIO_OUT_VOLUME
 {
-	RDP_SHADOW_MSG_OUT_COMMON();
+	SHADOW_MSG_OUT common;
 	int left;
 	int right;
 };

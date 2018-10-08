@@ -1,7 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
+ * FreeRDP Server Common
  *
- * Copyright 2015 Jiang Zihao <zihao.jiang@yahoo.com>
+ * Copyright 2018 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2018 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +18,14 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SERVER_SHADOW_AUDIN_H
-#define FREERDP_SERVER_SHADOW_AUDIN_H
+#ifndef FREERDP_SERVER_COMMON_SERVER_H
+#define FREERDP_SERVER_COMMON_SERVER_H
 
-#include <freerdp/server/shadow.h>
+#include <winpr/wtypes.h>
+#include <freerdp/api.h>
+#include <freerdp/codec/audio.h>
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
+FREERDP_API size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats);
+FREERDP_API size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-BOOL shadow_client_audin_init(rdpShadowClient* client);
-void shadow_client_audin_uninit(rdpShadowClient* client);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* FREERDP_SERVER_SHADOW_AUDIN_H */
+#endif /* FREERDP_SERVER_COMMON_SERVER_H */

@@ -45,7 +45,7 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 {
 	size_t pos;
 	UINT16 i;
-	BOOL status;
+	BOOL status = FALSE;
 	ULONG written;
 	Stream_Write_UINT8(s, SNDC_FORMATS);
 	Stream_Write_UINT8(s, 0);
@@ -61,25 +61,12 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 
 	for (i = 0; i < context->num_server_formats; i++)
 	{
-		Stream_Write_UINT16(s,
-		                    context->server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
-		Stream_Write_UINT16(s, context->server_formats[i].nChannels); /* nChannels */
-		Stream_Write_UINT32(s,
-		                    context->server_formats[i].nSamplesPerSec); /* nSamplesPerSec */
-		Stream_Write_UINT32(s, context->server_formats[i].nSamplesPerSec*
-		                    context->server_formats[i].nChannels*
-		                    context->server_formats[i].wBitsPerSample / 8); /* nAvgBytesPerSec */
-		Stream_Write_UINT16(s,
-		                    context->server_formats[i].nBlockAlign); /* nBlockAlign */
-		Stream_Write_UINT16(s,
-		                    context->server_formats[i].wBitsPerSample); /* wBitsPerSample */
-		Stream_Write_UINT16(s, context->server_formats[i].cbSize); /* cbSize */
+		AUDIO_FORMAT format = context->server_formats[i];
+		// TODO: Eliminate this!!!
+		format.nAvgBytesPerSec = format.nSamplesPerSec * format.nChannels * format.wBitsPerSample / 8;
 
-		if (context->server_formats[i].cbSize > 0)
-		{
-			Stream_Write(s, context->server_formats[i].data,
-			             context->server_formats[i].cbSize);
-		}
+		if (!audio_format_write(s, &format))
+			goto fail;
 	}
 
 	pos = Stream_GetPosition(s);
@@ -89,6 +76,7 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle,
 	                                (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
 	Stream_SetPosition(s, 0);
+fail:
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
@@ -184,8 +172,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	context->client_formats = (AUDIO_FORMAT*)calloc(context->num_client_formats,
-	                          sizeof(AUDIO_FORMAT));
+	context->client_formats = audio_formats_new(context->num_client_formats);
 
 	if (!context->client_formats)
 	{
@@ -322,17 +309,18 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context,
 	AUDIO_FORMAT* format;
 	UINT error = CHANNEL_RC_OK;
 
-	if (client_format_index < 0
-	    || client_format_index >= context->num_client_formats)
+	if ((client_format_index < 0)
+	    || (client_format_index >= context->num_client_formats)
+	    || (!context->src_format))
 	{
 		WLog_ERR(TAG,  "index %d is not correct.", client_format_index);
 		return ERROR_INVALID_DATA;
 	}
 
 	EnterCriticalSection(&context->priv->lock);
-	context->priv->src_bytes_per_sample = context->src_format.wBitsPerSample / 8;
+	context->priv->src_bytes_per_sample = context->src_format->wBitsPerSample / 8;
 	context->priv->src_bytes_per_frame = context->priv->src_bytes_per_sample *
-	                                     context->src_format.nChannels;
+	                                     context->src_format->nChannels;
 	context->selected_client_format = client_format_index;
 	format = &context->client_formats[client_format_index];
 
@@ -346,7 +334,7 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context,
 	if (context->latency <= 0)
 		context->latency = 50;
 
-	context->priv->out_frames = context->src_format.nSamplesPerSec *
+	context->priv->out_frames = context->src_format->nSamplesPerSec *
 	                            context->latency / 1000;
 
 	if (context->priv->out_frames < 1)

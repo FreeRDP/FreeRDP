@@ -28,14 +28,9 @@
 
 #include "sf_rdpsnd.h"
 
+#include <freerdp/server/server-common.h>
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("sample")
-
-static const AUDIO_FORMAT test_audio_formats[] =
-{
-	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
-	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL }
-};
 
 static void sf_peer_rdpsnd_activated(RdpsndServerContext* context)
 {
@@ -47,15 +42,10 @@ BOOL sf_peer_rdpsnd_init(testPeerContext* context)
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->rdpcontext = &context->_p;
 	context->rdpsnd->data = context;
+	context->rdpsnd->num_server_formats = server_rdpsnd_get_formats(&context->rdpsnd->server_formats);
 
-	context->rdpsnd->server_formats = test_audio_formats;
-	context->rdpsnd->num_server_formats =
-			sizeof(test_audio_formats) / sizeof(test_audio_formats[0]);
-
-	context->rdpsnd->src_format.wFormatTag = 1;
-	context->rdpsnd->src_format.nChannels = 2;
-	context->rdpsnd->src_format.nSamplesPerSec = 44100;
-	context->rdpsnd->src_format.wBitsPerSample = 16;
+	if (context->rdpsnd->num_server_formats > 0)
+		context->rdpsnd->src_format = &context->rdpsnd->server_formats[0];
 
 	context->rdpsnd->Activated = sf_peer_rdpsnd_activated;
 

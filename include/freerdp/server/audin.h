@@ -28,15 +28,16 @@
 
 typedef struct _audin_server_context audin_server_context;
 
-typedef UINT(*psAudinServerSelectFormat)(audin_server_context* context, int client_format_index);
+typedef UINT(*psAudinServerSelectFormat)(audin_server_context* context, size_t client_format_index);
 typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
 typedef BOOL (*psAudinServerIsOpen)(audin_server_context* context);
 typedef BOOL (*psAudinServerClose)(audin_server_context* context);
 
 typedef UINT(*psAudinServerOpening)(audin_server_context* context);
 typedef UINT(*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
-typedef UINT(*psAudinServerReceiveSamples)(audin_server_context* context, const void* buf,
-        int nframes);
+typedef UINT(*psAudinServerReceiveSamples)(audin_server_context* context,
+        const AUDIO_FORMAT* format, wStream* buf,
+        size_t nframes);
 
 struct _audin_server_context
 {
@@ -46,19 +47,19 @@ struct _audin_server_context
 	void* data;
 
 	/* Server supported formats. Set by server. */
-	const AUDIO_FORMAT* server_formats;
-	int num_server_formats;
+	AUDIO_FORMAT* server_formats;
+	size_t num_server_formats;
 
 	/* Server destination PCM audio format. Set by server. */
-	AUDIO_FORMAT dst_format;
+	AUDIO_FORMAT* dst_format;
 
 	/* Server preferred frames per packet. */
 	int frames_per_packet;
 
 	/* Client supported formats. */
 	AUDIO_FORMAT* client_formats;
-	int num_client_formats;
-	int selected_client_format;
+	size_t num_client_formats;
+	SSIZE_T selected_client_format;
 
 	/*** APIs called by the server. ***/
 	/**

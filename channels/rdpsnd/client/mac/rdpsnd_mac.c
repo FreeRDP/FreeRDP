@@ -109,7 +109,7 @@ static BOOL rdpsnd_mac_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT
 			return FALSE;
 	}
 
-	rdpsnd_print_audio_format(format);
+	audio_format_print(WLog_Get(TAG), WLOG_DEBUG, format);
 	return TRUE;
 }
 

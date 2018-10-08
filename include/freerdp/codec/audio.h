@@ -20,6 +20,8 @@
 #ifndef FREERDP_CODEC_AUDIO_H
 #define FREERDP_CODEC_AUDIO_H
 
+#include <winpr/wlog.h>
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
@@ -191,14 +193,24 @@ typedef struct AUDIO_FORMAT AUDIO_FORMAT;
 extern "C" {
 #endif
 
-FREERDP_API UINT32 rdpsnd_compute_audio_time_length(const AUDIO_FORMAT* format, size_t size);
+FREERDP_API UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size);
 
-FREERDP_API char* rdpsnd_get_audio_tag_string(UINT16 wFormatTag);
+FREERDP_API char* audio_format_get_tag_string(UINT16 wFormatTag);
 
-FREERDP_API void rdpsnd_print_audio_format(const AUDIO_FORMAT* format);
-FREERDP_API void rdpsnd_print_audio_formats(const AUDIO_FORMAT* formats, UINT16 count);
+FREERDP_API void audio_format_print(wLog* log, DWORD level, const AUDIO_FORMAT* format);
+FREERDP_API void audio_formats_print(wLog* log, DWORD level, const AUDIO_FORMAT* formats,
+                                     UINT16 count);
 
-FREERDP_API void rdpsnd_free_audio_formats(AUDIO_FORMAT* formats, UINT16 count);
+FREERDP_API BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format);
+FREERDP_API BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format);
+FREERDP_API BOOL audio_format_copy(const AUDIO_FORMAT* srcFormat, AUDIO_FORMAT* dstFormat);
+FREERDP_API BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what);
+
+FREERDP_API AUDIO_FORMAT* audio_format_new(void);
+FREERDP_API AUDIO_FORMAT* audio_formats_new(size_t count);
+
+FREERDP_API void audio_format_free(AUDIO_FORMAT* format);
+FREERDP_API void audio_formats_free(AUDIO_FORMAT* formats, size_t count);
 
 #ifdef __cplusplus
 }

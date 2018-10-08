@@ -91,7 +91,7 @@ static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 	if (!format)
 		return AV_CODEC_ID_NONE;
 
-	id = rdpsnd_get_audio_tag_string(format->wFormatTag);
+	id = audio_format_get_tag_string(format->wFormatTag);
 
 	switch (format->wFormatTag)
 	{

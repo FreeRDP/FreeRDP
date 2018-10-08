@@ -57,11 +57,11 @@ struct _rdpsnd_server_context
 	void* data;
 
 	/* Server supported formats. Set by server. */
-	const AUDIO_FORMAT* server_formats;
-	int num_server_formats;
+	AUDIO_FORMAT* server_formats;
+	size_t num_server_formats;
 
 	/* Server source PCM audio format. Set by server. */
-	AUDIO_FORMAT src_format;
+	AUDIO_FORMAT* src_format;
 
 	/* Server audio latency, or buffer size, in milli-seconds. Set by server. */
 	int latency;

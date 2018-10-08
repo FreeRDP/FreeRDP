@@ -32,12 +32,16 @@
 
 static macShadowSubsystem* g_Subsystem = NULL;
 
-static void mac_shadow_input_synchronize_event(macShadowSubsystem* subsystem,
+static BOOL mac_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT32 flags)
 {
+	if (!subsystem || !client)
+		return FALSE;
+
+	return TRUE;
 }
 
-static void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem,
+static BOOL mac_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
 	DWORD vkcode;
@@ -46,6 +50,9 @@ static void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem,
 	CGEventRef kbdEvent;
 	CGEventSourceRef source;
 	extended = (flags & KBD_FLAGS_EXTENDED) ? TRUE : FALSE;
+
+	if (!subsystem || !client)
+		return FALSE;
 
 	if (extended)
 		code |= KBDEXT;
@@ -58,7 +65,7 @@ static void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem,
 	keycode = GetKeycodeFromVirtualKeyCode(vkcode, KEYCODE_TYPE_APPLE);
 
 	if (keycode < 8)
-		return;
+		return TRUE;
 
 	keycode -= 8;
 	source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
@@ -77,19 +84,28 @@ static void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem,
 	}
 
 	CFRelease(source);
+	return TRUE;
 }
 
-static void mac_shadow_input_unicode_keyboard_event(macShadowSubsystem*
+static BOOL mac_shadow_input_unicode_keyboard_event(rdpShadowSubsystem*
         subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
+	if (!subsystem || !client)
+		return FALSE;
+
+	return TRUE;
 }
 
-static void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem,
+static BOOL mac_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
 {
+	macShadowSubsystem* mac = (macShadowSubsystem*)subsystem;
 	UINT32 scrollX = 0;
 	UINT32 scrollY = 0;
 	CGWheelCount wheelCount = 2;
+
+	if (!subsystem || !client)
+		return FALSE;
 
 	if (flags & PTR_FLAGS_WHEEL)
 	{
@@ -122,11 +138,11 @@ static void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem,
 
 		if (flags & PTR_FLAGS_MOVE)
 		{
-			if (subsystem->mouseDownLeft)
+			if (mac->mouseDownLeft)
 				mouseType = kCGEventLeftMouseDragged;
-			else if (subsystem->mouseDownRight)
+			else if (mac->mouseDownRight)
 				mouseType = kCGEventRightMouseDragged;
-			else if (subsystem->mouseDownOther)
+			else if (mac->mouseDownOther)
 				mouseType = kCGEventOtherMouseDragged;
 			else
 				mouseType = kCGEventMouseMoved;
@@ -144,12 +160,12 @@ static void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem,
 			if (flags & PTR_FLAGS_DOWN)
 			{
 				mouseType = kCGEventLeftMouseDown;
-				subsystem->mouseDownLeft = TRUE;
+				mac->mouseDownLeft = TRUE;
 			}
 			else
 			{
 				mouseType = kCGEventLeftMouseUp;
-				subsystem->mouseDownLeft = FALSE;
+				mac->mouseDownLeft = FALSE;
 			}
 		}
 		else if (flags & PTR_FLAGS_BUTTON2)
@@ -159,12 +175,12 @@ static void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem,
 			if (flags & PTR_FLAGS_DOWN)
 			{
 				mouseType = kCGEventRightMouseDown;
-				subsystem->mouseDownRight = TRUE;
+				mac->mouseDownRight = TRUE;
 			}
 			else
 			{
 				mouseType = kCGEventRightMouseUp;
-				subsystem->mouseDownRight = FALSE;
+				mac->mouseDownRight = FALSE;
 			}
 		}
 		else if (flags & PTR_FLAGS_BUTTON3)
@@ -174,12 +190,12 @@ static void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem,
 			if (flags & PTR_FLAGS_DOWN)
 			{
 				mouseType = kCGEventOtherMouseDown;
-				subsystem->mouseDownOther = TRUE;
+				mac->mouseDownOther = TRUE;
 			}
 			else
 			{
 				mouseType = kCGEventOtherMouseUp;
-				subsystem->mouseDownOther = FALSE;
+				mac->mouseDownOther = FALSE;
 			}
 		}
 
@@ -189,11 +205,17 @@ static void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem,
 		CFRelease(mouseEvent);
 		CFRelease(source);
 	}
+
+	return TRUE;
 }
 
-static void mac_shadow_input_extended_mouse_event(macShadowSubsystem* subsystem,
+static BOOL mac_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
 {
+	if (!subsystem || !client)
+		return FALSE;
+
+	return TRUE;
 }
 
 static int mac_shadow_detect_monitors(macShadowSubsystem* subsystem)
@@ -221,8 +243,8 @@ static int mac_shadow_detect_monitors(macShadowSubsystem* subsystem)
 		subsystem->height = subsystem->pixelHeight;
 	}
 
-	subsystem->numMonitors = 1;
-	monitor = &(subsystem->monitors[0]);
+	subsystem->common.numMonitors = 1;
+	monitor = &(subsystem->common.monitors[0]);
 	monitor->left = 0;
 	monitor->top = 0;
 	monitor->right = subsystem->width;
@@ -259,7 +281,7 @@ static int mac_shadow_capture_get_dirty_region(macShadowSubsystem* subsystem)
 	size_t numRects;
 	const CGRect* rects;
 	RECTANGLE_16 invalidRect;
-	rdpShadowSurface* surface = subsystem->server->surface;
+	rdpShadowSurface* surface = subsystem->common.server->surface;
 	rects = CGDisplayStreamUpdateGetRects(subsystem->lastUpdate,
 	                                      kCGDisplayStreamUpdateDirtyRects, &numRects);
 
@@ -359,7 +381,7 @@ static void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t,
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents;
 	macShadowSubsystem* subsystem = g_Subsystem;
-	rdpShadowServer* server = subsystem->server;
+	rdpShadowServer* server = subsystem->common.server;
 	rdpShadowSurface* surface = server->surface;
 	count = ArrayList_Count(server->clients);
 
@@ -401,7 +423,7 @@ static void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t,
 		ArrayList_Lock(server->clients);
 		count = ArrayList_Count(server->clients);
 		EnterCriticalSection(&(surface->lock));
-		shadow_subsystem_frame_update((rdpShadowSubsystem*)subsystem);
+		shadow_subsystem_frame_update(&subsystem->common);
 		LeaveCriticalSection(&(surface->lock));
 
 		if (count == 1)
@@ -411,7 +433,7 @@ static void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t,
 
 			if (client)
 			{
-				subsystem->captureFrameRate = shadow_encoder_preferred_fps(client->encoder);
+				subsystem->common.captureFrameRate = shadow_encoder_preferred_fps(client->encoder);
 			}
 		}
 
@@ -477,7 +499,7 @@ static int mac_shadow_screen_grab(macShadowSubsystem* subsystem)
 static int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem,
         wMessage* message)
 {
-	rdpShadowServer* server = subsystem->server;
+	rdpShadowServer* server = subsystem->common.server;
 	rdpShadowSurface* surface = server->surface;
 
 	switch (message->id)
@@ -511,11 +533,11 @@ static DWORD WINAPI mac_shadow_subsystem_thread(LPVOID arg)
 	HANDLE events[32];
 	wMessage message;
 	wMessagePipe* MsgPipe;
-	MsgPipe = subsystem->MsgPipe;
+	MsgPipe = subsystem->common.MsgPipe;
 	nCount = 0;
 	events[nCount++] = MessageQueue_Event(MsgPipe->In);
-	subsystem->captureFrameRate = 16;
-	dwInterval = 1000 / subsystem->captureFrameRate;
+	subsystem->common.captureFrameRate = 16;
+	dwInterval = 1000 / subsystem->common.captureFrameRate;
 	frameTime = GetTickCount64() + dwInterval;
 
 	while (1)
@@ -538,7 +560,7 @@ static DWORD WINAPI mac_shadow_subsystem_thread(LPVOID arg)
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
 			mac_shadow_screen_grab(subsystem);
-			dwInterval = 1000 / subsystem->captureFrameRate;
+			dwInterval = 1000 / subsystem->common.captureFrameRate;
 			frameTime += dwInterval;
 		}
 	}
@@ -636,15 +658,11 @@ static macShadowSubsystem* mac_shadow_subsystem_new(void)
 	if (!subsystem)
 		return NULL;
 
-	subsystem->SynchronizeEvent = (pfnShadowSynchronizeEvent)
-	                              mac_shadow_input_synchronize_event;
-	subsystem->KeyboardEvent = (pfnShadowKeyboardEvent)
-	                           mac_shadow_input_keyboard_event;
-	subsystem->UnicodeKeyboardEvent = (pfnShadowUnicodeKeyboardEvent)
-	                                  mac_shadow_input_unicode_keyboard_event;
-	subsystem->MouseEvent = (pfnShadowMouseEvent) mac_shadow_input_mouse_event;
-	subsystem->ExtendedMouseEvent = (pfnShadowExtendedMouseEvent)
-	                                mac_shadow_input_extended_mouse_event;
+	subsystem->common.SynchronizeEvent = mac_shadow_input_synchronize_event;
+	subsystem->common.KeyboardEvent = mac_shadow_input_keyboard_event;
+	subsystem->common.UnicodeKeyboardEvent = mac_shadow_input_unicode_keyboard_event;
+	subsystem->common.MouseEvent = mac_shadow_input_mouse_event;
+	subsystem->common.ExtendedMouseEvent = mac_shadow_input_extended_mouse_event;
 	return subsystem;
 }
 
