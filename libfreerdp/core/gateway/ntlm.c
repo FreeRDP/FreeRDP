@@ -409,16 +409,15 @@ SSIZE_T ntlm_client_query_auth_size(rdpNtlm* ntlm)
 	return ntlm_client_get_context_max_size(ntlm);
 }
 
-BOOL ntlm_client_encrypt(rdpNtlm* ntlm, size_t foo, SecBufferDesc* Message, size_t sequence)
+BOOL ntlm_client_encrypt(rdpNtlm* ntlm, ULONG fQOP, SecBufferDesc* Message, size_t sequence)
 {
 	SECURITY_STATUS encrypt_status;
-	const ULONG f = cast_from_size(foo);
 	const ULONG s = cast_from_size(sequence);
 
 	if (!ntlm || !Message)
 		return FALSE;
 
-	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, f, Message, s);
+	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, fQOP, Message, s);
 
 	if (encrypt_status != SEC_E_OK)
 	{

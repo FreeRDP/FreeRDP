@@ -43,7 +43,7 @@ FREERDP_LOCAL BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass,
 FREERDP_LOCAL SSIZE_T ntlm_client_query_auth_size(rdpNtlm* ntlm);
 FREERDP_LOCAL SSIZE_T ntlm_client_get_context_max_size(rdpNtlm* ntlm);
 
-FREERDP_LOCAL BOOL ntlm_client_encrypt(rdpNtlm* ntlm, size_t foo, SecBufferDesc* Message,
+FREERDP_LOCAL BOOL ntlm_client_encrypt(rdpNtlm* ntlm, ULONG fQOP, SecBufferDesc* Message,
                                        size_t sequence);
 
 FREERDP_LOCAL BOOL ntlm_client_set_input_buffer(rdpNtlm* ntlm, BOOL copy, const void* data,
