@@ -874,7 +874,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	UINT32 offset;
 	BYTE* buffer = NULL;
 	UINT32 stub_data_pad;
-	SecBuffer Buffers[2];
+	SecBuffer Buffers[2] = { 0 };
 	SecBufferDesc Message;
 	RpcClientCall* clientCall = NULL;
 	rdpNtlm* ntlm;
@@ -884,8 +884,11 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	size_t length;
 	SSIZE_T size;
 
-	if (!s || !rpc)
+	if (!s)
 		return FALSE;
+
+	if (!rpc)
+		goto fail;
 
 	ntlm = rpc->ntlm;
 	connection = rpc->VirtualConnection;
@@ -893,16 +896,16 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	if (!ntlm)
 	{
 		WLog_ERR(TAG, "invalid ntlm context");
-		return FALSE;
+		goto fail;
 	}
 
 	if (!connection)
-		return FALSE;
+		goto fail;
 
 	inChannel = connection->DefaultInChannel;
 
 	if (!inChannel)
-		return FALSE;
+		goto fail;
 
 	Stream_SealLength(s);
 	length = Stream_Length(s);
@@ -911,14 +914,13 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	{
 		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08"PRIX32"]",
 		         GetSecurityStatusString(status), status);
-		return FALSE;
+		goto fail;
 	}
 
-	ZeroMemory(&Buffers, sizeof(Buffers));
 	request_pdu = (rpcconn_request_hdr_t*) calloc(1, sizeof(rpcconn_request_hdr_t));
 
 	if (!request_pdu)
-		return FALSE;
+		goto fail;
 
 	size = ntlm_client_get_context_max_size(ntlm);
 
