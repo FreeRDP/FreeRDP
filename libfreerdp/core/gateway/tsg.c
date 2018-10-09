@@ -560,7 +560,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 			/* 4-byte alignment */
 			{
-				UINT32 offset = Stream_Pointer(pdu->s);
+				UINT32 offset = Stream_GetPosition(pdu->s);
 
 				if (!Stream_SafeSeek(pdu->s, rpc_offset_align(&offset, 4)))
 					goto fail;
