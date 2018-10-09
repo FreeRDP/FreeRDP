@@ -644,7 +644,7 @@ static void rpc_virtual_connection_free(RpcVirtualConnection* connection)
 	free(connection);
 }
 
-static int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
+static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 {
 	int sockfd;
 	rdpTls* tls;
@@ -685,20 +685,20 @@ static int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	bufferedBio = BIO_push(bufferedBio, socketBio);
 
 	if (!BIO_set_nonblock(bufferedBio, TRUE))
-		return -1;
+		return FALSE;
 
 	if (channel->client->isProxy)
 	{
 		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,	settings->GatewayHostname,
 		                   settings->GatewayPort))
-			return -1;
+			return FALSE;
 	}
 
 	channel->bio = bufferedBio;
 	tls = channel->tls = tls_new(settings);
 
 	if (!tls)
-		return -1;
+		return FALSE;
 
 	tls->hostname = settings->GatewayHostname;
 	tls->port = settings->GatewayPort;
@@ -718,10 +718,10 @@ static int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
 		}
 
-		return -1;
+		return FALSE;
 	}
 
-	return 1;
+	return TRUE;
 }
 
 static int rpc_in_channel_connect(RpcInChannel* inChannel, int timeout)
@@ -735,7 +735,7 @@ static int rpc_in_channel_connect(RpcInChannel* inChannel, int timeout)
 
 	/* Connect IN Channel */
 
-	if (rpc_channel_tls_connect(&inChannel->common, timeout) < 0)
+	if (!rpc_channel_tls_connect(&inChannel->common, timeout))
 		return -1;
 
 	rpc_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_CONNECTED);
@@ -768,7 +768,7 @@ static int rpc_out_channel_connect(RpcOutChannel* outChannel, int timeout)
 
 	/* Connect OUT Channel */
 
-	if (rpc_channel_tls_connect(&outChannel->common, timeout) < 0)
+	if (!rpc_channel_tls_connect(&outChannel->common, timeout))
 		return -1;
 
 	rpc_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
@@ -799,7 +799,7 @@ int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout)
 
 	/* Connect OUT Channel */
 
-	if (rpc_channel_tls_connect(&outChannel->common, timeout) < 0)
+	if (!rpc_channel_tls_connect(&outChannel->common, timeout))
 		return -1;
 
 	rpc_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
