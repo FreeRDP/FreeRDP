@@ -52,6 +52,9 @@ WINPR_API BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size);
 WINPR_API wStream* Stream_New(BYTE* buffer, size_t size);
 WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 
+WINPR_API BOOL Stream_StaticInit(wStream *s, BYTE* buffer, size_t size);
+WINPR_API void Stream_StaticFree(wStream *s, BOOL bFreeBuffer);
+
 static INLINE void Stream_Seek(wStream* s, size_t _offset)
 {
 	s->pointer += (_offset);
