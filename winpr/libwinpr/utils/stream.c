@@ -66,6 +66,28 @@ BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size)
 	return TRUE;
 }
 
+BOOL Stream_StaticInit(wStream *s, BYTE* buffer, size_t size)
+{
+	if (buffer)
+		s->buffer = buffer;
+	else
+		s->buffer = (BYTE*) malloc(size);
+
+	if (!s->buffer)
+		return FALSE;
+
+	s->pointer = s->buffer;
+	s->capacity = size;
+	s->length = size;
+
+	s->pool = NULL;
+	s->count = 0;
+
+	return TRUE;
+}
+
+
+
 wStream* Stream_New(BYTE* buffer, size_t size)
 {
 	wStream* s;
@@ -78,35 +100,29 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	if (!s)
 		return NULL;
 
-
-	if (buffer)
-		s->buffer = buffer;
-	else
-		s->buffer = (BYTE*) malloc(size);
-
-	if (!s->buffer)
+	if (!Stream_StaticInit(s, buffer, size))
 	{
 		free(s);
 		return NULL;
 	}
 
-	s->pointer = s->buffer;
-	s->capacity = size;
-	s->length = size;
-
-	s->pool = NULL;
-	s->count = 0;
-
 	return s;
+}
+
+void Stream_StaticFree(wStream *s, BOOL bFreeBuffer)
+{
+	if (s)
+	{
+		if (bFreeBuffer)
+			free(s->buffer);
+	}
 }
 
 void Stream_Free(wStream* s, BOOL bFreeBuffer)
 {
 	if (s)
 	{
-		if (bFreeBuffer)
-			free(s->buffer);
-
+		Stream_StaticFree(s, bFreeBuffer);
 		free(s);
 	}
 }

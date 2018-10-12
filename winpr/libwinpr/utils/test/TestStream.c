@@ -74,6 +74,27 @@ static BOOL TestStream_New()
 	return TRUE;
 }
 
+static BOOL TestStream_Static()
+{
+	BYTE buffer[20];
+	wStream staticStream, *s = &staticStream;
+	UINT16 v;
+
+	/* Test creation of a static stream */
+	if (!Stream_StaticInit(s, buffer, sizeof(buffer)))
+		return FALSE;
+
+	Stream_Write_UINT16(s, 0xcab1);
+	Stream_SetPosition(s, 0);
+	Stream_Read_UINT16(s, v);
+
+	if (v != 0xcab1)
+		return FALSE;
+
+	Stream_StaticFree(s, FALSE);
+	return TRUE;
+}
+
 
 static BOOL TestStream_Create(int count, BOOL selfAlloc)
 {
@@ -541,6 +562,9 @@ int TestStream(int argc, char* argv[])
 
 	if (!TestStream_Copy())
 		return 11;
+
+	if (!TestStream_Static())
+		return 12;
 
 	return 0;
 }
