@@ -357,6 +357,7 @@ static BOOL adjust_point(rdpContext* context, INT32* px, INT32* py)
 	*py = y;
 	return TRUE;;
 }
+
 static BOOL freerdp_check_delta_point(rdpContext* context, INT32 x, INT32 y, UINT32 count,
                                       const DELTA_POINT* data)
 {
@@ -3498,13 +3499,6 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!adjust_point(context, &primary->line_to.nXStart, &primary->line_to.nYStart))
-				return FALSE;
-
-			if (!adjust_point(context, &primary->line_to.nXEnd, &primary->line_to.nYEnd))
-				return FALSE;
-
 			rc = IFCALLRESULT(FALSE, primary->LineTo, context, &primary->line_to);
 			break;
 
@@ -3516,11 +3510,6 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!freerdp_check_delta_point(context, primary->polyline.xStart, primary->polyline.yStart,
-			                               primary->polyline.numDeltaEntries, primary->polyline.points))
-				return FALSE;
-
 			rc = IFCALLRESULT(FALSE, primary->Polyline, context, &primary->polyline);
 			break;
 
