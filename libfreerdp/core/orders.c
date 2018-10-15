@@ -302,22 +302,30 @@ fail:
 
 static BOOL freerdp_check_point(rdpContext* context, INT32 x, INT32 y)
 {
+	UINT32 dw, dh;
+
 	if (!context || !context->settings)
 		return FALSE;
 
+	dw = context->settings->DesktopWidth;
+	dh = context->settings->DesktopHeight;
+
 	if (x < 0)
-		return FALSE;
+		goto fail;
 
 	if (y < 0)
-		return FALSE;
+		goto fail;
 
-	if (x > context->settings->DesktopWidth)
-		return FALSE;
+	if (x > dw)
+		goto fail;
 
-	if (y > context->settings->DesktopHeight)
-		return FALSE;
+	if (y > dw)
+		goto fail;
 
 	return TRUE;
+fail:
+	WLog_ERR(TAG, "Invalid point %"PRId32"x%"PRId32" [%"PRIu32"x%"PRIu32"]", x, y, dw, dh);
+	return FALSE;
 }
 
 static BOOL freerdp_check_delta_point(rdpContext* context, INT32 x, INT32 y, UINT32 count,
@@ -353,10 +361,10 @@ static BOOL freerdp_check_delta_rect(rdpContext* context, UINT32 count, const DE
 	INT32 h = 0;
 
 	if (!context || !data)
-		return FALSE;
+		goto fail;
 
 	if (count > 45)
-		return FALSE;
+		goto fail;
 
 	for (i = 0; i < count; i++)
 	{
@@ -367,10 +375,13 @@ static BOOL freerdp_check_delta_rect(rdpContext* context, UINT32 count, const DE
 		h = delta->height;
 
 		if (!freerdp_primary_check_rect(context, x, y, w, h))
-			return FALSE;
+			goto fail;
 	}
 
 	return TRUE;
+fail:
+	WLog_ERR(TAG, "invalid delta rectangles");
+	return FALSE;
 }
 
 static BOOL freerdp_check_glyph_op_bound(rdpContext* context, INT32 left, INT32 top, INT32 right,
@@ -2735,7 +2746,7 @@ static BOOL update_read_create_offscreen_bitmap_order(wStream* s,
 
 	if (deleteListPresent)
 	{
-		int i;
+		UINT32 i;
 
 		if (Stream_GetRemainingLength(s) < 2)
 			return FALSE;
@@ -2757,7 +2768,7 @@ static BOOL update_read_create_offscreen_bitmap_order(wStream* s,
 		if (Stream_GetRemainingLength(s) < 2 * deleteList->cIndices)
 			return FALSE;
 
-		for (i = 0; i < (int) deleteList->cIndices; i++)
+		for (i = 0; i < deleteList->cIndices; i++)
 		{
 			Stream_Read_UINT16(s, deleteList->indices[i]);
 		}
@@ -3670,7 +3681,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	}
 
 	if (!rc)
+	{
+		WLog_Print(update->log, WLOG_WARN,
+		           "Primary Drawing Order %s failed", orderName);
 		return FALSE;
+	}
 
 	if (flags & ORDER_BOUNDS)
 	{
@@ -3819,159 +3834,133 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 	switch (orderType)
 	{
 		case ORDER_TYPE_CREATE_OFFSCREEN_BITMAP:
-			if (!update_read_create_offscreen_bitmap_order(s,
+			if (update_read_create_offscreen_bitmap_order(s,
 			        &(altsec->create_offscreen_bitmap)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_create_offscreen_bitmap_order() failed",
-				           orderName);
-				return FALSE;
+				IFCALLRET(altsec->CreateOffscreenBitmap, rc, context,
+				          &(altsec->create_offscreen_bitmap));
 			}
 
-			IFCALLRET(altsec->CreateOffscreenBitmap, rc, context,
-			          &(altsec->create_offscreen_bitmap));
 			break;
 
 		case ORDER_TYPE_SWITCH_SURFACE:
-			if (!update_read_switch_surface_order(s, &(altsec->switch_surface)))
+			if (update_read_switch_surface_order(s, &(altsec->switch_surface)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_switch_surface_order() failed", orderName);
-				return FALSE;
+				IFCALLRET(altsec->SwitchSurface, rc, context, &(altsec->switch_surface));
 			}
 
-			IFCALLRET(altsec->SwitchSurface, rc, context, &(altsec->switch_surface));
 			break;
 
 		case ORDER_TYPE_CREATE_NINE_GRID_BITMAP:
-			if (!update_read_create_nine_grid_bitmap_order(s,
+			if (update_read_create_nine_grid_bitmap_order(s,
 			        &(altsec->create_nine_grid_bitmap)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_create_nine_grid_bitmap_order() failed",
-				           orderName);
-				return FALSE;
+				IFCALLRET(altsec->CreateNineGridBitmap, rc, context,
+				          &(altsec->create_nine_grid_bitmap));
 			}
 
-			IFCALLRET(altsec->CreateNineGridBitmap, rc, context,
-			          &(altsec->create_nine_grid_bitmap));
 			break;
 
 		case ORDER_TYPE_FRAME_MARKER:
-			if (!update_read_frame_marker_order(s, &(altsec->frame_marker)))
+			if (update_read_frame_marker_order(s, &(altsec->frame_marker)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_frame_marker_order() failed", orderName);
-				return FALSE;
+				IFCALLRET(altsec->FrameMarker, rc, context, &(altsec->frame_marker));
 			}
 
-			IFCALLRET(altsec->FrameMarker, rc, context, &(altsec->frame_marker));
 			break;
 
 		case ORDER_TYPE_STREAM_BITMAP_FIRST:
-			if (!update_read_stream_bitmap_first_order(s, &(altsec->stream_bitmap_first)))
+			if (update_read_stream_bitmap_first_order(s, &(altsec->stream_bitmap_first)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_stream_bitmap_first_order() failed",
-				           orderName);
-				return FALSE;
+				IFCALLRET(altsec->StreamBitmapFirst, rc, context, &(altsec->stream_bitmap_first));
 			}
 
-			IFCALLRET(altsec->StreamBitmapFirst, rc, context, &(altsec->stream_bitmap_first));
 			break;
 
 		case ORDER_TYPE_STREAM_BITMAP_NEXT:
-			if (!update_read_stream_bitmap_next_order(s, &(altsec->stream_bitmap_next)))
+			if (update_read_stream_bitmap_next_order(s, &(altsec->stream_bitmap_next)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_stream_bitmap_next_order() failed",
-				           orderName);
-				return FALSE;
+				IFCALLRET(altsec->StreamBitmapNext, rc, context, &(altsec->stream_bitmap_next));
 			}
 
-			IFCALLRET(altsec->StreamBitmapNext, rc, context, &(altsec->stream_bitmap_next));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_FIRST:
-			if (!update_read_draw_gdiplus_first_order(s, &(altsec->draw_gdiplus_first)))
+			if (update_read_draw_gdiplus_first_order(s, &(altsec->draw_gdiplus_first)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_draw_gdiplus_first_order() failed",
-				           orderName);
-				return FALSE;
+				IFCALLRET(altsec->DrawGdiPlusFirst, rc, context, &(altsec->draw_gdiplus_first));
 			}
 
-			IFCALLRET(altsec->DrawGdiPlusFirst, rc, context, &(altsec->draw_gdiplus_first));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_NEXT:
-			if (!update_read_draw_gdiplus_next_order(s, &(altsec->draw_gdiplus_next)))
+			if (update_read_draw_gdiplus_next_order(s, &(altsec->draw_gdiplus_next)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_draw_gdiplus_next_order() failed", orderName);
-				return FALSE;
+				IFCALLRET(altsec->DrawGdiPlusNext, rc, context, &(altsec->draw_gdiplus_next));
 			}
 
-			IFCALLRET(altsec->DrawGdiPlusNext, rc, context, &(altsec->draw_gdiplus_next));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_END:
-			if (!update_read_draw_gdiplus_end_order(s, &(altsec->draw_gdiplus_end)))
+			if (update_read_draw_gdiplus_end_order(s, &(altsec->draw_gdiplus_end)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_draw_gdiplus_end_order() failed", orderName);
-				return FALSE;
+				IFCALLRET(altsec->DrawGdiPlusEnd, rc, context, &(altsec->draw_gdiplus_end));
 			}
 
-			IFCALLRET(altsec->DrawGdiPlusEnd, rc, context, &(altsec->draw_gdiplus_end));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_FIRST:
-			if (!update_read_draw_gdiplus_cache_first_order(s,
+			if (update_read_draw_gdiplus_cache_first_order(s,
 			        &(altsec->draw_gdiplus_cache_first)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_draw_gdiplus_cache_first_order() failed",
-				           orderName);
-				return FALSE;
+				IFCALLRET(altsec->DrawGdiPlusCacheFirst, rc, context,
+				          &(altsec->draw_gdiplus_cache_first));
 			}
 
-			IFCALLRET(altsec->DrawGdiPlusCacheFirst, rc, context,
-			          &(altsec->draw_gdiplus_cache_first));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_NEXT:
-			if (!update_read_draw_gdiplus_cache_next_order(s,
+			if (update_read_draw_gdiplus_cache_next_order(s,
 			        &(altsec->draw_gdiplus_cache_next)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_draw_gdiplus_cache_next_order() failed",
-				           orderName);
-				return FALSE;
+				IFCALLRET(altsec->DrawGdiPlusCacheNext, rc, context,
+				          &(altsec->draw_gdiplus_cache_next));
 			}
 
-			IFCALLRET(altsec->DrawGdiPlusCacheNext, rc, context,
-			          &(altsec->draw_gdiplus_cache_next));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_END:
-			if (!update_read_draw_gdiplus_cache_end_order(s,
+			if (update_read_draw_gdiplus_cache_end_order(s,
 			        &(altsec->draw_gdiplus_cache_end)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_draw_gdiplus_cache_end_order() failed",
-				           orderName);
-				return FALSE;
+				IFCALLRET(altsec->DrawGdiPlusCacheEnd, rc, context, &(altsec->draw_gdiplus_cache_end));
 			}
 
-			IFCALLRET(altsec->DrawGdiPlusCacheEnd, rc, context, &(altsec->draw_gdiplus_cache_end));
 			break;
 
 		case ORDER_TYPE_WINDOW:
-			return update_recv_altsec_window_order(update, s);
+			rc = update_recv_altsec_window_order(update, s);
+			break;
 
 		case ORDER_TYPE_COMPDESK_FIRST:
 			rc = TRUE;
 			break;
 
 		default:
-			WLog_Print(update->log, WLOG_WARN,
-			           "Alternate Secondary Drawing Order %s", orderName);
 			break;
+	}
+
+	if (!rc)
+	{
+		WLog_Print(update->log, WLOG_WARN,
+		           "Alternate Secondary Drawing Order %s failed", orderName);
 	}
 
 	return rc;
 }
 BOOL update_recv_order(rdpUpdate* update, wStream* s)
 {
+	BOOL rc;
 	BYTE controlFlags;
 
 	if (Stream_GetRemainingLength(s) < 1)
@@ -3983,11 +3972,14 @@ BOOL update_recv_order(rdpUpdate* update, wStream* s)
 	Stream_Read_UINT8(s, controlFlags); /* controlFlags (1 byte) */
 
 	if (!(controlFlags & ORDER_STANDARD))
-		return update_recv_altsec_order(update, s, controlFlags);
+		rc = update_recv_altsec_order(update, s, controlFlags);
 	else if (controlFlags & ORDER_SECONDARY)
-		return update_recv_secondary_order(update, s, controlFlags);
+		rc = update_recv_secondary_order(update, s, controlFlags);
 	else
-		return update_recv_primary_order(update, s, controlFlags);
+		rc = update_recv_primary_order(update, s, controlFlags);
 
-	return TRUE;
+	if (!rc)
+		WLog_Print(update->log, WLOG_ERROR, "order flags %02"PRIx8" failed", controlFlags);
+
+	return rc;
 }
