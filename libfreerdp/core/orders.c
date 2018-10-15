@@ -43,70 +43,6 @@
 
 #define TAG FREERDP_TAG("core.orders")
 
-static const char* const PRIMARY_DRAWING_ORDER_STRINGS[] =
-{
-	"DstBlt",
-	"PatBlt",
-	"ScrBlt",
-	"", "", "", "",
-	"DrawNineGrid",
-	"MultiDrawNineGrid",
-	"LineTo",
-	"OpaqueRect",
-	"SaveBitmap",
-	"",
-	"MemBlt",
-	"Mem3Blt",
-	"MultiDstBlt",
-	"MultiPatBlt",
-	"MultiScrBlt",
-	"MultiOpaqueRect",
-	"FastIndex",
-	"PolygonSC",
-	"PolygonCB",
-	"Polyline",
-	"",
-	"FastGlyph",
-	"EllipseSC",
-	"EllipseCB",
-	"GlyphIndex"
-};
-
-static const char* const SECONDARY_DRAWING_ORDER_STRINGS[] =
-{
-	"Cache Bitmap",
-	"Cache Color Table",
-	"Cache Bitmap (Compressed)",
-	"Cache Glyph",
-	"Cache Bitmap V2",
-	"Cache Bitmap V2 (Compressed)",
-	"",
-	"Cache Brush",
-	"Cache Bitmap V3"
-};
-
-#define SECONDARY_DRAWING_ORDER_COUNT	(ARRAYSIZE(SECONDARY_DRAWING_ORDER_STRINGS))
-
-static const char* const ALTSEC_DRAWING_ORDER_STRINGS[] =
-{
-	"Switch Surface",
-	"Create Offscreen Bitmap",
-	"Stream Bitmap First",
-	"Stream Bitmap Next",
-	"Create NineGrid Bitmap",
-	"Draw GDI+ First",
-	"Draw GDI+ Next",
-	"Draw GDI+ End",
-	"Draw GDI+ Cache First",
-	"Draw GDI+ Cache Next",
-	"Draw GDI+ Cache End",
-	"Windowing",
-	"Desktop Composition",
-	"Frame Marker"
-};
-
-#define ALTSEC_DRAWING_ORDER_COUNT	(ARRAYSIZE(ALTSEC_DRAWING_ORDER_STRINGS))
-
 const BYTE PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 {
 	DSTBLT_ORDER_FIELD_BYTES,
@@ -179,6 +115,102 @@ static const BYTE BPP_BMF[] =
 	5, 0, 0, 0, 0, 0, 0, 0,
 	6, 0, 0, 0, 0, 0, 0, 0
 };
+
+static const char* primary_order_string(UINT32 orderType)
+{
+	const char* orders[] =
+	{
+		"[0x%02"PRIu8"] DstBlt",
+		"[0x%02"PRIu8"] PatBlt",
+		"[0x%02"PRIu8"] ScrBlt",
+		"[0x%02"PRIu8"] UNUSED",
+		"[0x%02"PRIu8"] UNUSED",
+		"[0x%02"PRIu8"] UNUSED",
+		"[0x%02"PRIu8"] UNUSED",
+		"[0x%02"PRIu8"] DrawNineGrid",
+		"[0x%02"PRIu8"] MultiDrawNineGrid",
+		"[0x%02"PRIu8"] LineTo",
+		"[0x%02"PRIu8"] OpaqueRect",
+		"[0x%02"PRIu8"] SaveBitmap",
+		"[0x%02"PRIu8"] UNUSED",
+		"[0x%02"PRIu8"] MemBlt",
+		"[0x%02"PRIu8"] Mem3Blt",
+		"[0x%02"PRIu8"] MultiDstBlt",
+		"[0x%02"PRIu8"] MultiPatBlt",
+		"[0x%02"PRIu8"] MultiScrBlt",
+		"[0x%02"PRIu8"] MultiOpaqueRect",
+		"[0x%02"PRIu8"] FastIndex",
+		"[0x%02"PRIu8"] PolygonSC",
+		"[0x%02"PRIu8"] PolygonCB",
+		"[0x%02"PRIu8"] Polyline",
+		"[0x%02"PRIu8"] UNUSED",
+		"[0x%02"PRIu8"] FastGlyph",
+		"[0x%02"PRIu8"] EllipseSC",
+		"[0x%02"PRIu8"] EllipseCB",
+		"[0x%02"PRIu8"] GlyphIndex"
+	};
+	const char* fmt = "[0x%02"PRIu8"] UNKNOWN";
+	static char buffer[64] = {0};
+
+	if (orderType < ARRAYSIZE(orders))
+		fmt = orders[orderType];
+
+	sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	return buffer;
+}
+
+static const char* secondary_order_string(UINT32 orderType)
+{
+	const char* orders[] =
+	{
+		"[0x%02"PRIu8"] Cache Bitmap",
+		"[0x%02"PRIu8"] Cache Color Table",
+		"[0x%02"PRIu8"] Cache Bitmap (Compressed)",
+		"[0x%02"PRIu8"] Cache Glyph",
+		"[0x%02"PRIu8"] Cache Bitmap V2",
+		"[0x%02"PRIu8"] Cache Bitmap V2 (Compressed)",
+		"[0x%02"PRIu8"] UNUSED",
+		"[0x%02"PRIu8"] Cache Brush",
+		"[0x%02"PRIu8"] Cache Bitmap V3"
+	};
+	const char* fmt = "[0x%02"PRIu8"] UNKNOWN";
+	static char buffer[64] = {0};
+
+	if (orderType < ARRAYSIZE(orders))
+		fmt = orders[orderType];
+
+	sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	return buffer;
+}
+
+static const char* altsec_order_string(BYTE orderType)
+{
+	const char* orders[] =
+	{
+		"[0x%02"PRIu8"] Switch Surface",
+		"[0x%02"PRIu8"] Create Offscreen Bitmap",
+		"[0x%02"PRIu8"] Stream Bitmap First",
+		"[0x%02"PRIu8"] Stream Bitmap Next",
+		"[0x%02"PRIu8"] Create NineGrid Bitmap",
+		"[0x%02"PRIu8"] Draw GDI+ First",
+		"[0x%02"PRIu8"] Draw GDI+ Next",
+		"[0x%02"PRIu8"] Draw GDI+ End",
+		"[0x%02"PRIu8"] Draw GDI+ Cache First",
+		"[0x%02"PRIu8"] Draw GDI+ Cache Next",
+		"[0x%02"PRIu8"] Draw GDI+ Cache End",
+		"[0x%02"PRIu8"] Windowing",
+		"[0x%02"PRIu8"] Desktop Composition",
+		"[0x%02"PRIu8"] Frame Marker"
+	};
+	const char* fmt = "[0x%02"PRIu8"] UNKNOWN";
+	static char buffer[64] = {0};
+
+	if (orderType < ARRAYSIZE(orders))
+		fmt = orders[orderType];
+
+	sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	return buffer;
+}
 
 static BOOL freerdp_primary_check_bound(rdpContext* context, INT32 left, INT32 top, INT32 right,
                                         INT32 bottom)
@@ -351,13 +383,6 @@ static BOOL freerdp_check_glyph_op_bound(rdpContext* context, INT32 left, INT32 
 		bottom = top;
 
 	return freerdp_primary_check_bound(context, left, top, right, bottom);
-}
-static const char* update_secondary_order_to_string(BYTE order)
-{
-	if (order >= ARRAYSIZE(SECONDARY_DRAWING_ORDER_STRINGS))
-		return "UNKNOWN";
-
-	return SECONDARY_DRAWING_ORDER_STRINGS[order];
 }
 
 static INLINE BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
@@ -3167,17 +3192,19 @@ BOOL update_write_bounds(wStream* s, ORDER_INFO* orderInfo)
 static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 {
 	BOOL rc = FALSE;
-	ORDER_INFO* orderInfo;
 	rdpContext* context = update->context;
 	rdpPrimaryUpdate* primary = update->primary;
-	orderInfo = &(primary->order_info);
+	ORDER_INFO* orderInfo = &(primary->order_info);
+	const char* orderName;
 
 	if (flags & ORDER_TYPE_CHANGE)
 		Stream_Read_UINT8(s, orderInfo->orderType); /* orderType (1 byte) */
 
+	orderName = primary_order_string(orderInfo->orderType);
+
 	if (orderInfo->orderType >= PRIMARY_DRAWING_ORDER_COUNT)
 	{
-		WLog_ERR(TAG,  "Invalid Primary Drawing Order (0x%08"PRIX32")", orderInfo->orderType);
+		WLog_ERR(TAG,  "Invalid Primary Drawing Order %s", orderName);
 		return FALSE;
 	}
 
@@ -3215,13 +3242,13 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_DSTBLT:
 			if (!update_read_dstblt_order(s, orderInfo, &(primary->dstblt)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_DSTBLT - update_read_dstblt_order() failed");
+				WLog_ERR(TAG, "%s - update_read_dstblt_order() failed", orderName);
 				return FALSE;
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,
-			           "%s Primary Drawing Order (0x%08"PRIX32") rop=%s [0x%08"PRIx32"]",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType,
+			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]",
+			           orderName,
 			           gdi_rop3_code_string(primary->dstblt.bRop), gdi_rop3_code(primary->dstblt.bRop));
 
 			if (!freerdp_primary_check_rect(context, primary->dstblt.nLeftRect, primary->dstblt.nTopRect,
@@ -3234,13 +3261,12 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_PATBLT:
 			if (!update_read_patblt_order(s, orderInfo, &(primary->patblt)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_PATBLT - update_read_patblt_order() failed");
+				WLog_ERR(TAG, "%s - update_read_patblt_order() failed", orderName);
 				return FALSE;
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,
-			           "%s Primary Drawing Order (0x%08"PRIX32") rop=%s [0x%08"PRIx32"]",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType,
+			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->patblt.bRop), gdi_rop3_code(primary->patblt.bRop));
 
 			if (!freerdp_primary_check_rect(context, primary->patblt.nLeftRect, primary->patblt.nTopRect,
@@ -3253,13 +3279,12 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_SCRBLT:
 			if (!update_read_scrblt_order(s, orderInfo, &(primary->scrblt)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_SCRBLT - update_read_scrblt_order() failed");
+				WLog_ERR(TAG, "%s - update_read_scrblt_order() failed", orderName);
 				return FALSE;
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,
-			           "%s Primary Drawing Order (0x%08"PRIX32") rop=%s [0x%08"PRIx32"]",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType,
+			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->scrblt.bRop), gdi_rop3_code(primary->scrblt.bRop));
 
 			if (!freerdp_primary_check_rect(context, primary->scrblt.nLeftRect, primary->scrblt.nTopRect,
@@ -3273,12 +3298,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			if (!update_read_opaque_rect_order(s, orderInfo, &(primary->opaque_rect)))
 			{
 				WLog_ERR(TAG,
-				         "ORDER_TYPE_OPAQUE_RECT - update_read_opaque_rect_order() failed");
+				         "%s - update_read_opaque_rect_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_primary_check_rect(context, primary->opaque_rect.nLeftRect,
 			                                primary->opaque_rect.nTopRect, primary->opaque_rect.nWidth, primary->opaque_rect.nHeight))
@@ -3291,12 +3315,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			if (!update_read_draw_nine_grid_order(s, orderInfo, &(primary->draw_nine_grid)))
 			{
 				WLog_ERR(TAG,
-				         "ORDER_TYPE_DRAW_NINE_GRID - update_read_draw_nine_grid_order() failed");
+				         "%s - update_read_draw_nine_grid_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_primary_check_bound(context, primary->draw_nine_grid.srcLeft,
 			                                 primary->draw_nine_grid.srcTop, primary->draw_nine_grid.srcRight,
@@ -3310,13 +3333,12 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			if (!update_read_multi_dstblt_order(s, orderInfo, &(primary->multi_dstblt)))
 			{
 				WLog_ERR(TAG,
-				         "ORDER_TYPE_MULTI_DSTBLT - update_read_multi_dstblt_order() failed");
+				         "%s - update_read_multi_dstblt_order() failed", orderName);
 				return FALSE;
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,
-			           "%s Primary Drawing Order (0x%08"PRIX32") rop=%s [0x%08"PRIx32"]",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType,
+			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->multi_dstblt.bRop), gdi_rop3_code(primary->multi_dstblt.bRop));
 
 			if (!freerdp_primary_check_rect(context, primary->multi_dstblt.nLeftRect,
@@ -3334,13 +3356,12 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			if (!update_read_multi_patblt_order(s, orderInfo, &(primary->multi_patblt)))
 			{
 				WLog_ERR(TAG,
-				         "ORDER_TYPE_MULTI_PATBLT - update_read_multi_patblt_order() failed");
+				         "%s - update_read_multi_patblt_order() failed", orderName);
 				return FALSE;
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,
-			           "%s Primary Drawing Order (0x%08"PRIX32") rop=%s [0x%08"PRIx32"]",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType,
+			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->multi_patblt.bRop), gdi_rop3_code(primary->multi_patblt.bRop));
 
 			if (!freerdp_primary_check_rect(context, primary->multi_patblt.nLeftRect,
@@ -3358,13 +3379,12 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			if (!update_read_multi_scrblt_order(s, orderInfo, &(primary->multi_scrblt)))
 			{
 				WLog_ERR(TAG,
-				         "ORDER_TYPE_MULTI_SCRBLT - update_read_multi_scrblt_order() failed");
+				         "%s - update_read_multi_scrblt_order() failed", orderName);
 				return FALSE;
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,
-			           "%s Primary Drawing Order (0x%08"PRIX32") rop=%s [0x%08"PRIx32"]",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType,
+			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->multi_scrblt.bRop), gdi_rop3_code(primary->multi_scrblt.bRop));
 
 			if (!freerdp_primary_check_rect(context, primary->multi_scrblt.nLeftRect,
@@ -3383,12 +3403,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			        &(primary->multi_opaque_rect)))
 			{
 				WLog_ERR(TAG,
-				         "ORDER_TYPE_MULTI_OPAQUE_RECT - update_read_multi_opaque_rect_order() failed");
+				         "%s - update_read_multi_opaque_rect_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_primary_check_rect(context, primary->multi_opaque_rect.nLeftRect,
 			                                primary->multi_opaque_rect.nTopRect, primary->multi_opaque_rect.nWidth,
@@ -3407,12 +3426,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			        &(primary->multi_draw_nine_grid)))
 			{
 				WLog_ERR(TAG,
-				         "ORDER_TYPE_MULTI_DRAW_NINE_GRID - update_read_multi_draw_nine_grid_order() failed");
+				         "%s - update_read_multi_draw_nine_grid_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_primary_check_bound(context, primary->multi_draw_nine_grid.srcLeft,
 			                                 primary->multi_draw_nine_grid.srcTop, primary->multi_draw_nine_grid.srcRight,
@@ -3426,12 +3444,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_LINE_TO:
 			if (!update_read_line_to_order(s, orderInfo, &(primary->line_to)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_LINE_TO - update_read_line_to_order() failed");
+				WLog_ERR(TAG, "%s - update_read_line_to_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_check_point(context, primary->line_to.nXStart, primary->line_to.nYStart))
 				return FALSE;
@@ -3445,12 +3462,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_POLYLINE:
 			if (!update_read_polyline_order(s, orderInfo, &(primary->polyline)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_POLYLINE - update_read_polyline_order() failed");
+				WLog_ERR(TAG, "%s - update_read_polyline_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_check_delta_point(context, primary->polyline.xStart, primary->polyline.yStart,
 			                               primary->polyline.numDeltaEntries, primary->polyline.points))
@@ -3462,13 +3478,12 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_MEMBLT:
 			if (!update_read_memblt_order(s, orderInfo, &(primary->memblt)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_MEMBLT - update_read_memblt_order() failed");
+				WLog_ERR(TAG, "%s - update_read_memblt_order() failed", orderName);
 				return FALSE;
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,
-			           "%s Primary Drawing Order (0x%08"PRIX32") rop=%s [0x%08"PRIx32"]",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType,
+			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->memblt.bRop), gdi_rop3_code(primary->memblt.bRop));
 
 			if (!freerdp_primary_check_rect(context, primary->memblt.nLeftRect, primary->memblt.nTopRect,
@@ -3481,13 +3496,12 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_MEM3BLT:
 			if (!update_read_mem3blt_order(s, orderInfo, &(primary->mem3blt)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_MEM3BLT - update_read_mem3blt_order() failed");
+				WLog_ERR(TAG, "%s - update_read_mem3blt_order() failed", orderName);
 				return FALSE;
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,
-			           "%s Primary Drawing Order (0x%08"PRIX32") rop=%s [0x%08"PRIx32"]",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType,
+			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->mem3blt.bRop), gdi_rop3_code(primary->mem3blt.bRop));
 
 			if (!freerdp_primary_check_rect(context, primary->mem3blt.nLeftRect, primary->mem3blt.nTopRect,
@@ -3501,12 +3515,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			if (!update_read_save_bitmap_order(s, orderInfo, &(primary->save_bitmap)))
 			{
 				WLog_ERR(TAG,
-				         "ORDER_TYPE_SAVE_BITMAP - update_read_save_bitmap_order() failed");
+				         "%s - update_read_save_bitmap_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_primary_check_bound(context, primary->save_bitmap.nLeftRect,
 			                                 primary->save_bitmap.nTopRect, primary->save_bitmap.nRightRect, primary->save_bitmap.nBottomRect))
@@ -3519,12 +3532,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			if (!update_read_glyph_index_order(s, orderInfo, &(primary->glyph_index)))
 			{
 				WLog_ERR(TAG,
-				         "ORDER_TYPE_GLYPH_INDEX - update_read_glyph_index_order() failed");
+				         "%s - update_read_glyph_index_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_primary_check_bound(context, primary->glyph_index.bkLeft, primary->glyph_index.bkTop,
 			                                 primary->glyph_index.bkRight, primary->fast_index.bkBottom))
@@ -3543,12 +3555,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_FAST_INDEX:
 			if (!update_read_fast_index_order(s, orderInfo, &(primary->fast_index)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_FAST_INDEX - update_read_fast_index_order() failed");
+				WLog_ERR(TAG, "%s - update_read_fast_index_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_primary_check_bound(context, primary->fast_index.bkLeft, primary->fast_index.bkTop,
 			                                 primary->fast_index.bkRight, primary->fast_index.bkBottom))
@@ -3567,12 +3578,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_FAST_GLYPH:
 			if (!update_read_fast_glyph_order(s, orderInfo, &(primary->fast_glyph)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_FAST_GLYPH - update_read_fast_glyph_order() failed");
+				WLog_ERR(TAG, "%s - update_read_fast_glyph_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_primary_check_bound(context, primary->fast_glyph.bkLeft, primary->fast_glyph.bkTop,
 			                                 primary->fast_glyph.bkRight, primary->fast_index.bkBottom))
@@ -3591,12 +3601,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_POLYGON_SC:
 			if (!update_read_polygon_sc_order(s, orderInfo, &(primary->polygon_sc)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_POLYGON_SC - update_read_polygon_sc_order() failed");
+				WLog_ERR(TAG, "%s - update_read_polygon_sc_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_check_delta_point(context, primary->polygon_sc.xStart, primary->polygon_sc.yStart,
 			                               primary->polygon_sc.numPoints, primary->polygon_sc.points))
@@ -3608,12 +3617,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_POLYGON_CB:
 			if (!update_read_polygon_cb_order(s, orderInfo, &(primary->polygon_cb)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_POLYGON_CB - update_read_polygon_cb_order() failed");
+				WLog_ERR(TAG, "%s - update_read_polygon_cb_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_check_delta_point(context, primary->polygon_cb.xStart, primary->polygon_cb.yStart,
 			                               primary->polygon_cb.numPoints, primary->polygon_cb.points))
@@ -3625,12 +3633,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_ELLIPSE_SC:
 			if (!update_read_ellipse_sc_order(s, orderInfo, &(primary->ellipse_sc)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_ELLIPSE_SC - update_read_ellipse_sc_order() failed");
+				WLog_ERR(TAG, "%s - update_read_ellipse_sc_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_primary_check_bound(context, primary->ellipse_sc.leftRect, primary->ellipse_sc.topRect,
 			                                 primary->ellipse_sc.rightRect,  primary->ellipse_sc.bottomRect))
@@ -3642,12 +3649,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_ELLIPSE_CB:
 			if (!update_read_ellipse_cb_order(s, orderInfo, &(primary->ellipse_cb)))
 			{
-				WLog_ERR(TAG, "ORDER_TYPE_ELLIPSE_CB - update_read_ellipse_cb_order() failed");
+				WLog_ERR(TAG, "%s - update_read_ellipse_cb_order() failed", orderName);
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%08"PRIX32")",
-			           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
 			if (!freerdp_primary_check_bound(context, primary->ellipse_cb.leftRect, primary->ellipse_cb.topRect,
 			                                 primary->ellipse_cb.rightRect,  primary->ellipse_cb.bottomRect))
@@ -3657,8 +3663,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			break;
 
 		default:
-			WLog_Print(update->log, WLOG_WARN,  "[UNKNOWN] Primary Drawing Order (0x%08"PRIX32"), ignoring",
-			           orderInfo->orderType);
+			WLog_Print(update->log, WLOG_WARN,  "Primary Drawing Order %s, ignoring", orderName);
 			rc = TRUE;
 			break;
 	}
@@ -3694,8 +3699,8 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 	Stream_Read_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	Stream_Read_UINT8(s, orderType); /* orderType (1 byte) */
 	next = Stream_Pointer(s) + ((INT16) orderLength) + 7;
-	WLog_Print(update->log, WLOG_DEBUG,  "%s Secondary Drawing Order (0x%02"PRIX8")",
-	           update_secondary_order_to_string(orderType), orderType);
+	WLog_Print(update->log, WLOG_DEBUG,  "Secondary Drawing Order %s",
+	           secondary_order_string(orderType));
 
 	switch (orderType)
 	{
@@ -3793,8 +3798,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 
 	if (!rc)
 	{
-		WLog_ERR(TAG, "SECONDARY ORDER %s [%"PRIx16"] failed", update_secondary_order_to_string(orderType),
-		         orderType);
+		WLog_ERR(TAG, "SECONDARY ORDER %s failed", secondary_order_string(orderType));
 	}
 
 	Stream_SetPointer(s, next);
@@ -3806,15 +3810,10 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 	BYTE orderType;
 	rdpContext* context = update->context;
 	rdpAltSecUpdate* altsec = update->altsec;
+	const char* orderName = altsec_order_string(orderType);
 	orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
-
-	if (orderType < ALTSEC_DRAWING_ORDER_COUNT)
-		WLog_Print(update->log, WLOG_DEBUG,
-		           "%s Alternate Secondary Drawing Order (0x%02"PRIX8")",
-		           ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
-	else
-		WLog_Print(update->log, WLOG_DEBUG,
-		           "Unknown Alternate Secondary Drawing Order: 0x%02"PRIX8"", orderType);
+	WLog_Print(update->log, WLOG_DEBUG,
+	           "Alternate Secondary Drawing Order %s", orderName);
 
 	switch (orderType)
 	{
@@ -3822,8 +3821,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			if (!update_read_create_offscreen_bitmap_order(s,
 			        &(altsec->create_offscreen_bitmap)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_CREATE_OFFSCREEN_BITMAP - update_read_create_offscreen_bitmap_order() failed");
+				WLog_ERR(TAG, "%s - update_read_create_offscreen_bitmap_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3834,8 +3832,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 		case ORDER_TYPE_SWITCH_SURFACE:
 			if (!update_read_switch_surface_order(s, &(altsec->switch_surface)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_SWITCH_SURFACE - update_read_switch_surface_order() failed");
+				WLog_ERR(TAG, "%s - update_read_switch_surface_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3846,8 +3843,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			if (!update_read_create_nine_grid_bitmap_order(s,
 			        &(altsec->create_nine_grid_bitmap)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_CREATE_NINE_GRID_BITMAP - update_read_create_nine_grid_bitmap_order() failed");
+				WLog_ERR(TAG, "%s - update_read_create_nine_grid_bitmap_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3858,8 +3854,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 		case ORDER_TYPE_FRAME_MARKER:
 			if (!update_read_frame_marker_order(s, &(altsec->frame_marker)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_FRAME_MARKER - update_read_frame_marker_order() failed");
+				WLog_ERR(TAG, "%s - update_read_frame_marker_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3869,8 +3864,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 		case ORDER_TYPE_STREAM_BITMAP_FIRST:
 			if (!update_read_stream_bitmap_first_order(s, &(altsec->stream_bitmap_first)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_STREAM_BITMAP_FIRST - update_read_stream_bitmap_first_order() failed");
+				WLog_ERR(TAG, "%s - update_read_stream_bitmap_first_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3880,8 +3874,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 		case ORDER_TYPE_STREAM_BITMAP_NEXT:
 			if (!update_read_stream_bitmap_next_order(s, &(altsec->stream_bitmap_next)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_STREAM_BITMAP_NEXT - update_read_stream_bitmap_next_order() failed");
+				WLog_ERR(TAG, "%s - update_read_stream_bitmap_next_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3891,8 +3884,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 		case ORDER_TYPE_GDIPLUS_FIRST:
 			if (!update_read_draw_gdiplus_first_order(s, &(altsec->draw_gdiplus_first)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_GDIPLUS_FIRST - update_read_draw_gdiplus_first_order() failed");
+				WLog_ERR(TAG, "%s - update_read_draw_gdiplus_first_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3902,8 +3894,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 		case ORDER_TYPE_GDIPLUS_NEXT:
 			if (!update_read_draw_gdiplus_next_order(s, &(altsec->draw_gdiplus_next)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_GDIPLUS_NEXT - update_read_draw_gdiplus_next_order() failed");
+				WLog_ERR(TAG, "%s - update_read_draw_gdiplus_next_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3913,8 +3904,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 		case ORDER_TYPE_GDIPLUS_END:
 			if (!update_read_draw_gdiplus_end_order(s, &(altsec->draw_gdiplus_end)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_GDIPLUS_END - update_read_draw_gdiplus_end_order() failed");
+				WLog_ERR(TAG, "%s - update_read_draw_gdiplus_end_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3925,8 +3915,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			if (!update_read_draw_gdiplus_cache_first_order(s,
 			        &(altsec->draw_gdiplus_cache_first)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_GDIPLUS_CACHE_FIRST - update_read_draw_gdiplus_cache_first_order() failed");
+				WLog_ERR(TAG, "%s - update_read_draw_gdiplus_cache_first_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3938,8 +3927,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			if (!update_read_draw_gdiplus_cache_next_order(s,
 			        &(altsec->draw_gdiplus_cache_next)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_GDIPLUS_CACHE_NEXT - update_read_draw_gdiplus_cache_next_order() failed");
+				WLog_ERR(TAG, "%s - update_read_draw_gdiplus_cache_next_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3951,8 +3939,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			if (!update_read_draw_gdiplus_cache_end_order(s,
 			        &(altsec->draw_gdiplus_cache_end)))
 			{
-				WLog_ERR(TAG,
-				         "ORDER_TYPE_GDIPLUS_CACHE_END - update_read_draw_gdiplus_cache_end_order() failed");
+				WLog_ERR(TAG, "%s - update_read_draw_gdiplus_cache_end_order() failed", orderName);
 				return FALSE;
 			}
 
