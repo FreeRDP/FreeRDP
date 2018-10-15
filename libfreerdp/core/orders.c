@@ -319,7 +319,7 @@ static BOOL freerdp_check_point(rdpContext* context, INT32 x, INT32 y)
 	if (x > dw)
 		goto fail;
 
-	if (y > dw)
+	if (y > dh)
 		goto fail;
 
 	return TRUE;
@@ -328,6 +328,35 @@ fail:
 	return FALSE;
 }
 
+static BOOL adjust_point(rdpContext* context, INT32* px, INT32* py)
+{
+	INT32 x, y;
+	UINT32 dw, dh;
+
+	if (!context || !context->settings || !px || !py)
+		return FALSE;
+
+	x = *px;
+	y = *py;
+	dw = context->settings->DesktopWidth;
+	dh = context->settings->DesktopHeight;
+
+	if (x < 0)
+		x = 0;
+
+	if (y < 0)
+		y = 0;
+
+	if (x > dw)
+		x = dw;
+
+	if (y > dh)
+		y = dh;
+
+	*px = x;
+	*py = y;
+	return TRUE;;
+}
 static BOOL freerdp_check_delta_point(rdpContext* context, INT32 x, INT32 y, UINT32 count,
                                       const DELTA_POINT* data)
 {
@@ -1402,7 +1431,12 @@ static BOOL update_read_multi_draw_nine_grid_order(wStream* s,
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 	{
-		FIELD_SKIP_BUFFER16(s, multi_draw_nine_grid->cbData);
+		if (Stream_GetRemainingLength(s) < 2)
+			return FALSE;
+
+		Stream_Read_UINT16(s, multi_draw_nine_grid->cbData);
+		return update_read_delta_rects(s, multi_draw_nine_grid->rectangles,
+		                               multi_draw_nine_grid->nDeltaEntries);
 	}
 
 	return TRUE;
@@ -3449,7 +3483,10 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			                                 primary->multi_draw_nine_grid.srcBottom))
 				return FALSE;
 
-			// TODO: Delta rects
+			if (!freerdp_check_delta_rect(context, primary->multi_draw_nine_grid.nDeltaEntries,
+			                              primary->multi_draw_nine_grid.rectangles))
+				return FALSE;
+
 			rc = IFCALLRESULT(FALSE, primary->MultiDrawNineGrid, context, &primary->multi_draw_nine_grid);
 			break;
 
@@ -3462,10 +3499,10 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_check_point(context, primary->line_to.nXStart, primary->line_to.nYStart))
+			if (!adjust_point(context, &primary->line_to.nXStart, &primary->line_to.nYStart))
 				return FALSE;
 
-			if (!freerdp_check_point(context, primary->line_to.nXEnd, primary->line_to.nYEnd))
+			if (!adjust_point(context, &primary->line_to.nXEnd, &primary->line_to.nYEnd))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->LineTo, context, &primary->line_to);
@@ -3604,7 +3641,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			                                  primary->fast_glyph.opRight, primary->fast_index.opBottom))
 				return FALSE;
 
-			if (!freerdp_check_point(context, primary->fast_glyph.x, primary->fast_glyph.y))
+			if (!adjust_point(context, &primary->fast_glyph.x, &primary->fast_glyph.y))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->FastGlyph, context, &primary->fast_glyph);
