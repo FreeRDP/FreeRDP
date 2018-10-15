@@ -390,9 +390,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
 	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
 	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
