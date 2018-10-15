@@ -212,100 +212,89 @@ static const char* altsec_order_string(BYTE orderType)
 	return buffer;
 }
 
-static BOOL freerdp_primary_check_bound(rdpContext* context, INT32 left, INT32 top, INT32 right,
-                                        INT32 bottom)
-{
-	if (!context || !context->settings)
-		goto fail;
-
-	if (left < 0)
-		goto fail;
-
-	if (top < 0)
-		goto fail;
-
-	if (right < 0)
-		goto fail;
-
-	if (bottom < 0)
-		goto fail;
-
-	if (left > context->settings->DesktopWidth)
-		goto fail;
-
-	if (right > context->settings->DesktopWidth)
-		goto fail;
-
-	if (top > context->settings->DesktopHeight)
-		goto fail;
-
-	if (bottom > context->settings->DesktopHeight)
-		goto fail;
-
-	return TRUE;
-fail:
-	WLog_ERR(TAG, "Invalid bounds: %"PRId32", %"PRId32", %"PRId32", %"PRId32"", left, top, right,
-	         bottom);
-	return FALSE;
-}
-
-static BOOL freerdp_primary_check_bounds(rdpContext* context, const rdpBounds* bounds)
-{
-	if (!context || !context->settings || !bounds)
-		return FALSE;
-
-	return freerdp_primary_check_bound(context, bounds->left, bounds->top, bounds->right,
-	                                   bounds->bottom);
-}
-
-static BOOL freerdp_primary_check_rect(rdpContext* context, INT32* pLeft, INT32* pTop,
-                                       INT32* pWidth,
-                                       INT32* pHeight)
+static BOOL freerdp_primary_adjust_bound(wLog* log, const char* order, rdpContext* context,
+        INT32* pLeft, INT32* pTop,
+        INT32* pRight,
+        INT32* pBottom)
 {
 	UINT32 dw, dh;
 	INT32 left = *pLeft;
 	INT32 top = *pTop;
-	INT32 width = *pWidth;
-	INT32 height = *pHeight;
+	INT32 right = *pRight;
+	INT32 bottom = *pBottom;
 
 	if (!context || !context->settings)
-		goto fail;
+		return FALSE;
 
 	dw = context->settings->DesktopWidth;
 	dh = context->settings->DesktopHeight;
 
+	if (top == -32768)
+		WLog_ERR(TAG, "xxx");
+
+	if (bottom == -32768)
+		WLog_ERR(TAG, "xxx");
+
 	if (left < 0)
-		goto fail;
+		left = 0;
 
 	if (top < 0)
-		goto fail;
+		top = 0;
 
-	if (width < 0)
-		goto fail;
+	if (right < 0)
+		right = 0;
 
-	if (height < 0)
-		goto fail;
+	if (bottom < 0)
+		bottom = 0;
 
-	if (left > dw)
-		goto fail;
+	if (right > dw)
+		right = dw;
 
-	if (left + width > dw)
-		goto fail;
+	if (left > right)
+		left = right;
 
 	if (top > dh)
-		goto fail;
+		top = dh;
 
-	if (top + height > dh)
-		goto fail;
+	if (bottom > dh)
+		bottom = dh;
 
+	if (top > bottom)
+		top = bottom;
+
+	if (*pLeft != left)
+		WLog_Print(log, WLOG_WARN, "[%s] Adjusted left from %"PRId32" to %"PRId32, order, *pLeft, left);
+
+	if (*pTop != top)
+		WLog_Print(log, WLOG_WARN, "[%s] Adjusted top from %"PRId32" to %"PRId32, order, *pTop, top);
+
+	if (*pRight != right)
+		WLog_Print(log, WLOG_WARN, "[%s] Adjusted right from %"PRId32" to %"PRId32, order, *pRight, right);
+
+	if (*pBottom != bottom)
+		WLog_Print(log, WLOG_WARN, "[%s] Adjusted bottom from %"PRId32" to %"PRId32, order, *pBottom,
+		           bottom);
+
+	*pLeft = left;
+	*pTop = top;
+	*pRight = right;
+	*pBottom = bottom;
 	return TRUE;
-fail:
-	WLog_ERR(TAG, "Invalid bounds: %"PRId32", %"PRId32", %"PRId32", %"PRId32"",
-	         left, top, width, height);
-	return FALSE;
 }
 
-static BOOL freerdp_primary_adjust_rect(rdpContext* context, INT32* pLeft, INT32* pTop,
+static BOOL freerdp_primary_adjust_bounds(wLog* log, const char* order, rdpContext* context,
+        rdpBounds* bounds)
+{
+	if (!context || !context->settings || !bounds)
+		return FALSE;
+
+	return freerdp_primary_adjust_bound(log, order, context, &bounds->left, &bounds->top,
+	                                    &bounds->right,
+	                                    &bounds->bottom);
+}
+
+static BOOL freerdp_primary_adjust_rect(wLog* log, const char* order, rdpContext* context,
+                                        INT32* pLeft, INT32* pTop,
                                         INT32* pWidth,
                                         INT32* pHeight)
 {
@@ -345,6 +334,19 @@ static BOOL freerdp_primary_adjust_rect(rdpContext* context, INT32* pLeft, INT32
 	if (top + height > dh)
 		height = dh - top;
 
+	if (*pLeft != left)
+		WLog_Print(log, WLOG_WARN, "[%s] Adjusted left from %"PRId32" to %"PRId32, order, *pLeft, left);
+
+	if (*pTop != top)
+		WLog_Print(log, WLOG_WARN, "[%s] Adjusted top from %"PRId32" to %"PRId32, order, *pTop, top);
+
+	if (*pWidth != width)
+		WLog_Print(log, WLOG_WARN, "[%s] Adjusted width from %"PRId32" to %"PRId32, order, *pWidth, width);
+
+	if (*pHeight != height)
+		WLog_Print(log, WLOG_WARN, "[%s] Adjusted height from %"PRId32" to %"PRId32, order, *pHeight,
+		           height);
+
 	*pLeft = left;
 	*pTop = top;
 	*pWidth = width;
@@ -352,9 +354,12 @@ static BOOL freerdp_primary_adjust_rect(rdpContext* context, INT32* pLeft, INT32
 	return TRUE;
 }
 
-static BOOL freerdp_check_point(rdpContext* context, INT32 x, INT32 y)
+static BOOL freerdp_adjust_point(wLog* log, const char* order, rdpContext* context, INT32* pX,
+                                 INT32* pY)
 {
 	UINT32 dw, dh;
+	INT32 x = *pX;
+	INT32 y = *pY;
 
 	if (!context || !context->settings)
 		return FALSE;
@@ -362,22 +367,33 @@ static BOOL freerdp_check_point(rdpContext* context, INT32 x, INT32 y)
 	dw = context->settings->DesktopWidth;
 	dh = context->settings->DesktopHeight;
 
+	if (x == -32768)
+		WLog_ERR(TAG, "xxx");
+
+	if (y == -32768)
+		WLog_ERR(TAG, "xxx");
+
 	if (x < 0)
-		goto fail;
+		x = 0;
 
 	if (y < 0)
-		goto fail;
+		y = 0;
 
 	if (x > dw)
-		goto fail;
+		x = dw;
 
 	if (y > dh)
-		goto fail;
+		y = dh;
 
+	if (x != *pX)
+		WLog_Print(log, WLOG_WARN, "[%s] adjusted x from %"PRId32" to %"PRId32, order, *pX, x);
+
+	if (y != *pY)
+		WLog_Print(log, WLOG_WARN, "[%s] adjusted y from %"PRId32" to %"PRId32, order, *pY, y);
+
+	*pX = x;
+	*pY = y;
 	return TRUE;
-fail:
-	WLog_ERR(TAG, "Invalid point %"PRId32"x%"PRId32" [%"PRIu32"x%"PRIu32"]", x, y, dw, dh);
-	return FALSE;
 }
 
 static BOOL adjust_point(rdpContext* context, INT32* px, INT32* py)
@@ -410,31 +426,8 @@ static BOOL adjust_point(rdpContext* context, INT32* px, INT32* py)
 	return TRUE;;
 }
 
-static BOOL freerdp_check_delta_point(rdpContext* context, INT32 x, INT32 y, UINT32 count,
-                                      const DELTA_POINT* data)
-{
-	UINT32 i;
-
-	if (!context || !data)
-		return FALSE;
-
-	if (!freerdp_check_point(context, x, y))
-		return FALSE;
-
-	for (i = 0; i < count; i++)
-	{
-		const DELTA_POINT* delta = &data[i];
-		x += delta->x;
-		y += delta->y;
-
-		if (!freerdp_check_point(context, x, y))
-			return FALSE;
-	}
-
-	return TRUE;
-}
-
-static BOOL freerdp_check_delta_rect(rdpContext* context, UINT32 count, DELTA_RECT* data)
+static BOOL freerdp_adjust_delta_rect(wLog* log, const char* order, rdpContext* context,
+                                      UINT32 count, DELTA_RECT* data)
 {
 	UINT32 i;
 
@@ -448,7 +441,8 @@ static BOOL freerdp_check_delta_rect(rdpContext* context, UINT32 count, DELTA_RE
 	{
 		DELTA_RECT* delta = &data[i];
 
-		if (!freerdp_primary_adjust_rect(context, &delta->left, &delta->top, &delta->width, &delta->height))
+		if (!freerdp_primary_adjust_rect(log, order, context, &delta->left, &delta->top, &delta->width,
+		                                 &delta->height))
 			goto fail;
 	}
 
@@ -458,7 +452,8 @@ fail:
 	return FALSE;
 }
 
-static BOOL freerdp_check_glyph_op_bound(rdpContext* context, INT32 left, INT32 top, INT32 right,
+static BOOL freerdp_check_glyph_op_bound(wLog* log, const char* order, rdpContext* context,
+        INT32 left, INT32 top, INT32 right,
         INT32 bottom)
 {
 	if (right == -32768)
@@ -467,7 +462,7 @@ static BOOL freerdp_check_glyph_op_bound(rdpContext* context, INT32 left, INT32 
 	if (bottom == -32768)
 		bottom = top;
 
-	return freerdp_primary_check_bound(context, left, top, right, bottom);
+	return freerdp_primary_adjust_bound(log, order, context, left, top, right, bottom);
 }
 
 static INLINE BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
@@ -3317,7 +3312,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			}
 		}
 
-		if (!freerdp_primary_check_bounds(context, &orderInfo->bounds))
+		if (!freerdp_primary_adjust_bounds(update->log, orderName, context, &orderInfo->bounds))
 			return FALSE;
 
 		rc = IFCALLRESULT(FALSE, update->SetBounds, context, &orderInfo->bounds);
@@ -3342,11 +3337,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			           orderName,
 			           gdi_rop3_code_string(primary->dstblt.bRop), gdi_rop3_code(primary->dstblt.bRop));
 
-			if (!freerdp_primary_check_rect(context,
-			                                &primary->dstblt.nLeftRect,
-			                                &primary->dstblt.nTopRect,
-			                                &primary->dstblt.nWidth,
-			                                &primary->dstblt.nHeight))
+			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+			                                 &primary->dstblt.nLeftRect,
+			                                 &primary->dstblt.nTopRect,
+			                                 &primary->dstblt.nWidth,
+			                                 &primary->dstblt.nHeight))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->DstBlt, context, &primary->dstblt);
@@ -3363,11 +3358,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->patblt.bRop), gdi_rop3_code(primary->patblt.bRop));
 
-			if (!freerdp_primary_check_rect(context,
-			                                &primary->patblt.nLeftRect,
-			                                &primary->patblt.nTopRect,
-			                                &primary->patblt.nWidth,
-			                                &primary->patblt.nHeight))
+			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+			                                 &primary->patblt.nLeftRect,
+			                                 &primary->patblt.nTopRect,
+			                                 &primary->patblt.nWidth,
+			                                 &primary->patblt.nHeight))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->PatBlt, context, &primary->patblt);
@@ -3384,11 +3379,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->scrblt.bRop), gdi_rop3_code(primary->scrblt.bRop));
 
-			if (!freerdp_primary_check_rect(context,
-			                                &primary->scrblt.nLeftRect,
-			                                &primary->scrblt.nTopRect,
-			                                &primary->scrblt.nWidth,
-			                                &primary->scrblt.nHeight))
+			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+			                                 &primary->scrblt.nLeftRect,
+			                                 &primary->scrblt.nTopRect,
+			                                 &primary->scrblt.nWidth,
+			                                 &primary->scrblt.nHeight))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->ScrBlt, context, &primary->scrblt);
@@ -3404,7 +3399,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_adjust_rect(context, &primary->opaque_rect.nLeftRect,
+			if (!freerdp_primary_adjust_rect(update->log, orderName, context, &primary->opaque_rect.nLeftRect,
 			                                 &primary->opaque_rect.nTopRect,
 			                                 &primary->opaque_rect.nWidth,
 			                                 &primary->opaque_rect.nHeight))
@@ -3423,9 +3418,9 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_check_bound(context, primary->draw_nine_grid.srcLeft,
-			                                 primary->draw_nine_grid.srcTop, primary->draw_nine_grid.srcRight,
-			                                 primary->draw_nine_grid.srcBottom))
+			if (!freerdp_primary_adjust_bound(update->log, orderName, context, primary->draw_nine_grid.srcLeft,
+			                                  primary->draw_nine_grid.srcTop, primary->draw_nine_grid.srcRight,
+			                                  primary->draw_nine_grid.srcBottom))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->DrawNineGrid, context, &primary->draw_nine_grid);
@@ -3443,15 +3438,15 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->multi_dstblt.bRop), gdi_rop3_code(primary->multi_dstblt.bRop));
 
-			if (!freerdp_primary_check_rect(context,
-			                                &primary->multi_dstblt.nLeftRect,
-			                                &primary->multi_dstblt.nTopRect,
-			                                &primary->multi_dstblt.nWidth,
-			                                &primary->multi_dstblt.nHeight))
+			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+			                                 &primary->multi_dstblt.nLeftRect,
+			                                 &primary->multi_dstblt.nTopRect,
+			                                 &primary->multi_dstblt.nWidth,
+			                                 &primary->multi_dstblt.nHeight))
 				return FALSE;
 
-			if (!freerdp_check_delta_rect(context, primary->multi_dstblt.numRectangles,
-			                              primary->multi_dstblt.rectangles))
+			if (!freerdp_adjust_delta_rect(update->log, orderName, context, primary->multi_dstblt.numRectangles,
+			                               primary->multi_dstblt.rectangles))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->MultiDstBlt, context, &primary->multi_dstblt);
@@ -3469,15 +3464,15 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->multi_patblt.bRop), gdi_rop3_code(primary->multi_patblt.bRop));
 
-			if (!freerdp_primary_check_rect(context,
-			                                &primary->multi_patblt.nLeftRect,
-			                                &primary->multi_patblt.nTopRect,
-			                                &primary->multi_patblt.nWidth,
-			                                &primary->multi_patblt.nHeight))
+			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+			                                 &primary->multi_patblt.nLeftRect,
+			                                 &primary->multi_patblt.nTopRect,
+			                                 &primary->multi_patblt.nWidth,
+			                                 &primary->multi_patblt.nHeight))
 				return FALSE;
 
-			if (!freerdp_check_delta_rect(context, primary->multi_patblt.numRectangles,
-			                              primary->multi_patblt.rectangles))
+			if (!freerdp_adjust_delta_rect(update->log, orderName, context, primary->multi_patblt.numRectangles,
+			                               primary->multi_patblt.rectangles))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->MultiPatBlt, context, &primary->multi_patblt);
@@ -3495,15 +3490,15 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->multi_scrblt.bRop), gdi_rop3_code(primary->multi_scrblt.bRop));
 
-			if (!freerdp_primary_check_rect(context,
-			                                &primary->multi_scrblt.nLeftRect,
-			                                &primary->multi_scrblt.nTopRect,
-			                                &primary->multi_scrblt.nWidth,
-			                                &primary->multi_scrblt.nHeight))
+			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+			                                 &primary->multi_scrblt.nLeftRect,
+			                                 &primary->multi_scrblt.nTopRect,
+			                                 &primary->multi_scrblt.nWidth,
+			                                 &primary->multi_scrblt.nHeight))
 				return FALSE;
 
-			if (!freerdp_check_delta_rect(context, primary->multi_scrblt.numRectangles,
-			                              primary->multi_scrblt.rectangles))
+			if (!freerdp_adjust_delta_rect(update->log, orderName, context, primary->multi_scrblt.numRectangles,
+			                               primary->multi_scrblt.rectangles))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->MultiScrBlt, context, &primary->multi_scrblt);
@@ -3520,15 +3515,16 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_adjust_rect(context,
+			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
 			                                 &primary->multi_opaque_rect.nLeftRect,
 			                                 &primary->multi_opaque_rect.nTopRect,
 			                                 &primary->multi_opaque_rect.nWidth,
 			                                 &primary->multi_opaque_rect.nHeight))
 				return FALSE;
 
-			if (!freerdp_check_delta_rect(context, primary->multi_opaque_rect.numRectangles,
-			                              primary->multi_opaque_rect.rectangles))
+			if (!freerdp_adjust_delta_rect(update->log, orderName, context,
+			                               primary->multi_opaque_rect.numRectangles,
+			                               primary->multi_opaque_rect.rectangles))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->MultiOpaqueRect, context, &primary->multi_opaque_rect);
@@ -3545,13 +3541,15 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_check_bound(context, primary->multi_draw_nine_grid.srcLeft,
-			                                 primary->multi_draw_nine_grid.srcTop, primary->multi_draw_nine_grid.srcRight,
-			                                 primary->multi_draw_nine_grid.srcBottom))
+			if (!freerdp_primary_adjust_bound(update->log, orderName, context,
+			                                  primary->multi_draw_nine_grid.srcLeft,
+			                                  primary->multi_draw_nine_grid.srcTop, primary->multi_draw_nine_grid.srcRight,
+			                                  primary->multi_draw_nine_grid.srcBottom))
 				return FALSE;
 
-			if (!freerdp_check_delta_rect(context, primary->multi_draw_nine_grid.nDeltaEntries,
-			                              primary->multi_draw_nine_grid.rectangles))
+			if (!freerdp_adjust_delta_rect(update->log, orderName, context,
+			                               primary->multi_draw_nine_grid.nDeltaEntries,
+			                               primary->multi_draw_nine_grid.rectangles))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->MultiDrawNineGrid, context, &primary->multi_draw_nine_grid);
@@ -3590,14 +3588,15 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->memblt.bRop), gdi_rop3_code(primary->memblt.bRop));
 
-			if (!freerdp_primary_check_rect(context,
-			                                &primary->memblt.nLeftRect,
-			                                &primary->memblt.nTopRect,
-			                                &primary->memblt.nWidth,
-			                                &primary->memblt.nHeight))
+			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+			                                 &primary->memblt.nLeftRect,
+			                                 &primary->memblt.nTopRect,
+			                                 &primary->memblt.nWidth,
+			                                 &primary->memblt.nHeight))
 				return FALSE;
 
-			if (!freerdp_check_point(context, primary->memblt.nXSrc, primary->memblt.nYSrc))
+			if (!freerdp_adjust_point(update->log, orderName, context, &primary->memblt.nXSrc,
+			                          &primary->memblt.nYSrc))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->MemBlt, context, &primary->memblt);
@@ -3614,14 +3613,15 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
 			           gdi_rop3_code_string(primary->mem3blt.bRop), gdi_rop3_code(primary->mem3blt.bRop));
 
-			if (!freerdp_primary_check_rect(context,
-			                                &primary->mem3blt.nLeftRect,
-			                                &primary->mem3blt.nTopRect,
-			                                &primary->mem3blt.nWidth,
-			                                &primary->mem3blt.nHeight))
+			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+			                                 &primary->mem3blt.nLeftRect,
+			                                 &primary->mem3blt.nTopRect,
+			                                 &primary->mem3blt.nWidth,
+			                                 &primary->mem3blt.nHeight))
 				return FALSE;
 
-			if (!freerdp_check_point(context, primary->mem3blt.nXSrc, primary->mem3blt.nYSrc))
+			if (!freerdp_adjust_point(update->log, orderName, context, &primary->mem3blt.nXSrc,
+			                          &primary->mem3blt.nYSrc))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->Mem3Blt, context, &primary->mem3blt);
@@ -3637,8 +3637,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_check_bound(context, primary->save_bitmap.nLeftRect,
-			                                 primary->save_bitmap.nTopRect, primary->save_bitmap.nRightRect, primary->save_bitmap.nBottomRect))
+			if (!freerdp_primary_adjust_bound(update->log, orderName, context, primary->save_bitmap.nLeftRect,
+			                                  primary->save_bitmap.nTopRect, primary->save_bitmap.nRightRect, primary->save_bitmap.nBottomRect))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->SaveBitmap, context, &primary->save_bitmap);
@@ -3654,15 +3654,18 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_check_bound(context, primary->glyph_index.bkLeft, primary->glyph_index.bkTop,
-			                                 primary->glyph_index.bkRight, primary->fast_index.bkBottom))
+			if (!freerdp_primary_adjust_bound(update->log, orderName, context, primary->glyph_index.bkLeft,
+			                                  primary->glyph_index.bkTop,
+			                                  primary->glyph_index.bkRight, primary->fast_index.bkBottom))
 				return FALSE;
 
-			if (!freerdp_primary_check_bound(context, primary->glyph_index.opLeft, primary->glyph_index.opTop,
-			                                 primary->glyph_index.opRight, primary->fast_index.opBottom))
+			if (!freerdp_primary_adjust_bound(update->log, orderName, context, primary->glyph_index.opLeft,
+			                                  primary->glyph_index.opTop,
+			                                  primary->glyph_index.opRight, primary->fast_index.opBottom))
 				return FALSE;
 
-			if (!freerdp_check_point(context, primary->glyph_index.x, primary->glyph_index.y))
+			if (!freerdp_adjust_point(update->log, orderName, context, primary->glyph_index.x,
+			                          primary->glyph_index.y))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->GlyphIndex, context, &primary->glyph_index);
@@ -3677,15 +3680,18 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_check_bound(context, primary->fast_index.bkLeft, primary->fast_index.bkTop,
-			                                 primary->fast_index.bkRight, primary->fast_index.bkBottom))
+			if (!freerdp_primary_adjust_bound(update->log, orderName, context, primary->fast_index.bkLeft,
+			                                  primary->fast_index.bkTop,
+			                                  primary->fast_index.bkRight, primary->fast_index.bkBottom))
 				return FALSE;
 
-			if (!freerdp_check_glyph_op_bound(context, primary->fast_index.opLeft, primary->fast_index.opTop,
+			if (!freerdp_check_glyph_op_bound(update->log, orderName, context, primary->fast_index.opLeft,
+			                                  primary->fast_index.opTop,
 			                                  primary->fast_index.opRight, primary->fast_index.opBottom))
 				return FALSE;
 
-			if (!freerdp_check_point(context, primary->fast_index.x, primary->fast_index.y))
+			if (!freerdp_adjust_point(update->log, orderName, context, &primary->fast_index.x,
+			                          &primary->fast_index.y))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->FastIndex, context, &primary->fast_index);
@@ -3700,11 +3706,13 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_check_bound(context, primary->fast_glyph.bkLeft, primary->fast_glyph.bkTop,
-			                                 primary->fast_glyph.bkRight, primary->fast_index.bkBottom))
+			if (!freerdp_primary_adjust_bound(update->log, orderName, context, primary->fast_glyph.bkLeft,
+			                                  primary->fast_glyph.bkTop,
+			                                  primary->fast_glyph.bkRight, primary->fast_index.bkBottom))
 				return FALSE;
 
-			if (!freerdp_check_glyph_op_bound(context, primary->fast_glyph.opLeft, primary->fast_glyph.opTop,
+			if (!freerdp_check_glyph_op_bound(update->log, orderName, context, primary->fast_glyph.opLeft,
+			                                  primary->fast_glyph.opTop,
 			                                  primary->fast_glyph.opRight, primary->fast_index.opBottom))
 				return FALSE;
 
@@ -3722,11 +3730,6 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!freerdp_check_delta_point(context, primary->polygon_sc.xStart, primary->polygon_sc.yStart,
-			                               primary->polygon_sc.numPoints, primary->polygon_sc.points))
-				return FALSE;
-
 			rc = IFCALLRESULT(FALSE, primary->PolygonSC, context, &primary->polygon_sc);
 			break;
 
@@ -3738,11 +3741,6 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!freerdp_check_delta_point(context, primary->polygon_cb.xStart, primary->polygon_cb.yStart,
-			                               primary->polygon_cb.numPoints, primary->polygon_cb.points))
-				return FALSE;
-
 			rc = IFCALLRESULT(FALSE, primary->PolygonCB, context, &primary->polygon_cb);
 			break;
 
@@ -3755,8 +3753,9 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_check_bound(context, primary->ellipse_sc.leftRect, primary->ellipse_sc.topRect,
-			                                 primary->ellipse_sc.rightRect,  primary->ellipse_sc.bottomRect))
+			if (!freerdp_primary_adjust_bound(update->log, orderName, context, primary->ellipse_sc.leftRect,
+			                                  primary->ellipse_sc.topRect,
+			                                  primary->ellipse_sc.rightRect,  primary->ellipse_sc.bottomRect))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->EllipseSC, context, &primary->ellipse_sc);
@@ -3771,8 +3770,9 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_check_bound(context, primary->ellipse_cb.leftRect, primary->ellipse_cb.topRect,
-			                                 primary->ellipse_cb.rightRect,  primary->ellipse_cb.bottomRect))
+			if (!freerdp_primary_adjust_bound(update->log, orderName, context, primary->ellipse_cb.leftRect,
+			                                  primary->ellipse_cb.topRect,
+			                                  primary->ellipse_cb.rightRect,  primary->ellipse_cb.bottomRect))
 				return FALSE;
 
 			rc = IFCALLRESULT(FALSE, primary->EllipseCB, context, &primary->ellipse_cb);
