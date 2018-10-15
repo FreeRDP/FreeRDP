@@ -434,13 +434,9 @@ static BOOL freerdp_check_delta_point(rdpContext* context, INT32 x, INT32 y, UIN
 	return TRUE;
 }
 
-static BOOL freerdp_check_delta_rect(rdpContext* context, UINT32 count, const DELTA_RECT* data)
+static BOOL freerdp_check_delta_rect(rdpContext* context, UINT32 count, DELTA_RECT* data)
 {
 	UINT32 i;
-	INT32 x = 0;
-	INT32 y = 0;
-	INT32 w = 0;
-	INT32 h = 0;
 
 	if (!context || !data)
 		goto fail;
@@ -450,13 +446,9 @@ static BOOL freerdp_check_delta_rect(rdpContext* context, UINT32 count, const DE
 
 	for (i = 0; i < count; i++)
 	{
-		const DELTA_RECT* delta = &data[i];
-		x = delta->left;
-		y = delta->top;
-		w = delta->width;
-		h = delta->height;
+		DELTA_RECT* delta = &data[i];
 
-		if (!freerdp_primary_check_rect(context, &x, &y, &w, &h))
+		if (!freerdp_primary_adjust_rect(context, &delta->left, &delta->top, &delta->width, &delta->height))
 			goto fail;
 	}
 
@@ -3528,11 +3520,11 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
-			if (!freerdp_primary_check_rect(context,
-			                                &primary->multi_opaque_rect.nLeftRect,
-			                                &primary->multi_opaque_rect.nTopRect,
-			                                &primary->multi_opaque_rect.nWidth,
-			                                &primary->multi_opaque_rect.nHeight))
+			if (!freerdp_primary_adjust_rect(context,
+			                                 &primary->multi_opaque_rect.nLeftRect,
+			                                 &primary->multi_opaque_rect.nTopRect,
+			                                 &primary->multi_opaque_rect.nWidth,
+			                                 &primary->multi_opaque_rect.nHeight))
 				return FALSE;
 
 			if (!freerdp_check_delta_rect(context, primary->multi_opaque_rect.numRectangles,
