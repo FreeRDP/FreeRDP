@@ -379,7 +379,7 @@ static BOOL freerdp_check_glyph_op_bound(rdpContext* context, INT32 left, INT32 
 	if (right == -32768)
 		right = left;
 
-	if (bottom = -32768)
+	if (bottom == -32768)
 		bottom = top;
 
 	return freerdp_primary_check_bound(context, left, top, right, bottom);
@@ -1907,7 +1907,7 @@ static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wSt
 
 	if ((cache_bitmap->bitmapBpp < 1) || (cache_bitmap->bitmapBpp > 32))
 	{
-		WLog_ERR(TAG, "invalid bitmap bpp %"PRIu32"", cache_bitmap->bitmapBpp);
+		WLog_Print(update->log, WLOG_ERROR, "invalid bitmap bpp %"PRIu32"", cache_bitmap->bitmapBpp);
 		goto fail;
 	}
 
@@ -2190,7 +2190,7 @@ static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* updat
 
 	if ((bitmapData->bpp < 1) || (bitmapData->bpp > 32))
 	{
-		WLog_ERR(TAG, "invalid bpp value %"PRIu32"", bitmapData->bpp);
+		WLog_Print(update->log, WLOG_ERROR, "invalid bpp value %"PRIu32"", bitmapData->bpp);
 		goto fail;
 	}
 
@@ -2595,7 +2595,8 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 		{
 			if (cache_brush->length != 8)
 			{
-				WLog_ERR(TAG,  "incompatible 1bpp brush of length:%"PRIu32"", cache_brush->length);
+				WLog_Print(update->log, WLOG_ERROR,  "incompatible 1bpp brush of length:%"PRIu32"",
+				           cache_brush->length);
 				goto fail;
 			}
 
@@ -3204,14 +3205,14 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	if (orderInfo->orderType >= PRIMARY_DRAWING_ORDER_COUNT)
 	{
-		WLog_ERR(TAG,  "Invalid Primary Drawing Order %s", orderName);
+		WLog_Print(update->log, WLOG_ERROR,  "Invalid Primary Drawing Order %s", orderName);
 		return FALSE;
 	}
 
 	if (!update_read_field_flags(s, &(orderInfo->fieldFlags), flags,
 	                             PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo->orderType]))
 	{
-		WLog_ERR(TAG, "update_read_field_flags() failed");
+		WLog_Print(update->log, WLOG_ERROR, "update_read_field_flags() failed");
 		return FALSE;
 	}
 
@@ -3221,7 +3222,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		{
 			if (!update_read_bounds(s, &orderInfo->bounds))
 			{
-				WLog_ERR(TAG, "update_read_bounds() failed");
+				WLog_Print(update->log, WLOG_ERROR, "update_read_bounds() failed");
 				return FALSE;
 			}
 		}
@@ -3242,7 +3243,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_DSTBLT:
 			if (!update_read_dstblt_order(s, orderInfo, &(primary->dstblt)))
 			{
-				WLog_ERR(TAG, "%s - update_read_dstblt_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_dstblt_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3261,7 +3262,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_PATBLT:
 			if (!update_read_patblt_order(s, orderInfo, &(primary->patblt)))
 			{
-				WLog_ERR(TAG, "%s - update_read_patblt_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_patblt_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3279,7 +3280,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_SCRBLT:
 			if (!update_read_scrblt_order(s, orderInfo, &(primary->scrblt)))
 			{
-				WLog_ERR(TAG, "%s - update_read_scrblt_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_scrblt_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3297,8 +3298,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_OPAQUE_RECT:
 			if (!update_read_opaque_rect_order(s, orderInfo, &(primary->opaque_rect)))
 			{
-				WLog_ERR(TAG,
-				         "%s - update_read_opaque_rect_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - update_read_opaque_rect_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3314,8 +3315,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_DRAW_NINE_GRID:
 			if (!update_read_draw_nine_grid_order(s, orderInfo, &(primary->draw_nine_grid)))
 			{
-				WLog_ERR(TAG,
-				         "%s - update_read_draw_nine_grid_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - update_read_draw_nine_grid_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3332,8 +3333,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_MULTI_DSTBLT:
 			if (!update_read_multi_dstblt_order(s, orderInfo, &(primary->multi_dstblt)))
 			{
-				WLog_ERR(TAG,
-				         "%s - update_read_multi_dstblt_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - update_read_multi_dstblt_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3355,8 +3356,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_MULTI_PATBLT:
 			if (!update_read_multi_patblt_order(s, orderInfo, &(primary->multi_patblt)))
 			{
-				WLog_ERR(TAG,
-				         "%s - update_read_multi_patblt_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - update_read_multi_patblt_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3378,8 +3379,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_MULTI_SCRBLT:
 			if (!update_read_multi_scrblt_order(s, orderInfo, &(primary->multi_scrblt)))
 			{
-				WLog_ERR(TAG,
-				         "%s - update_read_multi_scrblt_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - update_read_multi_scrblt_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3402,8 +3403,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			if (!update_read_multi_opaque_rect_order(s, orderInfo,
 			        &(primary->multi_opaque_rect)))
 			{
-				WLog_ERR(TAG,
-				         "%s - update_read_multi_opaque_rect_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - update_read_multi_opaque_rect_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3425,8 +3426,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			if (!update_read_multi_draw_nine_grid_order(s, orderInfo,
 			        &(primary->multi_draw_nine_grid)))
 			{
-				WLog_ERR(TAG,
-				         "%s - update_read_multi_draw_nine_grid_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - update_read_multi_draw_nine_grid_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3444,7 +3445,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_LINE_TO:
 			if (!update_read_line_to_order(s, orderInfo, &(primary->line_to)))
 			{
-				WLog_ERR(TAG, "%s - update_read_line_to_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_line_to_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3462,7 +3463,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_POLYLINE:
 			if (!update_read_polyline_order(s, orderInfo, &(primary->polyline)))
 			{
-				WLog_ERR(TAG, "%s - update_read_polyline_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_polyline_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3478,7 +3479,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_MEMBLT:
 			if (!update_read_memblt_order(s, orderInfo, &(primary->memblt)))
 			{
-				WLog_ERR(TAG, "%s - update_read_memblt_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_memblt_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3496,7 +3497,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_MEM3BLT:
 			if (!update_read_mem3blt_order(s, orderInfo, &(primary->mem3blt)))
 			{
-				WLog_ERR(TAG, "%s - update_read_mem3blt_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_mem3blt_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3514,8 +3515,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_SAVE_BITMAP:
 			if (!update_read_save_bitmap_order(s, orderInfo, &(primary->save_bitmap)))
 			{
-				WLog_ERR(TAG,
-				         "%s - update_read_save_bitmap_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - update_read_save_bitmap_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3531,8 +3532,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_GLYPH_INDEX:
 			if (!update_read_glyph_index_order(s, orderInfo, &(primary->glyph_index)))
 			{
-				WLog_ERR(TAG,
-				         "%s - update_read_glyph_index_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - update_read_glyph_index_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3555,7 +3556,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_FAST_INDEX:
 			if (!update_read_fast_index_order(s, orderInfo, &(primary->fast_index)))
 			{
-				WLog_ERR(TAG, "%s - update_read_fast_index_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_fast_index_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3578,7 +3579,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_FAST_GLYPH:
 			if (!update_read_fast_glyph_order(s, orderInfo, &(primary->fast_glyph)))
 			{
-				WLog_ERR(TAG, "%s - update_read_fast_glyph_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_fast_glyph_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3601,7 +3602,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_POLYGON_SC:
 			if (!update_read_polygon_sc_order(s, orderInfo, &(primary->polygon_sc)))
 			{
-				WLog_ERR(TAG, "%s - update_read_polygon_sc_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_polygon_sc_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3617,7 +3618,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_POLYGON_CB:
 			if (!update_read_polygon_cb_order(s, orderInfo, &(primary->polygon_cb)))
 			{
-				WLog_ERR(TAG, "%s - update_read_polygon_cb_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_polygon_cb_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3633,7 +3634,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_ELLIPSE_SC:
 			if (!update_read_ellipse_sc_order(s, orderInfo, &(primary->ellipse_sc)))
 			{
-				WLog_ERR(TAG, "%s - update_read_ellipse_sc_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_ellipse_sc_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3649,7 +3650,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_ELLIPSE_CB:
 			if (!update_read_ellipse_cb_order(s, orderInfo, &(primary->ellipse_cb)))
 			{
-				WLog_ERR(TAG, "%s - update_read_ellipse_cb_order() failed", orderName);
+				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_ellipse_cb_order() failed", orderName);
 				return FALSE;
 			}
 
@@ -3691,7 +3692,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 
 	if (Stream_GetRemainingLength(s) < 5)
 	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 5");
+		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) < 5");
 		return FALSE;
 	}
 
@@ -3798,7 +3799,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 
 	if (!rc)
 	{
-		WLog_ERR(TAG, "SECONDARY ORDER %s failed", secondary_order_string(orderType));
+		WLog_Print(update->log, WLOG_ERROR, "SECONDARY ORDER %s failed", secondary_order_string(orderType));
 	}
 
 	Stream_SetPointer(s, next);
@@ -3807,12 +3808,11 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
                                      BYTE flags)
 {
-	BYTE orderType;
+	BYTE orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
 	BOOL rc = FALSE;
 	rdpContext* context = update->context;
 	rdpAltSecUpdate* altsec = update->altsec;
 	const char* orderName = altsec_order_string(orderType);
-	orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
 	WLog_Print(update->log, WLOG_DEBUG,
 	           "Alternate Secondary Drawing Order %s", orderName);
 
@@ -3976,7 +3976,7 @@ BOOL update_recv_order(rdpUpdate* update, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 1");
+		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) < 1");
 		return FALSE;
 	}
 
