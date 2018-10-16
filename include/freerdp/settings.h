@@ -165,15 +165,15 @@
 #define NEG_MEMBLT_INDEX			0x03
 #define NEG_MEM3BLT_INDEX			0x04
 #define NEG_ATEXTOUT_INDEX			0x05
-#define NEG_AEXTTEXTOUT_INDEX			0x06
-#define NEG_DRAWNINEGRID_INDEX			0x07
+#define NEG_AEXTTEXTOUT_INDEX			0x06 /* Must be ignored */
+#define NEG_DRAWNINEGRID_INDEX			0x07 /* Must be ignored */
 #define NEG_LINETO_INDEX			0x08
 #define NEG_MULTI_DRAWNINEGRID_INDEX		0x09
-#define NEG_OPAQUE_RECT_INDEX			0x0A
+#define NEG_OPAQUE_RECT_INDEX			0x0A /* Must be ignored */
 #define NEG_SAVEBITMAP_INDEX			0x0B
-#define NEG_WTEXTOUT_INDEX			0x0C
-#define NEG_MEMBLT_V2_INDEX			0x0D
-#define NEG_MEM3BLT_V2_INDEX			0x0E
+#define NEG_WTEXTOUT_INDEX			0x0C /* Must be ignored */
+#define NEG_MEMBLT_V2_INDEX			0x0D /* Must be ignored */
+#define NEG_MEM3BLT_V2_INDEX			0x0E /* Must be ignored */
 #define NEG_MULTIDSTBLT_INDEX			0x0F
 #define NEG_MULTIPATBLT_INDEX			0x10
 #define NEG_MULTISCRBLT_INDEX			0x11
@@ -182,15 +182,15 @@
 #define NEG_POLYGON_SC_INDEX			0x14
 #define NEG_POLYGON_CB_INDEX			0x15
 #define NEG_POLYLINE_INDEX			0x16
-#define NEG_UNUSED23_INDEX			0x17
+#define NEG_UNUSED23_INDEX			0x17 /* Must be ignored */
 #define NEG_FAST_GLYPH_INDEX			0x18
 #define NEG_ELLIPSE_SC_INDEX			0x19
 #define NEG_ELLIPSE_CB_INDEX			0x1A
 #define NEG_GLYPH_INDEX_INDEX			0x1B
-#define NEG_GLYPH_WEXTTEXTOUT_INDEX		0x1C
-#define NEG_GLYPH_WLONGTEXTOUT_INDEX		0x1D
-#define NEG_GLYPH_WLONGEXTTEXTOUT_INDEX		0x1E
-#define NEG_UNUSED31_INDEX			0x1F
+#define NEG_GLYPH_WEXTTEXTOUT_INDEX		0x1C /* Must be ignored */
+#define NEG_GLYPH_WLONGTEXTOUT_INDEX		0x1D /* Must be ignored */
+#define NEG_GLYPH_WLONGEXTTEXTOUT_INDEX		0x1E /* Must be ignored */
+#define NEG_UNUSED31_INDEX			0x1F /* Must be ignored */
 
 /* Glyph Support Level */
 #define GLYPH_SUPPORT_NONE			0x0000
@@ -1265,7 +1265,8 @@ struct rdp_settings
 	ALIGN64 BYTE* OrderSupport;             /* 2432 */
 	ALIGN64 BOOL  BitmapCacheV3Enabled;     /* 2433 */
 	ALIGN64 BOOL  AltSecFrameMarkerSupport; /* 2434 */
-	UINT64 padding2497[2497 - 2435]; /* 2435 */
+	ALIGN64 BOOL  AllowUnanouncedOrdersFromServer; /* 2435 */
+	UINT64 padding2497[2497 - 2436]; /* 2436 */
 
 	/* Bitmap Cache Capabilities */
 	ALIGN64 BOOL                       BitmapCacheEnabled;        /* 2497 */

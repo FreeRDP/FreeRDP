@@ -112,10 +112,11 @@ static void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 
 	if (gdi_bitmap)
 	{
-		gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->org_bitmap);
+		if (gdi_bitmap->hdc)
+			gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->org_bitmap);
+
 		gdi_DeleteObject((HGDIOBJECT) gdi_bitmap->bitmap);
 		gdi_DeleteDC(gdi_bitmap->hdc);
-
 		_aligned_free(bitmap->data);
 	}
 
@@ -193,6 +194,7 @@ static BOOL gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
 		return FALSE;
 
 	gdi = context->gdi;
+
 	if (!gdi)
 		return FALSE;
 
