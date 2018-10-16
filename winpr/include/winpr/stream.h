@@ -43,6 +43,8 @@ struct _wStream
 
 	DWORD count;
 	wStreamPool* pool;
+	BOOL isAllocatedStream;
+	BOOL isOwner;
 };
 typedef struct _wStream wStream;
 
@@ -50,6 +52,7 @@ WINPR_API BOOL Stream_EnsureCapacity(wStream* s, size_t size);
 WINPR_API BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size);
 
 WINPR_API wStream* Stream_New(BYTE* buffer, size_t size);
+WINPR_API void Stream_StaticInit(wStream *s, BYTE *buffer, size_t size);
 WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 
 static INLINE void Stream_Seek(wStream* s, size_t _offset)
