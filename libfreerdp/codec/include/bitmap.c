@@ -292,7 +292,7 @@ static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, BYTE bitmask,
 /**
  * Decompress an RLE compressed bitmap.
  */
-static INLINE void RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
+static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
                                  BYTE* pbDestBuffer,
                                  UINT32 rowDelta, UINT32 width, UINT32 height)
 {
@@ -309,6 +309,9 @@ static INLINE void RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 	UINT32 code;
 	UINT32 advance;
 	RLEEXTRA
+
+	if (!pbSrcBuffer || !pbDestBuffer)
+		return FALSE;
 
 	while (pbSrc < pbEnd)
 	{
@@ -628,6 +631,11 @@ static INLINE void RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 				DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 				DESTNEXTPIXEL(pbDest);
 				break;
+
+			default:
+				return FALSE;
 		}
 	}
+
+	return TRUE;
 }
