@@ -2849,6 +2849,10 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 
 	Stream_Read_UINT8(s, cache_brush->index); /* cacheEntry (1 byte) */
 	Stream_Read_UINT8(s, iBitmapFormat); /* iBitmapFormat (1 byte) */
+
+	if (iBitmapFormat > ARRAYSIZE(BMF_BPP))
+		goto fail;
+
 	cache_brush->bpp = BMF_BPP[iBitmapFormat];
 	Stream_Read_UINT8(s, cache_brush->cx); /* cx (1 byte) */
 	Stream_Read_UINT8(s, cache_brush->cy); /* cy (1 byte) */
