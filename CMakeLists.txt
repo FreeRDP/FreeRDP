@@ -1037,6 +1037,10 @@ else()
 	set(PRIVATE_KEYWORD "PRIVATE")
 endif()
 
+if(BUILD_SHARED_LIBS)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_DLL")
+endif()
+
 add_subdirectory(winpr)
 
 # Sub-directories
