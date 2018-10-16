@@ -337,6 +337,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->FIPSMode = FALSE;
 	settings->CompressionEnabled = TRUE;
 	settings->LogonNotify = TRUE;
+	settings->BrushSupportLevel = BRUSH_COLOR_FULL;
 
 	if (settings->ServerMode)
 		settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;

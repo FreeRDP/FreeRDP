@@ -1453,7 +1453,7 @@ static BOOL rdp_write_brush_capability_set(wStream* s, rdpSettings* settings)
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	Stream_Write_UINT32(s, BRUSH_COLOR_FULL); /* brushSupportLevel (4 bytes) */
+	Stream_Write_UINT32(s, settings->BrushSupportLevel); /* brushSupportLevel (4 bytes) */
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_BRUSH);
 	return TRUE;
 }
