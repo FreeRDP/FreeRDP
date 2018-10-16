@@ -4190,6 +4190,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 	BYTE orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
 	BOOL rc = FALSE;
 	rdpContext* context = update->context;
+	rdpSettings* settings = context->settings;
 	rdpAltSecUpdate* altsec = update->altsec;
 	const char* orderName = altsec_order_string(orderType);
 	WLog_Print(update->log, WLOG_DEBUG,
@@ -4198,8 +4199,14 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 	switch (orderType)
 	{
 		case ORDER_TYPE_CREATE_OFFSCREEN_BITMAP:
-			if (update_read_create_offscreen_bitmap_order(s,
-			        &(altsec->create_offscreen_bitmap)))
+			if (!settings->OffscreenSupportLevel)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+			else if (update_read_create_offscreen_bitmap_order(s,
+			         &(altsec->create_offscreen_bitmap)))
 			{
 				IFCALLRET(altsec->CreateOffscreenBitmap, rc, context,
 				          &(altsec->create_offscreen_bitmap));
@@ -4208,7 +4215,13 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		case ORDER_TYPE_SWITCH_SURFACE:
-			if (update_read_switch_surface_order(s, &(altsec->switch_surface)))
+			if (!settings->OffscreenSupportLevel)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+			else if (update_read_switch_surface_order(s, &(altsec->switch_surface)))
 			{
 				IFCALLRET(altsec->SwitchSurface, rc, context, &(altsec->switch_surface));
 			}
@@ -4216,8 +4229,14 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		case ORDER_TYPE_CREATE_NINE_GRID_BITMAP:
-			if (update_read_create_nine_grid_bitmap_order(s,
-			        &(altsec->create_nine_grid_bitmap)))
+			if (!settings->DrawNineGridEnabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+			else if (update_read_create_nine_grid_bitmap_order(s,
+			         &(altsec->create_nine_grid_bitmap)))
 			{
 				IFCALLRET(altsec->CreateNineGridBitmap, rc, context,
 				          &(altsec->create_nine_grid_bitmap));
@@ -4226,7 +4245,13 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		case ORDER_TYPE_FRAME_MARKER:
-			if (update_read_frame_marker_order(s, &(altsec->frame_marker)))
+			if (!settings->FrameMarkerCommandEnabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+			else if (update_read_frame_marker_order(s, &(altsec->frame_marker)))
 			{
 				IFCALLRET(altsec->FrameMarker, rc, context, &(altsec->frame_marker));
 			}
@@ -4250,7 +4275,13 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		case ORDER_TYPE_GDIPLUS_FIRST:
-			if (update_read_draw_gdiplus_first_order(s, &(altsec->draw_gdiplus_first)))
+			if (!settings->DrawGdiPlusCacheEnabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+			else if (update_read_draw_gdiplus_first_order(s, &(altsec->draw_gdiplus_first)))
 			{
 				IFCALLRET(altsec->DrawGdiPlusFirst, rc, context, &(altsec->draw_gdiplus_first));
 			}
@@ -4258,7 +4289,13 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		case ORDER_TYPE_GDIPLUS_NEXT:
-			if (update_read_draw_gdiplus_next_order(s, &(altsec->draw_gdiplus_next)))
+			if (!settings->DrawGdiPlusCacheEnabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+			else if (update_read_draw_gdiplus_next_order(s, &(altsec->draw_gdiplus_next)))
 			{
 				IFCALLRET(altsec->DrawGdiPlusNext, rc, context, &(altsec->draw_gdiplus_next));
 			}
@@ -4266,7 +4303,13 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		case ORDER_TYPE_GDIPLUS_END:
-			if (update_read_draw_gdiplus_end_order(s, &(altsec->draw_gdiplus_end)))
+			if (!settings->DrawGdiPlusCacheEnabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+			else if (update_read_draw_gdiplus_end_order(s, &(altsec->draw_gdiplus_end)))
 			{
 				IFCALLRET(altsec->DrawGdiPlusEnd, rc, context, &(altsec->draw_gdiplus_end));
 			}
@@ -4274,8 +4317,14 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_FIRST:
-			if (update_read_draw_gdiplus_cache_first_order(s,
-			        &(altsec->draw_gdiplus_cache_first)))
+			if (!settings->DrawGdiPlusCacheEnabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+			else if (update_read_draw_gdiplus_cache_first_order(s,
+			         &(altsec->draw_gdiplus_cache_first)))
 			{
 				IFCALLRET(altsec->DrawGdiPlusCacheFirst, rc, context,
 				          &(altsec->draw_gdiplus_cache_first));
@@ -4284,8 +4333,14 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_NEXT:
-			if (update_read_draw_gdiplus_cache_next_order(s,
-			        &(altsec->draw_gdiplus_cache_next)))
+			if (!settings->DrawGdiPlusCacheEnabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+			else if (update_read_draw_gdiplus_cache_next_order(s,
+			         &(altsec->draw_gdiplus_cache_next)))
 			{
 				IFCALLRET(altsec->DrawGdiPlusCacheNext, rc, context,
 				          &(altsec->draw_gdiplus_cache_next));
@@ -4294,8 +4349,14 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_END:
-			if (update_read_draw_gdiplus_cache_end_order(s,
-			        &(altsec->draw_gdiplus_cache_end)))
+			if (!settings->DrawGdiPlusCacheEnabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+			else if (update_read_draw_gdiplus_cache_end_order(s,
+			         &(altsec->draw_gdiplus_cache_end)))
 			{
 				IFCALLRET(altsec->DrawGdiPlusCacheEnd, rc, context, &(altsec->draw_gdiplus_cache_end));
 			}
@@ -4311,6 +4372,8 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 			break;
 
 		default:
+			WLog_Print(update->log, WLOG_WARN,
+			           "%s - Alternate Secondary Drawing Order not supported", orderName);
 			break;
 	}
 
