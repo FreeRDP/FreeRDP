@@ -4117,24 +4117,24 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 					case GLYPH_SUPPORT_PARTIAL:
 					case GLYPH_SUPPORT_FULL:
 						{
-							CACHE_GLYPH_V2_ORDER* order = update_read_cache_glyph_v2_order(update, s, extraFlags);
-
-							if (order)
-							{
-								rc = IFCALLRESULT(FALSE, secondary->CacheGlyphV2, context, order);
-								free_cache_glyph_v2_order(context, order);
-							}
-						}
-						break;
-
-					case GLYPH_SUPPORT_ENCODE:
-						{
 							CACHE_GLYPH_ORDER* order = update_read_cache_glyph_order(update, s, extraFlags);
 
 							if (order)
 							{
 								rc = IFCALLRESULT(FALSE, secondary->CacheGlyph, context, order);
 								free_cache_glyph_order(context, order);
+							}
+						}
+						break;
+
+					case GLYPH_SUPPORT_ENCODE:
+						{
+							CACHE_GLYPH_V2_ORDER* order = update_read_cache_glyph_v2_order(update, s, extraFlags);
+
+							if (order)
+							{
+								rc = IFCALLRESULT(FALSE, secondary->CacheGlyphV2, context, order);
+								free_cache_glyph_v2_order(context, order);
 							}
 						}
 						break;
