@@ -3327,484 +3327,665 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	switch (orderInfo->orderType)
 	{
 		case ORDER_TYPE_DSTBLT:
-			if (!update_read_dstblt_order(s, orderInfo, &(primary->dstblt)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_dstblt_order() failed", orderName);
-				return FALSE;
+				if (!update_read_dstblt_order(s, orderInfo, &(primary->dstblt)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_dstblt_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,
+				           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]",
+				           orderName,
+				           gdi_rop3_code_string(primary->dstblt.bRop), gdi_rop3_code(primary->dstblt.bRop));
+
+				if (!settings->OrderSupport[NEG_DSTBLT_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+				                                 &primary->dstblt.nLeftRect,
+				                                 &primary->dstblt.nTopRect,
+				                                 &primary->dstblt.nWidth,
+				                                 &primary->dstblt.nHeight))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->DstBlt, context, &primary->dstblt);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,
-			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]",
-			           orderName,
-			           gdi_rop3_code_string(primary->dstblt.bRop), gdi_rop3_code(primary->dstblt.bRop));
-
-			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
-			                                 &primary->dstblt.nLeftRect,
-			                                 &primary->dstblt.nTopRect,
-			                                 &primary->dstblt.nWidth,
-			                                 &primary->dstblt.nHeight))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->DstBlt, context, &primary->dstblt);
 			break;
 
 		case ORDER_TYPE_PATBLT:
-			if (!update_read_patblt_order(s, orderInfo, &(primary->patblt)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_patblt_order() failed", orderName);
-				return FALSE;
+				if (!update_read_patblt_order(s, orderInfo, &(primary->patblt)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_patblt_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,
+				           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
+				           gdi_rop3_code_string(primary->patblt.bRop), gdi_rop3_code(primary->patblt.bRop));
+
+				if (!settings->OrderSupport[NEG_PATBLT_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+				                                 &primary->patblt.nLeftRect,
+				                                 &primary->patblt.nTopRect,
+				                                 &primary->patblt.nWidth,
+				                                 &primary->patblt.nHeight))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->PatBlt, context, &primary->patblt);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,
-			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
-			           gdi_rop3_code_string(primary->patblt.bRop), gdi_rop3_code(primary->patblt.bRop));
-
-			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
-			                                 &primary->patblt.nLeftRect,
-			                                 &primary->patblt.nTopRect,
-			                                 &primary->patblt.nWidth,
-			                                 &primary->patblt.nHeight))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->PatBlt, context, &primary->patblt);
 			break;
 
 		case ORDER_TYPE_SCRBLT:
-			if (!update_read_scrblt_order(s, orderInfo, &(primary->scrblt)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_scrblt_order() failed", orderName);
-				return FALSE;
+				if (!update_read_scrblt_order(s, orderInfo, &(primary->scrblt)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_scrblt_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,
+				           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
+				           gdi_rop3_code_string(primary->scrblt.bRop), gdi_rop3_code(primary->scrblt.bRop));
+
+				if (!settings->OrderSupport[NEG_SCRBLT_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+				                                 &primary->scrblt.nLeftRect,
+				                                 &primary->scrblt.nTopRect,
+				                                 &primary->scrblt.nWidth,
+				                                 &primary->scrblt.nHeight))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->ScrBlt, context, &primary->scrblt);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,
-			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
-			           gdi_rop3_code_string(primary->scrblt.bRop), gdi_rop3_code(primary->scrblt.bRop));
-
-			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
-			                                 &primary->scrblt.nLeftRect,
-			                                 &primary->scrblt.nTopRect,
-			                                 &primary->scrblt.nWidth,
-			                                 &primary->scrblt.nHeight))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->ScrBlt, context, &primary->scrblt);
 			break;
 
 		case ORDER_TYPE_OPAQUE_RECT:
-			if (!update_read_opaque_rect_order(s, orderInfo, &(primary->opaque_rect)))
 			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - update_read_opaque_rect_order() failed", orderName);
-				return FALSE;
+				if (!update_read_opaque_rect_order(s, orderInfo, &(primary->opaque_rect)))
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - update_read_opaque_rect_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_OPAQUE_RECT_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_rect(update->log, orderName, context, &primary->opaque_rect.nLeftRect,
+				                                 &primary->opaque_rect.nTopRect,
+				                                 &primary->opaque_rect.nWidth,
+				                                 &primary->opaque_rect.nHeight))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->OpaqueRect, context, &primary->opaque_rect);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!freerdp_primary_adjust_rect(update->log, orderName, context, &primary->opaque_rect.nLeftRect,
-			                                 &primary->opaque_rect.nTopRect,
-			                                 &primary->opaque_rect.nWidth,
-			                                 &primary->opaque_rect.nHeight))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->OpaqueRect, context, &primary->opaque_rect);
 			break;
 
 		case ORDER_TYPE_DRAW_NINE_GRID:
-			if (!update_read_draw_nine_grid_order(s, orderInfo, &(primary->draw_nine_grid)))
 			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - update_read_draw_nine_grid_order() failed", orderName);
-				return FALSE;
+				if (!update_read_draw_nine_grid_order(s, orderInfo, &(primary->draw_nine_grid)))
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - update_read_draw_nine_grid_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_DRAWNINEGRID_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->draw_nine_grid.srcLeft,
+				                                  &primary->draw_nine_grid.srcTop, &primary->draw_nine_grid.srcRight,
+				                                  &primary->draw_nine_grid.srcBottom))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->DrawNineGrid, context, &primary->draw_nine_grid);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->draw_nine_grid.srcLeft,
-			                                  &primary->draw_nine_grid.srcTop, &primary->draw_nine_grid.srcRight,
-			                                  &primary->draw_nine_grid.srcBottom))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->DrawNineGrid, context, &primary->draw_nine_grid);
 			break;
 
 		case ORDER_TYPE_MULTI_DSTBLT:
-			if (!update_read_multi_dstblt_order(s, orderInfo, &(primary->multi_dstblt)))
 			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - update_read_multi_dstblt_order() failed", orderName);
-				return FALSE;
+				if (!update_read_multi_dstblt_order(s, orderInfo, &(primary->multi_dstblt)))
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - update_read_multi_dstblt_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,
+				           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
+				           gdi_rop3_code_string(primary->multi_dstblt.bRop), gdi_rop3_code(primary->multi_dstblt.bRop));
+
+				if (!settings->OrderSupport[NEG_MULTIDSTBLT_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+				                                 &primary->multi_dstblt.nLeftRect,
+				                                 &primary->multi_dstblt.nTopRect,
+				                                 &primary->multi_dstblt.nWidth,
+				                                 &primary->multi_dstblt.nHeight))
+					return FALSE;
+
+				if (!freerdp_adjust_delta_rect(update->log, orderName, context, primary->multi_dstblt.numRectangles,
+				                               primary->multi_dstblt.rectangles))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->MultiDstBlt, context, &primary->multi_dstblt);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,
-			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
-			           gdi_rop3_code_string(primary->multi_dstblt.bRop), gdi_rop3_code(primary->multi_dstblt.bRop));
-
-			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
-			                                 &primary->multi_dstblt.nLeftRect,
-			                                 &primary->multi_dstblt.nTopRect,
-			                                 &primary->multi_dstblt.nWidth,
-			                                 &primary->multi_dstblt.nHeight))
-				return FALSE;
-
-			if (!freerdp_adjust_delta_rect(update->log, orderName, context, primary->multi_dstblt.numRectangles,
-			                               primary->multi_dstblt.rectangles))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->MultiDstBlt, context, &primary->multi_dstblt);
 			break;
 
 		case ORDER_TYPE_MULTI_PATBLT:
-			if (!update_read_multi_patblt_order(s, orderInfo, &(primary->multi_patblt)))
 			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - update_read_multi_patblt_order() failed", orderName);
-				return FALSE;
+				if (!update_read_multi_patblt_order(s, orderInfo, &(primary->multi_patblt)))
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - update_read_multi_patblt_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,
+				           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
+				           gdi_rop3_code_string(primary->multi_patblt.bRop), gdi_rop3_code(primary->multi_patblt.bRop));
+
+				if (!settings->OrderSupport[NEG_MULTIPATBLT_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+				                                 &primary->multi_patblt.nLeftRect,
+				                                 &primary->multi_patblt.nTopRect,
+				                                 &primary->multi_patblt.nWidth,
+				                                 &primary->multi_patblt.nHeight))
+					return FALSE;
+
+				if (!freerdp_adjust_delta_rect(update->log, orderName, context, primary->multi_patblt.numRectangles,
+				                               primary->multi_patblt.rectangles))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->MultiPatBlt, context, &primary->multi_patblt);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,
-			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
-			           gdi_rop3_code_string(primary->multi_patblt.bRop), gdi_rop3_code(primary->multi_patblt.bRop));
-
-			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
-			                                 &primary->multi_patblt.nLeftRect,
-			                                 &primary->multi_patblt.nTopRect,
-			                                 &primary->multi_patblt.nWidth,
-			                                 &primary->multi_patblt.nHeight))
-				return FALSE;
-
-			if (!freerdp_adjust_delta_rect(update->log, orderName, context, primary->multi_patblt.numRectangles,
-			                               primary->multi_patblt.rectangles))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->MultiPatBlt, context, &primary->multi_patblt);
 			break;
 
 		case ORDER_TYPE_MULTI_SCRBLT:
-			if (!update_read_multi_scrblt_order(s, orderInfo, &(primary->multi_scrblt)))
 			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - update_read_multi_scrblt_order() failed", orderName);
-				return FALSE;
+				if (!update_read_multi_scrblt_order(s, orderInfo, &(primary->multi_scrblt)))
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - update_read_multi_scrblt_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,
+				           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
+				           gdi_rop3_code_string(primary->multi_scrblt.bRop), gdi_rop3_code(primary->multi_scrblt.bRop));
+
+				if (!settings->OrderSupport[NEG_MULTISCRBLT_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+				                                 &primary->multi_scrblt.nLeftRect,
+				                                 &primary->multi_scrblt.nTopRect,
+				                                 &primary->multi_scrblt.nWidth,
+				                                 &primary->multi_scrblt.nHeight))
+					return FALSE;
+
+				if (!freerdp_adjust_delta_rect(update->log, orderName, context, primary->multi_scrblt.numRectangles,
+				                               primary->multi_scrblt.rectangles))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->MultiScrBlt, context, &primary->multi_scrblt);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,
-			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
-			           gdi_rop3_code_string(primary->multi_scrblt.bRop), gdi_rop3_code(primary->multi_scrblt.bRop));
-
-			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
-			                                 &primary->multi_scrblt.nLeftRect,
-			                                 &primary->multi_scrblt.nTopRect,
-			                                 &primary->multi_scrblt.nWidth,
-			                                 &primary->multi_scrblt.nHeight))
-				return FALSE;
-
-			if (!freerdp_adjust_delta_rect(update->log, orderName, context, primary->multi_scrblt.numRectangles,
-			                               primary->multi_scrblt.rectangles))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->MultiScrBlt, context, &primary->multi_scrblt);
 			break;
 
 		case ORDER_TYPE_MULTI_OPAQUE_RECT:
-			if (!update_read_multi_opaque_rect_order(s, orderInfo,
-			        &(primary->multi_opaque_rect)))
 			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - update_read_multi_opaque_rect_order() failed", orderName);
-				return FALSE;
+				if (!update_read_multi_opaque_rect_order(s, orderInfo,
+				        &(primary->multi_opaque_rect)))
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - update_read_multi_opaque_rect_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+				                                 &primary->multi_opaque_rect.nLeftRect,
+				                                 &primary->multi_opaque_rect.nTopRect,
+				                                 &primary->multi_opaque_rect.nWidth,
+				                                 &primary->multi_opaque_rect.nHeight))
+					return FALSE;
+
+				if (!freerdp_adjust_delta_rect(update->log, orderName, context,
+				                               primary->multi_opaque_rect.numRectangles,
+				                               primary->multi_opaque_rect.rectangles))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->MultiOpaqueRect, context, &primary->multi_opaque_rect);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
-			                                 &primary->multi_opaque_rect.nLeftRect,
-			                                 &primary->multi_opaque_rect.nTopRect,
-			                                 &primary->multi_opaque_rect.nWidth,
-			                                 &primary->multi_opaque_rect.nHeight))
-				return FALSE;
-
-			if (!freerdp_adjust_delta_rect(update->log, orderName, context,
-			                               primary->multi_opaque_rect.numRectangles,
-			                               primary->multi_opaque_rect.rectangles))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->MultiOpaqueRect, context, &primary->multi_opaque_rect);
 			break;
 
 		case ORDER_TYPE_MULTI_DRAW_NINE_GRID:
-			if (!update_read_multi_draw_nine_grid_order(s, orderInfo,
-			        &(primary->multi_draw_nine_grid)))
 			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - update_read_multi_draw_nine_grid_order() failed", orderName);
-				return FALSE;
+				if (!update_read_multi_draw_nine_grid_order(s, orderInfo,
+				        &(primary->multi_draw_nine_grid)))
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - update_read_multi_draw_nine_grid_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_bound(update->log, orderName, context,
+				                                  &primary->multi_draw_nine_grid.srcLeft,
+				                                  &primary->multi_draw_nine_grid.srcTop,
+				                                  &primary->multi_draw_nine_grid.srcRight,
+				                                  &primary->multi_draw_nine_grid.srcBottom))
+					return FALSE;
+
+				if (!freerdp_adjust_delta_rect(update->log, orderName, context,
+				                               primary->multi_draw_nine_grid.nDeltaEntries,
+				                               primary->multi_draw_nine_grid.rectangles))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->MultiDrawNineGrid, context, &primary->multi_draw_nine_grid);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!freerdp_primary_adjust_bound(update->log, orderName, context,
-			                                  &primary->multi_draw_nine_grid.srcLeft,
-			                                  &primary->multi_draw_nine_grid.srcTop,
-			                                  &primary->multi_draw_nine_grid.srcRight,
-			                                  &primary->multi_draw_nine_grid.srcBottom))
-				return FALSE;
-
-			if (!freerdp_adjust_delta_rect(update->log, orderName, context,
-			                               primary->multi_draw_nine_grid.nDeltaEntries,
-			                               primary->multi_draw_nine_grid.rectangles))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->MultiDrawNineGrid, context, &primary->multi_draw_nine_grid);
 			break;
 
 		case ORDER_TYPE_LINE_TO:
-			if (!update_read_line_to_order(s, orderInfo, &(primary->line_to)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_line_to_order() failed", orderName);
-				return FALSE;
-			}
+				if (!update_read_line_to_order(s, orderInfo, &(primary->line_to)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_line_to_order() failed", orderName);
+					return FALSE;
+				}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-			rc = IFCALLRESULT(FALSE, primary->LineTo, context, &primary->line_to);
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_LINETO_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				rc = IFCALLRESULT(FALSE, primary->LineTo, context, &primary->line_to);
+			}
 			break;
 
 		case ORDER_TYPE_POLYLINE:
-			if (!update_read_polyline_order(s, orderInfo, &(primary->polyline)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_polyline_order() failed", orderName);
-				return FALSE;
-			}
+				if (!update_read_polyline_order(s, orderInfo, &(primary->polyline)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_polyline_order() failed", orderName);
+					return FALSE;
+				}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-			rc = IFCALLRESULT(FALSE, primary->Polyline, context, &primary->polyline);
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_POLYLINE_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				rc = IFCALLRESULT(FALSE, primary->Polyline, context, &primary->polyline);
+			}
 			break;
 
 		case ORDER_TYPE_MEMBLT:
-			if (!update_read_memblt_order(s, orderInfo, &(primary->memblt)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_memblt_order() failed", orderName);
-				return FALSE;
+				if (!update_read_memblt_order(s, orderInfo, &(primary->memblt)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_memblt_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,
+				           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
+				           gdi_rop3_code_string(primary->memblt.bRop), gdi_rop3_code(primary->memblt.bRop));
+
+				if (!settings->OrderSupport[NEG_MEMBLT_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+				                                 &primary->memblt.nLeftRect,
+				                                 &primary->memblt.nTopRect,
+				                                 &primary->memblt.nWidth,
+				                                 &primary->memblt.nHeight))
+					return FALSE;
+
+				if (!freerdp_adjust_point(update->log, orderName, context, &primary->memblt.nXSrc,
+				                          &primary->memblt.nYSrc))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->MemBlt, context, &primary->memblt);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,
-			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
-			           gdi_rop3_code_string(primary->memblt.bRop), gdi_rop3_code(primary->memblt.bRop));
-
-			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
-			                                 &primary->memblt.nLeftRect,
-			                                 &primary->memblt.nTopRect,
-			                                 &primary->memblt.nWidth,
-			                                 &primary->memblt.nHeight))
-				return FALSE;
-
-			if (!freerdp_adjust_point(update->log, orderName, context, &primary->memblt.nXSrc,
-			                          &primary->memblt.nYSrc))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->MemBlt, context, &primary->memblt);
 			break;
 
 		case ORDER_TYPE_MEM3BLT:
-			if (!update_read_mem3blt_order(s, orderInfo, &(primary->mem3blt)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_mem3blt_order() failed", orderName);
-				return FALSE;
+				if (!update_read_mem3blt_order(s, orderInfo, &(primary->mem3blt)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_mem3blt_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,
+				           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
+				           gdi_rop3_code_string(primary->mem3blt.bRop), gdi_rop3_code(primary->mem3blt.bRop));
+
+				if (!settings->OrderSupport[NEG_MEM3BLT_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_rect(update->log, orderName, context,
+				                                 &primary->mem3blt.nLeftRect,
+				                                 &primary->mem3blt.nTopRect,
+				                                 &primary->mem3blt.nWidth,
+				                                 &primary->mem3blt.nHeight))
+					return FALSE;
+
+				if (!freerdp_adjust_point(update->log, orderName, context, &primary->mem3blt.nXSrc,
+				                          &primary->mem3blt.nYSrc))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->Mem3Blt, context, &primary->mem3blt);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,
-			           "Primary Drawing Order %s rop=%s [0x%08"PRIx32"]", orderName,
-			           gdi_rop3_code_string(primary->mem3blt.bRop), gdi_rop3_code(primary->mem3blt.bRop));
-
-			if (!freerdp_primary_adjust_rect(update->log, orderName, context,
-			                                 &primary->mem3blt.nLeftRect,
-			                                 &primary->mem3blt.nTopRect,
-			                                 &primary->mem3blt.nWidth,
-			                                 &primary->mem3blt.nHeight))
-				return FALSE;
-
-			if (!freerdp_adjust_point(update->log, orderName, context, &primary->mem3blt.nXSrc,
-			                          &primary->mem3blt.nYSrc))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->Mem3Blt, context, &primary->mem3blt);
 			break;
 
 		case ORDER_TYPE_SAVE_BITMAP:
-			if (!update_read_save_bitmap_order(s, orderInfo, &(primary->save_bitmap)))
 			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - update_read_save_bitmap_order() failed", orderName);
-				return FALSE;
+				if (!update_read_save_bitmap_order(s, orderInfo, &(primary->save_bitmap)))
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - update_read_save_bitmap_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_SAVEBITMAP_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->save_bitmap.nLeftRect,
+				                                  &primary->save_bitmap.nTopRect, &primary->save_bitmap.nRightRect,
+				                                  &primary->save_bitmap.nBottomRect))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->SaveBitmap, context, &primary->save_bitmap);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->save_bitmap.nLeftRect,
-			                                  &primary->save_bitmap.nTopRect, &primary->save_bitmap.nRightRect,
-			                                  &primary->save_bitmap.nBottomRect))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->SaveBitmap, context, &primary->save_bitmap);
 			break;
 
 		case ORDER_TYPE_GLYPH_INDEX:
-			if (!update_read_glyph_index_order(s, orderInfo, &(primary->glyph_index)))
 			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - update_read_glyph_index_order() failed", orderName);
-				return FALSE;
+				if (!update_read_glyph_index_order(s, orderInfo, &(primary->glyph_index)))
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - update_read_glyph_index_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_FAST_GLYPH_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->glyph_index.bkLeft,
+				                                  &primary->glyph_index.bkTop,
+				                                  &primary->glyph_index.bkRight, &primary->fast_index.bkBottom))
+					return FALSE;
+
+				if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->glyph_index.opLeft,
+				                                  &primary->glyph_index.opTop,
+				                                  &primary->glyph_index.opRight, &primary->fast_index.opBottom))
+					return FALSE;
+
+				if (!freerdp_adjust_point(update->log, orderName, context, &primary->glyph_index.x,
+				                          &primary->glyph_index.y))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->GlyphIndex, context, &primary->glyph_index);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (settings->GlyphSupportLevel == GLYPH_SUPPORT_NONE)
-			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
-				return TRUE;
-			}
-
-			if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->glyph_index.bkLeft,
-			                                  &primary->glyph_index.bkTop,
-			                                  &primary->glyph_index.bkRight, &primary->fast_index.bkBottom))
-				return FALSE;
-
-			if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->glyph_index.opLeft,
-			                                  &primary->glyph_index.opTop,
-			                                  &primary->glyph_index.opRight, &primary->fast_index.opBottom))
-				return FALSE;
-
-			if (!freerdp_adjust_point(update->log, orderName, context, &primary->glyph_index.x,
-			                          &primary->glyph_index.y))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->GlyphIndex, context, &primary->glyph_index);
 			break;
 
 		case ORDER_TYPE_FAST_INDEX:
-			if (!update_read_fast_index_order(s, orderInfo, &(primary->fast_index)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_fast_index_order() failed", orderName);
-				return FALSE;
+				if (!update_read_fast_index_order(s, orderInfo, &(primary->fast_index)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_fast_index_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_FAST_INDEX_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_bound(update->log, orderName, context,
+				                                  &primary->fast_index.bkLeft,
+				                                  &primary->fast_index.bkTop,
+				                                  &primary->fast_index.bkRight, &primary->fast_index.bkBottom))
+					return FALSE;
+
+				if (!freerdp_check_glyph_op_bound(update->log, orderName, context, primary->fast_index.opLeft,
+				                                  primary->fast_index.opTop,
+				                                  primary->fast_index.opRight, primary->fast_index.opBottom))
+					return FALSE;
+
+				if (!freerdp_adjust_point(update->log, orderName, context, &primary->fast_index.x,
+				                          &primary->fast_index.y))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->FastIndex, context, &primary->fast_index);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (settings->GlyphSupportLevel == GLYPH_SUPPORT_NONE)
-			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
-				return TRUE;
-			}
-
-			if (!freerdp_primary_adjust_bound(update->log, orderName, context,
-			                                  &primary->fast_index.bkLeft,
-			                                  &primary->fast_index.bkTop,
-			                                  &primary->fast_index.bkRight, &primary->fast_index.bkBottom))
-				return FALSE;
-
-			if (!freerdp_check_glyph_op_bound(update->log, orderName, context, primary->fast_index.opLeft,
-			                                  primary->fast_index.opTop,
-			                                  primary->fast_index.opRight, primary->fast_index.opBottom))
-				return FALSE;
-
-			if (!freerdp_adjust_point(update->log, orderName, context, &primary->fast_index.x,
-			                          &primary->fast_index.y))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->FastIndex, context, &primary->fast_index);
 			break;
 
 		case ORDER_TYPE_FAST_GLYPH:
-			if (!update_read_fast_glyph_order(s, orderInfo, &(primary->fast_glyph)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_fast_glyph_order() failed", orderName);
-				return FALSE;
+				if (!update_read_fast_glyph_order(s, orderInfo, &(primary->fast_glyph)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_fast_glyph_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_FAST_GLYPH_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->fast_glyph.bkLeft,
+				                                  &primary->fast_glyph.bkTop,
+				                                  &primary->fast_glyph.bkRight, &primary->fast_index.bkBottom))
+					return FALSE;
+
+				if (!freerdp_check_glyph_op_bound(update->log, orderName, context, primary->fast_glyph.opLeft,
+				                                  primary->fast_glyph.opTop,
+				                                  primary->fast_glyph.opRight, primary->fast_index.opBottom))
+					return FALSE;
+
+				if (!adjust_point(context, &primary->fast_glyph.x, &primary->fast_glyph.y))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->FastGlyph, context, &primary->fast_glyph);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (settings->GlyphSupportLevel == GLYPH_SUPPORT_NONE)
-			{
-				WLog_Print(update->log, WLOG_ERROR,
-				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
-				return TRUE;
-			}
-
-			if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->fast_glyph.bkLeft,
-			                                  &primary->fast_glyph.bkTop,
-			                                  &primary->fast_glyph.bkRight, &primary->fast_index.bkBottom))
-				return FALSE;
-
-			if (!freerdp_check_glyph_op_bound(update->log, orderName, context, primary->fast_glyph.opLeft,
-			                                  primary->fast_glyph.opTop,
-			                                  primary->fast_glyph.opRight, primary->fast_index.opBottom))
-				return FALSE;
-
-			if (!adjust_point(context, &primary->fast_glyph.x, &primary->fast_glyph.y))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->FastGlyph, context, &primary->fast_glyph);
 			break;
 
 		case ORDER_TYPE_POLYGON_SC:
-			if (!update_read_polygon_sc_order(s, orderInfo, &(primary->polygon_sc)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_polygon_sc_order() failed", orderName);
-				return FALSE;
-			}
+				if (!update_read_polygon_sc_order(s, orderInfo, &(primary->polygon_sc)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_polygon_sc_order() failed", orderName);
+					return FALSE;
+				}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-			rc = IFCALLRESULT(FALSE, primary->PolygonSC, context, &primary->polygon_sc);
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_POLYGON_SC_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				rc = IFCALLRESULT(FALSE, primary->PolygonSC, context, &primary->polygon_sc);
+			}
 			break;
 
 		case ORDER_TYPE_POLYGON_CB:
-			if (!update_read_polygon_cb_order(s, orderInfo, &(primary->polygon_cb)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_polygon_cb_order() failed", orderName);
-				return FALSE;
-			}
+				if (!update_read_polygon_cb_order(s, orderInfo, &(primary->polygon_cb)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_polygon_cb_order() failed", orderName);
+					return FALSE;
+				}
 
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-			rc = IFCALLRESULT(FALSE, primary->PolygonCB, context, &primary->polygon_cb);
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_POLYGON_CB_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				rc = IFCALLRESULT(FALSE, primary->PolygonCB, context, &primary->polygon_cb);
+			}
 			break;
 
 		case ORDER_TYPE_ELLIPSE_SC:
-			if (!update_read_ellipse_sc_order(s, orderInfo, &(primary->ellipse_sc)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_ellipse_sc_order() failed", orderName);
-				return FALSE;
+				if (!update_read_ellipse_sc_order(s, orderInfo, &(primary->ellipse_sc)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_ellipse_sc_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_ELLIPSE_SC_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->ellipse_sc.leftRect,
+				                                  &primary->ellipse_sc.topRect,
+				                                  &primary->ellipse_sc.rightRect,  &primary->ellipse_sc.bottomRect))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->EllipseSC, context, &primary->ellipse_sc);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->ellipse_sc.leftRect,
-			                                  &primary->ellipse_sc.topRect,
-			                                  &primary->ellipse_sc.rightRect,  &primary->ellipse_sc.bottomRect))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->EllipseSC, context, &primary->ellipse_sc);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_CB:
-			if (!update_read_ellipse_cb_order(s, orderInfo, &(primary->ellipse_cb)))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "%s - update_read_ellipse_cb_order() failed", orderName);
-				return FALSE;
+				if (!update_read_ellipse_cb_order(s, orderInfo, &(primary->ellipse_cb)))
+				{
+					WLog_Print(update->log, WLOG_ERROR, "%s - update_read_ellipse_cb_order() failed", orderName);
+					return FALSE;
+				}
+
+				WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+				if (!settings->OrderSupport[NEG_ELLIPSE_CB_INDEX])
+				{
+					WLog_Print(update->log, WLOG_ERROR,
+					           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+					return TRUE;
+				}
+
+				if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->ellipse_cb.leftRect,
+				                                  &primary->ellipse_cb.topRect,
+				                                  &primary->ellipse_cb.rightRect,  &primary->ellipse_cb.bottomRect))
+					return FALSE;
+
+				rc = IFCALLRESULT(FALSE, primary->EllipseCB, context, &primary->ellipse_cb);
 			}
-
-			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
-
-			if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->ellipse_cb.leftRect,
-			                                  &primary->ellipse_cb.topRect,
-			                                  &primary->ellipse_cb.rightRect,  &primary->ellipse_cb.bottomRect))
-				return FALSE;
-
-			rc = IFCALLRESULT(FALSE, primary->EllipseCB, context, &primary->ellipse_cb);
 			break;
 
 		default:
-			WLog_Print(update->log, WLOG_WARN,  "Primary Drawing Order %s, ignoring", orderName);
+			WLog_Print(update->log, WLOG_WARN,  "Primary Drawing Order %s not supported, ignoring", orderName);
 			rc = TRUE;
 			break;
 	}
