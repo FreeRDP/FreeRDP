@@ -282,7 +282,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 static INLINE BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4],
         BYTE* pDstData, UINT32 DstFormat,
         UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
-        BOOL alpha, BOOL vFlip)
+        BOOL vFlip)
 {
 	INT32 y;
 	INT32 beg, end, inc;
@@ -304,27 +304,13 @@ static INLINE BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4],
 		inc = 1;
 	}
 
-	if (alpha)
+	for (y = beg; y != end; y += inc)
 	{
-		for (y = beg; y != end; y += inc)
-		{
-			BYTE* pRGB = &pDstData[((nYDst + y) * nDstStep) + (nXDst * GetBytesPerPixel(
-			                                        DstFormat))];
+		BYTE* pRGB = &pDstData[((nYDst + y) * nDstStep) + (nXDst * GetBytesPerPixel(
+		                                        DstFormat))];
 
-			if (!writeLine(&pRGB, DstFormat, nWidth, &pR, &pG, &pB, &pA))
-				return FALSE;
-		}
-	}
-	else
-	{
-		for (y = beg; y != end; y += inc)
-		{
-			BYTE* pRGB = &pDstData[((nYDst + y) * nDstStep) + (nXDst * GetBytesPerPixel(
-			                                        DstFormat))];
-
-			if (!writeLine(&pRGB, DstFormat, nWidth, &pR, &pG, &pB, &pA))
-				return FALSE;
-		}
+		if (!writeLine(&pRGB, DstFormat, nWidth, &pR, &pG, &pB, &pA))
+			return FALSE;
 	}
 
 	return TRUE;
@@ -341,6 +327,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 	BOOL rle;
 	UINT32 cll;
 	BOOL alpha;
+	BOOL useAlpha = FALSE;
 	INT32 status;
 	const BYTE* srcp;
 	UINT32 subSize;
@@ -373,6 +360,9 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 	cs = (FormatHeader & PLANAR_FORMAT_HEADER_CS) ? TRUE : FALSE;
 	rle = (FormatHeader & PLANAR_FORMAT_HEADER_RLE) ? TRUE : FALSE;
 	alpha = (FormatHeader & PLANAR_FORMAT_HEADER_NA) ? FALSE : TRUE;
+
+	if (alpha)
+		useAlpha = ColorHasAlpha(DstFormat);
 
 	//WLog_INFO(TAG, "CLL: %"PRIu32" CS: %"PRIu8" RLE: %"PRIu8" ALPHA: %"PRIu8"", cll, cs, rle, alpha);
 
@@ -486,7 +476,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		BYTE* pTempData = pDstData;
 		UINT32 nTempStep = nDstStep;
 
-		if (alpha)
+		if (useAlpha)
 			TempFormat = PIXEL_FORMAT_BGRA32;
 		else
 			TempFormat = PIXEL_FORMAT_BGRX32;
@@ -501,7 +491,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		if (!rle) /* RAW */
 		{
 			if (!planar_decompress_planes_raw(planes, pTempData, TempFormat, nTempStep,
-			                                  nXDst, nYDst, nSrcWidth, nSrcHeight, alpha, vFlip))
+			                                  nXDst, nYDst, nSrcWidth, nSrcHeight, vFlip))
 				return FALSE;
 
 			if (alpha)
@@ -537,7 +527,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 
 			srcp += rleSizes[0] + rleSizes[1] + rleSizes[2];
 
-			if (alpha)
+			if (useAlpha)
 			{
 				status = planar_decompress_plane_rle(planes[3], rleSizes[3],
 				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 3,
@@ -545,9 +535,10 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 
 				if (status < 0)
 					return FALSE;
-
-				srcp += rleSizes[3];
 			}
+
+			if (alpha)
+				srcp += rleSizes[3];
 		}
 
 		if (pTempData != pDstData)
@@ -564,7 +555,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		BYTE* pTempData = planar->pTempData;
 		UINT32 nTempStep = planar->nTempStep;
 
-		if (alpha)
+		if (useAlpha)
 			TempFormat = PIXEL_FORMAT_BGRA32;
 		else
 			TempFormat = PIXEL_FORMAT_BGRX32;
@@ -581,7 +572,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		if (!rle) /* RAW */
 		{
 			if (!planar_decompress_planes_raw(planes, pTempData, TempFormat, nTempStep,
-			                                  nXDst, nYDst, nSrcWidth, nSrcHeight, alpha, vFlip))
+			                                  nXDst, nYDst, nSrcWidth, nSrcHeight, vFlip))
 				return FALSE;
 
 			if (alpha)
@@ -594,7 +585,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		}
 		else /* RLE */
 		{
-			if (alpha)
+			if (useAlpha)
 			{
 				status = planar_decompress_plane_rle(planes[3], rleSizes[3],
 				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 3,
@@ -602,9 +593,10 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 
 				if (status < 0)
 					return FALSE;
-
-				srcp += rleSizes[3];
 			}
+
+			if (alpha)
+				srcp += rleSizes[3];
 
 			status = planar_decompress_plane_rle(planes[0], rleSizes[0],
 			                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 2,
@@ -632,7 +624,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 
 		if (prims->YCoCgToRGB_8u_AC4R(pTempData, nTempStep, pDstData, DstFormat,
 		                              nDstStep,
-		                              w, h, cll, alpha) != PRIMITIVES_SUCCESS)
+		                              w, h, cll, useAlpha) != PRIMITIVES_SUCCESS)
 			return FALSE;
 	}
 
