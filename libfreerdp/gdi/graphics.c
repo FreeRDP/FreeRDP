@@ -176,6 +176,9 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		SrcFormat = gdi_get_pixel_format(bpp);
 
+		if (SrcSize < bitmap->length)
+			return FALSE;
+
 		if (!freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0,
 		                        DstWidth, DstHeight, pSrcData, SrcFormat,
 		                        0, 0, 0, &gdi->palette, FREERDP_FLIP_VERTICAL))
