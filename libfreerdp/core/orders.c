@@ -4013,7 +4013,9 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 	UINT16 extraFlags;
 	UINT16 orderLength;
 	rdpContext* context = update->context;
+	rdpSettings* settings = context->settings;
 	rdpSecondaryUpdate* secondary = update->secondary;
+	const char* name;
 
 	if (Stream_GetRemainingLength(s) < 5)
 	{
@@ -4025,13 +4027,20 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 	Stream_Read_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	Stream_Read_UINT8(s, orderType); /* orderType (1 byte) */
 	next = Stream_Pointer(s) + ((INT16) orderLength) + 7;
-	WLog_Print(update->log, WLOG_DEBUG,  "Secondary Drawing Order %s",
-	           secondary_order_string(orderType));
+	name = secondary_order_string(orderType);
+	WLog_Print(update->log, WLOG_DEBUG,  "Secondary Drawing Order %s", name);
 
 	switch (orderType)
 	{
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
+			if (!settings->BitmapCacheEnabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", name);
+				return TRUE;
+			}
+			else
 			{
 				const BOOL compressed = (orderType == ORDER_TYPE_CACHE_BITMAP_COMPRESSED);
 				CACHE_BITMAP_ORDER* order = update_read_cache_bitmap_order(update, s, compressed, extraFlags);
@@ -4042,10 +4051,18 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 					free_cache_bitmap_order(context, order);
 				}
 			}
+
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
+			if (!settings->BitmapCacheEnabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", name);
+				return TRUE;
+			}
+			else
 			{
 				const BOOL compressed = (orderType == ORDER_TYPE_BITMAP_COMPRESSED_V2);
 				CACHE_BITMAP_V2_ORDER* order = update_read_cache_bitmap_v2_order(update, s, compressed, extraFlags);
@@ -4056,9 +4073,17 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 					free_cache_bitmap_v2_order(context, order);
 				}
 			}
+
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
+			if (!settings->BitmapCacheV3Enabled)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", name);
+				return TRUE;
+			}
+			else
 			{
 				CACHE_BITMAP_V3_ORDER* order = update_read_cache_bitmap_v3_order(update, s, extraFlags);
 
@@ -4068,9 +4093,19 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 					free_cache_bitmap_v3_order(context, order);
 				}
 			}
+
 			break;
 
 		case ORDER_TYPE_CACHE_COLOR_TABLE:
+
+			/* [MS-RDPEGDI] 2.2.2.2.1.2.4 Cache Color Table (CACHE_COLOR_TABLE_ORDER) */
+			if (!settings->OrderSupport[NEG_MEMBLT_INDEX] && !settings->OrderSupport[NEG_MEM3BLT_INDEX])
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", name);
+				return TRUE;
+			}
+			else
 			{
 				CACHE_COLOR_TABLE_ORDER* order = update_read_cache_color_table_order(update, s, extraFlags);
 
@@ -4080,33 +4115,50 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 					free_cache_color_table_order(context, order);
 				}
 			}
+
 			break;
 
 		case ORDER_TYPE_CACHE_GLYPH:
-			if (secondary->glyph_v2)
 			{
-				CACHE_GLYPH_V2_ORDER* order = update_read_cache_glyph_v2_order(update, s, extraFlags);
-
-				if (order)
+				switch (settings->GlyphSupportLevel)
 				{
-					rc = IFCALLRESULT(FALSE, secondary->CacheGlyphV2, context, order);
-					free_cache_glyph_v2_order(context, order);
+					case GLYPH_SUPPORT_PARTIAL:
+					case GLYPH_SUPPORT_FULL:
+						{
+							CACHE_GLYPH_V2_ORDER* order = update_read_cache_glyph_v2_order(update, s, extraFlags);
+
+							if (order)
+							{
+								rc = IFCALLRESULT(FALSE, secondary->CacheGlyphV2, context, order);
+								free_cache_glyph_v2_order(context, order);
+							}
+						}
+						break;
+
+					case GLYPH_SUPPORT_ENCODE:
+						{
+							CACHE_GLYPH_ORDER* order = update_read_cache_glyph_order(update, s, extraFlags);
+
+							if (order)
+							{
+								rc = IFCALLRESULT(FALSE, secondary->CacheGlyph, context, order);
+								free_cache_glyph_order(context, order);
+							}
+						}
+						break;
+
+					case GLYPH_SUPPORT_NONE:
+					default:
+						WLog_Print(update->log, WLOG_ERROR,
+						           "%s - SERVER BUG: The support for this feature was not announced!", name);
+						return TRUE;
+						break;
 				}
 			}
-			else
-			{
-				CACHE_GLYPH_ORDER* order = update_read_cache_glyph_order(update, s, extraFlags);
-
-				if (order)
-				{
-					rc = IFCALLRESULT(FALSE, secondary->CacheGlyph, context, order);
-					free_cache_glyph_order(context, order);
-				}
-			}
-
 			break;
 
 		case ORDER_TYPE_CACHE_BRUSH:
+			/* [MS-RDPEGDI] 2.2.2.2.1.2.7 Cache Brush (CACHE_BRUSH_ORDER) */
 			{
 				CACHE_BRUSH_ORDER* order = update_read_cache_brush_order(update, s, extraFlags);
 
@@ -4119,6 +4171,8 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 			break;
 
 		default:
+			WLog_Print(update->log, WLOG_WARN, "SECONDARY ORDER %s not supported",
+			           secondary_order_string(orderType));
 			break;
 	}
 
