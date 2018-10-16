@@ -3281,6 +3281,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	rdpContext* context = update->context;
 	rdpPrimaryUpdate* primary = update->primary;
 	ORDER_INFO* orderInfo = &(primary->order_info);
+	rdpSettings* settings = context->settings;
 	const char* orderName;
 
 	if (flags & ORDER_TYPE_CHANGE)
@@ -3656,6 +3657,13 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
 
+			if (settings->GlyphSupportLevel == GLYPH_SUPPORT_NONE)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
+
 			if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->glyph_index.bkLeft,
 			                                  &primary->glyph_index.bkTop,
 			                                  &primary->glyph_index.bkRight, &primary->fast_index.bkBottom))
@@ -3681,6 +3689,13 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+			if (settings->GlyphSupportLevel == GLYPH_SUPPORT_NONE)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
 
 			if (!freerdp_primary_adjust_bound(update->log, orderName, context,
 			                                  &primary->fast_index.bkLeft,
@@ -3708,6 +3723,13 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			}
 
 			WLog_Print(update->log, WLOG_DEBUG,  "Primary Drawing Order %s", orderName);
+
+			if (settings->GlyphSupportLevel == GLYPH_SUPPORT_NONE)
+			{
+				WLog_Print(update->log, WLOG_ERROR,
+				           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+				return TRUE;
+			}
 
 			if (!freerdp_primary_adjust_bound(update->log, orderName, context, &primary->fast_glyph.bkLeft,
 			                                  &primary->fast_glyph.bkTop,
