@@ -265,15 +265,24 @@ static BOOL fastpath_recv_orders(rdpFastPath* fastpath, wStream* s)
 	UINT16 numberOrders;
 
 	if (!fastpath || !fastpath->rdp || !s)
+	{
+		WLog_ERR(TAG, "Invalid arguments");
 		return FALSE;
+	}
 
 	update = fastpath->rdp->update;
 
 	if (!update)
+	{
+		WLog_ERR(TAG, "Invalid configuration");
 		return FALSE;
+	}
 
 	if (Stream_GetRemainingLength(s) < 2)
+	{
+		WLog_ERR(TAG, "Stream short");
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, numberOrders); /* numberOrders (2 bytes) */
 

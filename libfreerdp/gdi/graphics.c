@@ -112,10 +112,11 @@ static void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 
 	if (gdi_bitmap)
 	{
-		gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->org_bitmap);
+		if (gdi_bitmap->hdc)
+			gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->org_bitmap);
+
 		gdi_DeleteObject((HGDIOBJECT) gdi_bitmap->bitmap);
 		gdi_DeleteDC(gdi_bitmap->hdc);
-
 		_aligned_free(bitmap->data);
 	}
 
@@ -139,7 +140,6 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
                                   UINT32 codecId)
 {
 	UINT32 SrcSize = length;
-	UINT32 SrcFormat;
 	rdpGdi* gdi = context->gdi;
 	bitmap->compressed = FALSE;
 	bitmap->format = gdi->dstFormat;
@@ -173,7 +173,19 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	}
 	else
 	{
-		SrcFormat = gdi_get_pixel_format(bpp);
+		const UINT32 SrcFormat = gdi_get_pixel_format(bpp);
+		const size_t sbpp = GetBytesPerPixel(SrcFormat);
+		const size_t dbpp = GetBytesPerPixel(bitmap->format);
+
+		if ((sbpp == 0) || (dbpp == 0))
+			return FALSE;
+		else
+		{
+			const size_t dstSize = SrcSize * dbpp / sbpp;
+
+			if (dstSize  < bitmap->length)
+				return FALSE;
+		}
 
 		if (!freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0,
 		                        DstWidth, DstHeight, pSrcData, SrcFormat,
@@ -193,6 +205,7 @@ static BOOL gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
 		return FALSE;
 
 	gdi = context->gdi;
+
 	if (!gdi)
 		return FALSE;
 

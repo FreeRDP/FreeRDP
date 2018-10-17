@@ -212,7 +212,7 @@ struct _MULTI_DRAW_NINE_GRID_ORDER
 	UINT32 bitmapId;
 	UINT32 nDeltaEntries;
 	UINT32 cbData;
-	BYTE* codeDeltaList;
+	DELTA_RECT rectangles[45];
 };
 typedef struct _MULTI_DRAW_NINE_GRID_ORDER MULTI_DRAW_NINE_GRID_ORDER;
 

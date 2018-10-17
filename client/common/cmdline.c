@@ -1756,6 +1756,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->ConsoleSession = enable;
 		}
+		CommandLineSwitchCase(arg, "relax-order-checks")
+		{
+			settings->AllowUnanouncedOrdersFromServer = arg->Value;
+		}
 		CommandLineSwitchCase(arg, "restricted-admin")
 		{
 			settings->ConsoleSession = enable;

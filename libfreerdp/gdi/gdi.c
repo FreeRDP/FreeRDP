@@ -574,7 +574,7 @@ static BOOL gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 	                  gdi_rop3_code(dstblt->bRop), &gdi->palette);
 }
 
-static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
+static BOOL gdi_patblt(rdpContext* context, const PATBLT_ORDER* patblt)
 {
 	const rdpBrush* brush = &patblt->brush;
 	UINT32 foreColor;
@@ -663,9 +663,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			break;
 	}
 
-	if (!hbrush)
-		gdi_DeleteObject((HGDIOBJECT) hBmp);
-	else
+	if (hbrush)
 	{
 		hbrush->nXOrg = brush->x;
 		hbrush->nYOrg = brush->y;
@@ -676,6 +674,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 
 out_error:
+	gdi_DeleteObject((HGDIOBJECT) hBmp);
 	gdi_DeleteObject((HGDIOBJECT) hbrush);
 	gdi->drawing->hdc->brush = originalBrush;
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
@@ -933,6 +932,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 				                 mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop),
 				                 &gdi->palette);
 				gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
+				gdi_DeleteObject((HGDIOBJECT) hBmp);
 				gdi->drawing->hdc->brush = originalBrush;
 			}
 			break;

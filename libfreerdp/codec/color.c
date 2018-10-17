@@ -87,6 +87,9 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat,
 	UINT32 monoStep;
 	const UINT32 dstBytesPerPixel = GetBytesPerPixel(DstFormat);
 
+	if (!pDstData || !pSrcData || !palette)
+		return FALSE;
+
 	if (nDstStep == 0)
 		nDstStep = dstBytesPerPixel * nWidth;
 
@@ -203,7 +206,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 				const BYTE* andBits;
 				const BYTE* xorBits;
 				BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) +
-				                            (nXDst * GetBytesPerPixel(DstFormat))];
+				                                         (nXDst * GetBytesPerPixel(DstFormat))];
 				xorBit = andBit = 0x80;
 
 				if (!vFlip)
@@ -281,7 +284,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 					const BYTE* xorBits;
 					const BYTE* andBits = NULL;
 					BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) +
-					                            (nXDst * GetBytesPerPixel(DstFormat))];
+					                                         (nXDst * GetBytesPerPixel(DstFormat))];
 					andBit = 0x80;
 
 					if (!vFlip)
@@ -326,9 +329,9 @@ BOOL freerdp_image_copy_from_pointer_data(
 						}
 
 						xorPixel = FreeRDPConvertColor(xorPixel,
-						                        pixelFormat,
-						                        PIXEL_FORMAT_ARGB32,
-						                        palette);
+						                               pixelFormat,
+						                               PIXEL_FORMAT_ARGB32,
+						                               palette);
 						xorBits += xorBytesPerPixel;
 						andPixel = 0;
 
@@ -352,7 +355,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 						}
 
 						color = FreeRDPConvertColor(xorPixel, PIXEL_FORMAT_ARGB32,
-						                     DstFormat, palette);
+						                            DstFormat, palette);
 						WriteColor(pDstPixel, DstFormat, color);
 						pDstPixel += GetBytesPerPixel(DstFormat);
 					}
@@ -435,11 +438,11 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 				for (y = 0; y < nHeight; y++)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-					                                nSrcStep * srcVMultiplier +
-					                                srcVOffset];
+					                                            nSrcStep * srcVMultiplier +
+					                                            srcVOffset];
 					BYTE* dstLine = &pDstData[(y + nYDst) *
-					                          nDstStep * dstVMultiplier +
-					                          dstVOffset];
+					                                      nDstStep * dstVMultiplier +
+					                                      dstVOffset];
 					memcpy(&dstLine[xDstOffset],
 					       &srcLine[xSrcOffset], copyDstWidth);
 				}
@@ -450,11 +453,11 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 				for (y = nHeight - 1; y >= 0; y--)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-					                                nSrcStep * srcVMultiplier +
-					                                srcVOffset];
+					                                            nSrcStep * srcVMultiplier +
+					                                            srcVOffset];
 					BYTE* dstLine = &pDstData[(y + nYDst) *
-					                          nDstStep * dstVMultiplier +
-					                          dstVOffset];
+					                                      nDstStep * dstVMultiplier +
+					                                      dstVOffset];
 					memcpy(&dstLine[xDstOffset],
 					       &srcLine[xSrcOffset], copyDstWidth);
 				}
@@ -465,11 +468,11 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 				for (y = 0; y < nHeight; y++)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-					                                nSrcStep * srcVMultiplier +
-					                                srcVOffset];
+					                                            nSrcStep * srcVMultiplier +
+					                                            srcVOffset];
 					BYTE* dstLine = &pDstData[(y + nYDst) *
-					                          nDstStep * dstVMultiplier +
-					                          dstVOffset];
+					                                      nDstStep * dstVMultiplier +
+					                                      dstVOffset];
 					memmove(&dstLine[xDstOffset],
 					        &srcLine[xSrcOffset], copyDstWidth);
 				}
@@ -480,11 +483,11 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 				for (y = nHeight - 1; y >= 0; y--)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-					                                nSrcStep * srcVMultiplier +
-					                                srcVOffset];
+					                                            nSrcStep * srcVMultiplier +
+					                                            srcVOffset];
 					BYTE* dstLine = &pDstData[(y + nYDst) *
-					                          nDstStep * dstVMultiplier +
-					                          dstVOffset];
+					                                      nDstStep * dstVMultiplier +
+					                                      dstVOffset];
 					memmove(&dstLine[xDstOffset],
 					        &srcLine[xSrcOffset], copyDstWidth);
 				}
@@ -499,11 +502,11 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 			for (y = 0; y < nHeight; y++)
 			{
 				const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-				                                nSrcStep * srcVMultiplier +
-				                                srcVOffset];
+				                                            nSrcStep * srcVMultiplier +
+				                                            srcVOffset];
 				BYTE* dstLine = &pDstData[(y + nYDst) *
-				                          nDstStep * dstVMultiplier +
-				                          dstVOffset];
+				                                      nDstStep * dstVMultiplier +
+				                                      dstVOffset];
 				memcpy(&dstLine[xDstOffset],
 				       &srcLine[xSrcOffset], copyDstWidth);
 			}
@@ -516,10 +519,10 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 		for (y = 0; y < nHeight; y++)
 		{
 			const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-			                                nSrcStep * srcVMultiplier +
-			                                srcVOffset];
+			                                            nSrcStep * srcVMultiplier +
+			                                            srcVOffset];
 			BYTE* dstLine = &pDstData[(y + nYDst) *
-			                          nDstStep * dstVMultiplier + dstVOffset];
+			                                      nDstStep * dstVMultiplier + dstVOffset];
 
 			for (x = 0; x < nWidth; x++)
 			{

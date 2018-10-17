@@ -1197,7 +1197,7 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 {
 	if (rdpsnd)
 	{
-		audio_format_free(rdpsnd->fixed_format);
+		audio_formats_free(rdpsnd->fixed_format, 1);
 		free(rdpsnd->subsystem);
 		free(rdpsnd->device_name);
 		CloseHandle(rdpsnd->stopEvent);
