@@ -121,13 +121,19 @@ static int check_order_activated(wLog* log, rdpSettings* settings, const char* o
 {
 	if (!condition)
 	{
-		WLog_Print(log, WLOG_ERROR,
-		           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
-
-		if (!settings->AllowUnanouncedOrdersFromServer)
+		if (settings->AllowUnanouncedOrdersFromServer)
+		{
+			WLog_Print(log, WLOG_WARN,
+			           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
+			return 0;
+		}
+		else
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "%s - SERVER BUG: The support for this feature was not announced! Use /relax-order-checks to ignore",
+			           orderName);
 			return -1;
-
-		return 0;
+		}
 	}
 
 	return 1;
