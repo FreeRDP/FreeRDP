@@ -20,33 +20,21 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_HTTP_H
 #define FREERDP_LIB_CORE_GATEWAY_HTTP_H
 
-typedef struct _http_context HttpContext;
-typedef struct _http_request HttpRequest;
-typedef struct _http_response HttpResponse;
-
-#include <freerdp/types.h>
-#include <freerdp/crypto/tls.h>
-#include <freerdp/api.h>
-
 #include <winpr/stream.h>
 #include <winpr/winhttp.h>
 
-struct _http_context
-{
-	char* Method;
-	char* URI;
-	char* UserAgent;
-	char* Host;
-	char* Accept;
-	char* CacheControl;
-	char* Connection;
-	char* Pragma;
-	char* RdgConnectionId;
-	char* RdgAuthScheme;
-};
+#include <freerdp/api.h>
+#include <freerdp/crypto/tls.h>
+
+/* HTTP context */
+typedef struct _http_context HttpContext;
+
+FREERDP_LOCAL HttpContext* http_context_new(void);
+FREERDP_LOCAL void http_context_free(HttpContext* context);
 
 FREERDP_LOCAL BOOL http_context_set_method(HttpContext* context,
         const char* Method);
+FREERDP_LOCAL const char* http_context_get_uri(HttpContext* context);
 FREERDP_LOCAL BOOL http_context_set_uri(HttpContext* context, const char* URI);
 FREERDP_LOCAL BOOL http_context_set_user_agent(HttpContext* context,
         const char* UserAgent);
@@ -65,23 +53,18 @@ FREERDP_LOCAL BOOL http_context_set_rdg_connection_id(HttpContext* context,
 FREERDP_LOCAL BOOL http_context_set_rdg_auth_scheme(HttpContext* context,
         const char* RdgAuthScheme);
 
-HttpContext* http_context_new(void);
-void http_context_free(HttpContext* context);
+/* HTTP request */
+typedef struct _http_request HttpRequest;
 
-struct _http_request
-{
-	char* Method;
-	char* URI;
-	char* AuthScheme;
-	char* AuthParam;
-	char* Authorization;
-	int ContentLength;
-	char* Content;
-	char* TransferEncoding;
-};
+FREERDP_LOCAL HttpRequest* http_request_new(void);
+FREERDP_LOCAL void http_request_free(HttpRequest* request);
 
 FREERDP_LOCAL BOOL http_request_set_method(HttpRequest* request,
         const char* Method);
+FREERDP_LOCAL SSIZE_T http_request_get_content_length(HttpRequest* request);
+FREERDP_LOCAL BOOL http_request_set_content_length(HttpRequest* request, size_t length);
+
+FREERDP_LOCAL const char* http_request_get_uri(HttpRequest* request);
 FREERDP_LOCAL BOOL http_request_set_uri(HttpRequest* request, const char* URI);
 FREERDP_LOCAL BOOL http_request_set_auth_scheme(HttpRequest* request,
         const char* AuthScheme);
@@ -93,32 +76,17 @@ FREERDP_LOCAL BOOL http_request_set_transfer_encoding(HttpRequest* request,
 FREERDP_LOCAL wStream* http_request_write(HttpContext* context,
         HttpRequest* request);
 
-FREERDP_LOCAL HttpRequest* http_request_new(void);
-FREERDP_LOCAL void http_request_free(HttpRequest* request);
-
-struct _http_response
-{
-	size_t count;
-	char** lines;
-
-	long StatusCode;
-	const char* ReasonPhrase;
-
-	size_t ContentLength;
-	const char* ContentType;
-
-	size_t BodyLength;
-	BYTE* BodyContent;
-
-	wListDictionary* Authenticates;
-	wStream* data;
-};
-
-FREERDP_LOCAL void http_response_print(HttpResponse* response);
-
-FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls);
+/* HTTP response */
+typedef struct _http_response HttpResponse;
 
 FREERDP_LOCAL HttpResponse* http_response_new(void);
 FREERDP_LOCAL void http_response_free(HttpResponse* response);
+
+FREERDP_LOCAL BOOL http_response_print(HttpResponse* response);
+FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls);
+
+FREERDP_LOCAL long http_response_get_status_code(HttpResponse* response);
+FREERDP_LOCAL SSIZE_T http_response_get_body_length(HttpResponse* response);
+FREERDP_LOCAL const char* http_response_get_auth_token(HttpResponse* respone, const char* method);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_HTTP_H */

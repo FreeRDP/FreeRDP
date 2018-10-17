@@ -240,7 +240,7 @@ static int rts_empty_command_write(BYTE* buffer)
 	return 4;
 }
 
-static int rts_padding_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+static SSIZE_T rts_padding_command_read(const BYTE* buffer, size_t length)
 {
 	UINT32 ConformanceCount;
 	ConformanceCount = *((UINT32*) &buffer[0]); /* ConformanceCount (4 bytes) */
@@ -290,7 +290,7 @@ static int rts_ance_command_write(BYTE* buffer)
 	return 4;
 }
 
-static int rts_client_address_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+static SSIZE_T rts_client_address_command_read(const BYTE* buffer, size_t length)
 {
 	UINT32 AddressType;
 	AddressType = *((UINT32*) &buffer[0]); /* AddressType (4 bytes) */
@@ -416,7 +416,7 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	header.NumberOfCommands = 4;
 	WLog_DBG(TAG, "Sending CONN/A1 RTS PDU");
 	VirtualConnectionCookie = (BYTE*) & (connection->Cookie);
-	OUTChannelCookie = (BYTE*) & (outChannel->Cookie);
+	OUTChannelCookie = (BYTE*) & (outChannel->common.Cookie);
 	ReceiveWindowSize = outChannel->ReceiveWindow;
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -430,7 +430,7 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	rts_cookie_command_write(&buffer[48], OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(&buffer[68],
 	                                      ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
-	status = rpc_out_channel_write(outChannel, buffer, header.frag_length);
+	status = rpc_channel_write(&outChannel->common, buffer, header.frag_length);
 	free(buffer);
 	return (status > 0) ? 1 : -1;
 }
@@ -463,7 +463,7 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	header.NumberOfCommands = 6;
 	WLog_DBG(TAG, "Sending CONN/B1 RTS PDU");
 	VirtualConnectionCookie = (BYTE*) & (connection->Cookie);
-	INChannelCookie = (BYTE*) & (inChannel->Cookie);
+	INChannelCookie = (BYTE*) & (inChannel->common.Cookie);
 	AssociationGroupId = (BYTE*) & (connection->AssociationGroupId);
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -482,7 +482,7 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	rts_association_group_id_command_write(&buffer[84],
 	                                       AssociationGroupId); /* AssociationGroupId (20 bytes) */
 	length = header.frag_length;
-	status = rpc_in_channel_write(inChannel, buffer, length);
+	status = rpc_channel_write(&inChannel->common, buffer, length);
 	free(buffer);
 	return (status > 0) ? 1 : -1;
 }
@@ -531,7 +531,7 @@ static int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	rts_client_keepalive_command_write(&buffer[20],
 	                                   rpc->CurrentKeepAliveInterval); /* ClientKeepAlive (8 bytes) */
 	length = header.frag_length;
-	status = rpc_in_channel_write(inChannel, buffer, length);
+	status = rpc_channel_write(&inChannel->common, buffer, length);
 	free(buffer);
 	return (status > 0) ? 1 : -1;
 }
@@ -555,7 +555,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	WLog_DBG(TAG, "Sending FlowControlAck RTS PDU");
 	BytesReceived = outChannel->BytesReceived;
 	AvailableWindow = outChannel->AvailableWindowAdvertised;
-	ChannelCookie = (BYTE*) & (outChannel->Cookie);
+	ChannelCookie = (BYTE*) & (outChannel->common.Cookie);
 	outChannel->ReceiverAvailableWindow = outChannel->AvailableWindowAdvertised;
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -567,7 +567,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	/* FlowControlAck Command (28 bytes) */
 	rts_flow_control_ack_command_write(&buffer[28], BytesReceived, AvailableWindow, ChannelCookie);
 	length = header.frag_length;
-	status = rpc_in_channel_write(inChannel, buffer, length);
+	status = rpc_channel_write(&inChannel->common, buffer, length);
 	free(buffer);
 	return (status > 0) ? 1 : -1;
 }
@@ -642,12 +642,12 @@ static int rts_send_ping_pdu(rdpRpc* rpc)
 
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 	length = header.frag_length;
-	status = rpc_in_channel_write(inChannel, buffer, length);
+	status = rpc_channel_write(&inChannel->common, buffer, length);
 	free(buffer);
 	return (status > 0) ? 1 : -1;
 }
 
-int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 length)
+SSIZE_T rts_command_length(UINT32 CommandType, const BYTE* buffer, size_t length)
 {
 	int CommandLength = 0;
 
@@ -686,7 +686,7 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 			break;
 
 		case RTS_CMD_PADDING: /* variable-size */
-			CommandLength = rts_padding_command_read(rpc, buffer, length);
+			CommandLength = rts_padding_command_read(buffer, length);
 			break;
 
 		case RTS_CMD_NEGATIVE_ANCE:
@@ -698,7 +698,7 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 			break;
 
 		case RTS_CMD_CLIENT_ADDRESS: /* variable-size */
-			CommandLength = rts_client_address_command_read(rpc, buffer, length);
+			CommandLength = rts_client_address_command_read(buffer, length);
 			break;
 
 		case RTS_CMD_ASSOCIATION_GROUP_ID:
@@ -716,7 +716,6 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 		default:
 			WLog_ERR(TAG, "Error: Unknown RTS Command Type: 0x%"PRIx32"", CommandType);
 			return -1;
-			break;
 	}
 
 	return CommandLength;
@@ -735,7 +734,7 @@ static int rts_send_OUT_R2_A7_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_OUT_CHANNEL;
 	header.NumberOfCommands = 3;
 	WLog_DBG(TAG, "Sending OUT_R2/A7 RTS PDU");
-	SuccessorChannelCookie = (BYTE*) & (nextOutChannel->Cookie);
+	SuccessorChannelCookie = (BYTE*) & (nextOutChannel->common.Cookie);
 	buffer = (BYTE*) malloc(header.frag_length);
 
 	if (!buffer)
@@ -746,7 +745,7 @@ static int rts_send_OUT_R2_A7_pdu(rdpRpc* rpc)
 	rts_cookie_command_write(&buffer[28],
 	                         SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
 	rts_version_command_write(&buffer[48]); /* Version (8 bytes) */
-	status = rpc_in_channel_write(inChannel, buffer, header.frag_length);
+	status = rpc_channel_write(&inChannel->common, buffer, header.frag_length);
 	free(buffer);
 	return (status > 0) ? 1 : -1;
 }
@@ -769,7 +768,7 @@ static int rts_send_OUT_R2_C1_pdu(rdpRpc* rpc)
 
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 	rts_empty_command_write(&buffer[20]); /* Empty command (4 bytes) */
-	status = rpc_out_channel_write(nextOutChannel, buffer, header.frag_length);
+	status = rpc_channel_write(&nextOutChannel->common, buffer, header.frag_length);
 	free(buffer);
 	return (status > 0) ? 1 : -1;
 }
@@ -792,8 +791,8 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	header.NumberOfCommands = 5;
 	WLog_DBG(TAG, "Sending OUT_R1/A3 RTS PDU");
 	VirtualConnectionCookie = (BYTE*) & (connection->Cookie);
-	PredecessorChannelCookie = (BYTE*) & (outChannel->Cookie);
-	SuccessorChannelCookie = (BYTE*) & (nextOutChannel->Cookie);
+	PredecessorChannelCookie = (BYTE*) & (outChannel->common.Cookie);
+	SuccessorChannelCookie = (BYTE*) & (nextOutChannel->common.Cookie);
 	ReceiveWindowSize = outChannel->ReceiveWindow;
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -810,7 +809,7 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	                         SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(&buffer[88],
 	                                      ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
-	status = rpc_out_channel_write(nextOutChannel, buffer, header.frag_length);
+	status = rpc_channel_write(&nextOutChannel->common, buffer, header.frag_length);
 	free(buffer);
 	return (status > 0) ? 1 : -1;
 }
@@ -889,20 +888,32 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	UINT32 SignatureId;
 	rpcconn_rts_hdr_t* rts;
 	RtsPduSignature signature;
-	RpcVirtualConnection* connection = rpc->VirtualConnection;
-	rts = (rpcconn_rts_hdr_t*) buffer;
-	rts_extract_pdu_signature(rpc, &signature, rts);
-	SignatureId = rts_identify_pdu_signature(rpc, &signature, NULL);
+	RpcVirtualConnection* connection;
 
-	if (rts_match_pdu_signature(rpc, &RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE, rts))
+	if (!rpc || !buffer)
+		return -1;
+
+	connection = rpc->VirtualConnection;
+
+	if (!connection)
+		return -1;
+
+	rts = (rpcconn_rts_hdr_t*) buffer;
+
+	if (!rts_extract_pdu_signature(&signature, rts))
+		return -1;
+
+	SignatureId = rts_identify_pdu_signature(&signature, NULL);
+
+	if (rts_match_pdu_signature(&RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE, rts))
 	{
 		status = rts_recv_flow_control_ack_pdu(rpc, buffer, length);
 	}
-	else if (rts_match_pdu_signature(rpc, &RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE, rts))
+	else if (rts_match_pdu_signature(&RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE, rts))
 	{
 		status = rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
 	}
-	else if (rts_match_pdu_signature(rpc, &RTS_PDU_PING_SIGNATURE, rts))
+	else if (rts_match_pdu_signature(&RTS_PDU_PING_SIGNATURE, rts))
 	{
 		status = rts_send_ping_pdu(rpc);
 	}
@@ -910,21 +921,21 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	{
 		if (connection->DefaultOutChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED)
 		{
-			if (rts_match_pdu_signature(rpc, &RTS_PDU_OUT_R1_A2_SIGNATURE, rts))
+			if (rts_match_pdu_signature(&RTS_PDU_OUT_R1_A2_SIGNATURE, rts))
 			{
 				status = rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
 			}
 		}
 		else if (connection->DefaultOutChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED_A6W)
 		{
-			if (rts_match_pdu_signature(rpc, &RTS_PDU_OUT_R2_A6_SIGNATURE, rts))
+			if (rts_match_pdu_signature(&RTS_PDU_OUT_R2_A6_SIGNATURE, rts))
 			{
 				status = rts_recv_OUT_R2_A6_pdu(rpc, buffer, length);
 			}
 		}
 		else if (connection->DefaultOutChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED_B3W)
 		{
-			if (rts_match_pdu_signature(rpc, &RTS_PDU_OUT_R2_B3_SIGNATURE, rts))
+			if (rts_match_pdu_signature(&RTS_PDU_OUT_R2_B3_SIGNATURE, rts))
 			{
 				status = rts_recv_OUT_R2_B3_pdu(rpc, buffer, length);
 			}
@@ -934,7 +945,7 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "error parsing RTS PDU with signature id: 0x%08"PRIX32"", SignatureId);
-		rts_print_pdu_signature(rpc, &signature);
+		rts_print_pdu_signature(&signature);
 	}
 
 	return status;

@@ -23,191 +23,191 @@
 
 #define TAG FREERDP_TAG("core.gateway.rts")
 
-RtsPduSignature RTS_PDU_CONN_A1_SIGNATURE = { RTS_FLAG_NONE, 4,
+const RtsPduSignature RTS_PDU_CONN_A1_SIGNATURE = { RTS_FLAG_NONE, 4,
 	{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_CONN_A2_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 5,
+const RtsPduSignature RTS_PDU_CONN_A2_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 5,
 	{
 		RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_CHANNEL_LIFETIME,
 		RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0
 	}
 };
-RtsPduSignature RTS_PDU_CONN_A3_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_CONN_A3_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-RtsPduSignature RTS_PDU_CONN_B1_SIGNATURE = { RTS_FLAG_NONE, 6,
+const RtsPduSignature RTS_PDU_CONN_B1_SIGNATURE = { RTS_FLAG_NONE, 6,
 	{
 		RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_CHANNEL_LIFETIME,
 		RTS_CMD_CLIENT_KEEPALIVE, RTS_CMD_ASSOCIATION_GROUP_ID, 0, 0
 	}
 };
-RtsPduSignature RTS_PDU_CONN_B2_SIGNATURE = { RTS_FLAG_IN_CHANNEL, 7,
+const RtsPduSignature RTS_PDU_CONN_B2_SIGNATURE = { RTS_FLAG_IN_CHANNEL, 7,
 	{
 		RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_RECEIVE_WINDOW_SIZE,
 		RTS_CMD_CONNECTION_TIMEOUT, RTS_CMD_ASSOCIATION_GROUP_ID, RTS_CMD_CLIENT_ADDRESS, 0
 	}
 };
-RtsPduSignature RTS_PDU_CONN_B3_SIGNATURE = { RTS_FLAG_NONE, 2,
+const RtsPduSignature RTS_PDU_CONN_B3_SIGNATURE = { RTS_FLAG_NONE, 2,
 	{ RTS_CMD_RECEIVE_WINDOW_SIZE, RTS_CMD_VERSION, 0, 0, 0, 0, 0, 0 }
 };
 
-RtsPduSignature RTS_PDU_CONN_C1_SIGNATURE = { RTS_FLAG_NONE, 3,
+const RtsPduSignature RTS_PDU_CONN_C1_SIGNATURE = { RTS_FLAG_NONE, 3,
 	{ RTS_CMD_VERSION, RTS_CMD_RECEIVE_WINDOW_SIZE, RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_CONN_C2_SIGNATURE = { RTS_FLAG_NONE, 3,
+const RtsPduSignature RTS_PDU_CONN_C2_SIGNATURE = { RTS_FLAG_NONE, 3,
 	{ RTS_CMD_VERSION, RTS_CMD_RECEIVE_WINDOW_SIZE, RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0, 0 }
 };
 
-RtsPduSignature RTS_PDU_IN_R1_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 4,
+const RtsPduSignature RTS_PDU_IN_R1_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 4,
 	{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_IN_R1_A2_SIGNATURE = { RTS_FLAG_NONE, 4,
+const RtsPduSignature RTS_PDU_IN_R1_A2_SIGNATURE = { RTS_FLAG_NONE, 4,
 	{
 		RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE,
 		RTS_CMD_RECEIVE_WINDOW_SIZE, RTS_CMD_CONNECTION_TIMEOUT, 0, 0
 	}
 };
-RtsPduSignature RTS_PDU_IN_R1_A3_SIGNATURE = { RTS_FLAG_NONE, 4,
+const RtsPduSignature RTS_PDU_IN_R1_A3_SIGNATURE = { RTS_FLAG_NONE, 4,
 	{
 		RTS_CMD_DESTINATION, RTS_CMD_VERSION, RTS_CMD_RECEIVE_WINDOW_SIZE,
 		RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0
 	}
 };
-RtsPduSignature RTS_PDU_IN_R1_A4_SIGNATURE = { RTS_FLAG_NONE, 4,
+const RtsPduSignature RTS_PDU_IN_R1_A4_SIGNATURE = { RTS_FLAG_NONE, 4,
 	{
 		RTS_CMD_DESTINATION, RTS_CMD_VERSION, RTS_CMD_RECEIVE_WINDOW_SIZE,
 		RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0
 	}
 };
-RtsPduSignature RTS_PDU_IN_R1_A5_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_IN_R1_A5_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_IN_R1_A6_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_IN_R1_A6_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-RtsPduSignature RTS_PDU_IN_R1_B1_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_IN_R1_B1_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_EMPTY, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_IN_R1_B2_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_IN_R1_B2_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-RtsPduSignature RTS_PDU_IN_R2_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 4,
+const RtsPduSignature RTS_PDU_IN_R2_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 4,
 	{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_IN_R2_A2_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_IN_R2_A2_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_IN_R2_A3_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_IN_R2_A3_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_IN_R2_A4_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_IN_R2_A4_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_IN_R2_A5_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_IN_R2_A5_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-RtsPduSignature RTS_PDU_OUT_R1_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
+const RtsPduSignature RTS_PDU_OUT_R1_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
 	{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R1_A2_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
+const RtsPduSignature RTS_PDU_OUT_R1_A2_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
 	{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R1_A3_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 5,
+const RtsPduSignature RTS_PDU_OUT_R1_A3_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 5,
 	{
 		RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE,
 		RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0
 	}
 };
-RtsPduSignature RTS_PDU_OUT_R1_A4_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL | RTS_FLAG_OUT_CHANNEL, 7,
+const RtsPduSignature RTS_PDU_OUT_R1_A4_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL | RTS_FLAG_OUT_CHANNEL, 7,
 	{
 		RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_CHANNEL_LIFETIME,
 		RTS_CMD_RECEIVE_WINDOW_SIZE, RTS_CMD_CONNECTION_TIMEOUT, 0
 	}
 };
-RtsPduSignature RTS_PDU_OUT_R1_A5_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 3,
+const RtsPduSignature RTS_PDU_OUT_R1_A5_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 3,
 	{ RTS_CMD_DESTINATION, RTS_CMD_VERSION, RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R1_A6_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 3,
+const RtsPduSignature RTS_PDU_OUT_R1_A6_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 3,
 	{ RTS_CMD_DESTINATION, RTS_CMD_VERSION, RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R1_A7_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 2,
+const RtsPduSignature RTS_PDU_OUT_R1_A7_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 2,
 	{ RTS_CMD_DESTINATION, RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R1_A8_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 2,
+const RtsPduSignature RTS_PDU_OUT_R1_A8_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 2,
 	{ RTS_CMD_DESTINATION, RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R1_A9_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_OUT_R1_A9_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R1_A10_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_OUT_R1_A10_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R1_A11_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_OUT_R1_A11_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-RtsPduSignature RTS_PDU_OUT_R2_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
+const RtsPduSignature RTS_PDU_OUT_R2_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
 	{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R2_A2_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
+const RtsPduSignature RTS_PDU_OUT_R2_A2_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
 	{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R2_A3_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 5,
+const RtsPduSignature RTS_PDU_OUT_R2_A3_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 5,
 	{
 		RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE,
 		RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0
 	}
 };
-RtsPduSignature RTS_PDU_OUT_R2_A4_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_OUT_R2_A4_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R2_A5_SIGNATURE = { RTS_FLAG_NONE, 2,
+const RtsPduSignature RTS_PDU_OUT_R2_A5_SIGNATURE = { RTS_FLAG_NONE, 2,
 	{ RTS_CMD_DESTINATION, RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R2_A6_SIGNATURE = { RTS_FLAG_NONE, 2,
+const RtsPduSignature RTS_PDU_OUT_R2_A6_SIGNATURE = { RTS_FLAG_NONE, 2,
 	{ RTS_CMD_DESTINATION, RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R2_A7_SIGNATURE = { RTS_FLAG_NONE, 3,
+const RtsPduSignature RTS_PDU_OUT_R2_A7_SIGNATURE = { RTS_FLAG_NONE, 3,
 	{ RTS_CMD_DESTINATION, RTS_CMD_COOKIE, RTS_CMD_VERSION, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R2_A8_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 2,
+const RtsPduSignature RTS_PDU_OUT_R2_A8_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 2,
 	{ RTS_CMD_DESTINATION, RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0 }
 };
 
-RtsPduSignature RTS_PDU_OUT_R2_B1_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_OUT_R2_B1_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R2_B2_SIGNATURE = { RTS_FLAG_NONE, 1,
+const RtsPduSignature RTS_PDU_OUT_R2_B2_SIGNATURE = { RTS_FLAG_NONE, 1,
 	{ RTS_CMD_NEGATIVE_ANCE, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_OUT_R2_B3_SIGNATURE = { RTS_FLAG_EOF, 1,
+const RtsPduSignature RTS_PDU_OUT_R2_B3_SIGNATURE = { RTS_FLAG_EOF, 1,
 	{ RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-RtsPduSignature RTS_PDU_OUT_R2_C1_SIGNATURE = { RTS_FLAG_PING, 1,
+const RtsPduSignature RTS_PDU_OUT_R2_C1_SIGNATURE = { RTS_FLAG_PING, 1,
 	{ 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-RtsPduSignature RTS_PDU_KEEP_ALIVE_SIGNATURE = { RTS_FLAG_OTHER_CMD, 1,
+const RtsPduSignature RTS_PDU_KEEP_ALIVE_SIGNATURE = { RTS_FLAG_OTHER_CMD, 1,
 	{ RTS_CMD_CLIENT_KEEPALIVE, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_PING_TRAFFIC_SENT_NOTIFY_SIGNATURE = { RTS_FLAG_OTHER_CMD, 1,
+const RtsPduSignature RTS_PDU_PING_TRAFFIC_SENT_NOTIFY_SIGNATURE = { RTS_FLAG_OTHER_CMD, 1,
 	{ RTS_CMD_PING_TRAFFIC_SENT_NOTIFY, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_ECHO_SIGNATURE = { RTS_FLAG_ECHO, 0,
+const RtsPduSignature RTS_PDU_ECHO_SIGNATURE = { RTS_FLAG_ECHO, 0,
 	{ 0, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_PING_SIGNATURE = { RTS_FLAG_PING, 0,
+const RtsPduSignature RTS_PDU_PING_SIGNATURE = { RTS_FLAG_PING, 0,
 	{ 0, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE = { RTS_FLAG_OTHER_CMD, 1,
+const RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE = { RTS_FLAG_OTHER_CMD, 1,
 	{ RTS_CMD_FLOW_CONTROL_ACK, 0, 0, 0, 0, 0, 0, 0 }
 };
-RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE = { RTS_FLAG_OTHER_CMD, 2,
+const RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE = { RTS_FLAG_OTHER_CMD, 2,
 	{ RTS_CMD_DESTINATION, RTS_CMD_FLOW_CONTROL_ACK, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -274,18 +274,22 @@ static const RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_TABLE[] =
 	{ RTS_PDU_FLOW_CONTROL_ACK, TRUE, &RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE, "FlowControlAck" },
 	{ RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION, TRUE, &RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE, "FlowControlAckWithDestination" },
 
-	{ 0, 0, NULL }
+	{ 0, FALSE, NULL, NULL }
 };
 
-BOOL rts_match_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rts_hdr_t* rts)
+BOOL rts_match_pdu_signature(const RtsPduSignature* signature,
+                             const rpcconn_rts_hdr_t* rts)
 {
-	int i;
+	UINT16 i;
 	int status;
-	BYTE* buffer;
+	const BYTE* buffer;
 	UINT32 length;
 	UINT32 offset;
 	UINT32 CommandType;
 	UINT32 CommandLength;
+
+	if (!signature || !rts)
+		return FALSE;
 
 	if (rts->Flags != signature->Flags)
 		return FALSE;
@@ -293,7 +297,7 @@ BOOL rts_match_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rt
 	if (rts->NumberOfCommands != signature->NumberOfCommands)
 		return FALSE;
 
-	buffer = (BYTE*) rts;
+	buffer = (const BYTE*) rts;
 	offset = RTS_PDU_HEADER_LENGTH;
 	length = rts->frag_length - offset;
 
@@ -305,7 +309,7 @@ BOOL rts_match_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rt
 		if (CommandType != signature->CommandTypes[i])
 			return FALSE;
 
-		status = rts_command_length(rpc, CommandType, &buffer[offset], length);
+		status = rts_command_length(CommandType, &buffer[offset], length);
 
 		if (status < 0)
 			return FALSE;
@@ -318,7 +322,7 @@ BOOL rts_match_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rt
 	return TRUE;
 }
 
-int rts_extract_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rts_hdr_t* rts)
+BOOL rts_extract_pdu_signature(RtsPduSignature* signature, const rpcconn_rts_hdr_t* rts)
 {
 	int i;
 	int status;
@@ -327,6 +331,10 @@ int rts_extract_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_r
 	UINT32 offset;
 	UINT32 CommandType;
 	UINT32 CommandLength;
+
+	if (!signature || !rts)
+		return FALSE;
+
 	signature->Flags = rts->Flags;
 	signature->NumberOfCommands = rts->NumberOfCommands;
 	buffer = (BYTE*) rts;
@@ -338,7 +346,7 @@ int rts_extract_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_r
 		CommandType = *((UINT32*) &buffer[offset]); /* CommandType (4 bytes) */
 		offset += 4;
 		signature->CommandTypes[i] = CommandType;
-		status = rts_command_length(rpc, CommandType, &buffer[offset], length);
+		status = rts_command_length(CommandType, &buffer[offset], length);
 
 		if (status < 0)
 			return FALSE;
@@ -348,18 +356,17 @@ int rts_extract_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_r
 		length = rts->frag_length - offset;
 	}
 
-	return 0;
+	return TRUE;
 }
 
-UINT32 rts_identify_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature,
+UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
                                   const RTS_PDU_SIGNATURE_ENTRY** entry)
 {
-	int i, j;
-	RtsPduSignature* pSignature;
+	size_t i, j;
 
 	for (i = 0; RTS_PDU_SIGNATURE_TABLE[i].SignatureId != 0; i++)
 	{
-		pSignature = RTS_PDU_SIGNATURE_TABLE[i].Signature;
+		const RtsPduSignature* pSignature = RTS_PDU_SIGNATURE_TABLE[i].Signature;
 
 		if (!RTS_PDU_SIGNATURE_TABLE[i].SignatureClient)
 			continue;
@@ -385,16 +392,20 @@ UINT32 rts_identify_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature,
 	return 0;
 }
 
-int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
+BOOL rts_print_pdu_signature(const RtsPduSignature* signature)
 {
 	UINT32 SignatureId;
 	const RTS_PDU_SIGNATURE_ENTRY* entry;
+
+	if (!signature)
+		return FALSE;
+
 	WLog_INFO(TAG,  "RTS PDU Signature: Flags: 0x%04"PRIX16" NumberOfCommands: %"PRIu16"",
 	          signature->Flags, signature->NumberOfCommands);
-	SignatureId = rts_identify_pdu_signature(rpc, signature, &entry);
+	SignatureId = rts_identify_pdu_signature(signature, &entry);
 
 	if (SignatureId)
 		WLog_ERR(TAG,  "Identified %s RTS PDU", entry->PduName);
 
-	return 0;
+	return TRUE;
 }

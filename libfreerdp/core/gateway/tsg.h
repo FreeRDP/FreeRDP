@@ -31,15 +31,9 @@ typedef struct rdp_tsg rdpTsg;
 #include <winpr/rpc.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/synch.h>
-#include <winpr/error.h>
 
-#include <time.h>
 #include <freerdp/types.h>
-#include <freerdp/settings.h>
 #include <freerdp/api.h>
-
-#include <freerdp/log.h>
 
 enum _TSG_STATE
 {
@@ -54,8 +48,6 @@ enum _TSG_STATE
 };
 typedef enum _TSG_STATE TSG_STATE;
 
-typedef WCHAR* RESOURCENAME;
-
 #define TsProxyCreateTunnelOpnum		1
 #define TsProxyAuthorizeTunnelOpnum		2
 #define TsProxyMakeTunnelCallOpnum		3
@@ -67,15 +59,6 @@ typedef WCHAR* RESOURCENAME;
 #define TsProxySendToServerOpnum		9
 
 #define MAX_RESOURCE_NAMES			50
-
-typedef struct _tsendpointinfo
-{
-	RESOURCENAME* resourceName;
-	UINT32 numResourceNames;
-	RESOURCENAME* alternateResourceNames;
-	UINT16 numAlternateResourceNames;
-	UINT32 Port;
-} TSENDPOINTINFO, *PTSENDPOINTINFO;
 
 #define TS_GATEWAY_TRANSPORT				0x5452
 
@@ -130,198 +113,24 @@ typedef struct _tsendpointinfo
 #define E_PROXY_REAUTH_NAP_FAILED			0x00005A00
 #define E_PROXY_CONNECTIONABORTED			0x000004D4
 
-typedef struct _TSG_PACKET_HEADER
-{
-	UINT16 ComponentId;
-	UINT16 PacketId;
-} TSG_PACKET_HEADER, *PTSG_PACKET_HEADER;
+FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
+FREERDP_LOCAL void tsg_free(rdpTsg* tsg);
 
-typedef struct _TSG_CAPABILITY_NAP
-{
-	UINT32 capabilities;
-} TSG_CAPABILITY_NAP, *PTSG_CAPABILITY_NAP;
-
-typedef union
-{
-	TSG_CAPABILITY_NAP tsgCapNap;
-} TSG_CAPABILITIES_UNION, *PTSG_CAPABILITIES_UNION;
-
-typedef struct _TSG_PACKET_CAPABILITIES
-{
-	UINT32 capabilityType;
-	TSG_CAPABILITIES_UNION tsgPacket;
-} TSG_PACKET_CAPABILITIES, *PTSG_PACKET_CAPABILITIES;
-
-typedef struct _TSG_PACKET_VERSIONCAPS
-{
-	TSG_PACKET_HEADER tsgHeader;
-	PTSG_PACKET_CAPABILITIES tsgCaps;
-	UINT32 numCapabilities;
-	UINT16 majorVersion;
-	UINT16 minorVersion;
-	UINT16 quarantineCapabilities;
-} TSG_PACKET_VERSIONCAPS, *PTSG_PACKET_VERSIONCAPS;
-
-typedef struct _TSG_PACKET_QUARCONFIGREQUEST
-{
-	UINT32 flags;
-} TSG_PACKET_QUARCONFIGREQUEST, *PTSG_PACKET_QUARCONFIGREQUEST;
-
-typedef struct _TSG_PACKET_QUARREQUEST
-{
-	UINT32 flags;
-	WCHAR* machineName;
-	UINT32 nameLength;
-	BYTE* data;
-	UINT32 dataLen;
-} TSG_PACKET_QUARREQUEST, *PTSG_PACKET_QUARREQUEST;
-
-typedef struct _TSG_REDIRECTION_FLAGS
-{
-	BOOL enableAllRedirections;
-	BOOL disableAllRedirections;
-	BOOL driveRedirectionDisabled;
-	BOOL printerRedirectionDisabled;
-	BOOL portRedirectionDisabled;
-	BOOL reserved;
-	BOOL clipboardRedirectionDisabled;
-	BOOL pnpRedirectionDisabled;
-} TSG_REDIRECTION_FLAGS, *PTSG_REDIRECTION_FLAGS;
-
-typedef struct _TSG_PACKET_RESPONSE
-{
-	UINT32 flags;
-	UINT32 reserved;
-	BYTE* responseData;
-	UINT32 responseDataLen;
-	TSG_REDIRECTION_FLAGS redirectionFlags;
-} TSG_PACKET_RESPONSE,	*PTSG_PACKET_RESPONSE;
-
-typedef struct _TSG_PACKET_QUARENC_RESPONSE
-{
-	UINT32 flags;
-	UINT32 certChainLen;
-	WCHAR* certChainData;
-	GUID nonce;
-	PTSG_PACKET_VERSIONCAPS versionCaps;
-} TSG_PACKET_QUARENC_RESPONSE, *PTSG_PACKET_QUARENC_RESPONSE;
-
-typedef struct TSG_PACKET_STRING_MESSAGE
-{
-	INT32 isDisplayMandatory;
-	INT32 isConsentMandatory;
-	UINT32 msgBytes;
-	WCHAR* msgBuffer;
-} TSG_PACKET_STRING_MESSAGE, *PTSG_PACKET_STRING_MESSAGE;
-
-typedef struct TSG_PACKET_REAUTH_MESSAGE
-{
-	UINT64 tunnelContext;
-} TSG_PACKET_REAUTH_MESSAGE, *PTSG_PACKET_REAUTH_MESSAGE;
-
-typedef union
-{
-	PTSG_PACKET_STRING_MESSAGE consentMessage;
-	PTSG_PACKET_STRING_MESSAGE serviceMessage;
-	PTSG_PACKET_REAUTH_MESSAGE reauthMessage;
-} TSG_PACKET_TYPE_MESSAGE_UNION, *PTSG_PACKET_TYPE_MESSAGE_UNION;
-
-typedef struct _TSG_PACKET_MSG_RESPONSE
-{
-	UINT32 msgID;
-	UINT32 msgType;
-	INT32 isMsgPresent;
-	TSG_PACKET_TYPE_MESSAGE_UNION messagePacket;
-} TSG_PACKET_MSG_RESPONSE, *PTSG_PACKET_MSG_RESPONSE;
-
-typedef struct TSG_PACKET_CAPS_RESPONSE
-{
-	TSG_PACKET_QUARENC_RESPONSE pktQuarEncResponse;
-	TSG_PACKET_MSG_RESPONSE pktConsentMessage;
-} TSG_PACKET_CAPS_RESPONSE, *PTSG_PACKET_CAPS_RESPONSE;
-
-typedef struct TSG_PACKET_MSG_REQUEST
-{
-	UINT32 maxMessagesPerBatch;
-} TSG_PACKET_MSG_REQUEST, *PTSG_PACKET_MSG_REQUEST;
-
-typedef struct _TSG_PACKET_AUTH
-{
-	TSG_PACKET_VERSIONCAPS tsgVersionCaps;
-	UINT32 cookieLen;
-	BYTE* cookie;
-} TSG_PACKET_AUTH, *PTSG_PACKET_AUTH;
-
-typedef union
-{
-	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
-	PTSG_PACKET_AUTH packetAuth;
-} TSG_INITIAL_PACKET_TYPE_UNION, *PTSG_INITIAL_PACKET_TYPE_UNION;
-
-typedef struct TSG_PACKET_REAUTH
-{
-	UINT64 tunnelContext;
-	UINT32 packetId;
-	TSG_INITIAL_PACKET_TYPE_UNION tsgInitialPacket;
-} TSG_PACKET_REAUTH, *PTSG_PACKET_REAUTH;
-
-typedef union
-{
-	PTSG_PACKET_HEADER packetHeader;
-	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
-	PTSG_PACKET_QUARCONFIGREQUEST packetQuarConfigRequest;
-	PTSG_PACKET_QUARREQUEST packetQuarRequest;
-	PTSG_PACKET_RESPONSE packetResponse;
-	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse;
-	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse;
-	PTSG_PACKET_MSG_REQUEST packetMsgRequest;
-	PTSG_PACKET_MSG_RESPONSE packetMsgResponse;
-	PTSG_PACKET_AUTH packetAuth;
-	PTSG_PACKET_REAUTH packetReauth;
-} TSG_PACKET_TYPE_UNION;
-
-typedef struct _TSG_PACKET
-{
-	UINT32 packetId;
-	TSG_PACKET_TYPE_UNION tsgPacket;
-} TSG_PACKET, *PTSG_PACKET;
-
-struct rdp_tsg
-{
-	BIO* bio;
-	rdpRpc* rpc;
-	UINT16 Port;
-	LPWSTR Hostname;
-	LPWSTR MachineName;
-	TSG_STATE state;
-	UINT32 TunnelId;
-	UINT32 ChannelId;
-	BOOL reauthSequence;
-	rdpSettings* settings;
-	rdpTransport* transport;
-	UINT64 ReauthTunnelContext;
-	CONTEXT_HANDLE TunnelContext;
-	CONTEXT_HANDLE ChannelContext;
-	CONTEXT_HANDLE NewTunnelContext;
-	CONTEXT_HANDLE NewChannelContext;
-	TSG_PACKET_REAUTH packetReauth;
-	TSG_PACKET_CAPABILITIES tsgCaps;
-	TSG_PACKET_VERSIONCAPS packetVersionCaps;
-};
-
-FREERDP_LOCAL int tsg_proxy_begin(rdpTsg* tsg);
+FREERDP_LOCAL BOOL tsg_proxy_begin(rdpTsg* tsg);
 
 FREERDP_LOCAL BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port,
                                int timeout);
 FREERDP_LOCAL BOOL tsg_disconnect(rdpTsg* tsg);
 
-FREERDP_LOCAL int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu);
+FREERDP_LOCAL BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu);
 
-FREERDP_LOCAL int tsg_check_event_handles(rdpTsg* tsg);
+FREERDP_LOCAL BOOL tsg_check_event_handles(rdpTsg* tsg);
 FREERDP_LOCAL DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events,
         DWORD count);
 
-FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
-FREERDP_LOCAL void tsg_free(rdpTsg* tsg);
+FREERDP_LOCAL TSG_STATE tsg_get_state(rdpTsg* tsg);
+FREERDP_LOCAL BOOL tsg_set_state(rdpTsg* tsg, TSG_STATE state);
+
+FREERDP_LOCAL BIO* tsg_get_bio(rdpTsg* tsg);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_TSG_H */

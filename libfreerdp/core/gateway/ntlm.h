@@ -24,58 +24,30 @@
 
 typedef struct rdp_ntlm rdpNtlm;
 
-#include "../tcp.h"
-#include "../transport.h"
-
-#include "rts.h"
-#include "http.h"
-
-#include <freerdp/types.h>
-#include <freerdp/settings.h>
-#include <freerdp/crypto/tls.h>
-#include <freerdp/crypto/crypto.h>
+#include <winpr/wtypes.h>
 #include <freerdp/api.h>
-
 #include <winpr/sspi.h>
-#include <winpr/print.h>
-#include <winpr/stream.h>
 
-struct rdp_ntlm
-{
-	BOOL http;
-	CtxtHandle context;
-	ULONG cbMaxToken;
-	ULONG fContextReq;
-	ULONG pfContextAttr;
-	TimeStamp expiration;
-	PSecBuffer pBuffer;
-	SecBuffer inputBuffer[2];
-	SecBuffer outputBuffer[2];
-	BOOL haveContext;
-	BOOL haveInputBuffer;
-	LPTSTR ServicePrincipalName;
-	SecBufferDesc inputBufferDesc;
-	SecBufferDesc outputBufferDesc;
-	CredHandle credentials;
-	BOOL confidentiality;
-	SecPkgInfo* pPackageInfo;
-	SecurityFunctionTable* table;
-	SEC_WINNT_AUTH_IDENTITY identity;
-	SecPkgContext_Sizes ContextSizes;
-	SecPkgContext_Bindings* Bindings;
-};
+FREERDP_LOCAL rdpNtlm* ntlm_new(void);
+FREERDP_LOCAL void ntlm_free(rdpNtlm* ntlm);
 
 FREERDP_LOCAL BOOL ntlm_authenticate(rdpNtlm* ntlm);
 
 FREERDP_LOCAL BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality,
-                                    char* user,
-                                    char* domain, char* password, SecPkgContext_Bindings* Bindings);
-FREERDP_LOCAL void ntlm_client_uninit(rdpNtlm* ntlm);
+                                    LPCTSTR user, LPCTSTR domain,
+                                    LPCTSTR password, SecPkgContext_Bindings* Bindings);
 
 FREERDP_LOCAL BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass,
-                                        char* hostname);
+                                        LPCTSTR hostname);
 
-FREERDP_LOCAL rdpNtlm* ntlm_new(void);
-FREERDP_LOCAL void ntlm_free(rdpNtlm* ntlm);
+FREERDP_LOCAL SSIZE_T ntlm_client_query_auth_size(rdpNtlm* ntlm);
+FREERDP_LOCAL SSIZE_T ntlm_client_get_context_max_size(rdpNtlm* ntlm);
+
+FREERDP_LOCAL BOOL ntlm_client_encrypt(rdpNtlm* ntlm, ULONG fQOP, SecBufferDesc* Message,
+                                       size_t sequence);
+
+FREERDP_LOCAL BOOL ntlm_client_set_input_buffer(rdpNtlm* ntlm, BOOL copy, const void* data,
+        size_t size);
+FREERDP_LOCAL const SecBuffer* ntlm_client_get_output_buffer(rdpNtlm* ntlm);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_NTLM_H */

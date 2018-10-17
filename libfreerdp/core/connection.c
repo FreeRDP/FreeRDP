@@ -409,21 +409,13 @@ static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 
 static BOOL rdp_client_redirect_resolvable(const char* host)
 {
-	int status;
-	struct addrinfo hints = { 0 };
-	struct addrinfo* result = NULL;
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	status = getaddrinfo(host, NULL, &hints, &result);
-	errno = 0;
+	struct addrinfo* result = freerdp_tcp_resolve_host(host, -1, 0);
 
-	if (status == 0)
-	{
-		freeaddrinfo(result);
-		return TRUE;
-	}
+	if (!result)
+		return FALSE;
 
-	return FALSE;
+	freeaddrinfo(result);
+	return TRUE;
 }
 
 static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)

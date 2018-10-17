@@ -31,87 +31,111 @@
 
 #define TAG FREERDP_TAG("core.gateway.ntlm")
 
-static wStream* rpc_ntlm_http_request(rdpRpc* rpc, HttpContext* http, const char* method,
+static wStream* rpc_ntlm_http_request(HttpContext* http, const char* method,
                                       int contentLength, SecBuffer* ntlmToken)
 {
-	wStream* s;
-	HttpRequest* request;
+	wStream* s = NULL;
+	HttpRequest* request = NULL;
 	char* base64NtlmToken = NULL;
+	const char* uri;
+
+	if (!http || !method || !ntlmToken)
+		goto fail;
+
 	request = http_request_new();
 
 	if (ntlmToken)
 		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, ntlmToken->cbBuffer);
 
-	http_request_set_method(request, method);
-	request->ContentLength = contentLength;
-	http_request_set_uri(request, http->URI);
+	uri = http_context_get_uri(http);
+
+	if (!http_request_set_method(request, method) ||
+	    !http_request_set_content_length(request, contentLength) ||
+	    !http_request_set_uri(request, uri))
+		return NULL;
 
 	if (base64NtlmToken)
 	{
-		http_request_set_auth_scheme(request, "NTLM");
-		http_request_set_auth_param(request, base64NtlmToken);
+		if (!http_request_set_auth_scheme(request, "NTLM") ||
+		    !http_request_set_auth_param(request, base64NtlmToken))
+			goto fail;
 	}
 
 	s = http_request_write(http, request);
+fail:
 	http_request_free(request);
 	free(base64NtlmToken);
 	return s;
 }
 
-int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc, RpcInChannel* inChannel)
+BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 {
 	wStream* s;
 	int status;
 	int contentLength;
 	BOOL continueNeeded;
-	rdpNtlm* ntlm = inChannel->ntlm;
-	HttpContext* http = inChannel->http;
+	rdpNtlm* ntlm;
+	HttpContext* http;
+	const SecBuffer* buffer;
+
+	if (!inChannel || !inChannel->ntlm || !inChannel->http)
+		return FALSE;
+
+	ntlm = inChannel->ntlm;
+	http = inChannel->http;
 	continueNeeded = ntlm_authenticate(ntlm);
 	contentLength = (continueNeeded) ? 0 : 0x40000000;
-	s = rpc_ntlm_http_request(rpc, http, "RPC_IN_DATA", contentLength, &ntlm->outputBuffer[0]);
+	buffer = ntlm_client_get_output_buffer(ntlm);
+	s = rpc_ntlm_http_request(http, "RPC_IN_DATA", contentLength, buffer);
 
 	if (!s)
 		return -1;
 
-	status = rpc_in_channel_write(inChannel, Stream_Buffer(s), Stream_Length(s));
+	status = rpc_channel_write(inChannel, Stream_Buffer(s), Stream_Length(s));
 	Stream_Free(s, TRUE);
 	return (status > 0) ? 1 : -1;
 }
 
-int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, RpcInChannel* inChannel,
+BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel,
         HttpResponse* response)
 {
-	char* token64 = NULL;
+	const char* token64 = NULL;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
-	rdpNtlm* ntlm = inChannel->ntlm;
+	rdpNtlm* ntlm;
 
-	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
-	{
-		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
+	if (!inChannel || !response || !inChannel->ntlm)
+		return FALSE;
 
-		if (!token64)
-			return -1;
+	ntlm = inChannel->ntlm;
+	token64 = http_response_get_auth_token(response, "NTLM");
 
+	if (token64)
 		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
-	}
 
 	if (ntlmTokenData && ntlmTokenLength)
-	{
-		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
-		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
-	}
+		return ntlm_client_set_input_buffer(ntlm, FALSE, ntlmTokenData, ntlmTokenLength);
 
-	return 1;
+	return TRUE;
 }
 
-int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
+BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel)
 {
-	rdpTls* tls = channel->tls;
-	rdpNtlm* ntlm = channel->ntlm;
-	rdpContext* context = rpc->context;
-	rdpSettings* settings = rpc->settings;
-	freerdp* instance = context->instance;
+	rdpTls* tls;
+	rdpNtlm* ntlm;
+	rdpSettings* settings;
+	freerdp* instance;
+
+	if (!context || !channel)
+		return FALSE;
+
+	tls = channel->tls;
+	ntlm = channel->ntlm;
+	settings = context->settings;
+	instance = context->instance;
+
+	if (!tls || !ntlm || !instance || !settings)
+		return FALSE;
 
 	if (!settings->GatewayPassword || !settings->GatewayUsername ||
 	    !strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
@@ -124,7 +148,7 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 			if (!proceed)
 			{
 				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
-				return 0;
+				return TRUE;
 			}
 
 			if (settings->GatewayUseSameCredentials)
@@ -134,7 +158,7 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 					free(settings->Username);
 
 					if (!(settings->Username = _strdup(settings->GatewayUsername)))
-						return -1;
+						return FALSE;
 				}
 
 				if (settings->GatewayDomain)
@@ -142,7 +166,7 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 					free(settings->Domain);
 
 					if (!(settings->Domain = _strdup(settings->GatewayDomain)))
-						return -1;
+						return FALSE;
 				}
 
 				if (settings->GatewayPassword)
@@ -150,7 +174,7 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 					free(settings->Password);
 
 					if (!(settings->Password = _strdup(settings->GatewayPassword)))
-						return -1;
+						return FALSE;
 				}
 			}
 		}
@@ -159,33 +183,42 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 	if (!ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
 	                      settings->GatewayDomain, settings->GatewayPassword, tls->Bindings))
 	{
-		return 0;
+		return TRUE;
 	}
 
 	if (!ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname))
 	{
-		return 0;
+		return TRUE;
 	}
 
-	return 1;
+	return TRUE;
 }
 
-void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, RpcChannel* channel)
+void rpc_ncacn_http_ntlm_uninit(RpcChannel* channel)
 {
-	ntlm_client_uninit(channel->ntlm);
+	if (!channel)
+		return;
+
 	ntlm_free(channel->ntlm);
 	channel->ntlm = NULL;
 }
 
-int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChannel,
+BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel,
         BOOL replacement)
 {
+	BOOL rc = TRUE;
 	wStream* s;
-	int status;
 	int contentLength;
 	BOOL continueNeeded;
-	rdpNtlm* ntlm = outChannel->ntlm;
-	HttpContext* http = outChannel->http;
+	rdpNtlm* ntlm;
+	HttpContext* http;
+	const SecBuffer* buffer;
+
+	if (!outChannel || !outChannel->ntlm || !outChannel->http)
+		return FALSE;
+
+	ntlm = outChannel->ntlm;
+	http = outChannel->http;
 	continueNeeded = ntlm_authenticate(ntlm);
 
 	if (!replacement)
@@ -193,39 +226,38 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChann
 	else
 		contentLength = (continueNeeded) ? 0 : 120;
 
-	s = rpc_ntlm_http_request(rpc, http, "RPC_OUT_DATA", contentLength, &ntlm->outputBuffer[0]);
+	buffer = ntlm_client_get_output_buffer(ntlm);
+	s = rpc_ntlm_http_request(http, "RPC_OUT_DATA", contentLength, buffer);
 
 	if (!s)
 		return -1;
 
-	status = rpc_out_channel_write(outChannel, Stream_Buffer(s), Stream_Length(s));
+	if (rpc_channel_write(outChannel, Stream_Buffer(s), Stream_Length(s)) < 0)
+		rc = FALSE;
+
 	Stream_Free(s, TRUE);
-	return (status > 0) ? 1 : -1;
+	return rc;
 }
 
-int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, RpcOutChannel* outChannel,
+BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel,
         HttpResponse* response)
 {
-	char* token64 = NULL;
+	const char* token64 = NULL;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
-	rdpNtlm* ntlm = outChannel->ntlm;
+	rdpNtlm* ntlm;
 
-	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
-	{
-		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
+	if (!outChannel || !response || !outChannel->ntlm)
+		return FALSE;
 
-		if (!token64)
-			return -1;
+	ntlm = outChannel->ntlm;
+	token64 = http_response_get_auth_token(response, "NTLM");
 
+	if (token64)
 		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
-	}
 
 	if (ntlmTokenData && ntlmTokenLength)
-	{
-		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
-		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
-	}
+		return ntlm_client_set_input_buffer(ntlm, FALSE, ntlmTokenData, ntlmTokenLength);
 
-	return 1;
+	return TRUE;
 }

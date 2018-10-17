@@ -20,29 +20,21 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H
 #define FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H
 
-#include <freerdp/types.h>
-#include <freerdp/settings.h>
-
-#include <freerdp/crypto/tls.h>
-#include <freerdp/crypto/crypto.h>
 #include <freerdp/api.h>
-
-#include <winpr/stream.h>
 
 #include "rpc.h"
 #include "http.h"
 
-FREERDP_LOCAL int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel);
-FREERDP_LOCAL void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, RpcChannel* channel);
+FREERDP_LOCAL BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel);
+FREERDP_LOCAL void rpc_ncacn_http_ntlm_uninit(RpcChannel* channel);
 
-FREERDP_LOCAL int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc,
-        RpcInChannel* inChannel);
-FREERDP_LOCAL int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc,
-        RpcInChannel* inChannel, HttpResponse* response);
+FREERDP_LOCAL BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel);
+FREERDP_LOCAL BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel,
+        HttpResponse* response);
 
-FREERDP_LOCAL int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc,
-        RpcOutChannel* outChannel, BOOL replacement);
-FREERDP_LOCAL int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc,
-        RpcOutChannel* outChannel, HttpResponse* response);
+FREERDP_LOCAL BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel,
+        BOOL replacement);
+FREERDP_LOCAL BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel,
+        HttpResponse* response);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H */
