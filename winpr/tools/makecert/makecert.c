@@ -612,7 +612,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 	else if (context->pfxFormat)
 		ext = "pfx";
 	else
-		return -1;
+		goto out_fail;
 
 	sprintf_s(filename, length + 8, "%s.%s", context->output_file, ext);
 
