@@ -245,10 +245,6 @@ static int check_primary_order_supported(wLog* log, rdpSettings* settings, BYTE 
 			condition = settings->OrderSupport[NEG_DSTBLT_INDEX];
 			break;
 
-		case ORDER_TYPE_PATBLT:
-			condition = settings->OrderSupport[NEG_PATBLT_INDEX];
-			break;
-
 		case ORDER_TYPE_SCRBLT:
 			condition = settings->OrderSupport[NEG_SCRBLT_INDEX];
 			break;
@@ -265,8 +261,12 @@ static int check_primary_order_supported(wLog* log, rdpSettings* settings, BYTE 
 			condition = settings->OrderSupport[NEG_LINETO_INDEX];
 			break;
 
+		/* [MS-RDPEGDI] 2.2.2.2.1.1.2.5 OpaqueRect (OPAQUERECT_ORDER)
+		 * suggests that PatBlt and OpaqueRect imply each other. */
+		case ORDER_TYPE_PATBLT:
 		case ORDER_TYPE_OPAQUE_RECT:
-			condition = settings->OrderSupport[NEG_OPAQUE_RECT_INDEX];
+			condition = settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] ||
+			            settings->OrderSupport[NEG_PATBLT_INDEX];
 			break;
 
 		case ORDER_TYPE_SAVE_BITMAP:
