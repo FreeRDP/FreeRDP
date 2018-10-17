@@ -616,7 +616,6 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width,
 	}
 
 	XSetWMNormalHints(xfc->display, window->handle, size_hints);
-
 	XFree(size_hints);
 }
 
@@ -656,25 +655,14 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style,
                        UINT32 ex_style)
 {
 	Atom window_type;
+	BOOL redirect = FALSE;
 
 	if ((ex_style & WS_EX_NOACTIVATE) || (ex_style & WS_EX_TOOLWINDOW))
 	{
-		/*
-		 * Tooltips and menu items should be unmanaged windows
-		 * (called "override redirect" in X windows parlance)
-		 * If they are managed, there are issues with window focus that
-		 * cause the windows to behave improperly.  For example, a mouse
-		 * press will dismiss a drop-down menu because the RDP server
-		 * sees that as a focus out event from the window owning the
-		 * dropdown.
-		 */
-		XSetWindowAttributes attrs;
-		attrs.override_redirect = True;
-		XChangeWindowAttributes(xfc->display, appWindow->handle, CWOverrideRedirect,
-		                        &attrs);
+		redirect = TRUE;
 		appWindow->is_transient = TRUE;
 		xf_SetWindowUnlisted(xfc, appWindow->handle);
-		window_type = xfc->_NET_WM_WINDOW_TYPE_POPUP;
+		window_type = xfc->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU;
 	}
 	/*
 	 * TOPMOST window that is not a tool window is treated like a regular window (i.e. task manager).
@@ -694,6 +682,22 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style,
 	else
 	{
 		window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
+	}
+
+	{
+		/*
+		 * Tooltips and menu items should be unmanaged windows
+		 * (called "override redirect" in X windows parlance)
+		 * If they are managed, there are issues with window focus that
+		 * cause the windows to behave improperly.  For example, a mouse
+		 * press will dismiss a drop-down menu because the RDP server
+		 * sees that as a focus out event from the window owning the
+		 * dropdown.
+		 */
+		XSetWindowAttributes attrs;
+		attrs.override_redirect = redirect ? True : False;
+		XChangeWindowAttributes(xfc->display, appWindow->handle, CWOverrideRedirect,
+		                        &attrs);
 	}
 
 	XChangeProperty(xfc->display, appWindow->handle, xfc->_NET_WM_WINDOW_TYPE,
