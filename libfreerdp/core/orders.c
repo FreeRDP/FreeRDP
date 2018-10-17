@@ -116,8 +116,8 @@ static const BYTE BPP_BMF[] =
 	6, 0, 0, 0, 0, 0, 0, 0
 };
 
-static int check_order_activated(wLog* log, rdpSettings* settings, const char* orderName,
-                                 BOOL condition)
+static BOOL check_order_activated(wLog* log, rdpSettings* settings, const char* orderName,
+                                  BOOL condition)
 {
 	if (!condition)
 	{
@@ -125,22 +125,22 @@ static int check_order_activated(wLog* log, rdpSettings* settings, const char* o
 		{
 			WLog_Print(log, WLOG_WARN,
 			           "%s - SERVER BUG: The support for this feature was not announced!", orderName);
-			return 0;
+			return TRUE;
 		}
 		else
 		{
 			WLog_Print(log, WLOG_ERROR,
 			           "%s - SERVER BUG: The support for this feature was not announced! Use /relax-order-checks to ignore",
 			           orderName);
-			return -1;
+			return FALSE;
 		}
 	}
 
-	return 1;
+	return TRUE;
 }
 
-static int check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE orderType,
-                                     const char* orderName)
+static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE orderType,
+                                      const char* orderName)
 {
 	BOOL condition = FALSE;
 
@@ -185,7 +185,7 @@ static int check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE orde
 	return check_order_activated(log, settings, orderName, condition);
 }
 
-static int check_secondary_order_supported(wLog* log, rdpSettings* settings, BYTE orderType,
+static BOOL check_secondary_order_supported(wLog* log, rdpSettings* settings, BYTE orderType,
         const char* orderName)
 {
 	BOOL condition = FALSE;
@@ -240,7 +240,7 @@ static int check_secondary_order_supported(wLog* log, rdpSettings* settings, BYT
 	return check_order_activated(log, settings, orderName, condition);
 }
 
-static int check_primary_order_supported(wLog* log, rdpSettings* settings, BYTE orderType,
+static BOOL check_primary_order_supported(wLog* log, rdpSettings* settings, UINT32 orderType,
         const char* orderName)
 {
 	BOOL condition = FALSE;
@@ -453,12 +453,6 @@ static BOOL freerdp_primary_adjust_bound(wLog* log, const char* order, rdpContex
 	dw = context->settings->DesktopWidth;
 	dh = context->settings->DesktopHeight;
 
-	if (top == -32768)
-		WLog_ERR(TAG, "xxx");
-
-	if (bottom == -32768)
-		WLog_ERR(TAG, "xxx");
-
 	if (left < 0)
 		left = 0;
 
@@ -587,12 +581,6 @@ static BOOL freerdp_adjust_point(wLog* log, const char* order, rdpContext* conte
 
 	dw = context->settings->DesktopWidth;
 	dh = context->settings->DesktopHeight;
-
-	if (x == -32768)
-		WLog_ERR(TAG, "xxx");
-
-	if (y == -32768)
-		WLog_ERR(TAG, "xxx");
 
 	if (x < 0)
 		x = 0;
@@ -3604,17 +3592,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	orderName = primary_order_string(orderInfo->orderType);
 
-	switch (check_primary_order_supported(update->log, settings, orderInfo->orderType, orderName))
-	{
-		case 1:
-			break;
-
-		case 0:
-			return TRUE; // TODO : Seek stream
-
-		default:
-			return FALSE;
-	}
+	if (!check_primary_order_supported(update->log, settings, orderInfo->orderType, orderName))
+		return FALSE;
 
 	if (!update_read_field_flags(s, &(orderInfo->fieldFlags), flags,
 	                             PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo->orderType]))
@@ -4053,18 +4032,8 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s,
 	name = secondary_order_string(orderType);
 	WLog_Print(update->log, WLOG_DEBUG,  "Secondary Drawing Order %s", name);
 
-	switch (check_secondary_order_supported(update->log, settings, orderType, name))
-	{
-		case 1:
-			break;
-
-		case 0:
-			return Stream_SafeSeek(s, orderLength);
-
-		case -1:
-		default:
-			return FALSE;
-	}
+	if (!check_secondary_order_supported(update->log, settings, orderType, name))
+		return FALSE;
 
 	switch (orderType)
 	{
@@ -4262,32 +4231,18 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 {
 	BYTE orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
 	BOOL rc = FALSE;
-	int supported;
 	rdpContext* context = update->context;
 	rdpSettings* settings = context->settings;
 	rdpAltSecUpdate* altsec = update->altsec;
 	const char* orderName = altsec_order_string(orderType);
 	WLog_Print(update->log, WLOG_DEBUG,
 	           "Alternate Secondary Drawing Order %s", orderName);
-	supported = check_alt_order_supported(update->log, settings, orderType, orderName);
 
-	switch (supported)
-	{
-		case 1:
-			break;
-
-		case 0:
-			rc = TRUE;
-
-		default:
-			rc = FALSE;
-	}
+	if (!check_alt_order_supported(update->log, settings, orderType, orderName))
+		return FALSE;
 
 	if (!read_altsec_order(s, orderType, altsec))
 		return FALSE;
-
-	if (supported != 1)
-		return rc;
 
 	switch (orderType)
 	{
