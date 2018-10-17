@@ -883,6 +883,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	RpcInChannel* inChannel;
 	size_t length;
 	SSIZE_T size;
+	BOOL rc = FALSE;
 
 	if (!s)
 		return FALSE;
@@ -911,11 +912,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	length = Stream_Length(s);
 
 	if (ntlm_client_query_auth_size(ntlm) < 0)
-	{
-		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08"PRIX32"]",
-		         GetSecurityStatusString(status), status);
 		goto fail;
-	}
 
 	request_pdu = (rpcconn_request_hdr_t*) calloc(1, sizeof(rpcconn_request_hdr_t));
 
@@ -941,7 +938,10 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 		goto fail;
 
 	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) < 0)
+	{
+		rpc_client_call_free(clientCall);
 		goto fail;
+	}
 
 	if (request_pdu->opnum == TsProxySetupReceivePipeOpnum)
 		rpc->PipeCallId = request_pdu->call_id;
@@ -989,22 +989,17 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 
 	CopyMemory(&buffer[offset], Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 	offset += Buffers[1].cbBuffer;
-	free(Buffers[1].pvBuffer);
 
 	if (rpc_in_channel_send_pdu(inChannel, buffer, request_pdu->frag_length) < 0)
 		goto fail;
 
-	free(request_pdu);
-	free(buffer);
-	Stream_Free(s, TRUE);
-	return TRUE;
+	rc = TRUE;
 fail:
-	rpc_client_call_free(clientCall);
 	free(buffer);
 	free(Buffers[1].pvBuffer);
 	free(request_pdu);
 	Stream_Free(s, TRUE);
-	return FALSE;
+	return rc;
 }
 
 static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT16* port,

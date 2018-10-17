@@ -107,25 +107,25 @@ const p_uuid_t BTFN_UUID =
 
 int rpc_send_bind_pdu(rdpRpc* rpc)
 {
-	int status;
-	BYTE* buffer;
+	int status = -1;
+	BYTE* buffer = NULL;
 	UINT32 offset;
 	UINT32 length;
 	RpcClientCall* clientCall;
 	p_cont_elem_t* p_cont_elem;
-	rpcconn_bind_hdr_t* bind_pdu;
+	rpcconn_bind_hdr_t* bind_pdu = NULL;
 	BOOL promptPassword = FALSE;
 	rdpSettings* settings = rpc->settings;
 	freerdp* instance = (freerdp*) settings->instance;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	RpcInChannel* inChannel = connection->DefaultInChannel;
-	const SecBuffer* sbuffer;
+	const SecBuffer* sbuffer = NULL;
 	WLog_DBG(TAG, "Sending Bind PDU");
 	ntlm_free(rpc->ntlm);
 	rpc->ntlm = ntlm_new();
 
 	if (!rpc->ntlm)
-		return -1;
+		goto fail;
 
 	if ((!settings->GatewayPassword) || (!settings->GatewayUsername)
 	    || (!strlen(settings->GatewayPassword)) || (!strlen(settings->GatewayUsername)))
@@ -153,30 +153,30 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 				settings->Password = _strdup(settings->GatewayPassword);
 
 				if (!settings->Username || !settings->Domain || settings->Password)
-					return -1;
+					goto fail;
 			}
 		}
 	}
 
 	if (!ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain,
 	                      settings->GatewayPassword, NULL))
-		return -1;
+		goto fail;
 
 	if (!ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname))
-		return -1;
+		goto fail;
 
 	if (!ntlm_authenticate(rpc->ntlm))
-		return -1;
+		goto fail;
 
 	bind_pdu = (rpcconn_bind_hdr_t*) calloc(1, sizeof(rpcconn_bind_hdr_t));
 
 	if (!bind_pdu)
-		return -1;
+		goto fail;
 
 	sbuffer = ntlm_client_get_output_buffer(rpc->ntlm);
 
 	if (!sbuffer)
-		return -1;
+		goto fail;
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) bind_pdu);
 	bind_pdu->auth_length = (UINT16) sbuffer->cbBuffer;
@@ -194,7 +194,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	                                       sizeof(p_cont_elem_t));
 
 	if (!bind_pdu->p_context_elem.p_cont_elem)
-		return -1;
+		goto fail;
 
 	p_cont_elem = &bind_pdu->p_context_elem.p_cont_elem[0];
 	p_cont_elem->p_cont_id = 0;
@@ -205,7 +205,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	p_cont_elem->transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
 
 	if (!p_cont_elem->transfer_syntaxes)
-		return -1;
+		goto fail;
 
 	CopyMemory(&(p_cont_elem->transfer_syntaxes[0].if_uuid), &NDR_UUID, sizeof(p_uuid_t));
 	p_cont_elem->transfer_syntaxes[0].if_version = NDR_SYNTAX_IF_VERSION;
@@ -218,7 +218,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	p_cont_elem->transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
 
 	if (!p_cont_elem->transfer_syntaxes)
-		return -1;
+		goto fail;
 
 	CopyMemory(&(p_cont_elem->transfer_syntaxes[0].if_uuid), &BTFN_UUID, sizeof(p_uuid_t));
 	p_cont_elem->transfer_syntaxes[0].if_version = BTFN_SYNTAX_IF_VERSION;
@@ -233,7 +233,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	buffer = (BYTE*) malloc(bind_pdu->frag_length);
 
 	if (!buffer)
-		return -1;
+		goto fail;
 
 	CopyMemory(buffer, bind_pdu, 24);
 	CopyMemory(&buffer[24], &bind_pdu->p_context_elem, 4);
@@ -250,21 +250,28 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	clientCall = rpc_client_call_new(bind_pdu->call_id, 0);
 
 	if (!clientCall)
-	{
-		free(buffer);
-		return -1;
-	}
+		goto fail;
 
 	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) < 0)
 	{
-		free(buffer);
-		return -1;
+		rpc_client_call_free(clientCall);
+		goto fail;
 	}
 
 	status = rpc_in_channel_send_pdu(inChannel, buffer, length);
-	free(bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes);
-	free(bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes);
-	free(bind_pdu->p_context_elem.p_cont_elem);
+fail:
+
+	if (bind_pdu)
+	{
+		if (bind_pdu->p_context_elem.p_cont_elem)
+		{
+			free(bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes);
+			free(bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes);
+		}
+
+		free(bind_pdu->p_context_elem.p_cont_elem);
+	}
+
 	free(bind_pdu);
 	free(buffer);
 	return (status > 0) ? 1 : -1;
@@ -341,7 +348,10 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	sbuffer = ntlm_client_get_output_buffer(rpc->ntlm);
 
 	if (!sbuffer)
+	{
+		free(auth_3_pdu);
 		return -1;
+	}
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) auth_3_pdu);
 	auth_3_pdu->auth_length = (UINT16) sbuffer->cbBuffer;
