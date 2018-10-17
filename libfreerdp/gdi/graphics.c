@@ -176,10 +176,16 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		const UINT32 SrcFormat = gdi_get_pixel_format(bpp);
 		const size_t sbpp = GetBytesPerPixel(SrcFormat);
 		const size_t dbpp = GetBytesPerPixel(bitmap->format);
-		const size_t dstSize = SrcSize * dbpp / sbpp;
 
-		if (dstSize  < bitmap->length)
+		if ((sbpp == 0) || (dbpp == 0))
 			return FALSE;
+		else
+		{
+			const size_t dstSize = SrcSize * dbpp / sbpp;
+
+			if (dstSize  < bitmap->length)
+				return FALSE;
+		}
 
 		if (!freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0,
 		                        DstWidth, DstHeight, pSrcData, SrcFormat,
