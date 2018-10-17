@@ -164,6 +164,7 @@ size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats)
 
 	/* Set default audio formats. */
 	*dst_formats = supported_audio_formats;
+	return y;
 fail:
 	audio_formats_free(supported_audio_formats, ARRAYSIZE(default_supported_audio_formats));
 
