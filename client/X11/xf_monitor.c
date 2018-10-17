@@ -146,6 +146,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	Window _dummy_w;
 	int current_monitor = 0;
 	Screen* screen;
+	MONITOR_INFO* monitor;
 #if defined WITH_XINERAMA || defined WITH_XRANDR
 	int major, minor;
 #endif
@@ -208,13 +209,6 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 					vscreen->monitors[i].area.top = screenInfo[i].y_org;
 					vscreen->monitors[i].area.right = screenInfo[i].x_org + screenInfo[i].width - 1;
 					vscreen->monitors[i].area.bottom = screenInfo[i].y_org + screenInfo[i].height - 1;
-
-					/* Determine which monitor that the mouse cursor is on */
-					if ((mouse_x >= vscreen->monitors[i].area.left) &&
-					    (mouse_x <= vscreen->monitors[i].area.right) &&
-					    (mouse_y >= vscreen->monitors[i].area.top) &&
-					    (mouse_y <= vscreen->monitors[i].area.bottom))
-						current_monitor = i;
 				}
 			}
 
@@ -225,6 +219,46 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	xfc->fullscreenMonitors.top = xfc->fullscreenMonitors.bottom =
 	                                  xfc->fullscreenMonitors.left = xfc->fullscreenMonitors.right = 0;
 
+	/* Determine which monitor that the mouse cursor is on */
+	if (vscreen->monitors)
+	{
+		for (i = 0; i < vscreen->nmonitors; i++)
+		{
+			if ((mouse_x >= vscreen->monitors[i].area.left) &&
+			    (mouse_x <= vscreen->monitors[i].area.right) &&
+			    (mouse_y >= vscreen->monitors[i].area.top) &&
+			    (mouse_y <= vscreen->monitors[i].area.bottom))
+			{
+				current_monitor = i;
+				break;
+			}
+		}
+	}
+
+	/*
+	   Even for a single monitor, we need to calculate the virtual screen to support
+	   window managers that do not implement all X window state hints.
+
+	   If the user did not request multiple monitor or is using workarea
+	   without remote app, we force the number of monitors be 1 so later
+	   the rest of the client don't end up using more monitors than the user desires.
+	 */
+	if ((!settings->UseMultimon && !settings->SpanMonitors) ||
+	    (settings->Workarea && !settings->RemoteApplicationMode))
+	{
+		/* If no monitors were specified on the command-line then set the current monitor as active */
+		if (!settings->NumMonitorIds)
+		{
+			settings->MonitorIds[0] = current_monitor;
+		}
+
+		/* Always sets number of monitors from command-line to just 1.
+		 * If the monitor is invalid then we will default back to current monitor
+		 * later as a fallback. So, there is no need to validate command-line entry here.
+		 */
+		settings->NumMonitorIds = 1;
+	}
+
 	/* WORKAROUND: With Remote Application Mode - using NET_WM_WORKAREA
 	 * causes issues with the ability to fully size the window vertically
 	 * (the bottom of the window area is never updated). So, we just set
@@ -232,10 +266,26 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	 */
 	if (settings->RemoteApplicationMode || !xf_GetWorkArea(xfc))
 	{
-		xfc->workArea.x = 0;
-		xfc->workArea.y = 0;
-		xfc->workArea.width = WidthOfScreen(xfc->screen);
-		xfc->workArea.height = HeightOfScreen(xfc->screen);
+		/*
+		   if only 1 monitor is enabled, use monitor area
+		   this is required in case of a screen composed of more than one monitor
+		   but user did not enable multimonitor
+		*/
+		if (settings->NumMonitorIds == 1)
+		{
+			monitor = vscreen->monitors + current_monitor;
+			xfc->workArea.x = monitor->area.left;
+			xfc->workArea.y = monitor->area.top;
+			xfc->workArea.width = monitor->area.right - monitor->area.left + 1;
+			xfc->workArea.height = monitor->area.bottom - monitor->area.top + 1;
+		}
+		else
+		{
+			xfc->workArea.x = 0;
+			xfc->workArea.y = 0;
+			xfc->workArea.width = WidthOfScreen(xfc->screen);
+			xfc->workArea.height = HeightOfScreen(xfc->screen);
+		}
 	}
 
 	if (settings->Fullscreen)
@@ -286,26 +336,6 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	{
 		*pMaxWidth = settings->DesktopWidth;
 		*pMaxHeight = settings->DesktopHeight;
-	}
-
-	if (!settings->Fullscreen && !settings->Workarea && !settings->UseMultimon)
-		goto out;
-
-	/* If single monitor fullscreen OR workarea without remote app */
-	if ((settings->Fullscreen && !settings->UseMultimon && !settings->SpanMonitors) ||
-	    (settings->Workarea && !settings->RemoteApplicationMode))
-	{
-		/* If no monitors were specified on the command-line then set the current monitor as active */
-		if (!settings->NumMonitorIds)
-		{
-			settings->MonitorIds[0] = current_monitor;
-		}
-
-		/* Always sets number of monitors from command-line to just 1.
-		 * If the monitor is invalid then we will default back to current monitor
-		 * later as a fallback. So, there is no need to validate command-line entry here.
-		 */
-		settings->NumMonitorIds = 1;
 	}
 
 	/* Create array of all active monitors by taking into account monitors requested on the command-line */
@@ -408,8 +438,6 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			vB = destB;
 		}
 
-		settings->DesktopPosX = vX;
-		settings->DesktopPosY = vY;
 		vscreen->area.left = 0;
 		vscreen->area.right = vR - vX - 1;
 		vscreen->area.top = 0;
@@ -491,7 +519,6 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	if (settings->MonitorCount)
 		settings->SupportMonitorLayoutPdu = TRUE;
 
-out:
 #ifdef USABLE_XRANDR
 
 	if (rrmonitors)

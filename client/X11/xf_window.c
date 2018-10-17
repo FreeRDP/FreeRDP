@@ -158,8 +158,11 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	int startX, startY;
 	UINT32 width = window->width;
 	UINT32 height = window->height;
+	/* xfc->decorations is set by caller depending on settings and whether it is fullscreen or not */
 	window->decorations = xfc->decorations;
+	/* show/hide decorations (e.g. title bar) as guided by xfc->decorations */
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
+	DEBUG_X11(TAG, "X window decoration set to %d", (int)window->decorations);
 
 	if (xfc->floatbar)
 		xf_floatbar_toggle_visibility(xfc, fullscreen);
@@ -202,7 +205,12 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		startY += xfc->context.settings->MonitorLocalShiftY;
 	}
 
-	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None)
+	/*
+	  It is safe to proceed with simply toogling _NET_WM_STATE_FULLSCREEN window state on the following conditions:
+	       - The window manager supports multiple monitor full screen
+	       - The user requested to use a single monitor to render the remote desktop
+	 */
+	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None || settings->MonitorCount == 1)
 	{
 		xf_ResizeDesktopWindow(xfc, window, width, height);
 
@@ -294,6 +302,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 			width = xfc->vscreen.area.right - xfc->vscreen.area.left + 1;
 			height = xfc->vscreen.area.bottom - xfc->vscreen.area.top + 1;
+			DEBUG_X11("X window move and resize %dx%d@%dx%d", startX, startY, width, height);
 			xf_ResizeDesktopWindow(xfc, window, width, height);
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
