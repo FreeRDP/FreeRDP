@@ -2244,7 +2244,7 @@ static BOOL rdp_read_window_list_capability_set(wStream* s, UINT16 length,
 	if (length < 11)
 		return FALSE;
 
-	Stream_Seek_UINT32(s); /* wndSupportLevel (4 bytes) */
+	Stream_Read_UINT32(s, settings->RemoteWndSupportLevel); /* wndSupportLevel (4 bytes) */
 	Stream_Read_UINT8(s, settings->RemoteAppNumIconCaches); /* numIconCaches (1 byte) */
 	Stream_Read_UINT16(s, settings->RemoteAppNumIconCacheEntries); /* numIconCacheEntries (2 bytes) */
 	return TRUE;
@@ -2260,14 +2260,12 @@ static BOOL rdp_read_window_list_capability_set(wStream* s, UINT16 length,
 static BOOL rdp_write_window_list_capability_set(wStream* s, rdpSettings* settings)
 {
 	int header;
-	UINT32 wndSupportLevel;
 
 	if (!Stream_EnsureRemainingCapacity(s, 32))
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	wndSupportLevel = WINDOW_LEVEL_SUPPORTED_EX;
-	Stream_Write_UINT32(s, wndSupportLevel); /* wndSupportLevel (4 bytes) */
+	Stream_Write_UINT32(s, settings->RemoteWndSupportLevel); /* wndSupportLevel (4 bytes) */
 	Stream_Write_UINT8(s, settings->RemoteAppNumIconCaches); /* numIconCaches (1 byte) */
 	Stream_Write_UINT16(s, settings->RemoteAppNumIconCacheEntries); /* numIconCacheEntries (2 bytes) */
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_WINDOW);
