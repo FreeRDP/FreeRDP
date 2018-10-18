@@ -1572,7 +1572,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 			nCount += tmp;
 		}
 
-		if (xfc->floatbar && xfc->fullscreen)
+		if (xfc->floatbar && xfc->fullscreen && !xfc->remote_app)
 			xf_floatbar_hide_and_show(xfc);
 
 		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
