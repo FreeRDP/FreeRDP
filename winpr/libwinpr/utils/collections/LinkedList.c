@@ -320,7 +320,7 @@ BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list)
 	return TRUE;
 }
 
-static BOOL default_equal_function(void* objA, void* objB)
+static BOOL default_equal_function(const void* objA, const void* objB)
 {
 	return objA == objB;
 }

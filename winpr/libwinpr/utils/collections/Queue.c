@@ -41,6 +41,7 @@
 int Queue_Count(wQueue* queue)
 {
 	int ret;
+
 	if (queue->synchronized)
 		EnterCriticalSection(&queue->lock);
 
@@ -48,6 +49,7 @@ int Queue_Count(wQueue* queue)
 
 	if (queue->synchronized)
 		LeaveCriticalSection(&queue->lock);
+
 	return ret;
 }
 
@@ -150,12 +152,11 @@ BOOL Queue_Enqueue(wQueue* queue, void* obj)
 	{
 		int old_capacity;
 		int new_capacity;
-		void **newArray;
-
+		void** newArray;
 		old_capacity = queue->capacity;
 		new_capacity = queue->capacity * queue->growthFactor;
+		newArray = (void**)realloc(queue->array, sizeof(void*) * new_capacity);
 
-		newArray = (void **)realloc(queue->array, sizeof(void*) * new_capacity);
 		if (!newArray)
 		{
 			ret = FALSE;
@@ -177,12 +178,12 @@ BOOL Queue_Enqueue(wQueue* queue, void* obj)
 	queue->array[queue->tail] = obj;
 	queue->tail = (queue->tail + 1) % queue->capacity;
 	queue->size++;
-
 	SetEvent(queue->event);
-
 out:
+
 	if (queue->synchronized)
 		LeaveCriticalSection(&queue->lock);
+
 	return ret;
 }
 
@@ -234,7 +235,7 @@ void* Queue_Peek(wQueue* queue)
 	return obj;
 }
 
-static BOOL default_queue_equals(void *obj1, void *obj2)
+static BOOL default_queue_equals(const void* obj1, const void* obj2)
 {
 	return (obj1 == obj2);
 }
@@ -246,14 +247,13 @@ static BOOL default_queue_equals(void *obj1, void *obj2)
 wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 {
 	wQueue* queue = NULL;
+	queue = (wQueue*)calloc(1, sizeof(wQueue));
 
-	queue = (wQueue *)calloc(1, sizeof(wQueue));
 	if (!queue)
 		return NULL;
 
 	queue->capacity = 32;
 	queue->growthFactor = 2;
-
 	queue->synchronized = synchronized;
 
 	if (capacity > 0)
@@ -262,11 +262,13 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 	if (growthFactor > 0)
 		queue->growthFactor = growthFactor;
 
-	queue->array = (void **)calloc(queue->capacity, sizeof(void *));
+	queue->array = (void**)calloc(queue->capacity, sizeof(void*));
+
 	if (!queue->array)
 		goto out_free;
 
 	queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
 	if (!queue->event)
 		goto out_free_array;
 
@@ -275,7 +277,6 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 
 	queue->object.fnObjectEquals = default_queue_equals;
 	return queue;
-
 out_free_event:
 	CloseHandle(queue->event);
 out_free_array:
@@ -291,7 +292,6 @@ void Queue_Free(wQueue* queue)
 		return;
 
 	Queue_Clear(queue);
-
 	CloseHandle(queue->event);
 	DeleteCriticalSection(&queue->lock);
 	free(queue->array);
