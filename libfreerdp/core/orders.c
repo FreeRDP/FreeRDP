@@ -347,36 +347,36 @@ static const char* primary_order_string(UINT32 orderType)
 {
 	const char* orders[] =
 	{
-		"[0x%02"PRIu8"] DstBlt",
-		"[0x%02"PRIu8"] PatBlt",
-		"[0x%02"PRIu8"] ScrBlt",
-		"[0x%02"PRIu8"] UNUSED",
-		"[0x%02"PRIu8"] UNUSED",
-		"[0x%02"PRIu8"] UNUSED",
-		"[0x%02"PRIu8"] UNUSED",
-		"[0x%02"PRIu8"] DrawNineGrid",
-		"[0x%02"PRIu8"] MultiDrawNineGrid",
-		"[0x%02"PRIu8"] LineTo",
-		"[0x%02"PRIu8"] OpaqueRect",
-		"[0x%02"PRIu8"] SaveBitmap",
-		"[0x%02"PRIu8"] UNUSED",
-		"[0x%02"PRIu8"] MemBlt",
-		"[0x%02"PRIu8"] Mem3Blt",
-		"[0x%02"PRIu8"] MultiDstBlt",
-		"[0x%02"PRIu8"] MultiPatBlt",
-		"[0x%02"PRIu8"] MultiScrBlt",
-		"[0x%02"PRIu8"] MultiOpaqueRect",
-		"[0x%02"PRIu8"] FastIndex",
-		"[0x%02"PRIu8"] PolygonSC",
-		"[0x%02"PRIu8"] PolygonCB",
-		"[0x%02"PRIu8"] Polyline",
-		"[0x%02"PRIu8"] UNUSED",
-		"[0x%02"PRIu8"] FastGlyph",
-		"[0x%02"PRIu8"] EllipseSC",
-		"[0x%02"PRIu8"] EllipseCB",
-		"[0x%02"PRIu8"] GlyphIndex"
+		"[0x%02"PRIx8"] DstBlt",
+		"[0x%02"PRIx8"] PatBlt",
+		"[0x%02"PRIx8"] ScrBlt",
+		"[0x%02"PRIx8"] UNUSED",
+		"[0x%02"PRIx8"] UNUSED",
+		"[0x%02"PRIx8"] UNUSED",
+		"[0x%02"PRIx8"] UNUSED",
+		"[0x%02"PRIx8"] DrawNineGrid",
+		"[0x%02"PRIx8"] MultiDrawNineGrid",
+		"[0x%02"PRIx8"] LineTo",
+		"[0x%02"PRIx8"] OpaqueRect",
+		"[0x%02"PRIx8"] SaveBitmap",
+		"[0x%02"PRIx8"] UNUSED",
+		"[0x%02"PRIx8"] MemBlt",
+		"[0x%02"PRIx8"] Mem3Blt",
+		"[0x%02"PRIx8"] MultiDstBlt",
+		"[0x%02"PRIx8"] MultiPatBlt",
+		"[0x%02"PRIx8"] MultiScrBlt",
+		"[0x%02"PRIx8"] MultiOpaqueRect",
+		"[0x%02"PRIx8"] FastIndex",
+		"[0x%02"PRIx8"] PolygonSC",
+		"[0x%02"PRIx8"] PolygonCB",
+		"[0x%02"PRIx8"] Polyline",
+		"[0x%02"PRIx8"] UNUSED",
+		"[0x%02"PRIx8"] FastGlyph",
+		"[0x%02"PRIx8"] EllipseSC",
+		"[0x%02"PRIx8"] EllipseCB",
+		"[0x%02"PRIx8"] GlyphIndex"
 	};
-	const char* fmt = "[0x%02"PRIu8"] UNKNOWN";
+	const char* fmt = "[0x%02"PRIx8"] UNKNOWN";
 	static char buffer[64] = {0};
 
 	if (orderType < ARRAYSIZE(orders))
@@ -389,17 +389,17 @@ static const char* secondary_order_string(UINT32 orderType)
 {
 	const char* orders[] =
 	{
-		"[0x%02"PRIu8"] Cache Bitmap",
-		"[0x%02"PRIu8"] Cache Color Table",
-		"[0x%02"PRIu8"] Cache Bitmap (Compressed)",
-		"[0x%02"PRIu8"] Cache Glyph",
-		"[0x%02"PRIu8"] Cache Bitmap V2",
-		"[0x%02"PRIu8"] Cache Bitmap V2 (Compressed)",
-		"[0x%02"PRIu8"] UNUSED",
-		"[0x%02"PRIu8"] Cache Brush",
-		"[0x%02"PRIu8"] Cache Bitmap V3"
+		"[0x%02"PRIx8"] Cache Bitmap",
+		"[0x%02"PRIx8"] Cache Color Table",
+		"[0x%02"PRIx8"] Cache Bitmap (Compressed)",
+		"[0x%02"PRIx8"] Cache Glyph",
+		"[0x%02"PRIx8"] Cache Bitmap V2",
+		"[0x%02"PRIx8"] Cache Bitmap V2 (Compressed)",
+		"[0x%02"PRIx8"] UNUSED",
+		"[0x%02"PRIx8"] Cache Brush",
+		"[0x%02"PRIx8"] Cache Bitmap V3"
 	};
-	const char* fmt = "[0x%02"PRIu8"] UNKNOWN";
+	const char* fmt = "[0x%02"PRIx8"] UNKNOWN";
 	static char buffer[64] = {0};
 
 	if (orderType < ARRAYSIZE(orders))
@@ -412,22 +412,22 @@ static const char* altsec_order_string(BYTE orderType)
 {
 	const char* orders[] =
 	{
-		"[0x%02"PRIu8"] Switch Surface",
-		"[0x%02"PRIu8"] Create Offscreen Bitmap",
-		"[0x%02"PRIu8"] Stream Bitmap First",
-		"[0x%02"PRIu8"] Stream Bitmap Next",
-		"[0x%02"PRIu8"] Create NineGrid Bitmap",
-		"[0x%02"PRIu8"] Draw GDI+ First",
-		"[0x%02"PRIu8"] Draw GDI+ Next",
-		"[0x%02"PRIu8"] Draw GDI+ End",
-		"[0x%02"PRIu8"] Draw GDI+ Cache First",
-		"[0x%02"PRIu8"] Draw GDI+ Cache Next",
-		"[0x%02"PRIu8"] Draw GDI+ Cache End",
-		"[0x%02"PRIu8"] Windowing",
-		"[0x%02"PRIu8"] Desktop Composition",
-		"[0x%02"PRIu8"] Frame Marker"
+		"[0x%02"PRIx8"] Switch Surface",
+		"[0x%02"PRIx8"] Create Offscreen Bitmap",
+		"[0x%02"PRIx8"] Stream Bitmap First",
+		"[0x%02"PRIx8"] Stream Bitmap Next",
+		"[0x%02"PRIx8"] Create NineGrid Bitmap",
+		"[0x%02"PRIx8"] Draw GDI+ First",
+		"[0x%02"PRIx8"] Draw GDI+ Next",
+		"[0x%02"PRIx8"] Draw GDI+ End",
+		"[0x%02"PRIx8"] Draw GDI+ Cache First",
+		"[0x%02"PRIx8"] Draw GDI+ Cache Next",
+		"[0x%02"PRIx8"] Draw GDI+ Cache End",
+		"[0x%02"PRIx8"] Windowing",
+		"[0x%02"PRIx8"] Desktop Composition",
+		"[0x%02"PRIx8"] Frame Marker"
 	};
-	const char* fmt = "[0x%02"PRIu8"] UNKNOWN";
+	const char* fmt = "[0x%02"PRIx8"] UNKNOWN";
 	static char buffer[64] = {0};
 
 	if (orderType < ARRAYSIZE(orders))
@@ -4213,6 +4213,7 @@ static BOOL read_altsec_order(wStream* s, BYTE orderType, rdpAltSecUpdate* altse
 
 		case ORDER_TYPE_WINDOW:
 			/* This order is handled elsewhere. */
+			rc = TRUE;
 			break;
 
 		case ORDER_TYPE_COMPDESK_FIRST:
