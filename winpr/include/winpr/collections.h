@@ -41,7 +41,7 @@ typedef void* (*OBJECT_NEW_FN)();
 typedef void (*OBJECT_INIT_FN)(void* obj);
 typedef void (*OBJECT_UNINIT_FN)(void* obj);
 typedef void (*OBJECT_FREE_FN)(void* obj);
-typedef BOOL (*OBJECT_EQUALS_FN)(void* objA, void* objB);
+typedef BOOL (*OBJECT_EQUALS_FN)(const void* objA, const void* objB);
 
 struct _wObject
 {
@@ -208,16 +208,17 @@ WINPR_API int ListDictionary_Count(wListDictionary* listDictionary);
 WINPR_API void ListDictionary_Lock(wListDictionary* listDictionary);
 WINPR_API void ListDictionary_Unlock(wListDictionary* listDictionary);
 
-WINPR_API BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value);
-WINPR_API void* ListDictionary_Remove(wListDictionary* listDictionary, void* key);
+WINPR_API BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, void* value);
+WINPR_API void* ListDictionary_Remove(wListDictionary* listDictionary, const void* key);
 WINPR_API void* ListDictionary_Remove_Head(wListDictionary* listDictionary);
 WINPR_API void ListDictionary_Clear(wListDictionary* listDictionary);
 
-WINPR_API BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key);
+WINPR_API BOOL ListDictionary_Contains(wListDictionary* listDictionary, const void* key);
 WINPR_API int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys);
 
-WINPR_API void* ListDictionary_GetItemValue(wListDictionary* listDictionary, void* key);
-WINPR_API BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, void* key, void* value);
+WINPR_API void* ListDictionary_GetItemValue(wListDictionary* listDictionary, const void* key);
+WINPR_API BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* key,
+        void* value);
 
 WINPR_API wListDictionary* ListDictionary_New(BOOL synchronized);
 WINPR_API void ListDictionary_Free(wListDictionary* listDictionary);

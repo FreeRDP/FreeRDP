@@ -838,6 +838,11 @@ void rpc_client_call_free(RpcClientCall* clientCall)
 	free(clientCall);
 }
 
+static void rpc_array_client_call_free(void* call)
+{
+	rpc_client_call_free((RpcClientCall*)call);
+}
+
 int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length)
 {
 	int status;
@@ -870,7 +875,6 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length
 
 BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 {
-	SECURITY_STATUS status;
 	UINT32 offset;
 	BYTE* buffer = NULL;
 	UINT32 stub_data_pad;
@@ -1021,7 +1025,7 @@ static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT1
 		if (!result)
 			return FALSE;
 
-		*host = freerdp_tcp_address_to_string(result->ai_addr, NULL);
+		*host = freerdp_tcp_address_to_string((const struct sockaddr_storage*)result->ai_addr, NULL);
 		freeaddrinfo(result);
 		return TRUE;
 	}
@@ -1068,7 +1072,7 @@ RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 	if (!client->ClientCallList)
 		goto fail;
 
-	ArrayList_Object(client->ClientCallList)->fnObjectFree = rpc_client_call_free;
+	ArrayList_Object(client->ClientCallList)->fnObjectFree = rpc_array_client_call_free;
 	return client;
 fail:
 	rpc_client_free(client);

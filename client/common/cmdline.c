@@ -1758,7 +1758,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "relax-order-checks")
 		{
-			settings->AllowUnanouncedOrdersFromServer = arg->Value;
+			settings->AllowUnanouncedOrdersFromServer = enable;
 		}
 		CommandLineSwitchCase(arg, "restricted-admin")
 		{
@@ -2055,7 +2055,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "load-balance-info")
 		{
-			if (!copy_value(arg->Value, &settings->LoadBalanceInfo))
+			if (!copy_value(arg->Value, (char**)&settings->LoadBalanceInfo))
 				return COMMAND_LINE_ERROR_MEMORY;
 
 			settings->LoadBalanceInfoLength = (UINT32) strlen((char*)

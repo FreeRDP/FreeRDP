@@ -128,12 +128,13 @@ void Stack_Push(wStack* stack, void* obj)
 	if ((stack->size + 1) >= stack->capacity)
 	{
 		int new_cap;
-		void **new_arr;
-
+		void** new_arr;
 		new_cap = stack->capacity * 2;
 		new_arr = (void**) realloc(stack->array, sizeof(void*) * new_cap);
+
 		if (!new_arr)
 			return;
+
 		stack->array = new_arr;
 		stack->capacity = new_cap;
 	}
@@ -185,7 +186,7 @@ void* Stack_Peek(wStack* stack)
 }
 
 
-static BOOL default_stack_equals(void *obj1, void *obj2)
+static BOOL default_stack_equals(const void* obj1, const void* obj2)
 {
 	return (obj1 == obj2);
 }
@@ -197,24 +198,23 @@ static BOOL default_stack_equals(void *obj1, void *obj2)
 wStack* Stack_New(BOOL synchronized)
 {
 	wStack* stack = NULL;
+	stack = (wStack*)calloc(1, sizeof(wStack));
 
-	stack = (wStack *)calloc(1, sizeof(wStack));
 	if (!stack)
 		return NULL;
 
 	stack->object.fnObjectEquals = default_stack_equals;
 	stack->synchronized = synchronized;
-
 	stack->capacity = 32;
 	stack->array = (void**) calloc(stack->capacity, sizeof(void*));
+
 	if (!stack->array)
 		goto out_free;
 
 	if (stack->synchronized && !InitializeCriticalSectionAndSpinCount(&stack->lock, 4000))
-			goto out_free_array;
+		goto out_free_array;
 
 	return stack;
-
 out_free_array:
 	free(stack->array);
 out_free:
@@ -230,7 +230,6 @@ void Stack_Free(wStack* stack)
 			DeleteCriticalSection(&stack->lock);
 
 		free(stack->array);
-
 		free(stack);
 	}
 }

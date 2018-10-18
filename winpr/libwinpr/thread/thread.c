@@ -269,10 +269,10 @@ static BOOL reset_event(WINPR_THREAD* thread)
 	return status;
 }
 
-static BOOL thread_compare(void* a, void* b)
+static BOOL thread_compare(const void* a, const void* b)
 {
-	pthread_t* p1 = a;
-	pthread_t* p2 = b;
+	const pthread_t* p1 = a;
+	const pthread_t* p2 = b;
 	BOOL rc = pthread_equal(*p1, *p2);
 	return rc;
 }

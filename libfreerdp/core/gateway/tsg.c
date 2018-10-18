@@ -229,6 +229,22 @@ struct rdp_tsg
 	TSG_PACKET_VERSIONCAPS packetVersionCaps;
 };
 
+static BOOL tsg_stream_align(wStream* s, size_t align)
+{
+	size_t pos;
+	size_t offset = 0;
+
+	if (!s)
+		return FALSE;
+
+	pos = Stream_GetPosition(s);
+
+	if ((pos % align) != 0)
+		offset = align - pos % align;
+
+	return Stream_SafeSeek(s, offset);
+}
+
 static BIO_METHOD* BIO_s_tsg(void);
 /**
  * RPC Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa378623/
@@ -559,12 +575,8 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 				goto fail;
 
 			/* 4-byte alignment */
-			{
-				UINT32 offset = Stream_GetPosition(pdu->s);
-
-				if (!Stream_SafeSeek(pdu->s, rpc_offset_align(&offset, 4)))
-					goto fail;
-			}
+			if (!tsg_stream_align(pdu->s, 4))
+				goto fail;
 		}
 		else
 		{
@@ -600,13 +612,11 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 		Stream_Read_UINT16(pdu->s, versionCaps->minorVersion); /* MinorVersion (2 bytes) */
 		Stream_Read_UINT16(pdu->s,
 		                   versionCaps->quarantineCapabilities); /* QuarantineCapabilities (2 bytes) */
-		/* 4-byte alignment */
-		{
-			UINT32 offset = Stream_Pointer(pdu->s);
 
-			if (!Stream_SafeSeek(pdu->s, rpc_offset_align(&offset, 4)))
-				goto fail;
-		}
+		/* 4-byte alignment */
+		if (!tsg_stream_align(pdu->s, 4))
+			goto fail;
+
 		tsgCaps = (PTSG_PACKET_CAPABILITIES) calloc(1, sizeof(TSG_PACKET_CAPABILITIES));
 
 		if (!tsgCaps)
@@ -666,10 +676,10 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 			case TSG_ASYNC_MESSAGE_REAUTH:
 				{
-					UINT32 offset = Stream_Pointer(pdu->s);
+					if (!tsg_stream_align(pdu->s, 8))
+						goto fail;
 
-					if (!Stream_SafeSeek(pdu->s, rpc_offset_align(&offset, 8) ||
-					                     (Stream_GetRemainingLength(pdu->s) < 8)))
+					if (Stream_GetRemainingLength(pdu->s) < 8)
 						goto fail;
 
 					Stream_Seek_UINT64(pdu->s); /* TunnelContext (8 bytes) */
@@ -681,12 +691,8 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 				goto fail;
 		}
 
-		{
-			UINT32 offset = Stream_GetPosition(pdu->s);
-
-			if (!Stream_SafeSeek(pdu->s, rpc_offset_align(&offset, 4)))
-				goto fail;
-		}
+		if (!tsg_stream_align(pdu->s, 4))
+			goto fail;
 
 		/* TunnelContext (20 bytes) */
 		if (Stream_GetRemainingLength(pdu->s) < 24)
@@ -736,12 +742,8 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 				goto fail;
 
 			/* 4-byte alignment */
-			{
-				UINT32 offset = Stream_GetPosition(pdu->s);
-
-				if (!Stream_SafeSeek(pdu->s, rpc_offset_align(&offset, 4)))
-					goto fail;
-			}
+			if (!tsg_stream_align(pdu->s, 4))
+				goto fail;
 		}
 		else
 		{
@@ -777,13 +779,10 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 		Stream_Read_UINT16(pdu->s, versionCaps->majorVersion); /* MinorVersion (2 bytes) */
 		Stream_Read_UINT16(pdu->s,
 		                   versionCaps->quarantineCapabilities); /* QuarantineCapabilities (2 bytes) */
-		/* 4-byte alignment */
-		{
-			UINT32 offset = Stream_GetPosition(pdu->s);
 
-			if (!Stream_SafeSeek(pdu->s, rpc_offset_align(&offset, 4)))
-				goto fail;
-		}
+		/* 4-byte alignment */
+		if (!tsg_stream_align(pdu->s, 4))
+			goto fail;
 
 		if (Stream_GetRemainingLength(pdu->s) < 36)
 			goto fail;
@@ -839,7 +838,7 @@ static BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunn
 	count = _wcslen(tsg->MachineName) + 1;
 	rpc = tsg->rpc;
 	WLog_DBG(TAG, "TsProxyAuthorizeTunnelWriteRequest");
-	s = Stream_New(NULL, 1024);
+	s = Stream_New(NULL, 1024 + count * 2);
 
 	if (!s)
 		return FALSE;
@@ -1727,10 +1726,10 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 
 BOOL tsg_check_event_handles(rdpTsg* tsg)
 {
-	if (!rpc_client_in_channel_recv(tsg->rpc))
+	if (rpc_client_in_channel_recv(tsg->rpc) < 0)
 		return FALSE;
 
-	if (!rpc_client_out_channel_recv(tsg->rpc))
+	if (rpc_client_out_channel_recv(tsg->rpc) < 0)
 		return FALSE;
 
 	return TRUE;
