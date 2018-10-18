@@ -326,7 +326,7 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 	HttpRequest* request = NULL;
 	const char* uri;
 
-	if (!rdg || !method || !transferEncoding)
+	if (!rdg || !method )
 		return NULL;
 
 	uri = http_context_get_uri(rdg->http);
