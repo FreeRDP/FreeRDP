@@ -229,7 +229,7 @@ struct rdp_tsg
 	TSG_PACKET_VERSIONCAPS packetVersionCaps;
 };
 
-static BOOL tsg_stream_align(wStream* s)
+static BOOL tsg_stream_align(wStream* s, size_t align)
 {
 	size_t pos;
 	size_t offset = 0;
@@ -239,8 +239,8 @@ static BOOL tsg_stream_align(wStream* s)
 
 	pos = Stream_GetPosition(s);
 
-	if ((pos % 4) != 0)
-		offset = 4 - pos % 4;
+	if ((pos % align) != 0)
+		offset = align - pos % align;
 
 	return Stream_SafeSeek(s, offset);
 }
@@ -575,7 +575,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 				goto fail;
 
 			/* 4-byte alignment */
-			if (!tsg_stream_align(pdu->s))
+			if (!tsg_stream_align(pdu->s, 4))
 				goto fail;
 		}
 		else
@@ -614,7 +614,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 		                   versionCaps->quarantineCapabilities); /* QuarantineCapabilities (2 bytes) */
 
 		/* 4-byte alignment */
-		if (!tsg_stream_align(pdu->s))
+		if (!tsg_stream_align(pdu->s, 4))
 			goto fail;
 
 		tsgCaps = (PTSG_PACKET_CAPABILITIES) calloc(1, sizeof(TSG_PACKET_CAPABILITIES));
@@ -676,7 +676,10 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 			case TSG_ASYNC_MESSAGE_REAUTH:
 				{
-					if (!tsg_stream_align(pdu->s))
+					if (!tsg_stream_align(pdu->s, 8))
+						goto fail;
+
+					if (Stream_GetRemainingLength(pdu->s) < 8)
 						goto fail;
 
 					Stream_Seek_UINT64(pdu->s); /* TunnelContext (8 bytes) */
@@ -688,7 +691,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 				goto fail;
 		}
 
-		if (!tsg_stream_align(pdu->s))
+		if (!tsg_stream_align(pdu->s, 4))
 			goto fail;
 
 		/* TunnelContext (20 bytes) */
@@ -739,7 +742,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 				goto fail;
 
 			/* 4-byte alignment */
-			if (!tsg_stream_align(pdu->s))
+			if (!tsg_stream_align(pdu->s, 4))
 				goto fail;
 		}
 		else
@@ -778,7 +781,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 		                   versionCaps->quarantineCapabilities); /* QuarantineCapabilities (2 bytes) */
 
 		/* 4-byte alignment */
-		if (!tsg_stream_align(pdu->s))
+		if (!tsg_stream_align(pdu->s, 4))
 			goto fail;
 
 		if (Stream_GetRemainingLength(pdu->s) < 36)
