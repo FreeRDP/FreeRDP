@@ -84,7 +84,7 @@ struct _http_response
 	wStream* data;
 };
 
-static char* string_strnstr(const char* str1, const char* str2, size_t slen)
+static char* string_strnstr(char* str1, const char* str2, size_t slen)
 {
 	char c, sc;
 	size_t len;
@@ -110,10 +110,10 @@ static char* string_strnstr(const char* str1, const char* str2, size_t slen)
 		str1--;
 	}
 
-	return ((char*) str1);
+	return str1;
 }
 
-static BOOL strings_equals_nocase(void* obj1, void* obj2)
+static BOOL strings_equals_nocase(const void* obj1, const void* obj2)
 {
 	if (!obj1 || !obj2)
 		return FALSE;
@@ -362,7 +362,7 @@ static BOOL http_encode_print(wStream* s, const char* fmt, ...)
 {
 	char* str;
 	va_list ap;
-	size_t length, used;
+	int length, used;
 
 	if (!s || !fmt)
 		return FALSE;
@@ -371,19 +371,19 @@ static BOOL http_encode_print(wStream* s, const char* fmt, ...)
 	length = vsnprintf(NULL, 0, fmt, ap) + 1;
 	va_end(ap);
 
-	if (!Stream_EnsureRemainingCapacity(s, length))
+	if (!Stream_EnsureRemainingCapacity(s, (size_t)length))
 		return FALSE;
 
 	str = (char*)Stream_Pointer(s);
 	va_start(ap, fmt);
-	used = vsnprintf(str, length, fmt, ap);
+	used = vsnprintf(str, (size_t)length, fmt, ap);
 	va_end(ap);
 
 	/* Strip the trailing '\0' from the string. */
 	if ((used + 1) != length)
 		return FALSE;
 
-	Stream_Seek(s, used);
+	Stream_Seek(s, (size_t)used);
 	return TRUE;
 }
 
@@ -571,7 +571,7 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 	{
 		char* separator = NULL;
 		const char* authScheme = NULL;
-		const char* authValue = NULL;
+		char* authValue = NULL;
 		separator = strchr(value, ' ');
 
 		if (separator)
@@ -746,7 +746,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			const char* line = string_strnstr(buffer, "\r\n\r\n", position);
 
 			if (line)
-				payloadOffset = (line - buffer) + 4;
+				payloadOffset = (line - buffer) + 4UL;
 		}
 	}
 
@@ -756,7 +756,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		char* buffer = (char*)Stream_Buffer(response->data);
 		char* line = (char*) Stream_Buffer(response->data);
 
-		while ((line = string_strnstr(line, "\r\n", payloadOffset - (line - buffer) - 2)))
+		while ((line = string_strnstr(line, "\r\n", payloadOffset - (line - buffer) - 2UL)))
 		{
 			line += 2;
 			count++;
@@ -832,7 +832,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			}
 
 			Stream_Seek(response->data, (size_t)status);
-			response->BodyLength += status;
+			response->BodyLength += (unsigned long)status;
 
 			if (response->BodyLength > RESPONSE_SIZE_LIMIT)
 			{

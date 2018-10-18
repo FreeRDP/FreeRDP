@@ -602,7 +602,11 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 		                   versionCaps->quarantineCapabilities); /* QuarantineCapabilities (2 bytes) */
 		/* 4-byte alignment */
 		{
-			UINT32 offset = Stream_Pointer(pdu->s);
+			size_t loffset = Stream_GetPosition(pdu->s);
+			UINT32 offset = (UINT32) loffset;
+
+			if (loffset > UINT32_MAX)
+				goto fail;
 
 			if (!Stream_SafeSeek(pdu->s, rpc_offset_align(&offset, 4)))
 				goto fail;
@@ -666,7 +670,11 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 			case TSG_ASYNC_MESSAGE_REAUTH:
 				{
-					UINT32 offset = Stream_Pointer(pdu->s);
+					size_t loffset = Stream_GetPosition(pdu->s);
+					UINT32 offset = (UINT32)loffset;
+
+					if (loffset > UINT32_MAX)
+						goto fail;
 
 					if (!Stream_SafeSeek(pdu->s, rpc_offset_align(&offset, 8) ||
 					                     (Stream_GetRemainingLength(pdu->s) < 8)))

@@ -32,7 +32,7 @@
 #define TAG FREERDP_TAG("core.gateway.ntlm")
 
 static wStream* rpc_ntlm_http_request(HttpContext* http, const char* method,
-                                      int contentLength, SecBuffer* ntlmToken)
+                                      int contentLength, const SecBuffer* ntlmToken)
 {
 	wStream* s = NULL;
 	HttpRequest* request = NULL;

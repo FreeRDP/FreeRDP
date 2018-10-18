@@ -1199,7 +1199,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 				return -1;
 			}
 
-			if ((peerAddress = freerdp_tcp_address_to_string((struct sockaddr_storage*)addr->ai_addr,
+			if ((peerAddress = freerdp_tcp_address_to_string((const struct sockaddr_storage*)addr->ai_addr,
 			                   NULL)) != NULL)
 			{
 				WLog_DBG(TAG, "connecting to peer %s", peerAddress);
