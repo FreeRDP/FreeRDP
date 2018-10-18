@@ -4213,6 +4213,7 @@ static BOOL read_altsec_order(wStream* s, BYTE orderType, rdpAltSecUpdate* altse
 
 		case ORDER_TYPE_WINDOW:
 			/* This order is handled elsewhere. */
+			rc = TRUE;
 			break;
 
 		case ORDER_TYPE_COMPDESK_FIRST:
