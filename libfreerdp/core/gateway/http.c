@@ -842,15 +842,15 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		}
 
 		if (response->BodyLength > 0)
-		{
 			response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
-			response->BodyLength = bodyLength;
-		}
 
 		if (bodyLength != response->BodyLength)
 		{
 			WLog_WARN(TAG, "http_response_recv: %s unexpected body length: actual: %d, expected: %d",
-			          response->ContentType, bodyLength, response->BodyLength);
+			          response->ContentType, response->BodyLength, bodyLength);
+
+			if (bodyLength > 0)
+				response->BodyLength = MIN(bodyLength, response->BodyLength);
 		}
 	}
 
