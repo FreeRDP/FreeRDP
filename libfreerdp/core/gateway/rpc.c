@@ -338,9 +338,6 @@ SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length)
 
 	if (status > 0)
 	{
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-		VALGRIND_MAKE_MEM_DEFINED(data, status);
-#endif
 		Stream_Seek(s, (size_t)status);
 		return status;
 	}
