@@ -531,7 +531,7 @@
                   </para>
                   <variablelist>
                     <varlistentry>
-                      <term>drive:<replaceable class="parameter">name</replaceable>:<replaceable class="parameter">path</replaceable></term>
+                      <term>disk:<replaceable class="parameter">name</replaceable>:<replaceable class="parameter">path</replaceable></term>
                       <listitem>
                         <para>
                           Redirect system <replaceable class="parameter">path</replaceable> as disk with <replaceable class="parameter">name</replaceable>.
