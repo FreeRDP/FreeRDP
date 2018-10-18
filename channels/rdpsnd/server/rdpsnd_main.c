@@ -238,12 +238,6 @@ static DWORD WINAPI rdpsnd_server_thread(LPVOID arg)
 	events[nCount++] = context->priv->channelEvent;
 	events[nCount++] = context->priv->StopEvent;
 
-	if ((error = rdpsnd_server_send_formats(context, context->priv->rdpsnd_pdu)))
-	{
-		WLog_ERR(TAG, "rdpsnd_server_send_formats failed with error %"PRIu32"", error);
-		goto out;
-	}
-
 	while (TRUE)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
@@ -273,8 +267,6 @@ static DWORD WINAPI rdpsnd_server_thread(LPVOID arg)
 			break;
 		}
 	}
-
-out:
 
 	if (error && context->rdpcontext)
 		setChannelError(context->rdpcontext, error,
@@ -696,6 +688,12 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 		goto out_pdu;
 	}
 
+	if ((error = rdpsnd_server_send_formats(context, context->priv->rdpsnd_pdu)))
+	{
+		WLog_ERR(TAG, "rdpsnd_server_send_formats failed with error %"PRIu32"", error);
+		goto out_lock;
+	}
+
 	if (priv->ownThread)
 	{
 		context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -717,6 +715,7 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 	}
 
 	return CHANNEL_RC_OK;
+
 out_stopEvent:
 	CloseHandle(context->priv->StopEvent);
 	context->priv->StopEvent = NULL;
