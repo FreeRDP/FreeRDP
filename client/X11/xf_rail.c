@@ -110,6 +110,22 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId,
 	xfc->rail->ClientSystemCommand(xfc->rail, &syscommand);
 }
 
+static BOOL change_detected(INT32 x, INT32 y)
+{
+	return fabs(x - y) > 10.0;
+}
+static BOOL move_detected(INT32 x, INT32 y, INT32 w, INT32 h,
+                          INT32 oldX, INT32 oldY, UINT32 oldW, UINT32 oldH)
+{
+	if ((x < 0) || (y < 0) || (w < 0) || (h < 0))
+		return TRUE;
+
+	return change_detected(x, oldX) ||
+	       change_detected(y, oldY) ||
+	       change_detected(w, oldW) ||
+	       change_detected(h, oldH);
+}
+
 /**
  * The position of the X window can become out of sync with the RDP window
  * if the X window is moved locally by the window manager.  In this event
@@ -124,10 +140,10 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		return;
 
 	/* If current window position disagrees with RDP window position, send update to RDP server */
-	if (appWindow->x != appWindow->windowOffsetX ||
-	    appWindow->y != appWindow->windowOffsetY ||
-	    appWindow->width != appWindow->windowWidth ||
-	    appWindow->height != appWindow->windowHeight)
+	if (move_detected(appWindow->x, appWindow->y,
+	                  appWindow->width, appWindow->height,
+	                  appWindow->windowOffsetX, appWindow->windowOffsetY,
+	                  appWindow->windowWidth, appWindow->windowHeight))
 	{
 		windowMove.windowId = appWindow->windowId;
 		/*
