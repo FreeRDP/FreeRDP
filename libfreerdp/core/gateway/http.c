@@ -747,7 +747,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		size_t s;
 		char* end;
 		/* Read until we encounter \r\n\r\n */
-		int status = BIO_read(tls->bio, Stream_Pointer(response->data), 4);
+		int status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
 
 		if (status <= 0)
 		{
