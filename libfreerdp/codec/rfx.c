@@ -145,8 +145,9 @@ static void rfx_profiler_print(RFX_CONTEXT* context)
 	PROFILER_PRINT_FOOTER
 }
 
-static void rfx_tile_init(RFX_TILE* tile)
+static void rfx_tile_init(void* obj)
 {
+	RFX_TILE* tile = (RFX_TILE*)obj;
 	if (tile)
 	{
 		tile->x = 0;
@@ -160,9 +161,10 @@ static void rfx_tile_init(RFX_TILE* tile)
 	}
 }
 
-static RFX_TILE* rfx_decoder_tile_new(void)
+static void* rfx_decoder_tile_new(void* val)
 {
 	RFX_TILE* tile = NULL;
+	WINPR_UNUSED(val);
 
 	if (!(tile = (RFX_TILE*) calloc(1, sizeof(RFX_TILE))))
 		return NULL;
@@ -177,8 +179,10 @@ static RFX_TILE* rfx_decoder_tile_new(void)
 	return tile;
 }
 
-static void rfx_decoder_tile_free(RFX_TILE* tile)
+static void rfx_decoder_tile_free(void* obj)
 {
+	RFX_TILE* tile = (RFX_TILE*)obj;
+
 	if (tile)
 	{
 		if (tile->allocated)
@@ -188,14 +192,15 @@ static void rfx_decoder_tile_free(RFX_TILE* tile)
 	}
 }
 
-static RFX_TILE* rfx_encoder_tile_new(void)
+static void* rfx_encoder_tile_new(void* val)
 {
-	return (RFX_TILE*)calloc(1, sizeof(RFX_TILE));
+	WINPR_UNUSED(val);
+	return calloc(1, sizeof(RFX_TILE));
 }
 
-static void rfx_encoder_tile_free(RFX_TILE* tile)
+static void rfx_encoder_tile_free(void* obj)
 {
-	free(tile);
+	free(obj);
 }
 
 RFX_CONTEXT* rfx_context_new(BOOL encoder)
@@ -231,17 +236,17 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 		goto error_tilePool;
 
 	pool = ObjectPool_Object(priv->TilePool);
-	pool->fnObjectInit = (OBJECT_INIT_FN) rfx_tile_init;
+	pool->fnObjectInit = rfx_tile_init;
 
 	if (context->encoder)
 	{
-		pool->fnObjectNew = (OBJECT_NEW_FN) rfx_encoder_tile_new;
-		pool->fnObjectFree = (OBJECT_FREE_FN) rfx_encoder_tile_free;
+		pool->fnObjectNew = rfx_encoder_tile_new;
+		pool->fnObjectFree = rfx_encoder_tile_free;
 	}
 	else
 	{
-		pool->fnObjectNew = (OBJECT_NEW_FN) rfx_decoder_tile_new;
-		pool->fnObjectFree = (OBJECT_FREE_FN) rfx_decoder_tile_free;
+		pool->fnObjectNew = rfx_decoder_tile_new;
+		pool->fnObjectFree = rfx_decoder_tile_free;
 	}
 
 	/*
