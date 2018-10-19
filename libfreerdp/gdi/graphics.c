@@ -271,8 +271,8 @@ static void gdi_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 	}
 }
 
-static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, UINT32 x,
-                           UINT32 y, UINT32 w, UINT32 h, UINT32 sx, UINT32 sy, BOOL fOpRedundant)
+static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x,
+                           INT32 y, INT32 w, INT32 h, INT32 sx, INT32 sy, BOOL fOpRedundant)
 {
 	gdiGlyph* gdi_glyph;
 	rdpGdi* gdi;
@@ -325,8 +325,8 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, UINT32 x,
 	return rc;
 }
 
-static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
-                                UINT32 width, UINT32 height, UINT32 bgcolor,
+static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y,
+                                INT32 width, INT32 height, UINT32 bgcolor,
                                 UINT32 fgcolor, BOOL fOpRedundant)
 {
 	rdpGdi* gdi;
@@ -374,8 +374,8 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 	return gdi_SetClipRgn(gdi->drawing->hdc, x, y, width, height);
 }
 
-static BOOL gdi_Glyph_EndDraw(rdpContext* context, UINT32 x, UINT32 y,
-                              UINT32 width, UINT32 height, UINT32 bgcolor, UINT32 fgcolor)
+static BOOL gdi_Glyph_EndDraw(rdpContext* context, INT32 x, INT32 y,
+                              INT32 width, INT32 height, UINT32 bgcolor, UINT32 fgcolor)
 {
 	rdpGdi* gdi;
 

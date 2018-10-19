@@ -34,8 +34,8 @@ FREERDP_API BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect,
 FREERDP_API BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT* lpPoints, int nCount);
 FREERDP_API BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT* lpPoints,
                                  int* lpPolyCounts, int nCount);
-FREERDP_API BOOL gdi_Rectangle(HGDI_DC hdc, UINT32 nXDst, UINT32 nYDst,
-                               UINT32 nWidth, UINT32 nHeight);
+FREERDP_API BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst,
+                               INT32 nWidth, INT32 nHeight);
 
 #ifdef __cplusplus
 }

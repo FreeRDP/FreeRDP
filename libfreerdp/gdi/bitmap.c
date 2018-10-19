@@ -458,9 +458,9 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
  * @param rop raster operation code
  * @return 0 on failure, non-zero otherwise
  */
-BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                UINT32 nXSrc, UINT32 nYSrc, DWORD rop, const gdiPalette* palette)
+BOOL gdi_BitBlt(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest,
+                INT32 nWidth, INT32 nHeight, HGDI_DC hdcSrc,
+                INT32 nXSrc, INT32 nYSrc, DWORD rop, const gdiPalette* palette)
 {
 	HGDI_BITMAP hSrcBmp, hDstBmp;
 

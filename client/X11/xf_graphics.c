@@ -144,12 +144,12 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		xbitmap->image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 		                              ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height,
 		                              xfc->scanline_pad, 0);
+
 		if (!xbitmap->image)
 			goto unlock;
 
 		xbitmap->image->byte_order = LSBFirst;
 		xbitmap->image->bitmap_bit_order = LSBFirst;
-
 		XPutImage(xfc->display, xbitmap->pixmap, xfc->gc, xbitmap->image, 0, 0, 0, 0, bitmap->width,
 		          bitmap->height);
 	}
@@ -425,8 +425,8 @@ static void xf_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 	free(glyph);
 }
 
-static BOOL xf_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, UINT32 x,
-                          UINT32 y, UINT32 w, UINT32 h, UINT32 sx, UINT32 sy,
+static BOOL xf_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x,
+                          INT32 y, INT32 w, INT32 h, INT32 sx, INT32 sy,
                           BOOL fOpRedundant)
 {
 	xfGlyph* xf_glyph;
@@ -453,8 +453,8 @@ static BOOL xf_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, UINT32 x,
 	return TRUE;
 }
 
-static BOOL xf_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
-                               UINT32 width, UINT32 height, UINT32 bgcolor,
+static BOOL xf_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y,
+                               INT32 width, INT32 height, UINT32 bgcolor,
                                UINT32 fgcolor, BOOL fOpRedundant)
 {
 	xfContext* xfc = (xfContext*) context;
@@ -487,8 +487,8 @@ static BOOL xf_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 	return TRUE;
 }
 
-static BOOL xf_Glyph_EndDraw(rdpContext* context, UINT32 x, UINT32 y,
-                             UINT32 width, UINT32 height,
+static BOOL xf_Glyph_EndDraw(rdpContext* context, INT32 x, INT32 y,
+                             INT32 width, INT32 height,
                              UINT32 bgcolor, UINT32 fgcolor)
 {
 	xfContext* xfc = (xfContext*) context;
