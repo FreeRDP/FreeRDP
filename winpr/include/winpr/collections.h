@@ -35,9 +35,7 @@
 extern "C" {
 #endif
 
-/* We don't know if the new function will require an argument.
- * Leave the braces empty, C defines that as variable arguments. */
-typedef void* (*OBJECT_NEW_FN)();
+typedef void* (*OBJECT_NEW_FN)(void* val);
 typedef void (*OBJECT_INIT_FN)(void* obj);
 typedef void (*OBJECT_UNINIT_FN)(void* obj);
 typedef void (*OBJECT_FREE_FN)(void* obj);

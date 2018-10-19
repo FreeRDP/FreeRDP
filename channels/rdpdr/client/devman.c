@@ -41,8 +41,10 @@
 
 #include "devman.h"
 
-void devman_device_free(DEVICE* device)
+static void devman_device_free(void* obj)
 {
+	DEVICE* device = (DEVICE*) obj;
+
 	if (!device)
 		return;
 
@@ -75,8 +77,7 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 		return NULL;
 	}
 
-	ListDictionary_ValueObject(devman->devices)->fnObjectFree =
-			(OBJECT_FREE_FN) devman_device_free;
+	ListDictionary_ValueObject(devman->devices)->fnObjectFree = devman_device_free;
 
 	return devman;
 }
