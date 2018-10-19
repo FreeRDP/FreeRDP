@@ -407,7 +407,7 @@ static void update_read_window_delete_order(wStream* s, WINDOW_ORDER_INFO* order
 
 static BOOL window_order_supported(const rdpSettings* settings, UINT32 fieldFlags)
 {
-	const UINT32 mask = (WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE || WINDOW_ORDER_FIELD_RP_CONTENT ||
+	const UINT32 mask = (WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE | WINDOW_ORDER_FIELD_RP_CONTENT |
 	                     WINDOW_ORDER_FIELD_ROOT_PARENT);
 	BOOL dresult;
 
