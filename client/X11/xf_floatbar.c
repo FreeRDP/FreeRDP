@@ -527,11 +527,11 @@ static void xf_floatbar_event_motionnotify(xfContext* xfc, XEvent* event)
 	floatbar = xfc->window->floatbar;
 	cursor = XCreateFontCursor(xfc->display, XC_arrow);
 
-	if (event->xmotion.state && Button1Mask && mode > XF_FLOATBAR_MODE_DRAGGING)
+	if ((event->xmotion.state & Button1Mask) && (mode > XF_FLOATBAR_MODE_DRAGGING))
 	{
 		xf_floatbar_resize(xfc, event);
 	}
-	else if (event->xmotion.state && Button1Mask && mode == XF_FLOATBAR_MODE_DRAGGING)
+	else if ((event->xmotion.state & Button1Mask) && (mode == XF_FLOATBAR_MODE_DRAGGING))
 	{
 		xf_floatbar_dragging(xfc, event);
 	}
