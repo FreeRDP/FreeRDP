@@ -742,10 +742,12 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 	response->ContentLength = 0;
 
-	while (!payloadOffset)
+	while (payloadOffset == 0)
 	{
-		int status = BIO_read(tls->bio, Stream_Pointer(response->data),
-		                      Stream_Capacity(response->data) - Stream_GetPosition(response->data));
+		size_t s;
+		char* end;
+		/* Read until we encounter \r\n\r\n */
+		int status = BIO_read(tls->bio, Stream_Pointer(response->data), 4);
 
 		if (status <= 0)
 		{
@@ -761,28 +763,26 @@ HttpResponse* http_response_recv(rdpTls* tls)
 #endif
 		Stream_Seek(response->data, (size_t)status);
 
-		if (Stream_GetRemainingLength(response->data) < 1024)
-		{
-			if (!Stream_EnsureRemainingCapacity(response->data, 1024))
-				goto out_error;
-		}
+		if (!Stream_EnsureRemainingCapacity(response->data, 1024))
+			goto out_error;
 
 		position = Stream_GetPosition(response->data);
 
-		if (position > RESPONSE_SIZE_LIMIT)
+		if (position < 4)
+			continue;
+		else if (position > RESPONSE_SIZE_LIMIT)
 		{
 			WLog_ERR(TAG, "Request header too large! (%"PRIdz" bytes) Aborting!", bodyLength);
 			goto out_error;
 		}
 
-		if (position >= 4)
-		{
-			char* buffer = (char*)Stream_Buffer(response->data);
-			const char* line = string_strnstr(buffer, "\r\n\r\n", position);
+		/* Always check at most the lase 8 bytes for occurance of the desired
+		 * sequence of \r\n\r\n */
+		s = (position > 8) ? 8 : position;
+		end = (char*)Stream_Pointer(response->data) - s;
 
-			if (line)
-				payloadOffset = (line - buffer) + 4UL;
-		}
+		if (string_strnstr(end, "\r\n\r\n", s) != NULL)
+			payloadOffset = Stream_GetPosition(response->data);
 	}
 
 	if (payloadOffset)
