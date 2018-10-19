@@ -43,7 +43,7 @@ static void pointer_free(rdpContext* context, rdpPointer* pointer)
 {
 	if (pointer)
 	{
-		pointer->Free(context, pointer);
+		IFCALL(pointer->Free, context, pointer);
 
 		if (pointer->xorMaskData)
 		{
@@ -139,7 +139,7 @@ static BOOL update_pointer_color(rdpContext* context,
 			           pointer->lengthXorMask);
 		}
 
-		if (!pointer->New(context, pointer))
+		if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
 			goto out_fail;
 
 		if (!pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer))
@@ -199,7 +199,7 @@ static BOOL update_pointer_new(rdpContext* context,
 		           pointer->lengthXorMask);
 	}
 
-	if (!pointer->New(context, pointer))
+	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
 		goto out_fail;
 
 	if (!pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex,
