@@ -691,6 +691,41 @@ BOOL http_response_print(HttpResponse* response)
 	return TRUE;
 }
 
+static BOOL http_use_content_length(const char* cur)
+{
+	size_t pos = 0;
+
+	if (!cur)
+		return FALSE;
+
+	if (_strnicmp(cur, "application/rpc", 15) == 0)
+		pos = 15;
+	else if (_strnicmp(cur, "text/plain", 10) == 0)
+		pos = 10;
+	else if (_strnicmp(cur, "text/html", 9) == 0)
+		pos = 9;
+
+	if (pos > 0)
+	{
+		char end = cur[pos];
+
+		switch (end)
+		{
+			case ' ':
+			case ';':
+			case '\0':
+			case '\r':
+			case '\n':
+				return TRUE;
+
+			default:
+				return FALSE;
+		}
+	}
+
+	return FALSE;
+}
+
 HttpResponse* http_response_recv(rdpTls* tls)
 {
 	size_t size;
@@ -793,18 +828,21 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 		response->BodyLength = Stream_GetPosition(response->data) - payloadOffset;
 		bodyLength = 0; /* expected body length */
-
-		if (response->ContentType)
 		{
-			if (_stricmp(response->ContentType, "application/rpc") != 0)
-				bodyLength = response->ContentLength;
-			else if (_stricmp(response->ContentType, "text/plain") == 0)
-				bodyLength = response->ContentLength;
-			else if (_stricmp(response->ContentType, "text/html") == 0)
-				bodyLength = response->ContentLength;
-		}
-		else
+			const char* cur = response->ContentType;
 			bodyLength = response->BodyLength;
+
+			while (cur != NULL)
+			{
+				if (http_use_content_length(cur))
+				{
+					bodyLength = response->ContentLength;
+					break;
+				}
+
+				cur = strchr(cur, ';');
+			}
+		}
 
 		if (bodyLength > RESPONSE_SIZE_LIMIT)
 		{
