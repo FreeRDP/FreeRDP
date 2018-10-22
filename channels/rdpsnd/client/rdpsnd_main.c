@@ -332,6 +332,45 @@ static UINT rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	return rdpsnd_send_training_confirm_pdu(rdpsnd, wTimeStamp, wPackSize);
 }
 
+static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT32 wFormatNo,
+        const AUDIO_FORMAT* format)
+{
+	if (!rdpsnd)
+		return FALSE;
+
+	if (!rdpsnd->isOpen || (wFormatNo != rdpsnd->wCurrentFormatNo))
+	{
+		BOOL rc;
+		BOOL supported;
+		AUDIO_FORMAT deviceFormat = *format;
+		rdpsnd_recv_close_pdu(rdpsnd);
+		supported = IFCALLRESULT(FALSE, rdpsnd->device->FormatSupported, rdpsnd->device, format);
+
+		if (!supported)
+		{
+			deviceFormat.wFormatTag = WAVE_FORMAT_PCM;
+			deviceFormat.wBitsPerSample = 16;
+			deviceFormat.cbSize = 0;
+		}
+
+		rc = IFCALLRESULT(FALSE, rdpsnd->device->Open, rdpsnd->device, &deviceFormat, rdpsnd->latency);
+
+		if (!rc)
+			return FALSE;
+
+		if (!supported)
+		{
+			if (!freerdp_dsp_context_reset(rdpsnd->dsp_context, format))
+				return FALSE;
+		}
+
+		rdpsnd->isOpen = TRUE;
+		rdpsnd->wCurrentFormatNo = wFormatNo;
+	}
+
+	return TRUE;
+}
+
 /**
  * Function description
  *
@@ -361,36 +400,8 @@ static UINT rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, wStream* s,
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "WaveInfo: cBlockNo: %"PRIu8" wFormatNo: %"PRIu16" [%s]",
 	           rdpsnd->cBlockNo, wFormatNo, audio_format_get_tag_string(format->wFormatTag));
 
-	if (!rdpsnd->isOpen || (wFormatNo != rdpsnd->wCurrentFormatNo))
-	{
-		BOOL rc;
-		AUDIO_FORMAT deviceFormat = *format;
-		rdpsnd_recv_close_pdu(rdpsnd);
-		rc = IFCALLRESULT(FALSE, rdpsnd->device->FormatSupported, rdpsnd->device, format);
-
-		if (!rc)
-		{
-			deviceFormat.wFormatTag = WAVE_FORMAT_PCM;
-			deviceFormat.wBitsPerSample = 16;
-			deviceFormat.cbSize = 0;
-		}
-
-		rc = IFCALLRESULT(FALSE, rdpsnd->device->Open, rdpsnd->device, &deviceFormat, rdpsnd->latency);
-
-		if (!rc)
-			return CHANNEL_RC_INITIALIZATION_ERROR;
-
-		rc = IFCALLRESULT(FALSE, rdpsnd->device->FormatSupported, rdpsnd->device, format);
-
-		if (!rc)
-		{
-			if (!freerdp_dsp_context_reset(rdpsnd->dsp_context, format))
-				return CHANNEL_RC_INITIALIZATION_ERROR;
-		}
-
-		rdpsnd->isOpen = TRUE;
-		rdpsnd->wCurrentFormatNo = wFormatNo;
-	}
+	if (!rdpsnd_ensure_device_is_open(rdpsnd, wFormatNo, format))
+		return ERROR_INTERNAL_ERROR;
 
 	rdpsnd->expectingWave = TRUE;
 	return CHANNEL_RC_OK;
@@ -504,36 +515,8 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave2PDU: cBlockNo: %"PRIu8" wFormatNo: %"PRIu16"",
 	           rdpsnd->cBlockNo, wFormatNo);
 
-	if (!rdpsnd->isOpen || (wFormatNo != rdpsnd->wCurrentFormatNo))
-	{
-		BOOL rc;
-		AUDIO_FORMAT deviceFormat = *format;
-		rdpsnd_recv_close_pdu(rdpsnd);
-		rc = IFCALLRESULT(FALSE, rdpsnd->device->FormatSupported, rdpsnd->device, format);
-
-		if (!rc)
-		{
-			deviceFormat.wFormatTag = WAVE_FORMAT_PCM;
-			deviceFormat.wBitsPerSample = 16;
-			deviceFormat.cbSize = 0;
-		}
-
-		rc = IFCALLRESULT(FALSE, rdpsnd->device->Open, rdpsnd->device, &deviceFormat, rdpsnd->latency);
-
-		if (!rc)
-			return CHANNEL_RC_INITIALIZATION_ERROR;
-
-		rc = IFCALLRESULT(FALSE, rdpsnd->device->FormatSupported, rdpsnd->device, format);
-
-		if (!rc)
-		{
-			if (!freerdp_dsp_context_reset(rdpsnd->dsp_context, format))
-				return CHANNEL_RC_INITIALIZATION_ERROR;
-		}
-
-		rdpsnd->isOpen = TRUE;
-		rdpsnd->wCurrentFormatNo = wFormatNo;
-	}
+	if (!rdpsnd_ensure_device_is_open(rdpsnd, wFormatNo, format))
+		return ERROR_INTERNAL_ERROR;
 
 	return rdpsnd_treat_wave(rdpsnd, s, rdpsnd->waveDataSize);
 }
