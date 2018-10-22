@@ -74,7 +74,7 @@ static const char* const NTLM_NEGOTIATE_STRINGS[] =
 	"NTLMSSP_NEGOTIATE_UNICODE"
 };
 
-void ntlm_print_negotiate_flags(UINT32 flags)
+static void ntlm_print_negotiate_flags(UINT32 flags)
 {
 	int i;
 	const char* str;
@@ -90,7 +90,7 @@ void ntlm_print_negotiate_flags(UINT32 flags)
 	}
 }
 
-int ntlm_read_message_header(wStream* s, NTLM_MESSAGE_HEADER* header)
+static int ntlm_read_message_header(wStream* s, NTLM_MESSAGE_HEADER* header)
 {
 	if (Stream_GetRemainingLength(s) < 12)
 		return -1;
@@ -104,19 +104,19 @@ int ntlm_read_message_header(wStream* s, NTLM_MESSAGE_HEADER* header)
 	return 1;
 }
 
-void ntlm_write_message_header(wStream* s, NTLM_MESSAGE_HEADER* header)
+static void ntlm_write_message_header(wStream* s, NTLM_MESSAGE_HEADER* header)
 {
 	Stream_Write(s, header->Signature, sizeof(NTLM_SIGNATURE));
 	Stream_Write_UINT32(s, header->MessageType);
 }
 
-void ntlm_populate_message_header(NTLM_MESSAGE_HEADER* header, UINT32 MessageType)
+static void ntlm_populate_message_header(NTLM_MESSAGE_HEADER* header, UINT32 MessageType)
 {
 	CopyMemory(header->Signature, NTLM_SIGNATURE, sizeof(NTLM_SIGNATURE));
 	header->MessageType = MessageType;
 }
 
-int ntlm_read_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
+static int ntlm_read_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 		return -1;
@@ -127,7 +127,7 @@ int ntlm_read_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 	return 1;
 }
 
-void ntlm_write_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
+static void ntlm_write_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields->MaxLen < 1)
 		fields->MaxLen = fields->Len;
@@ -137,11 +137,13 @@ void ntlm_write_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 	Stream_Write_UINT32(s, fields->BufferOffset); /* BufferOffset (4 bytes) */
 }
 
-int ntlm_read_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fields)
+static int ntlm_read_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields->Len > 0)
 	{
-		if ((fields->BufferOffset + fields->Len) > Stream_Length(s))
+		const UINT64 offset = (UINT64)fields->BufferOffset + (UINT64)fields->Len;
+
+		if (offset > Stream_Length(s))
 			return -1;
 
 		fields->Buffer = (PBYTE) malloc(fields->Len);
@@ -156,7 +158,7 @@ int ntlm_read_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 	return 1;
 }
 
-void ntlm_write_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fields)
+static void ntlm_write_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields->Len > 0)
 	{
@@ -165,7 +167,7 @@ void ntlm_write_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 	}
 }
 
-void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
+static void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields)
 	{
@@ -180,7 +182,7 @@ void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 	}
 }
 
-void ntlm_print_message_fields(NTLM_MESSAGE_FIELDS* fields, const char* name)
+static void ntlm_print_message_fields(NTLM_MESSAGE_FIELDS* fields, const char* name)
 {
 	WLog_DBG(TAG, "%s (Len: %"PRIu16" MaxLen: %"PRIu16" BufferOffset: %"PRIu32")",
 	         name, fields->Len, fields->MaxLen, fields->BufferOffset);
