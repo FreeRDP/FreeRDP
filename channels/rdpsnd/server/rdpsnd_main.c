@@ -381,7 +381,9 @@ out:
 
 static BOOL rdpsnd_server_align_wave_pdu(wStream* s, UINT32 alignment)
 {
-	size_t size = Stream_Length(s);
+	size_t size;
+	Stream_SealLength(s);
+	size = Stream_Length(s);
 
 	if ((size % alignment) != 0)
 	{
@@ -393,6 +395,7 @@ static BOOL rdpsnd_server_align_wave_pdu(wStream* s, UINT32 alignment)
 		Stream_Zero(s, offset);
 	}
 
+	Stream_SealLength(s);
 	return TRUE;
 }
 
@@ -506,6 +509,8 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 		error = ERROR_INTERNAL_ERROR;
 	else
 	{
+		BOOL rc;
+
 		/* Set stream size */
 		if (!rdpsnd_server_align_wave_pdu(s, format->nBlockAlign))
 			return ERROR_INTERNAL_ERROR;
@@ -513,14 +518,14 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 		end = Stream_GetPosition(s);
 		Stream_SetPosition(s, 2);
 		Stream_Write_UINT16(s, end - 4);
-		Stream_SetPosition(s, end);
-		Stream_SealLength(s);
 		context->block_no = (context->block_no + 1) % 256;
+		rc = WTSVirtualChannelWrite(context->priv->ChannelHandle,
+		                            (PCHAR) Stream_Buffer(s), end, &written);
 
-		if (!WTSVirtualChannelWrite(context->priv->ChannelHandle,
-		                            (PCHAR) Stream_Buffer(s), Stream_Length(s), &written))
+		if (!rc || (end != written))
 		{
-			WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
+			WLog_ERR(TAG, "WTSVirtualChannelWrite failed! [stream length=%"PRIdz" - written=%"PRIu32, end,
+			         written);
 			error = ERROR_INTERNAL_ERROR;
 		}
 	}
