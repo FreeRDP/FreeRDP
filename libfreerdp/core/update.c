@@ -208,11 +208,9 @@ BITMAP_UPDATE* update_read_bitmap_update(rdpUpdate* update, wStream* s)
 
 	if (bitmapUpdate->number > bitmapUpdate->count)
 	{
-		UINT16 count;
-		BITMAP_DATA* newdata;
-		count = bitmapUpdate->number * 2;
-		newdata = (BITMAP_DATA*) realloc(bitmapUpdate->rectangles,
-		                                 sizeof(BITMAP_DATA) * count);
+		UINT32 count = bitmapUpdate->number * 2;
+		BITMAP_DATA* newdata = (BITMAP_DATA*) realloc(bitmapUpdate->rectangles,
+		                       sizeof(BITMAP_DATA) * count);
 
 		if (!newdata)
 			goto fail;
