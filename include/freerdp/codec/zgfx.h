@@ -32,34 +32,18 @@
 
 #define ZGFX_SEGMENTED_MAXSIZE			65535
 
-struct _ZGFX_CONTEXT
-{
-	BOOL Compressor;
-
-	const BYTE* pbInputCurrent;
-	const BYTE* pbInputEnd;
-
-	UINT32 bits;
-	UINT32 cBitsRemaining;
-	UINT32 BitsCurrent;
-	UINT32 cBitsCurrent;
-
-	BYTE OutputBuffer[65536];
-	UINT32 OutputCount;
-
-	BYTE HistoryBuffer[2500000];
-	UINT32 HistoryIndex;
-	UINT32 HistoryBufferSize;
-};
 typedef struct _ZGFX_CONTEXT ZGFX_CONTEXT;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-FREERDP_API int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
-FREERDP_API int zgfx_compress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
-FREERDP_API int zgfx_compress_to_stream(ZGFX_CONTEXT* zgfx, wStream* sDst, const BYTE* pUncompressed, UINT32 uncompressedSize, UINT32* pFlags);
+FREERDP_API int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize,
+                                BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
+FREERDP_API int zgfx_compress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize,
+                              BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
+FREERDP_API int zgfx_compress_to_stream(ZGFX_CONTEXT* zgfx, wStream* sDst,
+                                        const BYTE* pUncompressed, UINT32 uncompressedSize, UINT32* pFlags);
 
 FREERDP_API void zgfx_context_reset(ZGFX_CONTEXT* zgfx, BOOL flush);
 
@@ -71,4 +55,4 @@ FREERDP_API void zgfx_context_free(ZGFX_CONTEXT* zgfx);
 #endif
 
 #endif /* FREERDP_CODEC_ZGFX_H */
- 
+
