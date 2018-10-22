@@ -137,6 +137,7 @@ static INLINE BOOL zgfx_GetBits(ZGFX_CONTEXT* _zgfx, UINT32 _nbits)
 	_zgfx->cBitsCurrent -= _nbits;
 	_zgfx->bits = _zgfx->BitsCurrent >> _zgfx->cBitsCurrent;
 	_zgfx->BitsCurrent &= ((1 << _zgfx->cBitsCurrent) - 1);
+	return TRUE;
 }
 
 static void zgfx_history_buffer_ring_write(ZGFX_CONTEXT* zgfx, const BYTE* src, size_t count)
@@ -229,9 +230,15 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
 	UINT32 count;
 	UINT32 distance;
 	BYTE* pbSegment;
-	size_t cbSegment = segmentSize - 1;
+	size_t cbSegment;
 
-	if ((Stream_GetRemainingLength(stream) < segmentSize) || (segmentSize < 1))
+	if (!zgfx || !stream)
+		return FALSE;
+
+	cbSegment = segmentSize - 1;
+
+	if ((Stream_GetRemainingLength(stream) < segmentSize) || (segmentSize < 1) ||
+	    (segmentSize > UINT32_MAX))
 		return FALSE;
 
 	Stream_Read_UINT8(stream, flags); /* header (1 byte) */
@@ -242,6 +249,10 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
 	if (!(flags & PACKET_COMPRESSED))
 	{
 		zgfx_history_buffer_ring_write(zgfx, pbSegment, cbSegment);
+
+		if (cbSegment > sizeof(zgfx->OutputBuffer))
+			return FALSE;
+
 		CopyMemory(zgfx->OutputBuffer, pbSegment, cbSegment);
 		zgfx->OutputCount = cbSegment;
 		return TRUE;
@@ -280,6 +291,9 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
 					if (++zgfx->HistoryIndex == zgfx->HistoryBufferSize)
 						zgfx->HistoryIndex = 0;
 
+					if (zgfx->OutputCount >= sizeof(zgfx->OutputBuffer))
+						return FALSE;
+
 					zgfx->OutputBuffer[zgfx->OutputCount++] = c;
 				}
 				else
@@ -313,6 +327,9 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
 							count += zgfx->bits;
 						}
 
+						if (count > sizeof(zgfx->OutputBuffer) - zgfx->OutputCount)
+							return FALSE;
+
 						zgfx_history_buffer_ring_read(zgfx, distance, &(zgfx->OutputBuffer[zgfx->OutputCount]), count);
 						zgfx_history_buffer_ring_write(zgfx, &(zgfx->OutputBuffer[zgfx->OutputCount]), count);
 						zgfx->OutputCount += count;
@@ -325,6 +342,10 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
 						zgfx->cBitsRemaining -= zgfx->cBitsCurrent;
 						zgfx->cBitsCurrent = 0;
 						zgfx->BitsCurrent = 0;
+
+						if (count > sizeof(zgfx->OutputBuffer) - zgfx->OutputCount)
+							return FALSE;
+
 						CopyMemory(&(zgfx->OutputBuffer[zgfx->OutputCount]), zgfx->pbInputCurrent, count);
 						zgfx_history_buffer_ring_write(zgfx, zgfx->pbInputCurrent, count);
 						zgfx->pbInputCurrent += count;
