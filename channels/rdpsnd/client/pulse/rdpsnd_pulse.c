@@ -347,11 +347,6 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 
 BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format)
 {
-	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
-
-	if (!pulse->context)
-		return FALSE;
-
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
