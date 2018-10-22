@@ -87,20 +87,17 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s)
 {
-	SURFACE_BITS_COMMAND* cmd = calloc(1, sizeof(SURFACE_BITS_COMMAND));
-
-	if (!cmd)
-		return FALSE;
+	SURFACE_BITS_COMMAND cmd = {0};
 
 	if (Stream_GetRemainingLength(s) < 8)
 		goto fail;
 
-	Stream_Read_UINT16(s, cmd->destLeft);
-	Stream_Read_UINT16(s, cmd->destTop);
-	Stream_Read_UINT16(s, cmd->destRight);
-	Stream_Read_UINT16(s, cmd->destBottom);
+	Stream_Read_UINT16(s, cmd.destLeft);
+	Stream_Read_UINT16(s, cmd.destTop);
+	Stream_Read_UINT16(s, cmd.destRight);
+	Stream_Read_UINT16(s, cmd.destBottom);
 
-	if (!update_recv_surfcmd_bitmap_ex(s, &cmd->bmp))
+	if (!update_recv_surfcmd_bitmap_ex(s, &cmd.bmp))
 		goto fail;
 
 	if (!update->SurfaceBits)
@@ -109,9 +106,8 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s)
 		goto fail;
 	}
 
-	return update->SurfaceBits(update->context, cmd);
+	return update->SurfaceBits(update->context, &cmd);
 fail:
-	free_surface_bits_command(update->context, cmd);
 	return FALSE;
 }
 
