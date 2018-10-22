@@ -379,6 +379,23 @@ out:
 	return error;
 }
 
+static BOOL rdpsnd_server_align_wave_pdu(wStream* s, UINT32 alignment)
+{
+	size_t size = Stream_Length(s);
+
+	if ((size % alignment) != 0)
+	{
+		size_t offset = alignment - size % alignment;
+
+		if (!Stream_EnsureRemainingCapacity(s, offset))
+			return FALSE;
+
+		Stream_Zero(s, offset);
+	}
+
+	return TRUE;
+}
+
 /**
  * Function description
  * context->priv->lock should be obtained before calling this function
@@ -410,10 +427,13 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context,
 	length = context->priv->out_pending_frames * context->priv->src_bytes_per_frame;
 
 	if (!freerdp_dsp_encode(context->priv->dsp_context, format, src, length, s))
-		error = ERROR_INTERNAL_ERROR;
+		return ERROR_INTERNAL_ERROR;
 	else
 	{
 		/* Set stream size */
+		if (!rdpsnd_server_align_wave_pdu(s, format->nBlockAlign))
+			return ERROR_INTERNAL_ERROR;
+
 		end = Stream_GetPosition(s);
 		Stream_SetPosition(s, 2);
 		Stream_Write_UINT16(s, end - start + 8);
@@ -487,6 +507,9 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 	else
 	{
 		/* Set stream size */
+		if (!rdpsnd_server_align_wave_pdu(s, format->nBlockAlign))
+			return ERROR_INTERNAL_ERROR;
+
 		end = Stream_GetPosition(s);
 		Stream_SetPosition(s, 2);
 		Stream_Write_UINT16(s, end - 4);
@@ -715,7 +738,6 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 	}
 
 	return CHANNEL_RC_OK;
-
 out_stopEvent:
 	CloseHandle(context->priv->StopEvent);
 	context->priv->StopEvent = NULL;
