@@ -449,8 +449,8 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 
 	data = Stream_Pointer(s);
 	format = &rdpsnd->ClientFormats[rdpsnd->wCurrentFormatNo];
-	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave: cBlockNo: %"PRIu8" wTimeStamp: %"PRIu16"",
-	           rdpsnd->cBlockNo, rdpsnd->wTimeStamp);
+	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave: cBlockNo: %"PRIu8" wTimeStamp: %"PRIu16", size: %"PRIdz,
+	           rdpsnd->cBlockNo, rdpsnd->wTimeStamp, size);
 
 	if (rdpsnd->device && rdpsnd->attached)
 	{
@@ -488,12 +488,16 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	rdpsnd->expectingWave = FALSE;
+
 	/**
 	 * The Wave PDU is a special case: it is always sent after a Wave Info PDU,
 	 * and we do not process its header. Instead, the header is pad that needs
 	 * to be filled with the first four bytes of the audio sample data sent as
 	 * part of the preceding Wave Info PDU.
 	 */
+	if (Stream_GetRemainingLength(s) < 4)
+		return ERROR_INVALID_DATA;
+
 	CopyMemory(Stream_Buffer(s), rdpsnd->waveData, 4);
 	return rdpsnd_treat_wave(rdpsnd, s, rdpsnd->waveDataSize);
 }
@@ -515,8 +519,8 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 	rdpsnd->waveDataSize = BodySize - 12;
 	format = &rdpsnd->ClientFormats[wFormatNo];
 	rdpsnd->wArrivalTime = GetTickCount();
-	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave2PDU: cBlockNo: %"PRIu8" wFormatNo: %"PRIu16"",
-	           rdpsnd->cBlockNo, wFormatNo);
+	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave2PDU: cBlockNo: %"PRIu8" wFormatNo: %"PRIu16", align=%hu",
+	           rdpsnd->cBlockNo, wFormatNo, format->nBlockAlign);
 
 	if (!rdpsnd_ensure_device_is_open(rdpsnd, wFormatNo, format))
 		return ERROR_INTERNAL_ERROR;
