@@ -147,6 +147,7 @@ struct _NTLMv2_CLIENT_CHALLENGE
 	BYTE ClientChallenge[8];
 	UINT32 Reserved3;
 	NTLM_AV_PAIR* AvPairs;
+	UINT32 cbAvPairs;
 };
 typedef struct _NTLMv2_CLIENT_CHALLENGE NTLMv2_CLIENT_CHALLENGE;
 

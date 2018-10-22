@@ -141,7 +141,10 @@ static int ntlm_read_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fiel
 {
 	if (fields->Len > 0)
 	{
-		const UINT64 offset = (UINT64)fields->BufferOffset + (UINT64)fields->Len;
+		const UINT32 offset = fields->BufferOffset + fields->Len;
+
+		if (fields->BufferOffset > UINT32_MAX - fields->Len)
+			return -1;
 
 		if (offset > Stream_Length(s))
 			return -1;
@@ -447,6 +450,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	if (message->TargetInfo.Len > 0)
 	{
+		size_t cbAvTimestamp;
+
 		if (ntlm_read_message_fields_buffer(s, &(message->TargetInfo)) < 0)
 		{
 			Stream_Free(s, FALSE);
@@ -455,14 +460,21 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 		context->ChallengeTargetInfo.pvBuffer = message->TargetInfo.Buffer;
 		context->ChallengeTargetInfo.cbBuffer = message->TargetInfo.Len;
-		AvTimestamp = ntlm_av_pair_get((NTLM_AV_PAIR*) message->TargetInfo.Buffer, MsvAvTimestamp);
+		AvTimestamp = ntlm_av_pair_get(message->TargetInfo.Buffer,
+		                               message->TargetInfo.Len,
+		                               MsvAvTimestamp, &cbAvTimestamp);
 
 		if (AvTimestamp)
 		{
+			PBYTE ptr = ntlm_av_pair_get_value_pointer(AvTimestamp, cbAvTimestamp);
+
+			if (!ptr)
+				return SEC_E_INTERNAL_ERROR;
+
 			if (context->NTLMv2)
 				context->UseMIC = TRUE;
 
-			CopyMemory(context->ChallengeTimestamp, ntlm_av_pair_get_value_pointer(AvTimestamp), 8);
+			CopyMemory(context->ChallengeTimestamp, ptr, 8);
 		}
 	}
 
@@ -786,6 +798,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (message->NtChallengeResponse.Len > 0)
 	{
+		size_t cbAvFlags;
 		wStream* snt = Stream_New(message->NtChallengeResponse.Buffer, message->NtChallengeResponse.Len);
 
 		if (!snt)
@@ -808,10 +821,12 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		context->ChallengeTargetInfo.pvBuffer = (void*) context->NTLMv2Response.Challenge.AvPairs;
 		context->ChallengeTargetInfo.cbBuffer = message->NtChallengeResponse.Len - (28 + 16);
 		CopyMemory(context->ClientChallenge, context->NTLMv2Response.Challenge.ClientChallenge, 8);
-		AvFlags = ntlm_av_pair_get(context->NTLMv2Response.Challenge.AvPairs, MsvAvFlags);
+		AvFlags = ntlm_av_pair_get(context->NTLMv2Response.Challenge.AvPairs,
+		                           context->NTLMv2Response.Challenge.cbAvPairs,
+		                           MsvAvFlags, &cbAvFlags);
 
 		if (AvFlags)
-			Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
+			Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags, cbAvFlags), flags);
 	}
 
 	if (ntlm_read_message_fields_buffer(s,
@@ -1103,18 +1118,24 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 {
 	UINT32 flags = 0;
+	size_t cbAvFlags;
 	NTLM_AV_PAIR* AvFlags = NULL;
 	NTLM_AUTHENTICATE_MESSAGE* message;
 	BYTE messageIntegrityCheck[16];
+
+	if (!context)
+		return SEC_E_INVALID_PARAMETER;
 
 	if (context->state != NTLM_STATE_COMPLETION)
 		return SEC_E_OUT_OF_SEQUENCE;
 
 	message = &context->AUTHENTICATE_MESSAGE;
-	AvFlags = ntlm_av_pair_get(context->NTLMv2Response.Challenge.AvPairs, MsvAvFlags);
+	AvFlags = ntlm_av_pair_get(context->NTLMv2Response.Challenge.AvPairs,
+	                           context->NTLMv2Response.Challenge.cbAvPairs,
+	                           MsvAvFlags, &cbAvFlags);
 
 	if (AvFlags)
-		Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
+		Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags, cbAvFlags), flags);
 
 	if (ntlm_compute_lm_v2_response(context) < 0) /* LmChallengeResponse */
 		return SEC_E_INTERNAL_ERROR;
