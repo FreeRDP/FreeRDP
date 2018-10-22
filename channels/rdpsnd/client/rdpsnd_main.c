@@ -353,6 +353,9 @@ static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT32 wFormatNo,
 			deviceFormat.cbSize = 0;
 		}
 
+		WLog_Print(rdpsnd->log, WLOG_DEBUG, "Opening device with format %s [backend %s]",
+		           audio_format_get_tag_string(format->wFormatTag),
+		           audio_format_get_tag_string(deviceFormat.wFormatTag));
 		rc = IFCALLRESULT(FALSE, rdpsnd->device->Open, rdpsnd->device, &deviceFormat, rdpsnd->latency);
 
 		if (!rc)
@@ -523,12 +526,14 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 
 static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
 {
-	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Close");
-
 	if (rdpsnd->isOpen)
+	{
+		WLog_Print(rdpsnd->log, WLOG_DEBUG, "Closing device");
 		IFCALL(rdpsnd->device->Close, rdpsnd->device);
-
-	rdpsnd->isOpen = FALSE;
+		rdpsnd->isOpen = FALSE;
+	}
+	else
+		WLog_Print(rdpsnd->log, WLOG_DEBUG, "Device already closed");
 }
 
 /**
