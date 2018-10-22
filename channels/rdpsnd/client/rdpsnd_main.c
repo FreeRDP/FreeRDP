@@ -547,7 +547,7 @@ static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
  */
 static UINT rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
-	BOOL error;
+	BOOL rc;
 	UINT32 dwVolume;
 
 	if (Stream_GetRemainingLength(s) < 4)
@@ -555,9 +555,9 @@ static UINT rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 
 	Stream_Read_UINT32(s, dwVolume);
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Volume: 0x%08"PRIX32"", dwVolume);
-	error = IFCALLRESULT(FALSE, rdpsnd->device->SetVolume, rdpsnd->device, dwVolume);
+	rc = IFCALLRESULT(FALSE, rdpsnd->device->SetVolume, rdpsnd->device, dwVolume);
 
-	if (error)
+	if (!rc)
 	{
 		WLog_ERR(TAG, "error setting volume");
 		return CHANNEL_RC_INITIALIZATION_ERROR;
