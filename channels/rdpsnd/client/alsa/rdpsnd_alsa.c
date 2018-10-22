@@ -223,6 +223,15 @@ static BOOL rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMA
 	return (rdpsnd_alsa_set_params(alsa) == 0);
 }
 
+static void rdpsnd_alsa_close_mixer(rdpsndAlsaPlugin* alsa)
+{
+	if (alsa && alsa->mixer_handle)
+	{
+		snd_mixer_close(alsa->mixer_handle);
+		alsa->mixer_handle = NULL;
+	}
+}
+
 static BOOL rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 {
 	int status;
@@ -235,7 +244,7 @@ static BOOL rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "snd_mixer_open failed");
-		return FALSE;
+		goto fail;
 	}
 
 	status = snd_mixer_attach(alsa->mixer_handle, alsa->device_name);
@@ -243,8 +252,7 @@ static BOOL rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "snd_mixer_attach failed");
-		snd_mixer_close(alsa->mixer_handle);
-		return FALSE;
+		goto fail;
 	}
 
 	status = snd_mixer_selem_register(alsa->mixer_handle, NULL, NULL);
@@ -252,8 +260,7 @@ static BOOL rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "snd_mixer_selem_register failed");
-		snd_mixer_close(alsa->mixer_handle);
-		return FALSE;
+		goto fail;
 	}
 
 	status = snd_mixer_load(alsa->mixer_handle);
@@ -261,11 +268,23 @@ static BOOL rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "snd_mixer_load failed");
-		snd_mixer_close(alsa->mixer_handle);
-		return FALSE;
+		goto fail;
 	}
 
 	return TRUE;
+fail:
+	rdpsnd_alsa_close_mixer(alsa);
+	return FALSE;
+}
+
+static void rdpsnd_alsa_pcm_close(rdpsndAlsaPlugin* alsa)
+{
+	if (alsa && alsa->pcm_handle)
+	{
+		snd_pcm_drain(alsa->pcm_handle);
+		snd_pcm_close(alsa->pcm_handle);
+		alsa->pcm_handle = 0;
+	}
 }
 
 static BOOL rdpsnd_alsa_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency)
@@ -293,37 +312,19 @@ static BOOL rdpsnd_alsa_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* for
 
 static void rdpsnd_alsa_close(rdpsndDevicePlugin* device)
 {
-	int status;
-	snd_htimestamp_t tstamp;
-	snd_pcm_uframes_t frames;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
-	if (!alsa->pcm_handle)
+	if (!alsa)
 		return;
 
-	status = snd_pcm_htimestamp(alsa->pcm_handle, &frames, &tstamp);
-
-	if (status != 0)
-		frames = 0;
+	rdpsnd_alsa_close_mixer(alsa);
 }
 
 static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
 {
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
-
-	if (alsa->pcm_handle)
-	{
-		snd_pcm_drain(alsa->pcm_handle);
-		snd_pcm_close(alsa->pcm_handle);
-		alsa->pcm_handle = 0;
-	}
-
-	if (alsa->mixer_handle)
-	{
-		snd_mixer_close(alsa->mixer_handle);
-		alsa->mixer_handle = NULL;
-	}
-
+	rdpsnd_alsa_pcm_close(alsa);
+	rdpsnd_alsa_close_mixer(alsa);
 	free(alsa->device_name);
 	free(alsa);
 }
@@ -361,8 +362,8 @@ static UINT32 rdpsnd_alsa_get_volume(rdpsndDevicePlugin* device)
 	dwVolumeLeft = ((50 * 0xFFFF) / 100); /* 50% */
 	dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
 
-	if (!alsa->mixer_handle)
-		rdpsnd_alsa_open_mixer(alsa);
+	if (!rdpsnd_alsa_open_mixer(alsa))
+		return 0;
 
 	for (elem = snd_mixer_first_elem(alsa->mixer_handle); elem; elem = snd_mixer_elem_next(elem))
 	{
@@ -392,7 +393,7 @@ static BOOL rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	snd_mixer_elem_t* elem;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
-	if (!alsa->mixer_handle && !rdpsnd_alsa_open_mixer(alsa))
+	if (!rdpsnd_alsa_open_mixer(alsa))
 		return FALSE;
 
 	left = (value & 0xFFFF);
@@ -438,8 +439,7 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 		if (status < 0)
 		{
 			WLog_ERR(TAG,  "status: %d\n", status);
-			snd_pcm_close(alsa->pcm_handle);
-			alsa->pcm_handle = NULL;
+			rdpsnd_alsa_close(alsa);
 			rdpsnd_alsa_open((rdpsndDevicePlugin*) alsa, NULL, alsa->latency);
 			break;
 		}
