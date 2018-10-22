@@ -703,8 +703,12 @@ static BOOL gdi_opaque_rect(rdpContext* context,
 	UINT32 brush_color;
 	rdpGdi* gdi = context->gdi;
 	BOOL ret;
-	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
-	               opaque_rect->nWidth, opaque_rect->nHeight, &rect);
+	INT32 x = opaque_rect->nLeftRect;
+	INT32 y = opaque_rect->nTopRect;
+	INT32 w = opaque_rect->nWidth;
+	INT32 h = opaque_rect->nHeight;
+	gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
+	gdi_CRgnToRect(x, y, w, h, &rect);
 
 	if (!gdi_decode_color(gdi, opaque_rect->color, &brush_color, NULL))
 		return FALSE;
@@ -738,8 +742,12 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 	for (i = 0; i < multi_opaque_rect->numRectangles; i++)
 	{
 		const DELTA_RECT* rectangle = &multi_opaque_rect->rectangles[i];
-		gdi_CRgnToRect(rectangle->left, rectangle->top,
-		               rectangle->width, rectangle->height, &rect);
+		INT32 x = rectangle->left;
+		INT32 y = rectangle->top;
+		INT32 w = rectangle->width;
+		INT32 h = rectangle->height;
+		gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
+		gdi_CRgnToRect(x, y, w, h, &rect);
 		ret = gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
 
 		if (!ret)
