@@ -115,6 +115,10 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr,
 
 #ifdef _UWP
 
+void first_hotplug(rdpdrPlugin* rdpdr)
+{
+}
+
 static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
 	return CHANNEL_RC_OK;
@@ -135,6 +139,10 @@ BOOL check_path(char* path)
 		return FALSE;
 
 	return GetVolumeInformationA(path, NULL, 0, NULL, NULL, NULL, NULL, 0);
+}
+
+void first_hotplug(rdpdrPlugin* rdpdr)
+{
 }
 
 LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -522,6 +530,16 @@ static void drive_hotplug_fsevent_callback(ConstFSEventStreamRef streamRef,
 	}
 }
 
+void first_hotplug(rdpdrPlugin* rdpdr)
+{
+	UINT error;
+
+	if ((error = handle_hotplug(rdpdr)))
+	{
+		WLog_ERR(TAG, "handle_hotplug failed with error %"PRIu32"!", error);
+	}
+}
+
 static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
 	rdpdrPlugin* rdpdr;
@@ -882,6 +900,16 @@ cleanup:
 	return error;
 }
 
+static void first_hotplug(rdpdrPlugin* rdpdr)
+{
+	UINT error;
+
+	if ((error = handle_hotplug(rdpdr)))
+	{
+		WLog_ERR(TAG, "handle_hotplug failed with error %"PRIu32"!", error);
+	}
+}
+
 static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
 	rdpdrPlugin* rdpdr;
@@ -1025,6 +1053,8 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 
 			if (!rdpdr->hotplugThread && drive->Path && (strcmp(drive->Path, "*") == 0))
 			{
+				first_hotplug(rdpdr);
+
 				if (!(rdpdr->hotplugThread = CreateThread(NULL, 0,
 				                             drive_hotplug_thread_func, rdpdr, 0, NULL)))
 				{
