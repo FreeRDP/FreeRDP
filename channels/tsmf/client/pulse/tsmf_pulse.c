@@ -317,7 +317,7 @@ static BOOL tsmf_pulse_play(ITSMFAudioDevice* audio, const BYTE* data, UINT32 da
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*) audio;
 	const BYTE* src;
-	int len;
+	size_t len;
 	int ret;
 	DEBUG_TSMF("data_size %"PRIu32"", data_size);
 
@@ -334,7 +334,7 @@ static BOOL tsmf_pulse_play(ITSMFAudioDevice* audio, const BYTE* data, UINT32 da
 				pa_threaded_mainloop_wait(pulse->mainloop);
 			}
 
-			if (len < 0)
+			if (len == (size_t) -1)
 				break;
 
 			if (len > data_size)
