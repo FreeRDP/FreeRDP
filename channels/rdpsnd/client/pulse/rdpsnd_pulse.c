@@ -483,7 +483,7 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 		while ((length = pa_stream_writable_size(pulse->stream)) == 0)
 			pa_threaded_mainloop_wait(pulse->mainloop);
 
-		if (length < 0)
+		if (length == (size_t) -1)
 			break;
 
 		if (length > size)
