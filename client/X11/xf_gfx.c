@@ -129,6 +129,7 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 	if (gdi->suppressOutput)
 		return CHANNEL_RC_OK;
 
+	EnterCriticalSection(&context->mux);
 	context->GetSurfaceIds(context, &pSurfaceIds, &count);
 
 	for (index = 0; index < count; index++)
@@ -145,6 +146,7 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 	}
 
 	free(pSurfaceIds);
+	LeaveCriticalSection(&context->mux);
 	return status;
 }
 
@@ -153,18 +155,22 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
 {
 	UINT16 count;
 	UINT32 index;
-	UINT status = CHANNEL_RC_OK;
+	UINT status = ERROR_INTERNAL_ERROR;
 	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 	RECTANGLE_16 surfaceRect;
 	RECTANGLE_16 intersection;
 	UINT16* pSurfaceIds = NULL;
 	RdpgfxClientContext* context = xfc->context.gdi->gfx;
+	EnterCriticalSection(&context->mux);
 	invalidRect.left = x;
 	invalidRect.top = y;
 	invalidRect.right = x + width;
 	invalidRect.bottom = y + height;
-	context->GetSurfaceIds(context, &pSurfaceIds, &count);
+	status = context->GetSurfaceIds(context, &pSurfaceIds, &count);
+
+	if (status != CHANNEL_RC_OK)
+		goto fail;
 
 	for (index = 0; index < count; index++)
 	{
@@ -193,6 +199,12 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
 
 	free(pSurfaceIds);
 	IFCALLRET(context->UpdateSurfaces, status, context);
+
+	if (status != CHANNEL_RC_OK)
+		goto fail;
+
+fail:
+	LeaveCriticalSection(&context->mux);
 	return status;
 }
 
@@ -343,6 +355,8 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 {
 	rdpCodecs* codecs = NULL;
 	xfGfxSurface* surface = NULL;
+	UINT status;
+	EnterCriticalSection(&context->mux);
 	surface = (xfGfxSurface*) context->GetSurfaceData(context,
 	          deleteSurface->surfaceId);
 
@@ -360,13 +374,14 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 		free(surface);
 	}
 
-	context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
+	status = context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
 
 	if (codecs && codecs->progressive)
 		progressive_delete_surface_context(codecs->progressive,
 		                                   deleteSurface->surfaceId);
 
-	return CHANNEL_RC_OK;
+	LeaveCriticalSection(&context->mux);
+	return status;
 }
 
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)

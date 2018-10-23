@@ -78,13 +78,14 @@ typedef void* (*pcRdpgfxGetCacheSlotData)(RdpgfxClientContext* context,
 typedef UINT(*pcRdpgfxUpdateSurfaces)(RdpgfxClientContext* context);
 
 typedef UINT(*pcRdpgfxUpdateSurfaceArea)(RdpgfxClientContext* context, UINT16 surfaceId,
-                                         UINT32 nrRects, const RECTANGLE_16* rects);
+        UINT32 nrRects, const RECTANGLE_16* rects);
 
 struct _rdpgfx_client_context
 {
 	void* handle;
 	void* custom;
 
+	/* Implementations require locking */
 	pcRdpgfxResetGraphics ResetGraphics;
 	pcRdpgfxStartFrame StartFrame;
 	pcRdpgfxEndFrame EndFrame;
@@ -108,9 +109,11 @@ struct _rdpgfx_client_context
 	pcRdpgfxSetCacheSlotData SetCacheSlotData;
 	pcRdpgfxGetCacheSlotData GetCacheSlotData;
 
+	/* No locking required */
 	pcRdpgfxUpdateSurfaces UpdateSurfaces;
 	pcRdpgfxUpdateSurfaceArea UpdateSurfaceArea;
 
+	CRITICAL_SECTION mux;
 	PROFILER_DEFINE(SurfaceProfiler)
 };
 
