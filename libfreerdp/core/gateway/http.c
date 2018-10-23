@@ -691,6 +691,41 @@ BOOL http_response_print(HttpResponse* response)
 	return TRUE;
 }
 
+static BOOL http_use_content_length(const char* cur)
+{
+	size_t pos = 0;
+
+	if (!cur)
+		return FALSE;
+
+	if (_strnicmp(cur, "application/rpc", 15) == 0)
+		pos = 15;
+	else if (_strnicmp(cur, "text/plain", 10) == 0)
+		pos = 10;
+	else if (_strnicmp(cur, "text/html", 9) == 0)
+		pos = 9;
+
+	if (pos > 0)
+	{
+		char end = cur[pos];
+
+		switch (end)
+		{
+			case ' ':
+			case ';':
+			case '\0':
+			case '\r':
+			case '\n':
+				return TRUE;
+
+			default:
+				return FALSE;
+		}
+	}
+
+	return FALSE;
+}
+
 HttpResponse* http_response_recv(rdpTls* tls)
 {
 	size_t size;
@@ -707,10 +742,12 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 	response->ContentLength = 0;
 
-	while (!payloadOffset)
+	while (payloadOffset == 0)
 	{
-		int status = BIO_read(tls->bio, Stream_Pointer(response->data),
-		                      Stream_Capacity(response->data) - Stream_GetPosition(response->data));
+		size_t s;
+		char* end;
+		/* Read until we encounter \r\n\r\n */
+		int status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
 
 		if (status <= 0)
 		{
@@ -726,28 +763,26 @@ HttpResponse* http_response_recv(rdpTls* tls)
 #endif
 		Stream_Seek(response->data, (size_t)status);
 
-		if (Stream_GetRemainingLength(response->data) < 1024)
-		{
-			if (!Stream_EnsureRemainingCapacity(response->data, 1024))
-				goto out_error;
-		}
+		if (!Stream_EnsureRemainingCapacity(response->data, 1024))
+			goto out_error;
 
 		position = Stream_GetPosition(response->data);
 
-		if (position > RESPONSE_SIZE_LIMIT)
+		if (position < 4)
+			continue;
+		else if (position > RESPONSE_SIZE_LIMIT)
 		{
 			WLog_ERR(TAG, "Request header too large! (%"PRIdz" bytes) Aborting!", bodyLength);
 			goto out_error;
 		}
 
-		if (position >= 4)
-		{
-			char* buffer = (char*)Stream_Buffer(response->data);
-			const char* line = string_strnstr(buffer, "\r\n\r\n", position);
+		/* Always check at most the lase 8 bytes for occurance of the desired
+		 * sequence of \r\n\r\n */
+		s = (position > 8) ? 8 : position;
+		end = (char*)Stream_Pointer(response->data) - s;
 
-			if (line)
-				payloadOffset = (line - buffer) + 4UL;
-		}
+		if (string_strnstr(end, "\r\n\r\n", s) != NULL)
+			payloadOffset = Stream_GetPosition(response->data);
 	}
 
 	if (payloadOffset)
@@ -793,18 +828,21 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 		response->BodyLength = Stream_GetPosition(response->data) - payloadOffset;
 		bodyLength = 0; /* expected body length */
-
-		if (response->ContentType)
 		{
-			if (_stricmp(response->ContentType, "application/rpc") != 0)
-				bodyLength = response->ContentLength;
-			else if (_stricmp(response->ContentType, "text/plain") == 0)
-				bodyLength = response->ContentLength;
-			else if (_stricmp(response->ContentType, "text/html") == 0)
-				bodyLength = response->ContentLength;
-		}
-		else
+			const char* cur = response->ContentType;
 			bodyLength = response->BodyLength;
+
+			while (cur != NULL)
+			{
+				if (http_use_content_length(cur))
+				{
+					bodyLength = response->ContentLength;
+					break;
+				}
+
+				cur = strchr(cur, ';');
+			}
+		}
 
 		if (bodyLength > RESPONSE_SIZE_LIMIT)
 		{
@@ -842,15 +880,15 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		}
 
 		if (response->BodyLength > 0)
-		{
 			response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
-			response->BodyLength = bodyLength;
-		}
 
 		if (bodyLength != response->BodyLength)
 		{
 			WLog_WARN(TAG, "http_response_recv: %s unexpected body length: actual: %d, expected: %d",
-			          response->ContentType, bodyLength, response->BodyLength);
+			          response->ContentType, response->BodyLength, bodyLength);
+
+			if (bodyLength > 0)
+				response->BodyLength = MIN(bodyLength, response->BodyLength);
 		}
 	}
 
