@@ -59,7 +59,6 @@
 #define SPECIAL_BLACK               0xFE
 
 #define BLACK_PIXEL 0x000000
-#define WHITE_PIXEL 0xFFFFFF
 
 typedef UINT32 PIXEL;
 
@@ -193,6 +192,44 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 	return runLength;
 }
 
+static INLINE BOOL write_pixel_8(BYTE* _buf, const BYTE* _end, BYTE _pix)
+{
+	if (!_buf || !_end)
+		return FALSE;
+
+	if ((_end - _buf) < 1)
+		return FALSE;
+
+	*_buf = _pix;
+	return TRUE;
+}
+
+static INLINE BOOL write_pixel_24(BYTE* _buf, const BYTE* _end, UINT32 _pix)
+{
+	if (!_buf || !_end)
+		return FALSE;
+
+	if ((_end - _buf) < 3)
+		return FALSE;
+
+	(_buf)[0] = (BYTE)(_pix);
+	(_buf)[1] = (BYTE)((_pix) >> 8);
+	(_buf)[2] = (BYTE)((_pix) >> 16);
+	return TRUE;
+}
+
+static INLINE BOOL write_pixel_16(BYTE* _buf, const BYTE* _end, UINT16 _pix)
+{
+	if (!_buf || !_end)
+		return FALSE;
+
+	if ((_end - _buf) < 2)
+		return FALSE;
+
+	*(UINT16*)_buf = _pix;
+	return TRUE;
+}
+
 #define UNROLL_COUNT 4
 #define UNROLL(_exp) do { _exp _exp _exp _exp } while (0)
 
@@ -205,7 +242,9 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
-#define DESTWRITEPIXEL(_buf, _pix) (_buf)[0] = (BYTE)(_pix)
+#undef WHITE_PIXEL
+#define WHITE_PIXEL 0xFF
+#define DESTWRITEPIXEL(_buf, _end, _pix) write_pixel_8(_buf, _end, _pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define DESTNEXTPIXEL(_buf) _buf += 1
@@ -225,7 +264,9 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
-#define DESTWRITEPIXEL(_buf, _pix) ((UINT16*)(_buf))[0] = (UINT16)(_pix)
+#undef WHITE_PIXEL
+#define WHITE_PIXEL 0xFFFF
+#define DESTWRITEPIXEL(_buf, _end, _pix) write_pixel_16(_buf, _end, _pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
 #ifdef HAVE_ALIGNED_REQUIRED
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8)
@@ -249,8 +290,9 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
-#define DESTWRITEPIXEL(_buf, _pix) do { (_buf)[0] = (BYTE)(_pix);  \
-		(_buf)[1] = (BYTE)((_pix) >> 8); (_buf)[2] = (BYTE)((_pix) >> 16); } while (0)
+#undef WHITE_PIXEL
+#define WHITE_PIXEL 0xFFFFFF
+#define DESTWRITEPIXEL(_buf, _end, _pix)  write_pixel_24(_buf, _end, _pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
         ((_buf)[2] << 16)
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
