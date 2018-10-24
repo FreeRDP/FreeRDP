@@ -1295,7 +1295,7 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client,
 	const RECTANGLE_16* extents;
 	BYTE* pSrcData;
 	int nSrcStep;
-	int index;
+	UINT32 index;
 	UINT32 numRects = 0;
 	const RECTANGLE_16* rects;
 

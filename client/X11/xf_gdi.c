@@ -245,7 +245,6 @@ static Pixmap xf_brush_new(xfContext* xfc, UINT32 width, UINT32 height,
 		image->bitmap_bit_order = LSBFirst;
 		gc = XCreateGC(xfc->display, xfc->drawable, 0, NULL);
 		XPutImage(xfc->display, bitmap, gc, image, 0, 0, 0, 0, width, height);
-
 		image->data = NULL;
 		XDestroyImage(image);
 
@@ -577,7 +576,7 @@ static BOOL xf_gdi_invalidate_poly_region(xfContext* xfc, XPoint* points,
 static BOOL xf_gdi_polyline(rdpContext* context,
                             const POLYLINE_ORDER* polyline)
 {
-	int i;
+	UINT32 i;
 	int npoints;
 	XColor color;
 	XPoint* points;
@@ -1011,6 +1010,7 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData,
 		bpp = 2;
 	else
 		bpp = 1;
+
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 
@@ -1021,15 +1021,14 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData,
 		UINT32 width = rects[i].right - rects[i].left;
 		UINT32 height = rects[i].bottom - rects[i].top;
 		const BYTE* src = pSrcData + top * scanline + bpp * left;
-
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 		                     (char*) src, width, height, xfc->scanline_pad, scanline);
+
 		if (!image)
 			break;
 
 		image->byte_order = LSBFirst;
 		image->bitmap_bit_order = LSBFirst;
-
 		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0, left, top, width, height);
 		image->data = NULL;
 		XDestroyImage(image);
@@ -1059,17 +1058,14 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 	cmdRect.top = cmd->destTop;
 	cmdRect.right = cmdRect.left + cmd->bmp.width;
 	cmdRect.bottom = cmdRect.top + cmd->bmp.height;
-
-
 	gdi = context->gdi;
-
 	xf_lock_x11(xfc, FALSE);
 
 	switch (cmd->bmp.codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
 			if (!rfx_process_message(context->codecs->rfx, cmd->bmp.bitmapData,
-									 cmd->bmp.bitmapDataLength, cmd->destLeft, cmd->destTop,
+			                         cmd->bmp.bitmapDataLength, cmd->destLeft, cmd->destTop,
 			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride,
 			                         gdi->height, &region))
 				goto fail;
@@ -1078,9 +1074,9 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 
 		case RDP_CODEC_ID_NSCODEC:
 			if (!nsc_process_message(context->codecs->nsc, cmd->bmp.bpp, cmd->bmp.width,
-									 cmd->bmp.height, cmd->bmp.bitmapData, cmd->bmp.bitmapDataLength,
+			                         cmd->bmp.height, cmd->bmp.bitmapData, cmd->bmp.bitmapDataLength,
 			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-									 0, 0, cmd->bmp.width, cmd->bmp.height, FREERDP_FLIP_VERTICAL))
+			                         0, 0, cmd->bmp.width, cmd->bmp.height, FREERDP_FLIP_VERTICAL))
 				goto fail;
 
 			region16_union_rect(&region, &region, &cmdRect);
@@ -1091,7 +1087,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			format = gdi_get_pixel_format(cmd->bmp.bpp);
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-									cmd->destLeft, cmd->destTop, cmd->bmp.width, cmd->bmp.height,
+			                        cmd->destLeft, cmd->destTop, cmd->bmp.width, cmd->bmp.height,
 			                        pSrcData, format, 0, 0, 0,
 			                        &xfc->context.gdi->palette, FREERDP_FLIP_VERTICAL))
 				goto fail;
