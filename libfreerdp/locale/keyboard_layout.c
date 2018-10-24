@@ -313,7 +313,7 @@ fail:
 
 const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutID)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
 	{
@@ -338,7 +338,7 @@ const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutID)
 
 DWORD freerdp_keyboard_get_layout_id_from_name(const char* name)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
 	{
