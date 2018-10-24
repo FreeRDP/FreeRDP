@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/* Run with ' csi scripts/WindowsZones.csx' from freerdp checkout root */
 
 #r "System.Xml"
 
@@ -32,11 +33,17 @@ using System.Collections.Generic;
  */
 
 string tzid, windows;
-const string file = @"WindowsZones.txt";
+const string file = @"winpr/libwinpr/timezone/WindowsZones.c";
 const string zonesUrl = @"http://www.unicode.org/repos/cldr/tags/latest/common/supplemental/windowsZones.xml";
 List<string> list = new List<string>();
 StreamWriter stream = new StreamWriter(file, false);
 XmlTextReader reader = new XmlTextReader(zonesUrl);
+
+Console.WriteLine("Updating " + file);
+stream.WriteLine("/* ");
+stream.WriteLine(" * Automatically generated with scripts/WindowsZones.csx");
+stream.WriteLine(" */ ");
+stream.WriteLine();
 
 stream.WriteLine("struct _WINDOWS_TZID_ENTRY");
 stream.WriteLine("{");
