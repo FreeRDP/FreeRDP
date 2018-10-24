@@ -937,7 +937,7 @@ struct rdp_settings
 	UINT64 padding0384[384 - 323]; /* 323 */
 
 	/* Client Monitor Data */
-	ALIGN64 int         MonitorCount;         /*    384 */
+	ALIGN64 UINT32      MonitorCount;         /*    384 */
 	ALIGN64 UINT32      MonitorDefArraySize;  /*    385 */
 	ALIGN64 rdpMonitor* MonitorDefArray;      /*    386 */
 	ALIGN64 BOOL        SpanMonitors;         /*    387 */

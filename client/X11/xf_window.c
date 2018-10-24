@@ -153,7 +153,7 @@ void xf_SetWindowMinimized(xfContext* xfc, xfWindow* window)
 
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 {
-	int i;
+	UINT32 i;
 	rdpSettings* settings = xfc->context.settings;
 	int startX, startY;
 	UINT32 width = window->width;
