@@ -419,7 +419,7 @@ int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 
 int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD x11_keycode_to_rdp_scancode[256])
 {
-	int i, j;
+	size_t i, j;
 	BOOL found;
 	XkbDescPtr xkb;
 	BOOL status = FALSE;
