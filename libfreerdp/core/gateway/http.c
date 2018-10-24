@@ -812,7 +812,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		count = 0;
 		line = strtok(buffer, "\r\n");
 
-		while (line && response->lines)
+		while (line && (response->count > count))
 		{
 			response->lines[count] = line;
 

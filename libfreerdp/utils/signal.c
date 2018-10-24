@@ -105,7 +105,7 @@ const int fatal_signals[] =
 
 int freerdp_handle_signals(void)
 {
-	int signal_index;
+	size_t signal_index;
 	sigset_t orig_set;
 	struct sigaction orig_sigaction;
 	struct sigaction fatal_sigaction;

@@ -129,7 +129,7 @@ static BOOL CommInitialized()
 }
 
 
-void CommLog_Print(int level, ...)
+void CommLog_Print(DWORD level, ...)
 {
 	if (!CommInitialized())
 		return;
