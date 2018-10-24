@@ -579,11 +579,7 @@ typedef struct _wEventType wEventType;
 	DEFINE_EVENT_UNSUBSCRIBE(_name)
 
 #define DEFINE_EVENT_ENTRY(_name) \
-	{ #_name, { sizeof( _name ## EventArgs) }, 0, { \
-		        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
-		        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
-		        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
-		        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL } },
+    { #_name, { sizeof( _name ## EventArgs), NULL }, 0, { NULL } },
 
 	struct _wPubSub
 	{
