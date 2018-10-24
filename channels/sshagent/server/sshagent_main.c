@@ -110,15 +110,9 @@
 
 #define _PATH_DEVNULL  "/dev/null"
 
-static char socket_name[PATH_MAX];
-static char socket_dir[PATH_MAX];
-static int sa_uds_fd = -1;
-static int is_going = 1;
-
-
 /* Make a template filename for mk[sd]temp() */
 /* This is from mktemp_proto() in misc.c from openssh */
-void
+static BOOL
 mktemp_proto(char* s, size_t len)
 {
 	const char* tmpdir;
@@ -129,7 +123,7 @@ mktemp_proto(char* s, size_t len)
 		r = snprintf(s, len, "%s/ssh-XXXXXXXXXXXX", tmpdir);
 
 		if (r > 0 && (size_t)r < len)
-			return;
+			return TRUE;
 	}
 
 	r = snprintf(s, len, "/tmp/ssh-XXXXXXXXXXXX");
@@ -137,35 +131,40 @@ mktemp_proto(char* s, size_t len)
 	if (r < 0 || (size_t)r >= len)
 	{
 		fprintf(stderr, "%s: template string too short", __func__);
-		exit(1);
+		return FALSE;
 	}
+
+	return TRUE;
 }
 
 
 /* This uses parts of main() in ssh-agent.c from openssh */
-static void
-setup_ssh_agent(struct sockaddr_un* addr)
+static int
+setup_ssh_agent(char* socket_name, size_t socket_len, struct sockaddr_un* addr)
 {
 	int rc;
+	char socket_dir[PATH_MAX - 20];
+
 	/* Create private directory for agent socket */
-	mktemp_proto(socket_dir, sizeof(socket_dir));
+	if (!mktemp_proto(socket_dir, sizeof(socket_dir)))
+		return -1;
 
 	if (mkdtemp(socket_dir) == NULL)
 	{
 		perror("mkdtemp: private socket dir");
-		exit(1);
+		return -2;
 	}
 
-	snprintf(socket_name, sizeof(socket_name), "%s/agent.%ld", socket_dir,
-	         (long)getpid());
+	snprintf(socket_name, socket_len, "%s/agent.%"PRIdz, socket_dir,
+	         (size_t)getpid());
 	/* Create unix domain socket */
 	unlink(socket_name);
-	sa_uds_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	rc = socket(AF_UNIX, SOCK_STREAM, 0);
 
-	if (sa_uds_fd == -1)
+	if (rc == -1)
 	{
 		fprintf(stderr, "sshagent: socket creation failed");
-		exit(2);
+		return -3;
 	}
 
 	memset(addr, 0, sizeof(struct sockaddr_un));
@@ -174,25 +173,23 @@ setup_ssh_agent(struct sockaddr_un* addr)
 	addr->sun_path[sizeof(addr->sun_path) - 1] = 0;
 	/* Create with privileges rw------- so other users can't access the UDS */
 	mode_t umask_sav = umask(0177);
-	rc = bind(sa_uds_fd, (struct sockaddr*)addr, sizeof(struct sockaddr_un));
+	rc = bind(rc, (struct sockaddr*)addr, sizeof(struct sockaddr_un));
 
 	if (rc != 0)
 	{
 		fprintf(stderr, "sshagent: bind failed");
-		close(sa_uds_fd);
-		unlink(socket_name);
-		exit(3);
+		close(rc);
+		return -4;
 	}
 
 	umask(umask_sav);
-	rc = listen(sa_uds_fd, /* backlog = */ 5);
+	rc = listen(rc, /* backlog = */ 5);
 
 	if (rc != 0)
 	{
 		fprintf(stderr, "listen failed\n");
-		close(sa_uds_fd);
-		unlink(socket_name);
-		exit(1);
+		close(rc);
+		return -5;
 	}
 
 	/* Now fork: the child becomes the ssh-agent daemon and the parent prints
@@ -202,16 +199,16 @@ setup_ssh_agent(struct sockaddr_un* addr)
 	if (pid == -1)
 	{
 		perror("fork");
-		exit(1);
+		return -6;
 	}
 	else if (pid != 0)
 	{
 		/* Parent */
-		close(sa_uds_fd);
+		close(rc);
 		printf("SSH_AUTH_SOCK=%s; export SSH_AUTH_SOCK;\n", socket_name);
 		printf("SSH_AGENT_PID=%d; export SSH_AGENT_PID;\n", pid);
 		printf("echo Agent pid %d;\n", pid);
-		exit(0);
+		return 0;
 	}
 
 	/* Child */
@@ -219,7 +216,7 @@ setup_ssh_agent(struct sockaddr_un* addr)
 	if (setsid() == -1)
 	{
 		fprintf(stderr, "setsid failed");
-		exit(1);
+		return -7;
 	}
 
 	(void)chdir("/");
@@ -243,8 +240,10 @@ setup_ssh_agent(struct sockaddr_un* addr)
 	if (setrlimit(RLIMIT_CORE, &rlim) < 0)
 	{
 		fprintf(stderr, "setrlimit RLIMIT_CORE: %s", strerror(errno));
-		exit(1);
+		return -8;
 	}
+
+	return rc;
 }
 
 
@@ -310,7 +309,7 @@ handle_connection(int client_fd)
 
 				while (bytes_to_write > 0)
 				{
-					int bytes_written = send(client_fd, pos, bytes_to_write, 0);
+					ssize_t bytes_written = send(client_fd, pos, bytes_to_write, 0);
 
 					if (bytes_written > 0)
 					{
@@ -390,23 +389,32 @@ int
 main(int argc, char** argv)
 {
 	/* Setup the Unix domain socket and daemon process */
+	int rc;
 	struct sockaddr_un addr;
-	setup_ssh_agent(&addr);
+	char socket_name[PATH_MAX];
+	rc = setup_ssh_agent(socket_name, sizeof(socket_name), &addr);
+
+	if (rc <= 0)
+		goto fail;
 
 	/* Wait for a client to connect to the socket */
-	while (is_going)
+	while (TRUE)
 	{
+		int status;
 		fd_set readfds;
 		FD_ZERO(&readfds);
-		FD_SET(sa_uds_fd, &readfds);
-		select(FD_SETSIZE, &readfds, NULL, NULL, NULL);
+		FD_SET(rc, &readfds);
+		status = select(FD_SETSIZE, &readfds, NULL, NULL, NULL);
+
+		if (status < 0)
+			break;
 
 		/* If something connected then get it...
 		 * (You can test this using "socat - UNIX-CONNECT:<udspath>".) */
-		if (FD_ISSET(sa_uds_fd, &readfds))
+		if (FD_ISSET(rc, &readfds))
 		{
 			socklen_t addrsize = sizeof(addr);
-			int client_fd = accept(sa_uds_fd,
+			int client_fd = accept(rc,
 			                       (struct sockaddr*)&addr,
 			                       &addrsize);
 			handle_connection(client_fd);
@@ -414,9 +422,11 @@ main(int argc, char** argv)
 		}
 	}
 
-	close(sa_uds_fd);
+	close(rc);
+	rc = 0;
+fail:
 	unlink(socket_name);
-	return 0;
+	return rc;
 }
 
 /* vim: set sw=4:ts=4:et: */
