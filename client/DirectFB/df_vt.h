@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * DirectFB Event Handling
+ * DirectFB Graphical Objects
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Killer{R} <support@killpprog.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,15 @@
  * limitations under the License.
  */
 
-#ifndef __DF_EVENT_H
-#define __DF_EVENT_H
+#ifndef __DF_VT_H
+#define __DF_VT_H
 
 #include "dfreerdp.h"
 
-void df_keyboard_init(void);
-boolean df_event_process(freerdp* instance, DFBEvent* event);
-void df_events_commit(freerdp* instance);
+void df_vt_register();
+void df_vt_deregister();
 
-#endif /* __DF_EVENT_H */
+boolean df_vt_is_disactivated_slow();
+boolean df_vt_is_disactivated_fast_unreliable();
+
+#endif // __DF_VT_H

@@ -18,12 +18,17 @@
 # limitations under the License.
 
 include_directories(${DIRECTFB_INCLUDE_DIRS})
+link_directories(/usr/local/lib)
 
 add_executable(dfreerdp
 	df_event.c
 	df_event.h
 	df_graphics.c
-	df_graphics.c
+	df_graphics.h
+	df_vt.c
+	df_vt.h
+	df_run.c
+	df_run.h
 	dfreerdp.c
 	dfreerdp.h)
 

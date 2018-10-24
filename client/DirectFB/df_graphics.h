@@ -22,6 +22,13 @@
 
 #include "dfreerdp.h"
 
+void df_create_temp_surface(dfInfo *dfi, int width, int height, int bpp, IDirectFBSurface **ppsurf);
+
+void df_fullscreen_cursor_bounds(rdpGdi* gdi, dfInfo* dfi, int *cursor_left, int *cursor_top, int *cursor_right, int *cursor_bottom);
+void df_fullscreen_cursor_unpaint(uint8 *surface, int pitch, dfContext *context, boolean update_pos);
+void df_fullscreen_cursor_save_image_under(uint8 *surface, int pitch, dfContext *context);
+void df_fullscreen_cursor_paint(uint8 *surface, int pitch, dfContext *context);
+
 void df_register_graphics(rdpGraphics* graphics);
 
 #endif /* __DF_GRAPHICS_H */

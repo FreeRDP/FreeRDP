@@ -3,6 +3,7 @@
  * DirectFB Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Killer{R} <support@killprog.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +21,21 @@
 #include <errno.h>
 #include <pthread.h>
 #include <locale.h>
+#include <time.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/event.h>
+#include <freerdp/peer.h>
 #include <freerdp/constants.h>
 #include <freerdp/plugins/cliprdr.h>
+#include <freerdp/gdi/region.h>
 
 #include "df_event.h"
 #include "df_graphics.h"
+#include "df_run.h"
 
 #include "dfreerdp.h"
 
@@ -50,64 +57,6 @@ void df_context_free(freerdp* instance, rdpContext* context)
 
 }
 
-void df_begin_paint(rdpContext* context)
-{
-	rdpGdi* gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = 1;
-}
-
-void df_end_paint(rdpContext* context)
-{
-	rdpGdi* gdi;
-	dfInfo* dfi;
-
-	gdi = context->gdi;
-	dfi = ((dfContext*) context)->dfi;
-
-	if (gdi->primary->hdc->hwnd->invalid->null)
-		return;
-
-#if 1
-	dfi->update_rect.x = gdi->primary->hdc->hwnd->invalid->x;
-	dfi->update_rect.y = gdi->primary->hdc->hwnd->invalid->y;
-	dfi->update_rect.w = gdi->primary->hdc->hwnd->invalid->w;
-	dfi->update_rect.h = gdi->primary->hdc->hwnd->invalid->h;
-#else
-	dfi->update_rect.x = 0;
-	dfi->update_rect.y = 0;
-	dfi->update_rect.w = gdi->width;
-	dfi->update_rect.h = gdi->height;
-#endif
-
-	dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
-}
-
-boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
-{
-	dfInfo* dfi;
-
-	dfi = ((dfContext*) instance->context)->dfi;
-
-	rfds[*rcount] = (void*)(long)(dfi->read_fds);
-	(*rcount)++;
-
-	return true;
-}
-
-boolean df_check_fds(freerdp* instance, fd_set* set)
-{
-	dfInfo* dfi;
-
-	dfi = ((dfContext*) instance->context)->dfi;
-
-	if (!FD_ISSET(dfi->read_fds, set))
-		return true;
-
-	if (read(dfi->read_fds, &(dfi->event), sizeof(dfi->event)) > 0)
-		df_event_process(instance, &(dfi->event));
-
-	return true;
-}
 
 boolean df_pre_connect(freerdp* instance)
 {
@@ -159,30 +108,126 @@ boolean df_pre_connect(freerdp* instance)
 	return true;
 }
 
+static void df_init_cursor(dfContext* context)
+{
+	if (((rdpContext *)context)->instance->settings->fullscreen)
+	{
+		context->dfi->pointer_x = context->_p.gdi->width / 2;
+		context->dfi->pointer_y = context->_p.gdi->height / 2;
+	}
+	else
+	{
+		context->dfi->dfb->GetDisplayLayer(context->dfi->dfb, 0, &(context->dfi->layer));
+		context->dfi->layer->EnableCursor(context->dfi->layer, 1);
+	}
+}
+
 boolean df_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
 	dfInfo* dfi;
 	dfContext* context;
+	int flags;
 
 	context = ((dfContext*) instance->context);
 	dfi = context->dfi;
-
-	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
-	gdi = instance->context->gdi;
-
 	dfi->err = DirectFBCreate(&(dfi->dfb));
+	if (dfi->err!=DFB_OK)
+	{
+		printf("DirectFB init failed! err=0x%x\n",  dfi->err);
+		return false;
+	}
+
+	if (((rdpContext *)context)->instance->settings->fullscreen)
+		dfi->dfb->SetCooperativeLevel(dfi->dfb, DFSCL_FULLSCREEN);
 
 	dfi->dsc.flags = DSDESC_CAPS;
 	dfi->dsc.caps = DSCAPS_PRIMARY;
 	dfi->err = dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->primary));
+	if (dfi->err!=DFB_OK)
+	{
+		printf("DirectFB surface failed! err=0x%x\n",  dfi->err);
+		return false;
+	}
+
+	if (context->direct_surface)
+	{
+		if (!df_lock_fb(dfi, DF_LOCK_BIT_INIT))
+			return false;
+
+		gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, dfi->primary_data);
+		gdi = instance->context->gdi;
+		df_run_register(instance);
+
+
+		dfi->err = dfi->primary->GetSize(dfi->primary, &(gdi->width), &(gdi->height));
+		if (dfi->err!=DFB_OK)
+		{
+			printf("DirectFB query surface size failed! err=0x%x\n",  dfi->err);
+			return false;
+		}
+		df_unlock_fb(dfi, DF_LOCK_BIT_INIT);
+
+		gdi->primary_buffer = 0;
+		gdi->primary->bitmap->data = 0;
+
+		dfi->err = dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
+		printf("SetVideoMode %dx%dx%d 0x%x\n", gdi->width, gdi->height, gdi->dstBpp, dfi->err);
+
+
+		dfi->dfb->CreateInputEventBuffer(dfi->dfb, DICAPS_ALL, DFB_TRUE, &(dfi->event_buffer));
+		dfi->event_buffer->CreateFileDescriptor(dfi->event_buffer, &(dfi->read_fds));
+
+		flags = fcntl(dfi->read_fds, F_GETFL, 0);
+    	if ( flags == -1 || fcntl(dfi->read_fds, F_SETFL, flags | O_NONBLOCK) == -1 )
+	    {
+    	    perror("DirectFB non-blocking mode");
+	        return false;
+	    }
+		dfi->read_len_pending = 0;
+
+		df_init_cursor(context);
+		if (!df_lock_fb(dfi, DF_LOCK_BIT_INIT))
+			return false;
+
+		df_keyboard_init();
+
+		pointer_cache_register_callbacks(instance->update);
+		df_register_graphics(instance->context->graphics);
+
+		freerdp_channels_post_connect(instance->context->channels, instance);
+		df_unlock_fb(dfi, DF_LOCK_BIT_INIT);
+		printf("DirectFB client initialized in experimental --direct-surface option!\n");
+		return true;
+	}
+
+	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
+	gdi = instance->context->gdi;
+	df_run_register(instance);
+
 	dfi->err = dfi->primary->GetSize(dfi->primary, &(gdi->width), &(gdi->height));
-	dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
+	if (dfi->err!=DFB_OK)
+	{
+		printf("DirectFB query surface size failed! err=0x%x\n",  dfi->err);
+		return false;
+	}
+
+	dfi->err = dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
+
+	printf("SetVideoMode %dx%dx%d 0x%x\n", gdi->width, gdi->height, gdi->dstBpp, dfi->err);
+
 	dfi->dfb->CreateInputEventBuffer(dfi->dfb, DICAPS_ALL, DFB_TRUE, &(dfi->event_buffer));
 	dfi->event_buffer->CreateFileDescriptor(dfi->event_buffer, &(dfi->read_fds));
 
-	dfi->dfb->GetDisplayLayer(dfi->dfb, 0, &(dfi->layer));
-	dfi->layer->EnableCursor(dfi->layer, 1);
+	flags = fcntl(dfi->read_fds, F_GETFL, 0);
+    if ( flags == -1 || fcntl(dfi->read_fds, F_SETFL, flags | O_NONBLOCK) == -1 )
+    {
+        perror("DirectFB non-blocking mode");
+        return false;
+    }
+	dfi->read_len_pending = 0;
+
+	df_init_cursor(context);
 
 	dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PREALLOCATED | DSDESC_PIXELFORMAT;
 	dfi->dsc.caps = DSCAPS_SYSTEMONLY;
@@ -200,10 +245,7 @@ boolean df_post_connect(freerdp* instance)
 
 	dfi->dsc.preallocated[0].data = gdi->primary_buffer;
 	dfi->dsc.preallocated[0].pitch = gdi->width * gdi->bytesPerPixel;
-	dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->surface));
-
-	instance->update->BeginPaint = df_begin_paint;
-	instance->update->EndPaint = df_end_paint;
+	dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->secondary));
 
 	df_keyboard_init();
 
@@ -211,7 +253,6 @@ boolean df_post_connect(freerdp* instance)
 	df_register_graphics(instance->context->graphics);
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
-
 	return true;
 }
 
@@ -261,161 +302,13 @@ df_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size,
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
-static void
-df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
-{
-	RDP_EVENT* event;
-	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
-
-	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
-
-	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
-	format_list_event->num_formats = 0;
-
-	freerdp_channels_send_event(channels, event);
-}
-
-static void
-df_process_channel_event(rdpChannels* channels, freerdp* instance)
-{
-	RDP_EVENT* event;
-
-	event = freerdp_channels_pop_event(channels);
-
-	if (event)
-	{
-		switch (event->event_type)
-		{
-			case RDP_EVENT_TYPE_CB_MONITOR_READY:
-				df_process_cb_monitor_ready_event(channels, instance);
-				break;
-			default:
-				printf("df_process_channel_event: unknown event type %d\n", event->event_type);
-				break;
-		}
-
-		freerdp_event_free(event);
-	}
-}
-
-static void df_free(dfInfo* dfi)
-{
-	dfi->dfb->Release(dfi->dfb);
-	xfree(dfi);
-}
-
-int dfreerdp_run(freerdp* instance)
-{
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	int wcount;
-	void* rfds[32];
-	void* wfds[32];
-	fd_set rfds_set;
-	fd_set wfds_set;
-	dfInfo* dfi;
-	dfContext* context;
-	rdpChannels* channels;
-
-	memset(rfds, 0, sizeof(rfds));
-	memset(wfds, 0, sizeof(wfds));
-
-	if (!freerdp_connect(instance))
-		return 0;
-
-	context = (dfContext*) instance->context;
-
-	dfi = context->dfi;
-	channels = instance->context->channels;
-
-	while (1)
-	{
-		rcount = 0;
-		wcount = 0;
-
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
-		{
-			printf("Failed to get FreeRDP file descriptor\n");
-			break;
-		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
-		{
-			printf("Failed to get channel manager file descriptor\n");
-			break;
-		}
-		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
-		{
-			printf("Failed to get dfreerdp file descriptor\n");
-			break;
-		}
-
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-		FD_ZERO(&wfds_set);
-
-		for (i = 0; i < rcount; i++)
-		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
-			break;
-
-		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
-			{
-				printf("dfreerdp_run: select failed\n");
-				break;
-			}
-		}
-
-		if (freerdp_check_fds(instance) != true)
-		{
-			printf("Failed to check FreeRDP file descriptor\n");
-			break;
-		}
-		if (df_check_fds(instance, &rfds_set) != true)
-		{
-			printf("Failed to check dfreerdp file descriptor\n");
-			break;
-		}
-		if (freerdp_channels_check_fds(channels, instance) != true)
-		{
-			printf("Failed to check channel manager file descriptor\n");
-			break;
-		}
-		df_process_channel_event(channels, instance);
-	}
-
-	freerdp_channels_close(channels, instance);
-	freerdp_channels_free(channels);
-	df_free(dfi);
-	gdi_free(instance);
-	freerdp_disconnect(instance);
-	freerdp_free(instance);
-
-	return 0;
-}
 
 void* thread_func(void* param)
 {
 	struct thread_data* data;
 	data = (struct thread_data*) param;
 
-	dfreerdp_run(data->instance);
-
+	df_run(data->instance);
 	xfree(data);
 
 	pthread_detach(pthread_self());
@@ -428,8 +321,10 @@ void* thread_func(void* param)
 	return NULL;
 }
 
+
 int main(int argc, char* argv[])
 {
+	int i;
 	pthread_t thread;
 	freerdp* instance;
 	dfContext* context;
@@ -455,10 +350,29 @@ int main(int argc, char* argv[])
 
 	context = (dfContext*) instance->context;
 	channels = instance->context->channels;
-
+	
 	DirectFBInit(&argc, &argv);
-	freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL);
+	if (freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL)==FREERDP_ARGS_PARSE_HELP)
+	{
+		printf("  --direct-surface: Use only single DirectFB surface (faster, but repaints more 'visible').\n");
+		printf("  --direct-flip: Can be neccessary with non-fullscreen mode if DirectFB setting 'autoflip-window' is not enabled. Don't use it if all works without it.\n");
+		printf("\n");
+		return 1;
+	}
 
+	for (i = 0; i<argc; ++i)
+	{
+		if (strcmp(argv[i], "--direct-surface")==0)
+		{
+			context->direct_surface = true;
+		}
+		else if (strcmp(argv[i], "--direct-flip")==0)
+		{
+			context->direct_flip = true;
+			if (instance->settings->fullscreen)
+				printf("WARNING: --direct-flip is not recommended to use with fullscreen mode. This probably will only defeat performance without any profit.\n");
+		}
+	}
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
 
@@ -467,7 +381,7 @@ int main(int argc, char* argv[])
 
 	while (g_thread_count > 0)
 	{
-                freerdp_sem_wait(g_sem);
+		freerdp_sem_wait(g_sem);
 	}
 
 	freerdp_channels_global_uninit();

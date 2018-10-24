@@ -39,7 +39,14 @@ struct df_context
 
 	dfInfo* dfi;
 	rdpSettings* settings;
+
+	uint64 busy_ts;
+	uint64 endpaint_defer_ts;
+	uint64 input_defer_ts;
+	boolean direct_surface;
+	boolean direct_flip;
 };
+
 typedef struct df_context dfContext;
 
 struct df_pointer
@@ -54,16 +61,44 @@ typedef struct df_pointer dfPointer;
 struct df_info
 {
 	int read_fds;
+	int read_len_pending;
 	DFBResult err;
 	IDirectFB* dfb;
+	uint8 *primary_data;
+	int primary_pitch;
+	uint8 primary_locks;
 	DFBEvent event;
 	HCLRCONV clrconv;
 	DFBRectangle update_rect;
 	DFBSurfaceDescription dsc;
 	IDirectFBSurface* primary;
-	IDirectFBSurface* surface;
+	IDirectFBSurface* secondary;
+
+	uint8* contents_under_cursor;
+	uint8* contents_of_cursor;
+	int cursor_x, cursor_y;
+	int cursor_w, cursor_h;
+	int cursor_hot_x, cursor_hot_y;
+	int cursor_new_w, cursor_new_h;
+	int cursor_new_hot_x, cursor_new_hot_y;
+	uint16 cursor_id, cursor_new_id;
+
+	boolean cursor_unpainted;
+	DFBRegion cursor_region;
+	
 	IDirectFBDisplayLayer* layer;
 	IDirectFBEventBuffer* event_buffer;
+	boolean pointer_pending;
+	int pointer_x;
+	int pointer_y;
+	rdpPrimaryUpdate lower_primary_update;
+	pSurfaceBits lower_surface_bits;
+	pBitmapUpdate lower_bitmap_update;
+
+	boolean wheel_pending;
+	int wheel;
+
+	boolean tty_background;
 };
 
 #endif /* __DFREERDP_H */

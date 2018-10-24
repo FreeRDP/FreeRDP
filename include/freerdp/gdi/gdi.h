@@ -98,6 +98,7 @@
 #define GDIOBJECT_BRUSH			0x03
 #define GDIOBJECT_RECT			0x04
 #define GDIOBJECT_REGION		0x04
+#define GDIOBJECT_BITMAP_INDEPENDENT_DATA 0x05
 
 struct _GDIOBJECT
 {
@@ -196,6 +197,7 @@ struct _GDI_WND
 {
 	int count;
 	int ninvalid;
+	int binvalid;
 	HGDI_RGN invalid;
 	HGDI_RGN cinvalid;
 };
@@ -269,6 +271,7 @@ struct rdp_gdi
 FREERDP_API uint32 gdi_rop3_code(uint8 code);
 FREERDP_API uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 FREERDP_API uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
+FREERDP_API uint8* gdi_get_bitmap_pointer_ex(HGDI_DC hdcBmp, int x, int y, uint8 **end, uint *width);
 FREERDP_API int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width);
 FREERDP_API void gdi_resize(rdpGdi* gdi, int width, int height);
 

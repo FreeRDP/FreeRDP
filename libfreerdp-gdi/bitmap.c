@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <malloc.h>
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
@@ -141,6 +142,14 @@ HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, uint8* 
 	return hBitmap;
 }
 
+HGDI_BITMAP gdi_CreateBitmapWithIndependentData(int nWidth, int nHeight, int cBitsPerPixel, uint8* data)
+{
+	HGDI_BITMAP hBitmap = gdi_CreateBitmap(nWidth, nHeight, cBitsPerPixel, data);
+	hBitmap->objectType = GDIOBJECT_BITMAP_INDEPENDENT_DATA;
+	return hBitmap;
+
+}
+
 /**
  * Create a new bitmap of the given width and height compatible with the current device context.\n
  * @msdn{dd183488}
@@ -152,13 +161,19 @@ HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, uint8* 
 
 HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
 {
-	HGDI_BITMAP hBitmap = (HGDI_BITMAP) malloc(sizeof(GDI_BITMAP));
-	hBitmap->objectType = GDIOBJECT_BITMAP;
+	unsigned char *p;
+	int data_offset = sizeof(GDI_BITMAP)%0x40;
+	if (data_offset) data_offset = 0x40 - data_offset;
+	data_offset+= sizeof(GDI_BITMAP);
+
+	p = (unsigned char *)memalign(0x40, data_offset + nWidth * nHeight * hdc->bytesPerPixel);
+	HGDI_BITMAP hBitmap = (HGDI_BITMAP)p;
+	hBitmap->objectType = GDIOBJECT_BITMAP_INDEPENDENT_DATA;
 	hBitmap->bytesPerPixel = hdc->bytesPerPixel;
 	hBitmap->bitsPerPixel = hdc->bitsPerPixel;
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
-	hBitmap->data = malloc(nWidth * nHeight * hBitmap->bytesPerPixel);
+	hBitmap->data = p + data_offset;
 	hBitmap->scanline = nWidth * hBitmap->bytesPerPixel;
 	return hBitmap;
 }

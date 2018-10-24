@@ -33,4 +33,34 @@ FREERDP_API char* xstrdup(const char* str);
 
 #define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(*(_x)))
 
+
+#if __GNUC__ >= 3
+
+# define LIKELY(x)              (__builtin_expect(!!(x), 1))
+# define UNLIKELY(x)            (__builtin_expect(!!(x), 0))
+
+#else
+
+# define LIKELY(x)              (x)
+# define UNLIKELY(x)            (x)
+
+#endif /* __GNUC__ */
+
+
+#if ( __GNUC__ > 3 ) || ( __GNUC__ == 3 && __GNUC_MINOR__ >= 1 )
+
+# define PREFETCH_LENGTH 32	//assuming cache line 32 bytes as on RPI
+
+# define PREFETCH_READ(p)            __builtin_prefetch((p))
+# define PREFETCH_WRITE(p)          __builtin_prefetch((p), 1)
+
+#else
+
+# undef PREFETCH_LENGTH
+
+# define PREFETCH_READ(p)  
+# define PREFETCH_WRITE(p)  
+
+#endif /* __GNUC__ */
+
 #endif /* __MEMORY_UTILS_H */

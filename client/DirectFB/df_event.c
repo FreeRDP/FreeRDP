@@ -3,6 +3,7 @@
  * DirectFB Event Handling
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Killer{R} <support@killprog.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,58 +212,106 @@ void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 
 	input->KeyboardEvent(input, flags, scancode);
 }
 
-boolean df_event_process(freerdp* instance, DFBEvent* event)
+void df_events_commit(freerdp* instance)
 {
-	int flags;
 	rdpGdi* gdi;
 	dfInfo* dfi;
-	int pointer_x;
-	int pointer_y;
+	gdi = instance->context->gdi;
+	dfi = ((dfContext*) instance->context)->dfi;
+
+	if (dfi->pointer_pending)
+	{
+		dfi->pointer_pending = false;
+		df_send_mouse_motion_event(instance->input, dfi->pointer_x, dfi->pointer_y);
+	}
+	if (dfi->wheel_pending)
+	{
+		dfi->wheel_pending = false;
+		df_send_mouse_wheel_event(instance->input, dfi->wheel, dfi->pointer_x, dfi->pointer_y);
+		dfi->wheel = 0;
+	}
+
+}
+
+boolean df_event_process(freerdp* instance, DFBEvent* event)
+{
+	rdpGdi* gdi;
+	dfInfo* dfi;
 	DFBInputEvent* input_event;
+	int x, y;
 
 	gdi = instance->context->gdi;
 	dfi = ((dfContext*) instance->context)->dfi;
 
-	dfi->layer->GetCursorPosition(dfi->layer, &pointer_x, &pointer_y);
-
 	if (event->clazz == DFEC_INPUT)
 	{
-		flags = 0;
 		input_event = (DFBInputEvent*) event;
 
 		switch (input_event->type)
 		{
 			case DIET_AXISMOTION:
+				if (instance->settings->fullscreen)
+				{
+					if (input_event->axis == DIAI_X)
+						dfi->pointer_x+= input_event->axisrel;
+					else if (input_event->axis == DIAI_Y)
+						dfi->pointer_y+= input_event->axisrel;
+				}
+				else
+					dfi->layer->GetCursorPosition(dfi->layer, &dfi->pointer_x, &dfi->pointer_y);
 
-				if (pointer_x > (gdi->width - 1))
-					pointer_x = gdi->width - 1;
+				if (dfi->pointer_x > (gdi->width - 1))
+					dfi->pointer_x = gdi->width - 1;
+				else if (dfi->pointer_x < 0)
+					dfi->pointer_x = 0;
 
-				if (pointer_y > (gdi->height - 1))
-					pointer_y = gdi->height - 1;
+				if (dfi->pointer_y > (gdi->height - 1))
+					dfi->pointer_y = gdi->height - 1;
+				else if (dfi->pointer_y < 0)
+					dfi->pointer_y = 0;
 
 				if (input_event->axis == DIAI_Z)
 				{
-					df_send_mouse_wheel_event(instance->input, input_event->axisrel, pointer_x, pointer_y);
+					dfi->wheel+= (int)input_event->axisrel;
+					dfi->wheel_pending = true;
 				}
 				else
 				{
-					df_send_mouse_motion_event(instance->input, pointer_x, pointer_y);
+					dfi->pointer_pending = true;
 				}
 				break;
 
 			case DIET_BUTTONPRESS:
-				df_send_mouse_button_event(instance->input, true, input_event->button, pointer_x, pointer_y);
+				df_events_commit(instance);
+				if (instance->settings->fullscreen)
+				{
+					x = dfi->pointer_x;
+					y = dfi->pointer_y;
+				}
+				else
+					dfi->layer->GetCursorPosition(dfi->layer, &x, &y);
+				df_send_mouse_button_event(instance->input, true, input_event->button, x, y);
 				break;
 
 			case DIET_BUTTONRELEASE:
-				df_send_mouse_button_event(instance->input, false, input_event->button, pointer_x, pointer_y);
+				df_events_commit(instance);
+				if (instance->settings->fullscreen)
+				{
+					x = dfi->pointer_x;
+					y = dfi->pointer_y;
+				}
+				else
+					dfi->layer->GetCursorPosition(dfi->layer, &x, &y);
+				df_send_mouse_button_event(instance->input, false, input_event->button, x, y);
 				break;
 
 			case DIET_KEYPRESS:
+				df_events_commit(instance);
 				df_send_keyboard_event(instance->input, true, input_event->key_id - DIKI_UNKNOWN, input_event->key_symbol - DFB_FUNCTION_KEY(0));
 				break;
 
 			case DIET_KEYRELEASE:
+				df_events_commit(instance);
 				df_send_keyboard_event(instance->input, false, input_event->key_id - DIKI_UNKNOWN, input_event->key_symbol - DFB_FUNCTION_KEY(0));
 				break;
 
@@ -273,3 +322,6 @@ boolean df_event_process(freerdp* instance, DFBEvent* event)
 
 	return true;
 }
+
+
+

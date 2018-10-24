@@ -740,7 +740,7 @@ void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height)
 		 * fixed size buffers (of max scanline size (or adaptative?) )
 		 * -- would be much faster).
 		 */
-		uint8 * tmpBfr = xmalloc(scanLineSz);
+		uint8 * tmpBfr = (scanLineSz>0xf00) ? xmalloc(scanLineSz) : alloca(scanLineSz);
 		int half = height / 2;
 		/* Flip buffer in place by line permutations through the temp
 		 * scan line buffer.
@@ -754,13 +754,15 @@ void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height)
 		for (i = 0; i < half ; i++)
 		{
 			memcpy(tmpBfr, topLine, scanLineSz);
+			PREFETCH_WRITE(topLine + scanLineSz);
 			memcpy(topLine, bottomLine, scanLineSz);
+			PREFETCH_WRITE(bottomLine - scanLineSz);
 			memcpy(bottomLine, tmpBfr, scanLineSz);
 			topLine += scanLineSz;
 			bottomLine -= scanLineSz;
 			height--;
 		}
-		xfree(tmpBfr);
+		if (scanLineSz>0xf00) xfree(tmpBfr);
 	}
 	/* Flip from source buffer to destination buffer. */
 	else

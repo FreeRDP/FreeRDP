@@ -54,8 +54,23 @@ void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitmap)
 {
 	rdpBitmap* bitmap;
-	rdpBitmap* prevBitmap;
 	rdpCache* cache = context->cache;
+
+	bitmap = bitmap_cache_get(cache->bitmap, cache_bitmap->cacheId, cache_bitmap->cacheIndex);
+
+	if (bitmap != NULL) 
+	{
+		if (cache_bitmap->bitmapWidth == bitmap->width &&
+			cache_bitmap->bitmapHeight == bitmap->height &&
+			cache_bitmap->bitmapBpp==bitmap->bpp)
+		{
+			bitmap->Decompress(context, bitmap,
+				cache_bitmap->bitmapDataStream, cache_bitmap->bitmapWidth, cache_bitmap->bitmapHeight,
+				cache_bitmap->bitmapBpp, cache_bitmap->bitmapLength, cache_bitmap->compressed);
+			return;
+		}
+		Bitmap_Free(context, bitmap);
+	}
 
 	bitmap = Bitmap_Alloc(context);
 
@@ -67,10 +82,6 @@ void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitm
 
 	bitmap->New(context, bitmap);
 
-	prevBitmap = bitmap_cache_get(cache->bitmap, cache_bitmap->cacheId, cache_bitmap->cacheIndex);
-
-	if (prevBitmap != NULL)
-		Bitmap_Free(context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cache_bitmap->cacheId, cache_bitmap->cacheIndex, bitmap);
 }
@@ -78,12 +89,8 @@ void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitm
 void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
 {
 	rdpBitmap* bitmap;
-	rdpBitmap* prevBitmap;
 	rdpCache* cache = context->cache;
 
-	bitmap = Bitmap_Alloc(context);
-
-	Bitmap_SetDimensions(context, bitmap, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight);
 
 	if (cache_bitmap_v2->bitmapBpp == 0)
 	{
@@ -91,16 +98,32 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 		cache_bitmap_v2->bitmapBpp = context->instance->settings->color_depth;
 	}
 
+	bitmap = bitmap_cache_get(cache->bitmap, cache_bitmap_v2->cacheId, cache_bitmap_v2->cacheIndex);
+
+	if (bitmap != NULL) 
+	{
+		if (cache_bitmap_v2->bitmapWidth == bitmap->width &&
+			cache_bitmap_v2->bitmapHeight == bitmap->height &&
+			cache_bitmap_v2->bitmapBpp==bitmap->bpp)
+		{
+			bitmap->Decompress(context, bitmap,
+				cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
+				cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength, cache_bitmap_v2->compressed);
+			return;
+		}
+		Bitmap_Free(context, bitmap);
+	}
+
+	bitmap = Bitmap_Alloc(context);
+
+	Bitmap_SetDimensions(context, bitmap, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight);
+
 	bitmap->Decompress(context, bitmap,
 			cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
 			cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength, cache_bitmap_v2->compressed);
 
 	bitmap->New(context, bitmap);
 
-	prevBitmap = bitmap_cache_get(cache->bitmap, cache_bitmap_v2->cacheId, cache_bitmap_v2->cacheIndex);
-
-	if (prevBitmap != NULL)
-		Bitmap_Free(context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cache_bitmap_v2->cacheId, cache_bitmap_v2->cacheIndex, bitmap);
 }

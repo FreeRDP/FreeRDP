@@ -313,6 +313,24 @@ INLINE uint32 gdi_rop3_code(uint8 code)
 	return rop3_code_table[code];
 }
 
+INLINE uint8* gdi_get_bitmap_pointer_ex(HGDI_DC hdcBmp, int x, int y, uint8 **end, uint *width)
+{
+	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdcBmp->selectedObject;
+	
+	if (x >= 0 && x < hBmp->width && y >= 0 && y < hBmp->height)
+	{
+		*end = hBmp->data + (hBmp->height * hBmp->width * hdcBmp->bytesPerPixel);
+		*width = hBmp->width;
+		return hBmp->data + (y * hBmp->width * hdcBmp->bytesPerPixel) + (x * hdcBmp->bytesPerPixel);
+	}
+	else
+	{
+		printf("gdi_get_bitmap_pointer_ex: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
+		return 0;
+	}
+}
+
+
 INLINE uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 {
 	uint8* p;
@@ -411,7 +429,7 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, uint8*
 	if (data == NULL)
 		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, width, height);
 	else
-		bitmap->bitmap = gdi_create_bitmap(gdi, width, height, bpp, data);
+		bitmap->bitmap = gdi_create_bitmap_with_independent_data(gdi, width, height, data);
 
 	gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->bitmap);
 	bitmap->org_bitmap = NULL;
@@ -533,7 +551,7 @@ void gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 			opaque_rect->nWidth, opaque_rect->nHeight, &rect);
 
-	brush_color = freerdp_color_convert_var_bgr(opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+	brush_color = freerdp_color_convert_var_rgb(opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
 
 	hBrush = gdi_CreateSolidBrush(brush_color);
 	gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
@@ -557,7 +575,7 @@ void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_o
 		gdi_CRgnToRect(rectangle->left, rectangle->top,
 				rectangle->width, rectangle->height, &rect);
 
-		brush_color = freerdp_color_convert_var_bgr(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+		brush_color = freerdp_color_convert_var_rgb(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
 
 		hBrush = gdi_CreateSolidBrush(brush_color);
 		gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
@@ -819,6 +837,7 @@ void gdi_init_primary(rdpGdi* gdi)
 	gdi->primary->hdc->hwnd->count = 32;
 	gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * gdi->primary->hdc->hwnd->count);
 	gdi->primary->hdc->hwnd->ninvalid = 0;
+	gdi->primary->hdc->hwnd->binvalid = 0;
 }
 
 void gdi_resize(rdpGdi* gdi, int width, int height)
@@ -954,4 +973,3 @@ void gdi_free(freerdp* instance)
 	
 	instance->context->gdi = (rdpGdi*) NULL;
 }
-

@@ -24,7 +24,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/color.h>
-
+#include <freerdp/utils/memory.h>
 #include <freerdp/gdi/pen.h>
 #include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/region.h>
@@ -53,40 +53,18 @@ uint32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color)
 	return color32;
 }
 
+#define BITBLT_PIXELBYTES 4
+
+#undef BITBLT_ALIGN
+#define BITBLT_ALIGN uint32
+#include "include/bitblt.c"
+
 int FillRect_32bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 {
-	int x, y;
-	uint32 *dstp;
-	uint32 color32;
-	int nXDest, nYDest;
-	int nWidth, nHeight;
-
-	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
-	
-	if (gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL) == 0)
-		return 0;
-
-	color32 = gdi_get_color_32bpp(hdc, hbr->color);
-
-	for (y = 0; y < nHeight; y++)
-	{
-		dstp = (uint32*) gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
-
-		if (dstp != 0)
-		{
-			for (x = 0; x < nWidth; x++)
-			{
-				*dstp = color32;
-				dstp++;
-			}
-		}
-	}
-
-	gdi_InvalidateRegion(hdc, nXDest, nYDest, nWidth, nHeight);
-	return 0;
+	return FillRect_4_uint32(hdc, rect, gdi_get_color_32bpp(hdc, hbr->color));
 }
 
-static int BitBlt_BLACKNESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
+INLINE static int BitBlt_BLACKNESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	if (hdcDest->alpha)
 	{
@@ -118,96 +96,20 @@ static int BitBlt_BLACKNESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	}
 	else
 	{
-		int y;
-		uint8* dstp;
-
-		for (y = 0; y < nHeight; y++)
-		{
-			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
-
-			if (dstp != 0)
-				memset(dstp, 0, nWidth * hdcDest->bytesPerPixel);
-		}
+	   return BitBlt_BLACKNESS_4_uint32(hdcDest, nXDest, nYDest, nWidth, nHeight);
 	}
 
 	return 0;
 }
 
-static int BitBlt_WHITENESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
+INLINE static int BitBlt_WHITENESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
-	int y;
-	uint8* dstp;
-	
-	for (y = 0; y < nHeight; y++)
-	{
-		dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
-
-		if (dstp != 0)
-			memset(dstp, 0xFF, nWidth * hdcDest->bytesPerPixel);
-	}
-
-	return 0;
+	return BitBlt_WHITENESS_4_uint32(hdcDest, nXDest, nYDest, nWidth, nHeight);
 }
 
-static int BitBlt_SRCCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
+INLINE static int BitBlt_SRCCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
-	int y;
-	uint8* srcp;
-	uint8* dstp;
-
-	if ((hdcDest->selectedObject != hdcSrc->selectedObject) ||
-	    gdi_CopyOverlap(nXDest, nYDest, nWidth, nHeight, nXSrc, nYSrc) == 0)
-	{
-		for (y = 0; y < nHeight; y++)
-		{
-			srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
-
-			if (srcp != 0 && dstp != 0)
-				memcpy(dstp, srcp, nWidth * hdcDest->bytesPerPixel);
-		}
-
-		return 0;
-	}
-	
-	if (nYSrc < nYDest)
-	{
-		/* copy down (bottom to top) */
-		for (y = nHeight - 1; y >= 0; y--)
-		{
-			srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
-
-			if (srcp != 0 && dstp != 0)
-				memmove(dstp, srcp, nWidth * hdcDest->bytesPerPixel);
-		}
-	}
-	else if (nYSrc > nYDest || nXSrc > nXDest)
-	{
-		/* copy up or left (top top bottom) */
-		for (y = 0; y < nHeight; y++)
-		{
-			srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
-
-			if (srcp != 0 && dstp != 0)
-				memmove(dstp, srcp, nWidth * hdcDest->bytesPerPixel);
-		}
-	}
-	else
-	{
-		/* copy straight right */
-		for (y = 0; y < nHeight; y++)
-		{
-			srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
-
-			if (srcp != 0 && dstp != 0)
-				memmove(dstp, srcp, nWidth * hdcDest->bytesPerPixel);
-		}
-	}
-
-	return 0;
+	return BitBlt_SRCCOPY_4_uint32(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
 }
 
 static int BitBlt_NOTSRCCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)

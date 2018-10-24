@@ -34,11 +34,18 @@
 
 /* Bitmap Class */
 
+HGDI_BITMAP gdi_create_bitmap_with_independent_data(rdpGdi* gdi, int width, int height, uint8* data)
+{
+	HGDI_BITMAP bitmap;
+	bitmap = gdi_CreateBitmapWithIndependentData(width, height, gdi->dstBpp, data);
+	return bitmap;
+}
+
 HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, uint8* data)
 {
-	uint8* bmpData;
 	HGDI_BITMAP bitmap;
 
+	uint8* bmpData;
 	bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
 	bitmap = gdi_CreateBitmap(width, height, gdi->dstBpp, bmpData);
 
@@ -55,6 +62,8 @@ void gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 
 	if (bitmap->data == NULL)
 		gdi_bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, bitmap->width, bitmap->height);
+	else if (gdi->dstBpp==gdi->srcBpp)
+		gdi_bitmap->bitmap = gdi_create_bitmap_with_independent_data(gdi, bitmap->width, bitmap->height, bitmap->data);
 	else
 		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, gdi->dstBpp, bitmap->data);
 
@@ -95,7 +104,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 	if (bitmap->data == NULL)
 		bitmap->data = (uint8*) xmalloc(size);
-	else
+	else if (size!=bitmap->length)
 		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
 
 	if (compressed)
@@ -112,7 +121,6 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 	{
 		freerdp_image_flip(data, bitmap->data, width, height, bpp);
-
 	}
 
 	bitmap->width = width;

@@ -24,7 +24,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 
-STREAM* stream_new(int size)
+static STREAM* stream_new_inner(int size, boolean dirty)
 {
 	STREAM* stream;
 
@@ -32,11 +32,12 @@ STREAM* stream_new(int size)
 
 	if (stream != NULL)
 	{
+		stream->dirty = dirty;
 		if (size != 0)
 		{
 			size = size > 0 ? size : 0x400;
-			stream->data = (uint8*) xzalloc(size);
-			stream->p = stream->data;
+			stream->p = stream->data = stream->allocated = 
+				dirty ? (uint8*) xmalloc(size) : (uint8*) xzalloc(size);
 			stream->size = size;
 		}
 	}
@@ -44,12 +45,23 @@ STREAM* stream_new(int size)
 	return stream;
 }
 
+
+STREAM* stream_new(int size)
+{
+	return stream_new_inner(size, false);
+}
+
+FREERDP_API STREAM* stream_new_dirty(int size)
+{
+	return stream_new_inner(size, true);
+}
+
 void stream_free(STREAM* stream)
 {
 	if (stream != NULL)
 	{
-		if (stream->data != NULL)
-			xfree(stream->data);
+		if (stream->allocated != NULL)
+			xfree(stream->allocated);
 
 		xfree(stream);
 	}
@@ -60,17 +72,47 @@ void stream_extend(STREAM* stream, int request_size)
 	int pos;
 	int original_size;
 	int increased_size;
+	int offset;
 
 	pos = stream_get_pos(stream);
 	original_size = stream->size;
 	increased_size = (request_size > original_size ? request_size : original_size);
 	stream->size += increased_size;
 
-	if (original_size == 0)
-		stream->data = (uint8*) xmalloc(stream->size);
-	else
-		stream->data = (uint8*) xrealloc(stream->data, stream->size);
+	if (stream->allocated == NULL)
+	{  //stram has or shadowed or really not allocated data 
+		stream->allocated = (uint8*) xmalloc(stream->size);
 
-	memset(stream->data + original_size, 0, increased_size);
+		//if stream is shadowed - copy original data to new storage
+		//original allocated pointer will be free'd by unshadowing
+		if (original_size!=0)
+			memcpy(stream->allocated, stream->data, original_size);
+
+		stream->data = stream->allocated;
+	}
+	else if (stream->allocated != stream->data)
+	{   //stream is not shadowed but shifted
+		//realloc whole block opnly if itssize less than we want
+		//otherwise just unshift pointer and move content to beginning
+		offset = stream->data - stream->allocated;
+		if (offset>=increased_size)
+		{
+			stream->size += offset - increased_size;
+			increased_size = offset;
+		}
+		else
+			stream->allocated = (uint8*) xrealloc(stream->allocated, stream->size);
+
+		memmove(stream->allocated, stream->allocated  + offset, original_size);
+		stream->data = stream->allocated;
+	}
+	else
+	{
+		stream->data = stream->allocated = 
+			(uint8*) xrealloc(stream->allocated, stream->size);
+	}
+
+	if (!stream->dirty)
+		memset(stream->data + original_size, 0, increased_size);
 	stream_set_pos(stream, pos);
 }

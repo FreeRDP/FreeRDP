@@ -77,6 +77,7 @@ HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp)
 	hDC->hwnd->count = 32;
 	hDC->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * hDC->hwnd->count);
 	hDC->hwnd->ninvalid = 0;
+	hDC->hwnd->binvalid = 0;
 
 	return hDC;
 }
@@ -118,7 +119,7 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 	if (hgdiobject == NULL)
 		return NULL;
 
-	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
+	if (hgdiobject->objectType == GDIOBJECT_BITMAP || hgdiobject->objectType == GDIOBJECT_BITMAP_INDEPENDENT_DATA)
 	{
 		hdc->selectedObject = hgdiobject;
 	}
@@ -161,7 +162,12 @@ int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	if (hgdiobject == NULL)
 		return 0;
 
-	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
+	if (hgdiobject->objectType == GDIOBJECT_BITMAP_INDEPENDENT_DATA)
+	{
+		HGDI_BITMAP hBitmap = (HGDI_BITMAP) hgdiobject;
+		free(hBitmap);
+	}
+	else if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{
 		HGDI_BITMAP hBitmap = (HGDI_BITMAP) hgdiobject;
 

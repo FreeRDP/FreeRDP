@@ -35,6 +35,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/gdi/region.h>
 
 #include "wf_gdi.h"
 #include "wf_graphics.h"
@@ -98,6 +99,7 @@ void wf_sw_end_paint(rdpContext* context)
 	if (gdi->primary->hdc->hwnd->ninvalid < 1)
 		return;
 
+	gdi_DecomposeInvalidArea(gdi->primary->hdc);
 	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
@@ -108,12 +110,15 @@ void wf_sw_end_paint(rdpContext* context)
 		w = cinvalid[i].w;
 		h = cinvalid[i].h;
 
-		update_rect.left = x;
-		update_rect.top = y;
-		update_rect.right = x + w - 1;
-		update_rect.bottom = y + h - 1;
+		if (w>0 && h>0)
+		{
+			update_rect.left = x;
+			update_rect.top = y;
+			update_rect.right = x + w - 1;
+			update_rect.bottom = y + h - 1;
 
-		InvalidateRect(wfi->hwnd, &update_rect, FALSE);
+			InvalidateRect(wfi->hwnd, &update_rect, FALSE);
+		}
 	}
 }
 

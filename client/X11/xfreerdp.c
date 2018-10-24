@@ -53,6 +53,7 @@
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/rail.h>
+#include <freerdp/gdi/region.h>
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
@@ -131,6 +132,7 @@ void xf_sw_end_paint(rdpContext* context)
 			if (gdi->primary->hdc->hwnd->ninvalid < 1)
 				return;
 
+			gdi_DecomposeInvalidArea(gdi->primary->hdc);
 			ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 			cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
@@ -141,8 +143,11 @@ void xf_sw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 
-				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
-				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+				if (w>0 && h>0)
+				{
+					XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
+					XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+				}
 			}
 
 			XFlush(xfi->display);

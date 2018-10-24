@@ -566,6 +566,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		deleteList->cIndices = 0;
 
 		update->SuppressOutput = update_send_suppress_output;
+		update->RefreshRect = update_send_refresh_rect;
 	}
 
 	return update;
