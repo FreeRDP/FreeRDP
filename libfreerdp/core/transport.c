@@ -369,7 +369,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 	{
 		if (!status && settings->GatewayHttpTransport)
 		{
-			transport->rdg = rdg_new(transport);
+			transport->rdg = rdg_new(context);
 
 			if (!transport->rdg)
 				return FALSE;
@@ -378,7 +378,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 
 			if (status)
 			{
-				transport->frontBio = transport->rdg->frontBio;
+				transport->frontBio = rdg_front_bio(transport->rdg);
 				BIO_set_nonblock(transport->frontBio, 0);
 				transport->layer = TRANSPORT_LAYER_TSG;
 				status = TRUE;
