@@ -457,7 +457,19 @@ static HANDLE_OPS namedOps =
 	NamedPipeRead,
 	NULL,
 	NULL,
-	NamedPipeWrite
+	NamedPipeWrite,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 static BOOL InitWinPRPipeModule()

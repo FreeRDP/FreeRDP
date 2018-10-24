@@ -53,7 +53,8 @@ static BOOL MutexIsHandled(HANDLE handle)
 
 static int MutexGetFd(HANDLE handle)
 {
-	WINPR_MUTEX *mux = (WINPR_MUTEX *)handle;
+	WINPR_MUTEX* mux = (WINPR_MUTEX*)handle;
+
 	if (!MutexIsHandled(handle))
 		return -1;
 
@@ -77,17 +78,18 @@ BOOL MutexCloseHandle(HANDLE handle)
 		{
 			size_t used = 0, i;
 			void* stack = winpr_backtrace(20);
-			char **msg = NULL;
+			char** msg = NULL;
 
 			if (stack)
 				msg = winpr_backtrace_symbols(stack, &used);
 
 			if (msg)
 			{
-				for(i=0; i<used; i++)
+				for (i = 0; i < used; i++)
 					WLog_ERR(TAG, "%2"PRIdz": %s", i, msg[i]);
 			}
-			free (msg);
+
+			free(msg);
 			winpr_backtrace_free(stack);
 		}
 #endif
@@ -98,7 +100,6 @@ BOOL MutexCloseHandle(HANDLE handle)
 	}
 
 	free(handle);
-
 	return TRUE;
 }
 
@@ -107,14 +108,29 @@ static HANDLE_OPS ops =
 	MutexIsHandled,
 	MutexCloseHandle,
 	MutexGetFd,
-	NULL /* CleanupHandle */
+	NULL, /* CleanupHandle */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
 {
 	HANDLE handle = NULL;
 	WINPR_MUTEX* mutex;
-
 	mutex = (WINPR_MUTEX*) calloc(1, sizeof(WINPR_MUTEX));
 
 	if (mutex)
@@ -123,10 +139,8 @@ HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 		pthread_mutexattr_init(&attr);
 		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 		pthread_mutex_init(&mutex->mutex, &attr);
-
 		WINPR_HANDLE_SET_TYPE_AND_MODE(mutex, HANDLE_TYPE_MUTEX, WINPR_FD_READ);
 		mutex->ops = &ops;
-
 		handle = (HANDLE) mutex;
 
 		if (bInitialOwner)
@@ -141,22 +155,24 @@ HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 	return CreateMutexW(lpMutexAttributes, bInitialOwner, NULL);
 }
 
-HANDLE CreateMutexExA(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCTSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess)
+HANDLE CreateMutexExA(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCTSTR lpName, DWORD dwFlags,
+                      DWORD dwDesiredAccess)
 {
 	return CreateMutexW(lpMutexAttributes, FALSE, NULL);
 }
 
-HANDLE CreateMutexExW(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess)
+HANDLE CreateMutexExW(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCWSTR lpName, DWORD dwFlags,
+                      DWORD dwDesiredAccess)
 {
 	return CreateMutexW(lpMutexAttributes, FALSE, NULL);
 }
 
-HANDLE OpenMutexA(DWORD dwDesiredAccess, BOOL bInheritHandle,LPCSTR lpName)
+HANDLE OpenMutexA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 {
 	return NULL;
 }
 
-HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle,LPCWSTR lpName)
+HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
 {
 	return NULL;
 }
@@ -173,11 +189,13 @@ BOOL ReleaseMutex(HANDLE hMutex)
 	{
 		WINPR_MUTEX* mutex = (WINPR_MUTEX*) Object;
 		int rc = pthread_mutex_unlock(&mutex->mutex);
+
 		if (rc)
 		{
 			WLog_ERR(TAG, "pthread_mutex_unlock failed with %s [%d]", strerror(rc), rc);
 			return FALSE;
 		}
+
 		return TRUE;
 	}
 

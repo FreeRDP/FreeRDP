@@ -81,10 +81,10 @@
 #endif
 
 /* clock_gettime is not implemented on OSX prior to 10.12 */
-int _mach_clock_gettime(int clk_id, struct timespec *t);
+int _mach_clock_gettime(int clk_id, struct timespec* t);
 
-int 
-_mach_clock_gettime(int clk_id, struct timespec *t)
+int
+_mach_clock_gettime(int clk_id, struct timespec* t)
 {
 	UINT64 time;
 	double seconds;
@@ -103,14 +103,17 @@ _mach_clock_gettime(int clk_id, struct timespec *t)
 #ifdef __CLOCK_AVAILABILITY
 /* If we compiled with Mac OSX 10.12 or later, then clock_gettime will be declared
  * * but it may be NULL at runtime. So we need to check before using it. */
-int _mach_safe_clock_gettime(int clk_id, struct timespec *t);
+int _mach_safe_clock_gettime(int clk_id, struct timespec* t);
 
 int
-_mach_safe_clock_gettime(int clk_id, struct timespec *t) {
-        if( clock_gettime ) {
-                    return clock_gettime(clk_id, t);
-                        }
-            return _mach_clock_gettime(clk_id, t);
+_mach_safe_clock_gettime(int clk_id, struct timespec* t)
+{
+	if (clock_gettime)
+	{
+		return clock_gettime(clk_id, t);
+	}
+
+	return _mach_clock_gettime(clk_id, t);
 }
 
 #define clock_gettime _mach_safe_clock_gettime
@@ -121,8 +124,8 @@ _mach_safe_clock_gettime(int clk_id, struct timespec *t) {
 #endif
 
 
-static long long ts_difftime(const struct timespec *o,
-							 const struct timespec *n)
+static long long ts_difftime(const struct timespec* o,
+                             const struct timespec* n)
 {
 	long long oldValue = o->tv_sec * 1000000000LL + o->tv_nsec;
 	long long newValue = n->tv_sec * 1000000000LL + n->tv_nsec;
@@ -134,7 +137,7 @@ static long long ts_difftime(const struct timespec *o,
 #if !defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
 #include <pthread.h>
 
-static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
+static int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeout)
 {
 	struct timespec timenow;
 	struct timespec sleepytime;
@@ -166,8 +169,10 @@ static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec
 static DWORD handle_mode_to_pollevent(ULONG mode)
 {
 	DWORD event = 0;
+
 	if (mode & WINPR_FD_READ)
 		event |= POLLIN;
+
 	if (mode & WINPR_FD_WRITE)
 		event |= POLLOUT;
 
@@ -175,7 +180,7 @@ static DWORD handle_mode_to_pollevent(ULONG mode)
 }
 #endif
 
-static void ts_add_ms(struct timespec *ts, DWORD dwMilliseconds)
+static void ts_add_ms(struct timespec* ts, DWORD dwMilliseconds)
 {
 	ts->tv_sec += dwMilliseconds / 1000L;
 	ts->tv_nsec += (dwMilliseconds % 1000L) * 1000000L;
@@ -212,6 +217,7 @@ static int waitOnFd(int fd, ULONG mode, DWORD dwMilliseconds)
 
 	if (mode & WINPR_FD_READ)
 		prfds = &rfds;
+
 	if (mode & WINPR_FD_WRITE)
 		pwfds = &wfds;
 
@@ -245,8 +251,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 	if (Type == HANDLE_TYPE_PROCESS)
 	{
-		WINPR_PROCESS *process;
-		process = (WINPR_PROCESS *) Object;
+		WINPR_PROCESS* process;
+		process = (WINPR_PROCESS*) Object;
 
 		if (process->pid != waitpid(process->pid, &(process->status), 0))
 		{
@@ -260,8 +266,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
-		WINPR_MUTEX *mutex;
-		mutex = (WINPR_MUTEX *) Object;
+		WINPR_MUTEX* mutex;
+		mutex = (WINPR_MUTEX*) Object;
 
 		if (dwMilliseconds != INFINITE)
 		{
@@ -285,13 +291,13 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	{
 		int status;
 		int fd = winpr_Handle_getFd(Object);
+
 		if (fd < 0)
 		{
 			WLog_ERR(TAG, "winpr_Handle_getFd did not return a fd!");
 			SetLastError(ERROR_INVALID_HANDLE);
 			return WAIT_FAILED;
 		}
-
 
 		status = waitOnFd(fd, Object->Mode, dwMilliseconds);
 
@@ -319,23 +325,24 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 	return WAIT_FAILED;
 }
 
-DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
+DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
+                             DWORD dwMilliseconds)
 {
 	struct timespec starttime;
 	struct timespec timenow;
 	unsigned long long diff;
 	DWORD signalled;
 	DWORD polled;
-	DWORD *poll_map = NULL;
-	BOOL *signalled_idx = NULL;
+	DWORD* poll_map = NULL;
+	BOOL* signalled_idx = NULL;
 	int fd = -1;
-	int index;
+	DWORD index;
 	int status;
 	ULONG Type;
 	BOOL signal_handled = FALSE;
 	WINPR_HANDLE* Object;
 #ifdef HAVE_POLL_H
-	struct pollfd *pollfds;
+	struct pollfd* pollfds;
 #else
 	int maxfd;
 	fd_set rfds;
@@ -368,11 +375,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 		fd_set* prfds = NULL;
 		fd_set* pwfds = NULL;
 		maxfd = 0;
-
 		FD_ZERO(&rfds);
 		FD_ZERO(&wfds);
 		ZeroMemory(&timeout, sizeof(timeout));
 #endif
+
 		if (bWaitAll && (dwMilliseconds != INFINITE))
 			clock_gettime(CLOCK_MONOTONIC, &starttime);
 
@@ -414,6 +421,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 			if (Object->Mode & WINPR_FD_READ)
 				prfds = &rfds;
+
 			if (Object->Mode & WINPR_FD_WRITE)
 				pwfds = &wfds;
 
@@ -443,7 +451,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 		do
 		{
 			status = select(maxfd + 1, prfds, pwfds, 0,
-					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+			                (dwMilliseconds == INFINITE) ? NULL : &timeout);
 		}
 		while (status < 0 && errno == EINTR);
 
@@ -453,10 +461,10 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 		{
 #ifdef HAVE_POLL_H
 			WLog_ERR(TAG, "poll() handle %d (%"PRIu32") failure [%d] %s", index, nCount, errno,
-					 strerror(errno));
+			         strerror(errno));
 #else
 			WLog_ERR(TAG, "select() handle %d (%"PRIu32") failure [%d] %s", index, nCount, errno,
-					 strerror(errno));
+			         strerror(errno));
 #endif
 			winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 			SetLastError(ERROR_INTERNAL_ERROR);
@@ -478,6 +486,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 		}
 
 		signal_handled = FALSE;
+
 		for (index = 0; index < polled; index++)
 		{
 			DWORD idx;
@@ -490,9 +499,9 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 			if (!winpr_Handle_GetInfo(lpHandles[idx], &Type, &Object))
 			{
-					WLog_ERR(TAG, "invalid hHandle.");
-					SetLastError(ERROR_INVALID_HANDLE);
-					return WAIT_FAILED;
+				WLog_ERR(TAG, "invalid hHandle.");
+				SetLastError(ERROR_INVALID_HANDLE);
+				return WAIT_FAILED;
 			}
 
 			fd = winpr_Handle_getFd(lpHandles[idx]);
@@ -507,14 +516,19 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 #ifdef HAVE_POLL_H
 			signal_set = pollfds[index].revents & pollfds[index].events;
 #else
+
 			if (Object->Mode & WINPR_FD_READ)
 				signal_set = FD_ISSET(fd, &rfds) ? 1 : 0;
+
 			if (Object->Mode & WINPR_FD_WRITE)
 				signal_set |= FD_ISSET(fd, &wfds) ? 1 : 0;
+
 #endif
+
 			if (signal_set)
 			{
 				DWORD rc = winpr_Handle_cleanup(lpHandles[idx]);
+
 				if (rc != WAIT_OBJECT_0)
 					return rc;
 
@@ -547,12 +561,14 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 	return WAIT_FAILED;
 }
 
-DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
+DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
+                               DWORD dwMilliseconds, BOOL bAlertable)
 {
 	return WaitForMultipleObjects(nCount, lpHandles, bWaitAll, dwMilliseconds);
 }
 
-DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable)
+DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds,
+                          BOOL bAlertable)
 {
 	WLog_ERR(TAG, "%s: Not implemented.", __FUNCTION__);
 	SetLastError(ERROR_NOT_SUPPORTED);
