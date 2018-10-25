@@ -865,3 +865,7 @@ void UwacSeatDestroy(UwacSeat *s) {
 const char *UwacSeatGetName(const UwacSeat *seat) {
 	return seat->name;
 }
+
+UwacSeatId UwacSeatGetId(const UwacSeat *seat) {
+	return seat->seat_id;
+}

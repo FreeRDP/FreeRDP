@@ -270,7 +270,7 @@ static void registry_handle_global_remove(void* data, struct wl_registry* regist
 			ev = (UwacSeatRemovedEvent*)UwacDisplayNewEvent(d, UWAC_EVENT_REMOVED_SEAT);
 
 			if (ev)
-				ev->seat = seat;
+				ev->id = name;
 		}
 
 		wl_list_remove(&global->link);
