@@ -671,24 +671,36 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	socketBio = BIO_new(BIO_s_simple_socket());
 
 	if (!socketBio)
+	{
+		close(sockfd);
 		return FALSE;
+	}
 
 	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
 	bufferedBio = BIO_new(BIO_s_buffered_socket());
 
 	if (!bufferedBio)
+	{
+		BIO_free_all(socketBio);
 		return FALSE;
+	}
 
 	bufferedBio = BIO_push(bufferedBio, socketBio);
 
 	if (!BIO_set_nonblock(bufferedBio, TRUE))
+	{
+		BIO_free_all(bufferedBio);
 		return FALSE;
+	}
 
 	if (channel->client->isProxy)
 	{
 		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,	settings->GatewayHostname,
 		                   settings->GatewayPort))
+		{
+			BIO_free_all(bufferedBio);
 			return FALSE;
+		}
 	}
 
 	channel->bio = bufferedBio;
