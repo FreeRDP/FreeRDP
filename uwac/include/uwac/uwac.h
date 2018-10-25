@@ -37,6 +37,7 @@ typedef struct uwac_display UwacDisplay;
 typedef struct uwac_output UwacOutput;
 typedef struct uwac_window UwacWindow;
 typedef struct uwac_seat UwacSeat;
+typedef uint32_t UwacSeatId;
 
 
 /** @brief error codes */
@@ -111,7 +112,12 @@ struct uwac_new_seat_event {
 };
 typedef struct uwac_new_seat_event UwacSeatNewEvent;
 
-typedef struct uwac_new_seat_event UwacSeatRemovedEvent;
+
+struct uwac_removed_seat_event {
+	int type;
+	UwacSeatId id;
+};
+typedef struct uwac_removed_seat_event UwacSeatRemovedEvent;
 
 struct uwac_keyboard_enter_event {
 	int type;
@@ -213,6 +219,7 @@ union uwac_event {
 	int type;
 	UwacOutputNewEvent output_new;
 	UwacSeatNewEvent seat_new;
+	UwacSeatRemovedEvent seat_removed;
 	UwacPointerEnterLeaveEvent mouse_enter_leave;
 	UwacPointerMotionEvent mouse_motion;
 	UwacPointerButtonEvent mouse_button;
@@ -478,6 +485,14 @@ UWAC_API UwacReturnCode UwacNextEvent(UwacDisplay *display, UwacEvent *event);
  * @return the name of the seat
  */
 UWAC_API const char *UwacSeatGetName(const UwacSeat *seat);
+
+/**
+ * returns the id of the given UwacSeat
+ *
+ * @param seat the UwacSeat
+ * @return the id of the seat
+ */
+UWAC_API UwacSeatId UwacSeatGetId(const UwacSeat *seat);
 
 #ifdef __cplusplus
 }
