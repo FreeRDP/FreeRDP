@@ -44,6 +44,9 @@ static wStream* rpc_ntlm_http_request(HttpContext* http, const char* method,
 
 	request = http_request_new();
 
+	if (!request)
+		goto fail;
+
 	if (ntlmToken)
 		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, ntlmToken->cbBuffer);
 
@@ -52,7 +55,7 @@ static wStream* rpc_ntlm_http_request(HttpContext* http, const char* method,
 	if (!http_request_set_method(request, method) ||
 	    !http_request_set_content_length(request, contentLength) ||
 	    !http_request_set_uri(request, uri))
-		return NULL;
+		goto fail;
 
 	if (base64NtlmToken)
 	{
