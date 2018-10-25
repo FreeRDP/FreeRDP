@@ -135,7 +135,7 @@ BOOL check_path(char* path)
 {
 	UINT type = GetDriveTypeA(path);
 
-	if (!(type == DRIVE_REMOVABLE || type == DRIVE_CDROM || type == DRIVE_REMOTE))
+	if (!(type == DRIVE_FIXED || type == DRIVE_REMOVABLE || type == DRIVE_CDROM || type == DRIVE_REMOTE))
 		return FALSE;
 
 	return GetVolumeInformationA(path, NULL, 0, NULL, NULL, NULL, NULL, 0);
@@ -143,6 +143,34 @@ BOOL check_path(char* path)
 
 void first_hotplug(rdpdrPlugin* rdpdr)
 {
+	int i;
+	char drive_path[5] = { 'c', ':', '\\', '\0' };
+	DWORD unitmask = GetLogicalDrives();
+
+	for (i = 0; i < 26; i++)
+	{
+		if (unitmask & 0x01)
+		{
+			RDPDR_DRIVE* drive;
+			drive_path[0] = 'A' + i;
+			drive_path[1] = ':';
+
+			if (check_path(drive_path))
+			{
+				drive = (RDPDR_DRIVE*)malloc(sizeof(RDPDR_DRIVE));
+				ZeroMemory(drive, sizeof(RDPDR_DRIVE));
+				drive->Type = RDPDR_DTYP_FILESYSTEM;
+				drive->Path = _strdup(drive_path);
+				drive_path[1] = '\0';
+				drive->Name = _strdup(drive_path);
+				drive->automount = TRUE;
+				devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE*)drive,
+				                           rdpdr->rdpcontext);
+			}
+		}
+
+		unitmask = unitmask >> 1;
+	}
 }
 
 LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -1051,7 +1079,7 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 		{
 			RDPDR_DRIVE* drive = (RDPDR_DRIVE*)device;
 
-			if (!rdpdr->hotplugThread && drive->Path && (strcmp(drive->Path, "*") == 0))
+			if (drive->Path && (strcmp(drive->Path, "*") == 0))
 			{
 				first_hotplug(rdpdr);
 
@@ -1061,6 +1089,8 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 					WLog_ERR(TAG, "CreateThread failed!");
 					return ERROR_INTERNAL_ERROR;
 				}
+
+				continue;
 			}
 		}
 
