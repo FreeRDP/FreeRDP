@@ -406,7 +406,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 			sprintf_s(fullpath, ARRAYSIZE(fullpath), "%s/%s", szdir, pDirent->d_name);
 			lstat(fullpath, &buf);
 
-			if (S_ISDIR(buf.st_mode))
+			if (S_ISDIR(buf.st_mode) || S_ISLNK(buf.st_mode))
 			{
 				dev_array[size].path = _strdup(fullpath);
 
