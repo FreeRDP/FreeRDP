@@ -328,7 +328,7 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 	HttpRequest* request = NULL;
 	const char* uri;
 
-	if (!rdg || !method )
+	if (!rdg || !method)
 		return NULL;
 
 	uri = http_context_get_uri(rdg->http);
@@ -693,9 +693,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	                             peerPort, timeout);
 
 	if (sockfd < 0)
-	{
 		return FALSE;
-	}
 
 	socketBio = BIO_new(BIO_s_simple_socket());
 
@@ -710,8 +708,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 
 	if (!bufferedBio)
 	{
-		closesocket(sockfd);
-		BIO_free(socketBio);
+		BIO_free_all(socketBio);
 		return FALSE;
 	}
 
@@ -722,7 +719,10 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	{
 		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword, settings->GatewayHostname,
 		                   settings->GatewayPort))
+		{
+			BIO_free_all(bufferedBio);
 			return FALSE;
+		}
 	}
 
 	if (!status)

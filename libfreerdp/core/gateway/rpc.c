@@ -672,7 +672,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 
 	if (!socketBio)
 	{
-		close(sockfd);
+		closesocket(sockfd);
 		return FALSE;
 	}
 
