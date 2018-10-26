@@ -500,8 +500,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_NEGO:
 			if (!rdp_server_accept_mcs_connect_initial(rdp, s))
 			{
-				WLog_ERR(TAG,
-				         "peer_recv_callback: CONNECTION_STATE_NEGO - rdp_server_accept_mcs_connect_initial() fail");
+				WLog_ERR(TAG, "peer_recv_callback: CONNECTION_STATE_NEGO - rdp_server_accept_mcs_connect_initial() fail");
 				return -1;
 			}
 
