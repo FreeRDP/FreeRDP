@@ -56,11 +56,28 @@ static int NoneHandleGetFd(HANDLE handle)
 	return -1;
 }
 
-static HANDLE_OPS ops = {
-		NoneHandleIsHandle,
-		NoneHandleCloseHandle,
-		NoneHandleGetFd,
-		NULL /* CleanupHandle */
+static HANDLE_OPS ops =
+{
+	NoneHandleIsHandle,
+	NoneHandleCloseHandle,
+	NoneHandleGetFd,
+	NULL, /* CleanupHandle */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 HANDLE CreateNoneHandle()
@@ -72,7 +89,6 @@ HANDLE CreateNoneHandle()
 		return NULL;
 
 	none->ops = &ops;
-
 	return (HANDLE)none;
 }
 

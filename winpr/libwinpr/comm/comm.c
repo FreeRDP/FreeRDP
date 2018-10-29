@@ -129,7 +129,7 @@ static BOOL CommInitialized()
 }
 
 
-void CommLog_Print(int level, ...)
+void CommLog_Print(DWORD level, ...)
 {
 	if (!CommInitialized())
 		return;
@@ -1204,7 +1204,23 @@ static HANDLE_OPS ops =
 	CommIsHandled,
 	CommCloseHandle,
 	CommGetFd,
-	NULL /* CleanupHandle */
+	NULL, /* CleanupHandle */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 

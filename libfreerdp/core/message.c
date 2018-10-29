@@ -1578,7 +1578,7 @@ static BOOL update_message_process_update_class(rdpUpdateProxy* proxy, wMessage*
 	BOOL rc = FALSE;
 
 	if (!proxy || !msg)
-		return -1;
+		return FALSE;
 
 	switch (type)
 	{

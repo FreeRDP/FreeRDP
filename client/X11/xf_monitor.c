@@ -136,7 +136,7 @@ static BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 
 BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 {
-	int i;
+	UINT32 i;
 	int nmonitors = 0;
 	int monitor_index = 0;
 	BOOL primaryMonitorFound = FALSE;

@@ -108,6 +108,7 @@ static char* FindApplicationPath(char* application)
 		return _strdup(application);
 
 	lpSystemPath = (LPSTR) malloc(nSize);
+
 	if (!lpSystemPath)
 		return NULL;
 
@@ -131,12 +132,10 @@ static char* FindApplicationPath(char* application)
 
 		free(filename);
 		filename = NULL;
-
 		path = strtok_s(NULL, ":", &save);
 	}
 
 	free(lpSystemPath);
-
 	return filename;
 }
 
@@ -144,9 +143,10 @@ static HANDLE CreateProcessHandle(pid_t pid);
 static BOOL ProcessHandleCloseHandle(HANDLE handle);
 
 BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
-		LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+                       LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                       LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                       LPVOID lpEnvironment,
+                       LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	pid_t pid;
 	int numArgs;
@@ -161,14 +161,12 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	sigset_t oldSigMask;
 	sigset_t newSigMask;
 	BOOL restoreSigMask = FALSE;
-
 	numArgs = 0;
 	lpszEnvironmentBlock = NULL;
-
 	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
+
 	if (!pArgs)
 		return FALSE;
-
 
 	token = (WINPR_ACCESS_TOKEN*) hToken;
 
@@ -179,23 +177,25 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	else
 	{
 		lpszEnvironmentBlock = GetEnvironmentStrings();
+
 		if (!lpszEnvironmentBlock)
 			goto finish;
+
 		envp = EnvironmentBlockToEnvpA(lpszEnvironmentBlock);
 	}
+
 	if (!envp)
 		goto finish;
 
 	filename = FindApplicationPath(pArgs[0]);
+
 	if (NULL == filename)
 		goto finish;
 
 	/* block all signals so that the child can safely reset the caller's handlers */
 	sigfillset(&newSigMask);
 	restoreSigMask = !pthread_sigmask(SIG_SETMASK, &newSigMask, &oldSigMask);
-
 	/* fork and exec */
-
 	pid = fork();
 
 	if (pid < 0)
@@ -214,14 +214,15 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		int sig;
 		sigset_t set;
 		struct sigaction act;
-
 		/* set default signal handlers */
 		memset(&act, 0, sizeof(act));
 		act.sa_handler = SIG_DFL;
 		act.sa_flags = 0;
 		sigemptyset(&act.sa_mask);
+
 		for (sig = 1; sig < NSIG; sig++)
 			sigaction(sig, &act, NULL);
+
 		/* unblock all signals */
 		sigfillset(&set);
 		pthread_sigmask(SIG_UNBLOCK, &set, NULL);
@@ -229,20 +230,21 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		if (lpStartupInfo)
 		{
 			int handle_fd;
-
 			handle_fd = winpr_Handle_getFd(lpStartupInfo->hStdOutput);
+
 			if (handle_fd != -1)
 				dup2(handle_fd, STDOUT_FILENO);
 
 			handle_fd = winpr_Handle_getFd(lpStartupInfo->hStdError);
+
 			if (handle_fd != -1)
 				dup2(handle_fd, STDERR_FILENO);
 
 			handle_fd = winpr_Handle_getFd(lpStartupInfo->hStdInput);
+
 			if (handle_fd != -1)
 				dup2(handle_fd, STDIN_FILENO);
 		}
-
 
 #ifdef __sun
 		closefrom(3);
@@ -252,8 +254,10 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 #else
 		maxfd = sysconf(_SC_OPEN_MAX);
 #endif
-		for(fd=3; fd<maxfd; fd++)
+
+		for (fd = 3; fd < maxfd; fd++)
 			close(fd);
+
 #endif // __sun
 
 		if (token)
@@ -261,6 +265,7 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 			if (token->GroupId)
 			{
 				int rc = setgid((gid_t) token->GroupId);
+
 				if (rc < 0)
 				{
 				}
@@ -272,7 +277,6 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 
 			if (token->UserId)
 				setuid((uid_t) token->UserId);
-
 		}
 
 		/* TODO: add better cwd handling and error checking */
@@ -309,15 +313,12 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	lpProcessInformation->hThread = thread;
 	lpProcessInformation->dwProcessId = (DWORD) pid;
 	lpProcessInformation->dwThreadId = (DWORD) pid;
-
 	ret = TRUE;
-
 finish:
 
 	/* restore caller's original signal mask */
 	if (restoreSigMask)
 		pthread_sigmask(SIG_SETMASK, &oldSigMask, NULL);
-
 
 	free(filename);
 
@@ -345,67 +346,81 @@ finish:
 	return ret;
 }
 
-BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine,
+                    LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                    LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                    LPVOID lpEnvironment,
+                    LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	return _CreateProcessExA(NULL, 0,
-			lpApplicationName, lpCommandLine, lpProcessAttributes,
-			lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,
-			lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	                         lpApplicationName, lpCommandLine, lpProcessAttributes,
+	                         lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,
+	                         lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }
 
-BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+                    LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                    LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                    LPVOID lpEnvironment,
+                    LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                    LPPROCESS_INFORMATION lpProcessInformation)
 {
 	return TRUE;
 }
 
-BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName, LPSTR lpCommandLine,
+                          LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                          LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                          LPVOID lpEnvironment,
+                          LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	return _CreateProcessExA(hToken, 0,
-			lpApplicationName, lpCommandLine, lpProcessAttributes,
-			lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,
-			lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	                         lpApplicationName, lpCommandLine, lpProcessAttributes,
+	                         lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,
+	                         lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }
 
-BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+                          LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                          LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                          LPVOID lpEnvironment,
+                          LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                          LPPROCESS_INFORMATION lpProcessInformation)
 {
 	return TRUE;
 }
 
-BOOL CreateProcessWithLogonA(LPCSTR lpUsername, LPCSTR lpDomain, LPCSTR lpPassword, DWORD dwLogonFlags,
-		LPCSTR lpApplicationName, LPSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+BOOL CreateProcessWithLogonA(LPCSTR lpUsername, LPCSTR lpDomain, LPCSTR lpPassword,
+                             DWORD dwLogonFlags,
+                             LPCSTR lpApplicationName, LPSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
+                             LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	return TRUE;
 }
 
-BOOL CreateProcessWithLogonW(LPCWSTR lpUsername, LPCWSTR lpDomain, LPCWSTR lpPassword, DWORD dwLogonFlags,
-		LPCWSTR lpApplicationName, LPWSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+BOOL CreateProcessWithLogonW(LPCWSTR lpUsername, LPCWSTR lpDomain, LPCWSTR lpPassword,
+                             DWORD dwLogonFlags,
+                             LPCWSTR lpApplicationName, LPWSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
+                             LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                             LPPROCESS_INFORMATION lpProcessInformation)
 {
 	return TRUE;
 }
 
 BOOL CreateProcessWithTokenA(HANDLE hToken, DWORD dwLogonFlags,
-		LPCSTR lpApplicationName, LPSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+                             LPCSTR lpApplicationName, LPSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
+                             LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	return _CreateProcessExA(NULL, 0,
-			lpApplicationName, lpCommandLine, NULL,
-			NULL, FALSE, dwCreationFlags, lpEnvironment,
-			lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	                         lpApplicationName, lpCommandLine, NULL,
+	                         NULL, FALSE, dwCreationFlags, lpEnvironment,
+	                         lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }
 
 BOOL CreateProcessWithTokenW(HANDLE hToken, DWORD dwLogonFlags,
-		LPCWSTR lpApplicationName, LPWSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+                             LPCWSTR lpApplicationName, LPWSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
+                             LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                             LPPROCESS_INFORMATION lpProcessInformation)
 {
 	return TRUE;
 }
@@ -426,9 +441,7 @@ BOOL GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode)
 		return FALSE;
 
 	process = (WINPR_PROCESS*) hProcess;
-
 	*lpExitCode = process->dwExitCode;
-
 	return TRUE;
 }
 
@@ -445,7 +458,6 @@ DWORD GetCurrentProcessId(VOID)
 DWORD GetProcessId(HANDLE Process)
 {
 	WINPR_PROCESS* process;
-
 	process = (WINPR_PROCESS*) Process;
 
 	if (!process)
@@ -457,7 +469,6 @@ DWORD GetProcessId(HANDLE Process)
 BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
 {
 	WINPR_PROCESS* process;
-
 	process = (WINPR_PROCESS*) hProcess;
 
 	if (!process || (process->pid <= 0))
@@ -492,7 +503,7 @@ static BOOL ProcessHandleIsHandle(HANDLE handle)
 
 static int ProcessGetFd(HANDLE handle)
 {
-	WINPR_PROCESS *process = (WINPR_PROCESS *)handle;
+	WINPR_PROCESS* process = (WINPR_PROCESS*)handle;
 
 	if (!ProcessHandleIsHandle(handle))
 		return -1;
@@ -502,11 +513,28 @@ static int ProcessGetFd(HANDLE handle)
 	return -1;
 }
 
-static HANDLE_OPS ops = {
-		ProcessHandleIsHandle,
-		ProcessHandleCloseHandle,
-		ProcessGetFd,
-		NULL /* CleanupHandle */
+static HANDLE_OPS ops =
+{
+	ProcessHandleIsHandle,
+	ProcessHandleCloseHandle,
+	ProcessGetFd,
+	NULL, /* CleanupHandle */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 HANDLE CreateProcessHandle(pid_t pid)
@@ -520,7 +548,6 @@ HANDLE CreateProcessHandle(pid_t pid)
 	process->pid = pid;
 	process->Type = HANDLE_TYPE_PROCESS;
 	process->ops = &ops;
-
 	return (HANDLE)process;
 }
 

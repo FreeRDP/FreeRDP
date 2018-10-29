@@ -160,7 +160,7 @@ void xf_keyboard_key_release(xfContext* xfc, BYTE keycode, KeySym keysym)
 
 void xf_keyboard_release_all_keypress(xfContext* xfc)
 {
-	int keycode;
+	size_t keycode;
 	DWORD rdp_scancode;
 
 	for (keycode = 0; keycode < ARRAYSIZE(xfc->KeyboardState); keycode++)

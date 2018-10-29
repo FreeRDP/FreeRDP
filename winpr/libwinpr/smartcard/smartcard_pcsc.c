@@ -1150,7 +1150,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardLocateCardsByATRW(SCARDCONTEXT hContext,
 WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext,
         DWORD dwTimeout, LPSCARD_READERSTATEA rgReaderStates, DWORD cReaders)
 {
-	int i, j;
+	PCSC_DWORD i, j;
 	int* map;
 	PCSC_DWORD cMappedReaders;
 	PCSC_SCARD_READERSTATE* states;
