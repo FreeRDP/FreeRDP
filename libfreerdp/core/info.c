@@ -929,9 +929,8 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 BOOL rdp_send_client_info(rdpRdp* rdp)
 {
 	wStream* s;
-	BOOL status;
 	rdp->sec_flags |= SEC_INFO_PKT;
-	s = Stream_New(NULL, 2048);
+	s = rdp_send_stream_init(rdp);
 
 	if (!s)
 	{
@@ -939,11 +938,8 @@ BOOL rdp_send_client_info(rdpRdp* rdp)
 		return FALSE;
 	}
 
-	rdp_init_stream(rdp, s);
 	rdp_write_info_packet(rdp, s);
-	status = rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
-	Stream_Free(s, TRUE);
-	return status;
+	return rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
 }
 
 static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
@@ -1461,7 +1457,7 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 	if (status)
 		status = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SAVE_SESSION_INFO, rdp->mcs->userId);
 	else
-		Stream_Free(s, TRUE);
+		Stream_Release(s);
 
 	return status;
 }

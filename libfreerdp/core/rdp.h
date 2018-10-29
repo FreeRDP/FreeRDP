@@ -192,20 +192,18 @@ FREERDP_LOCAL BOOL rdp_read_share_data_header(wStream* s, UINT16* length,
 FREERDP_LOCAL void rdp_write_share_data_header(wStream* s, UINT16 length,
         BYTE type, UINT32 share_id);
 
-FREERDP_LOCAL int rdp_init_stream(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL wStream* rdp_send_stream_init(rdpRdp* rdp);
+FREERDP_LOCAL wStream* rdp_send_stream_pdu_init(rdpRdp* rdp);
 
 FREERDP_LOCAL BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length,
                                    UINT16* channel_id);
 FREERDP_LOCAL void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length,
                                     UINT16 channel_id);
 
-FREERDP_LOCAL int rdp_init_stream_pdu(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type,
                                 UINT16 channel_id);
 
 FREERDP_LOCAL wStream* rdp_data_pdu_init(rdpRdp* rdp);
-FREERDP_LOCAL int rdp_init_stream_data_pdu(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type,
                                      UINT16 channel_id);
 FREERDP_LOCAL int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);

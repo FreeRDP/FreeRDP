@@ -1831,6 +1831,7 @@ static size_t nla_sizeof_ts_request(size_t length)
 
 BOOL nla_send(rdpNla* nla)
 {
+	BOOL rc = TRUE;
 	wStream* s;
 	size_t length;
 	size_t ts_request_length;
@@ -1933,9 +1934,12 @@ BOOL nla_send(rdpNla* nla)
 	}
 
 	Stream_SealLength(s);
-	transport_write(nla->transport, s);
+
+	if (transport_write(nla->transport, s) < 0)
+		rc = FALSE;
+
 	Stream_Free(s, TRUE);
-	return TRUE;
+	return rc;
 }
 
 static int nla_decode_ts_request(rdpNla* nla, wStream* s)

@@ -175,6 +175,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	else
 	{
 		Stream_SetPosition(s, 0);
+		Stream_SetLength(s, Stream_Capacity(s));
 		StreamPool_ShiftAvailable(pool, foundIndex, -1);
 	}
 
