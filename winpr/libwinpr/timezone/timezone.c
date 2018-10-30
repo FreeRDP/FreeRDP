@@ -2032,31 +2032,43 @@ static UINT64 winpr_windows_gmtime()
 
 static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 {
-	INT64 length;
-	char* tzid = NULL;
+	const INT CHUNK_SIZE = 32;
+	INT64 rc, read = 0, length = CHUNK_SIZE;
+	char* tmp, *tzid = NULL;
 
-	if (_fseeki64(fp, 0, SEEK_END) != 0)
-		return NULL;
-	length = _ftelli64(fp);
-	if (_fseeki64(fp, 0, SEEK_SET) != 0)
-		return NULL;
-
-	if (length < 2)
-		return NULL;
-
-	tzid = (char*) malloc(length + 1);
+	tzid = (char*) malloc(length);
 	if (!tzid)
 		return NULL;
 
-	if (fread(tzid, length, 1, fp) != 1)
+	do
+	{
+		rc = fread(tzid + read, 1, length - read - 1, fp);
+		read += rc;
+		
+		if(read < (length - 1))
+			break;
+
+		length += CHUNK_SIZE;
+		tmp = (char*) realloc(tzid, length);
+		if(!tmp)
+		{
+			free(tzid);
+			return NULL;
+		}
+
+		tzid = tmp;
+	}
+	while(rc > 0);
+
+	if (ferror(fp))
 	{
 		free(tzid);
 		return NULL;
 	}
 
-	tzid[length] = '\0';
-	if (tzid[length - 1] == '\n')
-		tzid[length - 1] = '\0';
+	tzid[read] = '\0';
+	if (tzid[read - 1] == '\n')
+		tzid[read - 1] = '\0';
 
 	return tzid;
 }
