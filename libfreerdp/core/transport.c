@@ -175,9 +175,9 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 					{
 						UINT32 kret = 0;
 #ifdef WITH_GSSAPI
-
-						if ((strlen(transport->settings->Domain) != 0) &&
-						    (strncmp(transport->settings->Domain, ".", 1) != 0))
+						if ((transport->settings->Domain!= NULL) &&
+							(strlen(transport->settings->Domain) != 0) &&
+							(strncmp(transport->settings->Domain, ".", 1) != 0))
 						{
 							kret = transport_krb5_check_account(transport, transport->settings->Username,
 							                                    transport->settings->Domain,
