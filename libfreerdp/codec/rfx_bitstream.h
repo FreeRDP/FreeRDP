@@ -77,6 +77,13 @@ typedef struct _RFX_BITSTREAM RFX_BITSTREAM;
 			bs->byte_pos++; \
 		} \
 	} } while (0)
+#define rfx_bitstream_flush(bs) do { \
+	if (bs->bits_left != 8) \
+	{ \
+		int _nbits = 8 - bs->bits_left; \
+		rfx_bitstream_put_bits(bs, 0, _nbits); \
+	} \
+	} while(0)
 
 #define rfx_bitstream_eos(_bs) ((_bs)->byte_pos >= (_bs)->nbytes)
 #define rfx_bitstream_left(_bs) ((_bs)->byte_pos >= (_bs)->nbytes ? 0 : ((_bs)->nbytes - (_bs)->byte_pos - 1) * 8 + (_bs)->bits_left)
