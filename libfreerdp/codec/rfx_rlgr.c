@@ -715,6 +715,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* b
 		}
 	}
 
+	rfx_bitstream_flush(bs);
 	processed_size = rfx_bitstream_get_processed_bytes(bs);
 	free(bs);
 
