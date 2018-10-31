@@ -196,6 +196,7 @@ struct rdp_license
 	LICENSE_BLOB* PlatformChallenge;
 	LICENSE_BLOB* EncryptedPremasterSecret;
 	LICENSE_BLOB* EncryptedPlatformChallenge;
+	LICENSE_BLOB *EncryptedPlatformChallengeResponse;
 	LICENSE_BLOB* EncryptedHardwareId;
 	SCOPE_LIST* ScopeList;
 	UINT32 PacketHeaderLength;
