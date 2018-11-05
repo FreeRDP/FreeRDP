@@ -224,22 +224,30 @@ wStream* transport_send_stream_init(rdpTransport* transport, int size)
 
 BOOL transport_attach(rdpTransport* transport, int sockfd)
 {
-	BIO* socketBio;
+	BIO* socketBio = NULL;
 	BIO* bufferedBio;
 	socketBio = BIO_new(BIO_s_simple_socket());
 
 	if (!socketBio)
-		return FALSE;
+		goto fail;
 
 	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
 	bufferedBio = BIO_new(BIO_s_buffered_socket());
 
 	if (!bufferedBio)
-		return FALSE;
+		goto fail;
 
 	bufferedBio = BIO_push(bufferedBio, socketBio);
 	transport->frontBio = bufferedBio;
 	return TRUE;
+fail:
+
+	if (socketBio)
+		BIO_free_all(socketBio);
+	else
+		close(sockfd);
+
+	return FALSE;
 }
 
 BOOL transport_connect_rdp(rdpTransport* transport)
@@ -1093,7 +1101,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 	else
 	{
 		if (transport->frontBio)
-			BIO_free(transport->frontBio);
+			BIO_free_all(transport->frontBio);
 	}
 
 	if (transport->tsg)

@@ -157,7 +157,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 	UINT error = 0;
 	DWORD status;
 
-	if (arg == NULL)
+	if (oss == NULL)
 	{
 		error = ERROR_INVALID_PARAMETER;
 		goto err_out;
