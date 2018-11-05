@@ -128,9 +128,23 @@
 #define NLA_PKG_NAME	NEGO_SSP_NAME
 
 
-typedef struct smartcard_creds smartcard_creds;
-typedef struct csp_data_detail csp_data_detail;
-typedef struct auth_identity
+typedef struct
+{
+ 	char* Pin;
+ 	char* UserHint;   /* OPTIONAL */
+ 	char* DomainHint; /* OPTIONAL */
+} smartcard_creds;
+
+typedef struct
+{
+	UINT32 KeySpec;
+	char* CardName;
+	char* ReaderName;
+	char* ContainerName;
+	char* CspName;
+} csp_data_detail;
+
+typedef struct
 {
 	SEC_WINNT_AUTH_IDENTITY* password_creds;
 	smartcard_creds*         smartcard_creds;
@@ -192,7 +206,6 @@ struct rdp_nla
 	credential_type cred_type;
 };
 
-
 static BOOL nla_send(rdpNla* nla);
 static int nla_recv(rdpNla* nla);
 static void nla_buffer_print(rdpNla* nla);
@@ -250,6 +263,7 @@ static const UINT32 NonceLength = 32;
 static void memory_clear_and_free(void* memory, size_t size)
 {
 	if (memory)
+
 	{
 		memset(memory, 0, size);
 		free(memory);
@@ -260,7 +274,7 @@ static void memory_clear_and_free(void* memory, size_t size)
 
 static void string_clear_and_free(char* string)
 {
-	if (string)
+	if(string)
 	{
 		memory_clear_and_free(string, strlen(string));
 	}
@@ -291,7 +305,6 @@ static char* string_concatenate(const char* string, ...)
 	strcpy(current, string);
 	current += strlen(string);
 	va_start(strings, string);
-	arg = va_arg(strings, const char*);
 
 	while (arg)
 	{
@@ -326,14 +339,9 @@ LPTSTR stringX_from_cstring(const char* cstring)
 	return result;
 }
 
-/* ============================================================ */
 
-typedef struct smartcard_creds
-{
-	char* Pin;
-	char* UserHint;   /* OPTIONAL */
-	char* DomainHint; /* OPTIONAL */
-} smartcard_creds;
+
+/* ============================================================ */
 
 static smartcard_creds* smartcard_creds_new_nocopy(char* Pin, char* UserHint, char* DomainHint)
 {
@@ -378,15 +386,6 @@ static void smartcard_creds_free(smartcard_creds* creds)
 }
 
 /* ============================================================ */
-
-typedef struct csp_data_detail
-{
-	UINT32 KeySpec;
-	char* CardName;
-	char* ReaderName;
-	char* ContainerName;
-	char* CspName;
-} csp_data_detail;
 
 static csp_data_detail* csp_data_detail_new_nocopy(UINT32 KeySpec,
         char* CardName,
@@ -442,34 +441,6 @@ static void csp_data_detail_free(csp_data_detail* csp)
 	string_clear_and_free(csp->CspName);
 	memory_clear_and_free(csp, sizeof(*csp));
 }
-
-/* ============================================================ */
-
-static auth_identity* auth_identity_new(SEC_WINNT_AUTH_IDENTITY* password_creds,
-                                        smartcard_creds* smartcard_creds,
-                                        csp_data_detail* csp_data)
-{
-	auth_identity* aid;
-	CHECK_MEMORY(aid = malloc(sizeof(*aid)), NULL,
-	             "Could not allocate a smartcard_aut_identity structure");
-	aid->password_creds = password_creds;
-	aid->smartcard_creds = smartcard_creds;
-	aid->csp_data = csp_data;
-	return aid;
-}
-
-static void auth_identity_free(auth_identity* aid)
-{
-	if (aid)
-	{
-		SEC_WINNT_AUTH_IDENTITY_free(aid->password_creds);
-		smartcard_creds_free(aid->smartcard_creds);
-		csp_data_detail_free(aid->csp_data);
-		memory_clear_and_free(aid, sizeof(*aid));
-	}
-}
-
-
 /* ============================================================ */
 
 /* SEC_WINNT_AUTH_IDENTITY contains only UTF-16 strings,  with length fields. */
@@ -477,15 +448,14 @@ static void auth_identity_free(auth_identity* aid)
 	memory_clear_and_free(structure->field, structure->field##Length * 2)
 #define WSTRING_LENGTH_SET_CSTRING(structure, field, cstring)				\
 	(structure->field##Length = (cstring						\
-	                             ?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
-	                             :(structure->field = NULL, 0)))
+		?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
+		:(structure->field = NULL, 0)))
 
-static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_new(char* user,  char* password,
-        char* domain)
+static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_new(char * user,  char * password,  char * domain)
 {
 	SEC_WINNT_AUTH_IDENTITY* password_creds;
-	CHECK_MEMORY(password_creds = malloc(sizeof(*password_creds)), NULL,
-	             "Could not allocate a SEC_WINNT_AUTH_IDENTITY structure");
+	CHECK_MEMORY(password_creds = malloc(sizeof (*password_creds)),NULL,
+		"Could not allocate a SEC_WINNT_AUTH_IDENTITY structure");
 	password_creds->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 	WSTRING_LENGTH_SET_CSTRING(password_creds, User, user);
 	WSTRING_LENGTH_SET_CSTRING(password_creds, Domain, domain);
@@ -501,8 +471,33 @@ static void SEC_WINNT_AUTH_IDENTITY_free(SEC_WINNT_AUTH_IDENTITY* password_creds
 		WSTRING_LENGTH_CLEAR_AND_FREE(password_creds, Domain);
 		WSTRING_LENGTH_CLEAR_AND_FREE(password_creds, Password);
 	}
-
 	free(password_creds);
+}
+
+/* ============================================================ */
+
+static auth_identity* auth_identity_new(SEC_WINNT_AUTH_IDENTITY* password_creds,
+                                        smartcard_creds* smartcard_creds,
+                                        csp_data_detail* csp_data)
+{
+	auth_identity* aid;
+	CHECK_MEMORY(aid = malloc(sizeof(*aid)), NULL,
+	             "Could not allocate a auth_identity structure");
+	aid->password_creds = password_creds;
+	aid->smartcard_creds = smartcard_creds;
+	aid->csp_data = csp_data;
+	return aid;
+}
+
+static void auth_identity_free(auth_identity* aid)
+{
+	if (aid)
+	{
+		SEC_WINNT_AUTH_IDENTITY_free(aid->password_creds);
+		smartcard_creds_free(aid->smartcard_creds);
+		csp_data_detail_free(aid->csp_data);
+		memory_clear_and_free(aid, sizeof(*aid));
+	}
 }
 
 /* ============================================================ */
@@ -540,6 +535,13 @@ static BOOL user_is_in_sam_database(const char* username)
 
 	return is_in;
 }
+
+/* ============================================================ */
+
+/**
+ * Returns whether the username is found in the SAM database.
+ * @param username: C string.
+ */
 
 static int nla_client_init_smartcard_logon(rdpNla* nla)
 {

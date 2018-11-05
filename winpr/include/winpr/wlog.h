@@ -116,7 +116,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
 			WLog_PrintMessage(_log, WLOG_MESSAGE_TEXT, _log_level, \
-			                  __LINE__, __FILE__, __FUNCTION__, __VA_ARGS__ ); \
+			                  __LINE__, __FILE__, __FUNCTION__, ## __VA_ARGS__ ); \
 		} \
 	} while (0)
 
@@ -132,7 +132,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
 			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, \
-			                  __LINE__, __FILE__, __FUNCTION__, __VA_ARGS__ ); \
+			                  __LINE__, __FILE__, __FUNCTION__, ## __VA_ARGS__ ); \
 		} \
 	} while (0)
 
