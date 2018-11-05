@@ -68,7 +68,7 @@
  * }
  *
  * TSCredentials ::= SEQUENCE {
- * 	credType    [0] INTEGER,
+ * 	cred_type    [0] INTEGER,
  * 	credentials [1] OCTET STRING
  * }
  *
@@ -93,12 +93,31 @@
  * 	cspName       [4] OCTET STRING OPTIONAL
  * }
  *
+ *
+ * TSRemoteGuardCreds ::= SEQUENCE {
+ *     logonCred         [0] TSRemoteGuardPackageCred,
+ *     supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL,
+ * }
+ *
+ * TSRemoteGuardPackageCred ::=  SEQUENCE {
+ *     packageName [0] OCTET STRING,
+ *     credBuffer  [1] OCTET STRING,
+ * }
+ *
  */
 
 #define NLA_PKG_NAME	NEGO_SSP_NAME
 
-#define TERMSRV_SPN_PREFIX	"TERMSRV/"
 
+typedef struct smartcard_auth_identity smartcard_auth_identity;
+
+typedef enum
+{
+	credential_type_password = 1,
+	credential_type_smartcard = 2,
+	credential_type_remote_guard = 6,
+	credential_type_default = credential_type_password,
+} credential_type;
 
 struct rdp_nla
 {
@@ -141,10 +160,15 @@ struct rdp_nla
 	SecBuffer PublicKey;
 	SecBuffer tsCredentials;
 	LPTSTR ServicePrincipalName;
-	SEC_WINNT_AUTH_IDENTITY* identity;
 	PSecurityFunctionTable table;
 	SecPkgContext_Sizes ContextSizes;
+	smartcard_auth_identity* identity;
+	credential_type          cred_type;
 };
+
+static const char* PREFIX_CONTAINER_NAME = "0x";
+static const char* PREFIX_PIN_GLOBAL = "CredProv&PIN Global&";
+static const char* TERMSRV_SPN_PREFIX = "TERMSRV/";
 
 static BOOL nla_send(rdpNla* nla);
 static int nla_recv(rdpNla* nla);
@@ -156,8 +180,9 @@ static SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla);
 static SECURITY_STATUS nla_decrypt_public_key_hash(rdpNla* nla);
 static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla);
 static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla);
-static BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s);
-static void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity);
+static BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s, size_t* length);
+static BOOL nla_read_ts_smartcard_creds(rdpNla* nla, wStream* s, size_t* length);
+static void SEC_WINNT_AUTH_IDENTITY_free(SEC_WINNT_AUTH_IDENTITY* identity);
 
 #define ber_sizeof_sequence_octet_string(length) ber_sizeof_contextual_tag(ber_sizeof_octet_string(length)) + ber_sizeof_octet_string(length)
 #define ber_write_sequence_octet_string(stream, context, value, length) ber_write_contextual_tag(stream, context, ber_sizeof_octet_string(length), TRUE) + ber_write_octet_string(stream, value, length)
@@ -184,36 +209,429 @@ static const BYTE ServerClientHashMagic[] =
 
 static const UINT32 NonceLength = 32;
 
-void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
+
+/* ============================================================ */
+
+#define CHECK_MEMORY(pointer, result, description, ...)                 \
+	do                                                              \
+	{                                                               \
+		if (!(pointer))						\
+		{                                                       \
+			WLog_ERR(TAG, "%s:%d: "  description,		\
+				__FUNCTION__, __LINE__,                 \
+				#__VA_ARGS__);				\
+			return result;                                  \
+		}                                                       \
+	}while (0)
+
+static void memory_clear_and_free(void* memory, size_t size)
 {
-	if (identity)
+	if (memory)
 	{
-		/* Password authentication */
-		if (identity->User)
+		memset(memory, 0, size);
+		free(memory);
+	}
+}
+
+/* ============================================================ */
+
+static void string_clear_and_free(char* string)
+{
+	if(string)
+	{
+		memory_clear_and_free(string, strlen(string));
+	}
+}
+
+static char* string_concatenate(const char* string, ...)
+{
+	char*   result;
+	char*   current;
+	/* sum the lengths of the strings */
+	const char*   arg = string;
+	int total_length = 0;
+	va_list strings;
+	va_start(strings, string);
+
+	while (arg)
+	{
+		total_length += strlen(arg);
+		arg = va_arg(strings, const char*);
+	}
+
+	va_end(strings);
+	total_length += 1; /*  null byte */
+	CHECK_MEMORY((result = malloc(total_length)),
+	             0, "Could not allocate %d bytes.", total_length);
+	/* start copying */
+	current = result;
+	strcpy(current, string);
+	current += strlen(string);
+	va_start(strings, string);
+
+	while (arg)
+	{
+		strcpy(current, arg);
+		current += strlen(arg);
+		arg = va_arg(strings, const char*);
+	}
+
+	va_end(strings);
+	/* strcpy copied the terminating null byte */
+	return result;
+}
+
+/* ============================================================ */
+
+typedef struct
+{
+ 	char* Pin;
+ 	char* UserHint;   /* OPTIONAL */
+ 	char* DomainHint; /* OPTIONAL */
+} smartcard_creds;
+
+static smartcard_creds* smartcard_creds_new_nocopy(char* Pin,char* UserHint,char* DomainHint)
+{
+	smartcard_creds * creds;
+	CHECK_MEMORY(creds = malloc(sizeof (*creds)),NULL, "Could not allocate a smartcard_creds structure");
+	creds->Pin = Pin;
+	creds->UserHint = UserHint;
+	creds->DomainHint = DomainHint;
+	return creds;
+}
+
+static smartcard_creds* smartcard_creds_new(char* pin,char* userhint,char* domainhint)
+{
+	char* Pin = strdup(pin);
+	char* UserHint = strdup(userhint);
+	char* DomainHint = strdup(domainhint);
+
+	if (!Pin || !UserHint || !DomainHint)
+	{
+		free(Pin);
+		free(UserHint);
+		free(DomainHint);
+		WLog_ERR(TAG, "%s:%d: Could not allocate Pin, UserHint or DomainHint", __FUNCTION__, __LINE__);
+		return NULL;
+	}
+
+	return smartcard_creds_new_nocopy(Pin, UserHint, DomainHint);
+}
+
+static void smartcard_creds_free(smartcard_creds * creds)
+{
+	if (creds == NULL)
+	{
+		return;
+	}
+
+	string_clear_and_free(creds->Pin);
+	string_clear_and_free(creds->UserHint);
+	string_clear_and_free(creds->DomainHint);
+	memory_clear_and_free(creds, sizeof (*creds));
+}
+
+/* ============================================================ */
+
+typedef struct
+{
+	UINT32 KeySpec;
+	char* CardName;
+	char* ReaderName;
+	char* ContainerName;
+	char* CspName;
+} csp_data_detail;
+
+static csp_data_detail* csp_data_detail_new_nocopy(UINT32 KeySpec,
+	char* CardName,
+	char* ReaderName,
+	char* ContainerName,
+	char* CspName)
+{
+	csp_data_detail * csp;
+	CHECK_MEMORY(csp = malloc(sizeof (*csp)),NULL, "Could not allocate a csp_data_detail structure");
+	csp->KeySpec=KeySpec;
+	csp->CardName=CardName;
+	csp->ReaderName=ReaderName;
+	csp->ContainerName=ContainerName;
+	csp->CspName=CspName;
+	return csp;
+}
+
+static csp_data_detail* csp_data_detail_new(UINT32 KeySpec,
+	char* cardname,
+	char* readername,
+	char* containername,
+	char* cspname)
+{
+	char* CardName = strdup(cardname);
+	char* ReaderName = strdup(readername);
+	char* ContainerName = strdup(containername);
+	char* CspName = strdup(cspname);
+
+	if (!CardName || !ReaderName || !ContainerName || !CspName)
+	{
+		free(CardName);
+		free(ReaderName);
+		free(ContainerName);
+		free(CspName);
+		WLog_ERR(TAG, "%s:%d: Could not allocate CardName, ReaderName, ContainerName or CspName", __FUNCTION__, __LINE__);
+		return NULL;
+	}
+
+	return csp_data_detail_new(KeySpec, CardName, ReaderName, ContainerName, CspName);
+}
+
+static void csp_data_detail_free(csp_data_detail * csp)
+{
+	if (csp == NULL)
+	{
+		return;
+	}
+
+	string_clear_and_free(csp->CardName);
+	string_clear_and_free(csp->ReaderName);
+	string_clear_and_free(csp->ContainerName);
+	string_clear_and_free(csp->CspName);
+	memory_clear_and_free(csp, sizeof (*csp));
+}
+
+/* ============================================================ */
+
+typedef struct smartcard_auth_identity
+{
+	SEC_WINNT_AUTH_IDENTITY* password_creds;
+	smartcard_creds*         smartcard_creds;
+	csp_data_detail*         csp_data;
+} smartcard_auth_identity;
+
+static smartcard_auth_identity* smartcard_auth_identity_new(SEC_WINNT_AUTH_IDENTITY* password_creds,
+	smartcard_creds* smartcard_creds,
+	csp_data_detail* csp_data)
+{
+	smartcard_auth_identity * said;
+	CHECK_MEMORY(said = malloc(sizeof (*said)),NULL,
+		"Could not allocate a smartcard_aut_identity structure");
+	said->password_creds = password_creds;
+	said->smartcard_creds = smartcard_creds;
+	said->csp_data = csp_data;
+	return said;
+}
+
+static void smartcard_auth_identity_free(smartcard_auth_identity * said)
+{
+	if (said)
+	{
+		SEC_WINNT_AUTH_IDENTITY_free(said->password_creds);
+		smartcard_creds_free(said->smartcard_creds);
+		csp_data_detail_free(said->csp_data);
+		memory_clear_and_free(said, sizeof(*said));
+	}
+}
+
+
+/* ============================================================ */
+
+/* SEC_WINNT_AUTH_IDENTITY contains only UTF-16 strings,  with length fields. */
+#define WSTRING_LENGTH_CLEAR_AND_FREE(structure, field) \
+	memory_clear_and_free(structure->field, structure->field##Length * 2)
+#define WSTRING_LENGTH_SET_CSTRING(structure, field, cstring)				\
+	(structure->field##Length = (cstring						\
+		?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
+		:(structure->field = NULL, 0)))
+
+static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_new(char * user,  char * password,  char * domain)
+{
+	SEC_WINNT_AUTH_IDENTITY* password_creds;
+	CHECK_MEMORY(password_creds = malloc(sizeof (*password_creds)),NULL,
+		"Could not allocate a SEC_WINNT_AUTH_IDENTITY structure");
+	password_creds->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+	WSTRING_LENGTH_SET_CSTRING(password_creds, User, user);
+	WSTRING_LENGTH_SET_CSTRING(password_creds, Domain, domain);
+	WSTRING_LENGTH_SET_CSTRING(password_creds, Password, password);
+	return password_creds;
+}
+
+static void SEC_WINNT_AUTH_IDENTITY_free(SEC_WINNT_AUTH_IDENTITY* password_creds)
+{
+	if (password_creds)
+	{
+		WSTRING_LENGTH_CLEAR_AND_FREE(password_creds, User);
+		WSTRING_LENGTH_CLEAR_AND_FREE(password_creds, Domain);
+		WSTRING_LENGTH_CLEAR_AND_FREE(password_creds, Password);
+	}
+	free(password_creds);
+}
+
+/* ============================================================ */
+
+/**
+ * Returns whether the username is found in the SAM database.
+ * @param username: C string.
+ */
+
+static BOOL user_is_in_sam_database(const char* username)
+{
+	char mutable_username[128]; /*  greater than the max of 104 on MS-Windows 2000,  and 20 on MS-Windows 2003 */
+	WINPR_SAM* sam = SamOpen(NULL, TRUE);
+	BOOL is_in = FALSE;
+
+	if (sizeof(mutable_username) - 1 < strlen(username))
+	{
+		return FALSE;
+	}
+
+	strcpy(mutable_username, username);
+
+	if (sam)
+	{
+		WINPR_SAM_ENTRY* entry = SamLookupUserA(sam, mutable_username, strlen(mutable_username), NULL, 0);
+
+		if (entry)
 		{
-			memset(identity->User, 0, identity->UserLength * 2);
-			free(identity->User);
+			is_in = TRUE;
+			SamFreeEntry(sam, entry);
 		}
 
-		if (identity->Password)
+		SamClose(sam);
+	}
+
+	return is_in;
+}
+
+static int nla_client_init_smartcard_logon(rdpNla* nla)
+{
+	rdpSettings* settings = nla->settings;
+	nla->cred_type = settings->CredentialsType;
+
+#if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
+
+	if (get_info_smartcard(nla->instance) != 0)
+	{
+		WLog_ERR(TAG, "Failed to retrieve UPN !");
+		return -1;
+	}
+
+	/* #if defined(WITH_KERBEROS) */
+	WLog_INFO(TAG, "WITH_KERBEROS");
+
+	if (get_TGT_kerberos(settings) == FALSE)
+	{
+		WLog_ERR(TAG, "Failed to get TGT from KDC !");
+		return -1;
+	}
+
+	/* #else */
+	/* 	WLog_INFO(TAG, "NOT WITH_KERBEROS"); */
+	/* #endif */
+#else
+	WLog_ERR(TAG, "Enable PKCS11H and GSSAPI features to authenticate via smartcard");
+	return -1;
+#endif
+
+	if (settings->PinPadIsPresent)
+	{
+		/* The middleware talking to the card performs PIN caching and will provide
+		* to its CSP (Cryptographic Service Provider) the PIN code
+		* when asked. If PIN caching fails, or is not handled by the middleware,
+		* the PIN code will be asked one more time before opening the session.
+		* Thus, entering PIN code on pinpad does not give the PIN code explicitly to the CSP.
+		* That's why we set it here to "0000".
+		* The PIN code is not communicated to any software module, nor central processing unit.
+		* Contrary to /pin option in command line or with getpass() which are less secure,
+		* because the PIN code is communicated (at the present) in clear and transit via the code.
+		*/
+		settings->Password = string_concatenate(PREFIX_PIN_GLOBAL, "0000", NULL);
+	}
+	else if (settings->Pin)
+	{
+		settings->Password = string_concatenate(PREFIX_PIN_GLOBAL, settings->Pin, NULL);
+	}
+	else
+	{
+		settings->Password = strdup("");
+	}
+
+	CHECK_MEMORY(settings->Password, -1, "Could not allocate memory for password.");
+	settings->Username = NULL;
+
+	if (settings->UserPrincipalName != NULL)
+	{
+		settings->Username = strdup(settings->UserPrincipalName);
+		CHECK_MEMORY(settings->Username,
+		             -1, "Could not strdup the UserPrincipalName (length = %d)",
+		             strlen(settings->UserPrincipalName));
+	}
+
+	if (!settings->Domain)
+	{
+		WLog_ERR(TAG, "Missing domain.");
+		return -1;
+	}
+
+	settings->DomainHint = strdup(settings->Domain); /* They're freed separately! */
+
+	if (settings->DomainHint != NULL)
+	{
+		if (settings->CanonicalizedUserHint != NULL)
 		{
-			size_t len = identity->PasswordLength;
-
-			if (len > LB_PASSWORD_MAX_LENGTH) /* [pth] Password hash */
-				len -= LB_PASSWORD_MAX_LENGTH;
-
-			memset(identity->Password, 0, len * 2);
-			free(identity->Password);
+			CHECK_MEMORY((settings->UserHint = strdup(settings->CanonicalizedUserHint)),
+			             -1, "Could not strdup the UserPrincipalName (length = %d)",
+			             strlen(settings->UserPrincipalName));
 		}
-
-		if (identity->Domain)
+		else
 		{
-			memset(identity->Domain, 0, identity->DomainLength * 2);
-			free(identity->Domain);
+			WLog_ERR(TAG, "Missing Canonicalized User Hint (Domain Hint = %s,  UPN = %s).",
+			         settings->DomainHint, settings->UserPrincipalName);
+			return -1;
 		}
 	}
 
-	free(identity);
+	WLog_INFO(TAG, "Canonicalized User Hint = %s,  Domain Hint = %s,  UPN = %s",
+	          settings->CanonicalizedUserHint, settings->DomainHint, settings->UserPrincipalName);
+	CHECK_MEMORY((settings->ContainerName = string_concatenate(PREFIX_CONTAINER_NAME, settings->IdCertificate, NULL)),
+	             -1, "Could not allocate memory for container name.");
+
+	if ((settings->CspName == NULL) || (settings->CspName != NULL && strlen(settings->CspName) == 0))
+	{
+		WLog_ERR(TAG, "/csp argument is mandatory for smartcard-logon ");
+		return -1;
+	}
+
+	if (!settings->RedirectSmartCards && !settings->DeviceRedirection)
+	{
+		WLog_ERR(TAG, "/smartcard argument is mandatory for smartcard-logon ");
+		return -1;
+	}
+
+	WLog_DBG(TAG, "SmartcardReaderName=%s", settings->SmartcardReaderName);
+
+	if(nla->identity->smartcard_creds)
+	{
+		smartcard_creds_free(nla->identity->smartcard_creds);
+	}
+
+	nla->identity->smartcard_creds = smartcard_creds_new( /* Pin: */ settings->Password,
+		settings->UserHint, settings->DomainHint);
+
+	if(nla->identity->csp_data)
+	{
+		csp_data_detail_free(nla->identity->csp_data);
+	}
+
+	nla->identity->csp_data = csp_data_detail_new(AT_KEYEXCHANGE /*AT_AUTHENTICATE*/,
+		settings->CardName,
+		settings->SmartcardReaderName,
+		settings->ContainerName,
+		settings->CspName);
+
+	if ((nla->identity->smartcard_creds == NULL) || (nla->identity->csp_data == NULL))
+	{
+		WLog_ERR(TAG, "%s:%d: Failed to set smartcard authentication parameters !", __FUNCTION__, __LINE__);
+		return -1;
+	}
+
+	return 0;
 }
 
 /**
@@ -232,6 +650,8 @@ static int nla_client_init(rdpNla* nla)
 	WINPR_SAM* sam;
 	WINPR_SAM_ENTRY* entry;
 	nla->state = NLA_STATE_INITIAL;
+	nla->cred_type = credential_type_default;
+	nla->identity = smartcard_auth_identity_new(SEC_WINNT_AUTH_IDENTITY_new(NULL, NULL, NULL), NULL, NULL);
 
 	if (settings->RestrictedAdminModeRequired)
 		settings->DisableCredentialsDelegation = TRUE;
@@ -292,16 +712,16 @@ static int nla_client_init(rdpNla* nla)
 		}
 	}
 
-	if (!settings->Username)
+	if (settings->Username == NULL)
 	{
-		nla_identity_free(nla->identity);
-		nla->identity = NULL;
+		SEC_WINNT_AUTH_IDENTITY_free(nla->identity->password_creds);
+		nla->identity->password_creds = NULL;
 	}
 	else
 	{
 		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
 		{
-			if (sspi_SetAuthIdentityWithUnicodePassword(nla->identity, settings->Username, settings->Domain,
+			if (sspi_SetAuthIdentityWithUnicodePassword(nla->identity->password_creds, settings->Username, settings->Domain,
 			        (UINT16*) settings->RedirectionPassword,
 			        settings->RedirectionPasswordLength / sizeof(WCHAR) - 1) < 0)
 				return -1;
@@ -316,7 +736,7 @@ static int nla_client_init(rdpNla* nla)
 				{
 					if (strlen(settings->PasswordHash) == 32)
 					{
-						if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
+						if (sspi_SetAuthIdentity(nla->identity->password_creds, settings->Username, settings->Domain,
 						                         settings->PasswordHash) < 0)
 							return -1;
 
@@ -324,7 +744,7 @@ static int nla_client_init(rdpNla* nla)
 						 * Increase password hash length by LB_PASSWORD_MAX_LENGTH to obtain a length exceeding
 						 * the maximum (LB_PASSWORD_MAX_LENGTH) and use it this for hash identification in WinPR.
 						 */
-						nla->identity->PasswordLength += LB_PASSWORD_MAX_LENGTH;
+						nla->identity->password_creds->PasswordLength += LB_PASSWORD_MAX_LENGTH;
 						usePassword = FALSE;
 					}
 				}
@@ -332,7 +752,7 @@ static int nla_client_init(rdpNla* nla)
 
 			if (usePassword)
 			{
-				if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
+				if (sspi_SetAuthIdentity(nla->identity->password_creds, settings->Username, settings->Domain,
 				                         settings->Password) < 0)
 					return -1;
 			}
@@ -395,7 +815,7 @@ static int nla_client_init(rdpNla* nla)
 	WLog_DBG(TAG, "%s %"PRIu32" : packageName=%ls ; cbMaxToken=%d", __FUNCTION__, __LINE__,
 	         nla->packageName, nla->cbMaxToken);
 	nla->status = nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
-	              SECPKG_CRED_OUTBOUND, NULL, nla->identity, NULL, NULL, &nla->credentials,
+	              SECPKG_CRED_OUTBOUND, NULL, nla->identity->password_creds, NULL, NULL, &nla->credentials,
 	              &nla->expiration);
 
 	if (nla->status != SEC_E_OK)
@@ -1457,33 +1877,169 @@ fail:
 	return status;
 }
 
-static size_t nla_sizeof_ts_password_creds(rdpNla* nla)
+static size_t nla_sizeof_ts_password_creds(SEC_WINNT_AUTH_IDENTITY * password_creds)
 {
 	size_t length = 0;
 
-	if (nla->identity)
+	if (password_creds)
 	{
-		length += ber_sizeof_sequence_octet_string(nla->identity->DomainLength * 2);
-		length += ber_sizeof_sequence_octet_string(nla->identity->UserLength * 2);
-		length += ber_sizeof_sequence_octet_string(nla->identity->PasswordLength * 2);
+		length += ber_sizeof_sequence_octet_string(password_creds->DomainLength * 2);
+		length += ber_sizeof_sequence_octet_string(password_creds->UserLength * 2);
+		length += ber_sizeof_sequence_octet_string(password_creds->PasswordLength * 2);
 	}
 
 	return length;
 }
 
-static size_t nla_sizeof_ts_credentials(rdpNla* nla)
+
+ /*
+string_length returns the number of characters in the utf-8 string.
+That is, the number of WCHAR in the string converted to "unicode".
+*/
+static int string_length(char * string)
+{
+	if (string == NULL)
+	{
+		return 0;
+	}
+	else
+	{
+		LPWSTR wstring = NULL;
+		int length =  ConvertToUnicode(CP_UTF8, 0, string, -1, & wstring, 0);
+		free(wstring);
+		return (length < 0)?0:length;
+	}
+}
+
+static int nla_sizeof_ts_cspdatadetail(csp_data_detail*  csp_data)
+{
+	int length = 0;
+
+	if (csp_data)
+	{
+		length += ber_sizeof_contextual_tag(ber_sizeof_integer(csp_data->KeySpec));
+		length += ber_sizeof_integer(csp_data->KeySpec);
+		length += ber_sizeof_sequence_octet_string(string_length(csp_data->CardName) * 2);
+		length += ber_sizeof_sequence_octet_string(string_length(csp_data->ReaderName) * 2);
+		length += ber_sizeof_sequence_octet_string(string_length(csp_data->ContainerName) * 2);
+		length += ber_sizeof_sequence_octet_string(string_length(csp_data->CspName) * 2);
+	}
+
+	return length;
+}
+
+static int nla_sizeof_sequence_ts_cspdatadetail(csp_data_detail*  csp_data)
+{
+	int length = 0;
+	length += nla_sizeof_ts_cspdatadetail(csp_data);
+	length += ber_sizeof_sequence_tag(length);
+	length += ber_sizeof_contextual_tag(length);
+	return length;
+}
+
+static int nla_sizeof_ts_smartcard_creds(smartcard_auth_identity* identity)
+{
+	int length = 0;
+
+	if (identity)
+	{
+		length += ber_sizeof_sequence_octet_string(string_length(identity->smartcard_creds->Pin) * 2);
+		length += nla_sizeof_sequence_ts_cspdatadetail(identity->csp_data);
+		length += ber_sizeof_sequence_octet_string(string_length(identity->smartcard_creds->UserHint) * 2);
+		length += ber_sizeof_sequence_octet_string(string_length(identity->smartcard_creds->DomainHint) * 2);
+	}
+
+	return length;
+}
+
+static int nla_sizeof_ts_pwd_or_sc_creds(smartcard_auth_identity *  identity, credential_type cred_type)
+{
+	switch (cred_type)
+	{
+		case credential_type_password:
+			return nla_sizeof_ts_password_creds(identity->password_creds);
+		case credential_type_smartcard:
+			return nla_sizeof_ts_smartcard_creds(identity);
+		default:
+			return 0;
+	}
+}
+
+static size_t nla_sizeof_ts_credentials(smartcard_auth_identity *  identity)
 {
 	size_t size = 0;
 	size += ber_sizeof_integer(1);
 	size += ber_sizeof_contextual_tag(ber_sizeof_integer(1));
-	size += ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_password_creds(nla)));
+	size += ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_password_creds(identity->password_creds)));
 	return size;
 }
 
-BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
-{
-	size_t length;
 
+static BOOL nla_read_octet_string_field(rdpNla* nla, wStream* s, const char* field_name, int contextual_tag,
+	UINT16** field, UINT32* field_length)
+{
+
+	size_t length = 0;
+	if (!ber_read_contextual_tag(s, contextual_tag, &length, TRUE) || !ber_read_octet_string_tag(s, &length))
+	{
+		return FALSE;
+	}
+
+	if (length == 0)
+	{
+		CHECK_MEMORY( (*field) = calloc(1, 2),
+			FALSE, "Cannot allocate %s", field_name);
+	}
+	else
+	{
+		CHECK_MEMORY( (*field) = malloc(length),
+			FALSE, "Cannot allocate %s", field_name);
+
+		CopyMemory((*field), Stream_Pointer(s), length);
+		Stream_Seek(s, length);
+	}
+
+	(*field_length) = (UINT32) length / 2;
+	return TRUE;
+}
+
+static BOOL nla_read_octet_string_string(rdpNla* nla, wStream* s, const char* field_name, int contextual_tag,
+	char** string)
+{
+	int result;
+	UINT16* field = NULL;
+	UINT32 field_length = 0;
+	(*string) = NULL;
+
+	if(!nla_read_octet_string_field(nla, s, field_name, contextual_tag, &field, &field_length))
+	{
+		return 0;
+	}
+
+	result = ConvertFromUnicode(CP_UTF8, 0, field, 2 * field_length, string, 0, 0, FALSE);
+	free(field);
+	return 0 <= result;
+}
+
+static int nla_write_octet_string_string(wStream* s, const char* field_name, int contextual_tag, char* string)
+{
+	LPWSTR buffer = NULL;
+	int length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0);
+
+	if (length < 0)
+	{
+		WLog_ERR(TAG, "Cannot ConvertToUnicode '%s'", string);
+		return 0;
+	}
+
+	int increment = ber_write_sequence_octet_string(s, contextual_tag, (BYTE*)buffer, length * 2);
+	free(buffer);
+	return increment;
+}
+
+
+static BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s, size_t* length)
+{
 	if (!nla->identity)
 	{
 		WLog_ERR(TAG, "nla->identity is NULL!");
@@ -1492,119 +2048,207 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 
 	/* TSPasswordCreds (SEQUENCE)
 	 * Initialise to default values. */
-	nla->identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-	nla->identity->UserLength = (UINT32) 0;
-	nla->identity->User = NULL;
-	nla->identity->DomainLength = (UINT32) 0;
-	nla->identity->Domain = NULL;
-	nla->identity->Password = NULL;
-	nla->identity->PasswordLength = (UINT32) 0;
+	SEC_WINNT_AUTH_IDENTITY_free(nla->identity->password_creds);
+	nla->identity->password_creds = SEC_WINNT_AUTH_IDENTITY_new(NULL, NULL, NULL);
+	if (nla->identity->password_creds == NULL)
+	{
+		return FALSE;
+	}
 
-	if (!ber_read_sequence_tag(s, &length))
+	if (!ber_read_sequence_tag(s, length))
 		return FALSE;
 
 	/* The sequence is empty, return early,
 	 * TSPasswordCreds (SEQUENCE) is optional. */
-	if (length == 0)
+	if ((*length) == 0)
 		return TRUE;
 
-	/* [0] domainName (OCTET STRING) */
-	if (!ber_read_contextual_tag(s, 0, &length, TRUE) ||
-	    !ber_read_octet_string_tag(s, &length))
-	{
-		return FALSE;
-	}
-
-	nla->identity->DomainLength = (UINT32) length;
-
-	if (nla->identity->DomainLength > 0)
-	{
-		nla->identity->Domain = (UINT16*) malloc(length);
-
-		if (!nla->identity->Domain)
-			return FALSE;
-
-		CopyMemory(nla->identity->Domain, Stream_Pointer(s), nla->identity->DomainLength);
-		Stream_Seek(s, nla->identity->DomainLength);
-		nla->identity->DomainLength /= 2;
-	}
-
-	/* [1] userName (OCTET STRING) */
-	if (!ber_read_contextual_tag(s, 1, &length, TRUE) ||
-	    !ber_read_octet_string_tag(s, &length))
-	{
-		return FALSE;
-	}
-
-	nla->identity->UserLength = (UINT32) length;
-
-	if (nla->identity->UserLength > 0)
-	{
-		nla->identity->User = (UINT16*) malloc(length);
-
-		if (!nla->identity->User)
-			return FALSE;
-
-		CopyMemory(nla->identity->User, Stream_Pointer(s), nla->identity->UserLength);
-		Stream_Seek(s, nla->identity->UserLength);
-		nla->identity->UserLength /= 2;
-	}
-
-	/* [2] password (OCTET STRING) */
-	if (!ber_read_contextual_tag(s, 2, &length, TRUE) ||
-	    !ber_read_octet_string_tag(s, &length))
-	{
-		return FALSE;
-	}
-
-	nla->identity->PasswordLength = (UINT32) length;
-
-	if (nla->identity->PasswordLength > 0)
-	{
-		nla->identity->Password = (UINT16*) malloc(length);
-
-		if (!nla->identity->Password)
-			return FALSE;
-
-		CopyMemory(nla->identity->Password, Stream_Pointer(s), nla->identity->PasswordLength);
-		Stream_Seek(s, nla->identity->PasswordLength);
-		nla->identity->PasswordLength /= 2;
-	}
-
-	return TRUE;
+	return (nla_read_octet_string_field(nla, s,"[0] domainName (OCTET STRING)",0,
+			&nla->identity->password_creds->Domain,
+			&nla->identity->password_creds->DomainLength) &&
+		nla_read_octet_string_field(nla, s,"[1] userName (OCTET STRING)",1,
+			&nla->identity->password_creds->User,
+			&nla->identity->password_creds->UserLength) &&
+		nla_read_octet_string_field(nla, s,"[2] password (OCTET STRING)",2,
+			&nla->identity->password_creds->Password,
+			&nla->identity->password_creds->PasswordLength));
 }
 
-static size_t nla_write_ts_password_creds(rdpNla* nla, wStream* s)
+static BOOL nla_read_ts_cspdatadetail(rdpNla* nla, wStream* s, size_t* length)
+{
+	if (!nla->identity->csp_data)
+	{
+		return FALSE;
+	}
+
+	/* TSCspDataDetail (SEQUENCE)
+	 * Initialise to default values. */
+	csp_data_detail_free(nla->identity->csp_data);
+	nla->identity->csp_data = csp_data_detail_new_nocopy(0, NULL, NULL, NULL, NULL);
+	if (nla->identity->csp_data == NULL)
+	{
+		return FALSE;
+	}
+
+	if (!ber_read_sequence_tag(s, length))
+	{
+		return FALSE;
+	}
+
+	/* The sequence is empty, return early,
+	 * TSCspDataDetail (SEQUENCE) is optional. */
+	if (*length == 0)
+		return TRUE;
+
+	/* [0] keySpec (INTEGER) */
+	if (!ber_read_contextual_tag(s, 0, length, TRUE) ||
+		!ber_read_integer(s, &nla->identity->csp_data->KeySpec))
+	{
+		return FALSE;
+	}
+
+	return (nla_read_octet_string_string(nla, s,"[1] cardName (OCTET STRING)",1,
+			&nla->identity->csp_data->CardName) &&
+		nla_read_octet_string_string(nla, s,"[2] readerName (OCTET STRING)",2,
+			&nla->identity->csp_data->ReaderName) &&
+		nla_read_octet_string_string(nla, s,"[3] containerName (OCTET STRING)",3,
+			&nla->identity->csp_data->ContainerName) &&
+		nla_read_octet_string_string(nla, s,"[4] cspName (OCTET STRING)",4,
+			&nla->identity->csp_data->CspName));
+}
+
+static BOOL nla_read_ts_smartcard_creds(rdpNla* nla, wStream* s, size_t* length)
+{
+	if (!nla->identity->smartcard_creds)
+	{
+		return FALSE;
+	}
+
+
+	/* TSSmartCardCreds (SEQUENCE)
+	* Initialize to default values. */
+	smartcard_creds_free(nla->identity->smartcard_creds);
+	nla->identity->smartcard_creds = smartcard_creds_new_nocopy(NULL, NULL, NULL);
+	if (nla->identity->smartcard_creds == NULL)
+	{
+		return FALSE;
+	}
+
+	if (!ber_read_sequence_tag(s, length))
+		return FALSE;
+
+	/* The sequence is empty, return early,
+	* TSSmartCardCreds (SEQUENCE) is optional. */
+	if ((*length) == 0)
+		return TRUE;
+
+	return (nla_read_octet_string_string(nla, s,"[0] Pin (OCTET STRING)",0,
+			&nla->identity->smartcard_creds->Pin) &&
+		nla_read_ts_cspdatadetail(nla,s, length) &&
+		nla_read_octet_string_string(nla, s,"[2] UserHint (OCTET STRING)",2,
+			&nla->identity->smartcard_creds->UserHint) &&
+		nla_read_octet_string_string(nla, s,"[3] DomainHint (OCTET STRING",3,
+			&nla->identity->smartcard_creds->DomainHint));
+}
+
+static size_t nla_write_ts_password_creds(SEC_WINNT_AUTH_IDENTITY *  password_creds, wStream* s)
 {
 	size_t size = 0;
-	size_t innerSize = nla_sizeof_ts_password_creds(nla);
+	size_t innerSize = nla_sizeof_ts_password_creds(password_creds);
 	/* TSPasswordCreds (SEQUENCE) */
 	size += ber_write_sequence_tag(s, innerSize);
 
-	if (nla->identity)
+	if (password_creds)
 	{
 		/* [0] domainName (OCTET STRING) */
 		size += ber_write_sequence_octet_string(
-		            s, 0, (BYTE*) nla->identity->Domain,
-		            nla->identity->DomainLength * 2);
+		            s, 0, (BYTE*) password_creds->Domain,
+		            password_creds->DomainLength * 2);
 		/* [1] userName (OCTET STRING) */
 		size += ber_write_sequence_octet_string(
-		            s, 1, (BYTE*) nla->identity->User,
-		            nla->identity->UserLength * 2);
+		            s, 1, (BYTE*) password_creds->User,
+		            password_creds->UserLength * 2);
 		/* [2] password (OCTET STRING) */
 		size += ber_write_sequence_octet_string(
-		            s, 2, (BYTE*) nla->identity->Password,
-		            nla->identity->PasswordLength * 2);
+		            s, 2, (BYTE*) password_creds->Password,
+		            password_creds->PasswordLength * 2);
 	}
 
 	return size;
 }
 
+static int nla_write_ts_csp_data_detail(csp_data_detail *  csp_data, wStream* s, int contextual_tag)
+{
+	int size = 0;
+	if (csp_data != NULL)
+	{
+		size += ber_write_contextual_tag(s, 1, ber_sizeof_sequence(nla_sizeof_ts_cspdatadetail(csp_data)), TRUE);
+		size += ber_write_sequence_tag(s, nla_sizeof_ts_cspdatadetail(csp_data));
+
+		/* [0] KeySpec (INTEGER) */
+		size += ber_write_contextual_tag(s, 0, ber_sizeof_integer(csp_data->KeySpec), TRUE);
+		size += ber_write_integer(s, csp_data->KeySpec);
+
+		size += nla_write_octet_string_string(s, "[1] CardName (OCTET STRING)", 1, csp_data->CardName);
+		size += nla_write_octet_string_string(s, "[2] ReaderName (OCTET STRING)", 2, csp_data->ReaderName);
+		size += nla_write_octet_string_string(s, "[3] ContainerName (OCTET STRING)", 3, csp_data->ContainerName);
+		size += nla_write_octet_string_string(s, "[4] CspName (OCTET STRING)", 4, csp_data->CspName);
+	}
+	return size;
+}
+
+static int nla_write_ts_smartcard_creds(smartcard_auth_identity* identity, wStream* s)
+{
+	int size = 0;
+	int innerSize = nla_sizeof_ts_smartcard_creds(identity);
+	/* TSSmartCardCreds (SEQUENCE) */
+	size += ber_write_sequence_tag(s, innerSize);
+
+	if ((identity != NULL) && (identity->smartcard_creds != NULL))
+	{
+		size += nla_write_octet_string_string(s, "[0] Pin (OCTET STRING)", 0, identity->smartcard_creds->Pin);
+		size += nla_write_ts_csp_data_detail(identity->csp_data, s, 1); /* [1] CspDataDetail (TSCspDataDetail) (SEQUENCE) */
+		size += nla_write_octet_string_string(s, "[2] userHint (OCTET STRING)", 2, identity->smartcard_creds->UserHint);
+		size += nla_write_octet_string_string(s, "[3] domainHint (OCTET STRING)", 3, identity->smartcard_creds->DomainHint);
+	}
+
+	return size;
+}
+
+static int nla_read_ts_creds(rdpNla* nla, wStream* s, credential_type cred_type, size_t* length)
+{
+	switch (cred_type)
+	{
+		case credential_type_password:
+			return nla_read_ts_password_creds(nla, s, length);
+		case credential_type_smartcard:
+			return nla_read_ts_smartcard_creds(nla, s, length);
+		default:
+			WLog_ERR(TAG,  "cred_type unknown: %d\n", cred_type);
+			return 0;
+	}
+}
+
+static int nla_write_ts_creds(smartcard_auth_identity* identity, wStream* s, credential_type cred_type)
+{
+	switch (cred_type)
+	{
+		case credential_type_password:
+			return nla_write_ts_password_creds(identity->password_creds, s);
+		case credential_type_smartcard:
+			return nla_write_ts_smartcard_creds(identity,s);
+		default:
+			WLog_ERR(TAG,  "cred_type unknown: %d\n", cred_type);
+			return 0;
+	}
+}
+
 static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 {
 	wStream* s;
-	size_t length;
-	size_t ts_password_creds_length = 0;
+	size_t length = 0;
+	size_t ts_creds_length = 0;
+	UINT32* value = NULL;
 	BOOL ret;
 
 	if (!ts_credentials || !ts_credentials->pvBuffer)
@@ -1619,33 +2263,33 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 	}
 
 	/* TSCredentials (SEQUENCE) */
-	ret = ber_read_sequence_tag(s, &length) &&
-	      /* [0] credType (INTEGER) */
-	      ber_read_contextual_tag(s, 0, &length, TRUE) &&
-	      ber_read_integer(s, NULL) &&
-	      /* [1] credentials (OCTET STRING) */
-	      ber_read_contextual_tag(s, 1, &length, TRUE) &&
-	      ber_read_octet_string_tag(s, &ts_password_creds_length) &&
-	      nla_read_ts_password_creds(nla, s);
+	ret = (ber_read_sequence_tag(s, &length) &&
+		/* [0] credType (INTEGER) */
+		ber_read_contextual_tag(s, 0, &length, TRUE) &&
+		ber_read_integer(s, value) &&
+		/* [1] credentials (OCTET STRING) */
+		ber_read_contextual_tag(s, 1, &length, TRUE) &&
+		ber_read_octet_string_tag(s, &ts_creds_length) &&
+		nla_read_ts_creds(nla, s, *value, &length)) ;
 	Stream_Free(s, FALSE);
 	return ret;
 }
 
 static size_t nla_write_ts_credentials(rdpNla* nla, wStream* s)
 {
-	size_t size = 0;
-	size_t passwordSize;
-	size_t innerSize = nla_sizeof_ts_credentials(nla);
+	int size = 0;
+	int credSize = 0;
+	int innerSize = nla_sizeof_ts_credentials(nla->identity);
 	/* TSCredentials (SEQUENCE) */
 	size += ber_write_sequence_tag(s, innerSize);
 	/* [0] credType (INTEGER) */
-	size += ber_write_contextual_tag(s, 0, ber_sizeof_integer(1), TRUE);
-	size += ber_write_integer(s, 1);
+	size += ber_write_contextual_tag(s, 0, ber_sizeof_integer(nla->cred_type), TRUE);
+	size += ber_write_integer(s, nla->cred_type);
 	/* [1] credentials (OCTET STRING) */
-	passwordSize = ber_sizeof_sequence(nla_sizeof_ts_password_creds(nla));
-	size += ber_write_contextual_tag(s, 1, ber_sizeof_octet_string(passwordSize), TRUE);
-	size += ber_write_octet_string_tag(s, passwordSize);
-	size += nla_write_ts_password_creds(nla, s);
+	credSize = ber_sizeof_sequence(nla_sizeof_ts_pwd_or_sc_creds(nla->identity, nla->cred_type));
+	size += ber_write_contextual_tag(s, 1, ber_sizeof_octet_string(credSize), TRUE);
+	size += ber_write_octet_string_tag(s, credSize);
+	size += nla_write_ts_creds(nla->identity, s, nla->cred_type);
 	return size;
 }
 
@@ -1656,34 +2300,45 @@ static size_t nla_write_ts_credentials(rdpNla* nla, wStream* s)
 
 static BOOL nla_encode_ts_credentials(rdpNla* nla)
 {
-	wStream* s;
-	size_t length;
-	int DomainLength = 0;
-	int UserLength = 0;
-	int PasswordLength = 0;
+	BOOL result = TRUE;
+	wStream* s = NULL;
+	size_t length = 0;
+	smartcard_auth_identity* identity = NULL;
 
-	if (nla->identity)
+	if (nla->settings->DisableCredentialsDelegation && nla->identity->password_creds)
 	{
-		/* TSPasswordCreds */
-		DomainLength = nla->identity->DomainLength;
-		UserLength = nla->identity->UserLength;
-		PasswordLength = nla->identity->PasswordLength;
+		csp_data_detail* csp_data = NULL;
+		smartcard_creds* smartcard_creds = NULL;
+		char * user          = strdup("");
+		char * password      = strdup("");
+		char * domain        = strdup("");
+		SEC_WINNT_AUTH_IDENTITY* password_creds = SEC_WINNT_AUTH_IDENTITY_new(user,password,domain);
+		if (nla->identity->csp_data != NULL){
+			char * pin           = strdup("");
+			char * userhint      = strdup("");
+			char * domainhint    = strdup("");
+			char * cardname      = strdup("");
+			char * readername    = strdup("");
+			char * containername = strdup("");
+			char * cspname       = strdup("");
+			smartcard_creds = smartcard_creds_new(pin,userhint,domainhint);
+			csp_data = csp_data_detail_new(nla->identity->csp_data->KeySpec,
+				cardname,readername,containername,cspname);
+		}
+		identity = smartcard_auth_identity_new(password_creds,smartcard_creds,csp_data);
+	}
+	else
+	{
+		identity = nla->identity;
 	}
 
-	if (nla->settings->DisableCredentialsDelegation && nla->identity)
-	{
-		/* TSPasswordCreds */
-		nla->identity->DomainLength = 0;
-		nla->identity->UserLength = 0;
-		nla->identity->PasswordLength = 0;
-	}
-
-	length = ber_sizeof_sequence(nla_sizeof_ts_credentials(nla));
+	length = ber_sizeof_sequence(nla_sizeof_ts_credentials(nla->identity));
 
 	if (!sspi_SecBufferAlloc(&nla->tsCredentials, length))
 	{
 		WLog_ERR(TAG, "sspi_SecBufferAlloc failed!");
-		return FALSE;
+		result = FALSE;
+		goto cleanup;
 	}
 
 	s = Stream_New((BYTE*) nla->tsCredentials.pvBuffer, length);
@@ -1692,21 +2347,25 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	{
 		sspi_SecBufferFree(&nla->tsCredentials);
 		WLog_ERR(TAG, "Stream_New failed!");
-		return FALSE;
+		result = FALSE;
+		goto cleanup;
 	}
 
 	nla_write_ts_credentials(nla, s);
+	result = TRUE;
 
-	if (nla->settings->DisableCredentialsDelegation && nla->identity)
+cleanup:
+	if(!s)
 	{
-		/* TSPasswordCreds */
-		nla->identity->DomainLength = DomainLength;
-		nla->identity->UserLength = UserLength;
-		nla->identity->PasswordLength = PasswordLength;
+		Stream_Free(s, FALSE);
 	}
 
-	Stream_Free(s, FALSE);
-	return TRUE;
+	if (identity != nla->identity)
+	{
+		smartcard_auth_identity_free(identity);
+	}
+
+	return result;
 }
 
 static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
@@ -2304,16 +2963,14 @@ LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname)
 
 rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings)
 {
-	rdpNla* nla = (rdpNla*) calloc(1, sizeof(rdpNla));
+	rdpNla* nla;
+	CHECK_MEMORY(nla = malloc(sizeof (*nla)),NULL, "rdpNla structure");
+	nla->identity = smartcard_auth_identity_new(SEC_WINNT_AUTH_IDENTITY_new(NULL, NULL, NULL), NULL, NULL);
 
-	if (!nla)
-		return NULL;
-
-	nla->identity = calloc(1, sizeof(SEC_WINNT_AUTH_IDENTITY));
-
-	if (!nla->identity)
+	if ((nla->identity == NULL) || (nla->identity->password_creds == NULL))
 	{
-		free(nla);
+		smartcard_auth_identity_free(nla->identity);
+		nla->identity = NULL;
 		return NULL;
 	}
 
@@ -2431,7 +3088,7 @@ void nla_free(rdpNla* nla)
 	sspi_SecBufferFree(&nla->PublicKey);
 	sspi_SecBufferFree(&nla->tsCredentials);
 	free(nla->ServicePrincipalName);
-	nla_identity_free(nla->identity);
+	smartcard_auth_identity_free(nla->identity);
 	free(nla);
 }
 
