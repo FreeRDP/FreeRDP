@@ -1335,7 +1335,7 @@ static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 {
 	int Size = 2 + 4 + 4 + 4 + 4 + 558;
 	int domainLen, usernameLen, len;
-	WCHAR* wString;
+	WCHAR* wString = NULL;
 
 	if (!Stream_EnsureRemainingCapacity(s, Size))
 		return FALSE;
