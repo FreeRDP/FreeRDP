@@ -347,6 +347,8 @@ BOOL transport_connect_nla(rdpTransport* transport)
 			freerdp_set_last_error(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 
 		transport_set_nla_mode(transport, FALSE);
+		nla_free(rdp->nla);
+		rdp->nla = NULL;
 		return FALSE;
 	}
 

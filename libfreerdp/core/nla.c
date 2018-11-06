@@ -628,6 +628,10 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	if ((nla->identity->smartcard_creds == NULL) || (nla->identity->csp_data == NULL))
 	{
 		WLog_ERR(TAG, "%s:%d: Failed to set smartcard authentication parameters !", __FUNCTION__, __LINE__);
+		smartcard_creds_free(nla->identity->smartcard_creds);
+		nla->identity->smartcard_creds = NULL;
+		csp_data_detail_free(nla->identity->csp_data);
+		nla->identity->csp_data = NULL;
 		return -1;
 	}
 
@@ -652,6 +656,12 @@ static int nla_client_init(rdpNla* nla)
 	nla->state = NLA_STATE_INITIAL;
 	nla->cred_type = credential_type_default;
 	nla->identity = smartcard_auth_identity_new(SEC_WINNT_AUTH_IDENTITY_new(NULL, NULL, NULL), NULL, NULL);
+
+	if ((nla->identity == NULL) || (nla->identity->password_creds == NULL))
+	{
+		smartcard_auth_identity_free(nla->identity);
+		return 0;
+	}
 
 	if (settings->RestrictedAdminModeRequired)
 		settings->DisableCredentialsDelegation = TRUE;
@@ -2084,6 +2094,7 @@ static BOOL nla_read_ts_cspdatadetail(rdpNla* nla, wStream* s, size_t* length)
 	/* TSCspDataDetail (SEQUENCE)
 	 * Initialise to default values. */
 	csp_data_detail_free(nla->identity->csp_data);
+
 	nla->identity->csp_data = csp_data_detail_new_nocopy(0, NULL, NULL, NULL, NULL);
 	if (nla->identity->csp_data == NULL)
 	{
@@ -2964,16 +2975,7 @@ LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname)
 rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings)
 {
 	rdpNla* nla;
-	CHECK_MEMORY(nla = malloc(sizeof (*nla)),NULL, "rdpNla structure");
-	nla->identity = smartcard_auth_identity_new(SEC_WINNT_AUTH_IDENTITY_new(NULL, NULL, NULL), NULL, NULL);
-
-	if ((nla->identity == NULL) || (nla->identity->password_creds == NULL))
-	{
-		smartcard_auth_identity_free(nla->identity);
-		nla->identity = NULL;
-		return NULL;
-	}
-
+	CHECK_MEMORY(nla = calloc(1, sizeof (*nla)),NULL, "rdpNla structure");
 	nla->instance = instance;
 	nla->settings = settings;
 	nla->server = settings->ServerMode;
@@ -3053,8 +3055,10 @@ cleanup:
 
 void nla_free(rdpNla* nla)
 {
-	if (!nla)
+	if (nla == NULL)
+	{
 		return;
+	}
 
 	if (nla->table)
 	{
@@ -3082,13 +3086,13 @@ void nla_free(rdpNla* nla)
 		}
 	}
 
-	free(nla->SamFile);
-	nla->SamFile = NULL;
 	sspi_SecBufferFree(&nla->ClientNonce);
 	sspi_SecBufferFree(&nla->PublicKey);
 	sspi_SecBufferFree(&nla->tsCredentials);
-	free(nla->ServicePrincipalName);
 	smartcard_auth_identity_free(nla->identity);
+	free(nla->SamFile);
+	free(nla->ServicePrincipalName);
+	free(nla->outputBuffer.pvBuffer);
 	free(nla);
 }
 
