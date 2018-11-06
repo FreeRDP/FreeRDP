@@ -2219,6 +2219,7 @@ static BOOL nla_read_ts_cspdatadetail(rdpNla* nla, wStream* s, size_t* length)
 	/* TSCspDataDetail (SEQUENCE)
 	 * Initialise to default values. */
 	csp_data_detail_free(nla->identity->csp_data);
+
 	nla->identity->csp_data = csp_data_detail_new_nocopy(0, NULL, NULL, NULL, NULL);
 
 	if (nla->identity->csp_data == NULL)
