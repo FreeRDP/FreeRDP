@@ -1126,9 +1126,7 @@ SECURITY_STATUS nla_encrypt_public_key_hash(rdpNla* nla)
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	WINPR_DIGEST_CTX* sha256 = NULL;
 	const BOOL krb = (_tcsncmp(nla->packageName, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0);
-	const ULONG auth_data_length = krb ? WINPR_SHA256_DIGEST_LENGTH :
-	                               (nla->ContextSizes.cbSecurityTrailer
-	                                + WINPR_SHA256_DIGEST_LENGTH);
+	const ULONG auth_data_length = (nla->ContextSizes.cbSecurityTrailer + WINPR_SHA256_DIGEST_LENGTH);
 	const BYTE* hashMagic = nla->server ? ServerClientHashMagic : ClientServerHashMagic;
 	const size_t hashSize = nla->server ? sizeof(ServerClientHashMagic) : sizeof(ClientServerHashMagic);
 
