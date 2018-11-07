@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -104,19 +105,27 @@ struct _FREERDP_DSP_CONTEXT
  */
 
 static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
-                                 const BYTE* src, size_t bytes_per_sample,
-                                 UINT32 schan, UINT32 srate, size_t sframes,
-                                 UINT32 rchan, UINT32 rrate)
+                                 const BYTE* src, size_t size,
+                                 const AUDIO_FORMAT* srcFormat)
 {
 	BYTE* p;
-	int rframes;
-	int rsize;
-	int i, j;
-	int n1, n2;
-	int sbytes, rbytes;
-	sbytes = bytes_per_sample * schan;
-	rbytes = bytes_per_sample * rchan;
-	rframes = sframes * rrate / srate;
+	size_t sframes, rframes;
+	size_t rsize;
+	size_t i, j;
+	size_t sbytes, rbytes;
+	size_t srcBytePerFrame;
+
+	if (!context || !src || !srcFormat)
+		return FALSE;
+
+	assert(srcFormat->wFormatTag == WAVE_FORMAT_PCM);
+	srcBytePerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
+	sbytes = srcFormat->nChannels * srcBytePerFrame;
+	sframes = size / sbytes;
+	rbytes = srcBytePerFrame * context->format.nChannels;
+	/* Integer rounding correct division */
+	rframes = (sframes * context->format.nSamplesPerSec + (srcFormat->nSamplesPerSec + 1) / 2) /
+	          srcFormat->nSamplesPerSec;
 	rsize = rbytes * rframes;
 
 	if (!Stream_EnsureCapacity(context->resample, rsize + 1024))
@@ -126,17 +135,20 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 
 	for (i = 0; i < rframes; i++)
 	{
-		n1 = i * srate / rrate;
+		size_t n2;
+		size_t n1 = (i * srcFormat->nSamplesPerSec) / context->format.nSamplesPerSec;
 
 		if (n1 >= sframes)
 			n1 = sframes - 1;
 
-		n2 = (n1 * rrate == i * srate || n1 == sframes - 1 ? n1 : n1 + 1);
+		n2 = ((n1 * context->format.nSamplesPerSec == i * srcFormat->nSamplesPerSec) ||
+		      ((n1 == sframes - 1) ? n1 : n1 + 1));
 
 		for (j = 0; j < rbytes; j++)
 		{
 			/* Nearest Interpolation, probably the easiest, but works */
-			*p++ = (i * srate - n1 * rrate > n2 * rrate - i * srate ?
+			*p++ = (i * srcFormat->nSamplesPerSec - n1 * context->format.nSamplesPerSec > n2 *
+			        context->format.nSamplesPerSec - i * srcFormat->nSamplesPerSec ?
 			        src[n2 * sbytes + (j % sbytes)] :
 			        src[n1 * sbytes + (j % sbytes)]);
 		}
@@ -1032,7 +1044,14 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 	if (!context || !context->encoder || !srcFormat || !data || !out)
 		return FALSE;
 
-	// TODO: Resample
+	if (srcFormat->nSamplesPerSec != context->format.nSamplesPerSec)
+	{
+		if (!freerdp_dsp_resample(context, data, length, srcFormat))
+			return FALSE;
+
+		data = Stream_Buffer(context->resample);
+		length = Stream_GetPosition(context->resample);
+	}
 
 	switch (context->format.wFormatTag)
 	{
