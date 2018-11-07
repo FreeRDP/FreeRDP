@@ -207,8 +207,7 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 	const size_t header = sizeof(RdgPacketHeader);
 	size_t packetLength;
 
-	if (header > INT_MAX)
-		return NULL;
+	assert (header <= INT_MAX);
 
 	s = Stream_New(NULL, 1024);
 
@@ -417,10 +416,7 @@ static BOOL rdg_set_ntlm_auth_header(rdpNtlm* ntlm, HttpRequest* request)
 	if (ntlmToken)
 	{
 		if (ntlmToken->cbBuffer > INT_MAX)
-		{
-			free(base64NtlmToken);
 			return FALSE;
-		}
 
 		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, (int)ntlmToken->cbBuffer);
 	}
@@ -1137,8 +1133,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 	if (packetLength < sizeof(RdgPacketHeader))
 		return FALSE;
 
-	if (sizeof(RdgPacketHeader) > INT_MAX)
-		return FALSE;
+	assert(sizeof(RdgPacketHeader) < INT_MAX);
 
 	if (payloadSize)
 	{
@@ -1206,8 +1201,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 
 	if (!rdg->packetRemainingCount)
 	{
-		if (sizeof(RdgPacketHeader) > INT_MAX)
-			return -1;
+		assert(sizeof(RdgPacketHeader) < INT_MAX);
 
 		while (readCount < sizeof(RdgPacketHeader))
 		{
