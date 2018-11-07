@@ -19,7 +19,7 @@ char*   crypto_cert_subject_common_name_wo_length(X509* xcert)
 	return crypto_cert_subject_common_name(xcert, & length);
 }
 
-const char* certificate_path()
+char* certificate_path()
 {
 	/*
 	Assume the .pem file is in the same directory as this source file.
@@ -45,12 +45,12 @@ const char* certificate_path()
 	else
 	{
 		/* No dirsep => relative path in same directory */
-		return filename;
+		return _strdup(filename);
 	}
 }
 
 const certificate_test_t certificate_tests[] =
-{
+	{
 
 	{
 		ENABLED,
@@ -78,6 +78,7 @@ const certificate_test_t certificate_tests[] =
 		"Certificate e-mail",
 		crypto_cert_get_email,
 		"testjean.testmartin@test.example.com"
+
 	},
 
 	{
@@ -93,8 +94,8 @@ const certificate_test_t certificate_tests[] =
 		crypto_cert_issuer,
 		"CN = ADMINISTRATION CENTRALE DES TESTS, C = FR, O = MINISTERE DES TESTS, OU = 0002 110014016"
 	},
-
 };
+
 
 
 int TestCertificateFile(const char* certificate_path, const certificate_test_t* certificate_tests,
@@ -112,6 +113,7 @@ int TestCertificateFile(const char* certificate_path, const certificate_test_t* 
 	}
 
 	certificate = PEM_read_X509(certificate_file, 0, 0, 0);
+	fclose(certificate_file);
 
 	if (!certificate)
 	{
@@ -148,6 +150,7 @@ int TestCertificateFile(const char* certificate_path, const certificate_test_t* 
 				       certificate_tests[i].expected_result);
 				success = -1;
 			}
+			free(result);
 		}
 		else
 		{
@@ -157,13 +160,16 @@ int TestCertificateFile(const char* certificate_path, const certificate_test_t* 
 	}
 
 fail:
-	fclose(certificate_file);
+	X509_free(certificate);
 	return success;
 }
 
 
 int Test_x509_cert_info(int argc, char* argv[])
 {
-	return TestCertificateFile(certificate_path(), certificate_tests, ARRAYSIZE(certificate_tests));
+	char* cert_path = certificate_path();
+	int ret = TestCertificateFile(cert_path, certificate_tests, ARRAYSIZE(certificate_tests));
+	free(cert_path);
+	return ret;
 }
 

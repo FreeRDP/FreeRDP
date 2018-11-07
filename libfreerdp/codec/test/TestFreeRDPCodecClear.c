@@ -58,7 +58,7 @@ static BOOL test_ClearDecompressExample(UINT32 nr, UINT32 width, UINT32 height,
 		goto fail;
 
 	status = clear_decompress(clear, pSrcData, SrcSize, width, height,
-	                          pDstData, PIXEL_FORMAT_XRGB32, 0, 1, 1, width, height,
+	                          pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, width, height,
 	                          NULL);
 	printf("clear_decompress example %"PRIu32" status: %d\n", nr, status);
 	fflush(stdout);
