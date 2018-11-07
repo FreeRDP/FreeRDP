@@ -28,152 +28,28 @@ static INLINE BYTE* WRITEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, UINT32 r
                                    BYTE bitmask, PIXEL fgPel, INT32 cBits)
 {
 	PIXEL xorPixel;
-	DESTREADPIXEL(xorPixel, pbDest - rowDelta);
+	BYTE mask = 0x01;
 
-	if (bitmask & g_MaskBit0)
-	{
-		if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel ^ fgPel))
-			return NULL;
-	}
-	else
-	{
-		if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel))
-			return NULL;
-	}
+	if (cBits > 8)
+		return NULL;
 
-	DESTNEXTPIXEL(pbDest);
-	cBits = cBits - 1;
+	if (!ENSURE_CAPACITY(pbDest, pbDestEnd, cBits))
+		return NULL;
 
-	if (cBits > 0)
+	while (cBits > 0)
 	{
+		UINT32 data;
 		DESTREADPIXEL(xorPixel, pbDest - rowDelta);
 
-		if (bitmask & g_MaskBit1)
-		{
-			if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel ^ fgPel))
-				return NULL;
-		}
+		if (bitmask & mask)
+			data = xorPixel ^ fgPel;
 		else
-		{
-			if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel))
-				return NULL;
-		}
+			data = xorPixel;
 
+		DESTWRITEPIXEL(pbDest, data);
 		DESTNEXTPIXEL(pbDest);
 		cBits = cBits - 1;
-
-		if (cBits > 0)
-		{
-			DESTREADPIXEL(xorPixel, pbDest - rowDelta);
-
-			if (bitmask & g_MaskBit2)
-			{
-				if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel ^ fgPel))
-					return NULL;
-			}
-			else
-			{
-				if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel))
-					return NULL;
-			}
-
-			DESTNEXTPIXEL(pbDest);
-			cBits = cBits - 1;
-
-			if (cBits > 0)
-			{
-				DESTREADPIXEL(xorPixel, pbDest - rowDelta);
-
-				if (bitmask & g_MaskBit3)
-				{
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel ^ fgPel))
-						return NULL;
-				}
-				else
-				{
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel))
-						return NULL;
-				}
-
-				DESTNEXTPIXEL(pbDest);
-				cBits = cBits - 1;
-
-				if (cBits > 0)
-				{
-					DESTREADPIXEL(xorPixel, pbDest - rowDelta);
-
-					if (bitmask & g_MaskBit4)
-					{
-						if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel ^ fgPel))
-							return NULL;
-					}
-					else
-					{
-						if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel))
-							return NULL;
-					}
-
-					DESTNEXTPIXEL(pbDest);
-					cBits = cBits - 1;
-
-					if (cBits > 0)
-					{
-						DESTREADPIXEL(xorPixel, pbDest - rowDelta);
-
-						if (bitmask & g_MaskBit5)
-						{
-							if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel ^ fgPel))
-								return NULL;
-						}
-						else
-						{
-							if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel))
-								return NULL;
-						}
-
-						DESTNEXTPIXEL(pbDest);
-						cBits = cBits - 1;
-
-						if (cBits > 0)
-						{
-							DESTREADPIXEL(xorPixel, pbDest - rowDelta);
-
-							if (bitmask & g_MaskBit6)
-							{
-								if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel ^ fgPel))
-									return NULL;
-							}
-							else
-							{
-								if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel))
-									return NULL;
-							}
-
-							DESTNEXTPIXEL(pbDest);
-							cBits = cBits - 1;
-
-							if (cBits > 0)
-							{
-								DESTREADPIXEL(xorPixel, pbDest - rowDelta);
-
-								if (bitmask & g_MaskBit7)
-								{
-									if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel ^ fgPel))
-										return NULL;
-								}
-								else
-								{
-									if (!DESTWRITEPIXEL(pbDest, pbDestEnd, xorPixel))
-										return NULL;
-								}
-
-								DESTNEXTPIXEL(pbDest);
-							}
-						}
-					}
-				}
-			}
-		}
+		mask = mask << 1;
 	}
 
 	return pbDest;
@@ -186,136 +62,27 @@ static INLINE BYTE* WRITEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, UINT32 r
 static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, BYTE bitmask,
         PIXEL fgPel, UINT32 cBits)
 {
-	if (bitmask & g_MaskBit0)
-	{
-		if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
-			return NULL;
-	}
-	else
-	{
-		if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
-			return NULL;
-	}
+	BYTE mask = 0x01;
 
-	DESTNEXTPIXEL(pbDest);
-	cBits = cBits - 1;
+	if (cBits > 8)
+		return NULL;
 
-	if (cBits > 0)
+	if (!ENSURE_CAPACITY(pbDest, pbDestEnd, cBits))
+		return NULL;
+
+	while (cBits > 0)
 	{
-		if (bitmask & g_MaskBit1)
-		{
-			if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
-				return NULL;
-		}
+		UINT32 data;
+
+		if (bitmask & mask)
+			data = fgPel;
 		else
-		{
-			if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
-				return NULL;
-		}
+			data =  BLACK_PIXEL;
 
+		DESTWRITEPIXEL(pbDest, data);
 		DESTNEXTPIXEL(pbDest);
 		cBits = cBits - 1;
-
-		if (cBits > 0)
-		{
-			if (bitmask & g_MaskBit2)
-			{
-				if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
-					return NULL;
-			}
-			else
-			{
-				if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
-					return NULL;
-			}
-
-			DESTNEXTPIXEL(pbDest);
-			cBits = cBits - 1;
-
-			if (cBits > 0)
-			{
-				if (bitmask & g_MaskBit3)
-				{
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
-						return NULL;
-				}
-				else
-				{
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
-						return NULL;
-				}
-
-				DESTNEXTPIXEL(pbDest);
-				cBits = cBits - 1;
-
-				if (cBits > 0)
-				{
-					if (bitmask & g_MaskBit4)
-					{
-						if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
-							return NULL;
-					}
-					else
-					{
-						if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
-							return NULL;
-					}
-
-					DESTNEXTPIXEL(pbDest);
-					cBits = cBits - 1;
-
-					if (cBits > 0)
-					{
-						if (bitmask & g_MaskBit5)
-						{
-							if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
-								return NULL;
-						}
-						else
-						{
-							if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
-								return NULL;
-						}
-
-						DESTNEXTPIXEL(pbDest);
-						cBits = cBits - 1;
-
-						if (cBits > 0)
-						{
-							if (bitmask & g_MaskBit6)
-							{
-								if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
-									return NULL;
-							}
-							else
-							{
-								if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
-									return NULL;
-							}
-
-							DESTNEXTPIXEL(pbDest);
-							cBits = cBits - 1;
-
-							if (cBits > 0)
-							{
-								if (bitmask & g_MaskBit7)
-								{
-									if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
-										return NULL;
-								}
-								else
-								{
-									if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
-										return NULL;
-								}
-
-								DESTNEXTPIXEL(pbDest);
-							}
-						}
-					}
-				}
-			}
-		}
+		mask = mask << 1;
 	}
 
 	return pbDest;
@@ -377,31 +144,22 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 			{
 				if (fInsertFgPel)
 				{
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
+					if (!ENSURE_CAPACITY(pbDest, pbDestEnd, 1))
 						return FALSE;
 
+					DESTWRITEPIXEL(pbDest, fgPel);
 					DESTNEXTPIXEL(pbDest);
 					runLength = runLength - 1;
 				}
 
-				while (runLength >= UNROLL_COUNT)
-				{
-					UNROLL(
-
-					    if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
-					    return FALSE;
-					    DESTNEXTPIXEL(pbDest););
-
-					runLength = runLength - UNROLL_COUNT;
-				}
+				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
+					return FALSE;
 
 				while (runLength > 0)
 				{
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
-						return FALSE;
-
+					DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 					DESTNEXTPIXEL(pbDest);
-					runLength = runLength - 1;
+					runLength--;
 				}
 			}
 			else
@@ -410,34 +168,23 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 				{
 					DESTREADPIXEL(temp, pbDest - rowDelta);
 
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, temp ^ fgPel))
+					if (!ENSURE_CAPACITY(pbDest, pbDestEnd, 1))
 						return FALSE;
 
+					DESTWRITEPIXEL(pbDest, temp ^ fgPel);
 					DESTNEXTPIXEL(pbDest);
-					runLength = runLength - 1;
+					runLength--;
 				}
 
-				while (runLength >= UNROLL_COUNT)
-				{
-					UNROLL(
-					    DESTREADPIXEL(temp, pbDest - rowDelta);
-
-					    if (!DESTWRITEPIXEL(pbDest, pbDestEnd, temp))
-					    return FALSE;
-					    DESTNEXTPIXEL(pbDest););
-
-					runLength = runLength - UNROLL_COUNT;
-				}
+				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
+					return FALSE;
 
 				while (runLength > 0)
 				{
 					DESTREADPIXEL(temp, pbDest - rowDelta);
-
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, temp))
-						return FALSE;
-
+					DESTWRITEPIXEL(pbDest, temp);
 					DESTNEXTPIXEL(pbDest);
-					runLength = runLength - 1;
+					runLength--;
 				}
 			}
 
@@ -466,51 +213,26 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 					SRCNEXTPIXEL(pbSrc);
 				}
 
+				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
+					return FALSE;
+
 				if (fFirstLine)
 				{
-					while (runLength >= UNROLL_COUNT)
-					{
-						UNROLL(
-
-						    if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
-						    return FALSE;
-						    DESTNEXTPIXEL(pbDest););
-
-						runLength = runLength - UNROLL_COUNT;
-					}
-
 					while (runLength > 0)
 					{
-						if (!DESTWRITEPIXEL(pbDest, pbDestEnd, fgPel))
-							return FALSE;
-
+						DESTWRITEPIXEL(pbDest, fgPel);
 						DESTNEXTPIXEL(pbDest);
-						runLength = runLength - 1;
+						runLength--;
 					}
 				}
 				else
 				{
-					while (runLength >= UNROLL_COUNT)
-					{
-						UNROLL(
-						    DESTREADPIXEL(temp, pbDest - rowDelta);
-
-						    if (!DESTWRITEPIXEL(pbDest, pbDestEnd, temp ^ fgPel))
-						    return FALSE;
-						    DESTNEXTPIXEL(pbDest););
-
-						runLength = runLength - UNROLL_COUNT;
-					}
-
 					while (runLength > 0)
 					{
 						DESTREADPIXEL(temp, pbDest - rowDelta);
-
-						if (!DESTWRITEPIXEL(pbDest, pbDestEnd, temp ^ fgPel))
-							return FALSE;
-
+						DESTWRITEPIXEL(pbDest, temp ^ fgPel);
 						DESTNEXTPIXEL(pbDest);
-						runLength = runLength - 1;
+						runLength--;
 					}
 				}
 
@@ -526,32 +248,16 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 				SRCREADPIXEL(pixelB, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
 
-				while (runLength >= UNROLL_COUNT)
-				{
-					UNROLL(
-
-					    if (!DESTWRITEPIXEL(pbDest, pbDestEnd, pixelA))
-					    return FALSE;
-					    DESTNEXTPIXEL(pbDest);
-					    if (!DESTWRITEPIXEL(pbDest, pbDestEnd, pixelB))
-						    return FALSE;
-						    DESTNEXTPIXEL(pbDest););
-
-					runLength = runLength - UNROLL_COUNT;
-				}
+				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength * 2))
+					return FALSE;
 
 				while (runLength > 0)
 				{
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, pixelA))
-						return FALSE;
-
+					DESTWRITEPIXEL(pbDest, pixelA);
 					DESTNEXTPIXEL(pbDest);
-
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, pixelB))
-						return FALSE;
-
+					DESTWRITEPIXEL(pbDest, pixelB);
 					DESTNEXTPIXEL(pbDest);
-					runLength = runLength - 1;
+					runLength--;
 				}
 
 				break;
@@ -564,24 +270,14 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 				SRCREADPIXEL(pixelA, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
 
-				while (runLength >= UNROLL_COUNT)
-				{
-					UNROLL(
-
-					    if (!DESTWRITEPIXEL(pbDest, pbDestEnd, pixelA))
-					    return FALSE;
-					    DESTNEXTPIXEL(pbDest););
-
-					runLength = runLength - UNROLL_COUNT;
-				}
+				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
+					return FALSE;
 
 				while (runLength > 0)
 				{
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, pixelA))
-						return FALSE;
-
+					DESTWRITEPIXEL(pbDest, pixelA);
 					DESTNEXTPIXEL(pbDest);
-					runLength = runLength - 1;
+					runLength--;
 				}
 
 				break;
@@ -655,29 +351,16 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 				runLength = ExtractRunLength(code, pbSrc, &advance);
 				pbSrc = pbSrc + advance;
 
-				while (runLength >= UNROLL_COUNT)
-				{
-					UNROLL(
-					    SRCREADPIXEL(temp, pbSrc);
-					    SRCNEXTPIXEL(pbSrc);
-
-					    if (!DESTWRITEPIXEL(pbDest, pbDestEnd, temp))
-					    return FALSE;
-					    DESTNEXTPIXEL(pbDest););
-
-					runLength = runLength - UNROLL_COUNT;
-				}
+				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
+					return FALSE;
 
 				while (runLength > 0)
 				{
 					SRCREADPIXEL(temp, pbSrc);
 					SRCNEXTPIXEL(pbSrc);
-
-					if (!DESTWRITEPIXEL(pbDest, pbDestEnd, temp))
-						return FALSE;
-
+					DESTWRITEPIXEL(pbDest, temp);
 					DESTNEXTPIXEL(pbDest);
-					runLength = runLength - 1;
+					runLength--;
 				}
 
 				break;
@@ -722,9 +405,10 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 			case SPECIAL_WHITE:
 				pbSrc = pbSrc + 1;
 
-				if (!DESTWRITEPIXEL(pbDest, pbDestEnd, WHITE_PIXEL))
+				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, 1))
 					return FALSE;
 
+				DESTWRITEPIXEL(pbDest, WHITE_PIXEL);
 				DESTNEXTPIXEL(pbDest);
 				break;
 
@@ -732,9 +416,10 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 			case SPECIAL_BLACK:
 				pbSrc = pbSrc + 1;
 
-				if (!DESTWRITEPIXEL(pbDest, pbDestEnd, BLACK_PIXEL))
+				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, 1))
 					return FALSE;
 
+				DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 				DESTNEXTPIXEL(pbDest);
 				break;
 

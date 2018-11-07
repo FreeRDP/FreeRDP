@@ -62,15 +62,6 @@
 
 typedef UINT32 PIXEL;
 
-static const BYTE g_MaskBit0 = 0x01; /* Least significant bit */
-static const BYTE g_MaskBit1 = 0x02;
-static const BYTE g_MaskBit2 = 0x04;
-static const BYTE g_MaskBit3 = 0x08;
-static const BYTE g_MaskBit4 = 0x10;
-static const BYTE g_MaskBit5 = 0x20;
-static const BYTE g_MaskBit6 = 0x40;
-static const BYTE g_MaskBit7 = 0x80; /* Most significant bit */
-
 static const BYTE g_MaskSpecialFgBg1 = 0x03;
 static const BYTE g_MaskSpecialFgBg2 = 0x05;
 
@@ -192,46 +183,29 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 	return runLength;
 }
 
-static INLINE BOOL write_pixel_8(BYTE* _buf, const BYTE* _end, BYTE _pix)
+static INLINE BOOL ensure_capacity(const BYTE* start, const BYTE* end, size_t size, size_t base)
 {
-	if (!_buf || !_end)
-		return FALSE;
-
-	if ((_end - _buf) < 1)
-		return FALSE;
-
-	*_buf = _pix;
-	return TRUE;
+	const size_t available = (uintptr_t)end - (uintptr_t)start;
+	const BOOL rc = available >= size * base;
+	return rc;
 }
 
-static INLINE BOOL write_pixel_24(BYTE* _buf, const BYTE* _end, UINT32 _pix)
+static INLINE void write_pixel_8(BYTE* _buf, BYTE _pix)
 {
-	if (!_buf || !_end)
-		return FALSE;
+	*_buf = _pix;
+}
 
-	if ((_end - _buf) < 3)
-		return FALSE;
-
+static INLINE void write_pixel_24(BYTE* _buf, UINT32 _pix)
+{
 	(_buf)[0] = (BYTE)(_pix);
 	(_buf)[1] = (BYTE)((_pix) >> 8);
 	(_buf)[2] = (BYTE)((_pix) >> 16);
-	return TRUE;
 }
 
-static INLINE BOOL write_pixel_16(BYTE* _buf, const BYTE* _end, UINT16 _pix)
+static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 {
-	if (!_buf || !_end)
-		return FALSE;
-
-	if ((_end - _buf) < 2)
-		return FALSE;
-
 	*(UINT16*)_buf = _pix;
-	return TRUE;
 }
-
-#define UNROLL_COUNT 4
-#define UNROLL(_exp) do { _exp _exp _exp _exp } while (0)
 
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
@@ -244,7 +218,7 @@ static INLINE BOOL write_pixel_16(BYTE* _buf, const BYTE* _end, UINT16 _pix)
 #undef RLEEXTRA
 #undef WHITE_PIXEL
 #define WHITE_PIXEL 0xFF
-#define DESTWRITEPIXEL(_buf, _end, _pix) write_pixel_8(_buf, _end, _pix)
+#define DESTWRITEPIXEL(_buf, _pix) write_pixel_8(_buf, _pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define DESTNEXTPIXEL(_buf) _buf += 1
@@ -253,6 +227,8 @@ static INLINE BOOL write_pixel_16(BYTE* _buf, const BYTE* _end, UINT16 _pix)
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage8to8
 #define RLEDECOMPRESS RleDecompress8to8
 #define RLEEXTRA
+#undef ENSURE_CAPACITY
+#define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 1)
 #include "include/bitmap.c"
 
 #undef DESTWRITEPIXEL
@@ -266,7 +242,7 @@ static INLINE BOOL write_pixel_16(BYTE* _buf, const BYTE* _end, UINT16 _pix)
 #undef RLEEXTRA
 #undef WHITE_PIXEL
 #define WHITE_PIXEL 0xFFFF
-#define DESTWRITEPIXEL(_buf, _end, _pix) write_pixel_16(_buf, _end, _pix)
+#define DESTWRITEPIXEL(_buf, _pix) write_pixel_16(_buf, _pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
 #ifdef HAVE_ALIGNED_REQUIRED
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8)
@@ -279,6 +255,8 @@ static INLINE BOOL write_pixel_16(BYTE* _buf, const BYTE* _end, UINT16 _pix)
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16
 #define RLEDECOMPRESS RleDecompress16to16
 #define RLEEXTRA
+#undef ENSURE_CAPACITY
+#define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 2)
 #include "include/bitmap.c"
 
 #undef DESTWRITEPIXEL
@@ -292,7 +270,7 @@ static INLINE BOOL write_pixel_16(BYTE* _buf, const BYTE* _end, UINT16 _pix)
 #undef RLEEXTRA
 #undef WHITE_PIXEL
 #define WHITE_PIXEL 0xFFFFFF
-#define DESTWRITEPIXEL(_buf, _end, _pix)  write_pixel_24(_buf, _end, _pix)
+#define DESTWRITEPIXEL(_buf, _pix)  write_pixel_24(_buf, _pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
         ((_buf)[2] << 16)
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
@@ -303,6 +281,8 @@ static INLINE BOOL write_pixel_16(BYTE* _buf, const BYTE* _end, UINT16 _pix)
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage24to24
 #define RLEDECOMPRESS RleDecompress24to24
 #define RLEEXTRA
+#undef ENSURE_CAPACITY
+#define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 3)
 #include "include/bitmap.c"
 
 BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
@@ -404,7 +384,7 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	int status;
 	wStream* s;
 	UINT32 DstFormat = 0;
-	int maxSize = 64 * 64 * 4;
+	const size_t maxSize = 64 * 64 * 4;
 
 	if (nWidth % 4)
 	{
