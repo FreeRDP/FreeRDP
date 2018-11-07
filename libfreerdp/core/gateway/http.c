@@ -38,7 +38,9 @@
 
 #define TAG FREERDP_TAG("core.gateway.http")
 
-#define RESPONSE_SIZE_LIMIT 64 * 1024 * 1024
+/* [MS-RPCH] <10> Section 2.1.2.1.4: Default value is set to 1GB, maximum
+ * allowed is 2GB */
+#define RESPONSE_SIZE_LIMIT 2UL * 1024UL * 1024UL * 1024UL
 
 struct _http_context
 {
