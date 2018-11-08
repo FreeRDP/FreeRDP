@@ -48,7 +48,7 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 		goto fail;
 
 	PROFILER_ENTER(profiler_comp);
-	rc = interleaved_compress(decoder, tmp, &DstSize, w, h, pSrcData,
+	rc = interleaved_compress(encoder, tmp, &DstSize, w, h, pSrcData,
 	                          format, step, x, y, NULL, bpp);
 	PROFILER_EXIT(profiler_comp);
 
@@ -56,7 +56,7 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 		goto fail;
 
 	PROFILER_ENTER(profiler_decomp);
-	rc = interleaved_decompress(encoder, tmp, DstSize, w, h, bpp, pDstData,
+	rc = interleaved_decompress(decoder, tmp, DstSize, w, h, bpp, pDstData,
 	                            format, step, x, y, w, h, NULL);
 	PROFILER_EXIT(profiler_decomp);
 
@@ -95,6 +95,33 @@ fail:
 	return rc2;
 }
 
+static const char* get_profiler_name(BOOL encode, UINT16 bpp)
+{
+	switch (bpp)
+	{
+		case 24:
+			if (encode)
+				return "interleaved_compress   24bpp";
+			else
+				return "interleaved_decompress 24bpp";
+
+		case 16:
+			if (encode)
+				return "interleaved_compress   16bpp";
+			else
+				return "interleaved_decompress 16bpp";
+
+		case 15:
+			if (encode)
+				return "interleaved_compress   15bpp";
+			else
+				return "interleaved_decompress 15bpp";
+
+		default:
+			return "configuration error!";
+	}
+}
+
 static BOOL run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
                               BITMAP_INTERLEAVED_CONTEXT* decoder)
 {
@@ -102,10 +129,10 @@ static BOOL run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
 	UINT32 x;
 	PROFILER_DEFINE(profiler_comp);
 	PROFILER_DEFINE(profiler_decomp);
-	PROFILER_CREATE(profiler_comp, "interleaved_compress")
-	PROFILER_CREATE(profiler_decomp, "interleaved_decompress")
+	PROFILER_CREATE(profiler_comp, get_profiler_name(TRUE, bpp))
+	PROFILER_CREATE(profiler_decomp, get_profiler_name(FALSE, bpp))
 
-	for (x = 0; x < 100; x++)
+	for (x = 0; x < 500; x++)
 	{
 		if (!run_encode_decode_single(bpp, encoder, decoder
 #if defined(WITH_PROFILER)
