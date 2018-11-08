@@ -615,6 +615,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	settings->ActionScript = _strdup("~/.config/freerdp/action.sh");
 	settings->SmartcardLogon = FALSE;
+	settings->TlsSecLevel = 1;
 	return settings;
 out_fail:
 	free(settings->HomePath);

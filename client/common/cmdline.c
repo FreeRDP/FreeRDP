@@ -2092,7 +2092,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "compression-level")
 		{
-			unsigned long val = strtol(arg->Value, NULL, 0);
+			unsigned long val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2457,6 +2457,15 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				if (!(settings->AllowedTlsCiphers = _strdup(arg->Value)))
 					return COMMAND_LINE_ERROR_MEMORY;
 			}
+		}
+		CommandLineSwitchCase(arg, "tls-seclevel")
+		{
+			unsigned long val = strtoul(arg->Value, NULL, 0);
+
+			if ((errno != 0) || (val > 5))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+			settings->TlsSecLevel = val;
 		}
 		CommandLineSwitchCase(arg, "cert-name")
 		{

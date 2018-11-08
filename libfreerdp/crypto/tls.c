@@ -651,6 +651,10 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method,
 	SSL_CTX_set_options(tls->ctx, options);
 	SSL_CTX_set_read_ahead(tls->ctx, 1);
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+	SSL_CTX_set_security_level(tls->ctx, settings->TlsSecLevel);
+#endif
+
 	if (settings->AllowedTlsCiphers)
 	{
 		if (!SSL_CTX_set_cipher_list(tls->ctx, settings->AllowedTlsCiphers))
