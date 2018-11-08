@@ -1093,6 +1093,9 @@ BOOL transport_disconnect(rdpTransport* transport)
 	if (!transport)
 		return FALSE;
 
+	if (transport->rdg && (transport->rdg->frontBio == transport->frontBio))
+		transport->frontBio = NULL;
+
 	if (transport->tls)
 	{
 		tls_free(transport->tls);

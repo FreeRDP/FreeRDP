@@ -538,7 +538,7 @@ static BIO* BIO_new_rdp_tls(SSL_CTX* ctx, int client)
 
 	if (!ssl)
 	{
-		BIO_free(bio);
+		BIO_free_all(bio);
 		return NULL;
 	}
 
@@ -935,7 +935,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 	}
 
 	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
-	BIO_free(bio);
+	BIO_free_all(bio);
 
 	if (!rsa)
 	{
@@ -979,7 +979,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 	}
 
 	x509 = PEM_read_bio_X509(bio, NULL, NULL, 0);
-	BIO_free(bio);
+	BIO_free_all(bio);
 
 	if (!x509)
 	{
@@ -1282,7 +1282,7 @@ fail:
 	if (!rc)
 		free(pemCert);
 
-	BIO_free(bio);
+	BIO_free_all(bio);
 	return rc;
 }
 
@@ -1612,17 +1612,11 @@ void tls_free(rdpTls* tls)
 		tls->ctx = NULL;
 	}
 
-	if (tls->bio)
-	{
-		BIO_free(tls->bio);
-		tls->bio = NULL;
-	}
-
-	if (tls->underlying)
-	{
-		BIO_free(tls->underlying);
-		tls->underlying = NULL;
-	}
+	/* tls->underlying is a stacked BIO under tls->bio.
+	 * BIO_free_all will free recursivly. */
+	BIO_free_all(tls->bio);
+	tls->bio = NULL;
+	tls->underlying = NULL;
 
 	if (tls->PublicKey)
 	{

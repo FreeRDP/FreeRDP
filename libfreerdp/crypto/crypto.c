@@ -251,7 +251,7 @@ char* crypto_print_name(X509_NAME* name)
 		BIO_read(outBIO, buffer, size);
 	}
 
-	BIO_free(outBIO);
+	BIO_free_all(outBIO);
 	return buffer;
 }
 

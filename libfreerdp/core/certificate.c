@@ -716,7 +716,7 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 		goto out_free;
 
 	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
-	BIO_free(bio);
+	BIO_free_all(bio);
 
 	if (!rsa)
 	{

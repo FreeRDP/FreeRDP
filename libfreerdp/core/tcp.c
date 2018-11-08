@@ -627,16 +627,15 @@ static int transport_bio_buffered_new(BIO* bio)
 	return 1;
 }
 
+/* Free the buffered BIO.
+ * Do not free other elements in the BIO stack,
+ * let BIO_free_all handle that. */
 static int transport_bio_buffered_free(BIO* bio)
 {
 	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
-	BIO* next_bio = BIO_next(bio);
 
-	if (next_bio)
-	{
-		BIO_free(next_bio);
-		BIO_set_next(bio, NULL);
-	}
+	if (!ptr)
+		return 0;
 
 	ringbuffer_destroy(&ptr->xmitBuffer);
 	free(ptr);
