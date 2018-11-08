@@ -380,7 +380,7 @@ static int transport_bio_simple_uninit(BIO* bio)
 
 	if (BIO_get_shutdown(bio))
 	{
-		if (BIO_get_init(bio))
+		if (BIO_get_init(bio) && ptr)
 		{
 			_shutdown(ptr->socket, SD_BOTH);
 			closesocket(ptr->socket);
@@ -388,7 +388,7 @@ static int transport_bio_simple_uninit(BIO* bio)
 		}
 	}
 
-	if (ptr->hEvent)
+	if (ptr && ptr->hEvent)
 	{
 		CloseHandle(ptr->hEvent);
 		ptr->hEvent = NULL;
