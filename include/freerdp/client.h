@@ -96,7 +96,7 @@ FREERDP_API int freerdp_client_settings_write_connection_file(const rdpSettings*
         const char* filename, BOOL unicode);
 
 FREERDP_API int freerdp_client_settings_parse_assistance_file(rdpSettings* settings,
-        const char* filename);
+        int argc, char* argv[]);
 
 FREERDP_API BOOL client_cli_authenticate(freerdp* instance, char** username, char** password,
         char** domain);
