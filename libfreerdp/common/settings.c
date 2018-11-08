@@ -1999,6 +1999,9 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 		case FreeRDP_SmartSizingHeight:
 			return settings->SmartSizingHeight;
 
+		case FreeRDP_TlsSecLevel:
+			return settings->TlsSecLevel;
+
 		default:
 			WLog_ERR(TAG,  "freerdp_get_param_uint32: unknown id: %d", id);
 			return 0;
@@ -2340,6 +2343,9 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 		case FreeRDP_DynamicChannelArraySize:
 			settings->DynamicChannelArraySize = param;
 			break;
+
+		case FreeRDP_TlsSecLevel:
+			settings->TlsSecLevel = param;
 
 		default:
 			WLog_ERR(TAG, "freerdp_set_param_uint32: unknown id %d (param = %"PRIu32")", id, param);

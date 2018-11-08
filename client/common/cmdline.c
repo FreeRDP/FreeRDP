@@ -2458,6 +2458,15 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					return COMMAND_LINE_ERROR_MEMORY;
 			}
 		}
+		CommandLineSwitchCase(arg, "tls-seclevel")
+		{
+			unsigned long val = strtoul(arg->Value, NULL, 0);
+
+			if ((errno != 0) || (val > 5))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+			settings->TlsSecLevel = val;
+		}
 		CommandLineSwitchCase(arg, "cert-name")
 		{
 			if (!copy_value(arg->Value, &settings->CertificateName))
