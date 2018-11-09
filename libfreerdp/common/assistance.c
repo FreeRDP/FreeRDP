@@ -60,9 +60,6 @@ struct rdp_assistance_file
 	BYTE* EncryptedLHTicket;
 	size_t EncryptedLHTicketLength;
 
-	char* MachineAddress;
-	UINT32 MachinePort;
-
 	UINT32 MachineCount;
 	char** MachineAddresses;
 	UINT32* MachinePorts;
@@ -145,15 +142,44 @@ fail:
 	return rc;
 }
 
+static BOOL reallocate(rdpAssistanceFile* file, const char* host, UINT32 port)
+{
+	void* tmp1, *tmp2;
+	file->MachineCount++;
+	tmp1 = realloc(file->MachinePorts, sizeof(UINT32) * file->MachineCount);
+	tmp2 = realloc(file->MachineAddresses, sizeof(char*) * file->MachineCount);
+
+	if (!tmp1 || !tmp2)
+		return FALSE;
+
+	file->MachinePorts = tmp1;
+	file->MachineAddresses = tmp2;
+	file->MachinePorts[file->MachineCount - 1] = port;
+	file->MachineAddresses[file->MachineCount - 1] = _strdup(host);
+	return TRUE;
+}
+
+static BOOL append_address(rdpAssistanceFile* file, const char* host, const char* port)
+{
+	unsigned long p;
+
+	if (!file || !host || !port)
+		return FALSE;
+
+	errno = 0;
+	p = strtoul(port, NULL, 0);
+
+	if ((errno != 0) || (p == 0) || (p > UINT16_MAX))
+		return FALSE;
+
+	return reallocate(file, host, p);
+}
+
 static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, const char* list)
 {
-	size_t i;
+	BOOL rc = FALSE;
 	char* p;
-	char* q;
 	char* str;
-	size_t count = 1;
-	size_t length;
-	char** tokens = NULL;
 
 	if (!file || !list)
 		return FALSE;
@@ -163,130 +189,28 @@ static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, const
 	if (!str)
 		return FALSE;
 
-	length = strlen(str);
+	p =	str;
 
-	for (i = 0; i < length; i++)
+	while ((p = strchr(p, ';')) != NULL)
 	{
-		if (str[i] == ';')
-			count++;
-	}
-
-	if (count > UINT32_MAX)
-		goto out;
-
-	tokens = (char**) calloc(count, sizeof(char*));
-
-	if (!tokens)
-		goto out;
-
-	count = 0;
-	tokens[count++] = str;
-
-	for (i = 0; i < length; i++)
-	{
-		if (str[i] == ';')
-		{
-			str[i] = '\0';
-			tokens[count++] = &str[i + 1];
-		}
-	}
-
-	file->MachineCount = (UINT32)count;
-	file->MachineAddresses = (char**) calloc(count, sizeof(char*));
-	file->MachinePorts = (UINT32*) calloc(count, sizeof(UINT32));
-
-	if (!file->MachineAddresses || !file->MachinePorts)
-		goto out;
-
-	for (i = 0; i < count; i++)
-	{
-		p = tokens[i];
-		q = strchr(p, ':');
+		char* q = strchr(p, ':');
 
 		if (!q)
 			goto out;
 
-		q[0] = '\0';
-		q++;
-		file->MachineAddresses[i] = _strdup(p);
-		errno = 0;
-		{
-			unsigned long val = strtoul(q, NULL, 0);
-
-			if ((errno != 0) || (val > UINT32_MAX))
-				goto out;
-
-			file->MachinePorts[i] = (UINT32)val;
-		}
-
-		if (!file->MachineAddresses[i])
-			goto out;
-
-		q[-1] = ':';
-	}
-
-	for (i = 0; i < count; i++)
-	{
-		length = strlen(tokens[i]);
-
-		if (length > 8)
-		{
-			if (strncmp(tokens[i], "169.254.", 8) == 0)
-				continue;
-		}
-
-		p = tokens[i];
-		q = strchr(p, ':');
-
-		if (!q)
-			goto out;
-
-		q[0] = '\0';
+		*q = '\0';
 		q++;
 
-		if (file->MachineAddress)
-			free(file->MachineAddress);
-
-		file->MachineAddress = _strdup(p);
-
-		if (!file->MachineAddress)
+		if (!append_address(file, p, q))
 			goto out;
 
-		errno = 0;
-		{
-			unsigned long val = strtoul(q, NULL, 0);
-
-			if ((errno != 0) || (val > UINT32_MAX))
-				goto out;
-
-			file->MachinePort = (UINT32)val;
-		}
-
-		if (!file->MachineAddress)
-			goto out;
-
-		break;
+		p = q;
 	}
 
-	free(tokens);
+	rc = TRUE;
+out:
 	free(str);
 	return TRUE;
-out:
-
-	if (file->MachineAddresses)
-	{
-		for (i = 0; i < count; i++)
-			free(file->MachineAddresses[i]);
-	}
-
-	free(file->MachineAddresses);
-	free(file->MachinePorts);
-	file->MachineCount = 0;
-	file->MachinePorts = NULL;
-	file->MachineAddresses = NULL;
-	free(tokens);
-	free(str);
-	return FALSE;
 }
 
 static BOOL freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
@@ -470,8 +394,8 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 
 	while (p)
 	{
+		char* port;
 		char* q;
-		int port;
 		size_t length;
 		p += sizeof("<L P=\"") - 1;
 		q = strchr(p, '"');
@@ -481,15 +405,7 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 
 		q[0] = '\0';
 		q++;
-		errno = 0;
-		{
-			unsigned long val = strtoul(p, NULL, 0);
-
-			if ((errno != 0) || (val == 0) || (val > UINT16_MAX))
-				goto out_fail;
-
-			port = (UINT16)val;
-		}
+		port = p;
 		p = strstr(q, " N=\"");
 
 		if (!p)
@@ -507,19 +423,8 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 
 		if (length > 8)
 		{
-			if (strncmp(p, "169.254.", 8) != 0)
-			{
-				if (file->MachineAddress)
-					free(file->MachineAddress);
-
-				file->MachineAddress = _strdup(p);
-
-				if (!file->MachineAddress)
-					goto out_fail;
-
-				file->MachinePort = (UINT32) port;
-				break;
-			}
+			if (!append_address(file, p, port))
+				goto out_fail;
 		}
 
 		p = strstr(q, "<L P=\"");
@@ -1149,7 +1054,7 @@ BOOL freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* fi
 	UINT32 i;
 	freerdp_set_param_bool(settings, FreeRDP_RemoteAssistanceMode, TRUE);
 
-	if (!file->RASessionId || !file->MachineAddress)
+	if (!file->RASessionId || !file->MachineAddresses)
 		return FALSE;
 
 	if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceSessionId, file->RASessionId) != 0)
@@ -1165,7 +1070,7 @@ BOOL freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* fi
 			return FALSE;
 	}
 
-	if (freerdp_set_param_string(settings, FreeRDP_ServerHostname, file->MachineAddress) != 0)
+	if (freerdp_set_param_string(settings, FreeRDP_ServerHostname, file->MachineAddresses[0]) != 0)
 		return FALSE;
 
 	if (freerdp_set_param_string(settings, FreeRDP_AssistanceFile, file->filename) != 0)
@@ -1175,7 +1080,7 @@ BOOL freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* fi
 		return FALSE;
 
 	settings->RemoteAssistanceMode = TRUE;
-	freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->MachinePort);
+	freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->MachinePorts[0]);
 	freerdp_target_net_addresses_free(settings);
 	settings->TargetNetAddressCount = file->MachineCount;
 
@@ -1223,7 +1128,6 @@ void freerdp_assistance_file_free(rdpAssistanceFile* file)
 	free(file->EncryptedLHTicket);
 	free(file->RASessionId);
 	free(file->RASpecificParams);
-	free(file->MachineAddress);
 	free(file->EncryptedPassStub);
 
 	for (i = 0; i < file->MachineCount; i++)
@@ -1238,6 +1142,7 @@ void freerdp_assistance_file_free(rdpAssistanceFile* file)
 
 void freerdp_assistance_print_file(rdpAssistanceFile* file, wLog* log, DWORD level)
 {
+	size_t x;
 	WLog_Print(log, level, "Username: %s", file->Username);
 	WLog_Print(log, level, "LHTicket: %s", file->LHTicket);
 	WLog_Print(log, level, "RCTicket: %s", file->RCTicket);
@@ -1248,8 +1153,12 @@ void freerdp_assistance_print_file(rdpAssistanceFile* file, wLog* log, DWORD lev
 	WLog_Print(log, level, "LowSpeed: %"PRId32, file->LowSpeed);
 	WLog_Print(log, level, "RASessionId: %s", file->RASessionId);
 	WLog_Print(log, level, "RASpecificParams: %s", file->RASpecificParams);
-	WLog_Print(log, level, "MachineAddress: %s", file->MachineAddress);
-	WLog_Print(log, level, "MachinePort: %"PRIu32, file->MachinePort);
+
+	for (x = 0; x < file->MachineCount; x++)
+	{
+		WLog_Print(log, level, "MachineAddress [%"PRIdz": %s", x, file->MachineAddresses[x]);
+		WLog_Print(log, level, "MachinePort    [%"PRIdz": %"PRIu32, x, file->MachinePorts[x]);
+	}
 }
 
 BOOL freerdp_assistance_get_encrypted_pass_stub(rdpAssistanceFile* file, const char** pwd,
