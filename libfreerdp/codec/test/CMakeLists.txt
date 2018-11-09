@@ -12,6 +12,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestFreeRDPCodecZGfx.c
 	TestFreeRDPCodecPlanar.c
 	TestFreeRDPCodecClear.c
+	TestFreeRDPCodecInterleaved.c
 	TestFreeRDPCodecProgressive.c
 	TestFreeRDPCodecRemoteFX.c)
 

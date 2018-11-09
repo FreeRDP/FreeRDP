@@ -30,6 +30,34 @@
 
 #define TAG FREERDP_TAG("codec")
 
+#define UNROLL_BODY(_exp, _count) do \
+	{ \
+		size_t x; \
+		for (x=0; x<(_count); x++) \
+		{ \
+			do _exp while(FALSE); \
+		} \
+	} \
+	while (FALSE)
+
+#define UNROLL_MULTIPLE(_condition, _exp, _count) do \
+	{ \
+		while ((_condition) >= _count) \
+		{ \
+			UNROLL_BODY(_exp, _count); \
+			(_condition) -= _count; \
+		} \
+	} \
+	while (FALSE)
+
+#define UNROLL(_condition, _exp) do \
+	{ \
+		UNROLL_MULTIPLE(_condition, _exp, 16); \
+		UNROLL_MULTIPLE(_condition, _exp, 4); \
+		UNROLL_MULTIPLE(_condition, _exp, 1); \
+	} \
+	while (FALSE)
+
 /*
    RLE Compressed Bitmap Stream (RLE_BITMAP_STREAM)
    http://msdn.microsoft.com/en-us/library/cc240895%28v=prot.10%29.aspx
@@ -59,18 +87,8 @@
 #define SPECIAL_BLACK               0xFE
 
 #define BLACK_PIXEL 0x000000
-#define WHITE_PIXEL 0xFFFFFF
 
 typedef UINT32 PIXEL;
-
-static const BYTE g_MaskBit0 = 0x01; /* Least significant bit */
-static const BYTE g_MaskBit1 = 0x02;
-static const BYTE g_MaskBit2 = 0x04;
-static const BYTE g_MaskBit3 = 0x08;
-static const BYTE g_MaskBit4 = 0x10;
-static const BYTE g_MaskBit5 = 0x20;
-static const BYTE g_MaskBit6 = 0x40;
-static const BYTE g_MaskBit7 = 0x80; /* Most significant bit */
 
 static const BYTE g_MaskSpecialFgBg1 = 0x03;
 static const BYTE g_MaskSpecialFgBg2 = 0x05;
@@ -193,8 +211,29 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 	return runLength;
 }
 
-#define UNROLL_COUNT 4
-#define UNROLL(_exp) do { _exp _exp _exp _exp } while (0)
+static INLINE BOOL ensure_capacity(const BYTE* start, const BYTE* end, size_t size, size_t base)
+{
+	const size_t available = (uintptr_t)end - (uintptr_t)start;
+	const BOOL rc = available >= size * base;
+	return rc;
+}
+
+static INLINE void write_pixel_8(BYTE* _buf, BYTE _pix)
+{
+	*_buf = _pix;
+}
+
+static INLINE void write_pixel_24(BYTE* _buf, UINT32 _pix)
+{
+	(_buf)[0] = (BYTE)(_pix);
+	(_buf)[1] = (BYTE)((_pix) >> 8);
+	(_buf)[2] = (BYTE)((_pix) >> 16);
+}
+
+static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
+{
+	*(UINT16*)_buf = _pix;
+}
 
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
@@ -205,7 +244,9 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
-#define DESTWRITEPIXEL(_buf, _pix) (_buf)[0] = (BYTE)(_pix)
+#undef WHITE_PIXEL
+#define WHITE_PIXEL 0xFF
+#define DESTWRITEPIXEL(_buf, _pix) write_pixel_8(_buf, _pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define DESTNEXTPIXEL(_buf) _buf += 1
@@ -214,6 +255,8 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage8to8
 #define RLEDECOMPRESS RleDecompress8to8
 #define RLEEXTRA
+#undef ENSURE_CAPACITY
+#define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 1)
 #include "include/bitmap.c"
 
 #undef DESTWRITEPIXEL
@@ -225,7 +268,9 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
-#define DESTWRITEPIXEL(_buf, _pix) ((UINT16*)(_buf))[0] = (UINT16)(_pix)
+#undef WHITE_PIXEL
+#define WHITE_PIXEL 0xFFFF
+#define DESTWRITEPIXEL(_buf, _pix) write_pixel_16(_buf, _pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
 #ifdef HAVE_ALIGNED_REQUIRED
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8)
@@ -238,6 +283,8 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16
 #define RLEDECOMPRESS RleDecompress16to16
 #define RLEEXTRA
+#undef ENSURE_CAPACITY
+#define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 2)
 #include "include/bitmap.c"
 
 #undef DESTWRITEPIXEL
@@ -249,8 +296,9 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
-#define DESTWRITEPIXEL(_buf, _pix) do { (_buf)[0] = (BYTE)(_pix);  \
-		(_buf)[1] = (BYTE)((_pix) >> 8); (_buf)[2] = (BYTE)((_pix) >> 16); } while (0)
+#undef WHITE_PIXEL
+#define WHITE_PIXEL 0xFFFFFF
+#define DESTWRITEPIXEL(_buf, _pix)  write_pixel_24(_buf, _pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
         ((_buf)[2] << 16)
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
@@ -261,6 +309,8 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage24to24
 #define RLEDECOMPRESS RleDecompress24to24
 #define RLEEXTRA
+#undef ENSURE_CAPACITY
+#define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 3)
 #include "include/bitmap.c"
 
 BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
@@ -359,10 +409,16 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
                           UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
                           const gdiPalette* palette, UINT32 bpp)
 {
-	int status;
+	BOOL status;
 	wStream* s;
 	UINT32 DstFormat = 0;
-	int maxSize = 64 * 64 * 4;
+	const size_t maxSize = 64 * 64 * 4;
+
+	if (!interleaved || !pDstData || !pSrcData)
+		return FALSE;
+
+	if ((nWidth == 0) || (nHeight == 0))
+		return FALSE;
 
 	if (nWidth % 4)
 	{
@@ -378,31 +434,43 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 		return FALSE;
 	}
 
-	if (bpp == 24)
-		DstFormat = PIXEL_FORMAT_BGRX32;
-	else if (bpp == 16)
-		DstFormat = PIXEL_FORMAT_RGB16;
-	else if (bpp == 15)
-		DstFormat = PIXEL_FORMAT_RGB15;
-	else if (bpp == 8)
-		DstFormat = PIXEL_FORMAT_RGB8;
+	switch (bpp)
+	{
+		case 24:
+			DstFormat = PIXEL_FORMAT_BGRX32;
+			break;
 
-	if (!DstFormat)
-		return FALSE;
+		case 16:
+			DstFormat = PIXEL_FORMAT_RGB16;
+			break;
+
+		case 15:
+			DstFormat = PIXEL_FORMAT_RGB15;
+			break;
+
+		default:
+			return FALSE;
+	}
 
 	if (!freerdp_image_copy(interleaved->TempBuffer, DstFormat, 0, 0, 0, nWidth,
-	                        nHeight,
-	                        pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
+	                        nHeight, pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc,
+	                        palette, FREERDP_FLIP_NONE))
 		return FALSE;
 
-	s = Stream_New(pDstData, maxSize);
+	s = Stream_New(pDstData, *pDstSize);
 
 	if (!s)
 		return FALSE;
 
-	status = freerdp_bitmap_compress((char*) interleaved->TempBuffer, nWidth,
-	                                 nHeight,
-	                                 s, bpp, maxSize, nHeight - 1, interleaved->bts, 0);
+	Stream_SetPosition(interleaved->bts, 0);
+
+	if (freerdp_bitmap_compress(interleaved->TempBuffer, nWidth, nHeight,
+	                            s, bpp, maxSize, nHeight - 1,
+	                            interleaved->bts, 0) < 0)
+		status = FALSE;
+	else
+		status = TRUE;
+
 	Stream_SealLength(s);
 	*pDstSize = (UINT32) Stream_Length(s);
 	Stream_Free(s, FALSE);
