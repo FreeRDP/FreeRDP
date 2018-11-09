@@ -1,0 +1,12 @@
+On an up to date windows machine run the following scripts (from checkout root):
+
+csi.exe scripts/TimeZones.csx
+csi.exe scripts/WindowsZones.csx
+
+After running the scripts check
+ * winpr/libwinpr/timezone/TimeZones.c
+ * winpr/libwinpr/timezone/WindowsZones.c
+for changes.
+
+Commit if the definitions changed and create a pull request at
+https://github.com/FreeRDP/FreeRDP
