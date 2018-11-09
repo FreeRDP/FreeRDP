@@ -31,16 +31,13 @@
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
 
+#if !defined(WITH_DSP_FFMPEG)
 #if defined(WITH_GSM)
 #include <gsm/gsm.h>
 #endif
 
 #if defined(WITH_LAME)
 #include <lame/lame.h>
-#endif
-
-#if defined(WITH_DSP_FFMPEG)
-#include "dsp_ffmpeg.h"
 #endif
 
 #if defined(WITH_FAAD2)
@@ -51,7 +48,13 @@
 #include <faac.h>
 #endif
 
+#else
+#include "dsp_ffmpeg.h"
+#endif
+
 #define TAG FREERDP_TAG("dsp")
+
+#if !defined(WITH_DSP_FFMPEG)
 
 union _ADPCM
 {
@@ -922,6 +925,8 @@ static BOOL freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE
 	Stream_SetPointer(out, dst);
 	return TRUE;
 }
+
+#endif
 
 FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder)
 {
