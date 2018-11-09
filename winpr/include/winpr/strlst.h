@@ -108,7 +108,6 @@ WINPR_API int string_list_mismatch(char** a,char** b);
 */
 WINPR_API BOOL string_list_equal(char** a,char** b);
 
-
 #ifdef __cplusplus
 }
 #endif
