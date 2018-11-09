@@ -29,6 +29,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/types.h>
+#include <freerdp/log.h>
 #include <freerdp/codec/dsp.h>
 
 #if !defined(WITH_DSP_FFMPEG)
@@ -109,29 +110,65 @@ struct _FREERDP_DSP_CONTEXT
 
 static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
                                  const BYTE* src, size_t size,
-                                 const AUDIO_FORMAT* srcFormat)
+                                 const AUDIO_FORMAT* srcFormat,
+                                 const BYTE** data, size_t* length)
 {
 	BYTE* p;
 	size_t sframes, rframes;
 	size_t rsize;
 	size_t i, j;
 	size_t sbytes, rbytes;
-	size_t srcBytePerFrame;
+	size_t srcBytesPerFrame, dstBytesPerFrame;
+	size_t srcChannels, dstChannels;
+	AUDIO_FORMAT format;
 
-	if (!context || !src || !srcFormat)
+	if (!context || !src || !srcFormat || !data || !length)
 		return FALSE;
 
-	assert(srcFormat->wFormatTag == WAVE_FORMAT_PCM);
-	srcBytePerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
-	sbytes = srcFormat->nChannels * srcBytePerFrame;
+	if (srcFormat->wFormatTag != WAVE_FORMAT_PCM)
+	{
+		WLog_ERR(TAG, "%s requires %s for sample input, got %s", __FUNCTION__,
+		         audio_format_get_tag_string(WAVE_FORMAT_PCM),
+		         audio_format_get_tag_string(srcFormat->wFormatTag));
+		return FALSE;
+	}
+
+	srcChannels = srcFormat->nChannels;
+	dstChannels = context->format.nChannels;
+	srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
+	dstBytesPerFrame = (context->format.wBitsPerSample > 8) ? 2 : 1;
+	/* We want to ignore differences of source and destination format. */
+	format = *srcFormat;
+	format.wFormatTag = WAVE_FORMAT_UNKNOWN;
+
+	if (audio_format_compatible(&format, &context->format))
+		return TRUE;
+
+	/* TODO: Currently sample size conversion is not implemented. */
+	if (srcFormat->wBitsPerSample != context->format.wBitsPerSample)
+	{
+		WLog_ERR(TAG, "%s does not support changing sample bit width [in=%"PRId16", out=%"PRId16"]",
+		         __FUNCTION__, srcFormat->wBitsPerSample, context->format.wBitsPerSample);
+		return FALSE;
+	}
+
+	/* TODO: Currently sample size conversion is not implemented. */
+	if (srcChannels != dstChannels)
+	{
+		WLog_ERR(TAG, "%s does not support changing number of channels [in=%"PRIdz", out=%"PRIdz"]",
+		         __FUNCTION__, srcChannels, dstChannels);
+		return FALSE;
+	}
+
+	sbytes = srcChannels * srcBytesPerFrame;
 	sframes = size / sbytes;
-	rbytes = srcBytePerFrame * context->format.nChannels;
+	rbytes = dstBytesPerFrame * dstChannels;
 	/* Integer rounding correct division */
 	rframes = (sframes * context->format.nSamplesPerSec + (srcFormat->nSamplesPerSec + 1) / 2) /
 	          srcFormat->nSamplesPerSec;
-	rsize = rbytes * rframes;
+	rsize = rframes * rbytes;
 
-	if (!Stream_EnsureCapacity(context->resample, rsize + 1024))
+	if (!Stream_EnsureCapacity(context->resample, rsize))
 		return FALSE;
 
 	p = Stream_Buffer(context->resample);
@@ -159,6 +196,8 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 
 	Stream_SetPointer(context->resample, p);
 	Stream_SealLength(context->resample);
+	*data = Stream_Buffer(context->resample);
+	*length = Stream_Length(context->resample);
 	return TRUE;
 }
 
@@ -1049,14 +1088,8 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 	if (!context || !context->encoder || !srcFormat || !data || !out)
 		return FALSE;
 
-	if (srcFormat->nSamplesPerSec != context->format.nSamplesPerSec)
-	{
-		if (!freerdp_dsp_resample(context, data, length, srcFormat))
-			return FALSE;
-
-		data = Stream_Buffer(context->resample);
-		length = Stream_GetPosition(context->resample);
-	}
+	if (!freerdp_dsp_resample(context, data, length, srcFormat, &data, &length))
+		return FALSE;
 
 	switch (context->format.wFormatTag)
 	{
@@ -1195,7 +1228,6 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 	return FALSE;
 #endif
 }
-
 
 BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* targetFormat)
 {
