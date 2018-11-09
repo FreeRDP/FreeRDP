@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion = 27
-    buildToolsVersion = "27.0.3"
+    compileSdkVersion = 28
+    buildToolsVersion = "28.0.3"
 
     defaultConfig {
         applicationId "com.freerdp.afreerdp"
-        minSdkVersion 14
-        targetSdkVersion 27
+        minSdkVersion 21
+        targetSdkVersion 28
         vectorDrawables.useSupportLibrary = true
         versionCode = 14
         versionName = rootProject.ext.versionName
@@ -16,7 +16,7 @@ android {
     signingConfigs {
         release {
             storeFile file(RELEASE_STORE_FILE)
-            storePassword RELEASE_STORE_PASSWORD
+            storePassword RELEASE_KEY_PASSWORD
             keyAlias RELEASE_KEY_ALIAS
             keyPassword RELEASE_KEY_PASSWORD
             storeType "jks"
@@ -37,5 +37,5 @@ android {
 }
 
 dependencies {
-    compile project(':freeRDPCore')
+    implementation project(':freeRDPCore')
 }

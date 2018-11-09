@@ -6,7 +6,7 @@ if (file.canRead()) {
 }
    
 if (!hasProperty('RELEASE_STORE_FILE')) {
-    ext.RELEASE_STORE_FILE=''
+    ext.RELEASE_STORE_FILE='nokeyfile'
 }
 if (!hasProperty('RELEASE_KEY_ALIAS')) {
     ext.RELEASE_KEY_ALIAS=''
@@ -43,7 +43,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.android.tools.build:gradle:3.2.1'
     }
 }
 

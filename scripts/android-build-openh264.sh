@@ -10,7 +10,7 @@ function build {
 	common_run cd $BUILD_SRC
 	PATH=$ANDROID_NDK:$PATH
 	MAKE="make PATH=$PATH ENABLEPIC=Yes OS=android NDKROOT=$ANDROID_NDK TARGET=android-$2 NDKLEVEL=$2 ARCH=$1 -j libraries"
-	common_run git clean -xdf
+	
 	common_run export QUIET_AR="$CCACHE "
 	common_run export QUIET_ASM="$CCACHE "
 	common_run export QUIET_CC="$CCACHE "
@@ -27,7 +27,7 @@ function build {
 common_parse_arguments $@
 common_check_requirements
 common_update $SCM_URL $SCM_TAG $BUILD_SRC
-common_clean $BUILD_DST
+
 
 for ARCH in $BUILD_ARCH
 do

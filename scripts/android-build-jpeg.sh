@@ -1,5 +1,5 @@
 #!/bin/bash
-SCM_URL=https://github.com/akallabeth/jpeg8d.git
+SCM_URL=https://github.com/akallabeth/jpeg8d
 SCM_TAG=master
 
 source $(dirname "${BASH_SOURCE[0]}")/android-build-common.sh
@@ -25,8 +25,8 @@ function build {
 	echo "Building architectures $BUILD_ARCH..."
 	BASE=$(pwd)
 	common_run cd $BUILD_SRC
-	common_run $NDK_BUILD V=1 APP_ABI="${BUILD_ARCH}" -j clean
-	common_run $NDK_BUILD V=1 APP_ABI="${BUILD_ARCH}" -j
+	common_run $NDK_BUILD V=1 APP_ABI="${BUILD_ARCH}" NDK_TOOLCHAIN_VERSION=4.9 -j clean
+	common_run $NDK_BUILD V=1 APP_ABI="${BUILD_ARCH}" NDK_TOOLCHAIN_VERSION=4.9 -j
 	common_run cd $BASE
 }
 
@@ -34,7 +34,6 @@ function build {
 common_parse_arguments $@
 common_check_requirements
 common_update $SCM_URL $SCM_TAG $BUILD_SRC
-common_clean $BUILD_DST
 
 build
 
