@@ -400,7 +400,7 @@ static int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, s
 	/* Set buffer */
 	_snprintf(krb_name, krb_name_len + 1, "%s@%s", lusername, lrealm);
 #ifdef WITH_DEBUG_NLA
-	WLog_DBG(TAG, "copied string is %s\n", krb_name);
+	WLog_DBG(TAG, "copied string is %s", krb_name);
 #endif
 	pstr = strchr(lusername, '@');
 
@@ -444,6 +444,7 @@ cleanup:
 	return ret;
 }
 #endif
+
 
 static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle phCredential,
         PCtxtHandle phContext,
@@ -522,7 +523,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle
 				if (SSPI_GSS_ERROR(context->major_status))
 				{
 					/* We can't use Kerberos */
-					WLog_ERR(TAG, "Init GSS security context failed : can't use Kerberos");
+					WLog_ERR(TAG, "Init GSS security context failed : can't use Kerberos because % s",
+					         krb5_get_error_message(NULL, context->minor_status));
 					return SEC_E_INTERNAL_ERROR;
 				}
 			}
