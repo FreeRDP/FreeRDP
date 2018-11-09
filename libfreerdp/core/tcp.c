@@ -885,7 +885,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
                                      UINT32* ports, UINT32 count, int port,
                                      int timeout)
 {
-	int index;
+	UINT32 index;
 	int sindex;
 	int status;
 	SOCKET sockfd = -1;
@@ -912,12 +912,12 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 
 	for (index = 0; index < count; index++)
 	{
-		int port = -1;
+		int curPort = port;
 
 		if (ports)
-			port = ports[index];
+			curPort = ports[index];
 
-		result = freerdp_tcp_resolve_host(hostnames[index], port, 0);
+		result = freerdp_tcp_resolve_host(hostnames[index], curPort, 0);
 
 		if (!result)
 			continue;
@@ -987,6 +987,12 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 
 	for (index = 0; index < count; index++)
 	{
+		const char* host = hostnames[index];
+		UINT32 curPort = port;
+
+		if (ports)
+			curPort = ports[index];
+
 		u_long arg = 0;
 
 		if (!sockfds[index])
@@ -995,15 +1001,15 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 		sockfd = sockfds[index];
 
 		/* set socket in blocking mode */
-		if (WSAEventSelect(sockfd, NULL, 0))
+		if (WSAEventSelect(sockfd, events[index], 0))
 		{
-			WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
+			WLog_ERR(TAG, "[%s:%"PRId32"] WSAEventSelect returned 0x%08X", host, port, WSAGetLastError());
 			continue;
 		}
 
 		if (_ioctlsocket(sockfd, FIONBIO, &arg))
 		{
-			WLog_ERR(TAG, "_ioctlsocket failed");
+			WLog_ERR(TAG, "[%s:%"PRId32"] _ioctlsocket failed", host, port);
 		}
 	}
 
