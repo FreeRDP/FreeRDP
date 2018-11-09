@@ -35,9 +35,10 @@
 		size_t x; \
 		for (x=0; x<(_count); x++) \
 		{ \
-			(_exp); \
+			do _exp while(FALSE); \
 		} \
-	} while (0)
+	} \
+	while (FALSE)
 
 #define UNROLL_MULTIPLE(_condition, _exp, _count) do \
 	{ \
@@ -46,14 +47,16 @@
 			UNROLL_BODY(_exp, _count); \
 			(_condition) -= _count; \
 		} \
-	} while (FALSE)
+	} \
+	while (FALSE)
 
 #define UNROLL(_condition, _exp) do \
 	{ \
 		UNROLL_MULTIPLE(_condition, _exp, 16); \
 		UNROLL_MULTIPLE(_condition, _exp, 4); \
 		UNROLL_MULTIPLE(_condition, _exp, 1); \
-	} while (FALSE)
+	} \
+	while (FALSE)
 
 /*
    RLE Compressed Bitmap Stream (RLE_BITMAP_STREAM)
