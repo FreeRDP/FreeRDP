@@ -53,19 +53,25 @@ char**  string_list_copy(const char* const* string_list)
 {
 	int i;
 	int length = string_list_length(string_list);
-	char**   copy = calloc(length + 1, sizeof(char*));
+	char** copy = malloc((length + 1) * sizeof(char*));
 
-	if (!copy)
+	if (copy == NULL)
 	{
-		return 0;
+		return NULL;
 	}
 
 	for (i = 0; i < length; i ++)
 	{
 		copy[i] = _strdup(string_list[i]);
+
+		if (copy[i] == NULL)
+		{
+			string_list_free(copy);
+			return NULL;
+		}
 	}
 
-	copy[length] = 0;
+	copy[length] = NULL;
 	return copy;
 }
 
@@ -81,3 +87,54 @@ void string_list_print(FILE* out, const char* const* string_list)
 	fflush(out);
 }
 
+char* string_list_join(const char* const* string_list, const char* separator)
+{
+	char* result;
+	char* current;
+	size_t maximum_size;
+	size_t i;
+	size_t count = string_list_length(string_list);
+	size_t separator_length = strlen(separator);
+	size_t* string_lengths = malloc(sizeof(*string_lengths) * count);
+	size_t total_length = 0;
+
+	if (string_lengths == NULL)
+	{
+		return NULL;
+	}
+
+	for (i = 0; i < count; i ++)
+	{
+		string_lengths[i] = strlen(string_list[i]);
+		total_length += string_lengths[i];
+	}
+
+	maximum_size = (((count == 0) ? 0 : (count - 1) * separator_length)
+	                + total_length
+	                + 1);
+	result = malloc(maximum_size);
+
+	if (result == NULL)
+	{
+		goto done;
+	}
+
+	strcpy(result, "");
+	current = result;
+
+	for (i = 0; i < count; i ++)
+	{
+		strcpy(current, string_list[i]);
+		current += string_lengths[i];
+
+		if (i < count - 1)
+		{
+			strcpy(current, separator);
+			current += separator_length;
+		}
+	}
+
+done:
+	free(string_lengths);
+	return result;
+}
