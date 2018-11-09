@@ -1079,6 +1079,9 @@ BOOL freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* fi
 	if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistancePassword, file->password) != 0)
 		return FALSE;
 
+	if (freerdp_set_param_string(settings, FreeRDP_Username, file->Username) != 0)
+		return FALSE;
+
 	settings->RemoteAssistanceMode = TRUE;
 	freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->MachinePorts[0]);
 	freerdp_target_net_addresses_free(settings);
