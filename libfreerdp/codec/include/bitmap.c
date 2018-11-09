@@ -36,7 +36,7 @@ static INLINE BYTE* WRITEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, UINT32 r
 	if (!ENSURE_CAPACITY(pbDest, pbDestEnd, cBits))
 		return NULL;
 
-	while (cBits > 0)
+	UNROLL(cBits,
 	{
 		UINT32 data;
 		DESTREADPIXEL(xorPixel, pbDest - rowDelta);
@@ -48,10 +48,8 @@ static INLINE BYTE* WRITEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, UINT32 r
 
 		DESTWRITEPIXEL(pbDest, data);
 		DESTNEXTPIXEL(pbDest);
-		cBits = cBits - 1;
 		mask = mask << 1;
-	}
-
+	});
 	return pbDest;
 }
 
@@ -70,7 +68,7 @@ static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd,
 	if (!ENSURE_CAPACITY(pbDest, pbDestEnd, cBits))
 		return NULL;
 
-	while (cBits > 0)
+	UNROLL(cBits,
 	{
 		UINT32 data;
 
@@ -81,10 +79,8 @@ static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd,
 
 		DESTWRITEPIXEL(pbDest, data);
 		DESTNEXTPIXEL(pbDest);
-		cBits = cBits - 1;
 		mask = mask << 1;
-	}
-
+	});
 	return pbDest;
 }
 
