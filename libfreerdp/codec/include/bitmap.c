@@ -155,12 +155,11 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
 					return FALSE;
 
-				while (runLength > 0)
+				UNROLL(runLength,
 				{
 					DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 					DESTNEXTPIXEL(pbDest);
-					runLength--;
-				}
+				});
 			}
 			else
 			{
@@ -179,13 +178,12 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
 					return FALSE;
 
-				while (runLength > 0)
+				UNROLL(runLength,
 				{
 					DESTREADPIXEL(temp, pbDest - rowDelta);
 					DESTWRITEPIXEL(pbDest, temp);
 					DESTNEXTPIXEL(pbDest);
-					runLength--;
-				}
+				});
 			}
 
 			/* A follow-on background run order will need a foreground pel inserted. */
@@ -218,22 +216,20 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 
 				if (fFirstLine)
 				{
-					while (runLength > 0)
+					UNROLL(runLength,
 					{
 						DESTWRITEPIXEL(pbDest, fgPel);
 						DESTNEXTPIXEL(pbDest);
-						runLength--;
-					}
+					});
 				}
 				else
 				{
-					while (runLength > 0)
+					UNROLL(runLength,
 					{
 						DESTREADPIXEL(temp, pbDest - rowDelta);
 						DESTWRITEPIXEL(pbDest, temp ^ fgPel);
 						DESTNEXTPIXEL(pbDest);
-						runLength--;
-					}
+					});
 				}
 
 				break;
@@ -251,15 +247,13 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength * 2))
 					return FALSE;
 
-				while (runLength > 0)
+				UNROLL(runLength,
 				{
 					DESTWRITEPIXEL(pbDest, pixelA);
 					DESTNEXTPIXEL(pbDest);
 					DESTWRITEPIXEL(pbDest, pixelB);
 					DESTNEXTPIXEL(pbDest);
-					runLength--;
-				}
-
+				});
 				break;
 
 			/* Handle Color Run Orders. */
@@ -273,13 +267,11 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
 					return FALSE;
 
-				while (runLength > 0)
+				UNROLL(runLength,
 				{
 					DESTWRITEPIXEL(pbDest, pixelA);
 					DESTNEXTPIXEL(pbDest);
-					runLength--;
-				}
-
+				});
 				break;
 
 			/* Handle Foreground/Background Image Orders. */
@@ -350,19 +342,13 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 			case MEGA_MEGA_COLOR_IMAGE:
 				runLength = ExtractRunLength(code, pbSrc, &advance);
 				pbSrc = pbSrc + advance;
-
-				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
-					return FALSE;
-
-				while (runLength > 0)
+				UNROLL(runLength,
 				{
 					SRCREADPIXEL(temp, pbSrc);
 					SRCNEXTPIXEL(pbSrc);
 					DESTWRITEPIXEL(pbDest, temp);
 					DESTNEXTPIXEL(pbDest);
-					runLength--;
-				}
-
+				});
 				break;
 
 			/* Handle Special Order 1. */

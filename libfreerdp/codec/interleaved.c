@@ -30,6 +30,31 @@
 
 #define TAG FREERDP_TAG("codec")
 
+#define UNROLL_BODY(_exp, _count) do \
+	{ \
+		size_t x; \
+		for (x=0; x<(_count); x++) \
+		{ \
+			(_exp); \
+		} \
+	} while (0)
+
+#define UNROLL_MULTIPLE(_condition, _exp, _count) do \
+	{ \
+		while ((_condition) >= _count) \
+		{ \
+			UNROLL_BODY(_exp, _count); \
+			(_condition) -= _count; \
+		} \
+	} while (FALSE)
+
+#define UNROLL(_condition, _exp) do \
+	{ \
+		UNROLL_MULTIPLE(_condition, _exp, 16); \
+		UNROLL_MULTIPLE(_condition, _exp, 4); \
+		UNROLL_MULTIPLE(_condition, _exp, 1); \
+	} while (FALSE)
+
 /*
    RLE Compressed Bitmap Stream (RLE_BITMAP_STREAM)
    http://msdn.microsoft.com/en-us/library/cc240895%28v=prot.10%29.aspx
