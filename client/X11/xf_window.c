@@ -996,43 +996,6 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 	XFlush(xfc->display);
 }
 
-#if 0
-void xf_SetWindowIcon(xfContext* xfc, xfAppWindow* appWindow, rdpIcon* icon)
-{
-	int x, y;
-	int pixels;
-	int propsize;
-	long* propdata;
-	long* dstp;
-	UINT32* srcp;
-
-	if (!icon->big)
-		return;
-
-	pixels = icon->entry->width * icon->entry->height;
-	propsize = 2 + pixels;
-	propdata = malloc(propsize * sizeof(long));
-	propdata[0] = icon->entry->width;
-	propdata[1] = icon->entry->height;
-	dstp = &(propdata[2]);
-	srcp = (UINT32*) icon->extra;
-
-	for (y = 0; y < icon->entry->height; y++)
-	{
-		for (x = 0; x < icon->entry->width; x++)
-		{
-			*dstp++ = *srcp++;
-		}
-	}
-
-	XChangeProperty(xfc->display, appWindow->handle, xfc->_NET_WM_ICON, XA_CARDINAL,
-	                32,
-	                PropModeReplace, (BYTE*) propdata, propsize);
-	XFlush(xfc->display);
-	free(propdata);
-}
-#endif
-
 void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow,
                        RECTANGLE_16* rects, int nrects)
 {
