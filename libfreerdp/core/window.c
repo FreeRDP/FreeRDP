@@ -86,8 +86,8 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	Stream_Read_UINT16(s, iconInfo->width); /* width (2 bytes) */
 	Stream_Read_UINT16(s, iconInfo->height); /* height (2 bytes) */
 
-	/* cbColorTable is only present when bpp is 1, 2 or 4 */
-	if (iconInfo->bpp == 1 || iconInfo->bpp == 2 || iconInfo->bpp == 4)
+	/* cbColorTable is only present when bpp is 1, 4 or 8 */
+	if (iconInfo->bpp == 1 || iconInfo->bpp == 4 || iconInfo->bpp == 8)
 	{
 		if (Stream_GetRemainingLength(s) < 2)
 			return FALSE;
