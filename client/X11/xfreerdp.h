@@ -83,6 +83,7 @@ typedef struct xf_glyph xfGlyph;
 typedef struct xf_clipboard xfClipboard;
 typedef struct _xfDispContext xfDispContext;
 typedef struct _xfVideoContext xfVideoContext;
+typedef struct xf_rail_icon_cache xfRailIconCache;
 
 /* Value of the first logical button number in X11 which must be */
 /* subtracted to go from a button number in X11 to an index into */
@@ -225,6 +226,7 @@ struct xf_context
 
 	RailClientContext* rail;
 	wHashTable* railWindows;
+	xfRailIconCache* railIconCache;
 
 	BOOL xkbAvailable;
 	BOOL xrenderAvailable;
