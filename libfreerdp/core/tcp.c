@@ -881,32 +881,42 @@ fail:
 	return rc;
 }
 
+typedef struct
+{
+	SOCKET s;
+	struct addrinfo* addr;
+	struct addrinfo* result;
+} t_peer;
+
+static BOOL peer_free(t_peer* peer)
+{
+	if (peer->s != INVALID_SOCKET)
+		closesocket(peer->s);
+
+	freeaddrinfo(peer->addr);
+	memset(peer, 0, sizeof(t_peer));
+	peer->s = INVALID_SOCKET;
+}
+
 static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
                                      UINT32* ports, UINT32 count, int port,
                                      int timeout)
 {
 	UINT32 index;
-	int sindex;
-	int status;
-	SOCKET sockfd = (SOCKET) - 1;
-	SOCKET* sockfds;
+	UINT32 sindex = count;
+	int status = -1;
+	SOCKET sockfd = INVALID_SOCKET;
 	HANDLE* events;
-	DWORD waitStatus;
 	struct addrinfo* addr;
 	struct addrinfo* result;
-	struct addrinfo** addrs;
-	struct addrinfo** results;
-	sockfds = (SOCKET*) calloc(count, sizeof(SOCKET));
+	t_peer* peers;
 	events = (HANDLE*) calloc(count + 1, sizeof(HANDLE));
-	addrs = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
-	results = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
+	peers = (t_peer*)calloc(count, sizeof(t_peer));
 
-	if (!sockfds || !events || !addrs || !results)
+	if (!peers || !events || (count < 1))
 	{
-		free(sockfds);
+		free(peers);
 		free(events);
-		free(addrs);
-		free(results);
 		return -1;
 	}
 
@@ -936,104 +946,48 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 				addr = result;
 		}
 
-		sockfds[index] = _socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+		peers[index].s = _socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 
-		if (sockfds[index] == INVALID_SOCKET)
+		if (peers[index].s == INVALID_SOCKET)
 		{
 			freeaddrinfo(result);
-			sockfds[index] = 0;
 			continue;
 		}
 
-		addrs[index] = addr;
-		results[index] = result;
+		peers[index].addr = addr;
+		peers[index].result = result;
 	}
 
 	for (index = 0; index < count; index++)
 	{
-		if (!sockfds[index])
+		if (peers[index].s == INVALID_SOCKET)
 			continue;
 
-		sockfd = sockfds[index];
-		addr = addrs[index];
-		/* set socket in non-blocking mode */
-		events[index] = WSACreateEvent();
-
-		if (!events[index])
-		{
-			WLog_ERR(TAG, "WSACreateEvent returned 0x%08X", WSAGetLastError());
-			continue;
-		}
-
-		if (WSAEventSelect(sockfd, events[index], FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE))
-		{
-			WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
-			continue;
-		}
-
-		/* non-blocking tcp connect */
+		sockfd = peers[index].s;
+		addr = peers[index].addr;
+		/* blocking tcp connect */
 		status = _connect(sockfd, addr->ai_addr, addr->ai_addrlen);
 
 		if (status >= 0)
 		{
 			/* connection success */
+			sindex = index;
 			break;
 		}
 	}
 
-	events[count] = context->abortEvent;
-	waitStatus = WaitForMultipleObjects(count + 1, events, FALSE, timeout * 1000);
-	sindex = waitStatus - WAIT_OBJECT_0;
-
-	for (index = 0; index < count; index++)
+	if (sindex < count)
 	{
-		const char* host = hostnames[index];
-		UINT32 curPort = port;
-		u_long arg = 0;
-
-		if (ports)
-			curPort = ports[index];
-
-		if (!sockfds[index])
-			continue;
-
-		sockfd = sockfds[index];
-
-		/* set socket in blocking mode */
-		if (WSAEventSelect(sockfd, events[index], 0))
-		{
-			WLog_ERR(TAG, "[%s:%"PRId32"] WSAEventSelect returned 0x%08X", host, port, WSAGetLastError());
-			continue;
-		}
-
-		if (_ioctlsocket(sockfd, FIONBIO, &arg))
-		{
-			WLog_ERR(TAG, "[%s:%"PRId32"] _ioctlsocket failed", host, port);
-		}
+		sockfd = peers[sindex].s;
+		peers[sindex].s = INVALID_SOCKET;
 	}
-
-	if ((sindex >= 0) && (sindex < count))
-	{
-		sockfd = sockfds[sindex];
-	}
-
-	if (sindex == count)
+	else
 		freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
 
 	for (index = 0; index < count; index++)
-	{
-		if (results[index])
-			freeaddrinfo(results[index]);
+		peer_free(&peers[index]);
 
-		if (sindex != index)
-			closesocket(sockfds[index]);
-
-		CloseHandle(events[index]);
-	}
-
-	free(addrs);
-	free(results);
-	free(sockfds);
+	free(peers);
 	free(events);
 	return sockfd;
 }
