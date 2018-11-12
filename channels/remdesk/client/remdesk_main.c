@@ -255,7 +255,13 @@ static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk,
 
 	Stream_Read_UINT32(s, versionMajor); /* versionMajor (4 bytes) */
 	Stream_Read_UINT32(s, versionMinor); /* versionMinor (4 bytes) */
-	remdesk->Version = versionMajor;
+
+	if ((versionMajor != 1) || (versionMinor > 2) || (versionMinor == 0))
+	{
+		WLog_ERR(TAG, "Unsupported protocol version %"PRId32".%"PRId32, versionMajor, versionMinor);
+	}
+
+	remdesk->Version = versionMinor;
 	return CHANNEL_RC_OK;
 }
 
