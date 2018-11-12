@@ -1346,30 +1346,11 @@ void rdg_free(rdpRdg* rdg)
 	if (!rdg)
 		return;
 
-	if (rdg->tlsOut)
-	{
-		tls_free(rdg->tlsOut);
-		rdg->tlsOut = NULL;
-	}
-
-	if (rdg->tlsIn)
-	{
-		tls_free(rdg->tlsIn);
-		rdg->tlsIn = NULL;
-	}
-
-	if (rdg->http)
-	{
-		http_context_free(rdg->http);
-		rdg->http = NULL;
-	}
-
-	if (rdg->ntlm)
-	{
-		ntlm_free(rdg->ntlm);
-		rdg->ntlm = NULL;
-	}
-
+	tls_free(rdg->tlsOut);
+	tls_free(rdg->tlsIn);
+	http_context_free(rdg->http);
+	ntlm_free(rdg->ntlm);
+	BIO_free_all(rdg->frontBio);
 	DeleteCriticalSection(&rdg->writeSection);
 	free(rdg);
 }
