@@ -888,7 +888,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 	UINT32 index;
 	int sindex;
 	int status;
-	SOCKET sockfd = -1;
+	SOCKET sockfd = (SOCKET) - 1;
 	SOCKET* sockfds;
 	HANDLE* events;
 	DWORD waitStatus;
@@ -989,11 +989,10 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 	{
 		const char* host = hostnames[index];
 		UINT32 curPort = port;
+		u_long arg = 0;
 
 		if (ports)
 			curPort = ports[index];
-
-		u_long arg = 0;
 
 		if (!sockfds[index])
 			continue;
@@ -1025,6 +1024,9 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 	{
 		if (results[index])
 			freeaddrinfo(results[index]);
+
+		if (sindex != index)
+			closesocket(sockfds[index]);
 
 		CloseHandle(events[index]);
 	}
