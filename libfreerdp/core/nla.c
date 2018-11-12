@@ -274,7 +274,7 @@ static void memory_clear_and_free(void* memory, size_t size)
 
 static void string_clear_and_free(char* string)
 {
-	if(string)
+	if (string)
 	{
 		memory_clear_and_free(string, strlen(string));
 	}
@@ -305,6 +305,7 @@ static char* string_concatenate(const char* string, ...)
 	strcpy(current, string);
 	current += strlen(string);
 	va_start(strings, string);
+	arg = va_arg(strings, const char*);
 
 	while (arg)
 	{
@@ -448,14 +449,15 @@ static void csp_data_detail_free(csp_data_detail* csp)
 	memory_clear_and_free(structure->field, structure->field##Length * 2)
 #define WSTRING_LENGTH_SET_CSTRING(structure, field, cstring)				\
 	(structure->field##Length = (cstring						\
-		?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
-		:(structure->field = NULL, 0)))
+	                             ?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
+	                             :(structure->field = NULL, 0)))
 
-static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_new(char * user,  char * password,  char * domain)
+static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_new(char* user,  char* password,
+        char* domain)
 {
 	SEC_WINNT_AUTH_IDENTITY* password_creds;
-	CHECK_MEMORY(password_creds = malloc(sizeof (*password_creds)),NULL,
-		"Could not allocate a SEC_WINNT_AUTH_IDENTITY structure");
+	CHECK_MEMORY(password_creds = malloc(sizeof(*password_creds)), NULL,
+	             "Could not allocate a SEC_WINNT_AUTH_IDENTITY structure");
 	password_creds->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 	WSTRING_LENGTH_SET_CSTRING(password_creds, User, user);
 	WSTRING_LENGTH_SET_CSTRING(password_creds, Domain, domain);
@@ -471,6 +473,7 @@ static void SEC_WINNT_AUTH_IDENTITY_free(SEC_WINNT_AUTH_IDENTITY* password_creds
 		WSTRING_LENGTH_CLEAR_AND_FREE(password_creds, Domain);
 		WSTRING_LENGTH_CLEAR_AND_FREE(password_creds, Password);
 	}
+
 	free(password_creds);
 }
 
@@ -693,7 +696,6 @@ static BOOL sspi_SecBufferFill(PSecBuffer buffer, BYTE* data, DWORD size)
 	return TRUE;
 }
 
-
 #define EMPTY_SL(field)   (((field) == NULL) || ((field##Length) == 0))
 #define EMPTY_S(cstring)  (((cstring) == NULL) || (strlen(cstring) == 0))
 #define HAS_SL(field)     ((field) != NULL)
@@ -726,7 +728,7 @@ static BOOL should_prompt_password(rdpSettings* settings)
 static LPTSTR service_principal_name(const char* server_hostname)
 {
 	char* spnA = string_concatenate(TERMSRV_SPN_PREFIX, server_hostname, NULL);
-	LPTSTR spnX = stringX_from_cstring(spnA);
+	LPTSTR spnX  = stringX_from_cstring(spnA);
 	free(spnA);
 	return spnX;
 }
@@ -2095,6 +2097,7 @@ static int nla_sizeof_ts_pwd_or_sc_creds(auth_identity*   identity,
 	}
 }
 
+
 static size_t nla_sizeof_ts_credentials(auth_identity*   identity)
 {
 	size_t size = 0;
@@ -2219,7 +2222,6 @@ static BOOL nla_read_ts_cspdatadetail(rdpNla* nla, wStream* s, size_t* length)
 	/* TSCspDataDetail (SEQUENCE)
 	 * Initialise to default values. */
 	csp_data_detail_free(nla->identity->csp_data);
-
 	nla->identity->csp_data = csp_data_detail_new_nocopy(0, NULL, NULL, NULL, NULL);
 
 	if (nla->identity->csp_data == NULL)
@@ -3264,3 +3266,4 @@ BOOL nla_set_service_principal(rdpNla* nla, LPSTR principal)
 	nla->ServicePrincipalName = principal;
 	return TRUE;
 }
+
