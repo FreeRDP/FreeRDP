@@ -3050,6 +3050,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	{
 		settings->EncomspVirtualChannel = TRUE;
 		settings->RemdeskVirtualChannel = TRUE;
+		settings->NlaSecurity = FALSE;
 	}
 
 	if (settings->EncomspVirtualChannel)
