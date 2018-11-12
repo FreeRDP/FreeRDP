@@ -83,7 +83,7 @@ FREERDP_LOCAL HttpResponse* http_response_new(void);
 FREERDP_LOCAL void http_response_free(HttpResponse* response);
 
 FREERDP_LOCAL BOOL http_response_print(HttpResponse* response);
-FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls);
+FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength);
 
 FREERDP_LOCAL long http_response_get_status_code(HttpResponse* response);
 FREERDP_LOCAL SSIZE_T http_response_get_body_length(HttpResponse* response);
