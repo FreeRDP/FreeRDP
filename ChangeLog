@@ -1,3 +1,44 @@
+# 2018-11-19	Version 2.0.0-rc4
+
+FreeRDP 2.0.0-rc4 is the fifth release candidate for 2.0.0. Although it mainly
+addresses security and stability there are some new features as well.
+
+Noteworthy features and improvements:
+
+* fix multiple reported CVEs (#5031)
+* gateway: multiple fixes and improvements (#3600, #4787, #4902, #4964, #4947,
+  #4952, #4938)
+* client/X11: support for rail (remote app) icons was added (#5012)
+* licensing: the licensing code was re-worked. Per-device licenses
+  are now saved on the client and used on re-connect.
+	WARNING: this is a change in FreeRDP behavior regarding licensing. If the old
+	behavior is required, or no licenses should be saved use the
+	new command line option +old-license (#4979)
+* improve order handling - only orders that were enabled
+  during capability exchange are accepted (#4926).
+	WARNING and NOTE: some servers do improperly send orders that weren't negotiated,
+	for such cases the new command line option /relax-order-checks was added to
+	disable the strict order checking. If connecting to xrdp the options
+	/relax-order-checks *and* +glyph-cache are required.
+* /smartcard has now support for substring filters (#4840)
+  for details see https://github.com/FreeRDP/FreeRDP/wiki/smartcard-logon
+* add support to set tls security level (for openssl >= 1.1.0)
+  - default level is set to 1
+  - the new command line option /tls-seclevel:[LEVEL] allows to set
+	  a different level if required
+* add new command line option /smartcard-logon to allow
+  smartcard login (currently only with RDP security) (#4842)
+* new command line option: /window-position to allow positioning
+  the window on startup (#5018)
+* client/X11: set window title before mapping (#5023)
+* rdpsnd/audin (mostly server side) add support for audio re-sampling using soxr or ffmpeg
+* client/Android: add Japanese translation (#4906)
+* client/Android: add Korean translation (#5029)
+
+For a complete and detailed change log since the last release candidate run:
+git log 2.0.0-rc3..2.0.0-rc4
+
+
 # 2018-08-01	Version 2.0.0-rc3
 
 FreeRDP 2.0.0-rc3 is the fourth release candidate for 2.0.0.
