@@ -476,7 +476,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		if (WaitForSingleObject(outChannelEvent, 0) != WAIT_OBJECT_0)
 			return 1;
 
-		response = http_response_recv(outChannel->common.tls);
+		response = http_response_recv(outChannel->common.tls, TRUE);
 
 		if (!response)
 			return -1;
@@ -533,7 +533,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		if (WaitForSingleObject(outChannelEvent, 0) != WAIT_OBJECT_0)
 			return 1;
 
-		response = http_response_recv(outChannel->common.tls);
+		response = http_response_recv(outChannel->common.tls, FALSE);
 
 		if (!response)
 			return -1;
@@ -646,7 +646,7 @@ static int rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 	if (WaitForSingleObject(nextOutChannelEvent, 0) != WAIT_OBJECT_0)
 		return 1;
 
-	response = http_response_recv(nextOutChannel->common.tls);
+	response = http_response_recv(nextOutChannel->common.tls, TRUE);
 
 	if (response)
 	{
@@ -726,7 +726,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 	if (inChannel->State < CLIENT_IN_CHANNEL_STATE_OPENED)
 	{
-		response = http_response_recv(inChannel->common.tls);
+		response = http_response_recv(inChannel->common.tls, TRUE);
 
 		if (!response)
 			return -1;
@@ -778,7 +778,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 	}
 	else
 	{
-		response = http_response_recv(inChannel->common.tls);
+		response = http_response_recv(inChannel->common.tls, TRUE);
 
 		if (!response)
 			return -1;

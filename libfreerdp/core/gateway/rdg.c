@@ -757,7 +757,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 		if (!rdg_send_http_request(rdg, tls, method, NULL))
 			return FALSE;
 
-		response = http_response_recv(tls);
+		response = http_response_recv(tls, TRUE);
 
 		if (!response)
 			return FALSE;
@@ -788,7 +788,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 
 	ntlm_free(rdg->ntlm);
 	rdg->ntlm = NULL;
-	response = http_response_recv(tls);
+	response = http_response_recv(tls, TRUE);
 
 	if (!response)
 		return FALSE;
