@@ -334,7 +334,7 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings,
 	if (status < 0)
 		goto out;
 
-	if (!freerdp_client_populate_settings_from_assistance_file(file, settings))
+	if (!freerdp_assistance_populate_settings_from_assistance_file(file, settings))
 		goto out;
 
 	ret = 0;

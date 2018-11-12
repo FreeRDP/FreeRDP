@@ -1045,7 +1045,7 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 	return status;
 }
 
-BOOL freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* file,
+BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile* file,
         rdpSettings* settings)
 {
 	UINT32 i;
@@ -1057,9 +1057,17 @@ BOOL freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* fi
 	if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceSessionId, file->RASessionId) != 0)
 		return FALSE;
 
-	if (file->RCTicket &&
-	    (freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceRCTicket, file->RCTicket) != 0))
-		return FALSE;
+	if (file->RCTicket)
+	{
+		if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceRCTicket, file->RCTicket) != 0)
+			return FALSE;
+	}
+	else
+	{
+		if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceRCTicket,
+		                             file->ConnectionString2) != 0)
+			return FALSE;
+	}
 
 	if (file->PassStub)
 	{
@@ -1170,4 +1178,17 @@ BOOL freerdp_assistance_get_encrypted_pass_stub(rdpAssistanceFile* file, const c
 	*pwd = (const char*)file->EncryptedPassStub;
 	*size = file->EncryptedPassStubLength;
 	return TRUE;
+}
+
+int freerdp_assistance_set_connection_string2(rdpAssistanceFile* file, const char* string,
+        const char* password)
+{
+	if (!file || !string || !password)
+		return -1;
+
+	free(file->ConnectionString2);
+	free(file->password);
+	file->ConnectionString2 = _strdup(string);
+	file->password = _strdup(password);
+	return freerdp_assistance_parse_connection_string2(file);
 }

@@ -37,12 +37,15 @@ FREERDP_API char* freerdp_assistance_construct_expert_blob(const char* name, con
 FREERDP_API BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* passStub,
         size_t* pEncryptedSize);
 
+FREERDP_API int freerdp_assistance_set_connection_string2(rdpAssistanceFile* file,
+        const char* string, const char* password);
+
 FREERDP_API int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* buffer,
         size_t size, const char* password);
 FREERDP_API int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name,
         const char* password);
 
-FREERDP_API BOOL freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* file,
+FREERDP_API BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile* file,
         rdpSettings* settings);
 FREERDP_API BOOL freerdp_assistance_get_encrypted_pass_stub(rdpAssistanceFile* file,
         const char** pwd, size_t* size);
