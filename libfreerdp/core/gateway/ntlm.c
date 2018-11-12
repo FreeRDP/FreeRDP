@@ -216,7 +216,7 @@ error:
  *                                           --------------
  */
 
-BOOL ntlm_authenticate(rdpNtlm* ntlm)
+BOOL ntlm_authenticate(rdpNtlm* ntlm, BOOL* pbContinueNeeded)
 {
 	SECURITY_STATUS status;
 
@@ -308,7 +308,11 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 	ntlm->haveInputBuffer = TRUE;
 	ntlm->haveContext = TRUE;
-	return (status == SEC_I_CONTINUE_NEEDED) ? TRUE : FALSE;
+
+	if (pbContinueNeeded)
+		*pbContinueNeeded = (status == SEC_I_CONTINUE_NEEDED) ? TRUE : FALSE;
+
+	return TRUE;
 }
 
 static void ntlm_client_uninit(rdpNtlm* ntlm)

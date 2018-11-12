@@ -31,7 +31,7 @@ typedef struct rdp_ntlm rdpNtlm;
 FREERDP_LOCAL rdpNtlm* ntlm_new(void);
 FREERDP_LOCAL void ntlm_free(rdpNtlm* ntlm);
 
-FREERDP_LOCAL BOOL ntlm_authenticate(rdpNtlm* ntlm);
+FREERDP_LOCAL BOOL ntlm_authenticate(rdpNtlm* ntlm, BOOL* pbContinueNeeded);
 
 FREERDP_LOCAL BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality,
                                     LPCTSTR user, LPCTSTR domain,

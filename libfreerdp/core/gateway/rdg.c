@@ -206,9 +206,7 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 	wStream* s;
 	const size_t header = sizeof(RdgPacketHeader);
 	size_t packetLength;
-
-	assert (header <= INT_MAX);
-
+	assert(header <= INT_MAX);
 	s = Stream_New(NULL, 1024);
 
 	if (!s)
@@ -477,6 +475,7 @@ out:
 
 static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 {
+	BOOL continueNeeded = FALSE;
 	size_t len;
 	const char* token64 = NULL;
 	int ntlmTokenLength = 0;
@@ -519,7 +518,10 @@ static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 			return FALSE;
 	}
 
-	return ntlm_authenticate(ntlm);
+	if (!ntlm_authenticate(ntlm, &continueNeeded))
+		return FALSE;
+
+	return continueNeeded;
 }
 
 static BOOL rdg_skip_seed_payload(rdpTls* tls, SSIZE_T lastResponseLength)
@@ -759,6 +761,7 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context)
 
 static BOOL rdg_ntlm_init(rdpRdg* rdg, rdpTls* tls)
 {
+	BOOL continueNeeded = FALSE;
 	rdpContext* context = rdg->context;
 	rdpSettings* settings = context->settings;
 	rdg->ntlm = ntlm_new();
@@ -776,10 +779,10 @@ static BOOL rdg_ntlm_init(rdpRdg* rdg, rdpTls* tls)
 	if (!ntlm_client_make_spn(rdg->ntlm, _T("HTTP"), settings->GatewayHostname))
 		return FALSE;
 
-	if (!ntlm_authenticate(rdg->ntlm))
+	if (!ntlm_authenticate(rdg->ntlm, &continueNeeded))
 		return FALSE;
 
-	return TRUE;
+	return continueNeeded;
 }
 
 static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
@@ -840,8 +843,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 
 	if (!bufferedBio)
 	{
-		closesocket((SOCKET)sockfd);
-		BIO_free(socketBio);
+		BIO_free_all(socketBio);
 		return FALSE;
 	}
 
@@ -852,7 +854,10 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	{
 		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword, settings->GatewayHostname,
 		                   (UINT16)settings->GatewayPort))
+		{
+			BIO_free_all(bufferedBio);
 			return FALSE;
+		}
 	}
 
 	if (!status)
