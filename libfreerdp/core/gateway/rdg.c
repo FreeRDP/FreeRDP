@@ -370,12 +370,15 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	size_t i;
 	wStream* s;
 	BOOL status;
-	const char* serverName = rdg->settings->ServerHostname;
-	size_t serverNameLen = strlen(serverName);
-	UINT32 packetSize = 16 + ((UINT32)serverNameLen + 1) * 2;
+	WCHAR* serverName = NULL;
+	int serverNameLen = ConvertToUnicode(CP_UTF8, 0, rdg->settings->ServerHostname, -1, &serverName, 0);
+	UINT32 packetSize = 16 + ((UINT32)serverNameLen) * 2;
 
-	if (serverNameLen > ((UINT32_MAX - 1) / 2 - 16))
+	if ((serverNameLen < 0) || (serverNameLen > UINT16_MAX / 2))
+	{
+		free(serverName);
 		return FALSE;
+	}
 
 	s = Stream_New(NULL, packetSize);
 
@@ -390,10 +393,7 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	Stream_Write_UINT16(s, (UINT16)rdg->settings->ServerPort); /* Resource port (2 bytes) */
 	Stream_Write_UINT16(s, 3); /* Protocol number (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)serverNameLen * 2);
-
-	for (i = 0; i < serverNameLen; i++)
-		Stream_Write_UINT16(s, (UINT16)serverName[i]);
-
+	Stream_Write_UTF16_String(s, serverName, (size_t)serverNameLen);
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
 	Stream_Free(s, TRUE);
@@ -521,7 +521,10 @@ static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 	if (!ntlm_authenticate(ntlm, &continueNeeded))
 		return FALSE;
 
-	return continueNeeded;
+	if (continueNeeded)
+		return FALSE;
+
+	return TRUE;
 }
 
 static BOOL rdg_skip_seed_payload(rdpTls* tls, SSIZE_T lastResponseLength)
@@ -531,11 +534,14 @@ static BOOL rdg_skip_seed_payload(rdpTls* tls, SSIZE_T lastResponseLength)
 	/* Per [MS-TSGU] 3.3.5.1 step 4, after final OK response RDG server sends
 	 * random "seed" payload of limited size. In practice it's 10 bytes.
 	 */
-	if ((lastResponseLength < 0) || ((size_t)lastResponseLength >= sizeof(seed_payload)))
-		return FALSE;
-
-	if (!rdg_read_all(tls, seed_payload, (int)sizeof(seed_payload) - (int)lastResponseLength))
-		return FALSE;
+	if (lastResponseLength < sizeof(seed_payload))
+	{
+		if (!rdg_read_all(tls, seed_payload,
+		                  sizeof(seed_payload) - lastResponseLength))
+		{
+			return FALSE;
+		}
+	}
 
 	return TRUE;
 }
@@ -1150,7 +1156,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 		while (readCount < payloadSize)
 		{
 			status = BIO_read(rdg->tlsOut->bio, Stream_Pointer(s),
-			                  (int)sizeof(RdgPacketHeader) - (int)readCount);
+			                  (int)payloadSize - (int)readCount);
 
 			if (status <= 0)
 			{
