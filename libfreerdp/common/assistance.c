@@ -670,24 +670,6 @@ fail:
 	return rc;
 }
 
-int freerdp_assistance_decrypt(rdpAssistanceFile* file, const char* password)
-{
-	int status = 1;
-	file->EncryptedPassStub = freerdp_assistance_encrypt_pass_stub(password,
-	                          file->PassStub, &file->EncryptedPassStubLength);
-
-	if (!file->EncryptedPassStub)
-		return -1;
-
-	if (file->Type > 1)
-	{
-		if (!freerdp_assistance_decrypt2(file, password))
-			status = -1;
-	}
-
-	return status;
-}
-
 BYTE* freerdp_assistance_hex_string_to_bin(const char* str, size_t* size)
 {
 	size_t length;
@@ -963,18 +945,27 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 	file->Type = (file->LHTicket) ? 2 : 1;
 	status = 0;
 
-	if (file->LHTicket)
+	switch (file->Type)
 	{
-		file->EncryptedLHTicket = freerdp_assistance_hex_string_to_bin(file->LHTicket,
-		                          &file->EncryptedLHTicketLength);
+		case 2:
+			{
+				file->EncryptedLHTicket = freerdp_assistance_hex_string_to_bin(file->LHTicket,
+				                          &file->EncryptedLHTicketLength);
 
-		if (!freerdp_assistance_decrypt2(file, password))
-			status = -1;
-	}
-	else
-	{
-		if (!freerdp_assistance_parse_connection_string1(file))
-			status = -1;
+				if (!freerdp_assistance_decrypt2(file, password))
+					status = -1;
+			}
+			break;
+
+		case 1:
+			{
+				if (!freerdp_assistance_parse_connection_string1(file))
+					status = -1;
+			}
+			break;
+
+		default:
+			return -1;
 	}
 
 	if (status < 0)
@@ -982,6 +973,12 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 		WLog_ERR(TAG,  "freerdp_assistance_parse_connection_string1 failure: %d", status);
 		return -1;
 	}
+
+	file->EncryptedPassStub = freerdp_assistance_encrypt_pass_stub(password,
+	                          file->PassStub, &file->EncryptedPassStubLength);
+
+	if (!file->EncryptedPassStub)
+		return -1;
 
 	return 1;
 }

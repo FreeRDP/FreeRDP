@@ -1,11 +1,11 @@
-
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/ssl.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/assistance.h>
 
-const char TEST_MSRC_INCIDENT_PASSWORD_TYPE1[] = "Password1";
+static const char TEST_MSRC_INCIDENT_PASSWORD_TYPE1[] = "Password1";
 
 static const char TEST_MSRC_INCIDENT_FILE_TYPE1[] =
     "<?xml version=\"1.0\" encoding=\"Unicode\" ?>"
@@ -21,11 +21,11 @@ static const char TEST_MSRC_INCIDENT_FILE_TYPE1[] =
     "L=\"0\" />"
     "</UPLOADINFO>";
 
-const BYTE TEST_MSRC_INCIDENT_EXPERT_BLOB_TYPE1[32] =
+static const BYTE TEST_MSRC_INCIDENT_EXPERT_BLOB_TYPE1[32] =
     "\x3C\x9C\xAE\x0B\xCE\x7A\xB1\x5C\x8A\xAC\x01\xD6\x76\x04\x5E\xDF"
     "\x3F\xFA\xF0\x92\xE2\xDE\x36\x8A\x20\x17\xE6\x8A\x0D\xED\x7C\x90";
 
-const char TEST_MSRC_INCIDENT_PASSWORD_TYPE2[] = "48BJQ853X3B4";
+static const char TEST_MSRC_INCIDENT_PASSWORD_TYPE2[] = "48BJQ853X3B4";
 
 static const char TEST_MSRC_INCIDENT_FILE_TYPE2[] =
     "<?xml version=\"1.0\"?>"
@@ -77,15 +77,14 @@ static const char TEST_MSRC_INCIDENT_FILE_TYPE2[] =
  * </E>
  */
 
-static int test_msrsc_incident_file_type1(void)
+static BOOL test_msrsc_incident_file_type1(wLog* log)
 {
-	int status;
-	char* pass;
-	char* expertBlob;
+	int status = -1;
+	char* pass = NULL;
+	char* expertBlob = NULL;
 	const char* EncryptedPassStub;
 	size_t EncryptedPassStubLength;
-	rdpAssistanceFile* file;
-	file = freerdp_assistance_file_new();
+	rdpAssistanceFile* file = freerdp_assistance_file_new();
 
 	if (!file)
 		return -1;
@@ -93,68 +92,89 @@ static int test_msrsc_incident_file_type1(void)
 	status = freerdp_assistance_parse_file_buffer(file,
 	         TEST_MSRC_INCIDENT_FILE_TYPE1, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE1),
 	         TEST_MSRC_INCIDENT_PASSWORD_TYPE1);
-	printf("freerdp_assistance_parse_file_buffer: %d\n", status);
+	WLog_Print(log, WLOG_INFO, "freerdp_assistance_parse_file_buffer: %d", status);
 
 	if (status < 0)
-		return -1;
+		goto fail;
 
 	freerdp_assistance_print_file(file, WLog_Get("foo"), WLOG_INFO);
 
 	if (!freerdp_assistance_get_encrypted_pass_stub(file, &EncryptedPassStub, &EncryptedPassStubLength))
-		return -1;
+		goto fail;
 
 	pass = freerdp_assistance_bin_to_hex_string(EncryptedPassStub, EncryptedPassStubLength);
 
 	if (!pass)
-		return -1;
+		goto fail;
 
+	WLog_Print(log, WLOG_INFO, "freerdp_assistance_decrypt: %d %s [%"PRIdz"]", status, pass,
+	           EncryptedPassStubLength);
 	expertBlob = freerdp_assistance_construct_expert_blob("Edgar Olougouna", pass);
+	WLog_Print(log, WLOG_INFO, "expertBlob='%s'", expertBlob);
+fail:
 	freerdp_assistance_file_free(file);
 	free(pass);
 	free(expertBlob);
-	return 0;
+	return status >= 0 ? TRUE : FALSE;
 }
 
-static int test_msrsc_incident_file_type2(void)
+static BOOL test_msrsc_incident_file_type2(wLog* log)
 {
-	int status;
-	rdpAssistanceFile* file;
-	file = freerdp_assistance_file_new();
+	int status = -1;
+	char* pass = NULL;
+	char* expertBlob = NULL;
+	const char* EncryptedPassStub = NULL;
+	size_t EncryptedPassStubLength;
+	rdpAssistanceFile* file = freerdp_assistance_file_new();
 
 	if (!file)
 		return -1;
 
 	status = freerdp_assistance_parse_file_buffer(file,
-	         TEST_MSRC_INCIDENT_FILE_TYPE2, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE2), NULL);
+	         TEST_MSRC_INCIDENT_FILE_TYPE2, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE2),
+	         TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
 	printf("freerdp_assistance_parse_file_buffer: %d\n", status);
 
 	if (status < 0)
-		return -1;
+		goto fail;
 
-	freerdp_assistance_print_file(file, WLog_Get("foo"), WLOG_INFO);
-	status = freerdp_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
-	printf("freerdp_assistance_decrypt: %d\n", status);
+	freerdp_assistance_print_file(file, log, WLOG_INFO);
+	status = freerdp_assistance_get_encrypted_pass_stub(file, &EncryptedPassStub,
+	         &EncryptedPassStubLength);
+	pass = freerdp_assistance_bin_to_hex_string(EncryptedPassStub, EncryptedPassStubLength);
+
+	if (!pass)
+		goto fail;
+
+	WLog_Print(log, WLOG_INFO, "freerdp_assistance_decrypt: %d %s [%"PRIdz"]", status, pass,
+	           EncryptedPassStubLength);
 
 	if (status < 0)
-		return -1;
+		goto fail;
 
+	expertBlob = freerdp_assistance_construct_expert_blob("Edgar Olougouna", pass);
+	WLog_Print(log, WLOG_INFO, "expertBlob='%s'", expertBlob);
+fail:
 	freerdp_assistance_file_free(file);
-	return 0;
+	free(expertBlob);
+	free(pass);
+	return status >= 0 ? TRUE : FALSE;
 }
 
 int TestCommonAssistance(int argc, char* argv[])
 {
+	wLog* log = WLog_Get(__FUNCTION__);
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
-	if (test_msrsc_incident_file_type1() != 0)
+	if (!test_msrsc_incident_file_type1(log))
 	{
-		printf("test_msrsc_incident_file_type1 failed\n");
+		WLog_Print(log, WLOG_ERROR, "test_msrsc_incident_file_type1 failed");
 		return -1;
 	}
 
-	if (test_msrsc_incident_file_type2() != 0)
+	if (!test_msrsc_incident_file_type2(log))
 	{
-		printf("test_msrsc_incident_file_type1 failed\n");
+		WLog_Print(log, WLOG_ERROR, "test_msrsc_incident_file_type1 failed");
 		return -1;
 	}
 
