@@ -121,8 +121,10 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
                                  const AUDIO_FORMAT* srcFormat,
                                  const BYTE** data, size_t* length)
 {
+#if defined(WITH_SOXR)
 	soxr_error_t error;
 	size_t idone, odone;
+#endif
 	size_t sframes, rframes;
 	size_t rsize;
 	size_t j;
