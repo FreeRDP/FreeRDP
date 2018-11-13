@@ -49,6 +49,10 @@
 #include <faac.h>
 #endif
 
+#if defined(WITH_SOXR)
+#include <soxr.h>
+#endif
+
 #else
 #include "dsp_ffmpeg.h"
 #endif
@@ -101,6 +105,10 @@ struct _FREERDP_DSP_CONTEXT
 	unsigned long faacInputSamples;
 	unsigned long faacMaxOutputBytes;
 #endif
+
+#if defined(WITH_SOXR)
+	soxr_t sox;
+#endif
 };
 
 /**
@@ -113,10 +121,11 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
                                  const AUDIO_FORMAT* srcFormat,
                                  const BYTE** data, size_t* length)
 {
-	BYTE* p;
+	soxr_error_t error;
+	size_t idone, odone;
 	size_t sframes, rframes;
 	size_t rsize;
-	size_t i, j;
+	size_t j;
 	size_t sbytes, rbytes;
 	size_t srcBytesPerFrame, dstBytesPerFrame;
 	size_t srcChannels, dstChannels;
@@ -137,28 +146,13 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 	dstChannels = context->format.nChannels;
 	srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
 	dstBytesPerFrame = (context->format.wBitsPerSample > 8) ? 2 : 1;
+
 	/* We want to ignore differences of source and destination format. */
 	format = *srcFormat;
 	format.wFormatTag = WAVE_FORMAT_UNKNOWN;
 
 	if (audio_format_compatible(&format, &context->format))
 		return TRUE;
-
-	/* TODO: Currently sample size conversion is not implemented. */
-	if (srcFormat->wBitsPerSample != context->format.wBitsPerSample)
-	{
-		WLog_ERR(TAG, "%s does not support changing sample bit width [in=%"PRId16", out=%"PRId16"]",
-		         __FUNCTION__, srcFormat->wBitsPerSample, context->format.wBitsPerSample);
-		return FALSE;
-	}
-
-	/* TODO: Currently sample size conversion is not implemented. */
-	if (srcChannels != dstChannels)
-	{
-		WLog_ERR(TAG, "%s does not support changing number of channels [in=%"PRIdz", out=%"PRIdz"]",
-		         __FUNCTION__, srcChannels, dstChannels);
-		return FALSE;
-	}
 
 	sbytes = srcChannels * srcBytesPerFrame;
 	sframes = size / sbytes;
@@ -171,34 +165,14 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 	if (!Stream_EnsureCapacity(context->resample, rsize))
 		return FALSE;
 
-	p = Stream_Buffer(context->resample);
+	error = soxr_process(context->sox, src, sframes, &idone,
+	                                Stream_Buffer(context->resample),
+	                                Stream_Capacity(context->resample)/rbytes, &odone);
 
-	for (i = 0; i < rframes; i++)
-	{
-		size_t n2;
-		size_t n1 = (i * srcFormat->nSamplesPerSec) / context->format.nSamplesPerSec;
-
-		if (n1 >= sframes)
-			n1 = sframes - 1;
-
-		n2 = ((n1 * context->format.nSamplesPerSec == i * srcFormat->nSamplesPerSec) ||
-		      ((n1 == sframes - 1) ? n1 : n1 + 1));
-
-		for (j = 0; j < rbytes; j++)
-		{
-			/* Nearest Interpolation, probably the easiest, but works */
-			*p++ = (i * srcFormat->nSamplesPerSec - n1 * context->format.nSamplesPerSec > n2 *
-			        context->format.nSamplesPerSec - i * srcFormat->nSamplesPerSec ?
-			        src[n2 * sbytes + (j % sbytes)] :
-			        src[n1 * sbytes + (j % sbytes)]);
-		}
-	}
-
-	Stream_SetPointer(context->resample, p);
-	Stream_SealLength(context->resample);
+	Stream_SetLength(context->resample, odone * rbytes);
 	*data = Stream_Buffer(context->resample);
 	*length = Stream_Length(context->resample);
-	return TRUE;
+	return (error == 0) ? TRUE : FALSE;
 }
 
 /**
@@ -465,16 +439,18 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* context,
 {
 	int16_t* inSamples = (int16_t*)src;
 	int32_t* outSamples;
+	unsigned int bpp;
 	unsigned int nrSamples, x;
 	int rc;
 
 	if (!context || !src || !out)
 		return FALSE;
 
-	nrSamples = size / context->format.nChannels / context->format.wBitsPerSample / 8;
+	bpp = context->format.wBitsPerSample / 8 * context->format.nChannels;
+	nrSamples = size / bpp;
 
 	if (!Stream_EnsureCapacity(context->buffer,
-	                           context->faacInputSamples * sizeof(int32_t) * context->format.nChannels))
+	                           nrSamples * sizeof(int32_t) * context->format.nChannels))
 		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(out, context->faacMaxOutputBytes))
@@ -1072,6 +1048,9 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 			faacEncClose(context->faac);
 
 #endif
+#if defined(WITH_SOXR)
+		soxr_delete(context->sox);
+#endif
 		free(context);
 	}
 
@@ -1262,6 +1241,20 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 		faacEncSetConfiguration(context->faac, cfg);
 	}
 
+#endif
+#if defined(WITH_SOXR)
+	{
+		soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16, SOXR_INT16);
+		soxr_error_t error;
+		soxr_delete(context->sox);
+
+		context->sox = soxr_create(context->format.nSamplesPerSec, targetFormat->nSamplesPerSec,
+		                           targetFormat->nChannels, &error, &iospec, NULL, NULL);
+
+		if (!context->sox || (error != 0))
+			return FALSE;
+
+	}
 #endif
 	return TRUE;
 #endif
