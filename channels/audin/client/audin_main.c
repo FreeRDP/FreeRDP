@@ -341,6 +341,7 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format,
                                     const BYTE* data, size_t size, void* user_data)
 {
 	UINT error;
+	BOOL compatible;
 	AUDIN_PLUGIN* audin;
 	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*) user_data;
 
@@ -362,7 +363,8 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format,
 
 	Stream_Write_UINT8(audin->data, MSG_SNDIN_DATA);
 
-	if (audin->device->FormatSupported(audin->device, audin->format))
+	compatible = audio_format_compatible(format, audin->format);
+	if (compatible && audin->device->FormatSupported(audin->device, audin->format))
 	{
 		if (!Stream_EnsureRemainingCapacity(audin->data, size))
 			return CHANNEL_RC_NO_MEMORY;
@@ -408,8 +410,31 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 
 	if (!supported)
 	{
+		/* Default sample rates supported by most backends. */
+		const UINT32 samplerates[] = {
+		    96000,
+		    48000,
+		    44100,
+		    22050
+		};
+		BOOL test = FALSE;
+
 		format.wFormatTag = WAVE_FORMAT_PCM;
 		format.wBitsPerSample = 16;
+		test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
+		if (!test)
+		{
+			size_t x;
+			for (x=0; x<ARRAYSIZE(samplerates); x++)
+			{
+				format.nSamplesPerSec = samplerates[x];
+				test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
+				if (test)
+					break;
+			}
+		}
+		if (!test)
+			return FALSE;
 	}
 
 	IFCALLRET(audin->device->SetFormat, error,
