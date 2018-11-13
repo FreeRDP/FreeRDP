@@ -584,8 +584,8 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = FALSE;
 	const DWORD rop = gdi_rop3_code(patblt->bRop);
-	UINT32 nXSrc = 0;
-	UINT32 nYSrc = 0;
+	INT32 nXSrc = 0;
+	INT32 nYSrc = 0;
 	BYTE data[8 * 8 * 4];
 	HGDI_BITMAP hBmp = NULL;
 
