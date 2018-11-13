@@ -162,6 +162,11 @@ if (WITH_DSP_FFMPEG)
 		codec/dsp_ffmpeg.h)
 endif (WITH_DSP_FFMPEG)
 
+if (WITH_SOXR)
+	freerdp_library_add(${SOXR_LIBRARIES})
+	include_directories(${SOXR_INCLUDE_DIR})
+endif(WITH_SOXR)
+
 if(GSM_FOUND)
 	freerdp_library_add(${GSM_LIBRARIES})
 	include_directories(${GSM_INCLUDE_DIRS})
