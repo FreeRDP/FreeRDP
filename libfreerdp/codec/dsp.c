@@ -146,7 +146,6 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 	dstChannels = context->format.nChannels;
 	srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
 	dstBytesPerFrame = (context->format.wBitsPerSample > 8) ? 2 : 1;
-
 	/* We want to ignore differences of source and destination format. */
 	format = *srcFormat;
 	format.wFormatTag = WAVE_FORMAT_UNKNOWN;
@@ -166,9 +165,8 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 		return FALSE;
 
 	error = soxr_process(context->sox, src, sframes, &idone,
-	                                Stream_Buffer(context->resample),
-	                                Stream_Capacity(context->resample)/rbytes, &odone);
-
+	                     Stream_Buffer(context->resample),
+	                     Stream_Capacity(context->resample) / rbytes, &odone);
 	Stream_SetLength(context->resample, odone * rbytes);
 	*data = Stream_Buffer(context->resample);
 	*length = Stream_Length(context->resample);
@@ -1165,9 +1163,13 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
+			return TRUE;
+#if defined(WITH_DSP_EXPERIMENTAL)
+
 		case WAVE_FORMAT_ADPCM:
 		case WAVE_FORMAT_DVI_ADPCM:
 			return TRUE;
+#endif
 #if defined(WITH_GSM)
 
 		case WAVE_FORMAT_GSM610:
@@ -1247,13 +1249,11 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 		soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16, SOXR_INT16);
 		soxr_error_t error;
 		soxr_delete(context->sox);
-
 		context->sox = soxr_create(context->format.nSamplesPerSec, targetFormat->nSamplesPerSec,
 		                           targetFormat->nChannels, &error, &iospec, NULL, NULL);
 
 		if (!context->sox || (error != 0))
 			return FALSE;
-
 	}
 #endif
 	return TRUE;
