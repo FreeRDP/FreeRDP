@@ -108,6 +108,7 @@ struct rdp_rdg
 {
 	rdpContext* context;
 	rdpSettings* settings;
+	BOOL attached;
 	BIO* frontBio;
 	rdpTls* tlsIn;
 	rdpTls* tlsOut;
@@ -1544,15 +1545,19 @@ void rdg_free(rdpRdg* rdg)
 	tls_free(rdg->tlsIn);
 	http_context_free(rdg->http);
 	ntlm_free(rdg->ntlm);
-	BIO_free_all(rdg->frontBio);
+
+	if (!rdg->attached)
+		BIO_free_all(rdg->frontBio);
+
 	DeleteCriticalSection(&rdg->writeSection);
 	free(rdg);
 }
 
-BIO* rdg_front_bio(rdpRdg* rdg)
+BIO* rdg_get_front_bio_and_take_ownership(rdpRdg* rdg)
 {
 	if (!rdg)
 		return NULL;
 
+	rdg->attached = TRUE;
 	return rdg->frontBio;
 }

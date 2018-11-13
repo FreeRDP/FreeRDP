@@ -378,7 +378,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 
 			if (status)
 			{
-				transport->frontBio = rdg_front_bio(transport->rdg);
+				transport->frontBio = rdg_get_front_bio_and_take_ownership(transport->rdg);
 				BIO_set_nonblock(transport->frontBio, 0);
 				transport->layer = TRANSPORT_LAYER_TSG;
 				status = TRUE;
@@ -1092,9 +1092,6 @@ BOOL transport_disconnect(rdpTransport* transport)
 
 	if (!transport)
 		return FALSE;
-
-	if (transport->rdg && (rdg_front_bio(transport->rdg) == transport->frontBio))
-		transport->frontBio = NULL;
 
 	if (transport->tls)
 	{
