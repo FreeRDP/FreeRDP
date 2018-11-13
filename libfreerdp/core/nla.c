@@ -127,7 +127,7 @@
 #define NLA_PKG_NAME	NEGO_SSP_NAME
 
 
-typedef struct smartcard_auth_identity smartcard_auth_identity;
+typedef struct auth_identity smartcard_auth_identity;
 
 typedef enum
 {
@@ -180,8 +180,8 @@ struct rdp_nla
 	LPTSTR ServicePrincipalName;
 	PSecurityFunctionTable table;
 	SecPkgContext_Sizes ContextSizes;
-	smartcard_auth_identity* identity;
-	credential_type          cred_type;
+	auth_identity*  identity;
+	credential_type cred_type;
 };
 
 static const char* PREFIX_CONTAINER_NAME = "0x";
@@ -440,34 +440,34 @@ static void csp_data_detail_free(csp_data_detail* csp)
 
 /* ============================================================ */
 
-typedef struct smartcard_auth_identity
+typedef struct auth_identity
 {
 	SEC_WINNT_AUTH_IDENTITY* password_creds;
 	smartcard_creds*         smartcard_creds;
 	csp_data_detail*         csp_data;
-} smartcard_auth_identity;
+} auth_identity;
 
-static smartcard_auth_identity* smartcard_auth_identity_new(SEC_WINNT_AUTH_IDENTITY* password_creds,
+static auth_identity* auth_identity_new(SEC_WINNT_AUTH_IDENTITY* password_creds,
         smartcard_creds* smartcard_creds,
         csp_data_detail* csp_data)
 {
-	smartcard_auth_identity* said;
-	CHECK_MEMORY(said = malloc(sizeof(*said)), NULL,
+	auth_identity* aid;
+	CHECK_MEMORY(aid = malloc(sizeof(*aid)), NULL,
 	             "Could not allocate a smartcard_aut_identity structure");
-	said->password_creds = password_creds;
-	said->smartcard_creds = smartcard_creds;
-	said->csp_data = csp_data;
-	return said;
+	aid->password_creds = password_creds;
+	aid->smartcard_creds = smartcard_creds;
+	aid->csp_data = csp_data;
+	return aid;
 }
 
-static void smartcard_auth_identity_free(smartcard_auth_identity* said)
+static void auth_identity_free(auth_identity* aid)
 {
-	if (said)
+	if (aid)
 	{
-		SEC_WINNT_AUTH_IDENTITY_free(said->password_creds);
-		smartcard_creds_free(said->smartcard_creds);
-		csp_data_detail_free(said->csp_data);
-		memory_clear_and_free(said, sizeof(*said));
+		SEC_WINNT_AUTH_IDENTITY_free(aid->password_creds);
+		smartcard_creds_free(aid->smartcard_creds);
+		csp_data_detail_free(aid->csp_data);
+		memory_clear_and_free(aid, sizeof(*aid));
 	}
 }
 
@@ -479,8 +479,8 @@ static void smartcard_auth_identity_free(smartcard_auth_identity* said)
 	memory_clear_and_free(structure->field, structure->field##Length * 2)
 #define WSTRING_LENGTH_SET_CSTRING(structure, field, cstring)				\
 	(structure->field##Length = (cstring						\
-	                             ?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
-	                             :(structure->field = NULL, 0)))
+		?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
+		:(structure->field = NULL, 0)))
 
 static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_new(char* user,  char* password,
         char* domain)
@@ -549,6 +549,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	nla->cred_type = settings->CredentialsType;
 #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
 
+	/* gets the UPN settings->UserPrincipalName */
 	if (get_info_smartcard(nla->instance) != 0)
 	{
 		WLog_ERR(TAG, "Failed to retrieve UPN !");
@@ -738,6 +739,24 @@ nla_client_init
 
 Initialize NTLM/Kerberos SSP authentication module (client).
 
+We prepare the CSSP negotiation, which involves sending three packets:
+
+ - TLSencrypted(TSRequest([SPNEGO token]))
+   (nla_client_begin)
+   using the parameters: nla->credentials, nla->ServicePrincipalName, nla->fContextReq, nla->pPackageInfo
+
+ - TLSencrypted(TSRequest([SPNego encrypted(client / server hash of public key)]))
+   (nla_client_recv->nal_encrypt_public_key_{echo,hash})
+   using the parameters: nla->credentials, nla->ServicePrincipalName, nla->fContextReq, nla->ClientNonce,  nla->PublicKey
+
+ - TLSencrypted(TSRequest([SPNego encrypted(user credentials)]))
+   (nla_client_recv->nla_encrypt_ts_credentials)
+   using the parameters: nla->credentials, nla->ServicePrincipalName, nla->fContextReq,
+   nla->settings->DisableCredentialsDelegation,  nla->identity
+
+
+
+
 INPUT:
 
     nla->instance
@@ -815,12 +834,12 @@ static int nla_client_init(rdpNla* nla)
 	rdpTls* tls = NULL;
 	nla->state = NLA_STATE_INITIAL;
 	nla->cred_type = credential_type_default;
-	nla->identity = smartcard_auth_identity_new(SEC_WINNT_AUTH_IDENTITY_new(NULL, NULL, NULL), NULL,
+	nla->identity = auth_identity_new(SEC_WINNT_AUTH_IDENTITY_new(NULL, NULL, NULL), NULL,
 	                NULL);
 
 	if ((nla->identity == NULL) || (nla->identity->password_creds == NULL))
 	{
-		smartcard_auth_identity_free(nla->identity);
+		auth_identity_free(nla->identity);
 		return 0;
 	}
 
@@ -2037,7 +2056,7 @@ static int nla_sizeof_sequence_ts_cspdatadetail(csp_data_detail*  csp_data)
 	return length;
 }
 
-static int nla_sizeof_ts_smartcard_creds(smartcard_auth_identity* identity)
+static int nla_sizeof_ts_smartcard_creds(auth_identity* identity)
 {
 	int length = 0;
 
@@ -2053,7 +2072,7 @@ static int nla_sizeof_ts_smartcard_creds(smartcard_auth_identity* identity)
 	return length;
 }
 
-static int nla_sizeof_ts_pwd_or_sc_creds(smartcard_auth_identity*   identity,
+static int nla_sizeof_ts_pwd_or_sc_creds(auth_identity*   identity,
         credential_type cred_type)
 {
 	switch (cred_type)
@@ -2069,7 +2088,7 @@ static int nla_sizeof_ts_pwd_or_sc_creds(smartcard_auth_identity*   identity,
 	}
 }
 
-static size_t nla_sizeof_ts_credentials(smartcard_auth_identity*   identity)
+static size_t nla_sizeof_ts_credentials(auth_identity*   identity)
 {
 	size_t size = 0;
 	size += ber_sizeof_integer(1);
@@ -2309,7 +2328,7 @@ static int nla_write_ts_csp_data_detail(csp_data_detail*   csp_data, wStream* s,
 	return size;
 }
 
-static int nla_write_ts_smartcard_creds(smartcard_auth_identity* identity, wStream* s)
+static int nla_write_ts_smartcard_creds(auth_identity* identity, wStream* s)
 {
 	int size = 0;
 	int innerSize = nla_sizeof_ts_smartcard_creds(identity);
@@ -2347,7 +2366,7 @@ static int nla_read_ts_creds(rdpNla* nla, wStream* s, credential_type cred_type,
 	}
 }
 
-static int nla_write_ts_creds(smartcard_auth_identity* identity, wStream* s,
+static int nla_write_ts_creds(auth_identity* identity, wStream* s,
                               credential_type cred_type)
 {
 	switch (cred_type)
@@ -2396,21 +2415,21 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 	return ret;
 }
 
-static size_t nla_write_ts_credentials(rdpNla* nla, wStream* s)
+static size_t nla_write_ts_credentials(rdpNla* nla, wStream* s, auth_identity * identity)
 {
 	int size = 0;
 	int credSize = 0;
-	int innerSize = nla_sizeof_ts_credentials(nla->identity);
+	int innerSize = nla_sizeof_ts_credentials(identity);
 	/* TSCredentials (SEQUENCE) */
 	size += ber_write_sequence_tag(s, innerSize);
 	/* [0] credType (INTEGER) */
 	size += ber_write_contextual_tag(s, 0, ber_sizeof_integer(nla->cred_type), TRUE);
 	size += ber_write_integer(s, nla->cred_type);
 	/* [1] credentials (OCTET STRING) */
-	credSize = ber_sizeof_sequence(nla_sizeof_ts_pwd_or_sc_creds(nla->identity, nla->cred_type));
+	credSize = ber_sizeof_sequence(nla_sizeof_ts_pwd_or_sc_creds(identity, nla->cred_type));
 	size += ber_write_contextual_tag(s, 1, ber_sizeof_octet_string(credSize), TRUE);
 	size += ber_write_octet_string_tag(s, credSize);
-	size += nla_write_ts_creds(nla->identity, s, nla->cred_type);
+	size += nla_write_ts_creds(identity, s, nla->cred_type);
 	return size;
 }
 
@@ -2424,7 +2443,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	BOOL result = TRUE;
 	wStream* s = NULL;
 	size_t length = 0;
-	smartcard_auth_identity* identity = NULL;
+	auth_identity* identity = NULL;
 
 	if (nla->settings->DisableCredentialsDelegation && nla->identity->password_creds)
 	{
@@ -2449,14 +2468,14 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 			                               cardname, readername, containername, cspname);
 		}
 
-		identity = smartcard_auth_identity_new(password_creds, smartcard_creds, csp_data);
+		identity = auth_identity_new(password_creds, smartcard_creds, csp_data);
 	}
 	else
 	{
 		identity = nla->identity;
 	}
 
-	length = ber_sizeof_sequence(nla_sizeof_ts_credentials(nla->identity));
+	length = ber_sizeof_sequence(nla_sizeof_ts_credentials(identity));
 
 	if (!sspi_SecBufferAlloc(&nla->tsCredentials, length))
 	{
@@ -2475,7 +2494,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		goto cleanup;
 	}
 
-	nla_write_ts_credentials(nla, s);
+	nla_write_ts_credentials(nla, s, identity);
 	result = TRUE;
 cleanup:
 
@@ -2486,7 +2505,7 @@ cleanup:
 
 	if (identity != nla->identity)
 	{
-		smartcard_auth_identity_free(identity);
+		auth_identity_free(identity);
 	}
 
 	return result;
@@ -3196,7 +3215,7 @@ void nla_free(rdpNla* nla)
 	sspi_SecBufferFree(&nla->PublicKey);
 	sspi_SecBufferFree(&nla->tsCredentials);
 	sspi_SecBufferFree(&nla->outputBuffer);
-	smartcard_auth_identity_free(nla->identity);
+	auth_identity_free(nla->identity);
 	free(nla->SamFile);
 	free(nla->ServicePrincipalName);
 	free(nla);
