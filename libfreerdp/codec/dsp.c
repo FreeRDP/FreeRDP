@@ -131,9 +131,6 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 	size_t srcChannels, dstChannels;
 	AUDIO_FORMAT format;
 
-	if (!context || !src || !srcFormat || !data || !length)
-		return FALSE;
-
 	if (srcFormat->wFormatTag != WAVE_FORMAT_PCM)
 	{
 		WLog_ERR(TAG, "%s requires %s for sample input, got %s", __FUNCTION__,
@@ -153,6 +150,7 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 	if (audio_format_compatible(&format, &context->format))
 		return TRUE;
 
+#if defined(WITH_SOXR)
 	sbytes = srcChannels * srcBytesPerFrame;
 	sframes = size / sbytes;
 	rbytes = dstBytesPerFrame * dstChannels;
@@ -171,6 +169,10 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 	*data = Stream_Buffer(context->resample);
 	*length = Stream_Length(context->resample);
 	return (error == 0) ? TRUE : FALSE;
+#else
+	WLog_ERR(TAG, "Missing resample support, recompile -DWITH_SOXR=ON or -DWITH_DSP_FFMPEG=ON");
+	return FALSE;
+#endif
 }
 
 /**
