@@ -512,7 +512,7 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 	src = context->priv->out_buffer;
 	length = context->priv->out_pending_frames * context->priv->src_bytes_per_frame;
 
-	if (!freerdp_dsp_encode(context->priv->dsp_context, format, src, length, s))
+	if (!freerdp_dsp_encode(context->priv->dsp_context, context->src_format, src, length, s))
 		error = ERROR_INTERNAL_ERROR;
 	else
 	{
