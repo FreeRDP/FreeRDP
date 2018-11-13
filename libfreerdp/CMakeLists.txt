@@ -215,6 +215,12 @@ if(WITH_FFMPEG)
 	freerdp_library_add(${FFMPEG_LIBRARIES})
 endif()
 
+if(WITH_PKCS11H)
+        freerdp_definition_add(-DWITH_PKCS11H)
+        freerdp_include_directory_add(${PKCS11H_INCLUDE_DIR})
+        freerdp_library_add(${PKCS11H_LIBRARIES})
+endif()
+
 if(WIN32 AND WITH_MEDIA_FOUNDATION)
 	set(CODEC_SRCS ${CODEC_SRCS} codec/h264_mf.c)
 endif()
