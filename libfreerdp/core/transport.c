@@ -1093,7 +1093,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 	if (!transport)
 		return FALSE;
 
-	if (transport->rdg && (transport->rdg->frontBio == transport->frontBio))
+	if (transport->rdg && (rdg_front_bio(transport->rdg) == transport->frontBio))
 		transport->frontBio = NULL;
 
 	if (transport->tls)
