@@ -415,7 +415,7 @@ static BOOL rdp_write_bitmap_capability_set(wStream* s, rdpSettings* settings)
 	 * appears consistent in its use.
 	 */
 
-	if (settings->RdpVersion > 5)
+	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
 		preferredBitsPerPixel = settings->ColorDepth;
 	else
 		preferredBitsPerPixel = 8;
@@ -4072,7 +4072,7 @@ BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 	    !rdp_write_order_capability_set(s, settings))
 		return FALSE;
 
-	if (settings->RdpVersion >= 5)
+	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
 		ret = rdp_write_bitmap_cache_v2_capability_set(s, settings);
 	else
 		ret = rdp_write_bitmap_cache_capability_set(s, settings);
