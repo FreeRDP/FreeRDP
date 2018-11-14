@@ -25,12 +25,15 @@
 #define SEC_ENTRY __stdcall
 #define SSPI_EXPORT	__declspec(dllexport)
 #else
+#include <winpr/winpr.h>
 #define SEC_ENTRY
-#define SSPI_EXPORT
+#define SSPI_EXPORT WINPR_API
 #endif
 
+#ifdef _WIN32
 typedef long LONG;
 typedef unsigned long ULONG;
+#endif
 typedef LONG SECURITY_STATUS;
 
 /**
