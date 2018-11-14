@@ -126,6 +126,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "nscodec", "NSCodec support" },
 	{ "offscreen-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "offscreen bitmap cache" },
 	{ "orientation", COMMAND_LINE_VALUE_REQUIRED, "0|90|180|270", NULL, NULL, -1, NULL, "Orientation of display in degrees" },
+	{ "old-license", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Use the old license workflow (no CAL and hwId set to 0)"},
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
 	{ "parallel", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<path>]", NULL, NULL, -1, NULL, "Redirect parallel device" },
 	{ "parent-window", COMMAND_LINE_VALUE_REQUIRED, "<window-id>", NULL, NULL, -1, NULL, "Parent window id" },

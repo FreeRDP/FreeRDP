@@ -1173,7 +1173,8 @@ struct rdp_settings
 	ALIGN64 BOOL AuthenticationOnly;   /* 1603 */
 	ALIGN64 BOOL CredentialsFromStdin; /* 1604 */
 	ALIGN64 BOOL UnmapButtons;         /* 1605 */
-	UINT64 padding1664[1664 - 1606];   /* 1606 */
+	ALIGN64 BOOL OldLicenseBehaviour;  /* 1606 */
+	UINT64 padding1664[1664 - 1607];   /* 1607 */
 
 	/* Names */
 	ALIGN64 char* ComputerName; /* 1664 */

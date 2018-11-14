@@ -2688,6 +2688,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			settings->DesktopOrientation = val;
 		}
+		CommandLineSwitchCase(arg, "old-license")
+		{
+			settings->OldLicenseBehaviour = TRUE;
+		}
 		CommandLineSwitchCase(arg, "scale")
 		{
 			unsigned long scaleFactor = strtoul(arg->Value, NULL, 0);
