@@ -135,7 +135,7 @@ BOOL check_path(char* path)
 {
 	UINT type = GetDriveTypeA(path);
 
-	if (!(type == DRIVE_REMOVABLE || type == DRIVE_CDROM || type == DRIVE_REMOTE))
+	if (!(type == DRIVE_FIXED ||type == DRIVE_REMOVABLE || type == DRIVE_CDROM || type == DRIVE_REMOTE))
 		return FALSE;
 
 	return GetVolumeInformationA(path, NULL, 0, NULL, NULL, NULL, NULL, 0);
@@ -439,7 +439,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		if (device_ext->path == NULL)
 			continue;
 
-		if (ConvertFromUnicode(CP_UTF8, 0, device_ext->path, 0, &path, 0, NULL, FALSE) <= 0)
+		if (ConvertFromUnicode(CP_UTF8, 0, device_ext->path, -1, &path, 0, NULL, FALSE) <= 0)
 			continue;
 
 		/* not plugable device */
