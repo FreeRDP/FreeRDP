@@ -573,7 +573,7 @@ static char* object_string(ASN1_TYPE* object)
 		return 0;
 	}
 
-	result = (char*)strdup((char*)utf8String);
+	result = (char*)_strdup((char*)utf8String);
 	OPENSSL_free(utf8String);
 	return result;
 }
@@ -638,7 +638,7 @@ char* crypto_cert_get_email(X509* x509)
 		return 0;
 	}
 
-	result = strdup(list.strings[0]);
+	result = _strdup(list.strings[0]);
 	OPENSSL_free(list.strings[0]);
 	string_list_free(&list);
 	return result;
