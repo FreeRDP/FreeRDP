@@ -66,6 +66,7 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 	return TRUE;
 }
 
+/* See [MS-RDPERP] 2.2.1.2.3 Icon Info (TS_ICON_INFO) */
 static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 {
 	BYTE* newBitMask;
@@ -87,16 +88,20 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	Stream_Read_UINT16(s, iconInfo->height); /* height (2 bytes) */
 
 	/* cbColorTable is only present when bpp is 1, 4 or 8 */
-	if (iconInfo->bpp == 1 || iconInfo->bpp == 4 || iconInfo->bpp == 8)
+	switch (iconInfo->bpp)
 	{
-		if (Stream_GetRemainingLength(s) < 2)
-			return FALSE;
+		case 1:
+		case 4:
+		case 8:
+			if (Stream_GetRemainingLength(s) < 2)
+				return FALSE;
 
-		Stream_Read_UINT16(s, iconInfo->cbColorTable); /* cbColorTable (2 bytes) */
-	}
-	else
-	{
-		iconInfo->cbColorTable = 0;
+			Stream_Read_UINT16(s, iconInfo->cbColorTable); /* cbColorTable (2 bytes) */
+			break;
+
+		default:
+			iconInfo->cbColorTable = 0;
+			break;
 	}
 
 	if (Stream_GetRemainingLength(s) < 4)
