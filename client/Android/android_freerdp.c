@@ -619,8 +619,8 @@ disconnect:
 
 	if (async_input && inputThread)
 	{
-    wMessageQueue* input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-    MessageQueue_PostQuit(input_queue, 0);
+		wMessageQueue* input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		MessageQueue_PostQuit(input_queue, 0);
 		WaitForSingleObject(inputThread, INFINITE);
 		CloseHandle(inputThread);
 	}
@@ -871,7 +871,7 @@ static jboolean JNICALL jni_freerdp_connect(JNIEnv* env, jclass cls,
 	ctx = (androidContext*)inst->context;
 
 	if (!(ctx->thread = CreateThread(NULL, 0, android_thread_func,
-	                        inst, 0, NULL)))
+	                                 inst, 0, NULL)))
 	{
 		return JNI_FALSE;
 	}
