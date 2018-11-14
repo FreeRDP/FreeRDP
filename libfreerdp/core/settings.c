@@ -298,7 +298,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->Fullscreen = FALSE;
 	settings->GrabKeyboard = TRUE;
 	settings->Decorations = TRUE;
-	settings->RdpVersion = 7;
+	settings->RdpVersion = RDP_VERSION_5_PLUS;
 	settings->ColorDepth = 16;
 	settings->ExtSecurity = FALSE;
 	settings->NlaSecurity = TRUE;

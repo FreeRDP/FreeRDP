@@ -676,7 +676,7 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 
 	Stream_Seek(s, 2);
 
-	if (settings->RdpVersion >= 5)
+	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
 		return rdp_read_extended_info_packet(rdp, s); /* extraInfo */
 
 	return TRUE;
@@ -873,7 +873,7 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	if (!usedPasswordCookie)
 		free(passwordW);
 
-	if (settings->RdpVersion >= 5)
+	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
 		rdp_write_extended_info_packet(rdp, s); /* extraInfo */
 }
 
