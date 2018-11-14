@@ -619,6 +619,8 @@ disconnect:
 
 	if (async_input && inputThread)
 	{
+    wMessageQueue* input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+    MessageQueue_PostQuit(input_queue, 0);
 		WaitForSingleObject(inputThread, INFINITE);
 		CloseHandle(inputThread);
 	}
