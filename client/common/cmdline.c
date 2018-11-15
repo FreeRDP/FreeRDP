@@ -220,6 +220,7 @@ static int freerdp_client_command_line_pre_filter(void* context, int index,
 	return 0;
 }
 
+
 BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
                                        char** params)
 {
@@ -1315,6 +1316,45 @@ static void activate_smartcard_logon_rdp(rdpSettings* settings)
 	freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
 }
 
+/**
+ * parses a string value with the format <v1>x<v2>
+ * @param input: input string
+ * @param v1: pointer to output v1
+ * @param v2: pointer to output v2
+ * @return if the parsing was successful
+ */
+static BOOL parseSizeValue(const char *input, unsigned long *v1, unsigned long *v2)
+{
+	const char *xcharpos;
+	char *endPtr;
+	unsigned long v;
+
+	errno = 0;
+	v = strtoul(input, &endPtr, 10);
+
+	if ((v == 0 || v == ULONG_MAX) && (errno != 0))
+		return FALSE;
+	if (v1)
+		*v1 = v;
+
+	xcharpos = strchr(input, 'x');
+	if (!xcharpos || xcharpos != endPtr)
+		return FALSE;
+
+	errno = 0;
+	v = strtoul(xcharpos + 1, &endPtr, 10);
+
+	if ((v == 0 || v == ULONG_MAX) && (errno != 0))
+		return FALSE;
+
+	if (*endPtr !=  '\0')
+		return FALSE;
+	if (v2)
+		*v2 = v;
+
+	return TRUE;
+}
+
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
         int argc, char** argv, BOOL allowUnknown)
 {
@@ -1536,39 +1576,23 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "size")
 		{
-			if (!(str = _strdup(arg->Value)))
-				return COMMAND_LINE_ERROR_MEMORY;
 
-			p = strchr(str, 'x');
+			p = strchr(arg->Value, 'x');
 
 			if (p)
 			{
-				*p = '\0';
-				{
-					long val = strtol(str, NULL, 0);
+				unsigned long w, h;
+				if (!parseSizeValue(arg->Value, &w, &h) || (w > UINT16_MAX) || (h > UINT16_MAX))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-					if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
-					{
-						free(str);
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					}
-
-					settings->DesktopWidth = val;
-				}
-				{
-					long val = strtol(&p[1], NULL, 0);
-
-					if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
-					{
-						free(str);
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					}
-
-					settings->DesktopHeight = val;
-				}
+				settings->DesktopWidth = w;
+				settings->DesktopHeight = h;
 			}
 			else
 			{
+				if (!(str = _strdup(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+
 				p = strchr(str, '%');
 
 				if (p)
@@ -1606,9 +1630,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 						settings->PercentScreen = val;
 					}
 				}
-			}
 
-			free(str);
+				free(str);
+			}
 		}
 		CommandLineSwitchCase(arg, "f")
 		{
@@ -1700,34 +1724,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			if (arg->Value)
 			{
-				if (!(str = _strdup(arg->Value)))
-					return COMMAND_LINE_ERROR_MEMORY;
+				unsigned long w, h;
 
-				if ((p = strchr(str, 'x')))
-				{
-					unsigned long w, h;
-					*p = '\0';
-					w = strtoul(str, NULL, 0);
+				if (!parseSizeValue(arg->Value, &w, &h) || (w > UINT16_MAX) || (h > UINT16_MAX))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-					if ((errno != 0) || (w == 0) || (w > UINT16_MAX))
-					{
-						free(str);
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					}
-
-					h = strtoul(&p[1], NULL, 0);
-
-					if ((errno != 0) || (h == 0) || (h > UINT16_MAX))
-					{
-						free(str);
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					}
-
-					settings->SmartSizingWidth = w;
-					settings->SmartSizingHeight = h;
-				}
-
-				free(str);
+				settings->SmartSizingWidth = w;
+				settings->SmartSizingHeight = h;
 			}
 		}
 		CommandLineSwitchCase(arg, "bpp")
@@ -2191,6 +2194,22 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "window-drag")
 		{
 			settings->DisableFullWindowDrag = !enable;
+		}
+		CommandLineSwitchCase(arg, "window-position")
+		{
+			unsigned long x, y;
+
+			if (!arg->Value)
+				return COMMAND_LINE_ERROR_MISSING_ARGUMENT;
+
+			if (!parseSizeValue(arg->Value, &x, &y) || x > UINT16_MAX || y > UINT16_MAX)
+			{
+				WLog_ERR(TAG, "invalid window-position argument");
+				return COMMAND_LINE_ERROR_MISSING_ARGUMENT;
+			}
+
+			settings->DesktopPosX = x;
+			settings->DesktopPosY = y;
 		}
 		CommandLineSwitchCase(arg, "menu-anims")
 		{

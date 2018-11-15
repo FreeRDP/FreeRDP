@@ -182,6 +182,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "w", COMMAND_LINE_VALUE_REQUIRED, "<width>", "1024", NULL, -1, NULL, "Width" },
 	{ "wallpaper", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "wallpaper" },
 	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "full window drag" },
+	{ "window-position", COMMAND_LINE_VALUE_REQUIRED, "<xpos>x<ypos>", NULL, NULL, -1, NULL, "window position" },
 	{ "wm-class", COMMAND_LINE_VALUE_REQUIRED, "<class-name>", NULL, NULL, -1, NULL, "Set the WM_CLASS hint for the window instance" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use available work area" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
