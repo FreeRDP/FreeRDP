@@ -709,6 +709,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_AuthenticationOnly                                 (1603)
 #define FreeRDP_CredentialsFromStdin                               (1604)
 #define FreeRDP_UnmapButtons                                       (1605)
+#define FreeRDP_OldLicenseBehaviour                                (1606)
 #define FreeRDP_ComputerName                                       (1664)
 #define FreeRDP_ConnectionFile                                     (1728)
 #define FreeRDP_AssistanceFile                                     (1729)
