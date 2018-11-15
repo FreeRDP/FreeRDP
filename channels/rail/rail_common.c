@@ -62,7 +62,7 @@ BOOL rail_string_to_unicode_string(const char* string, RAIL_UNICODE_STRING* unic
 	if (!string || strlen(string) < 1)
 		return TRUE;
 
-	length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0) * 2;
+	length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0);
 
 	if ((length < 0) || ((size_t)length * sizeof(WCHAR) > UINT16_MAX))
 	{
