@@ -349,9 +349,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		settings->MonitorDefArray[nmonitors].x = vscreen->monitors[i].area.left;
 		settings->MonitorDefArray[nmonitors].y = vscreen->monitors[i].area.top;
 		settings->MonitorDefArray[nmonitors].width =
-		    MIN(vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1, *pMaxWidth);
+		    vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1;
 		settings->MonitorDefArray[nmonitors].height =
-		    MIN(vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1, *pMaxHeight);
+		    vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1;
 		settings->MonitorDefArray[nmonitors].orig_screen = i;
 #ifdef USABLE_XRANDR
 
@@ -509,8 +509,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		}
 
 		/* Set the desktop width and height according to the bounding rectangle around the active monitors */
-		*pMaxWidth = vscreen->area.right - vscreen->area.left + 1;
-		*pMaxHeight = vscreen->area.bottom - vscreen->area.top + 1;
+		*pMaxWidth = MIN(*pMaxWidth, vscreen->area.right - vscreen->area.left + 1);
+		*pMaxHeight = MIN(*pMaxHeight, vscreen->area.bottom - vscreen->area.top + 1);
 	}
 
 	/* some 2008 server freeze at logon if we announce support for monitor layout PDU with
