@@ -547,7 +547,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 				if (!bWaitAll)
 					return (WAIT_OBJECT_0 + index);
 
-				if (bWaitAll && (signalled >= nCount))
+				if (signalled >= nCount)
 					return (WAIT_OBJECT_0);
 
 				signal_handled = TRUE;
