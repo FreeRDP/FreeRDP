@@ -455,10 +455,10 @@ void rfx_init_sse2(RFX_CONTEXT* context)
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		return;
 
-	IF_PROFILER(context->priv->prof_rfx_quantization_decode->name = "rfx_quantization_decode_sse2");
-	IF_PROFILER(context->priv->prof_rfx_quantization_encode->name = "rfx_quantization_encode_sse2");
-	IF_PROFILER(context->priv->prof_rfx_dwt_2d_decode->name = "rfx_dwt_2d_decode_sse2");
-	IF_PROFILER(context->priv->prof_rfx_dwt_2d_encode->name = "rfx_dwt_2d_encode_sse2");
+	PROFILER_RENAME(context->priv->prof_rfx_quantization_decode, "rfx_quantization_decode_sse2");
+	PROFILER_RENAME(context->priv->prof_rfx_quantization_encode, "rfx_quantization_encode_sse2");
+	PROFILER_RENAME(context->priv->prof_rfx_dwt_2d_decode, "rfx_dwt_2d_decode_sse2");
+	PROFILER_RENAME(context->priv->prof_rfx_dwt_2d_encode, "rfx_dwt_2d_encode_sse2");
 	context->quantization_decode = rfx_quantization_decode_sse2;
 	context->quantization_encode = rfx_quantization_encode_sse2;
 	context->dwt_2d_decode = rfx_dwt_2d_decode_sse2;

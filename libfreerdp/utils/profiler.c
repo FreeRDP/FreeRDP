@@ -29,30 +29,38 @@
 
 #define TAG FREERDP_TAG("utils")
 
-PROFILER* profiler_create(char* name)
+struct _PROFILER
 {
-	PROFILER* profiler;
-	profiler = (PROFILER*) malloc(sizeof(PROFILER));
+	char* name;
+	STOPWATCH* stopwatch;
+};
+
+PROFILER* profiler_create(const char* name)
+{
+	PROFILER* profiler = (PROFILER*) calloc(1, sizeof(PROFILER));
 
 	if (!profiler)
 		return NULL;
 
-	profiler->name = name;
+	profiler->name = _strdup(name);
 	profiler->stopwatch = stopwatch_create();
 
-	if (!profiler->stopwatch)
-	{
-		free(profiler);
-		return NULL;
-	}
+	if (!profiler->name || !profiler->stopwatch)
+		goto fail;
 
 	return profiler;
+fail:
+	profiler_free(profiler);
+	return NULL;
 }
 
 void profiler_free(PROFILER* profiler)
 {
 	if (profiler)
+	{
+		free(profiler->name);
 		stopwatch_free(profiler->stopwatch);
+	}
 
 	free(profiler);
 }
