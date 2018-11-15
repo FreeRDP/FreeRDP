@@ -2628,7 +2628,70 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "floatbar")
 		{
-			settings->Floatbar = enable;
+			/* Defaults are enabled, visible, sticky, fullscreen */
+			settings->Floatbar = 0x0017;
+
+			if (arg->Value)
+			{
+				char* start = arg->Value;
+
+				do
+				{
+					char* cur = start;
+					start = strchr(start, ',');
+
+					if (start)
+					{
+						*start = '\0';
+						start = start + 1;
+					}
+
+					/* sticky:[on|off] */
+					if (strncasecmp(cur, "sticky:", 7) == 0)
+					{
+						const char* val = cur + 7;
+						settings->Floatbar &= ~0x02u;
+
+						if (strncasecmp(val, "on", 3) == 0)
+							settings->Floatbar |= 0x02u;
+						else if (strncasecmp(val, "off", 4) == 0)
+							settings->Floatbar &= ~0x02u;
+						else
+							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					/* default:[visible|hidden] */
+					else if (strncasecmp(cur, "default:", 8) == 0)
+					{
+						const char* val = cur + 8;
+						settings->Floatbar &= ~0x04u;
+
+						if (strncasecmp(val, "visible", 8) == 0)
+							settings->Floatbar |= 0x04u;
+						else if (strncasecmp(val, "hidden", 7) == 0)
+							settings->Floatbar &= ~0x04u;
+						else
+							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					/* show:[always|fullscreen|window] */
+					else if (strncasecmp(cur, "show:", 5) == 0)
+					{
+						const char* val = cur + 5;
+						settings->Floatbar &= ~0x30u;
+
+						if (strncasecmp(val, "always", 7) == 0)
+							settings->Floatbar |= 0x30u;
+						else if (strncasecmp(val, "fullscreen", 11) == 0)
+							settings->Floatbar |= 0x10u;
+						else if (strncasecmp(val, "window", 7) == 0)
+							settings->Floatbar |= 0x20u;
+						else
+							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					else
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
+				while (start);
+			}
 		}
 		CommandLineSwitchCase(arg, "mouse-motion")
 		{

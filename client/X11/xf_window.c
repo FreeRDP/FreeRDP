@@ -163,9 +163,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	/* show/hide decorations (e.g. title bar) as guided by xfc->decorations */
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
 	DEBUG_X11(TAG, "X window decoration set to %d", (int)window->decorations);
-
-	if (xfc->floatbar)
-		xf_floatbar_toggle_visibility(xfc, fullscreen);
+	xf_floatbar_toggle_fullscreen(xfc->window->floatbar, fullscreen);
 
 	if (fullscreen)
 	{
@@ -587,7 +585,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 		            settings->DesktopPosY);
 	}
 
-	window->floatbar = xf_floatbar_new(xfc, window->handle);
+	window->floatbar = xf_floatbar_new(xfc, window->handle, settings->Floatbar);
 	return window;
 }
 
@@ -636,8 +634,7 @@ void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window)
 	if (xfc->window == window)
 		xfc->window = NULL;
 
-	if (window->floatbar)
-		xf_floatbar_free(xfc, window, window->floatbar);
+	xf_floatbar_free(window->floatbar);
 
 	if (window->gc)
 		XFreeGC(xfc->display, window->gc);
