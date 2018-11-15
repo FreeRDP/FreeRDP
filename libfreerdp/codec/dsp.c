@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,18 +29,16 @@
 #include <winpr/crt.h>
 
 #include <freerdp/types.h>
+#include <freerdp/log.h>
 #include <freerdp/codec/dsp.h>
 
+#if !defined(WITH_DSP_FFMPEG)
 #if defined(WITH_GSM)
 #include <gsm/gsm.h>
 #endif
 
 #if defined(WITH_LAME)
 #include <lame/lame.h>
-#endif
-
-#if defined(WITH_DSP_FFMPEG)
-#include "dsp_ffmpeg.h"
 #endif
 
 #if defined(WITH_FAAD2)
@@ -50,7 +49,17 @@
 #include <faac.h>
 #endif
 
+#if defined(WITH_SOXR)
+#include <soxr.h>
+#endif
+
+#else
+#include "dsp_ffmpeg.h"
+#endif
+
 #define TAG FREERDP_TAG("dsp")
+
+#if !defined(WITH_DSP_FFMPEG)
 
 union _ADPCM
 {
@@ -96,6 +105,10 @@ struct _FREERDP_DSP_CONTEXT
 	unsigned long faacInputSamples;
 	unsigned long faacMaxOutputBytes;
 #endif
+
+#if defined(WITH_SOXR)
+	soxr_t sox;
+#endif
 };
 
 /**
@@ -104,47 +117,64 @@ struct _FREERDP_DSP_CONTEXT
  */
 
 static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
-                                 const BYTE* src, size_t bytes_per_sample,
-                                 UINT32 schan, UINT32 srate, size_t sframes,
-                                 UINT32 rchan, UINT32 rrate)
+                                 const BYTE* src, size_t size,
+                                 const AUDIO_FORMAT* srcFormat,
+                                 const BYTE** data, size_t* length)
 {
-	BYTE* p;
-	int rframes;
-	int rsize;
-	int i, j;
-	int n1, n2;
-	int sbytes, rbytes;
-	sbytes = bytes_per_sample * schan;
-	rbytes = bytes_per_sample * rchan;
-	rframes = sframes * rrate / srate;
-	rsize = rbytes * rframes;
+#if defined(WITH_SOXR)
+	soxr_error_t error;
+	size_t idone, odone;
+#endif
+	size_t sframes, rframes;
+	size_t rsize;
+	size_t j;
+	size_t sbytes, rbytes;
+	size_t srcBytesPerFrame, dstBytesPerFrame;
+	size_t srcChannels, dstChannels;
+	AUDIO_FORMAT format;
 
-	if (!Stream_EnsureCapacity(context->resample, rsize + 1024))
-		return FALSE;
-
-	p = Stream_Buffer(context->resample);
-
-	for (i = 0; i < rframes; i++)
+	if (srcFormat->wFormatTag != WAVE_FORMAT_PCM)
 	{
-		n1 = i * srate / rrate;
-
-		if (n1 >= sframes)
-			n1 = sframes - 1;
-
-		n2 = (n1 * rrate == i * srate || n1 == sframes - 1 ? n1 : n1 + 1);
-
-		for (j = 0; j < rbytes; j++)
-		{
-			/* Nearest Interpolation, probably the easiest, but works */
-			*p++ = (i * srate - n1 * rrate > n2 * rrate - i * srate ?
-			        src[n2 * sbytes + (j % sbytes)] :
-			        src[n1 * sbytes + (j % sbytes)]);
-		}
+		WLog_ERR(TAG, "%s requires %s for sample input, got %s", __FUNCTION__,
+		         audio_format_get_tag_string(WAVE_FORMAT_PCM),
+		         audio_format_get_tag_string(srcFormat->wFormatTag));
+		return FALSE;
 	}
 
-	Stream_SetPointer(context->resample, p);
-	Stream_SealLength(context->resample);
-	return TRUE;
+	srcChannels = srcFormat->nChannels;
+	dstChannels = context->format.nChannels;
+	srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
+	dstBytesPerFrame = (context->format.wBitsPerSample > 8) ? 2 : 1;
+	/* We want to ignore differences of source and destination format. */
+	format = *srcFormat;
+	format.wFormatTag = WAVE_FORMAT_UNKNOWN;
+
+	if (audio_format_compatible(&format, &context->format))
+		return TRUE;
+
+#if defined(WITH_SOXR)
+	sbytes = srcChannels * srcBytesPerFrame;
+	sframes = size / sbytes;
+	rbytes = dstBytesPerFrame * dstChannels;
+	/* Integer rounding correct division */
+	rframes = (sframes * context->format.nSamplesPerSec + (srcFormat->nSamplesPerSec + 1) / 2) /
+	          srcFormat->nSamplesPerSec;
+	rsize = rframes * rbytes;
+
+	if (!Stream_EnsureCapacity(context->resample, rsize))
+		return FALSE;
+
+	error = soxr_process(context->sox, src, sframes, &idone,
+	                     Stream_Buffer(context->resample),
+	                     Stream_Capacity(context->resample) / rbytes, &odone);
+	Stream_SetLength(context->resample, odone * rbytes);
+	*data = Stream_Buffer(context->resample);
+	*length = Stream_Length(context->resample);
+	return (error == 0) ? TRUE : FALSE;
+#else
+	WLog_ERR(TAG, "Missing resample support, recompile -DWITH_SOXR=ON or -DWITH_DSP_FFMPEG=ON");
+	return FALSE;
+#endif
 }
 
 /**
@@ -411,16 +441,18 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* context,
 {
 	int16_t* inSamples = (int16_t*)src;
 	int32_t* outSamples;
+	unsigned int bpp;
 	unsigned int nrSamples, x;
 	int rc;
 
 	if (!context || !src || !out)
 		return FALSE;
 
-	nrSamples = size / context->format.nChannels / context->format.wBitsPerSample / 8;
+	bpp = context->format.wBitsPerSample / 8 * context->format.nChannels;
+	nrSamples = size / bpp;
 
 	if (!Stream_EnsureCapacity(context->buffer,
-	                           context->faacInputSamples * sizeof(int32_t) * context->format.nChannels))
+	                           nrSamples * sizeof(int32_t) * context->format.nChannels))
 		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(out, context->faacMaxOutputBytes))
@@ -911,6 +943,8 @@ static BOOL freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE
 	return TRUE;
 }
 
+#endif
+
 FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder)
 {
 #if defined(WITH_DSP_FFMPEG)
@@ -1016,6 +1050,9 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 			faacEncClose(context->faac);
 
 #endif
+#if defined(WITH_SOXR)
+		soxr_delete(context->sox);
+#endif
 		free(context);
 	}
 
@@ -1032,7 +1069,8 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 	if (!context || !context->encoder || !srcFormat || !data || !out)
 		return FALSE;
 
-	// TODO: Resample
+	if (!freerdp_dsp_resample(context, data, length, srcFormat, &data, &length))
+		return FALSE;
 
 	switch (context->format.wFormatTag)
 	{
@@ -1129,9 +1167,13 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
+			return TRUE;
+#if defined(WITH_DSP_EXPERIMENTAL)
+
 		case WAVE_FORMAT_ADPCM:
 		case WAVE_FORMAT_DVI_ADPCM:
 			return TRUE;
+#endif
 #if defined(WITH_GSM)
 
 		case WAVE_FORMAT_GSM610:
@@ -1172,7 +1214,6 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 #endif
 }
 
-
 BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* targetFormat)
 {
 #if defined(WITH_DSP_FFMPEG)
@@ -1206,6 +1247,18 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 		faacEncSetConfiguration(context->faac, cfg);
 	}
 
+#endif
+#if defined(WITH_SOXR)
+	{
+		soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16, SOXR_INT16);
+		soxr_error_t error;
+		soxr_delete(context->sox);
+		context->sox = soxr_create(context->format.nSamplesPerSec, targetFormat->nSamplesPerSec,
+		                           targetFormat->nChannels, &error, &iospec, NULL, NULL);
+
+		if (!context->sox || (error != 0))
+			return FALSE;
+	}
 #endif
 	return TRUE;
 #endif

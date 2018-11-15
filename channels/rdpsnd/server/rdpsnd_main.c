@@ -301,8 +301,7 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context,
 	AUDIO_FORMAT* format;
 	UINT error = CHANNEL_RC_OK;
 
-	if ((client_format_index < 0)
-	    || (client_format_index >= context->num_client_formats)
+	if ((client_format_index >= context->num_client_formats)
 	    || (!context->src_format))
 	{
 		WLog_ERR(TAG,  "index %d is not correct.", client_format_index);
@@ -415,6 +414,10 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context,
 	ULONG written;
 	wStream* s = context->priv->rdpsnd_pdu;
 	UINT error = CHANNEL_RC_OK;
+
+	if (context->selected_client_format >= context->num_client_formats)
+		return ERROR_INTERNAL_ERROR;
+
 	format = &context->client_formats[context->selected_client_format];
 	/* WaveInfo PDU */
 	Stream_SetPosition(s, 0);
@@ -429,7 +432,7 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context,
 	src = context->priv->out_buffer;
 	length = context->priv->out_pending_frames * context->priv->src_bytes_per_frame;
 
-	if (!freerdp_dsp_encode(context->priv->dsp_context, format, src, length, s))
+	if (!freerdp_dsp_encode(context->priv->dsp_context, context->src_format, src, length, s))
 		return ERROR_INTERNAL_ERROR;
 	else
 	{
@@ -491,6 +494,10 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 	ULONG written;
 	wStream* s = context->priv->rdpsnd_pdu;
 	UINT error = CHANNEL_RC_OK;
+
+	if (context->selected_client_format >= context->num_client_formats)
+		return ERROR_INTERNAL_ERROR;
+
 	format = &context->client_formats[context->selected_client_format];
 	/* WaveInfo PDU */
 	Stream_SetPosition(s, 0);
@@ -501,11 +508,11 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context,
 	Stream_Write_UINT16(s, context->selected_client_format); /* wFormatNo */
 	Stream_Write_UINT8(s, context->block_no); /* cBlockNo */
 	Stream_Seek(s, 3); /* bPad */
-	Stream_Write_UINT16(s, wTimestamp); /* dwAudioTimeStamp */
+	Stream_Write_UINT32(s, wTimestamp); /* dwAudioTimeStamp */
 	src = context->priv->out_buffer;
 	length = context->priv->out_pending_frames * context->priv->src_bytes_per_frame;
 
-	if (!freerdp_dsp_encode(context->priv->dsp_context, format, src, length, s))
+	if (!freerdp_dsp_encode(context->priv->dsp_context, context->src_format, src, length, s))
 		error = ERROR_INTERNAL_ERROR;
 	else
 	{
@@ -558,7 +565,7 @@ static UINT rdpsnd_server_send_samples(RdpsndServerContext* context,
 	UINT error = CHANNEL_RC_OK;
 	EnterCriticalSection(&context->priv->lock);
 
-	if (context->selected_client_format < 0)
+	if (context->selected_client_format >= context->num_client_formats)
 	{
 		/* It's possible while format negotiation has not been done */
 		WLog_WARN(TAG, "Drop samples because client format has not been negotiated.");
@@ -636,7 +643,7 @@ static UINT rdpsnd_server_close(RdpsndServerContext* context)
 
 	if (context->priv->out_pending_frames > 0)
 	{
-		if (context->selected_client_format < 0)
+		if (context->selected_client_format >= context->num_client_formats)
 		{
 			WLog_ERR(TAG, "Pending audio frame exists while no format selected.");
 			error = ERROR_INVALID_DATA;
@@ -652,7 +659,7 @@ static UINT rdpsnd_server_close(RdpsndServerContext* context)
 	if (error)
 		return error;
 
-	context->selected_client_format = -1;
+	context->selected_client_format = 0xFFFF;
 	Stream_Write_UINT8(s, SNDC_CLOSE);
 	Stream_Write_UINT8(s, 0);
 	Stream_Seek_UINT16(s);
@@ -807,7 +814,7 @@ RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm)
 	context->vcm = vcm;
 	context->Start = rdpsnd_server_start;
 	context->Stop = rdpsnd_server_stop;
-	context->selected_client_format = -1;
+	context->selected_client_format = 0xFFFF;
 	context->Initialize = rdpsnd_server_initialize;
 	context->SelectFormat = rdpsnd_server_select_format;
 	context->SendSamples = rdpsnd_server_send_samples;
