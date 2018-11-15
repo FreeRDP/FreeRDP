@@ -76,7 +76,7 @@ BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 	wStream* s;
 	int status;
 	int contentLength;
-	BOOL continueNeeded;
+	BOOL continueNeeded = FALSE;
 	rdpNtlm* ntlm;
 	HttpContext* http;
 	const SecBuffer* buffer;
@@ -86,7 +86,10 @@ BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 
 	ntlm = inChannel->ntlm;
 	http = inChannel->http;
-	continueNeeded = ntlm_authenticate(ntlm);
+
+	if (!ntlm_authenticate(ntlm, &continueNeeded))
+		return FALSE;
+
 	contentLength = (continueNeeded) ? 0 : 0x40000000;
 	buffer = ntlm_client_get_output_buffer(ntlm);
 	s = rpc_ntlm_http_request(http, "RPC_IN_DATA", contentLength, buffer);
@@ -212,7 +215,7 @@ BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel,
 	BOOL rc = TRUE;
 	wStream* s;
 	int contentLength;
-	BOOL continueNeeded;
+	BOOL continueNeeded = FALSE;
 	rdpNtlm* ntlm;
 	HttpContext* http;
 	const SecBuffer* buffer;
@@ -222,7 +225,9 @@ BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel,
 
 	ntlm = outChannel->ntlm;
 	http = outChannel->http;
-	continueNeeded = ntlm_authenticate(ntlm);
+
+	if (!ntlm_authenticate(ntlm, &continueNeeded))
+		return FALSE;
 
 	if (!replacement)
 		contentLength = (continueNeeded) ? 0 : 76;

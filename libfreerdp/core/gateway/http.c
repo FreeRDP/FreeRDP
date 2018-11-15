@@ -726,7 +726,7 @@ static BOOL http_use_content_length(const char* cur)
 	return FALSE;
 }
 
-HttpResponse* http_response_recv(rdpTls* tls)
+HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 {
 	size_t size;
 	size_t position;
@@ -827,16 +827,19 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			goto out_error;
 
 		response->BodyLength = Stream_GetPosition(response->data) - payloadOffset;
-		bodyLength = 0; /* expected body length */
+		bodyLength = response->BodyLength; /* expected body length */
+
+		if (readContentLength)
 		{
 			const char* cur = response->ContentType;
-			bodyLength = response->BodyLength;
 
 			while (cur != NULL)
 			{
 				if (http_use_content_length(cur))
 				{
-					bodyLength = response->ContentLength;
+					if (response->ContentLength < RESPONSE_SIZE_LIMIT)
+						bodyLength = response->ContentLength;
+
 					break;
 				}
 

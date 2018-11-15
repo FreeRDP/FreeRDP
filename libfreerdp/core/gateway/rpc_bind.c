@@ -107,6 +107,7 @@ const p_uuid_t BTFN_UUID =
 
 int rpc_send_bind_pdu(rdpRpc* rpc)
 {
+	BOOL continueNeeded = FALSE;
 	int status = -1;
 	BYTE* buffer = NULL;
 	UINT32 offset;
@@ -165,7 +166,10 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	if (!ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname))
 		goto fail;
 
-	if (!ntlm_authenticate(rpc->ntlm))
+	if (!ntlm_authenticate(rpc->ntlm, &continueNeeded))
+		goto fail;
+
+	if (!continueNeeded)
 		goto fail;
 
 	bind_pdu = (rpcconn_bind_hdr_t*) calloc(1, sizeof(rpcconn_bind_hdr_t));
@@ -302,6 +306,7 @@ fail:
 
 int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
+	BOOL continueNeeded = FALSE;
 	BYTE* auth_data;
 	rpcconn_hdr_t* header;
 	header = (rpcconn_hdr_t*) buffer;
@@ -317,7 +322,12 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	if (!ntlm_client_set_input_buffer(rpc->ntlm, TRUE, auth_data, header->common.auth_length))
 		return -1;
 
-	ntlm_authenticate(rpc->ntlm);
+	if (!ntlm_authenticate(rpc->ntlm, &continueNeeded))
+		return -1;
+
+	if (continueNeeded)
+		return -1;
+
 	return (int) length;
 }
 
