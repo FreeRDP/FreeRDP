@@ -320,8 +320,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->DesktopResize = TRUE;
 	settings->ToggleFullscreen = TRUE;
 	settings->Floatbar = TRUE;
-	settings->DesktopPosX = 0;
-	settings->DesktopPosY = 0;
+	settings->DesktopPosX = UINT32_MAX;
+	settings->DesktopPosY = UINT32_MAX;
 	settings->SoftwareGdi = TRUE;
 	settings->UnmapButtons = FALSE;
 	settings->PerformanceFlags = PERF_FLAG_NONE;

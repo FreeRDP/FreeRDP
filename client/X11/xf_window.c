@@ -173,8 +173,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		xfc->savedHeight = xfc->window->height;
 		xfc->savedPosX = xfc->window->left;
 		xfc->savedPosY = xfc->window->top;
-		startX = settings->DesktopPosX;
-		startY = settings->DesktopPosY;
+		startX = (settings->DesktopPosX != UINT32_MAX) ? settings->DesktopPosX : 0;
+		startY = (settings->DesktopPosY != UINT32_MAX) ? settings->DesktopPosY : 0;
 	}
 	else
 	{
@@ -580,7 +580,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 	{
 		XMoveWindow(xfc->display, window->handle, 0, 0);
 	}
-	else if (settings->DesktopPosX || settings->DesktopPosY)
+	else if (settings->DesktopPosX != UINT32_MAX && settings->DesktopPosY != UINT32_MAX)
 	{
 		XMoveWindow(xfc->display, window->handle, settings->DesktopPosX,
 		            settings->DesktopPosY);
