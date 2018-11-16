@@ -37,6 +37,7 @@
 #include "../proxy.h"
 #include "../rdp.h"
 #include "../../crypto/opensslcompat.h"
+#include "rpc_fault.h"
 
 #define TAG FREERDP_TAG("core.gateway.rdg")
 
@@ -146,6 +147,70 @@ typedef struct rdg_packet_header
 } RdgPacketHeader;
 
 #pragma pack(pop)
+
+typedef struct
+{
+	UINT32 code;
+	const char* name;
+} t_err_mapping;
+
+static const t_err_mapping fields_present[] =
+{
+	{HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID,   "HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID"},
+	{HTTP_CHANNEL_RESPONSE_OPTIONAL, "HTTP_CHANNEL_RESPONSE_OPTIONAL"},
+	{HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT,     "HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT"}
+};
+
+static const t_err_mapping extended_auth[] =
+{
+	{HTTP_EXTENDED_AUTH_NONE, "HTTP_EXTENDED_AUTH_NONE"},
+	{HTTP_EXTENDED_AUTH_SC, "HTTP_EXTENDED_AUTH_SC"},
+	{HTTP_EXTENDED_AUTH_PAA, "HTTP_EXTENDED_AUTH_PAA"},
+	{HTTP_EXTENDED_AUTH_SSPI_NTLM, "HTTP_EXTENDED_AUTH_SSPI_NTLM"}
+};
+
+static const char* fields_present_to_string(UINT16 fieldsPresent)
+{
+	size_t x = 0;
+	static char buffer[1024] = { 0 };
+	char fields[12];
+
+	for (x = 0; x < ARRAYSIZE(fields_present); x++)
+	{
+		if (strnlen(buffer, ARRAYSIZE(buffer)) > 0)
+			strcat(buffer, "|");
+
+		if ((fields_present[x].code & fieldsPresent) != 0)
+			strcat(buffer, fields_present[x].name);
+	}
+
+	sprintf_s(fields, ARRAYSIZE(fields), " [%04"PRIx16"]", fieldsPresent);
+	strcat(buffer, fields);
+	return buffer;
+}
+
+static const char* extended_auth_to_string(UINT16 auth)
+{
+	size_t x = 0;
+	static char buffer[1024] = { 0 };
+	char fields[12];
+
+	if (auth == HTTP_EXTENDED_AUTH_NONE)
+		return "HTTP_EXTENDED_AUTH_NONE [0x0000]";
+
+	for (x = 0; x < ARRAYSIZE(extended_auth); x++)
+	{
+		if (strnlen(buffer, ARRAYSIZE(buffer)) > 0)
+			strcat(buffer, "|");
+
+		if ((extended_auth[x].code & auth) != 0)
+			strcat(buffer, extended_auth[x].name);
+	}
+
+	sprintf_s(fields, ARRAYSIZE(fields), " [%04"PRIx16"]", auth);
+	strcat(buffer, fields);
+	return buffer;
+}
 
 static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
 {
@@ -546,6 +611,9 @@ static BOOL rdg_skip_seed_payload(rdpTls* tls, SSIZE_T lastResponseLength)
 static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 {
 	UINT32 errorCode;
+	UINT16 serverVersion, extendedAuth;
+	BYTE verMajor, verMinor;
+	const char* error;
 	WLog_DBG(TAG, "Handshake response received");
 
 	if (rdg->state != RDG_CLIENT_STATE_HANDSHAKE)
@@ -553,15 +621,22 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (Stream_GetRemainingLength(s) < 10)
 		return FALSE;
 
-	Stream_Seek(s, 8);
 	Stream_Read_UINT32(s, errorCode);
+	Stream_Read_UINT8(s, verMajor);
+	Stream_Read_UINT8(s, verMinor);
+	Stream_Read_UINT16(s, serverVersion);
+	Stream_Read_UINT16(s, extendedAuth);
+	error = rpc_error_to_string(errorCode);
+	WLog_DBG(TAG,
+	         "errorCode=%s, verMajor=%"PRId8", verMinor=%"PRId8", serverVersion=%"PRId16", extendedAuth=%s",
+	         error, verMajor, verMinor, serverVersion, extended_auth_to_string(extendedAuth));
 
 	if (FAILED(errorCode))
 	{
-		WLog_DBG(TAG, "Handshake error %"PRIx32, (HRESULT)errorCode);
+		WLog_DBG(TAG, "Handshake error %s", error);
 		return FALSE;
 	}
 
@@ -570,7 +645,9 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 
 static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 {
+	UINT16 serverVersion, fieldsPresent;
 	UINT32 errorCode;
+	const char* error;
 	WLog_DBG(TAG, "Tunnel response received");
 
 	if (rdg->state != RDG_CLIENT_STATE_TUNNEL_CREATE)
@@ -578,15 +655,20 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 14)
+	if (Stream_GetRemainingLength(s) < 10)
 		return FALSE;
 
-	Stream_Seek(s, 10);
+	Stream_Read_UINT16(s, serverVersion);
 	Stream_Read_UINT32(s, errorCode);
+	Stream_Read_UINT16(s, fieldsPresent);
+	Stream_Seek_UINT16(s); /* reserved */
+	error = rpc_error_to_string(errorCode);
+	WLog_DBG(TAG, "serverVersion=%"PRId16", errorCode=%s, fieldsPresent=%s",
+	         serverVersion, error, fields_present_to_string(fieldsPresent));
 
 	if (FAILED(errorCode))
 	{
-		WLog_DBG(TAG, "Tunnel creation error %"PRIx32, (HRESULT)errorCode);
+		WLog_DBG(TAG, "Tunnel creation error %s", error);
 		return FALSE;
 	}
 
@@ -596,6 +678,8 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 {
 	UINT32 errorCode;
+	UINT16 fieldsPresent;
+	const char* error;
 	WLog_DBG(TAG, "Tunnel authorization received");
 
 	if (rdg->state != RDG_CLIENT_STATE_TUNNEL_AUTHORIZE)
@@ -603,15 +687,19 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Seek(s, 8);
 	Stream_Read_UINT32(s, errorCode);
+	Stream_Read_UINT16(s, fieldsPresent);
+	Stream_Seek_UINT16(s); /* reserved */
+	error = rpc_error_to_string(errorCode);
+	WLog_DBG(TAG, "errorCode=%s, fieldsPresent=%s",
+	         error, fields_present_to_string(fieldsPresent));
 
 	if (FAILED(errorCode))
 	{
-		WLog_DBG(TAG, "Tunnel authorization error %"PRIx32, (HRESULT)errorCode);
+		WLog_DBG(TAG, "Tunnel authorization error %s", error);
 		return FALSE;
 	}
 
@@ -620,7 +708,9 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 
 static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 {
+	UINT16 fieldsPresent;
 	UINT32 errorCode;
+	const char* error;
 	WLog_DBG(TAG, "Channel response received");
 
 	if (rdg->state != RDG_CLIENT_STATE_CHANNEL_CREATE)
@@ -628,15 +718,20 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Seek(s, 8);
 	Stream_Read_UINT32(s, errorCode);
+	Stream_Read_UINT16(s, fieldsPresent);
+	Stream_Seek_UINT16(s); /* reserved */
+	error = rpc_error_to_string(errorCode);
+	WLog_DBG(TAG, "channel response errorCode=%s, fieldsPresent=%s",
+	         error, fields_present_to_string(fieldsPresent));
 
 	if (FAILED(errorCode))
 	{
-		WLog_DBG(TAG, "Channel error %"PRIx32, (HRESULT)errorCode);
+		WLog_ERR(TAG, "channel response errorCode=%s, fieldsPresent=%s",
+		         error, fields_present_to_string(fieldsPresent));
 		return FALSE;
 	}
 
@@ -648,12 +743,18 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 {
 	BOOL status = TRUE;
 	UINT16 type;
+	UINT32 packetLength;
 	Stream_SetPosition(s, 0);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Peek_UINT16(s, type);
+	Stream_Read_UINT16(s, type);
+	Stream_Seek_UINT16(s); /* reserved */
+	Stream_Read_UINT32(s, packetLength);
+
+	if (Stream_GetRemainingLength(s) < packetLength)
+		return FALSE;
 
 	switch (type)
 	{

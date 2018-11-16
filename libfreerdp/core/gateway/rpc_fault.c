@@ -25,6 +25,8 @@
 
 #include "rpc_fault.h"
 
+#include "rpc.h"
+
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
 static const RPC_FAULT_CODE RPC_FAULT_CODES[] =
@@ -359,19 +361,17 @@ static UINT32 rpc_map_status_code_to_win32_error_code(UINT32 code)
 	return code;
 }
 
-int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
+const char* rpc_error_to_string(UINT32 code)
 {
-	int index;
-	UINT32 code;
-	WLog_ERR(TAG,  "RPC Fault PDU:");
-	code = rpc_map_status_code_to_win32_error_code(header->fault.status);
+	size_t index;
+	static char buffer[1024];
 
 	for (index = 0; RPC_FAULT_CODES[index].name != NULL; index++)
 	{
 		if (RPC_FAULT_CODES[index].code == code)
 		{
-			WLog_ERR(TAG,  "status: %s (0x%08"PRIX32")", RPC_FAULT_CODES[index].name, code);
-			return 0;
+			sprintf_s(buffer, ARRAYSIZE(buffer), "%s [0x%08"PRIX32"]", RPC_FAULT_CODES[index].name, code);
+			goto out;
 		}
 	}
 
@@ -379,11 +379,20 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 	{
 		if (RPC_TSG_FAULT_CODES[index].code == code)
 		{
-			WLog_ERR(TAG,  "status: %s (0x%08"PRIX32")", RPC_TSG_FAULT_CODES[index].name, code);
-			return 0;
+			sprintf_s(buffer, ARRAYSIZE(buffer), "%s [0x%08"PRIX32"]", RPC_TSG_FAULT_CODES[index].name, code);
+			goto out;
 		}
 	}
 
-	WLog_ERR(TAG,  "status: %s (0x%08"PRIX32")", "UNKNOWN", code);
+	sprintf_s(buffer, ARRAYSIZE(buffer), "%s [0x%08"PRIX32"]", "UNKNOWN", code);
+out:
+	return buffer;
+}
+
+
+int rpc_recv_fault_pdu(UINT32 status)
+{
+	UINT32 code = rpc_map_status_code_to_win32_error_code(status);
+	WLog_ERR(TAG,  "RPC Fault PDU: status=%s", rpc_error_to_string(code));
 	return 0;
 }
