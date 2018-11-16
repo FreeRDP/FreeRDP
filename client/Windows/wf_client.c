@@ -193,10 +193,7 @@ static BOOL wf_pre_connect(freerdp* instance)
 	settings->OsMajorType = OSMAJORTYPE_WINDOWS;
 	settings->OsMinorType = OSMINORTYPE_WINDOWS_NT;
 	wfc->fullscreen = settings->Fullscreen;
-	wfc->floatbar_active = settings->Floatbar;
-
 	wfc->fullscreen_toggle = settings->ToggleFullscreen;
-
 	desktopWidth = settings->DesktopWidth;
 	desktopHeight = settings->DesktopHeight;
 
@@ -260,12 +257,12 @@ static void wf_add_system_menu(wfContext* wfc)
 {
 	HMENU hMenu;
 	MENUITEMINFO item_info;
-	
+
 	if (wfc->fullscreen && !wfc->fullscreen_toggle)
 	{
 		return;
 	}
-	
+
 	hMenu = GetSystemMenu(wfc->hwnd, FALSE);
 	ZeroMemory(&item_info, sizeof(MENUITEMINFO));
 	item_info.fMask = MIIM_CHECKMARKS | MIIM_FTYPE | MIIM_ID | MIIM_STRING |
@@ -312,7 +309,8 @@ static BOOL wf_post_connect(freerdp* instance)
 	}
 
 	if (settings->WindowTitle != NULL)
-		_snwprintf_s(wfc->window_title, ARRAYSIZE(wfc->window_title), _TRUNCATE, L"%S", settings->WindowTitle);
+		_snwprintf_s(wfc->window_title, ARRAYSIZE(wfc->window_title), _TRUNCATE, L"%S",
+		             settings->WindowTitle);
 	else if (settings->ServerPort == 3389)
 		_snwprintf_s(wfc->window_title, ARRAYSIZE(wfc->window_title), _TRUNCATE, L"FreeRDP: %S",
 		             settings->ServerHostname);
@@ -366,9 +364,7 @@ static BOOL wf_post_connect(freerdp* instance)
 		palette_cache_register_callbacks(instance->update);
 	}
 
-	if (wfc->fullscreen)
-		floatbar_window_create(wfc);
-
+	wfc->floatbar = wf_floatbar_new(wfc, wfc->hInstance, settings->Floatbar);
 	return TRUE;
 }
 

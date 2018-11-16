@@ -352,7 +352,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->GatewayPort = 443;
 	settings->DesktopResize = TRUE;
 	settings->ToggleFullscreen = TRUE;
-	settings->Floatbar = TRUE;
 	settings->DesktopPosX = UINT32_MAX;
 	settings->DesktopPosY = UINT32_MAX;
 	settings->SoftwareGdi = TRUE;

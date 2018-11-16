@@ -212,8 +212,8 @@ static BOOL wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg,
 		flags |= PTR_FLAGS_WHEEL_NEGATIVE;
 		delta = -delta;
 	}
-	flags |= delta;
 
+	flags |= delta;
 	return wf_scale_mouse_event(wfc, input, flags, x, y);
 }
 
@@ -359,16 +359,16 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam,
 				             y - wfc->offset_y + wfc->yCurrentScroll, SRCCOPY);
 				EndPaint(hWnd, &ps);
 				break;
-
 #if (_WIN32_WINNT >= 0x0500)
+
 			case WM_XBUTTONDOWN:
 				wf_scale_mouse_event_ex(wfc, input, PTR_XFLAGS_DOWN, GET_XBUTTON_WPARAM(wParam),
-			        	             X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
+				                        X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
 				break;
 
 			case WM_XBUTTONUP:
 				wf_scale_mouse_event_ex(wfc, input, 0, GET_XBUTTON_WPARAM(wParam),
-				                     X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
+				                        X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
 				break;
 #endif
 
@@ -406,20 +406,20 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam,
 				wf_scale_mouse_event(wfc, input, PTR_FLAGS_MOVE, X_POS(lParam) - wfc->offset_x,
 				                     Y_POS(lParam) - wfc->offset_y);
 				break;
-
 #if (_WIN32_WINNT >= 0x0400) || (_WIN32_WINDOWS > 0x0400)
+
 			case WM_MOUSEWHEEL:
 				wf_event_process_WM_MOUSEWHEEL(wfc, hWnd, Msg, wParam, lParam, FALSE,
-				                     X_POS(lParam) - wfc->offset_x,
-                                                     Y_POS(lParam) - wfc->offset_y);
+				                               X_POS(lParam) - wfc->offset_x,
+				                               Y_POS(lParam) - wfc->offset_y);
 				break;
 #endif
-
 #if (_WIN32_WINNT >= 0x0600)
+
 			case WM_MOUSEHWHEEL:
 				wf_event_process_WM_MOUSEWHEEL(wfc, hWnd, Msg, wParam, lParam, TRUE,
-				                     X_POS(lParam) - wfc->offset_x,
-                                                     Y_POS(lParam) - wfc->offset_y);
+				                               X_POS(lParam) - wfc->offset_x,
+				                               Y_POS(lParam) - wfc->offset_y);
 				break;
 #endif
 
@@ -701,11 +701,12 @@ static BOOL wf_scale_mouse_pos(wfContext* wfc, UINT16* x, UINT16* y)
 	int ww, wh, dw, dh;
 	rdpContext* context;
 	rdpSettings* settings;
-       
+
 	if (!wfc || !x || !y)
 		return FALSE;
 
 	settings = wfc->context.settings;
+
 	if (!settings)
 		return FALSE;
 
@@ -753,13 +754,15 @@ static BOOL wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags,
 }
 
 #if(_WIN32_WINNT >= 0x0500)
-static BOOL wf_scale_mouse_event_ex(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 buttonMask,
+static BOOL wf_scale_mouse_event_ex(wfContext* wfc, rdpInput* input, UINT16 flags,
+                                    UINT16 buttonMask,
                                     UINT16 x, UINT16 y)
 {
 	MouseEventExEventArgs eventArgs;
 
 	if (buttonMask & XBUTTON1)
 		flags |= PTR_XFLAGS_BUTTON1;
+
 	if (buttonMask & XBUTTON2)
 		flags |= PTR_XFLAGS_BUTTON2;
 
