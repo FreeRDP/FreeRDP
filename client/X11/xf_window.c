@@ -558,6 +558,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 
 	XSelectInput(xfc->display, window->handle, input_mask);
 	XClearWindow(xfc->display, window->handle);
+	xf_SetWindowTitleText(xfc, window->handle, name);
 	XMapWindow(xfc->display, window->handle);
 	xf_input_init(xfc, window->handle);
 
@@ -587,7 +588,6 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
 	}
 
 	window->floatbar = xf_floatbar_new(xfc, window->handle);
-	xf_SetWindowTitleText(xfc, window->handle, name);
 	return window;
 }
 
