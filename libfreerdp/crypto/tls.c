@@ -650,6 +650,11 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method,
 	                 SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_ENABLE_PARTIAL_WRITE);
 	SSL_CTX_set_options(tls->ctx, options);
 	SSL_CTX_set_read_ahead(tls->ctx, 1);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+	SSL_CTX_set_min_proto_version(tls->ctx, TLS1_VERSION); /* min version */
+	SSL_CTX_set_max_proto_version(tls->ctx, 0); /* highest supported version by library */
+#endif
+
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	SSL_CTX_set_security_level(tls->ctx, settings->TlsSecLevel);
@@ -840,6 +845,8 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 	 * support empty fragments. This needs to be disabled.
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	/**
 	 * disable SSLv2 and SSLv3
 	 */
@@ -847,6 +854,9 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 	options |= SSL_OP_NO_SSLv3;
 
 	if (!tls_prepare(tls, underlying, SSLv23_client_method(), options, TRUE))
+#else
+	if (!tls_prepare(tls, underlying, TLS_client_method(), options, TRUE))
+#endif
 		return FALSE;
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(LIBRESSL_VERSION_NUMBER)
