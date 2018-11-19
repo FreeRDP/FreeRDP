@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Button labels -->
+    <string name="yes">예</string>
+    <string name="no">아니오</string>
+    <string name="cancel">취소</string>
+    <string name="cont">계속</string>
+    <string name="login">로그인</string>
+    <string name="logout">로그아웃</string>
+    <!-- Home menu items -->
+    <string name="menu_exit">종료</string>
+    <string name="menu_about">정보</string>
+    <string name="menu_help">도움</string>
+    <string name="menu_new_bookmark">새 연결</string>
+    <string name="menu_app_settings">설정</string>
+    <!-- Bookmark menu items -->
+    <string name="menu_title_bookmark">연결</string>
+    <string name="menu_connect">열결하기</string>
+    <string name="menu_edit">수정</string>
+    <string name="menu_delete">삭제</string>
+    <!-- Session menu items -->
+    <string name="menu_sys_keyboard">키보드</string>
+    <string name="menu_ext_keyboard">기능 키</string>
+    <string name="menu_touch_pointer">터치 포인터</string>
+    <string name="menu_home">홈</string>
+    <string name="menu_disconnect">연결종료</string>
+    <!-- List section headers -->
+    <string name="section_bookmarks">수동 연결</string>
+    <string name="section_active_sessions">연결 중인 세션</string>
+    <!-- Search strings -->
+    <string name="search_hint">컴퓨터에 연결하기</string>
+    <!-- List placeholder labels -->
+    <string name="list_placeholder_login">로그인</string>
+    <string name="list_placeholder_no_servers">서버가 없습니다</string>
+    <string name="list_placeholder_connecting">연결중 &#8230;</string>
+    <string name="list_placeholder_disconnecting">연결종료중 &#8230;</string>
+    <string name="list_placeholder_connection_error">연결이 끊겼습니다</string>
+    <string name="list_placeholder_wrong_password">비밀번호가 다릅니다</string>
+    <string name="list_placeholder_invalid_username">사용자 이름이 다릅니다</string>
+    <string name="list_placeholder_add_bookmark">연결 추가</string>
+    <!-- Bookmark settings strings -->
+    <string name="settings_cat_host">호스트</string>
+    <string name="settings_label">이름</string>
+    <string name="settings_hostname">호스트 이름</string>
+    <string name="settings_port">포트</string>
+    <string name="settings_cat_credentials">계정</string>
+    <string name="settings_credentials">계정</string>
+    <string name="settings_username">사용자 이름</string>
+    <string name="settings_password">비밀번호</string>
+    <string name="settings_domain">도메인</string>
+    <string name="settings_cat_settings">설정</string>
+    <string name="settings_screen">화면</string>
+    <string name="settings_cat_screen">화면 설정</string>
+    <string name="settings_colors">색</string>
+    <string-array name="colors_array">
+        <item>Palette (8 Bit)</item>
+        <item>High Color (15 Bit)</item>
+        <item>High Color (16 Bit)</item>
+        <item>True Color (24 Bit)</item>
+        <item>Highest Quality (32 Bit)</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="colors_values_array" translatable="false">
+        <item>8</item>
+        <item>15</item>
+        <item>16</item>
+        <item>24</item>
+        <item>32</item>
+    </string-array>
+    <string name="settings_resolution">해상도</string>
+    <string name="resolution_automatic">자동</string>
+    <string name="resolution_fit">화면에 맞게</string>
+    <string name="resolution_custom">수동</string>
+    <string-array name="resolutions_array">
+        <item>자동</item>
+        <item>화면에 맞게</item>
+        <item>수동</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="resolutions_values_array" translatable="false">
+        <item>automatic</item>
+        <item>fitscreen</item>
+        <item>custom</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <string name="settings_width">너비</string>
+    <string name="settings_height">높이</string>
+    <string name="settings_performance">성능</string>
+    <string name="settings_cat_performance">성능 설정</string>
+    <string name="settings_perf_remotefx">RemoteFX</string>
+    <string name="settings_perf_gfx" translatable="false">GFX</string>
+    <string name="settings_perf_gfx_h264" translatable="false">H264</string>
+    <string name="settings_perf_wallpaper">데스크탑 배경</string>
+    <string name="settings_perf_font_smoothing">부드러운 폰트</string>
+    <string name="settings_perf_desktop_composition">Desktop Composition</string>
+    <string name="settings_perf_full_window_drag">Window contents while dragging</string>
+    <string name="settings_perf_menu_animation">메뉴 에니메이션</string>
+    <string name="settings_perf_theming">테마 스타일</string>
+    <string name="settings_advanced">고급</string>
+    <string name="settings_cat_advanced">고급 설정</string>
+    <string name="settings_enable_3g_settings">3G 설정</string>
+    <string name="settings_screen_3g">3G 화면</string>
+    <string name="settings_performance_3g">3G 성능</string>
+    <string name="settings_cat_gateway">게이트웨이</string>
+    <string name="settings_enable_gateway_settings">게이트웨이 사용</string>
+    <string name="settings_gateway_settings">게이트웨이 설정</string>
+    <string name="settings_redirect_sdcard">SDCard로 전달</string>
+    <string name="settings_redirect_sound">Sound 전달</string>
+    <string-array name="redirect_sound_array">
+        <item>플레이 하지 않음</item>
+        <item>서버에서 플레이</item>
+        <item>기기에서 플레이</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="redirect_sound_values_array" translatable="false">
+        <item>2</item>
+        <item>1</item>
+        <item>0</item>
+    </string-array>
+    <string name="settings_redirect_microphone">마이크로폰 전달하기</string>
+    <string name="settings_security">보안</string>
+    <string-array name="security_array">
+        <item>자동</item>
+        <item>RDP</item>
+        <item>TLS</item>
+        <item>NLA</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="security_values_array" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string name="settings_remote_program">리모트 프로그램</string>
+    <string name="settings_work_dir">작업 디렉터리</string>
+    <string name="settings_async_channel">비동기 채널</string>
+    <string name="settings_async_input">비동기 입력</string>
+    <string name="settings_async_update">비동기 갱신</string>
+    <string name="settings_console_mode">콘솔 모드</string>
+    <!-- App settings strings -->
+    <string name="settings_password_present">*******</string>
+    <string name="settings_password_empty">비밀번호를 입력하세요</string>
+    <string name="settings_cat_ui">사용자 화면</string>
+    <string name="settings_ui_hide_status_bar">상태바 숨기기</string>
+    <string name="settings_ui_hide_action_bar">액션바 숨기기</string>
+    <string name="settings_ui_hide_zoom_controls">줌 컨트롤 숨기기</string>
+    <string name="settings_ui_swap_mouse_buttons">마우스 버튼 바꾸기</string>
+    <string name="settings_ui_invert_scrolling">스크롤 뒤집기</string>
+    <string name="settings_ui_auto_scroll_touchpointer">터치 포인터 자동 스크롤</string>
+    <string name="settings_ui_ask_on_exit">종료할 때 다이얼로그 보이기</string>
+    <string name="settings_cat_power">절전 기능</string>
+    <string name="settings_cat_client">클라이언트</string>
+    <string name="settings_power_disconnect_timeout">사용하지 않는 연결 종료</string>
+    <string name="settings_cat_security">보안</string>
+    <string name="settings_security_accept_certificates">모든 인증서 허용</string>
+    <string name="settings_security_clear_certificate_cache">인증서 캐시 삭제</string>
+    <string name="settings_description_after_minutes">%1$d 분 뒤</string>
+    <string name="settings_description_disabled">사용안함</string>
+    <!-- Activity titles -->
+    <string name="title_bookmark_settings">연결 설정</string>
+    <string name="title_application_settings">설정</string>
+    <string name="title_home">aFreeRDP - FreeRDP for Android</string>
+    <string name="title_create_shortcut">RDP 연결</string>
+    <string name="title_help">도움</string>
+    <string name="title_about">정보</string>
+    <!-- Error message strings -->
+    <string name="error_bookmark_incomplete_title">저장하지 않고 취소하기?</string>
+    <string name="error_bookmark_incomplete">중단하려면 "취소"를 탭 하세요!\n필수 입력을 채우고 "계속"을 탭 하세요!</string>
+    <string name="error_connection_failure">서버에 연결하지 못 했습니다!</string>
+    <!-- Info message strings -->
+    <string name="info_capabilities_changed">서버가 설정을 지원하지 않아서 화면 설정이 변경되었습니다!</string>
+    <string name="info_reset_success">캐시된 인증서를 삭제했습니다!</string>
+    <string name="info_reset_failed">캐시된 인증서를 삭제하지 못 했습니다!</string>
+    <!-- Dialog strings -->
+    <string name="dlg_title_verify_certificate">인증서 검증하기</string>
+    <string name="dlg_msg_verify_certificate">인증서를 검증하지 못했습니다. 그래도 연결하시겠습니까?</string>
+    <string name="dlg_title_credentials">계정을 입력해 주세요</string>
+    <string name="dlg_title_create_shortcut">바로가기 만들기</string>
+    <string name="dlg_msg_create_shortcut">바로가기 이름:</string>
+    <string name="dlg_msg_connecting">연결중 &#8230;</string>
+    <string name="dlg_msg_logging_in">로그인중 &#8230;</string>
+    <string name="dlg_title_about">aFreeRDP 정보</string>
+    <string name="dlg_title_create_bookmark_after_qc">연결 설정 저장하기?</string>
+    <string name="dlg_msg_create_bookmark_after_qc">연결 설정이 저장되지 않았습니다! 저장하시겠습니까?</string>
+    <string name="dlg_title_save_bookmark">연결 저장?</string>
+    <string name="dlg_save_bookmark">연결 설정을 저장하시겠습니까?</string>
+    <string name="dlg_dont_show_again">다시 물어보지 않기</string>
+    <string name="dlg_title_exit">앱 종료?</string>
+    <string name="dlg_msg_exit">앱을 종료하시겠습니까?</string>
+    <string name="dlg_title_clear_cert_cache">인증서 삭제?</string>
+    <string name="dlg_msg_clear_cert_cache">캐시된 모든 인증서를 삭제하시겠습니까?</string>
+    <string name="debug_level">디버그 레벨</string>
+    <string name="settings_debug">디버그 설정</string>
+    <string name="preference_title_client">클라이언트</string>
+    <string name="preference_key_client_name" translatable="false">preference_key_client_name</string>
+    <string name="preference_title_client_name">클라이언트 이름</string>
+    <string name="preference_default_client_name" translatable="false">aFreeRDP</string>
+    <string name="preference_key_accept_certificates" translatable="false">security.accept_certificates</string>
+    <string name="preference_key_security_clear_certificate_cache" translatable="false">security.clear_certificate_cache</string>
+    <string name="preference_key_power_disconnect_timeout" translatable="false">power.disconnect_timeout</string>
+    <string name="preference_key_ui_hide_status_bar" translatable="false">ui.hide_status_bar</string>
+    <string name="preference_key_ui_ask_on_exit" translatable="false">ui.ask_on_exit</string>
+    <string name="preference_key_ui_auto_scroll_touchpointer" translatable="false">ui.auto_scroll_touchpointer</string>
+    <string name="preference_key_ui_invert_scrolling" translatable="false">ui.invert_scrolling</string>
+    <string name="preference_key_ui_swap_mouse_buttons" translatable="false">ui.swap_mouse_buttons</string>
+    <string name="preference_key_ui_hide_zoom_controls" translatable="false">ui.hide_zoom_controls</string>
+    <string name="preference_key_ui_hide_action_bar" translatable="false">ui.hide_action_bar</string>
+    <string-array name="debug_array" translatable="false">
+        <item>OFF</item>
+        <item>FATAL</item>
+        <item>ERROR</item>
+        <item>WARN</item>
+        <item>INFO</item>
+        <item>DEBUG</item>
+        <item>TRACE</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="debug_values_array" translatable="false">
+        <item>OFF</item>
+        <item>FATAL</item>
+        <item>ERROR</item>
+        <item>WARN</item>
+        <item>INFO</item>
+        <item>DEBUG</item>
+        <item>TRACE</item>
+    </string-array>
+
+    <string name="preference_key_h264_3g" translatable="false">bookmark.perf_gfx_h264</string>
+    <string name="preference_key_h264" translatable="false">bookmark.perf_gfx_h264</string>
+</resources>
