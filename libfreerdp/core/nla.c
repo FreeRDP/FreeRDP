@@ -547,6 +547,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 {
 	rdpSettings* settings = nla->settings;
 	nla->cred_type = settings->CredentialsType;
+
 #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
 
 	/* gets the UPN settings->UserPrincipalName */
@@ -556,7 +557,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 		return -1;
 	}
 
-	/* #if defined(WITH_KERBEROS) */
+#if defined(WITH_KERBEROS)
 	WLog_INFO(TAG, "WITH_KERBEROS");
 
 	if (get_TGT_kerberos(settings) == FALSE)
@@ -564,10 +565,9 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 		WLog_ERR(TAG, "Failed to get TGT from KDC !");
 		return -1;
 	}
-
-	/* #else */
-	/* 	WLog_INFO(TAG, "NOT WITH_KERBEROS"); */
-	/* #endif */
+#else
+	WLog_INFO(TAG, "NOT WITH_KERBEROS");
+#endif
 #else
 	WLog_ERR(TAG, "Enable PKCS11H and GSSAPI features to authenticate via smartcard");
 	return -1;
@@ -999,6 +999,7 @@ int nla_client_begin(rdpNla* nla)
 
 		if (nla->status)
 		{
+			/* Kerberos failed, Switch to NTLM */
 			SECURITY_STATUS status = nla->table->QuerySecurityPackageInfo(NTLM_SSP_NAME, &nla->pPackageInfo);
 
 			if (status != SEC_E_OK)
@@ -1028,10 +1029,17 @@ int nla_client_begin(rdpNla* nla)
 			}
 		}
 
-		if (nla->status == SEC_I_COMPLETE_NEEDED)
-			nla->status = SEC_E_OK;
-		else if (nla->status == SEC_I_COMPLETE_AND_CONTINUE)
-			nla->status = SEC_I_CONTINUE_NEEDED;
+		switch (nla->status)
+		{
+			case SEC_I_COMPLETE_NEEDED:
+				nla->status = SEC_E_OK;
+				break;
+			case SEC_I_COMPLETE_AND_CONTINUE:
+				nla->status = SEC_I_CONTINUE_NEEDED;
+				break;
+			default:
+				break;
+		}
 	}
 
 	if (nla->status != SEC_I_CONTINUE_NEEDED)
