@@ -42,7 +42,7 @@
  * @return draw mode
  */
 
-UINT32 gdi_GetROP2(HGDI_DC hdc)
+INT32 gdi_GetROP2(HGDI_DC hdc)
 {
 	return hdc->drawMode;
 }
@@ -55,9 +55,9 @@ UINT32 gdi_GetROP2(HGDI_DC hdc)
  * @return previous draw mode
  */
 
-UINT32 gdi_SetROP2(HGDI_DC hdc, int fnDrawMode)
+INT32 gdi_SetROP2(HGDI_DC hdc, INT32 fnDrawMode)
 {
-	UINT32 prevDrawMode = hdc->drawMode;
+	INT32 prevDrawMode = hdc->drawMode;
 
 	if (fnDrawMode > 0 && fnDrawMode <= 16)
 		hdc->drawMode = fnDrawMode;
@@ -113,11 +113,11 @@ UINT32 gdi_GetBkMode(HGDI_DC hdc)
  */
 
 
-BOOL gdi_SetBkMode(HGDI_DC hdc, int iBkMode)
+INT32 gdi_SetBkMode(HGDI_DC hdc, INT32 iBkMode)
 {
 	if (iBkMode == GDI_OPAQUE || iBkMode == GDI_TRANSPARENT)
 	{
-		int previousBkMode = hdc->bkMode;
+		INT32 previousBkMode = hdc->bkMode;
 		hdc->bkMode = iBkMode;
 		return previousBkMode;
 	}

@@ -470,8 +470,8 @@ struct _GDI_DC
 	HGDI_RGN clip;
 	HGDI_PEN pen;
 	HGDI_WND hwnd;
-	UINT32 drawMode;
-	UINT32 bkMode;
+	INT32 drawMode;
+	INT32 bkMode;
 };
 typedef struct _GDI_DC GDI_DC;
 typedef GDI_DC* HGDI_DC;
