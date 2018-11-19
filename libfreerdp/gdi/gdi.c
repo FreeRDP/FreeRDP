@@ -763,6 +763,14 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 	UINT32 color;
 	HGDI_PEN hPen;
 	rdpGdi* gdi = context->gdi;
+	INT32 xStart = lineTo->nXStart;
+	INT32 yStart = lineTo->nYStart;
+	INT32 xEnd = lineTo->nXEnd;
+	INT32 yEnd = lineTo->nYEnd;
+	INT32 w = 0;
+	INT32 h = 0;
+	gdi_ClipCoords(gdi->drawing->hdc, &xStart, &yStart, &w, &h, NULL, NULL);
+	gdi_ClipCoords(gdi->drawing->hdc, &xEnd, &yEnd, &w, &h, NULL, NULL);
 
 	if (!gdi_decode_color(gdi, lineTo->penColor, &color, NULL))
 		return FALSE;
@@ -788,6 +796,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	HGDI_PEN hPen;
 	DELTA_POINT* points;
 	rdpGdi* gdi = context->gdi;
+	INT32 w = 0, h = 0;
 
 	if (!gdi_decode_color(gdi, polyline->penColor, &color, NULL))
 		return FALSE;
@@ -800,6 +809,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
 	x = polyline->xStart;
 	y = polyline->yStart;
+	gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
 	gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 	points = polyline->points;
 
@@ -807,6 +817,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	{
 		x += points[i].x;
 		y += points[i].y;
+		gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
 		gdi_LineTo(gdi->drawing->hdc, x, y);
 		gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 	}
