@@ -235,6 +235,9 @@ static BOOL update_process_glyph_fragments(rdpContext* context,
 	                      fOpRedundant))
 		return FALSE;
 
+	if (!IFCALLRESULT(TRUE, glyph->SetBounds, context, bkX, bkY, bkWidth, bkHeight))
+		return FALSE;
+
 	while (index < length)
 	{
 		const UINT32 op = data[index++];

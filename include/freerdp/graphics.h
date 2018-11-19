@@ -126,6 +126,8 @@ typedef BOOL (*pGlyph_BeginDraw)(rdpContext* context, INT32 x, INT32 y,
                                  UINT32 fgcolor, BOOL fOpRedundant);
 typedef BOOL (*pGlyph_EndDraw)(rdpContext* context, INT32 x, INT32 y,
                                INT32 width, INT32 height, UINT32 bgcolor, UINT32 fgcolor);
+typedef BOOL (*pGlyph_SetBounds)(rdpContext* context, INT32 x, INT32 y,
+                                 INT32 width, INT32 height);
 
 struct rdp_glyph
 {
@@ -135,7 +137,8 @@ struct rdp_glyph
 	pGlyph_Draw Draw; /* 3 */
 	pGlyph_BeginDraw BeginDraw; /* 4 */
 	pGlyph_EndDraw EndDraw; /* 5 */
-	UINT32 paddingA[16 - 6]; /* 6 */
+	pGlyph_SetBounds SetBounds; /* 6 */
+	UINT32 paddingA[16 - 7]; /* 7 */
 
 	INT32 x; /* 16 */
 	INT32 y; /* 17 */

@@ -583,6 +583,10 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest,
 	if (!hdcDest)
 		return FALSE;
 
+	if (!gdi_ClipCoords(hdcDest, &nXDest, &nYDest, &nWidth, &nHeight, &nXSrc,
+	                    &nYSrc))
+		return TRUE;
+
 	/* Check which ROP should be performed.
 	 * Some specific ROP are used heavily and are resource intensive,
 	 * add optimized versions for these here.
