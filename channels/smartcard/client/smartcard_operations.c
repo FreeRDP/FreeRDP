@@ -665,20 +665,19 @@ static LONG smartcard_GetStatusChangeA_Decode(SMARTCARD_DEVICE* smartcard,
 	do											\
 	{											\
 		/*										\
-				* https://msdn.microsoft.com/library/windows/desktop/aa379773(v=vs.85).aspx	\
-				* Important  Each member of SCARD_READERSTATE structure in			\
-				* rgReaderStates [in, out] array must be initialized to zero			\
-				* and then set to specific values as necessary. If this is not done,		\
-				* the function will fail in situations that involve remote card readers.	\
-				*/										\
+		* https://msdn.microsoft.com/library/windows/desktop/aa379773(v=vs.85).aspx	\
+		* Important  Each member of SCARD_READERSTATE structure in			\
+		* rgReaderStates [in, out] array must be initialized to zero			\
+		* and then set to specific values as necessary. If this is not done,		\
+		* the function will fail in situations that involve remote card readers.	\
+		*/										\
 		call->rgReaderStates->pvUserData = NULL;					\
 		call->rgReaderStates->dwCurrentState = 0;					\
 		call->rgReaderStates->dwEventState = 0;						\
 		call->rgReaderStates->cbAtr = 0;						\
 		memset(call->rgReaderStates->rgbAtr, 0, sizeof(call->rgReaderStates->rgbAtr));	\
 		status = ret.ReturnCode = status_change(operation->hContext,			\
-		                                        call->dwTimeOut, call->rgReaderStates, call->cReaders);			\
-		\
+			call->dwTimeOut, call->rgReaderStates, call->cReaders);			\
 		if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))	\
 		{										\
 			call->cReaders = 0;							\
@@ -989,7 +988,7 @@ static LONG smartcard_Reconnect_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	IRP* irp = operation->irp;
 	Reconnect_Call* call = operation->call;
 	ret.ReturnCode = SCardReconnect(operation->hCard, call->dwShareMode,
-	                                call->dwPreferredProtocols, call->dwInitialization, &ret.dwActiveProtocol);
+		call->dwPreferredProtocols, call->dwInitialization, &ret.dwActiveProtocol);
 	smartcard_trace_reconnect_return(smartcard, &ret);
 
 	if ((status = smartcard_pack_reconnect_return(smartcard, irp->output, &ret)))
