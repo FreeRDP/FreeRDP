@@ -420,11 +420,14 @@ BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, DWORD line,
 
 DWORD WLog_GetLogLevel(wLog* log)
 {
+	if (!log)
+		return WLOG_OFF;
+
 	if (log->FilterLevel < 0)
 		log->FilterLevel = WLog_GetFilterLogLevel(log);
 
-	if ((log->FilterLevel >= 0) && (log->FilterLevel != WLOG_LEVEL_INHERIT))
-		return log->FilterLevel;
+	if (log->FilterLevel >= 0)
+		return (DWORD)log->FilterLevel;
 	else if (log->Level == WLOG_LEVEL_INHERIT)
 		log->Level = WLog_GetLogLevel(log->Parent);
 
@@ -443,7 +446,7 @@ BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level)
 	if (lvl < 0)
 		return FALSE;
 
-	return WLog_SetLogLevel(log, lvl);
+	return WLog_SetLogLevel(log, (DWORD)lvl);
 }
 
 BOOL WLog_AddStringLogFilters(LPCSTR filter)
@@ -515,8 +518,32 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 	return TRUE;
 }
 
+static BOOL WLog_UpdateInheritLevel(wLog* log, DWORD logLevel)
+{
+	if (!log)
+		return FALSE;
+
+	if (log->inherit)
+	{
+		DWORD x;
+		log->Level = logLevel;
+
+		for (x = 0; x < log->ChildrenCount; x++)
+		{
+			wLog* child = log->Children[x];
+
+			if (!WLog_UpdateInheritLevel(child, logLevel))
+				return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 {
+	DWORD x;
+
 	if (!log)
 		return FALSE;
 
@@ -524,6 +551,16 @@ BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 		logLevel = WLOG_OFF;
 
 	log->Level = logLevel;
+	log->inherit = (logLevel == WLOG_LEVEL_INHERIT) ? TRUE : FALSE;
+
+	for (x = 0; x < log->ChildrenCount; x++)
+	{
+		wLog* child = log->Children[x];
+
+		if (!WLog_UpdateInheritLevel(child, logLevel))
+			return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -695,7 +732,7 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 	if (match)
 		log->FilterLevel = g_Filters[i].Level;
 	else
-		log->FilterLevel = WLOG_LEVEL_INHERIT;
+		log->FilterLevel = -1;
 
 	return log->FilterLevel;
 }
@@ -777,6 +814,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	if (rootLogger)
 	{
 		log->Level = WLOG_LEVEL_INHERIT;
+		log->inherit = TRUE;
 	}
 	else
 	{
@@ -802,14 +840,20 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 			free(env);
 
 			if (iLevel >= 0)
-				log->Level = (DWORD) iLevel;
+			{
+				if (!WLog_SetLogLevel(log, (DWORD) iLevel))
+					goto out_fail;
+			}
 		}
 	}
 
 	iLevel = WLog_GetFilterLogLevel(log);
 
-	if ((iLevel >= 0) && (iLevel != WLOG_LEVEL_INHERIT))
-		log->Level = (DWORD) iLevel;
+	if (iLevel >= 0)
+	{
+		if (!WLog_SetLogLevel(log, (DWORD) iLevel))
+			goto out_fail;
+	}
 
 	return log;
 out_fail:

@@ -67,6 +67,7 @@ struct _wLog
 	DWORD Level;
 
 	BOOL IsRoot;
+	BOOL inherit;
 	LPSTR* Names;
 	DWORD NameCount;
 	wLogAppender* Appender;
