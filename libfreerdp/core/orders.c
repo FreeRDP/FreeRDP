@@ -168,9 +168,12 @@ static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE ord
 			condition =  settings->DrawGdiPlusCacheEnabled;
 			break;
 
+		case ORDER_TYPE_WINDOW:
+			condition = settings->RemoteWndSupportLevel != WINDOW_LEVEL_NOT_SUPPORTED;
+			break;
+
 		case ORDER_TYPE_STREAM_BITMAP_FIRST:
 		case ORDER_TYPE_STREAM_BITMAP_NEXT:
-		case ORDER_TYPE_WINDOW:
 		case ORDER_TYPE_COMPDESK_FIRST:
 			condition = TRUE;
 			break;

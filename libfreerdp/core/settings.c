@@ -497,6 +497,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings->ClientDir)
 		goto out_fail;
 
+	settings->RemoteWndSupportLevel = WINDOW_LEVEL_SUPPORTED_EX;
 	settings->RemoteAppNumIconCaches = 3;
 	settings->RemoteAppNumIconCacheEntries = 12;
 	settings->VirtualChannelChunkSize = CHANNEL_CHUNK_LENGTH;
