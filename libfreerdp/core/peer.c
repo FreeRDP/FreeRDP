@@ -31,6 +31,7 @@
 #include <freerdp/log.h>
 
 #include "rdp.h"
+#include "nla.h"
 #include "peer.h"
 
 #define TAG FREERDP_TAG("core.peer")

@@ -199,7 +199,6 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 	int index;
 	int keyCount;
 	ULONG_PTR* pKeys;
-	SCARDCONTEXT hContext;
 	SMARTCARD_CONTEXT* pContext;
 
 	/**
@@ -219,17 +218,11 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 		for (index = 0; index < keyCount; index++)
 		{
-			pContext = (SMARTCARD_CONTEXT*) ListDictionary_GetItemValue(
-			               smartcard->rgSCardContextList, (void*) pKeys[index]);
+			pContext = (SMARTCARD_CONTEXT*) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
 
-			if (!pContext)
-				continue;
-
-			hContext = pContext->hContext;
-
-			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
+			if (pContext && (SCardIsValidContext(pContext->hContext) == SCARD_S_SUCCESS))
 			{
-				SCardCancel(hContext);
+				SCardCancel(pContext->hContext);
 			}
 		}
 
@@ -247,17 +240,11 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 		for (index = 0; index < keyCount; index++)
 		{
-			pContext = (SMARTCARD_CONTEXT*) ListDictionary_Remove(
-			               smartcard->rgSCardContextList, (void*) pKeys[index]);
+			pContext = (SMARTCARD_CONTEXT*) ListDictionary_Remove(smartcard->rgSCardContextList, (void*) pKeys[index]);
 
-			if (!pContext)
-				continue;
-
-			hContext = pContext->hContext;
-
-			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
+			if (pContext && (SCardIsValidContext(pContext->hContext) == SCARD_S_SUCCESS))
 			{
-				SCardReleaseContext(hContext);
+				SCardReleaseContext(pContext->hContext);
 
 				if (MessageQueue_PostQuit(pContext->IrpQueue, 0)
 				    && (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED))
@@ -275,8 +262,24 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 {
-	if (!smartcard)
+	if (smartcard == NULL)
+	{
 		return CHANNEL_RC_OK;
+	}
+
+	if (sSmartcard == smartcard)
+	{
+		sSmartcard = NULL;
+	}
+
+	if (smartcard->StartedEvent)
+	{
+		SCardReleaseStartedEvent();
+	}
+
+	ListDictionary_Free(smartcard->rgOutstandingMessages);
+	ListDictionary_Free(smartcard->rgSCardContextList);
+	Queue_Free(smartcard->CompletedIrpQueue);
 
 	if (smartcard->IrpQueue)
 	{
@@ -284,18 +287,13 @@ static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 		CloseHandle(smartcard->thread);
 	}
 
-	Stream_Free(smartcard->device.data, TRUE);
 	LinkedList_Free(smartcard->names);
-	ListDictionary_Free(smartcard->rgSCardContextList);
-	ListDictionary_Free(smartcard->rgOutstandingMessages);
-	Queue_Free(smartcard->CompletedIrpQueue);
-
-	if (smartcard->StartedEvent)
-		SCardReleaseStartedEvent();
-
+	Stream_Free(smartcard->device.data, TRUE);
 	free(smartcard);
+
 	return CHANNEL_RC_OK;
 }
+
 /**
  * Function description
  *
@@ -327,9 +325,6 @@ static UINT smartcard_free(DEVICE* device)
 			return error;
 		}
 	}
-
-	if (sSmartcard == smartcard)
-		sSmartcard = NULL;
 
 	return smartcard_free_(smartcard);
 }
@@ -373,6 +368,71 @@ static UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
  * http://musclecard.996296.n3.nabble.com/Multiple-threads-and-SCardGetStatusChange-td4430.html
  */
 
+
+static BOOL is_operation_irp_asynchronous(UINT32 ioControlCode)
+{
+	switch (ioControlCode)
+	{
+		/*
+		* The following matches mstsc's behavior of processing
+		* only certain requests asynchronously while processing
+		* those expected to return fast synchronously.
+		*/
+		case SCARD_IOCTL_ESTABLISHCONTEXT:
+		case SCARD_IOCTL_RELEASECONTEXT:
+		case SCARD_IOCTL_ISVALIDCONTEXT:
+		case SCARD_IOCTL_ACCESSSTARTEDEVENT:
+		case SCARD_IOCTL_RELEASESTARTEDEVENT:
+		case SCARD_IOCTL_CANCEL:
+		case SCARD_IOCTL_LISTREADERGROUPSA:
+		case SCARD_IOCTL_LISTREADERGROUPSW:
+		case SCARD_IOCTL_LISTREADERSA:
+		case SCARD_IOCTL_LISTREADERSW:
+		case SCARD_IOCTL_INTRODUCEREADERGROUPA:
+		case SCARD_IOCTL_INTRODUCEREADERGROUPW:
+		case SCARD_IOCTL_FORGETREADERGROUPA:
+		case SCARD_IOCTL_FORGETREADERGROUPW:
+		case SCARD_IOCTL_INTRODUCEREADERA:
+		case SCARD_IOCTL_INTRODUCEREADERW:
+		case SCARD_IOCTL_FORGETREADERA:
+		case SCARD_IOCTL_FORGETREADERW:
+		case SCARD_IOCTL_ADDREADERTOGROUPA:
+		case SCARD_IOCTL_ADDREADERTOGROUPW:
+		case SCARD_IOCTL_REMOVEREADERFROMGROUPA:
+		case SCARD_IOCTL_REMOVEREADERFROMGROUPW:
+		case SCARD_IOCTL_LOCATECARDSA:
+		case SCARD_IOCTL_LOCATECARDSW:
+		case SCARD_IOCTL_LOCATECARDSBYATRA:
+		case SCARD_IOCTL_LOCATECARDSBYATRW:
+		case SCARD_IOCTL_READCACHEA:
+		case SCARD_IOCTL_READCACHEW:
+		case SCARD_IOCTL_WRITECACHEA:
+		case SCARD_IOCTL_WRITECACHEW:
+		case SCARD_IOCTL_GETREADERICON:
+		case SCARD_IOCTL_GETDEVICETYPEID:
+			return FALSE;
+
+		case SCARD_IOCTL_GETSTATUSCHANGEA:
+		case SCARD_IOCTL_GETSTATUSCHANGEW:
+		case SCARD_IOCTL_CONNECTA:
+		case SCARD_IOCTL_CONNECTW:
+		case SCARD_IOCTL_RECONNECT:
+		case SCARD_IOCTL_DISCONNECT:
+		case SCARD_IOCTL_BEGINTRANSACTION:
+		case SCARD_IOCTL_ENDTRANSACTION:
+		case SCARD_IOCTL_STATE:
+		case SCARD_IOCTL_STATUSA:
+		case SCARD_IOCTL_STATUSW:
+		case SCARD_IOCTL_TRANSMIT:
+		case SCARD_IOCTL_CONTROL:
+		case SCARD_IOCTL_GETATTRIB:
+		case SCARD_IOCTL_SETATTRIB:
+		case SCARD_IOCTL_GETTRANSMITCOUNT:
+		default:
+			return TRUE;
+	}
+}
+
 /**
  * Function description
  *
@@ -382,7 +442,6 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	void* key;
 	LONG status;
-	BOOL asyncIrp = FALSE;
 	SMARTCARD_CONTEXT* pContext = NULL;
 	SMARTCARD_OPERATION* operation = NULL;
 	key = (void*)(size_t) irp->CompletionId;
@@ -393,144 +452,69 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (irp->MajorFunction == IRP_MJ_DEVICE_CONTROL)
+	if (irp->MajorFunction != IRP_MJ_DEVICE_CONTROL)
 	{
-		operation = (SMARTCARD_OPERATION*) calloc(1, sizeof(SMARTCARD_OPERATION));
+		WLog_ERR(TAG,"Unexpected SmartCard IRP: MajorFunction 0x%08"PRIX32" MinorFunction: 0x%08"PRIX32"",
+			irp->MajorFunction, irp->MinorFunction);
+		irp->IoStatus = (UINT32)STATUS_NOT_SUPPORTED;
 
-		if (!operation)
+		if (Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp))
 		{
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		operation->irp = irp;
-		status = smartcard_irp_device_control_decode(smartcard, operation);
-
-		if (status != SCARD_S_SUCCESS)
-		{
-			irp->IoStatus = (UINT32)STATUS_UNSUCCESSFUL;
-
-			if (!Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp))
-			{
-				free(operation);
-				WLog_ERR(TAG, "Queue_Enqueue failed!");
-				return ERROR_INTERNAL_ERROR;
-			}
-
-			free(operation);
 			return CHANNEL_RC_OK;
 		}
 
-		asyncIrp = TRUE;
-
-		switch (operation->ioControlCode)
-		{
-			case SCARD_IOCTL_ESTABLISHCONTEXT:
-			case SCARD_IOCTL_RELEASECONTEXT:
-			case SCARD_IOCTL_ISVALIDCONTEXT:
-			case SCARD_IOCTL_CANCEL:
-			case SCARD_IOCTL_ACCESSSTARTEDEVENT:
-			case SCARD_IOCTL_RELEASESTARTEDEVENT:
-				asyncIrp = FALSE;
-				break;
-
-			case SCARD_IOCTL_LISTREADERGROUPSA:
-			case SCARD_IOCTL_LISTREADERGROUPSW:
-			case SCARD_IOCTL_LISTREADERSA:
-			case SCARD_IOCTL_LISTREADERSW:
-			case SCARD_IOCTL_INTRODUCEREADERGROUPA:
-			case SCARD_IOCTL_INTRODUCEREADERGROUPW:
-			case SCARD_IOCTL_FORGETREADERGROUPA:
-			case SCARD_IOCTL_FORGETREADERGROUPW:
-			case SCARD_IOCTL_INTRODUCEREADERA:
-			case SCARD_IOCTL_INTRODUCEREADERW:
-			case SCARD_IOCTL_FORGETREADERA:
-			case SCARD_IOCTL_FORGETREADERW:
-			case SCARD_IOCTL_ADDREADERTOGROUPA:
-			case SCARD_IOCTL_ADDREADERTOGROUPW:
-			case SCARD_IOCTL_REMOVEREADERFROMGROUPA:
-			case SCARD_IOCTL_REMOVEREADERFROMGROUPW:
-			case SCARD_IOCTL_LOCATECARDSA:
-			case SCARD_IOCTL_LOCATECARDSW:
-			case SCARD_IOCTL_LOCATECARDSBYATRA:
-			case SCARD_IOCTL_LOCATECARDSBYATRW:
-			case SCARD_IOCTL_READCACHEA:
-			case SCARD_IOCTL_READCACHEW:
-			case SCARD_IOCTL_WRITECACHEA:
-			case SCARD_IOCTL_WRITECACHEW:
-			case SCARD_IOCTL_GETREADERICON:
-			case SCARD_IOCTL_GETDEVICETYPEID:
-			case SCARD_IOCTL_GETSTATUSCHANGEA:
-			case SCARD_IOCTL_GETSTATUSCHANGEW:
-			case SCARD_IOCTL_CONNECTA:
-			case SCARD_IOCTL_CONNECTW:
-			case SCARD_IOCTL_RECONNECT:
-			case SCARD_IOCTL_DISCONNECT:
-			case SCARD_IOCTL_BEGINTRANSACTION:
-			case SCARD_IOCTL_ENDTRANSACTION:
-			case SCARD_IOCTL_STATE:
-			case SCARD_IOCTL_STATUSA:
-			case SCARD_IOCTL_STATUSW:
-			case SCARD_IOCTL_TRANSMIT:
-			case SCARD_IOCTL_CONTROL:
-			case SCARD_IOCTL_GETATTRIB:
-			case SCARD_IOCTL_SETATTRIB:
-			case SCARD_IOCTL_GETTRANSMITCOUNT:
-				asyncIrp = TRUE;
-				break;
-		}
-
-		pContext = ListDictionary_GetItemValue(smartcard->rgSCardContextList,
-		                                       (void*) operation->hContext);
-
-		if (!pContext)
-			asyncIrp = FALSE;
-
-		if (!asyncIrp)
-		{
-			if ((status = smartcard_irp_device_control_call(smartcard, operation)))
-			{
-				WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %"PRId32"!",
-				         status);
-				return (UINT32)status;
-			}
-
-			if (!Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp))
-			{
-				free(operation);
-				WLog_ERR(TAG, "Queue_Enqueue failed!");
-				return ERROR_INTERNAL_ERROR;
-			}
-
-			free(operation);
-		}
-		else
-		{
-			if (pContext)
-			{
-				if (!MessageQueue_Post(pContext->IrpQueue, NULL, 0, (void*) operation, NULL))
-				{
-					WLog_ERR(TAG, "MessageQueue_Post failed!");
-					return ERROR_INTERNAL_ERROR;
-				}
-			}
-		}
+		WLog_ERR(TAG, "Queue_Enqueue failed!");
+		return ERROR_INTERNAL_ERROR;
 	}
-	else
-	{
-		WLog_ERR(TAG,
-		         "Unexpected SmartCard IRP: MajorFunction 0x%08"PRIX32" MinorFunction: 0x%08"PRIX32"",
-		         irp->MajorFunction, irp->MinorFunction);
-		irp->IoStatus = (UINT32)STATUS_NOT_SUPPORTED;
 
-		if (!Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp))
+	operation = (SMARTCARD_OPERATION*) calloc(1, sizeof(SMARTCARD_OPERATION));
+
+	if (operation == NULL)
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	operation->irp = irp;
+	status = smartcard_irp_device_control_decode(smartcard, operation);
+
+	if (status != SCARD_S_SUCCESS)
+	{
+		irp->IoStatus = (UINT32)STATUS_UNSUCCESSFUL;
+		goto enqueue;
+	}
+
+	pContext = ListDictionary_GetItemValue(smartcard->rgSCardContextList,(void*) operation->hContext);
+
+	if ((pContext != NULL) && is_operation_irp_asynchronous(operation->ioControlCode))
+	{
+		if (!MessageQueue_Post(pContext->IrpQueue, NULL, 0, (void*) operation, NULL))
 		{
-			WLog_ERR(TAG, "Queue_Enqueue failed!");
+			WLog_ERR(TAG, "MessageQueue_Post failed!");
 			return ERROR_INTERNAL_ERROR;
 		}
+		return CHANNEL_RC_OK;
 	}
 
-	return CHANNEL_RC_OK;
+	if ((status = smartcard_irp_device_control_call(smartcard, operation)))
+	{
+		WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %"PRId32"!",
+			status);
+		free(operation);
+		return (UINT32)status;
+	}
+
+enqueue:
+	if (Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp))
+	{
+		free(operation);
+		return CHANNEL_RC_OK;
+	}
+
+	WLog_ERR(TAG, "Queue_Enqueue failed!");
+
+	free(operation);
+	return ERROR_INTERNAL_ERROR;
 }
 
 static DWORD WINAPI smartcard_thread_func(LPVOID arg)
@@ -727,7 +711,12 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	size_t length;
 	UINT error = CHANNEL_RC_NO_MEMORY;
 
-	if (!sSmartcard)
+	if (sSmartcard != NULL)
+	{
+		smartcard = sSmartcard;
+
+	}
+	else
 	{
 		wObject* obj;
 		smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));
@@ -808,11 +797,11 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		ResumeThread(smartcard->thread);
 	}
-	else
-		smartcard = sSmartcard;
 
 	if (pEntryPoints->device->Name)
+	{
 		LinkedList_AddLast(smartcard->names, pEntryPoints->device->Name);
+	}
 
 	sSmartcard = smartcard;
 	return CHANNEL_RC_OK;

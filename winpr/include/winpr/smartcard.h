@@ -789,6 +789,8 @@ WINSCARDAPI LONG WINAPI SCardListReadersWithDeviceInstanceIdW(SCARDCONTEXT hCont
 
 WINSCARDAPI LONG WINAPI SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent);
 
+WINSCARDAPI LONG WINAPI SCardAddReaderName(HANDLE* key, LPSTR readerName);
+
 #ifdef UNICODE
 #define SCardListReaderGroups			SCardListReaderGroupsW
 #define SCardListReaders			SCardListReadersW
@@ -1043,6 +1045,8 @@ typedef LONG(WINAPI* fnSCardListReadersWithDeviceInstanceIdW)(SCARDCONTEXT hCont
 
 typedef LONG(WINAPI* fnSCardAudit)(SCARDCONTEXT hContext, DWORD dwEvent);
 
+typedef LONG(WINAPI* fnSCardAddReaderName)(HANDLE* key, LPSTR readerName);
+
 struct _SCardApiFunctionTable
 {
 	DWORD dwVersion;
@@ -1124,6 +1128,7 @@ struct _SCardApiFunctionTable
 	fnSCardListReadersWithDeviceInstanceIdA pfnSCardListReadersWithDeviceInstanceIdA;
 	fnSCardListReadersWithDeviceInstanceIdW pfnSCardListReadersWithDeviceInstanceIdW;
 	fnSCardAudit pfnSCardAudit;
+	fnSCardAddReaderName pfnSCardAddReaderName;
 };
 
 typedef struct _SCardApiFunctionTable SCardApiFunctionTable;

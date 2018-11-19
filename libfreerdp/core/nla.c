@@ -127,7 +127,14 @@
 #define NLA_PKG_NAME	NEGO_SSP_NAME
 
 
-typedef struct auth_identity smartcard_auth_identity;
+typedef struct smartcard_creds smartcard_creds;
+typedef struct csp_data_detail csp_data_detail;
+typedef struct auth_identity
+{
+	SEC_WINNT_AUTH_IDENTITY* password_creds;
+	smartcard_creds*         smartcard_creds;
+	csp_data_detail*         csp_data;
+} auth_identity;
 
 typedef enum
 {
@@ -323,7 +330,7 @@ LPTSTR stringX_from_cstring(const char* cstring)
 
 /* ============================================================ */
 
-typedef struct
+typedef struct smartcard_creds
 {
 	char* Pin;
 	char* UserHint;   /* OPTIONAL */
@@ -374,7 +381,7 @@ static void smartcard_creds_free(smartcard_creds* creds)
 
 /* ============================================================ */
 
-typedef struct
+typedef struct csp_data_detail
 {
 	UINT32 KeySpec;
 	char* CardName;
@@ -439,13 +446,6 @@ static void csp_data_detail_free(csp_data_detail* csp)
 }
 
 /* ============================================================ */
-
-typedef struct auth_identity
-{
-	SEC_WINNT_AUTH_IDENTITY* password_creds;
-	smartcard_creds*         smartcard_creds;
-	csp_data_detail*         csp_data;
-} auth_identity;
 
 static auth_identity* auth_identity_new(SEC_WINNT_AUTH_IDENTITY* password_creds,
         smartcard_creds* smartcard_creds,
@@ -548,30 +548,31 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	rdpSettings* settings = nla->settings;
 	nla->cred_type = settings->CredentialsType;
 
-#if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
-
-	/* gets the UPN settings->UserPrincipalName */
-	if (get_info_smartcard(nla->instance) != 0)
-	{
-		WLog_ERR(TAG, "Failed to retrieve UPN !");
-		return -1;
-	}
-
-#if defined(WITH_KERBEROS)
-	WLog_INFO(TAG, "WITH_KERBEROS");
-
-	if (get_TGT_kerberos(settings) == FALSE)
-	{
-		WLog_ERR(TAG, "Failed to get TGT from KDC !");
-		return -1;
-	}
-#else
-	WLog_INFO(TAG, "NOT WITH_KERBEROS");
-#endif
-#else
-	WLog_ERR(TAG, "Enable PKCS11H and GSSAPI features to authenticate via smartcard");
-	return -1;
-#endif
+/* = ==  Not yet == = */
+/* #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI) */
+/*  */
+/* 	/\* gets the UPN settings->UserPrincipalName *\/ */
+/* 	if (get_info_smartcard(nla->instance) != 0) */
+/* 	{ */
+/* 		WLog_ERR(TAG, "Failed to retrieve UPN !"); */
+/* 		return -1; */
+/* 	} */
+/*  */
+/* #if defined(WITH_KERBEROS) */
+/* 	WLog_INFO(TAG, "WITH_KERBEROS"); */
+/*  */
+/* 	if (get_TGT_kerberos(settings) == FALSE) */
+/* 	{ */
+/* 		WLog_ERR(TAG, "Failed to get TGT from KDC !"); */
+/* 		return -1; */
+/* 	} */
+/* #else */
+/* 	WLog_INFO(TAG, "NOT WITH_KERBEROS"); */
+/* #endif */
+/* #else */
+/* 	WLog_ERR(TAG, "Enable PKCS11H and GSSAPI features to authenticate via smartcard"); */
+/* 	return -1; */
+/* #endif */
 
 	if (settings->PinPadIsPresent)
 	{
@@ -3231,10 +3232,12 @@ void nla_free(rdpNla* nla)
 
 SEC_WINNT_AUTH_IDENTITY* nla_get_identity(rdpNla* nla)
 {
-	if (!nla)
+	if ((nla == NULL) || (nla->identity == NULL))
+	{
 		return NULL;
+	}
 
-	return nla->identity;
+	return nla->identity->password_creds;
 }
 
 NLA_STATE nla_get_state(rdpNla* nla)
