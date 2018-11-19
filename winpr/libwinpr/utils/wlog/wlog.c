@@ -45,6 +45,8 @@ struct _wLogFilter
 };
 typedef struct _wLogFilter wLogFilter;
 
+#define WLOG_FILTER_NOT_FILTERED -1
+#define WLOG_FILTER_NOT_INITIALIZED -2
 /**
  * References for general logging concepts:
  *
@@ -423,10 +425,10 @@ DWORD WLog_GetLogLevel(wLog* log)
 	if (!log)
 		return WLOG_OFF;
 
-	if (log->FilterLevel < 0)
+	if (log->FilterLevel <= WLOG_FILTER_NOT_INITIALIZED)
 		log->FilterLevel = WLog_GetFilterLogLevel(log);
 
-	if (log->FilterLevel >= 0)
+	if (log->FilterLevel > WLOG_FILTER_NOT_FILTERED)
 		return (DWORD)log->FilterLevel;
 	else if (log->Level == WLOG_LEVEL_INHERIT)
 		log->Level = WLog_GetLogLevel(log->Parent);
@@ -447,6 +449,26 @@ BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level)
 		return FALSE;
 
 	return WLog_SetLogLevel(log, (DWORD)lvl);
+}
+
+static BOOL WLog_reset_log_filters(wLog* log)
+{
+	DWORD x;
+
+	if (!log)
+		return FALSE;
+
+	log->FilterLevel = WLOG_FILTER_NOT_INITIALIZED;
+
+	for (x = 0; x < log->ChildrenCount; x++)
+	{
+		wLog* child = log->Children[x];
+
+		if (!WLog_reset_log_filters(child))
+			return FALSE;
+	}
+
+	return TRUE;
 }
 
 BOOL WLog_AddStringLogFilters(LPCSTR filter)
@@ -515,7 +537,7 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 
 	g_FilterCount = size;
 	free(cp);
-	return TRUE;
+	return WLog_reset_log_filters(WLog_GetRoot());
 }
 
 static BOOL WLog_UpdateInheritLevel(wLog* log, DWORD logLevel)
@@ -561,7 +583,7 @@ BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 			return FALSE;
 	}
 
-	return TRUE;
+	return WLog_reset_log_filters(log);
 }
 
 int WLog_ParseLogLevel(LPCSTR level)
@@ -675,6 +697,7 @@ BOOL WLog_ParseFilters(void)
 	BOOL res = FALSE;
 	char* env;
 	DWORD nSize;
+	free(g_Filters);
 	g_Filters = NULL;
 	g_FilterCount = 0;
 	nSize = GetEnvironmentVariableA(filter, NULL, 0);
@@ -732,7 +755,7 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 	if (match)
 		log->FilterLevel = g_Filters[i].Level;
 	else
-		log->FilterLevel = -1;
+		log->FilterLevel = WLOG_FILTER_NOT_FILTERED;
 
 	return log->FilterLevel;
 }
@@ -804,7 +827,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	log->Parent = rootLogger;
 	log->ChildrenCount = 0;
 	log->ChildrenSize = 16;
-	log->FilterLevel = -1;
+	log->FilterLevel = WLOG_FILTER_NOT_INITIALIZED;
 
 	if (!(log->Children = (wLog**) calloc(log->ChildrenSize, sizeof(wLog*))))
 		goto out_fail;
