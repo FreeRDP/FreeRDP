@@ -375,7 +375,6 @@ static BOOL android_post_connect(freerdp* instance)
 	instance->update->BeginPaint = android_begin_paint;
 	instance->update->EndPaint = android_end_paint;
 	instance->update->DesktopResize = android_desktop_resize;
-	pointer_cache_register_callbacks(update);
 	freerdp_callback("OnSettingsChanged", "(JIII)V", (jlong)instance,
 	                 settings->DesktopWidth, settings->DesktopHeight,
 	                 settings->ColorDepth);

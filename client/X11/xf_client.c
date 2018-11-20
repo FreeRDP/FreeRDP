@@ -1274,7 +1274,6 @@ static BOOL xf_post_connect(freerdp* instance)
 		update->DesktopResize = xf_hw_desktop_resize;
 	}
 
-	pointer_cache_register_callbacks(update);
 	update->PlaySound = xf_play_sound;
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 	update->SetKeyboardImeStatus = xf_keyboard_set_ime_status;

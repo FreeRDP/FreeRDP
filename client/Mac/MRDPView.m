@@ -944,7 +944,6 @@ BOOL mac_post_connect(freerdp* instance)
 
 	gdi = instance->context->gdi;
 	view->bitmap_context = mac_create_bitmap_context(instance->context);
-	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
 	/* setup pasteboard (aka clipboard) for copy operations (write only) */
 	view->pasteboard_wr = [NSPasteboard generalPasteboard];

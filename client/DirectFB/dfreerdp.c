@@ -204,7 +204,6 @@ BOOL df_post_connect(freerdp* instance)
 	instance->update->BeginPaint = df_begin_paint;
 	instance->update->EndPaint = df_end_paint;
 	df_keyboard_init();
-	pointer_cache_register_callbacks(instance->update);
 	df_register_graphics(instance->context->graphics);
 	return TRUE;
 }
