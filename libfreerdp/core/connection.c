@@ -197,6 +197,7 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 
 BOOL rdp_client_connect(rdpRdp* rdp)
 {
+	UINT32 SelectedProtocol;
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
 	/* make sure SSL is initialize for earlier enough for crypto, by taking advantage of winpr SSL FIPS flag for openssl initialization */
@@ -306,7 +307,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		return FALSE;
 	}
 
-	if ((rdp->nego->SelectedProtocol & PROTOCOL_TLS) || (rdp->nego->SelectedProtocol == PROTOCOL_RDP))
+	SelectedProtocol = nego_get_selected_protocol(rdp->nego);
+
+	if ((SelectedProtocol & PROTOCOL_TLS) || (SelectedProtocol == PROTOCOL_RDP))
 	{
 		if ((settings->Username != NULL) && ((settings->Password != NULL) ||
 		                                     (settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
@@ -1169,6 +1172,8 @@ int rdp_client_transition_to_state(rdpRdp* rdp, int state)
 
 BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 {
+	UINT32 SelectedProtocol = 0;
+	UINT32 RequestedProtocols;
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
 	rdpNego* nego = rdp->nego;
@@ -1177,26 +1182,26 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	if (!nego_read_request(nego, s))
 		return FALSE;
 
-	nego->SelectedProtocol = 0;
+	RequestedProtocols = nego_get_requested_protocols(nego);
 	WLog_INFO(TAG, "Client Security: NLA:%d TLS:%d RDP:%d",
-	          (nego->RequestedProtocols & PROTOCOL_NLA) ? 1 : 0,
-	          (nego->RequestedProtocols & PROTOCOL_TLS) ? 1 : 0,
-	          (nego->RequestedProtocols == PROTOCOL_RDP) ? 1 : 0
+	          (RequestedProtocols & PROTOCOL_NLA) ? 1 : 0,
+	          (RequestedProtocols & PROTOCOL_TLS) ? 1 : 0,
+	          (RequestedProtocols == PROTOCOL_RDP) ? 1 : 0
 	         );
 	WLog_INFO(TAG, "Server Security: NLA:%"PRId32" TLS:%"PRId32" RDP:%"PRId32"",
 	          settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
-	if ((settings->NlaSecurity) && (nego->RequestedProtocols & PROTOCOL_NLA))
+	if ((settings->NlaSecurity) && (RequestedProtocols & PROTOCOL_NLA))
 	{
-		nego->SelectedProtocol = PROTOCOL_NLA;
+		SelectedProtocol = PROTOCOL_NLA;
 	}
-	else if ((settings->TlsSecurity) && (nego->RequestedProtocols & PROTOCOL_TLS))
+	else if ((settings->TlsSecurity) && (RequestedProtocols & PROTOCOL_TLS))
 	{
-		nego->SelectedProtocol = PROTOCOL_TLS;
+		SelectedProtocol = PROTOCOL_TLS;
 	}
-	else if ((settings->RdpSecurity) && (nego->RequestedProtocols == PROTOCOL_RDP))
+	else if ((settings->RdpSecurity) && (RequestedProtocols == PROTOCOL_RDP))
 	{
-		nego->SelectedProtocol = PROTOCOL_RDP;
+		SelectedProtocol = PROTOCOL_RDP;
 	}
 	else
 	{
@@ -1204,49 +1209,53 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 		 * when here client and server aren't compatible, we select the right
 		 * error message to return to the client in the nego failure packet
 		 */
-		nego->SelectedProtocol = PROTOCOL_FAILED_NEGO;
+		SelectedProtocol = PROTOCOL_FAILED_NEGO;
 
 		if (settings->RdpSecurity)
 		{
 			WLog_ERR(TAG, "server supports only Standard RDP Security");
-			nego->SelectedProtocol |= SSL_NOT_ALLOWED_BY_SERVER;
+			SelectedProtocol |= SSL_NOT_ALLOWED_BY_SERVER;
 		}
 		else
 		{
 			if (settings->NlaSecurity && !settings->TlsSecurity)
 			{
 				WLog_WARN(TAG, "server supports only NLA Security");
-				nego->SelectedProtocol |= HYBRID_REQUIRED_BY_SERVER;
+				SelectedProtocol |= HYBRID_REQUIRED_BY_SERVER;
 			}
 			else
 			{
 				WLog_WARN(TAG, "server supports only a SSL based Security (TLS or NLA)");
-				nego->SelectedProtocol |= SSL_REQUIRED_BY_SERVER;
+				SelectedProtocol |= SSL_REQUIRED_BY_SERVER;
 			}
 		}
 
 		WLog_ERR(TAG, "Protocol security negotiation failure");
 	}
 
-	if (!(nego->SelectedProtocol & PROTOCOL_FAILED_NEGO))
+	if (!(SelectedProtocol & PROTOCOL_FAILED_NEGO))
 	{
 		WLog_INFO(TAG, "Negotiated Security: NLA:%d TLS:%d RDP:%d",
-		          (nego->SelectedProtocol & PROTOCOL_NLA) ? 1 : 0,
-		          (nego->SelectedProtocol & PROTOCOL_TLS) ? 1 : 0,
-		          (nego->SelectedProtocol == PROTOCOL_RDP) ? 1 : 0
+		          (SelectedProtocol & PROTOCOL_NLA) ? 1 : 0,
+		          (SelectedProtocol & PROTOCOL_TLS) ? 1 : 0,
+		          (SelectedProtocol == PROTOCOL_RDP) ? 1 : 0
 		         );
 	}
+
+	if (!nego_set_selected_protocol(nego, SelectedProtocol))
+		return FALSE;
 
 	if (!nego_send_negotiation_response(nego))
 		return FALSE;
 
+	SelectedProtocol = nego_get_selected_protocol(nego);
 	status = FALSE;
 
-	if (nego->SelectedProtocol & PROTOCOL_NLA)
+	if (SelectedProtocol & PROTOCOL_NLA)
 		status = transport_accept_nla(rdp->transport);
-	else if (nego->SelectedProtocol & PROTOCOL_TLS)
+	else if (SelectedProtocol & PROTOCOL_TLS)
 		status = transport_accept_tls(rdp->transport);
-	else if (nego->SelectedProtocol == PROTOCOL_RDP) /* 0 */
+	else if (SelectedProtocol == PROTOCOL_RDP) /* 0 */
 		status = transport_accept_rdp(rdp->transport);
 
 	if (!status)

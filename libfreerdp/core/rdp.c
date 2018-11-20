@@ -1400,7 +1400,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			{
 				nego_recv(rdp->transport, s, (void*) rdp->nego);
 
-				if (rdp->nego->state != NEGO_STATE_FINAL)
+				if (nego_get_state(rdp->nego) != NEGO_STATE_FINAL)
 				{
 					WLog_ERR(TAG, "rdp_recv_callback: CONNECTION_STATE_NLA - nego_recv() fail");
 					return -1;
@@ -1415,8 +1415,12 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 				if (rdp->settings->VmConnectMode)
 				{
-					rdp->nego->state = NEGO_STATE_NLA;
-					rdp->nego->RequestedProtocols = PROTOCOL_NLA | PROTOCOL_TLS;
+					if (!nego_set_state(rdp->nego, NEGO_STATE_NLA))
+						return -1;
+
+					if (!nego_set_requested_protocols(rdp->nego, PROTOCOL_NLA | PROTOCOL_TLS))
+						return -1;
+
 					nego_send_negotiation_request(rdp->nego);
 					rdp->nla->state = NLA_STATE_POST_NEGO;
 				}
