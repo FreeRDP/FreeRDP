@@ -71,6 +71,65 @@ BOOL freerdp_client_print_buildconfig(void)
 	return TRUE;
 }
 
+static char* print_token(char* text, int start_offset, int* current, int limit,
+                         const char delimiter)
+{
+	int len = (int)strlen(text);
+
+	if (*current < start_offset)
+		*current += printf("%*c", (start_offset - *current), ' ');
+
+	if (*current + len > limit)
+	{
+		int x;
+
+		for (x = MIN(len, limit - start_offset); x > 1; x--)
+		{
+			if (text[x] == delimiter)
+			{
+				printf("%.*s\n", x, text);
+				*current = 0;
+				return &text[x];
+			}
+		}
+
+		return NULL;
+	}
+
+	*current += printf("%s", text);
+	return NULL;
+}
+
+static int print_optionals(const char* text, int start_offset, int current)
+{
+	const size_t limit = 80;
+	char* str = _strdup(text);
+	char* cur = print_token(str, start_offset, &current, limit, '[');
+
+	while (cur)
+		cur = print_token(cur, start_offset, &current, limit, '[');
+
+	free(str);
+	return current;
+}
+
+static int print_description(const char* text, int start_offset, int current)
+{
+	const size_t limit = 80;
+	char* str = _strdup(text);
+	char* cur = print_token(str, start_offset, &current, limit, ' ');
+
+	while (cur)
+	{
+		cur++;
+		cur = print_token(cur, start_offset, &current, limit, ' ');
+	}
+
+	free(str);
+	current += (size_t) printf("\n");
+	return current;
+}
+
 static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 {
 	if (!arg)
@@ -78,46 +137,45 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 
 	do
 	{
-		if (arg->Flags & COMMAND_LINE_VALUE_FLAG)
-		{
-			printf("    %s", "/");
-			printf("%-20s", arg->Name);
-			printf("\t%s\n", arg->Text);
-		}
-		else if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED)
-		         || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
-		{
-			BOOL overlong = FALSE;
-			printf("    %s", "/");
+		int pos = 0;
+		const int description_offset = 30 + 8;
 
+		if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
+			pos += printf("    %s%s", arg->Default ? "-" : "+", arg->Name);
+		else
+			pos += printf("    /%s", arg->Name);
+
+		if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED)
+		    || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
+		{
 			if (arg->Format)
 			{
-				size_t length = (strlen(arg->Name) + strlen(arg->Format) + 2);
-
 				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
-					length += 2;
-
-				if (length >= 20 + 8 + 8)
-					overlong = TRUE;
-
-				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
-					printf("%s[:%s]", arg->Name, overlong ? "..." : arg->Format);
+				{
+					pos += printf("[:");
+					pos = print_optionals(arg->Format, pos, pos);
+					pos += printf("]");
+				}
 				else
-					printf("%s:%s", arg->Name, overlong ? "..." : arg->Format);
-			}
-			else
-			{
-				printf("%-20s", arg->Name);
-			}
+				{
+					pos += printf(":");
+					pos = print_optionals(arg->Format, pos, pos);
+				}
 
-			printf("\t%s\n", arg->Text);
+				if (pos > description_offset)
+				{
+					printf("\n");
+					pos = 0;
+				}
+			}
 		}
-		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
-		{
-			printf("    %s", arg->Default ? "-" : "+");
-			printf("%-20s", arg->Name);
-			printf("\t%s %s\n", arg->Default ? "Disable" : "Enable", arg->Text);
-		}
+
+		pos += printf("%*c", (description_offset - pos), ' ');
+
+		if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
+			pos += printf("%s ", arg->Default ? "Disable" : "Enable");
+
+		print_description(arg->Text, description_offset, pos);
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 }
@@ -1323,21 +1381,22 @@ static void activate_smartcard_logon_rdp(rdpSettings* settings)
  * @param v2: pointer to output v2
  * @return if the parsing was successful
  */
-static BOOL parseSizeValue(const char *input, unsigned long *v1, unsigned long *v2)
+static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* v2)
 {
-	const char *xcharpos;
-	char *endPtr;
+	const char* xcharpos;
+	char* endPtr;
 	unsigned long v;
-
 	errno = 0;
 	v = strtoul(input, &endPtr, 10);
 
 	if ((v == 0 || v == ULONG_MAX) && (errno != 0))
 		return FALSE;
+
 	if (v1)
 		*v1 = v;
 
 	xcharpos = strchr(input, 'x');
+
 	if (!xcharpos || xcharpos != endPtr)
 		return FALSE;
 
@@ -1349,6 +1408,7 @@ static BOOL parseSizeValue(const char *input, unsigned long *v1, unsigned long *
 
 	if (*endPtr !=  '\0')
 		return FALSE;
+
 	if (v2)
 		*v2 = v;
 
@@ -1576,12 +1636,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "size")
 		{
-
 			p = strchr(arg->Value, 'x');
 
 			if (p)
 			{
 				unsigned long w, h;
+
 				if (!parseSizeValue(arg->Value, &w, &h) || (w > UINT16_MAX) || (h > UINT16_MAX))
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
