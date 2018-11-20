@@ -151,11 +151,6 @@ static test tests[] =
 	},
 	{
 		0, check_settings_smartcard_no_redirection,
-		{"xfreerdp", "test.freerdp.com", 0},
-		{{0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
 		{"xfreerdp", "-v", "test.freerdp.com", 0},
 		{{0}}
 	},
@@ -171,23 +166,8 @@ static test tests[] =
 	},
 	{
 		0, check_settings_smartcard_no_redirection,
-		{"xfreerdp", "--plugin", "rdpsnd", "--plugin", "rdpdr", "--data", "disk:media:"DRIVE_REDIRECT_PATH, "--", "test.freerdp.com", 0},
-		{{0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
 		{"xfreerdp", "/sound", "/drive:media,"DRIVE_REDIRECT_PATH, "/v:test.freerdp.com", 0},
 		{{0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"xfreerdp", "-u", "test", "-p", "test", "test.freerdp.com", 0},
-		{{4, "****"}, {0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"xfreerdp", "-u", "test", "-p", "test", "-v", "test.freerdp.com", 0},
-		{{4, "****"}, {0}}
 	},
 	{
 		0, check_settings_smartcard_no_redirection,
@@ -224,14 +204,6 @@ static test tests[] =
 		{"xfreerdp", "/sound", "/drive:media,/foo/bar/blabla", "/v:test.freerdp.com", 0},
 		{{0}}
 	},
-
-#if 0
-	{
-		COMMAND_LINE_STATUS_PRINT, check_settings_smartcard_no_redirection,
-		{"xfreerdp", "-z", "--plugin", "cliprdr", "--plugin", "rdpsnd", "--data", "alsa", "latency:100", "--", "--plugin", "rdpdr", "--data", "disk:w7share:/home/w7share", "--", "--plugin", "drdynvc", "--data", "tsmf:decoder:gstreamer", "--", "-u", "test", "host.example.com", 0},
-		{{0}}
-	},
-#endif
 };
 
 
