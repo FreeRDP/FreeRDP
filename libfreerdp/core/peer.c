@@ -478,11 +478,11 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			}
 
 			SelectedProtocol = nego_get_selected_protocol(rdp->nego);
-			client->settings->NlaSecurity = (SelectedProtocol & PROTOCOL_NLA) ? TRUE : FALSE;
-			client->settings->TlsSecurity = (SelectedProtocol & PROTOCOL_TLS) ? TRUE : FALSE;
+			client->settings->NlaSecurity = (SelectedProtocol & PROTOCOL_HYBRID) ? TRUE : FALSE;
+			client->settings->TlsSecurity = (SelectedProtocol & PROTOCOL_SSL) ? TRUE : FALSE;
 			client->settings->RdpSecurity = (SelectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE;
 
-			if (SelectedProtocol & PROTOCOL_NLA)
+			if (SelectedProtocol & PROTOCOL_HYBRID)
 			{
 				SEC_WINNT_AUTH_IDENTITY* identity = nego_get_identity(rdp->nego);
 				sspi_CopyAuthIdentity(&client->identity, identity);

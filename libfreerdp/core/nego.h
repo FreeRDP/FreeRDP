@@ -29,12 +29,14 @@
 
 #include <winpr/stream.h>
 
-/* Protocol Security Negotiation Protocols */
-#define PROTOCOL_RDP	0x00000000
-#define PROTOCOL_TLS	0x00000001
-#define PROTOCOL_NLA	0x00000002
-#define PROTOCOL_RDS	0x00000004
-#define PROTOCOL_EXT	0x00000008
+/* Protocol Security Negotiation Protocols
+ * [MS-RDPBCGR] 2.2.1.1.1 RDP Negotiation Request (RDP_NEG_REQ)
+ */
+#define PROTOCOL_RDP       0x00000000
+#define PROTOCOL_SSL       0x00000001
+#define PROTOCOL_HYBRID    0x00000002
+#define PROTOCOL_RDSTLS    0x00000004
+#define PROTOCOL_HYBRID_EX 0x00000008
 
 #define PROTOCOL_FAILED_NEGO	0x80000000 /* only used internally, not on the wire */
 

@@ -111,15 +111,15 @@ BOOL nego_connect(rdpNego* nego)
 
 	if (nego->state == NEGO_STATE_INITIAL)
 	{
-		if (nego->EnabledProtocols[PROTOCOL_EXT])
+		if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX])
 		{
 			nego->state = NEGO_STATE_EXT;
 		}
-		else if (nego->EnabledProtocols[PROTOCOL_NLA])
+		else if (nego->EnabledProtocols[PROTOCOL_HYBRID])
 		{
 			nego->state = NEGO_STATE_NLA;
 		}
-		else if (nego->EnabledProtocols[PROTOCOL_TLS])
+		else if (nego->EnabledProtocols[PROTOCOL_SSL])
 		{
 			nego->state = NEGO_STATE_TLS;
 		}
@@ -138,26 +138,26 @@ BOOL nego_connect(rdpNego* nego)
 		{
 			WLog_DBG(TAG, "Security Layer Negotiation is disabled");
 			/* attempt only the highest enabled protocol (see nego_attempt_*) */
-			nego->EnabledProtocols[PROTOCOL_NLA] = FALSE;
-			nego->EnabledProtocols[PROTOCOL_TLS] = FALSE;
+			nego->EnabledProtocols[PROTOCOL_HYBRID] = FALSE;
+			nego->EnabledProtocols[PROTOCOL_SSL] = FALSE;
 			nego->EnabledProtocols[PROTOCOL_RDP] = FALSE;
-			nego->EnabledProtocols[PROTOCOL_EXT] = FALSE;
+			nego->EnabledProtocols[PROTOCOL_HYBRID_EX] = FALSE;
 
 			if (nego->state == NEGO_STATE_EXT)
 			{
-				nego->EnabledProtocols[PROTOCOL_EXT] = TRUE;
-				nego->EnabledProtocols[PROTOCOL_NLA] = TRUE;
-				nego->SelectedProtocol = PROTOCOL_EXT;
+				nego->EnabledProtocols[PROTOCOL_HYBRID_EX] = TRUE;
+				nego->EnabledProtocols[PROTOCOL_HYBRID] = TRUE;
+				nego->SelectedProtocol = PROTOCOL_HYBRID_EX;
 			}
 			else if (nego->state == NEGO_STATE_NLA)
 			{
-				nego->EnabledProtocols[PROTOCOL_NLA] = TRUE;
-				nego->SelectedProtocol = PROTOCOL_NLA;
+				nego->EnabledProtocols[PROTOCOL_HYBRID] = TRUE;
+				nego->SelectedProtocol = PROTOCOL_HYBRID;
 			}
 			else if (nego->state == NEGO_STATE_TLS)
 			{
-				nego->EnabledProtocols[PROTOCOL_TLS] = TRUE;
-				nego->SelectedProtocol = PROTOCOL_TLS;
+				nego->EnabledProtocols[PROTOCOL_SSL] = TRUE;
+				nego->SelectedProtocol = PROTOCOL_SSL;
 			}
 			else if (nego->state == NEGO_STATE_RDP)
 			{
@@ -247,14 +247,14 @@ BOOL nego_security_connect(rdpNego* nego)
 	}
 	else if (!nego->SecurityConnected)
 	{
-		if (nego->SelectedProtocol == PROTOCOL_NLA)
+		if (nego->SelectedProtocol == PROTOCOL_HYBRID)
 		{
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_NLA");
+			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_HYBRID");
 			nego->SecurityConnected = transport_connect_nla(nego->transport);
 		}
-		else if (nego->SelectedProtocol == PROTOCOL_TLS)
+		else if (nego->SelectedProtocol == PROTOCOL_SSL)
 		{
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_TLS");
+			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_SSL");
 			nego->SecurityConnected = transport_connect_tls(nego->transport);
 		}
 		else if (nego->SelectedProtocol == PROTOCOL_RDP)
@@ -407,7 +407,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 
 static void nego_attempt_ext(rdpNego* nego)
 {
-	nego->RequestedProtocols = PROTOCOL_NLA | PROTOCOL_TLS | PROTOCOL_EXT;
+	nego->RequestedProtocols = PROTOCOL_HYBRID | PROTOCOL_SSL | PROTOCOL_HYBRID_EX;
 	WLog_DBG(TAG, "Attempting NLA extended security");
 
 	if (!nego_transport_connect(nego))
@@ -434,9 +434,9 @@ static void nego_attempt_ext(rdpNego* nego)
 	{
 		nego_transport_disconnect(nego);
 
-		if (nego->EnabledProtocols[PROTOCOL_NLA])
+		if (nego->EnabledProtocols[PROTOCOL_HYBRID])
 			nego->state = NEGO_STATE_NLA;
-		else if (nego->EnabledProtocols[PROTOCOL_TLS])
+		else if (nego->EnabledProtocols[PROTOCOL_SSL])
 			nego->state = NEGO_STATE_TLS;
 		else if (nego->EnabledProtocols[PROTOCOL_RDP])
 			nego->state = NEGO_STATE_RDP;
@@ -452,7 +452,7 @@ static void nego_attempt_ext(rdpNego* nego)
 
 static void nego_attempt_nla(rdpNego* nego)
 {
-	nego->RequestedProtocols = PROTOCOL_NLA | PROTOCOL_TLS;
+	nego->RequestedProtocols = PROTOCOL_HYBRID | PROTOCOL_SSL;
 	WLog_DBG(TAG, "Attempting NLA security");
 
 	if (!nego_transport_connect(nego))
@@ -479,7 +479,7 @@ static void nego_attempt_nla(rdpNego* nego)
 	{
 		nego_transport_disconnect(nego);
 
-		if (nego->EnabledProtocols[PROTOCOL_TLS])
+		if (nego->EnabledProtocols[PROTOCOL_SSL])
 			nego->state = NEGO_STATE_TLS;
 		else if (nego->EnabledProtocols[PROTOCOL_RDP])
 			nego->state = NEGO_STATE_RDP;
@@ -495,7 +495,7 @@ static void nego_attempt_nla(rdpNego* nego)
 
 static void nego_attempt_tls(rdpNego* nego)
 {
-	nego->RequestedProtocols = PROTOCOL_TLS;
+	nego->RequestedProtocols = PROTOCOL_SSL;
 	WLog_DBG(TAG, "Attempting TLS security");
 
 	if (!nego_transport_connect(nego))
@@ -629,14 +629,14 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 
 				if (nego->SelectedProtocol)
 				{
-					if ((nego->SelectedProtocol == PROTOCOL_NLA) &&
-					    (!nego->EnabledProtocols[PROTOCOL_NLA]))
+					if ((nego->SelectedProtocol == PROTOCOL_HYBRID) &&
+					    (!nego->EnabledProtocols[PROTOCOL_HYBRID]))
 					{
 						nego->state = NEGO_STATE_FAIL;
 					}
 
-					if ((nego->SelectedProtocol == PROTOCOL_TLS) &&
-					    (!nego->EnabledProtocols[PROTOCOL_TLS]))
+					if ((nego->SelectedProtocol == PROTOCOL_SSL) &&
+					    (!nego->EnabledProtocols[PROTOCOL_SSL]))
 					{
 						nego->state = NEGO_STATE_FAIL;
 					}
@@ -1113,7 +1113,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				return FALSE;
 			}
 		}
-		else if (settings->SelectedProtocol == PROTOCOL_TLS)
+		else if (settings->SelectedProtocol == PROTOCOL_SSL)
 		{
 			settings->TlsSecurity = TRUE;
 			settings->NlaSecurity = FALSE;
@@ -1121,7 +1121,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			settings->UseRdpSecurityLayer = FALSE;
 			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}
-		else if (settings->SelectedProtocol == PROTOCOL_NLA)
+		else if (settings->SelectedProtocol == PROTOCOL_HYBRID)
 		{
 			settings->TlsSecurity = TRUE;
 			settings->NlaSecurity = TRUE;
@@ -1253,7 +1253,7 @@ void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp)
 void nego_enable_tls(rdpNego* nego, BOOL enable_tls)
 {
 	WLog_DBG(TAG, "Enabling TLS security: %s", enable_tls ? "TRUE" : "FALSE");
-	nego->EnabledProtocols[PROTOCOL_TLS] = enable_tls;
+	nego->EnabledProtocols[PROTOCOL_SSL] = enable_tls;
 }
 
 /**
@@ -1265,7 +1265,7 @@ void nego_enable_tls(rdpNego* nego, BOOL enable_tls)
 void nego_enable_nla(rdpNego* nego, BOOL enable_nla)
 {
 	WLog_DBG(TAG, "Enabling NLA security: %s", enable_nla ? "TRUE" : "FALSE");
-	nego->EnabledProtocols[PROTOCOL_NLA] = enable_nla;
+	nego->EnabledProtocols[PROTOCOL_HYBRID] = enable_nla;
 }
 
 /**
@@ -1277,7 +1277,7 @@ void nego_enable_nla(rdpNego* nego, BOOL enable_nla)
 void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
 {
 	WLog_DBG(TAG, "Enabling NLA extended security: %s", enable_ext ? "TRUE" : "FALSE");
-	nego->EnabledProtocols[PROTOCOL_EXT] = enable_ext;
+	nego->EnabledProtocols[PROTOCOL_HYBRID_EX] = enable_ext;
 }
 
 /**

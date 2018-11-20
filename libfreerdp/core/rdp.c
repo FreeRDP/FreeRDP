@@ -1419,7 +1419,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 					if (!nego_set_state(rdp->nego, NEGO_STATE_NLA))
 						return -1;
 
-					if (!nego_set_requested_protocols(rdp->nego, PROTOCOL_NLA | PROTOCOL_TLS))
+					if (!nego_set_requested_protocols(rdp->nego, PROTOCOL_HYBRID | PROTOCOL_SSL))
 						return -1;
 
 					nego_send_negotiation_request(rdp->nego);
