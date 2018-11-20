@@ -45,10 +45,9 @@ function build {
 	BASE=$(pwd)
 	DST_DIR=$BUILD_DST/$DST_PREFIX
 	common_run cd $BUILD_SRC
-	common_run git clean -xdf
 	common_run ./Configure --config=$SCRIPT_PATH/openssl-mips64.conf --openssldir=$DST_DIR $CONFIG no-shared 
-	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" depend
-	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" build_libs
+	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" -j depend
+	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" -j build_libs
 
 	if [ ! -d $DST_DIR ];
 	then
@@ -64,7 +63,6 @@ function build {
 common_parse_arguments $@
 common_check_requirements
 common_update $SCM_URL $SCM_TAG $BUILD_SRC
-common_clean $BUILD_DST
 
 ORG_PATH=$PATH
 for ARCH in $BUILD_ARCH
