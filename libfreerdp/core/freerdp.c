@@ -48,6 +48,7 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/version.h>
 #include <freerdp/log.h>
+#include <freerdp/cache/pointer.h>
 
 #define TAG FREERDP_TAG("core")
 
@@ -208,6 +209,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (status)
 	{
+		pointer_cache_register_callbacks(instance->context->update);
 		IFCALLRET(instance->PostConnect, status, instance);
 		instance->ConnectionCallbackState = CLIENT_STATE_POSTCONNECT_PASSED;
 

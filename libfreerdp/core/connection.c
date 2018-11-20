@@ -37,6 +37,7 @@
 #include <freerdp/log.h>
 #include <freerdp/error.h>
 #include <freerdp/listener.h>
+#include <freerdp/cache/pointer.h>
 
 #define TAG FREERDP_TAG("core.connection")
 
@@ -394,6 +395,8 @@ static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 	{
 		if (redirect)
 			return TRUE;
+
+		pointer_cache_register_callbacks(context->update);
 
 		if (!IFCALLRESULT(FALSE, context->instance->PostConnect, context->instance))
 			return FALSE;

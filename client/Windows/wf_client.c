@@ -372,7 +372,6 @@ static BOOL wf_post_connect(freerdp* instance)
 	instance->update->BeginPaint = wf_begin_paint;
 	instance->update->DesktopResize = wf_desktop_resize;
 	instance->update->EndPaint = wf_end_paint;
-	pointer_cache_register_callbacks(instance->update);
 	wf_register_pointer(context->graphics);
 
 	if (!settings->SoftwareGdi)
