@@ -367,10 +367,10 @@ typedef GDIOBJECT* HGDIOBJECT;
 struct _GDI_RECT
 {
 	BYTE objectType;
-	UINT32 left;
-	UINT32 top;
-	UINT32 right;
-	UINT32 bottom;
+	INT32 left;
+	INT32 top;
+	INT32 right;
+	INT32 bottom;
 };
 typedef struct _GDI_RECT GDI_RECT;
 typedef GDI_RECT* HGDI_RECT;
@@ -378,10 +378,10 @@ typedef GDI_RECT* HGDI_RECT;
 struct _GDI_RGN
 {
 	BYTE objectType;
-	UINT32 x; /* left */
-	UINT32 y; /* top */
-	UINT32 w; /* width */
-	UINT32 h; /* height */
+	INT32 x; /* left */
+	INT32 y; /* top */
+	INT32 w; /* width */
+	INT32 h; /* height */
 	BOOL null; /* null region */
 };
 typedef struct _GDI_RGN GDI_RGN;
@@ -391,8 +391,8 @@ struct _GDI_BITMAP
 {
 	BYTE objectType;
 	UINT32 format;
-	UINT32 width;
-	UINT32 height;
+	INT32 width;
+	INT32 height;
 	UINT32 scanline;
 	BYTE* data;
 	void (*free)(void*);
@@ -404,9 +404,9 @@ struct _GDI_PEN
 {
 	BYTE objectType;
 	UINT32 style;
-	UINT32 width;
-	UINT32 posX;
-	UINT32 posY;
+	INT32 width;
+	INT32 posX;
+	INT32 posY;
 	UINT32 color;
 	UINT32 format;
 	const gdiPalette* palette;
@@ -432,8 +432,8 @@ typedef GDI_PALETTE* HGDI_PALETTE;
 
 struct _GDI_POINT
 {
-	UINT32 x;
-	UINT32 y;
+	INT32 x;
+	INT32 y;
 };
 typedef struct _GDI_POINT GDI_POINT;
 typedef GDI_POINT* HGDI_POINT;
@@ -444,8 +444,8 @@ struct _GDI_BRUSH
 	int style;
 	HGDI_BITMAP pattern;
 	UINT32 color;
-	UINT32 nXOrg;
-	UINT32 nYOrg;
+	INT32 nXOrg;
+	INT32 nYOrg;
 };
 typedef struct _GDI_BRUSH GDI_BRUSH;
 typedef GDI_BRUSH* HGDI_BRUSH;
@@ -470,8 +470,8 @@ struct _GDI_DC
 	HGDI_RGN clip;
 	HGDI_PEN pen;
 	HGDI_WND hwnd;
-	UINT32 drawMode;
-	UINT32 bkMode;
+	INT32 drawMode;
+	INT32 bkMode;
 };
 typedef struct _GDI_DC GDI_DC;
 typedef GDI_DC* HGDI_DC;
@@ -500,8 +500,8 @@ struct rdp_gdi
 {
 	rdpContext* context;
 
-	UINT32 width;
-	UINT32 height;
+	INT32 width;
+	INT32 height;
 	UINT32 stride;
 	UINT32 dstFormat;
 	UINT32 cursor_x;

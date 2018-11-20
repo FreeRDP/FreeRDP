@@ -119,13 +119,15 @@ FREERDP_API rdpPointer* Pointer_Alloc(rdpContext* context);
 typedef BOOL (*pGlyph_New)(rdpContext* context, const rdpGlyph* glyph);
 typedef void (*pGlyph_Free)(rdpContext* context, rdpGlyph* glyph);
 typedef BOOL (*pGlyph_Draw)(rdpContext* context, const rdpGlyph* glyph,
-                            UINT32 x, UINT32 y, UINT32 w, UINT32 h,
-                            UINT32 sx, UINT32 sy, BOOL fOpRedundant);
-typedef BOOL (*pGlyph_BeginDraw)(rdpContext* context, UINT32 x, UINT32 y,
-                                 UINT32 width, UINT32 height, UINT32 bgcolor,
+                            INT32 x, INT32 y, INT32 w, INT32 h,
+                            INT32 sx, INT32 sy, BOOL fOpRedundant);
+typedef BOOL (*pGlyph_BeginDraw)(rdpContext* context, INT32 x, INT32 y,
+                                 INT32 width, INT32 height, UINT32 bgcolor,
                                  UINT32 fgcolor, BOOL fOpRedundant);
-typedef BOOL (*pGlyph_EndDraw)(rdpContext* context, UINT32 x, UINT32 y,
-                               UINT32 width, UINT32 height, UINT32 bgcolor, UINT32 fgcolor);
+typedef BOOL (*pGlyph_EndDraw)(rdpContext* context, INT32 x, INT32 y,
+                               INT32 width, INT32 height, UINT32 bgcolor, UINT32 fgcolor);
+typedef BOOL (*pGlyph_SetBounds)(rdpContext* context, INT32 x, INT32 y,
+                                 INT32 width, INT32 height);
 
 struct rdp_glyph
 {
@@ -135,7 +137,8 @@ struct rdp_glyph
 	pGlyph_Draw Draw; /* 3 */
 	pGlyph_BeginDraw BeginDraw; /* 4 */
 	pGlyph_EndDraw EndDraw; /* 5 */
-	UINT32 paddingA[16 - 6]; /* 6 */
+	pGlyph_SetBounds SetBounds; /* 6 */
+	UINT32 paddingA[16 - 7]; /* 7 */
 
 	INT32 x; /* 16 */
 	INT32 y; /* 17 */

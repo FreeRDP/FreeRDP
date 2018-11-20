@@ -33,12 +33,12 @@ FREERDP_LOCAL gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height,
         BYTE* data);
 FREERDP_LOCAL void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
 
-static INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, UINT32 x, UINT32 y)
+static INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 {
 	BYTE* p;
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdcBmp->selectedObject;
 
-	if (x < hBmp->width && y < hBmp->height)
+	if ((x >= 0) && (y >= 0) && (x < hBmp->width) && (y < hBmp->height))
 	{
 		p = hBmp->data + (y * hBmp->scanline) + (x * GetBytesPerPixel(hdcBmp->format));
 		return p;

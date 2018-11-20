@@ -42,14 +42,14 @@ FREERDP_API HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight,
 FREERDP_API HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc,
         UINT32 nWidth, UINT32 nHeight);
 
-FREERDP_API BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                            UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                            UINT32 nXSrc, UINT32 nYSrc, DWORD rop,
+FREERDP_API BOOL gdi_BitBlt(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest,
+                            INT32 nWidth, INT32 nHeight, HGDI_DC hdcSrc,
+                            INT32 nXSrc, INT32 nYSrc, DWORD rop,
                             const gdiPalette* palette);
 
-typedef BOOL (*p_BitBlt)(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                         UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                         UINT32 nXSrc, UINT32 nYSrc, DWORD rop);
+typedef BOOL (*p_BitBlt)(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest,
+                         INT32 nWidth, INT32 nHeight, HGDI_DC hdcSrc,
+                         INT32 nXSrc, INT32 nYSrc, DWORD rop);
 
 #ifdef __cplusplus
 }

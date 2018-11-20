@@ -273,8 +273,8 @@ static UINT32 process_rop(UINT32 src, UINT32 dst, UINT32 pat, const char* rop,
 	return stack[0];
 }
 
-static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
-                                UINT32 nYDest, UINT32 nXSrc, UINT32 nYSrc, UINT32 x, UINT32 y,
+static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest,
+                                INT32 nYDest, INT32 nXSrc, INT32 nYSrc, INT32 x, INT32 y,
                                 BOOL useSrc, BOOL usePat, UINT32 style,
                                 const char* rop, const gdiPalette* palette)
 {
@@ -282,7 +282,9 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
 	UINT32 colorA;
 	UINT32 colorB = 0;
 	UINT32 colorC = 0;
-	BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
+	const INT32 dstX = nXDest + x;
+	const INT32 dstY = nYDest + y;
+	BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, dstX, dstY);
 
 	if (!dstp)
 	{
@@ -338,11 +340,116 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
 	return WriteColor(dstp, hdcDest->format, dstColor);
 }
 
-static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                           UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                           UINT32 nXSrc, UINT32 nYSrc, const char* rop, const gdiPalette* palette)
+static BOOL adjust_src_coordinates(HGDI_DC hdcSrc, INT32 nWidth, INT32 nHeight,
+                                   INT32* px, INT32* py)
 {
-	INT64 x, y;
+	HGDI_BITMAP hSrcBmp;
+	INT32 nXSrc, nYSrc;
+
+	if (!hdcSrc || (nWidth < 0) || (nHeight < 0) || !px || !py)
+		return FALSE;
+
+	hSrcBmp = (HGDI_BITMAP) hdcSrc->selectedObject;
+	nXSrc = *px;
+	nYSrc = *py;
+
+	if (!hSrcBmp)
+		return FALSE;
+
+	if (nYSrc < 0)
+	{
+		nYSrc = 0;
+		nHeight = nHeight + nYSrc;
+	}
+
+	if ((nXSrc) < 0)
+	{
+		nXSrc = 0;
+		nWidth = nWidth + nXSrc;
+	}
+
+	if (hSrcBmp->width < (nXSrc + nWidth))
+		nXSrc = hSrcBmp->width - nWidth;
+
+	if (hSrcBmp->height < (nYSrc + nHeight))
+		nYSrc = hSrcBmp->height - nHeight;
+
+	if ((nXSrc < 0) || (nYSrc < 0))
+		return FALSE;
+
+	*px = nXSrc;
+	*py = nYSrc;
+	return TRUE;
+}
+
+static BOOL adjust_src_dst_coordinates(HGDI_DC hdcDest, INT32* pnXSrc, INT32* pnYSrc,
+                                       INT32* pnXDst, INT32* pnYDst, INT32* pnWidth, INT32* pnHeight)
+{
+	HGDI_BITMAP hDstBmp;
+	volatile INT32 diffX, diffY;
+	volatile INT32 nXSrc, nYSrc;
+	volatile INT32 nXDst, nYDst, nWidth, nHeight;
+
+	if (!hdcDest || !pnXSrc || !pnYSrc || !pnXDst || !pnYDst || !pnWidth || !pnHeight)
+		return FALSE;
+
+	hDstBmp = (HGDI_BITMAP) hdcDest->selectedObject;
+	nXSrc = *pnXSrc;
+	nYSrc = *pnYSrc;
+	nXDst = *pnXDst;
+	nYDst = *pnYDst;
+	nWidth = *pnWidth;
+	nHeight = *pnHeight;
+
+	if (!hDstBmp)
+		return FALSE;
+
+	if (nXDst < 0)
+	{
+		nXSrc -= nXDst;
+		nWidth += nXDst;
+		nXDst = 0;
+	}
+
+	if (nYDst < 0)
+	{
+		nYSrc -= nYDst;
+		nHeight += nYDst;
+		nYDst = 0;
+	}
+
+	diffX = hDstBmp->width - nXDst - nWidth;
+
+	if (diffX < 0)
+		nWidth += diffX;
+
+	diffY = hDstBmp->height - nYDst - nHeight;
+
+	if (diffY < 0)
+		nHeight += diffY;
+
+	if ((nXDst < 0) || (nYDst < 0) || (nWidth < 0) || (nHeight < 0))
+	{
+		nXDst = 0;
+		nYDst = 0;
+		nWidth = 0;
+		nHeight = 0;
+	}
+
+	*pnXSrc = nXSrc;
+	*pnYSrc = nYSrc;
+	*pnXDst = nXDst;
+	*pnYDst = nYDst;
+	*pnWidth = nWidth;
+	*pnHeight = nHeight;
+	return TRUE;
+}
+
+static BOOL BitBlt_process(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest,
+                           INT32 nWidth, INT32 nHeight, HGDI_DC hdcSrc,
+                           INT32 nXSrc, INT32 nYSrc, const char* rop, const gdiPalette* palette)
+{
+	INT32 x, y;
 	UINT32 style = 0;
 	BOOL useSrc = FALSE;
 	BOOL usePat = FALSE;
@@ -368,8 +475,17 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	if (!hdcDest)
 		return FALSE;
 
+	if (!adjust_src_dst_coordinates(hdcDest, &nXSrc, &nYSrc, &nXDest, &nYDest, &nWidth, &nHeight))
+		return FALSE;
+
 	if (useSrc && !hdcSrc)
 		return FALSE;
+
+	if (useSrc)
+	{
+		if (!adjust_src_coordinates(hdcSrc, nWidth, nHeight, &nXSrc, &nYSrc))
+			return FALSE;
+	}
 
 	if (usePat)
 	{
@@ -390,9 +506,9 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 
 	if ((nXDest > nXSrc) && (nYDest > nYSrc))
 	{
-		for (y = (INT64)nHeight - 1; y >= 0; y--)
+		for (y = nHeight - 1; y >= 0; y--)
 		{
-			for (x = (INT64)nWidth - 1; x >= 0; x--)
+			for (x = nWidth - 1; x >= 0; x--)
 			{
 				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest,
 				                  nXSrc, nYSrc, x, y, useSrc,
@@ -405,7 +521,7 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	{
 		for (y = 0; y < nHeight; y++)
 		{
-			for (x = (INT64)nWidth - 1; x >= 0; x--)
+			for (x = nWidth - 1; x >= 0; x--)
 			{
 				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest,
 				                  nXSrc, nYSrc, x, y, useSrc,
@@ -416,7 +532,7 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	}
 	else if (nYDest > nYSrc)
 	{
-		for (y = (INT64)nHeight - 1; y >= 0; y--)
+		for (y = nHeight - 1; y >= 0; y--)
 		{
 			for (x = 0; x < nWidth; x++)
 			{
@@ -458,9 +574,9 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
  * @param rop raster operation code
  * @return 0 on failure, non-zero otherwise
  */
-BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                UINT32 nXSrc, UINT32 nYSrc, DWORD rop, const gdiPalette* palette)
+BOOL gdi_BitBlt(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest,
+                INT32 nWidth, INT32 nHeight, HGDI_DC hdcSrc,
+                INT32 nXSrc, INT32 nYSrc, DWORD rop, const gdiPalette* palette)
 {
 	HGDI_BITMAP hSrcBmp, hDstBmp;
 
@@ -483,6 +599,12 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 			if (!hdcSrc)
 				return FALSE;
 
+			if (!adjust_src_dst_coordinates(hdcDest, &nXSrc, &nYSrc, &nXDest, &nYDest, &nWidth, &nHeight))
+				return FALSE;
+
+			if (!adjust_src_coordinates(hdcSrc, nWidth, nHeight, &nXSrc, &nYSrc))
+				return FALSE;
+
 			hSrcBmp = (HGDI_BITMAP) hdcSrc->selectedObject;
 			hDstBmp = (HGDI_BITMAP) hdcDest->selectedObject;
 
@@ -499,6 +621,12 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 		case GDI_DSTCOPY:
 			hSrcBmp = (HGDI_BITMAP) hdcDest->selectedObject;
 			hDstBmp = (HGDI_BITMAP) hdcDest->selectedObject;
+
+			if (!adjust_src_dst_coordinates(hdcDest, &nXSrc, &nYSrc, &nXDest, &nYDest, &nWidth, &nHeight))
+				return FALSE;
+
+			if (!adjust_src_coordinates(hdcDest, nWidth, nHeight, &nXSrc, &nYSrc))
+				return FALSE;
 
 			if (!hSrcBmp || !hDstBmp)
 				return FALSE;

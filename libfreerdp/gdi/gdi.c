@@ -584,8 +584,8 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = FALSE;
 	const DWORD rop = gdi_rop3_code(patblt->bRop);
-	UINT32 nXSrc = 0;
-	UINT32 nYSrc = 0;
+	INT32 nXSrc = 0;
+	INT32 nYSrc = 0;
 	BYTE data[8 * 8 * 4];
 	HGDI_BITMAP hBmp = NULL;
 
@@ -703,8 +703,12 @@ static BOOL gdi_opaque_rect(rdpContext* context,
 	UINT32 brush_color;
 	rdpGdi* gdi = context->gdi;
 	BOOL ret;
-	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
-	               opaque_rect->nWidth, opaque_rect->nHeight, &rect);
+	INT32 x = opaque_rect->nLeftRect;
+	INT32 y = opaque_rect->nTopRect;
+	INT32 w = opaque_rect->nWidth;
+	INT32 h = opaque_rect->nHeight;
+	gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
+	gdi_CRgnToRect(x, y, w, h, &rect);
 
 	if (!gdi_decode_color(gdi, opaque_rect->color, &brush_color, NULL))
 		return FALSE;
@@ -738,8 +742,12 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 	for (i = 0; i < multi_opaque_rect->numRectangles; i++)
 	{
 		const DELTA_RECT* rectangle = &multi_opaque_rect->rectangles[i];
-		gdi_CRgnToRect(rectangle->left, rectangle->top,
-		               rectangle->width, rectangle->height, &rect);
+		INT32 x = rectangle->left;
+		INT32 y = rectangle->top;
+		INT32 w = rectangle->width;
+		INT32 h = rectangle->height;
+		gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
+		gdi_CRgnToRect(x, y, w, h, &rect);
 		ret = gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
 
 		if (!ret)
@@ -755,6 +763,14 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 	UINT32 color;
 	HGDI_PEN hPen;
 	rdpGdi* gdi = context->gdi;
+	INT32 xStart = lineTo->nXStart;
+	INT32 yStart = lineTo->nYStart;
+	INT32 xEnd = lineTo->nXEnd;
+	INT32 yEnd = lineTo->nYEnd;
+	INT32 w = 0;
+	INT32 h = 0;
+	gdi_ClipCoords(gdi->drawing->hdc, &xStart, &yStart, &w, &h, NULL, NULL);
+	gdi_ClipCoords(gdi->drawing->hdc, &xEnd, &yEnd, &w, &h, NULL, NULL);
 
 	if (!gdi_decode_color(gdi, lineTo->penColor, &color, NULL))
 		return FALSE;
@@ -780,6 +796,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	HGDI_PEN hPen;
 	DELTA_POINT* points;
 	rdpGdi* gdi = context->gdi;
+	INT32 w = 0, h = 0;
 
 	if (!gdi_decode_color(gdi, polyline->penColor, &color, NULL))
 		return FALSE;
@@ -792,6 +809,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
 	x = polyline->xStart;
 	y = polyline->yStart;
+	gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
 	gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 	points = polyline->points;
 
@@ -799,6 +817,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	{
 		x += points[i].x;
 		y += points[i].y;
+		gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
 		gdi_LineTo(gdi->drawing->hdc, x, y);
 		gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 	}

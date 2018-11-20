@@ -135,7 +135,7 @@ BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 	INT32 bx2, by2;
 	HGDI_BITMAP bmp;
 	UINT32 pen;
-	UINT32 rop2 = gdi_GetROP2(hdc);
+	INT32 rop2 = gdi_GetROP2(hdc);
 	x1 = hdc->pen->posX;
 	y1 = hdc->pen->posY;
 	x2 = nXEnd;

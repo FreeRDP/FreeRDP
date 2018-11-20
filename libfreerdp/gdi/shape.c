@@ -126,11 +126,11 @@ BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect,
 
 BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 {
-	UINT32 x, y;
+	INT32 x, y;
 	UINT32 color, dstColor;
 	BOOL monochrome = FALSE;
-	UINT32 nXDest, nYDest;
-	UINT32 nWidth, nHeight;
+	INT32 nXDest, nYDest;
+	INT32 nWidth, nHeight;
 	const BYTE* srcp;
 	DWORD formatSize;
 	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
@@ -246,10 +246,10 @@ BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT* lpPoints, int* lpPolyCounts,
 	return FALSE;
 }
 
-BOOL gdi_Rectangle(HGDI_DC hdc, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
-                   UINT32 nHeight)
+BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth,
+                   INT32 nHeight)
 {
-	UINT32 x, y;
+	INT32 x, y;
 	UINT32 color;
 
 	if (!gdi_ClipCoords(hdc, &nXDst, &nYDst, &nWidth, &nHeight, NULL, NULL))

@@ -34,8 +34,8 @@
 
 #include "clipping.h"
 
-BOOL gdi_SetClipRgn(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft, UINT32 nWidth,
-                    UINT32 nHeight)
+BOOL gdi_SetClipRgn(HGDI_DC hdc, INT32 nXLeft, INT32 nYLeft, INT32 nWidth,
+                    INT32 nHeight)
 {
 	return gdi_SetRgn(hdc->clip, nXLeft, nYLeft, nWidth, nHeight);
 }
@@ -77,8 +77,8 @@ BOOL gdi_SetNullClipRgn(HGDI_DC hdc)
  * @return nonzero if there is something to draw, 0 otherwise
  */
 
-BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32* x, UINT32* y, UINT32* w, UINT32* h,
-                    UINT32* srcx, UINT32* srcy)
+BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h,
+                    INT32* srcx, INT32* srcy)
 {
 	GDI_RECT bmp;
 	GDI_RECT clip;
