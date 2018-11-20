@@ -132,7 +132,12 @@ int ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* chal
 	Stream_Read(s, challenge->ClientChallenge, 8);
 	Stream_Read_UINT32(s, challenge->Reserved3);
 	size = Stream_Length(s) - Stream_GetPosition(s);
-	challenge->AvPairs = (NTLM_AV_PAIR*) malloc(size);
+
+	if (size > UINT32_MAX)
+		return -1;
+
+	challenge->cbAvPairs = size;
+	challenge->AvPairs = (NTLM_AV_PAIR*) malloc(challenge->cbAvPairs);
 
 	if (!challenge->AvPairs)
 		return -1;
@@ -151,7 +156,7 @@ int ntlm_write_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* cha
 	Stream_Write(s, challenge->Timestamp, 8);
 	Stream_Write(s, challenge->ClientChallenge, 8);
 	Stream_Write_UINT32(s, challenge->Reserved3);
-	length = ntlm_av_pair_list_length(challenge->AvPairs);
+	length = ntlm_av_pair_list_length(challenge->AvPairs, challenge->cbAvPairs);
 	Stream_Write(s, challenge->AvPairs, length);
 	return 1;
 }
