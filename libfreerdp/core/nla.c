@@ -99,6 +99,53 @@
 
 #define TERMSRV_SPN_PREFIX	"TERMSRV/"
 
+
+struct rdp_nla
+{
+	BOOL server;
+	NLA_STATE state;
+	int sendSeqNum;
+	int recvSeqNum;
+	freerdp* instance;
+	CtxtHandle context;
+	LPTSTR SspiModule;
+	char* SamFile;
+	rdpSettings* settings;
+	rdpTransport* transport;
+	UINT32 cbMaxToken;
+#if defined(UNICODE)
+	SEC_WCHAR* packageName;
+#else
+	SEC_CHAR* packageName;
+#endif
+	UINT32 version;
+	UINT32 peerVersion;
+	UINT32 errorCode;
+	ULONG fContextReq;
+	ULONG pfContextAttr;
+	BOOL haveContext;
+	BOOL haveInputBuffer;
+	BOOL havePubKeyAuth;
+	SECURITY_STATUS status;
+	CredHandle credentials;
+	TimeStamp expiration;
+	PSecPkgInfo pPackageInfo;
+	SecBuffer inputBuffer;
+	SecBuffer outputBuffer;
+	SecBufferDesc inputBufferDesc;
+	SecBufferDesc outputBufferDesc;
+	SecBuffer negoToken;
+	SecBuffer pubKeyAuth;
+	SecBuffer authInfo;
+	SecBuffer ClientNonce;
+	SecBuffer PublicKey;
+	SecBuffer tsCredentials;
+	LPTSTR ServicePrincipalName;
+	SEC_WINNT_AUTH_IDENTITY* identity;
+	PSecurityFunctionTable table;
+	SecPkgContext_Sizes ContextSizes;
+};
+
 static BOOL nla_send(rdpNla* nla);
 static int nla_recv(rdpNla* nla);
 static void nla_buffer_print(rdpNla* nla);
@@ -2386,4 +2433,38 @@ void nla_free(rdpNla* nla)
 	free(nla->ServicePrincipalName);
 	nla_identity_free(nla->identity);
 	free(nla);
+}
+
+SEC_WINNT_AUTH_IDENTITY* nla_get_identity(rdpNla* nla)
+{
+	if (!nla)
+		return NULL;
+
+	return nla->identity;
+}
+
+NLA_STATE nla_get_state(rdpNla* nla)
+{
+	if (!nla)
+		return NLA_STATE_FINAL;
+
+	return nla->state;
+}
+
+BOOL nla_set_state(rdpNla* nla, NLA_STATE state)
+{
+	if (!nla)
+		return FALSE;
+
+	nla->state = state;
+	return TRUE;
+}
+
+BOOL nla_set_service_principal(rdpNla* nla, LPSTR principal)
+{
+	if (!nla || !principal)
+		return FALSE;
+
+	nla->ServicePrincipalName = principal;
+	return TRUE;
 }
