@@ -401,7 +401,7 @@ static BOOL adjust_src_dst_coordinates(HGDI_DC hdcDest, INT32* pnXSrc, INT32* pn
 	nWidth = *pnWidth;
 	nHeight = *pnHeight;
 
-	if (!hdcDest)
+	if (!hDstBmp)
 		return FALSE;
 
 	if (nXDst < 0)
