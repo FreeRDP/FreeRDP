@@ -38,9 +38,9 @@
 
 struct rdp_nego
 {
-	int port;
+	UINT16 port;
 	UINT32 flags;
-	char* hostname;
+	const char* hostname;
 	char* cookie;
 	BYTE* RoutingToken;
 	DWORD RoutingTokenLength;
@@ -57,7 +57,7 @@ struct rdp_nego
 	UINT32 SelectedProtocol;
 	UINT32 RequestedProtocols;
 	BOOL NegotiateSecurityLayer;
-	BYTE EnabledProtocols[16];
+	BOOL EnabledProtocols[16];
 	BOOL RestrictedAdminModeRequired;
 	BOOL GatewayEnabled;
 	BOOL GatewayBypassLocal;
@@ -832,11 +832,12 @@ void nego_send(rdpNego* nego)
 
 BOOL nego_send_negotiation_request(rdpNego* nego)
 {
+	BOOL rc = FALSE;
 	wStream* s;
-	int length;
+	size_t length;
 	size_t bm, em;
 	BYTE flags = 0;
-	int cookie_length;
+	size_t cookie_length;
 	s = Stream_New(NULL, 512);
 
 	if (!s)
@@ -874,7 +875,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	{
 		cookie_length = strlen(nego->cookie);
 
-		if (cookie_length > (int) nego->CookieMaxLength)
+		if (cookie_length > nego->CookieMaxLength)
 			cookie_length = nego->CookieMaxLength;
 
 		Stream_Write(s, "Cookie: mstshash=", 17);
@@ -899,21 +900,19 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		length += 8;
 	}
 
+	if ((length < 5) || (length > UINT16_MAX))
+		goto fail;
+
 	em = Stream_GetPosition(s);
 	Stream_SetPosition(s, bm);
-	tpkt_write_header(s, length);
-	tpdu_write_connection_request(s, length - 5);
+	tpkt_write_header(s, (UINT16)length);
+	tpdu_write_connection_request(s, (UINT16)length - 5);
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
-
-	if (transport_write(nego->transport, s) < 0)
-	{
-		Stream_Free(s, TRUE);
-		return FALSE;
-	}
-
+	rc = (transport_write(nego->transport, s) >= 0);
+fail:
 	Stream_Free(s, TRUE);
-	return TRUE;
+	return rc;
 }
 
 /**
@@ -1012,7 +1011,7 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 
 BOOL nego_send_negotiation_response(rdpNego* nego)
 {
-	int length;
+	UINT16 length;
 	size_t bm, em;
 	BOOL status;
 	wStream* s;
@@ -1189,10 +1188,14 @@ void nego_free(rdpNego* nego)
  * @param port
  */
 
-void nego_set_target(rdpNego* nego, char* hostname, int port)
+BOOL nego_set_target(rdpNego* nego, const char* hostname, UINT16 port)
 {
+	if (!nego || !hostname)
+		return FALSE;
+
 	nego->hostname = hostname;
 	nego->port = port;
+	return TRUE;
 }
 
 /**

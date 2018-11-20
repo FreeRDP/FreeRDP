@@ -105,7 +105,7 @@ FREERDP_LOCAL rdpNego* nego_new(rdpTransport* transport);
 FREERDP_LOCAL void nego_free(rdpNego* nego);
 
 FREERDP_LOCAL void nego_init(rdpNego* nego);
-FREERDP_LOCAL void nego_set_target(rdpNego* nego, char* hostname, int port);
+FREERDP_LOCAL BOOL nego_set_target(rdpNego* nego, const char* hostname, UINT16 port);
 FREERDP_LOCAL void nego_set_negotiation_enabled(rdpNego* nego,
         BOOL NegotiateSecurityLayer);
 FREERDP_LOCAL void nego_set_restricted_admin_mode_required(rdpNego* nego,
