@@ -8,7 +8,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 27
         vectorDrawables.useSupportLibrary = true
-        versionCode = 14
+        versionCode = 15
         versionName = rootProject.ext.versionName
     }
 
