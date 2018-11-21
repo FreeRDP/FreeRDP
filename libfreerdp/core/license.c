@@ -689,13 +689,11 @@ static BOOL license_rc4_with_licenseKey(const rdpLicense* license, const BYTE *i
 	target->length = len;
 
 	if (!winpr_RC4_Update(rc4, len, input, buffer))
-		goto error_update;
+		goto error_buffer;
 
 	winpr_RC4_Free(rc4);
 	return TRUE;
 
-error_update:
-	free(buffer);
 error_buffer:
 	winpr_RC4_Free(rc4);
 	return FALSE;
