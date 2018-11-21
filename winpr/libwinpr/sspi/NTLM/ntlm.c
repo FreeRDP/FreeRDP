@@ -1146,10 +1146,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 	{
 		/* signature verification failed! */
 		WLog_ERR(TAG, "signature verification failed, something nasty is going on!");
+#ifdef WITH_DEBUG_NTLM
 		WLog_ERR(TAG, "Expected Signature:");
 		winpr_HexDump(TAG, WLOG_ERROR, expected_signature, 16);
 		WLog_ERR(TAG, "Actual Signature:");
 		winpr_HexDump(TAG, WLOG_ERROR, (BYTE*) signature_buffer->pvBuffer, 16);
+#endif
 		return SEC_E_MESSAGE_ALTERED;
 	}
 

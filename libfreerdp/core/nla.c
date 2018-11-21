@@ -457,7 +457,9 @@ int nla_client_begin(rdpNla* nla)
 	nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
 	nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
 	WLog_DBG(TAG, "Sending Authentication Token");
+#if defined (WITH_DEBUG_NLA)
 	winpr_HexDump(TAG, WLOG_DEBUG, nla->negoToken.pvBuffer, nla->negoToken.cbBuffer);
+#endif
 
 	if (!nla_send(nla))
 	{
@@ -547,7 +549,9 @@ static int nla_client_recv(rdpNla* nla)
 		nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
 		nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
 		WLog_DBG(TAG, "Sending Authentication Token");
+#if defined (WITH_DEBUG_NLA)
 		winpr_HexDump(TAG, WLOG_DEBUG, nla->negoToken.pvBuffer, nla->negoToken.cbBuffer);
+#endif
 
 		if (!nla_send(nla))
 		{
@@ -1112,7 +1116,8 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	if (Message.cBuffers == 2 && Buffers[0].cbBuffer < nla->ContextSizes.cbSecurityTrailer)
 	{
 		/* IMPORTANT: EncryptMessage may not use all the signature space, so we need to shrink the excess between the buffers */
-		MoveMemory(((BYTE*)Buffers[0].pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer, Buffers[1].cbBuffer);
+		MoveMemory(((BYTE*)Buffers[0].pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer,
+		           Buffers[1].cbBuffer);
 		nla->pubKeyAuth.cbBuffer = Buffers[0].cbBuffer + Buffers[1].cbBuffer;
 	}
 
@@ -1192,7 +1197,8 @@ SECURITY_STATUS nla_encrypt_public_key_hash(rdpNla* nla)
 	if (Message.cBuffers == 2 && Buffers[0].cbBuffer < nla->ContextSizes.cbSecurityTrailer)
 	{
 		/* IMPORTANT: EncryptMessage may not use all the signature space, so we need to shrink the excess between the buffers */
-		MoveMemory(((BYTE*)Buffers[0].pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer, Buffers[1].cbBuffer);
+		MoveMemory(((BYTE*)Buffers[0].pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer,
+		           Buffers[1].cbBuffer);
 		nla->pubKeyAuth.cbBuffer = Buffers[0].cbBuffer + Buffers[1].cbBuffer;
 	}
 
@@ -1290,10 +1296,12 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	if (!public_key1 || !public_key2 || memcmp(public_key1, public_key2, public_key_length) != 0)
 	{
 		WLog_ERR(TAG, "Could not verify server's public key echo");
+#if defined (WITH_DEBUG_NLA)
 		WLog_ERR(TAG, "Expected (length = %d):", public_key_length);
 		winpr_HexDump(TAG, WLOG_ERROR, public_key1, public_key_length);
 		WLog_ERR(TAG, "Actual (length = %d):", public_key_length);
 		winpr_HexDump(TAG, WLOG_ERROR, public_key2, public_key_length);
+#endif
 		status = SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
 		goto fail;
 	}
@@ -1705,7 +1713,8 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 	if (Message.cBuffers == 2 && Buffers[0].cbBuffer < nla->ContextSizes.cbSecurityTrailer)
 	{
 		/* IMPORTANT: EncryptMessage may not use all the signature space, so we need to shrink the excess between the buffers */
-		MoveMemory(((BYTE*)Buffers[0].pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer, Buffers[1].cbBuffer);
+		MoveMemory(((BYTE*)Buffers[0].pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer,
+		           Buffers[1].cbBuffer);
 		nla->authInfo.cbBuffer = Buffers[0].cbBuffer + Buffers[1].cbBuffer;
 	}
 
@@ -2147,19 +2156,25 @@ void nla_buffer_print(rdpNla* nla)
 	if (nla->negoToken.cbBuffer > 0)
 	{
 		WLog_DBG(TAG, "NLA.negoToken (length = %"PRIu32"):", nla->negoToken.cbBuffer);
+#if defined (WITH_DEBUG_NLA)
 		winpr_HexDump(TAG, WLOG_DEBUG, nla->negoToken.pvBuffer, nla->negoToken.cbBuffer);
+#endif
 	}
 
 	if (nla->pubKeyAuth.cbBuffer > 0)
 	{
 		WLog_DBG(TAG, "NLA.pubKeyAuth (length = %"PRIu32"):", nla->pubKeyAuth.cbBuffer);
+#if defined (WITH_DEBUG_NLA)
 		winpr_HexDump(TAG, WLOG_DEBUG, nla->pubKeyAuth.pvBuffer, nla->pubKeyAuth.cbBuffer);
+#endif
 	}
 
 	if (nla->authInfo.cbBuffer > 0)
 	{
 		WLog_DBG(TAG, "NLA.authInfo (length = %"PRIu32"):", nla->authInfo.cbBuffer);
+#if defined (WITH_DEBUG_NLA)
 		winpr_HexDump(TAG, WLOG_DEBUG, nla->authInfo.pvBuffer, nla->authInfo.cbBuffer);
+#endif
 	}
 }
 
