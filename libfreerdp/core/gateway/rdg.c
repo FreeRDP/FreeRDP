@@ -154,11 +154,26 @@ typedef struct
 	const char* name;
 } t_err_mapping;
 
-static const t_err_mapping fields_present[] =
+static const t_err_mapping tunnel_response_fields_present[] =
+{
+	{HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID,   "HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID"},
+	{HTTP_TUNNEL_RESPONSE_FIELD_CAPS, "HTTP_TUNNEL_RESPONSE_FIELD_CAPS"},
+	{HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ,     "HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ"},
+	{HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG,     "HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG"}
+};
+
+static const t_err_mapping channel_response_fields_present[] =
 {
 	{HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID,   "HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID"},
 	{HTTP_CHANNEL_RESPONSE_OPTIONAL, "HTTP_CHANNEL_RESPONSE_OPTIONAL"},
 	{HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT,     "HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT"}
+};
+
+static const t_err_mapping tunnel_authorization_response_fields_present[] =
+{
+	{HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS,  "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS"},
+	{HTTP_TUNNEL_AUTH_RESPONSE_FIELD_IDLE_TIMEOUT, "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_IDLE_TIMEOUT"},
+	{HTTP_TUNNEL_AUTH_RESPONSE_FIELD_SOH_RESPONSE, "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_SOH_RESPONSE"}
 };
 
 static const t_err_mapping extended_auth[] =
@@ -169,19 +184,20 @@ static const t_err_mapping extended_auth[] =
 	{HTTP_EXTENDED_AUTH_SSPI_NTLM, "HTTP_EXTENDED_AUTH_SSPI_NTLM"}
 };
 
-static const char* fields_present_to_string(UINT16 fieldsPresent)
+static const char* fields_present_to_string(UINT16 fieldsPresent, const t_err_mapping* map,
+        size_t elements)
 {
 	size_t x = 0;
 	static char buffer[1024] = { 0 };
 	char fields[12];
 
-	for (x = 0; x < ARRAYSIZE(fields_present); x++)
+	for (x = 0; x < elements; x++)
 	{
 		if (strnlen(buffer, ARRAYSIZE(buffer)) > 0)
 			strcat(buffer, "|");
 
-		if ((fields_present[x].code & fieldsPresent) != 0)
-			strcat(buffer, fields_present[x].name);
+		if ((map[x].code & fieldsPresent) != 0)
+			strcat(buffer, map[x].name);
 	}
 
 	sprintf_s(fields, ARRAYSIZE(fields), " [%04"PRIx16"]", fieldsPresent);
@@ -189,27 +205,30 @@ static const char* fields_present_to_string(UINT16 fieldsPresent)
 	return buffer;
 }
 
+static const char* channel_response_fields_present_to_string(UINT16 fieldsPresent)
+{
+	return fields_present_to_string(fieldsPresent, channel_response_fields_present,
+	                                ARRAYSIZE(channel_response_fields_present));
+}
+
+static const char* tunnel_response_fields_present_to_string(UINT16 fieldsPresent)
+{
+	return fields_present_to_string(fieldsPresent, tunnel_response_fields_present,
+	                                ARRAYSIZE(tunnel_response_fields_present));
+}
+
+static const char* tunnel_authorization_response_fields_present_to_string(UINT16 fieldsPresent)
+{
+	return fields_present_to_string(fieldsPresent, tunnel_authorization_response_fields_present,
+	                                ARRAYSIZE(tunnel_authorization_response_fields_present));
+}
+
 static const char* extended_auth_to_string(UINT16 auth)
 {
-	size_t x = 0;
-	static char buffer[1024] = { 0 };
-	char fields[12];
-
 	if (auth == HTTP_EXTENDED_AUTH_NONE)
 		return "HTTP_EXTENDED_AUTH_NONE [0x0000]";
 
-	for (x = 0; x < ARRAYSIZE(extended_auth); x++)
-	{
-		if (strnlen(buffer, ARRAYSIZE(buffer)) > 0)
-			strcat(buffer, "|");
-
-		if ((extended_auth[x].code & auth) != 0)
-			strcat(buffer, extended_auth[x].name);
-	}
-
-	sprintf_s(fields, ARRAYSIZE(fields), " [%04"PRIx16"]", auth);
-	strcat(buffer, fields);
-	return buffer;
+	return fields_present_to_string(auth, extended_auth, ARRAYSIZE(extended_auth));
 }
 
 static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
@@ -664,7 +683,7 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 	Stream_Seek_UINT16(s); /* reserved */
 	error = rpc_error_to_string(errorCode);
 	WLog_DBG(TAG, "serverVersion=%"PRId16", errorCode=%s, fieldsPresent=%s",
-	         serverVersion, error, fields_present_to_string(fieldsPresent));
+	         serverVersion, error, tunnel_response_fields_present_to_string(fieldsPresent));
 
 	if (FAILED(errorCode))
 	{
@@ -695,7 +714,7 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	Stream_Seek_UINT16(s); /* reserved */
 	error = rpc_error_to_string(errorCode);
 	WLog_DBG(TAG, "errorCode=%s, fieldsPresent=%s",
-	         error, fields_present_to_string(fieldsPresent));
+	         error, tunnel_authorization_response_fields_present_to_string(fieldsPresent));
 
 	if (FAILED(errorCode))
 	{
@@ -726,12 +745,12 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 	Stream_Seek_UINT16(s); /* reserved */
 	error = rpc_error_to_string(errorCode);
 	WLog_DBG(TAG, "channel response errorCode=%s, fieldsPresent=%s",
-	         error, fields_present_to_string(fieldsPresent));
+	         error, channel_response_fields_present_to_string(fieldsPresent));
 
 	if (FAILED(errorCode))
 	{
 		WLog_ERR(TAG, "channel response errorCode=%s, fieldsPresent=%s",
-		         error, fields_present_to_string(fieldsPresent));
+		         error, channel_response_fields_present_to_string(fieldsPresent));
 		return FALSE;
 	}
 
