@@ -22,7 +22,7 @@ typedef struct xf_floatbar xfFloatbar;
 
 #include "xfreerdp.h"
 
-xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, DWORD flags);
+xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* title, DWORD flags);
 void xf_floatbar_free(xfFloatbar* floatbar);
 
 BOOL xf_floatbar_event_process(xfFloatbar* floatbar, XEvent* event);

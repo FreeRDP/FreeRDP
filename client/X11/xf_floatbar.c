@@ -78,6 +78,7 @@ struct xf_floatbar
 	DWORD flags;
 	BOOL created;
 	Window root_window;
+	char* title;
 };
 
 struct xf_floatbar_button
@@ -296,7 +297,7 @@ xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type)
 	return button;
 }
 
-xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, DWORD flags)
+xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* name, DWORD flags)
 {
 	xfFloatbar* floatbar;
 
@@ -316,12 +317,20 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, DWORD flags)
 	if (!floatbar)
 		return NULL;
 
+	floatbar->title = _strdup(name);
+
+	if (!floatbar->title)
+		goto fail;
+
 	floatbar->root_window = window;
 	floatbar->flags = flags;
 	floatbar->xfc = xfc;
 	floatbar->locked = flags & 0x0002;
 	xf_floatbar_toggle_fullscreen(floatbar, FALSE);
 	return floatbar;
+fail:
+	xf_floatbar_free(floatbar);
+	return NULL;
 }
 
 static unsigned long xf_floatbar_get_color(xfFloatbar* floatbar, char* rgb_value)
@@ -342,7 +351,6 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar, XEvent* event)
 	Pixmap pmap;
 	XPoint shape[5], border[5];
 	int len;
-	rdpSettings* settings = floatbar->xfc->context.settings;
 	Display* display = floatbar->xfc->display;
 	/* create the pixmap that we'll use for shaping the window */
 	pmap = XCreatePixmap(display, floatbar->handle, floatbar->width, floatbar->height, 1);
@@ -385,10 +393,10 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar, XEvent* event)
 	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BORDER));
 	XDrawLines(display, floatbar->handle, gc, border, 5, CoordModeOrigin);
 	/* draw the host name connected to */
-	len = strlen(settings->ServerHostname);
+	len = strlen(floatbar->title);
 	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_FOREGROUND));
 	XDrawString(display, floatbar->handle, gc, floatbar->width / 2 - len * 2, 15,
-	            settings->ServerHostname, len);
+	            floatbar->title, len);
 	XFreeGC(display, gc);
 	XFreeGC(display, shape_gc);
 }
@@ -785,6 +793,7 @@ void xf_floatbar_free(xfFloatbar* floatbar)
 	if (!floatbar)
 		return;
 
+	free(floatbar->title);
 	xfc = floatbar->xfc;
 	size = ARRAYSIZE(floatbar->buttons);
 

@@ -501,6 +501,37 @@ static BOOL xf_process_x_events(freerdp* instance)
 	return status;
 }
 
+static char* xf_window_get_title(rdpSettings* settings)
+{
+	BOOL port;
+	char* windowTitle;
+	size_t size;
+	char* name;
+	const char* prefix = "FreeRDP:";
+
+	if (!settings)
+		return NULL;
+
+	name = settings->ServerHostname;
+
+	if (settings->WindowTitle)
+		return _strdup(settings->WindowTitle);
+
+	port = (settings->ServerPort != 3389);
+	size = strlen(name) + 16;
+	windowTitle = calloc(size, sizeof(char));
+
+	if (!windowTitle)
+		return NULL;
+
+	if (!port)
+		sprintf_s(windowTitle, size, "%s %s", prefix, name);
+	else
+		sprintf_s(windowTitle, size, "%s %s:%i", prefix, name, settings->ServerPort);
+
+	return windowTitle;
+}
+
 BOOL xf_create_window(xfContext* xfc)
 {
 	XGCValues gcv;
@@ -532,37 +563,10 @@ BOOL xf_create_window(xfContext* xfc)
 		xfc->offset_x = 0;
 		xfc->offset_y = 0;
 #endif
+		windowTitle = xf_window_get_title(settings);
 
-		if (settings->WindowTitle)
-		{
-			windowTitle = _strdup(settings->WindowTitle);
-
-			if (!windowTitle)
-				return FALSE;
-		}
-		else if (settings->ServerPort == 3389)
-		{
-			size_t size = 1 + sizeof("FreeRDP: ") + strlen(
-			                  settings->ServerHostname);
-			windowTitle = malloc(size);
-
-			if (!windowTitle)
-				return FALSE;
-
-			sprintf_s(windowTitle, size, "FreeRDP: %s", settings->ServerHostname);
-		}
-		else
-		{
-			size_t size = 1 + sizeof("FreeRDP: ") + strlen(settings->ServerHostname)
-			              + sizeof(":00000");
-			windowTitle = malloc(size);
-
-			if (!windowTitle)
-				return FALSE;
-
-			sprintf_s(windowTitle, size, "FreeRDP: %s:%i", settings->ServerHostname,
-			          settings->ServerPort);
-		}
+		if (!windowTitle)
+			return FALSE;
 
 #ifdef WITH_XRENDER
 
