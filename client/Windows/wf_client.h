@@ -81,7 +81,7 @@ struct wf_context
 	int fullscreen_toggle;
 	int fullscreen;
 	int percentscreen;
-	WCHAR window_title[512];
+	WCHAR* window_title;
 	int client_x;
 	int client_y;
 	int client_width;

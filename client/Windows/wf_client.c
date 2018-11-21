@@ -281,6 +281,41 @@ static void wf_add_system_menu(wfContext* wfc)
 	}
 }
 
+static WCHAR* wf_window_get_title(rdpSettings* settings)
+{
+	BOOL port;
+	WCHAR* windowTitle;
+	size_t size;
+	WCHAR* name;
+	WCHAR prefix[] = L"FreeRDP:";
+
+	if (!settings)
+		return NULL;
+
+	name = settings->ServerHostname;
+
+	if (settings->WindowTitle)
+	{
+		WCHAR* windowTitle = NULL;
+		ConvertToUnicode(CP_UTF8, 0, settings->WindowTitle, -1, &windowTitle, 0);
+		return windowTitle;
+	}
+
+	port = (settings->ServerPort != 3389);
+	size = wcslen(name) + 16 + wcslen(prefix);
+	windowTitle = calloc(size, sizeof(WCHAR));
+
+	if (!windowTitle)
+		return NULL;
+
+	if (!port)
+		_snwprintf_s(windowTitle, size, _TRUNCATE, L"%S %S", prefix, name);
+	else
+		_snwprintf_s(windowTitle, size, _TRUNCATE, L"%S %S:%u", prefix, name, settings->ServerPort);
+
+	return windowTitle;
+}
+
 static BOOL wf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
@@ -308,15 +343,10 @@ static BOOL wf_post_connect(freerdp* instance)
 		wf_gdi_register_update_callbacks(instance->update);
 	}
 
-	if (settings->WindowTitle != NULL)
-		_snwprintf_s(wfc->window_title, ARRAYSIZE(wfc->window_title), _TRUNCATE, L"%S",
-		             settings->WindowTitle);
-	else if (settings->ServerPort == 3389)
-		_snwprintf_s(wfc->window_title, ARRAYSIZE(wfc->window_title), _TRUNCATE, L"FreeRDP: %S",
-		             settings->ServerHostname);
-	else
-		_snwprintf_s(wfc->window_title, ARRAYSIZE(wfc->window_title), _TRUNCATE, L"FreeRDP: %S:%u",
-		             settings->ServerHostname, settings->ServerPort);
+	wfc->window_title = wf_window_get_title(settings);
+
+	if (!wfc->window_title)
+		return FALSE;
 
 	if (settings->EmbeddedWindow)
 		settings->Decorations = FALSE;
@@ -370,6 +400,13 @@ static BOOL wf_post_connect(freerdp* instance)
 
 static BOOL wf_post_disconnect(freerdp* instance)
 {
+	wfContext* wfc;
+
+	if (!instance || !instance->context || !instance->settings)
+		return FALSE;
+
+	wfc = (wfContext*) instance->context;
+	free(wfc->window_title);
 	return TRUE;
 }
 
