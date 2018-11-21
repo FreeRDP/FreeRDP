@@ -150,7 +150,11 @@ static BOOL reallocate(rdpAssistanceFile* file, const char* host, UINT32 port)
 	tmp2 = realloc(file->MachineAddresses, sizeof(char*) * file->MachineCount);
 
 	if (!tmp1 || !tmp2)
+	{
+		free(tmp1);
+		free(tmp2);
 		return FALSE;
+	}
 
 	file->MachinePorts = tmp1;
 	file->MachineAddresses = tmp2;
