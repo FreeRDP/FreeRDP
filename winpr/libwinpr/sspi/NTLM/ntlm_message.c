@@ -502,7 +502,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (context->ChallengeTargetInfo.cbBuffer > 0)
 	{
 		WLog_DBG(TAG, "ChallengeTargetInfo (%"PRIu32"):", context->ChallengeTargetInfo.cbBuffer);
-		ntlm_print_av_pair_list(context->ChallengeTargetInfo.pvBuffer);
+		ntlm_print_av_pair_list(context->ChallengeTargetInfo.pvBuffer,
+		                        context->ChallengeTargetInfo.cbBuffer);
 	}
 
 #endif
@@ -886,7 +887,8 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	ntlm_print_message_fields(&(message->LmChallengeResponse), "LmChallengeResponse");
 	ntlm_print_message_fields(&(message->NtChallengeResponse), "NtChallengeResponse");
 	ntlm_print_message_fields(&(message->EncryptedRandomSessionKey), "EncryptedRandomSessionKey");
-	ntlm_print_av_pair_list(context->NTLMv2Response.Challenge.AvPairs);
+	ntlm_print_av_pair_list(context->NTLMv2Response.Challenge.AvPairs,
+	                        context->NTLMv2Response.Challenge.cbAvPairs);
 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
@@ -1093,7 +1095,8 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->AuthenticateTargetInfo.cbBuffer > 0)
 	{
 		WLog_DBG(TAG, "AuthenticateTargetInfo (%"PRIu32"):", context->AuthenticateTargetInfo.cbBuffer);
-		ntlm_print_av_pair_list(context->AuthenticateTargetInfo.pvBuffer);
+		ntlm_print_av_pair_list(context->AuthenticateTargetInfo.pvBuffer,
+		                        context->AuthenticateTargetInfo.cbBuffer);
 	}
 
 	ntlm_print_message_fields(&(message->DomainName), "DomainName");
