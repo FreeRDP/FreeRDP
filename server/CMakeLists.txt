@@ -30,7 +30,7 @@ if(FREERDP_VENDOR)
 			add_subdirectory(Mac)
 		endif()
 	else()
-		#add_subdirectory(Windows)
+                add_subdirectory(Windows)
 	endif()
 
 	if(NOT DEFINED WITH_FREERDS)

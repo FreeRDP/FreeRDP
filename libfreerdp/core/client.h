@@ -35,7 +35,9 @@
 #include <freerdp/client/drdynvc.h>
 #include <freerdp/channels/channels.h>
 
-#define CHANNEL_MAX_COUNT 31
+#ifndef CHANNEL_MAX_COUNT
+#define CHANNEL_MAX_COUNT 30
+#endif
 
 struct rdp_channel_client_data
 {

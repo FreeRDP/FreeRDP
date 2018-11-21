@@ -115,11 +115,11 @@ static char* GetPath_TEMP(void)
 
 static char* GetPath_XDG_DATA_HOME(void)
 {
-	size_t size;
 	char* path = NULL;
 #if defined(WIN32) || defined(__IOS__)
 	path = GetPath_XDG_CONFIG_HOME();
 #else
+	size_t size;
 	char* home = NULL;
 	/**
 	 * There is a single base directory relative to which user-specific data files should be written.
@@ -155,7 +155,6 @@ static char* GetPath_XDG_DATA_HOME(void)
 
 static char* GetPath_XDG_CONFIG_HOME(void)
 {
-	size_t size;
 	char* path = NULL;
 #if defined(WIN32) && !defined(_UWP)
 	path = calloc(MAX_PATH, sizeof(char));
@@ -172,6 +171,7 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 #elif defined(__IOS__)
 	path = ios_get_data();
 #else
+	size_t size;
 	char* home = NULL;
 	/**
 	 * There is a single base directory relative to which user-specific configuration files should be written.
@@ -210,7 +210,6 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 
 static char* GetPath_XDG_CACHE_HOME(void)
 {
-	size_t size;
 	char* path = NULL;
 	char* home = NULL;
 #if defined(WIN32)
@@ -229,6 +228,7 @@ static char* GetPath_XDG_CACHE_HOME(void)
 #elif defined(__IOS__)
 	path = ios_get_cache();
 #else
+	size_t size;
 	/**
 	 * There is a single base directory relative to which user-specific non-essential (cached) data should be written.
 	 * This directory is defined by the environment variable $XDG_CACHE_HOME.

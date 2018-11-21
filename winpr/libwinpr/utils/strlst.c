@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include <winpr/strlst.h>
-
+#include <winpr/string.h>
 
 
 void string_list_free(char** string_list)
@@ -62,7 +62,7 @@ char**  string_list_copy(const char* const* string_list)
 
 	for (i = 0; i < length; i ++)
 	{
-		copy[i] = strdup(string_list[i]);
+		copy[i] = _strdup(string_list[i]);
 	}
 
 	copy[length] = 0;

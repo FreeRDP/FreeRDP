@@ -67,7 +67,7 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 
 					for (peerindex = 0; peerindex < wfi->peerCount; peerindex++)
 					{
-						for (; index < WF_INFO_MAXPEERS; index++)
+						for (; index < FREERDP_SERVER_WIN_INFO_MAXPEERS; index++)
 						{
 							if (wfi->peers[index] && wfi->peers[index]->activated)
 							{
@@ -134,12 +134,12 @@ void wf_update_encode(wfInfo* wfi)
 	cmd->destTop = wfi->invalid.top;
 	cmd->destRight = wfi->invalid.left + width;
 	cmd->destBottom = wfi->invalid.top + height;
-	cmd->bpp = 32;
-	cmd->codecID = 3;
-	cmd->width = width;
-	cmd->height = height;
-	cmd->bitmapDataLength = Stream_GetPosition(wfi->s);
-	cmd->bitmapData = Stream_Buffer(wfi->s);
+	cmd->bmp.bpp = 32;
+	cmd->bmp.codecID = 3;
+	cmd->bmp.width = width;
+	cmd->bmp.height = height;
+	cmd->bmp.bitmapDataLength = Stream_GetPosition(wfi->s);
+	cmd->bmp.bitmapData = Stream_Buffer(wfi->s);
 }
 
 void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
@@ -168,7 +168,7 @@ void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 		         wfi->frame_idx, context->frame_idx + 1);
 	}
 
-	wfi->cmd.codecID = client->settings->RemoteFxCodecId;
+	wfi->cmd.bmp.codecID = client->settings->RemoteFxCodecId;
 	client->update->SurfaceBits(client->update->context, &wfi->cmd);
 	context->frame_idx++;
 }
