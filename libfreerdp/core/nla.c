@@ -621,8 +621,8 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 		if (settings->CanonicalizedUserHint != NULL)
 		{
 			CHECK_MEMORY((settings->UserHint = strdup(settings->CanonicalizedUserHint)),
-			             -1, "Could not strdup the UserPrincipalName (length = %d)",
-			             strlen(settings->UserPrincipalName));
+			             -1, "Could not strdup the CanonicalizedUserHint (length = %d)",
+			             strlen(settings->CanonicalizedUserHint));
 		}
 		else
 		{
