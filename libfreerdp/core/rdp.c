@@ -1576,7 +1576,7 @@ BOOL rdp_send_error_info(rdpRdp* rdp)
 	return status;
 }
 
-int rdp_check_fds(rdpRdp* rdp)
+int rdp_check_event_handles(rdpRdp* rdp)
 {
 	int status;
 	rdpTransport* transport = rdp->transport;
@@ -1587,7 +1587,7 @@ int rdp_check_fds(rdpRdp* rdp)
 
 		if (!tsg_check_event_handles(tsg))
 		{
-			WLog_ERR(TAG, "rdp_check_fds: tsg_check_event_handles()");
+			WLog_ERR(TAG, "rdp_check_event_handles: tsg_check_event_handles()");
 			return -1;
 		}
 
@@ -1595,7 +1595,7 @@ int rdp_check_fds(rdpRdp* rdp)
 			return 1;
 	}
 
-	status = transport_check_fds(transport);
+	status = transport_check_event_handles(transport);
 
 	if (status == 1)
 	{
@@ -1603,7 +1603,7 @@ int rdp_check_fds(rdpRdp* rdp)
 	}
 
 	if (status < 0)
-		WLog_DBG(TAG, "transport_check_fds() - %i", status);
+		WLog_DBG(TAG, "transport_check_event_handles() - %i", status);
 
 	return status;
 }

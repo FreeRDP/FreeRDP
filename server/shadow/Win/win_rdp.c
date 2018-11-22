@@ -159,19 +159,13 @@ static BOOL shw_post_connect(freerdp* instance)
 static DWORD WINAPI shw_client_thread(LPVOID arg)
 {
 	int index;
-	int rcount;
-	int wcount;
 	BOOL bSuccess;
-	void* rfds[32];
-	void* wfds[32];
 	int fds_count;
 	HANDLE fds[64];
 	shwContext* shw;
 	rdpContext* context;
 	rdpChannels* channels;
 	freerdp* instance = (freerdp*) arg;
-	ZeroMemory(rfds, sizeof(rfds));
-	ZeroMemory(wfds, sizeof(wfds));
 	context = (rdpContext*) instance->context;
 	shw = (shwContext*) context;
 	bSuccess = freerdp_connect(instance);
@@ -185,50 +179,47 @@ static DWORD WINAPI shw_client_thread(LPVOID arg)
 
 	channels = instance->context->channels;
 
-	while (1)
+	while (!freerdp_shall_disconnect(instance))
 	{
-		rcount = 0;
-		wcount = 0;
+		DWORD status;
+		HANDLE handles[64];
+		DWORD usedHandles = freerdp_get_event_handles(context, handles, ARRAYSIZE(handles));
 
-		if (!freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount))
+		if (usedHandles == 0)
 		{
 			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
-		if (!freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount))
+		if (usedHandles > ARRAYSIZE(handles) - 1)
+		{
+			WLog_ERR(TAG, "freerdp_get_event_handles uses too many handles!");
+			break;
+		}
+
+		handles[usedHandles++] = freerdp_channels_get_event_handle(instance);
+
+		if (handles[usedHandles - 1] == INVALID_HANDLE_VALUE)
 		{
 			WLog_ERR(TAG, "Failed to get channels file descriptor");
 			break;
 		}
 
-		fds_count = 0;
+		status = MsgWaitForMultipleObjects(usedHandles, handles, FALSE, 1000, QS_ALLINPUT);
 
-		for (index = 0; index < rcount; index++)
-			fds[fds_count++] = rfds[index];
-
-		for (index = 0; index < wcount; index++)
-			fds[fds_count++] = wfds[index];
-
-		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000,
-		                              QS_ALLINPUT) == WAIT_FAILED)
+		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "MsgWaitForMultipleObjects failure: 0x%08lX", GetLastError());
 			break;
 		}
 
-		if (!freerdp_check_fds(instance))
+		if (!freerdp_check_event_handles(instance->context))
 		{
 			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
 
-		if (freerdp_shall_disconnect(instance))
-		{
-			break;
-		}
-
-		if (!freerdp_channels_check_fds(channels, instance))
+		if (!freerdp_channels_check_event_handles(channels, instance))
 		{
 			WLog_ERR(TAG, "Failed to check channels file descriptor");
 			break;

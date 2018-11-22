@@ -434,12 +434,15 @@ FREERDP_API void freerdp_channel_remove_open_handle_data(rdpChannelHandles* hand
 FREERDP_API UINT freerdp_channels_attach(freerdp* instance);
 FREERDP_API UINT freerdp_channels_detach(freerdp* instance);
 
+/* LEGACY: Prefer freerdp_get_event_handles whenever possible */
 FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount,
                                  void** wfds, int* wcount);
-FREERDP_API BOOL freerdp_check_fds(freerdp* instance);
 
 FREERDP_API DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events,
         DWORD count);
+
+/* Compatibility define */
+#define freerdp_check_fds freerdp_check_event_handles
 FREERDP_API BOOL freerdp_check_event_handles(rdpContext* context);
 
 FREERDP_API wMessageQueue* freerdp_get_message_queue(freerdp* instance,

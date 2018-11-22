@@ -287,7 +287,7 @@ DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HANDLE* eve
 	return listener->num_sockfds;
 }
 
-static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
+static BOOL freerdp_listener_check_event_handles(freerdp_listener* instance)
 {
 	int i;
 	void* sin_addr;
@@ -388,9 +388,8 @@ freerdp_listener* freerdp_listener_new(void)
 	instance->Open = freerdp_listener_open;
 	instance->OpenLocal = freerdp_listener_open_local;
 	instance->OpenFromSocket = freerdp_listener_open_from_socket;
-	instance->GetFileDescriptor = freerdp_listener_get_fds;
 	instance->GetEventHandles = freerdp_listener_get_event_handles;
-	instance->CheckFileDescriptor = freerdp_listener_check_fds;
+	instance->CheckFileDescriptor = freerdp_listener_check_event_handles;
 	instance->Close = freerdp_listener_close;
 	listener = (rdpListener*) calloc(1, sizeof(rdpListener));
 

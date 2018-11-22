@@ -54,6 +54,8 @@
 
 #define TAG FREERDP_TAG("core")
 
+static BOOL freerdp_check_for_events(freerdp* instance);
+
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
 
 UINT freerdp_channel_add_init_handle_data(rdpChannelHandles* handles, void* pInitHandle,
@@ -317,7 +319,7 @@ BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds,
 	return TRUE;
 }
 
-BOOL freerdp_check_fds(freerdp* instance)
+BOOL freerdp_check_for_events(freerdp* instance)
 {
 	int status;
 	rdpRdp* rdp;
@@ -332,13 +334,13 @@ BOOL freerdp_check_fds(freerdp* instance)
 		return FALSE;
 
 	rdp = instance->context->rdp;
-	status = rdp_check_fds(rdp);
+	status = rdp_check_event_handles(rdp);
 
 	if (status < 0)
 	{
 		TerminateEventArgs e;
 		rdpContext* context = instance->context;
-		WLog_DBG(TAG, "rdp_check_fds() - %i", status);
+		WLog_DBG(TAG, "freerdp_check_for_events() - %i", status);
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
 		PubSub_OnTerminate(context->pubSub, context, &e);
@@ -381,22 +383,22 @@ DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events,
 BOOL freerdp_check_event_handles(rdpContext* context)
 {
 	BOOL status;
-	status = freerdp_check_fds(context->instance);
+	status = freerdp_check_for_events(context->instance);
 
 	if (!status)
 	{
 		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-			WLog_ERR(TAG, "freerdp_check_fds() failed - %"PRIi32"", status);
+			WLog_ERR(TAG, "freerdp_check_for_events() failed - %"PRIi32"", status);
 
 		return FALSE;
 	}
 
-	status = freerdp_channels_check_fds(context->channels, context->instance);
+	status = freerdp_channels_check_event_handles(context->channels, context->instance);
 
 	if (!status)
 	{
 		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-			WLog_ERR(TAG, "freerdp_channels_check_fds() failed - %"PRIi32"", status);
+			WLog_ERR(TAG, "freerdp_channels_check_event_handles() failed - %"PRIi32"", status);
 
 		return FALSE;
 	}

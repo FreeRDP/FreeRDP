@@ -982,7 +982,7 @@ int transport_drain_output_buffer(rdpTransport* transport)
 	return status;
 }
 
-int transport_check_fds(rdpTransport* transport)
+int transport_check_event_handles(rdpTransport* transport)
 {
 	int status;
 	int recv_status;
@@ -1020,7 +1020,8 @@ int transport_check_fds(rdpTransport* transport)
 		if ((status = transport_read_pdu(transport, transport->ReceiveBuffer)) <= 0)
 		{
 			if (status < 0)
-				WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds: transport_read_pdu() - %i", status);
+				WLog_Print(transport->log, WLOG_DEBUG, "transport_check_event_handles: transport_read_pdu() - %i",
+				           status);
 
 			return status;
 		}
@@ -1047,7 +1048,8 @@ int transport_check_fds(rdpTransport* transport)
 
 		if (recv_status < 0)
 		{
-			WLog_Print(transport->log, WLOG_ERROR, "transport_check_fds: transport->ReceiveCallback() - %i",
+			WLog_Print(transport->log, WLOG_ERROR,
+			           "transport_check_event_handles: transport->ReceiveCallback() - %i",
 			           recv_status);
 			return -1;
 		}

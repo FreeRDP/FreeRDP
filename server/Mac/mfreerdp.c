@@ -39,56 +39,33 @@
 #include <freerdp/constants.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/log.h>
 
 #include "mfreerdp.h"
 #include "mf_peer.h"
 
+#define TAG SERVER_TAG("mac.mfreerdp")
+
 static void mf_server_main_loop(freerdp_listener* instance)
 {
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	void* rfds[32];
-	fd_set rfds_set;
-
-	memset(rfds, 0, sizeof(rfds));
-
 	while (1)
 	{
-		rcount = 0;
+		DWORD status;
+		HANDLE handles[64];
+		DWORD usedHandles = instance->GetEventHandles(instance, handles, ARRAYSIZE(handles));
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
+		if (usedHandles == 0)
 		{
+			WLog_ERR(TAG, "Failed to get event handles from listener");
 			break;
 		}
 
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
+		status = WaitForMultipleObjects(usedHandles, handles, FALSE, INFINITE);
 
-		for (i = 0; i < rcount; i++)
+		if (status == WAIT_FAILED)
 		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
+			WLog_ERR(TAG, "WaitForMultipleObjects failed");
 			break;
-
-		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
-			{
-				break;
-			}
 		}
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
@@ -103,11 +80,9 @@ static void mf_server_main_loop(freerdp_listener* instance)
 int main(int argc, char* argv[])
 {
 	freerdp_listener* instance;
-
 	signal(SIGPIPE, SIG_IGN);
-
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
-	
+
 	if (!(instance = freerdp_listener_new()))
 		return 1;
 
@@ -119,6 +94,5 @@ int main(int argc, char* argv[])
 	}
 
 	freerdp_listener_free(instance);
-
 	return 0;
 }
