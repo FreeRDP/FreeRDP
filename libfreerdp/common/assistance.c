@@ -167,16 +167,13 @@ static BOOL append_address(rdpAssistanceFile* file, const char* host, const char
 {
 	unsigned long p;
 
-	if (!file || !host || !port)
-		return FALSE;
-
 	errno = 0;
 	p = strtoul(port, NULL, 0);
 
 	if ((errno != 0) || (p == 0) || (p > UINT16_MAX))
 		return FALSE;
 
-	return reallocate(file, host, p);
+	return reallocate(file, host, (UINT16)p);
 }
 
 static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
