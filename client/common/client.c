@@ -311,7 +311,7 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings,
 	char* password = NULL;
 	rdpAssistanceFile* file;
 
-	if (!settings || !argv || (argc < 1))
+	if (!settings || !argv || (argc < 2))
 		return -1;
 
 	filename = argv[1];
