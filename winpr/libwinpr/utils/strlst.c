@@ -40,16 +40,21 @@ void string_list_free(char** string_list)
 	free(string_list);
 }
 
-int string_list_length(const char* const* string_list)
+int string_list_length(char** string_list)
 {
 	int i;
+
+	if (string_list == NULL)
+	{
+		return 0;
+	}
 
 	for (i = 0; string_list[i]; i ++);
 
 	return i;
 }
 
-char**  string_list_copy(const char* const* string_list)
+char**  string_list_copy(char** string_list)
 {
 	int i;
 	int length = string_list_length(string_list);
@@ -75,7 +80,7 @@ char**  string_list_copy(const char* const* string_list)
 	return copy;
 }
 
-void string_list_print(FILE* out, const char* const* string_list)
+void string_list_print(FILE* out, char** string_list)
 {
 	int j;
 
@@ -87,7 +92,7 @@ void string_list_print(FILE* out, const char* const* string_list)
 	fflush(out);
 }
 
-char* string_list_join(const char* const* string_list, const char* separator)
+char* string_list_join(char** string_list, const char* separator)
 {
 	char* result;
 	char* current;
@@ -138,3 +143,136 @@ done:
 	free(string_lengths);
 	return result;
 }
+
+
+static int extract_separated_substrings(const char* string, const char* separator,
+                                        int remove_empty_substring, char** result)
+{
+	/*
+	PRECONDITION: (string != NULL) && (strlen(string) > 0) && (separator != NULL) && (strlen(separator) > 0)
+	*/
+	size_t seplen = strlen(separator);
+	int i = 0;
+	int done = 0;
+
+	do
+	{
+		char* next = strstr(string, separator);
+		size_t sublen = 0;
+		/*
+		* When there are no remaining separator,
+		* we still need to add the rest of the string
+		* so we find the end-of-string
+		*/
+		done = (next == NULL);
+
+		if (done)
+		{
+			next = strchr(string, '\0');
+		}
+
+		sublen = next - string;
+
+		if (!remove_empty_substring || (sublen > 0))
+		{
+			if (result != NULL)
+			{
+				result[i] = strndup(string, sublen);
+			}
+
+			i++;
+		}
+
+		if (!done)
+		{
+			string = next + seplen;
+		}
+	}
+	while (!done);
+
+	return i;
+}
+
+char**  string_list_split_string(const char* string, const char* separator,
+                                 int remove_empty_substring)
+{
+	char** result = NULL;
+	size_t seplen = ((separator == NULL) ? 0 : strlen(separator));
+	size_t count = 0;
+
+	if (string == NULL)
+	{
+		goto empty_result;
+	}
+
+	if (seplen == 0)
+	{
+		if (remove_empty_substring && (strlen(string) == 0))
+		{
+			goto empty_result;
+		}
+
+		result = calloc(2, sizeof(*result));
+
+		if (result == NULL)
+		{
+			return NULL;
+		}
+
+		result[0] = strdup(string);
+
+		if (result[0] == NULL)
+		{
+			free(result);
+			return NULL;
+		}
+
+		return result;
+	}
+
+	count = extract_separated_substrings(string, separator, remove_empty_substring, NULL);
+	result = calloc(count + 1, sizeof(*result));
+
+	if (result == NULL)
+	{
+		return NULL;
+	}
+
+	extract_separated_substrings(string, separator, remove_empty_substring, result);
+
+	if (count != string_list_length((char**)result))
+	{
+		/* at least one of the strdup couldn't allocate */
+		string_list_free(result);
+		return NULL;
+	}
+
+	return result;
+empty_result:
+	return calloc(1, sizeof(*result));
+}
+
+
+int string_list_mismatch(char** a,char** b)
+{
+	int i = 0;
+	while(a[i] && b[i])
+	{
+		if ((a[i]!= b[i]) && (strcmp(a[i], b[i]) != 0))
+		{
+			return i;
+		}
+
+		i++;
+	}
+	return i;
+}
+
+
+BOOL string_list_equal(char** a,char** b)
+{
+	int result = string_list_mismatch(a, b);
+	return a[result] == b[result];
+}
+
+/**** THE END ****/

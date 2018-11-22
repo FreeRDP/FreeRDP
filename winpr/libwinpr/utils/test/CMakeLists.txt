@@ -17,6 +17,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestBitStream.c
 	TestArrayList.c
 	TestLinkedList.c
+	TestStringList.c
 	TestListDictionary.c
 	TestCmdLine.c
 	TestWLog.c
