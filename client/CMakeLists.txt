@@ -26,10 +26,6 @@ if(FREERDP_VENDOR AND WITH_CLIENT)
 		if(WITH_SAMPLE)
 			add_subdirectory(Sample)
 		endif()
-
-		if(WITH_DIRECTFB)
-			add_subdirectory(DirectFB)
-		endif()
 	endif()
 
 	if(WITH_X11)
