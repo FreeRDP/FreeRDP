@@ -107,32 +107,11 @@ static BOOL tf_pre_connect(freerdp* instance)
 	/* Optional OS identifier sent to server */
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-	/* Base protocol feature support mask */
-	ZeroMemory(settings->OrderSupport, 32);
-	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
-	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
-	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = settings->GlyphSupportLevel != GLYPH_SUPPORT_NONE;
-	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = settings->GlyphSupportLevel != GLYPH_SUPPORT_NONE;
-	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = settings->GlyphSupportLevel != GLYPH_SUPPORT_NONE;
-	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = FALSE;
-	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
-	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
-	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
+
+	/* settings->OrderSupport is initialized at this point.
+	 * Only override it if you plan to implement custom order
+	 * callbacks or deactiveate certain features. */
+
 	/* Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded. */
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
