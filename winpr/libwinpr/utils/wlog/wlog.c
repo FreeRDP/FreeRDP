@@ -436,6 +436,21 @@ DWORD WLog_GetLogLevel(wLog* log)
 	return log->Level;
 }
 
+BOOL WLog_IsLevelActive(wLog* _log, DWORD _log_level)
+{
+	DWORD level;
+
+	if (!_log)
+		return FALSE;
+
+	level = WLog_GetLogLevel(_log);
+
+	if (level == WLOG_OFF)
+		return FALSE;
+
+	return _log_level >= level;
+}
+
 BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level)
 {
 	int lvl;

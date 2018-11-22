@@ -111,21 +111,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
                                    const char* file, const char* function, va_list args);
 
 WINPR_API DWORD WLog_GetLogLevel(wLog* log);
-
-static INLINE BOOL WLog_IsLevelActive(wLog* _log, DWORD _log_level)
-{
-	DWORD level;
-
-	if (!_log)
-		return FALSE;
-
-	level = WLog_GetLogLevel(_log);
-
-	if (level == WLOG_OFF)
-		return FALSE;
-
-	return _log_level >= level;
-}
+WINPR_API BOOL WLog_IsLevelActive(wLog* _log, DWORD _log_level);
 
 #define WLog_Print(_log, _log_level, ...) \
 	do { \
