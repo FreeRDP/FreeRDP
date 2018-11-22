@@ -888,7 +888,7 @@ typedef struct
 	struct addrinfo* result;
 } t_peer;
 
-static BOOL peer_free(t_peer* peer)
+static void peer_free(t_peer* peer)
 {
 	if (peer->s != INVALID_SOCKET)
 		closesocket(peer->s);
