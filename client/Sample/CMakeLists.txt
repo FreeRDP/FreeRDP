@@ -19,7 +19,10 @@ set(MODULE_NAME "sfreerdp")
 set(MODULE_PREFIX "FREERDP_CLIENT_SAMPLE")
 
 set(${MODULE_PREFIX}_SRCS
-	freerdp.c)
+	tf_channels.c
+	tf_channels.h
+	tf_freerdp.h
+	tf_freerdp.c)
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
