@@ -243,8 +243,8 @@ static const UINT32 NonceLength = 32;
 		if (!(pointer))						\
 		{                                                       \
 			WLog_ERR(TAG, "%s:%d: "  description,		\
-				__FUNCTION__, __LINE__,                 \
-				#__VA_ARGS__);				\
+			         __FUNCTION__, __LINE__,                 \
+			         #__VA_ARGS__);				\
 			return result;                                  \
 		}                                                       \
 	}while (0)
@@ -448,8 +448,8 @@ static void csp_data_detail_free(csp_data_detail* csp)
 /* ============================================================ */
 
 static auth_identity* auth_identity_new(SEC_WINNT_AUTH_IDENTITY* password_creds,
-        smartcard_creds* smartcard_creds,
-        csp_data_detail* csp_data)
+                                        smartcard_creds* smartcard_creds,
+                                        csp_data_detail* csp_data)
 {
 	auth_identity* aid;
 	CHECK_MEMORY(aid = malloc(sizeof(*aid)), NULL,
@@ -479,8 +479,8 @@ static void auth_identity_free(auth_identity* aid)
 	memory_clear_and_free(structure->field, structure->field##Length * 2)
 #define WSTRING_LENGTH_SET_CSTRING(structure, field, cstring)				\
 	(structure->field##Length = (cstring						\
-		?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
-		:(structure->field = NULL, 0)))
+	                             ?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
+	                             :(structure->field = NULL, 0)))
 
 static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_new(char* user,  char* password,
         char* domain)
@@ -548,31 +548,31 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	rdpSettings* settings = nla->settings;
 	nla->cred_type = settings->CredentialsType;
 
-/* = ==  Not yet == = */
-/* #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI) */
-/*  */
-/* 	/\* gets the UPN settings->UserPrincipalName *\/ */
-/* 	if (get_info_smartcard(nla->instance) != 0) */
-/* 	{ */
-/* 		WLog_ERR(TAG, "Failed to retrieve UPN !"); */
-/* 		return -1; */
-/* 	} */
-/*  */
-/* #if defined(WITH_KERBEROS) */
-/* 	WLog_INFO(TAG, "WITH_KERBEROS"); */
-/*  */
-/* 	if (get_TGT_kerberos(settings) == FALSE) */
-/* 	{ */
-/* 		WLog_ERR(TAG, "Failed to get TGT from KDC !"); */
-/* 		return -1; */
-/* 	} */
-/* #else */
-/* 	WLog_INFO(TAG, "NOT WITH_KERBEROS"); */
-/* #endif */
-/* #else */
-/* 	WLog_ERR(TAG, "Enable PKCS11H and GSSAPI features to authenticate via smartcard"); */
-/* 	return -1; */
-/* #endif */
+	/* = ==  Not yet == = */
+	/* #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI) */
+	/*  */
+	/* 	/\* gets the UPN settings->UserPrincipalName *\/ */
+	/* 	if (get_info_smartcard(nla->instance) != 0) */
+	/* 	{ */
+	/* 		WLog_ERR(TAG, "Failed to retrieve UPN !"); */
+	/* 		return -1; */
+	/* 	} */
+	/*  */
+	/* #if defined(WITH_KERBEROS) */
+	/* 	WLog_INFO(TAG, "WITH_KERBEROS"); */
+	/*  */
+	/* 	if (get_TGT_kerberos(settings) == FALSE) */
+	/* 	{ */
+	/* 		WLog_ERR(TAG, "Failed to get TGT from KDC !"); */
+	/* 		return -1; */
+	/* 	} */
+	/* #else */
+	/* 	WLog_INFO(TAG, "NOT WITH_KERBEROS"); */
+	/* #endif */
+	/* #else */
+	/* 	WLog_ERR(TAG, "Enable PKCS11H and GSSAPI features to authenticate via smartcard"); */
+	/* 	return -1; */
+	/* #endif */
 
 	if (settings->PinPadIsPresent)
 	{
@@ -836,7 +836,7 @@ static int nla_client_init(rdpNla* nla)
 	nla->state = NLA_STATE_INITIAL;
 	nla->cred_type = credential_type_default;
 	nla->identity = auth_identity_new(SEC_WINNT_AUTH_IDENTITY_new(NULL, NULL, NULL), NULL,
-	                NULL);
+	                                  NULL);
 
 	if ((nla->identity == NULL) || (nla->identity->password_creds == NULL))
 	{
@@ -1035,9 +1035,11 @@ int nla_client_begin(rdpNla* nla)
 			case SEC_I_COMPLETE_NEEDED:
 				nla->status = SEC_E_OK;
 				break;
+
 			case SEC_I_COMPLETE_AND_CONTINUE:
 				nla->status = SEC_I_CONTINUE_NEEDED;
 				break;
+
 			default:
 				break;
 		}
@@ -2424,7 +2426,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 	return ret;
 }
 
-static size_t nla_write_ts_credentials(rdpNla* nla, wStream* s, auth_identity * identity)
+static size_t nla_write_ts_credentials(rdpNla* nla, wStream* s, auth_identity* identity)
 {
 	int size = 0;
 	int credSize = 0;

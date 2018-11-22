@@ -86,6 +86,7 @@ set(${MODULE_PREFIX}_SUBMODULES
 	cache
 	crypto
 	locale
+    scquery
 	core)
 
 foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
