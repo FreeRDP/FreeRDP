@@ -20,11 +20,10 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_RPC_FAULT_H
 #define FREERDP_LIB_CORE_GATEWAY_RPC_FAULT_H
 
-#include "rpc.h"
-
 #include <winpr/wtypes.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL int rpc_recv_fault_pdu(rpcconn_hdr_t* header);
+FREERDP_LOCAL int rpc_recv_fault_pdu(UINT32 status);
+FREERDP_LOCAL const char* rpc_error_to_string(UINT32 error);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_FAULT_H */

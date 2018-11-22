@@ -425,7 +425,7 @@ static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
 {
 	if (settings->RedirectionFlags & LB_TARGET_FQDN)
 	{
-		if (rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
+		if (settings->GatewayEnabled || rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
@@ -460,7 +460,7 @@ static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 {
 	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 	{
-		if (rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
+		if (settings->GatewayEnabled || rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);

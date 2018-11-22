@@ -446,7 +446,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 	}
 	else if (header->common.ptype == PTYPE_FAULT)
 	{
-		rpc_recv_fault_pdu(header);
+		rpc_recv_fault_pdu(header->fault.status);
 		return -1;
 	}
 	else
