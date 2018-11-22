@@ -79,7 +79,8 @@ static const char TEST_MSRC_INCIDENT_FILE_TYPE2[] =
 
 static BOOL test_msrsc_incident_file_type1(wLog* log)
 {
-	int status = -1;
+	BOOL rc = FALSE;
+	int status;
 	char* pass = NULL;
 	char* expertBlob = NULL;
 	const char* EncryptedPassStub;
@@ -111,11 +112,12 @@ static BOOL test_msrsc_incident_file_type1(wLog* log)
 	           EncryptedPassStubLength);
 	expertBlob = freerdp_assistance_construct_expert_blob("Edgar Olougouna", pass);
 	WLog_Print(log, WLOG_INFO, "expertBlob='%s'", expertBlob);
+	rc = TRUE;
 fail:
 	freerdp_assistance_file_free(file);
 	free(pass);
 	free(expertBlob);
-	return status >= 0 ? TRUE : FALSE;
+	return rc;
 }
 
 static BOOL test_msrsc_incident_file_type2(wLog* log)
