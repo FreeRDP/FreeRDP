@@ -98,7 +98,10 @@ typedef  struct object_handle_list
 CK_OBJECT_HANDLE   object_handle_first(object_handle_list list);
 object_handle_list object_handle_rest(object_handle_list list);
 object_handle_list object_handle_cons(CK_OBJECT_HANDLE object_handle, object_handle_list rest);
+<<<<<<< HEAD
 void object_handle_list_free(object_handle_list list);
+=======
+>>>>>>> Added scquery.
 CK_ULONG object_handle_list_length(object_handle_list list);
 
 #define DO_OBJECT_HANDLE_LIST(object_handle,current,list)                                   \

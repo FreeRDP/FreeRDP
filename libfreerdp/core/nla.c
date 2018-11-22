@@ -450,8 +450,8 @@ static void csp_data_detail_free(csp_data_detail* csp)
 	memory_clear_and_free(structure->field, structure->field##Length * 2)
 #define WSTRING_LENGTH_SET_CSTRING(structure, field, cstring)				\
 	(structure->field##Length = (cstring						\
-		?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
-		:(structure->field = NULL, 0)))
+	                             ?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
+	                             :(structure->field = NULL, 0)))
 
 static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_new(char* user,  char* password,
         char* domain)

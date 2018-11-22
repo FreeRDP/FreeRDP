@@ -45,5 +45,12 @@ smartcard_certificate scquery_certificate_new(CK_SLOT_ID          slot_id,
 /* scquery_certificate_free
 frees only the smartcard_certificate structure (not the fields). */
 void scquery_certificate_free(smartcard_certificate certificate);
+/* scquery_certificate_deepfree
+deepfrees smartcard_certificate structure and all its fields. */
+void scquery_certificate_deepfree(smartcard_certificate certificate);
+
+/* scquery_certificate_allocate
+allocates an empty smartcard_certificate structure. */
+smartcard_certificate scquery_certificate_allocate();
 
 #endif
