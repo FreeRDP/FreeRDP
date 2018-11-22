@@ -655,8 +655,7 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method,
 	SSL_CTX_set_max_proto_version(tls->ctx, 0); /* highest supported version by library */
 #endif
 
-
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
 	SSL_CTX_set_security_level(tls->ctx, settings->TlsSecLevel);
 #endif
 
