@@ -409,7 +409,7 @@ static UINT xf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors
 	if (settings->Fullscreen)
 		return CHANNEL_RC_OK;
 
-	WLog_DBG(TAG, "DisplayControlCapsPdu: setting the window as resizeable");
+	WLog_DBG(TAG, "DisplayControlCapsPdu: setting the window as resizable");
 	return xf_disp_set_window_resizable(xfDisp) ? CHANNEL_RC_OK : CHANNEL_RC_NO_MEMORY;
 }
 
