@@ -55,7 +55,7 @@ struct remdesk_plugin
 	UINT32 Version;
 	char* ExpertBlob;
 	BYTE* EncryptedPassStub;
-	int EncryptedPassStubSize;
+	size_t EncryptedPassStubSize;
 	rdpContext* rdpcontext;
 };
 typedef struct remdesk_plugin remdeskPlugin;

@@ -1410,7 +1410,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		if (assist)
 		{
 			if (freerdp_client_settings_parse_assistance_file(settings,
-			        argv[1]) < 0)
+			        argc, argv) < 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 
@@ -2673,13 +2673,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->PrintReconnectCookie = enable;
 		}
-		CommandLineSwitchCase(arg, "assistance")
-		{
-			settings->RemoteAssistanceMode = TRUE;
-
-			if (!copy_value(arg->Value, &settings->RemoteAssistancePassword))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
 		CommandLineSwitchCase(arg, "pwidth")
 		{
 			unsigned long val = strtoul(arg->Value, NULL, 0);
@@ -3057,6 +3050,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	{
 		settings->EncomspVirtualChannel = TRUE;
 		settings->RemdeskVirtualChannel = TRUE;
+		settings->NlaSecurity = FALSE;
 	}
 
 	if (settings->EncomspVirtualChannel)

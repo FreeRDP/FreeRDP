@@ -303,24 +303,38 @@ out:
 }
 
 int freerdp_client_settings_parse_assistance_file(rdpSettings* settings,
-        const char* filename)
+        int argc, char* argv[])
 {
-	int status;
+	int status, x;
 	int ret = -1;
+	char* filename;
+	char* password = NULL;
 	rdpAssistanceFile* file;
+
+	if (!settings || !argv || (argc < 2))
+		return -1;
+
+	filename = argv[1];
+
+	for (x = 2; x < argc; x++)
+	{
+		const char* key = strstr(argv[x], "assistance:");
+
+		if (key)
+			password = strchr(key, ':') + 1;
+	}
+
 	file = freerdp_assistance_file_new();
 
 	if (!file)
 		return -1;
 
-	status = freerdp_assistance_parse_file(file, filename);
+	status = freerdp_assistance_parse_file(file, filename, password);
 
 	if (status < 0)
 		goto out;
 
-	status = freerdp_client_populate_settings_from_assistance_file(file, settings);
-
-	if (status < 0)
+	if (!freerdp_assistance_populate_settings_from_assistance_file(file, settings))
 		goto out;
 
 	ret = 0;
