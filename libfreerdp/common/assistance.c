@@ -179,21 +179,15 @@ static BOOL append_address(rdpAssistanceFile* file, const char* host, const char
 	return reallocate(file, host, p);
 }
 
-static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, const char* list)
+static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 {
 	BOOL rc = FALSE;
 	char* p;
-	char* str;
 
 	if (!file || !list)
 		return FALSE;
 
-	str = _strdup(list);
-
-	if (!str)
-		return FALSE;
-
-	p =	str;
+	p =	list;
 
 	while ((p = strchr(p, ';')) != NULL)
 	{
@@ -213,8 +207,7 @@ static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, const
 
 	rc = TRUE;
 out:
-	free(str);
-	return TRUE;
+	return rc;
 }
 
 static BOOL freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
