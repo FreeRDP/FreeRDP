@@ -193,7 +193,7 @@ static const char* fields_present_to_string(UINT16 fieldsPresent, const t_err_ma
 
 	for (x = 0; x < elements; x++)
 	{
-		if (strnlen(buffer, ARRAYSIZE(buffer)) > 0)
+		if (buffer[0] != '\0')
 			strcat(buffer, "|");
 
 		if ((map[x].code & fieldsPresent) != 0)
