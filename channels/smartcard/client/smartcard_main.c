@@ -218,7 +218,8 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 		for (index = 0; index < keyCount; index++)
 		{
-			pContext = (SMARTCARD_CONTEXT*) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
+			pContext = (SMARTCARD_CONTEXT*) ListDictionary_GetItemValue(smartcard->rgSCardContextList,
+			           (void*) pKeys[index]);
 
 			if (pContext && (SCardIsValidContext(pContext->hContext) == SCARD_S_SUCCESS))
 			{
@@ -240,7 +241,8 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 		for (index = 0; index < keyCount; index++)
 		{
-			pContext = (SMARTCARD_CONTEXT*) ListDictionary_Remove(smartcard->rgSCardContextList, (void*) pKeys[index]);
+			pContext = (SMARTCARD_CONTEXT*) ListDictionary_Remove(smartcard->rgSCardContextList,
+			           (void*) pKeys[index]);
 
 			if (pContext && (SCardIsValidContext(pContext->hContext) == SCARD_S_SUCCESS))
 			{
@@ -290,7 +292,6 @@ static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 	LinkedList_Free(smartcard->names);
 	Stream_Free(smartcard->device.data, TRUE);
 	free(smartcard);
-
 	return CHANNEL_RC_OK;
 }
 
@@ -454,8 +455,8 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (irp->MajorFunction != IRP_MJ_DEVICE_CONTROL)
 	{
-		WLog_ERR(TAG,"Unexpected SmartCard IRP: MajorFunction 0x%08"PRIX32" MinorFunction: 0x%08"PRIX32"",
-			irp->MajorFunction, irp->MinorFunction);
+		WLog_ERR(TAG, "Unexpected SmartCard IRP: MajorFunction 0x%08"PRIX32" MinorFunction: 0x%08"PRIX32"",
+		         irp->MajorFunction, irp->MinorFunction);
 		irp->IoStatus = (UINT32)STATUS_NOT_SUPPORTED;
 
 		if (Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp))
@@ -484,7 +485,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		goto enqueue;
 	}
 
-	pContext = ListDictionary_GetItemValue(smartcard->rgSCardContextList,(void*) operation->hContext);
+	pContext = ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) operation->hContext);
 
 	if ((pContext != NULL) && is_operation_irp_asynchronous(operation->ioControlCode))
 	{
@@ -493,18 +494,20 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			WLog_ERR(TAG, "MessageQueue_Post failed!");
 			return ERROR_INTERNAL_ERROR;
 		}
+
 		return CHANNEL_RC_OK;
 	}
 
 	if ((status = smartcard_irp_device_control_call(smartcard, operation)))
 	{
 		WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %"PRId32"!",
-			status);
+		         status);
 		free(operation);
 		return (UINT32)status;
 	}
 
 enqueue:
+
 	if (Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp))
 	{
 		free(operation);
@@ -512,7 +515,6 @@ enqueue:
 	}
 
 	WLog_ERR(TAG, "Queue_Enqueue failed!");
-
 	free(operation);
 	return ERROR_INTERNAL_ERROR;
 }
@@ -714,7 +716,6 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	if (sSmartcard != NULL)
 	{
 		smartcard = sSmartcard;
-
 	}
 	else
 	{
