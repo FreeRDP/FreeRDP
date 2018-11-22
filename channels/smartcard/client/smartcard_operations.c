@@ -988,7 +988,7 @@ static LONG smartcard_Reconnect_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	IRP* irp = operation->irp;
 	Reconnect_Call* call = operation->call;
 	ret.ReturnCode = SCardReconnect(operation->hCard, call->dwShareMode,
-		call->dwPreferredProtocols, call->dwInitialization, &ret.dwActiveProtocol);
+	                                call->dwPreferredProtocols, call->dwInitialization, &ret.dwActiveProtocol);
 	smartcard_trace_reconnect_return(smartcard, &ret);
 
 	if ((status = smartcard_pack_reconnect_return(smartcard, irp->output, &ret)))

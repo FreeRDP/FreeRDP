@@ -292,7 +292,6 @@ static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 	LinkedList_Free(smartcard->names);
 	Stream_Free(smartcard->device.data, TRUE);
 	free(smartcard);
-
 	return CHANNEL_RC_OK;
 }
 
