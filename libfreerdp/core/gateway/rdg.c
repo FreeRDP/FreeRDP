@@ -641,7 +641,11 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 	}
 
 	if (Stream_GetRemainingLength(s) < 10)
+	{
+		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected 10",
+		         __FUNCTION__, Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, errorCode);
 	Stream_Read_UINT8(s, verMajor);
@@ -655,7 +659,7 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 
 	if (FAILED(errorCode))
 	{
-		WLog_DBG(TAG, "Handshake error %s", error);
+		WLog_ERR(TAG, "Handshake error %s", error);
 		return FALSE;
 	}
 
@@ -675,7 +679,11 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 	}
 
 	if (Stream_GetRemainingLength(s) < 10)
+	{
+		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected 10",
+		         __FUNCTION__, Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, serverVersion);
 	Stream_Read_UINT32(s, errorCode);
@@ -687,7 +695,7 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 
 	if (FAILED(errorCode))
 	{
-		WLog_DBG(TAG, "Tunnel creation error %s", error);
+		WLog_ERR(TAG, "Tunnel creation error %s", error);
 		return FALSE;
 	}
 
@@ -707,7 +715,11 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	}
 
 	if (Stream_GetRemainingLength(s) < 8)
+	{
+		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected 8",
+		         __FUNCTION__, Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, errorCode);
 	Stream_Read_UINT16(s, fieldsPresent);
@@ -718,7 +730,7 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 
 	if (FAILED(errorCode))
 	{
-		WLog_DBG(TAG, "Tunnel authorization error %s", error);
+		WLog_ERR(TAG, "Tunnel authorization error %s", error);
 		return FALSE;
 	}
 
@@ -738,7 +750,11 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 	}
 
 	if (Stream_GetRemainingLength(s) < 8)
+	{
+		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected 8",
+		         __FUNCTION__, Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, errorCode);
 	Stream_Read_UINT16(s, fieldsPresent);
@@ -766,14 +782,22 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 	Stream_SetPosition(s, 0);
 
 	if (Stream_GetRemainingLength(s) < 8)
+	{
+		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected 8",
+		         __FUNCTION__, Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, type);
 	Stream_Seek_UINT16(s); /* reserved */
 	Stream_Read_UINT32(s, packetLength);
 
-	if (Stream_GetRemainingLength(s) < packetLength)
+	if (Stream_Length(s) < packetLength)
+	{
+		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected %"PRIuz,
+		         __FUNCTION__, Stream_Length(s), packetLength);
 		return FALSE;
+	}
 
 	switch (type)
 	{
@@ -794,7 +818,7 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 			break;
 
 		case PKT_TYPE_DATA:
-			assert(FALSE);
+			WLog_ERR(TAG, "[%s] Unexpected packet type DATA", __FUNCTION__);
 			return FALSE;
 	}
 
