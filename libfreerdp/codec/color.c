@@ -179,6 +179,12 @@ BOOL freerdp_image_copy_from_pointer_data(
 	if (nDstStep <= 0)
 		nDstStep = dstBytesPerPixel * nWidth;
 
+	for (y = nYDst; y < nHeight; y++)
+	{
+		BYTE* pDstLine = &pDstData[y * nDstStep + nXDst * dstBytesPerPixel];
+		memset(pDstLine, 0, dstBytesPerPixel * (nWidth - nXDst));
+	}
+
 	vFlip = (xorBpp == 1) ? FALSE : TRUE;
 	andStep = (nWidth + 7) / 8;
 	andStep += (andStep % 2);
