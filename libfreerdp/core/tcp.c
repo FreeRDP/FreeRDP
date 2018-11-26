@@ -960,11 +960,12 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 
 	for (index = 0; index < count; index++)
 	{
-		if (peers[index].s == INVALID_SOCKET)
-			continue;
-
 		sockfd = peers[index].s;
 		addr = peers[index].addr;
+
+		if ((sockfd == INVALID_SOCKET) || (!addr))
+			continue;
+
 		/* blocking tcp connect */
 		status = _connect(sockfd, addr->ai_addr, addr->ai_addrlen);
 
