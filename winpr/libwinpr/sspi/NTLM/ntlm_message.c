@@ -185,6 +185,7 @@ static void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 	}
 }
 
+#ifdef WITH_DEBUG_NTLM
 static void ntlm_print_message_fields(NTLM_MESSAGE_FIELDS* fields, const char* name)
 {
 	WLog_DBG(TAG, "%s (Len: %"PRIu16" MaxLen: %"PRIu16" BufferOffset: %"PRIu32")",
@@ -193,6 +194,7 @@ static void ntlm_print_message_fields(NTLM_MESSAGE_FIELDS* fields, const char* n
 	if (fields->Len > 0)
 		winpr_HexDump(TAG, WLOG_DEBUG, fields->Buffer, fields->Len);
 }
+#endif
 
 SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
@@ -1164,10 +1166,12 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 		if (memcmp(messageIntegrityCheck, message->MessageIntegrityCheck, 16) != 0)
 		{
 			WLog_ERR(TAG, "Message Integrity Check (MIC) verification failed!");
+#ifdef WITH_DEBUG_NTLM
 			WLog_ERR(TAG, "Expected MIC:");
 			winpr_HexDump(TAG, WLOG_ERROR, messageIntegrityCheck, 16);
 			WLog_ERR(TAG, "Actual MIC:");
 			winpr_HexDump(TAG, WLOG_ERROR, message->MessageIntegrityCheck, 16);
+#endif
 			return SEC_E_MESSAGE_ALTERED;
 		}
 	}
