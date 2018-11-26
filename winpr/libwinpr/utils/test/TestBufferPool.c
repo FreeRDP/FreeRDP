@@ -5,60 +5,76 @@
 
 int TestBufferPool(int argc, char* argv[])
 {
-	DWORD PoolSize;
-	int BufferSize;
+	int status = -1;
+	BOOL rc;
+	size_t PoolSize;
+	SSIZE_T BufferSize;
+	size_t uBufferSize;
 	wBufferPool* pool;
 	BYTE* Buffers[10];
-	DWORD DefaultSize = 1234;
-
+	size_t DefaultSize = 1234;
 	pool = BufferPool_New(TRUE, -1, 16);
+
 	if (!pool)
 		return -1;
 
 	Buffers[0] = BufferPool_Take(pool, DefaultSize);
 	Buffers[1] = BufferPool_Take(pool, DefaultSize);
 	Buffers[2] = BufferPool_Take(pool, 2048);
+
 	if (!Buffers[0] || !Buffers[1] || !Buffers[2])
-		return -1;
+		goto fail;
 
 	BufferSize = BufferPool_GetBufferSize(pool, Buffers[0]);
 
-	if (BufferSize != DefaultSize)
+	if (BufferSize < 0)
+		goto fail;
+
+	uBufferSize = (size_t)BufferSize;
+
+	if (uBufferSize != DefaultSize)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %"PRIu32"\n", BufferSize, DefaultSize);
-		return -1;
+		printf("BufferPool_GetBufferSize failure: Actual: %"PRIdz" Expected: %"PRIuz"\n", BufferSize,
+		       DefaultSize);
+		goto fail;
 	}
 
 	BufferSize = BufferPool_GetBufferSize(pool, Buffers[1]);
 
-	if (BufferSize != DefaultSize)
+	if (uBufferSize != DefaultSize)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %"PRIu32"\n", BufferSize, DefaultSize);
-		return -1;
+		printf("BufferPool_GetBufferSize failure: Actual: %"PRIdz" Expected: %"PRIuz"\n", BufferSize,
+		       DefaultSize);
+		goto fail;
 	}
 
 	BufferSize = BufferPool_GetBufferSize(pool, Buffers[2]);
 
 	if (BufferSize != 2048)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: 2048\n", BufferSize);
-		return -1;
+		printf("BufferPool_GetBufferSize failure: Actual: %"PRIdz" Expected: 2048\n", BufferSize);
+		goto fail;
 	}
 
-	BufferPool_Return(pool, Buffers[1]);
+	rc = BufferPool_Return(pool, Buffers[1]);
+
+	if (!rc)
+	{
+		goto fail;
+	}
 
 	PoolSize = BufferPool_GetPoolSize(pool);
 
 	if (PoolSize != 2)
 	{
-		printf("BufferPool_GetPoolSize failure: Actual: %"PRIu32" Expected: 2\n", PoolSize);
-		return -1;
+		printf("BufferPool_GetPoolSize failure: Actual: %"PRIuz" Expected: 2\n", PoolSize);
+		goto fail;
 	}
 
+	status = 0;
+fail:
 	BufferPool_Clear(pool);
-
 	BufferPool_Free(pool);
-
-	return 0;
+	return status;
 }
 

@@ -368,42 +368,16 @@ WINPR_API void HashTable_Free(wHashTable* table);
 
 /* BufferPool */
 
-struct _wBufferPoolItem
-{
-	int size;
-	void* buffer;
-};
-typedef struct _wBufferPoolItem wBufferPoolItem;
-
-struct _wBufferPool
-{
-	int fixedSize;
-	DWORD alignment;
-	BOOL synchronized;
-	CRITICAL_SECTION lock;
-
-	int size;
-	int capacity;
-	void** array;
-
-	int aSize;
-	int aCapacity;
-	wBufferPoolItem* aArray;
-
-	int uSize;
-	int uCapacity;
-	wBufferPoolItem* uArray;
-};
 typedef struct _wBufferPool wBufferPool;
 
-WINPR_API int BufferPool_GetPoolSize(wBufferPool* pool);
-WINPR_API int BufferPool_GetBufferSize(wBufferPool* pool, void* buffer);
+WINPR_API size_t BufferPool_GetPoolSize(wBufferPool* pool);
+WINPR_API SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool, const void* buffer);
 
-WINPR_API void* BufferPool_Take(wBufferPool* pool, int bufferSize);
+WINPR_API void* BufferPool_Take(wBufferPool* pool, size_t bufferSize);
 WINPR_API BOOL BufferPool_Return(wBufferPool* pool, void* buffer);
 WINPR_API void BufferPool_Clear(wBufferPool* pool);
 
-WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment);
+WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignment);
 WINPR_API void BufferPool_Free(wBufferPool* pool);
 
 /* ObjectPool */
@@ -579,7 +553,7 @@ typedef struct _wEventType wEventType;
 	DEFINE_EVENT_UNSUBSCRIBE(_name)
 
 #define DEFINE_EVENT_ENTRY(_name) \
-    { #_name, { sizeof( _name ## EventArgs), NULL }, 0, { NULL } },
+	{ #_name, { sizeof( _name ## EventArgs), NULL }, 0, { NULL } },
 
 	struct _wPubSub
 	{
