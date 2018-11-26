@@ -455,7 +455,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi,
 
 	if (rc < 0)
 	{
-		WLog_WARN(TAG, "avc420_decompress failure: %"PRIu32", ignoring update.", status);
+		WLog_WARN(TAG, "avc420_decompress failure: %"PRId32", ignoring update.", rc);
 		return CHANNEL_RC_OK;
 	}
 
