@@ -75,6 +75,7 @@ set(${MODULE_PREFIX}_SRCS
 	security.c
 	security.h
 	settings.c
+	settings.h
 	orders.c
 	orders.h
 	freerdp.c

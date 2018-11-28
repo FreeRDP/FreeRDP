@@ -50,6 +50,8 @@
 #include <freerdp/log.h>
 #include <freerdp/cache/pointer.h>
 
+#include "settings.h"
+
 #define TAG FREERDP_TAG("core")
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
@@ -166,6 +168,10 @@ BOOL freerdp_connect(freerdp* instance)
 	ResetEvent(instance->context->abortEvent);
 	rdp = instance->context->rdp;
 	settings = instance->settings;
+
+	if (!freerdp_settings_set_default_order_support(settings))
+		return FALSE;
+
 	IFCALLRET(instance->PreConnect, status, instance);
 	instance->ConnectionCallbackState = CLIENT_STATE_PRECONNECT_PASSED;
 
