@@ -110,11 +110,7 @@ int TestStringList(int argc, char* argv[])
 
 	TEST(string_list_equal(sl40, sl40), "sl40 should be equal to itself!");
 	TEST(string_list_equal(sl44, sl44), "sl44 should be equal to itself!");
-<<<<<<< HEAD
 
-=======
-	
->>>>>>> Added string_list_split_string, string_list_mismatch and string_list_equal; removed const from string array type.
 	TEST_COPY(sl0, 0);
 	TEST_COPY(sl1, 1);
 	TEST_COPY(sl40, 4);
@@ -161,7 +157,4 @@ int TestStringList(int argc, char* argv[])
 
 	return 0;
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> Added string_list_split_string, string_list_mismatch and string_list_equal; removed const from string array type.
