@@ -20,16 +20,16 @@
 
 #if DEFINE_UNICODE
 
-HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags, PWSTR* ppszPathOut)
+HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags,
+                           PWSTR* ppszPathOut)
 {
 #ifdef _WIN32
 	PWSTR pszPathOut;
 	BOOL backslashIn;
 	BOOL backslashMore;
-	int pszMoreLength;
-	int pszPathInLength;
-	int pszPathOutLength;
-
+	size_t pszMoreLength;
+	size_t pszPathInLength;
+	size_t pszPathOutLength;
 	WLog_WARN(TAG, "%s: has known bugs and needs fixing.", __FUNCTION__);
 
 	if (!ppszPathOut)
@@ -59,29 +59,25 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 		if ((pszPathIn[1] == ':') && (pszPathIn[2] == _PATH_SEPARATOR_CHR))
 		{
 			size_t sizeOfBuffer;
-
 			pszPathOutLength = 2 + pszMoreLength;
 			sizeOfBuffer = (pszPathOutLength + 1) * 2;
-
 			pszPathOut = (PWSTR) HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
+
 			if (!pszPathOut)
 				return E_OUTOFMEMORY;
 
 			swprintf_s(pszPathOut, sizeOfBuffer, L"%c:%s", pszPathIn[0], pszMore);
-
 			*ppszPathOut = pszPathOut;
-
 			return S_OK;
 		}
 	}
 	else
 	{
 		size_t sizeOfBuffer;
-
 		pszPathOutLength = pszPathInLength + pszMoreLength;
 		sizeOfBuffer = (pszPathOutLength + 1) * 2;
-
 		pszPathOut = (PWSTR) HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
+
 		if (!pszPathOut)
 			return E_OUTOFMEMORY;
 
@@ -91,11 +87,10 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 			swprintf_s(pszPathOut, sizeOfBuffer, L"%s" _PATH_SEPARATOR_STR L"%s", pszPathIn, pszMore);
 
 		*ppszPathOut = pszPathOut;
-
 		return S_OK;
 	}
-#endif
 
+#endif
 	return E_FAIL;
 }
 
@@ -109,7 +104,6 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags
 	int pszMoreLength;
 	int pszPathInLength;
 	int pszPathOutLength;
-
 	WLog_WARN(TAG, "%s: has known bugs and needs fixing.", __FUNCTION__);
 
 	if (!ppszPathOut)
@@ -139,29 +133,25 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags
 		if ((pszPathIn[1] == ':') && (pszPathIn[2] == _PATH_SEPARATOR_CHR))
 		{
 			size_t sizeOfBuffer;
-
 			pszPathOutLength = 2 + pszMoreLength;
 			sizeOfBuffer = (pszPathOutLength + 1) * 2;
-
 			pszPathOut = (PSTR) HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
+
 			if (!pszPathOut)
 				return E_OUTOFMEMORY;
 
 			sprintf_s(pszPathOut, sizeOfBuffer, "%c:%s", pszPathIn[0], pszMore);
-
 			*ppszPathOut = pszPathOut;
-
 			return S_OK;
 		}
 	}
 	else
 	{
 		size_t sizeOfBuffer;
-
 		pszPathOutLength = pszPathInLength + pszMoreLength;
 		sizeOfBuffer = (pszPathOutLength + 1) * 2;
-
 		pszPathOut = (PSTR) HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
+
 		if (!pszPathOut)
 			return E_OUTOFMEMORY;
 
@@ -171,7 +161,6 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags
 			sprintf_s(pszPathOut, sizeOfBuffer, "%s" _PATH_SEPARATOR_STR "%s", pszPathIn, pszMore);
 
 		*ppszPathOut = pszPathOut;
-
 		return S_OK;
 	}
 
