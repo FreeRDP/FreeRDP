@@ -69,8 +69,8 @@ int TestCmdLine(int argc, char* argv[])
         char** command_line;
 
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
-        testArgc = string_list_length(testArgv);
-	command_line = string_list_copy(testArgv);
+        testArgc = string_list_length((char**)testArgv);
+	command_line = string_list_copy((char**)testArgv);
 
 	if (!command_line)
 	{

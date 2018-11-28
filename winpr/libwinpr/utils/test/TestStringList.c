@@ -110,7 +110,7 @@ int TestStringList(int argc, char* argv[])
 
 	TEST(string_list_equal(sl40, sl40), "sl40 should be equal to itself!");
 	TEST(string_list_equal(sl44, sl44), "sl44 should be equal to itself!");
-	
+
 	TEST_COPY(sl0, 0);
 	TEST_COPY(sl1, 1);
 	TEST_COPY(sl40, 4);
@@ -157,4 +157,3 @@ int TestStringList(int argc, char* argv[])
 
 	return 0;
 }
-

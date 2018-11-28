@@ -109,11 +109,11 @@ typedef struct
 {
 	int expected_status;
 	validate_settings_pr validate_settings;
-	const char* command_line[128];
+	char* command_line[128];
 	struct
 	{
 		int index;
-		const char*   expected_value;
+		char* expected_value;
 	} modified_arguments[8];
 } test;
 
@@ -267,7 +267,7 @@ int TestClientCmdLine(int argc, char* argv[])
 		char** command_line = string_list_copy(tests[i].command_line);
 
 		if (!testcase(__FUNCTION__,
-		              command_line, string_list_length((const char * const*)command_line),
+		              command_line, string_list_length(command_line),
 		              tests[i].expected_status, tests[i].validate_settings))
 		{
 			FAILURE("parsing arguments.\n");
@@ -278,7 +278,7 @@ int TestClientCmdLine(int argc, char* argv[])
 
 		if (failure)
 		{
-			string_list_print(stdout, (const char * const*)command_line);
+			string_list_print(stdout, command_line);
 			rc = -1;
 		}
 
