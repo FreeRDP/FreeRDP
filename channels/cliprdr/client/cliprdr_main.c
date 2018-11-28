@@ -216,7 +216,7 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s,
-                                      UINT16 length, UINT16 flags)
+                                      UINT32 length, UINT16 flags)
 {
 	UINT16 index;
 	UINT16 lengthCapability;
@@ -257,7 +257,6 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s,
 			default:
 				WLog_ERR(TAG, "unknown cliprdr capability set: %"PRIu16"", capabilitySetType);
 				return CHANNEL_RC_BAD_PROC;
-				break;
 		}
 	}
 
@@ -270,7 +269,7 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s,
-        UINT16 length, UINT16 flags)
+        UINT32 length, UINT16 flags)
 {
 	CLIPRDR_MONITOR_READY monitorReady;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
@@ -639,8 +638,8 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
 	if (length > 520)
 		length = 520;
 
-	Stream_Write(s, wszTempDir, length * 2);
-	Stream_Zero(s, (520 - length) * 2);
+	Stream_Write(s, wszTempDir, (size_t)length * 2);
+	Stream_Zero(s, (520 - (size_t)length) * 2);
 	free(wszTempDir);
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "TempDirectory: %s",
 	           tempDirectory->szTempDir);
@@ -657,11 +656,11 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 {
 	wStream* s;
 	UINT32 index;
-	int length = 0;
+	UINT32 length = 0;
 	int cchWideChar;
 	LPWSTR lpWideCharStr;
-	int formatNameSize;
-	int formatNameLength;
+	size_t formatNameSize;
+	size_t formatNameLength;
 	char* szFormatName;
 	WCHAR* wszFormatName;
 	BOOL asciiNames = FALSE;
@@ -703,8 +702,14 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 				wszFormatName = NULL;
 
 				if (szFormatName)
-					formatNameSize = ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName,
-					                                  0);
+				{
+					int rc = ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName, 0);
+
+					if (rc < 0)
+						return ERROR_INTERNAL_ERROR;
+
+					formatNameSize = (size_t)rc;
+				}
 
 				if (formatNameSize > 15)
 					formatNameSize = 15;
@@ -726,8 +731,14 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 			formatNameSize = 2;
 
 			if (format->formatName)
-				formatNameSize = MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1, NULL,
-				                                     0) * 2;
+			{
+				int rc = MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1, NULL, 0);
+
+				if (rc < 0)
+					return ERROR_INTERNAL_ERROR;
+
+				formatNameSize = (size_t)rc * 2;
+			}
 
 			length += formatNameSize;
 		}
@@ -989,7 +1000,7 @@ static UINT cliprdr_virtual_channel_event_data_received(cliprdrPlugin* cliprdr,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(data_in, (int) dataLength))
+	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
 	{
 		Stream_Free(cliprdr->data_in, TRUE);
 		cliprdr->data_in = NULL;
@@ -1100,6 +1111,17 @@ static DWORD WINAPI cliprdr_virtual_channel_client_thread(LPVOID arg)
 	return error;
 }
 
+static void cliprdr_free_msg(void* obj)
+{
+	wMessage* msg = (wMessage*)obj;
+
+	if (msg)
+	{
+		wStream* s = (wStream*)msg->wParam;
+		Stream_Free(s, TRUE);
+	}
+}
+
 /**
  * Function description
  *
@@ -1109,6 +1131,7 @@ static UINT cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr,
         LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
+	wObject obj = { 0 };
 	status = cliprdr->channelEntryPoints.pVirtualChannelOpenEx(cliprdr->InitHandle,
 	         &cliprdr->OpenHandle, cliprdr->channelDef.name,
 	         cliprdr_virtual_channel_open_event_ex);
@@ -1120,7 +1143,8 @@ static UINT cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr,
 		return status;
 	}
 
-	cliprdr->queue = MessageQueue_New(NULL);
+	obj.fnObjectFree = cliprdr_free_msg;
+	cliprdr->queue = MessageQueue_New(&obj);
 
 	if (!cliprdr->queue)
 	{
