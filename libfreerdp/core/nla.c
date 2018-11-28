@@ -730,7 +730,7 @@ static BOOL should_prompt_password(rdpSettings* settings)
 static LPTSTR service_principal_name(const char* server_hostname)
 {
 	char* spnA = string_concatenate(TERMSRV_SPN_PREFIX, server_hostname, NULL);
-	LPTSTR spnX  = stringX_from_cstring(spnA);
+	LPTSTR spnX = stringX_from_cstring(spnA);
 	free(spnA);
 	return spnX;
 }
