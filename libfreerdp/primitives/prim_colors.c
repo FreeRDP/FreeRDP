@@ -42,8 +42,8 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(
 	const INT16* pY  = pSrc[0];
 	const INT16* pCb = pSrc[1];
 	const INT16* pCr = pSrc[2];
-	int srcPad = (srcStep - (roi->width * 2)) / 2;
-	int dstPad = (dstStep - (roi->width * 4)) / 4;
+	const size_t srcPad = (srcStep - (roi->width * 2)) / 2;
+	const size_t dstPad = (dstStep - (roi->width * 4));
 	const DWORD formatSize = GetBytesPerPixel(DstFormat);
 
 	for (y = 0; y < roi->height; y++)
@@ -85,9 +85,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
 	const INT16* pY  = pSrc[0];
 	const INT16* pCb = pSrc[1];
 	const INT16* pCr = pSrc[2];
-	int srcPad = (srcStep - (roi->width * 2)) / 2;
-	int dstPad = (dstStep - (roi->width * 4)) / 4;
-	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
+	const size_t srcPad = (srcStep - (roi->width * 2)) / 2;
+	const size_t dstPad = (dstStep - (roi->width * 4));
+	const fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
 	const DWORD formatSize = GetBytesPerPixel(DstFormat);
 
 	for (y = 0; y < roi->height; y++)
