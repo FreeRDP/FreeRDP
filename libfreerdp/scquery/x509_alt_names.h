@@ -28,13 +28,12 @@ alt_name_list alt_name_list_rest(alt_name_list list);
 void          alt_name_list_free(alt_name_list list);
 void          alt_name_list_deepfree(alt_name_list list);
 
-#define DO_ALT_NAME_LIST(alt_name,current,list)                         \
-	for((current=list,                                                  \
-	     alt_name=alt_name_list_first(current));                        \
-	    (current!=NULL);                                                \
-	    (current=alt_name_list_rest(current),                           \
+#define DO_ALT_NAME_LIST(alt_name,current,list)      \
+	for((current=list,			     \
+	     alt_name=alt_name_list_first(current)); \
+	    (current!=NULL);			     \
+	    (current=alt_name_list_rest(current),    \
 	     alt_name=alt_name_list_first(current)))
-
 
 alt_name_list certificate_extract_subject_alt_names(buffer certificate_data);
 
