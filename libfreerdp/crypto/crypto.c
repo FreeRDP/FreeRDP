@@ -756,7 +756,6 @@ char* crypto_cert_issuer(X509* xcert)
 
 BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 {
-	int purpose;
 	X509_VERIFY_PARAM* verify_param;
 	X509_STORE_CTX* csc;
 	BOOL status = FALSE;
@@ -802,13 +801,7 @@ BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 	if (!X509_STORE_CTX_init(csc, cert_ctx, xcert, cert->px509chain))
 		goto end;
 
-	purpose = X509_PURPOSE_ANY;
-	verify_param = X509_STORE_CTX_get0_param(csc);
-
-	if (!verify_param)
-		goto end;
-
-	X509_VERIFY_PARAM_set_purpose(verify_param, purpose);
+	X509_STORE_CTX_set_purpose(csc, X509_PURPOSE_SSL_SERVER);
 
 	if (X509_verify_cert(csc) == 1)
 		status = TRUE;
