@@ -42,6 +42,8 @@
 @synthesize issuer;
 @synthesize subject;
 @synthesize hostMismatch;
+@synthesize changed;
+@synthesize result;
 
 - (id)init
 {
@@ -53,9 +55,17 @@
 	[super windowDidLoad];
 	// Implement this method to handle any initialization after your window controller's window has been loaded from its nib file.
 	[self.window setTitle:self.serverHostname];
-	[self.messageLabel setStringValue:[NSString stringWithFormat:@"Certificate for %@",
+	if (self.changed)
+		[self.messageLabel setStringValue:[NSString stringWithFormat:@"Changed certificate for %@",
 	                              self.serverHostname]];
+	else
+		[self.messageLabel setStringValue:[NSString stringWithFormat:@"New Certificate for %@",
+									  self.serverHostname]];
 
+	if (!self.hostMismatch)
+        [self.textMismatch setStringValue:[NSString stringWithFormat:@"NOTE: The server name matches the certificate, good."]];
+	else
+		[self.textMismatch setStringValue:[NSString stringWithFormat:@"ATTENTION: The common name does not match the server name!"]];
 	[self.textCommonName setStringValue:self.commonName];
 	[self.textFingerprint setStringValue:self.fingerprint];
 	[self.textIssuer setStringValue:self.issuer];

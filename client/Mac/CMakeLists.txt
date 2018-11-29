@@ -30,7 +30,9 @@ set(MACOSX_BUNDLE_SHORT_VERSION_STRING ${FREERDP_VERSION})
 set(MACOSX_BUNDLE_BUNDLE_VERSION ${FREERDP_VERSION})
 set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2013-${VERSION_YEAR}. All Rights Reserved.")
 
-set(${MODULE_PREFIX}_XIBS PasswordDialog.xib)
+set(${MODULE_PREFIX}_XIBS
+	CertificateDialog.xib
+	PasswordDialog.xib)
 
 set(${MODULE_PREFIX}_SOURCES "")
 

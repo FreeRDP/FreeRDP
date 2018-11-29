@@ -1030,27 +1030,45 @@ DWORD mac_verify_certificate(freerdp* instance, const char* common_name, const c
 	mfContext* mfc = (mfContext*) instance->context;
 	MRDPView* view = (MRDPView*) mfc->view;
 	CertificateDialog* dialog = [CertificateDialog new];
-	dialog.serverHostname = [NSString stringWithCString:subject encoding:
-			NSUTF8StringEncoding];;
+	dialog.serverHostname = [NSString stringWithFormat:@"TODO: The server name we connect to."];
 	dialog.commonName = [NSString stringWithCString:common_name encoding:
-			NSUTF8StringEncoding];;
+			NSUTF8StringEncoding];
 	dialog.subject = [NSString stringWithCString:subject encoding:
-			NSUTF8StringEncoding];;
+			NSUTF8StringEncoding];
 	dialog.issuer = [NSString stringWithCString:issuer encoding:
-			NSUTF8StringEncoding];;
+			NSUTF8StringEncoding];
 	dialog.fingerprint = [NSString stringWithCString:fingerprint encoding:
-			NSUTF8StringEncoding];;
+			NSUTF8StringEncoding];
 	dialog.hostMismatch = host_mismatch;
+	dialog.changed = FALSE;
 	[dialog performSelectorOnMainThread:@selector(runModal:) withObject:[view
 	        window] waitUntilDone:TRUE];
 
 	return dialog.result;
 }
 
-DWORD mac_verify_changed_certificate(freerdp* instance, const char* common_name, const char* subject, const char* issuer, const char* fingerprint, const char* old_subject, const char* old_issuer, const char* old_fingerprint)
+DWORD mac_verify_changed_certificate(freerdp* instance, const char* common_name,
+									 const char* subject, const char* issuer, const char* fingerprint,
+									 const char* old_subject, const char* old_issuer, const char* old_fingerprint)
 {
-	WLog_WARN(TAG, "TODO: Implement %s, accepting everything", __FUNCTION__);
-	return 2;
+	mfContext* mfc = (mfContext*) instance->context;
+	MRDPView* view = (MRDPView*) mfc->view;
+	CertificateDialog* dialog = [CertificateDialog new];
+	dialog.serverHostname = [NSString stringWithFormat:@"TODO: The server name we connect to."];
+	dialog.commonName = [NSString stringWithCString:common_name encoding:
+			NSUTF8StringEncoding];
+	dialog.subject = [NSString stringWithCString:subject encoding:
+			NSUTF8StringEncoding];
+	dialog.issuer = [NSString stringWithCString:issuer encoding:
+			NSUTF8StringEncoding];
+	dialog.fingerprint = [NSString stringWithCString:fingerprint encoding:
+			NSUTF8StringEncoding];
+	dialog.hostMismatch = FALSE;
+	dialog.changed = TRUE;
+	[dialog performSelectorOnMainThread:@selector(runModal:) withObject:[view
+	        window] waitUntilDone:TRUE];
+
+	return dialog.result;
 }
 
 int mac_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
