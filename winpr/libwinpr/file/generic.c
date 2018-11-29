@@ -944,7 +944,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 				name++;
 
 			pFileSearch->lpPattern[0] = '*';
-			strcpy(lpFindFileData->cFileName, name);
+			sprintf_s(lpFindFileData->cFileName, ARRAYSIZE(lpFindFileData->cFileName), "%s", name);
 		}
 
 		return (HANDLE) pFileSearch;
