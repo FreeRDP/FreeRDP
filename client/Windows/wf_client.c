@@ -878,14 +878,6 @@ static BOOL wfreerdp_client_global_init(void)
 {
 	WSADATA wsaData;
 
-	if (!getenv("HOME"))
-	{
-		char home[MAX_PATH * 2] = "HOME=";
-		strcat(home, getenv("HOMEDRIVE"));
-		strcat(home, getenv("HOMEPATH"));
-		_putenv(home);
-	}
-
 	WSAStartup(0x101, &wsaData);
 #if defined(WITH_DEBUG) || defined(_DEBUG)
 	wf_create_console();
