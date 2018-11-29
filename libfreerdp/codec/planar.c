@@ -339,7 +339,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 	UINT32 rawWidths[4];
 	UINT32 rawHeights[4];
 	BYTE FormatHeader;
-	const BYTE* planes[4];
+	const BYTE* planes[4] = { 0 };
 	const UINT32 w = MIN(nSrcWidth, nDstWidth);
 	const UINT32 h = MIN(nSrcHeight, nDstHeight);
 	const primitives_t* prims = primitives_get();

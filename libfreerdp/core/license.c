@@ -1394,11 +1394,17 @@ BOOL license_answer_license_request(rdpLicense* license)
 
 		license->EncryptedHardwareId->type = BB_ENCRYPTED_DATA_BLOB;
 		if (!license_encrypt_and_MAC(license, license->HardwareId, HWID_LENGTH, license->EncryptedHardwareId, signature))
+		{
+			free(license_data);
 			return FALSE;
+		}
 
 		calBlob = license_new_binary_blob(BB_DATA_BLOB);
 		if (!calBlob)
+		{
+			free(license_data);
 			return FALSE;
+		}
 		calBlob->data = license_data;
 		calBlob->length = license_size;
 
