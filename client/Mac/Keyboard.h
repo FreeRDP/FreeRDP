@@ -24,4 +24,4 @@ enum APPLE_KEYBOARD_TYPE
 	APPLE_KEYBOARD_TYPE_JIS
 };
 
-enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type();
+enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type(void);

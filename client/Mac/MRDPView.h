@@ -26,6 +26,8 @@
 #import "mf_client.h"
 #import "Keyboard.h"
 
+#import <CoreGraphics/CoreGraphics.h>
+
 @interface MRDPView : NSView
 {
 	mfContext* mfc;

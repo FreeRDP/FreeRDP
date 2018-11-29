@@ -28,7 +28,7 @@ typedef struct mf_context mfContext;
 
 #include "MRDPView.h"
 #include "Keyboard.h"
-#include <AppKit/NSView.h>
+#include <CoreGraphics/CoreGraphics.h>
 
 struct mf_context
 {

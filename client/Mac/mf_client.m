@@ -30,13 +30,13 @@
  * Client Interface
  */
 
-static BOOL mfreerdp_client_global_init()
+static BOOL mfreerdp_client_global_init(void)
 {
 	freerdp_handle_signals();
 	return TRUE;
 }
 
-static void mfreerdp_client_global_uninit()
+static void mfreerdp_client_global_uninit(void)
 {
 }
 
@@ -98,7 +98,6 @@ static BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
 static void mfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
 	mfContext* mfc;
-	rdpSettings* settings;
 
 	if (!instance || !context)
 		return;
@@ -110,7 +109,7 @@ static void mfreerdp_client_free(freerdp* instance, rdpContext* context)
 static void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x,
                                        int y)
 {
-	int width, height;
+	UINT32 width, height;
 	rdpInput* input = cfc->instance->input;
 	rdpSettings* settings = cfc->instance->settings;
 	width = settings->DesktopWidth;
@@ -119,7 +118,8 @@ static void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x,
 	if (x < 0)
 		x = 0;
 
-	x = width - 1;
+	if (x >= width)
+		x = width - 1;
 
 	if (y < 0)
 		y = 0;

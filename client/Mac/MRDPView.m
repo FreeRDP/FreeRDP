@@ -44,6 +44,8 @@
 #import "freerdp/client/cmdline.h"
 #import "freerdp/log.h"
 
+#import <CoreGraphics/CoreGraphics.h>
+
 #define TAG CLIENT_TAG("mac")
 
 static BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
@@ -60,7 +62,7 @@ static BOOL mac_desktop_resize(rdpContext* context);
 static void update_activity_cb(freerdp* instance);
 static void input_activity_cb(freerdp* instance);
 
-static DWORD mac_client_thread(void* param);
+static DWORD WINAPI mac_client_thread(void* param);
 
 @implementation MRDPView
 
@@ -106,7 +108,7 @@ static DWORD mac_client_thread(void* param);
 	return 0;
 }
 
-static DWORD mac_client_update_thread(void* param)
+static DWORD WINAPI mac_client_update_thread(void* param)
 {
 	int status;
 	wMessage message;
@@ -164,7 +166,7 @@ static DWORD WINAPI mac_client_input_thread(LPVOID param)
 	return 0;
 }
 
-DWORD mac_client_thread(void* param)
+DWORD WINAPI mac_client_thread(void* param)
 {
 	@autoreleasepool
 	{

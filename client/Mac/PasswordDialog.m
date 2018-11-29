@@ -20,6 +20,8 @@
 #import "PasswordDialog.h"
 #import <freerdp/client/cmdline.h>
 
+#import <CoreGraphics/CoreGraphics.h>
+
 @interface PasswordDialog()
 
 	@property BOOL modalCode;
