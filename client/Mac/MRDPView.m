@@ -704,7 +704,6 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	if (!is_connected)
 		return;
 
-	gdi_free(context->instance);
 	free(pixel_data);
 }
 
@@ -934,16 +933,23 @@ BOOL mac_post_connect(freerdp* instance)
 	return TRUE;
 }
 
-BOOL mac_authenticate(freerdp* instance, char** username, char** password,
+void mac_post_disconnect(freerdp*	instance)
+{
+	if (!instance || !instance->context)
+		return;
+
+	PubSub_UnsubscribeChannelConnected(instance->context->pubSub, mac_OnChannelConnectedEventHandler);
+	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub, mac_OnChannelDisconnectedEventHandler);
+	gdi_free(instance);
+}
+
+static BOOL mac_authenticate_int(NSString* title, freerdp* instance, char** username, char** password,
                       char** domain)
 {
 	mfContext* mfc = (mfContext*) instance->context;
 	MRDPView* view = (MRDPView*) mfc->view;
 	PasswordDialog* dialog = [PasswordDialog new];
-	dialog.serverHostname = [NSString stringWithFormat:@"%@:%u",
-	                                  [NSString stringWithCString:instance->settings->ServerHostname encoding:
-	                                   NSUTF8StringEncoding],
-	                                  instance->settings->ServerPort];
+	dialog.serverHostname = title;
 
 	if (*username)
 		dialog.username = [NSString stringWithCString:*username encoding:
@@ -994,6 +1000,50 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
 	}
 
 	return ok;
+}
+
+BOOL mac_authenticate(freerdp* instance, char** username, char** password,
+                      char** domain)
+{
+	NSString* title = [NSString stringWithFormat:@"%@:%u",
+										  [NSString stringWithCString:instance->settings->ServerHostname encoding:
+										   NSUTF8StringEncoding],
+										  instance->settings->ServerPort];
+
+	return mac_authenticate_int(title, instance, username, password, domain);
+}
+
+BOOL mac_gw_authenticate(freerdp* instance, char** username, char** password,
+                      char** domain)
+{
+	NSString* title = [NSString stringWithFormat:@"%@:%u",
+										  [NSString stringWithCString:instance->settings->GatewayHostname encoding:
+										   NSUTF8StringEncoding],
+										  instance->settings->GatewayPort];
+
+	return mac_authenticate_int(title, instance, username, password, domain);
+}
+
+DWORD mac_verify_certificate(freerdp* instance, const char* common_name, const char* subject, const char* issuer, const char* fingerprint, BOOL host_mismatch)
+{
+	WLog_WARN(TAG, "TODO: Implement %s, accepting everything", __FUNCTION__);
+	return 2;
+}
+
+DWORD mac_verify_changed_certificate(freerdp* instance, const char* common_name, const char* subject, const char* issuer, const char* fingerprint, const char* old_subject, const char* old_issuer, const char* old_fingerprint)
+{
+	WLog_WARN(TAG, "TODO: Implement %s, accepting everything", __FUNCTION__);
+	return 2;
+}
+
+int mac_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
+{
+	const char* str_data = freerdp_get_logon_error_info_data(data);
+	const char* str_type = freerdp_get_logon_error_info_type(type);
+
+	// TODO: Error message dialog
+	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
+	return 1;
 }
 
 BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer)

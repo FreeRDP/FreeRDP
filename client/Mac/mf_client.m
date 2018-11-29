@@ -88,8 +88,14 @@ static BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
 	mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
+	context->instance->PostDisconnect = mac_post_disconnect;
 	context->instance->Authenticate = mac_authenticate;
-	settings = instance->settings;
+	context->instance->GatewayAuthenticate = mac_gw_authenticate;
+	context->instance->VerifyCertificate = mac_verify_certificate;
+	context->instance->VerifyChangedCertificate = mac_verify_changed_certificate;
+	context->instance->LogonErrorInfo = mac_logon_error_info;
+	context->instance->settings = instance->settings;
+	settings = context->settings;
 	settings->AsyncUpdate = TRUE;
 	settings->AsyncInput = TRUE;
 	return TRUE;

@@ -84,7 +84,14 @@
 
 BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp*	instance);
+void mac_post_disconnect(freerdp* instance);
 BOOL mac_authenticate(freerdp* instance, char** username, char** password,
                       char** domain);
+BOOL mac_gw_authenticate(freerdp* instance, char** username, char** password,
+                      char** domain);
 
+DWORD mac_verify_certificate(freerdp* instance, const char* common_name, const char* subject, const char* issuer, const char* fingerprint, BOOL host_mismatch);
+DWORD mac_verify_changed_certificate(freerdp* instance, const char* common_name, const char* subject, const char* issuer, const char* fingerprint, const char* old_subject, const char* old_issuer, const char* old_fingerprint);
+
+int mac_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
 #endif /* FREERDP_CLIENT_MAC_MRDPVIEW_H */
