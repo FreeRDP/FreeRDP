@@ -2098,6 +2098,9 @@ static CACHE_BITMAP_V2_ORDER* update_read_cache_bitmap_v2_order(rdpUpdate* updat
 	if (Stream_GetRemainingLength(s) < cache_bitmap_v2->bitmapLength)
 		goto fail;
 
+	if (cache_bitmap_v2->bitmapLength == 0)
+		goto fail;
+
 	cache_bitmap_v2->bitmapDataStream = malloc(cache_bitmap_v2->bitmapLength);
 
 	if (!cache_bitmap_v2->bitmapDataStream)
