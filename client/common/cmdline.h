@@ -136,6 +136,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "pheight", COMMAND_LINE_VALUE_REQUIRED, "<height>", NULL, NULL, -1, NULL, "Physical height of display (in millimeters)" },
 	{ "play-rfx", COMMAND_LINE_VALUE_REQUIRED, "<pcap-file>", NULL, NULL, -1, NULL, "Replay rfx pcap file" },
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
+	{ "prevent-suppress-output", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Do not suppress output" },
 	{ "print-reconnect-cookie", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Print base64 reconnect cookie after connecting" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<driver>]", NULL, NULL, -1, NULL, "Redirect printer device" },
 	{

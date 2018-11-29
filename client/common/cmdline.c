@@ -1736,6 +1736,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->Fullscreen = enable;
 		}
+		CommandLineSwitchCase(arg, "prevent-suppress-output")
+		{
+			settings->SuppressOutput = !enable;
+		}
 		CommandLineSwitchCase(arg, "multimon")
 		{
 			settings->UseMultimon = TRUE;
