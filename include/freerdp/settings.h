@@ -676,20 +676,33 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_Password51Length                                   (1281)
 #define FreeRDP_SmartcardLogon                                     (1282)
 #define FreeRDP_SmartcardReaderName                                (1283)
-#define FreeRDP_KeySpec                                            (1284)
-#define FreeRDP_CardName                                           (1285)
-#define FreeRDP_ReaderName                                         (1286)
-#define FreeRDP_ContainerName                                      (1287)
-#define FreeRDP_CspName                                            (1288)
-#define FreeRDP_UserHint                                           (1289)
-#define FreeRDP_DomainHint                                         (1290)
-#define FreeRDP_CredentialsType                                    (1291)
-#define FreeRDP_UserPrincipalName                                  (1292)
-#define FreeRDP_CanonicalizedUserHint                              (1293)
-#define FreeRDP_IdCertificate                                      (1294)
-#define FreeRDP_PinLoginRequired                                   (1295)
-#define FreeRDP_PinPadIsPresent                                    (1296)
-#define FreeRDP_Pin                                                (1297)
+#define FreeRDP_Pkcs11Module                                       (1284)
+#define FreeRDP_PinLoginRequired                                   (1285)
+#define FreeRDP_PinPadIsPresent                                    (1286)
+#define FreeRDP_Pin                                                (1287)
+#define FreeRDP_KeySpec                                            (1288)
+#define FreeRDP_CardName                                           (1289)
+#define FreeRDP_ReaderName                                         (1290)
+#define FreeRDP_ContainerName                                      (1291)
+#define FreeRDP_CspName                                            (1292)
+#define FreeRDP_UserHint                                           (1293)
+#define FreeRDP_DomainHint                                         (1294)
+#define FreeRDP_CredentialsType                                    (1295)
+#define FreeRDP_UserPrincipalName                                  (1296)
+#define FreeRDP_CanonicalizedUserHint                              (1297)
+#define FreeRDP_IdCertificate                                      (1298)
+#define FreeRDP_IdCertificateLength                                (1299)
+#define FreeRDP_PkinitIdentity                                     (1300)
+#define FreeRDP_PkinitAnchors                                      (1301)
+#define FreeRDP_SlotID                                             (1302)
+#define FreeRDP_TokenLabel                                         (1303)
+#define FreeRDP_TokenFlags                                         (1304)
+#define FreeRDP_KerberosStartTime                                  (1305)
+#define FreeRDP_KerberosLifeTime                                   (1306)
+#define FreeRDP_KerberosRenewableLifeTime                          (1307)
+#define FreeRDP_Pkinit                                             (1308)
+#define FreeRDP_PkinitCertificate                                  (1309)
+#define FreeRDP_Krb5Trace                                          (1310)
 #define FreeRDP_KerberosKdc                                        (1344)
 #define FreeRDP_KerberosRealm                                      (1345)
 #define FreeRDP_IgnoreCertificate                                  (1408)
@@ -1136,32 +1149,43 @@ struct rdp_settings
 
 	/* Credentials Cache */
 
-	ALIGN64 BYTE*  Password51;            /* 1280 */
-	ALIGN64 UINT32 Password51Length;      /* 1281 */
-	ALIGN64 BOOL   SmartcardLogon;        /* 1282 */
-	ALIGN64 char*  SmartcardReaderName;   /* 1283 */
-	ALIGN64 UINT32 KeySpec;               /* 1284 */
-	ALIGN64 char*  CardName;              /* 1285 */
-	ALIGN64 char*  ReaderName;            /* 1286 */
-	ALIGN64 char*  ContainerName;         /* 1287 */
-	ALIGN64 char*  CspName;               /* 1288 */
-	ALIGN64 char*  UserHint;              /* 1289 */
-	ALIGN64 char*  DomainHint;            /* 1290 */
-	ALIGN64 UINT32 CredentialsType;       /* 1291 */
-	ALIGN64 char*  UserPrincipalName;     /* 1292 */
-	ALIGN64 char*  CanonicalizedUserHint; /* 1293 */
-	ALIGN64 char*  IdCertificate;         /* 1294 */
-	ALIGN64 BOOL   PinLoginRequired;      /* 1295 */
-	ALIGN64 BOOL   PinPadIsPresent;       /* 1296 */
-	ALIGN64 char*  Pin;                   /* 1297 */
-
-	UINT64  padding1344[1344 - 1298];     /* 1298 */
+	ALIGN64 BYTE*  Password51;                    /* 1280 */    /* NOT USED */
+	ALIGN64 UINT32 Password51Length;              /* 1281 */    /* NOT USED */
+	ALIGN64 BOOL   SmartcardLogon;                /* 1282 */
+	ALIGN64 char*  Pkcs11Module;                  /* 1283 */
+	ALIGN64 BOOL   PinLoginRequired;              /* 1284 */
+	ALIGN64 BOOL   PinPadIsPresent;               /* 1285 */
+	ALIGN64 char*  Pin;                           /* 1286 */
+	ALIGN64 UINT32 KeySpec;                       /* 1287 */
+	ALIGN64 char*  CardName;                      /* 1288 */
+	ALIGN64 char*  ReaderName;                    /* 1289 */
+	ALIGN64 char*  ContainerName;                 /* 1290 */
+	ALIGN64 char*  CspName;                       /* 1291 */
+	ALIGN64 char*  UserHint;                      /* 1292 */
+	ALIGN64 char*  DomainHint;                    /* 1293 */
+	ALIGN64 UINT32 CredentialsType;               /* 1294 */
+	ALIGN64 char*  UserPrincipalName;             /* 1295 */
+	ALIGN64 char*  CanonicalizedUserHint;         /* 1296 */
+	ALIGN64 char*  IdCertificate;                 /* 1297 */
+	ALIGN64 UINT64 IdCertificateLength;           /* 1298 */
+	ALIGN64 char*  PkinitIdentity;                /* 1299 */
+	ALIGN64 char*  PkinitAnchors;                 /* 1300 */
+	ALIGN64 char*  SlotID;                        /* 1301 */
+	ALIGN64 char*  TokenLabel;                    /* 1302 */
+	ALIGN64 INT32  TokenFlags;                    /* 1303 */
+	ALIGN64 UINT64 KerberosStartTime;             /* 1304 */
+	ALIGN64 UINT64 KerberosLifeTime;              /* 1305 */
+	ALIGN64 UINT64 KerberosRenewableLifeTime;     /* 1306 */
+	ALIGN64 BOOL   Pkinit;                        /* 1307 */
+	ALIGN64 char*  PkinitCertificate;             /* 1308 */
+	ALIGN64 BOOL   Krb5Trace;             	      /* 1309 */
+	UINT64  padding1344[1344 - 1310];     	      /* 1310 */
 
 
 	/* Kerberos Authentication */
-	ALIGN64 char* KerberosKdc;   /* 1344 */
-	ALIGN64 char* KerberosRealm; /* 1345 */
-	UINT64 padding1408[1408 - 1346]; /* 1346 */
+	ALIGN64 char* KerberosKdc;                    /* 1344 */
+	ALIGN64 char* KerberosRealm;                  /* 1345 */
+	UINT64 padding1408[1408 - 1346];              /* 1346 */
 
 	/* Server Certificate */
 	ALIGN64 BOOL            IgnoreCertificate;             /* 1408 */

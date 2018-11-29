@@ -650,7 +650,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 		return -1;
 	}
 
-	WLog_DBG(TAG, "SmartcardReaderName=%s", settings->SmartcardReaderName);
+	WLog_DBG(TAG, "smartcard ReaderName=%s", settings->ReaderName);
 
 	if (nla->identity->smartcard_creds)
 	{
@@ -667,7 +667,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 
 	nla->identity->csp_data = csp_data_detail_new(AT_KEYEXCHANGE /*AT_AUTHENTICATE*/,
 	                          settings->CardName,
-	                          settings->SmartcardReaderName,
+	                          settings->ReaderName,
 	                          settings->ContainerName,
 	                          settings->CspName);
 

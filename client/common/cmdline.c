@@ -252,6 +252,18 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("\n");
 	printf("Drive Redirection: /drive:home,/home/user\n");
 	printf("Smartcard Redirection: /smartcard:<device>\n");
+ 	printf("Smartcard logon with rdp only:                /smartcard-logon [/sec:rdp]\n");
+ 	printf("Smartcard logon with Kerberos authentication: /smartcard-logon /sec:nla\n");
+	printf("Those options are only accepted with /smartcard-logon:\n");
+ 	printf("    PIN code: /pin:<PIN code>\n");
+	printf("    PKCS11 module to load: /pkcs11-module:<module>\n");
+ 	printf("    PKINIT anchors: /pkinit-anchors:<pkinit_anchors>\n");
+ 	printf("    Kerberos Ticket start time: /start-time:<time to issue ticket>\n");
+ 	printf("    Kerberos Ticket lifetime: /lifetime:<ticket lifetime>\n");
+ 	printf("    Kerberos Ticket renewable lifetime: /renewable-lifetime:<ticket renewable lifetime>\n");
+ 	printf("    Activate Kerberos PKINIT trace: /T\n");
+ 	printf("    CSP Name: /csp:<csp name>\n");
+ 	printf("    Card Name: /card:<card name>\n");
 	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
 	printf("Parallel Port Redirection: /parallel:<name>,<device>\n");
@@ -327,13 +339,21 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 		RDPDR_DRIVE* drive;
 
 		if (count < 3)
+		{
+			WLog_ERR(TAG, "Missing argument for the %s option", params[0]);
 			return FALSE;
+		}
+
 
 		settings->DeviceRedirection = TRUE;
 		drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
 
 		if (!drive)
+		{
+			WLog_ERR(TAG, "Could not allocate memory for the drive %s", params[1]);
 			return FALSE;
+		}
+
 
 		drive->Type = RDPDR_DTYP_FILESYSTEM;
 
@@ -342,6 +362,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 			if (!(drive->Name = _strdup(params[1])))
 			{
 				free(drive);
+				WLog_ERR(TAG, "Could not allocate memory for the drive name %s", params[1]);
 				return FALSE;
 			}
 		}
@@ -351,8 +372,20 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 			const BOOL isPath = PathFileExistsA(params[2]);
 			const BOOL isSpecial = (strncmp(params[2], "*", 2) == 0) ||
 			                       (strncmp(params[2], "%", 2) == 0) ? TRUE : FALSE;
+			BOOL bad = FALSE;
 
-			if ((!isPath && !isSpecial) || !(drive->Path = _strdup(params[2])))
+			if (!isPath && !isSpecial)
+			{
+				WLog_ERR(TAG, "Drive argument is not a path or special: %s", params[2]);
+				bad = TRUE;
+			}
+			else if (!(drive->Path = _strdup(params[2]))	)
+			{
+				WLog_ERR(TAG, "Could not allocate memory for the drive path %s", params[2]);
+				bad = TRUE;
+			}
+
+			if (bad)
 			{
 				free(drive->Name);
 				free(drive);
@@ -362,6 +395,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 
 		if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive))
 		{
+			WLog_ERR(TAG, "Could not add the drive %s", drive->Name);
 			free(drive->Path);
 			free(drive->Name);
 			free(drive);
@@ -569,6 +603,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 		return TRUE;
 	}
 
+	WLog_ERR(TAG, "Invalid device %s", params[0]);
 	return FALSE;
 }
 
@@ -676,82 +711,112 @@ error_argv:
 	return FALSE;
 }
 
+
+/*
+string_list_allocate
+
+Allocate and clear memory for a string list (array of char*) with additionnal bytes.
+Return the string list, set (*tail) to point to the additionnal bytes.
+
+Note: One purpose is to store the strings in the string list in the
+additionnal bytes, so the whole string list can be freed with a simple
+call to free(), instead of calling string_list_free().
+*/
+static char** string_list_allocate(size_t entry_count, size_t additionnal_size, char ** tail)
+{
+
+	size_t total_size = entry_count * sizeof(char*) + additionnal_size * sizeof(char);
+	char** list = malloc(total_size);
+
+	if (list == NULL)
+	{
+		return NULL;
+	}
+
+	memset(list, 0, total_size);
+	(*tail) = (char*)&list[entry_count];
+	return list;
+}
+
+static size_t string_count_char(const char* string, char character)
+{
+	size_t count = 0;
+	const char* it = string;
+	while ((it = strchr(it, character)) != NULL)
+	{
+		it++;
+		count++;
+	}
+	return count;
+}
+
 static char** freerdp_command_line_parse_comma_separated_values_ex(const char* name,
         const char* list,
         size_t* count)
 {
-	char** p;
-	char* str;
-	size_t nArgs;
-	size_t index;
-	size_t nCommas;
-	size_t prefix, len;
-	nCommas = 0;
 	assert(NULL != count);
 	*count = 0;
 
-	if (!list)
+	if (list == NULL)
 	{
-		if (name)
-		{
-			size_t len = strlen(name);
-			p = (char**) calloc(2UL + len, sizeof(char*));
+		char** p = NULL;
+		char* copy = NULL;
 
-			if (p)
+		if (name == NULL)
+		{
+			return NULL;
+		}
+
+		p = string_list_allocate(1, 1 + strlen(name), &copy);
+
+		if (p == NULL)
+		{
+			return NULL;
+		}
+
+		strcpy(copy, name);
+		p[0] = copy;
+		(*count) = 1;
+		return p;
+	}
+	else
+	{
+		size_t index = 0;
+		size_t nCommas = string_count_char(list, ',');
+		size_t nArgs = nCommas + 1 + ((name == NULL)?0:1);
+		size_t namelen = (name == NULL)?0:strlen(name);
+		char* store = NULL;
+		char** p = string_list_allocate(nArgs, namelen + 1 + strlen(list) + 1, &store);
+
+		if (p == NULL)
+		{
+			return NULL;
+		}
+
+		if (name != NULL)
+		{
+			strcpy(store, name);
+			p[index++] = store;
+			store = strchr(store, '\0') + 1;
+		}
+
+		strcpy(store, list);
+
+		while (index < nArgs)
+		{
+			char* comma = strchr(store, ',');
+			p[index++] = store;
+
+			if (comma)
 			{
-				char* dst = (char*)&p[1];
-				p[0] = dst;
-				sprintf_s(dst, len + 1, "%s", name);
-				*count = 1;
-				return p;
+				store = comma + 1;
+				*comma = '\0';
 			}
 		}
 
-		return NULL;
+		*count = nArgs;
+		return p;
 	}
-
-	{
-		const char* it = list;
-
-		while ((it = strchr(it, ',')) != NULL)
-		{
-			it++;
-			nCommas++;
-		}
-	}
-
-	nArgs = nCommas + 1;
-
-	if (name)
-		nArgs++;
-
-	prefix = (nArgs + 1UL) * sizeof(char*);
-	len = strlen(list);
-	p = (char**) calloc(len + prefix + 1, sizeof(char*));
-
-	if (!p)
-		return NULL;
-
-	str = &((char*)p)[prefix];
-	memcpy(str, list, len);
-
-	if (name)
-		p[0] = (char*)name;
-
-	for (index = name ? 1 : 0; index < nArgs; index++)
-	{
-		char* comma = strchr(str, ',');
-		p[index] = str;
-
-		if (comma)
-		{
-			str = comma + 1;
-			*comma = '\0';
-		}
-	}
-
-	*count = nArgs;
-	return p;
 }
 
 static char** freerdp_command_line_parse_comma_separated_values(char* list,
@@ -1405,11 +1470,19 @@ static BOOL ends_with(const char* str, const char* ext)
 	return strncmp(&str[strLen - extLen], ext, extLen) == 0;
 }
 
-static void activate_smartcard_logon_rdp(rdpSettings* settings)
+static void activate_smartcard_logon(rdpSettings* settings)
 {
 	settings->SmartcardLogon = TRUE;
-	/* TODO: why not? settings->UseRdpSecurityLayer = TRUE; */
-	freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
+	/* We initialize all the settings, for all the variants of smartcard logon: */
+	settings->Pin = NULL;
+	settings->PinPadIsPresent = FALSE;
+	settings->KerberosStartTime = 0;
+	/* Ticket lifetime value in seconds ; KDC default value : 600mn (i.e. 36000s) ; 600mn at maximum */
+	settings->KerberosLifeTime = 36000;
+	/* Ticket renewable lifetime value in seconds ; KDC default value : 1 day (i.e. 86400s) ; 7 days at maximum */
+	settings->KerberosRenewableLifeTime = 86400;
+	settings->Krb5Trace = FALSE;
+	freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);	/* TODO: why not? settings->UseRdpSecurityLayer = TRUE; */
 }
 
 /**
@@ -1451,6 +1524,16 @@ static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* 
 		*v2 = v;
 
 	return TRUE;
+}
+
+static UINT64 parse_time(const char* time_string)
+{
+	/*
+	For now, let's parse a simple integer.
+	But it would be nice to parse ISO-8601 datetimes too,
+	and relative expressions such as "now + 1 day", etc.
+	*/
+	return atoi(time_string);
 }
 
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
@@ -2288,7 +2371,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			}
 
 			if (!freerdp_set_connection_type(settings, type))
+			{
+				WLog_ERR(TAG, "Cannot set the connection type %ld", type);
 				return COMMAND_LINE_ERROR;
+			}
+
 		}
 		CommandLineSwitchCase(arg, "fonts")
 		{
@@ -2357,7 +2444,14 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				else
 #endif
 					if (_strnicmp("RFX", arg->Value, 4) != 0)
+					{
+						WLog_ERR(TAG, "Bad value for gfx option: %s, should be "
+#ifdef WITH_GFX_H264
+							      "AVC444,  AVC420 or "
+#endif
+							      "RFX", arg->Value);
 						return COMMAND_LINE_ERROR;
+					}
 			}
 		}
 		CommandLineSwitchCase(arg, "gfx-thin-client")
@@ -2397,7 +2491,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					settings->GfxAVC444 = TRUE;
 				}
 				else if (_strnicmp("AVC420", arg->Value, 7) != 0)
+				{
+					WLog_ERR(TAG, "Bad value for gfx-h264 option: %s, should be AVC444 or AVC420", arg->Value);
 					return COMMAND_LINE_ERROR;
+				}
 			}
 		}
 #endif
@@ -2533,7 +2630,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				promptForPassword = (strncmp(arg->Value, "force", 6) == 0);
 
 				if (!promptForPassword)
+				{
+					WLog_ERR(TAG, "Bad value for from-stdin option: %s, should be force", arg->Value);
 					return COMMAND_LINE_ERROR;
+				}
+
 			}
 		}
 		CommandLineSwitchCase(arg, "log-level")
@@ -2541,12 +2642,20 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			wLog* root = WLog_GetRoot();
 
 			if (!WLog_SetStringLogLevel(root, arg->Value))
+			{
+				WLog_ERR(TAG, "Could not set the log-level: %s", arg->Value);
 				return COMMAND_LINE_ERROR;
+			}
+
 		}
 		CommandLineSwitchCase(arg, "log-filters")
 		{
 			if (!WLog_AddStringLogFilters(arg->Value))
+			{
+				WLog_ERR(TAG, "Could not add the log-filter: %s", arg->Value);
 				return COMMAND_LINE_ERROR;
+			}
+
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
@@ -2808,6 +2917,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (!value_to_int(arg->Value, &val, 0, 1000))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
+			if (val > 1000)
+			{
+				WLog_ERR(TAG, "auto-reconnect-max-retries value is too big %lu,  should be in [0..1000]", settings->AutoReconnectMaxRetries);
+				return COMMAND_LINE_ERROR;
+			}
+
 			settings->AutoReconnectMaxRetries = (UINT32)val;
 		}
 		CommandLineSwitchCase(arg, "reconnect-cookie")
@@ -2922,7 +3037,122 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "smartcard-logon")
 		{
 			if (!settings->SmartcardLogon)
-				activate_smartcard_logon_rdp(settings);
+				activate_smartcard_logon(settings);
+		}
+		CommandLineSwitchCase(arg, "pin")
+		{
+			if (!settings->SmartcardLogon)
+			{
+				WLog_ERR(TAG, "/pin option can only be given after /smartcard-logon");
+				return COMMAND_LINE_ERROR;
+			}
+			else if (!copy_value(arg->Value, &settings->Pin))
+			{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+
+			/* overwrite argument so it won't appear in ps */
+			p = arg->Value;
+
+			while (*p)
+				*(p++) = 'X';
+
+			while (*arg->Value)
+				*(arg->Value++) = 'X';
+		}
+		CommandLineSwitchCase(arg, "pkcs11-module")
+		{
+			if (!settings->SmartcardLogon)
+			{
+				WLog_ERR(TAG, "/pkcs11-module option can only be given after /smartcard-logon");
+				return COMMAND_LINE_ERROR;
+			}
+			else if (!copy_value(arg->Value, &settings->Pkcs11Module))
+			{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+		CommandLineSwitchCase(arg, "pkinit-anchors")
+		{
+			if (!settings->SmartcardLogon)
+			{
+				WLog_ERR(TAG, "/pkinit-anchors option can only be given after /smartcard-logon");
+				return COMMAND_LINE_ERROR;
+			}
+			else if (!copy_value(arg->Value, &settings->PkinitAnchors))
+			{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+		CommandLineSwitchCase(arg, "start-time")
+		{
+			if (!settings->SmartcardLogon)
+			{
+				WLog_ERR(TAG, "/start-time option can only be given after /smartcard-logon");
+				return COMMAND_LINE_ERROR;
+			}
+			else if (!(settings->KerberosStartTime = parse_time(arg->Value)))
+			{
+				return COMMAND_LINE_ERROR;
+			}
+		}
+		CommandLineSwitchCase(arg, "lifetime")
+		{
+			if (!settings->SmartcardLogon)
+			{
+				WLog_ERR(TAG, "/lifetime option can only be given after /smartcard-logon");
+				return COMMAND_LINE_ERROR;
+			}
+			else if (!(settings->KerberosLifeTime = parse_time(arg->Value)))
+			{
+				return COMMAND_LINE_ERROR;
+			}
+		}
+		CommandLineSwitchCase(arg, "renewable-lifetime")
+		{
+			if (!settings->SmartcardLogon)
+			{
+				WLog_ERR(TAG, "/renewable-lifetime option can only be given after /smartcard-logon");
+				return COMMAND_LINE_ERROR;
+			}
+			else if (!(settings->KerberosRenewableLifeTime = parse_time(arg->Value)))
+			{
+				return COMMAND_LINE_ERROR;
+			}
+		}
+		CommandLineSwitchCase(arg, "T")
+		{
+			if (!settings->SmartcardLogon)
+			{
+				WLog_ERR(TAG, "/T option can only be given after /smartcard-logon");
+				return COMMAND_LINE_ERROR;
+			}
+
+			settings->Krb5Trace = TRUE;
+		}
+		CommandLineSwitchCase(arg, "csp")
+		{
+			if (!settings->SmartcardLogon)
+			{
+				WLog_ERR(TAG, "/csp option can only be given after /smartcard-logon");
+				return COMMAND_LINE_ERROR;
+			}
+			else if (!copy_value(arg->Value, &settings->CspName))
+			{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
+		CommandLineSwitchCase(arg, "card")
+		{
+			if (!settings->SmartcardLogon)
+			{
+				WLog_ERR(TAG, "/card option can only be given after /smartcard-logon");
+				return COMMAND_LINE_ERROR;
+			}
+			else if (!copy_value(arg->Value, &settings->CardName))
+			{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -2940,13 +3170,27 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			BOOL ret;
 			free(settings->Domain);
 			ret = freerdp_parse_username(user, &settings->Username, &settings->Domain);
-			free(user);
 
 			if (!ret)
+			{
+				WLog_ERR(TAG, "Could not parse username %s", user);
+				free(user);
 				return COMMAND_LINE_ERROR;
+			}
+
+			free(user);
 		}
 		else
+		{
 			settings->Username = user;
+		}
+
+		if (settings->SmartcardLogon)
+		{
+			/* We don't need the Username for smartcard logon */
+			free(settings->Username);
+			settings->Username = NULL;
+		}
 	}
 
 	if (gwUser)
@@ -2962,7 +3206,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			free(gwUser);
 
 			if (!ret)
+			{
+				WLog_ERR(TAG, "Could not parse gateway username %s", gwUser);
 				return COMMAND_LINE_ERROR;
+			}
+
 		}
 		else
 			settings->GatewayUsername = gwUser;
@@ -2977,10 +3225,16 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			settings->Password = calloc(size, sizeof(char));
 
 			if (!settings->Password)
-				return COMMAND_LINE_ERROR;
+			{
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+
 
 			if (!freerdp_passphrase_read("Password: ", settings->Password, size, 1))
+			{
+				WLog_ERR(TAG, "Could not read password.");
 				return COMMAND_LINE_ERROR;
+			}
 		}
 
 		if (settings->GatewayEnabled && !settings->GatewayUseSameCredentials)
@@ -2990,10 +3244,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				settings->GatewayPassword = calloc(size, sizeof(char));
 
 				if (!settings->GatewayPassword)
-					return COMMAND_LINE_ERROR;
+					return COMMAND_LINE_ERROR_MEMORY;
 
 				if (!freerdp_passphrase_read("Gateway Password: ", settings->GatewayPassword, size, 1))
+				{
+					WLog_ERR(TAG, "Could not read gateway password.");
 					return COMMAND_LINE_ERROR;
+				}
 			}
 		}
 	}

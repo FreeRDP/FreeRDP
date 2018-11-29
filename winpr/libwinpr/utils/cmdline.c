@@ -21,14 +21,42 @@
 #include "config.h"
 #endif
 
+#include <winpr/wlog.h>
 #include <winpr/crt.h>
-
 #include <winpr/cmdline.h>
 
 /**
  * Command-line syntax: some basic concepts:
  * https://pythonconquerstheuniverse.wordpress.com/2010/07/25/command-line-syntax-some-basic-concepts/
  */
+
+#define TAG "winpr.utils.cmdline"
+
+/*
+find_option_by_name_or_alias
+return the index of the first entry in options that has keyword as Name or Alias,  or -1 if not found.
+*/
+static int find_option_by_name_or_alias(COMMAND_LINE_ARGUMENT_A* options, char* keyword, SSIZE_T keyword_length)
+{
+	size_t index;
+	for (index = 0; options[index].Name != NULL; index++)
+	{
+		if ((strncmp(options[index].Name, keyword, keyword_length) == 0)
+			&& (strlen(options[index].Name) == keyword_length))
+		{
+			return index;
+		}
+
+		if ((options[index].Alias != NULL)
+			&& (strncmp(options[index].Alias, keyword, keyword_length) == 0)
+			&& (strlen(options[index].Alias) == keyword_length))
+
+		{
+			return index;
+		}
+	}
+	return -1;
+}
 
 /**
  * Command-Line Syntax:
@@ -80,7 +108,6 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 	for (i = 1; i < argc; i++)
 	{
-		BOOL found = FALSE;
 		BOOL escaped = TRUE;
 
 		if (preFilter)
@@ -89,6 +116,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 			if (count < 0)
 			{
+				WLog_ERR(TAG, "Prefilter signaled an error.");
 				status = COMMAND_LINE_ERROR;
 				return status;
 			}
@@ -132,7 +160,11 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		else if (flags & COMMAND_LINE_SIGIL_NOT_ESCAPED)
 		{
 			if (notescaped)
+			{
+				WLog_ERR(TAG, "Option sigil not escaped: %s", sigil);
 				return COMMAND_LINE_ERROR;
+			}
+
 
 			sigil_length = 0;
 			escaped = FALSE;
@@ -140,11 +172,13 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		}
 		else
 		{
+			/* Note: this case seems to be handled by the caller. */
+			WLog_WARN(TAG, "Invalid option syntax: %s", sigil);
 			return COMMAND_LINE_ERROR;
 		}
 
 		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE) ||
-		    (flags & COMMAND_LINE_SIGIL_NOT_ESCAPED))
+			(flags & COMMAND_LINE_SIGIL_NOT_ESCAPED))
 		{
 			if (length < (sigil_length + 1))
 			{
@@ -198,29 +232,17 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 			if (!escaped)
 				continue;
 
-			for (j = 0; options[j].Name != NULL; j++)
+			j = find_option_by_name_or_alias(options, keyword, keyword_length);
+
+			if (j < 0)
 			{
-				BOOL match = FALSE;
-
-				if (strncmp(options[j].Name, keyword, keyword_length) == 0)
+				if ((flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD) == 0)
 				{
-					if (strlen(options[j].Name) == keyword_length)
-						match = TRUE;
+					return COMMAND_LINE_ERROR_NO_KEYWORD;
 				}
-
-				if ((!match) && (options[j].Alias != NULL))
-				{
-					if (strncmp(options[j].Alias, keyword, keyword_length) == 0)
-					{
-						if (strlen(options[j].Alias) == keyword_length)
-							match = TRUE;
-					}
-				}
-
-				if (!match)
-					continue;
-
-				found = match;
+			}
+			else
+			{
 				options[j].Index = i;
 
 				if ((flags & COMMAND_LINE_SEPARATOR_SPACE) && ((i + 1) < argc))
@@ -247,7 +269,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 					}
 
 					if ((options[j].Flags & COMMAND_LINE_VALUE_REQUIRED) ||
-					    (options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+						(options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
 						argument = TRUE;
 					else
 						argument = FALSE;
@@ -262,7 +284,11 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 						value = NULL;
 					}
 					else if (!value_present && argument)
+					{
+						WLog_ERR(TAG, "Missing mandatory value for option: %s", argv[i + 1]);
 						return COMMAND_LINE_ERROR;
+					}
+
 				}
 
 				if (!(flags & COMMAND_LINE_SEPARATOR_SPACE))
@@ -306,18 +332,14 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 					{
 						if (flags & COMMAND_LINE_SIGIL_ENABLE_DISABLE)
 						{
-							if (toggle == -1)
-								options[j].Value = BoolValueTrue;
-							else if (!toggle)
+							if (toggle == 0)
 								options[j].Value = BoolValueFalse;
 							else
 								options[j].Value = BoolValueTrue;
 						}
 						else
 						{
-							if (sigil[0] == '+')
-								options[j].Value = BoolValueTrue;
-							else if (sigil[0] == '-')
+							if (sigil[0] == '-')
 								options[j].Value = BoolValueFalse;
 							else
 								options[j].Value = BoolValueTrue;
@@ -333,6 +355,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 					if (count < 0)
 					{
+						WLog_ERR(TAG, "Postfilter signaled an error for option %s", options[j].Name);
 						status = COMMAND_LINE_ERROR;
 						return status;
 					}
@@ -347,9 +370,6 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				else if (options[j].Flags & COMMAND_LINE_PRINT_BUILDCONFIG)
 					return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
 			}
-
-			if (!found && (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD) == 0)
-				return COMMAND_LINE_ERROR_NO_KEYWORD;
 		}
 	}
 
