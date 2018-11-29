@@ -35,6 +35,7 @@
 @synthesize textFingerprint;
 @synthesize textIssuer;
 @synthesize textSubject;
+@synthesize textMismatch;
 @synthesize messageLabel;
 @synthesize serverHostname;
 @synthesize commonName;

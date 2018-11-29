@@ -60,7 +60,6 @@ static BOOL mac_begin_paint(rdpContext* context);
 static BOOL mac_end_paint(rdpContext* context);
 static BOOL mac_desktop_resize(rdpContext* context);
 
-static void update_activity_cb(freerdp* instance);
 static void input_activity_cb(freerdp* instance);
 
 static DWORD WINAPI mac_client_thread(void* param);
@@ -106,35 +105,6 @@ static DWORD WINAPI mac_client_thread(void* param);
 		return -1;
 	}
 
-	return 0;
-}
-
-static DWORD WINAPI mac_client_update_thread(void* param)
-{
-	int status;
-	wMessage message;
-	wMessageQueue* queue;
-	rdpContext* context = (rdpContext*) param;
-	status = 1;
-	queue = freerdp_get_message_queue(context->instance,
-	                                  FREERDP_UPDATE_MESSAGE_QUEUE);
-
-	while (MessageQueue_Wait(queue))
-	{
-		while (MessageQueue_Peek(queue, &message, TRUE))
-		{
-			status = freerdp_message_queue_process_message(context->instance,
-			         FREERDP_UPDATE_MESSAGE_QUEUE, &message);
-
-			if (!status)
-				break;
-		}
-
-		if (!status)
-			break;
-	}
-
-	ExitThread(0);
 	return 0;
 }
 
@@ -1346,31 +1316,6 @@ BOOL mac_desktop_resize(rdpContext* context)
 	e.height = settings->DesktopHeight;
 	PubSub_OnResizeWindow(context->pubSub, context, &e);
 	return TRUE;
-}
-
-void update_activity_cb(freerdp* instance)
-{
-	int status;
-	wMessage message;
-	wMessageQueue* queue;
-	status = 1;
-	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-
-	if (queue)
-	{
-		while (MessageQueue_Peek(queue, &message, TRUE))
-		{
-			status = freerdp_message_queue_process_message(instance,
-			         FREERDP_UPDATE_MESSAGE_QUEUE, &message);
-
-			if (!status)
-				break;
-		}
-	}
-	else
-	{
-		WLog_ERR(TAG,  "update_activity_cb: No queue!");
-	}
 }
 
 void input_activity_cb(freerdp* instance)

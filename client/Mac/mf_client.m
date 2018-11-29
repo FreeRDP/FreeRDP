@@ -112,30 +112,6 @@ static void mfreerdp_client_free(freerdp* instance, rdpContext* context)
 	CloseHandle(mfc->stopEvent);
 }
 
-static void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x,
-                                       int y)
-{
-	UINT32 width, height;
-	rdpInput* input = cfc->instance->input;
-	rdpSettings* settings = cfc->instance->settings;
-	width = settings->DesktopWidth;
-	height = settings->DesktopHeight;
-
-	if (x < 0)
-		x = 0;
-
-	if (x >= width)
-		x = width - 1;
-
-	if (y < 0)
-		y = 0;
-
-	if (y >= height)
-		y = height - 1;
-
-	freerdp_input_send_mouse_event(input, flags, x, y);
-}
-
 void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags,
                           UINT16 x, UINT16 y)
 {
