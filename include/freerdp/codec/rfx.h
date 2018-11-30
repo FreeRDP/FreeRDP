@@ -155,6 +155,8 @@ struct _RFX_CONTEXT
 
 	/* decoded header blocks */
 	UINT32 decodedHeaderBlocks;
+	UINT16 expectedDataBlockType;
+	RFX_MESSAGE currentMessage;
 
 	/* routines */
 	void (*quantization_decode)(INT16* buffer, const UINT32* quantization_values);

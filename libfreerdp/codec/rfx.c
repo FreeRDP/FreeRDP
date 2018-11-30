@@ -82,27 +82,20 @@ static const UINT32 rfx_default_quantization_values[] =
 static void rfx_profiler_create(RFX_CONTEXT* context)
 {
 	PROFILER_CREATE(context->priv->prof_rfx_decode_rgb, "rfx_decode_rgb")
-	PROFILER_CREATE(context->priv->prof_rfx_decode_component,
-	                "rfx_decode_component")
+	PROFILER_CREATE(context->priv->prof_rfx_decode_component, "rfx_decode_component")
 	PROFILER_CREATE(context->priv->prof_rfx_rlgr_decode, "rfx_rlgr_decode")
-	PROFILER_CREATE(context->priv->prof_rfx_differential_decode,
-	                "rfx_differential_decode")
-	PROFILER_CREATE(context->priv->prof_rfx_quantization_decode,
-	                "rfx_quantization_decode")
+	PROFILER_CREATE(context->priv->prof_rfx_differential_decode, "rfx_differential_decode")
+	PROFILER_CREATE(context->priv->prof_rfx_quantization_decode, "rfx_quantization_decode")
 	PROFILER_CREATE(context->priv->prof_rfx_dwt_2d_decode, "rfx_dwt_2d_decode")
 	PROFILER_CREATE(context->priv->prof_rfx_ycbcr_to_rgb, "prims->yCbCrToRGB")
 	PROFILER_CREATE(context->priv->prof_rfx_encode_rgb, "rfx_encode_rgb")
-	PROFILER_CREATE(context->priv->prof_rfx_encode_component,
-	                "rfx_encode_component")
+	PROFILER_CREATE(context->priv->prof_rfx_encode_component, "rfx_encode_component")
 	PROFILER_CREATE(context->priv->prof_rfx_rlgr_encode, "rfx_rlgr_encode")
-	PROFILER_CREATE(context->priv->prof_rfx_differential_encode,
-	                "rfx_differential_encode")
-	PROFILER_CREATE(context->priv->prof_rfx_quantization_encode,
-	                "rfx_quantization_encode")
+	PROFILER_CREATE(context->priv->prof_rfx_differential_encode, "rfx_differential_encode")
+	PROFILER_CREATE(context->priv->prof_rfx_quantization_encode, "rfx_quantization_encode")
 	PROFILER_CREATE(context->priv->prof_rfx_dwt_2d_encode, "rfx_dwt_2d_encode")
 	PROFILER_CREATE(context->priv->prof_rfx_rgb_to_ycbcr, "prims->RGBToYCbCr")
-	PROFILER_CREATE(context->priv->prof_rfx_encode_format_rgb,
-	                "rfx_encode_format_rgb")
+	PROFILER_CREATE(context->priv->prof_rfx_encode_format_rgb, "rfx_encode_format_rgb")
 }
 
 static void rfx_profiler_free(RFX_CONTEXT* context)
@@ -220,6 +213,7 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 		return NULL;
 
 	context->encoder = encoder;
+	context->currentMessage.freeArray = TRUE;
 	context->priv = priv = (RFX_CONTEXT_PRIV*)calloc(1, sizeof(RFX_CONTEXT_PRIV));
 
 	if (!priv)
@@ -341,6 +335,7 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	context->rlgr_encode = rfx_rlgr_encode;
 	RFX_INIT_SIMD(context);
 	context->state = RFX_STATE_SEND_HEADERS;
+	context->expectedDataBlockType = WBT_FRAME_BEGIN;
 	return context;
 error_threadPool_minimum:
 	CloseThreadpool(priv->ThreadPool);
@@ -367,6 +362,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 	assert(NULL != context->priv->TilePool);
 	assert(NULL != context->priv->BufferPool);
 	priv = context->priv;
+	rfx_message_free(context, &context->currentMessage);
 	free(context->quants);
 	ObjectPool_Free(priv->TilePool);
 	rfx_profiler_print(context);
@@ -413,6 +409,7 @@ BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height)
 	context->width = width;
 	context->height = height;
 	context->state = RFX_STATE_SEND_HEADERS;
+	context->expectedDataBlockType = WBT_FRAME_BEGIN;
 	context->frameIdx = 0;
 	return TRUE;
 }
@@ -430,16 +427,13 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 	}
 
 	Stream_Read_UINT32(s, magic); /* magic (4 bytes), 0xCACCACCA */
-
 	if (magic != WF_MAGIC)
 	{
 		WLog_ERR(TAG, "invalid magic number 0x%08"PRIX32"", magic);
 		return FALSE;
 	}
 
-	Stream_Read_UINT16(s,
-	                   context->version); /* version (2 bytes), WF_VERSION_1_0 (0x0100) */
-
+	Stream_Read_UINT16(s, context->version); /* version (2 bytes), WF_VERSION_1_0 (0x0100) */
 	if (context->version != WF_VERSION_1_0)
 	{
 		WLog_ERR(TAG, "invalid version number 0x%08"PRIX32"", context->version);
@@ -463,10 +457,8 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 	}
 
 	Stream_Read_UINT8(s, numCodecs); /* numCodecs (1 byte), must be set to 0x01 */
-	Stream_Read_UINT8(s,
-	                  context->codec_id); /* codecId (1 byte), must be set to 0x01 */
-	Stream_Read_UINT16(s,
-	                   context->codec_version); /* version (2 bytes), must be set to WF_VERSION_1_0 (0x0100)  */
+	Stream_Read_UINT8(s, context->codec_id); /* codecId (1 byte), must be set to 0x01 */
+	Stream_Read_UINT16(s, context->codec_version); /* version (2 bytes), must be set to WF_VERSION_1_0 (0x0100)  */
 
 	if (numCodecs != 1)
 	{
@@ -505,8 +497,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 		return FALSE;
 	}
 
-	Stream_Read_UINT8(s,
-	                  numChannels); /* numChannels (1 byte), must bet set to 0x01 */
+	Stream_Read_UINT8(s, numChannels); /* numChannels (1 byte), must bet set to 0x01 */
 
 	/* In RDVH sessions, numChannels will represent the number of virtual monitors
 	 * configured and does not always be set to 0x01 as [MS-RDPRFX] said.
@@ -565,8 +556,7 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 	}
 
 	Stream_Read_UINT8(s, ctxId); /* ctxId (1 byte), must be set to 0x00 */
-	Stream_Read_UINT16(s,
-	                   tileSize); /* tileSize (2 bytes), must be set to CT_TILE_64x64 (0x0040) */
+	Stream_Read_UINT16(s, tileSize); /* tileSize (2 bytes), must be set to CT_TILE_64x64 (0x0040) */
 	Stream_Read_UINT16(s, properties); /* properties (2 bytes) */
 	WLog_Print(context->priv->log, WLOG_DEBUG,
 	           "ctxId %"PRIu8" tileSize %"PRIu16" properties 0x%04"PRIX16".",
@@ -612,7 +602,7 @@ static BOOL rfx_process_message_frame_begin(RFX_CONTEXT* context,
 
 	if (*pExpectedBlockType != WBT_FRAME_BEGIN)
 	{
-		WLog_ERR(TAG, "%s: message unexpeced", __FUNCTION__);
+		WLog_ERR(TAG, "%s: message unexpected wants WBT_FRAME_BEGIN", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -624,8 +614,7 @@ static BOOL rfx_process_message_frame_begin(RFX_CONTEXT* context,
 		return FALSE;
 	}
 
-	Stream_Read_UINT32(s,
-	                   frameIdx); /* frameIdx (4 bytes), if codec is in video mode, must be ignored */
+	Stream_Read_UINT32(s, frameIdx); /* frameIdx (4 bytes), if codec is in video mode, must be ignored */
 	Stream_Read_UINT16(s, numRegions); /* numRegions (2 bytes) */
 	WLog_Print(context->priv->log, WLOG_DEBUG,
 	           "RFX_FRAME_BEGIN: frameIdx: %"PRIu32" numRegions: %"PRIu16"", frameIdx, numRegions);
@@ -637,7 +626,7 @@ static BOOL rfx_process_message_frame_end(RFX_CONTEXT* context,
 {
 	if (*pExpectedBlockType != WBT_FRAME_END)
 	{
-		WLog_ERR(TAG, "%s: message unexpeced", __FUNCTION__);
+		WLog_ERR(TAG, "%s: message unexpected, wants WBT_FRAME_END", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -652,10 +641,11 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context,
 	int i;
 	UINT16 regionType;
 	UINT16 numTileSets;
+	RFX_RECT *tmpRects;
 
 	if (*pExpectedBlockType != WBT_REGION)
 	{
-		WLog_ERR(TAG, "%s: message unexpeced", __FUNCTION__);
+		WLog_ERR(TAG, "%s: message unexpected wants WBT_REGION", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -678,10 +668,12 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context,
 		   See [MS-RDPRFX] (revision >= 17.0) 2.2.2.3.3 TS_RFX_REGION
 		   https://msdn.microsoft.com/en-us/library/ff635233.aspx
 		*/
-		if (!(message->rects = (RFX_RECT*) malloc(sizeof(RFX_RECT))))
+		tmpRects = realloc(message->rects, sizeof(RFX_RECT));
+		if (!tmpRects)
 			return FALSE;
 
 		message->numRects = 1;
+		message->rects = tmpRects;
 		message->rects->x = 0;
 		message->rects->y = 0;
 		message->rects->width = context->width;
@@ -696,8 +688,10 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context,
 		return FALSE;
 	}
 
-	if (!(message->rects = (RFX_RECT*) calloc(message->numRects, sizeof(RFX_RECT))))
+	tmpRects = realloc(message->rects, message->numRects * sizeof(RFX_RECT));
+	if (!tmpRects)
 		return FALSE;
+	message->rects = tmpRects;
 
 	/* rects */
 	for (i = 0; i < message->numRects; i++)
@@ -720,10 +714,8 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context,
 		return FALSE;
 	}
 
-	Stream_Read_UINT16(s,
-	                   regionType); /* regionType (2 bytes): MUST be set to CBT_REGION (0xCAC1) */
-	Stream_Read_UINT16(s,
-	                   numTileSets); /* numTilesets (2 bytes): MUST be set to 0x0001. */
+	Stream_Read_UINT16(s, regionType); /*regionType (2 bytes): MUST be set to CBT_REGION (0xCAC1)*/
+	Stream_Read_UINT16(s, numTileSets); /*numTilesets (2 bytes): MUST be set to 0x0001.*/
 
 	if (regionType != CBT_REGION)
 	{
@@ -756,15 +748,16 @@ static void CALLBACK rfx_process_message_tile_work_callback(
 }
 
 static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
-                                        RFX_MESSAGE* message, wStream* s, UINT16* pExpecedBlockType)
+                                        RFX_MESSAGE* message, wStream* s, UINT16* pExpectedBlockType)
 {
 	BOOL rc;
 	int i, close_cnt;
 	size_t pos;
 	BYTE quant;
 	RFX_TILE* tile;
+	RFX_TILE** tmpTiles;
 	UINT32* quants;
-	UINT16 subtype;
+	UINT16 subtype, numTiles;
 	UINT32 blockLen;
 	UINT32 blockType;
 	UINT32 tilesDataSize;
@@ -772,13 +765,13 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 	RFX_TILE_PROCESS_WORK_PARAM* params = NULL;
 	void* pmem;
 
-	if (*pExpecedBlockType != WBT_EXTENSION)
+	if (*pExpectedBlockType != WBT_EXTENSION)
 	{
-		WLog_ERR(TAG, "%s: message unexpeced", __FUNCTION__);
+		WLog_ERR(TAG, "%s: message unexpected wants a tileset", __FUNCTION__);
 		return FALSE;
 	}
 
-	*pExpecedBlockType = WBT_FRAME_END;
+	*pExpectedBlockType = WBT_FRAME_END;
 
 	if (Stream_GetRemainingLength(s) < 14)
 	{
@@ -786,9 +779,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 		return FALSE;
 	}
 
-	Stream_Read_UINT16(s,
-	                   subtype); /* subtype (2 bytes) must be set to CBT_TILESET (0xCAC2) */
-
+	Stream_Read_UINT16(s, subtype); /* subtype (2 bytes) must be set to CBT_TILESET (0xCAC2) */
 	if (subtype != CBT_TILESET)
 	{
 		WLog_ERR(TAG, "invalid subtype, expected CBT_TILESET.");
@@ -806,9 +797,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 		return FALSE;
 	}
 
-	Stream_Read_UINT16(s, message->numTiles); /* numTiles (2 bytes) */
-
-	if (message->numTiles < 1)
+	Stream_Read_UINT16(s, numTiles); /* numTiles (2 bytes) */
+	if (numTiles < 1)
 	{
 		/* Windows Server 2012 (not R2) can send empty tile sets */
 		return TRUE;
@@ -816,8 +806,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 
 	Stream_Read_UINT32(s, tilesDataSize); /* tilesDataSize (4 bytes) */
 
-	if (!(pmem = realloc((void*) context->quants,
-	                     context->numQuant * 10 * sizeof(UINT32))))
+	if (!(pmem = realloc((void*)context->quants, context->numQuant * 10 * sizeof(UINT32))))
 		return FALSE;
 
 	quants = context->quants = (UINT32*) pmem;
@@ -857,12 +846,18 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 		           context->quants[i * 10 + 8], context->quants[i * 10 + 9]);
 	}
 
-	if (!(message->tiles = (RFX_TILE**) calloc(message->numTiles,
-	                       sizeof(RFX_TILE*))))
+	for (i = 0; i < message->numTiles; i++)
 	{
-		message->numTiles = 0;
-		return FALSE;
+		ObjectPool_Return(context->priv->TilePool, message->tiles[i]);
+		message->tiles[i] = NULL;
 	}
+
+	tmpTiles = (RFX_TILE**)realloc(message->tiles, numTiles * sizeof(RFX_TILE *));
+	if (!tmpTiles)
+		return FALSE;
+
+	message->tiles = tmpTiles;
+	message->numTiles = numTiles;
 
 	if (context->priv->UseThreads)
 	{
@@ -907,8 +902,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 			break;
 		}
 
-		Stream_Read_UINT16(s,
-		                   blockType); /* blockType (2 bytes), must be set to CBT_TILE (0xCAC3) */
+		Stream_Read_UINT16(s, blockType); /* blockType (2 bytes), must be set to CBT_TILE (0xCAC3) */
 		Stream_Read_UINT32(s, blockLen); /* blockLen (4 bytes) */
 
 		if (Stream_GetRemainingLength(s) < blockLen - 6)
@@ -1003,53 +997,48 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
                          UINT32 dstStride, UINT32 dstHeight,
                          REGION16* invalidRegion)
 {
-	size_t pos;
 	REGION16 updateRegion;
 	UINT32 blockLen;
 	UINT32 blockType;
-	RFX_MESSAGE* message = NULL;
-	wStream* s = NULL;
+	RFX_MESSAGE* message = &context->currentMessage;
+	wStream inStream, *s = &inStream;
 	BOOL ok = TRUE;
-	UINT16 expectedDataBlockType = WBT_FRAME_BEGIN;
 
 	if (!context || !data || !length)
-		goto fail;
+		return FALSE;
 
-	if (!(s = Stream_New((BYTE*)data, length)))
-		goto fail;
-
-	if (!(message = (RFX_MESSAGE*) calloc(1, sizeof(RFX_MESSAGE))))
-		goto fail;
+	Stream_StaticInit(s, (BYTE*)data, length);
 
 	message->freeRects = TRUE;
 
 	while (ok && Stream_GetRemainingLength(s) > 6)
 	{
+		wStream subStream;
+		size_t extraBlockLen = 0;
+
 		/* RFX_BLOCKT */
 		Stream_Read_UINT16(s, blockType); /* blockType (2 bytes) */
 		Stream_Read_UINT32(s, blockLen); /* blockLen (4 bytes) */
 		WLog_Print(context->priv->log, WLOG_DEBUG, "blockType 0x%"PRIX32" blockLen %"PRIu32"",
 		           blockType, blockLen);
 
-		if (blockLen == 0)
+		if (blockLen < 6)
 		{
-			WLog_ERR(TAG, "zero blockLen");
-			goto fail;
+			WLog_ERR(TAG, "blockLen too small(%"PRIu32")", blockLen);
+			return FALSE;
 		}
 
 		if (Stream_GetRemainingLength(s) < blockLen - 6)
 		{
 			WLog_ERR(TAG, "%s: packet too small for blocklen=%"PRIu32"", __FUNCTION__, blockLen);
-			goto fail;
+			return FALSE;
 		}
-
-		pos = Stream_GetPosition(s) - 6 + blockLen;
 
 		if (blockType > WBT_CONTEXT
 		    && context->decodedHeaderBlocks != _RFX_DECODED_HEADERS)
 		{
 			WLog_ERR(TAG, "%s: incomplete header blocks processing", __FUNCTION__);
-			goto fail;
+			return FALSE;
 		}
 
 		if (blockType >= WBT_CONTEXT && blockType <= WBT_EXTENSION)
@@ -1059,16 +1048,16 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 			UINT8 channelId;
 
 			if (Stream_GetRemainingLength(s) < 2)
-				goto fail;
+				return FALSE;
 
+			extraBlockLen = 2;
 			Stream_Read_UINT8(s, codecId); /* codecId (1 byte) must be set to 0x01 */
-			Stream_Read_UINT8(s,
-			                  channelId); /* channelId (1 byte) 0xFF or 0x00, see below */
+			Stream_Read_UINT8(s, channelId); /* channelId (1 byte) 0xFF or 0x00, see below */
 
 			if (codecId != 0x01)
 			{
 				WLog_ERR(TAG, "%s: invalid codecId 0x%02"PRIX8"", __FUNCTION__, codecId);
-				goto fail;
+				return FALSE;
 			}
 
 			if (blockType == WBT_CONTEXT)
@@ -1078,7 +1067,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 				{
 					WLog_ERR(TAG, "%s: invalid channelId 0x%02"PRIX8" for blockType 0x%08"PRIX32"", __FUNCTION__,
 					         channelId, blockType);
-					goto fail;
+					return FALSE;
 				}
 			}
 			else
@@ -1088,10 +1077,13 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 				{
 					WLog_ERR(TAG, "%s: invalid channelId 0x%02"PRIX8" for blockType WBT_CONTEXT",
 					         __FUNCTION__, channelId);
-					goto fail;
+					return FALSE;
 				}
 			}
 		}
+
+		Stream_StaticInit(&subStream, Stream_Pointer(s), blockLen - (6 + extraBlockLen));
+		Stream_Seek(s, blockLen - (6 + extraBlockLen));
 
 		switch (blockType)
 		{
@@ -1100,19 +1092,19 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 			 * in the stream at a later stage. The header messages can be repeated.
 			 */
 			case WBT_SYNC:
-				ok = rfx_process_message_sync(context, s);
+				ok = rfx_process_message_sync(context, &subStream);
 				break;
 
 			case WBT_CONTEXT:
-				ok = rfx_process_message_context(context, s);
+				ok = rfx_process_message_context(context, &subStream);
 				break;
 
 			case WBT_CODEC_VERSIONS:
-				ok = rfx_process_message_codec_versions(context, s);
+				ok = rfx_process_message_codec_versions(context, &subStream);
 				break;
 
 			case WBT_CHANNELS:
-				ok = rfx_process_message_channels(context, s);
+				ok = rfx_process_message_channels(context, &subStream);
 				break;
 
 			/* Data messages:
@@ -1123,28 +1115,25 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 			 */
 
 			case WBT_FRAME_BEGIN:
-				ok = rfx_process_message_frame_begin(context, message, s,
-				                                     &expectedDataBlockType);
+				ok = rfx_process_message_frame_begin(context, message, &subStream, &context->expectedDataBlockType);
 				break;
 
 			case WBT_REGION:
-				ok = rfx_process_message_region(context, message, s, &expectedDataBlockType);
+				ok = rfx_process_message_region(context, message, &subStream, &context->expectedDataBlockType);
 				break;
 
 			case WBT_EXTENSION:
-				ok = rfx_process_message_tileset(context, message, s, &expectedDataBlockType);
+				ok = rfx_process_message_tileset(context, message, &subStream, &context->expectedDataBlockType);
 				break;
 
 			case WBT_FRAME_END:
-				ok = rfx_process_message_frame_end(context, message, s, &expectedDataBlockType);
+				ok = rfx_process_message_frame_end(context, message, &subStream, &context->expectedDataBlockType);
 				break;
 
 			default:
 				WLog_ERR(TAG, "%s: unknown blockType 0x%"PRIX32"", __FUNCTION__, blockType);
-				goto fail;
+				return FALSE;
 		}
-
-		Stream_SetPosition(s, pos);
 	}
 
 	if (ok)
@@ -1195,7 +1184,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 				                        tile->data, context->pixel_format, stride, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
 				{
 					region16_uninit(&updateRegion);
-					goto fail;
+					return FALSE;
 				}
 
 				if (invalidRegion)
@@ -1206,14 +1195,9 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 		}
 
 		region16_uninit(&clippingRects);
-		Stream_Free(s, FALSE);
-		rfx_message_free(context, message);
 		return TRUE;
 	}
 
-fail:
-	Stream_Free(s, FALSE);
-	rfx_message_free(context, message);
 	return FALSE;
 }
 
@@ -1271,8 +1255,7 @@ static void rfx_update_context_properties(RFX_CONTEXT* context)
 	properties |= (context->flags << 1); /* flags */
 	properties |= (COL_CONV_ICT << 4); /* cct */
 	properties |= (CLW_XFORM_DWT_53_A << 6); /* xft */
-	properties |= ((context->mode == RLGR1 ? CLW_ENTROPY_RLGR1 : CLW_ENTROPY_RLGR3)
-	               << 10); /* et */
+	properties |= ((context->mode == RLGR1 ? CLW_ENTROPY_RLGR1 : CLW_ENTROPY_RLGR3) << 10); /* et */
 	properties |= (SCALAR_QUANTIZATION << 14); /* qt */
 	context->properties = properties;
 }
