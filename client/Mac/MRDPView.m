@@ -142,6 +142,7 @@ DWORD WINAPI mac_client_thread(void* param)
 	@autoreleasepool
 	{
 		int status;
+		DWORD rc;
 		HANDLE events[16];
 		HANDLE inputEvent;
 		HANDLE inputThread = NULL;
@@ -200,15 +201,15 @@ DWORD WINAPI mac_client_thread(void* param)
 
 				nCount += nCountTmp;
 			}
-			status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+			rc = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-			if (status >= (WAIT_OBJECT_0 + nCount))
+			if (rc >= (WAIT_OBJECT_0 + nCount))
 			{
-				WLog_ERR(TAG, "WaitForMultipleObjects failed (0x%08X)", status);
+				WLog_ERR(TAG, "WaitForMultipleObjects failed (0x%08X)", rc);
 				break;
 			}
 
-			if (status == WAIT_OBJECT_0)
+			if (rc == WAIT_OBJECT_0)
 			{
 				/* stop event triggered */
 				break;
@@ -307,7 +308,7 @@ DWORD WINAPI mac_client_thread(void* param)
 {
 	[super mouseMoved:event];
 
-	if (!is_connected)
+	if (!self.is_connected)
 		return;
 
 	NSPoint loc = [event locationInWindow];
@@ -320,7 +321,7 @@ DWORD WINAPI mac_client_thread(void* param)
 {
 	[super mouseDown:event];
 
-	if (!is_connected)
+	if (!self.is_connected)
 		return;
 
 	NSPoint loc = [event locationInWindow];
@@ -334,7 +335,7 @@ DWORD WINAPI mac_client_thread(void* param)
 {
 	[super mouseUp:event];
 
-	if (!is_connected)
+	if (!self.is_connected)
 		return;
 
 	NSPoint loc = [event locationInWindow];
@@ -347,7 +348,7 @@ DWORD WINAPI mac_client_thread(void* param)
 {
 	[super rightMouseDown:event];
 
-	if (!is_connected)
+	if (!self.is_connected)
 		return;
 
 	NSPoint loc = [event locationInWindow];
@@ -361,7 +362,7 @@ DWORD WINAPI mac_client_thread(void* param)
 {
 	[super rightMouseUp:event];
 
-	if (!is_connected)
+	if (!self.is_connected)
 		return;
 
 	NSPoint loc = [event locationInWindow];
@@ -374,7 +375,7 @@ DWORD WINAPI mac_client_thread(void* param)
 {
 	[super otherMouseDown:event];
 
-	if (!is_connected)
+	if (!self.is_connected)
 		return;
 
 	NSPoint loc = [event locationInWindow];
@@ -388,7 +389,7 @@ DWORD WINAPI mac_client_thread(void* param)
 {
 	[super otherMouseUp:event];
 
-	if (!is_connected)
+	if (!self.is_connected)
 		return;
 
 	NSPoint loc = [event locationInWindow];
@@ -402,7 +403,7 @@ DWORD WINAPI mac_client_thread(void* param)
 	UINT16 flags;
 	[super scrollWheel:event];
 
-	if (!is_connected)
+	if (!self.is_connected)
 		return;
 
 	NSPoint loc = [event locationInWindow];
@@ -427,7 +428,7 @@ DWORD WINAPI mac_client_thread(void* param)
 {
 	[super mouseDragged:event];
 
-	if (!is_connected)
+	if (!self.is_connected)
 		return;
 
 	NSPoint loc = [event locationInWindow];
@@ -910,12 +911,14 @@ void mac_post_disconnect(freerdp*	instance)
 		return;
 
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub, mac_OnChannelConnectedEventHandler);
-	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub, mac_OnChannelDisconnectedEventHandler);
+	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
+	                                      mac_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
 }
 
-static BOOL mac_authenticate_int(NSString* title, freerdp* instance, char** username, char** password,
-                      char** domain)
+static BOOL mac_authenticate_int(NSString* title, freerdp* instance, char** username,
+                                 char** password,
+                                 char** domain)
 {
 	mfContext* mfc = (mfContext*) instance->context;
 	MRDPView* view = (MRDPView*) mfc->view;
@@ -977,67 +980,98 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
                       char** domain)
 {
 	NSString* title = [NSString stringWithFormat:@"%@:%u",
-										  [NSString stringWithCString:instance->settings->ServerHostname encoding:
-										   NSUTF8StringEncoding],
-										  instance->settings->ServerPort];
-
+	                            [NSString stringWithCString:instance->settings->ServerHostname encoding:
+	                             NSUTF8StringEncoding],
+	                            instance->settings->ServerPort];
 	return mac_authenticate_int(title, instance, username, password, domain);
 }
 
 BOOL mac_gw_authenticate(freerdp* instance, char** username, char** password,
-                      char** domain)
+                         char** domain)
 {
 	NSString* title = [NSString stringWithFormat:@"%@:%u",
-										  [NSString stringWithCString:instance->settings->GatewayHostname encoding:
-										   NSUTF8StringEncoding],
-										  instance->settings->GatewayPort];
-
+	                            [NSString stringWithCString:instance->settings->GatewayHostname encoding:
+	                             NSUTF8StringEncoding],
+	                            instance->settings->GatewayPort];
 	return mac_authenticate_int(title, instance, username, password, domain);
 }
 
-DWORD mac_verify_certificate(freerdp* instance, const char* common_name, const char* subject, const char* issuer, const char* fingerprint, BOOL host_mismatch)
+DWORD mac_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
+                                const char* common_name, const char* subject,
+                                const char* issuer, const char* fingerprint,
+                                DWORD flags)
 {
 	mfContext* mfc = (mfContext*) instance->context;
 	MRDPView* view = (MRDPView*) mfc->view;
 	CertificateDialog* dialog = [CertificateDialog new];
-	dialog.serverHostname = [NSString stringWithFormat:@"TODO: The server name we connect to."];
+	const char* type = "RDP-Server";
+	char hostname[8192];
+
+	if (flags & VERIFY_CERT_FLAG_GATEWAY)
+		type = "RDP-Gateway";
+
+	if (flags & VERIFY_CERT_FLAG_REDIRECT)
+		type = "RDP-Redirect";
+
+	sprintf_s(hostname, sizeof(hostname), "%s %s:%"PRIu16, type, host, port);
+	dialog.serverHostname = [NSString stringWithCString:hostname];
 	dialog.commonName = [NSString stringWithCString:common_name encoding:
-			NSUTF8StringEncoding];
+	                              NSUTF8StringEncoding];
 	dialog.subject = [NSString stringWithCString:subject encoding:
-			NSUTF8StringEncoding];
+	                           NSUTF8StringEncoding];
 	dialog.issuer = [NSString stringWithCString:issuer encoding:
-			NSUTF8StringEncoding];
+	                          NSUTF8StringEncoding];
 	dialog.fingerprint = [NSString stringWithCString:fingerprint encoding:
-			NSUTF8StringEncoding];
-	dialog.hostMismatch = host_mismatch;
-	dialog.changed = FALSE;
+	                               NSUTF8StringEncoding];
+
+	if (flags & VERIFY_CERT_FLAG_MISMATCH)
+		dialog.hostMismatch = TRUE;
+
+	if (flags & VERIFY_CERT_FLAG_CHANGED)
+		dialog.changed = TRUE;
+
 	[dialog performSelectorOnMainThread:@selector(runModal:) withObject:[view
 	        window] waitUntilDone:TRUE];
-
 	return dialog.result;
 }
 
-DWORD mac_verify_changed_certificate(freerdp* instance, const char* common_name,
-									 const char* subject, const char* issuer, const char* fingerprint,
-									 const char* old_subject, const char* old_issuer, const char* old_fingerprint)
+DWORD mac_verify_changed_certificate_ex(freerdp* instance, const char* host, UINT16 port,
+                                        const char* common_name, const char* subject,
+                                        const char* issuer, const char* fingerprint,
+                                        const char* old_subject, const char* old_issuer,
+                                        const char* old_fingerprint, DWORD flags)
 {
 	mfContext* mfc = (mfContext*) instance->context;
 	MRDPView* view = (MRDPView*) mfc->view;
 	CertificateDialog* dialog = [CertificateDialog new];
-	dialog.serverHostname = [NSString stringWithFormat:@"TODO: The server name we connect to."];
+	const char* type = "RDP-Server";
+	char hostname[8192];
+
+	if (flags & VERIFY_CERT_FLAG_GATEWAY)
+		type = "RDP-Gateway";
+
+	if (flags & VERIFY_CERT_FLAG_REDIRECT)
+		type = "RDP-Redirect";
+
+	sprintf_s(hostname, sizeof(hostname), "%s %s:%"PRIu16, type, host, port);
+	dialog.serverHostname = [NSString stringWithCString:hostname];
 	dialog.commonName = [NSString stringWithCString:common_name encoding:
-			NSUTF8StringEncoding];
+	                              NSUTF8StringEncoding];
 	dialog.subject = [NSString stringWithCString:subject encoding:
-			NSUTF8StringEncoding];
+	                           NSUTF8StringEncoding];
 	dialog.issuer = [NSString stringWithCString:issuer encoding:
-			NSUTF8StringEncoding];
+	                          NSUTF8StringEncoding];
 	dialog.fingerprint = [NSString stringWithCString:fingerprint encoding:
-			NSUTF8StringEncoding];
-	dialog.hostMismatch = FALSE;
-	dialog.changed = TRUE;
+	                               NSUTF8StringEncoding];
+
+	if (flags & VERIFY_CERT_FLAG_MISMATCH)
+		dialog.hostMismatch = TRUE;
+
+	if (flags & VERIFY_CERT_FLAG_CHANGED)
+		dialog.changed = TRUE;
+
 	[dialog performSelectorOnMainThread:@selector(runModal:) withObject:[view
 	        window] waitUntilDone:TRUE];
-
 	return dialog.result;
 }
 
@@ -1045,7 +1079,6 @@ int mac_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
 	const char* str_data = freerdp_get_logon_error_info_data(data);
 	const char* str_type = freerdp_get_logon_error_info_type(type);
-
 	// TODO: Error message dialog
 	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
 	return 1;

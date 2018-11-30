@@ -91,8 +91,8 @@ static BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
 	context->instance->PostDisconnect = mac_post_disconnect;
 	context->instance->Authenticate = mac_authenticate;
 	context->instance->GatewayAuthenticate = mac_gw_authenticate;
-	context->instance->VerifyCertificate = mac_verify_certificate;
-	context->instance->VerifyChangedCertificate = mac_verify_changed_certificate;
+	context->instance->VerifyCertificateEx = mac_verify_certificate_ex;
+	context->instance->VerifyChangedCertificateEx = mac_verify_changed_certificate_ex;
 	context->instance->LogonErrorInfo = mac_logon_error_info;
 	context->instance->settings = instance->settings;
 	settings = context->settings;
