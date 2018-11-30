@@ -22,6 +22,13 @@ certificate_list      certificate_list_rest(certificate_list list);
 allocates a new list node containing the certificate and the next list. */
 certificate_list certificate_list_cons(smartcard_certificate certificate, certificate_list rest);
 
+/* certificate_list_delete
+removes the certificate from the certificate list.
+returns the list (or the rest of the list when the certificate was the first element).
+The node that held the certificate is freed, but not the certificate!
+*/
+certificate_list certificate_list_delete(smartcard_certificate certificate, certificate_list list);
+
 /* certificate_list_deepfree
 deepfrees the certificates and the list nodes */
 void certificate_list_deepfree(certificate_list list);

@@ -28,6 +28,5 @@ scquery_result scquery_result_new(smartcard_certificate  certificate,
 
 void scquery_result_free(scquery_result that);
 
-
 #endif
 
