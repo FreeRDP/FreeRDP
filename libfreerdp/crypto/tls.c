@@ -1461,6 +1461,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 				}
 				else if (instance->VerifyCertificate)
 				{
+					WLog_WARN(TAG,
+					          "The VerifyCertificate callback is deprecated, migrate your application to VerifyCertificateEx");
 					accept_certificate = instance->VerifyCertificate(
 					                         instance, common_name,
 					                         subject, issuer,
@@ -1503,6 +1505,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 				}
 				else if (instance->VerifyChangedCertificate)
 				{
+					WLog_WARN(TAG,
+					          "The VerifyChangedCertificate callback is deprecated, migrate your application to VerifyChangedCertificateEx");
 					accept_certificate = instance->VerifyChangedCertificate(
 					                         instance, common_name, subject, issuer,
 					                         fingerprint, old_subject, old_issuer,
