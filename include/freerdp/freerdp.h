@@ -111,9 +111,31 @@ typedef DWORD (*pVerifyChangedCertificate)(freerdp* instance,
         const char* old_subject,
         const char* old_issuer,
         const char* old_fingerprint);
-typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data,
-                                      int length, const char* hostname,
-                                      int port, DWORD flags);
+
+
+#define VERIFY_X509_CERT_FLAG_NONE     0x00
+#define VERIFY_X509_CERT_FLAG_LEGACY   0x02
+#define VERIFY_X509_CERT_FLAG_REDIRECT 0x10
+#define VERIFY_X509_CERT_FLAG_GATEWAY  0x20
+#define VERIFY_X509_CERT_FLAG_CHANGED  0x40
+#define VERIFY_X509_CERT_FLAG_MISMATCH 0x80
+
+/** @brief Callback used if user interaction is required to accept
+ *         a certificate.
+ *
+ *  @param instance         Pointer to the freerdp instance.
+ *  @param data             Pointer to certificate data in PEM format.
+ *  @param length           The length of the certificate data.
+ *  @param hostname         The hostname connecting to.
+ *  @param port             The port connecting to.
+ *  @param flags            The issuer of the new certificate.
+ *
+ *  @return 1 to accept and store a certificate, 2 to accept
+ *          a certificate only for this session, 0 otherwise.
+ */
+typedef int (*pVerifyX509Certificate)(freerdp* instance, const BYTE* data,
+                                      size_t length, const char* hostname,
+                                      UINT16 port, DWORD flags);
 
 typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
 

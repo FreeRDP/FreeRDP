@@ -754,9 +754,8 @@ char* crypto_cert_issuer(X509* xcert)
 	return crypto_print_name(X509_get_issuer_name(xcert));
 }
 
-BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
+BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path)
 {
-	X509_VERIFY_PARAM* verify_param;
 	X509_STORE_CTX* csc;
 	BOOL status = FALSE;
 	X509_STORE* cert_ctx = NULL;
@@ -812,7 +811,7 @@ end:
 	return status;
 }
 
-rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname, UINT16 port)
+rdpCertificateData* crypto_get_certificate_data(X509* xcert, const char* hostname, UINT16 port)
 {
 	char* issuer;
 	char* subject;

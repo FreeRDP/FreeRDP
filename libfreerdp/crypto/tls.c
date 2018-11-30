@@ -79,6 +79,13 @@ struct _BIO_RDP_TLS
 };
 typedef struct _BIO_RDP_TLS BIO_RDP_TLS;
 
+static int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, UINT16 port);
+static void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,
+        const char* common_name, char** alt_names,
+        int alt_names_count);
+static void tls_print_certificate_error(const char* hostname, UINT16 port, const char* fingerprint,
+                                        const char* hosts_file);
+
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
 	int error;
@@ -654,7 +661,6 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method,
 	SSL_CTX_set_min_proto_version(tls->ctx, TLS1_VERSION); /* min version */
 	SSL_CTX_set_max_proto_version(tls->ctx, 0); /* highest supported version by library */
 #endif
-
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
 	SSL_CTX_set_security_level(tls->ctx, settings->TlsSecLevel);
 #endif
@@ -844,7 +850,6 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 	 * support empty fragments. This needs to be disabled.
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
-
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	/**
 	 * disable SSLv2 and SSLv3
@@ -1098,7 +1103,8 @@ int tls_set_alert_code(rdpTls* tls, int level, int description)
 	return 0;
 }
 
-BOOL tls_match_hostname(char* pattern, int pattern_length, char* hostname)
+static BOOL tls_match_hostname(const char* pattern, const size_t pattern_length,
+                               const char* hostname)
 {
 	if (strlen(hostname) == pattern_length)
 	{
@@ -1107,9 +1113,9 @@ BOOL tls_match_hostname(char* pattern, int pattern_length, char* hostname)
 	}
 
 	if ((pattern_length > 2) && (pattern[0] == '*') && (pattern[1] == '.')
-	    && (((int) strlen(hostname)) >= pattern_length))
+	    && ((strlen(hostname)) >= pattern_length))
 	{
-		char* check_hostname = &hostname[strlen(hostname) - pattern_length + 1];
+		const char* check_hostname = &hostname[strlen(hostname) - pattern_length + 1];
 
 		if (_strnicmp(check_hostname, &pattern[1], pattern_length - 1) == 0)
 		{
@@ -1299,8 +1305,8 @@ fail:
 	return rc;
 }
 
-int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
-                           int port)
+int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
+                           UINT16 port)
 {
 	int match;
 	int index;
@@ -1316,6 +1322,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 	freerdp* instance = (freerdp*) tls->settings->instance;
 	DWORD length;
 	BYTE* pemCert;
+	DWORD flags = VERIFY_X509_CERT_FLAG_NONE;
 
 	if (!tls_extract_pem(cert, &pemCert, &length))
 		return -1;
@@ -1327,13 +1334,22 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 		return 1;
 	}
 
+	if (tls->isGatewayTransport || is_redirected(tls))
+		flags |= VERIFY_X509_CERT_FLAG_LEGACY;
+
+	if (tls->isGatewayTransport)
+		flags |= VERIFY_X509_CERT_FLAG_GATEWAY;
+
+	if (is_redirected(tls))
+		flags |= VERIFY_X509_CERT_FLAG_REDIRECT;
+
 	if (tls->settings->ExternalCertificateManagement)
 	{
 		int status = -1;
 
 		if (instance->VerifyX509Certificate)
 			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
-			         port, tls->isGatewayTransport | is_redirected(tls) ? 2 : 0);
+			         port, flags);
 		else
 			WLog_ERR(TAG, "No VerifyX509Certificate callback registered!");
 
@@ -1407,6 +1423,9 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 	if (certificate_status && hostname_match)
 		verification_status = TRUE; /* success! */
 
+	if (!hostname_match)
+		flags |= VERIFY_X509_CERT_FLAG_MISMATCH;
+
 	/* verification could not succeed with OpenSSL, use known_hosts file and prompt user for manual verification */
 	if (!certificate_status || !hostname_match)
 	{
@@ -1434,6 +1453,18 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 			{
 				WLog_INFO(TAG, "No certificate stored, automatically accepting.");
 				accept_certificate = 1;
+			}
+			else if (instance->VerifyX509Certificate)
+			{
+				int rc = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
+				         port, flags);
+
+				if (rc == 1)
+					accept_certificate = 1;
+				else if (rc > 1)
+					accept_certificate = 2;
+				else
+					accept_certificate = 0;
 			}
 			else if (instance->VerifyCertificate)
 			{
@@ -1477,7 +1508,19 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 				WLog_WARN(TAG, "Failed to get certificate entry for %s:%d",
 				          hostname, port);
 
-			if (instance->VerifyChangedCertificate)
+			if (instance->VerifyX509Certificate)
+			{
+				const int rc = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
+				               port, flags | VERIFY_X509_CERT_FLAG_CHANGED);
+
+				if (rc == 1)
+					accept_certificate = 1;
+				else if (rc > 1)
+					accept_certificate = 2;
+				else
+					accept_certificate = 0;
+			}
+			else if (instance->VerifyChangedCertificate)
 			{
 				accept_certificate = instance->VerifyChangedCertificate(
 				                         instance, common_name, subject, issuer,
@@ -1535,8 +1578,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 	return (verification_status == 0) ? 0 : 1;
 }
 
-void tls_print_certificate_error(char* hostname, UINT16 port, char* fingerprint,
-                                 char* hosts_file)
+void tls_print_certificate_error(const char* hostname, UINT16 port, const char* fingerprint,
+                                 const char* hosts_file)
 {
 	WLog_ERR(TAG, "The host key for %s:%"PRIu16" has changed", hostname, port);
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
@@ -1557,8 +1600,8 @@ void tls_print_certificate_error(char* hostname, UINT16 port, char* fingerprint,
 	WLog_ERR(TAG, "Host key verification failed.");
 }
 
-void tls_print_certificate_name_mismatch_error(char* hostname, UINT16 port,
-        char* common_name, char** alt_names,
+void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,
+        const char* common_name, char** alt_names,
         int alt_names_count)
 {
 	int index;
