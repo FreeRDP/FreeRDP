@@ -44,11 +44,9 @@ CK_OBJECT_HANDLE object_handle_ensure_one(object_handle_list list, char* what)
 		     (list == NULL) ? "zero" : "more than one", what);
 	}
 
-	CK_OBJECT_HANDLE result = ((list == NULL)
-		? CK_INVALID_HANDLE
-		: object_handle_first(list));
-	object_handle_list_free(list);
-	return result;
+	return (list == NULL)
+	       ? CK_INVALID_HANDLE
+	       : object_handle_first(list);
 }
 
 CK_ULONG position_of_attribute(CK_ULONG attribute_type, template* template)
@@ -83,6 +81,18 @@ char* string_attribute(CK_ULONG attribute, template* template)
 	}
 }
 
+char* string_unpad(char* padded_string, size_t maxlength, char pad)
+{
+	size_t len = strnlen(padded_string, maxlength);
+
+	while ((0 < len) && (padded_string[len - 1] == pad))
+	{
+		len--;
+	}
+
+	return check_memory(strndup(padded_string, len), len);
+}
+
 buffer buffer_attribute(CK_ULONG attribute, template* template)
 {
 	CK_ULONG index = position_of_attribute(attribute, template);
@@ -93,16 +103,30 @@ buffer buffer_attribute(CK_ULONG attribute, template* template)
 	}
 	else
 	{
-		return buffer_new_copy(template->attributes[index].ulValueLen,
-			template->attributes[index].pValue);
+		buffer buffer = checked_malloc(sizeof(*buffer));
+
+		if (buffer == NULL)
+		{
+			return NULL;
+		}
+
+		buffer->size = template->attributes[index].ulValueLen;
+		buffer->data = checked_malloc(buffer->size);
+
+		if (buffer->data == NULL)
+		{
+			free(buffer);
+			return NULL;
+		}
+
+		memcpy(buffer->data, template->attributes[index].pValue, buffer->size);
+		return buffer;
 	}
 }
 
 certificate_list find_x509_certificates_with_signing_rsa_private_key_in_slot(pkcs11_module* module,
         CK_ULONG slot_id,
-	const char* slot_description,
-	const char* token_label,
-	const char* token_serial,
+        CK_TOKEN_INFO* info,
         CK_SESSION_HANDLE session,
         certificate_list result)
 {
@@ -176,9 +200,7 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key_in_slot(pkc
 			CK_ULONG certype_index = position_of_attribute(CKA_CERTIFICATE_TYPE, &certificate_attributes);
 			CK_ULONG keytype_index = position_of_attribute(CKA_KEY_TYPE, &certificate_attributes);
 			certificate = scquery_certificate_new(slot_id,
-				                              check_memory(strdup(slot_description), strlen(slot_description)),
-				                              check_memory(strdup(token_label), strlen(token_label)),
-				                              check_memory(strdup(token_serial), strlen(token_serial)),
+			                                      string_unpad((char*)info->label, 32, ' '),
 			                                      ((id_index != CK_UNAVAILABLE_INFORMATION)
 			                                       ? (bytes_to_hexadecimal(certificate_attributes.attributes[id_index].pValue,
 			                                               certificate_attributes.attributes[id_index].ulValueLen))
@@ -208,48 +230,21 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key_in_slot(pkc
 			VERBOSE(module->verbose, "Private key has no ID!");
 		}
 	}
-	object_handle_list_free(privkey_list);
 	return result;
 }
 
-
-char* get_slot_description(pkcs11_module* module, CK_ULONG slot_id)
-{
-	CK_SLOT_INFO info;
-	char*  result = NULL;
-
-	if (CHECK_RV(module->p11->C_GetSlotInfo(slot_id, &info), "C_GetSlotInfo"))
-	{
-		result = check_memory(string_from_padded_string((const char*)info.slotDescription, sizeof(info.slotDescription), ' '),
-			sizeof(info.slotDescription) + 1);
-	}
-
-	return result;
-}
-
-char* get_token_label(pkcs11_module* module, CK_ULONG slot_id, char** token_serial)
-{
-	CK_TOKEN_INFO info;
-
-	if(CHECK_RV(module->p11->C_GetTokenInfo(slot_id, &info), "C_GetTokenInfo"))
-	{
-		char* label = check_memory(string_from_padded_string((const char*)info.label, sizeof(info.label), ' '), sizeof(info.label) + 1);
-		char* serial = check_memory(string_from_padded_string((const char*)info.serialNumber, sizeof(info.serialNumber), ' '), sizeof(info.serialNumber) + 1);
-		(*token_serial) = serial;
-		return label;
-	}
-
-	(*token_serial) = NULL;
-	return NULL;
-}
-
-CK_BBOOL selected_slot(pkcs11_module* module, CK_ULONG slot_id, const char* slot_description, const char* reader_name)
+CK_BBOOL selected_slot(pkcs11_module* module, CK_ULONG slot_id, const char* reader_name)
 {
 	CK_BBOOL selected = TRUE;
+	CK_SLOT_INFO info;
 
-	if (reader_name!= NULL)
+	if ((reader_name != NULL)
+	    && CHECK_RV(module->p11->C_GetSlotInfo(slot_id, &info), "C_GetSlotInfo"))
 	{
-		selected = ((slot_description != NULL) && (0 == strcmp(slot_description, reader_name)));
+		char* slot_description = string_from_padded_string((const char*)info.slotDescription,
+		                         sizeof(info.slotDescription), ' ');
+		selected = (0 == strcmp(slot_description, reader_name));
+		free(slot_description);
 	}
 
 	if (selected)
@@ -266,12 +261,17 @@ CK_BBOOL selected_slot(pkcs11_module* module, CK_ULONG slot_id, const char* slot
 	return selected;
 }
 
-CK_BBOOL selected_token(pkcs11_module* module, CK_ULONG slot_id, const char* label, const char* serial, const char* card_name)
+CK_BBOOL selected_token(pkcs11_module* module, CK_TOKEN_INFO* info, const char* card_name)
 {
 	CK_BBOOL selected = TRUE;
+	char* label = NULL;
+	char* serial = NULL;
 
 	if (card_name != NULL)
 	{
+		label = string_from_padded_string((const char*)info->label, sizeof(info->label), ' ');
+		serial = string_from_padded_string((const char*)info->serialNumber, sizeof(info->serialNumber),
+		                                   ' ');
 		selected = ((label != NULL) && (0 == strcmp(label, card_name)))
 		           || ((serial != NULL) && (0 == strcmp(serial, card_name)));
 	}
@@ -286,6 +286,8 @@ CK_BBOOL selected_token(pkcs11_module* module, CK_ULONG slot_id, const char* lab
 		        card_name);
 	}
 
+	free(label);
+	free(serial);
 	return selected;
 }
 
@@ -305,7 +307,7 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key(const char*
 
 		if (slots.count == 0)
 		{
-			ERROR(1, "No smartcard!");
+			printf("No smartcard\n");
 		}
 		else
 		{
@@ -313,29 +315,32 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key(const char*
 
 			for (i = 0; i < slots.count; i++)
 			{
+				CK_TOKEN_INFO info;
 				CK_ULONG slot_id = slots.slot_id[i];
-				char * slot_description = get_slot_description(module, slot_id);
 
-				if (selected_slot(module, slot_id, slot_description, reader_name))
+				if (!selected_slot(module, slot_id, reader_name))
 				{
-					char * serial = NULL;
-					char * label = get_token_label(module, slot_id, &serial);
-
-					if (selected_token(module, slot_id, label, serial, card_name))
-					{
-						CK_SESSION_HANDLE session;
-						WITH_PKCS11_OPEN_SESSION(session, module, slot_id, CKF_SERIAL_SESSION, NULL, NULL)
-						{
-							VERBOSE(module->verbose, "Opened PKCS#11 session %lu", session);
-							result = find_x509_certificates_with_signing_rsa_private_key_in_slot(module, slot_id, slot_description, label, serial,  session, result);
-						}
-					}
-
-					free(label);
-					free(serial);
+					continue;
 				}
 
-				free(slot_description);
+				if (CHECK_RV(module->p11->C_GetTokenInfo(slot_id, &info), "C_GetTokenInfo"))
+				{
+					CK_SESSION_HANDLE session;
+
+					if (!selected_token(module, &info, card_name))
+					{
+						VERBOSE(module->verbose, "Rejected token in slot id %lu (card named %s, not named %s)", slot_id,
+						        info.label, card_name);
+						continue;
+					}
+
+					WITH_PKCS11_OPEN_SESSION(session, module, slot_id, CKF_SERIAL_SESSION, NULL, NULL)
+					{
+						VERBOSE(module->verbose, "Opened PKCS#11 session %lu", session);
+						result = find_x509_certificates_with_signing_rsa_private_key_in_slot(module, slot_id, &info,
+						         session, result);
+					}
+				}
 			}
 		}
 	}

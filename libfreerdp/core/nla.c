@@ -551,6 +551,14 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 {
 	rdpSettings* settings = nla->settings;
 	nla->cred_type = settings->CredentialsType;
+#if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
+
+	/* gets the UPN settings->UserPrincipalName */
+	if (get_info_smartcard(settings) != 0)
+	{
+		WLog_ERR(TAG, "Failed to retrieve UPN !");
+		return -1;
+	}
 
 #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
 

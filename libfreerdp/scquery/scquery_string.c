@@ -155,20 +155,27 @@ size_t string_count(const char* string, char character)
 
 size_t padded_string_length(const char* padded_string, size_t max_size, char pad)
 {
-	size_t len = strnlen(padded_string, max_size);
-
-	while ((len > 0) && (padded_string[len - 1] == pad))
+	while ((max_size > 0) && (padded_string[max_size - 1] == pad))
 	{
-		len--;
+		max_size--;
 	}
 
-	return len;
+	return max_size;
 }
 
 char* string_from_padded_string(const char* padded_string, size_t max_size, char pad)
 {
 	size_t length = padded_string_length(padded_string, max_size, pad);
-	return check_memory(strndup(padded_string, length), length);
+	char* copy = checked_malloc(1 + length);
+
+	if (copy == NULL)
+	{
+		return NULL;
+	}
+
+	strncpy(copy, padded_string, length);
+	copy[length] = '\0';
+	return copy;
 }
 
 char* string_format(const char* format_string, ...)

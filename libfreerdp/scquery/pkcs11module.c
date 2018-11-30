@@ -5,11 +5,7 @@
 
 #include "pkcs11module.h"
 #include "pkcs11errors.h"
-<<<<<<< HEAD
 #include "scquery_error.h"
-=======
-#include "error.h"
->>>>>>> Added scquery.
 
 
 /*
@@ -264,7 +260,6 @@ object_handle_list object_handle_cons(CK_OBJECT_HANDLE object_handle, object_han
 
 	return list;
 }
-<<<<<<< HEAD
 void object_handle_list_free(object_handle_list list)
 {
 	while (list != NULL)
@@ -274,8 +269,7 @@ void object_handle_list_free(object_handle_list list)
 		free(current);
 	}
 }
-=======
->>>>>>> Added scquery.
+
 CK_ULONG object_handle_list_length(object_handle_list list)
 {
 	CK_ULONG length = 0;
