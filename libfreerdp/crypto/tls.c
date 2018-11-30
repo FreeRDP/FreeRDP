@@ -1340,6 +1340,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 	if (is_redirected(tls))
 		flags |= VERIFY_CERT_FLAG_REDIRECT;
 
+	/* Certificate management is done by the application */
 	if (tls->settings->ExternalCertificateManagement)
 	{
 		int status = -1;
@@ -1360,120 +1361,162 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 		}
 
 		verification_status = (status == 0) ? FALSE : TRUE;
-		goto end;
 	}
-
 	/* ignore certificate verification if user explicitly required it (discouraged) */
-	if (tls->settings->IgnoreCertificate)
+	else if (tls->settings->IgnoreCertificate)
+		verification_status = TRUE; /* success! */
+	else if (!tls->isGatewayTransport && (tls->settings->AuthenticationLevel == 0))
+		verification_status = TRUE; /* success! */
+	else
 	{
-		verification_status = TRUE;
-		goto end;  /* success! */
-	}
+		/* if user explicitly specified a certificate name, use it instead of the hostname */
+		if (!tls->isGatewayTransport && tls->settings->CertificateName)
+			hostname = tls->settings->CertificateName;
 
-	if (!tls->isGatewayTransport && tls->settings->AuthenticationLevel == 0)
-	{
-		verification_status = TRUE;
-		goto end;  /* success! */
-	}
+		/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
+		certificate_status = x509_verify_certificate(cert,
+		                     tls->certificate_store->path);
+		/* verify certificate name match */
+		certificate_data = crypto_get_certificate_data(cert->px509, hostname, port);
+		/* extra common name and alternative names */
+		common_name = crypto_cert_subject_common_name(cert->px509, &common_name_length);
+		dns_names = crypto_cert_get_dns_names(cert->px509, &dns_names_count,
+		                                      &dns_names_lengths);
 
-	/* if user explicitly specified a certificate name, use it instead of the hostname */
-	if (!tls->isGatewayTransport && tls->settings->CertificateName)
-		hostname = tls->settings->CertificateName;
+		/* compare against common name */
 
-	/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
-	certificate_status = x509_verify_certificate(cert,
-	                     tls->certificate_store->path);
-	/* verify certificate name match */
-	certificate_data = crypto_get_certificate_data(cert->px509, hostname, port);
-	/* extra common name and alternative names */
-	common_name = crypto_cert_subject_common_name(cert->px509, &common_name_length);
-	dns_names = crypto_cert_get_dns_names(cert->px509, &dns_names_count,
-	                                      &dns_names_lengths);
-
-	/* compare against common name */
-
-	if (common_name)
-	{
-		if (tls_match_hostname(common_name, common_name_length, hostname))
-			hostname_match = TRUE;
-	}
-
-	/* compare against alternative names */
-
-	if (dns_names)
-	{
-		for (index = 0; index < dns_names_count; index++)
+		if (common_name)
 		{
-			if (tls_match_hostname(dns_names[index], dns_names_lengths[index], hostname))
-			{
+			if (tls_match_hostname(common_name, common_name_length, hostname))
 				hostname_match = TRUE;
-				break;
+		}
+
+		/* compare against alternative names */
+
+		if (dns_names)
+		{
+			for (index = 0; index < dns_names_count; index++)
+			{
+				if (tls_match_hostname(dns_names[index], dns_names_lengths[index], hostname))
+				{
+					hostname_match = TRUE;
+					break;
+				}
 			}
 		}
-	}
 
-	/* if the certificate is valid and the certificate name matches, verification succeeds */
-	if (certificate_status && hostname_match)
-		verification_status = TRUE; /* success! */
+		/* if the certificate is valid and the certificate name matches, verification succeeds */
+		if (certificate_status && hostname_match)
+			verification_status = TRUE; /* success! */
 
-	if (!hostname_match)
-		flags |= VERIFY_CERT_FLAG_MISMATCH;
+		if (!hostname_match)
+			flags |= VERIFY_CERT_FLAG_MISMATCH;
 
-	/* verification could not succeed with OpenSSL, use known_hosts file and prompt user for manual verification */
-	if (!certificate_status || !hostname_match)
-	{
-		char* issuer;
-		char* subject;
-		char* fingerprint;
-		DWORD accept_certificate = 0;
-		issuer = crypto_cert_issuer(cert->px509);
-		subject = crypto_cert_subject(cert->px509);
-		fingerprint = crypto_cert_fingerprint(cert->px509);
-		/* search for matching entry in known_hosts file */
-		match = certificate_data_match(tls->certificate_store, certificate_data);
-
-		if (match == 1)
+		/* verification could not succeed with OpenSSL, use known_hosts file and prompt user for manual verification */
+		if (!certificate_status || !hostname_match)
 		{
-			/* no entry was found in known_hosts file, prompt user for manual verification */
-			if (!hostname_match)
-				tls_print_certificate_name_mismatch_error(
-				    hostname, port,
-				    common_name, dns_names,
-				    dns_names_count);
+			char* issuer;
+			char* subject;
+			char* fingerprint;
+			DWORD accept_certificate = 0;
+			issuer = crypto_cert_issuer(cert->px509);
+			subject = crypto_cert_subject(cert->px509);
+			fingerprint = crypto_cert_fingerprint(cert->px509);
+			/* search for matching entry in known_hosts file */
+			match = certificate_data_match(tls->certificate_store, certificate_data);
 
-			/* Automatically accept certificate on first use */
-			if (tls->settings->AutoAcceptCertificate)
+			if (match == 1)
 			{
-				WLog_INFO(TAG, "No certificate stored, automatically accepting.");
-				accept_certificate = 1;
-			}
-			else if (instance->VerifyX509Certificate)
-			{
-				int rc = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
-				         port, flags);
+				/* no entry was found in known_hosts file, prompt user for manual verification */
+				if (!hostname_match)
+					tls_print_certificate_name_mismatch_error(
+					    hostname, port,
+					    common_name, dns_names,
+					    dns_names_count);
 
-				if (rc == 1)
+				/* Automatically accept certificate on first use */
+				if (tls->settings->AutoAcceptCertificate)
+				{
+					WLog_INFO(TAG, "No certificate stored, automatically accepting.");
 					accept_certificate = 1;
-				else if (rc > 1)
-					accept_certificate = 2;
-				else
-					accept_certificate = 0;
-			}
-			else if (instance->VerifyCertificateEx)
-			{
-				accept_certificate = instance->VerifyCertificateEx(
-				                         instance, hostname, port, common_name,
-				                         subject, issuer,
-				                         fingerprint, flags);
-			}
-			else if (instance->VerifyCertificate)
-			{
-				accept_certificate = instance->VerifyCertificate(
-				                         instance, common_name,
-				                         subject, issuer,
-				                         fingerprint, !hostname_match);
-			}
+				}
+				else if (instance->VerifyX509Certificate)
+				{
+					int rc = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
+					         port, flags);
 
+					if (rc == 1)
+						accept_certificate = 1;
+					else if (rc > 1)
+						accept_certificate = 2;
+					else
+						accept_certificate = 0;
+				}
+				else if (instance->VerifyCertificateEx)
+				{
+					accept_certificate = instance->VerifyCertificateEx(
+					                         instance, hostname, port, common_name,
+					                         subject, issuer,
+					                         fingerprint, flags);
+				}
+				else if (instance->VerifyCertificate)
+				{
+					accept_certificate = instance->VerifyCertificate(
+					                         instance, common_name,
+					                         subject, issuer,
+					                         fingerprint, !hostname_match);
+				}
+			}
+			else if (match == -1)
+			{
+				char* old_subject = NULL;
+				char* old_issuer = NULL;
+				char* old_fingerprint = NULL;
+				/* entry was found in known_hosts file, but fingerprint does not match. ask user to use it */
+				tls_print_certificate_error(hostname, port, fingerprint,
+				                            tls->certificate_store->file);
+
+				if (!certificate_get_stored_data(tls->certificate_store,
+				                                 certificate_data, &old_subject,
+				                                 &old_issuer, &old_fingerprint))
+					WLog_WARN(TAG, "Failed to get certificate entry for %s:%d",
+					          hostname, port);
+
+				if (instance->VerifyX509Certificate)
+				{
+					const int rc = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
+					               port, flags | VERIFY_CERT_FLAG_CHANGED);
+
+					if (rc == 1)
+						accept_certificate = 1;
+					else if (rc > 1)
+						accept_certificate = 2;
+					else
+						accept_certificate = 0;
+				}
+				else if (instance->VerifyChangedCertificateEx)
+				{
+					accept_certificate = instance->VerifyChangedCertificateEx(
+					                         instance, hostname, port, common_name, subject, issuer,
+					                         fingerprint, old_subject, old_issuer,
+					                         old_fingerprint, flags | VERIFY_CERT_FLAG_CHANGED);
+				}
+				else if (instance->VerifyChangedCertificate)
+				{
+					accept_certificate = instance->VerifyChangedCertificate(
+					                         instance, common_name, subject, issuer,
+					                         fingerprint, old_subject, old_issuer,
+					                         old_fingerprint);
+				}
+
+				free(old_subject);
+				free(old_issuer);
+				free(old_fingerprint);
+			}
+			else if (match == 0)
+				accept_certificate = 2; /* success! */
+
+			/* Save certificate or do a simple accept / reject */
 			switch (accept_certificate)
 			{
 				case 1:
@@ -1492,82 +1535,15 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 					verification_status = FALSE; /* failure! */
 					break;
 			}
+
+			free(issuer);
+			free(subject);
+			free(fingerprint);
 		}
-		else if (match == -1)
-		{
-			char* old_subject = NULL;
-			char* old_issuer = NULL;
-			char* old_fingerprint = NULL;
-			/* entry was found in known_hosts file, but fingerprint does not match. ask user to use it */
-			tls_print_certificate_error(hostname, port, fingerprint,
-			                            tls->certificate_store->file);
 
-			if (!certificate_get_stored_data(tls->certificate_store,
-			                                 certificate_data, &old_subject,
-			                                 &old_issuer, &old_fingerprint))
-				WLog_WARN(TAG, "Failed to get certificate entry for %s:%d",
-				          hostname, port);
-
-			if (instance->VerifyX509Certificate)
-			{
-				const int rc = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
-				               port, flags | VERIFY_CERT_FLAG_CHANGED);
-
-				if (rc == 1)
-					accept_certificate = 1;
-				else if (rc > 1)
-					accept_certificate = 2;
-				else
-					accept_certificate = 0;
-			}
-			else if (instance->VerifyChangedCertificateEx)
-			{
-				accept_certificate = instance->VerifyChangedCertificateEx(
-				                         instance, hostname, port, common_name, subject, issuer,
-				                         fingerprint, old_subject, old_issuer,
-				                         old_fingerprint, flags | VERIFY_CERT_FLAG_CHANGED);
-			}
-			else if (instance->VerifyChangedCertificate)
-			{
-				accept_certificate = instance->VerifyChangedCertificate(
-				                         instance, common_name, subject, issuer,
-				                         fingerprint, old_subject, old_issuer,
-				                         old_fingerprint);
-			}
-
-			free(old_subject);
-			free(old_issuer);
-			free(old_fingerprint);
-
-			switch (accept_certificate)
-			{
-				case 1:
-					/* user accepted certificate, add entry in known_hosts file */
-					verification_status = certificate_data_replace(tls->certificate_store,
-					                      certificate_data);
-					break;
-
-				case 2:
-					/* user did accept temporaty, do not add to known hosts file */
-					verification_status = TRUE;
-					break;
-
-				default:
-					/* user did not accept, abort and do not add entry in known_hosts file */
-					verification_status = FALSE; /* failure! */
-					break;
-			}
-		}
-		else if (match == 0)
-			verification_status = TRUE; /* success! */
-
-		free(issuer);
-		free(subject);
-		free(fingerprint);
+		if (verification_status)
+			accept_cert(tls, pemCert, length);
 	}
-
-	if (verification_status > 0)
-		accept_cert(tls, pemCert, length);
 
 end:
 	certificate_data_free(certificate_data);

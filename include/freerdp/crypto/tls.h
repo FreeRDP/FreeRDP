@@ -96,8 +96,6 @@ FREERDP_API int tls_write_all(rdpTls* tls, const BYTE* data, int length);
 
 FREERDP_API int tls_set_alert_code(rdpTls* tls, int level, int description);
 
-FREERDP_API BOOL tls_print_error(char* func, SSL* connection, int value);
-
 FREERDP_API rdpTls* tls_new(rdpSettings* settings);
 FREERDP_API void tls_free(rdpTls* tls);
 
