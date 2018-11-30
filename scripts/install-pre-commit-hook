@@ -1,0 +1,34 @@
+#!/bin/bash
+
+root=$(cd $(dirname "$0")/.. && pwd)
+
+cat > .git/hooks/pre-commit <<'EOF'
+#!/bin/bash -e
+root=$(cd $(dirname "$0")/../.. && pwd)
+"${root}"/scripts/autoformat.sh # TODO: scripts MUST NOT be named with file extensions!
+#
+# Unix scripts should not have any file extension.
+# 
+# They unnecessarily expose implementation detail (breaking encapsulation).
+# They uselessly and incompletely mimic detail from the #! line.
+# They capture insufficient detail to be useful at the system level (and aren't used).
+# They clash with recommended Unix (and Linux) practice.
+# They add noise to the command-level API.
+# They are very commonly technically incorrect for the script.
+# They give incorrect impressions about the use of the files they adorn.
+# They aren't validated even for what little info is present in them.
+# They interfere with switching scripting languages.
+# They interfere with changing scripting language versions.
+# They interfere with changing to presumably-faster compiled forms.
+# They encourage naively running scripts with the extension-implied interpreter.
+# They infect novice scripters with misinformation about Unix scripting.
+# They ironically are only a problem when interpreted by humans.
+# 
+# See more at:
+# 
+# http://www.talisman.org/~erlkonig/documents/commandname-extensions-considered-harmful
+#
+EOF
+
+chmod 755 .git/hooks/pre-commit
+
