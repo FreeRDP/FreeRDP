@@ -1189,23 +1189,23 @@ static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
 	return FALSE;
 }
 
-static BOOL accept_cert(rdpTls* tls, BYTE* pem, UINT32 length)
+static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
 {
 	rdpSettings* settings = tls->settings;
 
 	if (tls->isGatewayTransport)
 	{
-		settings->GatewayAcceptedCert = (char*)pem;
+		settings->GatewayAcceptedCert = _strdup(pem);
 		settings->GatewayAcceptedCertLength = length;
 	}
 	else if (is_redirected(tls))
 	{
-		settings->RedirectionAcceptedCert = (char*)pem;
+		settings->RedirectionAcceptedCert = _strdup(pem);
 		settings->RedirectionAcceptedCertLength = length;
 	}
 	else
 	{
-		settings->AcceptedCert = (char*)pem;
+		settings->AcceptedCert = _strdup(pem);
 		settings->AcceptedCertLength = length;
 	}
 
