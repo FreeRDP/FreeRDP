@@ -1318,30 +1318,27 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 	BOOL certificate_status;
 	BOOL hostname_match = FALSE;
 	BOOL verification_status = FALSE;
-	rdpCertificateData* certificate_data;
+	rdpCertificateData* certificate_data = NULL;
 	freerdp* instance = (freerdp*) tls->settings->instance;
 	DWORD length;
-	BYTE* pemCert;
-	DWORD flags = VERIFY_X509_CERT_FLAG_NONE;
+	BYTE* pemCert = NULL;
+	DWORD flags = VERIFY_CERT_FLAG_NONE;
 
 	if (!tls_extract_pem(cert, &pemCert, &length))
-		return -1;
+		goto end;
 
 	/* Check, if we already accepted this key. */
 	if (is_accepted(tls, pemCert, length))
-	{
-		free(pemCert);
-		return 1;
-	}
+		goto end;
 
 	if (tls->isGatewayTransport || is_redirected(tls))
-		flags |= VERIFY_X509_CERT_FLAG_LEGACY;
+		flags |= VERIFY_CERT_FLAG_LEGACY;
 
 	if (tls->isGatewayTransport)
-		flags |= VERIFY_X509_CERT_FLAG_GATEWAY;
+		flags |= VERIFY_CERT_FLAG_GATEWAY;
 
 	if (is_redirected(tls))
-		flags |= VERIFY_X509_CERT_FLAG_REDIRECT;
+		flags |= VERIFY_CERT_FLAG_REDIRECT;
 
 	if (tls->settings->ExternalCertificateManagement)
 	{
@@ -1354,33 +1351,29 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 			WLog_ERR(TAG, "No VerifyX509Certificate callback registered!");
 
 		if (status > 0)
-		{
 			accept_cert(tls, pemCert, length);
-		}
 		else if (status < 0)
 		{
 			WLog_ERR(TAG, "VerifyX509Certificate failed: (length = %d) status: [%d] %s",
 			         length, status, pemCert);
-			free(pemCert);
-			return -1;
+			goto end;
 		}
-		else
-			free(pemCert);
 
-		return (status == 0) ? 0 : 1;
+		verification_status = (status == 0) ? FALSE : TRUE;
+		goto end;
 	}
 
 	/* ignore certificate verification if user explicitly required it (discouraged) */
 	if (tls->settings->IgnoreCertificate)
 	{
-		free(pemCert);
-		return 1;  /* success! */
+		verification_status = TRUE;
+		goto end;  /* success! */
 	}
 
 	if (!tls->isGatewayTransport && tls->settings->AuthenticationLevel == 0)
 	{
-		free(pemCert);
-		return 1;  /* success! */
+		verification_status = TRUE;
+		goto end;  /* success! */
 	}
 
 	/* if user explicitly specified a certificate name, use it instead of the hostname */
@@ -1424,7 +1417,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 		verification_status = TRUE; /* success! */
 
 	if (!hostname_match)
-		flags |= VERIFY_X509_CERT_FLAG_MISMATCH;
+		flags |= VERIFY_CERT_FLAG_MISMATCH;
 
 	/* verification could not succeed with OpenSSL, use known_hosts file and prompt user for manual verification */
 	if (!certificate_status || !hostname_match)
@@ -1465,6 +1458,13 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 					accept_certificate = 2;
 				else
 					accept_certificate = 0;
+			}
+			else if (instance->VerifyCertificateEx)
+			{
+				accept_certificate = instance->VerifyCertificateEx(
+				                         instance, hostname, port, common_name,
+				                         subject, issuer,
+				                         fingerprint, flags);
 			}
 			else if (instance->VerifyCertificate)
 			{
@@ -1511,7 +1511,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 			if (instance->VerifyX509Certificate)
 			{
 				const int rc = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
-				               port, flags | VERIFY_X509_CERT_FLAG_CHANGED);
+				               port, flags | VERIFY_CERT_FLAG_CHANGED);
 
 				if (rc == 1)
 					accept_certificate = 1;
@@ -1519,6 +1519,13 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 					accept_certificate = 2;
 				else
 					accept_certificate = 0;
+			}
+			else if (instance->VerifyChangedCertificateEx)
+			{
+				accept_certificate = instance->VerifyChangedCertificateEx(
+				                         instance, hostname, port, common_name, subject, issuer,
+				                         fingerprint, old_subject, old_issuer,
+				                         old_fingerprint, flags | VERIFY_CERT_FLAG_CHANGED);
 			}
 			else if (instance->VerifyChangedCertificate)
 			{
@@ -1559,6 +1566,10 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 		free(fingerprint);
 	}
 
+	if (verification_status > 0)
+		accept_cert(tls, pemCert, length);
+
+end:
 	certificate_data_free(certificate_data);
 	free(common_name);
 
@@ -1566,15 +1577,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 		crypto_cert_dns_names_free(dns_names_count, dns_names_lengths,
 		                           dns_names);
 
-	if (verification_status > 0)
-	{
-		accept_cert(tls, pemCert, length);
-	}
-	else
-	{
-		free(pemCert);
-	}
-
+	free(pemCert);
 	return (verification_status == 0) ? 0 : 1;
 }
 
