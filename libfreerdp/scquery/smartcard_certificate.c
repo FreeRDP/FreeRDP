@@ -3,11 +3,11 @@
 #include <string.h>
 #include <stdbool.h>
 #include <pkcs11-helper-1.0/pkcs11.h>
-#include "smartcard-certificate.h"
+#include "smartcard_certificate.h"
 #include "pkcs11module.h"
 #include "pkcs11errors.h"
-#include "error.h"
-#include "string.h"
+#include "scquery_error.h"
+#include "scquery_string.h"
 
 
 /* ========================================================================== */
@@ -200,21 +200,21 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key_in_slot(pkc
 			CK_ULONG certype_index = position_of_attribute(CKA_CERTIFICATE_TYPE, &certificate_attributes);
 			CK_ULONG keytype_index = position_of_attribute(CKA_KEY_TYPE, &certificate_attributes);
 			certificate = scquery_certificate_new(slot_id,
-			                              string_unpad((char*)info->label, 32, ' '),
-			                              ((id_index != CK_UNAVAILABLE_INFORMATION)
-			                               ? (bytes_to_hexadecimal(certificate_attributes.attributes[id_index].pValue,
-			                                       certificate_attributes.attributes[id_index].ulValueLen))
-			                               : string_attribute(CKA_ID, &certificate_attributes)),
-			                              string_attribute(CKA_LABEL, &certificate_attributes),
-			                              ((certype_index != CK_UNAVAILABLE_INFORMATION)
-			                               ? (*(CK_CERTIFICATE_TYPE*)certificate_attributes.attributes[certype_index].pValue)
-			                               : 0),
-			                              buffer_attribute(CKA_ISSUER, &certificate_attributes),
-			                              buffer_attribute(CKA_SUBJECT, &certificate_attributes),
-			                              buffer_attribute(CKA_VALUE, &certificate_attributes),
-			                              ((keytype_index != CK_UNAVAILABLE_INFORMATION)
-			                               ? (*(CK_KEY_TYPE*)certificate_attributes.attributes[keytype_index].pValue)
-			                               : 0));
+			                                      string_unpad((char*)info->label, 32, ' '),
+			                                      ((id_index != CK_UNAVAILABLE_INFORMATION)
+			                                       ? (bytes_to_hexadecimal(certificate_attributes.attributes[id_index].pValue,
+			                                               certificate_attributes.attributes[id_index].ulValueLen))
+			                                       : string_attribute(CKA_ID, &certificate_attributes)),
+			                                      string_attribute(CKA_LABEL, &certificate_attributes),
+			                                      ((certype_index != CK_UNAVAILABLE_INFORMATION)
+			                                       ? (*(CK_CERTIFICATE_TYPE*)certificate_attributes.attributes[certype_index].pValue)
+			                                       : 0),
+			                                      buffer_attribute(CKA_ISSUER, &certificate_attributes),
+			                                      buffer_attribute(CKA_SUBJECT, &certificate_attributes),
+			                                      buffer_attribute(CKA_VALUE, &certificate_attributes),
+			                                      ((keytype_index != CK_UNAVAILABLE_INFORMATION)
+			                                       ? (*(CK_KEY_TYPE*)certificate_attributes.attributes[keytype_index].pValue)
+			                                       : 0));
 			VERBOSE(module->verbose,
 			        "Certificate slot_id=%lu token_label=%s id=%s label=%s type=%lu issuer=(%d bytes) subject=(%d bytes) value=(%d bytes) key_type=%lu",
 			        certificate->slot_id, certificate->token_label, certificate->id, certificate->label,
@@ -233,9 +233,67 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key_in_slot(pkc
 	return result;
 }
 
+CK_BBOOL selected_slot(pkcs11_module* module, CK_ULONG slot_id, const char* reader_name)
+{
+	CK_BBOOL selected = TRUE;
+	CK_SLOT_INFO info;
+
+	if ((reader_name != NULL)
+	    && CHECK_RV(module->p11->C_GetSlotInfo(slot_id, &info), "C_GetSlotInfo"))
+	{
+		char* slot_description = string_from_padded_string((const char*)info.slotDescription,
+		                         sizeof(info.slotDescription), ' ');
+		selected = (0 == strcmp(slot_description, reader_name));
+		free(slot_description);
+	}
+
+	if (selected)
+	{
+		VERBOSE(module->verbose, "Processing slot id %lu", slot_id);
+	}
+	else
+	{
+		VERBOSE(module->verbose, "Rejected slot id %lu (reader named \"%s\",  not \"%s\")",
+		        slot_id,
+		        reader_name);
+	}
+
+	return selected;
+}
+
+CK_BBOOL selected_token(pkcs11_module* module, CK_TOKEN_INFO* info, const char* card_name)
+{
+	CK_BBOOL selected = TRUE;
+	char* label = NULL;
+	char* serial = NULL;
+
+	if (card_name != NULL)
+	{
+		label = string_from_padded_string((const char*)info->label, sizeof(info->label), ' ');
+		serial = string_from_padded_string((const char*)info->serialNumber, sizeof(info->serialNumber),
+		                                   ' ');
+		selected = ((label != NULL) && (0 == strcmp(label, card_name)))
+		           || ((serial != NULL) && (0 == strcmp(serial, card_name)));
+	}
+
+	if (selected)
+	{
+		VERBOSE(module->verbose, "Processing token label %s (serial %s)", label, serial);
+	}
+	else
+	{
+		VERBOSE(module->verbose, "Rejected token label %s (serial %s), not named %s", label, serial,
+		        card_name);
+	}
+
+	free(label);
+	free(serial);
+	return selected;
+}
 
 certificate_list find_x509_certificates_with_signing_rsa_private_key(const char*
-        pkcs11_library_path, int verbose)
+        pkcs11_library_path,
+        const char* reader_name, const char* card_name, int verbose)
 {
 	/* Find PRIVATE-KEYs of KEY-TYPE = RSA, that can SIGN, and that have a X-509 certificate with same ID. */
 	certificate_list result = NULL;
@@ -259,11 +317,23 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key(const char*
 			{
 				CK_TOKEN_INFO info;
 				CK_ULONG slot_id = slots.slot_id[i];
-				VERBOSE(module->verbose, "Processing slot id %lu", slot_id);
+
+				if (!selected_slot(module, slot_id, reader_name))
+				{
+					continue;
+				}
 
 				if (CHECK_RV(module->p11->C_GetTokenInfo(slot_id, &info), "C_GetTokenInfo"))
 				{
 					CK_SESSION_HANDLE session;
+
+					if (!selected_token(module, &info, card_name))
+					{
+						VERBOSE(module->verbose, "Rejected token in slot id %lu (card named %s, not named %s)", slot_id,
+						        info.label, card_name);
+						continue;
+					}
+
 					WITH_PKCS11_OPEN_SESSION(session, module, slot_id, CKF_SERIAL_SESSION, NULL, NULL)
 					{
 						VERBOSE(module->verbose, "Opened PKCS#11 session %lu", session);

@@ -69,7 +69,7 @@ macro (freerdp_library_add)
 		foreach (_lib ${ARGN})
 						list (APPEND LIBFREERDP_LIBS "${_lib}")
 		endforeach()
-		 set (LIBFREERDP_LIBS ${LIBFREERDP_LIBS} PARENT_SCOPE)
+        set (LIBFREERDP_LIBS ${LIBFREERDP_LIBS} PARENT_SCOPE)
 endmacro()
 
 macro (freerdp_definition_add)
@@ -86,12 +86,12 @@ set(${MODULE_PREFIX}_SUBMODULES
 	cache
 	crypto
 	locale
-    scquery
 	core)
 
 foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
 	add_subdirectory(${${MODULE_PREFIX}_SUBMODULE})
 endforeach()
+
 
 ## cmake source properties are only seen by targets in the same CMakeLists.txt
 ## therefore primitives and codecs need to be defined here
@@ -220,6 +220,9 @@ if(WITH_PKCS11H)
         freerdp_definition_add(-DWITH_PKCS11H)
         freerdp_include_directory_add(${PKCS11H_INCLUDE_DIR})
         freerdp_library_add(${PKCS11H_LIBRARIES})
+        freerdp_include_directory_add(${FREERDP_SCQUERY_INCLUDE_DIR})
+        freerdp_library_add(${FREERDP_SCQUERY_LIBRARIES})
+        add_subdirectory(scquery)
 endif()
 
 if(WIN32 AND WITH_MEDIA_FOUNDATION)
@@ -360,7 +363,6 @@ set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREE
 if (WITH_LIBRARY_VERSIONING)
     set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
 endif()
-
 
 target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${LIBFREERDP_LIBS} winpr)
 

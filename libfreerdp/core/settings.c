@@ -1108,7 +1108,6 @@ void freerdp_settings_free(rdpSettings* settings)
 	free(settings->IdCertificate);
 	free(settings->PkinitIdentity);
 	free(settings->PkinitAnchors);
-	free(settings->SlotID);
 	free(settings->TokenLabel);
 	free(settings->PkinitCertificate);
 	free(settings->RemoteAssistanceSessionId);

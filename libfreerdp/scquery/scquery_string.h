@@ -31,4 +31,16 @@ char* string_mapconcat(string_preprocess_pr preprocess,
 
 size_t string_count(const char* string, char character);
 
+
+size_t padded_string_length(const char* padded_string, size_t max_size, char pad);
+char* string_from_padded_string(const char* padded_string, size_t max_size, char pad);
+
+/*
+string_format
+format a string as with sprintf,  but first computing the output size
+and allocating buffer of that size (plus terminating nul).
+@result returns the new string,  or NULL if it couldn't be allocated.
+ */
+char* string_format(const char* format_string, ...);
+
 #endif

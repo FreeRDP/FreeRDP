@@ -1,5 +1,8 @@
-#include "string.h"
-#include "error.h"
+#include <stdarg.h>
+#include <stdio.h>
+
+#include "scquery_string.h"
+#include "scquery_error.h"
 
 #if _POSIX_C_SOURCE >= 200809L || defined(_GNU_SOURCE)
 /* strndup and strnlen are defined in string.h */
@@ -147,4 +150,50 @@ size_t string_count(const char* string, char character)
 	}
 
 	return count;
+}
+
+
+size_t padded_string_length(const char* padded_string, size_t max_size, char pad)
+{
+	while ((max_size > 0) && (padded_string[max_size - 1] == pad))
+	{
+		max_size--;
+	}
+
+	return max_size;
+}
+
+char* string_from_padded_string(const char* padded_string, size_t max_size, char pad)
+{
+	size_t length = padded_string_length(padded_string, max_size, pad);
+	char* copy = checked_malloc(1 + length);
+
+	if (copy == NULL)
+	{
+		return NULL;
+	}
+
+	strncpy(copy, padded_string, length);
+	copy[length] = '\0';
+	return copy;
+}
+
+char* string_format(const char* format_string, ...)
+{
+	char* result = NULL;
+	va_list args;
+	int length;
+	va_start(args, format_string);
+	length = vsnprintf(NULL, 0, format_string, args);
+	va_end(args);
+	result = checked_malloc(1 + length);
+
+	if (result != NULL)
+	{
+		va_start(args, format_string);
+		vsnprintf(result, 1 + length, format_string, args);
+		va_end(args);
+	}
+
+	return result;
 }

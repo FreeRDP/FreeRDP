@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "certificate.h"
-#include "error.h"
+#include "scquery_error.h"
 
 /* ========================================================================== */
 /* smartcard_certificate */

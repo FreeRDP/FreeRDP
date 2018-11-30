@@ -5,7 +5,7 @@
 
 #include "pkcs11module.h"
 #include "pkcs11errors.h"
-#include "error.h"
+#include "scquery_error.h"
 
 
 /*

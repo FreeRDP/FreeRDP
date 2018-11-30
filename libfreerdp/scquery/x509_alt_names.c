@@ -6,8 +6,8 @@
 #include <openssl/stack.h>
 #include <openssl/x509v3.h>
 #include "x509_alt_names.h"
-#include "error.h"
-#include "string.h"
+#include "scquery_error.h"
+#include "scquery_string.h"
 
 static void string_list_free(unsigned count, char** components)
 {

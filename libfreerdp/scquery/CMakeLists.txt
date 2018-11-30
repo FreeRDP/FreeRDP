@@ -20,19 +20,22 @@ set(MODULE_PREFIX "FREERDP_SCQUERY")
 
 set(${MODULE_PREFIX}_SRCS
     buffer.c
-    certificate-list.c
     certificate.c
-    error.c
+    certificate_list.c
     pkcs11errors.c
     pkcs11module.c
-    smartcard-certificate.c
-    string.c
+    scquery.c
+    scquery_error.c
+    scquery_string.c
+    smartcard_certificate.c
     x509_alt_names.c
 )
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
-freerdp_library_add(${CMAKE_THREAD_LIBS_INIT})
+# freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
+# freerdp_library_add(${OPENSSL_LIBRARIES})
+
 
 # if(BUILD_TESTING)
 # 	add_subdirectory(test)

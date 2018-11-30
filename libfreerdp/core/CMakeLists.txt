@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 set(MODULE_NAME "freerdp-core")
 set(MODULE_PREFIX "FREERDP_CORE")
 
@@ -128,6 +129,8 @@ set(${MODULE_PREFIX}_SRCS
 	window.h
 	listener.c
 	listener.h
+    smartcardlogon.c
+    smartcardlogon.h
 	peer.c
 	peer.h)
 

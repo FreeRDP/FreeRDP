@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "buffer.h"
-#include "error.h"
+#include "scquery_error.h"
 
 enum
 {
