@@ -4,6 +4,7 @@
 #include <winpr/image.h>
 #include <winpr/print.h>
 #include <winpr/wlog.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/codec/region.h>
 
@@ -923,7 +924,14 @@ static int test_progressive_ms_sample(char* ms_sample_path)
 int TestFreeRDPCodecProgressive(int argc, char* argv[])
 {
 	char* ms_sample_path;
-	ms_sample_path = GetKnownSubPath(KNOWN_PATH_TEMP, "EGFX_PROGRESSIVE_MS_SAMPLE");
+	char name[8192];
+	SYSTEMTIME systemTime;
+	GetSystemTime(&systemTime);
+	sprintf_s(name, sizeof(name),
+	          "EGFX_PROGRESSIVE_MS_SAMPLE-%04"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%04"PRIu16,
+	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour, systemTime.wMinute,
+	          systemTime.wSecond, systemTime.wMilliseconds);
+	ms_sample_path = GetKnownSubPath(KNOWN_PATH_TEMP, name);
 
 	if (!ms_sample_path)
 	{
