@@ -2565,9 +2565,10 @@ BOOL wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr)
 		PostMessage(clipboard->hwnd, WM_QUIT, 0, 0);
 
 	if (clipboard->thread)
+	{
 		WaitForSingleObject(clipboard->thread, INFINITE);
-
-	CloseHandle(clipboard->thread);
+		CloseHandle(clipboard->thread);
+	}
 
 	if (clipboard->response_data_event)
 		CloseHandle(clipboard->response_data_event);
