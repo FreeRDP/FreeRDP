@@ -56,11 +56,7 @@ void report_warning(const char* file, unsigned long line, const char* function, 
 {
 	va_list ap;
 	va_start(ap, format);
-<<<<<<< HEAD
 	report_level(WLOG_WARN, file, line, function, status, format, ap);
-=======
-	report_level(WLOG_WARN, file, line, function, status, ap);
->>>>>>> Renamed some scquery files. Added the scquery module to the libfreerdp CMakeLists.txt.
 	va_end(ap);
 }
 
@@ -74,11 +70,7 @@ void report_verbose(const char* file, unsigned long line, const char* function, 
 {
 	va_list ap;
 	va_start(ap, format);
-<<<<<<< HEAD
 	report_level(WLOG_INFO, file, line, function, 0, format, ap);
-=======
-	report_level(WLOG_INFO, file, line, function, 0, ap);
->>>>>>> Renamed some scquery files. Added the scquery module to the libfreerdp CMakeLists.txt.
 	va_end(ap);
 }
 
@@ -146,11 +138,7 @@ scquery_result query_X509_user_identities(const char* module, const char* reader
 
 	if (result == NULL)
 	{
-<<<<<<< HEAD
 		scquery_certificate_deepfree(entry);
-=======
-		scquery_certificate_free(entry);
->>>>>>> Renamed some scquery files. Added the scquery module to the libfreerdp CMakeLists.txt.
 		free(X509_user_identity);
 		free(upn);
 	}
