@@ -247,14 +247,6 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	wfPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) lpParam;
 
-	if (!getenv("HOME"))
-	{
-		char home[MAX_PATH * 2] = "HOME=";
-		strcat(home, getenv("HOMEDRIVE"));
-		strcat(home, getenv("HOMEPATH"));
-		_putenv(home);
-	}
-
 	if (!wf_peer_init(client))
 		goto fail_peer_init;
 
