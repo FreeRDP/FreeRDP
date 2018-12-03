@@ -26,14 +26,14 @@ smartcard_certificate  scquery_certificate_allocate()
 }
 
 smartcard_certificate  scquery_certificate_new(CK_SLOT_ID          slot_id,
-                                      char*               token_label,
-                                      char*               id,
-                                      char*               label,
-                                      CK_CERTIFICATE_TYPE type,
-                                      buffer              issuer,
-                                      buffer              subject,
-                                      buffer              value,
-                                      CK_KEY_TYPE         key_type)
+        char*               token_label,
+        char*               id,
+        char*               label,
+        CK_CERTIFICATE_TYPE type,
+        buffer              issuer,
+        buffer              subject,
+        buffer              value,
+        CK_KEY_TYPE         key_type)
 {
 	smartcard_certificate certificate =  scquery_certificate_allocate();
 

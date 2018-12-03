@@ -41,10 +41,10 @@ int get_info_smartcard(rdpSettings* settings)
 	}
 
 	copy_string(&settings->UserPrincipalName, identity->upn);
-	copy_string(&settings->PkinitIdentity, 	   identity->X509_user_identity);
-	copy_string(&settings->TokenLabel,    	   identity->certificate->token_label);
-	copy_string(&settings->ContainerName, 	   identity->certificate->label);
-	copy_string(&settings->IdCertificate, 	   identity->certificate->id);
+	copy_string(&settings->PkinitIdentity, 	  identity->X509_user_identity);
+	copy_string(&settings->TokenLabel,    	  identity->certificate->token_label);
+	copy_string(&settings->ContainerName, 	  identity->certificate->label);
+	copy_string(&settings->IdCertificate, 	  identity->certificate->id);
 	settings->SlotID = identity->certificate->slot_id;
 	settings->IdCertificateLength = strlen(identity->certificate->id);
 	scquery_result_free(identity);

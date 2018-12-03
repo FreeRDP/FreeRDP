@@ -561,7 +561,8 @@ void cert_info_kpn(X509* x509, alt_name alt_name)
 				}
 				else
 				{
-					alt_name_add_component(alt_name, check_memory(strdup((const char*)txt), 1 + strlen((const char *)txt)));
+					alt_name_add_component(alt_name, check_memory(strdup((const char*)txt),
+					                       1 + strlen((const char*)txt)));
 					j++;
 				}
 			}
