@@ -1051,7 +1051,7 @@ add_subdirectory(include)
 add_subdirectory(libfreerdp)
 
 if (IOS)
-	set(CMAKE_OSX_DEPLOYMENT_TARGET "")
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.0")
 	if (IOS_PLATFORM MATCHES "SIMULATOR")
 		set(CMAKE_OSX_SYSROOT "iphonesimulator")
 	else()

@@ -9,13 +9,13 @@
 
 ## Settings
 # openssl version to use
-OPENSSLVERSION="1.0.2h"
-SHA256SUM="1d4007e53aad94a5b2002fe045ee7bb0b3d98f1a47f8b2bc851dcd1c74332919"
+OPENSSLVERSION="1.0.2q"
+SHA256SUM="5744cfcbcec2b1b48629f7354203bc1e5e9b5466998bbccc5b5fcde3b18eb684"
 # SDK version to use - if not set latest version found is used
 SDK_VERSION=""
 
 # Minimum SDK version the application supports
-MIN_SDK_VERSION="9.3"
+MIN_SDK_VERSION="10.0"
 
 ## Defaults
 INSTALLDIR="external"

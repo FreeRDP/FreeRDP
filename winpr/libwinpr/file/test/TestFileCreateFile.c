@@ -5,6 +5,7 @@
 #include <winpr/path.h>
 #include <winpr/handle.h>
 #include <winpr/windows.h>
+#include <winpr/sysinfo.h>
 
 int TestFileCreateFile(int argc, char* argv[])
 {
@@ -13,9 +14,16 @@ int TestFileCreateFile(int argc, char* argv[])
 	DWORD written;
 	const char buffer[] = "Some random text\r\njust want it done.";
 	char cmp[sizeof(buffer)];
-	LPSTR name = GetKnownSubPath(KNOWN_PATH_TEMP, "CreateFile.testfile");
-
+	char sname[8192];
+	LPSTR name;
 	int rc = 0;
+	SYSTEMTIME systemTime;
+	GetSystemTime(&systemTime);
+	sprintf_s(sname, sizeof(sname),
+	          "CreateFile-%04"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%04"PRIu16,
+	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour, systemTime.wMinute,
+	          systemTime.wSecond, systemTime.wMilliseconds);
+	name = GetKnownSubPath(KNOWN_PATH_TEMP, sname);
 
 	if (!name)
 		return -1;
@@ -23,11 +31,13 @@ int TestFileCreateFile(int argc, char* argv[])
 	/* On windows we would need '\\' or '/' as seperator.
 	 * Single '\' do not work. */
 	hr = PathCchConvertStyleA(name, strlen(name), PATH_STYLE_UNIX);
+
 	if (FAILED(hr))
 		rc = -1;
 
 	handle = CreateFileA(name, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-			CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	                     CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+
 	if (!handle)
 	{
 		free(name);
@@ -77,6 +87,5 @@ int TestFileCreateFile(int argc, char* argv[])
 		rc = -1;
 
 	free(name);
-
 	return rc;
 }
