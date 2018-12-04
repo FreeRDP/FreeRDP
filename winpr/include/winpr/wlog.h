@@ -105,10 +105,12 @@ typedef struct _wLog wLog;
 #define WLOG_PACKET_OUTBOUND    2
 
 WINPR_API BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, DWORD line,
-                                 const char* file, const char* function, ...);
+                                 const char* file, const char* function,
+	                         const void* format, ...);
 WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
                                    DWORD line,
-                                   const char* file, const char* function, va_list args);
+                                   const char* file, const char* function,
+	                           const void* format, va_list args);
 
 #define WLog_Print(_log, _log_level, ...) \
 	do { \
@@ -118,11 +120,11 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
 		} \
 	} while (0)
 
-#define WLog_PrintVA(_log, _log_level, _args) \
+#define WLog_PrintVA(_log, _log_level, _format, _args) \
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
 			WLog_PrintMessageVA(_log, WLOG_MESSAGE_TEXT, _log_level, \
-			                    __LINE__, __FILE__, __FUNCTION__, _args ); \
+			                    __LINE__, __FILE__, __FUNCTION__, _format, _args ); \
 		} \
 	} while (0)
 

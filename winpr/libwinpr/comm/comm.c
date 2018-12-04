@@ -129,14 +129,14 @@ static BOOL CommInitialized()
 }
 
 
-void CommLog_Print(DWORD level, ...)
+void CommLog_Print(DWORD level, const char* format, ...)
 {
 	if (!CommInitialized())
 		return;
 
 	va_list ap;
-	va_start(ap, level);
-	WLog_PrintVA(_Log, level, ap);
+	va_start(ap, format);
+	WLog_PrintVA(_Log, level, format, ap);
 	va_end(ap);
 }
 

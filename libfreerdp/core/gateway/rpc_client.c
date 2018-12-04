@@ -886,7 +886,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	UINT32 offset;
 	BYTE* buffer = NULL;
 	UINT32 stub_data_pad;
-	SecBuffer Buffers[2] = { 0 };
+	SecBuffer Buffers[2] = {{ 0 }};
 	SecBufferDesc Message;
 	RpcClientCall* clientCall = NULL;
 	rdpNtlm* ntlm;

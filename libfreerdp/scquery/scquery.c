@@ -32,14 +32,13 @@ void* error_out_of_memory(size_t size)
 }
 
 static void report_level(DWORD level, const char* file, unsigned long line, const char* function,
-                         int status,
-                         va_list ap)
+	int status, const char * format, va_list ap)
 {
 	wLog* log = WLog_Get(TAG);
 
 	if ((log != NULL) && (level >= WLog_GetLogLevel(log)))
 	{
-		WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, file, function, ap);
+		WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, file, function, format, ap);
 	}
 }
 
@@ -48,7 +47,7 @@ void report_error(const char* file, unsigned long line, const char* function, in
 {
 	va_list ap;
 	va_start(ap, format);
-	report_level(WLOG_ERROR, file, line, function, status, ap);
+	report_level(WLOG_ERROR, file, line, function, status, format, ap);
 	va_end(ap);
 }
 
@@ -57,8 +56,13 @@ void report_warning(const char* file, unsigned long line, const char* function, 
 {
 	va_list ap;
 	va_start(ap, format);
-	report_level(WLOG_WARN, file, line, function, status, ap);
+	report_level(WLOG_WARN, file, line, function, status, format, ap);
 	va_end(ap);
+}
+
+const char * next_arg(va_list ap)
+{
+	return va_arg(ap, const char *);
 }
 
 void report_verbose(const char* file, unsigned long line, const char* function, const char* format,
@@ -66,7 +70,7 @@ void report_verbose(const char* file, unsigned long line, const char* function, 
 {
 	va_list ap;
 	va_start(ap, format);
-	report_level(WLOG_INFO, file, line, function, 0, ap);
+	report_level(WLOG_INFO, file, line, function, 0, format, ap);
 	va_end(ap);
 }
 
@@ -85,18 +89,17 @@ scquery_result query_X509_user_identities(const char* module, const char* reader
 	certificate_list current;
 	certificate_list clist = find_x509_certificates_with_signing_rsa_private_key(module, reader_name,
 	                         card_name, verbose);
-	smartcard_certificate entry;
+	smartcard_certificate entry = NULL;
 	char* X509_user_identity = NULL;
 	char* upn = NULL;
 	DO_CERTIFICATE_LIST(entry, current, clist)
 	{
 		alt_name name;
 		alt_name_list current;
-		alt_name_list alist;
-		alist = certificate_extract_subject_alt_names(entry->value);
+		alt_name_list alist = certificate_extract_subject_alt_names(entry->value);
 		DO_ALT_NAME_LIST(name, current, alist)
 		{
-			if ((0 != strcmp("othername", name->type))
+			if ((0 != strcasecmp("OTHERNAME", name->type))
 			    || (name->count < 2)
 			    || (0 != strcmp(scquery_upn_oid, name->components[0])))
 			{
@@ -117,8 +120,8 @@ scquery_result query_X509_user_identities(const char* module, const char* reader
 	if ((entry != NULL) && (upn != NULL))
 	{
 		clist = certificate_list_delete(entry, clist);
-		X509_user_identity = string_format("PKCS11:module_name=%s:slotid=%lu:token=%s:certid=%s\n", module,
-		                                   entry->slot_id, entry->token_label, entry->id);
+		X509_user_identity = string_format("PKCS11:module_name=%s:slotid=%lu:token=%s:certid=%s",
+			module, entry->slot_id, entry->token_label, entry->id);
 
 		if (X509_user_identity != NULL)
 		{
@@ -134,7 +137,7 @@ scquery_result query_X509_user_identities(const char* module, const char* reader
 
 	if (result == NULL)
 	{
-		scquery_certificate_free(entry);
+		scquery_certificate_deepfree(entry);
 		free(X509_user_identity);
 		free(upn);
 	}

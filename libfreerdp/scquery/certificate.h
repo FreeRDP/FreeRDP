@@ -6,7 +6,9 @@
 typedef struct
 {
 	CK_SLOT_ID          slot_id;
-	char*               token_label;
+	char*               slot_description; /* ReaderName */
+	char*               token_label;      /* CardName */
+	char*               token_serial;
 	char*               id;
 	char*               label;
 	CK_CERTIFICATE_TYPE type;
@@ -29,14 +31,16 @@ smartcard_certificate scquery_certificate_allocate();
 /* scquery_certificate_new
 allocates and initialize a new smartcard_certificate */
 smartcard_certificate scquery_certificate_new(CK_SLOT_ID          slot_id,
-                                      char*               token_label,
-                                      char*               id,
-                                      char*               label,
-                                      CK_CERTIFICATE_TYPE type,
-                                      buffer              issuer,
-                                      buffer              subject,
-                                      buffer              value,
-                                      CK_KEY_TYPE         key_type);
+	char*               slot_description,
+	char*               token_label,
+	char*               token_serial,
+	char*               id,
+	char*               label,
+	CK_CERTIFICATE_TYPE type,
+	buffer              issuer,
+	buffer              subject,
+	buffer              value,
+	CK_KEY_TYPE         key_type);
 
 /* scquery_certificate_free
 frees only the smartcard_certificate structure (not the fields). */

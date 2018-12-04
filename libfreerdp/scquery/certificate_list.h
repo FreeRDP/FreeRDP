@@ -1,3 +1,4 @@
+
 #ifndef LIBFREERDP_SCQUERY_CERTIFICATE_LIST_H
 #define LIBFREERDP_SCQUERY_CERTIFICATE_LIST_H
 #include "certificate.h"
@@ -11,7 +12,7 @@ typedef struct certificate_list
 smartcard_certificate certificate_list_first(certificate_list list);
 certificate_list      certificate_list_rest(certificate_list list);
 
-#define DO_CERTIFICATE_LIST(certificate,current,list)                                       \
+#define DO_CERTIFICATE_LIST(certificate,current,list)                                           \
 	for((current=list,                                                                      \
 	     certificate=((current!=NULL)?certificate_list_first(current):CK_INVALID_HANDLE));  \
 	    (current!=NULL);                                                                    \

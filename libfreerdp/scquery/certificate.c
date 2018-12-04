@@ -12,7 +12,9 @@ smartcard_certificate  scquery_certificate_allocate()
 	if (certificate)
 	{
 		certificate->slot_id = 0;
+		certificate->slot_description = NULL;
 		certificate->token_label = NULL;
+		certificate->token_serial = NULL;
 		certificate->id = NULL;
 		certificate->label = NULL;
 		certificate->type = 0;
@@ -26,7 +28,9 @@ smartcard_certificate  scquery_certificate_allocate()
 }
 
 smartcard_certificate  scquery_certificate_new(CK_SLOT_ID          slot_id,
-        char*               token_label,
+	char*               slot_description,
+	char*               token_label,
+	char*               token_serial,
         char*               id,
         char*               label,
         CK_CERTIFICATE_TYPE type,
@@ -40,7 +44,9 @@ smartcard_certificate  scquery_certificate_new(CK_SLOT_ID          slot_id,
 	if (certificate)
 	{
 		certificate->slot_id = slot_id;
+		certificate->slot_description = slot_description;
 		certificate->token_label = token_label;
+		certificate->token_serial = token_serial;
 		certificate->id = id;
 		certificate->label = label;
 		certificate->type = type;
@@ -57,12 +63,14 @@ void scquery_certificate_deepfree(smartcard_certificate certificate)
 {
 	if (certificate)
 	{
+		free(certificate->slot_description);
 		free(certificate->token_label);
+		free(certificate->token_serial);
 		free(certificate->id);
 		free(certificate->label);
-		free(certificate->issuer);
-		free(certificate->subject);
-		free(certificate->value);
+		buffer_free(certificate->issuer);
+		buffer_free(certificate->subject);
+		buffer_free(certificate->value);
 		scquery_certificate_free(certificate);
 	}
 }

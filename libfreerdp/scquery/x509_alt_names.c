@@ -123,10 +123,12 @@ alt_name      alt_name_list_first(alt_name_list list)
 {
 	return ((list == NULL) ? NULL : list->name);
 }
+
 alt_name_list alt_name_list_rest(alt_name_list list)
 {
 	return ((list == NULL) ? NULL : list->rest);
 }
+
 void          alt_name_list_free(alt_name_list list)
 {
 	free(list);
@@ -476,12 +478,14 @@ void extract_othername_object(GENERAL_NAME* name, alt_name alt_name)
 {
 	switch (name->type)
 	{
+		char *  type;
 		case GEN_OTHERNAME:
-			alt_name_add_component(alt_name, type_id_to_oid_string(name->d.otherName->type_id));
+			alt_name_add_component(alt_name, type = type_id_to_oid_string(name->d.otherName->type_id));
 			unsigned char* der = NULL;
 			int length = i2d_ASN1_TYPE(name->d.otherName->value, &der);
 			decode_der_item_collect(der, 0, (unsigned)length, collect_alt_name_component, alt_name);
 			free(der);
+			free(type);
 	}
 }
 
@@ -491,26 +495,27 @@ alt_name extract_alt_name(GENERAL_NAME* name, unsigned i)
 {
 	(void)i;
 	alt_name alt_name;
+	char* type;
 
 	switch (name->type)
 	{
 		case GEN_URI:
 		case GEN_DNS:
 		case GEN_EMAIL:
-			alt_name = alt_name_new(general_name_type_label(name->type), 1);
+			alt_name = alt_name_new(type = general_name_type_label(name->type), 1);
 			extract_asn1_string(name, alt_name);
+			free(type);
 			return alt_name;
 
 		case GEN_OTHERNAME:
-			alt_name = alt_name_new(general_name_type_label(name->type), 1);
+			alt_name = alt_name_new(type = general_name_type_label(name->type), 1);
 			extract_othername_object(name, alt_name);
+			free(type);
 			return alt_name;
 
 		default:
 			return NULL;
 	}
-
-	;
 }
 
 void cert_info_kpn(X509* x509, alt_name alt_name)

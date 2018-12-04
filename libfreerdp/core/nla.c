@@ -244,8 +244,8 @@ static const UINT32 NonceLength = 32;
 		if (!(pointer))						\
 		{                                                       \
 			WLog_ERR(TAG, "%s:%d: "  description,		\
-			         __FUNCTION__, __LINE__,                 \
-			         #__VA_ARGS__);				\
+			         __FUNCTION__, __LINE__,                \
+			         ## __VA_ARGS__);			\
 			return result;                                  \
 		}                                                       \
 	}while (0)
@@ -429,7 +429,7 @@ static csp_data_detail* csp_data_detail_new(UINT32 KeySpec,
 		return NULL;
 	}
 
-	return csp_data_detail_new(KeySpec, CardName, ReaderName, ContainerName, CspName);
+	return csp_data_detail_new_nocopy(KeySpec, CardName, ReaderName, ContainerName, CspName);
 }
 
 static void csp_data_detail_free(csp_data_detail* csp)
@@ -548,6 +548,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 {
 	rdpSettings* settings = nla->settings;
 	nla->cred_type = settings->CredentialsType;
+
 #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
 
 	/* gets the UPN settings->UserPrincipalName */
@@ -569,7 +570,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	/* 	WLog_INFO(TAG, "NOT WITH_KERBEROS"); */
 	/* #endif */
 #else
-	WLog_ERR(TAG, "Enable PKCS11H and GSSAPI features to authenticate via smartcard");
+	WLog_ERR(TAG, "Recompile with the PKCS11H and GSSAPI features enabled to authenticate via smartcard.");
 	return -1;
 #endif
 
@@ -607,29 +608,29 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 		             strlen(settings->UserPrincipalName));
 	}
 
-	if (!settings->Domain)
+	if (settings->Domain == NULL)
 	{
 		WLog_ERR(TAG, "Missing domain.");
 		return -1;
 	}
 
-	settings->DomainHint = strdup(settings->Domain); /* They're freed separately! */
+	CHECK_MEMORY(settings->DomainHint = strdup(settings->Domain),  /* They're freed separately! */
+		-1, "Could not strdup the Domain (length = %d)",
+		strlen(settings->Domain));
 
-	if (settings->DomainHint != NULL)
+
+	settings->CanonicalizedUserHint = strdup("BOURGUIGNONPA"); /* PJBDEBUG */
+
+	if (settings->CanonicalizedUserHint == NULL)
 	{
-		if (settings->CanonicalizedUserHint != NULL)
-		{
-			CHECK_MEMORY((settings->UserHint = strdup(settings->CanonicalizedUserHint)),
-			             -1, "Could not strdup the CanonicalizedUserHint (length = %d)",
-			             strlen(settings->CanonicalizedUserHint));
-		}
-		else
-		{
-			WLog_ERR(TAG, "Missing Canonicalized User Hint (Domain Hint = %s,  UPN = %s).",
-			         settings->DomainHint, settings->UserPrincipalName);
-			return -1;
-		}
+		WLog_ERR(TAG, "Missing Canonicalized User Hint (Domain Hint = %s,  UPN = %s).",
+			settings->DomainHint, settings->UserPrincipalName);
+		return -1;
 	}
+
+	CHECK_MEMORY((settings->UserHint = strdup(settings->CanonicalizedUserHint)),
+		-1, "Could not strdup the CanonicalizedUserHint (length = %d)",
+		strlen(settings->CanonicalizedUserHint));
 
 	WLog_INFO(TAG, "Canonicalized User Hint = %s,  Domain Hint = %s,  UPN = %s",
 	          settings->CanonicalizedUserHint, settings->DomainHint, settings->UserPrincipalName);
