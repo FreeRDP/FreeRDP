@@ -26,10 +26,10 @@
 #include "wf_input.h"
 #include "wf_info.h"
 
-void wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	INPUT keyboard_event;
-
+	WINPR_UNUSED(input);
 	keyboard_event.type = INPUT_KEYBOARD;
 	keyboard_event.ki.wVk = 0;
 	keyboard_event.ki.wScan = code;
@@ -44,12 +44,13 @@ void wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 		keyboard_event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
 
 	SendInput(1, &keyboard_event, sizeof(INPUT));
+	return TRUE;
 }
 
-void wf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL wf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	INPUT keyboard_event;
-
+	WINPR_UNUSED(input);
 	keyboard_event.type = INPUT_KEYBOARD;
 	keyboard_event.ki.wVk = 0;
 	keyboard_event.ki.wScan = code;
@@ -61,13 +62,14 @@ void wf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 		keyboard_event.ki.dwFlags |= KEYEVENTF_KEYUP;
 
 	SendInput(1, &keyboard_event, sizeof(INPUT));
+	return TRUE;
 }
 
-void wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	INPUT mouse_event;
 	float width, height;
-
+	WINPR_UNUSED(input);
 	ZeroMemory(&mouse_event, sizeof(INPUT));
 	mouse_event.type = INPUT_MOUSE;
 
@@ -83,21 +85,19 @@ void wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	}
 	else
 	{
-		wfInfo * wfi;
-		
+		wfInfo* wfi;
 		wfi = wf_info_get_instance();
+
 		if (!wfi)
-			return;
+			return FALSE;
 
 		//width and height of primary screen (even in multimon setups
 		width = (float) GetSystemMetrics(SM_CXSCREEN);
 		height = (float) GetSystemMetrics(SM_CYSCREEN);
-
 		x += wfi->servscreen_xoffset;
 		y += wfi->servscreen_yoffset;
-
-		mouse_event.mi.dx = (LONG) ((float) x * (65535.0f / width));
-		mouse_event.mi.dy = (LONG) ((float) y * (65535.0f / height));
+		mouse_event.mi.dx = (LONG)((float) x * (65535.0f / width));
+		mouse_event.mi.dy = (LONG)((float) y * (65535.0f / height));
 		mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
 
 		if (flags & PTR_FLAGS_MOVE)
@@ -136,36 +136,35 @@ void wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 			SendInput(1, &mouse_event, sizeof(INPUT));
 		}
 	}
+
+	return TRUE;
 }
 
-void wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	if ((flags & PTR_XFLAGS_BUTTON1) || (flags & PTR_XFLAGS_BUTTON2))
 	{
 		INPUT mouse_event;
 		ZeroMemory(&mouse_event, sizeof(INPUT));
-
 		mouse_event.type = INPUT_MOUSE;
 
 		if (flags & PTR_FLAGS_MOVE)
 		{
 			float width, height;
-			wfInfo * wfi;
-
+			wfInfo* wfi;
 			wfi = wf_info_get_instance();
+
 			if (!wfi)
-				return;
+				return FALSE;
+
 			//width and height of primary screen (even in multimon setups
 			width = (float) GetSystemMetrics(SM_CXSCREEN);
 			height = (float) GetSystemMetrics(SM_CYSCREEN);
-
 			x += wfi->servscreen_xoffset;
 			y += wfi->servscreen_yoffset;
-
-			mouse_event.mi.dx = (LONG) ((float) x * (65535.0f / width));
-			mouse_event.mi.dy = (LONG) ((float) y * (65535.0f / height));
+			mouse_event.mi.dx = (LONG)((float) x * (65535.0f / width));
+			mouse_event.mi.dy = (LONG)((float) y * (65535.0f / height));
 			mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-
 			SendInput(1, &mouse_event, sizeof(INPUT));
 		}
 
@@ -187,21 +186,40 @@ void wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 	{
 		wf_peer_mouse_event(input, flags, x, y);
 	}
+
+	return TRUE;
 }
 
-
-void wf_peer_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL wf_peer_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
 {
+	WINPR_UNUSED(input);
+	WINPR_UNUSED(flags);
+	WINPR_UNUSED(code);
+	return TRUE;
 }
 
-void wf_peer_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL wf_peer_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
 {
+	WINPR_UNUSED(input);
+	WINPR_UNUSED(flags);
+	WINPR_UNUSED(code);
+	return TRUE;
 }
 
-void wf_peer_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL wf_peer_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
+	WINPR_UNUSED(input);
+	WINPR_UNUSED(flags);
+	WINPR_UNUSED(x);
+	WINPR_UNUSED(y);
+	return TRUE;
 }
 
-void wf_peer_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL wf_peer_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
+	WINPR_UNUSED(input);
+	WINPR_UNUSED(flags);
+	WINPR_UNUSED(x);
+	WINPR_UNUSED(y);
+	return TRUE;
 }

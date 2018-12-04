@@ -92,7 +92,6 @@ static BOOL wf_peer_init(freerdp_peer* client)
 
 static BOOL wf_peer_post_connect(freerdp_peer* client)
 {
-	int i;
 	wfInfo* wfi;
 	rdpSettings* settings;
 	wfPeerContext* context = (wfPeerContext*) client->context;
@@ -150,8 +149,9 @@ static BOOL wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identit
 	return TRUE;
 }
 
-static void wf_peer_synchronize_event(rdpInput* input, UINT32 flags)
+static BOOL wf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
+	return TRUE;
 }
 
 BOOL wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
