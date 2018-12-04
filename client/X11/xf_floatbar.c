@@ -86,7 +86,7 @@ struct xf_floatbar_button
 
 static void xf_floatbar_button_onclick_close(xfContext* xfc)
 {
-	ExitProcess(EXIT_SUCCESS);
+	freerdp_abort_connect(xfc->context.instance);
 }
 
 static void xf_floatbar_button_onclick_minimize(xfContext* xfc)
