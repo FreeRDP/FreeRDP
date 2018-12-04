@@ -86,6 +86,8 @@ public class LibFreeRDP {
 
     private static native boolean freerdp_send_clipboard_data(long inst, String data);
 
+    private static native String freerdp_get_last_error_string(long inst);
+
     public static void setEventListener(EventListener l) {
         listener = l;
     }
