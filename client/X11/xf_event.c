@@ -900,7 +900,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MINIMIZE);
 			}
 			else if (!minimized && !maxVert && !maxHorz
-			         && (appWindow->rail_state != WINDOW_SHOW))
+			         && (appWindow->rail_state != WINDOW_SHOW) && (appWindow->rail_state != WINDOW_HIDE))
 			{
 				appWindow->rail_state = WINDOW_SHOW;
 				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);

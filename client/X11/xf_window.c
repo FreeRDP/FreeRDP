@@ -988,6 +988,8 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 			if (appWindow->is_transient)
 				xf_SetWindowUnlisted(xfc, appWindow->handle);
 
+			XMapWindow(xfc->display, appWindow->handle);
+
 			break;
 	}
 
