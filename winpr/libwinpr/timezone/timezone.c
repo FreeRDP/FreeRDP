@@ -149,13 +149,93 @@ static char* winpr_get_timezone_from_link(void)
 	return NULL;
 }
 
+#if defined(ANDROID)
+#include <jni.h>
+static JavaVM* jniVm = NULL;
+
+JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
+{
+	jniVm = vm;
+	return JNI_VERSION_1_6;
+}
+
+static char* winpr_get_android_timezone_identifier(void)
+{
+	char* tzid = NULL;
+	JNIEnv* jniEnv;
+
+	/* Preferred: Try to get identifier from java TimeZone class */
+	if (jniVm && ((*jniVm)->GetEnv(jniVm, (void**)&jniEnv, JNI_VERSION_1_6) == JNI_OK))
+	{
+		const char* raw;
+		jclass jObjClass;
+		jobject jObj;
+		jmethodID jDefaultTimezone;
+		jmethodID jTimezoneIdentifier;
+		jstring tzJId;
+		jboolean attached = (*jniVm)->AttachCurrentThread(jniVm, &jniEnv, NULL);
+		jObjClass = (*jniEnv)->FindClass(jniEnv, "java/util/TimeZone");
+
+		if (!jObjClass)
+			goto fail;
+
+		jDefaultTimezone = (*jniEnv)->GetStaticMethodID(jniEnv, jObjClass, "getDefault",
+		                   "()Ljava/util/TimeZone;");
+
+		if (!jDefaultTimezone)
+			goto fail;
+
+		jObj = (*jniEnv)->CallStaticObjectMethod(jniEnv, jObjClass, jDefaultTimezone);
+
+		if (!jObj)
+			goto fail;
+
+		jTimezoneIdentifier = (*jniEnv)->GetMethodID(jniEnv, jObjClass, "getID", "()Ljava/lang/String;");
+
+		if (!jTimezoneIdentifier)
+			goto fail;
+
+		tzJId = (*jniEnv)->CallObjectMethod(jniEnv, jObj, jTimezoneIdentifier);
+
+		if (!tzJId)
+			goto fail;
+
+		raw = (*jniEnv)->GetStringUTFChars(jniEnv, tzJId, 0);
+
+		if (raw)
+			tzid = _strdup(raw);
+
+		(*jniEnv)->ReleaseStringUTFChars(jniEnv, tzJId, raw);
+	fail:
+
+		if (attached)
+			(*jniVm)->DetachCurrentThread(jniVm);
+	}
+
+	/* Fall back to property, might not be available. */
+	if (!tzid)
+	{
+		FILE* fp = popen("getprop persist.sys.timezone", "r");
+
+		if (fp)
+		{
+			tzid = winpr_read_unix_timezone_identifier_from_file(fp);
+			pclose(fp);
+		}
+	}
+
+	return tzid;
+}
+#endif
+
 static char* winpr_get_unix_timezone_identifier_from_file(void)
 {
+#if defined(ANDROID)
+	return winpr_get_android_timezone_identifier();
+#else
 	FILE* fp;
 	char* tzid = NULL;
-#if defined(ANDROID)
-	fp = popen("getprop persist.sys.timezone", "r");
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 	fp = fopen("/var/db/zoneinfo", "r");
 #else
 	fp = fopen("/etc/timezone", "r");
@@ -165,12 +245,9 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 		return NULL;
 
 	tzid = winpr_read_unix_timezone_identifier_from_file(fp);
-#if defined(ANDROID)
-	pclose(fp) ;
-#else
 	fclose(fp) ;
-#endif
 	return tzid;
+#endif
 }
 
 static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, const char* list)
