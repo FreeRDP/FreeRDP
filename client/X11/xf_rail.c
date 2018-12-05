@@ -999,17 +999,24 @@ static UINT xf_rail_server_system_param(RailClientContext* context,
 static UINT xf_rail_server_handshake(RailClientContext* context,
                                      const RAIL_HANDSHAKE_ORDER* handshake)
 {
-	RAIL_EXEC_ORDER exec;
-	RAIL_SYSPARAM_ORDER sysparam;
+	UINT status;
+	RAIL_EXEC_ORDER exec = { 0 };
+	RAIL_SYSPARAM_ORDER sysparam = { 0 };
 	RAIL_HANDSHAKE_ORDER clientHandshake;
-	RAIL_CLIENT_STATUS_ORDER clientStatus;
+	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
 	xfContext* xfc = (xfContext*) context->custom;
 	rdpSettings* settings = xfc->context.settings;
 	clientHandshake.buildNumber = 0x00001DB0;
-	context->ClientHandshake(context, &clientHandshake);
-	ZeroMemory(&clientStatus, sizeof(RAIL_CLIENT_STATUS_ORDER));
+	status = context->ClientHandshake(context, &clientHandshake);
+
+	if (status != CHANNEL_RC_OK)
+		return status;
+
 	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
-	context->ClientInformation(context, &clientStatus);
+	status = context->ClientInformation(context, &clientStatus);
+
+	if (status != CHANNEL_RC_OK)
+		return status;
 
 	if (settings->RemoteAppLanguageBarSupported)
 	{
@@ -1018,7 +1025,6 @@ static UINT xf_rail_server_handshake(RailClientContext* context,
 		context->ClientLanguageBarInfo(context, &langBarInfo);
 	}
 
-	ZeroMemory(&sysparam, sizeof(RAIL_SYSPARAM_ORDER));
 	sysparam.params = 0;
 	sysparam.params |= SPI_MASK_SET_HIGH_CONTRAST;
 	sysparam.highContrast.colorScheme.string = NULL;
@@ -1038,13 +1044,15 @@ static UINT xf_rail_server_handshake(RailClientContext* context,
 	sysparam.workArea.right = settings->DesktopWidth;
 	sysparam.workArea.bottom = settings->DesktopHeight;
 	sysparam.dragFullWindows = FALSE;
-	context->ClientSystemParam(context, &sysparam);
-	ZeroMemory(&exec, sizeof(RAIL_EXEC_ORDER));
+	status = context->ClientSystemParam(context, &sysparam);
+
+	if (status != CHANNEL_RC_OK)
+		return status;
+
 	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
 	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
 	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
-	context->ClientExecute(context, &exec);
-	return CHANNEL_RC_OK;
+	return context->ClientExecute(context, &exec);
 }
 
 /**
