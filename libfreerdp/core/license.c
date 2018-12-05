@@ -1165,8 +1165,7 @@ static BOOL license_read_encrypted_blob(const rdpLicense *license, wStream *s, L
 	Stream_Read_UINT16(s, wBlobType);
 	if (wBlobType != BB_ENCRYPTED_DATA_BLOB)
 	{
-		WLog_ERR(TAG, "expecting BB_ENCRYPTED_DATA_BLOB blob");
-		return FALSE;
+		WLog_DBG(TAG, "expecting BB_ENCRYPTED_DATA_BLOB blob, probably a windows 2003 server, continuing...");
 	}
 
 	Stream_Read_UINT16(s, wBlobLen);
