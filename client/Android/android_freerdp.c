@@ -793,6 +793,17 @@ static void JNICALL jni_freerdp_free(JNIEnv* env, jclass cls, jlong instance)
 #endif
 }
 
+static jstring JNICALL jni_freerdp_get_last_error_string(JNIEnv* env, jclass cls, jlong instance)
+{
+	freerdp* inst = (freerdp*)instance;
+
+	if (!inst || !inst->context)
+		return (*env)->NewStringUTF(env, "");
+
+	return (*env)->NewStringUTF(env,
+	                            freerdp_get_last_error_string(freerdp_get_last_error(inst->context)));
+}
+
 static jboolean JNICALL jni_freerdp_parse_arguments(
     JNIEnv* env, jclass cls, jlong instance, jobjectArray arguments)
 {
@@ -1100,6 +1111,11 @@ static JNINativeMethod methods[] =
 		"freerdp_get_build_config",
 		"()Ljava/lang/String;",
 		&jni_freerdp_get_build_config
+	},
+	{
+		"freerdp_get_last_error_string",
+		"(J)Ljava/lang/String;",
+		&jni_freerdp_get_last_error_string
 	},
 	{
 		"freerdp_new",
