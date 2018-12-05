@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -232,7 +233,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("FreeRDP - A Free Remote Desktop Protocol Implementation\n");
 	printf("See www.freerdp.com for more information\n");
 	printf("\n");
-	printf("Usage: %s [file] [options] [/v:<server>[:port]]\n", argv[0]);
+	printf("Usage: %s [/from-fd[:<number>]] || [file] [options] [/v:<server>[:port]]\n", argv[0]);
 	printf("\n");
 	printf("Syntax:\n");
 	printf("    /flag (enables flag)\n");
@@ -243,8 +244,9 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	freerdp_client_print_command_line_args(args);
 	printf("\n");
 	printf("Examples:\n");
+	printf("    echo '/v:rdp.freerdp.test' | xfreerdp /from-fd:0\n");
 	printf("    xfreerdp connection.rdp /p:Pwd123! /f\n");
-	printf("    xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com\n");
+	printf("    xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.freerdp.test\n");
 	printf("    xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489\n");
 	printf("    xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168.1.100\n");
 	printf("\n");
@@ -268,11 +270,11 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("\n");
 	printf("For Gateways, the https_proxy environment variable is respected:\n");
 #ifdef _WIN32
-	printf("    set HTTPS_PROXY=http://proxy.contoso.com:3128/\n");
+	printf("    set HTTPS_PROXY=http://proxy.freerdp.test:3128/\n");
 #else
-	printf("    export https_proxy=http://proxy.contoso.com:3128/\n");
+	printf("    export https_proxy=http://proxy.freerdp.test:3128/\n");
 #endif
-	printf("    xfreerdp /g:rdp.contoso.com ...\n");
+	printf("    xfreerdp /g:rdp.freerdp.test ...\n");
 	printf("\n");
 	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
@@ -1453,7 +1455,7 @@ static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* 
 	return TRUE;
 }
 
-int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
+static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings* settings,
         int argc, char** argv, BOOL allowUnknown)
 {
 	char* p;
@@ -2971,6 +2973,213 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	{
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
+
+	return status;
+}
+
+static void argv_free(int argc, char** argv)
+{
+	if (argv)
+	{
+		int x;
+
+		for (x = 0; x < argc; x++)
+			free(argv[x]);
+
+		free(argv);
+	}
+}
+
+static const char* str_next_token(const char* start, char sep, char esc, char esc2)
+{
+	const char* cur = start;
+	BOOL escaped = FALSE;
+	BOOL quoted = FALSE;
+
+	if (!start)
+		return NULL;
+
+	while (*cur != '\0')
+	{
+		if (*cur == esc2)
+			escaped = !escaped;
+		else
+		{
+			if (*cur == esc)
+			{
+				if (escaped)
+					escaped = FALSE;
+				else
+					quoted = !quoted;
+			}
+			else if (!quoted && (*cur == sep))
+			{
+				return cur;
+			}
+			else
+			{
+				if (escaped)
+					return NULL;
+			}
+		}
+
+		cur++;
+	}
+
+	if (quoted || escaped)
+		return NULL;
+
+	if (cur == start)
+	{
+		if (*cur == '\0')
+			return NULL;
+	}
+
+	return cur;
+}
+
+static int str_tokens(const char* s, char sep, char esc, char esc2)
+{
+	int count = 0;
+	const char* cur = s;
+	const char* next;
+
+	while ((next = str_next_token(cur, sep, esc, esc2)) != NULL)
+	{
+		count++;
+		cur = next + 1;
+	}
+
+	return count + 1;
+}
+
+static char** str_tokenize(const char* first, const char* s, char sep, char esc, char esc2,
+                           int* count)
+{
+	char** list = NULL;
+	*count = str_tokens(s, sep, esc, esc2);
+	list = calloc((size_t) * count, sizeof(char*));
+
+	if (list != NULL)
+	{
+		int i;
+		const char* next = s;
+		const char* cur = s;
+		i = 0;
+		list[i++] = _strdup(first);
+
+		while ((next = str_next_token(cur, sep, esc, esc2)) != NULL)
+		{
+			const size_t size = (size_t)(next - cur);
+			char* arg = calloc(size, sizeof(char));
+
+			if (!arg)
+			{
+				argv_free(i, list);
+				return NULL;
+			}
+
+			memcpy(arg, cur, size - 1);
+			cur = next + 1;
+		}
+	}
+
+	return list;
+}
+
+static char* argv_from_fd(int fd)
+{
+	size_t size = 100;
+	size_t pos = 0;
+	int rc;
+	char* read = NULL;
+	FILE* fp = fdopen(fd, "r");
+
+	if (!fp)
+		return NULL;
+
+	do
+	{
+		rc = fgetc(fp);
+
+		if ((read == NULL) || (size < pos + 1))
+		{
+			char* tmp;
+			size *= 2;
+			tmp = realloc(read, size);
+
+			if (!tmp)
+			{
+				free(read);
+				fclose(fp);
+				return NULL;
+			}
+
+			read = tmp;
+		}
+
+		if ((rc < 0) || (rc == '\r') || (rc == '\n') || (rc == '\0'))
+		{
+			read[pos++] = '\0';
+			break;
+		}
+		else
+			read[pos++] = (char)rc;
+	}
+	while (rc != EOF);
+
+	fclose(fp);
+	return read;
+}
+
+int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
+        int argc, char** argv, BOOL allowUnknown)
+{
+	int status;
+	BOOL fromFd = FALSE;
+
+	if (argc > 1)
+		fromFd = _strnicmp(argv[1], "/from-fd", 8) == 0;
+
+	/* Only argument is a file descriptor to read everything in.
+	 * Do this before checking if the argument is a rdp or msrcIncident file.
+	 */
+	if (fromFd)
+	{
+		BOOL success = FALSE;
+		int fd = 0;
+		char* read = NULL;
+		const char* delim = strchr(argv[1], ':');
+
+		if (delim)
+		{
+			ULONGLONG val;
+
+			if (!value_to_uint(delim + 1, &val, 0, INT_MAX))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+			fd = (int)val;
+		}
+
+		read = argv_from_fd(fd);
+
+		if (read)
+		{
+			argv = str_tokenize(argv[0], read, ' ', '\"', '\\', &argc);
+			success = argv != NULL;
+		}
+
+		free(read);
+
+		if (!success)
+			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+	}
+
+	status = freerdp_client_settings_parse_command_line_arguments_int(settings, argc, argv,
+	         allowUnknown);
+
+	if (fromFd)
+		argv_free(argc, argv);
 
 	return status;
 }
