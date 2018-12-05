@@ -66,6 +66,7 @@ static void keyboard_handle_keymap(void *data, struct wl_keyboard *keyboard,
 	struct xkb_keymap *keymap;
 	struct xkb_state *state;
 	char *map_str;
+	int mapFlags = MAP_SHARED;
 
 	if (!data) {
 		close(fd);
@@ -77,7 +78,10 @@ static void keyboard_handle_keymap(void *data, struct wl_keyboard *keyboard,
 		return;
 	}
 
-	map_str = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+	if (input->seat_version >= 7)
+		mapFlags = MAP_PRIVATE;
+
+	map_str = mmap(NULL, size, PROT_READ, mapFlags, fd, 0);
 	if (map_str == MAP_FAILED) {
 		close(fd);
 		return;
