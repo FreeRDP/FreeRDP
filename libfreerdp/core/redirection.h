@@ -31,25 +31,6 @@ typedef struct rdp_redirection rdpRedirection;
 #include <winpr/wlog.h>
 #include <winpr/stream.h>
 
-struct rdp_redirection
-{
-	UINT32 flags;
-	UINT32 sessionID;
-	BYTE* TsvUrl;
-	DWORD TsvUrlLength;
-	char* Username;
-	char* Domain;
-	BYTE* Password;
-	DWORD PasswordLength;
-	char* TargetFQDN;
-	BYTE* LoadBalanceInfo;
-	DWORD LoadBalanceInfoLength;
-	char* TargetNetBiosName;
-	char* TargetNetAddress;
-	UINT32 TargetNetAddressesCount;
-	char** TargetNetAddresses;
-};
-
 FREERDP_LOCAL int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp,
         wStream* s);
 

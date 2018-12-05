@@ -30,6 +30,25 @@
 
 #define TAG FREERDP_TAG("core.redirection")
 
+struct rdp_redirection
+{
+	UINT32 flags;
+	UINT32 sessionID;
+	BYTE* TsvUrl;
+	DWORD TsvUrlLength;
+	char* Username;
+	char* Domain;
+	BYTE* Password;
+	DWORD PasswordLength;
+	char* TargetFQDN;
+	BYTE* LoadBalanceInfo;
+	DWORD LoadBalanceInfoLength;
+	char* TargetNetBiosName;
+	char* TargetNetAddress;
+	UINT32 TargetNetAddressesCount;
+	char** TargetNetAddresses;
+};
+
 static void rdp_print_redirection_flags(UINT32 flags)
 {
 	WLog_DBG(TAG, "redirectionFlags = {");

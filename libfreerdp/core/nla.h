@@ -47,58 +47,19 @@ enum _NLA_STATE
 };
 typedef enum _NLA_STATE NLA_STATE;
 
-struct rdp_nla
-{
-	BOOL server;
-	NLA_STATE state;
-	int sendSeqNum;
-	int recvSeqNum;
-	freerdp* instance;
-	CtxtHandle context;
-	LPTSTR SspiModule;
-	char* SamFile;
-	rdpSettings* settings;
-	rdpTransport* transport;
-	UINT32 cbMaxToken;
-#if defined(UNICODE)
-	SEC_WCHAR* packageName;
-#else
-	SEC_CHAR* packageName;
-#endif
-	UINT32 version;
-	UINT32 peerVersion;
-	UINT32 errorCode;
-	ULONG fContextReq;
-	ULONG pfContextAttr;
-	BOOL haveContext;
-	BOOL haveInputBuffer;
-	BOOL havePubKeyAuth;
-	SECURITY_STATUS status;
-	CredHandle credentials;
-	TimeStamp expiration;
-	PSecPkgInfo pPackageInfo;
-	SecBuffer inputBuffer;
-	SecBuffer outputBuffer;
-	SecBufferDesc inputBufferDesc;
-	SecBufferDesc outputBufferDesc;
-	SecBuffer negoToken;
-	SecBuffer pubKeyAuth;
-	SecBuffer authInfo;
-	SecBuffer ClientNonce;
-	SecBuffer PublicKey;
-	SecBuffer tsCredentials;
-	LPTSTR ServicePrincipalName;
-	SEC_WINNT_AUTH_IDENTITY* identity;
-	PSecurityFunctionTable table;
-	SecPkgContext_Sizes ContextSizes;
-};
-
 FREERDP_LOCAL int nla_authenticate(rdpNla* nla);
 FREERDP_LOCAL LPTSTR nla_make_spn(const char* ServiceClass,
                                   const char* hostname);
 
 FREERDP_LOCAL int nla_client_begin(rdpNla* nla);
 FREERDP_LOCAL int nla_recv_pdu(rdpNla* nla, wStream* s);
+
+FREERDP_LOCAL SEC_WINNT_AUTH_IDENTITY* nla_get_identity(rdpNla* nla);
+
+FREERDP_LOCAL NLA_STATE nla_get_state(rdpNla* nla);
+FREERDP_LOCAL BOOL nla_set_state(rdpNla* nla, NLA_STATE state);
+
+FREERDP_LOCAL BOOL nla_set_service_principal(rdpNla* nla, LPSTR principal);
 
 FREERDP_LOCAL rdpNla* nla_new(freerdp* instance, rdpTransport* transport,
                               rdpSettings* settings);
