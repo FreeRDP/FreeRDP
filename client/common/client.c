@@ -506,6 +506,7 @@ static DWORD client_cli_accept_certificate(rdpSettings* settings)
  *  when the connection requires it.
  *  This function will actually be called by tls_verify_certificate().
  *  @see rdp_client_connect() and tls_connect()
+ *  @deprecated Use client_cli_verify_certificate_ex
  *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
  *  @param common_name
  *  @param subject
@@ -518,6 +519,7 @@ DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name,
                                     const char* subject, const char* issuer,
                                     const char* fingerprint, BOOL host_mismatch)
 {
+	printf("WARNING: This callback is deprecated, migrate to client_cli_verify_certificate_ex\n");
 	printf("Certificate details:\n");
 	printf("\tSubject: %s\n", subject);
 	printf("\tIssuer: %s\n", issuer);
@@ -529,9 +531,49 @@ DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name,
 }
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
+ *  when the connection requires it.
+ *  This function will actually be called by tls_verify_certificate().
+ *  @see rdp_client_connect() and tls_connect()
+ *  @param instance     pointer to the rdp_freerdp structure that contains the connection settings
+ *  @param host         The host currently connecting to
+ *  @param port         The port currently connecting to
+ *  @param common_name  The common name of the certificate, should match host or an alias of it
+ *  @param subject      The subject of the certificate
+ *  @param issuer       The certificate issuer name
+ *  @param fingerprint  The fingerprint of the certificate
+ *  @param flags        See VERIFY_CERT_FLAG_* for possible values.
+ *
+ *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
+ */
+DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
+                                       const char* common_name,
+                                       const char* subject, const char* issuer,
+                                       const char* fingerprint, DWORD flags)
+{
+	const char* type = "RDP-Server";
+
+	if (flags & VERIFY_CERT_FLAG_GATEWAY)
+		type = "RDP-Gateway";
+
+	if (flags & VERIFY_CERT_FLAG_REDIRECT)
+		type = "RDP-Redirect";
+
+	printf("Certificate details for %s:%"PRIu16" (%s):\n", host, port, type);
+	printf("\tCommon Name: %s\n", common_name);
+	printf("\tSubject:     %s\n", subject);
+	printf("\tIssuer:      %s\n", issuer);
+	printf("\tThumbprint:  %s\n", fingerprint);
+	printf("The above X.509 certificate could not be verified, possibly because you do not have\n"
+	       "the CA certificate in your certificate store, or the certificate has expired.\n"
+	       "Please look at the OpenSSL documentation on how to add a private CA to the store.\n");
+	return client_cli_accept_certificate(instance->settings);
+}
+
+/** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when a stored certificate does not match the remote counterpart.
  *  This function will actually be called by tls_verify_certificate().
  *  @see rdp_client_connect() and tls_connect()
+ *  @deprecated Use client_cli_verify_changed_certificate_ex
  *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
  *  @param common_name
  *  @param subject
@@ -549,6 +591,7 @@ DWORD client_cli_verify_changed_certificate(freerdp* instance,
         const char* old_subject, const char* old_issuer,
         const char* old_fingerprint)
 {
+	printf("WARNING: This callback is deprecated, migrate to client_cli_verify_changed_certificate_ex\n");
 	printf("!!! Certificate has changed !!!\n");
 	printf("\n");
 	printf("New Certificate details:\n");
@@ -560,6 +603,59 @@ DWORD client_cli_verify_changed_certificate(freerdp* instance,
 	printf("\tSubject: %s\n", old_subject);
 	printf("\tIssuer: %s\n", old_issuer);
 	printf("\tThumbprint: %s\n", old_fingerprint);
+	printf("\n");
+	printf("The above X.509 certificate does not match the certificate used for previous connections.\n"
+	       "This may indicate that the certificate has been tampered with.\n"
+	       "Please contact the administrator of the RDP server and clarify.\n");
+	return client_cli_accept_certificate(instance->settings);
+}
+
+/** Callback set in the rdp_freerdp structure, and used to make a certificate validation
+ *  when a stored certificate does not match the remote counterpart.
+ *  This function will actually be called by tls_verify_certificate().
+ *  @see rdp_client_connect() and tls_connect()
+ *  @param instance        pointer to the rdp_freerdp structure that contains the connection settings
+ *  @param host            The host currently connecting to
+ *  @param port            The port currently connecting to
+ *  @param common_name     The common name of the certificate, should match host or an alias of it
+ *  @param subject         The subject of the certificate
+ *  @param issuer          The certificate issuer name
+ *  @param fingerprint     The fingerprint of the certificate
+ *  @param old_subject     The subject of the previous certificate
+ *  @param old_issuer      The previous certificate issuer name
+ *  @param old_fingerprint The fingerprint of the previous certificate
+ *  @param flags           See VERIFY_CERT_FLAG_* for possible values.
+ *
+ *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
+ */
+DWORD client_cli_verify_changed_certificate_ex(freerdp* instance,
+        const char* host, UINT16 port,
+        const char* common_name,
+        const char* subject, const char* issuer,
+        const char* fingerprint,
+        const char* old_subject, const char* old_issuer,
+        const char* old_fingerprint, DWORD flags)
+{
+	const char* type = "RDP-Server";
+
+	if (flags & VERIFY_CERT_FLAG_GATEWAY)
+		type = "RDP-Gateway";
+
+	if (flags & VERIFY_CERT_FLAG_REDIRECT)
+		type = "RDP-Redirect";
+
+	printf("!!!Certificate for %s:%"PRIu16" (%s) has changed!!!\n", host, port, type);
+	printf("\n");
+	printf("New Certificate details:\n");
+	printf("\tCommon Name: %s\n", common_name);
+	printf("\tSubject:     %s\n", subject);
+	printf("\tIssuer:      %s\n", issuer);
+	printf("\tThumbprint:  %s\n", fingerprint);
+	printf("\n");
+	printf("Old Certificate details:\n");
+	printf("\tSubject:     %s\n", old_subject);
+	printf("\tIssuer:      %s\n", old_issuer);
+	printf("\tThumbprint:  %s\n", old_fingerprint);
 	printf("\n");
 	printf("The above X.509 certificate does not match the certificate used for previous connections.\n"
 	       "This may indicate that the certificate has been tampered with.\n"

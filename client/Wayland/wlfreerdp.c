@@ -386,8 +386,8 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	instance->PostDisconnect = wl_post_disconnect;
 	instance->Authenticate = client_cli_authenticate;
 	instance->GatewayAuthenticate = client_cli_gw_authenticate;
-	instance->VerifyCertificate = client_cli_verify_certificate;
-	instance->VerifyChangedCertificate = client_cli_verify_changed_certificate;
+	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
+	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = wlf_logon_error_info;
 	wfl->display = UwacOpenDisplay(NULL, &status);
 

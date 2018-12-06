@@ -72,10 +72,10 @@ Note: email and upn amongst others are also alt_names,
 but the old crypto_cert_get_alt_names returned only the dns_names
 */
 FREERDP_API char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths);
-FREERDP_API void crypto_cert_subject_alt_name_free(int count, int *lengths, char** alt_names);
+FREERDP_API void crypto_cert_subject_alt_name_free(int count, int* lengths, char** alt_names);
 
-FREERDP_API BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path);
-FREERDP_API rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname,
+FREERDP_API BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path);
+FREERDP_API rdpCertificateData* crypto_get_certificate_data(X509* xcert, const char* hostname,
         UINT16 port);
 FREERDP_API BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey,
         DWORD* PublicKeyLength);

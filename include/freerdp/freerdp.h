@@ -59,6 +59,14 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 extern "C" {
 #endif
 
+/* Flags used by certificate callbacks */
+#define VERIFY_CERT_FLAG_NONE     0x00
+#define VERIFY_CERT_FLAG_LEGACY   0x02
+#define VERIFY_CERT_FLAG_REDIRECT 0x10
+#define VERIFY_CERT_FLAG_GATEWAY  0x20
+#define VERIFY_CERT_FLAG_CHANGED  0x40
+#define VERIFY_CERT_FLAG_MISMATCH 0x80
+
 typedef BOOL (*pContextNew)(freerdp* instance, rdpContext* context);
 typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
@@ -71,6 +79,7 @@ typedef BOOL (*pAuthenticate)(freerdp* instance, char** username,
 /** @brief Callback used if user interaction is required to accept
  *         an unknown certificate.
  *
+ *  @deprecated Use pVerifyCertificateEx
  *  @param common_name      The certificate registered hostname.
  *  @param subject          The common name of the certificate.
  *  @param issuer           The issuer of the certificate.
@@ -89,8 +98,32 @@ typedef DWORD (*pVerifyCertificate)(freerdp* instance,
                                     BOOL host_mismatch);
 
 /** @brief Callback used if user interaction is required to accept
+ *         an unknown certificate.
+ *
+ *  @param host             The hostname connecting to.
+ *  @param port             The port connecting to.
+ *  @param common_name      The certificate registered hostname.
+ *  @param subject          The common name of the certificate.
+ *  @param issuer           The issuer of the certificate.
+ *  @param fingerprint      The fingerprint of the certificate.
+ *  @param flags            Flags of type VERIFY_CERT_FLAG*
+ *
+ *  @return 1 to accept and store a certificate, 2 to accept
+ *          a certificate only for this session, 0 otherwise.
+ */
+typedef DWORD (*pVerifyCertificateEx)(freerdp* instance,
+                                      const char* host,
+                                      UINT16 port,
+                                      const char* common_name,
+                                      const char* subject,
+                                      const char* issuer,
+                                      const char* fingerprint,
+                                      DWORD flags);
+
+/** @brief Callback used if user interaction is required to accept
  *         a changed certificate.
  *
+ *  @deprecated Use pVerifyChangedCertificateEx
  *  @param common_name      The certificate registered hostname.
  *  @param subject          The common name of the new certificate.
  *  @param issuer           The issuer of the new certificate.
@@ -111,9 +144,53 @@ typedef DWORD (*pVerifyChangedCertificate)(freerdp* instance,
         const char* old_subject,
         const char* old_issuer,
         const char* old_fingerprint);
-typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data,
-                                      int length, const char* hostname,
-                                      int port, DWORD flags);
+
+/** @brief Callback used if user interaction is required to accept
+ *         a changed certificate.
+ *
+ *  @param host             The hostname connecting to.
+ *  @param port             The port connecting to.
+ *  @param common_name      The certificate registered hostname.
+ *  @param subject          The common name of the new certificate.
+ *  @param issuer           The issuer of the new certificate.
+ *  @param fingerprint      The fingerprint of the new certificate.
+ *  @param old_subject      The common name of the old certificate.
+ *  @param old_issuer       The issuer of the new certificate.
+ *  @param old_fingerprint  The fingerprint of the old certificate.
+ *  @param flags            Flags of type VERIFY_CERT_FLAG*
+ *
+ *  @return 1 to accept and store a certificate, 2 to accept
+ *          a certificate only for this session, 0 otherwise.
+ */
+
+typedef DWORD (*pVerifyChangedCertificateEx)(freerdp* instance,
+        const char* host,
+        UINT16 port,
+        const char* common_name,
+        const char* subject,
+        const char* issuer,
+        const char* new_fingerprint,
+        const char* old_subject,
+        const char* old_issuer,
+        const char* old_fingerprint,
+        DWORD flags);
+
+/** @brief Callback used if user interaction is required to accept
+ *         a certificate.
+ *
+ *  @param instance         Pointer to the freerdp instance.
+ *  @param data             Pointer to certificate data in PEM format.
+ *  @param length           The length of the certificate data.
+ *  @param hostname         The hostname connecting to.
+ *  @param port             The port connecting to.
+ *  @param flags            Flags of type VERIFY_CERT_FLAG*
+ *
+ *  @return 1 to accept and store a certificate, 2 to accept
+ *          a certificate only for this session, 0 otherwise.
+ */
+typedef int (*pVerifyX509Certificate)(freerdp* instance, const BYTE* data,
+                                      size_t length, const char* hostname,
+                                      UINT16 port, DWORD flags);
 
 typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
 
@@ -274,11 +351,12 @@ struct rdp_freerdp
 									 It is used to get the username/password when it was not provided at connection time. */
 	ALIGN64 pVerifyCertificate VerifyCertificate; /**< (offset 51)
 											   Callback for certificate validation.
-											   Used to verify that an unknown certificate is trusted. */
+											   Used to verify that an unknown certificate is trusted.
+ DEPRECATED: Use VerifyChangedCertificateEx*/
 	ALIGN64 pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
 															 Callback for changed certificate validation.
 															 Used when a certificate differs from stored fingerprint.
-															 If returns TRUE, the new fingerprint will be trusted and old thrown out. */
+ DEPRECATED: Use VerifyChangedCertificateEx */
 
 	ALIGN64 pVerifyX509Certificate
 	VerifyX509Certificate;  /**< (offset 53)  Callback for X509 certificate verification (PEM format) */
@@ -305,7 +383,13 @@ struct rdp_freerdp
 											   This is called by freerdp_channel_process() (if not NULL).
 											   Clients will typically use a function that calls freerdp_channels_data() to perform the needed tasks. */
 
-	UINT64 paddingE[80 - 66]; /* 66 */
+	ALIGN64 pVerifyCertificateEx VerifyCertificateEx; /**< (offset 66)
+											   Callback for certificate validation.
+											   Used to verify that an unknown certificate is trusted. */
+	ALIGN64 pVerifyChangedCertificateEx VerifyChangedCertificateEx; /**< (offset 67)
+															 Callback for changed certificate validation.
+															 Used when a certificate differs from stored fingerprint. */
+	UINT64 paddingE[80 - 68]; /* 68 */
 };
 
 struct rdp_channel_handles

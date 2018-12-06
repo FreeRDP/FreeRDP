@@ -51,35 +51,35 @@ struct rdp_certificate_store
 };
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 FREERDP_API rdpCertificateData* certificate_data_new(
-        char* hostname, UINT16 port, char* subject,
-        char* issuer, char* fingerprint);
+    const char* hostname, UINT16 port, const char* subject,
+    const char* issuer, const char* fingerprint);
 FREERDP_API void certificate_data_free(
-        rdpCertificateData* certificate_data);
+    rdpCertificateData* certificate_data);
 FREERDP_API rdpCertificateStore* certificate_store_new(
-        rdpSettings* settings);
+    rdpSettings* settings);
 FREERDP_API BOOL certificate_data_replace(
-        rdpCertificateStore* certificate_store,
-        rdpCertificateData* certificate_data);
+    rdpCertificateStore* certificate_store,
+    rdpCertificateData* certificate_data);
 FREERDP_API void certificate_store_free(
-        rdpCertificateStore* certificate_store);
+    rdpCertificateStore* certificate_store);
 FREERDP_API int certificate_data_match(
-        rdpCertificateStore* certificate_store,
-        rdpCertificateData* certificate_data);
+    rdpCertificateStore* certificate_store,
+    rdpCertificateData* certificate_data);
 FREERDP_API BOOL certificate_data_print(
-        rdpCertificateStore* certificate_store,
-        rdpCertificateData* certificate_data);
+    rdpCertificateStore* certificate_store,
+    rdpCertificateData* certificate_data);
 FREERDP_API BOOL certificate_get_stored_data(
-        rdpCertificateStore* certificate_store,
-        rdpCertificateData* certificate_data,
-        char** subject, char** issuer,
-        char** fingerprint);
+    rdpCertificateStore* certificate_store,
+    rdpCertificateData* certificate_data,
+    char** subject, char** issuer,
+    char** fingerprint);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CRYPTO_CERTIFICATE_H */

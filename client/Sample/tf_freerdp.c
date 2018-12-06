@@ -107,11 +107,9 @@ static BOOL tf_pre_connect(freerdp* instance)
 	/* Optional OS identifier sent to server */
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-
 	/* settings->OrderSupport is initialized at this point.
 	 * Only override it if you plan to implement custom order
 	 * callbacks or deactiveate certain features. */
-
 	/* Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded. */
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
@@ -262,8 +260,8 @@ static BOOL tf_client_new(freerdp* instance, rdpContext* context)
 	instance->PostDisconnect = tf_post_disconnect;
 	instance->Authenticate = client_cli_authenticate;
 	instance->GatewayAuthenticate = client_cli_gw_authenticate;
-	instance->VerifyCertificate = client_cli_verify_certificate;
-	instance->VerifyChangedCertificate = client_cli_verify_changed_certificate;
+	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
+	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = tf_logon_error_info;
 	/* TODO: Client display set up */
 	return TRUE;
