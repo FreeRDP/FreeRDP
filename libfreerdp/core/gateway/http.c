@@ -500,26 +500,27 @@ void http_request_free(HttpRequest* request)
 	free(request);
 }
 
-static BOOL http_response_parse_header_status_line(HttpResponse* response, char* status_line)
+static BOOL http_response_parse_header_status_line(HttpResponse* response, const char* status_line)
 {
+	BOOL rc = FALSE;
 	char* separator = NULL;
 	char* status_code;
 	char* reason_phrase;
 
 	if (!response)
-		return FALSE;
+		goto fail;
 
 	if (status_line)
 		separator = strchr(status_line, ' ');
 
 	if (!separator)
-		return FALSE;
+		goto fail;
 
 	status_code = separator + 1;
 	separator = strchr(status_code, ' ');
 
 	if (!separator)
-		return FALSE;
+		goto fail;
 
 	reason_phrase = separator + 1;
 	*separator = '\0';
@@ -528,17 +529,23 @@ static BOOL http_response_parse_header_status_line(HttpResponse* response, char*
 		long val = strtol(status_code, NULL, 0);
 
 		if ((errno != 0) || (val < 0) || (val > INT16_MAX))
-			return FALSE;
+			goto fail;
 
 		response->StatusCode = strtol(status_code, NULL, 0);
 	}
 	response->ReasonPhrase = reason_phrase;
 
 	if (!response->ReasonPhrase)
-		return FALSE;
+		goto fail;
 
 	*separator = ' ';
-	return TRUE;
+	rc = TRUE;
+fail:
+
+	if (!rc)
+		WLog_ERR(TAG, "http_response_parse_header_status_line failed [%s]", status_line);
+
+	return rc;
 }
 
 static BOOL http_response_parse_header_field(HttpResponse* response, const char* name,
@@ -607,6 +614,7 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 
 static BOOL http_response_parse_header(HttpResponse* response)
 {
+	BOOL rc = FALSE;
 	char c;
 	size_t count;
 	char* line;
@@ -617,13 +625,13 @@ static BOOL http_response_parse_header(HttpResponse* response)
 	char end_of_header_char;
 
 	if (!response)
-		return FALSE;
+		goto fail;
 
 	if (!response->lines)
-		return FALSE;
+		goto fail;
 
 	if (!http_response_parse_header_status_line(response, response->lines[0]))
-		return FALSE;
+		goto fail;
 
 	for (count = 1; count < response->count; count++)
 	{
@@ -656,7 +664,7 @@ static BOOL http_response_parse_header(HttpResponse* response)
 		}
 
 		if (end_of_header == line)
-			return FALSE;
+			goto fail;
 
 		end_of_header_char = *end_of_header;
 		*end_of_header = '\0';
@@ -670,12 +678,18 @@ static BOOL http_response_parse_header(HttpResponse* response)
 		}
 
 		if (!http_response_parse_header_field(response, name, value))
-			return FALSE;
+			goto fail;
 
 		*end_of_header = end_of_header_char;
 	}
 
-	return TRUE;
+	rc = TRUE;
+fail:
+
+	if (!rc)
+		WLog_ERR(TAG, "%s: parsing failed", __FUNCTION__);
+
+	return rc;
 }
 
 BOOL http_response_print(HttpResponse* response)
@@ -752,7 +766,10 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		if (status <= 0)
 		{
 			if (!BIO_should_retry(tls->bio))
+			{
+				WLog_ERR(TAG, "%s: Retries exceeded", __FUNCTION__);
 				goto out_error;
+			}
 
 			USleep(100);
 			continue;
@@ -815,10 +832,6 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		while (line && (response->count > count))
 		{
 			response->lines[count] = line;
-
-			if (!response->lines[count])
-				goto out_error;
-
 			line = strtok(NULL, "\r\n");
 			count++;
 		}
@@ -866,7 +879,10 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			if (status <= 0)
 			{
 				if (!BIO_should_retry(tls->bio))
+				{
+					WLog_ERR(TAG, "%s: Retries exceeded", __FUNCTION__);
 					goto out_error;
+				}
 
 				USleep(100);
 				continue;
@@ -887,8 +903,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 		if (bodyLength != response->BodyLength)
 		{
-			WLog_WARN(TAG, "http_response_recv: %s unexpected body length: actual: %d, expected: %d",
-			          response->ContentType, response->BodyLength, bodyLength);
+			WLog_WARN(TAG, "%s: %s unexpected body length: actual: %d, expected: %d",
+			          __FUNCTION__, response->ContentType, response->BodyLength, bodyLength);
 
 			if (bodyLength > 0)
 				response->BodyLength = MIN(bodyLength, response->BodyLength);
