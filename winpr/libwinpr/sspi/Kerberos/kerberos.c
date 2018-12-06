@@ -506,11 +506,17 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle
 				 * If we use smartcard-logon, the credentials have already
 				 * been acquired by pkinit process. If not, returned error previously.
 				 */
-				if (init_creds(context->credentials->identity.User,
-				               context->credentials->identity.UserLength,
-				               context->credentials->identity.Password,
-				               context->credentials->identity.PasswordLength))
+				if ((context->credentials->identity.User == NULL)
+				    || (context->credentials->identity.UserLength == 0)
+				    || (context->credentials->identity.Password == NULL)
+				    || (context->credentials->identity.PasswordLength == 0)
+				    || init_creds(context->credentials->identity.User,
+				                  context->credentials->identity.UserLength,
+				                  context->credentials->identity.Password,
+				                  context->credentials->identity.PasswordLength))
+				{
 					return SEC_E_NO_CREDENTIALS;
+				}
 
 				WLog_INFO(TAG, "Authenticated to Kerberos v5 via login/password");
 				/* retry GSSAPI call */
