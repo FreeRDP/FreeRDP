@@ -880,6 +880,35 @@ static BOOL xf_rail_window_cached_icon(rdpContext* context,
 static BOOL xf_rail_notify_icon_common(rdpContext* context,
                                        WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
+	xfContext* xfc = NULL;
+	xfAppNotifyIcon* notifyIcon = NULL;
+	xfc = (xfContext*) context;
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
+	{
+		notifyIcon = (xfAppNotifyIcon*) calloc(1, sizeof(xfAppNotifyIcon));
+		notifyIcon->xfc = xfc;
+		notifyIcon->windowId = orderInfo->windowId;
+		notifyIcon->notifyIconId = orderInfo->notifyIconId;
+
+		if (!notifyIcon)
+			return FALSE;
+
+		HashTable_Add(xfc->railNotifyIcons, (void*)(UINT_PTR) orderInfo->notifyIconId,
+		              (void*) notifyIcon);
+		xf_appNotifyIconCreate(xfc, notifyIcon);
+	}
+	else
+	{
+		notifyIcon = (xfAppNotifyIcon*) HashTable_GetItemValue(xfc->railNotifyIcons,
+		             (void*)(UINT_PTR) orderInfo->notifyIconId);
+	}
+
+	if (!notifyIcon)
+	{
+		return FALSE;
+	}
+
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION)
 	{
 	}
@@ -922,6 +951,12 @@ static BOOL xf_rail_notify_icon_update(rdpContext* context,
 static BOOL xf_rail_notify_icon_delete(rdpContext* context,
                                        WINDOW_ORDER_INFO* orderInfo)
 {
+	xfContext* xfc = (xfContext*) context;
+
+	if (!xfc)
+		return FALSE;
+
+	HashTable_Remove(xfc->railNotifyIcons, (void*)(UINT_PTR) orderInfo->notifyIconId);
 	return TRUE;
 }
 
@@ -1222,6 +1257,17 @@ static void rail_window_free(void* value)
 	xf_DestroyWindow(appWindow->xfc, appWindow);
 }
 
+static void rail_notify_icon_free(void* value)
+{
+	xfAppNotifyIcon* icon = (xfAppNotifyIcon*) value;
+
+	if (!icon)
+		return;
+
+	XUnmapWindow(icon->xfc->display, icon->handle);
+	XDestroyWindow(icon->xfc->display, icon->handle);
+}
+
 int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 {
 	rdpContext* context = (rdpContext*) xfc;
@@ -1241,11 +1287,13 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	rail->ServerLanguageBarInfo = xf_rail_server_language_bar_info;
 	rail->ServerGetAppIdResponse = xf_rail_server_get_appid_response;
 	xfc->railWindows = HashTable_New(TRUE);
+	xfc->railNotifyIcons = HashTable_New(TRUE);
 
 	if (!xfc->railWindows)
 		return 0;
 
 	xfc->railWindows->valueFree = rail_window_free;
+	xfc->railNotifyIcons->valueFree = rail_notify_icon_free;
 	xfc->railIconCache = RailIconCache_New(xfc->context.settings);
 
 	if (!xfc->railIconCache)

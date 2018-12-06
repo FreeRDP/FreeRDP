@@ -25,6 +25,7 @@
 #include <freerdp/freerdp.h>
 
 typedef struct xf_app_window xfAppWindow;
+typedef struct xf_app_notify_icon xfAppNotifyIcon;
 
 typedef struct xf_localmove xfLocalMove;
 typedef struct xf_window xfWindow;
@@ -139,6 +140,16 @@ struct xf_app_window
 	BOOL rail_ignore_configure;
 };
 
+struct xf_app_notify_icon
+{
+	xfContext* xfc;
+
+	UINT32 windowId;
+	UINT32 notifyIconId;
+
+	Window handle;
+};
+
 void xf_ewmhints_init(xfContext* xfc);
 
 BOOL xf_GetCurrentDesktop(xfContext* xfc);
@@ -178,5 +189,7 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow,
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y);
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
 xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
+
+BOOL xf_appNotifyIconCreate(xfContext* xfc, xfAppNotifyIcon* icon);
 
 #endif /* FREERDP_CLIENT_X11_WINDOW_H */

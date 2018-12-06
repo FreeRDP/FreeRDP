@@ -989,7 +989,6 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 				xf_SetWindowUnlisted(xfc, appWindow->handle);
 
 			XMapWindow(xfc->display, appWindow->handle);
-
 			break;
 	}
 
@@ -1132,4 +1131,43 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 
 	free(pKeys);
 	return NULL;
+}
+
+BOOL xf_appNotifyIconCreate(xfContext* xfc, xfAppNotifyIcon* icon)
+{
+	XEvent ev;
+	int input_mask;
+	Window win;
+	Window tray;
+	Window root;
+	Atom selection_atom;
+	root = RootWindow(xfc->display, DefaultScreen(xfc->display));
+	win = XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen),
+	                    0, 0, 16, 16,
+	                    0, xfc->depth, InputOutput, xfc->visual,
+	                    CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
+	                    CWBorderPixel | CWWinGravity | CWBitGravity, &xfc->attribs);
+	selection_atom = XInternAtom(xfc->display, "_NET_SYSTEM_TRAY_S0", False);
+	tray = XGetSelectionOwner(xfc->display, selection_atom);
+
+	if (tray != None)
+	{
+		XSelectInput(xfc->display, tray, StructureNotifyMask);
+	}
+
+	memset(&ev, 0, sizeof(ev));
+	ev.xclient.type = ClientMessage;
+	ev.xclient.window = tray;
+	ev.xclient.message_type = XInternAtom(xfc->display, "_NET_SYSTEM_TRAY_OPCODE", False);
+	ev.xclient.format = 32;
+	ev.xclient.data.l[0] = CurrentTime;
+	ev.xclient.data.l[1] = 0;
+	ev.xclient.data.l[2] = win;
+	ev.xclient.data.l[3] = 0;
+	ev.xclient.data.l[4] = 0;
+	XSendEvent(xfc->display, tray, False, NoEventMask, &ev);
+	XMapWindow(xfc->display, win);
+	XSync(xfc->display, False);
+	icon->handle = win;
+	return TRUE;
 }

@@ -226,6 +226,7 @@ struct xf_context
 
 	RailClientContext* rail;
 	wHashTable* railWindows;
+	wHashTable* railNotifyIcons;
 	xfRailIconCache* railIconCache;
 
 	BOOL xkbAvailable;
