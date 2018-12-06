@@ -1155,6 +1155,8 @@ BOOL xf_appNotifyIconCreate(xfContext* xfc, xfAppNotifyIcon* icon)
 		XSelectInput(xfc->display, tray, StructureNotifyMask);
 	}
 
+	input_mask = ButtonPressMask | ButtonReleaseMask;
+	XSelectInput(xfc->display, win, input_mask);
 	memset(&ev, 0, sizeof(ev));
 	ev.xclient.type = ClientMessage;
 	ev.xclient.window = tray;
@@ -1170,4 +1172,28 @@ BOOL xf_appNotifyIconCreate(xfContext* xfc, xfAppNotifyIcon* icon)
 	XSync(xfc->display, False);
 	icon->handle = win;
 	return TRUE;
+}
+
+xfAppNotifyIcon* xf_AppNotifyIconFromX11Window(xfContext* xfc, Window wnd)
+{
+	int index;
+	int count;
+	ULONG_PTR* pKeys = NULL;
+	xfAppNotifyIcon* notifyIcon;
+	count = HashTable_GetKeys(xfc->railNotifyIcons, &pKeys);
+
+	for (index = 0; index < count; index++)
+	{
+		notifyIcon = (xfAppNotifyIcon*) HashTable_GetItemValue(xfc->railNotifyIcons,
+		             (void*) pKeys[index]);
+
+		if (notifyIcon->handle == wnd)
+		{
+			free(pKeys);
+			return notifyIcon;
+		}
+	}
+
+	free(pKeys);
+	return NULL;
 }

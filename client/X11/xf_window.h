@@ -191,5 +191,6 @@ void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
 xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
 
 BOOL xf_appNotifyIconCreate(xfContext* xfc, xfAppNotifyIcon* icon);
+xfAppNotifyIcon* xf_AppNotifyIconFromX11Window(xfContext* xfc, Window wnd);
 
 #endif /* FREERDP_CLIENT_X11_WINDOW_H */

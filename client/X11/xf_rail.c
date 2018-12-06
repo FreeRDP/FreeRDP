@@ -127,6 +127,16 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId,
 	xfc->rail->ClientSystemCommand(xfc->rail, &syscommand);
 }
 
+void xf_rail_send_client_notify_event(xfContext* xfc, UINT32 windowId,
+                                      UINT32 notifyIconId, UINT32 message)
+{
+	RAIL_NOTIFY_EVENT_ORDER notifyEvent;
+	notifyEvent.windowId = windowId;
+	notifyEvent.notifyIconId = notifyIconId;
+	notifyEvent.message = message;
+	xfc->rail->ClientNotifyEvent(xfc->rail, &notifyEvent);
+}
+
 /**
  * The position of the X window can become out of sync with the RDP window
  * if the X window is moved locally by the window manager.  In this event
