@@ -545,7 +545,6 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 {
 	rdpSettings* settings = nla->settings;
 	nla->cred_type = settings->CredentialsType;
-
 #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
 
 	/* gets the UPN settings->UserPrincipalName */
@@ -567,7 +566,8 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	/* 	WLog_INFO(TAG, "NOT WITH_KERBEROS"); */
 	/* #endif */
 #else
-	WLog_ERR(TAG, "Recompile with the PKCS11H and GSSAPI features enabled to authenticate via smartcard.");
+	WLog_ERR(TAG,
+	         "Recompile with the PKCS11H and GSSAPI features enabled to authenticate via smartcard.");
 	return -1;
 #endif
 
@@ -612,23 +612,20 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	}
 
 	CHECK_MEMORY(settings->DomainHint = strdup(settings->Domain),  /* They're freed separately! */
-		-1, "Could not strdup the Domain (length = %d)",
-		strlen(settings->Domain));
-
-
+	             -1, "Could not strdup the Domain (length = %d)",
+	             strlen(settings->Domain));
 	settings->CanonicalizedUserHint = strdup("BOURGUIGNONPA"); /* PJBDEBUG */
 
 	if (settings->CanonicalizedUserHint == NULL)
 	{
 		WLog_ERR(TAG, "Missing Canonicalized User Hint (Domain Hint = %s,  UPN = %s).",
-			settings->DomainHint, settings->UserPrincipalName);
+		         settings->DomainHint, settings->UserPrincipalName);
 		return -1;
 	}
 
 	CHECK_MEMORY((settings->UserHint = strdup(settings->CanonicalizedUserHint)),
-		-1, "Could not strdup the CanonicalizedUserHint (length = %d)",
-		strlen(settings->CanonicalizedUserHint));
-
+	             -1, "Could not strdup the CanonicalizedUserHint (length = %d)",
+	             strlen(settings->CanonicalizedUserHint));
 	WLog_INFO(TAG, "Canonicalized User Hint = %s,  Domain Hint = %s,  UPN = %s",
 	          settings->CanonicalizedUserHint, settings->DomainHint, settings->UserPrincipalName);
 	CHECK_MEMORY((settings->ContainerName = string_concatenate(PREFIX_CONTAINER_NAME,
