@@ -2990,6 +2990,11 @@ static void argv_free(int argc, char** argv)
 	}
 }
 
+/* This function works like strtok except it allows for escape sequences.
+ * Take for example 'sep' as space, 'esc' as quote and 'esc2' as backslash
+ * The sequence 'a" b c \" \\ d" e f "g h"' will return
+ * 'a" b c \" \\ d"', 'e', 'f' and '"g h"'
+ */
 static const char* str_next_token(const char* start, char sep, char esc, char esc2)
 {
 	const char* cur = start;
@@ -3058,7 +3063,7 @@ static char** str_tokenize(const char* first, const char* s, char sep, char esc,
 {
 	char** list = NULL;
 	*count = str_tokens(s, sep, esc, esc2);
-	list = calloc((size_t) * count, sizeof(char*));
+	list = calloc((size_t)(*count), sizeof(char*));
 
 	if (list != NULL)
 	{
