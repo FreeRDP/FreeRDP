@@ -283,6 +283,17 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 	int w, h;
 	rdpSettings* settings = xfc->context.settings;
 
+	if (app)
+	{
+		xfAppNotifyIcon* appNotifyIcon = xf_AppNotifyIconFromX11Window(xfc, event->xany.window);
+
+		if (appNotifyIcon)
+		{
+			xf_appNotifyIconDrawIcon(xfc, appNotifyIcon);
+			return TRUE;
+		}
+	}
+
 	if (!app && (settings->SmartSizing || settings->MultiTouchGestures))
 	{
 		x = 0;

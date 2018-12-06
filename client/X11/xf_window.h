@@ -147,7 +147,9 @@ struct xf_app_notify_icon
 	UINT32 windowId;
 	UINT32 notifyIconId;
 
+	GC gc;
 	Window handle;
+	XImage* image;
 };
 
 void xf_ewmhints_init(xfContext* xfc);
@@ -192,5 +194,6 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
 
 BOOL xf_appNotifyIconCreate(xfContext* xfc, xfAppNotifyIcon* icon);
 xfAppNotifyIcon* xf_AppNotifyIconFromX11Window(xfContext* xfc, Window wnd);
+BOOL xf_appNotifyIconDrawIcon(xfContext* xfc, xfAppNotifyIcon* notifyIcon);
 
 #endif /* FREERDP_CLIENT_X11_WINDOW_H */
