@@ -192,9 +192,6 @@ struct rdp_nla
 	credential_type cred_type;
 };
 
-static const char* PREFIX_CONTAINER_NAME = "0x";
-static const char* PREFIX_PIN_GLOBAL = "CredProv&PIN Global&";
-static const char* TERMSRV_SPN_PREFIX = "TERMSRV/";
 
 static BOOL nla_send(rdpNla* nla);
 static int nla_recv(rdpNla* nla);
