@@ -14,23 +14,25 @@ static void copy_string(char** old_string, char* new_string)
 
 	if (new_string != NULL)
 	{
-		char*   copy = check_memory(strdup(new_string), strlen(new_string));
-		(*old_string) = copy;
+		(*old_string) = check_memory(strdup(new_string), strlen(new_string));
 	}
 }
 
 int get_info_smartcard(rdpSettings* settings)
 {
+	scquery_result identity = NULL;
+
 	if (settings->Pkcs11Module == NULL)
 	{
 		WLog_ERR(TAG, "Missing /pkcs11module");
 		return -1;
 	}
 
-	scquery_result identity = scquery_X509_user_identities(settings->Pkcs11Module,
-	                          settings->ReaderName,
-	                          settings->CardName,
-	                          1 || settings->Krb5Trace);
+	identity = scquery_X509_user_identities(settings->Pkcs11Module,
+		settings->ReaderName,
+		settings->CardName,
+		/* DEBUG */ 1 ||
+		settings->Krb5Trace);
 
 	if (identity == NULL)
 	{

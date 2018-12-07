@@ -114,18 +114,19 @@ scquery_result query_X509_user_identities(const char* module, const char* reader
 		if (upn != NULL)
 		{
 			break;
-		}
+ 		}
 	}
 
 	if ((entry != NULL) && (upn != NULL))
 	{
-		clist = certificate_list_delete(entry, clist);
 		X509_user_identity = string_format("PKCS11:module_name=%s:slotid=%lu:token=%s:certid=%s",
 			module, entry->slot_id, entry->token_label, entry->id);
 
 		if (X509_user_identity != NULL)
 		{
 			result = scquery_result_new(entry, X509_user_identity, upn);
+			/* Remove entry from clist,  since we keep entry in the result,  and we'll free clist. */
+			clist = certificate_list_delete(entry, clist);
 		}
 	}
 	else

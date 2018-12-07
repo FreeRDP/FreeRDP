@@ -17,7 +17,7 @@ typedef struct
 * @param reader_name NULL or a smartcard reader name.
 * @param card_name NULL or a smartcard name.
 * @param verbose non-0 to add some logs.
-* @return A structure containign the X509_user_identity parameter for kinit, and the upn from the selected certificate from the smartcard. The result shall be fredd with  scquery_result_free().
+* @return A structure containign the X509_user_identity parameter for kinit, and the upn from the selected certificate from the smartcard. The result shall be freed with  scquery_result_free().
 */
 scquery_result scquery_X509_user_identities(const char* module, const char* reader_name,
         const char* card_name, int verbose);

@@ -55,9 +55,11 @@ void buffer_free(buffer buffer)
 
 	if (buffer->flags & buffer_flag_allocated)
 	{
+		memset(buffer->data, 0, buffer->size);
 		free(buffer->data);
 	}
 
+	memset(buffer, 0, sizeof (*buffer));
 	free(buffer);
 }
 

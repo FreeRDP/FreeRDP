@@ -93,24 +93,8 @@ buffer buffer_attribute(CK_ULONG attribute, template* template)
 	}
 	else
 	{
-		buffer buffer = checked_malloc(sizeof(*buffer));
-
-		if (buffer == NULL)
-		{
-			return NULL;
-		}
-
-		buffer->size = template->attributes[index].ulValueLen;
-		buffer->data = checked_malloc(buffer->size);
-
-		if (buffer->data == NULL)
-		{
-			free(buffer);
-			return NULL;
-		}
-
-		memcpy(buffer->data, template->attributes[index].pValue, buffer->size);
-		return buffer;
+		return buffer_new_copy(template->attributes[index].ulValueLen,
+			template->attributes[index].pValue);
 	}
 }
 
