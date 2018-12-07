@@ -479,20 +479,23 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 	if (xfc->use_xinput)
 		return TRUE;
 
-	xfAppNotifyIcon* appNotifyIcon = xf_AppNotifyIconFromX11Window(xfc, event->xany.window);
-
-	if (appNotifyIcon)
+	if (app)
 	{
-		int button = event->xbutton.button;
+		xfAppNotifyIcon* appNotifyIcon = xf_AppNotifyIconFromX11Window(xfc, event->xany.window);
 
-		if (button == Button1 || button == Button3)
+		if (appNotifyIcon)
 		{
-			xf_rail_send_client_notify_event(xfc, appNotifyIcon->windowId,
-			                                 appNotifyIcon->notifyIconId,
-			                                 button == Button1 ? WM_LBUTTONDOWN : WM_RBUTTONDOWN);
-		}
+			int button = event->xbutton.button;
 
-		return TRUE;
+			if (button == Button1 || button == Button3)
+			{
+				xf_rail_send_client_notify_event(xfc, appNotifyIcon->windowId,
+				                                 appNotifyIcon->notifyIconId,
+				                                 button == Button1 ? WM_LBUTTONDOWN : WM_RBUTTONDOWN);
+			}
+
+			return TRUE;
+		}
 	}
 
 	return xf_generic_ButtonPress(xfc, event->xbutton.x, event->xbutton.y,
@@ -567,20 +570,23 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
 	if (xfc->use_xinput)
 		return TRUE;
 
-	xfAppNotifyIcon* appNotifyIcon = xf_AppNotifyIconFromX11Window(xfc, event->xany.window);
-
-	if (appNotifyIcon)
+	if (app)
 	{
-		int button = event->xbutton.button;
+		xfAppNotifyIcon* appNotifyIcon = xf_AppNotifyIconFromX11Window(xfc, event->xany.window);
 
-		if (button == Button1 || button == Button3)
+		if (appNotifyIcon)
 		{
-			xf_rail_send_client_notify_event(xfc, appNotifyIcon->windowId,
-			                                 appNotifyIcon->notifyIconId,
-			                                 button == Button1 ? WM_LBUTTONUP : WM_RBUTTONUP);
-		}
+			int button = event->xbutton.button;
 
-		return TRUE;
+			if (button == Button1 || button == Button3)
+			{
+				xf_rail_send_client_notify_event(xfc, appNotifyIcon->windowId,
+				                                 appNotifyIcon->notifyIconId,
+				                                 button == Button1 ? WM_LBUTTONUP : WM_RBUTTONUP);
+			}
+
+			return TRUE;
+		}
 	}
 
 	return xf_generic_ButtonRelease(xfc, event->xbutton.x, event->xbutton.y,
