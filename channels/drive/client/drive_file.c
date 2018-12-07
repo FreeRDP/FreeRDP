@@ -784,14 +784,14 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 			Stream_Write_UINT32(output, 68 + length); /* Length */
 			Stream_Write_UINT32(output, 0); /* NextEntryOffset */
 			Stream_Write_UINT32(output, 0); /* FileIndex */
-			Stream_Write_UINT32(output, file->find_data.ftCreationTime.dwHighDateTime); /* CreationTime */
 			Stream_Write_UINT32(output, file->find_data.ftCreationTime.dwLowDateTime); /* CreationTime */
-			Stream_Write_UINT32(output, file->find_data.ftLastAccessTime.dwHighDateTime); /* LastAccessTime */
+			Stream_Write_UINT32(output, file->find_data.ftCreationTime.dwHighDateTime); /* CreationTime */			
 			Stream_Write_UINT32(output, file->find_data.ftLastAccessTime.dwLowDateTime); /* LastAccessTime */
-			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwHighDateTime); /* LastWriteTime */
+			Stream_Write_UINT32(output, file->find_data.ftLastAccessTime.dwHighDateTime); /* LastAccessTime */
 			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwLowDateTime); /* LastWriteTime */
-			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwHighDateTime); /* ChangeTime */
+			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwHighDateTime); /* LastWriteTime */
 			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwLowDateTime); /* ChangeTime */
+			Stream_Write_UINT32(output, file->find_data.ftLastWriteTime.dwHighDateTime); /* ChangeTime */
 			Stream_Write_UINT32(output, file->find_data.nFileSizeLow); /* EndOfFile */
 			Stream_Write_UINT32(output, file->find_data.nFileSizeHigh); /* EndOfFile */
 			Stream_Write_UINT32(output, file->find_data.nFileSizeLow); /* AllocationSize */
@@ -846,6 +846,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 			break;
 
 		default:
+			WLog_ERR(TAG, "unhandled FsInformationClass %"PRIu32, FsInformationClass);
 			/* Unhandled FsInformationClass */
 			goto out_fail;
 	}
