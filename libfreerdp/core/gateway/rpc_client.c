@@ -650,33 +650,41 @@ static int rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 
 	if (response)
 	{
-		if (nextOutChannel->State == CLIENT_OUT_CHANNEL_STATE_SECURITY)
+		switch (nextOutChannel->State)
 		{
-			if (rpc_ncacn_http_recv_out_channel_response(&nextOutChannel->common, response))
-			{
-				if (rpc_ncacn_http_send_out_channel_request(&nextOutChannel->common, TRUE))
+			case  CLIENT_OUT_CHANNEL_STATE_SECURITY:
+				if (rpc_ncacn_http_recv_out_channel_response(&nextOutChannel->common, response))
 				{
-					rpc_ncacn_http_ntlm_uninit(&nextOutChannel->common);
-					status = rts_send_OUT_R1_A3_pdu(rpc);
-
-					if (status >= 0)
+					if (rpc_ncacn_http_send_out_channel_request(&nextOutChannel->common, TRUE))
 					{
-						rpc_out_channel_transition_to_state(nextOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_A6W);
+						rpc_ncacn_http_ntlm_uninit(&nextOutChannel->common);
+						status = rts_send_OUT_R1_A3_pdu(rpc);
+
+						if (status >= 0)
+						{
+							rpc_out_channel_transition_to_state(nextOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_A6W);
+						}
+						else
+						{
+							WLog_ERR(TAG, "rts_send_OUT_R1/A3_pdu failure");
+						}
 					}
 					else
 					{
-						WLog_ERR(TAG, "rts_send_OUT_R1/A3_pdu failure");
+						WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 					}
 				}
 				else
 				{
-					WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
+					WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
 				}
-			}
-			else
-			{
-				WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
-			}
+
+				break;
+
+			default:
+				WLog_ERR(TAG, "rpc_client_nondefault_out_channel_recv: Unexpected message %08"PRIx32,
+				         nextOutChannel->State);
+				return -1;
 		}
 
 		http_response_free(response);

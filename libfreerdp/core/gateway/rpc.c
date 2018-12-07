@@ -345,6 +345,7 @@ SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length)
 	if (BIO_should_retry(channel->tls->bio))
 		return 0;
 
+	WLog_ERR(TAG, "rpc_channel_read: Out of retries");
 	return -1;
 }
 
