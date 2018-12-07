@@ -648,7 +648,7 @@ static void fill_gdi_palette_for_icon(ICON_INFO* iconInfo, gdiPalette* palette)
 	}
 }
 
-static BOOL convert_icon_color_to_argb(ICON_INFO* iconInfo, BYTE* argbPixels)
+static BOOL convert_icon_color_to_format(ICON_INFO* iconInfo, DWORD dstFormat, BYTE* dstPixels)
 {
 	DWORD format;
 	gdiPalette palette;
@@ -695,8 +695,8 @@ static BOOL convert_icon_color_to_argb(ICON_INFO* iconInfo, BYTE* argbPixels)
 
 	fill_gdi_palette_for_icon(iconInfo, &palette);
 	return freerdp_image_copy(
-	           argbPixels,
-	           PIXEL_FORMAT_ARGB32,
+	           dstPixels,
+	           dstFormat,
 	           0, 0, 0,
 	           iconInfo->width,
 	           iconInfo->height,
@@ -708,21 +708,14 @@ static BOOL convert_icon_color_to_argb(ICON_INFO* iconInfo, BYTE* argbPixels)
 	       );
 }
 
-static void convert_argb_to_bgra(BYTE* argbPixels, BYTE* bgraPixels, int len)
+static BOOL convert_icon_color_to_argb(ICON_INFO* iconInfo, BYTE* argbPixels)
 {
-	BYTE* nextPixel;
-	nextPixel = argbPixels;
+	return convert_icon_color_to_format(iconInfo, PIXEL_FORMAT_ARGB32, argbPixels);
+}
 
-	for (int i = 0; i < len;)
-	{
-		UINT32 color = ReadColor(nextPixel, PIXEL_FORMAT_ARGB32);
-		bgraPixels[i] = (color & 0x000000FF);
-		bgraPixels[i + 1] = ((color & 0x0000FF00) >> 8);
-		bgraPixels[i + 2] = ((color & 0x00FF0000) >> 16);
-		bgraPixels[i + 3] = ((color & 0xFF000000) >> 24);
-		nextPixel += 4;
-		i += 4;
-	}
+static BOOL convert_icon_color_to_bgra(ICON_INFO* iconInfo, BYTE* bgraPixels)
+{
+	return convert_icon_color_to_format(iconInfo, PIXEL_FORMAT_BGRA32, bgraPixels);
 }
 
 static inline UINT32 div_ceil(UINT32 a, UINT32 b)
@@ -955,40 +948,29 @@ static BOOL xf_rail_notify_icon_common(rdpContext* context,
 	if (orderInfo->fieldFlags & WINDOW_ORDER_ICON)
 	{
 		ICON_INFO icon;
-		BYTE* argbPixels;
-		BYTE* pixels;
+		BYTE* bgraPixels = NULL;
 		XImage* image = NULL;
+		BOOL status = FALSE;
 		icon = notifyIconState->icon;
-		argbPixels = calloc(icon.width * icon.height, 4);
+		bgraPixels = calloc(icon.width * icon.height, 4);
+		status = convert_icon_color_to_bgra(&icon, bgraPixels);
 
-		if (!argbPixels)
-			return FALSE;
-
-		if (!convert_icon_color_to_argb(&icon, argbPixels))
+		if (!status)
 		{
-			free(argbPixels);
+			WLog_WARN(TAG, "failed to convert notification icon image");
+			free(bgraPixels);
 			return FALSE;
 		}
 
-		apply_icon_alpha_mask(&icon, argbPixels);
-		pixels = calloc(icon.width * icon.height, 4);
-
-		if (!pixels)
-		{
-			free(argbPixels);
-			return FALSE;
-		}
-
-		convert_argb_to_bgra(argbPixels, pixels, icon.width * icon.height * 4);
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
-		                     ZPixmap, 0, (char*) pixels, icon.width, icon.height,
+		                     ZPixmap, 0, (char*) bgraPixels, icon.width, icon.height,
 		                     xfc->scanline_pad, 0);
 
 		if (notifyIcon->image)
 			XDestroyImage(notifyIcon->image);
 
 		notifyIcon->image = image;
-		free(argbPixels);
+		// bgraPixels will be freed by XDestroyImage.
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
