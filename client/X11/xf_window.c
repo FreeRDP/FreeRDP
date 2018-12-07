@@ -1120,8 +1120,7 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 
 	for (index = 0; index < count; index++)
 	{
-		appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
-		            (void*) pKeys[index]);
+		appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows, (void*) pKeys[index]);
 
 		if (appWindow->handle == wnd)
 		{
