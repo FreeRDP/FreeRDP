@@ -907,13 +907,13 @@ static BOOL xf_rail_notify_icon_common(rdpContext* context,
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
 		notifyIcon = (xfAppNotifyIcon*) calloc(1, sizeof(xfAppNotifyIcon));
-		notifyIcon->xfc = xfc;
-		notifyIcon->windowId = orderInfo->windowId;
-		notifyIcon->notifyIconId = orderInfo->notifyIconId;
 
 		if (!notifyIcon)
 			return FALSE;
 
+		notifyIcon->xfc = xfc;
+		notifyIcon->windowId = orderInfo->windowId;
+		notifyIcon->notifyIconId = orderInfo->notifyIconId;
 		HashTable_Add(xfc->railNotifyIcons, (void*)(UINT_PTR) orderInfo->notifyIconId,
 		              (void*) notifyIcon);
 		xf_appNotifyIconCreate(xfc, notifyIcon);
@@ -1310,6 +1310,7 @@ static void rail_notify_icon_free(void* value)
 
 	XUnmapWindow(icon->xfc->display, icon->handle);
 	XDestroyWindow(icon->xfc->display, icon->handle);
+	free(icon);
 }
 
 int xf_rail_init(xfContext* xfc, RailClientContext* rail)
