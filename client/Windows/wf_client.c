@@ -286,7 +286,7 @@ static WCHAR* wf_window_get_title(rdpSettings* settings)
 	BOOL port;
 	WCHAR* windowTitle;
 	size_t size;
-	WCHAR* name;
+	char* name;
 	WCHAR prefix[] = L"FreeRDP:";
 
 	if (!settings)
@@ -309,9 +309,9 @@ static WCHAR* wf_window_get_title(rdpSettings* settings)
 		return NULL;
 
 	if (!port)
-		_snwprintf_s(windowTitle, size, _TRUNCATE, L"%S %S", prefix, name);
+		_snwprintf_s(windowTitle, size, _TRUNCATE, L"%s %S", prefix, name);
 	else
-		_snwprintf_s(windowTitle, size, _TRUNCATE, L"%S %S:%u", prefix, name, settings->ServerPort);
+		_snwprintf_s(windowTitle, size, _TRUNCATE, L"%s %S:%u", prefix, name, settings->ServerPort);
 
 	return windowTitle;
 }
