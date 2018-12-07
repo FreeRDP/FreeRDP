@@ -1404,7 +1404,7 @@ static int nla_server_authenticate(rdpNla* nla)
 		nla->outputBufferDesc.pBuffers = &nla->outputBuffer;
 		nla->outputBuffer.BufferType = SECBUFFER_TOKEN;
 		nla->outputBuffer.cbBuffer = nla->cbMaxToken;
-		nla->outputBuffer.pvBuffer = malloc(nla->outputBuffer.cbBuffer);
+		nla->outputBuffer.pvBuffer = calloc(nla->outputBuffer.cbBuffer, 1);
 
 		if (!nla->outputBuffer.pvBuffer)
 			return -1;
