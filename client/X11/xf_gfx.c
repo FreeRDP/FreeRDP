@@ -162,7 +162,6 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
 	RECTANGLE_16 intersection;
 	UINT16* pSurfaceIds = NULL;
 	RdpgfxClientContext* context = xfc->context.gdi->gfx;
-	EnterCriticalSection(&context->mux);
 	invalidRect.left = x;
 	invalidRect.top = y;
 	invalidRect.right = x + width;
@@ -171,6 +170,8 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
 
 	if (status != CHANNEL_RC_OK)
 		goto fail;
+
+	EnterCriticalSection(&context->mux);
 
 	for (index = 0; index < count; index++)
 	{
@@ -198,13 +199,13 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
 	}
 
 	free(pSurfaceIds);
+	LeaveCriticalSection(&context->mux);
 	IFCALLRET(context->UpdateSurfaces, status, context);
 
 	if (status != CHANNEL_RC_OK)
 		goto fail;
 
 fail:
-	LeaveCriticalSection(&context->mux);
 	return status;
 }
 

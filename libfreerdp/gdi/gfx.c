@@ -167,6 +167,7 @@ static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 	if (!gdi->graphicsReset)
 		return CHANNEL_RC_OK;
 
+	EnterCriticalSection(&context->mux);
 	context->GetSurfaceIds(context, &pSurfaceIds, &count);
 	status = CHANNEL_RC_OK;
 
@@ -184,6 +185,7 @@ static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 	}
 
 	free(pSurfaceIds);
+	LeaveCriticalSection(&context->mux);
 	return status;
 }
 
@@ -965,16 +967,15 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context,
 	if (status != CHANNEL_RC_OK)
 		goto fail;
 
+	LeaveCriticalSection(&context->mux);
+
 	if (!gdi->inGfxFrame)
 	{
 		status = CHANNEL_RC_NOT_INITIALIZED;
 		IFCALLRET(context->UpdateSurfaces, status, context);
 	}
 
-	if (status != CHANNEL_RC_OK)
-		goto fail;
-
-	status = CHANNEL_RC_OK;
+	return status;
 fail:
 	LeaveCriticalSection(&context->mux);
 	return status;
@@ -1042,16 +1043,15 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 			goto fail;
 	}
 
+	LeaveCriticalSection(&context->mux);
+
 	if (!gdi->inGfxFrame)
 	{
 		status = CHANNEL_RC_NOT_INITIALIZED;
 		IFCALLRET(context->UpdateSurfaces, status, context);
-
-		if (status != CHANNEL_RC_OK)
-			goto fail;
 	}
 
-	status = CHANNEL_RC_OK;
+	return status;
 fail:
 	LeaveCriticalSection(&context->mux);
 	return status;
@@ -1152,6 +1152,8 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 			goto fail;
 	}
 
+	LeaveCriticalSection(&context->mux);
+
 	if (!gdi->inGfxFrame)
 	{
 		status = CHANNEL_RC_NOT_INITIALIZED;
@@ -1160,6 +1162,7 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 	else
 		status = CHANNEL_RC_OK;
 
+	return status;
 fail:
 	LeaveCriticalSection(&context->mux);
 	return status;
