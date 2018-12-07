@@ -59,6 +59,7 @@ void buffer_free(buffer buffer)
 		free(buffer->data);
 	}
 
+	memset(buffer, 0, sizeof (*buffer));
 	free(buffer);
 }
 
