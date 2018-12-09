@@ -970,7 +970,7 @@ static BOOL xf_rail_notify_icon_common(rdpContext* context,
 			XDestroyImage(notifyIcon->image);
 
 		notifyIcon->image = image;
-		// bgraPixels will be freed by XDestroyImage.
+		/* bgraPixels will be freed by XDestroyImage. */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
