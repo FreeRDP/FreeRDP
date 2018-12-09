@@ -43,6 +43,16 @@ UINT32 HashTable_PointerHash(void* pointer)
 	return ((UINT32)(UINT_PTR) pointer) >> 4;
 }
 
+BOOL HashTable_UINT32Compare(void* uint32_1, void* uint32_2)
+{
+	return (uint32_1 == uint32_2);
+}
+
+UINT32 HashTable_UINT32Hash(void* key)
+{
+	return (UINT32)key + 1;
+}
+
 BOOL HashTable_StringCompare(void* string1, void* string2)
 {
 	if (!string1 || !string2)

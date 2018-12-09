@@ -358,6 +358,9 @@ WINPR_API int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys);
 WINPR_API UINT32 HashTable_PointerHash(void* pointer);
 WINPR_API BOOL HashTable_PointerCompare(void* pointer1, void* pointer2);
 
+WINPR_API UINT32 HashTable_UINT32Hash(void* key);
+WINPR_API BOOL HashTable_UINT32Compare(void* uint32_1, void* uint32_2);
+
 WINPR_API UINT32 HashTable_StringHash(void* key);
 WINPR_API BOOL HashTable_StringCompare(void* string1, void* string2);
 WINPR_API void* HashTable_StringClone(void* str);
