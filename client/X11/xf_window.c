@@ -1201,6 +1201,8 @@ xfAppNotifyIcon* xf_AppNotifyIconFromX11Window(xfContext* xfc, Window wnd)
 BOOL xf_appNotifyIconDrawIcon(xfContext* xfc, xfAppNotifyIcon* notifyIcon)
 {
 	XGCValues gcv;
+	XWindowAttributes wa;
+	int drawX, drawY;
 
 	if (!notifyIcon->gc)
 	{
@@ -1209,7 +1211,17 @@ BOOL xf_appNotifyIconDrawIcon(xfContext* xfc, xfAppNotifyIcon* notifyIcon)
 		                           &gcv);
 	}
 
+	ZeroMemory(&wa, sizeof(wa));
+
+	if (!XGetWindowAttributes(xfc->display, notifyIcon->handle, &wa))
+	{
+		return FALSE;
+	}
+
+	drawX = (wa.width - notifyIcon->image->width) / 2;
+	drawY = (wa.height - notifyIcon->image->height) / 2;
 	XPutImage(xfc->display, notifyIcon->handle, notifyIcon->gc,
-	          notifyIcon->image, 0, 0, 0, 0, notifyIcon->image->width, notifyIcon->image->height);
+	          notifyIcon->image, 0, 0, drawX, drawY,
+	          notifyIcon->image->width, notifyIcon->image->height);
 	return TRUE;
 }
