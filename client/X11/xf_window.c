@@ -1168,6 +1168,11 @@ BOOL xf_appNotifyIconCreate(xfContext* xfc, xfAppNotifyIcon* icon)
 	ev.xclient.data.l[3] = 0;
 	ev.xclient.data.l[4] = 0;
 	XSendEvent(xfc->display, tray, False, NoEventMask, &ev);
+	XSync(xfc->display, False);
+	/* FIXME if we don't do sleep here, the tray icon window will be end up
+	 * with a tray icon _AND_ a strange window.
+	 * Got the `usleep(10000)` code from https://stackoverflow.com/questions/45392284/ */
+	usleep(10000);
 	XMapWindow(xfc->display, win);
 	XSync(xfc->display, False);
 	icon->handle = win;
