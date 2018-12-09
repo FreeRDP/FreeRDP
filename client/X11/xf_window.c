@@ -1137,17 +1137,17 @@ BOOL xf_appNotifyIconCreate(xfContext* xfc, xfAppNotifyIcon* icon)
 {
 	XEvent ev;
 	int input_mask;
-	Window win;
-	Window tray;
-	Window root;
+	Window win, tray, root;
 	Atom selection_atom;
-	root = RootWindow(xfc->display, DefaultScreen(xfc->display));
-	win = XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen),
+	char str_selection_atom[32];
+	root = RootWindowOfScreen(xfc->screen);
+	win = XCreateWindow(xfc->display, root,
 	                    0, 0, 16, 16,
 	                    0, xfc->depth, InputOutput, xfc->visual,
 	                    CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
 	                    CWBorderPixel | CWWinGravity | CWBitGravity, &xfc->attribs);
-	selection_atom = XInternAtom(xfc->display, "_NET_SYSTEM_TRAY_S0", False);
+	sprintf(str_selection_atom, "_NET_SYSTEM_TRAY_S%d", xfc->screen_number);
+	selection_atom = XInternAtom(xfc->display, str_selection_atom, False);
 	tray = XGetSelectionOwner(xfc->display, selection_atom);
 
 	if (tray != None)
