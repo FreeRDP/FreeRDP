@@ -371,70 +371,50 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, XEvent* event, BOOL app)
 	return xf_generic_MotionNotify(xfc, event->xmotion.x, event->xmotion.y,
 	                               event->xmotion.state, event->xmotion.window, app);
 }
-BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button,
-                            Window window, BOOL app)
+
+BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button,
+                            Window window, BOOL app, BOOL down)
 {
-	int flags;
-	BOOL wheel;
-	BOOL extended;
+	UINT16 flags = 0;
 	rdpInput* input;
 	Window childWindow;
-	wheel = FALSE;
-	extended = FALSE;
-	input = xfc->context.input;
+	size_t i;
 
-	switch (button)
+	for (i = 0; i < ARRAYSIZE(xfc->button_map); i++)
 	{
-		case Button1:
-		case Button2:
-		case Button3:
-			flags = PTR_FLAGS_DOWN | xfc->button_map[button - BUTTON_BASE];
-			break;
+		const button_map* cur = &xfc->button_map[i];
 
-		case 4:
-			wheel = TRUE;
-			flags = PTR_FLAGS_WHEEL | 0x0078;
+		if (cur->button == button)
+		{
+			flags = cur->flags;
 			break;
-
-		case 5:
-			wheel = TRUE;
-			flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0078;
-			break;
-
-		case 8:		/* back */
-		case 97:	/* Xming */
-			extended = TRUE;
-			flags = PTR_XFLAGS_DOWN | PTR_XFLAGS_BUTTON1;
-			break;
-
-		case 9:		/* forward */
-		case 112:	/* Xming */
-			extended = TRUE;
-			flags = PTR_XFLAGS_DOWN | PTR_XFLAGS_BUTTON2;
-			break;
-
-		case 6:		/* wheel left */
-			wheel = TRUE;
-			flags = PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0078;
-			break;
-
-		case 7:		/* wheel right */
-			wheel = TRUE;
-			flags = PTR_FLAGS_HWHEEL | 0x0078;
-			break;
-
-		default:
-			x = 0;
-			y = 0;
-			flags = 0;
-			break;
+		}
 	}
+
+	input = xfc->context.input;
 
 	if (flags != 0)
 	{
-		if (wheel)
+		BOOL extended = FALSE;
+
+		if (flags & (PTR_XFLAGS_BUTTON1 | PTR_XFLAGS_BUTTON1))
 		{
-			freerdp_input_send_mouse_event(input, flags, 0, 0);
+			extended = TRUE;
+
+			if (down)
+				flags |= PTR_XFLAGS_DOWN;
+		}
+
+		if (flags & (PTR_FLAGS_BUTTON1 | PTR_FLAGS_BUTTON2 | PTR_FLAGS_BUTTON3))
+		{
+			if (down)
+				flags |= PTR_FLAGS_DOWN;
+		}
+
+		if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
+		{
+			if (down)
+				freerdp_input_send_mouse_event(input, flags, 0, 0);
 		}
 		else
 		{
@@ -466,80 +446,17 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 	if (xfc->use_xinput)
 		return TRUE;
 
-	return xf_generic_ButtonPress(xfc, event->xbutton.x, event->xbutton.y,
-	                              event->xbutton.button, event->xbutton.window, app);
+	return xf_generic_ButtonEvent(xfc, event->xbutton.x, event->xbutton.y,
+	                              event->xbutton.button, event->xbutton.window, app, TRUE);
 }
-BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button,
-                              Window window, BOOL app)
-{
-	int flags = 0;
-	BOOL extended = FALSE;
-	rdpInput* input;
-	Window childWindow;
 
-	if (!xfc || !xfc->context.input)
-		return FALSE;
-
-	input = xfc->context.input;
-
-	switch (button)
-	{
-		case Button1:
-		case Button2:
-		case Button3:
-			flags = xfc->button_map[button - BUTTON_BASE];
-			break;
-
-		case 6:
-		case 8:
-		case 97:
-			extended = TRUE;
-			flags = PTR_XFLAGS_BUTTON1;
-			break;
-
-		case 7:
-		case 9:
-		case 112:
-			extended = TRUE;
-			flags = PTR_XFLAGS_BUTTON2;
-			break;
-
-		default:
-			flags = 0;
-			break;
-	}
-
-	if (flags != 0)
-	{
-		if (app)
-		{
-			/* make sure window exists */
-			if (!xf_AppWindowFromX11Window(xfc, window))
-				return TRUE;
-
-			/* Translate to desktop coordinates */
-			XTranslateCoordinates(xfc->display, window,
-			                      RootWindowOfScreen(xfc->screen),
-			                      x, y, &x, &y, &childWindow);
-		}
-
-		xf_event_adjust_coordinates(xfc, &x, &y);
-
-		if (extended)
-			freerdp_input_send_extended_mouse_event(input, flags, x, y);
-		else
-			freerdp_input_send_mouse_event(input, flags, x, y);
-	}
-
-	return TRUE;
-}
 static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (xfc->use_xinput)
 		return TRUE;
 
-	return xf_generic_ButtonRelease(xfc, event->xbutton.x, event->xbutton.y,
-	                                event->xbutton.button, event->xbutton.window, app);
+	return xf_generic_ButtonEvent(xfc, event->xbutton.x, event->xbutton.y,
+	                              event->xbutton.button, event->xbutton.window, app, FALSE);
 }
 static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
 {
