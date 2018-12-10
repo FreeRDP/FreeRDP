@@ -268,7 +268,11 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
  * to the output buffer, and should match the value obtained on the first call to WideCharToMultiByte.
  *
  */
-
+/* TODO: https://github.com/FreeRDP/FreeRDP/issues/5121
+ *
+ * Seems like we get invalid unicode sequences from certain servers sometimes.
+ * As a temporary fix ignore these errors and return whatever was successfully
+ * converted. */
 int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
                         LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar)
 {
@@ -329,7 +333,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 		{
 			u_strToUTF8(targetStart, targetCapacity, &targetLength,
 			            lpWideCharStr, cchWideChar, &error);
-			cbMultiByte = U_SUCCESS(error) ? targetLength : 0;
+			cbMultiByte = targetLength;
 		}
 	}
 #else
@@ -339,7 +343,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 		sourceStart = (WCHAR*) lpWideCharStr;
 		targetStart = (BYTE*) NULL;
 		result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar],
-		                            &targetStart, NULL, strictConversion);
+		                            &targetStart, NULL, lenientConversion);
 		length = targetStart - ((BYTE*) NULL);
 	}
 	else
@@ -347,7 +351,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 		sourceStart = (WCHAR*) lpWideCharStr;
 		targetStart = (BYTE*) lpMultiByteStr;
 		result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar],
-		                            &targetStart, &targetStart[cbMultiByte], strictConversion);
+		                            &targetStart, &targetStart[cbMultiByte], lenientConversion);
 		length = targetStart - ((BYTE*) lpMultiByteStr);
 	}
 
