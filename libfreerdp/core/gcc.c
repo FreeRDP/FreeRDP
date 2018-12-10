@@ -1872,7 +1872,7 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs,
 
 void gcc_write_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
 {
-	int i;
+	UINT32 i;
 	UINT16 length;
 	rdpSettings* settings = mcs->settings;
 

@@ -78,11 +78,10 @@ struct wf_context
 
 	int offset_x;
 	int offset_y;
-	int fs_toggle;
+	int fullscreen_toggle;
 	int fullscreen;
-	int floatbar_active;
 	int percentscreen;
-	char window_title[64];
+	WCHAR* window_title;
 	int client_x;
 	int client_y;
 	int client_width;
@@ -129,7 +128,7 @@ struct wf_context
 	void* clipboard;
 	CliprdrClientContext* cliprdr;
 
-	FloatBar* floatbar;
+	wfFloatBar* floatbar;
 
 	RailClientContext* rail;
 	wHashTable* railWindows;

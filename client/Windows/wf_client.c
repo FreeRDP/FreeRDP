@@ -193,11 +193,7 @@ static BOOL wf_pre_connect(freerdp* instance)
 	settings->OsMajorType = OSMAJORTYPE_WINDOWS;
 	settings->OsMinorType = OSMINORTYPE_WINDOWS_NT;
 	wfc->fullscreen = settings->Fullscreen;
-	wfc->floatbar_active = settings->Floatbar;
-
-	if (wfc->fullscreen)
-		wfc->fs_toggle = 1;
-
+	wfc->fullscreen_toggle = settings->ToggleFullscreen;
 	desktopWidth = settings->DesktopWidth;
 	desktopHeight = settings->DesktopHeight;
 
@@ -259,8 +255,15 @@ static BOOL wf_pre_connect(freerdp* instance)
 
 static void wf_add_system_menu(wfContext* wfc)
 {
-	HMENU hMenu = GetSystemMenu(wfc->hwnd, FALSE);
+	HMENU hMenu;
 	MENUITEMINFO item_info;
+
+	if (wfc->fullscreen && !wfc->fullscreen_toggle)
+	{
+		return;
+	}
+
+	hMenu = GetSystemMenu(wfc->hwnd, FALSE);
 	ZeroMemory(&item_info, sizeof(MENUITEMINFO));
 	item_info.fMask = MIIM_CHECKMARKS | MIIM_FTYPE | MIIM_ID | MIIM_STRING |
 	                  MIIM_DATA;
@@ -278,6 +281,40 @@ static void wf_add_system_menu(wfContext* wfc)
 	}
 }
 
+static WCHAR* wf_window_get_title(rdpSettings* settings)
+{
+	BOOL port;
+	WCHAR* windowTitle = NULL;
+	size_t size;
+	char* name;
+	WCHAR prefix[] = L"FreeRDP:";
+
+	if (!settings)
+		return NULL;
+
+	name = settings->ServerHostname;
+
+	if (settings->WindowTitle)
+	{
+		ConvertToUnicode(CP_UTF8, 0, settings->WindowTitle, -1, &windowTitle, 0);
+		return windowTitle;
+	}
+
+	port = (settings->ServerPort != 3389);
+	size = wcslen(name) + 16 + wcslen(prefix);
+	windowTitle = calloc(size, sizeof(WCHAR));
+
+	if (!windowTitle)
+		return NULL;
+
+	if (!port)
+		_snwprintf_s(windowTitle, size, _TRUNCATE, L"%s %S", prefix, name);
+	else
+		_snwprintf_s(windowTitle, size, _TRUNCATE, L"%s %S:%u", prefix, name, settings->ServerPort);
+
+	return windowTitle;
+}
+
 static BOOL wf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
@@ -285,7 +322,6 @@ static BOOL wf_post_connect(freerdp* instance)
 	rdpCache* cache;
 	wfContext* wfc;
 	rdpContext* context;
-	WCHAR lpWindowName[512];
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
 	const UINT32 format = PIXEL_FORMAT_BGRX32;
@@ -306,14 +342,10 @@ static BOOL wf_post_connect(freerdp* instance)
 		wf_gdi_register_update_callbacks(instance->update);
 	}
 
-	if (settings->WindowTitle != NULL)
-		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"%S", settings->WindowTitle);
-	else if (settings->ServerPort == 3389)
-		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"FreeRDP: %S",
-		             settings->ServerHostname);
-	else
-		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"FreeRDP: %S:%u",
-		             settings->ServerHostname, settings->ServerPort);
+	wfc->window_title = wf_window_get_title(settings);
+
+	if (!wfc->window_title)
+		return FALSE;
 
 	if (settings->EmbeddedWindow)
 		settings->Decorations = FALSE;
@@ -328,7 +360,7 @@ static BOOL wf_post_connect(freerdp* instance)
 
 	if (!wfc->hwnd)
 	{
-		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, lpWindowName,
+		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, wfc->window_title,
 		                           dwStyle,
 		                           0, 0, 0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
 		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);
@@ -361,14 +393,19 @@ static BOOL wf_post_connect(freerdp* instance)
 		palette_cache_register_callbacks(instance->update);
 	}
 
-	if (wfc->fullscreen)
-		floatbar_window_create(wfc);
-
+	wfc->floatbar = wf_floatbar_new(wfc, wfc->hInstance, settings->Floatbar);
 	return TRUE;
 }
 
 static BOOL wf_post_disconnect(freerdp* instance)
 {
+	wfContext* wfc;
+
+	if (!instance || !instance->context || !instance->settings)
+		return FALSE;
+
+	wfc = (wfContext*) instance->context;
+	free(wfc->window_title);
 	return TRUE;
 }
 
