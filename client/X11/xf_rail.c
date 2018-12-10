@@ -222,7 +222,7 @@ static void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 
 	for (index = 0; index < count; index++)
 	{
-		appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows, (void *)pKeys[index]);
+		appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows, (void*)pKeys[index]);
 
 		if (appWindow)
 		{
@@ -1075,7 +1075,8 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 	Window child_window;
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context->custom;
-	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows, (void *)&localMoveSize->windowId);
+	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
+	            (void*)&localMoveSize->windowId);
 
 	if (!appWindow)
 		return ERROR_INTERNAL_ERROR;
@@ -1170,7 +1171,7 @@ static UINT xf_rail_server_min_max_info(RailClientContext* context,
 {
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context->custom;
-	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows, (void *)&minMaxInfo->windowId);
+	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows, (void*)&minMaxInfo->windowId);
 
 	if (appWindow)
 	{
@@ -1206,9 +1207,14 @@ static UINT xf_rail_server_get_appid_response(RailClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-static BOOL rail_window_key_equals(void *key1, void* key2)
+static BOOL rail_window_key_equals(void* key1, void* key2)
 {
-	return *(UINT32 *)key1 == *(UINT32 *)key2;
+	return *(UINT32*)key1 == *(UINT32*)key2;
+}
+
+static UINT32 rail_window_key_hash(void* key)
+{
+	return *(UINT32*)key;
 }
 
 static void rail_window_free(void* value)
@@ -1239,13 +1245,14 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	rail->ServerMinMaxInfo = xf_rail_server_min_max_info;
 	rail->ServerLanguageBarInfo = xf_rail_server_language_bar_info;
 	rail->ServerGetAppIdResponse = xf_rail_server_get_appid_response;
-
 	xfc->railWindows = HashTable_New(TRUE);
+
 	if (!xfc->railWindows)
 		return 0;
-	xfc->railWindows->keyCompare = rail_window_key_equals;
-	xfc->railWindows->valueFree = rail_window_free;
 
+	xfc->railWindows->keyCompare = rail_window_key_equals;
+	xfc->railWindows->hash = rail_window_key_hash;
+	xfc->railWindows->valueFree = rail_window_free;
 	xfc->railIconCache = RailIconCache_New(xfc->context.settings);
 
 	if (!xfc->railIconCache)
