@@ -914,14 +914,14 @@ static BOOL xf_rail_notify_icon_common(rdpContext* context,
 		notifyIcon->xfc = xfc;
 		notifyIcon->windowId = orderInfo->windowId;
 		notifyIcon->notifyIconId = orderInfo->notifyIconId;
-		HashTable_Add(xfc->railNotifyIcons, (void*)(UINT_PTR) orderInfo->notifyIconId,
+		HashTable_Add(xfc->railNotifyIcons, &orderInfo->notifyIconId,
 		              (void*) notifyIcon);
 		xf_appNotifyIconCreate(xfc, notifyIcon);
 	}
 	else
 	{
 		notifyIcon = (xfAppNotifyIcon*) HashTable_GetItemValue(xfc->railNotifyIcons,
-		             (void*)(UINT_PTR) orderInfo->notifyIconId);
+		             &orderInfo->notifyIconId);
 	}
 
 	if (!notifyIcon)
@@ -1000,7 +1000,7 @@ static BOOL xf_rail_notify_icon_delete(rdpContext* context,
 	if (!xfc)
 		return FALSE;
 
-	HashTable_Remove(xfc->railNotifyIcons, (void*)(UINT_PTR) orderInfo->notifyIconId);
+	HashTable_Remove(xfc->railNotifyIcons, &orderInfo->notifyIconId);
 	return TRUE;
 }
 
@@ -1301,6 +1301,11 @@ static void rail_window_free(void* value)
 	xf_DestroyWindow(appWindow->xfc, appWindow);
 }
 
+static BOOL rail_notify_icon_key_equals(void *key1, void* key2)
+{
+	return *(UINT32 *)key1 == *(UINT32 *)key2;
+}
+
 static void rail_notify_icon_free(void* value)
 {
 	xfAppNotifyIcon* icon = (xfAppNotifyIcon*) value;
@@ -1338,6 +1343,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 		return 0;
 
 	xfc->railWindows->valueFree = rail_window_free;
+	xfc->railNotifyIcons->keyCompare = rail_notify_icon_key_equals;
 	xfc->railNotifyIcons->valueFree = rail_notify_icon_free;
 	xfc->railIconCache = RailIconCache_New(xfc->context.settings);
 
