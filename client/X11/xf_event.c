@@ -367,7 +367,9 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, XEvent* event, BOOL app)
 	if (xfc->use_xinput)
 		return TRUE;
 
-	xf_floatbar_set_root_y(xfc->window->floatbar, event->xmotion.y);
+	if (xfc->window)
+		xf_floatbar_set_root_y(xfc->window->floatbar, event->xmotion.y);
+
 	return xf_generic_MotionNotify(xfc, event->xmotion.x, event->xmotion.y,
 	                               event->xmotion.state, event->xmotion.window, app);
 }
@@ -1016,10 +1018,13 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		}
 	}
 
-	if (xf_floatbar_check_event(xfc->window->floatbar, event))
+	if (xfc->window)
 	{
-		xf_floatbar_event_process(xfc->window->floatbar, event);
-		return TRUE;
+		if (xf_floatbar_check_event(xfc->window->floatbar, event))
+		{
+			xf_floatbar_event_process(xfc->window->floatbar, event);
+			return TRUE;
+		}
 	}
 
 	xf_event_execute_action_script(xfc, event);
