@@ -58,6 +58,8 @@ WINPR_API int _strnicmp(const char* string1, const char* string2, size_t count);
 WINPR_API int _wcscmp(const WCHAR* string1, const WCHAR* string2);
 
 WINPR_API size_t _wcslen(const WCHAR* str);
+WINPR_API size_t _wcsnlen(const WCHAR* str, size_t numberOfElements);
+
 WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
 WINPR_API WCHAR* _wcsrchr(const WCHAR* str, WCHAR c);
 
