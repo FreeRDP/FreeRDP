@@ -111,6 +111,90 @@ struct _FREERDP_DSP_CONTEXT
 #endif
 };
 
+static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context,
+                                    const BYTE* src, size_t size,
+                                    const AUDIO_FORMAT* srcFormat,
+                                    const BYTE** data, size_t* length)
+{
+	UINT32 bpp;
+	size_t samples;
+	size_t x, y;
+
+	if (!context || !data || !length)
+		return FALSE;
+
+	if (srcFormat->wFormatTag != WAVE_FORMAT_PCM)
+		return FALSE;
+
+	bpp = srcFormat->wBitsPerSample > 8 ? 2 : 1;
+	samples = size / bpp;
+
+	if (context->format.nChannels == srcFormat->nChannels)
+	{
+		*data = src;
+		*length = size;
+		return TRUE;
+	}
+
+	Stream_SetPosition(context->buffer, 0);
+
+	/* Destination has more channels than source */
+	if (context->format.nChannels > srcFormat->nChannels)
+	{
+		switch (srcFormat->nChannels)
+		{
+			case 1:
+				if (!Stream_EnsureCapacity(context->buffer, size * 2))
+					return FALSE;
+
+				for (x = 0; x < samples; x++)
+				{
+					for (y = 0; y < bpp; y++)
+						Stream_Write_UINT8(context->buffer, src[x * bpp + y]);
+
+					for (y = 0; y < bpp; y++)
+						Stream_Write_UINT8(context->buffer, src[x * bpp + y]);
+				}
+
+				Stream_SealLength(context->buffer);
+				*data = Stream_Buffer(context->buffer);
+				*length = Stream_Length(context->buffer);
+				return TRUE;
+
+			case 2: /* We only support stereo, so we can not handle this case. */
+			default: /* Unsupported number of channels */
+				return FALSE;
+		}
+	}
+
+	/* Destination has less channels than source */
+	switch (srcFormat->nChannels)
+	{
+		case 2:
+			if (!Stream_EnsureCapacity(context->buffer, size / 2))
+				return FALSE;
+
+			/* Simply drop second channel.
+			 * TODO: Calculate average */
+			for (x = 0; x < samples; x++)
+			{
+				for (y = 0; y < bpp; y++)
+					Stream_Write_UINT8(context->buffer, src[2 * x * bpp + y]);
+			}
+
+			Stream_SealLength(context->buffer);
+			*data = Stream_Buffer(context->buffer);
+			*length = Stream_Length(context->buffer);
+			return TRUE;
+
+		case 1: /* Invalid, do we want to use a 0 channel sound? */
+		default: /* Unsupported number of channels */
+			return FALSE;
+	}
+
+	return FALSE;
+}
+
 /**
  * Microsoft Multimedia Standards Update
  * http://download.microsoft.com/download/9/8/6/9863C72A-A3AA-4DDB-B1BA-CA8D17EFD2D4/RIFFNEW.pdf
@@ -1065,11 +1149,19 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_encode(context, srcFormat, data, length, out);
 #else
+	const BYTE* resampleData;
+	size_t resampleLength;
+	AUDIO_FORMAT format = *srcFormat;
 
 	if (!context || !context->encoder || !srcFormat || !data || !out)
 		return FALSE;
 
-	if (!freerdp_dsp_resample(context, data, length, srcFormat, &data, &length))
+	if (!freerdp_dsp_channel_mix(context, data, length, srcFormat, &resampleData, &resampleLength))
+		return FALSE;
+
+	format.nChannels = context->format.nChannels;
+
+	if (!freerdp_dsp_resample(context, resampleData, resampleLength, &format, &data, &length))
 		return FALSE;
 
 	switch (context->format.wFormatTag)
