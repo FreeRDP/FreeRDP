@@ -284,7 +284,7 @@ static void wf_add_system_menu(wfContext* wfc)
 static WCHAR* wf_window_get_title(rdpSettings* settings)
 {
 	BOOL port;
-	WCHAR* windowTitle;
+	WCHAR* windowTitle = NULL;
 	size_t size;
 	char* name;
 	WCHAR prefix[] = L"FreeRDP:";
@@ -296,7 +296,6 @@ static WCHAR* wf_window_get_title(rdpSettings* settings)
 
 	if (settings->WindowTitle)
 	{
-		WCHAR* windowTitle = NULL;
 		ConvertToUnicode(CP_UTF8, 0, settings->WindowTitle, -1, &windowTitle, 0);
 		return windowTitle;
 	}
