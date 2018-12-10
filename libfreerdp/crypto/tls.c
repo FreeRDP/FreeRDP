@@ -1528,9 +1528,15 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 			switch (accept_certificate)
 			{
 				case 1:
+
 					/* user accepted certificate, add entry in known_hosts file */
-					verification_status = certificate_data_replace(tls->certificate_store,
-					                      certificate_data);
+					if (match < 0)
+						verification_status = certificate_data_replace(tls->certificate_store,
+						                      certificate_data);
+					else
+						verification_status = certificate_data_print(tls->certificate_store,
+						                      certificate_data);
+
 					break;
 
 				case 2:
