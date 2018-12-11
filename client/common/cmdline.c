@@ -3052,6 +3052,10 @@ static int str_tokens(const char* s, char sep, char esc, char esc2)
 	while ((next = str_next_token(cur, sep, esc, esc2)) != NULL)
 	{
 		count++;
+
+		if (*next == '\0')
+			break;
+
 		cur = next + 1;
 	}
 
@@ -3076,7 +3080,7 @@ static char** str_tokenize(const char* first, const char* s, char sep, char esc,
 		while ((next = str_next_token(cur, sep, esc, esc2)) != NULL)
 		{
 			const size_t size = (size_t)(next - cur);
-			char* arg = calloc(size, sizeof(char));
+			char* arg = calloc(size + 1, sizeof(char));
 
 			if (!arg)
 			{
@@ -3084,7 +3088,12 @@ static char** str_tokenize(const char* first, const char* s, char sep, char esc,
 				return NULL;
 			}
 
-			memcpy(arg, cur, size - 1);
+			memcpy(arg, cur, size);
+			list[i++] = arg;
+
+			if (*next == '\0')
+				break;
+
 			cur = next + 1;
 		}
 	}
