@@ -46,14 +46,15 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
 
 	if (formatId == CF_UNICODETEXT)
 	{
+		size_t wsize;
 		char* str = NULL;
 
 		if (*pSize > INT32_MAX)
 			return NULL;
 
-		size = (int) * pSize;
-		size = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) data,
-		                          size / 2, (CHAR**) &str, 0, NULL, NULL);
+		wsize = _wcsnlen(data, (*pSize) / 2);
+		size = ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR) data,
+		                          wsize, (CHAR**) &str, 0, NULL, NULL);
 
 		if (!str)
 			return NULL;
@@ -168,9 +169,9 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 
 	if (formatId == CF_UNICODETEXT)
 	{
-		size = (INT64) * pSize;
-		size = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) data,
-		                          size / 2, (CHAR**) &pDstData, 0, NULL, NULL);
+		size_t wsize = _wcsnlen(data, (*pSize) / 2);
+		size = ConvertFromUnicode(CP_UTF8, 0, (LPWSTR) data,
+		                          wsize, (CHAR**) &pDstData, 0, NULL, NULL);
 
 		if (!pDstData)
 			return NULL;

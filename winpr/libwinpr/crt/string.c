@@ -45,7 +45,7 @@ char* _strdup(const char* strSource)
 	strDestination = strdup(strSource);
 
 	if (strDestination == NULL)
-		WLog_ERR(TAG,"strdup");
+		WLog_ERR(TAG, "strdup");
 
 	return strDestination;
 }
@@ -68,7 +68,7 @@ WCHAR* _wcsdup(const WCHAR* strSource)
 #endif
 
 	if (strDestination == NULL)
-		WLog_ERR(TAG,"wcsdup");
+		WLog_ERR(TAG, "wcsdup");
 
 	return strDestination;
 }
@@ -104,7 +104,7 @@ int _wcscmp(const WCHAR* string1, const WCHAR* string2)
 
 size_t _wcslen(const WCHAR* str)
 {
-	WCHAR* p = (WCHAR*) str;
+	const WCHAR* p = (const WCHAR*) str;
 
 	if (!p)
 		return 0;
@@ -112,8 +112,27 @@ size_t _wcslen(const WCHAR* str)
 	while (*p)
 		p++;
 
-	return (p - str);
+	return (size_t)(p - str);
 }
+
+/* _wcsnlen -> wcsnlen */
+
+size_t _wcsnlen(const WCHAR* str, size_t max)
+{
+	size_t x;
+
+	if (!str)
+		return 0;
+
+	for (x = 0; x < max; x++)
+	{
+		if (str[x] == 0)
+			return x;
+	}
+
+	return x;
+}
+
 
 /* _wcschr -> wcschr */
 
@@ -121,8 +140,8 @@ WCHAR* _wcschr(const WCHAR* str, WCHAR c)
 {
 	WCHAR* p = (WCHAR*) str;
 	WCHAR value;
-
 	Data_Write_UINT16(&value, c);
+
 	while (*p && (*p != value))
 		p++;
 
@@ -133,15 +152,15 @@ WCHAR* _wcschr(const WCHAR* str, WCHAR c)
 
 WCHAR* _wcsrchr(const WCHAR* str, WCHAR c)
 {
-	WCHAR *p;
+	WCHAR* p;
 	WCHAR ch;
 
 	if (!str)
 		return NULL;
 
-	for (p = (WCHAR *) 0; (ch = *str); str++)
+	for (p = (WCHAR*) 0; (ch = *str); str++)
 		if (ch == c)
-			p = (WCHAR *) str;
+			p = (WCHAR*) str;
 
 	return p;
 }
@@ -160,6 +179,7 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 		strToken = *context;
 
 	Data_Read_UINT16(strToken, value);
+
 	while (*strToken && _wcschr(strDelimit, value))
 	{
 		strToken++;
@@ -170,8 +190,8 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 		return NULL;
 
 	nextToken = strToken++;
-
 	Data_Read_UINT16(strToken, value);
+
 	while (*strToken && !(_wcschr(strDelimit, value)))
 	{
 		strToken++;
@@ -352,7 +372,7 @@ BOOL IsCharAlphaW(WCHAR ch)
 BOOL IsCharAlphaNumericA(CHAR ch)
 {
 	if (((ch >= 'a') && (ch <= 'z')) || ((ch >= 'A') && (ch <= 'Z')) ||
-			((ch >= '0') && (ch <= '9')))
+	    ((ch >= '0') && (ch <= '9')))
 		return 1;
 	else
 		return 0;
@@ -409,7 +429,7 @@ int lstrlenW(LPCWSTR lpString)
 	while (*p)
 		p++;
 
-	return (int) (p - lpString);
+	return (int)(p - lpString);
 }
 
 int lstrcmpA(LPCSTR lpString1, LPCSTR lpString2)
@@ -440,7 +460,6 @@ int ConvertLineEndingToLF(char* str, int size)
 	char* end;
 	char* pInput;
 	char* pOutput;
-
 	end = &str[size];
 	pInput = pOutput = str;
 
@@ -457,8 +476,7 @@ int ConvertLineEndingToLF(char* str, int size)
 		}
 	}
 
-	status = (int) (pOutput - str);
-
+	status = (int)(pOutput - str);
 	return status;
 }
 
@@ -469,9 +487,7 @@ char* ConvertLineEndingToCRLF(const char* str, int* size)
 	char* pOutput;
 	const char* end;
 	const char* pInput;
-
 	end = &str[*size];
-
 	count = 0;
 	pInput = str;
 
@@ -506,8 +522,7 @@ char* ConvertLineEndingToCRLF(const char* str, int* size)
 		pInput++;
 	}
 
-	*size = (int) (pOutput - newStr);
-
+	*size = (int)(pOutput - newStr);
 	return newStr;
 }
 
@@ -515,7 +530,6 @@ char* StrSep(char** stringp, const char* delim)
 {
 	char* start = *stringp;
 	char* p;
-
 	p = (start != NULL) ? strpbrk(start, delim) : NULL;
 
 	if (!p)
@@ -533,7 +547,7 @@ INT64 GetLine(char** lineptr, size_t* size, FILE* stream)
 {
 #if defined(_WIN32)
 	char c;
-	char *n;
+	char* n;
 	size_t step = 32;
 	size_t used = 0;
 
@@ -549,18 +563,23 @@ INT64 GetLine(char** lineptr, size_t* size, FILE* stream)
 		{
 			*size += step;
 			n = realloc(*lineptr, *size);
+
 			if (!n)
 			{
 				return -1;
 			}
+
 			*lineptr = n;
 		}
-        c = fgetc(stream);
-        if (c != EOF)
-            (*lineptr)[used++] = c;
-    } while((c != '\n') && (c != '\r') && (c != EOF));
-    (*lineptr)[used] = '\0';
 
+		c = fgetc(stream);
+
+		if (c != EOF)
+			(*lineptr)[used++] = c;
+	}
+	while ((c != '\n') && (c != '\r') && (c != EOF));
+
+	(*lineptr)[used] = '\0';
 	return used;
 #elif !defined(ANDROID) && !defined(IOS)
 	return getline(lineptr, size, stream);

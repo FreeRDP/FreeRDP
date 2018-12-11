@@ -58,6 +58,8 @@ WINPR_API int _strnicmp(const char* string1, const char* string2, size_t count);
 WINPR_API int _wcscmp(const WCHAR* string1, const WCHAR* string2);
 
 WINPR_API size_t _wcslen(const WCHAR* str);
+WINPR_API size_t _wcsnlen(const WCHAR* str, size_t maxNumberOfElements);
+
 WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
 WINPR_API WCHAR* _wcsrchr(const WCHAR* str, WCHAR c);
 
@@ -70,6 +72,7 @@ WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit,
 
 #define _wcscmp		wcscmp
 #define _wcslen		wcslen
+#define _wcsnlen	wcsnlen
 #define _wcschr		wcschr
 #define _wcsrchr	wcsrchr
 
