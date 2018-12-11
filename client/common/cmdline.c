@@ -3081,6 +3081,7 @@ static char** str_tokenize(const char* first, const char* s, char sep, char esc,
 		{
 			const size_t size = (size_t)(next - cur);
 			char* arg = calloc(size + 1, sizeof(char));
+			size_t x, pos = 0;;
 
 			if (!arg)
 			{
@@ -3088,7 +3089,25 @@ static char** str_tokenize(const char* first, const char* s, char sep, char esc,
 				return NULL;
 			}
 
-			memcpy(arg, cur, size);
+			for (x = 0; x < size; x++)
+			{
+				const char c = cur[x];
+				const char n = cur[x + 1];
+
+				if ((c != esc) && (c != esc2))
+					arg[pos++] = c;
+				else
+				{
+					if ((c == esc2) && (n != esc))
+						arg[pos++] = c;
+					else if (c == esc2)
+					{
+						arg[pos++] = n;
+						x++;
+					}
+				}
+			}
+
 			list[i++] = arg;
 
 			if (*next == '\0')
