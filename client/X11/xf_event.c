@@ -395,22 +395,6 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button,
 
 	if (flags != 0)
 	{
-		BOOL extended = FALSE;
-
-		if (flags & (PTR_XFLAGS_BUTTON1 | PTR_XFLAGS_BUTTON1))
-		{
-			extended = TRUE;
-
-			if (down)
-				flags |= PTR_XFLAGS_DOWN;
-		}
-
-		if (flags & (PTR_FLAGS_BUTTON1 | PTR_FLAGS_BUTTON2 | PTR_FLAGS_BUTTON3))
-		{
-			if (down)
-				flags |= PTR_FLAGS_DOWN;
-		}
-
 		if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 		{
 			if (down)
@@ -418,6 +402,21 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button,
 		}
 		else
 		{
+			BOOL extended = FALSE;
+
+			if (flags & (PTR_XFLAGS_BUTTON1 | PTR_XFLAGS_BUTTON2))
+			{
+				extended = TRUE;
+
+				if (down)
+					flags |= PTR_XFLAGS_DOWN;
+			}
+			else if (flags & (PTR_FLAGS_BUTTON1 | PTR_FLAGS_BUTTON2 | PTR_FLAGS_BUTTON3))
+			{
+				if (down)
+					flags |= PTR_FLAGS_DOWN;
+			}
+
 			if (app)
 			{
 				/* make sure window exists */
