@@ -1309,14 +1309,22 @@ static BOOL rdp_write_input_capability_set(wStream* s, rdpSettings* settings)
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_MOUSEX | INPUT_FLAG_UNICODE |
-	             TS_INPUT_FLAG_MOUSE_HWHEEL;
+	inputFlags = INPUT_FLAG_SCANCODES;
 
 	if (settings->FastPathInput)
 	{
 		inputFlags |= INPUT_FLAG_FASTPATH_INPUT;
 		inputFlags |= INPUT_FLAG_FASTPATH_INPUT2;
 	}
+
+	if (settings->HasHorizontalWheel)
+		inputFlags |= TS_INPUT_FLAG_MOUSE_HWHEEL;
+
+	if (settings->UnicodeInput)
+		inputFlags |= INPUT_FLAG_UNICODE;
+
+	if (settings->HasExtendedMouseEvent)
+		inputFlags |= INPUT_FLAG_MOUSEX;
 
 	Stream_Write_UINT16(s, inputFlags); /* inputFlags (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad2OctetsA (2 bytes) */
