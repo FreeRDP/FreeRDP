@@ -25,6 +25,10 @@
 
 #include <winpr/cmdline.h>
 
+#include "../log.h"
+
+#define TAG WINPR_TAG("commandline")
+
 /**
  * Command-line syntax: some basic concepts:
  * https://pythonconquerstheuniverse.wordpress.com/2010/07/25/command-line-syntax-some-basic-concepts/
@@ -89,6 +93,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 			if (count < 0)
 			{
+				WLog_ERR(TAG, "Failed for index %d [%s]: PreFilter rule could not be applied", i, argv[i]);
 				status = COMMAND_LINE_ERROR;
 				return status;
 			}
@@ -132,7 +137,10 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		else if (flags & COMMAND_LINE_SIGIL_NOT_ESCAPED)
 		{
 			if (notescaped)
+			{
+				WLog_ERR(TAG, "Failed at index %d [%s]: Unescaped sigil", i, argv[i]);
 				return COMMAND_LINE_ERROR;
+			}
 
 			sigil_length = 0;
 			escaped = FALSE;
@@ -140,6 +148,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		}
 		else
 		{
+			WLog_ERR(TAG, "Failed at index %d [%s]: Invalid sigil", i, argv[i]);
 			return COMMAND_LINE_ERROR;
 		}
 
@@ -262,13 +271,19 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 						value = NULL;
 					}
 					else if (!value_present && argument)
+					{
+						WLog_ERR(TAG, "Failed at index %d [%s]: Argument required", i, argv[i]);
 						return COMMAND_LINE_ERROR;
+					}
 				}
 
 				if (!(flags & COMMAND_LINE_SEPARATOR_SPACE))
 				{
 					if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
+					{
+						WLog_ERR(TAG, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
 				}
 				else
 				{
@@ -281,6 +296,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 				if (!value && (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED))
 				{
+					WLog_ERR(TAG, "Failed at index %d [%s]: Missing value", i, argv[i]);
 					status = COMMAND_LINE_ERROR_MISSING_VALUE;
 					return status;
 				}
@@ -290,7 +306,10 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				if (value)
 				{
 					if (options[j].Flags & (COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_VALUE_BOOL))
+					{
+						WLog_ERR(TAG, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
 
 					options[j].Value = value;
 					options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
@@ -333,6 +352,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 					if (count < 0)
 					{
+						WLog_ERR(TAG, "Failed at index %d [%s]: PostFilter rule could not be applied", i, argv[i]);
 						status = COMMAND_LINE_ERROR;
 						return status;
 					}
@@ -349,7 +369,10 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 			}
 
 			if (!found && (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD) == 0)
+			{
+				WLog_ERR(TAG, "Failed at index %d [%s]: Unexpected keyword", i, argv[i]);
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
+			}
 		}
 	}
 

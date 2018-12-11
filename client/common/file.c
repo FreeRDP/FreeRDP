@@ -227,7 +227,10 @@ static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* nam
 	ivalue = strtol(value, NULL, 0);
 
 	if ((errno != 0) || (ivalue < INT32_MIN) || (ivalue > INT32_MAX))
+	{
+		WLog_ERR(TAG, "Failed to convert RDP file integer option %s [value=%s]", name, value);
 		return FALSE;
+	}
 
 	if (freerdp_client_rdp_file_set_integer(file, name, ivalue, index) < 0)
 		return FALSE;
@@ -395,7 +398,10 @@ static BOOL freerdp_client_parse_rdp_file_string(rdpFile* file, char* name, char
 	char* valueA = _strdup(value);
 
 	if (!valueA)
+	{
+		WLog_ERR(TAG, "Failed to convert RDP file string option %s [value=%s]", name, value);
 		return FALSE;
+	}
 
 	if (freerdp_client_rdp_file_set_string(file, name, valueA, index) == -1)
 		ret = FALSE;
@@ -431,7 +437,10 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer,
 		size = size / 2 - 1;
 
 		if (ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR)(&buffer[2]), size, &copy, 0, NULL, NULL) < 0)
+		{
+			WLog_ERR(TAG, "Failed to convert RDP file from UCS2 to UTF8");
 			return FALSE;
+		}
 	}
 	else
 	{
@@ -499,6 +508,7 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer,
 			else if (*type == 'b')
 			{
 				/* binary type */
+				WLog_ERR(TAG, "Unsupported RDP file binary option %s [value=%s]", name, value);
 			}
 		}
 
@@ -523,7 +533,10 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 	fp = fopen(name, "r");
 
 	if (!fp)
+	{
+		WLog_ERR(TAG, "Failed to open RDP file %s", name);
 		return FALSE;
+	}
 
 	_fseeki64(fp, 0, SEEK_END);
 	file_size = _ftelli64(fp);
@@ -531,6 +544,7 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 
 	if (file_size < 1)
 	{
+		WLog_ERR(TAG, "RDP file %s is empty", name);
 		fclose(fp);
 		return FALSE;
 	}
@@ -555,6 +569,7 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 
 	if (read_size < 1)
 	{
+		WLog_ERR(TAG, "Could not read from RDP file %s", name);
 		free(buffer);
 		return FALSE;
 	}
