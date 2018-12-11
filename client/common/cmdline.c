@@ -1191,7 +1191,7 @@ static int freerdp_detect_windows_style_command_line_syntax(int argc, char** arg
 	DWORD flags;
 	int detect_status;
 	COMMAND_LINE_ARGUMENT_A* arg;
-	flags = COMMAND_LINE_SEPARATOR_COLON;
+	flags = COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SILENCE_PARSER;
 	flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 
 	if (ignoreUnknown)
@@ -1232,7 +1232,7 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 	DWORD flags;
 	int detect_status;
 	COMMAND_LINE_ARGUMENT_A* arg;
-	flags = COMMAND_LINE_SEPARATOR_SPACE;
+	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SILENCE_PARSER;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
 

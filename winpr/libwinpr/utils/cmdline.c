@@ -49,6 +49,12 @@
  *
  */
 
+static void log_error(DWORD flags, LPCSTR message, int index, LPCSTR argv)
+{
+	if ((flags & COMMAND_LINE_SILENCE_PARSER) == 0)
+		WLog_ERR(TAG, message, index, argv);
+}
+
 int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* options,
                                DWORD flags,
                                void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter, COMMAND_LINE_POST_FILTER_FN_A postFilter)
@@ -93,7 +99,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 			if (count < 0)
 			{
-				WLog_ERR(TAG, "Failed for index %d [%s]: PreFilter rule could not be applied", i, argv[i]);
+				log_error(flags, "Failed for index %d [%s]: PreFilter rule could not be applied", i, argv[i]);
 				status = COMMAND_LINE_ERROR;
 				return status;
 			}
@@ -138,7 +144,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		{
 			if (notescaped)
 			{
-				WLog_ERR(TAG, "Failed at index %d [%s]: Unescaped sigil", i, argv[i]);
+				log_error(flags, "Failed at index %d [%s]: Unescaped sigil", i, argv[i]);
 				return COMMAND_LINE_ERROR;
 			}
 
@@ -148,7 +154,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		}
 		else
 		{
-			WLog_ERR(TAG, "Failed at index %d [%s]: Invalid sigil", i, argv[i]);
+			log_error(flags, "Failed at index %d [%s]: Invalid sigil", i, argv[i]);
 			return COMMAND_LINE_ERROR;
 		}
 
@@ -272,7 +278,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 					}
 					else if (!value_present && argument)
 					{
-						WLog_ERR(TAG, "Failed at index %d [%s]: Argument required", i, argv[i]);
+						log_error(flags, "Failed at index %d [%s]: Argument required", i, argv[i]);
 						return COMMAND_LINE_ERROR;
 					}
 				}
@@ -281,7 +287,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				{
 					if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
 					{
-						WLog_ERR(TAG, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
+						log_error(flags, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 				}
@@ -296,7 +302,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 				if (!value && (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED))
 				{
-					WLog_ERR(TAG, "Failed at index %d [%s]: Missing value", i, argv[i]);
+					log_error(flags, "Failed at index %d [%s]: Missing value", i, argv[i]);
 					status = COMMAND_LINE_ERROR_MISSING_VALUE;
 					return status;
 				}
@@ -307,7 +313,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				{
 					if (options[j].Flags & (COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_VALUE_BOOL))
 					{
-						WLog_ERR(TAG, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
+						log_error(flags, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 
@@ -352,7 +358,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 					if (count < 0)
 					{
-						WLog_ERR(TAG, "Failed at index %d [%s]: PostFilter rule could not be applied", i, argv[i]);
+						log_error(flags, "Failed at index %d [%s]: PostFilter rule could not be applied", i, argv[i]);
 						status = COMMAND_LINE_ERROR;
 						return status;
 					}
@@ -370,7 +376,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 			if (!found && (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD) == 0)
 			{
-				WLog_ERR(TAG, "Failed at index %d [%s]: Unexpected keyword", i, argv[i]);
+				log_error(flags, "Failed at index %d [%s]: Unexpected keyword", i, argv[i]);
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
 			}
 		}

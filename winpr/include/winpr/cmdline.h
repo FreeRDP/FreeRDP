@@ -62,6 +62,7 @@
 
 /* Supress COMMAND_LINE_ERROR_NO_KEYWORD return. */
 #define COMMAND_LINE_IGN_UNKNOWN_KEYWORD	0x00001000
+#define COMMAND_LINE_SILENCE_PARSER			0x00002000
 
 /* Command-Line Parsing Error Codes */
 
