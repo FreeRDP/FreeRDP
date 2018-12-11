@@ -85,13 +85,14 @@ typedef struct _xfDispContext xfDispContext;
 typedef struct _xfVideoContext xfVideoContext;
 typedef struct xf_rail_icon_cache xfRailIconCache;
 
-/* Value of the first logical button number in X11 which must be */
-/* subtracted to go from a button number in X11 to an index into */
-/* a per-button array.                                           */
-#define BUTTON_BASE Button1
-
 /* Number of buttons that are mapped from X11 to RDP button events. */
-#define NUM_BUTTONS_MAPPED 3
+#define NUM_BUTTONS_MAPPED 11
+
+typedef struct
+{
+	int button;
+	UINT16 flags;
+} button_map;
 
 struct xf_context
 {
@@ -231,7 +232,7 @@ struct xf_context
 	BOOL xrenderAvailable;
 
 	/* value to be sent over wire for each logical client mouse button */
-	int button_map[NUM_BUTTONS_MAPPED];
+	button_map button_map[NUM_BUTTONS_MAPPED];
 	BYTE savedMaximizedState;
 };
 

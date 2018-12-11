@@ -581,13 +581,13 @@ static int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	switch (evtype)
 	{
 		case XI_ButtonPress:
-			xf_generic_ButtonPress(xfc, (int) event->event_x, (int) event->event_y,
-			                       event->detail, event->event, xfc->remote_app);
+			xf_generic_ButtonEvent(xfc, (int) event->event_x, (int) event->event_y,
+			                       event->detail, event->event, xfc->remote_app, TRUE);
 			break;
 
 		case XI_ButtonRelease:
-			xf_generic_ButtonRelease(xfc, (int) event->event_x, (int) event->event_y,
-			                         event->detail, event->event, xfc->remote_app);
+			xf_generic_ButtonEvent(xfc, (int) event->event_x, (int) event->event_y,
+			                       event->detail, event->event, xfc->remote_app, FALSE);
 			break;
 
 		case XI_Motion:

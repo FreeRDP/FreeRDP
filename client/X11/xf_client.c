@@ -1036,26 +1036,55 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 
 /* Assignment of physical (not logical) mouse buttons to wire flags. */
 /* Notice that the middle button is 2 in X11, but 3 in RDP.          */
-static const int xf_button_flags[NUM_BUTTONS_MAPPED] =
+static const button_map xf_button_flags[NUM_BUTTONS_MAPPED] =
 {
-	PTR_FLAGS_BUTTON1,
-	PTR_FLAGS_BUTTON3,
-	PTR_FLAGS_BUTTON2
+	{Button1, PTR_FLAGS_BUTTON1},
+	{Button2, PTR_FLAGS_BUTTON3},
+	{Button3, PTR_FLAGS_BUTTON2},
+	{Button4, PTR_FLAGS_WHEEL | 0x78},
+	{Button5, PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x78},
+	{6, PTR_FLAGS_HWHEEL | 0x78},
+	{7, PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x78},
+	{8, PTR_XFLAGS_BUTTON1},
+	{9, PTR_XFLAGS_BUTTON2},
+	{97, PTR_XFLAGS_BUTTON1},
+	{112, PTR_XFLAGS_BUTTON2}
 };
+
+static UINT16 get_flags_for_button(int button)
+{
+	size_t x;
+
+	for (x = 0; x < ARRAYSIZE(xf_button_flags); x++)
+	{
+		const button_map* map = &xf_button_flags[x];
+
+		if (map->button == button)
+			return map->flags;
+	}
+
+	return 0;
+}
 
 static void xf_button_map_init(xfContext* xfc)
 {
+	size_t pos = 0;
 	/* loop counter for array initialization */
-	int physical;
-	int logical;
+	size_t physical;
 	/* logical mouse button which is used for each physical mouse  */
 	/* button (indexed from zero). This is the default map.        */
-	unsigned char x11_map[NUM_BUTTONS_MAPPED] =
-	{
-		Button1,
-		Button2,
-		Button3
-	};
+	unsigned char x11_map[112] = { 0 };
+	x11_map[0] = Button1;
+	x11_map[1] = Button2;
+	x11_map[2] = Button3;
+	x11_map[3] = Button4;
+	x11_map[4] = Button5;
+	x11_map[5] = 6;
+	x11_map[6] = 7;
+	x11_map[7] = 8;
+	x11_map[8] = 9;
+	x11_map[96] = 97;
+	x11_map[111] = 112;
 
 	/* query system for actual remapping */
 	if (!xfc->context.settings->UnmapButtons)
@@ -1066,18 +1095,23 @@ static void xf_button_map_init(xfContext* xfc)
 	/* iterate over all (mapped) physical buttons; for each of them */
 	/* find the logical button in X11, and assign to this the       */
 	/* appropriate value to send over the RDP wire.                 */
-	for (physical = 0; physical < NUM_BUTTONS_MAPPED; ++physical)
+	for (physical = 0; physical < ARRAYSIZE(x11_map); ++physical)
 	{
-		logical = x11_map[physical];
+		const unsigned char logical = x11_map[physical];
+		const UINT16 flags = get_flags_for_button(logical);
 
-		if (Button1 <= logical && logical <= Button3)
+		if ((logical != 0) && (flags != 0))
 		{
-			xfc->button_map[logical - BUTTON_BASE] = xf_button_flags[physical];
-		}
-		else
-		{
-			WLog_ERR(TAG, "Mouse physical button %d is mapped to logical button %d",
-			         physical, logical);
+			if (pos >= NUM_BUTTONS_MAPPED)
+			{
+				WLog_ERR(TAG, "Failed to map mouse button to RDP button, no space");
+			}
+			else
+			{
+				button_map* map = &xfc->button_map[pos++];
+				map->button = physical + Button1;
+				map->flags = get_flags_for_button(logical);
+			}
 		}
 	}
 }
