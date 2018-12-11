@@ -30,13 +30,13 @@
  * Client Interface
  */
 
-static BOOL mfreerdp_client_global_init()
+static BOOL mfreerdp_client_global_init(void)
 {
 	freerdp_handle_signals();
 	return TRUE;
 }
 
-static void mfreerdp_client_global_uninit()
+static void mfreerdp_client_global_uninit(void)
 {
 }
 
@@ -88,8 +88,14 @@ static BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
 	mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
+	context->instance->PostDisconnect = mac_post_disconnect;
 	context->instance->Authenticate = mac_authenticate;
-	settings = instance->settings;
+	context->instance->GatewayAuthenticate = mac_gw_authenticate;
+	context->instance->VerifyCertificateEx = mac_verify_certificate_ex;
+	context->instance->VerifyChangedCertificateEx = mac_verify_changed_certificate_ex;
+	context->instance->LogonErrorInfo = mac_logon_error_info;
+	context->instance->settings = instance->settings;
+	settings = context->settings;
 	settings->AsyncUpdate = TRUE;
 	settings->AsyncInput = TRUE;
 	return TRUE;
@@ -98,36 +104,12 @@ static BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
 static void mfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
 	mfContext* mfc;
-	rdpSettings* settings;
 
 	if (!instance || !context)
 		return;
 
 	mfc = (mfContext*) instance->context;
 	CloseHandle(mfc->stopEvent);
-}
-
-static void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x,
-                                       int y)
-{
-	int width, height;
-	rdpInput* input = cfc->instance->input;
-	rdpSettings* settings = cfc->instance->settings;
-	width = settings->DesktopWidth;
-	height = settings->DesktopHeight;
-
-	if (x < 0)
-		x = 0;
-
-	x = width - 1;
-
-	if (y < 0)
-		y = 0;
-
-	if (y >= height)
-		y = height - 1;
-
-	freerdp_input_send_mouse_event(input, flags, x, y);
 }
 
 void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags,

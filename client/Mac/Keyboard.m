@@ -21,7 +21,8 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
-#include <IOKit/hid/IOHIDLib.h>
+#include <IOKit/IOKitLib.h>
+#include <IOKit/hid/IOHIDManager.h>
 
 struct _APPLE_KEYBOARD_DESC
 {
@@ -158,7 +159,7 @@ static enum APPLE_KEYBOARD_TYPE mac_identify_keyboard_type(uint32_t vendorID,
 	return type;
 }
 
-enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type()
+enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type(void)
 {
 	CFSetRef deviceCFSetRef = NULL;
 	IOHIDDeviceRef inIOHIDDeviceRef = NULL;

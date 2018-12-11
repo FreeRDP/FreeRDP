@@ -44,13 +44,7 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 	mfc = (mfContext*) context;
 	mfc->view = (void*) mrdpView;
 
-	if (status < 0)
-	{
-		NSString* winTitle;
-		winTitle = [[NSString alloc] initWithCString:"ERROR"];
-		[window setTitle:winTitle];
-	}
-	else
+	if (status == 0)
 	{
 		NSScreen* screen = [[NSScreen screens] objectAtIndex:0];
 		NSRect screenFrame = [screen frame];

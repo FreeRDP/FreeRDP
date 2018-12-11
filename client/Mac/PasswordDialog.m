@@ -20,6 +20,8 @@
 #import "PasswordDialog.h"
 #import <freerdp/client/cmdline.h>
 
+#import <CoreGraphics/CoreGraphics.h>
+
 @interface PasswordDialog()
 
 	@property BOOL modalCode;
@@ -47,7 +49,7 @@
 	[super windowDidLoad];
 	// Implement this method to handle any initialization after your window controller's window has been loaded from its nib file.
 	[self.window setTitle:self.serverHostname];
-	[messageLabel setStringValue:[NSString stringWithFormat:@"Authenticate to %@",
+	[self.messageLabel setStringValue:[NSString stringWithFormat:@"Authenticate to %@",
 	                              self.serverHostname]];
 	NSMutableString* domainUser = [[NSMutableString alloc] initWithString:@""];
 
@@ -61,10 +63,10 @@
 	if (self.username != nil)
 	{
 		[domainUser appendString:self.username];
-		[self.window makeFirstResponder:passwordText];
+		[self.window makeFirstResponder:self.passwordText];
 	}
 
-	[usernameText setStringValue:domainUser];
+	[self.usernameText setStringValue:domainUser];
 }
 
 - (IBAction)onOK:(NSObject*)sender
