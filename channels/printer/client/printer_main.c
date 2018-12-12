@@ -293,6 +293,44 @@ static UINT printer_irp_request(DEVICE* device, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
+static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 packetId, wStream* s)
+{
+	switch (component)
+	{
+		case RDPDR_CTYP_PRN:
+			switch (packetId)
+			{
+				case PAKID_PRN_CACHE_DATA:
+					{
+						UINT32 eventID;
+
+						if (Stream_GetRemainingLength(s) < 4)
+							return ERROR_INVALID_DATA;
+
+						Stream_Read_UINT32(s, eventID);
+						WLog_ERR(TAG,
+						         "Ignoring unhandled message PAKID_PRN_CACHE_DATA (EventID: 0x%08"PRIX32")", eventID);
+					}
+					break;
+
+				case PAKID_PRN_USING_XPS:
+					WLog_ERR(TAG, "Ignoring unhandled message PAKID_PRN_USING_XPS");
+					break;
+
+				default:
+					WLog_ERR(TAG, "Unknown printing component packetID: 0x%04"PRIX16"", packetId);
+					return ERROR_INVALID_DATA;
+			}
+
+			break;
+
+		default:
+			return ERROR_INVALID_DATA;
+	}
+
+	return CHANNEL_RC_OK;
+}
+
 /**
  * Function description
  *
@@ -357,6 +395,7 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 	printer_dev->device.type = RDPDR_DTYP_PRINT;
 	printer_dev->device.name = printer_dev->port;
 	printer_dev->device.IRPRequest = printer_irp_request;
+	printer_dev->device.CustomComponentRequest = printer_custom_component;
 	printer_dev->device.Free = printer_free;
 	printer_dev->rdpcontext = pEntryPoints->rdpcontext;
 	printer_dev->printer = printer;
