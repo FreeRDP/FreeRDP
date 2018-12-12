@@ -470,11 +470,11 @@ static BOOL printer_save_default_config(const rdpSettings* settings, rdpPrinter*
 	if (!path)
 		goto fail;
 
-	if (!printer_write_setting(path, PRN_CONF_DRIVER, driver, dlen * sizeof(WCHAR)))
-		goto fail;
-
-	if (!printer_write_setting(path, PRN_CONF_DATA, NULL, 0))
-		goto fail;
+	if (dlen > 1)
+	{
+		if (!printer_write_setting(path, PRN_CONF_DRIVER, driver, dlen * sizeof(WCHAR)))
+			goto fail;
+	}
 
 	res = TRUE;
 fail:
