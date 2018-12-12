@@ -102,7 +102,7 @@ XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] =
 	{ "AE13", RDP_SCANCODE_BACKSLASH_JP }, // JP 132 Yen next to backspace
 	// { "AGAI", RDP_SCANCODE_ },	// evdev 137
 	{ "ALGR", RDP_SCANCODE_RMENU },	// alias of evdev 108 RALT
-	// { "ALT",  RDP_SCANCODE_ },	// evdev 204
+	{ "ALT",  RDP_SCANCODE_LMENU },	// evdev 204, fake keycode for virtual key
 	{ "BKSL", RDP_SCANCODE_OEM_5 },	// evdev 51
 	{ "BKSP", RDP_SCANCODE_BACKSPACE },	// evdev 22
 	// { "BRK",  RDP_SCANCODE_ },	// evdev 419
@@ -148,7 +148,7 @@ XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] =
 	{ "HKTG", RDP_SCANCODE_HIRAGANA },	// JP evdev 101 Hiragana/Katakana toggle
 	{ "HNGL", RDP_SCANCODE_HANGUL },	// KR evdev 130 Hangul/Latin toggle
 	{ "HOME", RDP_SCANCODE_HOME },	// evdev 110
-	// { "HYPR", RDP_SCANCODE_ },	// evdev 207
+	{ "HYPR", RDP_SCANCODE_LWIN },	// evdev 207, fake keycode for virtual key
 	{ "HZTG", RDP_SCANCODE_OEM_3 },	// JP alias of evdev 49
 	// { "I120", RDP_SCANCODE_ },	// evdev 120 KEY_MACRO
 	// { "I126", RDP_SCANCODE_ },	// evdev 126 KEY_KPPLUSMINUS
@@ -272,11 +272,11 @@ XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] =
 	{ "LMTA", RDP_SCANCODE_LWIN },	// alias of evdev 133 LWIN
 	// { "LNFD", RDP_SCANCODE_ },	// evdev 109 KEY_LINEFEED
 	{ "LSGT", RDP_SCANCODE_OEM_102 },	// evdev 94
-	// { "LVL3", RDP_SCANCODE_ },	// evdev 92
+	{ "LVL3", RDP_SCANCODE_RMENU },	// evdev 92, fake keycode for virtual key
 	{ "LWIN", RDP_SCANCODE_LWIN },	// evdev 133
-	// { "MDSW", RDP_SCANCODE_ },	// evdev 203
+	{ "MDSW", RDP_SCANCODE_RMENU },	// evdev 203, fake keycode for virtual key
 	{ "MENU", RDP_SCANCODE_APPS },	// alias of evdev 135 COMP
-	// { "META", RDP_SCANCODE_ },	// evdev 205
+	{ "META", RDP_SCANCODE_LMENU },	// evdev 205, fake keycode for virtual key
 	{ "MUHE", RDP_SCANCODE_NONCONVERT_JP },	// JP evdev 102 Muhenkan
 	{ "MUTE", RDP_SCANCODE_VOLUME_MUTE },	// evdev 121
 	{ "NFER", RDP_SCANCODE_NONCONVERT_JP }, // JP alias of evdev 102 Muhenkan
@@ -300,7 +300,7 @@ XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] =
 	{ "SCLK", RDP_SCANCODE_SCROLLLOCK },	// evdev 78
 	{ "SPCE", RDP_SCANCODE_SPACE },	// evdev 65
 	{ "STOP", RDP_SCANCODE_BROWSER_STOP },	// evdev 136
-	// { "SUPR", RDP_SCANCODE_ },	// evdev 206
+	{ "SUPR", RDP_SCANCODE_LWIN },	// evdev 206, fake keycode for virtual key
 	{ "SYRQ", RDP_SCANCODE_SYSREQ },	// evdev 107
 	{ "TAB",  RDP_SCANCODE_TAB },	// evdev 23
 	{ "TLDE", RDP_SCANCODE_OEM_3 },	// evdev 49
