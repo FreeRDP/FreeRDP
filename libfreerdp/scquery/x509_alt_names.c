@@ -623,8 +623,9 @@ alt_name_list certificate_extract_subject_alt_names(buffer certificate_data)
 	}
 	else
 	{
-		X509* certificate = d2i_X509(NULL, (const unsigned char**) & (certificate_data->data),
-		                             certificate_data->size);
+		/* d2i_X509 increments the input point by the length read */
+		const unsigned char * next = buffer_data(certificate_data);
+		X509* certificate = d2i_X509(NULL, &next, buffer_size(certificate_data));
 		alt_name_list result = map_subject_alt_names(certificate, extract_alt_name);
 		/* alt_name alt_name = alt_name_new("1.3.6.1.5.2.2",1); */
 		/* cert_info_kpn(certificate, alt_name); */
