@@ -3233,7 +3233,6 @@ void nla_free(rdpNla* nla)
 	sspi_SecBufferFree(&nla->ClientNonce);
 	sspi_SecBufferFree(&nla->PublicKey);
 	sspi_SecBufferFree(&nla->tsCredentials);
-	sspi_SecBufferFree(&nla->outputBuffer);
 	auth_identity_free(nla->identity);
 	free(nla->SamFile);
 	free(nla->ServicePrincipalName);
