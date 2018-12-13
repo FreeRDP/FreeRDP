@@ -126,7 +126,7 @@ static const struct _wl_fullscreen_shell_listener fullscreen_shell_listener =
 #endif
 
 
-static UwacSeat* display_destroy_seat(UwacDisplay* d, uint32_t name)
+static void display_destroy_seat(UwacDisplay* d, uint32_t name)
 {
 	UwacSeat* seat;
 	wl_list_for_each(seat, &d->seats, link)
@@ -134,10 +134,8 @@ static UwacSeat* display_destroy_seat(UwacDisplay* d, uint32_t name)
 		if (seat->seat_id == name)
 		{
 			UwacSeatDestroy(seat);
-			return seat;
 		}
 	}
-	return NULL;
 }
 
 static void registry_handle_global(void* data, struct wl_registry* registry, uint32_t id,
@@ -265,8 +263,8 @@ static void registry_handle_global_remove(void* data, struct wl_registry* regist
 		if (strcmp(global->interface, "wl_seat") == 0)
 		{
 			UwacSeatRemovedEvent* ev;
-			UwacSeat* seat;
-			seat = display_destroy_seat(d, name);
+
+			display_destroy_seat(d, name);
 			ev = (UwacSeatRemovedEvent*)UwacDisplayNewEvent(d, UWAC_EVENT_REMOVED_SEAT);
 
 			if (ev)
