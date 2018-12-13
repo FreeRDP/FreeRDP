@@ -45,8 +45,8 @@ CK_OBJECT_HANDLE object_handle_ensure_one(object_handle_list list, char* what)
 	}
 
 	CK_OBJECT_HANDLE result = ((list == NULL)
-		? CK_INVALID_HANDLE
-		: object_handle_first(list));
+	                           ? CK_INVALID_HANDLE
+	                           : object_handle_first(list));
 	object_handle_list_free(list);
 	return result;
 }
@@ -94,15 +94,15 @@ buffer buffer_attribute(CK_ULONG attribute, template* template)
 	else
 	{
 		return buffer_new_copy(template->attributes[index].ulValueLen,
-			template->attributes[index].pValue);
+		                       template->attributes[index].pValue);
 	}
 }
 
 certificate_list find_x509_certificates_with_signing_rsa_private_key_in_slot(pkcs11_module* module,
         CK_ULONG slot_id,
-	const char* slot_description,
-	const char* token_label,
-	const char* token_serial,
+        const char* slot_description,
+        const char* token_label,
+        const char* token_serial,
         CK_SESSION_HANDLE session,
         certificate_list result)
 {
@@ -176,9 +176,9 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key_in_slot(pkc
 			CK_ULONG certype_index = position_of_attribute(CKA_CERTIFICATE_TYPE, &certificate_attributes);
 			CK_ULONG keytype_index = position_of_attribute(CKA_KEY_TYPE, &certificate_attributes);
 			certificate = scquery_certificate_new(slot_id,
-				                              check_memory(strdup(slot_description), strlen(slot_description)),
-				                              check_memory(strdup(token_label), strlen(token_label)),
-				                              check_memory(strdup(token_serial), strlen(token_serial)),
+			                                      check_memory(strdup(slot_description), strlen(slot_description)),
+			                                      check_memory(strdup(token_label), strlen(token_label)),
+			                                      check_memory(strdup(token_serial), strlen(token_serial)),
 			                                      ((id_index != CK_UNAVAILABLE_INFORMATION)
 			                                       ? (bytes_to_hexadecimal(certificate_attributes.attributes[id_index].pValue,
 			                                               certificate_attributes.attributes[id_index].ulValueLen))
@@ -220,8 +220,9 @@ char* get_slot_description(pkcs11_module* module, CK_ULONG slot_id)
 
 	if (CHECK_RV(module->p11->C_GetSlotInfo(slot_id, &info), "C_GetSlotInfo"))
 	{
-		result = check_memory(string_from_padded_string((const char*)info.slotDescription, sizeof(info.slotDescription), ' '),
-			sizeof(info.slotDescription) + 1);
+		result = check_memory(string_from_padded_string((const char*)info.slotDescription,
+		                      sizeof(info.slotDescription), ' '),
+		                      sizeof(info.slotDescription) + 1);
 	}
 
 	return result;
@@ -231,10 +232,12 @@ char* get_token_label(pkcs11_module* module, CK_ULONG slot_id, char** token_seri
 {
 	CK_TOKEN_INFO info;
 
-	if(CHECK_RV(module->p11->C_GetTokenInfo(slot_id, &info), "C_GetTokenInfo"))
+	if (CHECK_RV(module->p11->C_GetTokenInfo(slot_id, &info), "C_GetTokenInfo"))
 	{
-		char* label = check_memory(string_from_padded_string((const char*)info.label, sizeof(info.label), ' '), sizeof(info.label) + 1);
-		char* serial = check_memory(string_from_padded_string((const char*)info.serialNumber, sizeof(info.serialNumber), ' '), sizeof(info.serialNumber) + 1);
+		char* label = check_memory(string_from_padded_string((const char*)info.label, sizeof(info.label),
+		                           ' '), sizeof(info.label) + 1);
+		char* serial = check_memory(string_from_padded_string((const char*)info.serialNumber,
+		                            sizeof(info.serialNumber), ' '), sizeof(info.serialNumber) + 1);
 		(*token_serial) = serial;
 		return label;
 	}
@@ -243,11 +246,12 @@ char* get_token_label(pkcs11_module* module, CK_ULONG slot_id, char** token_seri
 	return NULL;
 }
 
-CK_BBOOL selected_slot(pkcs11_module* module, CK_ULONG slot_id, const char* slot_description, const char* reader_name)
+CK_BBOOL selected_slot(pkcs11_module* module, CK_ULONG slot_id, const char* slot_description,
+                       const char* reader_name)
 {
 	CK_BBOOL selected = TRUE;
 
-	if (reader_name!= NULL)
+	if (reader_name != NULL)
 	{
 		selected = ((slot_description != NULL) && (0 == strcmp(slot_description, reader_name)));
 	}
@@ -266,7 +270,8 @@ CK_BBOOL selected_slot(pkcs11_module* module, CK_ULONG slot_id, const char* slot
 	return selected;
 }
 
-CK_BBOOL selected_token(pkcs11_module* module, CK_ULONG slot_id, const char* label, const char* serial, const char* card_name)
+CK_BBOOL selected_token(pkcs11_module* module, CK_ULONG slot_id, const char* label,
+                        const char* serial, const char* card_name)
 {
 	CK_BBOOL selected = TRUE;
 
@@ -314,12 +319,12 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key(const char*
 			for (i = 0; i < slots.count; i++)
 			{
 				CK_ULONG slot_id = slots.slot_id[i];
-				char * slot_description = get_slot_description(module, slot_id);
+				char* slot_description = get_slot_description(module, slot_id);
 
 				if (selected_slot(module, slot_id, slot_description, reader_name))
 				{
-					char * serial = NULL;
-					char * label = get_token_label(module, slot_id, &serial);
+					char* serial = NULL;
+					char* label = get_token_label(module, slot_id, &serial);
 
 					if (selected_token(module, slot_id, label, serial, card_name))
 					{
@@ -327,7 +332,8 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key(const char*
 						WITH_PKCS11_OPEN_SESSION(session, module, slot_id, CKF_SERIAL_SESSION, NULL, NULL)
 						{
 							VERBOSE(module->verbose, "Opened PKCS#11 session %lu", session);
-							result = find_x509_certificates_with_signing_rsa_private_key_in_slot(module, slot_id, slot_description, label, serial,  session, result);
+							result = find_x509_certificates_with_signing_rsa_private_key_in_slot(module, slot_id,
+							         slot_description, label, serial,  session, result);
 						}
 					}
 
@@ -343,3 +349,4 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key(const char*
 }
 
 /**** THE END ****/
+

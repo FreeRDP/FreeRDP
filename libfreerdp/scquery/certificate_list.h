@@ -39,3 +39,4 @@ frees only the current list nodes (not the next ones). */
 void certificate_list_free(certificate_list list);
 
 #endif
+

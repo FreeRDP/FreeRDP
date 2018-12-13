@@ -372,3 +372,4 @@ CK_RV object_get_attributes(pkcs11_module* module, CK_SESSION_HANDLE session,
 			return rv;
 	}
 }
+

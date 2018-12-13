@@ -32,7 +32,7 @@ void* error_out_of_memory(size_t size)
 }
 
 static void report_level(DWORD level, const char* file, unsigned long line, const char* function,
-	int status, const char * format, va_list ap)
+                         int status, const char* format, va_list ap)
 {
 	wLog* log = WLog_Get(TAG);
 
@@ -60,9 +60,9 @@ void report_warning(const char* file, unsigned long line, const char* function, 
 	va_end(ap);
 }
 
-const char * next_arg(va_list ap)
+const char* next_arg(va_list ap)
 {
-	return va_arg(ap, const char *);
+	return va_arg(ap, const char*);
 }
 
 void report_verbose(const char* file, unsigned long line, const char* function, const char* format,
@@ -114,13 +114,13 @@ scquery_result query_X509_user_identities(const char* module, const char* reader
 		if (upn != NULL)
 		{
 			break;
- 		}
+		}
 	}
 
 	if ((entry != NULL) && (upn != NULL))
 	{
 		X509_user_identity = string_format("PKCS11:module_name=%s:slotid=%lu:token=%s:certid=%s",
-			module, entry->slot_id, entry->token_label, entry->id);
+		                                   module, entry->slot_id, entry->token_label, entry->id);
 
 		if (X509_user_identity != NULL)
 		{
@@ -181,3 +181,4 @@ void  scquery_result_free(scquery_result that)
 }
 
 /**** THE END ****/
+

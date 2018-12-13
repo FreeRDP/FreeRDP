@@ -478,7 +478,8 @@ void extract_othername_object(GENERAL_NAME* name, alt_name alt_name)
 {
 	switch (name->type)
 	{
-		char *  type;
+			char*   type;
+
 		case GEN_OTHERNAME:
 			alt_name_add_component(alt_name, type = type_id_to_oid_string(name->d.otherName->type_id));
 			unsigned char* der = NULL;
@@ -624,7 +625,7 @@ alt_name_list certificate_extract_subject_alt_names(buffer certificate_data)
 	else
 	{
 		/* d2i_X509 increments the input point by the length read */
-		const unsigned char * next = buffer_data(certificate_data);
+		const unsigned char* next = buffer_data(certificate_data);
 		X509* certificate = d2i_X509(NULL, &next, buffer_size(certificate_data));
 		alt_name_list result = map_subject_alt_names(certificate, extract_alt_name);
 		/* alt_name alt_name = alt_name_new("1.3.6.1.5.2.2",1); */
@@ -637,3 +638,4 @@ alt_name_list certificate_extract_subject_alt_names(buffer certificate_data)
 
 
 /**** THE END ****/
+

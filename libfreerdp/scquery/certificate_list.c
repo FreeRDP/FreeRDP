@@ -68,3 +68,4 @@ certificate_list certificate_list_delete(smartcard_certificate certificate, cert
 }
 
 /**** THE END ****/
+

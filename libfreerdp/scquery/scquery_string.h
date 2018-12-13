@@ -44,3 +44,4 @@ and allocating buffer of that size (plus terminating nul).
 char* string_format(const char* format_string, ...);
 
 #endif
+

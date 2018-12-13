@@ -59,3 +59,4 @@ verbose_handler handle_verbose;
 #define assert(condition) do{if(!(condition)){ERROR(EX_SOFTWARE,"Assertion failed: %s",#condition);}}while(0)
 
 #endif
+

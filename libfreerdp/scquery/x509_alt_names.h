@@ -38,3 +38,4 @@ void          alt_name_list_deepfree(alt_name_list list);
 alt_name_list certificate_extract_subject_alt_names(buffer certificate_data);
 
 #endif
+

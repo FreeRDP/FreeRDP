@@ -190,3 +190,4 @@ char* string_format(const char* format_string, ...)
 
 	return result;
 }
+

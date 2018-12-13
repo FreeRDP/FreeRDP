@@ -21,15 +21,15 @@ CK_RV C_UnloadModule(pkcs11_module* module);
 
 #define WITH_PKCS11_MODULE(module,name)						\
 	for(((module=C_LoadModule(name))					\
-			?(module->rv=module->p11->C_Initialize(NULL))		\
-			:0);							\
+	     ?(module->rv=module->p11->C_Initialize(NULL))		\
+	     :0);							\
 	    ((module!=NULL)							\
-		    && ((module->rv==CKR_OK)					\
-			    ||(module->rv==CKR_CRYPTOKI_ALREADY_INITIALIZED)));	\
+	     && ((module->rv==CKR_OK)					\
+	         ||(module->rv==CKR_CRYPTOKI_ALREADY_INITIALIZED)));	\
 	    (((module!=NULL)							\
-		    ?(module->p11->C_Finalize(NULL),				\
-			    C_UnloadModule(module))				\
-		    :0),							\
+	      ?(module->p11->C_Finalize(NULL),				\
+	        C_UnloadModule(module))				\
+	      :0),							\
 	     module=NULL))
 
 
@@ -41,8 +41,8 @@ CK_SESSION_HANDLE pkcs11module_open_session(pkcs11_module* module, CK_ULONG slot
 	for(session=pkcs11module_open_session(module,slot_id,flags,application_reference,notify_function);	\
 	    session!=CK_INVALID_HANDLE;										\
 	    session=((session!=CK_INVALID_HANDLE)								\
-		    ?(module->p11->C_CloseSession(session),CK_INVALID_HANDLE)					\
-		    :CK_INVALID_HANDLE))
+	             ?(module->p11->C_CloseSession(session),CK_INVALID_HANDLE)					\
+	             :CK_INVALID_HANDLE))
 
 
 
@@ -116,3 +116,4 @@ CK_RV  object_get_attributes(pkcs11_module* module, CK_SESSION_HANDLE session,
 
 
 #endif
+

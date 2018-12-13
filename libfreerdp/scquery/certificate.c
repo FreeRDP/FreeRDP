@@ -28,9 +28,9 @@ smartcard_certificate  scquery_certificate_allocate()
 }
 
 smartcard_certificate  scquery_certificate_new(CK_SLOT_ID          slot_id,
-	char*               slot_description,
-	char*               token_label,
-	char*               token_serial,
+        char*               slot_description,
+        char*               token_label,
+        char*               token_serial,
         char*               id,
         char*               label,
         CK_CERTIFICATE_TYPE type,
@@ -81,3 +81,4 @@ void scquery_certificate_free(smartcard_certificate certificate)
 }
 
 /**** THE END ****/
+

@@ -68,6 +68,7 @@ buffer buffer_new(CK_ULONG size, CK_BYTE* data)
 void buffer_free(buffer buf)
 {
 	buffer_t* buffer = buf;
+
 	if (buffer == NULL)
 	{
 		return;
@@ -79,8 +80,9 @@ void buffer_free(buffer buf)
 		free(buffer->data);
 	}
 
-	memset(buffer, 0, sizeof (*buffer));
+	memset(buffer, 0, sizeof(*buffer));
 	free(buffer);
 }
 
 /**** THE END ****/
+
