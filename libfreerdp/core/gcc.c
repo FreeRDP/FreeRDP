@@ -1807,6 +1807,7 @@ void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs)
 			{
 				baseX = settings->MonitorDefArray[i].x;
 				baseY = settings->MonitorDefArray[i].y;
+				break;
 			}
 		}
 
