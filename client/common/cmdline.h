@@ -95,7 +95,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[[<domain>\\]<user>|<user>[@<domain>]]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gat", COMMAND_LINE_VALUE_REQUIRED, "<access token>", NULL, NULL, -1, NULL, "Gateway Access Token" },
 	{ "h", COMMAND_LINE_VALUE_REQUIRED, "<height>", "768", NULL, -1, NULL, "Height" },
-	{ "heartbeat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support heartbeat PDUs" },
+	{ "heartbeat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Support heartbeat PDUs" },
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "Print help" },
 	{ "home-drive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect user home as share" },
 	{ "ipv6", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "6", "Prefer IPv6 AAA record over IPv4 A record"},

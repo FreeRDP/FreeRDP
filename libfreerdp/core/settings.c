@@ -322,6 +322,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings)
 		return NULL;
 
+	settings->SupportHeartbeatPdu = TRUE;
 	settings->ServerMode = (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE;
 	settings->WaitForOutputBufferFlush = TRUE;
 	settings->MaxTimeInCheckLoop = 100;
