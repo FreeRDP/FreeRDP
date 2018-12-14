@@ -417,9 +417,6 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 		}
 		else
 		{
-			if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
-				WLog_ERR(TAG, "warning: unhandled RTS PDU");
-
 			if (rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length) < 0)
 				return -1;
 		}
