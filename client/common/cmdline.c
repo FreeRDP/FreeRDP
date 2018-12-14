@@ -2606,6 +2606,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->AutoAcceptCertificate = enable;
 		}
+		CommandLineSwitchCase(arg, "cert-deny")
+		{
+			settings->AutoDenyCertificate = enable;
+		}
 		CommandLineSwitchCase(arg, "authentication")
 		{
 			settings->Authentication = enable;
