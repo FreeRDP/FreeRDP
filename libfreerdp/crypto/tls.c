@@ -1333,7 +1333,10 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 
 	/* Check, if we already accepted this key. */
 	if (is_accepted(tls, pemCert, length))
+	{
+		verification_status = TRUE;
 		goto end;
+	}
 
 	if (tls->isGatewayTransport || is_redirected(tls))
 		flags |= VERIFY_CERT_FLAG_LEGACY;
