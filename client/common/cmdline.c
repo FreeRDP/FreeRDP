@@ -252,18 +252,18 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("\n");
 	printf("Drive Redirection: /drive:home,/home/user\n");
 	printf("Smartcard Redirection: /smartcard:<device>\n");
- 	printf("Smartcard logon with rdp only:                /smartcard-logon [/sec:rdp]\n");
- 	printf("Smartcard logon with Kerberos authentication: /smartcard-logon /sec:nla\n");
+	printf("Smartcard logon with rdp only:                /smartcard-logon [/sec:rdp]\n");
+	printf("Smartcard logon with Kerberos authentication: /smartcard-logon /sec:nla\n");
 	printf("Those options are only accepted with /smartcard-logon:\n");
- 	printf("    PIN code: /pin:<PIN code>\n");
+	printf("    PIN code: /pin:<PIN code>\n");
 	printf("    PKCS11 module to load: /pkcs11-module:<module>\n");
- 	printf("    PKINIT anchors: /pkinit-anchors:<pkinit_anchors>\n");
- 	printf("    Kerberos Ticket start time: /start-time:<time to issue ticket>\n");
- 	printf("    Kerberos Ticket lifetime: /lifetime:<ticket lifetime>\n");
- 	printf("    Kerberos Ticket renewable lifetime: /renewable-lifetime:<ticket renewable lifetime>\n");
- 	printf("    Activate Kerberos PKINIT trace: /T\n");
- 	printf("    CSP Name: /csp:<csp name>\n");
- 	printf("    Card Name: /card:<card name>\n");
+	printf("    PKINIT anchors: /pkinit-anchors:<pkinit_anchors>\n");
+	printf("    Kerberos Ticket start time: /start-time:<time to issue ticket>\n");
+	printf("    Kerberos Ticket lifetime: /lifetime:<ticket lifetime>\n");
+	printf("    Kerberos Ticket renewable lifetime: /renewable-lifetime:<ticket renewable lifetime>\n");
+	printf("    Activate Kerberos PKINIT trace: /T\n");
+	printf("    CSP Name: /csp:<csp name>\n");
+	printf("    Card Name: /card:<card name>\n");
 	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
 	printf("Parallel Port Redirection: /parallel:<name>,<device>\n");
@@ -344,7 +344,6 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 			return FALSE;
 		}
 
-
 		settings->DeviceRedirection = TRUE;
 		drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
 
@@ -353,7 +352,6 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 			WLog_ERR(TAG, "Could not allocate memory for the drive %s", params[1]);
 			return FALSE;
 		}
-
 
 		drive->Type = RDPDR_DTYP_FILESYSTEM;
 
@@ -379,7 +377,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 				WLog_ERR(TAG, "Drive argument is not a path or special: %s", params[2]);
 				bad = TRUE;
 			}
-			else if (!(drive->Path = _strdup(params[2]))	)
+			else if (!(drive->Path = _strdup(params[2])))
 			{
 				WLog_ERR(TAG, "Could not allocate memory for the drive path %s", params[2]);
 				bad = TRUE;
@@ -722,9 +720,8 @@ Note: One purpose is to store the strings in the string list in the
 additionnal bytes, so the whole string list can be freed with a simple
 call to free(), instead of calling string_list_free().
 */
-static char** string_list_allocate(size_t entry_count, size_t additionnal_size, char ** tail)
+static char** string_list_allocate(size_t entry_count, size_t additionnal_size, char** tail)
 {
-
 	size_t total_size = entry_count * sizeof(char*) + additionnal_size * sizeof(char);
 	char** list = malloc(total_size);
 
@@ -742,11 +739,13 @@ static size_t string_count_char(const char* string, char character)
 {
 	size_t count = 0;
 	const char* it = string;
+
 	while ((it = strchr(it, character)) != NULL)
 	{
 		it++;
 		count++;
 	}
+
 	return count;
 }
 
@@ -783,8 +782,8 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 	{
 		size_t index = 0;
 		size_t nCommas = string_count_char(list, ',');
-		size_t nArgs = nCommas + 1 + ((name == NULL)?0:1);
-		size_t namelen = (name == NULL)?0:strlen(name);
+		size_t nArgs = nCommas + 1 + ((name == NULL) ? 0 : 1);
+		size_t namelen = (name == NULL) ? 0 : strlen(name);
 		char* store = NULL;
 		char** p = string_list_allocate(nArgs, namelen + 1 + strlen(list) + 1, &store);
 
@@ -1482,7 +1481,8 @@ static void activate_smartcard_logon(rdpSettings* settings)
 	/* Ticket renewable lifetime value in seconds ; KDC default value : 1 day (i.e. 86400s) ; 7 days at maximum */
 	settings->KerberosRenewableLifeTime = 86400;
 	settings->Krb5Trace = FALSE;
-	freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);	/* TODO: why not? settings->UseRdpSecurityLayer = TRUE; */
+	freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin,
+	                       TRUE);	/* TODO: why not? settings->UseRdpSecurityLayer = TRUE; */
 }
 
 /**
@@ -2375,7 +2375,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				WLog_ERR(TAG, "Cannot set the connection type %ld", type);
 				return COMMAND_LINE_ERROR;
 			}
-
 		}
 		CommandLineSwitchCase(arg, "fonts")
 		{
@@ -2447,9 +2446,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					{
 						WLog_ERR(TAG, "Bad value for gfx option: %s, should be "
 #ifdef WITH_GFX_H264
-							      "AVC444,  AVC420 or "
+						         "AVC444,  AVC420 or "
 #endif
-							      "RFX", arg->Value);
+						         "RFX", arg->Value);
 						return COMMAND_LINE_ERROR;
 					}
 			}
@@ -2634,7 +2633,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					WLog_ERR(TAG, "Bad value for from-stdin option: %s, should be force", arg->Value);
 					return COMMAND_LINE_ERROR;
 				}
-
 			}
 		}
 		CommandLineSwitchCase(arg, "log-level")
@@ -2646,7 +2644,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				WLog_ERR(TAG, "Could not set the log-level: %s", arg->Value);
 				return COMMAND_LINE_ERROR;
 			}
-
 		}
 		CommandLineSwitchCase(arg, "log-filters")
 		{
@@ -2655,7 +2652,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				WLog_ERR(TAG, "Could not add the log-filter: %s", arg->Value);
 				return COMMAND_LINE_ERROR;
 			}
-
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
@@ -2919,7 +2915,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			if (val > 1000)
 			{
-				WLog_ERR(TAG, "auto-reconnect-max-retries value is too big %lu,  should be in [0..1000]", settings->AutoReconnectMaxRetries);
+				WLog_ERR(TAG, "auto-reconnect-max-retries value is too big %lu,  should be in [0..1000]",
+				         settings->AutoReconnectMaxRetries);
 				return COMMAND_LINE_ERROR;
 			}
 
@@ -3210,7 +3207,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				WLog_ERR(TAG, "Could not parse gateway username %s", gwUser);
 				return COMMAND_LINE_ERROR;
 			}
-
 		}
 		else
 			settings->GatewayUsername = gwUser;
@@ -3228,7 +3224,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 				return COMMAND_LINE_ERROR_MEMORY;
 			}
-
 
 			if (!freerdp_passphrase_read("Password: ", settings->Password, size, 1))
 			{

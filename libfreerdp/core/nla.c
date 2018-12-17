@@ -1,25 +1,25 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * Network Level Authentication (NLA)
- *
- * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2015 Thincast Technologies GmbH
- * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
- * Copyright 2016 Martin Fleisz <martin.fleisz@thincast.com>
- * Copyright 2017 Dorian Ducournau <dorian.ducournau@gmail.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *		 http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* FreeRDP: A Remote Desktop Protocol Implementation
+* Network Level Authentication (NLA)
+*
+* Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+* Copyright 2015 Thincast Technologies GmbH
+* Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+* Copyright 2016 Martin Fleisz <martin.fleisz@thincast.com>
+* Copyright 2017 Dorian Ducournau <dorian.ducournau@gmail.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*		 http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -72,67 +72,67 @@
 
 
 /**
- * TSRequest ::= SEQUENCE {
- * 	version    [0] INTEGER,
- * 	negoTokens [1] NegoData OPTIONAL,
- * 	authInfo   [2] OCTET STRING OPTIONAL,
- * 	pubKeyAuth [3] OCTET STRING OPTIONAL,
- * 	errorCode  [4] INTEGER OPTIONAL
- * }
- *
- * NegoData ::= SEQUENCE OF NegoDataItem
- *
- * NegoDataItem ::= SEQUENCE {
- * 	negoToken [0] OCTET STRING
- * }
- *
- * TSCredentials ::= SEQUENCE {
- * 	cred_type    [0] INTEGER,
- * 	credentials [1] OCTET STRING
- * }
- *
- * TSPasswordCreds ::= SEQUENCE {
- * 	domainName  [0] OCTET STRING,
- * 	userName    [1] OCTET STRING,
- * 	password    [2] OCTET STRING
- * }
- *
- * TSSmartCardCreds ::= SEQUENCE {
- * 	pin        [0] OCTET STRING,
- * 	cspData    [1] TSCspDataDetail,
- * 	userHint   [2] OCTET STRING OPTIONAL,
- * 	domainHint [3] OCTET STRING OPTIONAL
- * }
- *
- * TSCspDataDetail ::= SEQUENCE {
- * 	keySpec       [0] INTEGER,
- * 	cardName      [1] OCTET STRING OPTIONAL,
- * 	readerName    [2] OCTET STRING OPTIONAL,
- * 	containerName [3] OCTET STRING OPTIONAL,
- * 	cspName       [4] OCTET STRING OPTIONAL
- * }
- *
- *
- * TSRemoteGuardCreds ::= SEQUENCE {
- *     logonCred         [0] TSRemoteGuardPackageCred,
- *     supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL,
- * }
- *
- * TSRemoteGuardPackageCred ::=  SEQUENCE {
- *     packageName [0] OCTET STRING,
- *     credBuffer  [1] OCTET STRING,
- * }
- *
- */
+* TSRequest ::= SEQUENCE {
+* 	version    [0] INTEGER,
+* 	negoTokens [1] NegoData OPTIONAL,
+* 	authInfo   [2] OCTET STRING OPTIONAL,
+* 	pubKeyAuth [3] OCTET STRING OPTIONAL,
+* 	errorCode  [4] INTEGER OPTIONAL
+* }
+*
+* NegoData ::= SEQUENCE OF NegoDataItem
+*
+* NegoDataItem ::= SEQUENCE {
+* 	negoToken [0] OCTET STRING
+* }
+*
+* TSCredentials ::= SEQUENCE {
+* 	cred_type    [0] INTEGER,
+* 	credentials [1] OCTET STRING
+* }
+*
+* TSPasswordCreds ::= SEQUENCE {
+* 	domainName  [0] OCTET STRING,
+* 	userName    [1] OCTET STRING,
+* 	password    [2] OCTET STRING
+* }
+*
+* TSSmartCardCreds ::= SEQUENCE {
+* 	pin        [0] OCTET STRING,
+* 	cspData    [1] TSCspDataDetail,
+* 	userHint   [2] OCTET STRING OPTIONAL,
+* 	domainHint [3] OCTET STRING OPTIONAL
+* }
+*
+* TSCspDataDetail ::= SEQUENCE {
+* 	keySpec       [0] INTEGER,
+* 	cardName      [1] OCTET STRING OPTIONAL,
+* 	readerName    [2] OCTET STRING OPTIONAL,
+* 	containerName [3] OCTET STRING OPTIONAL,
+* 	cspName       [4] OCTET STRING OPTIONAL
+* }
+*
+*
+* TSRemoteGuardCreds ::= SEQUENCE {
+*     logonCred         [0] TSRemoteGuardPackageCred,
+*     supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL,
+* }
+*
+* TSRemoteGuardPackageCred ::=  SEQUENCE {
+*     packageName [0] OCTET STRING,
+*     credBuffer  [1] OCTET STRING,
+* }
+*
+*/
 
 #define NLA_PKG_NAME	NEGO_SSP_NAME
 
 
 typedef struct
 {
- 	char* Pin;
- 	char* UserHint;   /* OPTIONAL */
- 	char* DomainHint; /* OPTIONAL */
+	char* Pin;
+	char* UserHint;   /* OPTIONAL */
+	char* DomainHint; /* OPTIONAL */
 } smartcard_creds;
 
 typedef struct
@@ -254,7 +254,7 @@ static const UINT32 NonceLength = 32;
 		if (!(pointer))						\
 		{                                                       \
 			WLog_ERR(TAG, "%s:%d: "  description,		\
-			         __FUNCTION__, __LINE__,                \
+			         __FUNCTION__, __LINE__,			\
 			         ## __VA_ARGS__);			\
 			return result;                                  \
 		}                                                       \
@@ -263,7 +263,6 @@ static const UINT32 NonceLength = 32;
 static void memory_clear_and_free(void* memory, size_t size)
 {
 	if (memory)
-
 	{
 		memset(memory, 0, size);
 		free(memory);
@@ -446,7 +445,7 @@ static void csp_data_detail_free(csp_data_detail* csp)
 /* ============================================================ */
 
 /* SEC_WINNT_AUTH_IDENTITY contains only UTF-16 strings,  with length fields. */
-#define WSTRING_LENGTH_CLEAR_AND_FREE(structure, field) \
+#define WSTRING_LENGTH_CLEAR_AND_FREE(structure, field)				\
 	memory_clear_and_free(structure->field, structure->field##Length * 2)
 #define WSTRING_LENGTH_SET_CSTRING(structure, field, cstring)				\
 	(structure->field##Length = (cstring						\
@@ -507,9 +506,9 @@ static void auth_identity_free(auth_identity* aid)
 /* ============================================================ */
 
 /**
- * Returns whether the username is found in the SAM database.
- * @param username: C string.
- */
+* Returns whether the username is found in the SAM database.
+* @param username: C string.
+*/
 
 static BOOL user_is_in_sam_database(const char* username)
 {
@@ -543,9 +542,9 @@ static BOOL user_is_in_sam_database(const char* username)
 /* ============================================================ */
 
 /**
- * Returns whether the username is found in the SAM database.
- * @param username: C string.
- */
+* Returns whether the username is found in the SAM database.
+* @param username: C string.
+*/
 
 static int nla_client_init_smartcard_logon(rdpNla* nla)
 {
@@ -570,15 +569,15 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	}
 
 	/* #if defined(WITH_KERBEROS) */
-	/* 	WLog_INFO(TAG, "WITH_KERBEROS"); */
+	/*	WLog_INFO(TAG, "WITH_KERBEROS"); */
 	/*  */
-	/* 	if (get_TGT_kerberos(settings) == FALSE) */
-	/* 	{ */
-	/* 		WLog_ERR(TAG, "Failed to get TGT from KDC !"); */
-	/* 		return -1; */
-	/* 	} */
+	/*	if (get_TGT_kerberos(settings) == FALSE) */
+	/*	{ */
+	/*		WLog_ERR(TAG, "Failed to get TGT from KDC !"); */
+	/*		return -1; */
+	/*	} */
 	/* #else */
-	/* 	WLog_INFO(TAG, "NOT WITH_KERBEROS"); */
+	/*	WLog_INFO(TAG, "NOT WITH_KERBEROS"); */
 	/* #endif */
 #else
 	WLog_ERR(TAG,
@@ -750,89 +749,89 @@ Initialize NTLM/Kerberos SSP authentication module (client).
 
 We prepare the CSSP negotiation, which involves sending three packets:
 
- - TLSencrypted(TSRequest([SPNEGO token]))
-   (nla_client_begin)
-   using the parameters: nla->credentials, nla->ServicePrincipalName, nla->fContextReq, nla->pPackageInfo
+- TLSencrypted(TSRequest([SPNEGO token]))
+(nla_client_begin)
+using the parameters: nla->credentials, nla->ServicePrincipalName, nla->fContextReq, nla->pPackageInfo
 
- - TLSencrypted(TSRequest([SPNego encrypted(client / server hash of public key)]))
-   (nla_client_recv->nal_encrypt_public_key_{echo,hash})
-   using the parameters: nla->credentials, nla->ServicePrincipalName, nla->fContextReq, nla->ClientNonce,  nla->PublicKey
+- TLSencrypted(TSRequest([SPNego encrypted(client / server hash of public key)]))
+(nla_client_recv->nal_encrypt_public_key_{echo,hash})
+using the parameters: nla->credentials, nla->ServicePrincipalName, nla->fContextReq, nla->ClientNonce,  nla->PublicKey
 
- - TLSencrypted(TSRequest([SPNego encrypted(user credentials)]))
-   (nla_client_recv->nla_encrypt_ts_credentials)
-   using the parameters: nla->credentials, nla->ServicePrincipalName, nla->fContextReq,
-   nla->settings->DisableCredentialsDelegation,  nla->identity
+- TLSencrypted(TSRequest([SPNego encrypted(user credentials)]))
+(nla_client_recv->nla_encrypt_ts_credentials)
+using the parameters: nla->credentials, nla->ServicePrincipalName, nla->fContextReq,
+nla->settings->DisableCredentialsDelegation,  nla->identity
 
 
 
 
 INPUT:
 
-    nla->instance
+nla->instance
 
-    nla->settings->RestrictedAdminModeRequired
-    nla->settings->SmartcardLogon
+nla->settings->RestrictedAdminModeRequired
+nla->settings->SmartcardLogon
 
-    nla->settings->ServerHostname
+nla->settings->ServerHostname
 
-    nla->settings->Username
-    nla->settings->Password
-    nla->settings->Domain
+nla->settings->Username
+nla->settings->Password
+nla->settings->Domain
 
-    nla->settings->RedirectionPassword
-    nla->settings->PasswordHash
+nla->settings->RedirectionPassword
+nla->settings->PasswordHash
 
-    {nla->tls->PublicKey,  nla->tls->PublicKeyLength}
+{nla->tls->PublicKey,  nla->tls->PublicKeyLength}
 
 OUTPUT:
 
-    nla->state = NLA_STATE_INITIAL;
-    nla->cred_type = credential_type_default;
+nla->state = NLA_STATE_INITIAL;
+nla->cred_type = credential_type_default;
 
-    nla->identity
-    nla->identity->password_creds
-    nla->identity->smartcard_creds
-    nla->identity->csp_data
+nla->identity
+nla->identity->password_creds
+nla->identity->smartcard_creds
+nla->identity->csp_data
 
 
-    settings->DisableCredentialsDelegation
-    nla->ServicePrincipalName
+settings->DisableCredentialsDelegation
+nla->ServicePrincipalName
 
-    nla->table
-    nla->status
-    nla->pPackageInfo
-    nla->cbMaxToken
-    nla->packageName
-    nla->haveContext
-    nla->haveInputBuffer
-    nla->HavePubKeyAuth
-    nla->inputBuffer
-    nla->outputBuffer
-    nla->ContextSizes
-    nla->fContextReq
-    nla->credentials
-    nla->expiration
+nla->table
+nla->status
+nla->pPackageInfo
+nla->cbMaxToken
+nla->packageName
+nla->haveContext
+nla->haveInputBuffer
+nla->HavePubKeyAuth
+nla->inputBuffer
+nla->outputBuffer
+nla->ContextSizes
+nla->fContextReq
+nla->credentials
+nla->expiration
 
 RULES:
 
-    settings->RestrictedAdminModeRequired => settings->DisableCredentialsDelegation
+settings->RestrictedAdminModeRequired => settings->DisableCredentialsDelegation
 
-    settings->SmartcardLogon => PromptPin
-    (!settings->Username || !settings->Password) && !settings->SmartcardLogon => PromptPassword
-    PromptPassword && settings->Username && user_is_in_sam_database(settings->Username) => PromptPassword = FALSE
-    !_WIN32 &&  PromptPassword && settings->RestrictedAdminModeRequired && settings->PasswordHash => PromptPassword = FALSE
+settings->SmartcardLogon => PromptPin
+(!settings->Username || !settings->Password) && !settings->SmartcardLogon => PromptPassword
+PromptPassword && settings->Username && user_is_in_sam_database(settings->Username) => PromptPassword = FALSE
+!_WIN32 &&  PromptPassword && settings->RestrictedAdminModeRequired && settings->PasswordHash => PromptPassword = FALSE
 
-    (PromptPassword || PromptPin) &&  instance->Authenticate => instance->Authenticate(instance, &settings->Username, &settings->Password, &settings->Domain)
+(PromptPassword || PromptPin) &&  instance->Authenticate => instance->Authenticate(instance, &settings->Username, &settings->Password, &settings->Domain)
 
-    !settings->UserName => nla->identity->password_creds == NULL
-    settings->UserName && settings->RedirectionPassword
+!settings->UserName => nla->identity->password_creds == NULL
+settings->UserName && settings->RedirectionPassword
 
-    nla->ServicePrincipalName =  TERMSRV_SPN_PREFIX + settings->ServerHostname
+nla->ServicePrincipalName =  TERMSRV_SPN_PREFIX + settings->ServerHostname
 
 CALLS:
 
-    nla->table->QuerySecurityPackageInfo()
-    nla->table->AcquireCredentialsHandle()
+nla->table->QuerySecurityPackageInfo()
+nla->table->AcquireCredentialsHandle()
 
 */
 static int nla_client_init(rdpNla* nla)
@@ -960,12 +959,12 @@ static int nla_client_init(rdpNla* nla)
 	ZeroMemory(&nla->outputBuffer, sizeof(SecBuffer));
 	ZeroMemory(&nla->ContextSizes, sizeof(SecPkgContext_Sizes));
 	/*
-	 * from tspkg.dll: 0x00000132
-	 * ISC_REQ_MUTUAL_AUTH
-	 * ISC_REQ_CONFIDENTIALITY
-	 * ISC_REQ_USE_SESSION_KEY
-	 * ISC_REQ_ALLOCATE_MEMORY
-	 */
+	* from tspkg.dll: 0x00000132
+	* ISC_REQ_MUTUAL_AUTH
+	* ISC_REQ_CONFIDENTIALITY
+	* ISC_REQ_USE_SESSION_KEY
+	* ISC_REQ_ALLOCATE_MEMORY
+	*/
 	nla->fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 	return 1;
 }
@@ -996,7 +995,7 @@ int nla_client_begin(rdpNla* nla)
 	         GetSecurityStatusString(nla->status), nla->status);
 
 	/* Handle kerberos context initialization failure.
-	 * After kerberos failed initialize NTLM context */
+	* After kerberos failed initialize NTLM context */
 	if (nla->status == SEC_E_NO_CREDENTIALS)
 	{
 		nla->status = nla->table->InitializeSecurityContext(&nla->credentials,
@@ -1280,9 +1279,9 @@ static int nla_client_authenticate(rdpNla* nla)
 }
 
 /**
- * Initialize NTLMSSP authentication module (server).
- * @param credssp
- */
+* Initialize NTLMSSP authentication module (server).
+* @param credssp
+*/
 
 static int nla_server_init(rdpNla* nla)
 {
@@ -1350,11 +1349,11 @@ static int nla_server_init(rdpNla* nla)
 	ZeroMemory(&nla->outputBufferDesc, sizeof(SecBufferDesc));
 	ZeroMemory(&nla->ContextSizes, sizeof(SecPkgContext_Sizes));
 	/*
-	 * from tspkg.dll: 0x00000112
-	 * ASC_REQ_MUTUAL_AUTH
-	 * ASC_REQ_CONFIDENTIALITY
-	 * ASC_REQ_ALLOCATE_MEMORY
-	 */
+	* from tspkg.dll: 0x00000112
+	* ASC_REQ_MUTUAL_AUTH
+	* ASC_REQ_CONFIDENTIALITY
+	* ASC_REQ_ALLOCATE_MEMORY
+	*/
 	nla->fContextReq = 0;
 	nla->fContextReq |= ASC_REQ_MUTUAL_AUTH;
 	nla->fContextReq |= ASC_REQ_CONFIDENTIALITY;
@@ -1367,10 +1366,10 @@ static int nla_server_init(rdpNla* nla)
 }
 
 /**
- * Authenticate with client using CredSSP (server).
- * @param credssp
- * @return 1 if authentication is successful
- */
+* Authenticate with client using CredSSP (server).
+* @param credssp
+* @return 1 if authentication is successful
+*/
 
 static int nla_server_authenticate(rdpNla* nla)
 {
@@ -1524,8 +1523,8 @@ static int nla_server_authenticate(rdpNla* nla)
 		if ((nla->status != SEC_E_OK) && (nla->status != SEC_I_CONTINUE_NEEDED))
 		{
 			/* Special handling of these specific error codes as NTSTATUS_FROM_WIN32
-			   unfortunately does not map directly to the corresponding NTSTATUS values
-			 */
+			unfortunately does not map directly to the corresponding NTSTATUS values
+			*/
 			switch (GetLastError())
 			{
 				case ERROR_PASSWORD_MUST_CHANGE:
@@ -1616,10 +1615,10 @@ static int nla_server_authenticate(rdpNla* nla)
 }
 
 /**
- * Authenticate using CredSSP.
- * @param credssp
- * @return 1 if authentication is successful
- */
+* Authenticate using CredSSP.
+* @param credssp
+* @return 1 if authentication is successful
+*/
 
 int nla_authenticate(rdpNla* nla)
 {
@@ -2193,7 +2192,7 @@ static BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s, size_t* length)
 	}
 
 	/* TSPasswordCreds (SEQUENCE)
-	 * Initialise to default values. */
+	* Initialise to default values. */
 	SEC_WINNT_AUTH_IDENTITY_free(nla->identity->password_creds);
 	nla->identity->password_creds = SEC_WINNT_AUTH_IDENTITY_new(NULL, NULL, NULL);
 
@@ -2206,7 +2205,7 @@ static BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s, size_t* length)
 		return FALSE;
 
 	/* The sequence is empty, return early,
-	 * TSPasswordCreds (SEQUENCE) is optional. */
+	* TSPasswordCreds (SEQUENCE) is optional. */
 	if ((*length) == 0)
 		return TRUE;
 
@@ -2229,7 +2228,7 @@ static BOOL nla_read_ts_cspdatadetail(rdpNla* nla, wStream* s, size_t* length)
 	}
 
 	/* TSCspDataDetail (SEQUENCE)
-	 * Initialise to default values. */
+	* Initialise to default values. */
 	csp_data_detail_free(nla->identity->csp_data);
 	nla->identity->csp_data = csp_data_detail_new_nocopy(0, NULL, NULL, NULL, NULL);
 
@@ -2244,7 +2243,7 @@ static BOOL nla_read_ts_cspdatadetail(rdpNla* nla, wStream* s, size_t* length)
 	}
 
 	/* The sequence is empty, return early,
-	 * TSCspDataDetail (SEQUENCE) is optional. */
+	* TSCspDataDetail (SEQUENCE) is optional. */
 	if (*length == 0)
 		return TRUE;
 
@@ -2453,9 +2452,9 @@ static size_t nla_write_ts_credentials(rdpNla* nla, wStream* s, auth_identity* i
 }
 
 /**
- * Encode TSCredentials structure.
- * @param credssp
- */
+* Encode TSCredentials structure.
+* @param credssp
+*/
 
 static BOOL nla_encode_ts_credentials(rdpNla* nla)
 {
@@ -2700,9 +2699,9 @@ static size_t nla_sizeof_ts_request(size_t length)
 }
 
 /**
- * Send CredSSP message.
- * @param credssp
- */
+* Send CredSSP message.
+* @param credssp
+*/
 
 BOOL nla_send(rdpNla* nla)
 {
@@ -3111,10 +3110,10 @@ LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname)
 }
 
 /**
- * Create new CredSSP state machine.
- * @param transport
- * @return new CredSSP state machine.
- */
+* Create new CredSSP state machine.
+* @param transport
+* @return new CredSSP state machine.
+*/
 
 rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings)
 {
@@ -3193,9 +3192,9 @@ cleanup:
 }
 
 /**
- * Free CredSSP state machine.
- * @param credssp
- */
+* Free CredSSP state machine.
+* @param credssp
+*/
 
 void nla_free(rdpNla* nla)
 {
