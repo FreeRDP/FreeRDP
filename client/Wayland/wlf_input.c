@@ -44,7 +44,8 @@ BOOL wlf_handle_pointer_motion(freerdp* instance, UwacPointerMotionEvent* ev)
 BOOL wlf_handle_pointer_buttons(freerdp* instance, UwacPointerButtonEvent* ev)
 {
 	rdpInput* input;
-	UINT16 flags;
+	UINT16 flags = 0;
+	UINT16 xflags = 0;
 
 	if (!instance || !ev || !instance->input)
 		return FALSE;
@@ -52,9 +53,10 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, UwacPointerButtonEvent* ev)
 	input = instance->input;
 
 	if (ev->state == WL_POINTER_BUTTON_STATE_PRESSED)
-		flags = PTR_FLAGS_DOWN;
-	else
-		flags = 0;
+	{
+		flags |= PTR_FLAGS_DOWN;
+		xflags |= PTR_XFLAGS_DOWN;
+	}
 
 	switch (ev->button)
 	{
@@ -70,11 +72,25 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, UwacPointerButtonEvent* ev)
 			flags |= PTR_FLAGS_BUTTON3;
 			break;
 
+		case BTN_SIDE:
+			xflags |= PTR_XFLAGS_BUTTON1;
+			break;
+
+		case BTN_EXTRA:
+			xflags |= PTR_XFLAGS_BUTTON2;
+			break;
+
 		default:
 			return TRUE;
 	}
 
-	return freerdp_input_send_mouse_event(input, flags, ev->x, ev->y);
+	if ((flags & ~PTR_FLAGS_DOWN) != 0)
+		return freerdp_input_send_mouse_event(input, flags, ev->x, ev->y);
+
+	if ((xflags & ~PTR_XFLAGS_DOWN) != 0)
+		return freerdp_input_send_extended_mouse_event(input, xflags, ev->x, ev->y);
+
+	return FALSE;
 }
 
 
