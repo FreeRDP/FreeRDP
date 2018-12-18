@@ -36,6 +36,7 @@
 
 #include "wlfreerdp.h"
 #include "wlf_input.h"
+#include "wlf_disp.h"
 #include "wlf_channels.h"
 
 static BOOL wl_update_content(wlfContext* context_w)
@@ -227,6 +228,10 @@ static BOOL wl_post_connect(freerdp* instance)
 	instance->update->EndPaint = wl_end_paint;
 	instance->update->DesktopResize = wl_resize_display;
 	freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
+
+	if (!(context->disp = wlf_disp_new(context)))
+		return FALSE;
+
 	return wl_update_buffer(context, 0, 0, gdi->width, gdi->height);
 }
 
@@ -242,6 +247,7 @@ static void wl_post_disconnect(freerdp* instance)
 
 	context = (wlfContext*) instance->context;
 	gdi_free(instance);
+	wlf_disp_free(context->disp);
 
 	if (context->window)
 		UwacDestroyWindow(&context->window);
@@ -313,6 +319,9 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_CONFIGURE:
+				if (!wlf_disp_handle_configure(context->disp, event.configure.width, event.configure.height))
+					return FALSE;
+
 				if (!wl_refresh_display(context))
 					return FALSE;
 
@@ -343,7 +352,7 @@ static int wlfreerdp_run(freerdp* instance)
 
 	if (!freerdp_connect(instance))
 	{
-		printf("Failed to connect\n");
+		WLog_Print(context->log, WLOG_ERROR, "Failed to connect");
 		return -1;
 	}
 
@@ -354,7 +363,7 @@ static int wlfreerdp_run(freerdp* instance)
 
 		if (count <= 1)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			WLog_Print(context->log, WLOG_ERROR, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
@@ -362,20 +371,20 @@ static int wlfreerdp_run(freerdp* instance)
 
 		if (WAIT_FAILED == status)
 		{
-			printf("%s: WaitForMultipleObjects failed\n", __FUNCTION__);
+			WLog_Print(context->log, WLOG_ERROR, "%s: WaitForMultipleObjects failed", __FUNCTION__);
 			break;
 		}
 
 		if (!handle_uwac_events(instance, context->display))
 		{
-			printf("error handling UWAC events\n");
+			WLog_Print(context->log, WLOG_ERROR, "error handling UWAC events");
 			break;
 		}
 
 		if (freerdp_check_event_handles(instance->context) != TRUE)
 		{
 			if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
-				printf("Failed to check FreeRDP file descriptor\n");
+				WLog_Print(context->log, WLOG_ERROR, "Failed to check FreeRDP file descriptor");
 
 			break;
 		}
@@ -409,7 +418,7 @@ static int wlf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 		return -1;
 
 	wlf = (wlfContext*) instance->context;
-	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
+	WLog_Print(wlf->log, WLOG_INFO,  "Logon Error Info %s [%s]", str_data, str_type);
 	return 1;
 }
 
@@ -429,9 +438,10 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = wlf_logon_error_info;
+	wfl->log = WLog_Get(TAG);
 	wfl->display = UwacOpenDisplay(NULL, &status);
 
-	if (!wfl->display || (status != UWAC_SUCCESS))
+	if (!wfl->display || (status != UWAC_SUCCESS) || !wfl->log)
 		return FALSE;
 
 	wfl->displayHandle = CreateFileDescriptorEvent(NULL, FALSE, FALSE,
