@@ -58,6 +58,7 @@ set(${MODULE_PREFIX}_SRCS
     ${GENERATED_SOURCES}
     uwac-display.c
     uwac-input.c
+    uwac-clipboard.c
     uwac-os.c
     uwac-os.h
     uwac-output.c

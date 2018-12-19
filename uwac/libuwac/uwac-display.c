@@ -191,6 +191,7 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 			return;
 		}
 
+		UwacSeatRegisterClipboard(seat);
 		ev = (UwacSeatNewEvent*)UwacDisplayNewEvent(d, UWAC_EVENT_NEW_SEAT);
 
 		if (!ev)
@@ -276,7 +277,6 @@ static void registry_handle_global_remove(void* data, struct wl_registry* regist
 		if (strcmp(global->interface, "wl_seat") == 0)
 		{
 			UwacSeatRemovedEvent* ev;
-
 			display_destroy_seat(d, name);
 			ev = (UwacSeatRemovedEvent*)UwacDisplayNewEvent(d, UWAC_EVENT_REMOVED_SEAT);
 
@@ -726,7 +726,6 @@ bool UwacHasEvent(UwacDisplay* display)
 {
 	return display->pop_queue != NULL;
 }
-
 
 UwacReturnCode UwacNextEvent(UwacDisplay* display, UwacEvent* event)
 {
