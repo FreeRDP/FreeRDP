@@ -24,6 +24,7 @@
 #include <freerdp/gdi/gfx.h>
 
 #include "wlf_channels.h"
+#include "wlf_cliprdr.h"
 #include "wlf_disp.h"
 #include "wlfreerdp.h"
 
@@ -81,6 +82,7 @@ void wlf_OnChannelConnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
+		wlf_cliprdr_init(wlf->clipboard, (CliprdrClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
@@ -116,6 +118,7 @@ void wlf_OnChannelDisconnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
+		wlf_cliprdr_uninit(wlf->clipboard, (CliprdrClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{

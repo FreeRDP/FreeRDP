@@ -31,6 +31,7 @@
 #define TAG CLIENT_TAG("wayland")
 
 typedef struct wlf_context wlfContext;
+typedef struct wlf_clipboard wfClipboard;
 typedef struct _wlfDispContext wlfDispContext;
 
 struct wlf_context
@@ -49,6 +50,7 @@ struct wlf_context
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
+	wfClipboard* clipboard;
 	wlfDispContext* disp;
 	wLog* log;
 };

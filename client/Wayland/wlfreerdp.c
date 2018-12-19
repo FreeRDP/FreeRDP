@@ -36,6 +36,7 @@
 
 #include "wlfreerdp.h"
 #include "wlf_input.h"
+#include "wlf_cliprdr.h"
 #include "wlf_disp.h"
 #include "wlf_channels.h"
 
@@ -232,6 +233,11 @@ static BOOL wl_post_connect(freerdp* instance)
 	if (!(context->disp = wlf_disp_new(context)))
 		return FALSE;
 
+	context->clipboard = wlf_clipboard_new(context);
+
+	if (!context->clipboard)
+		return FALSE;
+
 	return wl_update_buffer(context, 0, 0, gdi->width, gdi->height);
 }
 
@@ -247,6 +253,7 @@ static void wl_post_disconnect(freerdp* instance)
 
 	context = (wlfContext*) instance->context;
 	gdi_free(instance);
+	wlf_clipboard_free(context->clipboard);
 	wlf_disp_free(context->disp);
 
 	if (context->window)
@@ -325,6 +332,14 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 					return FALSE;
 
 				if (!wl_refresh_display(context))
+					return FALSE;
+
+				break;
+
+			case UWAC_EVENT_CLIPBOARD_AVAILABLE:
+			case UWAC_EVENT_CLIPBOARD_OFFER:
+			case UWAC_EVENT_CLIPBOARD_SELECT:
+				if (!wlf_cliprdr_handle_event(context->clipboard, &event.clipboard))
 					return FALSE;
 
 				break;
