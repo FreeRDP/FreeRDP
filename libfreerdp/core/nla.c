@@ -522,17 +522,23 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 		return -1;
 	}
 
-	/* #if defined(WITH_KERBEROS) */
-	/*	WLog_INFO(TAG, "WITH_KERBEROS"); */
-	/*  */
-	/*	if (get_TGT_kerberos(settings) == FALSE) */
-	/*	{ */
-	/*		WLog_ERR(TAG, "Failed to get TGT from KDC !"); */
-	/*		return -1; */
-	/*	} */
-	/* #else */
-	/*	WLog_INFO(TAG, "NOT WITH_KERBEROS"); */
-	/* #endif */
+#if defined(WITH_KERBEROS)
+	WLog_INFO(TAG, "WITH_KERBEROS");
+
+	if (kerberos_get_tgt(settings))
+	{
+		WLog_INFO(TAG, "Got Ticket Granting Ticket for %s", settings->CanonicalizedUserHint);
+	}
+	else
+	{
+		WLog_ERR(TAG, "Failed to get Ticket Granting Ticket from KDC!");
+		return -1;
+	}
+
+#else
+	/* TODO: try to get the CanonicalizedUserHint from klist? */
+	WLog_INFO(TAG, "NOT WITH_KERBEROS");
+#endif
 #else
 	WLog_ERR(TAG,
 	         "Recompile with the PKCS11H and GSSAPI features enabled to authenticate via smartcard.");
@@ -582,7 +588,6 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	CHECK_MEMORY(settings->DomainHint = strdup(settings->Domain),  /* They're freed separately! */
 	             -1, "Could not strdup the Domain (length = %d)",
 	             strlen(settings->Domain));
-	settings->CanonicalizedUserHint = strdup("BOURGUIGNONPA"); /* PJBDEBUG */
 
 	if (settings->CanonicalizedUserHint == NULL)
 	{
