@@ -1108,6 +1108,9 @@ void freerdp_settings_free(rdpSettings* settings)
 	free(settings->IdCertificate);
 	free(settings->PkinitIdentity);
 	free(settings->PkinitAnchors);
+	free(settings->KerberosStartTime);
+	free(settings->KerberosLifeTime);
+	free(settings->KerberosRenewableLifeTime);
 	free(settings->TokenLabel);
 	free(settings->PkinitCertificate);
 	free(settings->RemoteAssistanceSessionId);
@@ -1150,4 +1153,3 @@ void freerdp_settings_free(rdpSettings* settings)
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
-

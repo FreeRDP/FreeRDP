@@ -61,13 +61,23 @@ WINPR_API char** string_list_copy(char** string_list);
 WINPR_API void string_list_print(FILE* out, char** string_list);
 
 /**
-* string_list_join concatenates each string in the string list, separated by the separator string.
+* string_list_join concatenates the strings in the string list, separated by the separator string.
 *
+* @result NULL when out of memory,  or a fresh NUL-terminated C string containing the concatenation.
 * @param [in] string_list   A NULL-terminated array of strings.
 * @param [in] separator     A C string.
 */
 WINPR_API char* string_list_join(char** string_list, const char* separator);
 
+/**
+* string_concatenate concatenates the strings in the arguments, until NULL.
+*
+* @result NULL when out of memory,  or a fresh NUL-terminated C string containing the concatenation.
+* @param [in] string   A NUL-terminated C string, or NULL.
+* @param [in] ...      Other NUL-terminated C strings,  the last one must be NULL;
+* @note The last string must be NULL,  not 0,  since on 64-bit, they're not the same parameter size!
+*/
+WINPR_API char* string_concatenate(const char* string, ...);
 
 /**
 * string_list_split_string splits a string into a string_list of substring,
@@ -97,7 +107,7 @@ WINPR_API char** string_list_split_string(const char* string, const char* separa
 * @param [in] b   A NULL-terminated array of strings.
 * @result The index of the first element in a that is different in b.
 */
-WINPR_API int string_list_mismatch(char** a,char** b);
+WINPR_API int string_list_mismatch(char** a, char** b);
 
 /**
 * string_list_equal compares the two string lists a and b.
@@ -106,7 +116,7 @@ WINPR_API int string_list_mismatch(char** a,char** b);
 * @param [in] b   A NULL-terminated array of strings.
 * @result whether the two string lists contains the same strings in the same order.
 */
-WINPR_API BOOL string_list_equal(char** a,char** b);
+WINPR_API BOOL string_list_equal(char** a, char** b);
 
 #ifdef __cplusplus
 }

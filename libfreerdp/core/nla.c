@@ -42,6 +42,7 @@
 #include <winpr/print.h>
 #include <winpr/tchar.h>
 #include <winpr/dsparse.h>
+#include <winpr/strlst.h>
 #include <winpr/library.h>
 #include <winpr/registry.h>
 
@@ -279,44 +280,6 @@ static void string_clear_and_free(char* string)
 	}
 }
 
-static char* string_concatenate(const char* string, ...)
-{
-	char*   result;
-	char*   current;
-	/* sum the lengths of the strings */
-	const char*   arg = string;
-	int total_length = 0;
-	va_list strings;
-	va_start(strings, string);
-
-	while (arg)
-	{
-		total_length += strlen(arg);
-		arg = va_arg(strings, const char*);
-	}
-
-	va_end(strings);
-	total_length += 1; /*  null byte */
-	CHECK_MEMORY((result = malloc(total_length)),
-	             0, "Could not allocate %d bytes.", total_length);
-	/* start copying */
-	current = result;
-	strcpy(current, string);
-	current += strlen(string);
-	va_start(strings, string);
-	arg = va_arg(strings, const char*);
-
-	while (arg)
-	{
-		strcpy(current, arg);
-		current += strlen(arg);
-		arg = va_arg(strings, const char*);
-	}
-
-	va_end(strings);
-	/* strcpy copied the terminating null byte */
-	return result;
-}
 
 /*
 Duplicate the cstring, or convert it to WCHAR,  depending on UNICODE.
@@ -550,7 +513,6 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 {
 	rdpSettings* settings = nla->settings;
 	nla->cred_type = settings->CredentialsType;
-
 #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
 
 	/* gets the UPN settings->UserPrincipalName */

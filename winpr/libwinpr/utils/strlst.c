@@ -20,6 +20,7 @@
 #include "config.h"
 #endif
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -144,6 +145,48 @@ done:
 	return result;
 }
 
+char* string_concatenate(const char* string, ...)
+{
+	char*   result;
+	char*   current;
+	/* sum the lengths of the strings */
+	const char*   arg = string;
+	int total_length = 0;
+	va_list strings;
+	va_start(strings, string);
+
+	while (arg)
+	{
+		total_length += strlen(arg);
+		arg = va_arg(strings, const char*);
+	}
+
+	va_end(strings);
+	total_length += 1; /*  null byte */
+
+	if (NULL == (result = malloc(total_length)))
+	{
+		return NULL;
+	}
+
+	/* start copying */
+	current = result;
+	strcpy(current, string);
+	current += strlen(string);
+	va_start(strings, string);
+	arg = va_arg(strings, const char*);
+
+	while (arg)
+	{
+		strcpy(current, arg);
+		current += strlen(arg);
+		arg = va_arg(strings, const char*);
+	}
+
+	va_end(strings);
+	/* strcpy copied the terminating null byte */
+	return result;
+}
 
 static int extract_separated_substrings(const char* string, const char* separator,
                                         int remove_empty_substring, char** result)
@@ -253,23 +296,25 @@ empty_result:
 }
 
 
-int string_list_mismatch(char** a,char** b)
+int string_list_mismatch(char** a, char** b)
 {
 	int i = 0;
-	while(a[i] && b[i])
+
+	while (a[i] && b[i])
 	{
-		if ((a[i]!= b[i]) && (strcmp(a[i], b[i]) != 0))
+		if ((a[i] != b[i]) && (strcmp(a[i], b[i]) != 0))
 		{
 			return i;
 		}
 
 		i++;
 	}
+
 	return i;
 }
 
 
-BOOL string_list_equal(char** a,char** b)
+BOOL string_list_equal(char** a, char** b)
 {
 	int result = string_list_mismatch(a, b);
 	return a[result] == b[result];

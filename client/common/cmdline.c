@@ -258,9 +258,11 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("    PIN code: /pin:<PIN code>\n");
 	printf("    PKCS11 module to load: /pkcs11-module:<module>\n");
 	printf("    PKINIT anchors: /pkinit-anchors:<pkinit_anchors>\n");
-	printf("    Kerberos Ticket start time: /start-time:<time to issue ticket>\n");
+	printf("    Kerberos Ticket start time: /start-time:<delay to issue ticket>\n");
 	printf("    Kerberos Ticket lifetime: /lifetime:<ticket lifetime>\n");
 	printf("    Kerberos Ticket renewable lifetime: /renewable-lifetime:<ticket renewable lifetime>\n");
+	/* See also http://web.mit.edu/kerberos/krb5-latest/doc/basic/date_format.html */
+	printf("    The delay and lifetime have the following syntax: <integer>[s|m|h|d] (for seconds,  minutes,  hours and days)\n");
 	printf("    Activate Kerberos PKINIT trace: /T\n");
 	printf("    CSP Name: /csp:<csp name>\n");
 	printf("    Card Name: /card:<card name>\n");
@@ -1475,11 +1477,11 @@ static void activate_smartcard_logon(rdpSettings* settings)
 	/* We initialize all the settings, for all the variants of smartcard logon: */
 	settings->Pin = NULL;
 	settings->PinPadIsPresent = FALSE;
-	settings->KerberosStartTime = 0;
+	settings->KerberosStartTime = "0";
 	/* Ticket lifetime value in seconds ; KDC default value : 600mn (i.e. 36000s) ; 600mn at maximum */
-	settings->KerberosLifeTime = 36000;
+	settings->KerberosLifeTime = "10h";
 	/* Ticket renewable lifetime value in seconds ; KDC default value : 1 day (i.e. 86400s) ; 7 days at maximum */
-	settings->KerberosRenewableLifeTime = 86400;
+	settings->KerberosRenewableLifeTime = "1d";
 	settings->Krb5Trace = FALSE;
 	freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin,
 	                       TRUE);	/* TODO: why not? settings->UseRdpSecurityLayer = TRUE; */
@@ -1526,15 +1528,16 @@ static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* 
 	return TRUE;
 }
 
-static UINT64 parse_time(const char* time_string)
-{
-	/*
-	For now, let's parse a simple integer.
-	But it would be nice to parse ISO-8601 datetimes too,
-	and relative expressions such as "now + 1 day", etc.
-	*/
-	return atoi(time_string);
-}
+#define CHECK_MEMORY(pointer)				      \
+	do                                                    \
+	{                                                     \
+		if (!(pointer))				      \
+		{                                             \
+			WLog_ERR(TAG, "%s:%d: out of memory", \
+			         __FUNCTION__, __LINE__);      \
+			return COMMAND_LINE_ERROR_MEMORY;     \
+		}                                             \
+	}while (0)
 
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
         int argc, char** argv, BOOL allowUnknown)
@@ -3088,10 +3091,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				WLog_ERR(TAG, "/start-time option can only be given after /smartcard-logon");
 				return COMMAND_LINE_ERROR;
 			}
-			else if (!(settings->KerberosStartTime = parse_time(arg->Value)))
-			{
-				return COMMAND_LINE_ERROR;
-			}
+
+			/* Let kinit parse time strings according to krb5_string_to_deltat syntax. */
+			CHECK_MEMORY(copy_value(arg->Value, &settings->KerberosStartTime));
 		}
 		CommandLineSwitchCase(arg, "lifetime")
 		{
@@ -3100,10 +3102,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				WLog_ERR(TAG, "/lifetime option can only be given after /smartcard-logon");
 				return COMMAND_LINE_ERROR;
 			}
-			else if (!(settings->KerberosLifeTime = parse_time(arg->Value)))
-			{
-				return COMMAND_LINE_ERROR;
-			}
+
+			/* Let kinit parse time strings according to krb5_string_to_deltat syntax. */
+			CHECK_MEMORY(copy_value(arg->Value, &settings->KerberosLifeTime));
 		}
 		CommandLineSwitchCase(arg, "renewable-lifetime")
 		{
@@ -3112,10 +3113,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				WLog_ERR(TAG, "/renewable-lifetime option can only be given after /smartcard-logon");
 				return COMMAND_LINE_ERROR;
 			}
-			else if (!(settings->KerberosRenewableLifeTime = parse_time(arg->Value)))
-			{
-				return COMMAND_LINE_ERROR;
-			}
+
+			/* Let kinit parse time strings according to krb5_string_to_deltat syntax. */
+			CHECK_MEMORY(copy_value(arg->Value, &settings->KerberosRenewableLifeTime));
 		}
 		CommandLineSwitchCase(arg, "T")
 		{

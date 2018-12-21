@@ -1172,9 +1172,9 @@ struct rdp_settings
 	ALIGN64 UINT64 SlotID;                        /* 1301 */
 	ALIGN64 char*  TokenLabel;                    /* 1302 */
 	ALIGN64 INT32  TokenFlags;                    /* 1303 */
-	ALIGN64 UINT64 KerberosStartTime;             /* 1304 */
-	ALIGN64 UINT64 KerberosLifeTime;              /* 1305 */
-	ALIGN64 UINT64 KerberosRenewableLifeTime;     /* 1306 */
+	ALIGN64 char*  KerberosStartTime;             /* 1304 */
+	ALIGN64 char*  KerberosLifeTime;              /* 1305 */
+	ALIGN64 char*  KerberosRenewableLifeTime;     /* 1306 */
 	ALIGN64 BOOL   Pkinit;                        /* 1307 */
 	ALIGN64 char*  PkinitCertificate;             /* 1308 */
 	ALIGN64 BOOL   Krb5Trace;             	      /* 1309 */
