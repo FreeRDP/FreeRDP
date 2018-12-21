@@ -46,6 +46,7 @@
 #include <winpr/library.h>
 #include <winpr/registry.h>
 
+#include "../mit-krb5-pkinit/kinit.h"
 #include "nla.h"
 #include "smartcardlogon.h"
 

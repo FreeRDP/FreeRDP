@@ -24,6 +24,7 @@
  * or implied warranty.
  */
 
+
 //  #include "autoconf.h"
 //  #include <k5-int.h>
 // #include "k5-platform.h"        /* For asprintf and getopt */
@@ -40,6 +41,7 @@
 #include <winpr/strlst.h>
 
 #include "extern.h"
+#include "kinit.h"
 
 #define TAG CLIENT_TAG("kinit")
 

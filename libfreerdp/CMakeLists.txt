@@ -228,8 +228,12 @@ if(WITH_PKCS11H)
         freerdp_include_directory_add(${FREERDP_MIT_KRB5_PKINIT_INCLUDE_DIR})
         freerdp_library_add(${GSS_LIBRARIES})
         freerdp_library_add(${FREERDP_MIT_KRB5_PKINIT_LIBRARIES})
-        add_subdirectory(mit-krb5-pkint)
+        add_subdirectory(mit-krb5-pkinit)
     endif()
+endif()
+
+if(WITH_KERBEROS)
+    freerdp_definition_add(-DWITH_KERBEROS)
 endif()
 
 if(WIN32 AND WITH_MEDIA_FOUNDATION)
