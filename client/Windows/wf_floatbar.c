@@ -217,6 +217,7 @@ static BOOL button_set_locked(Button* button, BOOL locked)
 
 	InvalidateRect(button->floatbar->hwnd, NULL, FALSE);
 	UpdateWindow(button->floatbar->hwnd);
+	return TRUE;
 }
 
 static BOOL update_locked_state(wfFloatBar* floatbar)
