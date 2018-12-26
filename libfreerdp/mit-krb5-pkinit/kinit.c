@@ -25,8 +25,8 @@
  */
 
 
-//  #include "autoconf.h"
-//  #include <k5-int.h>
+// #include "autoconf.h"
+// #include <k5-int.h>
 // #include "k5-platform.h"        /* For asprintf and getopt */
 #include <krb5.h>
 #include <locale.h>
@@ -202,24 +202,24 @@ struct k5_data
 };
 
 #define CHECK_MEMORY(pointer, error_action)                             \
-	do                                                                  \
-	{                                                                   \
-		if (!(pointer))                                                 \
-		{                                                               \
-			WLog_ERR(TAG, "%s:%d: out of memory",                       \
-			         __FUNCTION__, __LINE__);                                \
-			error_action;                                               \
-		}                                                               \
+	do                                                              \
+	{                                                               \
+		if (!(pointer))                                         \
+		{                                                       \
+			WLog_ERR(TAG, "%s:%d: out of memory",           \
+			         __FUNCTION__, __LINE__);                \
+			error_action;                                   \
+		}                                                       \
 	}while (0)
 
 #define CHECK_STRING_PRESENT(string, name, error_action)                \
-	do                                                                  \
-	{                                                                   \
-		if((string) == NULL)                                            \
-		{                                                               \
-			WLog_ERR(TAG, "Missing %s", name);                          \
-			error_action;                                               \
-		}                                                               \
+	do                                                              \
+	{                                                               \
+		if((string) == NULL)                                    \
+		{                                                       \
+			WLog_ERR(TAG, "Missing %s", name);              \
+			error_action;                                   \
+		}                                                       \
 	}while (0)
 
 static krb5_context errctx;
@@ -229,10 +229,12 @@ static void extended_com_err_fn(const char* myprog, errcode_t code, const char* 
 	const char* emsg;
 	char*  buffer = NULL;
 	int size = 0;
+	va_list dry;
+	va_copy(dry, args);
 	emsg = krb5_get_error_message(errctx, code);
 	WLog_ERR(myprog, "%s", emsg);
 	krb5_free_error_message(errctx, emsg);
-	size = vsnprintf(NULL, 0, fmt, args);
+	size = vsnprintf(NULL, 0, fmt, dry);
 	CHECK_MEMORY(buffer = malloc(1 + size), return);
 	size = vsnprintf(buffer, 1 + size, fmt, args);
 	WLog_ERR(myprog, "%s", buffer);
@@ -526,7 +528,8 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 	if (opts->verbose)
 		fprintf(stderr, _("Using principal: %s\n"), k5->name);
 
-	opts->principal_name = k5->name;
+	free(opts->principal_name);
+	CHECK_MEMORY(opts->principal_name = strdup(k5->name), goto cleanup);
 	success = 1;
 cleanup:
 
@@ -863,19 +866,23 @@ static int kinit(struct k_opts*   opts, char** canonicalized_user)
 		if (opts->verbose)
 		{
 			WLog_INFO(TAG, "Authenticated to Kerberos v5");
+		}
 
-			if (opts->outdata->data)
+		if (opts->outdata->data)
+		{
+			(*canonicalized_user) = strdup(opts->outdata->data);
+
+			if ((*canonicalized_user) == NULL)
 			{
-				(*canonicalized_user) = strdup(opts->outdata->data);
-
-				if ((*canonicalized_user) == NULL)
-				{
-					WLog_ERR(TAG, "Error cannot strdup outdata into canonicalized user hint.");
-					authed_k5 = FALSE;
-				}
-
-				krb5_free_data(k5.ctx, opts->outdata);
+				WLog_ERR(TAG, "Error cannot strdup outdata into canonicalized user hint.");
+				authed_k5 = FALSE;
 			}
+
+			krb5_free_data(k5.ctx, opts->outdata);
+		}
+		else
+		{
+			WLog_ERR(TAG, "kinit couldn't canonicalize the UPN %s.", opts->principal_name);
 		}
 	}
 
@@ -885,13 +892,13 @@ static int kinit(struct k_opts*   opts, char** canonicalized_user)
 
 static int convert_deltat(char* timestring, krb5_deltat* deltat, int try_absolute, const char* what)
 {
+	/* See: http://web.mit.edu/kerberos/krb5-latest/doc/basic/date_format.html */
 	if (timestring == NULL)
 	{
 		return 0;
 	}
 
-	if ((krb5_string_to_deltat(timestring, deltat) != 0)
-	    || (*deltat == 0))
+	if (krb5_string_to_deltat(timestring, deltat) != 0)
 	{
 		krb5_timestamp abs_starttime;
 
@@ -928,9 +935,9 @@ static int fill_opts_with_settings(rdpSettings* settings, struct k_opts*   opts)
 	opts->enterprise = 1;
 	opts->action = INIT_KT;
 
-	if (!convert_deltat(settings->KerberosStartTime, &opts->starttime, 1, "start time") ||
-	    !convert_deltat(settings->KerberosLifeTime, &opts->lifetime,  0, "life time")  ||
-	    !convert_deltat(settings->KerberosRenewableLifeTime, &opts->rlife, 0, "renewable time"))
+	if ((0 != convert_deltat(settings->KerberosStartTime, &opts->starttime, 1, "start time")) ||
+	    (0 != convert_deltat(settings->KerberosLifeTime, &opts->lifetime,  0, "life time"))  ||
+	    (0 != convert_deltat(settings->KerberosRenewableLifeTime, &opts->rlife, 0, "renewable time")))
 	{
 		goto error;
 	}
@@ -939,11 +946,11 @@ static int fill_opts_with_settings(rdpSettings* settings, struct k_opts*   opts)
 	CHECK_STRING_PRESENT(settings->Domain,            "domain name setting",         goto error);
 	CHECK_STRING_PRESENT(settings->PkinitIdentity,    "pkinit Identity setting",     goto error);
 	CHECK_MEMORY(opts->principal_name = strdup(settings->UserPrincipalName),         goto error);
-	CHECK_MEMORY(opts->service_name   = strdup(settings->Domain),                    goto error);
+	CHECK_MEMORY(opts->service_name   = strdup(settings->ServerHostname),            goto error);
 	CHECK_MEMORY(attribute            = strdup("X509_user_identity"),                goto error);
 	CHECK_MEMORY(value                = strdup(settings->PkinitIdentity),            goto error);
 
-	if (!add_preauth_opt(opts, attribute, value))
+	if (0 != add_preauth_opt(opts, attribute, value))
 	{
 		WLog_ERR(TAG, "Could not add preauth option %s = %s", attribute, value);
 		goto error;
@@ -959,7 +966,7 @@ static int fill_opts_with_settings(rdpSettings* settings, struct k_opts*   opts)
 			CHECK_MEMORY(attribute  = strdup("X509_anchors"),                         goto error);
 			CHECK_MEMORY(value      = string_concatenate("FILE:", anchors[i], NULL),  goto error);
 
-			if (!add_preauth_opt(opts, attribute, value))
+			if (0 != add_preauth_opt(opts, attribute, value))
 			{
 				WLog_ERR(TAG, "Could not add preauth option %s = %s", attribute, value);
 				goto error;
