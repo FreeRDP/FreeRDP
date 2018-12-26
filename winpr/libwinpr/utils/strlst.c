@@ -31,14 +31,17 @@
 
 void string_list_free(char** string_list)
 {
-	int i;
-
-	for (i = 0; string_list[i]; i ++)
+	if(string_list != NULL)
 	{
-		free(string_list[i]);
-	}
+		int i;
 
-	free(string_list);
+		for (i = 0; string_list[i]; i ++)
+		{
+			free(string_list[i]);
+		}
+
+		free(string_list);
+	}
 }
 
 int string_list_length(char** string_list)
@@ -83,13 +86,19 @@ char**  string_list_copy(char** string_list)
 
 void string_list_print(FILE* out, char** string_list)
 {
-	int j;
-
-	for (j = 0; string_list[j]; j ++)
+	if (string_list == NULL)
 	{
-		fprintf(out, "[%2d]: %s\n", j, string_list[j]);
+		fprintf(out, "NULL\n");
 	}
+	else
+	{
+		int j;
 
+		for (j = 0; string_list[j]; j ++)
+		{
+			fprintf(out, "[%2d]: %s\n", j, string_list[j]);
+		}
+	}
 	fflush(out);
 }
 
@@ -295,7 +304,6 @@ empty_result:
 	return calloc(1, sizeof(*result));
 }
 
-
 int string_list_mismatch(char** a, char** b)
 {
 	int i = 0;
@@ -312,7 +320,6 @@ int string_list_mismatch(char** a, char** b)
 
 	return i;
 }
-
 
 BOOL string_list_equal(char** a, char** b)
 {
