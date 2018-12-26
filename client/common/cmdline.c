@@ -1477,11 +1477,11 @@ static void activate_smartcard_logon(rdpSettings* settings)
 	/* We initialize all the settings, for all the variants of smartcard logon: */
 	settings->Pin = NULL;
 	settings->PinPadIsPresent = FALSE;
-	settings->KerberosStartTime = "0";
+	copy_value("0s", &settings->KerberosStartTime);
 	/* Ticket lifetime value in seconds ; KDC default value : 600mn (i.e. 36000s) ; 600mn at maximum */
-	settings->KerberosLifeTime = "10h";
+	copy_value("10h", &settings->KerberosLifeTime);
 	/* Ticket renewable lifetime value in seconds ; KDC default value : 1 day (i.e. 86400s) ; 7 days at maximum */
-	settings->KerberosRenewableLifeTime = "1d";
+	copy_value("1d", &settings->KerberosRenewableLifeTime);
 	settings->Krb5Trace = FALSE;
 	freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin,
 	                       TRUE);	/* TODO: why not? settings->UseRdpSecurityLayer = TRUE; */
