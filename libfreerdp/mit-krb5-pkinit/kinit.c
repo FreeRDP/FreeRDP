@@ -28,12 +28,14 @@
 // #include "autoconf.h"
 // #include <k5-int.h>
 // #include "k5-platform.h"        /* For asprintf and getopt */
-#include <krb5.h>
 #include <locale.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
+
+#include <krb5.h>
 #include <com_err.h>
 
 #include <freerdp/log.h>
@@ -166,6 +168,42 @@ struct k_opts
 	/* output */
 	krb5_data* outdata;
 };
+
+void k_opts_print(struct k_opts* opts)
+{
+	int i;
+	printf(" lifetime                       = %d\n", opts->lifetime);
+	printf(" rlife                          = %d\n", opts->rlife);
+	printf(" forwardable                    = %d\n", opts->forwardable);
+	printf(" proxiable                      = %d\n", opts->proxiable);
+	printf(" request_pac                    = %d\n", opts->request_pac);
+	printf(" anonymous                      = %d\n", opts->anonymous);
+	printf(" addresses                      = %d\n", opts->addresses);
+	printf(" not_forwardable                = %d\n", opts->not_forwardable);
+	printf(" not_proxiable                  = %d\n", opts->not_proxiable);
+	printf(" not_request_pac                = %d\n", opts->not_request_pac);
+	printf(" no_addresses                   = %d\n", opts->no_addresses);
+	printf(" verbose                        = %d\n", opts->verbose);
+	printf(" action                         = %d\n", opts->action);
+	printf(" use_client_keytab              = %d\n", opts->use_client_keytab);
+	printf(" canonicalize                   = %d\n", opts->canonicalize);
+	printf(" enterprise                     = %d\n", opts->enterprise);
+	printf(" principal_name                 = %s\n", opts->principal_name);
+	printf(" service_name                   = %s\n", opts->service_name);
+	printf(" keytab_name                    = %s\n", opts->keytab_name);
+	printf(" k5_in_cache_name               = %s\n", opts->k5_in_cache_name);
+	printf(" k5_out_cache_name              = %s\n", opts->k5_out_cache_name);
+	printf(" armor_ccache                   = %s\n", opts->armor_ccache);
+	printf(" unum_pa_opts                   = %d\n", opts->num_pa_opts);
+
+	for (i = 0; i < opts->num_pa_opts; i ++)
+	{
+		printf(" pa_opts[%2d].attr               = %s\n", i, opts->pa_opts[i].attr);
+		printf(" pa_opts[%2d].value              = %s\n", i, opts->pa_opts[i].value);
+	}
+
+	// krb5_data*            outdata;
+}
 
 void pa_opts_free(int num_pa_opts, krb5_gic_opt_pa_data* pa_opts)
 {
@@ -589,6 +627,7 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 	krb5_boolean pwprompt = FALSE;
 	krb5_address** addresses = NULL;
 	int i;
+	k_opts_print(opts);
 	memset(&my_creds, 0, sizeof(my_creds));
 	ret = krb5_get_init_creds_opt_alloc(k5->ctx, &options);
 
@@ -714,13 +753,19 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 		        k5->in_cc);
 
 		if (ret)
+		{
+			com_err(TAG, ret, _("Cannot set the In Credential Cache"));
 			goto cleanup;
+		}
 	}
 
 	ret = krb5_get_init_creds_opt_set_out_ccache(k5->ctx, options, k5->out_cc);
 
 	if (ret)
+	{
+		com_err(TAG, ret, _("Cannot set the Out Credential Cache"));
 		goto cleanup;
+	}
 
 	switch (opts->action)
 	{
@@ -773,11 +818,11 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 		if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY ||
 		    (pwprompt && ret == KRB5KDC_ERR_PREAUTH_FAILED))
 		{
-			com_err(TAG, ret, _("Password incorrect while %s"), doing);
+			com_err(TAG, ret, _("Password incorrect while %s with %s"), doing, opts->service_name);
 		}
 		else
 		{
-			com_err(TAG, ret, _("while %s"), doing);
+			com_err(TAG, ret, _("while %s with %s"), doing, opts->service_name);
 		}
 
 		goto cleanup;
@@ -863,22 +908,27 @@ static int kinit(struct k_opts*   opts, char** canonicalized_user)
 			WLog_INFO(TAG, "Authenticated to Kerberos v5");
 		}
 
-		if (opts->outdata && opts->outdata->data)
+		if (opts->outdata)
 		{
-			(*canonicalized_user) = strdup(opts->outdata->data);
-
-			if ((*canonicalized_user) == NULL)
+			if (opts->outdata->data)
 			{
-				WLog_ERR(TAG, "Error cannot strdup outdata into canonicalized user hint.");
-				authed_k5 = FALSE;
+				CHECK_MEMORY((*canonicalized_user) = strdup(opts->outdata->data), authed_k5 = FALSE);
+			}
+			else
+			{
+				WLog_WARN(TAG, "kinit couldn't canonicalize the UPN %s.", opts->principal_name);
 			}
 
 			krb5_free_data(k5.ctx, opts->outdata);
 		}
 		else
 		{
-			WLog_ERR(TAG, "kinit couldn't canonicalize the UPN %s.", opts->principal_name);
+			WLog_ERR(TAG, "kinit produced no output data.");
 		}
+	}
+	else
+	{
+		WLog_ERR(TAG, "Not authenticated to Kerberos v5.");
 	}
 
 	k5_end(&k5);
@@ -928,7 +978,7 @@ static int fill_opts_with_settings(rdpSettings* settings, struct k_opts*   opts)
 	opts->verbose = settings->Krb5Trace;
 	opts->canonicalize = 1;
 	opts->enterprise = 1;
-	opts->action = INIT_KT;
+	opts->action = INIT_PW;
 
 	if ((0 != convert_deltat(settings->KerberosStartTime, &opts->starttime, 1, "start time")) ||
 	    (0 != convert_deltat(settings->KerberosLifeTime, &opts->lifetime,  0, "life time"))  ||
@@ -938,10 +988,8 @@ static int fill_opts_with_settings(rdpSettings* settings, struct k_opts*   opts)
 	}
 
 	CHECK_STRING_PRESENT(settings->UserPrincipalName, "user principal name setting", goto error);
-	CHECK_STRING_PRESENT(settings->ServerHostname,    "server hostname setting",     goto error);
 	CHECK_STRING_PRESENT(settings->PkinitIdentity,    "pkinit Identity setting",     goto error);
 	CHECK_MEMORY(opts->principal_name = strdup(settings->UserPrincipalName),         goto error);
-	CHECK_MEMORY(opts->service_name   = strdup(settings->ServerHostname),            goto error);
 	CHECK_MEMORY(value                = strdup(settings->PkinitIdentity),            goto error);
 	CHECK_MEMORY(attribute            = strdup("X509_user_identity"),                goto error);
 
