@@ -357,7 +357,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->SoftwareGdi = TRUE;
 	settings->UnmapButtons = FALSE;
 	settings->PerformanceFlags = PERF_FLAG_NONE;
-	settings->AllowFontSmoothing = FALSE;
+	settings->AllowFontSmoothing = TRUE;
 	settings->AllowDesktopComposition = FALSE;
 	settings->DisableWallpaper = FALSE;
 	settings->DisableFullWindowDrag = TRUE;
