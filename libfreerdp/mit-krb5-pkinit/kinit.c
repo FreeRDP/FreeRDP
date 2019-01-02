@@ -903,10 +903,7 @@ static int kinit(struct k_opts*   opts, char** canonicalized_user)
 
 	if (authed_k5)
 	{
-		if (opts->verbose)
-		{
-			WLog_INFO(TAG, "Authenticated to Kerberos v5");
-		}
+                WLog_INFO(TAG, "Authenticated to Kerberos v5");
 
 		if (opts->outdata)
 		{
