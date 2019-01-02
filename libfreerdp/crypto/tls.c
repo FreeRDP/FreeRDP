@@ -1585,7 +1585,7 @@ void tls_print_certificate_error(const char* hostname, UINT16 port, const char* 
 	WLog_ERR(TAG,
 	         "Someone could be eavesdropping on you right now (man-in-the-middle attack)!");
 	WLog_ERR(TAG, "It is also possible that a host key has just been changed.");
-	WLog_ERR(TAG, "The fingerprint for the host key sent by the remote host is%s",
+	WLog_ERR(TAG, "The fingerprint for the host key sent by the remote host is %s",
 	         fingerprint);
 	WLog_ERR(TAG, "Please contact your system administrator.");
 	WLog_ERR(TAG, "Add correct host key in %s to get rid of this message.",
