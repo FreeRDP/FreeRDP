@@ -797,9 +797,6 @@ void xf_floatbar_free(xfFloatbar* floatbar)
 	xfc = floatbar->xfc;
 	size = ARRAYSIZE(floatbar->buttons);
 
-	if (!floatbar)
-		return;
-
 	for (i = 0; i < size; i++)
 	{
 		xf_floatbar_button_free(xfc, floatbar->buttons[i]);
