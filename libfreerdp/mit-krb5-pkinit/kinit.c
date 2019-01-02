@@ -334,7 +334,7 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 
 		if (opts->verbose)
 		{
-			WLog_INFO(TAG, _("Using specified cache: %s\n"), opts->k5_out_cache_name);
+			WLog_INFO(TAG, _("Using specified cache: %s"), opts->k5_out_cache_name);
 		}
 	}
 	else
@@ -470,7 +470,7 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 
 		if (name == NULL)
 		{
-			fprintf(stderr, _("Unable to identify user\n"));
+			fprintf(stderr, _("Unable to identify user"));
 			goto cleanup;
 		}
 
@@ -499,7 +499,7 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 		{
 			if (opts->verbose)
 			{
-				WLog_INFO(TAG, _("Using existing cache: %s\n"),
+				WLog_INFO(TAG, _("Using existing cache: %s"),
 				          krb5_cc_get_name(k5->ctx, k5->out_cc));
 			}
 
@@ -519,7 +519,7 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 
 			if (opts->verbose)
 			{
-				WLog_INFO(TAG, _("Using new cache: %s\n"),
+				WLog_INFO(TAG, _("Using new cache: %s"),
 				          krb5_cc_get_name(k5->ctx, k5->out_cc));
 			}
 
@@ -535,7 +535,7 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 
 		if (opts->verbose)
 		{
-			WLog_INFO(TAG, _("Using default cache: %s\n"),
+			WLog_INFO(TAG, _("Using default cache: %s"),
 			          krb5_cc_get_name(k5->ctx, k5->out_cc));
 		}
 	}
@@ -553,7 +553,7 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 
 		if (opts->verbose)
 		{
-			WLog_INFO(TAG, _("Using specified input cache: %s\n"),
+			WLog_INFO(TAG, _("Using specified input cache: %s"),
 			          opts->k5_in_cache_name);
 		}
 	}
@@ -567,7 +567,7 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 	}
 
 	if (opts->verbose)
-		WLog_INFO(TAG, _("Using principal: %s\n"), k5->name);
+		WLog_INFO(TAG, _("Using principal: %s"), k5->name);
 
 	free(opts->principal_name);
 	CHECK_MEMORY(opts->principal_name = strdup(k5->name), goto cleanup);
@@ -714,7 +714,7 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 		}
 
 		if (opts->verbose)
-			WLog_INFO(TAG, _("Using keytab: %s\n"), opts->keytab_name);
+			WLog_INFO(TAG, _("Using keytab: %s"), opts->keytab_name);
 	}
 	else if (opts->action == INIT_KT && opts->use_client_keytab)
 	{
@@ -742,7 +742,7 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 
 		if (opts->verbose)
 		{
-			WLog_INFO(TAG, _("PA Option %s = %s\n"), opts->pa_opts[i].attr,
+			WLog_INFO(TAG, _("PA Option %s = %s"), opts->pa_opts[i].attr,
 			          opts->pa_opts[i].value);
 		}
 	}
@@ -841,7 +841,7 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 		}
 
 		if (opts->verbose)
-			WLog_INFO(TAG, _("Initialized cache\n"));
+			WLog_INFO(TAG, _("Initialized cache"));
 
 		ret = krb5_cc_store_cred(k5->ctx, k5->out_cc, &my_creds);
 
@@ -852,7 +852,7 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 		}
 
 		if (opts->verbose)
-			WLog_INFO(TAG, _("Stored credentials\n"));
+			WLog_INFO(TAG, _("Stored credentials"));
 	}
 
 	/* Get canonicalized principal name for credentials delegation (CredSSP) */
