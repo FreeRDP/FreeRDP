@@ -526,7 +526,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 #if defined(WITH_KERBEROS)
 	WLog_INFO(TAG, "WITH_KERBEROS");
 
-	if (kerberos_get_tgt(settings))
+	if (0 == kerberos_get_tgt(settings))
 	{
 		WLog_INFO(TAG, "Got Ticket Granting Ticket for %s", settings->CanonicalizedUserHint);
 	}
