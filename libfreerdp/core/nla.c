@@ -513,7 +513,8 @@ static BOOL user_is_in_sam_database(const char* username)
 static int nla_client_init_smartcard_logon(rdpNla* nla)
 {
 	rdpSettings* settings = nla->settings;
-	nla->cred_type = settings->CredentialsType;
+	nla->cred_type = credential_type_smartcard;
+
 #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
 
 	/* gets the UPN settings->UserPrincipalName */
@@ -524,6 +525,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	}
 
 #if defined(WITH_KERBEROS)
+
 	WLog_INFO(TAG, "WITH_KERBEROS");
 
 	if (0 == kerberos_get_tgt(settings))
@@ -2066,13 +2068,12 @@ static int nla_sizeof_ts_pwd_or_sc_creds(auth_identity*   identity,
 	}
 }
 
-static size_t nla_sizeof_ts_credentials(auth_identity*   identity)
+static size_t nla_sizeof_ts_credentials(auth_identity*   identity, credential_type cred_type)
 {
 	size_t size = 0;
 	size += ber_sizeof_integer(1);
 	size += ber_sizeof_contextual_tag(ber_sizeof_integer(1));
-	size += ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_password_creds(
-	            identity->password_creds)));
+	size += ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_pwd_or_sc_creds(identity, cred_type)));
 	return size;
 }
 
@@ -2397,7 +2398,7 @@ static size_t nla_write_ts_credentials(rdpNla* nla, wStream* s, auth_identity* i
 {
 	int size = 0;
 	int credSize = 0;
-	int innerSize = nla_sizeof_ts_credentials(identity);
+	int innerSize = nla_sizeof_ts_credentials(identity, nla->cred_type);
 	/* TSCredentials (SEQUENCE) */
 	size += ber_write_sequence_tag(s, innerSize);
 	/* [0] credType (INTEGER) */
@@ -2453,7 +2454,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		identity = nla->identity;
 	}
 
-	length = ber_sizeof_sequence(nla_sizeof_ts_credentials(identity));
+	length = ber_sizeof_sequence(nla_sizeof_ts_credentials(identity, nla->cred_type));
 
 	if (!sspi_SecBufferAlloc(&nla->tsCredentials, length))
 	{
