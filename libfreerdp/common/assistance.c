@@ -743,236 +743,256 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 	size_t length;
 	p = strstr(buffer, "UPLOADINFO");
 
-	if (!p)
-		return -1;
-
-	p = strstr(p + sizeof("UPLOADINFO") - 1, "TYPE=\"");
-
-	if (!p)
-		return -1;
-
-	p = strstr(buffer, "UPLOADDATA");
-
-	if (!p)
-		return -1;
-
-	/* Parse USERNAME */
-	p = strstr(buffer, "USERNAME=\"");
-
 	if (p)
 	{
-		p += sizeof("USERNAME=\"") - 1;
-		q = strchr(p, '"');
+		p = strstr(p + sizeof("UPLOADINFO") - 1, "TYPE=\"");
 
-		if (!q)
+		if (!p)
 			return -1;
 
-		length = q - p;
-		file->Username = (char*) malloc(length + 1);
+		p = strstr(buffer, "UPLOADDATA");
 
-		if (!file->Username)
+		if (!p)
 			return -1;
 
-		CopyMemory(file->Username, p, length);
-		file->Username[length] = '\0';
-	}
+		/* Parse USERNAME */
+		p = strstr(buffer, "USERNAME=\"");
 
-	/* Parse LHTICKET */
-	p = strstr(buffer, "LHTICKET=\"");
-
-	if (p)
-	{
-		p += sizeof("LHTICKET=\"") - 1;
-		q = strchr(p, '"');
-
-		if (!q)
-			return -1;
-
-		length = q - p;
-		file->LHTicket = (char*) malloc(length + 1);
-
-		if (!file->LHTicket)
-			return -1;
-
-		CopyMemory(file->LHTicket, p, length);
-		file->LHTicket[length] = '\0';
-	}
-
-	/* Parse RCTICKET */
-	p = strstr(buffer, "RCTICKET=\"");
-
-	if (p)
-	{
-		p += sizeof("RCTICKET=\"") - 1;
-		q = strchr(p, '"');
-
-		if (!q)
-			return -1;
-
-		length = q - p;
-		file->RCTicket = (char*) malloc(length + 1);
-
-		if (!file->RCTicket)
-			return -1;
-
-		CopyMemory(file->RCTicket, p, length);
-		file->RCTicket[length] = '\0';
-	}
-
-	/* Parse RCTICKETENCRYPTED */
-	p = strstr(buffer, "RCTICKETENCRYPTED=\"");
-
-	if (p)
-	{
-		p += sizeof("RCTICKETENCRYPTED=\"") - 1;
-		q = strchr(p, '"');
-
-		if (!q)
-			return -1;
-
-		length = q - p;
-
-		if ((length == 1) && (p[0] == '1'))
-			file->RCTicketEncrypted = TRUE;
-	}
-
-	/* Parse PassStub */
-	p = strstr(buffer, "PassStub=\"");
-
-	if (p)
-	{
-		p += sizeof("PassStub=\"") - 1;
-		q = strchr(p, '"');
-
-		if (!q)
-			return -1;
-
-		length = q - p;
-		file->PassStub = (char*) malloc(length + 1);
-
-		if (!file->PassStub)
-			return -1;
-
-		CopyMemory(file->PassStub, p, length);
-		file->PassStub[length] = '\0';
-	}
-
-	/* Parse DtStart */
-	p = strstr(buffer, "DtStart=\"");
-
-	if (p)
-	{
-		p += sizeof("DtStart=\"") - 1;
-		q = strchr(p, '"');
-
-		if (!q)
-			return -1;
-
-		length = q - p;
-		r = (char*) malloc(length + 1);
-
-		if (!r)
-			return -1;
-
-		CopyMemory(r, p, length);
-		r[length] = '\0';
-		errno = 0;
+		if (p)
 		{
-			unsigned long val = strtoul(r, NULL, 0);
-			free(r);
+			p += sizeof("USERNAME=\"") - 1;
+			q = strchr(p, '"');
 
-			if ((errno != 0) || (val > UINT32_MAX))
+			if (!q)
 				return -1;
 
-			file->DtStart = val;
-		}
-	}
+			length = q - p;
+			file->Username = (char*) malloc(length + 1);
 
-	/* Parse DtLength */
-	p = strstr(buffer, "DtLength=\"");
-
-	if (p)
-	{
-		p += sizeof("DtLength=\"") - 1;
-		q = strchr(p, '"');
-
-		if (!q)
-			return -1;
-
-		length = q - p;
-		r = (char*) malloc(length + 1);
-
-		if (!r)
-			return -1;
-
-		CopyMemory(r, p, length);
-		r[length] = '\0';
-		errno = 0;
-		{
-			unsigned long val = strtoul(r, NULL, 0);
-			free(r);
-
-			if ((errno != 0) || (val > UINT32_MAX))
+			if (!file->Username)
 				return -1;
 
-			file->DtLength = val;
+			CopyMemory(file->Username, p, length);
+			file->Username[length] = '\0';
 		}
-	}
 
-	/* Parse L (LowSpeed) */
-	p = strstr(buffer, " L=\"");
+		/* Parse LHTICKET */
+		p = strstr(buffer, "LHTICKET=\"");
 
-	if (p)
-	{
-		p += sizeof(" L=\"") - 1;
-		q = strchr(p, '"');
+		if (p)
+		{
+			p += sizeof("LHTICKET=\"") - 1;
+			q = strchr(p, '"');
 
-		if (!q)
-			return -1;
+			if (!q)
+				return -1;
 
-		length = q - p;
+			length = q - p;
+			file->LHTicket = (char*) malloc(length + 1);
 
-		if ((length == 1) && (p[0] == '1'))
-			file->LowSpeed = TRUE;
-	}
+			if (!file->LHTicket)
+				return -1;
 
-	file->Type = (file->LHTicket) ? 2 : 1;
-	status = 0;
+			CopyMemory(file->LHTicket, p, length);
+			file->LHTicket[length] = '\0';
+		}
 
-	switch (file->Type)
-	{
-		case 2:
+		/* Parse RCTICKET */
+		p = strstr(buffer, "RCTICKET=\"");
+
+		if (p)
+		{
+			p += sizeof("RCTICKET=\"") - 1;
+			q = strchr(p, '"');
+
+			if (!q)
+				return -1;
+
+			length = q - p;
+			file->RCTicket = (char*) malloc(length + 1);
+
+			if (!file->RCTicket)
+				return -1;
+
+			CopyMemory(file->RCTicket, p, length);
+			file->RCTicket[length] = '\0';
+		}
+
+		/* Parse RCTICKETENCRYPTED */
+		p = strstr(buffer, "RCTICKETENCRYPTED=\"");
+
+		if (p)
+		{
+			p += sizeof("RCTICKETENCRYPTED=\"") - 1;
+			q = strchr(p, '"');
+
+			if (!q)
+				return -1;
+
+			length = q - p;
+
+			if ((length == 1) && (p[0] == '1'))
+				file->RCTicketEncrypted = TRUE;
+		}
+
+		/* Parse PassStub */
+		p = strstr(buffer, "PassStub=\"");
+
+		if (p)
+		{
+			p += sizeof("PassStub=\"") - 1;
+			q = strchr(p, '"');
+
+			if (!q)
+				return -1;
+
+			length = q - p;
+			file->PassStub = (char*) malloc(length + 1);
+
+			if (!file->PassStub)
+				return -1;
+
+			CopyMemory(file->PassStub, p, length);
+			file->PassStub[length] = '\0';
+		}
+
+		/* Parse DtStart */
+		p = strstr(buffer, "DtStart=\"");
+
+		if (p)
+		{
+			p += sizeof("DtStart=\"") - 1;
+			q = strchr(p, '"');
+
+			if (!q)
+				return -1;
+
+			length = q - p;
+			r = (char*) malloc(length + 1);
+
+			if (!r)
+				return -1;
+
+			CopyMemory(r, p, length);
+			r[length] = '\0';
+			errno = 0;
 			{
-				file->EncryptedLHTicket = freerdp_assistance_hex_string_to_bin(file->LHTicket,
-				                          &file->EncryptedLHTicketLength);
+				unsigned long val = strtoul(r, NULL, 0);
+				free(r);
 
-				if (!freerdp_assistance_decrypt2(file, password))
-					status = -1;
+				if ((errno != 0) || (val > UINT32_MAX))
+					return -1;
+
+				file->DtStart = val;
 			}
-			break;
+		}
+
+		/* Parse DtLength */
+		p = strstr(buffer, "DtLength=\"");
+
+		if (p)
+		{
+			p += sizeof("DtLength=\"") - 1;
+			q = strchr(p, '"');
+
+			if (!q)
+				return -1;
+
+			length = q - p;
+			r = (char*) malloc(length + 1);
+
+			if (!r)
+				return -1;
+
+			CopyMemory(r, p, length);
+			r[length] = '\0';
+			errno = 0;
+			{
+				unsigned long val = strtoul(r, NULL, 0);
+				free(r);
+
+				if ((errno != 0) || (val > UINT32_MAX))
+					return -1;
+
+				file->DtLength = val;
+			}
+		}
+
+		/* Parse L (LowSpeed) */
+		p = strstr(buffer, " L=\"");
+
+		if (p)
+		{
+			p += sizeof(" L=\"") - 1;
+			q = strchr(p, '"');
+
+			if (!q)
+				return -1;
+
+			length = q - p;
+
+			if ((length == 1) && (p[0] == '1'))
+				file->LowSpeed = TRUE;
+		}
+
+		file->Type = (file->LHTicket) ? 2 : 1;
+		status = 0;
+
+		switch (file->Type)
+		{
+		case 2:
+		{
+			file->EncryptedLHTicket = freerdp_assistance_hex_string_to_bin(file->LHTicket,
+				&file->EncryptedLHTicketLength);
+
+			if (!freerdp_assistance_decrypt2(file, password))
+				status = -1;
+		}
+		break;
 
 		case 1:
-			{
-				if (!freerdp_assistance_parse_connection_string1(file))
-					status = -1;
-			}
-			break;
+		{
+			if (!freerdp_assistance_parse_connection_string1(file))
+				status = -1;
+		}
+		break;
 
 		default:
 			return -1;
+		}
+
+		if (status < 0)
+		{
+			WLog_ERR(TAG,  "freerdp_assistance_parse_connection_string1 failure: %d", status);
+			return -1;
+		}
+
+		file->EncryptedPassStub = freerdp_assistance_encrypt_pass_stub(password,
+			file->PassStub, &file->EncryptedPassStubLength);
+
+		if (!file->EncryptedPassStub)
+			return -1;
+
+		return 1;
 	}
 
-	if (status < 0)
+	p = strstr(buffer, "<E>");
+	if(p)
 	{
-		WLog_ERR(TAG,  "freerdp_assistance_parse_connection_string1 failure: %d", status);
-		return -1;
+		q = strstr(buffer, "</E>");
+		if (!q)
+			return -1;
+
+		q += sizeof("</E>") - 1;
+		length = q - p;
+		file->ConnectionString2 = (char*) malloc(length + 1);
+		
+		CopyMemory(file->ConnectionString2, p, length);
+		file->ConnectionString2[length] = '\0';
+
+		if (!freerdp_assistance_parse_connection_string2(file))
+			return -1;
 	}
-
-	file->EncryptedPassStub = freerdp_assistance_encrypt_pass_stub(password,
-	                          file->PassStub, &file->EncryptedPassStubLength);
-
-	if (!file->EncryptedPassStub)
-		return -1;
 
 	return 1;
 }
@@ -1076,9 +1096,6 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 		return FALSE;
 
 	if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistancePassword, file->password) != 0)
-		return FALSE;
-
-	if (freerdp_set_param_string(settings, FreeRDP_Username, file->Username) != 0)
 		return FALSE;
 
 	settings->RemoteAssistanceMode = TRUE;
