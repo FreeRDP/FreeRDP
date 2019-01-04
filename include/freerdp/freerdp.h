@@ -279,6 +279,12 @@ enum Disconnect_Ultimatum
 
 #include <freerdp/client.h>
 
+typedef struct freerdp_blob
+{
+	void* data;
+	void (*free)(struct freerdp_blob*);
+} freerdp_blob;
+
 /** Defines the options for a given instance of RDP connection.
  *  This is built by the client and given to the FreeRDP library to create the connection
  *  with the expected options.
@@ -288,75 +294,75 @@ enum Disconnect_Ultimatum
 struct rdp_freerdp
 {
 	ALIGN64 rdpContext* context; /**< (offset 0)
-							  Pointer to a rdpContext structure.
-							  Client applications can use the ContextSize field to register a context bigger than the rdpContext
-							  structure. This allow clients to use additional context information.
-							  When using this capability, client application should ALWAYS declare their structure with the
-							  rdpContext field first, and any additional content following it.
-							  Can be allocated by a call to freerdp_context_new().
-							  Must be deallocated by a call to freerdp_context_free() before deallocating the current instance. */
+				     Pointer to a rdpContext structure.
+				     Client applications can use the ContextSize field to register a context bigger than the rdpContext
+				     structure. This allow clients to use additional context information.
+				     When using this capability, client application should ALWAYS declare their structure with the
+				     rdpContext field first, and any additional content following it.
+				     Can be allocated by a call to freerdp_context_new().
+				     Must be deallocated by a call to freerdp_context_free() before deallocating the current instance. */
 
 	ALIGN64 RDP_CLIENT_ENTRY_POINTS* pClientEntryPoints;
 
 	UINT64 paddingA[16 - 2]; /* 2 */
 
 	ALIGN64 rdpInput* input; /* (offset 16)
-						Input handle for the connection.
-						Will be initialized by a call to freerdp_context_new() */
+				 Input handle for the connection.
+				 Will be initialized by a call to freerdp_context_new() */
 	ALIGN64 rdpUpdate* update; /* (offset 17)
-						  Update display parameters. Used to register display events callbacks and settings.
-						  Will be initialized by a call to freerdp_context_new() */
+				   Update display parameters. Used to register display events callbacks and settings.
+				   Will be initialized by a call to freerdp_context_new() */
 	ALIGN64 rdpSettings* settings; /**< (offset 18)
-								Pointer to a rdpSettings structure. Will be used to maintain the required RDP settings.
-								Will be initialized by a call to freerdp_context_new() */
+				       Pointer to a rdpSettings structure. Will be used to maintain the required RDP settings.
+				       Will be initialized by a call to freerdp_context_new() */
 	ALIGN64 rdpAutoDetect* autodetect; /* (offset 19)
-									Auto-Detect handle for the connection.
-									Will be initialized by a call to freerdp_context_new() */
+					   Auto-Detect handle for the connection.
+					   Will be initialized by a call to freerdp_context_new() */
 	UINT64 paddingB[32 - 20]; /* 20 */
 
 	ALIGN64 size_t ContextSize; /* (offset 32)
-							Specifies the size of the 'context' field. freerdp_context_new() will use this size to allocate the context buffer.
-							freerdp_new() sets it to sizeof(rdpContext).
-							If modifying it, there should always be a minimum of sizeof(rdpContext), as the freerdp library will assume it can use the
-							'context' field to set the required informations in it.
-							Clients will typically make it bigger, and use a context structure embedding the rdpContext, and
-							adding additional information after that.
-						 */
+				    Specifies the size of the 'context' field. freerdp_context_new() will use this size to allocate the context buffer.
+				    freerdp_new() sets it to sizeof(rdpContext).
+				    If modifying it, there should always be a minimum of sizeof(rdpContext), as the freerdp library will assume it can use the
+				    'context' field to set the required informations in it.
+				    Clients will typically make it bigger, and use a context structure embedding the rdpContext, and
+				    adding additional information after that.
+				    */
 
 	ALIGN64 pContextNew ContextNew; /**< (offset 33)
-								 Callback for context allocation
-								 Can be set before calling freerdp_context_new() to have it executed after allocation and initialization.
-								 Must be set to NULL if not needed. */
+					Callback for context allocation
+					Can be set before calling freerdp_context_new() to have it executed after allocation and initialization.
+					Must be set to NULL if not needed. */
 
 	ALIGN64 pContextFree ContextFree; /**< (offset 34)
-								   Callback for context deallocation
-								   Can be set before calling freerdp_context_free() to have it executed before deallocation.
-								   Must be set to NULL if not needed. */
+					  Callback for context deallocation
+					  Can be set before calling freerdp_context_free() to have it executed before deallocation.
+					  Must be set to NULL if not needed. */
 	UINT64 paddingC[47 - 35]; /* 35 */
 
 	ALIGN64 UINT ConnectionCallbackState; /* 47 */
 
 	ALIGN64 pPreConnect PreConnect; /**< (offset 48)
-								 Callback for pre-connect operations.
-								 Can be set before calling freerdp_connect() to have it executed before the actual connection happens.
-								 Must be set to NULL if not needed. */
+					Callback for pre-connect operations.
+					Can be set before calling freerdp_connect() to have it executed before the actual connection happens.
+					Must be set to NULL if not needed. */
 
 	ALIGN64 pPostConnect PostConnect; /**< (offset 49)
-								   Callback for post-connect operations.
-								   Can be set before calling freerdp_connect() to have it executed after the actual connection has succeeded.
-								   Must be set to NULL if not needed. */
+					  Callback for post-connect operations.
+					  Can be set before calling freerdp_connect() to have it executed after the actual connection has succeeded.
+					  Must be set to NULL if not needed. */
 
 	ALIGN64 pAuthenticate Authenticate; /**< (offset 50)
-									 Callback for authentication.
-									 It is used to get the username/password when it was not provided at connection time. */
+					    Callback for authentication.
+					    It is used to get the username/password when it was not provided at connection time. */
 	ALIGN64 pVerifyCertificate VerifyCertificate; /**< (offset 51)
-											   Callback for certificate validation.
-											   Used to verify that an unknown certificate is trusted.
- DEPRECATED: Use VerifyChangedCertificateEx*/
+						      Callback for certificate validation.
+						      Used to verify that an unknown certificate is trusted.
+						      DEPRECATED: Use VerifyChangedCertificateEx*/
 	ALIGN64 pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
-															 Callback for changed certificate validation.
-															 Used when a certificate differs from stored fingerprint.
- DEPRECATED: Use VerifyChangedCertificateEx */
+								    Callback for changed certificate validation.
+								    Used when a certificate differs from stored fingerprint.
+								    DEPRECATED: Use VerifyChangedCertificateEx */
 
 	ALIGN64 pVerifyX509Certificate
 	VerifyX509Certificate;  /**< (offset 53)  Callback for X509 certificate verification (PEM format) */
@@ -365,31 +371,32 @@ struct rdp_freerdp
 	LogonErrorInfo; /**< (offset 54)  Callback for logon error info, important for logon system messages with RemoteApp */
 
 	ALIGN64 pPostDisconnect PostDisconnect; /**< (offset 55)
-																						Callback for cleaning up resources allocated
-																						by connect callbacks. */
+						Callback for cleaning up resources allocated
+						by connect callbacks. */
 
 	ALIGN64 pAuthenticate GatewayAuthenticate; /**< (offset 56)
-									 Callback for gateway authentication.
-									 It is used to get the username/password when it was not provided at connection time. */
+						   Callback for gateway authentication.
+						   It is used to get the username/password when it was not provided at connection time. */
 
 	UINT64 paddingD[64 - 57]; /* 57 */
 
 	ALIGN64 pSendChannelData SendChannelData; /* (offset 64)
-										 Callback for sending data to a channel.
-										 By default, it is set by freerdp_new() to freerdp_send_channel_data(), which eventually calls
-										 freerdp_channel_send() */
+						  Callback for sending data to a channel.
+						  By default, it is set by freerdp_new() to freerdp_send_channel_data(), which eventually calls
+						  freerdp_channel_send() */
 	ALIGN64 pReceiveChannelData ReceiveChannelData; /* (offset 65)
-											   Callback for receiving data from a channel.
-											   This is called by freerdp_channel_process() (if not NULL).
-											   Clients will typically use a function that calls freerdp_channels_data() to perform the needed tasks. */
+							Callback for receiving data from a channel.
+							This is called by freerdp_channel_process() (if not NULL).
+							Clients will typically use a function that calls freerdp_channels_data() to perform the needed tasks. */
 
 	ALIGN64 pVerifyCertificateEx VerifyCertificateEx; /**< (offset 66)
-											   Callback for certificate validation.
-											   Used to verify that an unknown certificate is trusted. */
+							  Callback for certificate validation.
+							  Used to verify that an unknown certificate is trusted. */
 	ALIGN64 pVerifyChangedCertificateEx VerifyChangedCertificateEx; /**< (offset 67)
-															 Callback for changed certificate validation.
-															 Used when a certificate differs from stored fingerprint. */
-	UINT64 paddingE[80 - 68]; /* 68 */
+									Callback for changed certificate validation.
+									Used when a certificate differs from stored fingerprint. */
+	UINT64 paddingE[79 - 68]; /* 68 */
+	ALIGN64 freerdp_blob*  saved_identity;
 };
 
 struct rdp_channel_handles
@@ -479,6 +486,9 @@ FREERDP_API const char* getChannelErrorDescription(rdpContext* context);
 FREERDP_API void setChannelError(rdpContext* context, UINT errorNum,
                                  char* description);
 FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
+
+FREERDP_API freerdp_blob* freerdp_saved_identity(freerdp* instance);
+FREERDP_API void freerdp_save_identity(freerdp* instance, freerdp_blob* identity);
 
 #ifdef __cplusplus
 }

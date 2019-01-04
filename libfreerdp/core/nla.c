@@ -255,8 +255,8 @@ static const UINT32 NonceLength = 32;
 	{                                                               \
 		if (!(pointer))						\
 		{                                                       \
-			WLog_ERR(TAG, "%s:%d: "  description,		\
-			         __FUNCTION__, __LINE__,			\
+			WLog_ERR(TAG, "%s:%d: %s() "  description,	\
+			         __FILE__, __LINE__, __FUNCTION__,	\
 			         ## __VA_ARGS__);			\
 			return result;                                  \
 		}                                                       \
@@ -269,6 +269,18 @@ static void memory_clear_and_free(void* memory, size_t size)
 		memset(memory, 0, size);
 		free(memory);
 	}
+}
+
+static void* memdup(void* source, size_t size)
+{
+	void* destination = malloc(size);
+
+	if (destination != NULL)
+	{
+		memcpy(destination, source, size);
+	}
+
+	return destination;
 }
 
 /* ============================================================ */
@@ -329,11 +341,17 @@ static smartcard_creds* smartcard_creds_new(char* pin, char* userhint, char* dom
 		free(Pin);
 		free(UserHint);
 		free(DomainHint);
-		WLog_ERR(TAG, "%s:%d: Could not allocate Pin, UserHint or DomainHint", __FUNCTION__, __LINE__);
+		WLog_ERR(TAG, "%s:%d: %s() Could not allocate Pin, UserHint or DomainHint",
+		         __FILE__, __LINE__, __FUNCTION__);
 		return NULL;
 	}
 
 	return smartcard_creds_new_nocopy(Pin, UserHint, DomainHint);
+}
+
+static smartcard_creds* smartcard_creds_deepcopy(smartcard_creds* original)
+{
+	return smartcard_creds_new(original->Pin, original->UserHint, original->DomainHint);
 }
 
 static void smartcard_creds_free(smartcard_creds* creds)
@@ -384,12 +402,21 @@ static csp_data_detail* csp_data_detail_new(UINT32 KeySpec,
 		free(ReaderName);
 		free(ContainerName);
 		free(CspName);
-		WLog_ERR(TAG, "%s:%d: Could not allocate CardName, ReaderName, ContainerName or CspName",
-		         __FUNCTION__, __LINE__);
+		WLog_ERR(TAG, "%s:%d: %s() Could not allocate CardName, ReaderName, ContainerName or CspName",
+		         __FILE__, __LINE__, __FUNCTION__);
 		return NULL;
 	}
 
 	return csp_data_detail_new_nocopy(KeySpec, CardName, ReaderName, ContainerName, CspName);
+}
+
+static csp_data_detail* csp_data_detail_deepcopy(csp_data_detail* original)
+{
+	return csp_data_detail_new(original->KeySpec,
+	                           original->CardName,
+	                           original->ReaderName,
+	                           original->ContainerName,
+	                           original->CspName);
 }
 
 static void csp_data_detail_free(csp_data_detail* csp)
@@ -415,6 +442,11 @@ static void csp_data_detail_free(csp_data_detail* csp)
 	(structure->field##Length = (cstring						\
 	                             ?ConvertToUnicode(CP_UTF8, 0, cstring, -1, &(structure->field), 0)	\
 	                             :(structure->field = NULL, 0)))
+#define WSTRING_LENGTH_COPY(source, destination, field)				\
+	((destination->field##Length = source->field##Length),			\
+	 (destination->field = ((source->field == NULL)			\
+	                        ?NULL							\
+	                        :memdup(source->field, source->field##Length))))
 
 static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_new(char* user,  char* password,
         char* domain)
@@ -427,6 +459,29 @@ static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_new(char* user,  char* p
 	WSTRING_LENGTH_SET_CSTRING(password_creds, Domain, domain);
 	WSTRING_LENGTH_SET_CSTRING(password_creds, Password, password);
 	return password_creds;
+}
+
+static SEC_WINNT_AUTH_IDENTITY* SEC_WINNT_AUTH_IDENTITY_deepcopy(SEC_WINNT_AUTH_IDENTITY* original)
+{
+	SEC_WINNT_AUTH_IDENTITY* copy;
+	CHECK_MEMORY(copy = calloc(1, sizeof(*copy)), NULL,
+	             "Could not allocate a SEC_WINNT_AUTH_IDENTITY structure");
+	copy->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+	WSTRING_LENGTH_COPY(original, copy, User);
+	WSTRING_LENGTH_COPY(original, copy, Domain);
+	WSTRING_LENGTH_COPY(original, copy, Password);
+
+	if (((original->User != NULL) && (copy->User == NULL))
+	    || ((original->Password != NULL) && (copy->Password == NULL))
+	    || ((original->Domain != NULL) && (copy->Domain == NULL)))
+	{
+		SEC_WINNT_AUTH_IDENTITY_free(copy);
+		WLog_ERR(TAG, "%s:%d: %s() Could not allocate the fields of a SEC_WINNT_AUTH_IDENTITY structure",
+		         __FILE__, __LINE__, __FUNCTION__);
+		return NULL;
+	}
+
+	return copy;
 }
 
 static void SEC_WINNT_AUTH_IDENTITY_free(SEC_WINNT_AUTH_IDENTITY* password_creds)
@@ -456,7 +511,7 @@ static auth_identity* auth_identity_new(SEC_WINNT_AUTH_IDENTITY* password_creds,
 	return aid;
 }
 
-static void auth_identity_free(auth_identity* aid)
+void auth_identity_free(auth_identity* aid)
 {
 	if (aid)
 	{
@@ -465,6 +520,31 @@ static void auth_identity_free(auth_identity* aid)
 		csp_data_detail_free(aid->csp_data);
 		memory_clear_and_free(aid, sizeof(*aid));
 	}
+}
+
+static auth_identity*  auth_identity_deepcopy(auth_identity* identity)
+{
+	SEC_WINNT_AUTH_IDENTITY* password_creds = NULL;
+	smartcard_creds* smartcard_creds = NULL;
+	csp_data_detail* csp_data = NULL;
+#define CHECK_COPY(field, copier)					\
+	if (identity->field != NULL)					\
+	{								\
+		if ((field = copier(identity->field)) == NULL)		\
+		{							\
+			goto failure;					\
+		}							\
+	}
+	CHECK_COPY(password_creds, SEC_WINNT_AUTH_IDENTITY_deepcopy);
+	CHECK_COPY(smartcard_creds, smartcard_creds_deepcopy);
+	CHECK_COPY(csp_data, csp_data_detail_deepcopy);
+#undef CHECK_COPY
+	return auth_identity_new(password_creds, smartcard_creds, csp_data);
+failure:
+	SEC_WINNT_AUTH_IDENTITY_free(password_creds);
+	smartcard_creds_free(smartcard_creds);
+	csp_data_detail_free(csp_data);
+	return NULL;
 }
 
 /* ============================================================ */
@@ -505,6 +585,29 @@ static BOOL user_is_in_sam_database(const char* username)
 
 /* ============================================================ */
 
+
+static void free_identity_blob(freerdp_blob* blob)
+{
+	if (blob != NULL)
+	{
+		auth_identity_free(blob->data);
+		free(blob);
+	}
+}
+
+static void save_identity(rdpNla* nla)
+{
+	auth_identity* saved_identity = auth_identity_deepcopy(nla->identity);
+	freerdp_blob* blob = malloc(sizeof(*blob));
+
+	if (blob != NULL)
+	{
+		blob->data = saved_identity;
+		blob->free = free_identity_blob;
+		freerdp_save_identity(nla->instance, blob);
+	}
+}
+
 /**
 * Returns whether the username is found in the SAM database.
 * @param username: C string.
@@ -514,7 +617,20 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 {
 	rdpSettings* settings = nla->settings;
 	nla->cred_type = credential_type_smartcard;
+	{
+		/*
+		In case of redirection we don't need to re-establish the identity
+		(notably with kerberos), we used the one we saved previously.
+		*/
+		freerdp_blob* blob = freerdp_saved_identity(nla->instance);
+		auth_identity* saved_identity = (blob == NULL) ? NULL : blob->data;
 
+		if (saved_identity != NULL)
+		{
+			nla->identity = auth_identity_deepcopy(saved_identity);
+			return 0;
+		}
+	}
 #if defined(WITH_PKCS11H) && defined(WITH_GSSAPI)
 
 	/* gets the UPN settings->UserPrincipalName */
@@ -525,7 +641,6 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	}
 
 #if defined(WITH_KERBEROS)
-
 	WLog_INFO(TAG, "WITH_KERBEROS");
 
 	if (0 == kerberos_get_tgt(settings))
@@ -643,7 +758,8 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 
 	if ((nla->identity->smartcard_creds == NULL) || (nla->identity->csp_data == NULL))
 	{
-		WLog_ERR(TAG, "%s:%d: Failed to set smartcard authentication parameters !", __FUNCTION__, __LINE__);
+		WLog_ERR(TAG, "%s:%d: %s() Failed to set smartcard authentication parameters !",
+		         __FILE__, __LINE__, __FUNCTION__);
 		smartcard_creds_free(nla->identity->smartcard_creds);
 		nla->identity->smartcard_creds = NULL;
 		csp_data_detail_free(nla->identity->csp_data);
@@ -651,6 +767,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 		return -1;
 	}
 
+	save_identity(nla);
 	return 0;
 }
 
@@ -901,7 +1018,7 @@ static int nla_client_init(rdpNla* nla)
 
 	nla->cbMaxToken = nla->pPackageInfo->cbMaxToken;
 	nla->packageName = nla->pPackageInfo->Name;
-	WLog_DBG(TAG, "%s %"PRIu32" : packageName=%ls ; cbMaxToken=%d", __FUNCTION__, __LINE__,
+	WLog_DBG(TAG, "%s:%d: %s() packageName=%ls ; cbMaxToken=%d", __FILE__, __LINE__, __FUNCTION__,
 	         nla->packageName, nla->cbMaxToken);
 	nla->status = nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
 	              SECPKG_CRED_OUTBOUND, NULL, nla->identity->password_creds, NULL, NULL, &nla->credentials,
@@ -933,6 +1050,7 @@ static int nla_client_init(rdpNla* nla)
 
 int nla_client_begin(rdpNla* nla)
 {
+
 	if (nla_client_init(nla) < 1)
 		return -1;
 
@@ -2073,7 +2191,8 @@ static size_t nla_sizeof_ts_credentials(auth_identity*   identity, credential_ty
 	size_t size = 0;
 	size += ber_sizeof_integer(1);
 	size += ber_sizeof_contextual_tag(ber_sizeof_integer(1));
-	size += ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_pwd_or_sc_creds(identity, cred_type)));
+	size += ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_pwd_or_sc_creds(identity,
+	        cred_type)));
 	return size;
 }
 
@@ -2488,6 +2607,43 @@ cleanup:
 	}
 
 	return result;
+}
+
+void dump_ssp(BOOL krb, BOOL nego, BOOL ntlm)
+{
+	printf("krb = %d, nego = %d, ntlm = %d\n", krb, nego, ntlm);
+}
+
+void dump_message(SecBufferDesc* message)
+{
+	printf("message: buffer count = %d\n", message->cBuffers);
+
+	for (int i = 0; i < message->cBuffers; i ++)
+	{
+		printf("message->buffer[%d].BufferType = %d\n", i, message->pBuffers[i].BufferType);
+		printf("message->buffer[%d].cbBuffer = %d\n", i, message->pBuffers[i].cbBuffer);
+		printf("message->buffer[%d].pvBuffer = ", i);
+
+		for (int j = 0; j < message->pBuffers[i].cbBuffer; j += 16)
+		{
+			printf("\n%04x: ", j);
+
+			for (int k = 0; k < 16; k ++)
+			{
+				printf(" %02x", ((unsigned char*)message->pBuffers[i].pvBuffer)[j + k]);
+			}
+
+			printf("   ");
+
+			for (int k = 0; k < 16; k ++)
+			{
+				unsigned char c = ((unsigned char*)message->pBuffers[i].pvBuffer)[j + k];
+				printf("%c", ((c < 32 || c > 126) ? '.' : c));
+			}
+		}
+
+		printf("\n");
+	}
 }
 
 static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
