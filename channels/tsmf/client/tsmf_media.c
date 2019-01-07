@@ -702,16 +702,8 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 				buffer_filled = FALSE;
 		}
 
-		if (buffer_filled)
-		{
-			ack_anticipation_time += (sample->duration / 2 < MAX_ACK_TIME) ?
-			                         sample->duration / 2 : MAX_ACK_TIME;
-		}
-		else
-		{
-			ack_anticipation_time += (sample->duration / 2 < MAX_ACK_TIME) ?
-			                         sample->duration / 2 : MAX_ACK_TIME;
-		}
+		ack_anticipation_time += (sample->duration / 2 < MAX_ACK_TIME) ?
+		                         sample->duration / 2 : MAX_ACK_TIME;
 
 		switch (sample->stream->major_type)
 		{

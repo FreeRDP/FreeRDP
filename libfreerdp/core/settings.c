@@ -370,12 +370,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->CompressionEnabled = TRUE;
 	settings->LogonNotify = TRUE;
 	settings->BrushSupportLevel = BRUSH_COLOR_FULL;
-
-	if (settings->ServerMode)
-		settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
-	else
-		settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
-
+	settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
 	settings->Authentication = TRUE;
 	settings->AuthenticationOnly = FALSE;
 	settings->CredentialsFromStdin = FALSE;
