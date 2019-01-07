@@ -2611,38 +2611,18 @@ cleanup:
 
 void dump_ssp(BOOL krb, BOOL nego, BOOL ntlm)
 {
-	printf("krb = %d, nego = %d, ntlm = %d\n", krb, nego, ntlm);
+	WLog_DBG(TAG, "krb = %d, nego = %d, ntlm = %d\n", krb, nego, ntlm);
 }
 
 void dump_message(SecBufferDesc* message)
 {
-	printf("message: buffer count = %d\n", message->cBuffers);
-
+	WLog_DBG(TAG, "message: buffer count = %d\n", message->cBuffers);
 	for (int i = 0; i < message->cBuffers; i ++)
 	{
-		printf("message->buffer[%d].BufferType = %d\n", i, message->pBuffers[i].BufferType);
-		printf("message->buffer[%d].cbBuffer = %d\n", i, message->pBuffers[i].cbBuffer);
-		printf("message->buffer[%d].pvBuffer = ", i);
-
-		for (int j = 0; j < message->pBuffers[i].cbBuffer; j += 16)
-		{
-			printf("\n%04x: ", j);
-
-			for (int k = 0; k < 16; k ++)
-			{
-				printf(" %02x", ((unsigned char*)message->pBuffers[i].pvBuffer)[j + k]);
-			}
-
-			printf("   ");
-
-			for (int k = 0; k < 16; k ++)
-			{
-				unsigned char c = ((unsigned char*)message->pBuffers[i].pvBuffer)[j + k];
-				printf("%c", ((c < 32 || c > 126) ? '.' : c));
-			}
-		}
-
-		printf("\n");
+		WLog_DBG(TAG, "message->buffer[%d].BufferType = %d\n", i, message->pBuffers[i].BufferType);
+		WLog_DBG(TAG, "message->buffer[%d].cbBuffer = %d\n", i, message->pBuffers[i].cbBuffer);
+		WLog_DBG(TAG, "message->buffer[%d].pvBuffer = ", i);
+		winpr_HexDump(TAG, WLOG_DEBUG, message->pBuffers[i].pvBuffer, message->pBuffers[i].cbBuffer);
 	}
 }
 
