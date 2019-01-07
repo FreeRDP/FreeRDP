@@ -992,9 +992,11 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 
 		if (!freerdp_assistance_parse_connection_string2(file))
 			return -1;
+
+		return 1;
 	}
 
-	return 1;
+	return -1;
 }
 
 int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, const char* password)
