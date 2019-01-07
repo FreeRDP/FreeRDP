@@ -1151,10 +1151,12 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 #else
 	const BYTE* resampleData;
 	size_t resampleLength;
-	AUDIO_FORMAT format = *srcFormat;
+	AUDIO_FORMAT format;
 
 	if (!context || !context->encoder || !srcFormat || !data || !out)
 		return FALSE;
+
+	format = *srcFormat;
 
 	if (!freerdp_dsp_channel_mix(context, data, length, srcFormat, &resampleData, &resampleLength))
 		return FALSE;

@@ -1447,11 +1447,11 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 {
 	UINT status;
 
-	if (drdynvc->OpenHandle == 0)
-		return CHANNEL_RC_OK;
-
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	if (drdynvc->OpenHandle == 0)
+		return CHANNEL_RC_OK;
 
 	if (!MessageQueue_PostQuit(drdynvc->queue, 0))
 	{

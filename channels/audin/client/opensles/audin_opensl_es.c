@@ -93,11 +93,6 @@ static UINT audin_opensles_free(IAudinDevice* device)
 
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p", (void*) device);
 
-	/* The function may have been called out of order,
-	 * ignore duplicate requests. */
-	if (!opensles)
-		return CHANNEL_RC_OK;
-
 	free(opensles->device_name);
 	free(opensles);
 	return CHANNEL_RC_OK;
@@ -153,11 +148,6 @@ static UINT audin_opensles_set_format(IAudinDevice* device,
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, format=%p, FramesPerPacket=%"PRIu32"",
 	           (void*) device, (void*) format, FramesPerPacket);
 	assert(format);
-
-	/* The function may have been called out of order, ignore
-	 * requests before the device is available. */
-	if (!opensles)
-		return CHANNEL_RC_OK;
 
 	opensles->format = *format;
 
