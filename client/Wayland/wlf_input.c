@@ -104,7 +104,6 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, UwacPointerAxisEvent* ev)
 		return FALSE;
 
 	input = instance->input;
-	flags = PTR_FLAGS_WHEEL;
 
 	switch (ev->axis)
 	{
@@ -123,7 +122,7 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, UwacPointerAxisEvent* ev)
 	direction = wl_fixed_to_int(ev->value);
 	flags |= 0x0078; /* TODO: Calculate the distance with the provided value size */
 
-	if (direction > 0)
+	if (direction < 0)
 		flags |= PTR_FLAGS_WHEEL_NEGATIVE;
 
 	return freerdp_input_send_mouse_event(input, flags, ev->x, ev->y);
