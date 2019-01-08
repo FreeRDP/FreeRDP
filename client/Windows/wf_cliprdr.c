@@ -2558,9 +2558,6 @@ BOOL wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr)
 
 	cliprdr->custom = NULL;
 
-	if (!clipboard)
-		return FALSE;
-
 	if (clipboard->hwnd)
 		PostMessage(clipboard->hwnd, WM_QUIT, 0, 0);
 

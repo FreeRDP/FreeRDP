@@ -5044,16 +5044,8 @@ static void filterScanline(unsigned char* out, const unsigned char* scanline, co
       for(i = 0; i < length; i++) out[i] = scanline[i];
       break;
     case 1: /*Sub*/
-      if(prevline)
-      {
-        for(i = 0; i < bytewidth; i++) out[i] = scanline[i];
-        for(i = bytewidth; i < length; i++) out[i] = scanline[i] - scanline[i - bytewidth];
-      }
-      else
-      {
-        for(i = 0; i < bytewidth; i++) out[i] = scanline[i];
-        for(i = bytewidth; i < length; i++) out[i] = scanline[i] - scanline[i - bytewidth];
-      }
+      for(i = 0; i < bytewidth; i++) out[i] = scanline[i];
+      for(i = bytewidth; i < length; i++) out[i] = scanline[i] - scanline[i - bytewidth];
       break;
     case 2: /*Up*/
       if(prevline)
