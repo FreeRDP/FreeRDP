@@ -771,28 +771,29 @@ static BOOL fuzzyCompareImage(const UINT32 *refImage, const BYTE *img, size_t np
 
 int TestFreeRDPCodecRemoteFX(int argc, char* argv[])
 {
-	REGION16 region;
-	RFX_CONTEXT* context;
-	BYTE *dest;
+	int rc = -1;
+	REGION16 region = { 0 };
+	RFX_CONTEXT* context = NULL;
+	BYTE *dest = NULL;
 	size_t stride = FORMAT_SIZE * IMG_WIDTH;
 
 	context = rfx_context_new(FALSE);
 	if (!context)
-		return -1;
+		goto fail;
 
 	dest = calloc(IMG_WIDTH * IMG_HEIGHT, FORMAT_SIZE);
 	if (!dest)
-		return -2;
+		goto fail;
 
 	region16_init(&region);
 	if (!rfx_process_message(context, encodeHeaderSample, sizeof(encodeHeaderSample), 0, 0, dest, FORMAT,
 			stride, IMG_HEIGHT, &region))
-		return -3;
+		goto fail;
 
 	region16_clear(&region);
 	if(!rfx_process_message(context, encodeDataSample, sizeof(encodeDataSample), 0, 0, dest, FORMAT,
 			stride, IMG_HEIGHT, &region))
-		return -4;
+		goto fail;
 	region16_print(&region);
 
 #if 0
@@ -802,7 +803,12 @@ int TestFreeRDPCodecRemoteFX(int argc, char* argv[])
 #endif
 
 	if (!fuzzyCompareImage(refImage, dest, IMG_WIDTH * IMG_HEIGHT))
-		return -5;
+		goto fail;
 
-	return 0;
+	rc = 0;
+fail:
+	region16_uninit(&region);
+	rfx_context_free(context);
+	free(dest);
+	return rc;
 }
