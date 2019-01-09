@@ -783,7 +783,7 @@ static int freerdp_client_focus_out(wfContext* wfc)
 	return 0;
 }
 
-static int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
+int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
 {
 	WLog_DBG(TAG,  "freerdp_client_set_window_size %d, %d", width, height);
 
