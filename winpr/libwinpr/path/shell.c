@@ -41,7 +41,7 @@
 #endif
 
 #if defined(WIN32)
-#include <Shlobj.h>
+#include <shlobj.h>
 #else
 #include <errno.h>
 #include <dirent.h>

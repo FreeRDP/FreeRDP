@@ -36,8 +36,8 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <io.h>
-#include <Windows.h>
-#include <Dbghelp.h>
+#include <windows.h>
+#include <dbghelp.h>
 #define write _write
 #endif
 
