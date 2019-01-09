@@ -53,7 +53,7 @@ static HMODULE g_WtsApi32Module = NULL;
 static WtsApiFunctionTable WtsApi32_WtsApiFunctionTable = { 0 };
 
 #define WTSAPI32_LOAD_PROC(_name, _type) \
-	WtsApi32_WtsApiFunctionTable.p ## _name = (## _type) GetProcAddress(g_WtsApi32Module, "WTS" #_name);
+	WtsApi32_WtsApiFunctionTable.p ## _name = (_type) GetProcAddress(g_WtsApi32Module, "WTS" #_name);
 
 BOOL WtsApi32_InitializeWtsApi(void)
 {
