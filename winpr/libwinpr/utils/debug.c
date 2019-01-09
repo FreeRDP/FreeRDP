@@ -187,7 +187,7 @@ fail:
 }
 #endif
 
-#if defined(_WIN32) && (NTDDI_VERSION <= NTDDI_WINXP)
+#if defined(_WIN32) && (NTDDI_VERSION <= NTDDI_WINXP) && !defined(__MINGW32__)
 
 typedef USHORT(WINAPI* PRTL_CAPTURE_STACK_BACK_TRACE_FN)(ULONG FramesToSkip, ULONG FramesToCapture,
         PVOID* BackTrace, PULONG BackTraceHash);

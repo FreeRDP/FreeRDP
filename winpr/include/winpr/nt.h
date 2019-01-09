@@ -1267,6 +1267,10 @@ static INLINE NTSTATUS NTSTATUS_FROM_WIN32(long x)
 }
 #endif
 
+#if defined(__MINGW32__)
+#include <winternl.h>
+#else
+
 #ifdef _WIN32
 
 /**
@@ -1334,6 +1338,8 @@ typedef enum _FILE_INFORMATION_CLASS
 	FileShortNameInformation
 } FILE_INFORMATION_CLASS;
 
+#endif /* __MINGW32__ */
+
 #if !defined(_WIN32) || defined(_UWP)
 
 #define FILE_SUPERSEDE				0x00000000
@@ -1371,6 +1377,10 @@ typedef enum _FILE_INFORMATION_CLASS
 #define FILE_OPEN_NO_RECALL			0x00400000
 #define FILE_OPEN_FOR_FREE_SPACE_QUERY		0x00800000
 
+#endif
+
+#if !defined(_WIN32) || defined(_UWP) || defined(__MINGW32__)
+
 #define FILE_VALID_OPTION_FLAGS			0x00FFFFFF
 #define FILE_VALID_PIPE_OPTION_FLAGS		0x00000032
 #define FILE_VALID_MAILSLOT_OPTION_FLAGS	0x00000032
@@ -1382,6 +1392,10 @@ typedef enum _FILE_INFORMATION_CLASS
 #define FILE_OVERWRITTEN			0x00000003
 #define FILE_EXISTS				0x00000004
 #define FILE_DOES_NOT_EXIST			0x00000005
+
+#endif
+
+#if !defined(_WIN32) || defined(_UWP)
 
 typedef CONST char* PCSZ;
 

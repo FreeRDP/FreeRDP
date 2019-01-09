@@ -32,6 +32,11 @@
 #include <shlobj.h>
 #include <userenv.h>
 
+// MinGW
+#ifndef FD_SHOWPROGRESSUI
+#define FD_SHOWPROGRESSUI               0x00004000
+#endif
+
 #else
 
 /* Shell clipboard formats */
