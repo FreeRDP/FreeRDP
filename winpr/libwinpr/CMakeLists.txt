@@ -133,6 +133,8 @@ endif()
 
 add_definitions(${WINPR_DEFINITIONS})
 if (WIN32)
+        # With some versions of msvcrt, you need msvcr100 to get wmemmove_s
+        list(APPEND WINPR_LIBS "msvcr100")
 	target_link_libraries(${MODULE_NAME} ${PUBLIC_KEYWORD} ${WINPR_LIBS})
 else()
 	target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${WINPR_LIBS})
