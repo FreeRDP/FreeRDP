@@ -956,21 +956,35 @@ char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
 
 #endif
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-  #ifdef __GNUC__
-    #define DECLSPEC_EXPORT __attribute__((dllexport))
-    #define DECLSPEC_IMPORT __attribute__((dllimport))
+#ifndef DECLSPEC_EXPORT
+  #if defined(_WIN32) || defined(__CYGWIN__)
+    #ifdef __GNUC__
+      #define DECLSPEC_EXPORT __attribute__((dllexport))
+    #else
+      #define DECLSPEC_EXPORT __declspec(dllexport)
+    #endif
   #else
-    #define DECLSPEC_EXPORT __declspec(dllexport)
-    #define DECLSPEC_IMPORT __declspec(dllimport)
+    #if defined(__GNUC__) && __GNUC__ >= 4
+      #define DECLSPEC_EXPORT __attribute__ ((visibility("default")))
+    #else
+      #define DECLSPEC_EXPORT
+    #endif
   #endif
-#else
-  #if defined(__GNUC__) && __GNUC__ >= 4
-    #define DECLSPEC_EXPORT __attribute__ ((visibility("default")))
-    #define DECLSPEC_IMPORT
+#endif
+
+#ifndef DECLSPEC_IMPORT
+  #if defined(_WIN32) || defined(__CYGWIN__)
+    #ifdef __GNUC__
+      #define DECLSPEC_IMPORT __attribute__((dllimport))
+    #else
+      #define DECLSPEC_IMPORT __declspec(dllimport)
+    #endif
   #else
-    #define DECLSPEC_EXPORT
-    #define DECLSPEC_IMPORT
+    #if defined(__GNUC__) && __GNUC__ >= 4
+      #define DECLSPEC_IMPORT
+    #else
+      #define DECLSPEC_IMPORT
+    #endif
   #endif
 #endif
 
