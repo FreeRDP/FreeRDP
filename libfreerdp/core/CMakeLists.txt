@@ -131,6 +131,8 @@ set(${MODULE_PREFIX}_SRCS
 	listener.h
     smartcardlogon.c
     smartcardlogon.h
+    tscredentials.c
+    tscredentials.h
 	peer.c
 	peer.h)
 
