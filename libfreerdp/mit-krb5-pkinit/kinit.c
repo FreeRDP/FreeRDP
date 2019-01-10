@@ -205,25 +205,25 @@ struct k5_data
 };
 
 #define CHECK_MEMORY(pointer, error_action)                             \
-    do                                                                  \
-    {                                                                   \
-        if (!(pointer))                                                 \
-        {                                                               \
-            WLog_ERR(TAG, "%s:%d: out of memory",                       \
-                __FUNCTION__, __LINE__);                                \
-            error_action;                                               \
-        }                                                               \
-    }while (0)
+	do                                                                  \
+	{                                                                   \
+		if (!(pointer))                                                 \
+		{                                                               \
+			WLog_ERR(TAG, "%s:%d: out of memory",                       \
+			         __FUNCTION__, __LINE__);                                \
+			error_action;                                               \
+		}                                                               \
+	}while (0)
 
 #define CHECK_STRING_PRESENT(string, name, error_action)                \
-    do                                                                  \
-    {                                                                   \
-        if((string) == NULL)                                            \
-        {                                                               \
-            WLog_ERR(TAG, "Missing %s", name);                          \
-            error_action;                                               \
-        }                                                               \
-    }while (0)
+	do                                                                  \
+	{                                                                   \
+		if((string) == NULL)                                            \
+		{                                                               \
+			WLog_ERR(TAG, "Missing %s", name);                          \
+			error_action;                                               \
+		}                                                               \
+	}while (0)
 
 static krb5_context errctx;
 static void extended_com_err_fn(const char* myprog, errcode_t code, const char* fmt,
