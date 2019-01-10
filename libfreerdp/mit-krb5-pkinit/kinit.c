@@ -169,41 +169,6 @@ struct k_opts
 	krb5_data* outdata;
 };
 
-void k_opts_print(struct k_opts* opts)
-{
-	int i;
-	printf(" lifetime                       = %d\n", opts->lifetime);
-	printf(" rlife                          = %d\n", opts->rlife);
-	printf(" forwardable                    = %d\n", opts->forwardable);
-	printf(" proxiable                      = %d\n", opts->proxiable);
-	printf(" request_pac                    = %d\n", opts->request_pac);
-	printf(" anonymous                      = %d\n", opts->anonymous);
-	printf(" addresses                      = %d\n", opts->addresses);
-	printf(" not_forwardable                = %d\n", opts->not_forwardable);
-	printf(" not_proxiable                  = %d\n", opts->not_proxiable);
-	printf(" not_request_pac                = %d\n", opts->not_request_pac);
-	printf(" no_addresses                   = %d\n", opts->no_addresses);
-	printf(" verbose                        = %d\n", opts->verbose);
-	printf(" action                         = %d\n", opts->action);
-	printf(" use_client_keytab              = %d\n", opts->use_client_keytab);
-	printf(" canonicalize                   = %d\n", opts->canonicalize);
-	printf(" enterprise                     = %d\n", opts->enterprise);
-	printf(" principal_name                 = %s\n", opts->principal_name);
-	printf(" service_name                   = %s\n", opts->service_name);
-	printf(" keytab_name                    = %s\n", opts->keytab_name);
-	printf(" k5_in_cache_name               = %s\n", opts->k5_in_cache_name);
-	printf(" k5_out_cache_name              = %s\n", opts->k5_out_cache_name);
-	printf(" armor_ccache                   = %s\n", opts->armor_ccache);
-	printf(" unum_pa_opts                   = %d\n", opts->num_pa_opts);
-
-	for (i = 0; i < opts->num_pa_opts; i ++)
-	{
-		printf(" pa_opts[%2d].attr               = %s\n", i, opts->pa_opts[i].attr);
-		printf(" pa_opts[%2d].value              = %s\n", i, opts->pa_opts[i].value);
-	}
-
-	// krb5_data*            outdata;
-}
 
 void pa_opts_free(int num_pa_opts, krb5_gic_opt_pa_data* pa_opts)
 {
@@ -243,25 +208,25 @@ struct k5_data
 };
 
 #define CHECK_MEMORY(pointer, error_action)                             \
-	do                                                                  \
-	{                                                                   \
-		if (!(pointer))                                                 \
-		{                                                               \
-			WLog_ERR(TAG, "%s:%d: out of memory",                       \
-			         __FUNCTION__, __LINE__);                                \
-			error_action;                                               \
-		}                                                               \
-	}while (0)
+    do                                                                  \
+    {                                                                   \
+        if (!(pointer))                                                 \
+        {                                                               \
+            WLog_ERR(TAG, "%s:%d: out of memory",                       \
+                __FUNCTION__, __LINE__);                                \
+            error_action;                                               \
+        }                                                               \
+    }while (0)
 
 #define CHECK_STRING_PRESENT(string, name, error_action)                \
-	do                                                                  \
-	{                                                                   \
-		if((string) == NULL)                                            \
-		{                                                               \
-			WLog_ERR(TAG, "Missing %s", name);                          \
-			error_action;                                               \
-		}                                                               \
-	}while (0)
+    do                                                                  \
+    {                                                                   \
+        if((string) == NULL)                                            \
+        {                                                               \
+            WLog_ERR(TAG, "Missing %s", name);                          \
+            error_action;                                               \
+        }                                                               \
+    }while (0)
 
 static krb5_context errctx;
 static void extended_com_err_fn(const char* myprog, errcode_t code, const char* fmt,
@@ -627,7 +592,6 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 	krb5_boolean pwprompt = FALSE;
 	krb5_address** addresses = NULL;
 	int i;
-	k_opts_print(opts);
 	memset(&my_creds, 0, sizeof(my_creds));
 	ret = krb5_get_init_creds_opt_alloc(k5->ctx, &options);
 
