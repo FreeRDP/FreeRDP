@@ -96,6 +96,7 @@ remote_guard_package_cred* remote_guard_package_cred_new_nocopy(char* package_na
 remote_guard_package_cred* remote_guard_package_cred_deepcopy(remote_guard_package_cred* that);
 void remote_guard_package_cred_deepfree(remote_guard_package_cred* that);
 
+remote_guard_creds* remote_guard_creds_new_logon_cred(remote_guard_package_cred* logon_cred);
 remote_guard_creds* remote_guard_creds_new_nocopy(char* package_name,
         unsigned credenial_size,
         BYTE*    credential);
@@ -110,12 +111,19 @@ auth_identity* auth_identity_new_remote_guard(remote_guard_creds* remote_guard_c
 auth_identity* auth_identity_deepcopy(auth_identity* that);
 void auth_identity_free(auth_identity* that);
 
+size_t nla_sizeof_ts_creds(auth_identity* identity);
+size_t nla_write_ts_creds(auth_identity* identity, wStream* s);
 size_t nla_sizeof_ts_credentials(auth_identity* identity);
 size_t nla_write_ts_credentials(auth_identity* identity, wStream* s);
 auth_identity* nla_read_ts_credentials(PSecBuffer ts_credentials);
 
-#define ber_sizeof_sequence_octet_string(length) ber_sizeof_contextual_tag(ber_sizeof_octet_string(length)) + ber_sizeof_octet_string(length)
-#define ber_write_sequence_octet_string(stream, context, value, length) ber_write_contextual_tag(stream, context, ber_sizeof_octet_string(length), TRUE) + ber_write_octet_string(stream, value, length)
+#define ber_sizeof_sequence_octet_string(length) \
+	(ber_sizeof_contextual_tag(ber_sizeof_octet_string(length)) \
+         + ber_sizeof_octet_string(length))
+
+#define ber_write_sequence_octet_string(stream, context, value, length) \
+	(ber_write_contextual_tag(stream, context, ber_sizeof_octet_string(length), TRUE) \
+	 + ber_write_octet_string(stream, value, length))
 
 #endif
 

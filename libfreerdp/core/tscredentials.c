@@ -599,19 +599,20 @@ static BOOL nla_read_octet_string_string(wStream* s, const char* field_name,
 	return 0 <= result;
 }
 
-static int nla_write_octet_string_string(wStream* s, const char* field_name, int contextual_tag,
+static int nla_write_sequence_octet_string_string(wStream* s, const char* field_name, int contextual_tag,
         char* string)
 {
 	LPWSTR buffer = NULL;
-	int length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0);
+	size_t length = strlen(string);
+	int increment;
 
-	if (length < 0)
+	if (ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0) < 0)
 	{
 		WLog_ERR(TAG, "Cannot ConvertToUnicode '%s'", string);
 		return 0;
 	}
 
-	int increment = ber_write_sequence_octet_string(s, contextual_tag, (BYTE*)buffer, length * 2);
+	increment = ber_write_sequence_octet_string(s, contextual_tag, (BYTE*)buffer, length * 2);
 	free(buffer);
 	return increment;
 }
@@ -637,15 +638,32 @@ static int string_length(char* string)
 
 /* ============================================================ */
 
-static size_t nla_sizeof_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_creds)
+static size_t nla_sizeof_ts_password_creds_inner(SEC_WINNT_AUTH_IDENTITY* password_creds)
 {
+	if (password_creds == NULL)
+	{
+		return 0;
+	}
+
 	return (ber_sizeof_sequence_octet_string(password_creds->DomainLength * 2)
-	        + ber_sizeof_sequence_octet_string(password_creds->UserLength * 2)
-	        + ber_sizeof_sequence_octet_string(password_creds->PasswordLength * 2));
+		+ ber_sizeof_sequence_octet_string(password_creds->UserLength * 2)
+		+ ber_sizeof_sequence_octet_string(password_creds->PasswordLength * 2));
 }
 
-static int nla_sizeof_ts_cspdatadetail(csp_data_detail*  csp_data)
+static size_t nla_sizeof_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_creds)
 {
+	size_t inner_size = nla_sizeof_ts_password_creds_inner(password_creds);
+	return (ber_sizeof_sequence(inner_size) + inner_size);
+}
+
+
+static int nla_sizeof_ts_cspdatadetail_inner(csp_data_detail* csp_data)
+{
+	if (csp_data == NULL)
+	{
+		return 0;
+	}
+
 	return (ber_sizeof_contextual_tag(ber_sizeof_integer(csp_data->KeySpec))
 	        + ber_sizeof_integer(csp_data->KeySpec)
 	        + ber_sizeof_sequence_octet_string(string_length(csp_data->CardName) * 2)
@@ -654,54 +672,86 @@ static int nla_sizeof_ts_cspdatadetail(csp_data_detail*  csp_data)
 	        + ber_sizeof_sequence_octet_string(string_length(csp_data->CspName) * 2));
 }
 
-static int nla_sizeof_sequence_ts_cspdatadetail(csp_data_detail*  csp_data)
+static int nla_sizeof_ts_cspdatadetail(csp_data_detail*  csp_data)
 {
-	size_t size = nla_sizeof_ts_cspdatadetail(csp_data);
-	return (size
-	        + ber_sizeof_sequence_tag(size)
-	        + ber_sizeof_contextual_tag(size));
+	size_t inner_size = nla_sizeof_ts_cspdatadetail_inner(csp_data);
+	return (ber_sizeof_contextual_tag(inner_size)
+	        + ber_sizeof_sequence(inner_size));
 }
 
-static int nla_sizeof_ts_smartcard_creds(auth_identity* identity)
+static int nla_sizeof_ts_smartcard_creds_inner(smartcard_creds* smartcard_creds)
 {
-	return (ber_sizeof_sequence_octet_string(string_length(identity->creds.smartcard_creds->Pin) * 2)
-	        + nla_sizeof_sequence_ts_cspdatadetail(identity->creds.smartcard_creds->csp_data)
-	        + ber_sizeof_sequence_octet_string(string_length(identity->creds.smartcard_creds->UserHint) * 2)
-	        + ber_sizeof_sequence_octet_string(string_length(identity->creds.smartcard_creds->DomainHint) * 2));
+	if (smartcard_creds == NULL)
+	{
+		return 0;
+	}
+
+	return (ber_sizeof_sequence_octet_string(string_length(smartcard_creds->Pin) * 2)
+	        + nla_sizeof_ts_cspdatadetail(smartcard_creds->csp_data)
+	        + ber_sizeof_sequence_octet_string(string_length(smartcard_creds->UserHint) * 2)
+	        + ber_sizeof_sequence_octet_string(string_length(smartcard_creds->DomainHint) * 2));
+}
+
+static int nla_sizeof_ts_smartcard_creds(smartcard_creds* smartcard_creds)
+{
+	return ber_sizeof_sequence(nla_sizeof_ts_smartcard_creds_inner(smartcard_creds));
+}
+
+
+static int nla_sizeof_ts_remote_guard_package_cred_inner(remote_guard_package_cred* package_cred)
+{
+	return (ber_sizeof_sequence_octet_string(string_length(package_cred->package_name) * 2)
+	        + ber_sizeof_sequence(package_cred->credential_size));
 }
 
 static int nla_sizeof_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred)
 {
-	return (ber_sizeof_sequence_octet_string(string_length(package_cred->package_name) * 2)
-	        + ber_sizeof_sequence_octet_string(package_cred->credential_size));
+	return ber_sizeof_sequence(nla_sizeof_ts_remote_guard_package_cred_inner(package_cred));
 }
 
-static int nla_sizeof_sequence_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred)
+static int nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds* remote_guard_creds)
 {
-	size_t size = nla_sizeof_ts_remote_guard_package_cred(package_cred);
-	return (size
-	        + ber_sizeof_sequence_tag(size)
-	        + ber_sizeof_contextual_tag(size));
-}
-
-static int nla_sizeof_ts_remote_guard_creds(auth_identity* identity)
-{
-	size_t size = nla_sizeof_sequence_ts_remote_guard_package_cred(
-	                  identity->creds.remote_guard_creds->login_cred);
+	size_t size = 0;
 	unsigned i;
 
-	for (i = 0; i < identity->creds.remote_guard_creds->supplemental_creds_count; i++)
+	if (remote_guard_creds == NULL)
 	{
-		size += nla_sizeof_ts_remote_guard_package_cred(
-		            identity->creds.remote_guard_creds->supplemental_creds[i]);
+		return 0;
 	}
 
-	size += ber_sizeof_sequence_tag(size);
-	size += ber_sizeof_contextual_tag(size);
+	/* logonCred         [0] TSRemoteGuardPackageCred, */
+	{
+		size_t login_size = nla_sizeof_ts_remote_guard_package_cred(remote_guard_creds->login_cred);
+		size += ber_sizeof_contextual_tag(login_size);
+		size += login_size;
+	}
+
+	/* supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL, */
+	if (0 < remote_guard_creds->supplemental_creds_count)
+	{
+		size_t seq_size = 0;
+		size_t supplemental_size = 0;
+
+		for (i = 0; i < remote_guard_creds->supplemental_creds_count; i++)
+		{
+			supplemental_size += nla_sizeof_ts_remote_guard_package_cred(remote_guard_creds->supplemental_creds[i]);
+		}
+
+		seq_size = ber_sizeof_sequence(supplemental_size);
+		size += ber_sizeof_contextual_tag(seq_size);
+		size += seq_size;
+	}
+
 	return size;
 }
 
-static int nla_sizeof_ts_creds(auth_identity* identity)
+static int nla_sizeof_ts_remote_guard_creds(remote_guard_creds* remote_guard_creds)
+{
+	return ber_sizeof_sequence(nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds));
+}
+
+
+size_t nla_sizeof_ts_creds(auth_identity* identity)
 {
 	switch (identity->cred_type)
 	{
@@ -709,21 +759,27 @@ static int nla_sizeof_ts_creds(auth_identity* identity)
 			return nla_sizeof_ts_password_creds(identity->creds.password_creds);
 
 		case credential_type_smartcard:
-			return nla_sizeof_ts_smartcard_creds(identity);
+			return nla_sizeof_ts_smartcard_creds(identity->creds.smartcard_creds);
 
 		case credential_type_remote_guard:
-			return nla_sizeof_ts_remote_guard_creds(identity);
+			return nla_sizeof_ts_remote_guard_creds(identity->creds.remote_guard_creds);
 
 		default:
 			return 0;
 	}
 }
 
+size_t nla_sizeof_ts_credentials_inner(auth_identity* identity)
+{
+	return (ber_sizeof_contextual_tag(ber_sizeof_integer(1))
+		+ ber_sizeof_integer(1)
+	        + ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_creds(identity))));
+}
+
+
 size_t nla_sizeof_ts_credentials(auth_identity* identity)
 {
-	return (ber_sizeof_integer(1)
-	        + ber_sizeof_contextual_tag(ber_sizeof_integer(1))
-	        + ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_creds(identity))));
+	return ber_sizeof_sequence(nla_sizeof_ts_credentials_inner(identity));
 }
 
 
@@ -873,12 +929,10 @@ static remote_guard_package_cred* nla_read_ts_remote_guard_package_cred(wStream*
 	BYTE* cred_buffer;
 	UINT32 cred_buffer_size;
 
-	if (nla_read_octet_string_string(s, "[0] OCTET STRING,", 0,
-	                                 &package_name) &&
-	    nla_read_octet_string(s, "[1] OCTET STRING", 1,
-	                          &cred_buffer, &cred_buffer_size))
+	if (nla_read_octet_string_string(s, "[0] OCTET STRING,", 0, &package_name) &&
+	    nla_read_octet_string(s, "[1] OCTET STRING", 1, &cred_buffer, &cred_buffer_size))
 	{
-		package_cred = remote_guard_package_cred_new_nocopy(package_name,  cred_buffer_size, cred_buffer);
+		package_cred = remote_guard_package_cred_new_nocopy(package_name, cred_buffer_size, cred_buffer);
 	}
 
 	if (package_cred == NULL)
@@ -893,16 +947,15 @@ static remote_guard_package_cred* nla_read_ts_remote_guard_package_cred(wStream*
 
 static remote_guard_creds* nla_read_ts_remote_guard_creds(wStream* s, size_t* length)
 {
-	remote_guard_creds*  remote_guard_creds = NULL;
-	remote_guard_package_cred* logon_cred = NULL;
-	size_t supplemental_length = 0;
 	/*
 	* TSRemoteGuardCreds ::= SEQUENCE {
 	*     logonCred         [0] TSRemoteGuardPackageCred,
 	*     supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL,
 	* }
-	*
 	*/
+	remote_guard_creds*  remote_guard_creds = NULL;
+	remote_guard_package_cred* logon_cred = NULL;
+	size_t supplemental_length = 0;
 
 	/* TSRemoteGuardCreds (SEQUENCE)
 	* Initialize to default values. */
@@ -1030,11 +1083,11 @@ auth_identity* nla_read_ts_credentials(PSecBuffer ts_credentials)
 static size_t nla_write_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_creds, wStream* s)
 {
 	size_t size = 0;
-	size_t innerSize = nla_sizeof_ts_password_creds(password_creds);
+	size_t inner_size = nla_sizeof_ts_password_creds_inner(password_creds);
 	/* TSPasswordCreds (SEQUENCE) */
-	size += ber_write_sequence_tag(s, innerSize);
+	size += ber_write_sequence_tag(s, inner_size);
 
-	if (password_creds)
+	if (password_creds != NULL)
 	{
 		/* [0] domainName (OCTET STRING) */
 		size += ber_write_sequence_octet_string(
@@ -1053,102 +1106,102 @@ static size_t nla_write_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_cred
 	return size;
 }
 
-static int nla_write_ts_csp_data_detail(csp_data_detail*   csp_data, wStream* s, int contextual_tag)
+static int nla_write_ts_csp_data_detail(csp_data_detail* csp_data, int contextual_tag,  wStream* s)
 {
 	int size = 0;
 
 	if (csp_data != NULL)
 	{
-		size += ber_write_contextual_tag(s, 1, ber_sizeof_sequence(nla_sizeof_ts_cspdatadetail(csp_data)),
-		                                 TRUE);
-		size += ber_write_sequence_tag(s, nla_sizeof_ts_cspdatadetail(csp_data));
+		size_t inner_size = nla_sizeof_ts_cspdatadetail_inner(csp_data);
+		size += ber_write_contextual_tag(s, contextual_tag, ber_sizeof_sequence(inner_size), TRUE);
+		size += ber_write_sequence_tag(s, inner_size);
 		/* [0] KeySpec (INTEGER) */
 		size += ber_write_contextual_tag(s, 0, ber_sizeof_integer(csp_data->KeySpec), TRUE);
 		size += ber_write_integer(s, csp_data->KeySpec);
-		size += nla_write_octet_string_string(s, "[1] CardName (OCTET STRING)", 1, csp_data->CardName);
-		size += nla_write_octet_string_string(s, "[2] ReaderName (OCTET STRING)", 2, csp_data->ReaderName);
-		size += nla_write_octet_string_string(s, "[3] ContainerName (OCTET STRING)", 3,
-		                                      csp_data->ContainerName);
-		size += nla_write_octet_string_string(s, "[4] CspName (OCTET STRING)", 4, csp_data->CspName);
+		size += nla_write_sequence_octet_string_string(s, "[1] CardName (OCTET STRING)", 1, csp_data->CardName);
+		size += nla_write_sequence_octet_string_string(s, "[2] ReaderName (OCTET STRING)", 2, csp_data->ReaderName);
+		size += nla_write_sequence_octet_string_string(s, "[3] ContainerName (OCTET STRING)", 3, csp_data->ContainerName);
+		size += nla_write_sequence_octet_string_string(s, "[4] CspName (OCTET STRING)", 4, csp_data->CspName);
 	}
 
 	return size;
 }
 
-static int nla_write_ts_smartcard_creds(auth_identity* identity, wStream* s)
+static int nla_write_ts_smartcard_creds(smartcard_creds* smartcard_creds, wStream* s)
 {
 	int size = 0;
-	int innerSize = nla_sizeof_ts_smartcard_creds(identity);
+	int inner_size = nla_sizeof_ts_smartcard_creds_inner(smartcard_creds);
 	/* TSSmartCardCreds (SEQUENCE) */
-	size += ber_write_sequence_tag(s, innerSize);
+	size += ber_write_sequence_tag(s, inner_size);
 
-	if ((identity != NULL) && (identity->creds.smartcard_creds != NULL))
+	if (smartcard_creds != NULL)
 	{
-		size += nla_write_octet_string_string(s, "[0] Pin (OCTET STRING)", 0,
-		                                      identity->creds.smartcard_creds->Pin);
-		size += nla_write_ts_csp_data_detail(identity->creds.smartcard_creds->csp_data, s,
-		                                     1); /* [1] CspDataDetail (TSCspDataDetail) (SEQUENCE) */
-		size += nla_write_octet_string_string(s, "[2] userHint (OCTET STRING)", 2,
-		                                      identity->creds.smartcard_creds->UserHint);
-		size += nla_write_octet_string_string(s, "[3] domainHint (OCTET STRING)", 3,
-		                                      identity->creds.smartcard_creds->DomainHint);
+		size += nla_write_sequence_octet_string_string(s, "[0] Pin (OCTET STRING)", 0, smartcard_creds->Pin);
+		/* [1] CspDataDetail (TSCspDataDetail) (SEQUENCE) */
+		size += nla_write_ts_csp_data_detail(smartcard_creds->csp_data, 1, s);
+		size += nla_write_sequence_octet_string_string(s, "[2] userHint (OCTET STRING)", 2, smartcard_creds->UserHint);
+		size += nla_write_sequence_octet_string_string(s, "[3] domainHint (OCTET STRING)", 3, smartcard_creds->DomainHint);
 	}
 
 	return size;
 }
 
-
-static int nla_write_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred,
-        wStream* s)
+static int nla_write_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred, wStream* s)
 {
+	/*
+	* TSRemoteGuardPackageCred ::=  SEQUENCE {
+	*     packageName [0] OCTET STRING,
+	*     credBuffer  [1] OCTET STRING,
+	* }
+	*/
 	int size = 0;
+	int inner_size = nla_sizeof_ts_remote_guard_package_cred_inner(package_cred);
+	size += ber_write_sequence_tag(s, inner_size);
 
 	if (package_cred != NULL)
 	{
-		size += nla_write_octet_string_string(s, "packageName [0] OCTET STRING",
-		                                      0, package_cred->package_name);
+		size += nla_write_sequence_octet_string_string(s, "packageName [0] OCTET STRING", 0, package_cred->package_name);
 		/* credBuffer  [1] OCTET STRING, */
-		size += ber_write_sequence_octet_string(s, 1, package_cred->credential,
-		                                        package_cred->credential_size);
+		size += ber_write_sequence_octet_string(s, 1, package_cred->credential, package_cred->credential_size);
 	}
 
 	return size;
 }
 
-static int nla_write_ts_remote_guard_creds(auth_identity* identity, wStream* s)
+static int nla_write_ts_remote_guard_creds(remote_guard_creds*  remote_guard_creds, wStream* s)
 {
 	unsigned i;
 	int size = 0;
-	int innerSize = nla_sizeof_ts_remote_guard_creds(identity);
-	/* TSRemoteGuardCreds (SEQUENCE) */
-	size += ber_write_sequence_tag(s, innerSize);
-	size += nla_write_ts_remote_guard_package_cred(identity->creds.remote_guard_creds->login_cred, s);
-	/* TODO: add sequence header? */
-	/* credSize = ber_sizeof_sequence(nla_sizeof_ts_creds(identity)); */
-	/* size += ber_write_contextual_tag(s, 1, ber_sizeof_octet_string(credSize), TRUE); */
-
-	for (i = 0; i < identity->creds.remote_guard_creds->supplemental_creds_count; i++)
+	int inner_size = nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds);
+	/* TSRemoteGuardCreds ::= SEQUENCE { */
+	size += ber_write_sequence_tag(s, inner_size);
+	/*     logonCred         [0] TSRemoteGuardPackageCred, */
+	size += ber_write_contextual_tag(s, 0, nla_sizeof_ts_remote_guard_package_cred(remote_guard_creds->login_cred), TRUE);
+	size += nla_write_ts_remote_guard_package_cred(remote_guard_creds->login_cred, s);
+	/*     supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL, */
+	if (0 < remote_guard_creds->supplemental_creds_count)
 	{
-		size += nla_write_ts_remote_guard_package_cred(
-		            identity->creds.remote_guard_creds->supplemental_creds[i], s);
+		unsigned supplemental_size = 0;
+
+		for (i = 0; i < remote_guard_creds->supplemental_creds_count; i++)
+		{
+			supplemental_size += nla_sizeof_ts_remote_guard_package_cred(remote_guard_creds->supplemental_creds[i]);
+		}
+
+		size += ber_write_contextual_tag(s, 1, ber_sizeof_sequence(supplemental_size), TRUE);
+		size += ber_write_sequence_tag(s, supplemental_size);
+
+		for (i = 0; i < remote_guard_creds->supplemental_creds_count; i++)
+		{
+			size += nla_write_ts_remote_guard_package_cred(remote_guard_creds->supplemental_creds[i], s);
+		}
 	}
 
-	/* if ((identity != NULL) && (identity->creds.smartcard_creds != NULL)) */
-	/* { */
-	/* size += nla_write_octet_string_string(s, "[0] Pin (OCTET STRING)", 0, */
-	/*                                       identity->creds.smartcard_creds->Pin); */
-	/* size += nla_write_ts_csp_data_detail(identity->creds.csp_data, s, */
-	/*                                      1); /\* [1] CspDataDetail (TSCspDataDetail) (SEQUENCE) *\/ */
-	/* size += nla_write_octet_string_string(s, "[2] userHint (OCTET STRING)", 2, */
-	/*                                       identity->creds.smartcard_creds->UserHint); */
-	/* size += nla_write_octet_string_string(s, "[3] domainHint (OCTET STRING)", 3, */
-	/*                                       identity->creds.smartcard_creds->DomainHint); */
-	/* } */
 	return size;
 }
 
 
-static int nla_write_ts_creds(auth_identity* identity, wStream* s)
+size_t nla_write_ts_creds(auth_identity* identity, wStream* s)
 {
 	switch (identity->cred_type)
 	{
@@ -1156,13 +1209,13 @@ static int nla_write_ts_creds(auth_identity* identity, wStream* s)
 			return nla_write_ts_password_creds(identity->creds.password_creds, s);
 
 		case credential_type_smartcard:
-			return nla_write_ts_smartcard_creds(identity, s);
+			return nla_write_ts_smartcard_creds(identity->creds.smartcard_creds, s);
 
 		case credential_type_remote_guard:
-			return nla_write_ts_remote_guard_creds(identity, s);
+			return nla_write_ts_remote_guard_creds(identity->creds.remote_guard_creds, s);
 
 		default:
-			WLog_ERR(TAG,  "cred_type unknown: %d\n", identity->cred_type);
+			WLog_ERR(TAG, "cred_type unknown: %d\n", identity->cred_type);
 			return 0;
 	}
 }
@@ -1171,17 +1224,17 @@ static int nla_write_ts_creds(auth_identity* identity, wStream* s)
 size_t nla_write_ts_credentials(auth_identity* identity, wStream* s)
 {
 	int size = 0;
-	int credSize = 0;
-	int innerSize = nla_sizeof_ts_credentials(identity);
+	int cred_size = 0;
+	int inner_size = nla_sizeof_ts_credentials_inner(identity);
 	/* TSCredentials (SEQUENCE) */
-	size += ber_write_sequence_tag(s, innerSize);
+	size += ber_write_sequence_tag(s, inner_size);
 	/* [0] credType (INTEGER) */
 	size += ber_write_contextual_tag(s, 0, ber_sizeof_integer(identity->cred_type), TRUE);
 	size += ber_write_integer(s, identity->cred_type);
 	/* [1] credentials (OCTET STRING) */
-	credSize = ber_sizeof_sequence(nla_sizeof_ts_creds(identity));
-	size += ber_write_contextual_tag(s, 1, ber_sizeof_octet_string(credSize), TRUE);
-	size += ber_write_octet_string_tag(s, credSize);
+	cred_size = ber_sizeof_sequence(nla_sizeof_ts_creds(identity));
+	size += ber_write_contextual_tag(s, 1, ber_sizeof_octet_string(cred_size), TRUE);
+	size += ber_write_octet_string_tag(s, cred_size);
 	size += nla_write_ts_creds(identity, s);
 	return size;
 }

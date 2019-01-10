@@ -6,7 +6,8 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
 	TestVersion.c
-	TestSettings.c)
+	TestSettings.c
+    TestTSRequestRemoteGuardCreds.c)
 
 if(WITH_SAMPLE AND WITH_SERVER)
 	set(${MODULE_PREFIX}_TESTS
