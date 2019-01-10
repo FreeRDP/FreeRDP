@@ -143,6 +143,80 @@ void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags,
 	}
 }
 
+void mf_scale_mouse_event_ex(void* context, rdpInput* input, UINT16 flags,
+                             UINT16 x, UINT16 y)
+{
+	mfContext* mfc = (mfContext*) context;
+	MRDPView* view = (MRDPView*) mfc->view;
+	int ww, wh, dw, dh;
+	ww = mfc->client_width;
+	wh = mfc->client_height;
+	dw = mfc->context.settings->DesktopWidth;
+	dh = mfc->context.settings->DesktopHeight;
+	// Convert to windows coordinates
+	y = [view frame].size.height - y;
+
+	if (!mfc->context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
+	{
+		y = y + mfc->yCurrentScroll;
+
+		if (wh != dh)
+		{
+			y -= (dh - wh);
+		}
+
+		freerdp_input_send_extended_mouse_event(input, flags, x + mfc->xCurrentScroll, y);
+	}
+	else
+	{
+		y = y * dh / wh + mfc->yCurrentScroll;
+		freerdp_input_send_extended_mouse_event(input, flags, x * dw / ww + mfc->xCurrentScroll, y);
+	}
+}
+
+void mf_press_mouse_button(void* context, rdpInput* input, int button, int x, int y, BOOL down)
+{
+	UINT16 flags = 0;
+	UINT16 xflags = 0;
+
+	if (down)
+	{
+		flags |= PTR_FLAGS_DOWN;
+		xflags |= PTR_XFLAGS_DOWN;
+	}
+
+	switch (button)
+	{
+		case 0:
+			mf_scale_mouse_event(context, input,
+			                     flags | PTR_FLAGS_BUTTON1, x, y);
+			break;
+
+		case 1:
+			mf_scale_mouse_event(context, input,
+			                     flags | PTR_FLAGS_BUTTON2, x, y);
+			break;
+
+		case 2:
+			mf_scale_mouse_event(context, input,
+			                     flags | PTR_FLAGS_BUTTON3, x, y);
+			break;
+
+		case 3:
+			mf_scale_mouse_event_ex(context, input,
+			                        xflags | PTR_XFLAGS_BUTTON1, x, y);
+			break;
+
+		case 4:
+			mf_scale_mouse_event_ex(context, input,
+			                        xflags | PTR_XFLAGS_BUTTON2, x, y);
+			break;
+
+		default:
+			break;
+	}
+}
+
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->Version = 1;
