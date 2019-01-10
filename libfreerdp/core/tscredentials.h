@@ -119,7 +119,7 @@ auth_identity* nla_read_ts_credentials(PSecBuffer ts_credentials);
 
 #define ber_sizeof_sequence_octet_string(length) \
 	(ber_sizeof_contextual_tag(ber_sizeof_octet_string(length)) \
-         + ber_sizeof_octet_string(length))
+	 + ber_sizeof_octet_string(length))
 
 #define ber_write_sequence_octet_string(stream, context, value, length) \
 	(ber_write_contextual_tag(stream, context, ber_sizeof_octet_string(length), TRUE) \

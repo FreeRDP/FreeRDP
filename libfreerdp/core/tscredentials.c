@@ -599,7 +599,8 @@ static BOOL nla_read_octet_string_string(wStream* s, const char* field_name,
 	return 0 <= result;
 }
 
-static int nla_write_sequence_octet_string_string(wStream* s, const char* field_name, int contextual_tag,
+static int nla_write_sequence_octet_string_string(wStream* s, const char* field_name,
+        int contextual_tag,
         char* string)
 {
 	LPWSTR buffer = NULL;
@@ -646,8 +647,8 @@ static size_t nla_sizeof_ts_password_creds_inner(SEC_WINNT_AUTH_IDENTITY* passwo
 	}
 
 	return (ber_sizeof_sequence_octet_string(password_creds->DomainLength * 2)
-		+ ber_sizeof_sequence_octet_string(password_creds->UserLength * 2)
-		+ ber_sizeof_sequence_octet_string(password_creds->PasswordLength * 2));
+	        + ber_sizeof_sequence_octet_string(password_creds->UserLength * 2)
+	        + ber_sizeof_sequence_octet_string(password_creds->PasswordLength * 2));
 }
 
 static size_t nla_sizeof_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_creds)
@@ -734,7 +735,8 @@ static int nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds* remote_gua
 
 		for (i = 0; i < remote_guard_creds->supplemental_creds_count; i++)
 		{
-			supplemental_size += nla_sizeof_ts_remote_guard_package_cred(remote_guard_creds->supplemental_creds[i]);
+			supplemental_size += nla_sizeof_ts_remote_guard_package_cred(
+			                         remote_guard_creds->supplemental_creds[i]);
 		}
 
 		seq_size = ber_sizeof_sequence(supplemental_size);
@@ -772,7 +774,7 @@ size_t nla_sizeof_ts_creds(auth_identity* identity)
 size_t nla_sizeof_ts_credentials_inner(auth_identity* identity)
 {
 	return (ber_sizeof_contextual_tag(ber_sizeof_integer(1))
-		+ ber_sizeof_integer(1)
+	        + ber_sizeof_integer(1)
 	        + ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_creds(identity))));
 }
 
@@ -1118,10 +1120,14 @@ static int nla_write_ts_csp_data_detail(csp_data_detail* csp_data, int contextua
 		/* [0] KeySpec (INTEGER) */
 		size += ber_write_contextual_tag(s, 0, ber_sizeof_integer(csp_data->KeySpec), TRUE);
 		size += ber_write_integer(s, csp_data->KeySpec);
-		size += nla_write_sequence_octet_string_string(s, "[1] CardName (OCTET STRING)", 1, csp_data->CardName);
-		size += nla_write_sequence_octet_string_string(s, "[2] ReaderName (OCTET STRING)", 2, csp_data->ReaderName);
-		size += nla_write_sequence_octet_string_string(s, "[3] ContainerName (OCTET STRING)", 3, csp_data->ContainerName);
-		size += nla_write_sequence_octet_string_string(s, "[4] CspName (OCTET STRING)", 4, csp_data->CspName);
+		size += nla_write_sequence_octet_string_string(s, "[1] CardName (OCTET STRING)", 1,
+		        csp_data->CardName);
+		size += nla_write_sequence_octet_string_string(s, "[2] ReaderName (OCTET STRING)", 2,
+		        csp_data->ReaderName);
+		size += nla_write_sequence_octet_string_string(s, "[3] ContainerName (OCTET STRING)", 3,
+		        csp_data->ContainerName);
+		size += nla_write_sequence_octet_string_string(s, "[4] CspName (OCTET STRING)", 4,
+		        csp_data->CspName);
 	}
 
 	return size;
@@ -1136,17 +1142,21 @@ static int nla_write_ts_smartcard_creds(smartcard_creds* smartcard_creds, wStrea
 
 	if (smartcard_creds != NULL)
 	{
-		size += nla_write_sequence_octet_string_string(s, "[0] Pin (OCTET STRING)", 0, smartcard_creds->Pin);
+		size += nla_write_sequence_octet_string_string(s, "[0] Pin (OCTET STRING)", 0,
+		        smartcard_creds->Pin);
 		/* [1] CspDataDetail (TSCspDataDetail) (SEQUENCE) */
 		size += nla_write_ts_csp_data_detail(smartcard_creds->csp_data, 1, s);
-		size += nla_write_sequence_octet_string_string(s, "[2] userHint (OCTET STRING)", 2, smartcard_creds->UserHint);
-		size += nla_write_sequence_octet_string_string(s, "[3] domainHint (OCTET STRING)", 3, smartcard_creds->DomainHint);
+		size += nla_write_sequence_octet_string_string(s, "[2] userHint (OCTET STRING)", 2,
+		        smartcard_creds->UserHint);
+		size += nla_write_sequence_octet_string_string(s, "[3] domainHint (OCTET STRING)", 3,
+		        smartcard_creds->DomainHint);
 	}
 
 	return size;
 }
 
-static int nla_write_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred, wStream* s)
+static int nla_write_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred,
+        wStream* s)
 {
 	/*
 	* TSRemoteGuardPackageCred ::=  SEQUENCE {
@@ -1160,9 +1170,11 @@ static int nla_write_ts_remote_guard_package_cred(remote_guard_package_cred* pac
 
 	if (package_cred != NULL)
 	{
-		size += nla_write_sequence_octet_string_string(s, "packageName [0] OCTET STRING", 0, package_cred->package_name);
+		size += nla_write_sequence_octet_string_string(s, "packageName [0] OCTET STRING", 0,
+		        package_cred->package_name);
 		/* credBuffer  [1] OCTET STRING, */
-		size += ber_write_sequence_octet_string(s, 1, package_cred->credential, package_cred->credential_size);
+		size += ber_write_sequence_octet_string(s, 1, package_cred->credential,
+		                                        package_cred->credential_size);
 	}
 
 	return size;
@@ -1176,8 +1188,10 @@ static int nla_write_ts_remote_guard_creds(remote_guard_creds*  remote_guard_cre
 	/* TSRemoteGuardCreds ::= SEQUENCE { */
 	size += ber_write_sequence_tag(s, inner_size);
 	/*     logonCred         [0] TSRemoteGuardPackageCred, */
-	size += ber_write_contextual_tag(s, 0, nla_sizeof_ts_remote_guard_package_cred(remote_guard_creds->login_cred), TRUE);
+	size += ber_write_contextual_tag(s, 0,
+	                                 nla_sizeof_ts_remote_guard_package_cred(remote_guard_creds->login_cred), TRUE);
 	size += nla_write_ts_remote_guard_package_cred(remote_guard_creds->login_cred, s);
+
 	/*     supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL, */
 	if (0 < remote_guard_creds->supplemental_creds_count)
 	{
@@ -1185,7 +1199,8 @@ static int nla_write_ts_remote_guard_creds(remote_guard_creds*  remote_guard_cre
 
 		for (i = 0; i < remote_guard_creds->supplemental_creds_count; i++)
 		{
-			supplemental_size += nla_sizeof_ts_remote_guard_package_cred(remote_guard_creds->supplemental_creds[i]);
+			supplemental_size += nla_sizeof_ts_remote_guard_package_cred(
+			                         remote_guard_creds->supplemental_creds[i]);
 		}
 
 		size += ber_write_contextual_tag(s, 1, ber_sizeof_sequence(supplemental_size), TRUE);
