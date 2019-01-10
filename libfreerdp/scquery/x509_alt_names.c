@@ -138,8 +138,8 @@ void          alt_name_list_deepfree(alt_name_list list)
 {
 	while (list != NULL)
 	{
-		alt_name_free(list->name);
 		alt_name_list rest = list->rest;
+		alt_name_free(list->name);
 		alt_name_list_free(list);
 		list = rest;
 	}
@@ -169,7 +169,6 @@ char* general_name_type_label(int general_name_type)
 
 void extract_asn1_string(GENERAL_NAME* name, alt_name alt_name)
 {
-	char* result = NULL;
 	unsigned char* string = NULL;
 
 	switch (name->type)
@@ -185,9 +184,9 @@ void extract_asn1_string(GENERAL_NAME* name, alt_name alt_name)
 				return;
 			}
 
-			result = check_memory(strdup((char*)string), 1 + strlen((char*)string));
+			/* alt_name_add_component makes a copy of the component: */
+			alt_name_add_component(alt_name, (char*)string);
 			OPENSSL_free(string);
-			alt_name_add_component(alt_name, result);
 	}
 }
 
@@ -612,7 +611,8 @@ alt_name_list map_subject_alt_names(X509* certificate, extract_alt_name_pr extra
 	/* It looks like it's not possible to free the general_name themselves
 	   (they may be taken directly from the certificate data?).
 	   sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free) crashes. */
-	sk_GENERAL_NAME_free(gens);
+	sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
+	/* sk_GENERAL_NAME_free(gens); */
 	return results;
 }
 

@@ -1,28 +1,28 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* clients/kinit/kinit.c - Initialize a credential cache */
 /*
- * Copyright 1990, 2008 by the Massachusetts Institute of Technology.
- * All Rights Reserved.
- *
- * Export of this software from the United States of America may
- *   require a specific license from the United States Government.
- *   It is the responsibility of any person or organization contemplating
- *   export to obtain such a license before exporting.
- *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
- * distribute this software and its documentation for any purpose and
- * without fee is hereby granted, provided that the above copyright
- * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation, and that
- * the name of M.I.T. not be used in advertising or publicity pertaining
- * to distribution of the software without specific, written prior
- * permission.  Furthermore if you modify this software you must label
- * your software as modified software and not distribute it in such a
- * fashion that it might be confused with the original M.I.T. software.
- * M.I.T. makes no representations about the suitability of
- * this software for any purpose.  It is provided "as is" without express
- * or implied warranty.
- */
+* Copyright 1990, 2008 by the Massachusetts Institute of Technology.
+* All Rights Reserved.
+*
+* Export of this software from the United States of America may
+*   require a specific license from the United States Government.
+*   It is the responsibility of any person or organization contemplating
+*   export to obtain such a license before exporting.
+*
+* WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+* distribute this software and its documentation for any purpose and
+* without fee is hereby granted, provided that the above copyright
+* notice appear in all copies and that both that copyright notice and
+* this permission notice appear in supporting documentation, and that
+* the name of M.I.T. not be used in advertising or publicity pertaining
+* to distribution of the software without specific, written prior
+* permission.  Furthermore if you modify this software you must label
+* your software as modified software and not distribute it in such a
+* fashion that it might be confused with the original M.I.T. software.
+* M.I.T. makes no representations about the suitability of
+* this software for any purpose.  It is provided "as is" without express
+* or implied warranty.
+*/
 
 
 // #include "autoconf.h"
@@ -54,7 +54,7 @@ krb5_error_code
 krb5int_copy_data_contents_add0(krb5_context, const krb5_data*, krb5_data*);
 
 /* Return the delta between two timestamps (a - b) as a signed 32-bit value,
- * without relying on undefined behavior. */
+* without relying on undefined behavior. */
 static inline krb5_deltat
 ts_delta(krb5_timestamp a, krb5_timestamp b)
 {
@@ -169,15 +169,18 @@ struct k_opts
 
 void pa_opts_free(int num_pa_opts, krb5_gic_opt_pa_data* pa_opts)
 {
-	int i;
-
-	for (i = 0; i < num_pa_opts; i ++)
+	if (pa_opts != NULL)
 	{
-		free(pa_opts->attr);
-		free(pa_opts->value);
-	}
+		int i;
 
-	free(pa_opts);
+		for (i = 0; i < num_pa_opts; i ++)
+		{
+			free(pa_opts[i].attr);
+			free(pa_opts[i].value);
+		}
+
+		free(pa_opts);
+	}
 }
 
 void k_opts_free_fields(struct k_opts* opts)
@@ -207,20 +210,20 @@ struct k5_data
 		if (!(pointer))                                         \
 		{                                                       \
 			WLog_ERR(TAG, "%s:%d: out of memory",           \
-			         __FUNCTION__, __LINE__);                \
+                            __FUNCTION__, __LINE__);                    \
 			error_action;                                   \
 		}                                                       \
 	}while (0)
 
 #define CHECK_STRING_PRESENT(string, name, error_action)                \
-	do                                                              \
-	{                                                               \
-		if((string) == NULL)                                    \
-		{                                                       \
-			WLog_ERR(TAG, "Missing %s", name);              \
-			error_action;                                   \
-		}                                                       \
-	}while (0)
+    do                                                                  \
+    {                                                                   \
+        if((string) == NULL)                                            \
+        {                                                               \
+            WLog_ERR(TAG, "Missing %s", name);                          \
+            error_action;                                               \
+        }                                                               \
+    }while (0)
 
 static krb5_context errctx;
 static void extended_com_err_fn(const char* myprog, errcode_t code, const char* fmt,
@@ -238,6 +241,7 @@ static void extended_com_err_fn(const char* myprog, errcode_t code, const char* 
 	CHECK_MEMORY(buffer = malloc(1 + size), return);
 	size = vsnprintf(buffer, 1 + size, fmt, args);
 	WLog_ERR(myprog, "%s", buffer);
+	free(buffer);
 }
 
 static int add_preauth_opt(struct k_opts* opts, char* attribute, char* value)
@@ -292,14 +296,13 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 
 		if (opts->verbose)
 		{
-			fprintf(stderr, _("Using specified cache: %s\n"),
-			        opts->k5_out_cache_name);
+			WLog_INFO(TAG, _("Using specified cache: %s\n"), opts->k5_out_cache_name);
 		}
 	}
 	else
 	{
 		/* Resolve the default ccache and get its type and default principal
-		 * (if it is initialized). */
+		* (if it is initialized). */
 		ret = krb5_cc_default(k5->ctx, &defcache);
 
 		if (ret)
@@ -415,7 +418,7 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 	else if (defcache_princ != NULL)
 	{
 		/* Use the default cache's principal, and use the default cache as the
-		 * output cache. */
+		* output cache. */
 		k5->out_cc = defcache;
 		defcache = NULL;
 		k5->me = defcache_princ;
@@ -458,8 +461,8 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 		{
 			if (opts->verbose)
 			{
-				fprintf(stderr, _("Using existing cache: %s\n"),
-				        krb5_cc_get_name(k5->ctx, k5->out_cc));
+				WLog_INFO(TAG, _("Using existing cache: %s\n"),
+				          krb5_cc_get_name(k5->ctx, k5->out_cc));
 			}
 
 			k5->switch_to_cache = 1;
@@ -467,7 +470,7 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 		else if (defcache_princ != NULL)
 		{
 			/* Create a new cache to avoid overwriting the initialized default
-			 * cache. */
+			* cache. */
 			ret = krb5_cc_new_unique(k5->ctx, deftype, NULL, &k5->out_cc);
 
 			if (ret)
@@ -478,8 +481,8 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 
 			if (opts->verbose)
 			{
-				fprintf(stderr, _("Using new cache: %s\n"),
-				        krb5_cc_get_name(k5->ctx, k5->out_cc));
+				WLog_INFO(TAG, _("Using new cache: %s\n"),
+				          krb5_cc_get_name(k5->ctx, k5->out_cc));
 			}
 
 			k5->switch_to_cache = 1;
@@ -494,8 +497,8 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 
 		if (opts->verbose)
 		{
-			fprintf(stderr, _("Using default cache: %s\n"),
-			        krb5_cc_get_name(k5->ctx, k5->out_cc));
+			WLog_INFO(TAG, _("Using default cache: %s\n"),
+			          krb5_cc_get_name(k5->ctx, k5->out_cc));
 		}
 	}
 
@@ -512,8 +515,8 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 
 		if (opts->verbose)
 		{
-			fprintf(stderr, _("Using specified input cache: %s\n"),
-			        opts->k5_in_cache_name);
+			WLog_INFO(TAG, _("Using specified input cache: %s\n"),
+			          opts->k5_in_cache_name);
 		}
 	}
 
@@ -526,7 +529,7 @@ static int k5_begin(struct k_opts* opts, struct k5_data* k5)
 	}
 
 	if (opts->verbose)
-		fprintf(stderr, _("Using principal: %s\n"), k5->name);
+		WLog_INFO(TAG, _("Using principal: %s\n"), k5->name);
 
 	free(opts->principal_name);
 	CHECK_MEMORY(opts->principal_name = strdup(k5->name), goto cleanup);
@@ -672,7 +675,7 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 		}
 
 		if (opts->verbose)
-			fprintf(stderr, _("Using keytab: %s\n"), opts->keytab_name);
+			WLog_INFO(TAG, _("Using keytab: %s\n"), opts->keytab_name);
 	}
 	else if (opts->action == INIT_KT && opts->use_client_keytab)
 	{
@@ -700,8 +703,8 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 
 		if (opts->verbose)
 		{
-			fprintf(stderr, _("PA Option %s = %s\n"), opts->pa_opts[i].attr,
-			        opts->pa_opts[i].value);
+			WLog_INFO(TAG, _("PA Option %s = %s\n"), opts->pa_opts[i].attr,
+			          opts->pa_opts[i].value);
 		}
 	}
 
@@ -766,12 +769,11 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 		}
 
 		/* If reply decryption failed, or if pre-authentication failed and we
-		 * were prompted for a password, assume the password was wrong. */
+		* were prompted for a password, assume the password was wrong. */
 		if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY ||
 		    (pwprompt && ret == KRB5KDC_ERR_PREAUTH_FAILED))
 		{
-			fprintf(stderr, _("%s: Password incorrect while %s\n"), TAG,
-			        doing);
+			com_err(TAG, ret, _("Password incorrect while %s"), doing);
 		}
 		else
 		{
@@ -794,7 +796,7 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 		}
 
 		if (opts->verbose)
-			fprintf(stderr, _("Initialized cache\n"));
+			WLog_INFO(TAG, _("Initialized cache\n"));
 
 		ret = krb5_cc_store_cred(k5->ctx, k5->out_cc, &my_creds);
 
@@ -805,7 +807,7 @@ k5_kinit(struct k_opts* opts, struct k5_data* k5)
 		}
 
 		if (opts->verbose)
-			fprintf(stderr, _("Stored credentials\n"));
+			WLog_INFO(TAG, _("Stored credentials\n"));
 	}
 
 	/* Get canonicalized principal name for credentials delegation (CredSSP) */
@@ -834,13 +836,6 @@ cleanup:
 	if (my_creds.client == k5->me)
 		my_creds.client = 0;
 
-	if (opts->pa_opts)
-	{
-		free(opts->pa_opts);
-		opts->pa_opts = NULL;
-		opts->num_pa_opts = 0;
-	}
-
 	krb5_free_cred_contents(k5->ctx, &my_creds);
 
 	if (keytab != NULL)
@@ -868,7 +863,7 @@ static int kinit(struct k_opts*   opts, char** canonicalized_user)
 			WLog_INFO(TAG, "Authenticated to Kerberos v5");
 		}
 
-		if (opts->outdata->data)
+		if (opts->outdata && opts->outdata->data)
 		{
 			(*canonicalized_user) = strdup(opts->outdata->data);
 
@@ -943,12 +938,12 @@ static int fill_opts_with_settings(rdpSettings* settings, struct k_opts*   opts)
 	}
 
 	CHECK_STRING_PRESENT(settings->UserPrincipalName, "user principal name setting", goto error);
-	CHECK_STRING_PRESENT(settings->Domain,            "domain name setting",         goto error);
+	CHECK_STRING_PRESENT(settings->ServerHostname,    "server hostname setting",     goto error);
 	CHECK_STRING_PRESENT(settings->PkinitIdentity,    "pkinit Identity setting",     goto error);
 	CHECK_MEMORY(opts->principal_name = strdup(settings->UserPrincipalName),         goto error);
 	CHECK_MEMORY(opts->service_name   = strdup(settings->ServerHostname),            goto error);
-	CHECK_MEMORY(attribute            = strdup("X509_user_identity"),                goto error);
 	CHECK_MEMORY(value                = strdup(settings->PkinitIdentity),            goto error);
+	CHECK_MEMORY(attribute            = strdup("X509_user_identity"),                goto error);
 
 	if (0 != add_preauth_opt(opts, attribute, value))
 	{
@@ -958,8 +953,8 @@ static int fill_opts_with_settings(rdpSettings* settings, struct k_opts*   opts)
 
 	if (settings->PkinitAnchors != NULL)
 	{
-		anchors = string_list_split_string(settings->PkinitAnchors, ",", /* remove_empty_substring = */  1);
 		int i;
+		anchors = string_list_split_string(settings->PkinitAnchors, ",", /* remove_empty_substring = */  1);
 
 		for (i = 0; anchors[i] != NULL; i++)
 		{
@@ -972,6 +967,8 @@ static int fill_opts_with_settings(rdpSettings* settings, struct k_opts*   opts)
 				goto error;
 			}
 		}
+
+		string_list_free(anchors);
 	}
 
 	return 0;
@@ -997,7 +994,5 @@ int kerberos_get_tgt(rdpSettings* settings)
 	k_opts_free_fields(&opts);
 	return ret;
 }
-
-
 
 /**** THE END ****/
