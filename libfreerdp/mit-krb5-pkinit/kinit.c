@@ -205,15 +205,15 @@ struct k5_data
 };
 
 #define CHECK_MEMORY(pointer, error_action)                             \
-	do                                                              \
-	{                                                               \
-		if (!(pointer))                                         \
-		{                                                       \
-			WLog_ERR(TAG, "%s:%d: out of memory",           \
-                            __FUNCTION__, __LINE__);                    \
-			error_action;                                   \
-		}                                                       \
-	}while (0)
+    do                                                                  \
+    {                                                                   \
+        if (!(pointer))                                                 \
+        {                                                               \
+            WLog_ERR(TAG, "%s:%d: out of memory",                       \
+                __FUNCTION__, __LINE__);                                \
+            error_action;                                               \
+        }                                                               \
+    }while (0)
 
 #define CHECK_STRING_PRESENT(string, name, error_action)                \
     do                                                                  \
