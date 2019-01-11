@@ -229,14 +229,14 @@ SSPI_CREDENTIALS* sspi_CredentialsNew(void)
 	return credentials;
 }
 
-#define MEMORY_CLEAR_AND_FREE(memory, size)				\
-	do								\
-	{								\
-		if(memory){						\
-			memset(memory, 0, size);			\
-			free(memory);					\
-		}							\
-	} while (0)
+void memory_clear_and_free(void** memory, size_t size)
+{
+	if(*memory != NULL){
+		memset(*memory, 0, size);
+		free(*memory);
+	}
+	(*memory) = NULL;
+}
 
 void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 {
@@ -261,9 +261,9 @@ void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 		passwordLength *= 2;
 	}
 
-	MEMORY_CLEAR_AND_FREE(credentials->identity.User, userLength);
-	MEMORY_CLEAR_AND_FREE(credentials->identity.Domain, domainLength);
-	MEMORY_CLEAR_AND_FREE(credentials->identity.Password, passwordLength);
+	memory_clear_and_free((void**)&credentials->identity.User, userLength);
+	memory_clear_and_free((void**)&credentials->identity.Domain, domainLength);
+	memory_clear_and_free((void**)&credentials->identity.Password, passwordLength);
 	free(credentials);
 }
 
