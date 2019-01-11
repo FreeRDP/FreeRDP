@@ -103,6 +103,7 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key_in_slot(pkc
         const char* slot_description,
         const char* token_label,
         const char* token_serial,
+	int protected_authentication_path,
         CK_SESSION_HANDLE session,
         certificate_list result)
 {
@@ -176,23 +177,24 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key_in_slot(pkc
 			CK_ULONG certype_index = position_of_attribute(CKA_CERTIFICATE_TYPE, &certificate_attributes);
 			CK_ULONG keytype_index = position_of_attribute(CKA_KEY_TYPE, &certificate_attributes);
 			certificate = scquery_certificate_new(slot_id,
-			                                      check_memory(strdup(slot_description), strlen(slot_description)),
-			                                      check_memory(strdup(token_label), strlen(token_label)),
-			                                      check_memory(strdup(token_serial), strlen(token_serial)),
-			                                      ((id_index != CK_UNAVAILABLE_INFORMATION)
-			                                       ? (bytes_to_hexadecimal(certificate_attributes.attributes[id_index].pValue,
-			                                               certificate_attributes.attributes[id_index].ulValueLen))
-			                                       : string_attribute(CKA_ID, &certificate_attributes)),
-			                                      string_attribute(CKA_LABEL, &certificate_attributes),
-			                                      ((certype_index != CK_UNAVAILABLE_INFORMATION)
-			                                       ? (*(CK_CERTIFICATE_TYPE*)certificate_attributes.attributes[certype_index].pValue)
-			                                       : 0),
-			                                      buffer_attribute(CKA_ISSUER, &certificate_attributes),
-			                                      buffer_attribute(CKA_SUBJECT, &certificate_attributes),
-			                                      buffer_attribute(CKA_VALUE, &certificate_attributes),
-			                                      ((keytype_index != CK_UNAVAILABLE_INFORMATION)
-			                                       ? (*(CK_KEY_TYPE*)certificate_attributes.attributes[keytype_index].pValue)
-			                                       : 0));
+				check_memory(strdup(slot_description), strlen(slot_description)),
+				check_memory(strdup(token_label), strlen(token_label)),
+				check_memory(strdup(token_serial), strlen(token_serial)),
+				((id_index != CK_UNAVAILABLE_INFORMATION)
+					? (bytes_to_hexadecimal(certificate_attributes.attributes[id_index].pValue,
+							certificate_attributes.attributes[id_index].ulValueLen))
+					: string_attribute(CKA_ID, &certificate_attributes)),
+				string_attribute(CKA_LABEL, &certificate_attributes),
+				((certype_index != CK_UNAVAILABLE_INFORMATION)
+					? (*(CK_CERTIFICATE_TYPE*)certificate_attributes.attributes[certype_index].pValue)
+					: 0),
+				buffer_attribute(CKA_ISSUER, &certificate_attributes),
+				buffer_attribute(CKA_SUBJECT, &certificate_attributes),
+				buffer_attribute(CKA_VALUE, &certificate_attributes),
+				((keytype_index != CK_UNAVAILABLE_INFORMATION)
+					? (*(CK_KEY_TYPE*)certificate_attributes.attributes[keytype_index].pValue)
+					: 0),
+				protected_authentication_path);
 			VERBOSE(module->verbose,
 			        "Certificate slot_id=%lu token_label=%s id=%s label=%s type=%lu issuer=(%d bytes) subject=(%d bytes) value=(%d bytes) key_type=%lu",
 			        certificate->slot_id, certificate->token_label, certificate->id, certificate->label,
@@ -228,7 +230,7 @@ char* get_slot_description(pkcs11_module* module, CK_ULONG slot_id)
 	return result;
 }
 
-char* get_token_label(pkcs11_module* module, CK_ULONG slot_id, char** token_serial)
+char* get_token_label(pkcs11_module* module, CK_ULONG slot_id, char** token_serial, int* protected_authentication_path)
 {
 	CK_TOKEN_INFO info;
 
@@ -239,6 +241,7 @@ char* get_token_label(pkcs11_module* module, CK_ULONG slot_id, char** token_seri
 		char* serial = check_memory(string_from_padded_string((const char*)info.serialNumber,
 		                            sizeof(info.serialNumber), ' '), sizeof(info.serialNumber) + 1);
 		(*token_serial) = serial;
+		(*protected_authentication_path) = ((info.flags & CKF_PROTECTED_AUTHENTICATION_PATH) != 0);
 		return label;
 	}
 
@@ -323,8 +326,9 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key(const char*
 
 				if (selected_slot(module, slot_id, slot_description, reader_name))
 				{
+					int protected_authentication_path = 0;
 					char* serial = NULL;
-					char* label = get_token_label(module, slot_id, &serial);
+					char* label = get_token_label(module, slot_id, &serial, &protected_authentication_path);
 
 					if (selected_token(module, slot_id, label, serial, card_name))
 					{
@@ -333,7 +337,7 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key(const char*
 						{
 							VERBOSE(module->verbose, "Opened PKCS#11 session %lu", session);
 							result = find_x509_certificates_with_signing_rsa_private_key_in_slot(module, slot_id,
-							         slot_description, label, serial,  session, result);
+							         slot_description, label, serial, protected_authentication_path, session, result);
 						}
 					}
 
@@ -349,4 +353,3 @@ certificate_list find_x509_certificates_with_signing_rsa_private_key(const char*
 }
 
 /**** THE END ****/
-

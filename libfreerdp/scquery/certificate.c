@@ -22,6 +22,7 @@ smartcard_certificate  scquery_certificate_allocate()
 		certificate->subject = NULL;
 		certificate->value = NULL;
 		certificate->key_type = 0;
+		certificate->protected_authentication_path = 0;
 	}
 
 	return certificate;
@@ -37,7 +38,8 @@ smartcard_certificate  scquery_certificate_new(CK_SLOT_ID          slot_id,
         buffer              issuer,
         buffer              subject,
         buffer              value,
-        CK_KEY_TYPE         key_type)
+        CK_KEY_TYPE         key_type,
+	int                 protected_authentication_path)
 {
 	smartcard_certificate certificate =  scquery_certificate_allocate();
 
@@ -54,6 +56,7 @@ smartcard_certificate  scquery_certificate_new(CK_SLOT_ID          slot_id,
 		certificate->subject = subject;
 		certificate->value = value;
 		certificate->key_type = key_type;
+		certificate->protected_authentication_path = protected_authentication_path;
 	}
 
 	return certificate;

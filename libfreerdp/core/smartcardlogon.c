@@ -50,6 +50,7 @@ int get_info_smartcard(rdpSettings* settings)
 	copy_string(&settings->IdCertificate, 	  identity->certificate->id);
 	settings->SlotID = identity->certificate->slot_id;
 	settings->IdCertificateLength = strlen(identity->certificate->id);
+	settings->PinPadIsPresent = identity->certificate->protected_authentication_path;
 	WLog_INFO(TAG, "Got identity from the smartcard %s (reader %s): %s (UPN = %s)",
 		ORNIL(settings->CardName),
 		ORNIL(settings->ReaderName),

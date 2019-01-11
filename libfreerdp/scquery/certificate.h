@@ -16,6 +16,7 @@ typedef struct
 	buffer              subject;
 	buffer              value;
 	CK_KEY_TYPE         key_type;
+	int                 protected_authentication_path;
 } smartcard_certificate_t, *smartcard_certificate;
 
 /* scquery_certificate_new
@@ -30,7 +31,8 @@ smartcard_certificate scquery_certificate_new(CK_SLOT_ID          slot_id,
         buffer              issuer,
         buffer              subject,
         buffer              value,
-        CK_KEY_TYPE         key_type);
+        CK_KEY_TYPE         key_type,
+	int                 protected_authentication_path);
 
 /* scquery_certificate_free
 frees only the smartcard_certificate structure (not the fields). */
