@@ -687,9 +687,15 @@ static int nla_client_init(rdpNla* nla)
 	nla->packageName = nla->pPackageInfo->Name;
 	WLog_DBG(TAG, "%s:%d: %s() packageName=%ls ; cbMaxToken=%d", __FILE__, __LINE__, __FUNCTION__,
 	         nla->packageName, nla->cbMaxToken);
+
+
 	nla->status = nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
-	              SECPKG_CRED_OUTBOUND, NULL, nla->identity->creds.password_creds, NULL, NULL, &nla->credentials,
-	              &nla->expiration);
+		SECPKG_CRED_OUTBOUND, NULL,
+		((nla->identity->cred_type == credential_type_password)
+			?nla->identity->creds.password_creds
+			:NULL /* use the default credentials for that package */),
+		NULL, NULL, &nla->credentials,
+		&nla->expiration);
 
 	if (nla->status != SEC_E_OK)
 	{
@@ -712,6 +718,7 @@ static int nla_client_init(rdpNla* nla)
 	* ISC_REQ_ALLOCATE_MEMORY
 	*/
 	nla->fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
+	printf("%s done\n", __FUNCTION__);
 	return 1;
 }
 
@@ -806,7 +813,7 @@ int nla_client_begin(rdpNla* nla)
 
 	nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
 	nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
-	WLog_DBG(TAG, "Sending Authentication Token");
+	WLog_DBG(TAG, "Sending Authentication Token (1)");
 #if defined (WITH_DEBUG_NLA)
 	winpr_HexDump(TAG, WLOG_DEBUG, nla->negoToken.pvBuffer, nla->negoToken.cbBuffer);
 #endif
@@ -887,6 +894,11 @@ static int nla_client_recv(rdpNla* nla)
 				return -1;
 			}
 
+#if defined (WITH_DEBUG_NLA)
+			WLog_DBG(TAG, "Encrypting Authentication Token (2)");
+			winpr_HexDump(TAG, WLOG_DEBUG, nla->outputBuffer.pvBuffer, nla->outputBuffer.cbBuffer);
+#endif
+
 			if (nla->peerVersion < 5)
 				nla->status = nla_encrypt_public_key_echo(nla);
 			else
@@ -898,7 +910,7 @@ static int nla_client_recv(rdpNla* nla)
 
 		nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
 		nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
-		WLog_DBG(TAG, "Sending Authentication Token");
+		WLog_DBG(TAG, "Sending Authentication Token (2)");
 #if defined (WITH_DEBUG_NLA)
 		winpr_HexDump(TAG, WLOG_DEBUG, nla->negoToken.pvBuffer, nla->negoToken.cbBuffer);
 #endif
@@ -1297,7 +1309,7 @@ static int nla_server_authenticate(rdpNla* nla)
 		}
 
 		/* send authentication token */
-		WLog_DBG(TAG, "Sending Authentication Token");
+		WLog_DBG(TAG, "Sending Authentication Token (3)");
 		nla_buffer_print(nla);
 
 		if (!nla_send(nla))
@@ -1786,7 +1798,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		identity = nla->identity;
 	}
 
-	length = ber_sizeof_sequence(nla_sizeof_ts_credentials(identity));
+	length = nla_sizeof_ts_credentials(identity);
 
 	if (!sspi_SecBufferAlloc(&nla->tsCredentials, length))
 	{
@@ -1852,8 +1864,13 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 	if (!nla_encode_ts_credentials(nla))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
+#if defined (WITH_DEBUG_NLA)
+	WLog_DBG(TAG, "Encrypting TSCredentials");
+	winpr_HexDump(TAG, WLOG_DEBUG, nla->tsCredentials.pvBuffer, nla->tsCredentials.cbBuffer);
+#endif
+
 	if (!sspi_SecBufferAlloc(&nla->authInfo,
-	                         nla->tsCredentials.cbBuffer + nla->ContextSizes.cbSecurityTrailer))
+			nla->tsCredentials.cbBuffer + nla->ContextSizes.cbSecurityTrailer))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
 	if (krb)

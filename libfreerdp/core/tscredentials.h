@@ -125,5 +125,22 @@ auth_identity* nla_read_ts_credentials(PSecBuffer ts_credentials);
 	(ber_write_contextual_tag(stream, context, ber_sizeof_octet_string(length), TRUE) \
 	 + ber_write_octet_string(stream, value, length))
 
-#endif
+/* exported for tests */
+size_t nla_sizeof_ts_password_creds_inner(SEC_WINNT_AUTH_IDENTITY* password_creds);
+size_t nla_sizeof_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_creds);
+size_t nla_sizeof_ts_cspdatadetail_inner(csp_data_detail* csp_data);
+size_t nla_sizeof_ts_cspdatadetail(csp_data_detail*  csp_data);
+size_t nla_sizeof_ts_smartcard_creds_inner(smartcard_creds* smartcard_creds);
+size_t nla_sizeof_ts_smartcard_creds(smartcard_creds* smartcard_creds);
+size_t nla_sizeof_ts_remote_guard_package_cred_inner(remote_guard_package_cred* package_cred);
+size_t nla_sizeof_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred);
+size_t nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds* remote_guard_creds);
+size_t nla_sizeof_ts_remote_guard_creds(remote_guard_creds* remote_guard_creds);
 
+size_t nla_write_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_creds, wStream* s);
+size_t nla_write_ts_csp_data_detail(csp_data_detail* csp_data, int contextual_tag,  wStream* s);
+size_t nla_write_ts_smartcard_creds(smartcard_creds* smartcard_creds, wStream* s);
+size_t nla_write_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred, wStream* s);
+size_t nla_write_ts_remote_guard_creds(remote_guard_creds*  remote_guard_creds, wStream* s);
+
+#endif

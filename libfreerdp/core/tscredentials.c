@@ -62,10 +62,7 @@ static void memory_clear_and_free(void* memory, size_t size)
 
 static void string_clear_and_free(char* string)
 {
-	if (string)
-	{
-		memory_clear_and_free(string, strlen(string));
-	}
+	memory_clear_and_free(string, strlen(string));
 }
 
 static void* memdup(void* source, size_t size)
@@ -79,8 +76,6 @@ static void* memdup(void* source, size_t size)
 
 	return destination;
 }
-
-
 
 /**
 * TSCredentials ::= SEQUENCE {
@@ -599,21 +594,22 @@ static BOOL nla_read_octet_string_string(wStream* s, const char* field_name,
 	return 0 <= result;
 }
 
-static int nla_write_sequence_octet_string_string(wStream* s, const char* field_name,
+static size_t nla_write_sequence_octet_string_string(wStream* s, const char* field_name,
         int contextual_tag,
         char* string)
 {
 	LPWSTR buffer = NULL;
-	size_t length = strlen(string);
+	size_t length;
 	int increment;
 
-	if (ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0) < 0)
+	if ((length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0)) <=  0)
 	{
 		WLog_ERR(TAG, "Cannot ConvertToUnicode '%s'", string);
 		return 0;
 	}
 
-	increment = ber_write_sequence_octet_string(s, contextual_tag, (BYTE*)buffer, length * 2);
+	/* ConvertToUnicode returns the number of codepoints, including the terminating nul! */
+	increment = ber_write_sequence_octet_string(s, contextual_tag, (BYTE*)buffer, (length - 1) * 2);
 	free(buffer);
 	return increment;
 }
@@ -622,7 +618,7 @@ static int nla_write_sequence_octet_string_string(wStream* s, const char* field_
 string_length returns the number of characters in the utf-8 string.
 That is, the number of WCHAR in the string converted to "unicode".
 */
-static int string_length(char* string)
+int string_length(char* string)
 {
 	if (string == NULL)
 	{
@@ -633,13 +629,14 @@ static int string_length(char* string)
 		LPWSTR wstring = NULL;
 		int length =  ConvertToUnicode(CP_UTF8, 0, string, -1, & wstring, 0);
 		free(wstring);
-		return (length < 0) ? 0 : length;
+		/* ConvertToUnicode returns the number of codepoints, including the terminating nul! */
+		return (length <= 0) ? 0 : length - 1;
 	}
 }
 
 /* ============================================================ */
 
-static size_t nla_sizeof_ts_password_creds_inner(SEC_WINNT_AUTH_IDENTITY* password_creds)
+size_t nla_sizeof_ts_password_creds_inner(SEC_WINNT_AUTH_IDENTITY* password_creds)
 {
 	if (password_creds == NULL)
 	{
@@ -651,14 +648,14 @@ static size_t nla_sizeof_ts_password_creds_inner(SEC_WINNT_AUTH_IDENTITY* passwo
 	        + ber_sizeof_sequence_octet_string(password_creds->PasswordLength * 2));
 }
 
-static size_t nla_sizeof_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_creds)
+size_t nla_sizeof_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_creds)
 {
 	size_t inner_size = nla_sizeof_ts_password_creds_inner(password_creds);
-	return (ber_sizeof_sequence(inner_size) + inner_size);
+	return ber_sizeof_sequence(inner_size);
 }
 
 
-static int nla_sizeof_ts_cspdatadetail_inner(csp_data_detail* csp_data)
+size_t nla_sizeof_ts_cspdatadetail_inner(csp_data_detail* csp_data)
 {
 	if (csp_data == NULL)
 	{
@@ -673,14 +670,14 @@ static int nla_sizeof_ts_cspdatadetail_inner(csp_data_detail* csp_data)
 	        + ber_sizeof_sequence_octet_string(string_length(csp_data->CspName) * 2));
 }
 
-static int nla_sizeof_ts_cspdatadetail(csp_data_detail*  csp_data)
+size_t nla_sizeof_ts_cspdatadetail(csp_data_detail*  csp_data)
 {
 	size_t inner_size = nla_sizeof_ts_cspdatadetail_inner(csp_data);
-	return (ber_sizeof_contextual_tag(inner_size)
-	        + ber_sizeof_sequence(inner_size));
+	size_t seq_size = ber_sizeof_sequence(inner_size);
+	return (ber_sizeof_contextual_tag(seq_size) + seq_size);
 }
 
-static int nla_sizeof_ts_smartcard_creds_inner(smartcard_creds* smartcard_creds)
+size_t nla_sizeof_ts_smartcard_creds_inner(smartcard_creds* smartcard_creds)
 {
 	if (smartcard_creds == NULL)
 	{
@@ -693,24 +690,24 @@ static int nla_sizeof_ts_smartcard_creds_inner(smartcard_creds* smartcard_creds)
 	        + ber_sizeof_sequence_octet_string(string_length(smartcard_creds->DomainHint) * 2));
 }
 
-static int nla_sizeof_ts_smartcard_creds(smartcard_creds* smartcard_creds)
+size_t nla_sizeof_ts_smartcard_creds(smartcard_creds* smartcard_creds)
 {
 	return ber_sizeof_sequence(nla_sizeof_ts_smartcard_creds_inner(smartcard_creds));
 }
 
 
-static int nla_sizeof_ts_remote_guard_package_cred_inner(remote_guard_package_cred* package_cred)
+size_t nla_sizeof_ts_remote_guard_package_cred_inner(remote_guard_package_cred* package_cred)
 {
 	return (ber_sizeof_sequence_octet_string(string_length(package_cred->package_name) * 2)
-	        + ber_sizeof_sequence(package_cred->credential_size));
+	        + ber_sizeof_sequence_octet_string(package_cred->credential_size));
 }
 
-static int nla_sizeof_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred)
+size_t nla_sizeof_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred)
 {
 	return ber_sizeof_sequence(nla_sizeof_ts_remote_guard_package_cred_inner(package_cred));
 }
 
-static int nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds* remote_guard_creds)
+size_t nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds* remote_guard_creds)
 {
 	size_t size = 0;
 	unsigned i;
@@ -747,7 +744,7 @@ static int nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds* remote_gua
 	return size;
 }
 
-static int nla_sizeof_ts_remote_guard_creds(remote_guard_creds* remote_guard_creds)
+size_t nla_sizeof_ts_remote_guard_creds(remote_guard_creds* remote_guard_creds)
 {
 	return ber_sizeof_sequence(nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds));
 }
@@ -773,8 +770,8 @@ size_t nla_sizeof_ts_creds(auth_identity* identity)
 
 size_t nla_sizeof_ts_credentials_inner(auth_identity* identity)
 {
-	return (ber_sizeof_contextual_tag(ber_sizeof_integer(1))
-	        + ber_sizeof_integer(1)
+	return (ber_sizeof_contextual_tag(ber_sizeof_integer(identity->cred_type))
+	        + ber_sizeof_integer(identity->cred_type)
 	        + ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_creds(identity))));
 }
 
@@ -1082,7 +1079,7 @@ auth_identity* nla_read_ts_credentials(PSecBuffer ts_credentials)
 }
 
 
-static size_t nla_write_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_creds, wStream* s)
+size_t nla_write_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_creds, wStream* s)
 {
 	size_t size = 0;
 	size_t inner_size = nla_sizeof_ts_password_creds_inner(password_creds);
@@ -1108,9 +1105,9 @@ static size_t nla_write_ts_password_creds(SEC_WINNT_AUTH_IDENTITY* password_cred
 	return size;
 }
 
-static int nla_write_ts_csp_data_detail(csp_data_detail* csp_data, int contextual_tag,  wStream* s)
+size_t nla_write_ts_csp_data_detail(csp_data_detail* csp_data, int contextual_tag,  wStream* s)
 {
-	int size = 0;
+	size_t size = 0;
 
 	if (csp_data != NULL)
 	{
@@ -1133,10 +1130,10 @@ static int nla_write_ts_csp_data_detail(csp_data_detail* csp_data, int contextua
 	return size;
 }
 
-static int nla_write_ts_smartcard_creds(smartcard_creds* smartcard_creds, wStream* s)
+size_t nla_write_ts_smartcard_creds(smartcard_creds* smartcard_creds, wStream* s)
 {
-	int size = 0;
-	int inner_size = nla_sizeof_ts_smartcard_creds_inner(smartcard_creds);
+	size_t size = 0;
+	size_t inner_size = nla_sizeof_ts_smartcard_creds_inner(smartcard_creds);
 	/* TSSmartCardCreds (SEQUENCE) */
 	size += ber_write_sequence_tag(s, inner_size);
 
@@ -1155,7 +1152,7 @@ static int nla_write_ts_smartcard_creds(smartcard_creds* smartcard_creds, wStrea
 	return size;
 }
 
-static int nla_write_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred,
+size_t nla_write_ts_remote_guard_package_cred(remote_guard_package_cred* package_cred,
         wStream* s)
 {
 	/*
@@ -1164,8 +1161,8 @@ static int nla_write_ts_remote_guard_package_cred(remote_guard_package_cred* pac
 	*     credBuffer  [1] OCTET STRING,
 	* }
 	*/
-	int size = 0;
-	int inner_size = nla_sizeof_ts_remote_guard_package_cred_inner(package_cred);
+	size_t size = 0;
+	size_t inner_size = nla_sizeof_ts_remote_guard_package_cred_inner(package_cred);
 	size += ber_write_sequence_tag(s, inner_size);
 
 	if (package_cred != NULL)
@@ -1180,11 +1177,11 @@ static int nla_write_ts_remote_guard_package_cred(remote_guard_package_cred* pac
 	return size;
 }
 
-static int nla_write_ts_remote_guard_creds(remote_guard_creds*  remote_guard_creds, wStream* s)
+size_t nla_write_ts_remote_guard_creds(remote_guard_creds*  remote_guard_creds, wStream* s)
 {
 	unsigned i;
-	int size = 0;
-	int inner_size = nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds);
+	size_t size = 0;
+	size_t inner_size = nla_sizeof_ts_remote_guard_creds_inner(remote_guard_creds);
 	/* TSRemoteGuardCreds ::= SEQUENCE { */
 	size += ber_write_sequence_tag(s, inner_size);
 	/*     logonCred         [0] TSRemoteGuardPackageCred, */
@@ -1238,16 +1235,16 @@ size_t nla_write_ts_creds(auth_identity* identity, wStream* s)
 
 size_t nla_write_ts_credentials(auth_identity* identity, wStream* s)
 {
-	int size = 0;
-	int cred_size = 0;
-	int inner_size = nla_sizeof_ts_credentials_inner(identity);
+	size_t size = 0;
+	size_t cred_size = 0;
+	size_t inner_size = nla_sizeof_ts_credentials_inner(identity);
 	/* TSCredentials (SEQUENCE) */
 	size += ber_write_sequence_tag(s, inner_size);
 	/* [0] credType (INTEGER) */
 	size += ber_write_contextual_tag(s, 0, ber_sizeof_integer(identity->cred_type), TRUE);
 	size += ber_write_integer(s, identity->cred_type);
 	/* [1] credentials (OCTET STRING) */
-	cred_size = ber_sizeof_sequence(nla_sizeof_ts_creds(identity));
+	cred_size = nla_sizeof_ts_creds(identity);
 	size += ber_write_contextual_tag(s, 1, ber_sizeof_octet_string(cred_size), TRUE);
 	size += ber_write_octet_string_tag(s, cred_size);
 	size += nla_write_ts_creds(identity, s);
