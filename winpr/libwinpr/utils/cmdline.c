@@ -161,7 +161,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		{
 			if (notescaped)
 			{
-				WLog_ERR(TAG, "Option sigil not escaped: %s", sigil);
+				WLog_DBG(TAG, "Option sigil not escaped: %s", sigil);
 				return COMMAND_LINE_ERROR;
 			}
 
@@ -173,7 +173,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		else
 		{
 			/* Note: this case seems to be handled by the caller. */
-			WLog_WARN(TAG, "Invalid option syntax: %s", sigil);
+			WLog_DBG(TAG, "Invalid option syntax: %s", sigil);
 			return COMMAND_LINE_ERROR;
 		}
 
