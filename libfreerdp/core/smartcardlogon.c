@@ -31,7 +31,6 @@ int get_info_smartcard(rdpSettings* settings)
 	identity = scquery_X509_user_identities(settings->Pkcs11Module,
 		settings->ReaderName,
 		settings->CardName,
-		/* DEBUG */ 1 ||
 		settings->Krb5Trace);
 
 	if (identity == NULL)
