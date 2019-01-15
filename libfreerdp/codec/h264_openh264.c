@@ -18,6 +18,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
 #include <winpr/library.h>
@@ -38,6 +42,7 @@ struct _H264_CONTEXT_OPENH264
 {
 #if defined (WITH_OPENH264_LOADING)
 	HMODULE lib;
+	OpenH264Version version;
 #endif
 	pWelsGetCodecVersionEx WelsGetCodecVersionEx;
 	pWelsCreateDecoder WelsCreateDecoder;
@@ -360,7 +365,6 @@ static void openh264_uninit(H264_CONTEXT* h264)
 #if defined (WITH_OPENH264_LOADING)
 static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 {
-	OpenH264Version version;
 	H264_CONTEXT_OPENH264* sysContexts;
 
 	if (!h264)
@@ -391,9 +395,22 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 		return FALSE;
 	}
 
-	sysContexts->WelsGetCodecVersionEx(&version);
-	WLog_Print(h264->log, WLOG_INFO, "loaded %s %d.%d.%d", name, version.uMajor, version.uMinor,
-	           version.uRevision);
+	sysContexts->WelsGetCodecVersionEx(&sysContexts->version);
+	WLog_Print(h264->log, WLOG_INFO, "loaded %s %d.%d.%d", name, sysContexts->version.uMajor,
+	           sysContexts->version.uMinor,
+	           sysContexts->version.uRevision);
+
+	if ((sysContexts->version.uMajor < 1) || (sysContexts->version.uMinor < 6))
+	{
+		WLog_Print(h264->log, WLOG_ERROR,
+		           "OpenH264 %s %d.%d.%d is too old, need at least version 1.6.0 for dynamic loading",
+		           name, sysContexts->version.uMajor, sysContexts->version.uMinor,
+		           sysContexts->version.uRevision);
+		FreeLibrary(sysContexts->lib);
+		sysContexts->lib = NULL;
+		return FALSE;
+	}
+
 	return TRUE;
 }
 #endif
