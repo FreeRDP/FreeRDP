@@ -794,7 +794,7 @@ size_t nla_sizeof_ts_credentials_inner(auth_identity* identity)
 {
 	return (ber_sizeof_contextual_tag(ber_sizeof_integer(identity->cred_type))
 	        + ber_sizeof_integer(identity->cred_type)
-	        + ber_sizeof_sequence_octet_string(ber_sizeof_sequence(nla_sizeof_ts_creds(identity))));
+	        + ber_sizeof_sequence_octet_string(nla_sizeof_ts_creds(identity)));
 }
 
 

@@ -195,6 +195,34 @@ BOOL test_sizeof_smartcard_creds()
 	return (failure_count == 0) && (error_count == 0);
 }
 
+BOOL test_sizeof_ts_credentials()
+{
+	auth_identity* identity = make_test_smartcard_creds();
+	reset_counters();
+	WLog_INFO(TAG, "Testing %s", __FUNCTION__);
+
+	{
+		size_t expected_inner = nla_sizeof_ts_credentials_inner(identity);
+		size_t expected = ber_sizeof_sequence(expected_inner);
+		size_t result_inner = nla_sizeof_ts_credentials_inner(identity);
+		size_t written_size = stream_size(expected, (writer_pr)nla_write_ts_credentials, identity);
+		size_t result = expected;
+
+		TEST(expected_inner == result_inner,
+			"credentials_inner expected = %d != %d = result",
+			expected_inner, result_inner);
+		TEST(expected == result,
+			"credentials expected = %d != %d = result",
+			expected, result);
+		TEST(expected == written_size,
+			"credentials expected = %d != %d = written",
+			expected, written_size);
+	}
+
+	auth_identity_free(identity);
+	return (failure_count == 0) && (error_count == 0);
+}
+
 
 void compare_buffers(BYTE* expected_ber, size_t expected_length, BYTE* result_ber, size_t result_length)
 {
@@ -301,6 +329,7 @@ BOOL test_write_remote_guard_creds()
 int TestTSCredentials(int argc, char* argv[])
 {
 	return ((test_sizeof_smartcard_creds() &&
+			test_sizeof_ts_credentials() &&
 			test_write_smartcard_creds() &&
 			test_write_remote_guard_creds())
 	        ? 0

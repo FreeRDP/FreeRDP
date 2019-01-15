@@ -114,6 +114,7 @@ const char* auth_identity_credential_type_label(auth_identity* that);
 
 size_t nla_sizeof_ts_creds(auth_identity* identity);
 size_t nla_write_ts_creds(auth_identity* identity, wStream* s);
+size_t nla_sizeof_ts_credentials_inner(auth_identity* identity);
 size_t nla_sizeof_ts_credentials(auth_identity* identity);
 size_t nla_write_ts_credentials(auth_identity* identity, wStream* s);
 auth_identity* nla_read_ts_credentials(PSecBuffer ts_credentials);
