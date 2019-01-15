@@ -110,6 +110,7 @@ auth_identity* auth_identity_new_smartcard(smartcard_creds* smartcard_creds);
 auth_identity* auth_identity_new_remote_guard(remote_guard_creds* remote_guard_creds);
 auth_identity* auth_identity_deepcopy(auth_identity* that);
 void auth_identity_free(auth_identity* that);
+const char* auth_identity_credential_type_label(auth_identity* that);
 
 size_t nla_sizeof_ts_creds(auth_identity* identity);
 size_t nla_write_ts_creds(auth_identity* identity, wStream* s);

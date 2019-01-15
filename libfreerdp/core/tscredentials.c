@@ -494,6 +494,28 @@ void auth_identity_free(auth_identity* that)
 	}
 }
 
+const char* auth_identity_credential_type_label(auth_identity* that)
+{
+	if(that ==  NULL)
+	{
+		return "NULL";
+	}
+
+	switch (that->cred_type)
+	{
+		case credential_type_password:
+			return "password";
+
+		case credential_type_smartcard:
+			return "smartcard";
+
+		case credential_type_remote_guard:
+			return "remote-guard";
+		default:
+			return "unknown";
+	}
+}
+
 auth_identity* auth_identity_deepcopy(auth_identity* that)
 {
 #define CHECK_COPY(field, copier)					\

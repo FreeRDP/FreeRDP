@@ -402,6 +402,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 	                  settings->UserHint,
 	                  settings->DomainHint,
 	                  csp_data);
+	csp_data_detail_free(csp_data);
 
 	if (smartcard_creds == NULL)
 	{
@@ -425,16 +426,7 @@ static int nla_client_init_smartcard_logon(rdpNla* nla)
 failure:
 	WLog_ERR(TAG, "%s:%d: %s() Failed to set smartcard authentication parameters !",
 	         __FILE__, __LINE__, __FUNCTION__);
-
-	if (smartcard_creds == NULL)
-	{
-		csp_data_detail_free(csp_data);
-	}
-	else
-	{
-		smartcard_creds_free(smartcard_creds);
-	}
-
+	smartcard_creds_free(smartcard_creds);
 	return -1;
 }
 
@@ -1817,6 +1809,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		goto cleanup;
 	}
 
+	WLog_INFO(TAG, "TSCredentials: %s", auth_identity_credential_type_label(nla->identity));
 	nla_write_ts_credentials(nla->identity, s);
 	result = TRUE;
 cleanup:

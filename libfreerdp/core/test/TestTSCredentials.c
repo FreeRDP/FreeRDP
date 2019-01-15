@@ -47,14 +47,17 @@ size_t min(size_t a, size_t b)
 
 auth_identity* make_test_smartcard_creds()
 {
-	return auth_identity_new_smartcard(smartcard_creds_new("0000",
+	csp_data_detail* csp = csp_data_detail_new(1,
+		"IAS-ECC",
+		"XIRING Leo v2 (8288830623) 00 00",
+		"Clé d'authentification1",
+		"Middleware IAS ECC Cryptographic Provider");
+	auth_identity* identity = auth_identity_new_smartcard(smartcard_creds_new("0000",
 			"EXAMPLEUSER",
 			"EXAMPLE.DOMAIN",
-			csp_data_detail_new(1,
-				"IAS-ECC",
-				"XIRING Leo v2 (8288830623) 00 00",
-				"Clé d'authentification1",
-				"Middleware IAS ECC Cryptographic Provider")));
+			csp));
+	csp_data_detail_free(csp);
+	return identity;
 }
 
 auth_identity* make_test_remote_guard_creds()
