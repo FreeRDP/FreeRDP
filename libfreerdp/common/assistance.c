@@ -934,14 +934,15 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 			errno = 0;
 			{
 				unsigned long val = strtoul(r, NULL, 0);
-				free(r);
 
 				if ((errno != 0) || (val > UINT32_MAX))
 				{
 					WLog_ERR(TAG, "Failed to parse ASSISTANCE file: Invalid DtStart value %s", r);
+					free(r);
 					return -1;
 				}
 
+				free(r);
 				file->DtStart = val;
 			}
 		}
@@ -971,14 +972,15 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 			errno = 0;
 			{
 				unsigned long val = strtoul(r, NULL, 0);
-				free(r);
 
 				if ((errno != 0) || (val > UINT32_MAX))
 				{
 					WLog_ERR(TAG, "Failed to parse ASSISTANCE file: Invalid DtLength value %s", r);
+					free(r);
 					return -1;
 				}
 
+				free(r);
 				file->DtLength = val;
 			}
 		}
@@ -1008,25 +1010,25 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 
 		switch (file->Type)
 		{
-		case 2:
-		{
-			file->EncryptedLHTicket = freerdp_assistance_hex_string_to_bin(file->LHTicket,
-				&file->EncryptedLHTicketLength);
+			case 2:
+				{
+					file->EncryptedLHTicket = freerdp_assistance_hex_string_to_bin(file->LHTicket,
+					                          &file->EncryptedLHTicketLength);
 
-			if (!freerdp_assistance_decrypt2(file, password))
-				status = -1;
-		}
-		break;
+					if (!freerdp_assistance_decrypt2(file, password))
+						status = -1;
+				}
+				break;
 
-		case 1:
-		{
-			if (!freerdp_assistance_parse_connection_string1(file))
-				status = -1;
-		}
-		break;
+			case 1:
+				{
+					if (!freerdp_assistance_parse_connection_string1(file))
+						status = -1;
+				}
+				break;
 
-		default:
-			return -1;
+			default:
+				return -1;
 		}
 
 		if (status < 0)
@@ -1036,7 +1038,7 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 		}
 
 		file->EncryptedPassStub = freerdp_assistance_encrypt_pass_stub(password,
-			file->PassStub, &file->EncryptedPassStubLength);
+		                          file->PassStub, &file->EncryptedPassStubLength);
 
 		if (!file->EncryptedPassStub)
 			return -1;
@@ -1045,9 +1047,11 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 	}
 
 	p = strstr(buffer, "<E>");
-	if(p)
+
+	if (p)
 	{
 		q = strstr(buffer, "</E>");
+
 		if (!q)
 		{
 			WLog_ERR(TAG, "Failed to parse ASSISTANCE file: Missing </E> tag");
@@ -1057,6 +1061,7 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 		q += sizeof("</E>") - 1;
 		length = q - p;
 		file->ConnectionString2 = (char*) malloc(length + 1);
+
 		if (!file->ConnectionString2)
 			return -1;
 
