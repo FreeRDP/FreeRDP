@@ -23,6 +23,7 @@
 #include <errno.h>
 
 #include <winpr/ntlm.h>
+#include <winpr/ssl.h>
 
 /**
  * Define NTOWFv1(Password, User, Domain) as
@@ -150,6 +151,7 @@ int main(int argc, char* argv[])
 		printf("missing username or password\n\n");
 		usage_and_exit();
 	}
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	UserLength = strlen(User);
 	PasswordLength = strlen(Password);
@@ -163,11 +165,19 @@ int main(int argc, char* argv[])
 			usage_and_exit();
 		}
 
-		NTOWFv2A(Password, PasswordLength, User, UserLength, Domain, DomainLength, NtHash);
+		if (!NTOWFv2A(Password, PasswordLength, User, UserLength, Domain, DomainLength, NtHash))
+		{
+			fprintf(stderr, "Hash creation failed\n");
+			return 1;
+		}
 	}
 	else
 	{
-		NTOWFv1A(Password, PasswordLength, NtHash);
+		if(!NTOWFv1A(Password, PasswordLength, NtHash))
+		{
+			fprintf(stderr, "Hash creation failed\n");
+			return 1;
+		}
 	}
 
 	if (format == 0)
