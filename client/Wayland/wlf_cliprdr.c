@@ -803,10 +803,7 @@ wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 	wfClipboard* clipboard;
 
 	if (!(clipboard = (wfClipboard*) calloc(1, sizeof(wfClipboard))))
-	{
-		WLog_Print(clipboard->log, WLOG_ERROR, "failed to allocate wfClipboard data");
 		return NULL;
-	}
 
 	clipboard->wfc = wfc;
 	channels = wfc->context.channels;
