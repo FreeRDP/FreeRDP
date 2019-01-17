@@ -278,6 +278,9 @@ static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 	if (!smartcard)
 		return CHANNEL_RC_OK;
 
+	if (sSmartcard == smartcard)
+		sSmartcard = NULL;
+
 	if (smartcard->IrpQueue)
 	{
 		MessageQueue_Free(smartcard->IrpQueue);
@@ -327,9 +330,6 @@ static UINT smartcard_free(DEVICE* device)
 			return error;
 		}
 	}
-
-	if (sSmartcard == smartcard)
-		sSmartcard = NULL;
 
 	return smartcard_free_(smartcard);
 }
