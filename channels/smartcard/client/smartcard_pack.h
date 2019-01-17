@@ -128,7 +128,7 @@ typedef struct _ReaderState_Common_Call
 
 typedef struct _ReaderStateA
 {
-	/* [string] */ unsigned char* szReader;
+	/* [string] */ LPSTR szReader;
 	ReaderState_Common_Call Common;
 } ReaderStateA;
 
