@@ -330,8 +330,7 @@ DWORD WINAPI mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	mf_scale_mouse_event(context, instance->input,
-	                     PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
+	mf_press_mouse_button(context, instance->input, 0, x, y, TRUE);
 }
 
 - (void) mouseUp:(NSEvent*) event
@@ -344,7 +343,7 @@ DWORD WINAPI mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON1, x, y);
+	mf_press_mouse_button(context, instance->input, 0, x, y, FALSE);
 }
 
 - (void) rightMouseDown:(NSEvent*)event
@@ -357,8 +356,7 @@ DWORD WINAPI mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	mf_scale_mouse_event(context, instance->input,
-	                     PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
+	mf_press_mouse_button(context, instance->input, 1, x, y, TRUE);
 }
 
 - (void) rightMouseUp:(NSEvent*)event
@@ -371,7 +369,7 @@ DWORD WINAPI mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON2, x, y);
+	mf_press_mouse_button(context, instance->input, 1, x, y, FALSE);
 }
 
 - (void) otherMouseDown:(NSEvent*)event
@@ -384,8 +382,8 @@ DWORD WINAPI mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	mf_scale_mouse_event(context, instance->input,
-	                     PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
+	int pressed = [event buttonNumber];
+	mf_press_mouse_button(context, instance->input, pressed, x, y, TRUE);
 }
 
 - (void) otherMouseUp:(NSEvent*)event
@@ -398,7 +396,8 @@ DWORD WINAPI mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON3, x, y);
+	int pressed = [event buttonNumber];
+	mf_press_mouse_button(context, instance->input, pressed, x, y, FALSE);
 }
 
 - (void) scrollWheel:(NSEvent*)event
@@ -412,17 +411,37 @@ DWORD WINAPI mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	flags = PTR_FLAGS_WHEEL;
+	float dx = [event deltaX];
+	float dy = [event deltaY];
 	/* 1 event = 120 units */
-	int units = [event deltaY] * 120;
+	UINT16 units = 0;
+
+	if (fabsf(dy) > FLT_EPSILON)
+	{
+		flags = PTR_FLAGS_WHEEL;
+		units = fabsf(dy) * 120;
+
+		if (dy < 0)
+			flags |= PTR_FLAGS_WHEEL_NEGATIVE;
+	}
+	else if (fabsf(dx) > FLT_EPSILON)
+	{
+		flags = PTR_FLAGS_HWHEEL;
+		units = fabsf(dx) * 120;
+
+		if (dx > 0)
+			flags |= PTR_FLAGS_WHEEL_NEGATIVE;
+	}
+	else
+		return;
 
 	/* send out all accumulated rotations */
 	while (units != 0)
 	{
 		/* limit to maximum value in WheelRotationMask (9bit signed value) */
-		int step = MIN(MAX(-256, units), 255);
+		const UINT16 step = units & WheelRotationMask;
 		mf_scale_mouse_event(context, instance->input,
-		                     flags | ((UINT16)step & WheelRotationMask), x, y);
+		                     flags | step, 0, 0);
 		units -= step;
 	}
 }
