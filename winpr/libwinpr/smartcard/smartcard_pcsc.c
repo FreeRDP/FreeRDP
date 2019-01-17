@@ -1209,7 +1209,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		states[j].pvUserData = rgReaderStates[i].pvUserData;
 		states[j].dwEventState = rgReaderStates[i].dwEventState;
 		states[j].cbAtr = rgReaderStates[i].cbAtr;
-		CopyMemory(&(states[j].rgbAtr), &(rgReaderStates[i].rgbAtr), PCSC_MAX_ATR_SIZE);
+		CopyMemory(states[j].rgbAtr, rgReaderStates[i].rgbAtr, PCSC_MAX_ATR_SIZE);
 		j++;
 	}
 
@@ -1234,7 +1234,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		j = map[i];
 		rgReaderStates[i].dwCurrentState = states[j].dwCurrentState;
 		rgReaderStates[i].cbAtr = states[j].cbAtr;
-		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
+		ZeroMemory(rgReaderStates[i].rgbAtr, sizeof(rgReaderStates[i].rgbAtr));
+		CopyMemory(rgReaderStates[i].rgbAtr, states[j].rgbAtr, PCSC_MAX_ATR_SIZE);
 		rgReaderStates[i].dwEventState = states[j].dwEventState;
 	}
 
@@ -1289,7 +1290,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 		states[index].dwCurrentState = rgReaderStates[index].dwCurrentState;
 		states[index].dwEventState = rgReaderStates[index].dwEventState;
 		states[index].cbAtr = rgReaderStates[index].cbAtr;
-		CopyMemory(&(states[index].rgbAtr), &(rgReaderStates[index].rgbAtr), 36);
+		CopyMemory(states[index].rgbAtr, rgReaderStates[index].rgbAtr, ARRAYSIZE(states[0].rgbAtr));
 	}
 
 	status = PCSC_SCardGetStatusChange_Internal(hContext, dwTimeout, states, cReaders);
@@ -1301,7 +1302,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 		rgReaderStates[index].dwCurrentState = states[index].dwCurrentState;
 		rgReaderStates[index].dwEventState = states[index].dwEventState;
 		rgReaderStates[index].cbAtr = states[index].cbAtr;
-		CopyMemory(&(rgReaderStates[index].rgbAtr), &(states[index].rgbAtr), 36);
+		CopyMemory(rgReaderStates[index].rgbAtr, states[index].rgbAtr, ARRAYSIZE(states[0].rgbAtr));
 	}
 
 	free(states);
