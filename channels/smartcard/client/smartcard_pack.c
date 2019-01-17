@@ -1681,8 +1681,7 @@ LONG smartcard_pack_get_status_change_return(SMARTCARD_DEVICE* smartcard, wStrea
 		Stream_Write_UINT32(s, rgReaderState->dwCurrentState); /* dwCurrentState (4 bytes) */
 		Stream_Write_UINT32(s, rgReaderState->dwEventState); /* dwEventState (4 bytes) */
 		Stream_Write_UINT32(s, rgReaderState->cbAtr); /* cbAtr (4 bytes) */
-		Stream_Write(s, rgReaderState->rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
-		Stream_Zero(s, 4); /* rgbAtr [32..36] (32 bytes) */
+		Stream_Write(s, rgReaderState->rgbAtr, sizeof( rgReaderState->rgbAtr)); /* rgbAtr [0..36] (36 bytes) */
 	}
 
 	return SCARD_S_SUCCESS;
