@@ -112,35 +112,44 @@ static void mfreerdp_client_free(freerdp* instance, rdpContext* context)
 	CloseHandle(mfc->stopEvent);
 }
 
+static void mf_scale_mouse_coordinates(mfContext* mfc, UINT16* px, UINT16* py)
+{
+	UINT16 x = *px;
+	UINT16 y = *py;
+	UINT32 ww = mfc->client_width;
+	UINT32 wh = mfc->client_height;
+	UINT32 dw = mfc->context.settings->DesktopWidth;
+	UINT32 dh = mfc->context.settings->DesktopHeight;
+
+	if (!mfc->context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
+	{
+		y = y + mfc->yCurrentScroll;
+		x = x + mfc->xCurrentScroll;
+
+		y -= (dh - wh);
+		x -= (dw - ww);
+
+	}
+	else
+	{
+		y = y * dh / wh + mfc->yCurrentScroll;
+		x = x * dw / ww + mfc->xCurrentScroll;
+	}
+
+	*px = x;
+	*py = y;
+}
+
 void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags,
                           UINT16 x, UINT16 y)
 {
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
-	int ww, wh, dw, dh;
-	ww = mfc->client_width;
-	wh = mfc->client_height;
-	dw = mfc->context.settings->DesktopWidth;
-	dh = mfc->context.settings->DesktopHeight;
 	// Convert to windows coordinates
 	y = [view frame].size.height - y;
 
-	if (!mfc->context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
-	{
-		y = y + mfc->yCurrentScroll;
-
-		if (wh != dh)
-		{
-			y -= (dh - wh);
-		}
-
-		freerdp_input_send_mouse_event(input, flags, x + mfc->xCurrentScroll, y);
-	}
-	else
-	{
-		y = y * dh / wh + mfc->yCurrentScroll;
-		freerdp_input_send_mouse_event(input, flags, x * dw / ww + mfc->xCurrentScroll, y);
-	}
+	mf_scale_mouse_coordinates(mfc, &x, &y);
+	freerdp_input_send_mouse_event(input, flags, x, y);
 }
 
 void mf_scale_mouse_event_ex(void* context, rdpInput* input, UINT16 flags,
@@ -148,30 +157,11 @@ void mf_scale_mouse_event_ex(void* context, rdpInput* input, UINT16 flags,
 {
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
-	int ww, wh, dw, dh;
-	ww = mfc->client_width;
-	wh = mfc->client_height;
-	dw = mfc->context.settings->DesktopWidth;
-	dh = mfc->context.settings->DesktopHeight;
 	// Convert to windows coordinates
 	y = [view frame].size.height - y;
 
-	if (!mfc->context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
-	{
-		y = y + mfc->yCurrentScroll;
-
-		if (wh != dh)
-		{
-			y -= (dh - wh);
-		}
-
-		freerdp_input_send_extended_mouse_event(input, flags, x + mfc->xCurrentScroll, y);
-	}
-	else
-	{
-		y = y * dh / wh + mfc->yCurrentScroll;
-		freerdp_input_send_extended_mouse_event(input, flags, x * dw / ww + mfc->xCurrentScroll, y);
-	}
+	mf_scale_mouse_coordinates(mfc, &x, &y);
+	freerdp_input_send_extended_mouse_event(input, flags, x, y);
 }
 
 void mf_press_mouse_button(void* context, rdpInput* input, int button, int x, int y, BOOL down)
