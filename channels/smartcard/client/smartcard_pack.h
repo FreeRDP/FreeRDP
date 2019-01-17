@@ -458,26 +458,6 @@ LONG smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* 
 void smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         UINT32 objectBufferLength);
 
-LONG smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDCONTEXT* context);
-LONG smartcard_pack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s,
-                                        REDIR_SCARDCONTEXT* context);
-
-LONG smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDCONTEXT* context);
-LONG smartcard_pack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDCONTEXT* context);
-
-LONG smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDHANDLE* handle);
-LONG smartcard_pack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s,
-                                       REDIR_SCARDHANDLE* handle);
-
-LONG smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDHANDLE* handle);
-LONG smartcard_pack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDHANDLE* handle);
-
 LONG smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStream* s,
         EstablishContext_Call* call);
 void smartcard_trace_establish_context_call(SMARTCARD_DEVICE* smartcard,
