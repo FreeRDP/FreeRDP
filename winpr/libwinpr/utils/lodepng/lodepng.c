@@ -2017,7 +2017,8 @@ static unsigned lodepng_deflatev(ucvector* out, const unsigned char* in, size_t 
   if(numdeflateblocks == 0) numdeflateblocks = 1;
 
   error = hash_init(&hash, settings->windowsize);
-  if(error) return error;
+  if(error)
+		goto fail;
 
   for(i = 0; i < numdeflateblocks && !error; i++)
   {
@@ -2030,6 +2031,7 @@ static unsigned lodepng_deflatev(ucvector* out, const unsigned char* in, size_t 
     else if(settings->btype == 2) error = deflateDynamic(out, &bp, &hash, in, start, end, settings, final);
   }
 
+fail:
   hash_cleanup(&hash);
 
   return error;
