@@ -735,7 +735,7 @@ BOOL SwitchToThread(VOID)
 	 * Note: on some operating systems sched_yield is a stub returning -1.
 	 * usleep should at least trigger a context switch if any thread is waiting.
 	 */
-	if (!sched_yield())
+	if (sched_yield() != 0)
 		usleep(1);
 
 	return TRUE;
