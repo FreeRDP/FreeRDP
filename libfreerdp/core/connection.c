@@ -336,6 +336,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 			return FALSE;
 		}
+		SwitchToThread();
 	}
 
 	return TRUE;
