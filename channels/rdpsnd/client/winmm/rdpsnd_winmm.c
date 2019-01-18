@@ -102,14 +102,12 @@ static void CALLBACK rdpsnd_winmm_callback_function(HWAVEOUT hwo, UINT uMsg, DWO
 
 		case MM_WOM_CLOSE:
 			WLog_DBG(TAG,  "MM_WOM_CLOSE");
-			SetEvent(winmm->next);
 			break;
 
 		case MM_WOM_DONE:
 			WLog_DBG(TAG, "MM_WOM_DONE");
 			lpWaveHdr = (LPWAVEHDR) dwParam1;
 			free(lpWaveHdr);
-			SetEvent(winmm->next);
 			break;
 
 		default:
@@ -176,7 +174,6 @@ static void rdpsnd_winmm_free(rdpsndDevicePlugin* device)
 	if (winmm)
 	{
 		rdpsnd_winmm_close(device);
-		CloseHandle(winmm->next);
 		free(winmm);
 	}
 }
@@ -269,7 +266,6 @@ static UINT rdpsnd_winmm_play(rdpsndDevicePlugin* device, const BYTE* data, size
 		return 0;
 	}
 
-	WaitForSingleObject(winmm->next, INFINITE);
 	return 10; /* TODO: Get real latencry in [ms] */
 }
 
@@ -305,13 +301,6 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	winmm->device.Play = rdpsnd_winmm_play;
 	winmm->device.Close = rdpsnd_winmm_close;
 	winmm->device.Free = rdpsnd_winmm_free;
-	winmm->next = CreateEventA(NULL, FALSE, FALSE, "winmm-play-event");
-
-	if (!winmm->next)
-	{
-		free(winmm);
-		return CHANNEL_RC_NO_MEMORY;
-	}
 
 	args = pEntryPoints->args;
 	rdpsnd_winmm_parse_addin_args((rdpsndDevicePlugin*) winmm, args);
