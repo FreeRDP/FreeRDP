@@ -641,6 +641,7 @@ UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNex
 	if (window->pendingBuffer)
 	{
 		/* we already have a pending frame, don't do anything*/
+		UwacSubmitBufferPtr(window, window->pendingBuffer);
 		return UWAC_SUCCESS;
 	}
 
