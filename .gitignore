@@ -131,7 +131,7 @@ TAGS
 # generated packages
 *.zip
 *.exe
-*.sh
+#*.sh
 *.deb
 *.rpm
 *.dmg
@@ -139,7 +139,7 @@ TAGS
 *.tar.gz
 
 # packaging related files
-!packaging/scripts/prepare_deb_freerdp-nightly.sh
+!packaging/**.sh
 packaging/deb/freerdp-nightly/freerdp-nightly
 packaging/deb/freerdp-nightly/freerdp-nightly-dev
 packaging/deb/freerdp-nightly/freerdp-nightly-dbg
