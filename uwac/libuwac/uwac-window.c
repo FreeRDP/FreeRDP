@@ -447,6 +447,13 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 			goto out_error_shell;
 		}
 
+		if (w->display->deco_manager) {
+			w->deco = zxdg_decoration_manager_v1_get_toplevel_decoration(
+			            w->display->deco_manager, w->xdg_toplevel);
+			if (!w->deco) {
+				uwacErrorHandler(w->display, UWAC_NOT_FOUND, "Current window manager does not allow decorating with SSD");
+			}
+		}
 		assert(w->xdg_surface);
 		xdg_toplevel_add_listener(w->xdg_toplevel, &xdg_toplevel_listener, w);
 	}
@@ -495,6 +502,9 @@ UwacReturnCode UwacDestroyWindow(UwacWindow** pwindow)
 
 	if (w->frame_callback)
 		wl_callback_destroy(w->frame_callback);
+
+	if (w->deco)
+		zxdg_toplevel_decoration_v1_destroy(w->deco);
 
 	if (w->xdg_surface)
 		xdg_surface_destroy(w->xdg_surface);

@@ -37,6 +37,7 @@ macro(generate_protocol_file PROTO)
 endmacro()
 
 generate_protocol_file(xdg-shell)
+generate_protocol_file(xdg-decoration-unstable-v1)
 generate_protocol_file(ivi-application)
 generate_protocol_file(fullscreen-shell-unstable-v1)
 generate_protocol_file(keyboard-shortcuts-inhibit-unstable-v1)
@@ -62,7 +63,7 @@ set(${MODULE_PREFIX}_SRCS
     uwac-priv.h
     uwac-tools.c
     uwac-utils.c
-	uwac-window.c)
+    uwac-window.c)
 
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})

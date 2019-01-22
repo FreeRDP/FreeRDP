@@ -220,6 +220,10 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	{
 		d->keyboard_inhibit_manager = wl_registry_bind(registry, id, &zwp_keyboard_shortcuts_inhibit_manager_v1_interface, 1);
 	}
+	else if (strcmp(interface, "zxdg_decoration_manager_v1") == 0)
+	{
+		d->deco_manager = wl_registry_bind(registry, id, &zxdg_decoration_manager_v1_interface, 1);
+	}
 #if BUILD_IVI
 	else if (strcmp(interface, "ivi_application") == 0)
 	{
@@ -517,6 +521,9 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 
 	if (display->keyboard_inhibit_manager)
 		zwp_keyboard_shortcuts_inhibit_manager_v1_destroy(display->keyboard_inhibit_manager);
+
+	if (display->deco_manager)
+		zxdg_decoration_manager_v1_destroy(display->deco_manager);
 
 #ifdef BUILD_FULLSCREEN_SHELL
 

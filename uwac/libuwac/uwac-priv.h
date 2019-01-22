@@ -29,6 +29,7 @@
 #include <wayland-client.h>
 #include "xdg-shell-client-protocol.h"
 #include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
+#include "xdg-decoration-unstable-v1-client-protocol.h"
 
 #ifdef BUILD_IVI
 #include "ivi-application-client-protocol.h"
@@ -89,6 +90,7 @@ struct uwac_display {
 	struct xdg_toplevel *xdg_toplevel;
 	struct xdg_wm_base *xdg_base;
 	struct zwp_keyboard_shortcuts_inhibit_manager_v1 *keyboard_inhibit_manager;
+	struct zxdg_decoration_manager_v1 *deco_manager;
 #ifdef BUILD_IVI
 	struct ivi_application *ivi_application;
 #endif
@@ -216,6 +218,7 @@ struct uwac_window {
 	struct wl_shell_surface *shell_surface;
 	struct xdg_surface *xdg_surface;
 	struct xdg_toplevel *xdg_toplevel;
+	struct zxdg_toplevel_decoration_v1 *deco;
 #ifdef BUILD_IVI
 	struct ivi_surface *ivi_surface;
 #endif
