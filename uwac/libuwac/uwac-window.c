@@ -124,7 +124,7 @@ static void xdg_handle_configure(void *data,
 	{
 		assert(uwacErrorHandler(window->display, UWAC_ERROR_NOMEMORY,
 		                        "failed to allocate a configure event\n"));
-		goto ack;
+		return;
 	}
 
 	event->window = window;
@@ -145,7 +145,7 @@ static void xdg_handle_configure(void *data,
 		{
 			assert(uwacErrorHandler(window->display, ret, "failed to reallocate a wayland buffers\n"));
 			window->drawingBuffer = window->pendingBuffer = NULL;
-			goto ack;
+			return;
 		}
 
 		window->drawingBuffer = window->pendingBuffer = &window->buffers[0];
@@ -155,9 +155,6 @@ static void xdg_handle_configure(void *data,
 		event->width = window->width;
 		event->height = window->height;
 	}
-
-ack:
-	return;
 }
 
 static void xdg_handle_close(void *data,
