@@ -126,13 +126,9 @@ static const struct wl_data_source_listener data_source_listener =
 	.cancelled = data_source_cancelled_handler
 };
 
-static UwacReturnCode UwacRegisterDeviceListener(UwacSeat* s)
+static void UwacRegisterDeviceListener(UwacSeat* s)
 {
-	if (!s)
-		return UWAC_ERROR_INTERNAL;
-
 	wl_data_device_add_listener(s->data_device, &data_device_listener, s);
-	return UWAC_SUCCESS;
 }
 
 UwacReturnCode UwacCreateDataSource(UwacSeat* s)
@@ -153,10 +149,7 @@ UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 	if (!s)
 		return UWAC_ERROR_INTERNAL;
 
-	rc = UwacRegisterDeviceListener(s);
-
-	if (rc != UWAC_SUCCESS)
-		return rc;
+	UwacRegisterDeviceListener(s);
 
 	rc = UwacCreateDataSource(s);
 
