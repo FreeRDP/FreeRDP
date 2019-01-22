@@ -82,32 +82,34 @@ void UwacWindowDestroyBuffers(UwacWindow* w)
 int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32_t width,
                               uint32_t height, enum wl_shm_format format);
 
-static void xdg_handle_configure(void* data, struct xdg_surface* surface,
-                                 int32_t width, int32_t height,
-                                 struct wl_array* states, uint32_t serial)
+static void xdg_handle_configure(void *data,
+                                 struct xdg_toplevel *xdg_toplevel,
+                                 int32_t width,
+                                 int32_t height,
+                                 struct wl_array *states)
 {
 	UwacWindow* window = (UwacWindow*)data;
 	UwacConfigureEvent* event;
 	int ret, surfaceState;
-	enum xdg_surface_state* state;
+	enum xdg_toplevel_state* state;
 	surfaceState = 0;
 	wl_array_for_each(state, states)
 	{
 		switch (*state)
 		{
-			case XDG_SURFACE_STATE_MAXIMIZED:
+			case XDG_TOPLEVEL_STATE_MAXIMIZED:
 				surfaceState |= UWAC_WINDOW_MAXIMIZED;
 				break;
 
-			case XDG_SURFACE_STATE_FULLSCREEN:
+			case XDG_TOPLEVEL_STATE_FULLSCREEN:
 				surfaceState |= UWAC_WINDOW_FULLSCREEN;
 				break;
 
-			case XDG_SURFACE_STATE_ACTIVATED:
+			case XDG_TOPLEVEL_STATE_ACTIVATED:
 				surfaceState |= UWAC_WINDOW_ACTIVATED;
 				break;
 
-			case XDG_SURFACE_STATE_RESIZING:
+			case XDG_TOPLEVEL_STATE_RESIZING:
 				surfaceState |= UWAC_WINDOW_RESIZING;
 				break;
 
@@ -155,10 +157,11 @@ static void xdg_handle_configure(void* data, struct xdg_surface* surface,
 	}
 
 ack:
-	xdg_surface_ack_configure(surface, serial);
+	return;
 }
 
-static void xdg_handle_close(void* data, struct xdg_surface* xdg_surface)
+static void xdg_handle_close(void *data,
+                             struct xdg_toplevel *xdg_toplevel)
 {
 	UwacCloseEvent* event;
 	UwacWindow* window = (UwacWindow*)data;
@@ -174,12 +177,11 @@ static void xdg_handle_close(void* data, struct xdg_surface* xdg_surface)
 	event->window = window;
 }
 
-static const struct xdg_surface_listener xdg_surface_listener =
+static const struct xdg_toplevel_listener xdg_toplevel_listener =
 {
 	xdg_handle_configure,
 	xdg_handle_close,
 };
-
 #if BUILD_IVI
 
 static void ivi_handle_configure(void* data, struct ivi_surface* surface,
@@ -428,9 +430,9 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 
 	wl_surface_set_user_data(w->surface, w);
 
-	if (display->xdg_shell)
+	if (display->xdg_base)
 	{
-		w->xdg_surface = xdg_shell_get_xdg_surface(display->xdg_shell, w->surface);
+		w->xdg_surface = xdg_wm_base_get_xdg_surface(display->xdg_base, w->surface);
 
 		if (!w->xdg_surface)
 		{
@@ -438,8 +440,15 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 			goto out_error_shell;
 		}
 
+		w->xdg_toplevel = xdg_surface_get_toplevel(w->xdg_surface);
+		if (!w->xdg_toplevel)
+		{
+			display->last_error = UWAC_ERROR_NOMEMORY;
+			goto out_error_shell;
+		}
+
 		assert(w->xdg_surface);
-		xdg_surface_add_listener(w->xdg_surface, &xdg_surface_listener, w);
+		xdg_toplevel_add_listener(w->xdg_toplevel, &xdg_toplevel_listener, w);
 #if BUILD_IVI
 	}
 	else if (display->ivi_application)
@@ -452,8 +461,8 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 	}
 	else if (display->fullscreen_shell)
 	{
-		_wl_fullscreen_shell_present_surface(display->fullscreen_shell, w->surface,
-		                                     _WL_FULLSCREEN_SHELL_PRESENT_METHOD_CENTER, NULL);
+		zwp_fullscreen_shell_v1_present_surface(display->fullscreen_shell, w->surface,
+		                                     ZWP_FULLSCREEN_SHELL_V1_PRESENT_METHOD_CENTER, NULL);
 #endif
 	}
 	else
@@ -672,15 +681,15 @@ UwacReturnCode UwacWindowGetGeometry(UwacWindow* window, UwacSize* geometry)
 UwacReturnCode UwacWindowSetFullscreenState(UwacWindow* window, UwacOutput* output,
         bool isFullscreen)
 {
-	if (window->xdg_surface)
+	if (window->xdg_toplevel)
 	{
 		if (isFullscreen)
 		{
-			xdg_surface_set_fullscreen(window->xdg_surface, output ? output->output : NULL);
+			xdg_toplevel_set_fullscreen(window->xdg_toplevel, output ? output->output : NULL);
 		}
 		else
 		{
-			xdg_surface_unset_fullscreen(window->xdg_surface);
+			xdg_toplevel_unset_fullscreen(window->xdg_toplevel);
 		}
 	}
 	else if (window->shell_surface)
@@ -703,8 +712,8 @@ UwacReturnCode UwacWindowSetFullscreenState(UwacWindow* window, UwacOutput* outp
 
 void UwacWindowSetTitle(UwacWindow* window, const char* name)
 {
-	if (window->xdg_surface)
-		xdg_surface_set_title(window->xdg_surface, name);
+	if (window->xdg_toplevel)
+		xdg_toplevel_set_title(window->xdg_toplevel, name);
 	else if (window->shell_surface)
 		wl_shell_surface_set_title(window->shell_surface, name);
 }

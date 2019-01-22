@@ -32,7 +32,7 @@
 #include "ivi-application-client-protocol.h"
 #endif
 #ifdef BUILD_FULLSCREEN_SHELL
-#include "fullscreen-shell-client-protocol.h"
+#include "fullscreen-shell-unstable-v1-client-protocol.h"
 #endif
 
 #ifdef HAVE_PIXMAN_REGION
@@ -84,12 +84,13 @@ struct uwac_display {
 	struct wl_compositor *compositor;
 	struct wl_subcompositor *subcompositor;
 	struct wl_shell *shell;
-	struct xdg_shell *xdg_shell;
+	struct xdg_toplevel *xdg_toplevel;
+	struct xdg_wm_base *xdg_base;
 #ifdef BUILD_IVI
 	struct ivi_application *ivi_application;
 #endif
 #ifdef BUILD_FULLSCREEN_SHELL
-	struct _wl_fullscreen_shell *fullscreen_shell;
+	struct zwp_fullscreen_shell_v1 *fullscreen_shell;
 #endif
 
 	struct wl_shm *shm;
@@ -210,6 +211,7 @@ struct uwac_window {
 	struct wl_surface *surface;
 	struct wl_shell_surface *shell_surface;
 	struct xdg_surface *xdg_surface;
+	struct xdg_toplevel *xdg_toplevel;
 #ifdef BUILD_IVI
 	struct ivi_surface *ivi_surface;
 #endif

@@ -31,14 +31,14 @@ macro(generate_protocol_file PROTO)
         COMMAND ${WAYLAND_SCANNER} client-header < ${CMAKE_SOURCE_DIR}/uwac/protocols/${PROTO}.xml > ${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-client-protocol.h
         DEPENDS ${CMAKE_SOURCE_DIR}/uwac/protocols/${PROTO}.xml
     )
-    
+
     list(APPEND GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-client-protocol.h)
     list(APPEND GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-protocol.c)
 endmacro()
 
 generate_protocol_file(xdg-shell)
 generate_protocol_file(ivi-application)
-generate_protocol_file(fullscreen-shell)
+generate_protocol_file(fullscreen-shell-unstable-v1)
 
 if(FREEBSD)
 	include_directories(${EPOLLSHIM_INCLUDE_DIR})
