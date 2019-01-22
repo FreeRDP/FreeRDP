@@ -7,7 +7,7 @@
         "cflags": "-O2 -g",
         "cxxflags": "-O2 -g"
     },
-    "command": "xfreerdp",
+    "command": "freerdp.sh",
     "cleanup": [
     ],
     "finish-args": [
@@ -68,6 +68,19 @@
                 "commit": "73d95ada3221c060cbd7b6aa2375453f9d0e359b"
             }
         ]
+    },
+    {
+        "name": "wrapper",
+        "buildsystem": "simple",
+        "build-commands": [
+                "install -D freerdp.sh /app/bin/freerdp.sh"
+            ],
+        "sources": [
+                {
+                     "type": "file",
+                     "path": "freerdp.sh"
+                }
+            ]
     },
     {
         "name": "freerdp",
