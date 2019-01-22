@@ -640,7 +640,8 @@ UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNex
 
 	if (window->pendingBuffer)
 	{
-		/* we already have a pending frame, don't do anything*/
+		/* we already have a pending frame. resubmit as the buffer
+		 * might have been discarded due to focus loss */
 		UwacSubmitBufferPtr(window, window->pendingBuffer);
 		return UWAC_SUCCESS;
 	}
