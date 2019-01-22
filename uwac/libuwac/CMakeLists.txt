@@ -38,6 +38,7 @@ endmacro()
 
 generate_protocol_file(xdg-shell)
 generate_protocol_file(xdg-decoration-unstable-v1)
+generate_protocol_file(server-decoration)
 generate_protocol_file(ivi-application)
 generate_protocol_file(fullscreen-shell-unstable-v1)
 generate_protocol_file(keyboard-shortcuts-inhibit-unstable-v1)

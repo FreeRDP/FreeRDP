@@ -224,6 +224,10 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	{
 		d->deco_manager = wl_registry_bind(registry, id, &zxdg_decoration_manager_v1_interface, 1);
 	}
+	else if (strcmp(interface, "org_kde_kwin_server_decoration_manager") == 0)
+	{
+		d->kde_deco_manager = wl_registry_bind(registry, id, &org_kde_kwin_server_decoration_manager_interface, 1);
+	}
 #if BUILD_IVI
 	else if (strcmp(interface, "ivi_application") == 0)
 	{
@@ -524,6 +528,9 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 
 	if (display->deco_manager)
 		zxdg_decoration_manager_v1_destroy(display->deco_manager);
+
+	if (display->kde_deco_manager)
+		org_kde_kwin_server_decoration_manager_destroy(display->kde_deco_manager);
 
 #ifdef BUILD_FULLSCREEN_SHELL
 
