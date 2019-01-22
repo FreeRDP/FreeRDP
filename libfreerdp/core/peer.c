@@ -567,16 +567,34 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_LICENSING:
-			if (!license_send_valid_client_error_packet(rdp->license))
+		{
+			LicenseCallbackResult res;
+			if (!client->LicenseCallback)
 			{
-				WLog_ERR(TAG,
-				         "peer_recv_callback: CONNECTION_STATE_LICENSING - license_send_valid_client_error_packet() fail");
+				WLog_ERR(TAG, "peer_recv_callback: LicenseCallback has been removed, assuming licensing is ok (please fix your app)");
+				res = LICENSE_CB_COMPLETED;
+			}
+			else
+				res = client->LicenseCallback(client, s);
+
+			switch(res) {
+			case LICENSE_CB_INTERNAL_ERROR:
+				WLog_ERR(TAG, "peer_recv_callback: CONNECTION_STATE_LICENSING - callback internal error, aborting");
 				return -1;
+			case LICENSE_CB_ABORT:
+				return -1;
+			case LICENSE_CB_IN_PROGRESS:
+				break;
+			case LICENSE_CB_COMPLETED:
+				rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
+				return peer_recv_callback(transport, NULL, extra);
+			default:
+				WLog_ERR(TAG, "peer_recv_callback: CONNECTION_STATE_LICENSING - unknown license callback result %d", (int)res);
+				break;
 			}
 
-			rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
-			return peer_recv_callback(transport, NULL, extra);
 			break;
+		}
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 			if (!rdp->AwaitCapabilities)
@@ -699,6 +717,19 @@ static BOOL freerdp_peer_has_more_to_read(freerdp_peer* peer)
 	return peer->context->rdp->transport->haveMoreBytesToRead;
 }
 
+static LicenseCallbackResult freerdp_peer_nolicense(freerdp_peer* peer, wStream *s)
+{
+	rdpRdp *rdp = peer->context->rdp;
+
+	if (!license_send_valid_client_error_packet(rdp))
+	{
+		WLog_ERR(TAG, "freerdp_peer_nolicense: license_send_valid_client_error_packet() failed");
+		return LICENSE_CB_ABORT;
+	}
+
+	return LICENSE_CB_COMPLETED;
+}
+
 BOOL freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
@@ -752,6 +783,7 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
 	client->HasMoreToRead = freerdp_peer_has_more_to_read;
+	client->LicenseCallback = freerdp_peer_nolicense;
 	IFCALLRET(client->ContextNew, ret, client, client->context);
 
 	if (ret)

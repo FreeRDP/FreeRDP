@@ -605,7 +605,12 @@ BOOL license_generate_hwid(rdpLicense* license)
 	}
 	else
 	{
+		wStream s;
 		const char *hostname = license->rdp->settings->ClientHostname;
+		Stream_StaticInit(&s, license->HardwareId, 4);
+		Stream_Write_UINT32(&s, PLATFORMID);
+		Stream_Free(&s, TRUE);
+
 		hashTarget = (const BYTE *)hostname;
 		targetLen = strlen(hostname);
 	}
@@ -1551,8 +1556,9 @@ BOOL license_send_platform_challenge_response_packet(rdpLicense* license)
  * @param license license module
  */
 
-BOOL license_send_valid_client_error_packet(rdpLicense* license)
+BOOL license_send_valid_client_error_packet(rdpRdp* rdp)
 {
+	rdpLicense *license = rdp->license;
 	wStream* s = license_send_stream_init(license);
 	if (!s)
 		return FALSE;
