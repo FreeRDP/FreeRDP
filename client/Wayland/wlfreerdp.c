@@ -127,6 +127,28 @@ static BOOL wl_end_paint(rdpContext* context)
 	return wl_update_buffer(context_w, x, y, w, h);
 }
 
+static BOOL wl_refresh_display(wlfContext* context)
+{
+	rdpGdi* gdi;
+
+	if (!context || !context->context.gdi)
+		return FALSE;
+
+	gdi = context->context.gdi;
+	return wl_update_buffer(context, 0, 0, gdi->width, gdi->height);
+}
+
+static BOOL wl_resize_display(rdpContext* context)
+{
+	wlfContext* wlc = (wlfContext*)context;
+	rdpGdi* gdi = context->gdi;
+	rdpSettings* settings = context->settings;
+
+	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
+		return FALSE;
+
+	return wl_refresh_display(wlc);
+}
 
 static BOOL wl_pre_connect(freerdp* instance)
 {
@@ -203,6 +225,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, gdi->width, gdi->height);
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
+	instance->update->DesktopResize = wl_resize_display;
 	freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
 	return wl_update_buffer(context, 0, 0, gdi->width, gdi->height);
 }
@@ -222,17 +245,6 @@ static void wl_post_disconnect(freerdp* instance)
 
 	if (context->window)
 		UwacDestroyWindow(&context->window);
-}
-
-static BOOL wl_refresh_display(wlfContext* context)
-{
-	rdpGdi* gdi;
-
-	if (!context || !context->context.gdi)
-		return FALSE;
-
-	gdi = context->context.gdi;
-	return wl_update_buffer(context, 0, 0, gdi->width, gdi->height);
 }
 
 static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
