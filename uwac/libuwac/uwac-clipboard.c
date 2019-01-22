@@ -168,7 +168,7 @@ UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 	if (!event)
 	{
 		assert(uwacErrorHandler(s->display, UWAC_ERROR_INTERNAL,
-		                        "failed to allocate a close event\n"));
+		                        "failed to allocate a clipboard event\n"));
 		return UWAC_ERROR_INTERNAL;
 	}
 
