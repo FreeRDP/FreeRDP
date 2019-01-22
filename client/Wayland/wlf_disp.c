@@ -318,9 +318,6 @@ BOOL wlf_disp_handle_configure(wlfDispContext* disp, int32_t width, int32_t heig
 	if (!disp)
 		return FALSE;
 
-	if (!disp)
-		return FALSE;
-
 	disp->targetWidth = width;
 	disp->targetHeight = height;
 	return wlf_disp_sendResize(disp);
