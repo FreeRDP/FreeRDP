@@ -102,7 +102,8 @@ struct wlf_clipboard
 static BOOL wlf_mime_is_text(const char* mime)
 {
 	size_t x;
-	for (x=0; x<ARRAYSIZE(mime_text); x++)
+
+	for (x = 0; x < ARRAYSIZE(mime_text); x++)
 	{
 		if (strcmp(mime, mime_text[x]) == 0)
 			return TRUE;
@@ -114,7 +115,8 @@ static BOOL wlf_mime_is_text(const char* mime)
 static BOOL wlf_mime_is_image(const char* mime)
 {
 	size_t x;
-	for (x=0; x<ARRAYSIZE(mime_image); x++)
+
+	for (x = 0; x < ARRAYSIZE(mime_image); x++)
 	{
 		if (strcmp(mime, mime_image[x]) == 0)
 			return TRUE;
@@ -126,7 +128,8 @@ static BOOL wlf_mime_is_image(const char* mime)
 static BOOL wlf_mime_is_html(const char* mime)
 {
 	size_t x;
-	for (x=0; x<ARRAYSIZE(mime_html); x++)
+
+	for (x = 0; x < ARRAYSIZE(mime_html); x++)
 	{
 		if (strcmp(mime, mime_html[x]) == 0)
 			return TRUE;
@@ -183,7 +186,6 @@ static void wlf_cliprdr_free_client_formats(wfClipboard* clipboard)
 static UINT wlf_cliprdr_send_client_format_list(wfClipboard* clipboard)
 {
 	CLIPRDR_FORMAT_LIST formatList = { 0 };
-
 	formatList.msgFlags = CB_RESPONSE_OK;
 	formatList.numFormats = (UINT32)clipboard->numClientFormats;
 	formatList.formats = clipboard->clientFormats;
@@ -196,14 +198,17 @@ static void wfl_cliprdr_add_client_format_id(wfClipboard* clipboard, UINT32 form
 	CLIPRDR_FORMAT* format;
 	const char* name = ClipboardGetFormatName(clipboard->system, formatId);
 
-	for (x=0; x<clipboard->numClientFormats; x++)
+	for (x = 0; x < clipboard->numClientFormats; x++)
 	{
 		format = &clipboard->clientFormats[x];
+
 		if (format->formatId == formatId)
 			return;
 	}
 
-	format = realloc(clipboard->clientFormats, (clipboard->numClientFormats + 1) * sizeof(CLIPRDR_FORMAT));
+	format = realloc(clipboard->clientFormats,
+	                 (clipboard->numClientFormats + 1) * sizeof(CLIPRDR_FORMAT));
+
 	if (!format)
 		return;
 
@@ -211,6 +216,7 @@ static void wfl_cliprdr_add_client_format_id(wfClipboard* clipboard, UINT32 form
 	format = &clipboard->clientFormats[clipboard->numClientFormats++];
 	format->formatId = formatId;
 	format->formatName = NULL;
+
 	if (name && (formatId >= CF_MAX))
 		format->formatName = _strdup(name);
 }
@@ -234,6 +240,7 @@ static void wlf_cliprdr_add_client_format(wfClipboard* clipboard, const char* mi
 		wfl_cliprdr_add_client_format_id(clipboard, formatId);
 		wfl_cliprdr_add_client_format_id(clipboard, CF_DIB);
 	}
+
 	wlf_cliprdr_send_client_format_list(clipboard);
 }
 
@@ -439,6 +446,9 @@ static void wlf_cliprdr_transfer_data(UwacSeat* seat, void* context, const char*
 
 		if (clipboard->responseFile)
 			wlf_cliprdr_send_data_request(clipboard, clipboard->responseFormat);
+		else
+			WLog_Print(clipboard->log, WLOG_ERROR, "failed to open clipboard file descriptor for MIME %s",
+			           clipboard->responseMime);
 	}
 }
 
@@ -482,7 +492,10 @@ static UINT wlf_cliprdr_server_format_list(CliprdrClientContext* context,
 	clipboard->numServerFormats = formatList->numFormats;
 
 	if (!clipboard->seat)
+	{
+		WLog_Print(clipboard->log, WLOG_ERROR, "clipboard->seat=NULL, check your client implementation");
 		return ERROR_INTERNAL_ERROR;
+	}
 
 	for (i = 0; i < formatList->numFormats; i++)
 	{
@@ -586,17 +599,19 @@ static UINT wlf_cliprdr_server_format_data_request(CliprdrClientContext* context
 	UINT32 formatId = formatDataRequest->requestedFormatId;
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 
-	switch(formatId)
+	switch (formatId)
 	{
 		case CF_TEXT:
 		case CF_OEMTEXT:
 		case CF_UNICODETEXT:
 			mime = "text/plain;charset=utf-8";
 			break;
+
 		case CF_DIB:
 		case CF_DIBV5:
 			mime = "image/bmp";
 			break;
+
 		default:
 			if (formatId == ClipboardGetFormatId(clipboard->system, "HTML Format"))
 				mime = "text/html";
@@ -604,10 +619,12 @@ static UINT wlf_cliprdr_server_format_data_request(CliprdrClientContext* context
 				mime = "image/bmp";
 			else
 				mime = ClipboardGetFormatName(clipboard->system, formatId);
+
 			break;
 	}
 
 	data = UwacClipboardDataGet(clipboard->seat, mime, &size);
+
 	if (!data)
 		return ERROR_INTERNAL_ERROR;
 
@@ -807,7 +824,6 @@ wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 	clipboard->log = WLog_Get(TAG);
 	clipboard->channels = channels;
 	clipboard->system = ClipboardCreate();
-
 	clipboard->delegate = ClipboardGetDelegate(clipboard->system);
 	clipboard->delegate->custom = clipboard;
 	clipboard->delegate->ClipboardFileSizeSuccess = wlf_cliprdr_clipboard_file_size_success;
