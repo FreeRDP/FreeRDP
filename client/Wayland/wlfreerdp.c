@@ -69,32 +69,23 @@ static BOOL wl_begin_paint(rdpContext* context)
 	return TRUE;
 }
 
-
-static BOOL wl_end_paint(rdpContext* context)
+static BOOL wl_update_buffer(wlfContext* context_w, UINT32 x, UINT32 y, UINT32 w, UINT32 h)
 {
 	rdpGdi* gdi;
 	char* data;
-	wlfContext* context_w;
-	INT32 x, y;
-	UINT32 w, h;
 	UINT32 i;
 
-	if (!context || !context->gdi || !context->gdi->primary)
+	if (!context_w)
 		return FALSE;
 
-	gdi = context->gdi;
-
-	if (gdi->primary->hdc->hwnd->invalid->null)
-		return TRUE;
-
-	x = gdi->primary->hdc->hwnd->invalid->x;
-	y = gdi->primary->hdc->hwnd->invalid->y;
-	w = gdi->primary->hdc->hwnd->invalid->w;
-	h = gdi->primary->hdc->hwnd->invalid->h;
-	context_w = (wlfContext*) context;
 	data = UwacWindowGetDrawingBuffer(context_w->window);
 
 	if (!data)
+		return FALSE;
+
+	gdi = context_w->context.gdi;
+
+	if (!gdi)
 		return FALSE;
 
 	for (i = 0; i < h; i++)
@@ -113,6 +104,51 @@ static BOOL wl_end_paint(rdpContext* context)
 	return wl_update_content(context_w);
 }
 
+static BOOL wl_end_paint(rdpContext* context)
+{
+	rdpGdi* gdi;
+	wlfContext* context_w;
+	INT32 x, y;
+	UINT32 w, h;
+
+	if (!context || !context->gdi || !context->gdi->primary)
+		return FALSE;
+
+	gdi = context->gdi;
+
+	if (gdi->primary->hdc->hwnd->invalid->null)
+		return TRUE;
+
+	x = gdi->primary->hdc->hwnd->invalid->x;
+	y = gdi->primary->hdc->hwnd->invalid->y;
+	w = gdi->primary->hdc->hwnd->invalid->w;
+	h = gdi->primary->hdc->hwnd->invalid->h;
+	context_w = (wlfContext*) context;
+	return wl_update_buffer(context_w, x, y, w, h);
+}
+
+static BOOL wl_refresh_display(wlfContext* context)
+{
+	rdpGdi* gdi;
+
+	if (!context || !context->context.gdi)
+		return FALSE;
+
+	gdi = context->context.gdi;
+	return wl_update_buffer(context, 0, 0, gdi->width, gdi->height);
+}
+
+static BOOL wl_resize_display(rdpContext* context)
+{
+	wlfContext* wlc = (wlfContext*)context;
+	rdpGdi* gdi = context->gdi;
+	rdpSettings* settings = context->settings;
+
+	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
+		return FALSE;
+
+	return wl_refresh_display(wlc);
+}
 
 static BOOL wl_pre_connect(freerdp* instance)
 {
@@ -189,12 +225,9 @@ static BOOL wl_post_connect(freerdp* instance)
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, gdi->width, gdi->height);
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
-	memcpy(UwacWindowGetDrawingBuffer(context->window), gdi->primary_buffer,
-	       gdi->width * gdi->height * 4);
-	UwacWindowAddDamage(context->window, 0, 0, gdi->width, gdi->height);
-	context->haveDamage = TRUE;
+	instance->update->DesktopResize = wl_resize_display;
 	freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
-	return wl_update_content(context);
+	return wl_update_buffer(context, 0, 0, gdi->width, gdi->height);
 }
 
 static void wl_post_disconnect(freerdp* instance)
@@ -222,6 +255,8 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 	if (UwacDisplayDispatch(display, 1) < 0)
 		return FALSE;
 
+	context = (wlfContext*)instance->context;
+
 	while (UwacHasEvent(display))
 	{
 		if (UwacNextEvent(display, &event) != UWAC_SUCCESS)
@@ -234,7 +269,6 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				if (!instance)
 					continue;
 
-				context = (wlfContext*)instance->context;
 				context->waitingFrameDone = FALSE;
 
 				if (context->haveDamage && !wl_update_content(context))
@@ -274,6 +308,12 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 			case UWAC_EVENT_KEYBOARD_ENTER:
 				if (!wlf_keyboard_enter(instance, &event.keyboard_enter_leave))
+					return FALSE;
+
+				break;
+
+			case UWAC_EVENT_CONFIGURE:
+				if (!wl_refresh_display(context))
 					return FALSE;
 
 				break;
