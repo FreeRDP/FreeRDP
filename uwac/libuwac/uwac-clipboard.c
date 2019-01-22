@@ -167,6 +167,7 @@ UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 	}
 
 	event->seat = s;
+	return UWAC_SUCCESS;
 }
 
 UwacReturnCode UwacClipboardOfferDestroy(UwacSeat* seat)
