@@ -384,6 +384,30 @@ UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w)
 	return &w->buffers[i];
 }
 
+static UwacReturnCode UwacWindowSetDecorations(UwacWindow *w)
+{
+	if (!w || !w->display)
+		return UWAC_ERROR_INTERNAL;
+
+	if (w->display->deco_manager) {
+		w->deco = zxdg_decoration_manager_v1_get_toplevel_decoration(
+		            w->display->deco_manager, w->xdg_toplevel);
+		if (!w->deco) {
+			uwacErrorHandler(w->display, UWAC_NOT_FOUND, "Current window manager does not allow decorating with SSD");
+		}
+		else
+			zxdg_toplevel_decoration_v1_set_mode(w->deco, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+	}
+	else if (w->display->kde_deco_manager) {
+		w->kde_deco = org_kde_kwin_server_decoration_manager_create(w->display->kde_deco_manager, w->surface);
+		if (!w->kde_deco) {
+			uwacErrorHandler(w->display, UWAC_NOT_FOUND, "Current window manager does not allow decorating with SSD");
+		}
+		else
+			org_kde_kwin_server_decoration_request_mode(w->kde_deco, ORG_KDE_KWIN_SERVER_DECORATION_MODE_SERVER);
+	}
+	return UWAC_SUCCESS;
+}
 
 UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t height,
                                 enum wl_shm_format format)
@@ -447,24 +471,6 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 			goto out_error_shell;
 		}
 
-		if (w->display->deco_manager) {
-			w->deco = zxdg_decoration_manager_v1_get_toplevel_decoration(
-			            w->display->deco_manager, w->xdg_toplevel);
-			if (!w->deco) {
-				uwacErrorHandler(w->display, UWAC_NOT_FOUND, "Current window manager does not allow decorating with SSD");
-			}
-			else
-				zxdg_toplevel_decoration_v1_set_mode(w->deco, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
-		}
-		else if (w->display->kde_deco_manager) {
-			w->kde_deco = org_kde_kwin_server_decoration_manager_create(w->display->kde_deco_manager, w->surface);
-			if (!w->kde_deco) {
-				uwacErrorHandler(w->display, UWAC_NOT_FOUND, "Current window manager does not allow decorating with SSD");
-			}
-			else
-				org_kde_kwin_server_decoration_request_mode(w->kde_deco, ORG_KDE_KWIN_SERVER_DECORATION_MODE_SERVER);
-		}
-
 		assert(w->xdg_surface);
 		xdg_toplevel_add_listener(w->xdg_toplevel, &xdg_toplevel_listener, w);
 	}
@@ -493,6 +499,7 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 
 	wl_list_insert(display->windows.prev, &w->link);
 	display->last_error = UWAC_SUCCESS;
+	UwacWindowSetDecorations(w);
 	return w;
 out_error_shell:
 	wl_surface_destroy(w->surface);
