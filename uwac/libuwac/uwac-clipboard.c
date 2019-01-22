@@ -40,7 +40,8 @@ static void data_offer_offer(void* data, struct wl_data_offer* data_offer,
 {
 	UwacSeat* seat = (UwacSeat*)data;
 
-	if (seat && !seat->ignore_announcement)
+	assert(seat);
+	if (!seat->ignore_announcement)
 	{
 		UwacClipboardEvent* event = (UwacClipboardEvent*)UwacDisplayNewEvent(seat->display,
 		                            UWAC_EVENT_CLIPBOARD_OFFER);
