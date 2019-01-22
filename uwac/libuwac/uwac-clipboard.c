@@ -48,7 +48,7 @@ static void data_offer_offer(void* data, struct wl_data_offer* data_offer,
 		if (!event)
 		{
 			assert(uwacErrorHandler(seat->display, UWAC_ERROR_INTERNAL,
-			                        "failed to allocate a close event\n"));
+			                        "failed to allocate a clipboard event\n"));
 		}
 		else
 		{
@@ -68,7 +68,8 @@ static void data_device_data_offer(void* data, struct wl_data_device* data_devic
 {
 	UwacSeat* seat = (UwacSeat*)data;
 
-	if (seat && !seat->ignore_announcement)
+	assert(seat);
+	if (!seat->ignore_announcement)
 	{
 		UwacClipboardEvent* event = (UwacClipboardEvent*)UwacDisplayNewEvent(seat->display,
 		                            UWAC_EVENT_CLIPBOARD_SELECT);
@@ -84,7 +85,7 @@ static void data_device_data_offer(void* data, struct wl_data_device* data_devic
 		wl_data_offer_add_listener(data_offer, &data_offer_listener, data);
 		seat->offer = data_offer;
 	}
-	else if (seat)
+	else
 		seat->offer = NULL;
 }
 
