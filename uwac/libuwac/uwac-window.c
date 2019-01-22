@@ -449,22 +449,22 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 
 		assert(w->xdg_surface);
 		xdg_toplevel_add_listener(w->xdg_toplevel, &xdg_toplevel_listener, w);
-#if BUILD_IVI
 	}
+#if BUILD_IVI
 	else if (display->ivi_application)
 	{
 		w->ivi_surface = ivi_application_surface_create(display->ivi_application, 1, w->surface);
 		assert(w->ivi_surface);
 		ivi_surface_add_listener(w->ivi_surface, &ivi_surface_listener, w);
+	}
 #endif
 #if BUILD_FULLSCREEN_SHELL
-	}
 	else if (display->fullscreen_shell)
 	{
 		zwp_fullscreen_shell_v1_present_surface(display->fullscreen_shell, w->surface,
 		                                     ZWP_FULLSCREEN_SHELL_V1_PRESENT_METHOD_CENTER, NULL);
-#endif
 	}
+#endif
 	else
 	{
 		w->shell_surface = wl_shell_get_shell_surface(display->shell, w->surface);

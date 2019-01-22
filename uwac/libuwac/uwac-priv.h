@@ -28,6 +28,8 @@
 #include <stdbool.h>
 #include <wayland-client.h>
 #include "xdg-shell-client-protocol.h"
+#include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
+
 #ifdef BUILD_IVI
 #include "ivi-application-client-protocol.h"
 #endif
@@ -86,6 +88,7 @@ struct uwac_display {
 	struct wl_shell *shell;
 	struct xdg_toplevel *xdg_toplevel;
 	struct xdg_wm_base *xdg_base;
+	struct zwp_keyboard_shortcuts_inhibit_manager_v1 *keyboard_inhibit_manager;
 #ifdef BUILD_IVI
 	struct ivi_application *ivi_application;
 #endif
@@ -151,6 +154,7 @@ struct uwac_seat {
 	struct wl_keyboard *keyboard;
 	struct wl_touch *touch;
 	struct xkb_context *xkb_context;
+	struct zwp_keyboard_shortcuts_inhibitor_v1 *keyboard_inhibitor;
 
 	struct {
 		struct xkb_keymap *keymap;

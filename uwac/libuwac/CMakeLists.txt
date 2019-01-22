@@ -39,6 +39,7 @@ endmacro()
 generate_protocol_file(xdg-shell)
 generate_protocol_file(ivi-application)
 generate_protocol_file(fullscreen-shell-unstable-v1)
+generate_protocol_file(keyboard-shortcuts-inhibit-unstable-v1)
 
 if(FREEBSD)
 	include_directories(${EPOLLSHIM_INCLUDE_DIR})

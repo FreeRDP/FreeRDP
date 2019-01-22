@@ -494,6 +494,16 @@ UWAC_API const char *UwacSeatGetName(const UwacSeat *seat);
  */
 UWAC_API UwacSeatId UwacSeatGetId(const UwacSeat *seat);
 
+/**
+ * Inhibits or restores keyboard shortcuts.
+ *
+ * @param seat    The UwacSeat to inhibit the shortcuts for
+ * @param inhibit Inhibit or restore keyboard shortcuts
+ *
+ * @return UWAC_SUCCESS or an appropriate error code.
+ */
+UWAC_API UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* seat, bool inhibit);
+
 #ifdef __cplusplus
 }
 #endif

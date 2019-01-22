@@ -273,6 +273,8 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_KEYBOARD_ENTER:
+				if (instance->context->settings->GrabKeyboard)
+					UwacSeatInhibitShortcuts(event.keyboard_enter_leave.seat, true);
 				if (!wlf_keyboard_enter(instance, &event.keyboard_enter_leave))
 					return FALSE;
 

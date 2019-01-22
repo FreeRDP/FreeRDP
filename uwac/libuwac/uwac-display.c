@@ -215,21 +215,25 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	{
 		d->xdg_base = wl_registry_bind(registry, id, &xdg_wm_base_interface, 1);
 		xdg_wm_base_add_listener(d->xdg_base, &xdg_wm_base_listener, d);
-#if BUILD_IVI
 	}
+	else if (strcmp(interface, "zwp_keyboard_shortcuts_inhibit_manager_v1") == 0)
+	{
+		d->keyboard_inhibit_manager = wl_registry_bind(registry, id, &zwp_keyboard_shortcuts_inhibit_manager_v1_interface, 1);
+	}
+#if BUILD_IVI
 	else if (strcmp(interface, "ivi_application") == 0)
 	{
 		d->ivi_application = wl_registry_bind(registry, id, &ivi_application_interface, 1);
+	}
 #endif
 #if BUILD_FULLSCREEN_SHELL
-	}
 	else if (strcmp(interface, "zwp_fullscreen_shell_v1") == 0)
 	{
 		d->fullscreen_shell = wl_registry_bind(registry, id, &zwp_fullscreen_shell_v1_interface, 1);
 		zwp_fullscreen_shell_v1_add_listener(d->fullscreen_shell, &fullscreen_shell_listener, d);
+	}
 #endif
 #if 0
-	}
 	else if (strcmp(interface, "text_cursor_position") == 0)
 	{
 		d->text_cursor_position = wl_registry_bind(registry, id, &text_cursor_position_interface, 1);
@@ -242,7 +246,6 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	{
 		d->subcompositor = wl_registry_bind(registry, id, &wl_subcompositor_interface, 1);
 #endif
-	}
 }
 
 static void registry_handle_global_remove(void* data, struct wl_registry* registry, uint32_t name)
@@ -511,6 +514,9 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 
 	if (display->compositor)
 		wl_compositor_destroy(display->compositor);
+
+	if (display->keyboard_inhibit_manager)
+		zwp_keyboard_shortcuts_inhibit_manager_v1_destroy(display->keyboard_inhibit_manager);
 
 #ifdef BUILD_FULLSCREEN_SHELL
 
