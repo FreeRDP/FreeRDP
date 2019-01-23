@@ -31,7 +31,7 @@
 #define TAG CLIENT_TAG("wayland")
 
 typedef struct wlf_context wlfContext;
-
+typedef struct _wlfDispContext wlfDispContext;
 
 struct wlf_context
 {
@@ -43,11 +43,14 @@ struct wlf_context
 
 	BOOL waitingFrameDone;
 	BOOL haveDamage;
+	BOOL fullscreen;
 
 	/* Channels */
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
+	wlfDispContext* disp;
+	wLog* log;
 };
 
 #endif /* FREERDP_CLIENT_WAYLAND_FREERDP_H */

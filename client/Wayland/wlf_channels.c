@@ -24,6 +24,7 @@
 #include <freerdp/gdi/gfx.h>
 
 #include "wlf_channels.h"
+#include "wlf_disp.h"
 #include "wlfreerdp.h"
 
 /**
@@ -62,7 +63,6 @@ void wlf_OnChannelConnectedEventHandler(void* context,
 {
 	wlfContext* wlf = (wlfContext*) context;
 	rdpSettings* settings;
-
 	settings = wlf->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
@@ -74,8 +74,7 @@ void wlf_OnChannelConnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_init(wlf->context.gdi, (RdpgfxClientContext*) e->pInterface);
+		gdi_graphics_pipeline_init(wlf->context.gdi, (RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -87,6 +86,10 @@ void wlf_OnChannelConnectedEventHandler(void* context,
 	{
 		wlf_encomsp_init(wlf, (EncomspClientContext*) e->pInterface);
 	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		wlf_disp_init(wlf->disp, (DispClientContext*)e->pInterface);
+	}
 }
 
 void wlf_OnChannelDisconnectedEventHandler(void* context,
@@ -94,7 +97,6 @@ void wlf_OnChannelDisconnectedEventHandler(void* context,
 {
 	wlfContext* wlf = (wlfContext*) context;
 	rdpSettings* settings;
-
 	settings = wlf->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
@@ -106,9 +108,8 @@ void wlf_OnChannelDisconnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_uninit(wlf->context.gdi,
-			                             (RdpgfxClientContext*) e->pInterface);
+		gdi_graphics_pipeline_uninit(wlf->context.gdi,
+		                             (RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -119,5 +120,9 @@ void wlf_OnChannelDisconnectedEventHandler(void* context,
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
 		wlf_encomsp_uninit(wlf, (EncomspClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		wlf_disp_uninit(wlf->disp, (DispClientContext*)e->pInterface);
 	}
 }
