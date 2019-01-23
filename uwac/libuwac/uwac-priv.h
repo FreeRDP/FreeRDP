@@ -90,6 +90,7 @@ struct uwac_display {
 	struct wl_shell *shell;
 	struct xdg_toplevel *xdg_toplevel;
 	struct xdg_wm_base *xdg_base;
+	struct wl_data_device_manager* devicemanager;
 	struct zwp_keyboard_shortcuts_inhibit_manager_v1 *keyboard_inhibit_manager;
 	struct zxdg_decoration_manager_v1 *deco_manager;
 	struct org_kde_kwin_server_decoration_manager *kde_deco_manager;
@@ -154,9 +155,12 @@ struct uwac_seat {
 	struct wl_seat *seat;
 	uint32_t seat_id;
 	uint32_t seat_version;
+	struct wl_data_device* data_device;
+	struct wl_data_source* data_source;
 	struct wl_pointer *pointer;
 	struct wl_keyboard *keyboard;
 	struct wl_touch *touch;
+	struct wl_data_offer* offer;
 	struct xkb_context *xkb_context;
 	struct zwp_keyboard_shortcuts_inhibitor_v1 *keyboard_inhibitor;
 
@@ -185,6 +189,11 @@ struct uwac_seat {
 	UwacTask repeat_task;
 	float sx, sy;
 	struct wl_list link;
+
+	void* data_context;
+	UwacDataTransferHandler transfer_data;
+	UwacCancelDataTransferHandler cancel_data;
+	bool ignore_announcement;
 };
 
 
@@ -245,5 +254,7 @@ void UwacSeatDestroy(UwacSeat *s);
 /* in uwac-output.c */
 UwacOutput *UwacCreateOutput(UwacDisplay *d, uint32_t id, uint32_t version);
 int UwacDestroyOutput(UwacOutput *output);
+
+UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s);
 
 #endif /* UWAC_PRIV_H_ */

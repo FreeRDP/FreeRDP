@@ -586,10 +586,10 @@ static UINT cliprdr_order_recv(cliprdrPlugin* cliprdr, wStream* s)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_client_capabilities(CliprdrClientContext* context,
-                                        CLIPRDR_CAPABILITIES* capabilities)
+                                        const CLIPRDR_CAPABILITIES* capabilities)
 {
 	wStream* s;
-	CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet;
+	const CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
 	s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
 
@@ -601,7 +601,7 @@ static UINT cliprdr_client_capabilities(CliprdrClientContext* context,
 
 	Stream_Write_UINT16(s, 1); /* cCapabilitiesSets */
 	Stream_Write_UINT16(s, 0); /* pad1 */
-	generalCapabilitySet = (CLIPRDR_GENERAL_CAPABILITY_SET*)capabilities->capabilitySets;
+	generalCapabilitySet = (const CLIPRDR_GENERAL_CAPABILITY_SET*)capabilities->capabilitySets;
 	Stream_Write_UINT16(s, generalCapabilitySet->capabilitySetType); /* capabilitySetType */
 	Stream_Write_UINT16(s, generalCapabilitySet->capabilitySetLength); /* lengthCapability */
 	Stream_Write_UINT32(s, generalCapabilitySet->version); /* version */
@@ -616,7 +616,7 @@ static UINT cliprdr_client_capabilities(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_temp_directory(CliprdrClientContext* context,
-                                   CLIPRDR_TEMP_DIRECTORY* tempDirectory)
+                                   const CLIPRDR_TEMP_DIRECTORY* tempDirectory)
 {
 	int length;
 	wStream* s;
@@ -652,7 +652,7 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_client_format_list(CliprdrClientContext* context,
-                                       CLIPRDR_FORMAT_LIST* formatList)
+                                       const CLIPRDR_FORMAT_LIST* formatList)
 {
 	wStream* s;
 	UINT32 index;
@@ -782,14 +782,12 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_client_format_list_response(CliprdrClientContext* context,
-        CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+        const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
-	formatListResponse->msgType = CB_FORMAT_LIST_RESPONSE;
-	formatListResponse->dataLen = 0;
-	s = cliprdr_packet_new(formatListResponse->msgType,
-	                       formatListResponse->msgFlags, formatListResponse->dataLen);
+	s = cliprdr_packet_new(CB_FORMAT_LIST_RESPONSE,
+	                       formatListResponse->msgFlags, 0);
 
 	if (!s)
 	{
@@ -807,7 +805,7 @@ static UINT cliprdr_client_format_list_response(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_client_lock_clipboard_data(CliprdrClientContext* context,
-        CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
+        const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
@@ -832,7 +830,7 @@ static UINT cliprdr_client_lock_clipboard_data(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_client_unlock_clipboard_data(CliprdrClientContext* context,
-        CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+        const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
@@ -857,15 +855,12 @@ static UINT cliprdr_client_unlock_clipboard_data(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_client_format_data_request(CliprdrClientContext* context,
-        CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+        const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
-	formatDataRequest->msgType = CB_FORMAT_DATA_REQUEST;
-	formatDataRequest->msgFlags = 0;
-	formatDataRequest->dataLen = 4;
-	s = cliprdr_packet_new(formatDataRequest->msgType, formatDataRequest->msgFlags,
-	                       formatDataRequest->dataLen);
+
+	s = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST, 0, 4);
 
 	if (!s)
 	{
@@ -884,12 +879,12 @@ static UINT cliprdr_client_format_data_request(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_client_format_data_response(CliprdrClientContext* context,
-        CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+        const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
-	formatDataResponse->msgType = CB_FORMAT_DATA_RESPONSE;
-	s = cliprdr_packet_new(formatDataResponse->msgType,
+
+	s = cliprdr_packet_new(CB_FORMAT_DATA_RESPONSE,
 	                       formatDataResponse->msgFlags, formatDataResponse->dataLen);
 
 	if (!s)
@@ -910,7 +905,7 @@ static UINT cliprdr_client_format_data_response(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_client_file_contents_request(CliprdrClientContext* context,
-        CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+        const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
@@ -944,7 +939,7 @@ static UINT cliprdr_client_file_contents_request(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_client_file_contents_response(CliprdrClientContext* context,
-        CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
+        const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;

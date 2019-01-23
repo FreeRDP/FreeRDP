@@ -807,6 +807,7 @@ UwacSeat *UwacSeatNew(UwacDisplay *d, uint32_t id, uint32_t version) {
 		goto error_watch_timerfd;
 	}
 
+	ret->data_device = wl_data_device_manager_get_data_device(d->data_device_manager, ret->seat);
 	wl_list_insert(d->seats.prev, &ret->link);
 	return ret;
 
@@ -863,6 +864,12 @@ void UwacSeatDestroy(UwacSeat *s) {
 #endif
 			wl_keyboard_destroy(s->keyboard);
 	}
+
+	if (s->data_device)
+		wl_data_device_destroy(s->data_device);
+
+	if (s->data_source)
+		wl_data_source_destroy(s->data_source);
 
 	wl_list_remove(&s->link);
 	free(s);

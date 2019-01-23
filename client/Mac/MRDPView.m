@@ -418,7 +418,7 @@ DWORD WINAPI mac_client_thread(void* param)
 
 	if (fabsf(dy) > FLT_EPSILON)
 	{
-		flags = PTR_FLAGS_WHEEL;
+		flags = PTR_FLAGS_HWHEEL;
 		units = fabsf(dy) * 120;
 
 		if (dy < 0)
@@ -426,7 +426,7 @@ DWORD WINAPI mac_client_thread(void* param)
 	}
 	else if (fabsf(dx) > FLT_EPSILON)
 	{
-		flags = PTR_FLAGS_HWHEEL;
+		flags = PTR_FLAGS_WHEEL;
 		units = fabsf(dx) * 120;
 
 		if (dx > 0)

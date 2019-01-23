@@ -143,7 +143,7 @@ static UINT android_cliprdr_send_client_capabilities(CliprdrClientContext*
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT android_cliprdr_monitor_ready(CliprdrClientContext* cliprdr,
-        CLIPRDR_MONITOR_READY* monitorReady)
+        const CLIPRDR_MONITOR_READY* monitorReady)
 {
 	UINT rc;
 	androidContext* afc;
@@ -172,7 +172,7 @@ static UINT android_cliprdr_monitor_ready(CliprdrClientContext* cliprdr,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT android_cliprdr_server_capabilities(CliprdrClientContext* cliprdr,
-        CLIPRDR_CAPABILITIES* capabilities)
+        const CLIPRDR_CAPABILITIES* capabilities)
 {
 	UINT32 index;
 	CLIPRDR_CAPABILITY_SET* capabilitySet;
@@ -209,7 +209,7 @@ static UINT android_cliprdr_server_capabilities(CliprdrClientContext* cliprdr,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
-        CLIPRDR_FORMAT_LIST* formatList)
+        const CLIPRDR_FORMAT_LIST* formatList)
 {
 	UINT rc;
 	UINT32 index;
@@ -291,7 +291,7 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
  */
 static UINT android_cliprdr_server_format_list_response(
     CliprdrClientContext* cliprdr,
-    CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+    const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	if (!cliprdr || !formatListResponse)
 		return ERROR_INVALID_PARAMETER;
@@ -306,7 +306,7 @@ static UINT android_cliprdr_server_format_list_response(
  */
 static UINT android_cliprdr_server_lock_clipboard_data(CliprdrClientContext*
         cliprdr,
-        CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
+        const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
 	if (!cliprdr || !lockClipboardData)
 		return ERROR_INVALID_PARAMETER;
@@ -321,7 +321,7 @@ static UINT android_cliprdr_server_lock_clipboard_data(CliprdrClientContext*
  */
 static UINT android_cliprdr_server_unlock_clipboard_data(
     CliprdrClientContext* cliprdr,
-    CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+    const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
 	if (!cliprdr || !unlockClipboardData)
 		return ERROR_INVALID_PARAMETER;
@@ -336,7 +336,7 @@ static UINT android_cliprdr_server_unlock_clipboard_data(
  */
 static UINT android_cliprdr_server_format_data_request(CliprdrClientContext*
         cliprdr,
-        CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+        const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	UINT rc;
 	BYTE* data;
@@ -379,7 +379,7 @@ static UINT android_cliprdr_server_format_data_request(CliprdrClientContext*
  */
 static UINT android_cliprdr_server_format_data_response(
     CliprdrClientContext* cliprdr,
-    CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+    const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	BYTE* data;
 	UINT32 size;
@@ -455,7 +455,7 @@ static UINT android_cliprdr_server_format_data_response(
  */
 static UINT android_cliprdr_server_file_contents_request(
     CliprdrClientContext* cliprdr,
-    CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+    const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	if (!cliprdr || !fileContentsRequest)
 		return ERROR_INVALID_PARAMETER;
@@ -470,7 +470,7 @@ static UINT android_cliprdr_server_file_contents_request(
  */
 static UINT android_cliprdr_server_file_contents_response(
     CliprdrClientContext* cliprdr,
-    CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
+    const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
 	if (!cliprdr || !fileContentsResponse)
 		return ERROR_INVALID_PARAMETER;

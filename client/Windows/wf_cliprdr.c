@@ -1206,7 +1206,7 @@ static UINT cliprdr_send_tempdir(wfClipboard* clipboard)
 	return clipboard->context->TempDirectory(clipboard->context, &tempDirectory);
 }
 
-BOOL cliprdr_GetUpdatedClipboardFormats(wfClipboard* clipboard,
+static BOOL cliprdr_GetUpdatedClipboardFormats(wfClipboard* clipboard,
                                         PUINT lpuiFormats, UINT cFormats, PUINT pcFormatsOut)
 {
 	UINT index = 0;
@@ -1861,7 +1861,7 @@ static UINT wf_cliprdr_send_client_capabilities(wfClipboard* clipboard)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_cliprdr_monitor_ready(CliprdrClientContext* context,
-                                     CLIPRDR_MONITOR_READY* monitorReady)
+                                     const CLIPRDR_MONITOR_READY* monitorReady)
 {
 	UINT rc;
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
@@ -1884,7 +1884,7 @@ static UINT wf_cliprdr_monitor_ready(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_cliprdr_server_capabilities(CliprdrClientContext* context,
-        CLIPRDR_CAPABILITIES* capabilities)
+        const CLIPRDR_CAPABILITIES* capabilities)
 {
 	UINT32 index;
 	CLIPRDR_CAPABILITY_SET* capabilitySet;
@@ -1916,7 +1916,7 @@ static UINT wf_cliprdr_server_capabilities(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_cliprdr_server_format_list(CliprdrClientContext* context,
-        CLIPRDR_FORMAT_LIST* formatList)
+        const CLIPRDR_FORMAT_LIST* formatList)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
 	UINT32 i;
@@ -1989,7 +1989,7 @@ static UINT wf_cliprdr_server_format_list(CliprdrClientContext* context,
  */
 static UINT wf_cliprdr_server_format_list_response(CliprdrClientContext*
         context,
-        CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+        const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	(void)context;
 	(void)formatListResponse;
@@ -2006,7 +2006,7 @@ static UINT wf_cliprdr_server_format_list_response(CliprdrClientContext*
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_cliprdr_server_lock_clipboard_data(CliprdrClientContext* context,
-        CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
+        const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
 	(void)context;
 	(void)lockClipboardData;
@@ -2020,7 +2020,7 @@ static UINT wf_cliprdr_server_lock_clipboard_data(CliprdrClientContext* context,
  */
 static UINT wf_cliprdr_server_unlock_clipboard_data(CliprdrClientContext*
         context,
-        CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+        const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
 	(void)context;
 	(void)unlockClipboardData;
@@ -2067,7 +2067,7 @@ static BOOL wf_cliprdr_process_filename(wfClipboard* clipboard,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_cliprdr_server_format_data_request(CliprdrClientContext* context,
-        CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+        const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	UINT rc;
 	size_t size = 0;
@@ -2214,7 +2214,7 @@ static UINT wf_cliprdr_server_format_data_request(CliprdrClientContext* context,
  */
 static UINT wf_cliprdr_server_format_data_response(CliprdrClientContext*
         context,
-        CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+        const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	BYTE* data;
 	HANDLE hMem;
@@ -2268,7 +2268,7 @@ static UINT wf_cliprdr_server_format_data_response(CliprdrClientContext*
  */
 static UINT wf_cliprdr_server_file_contents_request(CliprdrClientContext*
         context,
-        CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+        const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	DWORD uSize = 0;
 	BYTE* pData = NULL;
@@ -2282,6 +2282,7 @@ static UINT wf_cliprdr_server_file_contents_request(CliprdrClientContext*
 	wfClipboard* clipboard;
 	UINT rc = ERROR_INTERNAL_ERROR;
 	UINT sRc;
+	UINT32 cbRequested;
 
 	if (!context || !fileContentsRequest)
 		return ERROR_INTERNAL_ERROR;
@@ -2291,10 +2292,11 @@ static UINT wf_cliprdr_server_file_contents_request(CliprdrClientContext*
 	if (!clipboard)
 		return ERROR_INTERNAL_ERROR;
 
+	cbRequested = fileContentsRequest->cbRequested;
 	if (fileContentsRequest->dwFlags == FILECONTENTS_SIZE)
-		fileContentsRequest->cbRequested = sizeof(UINT64);
+		cbRequested = sizeof(UINT64);
 
-	pData = (BYTE*) calloc(1, fileContentsRequest->cbRequested);
+	pData = (BYTE*) calloc(1, cbRequested);
 
 	if (!pData)
 		goto error;
@@ -2369,7 +2371,7 @@ static UINT wf_cliprdr_server_file_contents_request(CliprdrClientContext*
 			{
 				*((UINT32*) &pData[0]) = vStatStg.cbSize.LowPart;
 				*((UINT32*) &pData[4]) = vStatStg.cbSize.HighPart;
-				uSize = fileContentsRequest->cbRequested;
+				uSize = cbRequested;
 			}
 		}
 		else if (fileContentsRequest->dwFlags == FILECONTENTS_RANGE)
@@ -2381,7 +2383,7 @@ static UINT wf_cliprdr_server_file_contents_request(CliprdrClientContext*
 			hRet = IStream_Seek(pStreamStc, dlibMove, STREAM_SEEK_SET, &dlibNewPosition);
 
 			if (SUCCEEDED(hRet))
-				hRet = IStream_Read(pStreamStc, pData, fileContentsRequest->cbRequested,
+				hRet = IStream_Read(pStreamStc, pData, cbRequested,
 				                    (PULONG) &uSize);
 		}
 	}
@@ -2393,7 +2395,7 @@ static UINT wf_cliprdr_server_file_contents_request(CliprdrClientContext*
 			    clipboard->fileDescriptor[fileContentsRequest->listIndex]->nFileSizeLow;
 			*((UINT32*) &pData[4]) =
 			    clipboard->fileDescriptor[fileContentsRequest->listIndex]->nFileSizeHigh;
-			uSize = fileContentsRequest->cbRequested;
+			uSize = cbRequested;
 		}
 		else if (fileContentsRequest->dwFlags == FILECONTENTS_RANGE)
 		{
@@ -2401,7 +2403,7 @@ static UINT wf_cliprdr_server_file_contents_request(CliprdrClientContext*
 			bRet = wf_cliprdr_get_file_contents(
 			           clipboard->file_names[fileContentsRequest->listIndex], pData,
 			           fileContentsRequest->nPositionLow, fileContentsRequest->nPositionHigh,
-			           fileContentsRequest->cbRequested, &uSize);
+					   cbRequested, &uSize);
 
 			if (bRet == FALSE)
 			{
@@ -2442,7 +2444,7 @@ error:
  */
 static UINT wf_cliprdr_server_file_contents_response(CliprdrClientContext*
         context,
-        CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
+        const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
 	wfClipboard* clipboard;
 
