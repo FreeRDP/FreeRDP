@@ -252,8 +252,7 @@ static void wlf_cliprdr_add_client_format(wfClipboard* clipboard, const char* mi
 static UINT wlf_cliprdr_send_data_request(wfClipboard* clipboard,
         UINT32 formatId)
 {
-	CLIPRDR_FORMAT_DATA_REQUEST request;
-	ZeroMemory(&request, sizeof(CLIPRDR_FORMAT_DATA_REQUEST));
+	CLIPRDR_FORMAT_DATA_REQUEST request = { 0 };
 	request.requestedFormatId = formatId;
 	return clipboard->context->ClientFormatDataRequest(clipboard->context,
 	        &request);
@@ -267,8 +266,7 @@ static UINT wlf_cliprdr_send_data_request(wfClipboard* clipboard,
 static UINT wlf_cliprdr_send_data_response(wfClipboard* clipboard, const BYTE* data,
         size_t size)
 {
-	CLIPRDR_FORMAT_DATA_RESPONSE response;
-	ZeroMemory(&response, sizeof(CLIPRDR_FORMAT_DATA_RESPONSE));
+	CLIPRDR_FORMAT_DATA_RESPONSE response = { 0 };
 	response.msgFlags = (data) ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
 	response.dataLen = size;
 	response.requestedFormatData = data;
@@ -691,8 +689,7 @@ fail:
 static UINT wlf_cliprdr_server_file_size_request(wfClipboard* clipboard,
         const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	wClipboardFileSizeRequest request;
-	ZeroMemory(&request, sizeof(request));
+	wClipboardFileSizeRequest request = { 0 };
 	request.streamId = fileContentsRequest->streamId;
 	request.listIndex = fileContentsRequest->listIndex;
 
@@ -708,8 +705,7 @@ static UINT wlf_cliprdr_server_file_size_request(wfClipboard* clipboard,
 static UINT wlf_cliprdr_server_file_range_request(wfClipboard* clipboard,
         const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	wClipboardFileRangeRequest request;
-	ZeroMemory(&request, sizeof(request));
+	wClipboardFileRangeRequest request = { 0 };
 	request.streamId = fileContentsRequest->streamId;
 	request.listIndex = fileContentsRequest->listIndex;
 	request.nPositionLow = fileContentsRequest->nPositionLow;
@@ -721,8 +717,7 @@ static UINT wlf_cliprdr_server_file_range_request(wfClipboard* clipboard,
 static UINT wlf_cliprdr_send_file_contents_failure(CliprdrClientContext* context,
         const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	CLIPRDR_FILE_CONTENTS_RESPONSE response;
-	ZeroMemory(&response, sizeof(response));
+	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = fileContentsRequest->streamId;
 	response.dwFlags = fileContentsRequest->dwFlags;
@@ -765,9 +760,8 @@ static UINT wlf_cliprdr_server_file_contents_request(CliprdrClientContext* conte
 static UINT wlf_cliprdr_clipboard_file_size_success(wClipboardDelegate* delegate,
         const wClipboardFileSizeRequest* request, UINT64 fileSize)
 {
-	CLIPRDR_FILE_CONTENTS_RESPONSE response;
+	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	wfClipboard* clipboard = delegate->custom;
-	ZeroMemory(&response, sizeof(response));
 	response.msgFlags = CB_RESPONSE_OK;
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_SIZE;
@@ -779,9 +773,8 @@ static UINT wlf_cliprdr_clipboard_file_size_success(wClipboardDelegate* delegate
 static UINT wlf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate,
         const wClipboardFileSizeRequest* request, UINT errorCode)
 {
-	CLIPRDR_FILE_CONTENTS_RESPONSE response;
+	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	wfClipboard* clipboard = delegate->custom;
-	ZeroMemory(&response, sizeof(response));
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_SIZE;
@@ -791,9 +784,8 @@ static UINT wlf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate
 static UINT wlf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegate,
         const wClipboardFileRangeRequest* request, const BYTE* data, UINT32 size)
 {
-	CLIPRDR_FILE_CONTENTS_RESPONSE response;
+	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	wfClipboard* clipboard = delegate->custom;
-	ZeroMemory(&response, sizeof(response));
 	response.msgFlags = CB_RESPONSE_OK;
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_RANGE;
@@ -805,9 +797,8 @@ static UINT wlf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegat
 static UINT wlf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate,
         const wClipboardFileRangeRequest* request, UINT errorCode)
 {
-	CLIPRDR_FILE_CONTENTS_RESPONSE response;
+	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	wfClipboard* clipboard = delegate->custom;
-	ZeroMemory(&response, sizeof(response));
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_RANGE;

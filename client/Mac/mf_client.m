@@ -148,7 +148,8 @@ void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags,
 	// Convert to windows coordinates
 	y = [view frame].size.height - y;
 
-	mf_scale_mouse_coordinates(mfc, &x, &y);
+	if ((flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL)) == 0)
+		mf_scale_mouse_coordinates(mfc, &x, &y);
 	freerdp_input_send_mouse_event(input, flags, x, y);
 }
 
