@@ -281,6 +281,9 @@ BOOL wlf_cliprdr_handle_event(wfClipboard* clipboard, const UwacClipboardEvent* 
 	if (!clipboard || !event)
 		return FALSE;
 
+	if (!clipboard->context)
+		return TRUE;
+
 	switch (event->type)
 	{
 		case UWAC_EVENT_CLIPBOARD_AVAILABLE:
