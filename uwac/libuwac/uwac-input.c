@@ -130,6 +130,7 @@ static void keyboard_handle_enter(void *data, struct wl_keyboard *keyboard, uint
 		return;
 
 	event->window = input->keyboard_focus = (UwacWindow *)wl_surface_get_user_data(surface);
+	event->seat = input;
 
 	/* look for keys that have been released */
 	found = false;
@@ -819,6 +820,7 @@ error_xkb_context:
 }
 
 void UwacSeatDestroy(UwacSeat *s) {
+	UwacSeatInhibitShortcuts(s, false);
 	if (s->seat) {
 #ifdef WL_SEAT_RELEASE_SINCE_VERSION
 		if (s->seat_version >= WL_SEAT_RELEASE_SINCE_VERSION)
@@ -872,4 +874,20 @@ const char *UwacSeatGetName(const UwacSeat *seat) {
 
 UwacSeatId UwacSeatGetId(const UwacSeat *seat) {
 	return seat->seat_id;
+}
+
+UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* s, bool inhibit)
+{
+	if (!s)
+		return UWAC_ERROR_CLOSED;
+
+	if (s->keyboard_inhibitor)
+		zwp_keyboard_shortcuts_inhibitor_v1_destroy(s->keyboard_inhibitor);
+	if (inhibit && s->display && s->display->keyboard_inhibit_manager)
+		s->keyboard_inhibitor = zwp_keyboard_shortcuts_inhibit_manager_v1_inhibit_shortcuts(s->display->keyboard_inhibit_manager,
+		                                                                                    s->keyboard_focus->surface, s->seat);
+
+	if (!s->keyboard_inhibitor)
+		return UWAC_ERROR_INTERNAL;
+	return UWAC_SUCCESS;
 }

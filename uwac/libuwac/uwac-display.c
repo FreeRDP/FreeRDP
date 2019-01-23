@@ -103,23 +103,26 @@ struct wl_shm_listener shm_listener =
 	cb_shm_format
 };
 
-static void xdg_shell_ping(void* data, struct xdg_shell* shell, uint32_t serial)
+static void xdg_shell_ping(void *data,
+                                       struct xdg_wm_base *xdg_wm_base,
+                                       uint32_t serial)
 {
-	xdg_shell_pong(shell, serial);
+	xdg_wm_base_pong(xdg_wm_base, serial);
 }
 
-static const struct xdg_shell_listener xdg_shell_listener =
+static const struct xdg_wm_base_listener xdg_wm_base_listener =
 {
 	xdg_shell_ping,
 };
 
 #ifdef BUILD_FULLSCREEN_SHELL
-static void fullscreen_capability(void* data, struct _wl_fullscreen_shell* _wl_fullscreen_shell,
-                                  uint32_t capabilty)
+static void fullscreen_capability(void *data,
+                                                     struct zwp_fullscreen_shell_v1 *zwp_fullscreen_shell_v1,
+                                                     uint32_t capability)
 {
 }
 
-static const struct _wl_fullscreen_shell_listener fullscreen_shell_listener =
+static const struct zwp_fullscreen_shell_v1_listener fullscreen_shell_listener =
 {
 	fullscreen_capability,
 };
@@ -208,26 +211,37 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 		d->shell = wl_registry_bind(registry, id, &wl_shell_interface, min(TARGET_SHELL_INTERFACE,
 		                            version));
 	}
-	else if (strcmp(interface, "xdg_shell") == 0)
+	else if (strcmp(interface, "xdg_wm_base") == 0)
 	{
-		d->xdg_shell = wl_registry_bind(registry, id, &xdg_shell_interface, 1);
-		xdg_shell_use_unstable_version(d->xdg_shell, TARGET_XDG_VERSION);
-		xdg_shell_add_listener(d->xdg_shell, &xdg_shell_listener, d);
-#if BUILD_IVI
+		d->xdg_base = wl_registry_bind(registry, id, &xdg_wm_base_interface, 1);
+		xdg_wm_base_add_listener(d->xdg_base, &xdg_wm_base_listener, d);
 	}
+	else if (strcmp(interface, "zwp_keyboard_shortcuts_inhibit_manager_v1") == 0)
+	{
+		d->keyboard_inhibit_manager = wl_registry_bind(registry, id, &zwp_keyboard_shortcuts_inhibit_manager_v1_interface, 1);
+	}
+	else if (strcmp(interface, "zxdg_decoration_manager_v1") == 0)
+	{
+		d->deco_manager = wl_registry_bind(registry, id, &zxdg_decoration_manager_v1_interface, 1);
+	}
+	else if (strcmp(interface, "org_kde_kwin_server_decoration_manager") == 0)
+	{
+		d->kde_deco_manager = wl_registry_bind(registry, id, &org_kde_kwin_server_decoration_manager_interface, 1);
+	}
+#if BUILD_IVI
 	else if (strcmp(interface, "ivi_application") == 0)
 	{
 		d->ivi_application = wl_registry_bind(registry, id, &ivi_application_interface, 1);
+	}
 #endif
 #if BUILD_FULLSCREEN_SHELL
-	}
-	else if (strcmp(interface, "_wl_fullscreen_shell") == 0)
+	else if (strcmp(interface, "zwp_fullscreen_shell_v1") == 0)
 	{
-		d->fullscreen_shell = wl_registry_bind(registry, id, &_wl_fullscreen_shell_interface, 1);
-		_wl_fullscreen_shell_add_listener(d->fullscreen_shell, &fullscreen_shell_listener, d);
+		d->fullscreen_shell = wl_registry_bind(registry, id, &zwp_fullscreen_shell_v1_interface, 1);
+		zwp_fullscreen_shell_v1_add_listener(d->fullscreen_shell, &fullscreen_shell_listener, d);
+	}
 #endif
 #if 0
-	}
 	else if (strcmp(interface, "text_cursor_position") == 0)
 	{
 		d->text_cursor_position = wl_registry_bind(registry, id, &text_cursor_position_interface, 1);
@@ -240,7 +254,6 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	{
 		d->subcompositor = wl_registry_bind(registry, id, &wl_subcompositor_interface, 1);
 #endif
-	}
 }
 
 static void registry_handle_global_remove(void* data, struct wl_registry* registry, uint32_t name)
@@ -510,10 +523,19 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 	if (display->compositor)
 		wl_compositor_destroy(display->compositor);
 
+	if (display->keyboard_inhibit_manager)
+		zwp_keyboard_shortcuts_inhibit_manager_v1_destroy(display->keyboard_inhibit_manager);
+
+	if (display->deco_manager)
+		zxdg_decoration_manager_v1_destroy(display->deco_manager);
+
+	if (display->kde_deco_manager)
+		org_kde_kwin_server_decoration_manager_destroy(display->kde_deco_manager);
+
 #ifdef BUILD_FULLSCREEN_SHELL
 
 	if (display->fullscreen_shell)
-		_wl_fullscreen_shell_destroy(display->fullscreen_shell);
+		zwp_fullscreen_shell_v1_destroy(display->fullscreen_shell);
 
 #endif
 #ifdef BUILD_IVI
@@ -523,8 +545,11 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 
 #endif
 
-	if (display->xdg_shell)
-		xdg_shell_destroy(display->xdg_shell);
+	if (display->xdg_toplevel)
+		xdg_toplevel_destroy(display->xdg_toplevel);
+
+	if (display->xdg_base)
+		xdg_wm_base_destroy(display->xdg_base);
 
 	if (display->shell)
 		wl_shell_destroy(display->shell);

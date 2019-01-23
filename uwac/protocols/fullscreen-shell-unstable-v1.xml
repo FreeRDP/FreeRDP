@@ -1,6 +1,8 @@
-<protocol name="fullscreen_shell">
-  <interface name="_wl_fullscreen_shell" version="1">
-    <description summary="Displays a single surface per output">
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="fullscreen_shell_unstable_v1">
+
+  <interface name="zwp_fullscreen_shell_v1" version="1">
+    <description summary="displays a single surface per output">
       Displays a single surface per output.
 
       This interface provides a mechanism for a single client to display
@@ -14,7 +16,7 @@
       details about scaling and mode switches.
 
       The client can have at most one surface per output at any time.
-      Requesting a surface be presented on an output that already has a
+      Requesting a surface to be presented on an output that already has a
       surface replaces the previously presented surface.  Presenting a null
       surface removes its content and effectively disables the output.
       Exactly what happens when an output is "disabled" is
@@ -25,11 +27,20 @@
       until either the client removes it or the compositor destroys the
       output.  This way, the client can update the output's contents by
       simply attaching a new buffer.
+
+      Warning! The protocol described in this file is experimental and
+      backward incompatible changes may be made. Backward compatible changes
+      may be added together with the corresponding interface version bump.
+      Backward incompatible changes are done by bumping the version number in
+      the protocol and interface names and resetting the interface version.
+      Once the protocol is to be declared stable, the 'z' prefix and the
+      version number in the protocol and interface names are removed and the
+      interface version number is reset.
     </description>
 
     <request name="release" type="destructor">
       <description summary="release the wl_fullscreen_shell interface">
-	Release the binding from the wl_fullscreen_shell interface
+	Release the binding from the wl_fullscreen_shell interface.
 
 	This destroys the server-side object and frees this binding.  If
 	the client binds to wl_fullscreen_shell multiple times, it may wish
@@ -43,7 +54,7 @@
 	are advertised one-at-a-time when the wl_fullscreen_shell interface is
 	bound.  See the wl_fullscreen_shell.capability event for more details.
 
-	ARBITRARY_MODE:
+	ARBITRARY_MODES:
 	This is a hint to the client that indicates that the compositor is
 	capable of setting practically any mode on its outputs.  If this
 	capability is provided, wl_fullscreen_shell.present_surface_for_mode
@@ -76,7 +87,7 @@
 	wl_display.sync request immediately after binding to ensure that they
 	receive all the capability events.
       </description>
-      <arg name="capabilty" type="uint"/>
+      <arg name="capability" type="uint"/>
     </event>
 
     <enum name="present_method">
@@ -160,18 +171,18 @@
       <arg name="surface" type="object" interface="wl_surface"/>
       <arg name="output" type="object" interface="wl_output"/>
       <arg name="framerate" type="int"/>
-      <arg name="feedback" type="new_id" interface="_wl_fullscreen_shell_mode_feedback"/>
+      <arg name="feedback" type="new_id" interface="zwp_fullscreen_shell_mode_feedback_v1"/>
     </request>
 
     <enum name="error">
       <description summary="wl_fullscreen_shell error values">
-	These errors can be emitted in response to wl_fullscreen_shell requests
+	These errors can be emitted in response to wl_fullscreen_shell requests.
       </description>
       <entry name="invalid_method" value="0" summary="present_method is not known"/>
     </enum>
   </interface>
 
-  <interface name="_wl_fullscreen_shell_mode_feedback" version="1">
+  <interface name="zwp_fullscreen_shell_mode_feedback_v1" version="1">
     <event name="mode_successful">
       <description summary="mode switch succeeded">
 	This event indicates that the attempted mode switch operation was
@@ -182,16 +193,18 @@
 	wl_fullscreen_shell_mode_feedback object.
       </description>
     </event>
+
     <event name="mode_failed">
       <description summary="mode switch failed">
 	This event indicates that the attempted mode switch operation
-	failed. This may be because the requested output mode is not
+	failed.  This may be because the requested output mode is not
 	possible or it may mean that the compositor does not want to allow it.
 
 	Upon receiving this event, the client should destroy the
 	wl_fullscreen_shell_mode_feedback object.
       </description>
     </event>
+
     <event name="present_cancelled">
       <description summary="mode switch cancelled">
 	This event indicates that the attempted mode switch operation was
@@ -203,4 +216,5 @@
       </description>
     </event>
   </interface>
+
 </protocol>

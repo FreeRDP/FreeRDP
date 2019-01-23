@@ -28,11 +28,15 @@
 #include <stdbool.h>
 #include <wayland-client.h>
 #include "xdg-shell-client-protocol.h"
+#include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
+#include "xdg-decoration-unstable-v1-client-protocol.h"
+#include "server-decoration-client-protocol.h"
+
 #ifdef BUILD_IVI
 #include "ivi-application-client-protocol.h"
 #endif
 #ifdef BUILD_FULLSCREEN_SHELL
-#include "fullscreen-shell-client-protocol.h"
+#include "fullscreen-shell-unstable-v1-client-protocol.h"
 #endif
 
 #ifdef HAVE_PIXMAN_REGION
@@ -84,12 +88,16 @@ struct uwac_display {
 	struct wl_compositor *compositor;
 	struct wl_subcompositor *subcompositor;
 	struct wl_shell *shell;
-	struct xdg_shell *xdg_shell;
+	struct xdg_toplevel *xdg_toplevel;
+	struct xdg_wm_base *xdg_base;
+	struct zwp_keyboard_shortcuts_inhibit_manager_v1 *keyboard_inhibit_manager;
+	struct zxdg_decoration_manager_v1 *deco_manager;
+	struct org_kde_kwin_server_decoration_manager *kde_deco_manager;
 #ifdef BUILD_IVI
 	struct ivi_application *ivi_application;
 #endif
 #ifdef BUILD_FULLSCREEN_SHELL
-	struct _wl_fullscreen_shell *fullscreen_shell;
+	struct zwp_fullscreen_shell_v1 *fullscreen_shell;
 #endif
 
 	struct wl_shm *shm;
@@ -150,6 +158,7 @@ struct uwac_seat {
 	struct wl_keyboard *keyboard;
 	struct wl_touch *touch;
 	struct xkb_context *xkb_context;
+	struct zwp_keyboard_shortcuts_inhibitor_v1 *keyboard_inhibitor;
 
 	struct {
 		struct xkb_keymap *keymap;
@@ -210,6 +219,9 @@ struct uwac_window {
 	struct wl_surface *surface;
 	struct wl_shell_surface *shell_surface;
 	struct xdg_surface *xdg_surface;
+	struct xdg_toplevel *xdg_toplevel;
+	struct zxdg_toplevel_decoration_v1 *deco;
+	struct org_kde_kwin_server_decoration *kde_deco;
 #ifdef BUILD_IVI
 	struct ivi_surface *ivi_surface;
 #endif
