@@ -141,6 +141,15 @@ static void display_destroy_seat(UwacDisplay* d, uint32_t name)
 	}
 }
 
+static void UwacSeatRegisterDDM(UwacSeat *seat)
+{
+	UwacDisplay *d = seat->display;
+	if (!d->data_device_manager)
+		return;
+
+	seat->data_device = wl_data_device_manager_get_data_device(d->data_device_manager, seat->seat);
+}
+
 static void registry_handle_global(void* data, struct wl_registry* registry, uint32_t id,
                                    const char* interface, uint32_t version)
 {
@@ -191,6 +200,7 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 			return;
 		}
 
+		UwacSeatRegisterDDM(seat);
 		UwacSeatRegisterClipboard(seat);
 		ev = (UwacSeatNewEvent*)UwacDisplayNewEvent(d, UWAC_EVENT_NEW_SEAT);
 
@@ -204,8 +214,15 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	}
 	else if (strcmp(interface, "wl_data_device_manager") == 0)
 	{
+		UwacSeat* seat;
+
 		d->data_device_manager = wl_registry_bind(registry, id, &wl_data_device_manager_interface,
 		                         min(TARGET_DDM_INTERFACE, version));
+
+		wl_list_for_each(seat, &d->seats, link)
+		{
+			UwacSeatRegisterDDM(seat);
+		}
 	}
 	else if (strcmp(interface, "wl_shell") == 0)
 	{
