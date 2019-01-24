@@ -807,7 +807,6 @@ UwacSeat *UwacSeatNew(UwacDisplay *d, uint32_t id, uint32_t version) {
 		goto error_watch_timerfd;
 	}
 
-	ret->data_device = wl_data_device_manager_get_data_device(d->data_device_manager, ret->seat);
 	wl_list_insert(d->seats.prev, &ret->link);
 	return ret;
 
@@ -819,6 +818,7 @@ error_xkb_context:
 	free(ret);
 	return NULL;
 }
+
 
 void UwacSeatDestroy(UwacSeat *s) {
 	UwacSeatInhibitShortcuts(s, false);
