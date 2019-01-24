@@ -150,6 +150,9 @@ UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 	if (!s)
 		return UWAC_ERROR_INTERNAL;
 
+	if (!s->display->data_device_manager || !s->data_device)
+		return UWAC_NOT_ENOUGH_RESOURCES;
+
 	UwacRegisterDeviceListener(s);
 
 	rc = UwacCreateDataSource(s);
