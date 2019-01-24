@@ -42,8 +42,6 @@ struct wlf_context
 	HANDLE displayHandle;
 	UwacWindow* window;
 
-	BOOL waitingFrameDone;
-	BOOL haveDamage;
 	BOOL fullscreen;
 
 	/* Channels */

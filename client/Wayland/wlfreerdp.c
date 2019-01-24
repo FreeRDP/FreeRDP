@@ -40,21 +40,6 @@
 #include "wlf_disp.h"
 #include "wlf_channels.h"
 
-static BOOL wl_update_content(wlfContext* context_w)
-{
-	if (!context_w)
-		return FALSE;
-
-	if (!context_w->waitingFrameDone && context_w->haveDamage)
-	{
-		UwacWindowSubmitBuffer(context_w->window, true);
-		context_w->waitingFrameDone = TRUE;
-		context_w->haveDamage = FALSE;
-	}
-
-	return TRUE;
-}
-
 static BOOL wl_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
@@ -75,6 +60,7 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 {
 	rdpGdi* gdi;
 	char* data;
+	size_t baseOffset;
 	UINT32 i, x, y, w, h;
 
 	if (!context_w)
@@ -97,9 +83,10 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	if (!gdi)
 		return FALSE;
 
+	baseOffset = y * gdi->stride + x * GetBytesPerPixel(gdi->dstFormat);
 	for (i = 0; i < h; i++)
 	{
-		size_t offset = (i + y) * gdi->stride + x * GetBytesPerPixel(gdi->dstFormat);
+		size_t offset = i * gdi->stride + baseOffset;
 		memcpy(data + offset, gdi->primary_buffer + offset,
 		       w * GetBytesPerPixel(gdi->dstFormat));
 	}
@@ -107,8 +94,10 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)
 		return FALSE;
 
-	context_w->haveDamage = TRUE;
-	return wl_update_content(context_w);
+	if (UwacWindowSubmitBuffer(context_w->window, true) != UWAC_SUCCESS)
+		return FALSE;
+
+	return TRUE;
 }
 
 static BOOL wl_end_paint(rdpContext* context)
@@ -245,7 +234,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	if (!context->clipboard)
 		return FALSE;
 
-	return wl_update_buffer(context, 0, 0, gdi->width, gdi->height);
+	return wl_refresh_display(context);
 }
 
 static void wl_post_disconnect(freerdp* instance)
@@ -286,14 +275,6 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 		switch (event.type)
 		{
 			case UWAC_EVENT_FRAME_DONE:
-				if (!instance)
-					continue;
-
-				context->waitingFrameDone = FALSE;
-
-				if (context->haveDamage && !wl_update_content(context))
-					return FALSE;
-
 				break;
 
 			case UWAC_EVENT_POINTER_ENTER:
