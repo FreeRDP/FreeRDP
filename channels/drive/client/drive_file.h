@@ -40,7 +40,7 @@ struct _DRIVE_FILE
 	HANDLE file_handle;
 	HANDLE find_handle;
 	WIN32_FIND_DATAW find_data;
-	WCHAR* basepath;
+	const WCHAR* basepath;
 	WCHAR* fullpath;
 	WCHAR* filename;
 	BOOL delete_pending;
