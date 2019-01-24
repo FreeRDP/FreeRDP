@@ -71,15 +71,22 @@ static BOOL wl_begin_paint(rdpContext* context)
 	return TRUE;
 }
 
-static BOOL wl_update_buffer(wlfContext* context_w, UINT32 x, UINT32 y, UINT32 w, UINT32 h)
+static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw, INT32 ih)
 {
 	rdpGdi* gdi;
 	char* data;
-	UINT32 i;
+	UINT32 i, x, y, w, h;
 
 	if (!context_w)
 		return FALSE;
 
+	if ((ix < 0) || (iy < 0) || (iw < 0) || (ih < 0))
+		return FALSE;
+
+	x = (UINT32)ix;
+	y = (UINT32)iy;
+	w = (UINT32)iw;
+	h = (UINT32)ih;
 	data = UwacWindowGetDrawingBuffer(context_w->window);
 
 	if (!data)
@@ -92,10 +99,8 @@ static BOOL wl_update_buffer(wlfContext* context_w, UINT32 x, UINT32 y, UINT32 w
 
 	for (i = 0; i < h; i++)
 	{
-		memcpy(data + ((i + y) * (gdi->width * GetBytesPerPixel(
-		                              gdi->dstFormat))) + x * GetBytesPerPixel(gdi->dstFormat),
-		       gdi->primary_buffer + ((i + y) * (gdi->width * GetBytesPerPixel(
-		                                  gdi->dstFormat))) + x * GetBytesPerPixel(gdi->dstFormat),
+		size_t offset = (i + y) * gdi->stride + x * GetBytesPerPixel(gdi->dstFormat);
+		memcpy(data + offset, gdi->primary_buffer + offset,
 		       w * GetBytesPerPixel(gdi->dstFormat));
 	}
 
@@ -111,7 +116,7 @@ static BOOL wl_end_paint(rdpContext* context)
 	rdpGdi* gdi;
 	wlfContext* context_w;
 	INT32 x, y;
-	UINT32 w, h;
+	INT32 w, h;
 
 	if (!context || !context->gdi || !context->gdi->primary)
 		return FALSE;
@@ -203,6 +208,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	rdpGdi* gdi;
 	UwacWindow* window;
 	wlfContext* context;
+	UINT32 w, h;
 
 	if (!instance || !instance->context)
 		return FALSE;
@@ -212,19 +218,20 @@ static BOOL wl_post_connect(freerdp* instance)
 
 	gdi = instance->context->gdi;
 
-	if (!gdi)
+	if (!gdi || (gdi->width < 0) || (gdi->height < 0))
 		return FALSE;
 
+	w = (UINT32)gdi->width;
+	h = (UINT32)gdi->height;
 	context = (wlfContext*) instance->context;
-	context->window = window = UwacCreateWindowShm(context->display, gdi->width,
-	                           gdi->height, WL_SHM_FORMAT_XRGB8888);
+	context->window = window = UwacCreateWindowShm(context->display, w, h, WL_SHM_FORMAT_XRGB8888);
 
 	if (!window)
 		return FALSE;
 
 	UwacWindowSetFullscreenState(window, NULL, instance->context->settings->Fullscreen);
 	UwacWindowSetTitle(window, "FreeRDP");
-	UwacWindowSetOpaqueRegion(context->window, 0, 0, gdi->width, gdi->height);
+	UwacWindowSetOpaqueRegion(context->window, 0, 0, w, h);
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
 	instance->update->DesktopResize = wl_resize_display;
@@ -487,11 +494,13 @@ static void wlf_client_free(freerdp* instance, rdpContext* context)
 
 static int wfl_client_start(rdpContext* context)
 {
+	WINPR_UNUSED(context);
 	return 0;
 }
 
 static int wfl_client_stop(rdpContext* context)
 {
+	WINPR_UNUSED(context);
 	return 0;
 }
 
@@ -513,7 +522,7 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 int main(int argc, char* argv[])
 {
 	int rc = -1;
-	DWORD status;
+	int status;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	rdpContext* context;
 	RdpClientEntry(&clientEntryPoints);
