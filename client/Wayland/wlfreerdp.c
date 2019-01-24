@@ -60,8 +60,12 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 {
 	rdpGdi* gdi;
 	char* data;
-	size_t baseOffset;
+	size_t baseSrcOffset;
+	size_t baseDstOffset;
 	UINT32 i, x, y, w, h;
+	UwacSize geometry;
+	size_t stride;
+	UwacReturnCode rc;
 
 	if (!context_w)
 		return FALSE;
@@ -73,9 +77,10 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	y = (UINT32)iy;
 	w = (UINT32)iw;
 	h = (UINT32)ih;
+	rc = UwacWindowGetDrawingBufferGeometry(context_w->window, &geometry, &stride);
 	data = UwacWindowGetDrawingBuffer(context_w->window);
 
-	if (!data)
+	if (!data || (rc != UWAC_SUCCESS))
 		return FALSE;
 
 	gdi = context_w->context.gdi;
@@ -83,12 +88,19 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	if (!gdi)
 		return FALSE;
 
-	baseOffset = y * gdi->stride + x * GetBytesPerPixel(gdi->dstFormat);
-	for (i = 0; i < h; i++)
+	/* Ignore output if the surface size does not match. */
+	if ((x > geometry.width) || (y > geometry.height))
+		return TRUE;
+
+	baseSrcOffset = y * gdi->stride + x * GetBytesPerPixel(gdi->dstFormat);
+	baseDstOffset = y * stride + x * 4;
+	for (i = 0; i < MIN(h, geometry.height - y); i++)
 	{
-		size_t offset = i * gdi->stride + baseOffset;
-		memcpy(data + offset, gdi->primary_buffer + offset,
-		       w * GetBytesPerPixel(gdi->dstFormat));
+		const size_t srcOffset = i * gdi->stride + baseSrcOffset;
+		const size_t dstOffset = i * stride + baseDstOffset;
+
+		memcpy(data + dstOffset, gdi->primary_buffer + srcOffset,
+		       MIN(w, geometry.width - x) * GetBytesPerPixel(gdi->dstFormat));
 	}
 
 	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)

@@ -670,6 +670,22 @@ UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, u
 	return UWAC_SUCCESS;
 }
 
+UwacReturnCode UwacWindowGetDrawingBufferGeometry(UwacWindow* window, UwacSize* geometry, size_t* stride)
+{
+	if (!window || !window->drawingBuffer)
+		return UWAC_ERROR_INTERNAL;
+
+	if (geometry)
+	{
+		geometry->width = window->width;
+		geometry->height = window->height;
+	}
+
+	if (stride)
+		*stride = window->stride;
+
+	return UWAC_SUCCESS;
+}
 
 UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNextFrame)
 {
