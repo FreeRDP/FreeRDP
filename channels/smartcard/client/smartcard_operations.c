@@ -1119,6 +1119,11 @@ static LONG smartcard_StatusA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	if ((status = smartcard_unpack_status_call(smartcard, irp->input, call)))
 		WLog_ERR(TAG, "smartcard_unpack_status_call failed with error %"PRId32"", status);
 
+	/*
+	 * cbAtrLen is unused and should be ignored upon receipt according to MS-RDPESC 2.2.2.18
+	 * set it to the maximum value possible
+	 */
+	call->cbAtrLen = 32;
 	smartcard_trace_status_call(smartcard, call, FALSE);
 	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
 	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
@@ -1129,34 +1134,59 @@ static LONG smartcard_StatusA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 {
 	LONG status;
 	Status_Return ret = { 0 };
-	DWORD cchReaderLen = 0;
-	DWORD cbAtrLen = 0;
+	DWORD cchReaderLen = SCARD_AUTOALLOCATE;
 	LPSTR mszReaderNames = NULL;
+	BYTE* pbAtr;
+	BYTE* allocatedAttr = NULL;
+	BYTE* allocatedReaderNames = NULL;
 	IRP* irp = operation->irp;
 	Status_Call* call = operation->call;
-	ZeroMemory(ret.pbAtr, 32);
-	call->cbAtrLen = 32;
-	cbAtrLen = call->cbAtrLen;
+	ret.cbAtrLen = SCARD_AUTOALLOCATE;
 
-	if (call->fmszReaderNamesIsNULL)
-		cchReaderLen = 0;
+	/* https://docs.microsoft.com/en-us/windows/desktop/api/winscard/nf-winscard-scardstatusa
+	 * basically means if SCARD_AUTOALLOCATE is set, then the arguments change
+	 * and become pointer to pointer
+	 */
+	if (ret.cbAtrLen == SCARD_AUTOALLOCATE)
+		pbAtr = (LPBYTE)&allocatedAttr;
 	else
-		cchReaderLen = SCARD_AUTOALLOCATE;
+		pbAtr = ret.pbAtr;
+
+	if (!call->fmszReaderNamesIsNULL && (cchReaderLen == SCARD_AUTOALLOCATE))
+		mszReaderNames = (LPSTR)&allocatedReaderNames;
 
 	status = ret.ReturnCode = SCardStatusA(operation->hCard,
-	                                       call->fmszReaderNamesIsNULL ? NULL : (LPSTR) &mszReaderNames,
-	                                       &cchReaderLen, &ret.dwState, &ret.dwProtocol,
-	                                       cbAtrLen ? (BYTE*) &ret.pbAtr : NULL, &cbAtrLen);
+	                                       mszReaderNames,
+	                                       &cchReaderLen,
+	                                       &ret.dwState, &ret.dwProtocol,
+	                                       pbAtr,
+	                                       &ret.cbAtrLen);
 
+	/* Since the buffer is not provided by the call, use SCARD_AUTOALLOCATE
+	 * locally. Check the supplied length here to avoid returning a buffer
+	 * that is too large for the request. */
 	if (status == SCARD_S_SUCCESS)
 	{
 		if (!call->fmszReaderNamesIsNULL)
-			ret.mszReaderNames = (BYTE*) mszReaderNames;
+		{
+			if (cchReaderLen > call->cchReaderLen)
+				status = ret.ReturnCode = SCARD_E_INSUFFICIENT_BUFFER;
+		}
+	}
 
+	if (status == SCARD_S_SUCCESS)
+	{
 		ret.cBytes = cchReaderLen;
+		ret.mszReaderNames = (BYTE*)allocatedReaderNames;
 
-		if (call->cbAtrLen)
-			ret.cbAtrLen = cbAtrLen;
+		if (ret.cbAtrLen > 32)
+		{
+			WLog_WARN(TAG, "smartcard_StatusA_Call cbAtrLen > 32 (%"PRId32")", ret.cbAtrLen);
+			ret.cbAtrLen = 32;
+		}
+
+		if (allocatedAttr)
+			memcpy(ret.pbAtr, pbAtr, ret.cbAtrLen);
 	}
 
 	smartcard_trace_status_return(smartcard, &ret, FALSE);
@@ -1167,10 +1197,11 @@ static LONG smartcard_StatusA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 		return status;
 	}
 
-	if (mszReaderNames)
-	{
-		SCardFreeMemory(operation->hContext, mszReaderNames);
-	}
+	if (allocatedReaderNames)
+		SCardFreeMemory(operation->hContext, allocatedReaderNames);
+
+	if (allocatedAttr)
+		SCardFreeMemory(operation->hContext, allocatedAttr);
 
 	return ret.ReturnCode;
 }
@@ -1188,6 +1219,11 @@ static LONG smartcard_StatusW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	if ((status = smartcard_unpack_status_call(smartcard, irp->input, call)))
 		WLog_ERR(TAG, "smartcard_unpack_status_call failed with error %"PRId32"", status);
 
+	/*
+	 * cbAtrLen is unused and should be ignored upon receipt according to MS-RDPESC 2.2.2.18
+	 * set it to the maximum value possible
+	 */
+	call->cbAtrLen = 32;
 	smartcard_trace_status_call(smartcard, call, TRUE);
 	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
 	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
@@ -1197,42 +1233,61 @@ static LONG smartcard_StatusW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	Status_Return ret;
-	DWORD cchReaderLen = 0;
+	Status_Return ret = { 0 };
+	DWORD cchReaderLen = SCARD_AUTOALLOCATE;
+	LPWSTR allocatedReaderNames = NULL;
 	LPWSTR mszReaderNames = NULL;
+	BYTE* allocatedAttr = NULL;
+	BYTE* pbAtr;
 	IRP* irp = operation->irp;
 	Status_Call* call = operation->call;
-	DWORD cbAtrLen;
+	ret.cbAtrLen = SCARD_AUTOALLOCATE;
 
-	if (call->cbAtrLen > 32)
-		call->cbAtrLen = 32;
-
-	if (call->fmszReaderNamesIsNULL)
-		cchReaderLen = 0;
+	/* https://docs.microsoft.com/en-us/windows/desktop/api/winscard/nf-winscard-scardstatusa
+	 * basically means if SCARD_AUTOALLOCATE is set, then the arguments change
+	 * and become pointer to pointer
+	 */
+	if (ret.cbAtrLen == SCARD_AUTOALLOCATE)
+		pbAtr = (LPBYTE)&allocatedAttr;
 	else
-		cchReaderLen = SCARD_AUTOALLOCATE;
+		pbAtr = ret.pbAtr;
 
-	cbAtrLen = call->cbAtrLen;
-	ZeroMemory(ret.pbAtr, 32);
+	if (!call->fmszReaderNamesIsNULL && (cchReaderLen == SCARD_AUTOALLOCATE))
+		mszReaderNames = (LPWSTR)&allocatedReaderNames;
+
 	status = ret.ReturnCode = SCardStatusW(operation->hCard,
-	                                       call->fmszReaderNamesIsNULL ? NULL : (LPWSTR) &mszReaderNames,
-	                                       &cchReaderLen, &ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &cbAtrLen);
+	                                       mszReaderNames,
+	                                       &cchReaderLen,
+	                                       &ret.dwState, &ret.dwProtocol,
+	                                       pbAtr,
+	                                       &ret.cbAtrLen);
 
+	/* Since the buffer is not provided by the call, use SCARD_AUTOALLOCATE
+	 * locally. Check the supplied length here to avoid returning a buffer
+	 * that is too large for the request. */
 	if (status == SCARD_S_SUCCESS)
 	{
 		if (!call->fmszReaderNamesIsNULL)
-			ret.mszReaderNames = (BYTE*) mszReaderNames;
+		{
+			if (cchReaderLen > call->cchReaderLen)
+				status = ret.ReturnCode = SCARD_E_INSUFFICIENT_BUFFER;
+		}
+	}
 
-		// WinScard returns the number of CHARACTERS whereas pcsc-lite returns the
-		// number of BYTES.
-#ifdef _WIN32
+	if (status == SCARD_S_SUCCESS)
+	{
+		/* SCardStatusW returns the number of characters */
 		ret.cBytes = cchReaderLen * 2;
-#else
-		ret.cBytes = cchReaderLen;
-#endif
+		ret.mszReaderNames = (BYTE*)allocatedReaderNames;
 
-		if (call->cbAtrLen)
-			ret.cbAtrLen = cbAtrLen;
+		if (ret.cbAtrLen > 32)
+		{
+			WLog_WARN(TAG, "smartcard_StatusW_Call cbAtrLen > 32 (%"PRId32")", ret.cbAtrLen);
+			ret.cbAtrLen = 32;
+		}
+
+		if (allocatedAttr)
+			memcpy(ret.pbAtr, pbAtr, ret.cbAtrLen);
 	}
 
 	smartcard_trace_status_return(smartcard, &ret, TRUE);
@@ -1243,8 +1298,11 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 		return status;
 	}
 
-	if (mszReaderNames)
-		SCardFreeMemory(operation->hContext, mszReaderNames);
+	if (allocatedReaderNames)
+		SCardFreeMemory(operation->hContext, allocatedReaderNames);
+
+	if (allocatedAttr)
+		SCardFreeMemory(operation->hContext, allocatedAttr);
 
 	return ret.ReturnCode;
 }
@@ -2108,7 +2166,8 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 	}
 
 	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT) &&
-	    (result != SCARD_E_NO_READERS_AVAILABLE) && (result != SCARD_E_NO_SERVICE))
+	    (result != SCARD_E_NO_READERS_AVAILABLE) && (result != SCARD_E_NO_SERVICE) &&
+	    (result != SCARD_E_UNSUPPORTED_FEATURE))
 	{
 		WLog_WARN(TAG, "IRP failure: %s (0x%08"PRIX32"), status: %s (0x%08"PRIX32")",
 		          smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
