@@ -267,8 +267,11 @@ static UINT wlf_cliprdr_send_data_response(wfClipboard* clipboard, const BYTE* d
         size_t size)
 {
 	CLIPRDR_FORMAT_DATA_RESPONSE response = { 0 };
+	if (size > UINT32_MAX)
+		return ERROR_INVALID_PARAMETER;
+
 	response.msgFlags = (data) ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
-	response.dataLen = size;
+	response.dataLen = (UINT32)size;
 	response.requestedFormatData = data;
 	return clipboard->context->ClientFormatDataResponse(clipboard->context,
 	        &response);
@@ -355,6 +358,7 @@ static UINT wlf_cliprdr_monitor_ready(CliprdrClientContext* context,
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 	UINT ret;
 
+	WINPR_UNUSED(monitorReady);
 	if ((ret = wlf_cliprdr_send_client_capabilities(clipboard)) != CHANNEL_RC_OK)
 		return ret;
 
@@ -592,8 +596,9 @@ static UINT wlf_cliprdr_server_format_list_response(CliprdrClientContext*
 static UINT wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
         const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
+	int cnv;
 	UINT rc;
-	char* data;
+	BYTE* data;
 	LPWSTR cdata;
 	size_t size;
 	const char* mime;
@@ -632,10 +637,22 @@ static UINT wlf_cliprdr_server_format_data_request(CliprdrClientContext* context
 	switch (formatId)
 	{
 		case CF_UNICODETEXT:
-			size = ConvertToUnicode(CP_UTF8, 0, data, size, &cdata, 0);
-			free(data);
-			data = cdata;
-			size *= sizeof(WCHAR);
+			if (size > INT_MAX)
+				rc = ERROR_INTERNAL_ERROR;
+			else
+			{
+				cnv = ConvertToUnicode(CP_UTF8, 0, (LPCSTR)data, (int)size, &cdata, 0);
+				free(data);
+
+				if (cnv < 0)
+					rc = ERROR_INTERNAL_ERROR;
+				else
+				{
+					size = (size_t)cnv;
+					data = (BYTE*)cdata;
+					size *= sizeof(WCHAR);
+				}
+			}
 			break;
 
 		default:
@@ -656,18 +673,25 @@ static UINT wlf_cliprdr_server_format_data_request(CliprdrClientContext* context
 static UINT wlf_cliprdr_server_format_data_response(CliprdrClientContext*
         context, const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
+	int cnv;
 	UINT rc = ERROR_INTERNAL_ERROR;
-	BOOL freedata = FALSE;
 	UINT32 size = formatDataResponse->dataLen;
-	LPSTR data = formatDataResponse->requestedFormatData;
-	const WCHAR* wdata = (WCHAR*)formatDataResponse->requestedFormatData;
+	LPSTR cdata = NULL;
+	LPCSTR data = (LPCSTR)formatDataResponse->requestedFormatData;
+	const WCHAR* wdata = (const WCHAR*)formatDataResponse->requestedFormatData;
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
+
+	if (size > INT_MAX * sizeof(WCHAR))
+		return ERROR_INTERNAL_ERROR;
 
 	switch (clipboard->responseFormat)
 	{
 		case CF_UNICODETEXT:
-			size = ConvertFromUnicode(CP_UTF8, 0, wdata, size / sizeof(WCHAR), &data, 0, NULL, NULL);
-			freedata = TRUE;
+			cnv = ConvertFromUnicode(CP_UTF8, 0, wdata, (int)(size / sizeof(WCHAR)), &cdata, 0, NULL, NULL);
+			if (cnv < 0)
+				return ERROR_INTERNAL_ERROR;
+			size = (size_t)cnv;
+			data = cdata;
 			break;
 
 		default:
@@ -678,10 +702,7 @@ static UINT wlf_cliprdr_server_format_data_response(CliprdrClientContext*
 	fwrite(data, 1, size, clipboard->responseFile);
 	fclose(clipboard->responseFile);
 	rc = CHANNEL_RC_OK;
-fail:
-
-	if (freedata)
-		free(data);
+	free(cdata);
 
 	return rc;
 }
@@ -775,6 +796,8 @@ static UINT wlf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	wfClipboard* clipboard = delegate->custom;
+
+	WINPR_UNUSED(errorCode);
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_SIZE;
@@ -790,7 +813,7 @@ static UINT wlf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegat
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_RANGE;
 	response.cbRequested = size;
-	response.requestedData = (BYTE*) data;
+	response.requestedData = (const BYTE*) data;
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
@@ -799,6 +822,8 @@ static UINT wlf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegat
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	wfClipboard* clipboard = delegate->custom;
+
+	WINPR_UNUSED(errorCode);
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_RANGE;
@@ -825,9 +850,6 @@ wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 	clipboard->delegate->ClipboardFileRangeSuccess = wlf_cliprdr_clipboard_file_range_success;
 	clipboard->delegate->ClipboardFileRangeFailure = wlf_cliprdr_clipboard_file_range_failure;
 	return clipboard;
-error:
-	wlf_clipboard_free(clipboard);
-	return NULL;
 }
 
 void wlf_clipboard_free(wfClipboard* clipboard)
