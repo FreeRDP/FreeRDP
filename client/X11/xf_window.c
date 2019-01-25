@@ -926,11 +926,11 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y,
 	appWindow->height = height;
 
 	if (resize) {
-		DEBUG_X11("setting new internal & X geometry: %dx%d+%d+%d", width, height, x, y);
+		DEBUG_X11("setting new internal & X geometry: %dx%d+%d+%d\tshowState=%d", width, height, x, y, appWindow->showState);
 		XMoveResizeWindow(xfc->display, appWindow->handle, x, y, width, height);
 	}
 	else {
-		DEBUG_X11("setting new internal & X location: +%d+%d", x, y);
+		DEBUG_X11("setting new internal & X location: +%d+%d\tshowState=%d", x, y, appWindow->showState);
 		XMoveWindow(xfc->display, appWindow->handle, x, y);
 	}
 
