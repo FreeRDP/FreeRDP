@@ -919,6 +919,9 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 		case FreeRDP_IgnoreCertificate:
 			return settings->IgnoreCertificate;
 
+		case FreeRDP_AutoDenyCertificate:
+			return settings->AutoDenyCertificate;
+
 		case FreeRDP_AutoAcceptCertificate:
 			return settings->AutoAcceptCertificate;
 
@@ -1378,6 +1381,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_IgnoreCertificate:
 			settings->IgnoreCertificate = param;
+			break;
+
+		case FreeRDP_AutoDenyCertificate:
+			settings->AutoDenyCertificate = param;
 			break;
 
 		case FreeRDP_AutoAcceptCertificate:
