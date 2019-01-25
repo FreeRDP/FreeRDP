@@ -54,7 +54,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	int ret = 1;
 	int argc = 0, i;
-	LPWSTR* args;
+	LPWSTR* args = NULL;
 	LPWSTR cmd;
 	char** argv;
 	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
