@@ -97,6 +97,7 @@ enum
 	UWAC_EVENT_CLIPBOARD_AVAILABLE,
 	UWAC_EVENT_CLIPBOARD_SELECT,
 	UWAC_EVENT_CLIPBOARD_OFFER,
+	UWAC_EVENT_OUTPUT_GEOMETRY,
 };
 
 /** @brief window states */
@@ -243,11 +244,27 @@ struct uwac_clipboard_event
 };
 typedef struct uwac_clipboard_event UwacClipboardEvent;
 
+struct uwac_output_geometry_event
+{
+	int type;
+	UwacOutput* output;
+	int x;
+	int y;
+	int physical_width;
+	int physical_height;
+	int subpixel;
+	const char *make;
+	const char *model;
+	int transform;
+};
+typedef struct uwac_output_geometry_event UwacOutputGeometryEvent;
+
 /** @brief */
 union uwac_event
 {
 	int type;
 	UwacOutputNewEvent output_new;
+	UwacOutputGeometryEvent output_geometry;
 	UwacSeatNewEvent seat_new;
 	UwacSeatRemovedEvent seat_removed;
 	UwacPointerEnterLeaveEvent mouse_enter_leave;

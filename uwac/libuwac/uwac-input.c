@@ -50,8 +50,11 @@ set_cursor_image(UwacSeat* seat, uint32_t serial)
 
 	switch(seat->pointer_type) {
 		case 2: /* Custom poiner */
+			if (!seat->pointer_buffer)
+				return UWAC_SUCCESS;
 			image = seat->pointer_image;
 			buffer = seat->pointer_buffer;
+			seat->pointer_buffer = NULL;
 			surface = seat->pointer_surface;
 			x = image->hotspot_x;
 			y = image->hotspot_y;
@@ -1007,7 +1010,7 @@ UwacReturnCode create_pointer_buffer(UwacSeat* seat, const void* src, size_t siz
 	                                                 seat->pointer_image->width,
 	                                                 seat->pointer_image->height,
 	                                                 seat->pointer_image->width * 4,
-	                                                 WL_SHM_FORMAT_XRGB8888);
+	                                                 WL_SHM_FORMAT_ARGB8888);
 	wl_shm_pool_destroy(pool);
 
 error_mmap:
