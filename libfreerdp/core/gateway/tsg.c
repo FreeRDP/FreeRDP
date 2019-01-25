@@ -1023,7 +1023,7 @@ static BOOL TsProxyReadPacketSTringMessage(rdpTsg* tsg, wStream* s, TSG_PACKET_S
 	if (Stream_GetRemainingLength(s) < msg->msgBytes)
 		return FALSE;
 
-	msg->msgBuffer = Stream_Pointer(s);
+	msg->msgBuffer = (WCHAR*) Stream_Pointer(s);
 	Stream_Seek(s, msg->msgBytes);
 
 	return TRUE;

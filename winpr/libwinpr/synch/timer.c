@@ -594,14 +594,6 @@ static void timespec_add_ms(struct timespec* tspec, UINT32 ms)
 	tspec->tv_nsec = (ns % 1000000000);
 }
 
-static UINT64 timespec_to_ms(struct timespec* tspec)
-{
-	UINT64 ms;
-	ms = tspec->tv_sec * 1000;
-	ms += tspec->tv_nsec / 1000000;
-	return ms;
-}
-
 static void timespec_gettimeofday(struct timespec* tspec)
 {
 	struct timeval tval;
