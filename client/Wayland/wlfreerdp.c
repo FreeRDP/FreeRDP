@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <locale.h>
+#include <float.h>
 
 #include <freerdp/client/cmdline.h>
 #include <freerdp/channels/channels.h>
@@ -33,6 +34,9 @@
 #include <linux/input.h>
 
 #include <uwac/uwac.h>
+#if defined(CAIRO_FOUND)
+#include <cairo.h>
+#endif
 
 #include "wlfreerdp.h"
 #include "wlf_input.h"
@@ -67,6 +71,7 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	UwacSize geometry;
 	size_t stride;
 	UwacReturnCode rc;
+	RECTANGLE_16 area;
 
 	if (!context_w)
 		return FALSE;
@@ -93,16 +98,21 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	if ((x > geometry.width) || (y > geometry.height))
 		return TRUE;
 
-	baseSrcOffset = y * gdi->stride + x * GetBytesPerPixel(gdi->dstFormat);
-	baseDstOffset = y * stride + x * 4;
-	for (i = 0; i < MIN(h, geometry.height - y); i++)
-	{
-		const size_t srcOffset = i * gdi->stride + baseSrcOffset;
-		const size_t dstOffset = i * stride + baseDstOffset;
+	area.left = x;
+	area.top = y;
+	area.right = x + w;
+	area.bottom = y + h;
 
-		memcpy(data + dstOffset, gdi->primary_buffer + srcOffset,
-		       MIN(w, geometry.width - x) * GetBytesPerPixel(gdi->dstFormat));
-	}
+	if (!wlf_copy_image(gdi->primary_buffer, gdi->stride, gdi->width, gdi->height,
+	                    data, stride, geometry.width, geometry.height, &area,
+	                    context_w->context.settings->SmartSizing))
+		return FALSE;
+
+	if (!wlf_scale_coordinates(&context_w->context, &x, &y))
+		return FALSE;
+
+	if (!wlf_scale_coordinates(&context_w->context, &w, &h))
+		return FALSE;
 
 	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)
 		return FALSE;
@@ -299,6 +309,9 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_FRAME_DONE:
+				if (UwacWindowSubmitBuffer(context->window, true) != UWAC_SUCCESS)
+					return FALSE;
+
 				break;
 
 			case UWAC_EVENT_POINTER_ENTER:
@@ -334,6 +347,7 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 			case UWAC_EVENT_KEYBOARD_ENTER:
 				if (instance->context->settings->GrabKeyboard)
 					UwacSeatInhibitShortcuts(event.keyboard_enter_leave.seat, true);
+
 				if (!wlf_keyboard_enter(instance, &event.keyboard_enter_leave))
 					return FALSE;
 
@@ -555,4 +569,97 @@ int main(int argc, char* argv[])
 fail:
 	freerdp_client_context_free(context);
 	return rc;
+}
+
+BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t srcHeight,
+                    void* dst, size_t dstStride, size_t dstWidth, size_t dstHeight,
+                    const RECTANGLE_16* area, BOOL scale)
+{
+	BOOL rc = FALSE;
+
+	if (!src || !dst || !area)
+		return FALSE;
+
+	if (scale)
+	{
+#if defined(CAIRO_FOUND)
+		const double sx = (double)dstWidth / (double)srcWidth;
+		const double sy = (double)dstHeight / (double)srcHeight;
+		cairo_t* cairo_context;
+		cairo_surface_t* csrc = cairo_image_surface_create_for_data(src, CAIRO_FORMAT_ARGB32, srcWidth,
+		                        srcHeight, srcStride);
+		cairo_surface_t* cdst = cairo_image_surface_create_for_data(dst, CAIRO_FORMAT_ARGB32, dstWidth,
+		                        dstHeight, dstStride);
+
+		if (!csrc || !cdst)
+			goto fail;
+
+		cairo_context = cairo_create(cdst);
+
+		if (!cairo_context)
+			goto fail2;
+
+		cairo_scale(cairo_context, sx, sy);
+		cairo_set_operator(cairo_context, CAIRO_OPERATOR_SOURCE);
+		cairo_set_source_surface(cairo_context, csrc, 0, 0);
+		cairo_paint(cairo_context);
+		rc = TRUE;
+	fail2:
+		cairo_destroy(cairo_context);
+	fail:
+		cairo_surface_destroy(csrc);
+		cairo_surface_destroy(cdst);
+#else
+		WLog_WARN(TAG, "SmartScaling requested but compiled without libcairo support!");
+#endif
+	}
+	else
+	{
+		size_t i;
+		const size_t baseSrcOffset = area->top * srcStride + area->left * 4;
+		const size_t baseDstOffset = area->top * dstStride + area->left * 4;
+		const size_t width = MIN(area->right - area->left, dstWidth - area->left);
+		const size_t height = MIN(area->bottom - area->top, dstHeight - area->top);
+		const BYTE* psrc = (const BYTE*)src;
+		BYTE* pdst = (BYTE*)dst;
+
+		for (i = 0; i < height; i++)
+		{
+			const size_t srcOffset = i * srcStride + baseSrcOffset;
+			const size_t dstOffset = i * dstStride + baseDstOffset;
+			memcpy(&pdst[dstOffset], &psrc[srcOffset], width * 4);
+		}
+
+		rc = TRUE;
+	}
+
+	return rc;
+}
+
+BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py)
+{
+	wlfContext* wlf = (wlfContext*)context;
+	rdpGdi* gdi;
+	UwacSize geometry;
+	double sx, sy;
+
+	if (!context || !px || !py || !context->gdi)
+		return FALSE;
+
+	if (!context->settings->SmartSizing)
+		return TRUE;
+
+	/* If libcairo is not compiled, smart scaling is ignored. */
+#if defined(CAIRO_FOUND)
+	gdi = context->gdi;
+
+	if (UwacWindowGetDrawingBufferGeometry(wlf->window, &geometry, NULL) != UWAC_SUCCESS)
+		return FALSE;
+
+	sx = geometry.width / (double)gdi->width;
+	sy = geometry.height / (double)gdi->height;
+	*px /= sx;
+	*py /= sy;
+#endif
+	return TRUE;
 }

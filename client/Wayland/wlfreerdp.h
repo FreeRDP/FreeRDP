@@ -54,5 +54,10 @@ struct wlf_context
 	wLog* log;
 };
 
+BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py);
+BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t srcHeight,
+                    void* dst, size_t dstStride, size_t dstWidth, size_t dstHeight,
+                    const RECTANGLE_16* area, BOOL scale);
+
 #endif /* FREERDP_CLIENT_WAYLAND_FREERDP_H */
 

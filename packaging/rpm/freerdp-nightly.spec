@@ -40,6 +40,7 @@ BuildRequires: libXv-devel
 BuildRequires: libXdamage-devel
 BuildRequires: libXtst-devel
 BuildRequires: cups-devel
+BuildRequires: cairo-devel
 BuildRequires: pcsc-lite-devel
 BuildRequires: uuid-devel
 BuildRequires: libxml2-devel
