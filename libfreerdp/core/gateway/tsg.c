@@ -132,26 +132,18 @@ typedef struct TSG_PACKET_STRING_MESSAGE
 	INT32 isConsentMandatory;
 	UINT32 msgBytes;
 	WCHAR* msgBuffer;
-} TSG_PACKET_STRING_MESSAGE, *PTSG_PACKET_STRING_MESSAGE;
+} TSG_PACKET_STRING_MESSAGE;
 
 typedef struct TSG_PACKET_REAUTH_MESSAGE
 {
 	UINT64 tunnelContext;
 } TSG_PACKET_REAUTH_MESSAGE, *PTSG_PACKET_REAUTH_MESSAGE;
 
-typedef union
-{
-	PTSG_PACKET_STRING_MESSAGE consentMessage;
-	PTSG_PACKET_STRING_MESSAGE serviceMessage;
-	PTSG_PACKET_REAUTH_MESSAGE reauthMessage;
-} TSG_PACKET_TYPE_MESSAGE_UNION, *PTSG_PACKET_TYPE_MESSAGE_UNION;
-
 typedef struct _TSG_PACKET_MSG_RESPONSE
 {
 	UINT32 msgID;
 	UINT32 msgType;
 	INT32 isMsgPresent;
-	TSG_PACKET_TYPE_MESSAGE_UNION messagePacket;
 } TSG_PACKET_MSG_RESPONSE, *PTSG_PACKET_MSG_RESPONSE;
 
 typedef struct TSG_PACKET_CAPS_RESPONSE
@@ -1007,18 +999,46 @@ static BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunne
 	return rpc_client_write_call(rpc, s, TsProxyMakeTunnelCallOpnum);
 }
 
+static BOOL TsProxyReadPacketSTringMessage(rdpTsg* tsg, wStream* s, TSG_PACKET_STRING_MESSAGE* msg)
+{
+	UINT32 Pointer, ActualCount, MaxCount;
+	if (!tsg || !s || !msg)
+		return FALSE;
+
+	if (Stream_GetRemainingLength(s) < 32)
+		return FALSE;
+
+	Stream_Read_UINT32(s, Pointer); /* ConsentMessagePtr (4 bytes) */
+	Stream_Read_INT32(s, msg->isDisplayMandatory); /* IsDisplayMandatory (4 bytes) */
+	Stream_Read_INT32(s, msg->isConsentMandatory); /* IsConsentMandatory (4 bytes) */
+	Stream_Read_UINT32(s, msg->msgBytes); /* MsgBytes (4 bytes) */
+	Stream_Read_UINT32(s, Pointer); /* MsgPtr (4 bytes) */
+	Stream_Read_UINT32(s, MaxCount); /* MaxCount (4 bytes) */
+	Stream_Seek_UINT32(s); /* Offset (4 bytes) */
+	Stream_Read_UINT32(s, ActualCount); /* ActualCount (4 bytes) */
+
+	if (msg->msgBytes < ActualCount * 2)
+		return FALSE;
+
+	if (Stream_GetRemainingLength(s) < msg->msgBytes)
+		return FALSE;
+
+	msg->msgBuffer = Stream_Pointer(s);
+	Stream_Seek(s, msg->msgBytes);
+
+	return TRUE;
+}
+
 static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
 	UINT32 Pointer;
-	UINT32 MaxCount;
-	UINT32 ActualCount;
 	UINT32 SwitchValue;
-	PTSG_PACKET packet;
+	TSG_PACKET packet;
 	char* messageText = NULL;
-	PTSG_PACKET_MSG_RESPONSE packetMsgResponse = NULL;
-	PTSG_PACKET_STRING_MESSAGE packetStringMessage = NULL;
-	PTSG_PACKET_REAUTH_MESSAGE packetReauthMessage = NULL;
+	TSG_PACKET_MSG_RESPONSE packetMsgResponse = { 0 };
+	TSG_PACKET_STRING_MESSAGE packetStringMessage = { 0 };
+	TSG_PACKET_REAUTH_MESSAGE packetReauthMessage = { 0 };
 	WLog_DBG(TAG, "TsProxyMakeTunnelCallReadResponse");
 
 	/* This is an asynchronous response */
@@ -1026,120 +1046,89 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	if (!pdu)
 		return FALSE;
 
-	packet = (PTSG_PACKET) calloc(1, sizeof(TSG_PACKET));
-
-	if (!packet)
-		return FALSE;
-
-	if (Stream_GetRemainingLength(pdu->s) < 32)
+	if (Stream_GetRemainingLength(pdu->s) < 28)
 		goto fail;
 
 	Stream_Seek_UINT32(pdu->s); /* PacketPtr (4 bytes) */
-	Stream_Read_UINT32(pdu->s, packet->packetId); /* PacketId (4 bytes) */
+	Stream_Read_UINT32(pdu->s, packet.packetId); /* PacketId (4 bytes) */
 	Stream_Read_UINT32(pdu->s, SwitchValue); /* SwitchValue (4 bytes) */
 
-	if ((packet->packetId != TSG_PACKET_TYPE_MESSAGE_PACKET) ||
+	if ((packet.packetId != TSG_PACKET_TYPE_MESSAGE_PACKET) ||
 	    (SwitchValue != TSG_PACKET_TYPE_MESSAGE_PACKET))
 	{
 		WLog_ERR(TAG, "Unexpected PacketId: 0x%08"PRIX32", Expected TSG_PACKET_TYPE_MESSAGE_PACKET",
-		         packet->packetId);
+		         packet.packetId);
 		goto fail;
 	}
 
-	packetMsgResponse = (PTSG_PACKET_MSG_RESPONSE) calloc(1, sizeof(TSG_PACKET_MSG_RESPONSE));
-
-	if (!packetMsgResponse)
-		goto fail;
-
-	packet->tsgPacket.packetMsgResponse = packetMsgResponse;
 	Stream_Read_UINT32(pdu->s, Pointer); /* PacketMsgResponsePtr (4 bytes) */
-	Stream_Read_UINT32(pdu->s, packetMsgResponse->msgID); /* MsgId (4 bytes) */
-	Stream_Read_UINT32(pdu->s, packetMsgResponse->msgType); /* MsgType (4 bytes) */
-	Stream_Read_INT32(pdu->s, packetMsgResponse->isMsgPresent); /* IsMsgPresent (4 bytes) */
+	Stream_Read_UINT32(pdu->s, packetMsgResponse.msgID); /* MsgId (4 bytes) */
+	Stream_Read_UINT32(pdu->s, packetMsgResponse.msgType); /* MsgType (4 bytes) */
+	Stream_Read_INT32(pdu->s, packetMsgResponse.isMsgPresent); /* IsMsgPresent (4 bytes) */
+
+	/* 2.2.9.2.1.9 TSG_PACKET_MSG_RESPONSE: Ignore empty message body. */
+	if (!packetMsgResponse.isMsgPresent)
+	{
+		rc = TRUE;
+		goto fail;
+	}
+
 	Stream_Read_UINT32(pdu->s, SwitchValue); /* SwitchValue (4 bytes) */
 
 	switch (SwitchValue)
 	{
 		case TSG_ASYNC_MESSAGE_CONSENT_MESSAGE:
-			packetStringMessage = (PTSG_PACKET_STRING_MESSAGE) calloc(1, sizeof(TSG_PACKET_STRING_MESSAGE));
-
-			if (!packetStringMessage)
+			if (!TsProxyReadPacketSTringMessage(tsg, pdu->s, &packetStringMessage))
 				goto fail;
 
-			packetMsgResponse->messagePacket.consentMessage = packetStringMessage;
-
-			if (Stream_GetRemainingLength(pdu->s) < 32)
-				goto fail;
-
-			Stream_Read_UINT32(pdu->s, Pointer); /* ConsentMessagePtr (4 bytes) */
-			Stream_Read_INT32(pdu->s,
-			                  packetStringMessage->isDisplayMandatory); /* IsDisplayMandatory (4 bytes) */
-			Stream_Read_INT32(pdu->s,
-			                  packetStringMessage->isConsentMandatory); /* IsConsentMandatory (4 bytes) */
-			Stream_Read_UINT32(pdu->s, packetStringMessage->msgBytes); /* MsgBytes (4 bytes) */
-			Stream_Read_UINT32(pdu->s, Pointer); /* MsgPtr (4 bytes) */
-			Stream_Read_UINT32(pdu->s, MaxCount); /* MaxCount (4 bytes) */
-			Stream_Seek_UINT32(pdu->s); /* Offset (4 bytes) */
-			Stream_Read_UINT32(pdu->s, ActualCount); /* ActualCount (4 bytes) */
-
-			if (Stream_GetRemainingLength(pdu->s) < ActualCount * 2)
-				goto fail;
-
-			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(pdu->s), ActualCount, &messageText, 0, NULL,
+			ConvertFromUnicode(CP_UTF8, 0, packetStringMessage.msgBuffer, packetStringMessage.msgBytes/2, &messageText, 0, NULL,
 			                   NULL);
-			Stream_Seek(pdu->s, ActualCount * 2);
+
 			WLog_INFO(TAG, "Consent Message: %s", messageText);
 			free(messageText);
+
+			if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
+			{
+				rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
+				                  tsg->rpc->context->instance, SwitchValue,
+				                  packetStringMessage.isDisplayMandatory != 0,
+				                  packetStringMessage.isConsentMandatory != 0,
+				                  packetStringMessage.msgBytes,
+				                  packetStringMessage.msgBuffer);
+			}
+
 			break;
 
 		case TSG_ASYNC_MESSAGE_SERVICE_MESSAGE:
-			packetStringMessage = (PTSG_PACKET_STRING_MESSAGE) calloc(1, sizeof(TSG_PACKET_STRING_MESSAGE));
-
-			if (!packetStringMessage)
+			if (!TsProxyReadPacketSTringMessage(tsg, pdu->s, &packetStringMessage))
 				goto fail;
 
-			packetMsgResponse->messagePacket.serviceMessage = packetStringMessage;
-
-			if (Stream_GetRemainingLength(pdu->s) < 32)
-				goto fail;
-
-			Stream_Read_UINT32(pdu->s, Pointer); /* ServiceMessagePtr (4 bytes) */
-			Stream_Read_INT32(pdu->s,
-			                  packetStringMessage->isDisplayMandatory); /* IsDisplayMandatory (4 bytes) */
-			Stream_Read_INT32(pdu->s,
-			                  packetStringMessage->isConsentMandatory); /* IsConsentMandatory (4 bytes) */
-			Stream_Read_UINT32(pdu->s, packetStringMessage->msgBytes); /* MsgBytes (4 bytes) */
-			Stream_Read_UINT32(pdu->s, Pointer); /* MsgPtr (4 bytes) */
-			Stream_Read_UINT32(pdu->s, MaxCount); /* MaxCount (4 bytes) */
-			Stream_Seek_UINT32(pdu->s); /* Offset (4 bytes) */
-			Stream_Read_UINT32(pdu->s, ActualCount); /* ActualCount (4 bytes) */
-
-			if (Stream_GetRemainingLength(pdu->s) < ActualCount * 2)
-				goto fail;
-
-			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(pdu->s), ActualCount, &messageText, 0, NULL,
+			ConvertFromUnicode(CP_UTF8, 0, packetStringMessage.msgBuffer, packetStringMessage.msgBytes/2, &messageText, 0, NULL,
 			                   NULL);
-			Stream_Seek(pdu->s, ActualCount * 2);
+
 			WLog_INFO(TAG, "Service Message: %s", messageText);
 			free(messageText);
+
+			if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
+			{
+				rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
+				                  tsg->rpc->context->instance, SwitchValue,
+				                  packetStringMessage.isDisplayMandatory != 0,
+				                  packetStringMessage.isConsentMandatory != 0,
+				                  packetStringMessage.msgBytes,
+				                  packetStringMessage.msgBuffer);
+			}
 			break;
 
 		case TSG_ASYNC_MESSAGE_REAUTH:
-			packetReauthMessage = (PTSG_PACKET_REAUTH_MESSAGE) calloc(1, sizeof(TSG_PACKET_REAUTH_MESSAGE));
-
-			if (!packetReauthMessage)
-				goto fail;
-
-			packetMsgResponse->messagePacket.reauthMessage = packetReauthMessage;
-
 			if (Stream_GetRemainingLength(pdu->s) < 20)
 				goto fail;
 
 			Stream_Read_UINT32(pdu->s, Pointer); /* ReauthMessagePtr (4 bytes) */
 			Stream_Seek_UINT32(pdu->s); /* alignment pad (4 bytes) */
-			Stream_Read_UINT64(pdu->s, packetReauthMessage->tunnelContext); /* TunnelContext (8 bytes) */
+			Stream_Read_UINT64(pdu->s, packetReauthMessage.tunnelContext); /* TunnelContext (8 bytes) */
 			Stream_Seek_UINT32(pdu->s); /* ReturnValue (4 bytes) */
-			tsg->ReauthTunnelContext = packetReauthMessage->tunnelContext;
+			tsg->ReauthTunnelContext = packetReauthMessage.tunnelContext;
 			break;
 
 		default:
@@ -1149,10 +1138,6 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	rc = TRUE;
 fail:
-	free(packetStringMessage);
-	free(packetReauthMessage);
-	free(packetMsgResponse);
-	free(packet);
 	return rc;
 }
 

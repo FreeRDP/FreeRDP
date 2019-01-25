@@ -18,26 +18,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
+#include <winpr/library.h>
 
 #include "wels/codec_def.h"
 #include "wels/codec_api.h"
 #include "wels/codec_ver.h"
 
-#if (OPENH264_MAJOR == 1) && (OPENH264_MINOR < 3) || (OPENH264_MAJOR < 1)
-#error "Unsupported OpenH264 version "OPENH264_MAJOR"."OPENH264_MINOR"."OPENH264_REVISION" detected!"
-#elif (OPENH264_MAJOR > 1) || (OPENH264_MINOR > 7)
-#warning "Untested OpenH264 version "OPENH264_MAJOR"."OPENH264_MINOR"."OPENH264_REVISION" detected!"
-#endif
+typedef void (*pWelsGetCodecVersionEx)(OpenH264Version* pVersion);
+
+typedef long (*pWelsCreateDecoder)(ISVCDecoder** ppDecoder);
+typedef void (*pWelsDestroyDecoder)(ISVCDecoder* pDecoder);
+
+typedef int (*pWelsCreateSVCEncoder)(ISVCEncoder** ppEncoder);
+typedef void (*pWelsDestroySVCEncoder)(ISVCEncoder* pEncoder);
 
 struct _H264_CONTEXT_OPENH264
 {
+#if defined (WITH_OPENH264_LOADING)
+	HMODULE lib;
+	OpenH264Version version;
+#endif
+	pWelsGetCodecVersionEx WelsGetCodecVersionEx;
+	pWelsCreateDecoder WelsCreateDecoder;
+	pWelsDestroyDecoder WelsDestroyDecoder;
+	pWelsCreateSVCEncoder WelsCreateSVCEncoder;
+	pWelsDestroySVCEncoder WelsDestroySVCEncoder;
 	ISVCDecoder* pDecoder;
 	ISVCEncoder* pEncoder;
 	SEncParamExt EncParamExt;
 };
 typedef struct _H264_CONTEXT_OPENH264 H264_CONTEXT_OPENH264;
+
+#if defined (WITH_OPENH264_LOADING)
+static const char* openh264_library_names[] =
+{
+#if defined(_WIN32)
+	"openh264.dll"
+#elif defined(__APPLE__)
+	"libopenh264.dylib"
+#else
+	"libopenh264.so"
+#endif
+};
+#endif
 
 static void openh264_trace_callback(H264_CONTEXT* h264, int level,
                                     const char* message)
@@ -313,25 +342,85 @@ static void openh264_uninit(H264_CONTEXT* h264)
 			if (sys->pDecoder)
 			{
 				(*sys->pDecoder)->Uninitialize(sys->pDecoder);
-				WelsDestroyDecoder(sys->pDecoder);
+				sysContexts->WelsDestroyDecoder(sys->pDecoder);
 				sys->pDecoder = NULL;
 			}
 
 			if (sys->pEncoder)
 			{
 				(*sys->pEncoder)->Uninitialize(sys->pEncoder);
-				WelsDestroySVCEncoder(sys->pEncoder);
+				sysContexts->WelsDestroySVCEncoder(sys->pEncoder);
 				sys->pEncoder = NULL;
 			}
 		}
 
+#if defined (WITH_OPENH264_LOADING)
+		FreeLibrary(sysContexts->lib);
+#endif
 		free(h264->pSystemData);
 		h264->pSystemData = NULL;
 	}
 }
 
+#if defined (WITH_OPENH264_LOADING)
+static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
+{
+	H264_CONTEXT_OPENH264* sysContexts;
+
+	if (!h264)
+		return FALSE;
+
+	sysContexts = h264->pSystemData;
+
+	if (!sysContexts)
+		return FALSE;
+
+	sysContexts->lib = LoadLibraryA(name);
+
+	if (!sysContexts->lib)
+		return FALSE;
+
+	sysContexts->WelsGetCodecVersionEx = (pWelsGetCodecVersionEx) GetProcAddress(sysContexts->lib, "WelsGetCodecVersionEx");
+	sysContexts->WelsCreateDecoder = (pWelsCreateDecoder) GetProcAddress(sysContexts->lib, "WelsCreateDecoder");
+	sysContexts->WelsDestroyDecoder = (pWelsDestroyDecoder) GetProcAddress(sysContexts->lib, "WelsDestroyDecoder");
+	sysContexts->WelsCreateSVCEncoder = (pWelsCreateSVCEncoder) GetProcAddress(sysContexts->lib, "WelsCreateSVCEncoder");
+	sysContexts->WelsDestroySVCEncoder = (pWelsDestroySVCEncoder) GetProcAddress(sysContexts->lib, "WelsDestroySVCEncoder");
+
+	if (!sysContexts->WelsCreateDecoder || !sysContexts->WelsDestroyDecoder ||
+	    !sysContexts->WelsCreateSVCEncoder || !sysContexts->WelsDestroySVCEncoder ||
+	    !sysContexts->WelsGetCodecVersionEx)
+	{
+		FreeLibrary(sysContexts->lib);
+		sysContexts->lib = NULL;
+		return FALSE;
+	}
+
+	sysContexts->WelsGetCodecVersionEx(&sysContexts->version);
+	WLog_Print(h264->log, WLOG_INFO, "loaded %s %d.%d.%d", name, sysContexts->version.uMajor,
+	           sysContexts->version.uMinor,
+	           sysContexts->version.uRevision);
+
+	if ((sysContexts->version.uMajor < 1) || (sysContexts->version.uMinor < 6))
+	{
+		WLog_Print(h264->log, WLOG_ERROR,
+		           "OpenH264 %s %d.%d.%d is too old, need at least version 1.6.0 for dynamic loading",
+		           name, sysContexts->version.uMajor, sysContexts->version.uMinor,
+		           sysContexts->version.uRevision);
+		FreeLibrary(sysContexts->lib);
+		sysContexts->lib = NULL;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+#endif
+
 static BOOL openh264_init(H264_CONTEXT* h264)
 {
+#if defined (WITH_OPENH264_LOADING)
+	BOOL success = FALSE;
+	size_t i;
+#endif
 	UINT32 x;
 	long status;
 	SDecodingParam sDecParam;
@@ -350,6 +439,27 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 		goto EXCEPTION;
 
 	h264->pSystemData = (void*) sysContexts;
+#if defined (WITH_OPENH264_LOADING)
+
+	for (i = 0; i < ARRAYSIZE(openh264_library_names); i++)
+	{
+		const char* current = openh264_library_names[i];
+		success = openh264_load_functionpointers(h264, current);
+
+		if (success)
+			break;
+	}
+
+	if (!success)
+		goto EXCEPTION;
+
+#else
+	sysContexts->WelsGetCodecVersionEx = WelsGetCodecVersionEx;
+	sysContexts->WelsCreateDecoder = WelsCreateDecoder;
+	sysContexts->WelsDestroyDecoder = WelsDestroyDecoder;
+	sysContexts->WelsCreateSVCEncoder = WelsCreateSVCEncoder;
+	sysContexts->WelsDestroySVCEncoder = WelsDestroySVCEncoder;
+#endif
 
 	for (x = 0; x < h264->numSystemData; x++)
 	{
@@ -357,7 +467,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 		if (h264->Compressor)
 		{
-			WelsCreateSVCEncoder(&sys->pEncoder);
+			sysContexts->WelsCreateSVCEncoder(&sys->pEncoder);
 
 			if (!sys->pEncoder)
 			{
@@ -367,7 +477,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 		}
 		else
 		{
-			WelsCreateDecoder(&sys->pDecoder);
+			sysContexts->WelsCreateDecoder(&sys->pDecoder);
 
 			if (!sys->pDecoder)
 			{

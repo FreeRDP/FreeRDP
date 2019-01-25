@@ -1178,10 +1178,11 @@ static BOOL update_message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* or
 	lParam = (WINDOW_ICON_ORDER*) calloc(1, sizeof(WINDOW_ICON_ORDER));
 
 	if (!lParam)
-	{
-		free(wParam);
-		return FALSE;
-	}
+		goto out_fail;
+
+	lParam->iconInfo = calloc(1, sizeof(ICON_INFO));
+	if (!lParam->iconInfo)
+		goto out_fail;
 
 	CopyMemory(lParam, windowIcon, sizeof(WINDOW_ICON_ORDER));
 	WLog_VRB(TAG,  "update_message_WindowIcon");
@@ -1222,10 +1223,15 @@ static BOOL update_message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* or
 	return MessageQueue_Post(context->update->queue, (void*) context,
 	                         MakeMessageId(WindowUpdate, WindowIcon), (void*) wParam, (void*) lParam);
 out_fail:
-	free(lParam->iconInfo->bitsColor);
-	free(lParam->iconInfo->bitsMask);
-	free(lParam->iconInfo->colorTable);
-	free(lParam);
+	if (lParam && lParam->iconInfo)
+	{
+		free(lParam->iconInfo->bitsColor);
+		free(lParam->iconInfo->bitsMask);
+		free(lParam->iconInfo->colorTable);
+		free(lParam->iconInfo);
+	}
+
+	free(lParam);	
 	free(wParam);
 	return FALSE;
 }
@@ -2131,6 +2137,7 @@ static BOOL update_message_free_window_update_class(wMessage* msg, int type)
 				}
 
 				free(orderInfo);
+				free(windowIcon->iconInfo);
 				free(windowIcon);
 			}
 			break;

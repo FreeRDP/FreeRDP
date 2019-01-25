@@ -67,6 +67,17 @@ typedef int (*psPeerVirtualChannelWrite)(freerdp_peer* peer, HANDLE hChannel, BY
 typedef void* (*psPeerVirtualChannelGetData)(freerdp_peer* peer, HANDLE hChannel);
 typedef int (*psPeerVirtualChannelSetData)(freerdp_peer* peer, HANDLE hChannel, void* data);
 
+/** @brief the result of the license callback */
+typedef enum
+{
+	LICENSE_CB_INTERNAL_ERROR, 	/** an internal error happened in the callback */
+	LICENSE_CB_ABORT,			/** licensing process failed, abort the connection */
+	LICENSE_CB_IN_PROGRESS,		/** incoming packet has been treated, we're waiting for further packets to complete the workflow */
+	LICENSE_CB_COMPLETED		/** the licensing workflow has completed, go to next step */
+} LicenseCallbackResult;
+
+typedef LicenseCallbackResult (*psPeerLicenseCallback)(freerdp_peer* peer, wStream* s);
+
 
 struct rdp_freerdp_peer
 {
@@ -123,6 +134,7 @@ struct rdp_freerdp_peer
 	psPeerAdjustMonitorsLayout AdjustMonitorsLayout;
 	psPeerClientCapabilities ClientCapabilities;
 	psPeerComputeNtlmHash ComputeNtlmHash;
+	psPeerLicenseCallback LicenseCallback;
 };
 
 #ifdef __cplusplus

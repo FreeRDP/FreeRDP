@@ -1447,6 +1447,11 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 					WLog_INFO(TAG, "No certificate stored, automatically accepting.");
 					accept_certificate = 1;
 				}
+				else if (tls->settings->AutoDenyCertificate)
+				{
+					WLog_INFO(TAG, "No certificate stored, automatically denying.");
+					accept_certificate = 0;
+				}
 				else if (instance->VerifyX509Certificate)
 				{
 					int rc = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
@@ -1491,7 +1496,12 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 					WLog_WARN(TAG, "Failed to get certificate entry for %s:%d",
 					          hostname, port);
 
-				if (instance->VerifyX509Certificate)
+				if (tls->settings->AutoDenyCertificate)
+				{
+					WLog_INFO(TAG, "No certificate stored, automatically denying.");
+					accept_certificate = 0;
+				}
+				else if (instance->VerifyX509Certificate)
 				{
 					const int rc = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
 					               port, flags | VERIFY_CERT_FLAG_CHANGED);

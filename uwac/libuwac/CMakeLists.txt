@@ -31,14 +31,17 @@ macro(generate_protocol_file PROTO)
         COMMAND ${WAYLAND_SCANNER} client-header < ${CMAKE_SOURCE_DIR}/uwac/protocols/${PROTO}.xml > ${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-client-protocol.h
         DEPENDS ${CMAKE_SOURCE_DIR}/uwac/protocols/${PROTO}.xml
     )
-    
+
     list(APPEND GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-client-protocol.h)
     list(APPEND GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-protocol.c)
 endmacro()
 
 generate_protocol_file(xdg-shell)
+generate_protocol_file(xdg-decoration-unstable-v1)
+generate_protocol_file(server-decoration)
 generate_protocol_file(ivi-application)
-generate_protocol_file(fullscreen-shell)
+generate_protocol_file(fullscreen-shell-unstable-v1)
+generate_protocol_file(keyboard-shortcuts-inhibit-unstable-v1)
 
 if(FREEBSD)
 	include_directories(${EPOLLSHIM_INCLUDE_DIR})
@@ -55,13 +58,14 @@ set(${MODULE_PREFIX}_SRCS
     ${GENERATED_SOURCES}
     uwac-display.c
     uwac-input.c
+    uwac-clipboard.c
     uwac-os.c
     uwac-os.h
     uwac-output.c
     uwac-priv.h
     uwac-tools.c
     uwac-utils.c
-	uwac-window.c)
+    uwac-window.c)
 
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})

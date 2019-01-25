@@ -203,7 +203,7 @@ struct _CLIPRDR_FORMAT_DATA_RESPONSE
 {
 	DEFINE_CLIPRDR_HEADER_COMMON();
 
-	BYTE* requestedFormatData;
+	const BYTE* requestedFormatData;
 };
 typedef struct _CLIPRDR_FORMAT_DATA_RESPONSE CLIPRDR_FORMAT_DATA_RESPONSE;
 
@@ -229,7 +229,7 @@ struct _CLIPRDR_FILE_CONTENTS_RESPONSE
 	UINT32 streamId;
 	UINT32 dwFlags;
 	UINT32 cbRequested;
-	BYTE* requestedData;
+	const BYTE* requestedData;
 };
 typedef struct _CLIPRDR_FILE_CONTENTS_RESPONSE CLIPRDR_FILE_CONTENTS_RESPONSE;
 

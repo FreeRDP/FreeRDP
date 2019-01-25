@@ -31,7 +31,8 @@
 #define TAG CLIENT_TAG("wayland")
 
 typedef struct wlf_context wlfContext;
-
+typedef struct wlf_clipboard wfClipboard;
+typedef struct _wlfDispContext wlfDispContext;
 
 struct wlf_context
 {
@@ -41,13 +42,15 @@ struct wlf_context
 	HANDLE displayHandle;
 	UwacWindow* window;
 
-	BOOL waitingFrameDone;
-	BOOL haveDamage;
+	BOOL fullscreen;
 
 	/* Channels */
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
+	wfClipboard* clipboard;
+	wlfDispContext* disp;
+	wLog* log;
 };
 
 #endif /* FREERDP_CLIENT_WAYLAND_FREERDP_H */

@@ -476,17 +476,31 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 	char* dup;
 	char* p;
 	BOOL result = TRUE;
-
 	/* we only operate on a non-null, absolute path */
+#if defined(__OS2__)
+
+	if (!path)
+		return FALSE;
+
+#else
+
 	if (!path || *path != delim)
 		return FALSE;
+
+#endif
 
 	if (!(dup = _strdup(path)))
 		return FALSE;
 
+#ifdef __OS2__
+	p = (strlen(dup) > 3) && (dup[1] == ':') && (dup[2] == delim)) ? &dup[3] : dup;
+
+	while (p)
+#else
 	for (p = dup; p;)
-	{
-		if ((p = strchr(p + 1, delim)))
+#endif
+{
+	if ((p = strchr(p + 1, delim)))
 			* p = '\0';
 
 		if (mkdir(dup, 0777) != 0)
