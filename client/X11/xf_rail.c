@@ -141,17 +141,6 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId,
 
 static void xf_rail_move_window(xfContext* xfc, xfAppWindow* appWindow, const RAIL_WINDOW_MOVE_ORDER* windowMove)
 {
-	struct timespec ts;
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-	{
-		WLog_ERR(TAG, "failed to get clock time (errno=%d); window movement may be negatively affected", errno);
-		appWindow->last_move_time = 0;
-	}
-	else
-	{
-		appWindow->last_move_time = ts.tv_sec * 1000 + ts.tv_nsec / 1000000; // convert to ms
-	}
-
 	DEBUG_X11("forwarding geometry from X/internal to RDP server: %dx%d+%d+%d",
 			(windowMove->right - windowMove->left),
 			(windowMove->bottom - windowMove->top),
@@ -388,18 +377,6 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (!appWindow)
 		return FALSE;
-
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-	{
-		WLog_ERR(TAG, "failed to get clock time (errno=%d); window movement may be negatively affected", errno);
-		time_since_move = ULONG_MAX;
-	}
-	else
-	{
-		ULONG64 current_time;
-		current_time = ts.tv_sec * 1000 + ts.tv_nsec / 1000000; // convert to ms
-		time_since_move = current_time - appWindow->last_move_time;
-	}
 
 	/* Update Parameters */
 
