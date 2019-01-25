@@ -128,7 +128,7 @@ static BOOL floatbar_animation(wfFloatBar* const floatbar, const BOOL show)
 
 	floatbar->animating = timer;
 
-	if (SetTimer(floatbar->hwnd, timer, 10, NULL) == NULL)
+	if (SetTimer(floatbar->hwnd, timer, USER_TIMER_MINIMUM, NULL) == NULL)
 	{
 		DWORD err = GetLastError();
 		WLog_ERR(TAG, "SetTimer failed with %08"PRIx32, err);
