@@ -33,6 +33,7 @@
 #include <sys/epoll.h>
 
 #include "uwac-os.h"
+#include "wayland-cursor.h"
 
 #define TARGET_COMPOSITOR_INTERFACE 3
 #define TARGET_SHM_INTERFACE 1
@@ -151,6 +152,14 @@ static void UwacSeatRegisterDDM(UwacSeat *seat)
 		seat->data_device = wl_data_device_manager_get_data_device(d->data_device_manager, seat->seat);
 }
 
+static void UwacRegisterCursor(UwacSeat* seat)
+{
+	if (!seat || !seat->display || !seat->display->compositor)
+		return;
+
+	seat->pointer_surface = wl_compositor_create_surface(seat->display->compositor);
+}
+
 static void registry_handle_global(void* data, struct wl_registry* registry, uint32_t id,
                                    const char* interface, uint32_t version)
 {
@@ -171,6 +180,18 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	{
 		d->shm = wl_registry_bind(registry, id, &wl_shm_interface, min(TARGET_SHM_INTERFACE, version));
 		wl_shm_add_listener(d->shm, &shm_listener, d);
+
+		d->cursor_theme = wl_cursor_theme_load(NULL, 32, d->shm);
+		if (!d->cursor_theme) {
+			assert(uwacErrorHandler(d, UWAC_ERROR_NOMEMORY, "unable to get wayland cursor theme\n"));
+			return;
+		}
+
+		d->default_cursor = wl_cursor_theme_get_cursor(d->cursor_theme, "left_ptr");
+		if (!d->default_cursor) {
+			assert(uwacErrorHandler(d, UWAC_ERROR_NOMEMORY, "unable to get wayland cursor left_ptr\n"));
+			return;
+		}
 	}
 	else if (strcmp(interface, "wl_output") == 0)
 	{
@@ -203,6 +224,7 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 
 		UwacSeatRegisterDDM(seat);
 		UwacSeatRegisterClipboard(seat);
+		UwacRegisterCursor(seat);
 		ev = (UwacSeatNewEvent*)UwacDisplayNewEvent(d, UWAC_EVENT_NEW_SEAT);
 
 		if (!ev)
@@ -224,6 +246,7 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 		{
 			UwacSeatRegisterDDM(seat);
 			UwacSeatRegisterClipboard(seat);
+			UwacRegisterCursor(seat);
 		}
 	}
 	else if (strcmp(interface, "wl_shell") == 0)
@@ -572,6 +595,9 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 
 	if (display->shell)
 		wl_shell_destroy(display->shell);
+
+	if (display->cursor_theme)
+		wl_cursor_theme_destroy(display->cursor_theme);
 
 	if (display->shm)
 		wl_shm_destroy(display->shm);

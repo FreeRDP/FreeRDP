@@ -121,7 +121,7 @@ struct uwac_display {
 	uint32_t serial;
 
 	struct wl_cursor_theme *cursor_theme;
-	struct wl_cursor **cursors;
+	struct wl_cursor *default_cursor;
 
 	struct wl_list windows;
 
@@ -158,6 +158,10 @@ struct uwac_seat {
 	struct wl_data_device* data_device;
 	struct wl_data_source* data_source;
 	struct wl_pointer *pointer;
+	struct wl_surface *pointer_surface;
+	struct wl_cursor_image *pointer_image;
+	int pointer_type;
+	struct wl_buffer *pointer_buffer;
 	struct wl_keyboard *keyboard;
 	struct wl_touch *touch;
 	struct wl_data_offer* offer;

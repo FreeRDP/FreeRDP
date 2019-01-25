@@ -27,6 +27,8 @@ set(${MODULE_PREFIX}_SRCS
 	wlfreerdp.h
 	wlf_disp.c
 	wlf_disp.h
+	wlf_pointer.c
+	wlf_pointer.h
 	wlf_input.c
 	wlf_input.h
 	wlf_cliprdr.c

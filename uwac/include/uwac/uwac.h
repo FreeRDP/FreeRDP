@@ -564,6 +564,25 @@ UWAC_API void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* si
  */
 UWAC_API UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* seat, bool inhibit);
 
+/**
+ * @brief UwacSeatSetMouseCursor Sets the specified image as the new mouse cursor.
+ *                               Special values: If data == NULL && lenght == 0
+ *                               the cursor is hidden, if data == NULL && length != 0
+ *                               the default system cursor is used.
+ *
+ * @param seat   The UwacSeat to apply the cursor image to
+ * @param data   A pointer to the image data
+ * @param length The size of the image data
+ * @param width  The image width in pixel
+ * @param height The image height in pixel
+ * @param hot_x  The hotspot horizontal offset in pixel
+ * @param hot_y  The hotspot vertical offset in pixel
+ *
+ * @return UWAC_SUCCESS if successful, an appropriate error otherwise.
+ */
+UWAC_API UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t length,
+                                               size_t width, size_t height, size_t hot_x, size_t hot_y);
+
 #ifdef __cplusplus
 }
 #endif

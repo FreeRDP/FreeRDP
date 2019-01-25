@@ -39,6 +39,7 @@
 #include "wlf_cliprdr.h"
 #include "wlf_disp.h"
 #include "wlf_channels.h"
+#include "wlf_pointer.h"
 
 static BOOL wl_begin_paint(rdpContext* context)
 {
@@ -222,6 +223,9 @@ static BOOL wl_post_connect(freerdp* instance)
 	if (!gdi || (gdi->width < 0) || (gdi->height < 0))
 		return FALSE;
 
+	if (!wlf_register_pointer(instance->context->graphics))
+		return FALSE;
+
 	w = (UINT32)gdi->width;
 	h = (UINT32)gdi->height;
 	context = (wlfContext*) instance->context;
@@ -286,6 +290,14 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 		/*printf("UWAC event type %d\n", event.type);*/
 		switch (event.type)
 		{
+			case UWAC_EVENT_NEW_SEAT:
+				context->seat = event.seat_new.seat;
+				break;
+
+			case UWAC_EVENT_REMOVED_SEAT:
+				context->seat = NULL;
+				break;
+
 			case UWAC_EVENT_FRAME_DONE:
 				break;
 
