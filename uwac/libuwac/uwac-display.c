@@ -147,7 +147,8 @@ static void UwacSeatRegisterDDM(UwacSeat *seat)
 	if (!d->data_device_manager)
 		return;
 
-	seat->data_device = wl_data_device_manager_get_data_device(d->data_device_manager, seat->seat);
+	if (!seat->data_device)
+		seat->data_device = wl_data_device_manager_get_data_device(d->data_device_manager, seat->seat);
 }
 
 static void registry_handle_global(void* data, struct wl_registry* registry, uint32_t id,
@@ -222,6 +223,7 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 		wl_list_for_each(seat, &d->seats, link)
 		{
 			UwacSeatRegisterDDM(seat);
+			UwacSeatRegisterClipboard(seat);
 		}
 	}
 	else if (strcmp(interface, "wl_shell") == 0)

@@ -454,6 +454,16 @@ UWAC_API UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint
         uint32_t width, uint32_t height);
 
 /**
+ *	returns the geometry of the given UwacWindow buffer
+ *
+ * @param window   the UwacWindow
+ * @param geometry the geometry to fill
+ * @param stride   the length of a buffer line in bytes
+ * @return UWAC_SUCCESS on success, an Uwac error otherwise
+ */
+UWAC_API UwacReturnCode UwacWindowGetDrawingBufferGeometry(UwacWindow* window, UwacSize* geometry, size_t* stride);
+
+/**
  *	Sends a frame to the compositor with the content of the drawing buffer
  *
  * @param window the UwacWindow to refresh

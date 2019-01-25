@@ -375,16 +375,16 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 	if (!sysContexts)
 		return FALSE;
 
-	sysContexts->lib = sysContexts->lib = LoadLibraryA(name);
+	sysContexts->lib = LoadLibraryA(name);
 
 	if (!sysContexts->lib)
 		return FALSE;
 
-	sysContexts->WelsGetCodecVersionEx = GetProcAddress(sysContexts->lib, "WelsGetCodecVersionEx");
-	sysContexts->WelsCreateDecoder = GetProcAddress(sysContexts->lib, "WelsCreateDecoder");
-	sysContexts->WelsDestroyDecoder = GetProcAddress(sysContexts->lib, "WelsDestroyDecoder");
-	sysContexts->WelsCreateSVCEncoder = GetProcAddress(sysContexts->lib, "WelsCreateSVCEncoder");
-	sysContexts->WelsDestroySVCEncoder = GetProcAddress(sysContexts->lib, "WelsDestroySVCEncoder");
+	sysContexts->WelsGetCodecVersionEx = (pWelsGetCodecVersionEx) GetProcAddress(sysContexts->lib, "WelsGetCodecVersionEx");
+	sysContexts->WelsCreateDecoder = (pWelsCreateDecoder) GetProcAddress(sysContexts->lib, "WelsCreateDecoder");
+	sysContexts->WelsDestroyDecoder = (pWelsDestroyDecoder) GetProcAddress(sysContexts->lib, "WelsDestroyDecoder");
+	sysContexts->WelsCreateSVCEncoder = (pWelsCreateSVCEncoder) GetProcAddress(sysContexts->lib, "WelsCreateSVCEncoder");
+	sysContexts->WelsDestroySVCEncoder = (pWelsDestroySVCEncoder) GetProcAddress(sysContexts->lib, "WelsDestroySVCEncoder");
 
 	if (!sysContexts->WelsCreateDecoder || !sysContexts->WelsDestroyDecoder ||
 	    !sysContexts->WelsCreateSVCEncoder || !sysContexts->WelsDestroySVCEncoder ||

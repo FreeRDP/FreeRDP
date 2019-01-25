@@ -515,9 +515,6 @@ UwacReturnCode UwacDestroyWindow(UwacWindow** pwindow)
 	w = *pwindow;
 	UwacWindowDestroyBuffers(w);
 
-	if (w->frame_callback)
-		wl_callback_destroy(w->frame_callback);
-
 	if (w->deco)
 		zxdg_toplevel_decoration_v1_destroy(w->deco);
 
@@ -607,6 +604,7 @@ static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
 	const RECTANGLE_16* box;
 #endif
 	wl_surface_attach(window->surface, buffer->wayland_buffer, 0, 0);
+#if 0
 #ifdef HAVE_PIXMAN_REGION
 	box = pixman_region32_rectangles(&buffer->damage, &nrects);
 
@@ -621,12 +619,11 @@ static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
 		                  (box->bottom - box->top));
 
 #endif
-
-	if (window->frame_callback)
-		wl_callback_destroy(window->frame_callback);
-
-	window->frame_callback = wl_surface_frame(window->surface);
-	wl_callback_add_listener(window->frame_callback, &frame_listener, window);
+#else
+	wl_surface_damage(window->surface, 0, 0, window->width, window->height);
+#endif
+	struct wl_callback* frame_callback = wl_surface_frame(window->surface);
+	wl_callback_add_listener(frame_callback, &frame_listener, window);
 	wl_surface_commit(window->surface);
 #ifdef HAVE_PIXMAN_REGION
 	pixman_region32_clear(&buffer->damage);
@@ -640,6 +637,8 @@ static void frame_done_cb(void* data, struct wl_callback* callback, uint32_t tim
 {
 	UwacWindow* window = (UwacWindow*)data;
 	UwacFrameDoneEvent* event;
+
+	wl_callback_destroy(callback);
 	window->pendingBuffer = NULL;
 	event = (UwacFrameDoneEvent*)UwacDisplayNewEvent(window->display, UWAC_EVENT_FRAME_DONE);
 
@@ -670,20 +669,30 @@ UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, u
 	return UWAC_SUCCESS;
 }
 
+UwacReturnCode UwacWindowGetDrawingBufferGeometry(UwacWindow* window, UwacSize* geometry, size_t* stride)
+{
+	if (!window || !window->drawingBuffer)
+		return UWAC_ERROR_INTERNAL;
+
+	if (geometry)
+	{
+		geometry->width = window->width;
+		geometry->height = window->height;
+	}
+
+	if (stride)
+		*stride = window->stride;
+
+	return UWAC_SUCCESS;
+}
 
 UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNextFrame)
 {
 	UwacBuffer* drawingBuffer = window->drawingBuffer;
 
 	if (window->pendingBuffer)
-	{
-		/* we already have a pending frame. resubmit as the buffer
-		 * might have been discarded due to focus loss */
-		UwacSubmitBufferPtr(window, window->pendingBuffer);
 		return UWAC_SUCCESS;
-	}
 
-	UwacSubmitBufferPtr(window, drawingBuffer);
 	window->pendingBuffer = window->drawingBuffer;
 	window->drawingBuffer = UwacWindowFindFreeBuffer(window);
 
@@ -691,10 +700,9 @@ UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNex
 		return UWAC_ERROR_NOMEMORY;
 
 	if (copyContentForNextFrame)
-	{
 		memcpy(window->drawingBuffer->data, window->pendingBuffer->data, window->stride * window->height);
-	}
 
+	UwacSubmitBufferPtr(window, drawingBuffer);
 	return UWAC_SUCCESS;
 }
 
