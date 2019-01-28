@@ -84,6 +84,9 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	switch (correlation_operator)
 	{
 		case FC_DEREFERENCE:
+			if (!ptr)
+				return pFormat;
+
 			ptr = *(LPVOID*)((char*) ptr + offset);
 			break;
 
