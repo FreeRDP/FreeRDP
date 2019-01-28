@@ -160,8 +160,9 @@ struct uwac_seat {
 	struct wl_pointer *pointer;
 	struct wl_surface *pointer_surface;
 	struct wl_cursor_image *pointer_image;
+	void *pointer_data;
+	size_t pointer_size;
 	int pointer_type;
-	struct wl_buffer *pointer_buffer;
 	struct wl_keyboard *keyboard;
 	struct wl_touch *touch;
 	struct wl_data_offer* offer;
