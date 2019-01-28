@@ -161,7 +161,7 @@ LONG smartcard_pack_write_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UI
 SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartcard,
         REDIR_SCARDCONTEXT* context)
 {
-	SCARDCONTEXT hContext = 0;
+	SCARDCONTEXT hContext = { 0 };
 
 	if ((context->cbContext != sizeof(ULONG_PTR)) && (context->cbContext != 0))
 	{
@@ -173,8 +173,6 @@ SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartca
 
 	if (context->cbContext)
 		CopyMemory(&hContext, &(context->pbContext), context->cbContext);
-	else
-		ZeroMemory(&hContext, sizeof(ULONG_PTR));
 
 	return hContext;
 }
