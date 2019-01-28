@@ -643,6 +643,7 @@ static UINT wlf_cliprdr_server_format_data_request(CliprdrClientContext* context
 			{
 				cnv = ConvertToUnicode(CP_UTF8, 0, (LPCSTR)data, (int)size, &cdata, 0);
 				free(data);
+				data = NULL;
 
 				if (cnv < 0)
 					rc = ERROR_INTERNAL_ERROR;

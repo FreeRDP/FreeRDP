@@ -213,7 +213,7 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, XEvent* event)
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
 
-	if (!xfc->actionScriptExists || !xfc->xevents)
+	if (!xfc->actionScriptExists || !xfc->xevents || !xfc->window)
 		return FALSE;
 
 	if (event->type > LASTEvent)
@@ -477,6 +477,9 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 }
 static BOOL xf_event_FocusIn(xfContext* xfc, XEvent* event, BOOL app)
 {
+	if (!xfc->window)
+		return FALSE;
+
 	if (event->xfocus.mode == NotifyGrab)
 		return TRUE;
 
@@ -560,6 +563,9 @@ static BOOL xf_event_ClientMessage(xfContext* xfc, XEvent* event, BOOL app)
 }
 static BOOL xf_event_EnterNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
+	if (!xfc->window)
+		return FALSE;
+
 	if (!app)
 	{
 		xfc->mouse_active = TRUE;
@@ -601,7 +607,12 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	Window childWindow;
 	xfAppWindow* appWindow;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings;
+	
+	if (!xfc->window)
+		return FALSE;
+
+	settings = xfc->context.settings;
 
 	if (!app)
 	{
