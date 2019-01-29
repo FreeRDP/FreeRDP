@@ -1021,9 +1021,6 @@ UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t l
 	if (!seat)
 		return UWAC_ERROR_CLOSED;
 
-	fprintf(stderr, "%s: %p\n", __func__, data);
-	fflush(stderr);
-
 	free(seat->pointer_image);
 	seat->pointer_image = NULL;
 
