@@ -664,11 +664,12 @@ fail:
 	return rc;
 }
 
-BYTE* freerdp_assistance_hex_string_to_bin(const char* str, size_t* size)
+BYTE* freerdp_assistance_hex_string_to_bin(const void* raw, size_t* size)
 {
 	size_t length;
 	BYTE* buffer;
 	size_t i;
+	const char* str = (const char*)raw;
 	length = strlen(str);
 
 	if ((length % 2) != 0)
@@ -710,11 +711,12 @@ BYTE* freerdp_assistance_hex_string_to_bin(const char* str, size_t* size)
 	return buffer;
 }
 
-char* freerdp_assistance_bin_to_hex_string(const BYTE* data, size_t size)
+char* freerdp_assistance_bin_to_hex_string(const void* raw, size_t size)
 {
 	size_t i;
 	char* p;
 	int ln, hn;
+	const char* data = (const char*)raw;
 	char bin2hex[] = "0123456789ABCDEF";
 	p = (char*) calloc((size + 1), 2);
 
