@@ -2094,6 +2094,8 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SetKeyboardIndicators = update_send_set_keyboard_indicators;
 	update->SetKeyboardImeStatus = update_send_set_keyboard_ime_status;
 	update->SaveSessionInfo = rdp_send_save_session_info;
+	update->ServerStatusInfo = rdp_send_server_status_info;
+
 	update->primary->DstBlt = update_send_dstblt;
 	update->primary->PatBlt = update_send_patblt;
 	update->primary->ScrBlt = update_send_scrblt;
@@ -2101,6 +2103,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->primary->LineTo = update_send_line_to;
 	update->primary->MemBlt = update_send_memblt;
 	update->primary->GlyphIndex = update_send_glyph_index;
+
 	update->secondary->CacheBitmap = update_send_cache_bitmap;
 	update->secondary->CacheBitmapV2 = update_send_cache_bitmap_v2;
 	update->secondary->CacheBitmapV3 = update_send_cache_bitmap_v3;
@@ -2108,9 +2111,10 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->secondary->CacheGlyph = update_send_cache_glyph;
 	update->secondary->CacheGlyphV2 = update_send_cache_glyph_v2;
 	update->secondary->CacheBrush = update_send_cache_brush;
-	update->altsec->CreateOffscreenBitmap =
-	    update_send_create_offscreen_bitmap_order;
+
+	update->altsec->CreateOffscreenBitmap = update_send_create_offscreen_bitmap_order;
 	update->altsec->SwitchSurface = update_send_switch_surface_order;
+
 	update->pointer->PointerSystem = update_send_pointer_system;
 	update->pointer->PointerPosition = update_send_pointer_position;
 	update->pointer->PointerColor = update_send_pointer_color;

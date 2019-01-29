@@ -1461,3 +1461,17 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 
 	return status;
 }
+
+BOOL rdp_send_server_status_info(rdpContext* context, UINT32 status)
+{
+	wStream* s;
+	rdpRdp* rdp = context->rdp;
+	s = rdp_data_pdu_init(rdp);
+
+	if (!s)
+		return FALSE;
+
+	Stream_Write_UINT32(s, status);
+
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_STATUS_INFO, rdp->mcs->userId);;
+}
