@@ -32,6 +32,111 @@
 #include <sys/timerfd.h>
 #include <sys/epoll.h>
 
+#include "uwac-os.h"
+#include "wayland-cursor.h"
+#include "wayland-client-protocol.h"
+
+static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, size_t size)
+{
+	struct wl_buffer* buffer = NULL;
+	UwacReturnCode ret = UWAC_SUCCESS;
+	int fd;
+	void* data;
+	struct wl_shm_pool* pool;
+
+	fd = uwac_create_anonymous_file(size);
+
+	if (fd < 0)
+		return buffer;
+
+	data = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
+	if (data == MAP_FAILED)
+	{
+		ret = UWAC_ERROR_NOMEMORY;
+		goto error_mmap;
+	}
+	memcpy(data, src, size);
+
+	pool = wl_shm_create_pool(seat->display->shm, fd, size);
+
+	if (!pool)
+	{
+		munmap(data, size);
+		ret = UWAC_ERROR_NOMEMORY;
+		goto error_mmap;
+	}
+
+	buffer = wl_shm_pool_create_buffer(pool, 0,
+	                                                 seat->pointer_image->width,
+	                                                 seat->pointer_image->height,
+	                                                 seat->pointer_image->width * 4,
+	                                                 WL_SHM_FORMAT_ARGB8888);
+	wl_shm_pool_destroy(pool);
+
+error_mmap:
+	close(fd);
+	return buffer;
+}
+
+static UwacReturnCode
+set_cursor_image(UwacSeat* seat, uint32_t serial)
+{
+	struct wl_buffer* buffer = NULL;
+	struct wl_cursor* cursor;
+	struct wl_cursor_image* image;
+	struct wl_surface* surface = NULL;
+	int32_t x = 0, y = 0;
+
+	if (!seat || !seat->display || !seat->display->default_cursor || !seat->display->default_cursor->images)
+		return UWAC_ERROR_INTERNAL;
+
+	switch(seat->pointer_type) {
+		case 2: /* Custom poiner */
+			image = seat->pointer_image;
+			buffer = create_pointer_buffer(seat, seat->pointer_data, seat->pointer_size);
+			if (!buffer)
+				return UWAC_ERROR_INTERNAL;
+			surface = seat->pointer_surface;
+			x = image->hotspot_x;
+			y = image->hotspot_y;
+			break;
+		case 1: /* NULL pointer */
+			break;
+		default: /* Default system pointer */
+			cursor = seat->display->default_cursor;
+			if (!cursor)
+				return UWAC_ERROR_INTERNAL;
+			image = cursor->images[0];
+			if (!image)
+				return UWAC_ERROR_INTERNAL;
+			x = image->hotspot_x;
+			y = image->hotspot_y;
+			buffer = wl_cursor_image_get_buffer(image);
+			if (!buffer)
+				return UWAC_ERROR_INTERNAL;
+			surface = seat->pointer_surface;
+			break;
+	}
+
+	if (surface) {
+		wl_surface_attach(surface, buffer, -x, -y);
+		wl_surface_damage(surface, 0, 0,
+	                  image->width, image->height);
+		wl_surface_commit(surface);
+	}
+
+	if (buffer) {
+		wl_buffer_destroy(buffer);
+	}
+
+	wl_pointer_set_cursor(seat->pointer,
+	                      serial,
+	                      surface,
+	                      x, y);
+
+	return UWAC_SUCCESS;
+}
 
 static void keyboard_repeat_func(UwacTask *task, uint32_t events)
 {
@@ -588,6 +693,10 @@ static void pointer_handle_enter(void *data, struct wl_pointer *pointer, uint32_
 	event->window = window;
 	event->x = sx;
 	event->y = sy;
+
+
+	/* Apply cursor theme */
+	set_cursor_image(input, serial);
 }
 
 static void pointer_handle_leave(void *data, struct wl_pointer *pointer, uint32_t serial,
@@ -871,6 +980,12 @@ void UwacSeatDestroy(UwacSeat *s) {
 	if (s->data_source)
 		wl_data_source_destroy(s->data_source);
 
+	if (s->pointer_surface)
+		wl_surface_destroy(s->pointer_surface);
+
+	free(s->pointer_image);
+	free(s->pointer_data);
+
 	wl_list_remove(&s->link);
 	free(s);
 }
@@ -897,4 +1012,47 @@ UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* s, bool inhibit)
 	if (!s->keyboard_inhibitor)
 		return UWAC_ERROR_INTERNAL;
 	return UWAC_SUCCESS;
+}
+
+UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t length,
+                                      size_t width, size_t height,
+                                      size_t hot_x, size_t hot_y)
+{
+	if (!seat)
+		return UWAC_ERROR_CLOSED;
+
+	free(seat->pointer_image);
+	seat->pointer_image = NULL;
+
+	free(seat->pointer_data);
+	seat->pointer_data = NULL;
+	seat->pointer_size = 0;
+
+	/* There is a cursor provided */
+	if ((data != NULL) && (length != 0))
+	{
+		seat->pointer_image = calloc(1, sizeof(struct wl_cursor_image));
+		if (!seat->pointer_image)
+			return UWAC_ERROR_NOMEMORY;
+		seat->pointer_image->width = width;
+		seat->pointer_image->height = height;
+		seat->pointer_image->hotspot_x = hot_x;
+		seat->pointer_image->hotspot_y = hot_y;
+
+		free(seat->pointer_data);
+		seat->pointer_data = malloc(length);
+		memcpy(seat->pointer_data, data, length);
+		seat->pointer_size = length;
+
+		seat->pointer_type = 2;
+	}
+	/* We want to use the system cursor */
+	else if (length != 0) {
+		seat->pointer_type = 0;
+	}
+	/* Hide the cursor */
+	else {
+		seat->pointer_type = 1;
+	}
+	return set_cursor_image(seat, seat->display->serial);
 }

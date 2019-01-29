@@ -41,6 +41,7 @@ struct wlf_context
 	UwacDisplay* display;
 	HANDLE displayHandle;
 	UwacWindow* window;
+	UwacSeat* seat;
 
 	BOOL fullscreen;
 

@@ -97,6 +97,7 @@ enum
 	UWAC_EVENT_CLIPBOARD_AVAILABLE,
 	UWAC_EVENT_CLIPBOARD_SELECT,
 	UWAC_EVENT_CLIPBOARD_OFFER,
+	UWAC_EVENT_OUTPUT_GEOMETRY,
 };
 
 /** @brief window states */
@@ -243,11 +244,27 @@ struct uwac_clipboard_event
 };
 typedef struct uwac_clipboard_event UwacClipboardEvent;
 
+struct uwac_output_geometry_event
+{
+	int type;
+	UwacOutput* output;
+	int x;
+	int y;
+	int physical_width;
+	int physical_height;
+	int subpixel;
+	const char *make;
+	const char *model;
+	int transform;
+};
+typedef struct uwac_output_geometry_event UwacOutputGeometryEvent;
+
 /** @brief */
 union uwac_event
 {
 	int type;
 	UwacOutputNewEvent output_new;
+	UwacOutputGeometryEvent output_geometry;
 	UwacSeatNewEvent seat_new;
 	UwacSeatRemovedEvent seat_removed;
 	UwacPointerEnterLeaveEvent mouse_enter_leave;
@@ -563,6 +580,25 @@ UWAC_API void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* si
  * @return UWAC_SUCCESS or an appropriate error code.
  */
 UWAC_API UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* seat, bool inhibit);
+
+/**
+ * @brief UwacSeatSetMouseCursor Sets the specified image as the new mouse cursor.
+ *                               Special values: If data == NULL && lenght == 0
+ *                               the cursor is hidden, if data == NULL && length != 0
+ *                               the default system cursor is used.
+ *
+ * @param seat   The UwacSeat to apply the cursor image to
+ * @param data   A pointer to the image data
+ * @param length The size of the image data
+ * @param width  The image width in pixel
+ * @param height The image height in pixel
+ * @param hot_x  The hotspot horizontal offset in pixel
+ * @param hot_y  The hotspot vertical offset in pixel
+ *
+ * @return UWAC_SUCCESS if successful, an appropriate error otherwise.
+ */
+UWAC_API UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t length,
+                                               size_t width, size_t height, size_t hot_x, size_t hot_y);
 
 #ifdef __cplusplus
 }
