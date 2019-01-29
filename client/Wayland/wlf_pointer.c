@@ -47,7 +47,7 @@ static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		return FALSE;
 
 	if (!freerdp_image_copy_from_pointer_data(
-	        ptr->data, PIXEL_FORMAT_RGBA32,
+	        ptr->data, PIXEL_FORMAT_BGRA32,
 	        0, 0, 0, pointer->width, pointer->height,
 	        pointer->xorMaskData, pointer->lengthXorMask,
 	        pointer->andMaskData, pointer->lengthAndMask,
