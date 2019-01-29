@@ -36,7 +36,7 @@ BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEven
 	x = ev->x;
 	y = ev->y;
 
-	if (!wlf_scale_coordinates(instance->context, &x, &y))
+	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
 	return freerdp_input_send_mouse_event(instance->input, PTR_FLAGS_MOVE, x, y);
@@ -52,7 +52,7 @@ BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* 
 	x = ev->x;
 	y = ev->y;
 
-	if (!wlf_scale_coordinates(instance->context, &x, &y))
+	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
 	return freerdp_input_send_mouse_event(instance->input, PTR_FLAGS_MOVE, x, y);
@@ -71,7 +71,7 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 	x = ev->x;
 	y = ev->y;
 
-	if (!wlf_scale_coordinates(instance->context, &x, &y))
+	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
 	input = instance->input;
@@ -131,7 +131,7 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 	x = ev->x;
 	y = ev->y;
 
-	if (!wlf_scale_coordinates(instance->context, &x, &y))
+	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
 	input = instance->input;

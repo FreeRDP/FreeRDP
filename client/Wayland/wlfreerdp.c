@@ -108,10 +108,10 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	                    context_w->context.settings->SmartSizing))
 		return FALSE;
 
-	if (!wlf_scale_coordinates(&context_w->context, &x, &y))
+	if (!wlf_scale_coordinates(&context_w->context, &x, &y, FALSE))
 		return FALSE;
 
-	if (!wlf_scale_coordinates(&context_w->context, &w, &h))
+	if (!wlf_scale_coordinates(&context_w->context, &w, &h, FALSE))
 		return FALSE;
 
 	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)
@@ -636,7 +636,7 @@ BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t s
 	return rc;
 }
 
-BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py)
+BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fromLocalToRDP)
 {
 	wlfContext* wlf = (wlfContext*)context;
 	rdpGdi* gdi;
@@ -658,8 +658,18 @@ BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py)
 
 	sx = geometry.width / (double)gdi->width;
 	sy = geometry.height / (double)gdi->height;
-	*px /= sx;
-	*py /= sy;
+
+	if (!fromLocalToRDP)
+	{
+		*px *= sx;
+		*py *= sy;
+	}
+	else
+	{
+		*px /= sx;
+		*py /= sy;
+	}
+
 #endif
 	return TRUE;
 }

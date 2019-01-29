@@ -36,11 +36,13 @@ typedef struct wlf_pointer wlfPointer;
 static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 	wlfPointer* ptr = (wlfPointer*)pointer;
+
 	if (!ptr)
 		return FALSE;
 
 	ptr->size = pointer->width * pointer->height * 4;
 	ptr->data = _aligned_malloc(ptr->size, 16);
+
 	if (!ptr->data)
 		return FALSE;
 
@@ -62,29 +64,64 @@ static void wlf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
 	wlfPointer* ptr = (wlfPointer*)pointer;
 	WINPR_UNUSED(context);
+
 	if (ptr)
 		_aligned_free(ptr->data);
 }
 
 static BOOL wlf_Pointer_Set(rdpContext* context,
-                           const rdpPointer* pointer)
+                            const rdpPointer* pointer)
 {
 	wlfContext* wlf = (wlfContext*)context;
 	wlfPointer* ptr = (wlfPointer*)pointer;
+	void* data;
+	UINT32 w, h, x, y;
+	size_t size;
+	UwacReturnCode rc;
+	BOOL res = FALSE;
+	RECTANGLE_16 area;
 
 	if (!wlf || !wlf->seat)
 		return FALSE;
 
-	// TODO: Scale according to SmartSizing
-	if (UwacSeatSetMouseCursor(wlf->seat, ptr->data, ptr->size, pointer->width, pointer->height, pointer->xPos, pointer->yPos) != UWAC_SUCCESS)
+	x = pointer->xPos;
+	y = pointer->yPos;
+	w = pointer->width;
+	h = pointer->height;
+
+	if (!wlf_scale_coordinates(context, &x, &y, FALSE) ||
+	    !wlf_scale_coordinates(context, &w, &h, FALSE))
 		return FALSE;
 
-	return TRUE;
+	size = w * h * 4;
+	data = malloc(size);
+
+	if (!data)
+		return FALSE;
+
+	area.top = 0;
+	area.left = 0;
+	area.right = (UINT16)pointer->width;
+	area.bottom = (UINT16)pointer->height;
+
+	if (!wlf_copy_image(ptr->data, pointer->width * 4, pointer->width, pointer->height, data, w * 4, w,
+	                    h, &area, context->settings->SmartSizing))
+		goto fail;
+
+	rc = UwacSeatSetMouseCursor(wlf->seat, data, size, w, h, x, y);
+
+	if (rc == UWAC_SUCCESS)
+		res = TRUE;
+
+fail:
+	free(data);
+	return res;
 }
 
 static BOOL wlf_Pointer_SetNull(rdpContext* context)
 {
 	wlfContext* wlf = (wlfContext*)context;
+
 	if (!wlf || !wlf->seat)
 		return FALSE;
 
@@ -97,6 +134,7 @@ static BOOL wlf_Pointer_SetNull(rdpContext* context)
 static BOOL wlf_Pointer_SetDefault(rdpContext* context)
 {
 	wlfContext* wlf = (wlfContext*)context;
+
 	if (!wlf || !wlf->seat)
 		return FALSE;
 
