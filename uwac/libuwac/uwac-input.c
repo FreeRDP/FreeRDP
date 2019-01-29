@@ -82,7 +82,7 @@ error_mmap:
 static UwacReturnCode
 set_cursor_image(UwacSeat* seat, uint32_t serial)
 {
-	struct wl_buffer* buffer;
+	struct wl_buffer* buffer = NULL;
 	struct wl_cursor* cursor;
 	struct wl_cursor_image* image;
 	struct wl_surface* surface = NULL;
