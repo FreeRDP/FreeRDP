@@ -649,9 +649,9 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		}
 		CommandLineSwitchCase(arg, "x")
 		{
-			long type;
+			unsigned long type;
 			char* pEnd;
-			type = strtol(arg->Value, &pEnd, 16);
+			type = strtoul(arg->Value, &pEnd, 16);
 
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
