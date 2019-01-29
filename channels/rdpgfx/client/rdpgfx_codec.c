@@ -243,10 +243,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 		h264.bitstream[1].length = Stream_GetRemainingLength(s);
 	}
 	else
-	{
 		h264.bitstream[0].length = Stream_GetRemainingLength(s);
-		memset(&h264.bitstream[1], 0, sizeof(h264.bitstream[1]));
-	}
 
 	cmd->extra = (void*) &h264;
 

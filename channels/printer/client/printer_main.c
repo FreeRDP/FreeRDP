@@ -845,7 +845,13 @@ static UINT printer_free(DEVICE* device)
 	{
 		error = GetLastError();
 		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
+
+		/* The analyzer is confused by this premature return value.
+		 * Since this case can not be handled gracefully silence the
+		 * analyzer here. */
+#ifndef __clang_analyzer__
 		return error;
+#endif
 	}
 
 	while ((irp = (IRP*) InterlockedPopEntrySList(printer_dev->pIrpList)) != NULL)
@@ -873,7 +879,7 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
                       rdpPrinter* printer)
 {
 	PRINTER_DEVICE* printer_dev;
-	UINT error;
+	UINT error = ERROR_INTERNAL_ERROR;
 	printer_dev = (PRINTER_DEVICE*) calloc(1, sizeof(PRINTER_DEVICE));
 
 	if (!printer_dev)

@@ -246,8 +246,13 @@ static BOOL NamedPipeCloseHandle(HANDLE handle)
 {
 	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*)handle;
 
+	/* This check confuses the analyzer. Since not all handle
+	 * types are handled here, it guesses that the memory of a
+	 * NamedPipeHandle may leak. */
+#ifndef __clang_analyzer__
 	if (!NamedPipeIsHandled(handle))
 		return FALSE;
+#endif
 
 	if (pNamedPipe->pfnUnrefNamedPipe)
 		pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);

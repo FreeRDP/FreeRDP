@@ -1140,8 +1140,13 @@ BOOL FindClose(HANDLE hFindFile)
 {
 	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
 
+	/* Since INVALID_HANDLE_VALUE != NULL the analyzer guesses that there
+	 * is a initialized HANDLE that is not freed properly.
+	 * Disable this return to stop confusing the analyzer. */
+#ifndef __clang_analyzer__
 	if (!pFileSearch || (pFileSearch == INVALID_HANDLE_VALUE))
 		return FALSE;
+#endif
 
 	free(pFileSearch->lpPath);
 	free(pFileSearch->lpPattern);
