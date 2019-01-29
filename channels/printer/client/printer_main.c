@@ -297,59 +297,6 @@ static BOOL printer_move_config(const rdpSettings* settings, const WCHAR* oldNam
 	return rc;
 }
 
-#if 0
-sprintf_s(printer_dev->port, sizeof(printer_dev->port), "PRN%d", printer->id);
-printer_dev->device.type = RDPDR_DTYP_PRINT;
-printer_dev->device.name = printer_dev->port;
-printer_dev->device.IRPRequest = printer_irp_request;
-printer_dev->device.CustomComponentRequest = printer_custom_component;
-printer_dev->device.Free = printer_free;
-printer_dev->rdpcontext = pEntryPoints->rdpcontext;
-printer_dev->printer = printer;
-CachedFieldsLen = 0;
-CachedPrinterConfigData = NULL;
-Flags = 0;
-
-if (printer->is_default)
-	Flags |= RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER;
-
-DriverNameLen = ConvertToUnicode(CP_UTF8, 0, printer->driver, -1, &DriverName,
-                                 0) * 2;
-PrintNameLen = ConvertToUnicode(CP_UTF8, 0, printer->name, -1, &PrintName,
-                                0) * 2;
-printer_dev->device.data = Stream_New(NULL,
-                                      28 + DriverNameLen + PrintNameLen + CachedFieldsLen);
-
-if (!printer_dev->device.data)
-{
-	WLog_ERR(TAG, "calloc failed!");
-	error = CHANNEL_RC_NO_MEMORY;
-	free(DriverName);
-	free(PrintName);
-	goto error_out;
-}
-
-Stream_Write_UINT32(printer_dev->device.data, Flags);
-Stream_Write_UINT32(printer_dev->device.data, 0); /* CodePage, reserved */
-Stream_Write_UINT32(printer_dev->device.data, printer_dev->PnPNameLen); /* PnPNameLen */
-Stream_Write_UINT32(printer_dev->device.data, DriverNameLen + 2);
-Stream_Write_UINT32(printer_dev->device.data, PrintNameLen + 2);
-Stream_Write_UINT32(printer_dev->device.data, printer_dev->CachedFieldsLen);
-Stream_Write(printer_dev->device.data, DriverName, DriverNameLen);
-Stream_Write_UINT16(printer_dev->device.data, 0);
-Stream_Write(printer_dev->device.data, PrintName, PrintNameLen);
-Stream_Write_UINT16(printer_dev->device.data, 0);
-
-if (printer_dev->PnPNameLen > 0)
-	Stream_Write(printer_dev->device.data, printer_dev->PnPName, printer_dev->PnPNameLen);
-
-if (printer_dev->CachedFieldsLen > 0)
-	Stream_Write(printer_dev->device.data, printer_dev->CachedPrinterConfigData,
-	             printer_dev->CachedFieldsLen);
-
-free(DriverName);
-free(PrintName);
-#endif
 static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* printer,
                                      PRINTER_DEVICE* printer_dev)
 {
@@ -854,7 +801,7 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					break;
 
 				default:
-					WLog_ERR(TAG, "Unknown chache data eventID: 0x%08"PRIX32"", eventID);
+					WLog_ERR(TAG, "Unknown cache data eventID: 0x%08"PRIX32"", eventID);
 					return ERROR_INVALID_DATA;
 			}
 
