@@ -5083,7 +5083,7 @@ TRIO_ARGS1((ref),
 /*************************************************************************
  * trio_get_argument [public]
  */
-TRIO_CONST trio_pointer_t
+trio_pointer_t
 trio_get_argument
 TRIO_ARGS1((ref),
 	   trio_pointer_t ref)

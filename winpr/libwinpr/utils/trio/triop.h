@@ -428,7 +428,7 @@ trio_pointer_t trio_register TRIO_PROTO((trio_callback_t callback, const char *n
 void trio_unregister TRIO_PROTO((trio_pointer_t handle));
 
 TRIO_CONST char *trio_get_format TRIO_PROTO((trio_pointer_t ref));
-TRIO_CONST trio_pointer_t trio_get_argument TRIO_PROTO((trio_pointer_t ref));
+trio_pointer_t trio_get_argument TRIO_PROTO((trio_pointer_t ref));
 
 /* Modifiers */
 int  trio_get_width TRIO_PROTO((trio_pointer_t ref));
