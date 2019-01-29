@@ -84,7 +84,7 @@ static void printer_cups_get_printjob_name(char* buf, int size)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT printer_cups_write_printjob(rdpPrintJob* printjob, BYTE* data, int size)
+static UINT printer_cups_write_printjob(rdpPrintJob* printjob, const BYTE* data, size_t size)
 {
 	rdpCupsPrintJob* cups_printjob = (rdpCupsPrintJob*) printjob;
 

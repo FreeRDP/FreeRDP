@@ -938,6 +938,7 @@ endif()
 if(OPENSSL_FOUND)
 	add_definitions("-DWITH_OPENSSL")
 	message(STATUS "Using OpenSSL Version: ${OPENSSL_VERSION}")
+	include_directories(${OPENSSL_INCLUDE_DIR})
 endif()
 
 if(MBEDTLS_FOUND)

@@ -135,7 +135,8 @@ BOOL check_path(char* path)
 {
 	UINT type = GetDriveTypeA(path);
 
-	if (!(type == DRIVE_FIXED ||type == DRIVE_REMOVABLE || type == DRIVE_CDROM || type == DRIVE_REMOTE))
+	if (!(type == DRIVE_FIXED || type == DRIVE_REMOVABLE || type == DRIVE_CDROM ||
+	      type == DRIVE_REMOTE))
 		return FALSE;
 
 	return GetVolumeInformationA(path, NULL, 0, NULL, NULL, NULL, NULL, 0);
@@ -1324,6 +1325,31 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	return error;
 }
 
+static UINT rdpdr_process_component(rdpdrPlugin* rdpdr, UINT16 component, UINT16 packetId,
+                                    wStream* s)
+{
+	UINT32 type;
+	DEVICE* device;
+
+	switch (component)
+	{
+		case RDPDR_CTYP_PRN:
+			type = RDPDR_DTYP_PRINT;
+			break;
+
+		default:
+			return ERROR_INVALID_DATA;
+	}
+
+	device = devman_get_device_by_type(rdpdr->devman, type);
+
+	if (!device)
+		return ERROR_INVALID_PARAMETER;
+
+	return IFCALLRESULT(ERROR_INVALID_PARAMETER, device->CustomComponentRequest, device, component,
+	                    packetId, s);
+}
+
 /**
  * Function description
  *
@@ -1368,141 +1394,114 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 packetId;
 	UINT32 deviceId;
 	UINT32 status;
-	UINT error;
+	UINT error = ERROR_INVALID_DATA;
 
 	if (!rdpdr || !s)
 		return CHANNEL_RC_NULL_DATA;
 
-	if (Stream_GetRemainingLength(s) < 4)
-		return ERROR_INVALID_DATA;
-
-	Stream_Read_UINT16(s, component); /* Component (2 bytes) */
-	Stream_Read_UINT16(s, packetId); /* PacketId (2 bytes) */
-
-	if (component == RDPDR_CTYP_CORE)
+	if (Stream_GetRemainingLength(s) >= 4)
 	{
-		switch (packetId)
+		Stream_Read_UINT16(s, component); /* Component (2 bytes) */
+		Stream_Read_UINT16(s, packetId); /* PacketId (2 bytes) */
+
+		if (component == RDPDR_CTYP_CORE)
 		{
-			case PAKID_CORE_SERVER_ANNOUNCE:
-				if ((error = rdpdr_process_server_announce_request(rdpdr, s)))
-					return error;
+			switch (packetId)
+			{
+				case PAKID_CORE_SERVER_ANNOUNCE:
+					if ((error = rdpdr_process_server_announce_request(rdpdr, s)))
+					{
+					}
+					else if ((error = rdpdr_send_client_announce_reply(rdpdr)))
+					{
+						WLog_ERR(TAG, "rdpdr_send_client_announce_reply failed with error %"PRIu32"", error);
+					}
+					else if ((error = rdpdr_send_client_name_request(rdpdr)))
+					{
+						WLog_ERR(TAG, "rdpdr_send_client_name_request failed with error %"PRIu32"", error);
+					}
+					else if ((error = rdpdr_process_init(rdpdr)))
+					{
+						WLog_ERR(TAG, "rdpdr_process_init failed with error %"PRIu32"", error);
+					}
 
-				if ((error = rdpdr_send_client_announce_reply(rdpdr)))
-				{
-					WLog_ERR(TAG, "rdpdr_send_client_announce_reply failed with error %"PRIu32"", error);
-					return error;
-				}
+					break;
 
-				if ((error = rdpdr_send_client_name_request(rdpdr)))
-				{
-					WLog_ERR(TAG, "rdpdr_send_client_name_request failed with error %"PRIu32"", error);
-					return error;
-				}
+				case PAKID_CORE_SERVER_CAPABILITY:
+					if ((error = rdpdr_process_capability_request(rdpdr, s)))
+					{
+					}
+					else if ((error = rdpdr_send_capability_response(rdpdr)))
+					{
+						WLog_ERR(TAG, "rdpdr_send_capability_response failed with error %"PRIu32"", error);
+					}
 
-				if ((error = rdpdr_process_init(rdpdr)))
-				{
-					WLog_ERR(TAG, "rdpdr_process_init failed with error %"PRIu32"", error);
-					return error;
-				}
+					break;
 
-				break;
+				case PAKID_CORE_CLIENTID_CONFIRM:
+					if ((error = rdpdr_process_server_clientid_confirm(rdpdr, s)))
+					{
+					}
+					else if ((error = rdpdr_send_device_list_announce_request(rdpdr, FALSE)))
+					{
+						WLog_ERR(TAG, "rdpdr_send_device_list_announce_request failed with error %"PRIu32"",
+						         error);
+					}
 
-			case PAKID_CORE_SERVER_CAPABILITY:
-				if ((error = rdpdr_process_capability_request(rdpdr, s)))
-					return error;
+					break;
 
-				if ((error = rdpdr_send_capability_response(rdpdr)))
-				{
-					WLog_ERR(TAG, "rdpdr_send_capability_response failed with error %"PRIu32"", error);
-					return error;
-				}
+				case PAKID_CORE_USER_LOGGEDON:
+					if ((error = rdpdr_send_device_list_announce_request(rdpdr, TRUE)))
+					{
+						WLog_ERR(TAG, "rdpdr_send_device_list_announce_request failed with error %"PRIu32"",
+						         error);
+					}
 
-				break;
+					break;
 
-			case PAKID_CORE_CLIENTID_CONFIRM:
-				if ((error = rdpdr_process_server_clientid_confirm(rdpdr, s)))
-					return error;
+				case PAKID_CORE_DEVICE_REPLY:
 
-				if ((error = rdpdr_send_device_list_announce_request(rdpdr, FALSE)))
-				{
-					WLog_ERR(TAG, "rdpdr_send_device_list_announce_request failed with error %"PRIu32"",
-					         error);
-					return error;
-				}
+					/* connect to a specific resource */
+					if (Stream_GetRemainingLength(s) >= 8)
+					{
+						Stream_Read_UINT32(s, deviceId);
+						Stream_Read_UINT32(s, status);
+						error = CHANNEL_RC_OK;
+					}
 
-				break;
+					break;
 
-			case PAKID_CORE_USER_LOGGEDON:
-				if ((error = rdpdr_send_device_list_announce_request(rdpdr, TRUE)))
-				{
-					WLog_ERR(TAG, "rdpdr_send_device_list_announce_request failed with error %"PRIu32"",
-					         error);
-					return error;
-				}
+				case PAKID_CORE_DEVICE_IOREQUEST:
+					if ((error = rdpdr_process_irp(rdpdr, s)))
+					{
+						WLog_ERR(TAG, "rdpdr_process_irp failed with error %"PRIu32"", error);
+						return error;
+					}
+					else
+						s = NULL;
 
-				break;
+					break;
 
-			case PAKID_CORE_DEVICE_REPLY:
-
-				/* connect to a specific resource */
-				if (Stream_GetRemainingLength(s) < 8)
-					return ERROR_INVALID_DATA;
-
-				Stream_Read_UINT32(s, deviceId);
-				Stream_Read_UINT32(s, status);
-				break;
-
-			case PAKID_CORE_DEVICE_IOREQUEST:
-				if ((error = rdpdr_process_irp(rdpdr, s)))
-				{
-					WLog_ERR(TAG, "rdpdr_process_irp failed with error %"PRIu32"", error);
-					return error;
-				}
-
-				s = NULL;
-				break;
-
-			default:
-				WLog_ERR(TAG, "RDPDR_CTYP_CORE unknown PacketId: 0x%04"PRIX16"", packetId);
-				return ERROR_INVALID_DATA;
-				break;
+				default:
+					WLog_ERR(TAG, "RDPDR_CTYP_CORE unknown PacketId: 0x%04"PRIX16"", packetId);
+					error = ERROR_INVALID_DATA;
+					break;
+			}
 		}
-	}
-	else if (component == RDPDR_CTYP_PRN)
-	{
-		switch (packetId)
+		else
 		{
-			case PAKID_PRN_CACHE_DATA:
-				{
-					UINT32 eventID;
+			error = rdpdr_process_component(rdpdr, component, packetId, s);
 
-					if (Stream_GetRemainingLength(s) < 4)
-						return ERROR_INVALID_DATA;
-
-					Stream_Read_UINT32(s, eventID);
-					WLog_ERR(TAG,
-					         "Ignoring unhandled message PAKID_PRN_CACHE_DATA (EventID: 0x%08"PRIX32")", eventID);
-				}
-				break;
-
-			case PAKID_PRN_USING_XPS:
-				WLog_ERR(TAG, "Ignoring unhandled message PAKID_PRN_USING_XPS");
-				break;
-
-			default:
-				WLog_ERR(TAG, "Unknown printing component packetID: 0x%04"PRIX16"", packetId);
-				return ERROR_INVALID_DATA;
+			if (error != CHANNEL_RC_OK)
+			{
+				WLog_ERR(TAG, "Unknown message: Component: 0x%04"PRIX16" PacketId: 0x%04"PRIX16"", component,
+				         packetId);
+			}
 		}
-	}
-	else
-	{
-		WLog_ERR(TAG, "Unknown message: Component: 0x%04"PRIX16" PacketId: 0x%04"PRIX16"", component,
-		         packetId);
-		return ERROR_INVALID_DATA;
 	}
 
 	Stream_Free(s, TRUE);
-	return CHANNEL_RC_OK;
+	return error;
 }
 
 /**
