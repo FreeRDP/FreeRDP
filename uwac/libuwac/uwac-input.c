@@ -659,6 +659,8 @@ static const struct wl_touch_listener touch_listener = {
 	touch_handle_motion,
 	touch_handle_frame,
 	touch_handle_cancel,
+	NULL,
+	NULL
 };
 
 
