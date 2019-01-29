@@ -65,9 +65,7 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 {
 	rdpGdi* gdi;
 	char* data;
-	size_t baseSrcOffset;
-	size_t baseDstOffset;
-	UINT32 i, x, y, w, h;
+	UINT32 x, y, w, h;
 	UwacSize geometry;
 	size_t stride;
 	UwacReturnCode rc;
