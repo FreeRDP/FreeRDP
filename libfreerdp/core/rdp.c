@@ -765,6 +765,10 @@ static BOOL rdp_recv_server_status_info_pdu(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	Stream_Read_UINT32(s, statusCode); /* statusCode (4 bytes) */
+
+	if (rdp->update->ServerStatusInfo)
+		return rdp->update->ServerStatusInfo(rdp->context, statusCode);
+
 	return TRUE;
 }
 

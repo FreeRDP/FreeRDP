@@ -139,6 +139,20 @@ enum SURFCMD_FRAMEACTION
 	SURFACECMD_FRAMEACTION_END = 0x0001
 };
 
+/** @brief status code as in 2.2.5.2 Server Status Info PDU */
+enum
+{
+	TS_STATUS_FINDING_DESTINATION = 0x00000401,
+	TS_STATUS_LOADING_DESTINATION = 0x00000402,
+	TS_STATUS_BRINGING_SESSION_ONLINE = 0x00000403,
+	TS_STATUS_REDIRECTING_TO_DESTINATION = 0x00000404,
+	TS_STATUS_VM_LOADING = 0x00000501,
+	TS_STATUS_VM_WAKING = 0x00000502,
+	TS_STATUS_VM_STARTING = 0x00000503,
+	TS_STATUS_VM_STARTING_MONITORING = 0x00000504,
+	TS_STATUS_VM_RETRYING_MONITORING = 0x00000505
+};
+
 struct _SURFACE_FRAME
 {
 	UINT32 frameId;
@@ -180,6 +194,7 @@ typedef BOOL (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
 typedef BOOL (*pSaveSessionInfo)(rdpContext* context, UINT32 type, void* data);
 typedef BOOL (*pSetKeyboardImeStatus)(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                       UINT32 imeConvMode);
+typedef BOOL (*pServerStatusInfo)(rdpContext* context, UINT32 status);
 
 struct rdp_update
 {
@@ -216,7 +231,8 @@ struct rdp_update
 	pSurfaceFrameBits SurfaceFrameBits; /* 67 */
 	pSurfaceFrameAcknowledge SurfaceFrameAcknowledge; /* 68 */
 	pSaveSessionInfo SaveSessionInfo; /* 69 */
-	UINT32 paddingE[80 - 70]; /* 70 */
+	pServerStatusInfo ServerStatusInfo; /* 70 */
+	UINT32 paddingE[80 - 71]; /* 71 */
 
 	/* internal */
 
