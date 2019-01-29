@@ -27,10 +27,10 @@
 #define CINTERFACE
 #define COBJMACROS
 
-#include <Ole2.h>
-#include <ShlObj.h>
-#include <Windows.h>
-#include <WinUser.h>
+#include <ole2.h>
+#include <shlobj.h>
+#include <windows.h>
+#include <winuser.h>
 
 #include <assert.h>
 
@@ -41,7 +41,7 @@
 #include <freerdp/log.h>
 #include <freerdp/client/cliprdr.h>
 
-#include <Strsafe.h>
+#include <strsafe.h>
 
 #include "wf_cliprdr.h"
 

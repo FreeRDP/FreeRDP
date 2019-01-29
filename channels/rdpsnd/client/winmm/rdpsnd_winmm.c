@@ -29,8 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <Windows.h>
-#include <MMSystem.h>
+#include <windows.h>
+#include <mmsystem.h>
 
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>

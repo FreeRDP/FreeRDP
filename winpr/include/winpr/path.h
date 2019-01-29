@@ -309,7 +309,7 @@ WINPR_API BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath);
 #endif
 
 #ifdef _WIN32
-#include <Shlwapi.h>
+#include <shlwapi.h>
 #endif
 
 #endif /* WINPR_PATH_H */

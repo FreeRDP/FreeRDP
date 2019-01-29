@@ -20,7 +20,8 @@ winpr_module_add(
 	clipboard.c
 	clipboard.h)
 
-if(HAVE_UNISTD_H)
+# MinGW has unistd.h
+if(HAVE_UNISTD_H AND NOT WIN32)
 	winpr_definition_add(-DWITH_WCLIPBOARD_POSIX)
 	winpr_module_add(
 		posix.h

@@ -147,7 +147,7 @@ if((FREEBSD) AND (NOT KFREEBSD))
 endif()
 
 if(WIN32)
-	winpr_library_add(Dbghelp)
+	winpr_library_add(dbghelp)
 endif()
 
 if(BUILD_TESTING)
