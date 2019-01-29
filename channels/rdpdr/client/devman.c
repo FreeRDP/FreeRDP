@@ -150,7 +150,7 @@ DEVICE* devman_get_device_by_type(DEVMAN* devman, UINT32 type)
 
 	for (x = 0; x < count; x++)
 	{
-		DEVICE* cur = (DEVICE*) ListDictionary_GetItemValue(devman->devices, keys[x]);
+		DEVICE* cur = (DEVICE*) ListDictionary_GetItemValue(devman->devices, (void*)keys[x]);
 
 		if (!cur)
 			continue;
