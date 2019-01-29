@@ -873,7 +873,7 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
                       rdpPrinter* printer)
 {
 	PRINTER_DEVICE* printer_dev;
-	UINT error;
+	UINT error = ERROR_INTERNAL_ERROR;
 	printer_dev = (PRINTER_DEVICE*) calloc(1, sizeof(PRINTER_DEVICE));
 
 	if (!printer_dev)
