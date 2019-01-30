@@ -53,14 +53,12 @@ BOOL BipBuffer_AllocBuffer(wBipBuffer* bb, size_t size)
 		return FALSE;
 
 	size += size % bb->pageSize;
-
 	bb->buffer = (BYTE*) malloc(size);
 
 	if (!bb->buffer)
 		return FALSE;
 
 	bb->size = size;
-
 	return TRUE;
 }
 
@@ -70,7 +68,6 @@ BOOL BipBuffer_Grow(wBipBuffer* bb, size_t size)
 	BYTE* buffer;
 	size_t blockSize = 0;
 	size_t commitSize = 0;
-
 	size += size % bb->pageSize;
 
 	if (size <= bb->size)
@@ -100,14 +97,11 @@ BOOL BipBuffer_Grow(wBipBuffer* bb, size_t size)
 	}
 
 	BipBuffer_Clear(bb);
-
 	free(bb->buffer);
 	bb->buffer = buffer;
 	bb->size = size;
-
 	bb->blockA.index = 0;
 	bb->blockA.size = commitSize;
-
 	return TRUE;
 }
 
@@ -142,7 +136,6 @@ BYTE* BipBuffer_WriteTryReserve(wBipBuffer* bb, size_t size, size_t* reserved)
 	if (!bb->blockB.size)
 	{
 		/* block B does not exist */
-
 		reservable = bb->size - bb->blockA.index - bb->blockA.size; /* space after block A */
 
 		if (reservable >= bb->blockA.index)
@@ -155,7 +148,6 @@ BYTE* BipBuffer_WriteTryReserve(wBipBuffer* bb, size_t size, size_t* reserved)
 
 			bb->writeR.size = reservable;
 			*reserved = reservable;
-
 			bb->writeR.index = bb->blockA.index + bb->blockA.size;
 			return &bb->buffer[bb->writeR.index];
 		}
@@ -168,13 +160,11 @@ BYTE* BipBuffer_WriteTryReserve(wBipBuffer* bb, size_t size, size_t* reserved)
 
 		bb->writeR.size = size;
 		*reserved = size;
-
 		bb->writeR.index = 0;
 		return bb->buffer;
 	}
 
 	/* block B exists */
-
 	reservable = bb->blockA.index - bb->blockB.index - bb->blockB.size; /* space after block B */
 
 	if (size < reservable)
@@ -185,7 +175,6 @@ BYTE* BipBuffer_WriteTryReserve(wBipBuffer* bb, size_t size, size_t* reserved)
 
 	bb->writeR.size = reservable;
 	*reserved = reservable;
-
 	bb->writeR.index = bb->blockB.index + bb->blockB.size;
 	return &bb->buffer[bb->writeR.index];
 }
@@ -194,7 +183,6 @@ BYTE* BipBuffer_WriteReserve(wBipBuffer* bb, size_t size)
 {
 	BYTE* block = NULL;
 	size_t reserved = 0;
-
 	block = BipBuffer_WriteTryReserve(bb, size, &reserved);
 
 	if (reserved == size)
@@ -204,7 +192,6 @@ BYTE* BipBuffer_WriteReserve(wBipBuffer* bb, size_t size)
 		return NULL;
 
 	block = BipBuffer_WriteTryReserve(bb, size, &reserved);
-
 	return block;
 }
 
@@ -235,15 +222,21 @@ void BipBuffer_WriteCommit(wBipBuffer* bb, size_t size)
 	BipBlock_Clear(bb->writeR);
 }
 
-SSIZE_T BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size)
+SSIZE_T BipBuffer_Write(wBipBuffer* bb, const BYTE* data, size_t size)
 {
 	size_t status = 0;
 	BYTE* block = NULL;
 	size_t writeSize = 0;
 	size_t blockSize = 0;
 
-	if (!bb)
+	if (size == 0)
+		return 0;
+
+	if (!bb || !data)
 		return -1;
+
+	if (size > SSIZE_MAX)
+		size = SSIZE_MAX;
 
 	block = BipBuffer_WriteReserve(bb, size);
 
@@ -357,8 +350,14 @@ SSIZE_T BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size)
 	size_t readSize = 0;
 	size_t blockSize = 0;
 
-	if (!bb)
+	if (size == 0)
+		return 0;
+
+	if (!bb || !data)
 		return -1;
+
+	if (size > SSIZE_MAX)
+		size = SSIZE_MAX;
 
 	block = BipBuffer_ReadTryReserve(bb, 0, &blockSize);
 
@@ -404,15 +403,12 @@ SSIZE_T BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size)
 wBipBuffer* BipBuffer_New(size_t size)
 {
 	wBipBuffer* bb;
-
 	bb = (wBipBuffer*) calloc(1, sizeof(wBipBuffer));
 
 	if (bb)
 	{
 		SYSTEM_INFO si;
-
 		GetSystemInfo(&si);
-
 		bb->pageSize = (size_t) si.dwPageSize;
 
 		if (bb->pageSize < 4096)
@@ -434,6 +430,5 @@ void BipBuffer_Free(wBipBuffer* bb)
 		return;
 
 	BipBuffer_FreeBuffer(bb);
-
 	free(bb);
 }
