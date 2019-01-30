@@ -141,7 +141,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	int monitor_index = 0;
 	BOOL primaryMonitorFound = FALSE;
 	VIRTUAL_SCREEN* vscreen;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings;
 	int mouse_x, mouse_y, _dummy_i;
 	Window _dummy_w;
 	int current_monitor = 0;
@@ -154,6 +154,11 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	XRRMonitorInfo* rrmonitors = NULL;
 	BOOL useXRandr = FALSE;
 #endif
+	
+	if (!xfc || !pMaxWidth || !pMaxHeight || !xfc->context.settings)
+		return FALSE;
+
+	settings = xfc->context.settings;
 	vscreen = &xfc->vscreen;
 	*pMaxWidth = settings->DesktopWidth;
 	*pMaxHeight = settings->DesktopHeight;
@@ -274,6 +279,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		if (settings->NumMonitorIds == 1)
 		{
 			monitor = vscreen->monitors + current_monitor;
+			if (!monitor)
+				return FALSE;
+
 			xfc->workArea.x = monitor->area.left;
 			xfc->workArea.y = monitor->area.top;
 			xfc->workArea.width = monitor->area.right - monitor->area.left + 1;
@@ -305,6 +313,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		 */
 		if (vscreen->nmonitors > 0)
 		{
+			if (!vscreen->monitors)
+				return FALSE;
+
 			*pMaxWidth = vscreen->monitors[current_monitor].area.right -
 			             vscreen->monitors[current_monitor].area.left + 1;
 			*pMaxHeight = vscreen->monitors[current_monitor].area.bottom -
@@ -346,6 +357,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		if (!xf_is_monitor_id_active(xfc, i))
 			continue;
 
+		if (!vscreen->monitors)
+			return FALSE;
+
 		settings->MonitorDefArray[nmonitors].x = vscreen->monitors[i].area.left;
 		settings->MonitorDefArray[nmonitors].y = vscreen->monitors[i].area.top;
 		settings->MonitorDefArray[nmonitors].width =
@@ -380,7 +394,10 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 	/* If no monitor is active(bogus command-line monitor specification) - then lets try to fallback to go fullscreen on the current monitor only */
 	if (nmonitors == 0 && vscreen->nmonitors > 0)
-	{
+	{	
+		if (!vscreen->monitors)
+			return FALSE;
+
 		settings->MonitorDefArray[0].x = vscreen->monitors[current_monitor].area.left;
 		settings->MonitorDefArray[0].y = vscreen->monitors[current_monitor].area.top;
 		settings->MonitorDefArray[0].width = MIN(

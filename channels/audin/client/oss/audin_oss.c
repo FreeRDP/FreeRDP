@@ -279,7 +279,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 
 err_out:
 
-	if (error && oss->rdpcontext)
+	if (error && oss && oss->rdpcontext)
 		setChannelError(oss->rdpcontext, error,
 		                "audin_oss_thread_func reported an error");
 

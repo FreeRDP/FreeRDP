@@ -1343,6 +1343,21 @@ static INLINE pstatus_t general_RGBToAVC444YUV(
     BYTE* pDst2[3], const UINT32 dst2Step[3],
     const prim_size_t* roi)
 {
+	if (!pSrc || !pDst1 || !dst1Step || !pDst2 || !dst2Step)
+		return -1;
+
+	if (!pDst1[0] || !pDst1[1] || !pDst1[2])
+		return -1;
+
+	if (!dst1Step[0] || !dst1Step[1] || !dst1Step[2])
+		return -1;
+
+	if (!pDst2[0] || !pDst2[1] || !pDst2[2])
+		return -1;
+
+	if (!dst2Step[0] || !dst2Step[1] || !dst2Step[2])
+		return -1;
+
 	switch (srcFormat)
 	{
 		case PIXEL_FORMAT_BGRA32:

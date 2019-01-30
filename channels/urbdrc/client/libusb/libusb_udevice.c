@@ -1387,7 +1387,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, UINT32 RequestId, UINT32 E
 	if (iso_transfer == NULL)
 	{
 		WLog_ERR(TAG,  "Error: libusb_alloc_transfer.");
-		status = -1;
+		return -1;
 	}
 
 	/**  process URB_FUNCTION_IOSCH_TRANSFER */

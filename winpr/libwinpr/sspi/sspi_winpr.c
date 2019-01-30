@@ -673,6 +673,9 @@ static void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 	SecPkgInfoA* pPackageInfo = (SecPkgInfoA*) contextBuffer;
 	cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
 
+	if (!pPackageInfo)
+		return;
+
 	for (index = 0; index < (int) cPackages; index++)
 	{
 		free(pPackageInfo[index].Name);
