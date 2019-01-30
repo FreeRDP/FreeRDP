@@ -517,6 +517,17 @@ typedef const BYTE* LPCBYTE;
 #endif /* _MSC_VER */
 #endif /* WINPR_HAVE_INTTYPES_H not defined*/
 
+#ifndef SSIZE_MAX
+#if defined(_POSIX_SSIZE_MAX)
+#define SSIZE_MAX _POSIX_SSIZE_MAX
+#elif defined(_WIN64)
+#define SSIZE_MAX _I64_MAX
+#elif defined(_WIN32)
+#define SSIZE_MAX LONG_MAX
+#else
+#define SSIZE_MAX LONG_MAX
+#endif
+#endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
 /* %z not supported before MSVC 2015 */
