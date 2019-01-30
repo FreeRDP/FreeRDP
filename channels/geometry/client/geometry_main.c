@@ -181,10 +181,10 @@ static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgn
 			h = bottom - y;
 			if ((abs(w) > INT16_MAX) || (abs(h) > INT16_MAX))
 				return ERROR_INVALID_DATA;
-			rgndata->boundingRect.x = (INT16)x;
-			rgndata->boundingRect.y = (INT16)y;
-			rgndata->boundingRect.width = (INT16)w;
-			rgndata->boundingRect.height = (INT16)h;
+			rgndata->rects[i].x = (INT16)x;
+			rgndata->rects[i].y = (INT16)y;
+			rgndata->rects[i].width = (INT16)w;
+			rgndata->rects[i].height = (INT16)h;
 		}
 	}
 
