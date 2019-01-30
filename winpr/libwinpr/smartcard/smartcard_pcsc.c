@@ -1592,26 +1592,31 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 	if (!hContext)
 		return SCARD_E_INVALID_VALUE;
 
-	status = (LONG) g_PCSC.pfnSCardStatus(hCard, NULL, &pcsc_cchReaderLen, NULL, NULL, NULL,
-	                                      &pcsc_cbAtrLen);
-
-	if (status != STATUS_SUCCESS)
-		return PCSC_MapErrorCodeToWinSCard(status);
-
-	pcsc_cchReaderLen++;
-
-	if (unicode)
-		pcsc_cchReaderLen *= 2;
-
 	if (pcchReaderLen)
 	{
 		if (*pcchReaderLen == SCARD_AUTOALLOCATE)
 			allocateReader = TRUE;
-		else if (mszReaderNames && (*pcchReaderLen < pcsc_cchReaderLen))
+
+		status = (LONG) g_PCSC.pfnSCardStatus(hCard, NULL, &pcsc_cchReaderLen, NULL, NULL, NULL,
+		                                      &pcsc_cbAtrLen);
+
+		if (status != STATUS_SUCCESS)
+			return PCSC_MapErrorCodeToWinSCard(status);
+
+		/* We need the size including terminating NULL. */
+		pcsc_cchReaderLen++;
+
+		if (unicode)
+			pcsc_cchReaderLen *= 2;
+
+		if (mszReaderNames && (*pcchReaderLen < pcsc_cchReaderLen))
 			return SCARD_E_INSUFFICIENT_BUFFER;
-		else
+		else if (!allocateReader)
 			pcsc_cchReaderLen = *pcchReaderLen;
 	}
+
+	if (!mszReaderNames)
+		allocateReader = FALSE;
 
 	if (pcbAtrLen)
 	{
@@ -1710,12 +1715,7 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 		*pcbAtrLen = (DWORD) pcsc_cbAtrLen;
 
 	if (pcchReaderLen)
-	{
-		if (unicode)
-			*pcchReaderLen = (pcsc_cchReaderLen + 1) * 2;
-		else
-			*pcchReaderLen = pcsc_cchReaderLen + 1;
-	}
+		*pcchReaderLen = pcsc_cchReaderLen + 1;
 
 	/* Make sure the last byte is set */
 	if (readerNames)
