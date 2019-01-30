@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <limits.h>
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
 
@@ -234,9 +235,9 @@ void BipBuffer_WriteCommit(wBipBuffer* bb, size_t size)
 	BipBlock_Clear(bb->writeR);
 }
 
-int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size)
+SSIZE_T BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size)
 {
-	int status = 0;
+	size_t status = 0;
 	BYTE* block = NULL;
 	size_t writeSize = 0;
 	size_t blockSize = 0;
@@ -260,10 +261,10 @@ int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size)
 
 		CopyMemory(block, &data[status], writeSize);
 		BipBuffer_WriteCommit(bb, writeSize);
-		status += (int) writeSize;
+		status += writeSize;
 
 		if ((status == size) || (writeSize < blockSize))
-			return status;
+			return (SSIZE_T)status;
 	}
 
 	block = BipBuffer_WriteTryReserve(bb, size - status, &blockSize);
@@ -277,13 +278,13 @@ int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size)
 
 		CopyMemory(block, &data[status], writeSize);
 		BipBuffer_WriteCommit(bb, writeSize);
-		status += (int) writeSize;
+		status += writeSize;
 
 		if ((status == size) || (writeSize < blockSize))
-			return status;
+			return (SSIZE_T)status;
 	}
 
-	return status;
+	return (SSIZE_T)status;
 }
 
 BYTE* BipBuffer_ReadTryReserve(wBipBuffer* bb, size_t size, size_t* reserved)
@@ -349,9 +350,9 @@ void BipBuffer_ReadCommit(wBipBuffer* bb, size_t size)
 	}
 }
 
-int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size)
+SSIZE_T BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size)
 {
-	int status = 0;
+	size_t status = 0;
 	BYTE* block = NULL;
 	size_t readSize = 0;
 	size_t blockSize = 0;
@@ -370,10 +371,10 @@ int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size)
 
 		CopyMemory(&data[status], block, readSize);
 		BipBuffer_ReadCommit(bb, readSize);
-		status += (int) readSize;
+		status += readSize;
 
 		if ((status == size) || (readSize < blockSize))
-			return status;
+			return (SSIZE_T)status;
 	}
 
 	block = BipBuffer_ReadTryReserve(bb, 0, &blockSize);
@@ -387,13 +388,13 @@ int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size)
 
 		CopyMemory(&data[status], block, readSize);
 		BipBuffer_ReadCommit(bb, readSize);
-		status += (int) readSize;
+		status += readSize;
 
 		if ((status == size) || (readSize < blockSize))
-			return status;
+			return (SSIZE_T)status;
 	}
 
-	return status;
+	return (SSIZE_T)status;
 }
 
 /**

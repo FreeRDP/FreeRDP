@@ -643,8 +643,8 @@ typedef struct _wEventType wEventType;
 	WINPR_API BYTE* BipBuffer_ReadTryReserve(wBipBuffer* bb, size_t size, size_t* reserved);
 	WINPR_API void BipBuffer_ReadCommit(wBipBuffer* bb, size_t size);
 
-	WINPR_API int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size);
-	WINPR_API int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size);
+	WINPR_API SSIZE_T BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size);
+	WINPR_API SSIZE_T BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size);
 
 	WINPR_API wBipBuffer* BipBuffer_New(size_t size);
 	WINPR_API void BipBuffer_Free(wBipBuffer* bb);
