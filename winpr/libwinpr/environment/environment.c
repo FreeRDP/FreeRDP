@@ -51,7 +51,7 @@
 DWORD GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer)
 {
 	char* cwd;
-	int length;
+	size_t length;
 
 	cwd = getcwd(NULL, 0);
 
@@ -139,7 +139,7 @@ BOOL NeedCurrentDirectoryForExePathW(LPCWSTR ExeName)
 DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 {
 #if !defined(_UWP)
-	int length;
+	size_t length;
 	char* env = NULL;
 
 	env = getenv(lpName);
