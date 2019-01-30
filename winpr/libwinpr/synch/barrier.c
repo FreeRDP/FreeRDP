@@ -189,7 +189,7 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 		 * of processors.
 		 */
 
-		if (spinOnly || (remainingThreads < dwProcessors && !blockOnly))
+		if (spinOnly || (((ULONG)remainingThreads < dwProcessors) && !blockOnly))
 		{
 			DWORD dwSpinCount = lpBarrier->Reserved5;
 			DWORD sp = 0;
