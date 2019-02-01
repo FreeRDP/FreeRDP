@@ -155,7 +155,8 @@ static void wlf_cliprdr_free_server_formats(wfClipboard* clipboard)
 		clipboard->numServerFormats = 0;
 	}
 
-	UwacClipboardOfferDestroy(clipboard->seat);
+	if (clipboard)
+		UwacClipboardOfferDestroy(clipboard->seat);
 }
 
 static void wlf_cliprdr_free_client_formats(wfClipboard* clipboard)
@@ -175,7 +176,8 @@ static void wlf_cliprdr_free_client_formats(wfClipboard* clipboard)
 		clipboard->numClientFormats = 0;
 	}
 
-	UwacClipboardOfferDestroy(clipboard->seat);
+	if (clipboard)
+		UwacClipboardOfferDestroy(clipboard->seat);
 }
 
 /**
