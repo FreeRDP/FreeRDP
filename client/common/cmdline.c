@@ -396,13 +396,10 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 
 			printer->Type = RDPDR_DTYP_PRINT;
 
-			if (count > 1)
+			if (!(printer->Name = _strdup(params[1])))
 			{
-				if (!(printer->Name = _strdup(params[1])))
-				{
-					free(printer);
-					return FALSE;
-				}
+				free(printer);
+				return FALSE;
 			}
 
 			if (count > 2)
