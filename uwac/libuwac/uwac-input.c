@@ -235,7 +235,7 @@ static void keyboard_handle_enter(void *data, struct wl_keyboard *keyboard, uint
 {
 	uint32_t *key, *pressedKey;
 	UwacSeat *input = (UwacSeat *)data;
-	int i, found;
+	size_t i, found;
 	UwacKeyboardEnterLeaveEvent *event;
 
 	event = (UwacKeyboardEnterLeaveEvent *)UwacDisplayNewEvent(input->display, UWAC_EVENT_KEYBOARD_ENTER);
@@ -309,7 +309,7 @@ static int update_key_pressed(UwacSeat *seat, uint32_t key) {
 
 static int update_key_released(UwacSeat *seat, uint32_t key) {
 	uint32_t *keyPtr;
-	int i, toMove;
+	size_t i, toMove;
 	bool found = false;
 
 	for (i = 0, keyPtr = seat->pressed_keys.data; i < seat->pressed_keys.size; i++, keyPtr++) {
