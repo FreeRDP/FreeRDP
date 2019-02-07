@@ -320,9 +320,13 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
 {
-	WLog_ERR(TAG, "%s: Not implemented.", __FUNCTION__);
-	SetLastError(ERROR_NOT_SUPPORTED);
-	return WAIT_FAILED;
+	if (bAlertable)
+	{
+		/* TODO: Implement */
+		WLog_ERR(TAG, "%s: Not implemented: bAlertable", __FUNCTION__);
+		return WAIT_FAILED;
+	}
+	return WaitForSingleObject(hHandle, dwMilliseconds);
 }
 
 DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
@@ -564,6 +568,13 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
                                DWORD dwMilliseconds, BOOL bAlertable)
 {
+	if (bAlertable)
+	{
+		/* TODO: Implement */
+		WLog_ERR(TAG, "%s: Not implemented: bAlertable", __FUNCTION__);
+		return WAIT_FAILED;
+	}
+
 	return WaitForMultipleObjects(nCount, lpHandles, bWaitAll, dwMilliseconds);
 }
 
