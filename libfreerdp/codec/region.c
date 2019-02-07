@@ -180,7 +180,7 @@ void region16_clear(REGION16* region)
 	assert(region);
 	assert(region->data);
 
-	if (region->data->size)
+	if ((region->data->size > 0) && (region->data != &empty_region))
 		free(region->data);
 
 	region->data = &empty_region;
@@ -212,13 +212,11 @@ BOOL region16_copy(REGION16* dst, const REGION16* src)
 
 	dst->extents = src->extents;
 
-	if (dst->data->size)
+	if ((dst->data->size > 0) && (dst->data != &empty_region))
 		free(dst->data);
 
-	if (!src->data->size)
-	{
+	if (src->data->size == 0)
 		dst->data = &empty_region;
-	}
 	else
 	{
 		dst->data = allocateRegion(src->data->nbRects);
@@ -667,7 +665,7 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 		dstRect++;
 	}
 
-	if ((src == dst) && (src->data->size))
+	if ((src == dst) && (src->data->size > 0) && (src->data != &empty_region))
 		free(src->data);
 
 	dstExtents->top = MIN(rect->top, srcExtents->top);
@@ -788,7 +786,7 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 	newItems->nbRects = usedRects;
 	newItems->size = sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16));
 
-	if (dst->data->size)
+	if ((dst->data->size > 0) && (dst->data != &empty_region))
 		free(dst->data);
 
 	dst->data = realloc(newItems, newItems->size);
@@ -809,7 +807,7 @@ void region16_uninit(REGION16* region)
 
 	if (region->data)
 	{
-		if (region->data->size)
+		if ((region->data->size > 0) && (region->data != &empty_region))
 			free(region->data);
 
 		region->data = NULL;
