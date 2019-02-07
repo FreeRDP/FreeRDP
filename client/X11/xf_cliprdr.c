@@ -450,7 +450,7 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_raw_server_formats(xfClipboard* clipboard,
 static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(
     xfClipboard* clipboard, UINT32* numFormats)
 {
-	int i;
+	unsigned long i;
 	Atom atom;
 	BYTE* data = NULL;
 	int format_property;
@@ -750,7 +750,10 @@ static void xf_cliprdr_append_target(xfClipboard* clipboard, Atom target)
 {
 	int i;
 
-	if (clipboard->numTargets >= ARRAYSIZE(clipboard->targets))
+	if (clipboard->numTargets < 0)
+		return;
+
+	if ((size_t)clipboard->numTargets >= ARRAYSIZE(clipboard->targets))
 		return;
 
 	for (i = 0; i < clipboard->numTargets; i++)

@@ -751,7 +751,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	    (((Atom) event->xproperty.atom == xfc->WM_STATE)
 	     && (event->xproperty.state != PropertyDelete)))
 	{
-		int i;
+		unsigned long i;
 		BOOL status;
 		BOOL maxVert = FALSE;
 		BOOL maxHorz = FALSE;

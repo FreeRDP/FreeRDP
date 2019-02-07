@@ -747,7 +747,8 @@ fail:
 static BOOL xf_gdi_polygon_sc(rdpContext* context,
                               const POLYGON_SC_ORDER* polygon_sc)
 {
-	int i, npoints;
+	UINT32 i;
+	int npoints;
 	XPoint* points;
 	XColor brush_color;
 	xfContext* xfc = (xfContext*) context;
@@ -811,7 +812,8 @@ static BOOL xf_gdi_polygon_sc(rdpContext* context,
 static BOOL xf_gdi_polygon_cb(rdpContext* context,
                               POLYGON_CB_ORDER* polygon_cb)
 {
-	int i, npoints;
+	UINT32 i;
+	int npoints;
 	XPoint* points;
 	Pixmap pattern;
 	const rdpBrush* brush;

@@ -195,9 +195,9 @@ BOOL xf_picture_transform_required(xfContext* xfc)
 {
 	rdpSettings* settings = xfc->context.settings;
 
-	if (xfc->offset_x || xfc->offset_y ||
-	    xfc->scaledWidth != settings->DesktopWidth ||
-	    xfc->scaledHeight != settings->DesktopHeight)
+	if ((xfc->offset_x != 0) || (xfc->offset_y != 0) ||
+	    (xfc->scaledWidth != (INT64)settings->DesktopWidth) ||
+	    (xfc->scaledHeight != (INT64)settings->DesktopHeight))
 	{
 		return TRUE;
 	}
