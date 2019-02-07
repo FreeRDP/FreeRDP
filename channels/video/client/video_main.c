@@ -498,7 +498,7 @@ static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATI
 		PresentationContext_unref(presentation);
 	}
 
-	return CHANNEL_RC_OK;
+	return ret;
 }
 
 
