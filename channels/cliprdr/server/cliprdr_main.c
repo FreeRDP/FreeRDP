@@ -929,6 +929,7 @@ static UINT cliprdr_server_receive_format_data_response(
 {
 	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse;
 	UINT error = CHANNEL_RC_OK;
+	BYTE* requestedFormatData = NULL;
 	WLog_DBG(TAG, "CliprdrClientFormatDataResponse");
 	formatDataResponse.msgType = CB_FORMAT_DATA_RESPONSE;
 	formatDataResponse.msgFlags = header->msgFlags;
@@ -943,8 +944,12 @@ static UINT cliprdr_server_receive_format_data_response(
 
 	if (header->dataLen)
 	{
-		formatDataResponse.requestedFormatData = (BYTE*) malloc(header->dataLen);
-		Stream_Read(s, formatDataResponse.requestedFormatData, header->dataLen);
+		requestedFormatData = (BYTE*) malloc(header->dataLen);
+		if (!requestedFormatData)
+			return ERROR_OUTOFMEMORY;
+
+		Stream_Read(s, requestedFormatData, header->dataLen);
+		formatDataResponse.requestedFormatData = requestedFormatData;
 	}
 
 	IFCALLRET(context->ClientFormatDataResponse, error, context,
@@ -953,7 +958,7 @@ static UINT cliprdr_server_receive_format_data_response(
 	if (error)
 		WLog_ERR(TAG, "ClientFormatDataResponse failed with error %"PRIu32"!", error);
 
-	free(formatDataResponse.requestedFormatData);
+	free(requestedFormatData);
 	return error;
 }
 
