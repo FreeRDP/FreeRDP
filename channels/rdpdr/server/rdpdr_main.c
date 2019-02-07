@@ -762,7 +762,7 @@ static UINT rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 static UINT rdpdr_server_receive_device_list_announce_request(
     RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
-	int i;
+	UINT32 i;
 	UINT32 DeviceCount;
 	UINT32 DeviceType;
 	UINT32 DeviceId;
@@ -855,7 +855,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(
 static UINT rdpdr_server_receive_device_list_remove_request(
     RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
-	int i;
+	UINT32 i;
 	UINT32 DeviceCount;
 	UINT32 DeviceType;
 	UINT32 DeviceId;

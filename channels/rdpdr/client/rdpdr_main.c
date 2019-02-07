@@ -665,7 +665,7 @@ static char* next_line(FILE* fd, size_t* len)
 	int c;
 	char* newbuf;
 	char* lrbuf;
-	int lrsiz;
+	size_t lrsiz;
 	*len = 0;
 	lrsiz = 0;
 	lrbuf = NULL;
