@@ -203,7 +203,7 @@ BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword
 
 BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
 {
-	int length;
+	size_t length;
 	char* login;
 
 	switch (NameFormat)
