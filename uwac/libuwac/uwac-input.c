@@ -39,7 +39,6 @@
 static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, size_t size)
 {
 	struct wl_buffer* buffer = NULL;
-	UwacReturnCode ret = UWAC_SUCCESS;
 	int fd;
 	void* data;
 	struct wl_shm_pool* pool;
@@ -53,7 +52,6 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 
 	if (data == MAP_FAILED)
 	{
-		ret = UWAC_ERROR_NOMEMORY;
 		goto error_mmap;
 	}
 	memcpy(data, src, size);
@@ -63,7 +61,6 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	if (!pool)
 	{
 		munmap(data, size);
-		ret = UWAC_ERROR_NOMEMORY;
 		goto error_mmap;
 	}
 
