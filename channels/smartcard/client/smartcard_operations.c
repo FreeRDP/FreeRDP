@@ -491,21 +491,26 @@ static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD
 
 static DWORD filter_device_by_name_w(wLinkedList* list, LPWSTR* mszReaders, DWORD cchReaders)
 {
+	int res;
 	DWORD rc;
 	LPSTR readers;
 
 	if (LinkedList_Count(list) < 1)
 		return cchReaders;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, *mszReaders, (int)cchReaders, &readers, 0, NULL,
-	                       NULL) != cchReaders)
+	res = ConvertFromUnicode(CP_UTF8, 0, *mszReaders, (int)cchReaders, &readers, 0, NULL,
+	                       NULL);
+
+	if ((res < 0) || ((DWORD)res != cchReaders))
 		return 0;
 
 	free(*mszReaders);
 	*mszReaders = NULL;
 	rc = filter_device_by_name_a(list, &readers, cchReaders);
 
-	if (ConvertToUnicode(CP_UTF8, 0, readers, (int)rc, mszReaders, 0) != rc)
+	res = ConvertToUnicode(CP_UTF8, 0, readers, (int)rc, mszReaders, 0);
+
+	if ((res < 0) || ((DWORD)res != rc))
 		rc = 0;
 
 	free(readers);
