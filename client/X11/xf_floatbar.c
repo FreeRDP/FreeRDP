@@ -672,15 +672,12 @@ BOOL xf_floatbar_check_event(xfFloatbar* floatbar, XEvent* event)
 {
 	xfFloatbarButton* button;
 	size_t i, size;
-	xfContext* xfc;
 
 	if (!floatbar || !floatbar->xfc || !event)
 		return FALSE;
 
 	if (!floatbar->created)
 		return FALSE;
-
-	xfc = floatbar->xfc;
 
 	if (event->xany.window == floatbar->handle)
 		return TRUE;

@@ -69,8 +69,6 @@ void tf_OnChannelConnectedEventHandler(void* context,
                                        ChannelConnectedEventArgs* e)
 {
 	tfContext* tf = (tfContext*) context;
-	rdpSettings* settings;
-	settings = tf->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -99,8 +97,6 @@ void tf_OnChannelDisconnectedEventHandler(void* context,
         ChannelDisconnectedEventArgs* e)
 {
 	tfContext* tf = (tfContext*) context;
-	rdpSettings* settings;
-	settings = tf->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
