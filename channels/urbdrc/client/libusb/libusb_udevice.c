@@ -631,7 +631,7 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 			}
 			while (p1 != NULL);
 
-			if ((p2 - sysfs_path) < (strlen(sysfs_path) - 2U))
+			if ((size_t)((p2 - sysfs_path) + 2U) < strlen(sysfs_path))
 			{
 				p1 = (char*) sysfs_path;
 
