@@ -144,6 +144,7 @@ BOOL TimerCloseHandle(HANDLE handle)
 		close(timer->pipe[1]);
 
 #endif
+	free(timer->name);
 	free(timer);
 	return TRUE;
 }
@@ -310,6 +311,10 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 {
 	HANDLE handle = NULL;
 	WINPR_TIMER* timer;
+
+	if (lpTimerAttributes)
+		WLog_WARN(TAG, "%s [%s] does not support lpTimerAttributes", __FUNCTION__, lpTimerName);
+
 	timer = (WINPR_TIMER*) calloc(1, sizeof(WINPR_TIMER));
 
 	if (timer)
@@ -322,6 +327,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 		timer->pfnCompletionRoutine = NULL;
 		timer->lpArgToCompletionRoutine = NULL;
 		timer->bInit = FALSE;
+		timer->name = strdup(lpTimerName);
 		timer->ops = &ops;
 #if defined(__APPLE__)
 
@@ -375,8 +381,12 @@ HANDLE CreateWaitableTimerW(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 HANDLE CreateWaitableTimerExA(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCSTR lpTimerName,
                               DWORD dwFlags, DWORD dwDesiredAccess)
 {
-	BOOL bManualReset;
-	bManualReset = (dwFlags & CREATE_WAITABLE_TIMER_MANUAL_RESET) ? TRUE : FALSE;
+	BOOL bManualReset = (dwFlags & CREATE_WAITABLE_TIMER_MANUAL_RESET) ? TRUE : FALSE;
+
+	if (dwDesiredAccess != 0)
+		WLog_WARN(TAG, "%s [%s] does not support dwDesiredAccess 0x%08"PRIx32, __FUNCTION__, lpTimerName,
+		          dwDesiredAccess);
+
 	return CreateWaitableTimerA(lpTimerAttributes, bManualReset, lpTimerName);
 }
 
@@ -421,6 +431,12 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 
 	if (lPeriod < 0)
 		return FALSE;
+
+	if (fResume)
+	{
+		WLog_ERR(TAG, "%s does not support fResume", __FUNCTION__);
+		return FALSE;
+	}
 
 	timer = (WINPR_TIMER*) Object;
 	timer->lPeriod = lPeriod; /* milliseconds */
@@ -547,11 +563,15 @@ BOOL SetWaitableTimerEx(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPer
 
 HANDLE OpenWaitableTimerA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpTimerName)
 {
+	/* TODO: Implement */
+	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
 	return NULL;
 }
 
 HANDLE OpenWaitableTimerW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpTimerName)
 {
+	/* TODO: Implement */
+	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
 	return NULL;
 }
 

@@ -96,6 +96,7 @@ struct winpr_timer
 	BOOL bManualReset;
 	PTIMERAPCROUTINE pfnCompletionRoutine;
 	LPVOID lpArgToCompletionRoutine;
+	char* name;
 
 #ifdef WITH_POSIX_TIMER
 	timer_t tid;
