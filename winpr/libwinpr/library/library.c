@@ -232,10 +232,45 @@ HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
 
 DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 {
-	/* TODO: Implement */
-	WLog_ERR(TAG, "%s is not implemented", __FUNCTION__);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return 0;
+	WCHAR* wname = NULL;
+	char* name = NULL;
+	int csize;
+	DWORD status;
+	{
+		csize = ConvertFromUnicode(CP_UTF8, 0, lpFilename, -1, &name, 0, NULL, NULL);
+
+		if (csize < 0)
+		{
+			SetLastError(ERROR_INTERNAL_ERROR);
+			return 0;
+		}
+	}
+	memset(lpFilename, 0, nSize * sizeof(WCHAR));
+	status = GetModuleFileNameA(hModule, name, (DWORD)csize);
+
+	if (status > INT_MAX)
+	{
+		SetLastError(ERROR_INTERNAL_ERROR);
+		status = 0;
+	}
+
+	if (status > 0)
+	{
+		int rc = ConvertToUnicode(CP_UTF8, 0, name, (int)status, &wname, 0);
+
+		if (rc < 0)
+		{
+			free(name);
+			SetLastError(ERROR_INTERNAL_ERROR);
+			return 0;
+		}
+
+		memcpy(lpFilename, wname, (size_t)rc * sizeof(WCHAR));
+	}
+
+	free(name);
+	free(wname);
+	return status;
 }
 
 DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
