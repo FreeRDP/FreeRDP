@@ -1276,7 +1276,7 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	ntlm = (_tcsncmp(nla->packageName,  NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0);
 	signature_length = nla->pubKeyAuth.cbBuffer - nla->PublicKey.cbBuffer;
 
-	if ((signature_length < 0) || (signature_length > nla->ContextSizes.cbSecurityTrailer))
+	if ((signature_length < 0) || ((UINT32)signature_length > nla->ContextSizes.cbSecurityTrailer))
 	{
 		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %"PRIu32"", nla->pubKeyAuth.cbBuffer);
 		goto fail;

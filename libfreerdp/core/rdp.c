@@ -361,10 +361,10 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 
 	MCSPDU = domainMCSPDU;
 
-	if (*length < 8)
+	if (*length < 8U)
 		return FALSE;
 
-	if ((*length - 8) > Stream_GetRemainingLength(s))
+	if ((*length - 8U) > Stream_GetRemainingLength(s))
 		return FALSE;
 
 	if (MCSPDU == DomainMCSPDU_DisconnectProviderUltimatum)

@@ -281,10 +281,13 @@ static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* in
 
 	error++;
 
-	if (((int) Stream_GetRemainingLength(s)) < modulus_length)
+	if (modulus_length > UINT32_MAX)
 		goto error1;
 
-	info->ModulusLength = modulus_length;
+	if ((Stream_GetRemainingLength(s)) < modulus_length)
+		goto error1;
+
+	info->ModulusLength = (UINT32)modulus_length;
 	info->Modulus = (BYTE*) malloc(info->ModulusLength);
 
 	if (!info->Modulus)
@@ -298,7 +301,7 @@ static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* in
 
 	error++;
 
-	if ((((int) Stream_GetRemainingLength(s)) < exponent_length) || (exponent_length > 4))
+	if (((Stream_GetRemainingLength(s)) < exponent_length) || (exponent_length > 4))
 		goto error2;
 
 	Stream_Read(s, &info->exponent[4 - exponent_length], exponent_length);
@@ -835,7 +838,7 @@ void key_free(rdpRsaKey* key)
 
 rdpCertificate* certificate_clone(rdpCertificate* certificate)
 {
-	int index;
+	UINT32 index;
 	rdpCertificate* _certificate = (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
 
 	if (!_certificate)
@@ -884,10 +887,10 @@ rdpCertificate* certificate_clone(rdpCertificate* certificate)
 
 					if (!_certificate->x509_cert_chain->array[index].data)
 					{
-						for (--index; index >= 0; --index)
+						for (; index > 0; --index)
 						{
-							if (certificate->x509_cert_chain->array[index].length)
-								free(_certificate->x509_cert_chain->array[index].data);
+							if (certificate->x509_cert_chain->array[index-1].length)
+								free(_certificate->x509_cert_chain->array[index-1].data);
 						}
 
 						goto out_fail;

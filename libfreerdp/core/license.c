@@ -161,7 +161,7 @@ static BOOL computeCalHash(const char *hostname, char *hashStr)
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	BOOL ret = FALSE;
 	BYTE hash[20];
-	int i;
+	size_t i;
 
 	if (!(sha1 = winpr_Digest_New()))
 		goto out;

@@ -223,7 +223,7 @@ static BOOL wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s,
 
 		Stream_Write(channel->receiveData, Stream_Pointer(s), length);
 
-		if (Stream_GetPosition(channel->receiveData) >= (int) channel->dvc_total_length)
+		if (Stream_GetPosition(channel->receiveData) >= channel->dvc_total_length)
 		{
 			ret = wts_queue_receive_data(channel, Stream_Buffer(channel->receiveData),
 			                             channel->dvc_total_length);
@@ -363,9 +363,13 @@ static BOOL wts_write_drdynvc_create_request(wStream* s, UINT32 ChannelId,
 }
 
 static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId,
-                                  const BYTE* data, int size, int flags, int totalSize)
+                                  const BYTE* data, int s, int flags, int t)
 {
 	BOOL ret = TRUE;
+	const size_t size = (size_t)s;
+	const size_t totalSize = (size_t)t;
+	if ((s < 0) || (t < 0))
+		return FALSE;
 
 	if (flags & CHANNEL_FLAG_FIRST)
 	{

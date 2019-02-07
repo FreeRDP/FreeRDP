@@ -1186,7 +1186,7 @@ static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex*
 	Stream_Read_UINT16(s, Length); /* Length (2 bytes) */
 	Stream_Read_UINT32(s, fieldsPresent); /* fieldsPresent (4 bytes) */
 
-	if ((Length < 6) || (Stream_GetRemainingLength(s) < (Length - 6)))
+	if ((Length < 6) || (Stream_GetRemainingLength(s) < (Length - 6U)))
 		return FALSE;
 
 	WLog_DBG(TAG, "LogonInfoExtended: fieldsPresent: 0x%08"PRIX32"", fieldsPresent);

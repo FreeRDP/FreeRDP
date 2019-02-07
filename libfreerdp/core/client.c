@@ -350,7 +350,7 @@ fail:
 UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
-	UINT index;
+	int index;
 	char* hostname;
 	size_t hostnameLength;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
