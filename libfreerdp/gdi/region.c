@@ -439,7 +439,7 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w,
 
 	cinvalid = hdc->hwnd->cinvalid;
 
-	if ((hdc->hwnd->ninvalid + 1) > hdc->hwnd->count)
+	if ((hdc->hwnd->ninvalid + 1) > (INT64)hdc->hwnd->count)
 	{
 		int new_cnt;
 		HGDI_RGN new_rgn;
