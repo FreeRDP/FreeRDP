@@ -63,8 +63,6 @@ void wlf_OnChannelConnectedEventHandler(void* context,
                                         ChannelConnectedEventArgs* e)
 {
 	wlfContext* wlf = (wlfContext*) context;
-	rdpSettings* settings;
-	settings = wlf->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -98,8 +96,6 @@ void wlf_OnChannelDisconnectedEventHandler(void* context,
         ChannelDisconnectedEventArgs* e)
 {
 	wlfContext* wlf = (wlfContext*) context;
-	rdpSettings* settings;
-	settings = wlf->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
