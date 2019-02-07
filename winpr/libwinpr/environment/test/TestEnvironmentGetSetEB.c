@@ -9,7 +9,7 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 #ifndef _WIN32
 	char test[1024];
 	TCHAR* p;
-	int length;
+	DWORD length;
 	LPTCH lpszEnvironmentBlock = "SHELL=123\0test=1\0test1=2\0DISPLAY=WINPR_TEST_VALUE\0\0";
 	LPTCH lpszEnvironmentBlockNew = NULL;
 
