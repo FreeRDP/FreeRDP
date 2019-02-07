@@ -382,12 +382,12 @@ error_stream_list:
 
 static char* guid_to_string(const BYTE* guid, char* str, size_t len)
 {
-	int i;
+	size_t i;
 
 	if (!guid || !str)
 		return NULL;
 
-	for (i = 0; i < GUID_SIZE && len > 2 * i; i++)
+	for (i = 0; i < GUID_SIZE && (len > 2 * i); i++)
 		sprintf_s(str + (2 * i), len - 2 * i, "%02"PRIX8"", guid[i]);
 
 	return str;
@@ -1132,7 +1132,8 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 
 	presentation->nr_rects = num_rects;
 	presentation->rects = tmp_rects;
-	CopyMemory(presentation->rects, rects, sizeof(RDP_RECT) * num_rects);
+	if (presentation->rects)
+		CopyMemory(presentation->rects, rects, sizeof(RDP_RECT) * num_rects);
 	ArrayList_Lock(presentation->stream_list);
 	count = ArrayList_Count(presentation->stream_list);
 
