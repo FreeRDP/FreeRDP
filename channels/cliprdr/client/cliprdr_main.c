@@ -239,7 +239,7 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s,
 		Stream_Read_UINT16(s, capabilitySetType); /* capabilitySetType (2 bytes) */
 		Stream_Read_UINT16(s, lengthCapability); /* lengthCapability (2 bytes) */
 
-		if (lengthCapability < 4 || Stream_GetRemainingLength(s) < lengthCapability - 4)
+		if ((lengthCapability < 4) || (Stream_GetRemainingLength(s) < (lengthCapability - 4U)))
 			return ERROR_INVALID_DATA;
 
 		switch (capabilitySetType)
