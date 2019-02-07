@@ -250,7 +250,7 @@ static UINT read_touch_contact_data(RdpeiServerContext *context, wStream *s, RDP
  */
 static UINT read_touch_frame(RdpeiServerContext *context, wStream *s, RDPINPUT_TOUCH_FRAME *frame)
 {
-	int i;
+	UINT32 i;
 	RDPINPUT_CONTACT_DATA *contact;
 	UINT error;
 
@@ -288,7 +288,7 @@ static UINT read_touch_frame(RdpeiServerContext *context, wStream *s, RDPINPUT_T
 static UINT read_touch_event(RdpeiServerContext *context, wStream *s)
 {
 	UINT32 frameCount;
-	int i;
+	UINT32 i;
 	RDPINPUT_TOUCH_EVENT *event = &context->priv->touchEvent;
 	RDPINPUT_TOUCH_FRAME *frame;
 	UINT error = CHANNEL_RC_OK;
