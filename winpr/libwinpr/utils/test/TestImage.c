@@ -29,14 +29,18 @@ static void* read_image(const char* src, size_t* size)
 	}
 
 	src_size = _ftelli64(fsrc);
-
+	if (src_size < 0)
+	{
+		fprintf(stderr, "Invalid file position %"PRId64"\n", src_size);
+		goto cleanup;
+	}
 	if (_fseeki64(fsrc, 0, SEEK_SET))
 	{
 		fprintf(stderr, "Failed to seek to SEEK_SET\n");
 		goto cleanup;
 	}
 
-	a = malloc(src_size);
+	a = malloc((size_t)src_size);
 
 	if (!a)
 	{
@@ -44,7 +48,7 @@ static void* read_image(const char* src, size_t* size)
 		goto cleanup;
 	}
 
-	if (fread(a, sizeof(char), src_size, fsrc) != src_size)
+	if (fread(a, sizeof(char), (size_t)src_size, fsrc) != (size_t)src_size)
 	{
 		fprintf(stderr, "Failed read %"PRId64" bytes\n", src_size);
 		goto cleanup;
