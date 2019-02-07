@@ -34,6 +34,7 @@
 
 static void sf_peer_rdpsnd_activated(RdpsndServerContext* context)
 {
+	WINPR_UNUSED(context);
 	WLog_DBG(TAG, "RDPSND Activated");
 }
 
