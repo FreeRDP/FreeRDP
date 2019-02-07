@@ -593,33 +593,6 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 	return CHANNEL_RC_OK;
 }
 
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
-{
-	UINT error;
-
-	if (rdpdr->hotplugThread)
-	{
-		CFRunLoopStop(rdpdr->runLoop);
-
-		if (WaitForSingleObject(rdpdr->hotplugThread, INFINITE) == WAIT_FAILED)
-		{
-			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
-			return error;
-		}
-
-		rdpdr->hotplugThread = NULL;
-	}
-
-	return CHANNEL_RC_OK;
-}
-
 #else
 
 #define MAX_USB_DEVICES 100
@@ -949,14 +922,6 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 	UINT error = 0;
 	DWORD status;
 	rdpdr = (rdpdrPlugin*) arg;
-
-	if (!(rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-	{
-		WLog_ERR(TAG, "CreateEvent failed!");
-		error = ERROR_INTERNAL_ERROR;
-		goto out;
-	}
-
 	mfd = open("/proc/mounts", O_RDONLY, 0);
 
 	if (mfd < 0)
@@ -1009,11 +974,13 @@ out:
 		setChannelError(rdpdr->rdpcontext, error,
 		                "drive_hotplug_thread_func reported an error");
 
-	CloseHandle(rdpdr->stopEvent);
 	ExitThread(error);
 	return error;
 }
 
+#endif
+
+#ifndef _WIN32
 /**
  * Function description
  *
@@ -1025,8 +992,10 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 
 	if (rdpdr->hotplugThread)
 	{
-		if (rdpdr->stopEvent)
-			SetEvent(rdpdr->stopEvent);
+		SetEvent(rdpdr->stopEvent);
+#ifdef __MACOSX__
+		CFRunLoopStop(rdpdr->runLoop);
+#endif
 
 		if (WaitForSingleObject(rdpdr->hotplugThread, INFINITE) == WAIT_FAILED)
 		{
@@ -1035,6 +1004,9 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 			return error;
 		}
 
+		CloseHandle(rdpdr->hotplugThread);
+		CloseHandle(rdpdr->stopEvent);
+		rdpdr->stopEvent = NULL;
 		rdpdr->hotplugThread = NULL;
 	}
 
@@ -1083,11 +1055,24 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 			if (drive->Path && (strcmp(drive->Path, "*") == 0))
 			{
 				first_hotplug(rdpdr);
+#ifndef _WIN32
+
+				if (!(rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+				{
+					WLog_ERR(TAG, "CreateEvent failed!");
+					return ERROR_INTERNAL_ERROR;
+				}
+
+#endif
 
 				if (!(rdpdr->hotplugThread = CreateThread(NULL, 0,
 				                             drive_hotplug_thread_func, rdpdr, 0, NULL)))
 				{
 					WLog_ERR(TAG, "CreateThread failed!");
+#ifndef _WIN32
+					CloseHandle(rdpdr->stopEvent);
+					rdpdr->stopEvent = NULL;
+#endif
 					return ERROR_INTERNAL_ERROR;
 				}
 

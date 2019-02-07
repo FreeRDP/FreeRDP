@@ -1080,9 +1080,12 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			}
 
 			memcpy(fullpath, pFileSearch->lpPath, pathlen);
-			fullpath[pathlen] = '/';
-			memcpy(fullpath + pathlen + 1, pFileSearch->pDirent->d_name, namelen);
-			fullpath[pathlen + namelen + 1] = 0;
+			/* Ensure path is terminated with a separator, but prevent
+			 * duplicate separators */
+			if (fullpath[pathlen-1] != '/')
+				fullpath[pathlen++] = '/';
+			memcpy(fullpath + pathlen, pFileSearch->pDirent->d_name, namelen);
+			fullpath[pathlen + namelen] = 0;
 
 			if (stat(fullpath, &fileStat) != 0)
 			{
