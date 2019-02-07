@@ -95,7 +95,7 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 		return FALSE;
 
 	/* Ignore output if the surface size does not match. */
-	if ((x > geometry.width) || (y > geometry.height))
+	if (((INT64)x > geometry.width) || ((INT64)y > geometry.height))
 		return TRUE;
 
 	area.left = x;
@@ -638,8 +638,8 @@ BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t s
 		size_t i;
 		const size_t baseSrcOffset = area->top * srcStride + area->left * 4;
 		const size_t baseDstOffset = area->top * dstStride + area->left * 4;
-		const size_t width = MIN(area->right - area->left, dstWidth - area->left);
-		const size_t height = MIN(area->bottom - area->top, dstHeight - area->top);
+		const size_t width = MIN((size_t)area->right - area->left, dstWidth - area->left);
+		const size_t height = MIN((size_t)area->bottom - area->top, dstHeight - area->top);
 		const BYTE* psrc = (const BYTE*)src;
 		BYTE* pdst = (BYTE*)dst;
 
