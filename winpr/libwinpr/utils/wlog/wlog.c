@@ -346,7 +346,8 @@ static BOOL WLog_WritePacket(wLog* log, wLogMessage* message)
 }
 
 BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, DWORD line,
-                         const char* file, const char* function, va_list args)
+                         const char* file, const char* function,
+			 const void* format, va_list args)
 {
 	BOOL status = FALSE;
 	wLogMessage message = { 0 };
@@ -358,7 +359,7 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, DWORD line,
 	switch (type)
 	{
 		case WLOG_MESSAGE_TEXT:
-			message.FormatString = va_arg(args, const char*);
+			message.FormatString = format;
 
 			if (!strchr(message.FormatString, '%'))
 			{
@@ -408,12 +409,13 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, DWORD line,
 }
 
 BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, DWORD line,
-                       const char* file, const char* function, ...)
+                       const char* file, const char* function,
+		       const void* format, ...)
 {
 	BOOL status;
 	va_list args;
-	va_start(args, function);
-	status = WLog_PrintMessageVA(log, type, level, line, file, function, args);
+	va_start(args, format);
+	status = WLog_PrintMessageVA(log, type, level, line, file, function, format, args);
 	va_end(args);
 	return status;
 }

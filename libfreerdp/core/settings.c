@@ -1093,6 +1093,24 @@ void freerdp_settings_free(rdpSettings* settings)
 	free(settings->RedirectionPassword);
 	free(settings->RedirectionTsvUrl);
 	free(settings->RedirectionAcceptedCert);
+	free(settings->Pkcs11Module);
+	free(settings->Pin);
+	free(settings->CardName);
+	free(settings->ReaderName);
+	free(settings->ContainerName);
+	free(settings->CspName);
+	free(settings->UserHint);
+	free(settings->DomainHint);
+	free(settings->UserPrincipalName);
+	free(settings->CanonicalizedUserHint);
+	free(settings->IdCertificate);
+	free(settings->PkinitIdentity);
+	free(settings->PkinitAnchors);
+	free(settings->KerberosStartTime);
+	free(settings->KerberosLifeTime);
+	free(settings->KerberosRenewableLifeTime);
+	free(settings->TokenLabel);
+	free(settings->PkinitCertificate);
 	free(settings->RemoteAssistanceSessionId);
 	free(settings->RemoteAssistancePassword);
 	free(settings->RemoteAssistancePassStub);
@@ -1133,4 +1151,3 @@ void freerdp_settings_free(rdpSettings* settings)
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
-

@@ -47,6 +47,7 @@ enum _NLA_STATE
 };
 typedef enum _NLA_STATE NLA_STATE;
 
+
 FREERDP_LOCAL int nla_authenticate(rdpNla* nla);
 FREERDP_LOCAL LPTSTR nla_make_spn(const char* ServiceClass,
                                   const char* hostname);
