@@ -395,7 +395,7 @@ static INLINE void shadow_client_convert_rects(rdpShadowClient* client,
 {
 	if (client->server->shareSubRect)
 	{
-		int i = 0;
+		UINT32 i = 0;
 		UINT16 offsetX = client->server->subRect.left;
 		UINT16 offsetY = client->server->subRect.top;
 
@@ -1138,7 +1138,8 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client,
 	BOOL ret = TRUE;
 	BYTE* data;
 	BYTE* buffer;
-	int yIdx, xIdx, k;
+	size_t k;
+	int yIdx, xIdx;
 	int rows, cols;
 	UINT32 DstSize;
 	UINT32 SrcFormat;
@@ -1227,11 +1228,11 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client,
 			bitmap->destLeft = nXSrc + (xIdx * 64);
 			bitmap->destTop = nYSrc + (yIdx * 64);
 
-			if ((bitmap->destLeft + bitmap->width) > (nXSrc + nWidth))
-				bitmap->width = (nXSrc + nWidth) - bitmap->destLeft;
+			if ((INT64)(bitmap->destLeft + bitmap->width) > (nXSrc + nWidth))
+				bitmap->width = (UINT32)(nXSrc + nWidth) - bitmap->destLeft;
 
-			if ((bitmap->destTop + bitmap->height) > (nYSrc + nHeight))
-				bitmap->height = (nYSrc + nHeight) - bitmap->destTop;
+			if ((INT64)(bitmap->destTop + bitmap->height) > (nYSrc + nHeight))
+				bitmap->height = (UINT32)(nYSrc + nHeight) - bitmap->destTop;
 
 			bitmap->destRight = bitmap->destLeft + bitmap->width - 1;
 			bitmap->destBottom = bitmap->destTop + bitmap->height - 1;
