@@ -344,13 +344,11 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 BOOL rdp_client_disconnect(rdpRdp* rdp)
 {
-	rdpSettings* settings;
 	rdpContext* context;
 
 	if (!rdp || !rdp->settings || !rdp->context)
 		return FALSE;
 
-	settings = rdp->settings;
 	context = rdp->context;
 
 	if (!nego_disconnect(rdp->nego))
@@ -384,13 +382,11 @@ static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 {
 	BOOL status = FALSE;
 	rdpContext* context;
-	rdpChannels* channels;
 
 	if (!rdp || !rdp->context || !rdp->context->channels)
 		return FALSE;
 
 	context = rdp->context;
-	channels = context->channels;
 
 	if (context->instance->ConnectionCallbackState == CLIENT_STATE_INITIAL)
 		return FALSE;
@@ -483,15 +479,11 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 {
 	BOOL status;
 	rdpSettings* settings;
-	rdpContext* context;
-	rdpChannels* channels;
 
-	if (!rdp || !rdp->context || !rdp->context->channels)
+	if (!rdp || !rdp->settings)
 		return FALSE;
 
 	settings = rdp->settings;
-	context = rdp->context;
-	channels = context->channels;
 
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
@@ -558,14 +550,9 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 BOOL rdp_client_reconnect(rdpRdp* rdp)
 {
 	BOOL status;
-	rdpContext* context;
-	rdpChannels* channels;
 
 	if (!rdp || !rdp->context || !rdp->context->channels)
 		return FALSE;
-
-	context = rdp->context;
-	channels = context->channels;
 
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
