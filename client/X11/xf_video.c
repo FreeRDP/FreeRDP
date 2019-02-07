@@ -88,6 +88,8 @@ static BOOL xfVideoDeleteSurface(VideoClientContext* video, VideoSurface* surfac
 {
 	xfVideoSurface* xfSurface = (xfVideoSurface*)surface;
 
+	WINPR_UNUSED(video);
+
 	if (xfSurface)
 		XFree(xfSurface->image);
 

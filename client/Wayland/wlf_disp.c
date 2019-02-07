@@ -193,6 +193,7 @@ static void wlf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
 	wlfDispContext* wlfDisp;
 	rdpSettings* settings;
 
+	WINPR_UNUSED(e);
 	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
 		return;
 
@@ -211,6 +212,7 @@ static void wlf_disp_OnTimer(void* context, TimerEventArgs* e)
 	wlfDispContext* wlfDisp;
 	rdpSettings* settings;
 
+	WINPR_UNUSED(e);
 	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
 		return;
 

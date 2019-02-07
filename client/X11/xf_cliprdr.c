@@ -960,6 +960,8 @@ static BOOL xf_cliprdr_process_selection_clear(xfClipboard* clipboard,
 {
 	xfContext* xfc = clipboard->xfc;
 
+	WINPR_UNUSED(xevent);
+
 	if (xf_cliprdr_is_self_owned(clipboard))
 		return FALSE;
 
@@ -1158,6 +1160,8 @@ static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context,
 {
 	xfClipboard* clipboard = (xfClipboard*) context->custom;
 	UINT ret;
+
+	WINPR_UNUSED(monitorReady);
 
 	if ((ret = xf_cliprdr_send_client_capabilities(clipboard)) != CHANNEL_RC_OK)
 		return ret;
@@ -1561,6 +1565,8 @@ static UINT xf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate,
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	xfClipboard* clipboard = delegate->custom;
+	WINPR_UNUSED(errorCode);
+
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_SIZE;
@@ -1585,6 +1591,8 @@ static UINT xf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	xfClipboard* clipboard = delegate->custom;
+	WINPR_UNUSED(errorCode);
+
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_RANGE;

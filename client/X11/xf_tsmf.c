@@ -431,6 +431,7 @@ int xf_tsmf_xv_uninit(xfContext* xfc, TsmfClientContext* tsmf)
 {
 	xfXvContext* xv = (xfXvContext*) xfc->xv_context;
 
+	WINPR_UNUSED(tsmf);
 	if (xv)
 	{
 		if (xv->xv_image_size > 0)

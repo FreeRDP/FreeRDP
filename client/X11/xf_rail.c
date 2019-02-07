@@ -1266,6 +1266,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 {
+	WINPR_UNUSED(rail);
 	if (xfc->rail)
 	{
 		xfc->rail->custom = NULL;

@@ -385,6 +385,7 @@ static void xf_input_touch_begin(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
 
+	WINPR_UNUSED(xfc);
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (contacts[i].id == 0)
@@ -423,6 +424,7 @@ static void xf_input_touch_end(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
 
+	WINPR_UNUSED(xfc);
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (contacts[i].id == event->detail)

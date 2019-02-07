@@ -42,6 +42,8 @@
 static UINT tf_encomsp_participant_created(EncomspClientContext* context,
         ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
 {
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(participantCreated);
 	return CHANNEL_RC_OK;
 }
 

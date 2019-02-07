@@ -12,6 +12,8 @@ int TestClientChannels(int argc, char* argv[])
 	FREERDP_ADDIN* pAddin;
 	FREERDP_ADDIN** ppAddins;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	dwFlags = FREERDP_ADDIN_DYNAMIC;
 
 	printf("Enumerate all\n");

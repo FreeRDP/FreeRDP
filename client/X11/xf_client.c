@@ -765,6 +765,7 @@ void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp)
 
 void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp)
 {
+	WINPR_UNUSED(encomsp);
 	xfc->encomsp = NULL;
 }
 
@@ -910,6 +911,7 @@ static BOOL xf_play_sound(rdpContext* context,
                           const PLAY_SOUND_UPDATE* play_sound)
 {
 	xfContext* xfc = (xfContext*) context;
+	WINPR_UNUSED(play_sound);
 	XkbBell(xfc->display, None, 100, 0);
 	return TRUE;
 }
@@ -1675,6 +1677,7 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 static void xf_TerminateEventHandler(void* context, TerminateEventArgs* e)
 {
 	rdpContext* ctx = (rdpContext*)context;
+	WINPR_UNUSED(e);
 	freerdp_abort_connect(ctx->instance);
 }
 

@@ -75,6 +75,8 @@ static BOOL tf_play_sound(rdpContext* context,
                           const PLAY_SOUND_UPDATE* play_sound)
 {
 	/* TODO: Implement */
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(play_sound);
 	return TRUE;
 }
 
@@ -82,6 +84,8 @@ static BOOL tf_play_sound(rdpContext* context,
 static BOOL tf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 {
 	/* TODO: Set local keyboard indicator LED status */
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(led_flags);
 	return TRUE;
 }
 
@@ -286,12 +290,14 @@ static void tf_client_free(freerdp* instance, rdpContext* context)
 static int tf_client_start(rdpContext* context)
 {
 	/* TODO: Start client related stuff */
+	WINPR_UNUSED(context);
 	return 0;
 }
 
 static int tf_client_stop(rdpContext* context)
 {
 	/* TODO: Stop client related stuff */
+	WINPR_UNUSED(context);
 	return 0;
 }
 
