@@ -597,11 +597,13 @@ static const struct wl_callback_listener frame_listener =
 
 static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
 {
+#if 0
 	UINT32 nrects, i;
 #ifdef HAVE_PIXMAN_REGION
 	const pixman_box32_t* box;
 #else
 	const RECTANGLE_16* box;
+#endif
 #endif
 	wl_surface_attach(window->surface, buffer->wayland_buffer, 0, 0);
 #if 0
