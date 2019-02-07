@@ -54,7 +54,8 @@ pstatus_t sse2_alphaComp_argb(
 	const UINT32* sptr1 = (const UINT32*) pSrc1;
 	const UINT32* sptr2 = (const UINT32*) pSrc2;
 	UINT32* dptr;
-	int linebytes, src1Jump, src2Jump, dstJump, y;
+	int linebytes, src1Jump, src2Jump, dstJump;
+	UINT32 y;
 	__m128i xmm0, xmm1;
 
 	if ((width <= 0) || (height <= 0)) return PRIMITIVES_SUCCESS;

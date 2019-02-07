@@ -77,7 +77,8 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(
 {
 	__m128i zero, max, r_cr, g_cb, g_cr, b_cb, c4096;
 	__m128i* y_buf, *cb_buf, *cr_buf, *r_buf, *g_buf, *b_buf;
-	int srcbump, dstbump, yp, imax;
+	UINT32 yp;
+	int srcbump, dstbump, imax;
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f)
 	    || ((ULONG_PTR)(pSrc[1]) & 0x0f)
@@ -221,7 +222,7 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(
 	const UINT32 step = sizeof(__m128i) / sizeof(INT16);
 	const UINT32 imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
 	BYTE* d_buf = pDst;
-	int yp;
+	UINT32 yp;
 	const size_t dstPad = (dstStep - roi->width * 4);
 #ifdef DO_PREFETCH
 
@@ -410,7 +411,7 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(
 	const UINT32 step = sizeof(__m128i) / sizeof(INT16);
 	const UINT32 imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
 	BYTE* d_buf = pDst;
-	int yp;
+	UINT32 yp;
 	const size_t dstPad = (dstStep - roi->width * 4);
 #ifdef DO_PREFETCH
 
@@ -622,7 +623,8 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(
 {
 	__m128i min, max, y_r, y_g, y_b, cb_r, cb_g, cb_b, cr_r, cr_g, cr_b;
 	__m128i* r_buf, *g_buf, *b_buf, *y_buf, *cb_buf, *cr_buf;
-	int srcbump, dstbump, yp, imax;
+	UINT32 yp;
+	int srcbump, dstbump, imax;
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f)
 	    || ((ULONG_PTR)(pSrc[1]) & 0x0f)
