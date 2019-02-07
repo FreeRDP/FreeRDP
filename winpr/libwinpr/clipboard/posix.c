@@ -132,7 +132,7 @@ static BOOL decode_percent_encoded_byte(const char* str, const char* end, char* 
 {
 	BOOL valid = TRUE;
 
-	if ((end < str) || (end - str < strlen("%20")))
+	if ((end < str) || ((size_t)(end - str) < strlen("%20")))
 		return FALSE;
 
 	*value = 0;
@@ -689,13 +689,16 @@ static UINT posix_file_read_seek(struct posix_file* file, UINT64 offset)
 	 * an accurate account of the current file offset and do not call
 	 * lseek() if the client requests file content sequentially.
 	 */
-	if (file->offset == offset)
+	if (offset > INT64_MAX)
+		return ERROR_SEEK;
+
+	if (file->offset == (INT64)offset)
 		return NO_ERROR;
 
 	WLog_VRB(TAG, "file %d force seeking to %"PRIu64", current %"PRIu64, file->fd,
 	         offset, file->offset);
 
-	if (lseek(file->fd, offset, SEEK_SET) < 0)
+	if (lseek(file->fd, (off_t)offset, SEEK_SET) < 0)
 	{
 		int err = errno;
 		WLog_ERR(TAG, "failed to seek file: %s", strerror(err));
