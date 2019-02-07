@@ -1153,7 +1153,7 @@ void* urbdrc_new_device_create(void* arg)
 static UINT urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer,
         UINT32 cbSize)
 {
-	int i;
+	UINT32 i;
 	UINT32 MessageId;
 	UINT32 FunctionId;
 	UINT error = CHANNEL_RC_OK;
