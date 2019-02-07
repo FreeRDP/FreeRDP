@@ -234,7 +234,7 @@ fail:
 }
 
 PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
-        LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags)
+        LPCSTR pszSubsystem, LPCSTR pszType, DWORD dwFlags)
 {
 	PVIRTUALCHANNELENTRY entry;
 	LPSTR pszFileName;
@@ -336,7 +336,7 @@ int freerdp_register_addin_provider(FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN
 }
 
 PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(LPCSTR pszName,
-        LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags)
+        LPCSTR pszSubsystem, LPCSTR pszType, DWORD dwFlags)
 {
 	PVIRTUALCHANNELENTRY entry = NULL;
 
