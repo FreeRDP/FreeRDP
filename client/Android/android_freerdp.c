@@ -975,11 +975,12 @@ static jboolean JNICALL jni_freerdp_send_key_event(
 }
 
 static jboolean JNICALL jni_freerdp_send_unicodekey_event(
-    JNIEnv* env, jclass cls, jlong instance, jint keycode)
+    JNIEnv* env, jclass cls, jlong instance, jint keycode, jboolean down)
 {
 	ANDROID_EVENT* event;
 	freerdp* inst = (freerdp*)instance;
-	event = (ANDROID_EVENT*) android_event_unicodekey_new(keycode);
+	UINT16 flags = (down == JNI_TRUE) ? 0 : KBD_FLAGS_RELEASE;
+	event = (ANDROID_EVENT*) android_event_unicodekey_new(flags, keycode);
 
 	if (!event)
 		return JNI_FALSE;
