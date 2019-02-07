@@ -505,6 +505,8 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 
 	arg = old_args;
 	errno = 0;
+	settings->BitmapCacheEnabled = TRUE;
+	settings->OffscreenSupportLevel = TRUE;
 
 	do
 	{
