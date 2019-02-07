@@ -175,16 +175,16 @@ static void zgfx_history_buffer_ring_read(ZGFX_CONTEXT* zgfx, int offset, BYTE* 
 {
 	UINT32 front;
 	UINT32 index;
-	UINT32 bytes;
+	INT32 bytes;
 	UINT32 valid;
-	UINT32 bytesLeft;
+	INT32 bytesLeft;
 	BYTE* dptr = dst;
 	BYTE* origDst = dst;
 
-	if (count <= 0)
+	if ((count <= 0) || (count > INT32_MAX))
 		return;
 
-	bytesLeft = count;
+	bytesLeft = (INT32)count;
 	index = (zgfx->HistoryIndex + zgfx->HistoryBufferSize - offset) % zgfx->HistoryBufferSize;
 	bytes = MIN(bytesLeft, offset);
 
@@ -225,8 +225,8 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
 	BYTE flags;
 	UINT32 extra = 0;
 	int opIndex;
-	int haveBits;
-	int inPrefix;
+	UINT32 haveBits;
+	UINT32 inPrefix;
 	UINT32 count;
 	UINT32 distance;
 	BYTE* pbSegment;

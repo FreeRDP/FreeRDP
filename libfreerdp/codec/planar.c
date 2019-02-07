@@ -93,7 +93,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
         UINT32 nWidth, UINT32 nHeight,
         UINT32 nChannel, BOOL vFlip)
 {
-	UINT32 x, y;
+	INT32 x, y;
 	UINT32 pixel;
 	UINT32 cRawBytes;
 	UINT32 nRunLength;
@@ -103,28 +103,32 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
 	BYTE* currentScanline;
 	BYTE* previousScanline;
 	const BYTE* srcp = pSrcData;
+
+	if ((nHeight > INT32_MAX) || (nWidth > INT32_MAX) || (nDstStep > INT32_MAX))
+		return -1;
+
 	previousScanline = NULL;
 
 	if (vFlip)
 	{
-		beg = nHeight - 1;
+		beg = (INT32)nHeight - 1;
 		end = -1;
 		inc = -1;
 	}
 	else
 	{
 		beg = 0;
-		end = nHeight;
+		end = (INT32)nHeight;
 		inc = 1;
 	}
 
 	for (y = beg; y != end; y += inc)
 	{
-		BYTE* dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
+		BYTE* dstp = &pDstData[((nYDst + y) * (INT32)nDstStep) + (nXDst * 4) + nChannel];
 		pixel = 0;
 		currentScanline = dstp;
 
-		for (x = 0; x < nWidth;)
+		for (x = 0; x < (INT32)nWidth;)
 		{
 			controlByte = *srcp;
 			srcp++;
@@ -636,16 +640,19 @@ static INLINE BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format,
         UINT32 scanline, BYTE* planes[4])
 {
 	INT32 i, j, k;
+	if ((width > INT32_MAX) || (height > INT32_MAX) || (scanline > INT32_MAX))
+		return FALSE;
+
 	k = 0;
 
 	if (scanline == 0)
 		scanline = width * GetBytesPerPixel(format);
 
-	for (i = height - 1; i >= 0; i--)
+	for (i = (INT32)height - 1; i >= 0; i--)
 	{
-		const BYTE* pixel = &data[scanline * i];
+		const BYTE* pixel = &data[(INT32)scanline * i];
 
-		for (j = 0; j < width; j++)
+		for (j = 0; j < (INT32)width; j++)
 		{
 			const UINT32 color = ReadColor(pixel, format);
 			pixel += GetBytesPerPixel(format);

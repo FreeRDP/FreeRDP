@@ -2276,7 +2276,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	UINT32 DstSize;
 	BOOL PacketAtFront;
 	BOOL PacketFlushed;
-	int MatchLength;
+	UINT32 MatchLength;
 	UINT32 IndexLEC;
 	UINT32 IndexLOM;
 	UINT32 IndexCO;
@@ -2362,11 +2362,14 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 		if (ncrush->MatchTable[HistoryOffset])
 		{
-			MatchOffset = 0;
-			MatchLength = ncrush_find_best_match(ncrush, HistoryOffset, &MatchOffset);
+			int rc;
 
-			if (MatchLength == -1)
+			MatchOffset = 0;
+			rc = ncrush_find_best_match(ncrush, HistoryOffset, &MatchOffset);
+
+			if (rc < 0)
 				return -1005;
+			MatchLength = (UINT32)rc;
 		}
 
 		if (MatchLength)
@@ -2375,7 +2378,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		if ((MatchLength == 2) && (CopyOffset >= 64))
 			MatchLength = 0;
 
-		if (!MatchLength)
+		if (MatchLength == 0)
 		{
 			/* Literal */
 			Literal = *SrcPtr++;
@@ -2606,15 +2609,16 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 {
-	int i, j, k, l;
+	UINT32 k, i;
+	int j, l;
 	k = 0;
 
 	for (i = 0; i < 28; i++)
 	{
 		for (j = 0; j < 1 << LOMBitsLUT[i]; j++)
 		{
-			l = k++ + 2;
-			context->HuffTableLOM[l] = i;
+			l = (k++) + 2;
+			context->HuffTableLOM[l] = (int)i;
 		}
 	}
 

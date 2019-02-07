@@ -1409,8 +1409,11 @@ BOOL setupWorkers(RFX_CONTEXT* context, int nbTiles)
 
 RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
                                 int numRects,
-                                BYTE* data, int width, int height, int scanline)
+                                BYTE* data, int w, int h, int s)
 {
+	const UINT32 width = (UINT32)w;
+	const UINT32 height = (UINT32)h;
+	const UINT32 scanline = (UINT32)s;
 	UINT32 i, maxNbTiles, maxTilesX, maxTilesY;
 	UINT32 xIdx, yIdx, regionNbRects;
 	UINT32 gridRelX, gridRelY, ax, ay, bytesPerPixel;
@@ -1427,9 +1430,9 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 	assert(data);
 	assert(rects);
 	assert(numRects > 0);
-	assert(width > 0);
-	assert(height > 0);
-	assert(scanline > 0);
+	assert(w > 0);
+	assert(h > 0);
+	assert(s > 0);
 
 	if (!(message = (RFX_MESSAGE*)calloc(1, sizeof(RFX_MESSAGE))))
 		return NULL;
@@ -1492,10 +1495,10 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 	for (i = 0, rfxRect = message->rects; i < regionNbRects;
 	     i++, regionRect++, rfxRect++)
 	{
-		int startTileX = regionRect->left / 64;
-		int endTileX = (regionRect->right - 1) / 64;
-		int startTileY = regionRect->top / 64;
-		int endTileY = (regionRect->bottom - 1) / 64;
+		UINT32 startTileX = regionRect->left / 64;
+		UINT32 endTileX = (regionRect->right - 1) / 64;
+		UINT32 startTileY = regionRect->top / 64;
+		UINT32 endTileY = (regionRect->bottom - 1) / 64;
 		rfxRect->x = regionRect->left;
 		rfxRect->y = regionRect->top;
 		rfxRect->width = (regionRect->right - regionRect->left);
@@ -1504,7 +1507,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 		for (yIdx = startTileY, gridRelY = startTileY * 64; yIdx <= endTileY;
 		     yIdx++, gridRelY += 64)
 		{
-			int tileHeight = 64;
+			UINT32 tileHeight = 64;
 
 			if ((yIdx == endTileY) && (gridRelY + 64 > height))
 				tileHeight = height - gridRelY;
