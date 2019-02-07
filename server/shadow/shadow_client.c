@@ -213,6 +213,7 @@ static void shadow_client_context_free(freerdp_peer* peer,
                                        rdpShadowClient* client)
 {
 	rdpShadowServer* server = client->server;
+	WINPR_UNUSED(peer);
 	ArrayList_Remove(server->clients, (void*) client);
 
 	if (client->encoder)
