@@ -1556,6 +1556,7 @@ static INLINE BOOL shadow_client_no_surface_update(rdpShadowClient* client,
 {
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
+	WINPR_UNUSED(pStatus);
 	server = client->server;
 	surface = client->inLobby ? server->lobby : server->surface;
 	return shadow_client_surface_update(client, &(surface->invalidRegion));

@@ -168,6 +168,8 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem,
 {
 	int pam_status;
 	SHADOW_PAM_AUTH_INFO* info;
+	WINPR_UNUSED(subsystem);
+	WINPR_UNUSED(client);
 	info = calloc(1, sizeof(SHADOW_PAM_AUTH_INFO));
 
 	if (!info)
@@ -222,6 +224,8 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem,
 static BOOL x11_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT32 flags)
 {
+	/* TODO: Implement */
+	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
 	return TRUE;
 }
 
@@ -273,6 +277,8 @@ static BOOL x11_shadow_input_unicode_keyboard_event(rdpShadowSubsystem*
         subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
+	/* TODO: Implement */
+	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
 	return TRUE;
 }
 
