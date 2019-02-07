@@ -259,7 +259,7 @@ void check_modified_arguments(test* test, char** command_line, int* rc)
 int TestClientCmdLine(int argc, char* argv[])
 {
 	int rc = 0;
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i ++)
 	{

@@ -404,7 +404,7 @@ static int freerdp_client_old_command_line_post_filter(void* context, COMMAND_LI
 {
 	return 0;
 }
-int freerdp_detect_old_command_line_syntax(int argc, char** argv, int* count)
+int freerdp_detect_old_command_line_syntax(int argc, char** argv, size_t* count)
 {
 	int status;
 	DWORD flags;
