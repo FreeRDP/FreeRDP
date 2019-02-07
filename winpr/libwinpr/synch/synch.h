@@ -51,7 +51,7 @@
 struct winpr_mutex
 {
 	WINPR_HANDLE_DEF();
-
+	char* name;
 	pthread_mutex_t mutex;
 };
 typedef struct winpr_mutex WINPR_MUTEX;
