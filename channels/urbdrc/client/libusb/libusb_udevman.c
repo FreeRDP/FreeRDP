@@ -460,7 +460,7 @@ COMMAND_LINE_ARGUMENT_A urbdrc_udevman_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static void urbdrc_udevman_register_devices(UDEVMAN* udevman, char* devices)
+static void urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* devices)
 {
 	char* token;
 	int idVendor;
@@ -468,6 +468,7 @@ static void urbdrc_udevman_register_devices(UDEVMAN* udevman, char* devices)
 	int bus_number;
 	int dev_number;
 	int success = 0;
+	char* devices_copy;
 	char hardware_id[16];
 	char* default_devices = "id";
 	UINT32 UsbDevice = BASE_USBDEVICE_NUM;
@@ -475,8 +476,12 @@ static void urbdrc_udevman_register_devices(UDEVMAN* udevman, char* devices)
 	if (!devices)
 		devices = default_devices;
 
+	devices_copy = _strdup(devices);
+	if (!devices_copy)
+		return;
+
 	/* register all usb devices */
-	token = strtok(devices, "#");
+	token = strtok(devices_copy, "#");
 
 	while (token)
 	{
@@ -505,6 +510,7 @@ static void urbdrc_udevman_register_devices(UDEVMAN* udevman, char* devices)
 	}
 
 	udevman->defUsbDevice = UsbDevice;
+	free(devices_copy);
 }
 
 static void urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
