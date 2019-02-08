@@ -220,10 +220,14 @@ static BOOL wl_post_connect(freerdp* instance)
 	rdpGdi* gdi;
 	UwacWindow* window;
 	wlfContext* context;
+	rdpSettings* settings;
 	UINT32 w, h;
 
 	if (!instance || !instance->context)
 		return FALSE;
+
+	context = (wlfContext*) instance->context;
+	settings = instance->context->settings;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
@@ -238,7 +242,15 @@ static BOOL wl_post_connect(freerdp* instance)
 
 	w = (UINT32)gdi->width;
 	h = (UINT32)gdi->height;
-	context = (wlfContext*) instance->context;
+	if (settings->SmartSizing && !context->fullscreen)
+	{
+		if (settings->SmartSizingWidth > 0)
+			w = settings->SmartSizingWidth;
+
+		if (settings->SmartSizingHeight > 0)
+			h = settings->SmartSizingHeight;
+	}
+
 	context->window = window = UwacCreateWindowShm(context->display, w, h, WL_SHM_FORMAT_XRGB8888);
 
 	if (!window)
