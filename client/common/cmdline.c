@@ -1221,7 +1221,7 @@ static int freerdp_detect_windows_style_command_line_syntax(int argc, char** arg
 
 	do
 	{
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		if (CommandLineIgnoreArgument(arg))
 			continue;
 
 		(*count)++;
@@ -1263,7 +1263,7 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 
 	do
 	{
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		if (CommandLineIgnoreArgument(arg))
 			continue;
 
 		(*count)++;
@@ -1538,7 +1538,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	{
 		BOOL enable = arg->Value ? TRUE : FALSE;
 
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		if (CommandLineIgnoreArgument(arg))
 			continue;
 
 		CommandLineSwitchStart(arg)
@@ -3046,7 +3046,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 	arg = CommandLineFindArgumentA(args, "port");
 
-	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	if (!CommandLineIgnoreArgument(arg))
 	{
 		LONGLONG val;
 
@@ -3058,14 +3058,14 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 	arg = CommandLineFindArgumentA(args, "p");
 
-	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	if (!CommandLineIgnoreArgument(arg))
 	{
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
 
 	arg = CommandLineFindArgumentA(args, "gp");
 
-	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	if (!CommandLineIgnoreArgument(arg))
 	{
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 	}

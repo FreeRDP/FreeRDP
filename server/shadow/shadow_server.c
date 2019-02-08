@@ -178,7 +178,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 	do
 	{
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		if (CommandLineIgnoreArgument(arg))
 			continue;
 
 		CommandLineSwitchStart(arg)
@@ -348,7 +348,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 	arg = CommandLineFindArgumentA(shadow_args, "monitors");
 
-	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+	if (arg && !CommandLineIgnoreArgument(arg))
 	{
 		int index;
 		int numMonitors;

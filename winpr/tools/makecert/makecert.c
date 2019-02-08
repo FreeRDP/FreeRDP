@@ -447,7 +447,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc,
 
 	do
 	{
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		if (CommandLineIgnoreArgument(arg))
 			continue;
 
 		CommandLineSwitchStart(arg)
@@ -462,9 +462,6 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc,
 		}
 		CommandLineSwitchCase(arg, "format")
 		{
-			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-				continue;
-
 			if (strcmp(arg->Value, "crt") == 0)
 			{
 				context->crtFormat = TRUE;
@@ -488,9 +485,6 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc,
 		}
 		CommandLineSwitchCase(arg, "path")
 		{
-			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-				continue;
-
 			context->output_path = _strdup(arg->Value);
 
 			if (!context->output_path)
@@ -498,9 +492,6 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc,
 		}
 		CommandLineSwitchCase(arg, "p")
 		{
-			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-				continue;
-
 			context->password = _strdup(arg->Value);
 
 			if (!context->password)
@@ -508,9 +499,6 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc,
 		}
 		CommandLineSwitchCase(arg, "n")
 		{
-			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-				continue;
-
 			context->common_name = _strdup(arg->Value);
 
 			if (!context->common_name)
@@ -519,9 +507,6 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc,
 		CommandLineSwitchCase(arg, "y")
 		{
 			long val;
-
-			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-				continue;
 
 			val = strtol(arg->Value, NULL, 0);
 
@@ -533,9 +518,6 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc,
 		CommandLineSwitchCase(arg, "m")
 		{
 			long val;
-
-			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-				continue;
 
 			val = strtol(arg->Value, NULL, 0);
 

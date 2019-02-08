@@ -435,7 +435,7 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, int* count)
 
 	do
 	{
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		if (CommandLineIgnoreArgument(arg))
 			continue;
 
 		CommandLineSwitchStart(arg)
@@ -510,7 +510,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 
 	do
 	{
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		if (CommandLineIgnoreArgument(arg))
 			continue;
 
 		CommandLineSwitchStart(arg)
