@@ -232,23 +232,16 @@ HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
 
 DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 {
-	WCHAR* wname = NULL;
-	char* name = NULL;
-	int csize;
 	DWORD status;
+	char* name = calloc(nSize, sizeof(char));
+	if (!name)
 	{
-		csize = ConvertFromUnicode(CP_UTF8, 0, lpFilename, -1, &name, 0, NULL, NULL);
-
-		if (csize < 0)
-		{
-			SetLastError(ERROR_INTERNAL_ERROR);
-			return 0;
-		}
+		SetLastError(ERROR_INTERNAL_ERROR);
+		return 0;
 	}
-	memset(lpFilename, 0, nSize * sizeof(WCHAR));
-	status = GetModuleFileNameA(hModule, name, (DWORD)csize);
+	status = GetModuleFileNameA(hModule, name, nSize);
 
-	if (status > INT_MAX)
+	if ((status > INT_MAX) || (nSize > INT_MAX))
 	{
 		SetLastError(ERROR_INTERNAL_ERROR);
 		status = 0;
@@ -256,7 +249,7 @@ DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 
 	if (status > 0)
 	{
-		int rc = ConvertToUnicode(CP_UTF8, 0, name, (int)status, &wname, 0);
+		int rc = ConvertToUnicode(CP_UTF8, 0, name, (int)status, &lpFilename, (int)nSize);
 
 		if (rc < 0)
 		{
@@ -264,12 +257,9 @@ DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 			SetLastError(ERROR_INTERNAL_ERROR);
 			return 0;
 		}
-
-		memcpy(lpFilename, wname, (size_t)rc * sizeof(WCHAR));
 	}
 
 	free(name);
-	free(wname);
 	return status;
 }
 
