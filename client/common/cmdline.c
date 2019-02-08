@@ -758,14 +758,14 @@ static char** freerdp_command_line_parse_comma_separated_values_ex(const char* n
 	return p;
 }
 
-static char** freerdp_command_line_parse_comma_separated_values(char* list,
+static char** freerdp_command_line_parse_comma_separated_values(const char* list,
         size_t* count)
 {
 	return freerdp_command_line_parse_comma_separated_values_ex(NULL, list, count);
 }
 
 static char** freerdp_command_line_parse_comma_separated_values_offset(
-    const char* name, char* list, size_t* count)
+	const char* name, const char* list, size_t* count)
 {
 	return freerdp_command_line_parse_comma_separated_values_ex(name, list, count);
 }
@@ -1103,7 +1103,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 	return TRUE;
 }
 
-int freerdp_map_keyboard_layout_name_to_id(char* name)
+static int freerdp_map_keyboard_layout_name_to_id(const char* name)
 {
 	int i;
 	int id = 0;
@@ -1613,7 +1613,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "redirect-prefer")
 		{
 			size_t count = 0;
-			char* cur = arg->Value;
+			const char* cur = arg->Value;
 			assert(arg->Value);
 
 			settings->RedirectionPreferType = 0;
@@ -2663,11 +2663,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			if (arg->Value)
 			{
-				char* start = arg->Value;
+				int rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				char* start = _strdup(arg->Value);
 
 				do
 				{
-					char* cur = start;
+					const char* cur = start;
 					start = strchr(start, ',');
 
 					if (start)
@@ -2687,7 +2688,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 						else if (_strnicmp(val, "off", 4) == 0)
 							settings->Floatbar &= ~0x02u;
 						else
-							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+							goto arg_error;
 					}
 					/* default:[visible|hidden] */
 					else if (_strnicmp(cur, "default:", 8) == 0)
@@ -2700,7 +2701,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 						else if (_strnicmp(val, "hidden", 7) == 0)
 							settings->Floatbar &= ~0x04u;
 						else
-							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+							goto arg_error;
 					}
 					/* show:[always|fullscreen|window] */
 					else if (_strnicmp(cur, "show:", 5) == 0)
@@ -2715,12 +2716,19 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 						else if (_strnicmp(val, "window", 7) == 0)
 							settings->Floatbar |= 0x20u;
 						else
-							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+							goto arg_error;
 					}
 					else
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+						goto arg_error;
 				}
 				while (start);
+
+				rc = 0;
+
+			arg_error:
+				free(start);
+				if (rc)
+					return rc;
 			}
 		}
 		CommandLineSwitchCase(arg, "mouse-motion")
