@@ -126,10 +126,6 @@ set_cursor_image(UwacSeat* seat, uint32_t serial)
 		wl_surface_commit(surface);
 	}
 
-	if (buffer) {
-		wl_buffer_destroy(buffer);
-	}
-
 	wl_pointer_set_cursor(seat->pointer,
 	                      serial,
 	                      surface,
