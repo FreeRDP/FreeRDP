@@ -1497,7 +1497,7 @@ static UINT urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, const char* name, ADD
 	return CHANNEL_RC_OK;
 }
 
-BOOL urbdrc_set_subsystem(URBDRC_PLUGIN* urbdrc, char* subsystem)
+static BOOL urbdrc_set_subsystem(URBDRC_PLUGIN* urbdrc, const char* subsystem)
 {
 	free(urbdrc->subsystem);
 	urbdrc->subsystem = _strdup(subsystem);
