@@ -179,6 +179,7 @@ static void WaitableTimerHandler(void* arg)
 static void WaitableTimerSignalHandler(int signum, siginfo_t* siginfo, void* arg)
 {
 	WINPR_TIMER* timer = siginfo->si_value.sival_ptr;
+	WINPR_UNUSED(arg);
 
 	if (!timer || (signum != SIGALRM))
 		return;
@@ -327,7 +328,10 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 		timer->pfnCompletionRoutine = NULL;
 		timer->lpArgToCompletionRoutine = NULL;
 		timer->bInit = FALSE;
-		timer->name = strdup(lpTimerName);
+
+		if (lpTimerName)
+			timer->name = strdup(lpTimerName);
+
 		timer->ops = &ops;
 #if defined(__APPLE__)
 
