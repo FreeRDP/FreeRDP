@@ -169,7 +169,8 @@ HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 		if (bInitialOwner)
 			pthread_mutex_lock(&mutex->mutex);
 
-		mutex->name = strdup(lpName); /* Non runtime relevant information, skip NULL check */
+		if (lpName)
+			mutex->name = strdup(lpName); /* Non runtime relevant information, skip NULL check */
 	}
 
 	return handle;
