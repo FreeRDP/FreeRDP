@@ -42,6 +42,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
 static UINT dvcman_get_configuration(IWTSListener* pListener,
                                      void** ppPropertyBag)
 {
+	WINPR_UNUSED(pListener);
 	*ppPropertyBag = NULL;
 	return ERROR_INTERNAL_ERROR;
 }
@@ -411,6 +412,7 @@ static UINT dvcman_write_channel(IWTSVirtualChannel* pChannel, ULONG cbSize,
 	UINT status;
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
 
+	WINPR_UNUSED(pReserved);
 	if (!channel || !channel->dvcman)
 		return CHANNEL_RC_BAD_CHANNEL;
 
@@ -668,19 +670,19 @@ static UINT dvcman_receive_channel_data(drdynvcPlugin* drdynvc,
 	return status;
 }
 
-static UINT drdynvc_write_variable_uint(wStream* s, UINT32 val)
+static UINT8 drdynvc_write_variable_uint(wStream* s, UINT32 val)
 {
-	UINT cb;
+	UINT8 cb;
 
 	if (val <= 0xFF)
 	{
 		cb = 0;
-		Stream_Write_UINT8(s, val);
+		Stream_Write_UINT8(s, (UINT8)val);
 	}
 	else if (val <= 0xFFFF)
 	{
 		cb = 1;
-		Stream_Write_UINT16(s, val);
+		Stream_Write_UINT16(s, (UINT16)val);
 	}
 	else
 	{
@@ -741,8 +743,8 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
 {
 	wStream* data_out;
 	size_t pos;
-	UINT32 cbChId;
-	UINT32 cbLen;
+	UINT8 cbChId;
+	UINT8 cbLen;
 	unsigned long chunkLength;
 	UINT status;
 
@@ -784,7 +786,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
 		cbLen = drdynvc_write_variable_uint(data_out, dataSize);
 		pos = Stream_GetPosition(data_out);
 		Stream_SetPosition(data_out, 0);
-		Stream_Write_UINT8(data_out, 0x20 | cbChId | (cbLen << 2));
+		Stream_Write_UINT8(data_out, (UINT8)(0x20 | cbChId | (cbLen << 2)));
 		Stream_SetPosition(data_out, pos);
 		chunkLength = CHANNEL_CHUNK_LENGTH - pos;
 		Stream_Write(data_out, data, chunkLength);
@@ -958,6 +960,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 	char* name;
 	size_t length;
 
+	WINPR_UNUSED(Sp);
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
@@ -1001,7 +1004,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	Stream_Write_UINT8(data_out, 0x10 | cbChId);
+	Stream_Write_UINT8(data_out, (UINT8)(0x10 | cbChId));
 	Stream_SetPosition(s, 1);
 	Stream_Copy(s, data_out, pos - 1);
 
@@ -1099,7 +1102,7 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId,
 static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp,
         int cbChId, wStream* s)
 {
-	int value;
+	UINT8 value;
 	UINT error;
 	UINT32 ChannelId;
 	wStream* data_out;
@@ -1373,6 +1376,9 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	UINT32 index;
 	ADDIN_ARGV* args;
 	rdpSettings* settings;
+
+	WINPR_UNUSED(pData);
+	WINPR_UNUSED(dataLength);
 
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;

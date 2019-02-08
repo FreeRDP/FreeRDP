@@ -110,6 +110,7 @@ static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgn
 {
 	UINT32 dwSize, iType;
 	INT32 right, bottom;
+	INT32 x, y, w, h;
 
 	if (len < 32)
 	{
@@ -135,12 +136,20 @@ static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgn
 
 	Stream_Read_UINT32(s, rgndata->nRectCount);
 	Stream_Seek_UINT32(s); /* nRgnSize IGNORED */
-	Stream_Read_INT32(s, rgndata->boundingRect.x);
-	Stream_Read_INT32(s, rgndata->boundingRect.y);
+	Stream_Read_INT32(s, x);
+	Stream_Read_INT32(s, y);
 	Stream_Read_INT32(s, right);
 	Stream_Read_INT32(s, bottom);
-	rgndata->boundingRect.width = right - rgndata->boundingRect.x;
-	rgndata->boundingRect.height = bottom - rgndata->boundingRect.y;
+	if ((abs(x) > INT16_MAX) || (abs(y) > INT16_MAX))
+		return ERROR_INVALID_DATA;
+	w = right - x;
+	h = bottom - y;
+	if ((abs(w) > INT16_MAX) || (abs(h) > INT16_MAX))
+		return ERROR_INVALID_DATA;
+	rgndata->boundingRect.x = (INT16)x;
+	rgndata->boundingRect.y = (INT16)y;
+	rgndata->boundingRect.width = (INT16)w;
+	rgndata->boundingRect.height = (INT16)h;
 	len -= 32;
 
 	if (len / (4 * 4) < rgndata->nRectCount)
@@ -150,7 +159,7 @@ static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgn
 
 	if (rgndata->nRectCount)
 	{
-		int i;
+		UINT32 i;
 		RDP_RECT *tmp = realloc(rgndata->rects, rgndata->nRectCount * sizeof(RDP_RECT));
 
 		if (!tmp)
@@ -162,12 +171,20 @@ static UINT32 geometry_read_RGNDATA(wStream *s, UINT32 len, FREERDP_RGNDATA *rgn
 
 		for (i = 0; i < rgndata->nRectCount; i++)
 		{
-			Stream_Read_INT32(s, rgndata->rects[i].x);
-			Stream_Read_INT32(s, rgndata->rects[i].y);
+			Stream_Read_INT32(s, x);
+			Stream_Read_INT32(s, y);
 			Stream_Read_INT32(s, right);
 			Stream_Read_INT32(s, bottom);
-			rgndata->rects[i].width = right - rgndata->rects[i].x;
-			rgndata->rects[i].height = bottom - rgndata->rects[i].y;
+			if ((abs(x) > INT16_MAX) || (abs(y) > INT16_MAX))
+				return ERROR_INVALID_DATA;
+			w = right - x;
+			h = bottom - y;
+			if ((abs(w) > INT16_MAX) || (abs(h) > INT16_MAX))
+				return ERROR_INVALID_DATA;
+			rgndata->rects[i].x = (INT16)x;
+			rgndata->rects[i].y = (INT16)y;
+			rgndata->rects[i].width = (INT16)w;
+			rgndata->rects[i].height = (INT16)h;
 		}
 	}
 
@@ -348,6 +365,10 @@ static UINT geometry_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 {
 	GEOMETRY_CHANNEL_CALLBACK* callback;
 	GEOMETRY_LISTENER_CALLBACK* listener_callback = (GEOMETRY_LISTENER_CALLBACK*) pListenerCallback;
+
+	WINPR_UNUSED(Data);
+	WINPR_UNUSED(pbAccept);
+
 	callback = (GEOMETRY_CHANNEL_CALLBACK*) calloc(1, sizeof(GEOMETRY_CHANNEL_CALLBACK));
 
 	if (!callback)
