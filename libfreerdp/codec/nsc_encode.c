@@ -106,9 +106,6 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data,
 	BYTE a_val;
 	UINT32 tempWidth;
 
-	if (!context || data || (scanline == 0))
-		return FALSE;
-
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
