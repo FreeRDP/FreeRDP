@@ -45,6 +45,8 @@
 #include "wlf_channels.h"
 #include "wlf_pointer.h"
 
+#define TAG CLIENT_TAG("wayland")
+
 static BOOL wl_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
@@ -584,7 +586,7 @@ BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t s
 		const double sx = (double)dstWidth / (double)srcWidth;
 		const double sy = (double)dstHeight / (double)srcHeight;
 		cairo_t* cairo_context;
-		cairo_surface_t *csrc, *cdst;
+		cairo_surface_t* csrc, *cdst;
 
 		if ((srcWidth > INT_MAX) || (srcHeight > INT_MAX) || (srcStride > INT_MAX))
 			return FALSE;
@@ -593,9 +595,9 @@ BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t s
 			return FALSE;
 
 		csrc = cairo_image_surface_create_for_data((void*)src, CAIRO_FORMAT_ARGB32, (int)srcWidth,
-		                        (int)srcHeight, (int)srcStride);
+		        (int)srcHeight, (int)srcStride);
 		cdst = cairo_image_surface_create_for_data(dst, CAIRO_FORMAT_ARGB32, (int)dstWidth,
-		                        (int)dstHeight, (int)dstStride);
+		        (int)dstHeight, (int)dstStride);
 
 		if (!csrc || !cdst)
 			goto fail;

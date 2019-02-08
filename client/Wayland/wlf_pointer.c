@@ -25,6 +25,8 @@
 #include "wlf_pointer.h"
 #include "wlfreerdp.h"
 
+#define TAG CLIENT_TAG("wayland.pointer")
+
 struct wlf_pointer
 {
 	rdpPointer pointer;

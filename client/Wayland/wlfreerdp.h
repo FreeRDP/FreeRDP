@@ -28,8 +28,6 @@
 #include <winpr/wtypes.h>
 #include <uwac/uwac.h>
 
-#define TAG CLIENT_TAG("wayland")
-
 typedef struct wlf_context wlfContext;
 typedef struct wlf_clipboard wfClipboard;
 typedef struct _wlfDispContext wlfDispContext;
