@@ -137,18 +137,14 @@ extern "C" {
 
 static INLINE BOOL CommandLineIgnoreArgument(const COMMAND_LINE_ARGUMENT_A* arg)
 {
+	BOOL rc = FALSE;
 	if ((arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT) == 0)
 	{
-		if ((arg->Flags & (COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_VALUE_REQUIRED)) &&
-		    (arg->Default != NULL))
-			return FALSE;
-
-		return arg->Flags & (COMMAND_LINE_VALUE_OPTIONAL |
-		                     COMMAND_LINE_VALUE_REQUIRED |
-		                     COMMAND_LINE_VALUE_FLAG);
+		const UINT32 mask = ~(COMMAND_LINE_VALUE_BOOL);
+		rc = arg->Flags & mask;
 	}
 
-	return FALSE;
+	return rc;
 }
 
 WINPR_API int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options);
