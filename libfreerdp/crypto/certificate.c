@@ -622,7 +622,7 @@ BOOL certificate_data_print(rdpCertificateStore* certificate_store,
 	int rc;
 	HANDLE fp;
 	char* tdata;
-	UINT64 size;
+	size_t size;
 	DWORD written;
 	/* reopen in append mode */
 	/* Assure POSIX style paths, CreateFile expects either '/' or '\\' */
