@@ -27,12 +27,12 @@
 #include <uwac/uwac.h>
 
 BOOL wlf_handle_pointer_enter(freerdp* instance,
-                              UwacPointerEnterLeaveEvent* ev);
-BOOL wlf_handle_pointer_motion(freerdp* instance, UwacPointerMotionEvent* ev);
-BOOL wlf_handle_pointer_buttons(freerdp* instance, UwacPointerButtonEvent* ev);
-BOOL wlf_handle_pointer_axis(freerdp* instance, UwacPointerAxisEvent* ev);
+                              const UwacPointerEnterLeaveEvent* ev);
+BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* ev);
+BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent* ev);
+BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev);
 
-BOOL wlf_handle_key(freerdp* instance, UwacKeyEvent* ev);
-BOOL wlf_keyboard_enter(freerdp* instance, UwacKeyboardEnterLeaveEvent* ev);
+BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev);
+BOOL wlf_keyboard_enter(freerdp* instance, const UwacKeyboardEnterLeaveEvent* ev);
 
 #endif /* FREERDP_CLIENT_WAYLAND_INPUT_H */

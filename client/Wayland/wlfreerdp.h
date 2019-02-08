@@ -28,8 +28,6 @@
 #include <winpr/wtypes.h>
 #include <uwac/uwac.h>
 
-#define TAG CLIENT_TAG("wayland")
-
 typedef struct wlf_context wlfContext;
 typedef struct wlf_clipboard wfClipboard;
 typedef struct _wlfDispContext wlfDispContext;
@@ -53,6 +51,11 @@ struct wlf_context
 	wlfDispContext* disp;
 	wLog* log;
 };
+
+BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fromLocalToRDP);
+BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t srcHeight,
+                    void* dst, size_t dstStride, size_t dstWidth, size_t dstHeight,
+                    const RECTANGLE_16* area, BOOL scale);
 
 #endif /* FREERDP_CLIENT_WAYLAND_FREERDP_H */
 
