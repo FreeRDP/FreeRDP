@@ -740,6 +740,15 @@ static BOOL http_use_content_length(const char* cur)
 	return FALSE;
 }
 
+static int print_bio_error(const char* str, size_t len, void* bp)
+{
+	WINPR_UNUSED(len);
+	WINPR_UNUSED(bp);
+	WLog_ERR(TAG, "%s", str);
+	return len;
+}
+
+
 HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 {
 	size_t size;
@@ -768,6 +777,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			if (!BIO_should_retry(tls->bio))
 			{
 				WLog_ERR(TAG, "%s: Retries exceeded", __FUNCTION__);
+				ERR_print_errors_cb(print_bio_error, NULL);
 				goto out_error;
 			}
 
@@ -881,6 +891,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 				if (!BIO_should_retry(tls->bio))
 				{
 					WLog_ERR(TAG, "%s: Retries exceeded", __FUNCTION__);
+					ERR_print_errors_cb(print_bio_error, NULL);
 					goto out_error;
 				}
 
