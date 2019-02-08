@@ -334,7 +334,7 @@ static int x509_add_ext(X509* cert, int nid, char* value)
 }
 #endif
 
-static char* x509_name_parse(char* name, char* txt, int* length)
+static char* x509_name_parse(const char* name, const char* txt, int* length)
 {
 	char* p;
 	char* entry;
