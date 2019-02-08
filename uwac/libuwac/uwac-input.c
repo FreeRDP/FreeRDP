@@ -79,6 +79,15 @@ error_mmap:
 	return buffer;
 }
 
+static void on_buffer_release(void *data, struct wl_buffer *wl_buffer) {
+	(void)data;
+	wl_buffer_destroy(wl_buffer);
+}
+
+const struct wl_buffer_listener buffer_release_listener = {
+	on_buffer_release
+};
+
 static UwacReturnCode
 set_cursor_image(UwacSeat* seat, uint32_t serial)
 {
@@ -118,6 +127,9 @@ set_cursor_image(UwacSeat* seat, uint32_t serial)
 			surface = seat->pointer_surface;
 			break;
 	}
+
+	if (buffer)
+		wl_buffer_add_listener(buffer, &buffer_release_listener, seat);
 
 	if (surface) {
 		wl_surface_attach(surface, buffer, -x, -y);
