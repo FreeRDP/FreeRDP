@@ -68,6 +68,7 @@ typedef struct winpr_semaphore WINPR_SEMAPHORE;
 struct winpr_event
 {
 	WINPR_HANDLE_DEF();
+	char* name;
 
 	int pipe_fd[2];
 	BOOL bAttached;

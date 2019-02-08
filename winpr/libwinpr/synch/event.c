@@ -74,11 +74,9 @@ static int EventGetFd(HANDLE handle)
 	return event->pipe_fd[0];
 }
 
-static BOOL EventCloseHandle(HANDLE handle)
+static BOOL EventCloseHandle_(WINPR_EVENT* event)
 {
-	WINPR_EVENT* event = (WINPR_EVENT*) handle;
-
-	if (!EventIsHandled(handle))
+	if (!event)
 		return FALSE;
 
 	if (!event->bAttached)
@@ -96,8 +94,19 @@ static BOOL EventCloseHandle(HANDLE handle)
 		}
 	}
 
+	free(event->name);
 	free(event);
 	return TRUE;
+}
+
+static BOOL EventCloseHandle(HANDLE handle)
+{
+	WINPR_EVENT* event = (WINPR_EVENT*) handle;
+
+	if (!EventIsHandled(handle))
+		return FALSE;
+
+	return EventCloseHandle_(event);
 }
 
 static HANDLE_OPS ops =
@@ -154,6 +163,9 @@ HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	if (!event)
 		return NULL;
 
+	if (lpName)
+		event->name = strdup(lpName);
+
 	event->bAttached = FALSE;
 	event->bManualReset = bManualReset;
 	event->ops = &ops;
@@ -185,7 +197,7 @@ HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 	return (HANDLE)event;
 fail:
-	free(event);
+	EventCloseHandle_(event);
 	return NULL;
 }
 
