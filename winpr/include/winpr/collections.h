@@ -579,7 +579,7 @@ typedef struct _wEventType wEventType;
 	DEFINE_EVENT_UNSUBSCRIBE(_name)
 
 #define DEFINE_EVENT_ENTRY(_name) \
-    { #_name, { sizeof( _name ## EventArgs), NULL }, 0, { NULL } },
+	{ #_name, { sizeof( _name ## EventArgs), NULL }, 0, { NULL } },
 
 	struct _wPubSub
 	{
@@ -643,8 +643,8 @@ typedef struct _wEventType wEventType;
 	WINPR_API BYTE* BipBuffer_ReadTryReserve(wBipBuffer* bb, size_t size, size_t* reserved);
 	WINPR_API void BipBuffer_ReadCommit(wBipBuffer* bb, size_t size);
 
-	WINPR_API int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size);
-	WINPR_API int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size);
+	WINPR_API SSIZE_T BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size);
+	WINPR_API SSIZE_T BipBuffer_Write(wBipBuffer* bb, const BYTE* data, size_t size);
 
 	WINPR_API wBipBuffer* BipBuffer_New(size_t size);
 	WINPR_API void BipBuffer_Free(wBipBuffer* bb);

@@ -67,7 +67,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 	const char* sigil;
 	size_t sigil_length;
 	char* keyword;
-	SSIZE_T keyword_length;
+	size_t keyword_length;
 	SSIZE_T keyword_index;
 	char* separator;
 	char* value;
