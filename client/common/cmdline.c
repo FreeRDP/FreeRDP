@@ -1200,7 +1200,7 @@ static int freerdp_detect_windows_style_command_line_syntax(int argc, char** arg
 	DWORD flags;
 	int detect_status;
 	COMMAND_LINE_ARGUMENT_A* arg;
-	flags = COMMAND_LINE_SEPARATOR_COLON;
+	flags = COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SILENCE_PARSER;
 	flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 
 	if (ignoreUnknown)
@@ -1241,7 +1241,7 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 	DWORD flags;
 	int detect_status;
 	COMMAND_LINE_ARGUMENT_A* arg;
-	flags = COMMAND_LINE_SEPARATOR_SPACE;
+	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SILENCE_PARSER;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
 
@@ -1277,7 +1277,7 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 }
 
 static BOOL freerdp_client_detect_command_line(int argc, char** argv,
-        DWORD* flags, BOOL ignoreUnknown)
+        DWORD* flags)
 {
 	int old_cli_status;
 	int old_cli_count;
@@ -1286,6 +1286,7 @@ static BOOL freerdp_client_detect_command_line(int argc, char** argv,
 	int windows_cli_status;
 	size_t windows_cli_count;
 	BOOL compatibility = FALSE;
+	const BOOL ignoreUnknown = TRUE;
 	windows_cli_status = freerdp_detect_windows_style_command_line_syntax(argc,
 	                     argv, &windows_cli_count, ignoreUnknown);
 	posix_cli_status = freerdp_detect_posix_style_command_line_syntax(argc, argv,
@@ -1488,11 +1489,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	}
 
 	if (!ext && !assist)
-		compatibility = freerdp_client_detect_command_line(argc, argv, &flags,
-		                allowUnknown);
+		compatibility = freerdp_client_detect_command_line(argc, argv, &flags);
 	else
-		compatibility = freerdp_client_detect_command_line(argc - 1, &argv[1], &flags,
-		                allowUnknown);
+		compatibility = freerdp_client_detect_command_line(argc - 1, &argv[1], &flags);
 
 	settings->ProxyHostname = NULL;
 	settings->ProxyUsername = NULL;
