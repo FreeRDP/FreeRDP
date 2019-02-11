@@ -48,6 +48,7 @@
 
 #include "../config.h"
 #include "uwac-os.h"
+#include "uwac-utils.h"
 
 static int set_cloexec_or_close(int fd)
 {
@@ -230,7 +231,7 @@ int uwac_create_anonymous_file(off_t size)
 	if (fd < 0)
 	{
 		length = strlen(path) + sizeof(template);
-		name = malloc(length);
+		name = xmalloc(length);
 
 		if (!name)
 			return -1;

@@ -110,7 +110,7 @@ static const struct wl_output_listener output_listener = {
 UwacOutput *UwacCreateOutput(UwacDisplay *d, uint32_t id, uint32_t version) {
 	UwacOutput *o;
 
-	o = zalloc(sizeof *o);
+	o = xzalloc(sizeof *o);
 	if (!o)
 		return NULL;
 

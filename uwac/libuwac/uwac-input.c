@@ -899,7 +899,7 @@ static const struct wl_seat_listener seat_listener = {
 UwacSeat *UwacSeatNew(UwacDisplay *d, uint32_t id, uint32_t version) {
 	UwacSeat *ret;
 
-	ret = zalloc(sizeof(UwacSeat));
+	ret = xzalloc(sizeof(UwacSeat));
 	ret->display = d;
 	ret->seat_id = id;
 	ret->seat_version = version;
@@ -1041,7 +1041,7 @@ UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t l
 	/* There is a cursor provided */
 	if ((data != NULL) && (length != 0))
 	{
-		seat->pointer_image = calloc(1, sizeof(struct wl_cursor_image));
+		seat->pointer_image = xzalloc(sizeof(struct wl_cursor_image));
 		if (!seat->pointer_image)
 			return UWAC_ERROR_NOMEMORY;
 		seat->pointer_image->width = width;
@@ -1050,7 +1050,7 @@ UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t l
 		seat->pointer_image->hotspot_y = hot_y;
 
 		free(seat->pointer_data);
-		seat->pointer_data = malloc(length);
+		seat->pointer_data = xmalloc(length);
 		memcpy(seat->pointer_data, data, length);
 		seat->pointer_size = length;
 
