@@ -337,7 +337,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	}
 
 	/* some listeners may be interested (namely the display channel) */
-	EventArgsInit(&graphicsReset, "xfreerdp");
+	EventArgsInit(&graphicsReset, "libfreerdp");
 	graphicsReset.width = pdu.width;
 	graphicsReset.height = pdu.height;
 	PubSub_OnGraphicsReset(gfx->rdpcontext->pubSub, gfx->rdpcontext, &graphicsReset);
