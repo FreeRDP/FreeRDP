@@ -304,7 +304,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 	int i, fd;
 	void* data;
 	struct wl_shm_pool* pool;
-	newBuffers = realloc(w->buffers, (w->nbuffers + nbuffers) * sizeof(UwacBuffer));
+	newBuffers = xrealloc(w->buffers, (w->nbuffers + nbuffers) * sizeof(UwacBuffer));
 
 	if (!newBuffers)
 		return UWAC_ERROR_NOMEMORY;
@@ -417,7 +417,7 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 		return NULL;
 	}
 
-	w = zalloc(sizeof(*w));
+	w = xzalloc(sizeof(*w));
 
 	if (!w)
 	{

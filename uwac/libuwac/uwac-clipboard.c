@@ -259,7 +259,7 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 	{
 		void* tmp;
 		alloc += 1024;
-		tmp = realloc(data, alloc);
+		tmp = xrealloc(data, alloc);
 		if (!tmp)
 		{
 			free(data);

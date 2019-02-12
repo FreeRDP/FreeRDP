@@ -165,7 +165,7 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 {
 	UwacDisplay* d = data;
 	UwacGlobal* global;
-	global = xmalloc(sizeof * global);
+	global = xzalloc(sizeof * global);
 	global->name = id;
 	global->interface = xstrdup(interface);
 	global->version = version;
@@ -416,7 +416,7 @@ static void display_dispatch_events(UwacTask* task, uint32_t events)
 UwacDisplay* UwacOpenDisplay(const char* name, UwacReturnCode* err)
 {
 	UwacDisplay* ret;
-	ret = (UwacDisplay*)calloc(1, sizeof(*ret));
+	ret = (UwacDisplay*)xzalloc(sizeof(*ret));
 
 	if (!ret)
 	{
@@ -745,7 +745,7 @@ UwacEvent* UwacDisplayNewEvent(UwacDisplay* display, int type)
 		return 0;
 	}
 
-	ret = zalloc(sizeof(UwacEventListItem));
+	ret = xzalloc(sizeof(UwacEventListItem));
 
 	if (!ret)
 	{
