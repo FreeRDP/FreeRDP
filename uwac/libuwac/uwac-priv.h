@@ -120,9 +120,6 @@ struct uwac_display {
 	UwacTask dispatch_fd_task;
 	uint32_t serial;
 
-	struct wl_cursor_theme *cursor_theme;
-	struct wl_cursor *default_cursor;
-
 	struct wl_list windows;
 
 	struct wl_list outputs;
@@ -160,6 +157,8 @@ struct uwac_seat {
 	struct wl_pointer *pointer;
 	struct wl_surface *pointer_surface;
 	struct wl_cursor_image *pointer_image;
+	struct wl_cursor_theme *cursor_theme;
+	struct wl_cursor *default_cursor;
 	void *pointer_data;
 	size_t pointer_size;
 	int pointer_type;

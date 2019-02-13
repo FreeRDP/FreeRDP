@@ -180,18 +180,6 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	{
 		d->shm = wl_registry_bind(registry, id, &wl_shm_interface, min(TARGET_SHM_INTERFACE, version));
 		wl_shm_add_listener(d->shm, &shm_listener, d);
-
-		d->cursor_theme = wl_cursor_theme_load(NULL, 32, d->shm);
-		if (!d->cursor_theme) {
-			assert(uwacErrorHandler(d, UWAC_ERROR_NOMEMORY, "unable to get wayland cursor theme\n"));
-			return;
-		}
-
-		d->default_cursor = wl_cursor_theme_get_cursor(d->cursor_theme, "left_ptr");
-		if (!d->default_cursor) {
-			assert(uwacErrorHandler(d, UWAC_ERROR_NOMEMORY, "unable to get wayland cursor left_ptr\n"));
-			return;
-		}
 	}
 	else if (strcmp(interface, "wl_output") == 0)
 	{
@@ -595,9 +583,6 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 
 	if (display->shell)
 		wl_shell_destroy(display->shell);
-
-	if (display->cursor_theme)
-		wl_cursor_theme_destroy(display->cursor_theme);
 
 	if (display->shm)
 		wl_shm_destroy(display->shm);
