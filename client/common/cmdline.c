@@ -228,8 +228,10 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
         COMMAND_LINE_ARGUMENT_A* custom)
 {
-	WINPR_UNUSED(argc);
-	WINPR_UNUSED(argv);
+	const char* name = "FreeRDP";
+
+	if (argc > 0)
+		name = argv[0];
 
 	printf("\n");
 	printf("FreeRDP - A Free Remote Desktop Protocol Implementation\n");
@@ -246,10 +248,10 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	freerdp_client_print_command_line_args(args);
 	printf("\n");
 	printf("Examples:\n");
-	printf("    xfreerdp connection.rdp /p:Pwd123! /f\n");
-	printf("    xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com\n");
-	printf("    xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489\n");
-	printf("    xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168.1.100\n");
+	printf("    %s connection.rdp /p:Pwd123! /f\n", name);
+	printf("    %s /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com\n", name);
+	printf("    %s /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489\n", name);
+	printf("    %s /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168.1.100\n", name);
 	printf("\n");
 	printf("Clipboard Redirection: +clipboard\n");
 	printf("\n");
@@ -275,7 +277,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 #else
 	printf("    export https_proxy=http://proxy.contoso.com:3128/\n");
 #endif
-	printf("    xfreerdp /g:rdp.contoso.com ...\n");
+	printf("    %s /g:rdp.contoso.com ...\n", name);
 	printf("\n");
 	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
