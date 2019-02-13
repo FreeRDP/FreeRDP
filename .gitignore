@@ -150,3 +150,4 @@ packaging/deb/freerdp-nightly/freerdp-nightly-dbg
 
 # VisualStudio Code
 .vscode
+cache/
