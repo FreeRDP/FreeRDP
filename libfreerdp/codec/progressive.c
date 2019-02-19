@@ -1984,7 +1984,6 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 		           sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
 		progressive->quantProgValFull.quality = 100;
 		progressive->SurfaceContexts = HashTable_New(TRUE);
-		progressive_context_reset(progressive);
 		progressive->log = WLog_Get(TAG);
 	}
 
