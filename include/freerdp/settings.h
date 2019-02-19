@@ -1239,7 +1239,7 @@ struct rdp_settings
 	 */
 
 	/* RemoteApp */
-	ALIGN64 BOOL   RemoteApplicationMode;             /* 2112 */
+	ALIGN64 UINT32 RemoteApplicationMode;             /* 2112 */
 	ALIGN64 char*  RemoteApplicationName;             /* 2113 */
 	ALIGN64 char*  RemoteApplicationIcon;             /* 2114 */
 	ALIGN64 char*  RemoteApplicationProgram;          /* 2115 */

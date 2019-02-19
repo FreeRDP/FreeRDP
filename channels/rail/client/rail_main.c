@@ -76,13 +76,15 @@ static UINT rail_send(railPlugin* rail, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_send_channel_data(railPlugin* rail, void* data, size_t length)
+UINT rail_send_channel_data(railPlugin* rail, wStream* src)
 {
-	wStream* s = NULL;
+	wStream* s;
+	size_t length;
 
-	if (!rail || !data)
+	if (!rail || !src)
 		return ERROR_INVALID_PARAMETER;
 
+	length = Stream_GetPosition(src);
 	s = Stream_New(NULL, length);
 
 	if (!s)
@@ -91,7 +93,7 @@ UINT rail_send_channel_data(railPlugin* rail, void* data, size_t length)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	Stream_Write(s, data, length);
+	Stream_Write(s, Stream_Buffer(src), length);
 	return rail_send(rail, s);
 }
 
@@ -393,23 +395,6 @@ static UINT rail_server_handshake(RailClientContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_client_handshake_ex(RailClientContext* context,
-                                     const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
-{
-	railPlugin* rail;
-
-	if (!context || !handshakeEx)
-		return ERROR_INVALID_PARAMETER;
-
-	rail = (railPlugin*) context->handle;
-	return rail_send_handshake_ex_order(rail, handshakeEx);
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 static UINT rail_server_handshake_ex(RailClientContext* context,
                                      const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
@@ -575,6 +560,30 @@ static UINT rail_client_get_appid_request(RailClientContext* context,
 
 	rail = (railPlugin*) context->handle;
 	return rail_send_client_get_appid_req_order(rail, getAppIdReq);
+}
+
+static UINT rail_client_cloak(RailClientContext* context,
+                              const RAIL_CLOAK* cloak)
+{
+	railPlugin* rail;
+
+	if (!context || !cloak || !context->handle)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
+	return rail_send_client_order_cloak_order(rail, cloak);
+}
+
+static UINT rail_client_snap_arrange(RailClientContext* context,
+                                     const RAIL_SNAP_ARRANGE* snap)
+{
+	railPlugin* rail;
+
+	if (!context || !snap || !context->handle)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
+	return rail_send_client_order_snap_arrange_order(rail, snap);
 }
 
 /**
@@ -917,7 +926,6 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		context->ClientSystemCommand = rail_client_system_command;
 		context->ClientHandshake = rail_client_handshake;
 		context->ServerHandshake = rail_server_handshake;
-		context->ClientHandshakeEx = rail_client_handshake_ex;
 		context->ServerHandshakeEx = rail_server_handshake_ex;
 		context->ClientNotifyEvent = rail_client_notify_event;
 		context->ClientWindowMove = rail_client_window_move;
@@ -930,6 +938,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		context->ServerExecuteResult = rail_server_execute_result;
 		context->ClientGetAppIdRequest = rail_client_get_appid_request;
 		context->ServerGetAppIdResponse = rail_server_get_appid_response;
+		context->ClientSnapArrange = rail_client_snap_arrange;
+		context->ClientCloak = rail_client_cloak;
 		rail->rdpcontext = pEntryPointsEx->context;
 		rail->context = context;
 		isFreerdp = TRUE;

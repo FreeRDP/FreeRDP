@@ -52,4 +52,7 @@ UINT rail_send_client_get_appid_req_order(railPlugin* rail,
 UINT rail_send_client_langbar_info_order(railPlugin* rail,
         const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
 
+UINT rail_send_client_order_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak);
+UINT rail_send_client_order_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap);
+
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_ORDERS_H */
