@@ -573,6 +573,71 @@ static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 f
 	return descriptors;
 }
 
+static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 formatId,
+        const void* data, UINT32* pSize)
+{
+	const FILEDESCRIPTOR* descriptors;
+	UINT32 nrDescriptors;
+	size_t count, x, alloc, pos, baseLength = 0;
+	const char* src = (const char*) data;
+	char* dst;
+
+	if (!clipboard || !data || !pSize)
+		return NULL;
+
+	if (*pSize < sizeof(UINT32))
+		return NULL;
+
+	if (clipboard->delegate.basePath)
+		baseLength = strnlen(clipboard->delegate.basePath, MAX_PATH);
+
+	if (baseLength < 1)
+		return NULL;
+
+	if (clipboard->delegate.ClientRequestFileSize)
+		nrDescriptors = (UINT32)(src[3] << 24) | (UINT32)(src[2] << 16) | (UINT32)(src[1] << 8) |
+		                (src[0] & 0xFF);
+
+	count = (*pSize - 4) / sizeof(FILEDESCRIPTOR);
+
+	if ((count < 1) || (count != nrDescriptors))
+		return NULL;
+
+	descriptors = (const FILEDESCRIPTOR*)&src[4];
+
+	if (formatId != ClipboardGetFormatId(clipboard, "FileGroupDescriptorW"))
+		return NULL;
+
+	alloc = 0;
+
+	/* Get total size of file names */
+	for (x = 0; x < count; x++)
+		alloc += _wcsnlen(descriptors[x].cFileName, ARRAYSIZE(descriptors[x].cFileName));
+
+	/* Append a prefix file:// and postfix \r\n for each file */
+	alloc += (sizeof("/\r\n") + baseLength) * count;
+	dst = calloc(alloc, sizeof(char));
+
+	if (!dst)
+		return NULL;
+
+	pos = 0;
+
+	for (x = 0; x < count; x++)
+	{
+		const FILEDESCRIPTOR* cur = &descriptors[x];
+		size_t curLen = _wcsnlen(cur->cFileName, ARRAYSIZE(cur->cFileName));
+		char* curName = NULL;
+		ConvertFromUnicode(CP_UTF8, 0, cur->cFileName, curLen, &curName, 0, NULL, NULL);
+		pos += _snprintf(&dst[pos], alloc - pos, "%s/%s\r\n", clipboard->delegate.basePath, curName);
+		free(curName);
+	}
+
+	*pSize = alloc;
+	clipboard->fileListSequenceNumber = clipboard->sequenceNumber;
+	return dst;
+}
+
 static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 {
 	UINT32 file_group_format_id;
@@ -593,6 +658,11 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 	if (!ClipboardRegisterSynthesizer(clipboard,
 	                                  local_file_format_id, file_group_format_id,
 	                                  convert_uri_list_to_filedescriptors))
+		goto error_free_local_files;
+
+	if (!ClipboardRegisterSynthesizer(clipboard,
+	                                  file_group_format_id, local_file_format_id,
+	                                  convert_filedescriptors_to_uri_list))
 		goto error_free_local_files;
 
 	return TRUE;
