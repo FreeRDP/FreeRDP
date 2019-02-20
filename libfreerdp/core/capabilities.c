@@ -2183,7 +2183,17 @@ static BOOL rdp_read_remote_programs_capability_set(wStream* s, UINT16 length,
 		return FALSE;
 
 	Stream_Read_UINT32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
-	settings->RemoteApplicationMode = railSupportLevel;
+	settings->RemoteApplicationSupportLevel = railSupportLevel;
+
+	if ((railSupportLevel & RAIL_LEVEL_SUPPORTED) == 0)
+	{
+		if (settings->RemoteApplicationMode == TRUE)
+		{
+			/* RemoteApp Failure! */
+			settings->RemoteApplicationMode = FALSE;
+		}
+	}
+
 	return TRUE;
 }
 
@@ -2206,13 +2216,13 @@ static BOOL rdp_write_remote_programs_capability_set(wStream* s,
 	header = rdp_capability_set_start(s);
 	railSupportLevel = RAIL_LEVEL_SUPPORTED;
 
-	if (settings->RemoteApplicationMode & RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED)
+	if (settings->RemoteApplicationSupportLevel & RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED)
 	{
 		if (settings->RemoteAppLanguageBarSupported)
 			railSupportLevel |= RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
 	}
 
-	if (settings->RemoteApplicationMode & RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED)
+	if (settings->RemoteApplicationSupportLevel & RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED)
 		railSupportLevel |= RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
 
 	Stream_Write_UINT32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
@@ -3941,7 +3951,7 @@ BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (settings->RemoteApplicationMode & RAIL_LEVEL_SUPPORTED)
+	if (settings->RemoteApplicationMode)
 	{
 		numberCapabilities += 2;
 
@@ -4125,7 +4135,7 @@ BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 		}
 	}
 
-	if (settings->RemoteApplicationMode & RAIL_LEVEL_SUPPORTED)
+	if (settings->RemoteApplicationMode)
 	{
 		numberCapabilities += 2;
 
