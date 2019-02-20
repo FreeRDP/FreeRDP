@@ -123,6 +123,7 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 	rdpInput* input;
 	UINT16 flags = 0;
 	int direction;
+	uint32_t step;
 	uint32_t x, y;
 
 	if (!instance || !ev || !instance->input)
@@ -136,27 +137,31 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 
 	input = instance->input;
 
+	direction = wl_fixed_to_int(ev->value);
 	switch (ev->axis)
 	{
 		case WL_POINTER_AXIS_VERTICAL_SCROLL:
 			flags |= PTR_FLAGS_WHEEL;
+			if (direction > 0)
+				flags |= PTR_FLAGS_WHEEL_NEGATIVE;
 			break;
 
 		case WL_POINTER_AXIS_HORIZONTAL_SCROLL:
 			flags |= PTR_FLAGS_HWHEEL;
+			if (direction < 0)
+				flags |= PTR_FLAGS_WHEEL_NEGATIVE;
 			break;
 
 		default:
 			return FALSE;
 	}
 
-	direction = wl_fixed_to_int(ev->value);
-	flags |= 0x0078; /* TODO: Calculate the distance with the provided value size */
+	step = (uint32_t)abs(direction);
+	if (step > WheelRotationMask)
+		step = WheelRotationMask;
+	flags |=  step;
 
-	if (direction < 0)
-		flags |= PTR_FLAGS_WHEEL_NEGATIVE;
-
-	return freerdp_input_send_mouse_event(input, flags, x, y);
+	return freerdp_input_send_mouse_event(input, flags, (UINT16)x, (UINT16)y);
 }
 
 BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
