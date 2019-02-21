@@ -171,8 +171,15 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 	if (!pYUVData[0] || !pYUVData[1] || !pYUVData[2])
 		return -1;
 
-	if ((sys->EncParamExt.iPicWidth != h264->width)
-	    || (sys->EncParamExt.iPicHeight != h264->height))
+	if ((h264->width > INT_MAX) || (h264->height > INT_MAX))
+		return -1;
+
+	if ((h264->FrameRate > INT_MAX) || (h264->NumberOfThreads > INT_MAX) ||
+		(h264->BitRate > INT_MAX) || (h264->QP > INT_MAX))
+		return -1;
+
+	if ((sys->EncParamExt.iPicWidth != (int)h264->width)
+		|| (sys->EncParamExt.iPicHeight != (int)h264->height))
 	{
 		status = (*sys->pEncoder)->GetDefaultParams(sys->pEncoder, &sys->EncParamExt);
 
@@ -183,15 +190,15 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 		}
 
 		sys->EncParamExt.iUsageType = SCREEN_CONTENT_REAL_TIME;
-		sys->EncParamExt.iPicWidth = h264->width;
-		sys->EncParamExt.iPicHeight = h264->height;
-		sys->EncParamExt.fMaxFrameRate = h264->FrameRate;
+		sys->EncParamExt.iPicWidth = (int)h264->width;
+		sys->EncParamExt.iPicHeight = (int)h264->height;
+		sys->EncParamExt.fMaxFrameRate = (int)h264->FrameRate;
 		sys->EncParamExt.iMaxBitrate = UNSPECIFIED_BIT_RATE;
 		sys->EncParamExt.bEnableDenoise = 0;
 		sys->EncParamExt.bEnableLongTermReference = 0;
 		sys->EncParamExt.bEnableFrameSkip = 0;
 		sys->EncParamExt.iSpatialLayerNum = 1;
-		sys->EncParamExt.iMultipleThreadIdc = h264->NumberOfThreads;
+		sys->EncParamExt.iMultipleThreadIdc = (int)h264->NumberOfThreads;
 		sys->EncParamExt.sSpatialLayers[0].fFrameRate = h264->FrameRate;
 		sys->EncParamExt.sSpatialLayers[0].iVideoWidth = sys->EncParamExt.iPicWidth;
 		sys->EncParamExt.sSpatialLayers[0].iVideoHeight = sys->EncParamExt.iPicHeight;
@@ -202,14 +209,14 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 		{
 			case H264_RATECONTROL_VBR:
 				sys->EncParamExt.iRCMode = RC_BITRATE_MODE;
-				sys->EncParamExt.iTargetBitrate = h264->BitRate;
+				sys->EncParamExt.iTargetBitrate = (int)h264->BitRate;
 				sys->EncParamExt.sSpatialLayers[0].iSpatialBitrate =
 				    sys->EncParamExt.iTargetBitrate;
 				break;
 
 			case H264_RATECONTROL_CQP:
 				sys->EncParamExt.iRCMode = RC_OFF_MODE;
-				sys->EncParamExt.sSpatialLayers[0].iDLayerQp = h264->QP;
+				sys->EncParamExt.sSpatialLayers[0].iDLayerQp = (int)h264->QP;
 				break;
 		}
 
@@ -246,11 +253,11 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 		switch (h264->RateControlMode)
 		{
 			case H264_RATECONTROL_VBR:
-				if (sys->EncParamExt.iTargetBitrate != h264->BitRate)
+				if (sys->EncParamExt.iTargetBitrate != (int)h264->BitRate)
 				{
-					sys->EncParamExt.iTargetBitrate = h264->BitRate;
+					sys->EncParamExt.iTargetBitrate = (int)h264->BitRate;
 					bitrate.iLayer = SPATIAL_LAYER_ALL;
-					bitrate.iBitrate = h264->BitRate;
+					bitrate.iBitrate = (int)h264->BitRate;
 					status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_BITRATE,
 					                                     &bitrate);
 
@@ -261,9 +268,9 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 					}
 				}
 
-				if (sys->EncParamExt.fMaxFrameRate != h264->FrameRate)
+				if (sys->EncParamExt.fMaxFrameRate != (int)h264->FrameRate)
 				{
-					sys->EncParamExt.fMaxFrameRate = h264->FrameRate;
+					sys->EncParamExt.fMaxFrameRate = (int)h264->FrameRate;
 					status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_FRAME_RATE,
 					                                     &sys->EncParamExt.fMaxFrameRate);
 
@@ -277,9 +284,9 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 				break;
 
 			case H264_RATECONTROL_CQP:
-				if (sys->EncParamExt.sSpatialLayers[0].iDLayerQp != h264->QP)
+				if (sys->EncParamExt.sSpatialLayers[0].iDLayerQp != (int)h264->QP)
 				{
-					sys->EncParamExt.sSpatialLayers[0].iDLayerQp = h264->QP;
+					sys->EncParamExt.sSpatialLayers[0].iDLayerQp = (int)h264->QP;
 					status = (*sys->pEncoder)->SetOption(sys->pEncoder,
 					                                     ENCODER_OPTION_SVC_ENCODE_PARAM_EXT,
 					                                     &sys->EncParamExt);

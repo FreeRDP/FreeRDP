@@ -164,13 +164,13 @@ static BOOL printer_config_valid(const char* path)
 	return TRUE;
 }
 
-static BOOL printer_read_setting(const char* path, prn_conf_t type, void** data, size_t* length)
+static BOOL printer_read_setting(const char* path, prn_conf_t type, void** data, UINT32* length)
 {
 	DWORD lowSize, highSize;
 	DWORD read = 0;
 	BOOL rc = FALSE;
 	HANDLE file;
-	BYTE* fdata = NULL;
+	char* fdata = NULL;
 	const char* name = filemap[type];
 	char* abs = GetCombinedPath(path, name);
 
@@ -205,13 +205,13 @@ static BOOL printer_read_setting(const char* path, prn_conf_t type, void** data,
 fail:
 	CloseHandle(file);
 
-	if (rc)
+	if (rc && (lowSize <= INT_MAX))
 	{
 		int blen = 0;
-		crypto_base64_decode(fdata, lowSize, data, &blen);
+		crypto_base64_decode(fdata, (int)lowSize, (BYTE**)data, &blen);
 
-		if (*data)
-			*length = blen;
+		if (*data && (blen > 0))
+			*length = (UINT32)blen;
 		else
 		{
 			rc = FALSE;
@@ -306,13 +306,13 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	char* path = NULL;
 	int rc;
 	UINT32 flags = 0;
-	WCHAR* DriverName = NULL;
-	size_t DriverNameLen = 0;
-	WCHAR* PnPName = NULL;
-	size_t PnPNameLen = 0;
-	BYTE* CachedPrinterConfigData = NULL;
-	size_t CachedFieldsLen = 0;
-	size_t PrinterNameLen = 0;
+	void* DriverName = NULL;
+	UINT32 DriverNameLen = 0;
+	void* PnPName = NULL;
+	UINT32 PnPNameLen = 0;
+	void* CachedPrinterConfigData = NULL;
+	UINT32 CachedFieldsLen = 0;
+	UINT32 PrinterNameLen = 0;
 
 	if (!settings || !printer)
 		return FALSE;
@@ -338,7 +338,7 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 
 	if (!printer_read_setting(path, PRN_CONF_DRIVER, &DriverName, &DriverNameLen))
 	{
-		DriverNameLen = ConvertToUnicode(CP_UTF8, 0, printer->driver, -1, &DriverName,
+		DriverNameLen = ConvertToUnicode(CP_UTF8, 0, printer->driver, -1, (LPWSTR*)&DriverName,
 		                                 0) * 2 + 1;
 	}
 
