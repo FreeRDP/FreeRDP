@@ -32,7 +32,7 @@ static ITSMFAudioDevice* tsmf_load_audio_device_by_name(const char* name, const 
 	ITSMFAudioDevice* audio;
 	TSMF_AUDIO_DEVICE_ENTRY entry;
 
-	entry = (TSMF_AUDIO_DEVICE_ENTRY) freerdp_load_channel_addin_entry("tsmf", (LPSTR) name, "audio", 0);
+	entry = (TSMF_AUDIO_DEVICE_ENTRY) (void*)freerdp_load_channel_addin_entry("tsmf", name, "audio", 0);
 
 	if (!entry)
 		return NULL;
