@@ -523,9 +523,9 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 	}
 	else
 	{
-		INT32 x, y;
+		UINT32 x, y;
 
-		for (y = 0; y < (INT32)nHeight; y++)
+		for (y = 0; y < nHeight; y++)
 		{
 			const BYTE* srcLine = &pSrcData[(y + nYSrc) *
 			                                            nSrcStep * srcVMultiplier +
@@ -533,7 +533,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 			BYTE* dstLine = &pDstData[(y + nYDst) *
 			                                      nDstStep * dstVMultiplier + dstVOffset];
 
-			for (x = 0; x < (INT32)nWidth; x++)
+			for (x = 0; x < nWidth; x++)
 			{
 				UINT32 dstColor;
 				UINT32 color = ReadColor(&srcLine[(x + nXSrc) * srcByte],
