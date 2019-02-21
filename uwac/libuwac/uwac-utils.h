@@ -48,6 +48,6 @@ void *xzalloc(size_t s);
 
 char *xstrdup(const char *s);
 
-void *xrealloc(char *p, size_t s);
+void *xrealloc(void *p, size_t s);
 
 #endif /* UWAC_UTILS_H_ */
