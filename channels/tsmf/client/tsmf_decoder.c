@@ -37,7 +37,7 @@ static ITSMFDecoder* tsmf_load_decoder_by_name(const char *name)
 	ITSMFDecoder* decoder;
 	TSMF_DECODER_ENTRY entry;
 
-	entry = (TSMF_DECODER_ENTRY) freerdp_load_channel_addin_entry("tsmf", (LPSTR) name, "decoder", 0);
+	entry = (TSMF_DECODER_ENTRY) (void*)freerdp_load_channel_addin_entry("tsmf", name, "decoder", 0);
 
 	if (!entry)
 		return NULL;

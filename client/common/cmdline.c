@@ -3080,7 +3080,7 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels,
 {
 	PVIRTUALCHANNELENTRY entry = NULL;
 	PVIRTUALCHANNELENTRYEX entryEx = NULL;
-	entryEx = (PVIRTUALCHANNELENTRYEX) freerdp_load_channel_addin_entry(name, NULL, NULL,
+	entryEx = (PVIRTUALCHANNELENTRYEX) (void*)freerdp_load_channel_addin_entry(name, NULL, NULL,
 	          FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX);
 
 	if (!entryEx)

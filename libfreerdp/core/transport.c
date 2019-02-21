@@ -300,7 +300,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 	transport->frontBio = tls->bio;
 	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK,
-	                  (bio_info_cb*) transport_ssl_cb);
+	                  (bio_info_cb*)(void*) transport_ssl_cb);
 	SSL_set_app_data(tls->ssl, transport);
 
 	if (!transport->frontBio)
