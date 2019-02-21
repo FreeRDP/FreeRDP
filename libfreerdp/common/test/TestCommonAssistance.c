@@ -21,9 +21,12 @@ static const char TEST_MSRC_INCIDENT_FILE_TYPE1[] =
     "L=\"0\" />"
     "</UPLOADINFO>";
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-const-variable"
 static const BYTE TEST_MSRC_INCIDENT_EXPERT_BLOB_TYPE1[32] =
     "\x3C\x9C\xAE\x0B\xCE\x7A\xB1\x5C\x8A\xAC\x01\xD6\x76\x04\x5E\xDF"
     "\x3F\xFA\xF0\x92\xE2\xDE\x36\x8A\x20\x17\xE6\x8A\x0D\xED\x7C\x90";
+#pragma GCC diagnostic pop
 
 static const char TEST_MSRC_INCIDENT_PASSWORD_TYPE2[] = "48BJQ853X3B4";
 
