@@ -53,7 +53,7 @@ int TestArrayList(int argc, char* argv[])
 		ArrayList_RemoveAt(arrayList, 0);
 		if (val != index)
 		{
-			printf("ArrayList: shifted %d entries, expected value %d, got %"PRIdz"\n", index, index, val);
+			printf("ArrayList: shifted %"PRIdz" entries, expected value %"PRIdz", got %"PRIdz"\n", index, index, val);
 			return -1;
 		}
 	}

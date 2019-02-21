@@ -167,7 +167,12 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	/* If cbMultiByte is -1, the string is null-terminated */
 
 	if (cbMultiByte == -1)
-		cbMultiByte = strlen((char*) lpMultiByteStr) + 1;
+	{
+		size_t len = strlen((const char*) lpMultiByteStr);
+		if (len >= INT32_MAX)
+			return 0;
+		cbMultiByte = (int)len + 1;
+	}
 
 	/*
 	 * if cchWideChar is 0, the function returns the required buffer size
@@ -189,9 +194,6 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 				WLog_ERR(TAG, "Unsupported encoding %u", CodePage);
 				return 0;
 		}
-
-		if (cbMultiByte > UINT32_MAX)
-			return 0;
 
 		targetStart = lpWideCharStr;
 		targetCapacity = cchWideChar;
@@ -289,7 +291,12 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 	/* If cchWideChar is -1, the string is null-terminated */
 
 	if (cchWideChar == -1)
-		cchWideChar = _wcslen(lpWideCharStr) + 1;
+	{
+		size_t len = _wcslen(lpWideCharStr);
+		if (len >= INT32_MAX)
+			return 0;
+		cchWideChar = (int)len + 1;
+	}
 
 	/*
 	 * if cbMultiByte is 0, the function returns the required buffer size
@@ -311,9 +318,6 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 				WLog_ERR(TAG, "Unsupported encoding %u", CodePage);
 				return 0;
 		}
-
-		if (cchWideChar > UINT32_MAX)
-			return 0;
 
 		targetStart = lpMultiByteStr;
 		targetCapacity = cbMultiByte;
@@ -384,7 +388,12 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		return 0;
 
 	if (cbMultiByte == -1)
-		cbMultiByte = (int)(strlen(lpMultiByteStr) + 1);
+	{
+		size_t len = strlen(lpMultiByteStr);
+		if (len >= INT_MAX)
+			return 0;
+		cbMultiByte = (int)(len + 1);
+	}
 
 	if (cchWideChar == 0)
 	{
