@@ -92,8 +92,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
                                  UINT32 rowDelta, UINT32 width, UINT32 height)
 {
 	const BYTE* pbSrc = pbSrcBuffer;
-	const BYTE* pbEnd = pbSrcBuffer + cbSrcBuffer;
-	const BYTE* pbDestEnd = pbDestBuffer + rowDelta * height;
+	const BYTE* pbEnd;
+	const BYTE* pbDestEnd;
 	BYTE* pbDest = pbDestBuffer;
 	PIXEL temp;
 	PIXEL fgPel = WHITE_PIXEL;
@@ -111,6 +111,9 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
 
 	if (!pbSrcBuffer || !pbDestBuffer)
 		return FALSE;
+
+	pbEnd = pbSrcBuffer + cbSrcBuffer;
+	pbDestEnd = pbDestBuffer + rowDelta * height;
 
 	while (pbSrc < pbEnd)
 	{
