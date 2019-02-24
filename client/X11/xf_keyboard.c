@@ -325,6 +325,10 @@ static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 	int keysyms[] = {XK_Shift_L, XK_Shift_R, XK_Alt_L, XK_Alt_R,
 	                 XK_Control_L, XK_Control_R, XK_Super_L, XK_Super_R
 	                };
+
+	// CTRL-ALT-ENTER FIX: we need to clear the buffer here beforehand
+	xf_keyboard_clear(xfc);
+
 	state = xf_keyboard_read_keyboard_state(xfc);
 
 	for (i = 0; i < ARRAYSIZE(keysyms); i++)
