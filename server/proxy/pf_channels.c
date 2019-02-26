@@ -31,8 +31,8 @@
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/encomsp.h>
 
-#include "tf_channels.h"
-#include "tf_freerdp.h"
+#include "pf_channels.h"
+#include "pf_freerdp.h"
 
 /**
  * Function description

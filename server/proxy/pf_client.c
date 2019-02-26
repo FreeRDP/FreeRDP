@@ -305,8 +305,8 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	return 0;
 }
 
-rdpContext* forward_connection(proxyContext* context, char* host,
-                               char* username, char* password, DWORD port)
+rdpContext* proxy_client_create_context(proxyContext* context, char* host,
+                                        char* username, char* password, DWORD port)
 {
 	int rc = -1;
 	DWORD status;
@@ -319,11 +319,15 @@ rdpContext* forward_connection(proxyContext* context, char* host,
 		goto fail;
 
 	context->settings->RedirectClipboard = FALSE;
-	context->settings->ServerHostname = "";
-	context->settings->ServerPort = 3389;
-	context->settings->Username = "";
-	context->settings->Password = "";
+	context->settings->ServerHostname = "192.168.43.43";
+	context->settings->ServerPort = 33890;
+	context->settings->Username = "win1";
+	context->settings->Password = "Password1";
+	return context;
+}
 
+int proxy_client_start(rdpContext* context)
+{
 	if (freerdp_client_start(context) != 0)
 		goto fail;
 
