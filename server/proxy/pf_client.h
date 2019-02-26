@@ -25,6 +25,6 @@ typedef struct tf_context tfContext;
 
 rdpContext* proxy_client_create_context(proxyContext* pContext, char* host, DWORD port,
                                         char* username, char* password);
-int proxy_client_start(rdpContext* context);
+DWORD WINAPI proxy_client_start(LPVOID arg);
 
 #endif /* FREERDP_PROXY_CLIENT_H */

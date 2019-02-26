@@ -306,8 +306,9 @@ rdpContext* proxy_client_create_context(proxyContext* pContext, char* host, DWOR
 	return context;
 }
 
-int proxy_client_start(rdpContext* context)
+DWORD WINAPI proxy_client_start(LPVOID arg)
 {
+	rdpContext* context = (rdpContext*)arg;
 	int rc = 0;
 
 	if (freerdp_client_start(context) != 0)
