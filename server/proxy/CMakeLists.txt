@@ -2,12 +2,12 @@ set(MODULE_NAME "pfreerdp")
 set(MODULE_PREFIX "FREERDP_SERVER_PROXY")
 
 set(${MODULE_PREFIX}_SRCS
-	pfreerdp.c
-	pfreerdp.h
-    pf_channels.c
-    pf_channels.h
-    pf_client.c
-    pf_client.h)
+  pfreerdp.c
+  pfreerdp.h
+  pf_channels.c
+  pf_channels.h
+  pf_client.c
+  pf_client.h)
 
 	# On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
@@ -28,6 +28,7 @@ endif()
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
