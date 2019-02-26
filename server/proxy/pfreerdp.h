@@ -41,6 +41,7 @@
 struct proxy_context
 {
 	rdpContext _p;
+	rdpContext* clientContext;
 
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;

@@ -27,6 +27,7 @@
 #include <winpr/string.h>
 #include <winpr/path.h>
 #include <winpr/winsock.h>
+#include <winpr/thread.h>
 
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
@@ -61,7 +62,6 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
 
-	WLog_INFO(TAG, "");
 	WLog_INFO(TAG, "Client requested desktop: %"PRIu32"x%"PRIu32"x%"PRIu32"",
 	          client->settings->DesktopWidth, client->settings->DesktopHeight,
 	          client->settings->ColorDepth);
@@ -70,9 +70,16 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	                       client->settings->DesktopHeight))
 		return FALSE;
 
-	rdpContext* clientContext = proxy_client_create_context(NULL, "192.168.43.43", 33890, "win1", "Password1");
-	proxy_client_start(clientContext);
-	
+	rdpContext* clientContext = proxy_client_create_context(NULL, "192.168.43.43", 33890, "win1",
+	                            "Password1");
+	context->clientContext = clientContext;
+
+	if (!(CreateThread(NULL, 0, proxy_client_start, clientContext, 0, NULL)))
+	{
+		WLog_ERR(TAG, "CreateThread failed!");
+		return FALSE;
+	}
+
 	/* Return FALSE here would stop the execution of the peer main loop. */
 	return TRUE;
 }
@@ -98,6 +105,8 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	WLog_INFO(TAG, "Client sent a keyboard event (flags:0x%04"PRIX16" code:0x%04"PRIX16")", flags,
 	          code);
+	proxyContext* context = (proxyContext*)input->context;
+	freerdp_input_send_keyboard_event(context->clientContext->input, flags, code);
 	return TRUE;
 }
 
