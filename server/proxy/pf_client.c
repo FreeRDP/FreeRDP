@@ -1,24 +1,3 @@
-/**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Test UI
- *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2016,2018 Armin Novak <armin.novak@thincast.com>
- * Copyright 2016,2018 Thincast Technologies GmbH
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -42,10 +21,11 @@
 #include <winpr/synch.h>
 #include <freerdp/log.h>
 
-#include "tf_channels.h"
-#include "tf_freerdp.h"
+#include "pf_channels.h"
+#include "pf_client.h"
+#include "pfreerdp.h"
 
-#define TAG CLIENT_TAG("sample")
+#define TAG PROXY_TAG("client")
 
 /* This function is called whenever a new frame starts.
  * It can be used to reset invalidated areas. */
@@ -305,7 +285,7 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	return 0;
 }
 
-rdpContext* proxy_client_create_context(proxyContext* context, char* host,
+rdpContext* proxy_client_create_context(proxyContext* pContext, char* host,
                                         char* username, char* password, DWORD port)
 {
 	int rc = -1;
@@ -316,7 +296,7 @@ rdpContext* proxy_client_create_context(proxyContext* context, char* host,
 	context = freerdp_client_context_new(&clientEntryPoints);
 
 	if (!context)
-		goto fail;
+		return NULL;
 
 	context->settings->RedirectClipboard = FALSE;
 	context->settings->ServerHostname = "192.168.43.43";
@@ -328,6 +308,8 @@ rdpContext* proxy_client_create_context(proxyContext* context, char* host,
 
 int proxy_client_start(rdpContext* context)
 {
+	int rc = 0;
+
 	if (freerdp_client_start(context) != 0)
 		goto fail;
 
