@@ -35,6 +35,7 @@
 #include <freerdp/server/rdpsnd.h>
 
 #include "pfreerdp.h"
+#include "pf_client.h"
 
 #define TAG PROXY_TAG("server")
 
@@ -69,6 +70,9 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	                       client->settings->DesktopHeight))
 		return FALSE;
 
+	rdpContext* clientContext = proxy_client_create_context(NULL, "192.168.43.43", 33890, "win1", "Password1");
+	proxy_client_start(clientContext);
+	
 	/* Return FALSE here would stop the execution of the peer main loop. */
 	return TRUE;
 }

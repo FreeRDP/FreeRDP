@@ -299,10 +299,10 @@ rdpContext* proxy_client_create_context(proxyContext* pContext, char* host,
 		return NULL;
 
 	context->settings->RedirectClipboard = FALSE;
-	context->settings->ServerHostname = "192.168.43.43";
+	context->settings->ServerHostname = host;
 	context->settings->ServerPort = 33890;
-	context->settings->Username = "win1";
-	context->settings->Password = "Password1";
+	context->settings->Username = username;
+	context->settings->Password = password;
 	return context;
 }
 
