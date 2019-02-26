@@ -285,8 +285,8 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	return 0;
 }
 
-rdpContext* proxy_client_create_context(proxyContext* pContext, char* host,
-                                        char* username, char* password, DWORD port)
+rdpContext* proxy_client_create_context(proxyContext* pContext, char* host, DWORD port,
+                                        char* username, char* password)
 {
 	int rc = -1;
 	DWORD status;
