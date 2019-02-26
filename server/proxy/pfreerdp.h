@@ -18,7 +18,7 @@
 // Define log tags
 #define PROXY_TAG(tag) "proxy." tag
 
-struct test_peer_context
+struct proxy_context
 {
 	rdpContext _p;
 
@@ -43,6 +43,6 @@ struct test_peer_context
 	RdpsndServerContext* rdpsnd;
 	EncomspServerContext* encomsp;
 };
-typedef struct test_peer_context testPeerContext;
+typedef struct proxy_context proxyContext;
 
 #endif /* FREERDP_SERVER_PROXY_PFREERDP_H */

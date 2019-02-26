@@ -21,7 +21,7 @@
 /* Event callbacks */
 BOOL tf_peer_post_connect(freerdp_peer* client)
 {
-	testPeerContext* context = (testPeerContext*) client->context;
+	proxyContext* context = (proxyContext*) client->context;
 	/**
 	 * This callback is called when the entire connection sequence is done, i.e. we've received the
 	 * Font List PDU from the client and sent out the Font Map PDU.
@@ -55,7 +55,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 
 BOOL tf_peer_activate(freerdp_peer* client)
 {
-	testPeerContext* context = (testPeerContext*) client->context;
+	proxyContext* context = (proxyContext*) client->context;
 	context->activated = TRUE;
 	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_8K;
 	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
@@ -106,7 +106,7 @@ static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count,
 
 	for (i = 0; i < count; i++)
 	{
-		WLog_INFO(TAG, "  (%"PRIu16"2, %"PRIu16") (%"PRIu16", %"PRIu16")", areas[i].left, areas[i].top,
+		WLog_INFO(TAG, "  (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16")", areas[i].left, areas[i].top,
 		          areas[i].right, areas[i].bottom);
 	}
 
@@ -130,7 +130,7 @@ static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow,
 	return TRUE;
 }
 
-BOOL test_peer_context_new(freerdp_peer* client, testPeerContext* context)
+BOOL test_peer_context_new(freerdp_peer* client, proxyContext* context)
 {
 	if (!(context->rfx_context = rfx_context_new(TRUE)))
 		goto fail_rfx_context;
@@ -171,7 +171,7 @@ fail_rfx_context:
 	return FALSE;
 }
 
-void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
+void test_peer_context_free(freerdp_peer* client, proxyContext* context)
 {
 	if (context)
 	{
@@ -207,7 +207,7 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 // Init client on connection
 static BOOL init_client(freerdp_peer* client)
 {
-	client->ContextSize = sizeof(testPeerContext);
+	client->ContextSize = sizeof(proxyContext);
 	client->ContextNew = (psPeerContextNew) test_peer_context_new;
 	client->ContextFree = (psPeerContextFree) test_peer_context_free;
 	return freerdp_peer_context_new(client);
@@ -265,8 +265,8 @@ static DWORD WINAPI handle_client(LPVOID arg)
 	client->update->SuppressOutput = tf_peer_suppress_output;
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
-	testPeerContext* context;
-	context = (testPeerContext*) client->context;
+	proxyContext* context;
+	context = (proxyContext*) client->context;
 	WLog_INFO(TAG, "Client connected: %s",
 	          client->local ? "(local)" : client->hostname);
 	HANDLE eventHandles[32];
