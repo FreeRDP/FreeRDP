@@ -41,35 +41,23 @@
 #define TAG PROXY_TAG("server")
 
 /* Event callbacks */
-BOOL tf_peer_post_connect(freerdp_peer* client)
+
+/**
+ * This callback is called when the entire connection sequence is done, i.e. we've received the
+ * Font List PDU from the client and sent out the Font Map PDU.
+ *
+ * The server may start sending graphics output and receiving keyboard/mouse input after this
+ * callback returns.
+ */
+BOOL pf_peer_post_connect(freerdp_peer* client)
 {
 	proxyContext* context = (proxyContext*) client->context;
-	/**
-	 * This callback is called when the entire connection sequence is done, i.e. we've received the
-	 * Font List PDU from the client and sent out the Font Map PDU.
-	 * The server may start sending graphics output and receiving keyboard/mouse input after this
-	 * callback returns.
-	 */
-	WLog_INFO(TAG, "Client %s is activated (osMajorType %"PRIu32" osMinorType %"PRIu32")",
-	          client->local ? "(local)" : client->hostname,
-	          client->settings->OsMajorType, client->settings->OsMinorType);
-
-	if (client->settings->AutoLogonEnabled)
-	{
-		WLog_INFO(TAG, " and wants to login automatically as %s\\%s",
-		          client->settings->Domain ? client->settings->Domain : "",
-		          client->settings->Username);
-		/* A real server may perform OS login here if NLA is not executed previously. */
-	}
-
-	WLog_INFO(TAG, "Client requested desktop: %"PRIu32"x%"PRIu32"x%"PRIu32"",
-	          client->settings->DesktopWidth, client->settings->DesktopHeight,
-	          client->settings->ColorDepth);
 
 	if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
 	                       client->settings->DesktopHeight))
 		return FALSE;
 
+	/* Start a proxy's client in it's own thread */
 	rdpContext* clientContext = proxy_client_create_context(NULL, "192.168.43.43", 33890, "win1",
 	                            "Password1");
 	context->clientContext = clientContext;
@@ -80,11 +68,10 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	/* Return FALSE here would stop the execution of the peer main loop. */
 	return TRUE;
 }
 
-BOOL tf_peer_activate(freerdp_peer* client)
+BOOL pf_peer_activate(freerdp_peer* client)
 {
 	proxyContext* context = (proxyContext*) client->context;
 	context->activated = TRUE;
@@ -95,75 +82,77 @@ BOOL tf_peer_activate(freerdp_peer* client)
 	return TRUE;
 }
 
-BOOL tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
+BOOL pf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	WLog_INFO(TAG, "Client sent a synchronize event (flags:0x%"PRIX32")", flags);
+	WLog_DBG(TAG, "Client sent a synchronize event (flags:0x%"PRIX32")", flags);
 	return TRUE;
 }
 
-BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL pf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	WLog_INFO(TAG, "Client sent a keyboard event (flags:0x%04"PRIX16" code:0x%04"PRIX16")", flags,
-	          code);
 	proxyContext* context = (proxyContext*)input->context;
 	freerdp_input_send_keyboard_event(context->clientContext->input, flags, code);
+	WLog_DBG(TAG, "Client sent a keyboard event (flags:0x%04"PRIX16" code:0x%04"PRIX16")", flags,
+	         code);
 	return TRUE;
 }
 
-BOOL tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL pf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	WLog_INFO(TAG, "Client sent a unicode keyboard event (flags:0x%04"PRIX16" code:0x%04"PRIX16")",
-	          flags, code);
+	WLog_DBG(TAG, "Client sent a unicode keyboard event (flags:0x%04"PRIX16" code:0x%04"PRIX16")",
+	         flags, code);
 	return TRUE;
 }
 
-BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL pf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	WLog_INFO(TAG, "Client sent a mouse event (flags:0x%04"PRIX16" pos:%"PRIu16",%"PRIu16")", flags, x,
-	          y);
+	WLog_DBG(TAG, "Client sent a mouse event (flags:0x%04"PRIX16" pos:%"PRIu16",%"PRIu16")", flags, x,
+	         y);
 	return TRUE;
 }
 
-BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
+BOOL pf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
                                   UINT16 y)
 {
-	//WLog_INFO(TAG, "Client sent an extended mouse event (flags:0x%04"PRIX16" pos:%"PRIu16",%"PRIu16")", flags, x, y);
+	WLog_DBG(TAG, "Client sent an extended mouse event (flags:0x%04"PRIX16" pos:%"PRIu16",%"PRIu16")",
+	         flags, x, y);
 	return TRUE;
 }
 
-static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count,
+static BOOL pf_peer_refresh_rect(rdpContext* context, BYTE count,
                                  const RECTANGLE_16* areas)
 {
 	BYTE i;
-	WLog_INFO(TAG, "Client requested to refresh:");
+	WLog_DBG(TAG, "Client requested to refresh:");
 
 	for (i = 0; i < count; i++)
 	{
-		WLog_INFO(TAG, "  (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16")", areas[i].left, areas[i].top,
-		          areas[i].right, areas[i].bottom);
+		WLog_DBG(TAG, "  (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16")", areas[i].left, areas[i].top,
+		         areas[i].right, areas[i].bottom);
 	}
 
 	return TRUE;
 }
 
-static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow,
+static BOOL pf_peer_suppress_output(rdpContext* context, BYTE allow,
                                     const RECTANGLE_16* area)
 {
 	if (allow > 0)
 	{
-		WLog_INFO(TAG, "Client restore output (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16").", area->left,
-		          area->top,
-		          area->right, area->bottom);
+		WLog_DBG(TAG, "Client restore output (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16").", area->left,
+		         area->top,
+		         area->right, area->bottom);
 	}
 	else
 	{
-		WLog_INFO(TAG, "Client minimized and suppress output.");
+		WLog_DBG(TAG, "Client minimized and suppress output.");
 	}
 
 	return TRUE;
 }
 
-BOOL test_peer_context_new(freerdp_peer* client, proxyContext* context)
+/* Proxy context initialization callback */
+BOOL proxy_context_new(freerdp_peer* client, proxyContext* context)
 {
 	if (!(context->rfx_context = rfx_context_new(TRUE)))
 		goto fail_rfx_context;
@@ -204,7 +193,8 @@ fail_rfx_context:
 	return FALSE;
 }
 
-void test_peer_context_free(freerdp_peer* client, proxyContext* context)
+/* Proxy context free callback */
+void proxy_context_free(freerdp_peer* client, proxyContext* context)
 {
 	if (context)
 	{
@@ -237,21 +227,21 @@ void test_peer_context_free(freerdp_peer* client, proxyContext* context)
 	}
 }
 
-// Init client on connection
 static BOOL init_client(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(proxyContext);
-	client->ContextNew = (psPeerContextNew) test_peer_context_new;
-	client->ContextFree = (psPeerContextFree) test_peer_context_free;
+	client->ContextNew = (psPeerContextNew) proxy_context_new;
+	client->ContextFree = (psPeerContextFree) proxy_context_free;
 	return freerdp_peer_context_new(client);
 }
 
-// Handles an incoming client connection, to be run in it's own thread.
-//
-// arg is a pointer to a freerdp_peer representing the client.
+/**
+ * Handles an incoming client connection, to be run in it's own thread.
+ *
+ * arg is a pointer to a freerdp_peer representing the client.
+ */
 static DWORD WINAPI handle_client(LPVOID arg)
 {
-	// Parse arg into client and init client
 	freerdp_peer* client = (freerdp_peer*) arg;
 
 	if (!init_client(client))
@@ -260,7 +250,6 @@ static DWORD WINAPI handle_client(LPVOID arg)
 		return 0;
 	}
 
-	// Load server key and cert
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->RdpKeyFile = _strdup("server.key");
@@ -273,7 +262,6 @@ static DWORD WINAPI handle_client(LPVOID arg)
 		return 0;
 	}
 
-	// Init security settings
 	client->settings->RdpSecurity = TRUE;
 	client->settings->TlsSecurity = TRUE;
 	client->settings->NlaSecurity = FALSE;
@@ -281,27 +269,26 @@ static DWORD WINAPI handle_client(LPVOID arg)
 	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_HIGH; */
 	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
 	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
-	// Init graphic settings
 	client->settings->RemoteFxCodec = TRUE;
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
 	client->settings->RefreshRect = TRUE;
-	// Init events
-	client->PostConnect = tf_peer_post_connect;
-	client->Activate = tf_peer_activate;
-	client->input->SynchronizeEvent = tf_peer_synchronize_event;
-	client->input->KeyboardEvent = tf_peer_keyboard_event;
-	client->input->UnicodeKeyboardEvent = tf_peer_unicode_keyboard_event;
-	client->input->MouseEvent = tf_peer_mouse_event;
-	client->input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
-	client->update->RefreshRect = tf_peer_refresh_rect;
-	client->update->SuppressOutput = tf_peer_suppress_output;
+	client->PostConnect = pf_peer_post_connect;
+	client->Activate = pf_peer_activate;
+	client->input->SynchronizeEvent = pf_peer_synchronize_event;
+	client->input->KeyboardEvent = pf_peer_keyboard_event;
+	client->input->UnicodeKeyboardEvent = pf_peer_unicode_keyboard_event;
+	client->input->MouseEvent = pf_peer_mouse_event;
+	client->input->ExtendedMouseEvent = pf_peer_extended_mouse_event;
+	client->update->RefreshRect = pf_peer_refresh_rect;
+	client->update->SuppressOutput = pf_peer_suppress_output;
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
 	proxyContext* context;
 	context = (proxyContext*) client->context;
 	WLog_INFO(TAG, "Client connected: %s",
 	          client->local ? "(local)" : client->hostname);
+	/* Main client event handling loop */
 	HANDLE eventHandles[32];
 
 	while (1)
@@ -342,9 +329,6 @@ static DWORD WINAPI handle_client(LPVOID arg)
 	return 0;
 }
 
-// The callback called when a client is accepted on the listener.
-//
-// Starts handling the client connection in it's own thread.
 static BOOL client_connected(freerdp_listener* listener, freerdp_peer* client)
 {
 	HANDLE hThread;
@@ -356,7 +340,6 @@ static BOOL client_connected(freerdp_listener* listener, freerdp_peer* client)
 	return TRUE;
 }
 
-// Gets events from the listener (??) and waits for them to be handled.
 static void server_mainloop(freerdp_listener* listener)
 {
 	HANDLE eventHandles[32];
@@ -393,14 +376,11 @@ static void server_mainloop(freerdp_listener* listener)
 
 int main(int argc, char* argv[])
 {
-	// Handle Flags
 	BOOL localOnly = FALSE;
 	char* host = "0.0.0.0";
 	long port = 3389;
-	// Init WTS and SSL
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
-	// Init listener
 	freerdp_listener* listener = freerdp_listener_new();
 
 	if (!listener)
@@ -409,7 +389,6 @@ int main(int argc, char* argv[])
 	}
 
 	listener->PeerAccepted = client_connected;
-	// Startup Windows Socket API
 	WSADATA wsaData;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
@@ -418,7 +397,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	// Determine file for local unix domain socket
+	/* Determine filepath for local socket */
 	char* localSockPath;
 	char localSockName[MAX_PATH];
 	sprintf_s(localSockName, sizeof(localSockName), "proxy.%ld", port);
@@ -431,22 +410,20 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	// Listen to local connections
+	/* Listen to local connections */
 	BOOL success = listener->OpenLocal(listener, localSockPath);
 
-	// Listen to remote connections
+	/* Listen to remote connections */
 	if (!localOnly)
 	{
 		success &= listener->Open(listener, host, port);
 	}
 
-	// Run server mainloop
 	if (success)
 	{
 		server_mainloop(listener);
 	}
 
-	// Exit
 	free(localSockPath);
 	freerdp_listener_free(listener);
 	WSACleanup();
