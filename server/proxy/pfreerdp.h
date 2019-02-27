@@ -35,34 +35,16 @@
 #include <winpr/thread.h>
 #include <winpr/wlog.h>
 
-// Define log tags
 #define PROXY_TAG(tag) "proxy." tag
 
 struct proxy_context
 {
+	/* Context of client to the proxy */
 	rdpContext _p;
+	/* Context of proxy's client to the server */
 	rdpContext* clientContext;
 
-	RFX_CONTEXT* rfx_context;
-	NSC_CONTEXT* nsc_context;
-	wStream* s;
-	BYTE* icon_data;
-	BYTE* bg_data;
-	int icon_width;
-	int icon_height;
-	int icon_x;
-	int icon_y;
-	BOOL activated;
-	HANDLE event;
-	HANDLE stopEvent;
 	HANDLE vcm;
-	void* debug_channel;
-	HANDLE debug_channel_thread;
-	audin_server_context* audin;
-	BOOL audin_open;
-	UINT32 frame_id;
-	RdpsndServerContext* rdpsnd;
-	EncomspServerContext* encomsp;
 };
 typedef struct proxy_context proxyContext;
 

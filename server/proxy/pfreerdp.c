@@ -53,10 +53,6 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 {
 	proxyContext* context = (proxyContext*) client->context;
 
-	if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
-	                       client->settings->DesktopHeight))
-		return FALSE;
-
 	/* Start a proxy's client in it's own thread */
 	rdpContext* clientContext = proxy_client_create_context(NULL, "192.168.43.43", 33890, "win1",
 	                            "Password1");
@@ -73,11 +69,6 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 
 BOOL pf_peer_activate(freerdp_peer* client)
 {
-	proxyContext* context = (proxyContext*) client->context;
-	context->activated = TRUE;
-	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_8K;
-	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
-	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
 	client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
 	return TRUE;
 }
@@ -154,42 +145,13 @@ static BOOL pf_peer_suppress_output(rdpContext* context, BYTE allow,
 /* Proxy context initialization callback */
 BOOL proxy_context_new(freerdp_peer* client, proxyContext* context)
 {
-	if (!(context->rfx_context = rfx_context_new(TRUE)))
-		goto fail_rfx_context;
-
-	if (!rfx_context_reset(context->rfx_context, 800, 600))
-		goto fail_rfx_context;
-
-	context->rfx_context->mode = RLGR3;
-	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_RGB24);
-
-	if (!(context->nsc_context = nsc_context_new()))
-		goto fail_nsc_context;
-
-	nsc_context_set_pixel_format(context->nsc_context, PIXEL_FORMAT_RGB24);
-
-	if (!(context->s = Stream_New(NULL, 65536)))
-		goto fail_stream_new;
-
-	context->icon_x = -1;
-	context->icon_y = -1;
 	context->vcm = WTSOpenServerA((LPSTR) client->context);
-
 	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
 		goto fail_open_server;
-
 	return TRUE;
+
 fail_open_server:
 	context->vcm = NULL;
-	Stream_Free(context->s, TRUE);
-	context->s = NULL;
-fail_stream_new:
-	nsc_context_free(context->nsc_context);
-	context->nsc_context = NULL;
-fail_nsc_context:
-	rfx_context_free(context->rfx_context);
-	context->rfx_context = NULL;
-fail_rfx_context:
 	return FALSE;
 }
 
@@ -198,31 +160,6 @@ void proxy_context_free(freerdp_peer* client, proxyContext* context)
 {
 	if (context)
 	{
-		if (context->debug_channel_thread)
-		{
-			SetEvent(context->stopEvent);
-			WaitForSingleObject(context->debug_channel_thread, INFINITE);
-			CloseHandle(context->debug_channel_thread);
-		}
-
-		Stream_Free(context->s, TRUE);
-		free(context->icon_data);
-		free(context->bg_data);
-		rfx_context_free(context->rfx_context);
-		nsc_context_free(context->nsc_context);
-
-		if (context->debug_channel)
-			WTSVirtualChannelClose(context->debug_channel);
-
-		if (context->audin)
-			audin_server_context_free(context->audin);
-
-		if (context->rdpsnd)
-			rdpsnd_server_context_free(context->rdpsnd);
-
-		if (context->encomsp)
-			encomsp_server_context_free(context->encomsp);
-
 		WTSCloseServer((HANDLE) context->vcm);
 	}
 }
