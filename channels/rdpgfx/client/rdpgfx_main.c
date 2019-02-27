@@ -55,6 +55,7 @@
 static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 {
 	UINT error;
+	UINT32 x;
 	wStream* s;
 	UINT16 index;
 	RDPGFX_PLUGIN* gfx;
@@ -118,12 +119,10 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 		caps10Flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 #endif
 		capsSet->flags = caps10Flags;
-		/*
-				capsSet = &capsSets[pdu.capsSetCount++];
-				capsSet->version = RDPGFX_CAPVERSION_101;
-				capsSet->length = 0x10;
-				capsSet->flags = 0;
-		*/
+		capsSet = &capsSets[pdu.capsSetCount++];
+		capsSet->version = RDPGFX_CAPVERSION_101;
+		capsSet->length = 0x10;
+		capsSet->flags = 0;
 		capsSet = &capsSets[pdu.capsSetCount++];
 		capsSet->version = RDPGFX_CAPVERSION_102;
 		capsSet->length = 0x4;
@@ -145,12 +144,21 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 		capsSet->length = 0x4;
 		capsSet->flags = caps10Flags;
 		capsSet = &capsSets[pdu.capsSetCount++];
+		/* TODO: Until  RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU and
+		 * RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU are not implemented do not
+		 * announce the following version */
+#if 0
 		capsSet->version = RDPGFX_CAPVERSION_106;
 		capsSet->length = 0x4;
 		capsSet->flags = caps10Flags;
+#endif
 	}
 
-	header.pduLength = RDPGFX_HEADER_SIZE + 2 + (pdu.capsSetCount * RDPGFX_CAPSET_SIZE);
+	header.pduLength = RDPGFX_HEADER_SIZE + 2;
+
+	for (x = 0; x < pdu.capsSetCount; x++)
+		header.pduLength += RDPGFX_CAPSET_BASE_SIZE + capsSets[x].length;
+
 	WLog_Print(gfx->log, WLOG_DEBUG, "SendCapsAdvertisePdu %"PRIu16"", pdu.capsSetCount);
 	s = Stream_New(NULL, header.pduLength);
 
@@ -172,6 +180,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 		Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
 		Stream_Write_UINT32(s, capsSet->length); /* capsDataLength (4 bytes) */
 		Stream_Write_UINT32(s, capsSet->flags); /* capsData (4 bytes) */
+		Stream_Zero(s, capsSet->length - 4);
 	}
 
 	Stream_SealLength(s);
