@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Sample Server (Audio Input)
+ * FreeRDP Proxy Server
  *
  * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
  * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
