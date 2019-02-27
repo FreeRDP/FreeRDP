@@ -1053,6 +1053,27 @@ static UINT rdpgfx_send_map_surface_to_window_pdu(RdpgfxServerContext* context,
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
+static UINT rdpgfx_send_map_surface_to_scaled_window_pdu(RdpgfxServerContext* context,
+        RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU* pdu)
+{
+	wStream* s = rdpgfx_server_single_packet_new(
+	                 RDPGFX_CMDID_MAPSURFACETOWINDOW, 18);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "rdpgfx_server_single_packet_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	Stream_Write_UINT16(s, pdu->surfaceId); /* surfaceId (2 bytes) */
+	Stream_Write_UINT64(s, pdu->windowId); /* windowId (8 bytes) */
+	Stream_Write_UINT32(s, pdu->mappedWidth); /* mappedWidth (4 bytes) */
+	Stream_Write_UINT32(s, pdu->mappedHeight); /* mappedHeight (4 bytes) */
+	Stream_Write_UINT32(s, pdu->targetWidth);
+	Stream_Write_UINT32(s, pdu->targetHeight);
+	return rdpgfx_server_single_packet_send(context, s);
+}
+
 /**
  * Function description
  *
@@ -1249,6 +1270,27 @@ static UINT rdpgfx_recv_qoe_frame_acknowledge_pdu(RdpgfxServerContext* context,
 	}
 
 	return error;
+}
+
+static UINT rdpgfx_send_map_surface_to_scaled_output_pdu(RdpgfxServerContext* context,
+        RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU* pdu)
+{
+	wStream* s = rdpgfx_server_single_packet_new(
+	                 RDPGFX_CMDID_MAPSURFACETOSCALEDOUTPUT, 12);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "rdpgfx_server_single_packet_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	Stream_Write_UINT16(s, pdu->surfaceId); /* surfaceId (2 bytes) */
+	Stream_Write_UINT16(s, 0); /* reserved (2 bytes). Must be 0 */
+	Stream_Write_UINT32(s, pdu->outputOriginX); /* outputOriginX (4 bytes) */
+	Stream_Write_UINT32(s, pdu->outputOriginY); /* outputOriginY (4 bytes) */
+	Stream_Write_UINT32(s, pdu->targetX);
+	Stream_Write_UINT32(s, pdu->targetY);
+	return rdpgfx_server_single_packet_send(context, s);
 }
 
 /**
@@ -1533,6 +1575,8 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	context->EvictCacheEntry = rdpgfx_send_evict_cache_entry_pdu;
 	context->MapSurfaceToOutput = rdpgfx_send_map_surface_to_output_pdu;
 	context->MapSurfaceToWindow = rdpgfx_send_map_surface_to_window_pdu;
+	context->MapSurfaceToScaledOutput = rdpgfx_send_map_surface_to_scaled_output_pdu;
+	context->MapSurfaceToScaledWindow = rdpgfx_send_map_surface_to_scaled_window_pdu;
 	context->CapsAdvertise = NULL;
 	context->CapsConfirm = rdpgfx_send_caps_confirm_pdu;
 	context->FrameAcknowledge = NULL;

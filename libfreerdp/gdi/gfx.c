@@ -1231,6 +1231,29 @@ fail:
 	return rc;
 }
 
+static UINT gdi_MapSurfaceToScaledOutput(RdpgfxClientContext* context,
+        const RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU* surfaceToOutput)
+{
+	UINT rc = ERROR_INTERNAL_ERROR;
+	gdiGfxSurface* surface;
+	EnterCriticalSection(&context->mux);
+	surface = (gdiGfxSurface*) context->GetSurfaceData(context,
+	          surfaceToOutput->surfaceId);
+
+	if (!surface)
+		goto fail;
+
+	surface->outputMapped = TRUE;
+	surface->outputOriginX = surfaceToOutput->outputOriginX;
+	surface->outputOriginY = surfaceToOutput->outputOriginY;
+	// TODO: Target x,y
+	region16_clear(&surface->invalidRegion);
+	rc = CHANNEL_RC_OK;
+fail:
+	LeaveCriticalSection(&context->mux);
+	return rc;
+}
+
 /**
  * Function description
  *
@@ -1238,6 +1261,12 @@ fail:
  */
 static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
                                    const RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow)
+{
+	return CHANNEL_RC_OK;
+}
+
+static UINT gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
+        const RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU* surfaceToWindow)
 {
 	return CHANNEL_RC_OK;
 }
@@ -1264,6 +1293,8 @@ BOOL gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx)
 	gfx->EvictCacheEntry = gdi_EvictCacheEntry;
 	gfx->MapSurfaceToOutput = gdi_MapSurfaceToOutput;
 	gfx->MapSurfaceToWindow = gdi_MapSurfaceToWindow;
+	gfx->MapSurfaceToScaledOutput = gdi_MapSurfaceToScaledOutput;
+	gfx->MapSurfaceToScaledWindow = gdi_MapSurfaceToScaledWindow;
 	gfx->UpdateSurfaces = gdi_UpdateSurfaces;
 	InitializeCriticalSection(&gfx->mux);
 	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER");
