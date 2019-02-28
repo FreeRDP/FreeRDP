@@ -21,6 +21,9 @@
 #include <errno.h>
 #include <signal.h>
 
+#include <freerdp/freerdp.h>
+#include <libfreerdp/core/listener.h>
+
 #include <winpr/crt.h>
 #include <winpr/ssl.h>
 #include <winpr/synch.h>
@@ -35,16 +38,17 @@
 #include <freerdp/constants.h>
 #include <freerdp/server/rdpsnd.h>
 
-#include "pfreerdp.h"
+#include "pf_log.h"
 #include "pf_client.h"
+#include "pf_context.h"
 
 #define TAG PROXY_TAG("server")
 
 /* Event callbacks */
 
 /**
- * This callback is called when the entire connection sequence is done, i.e. we've received the
- * Font List PDU from the client and sent out the Font Map PDU.
+ * This callback is called when the entire connection sequence is done (as described in
+ * MS-RDPBCGR section 1.3)
  *
  * The server may start sending graphics output and receiving keyboard/mouse input after this
  * callback returns.
@@ -52,11 +56,10 @@
 BOOL pf_peer_post_connect(freerdp_peer* client)
 {
 	proxyContext* context = (proxyContext*) client->context;
-
 	/* Start a proxy's client in it's own thread */
-	rdpContext* clientContext = proxy_client_create_context(NULL, "192.168.43.43", 33890, "win1",
-	                            "Password1");
-	context->clientContext = clientContext;
+	rdpContext* clientContext = proxy_to_server_context_create(client->context,
+	                            "192.168.43.43", 33890, "win1", "Password1");
+	context->peerContext = clientContext;
 
 	if (!(CreateThread(NULL, 0, proxy_client_start, clientContext, 0, NULL)))
 	{
@@ -82,7 +85,7 @@ BOOL pf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 BOOL pf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	proxyContext* context = (proxyContext*)input->context;
-	freerdp_input_send_keyboard_event(context->clientContext->input, flags, code);
+	freerdp_input_send_keyboard_event(context->peerContext->input, flags, code);
 	WLog_DBG(TAG, "Client sent a keyboard event (flags:0x%04"PRIX16" code:0x%04"PRIX16")", flags,
 	         code);
 	return TRUE;
@@ -142,33 +145,11 @@ static BOOL pf_peer_suppress_output(rdpContext* context, BYTE allow,
 	return TRUE;
 }
 
-/* Proxy context initialization callback */
-BOOL proxy_context_new(freerdp_peer* client, proxyContext* context)
-{
-	context->vcm = WTSOpenServerA((LPSTR) client->context);
-	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
-		goto fail_open_server;
-	return TRUE;
-
-fail_open_server:
-	context->vcm = NULL;
-	return FALSE;
-}
-
-/* Proxy context free callback */
-void proxy_context_free(freerdp_peer* client, proxyContext* context)
-{
-	if (context)
-	{
-		WTSCloseServer((HANDLE) context->vcm);
-	}
-}
-
-static BOOL init_client(freerdp_peer* client)
+static BOOL init_client_context(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(proxyContext);
-	client->ContextNew = (psPeerContextNew) proxy_context_new;
-	client->ContextFree = (psPeerContextFree) proxy_context_free;
+	client->ContextNew = (psPeerContextNew) client_to_proxy_context_new;
+	client->ContextFree = (psPeerContextFree) client_to_proxy_context_free;
 	return freerdp_peer_context_new(client);
 }
 
@@ -181,7 +162,7 @@ static DWORD WINAPI handle_client(LPVOID arg)
 {
 	freerdp_peer* client = (freerdp_peer*) arg;
 
-	if (!init_client(client))
+	if (!init_client_context(client))
 	{
 		freerdp_peer_free(client);
 		return 0;
@@ -221,8 +202,8 @@ static DWORD WINAPI handle_client(LPVOID arg)
 	client->update->SuppressOutput = pf_peer_suppress_output;
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
-	proxyContext* context;
-	context = (proxyContext*) client->context;
+	clientToProxyContext* context;
+	context = (clientToProxyContext*) client->context;
 	WLog_INFO(TAG, "Client connected: %s",
 	          client->local ? "(local)" : client->hostname);
 	/* Main client event handling loop */
