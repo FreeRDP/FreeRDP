@@ -143,11 +143,12 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 		capsSet->version = RDPGFX_CAPVERSION_105;
 		capsSet->length = 0x4;
 		capsSet->flags = caps10Flags;
-		capsSet = &capsSets[pdu.capsSetCount++];
+
 		/* TODO: Until  RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU and
 		 * RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU are not implemented do not
 		 * announce the following version */
 #if 0
+		capsSet = &capsSets[pdu.capsSetCount++];
 		capsSet->version = RDPGFX_CAPVERSION_106;
 		capsSet->length = 0x4;
 		capsSet->flags = caps10Flags;
