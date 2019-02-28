@@ -61,9 +61,12 @@ typedef UINT(*pcRdpgfxEvictCacheEntry)(RdpgfxClientContext* context,
                                        const RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry);
 typedef UINT(*pcRdpgfxMapSurfaceToOutput)(RdpgfxClientContext* context,
         const RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput);
+typedef UINT(*pcRdpgfxMapSurfaceToScaledOutput)(RdpgfxClientContext* context,
+        const RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU* surfaceToOutput);
 typedef UINT(*pcRdpgfxMapSurfaceToWindow)(RdpgfxClientContext* context,
         const RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow);
-
+typedef UINT(*pcRdpgfxMapSurfaceToScaledWindow)(RdpgfxClientContext* context,
+        const RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU* surfaceToWindow);
 typedef UINT(*pcRdpgfxSetSurfaceData)(RdpgfxClientContext* context,
                                       UINT16 surfaceId, void* pData);
 typedef void* (*pcRdpgfxGetSurfaceData)(RdpgfxClientContext* context,
@@ -101,7 +104,9 @@ struct _rdpgfx_client_context
 	pcRdpgfxCacheImportReply CacheImportReply;
 	pcRdpgfxEvictCacheEntry EvictCacheEntry;
 	pcRdpgfxMapSurfaceToOutput MapSurfaceToOutput;
+	pcRdpgfxMapSurfaceToScaledOutput MapSurfaceToScaledOutput;
 	pcRdpgfxMapSurfaceToWindow MapSurfaceToWindow;
+	pcRdpgfxMapSurfaceToScaledWindow MapSurfaceToScaledWindow;
 
 	pcRdpgfxGetSurfaceIds GetSurfaceIds;
 	pcRdpgfxSetSurfaceData SetSurfaceData;
