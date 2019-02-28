@@ -43,13 +43,14 @@
 
 #include "pf_channels.h"
 #include "pf_client.h"
-#include "pfreerdp.h"
+#include "pf_context.h"
+#include "pf_log.h"
 
 #define TAG PROXY_TAG("client")
 
 /* This function is called whenever a new frame starts.
  * It can be used to reset invalidated areas. */
-static BOOL tf_begin_paint(rdpContext* context)
+static BOOL pf_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = TRUE;
@@ -60,7 +61,7 @@ static BOOL tf_begin_paint(rdpContext* context)
  * frame. Read out the changed areas and blit them to your output device.
  * The image buffer will have the format specified by gdi_init
  */
-static BOOL tf_end_paint(rdpContext* context)
+static BOOL pf_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
 
@@ -71,7 +72,7 @@ static BOOL tf_end_paint(rdpContext* context)
 }
 
 /* This function is called to output a System BEEP */
-static BOOL tf_play_sound(rdpContext* context,
+static BOOL pf_play_sound(rdpContext* context,
                           const PLAY_SOUND_UPDATE* play_sound)
 {
 	/* TODO: Implement */
@@ -79,14 +80,14 @@ static BOOL tf_play_sound(rdpContext* context,
 }
 
 /* This function is called to update the keyboard indocator LED */
-static BOOL tf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
+static BOOL pf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 {
 	/* TODO: Set local keyboard indicator LED status */
 	return TRUE;
 }
 
 /* This function is called to set the IME state */
-static BOOL tf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
+static BOOL pf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                        UINT32 imeConvMode)
 {
 	if (!context)
@@ -100,7 +101,7 @@ static BOOL tf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 
 /* Called before a connection is established.
  * Set all configuration options to support and load channels here. */
-static BOOL tf_pre_connect(freerdp* instance)
+static BOOL pf_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
 	settings = instance->settings;
@@ -113,9 +114,9 @@ static BOOL tf_pre_connect(freerdp* instance)
 	/* Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded. */
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
-	                                 tf_OnChannelConnectedEventHandler);
+	                                 pf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-	                                    tf_OnChannelDisconnectedEventHandler);
+	                                    pf_OnChannelDisconnectedEventHandler);
 
 	/* Load all required plugins / channels / libraries specified by current
 	 * settings. */
@@ -135,25 +136,25 @@ static BOOL tf_pre_connect(freerdp* instance)
  * If required, register pointer callbacks to change the local mouse cursor
  * when hovering over the RDP window
  */
-static BOOL tf_post_connect(freerdp* instance)
+static BOOL pf_post_connect(freerdp* instance)
 {
 	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
 		return FALSE;
 
-	instance->update->BeginPaint = tf_begin_paint;
-	instance->update->EndPaint = tf_end_paint;
-	instance->update->PlaySound = tf_play_sound;
-	instance->update->SetKeyboardIndicators = tf_keyboard_set_indicators;
-	instance->update->SetKeyboardImeStatus = tf_keyboard_set_ime_status;
+	instance->update->BeginPaint = pf_begin_paint;
+	instance->update->EndPaint = pf_end_paint;
+	instance->update->PlaySound = pf_play_sound;
+	instance->update->SetKeyboardIndicators = pf_keyboard_set_indicators;
+	instance->update->SetKeyboardImeStatus = pf_keyboard_set_ime_status;
 	return TRUE;
 }
 
 /* This function is called whether a session ends by failure or success.
  * Clean up everything allocated by pre_connect and post_connect.
  */
-static void tf_post_disconnect(freerdp* instance)
+static void pf_post_disconnect(freerdp* instance)
 {
-	tfContext* context;
+	proxyToServerContext* context;
 
 	if (!instance)
 		return;
@@ -161,19 +162,21 @@ static void tf_post_disconnect(freerdp* instance)
 	if (!instance->context)
 		return;
 
-	context = (tfContext*) instance->context;
+	context = (proxyToServerContext*) instance->context;
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
-	                                   tf_OnChannelConnectedEventHandler);
+	                                   pf_OnChannelConnectedEventHandler);
 	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
-	                                      tf_OnChannelDisconnectedEventHandler);
+	                                      pf_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
 	/* TODO : Clean up custom stuff */
 }
 
-/* RDP main loop.
+/**
+ * RDP main loop.
  * Connects RDP, loops while running and handles event and dispatch, cleans up
- * after the connection ends. */
-static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
+ * after the connection ends.
+ */
+static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 {
 	freerdp* instance = (freerdp*)arg;
 	DWORD nCount;
@@ -221,7 +224,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 /* Optional global initializer.
  * Here we just register a signal handler to print out stack traces
  * if available. */
-static BOOL tf_client_global_init(void)
+static BOOL pf_client_global_init(void)
 {
 	if (freerdp_handle_signals() != 0)
 		return FALSE;
@@ -230,102 +233,76 @@ static BOOL tf_client_global_init(void)
 }
 
 /* Optional global tear down */
-static void tf_client_global_uninit(void)
+static void pf_client_global_uninit(void)
 {
 }
 
-static int tf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
+static int pf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
-	tfContext* tf;
+	proxyToServerContext* tf;
 	const char* str_data = freerdp_get_logon_error_info_data(data);
 	const char* str_type = freerdp_get_logon_error_info_type(type);
 
 	if (!instance || !instance->context)
 		return -1;
 
-	tf = (tfContext*) instance->context;
+	tf = (proxyToServerContext*) instance->context;
 	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
 	return 1;
 }
 
-static BOOL tf_client_new(freerdp* instance, rdpContext* context)
+static BOOL pf_client_new(freerdp* instance, rdpContext* context)
 {
-	tfContext* tf = (tfContext*) context;
+	proxyToServerContext* tf = (proxyToServerContext*) context;
 
 	if (!instance || !context)
 		return FALSE;
 
-	instance->PreConnect = tf_pre_connect;
-	instance->PostConnect = tf_post_connect;
-	instance->PostDisconnect = tf_post_disconnect;
+	instance->PreConnect = pf_pre_connect;
+	instance->PostConnect = pf_post_connect;
+	instance->PostDisconnect = pf_post_disconnect;
 	instance->Authenticate = client_cli_authenticate;
 	instance->GatewayAuthenticate = client_cli_gw_authenticate;
 	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
-	instance->LogonErrorInfo = tf_logon_error_info;
+	instance->LogonErrorInfo = pf_logon_error_info;
 	/* TODO: Client display set up */
 	return TRUE;
 }
 
 
-static void tf_client_free(freerdp* instance, rdpContext* context)
-{
-	tfContext* tf = (tfContext*) instance->context;
+static void pf_client_free(freerdp* instance, rdpContext* context) {}
 
-	if (!context)
-		return;
-
-	/* TODO: Client display tear down */
-}
-
-static int tf_client_start(rdpContext* context)
+static int pf_client_start(rdpContext* context)
 {
 	/* TODO: Start client related stuff */
 	return 0;
 }
 
-static int tf_client_stop(rdpContext* context)
+static int pf_client_stop(rdpContext* context)
 {
 	/* TODO: Stop client related stuff */
 	return 0;
 }
 
-static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
+int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
 	pEntryPoints->Version = RDP_CLIENT_INTERFACE_VERSION;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
-	pEntryPoints->GlobalInit = tf_client_global_init;
-	pEntryPoints->GlobalUninit = tf_client_global_uninit;
-	pEntryPoints->ContextSize = sizeof(tfContext);
-	pEntryPoints->ClientNew = tf_client_new;
-	pEntryPoints->ClientFree = tf_client_free;
-	pEntryPoints->ClientStart = tf_client_start;
-	pEntryPoints->ClientStop = tf_client_stop;
+	pEntryPoints->GlobalInit = pf_client_global_init;
+	pEntryPoints->GlobalUninit = pf_client_global_uninit;
+	pEntryPoints->ContextSize = sizeof(proxyToServerContext);
+	pEntryPoints->ClientNew = pf_client_new;
+	pEntryPoints->ClientFree = pf_client_free;
+	pEntryPoints->ClientStart = pf_client_start;
+	pEntryPoints->ClientStop = pf_client_stop;
 	return 0;
 }
 
-rdpContext* proxy_client_create_context(proxyContext* pContext, char* host, DWORD port,
-                                        char* username, char* password)
-{
-	int rc = -1;
-	DWORD status;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	rdpContext* context;
-	RdpClientEntry(&clientEntryPoints);
-	context = freerdp_client_context_new(&clientEntryPoints);
-
-	if (!context)
-		return NULL;
-
-	context->settings->RedirectClipboard = FALSE;
-	context->settings->ServerHostname = host;
-	context->settings->ServerPort = 33890;
-	context->settings->Username = username;
-	context->settings->Password = password;
-	return context;
-}
-
+/**
+ * Starts running a client connection towards target server.
+ */
 DWORD WINAPI proxy_client_start(LPVOID arg)
 {
 	rdpContext* context = (rdpContext*)arg;
@@ -334,7 +311,7 @@ DWORD WINAPI proxy_client_start(LPVOID arg)
 	if (freerdp_client_start(context) != 0)
 		goto fail;
 
-	rc = tf_client_thread_proc(context->instance);
+	rc = pf_client_thread_proc(context->instance);
 
 	if (freerdp_client_stop(context) != 0)
 		rc = -1;
