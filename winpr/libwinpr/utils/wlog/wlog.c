@@ -45,6 +45,8 @@ struct _wLogFilter
 };
 typedef struct _wLogFilter wLogFilter;
 
+#define WLOG_FILTER_NOT_FILTERED -1
+#define WLOG_FILTER_NOT_INITIALIZED -2
 /**
  * References for general logging concepts:
  *
@@ -420,15 +422,33 @@ BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, DWORD line,
 
 DWORD WLog_GetLogLevel(wLog* log)
 {
-	if (log->FilterLevel < 0)
+	if (!log)
+		return WLOG_OFF;
+
+	if (log->FilterLevel <= WLOG_FILTER_NOT_INITIALIZED)
 		log->FilterLevel = WLog_GetFilterLogLevel(log);
 
-	if ((log->FilterLevel >= 0) && (log->FilterLevel != WLOG_LEVEL_INHERIT))
-		return log->FilterLevel;
+	if (log->FilterLevel > WLOG_FILTER_NOT_FILTERED)
+		return (DWORD)log->FilterLevel;
 	else if (log->Level == WLOG_LEVEL_INHERIT)
 		log->Level = WLog_GetLogLevel(log->Parent);
 
 	return log->Level;
+}
+
+BOOL WLog_IsLevelActive(wLog* _log, DWORD _log_level)
+{
+	DWORD level;
+
+	if (!_log)
+		return FALSE;
+
+	level = WLog_GetLogLevel(_log);
+
+	if (level == WLOG_OFF)
+		return FALSE;
+
+	return _log_level >= level;
 }
 
 BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level)
@@ -443,7 +463,27 @@ BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level)
 	if (lvl < 0)
 		return FALSE;
 
-	return WLog_SetLogLevel(log, lvl);
+	return WLog_SetLogLevel(log, (DWORD)lvl);
+}
+
+static BOOL WLog_reset_log_filters(wLog* log)
+{
+	DWORD x;
+
+	if (!log)
+		return FALSE;
+
+	log->FilterLevel = WLOG_FILTER_NOT_INITIALIZED;
+
+	for (x = 0; x < log->ChildrenCount; x++)
+	{
+		wLog* child = log->Children[x];
+
+		if (!WLog_reset_log_filters(child))
+			return FALSE;
+	}
+
+	return TRUE;
 }
 
 BOOL WLog_AddStringLogFilters(LPCSTR filter)
@@ -512,11 +552,35 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 
 	g_FilterCount = size;
 	free(cp);
+	return WLog_reset_log_filters(WLog_GetRoot());
+}
+
+static BOOL WLog_UpdateInheritLevel(wLog* log, DWORD logLevel)
+{
+	if (!log)
+		return FALSE;
+
+	if (log->inherit)
+	{
+		DWORD x;
+		log->Level = logLevel;
+
+		for (x = 0; x < log->ChildrenCount; x++)
+		{
+			wLog* child = log->Children[x];
+
+			if (!WLog_UpdateInheritLevel(child, logLevel))
+				return FALSE;
+		}
+	}
+
 	return TRUE;
 }
 
 BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 {
+	DWORD x;
+
 	if (!log)
 		return FALSE;
 
@@ -524,7 +588,17 @@ BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 		logLevel = WLOG_OFF;
 
 	log->Level = logLevel;
-	return TRUE;
+	log->inherit = (logLevel == WLOG_LEVEL_INHERIT) ? TRUE : FALSE;
+
+	for (x = 0; x < log->ChildrenCount; x++)
+	{
+		wLog* child = log->Children[x];
+
+		if (!WLog_UpdateInheritLevel(child, logLevel))
+			return FALSE;
+	}
+
+	return WLog_reset_log_filters(log);
 }
 
 int WLog_ParseLogLevel(LPCSTR level)
@@ -638,6 +712,7 @@ BOOL WLog_ParseFilters(void)
 	BOOL res = FALSE;
 	char* env;
 	DWORD nSize;
+	free(g_Filters);
 	g_Filters = NULL;
 	g_FilterCount = 0;
 	nSize = GetEnvironmentVariableA(filter, NULL, 0);
@@ -695,7 +770,7 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 	if (match)
 		log->FilterLevel = g_Filters[i].Level;
 	else
-		log->FilterLevel = WLOG_LEVEL_INHERIT;
+		log->FilterLevel = WLOG_FILTER_NOT_FILTERED;
 
 	return log->FilterLevel;
 }
@@ -767,7 +842,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	log->Parent = rootLogger;
 	log->ChildrenCount = 0;
 	log->ChildrenSize = 16;
-	log->FilterLevel = -1;
+	log->FilterLevel = WLOG_FILTER_NOT_INITIALIZED;
 
 	if (!(log->Children = (wLog**) calloc(log->ChildrenSize, sizeof(wLog*))))
 		goto out_fail;
@@ -777,6 +852,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	if (rootLogger)
 	{
 		log->Level = WLOG_LEVEL_INHERIT;
+		log->inherit = TRUE;
 	}
 	else
 	{
@@ -802,14 +878,20 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 			free(env);
 
 			if (iLevel >= 0)
-				log->Level = (DWORD) iLevel;
+			{
+				if (!WLog_SetLogLevel(log, (DWORD) iLevel))
+					goto out_fail;
+			}
 		}
 	}
 
 	iLevel = WLog_GetFilterLogLevel(log);
 
-	if ((iLevel >= 0) && (iLevel != WLOG_LEVEL_INHERIT))
-		log->Level = (DWORD) iLevel;
+	if (iLevel >= 0)
+	{
+		if (!WLog_SetLogLevel(log, (DWORD) iLevel))
+			goto out_fail;
+	}
 
 	return log;
 out_fail:
