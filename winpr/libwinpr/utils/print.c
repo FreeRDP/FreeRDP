@@ -61,21 +61,47 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 
 	while (offset < length)
 	{
-		pos += trio_snprintf(&buffer[pos], blen - pos, "%04"PRIuz" ", offset);
+		int rc = trio_snprintf(&buffer[pos], blen - pos, "%04"PRIuz" ", offset);
+
+		if (rc < 0)
+			goto fail;
+
+		pos += (size_t)rc;
 		line = length - offset;
 
 		if (line > WINPR_HEXDUMP_LINE_LENGTH)
 			line = WINPR_HEXDUMP_LINE_LENGTH;
 
 		for (i = 0; i < line; i++)
-			pos += trio_snprintf(&buffer[pos], blen - pos, "%02"PRIx8" ", p[i]);
+		{
+			rc = trio_snprintf(&buffer[pos], blen - pos, "%02"PRIx8" ", p[i]);
+
+			if (rc < 0)
+				goto fail;
+
+			pos += (size_t)rc;
+		}
 
 		for (; i < WINPR_HEXDUMP_LINE_LENGTH; i++)
-			pos += trio_snprintf(&buffer[pos], blen - pos, "   ");
+		{
+			rc = trio_snprintf(&buffer[pos], blen - pos, "   ");
+
+			if (rc < 0)
+				goto fail;
+
+			pos += (size_t)rc;
+		}
 
 		for (i = 0; i < line; i++)
-			pos += trio_snprintf(&buffer[pos], blen - pos, "%c",
-			                     (p[i] >= 0x20 && p[i] < 0x7F) ? (char) p[i] : '.');
+		{
+			rc = trio_snprintf(&buffer[pos], blen - pos, "%c",
+			                   (p[i] >= 0x20 && p[i] < 0x7F) ? (char) p[i] : '.');
+
+			if (rc < 0)
+				goto fail;
+
+			pos += (size_t)rc;
+		}
 
 		WLog_Print(log, lvl, "%s", buffer);
 		offset += line;
@@ -84,6 +110,7 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 	}
 
 	WLog_Print(log, lvl, "[length=%"PRIuz"] ", length);
+fail:
 	free(buffer);
 }
 
