@@ -43,11 +43,21 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 {
 	const BYTE* p = data;
 	size_t i, line, offset = 0;
-	size_t blen = 7 + WINPR_HEXDUMP_LINE_LENGTH * 6;
+	const int maxlen = 20; /* 64bit SIZE_MAX as decimal */
+	/* String line length:
+	 * prefix          '[1234] '
+	 * hexdump         '01 02 03 04'
+	 * separator       '   '
+	 * ASIC line       'ab..cd'
+	 * zero terminator '\0'
+	 */
+	const size_t blen = ((size_t)maxlen + 3) + (WINPR_HEXDUMP_LINE_LENGTH * 3) + 3 + WINPR_HEXDUMP_LINE_LENGTH + 1;
 	size_t pos = 0;
+
+
 	char* buffer;
 
-	if (!log)
+	if (!log || (maxlen < 0))
 		return;
 
 	buffer = malloc(blen);
