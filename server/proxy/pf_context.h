@@ -75,6 +75,6 @@ struct proxy_to_server_context
 typedef struct proxy_to_server_context proxyToServerContext;
 
 rdpContext* proxy_to_server_context_create(rdpContext* peerContext, char* host,
-                                        DWORD port, char* username, char* password);
+        DWORD port, char* username, char* password);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONTEXT_H */

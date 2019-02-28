@@ -81,17 +81,14 @@ static BOOL pf_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
 	settings = instance->settings;
-
 	/* TODO: Consider forwarding this from client. */
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-
 	/**
 	 * settings->OrderSupport is initialized at this point.
 	 * Only override it if you plan to implement custom order
 	 * callbacks or deactiveate certain features.
 	 */
-
 	/**
 	 * Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded.
@@ -242,7 +239,6 @@ static BOOL pf_client_new(freerdp* instance, rdpContext* context)
 	instance->PostConnect = pf_post_connect;
 	instance->PostDisconnect = pf_post_disconnect;
 	instance->Authenticate = client_cli_authenticate;
-
 	/* TODO: Use a different auth methods, these are interactive with the client */
 	instance->GatewayAuthenticate = client_cli_gw_authenticate;
 	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
@@ -254,9 +250,15 @@ static BOOL pf_client_new(freerdp* instance, rdpContext* context)
 
 static void pf_client_free(freerdp* instance, rdpContext* context) {}
 
-static int pf_client_start(rdpContext* context) { return 0; }
+static int pf_client_start(rdpContext* context)
+{
+	return 0;
+}
 
-static int pf_client_stop(rdpContext* context) { return 0; }
+static int pf_client_stop(rdpContext* context)
+{
+	return 0;
+}
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
@@ -266,7 +268,6 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->GlobalInit = pf_client_global_init;
 	pEntryPoints->GlobalUninit = pf_client_global_uninit;
 	pEntryPoints->ContextSize = sizeof(proxyToServerContext);
-
 	/* Client init and finish */
 	pEntryPoints->ClientNew = pf_client_new;
 	pEntryPoints->ClientFree = pf_client_free;

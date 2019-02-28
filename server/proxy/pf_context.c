@@ -44,8 +44,8 @@ void client_to_proxy_context_free(freerdp_peer* client, clientToProxyContext* co
 	}
 }
 
-rdpContext* proxy_to_server_context_create(rdpContext* peerContext, char* host, 
-                                           DWORD port, char* username, char* password)
+rdpContext* proxy_to_server_context_create(rdpContext* peerContext, char* host,
+        DWORD port, char* username, char* password)
 {
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	rdpContext* context;
