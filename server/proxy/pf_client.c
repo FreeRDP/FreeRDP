@@ -71,68 +71,53 @@ static BOOL pf_end_paint(rdpContext* context)
 	return TRUE;
 }
 
-/* This function is called to output a System BEEP */
-static BOOL pf_play_sound(rdpContext* context,
-                          const PLAY_SOUND_UPDATE* play_sound)
-{
-	/* TODO: Implement */
-	return TRUE;
-}
-
-/* This function is called to update the keyboard indocator LED */
-static BOOL pf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
-{
-	/* TODO: Set local keyboard indicator LED status */
-	return TRUE;
-}
-
-/* This function is called to set the IME state */
-static BOOL pf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
-                                       UINT32 imeConvMode)
-{
-	if (!context)
-		return FALSE;
-
-	WLog_WARN(TAG,
-	          "KeyboardSetImeStatus(unitId=%04"PRIx16", imeState=%08"PRIx32", imeConvMode=%08"PRIx32") ignored",
-	          imeId, imeState, imeConvMode);
-	return TRUE;
-}
-
-/* Called before a connection is established.
- * Set all configuration options to support and load channels here. */
+/**
+ * Called before a connection is established.
+ *
+ * TODO: Take client to proxy settings and use channel whitelist to filter out
+ * unwanted channels.
+ */
 static BOOL pf_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
 	settings = instance->settings;
-	/* Optional OS identifier sent to server */
+
+	/* TODO: Consider forwarding this from client. */
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-	/* settings->OrderSupport is initialized at this point.
+
+	/**
+	 * settings->OrderSupport is initialized at this point.
 	 * Only override it if you plan to implement custom order
-	 * callbacks or deactiveate certain features. */
-	/* Register the channel listeners.
-	 * They are required to set up / tear down channels if they are loaded. */
+	 * callbacks or deactiveate certain features.
+	 */
+
+	/**
+	 * Register the channel listeners.
+	 * They are required to set up / tear down channels if they are loaded.
+	 */
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
 	                                 pf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    pf_OnChannelDisconnectedEventHandler);
 
-	/* Load all required plugins / channels / libraries specified by current
-	 * settings. */
+	/**
+	 * Load all required plugins / channels / libraries specified by current
+	 * settings.
+	 */
 	if (!freerdp_client_load_addins(instance->context->channels,
 	                                instance->settings))
 		return FALSE;
 
-	/* TODO: Any code your client requires */
 	return TRUE;
 }
 
-/* Called after a RDP connection was successfully established.
+/**
+ * Called after a RDP connection was successfully established.
  * Settings might have changed during negociation of client / server feature
  * support.
  *
- * Set up local framebuffers and paing callbacks.
+ * Set up local framebuffers and painting callbacks.
  * If required, register pointer callbacks to change the local mouse cursor
  * when hovering over the RDP window
  */
@@ -143,9 +128,6 @@ static BOOL pf_post_connect(freerdp* instance)
 
 	instance->update->BeginPaint = pf_begin_paint;
 	instance->update->EndPaint = pf_end_paint;
-	instance->update->PlaySound = pf_play_sound;
-	instance->update->SetKeyboardIndicators = pf_keyboard_set_indicators;
-	instance->update->SetKeyboardImeStatus = pf_keyboard_set_ime_status;
 	return TRUE;
 }
 
@@ -253,8 +235,6 @@ static int pf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 
 static BOOL pf_client_new(freerdp* instance, rdpContext* context)
 {
-	proxyToServerContext* tf = (proxyToServerContext*) context;
-
 	if (!instance || !context)
 		return FALSE;
 
@@ -262,28 +242,21 @@ static BOOL pf_client_new(freerdp* instance, rdpContext* context)
 	instance->PostConnect = pf_post_connect;
 	instance->PostDisconnect = pf_post_disconnect;
 	instance->Authenticate = client_cli_authenticate;
+
+	/* TODO: Use a different auth methods, these are interactive with the client */
 	instance->GatewayAuthenticate = client_cli_gw_authenticate;
 	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = pf_logon_error_info;
-	/* TODO: Client display set up */
 	return TRUE;
 }
 
 
 static void pf_client_free(freerdp* instance, rdpContext* context) {}
 
-static int pf_client_start(rdpContext* context)
-{
-	/* TODO: Start client related stuff */
-	return 0;
-}
+static int pf_client_start(rdpContext* context) { return 0; }
 
-static int pf_client_stop(rdpContext* context)
-{
-	/* TODO: Stop client related stuff */
-	return 0;
-}
+static int pf_client_stop(rdpContext* context) { return 0; }
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
@@ -293,6 +266,8 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->GlobalInit = pf_client_global_init;
 	pEntryPoints->GlobalUninit = pf_client_global_uninit;
 	pEntryPoints->ContextSize = sizeof(proxyToServerContext);
+
+	/* Client init and finish */
 	pEntryPoints->ClientNew = pf_client_new;
 	pEntryPoints->ClientFree = pf_client_free;
 	pEntryPoints->ClientStart = pf_client_start;
