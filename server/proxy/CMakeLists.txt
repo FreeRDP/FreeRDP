@@ -21,11 +21,13 @@ set(MODULE_PREFIX "FREERDP_SERVER_PROXY")
 
 set(${MODULE_PREFIX}_SRCS
   pfreerdp.c
-  pfreerdp.h
+  pf_context.c
+  pf_context.h
   pf_channels.c
   pf_channels.h
   pf_client.c
-  pf_client.h)
+  pf_client.h
+  pf_log.h)
 
 	# On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
