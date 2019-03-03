@@ -56,13 +56,20 @@
  */
 BOOL pf_peer_post_connect(freerdp_peer* client)
 {
-	proxyContext* context = (proxyContext*) client->context;
+	proxyContext* pContext = (proxyContext*) client->context;
+	/* hardcoded connection info for remote host */
+	char* host = _strdup("192.168.43.43");
+	char* username = _strdup("win1");
+	char* password = _strdup("Password1");
+	DWORD port = 33890;
 	/* Start a proxy's client in it's own thread */
-	rdpContext* clientContext = proxy_to_server_context_create(client->context,
-	                            "192.168.43.43", 33890, "win1", "Password1");
-	context->peerContext = clientContext;
+	rdpContext* sContext = proxy_to_server_context_create(client->context,
+	                       host, port, username, password);
+	/* Inject proxy's client context to proxy's context */
+	pContext->peerContext = sContext;
+	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
 
-	if (!(CreateThread(NULL, 0, proxy_client_start, clientContext, 0, NULL)))
+	if (!(cContext->thread = CreateThread(NULL, 0, proxy_client_start, sContext, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		return FALSE;
@@ -148,7 +155,7 @@ static BOOL pf_peer_suppress_output(rdpContext* context, BYTE allow,
 
 static BOOL init_client_context(freerdp_peer* client)
 {
-	client->ContextSize = sizeof(proxyContext);
+	client->ContextSize = sizeof(clientToProxyContext);
 	client->ContextNew = (psPeerContextNew) client_to_proxy_context_new;
 	client->ContextFree = (psPeerContextFree) client_to_proxy_context_free;
 	return freerdp_peer_context_new(client);
@@ -205,6 +212,7 @@ static DWORD WINAPI handle_client(LPVOID arg)
 	client->Initialize(client);
 	clientToProxyContext* context;
 	context = (clientToProxyContext*) client->context;
+	proxyContext* pContext = (proxyContext*)context;
 	WLog_INFO(TAG, "Client connected: %s",
 	          client->local ? "(local)" : client->hostname);
 	/* Main client event handling loop */
@@ -240,8 +248,21 @@ static DWORD WINAPI handle_client(LPVOID arg)
 			break;
 	}
 
-	WLog_INFO(TAG, "Client %s disconnected.",
-	          client->local ? "(local)" : client->hostname);
+	rdpContext* sContext = pContext->peerContext;
+	WLog_INFO(TAG, "Client %s disconnected; closing connection with server %s", client->hostname,
+	          sContext->settings->ServerHostname);
+	freerdp_abort_connect(sContext->instance);
+
+	if (context->thread)
+	{
+		WLog_DBG(TAG, "Waiting for proxy's client thread to finish");
+		WaitForSingleObject(context->thread, INFINITE);
+		CloseHandle(context->thread);
+		WLog_DBG(TAG, "Freeing proxy's client context");
+		freerdp_client_stop(sContext);
+		freerdp_client_context_free(sContext);
+	}
+
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
@@ -293,7 +314,8 @@ void server_mainloop(freerdp_listener* listener)
 	listener->Close(listener);
 }
 
-int proxy_server_start(char* host, long port, BOOL localOnly){
+int proxy_server_start(char* host, long port, BOOL localOnly)
+{
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	freerdp_listener* listener = freerdp_listener_new();

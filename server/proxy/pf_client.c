@@ -187,6 +187,9 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 			break;
 		}
 
+		if (freerdp_shall_disconnect(instance))
+			break;
+
 		if (!freerdp_check_event_handles(instance->context))
 		{
 			if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
@@ -282,17 +285,9 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 DWORD WINAPI proxy_client_start(LPVOID arg)
 {
 	rdpContext* context = (rdpContext*)arg;
-	int rc = 0;
 
 	if (freerdp_client_start(context) != 0)
-		goto fail;
+		return 1;
 
-	rc = pf_client_thread_proc(context->instance);
-
-	if (freerdp_client_stop(context) != 0)
-		rc = -1;
-
-fail:
-	freerdp_client_context_free(context);
-	return rc;
+	return pf_client_thread_proc(context->instance);
 }

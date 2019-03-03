@@ -25,6 +25,5 @@ int main(int argc, char* argv[])
 	char* host = "0.0.0.0";
 	long port = 3389;
 	BOOL localOnly = FALSE;
-	
 	return proxy_server_start(host, port, localOnly);
 }

@@ -53,6 +53,7 @@ struct client_to_proxy_context
 	proxyContext _context;
 
 	HANDLE vcm;
+	HANDLE thread;
 };
 typedef struct client_to_proxy_context clientToProxyContext;
 
