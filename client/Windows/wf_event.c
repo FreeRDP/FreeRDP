@@ -462,6 +462,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam,
 						// User dragged the scroll box.
 						case SB_THUMBPOSITION:
 							xNewPos = HIWORD(wParam);
+							break;
 
 						// user is dragging the scrollbar
 						case SB_THUMBTRACK :
