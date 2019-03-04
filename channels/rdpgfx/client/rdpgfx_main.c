@@ -131,6 +131,11 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 		if (gfx->ThinClient)
 			caps10Flags |= RDPGFX_CAPS_FLAG_AVC_THINCLIENT;
 
+		/* Reports from Remmina suggest that current H264 decoder settings do
+		 * not work with newer GFX protocol versions.
+		 * Need to investigate this.
+		 * Until resolved, disable the newer protocol versions. */
+#if 0
 		capsSet = &capsSets[pdu.capsSetCount++];
 		capsSet->version = RDPGFX_CAPVERSION_103;
 		capsSet->length = 0x4;
@@ -152,6 +157,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 		capsSet->version = RDPGFX_CAPVERSION_106;
 		capsSet->length = 0x4;
 		capsSet->flags = caps10Flags;
+#endif
 #endif
 	}
 
