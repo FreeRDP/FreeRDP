@@ -19,12 +19,9 @@
 
 add_subdirectory(common)
 add_subdirectory(shadow)
+add_subdirectory(proxy)
 
 if(FREERDP_VENDOR)
-	if(WITH_PROXY)
-		add_subdirectory(proxy)
-	endif()
-
 	if(WITH_SAMPLE)
 		add_subdirectory(Sample)
 	endif()
