@@ -46,6 +46,150 @@
 
 #define TAG PROXY_TAG("server")
 
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
+        RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
+{
+	UINT16 index;
+	rdpSettings* settings = context->rdpcontext->settings;
+	UINT32 flags = 0;
+
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_103)
+		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+#ifndef WITH_GFX_H264
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
+				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
+#endif
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_102)
+		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+#ifndef WITH_GFX_H264
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
+				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
+#endif
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_10)
+		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+#ifndef WITH_GFX_H264
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
+				settings->GfxAVC444 = settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+#endif
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_81)
+		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxAVC444v2 = settings->GfxAVC444 = FALSE;
+				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+#ifndef WITH_GFX_H264
+				settings->GfxH264 = FALSE;
+				pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_AVC420_ENABLED;
+#else
+				settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
+#endif
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_8)
+		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+
+	return CHANNEL_RC_UNSUPPORTED_VERSION;
+}
+
 int pf_peer_rdpgfx_init(clientToProxyContext* cContext)
 {
 	RdpgfxServerContext* gfx;
@@ -86,6 +230,8 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 	/* Inject proxy's client context to proxy's context */
 	pContext->peerContext = sContext;
 	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
+
+	pf_peer_rdpgfx_init(cContext);
 
 	if (!(cContext->thread = CreateThread(NULL, 0, proxy_client_start, sContext, 0, NULL)))
 	{
@@ -194,6 +340,9 @@ static DWORD WINAPI handle_client(LPVOID arg)
 		return 0;
 	}
 
+	client->settings->SupportGraphicsPipeline = TRUE;
+	client->settings->SupportDynamicChannels = TRUE;
+
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->RdpKeyFile = _strdup("server.key");
@@ -235,6 +384,7 @@ static DWORD WINAPI handle_client(LPVOID arg)
 	          client->local ? "(local)" : client->hostname);
 	/* Main client event handling loop */
 	HANDLE eventHandles[32];
+	BOOL gfxOpened = FALSE;
 
 	while (1)
 	{
@@ -262,8 +412,49 @@ static DWORD WINAPI handle_client(LPVOID arg)
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
 
-		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
-			break;
+		switch (WTSVirtualChannelManagerGetDrdynvcState(context->vcm))
+		{
+			/* Dynamic channel status may have been changed after processing */
+			case DRDYNVC_STATE_NONE:
+
+				/* Call this routine to Initialize drdynvc channel */
+				if (!WTSVirtualChannelManagerCheckFileDescriptor(context->vcm))
+				{
+					WLog_ERR(TAG, "Failed to initialize drdynvc channel");
+					goto fail;
+				}
+
+				break;
+
+			case DRDYNVC_STATE_READY:
+
+				/* Init RDPGFX dynamic channel */
+				if (client->settings->SupportGraphicsPipeline && context->gfx &&
+				    !gfxOpened)
+				{
+					context->gfx->CapsAdvertise = shadow_client_rdpgfx_caps_advertise;
+
+					if (!context->gfx->Open(context->gfx))
+					{
+						WLog_WARN(TAG, "Failed to open GraphicsPipeline");
+						client->settings->SupportGraphicsPipeline = FALSE;
+					}
+
+					gfxOpened = TRUE;
+					WLog_INFO(TAG, "Gfx Pipeline Opened");
+				}
+
+				break;
+
+			default:
+				break;
+		}
+	}
+
+fail:
+	if (gfxOpened)
+	{
+		(void)context->gfx->Close(context->gfx);
 	}
 
 	rdpContext* sContext = pContext->peerContext;
