@@ -37,6 +37,7 @@
 
 #include <freerdp/constants.h>
 #include <freerdp/server/rdpsnd.h>
+#include <freerdp/server/rdpgfx.h>
 
 #include "pf_server.h"
 #include "pf_log.h"
@@ -44,6 +45,22 @@
 #include "pf_context.h"
 
 #define TAG PROXY_TAG("server")
+
+int pf_peer_rdpgfx_init(clientToProxyContext* cContext)
+{
+	RdpgfxServerContext* gfx;
+	gfx = cContext->gfx = rdpgfx_server_context_new(cContext->vcm);
+	if (!gfx)
+	{
+		return 0;
+	}
+
+	gfx->rdpcontext = (rdpContext*)cContext;
+
+	gfx->custom = cContext;
+
+	return 1;
+}
 
 /* Event callbacks */
 
@@ -62,6 +79,7 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 	char* username = _strdup("win1");
 	char* password = _strdup("Password1");
 	DWORD port = 33890;
+
 	/* Start a proxy's client in it's own thread */
 	rdpContext* sContext = proxy_to_server_context_create(client->context,
 	                       host, port, username, password);

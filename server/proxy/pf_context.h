@@ -26,6 +26,7 @@
 #include <freerdp/client/encomsp.h>
 #include <freerdp/client/rdpei.h>
 #include <freerdp/client/rdpgfx.h>
+#include <freerdp/server/rdpgfx.h>
 
 /**
  * Proxy context wraps a peer's context, and holds a reference to the other end
@@ -54,6 +55,8 @@ struct client_to_proxy_context
 
 	HANDLE vcm;
 	HANDLE thread;
+
+	RdpgfxServerContext* gfx;
 };
 typedef struct client_to_proxy_context clientToProxyContext;
 
