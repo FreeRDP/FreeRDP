@@ -206,6 +206,33 @@ int pf_peer_rdpgfx_init(clientToProxyContext* cContext)
 	return 1;
 }
 
+static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
+        char** target, DWORD* port)
+{
+#define TARGET_MAX	(100)
+	rdpNego* nego = client->context->rdp->nego;
+
+	if (nego->RoutingToken &&
+	    nego->RoutingTokenLength > 0 && nego->RoutingTokenLength < TARGET_MAX)
+	{
+		*target = _strdup((char*)nego->RoutingToken);
+		char* colon = strchr(*target, ':');
+
+		if (colon)
+		{
+			// port is specified
+			*port = strtoul(colon + 1, NULL, 10);
+			*colon = '\0';
+		}
+
+		return TRUE;
+	}
+
+	// no routing token.
+	return FALSE;
+}
+
+
 /* Event callbacks */
 
 /**
@@ -218,12 +245,18 @@ int pf_peer_rdpgfx_init(clientToProxyContext* cContext)
 BOOL pf_peer_post_connect(freerdp_peer* client)
 {
 	proxyContext* pContext = (proxyContext*) client->context;
-	/* hardcoded connection info for remote host */
-	char* host = _strdup("192.168.43.43");
-	char* username = _strdup("win1");
-	char* password = _strdup("Password1");
-	DWORD port = 33890;
+	char* host = NULL;
+	DWORD port = 3389; // default port
 
+	if (!pf_server_parse_target_from_routing_token(client, &host, &port))
+	{
+		WLog_ERR(TAG, "pf_server_parse_target_from_routing_token failed!");
+		return FALSE;
+	}
+
+	// hardcoded connection info for remote host
+	char* username = _strdup("idan");
+	char* password = _strdup("Password1");
 	/* Start a proxy's client in it's own thread */
 	rdpContext* sContext = proxy_to_server_context_create(client->context,
 	                       host, port, username, password);

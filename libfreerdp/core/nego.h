@@ -92,6 +92,34 @@ enum RDP_NEG_MSG
 #define REDIRECTED_AUTHENTICATION_MODE_REQUIRED		0x02
 #define CORRELATION_INFO_PRESENT				0x08
 
+struct rdp_nego
+{
+	UINT16 port;
+	UINT32 flags;
+	const char* hostname;
+	char* cookie;
+	BYTE* RoutingToken;
+	DWORD RoutingTokenLength;
+	BOOL SendPreconnectionPdu;
+	UINT32 PreconnectionId;
+	char* PreconnectionBlob;
+
+	NEGO_STATE state;
+	BOOL TcpConnected;
+	BOOL SecurityConnected;
+	UINT32 CookieMaxLength;
+
+	BOOL sendNegoData;
+	UINT32 SelectedProtocol;
+	UINT32 RequestedProtocols;
+	BOOL NegotiateSecurityLayer;
+	BOOL EnabledProtocols[16];
+	BOOL RestrictedAdminModeRequired;
+	BOOL GatewayEnabled;
+	BOOL GatewayBypassLocal;
+
+	rdpTransport* transport;
+};
 typedef struct rdp_nego rdpNego;
 
 FREERDP_LOCAL BOOL nego_connect(rdpNego* nego);

@@ -36,34 +36,6 @@
 
 #define TAG FREERDP_TAG("core.nego")
 
-struct rdp_nego
-{
-	UINT16 port;
-	UINT32 flags;
-	const char* hostname;
-	char* cookie;
-	BYTE* RoutingToken;
-	DWORD RoutingTokenLength;
-	BOOL SendPreconnectionPdu;
-	UINT32 PreconnectionId;
-	char* PreconnectionBlob;
-
-	NEGO_STATE state;
-	BOOL TcpConnected;
-	BOOL SecurityConnected;
-	UINT32 CookieMaxLength;
-
-	BOOL sendNegoData;
-	UINT32 SelectedProtocol;
-	UINT32 RequestedProtocols;
-	BOOL NegotiateSecurityLayer;
-	BOOL EnabledProtocols[16];
-	BOOL RestrictedAdminModeRequired;
-	BOOL GatewayEnabled;
-	BOOL GatewayBypassLocal;
-
-	rdpTransport* transport;
-};
 
 static const char* const NEGO_STATE_STRINGS[] =
 {
@@ -701,8 +673,8 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	pos = Stream_GetPosition(s);
 
 	/* minimum length for token is 15 */
-	if (Stream_GetRemainingLength(s) < 15)
-		return TRUE;
+	// if (Stream_GetRemainingLength(s) < 15)
+	// 	return TRUE;
 
 	if (memcmp(Stream_Pointer(s), "Cookie: mstshash=", 17) != 0)
 	{
