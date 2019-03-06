@@ -142,12 +142,29 @@ static void pf_post_disconnect(freerdp* instance)
 		return;
 
 	context = (proxyToServerContext*) instance->context;
+	proxyContext* pContext = (proxyContext*)context;
+
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
 	                                   pf_OnChannelConnectedEventHandler);
 	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
 	                                      pf_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
-	/* TODO : Clean up custom stuff */
+
+	rdpContext* cContext = pContext->peerContext;
+
+	/* TODO: Use common function `pf_server_connection_aborted_by_other_side` and give it a good name`. */
+	if (WaitForSingleObject(pContext->connectionClosed, 0) != WAIT_OBJECT_0)
+	{
+		SetEvent(pContext->connectionClosed);
+		WLog_INFO(TAG, "connectionClosed event is not set; closing connection with client");
+	    freerdp_peer* peer = cContext->peer;
+	    peer->Disconnect(peer);
+	}
+
+	/* 
+	* It's important to avoid calling `freerdp_peer_context_free` and `freerdp_peer_free` here,
+	* in order to avoid double-free. Those objects will be freed by the server when needed.
+	*/
 }
 
 /**

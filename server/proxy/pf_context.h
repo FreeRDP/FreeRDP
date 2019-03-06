@@ -43,6 +43,8 @@ struct proxy_context
 	 * Events from the first context are forwarded to this one.
 	 */
 	rdpContext* peerContext;
+
+	HANDLE connectionClosed;
 };
 typedef struct proxy_context proxyContext;
 

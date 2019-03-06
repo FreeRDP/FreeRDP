@@ -206,6 +206,34 @@ int pf_peer_rdpgfx_init(clientToProxyContext* cContext)
 	return 1;
 }
 
+static BOOL pf_server_connection_aborted_by_other_side(proxyContext* context)
+{
+	return WaitForSingleObject(context->connectionClosed, 0) == WAIT_OBJECT_0;
+}
+
+void pf_server_handle_client_disconnection(freerdp_peer* client)
+{
+	proxyContext* pContext = (proxyContext*)client->context;
+	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
+	rdpContext* sContext = pContext->peerContext;
+
+	WLog_INFO(TAG, "Client %s disconnected; closing connection with server %s", client->hostname,
+	sContext->settings->ServerHostname);
+
+	WLog_INFO(TAG, "connectionClosed event is not set; closing connection to remote server");
+
+	/* Mark connection closed for sContext */
+	SetEvent(pContext->connectionClosed);
+	freerdp_abort_connect(sContext->instance);
+
+	/* Close connection to remote host */
+	WLog_DBG(TAG, "Waiting for proxy's client thread to finish");
+	WaitForSingleObject(cContext->thread, INFINITE);
+	CloseHandle(cContext->thread);
+	freerdp_client_stop(sContext);
+	freerdp_client_context_free(sContext);
+}
+
 static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
         char** target, DWORD* port)
 {
@@ -255,13 +283,19 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 	}
 
 	// hardcoded connection info for remote host
-	char* username = _strdup("idan");
-	char* password = _strdup("Password1");
+	char* username = _strdup("Kobi");
+	char* password = _strdup("123123");
 	/* Start a proxy's client in it's own thread */
 	rdpContext* sContext = proxy_to_server_context_create(client->context,
 	                       host, port, username, password);
 	/* Inject proxy's client context to proxy's context */
+
+	HANDLE connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	pContext->peerContext = sContext;
+	pContext->connectionClosed = connectionClosedEvent;
+	((proxyContext*)sContext)->peerContext = (rdpContext*)pContext;
+	((proxyContext*)sContext)->connectionClosed = connectionClosedEvent;
+
 	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
 
 	pf_peer_rdpgfx_init(cContext);
@@ -438,6 +472,10 @@ static DWORD WINAPI handle_client(LPVOID arg)
 
 		if (status == WAIT_FAILED)
 		{
+			/* If the wait failed because the connection closed by the proxy, that's ok */
+			if (pf_server_connection_aborted_by_other_side(pContext))
+				break;
+
 			WLog_ERR(TAG, "WaitForMultipleObjects failed (errno: %d)", errno);
 			break;
 		}
@@ -490,19 +528,13 @@ fail:
 		(void)context->gfx->Close(context->gfx);
 	}
 
-	rdpContext* sContext = pContext->peerContext;
-	WLog_INFO(TAG, "Client %s disconnected; closing connection with server %s", client->hostname,
-	          sContext->settings->ServerHostname);
-	freerdp_abort_connect(sContext->instance);
-
-	if (context->thread)
+	if (!pf_server_connection_aborted_by_other_side(pContext))
 	{
-		WLog_DBG(TAG, "Waiting for proxy's client thread to finish");
-		WaitForSingleObject(context->thread, INFINITE);
-		CloseHandle(context->thread);
-		WLog_DBG(TAG, "Freeing proxy's client context");
-		freerdp_client_stop(sContext);
-		freerdp_client_context_free(sContext);
+		pf_server_handle_client_disconnection(client);
+	}
+	else
+	{
+		WLog_INFO(TAG, "Connection already aborted; client potentially kicked by the server");
 	}
 
 	client->Disconnect(client);
