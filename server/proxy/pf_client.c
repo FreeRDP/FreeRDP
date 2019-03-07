@@ -83,6 +83,13 @@ static BOOL pf_pre_connect(freerdp* instance)
 	rdpSettings* settings;
 	settings = instance->settings;
 	/* TODO: Consider forwarding this from client. */
+
+	settings->SupportDynamicChannels = TRUE;
+	settings->RemoteFxCodec = FALSE;
+	settings->SupportGraphicsPipeline = TRUE;
+	settings->GfxH264 = TRUE;
+	settings->GfxAVC444 = TRUE;
+
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 	/**
@@ -103,9 +110,14 @@ static BOOL pf_pre_connect(freerdp* instance)
 	 * Load all required plugins / channels / libraries specified by current
 	 * settings.
 	 */
+
+	WLog_INFO(TAG, "Loading addins");
 	if (!freerdp_client_load_addins(instance->context->channels,
 	                                instance->settings))
+	{
+		WLog_ERR(TAG, "Failed to load addins");
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -177,9 +189,12 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	DWORD status;
 	HANDLE handles[64];
 
+	char* argv[] = {"./pfreerdp", "/gfx:AVC420", NULL};
+	freerdp_client_settings_parse_command_line(instance->settings, 2, argv, FALSE);
+
 	if (!freerdp_connect(instance))
 	{
-		WLog_ERR(TAG, "connection failure");
+		WLog_ERR(TAG, "connection failure: %s", freerdp_get_last_error_string(instance->context));
 		return 0;
 	}
 
