@@ -42,6 +42,8 @@
 #include <freerdp/log.h>
 
 #include "pf_channels.h"
+#include "pf_gdi.h"
+#include "pf_graphics.h"
 #include "pf_common.h"
 #include "pf_client.h"
 #include "pf_context.h"
@@ -53,6 +55,7 @@
  * It can be used to reset invalidated areas. */
 static BOOL pf_begin_paint(rdpContext* context)
 {
+	WLog_INFO(TAG, "Begin paint");
 	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	return TRUE;
@@ -64,6 +67,8 @@ static BOOL pf_begin_paint(rdpContext* context)
  */
 static BOOL pf_end_paint(rdpContext* context)
 {
+	WLog_INFO(TAG, "End paint");
+
 	rdpGdi* gdi = context->gdi;
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
@@ -135,6 +140,29 @@ static BOOL pf_post_connect(freerdp* instance)
 {
 	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
 		return FALSE;
+
+	rdpContext* context = instance->context;
+	rdpSettings* settings = instance->settings;
+	rdpUpdate* update = instance->update;
+
+	if (!pf_register_pointer(context->graphics))
+		return FALSE;
+
+	if (!settings->SoftwareGdi)
+	{
+		if (!pf_register_graphics(context->graphics))
+		{
+			WLog_ERR(TAG, "failed to register graphics");
+			return FALSE;
+		}
+
+		pf_gdi_register_update_callbacks(update);
+		brush_cache_register_callbacks(instance->update);
+		glyph_cache_register_callbacks(instance->update);
+		bitmap_cache_register_callbacks(instance->update);
+		offscreen_cache_register_callbacks(instance->update);
+		palette_cache_register_callbacks(instance->update);
+	}
 
 	instance->update->BeginPaint = pf_begin_paint;
 	instance->update->EndPaint = pf_end_paint;

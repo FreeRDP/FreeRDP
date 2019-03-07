@@ -33,6 +33,10 @@ set(${MODULE_PREFIX}_SRCS
   pf_server.h
   pf_common.c
   pf_common.h
+  pf_gdi.c
+  pf_gdi.h
+  pf_graphics.c
+  pf_graphics.h
   pf_log.h)
 
 	# On windows create dll version information.
