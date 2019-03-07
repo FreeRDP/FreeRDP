@@ -40,7 +40,6 @@
 static BOOL pf_gdi_set_bounds(rdpContext* context,
                               const rdpBounds* bounds)
 {
-	WLog_INFO(TAG, "WTF I'm here");
 	return TRUE;
 }
 
@@ -51,20 +50,17 @@ static BOOL pf_gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 
 static BOOL pf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
-	WLog_INFO(TAG, "WTF I'm here");
 	return TRUE;
 }
 
 static BOOL pf_gdi_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 {
-	WLog_INFO(TAG, "WTF I'm here");
 	return TRUE;
 }
 
 static BOOL pf_gdi_opaque_rect(rdpContext* context,
                                const OPAQUE_RECT_ORDER* opaque_rect)
 {
-	WLog_INFO(TAG, "WTF I'm here");
 	return TRUE;
 }
 
