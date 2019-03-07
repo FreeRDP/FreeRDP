@@ -34,6 +34,10 @@
 #include "pf_channels.h"
 #include "pf_client.h"
 #include "pf_context.h"
+#include "pf_rdpgfx.h"
+#include "pf_log.h"
+
+#define TAG PROXY_TAG("client")
 
 /**
  * Function description
@@ -69,20 +73,22 @@ static void pf_encomsp_uninit(proxyToServerContext* tf, EncomspClientContext* en
 void pf_OnChannelConnectedEventHandler(void* context,
                                        ChannelConnectedEventArgs* e)
 {
-	proxyToServerContext* proxyToServer = (proxyToServerContext*) context;
-	rdpSettings* settings;
-	settings = ((rdpContext*)proxyToServer)->settings;
+	WLog_DBG(TAG, "Channel connected: %s", e->name);
+	proxyToServerContext* sContext = (proxyToServerContext*) context;
+	clientToProxyContext* cContext = (clientToProxyContext*) ((proxyContext*) context)->peerContext;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
-		proxyToServer->rdpei = (RdpeiClientContext*) e->pInterface;
+		sContext->rdpei = (RdpeiClientContext*) e->pInterface;
 	}
 	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
 	{
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_graphics_pipeline_init(((rdpContext*)proxyToServer)->gdi, (RdpgfxClientContext*) e->pInterface);
+		RdpgfxClientContext* gfx = (RdpgfxClientContext*) e->pInterface;
+		RdpgfxServerContext* server = cContext->gfx;
+		proxy_graphics_pipeline_init(gfx, server);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -92,7 +98,7 @@ void pf_OnChannelConnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
-		pf_encomsp_init(proxyToServer, (EncomspClientContext*) e->pInterface);
+		pf_encomsp_init(sContext, (EncomspClientContext*) e->pInterface);
 	}
 }
 
