@@ -42,6 +42,7 @@
 #include <freerdp/log.h>
 
 #include "pf_channels.h"
+#include "pf_common.h"
 #include "pf_client.h"
 #include "pf_context.h"
 #include "pf_log.h"
@@ -143,25 +144,22 @@ static void pf_post_disconnect(freerdp* instance)
 
 	context = (proxyToServerContext*) instance->context;
 	proxyContext* pContext = (proxyContext*)context;
-
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
 	                                   pf_OnChannelConnectedEventHandler);
 	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
 	                                      pf_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
-
 	rdpContext* cContext = pContext->peerContext;
 
-	/* TODO: Use common function `pf_server_connection_aborted_by_other_side` and give it a good name`. */
-	if (WaitForSingleObject(pContext->connectionClosed, 0) != WAIT_OBJECT_0)
+	if (!pf_common_connection_aborted_by_peer(pContext))
 	{
 		SetEvent(pContext->connectionClosed);
 		WLog_INFO(TAG, "connectionClosed event is not set; closing connection with client");
-	    freerdp_peer* peer = cContext->peer;
-	    peer->Disconnect(peer);
+		freerdp_peer* peer = cContext->peer;
+		peer->Disconnect(peer);
 	}
 
-	/* 
+	/*
 	* It's important to avoid calling `freerdp_peer_context_free` and `freerdp_peer_free` here,
 	* in order to avoid double-free. Those objects will be freed by the server when needed.
 	*/
