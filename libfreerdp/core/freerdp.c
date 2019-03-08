@@ -1001,6 +1001,40 @@ ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount)
 	return written;
 }
 
+BOOL freerdp_nla_impersonate(rdpContext* context)
+{
+	rdpNla* nla;
+
+	if (!context)
+		return FALSE;
+
+	if (!context->rdp)
+		return FALSE;
+
+	if (!context->rdp->transport)
+		return FALSE;
+
+	nla = context->rdp->transport->nla;
+	return nla_impersonate(nla);
+}
+
+BOOL freerdp_nla_revert_to_self(rdpContext* context)
+{
+	rdpNla* nla;
+
+	if (!context)
+		return FALSE;
+
+	if (!context->rdp)
+		return FALSE;
+
+	if (!context->rdp->transport)
+		return FALSE;
+
+	nla = context->rdp->transport->nla;
+	return nla_revert_to_self(nla);
+}
+
 HANDLE getChannelErrorEventHandle(rdpContext* context)
 {
 	return context->channelErrorEvent;

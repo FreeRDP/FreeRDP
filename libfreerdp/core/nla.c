@@ -2468,3 +2468,25 @@ BOOL nla_set_service_principal(rdpNla* nla, LPSTR principal)
 	nla->ServicePrincipalName = principal;
 	return TRUE;
 }
+
+BOOL nla_impersonate(rdpNla* nla)
+{
+	if (!nla)
+		return FALSE;
+
+	if (!nla->table || !nla->table->ImpersonateSecurityContext)
+		return FALSE;
+
+	return (nla->table->ImpersonateSecurityContext(&nla->context) == SEC_E_OK);
+}
+
+BOOL nla_revert_to_self(rdpNla* nla)
+{
+	if (!nla)
+		return FALSE;
+
+	if (!nla->table || !nla->table->RevertSecurityContext)
+		return FALSE;
+
+	return (nla->table->RevertSecurityContext(&nla->context) == SEC_E_OK);
+}
