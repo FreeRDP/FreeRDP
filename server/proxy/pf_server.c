@@ -195,6 +195,7 @@ int pf_peer_rdpgfx_init(clientToProxyContext* cContext)
 {
 	RdpgfxServerContext* gfx;
 	gfx = cContext->gfx = rdpgfx_server_context_new(cContext->vcm);
+
 	if (!gfx)
 	{
 		return 0;
@@ -278,9 +279,6 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	// hardcoded connection info for remote host
-	char* username = _strdup("Kobi");
-	char* password = _strdup("123123");
 	/* Start a proxy's client in it's own thread */
 	rdpContext* sContext = proxy_to_server_context_create(client->context,
 	                       host, port, username, password);
@@ -425,7 +423,6 @@ static DWORD WINAPI handle_client(LPVOID arg)
 	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_HIGH; */
 	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
 	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
-	client->settings->RemoteFxCodec = TRUE;
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
 	client->settings->RefreshRect = TRUE;
@@ -447,6 +444,8 @@ static DWORD WINAPI handle_client(LPVOID arg)
 	          client->local ? "(local)" : client->hostname);
 	/* Main client event handling loop */
 	HANDLE eventHandles[32];
+	HANDLE ChannelEvent;
+	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(context->vcm);
 	BOOL gfxOpened = FALSE;
 
 	while (1)
@@ -463,6 +462,7 @@ static DWORD WINAPI handle_client(LPVOID arg)
 
 			eventCount += tmp;
 		}
+		eventHandles[eventCount++] = ChannelEvent;
 		eventHandles[eventCount++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);
 		DWORD status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
 
@@ -478,6 +478,15 @@ static DWORD WINAPI handle_client(LPVOID arg)
 
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
+
+		if (WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0)
+		{
+			if (!WTSVirtualChannelManagerCheckFileDescriptor(context->vcm))
+			{
+				WLog_ERR(TAG, "WTSVirtualChannelManagerCheckFileDescriptor failure");
+				goto fail;
+			}
+		}
 
 		switch (WTSVirtualChannelManagerGetDrdynvcState(context->vcm))
 		{
