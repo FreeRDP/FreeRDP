@@ -324,32 +324,26 @@ BOOL pf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 BOOL pf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	proxyContext* context = (proxyContext*)input->context;
-	freerdp_input_send_keyboard_event(context->peerContext->input, flags, code);
-	WLog_DBG(TAG, "Client sent a keyboard event (flags:0x%04"PRIX16" code:0x%04"PRIX16")", flags,
-	         code);
-	return TRUE;
+	return freerdp_input_send_keyboard_event(context->peerContext->input, flags, code);
 }
 
 BOOL pf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	WLog_DBG(TAG, "Client sent a unicode keyboard event (flags:0x%04"PRIX16" code:0x%04"PRIX16")",
-	         flags, code);
-	return TRUE;
+	proxyContext* context = (proxyContext*)input->context;
+	return freerdp_input_send_unicode_keyboard_event(context->peerContext->input, flags, code);
 }
 
 BOOL pf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	WLog_DBG(TAG, "Client sent a mouse event (flags:0x%04"PRIX16" pos:%"PRIu16",%"PRIu16")", flags, x,
-	         y);
-	return TRUE;
+	proxyContext* context = (proxyContext*)input->context;
+	return freerdp_input_send_mouse_event(context->peerContext->input, flags, x, y);
 }
 
 BOOL pf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
                                   UINT16 y)
 {
-	WLog_DBG(TAG, "Client sent an extended mouse event (flags:0x%04"PRIX16" pos:%"PRIu16",%"PRIu16")",
-	         flags, x, y);
-	return TRUE;
+	proxyContext* context = (proxyContext*)input->context;
+	return freerdp_input_send_extended_mouse_event(context->peerContext->input, flags, x, y);
 }
 
 static BOOL pf_peer_refresh_rect(rdpContext* context, BYTE count,
