@@ -87,12 +87,6 @@ static BOOL pf_pre_connect(freerdp* instance)
 	settings->ColorDepth = cContext->settings->ColorDepth;
 	/* TODO: Consider forwarding this from client. */
 
-	settings->SupportDynamicChannels = TRUE;
-	settings->RemoteFxCodec = FALSE;
-	settings->SupportGraphicsPipeline = TRUE;
-	settings->GfxH264 = TRUE;
-	settings->GfxAVC444 = TRUE;
-
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 	/**
@@ -224,7 +218,7 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	DWORD status;
 	HANDLE handles[64];
 
-	char* argv[] = {"./pfreerdp", "/gfx:AVC420", NULL};
+	char* argv[] = {"./pfreerdp", "/gfx", NULL};
 	freerdp_client_settings_parse_command_line(instance->settings, 2, argv, FALSE);
 
 	if (!freerdp_connect(instance))
