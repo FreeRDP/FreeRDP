@@ -55,10 +55,9 @@
  * It can be used to reset invalidated areas. */
 static BOOL pf_begin_paint(rdpContext* context)
 {
-	WLog_INFO(TAG, "Begin paint");
-	rdpGdi* gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = TRUE;
-	return TRUE;
+	proxyContext* pContext = (proxyContext*)context;
+	rdpContext* sContext = (rdpContext*)pContext->peerContext;
+	return sContext->update->BeginPaint(sContext);
 }
 
 /* This function is called when the library completed composing a new
@@ -67,14 +66,9 @@ static BOOL pf_begin_paint(rdpContext* context)
  */
 static BOOL pf_end_paint(rdpContext* context)
 {
-	WLog_INFO(TAG, "End paint");
-
-	rdpGdi* gdi = context->gdi;
-
-	if (gdi->primary->hdc->hwnd->invalid->null)
-		return TRUE;
-
-	return TRUE;
+	proxyContext* pContext = (proxyContext*)context;
+	rdpContext* sContext = (rdpContext*)pContext->peerContext;
+	return sContext->update->EndPaint(sContext);
 }
 
 /**
@@ -87,6 +81,10 @@ static BOOL pf_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
 	settings = instance->settings;
+	proxyContext* pContext = (proxyContext*)instance->context;
+	rdpContext* cContext = (rdpContext*)pContext->peerContext;
+	/* set color depth after client to proxy negotiation */
+	settings->ColorDepth = cContext->settings->ColorDepth;
 	/* TODO: Consider forwarding this from client. */
 
 	settings->SupportDynamicChannels = TRUE;
@@ -127,6 +125,14 @@ static BOOL pf_pre_connect(freerdp* instance)
 	return TRUE;
 }
 
+
+BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
+{
+	proxyContext* pContext = (proxyContext*)context;
+	rdpContext* sContext = (rdpContext*)pContext->peerContext;
+	return sContext->update->BitmapUpdate(sContext, bitmap);
+}
+
 /**
  * Called after a RDP connection was successfully established.
  * Settings might have changed during negociation of client / server feature
@@ -164,8 +170,9 @@ static BOOL pf_post_connect(freerdp* instance)
 		palette_cache_register_callbacks(instance->update);
 	}
 
-	instance->update->BeginPaint = pf_begin_paint;
-	instance->update->EndPaint = pf_end_paint;
+	update->BeginPaint = pf_begin_paint;
+	update->EndPaint = pf_end_paint;
+	update->BitmapUpdate = pf_client_bitmap_update;
 	return TRUE;
 }
 

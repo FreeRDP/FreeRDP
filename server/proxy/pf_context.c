@@ -60,5 +60,6 @@ rdpContext* proxy_to_server_context_create(rdpContext* peerContext, char* host,
 	context->settings->ServerPort = port;
 	context->settings->Username = username;
 	context->settings->Password = password;
+	context->settings->SoftwareGdi = FALSE;
 	return context;
 }

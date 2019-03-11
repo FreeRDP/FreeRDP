@@ -213,16 +213,12 @@ void pf_server_handle_client_disconnection(freerdp_peer* client)
 	proxyContext* pContext = (proxyContext*)client->context;
 	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
 	rdpContext* sContext = pContext->peerContext;
-
 	WLog_INFO(TAG, "Client %s disconnected; closing connection with server %s", client->hostname,
-	sContext->settings->ServerHostname);
-
+	          sContext->settings->ServerHostname);
 	WLog_INFO(TAG, "connectionClosed event is not set; closing connection to remote server");
-
 	/* Mark connection closed for sContext */
 	SetEvent(pContext->connectionClosed);
 	freerdp_abort_connect(sContext->instance);
-
 	/* Close connection to remote host */
 	WLog_DBG(TAG, "Waiting for proxy's client thread to finish");
 	WaitForSingleObject(cContext->thread, INFINITE);
@@ -257,7 +253,6 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 	return FALSE;
 }
 
-
 /* Event callbacks */
 
 /**
@@ -289,13 +284,11 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 	rdpContext* sContext = proxy_to_server_context_create(client->context,
 	                       host, port, username, password);
 	/* Inject proxy's client context to proxy's context */
-
 	HANDLE connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	pContext->peerContext = sContext;
 	pContext->connectionClosed = connectionClosedEvent;
 	((proxyContext*)sContext)->peerContext = (rdpContext*)pContext;
 	((proxyContext*)sContext)->connectionClosed = connectionClosedEvent;
-
 	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
 
 	pf_peer_rdpgfx_init(cContext);
@@ -308,6 +301,7 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 
 	return TRUE;
 }
+
 
 BOOL pf_peer_activate(freerdp_peer* client)
 {

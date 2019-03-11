@@ -40,54 +40,64 @@
 static BOOL pf_gdi_set_bounds(rdpContext* context,
                               const rdpBounds* bounds)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_opaque_rect(rdpContext* context,
                                const OPAQUE_RECT_ORDER* opaque_rect)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_multi_opaque_rect(rdpContext* context,
                                      const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_line_to(rdpContext* context, const LINE_TO_ORDER* line_to)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_polyline(rdpContext* context,
                             const POLYLINE_ORDER* polyline)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
@@ -95,24 +105,28 @@ static BOOL pf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 static BOOL pf_gdi_polygon_sc(rdpContext* context,
                               const POLYGON_SC_ORDER* polygon_sc)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_polygon_cb(rdpContext* context,
                               POLYGON_CB_ORDER* polygon_cb)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_surface_frame_marker(rdpContext* context,
                                         const SURFACE_FRAME_MARKER* surface_frame_marker)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL pf_gdi_surface_bits(rdpContext* context,
                                 const SURFACE_BITS_COMMAND* cmd)
 {
+	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
