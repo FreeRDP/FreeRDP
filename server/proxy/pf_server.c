@@ -265,6 +265,7 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 BOOL pf_peer_post_connect(freerdp_peer* client)
 {
 	proxyContext* pContext = (proxyContext*) client->context;
+
 	char* host = NULL;
 	DWORD port = 3389; // default port
 

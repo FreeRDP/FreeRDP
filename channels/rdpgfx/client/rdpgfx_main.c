@@ -842,7 +842,7 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		default:
 			return ERROR_INVALID_DATA;
 	}
-
+	
 	cmd.left = 0;
 	cmd.top = 0;
 	cmd.right = 0;
