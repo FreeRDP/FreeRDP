@@ -275,11 +275,8 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	if(!freerdp_client_settings_post_process(client.settings)) {
-		return FALSE
-	}
-	char* username = client->settings->Username;
-	char* password = client->settings->Password;
+	char* username = _strdup(client->settings->Username);
+	char* password = _strdup(client->settings->Password);
 	
 	/* Start a proxy's client in it's own thread */
 	rdpContext* sContext = proxy_to_server_context_create(client->context,
