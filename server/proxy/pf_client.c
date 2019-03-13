@@ -80,7 +80,6 @@ static BOOL pf_end_paint(rdpContext* context)
 static BOOL pf_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings = instance->settings;
-
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 	/**
@@ -96,13 +95,12 @@ static BOOL pf_pre_connect(freerdp* instance)
 	                                 pf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    pf_OnChannelDisconnectedEventHandler);
-
 	/**
 	 * Load all required plugins / channels / libraries specified by current
 	 * settings.
 	 */
-
 	WLog_INFO(TAG, "Loading addins");
+
 	if (!freerdp_client_load_addins(instance->context->channels,
 	                                instance->settings))
 	{
@@ -161,7 +159,6 @@ static BOOL pf_post_connect(freerdp* instance)
 	update->BeginPaint = pf_begin_paint;
 	update->EndPaint = pf_end_paint;
 	update->BitmapUpdate = pf_client_bitmap_update;
-
 	proxyContext* pContext = (proxyContext*)context;
 	rdpContext* cContext = (rdpContext*)pContext->peerContext;
 	proxy_server_reactivate(cContext, context);

@@ -75,7 +75,7 @@ void pf_OnChannelConnectedEventHandler(void* context,
 {
 	WLog_DBG(TAG, "Channel connected: %s", e->name);
 	proxyToServerContext* sContext = (proxyToServerContext*) context;
-	clientToProxyContext* cContext = (clientToProxyContext*) ((proxyContext*) context)->peerContext;
+	clientToProxyContext* cContext = (clientToProxyContext*)((proxyContext*) context)->peerContext;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{

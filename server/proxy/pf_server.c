@@ -202,9 +202,7 @@ int pf_peer_rdpgfx_init(clientToProxyContext* cContext)
 	}
 
 	gfx->rdpcontext = (rdpContext*)cContext;
-
 	gfx->custom = cContext;
-
 	return 1;
 }
 
@@ -265,7 +263,6 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 BOOL pf_peer_post_connect(freerdp_peer* client)
 {
 	proxyContext* pContext = (proxyContext*) client->context;
-
 	char* host = NULL;
 	DWORD port = 3389; // default port
 
@@ -277,12 +274,9 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 
 	char* username = _strdup(client->settings->Username);
 	char* password = _strdup(client->settings->Password);
-	
 	/* Start a proxy's client in it's own thread */
 	rdpContext* sContext = proxy_to_server_context_create(client->settings,
 	                       host, port, username, password);
-
-	
 	/* Inject proxy's client context to proxy's context */
 	HANDLE connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	pContext->peerContext = sContext;
@@ -290,7 +284,6 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 	((proxyContext*)sContext)->peerContext = (rdpContext*)pContext;
 	((proxyContext*)sContext)->connectionClosed = connectionClosedEvent;
 	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
-
 	pf_peer_rdpgfx_init(cContext);
 
 	if (!(cContext->thread = CreateThread(NULL, 0, proxy_client_start, sContext, 0, NULL)))
@@ -298,6 +291,7 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 		WLog_ERR(TAG, "CreateThread failed!");
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -396,7 +390,6 @@ static DWORD WINAPI handle_client(LPVOID arg)
 
 	client->settings->SupportGraphicsPipeline = TRUE;
 	client->settings->SupportDynamicChannels = TRUE;
-
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->RdpKeyFile = _strdup("server.key");
@@ -521,6 +514,7 @@ static DWORD WINAPI handle_client(LPVOID arg)
 	}
 
 fail:
+
 	if (gfxOpened)
 	{
 		(void)context->gfx->Close(context->gfx);

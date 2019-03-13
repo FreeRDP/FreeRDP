@@ -69,7 +69,6 @@ void proxy_context_settings_mirror(rdpSettings* settings, rdpSettings* baseSetti
 	settings->DesktopOrientation = baseSettings->DesktopOrientation;
 	settings->DesktopScaleFactor = baseSettings->DesktopScaleFactor;
 	settings->DeviceScaleFactor = baseSettings->DeviceScaleFactor;
-
 	/* client info */
 	settings->AutoLogonEnabled = baseSettings->AutoLogonEnabled;
 	settings->CompressionEnabled = baseSettings->CompressionEnabled;
@@ -89,8 +88,6 @@ void proxy_context_settings_mirror(rdpSettings* settings, rdpSettings* baseSetti
 	settings->ForceEncryptedCsPdu = baseSettings->ForceEncryptedCsPdu;
 	settings->HiDefRemoteApp = baseSettings->HiDefRemoteApp;
 	settings->CompressionLevel = baseSettings->CompressionLevel;
-
-
 	settings->ColorDepth = baseSettings->ColorDepth;
 	settings->ColorDepth = baseSettings->ColorDepth;
 	settings->PerformanceFlags = baseSettings->PerformanceFlags;
@@ -103,7 +100,6 @@ void proxy_context_settings_mirror(rdpSettings* settings, rdpSettings* baseSetti
 	settings->DisableCursorBlinking = baseSettings->DisableCursorBlinking;
 	settings->AllowDesktopComposition = baseSettings->AllowDesktopComposition;
 	settings->DisableThemes = baseSettings->DisableThemes;
-
 	/* Remote App */
 	settings->RemoteApplicationMode = baseSettings->RemoteApplicationMode;
 	settings->RemoteApplicationName = baseSettings->RemoteApplicationName;
@@ -119,10 +115,7 @@ void proxy_context_settings_mirror(rdpSettings* settings, rdpSettings* baseSetti
 	settings->RemoteAppNumIconCacheEntries = baseSettings->RemoteAppNumIconCacheEntries;
 	settings->RemoteAppLanguageBarSupported = baseSettings->RemoteAppLanguageBarSupported;
 	settings->RemoteWndSupportLevel = baseSettings->RemoteWndSupportLevel;
-	
 	/* GFX */
-
-
 	settings->GfxThinClient = baseSettings->GfxThinClient;
 	settings->GfxSmallCache = baseSettings->GfxSmallCache;
 	settings->GfxProgressive = baseSettings->GfxProgressive;
@@ -141,18 +134,17 @@ rdpContext* proxy_to_server_context_create(rdpSettings* baseSettings, char* host
 	rdpSettings* settings;
 	RdpClientEntry(&clientEntryPoints);
 	context = freerdp_client_context_new(&clientEntryPoints);
+
 	if (!context)
 		return NULL;
 
 	settings = context->settings;
 	proxy_context_settings_mirror(settings, baseSettings);
-	
 	settings->ServerHostname = host;
 	settings->ServerPort = port;
 	settings->Username = username;
 	settings->Password = password;
 	settings->SoftwareGdi = FALSE;
 	settings->RedirectClipboard = FALSE;
-	
 	return context;
 }
