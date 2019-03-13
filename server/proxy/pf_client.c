@@ -79,13 +79,7 @@ static BOOL pf_end_paint(rdpContext* context)
  */
 static BOOL pf_pre_connect(freerdp* instance)
 {
-	rdpSettings* settings;
-	settings = instance->settings;
-	proxyContext* pContext = (proxyContext*)instance->context;
-	rdpContext* cContext = (rdpContext*)pContext->peerContext;
-	/* set color depth after client to proxy negotiation */
-	settings->ColorDepth = cContext->settings->ColorDepth;
-	/* TODO: Consider forwarding this from client. */
+	rdpSettings* settings = instance->settings;
 
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
@@ -167,7 +161,20 @@ static BOOL pf_post_connect(freerdp* instance)
 	update->BeginPaint = pf_begin_paint;
 	update->EndPaint = pf_end_paint;
 	update->BitmapUpdate = pf_client_bitmap_update;
+
+	proxyContext* pContext = (proxyContext*)context;
+	rdpContext* cContext = (rdpContext*)pContext->peerContext;
+	proxy_server_reactivate(cContext, context);
 	return TRUE;
+}
+
+/* re-negociate with original client after negociation between the proxy
+ * and the target has finished.
+ **/
+void proxy_server_reactivate(rdpContext* client, rdpContext* target)
+{
+	proxy_context_settings_mirror(client->settings, target->settings);
+	client->update->DesktopResize(client);
 }
 
 /* This function is called whether a session ends by failure or success.

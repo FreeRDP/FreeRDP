@@ -30,7 +30,7 @@
 static UINT proxy_ResetGraphics(RdpgfxClientContext* context,
                               const RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
-	WLog_INFO(TAG, "ResetGraphics");
+	WLog_DBG(TAG, "ResetGraphics");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->ResetGraphics(server, resetGraphics);
 }
@@ -38,7 +38,7 @@ static UINT proxy_ResetGraphics(RdpgfxClientContext* context,
 static UINT proxy_StartFrame(RdpgfxClientContext* context,
                            const RDPGFX_START_FRAME_PDU* startFrame)
 {
-	WLog_INFO(TAG, "StartFrame");
+	WLog_DBG(TAG, "StartFrame");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->StartFrame(server, startFrame);
 }
@@ -46,7 +46,7 @@ static UINT proxy_StartFrame(RdpgfxClientContext* context,
 static UINT proxy_EndFrame(RdpgfxClientContext* context,
                          const RDPGFX_END_FRAME_PDU* endFrame)
 {
-	WLog_INFO(TAG, "EndFrame");
+	WLog_DBG(TAG, "EndFrame");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->EndFrame(server, endFrame);
 }
@@ -54,7 +54,7 @@ static UINT proxy_EndFrame(RdpgfxClientContext* context,
 static UINT proxy_SurfaceCommand(RdpgfxClientContext* context,
                                const RDPGFX_SURFACE_COMMAND* cmd)
 {
-	WLog_INFO(TAG, "SurfaceCommand");
+	WLog_DBG(TAG, "SurfaceCommand");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->SurfaceCommand(server, cmd);
 }
@@ -62,7 +62,7 @@ static UINT proxy_SurfaceCommand(RdpgfxClientContext* context,
 static UINT proxy_DeleteEncodingContext(RdpgfxClientContext* context,
                                       const RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext)
 {
-	WLog_INFO(TAG, "DeleteEncodingContext");
+	WLog_DBG(TAG, "DeleteEncodingContext");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->DeleteEncodingContext(server, deleteEncodingContext);
 }
@@ -70,7 +70,7 @@ static UINT proxy_DeleteEncodingContext(RdpgfxClientContext* context,
 static UINT proxy_CreateSurface(RdpgfxClientContext* context,
                               const RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
-	WLog_INFO(TAG, "CreateSurface");
+	WLog_DBG(TAG, "CreateSurface");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->CreateSurface(server, createSurface);
 }
@@ -78,7 +78,7 @@ static UINT proxy_CreateSurface(RdpgfxClientContext* context,
 static UINT proxy_DeleteSurface(RdpgfxClientContext* context,
                               const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
-	WLog_INFO(TAG, "DeleteSurface");
+	WLog_DBG(TAG, "DeleteSurface");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->DeleteSurface(server, deleteSurface);
 }
@@ -86,7 +86,7 @@ static UINT proxy_DeleteSurface(RdpgfxClientContext* context,
 static UINT proxy_SolidFill(RdpgfxClientContext* context,
                           const RDPGFX_SOLID_FILL_PDU* solidFill)
 {
-	WLog_INFO(TAG, "SolidFill");
+	WLog_DBG(TAG, "SolidFill");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->SolidFill(server, solidFill);
 }
@@ -94,7 +94,7 @@ static UINT proxy_SolidFill(RdpgfxClientContext* context,
 static UINT proxy_SurfaceToSurface(RdpgfxClientContext* context,
                                  const RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface)
 {
-	WLog_INFO(TAG, "SurfaceToSurface");
+	WLog_DBG(TAG, "SurfaceToSurface");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->SurfaceToSurface(server, surfaceToSurface);
 }
@@ -102,7 +102,7 @@ static UINT proxy_SurfaceToSurface(RdpgfxClientContext* context,
 static UINT proxy_SurfaceToCache(RdpgfxClientContext* context,
                                const RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
 {
-	WLog_INFO(TAG, "SurfaceToCache");
+	WLog_DBG(TAG, "SurfaceToCache");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->SurfaceToCache(server, surfaceToCache);
 }
@@ -110,7 +110,7 @@ static UINT proxy_SurfaceToCache(RdpgfxClientContext* context,
 static UINT proxy_CacheToSurface(RdpgfxClientContext* context,
                                const RDPGFX_CACHE_TO_SURFACE_PDU* cacheToSurface)
 {
-	WLog_INFO(TAG, "CacheToSurface");
+	WLog_DBG(TAG, "CacheToSurface");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->CacheToSurface(server, cacheToSurface);
 }
@@ -118,7 +118,7 @@ static UINT proxy_CacheToSurface(RdpgfxClientContext* context,
 static UINT proxy_CacheImportReply(RdpgfxClientContext* context,
                                  const RDPGFX_CACHE_IMPORT_REPLY_PDU* cacheImportReply)
 {	
-	WLog_INFO(TAG, "CacheImportReply");
+	WLog_DBG(TAG, "CacheImportReply");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->CacheImportReply(server, cacheImportReply);
 }
@@ -126,7 +126,7 @@ static UINT proxy_CacheImportReply(RdpgfxClientContext* context,
 static UINT proxy_EvictCacheEntry(RdpgfxClientContext* context,
                                 const RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry)
 {
-	WLog_INFO(TAG, "EvictCacheEntry");
+	WLog_DBG(TAG, "EvictCacheEntry");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->EvictCacheEntry(server, evictCacheEntry);
 }
@@ -134,7 +134,7 @@ static UINT proxy_EvictCacheEntry(RdpgfxClientContext* context,
 static UINT proxy_MapSurfaceToOutput(RdpgfxClientContext* context,
                                    const RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput)
 {
-	WLog_INFO(TAG, "MapSurfaceToOutput");
+	WLog_DBG(TAG, "MapSurfaceToOutput");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->MapSurfaceToOutput(server, surfaceToOutput);
 }
@@ -142,7 +142,7 @@ static UINT proxy_MapSurfaceToOutput(RdpgfxClientContext* context,
 static UINT proxy_MapSurfaceToWindow(RdpgfxClientContext* context,
                                    const RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow)
 {
-	WLog_INFO(TAG, "MapSurfaceToWindow");
+	WLog_DBG(TAG, "MapSurfaceToWindow");
 	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
 	return server->MapSurfaceToWindow(server, surfaceToWindow);
 }

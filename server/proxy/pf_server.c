@@ -279,8 +279,10 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 	char* password = _strdup(client->settings->Password);
 	
 	/* Start a proxy's client in it's own thread */
-	rdpContext* sContext = proxy_to_server_context_create(client->context,
+	rdpContext* sContext = proxy_to_server_context_create(client->settings,
 	                       host, port, username, password);
+
+	
 	/* Inject proxy's client context to proxy's context */
 	HANDLE connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	pContext->peerContext = sContext;
@@ -296,7 +298,6 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 		WLog_ERR(TAG, "CreateThread failed!");
 		return FALSE;
 	}
-
 	return TRUE;
 }
 
