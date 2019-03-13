@@ -44,7 +44,7 @@ void client_to_proxy_context_free(freerdp_peer* client, clientToProxyContext* co
 	}
 }
 
-void proxy_context_settings_mirror(rdpSettings* settings, rdpSettings* baseSettings)
+void proxy_settings_mirror(rdpSettings* settings, rdpSettings* baseSettings)
 {
 	/* Client/server CORE options */
 	settings->RdpVersion = baseSettings->RdpVersion;
@@ -88,8 +88,6 @@ void proxy_context_settings_mirror(rdpSettings* settings, rdpSettings* baseSetti
 	settings->ForceEncryptedCsPdu = baseSettings->ForceEncryptedCsPdu;
 	settings->HiDefRemoteApp = baseSettings->HiDefRemoteApp;
 	settings->CompressionLevel = baseSettings->CompressionLevel;
-	settings->ColorDepth = baseSettings->ColorDepth;
-	settings->ColorDepth = baseSettings->ColorDepth;
 	settings->PerformanceFlags = baseSettings->PerformanceFlags;
 	settings->AllowFontSmoothing = baseSettings->AllowFontSmoothing;
 	settings->DisableWallpaper = baseSettings->DisableWallpaper;
@@ -139,7 +137,7 @@ rdpContext* proxy_to_server_context_create(rdpSettings* baseSettings, char* host
 		return NULL;
 
 	settings = context->settings;
-	proxy_context_settings_mirror(settings, baseSettings);
+	proxy_settings_mirror(settings, baseSettings);
 	settings->ServerHostname = host;
 	settings->ServerPort = port;
 	settings->Username = username;

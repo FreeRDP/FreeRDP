@@ -170,7 +170,7 @@ static BOOL pf_post_connect(freerdp* instance)
  **/
 void proxy_server_reactivate(rdpContext* client, rdpContext* target)
 {
-	proxy_context_settings_mirror(client->settings, target->settings);
+	proxy_settings_mirror(client->settings, target->settings);
 	client->update->DesktopResize(client);
 }
 
@@ -224,7 +224,7 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 
 	if (!freerdp_connect(instance))
 	{
-		WLog_ERR(TAG, "connection failure: %s", freerdp_get_last_error_string(instance->context));
+		WLog_ERR(TAG, "connection failure");
 		return 0;
 	}
 
