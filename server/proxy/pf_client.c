@@ -218,9 +218,6 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	DWORD status;
 	HANDLE handles[64];
 
-	char* argv[] = {"./pfreerdp", "/gfx", NULL};
-	freerdp_client_settings_parse_command_line(instance->settings, 2, argv, FALSE);
-
 	if (!freerdp_connect(instance))
 	{
 		WLog_ERR(TAG, "connection failure: %s", freerdp_get_last_error_string(instance->context));
