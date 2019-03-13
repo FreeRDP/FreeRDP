@@ -106,7 +106,7 @@ XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] =
 	{ "BKSL", RDP_SCANCODE_OEM_5 },	// evdev 51
 	{ "BKSP", RDP_SCANCODE_BACKSPACE },	// evdev 22
 	// { "BRK",  RDP_SCANCODE_ },	// evdev 419
-	{ "CAPS", RDP_SCANCODE_CAPSLOCK },	// evdev 66
+	{ "CAPS", RDP_SCANCODE_LCONTROL },	// evdev 66
 	{ "COMP", RDP_SCANCODE_APPS },	// evdev 135
 	// { "COPY", RDP_SCANCODE_ },	// evdev 141
 	// { "CUT",  RDP_SCANCODE_ },	// evdev 145
