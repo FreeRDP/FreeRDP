@@ -138,6 +138,8 @@ rdpContext* proxy_to_server_context_create(rdpSettings* baseSettings, char* host
 
 	settings = context->settings;
 	proxy_settings_mirror(settings, baseSettings);
+	settings->Username = _strdup(baseSettings->Username);
+	settings->Password = _strdup(baseSettings->Password);
 	settings->ServerHostname = host;
 	settings->ServerPort = port;
 	settings->Username = username;

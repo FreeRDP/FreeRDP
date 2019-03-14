@@ -514,6 +514,7 @@ static DWORD WINAPI handle_client(LPVOID arg)
 	}
 
 fail:
+
 	if (gfxOpened)
 	{
 		(void)context->gfx->Close(context->gfx);

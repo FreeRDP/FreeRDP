@@ -51,6 +51,15 @@
 
 #define TAG PROXY_TAG("client")
 
+/* re-negociate with original client after negociation between the proxy
+ * and the target has finished.
+ **/
+void proxy_server_reactivate(rdpContext* client, rdpContext* target)
+{
+	proxy_settings_mirror(client->settings, target->settings);
+	client->update->DesktopResize(client);
+}
+
 /* This function is called whenever a new frame starts.
  * It can be used to reset invalidated areas. */
 static BOOL pf_begin_paint(rdpContext* context)
@@ -165,14 +174,6 @@ static BOOL pf_post_connect(freerdp* instance)
 	return TRUE;
 }
 
-/* re-negociate with original client after negociation between the proxy
- * and the target has finished.
- **/
-void proxy_server_reactivate(rdpContext* client, rdpContext* target)
-{
-	proxy_settings_mirror(client->settings, target->settings);
-	client->update->DesktopResize(client);
-}
 
 /* This function is called whether a session ends by failure or success.
  * Clean up everything allocated by pre_connect and post_connect.
