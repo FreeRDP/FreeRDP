@@ -128,6 +128,13 @@ BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
 	return sContext->update->BitmapUpdate(sContext, bitmap);
 }
 
+BOOL pf_client_desktop_resize(rdpContext* context)
+{
+	proxyContext* pContext = (proxyContext*)context;
+	rdpContext* peer = pContext->peerContext;
+	return peer->update->DesktopResize(peer);
+}
+
 /**
  * Called after a RDP connection was successfully established.
  * Settings might have changed during negociation of client / server feature
@@ -168,6 +175,8 @@ static BOOL pf_post_connect(freerdp* instance)
 	update->BeginPaint = pf_begin_paint;
 	update->EndPaint = pf_end_paint;
 	update->BitmapUpdate = pf_client_bitmap_update;
+	update->DesktopResize = pf_client_desktop_resize;
+
 	proxyContext* pContext = (proxyContext*)context;
 	rdpContext* cContext = (rdpContext*)pContext->peerContext;
 	proxy_server_reactivate(cContext, context);
