@@ -148,7 +148,6 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 		capsSet->version = RDPGFX_CAPVERSION_105;
 		capsSet->length = 0x4;
 		capsSet->flags = caps10Flags;
-
 		/* TODO: Until  RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU and
 		 * RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU are not implemented do not
 		 * announce the following version */
@@ -625,23 +624,28 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	gfx->TotalDecodedFrames++;
 	ack.frameId = pdu.frameId;
 	ack.totalFramesDecoded = gfx->TotalDecodedFrames;
+	BOOL sendAck = TRUE;
+	IFCALLRET(context->PreFrameAck, sendAck, context, &ack);
 
-	if (gfx->suspendFrameAcks)
+	if (sendAck)
 	{
-		ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
+		if (gfx->suspendFrameAcks)
+		{
+			ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
 
-		if (gfx->TotalDecodedFrames == 1)
+			if (gfx->TotalDecodedFrames == 1)
+				if ((error = rdpgfx_send_frame_acknowledge_pdu(callback, &ack)))
+					WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
+					           error);
+		}
+		else
+		{
+			ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
+
 			if ((error = rdpgfx_send_frame_acknowledge_pdu(callback, &ack)))
-				WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
+				WLog_Print(gfx->log, WLOG_DEBUG, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
 				           error);
-	}
-	else
-	{
-		ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
-
-		if ((error = rdpgfx_send_frame_acknowledge_pdu(callback, &ack)))
-			WLog_Print(gfx->log, WLOG_DEBUG, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
-			           error);
+		}
 	}
 
 	switch (gfx->ConnectionCaps.version)
