@@ -1194,7 +1194,6 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 	RDPGFX_CAPSET* capsSets;
 	RDPGFX_CAPS_ADVERTISE_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
-	UINT32 capsDataLength;
 
 	if (Stream_GetRemainingLength(s) < 2)
 	{
@@ -1221,9 +1220,9 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 	{
 		RDPGFX_CAPSET* capsSet = &(pdu.capsSets[index]);
 		Stream_Read_UINT32(s, capsSet->version); /* version (4 bytes) */
-		Stream_Read_UINT32(s, capsDataLength); /* capsDataLength (4 bytes) */
+		Stream_Read_UINT32(s, capsSet->length); /* capsDataLength (4 bytes) */
 
-		if (capsDataLength >= 4)
+		if (capsSet->length >= 4)
 			Stream_Peek_UINT32(s, capsSet->flags); /* capsData (4 bytes) */
 
 		Stream_Seek(s, capsSet->length);
