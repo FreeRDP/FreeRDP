@@ -599,6 +599,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
+	BOOL sendAck = TRUE;
 
 	if (Stream_GetRemainingLength(s) < RDPGFX_END_FRAME_PDU_SIZE)
 	{
@@ -624,7 +625,6 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	gfx->TotalDecodedFrames++;
 	ack.frameId = pdu.frameId;
 	ack.totalFramesDecoded = gfx->TotalDecodedFrames;
-	BOOL sendAck = TRUE;
 	IFCALLRET(context->PreFrameAck, sendAck, context, &ack);
 
 	if (sendAck)
