@@ -19,5 +19,5 @@
 winpr_module_add(handle.c handle.h nonehandle.c nonehandle.h)
 	
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
-	winpr_library_add(rt)
+	winpr_library_add_private(rt)
 endif()

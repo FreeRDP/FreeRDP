@@ -63,21 +63,21 @@ winpr_module_add(${${MODULE_PREFIX}_CREDSSP_SRCS}
 
 if(OPENSSL_FOUND)
 	winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
-	winpr_library_add(${OPENSSL_LIBRARIES})
+	winpr_library_add_private(${OPENSSL_LIBRARIES})
 endif()
 
 if(MBEDTLS_FOUND)
 	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
-	winpr_library_add(${MBEDTLS_LIBRARIES})
+	winpr_library_add_private(${MBEDTLS_LIBRARIES})
 endif()
 
 if(GSS_FOUND)
 	winpr_include_directory_add(${GSS_INCLUDE_DIR})
-	winpr_library_add(${GSS_LIBRARIES})
+	winpr_library_add_private(${GSS_LIBRARIES})
 endif()
 
 if(WIN32)
-	winpr_library_add(ws2_32)
+	winpr_library_add_public(ws2_32)
 endif()
 
 if(BUILD_TESTING)

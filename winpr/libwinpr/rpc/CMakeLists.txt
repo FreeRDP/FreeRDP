@@ -40,8 +40,8 @@ winpr_module_add(
 
 winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
 
-winpr_library_add(${OPENSSL_LIBRARIES})
+winpr_library_add_private(${OPENSSL_LIBRARIES})
 
 if(WIN32)
-	winpr_library_add(ws2_32 rpcrt4)
+	winpr_library_add_public(ws2_32 rpcrt4)
 endif()
