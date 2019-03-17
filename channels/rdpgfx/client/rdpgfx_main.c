@@ -643,7 +643,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 			ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
 
 			if ((error = rdpgfx_send_frame_acknowledge_pdu(callback, &ack)))
-				WLog_Print(gfx->log, WLOG_DEBUG, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
+				WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
 				           error);
 		}
 	}
@@ -667,7 +667,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 				qoe.timeDiffEDR = 1;
 
 				if ((error = rdpgfx_send_qoe_frame_acknowledge_pdu(callback, &qoe)))
-					WLog_Print(gfx->log, WLOG_DEBUG, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
+					WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
 					           error);
 			}
 
