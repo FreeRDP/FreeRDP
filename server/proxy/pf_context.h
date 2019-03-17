@@ -62,10 +62,7 @@ struct client_to_proxy_context
 };
 typedef struct client_to_proxy_context clientToProxyContext;
 
-BOOL client_to_proxy_context_new(freerdp_peer* client,
-                                 clientToProxyContext* context);
-void client_to_proxy_context_free(freerdp_peer* client,
-                                  clientToProxyContext* context);
+BOOL init_client_to_proxy_context(freerdp_peer* client);
 
 /**
  * Context used for the proxy's connection to the target server.
