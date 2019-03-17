@@ -361,6 +361,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 
 	client->settings->SupportGraphicsPipeline = TRUE;
 	client->settings->SupportDynamicChannels = TRUE;
+	/* TODO: Read path from config and default to /etc */
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->RdpKeyFile = _strdup("server.key");
@@ -378,21 +379,18 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	client->settings->TlsSecurity = TRUE;
 	client->settings->NlaSecurity = FALSE;
 	client->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
-	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_HIGH; */
-	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
-	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
 	client->settings->RefreshRect = TRUE;
-	client->PostConnect = pf_peer_post_connect;
-	client->Activate = pf_peer_activate;
-	client->input->SynchronizeEvent = pf_peer_synchronize_event;
-	client->input->KeyboardEvent = pf_peer_keyboard_event;
-	client->input->UnicodeKeyboardEvent = pf_peer_unicode_keyboard_event;
-	client->input->MouseEvent = pf_peer_mouse_event;
-	client->input->ExtendedMouseEvent = pf_peer_extended_mouse_event;
-	client->update->RefreshRect = pf_peer_refresh_rect;
-	client->update->SuppressOutput = pf_peer_suppress_output;
+	client->PostConnect = pf_server_post_connect;
+	client->Activate = pf_server_activate;
+	client->input->SynchronizeEvent = pf_server_synchronize_event;
+	client->input->KeyboardEvent = pf_server_keyboard_event;
+	client->input->UnicodeKeyboardEvent = pf_server_unicode_keyboard_event;
+	client->input->MouseEvent = pf_server_mouse_event;
+	client->input->ExtendedMouseEvent = pf_server_extended_mouse_event;
+	client->update->RefreshRect = pf_server_refresh_rect;
+	client->update->SuppressOutput = pf_server_suppress_output;
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
 	WLog_INFO(TAG, "Client connected: %s",
