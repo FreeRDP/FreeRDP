@@ -454,20 +454,20 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 
 			case DRDYNVC_STATE_READY:
 
-				/* Init RDPGFX dynamic channel */
-				if (client->settings->SupportGraphicsPipeline && context->gfx &&
-				    !gfxOpened)
+				/* Initialize RDPGFX dynamic channel */
+				if (!gfxOpened && client->settings->SupportGraphicsPipeline &&
+				    context->gfx)
 				{
-					context->gfx->CapsAdvertise = shadow_client_rdpgfx_caps_advertise;
-
 					if (!context->gfx->Open(context->gfx))
 					{
 						WLog_WARN(TAG, "Failed to open GraphicsPipeline");
 						client->settings->SupportGraphicsPipeline = FALSE;
+						break;
 					}
 
 					gfxOpened = TRUE;
-					WLog_INFO(TAG, "Gfx Pipeline Opened");
+					context->gfx->CapsAdvertise = pf_server_rdpgfx_caps_advertise;
+					WLog_DBG(TAG, "Gfx Pipeline Opened");
 				}
 
 				break;
