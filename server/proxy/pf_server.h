@@ -22,4 +22,4 @@
 
 #define TAG PROXY_TAG("server")
 
-int proxy_server_start(char* host, long port, BOOL localOnly);
+int pf_server_start(char* host, long port, BOOL localOnly);

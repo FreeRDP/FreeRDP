@@ -48,11 +48,12 @@
 #define TAG PROXY_TAG("server")
 
 /**
- * Function description
+ * Confirms client capabilities on caps advertised received.
+ * The server
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
+static UINT pf_server_rdpgfx_caps_advertise(RdpgfxServerContext* context,
         RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
 {
 	UINT16 index;
@@ -229,7 +230,6 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 }
 
 /* Event callbacks */
-
 /**
  * This callback is called when the entire connection sequence is done (as described in
  * MS-RDPBCGR section 1.3)
@@ -237,7 +237,7 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
  * The server may start sending graphics output and receiving keyboard/mouse input after this
  * callback returns.
  */
-BOOL pf_peer_post_connect(freerdp_peer* client)
+BOOL pf_server_post_connect(freerdp_peer* client)
 {
 	proxyContext* pContext = (proxyContext*) client->context;
 	char* host = NULL;
@@ -259,9 +259,9 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 	((proxyContext*)sContext)->peerContext = (rdpContext*)pContext;
 	((proxyContext*)sContext)->connectionClosed = connectionClosedEvent;
 	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
-	pf_peer_rdpgfx_init(cContext);
+	pf_server_rdpgfx_init(cContext);
 
-	if (!(cContext->thread = CreateThread(NULL, 0, proxy_client_start, sContext, 0, NULL)))
+	if (!(cContext->thread = CreateThread(NULL, 0, pf_client_start, sContext, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		return FALSE;
@@ -270,46 +270,45 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 	return TRUE;
 }
 
-
-BOOL pf_peer_activate(freerdp_peer* client)
+BOOL pf_server_activate(freerdp_peer* client)
 {
-	client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
+	client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
 	return TRUE;
 }
 
-BOOL pf_peer_synchronize_event(rdpInput* input, UINT32 flags)
+BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	WLog_DBG(TAG, "Client sent a synchronize event (flags:0x%"PRIX32")", flags);
 	return TRUE;
 }
 
-BOOL pf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	proxyContext* context = (proxyContext*)input->context;
 	return freerdp_input_send_keyboard_event(context->peerContext->input, flags, code);
 }
 
-BOOL pf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	proxyContext* context = (proxyContext*)input->context;
 	return freerdp_input_send_unicode_keyboard_event(context->peerContext->input, flags, code);
 }
 
-BOOL pf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	proxyContext* context = (proxyContext*)input->context;
 	return freerdp_input_send_mouse_event(context->peerContext->input, flags, x, y);
 }
 
-BOOL pf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
-                                  UINT16 y)
+BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
+                                    UINT16 y)
 {
 	proxyContext* context = (proxyContext*)input->context;
 	return freerdp_input_send_extended_mouse_event(context->peerContext->input, flags, x, y);
 }
 
-static BOOL pf_peer_refresh_rect(rdpContext* context, BYTE count,
-                                 const RECTANGLE_16* areas)
+static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
+                                   const RECTANGLE_16* areas)
 {
 	BYTE i;
 	WLog_DBG(TAG, "Client requested to refresh:");
@@ -323,8 +322,8 @@ static BOOL pf_peer_refresh_rect(rdpContext* context, BYTE count,
 	return TRUE;
 }
 
-static BOOL pf_peer_suppress_output(rdpContext* context, BYTE allow,
-                                    const RECTANGLE_16* area)
+static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
+                                      const RECTANGLE_16* area)
 {
 	if (allow > 0)
 	{
@@ -340,24 +339,16 @@ static BOOL pf_peer_suppress_output(rdpContext* context, BYTE allow,
 	return TRUE;
 }
 
-static BOOL init_client_context(freerdp_peer* client)
-{
-	client->ContextSize = sizeof(clientToProxyContext);
-	client->ContextNew = (psPeerContextNew) client_to_proxy_context_new;
-	client->ContextFree = (psPeerContextFree) client_to_proxy_context_free;
-	return freerdp_peer_context_new(client);
-}
-
 /**
  * Handles an incoming client connection, to be run in it's own thread.
  *
  * arg is a pointer to a freerdp_peer representing the client.
  */
-static DWORD WINAPI handle_client(LPVOID arg)
+static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 {
 	freerdp_peer* client = (freerdp_peer*) arg;
 
-	if (!init_client_context(client))
+	if (!init_client_to_proxy_context(client))
 	{
 		freerdp_peer_free(client);
 		return 0;
@@ -508,18 +499,19 @@ fail:
 	return 0;
 }
 
-static BOOL client_connected(freerdp_listener* listener, freerdp_peer* client)
+static BOOL pf_server_client_connected(freerdp_listener* listener,
+                                       freerdp_peer* client)
 {
 	HANDLE hThread;
 
-	if (!(hThread = CreateThread(NULL, 0, handle_client, (void*) client, 0, NULL)))
+	if (!(hThread = CreateThread(NULL, 0, pf_server_handle_client, (void*) client, 0, NULL)))
 		return FALSE;
 
 	CloseHandle(hThread);
 	return TRUE;
 }
 
-void server_mainloop(freerdp_listener* listener)
+void pf_server_mainloop(freerdp_listener* listener)
 {
 	HANDLE eventHandles[32];
 	DWORD eventCount;
@@ -553,7 +545,7 @@ void server_mainloop(freerdp_listener* listener)
 	listener->Close(listener);
 }
 
-int proxy_server_start(char* host, long port, BOOL localOnly)
+int pf_server_start(char* host, long port, BOOL localOnly)
 {
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
@@ -564,7 +556,7 @@ int proxy_server_start(char* host, long port, BOOL localOnly)
 		return -1;
 	}
 
-	listener->PeerAccepted = client_connected;
+	listener->PeerAccepted = pf_server_client_connected;
 	WSADATA wsaData;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
@@ -597,7 +589,7 @@ int proxy_server_start(char* host, long port, BOOL localOnly)
 
 	if (success)
 	{
-		server_mainloop(listener);
+		pf_server_mainloop(listener);
 	}
 
 	free(localSockPath);
