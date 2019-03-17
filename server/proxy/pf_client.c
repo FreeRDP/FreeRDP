@@ -56,7 +56,7 @@
  **/
 void proxy_server_reactivate(rdpContext* client, rdpContext* target)
 {
-	proxy_settings_mirror(client->settings, target->settings);
+	pf_common_copy_settings(client->settings, target->settings);
 	client->update->DesktopResize(client);
 }
 
@@ -176,7 +176,6 @@ static BOOL pf_post_connect(freerdp* instance)
 	update->EndPaint = pf_end_paint;
 	update->BitmapUpdate = pf_client_bitmap_update;
 	update->DesktopResize = pf_client_desktop_resize;
-
 	proxyContext* pContext = (proxyContext*)context;
 	rdpContext* cContext = (rdpContext*)pContext->peerContext;
 	proxy_server_reactivate(cContext, context);
