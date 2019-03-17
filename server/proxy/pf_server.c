@@ -73,13 +73,8 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-#ifndef WITH_GFX_H264
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
-				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
-#else
 				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
 				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
-#endif
 			}
 
 			return context->CapsConfirm(context, &pdu);
@@ -100,13 +95,8 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-#ifndef WITH_GFX_H264
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
-				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
-#else
 				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
 				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
-#endif
 			}
 
 			return context->CapsConfirm(context, &pdu);
@@ -127,12 +117,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-#ifndef WITH_GFX_H264
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
-				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
-#else
 				settings->GfxAVC444 = settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
-#endif
 			}
 
 			return context->CapsConfirm(context, &pdu);
@@ -155,12 +140,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				settings->GfxAVC444v2 = settings->GfxAVC444 = FALSE;
 				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-#ifndef WITH_GFX_H264
-				settings->GfxH264 = FALSE;
-				pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_AVC420_ENABLED;
-#else
 				settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
-#endif
 			}
 
 			return context->CapsConfirm(context, &pdu);
@@ -191,19 +171,18 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	return CHANNEL_RC_UNSUPPORTED_VERSION;
 }
 
-int pf_peer_rdpgfx_init(clientToProxyContext* cContext)
+BOOL pf_server_rdpgfx_init(clientToProxyContext* cContext)
 {
 	RdpgfxServerContext* gfx;
 	gfx = cContext->gfx = rdpgfx_server_context_new(cContext->vcm);
 
 	if (!gfx)
 	{
-		return 0;
+		return FALSE;
 	}
 
 	gfx->rdpcontext = (rdpContext*)cContext;
-	gfx->custom = cContext;
-	return 1;
+	return TRUE;
 }
 
 void pf_server_handle_client_disconnection(freerdp_peer* client)
