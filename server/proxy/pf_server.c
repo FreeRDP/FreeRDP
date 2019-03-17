@@ -221,8 +221,6 @@ void pf_server_handle_client_disconnection(freerdp_peer* client)
 	WLog_DBG(TAG, "Waiting for proxy's client thread to finish");
 	WaitForSingleObject(cContext->thread, INFINITE);
 	CloseHandle(cContext->thread);
-	freerdp_client_stop(sContext);
-	freerdp_client_context_free(sContext);
 }
 
 static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
@@ -523,6 +521,9 @@ fail:
 		pf_server_handle_client_disconnection(client);
 	}
 
+	freerdp_client_stop(pContext->peerContext);
+	freerdp_client_context_free(pContext->peerContext);
+	
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
