@@ -25,6 +25,6 @@
 #include <winpr/wtypes.h>
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
-DWORD WINAPI proxy_client_start(LPVOID arg);
+DWORD WINAPI pf_client_start(LPVOID arg);
 
 #endif /* FREERDP_SERVER_PROXY_PFCLIENT_H */

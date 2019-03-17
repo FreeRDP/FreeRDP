@@ -51,29 +51,33 @@
 
 #define TAG PROXY_TAG("client")
 
-/* re-negociate with original client after negociation between the proxy
+/**
+ * Re-negociate with original client after negociation between the proxy
  * and the target has finished.
- **/
+ */
 void proxy_server_reactivate(rdpContext* client, rdpContext* target)
 {
 	pf_common_copy_settings(client->settings, target->settings);
 	client->update->DesktopResize(client);
 }
 
-/* This function is called whenever a new frame starts.
- * It can be used to reset invalidated areas. */
-static BOOL pf_begin_paint(rdpContext* context)
+/**
+ * This function is called whenever a new frame starts.
+ * It can be used to reset invalidated areas.
+ */
+static BOOL pf_client_begin_paint(rdpContext* context)
 {
 	proxyContext* pContext = (proxyContext*)context;
 	rdpContext* sContext = (rdpContext*)pContext->peerContext;
 	return sContext->update->BeginPaint(sContext);
 }
 
-/* This function is called when the library completed composing a new
+/**
+ * This function is called when the library completed composing a new
  * frame. Read out the changed areas and blit them to your output device.
  * The image buffer will have the format specified by gdi_init
  */
-static BOOL pf_end_paint(rdpContext* context)
+static BOOL pf_client_end_paint(rdpContext* context)
 {
 	proxyContext* pContext = (proxyContext*)context;
 	rdpContext* sContext = (rdpContext*)pContext->peerContext;
@@ -86,7 +90,7 @@ static BOOL pf_end_paint(rdpContext* context)
  * TODO: Take client to proxy settings and use channel whitelist to filter out
  * unwanted channels.
  */
-static BOOL pf_pre_connect(freerdp* instance)
+static BOOL pf_client_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings = instance->settings;
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
@@ -144,7 +148,7 @@ BOOL pf_client_desktop_resize(rdpContext* context)
  * If required, register pointer callbacks to change the local mouse cursor
  * when hovering over the RDP window
  */
-static BOOL pf_post_connect(freerdp* instance)
+static BOOL pf_client_post_connect(freerdp* instance)
 {
 	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
 		return FALSE;
@@ -172,8 +176,8 @@ static BOOL pf_post_connect(freerdp* instance)
 		palette_cache_register_callbacks(instance->update);
 	}
 
-	update->BeginPaint = pf_begin_paint;
-	update->EndPaint = pf_end_paint;
+	update->BeginPaint = pf_client_begin_paint;
+	update->EndPaint = pf_client_end_paint;
 	update->BitmapUpdate = pf_client_bitmap_update;
 	update->DesktopResize = pf_client_desktop_resize;
 	proxyContext* pContext = (proxyContext*)context;
@@ -186,7 +190,7 @@ static BOOL pf_post_connect(freerdp* instance)
 /* This function is called whether a session ends by failure or success.
  * Clean up everything allocated by pre_connect and post_connect.
  */
-static void pf_post_disconnect(freerdp* instance)
+static void pf_client_post_disconnect(freerdp* instance)
 {
 	proxyToServerContext* context;
 
@@ -356,14 +360,14 @@ DWORD pf_client_verify_changed_certificate_ex(freerdp* instance,
 	return 1;
 }
 
-static BOOL pf_client_new(freerdp* instance, rdpContext* context)
+static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 {
 	if (!instance || !context)
 		return FALSE;
 
-	instance->PreConnect = pf_pre_connect;
-	instance->PostConnect = pf_post_connect;
-	instance->PostDisconnect = pf_post_disconnect;
+	instance->PreConnect = pf_client_pre_connect;
+	instance->PostConnect = pf_client_post_connect;
+	instance->PostDisconnect = pf_client_post_disconnect;
 	instance->VerifyCertificateEx = pf_client_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = pf_client_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = pf_logon_error_info;
@@ -371,14 +375,14 @@ static BOOL pf_client_new(freerdp* instance, rdpContext* context)
 }
 
 
-static void pf_client_free(freerdp* instance, rdpContext* context) {}
+static void pf_client_client_free(freerdp* instance, rdpContext* context) {}
 
-static int pf_client_start(rdpContext* context)
+static int pf_client_client_start(rdpContext* context)
 {
 	return 0;
 }
 
-static int pf_client_stop(rdpContext* context)
+static int pf_client_client_stop(rdpContext* context)
 {
 	return 0;
 }
@@ -392,17 +396,17 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->GlobalUninit = pf_client_global_uninit;
 	pEntryPoints->ContextSize = sizeof(proxyToServerContext);
 	/* Client init and finish */
-	pEntryPoints->ClientNew = pf_client_new;
-	pEntryPoints->ClientFree = pf_client_free;
-	pEntryPoints->ClientStart = pf_client_start;
-	pEntryPoints->ClientStop = pf_client_stop;
+	pEntryPoints->ClientNew = pf_client_client_new;
+	pEntryPoints->ClientFree = pf_client_client_free;
+	pEntryPoints->ClientStart = pf_client_client_start;
+	pEntryPoints->ClientStop = pf_client_client_stop;
 	return 0;
 }
 
 /**
  * Starts running a client connection towards target server.
  */
-DWORD WINAPI proxy_client_start(LPVOID arg)
+DWORD WINAPI pf_client_start(LPVOID arg)
 {
 	rdpContext* context = (rdpContext*)arg;
 
