@@ -45,8 +45,7 @@ void client_to_proxy_context_free(freerdp_peer* client, clientToProxyContext* co
 	}
 }
 
-rdpContext* proxy_to_server_context_create(rdpSettings* baseSettings, char* host,
-        DWORD port, char* username, char* password)
+rdpContext* proxy_to_server_context_create(rdpSettings* clientSettings, char* host, DWORD port)
 {
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	rdpContext* context;
@@ -58,13 +57,11 @@ rdpContext* proxy_to_server_context_create(rdpSettings* baseSettings, char* host
 		return NULL;
 
 	settings = context->settings;
-	proxy_settings_mirror(settings, baseSettings);
-	settings->Username = _strdup(baseSettings->Username);
-	settings->Password = _strdup(baseSettings->Password);
+	pf_common_copy_settings(settings, clientSettings);
+	settings->Username = _strdup(clientSettings->Username);
+	settings->Password = _strdup(clientSettings->Password);
 	settings->ServerHostname = host;
 	settings->ServerPort = port;
-	settings->Username = username;
-	settings->Password = password;
 	settings->SoftwareGdi = FALSE;
 	settings->RedirectClipboard = FALSE;
 	return context;

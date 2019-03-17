@@ -272,11 +272,9 @@ BOOL pf_peer_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	char* username = _strdup(client->settings->Username);
-	char* password = _strdup(client->settings->Password);
 	/* Start a proxy's client in it's own thread */
 	rdpContext* sContext = proxy_to_server_context_create(client->settings,
-	                       host, port, username, password);
+	                       host, port);
 	/* Inject proxy's client context to proxy's context */
 	HANDLE connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	pContext->peerContext = sContext;
