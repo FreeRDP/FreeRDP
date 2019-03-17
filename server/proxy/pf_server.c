@@ -346,7 +346,12 @@ static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
  */
 static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 {
+	HANDLE eventHandles[32];
+	HANDLE ChannelEvent;
+	BOOL gfxOpened = FALSE;
 	freerdp_peer* client = (freerdp_peer*) arg;
+	clientToProxyContext* context = (clientToProxyContext*) client->context;
+	proxyContext* pContext = (proxyContext*)context;
 
 	if (!init_client_to_proxy_context(client))
 	{
@@ -368,6 +373,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		return 0;
 	}
 
+	/* TODO: Read security settings from config */
 	client->settings->RdpSecurity = TRUE;
 	client->settings->TlsSecurity = TRUE;
 	client->settings->NlaSecurity = FALSE;
@@ -389,16 +395,10 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	client->update->SuppressOutput = pf_peer_suppress_output;
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
-	clientToProxyContext* context;
-	context = (clientToProxyContext*) client->context;
-	proxyContext* pContext = (proxyContext*)context;
 	WLog_INFO(TAG, "Client connected: %s",
 	          client->local ? "(local)" : client->hostname);
 	/* Main client event handling loop */
-	HANDLE eventHandles[32];
-	HANDLE ChannelEvent;
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(context->vcm);
-	BOOL gfxOpened = FALSE;
 
 	while (1)
 	{
@@ -445,7 +445,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 			/* Dynamic channel status may have been changed after processing */
 			case DRDYNVC_STATE_NONE:
 
-				/* Call this routine to Initialize drdynvc channel */
+				/* Initialize drdynvc channel */
 				if (!WTSVirtualChannelManagerCheckFileDescriptor(context->vcm))
 				{
 					WLog_ERR(TAG, "Failed to initialize drdynvc channel");
