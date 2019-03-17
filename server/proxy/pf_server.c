@@ -523,7 +523,6 @@ fail:
 
 	freerdp_client_stop(pContext->peerContext);
 	freerdp_client_context_free(pContext->peerContext);
-	
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);

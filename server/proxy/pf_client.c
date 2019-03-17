@@ -318,9 +318,9 @@ static int pf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
  *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
  */
 DWORD pf_client_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
-                                       const char* common_name,
-                                       const char* subject, const char* issuer,
-                                       const char* fingerprint, DWORD flags)
+                                      const char* common_name,
+                                      const char* subject, const char* issuer,
+                                      const char* fingerprint, DWORD flags)
 {
 	/* TODO: Add trust level to proxy configurable settings */
 	return 1;
