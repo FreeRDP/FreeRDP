@@ -24,7 +24,7 @@
 
 /* Proxy context initialization callback */
 BOOL client_to_proxy_context_new(freerdp_peer* client,
-        clientToProxyContext* context)
+                                 clientToProxyContext* context)
 {
 	context->vcm = WTSOpenServerA((LPSTR) client->context);
 
@@ -39,7 +39,7 @@ fail_open_server:
 
 /* Proxy context free callback */
 void client_to_proxy_context_free(freerdp_peer* client,
-        clientToProxyContext* context)
+                                  clientToProxyContext* context)
 {
 	if (context)
 	{
