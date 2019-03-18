@@ -74,8 +74,8 @@ static UINT pf_server_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
-				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 =
+				                            !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 			}
 
 			return context->CapsConfirm(context, &pdu);
@@ -96,8 +96,8 @@ static UINT pf_server_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
-				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 =
+				                            !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 			}
 
 			return context->CapsConfirm(context, &pdu);
@@ -118,7 +118,8 @@ static UINT pf_server_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-				settings->GfxAVC444 = settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+				settings->GfxAVC444 = settings->GfxH264 = !(flags &
+				                      RDPGFX_CAPS_FLAG_AVC_DISABLED);
 			}
 
 			return context->CapsConfirm(context, &pdu);
@@ -191,9 +192,8 @@ void pf_server_handle_client_disconnection(freerdp_peer* client)
 	proxyContext* pContext = (proxyContext*)client->context;
 	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
 	rdpContext* sContext = pContext->peerContext;
-	WLog_INFO(TAG, "Client %s disconnected; closing connection with server %s", client->hostname,
-	          sContext->settings->ServerHostname);
-	WLog_INFO(TAG, "connectionClosed event is not set; closing connection to remote server");
+	WLog_INFO(TAG, "Client %s disconnected; closing connection with server %s",
+	          client->hostname, sContext->settings->ServerHostname);
 	/* Mark connection closed for sContext */
 	SetEvent(pContext->connectionClosed);
 	freerdp_abort_connect(sContext->instance);
@@ -208,12 +208,13 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 {
 #define TARGET_MAX	(100)
 	rdpNego* nego = client->context->rdp->nego;
+	char* colon;
 
 	if (nego->RoutingToken &&
 	    nego->RoutingTokenLength > 0 && nego->RoutingTokenLength < TARGET_MAX)
 	{
 		*target = _strdup((char*)nego->RoutingToken);
-		char* colon = strchr(*target, ':');
+		colon = strchr(*target, ':');
 
 		if (colon)
 		{
@@ -231,15 +232,18 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 
 /* Event callbacks */
 /**
- * This callback is called when the entire connection sequence is done (as described in
- * MS-RDPBCGR section 1.3)
+ * This callback is called when the entire connection sequence is done (as
+ * described in MS-RDPBCGR section 1.3)
  *
- * The server may start sending graphics output and receiving keyboard/mouse input after this
- * callback returns.
+ * The server may start sending graphics output and receiving keyboard/mouse
+ * input after this callback returns.
  */
 BOOL pf_server_post_connect(freerdp_peer* client)
 {
 	proxyContext* pContext = (proxyContext*) client->context;
+	rdpContext* sContext;
+	clientToProxyContext* cContext;
+	HANDLE connectionClosedEvent;
 	char* host = NULL;
 	DWORD port = 3389; // default port
 
@@ -250,18 +254,18 @@ BOOL pf_server_post_connect(freerdp_peer* client)
 	}
 
 	/* Start a proxy's client in it's own thread */
-	rdpContext* sContext = proxy_to_server_context_create(client->settings,
-	                       host, port);
+	sContext = proxy_to_server_context_create(client->settings, host, port);
 	/* Inject proxy's client context to proxy's context */
-	HANDLE connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	pContext->peerContext = sContext;
 	pContext->connectionClosed = connectionClosedEvent;
 	((proxyContext*)sContext)->peerContext = (rdpContext*)pContext;
 	((proxyContext*)sContext)->connectionClosed = connectionClosedEvent;
-	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
+	cContext = (clientToProxyContext*)client->context;
 	pf_server_rdpgfx_init(cContext);
 
-	if (!(cContext->thread = CreateThread(NULL, 0, pf_client_start, sContext, 0, NULL)))
+	if (!(cContext->thread = CreateThread(NULL, 0, pf_client_start, sContext, 0,
+	                                      NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		return FALSE;
@@ -285,13 +289,15 @@ BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	proxyContext* context = (proxyContext*)input->context;
-	return freerdp_input_send_keyboard_event(context->peerContext->input, flags, code);
+	return freerdp_input_send_keyboard_event(context->peerContext->input, flags,
+	        code);
 }
 
 BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	proxyContext* context = (proxyContext*)input->context;
-	return freerdp_input_send_unicode_keyboard_event(context->peerContext->input, flags, code);
+	return freerdp_input_send_unicode_keyboard_event(context->peerContext->input,
+	        flags, code);
 }
 
 BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
@@ -304,7 +310,8 @@ BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
                                     UINT16 y)
 {
 	proxyContext* context = (proxyContext*)input->context;
-	return freerdp_input_send_extended_mouse_event(context->peerContext->input, flags, x, y);
+	return freerdp_input_send_extended_mouse_event(context->peerContext->input,
+	        flags, x, y);
 }
 
 static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
@@ -315,8 +322,8 @@ static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
 
 	for (i = 0; i < count; i++)
 	{
-		WLog_DBG(TAG, "  (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16")", areas[i].left, areas[i].top,
-		         areas[i].right, areas[i].bottom);
+		WLog_DBG(TAG, "  (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16")",
+		         areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
 	}
 
 	return TRUE;
@@ -327,9 +334,8 @@ static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
 {
 	if (allow > 0)
 	{
-		WLog_DBG(TAG, "Client restore output (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16").", area->left,
-		         area->top,
-		         area->right, area->bottom);
+		WLog_DBG(TAG, "Client restore output (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16").",
+		         area->left, area->top, area->right, area->bottom);
 	}
 	else
 	{
@@ -352,6 +358,9 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	freerdp_peer* client = (freerdp_peer*) arg;
 	clientToProxyContext* context = (clientToProxyContext*) client->context;
 	proxyContext* pContext = (proxyContext*)context;
+	DWORD status;
+	DWORD eventCount;
+	DWORD tmp;
 
 	if (!init_client_to_proxy_context(client))
 	{
@@ -400,9 +409,10 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 
 	while (1)
 	{
-		DWORD eventCount = 0;
+		eventCount = 0;
 		{
-			DWORD tmp = client->GetEventHandles(client, &eventHandles[eventCount], 32 - eventCount);
+			tmp = client->GetEventHandles(client, &eventHandles[eventCount],
+			                              32 - eventCount);
 
 			if (tmp == 0)
 			{
@@ -414,11 +424,11 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		}
 		eventHandles[eventCount++] = ChannelEvent;
 		eventHandles[eventCount++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);
-		DWORD status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
+		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
 		{
-			/* If the wait failed because the connection closed by the proxy, that's ok */
+			/* Ignore wait fails that are caused by legitimate client disconnections */
 			if (pf_common_connection_aborted_by_peer(pContext))
 				break;
 
@@ -502,7 +512,8 @@ static BOOL pf_server_client_connected(freerdp_listener* listener,
 {
 	HANDLE hThread;
 
-	if (!(hThread = CreateThread(NULL, 0, pf_server_handle_client, (void*) client, 0, NULL)))
+	if (!(hThread = CreateThread(NULL, 0, pf_server_handle_client,
+	                             (void*) client, 0, NULL)))
 		return FALSE;
 
 	CloseHandle(hThread);
@@ -545,17 +556,18 @@ void pf_server_mainloop(freerdp_listener* listener)
 
 int pf_server_start(char* host, long port, BOOL localOnly)
 {
-	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
-	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
+	char* localSockPath;
+	char localSockName[MAX_PATH];
+	BOOL success;
+	WSADATA wsaData;
 	freerdp_listener* listener = freerdp_listener_new();
 
 	if (!listener)
-	{
 		return -1;
-	}
 
+	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	listener->PeerAccepted = pf_server_client_connected;
-	WSADATA wsaData;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
@@ -564,8 +576,6 @@ int pf_server_start(char* host, long port, BOOL localOnly)
 	}
 
 	/* Determine filepath for local socket */
-	char* localSockPath;
-	char localSockName[MAX_PATH];
 	sprintf_s(localSockName, sizeof(localSockName), "proxy.%ld", port);
 	localSockPath = GetKnownSubPath(KNOWN_PATH_TEMP, localSockName);
 
@@ -577,7 +587,7 @@ int pf_server_start(char* host, long port, BOOL localOnly)
 	}
 
 	/* Listen to local connections */
-	BOOL success = listener->OpenLocal(listener, localSockPath);
+	success = listener->OpenLocal(listener, localSockPath);
 
 	/* Listen to remote connections */
 	if (!localOnly)
