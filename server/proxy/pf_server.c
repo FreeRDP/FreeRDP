@@ -44,6 +44,7 @@
 #include "pf_log.h"
 #include "pf_client.h"
 #include "pf_context.h"
+#include "pf_input.h"
 
 #define TAG PROXY_TAG("server")
 
@@ -280,41 +281,6 @@ BOOL pf_server_activate(freerdp_peer* client)
 	return TRUE;
 }
 
-BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
-{
-	proxyContext* context = (proxyContext*)input->context;
-	return freerdp_input_send_synchronize_event(context->peerContext->input,
-	        flags);
-}
-
-BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
-{
-	proxyContext* context = (proxyContext*)input->context;
-	return freerdp_input_send_keyboard_event(context->peerContext->input, flags,
-	        code);
-}
-
-BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
-{
-	proxyContext* context = (proxyContext*)input->context;
-	return freerdp_input_send_unicode_keyboard_event(context->peerContext->input,
-	        flags, code);
-}
-
-BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
-{
-	proxyContext* context = (proxyContext*)input->context;
-	return freerdp_input_send_mouse_event(context->peerContext->input, flags, x, y);
-}
-
-BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
-                                    UINT16 y)
-{
-	proxyContext* context = (proxyContext*)input->context;
-	return freerdp_input_send_extended_mouse_event(context->peerContext->input,
-	        flags, x, y);
-}
-
 static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
                                    const RECTANGLE_16* areas)
 {
@@ -379,13 +345,9 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	client->settings->RefreshRect = TRUE;
 	client->PostConnect = pf_server_post_connect;
 	client->Activate = pf_server_activate;
-	client->input->SynchronizeEvent = pf_server_synchronize_event;
-	client->input->KeyboardEvent = pf_server_keyboard_event;
-	client->input->UnicodeKeyboardEvent = pf_server_unicode_keyboard_event;
-	client->input->MouseEvent = pf_server_mouse_event;
-	client->input->ExtendedMouseEvent = pf_server_extended_mouse_event;
 	client->update->RefreshRect = pf_server_refresh_rect;
 	client->update->SuppressOutput = pf_server_suppress_output;
+	register_input_callbacks(client->input);
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
 	WLog_INFO(TAG, "Client connected: %s",

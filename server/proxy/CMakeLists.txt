@@ -27,6 +27,8 @@ set(${MODULE_PREFIX}_SRCS
   pf_channels.h
   pf_client.c
   pf_client.h
+  pf_input.c
+  pf_input.h
   pf_rdpgfx.c
   pf_rdpgfx.h
   pf_server.c
