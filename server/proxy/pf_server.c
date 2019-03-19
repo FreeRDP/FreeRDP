@@ -282,8 +282,9 @@ BOOL pf_server_activate(freerdp_peer* client)
 
 BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	WLog_DBG(TAG, "Client sent a synchronize event (flags:0x%"PRIX32")", flags);
-	return TRUE;
+	proxyContext* context = (proxyContext*)input->context;
+	return freerdp_input_send_synchronize_event(context->peerContext->input,
+            flags);
 }
 
 BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
