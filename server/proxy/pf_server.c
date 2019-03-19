@@ -284,7 +284,7 @@ BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	proxyContext* context = (proxyContext*)input->context;
 	return freerdp_input_send_synchronize_event(context->peerContext->input,
-            flags);
+	        flags);
 }
 
 BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -318,16 +318,8 @@ BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
 static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
                                    const RECTANGLE_16* areas)
 {
-	BYTE i;
-	WLog_DBG(TAG, "Client requested to refresh:");
-
-	for (i = 0; i < count; i++)
-	{
-		WLog_DBG(TAG, "  (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16")",
-		         areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
-	}
-
-	return TRUE;
+	proxyContext* pContext = (proxyContext*) context;
+	pContext->peerContext->update->RefreshRect(pContext->peerContext, count, areas);
 }
 
 static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
