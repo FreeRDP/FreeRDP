@@ -45,6 +45,7 @@
 #include "pf_client.h"
 #include "pf_context.h"
 #include "pf_input.h"
+#include "pf_update.h"
 
 #define TAG PROXY_TAG("server")
 
@@ -281,20 +282,6 @@ BOOL pf_server_activate(freerdp_peer* client)
 	return TRUE;
 }
 
-static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
-                                   const RECTANGLE_16* areas)
-{
-	proxyContext* pContext = (proxyContext*) context;
-	pContext->peerContext->update->RefreshRect(pContext->peerContext, count, areas);
-}
-
-static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
-                                      const RECTANGLE_16* area)
-{
-	proxyContext* pContext = (proxyContext*) context;
-	pContext->peerContext->update->SuppressOutput(pContext->peerContext, allow, area);
-}
-
 /**
  * Handles an incoming client connection, to be run in it's own thread.
  *
@@ -345,9 +332,8 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	client->settings->RefreshRect = TRUE;
 	client->PostConnect = pf_server_post_connect;
 	client->Activate = pf_server_activate;
-	client->update->RefreshRect = pf_server_refresh_rect;
-	client->update->SuppressOutput = pf_server_suppress_output;
 	register_input_callbacks(client->input);
+	register_update_callbacks(client->update);
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
 	WLog_INFO(TAG, "Client connected: %s",
