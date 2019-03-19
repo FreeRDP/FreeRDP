@@ -792,7 +792,21 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	cmd.surfaceId = pdu.surfaceId;
 	cmd.codecId = pdu.codecId;
 	cmd.contextId = pdu.codecContextId;
-	cmd.format = pdu.pixelFormat;
+
+	switch (pdu.pixelFormat)
+	{
+		case GFX_PIXEL_FORMAT_XRGB_8888:
+			cmd.format = PIXEL_FORMAT_BGRX32;
+			break;
+
+		case GFX_PIXEL_FORMAT_ARGB_8888:
+			cmd.format = PIXEL_FORMAT_BGRA32;
+			break;
+
+		default:
+			return ERROR_INVALID_DATA;
+	}
+
 	cmd.left = 0;
 	cmd.top = 0;
 	cmd.right = 0;
