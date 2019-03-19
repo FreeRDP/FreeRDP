@@ -355,12 +355,12 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	HANDLE eventHandles[32];
 	HANDLE ChannelEvent;
 	BOOL gfxOpened = FALSE;
-	freerdp_peer* client = (freerdp_peer*) arg;
-	clientToProxyContext* context = (clientToProxyContext*) client->context;
-	proxyContext* pContext = (proxyContext*)context;
-	DWORD status;
 	DWORD eventCount;
 	DWORD tmp;
+	DWORD status;
+	freerdp_peer* client = (freerdp_peer*) arg;
+	clientToProxyContext* context;
+	proxyContext* pContext;
 
 	if (!init_client_to_proxy_context(client))
 	{
@@ -368,6 +368,8 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		return 0;
 	}
 
+	context = (clientToProxyContext*) client->context;
+	pContext = (proxyContext*)context;
 	client->settings->SupportGraphicsPipeline = TRUE;
 	client->settings->SupportDynamicChannels = TRUE;
 	/* TODO: Read path from config and default to /etc */
