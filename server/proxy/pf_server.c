@@ -325,17 +325,8 @@ static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
 static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
                                       const RECTANGLE_16* area)
 {
-	if (allow > 0)
-	{
-		WLog_DBG(TAG, "Client restore output (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16").",
-		         area->left, area->top, area->right, area->bottom);
-	}
-	else
-	{
-		WLog_DBG(TAG, "Client minimized and suppress output.");
-	}
-
-	return TRUE;
+	proxyContext* pContext = (proxyContext*) context;
+	pContext->peerContext->update->SuppressOutput(pContext->peerContext, allow, area);
 }
 
 /**
