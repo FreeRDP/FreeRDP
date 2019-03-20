@@ -803,7 +803,7 @@ static BOOL update_end_paint(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
-		WLog_ERR(TAG,  "sending %"PRIu16" orders", update->numberOrders);
+		WLog_DBG(TAG,  "sending %"PRIu16" orders", update->numberOrders);
 		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s,
 		                         FALSE);
 	}
