@@ -1294,12 +1294,13 @@ BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingToke
 
 	free(nego->RoutingToken);
 	nego->RoutingTokenLength = RoutingTokenLength;
-	nego->RoutingToken = (BYTE*) malloc(nego->RoutingTokenLength);
+	nego->RoutingToken = (BYTE*) malloc(nego->RoutingTokenLength + 1);
 
 	if (!nego->RoutingToken)
 		return FALSE;
 
 	CopyMemory(nego->RoutingToken, RoutingToken, nego->RoutingTokenLength);
+	nego->RoutingToken[nego->RoutingTokenLength] = 0;
 	return TRUE;
 }
 
