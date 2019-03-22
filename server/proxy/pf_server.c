@@ -215,7 +215,10 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 	if (nego->RoutingToken &&
 	    nego->RoutingTokenLength > 0 && nego->RoutingTokenLength < TARGET_MAX)
 	{
-		*target = _strdup((char*)nego->RoutingToken);
+		*target = malloc(nego->RoutingTokenLength + 1);
+		CopyMemory(*target, (char*)nego->RoutingToken, nego->RoutingTokenLength);
+		*(*target + nego->RoutingTokenLength) = '\0';
+
 		colon = strchr(*target, ':');
 
 		if (colon)
