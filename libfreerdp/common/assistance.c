@@ -28,6 +28,7 @@
 #include <winpr/crypto.h>
 #include <winpr/print.h>
 #include <winpr/windows.h>
+#include <winpr/ssl.h>
 
 #include <freerdp/log.h>
 #include <freerdp/client/file.h>
@@ -1223,6 +1224,7 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 
 rdpAssistanceFile* freerdp_assistance_file_new(void)
 {
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	return (rdpAssistanceFile*) calloc(1, sizeof(rdpAssistanceFile));
 }
 
