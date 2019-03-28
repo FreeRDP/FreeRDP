@@ -82,6 +82,16 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 	}
 }
 
+- (void) applicationWillBecomeActive:(NSNotification*)notification
+{
+	[mrdpView resume];
+}
+
+- (void) applicationWillResignActive:(NSNotification*)notification
+{
+	[mrdpView pause];
+}
+
 - (void) applicationWillTerminate:(NSNotification*)notification
 {
 	NSLog(@"Stopping...\n");
