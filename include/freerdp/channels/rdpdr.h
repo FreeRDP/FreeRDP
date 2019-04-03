@@ -316,6 +316,8 @@ typedef struct _DEVICE DEVICE;
 typedef struct _IRP IRP;
 typedef struct _DEVMAN DEVMAN;
 
+typedef UINT(*pcCustomComponentRequest)(DEVICE* device, UINT16 component, UINT16 packetId,
+                                        wStream* s);
 typedef UINT(*pcIRPRequest)(DEVICE* device, IRP* irp);
 typedef UINT(*pcInitDevice)(DEVICE* device);
 typedef UINT(*pcFreeDevice)(DEVICE* device);
@@ -328,6 +330,7 @@ struct _DEVICE
 	const char* name;
 	wStream* data;
 
+	pcCustomComponentRequest CustomComponentRequest;
 	pcIRPRequest IRPRequest;
 	pcInitDevice Init;
 	pcFreeDevice Free;

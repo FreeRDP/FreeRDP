@@ -164,7 +164,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 	Stream_Read_UINT8(s, paletteCount);
 	bitmapDataOffset = 1 + (paletteCount * 3);
 
-	if (paletteCount > 127)
+	if ((paletteCount > 127) || (paletteCount < 1))
 	{
 		WLog_ERR(TAG, "paletteCount %"PRIu8"", paletteCount);
 		return FALSE;

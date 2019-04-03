@@ -58,7 +58,8 @@
             "--disable-libsystemd",
             "--enable-pic",
             "--disable-libusb",
-            "--enable-shared"
+            "--enable-shared",
+            "--with-systemdsystemunitdir=/app/lib/systemd/"
         ],
         "sources": [
             {

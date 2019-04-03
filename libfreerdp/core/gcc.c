@@ -1786,7 +1786,7 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs)
 {
-	int i;
+	UINT32 i;
 	UINT16 length;
 	UINT32 left, top, right, bottom, flags;
 	INT32 baseX = 0, baseY = 0;

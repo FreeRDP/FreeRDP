@@ -127,7 +127,7 @@ struct drdynvc_plugin
 	DRDYNVC_STATE state;
 	DrdynvcClientContext* context;
 
-	int version;
+	UINT16 version;
 	int PriorityCharge0;
 	int PriorityCharge1;
 	int PriorityCharge2;

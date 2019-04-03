@@ -62,8 +62,8 @@ FREERDP_LOCAL void rdp_write_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_client_info(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s);
-FREERDP_LOCAL BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type,
-        void* data);
+FREERDP_LOCAL BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data);
+FREERDP_LOCAL BOOL rdp_send_server_status_info(rdpContext* context, UINT32 status);
 
 FREERDP_LOCAL char* rdp_info_package_flags_description(UINT32 flags);
 

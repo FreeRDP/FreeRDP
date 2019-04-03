@@ -5083,7 +5083,7 @@ TRIO_ARGS1((ref),
 /*************************************************************************
  * trio_get_argument [public]
  */
-TRIO_CONST trio_pointer_t
+trio_pointer_t
 trio_get_argument
 TRIO_ARGS1((ref),
 	   trio_pointer_t ref)
@@ -6584,6 +6584,9 @@ TRIO_ARGS4((self, target, flags, width),
 	  infinity = ((start == 1) && (doubleString[0] == '-'))
 	    ? trio_ninf()
 	    : trio_pinf();
+	    if (!target)
+	        return FALSE;
+
 	  if (flags & FLAGS_LONGDOUBLE)
 	    {
 	      *((trio_long_double_t *)target) = infinity;
@@ -6600,6 +6603,9 @@ TRIO_ARGS4((self, target, flags, width),
 	}
       if (trio_equal(doubleString, NAN_UPPER))
 	{
+	    if (!target)
+	        return FALSE;
+
 	  /* NaN must not have a preceeding + nor - */
 	  if (flags & FLAGS_LONGDOUBLE)
 	    {
@@ -6696,14 +6702,23 @@ TRIO_ARGS4((self, target, flags, width),
   
   if (flags & FLAGS_LONGDOUBLE)
     {
+            if (!target)
+                return FALSE;
+
       *((trio_long_double_t *)target) = trio_to_long_double(doubleString, NULL);
     }
   else if (flags & FLAGS_LONG)
     {
+            if (!target)
+                return FALSE;
+
       *((double *)target) = trio_to_double(doubleString, NULL);
     }
   else
     {
+        if (!target)
+            return FALSE;
+
       *((float *)target) = trio_to_float(doubleString, NULL);
     }
   return TRUE;

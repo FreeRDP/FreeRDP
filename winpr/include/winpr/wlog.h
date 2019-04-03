@@ -110,9 +110,12 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
                                    DWORD line,
                                    const char* file, const char* function, va_list args);
 
+WINPR_API DWORD WLog_GetLogLevel(wLog* log);
+WINPR_API BOOL WLog_IsLevelActive(wLog* _log, DWORD _log_level);
+
 #define WLog_Print(_log, _log_level, ...) \
 	do { \
-		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
+		if (WLog_IsLevelActive(_log, _log_level)) { \
 			WLog_PrintMessage(_log, WLOG_MESSAGE_TEXT, _log_level, \
 			                  __LINE__, __FILE__, __FUNCTION__, __VA_ARGS__ ); \
 		} \
@@ -120,7 +123,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
 
 #define WLog_PrintVA(_log, _log_level, _args) \
 	do { \
-		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
+		if (WLog_IsLevelActive(_log, _log_level)) { \
 			WLog_PrintMessageVA(_log, WLOG_MESSAGE_TEXT, _log_level, \
 			                    __LINE__, __FILE__, __FUNCTION__, _args ); \
 		} \
@@ -128,7 +131,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
 
 #define WLog_Data(_log, _log_level, ...) \
 	do { \
-		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
+		if (WLog_IsLevelActive(_log, _log_level)) { \
 			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, \
 			                  __LINE__, __FILE__, __FUNCTION__, __VA_ARGS__ ); \
 		} \
@@ -136,7 +139,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
 
 #define WLog_Image(_log, _log_level, ...) \
 	do { \
-		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
+		if (WLog_IsLevelActive(_log, _log_level)) { \
 			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, \
 			                  __LINE__, __FILE__, __FUNCTION__, __VA_ARGS__ ); \
 		} \
@@ -144,7 +147,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
 
 #define WLog_Packet(_log, _log_level, ...) \
 	do { \
-		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
+		if (WLog_IsLevelActive(_log, _log_level)) { \
 			WLog_PrintMessage(_log, WLOG_MESSAGE_PACKET, _log_level, \
 			                  __LINE__, __FILE__, __FUNCTION__, __VA_ARGS__ ); \
 		} \
@@ -158,15 +161,9 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
 #define WLog_ERR(tag, ...) WLog_Print(WLog_Get(tag), WLOG_ERROR, __VA_ARGS__)
 #define WLog_FATAL(tag, ...) WLog_Print(WLog_Get(tag), WLOG_FATAL, __VA_ARGS__)
 
-WINPR_API DWORD WLog_GetLogLevel(wLog* log);
 WINPR_API BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel);
 WINPR_API BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level);
 WINPR_API BOOL WLog_AddStringLogFilters(LPCSTR filter);
-
-static INLINE BOOL WLog_IsLevelActive(wLog* _log, DWORD _log_level)
-{
-	return _log ? _log_level >= WLog_GetLogLevel(_log) : FALSE;
-}
 
 WINPR_API BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType);
 WINPR_API wLogAppender* WLog_GetLogAppender(wLog* log);

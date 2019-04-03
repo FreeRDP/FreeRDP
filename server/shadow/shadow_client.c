@@ -630,7 +630,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	{
 		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
 
-		if (currentCaps->version == RDPGFX_CAPVERSION_103)
+		if (currentCaps->version == RDPGFX_CAPVERSION_106)
 		{
 			RDPGFX_CAPSET caps = *currentCaps;
 			RDPGFX_CAPS_CONFIRM_PDU pdu;
@@ -640,6 +640,75 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_AVC_THINCLIENT);
+#ifndef WITH_GFX_H264
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
+				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
+#endif
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_105)
+		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_AVC_THINCLIENT);
+#ifndef WITH_GFX_H264
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
+				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
+#endif
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_104)
+		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_AVC_THINCLIENT);
+#ifndef WITH_GFX_H264
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+#else
+				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
+				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
+#endif
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+
+		if (currentCaps->version == RDPGFX_CAPVERSION_103)
+		{
+			RDPGFX_CAPSET caps = *currentCaps;
+			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			pdu.capsSet = &caps;
+
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_AVC_THINCLIENT);
 #ifndef WITH_GFX_H264
 				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
 				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;

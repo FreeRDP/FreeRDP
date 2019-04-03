@@ -6,7 +6,8 @@
     "--disable-logging",
     "--disable-introspection",
     "--disable-keymap",
-    "--disable-mtd_probe"
+    "--disable-mtd_probe",
+    "--with-systemdsystemunitdir=/app/lib/systemd/"
   ],
   "cleanup": [
     "/include",
@@ -14,6 +15,7 @@
     "/libexec",
     "/sbin",
     "/lib/pkgconfig",
+    "/lib/systemd",
     "/man",
     "/share/aclocal",
     "/share/doc",

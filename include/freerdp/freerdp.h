@@ -479,6 +479,9 @@ FREERDP_API const char* freerdp_get_logon_error_info_data(UINT32 data);
 FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context,
         BOOL resetCount);
 
+FREERDP_API BOOL freerdp_nla_impersonate(rdpContext* context);
+FREERDP_API BOOL freerdp_nla_revert_to_self(rdpContext* context);
+
 FREERDP_API void clearChannelError(rdpContext* context);
 FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
 FREERDP_API UINT getChannelError(rdpContext* context);

@@ -29,8 +29,8 @@ typedef struct rdp_assistance_file rdpAssistanceFile;
 extern "C" {
 #endif
 
-FREERDP_API BYTE* freerdp_assistance_hex_string_to_bin(const char* str, size_t* size);
-FREERDP_API char* freerdp_assistance_bin_to_hex_string(const BYTE* data, size_t size);
+FREERDP_API BYTE* freerdp_assistance_hex_string_to_bin(const void* str, size_t* size);
+FREERDP_API char* freerdp_assistance_bin_to_hex_string(const void* data, size_t size);
 
 FREERDP_API char* freerdp_assistance_generate_pass_stub(DWORD flags);
 FREERDP_API char* freerdp_assistance_construct_expert_blob(const char* name, const char* pass);

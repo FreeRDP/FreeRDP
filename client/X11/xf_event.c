@@ -215,7 +215,7 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, XEvent* event)
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
 
-	if (!xfc->actionScriptExists || !xfc->xevents)
+	if (!xfc->actionScriptExists || !xfc->xevents || !xfc->window)
 		return FALSE;
 
 	if (event->type > LASTEvent)
@@ -485,8 +485,13 @@ static BOOL xf_event_FocusIn(xfContext* xfc, XEvent* event, BOOL app)
 	xfc->focused = TRUE;
 
 	if (xfc->mouse_active && !app)
+	{
+		if (!xfc->window)
+			return FALSE;
+
 		XGrabKeyboard(xfc->display, xfc->window->handle, TRUE, GrabModeAsync,
 		              GrabModeAsync, CurrentTime);
+	}
 
 	if (app)
 	{
@@ -564,6 +569,9 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (!app)
 	{
+		if (!xfc->window)
+			return FALSE;
+
 		xfc->mouse_active = TRUE;
 
 		if (xfc->fullscreen)
@@ -603,10 +611,14 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	Window childWindow;
 	xfAppWindow* appWindow;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings;
+	settings = xfc->context.settings;
 
 	if (!app)
 	{
+		if (!xfc->window)
+			return FALSE;
+
 		if (xfc->window->left != event->xconfigure.x)
 			xfc->window->left = event->xconfigure.x;
 

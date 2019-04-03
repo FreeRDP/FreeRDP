@@ -68,8 +68,8 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 
 	devman->plugin = (void*) rdpdr;
 	devman->id_sequence = 1;
-
 	devman->devices = ListDictionary_New(TRUE);
+
 	if (!devman->devices)
 	{
 		WLog_INFO(TAG,  "ListDictionary_New failed!");
@@ -78,7 +78,6 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 	}
 
 	ListDictionary_ValueObject(devman->devices)->fnObjectFree = devman_device_free;
-
 	return devman;
 }
 
@@ -114,26 +113,57 @@ static UINT devman_register_device(DEVMAN* devman, DEVICE* device)
 		return ERROR_INVALID_PARAMETER;
 
 	device->id = devman->id_sequence++;
-	key = (void*) (size_t) device->id;
+	key = (void*)(size_t) device->id;
 
 	if (!ListDictionary_Add(devman->devices, key, device))
 	{
 		WLog_INFO(TAG,  "ListDictionary_Add failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
+
 	return CHANNEL_RC_OK;
 }
 
 DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
 {
 	DEVICE* device = NULL;
-	void* key = (void*) (size_t) id;
+	void* key = (void*)(size_t) id;
 
 	if (!devman)
 		return NULL;
 
 	device = (DEVICE*) ListDictionary_GetItemValue(devman->devices, key);
+	return device;
+}
 
+DEVICE* devman_get_device_by_type(DEVMAN* devman, UINT32 type)
+{
+	DEVICE* device = NULL;
+	ULONG_PTR* keys;
+	int count, x;
+
+	if (!devman)
+		return NULL;
+
+	ListDictionary_Lock(devman->devices);
+	count = ListDictionary_GetKeys(devman->devices, &keys);
+
+	for (x = 0; x < count; x++)
+	{
+		DEVICE* cur = (DEVICE*) ListDictionary_GetItemValue(devman->devices, (void*)keys[x]);
+
+		if (!cur)
+			continue;
+
+		if (cur->type != type)
+			continue;
+
+		device = cur;
+		break;
+	}
+
+	free(keys);
+	ListDictionary_Unlock(devman->devices);
 	return device;
 }
 
@@ -178,7 +208,9 @@ UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext
 		WLog_INFO(TAG,  "Loading device service %s [%s] (static)", ServiceName, device->Name);
 	else
 		WLog_INFO(TAG,  "Loading device service %s (static)", ServiceName);
-	entry = (PDEVICE_SERVICE_ENTRY) freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
+
+	entry = (PDEVICE_SERVICE_ENTRY) freerdp_load_channel_addin_entry(ServiceName, NULL,
+	        "DeviceServiceEntry", 0);
 
 	if (!entry)
 	{
@@ -190,6 +222,5 @@ UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext
 	ep.RegisterDevice = devman_register_device;
 	ep.device = device;
 	ep.rdpcontext = rdpcontext;
-
 	return entry(&ep);
 }

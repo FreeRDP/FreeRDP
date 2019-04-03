@@ -83,7 +83,7 @@ int TestSynchMultipleThreads(int argc, char *argv[])
 
 	ev = WaitForMultipleObjects(THREADS, threads, FALSE, INFINITE);
 
-	if ((ev < WAIT_OBJECT_0) || (ev > (WAIT_OBJECT_0 + THREADS)))
+	if (ev > (WAIT_OBJECT_0 + THREADS))
 	{
 		printf("WaitForMultipleObjects INFINITE failed\n");
 		rc = 6;

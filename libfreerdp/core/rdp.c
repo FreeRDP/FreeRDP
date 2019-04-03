@@ -765,6 +765,10 @@ static BOOL rdp_recv_server_status_info_pdu(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	Stream_Read_UINT32(s, statusCode); /* statusCode (4 bytes) */
+
+	if (rdp->update->ServerStatusInfo)
+		return rdp->update->ServerStatusInfo(rdp->context, statusCode);
+
 	return TRUE;
 }
 
@@ -1521,7 +1525,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				ActivatedEventArgs activatedEvent;
 				rdpContext* context = rdp->context;
 				rdp_client_transition_to_state(rdp, CONNECTION_STATE_ACTIVE);
-				EventArgsInit(&activatedEvent, "xfreerdp");
+				EventArgsInit(&activatedEvent, "libfreerdp");
 				activatedEvent.firstActivation = !rdp->deactivation_reactivation;
 				PubSub_OnActivated(context->pubSub, context, &activatedEvent);
 				return 2;

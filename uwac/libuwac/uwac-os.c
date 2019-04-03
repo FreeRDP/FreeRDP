@@ -48,6 +48,7 @@
 
 #include "../config.h"
 #include "uwac-os.h"
+#include "uwac-utils.h"
 
 static int set_cloexec_or_close(int fd)
 {
@@ -212,11 +213,11 @@ static int create_tmpfile_cloexec(char* tmpname)
 int uwac_create_anonymous_file(off_t size)
 {
 	static const char template[] = "/weston-shared-XXXXXX";
-	const char* path;
+	size_t length;
 	char* name;
+	const char* path;
 	int fd;
 	int ret;
-	size_t length;
 	path = getenv("XDG_RUNTIME_DIR");
 
 	if (!path)
@@ -225,15 +226,20 @@ int uwac_create_anonymous_file(off_t size)
 		return -1;
 	}
 
-	length = strlen(path) + sizeof(template);
-	name = malloc(length);
+	fd = open(path, O_TMPFILE | O_RDWR | O_EXCL, 0600);
 
-	if (!name)
-		return -1;
+	if (fd < 0)
+	{
+		length = strlen(path) + sizeof(template);
+		name = xmalloc(length);
 
-	snprintf(name, length, "%s%s", path, template);
-	fd = create_tmpfile_cloexec(name);
-	free(name);
+		if (!name)
+			return -1;
+
+		snprintf(name, length, "%s%s", path, template);
+		fd = create_tmpfile_cloexec(name);
+		free(name);
+	}
 
 	if (fd < 0)
 		return -1;

@@ -413,7 +413,7 @@ BOOL WINAPI Win32_WTSVirtualChannelRead_Static(WTSAPI_CHANNEL* pChannel, DWORD d
 
 			CopyMemory(lpBuffer, pChannel->chunk, numBytesToRead);
 			*lpNumberOfBytesTransferred += numBytesToRead;
-			((BYTE*) lpBuffer) += numBytesToRead;
+			lpBuffer = (BYTE*)lpBuffer + numBytesToRead;
 			nNumberOfBytesToRead -= numBytesToRead;
 			pChannel->readOffset += numBytesToRead;
 
@@ -524,7 +524,7 @@ BOOL WINAPI Win32_WTSVirtualChannelRead_Dynamic(WTSAPI_CHANNEL* pChannel, DWORD 
 
 				CopyMemory(lpBuffer, pChannel->header, numBytesRead);
 				*lpNumberOfBytesTransferred += numBytesRead;
-				((BYTE*) lpBuffer) += numBytesRead;
+				lpBuffer = (BYTE*)lpBuffer + numBytesRead;
 				nNumberOfBytesToRead -= numBytesRead;
 			}
 

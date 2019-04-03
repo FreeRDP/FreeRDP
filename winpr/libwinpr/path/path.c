@@ -726,7 +726,7 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 		if (cchPath < (lstrlenW(&pszPath[4]) + 1))
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
-		if (IsCharAlpha(pszPath[4]) && (pszPath[5] == ':')) /* like C: */
+		if (IsCharAlphaW(pszPath[4]) && (pszPath[5] == L':')) /* like C: */
 		{
 			wmemmove_s(pszPath, cchPath, &pszPath[4], cchPath - 4);
 			/* since the passed pszPath must not necessarily be null terminated

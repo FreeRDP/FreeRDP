@@ -52,6 +52,17 @@ static void output_handle_geometry(void *data, struct wl_output *wl_output, int 
 	if (!output->model) {
 		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY, "%s: unable to strdup model\n", __FUNCTION__));
 	}
+
+	UwacEvent* event = UwacDisplayNewEvent(output->display, UWAC_EVENT_OUTPUT_GEOMETRY);
+	event->output_geometry.output = output;
+	event->output_geometry.x = x;
+	event->output_geometry.y = y;
+	event->output_geometry.physical_width = physical_width;
+	event->output_geometry.physical_height = physical_height;
+	event->output_geometry.subpixel = subpixel;
+	event->output_geometry.make = output->make;
+	event->output_geometry.model = output->model;
+	event->output_geometry.transform = transform;
 }
 
 static void output_handle_done(void *data, struct wl_output *wl_output)
@@ -99,7 +110,7 @@ static const struct wl_output_listener output_listener = {
 UwacOutput *UwacCreateOutput(UwacDisplay *d, uint32_t id, uint32_t version) {
 	UwacOutput *o;
 
-	o = zalloc(sizeof *o);
+	o = xzalloc(sizeof *o);
 	if (!o)
 		return NULL;
 

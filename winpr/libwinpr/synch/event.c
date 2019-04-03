@@ -156,7 +156,10 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 #endif
 
 	if (bInitialState)
-		SetEvent(event);
+	{
+		if (!SetEvent(event))
+			goto fail;
+	}
 
 	return (HANDLE)event;
 fail:
@@ -218,6 +221,7 @@ BOOL SetEvent(HANDLE hEvent)
 	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
 	{
 		event = (WINPR_EVENT*) Object;
+
 #ifdef HAVE_SYS_EVENTFD_H
 		eventfd_t val = 1;
 
@@ -243,6 +247,7 @@ BOOL SetEvent(HANDLE hEvent)
 		}
 
 #endif
+
 	}
 
 	return status;

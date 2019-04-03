@@ -237,6 +237,32 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 
 #endif /* OpenSSL < 1.1.0 */
 
+static BOOL winpr_enable_fips(DWORD flags)
+{
+	if (flags & WINPR_SSL_INIT_ENABLE_FIPS)
+	{
+#if (OPENSSL_VERSION_NUMBER < 0x10001000L) || defined(LIBRESSL_VERSION_NUMBER)
+		WLog_ERR(TAG, "Openssl fips mode not available on openssl versions less than 1.0.1!");
+		return FALSE;
+#else
+		WLog_DBG(TAG, "Ensuring openssl fips mode is ENabled");
+
+		if (FIPS_mode() != 1)
+		{
+			if (FIPS_mode_set(1))
+				WLog_INFO(TAG, "Openssl fips mode ENabled!");
+			else
+			{
+				WLog_ERR(TAG, "Openssl fips mode ENable failed!");
+				return FALSE;
+			}
+		}
+
+#endif
+	}
+
+	return TRUE;
+}
 
 static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID* context)
 {
@@ -276,26 +302,7 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 
 #endif
 	g_winpr_openssl_initialized_by_winpr = TRUE;
-
-	if (flags & WINPR_SSL_INIT_ENABLE_FIPS)
-	{
-#if (OPENSSL_VERSION_NUMBER < 0x10001000L) || defined(LIBRESSL_VERSION_NUMBER)
-		WLog_ERR(TAG, "Openssl fips mode ENable not available on openssl versions less than 1.0.1!");
-#else
-		WLog_DBG(TAG, "Ensuring openssl fips mode is ENabled");
-
-		if (FIPS_mode() != 1)
-		{
-			if (FIPS_mode_set(1))
-				WLog_INFO(TAG, "Openssl fips mode ENabled!");
-			else
-				WLog_ERR(TAG, "Openssl fips mode ENable failed!");
-		}
-
-#endif
-	}
-
-	return TRUE;
+	return winpr_enable_fips(flags);
 }
 
 
@@ -304,7 +311,11 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 BOOL winpr_InitializeSSL(DWORD flags)
 {
 	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
-	return InitOnceExecuteOnce(&once, _winpr_openssl_initialize, &flags, NULL);
+
+	if (!InitOnceExecuteOnce(&once, _winpr_openssl_initialize, &flags, NULL))
+		return FALSE;
+
+	return winpr_enable_fips(flags);
 }
 
 BOOL winpr_CleanupSSL(DWORD flags)

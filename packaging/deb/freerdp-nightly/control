@@ -27,6 +27,7 @@ Build-Depends:
  libxdamage-dev,
  libxtst-dev,
  libcups2-dev,
+ libcairo2-dev,
  libpcsclite-dev,
  libasound2-dev,
  libpulse-dev, 

@@ -22,6 +22,8 @@
 
 #include "wlf_disp.h"
 
+#define TAG CLIENT_TAG("wayland.disp")
+
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
 struct _wlfDispContext

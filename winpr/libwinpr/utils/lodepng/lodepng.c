@@ -117,6 +117,7 @@ static unsigned uivector_reserve(uivector* p, size_t allocsize)
     void* data = realloc(p->data, newsize);
     if(data)
     {
+      memset(&((char*)data)[p->allocsize], 0, newsize - p->allocsize);
       p->allocsize = newsize;
       p->data = (unsigned*)data;
     }
@@ -908,6 +909,9 @@ static unsigned huffmanDecodeSymbol(const unsigned char* in, size_t* bp,
                                     const HuffmanTree* codetree, size_t inbitlength)
 {
   unsigned treepos = 0, ct;
+  if (!codetree || !codetree->tree2d)
+    return 0;
+
   for(;;)
   {
     if(*bp >= inbitlength) return (unsigned)(-1); /*error: end of input memory reached without endcode*/
@@ -1759,6 +1763,9 @@ static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash,
     else
     {
       if(!uivector_resize(&lz77_encoded, datasize)) ERROR_BREAK(83 /*alloc fail*/);
+      if (!lz77_encoded.data)
+          ERROR_BREAK(83 /* alloc fail */);
+
       for(i = datapos; i < dataend; i++) lz77_encoded.data[i] = data[i]; /*no LZ77, but still will be Huffman compressed*/
     }
 
@@ -1768,7 +1775,12 @@ static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash,
     /*Count the frequencies of lit, len and dist codes*/
     for(i = 0; i < lz77_encoded.size; i++)
     {
-      unsigned symbol = lz77_encoded.data[i];
+      unsigned symbol;
+
+      if (!lz77_encoded.data)
+          ERROR_BREAK(83 /* alloc fail */);
+
+      symbol = lz77_encoded.data[i];
       frequencies_ll.data[symbol]++;
       if(symbol > 256)
       {
@@ -2399,8 +2411,16 @@ static void setBitOfReversedStream0(size_t* bitpointer, unsigned char* bitstream
 static void setBitOfReversedStream(size_t* bitpointer, unsigned char* bitstream, unsigned char bit)
 {
   /*the current bit in bitstream may be 0 or 1 for this to work*/
-  if(bit == 0) bitstream[(*bitpointer) >> 3] &=  (unsigned char)(~(1 << (7 - ((*bitpointer) & 0x7))));
-  else         bitstream[(*bitpointer) >> 3] |=  (1 << (7 - ((*bitpointer) & 0x7)));
+  if(bit == 0)
+  {
+    size_t pos = (*bitpointer) >> 3;
+    bitstream[pos] &=  (unsigned char)(~(1 << (7 - ((*bitpointer) & 0x7))));
+  }
+  else
+  {
+    size_t pos = (*bitpointer) >> 3;
+    bitstream[pos] |=  (1 << (7 - ((*bitpointer) & 0x7)));
+  }
   (*bitpointer)++;
 }
 
@@ -5428,7 +5448,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
   if(info_png->interlace_method == 0)
   {
     *outsize = h + (h * ((w * bpp + 7) / 8)); /*image size plus an extra byte per scanline + possible padding bits*/
-    *out = (unsigned char*)malloc(*outsize);
+    *out = (unsigned char*)calloc(*outsize, 1);
     if(!(*out) && (*outsize)) error = 83; /*alloc fail*/
 
     if(!error)
@@ -5436,7 +5456,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
       /*non multiple of 8 bits per scanline, padding bits needed per scanline*/
       if(bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8)
       {
-        unsigned char* padded = (unsigned char*)malloc(h * ((w * bpp + 7) / 8));
+        unsigned char* padded = (unsigned char*)calloc(h * ((w * bpp + 7) / 8), 1);
         if(!padded) error = 83; /*alloc fail*/
         if(!error)
         {
@@ -5461,7 +5481,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
     Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
 
     *outsize = filter_passstart[7]; /*image size plus an extra byte per scanline + possible padding bits*/
-    *out = (unsigned char*)malloc(*outsize);
+    *out = (unsigned char*)calloc(*outsize, 1);
     if(!(*out)) error = 83; /*alloc fail*/
 
     adam7 = (unsigned char*)calloc(passstart[7], sizeof(unsigned char));
@@ -5594,7 +5614,7 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
     unsigned char* converted;
     size_t size = (w * h * lodepng_get_bpp(&info.color) + 7) / 8;
 
-    converted = (unsigned char*)malloc(size);
+    converted = (unsigned char*)calloc(size, 1);
     if(!converted && size) state->error = 83; /*alloc fail*/
     if(!state->error)
     {
@@ -5769,8 +5789,8 @@ unsigned lodepng_encode24(unsigned char** out, size_t* outsize, const unsigned c
 unsigned lodepng_encode_file(const char* filename, const unsigned char* image, unsigned w, unsigned h,
                              LodePNGColorType colortype, unsigned bitdepth)
 {
-  unsigned char* buffer;
-  size_t buffersize;
+  unsigned char* buffer = NULL;
+  size_t buffersize = 0;
   unsigned error = lodepng_encode_memory(&buffer, &buffersize, image, w, h, colortype, bitdepth);
   if(!error) error = lodepng_save_file(buffer, buffersize, filename);
   free(buffer);

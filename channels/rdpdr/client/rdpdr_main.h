@@ -70,9 +70,11 @@ struct rdpdr_plugin
 	HANDLE hotplugThread;
 #ifdef _WIN32
 	HWND hotplug_wnd;
-#elif __MACOSX__
+#endif
+#ifdef __MACOSX__
 	CFRunLoopRef runLoop;
-#else
+#endif
+#ifndef _WIN32
 	HANDLE stopEvent;
 #endif
 	rdpContext* rdpcontext;

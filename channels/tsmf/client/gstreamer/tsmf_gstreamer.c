@@ -151,11 +151,7 @@ static BOOL tsmf_gstreamer_change_volume(ITSMFDecoder* decoder, UINT32 newVolume
 	return TRUE;
 }
 
-#ifdef __OpenBSD__
 static inline GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(UINT64 ms_timestamp)
-#else
-static inline const GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(UINT64 ms_timestamp)
-#endif
 {
 	/*
 	 * Convert Microsoft 100ns timestamps to Gstreamer 1ns units.
@@ -633,7 +629,8 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 	{
 		tsmf_gstreamer_need_data,
 		tsmf_gstreamer_enough_data,
-		tsmf_gstreamer_seek_data
+	    tsmf_gstreamer_seek_data,
+	    { NULL }
 	};
 	g_object_set(mdecoder->src, "format", GST_FORMAT_TIME, NULL);
 	g_object_set(mdecoder->src, "is-live", FALSE, NULL);

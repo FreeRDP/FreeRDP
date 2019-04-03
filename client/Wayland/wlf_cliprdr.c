@@ -36,6 +36,8 @@
 
 #include "wlf_cliprdr.h"
 
+#define TAG CLIENT_TAG("wayland.cliprdr")
+
 #define MAX_CLIPBOARD_FORMATS	255
 
 static const char* mime_text[] =
@@ -155,7 +157,8 @@ static void wlf_cliprdr_free_server_formats(wfClipboard* clipboard)
 		clipboard->numServerFormats = 0;
 	}
 
-	UwacClipboardOfferDestroy(clipboard->seat);
+	if (clipboard)
+		UwacClipboardOfferDestroy(clipboard->seat);
 }
 
 static void wlf_cliprdr_free_client_formats(wfClipboard* clipboard)
@@ -175,7 +178,8 @@ static void wlf_cliprdr_free_client_formats(wfClipboard* clipboard)
 		clipboard->numClientFormats = 0;
 	}
 
-	UwacClipboardOfferDestroy(clipboard->seat);
+	if (clipboard)
+		UwacClipboardOfferDestroy(clipboard->seat);
 }
 
 /**
@@ -267,6 +271,7 @@ static UINT wlf_cliprdr_send_data_response(wfClipboard* clipboard, const BYTE* d
         size_t size)
 {
 	CLIPRDR_FORMAT_DATA_RESPONSE response = { 0 };
+
 	if (size > UINT32_MAX)
 		return ERROR_INVALID_PARAMETER;
 
@@ -357,8 +362,8 @@ static UINT wlf_cliprdr_monitor_ready(CliprdrClientContext* context,
 {
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 	UINT ret;
-
 	WINPR_UNUSED(monitorReady);
+
 	if ((ret = wlf_cliprdr_send_client_capabilities(clipboard)) != CHANNEL_RC_OK)
 		return ret;
 
@@ -643,6 +648,7 @@ static UINT wlf_cliprdr_server_format_data_request(CliprdrClientContext* context
 			{
 				cnv = ConvertToUnicode(CP_UTF8, 0, (LPCSTR)data, (int)size, &cdata, 0);
 				free(data);
+				data = NULL;
 
 				if (cnv < 0)
 					rc = ERROR_INTERNAL_ERROR;
@@ -653,6 +659,7 @@ static UINT wlf_cliprdr_server_format_data_request(CliprdrClientContext* context
 					size *= sizeof(WCHAR);
 				}
 			}
+
 			break;
 
 		default:
@@ -688,8 +695,10 @@ static UINT wlf_cliprdr_server_format_data_response(CliprdrClientContext*
 	{
 		case CF_UNICODETEXT:
 			cnv = ConvertFromUnicode(CP_UTF8, 0, wdata, (int)(size / sizeof(WCHAR)), &cdata, 0, NULL, NULL);
+
 			if (cnv < 0)
 				return ERROR_INTERNAL_ERROR;
+
 			size = (size_t)cnv;
 			data = cdata;
 			break;
@@ -703,7 +712,6 @@ static UINT wlf_cliprdr_server_format_data_response(CliprdrClientContext*
 	fclose(clipboard->responseFile);
 	rc = CHANNEL_RC_OK;
 	free(cdata);
-
 	return rc;
 }
 
@@ -796,7 +804,6 @@ static UINT wlf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	wfClipboard* clipboard = delegate->custom;
-
 	WINPR_UNUSED(errorCode);
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
@@ -822,7 +829,6 @@ static UINT wlf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegat
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	wfClipboard* clipboard = delegate->custom;
-
 	WINPR_UNUSED(errorCode);
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;

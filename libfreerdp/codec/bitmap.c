@@ -26,12 +26,14 @@
 
 static INLINE UINT16 GETPIXEL16(const void* d, UINT32 x, UINT32 y, UINT32 w)
 {
-	return (*(((const unsigned short*)d) + ((y) * (w) + (x))));
+	const BYTE* src = (const BYTE*)d + ((y * w + x) * sizeof(UINT16));
+	return (UINT16)(((UINT16)src[1] << 8) | (UINT16)src[0]);
 }
 
 static INLINE UINT32 GETPIXEL32(const void* d, UINT32 x, UINT32 y, UINT32 w)
 {
-	return (*(((const unsigned int*)d) + ((y) * (w) + (x))));
+	const BYTE* src = (const BYTE*)d + ((y * w + x) * sizeof(UINT32));
+	return (((UINT32)src[3]) << 24) | (((UINT32)src[2]) << 16) | (((UINT32)src[1]) << 8) | (src[0] & 0xFF);
 }
 
 /*****************************************************************************/

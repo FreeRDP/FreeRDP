@@ -130,24 +130,6 @@ static void android_OnChannelDisconnectedEventHandler(
 
 static BOOL android_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi;
-	HGDI_WND hwnd;
-
-	if (!context)
-		return FALSE;
-
-	gdi = context->gdi;
-
-	if (!gdi || !gdi->primary || !gdi->primary->hdc)
-		return FALSE;
-
-	hwnd = gdi->primary->hdc->hwnd;
-
-	if (!hwnd || !hwnd->invalid)
-		return FALSE;
-
-	hwnd->invalid->null = TRUE;
-	hwnd->ninvalid = 0;
 	return TRUE;
 }
 
@@ -182,9 +164,9 @@ static BOOL android_end_paint(rdpContext* context)
 
 	ninvalid = hwnd->ninvalid;
 
-	if (ninvalid == 0)
+	if (ninvalid < 1)
 		return TRUE;
-
+	
 	cinvalid = hwnd->cinvalid;
 
 	if (!cinvalid)
@@ -205,6 +187,9 @@ static BOOL android_end_paint(rdpContext* context)
 
 	freerdp_callback("OnGraphicsUpdate", "(JIIII)V", (jlong)context->instance,
 	                 x1, y1, x2 - x1, y2 - y1);
+
+	hwnd->invalid->null = TRUE;
+	hwnd->ninvalid = 0;
 	return TRUE;
 }
 

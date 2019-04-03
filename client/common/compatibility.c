@@ -413,7 +413,7 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, int* count)
 	COMMAND_LINE_ARGUMENT_A* arg;
 	*count = 0;
 	detect_status = 0;
-	flags = COMMAND_LINE_SEPARATOR_SPACE;
+	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SILENCE_PARSER;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	flags |= COMMAND_LINE_SIGIL_NOT_ESCAPED;
 	settings = (rdpSettings*) calloc(1, sizeof(rdpSettings));
@@ -505,6 +505,8 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 
 	arg = old_args;
 	errno = 0;
+	settings->BitmapCacheEnabled = TRUE;
+	settings->OffscreenSupportLevel = TRUE;
 
 	do
 	{
@@ -649,9 +651,9 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		}
 		CommandLineSwitchCase(arg, "x")
 		{
-			long type;
+			unsigned long type;
 			char* pEnd;
-			type = strtol(arg->Value, &pEnd, 16);
+			type = strtoul(arg->Value, &pEnd, 16);
 
 			if (errno != 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;

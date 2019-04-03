@@ -354,7 +354,17 @@ void wf_resize_window(wfContext* wfc)
 
 		if (settings->EmbeddedWindow)
 		{
+			if (!wfc->client_height)
+				wfc->client_height = settings->DesktopHeight;
+
+			if (!wfc->client_width)
+				wfc->client_width = settings->DesktopWidth;
+
 			wf_update_canvas_diff(wfc);
+			/* Now resize to get full canvas size and room for caption and borders */
+			SetWindowPos(wfc->hwnd, HWND_TOP, wfc->client_x, wfc->client_y,
+				wfc->client_width + wfc->diff.x, wfc->client_height + wfc->diff.y,
+				0 /*SWP_FRAMECHANGED*/);
 		}
 		else
 		{

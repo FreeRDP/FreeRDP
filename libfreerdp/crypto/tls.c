@@ -482,7 +482,7 @@ static int bio_rdp_tls_free(BIO* bio)
 
 static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 {
-	int status = 0;
+	long status = 0;
 	BIO_RDP_TLS* tls;
 
 	if (!bio)
@@ -496,8 +496,15 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 	switch (cmd)
 	{
 		case BIO_CTRL_SET_CALLBACK:
-			SSL_set_info_callback(tls->ssl, (void (*)(const SSL*, int, int)) fp);
-			status = 1;
+			{
+				typedef void (*fkt_t)(const SSL*, int, int);
+				/* Documented since https://www.openssl.org/docs/man1.1.1/man3/BIO_set_callback.html
+				 * the argument is not really of type bio_info_cb* and must be cast
+				 * to the required type */
+				fkt_t fkt = (fkt_t)(void*)fp;
+				SSL_set_info_callback(tls->ssl, fkt);
+				status = 1;
+			}
 			break;
 
 		default:
@@ -1058,6 +1065,7 @@ BOOL tls_send_alert(rdpTls* tls)
 		if (tls->ssl->s3->wbuf.left == 0)
 			tls->ssl->method->ssl_dispatch_alert(tls->ssl);
 	}
+
 #endif
 	return TRUE;
 }

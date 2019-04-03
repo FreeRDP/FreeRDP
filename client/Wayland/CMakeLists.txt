@@ -27,6 +27,8 @@ set(${MODULE_PREFIX}_SRCS
 	wlfreerdp.h
 	wlf_disp.c
 	wlf_disp.h
+	wlf_pointer.c
+	wlf_pointer.h
 	wlf_input.c
 	wlf_input.h
 	wlf_cliprdr.c
@@ -35,9 +37,19 @@ set(${MODULE_PREFIX}_SRCS
 	wlf_channels.h
 	)
 
+find_package(Cairo)
+
+list (APPEND ${MODULE_PREFIX}_LIBS freerdp-client freerdp uwac)
+if (CAIRO_FOUND)
+    add_definitions(-DCAIRO_FOUND=1)
+    include_directories(${CAIRO_INCLUDE_DIR})
+    list(APPEND ${MODULE_PREFIX}_LIBS ${CAIRO_LIBRARY})
+else(CAIRO_FOUND)
+    message(WARNING "libcairo not detected, compiling without wayland smart scaling support!")
+endif(CAIRO_FOUND)
+
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client freerdp uwac)
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)

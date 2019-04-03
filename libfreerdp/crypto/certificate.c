@@ -444,7 +444,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 
 	if (!data)
 	{
-		fclose(fp);
+		CloseHandle(fp);
 		return FALSE;
 	}
 

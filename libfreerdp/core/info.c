@@ -772,6 +772,9 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		cbDomain = 0;
 	}
 
+	/* excludes (!) the length of the mandatory null terminator */
+	cbDomain = cbDomain >= 2 ? cbDomain - 2 : cbDomain;
+
 	if (!settings->RemoteAssistanceMode)
 	{
 		cbUserName = ConvertToUnicode(CP_UTF8, 0, settings->Username, -1, &userNameW, 0) * 2;
@@ -782,13 +785,16 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		cbUserName = ConvertToUnicode(CP_UTF8, 0, settings->Username, -1, &userNameW, 0) * 2;
 	}
 
+	/* excludes (!) the length of the mandatory null terminator */
+	cbUserName = cbUserName >= 2 ? cbUserName - 2 : cbUserName;
+
 	if (!settings->RemoteAssistanceMode)
 	{
 		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
 		{
 			usedPasswordCookie = TRUE;
 			passwordW = (WCHAR*) settings->RedirectionPassword;
-			cbPassword = settings->RedirectionPasswordLength - 2; /* Strip double zero termination */
+			cbPassword = settings->RedirectionPasswordLength;
 		}
 		else
 		{
@@ -800,6 +806,9 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		/* This field MUST be filled with "*" */
 		cbPassword = ConvertToUnicode(CP_UTF8, 0, "*", -1, &passwordW, 0) * 2;
 	}
+
+	/* excludes (!) the length of the mandatory null terminator */
+	cbPassword = cbPassword >= 2 ? cbPassword - 2 : cbPassword;
 
 	if (!settings->RemoteAssistanceMode)
 	{
@@ -821,6 +830,9 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		}
 	}
 
+	/* excludes (!) the length of the mandatory null terminator */
+	cbAlternateShell = cbAlternateShell >= 2 ? cbAlternateShell - 2 : cbAlternateShell;
+
 	if (!settings->RemoteAssistanceMode)
 	{
 		cbWorkingDir = ConvertToUnicode(CP_UTF8, 0, settings->ShellWorkingDirectory, -1, &workingDirW,
@@ -833,6 +845,9 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		                                0) * 2;
 	}
 
+	/* excludes (!) the length of the mandatory null terminator */
+	cbWorkingDir = cbWorkingDir >= 2 ? cbWorkingDir - 2 : cbWorkingDir;
+
 	Stream_Write_UINT32(s, 0); /* CodePage (4 bytes) */
 	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
 	Stream_Write_UINT16(s, cbDomain); /* cbDomain (2 bytes) */
@@ -844,27 +859,33 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	if (cbDomain > 0)
 		Stream_Write(s, domainW, cbDomain);
 
+	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
 	if (cbUserName > 0)
 		Stream_Write(s, userNameW, cbUserName);
 
+	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
 	if (cbPassword > 0)
 		Stream_Write(s, passwordW, cbPassword);
 
+	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
 	if (cbAlternateShell > 0)
 		Stream_Write(s, alternateShellW, cbAlternateShell);
 
+	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
 	if (cbWorkingDir > 0)
 		Stream_Write(s, workingDirW, cbWorkingDir);
 
+	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
+
 	free(domainW);
 	free(userNameW);
 	free(alternateShellW);
@@ -1460,4 +1481,18 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 		Stream_Release(s);
 
 	return status;
+}
+
+BOOL rdp_send_server_status_info(rdpContext* context, UINT32 status)
+{
+	wStream* s;
+	rdpRdp* rdp = context->rdp;
+	s = rdp_data_pdu_init(rdp);
+
+	if (!s)
+		return FALSE;
+
+	Stream_Write_UINT32(s, status);
+
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_STATUS_INFO, rdp->mcs->userId);;
 }
