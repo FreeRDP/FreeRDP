@@ -244,7 +244,7 @@ static WCHAR* concat_remote_name(const WCHAR* dir, const WCHAR* file)
 	WCHAR* buffer = NULL;
 	len_dir = _wcslen(dir);
 	len_file = _wcslen(file);
-	buffer = calloc(len_dir + 1 + len_file + 1, sizeof(WCHAR));
+	buffer = calloc(len_dir + 1 + len_file + 2, sizeof(WCHAR));
 
 	if (!buffer)
 		return NULL;
@@ -418,17 +418,19 @@ static BOOL process_file_name(const char* local_name, wArrayList* files)
 
 static BOOL process_uri(const char* uri, size_t uri_len, wArrayList* files)
 {
+	const char* prefix = "file://";
 	BOOL result = FALSE;
 	char* name = NULL;
+	const size_t prefixLen = strnlen(prefix, sizeof (prefix));
 	WLog_VRB(TAG, "processing URI: %.*s", uri_len, uri);
 
-	if ((uri_len < strlen("file://")) || strncmp(uri, "file://", strlen("file://")))
+	if ((uri_len < prefixLen) || strncmp(uri, prefix, prefixLen))
 	{
 		WLog_ERR(TAG, "non-'file://' URI schemes are not supported");
 		goto out;
 	}
 
-	name = decode_percent_encoded_string(uri + strlen("file://"), uri_len - strlen("file://"));
+	name = decode_percent_encoded_string(uri + prefixLen, uri_len - prefixLen);
 
 	if (!name)
 		goto out;
