@@ -1614,10 +1614,15 @@ out_free:
 
 void rdpgfx_server_context_free(RdpgfxServerContext* context)
 {
-	rdpgfx_server_close(context);
-
 	if (context->priv)
+	{
+		RdpgfxServerPrivate* priv = (RdpgfxServerPrivate*) context->priv;
+
+		if (priv->isOpened)
+			rdpgfx_server_close(context);
+
 		Stream_Free(context->priv->input_stream, TRUE);
+	}
 
 	free(context->priv);
 	free(context);
