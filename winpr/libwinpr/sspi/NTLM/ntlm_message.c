@@ -468,7 +468,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 		if (AvTimestamp)
 		{
-			PBYTE ptr = ntlm_av_pair_get_value_pointer(AvTimestamp, cbAvTimestamp);
+			PBYTE ptr = ntlm_av_pair_get_value_pointer(AvTimestamp);
 
 			if (!ptr)
 				return SEC_E_INTERNAL_ERROR;
@@ -829,7 +829,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		                           MsvAvFlags, &cbAvFlags);
 
 		if (AvFlags)
-			Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags, cbAvFlags), flags);
+			Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
 	}
 
 	if (ntlm_read_message_fields_buffer(s,
@@ -1140,7 +1140,7 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	                           MsvAvFlags, &cbAvFlags);
 
 	if (AvFlags)
-		Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags, cbAvFlags), flags);
+		Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
 
 	if (ntlm_compute_lm_v2_response(context) < 0) /* LmChallengeResponse */
 		return SEC_E_INTERNAL_ERROR;
