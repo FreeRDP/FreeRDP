@@ -538,7 +538,7 @@ static void drive_hotplug_fsevent_callback(ConstFSEventStreamRef streamRef,
         const FSEventStreamEventId eventIds[])
 {
 	rdpdrPlugin* rdpdr;
-	int i;
+	size_t i;
 	UINT error;
 	char** paths = (char**)eventPaths;
 	rdpdr = (rdpdrPlugin*) clientCallBackInfo;

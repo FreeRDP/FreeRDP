@@ -409,9 +409,6 @@ DWORD WINAPI mac_client_thread(void* param)
 	if (!self.is_connected)
 		return;
 
-	NSPoint loc = [event locationInWindow];
-	int x = (int) loc.x;
-	int y = (int) loc.y;
 	float dx = [event deltaX];
 	float dy = [event deltaY];
 	/* 1 event = 120 units */
