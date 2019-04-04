@@ -172,21 +172,10 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr,
 	cliprdr_print_general_capability_flags(generalFlags);
 #endif
 
-	if (cliprdr->useLongFormatNames)
-		cliprdr->useLongFormatNames = (generalFlags & CB_USE_LONG_FORMAT_NAMES) ? TRUE :
-		                              FALSE;
-
-	if (cliprdr->streamFileClipEnabled)
-		cliprdr->streamFileClipEnabled = (generalFlags & CB_STREAM_FILECLIP_ENABLED) ?
-		                                 TRUE : FALSE;
-
-	if (cliprdr->fileClipNoFilePaths)
-		cliprdr->fileClipNoFilePaths = (generalFlags & CB_FILECLIP_NO_FILE_PATHS) ?
-		                               TRUE : FALSE;
-
-	if (cliprdr->canLockClipData)
-		cliprdr->canLockClipData = (generalFlags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
-
+	cliprdr->useLongFormatNames = (generalFlags & CB_USE_LONG_FORMAT_NAMES);
+	cliprdr->streamFileClipEnabled = (generalFlags & CB_STREAM_FILECLIP_ENABLED);
+	cliprdr->fileClipNoFilePaths = (generalFlags & CB_FILECLIP_NO_FILE_PATHS);
+	cliprdr->canLockClipData = (generalFlags & CB_CAN_LOCK_CLIPDATA);
 	cliprdr->capabilitiesReceived = TRUE;
 
 	if (!context->custom)
