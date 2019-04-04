@@ -768,14 +768,17 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
 	if (dataSize == 0)
 	{
 		Stream_SetPosition(data_out, 0);
-		Stream_Write_UINT8(data_out, 0x40 | cbChId);
+		Stream_Write_UINT8(data_out, (CLOSE_REQUEST_PDU << 4) | cbChId);
 		Stream_SetPosition(data_out, pos);
 		status = drdynvc_send(drdynvc, data_out);
+		/* Remove the channel from the active client channel list.
+		 * The server MAY send a response, but that is not guaranteed. */
+		dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
 	}
 	else if (dataSize <= CHANNEL_CHUNK_LENGTH - pos)
 	{
 		Stream_SetPosition(data_out, 0);
-		Stream_Write_UINT8(data_out, 0x30 | cbChId);
+		Stream_Write_UINT8(data_out, (DATA_PDU << 4) | cbChId);
 		Stream_SetPosition(data_out, pos);
 		Stream_Write(data_out, data, dataSize);
 		status = drdynvc_send(drdynvc, data_out);
@@ -786,7 +789,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
 		cbLen = drdynvc_write_variable_uint(data_out, dataSize);
 		pos = Stream_GetPosition(data_out);
 		Stream_SetPosition(data_out, 0);
-		Stream_Write_UINT8(data_out, (UINT8)(0x20 | cbChId | (cbLen << 2)));
+		Stream_Write_UINT8(data_out, (DATA_FIRST_PDU << 4) | cbChId | (cbLen << 2));
 		Stream_SetPosition(data_out, pos);
 		chunkLength = CHANNEL_CHUNK_LENGTH - pos;
 		Stream_Write(data_out, data, chunkLength);
@@ -808,7 +811,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
 			cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 			pos = Stream_GetPosition(data_out);
 			Stream_SetPosition(data_out, 0);
-			Stream_Write_UINT8(data_out, 0x30 | cbChId);
+			Stream_Write_UINT8(data_out, (DATA_PDU << 4) | cbChId);
 			Stream_SetPosition(data_out, pos);
 			chunkLength = dataSize;
 
@@ -1004,7 +1007,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	Stream_Write_UINT8(data_out, (UINT8)(0x10 | cbChId));
+	Stream_Write_UINT8(data_out, (CREATE_REQUEST_PDU << 4) | cbChId);
 	Stream_SetPosition(s, 1);
 	Stream_Copy(s, data_out, pos - 1);
 
