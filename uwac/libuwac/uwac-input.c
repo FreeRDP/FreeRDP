@@ -97,7 +97,7 @@ set_cursor_image(UwacSeat* seat, uint32_t serial)
 	struct wl_surface* surface = NULL;
 	int32_t x = 0, y = 0;
 
-	if (!seat || !seat->display || !seat->display->default_cursor || !seat->display->default_cursor->images)
+	if (!seat || !seat->display || !seat->default_cursor || !seat->default_cursor->images)
 		return UWAC_ERROR_INTERNAL;
 
 	switch(seat->pointer_type) {
@@ -113,7 +113,7 @@ set_cursor_image(UwacSeat* seat, uint32_t serial)
 		case 1: /* NULL pointer */
 			break;
 		default: /* Default system pointer */
-			cursor = seat->display->default_cursor;
+			cursor = seat->default_cursor;
 			if (!cursor)
 				return UWAC_ERROR_INTERNAL;
 			image = cursor->images[0];
@@ -839,6 +839,19 @@ static void seat_handle_capabilities(void *data, struct wl_seat *seat, enum wl_s
 		input->pointer = wl_seat_get_pointer(seat);
 		wl_pointer_set_user_data(input->pointer, input);
 		wl_pointer_add_listener(input->pointer, &pointer_listener, input);
+
+		input->cursor_theme = wl_cursor_theme_load(NULL, 32, input->display->shm);
+		if (!input->cursor_theme) {
+			assert(uwacErrorHandler(input->display, UWAC_ERROR_NOMEMORY, "unable to get wayland cursor theme\n"));
+			return;
+		}
+
+		input->default_cursor = wl_cursor_theme_get_cursor(input->cursor_theme, "left_ptr");
+		if (!input->default_cursor) {
+			assert(uwacErrorHandler(input->display, UWAC_ERROR_NOMEMORY, "unable to get wayland cursor left_ptr\n"));
+			return;
+		}
+
 	} else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && input->pointer) {
 #ifdef WL_POINTER_RELEASE_SINCE_VERSION
 		if (input->seat_version >= WL_POINTER_RELEASE_SINCE_VERSION)
@@ -846,6 +859,11 @@ static void seat_handle_capabilities(void *data, struct wl_seat *seat, enum wl_s
 		else
 #endif
 			wl_pointer_destroy(input->pointer);
+		if (input->cursor_theme)
+			wl_cursor_theme_destroy(input->cursor_theme);
+
+		input->default_cursor = NULL;
+		input->cursor_theme = NULL;
 		input->pointer = NULL;
 	}
 
