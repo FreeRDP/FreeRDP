@@ -450,7 +450,7 @@ LONG smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStrea
 }
 
 void smartcard_trace_establish_context_call(SMARTCARD_DEVICE* smartcard,
-        EstablishContext_Call* call)
+		const EstablishContext_Call* call)
 {
 	WINPR_UNUSED(smartcard);
 
@@ -481,7 +481,7 @@ LONG smartcard_pack_establish_context_return(SMARTCARD_DEVICE* smartcard, wStrea
 }
 
 void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard,
-        EstablishContext_Return* ret)
+		const EstablishContext_Return* ret)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -525,7 +525,7 @@ LONG smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 	return status;
 }
 
-void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, Context_Call* call, const char* name)
+void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, const Context_Call* call, const char* name)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -551,7 +551,7 @@ void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, Context_Call* cal
 	WLog_DBG(TAG, "}");
 }
 
-void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, Long_Return* ret, const char* name)
+void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, const Long_Return* ret, const char* name)
 {
 	WINPR_UNUSED(smartcard);
 
@@ -591,7 +591,7 @@ LONG smartcard_unpack_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, wStre
 }
 
 void smartcard_trace_list_reader_groups_call(SMARTCARD_DEVICE* smartcard,
-        ListReaderGroups_Call* call, BOOL unicode)
+		const ListReaderGroups_Call* call, BOOL unicode)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -644,7 +644,7 @@ LONG smartcard_pack_list_reader_groups_return(SMARTCARD_DEVICE* smartcard, wStre
 }
 
 void smartcard_trace_list_reader_groups_return(SMARTCARD_DEVICE* smartcard,
-        ListReaderGroups_Return* ret, BOOL unicode)
+		const ListReaderGroups_Return* ret, BOOL unicode)
 {
 	int index;
 	int length;
@@ -753,7 +753,7 @@ LONG smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	return SCARD_S_SUCCESS;
 }
 
-void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard, ListReaders_Call* call,
+void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard, const ListReaders_Call* call,
                                        BOOL unicode)
 {
 	BYTE* pb;
@@ -830,7 +830,7 @@ LONG smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 	return SCARD_S_SUCCESS;
 }
 
-void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReaders_Return* ret,
+void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, const ListReaders_Return* ret,
         BOOL unicode)
 {
 	size_t index;
@@ -953,7 +953,7 @@ LONG smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	return status;
 }
 
-void smartcard_trace_connect_a_call(SMARTCARD_DEVICE* smartcard, ConnectA_Call* call)
+void smartcard_trace_connect_a_call(SMARTCARD_DEVICE* smartcard, const ConnectA_Call* call)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -1026,7 +1026,7 @@ LONG smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	return status;
 }
 
-void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, ConnectW_Call* call)
+void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, const ConnectW_Call* call)
 {
 	BYTE* pb;
 	char* szReaderA = NULL;
@@ -1089,7 +1089,7 @@ LONG smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Conn
 	return status;
 }
 
-void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, Connect_Return* ret)
+void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, const Connect_Return* ret)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -1172,7 +1172,7 @@ LONG smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Re
 	return status;
 }
 
-void smartcard_trace_reconnect_call(SMARTCARD_DEVICE* smartcard, Reconnect_Call* call)
+void smartcard_trace_reconnect_call(SMARTCARD_DEVICE* smartcard, const Reconnect_Call* call)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -1224,7 +1224,7 @@ LONG smartcard_pack_reconnect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Re
 	return SCARD_S_SUCCESS;
 }
 
-void smartcard_trace_reconnect_return(SMARTCARD_DEVICE* smartcard, Reconnect_Return* ret)
+void smartcard_trace_reconnect_return(SMARTCARD_DEVICE* smartcard, const Reconnect_Return* ret)
 {
 	WINPR_UNUSED(smartcard);
 
@@ -1448,7 +1448,7 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 }
 
 void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard,
-        GetStatusChangeA_Call* call)
+		const GetStatusChangeA_Call* call)
 {
 	BYTE* pb;
 	UINT32 index;
@@ -1691,7 +1691,7 @@ LONG smartcard_pack_get_status_change_return(SMARTCARD_DEVICE* smartcard, wStrea
 }
 
 void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard,
-        GetStatusChange_Return* ret, BOOL unicode)
+		const GetStatusChange_Return* ret, BOOL unicode)
 {
 	UINT32 index;
 	char* rgbAtr;
@@ -1821,7 +1821,7 @@ LONG smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Statu
 	return status;
 }
 
-void smartcard_trace_status_call(SMARTCARD_DEVICE* smartcard, Status_Call* call, BOOL unicode)
+void smartcard_trace_status_call(SMARTCARD_DEVICE* smartcard, const Status_Call* call, BOOL unicode)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -1892,7 +1892,7 @@ LONG smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Statu
 	return status;
 }
 
-void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* ret, BOOL unicode)
+void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Status_Return* ret, BOOL unicode)
 {
 	size_t index;
 	size_t length;
@@ -2069,7 +2069,7 @@ LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 	return status;
 }
 
-void smartcard_trace_get_attrib_return(SMARTCARD_DEVICE* smartcard, GetAttrib_Return* ret,
+void smartcard_trace_get_attrib_return(SMARTCARD_DEVICE* smartcard, const GetAttrib_Return* ret,
                                        DWORD dwAttrId)
 {
 	WINPR_UNUSED(smartcard);
@@ -2173,7 +2173,7 @@ LONG smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 	return SCARD_S_SUCCESS;
 }
 
-void smartcard_trace_control_call(SMARTCARD_DEVICE* smartcard, Control_Call* call)
+void smartcard_trace_control_call(SMARTCARD_DEVICE* smartcard, const Control_Call* call)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -2256,7 +2256,7 @@ LONG smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 	return SCARD_S_SUCCESS;
 }
 
-void smartcard_trace_control_return(SMARTCARD_DEVICE* smartcard, Control_Return* ret)
+void smartcard_trace_control_return(SMARTCARD_DEVICE* smartcard, const Control_Return* ret)
 {
 	WINPR_UNUSED(smartcard);
 
@@ -2528,7 +2528,7 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 	return SCARD_S_SUCCESS;
 }
 
-void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, Transmit_Call* call)
+void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, const Transmit_Call* call)
 {
 	BYTE* pb;
 	UINT32 cbExtraBytes;
@@ -2691,7 +2691,7 @@ LONG smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 	return SCARD_S_SUCCESS;
 }
 
-void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, Transmit_Return* ret)
+void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, const Transmit_Return* ret)
 {
 	UINT32 cbExtraBytes;
 	BYTE* pbExtraBytes;
@@ -2912,7 +2912,7 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 }
 
 void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard,
-        LocateCardsByATRA_Call* call)
+		const LocateCardsByATRA_Call* call)
 {
 	BYTE* pb;
 	UINT32 index;
