@@ -83,6 +83,9 @@ typedef UINT(*pcRdpgfxUpdateSurfaces)(RdpgfxClientContext* context);
 typedef UINT(*pcRdpgfxUpdateSurfaceArea)(RdpgfxClientContext* context, UINT16 surfaceId,
         UINT32 nrRects, const RECTANGLE_16* rects);
 
+typedef BOOL(*pcRdpgfxPreFrameAck)(RdpgfxClientContext* context,
+                                   RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge);
+
 struct _rdpgfx_client_context
 {
 	void* handle;
@@ -117,6 +120,8 @@ struct _rdpgfx_client_context
 	/* No locking required */
 	pcRdpgfxUpdateSurfaces UpdateSurfaces;
 	pcRdpgfxUpdateSurfaceArea UpdateSurfaceArea;
+
+	pcRdpgfxPreFrameAck PreFrameAck;
 
 	CRITICAL_SECTION mux;
 	PROFILER_DEFINE(SurfaceProfiler)
