@@ -18,6 +18,6 @@
 
 define_channel("sshagent")
 
-if(WITH_CLIENT_CHANNELS)
+if(WITH_CLIENT_CHANNELS AND NOT WIN32)
 	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
 endif()

@@ -27,6 +27,17 @@
 
 #include <winerror.h>
 
+/* MinGW support */
+#ifndef RPC_S_PROXY_ACCESS_DENIED
+#define RPC_S_PROXY_ACCESS_DENIED							0x000006C1
+#endif
+#ifndef RPC_S_COOKIE_AUTH_FAILED
+#define RPC_S_COOKIE_AUTH_FAILED							0x00000729
+#endif
+#ifndef ERROR_FILE_TOO_LARGE
+#define ERROR_FILE_TOO_LARGE								0x000000DF
+#endif
+
 #else
 
 #ifndef NO_ERROR

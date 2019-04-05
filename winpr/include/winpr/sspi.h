@@ -193,13 +193,18 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define SEC_E_ISSUING_CA_UNTRUSTED_KDC		0x80090359
 #define SEC_E_KDC_CERT_EXPIRED			0x8009035A
 #define SEC_E_KDC_CERT_REVOKED			0x8009035B
+#endif
+
+#if !defined(_WINERROR_) || defined(__MINGW32__)
 #define SEC_E_INVALID_PARAMETER			0x8009035D
 #define SEC_E_DELEGATION_POLICY			0x8009035E
 #define SEC_E_POLICY_NLTM_ONLY			0x8009035F
 #define SEC_E_NO_CONTEXT			0x80090361
 #define SEC_E_PKU2U_CERT_FAILURE		0x80090362
 #define SEC_E_MUTUAL_AUTH_FAILED		0x80090363
+#endif
 
+#if !defined(_WINERROR_)
 #define SEC_I_CONTINUE_NEEDED			0x00090312
 #define SEC_I_COMPLETE_NEEDED			0x00090313
 #define SEC_I_COMPLETE_AND_CONTINUE		0x00090314
@@ -208,9 +213,11 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define SEC_I_INCOMPLETE_CREDENTIALS		0x00090320
 #define SEC_I_RENEGOTIATE			0x00090321
 #define SEC_I_NO_LSA_CONTEXT			0x00090323
+#endif
+
+#if !defined(_WINERROR_) || defined(__MINGW32__)
 #define SEC_I_SIGNATURE_NEEDED			0x0009035C
 #define SEC_I_NO_RENEGOTIATION			0x00090360
-
 #endif
 
 #define SECURITY_NATIVE_DREP			0x00000010
@@ -256,8 +263,9 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define SECPKG_ATTR_NEGO_STATUS				32
 #define SECPKG_ATTR_CONTEXT_DELETED			33
 
-#if !defined(_WIN32) || defined(_UWP)
+#if !defined(_WIN32) || defined(_UWP) || defined(__MINGW32__)
 
+#if !defined(__MINGW32__)
 struct _SecPkgContext_AccessToken
 {
 	void* AccessToken;
@@ -297,6 +305,7 @@ struct _SecPkgContext_ConnectionInfo
 	UINT32 dwExchStrength;
 };
 typedef struct _SecPkgContext_ConnectionInfo SecPkgContext_ConnectionInfo;
+#endif
 
 struct _SecPkgContext_ClientCreds
 {
@@ -312,6 +321,7 @@ struct _SecPkgContex_DceInfo
 };
 typedef struct _SecPkgContex_DceInfo SecPkgContex_DceInfo;
 
+#if !defined(__MINGW32__)
 struct _SEC_CHANNEL_BINDINGS
 {
 	UINT32 dwInitiatorAddrType;
@@ -324,6 +334,7 @@ struct _SEC_CHANNEL_BINDINGS
 	UINT32 dwApplicationDataOffset;
 };
 typedef struct _SEC_CHANNEL_BINDINGS SEC_CHANNEL_BINDINGS;
+#endif
 
 struct _SecPkgContext_Bindings
 {
@@ -332,6 +343,7 @@ struct _SecPkgContext_Bindings
 };
 typedef struct _SecPkgContext_Bindings SecPkgContext_Bindings;
 
+#if !defined(__MINGW32__)
 struct _SecPkgContext_EapKeyBlock
 {
 	BYTE rgbKeys[128];
@@ -472,6 +484,8 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #else
 #define SecPkgCredentials_Names SecPkgCredentials_NamesA
 #define PSecPkgCredentials_Names PSecPkgCredentials_NamesA
+#endif
+
 #endif
 
 #endif
