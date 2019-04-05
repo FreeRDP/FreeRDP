@@ -316,7 +316,7 @@ FREERDP_ADDIN** freerdp_channels_list_addins(LPCSTR pszName, LPCSTR pszSubsystem
 
 void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins)
 {
-	int index;
+	size_t index;
 
 	if (!ppAddins)
 		return;
