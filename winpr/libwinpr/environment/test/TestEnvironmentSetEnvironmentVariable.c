@@ -9,13 +9,13 @@
 #define TEST_VALUE "WINPR_TEST_VALUE"
 int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 {
+	int rc = -1;
 	DWORD nSize;
-	LPSTR lpBuffer;
+	LPSTR lpBuffer = NULL;
 	DWORD error = 0;
-
 	SetEnvironmentVariableA(TEST_NAME, TEST_VALUE);
-
 	nSize = GetEnvironmentVariableA(TEST_NAME, NULL, 0);
+
 	/* check if value returned is len + 1 ) */
 	if (nSize != strlen(TEST_VALUE) + 1)
 	{
@@ -24,6 +24,7 @@ int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 	}
 
 	lpBuffer = (LPSTR) malloc(nSize);
+
 	if (!lpBuffer)
 		return -1;
 
@@ -32,33 +33,37 @@ int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 	if (nSize != strlen(TEST_VALUE))
 	{
 		printf("GetEnvironmentVariableA wrong size returned\n");
-		return -1;
+		goto fail;
 	}
 
 	if (strcmp(lpBuffer, TEST_VALUE) != 0)
 	{
 		printf("GetEnvironmentVariableA returned value doesn't match\n");
-		return -1;
+		goto fail;
 	}
 
-	nSize = GetEnvironmentVariableA("__xx__notset_",lpBuffer, nSize);
+	nSize = GetEnvironmentVariableA("__xx__notset_", lpBuffer, nSize);
 	error = GetLastError();
+
 	if (0 != nSize || ERROR_ENVVAR_NOT_FOUND != error)
 	{
 		printf("GetEnvironmentVariableA not found error\n");
-		return -1;
+		goto fail;
 	}
-
-	free(lpBuffer);
 
 	/* clear variable */
 	SetEnvironmentVariableA(TEST_NAME, NULL);
 	nSize = GetEnvironmentVariableA(TEST_VALUE, NULL, 0);
-	if ( 0 != nSize)
+
+	if (0 != nSize)
 	{
 		printf("SetEnvironmentVariableA failed to clear variable\n");
-		return -1;
+		goto fail;
 	}
-	return 0;
+
+	rc = 0;
+fail:
+	free(lpBuffer);
+	return rc;
 }
 
