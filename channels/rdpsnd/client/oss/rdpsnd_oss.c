@@ -379,8 +379,8 @@ static UINT rdpsnd_oss_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 
 		data += status;
 
-		if (status <= size)
-			size -= status;
+		if ((size_t)status <= size)
+			size -= (size_t)status;
 		else
 			size = 0;
 	}
