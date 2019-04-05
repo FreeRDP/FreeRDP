@@ -1267,7 +1267,10 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 		goto out_free_stream;
 
 	license->state = LICENSE_STATE_COMPLETED;
-	ret = saveCal(license->rdp->settings, Stream_Pointer(licenseStream), cbLicenseInfo, license->rdp->settings->ClientHostname);
+	
+	ret = TRUE;
+	if (!license->rdp->settings->OldLicenseBehaviour)
+		ret = saveCal(license->rdp->settings, Stream_Pointer(licenseStream), cbLicenseInfo, license->rdp->settings->ClientHostname);
 
 out_free_stream:
 	Stream_Free(licenseStream, FALSE);
