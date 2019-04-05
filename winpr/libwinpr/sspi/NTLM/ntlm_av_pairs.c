@@ -100,7 +100,7 @@ ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 	return ((PBYTE) pAvPair - (PBYTE) pAvPairList) + sizeof(NTLM_AV_PAIR);
 }
 
-static INLINE SSIZE_T ntlm_av_pair_get_len(const NTLM_AV_PAIR* pAvPair)
+static INLINE SIZE_T ntlm_av_pair_get_len(const NTLM_AV_PAIR* pAvPair)
 {
 	UINT16 AvLen;
 

@@ -84,8 +84,8 @@ void* freerdp_channels_client_find_static_entry(const char* name, const char* id
 
 extern const STATIC_ADDIN_TABLE CLIENT_STATIC_ADDIN_TABLE[];
 
-FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPSTR pszName, LPSTR pszSubsystem,
-        LPSTR pszType, DWORD dwFlags)
+static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName, LPCSTR pszSubsystem,
+        LPCSTR pszType, DWORD dwFlags)
 {
 	size_t i, j;
 	DWORD nAddins;
@@ -145,8 +145,8 @@ error_out:
 	return NULL;
 }
 
-FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSubsystem,
-        LPSTR pszType, DWORD dwFlags)
+static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCSTR pszSubsystem,
+        LPCSTR pszType, DWORD dwFlags)
 {
 	int index;
 	int nDashes;
@@ -303,7 +303,7 @@ error_out:
 	return NULL;
 }
 
-FREERDP_ADDIN** freerdp_channels_list_addins(LPSTR pszName, LPSTR pszSubsystem, LPSTR pszType,
+FREERDP_ADDIN** freerdp_channels_list_addins(LPCSTR pszName, LPCSTR pszSubsystem, LPCSTR pszType,
         DWORD dwFlags)
 {
 	if (dwFlags & FREERDP_ADDIN_STATIC)
@@ -345,8 +345,8 @@ BOOL freerdp_channels_is_virtual_channel_entry_ex(LPCSTR pszName)
 	return FALSE;
 }
 
-PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsystem,
-        LPSTR pszType, DWORD dwFlags)
+PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPCSTR pszSubsystem,
+        LPCSTR pszType, DWORD dwFlags)
 {
 	int i, j;
 	STATIC_SUBSYSTEM_ENTRY* subsystems;

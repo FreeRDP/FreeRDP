@@ -91,13 +91,17 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, VideoSurface* surface
 	surfaceRect.right = surface->x + surface->w;
 	surfaceRect.bottom = surface->y + surface->h;
 	update->BeginPaint(gdi->context);
+
+	if ((gdi->width < 0) || (gdi->height < 0))
+		return FALSE;
+	else
 	{
 		const UINT32 nXSrc = surface->x;
 		const UINT32 nYSrc = surface->y;
 		const UINT32 nXDst = nXSrc;
 		const UINT32 nYDst = nYSrc;
-		const UINT32 width = (surface->w + surface->x < gdi->width) ? surface->w : gdi->width - surface->x;
-		const UINT32 height = (surface->h + surface->y < gdi->height) ? surface->h : gdi->height -
+		const UINT32 width = (surface->w + surface->x < (UINT32)gdi->width) ? surface->w : (UINT32)gdi->width - surface->x;
+		const UINT32 height = (surface->h + surface->y < (UINT32)gdi->height) ? surface->h : (UINT32)gdi->height -
 		                      surface->y;
 
 		if (!freerdp_image_copy(gdi->primary_buffer, gdi->primary->hdc->format,
@@ -105,9 +109,11 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, VideoSurface* surface
 		                        nXDst, nYDst, width, height,
 		                        surface->data, gdi->primary->hdc->format,
 		                        gdiSurface->scanline, 0, 0, NULL, FREERDP_FLIP_NONE))
-			return CHANNEL_RC_NULL_DATA;
+			return FALSE;
 
-		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, width, height);
+		if ((nXDst > INT32_MAX) || (nYDst > INT32_MAX) || (width > INT32_MAX) || (height > INT32_MAX))
+			return FALSE;
+		gdi_InvalidateRegion(gdi->primary->hdc, (INT32)nXDst, (INT32)nYDst, (INT32)width, (INT32)height);
 	}
 	update->EndPaint(gdi->context);
 	return TRUE;

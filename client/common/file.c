@@ -636,21 +636,15 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL unicode)
 {
 	FILE* fp;
-	int length;
+	size_t size;
 	char* buffer;
 	int status = 0;
 	WCHAR* unicodestr = NULL;
-	length = (int) freerdp_client_write_rdp_file_buffer(file, NULL, 0);
+	size = freerdp_client_write_rdp_file_buffer(file, NULL, 0);
 
-	if (length < 0)
-	{
-		WLog_ERR(TAG,  "freerdp_client_write_rdp_file: error determining buffer size.");
-		return FALSE;
-	}
+	buffer = (char*) calloc((size + 1), sizeof(char));
 
-	buffer = (char*) calloc((length + 1), sizeof(char));
-
-	if (freerdp_client_write_rdp_file_buffer(file, buffer, length + 1) != length)
+	if (freerdp_client_write_rdp_file_buffer(file, buffer, size + 1) != size)
 	{
 		WLog_ERR(TAG,  "freerdp_client_write_rdp_file: error writing to output buffer");
 		free(buffer);
@@ -663,11 +657,22 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 	{
 		if (unicode)
 		{
+			int length;
+			if (size > INT_MAX)
+			{
+				free(buffer);
+				free(unicodestr);
+				fclose(fp);
+				return FALSE;
+			}
+
+			length = (int)size;
 			ConvertToUnicode(CP_UTF8, 0, buffer, length, &unicodestr, 0);
 
 			/* Write multi-byte header */
-			if (fwrite(BOM_UTF16_LE, sizeof(BYTE), 2, fp) != 2 ||
-			    fwrite(unicodestr, 2, length, fp) != length)
+			if ((length < 0) ||
+			    (fwrite(BOM_UTF16_LE, sizeof(BYTE), 2, fp) != 2) ||
+			    (fwrite(unicodestr, 2, (size_t)length, fp) != (size_t)length))
 			{
 				free(buffer);
 				free(unicodestr);
@@ -679,7 +684,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 		}
 		else
 		{
-			if (fwrite(buffer, 1, length, fp) != length)
+			if (fwrite(buffer, 1, size, fp) != size)
 			{
 				free(buffer);
 				fclose(fp);
@@ -838,7 +843,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		                       (file->ScreenModeId == 2) ? TRUE : FALSE);
 	}
 
-	if (~((size_t) file->SmartSizing))
+	if (~(file->SmartSizing))
 	{
 		freerdp_set_param_bool(settings, FreeRDP_SmartSizing,
 		                       (file->SmartSizing == 1) ? TRUE : FALSE);

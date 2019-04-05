@@ -498,7 +498,7 @@ static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATI
 		PresentationContext_unref(presentation);
 	}
 
-	return CHANNEL_RC_OK;
+	return ret;
 }
 
 
@@ -979,6 +979,9 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
 	VIDEO_CHANNEL_CALLBACK* callback;
 	VIDEO_LISTENER_CALLBACK* listener_callback = (VIDEO_LISTENER_CALLBACK*) listenerCallback;
 
+	WINPR_UNUSED(Data);
+	WINPR_UNUSED(pbAccept);
+
 	callback = (VIDEO_CHANNEL_CALLBACK*) calloc(1, sizeof(VIDEO_CHANNEL_CALLBACK));
 	if (!callback)
 	{
@@ -1004,6 +1007,9 @@ static UINT video_data_on_new_channel_connection(IWTSListenerCallback* pListener
 {
 	VIDEO_CHANNEL_CALLBACK* callback;
 	VIDEO_LISTENER_CALLBACK* listener_callback = (VIDEO_LISTENER_CALLBACK*) pListenerCallback;
+
+	WINPR_UNUSED(Data);
+	WINPR_UNUSED(pbAccept);
 
 	callback = (VIDEO_CHANNEL_CALLBACK*) calloc(1, sizeof(VIDEO_CHANNEL_CALLBACK));
 	if (!callback)

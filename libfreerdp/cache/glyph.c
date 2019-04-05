@@ -198,7 +198,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context,
 	if (bkHeight < 0)
 		bkHeight = 0;
 
-	if (opX + opWidth > context->settings->DesktopWidth)
+	if (opX + opWidth > (INT64)context->settings->DesktopWidth)
 	{
 		/**
 		 * Some Microsoft servers send erroneous high values close to the
@@ -212,7 +212,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context,
 		opWidth = context->settings->DesktopWidth - opX;
 	}
 
-	if (bkX + bkWidth > context->settings->DesktopWidth)
+	if (bkX + bkWidth > (INT64)context->settings->DesktopWidth)
 	{
 		/**
 		 * Some Microsoft servers send erroneous high values close to the
@@ -363,8 +363,8 @@ static BOOL update_gdi_fast_index(rdpContext* context,
 	/* Server can send a massive number (32766) which appears to be
 	 * undocumented special behavior for "Erase all the way right".
 	 * X11 has nondeterministic results asking for a draw that wide. */
-	if (opRight > context->instance->settings->DesktopWidth)
-		opRight = context->instance->settings->DesktopWidth;
+	if (opRight > (INT64)context->instance->settings->DesktopWidth)
+		opRight = (int)context->instance->settings->DesktopWidth;
 
 	if (x == -32768)
 		x = fastIndex->bkLeft;
@@ -438,8 +438,8 @@ static BOOL update_gdi_fast_glyph(rdpContext* context,
 		opRight = fastGlyph->bkRight;
 
 	/* See update_gdi_fast_index opRight comment. */
-	if (opRight > context->instance->settings->DesktopWidth)
-		opRight = context->instance->settings->DesktopWidth;
+	if (opRight > (INT64)context->instance->settings->DesktopWidth)
+		opRight = (int)context->instance->settings->DesktopWidth;
 
 	if (x == -32768)
 		x = fastGlyph->bkLeft;

@@ -899,7 +899,7 @@ static const XKB_LAYOUT xkbLayouts[] =
 
 UINT32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 {
-	int i, j;
+	size_t i, j;
 
 	if ((layout == NULL) || (variant == NULL))
 		return 0;

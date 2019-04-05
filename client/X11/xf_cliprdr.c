@@ -450,7 +450,7 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_raw_server_formats(xfClipboard* clipboard,
 static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(
     xfClipboard* clipboard, UINT32* numFormats)
 {
-	int i;
+	unsigned long i;
 	Atom atom;
 	BYTE* data = NULL;
 	int format_property;
@@ -750,7 +750,10 @@ static void xf_cliprdr_append_target(xfClipboard* clipboard, Atom target)
 {
 	int i;
 
-	if (clipboard->numTargets >= ARRAYSIZE(clipboard->targets))
+	if (clipboard->numTargets < 0)
+		return;
+
+	if ((size_t)clipboard->numTargets >= ARRAYSIZE(clipboard->targets))
 		return;
 
 	for (i = 0; i < clipboard->numTargets; i++)
@@ -957,6 +960,8 @@ static BOOL xf_cliprdr_process_selection_clear(xfClipboard* clipboard,
 {
 	xfContext* xfc = clipboard->xfc;
 
+	WINPR_UNUSED(xevent);
+
 	if (xf_cliprdr_is_self_owned(clipboard))
 		return FALSE;
 
@@ -1155,6 +1160,8 @@ static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context,
 {
 	xfClipboard* clipboard = (xfClipboard*) context->custom;
 	UINT ret;
+
+	WINPR_UNUSED(monitorReady);
 
 	if ((ret = xf_cliprdr_send_client_capabilities(clipboard)) != CHANNEL_RC_OK)
 		return ret;
@@ -1558,6 +1565,8 @@ static UINT xf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate,
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	xfClipboard* clipboard = delegate->custom;
+	WINPR_UNUSED(errorCode);
+
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_SIZE;
@@ -1582,6 +1591,8 @@ static UINT xf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	xfClipboard* clipboard = delegate->custom;
+	WINPR_UNUSED(errorCode);
+
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
 	response.dwFlags = FILECONTENTS_RANGE;

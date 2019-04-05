@@ -602,7 +602,7 @@ static UINT wlf_cliprdr_server_format_data_request(CliprdrClientContext* context
         const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	int cnv;
-	UINT rc;
+	UINT rc = CHANNEL_RC_OK;
 	BYTE* data;
 	LPWSTR cdata;
 	size_t size;
@@ -666,6 +666,9 @@ static UINT wlf_cliprdr_server_format_data_request(CliprdrClientContext* context
 			// TODO: Image conversions
 			break;
 	}
+
+	if (rc != CHANNEL_RC_OK)
+		return rc;
 
 	rc = wlf_cliprdr_send_data_response(clipboard, data, size);
 	free(data);

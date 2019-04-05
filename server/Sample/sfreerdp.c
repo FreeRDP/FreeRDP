@@ -99,6 +99,8 @@ fail_rfx_context:
 
 void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 {
+	WINPR_UNUSED(client);
+
 	if (context)
 	{
 		if (context->debug_channel_thread)
@@ -582,7 +584,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 			}
 
 			if (!(context->debug_channel_thread = CreateThread(NULL, 0,
-												  tf_debug_channel_thread_func, (void*) context, 0, NULL)))
+			                                      tf_debug_channel_thread_func, (void*) context, 0, NULL)))
 			{
 				WLog_ERR(TAG, "Failed to create debug channel thread");
 				CloseHandle(context->stopEvent);
@@ -632,6 +634,7 @@ BOOL tf_peer_activate(freerdp_peer* client)
 
 BOOL tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
+	WINPR_UNUSED(input);
 	WLog_DBG(TAG, "Client sent a synchronize event (flags:0x%"PRIX32")", flags);
 	return TRUE;
 }
@@ -698,6 +701,7 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 BOOL tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
+	WINPR_UNUSED(input);
 	WLog_DBG(TAG, "Client sent a unicode keyboard event (flags:0x%04"PRIX16" code:0x%04"PRIX16")",
 	         flags, code);
 	return TRUE;
@@ -705,6 +709,7 @@ BOOL tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
+	WINPR_UNUSED(flags);
 	//WLog_DBG(TAG, "Client sent a mouse event (flags:0x%04"PRIX16" pos:%"PRIu16",%"PRIu16")", flags, x, y);
 	test_peer_draw_icon(input->context->peer, x + 10, y);
 	return TRUE;
@@ -713,7 +718,9 @@ BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
                                   UINT16 y)
 {
+	WINPR_UNUSED(flags);
 	//WLog_DBG(TAG, "Client sent an extended mouse event (flags:0x%04"PRIX16" pos:%"PRIu16",%"PRIu16")", flags, x, y);
+	test_peer_draw_icon(input->context->peer, x + 10, y);
 	return TRUE;
 }
 
@@ -721,6 +728,7 @@ static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count,
                                  const RECTANGLE_16* areas)
 {
 	BYTE i;
+	WINPR_UNUSED(context);
 	WLog_DBG(TAG, "Client requested to refresh:");
 
 	for (i = 0; i < count; i++)
@@ -735,6 +743,8 @@ static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count,
 static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow,
                                     const RECTANGLE_16* area)
 {
+	WINPR_UNUSED(context);
+
 	if (allow > 0)
 	{
 		WLog_DBG(TAG, "Client restore output (%"PRIu16", %"PRIu16") (%"PRIu16", %"PRIu16").", area->left,
@@ -843,6 +853,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	HANDLE hThread;
+	WINPR_UNUSED(instance);
 
 	if (!(hThread = CreateThread(NULL, 0, test_peer_mainloop, (void*) client, 0, NULL)))
 		return FALSE;

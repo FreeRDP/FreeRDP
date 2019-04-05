@@ -111,7 +111,7 @@ BOOL yuv_context_decode(YUV_CONTEXT* context, const BYTE* pYUVData[3], UINT32 iS
 	UINT32 y, nobjects, i;
 	PTP_WORK *work_objects = NULL;
 	YUV_PROCESS_WORK_PARAM *params;
-	int waitCount = 0;
+	UINT32 waitCount = 0;
 	BOOL ret = TRUE;
 
 	if (!context->useThreads)

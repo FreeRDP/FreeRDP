@@ -82,7 +82,7 @@ public class LibFreeRDP {
 
     private static native boolean freerdp_send_key_event(long inst, int keycode, boolean down);
 
-    private static native boolean freerdp_send_unicodekey_event(long inst, int keycode);
+    private static native boolean freerdp_send_unicodekey_event(long inst, int keycode, boolean down);
 
     private static native boolean freerdp_send_clipboard_data(long inst, String data);
 
@@ -357,8 +357,8 @@ public class LibFreeRDP {
         return freerdp_send_key_event(inst, keycode, down);
     }
 
-    public static boolean sendUnicodeKeyEvent(long inst, int keycode) {
-        return freerdp_send_unicodekey_event(inst, keycode);
+    public static boolean sendUnicodeKeyEvent(long inst, int keycode, boolean down) {
+        return freerdp_send_unicodekey_event(inst, keycode, down);
     }
 
     public static boolean sendClipboardData(long inst, String data) {

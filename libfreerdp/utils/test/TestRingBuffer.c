@@ -27,7 +27,10 @@ static BOOL test_overlaps(void)
 	RingBuffer rb;
 	DataChunk chunks[2];
 	BYTE bytes[200];
-	int nchunks, i, j, k, counter = 0;
+	size_t i;
+	size_t k;
+	int x;
+	int nchunks, j, counter = 0;
 
 	for (i = 0; i < sizeof(bytes); i++)
 		bytes[i] = (BYTE)i;
@@ -46,11 +49,11 @@ static BOOL test_overlaps(void)
 	if (nchunks != 2 || chunks[0].size != 3 || chunks[1].size != 1)
 		goto error;
 
-	for (i = 0, j = 2; i < nchunks; i++)
+	for (x = 0, j = 2; x < nchunks; x++)
 	{
-		for (k = 0; k < (int) chunks[i].size; k++, j++)
+		for (k = 0; k < chunks[x].size; k++, j++)
 		{
-			if (chunks[i].data[k] != (BYTE)j)
+			if (chunks[x].data[k] != (BYTE)j)
 				goto error;
 		}
 	}

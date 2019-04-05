@@ -16,14 +16,14 @@ static VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwT
 {
 	APC_DATA* apcData;
 	UINT32 CurrentTime = GetTickCount();
+	WINPR_UNUSED(dwTimerLowValue);
+	WINPR_UNUSED(dwTimerHighValue);
 
 	if (!lpArg)
 		return;
 
 	apcData = (APC_DATA*) lpArg;
-
 	printf("TimerAPCProc: time: %"PRIu32"\n", CurrentTime - apcData->StartTime);
-
 	g_Count++;
 
 	if (g_Count >= 5)
@@ -38,16 +38,11 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 	HANDLE hTimer = NULL;
 	BOOL bSuccess;
 	LARGE_INTEGER due;
-	APC_DATA* apcData = NULL;
-
-	apcData = (APC_DATA*) malloc(sizeof(APC_DATA));
-	if (!apcData)
-	{
-		printf("Memory allocation failed\n");
-		goto cleanup;
-	}
-
+	APC_DATA apcData = { 0 };
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	g_Event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
 	if (!g_Event)
 	{
 		printf("Failed to create event\n");
@@ -60,9 +55,8 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 		goto cleanup;
 
 	due.QuadPart = -15000000LL; /* 1.5 seconds */
-
-	apcData->StartTime = GetTickCount();
-	bSuccess = SetWaitableTimer(hTimer, &due, 2000, TimerAPCProc, apcData, FALSE);
+	apcData.StartTime = GetTickCount();
+	bSuccess = SetWaitableTimer(hTimer, &due, 2000, TimerAPCProc, &apcData, FALSE);
 
 	if (!bSuccess)
 		goto cleanup;
@@ -73,7 +67,6 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 	 * using SetWaitableTimer. However, the thread must be in an ALERTABLE state.
 	 */
 
-
 	/**
 	 * Note: On WIN32 we need to use WaitForSingleObjectEx with parameter bAlertable = TRUE
 	 * However, WinPR currently (May 2016) does not have a working WaitForSingleObjectEx implementation
@@ -81,7 +74,7 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 	 * timer implementations.
 	 **/
 
-	for(;;)
+	for (;;)
 	{
 		DWORD rc;
 #ifdef _WIN32
@@ -89,6 +82,7 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 #else
 		rc = WaitForSingleObject(g_Event, INFINITE);
 #endif
+
 		if (rc == WAIT_OBJECT_0)
 			break;
 
@@ -100,13 +94,13 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 	}
 
 	status = 0;
-
 cleanup:
+
 	if (hTimer)
 		CloseHandle(hTimer);
+
 	if (g_Event)
 		CloseHandle(g_Event);
-	free(apcData);
 
 	return status;
 }

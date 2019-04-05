@@ -215,6 +215,8 @@ static void xf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
 	xfDispContext* xfDisp;
 	rdpSettings* settings;
 
+	WINPR_UNUSED(e);
+
 	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
 		return;
 
@@ -232,6 +234,8 @@ static void xf_disp_OnTimer(void* context, TimerEventArgs* e)
 	xfContext* xfc;
 	xfDispContext* xfDisp;
 	rdpSettings* settings;
+
+	WINPR_UNUSED(e);
 
 	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
 		return;

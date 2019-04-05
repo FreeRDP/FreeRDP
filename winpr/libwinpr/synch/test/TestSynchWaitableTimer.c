@@ -9,6 +9,8 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	LONG period;
 	LARGE_INTEGER due;
 	int result = -1;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	timer = CreateWaitableTimer(NULL, FALSE, NULL);
 
 	if (!timer)

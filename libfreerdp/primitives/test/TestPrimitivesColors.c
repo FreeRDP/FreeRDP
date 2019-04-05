@@ -29,7 +29,7 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	INT16* b;
 	BYTE* out1;
 	BYTE* out2;
-	int i;
+	UINT64 i;
 	BOOL failed = FALSE;
 	const INT16* ptrs[3];
 	const UINT32 rgbStride = roi.width * 2;

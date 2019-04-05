@@ -137,7 +137,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 {
 	ADDIN_ARGV* args;
 	rdpsndFakePlugin* fake;
-	UINT ret;
+	UINT ret = CHANNEL_RC_OK;
 	fake = (rdpsndFakePlugin*) calloc(1, sizeof(rdpsndFakePlugin));
 
 	if (!fake)
@@ -163,9 +163,8 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 		}
 	}
 
-	ret = CHANNEL_RC_NO_MEMORY;
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, &fake->device);
-	return CHANNEL_RC_OK;
+	return ret;
 error:
 	rdpsnd_fake_free(&fake->device);
 	return ret;

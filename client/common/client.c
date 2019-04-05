@@ -519,6 +519,9 @@ DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name,
                                     const char* subject, const char* issuer,
                                     const char* fingerprint, BOOL host_mismatch)
 {
+	WINPR_UNUSED(common_name);
+	WINPR_UNUSED(host_mismatch);
+
 	printf("WARNING: This callback is deprecated, migrate to client_cli_verify_certificate_ex\n");
 	printf("Certificate details:\n");
 	printf("\tSubject: %s\n", subject);
@@ -591,6 +594,8 @@ DWORD client_cli_verify_changed_certificate(freerdp* instance,
         const char* old_subject, const char* old_issuer,
         const char* old_fingerprint)
 {
+	WINPR_UNUSED(common_name);
+
 	printf("WARNING: This callback is deprecated, migrate to client_cli_verify_changed_certificate_ex\n");
 	printf("!!! Certificate has changed !!!\n");
 	printf("\n");

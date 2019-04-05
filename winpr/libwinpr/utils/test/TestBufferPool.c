@@ -9,7 +9,7 @@ int TestBufferPool(int argc, char* argv[])
 	int BufferSize;
 	wBufferPool* pool;
 	BYTE* Buffers[10];
-	DWORD DefaultSize = 1234;
+	int DefaultSize = 1234;
 
 	pool = BufferPool_New(TRUE, -1, 16);
 	if (!pool)

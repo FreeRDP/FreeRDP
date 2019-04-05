@@ -459,8 +459,6 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSecBufferDesc pMessage)
 {
 	int status;
-	int length;
-	int offset;
 	int ssl_error;
 	PSecBuffer pStreamBodyBuffer;
 	PSecBuffer pStreamHeaderBuffer;
@@ -484,18 +482,21 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 
 	if (status > 0)
 	{
-		offset = 0;
-		length = (pStreamHeaderBuffer->cbBuffer > (unsigned long) status) ? status :
+		size_t ustatus = (size_t)status;
+		size_t length;
+		size_t offset = 0;
+
+		length = (pStreamHeaderBuffer->cbBuffer > ustatus) ? ustatus :
 		         pStreamHeaderBuffer->cbBuffer;
 		CopyMemory(pStreamHeaderBuffer->pvBuffer, &context->ReadBuffer[offset], length);
-		status -= length;
+		ustatus -= length;
 		offset += length;
-		length = (pStreamBodyBuffer->cbBuffer > (unsigned long) status) ? status :
+		length = (pStreamBodyBuffer->cbBuffer > ustatus) ? ustatus :
 		         pStreamBodyBuffer->cbBuffer;
 		CopyMemory(pStreamBodyBuffer->pvBuffer, &context->ReadBuffer[offset], length);
-		status -= length;
+		ustatus -= length;
 		offset += length;
-		length = (pStreamTrailerBuffer->cbBuffer > (unsigned long) status) ? status :
+		length = (pStreamTrailerBuffer->cbBuffer > ustatus) ? ustatus :
 		         pStreamTrailerBuffer->cbBuffer;
 		CopyMemory(pStreamTrailerBuffer->pvBuffer, &context->ReadBuffer[offset], length);
 	}

@@ -35,12 +35,12 @@
 #include "uwac-os.h"
 #include "wayland-cursor.h"
 
-#define TARGET_COMPOSITOR_INTERFACE 3
-#define TARGET_SHM_INTERFACE 1
-#define TARGET_SHELL_INTERFACE 1
-#define TARGET_DDM_INTERFACE 1
-#define TARGET_SEAT_INTERFACE 5
-#define TARGET_XDG_VERSION 5 /* The version of xdg-shell that we implement */
+#define TARGET_COMPOSITOR_INTERFACE 3U
+#define TARGET_SHM_INTERFACE 1U
+#define TARGET_SHELL_INTERFACE 1U
+#define TARGET_DDM_INTERFACE 1U
+#define TARGET_SEAT_INTERFACE 5U
+#define TARGET_XDG_VERSION 5U /* The version of xdg-shell that we implement */
 
 static const char* event_names[] =
 {
@@ -683,7 +683,7 @@ UwacReturnCode UwacDisplayQueryShmFormats(const UwacDisplay* display, enum wl_sh
 	if (!display)
 		return UWAC_ERROR_INVALID_DISPLAY;
 
-	*filled = min(display->shm_formats_nb, formats_size);
+	*filled = min((int64_t)display->shm_formats_nb, formats_size);
 	memcpy(formats, (const void*)display->shm_formats, *filled * sizeof(enum wl_shm_format));
 	return UWAC_SUCCESS;
 }

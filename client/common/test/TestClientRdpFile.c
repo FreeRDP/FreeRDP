@@ -267,6 +267,8 @@ int TestClientRdpFile(int argc, char* argv[])
 	char* sValue;
 	rdpFile* file;
 	rdpFileLine* line;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	/* Unicode */
 	file = freerdp_client_rdp_file_new();
 

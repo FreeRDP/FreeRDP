@@ -1229,7 +1229,7 @@ static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyL
 	BIO* bio;
 	int status;
 	size_t offset;
-	int length = 0;
+	size_t length = 0;
 	BOOL rc = FALSE;
 	BYTE* pemCert = NULL;
 
@@ -1275,7 +1275,7 @@ static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyL
 		goto fail;
 	}
 
-	offset += status;
+	offset += (size_t)status;
 
 	while (offset >= length)
 	{

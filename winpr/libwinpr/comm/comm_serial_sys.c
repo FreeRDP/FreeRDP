@@ -1547,7 +1547,10 @@ BOOL _get_dtrrts(WINPR_COMM *pComm, ULONG *pMask)
 BOOL _config_size(WINPR_COMM *pComm, ULONG *pSize)
 {
 	/* http://msdn.microsoft.com/en-us/library/ff546548%28v=vs.85%29.aspx */
-	pSize = 0;
+	if (!pSize)
+		return FALSE;
+
+	*pSize = 0;
 	return TRUE;
 }
 

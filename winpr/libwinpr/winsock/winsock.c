@@ -925,7 +925,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 	numInterfaces = 0;
 	ifreq = ifconf.ifc_req;
 
-	while ((offset < ifconf.ifc_len) && (numInterfaces < maxNumInterfaces))
+	while ((ifconf.ifc_len >= 0) && (offset < (size_t)ifconf.ifc_len) && (numInterfaces < maxNumInterfaces))
 	{
 		pInterface = &pInterfaces[index];
 		pAddress = (struct sockaddr_in*) &pInterface->iiAddress;

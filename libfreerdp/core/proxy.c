@@ -391,7 +391,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 	int status;
 	wStream* s;
 	char port_str[10], recv_buf[256], *eol;
-	int resultsize;
+	size_t resultsize;
 	_itoa_s(port, port_str, sizeof(port_str), 10);
 	s = Stream_New(NULL, 200);
 	Stream_Write(s, "CONNECT ", 8);
@@ -405,7 +405,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 	Stream_Write(s, CRLF CRLF, 4);
 	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
 
-	if (status != Stream_GetPosition(s))
+	if ((status < 0) || ((size_t)status != Stream_GetPosition(s)))
 	{
 		Stream_Free(s, TRUE);
 		WLog_ERR(TAG, "HTTP proxy: failed to write CONNECT request");
@@ -626,9 +626,9 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	/* follows DST.PORT in netw. format */
 	buf[hostnlen + 5] = (port >> 8) & 0xff;
 	buf[hostnlen + 6] = port & 0xff;
-	status = BIO_write(bufferedBio, buf, hostnlen + 7);
+	status = BIO_write(bufferedBio, buf, hostnlen + 7U);
 
-	if (status != (hostnlen + 7))
+	if ((status < 0) || ((size_t)status != (hostnlen + 7U)))
 	{
 		WLog_ERR(TAG, "SOCKS proxy: failed to write CONN REQ");
 		return FALSE;

@@ -25,6 +25,10 @@
 
 #include <winpr/synch.h>
 
+#include "../log.h"
+
+#define TAG WINPR_TAG("synch.sleep")
+
 #ifndef _WIN32
 
 #include <time.h>
@@ -43,8 +47,11 @@ VOID Sleep(DWORD dwMilliseconds)
 
 DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
 {
-	usleep(dwMilliseconds * 1000);
-	return TRUE;
+	/* TODO: Implement bAlertable support */
+	if (bAlertable)
+		WLog_WARN(TAG, "%s does not support bAlertable", __FUNCTION__);
+	Sleep(dwMilliseconds);
+	return 0;
 }
 
 #endif

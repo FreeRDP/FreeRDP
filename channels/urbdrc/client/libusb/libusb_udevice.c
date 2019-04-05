@@ -171,8 +171,8 @@ static void func_iso_callback(struct libusb_transfer* transfer)
 	BYTE* data = iso_user_data->IsoPacket;
 	int* completed = &iso_user_data->completed;
 	UINT32 offset = 0;
-	UINT32 index = 0;
-	UINT32 i, act_len;
+	INT32 index = 0;
+	INT32 i, act_len;
 	BYTE* b;
 	*completed = 1;
 
@@ -234,7 +234,7 @@ static const LIBUSB_ENDPOINT_DESCEIPTOR* func_get_ep_desc(LIBUSB_CONFIG_DESCRIPT
         MSUSB_CONFIG_DESCRIPTOR* MsConfig, UINT32 EndpointAddress)
 {
 	BYTE alt;
-	int inum, pnum;
+	UINT32 inum, pnum;
 	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
 	const LIBUSB_INTERFACE*	interface;
 	const LIBUSB_ENDPOINT_DESCEIPTOR* endpoint;
@@ -359,7 +359,8 @@ static void func_iso_data_init(ISO_USER_DATA* iso_user_data, UINT32 numPacket, U
 static int func_config_release_all_interface(LIBUSB_DEVICE_HANDLE* libusb_handle,
         UINT32 NumInterfaces)
 {
-	int i, ret;
+	UINT32 i;
+	int ret;
 
 	for (i = 0; i < NumInterfaces; i++)
 	{
@@ -630,7 +631,7 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 			}
 			while (p1 != NULL);
 
-			if ((p2 - sysfs_path) < (strlen(sysfs_path) - 2))
+			if ((size_t)((p2 - sysfs_path) + 2U) < strlen(sysfs_path))
 			{
 				p1 = (char*) sysfs_path;
 
@@ -761,7 +762,7 @@ static MSUSB_CONFIG_DESCRIPTOR* libusb_udev_complete_msconfig_setup(IUDEVICE* id
 	const LIBUSB_INTERFACE_DESCRIPTOR* LibusbAltsetting;
 	const LIBUSB_ENDPOINT_DESCEIPTOR* LibusbEndpoint;
 	BYTE LibusbNumEndpoint;
-	int inum = 0, pnum = 0, MsOutSize = 0;
+	UINT32 inum = 0, pnum = 0, MsOutSize = 0;
 	LibusbConfig = pdev->LibusbConfig;
 
 	if (LibusbConfig->bNumInterfaces != MsConfig->NumInterfaces)
@@ -994,7 +995,8 @@ static int libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextType
 	char deviceLocation[25];
 	BYTE bus_number;
 	BYTE device_address;
-	int ret = 0, i = 0;
+	int ret = 0;
+	size_t i = 0;
 
 	switch (TextType)
 	{
@@ -1005,7 +1007,7 @@ static int libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextType
 			                                   Buffer,
 			                                   *BufferSize);
 
-			for (i = 0; i < ret; i++)
+			for (i = 0; (ret > 0) && (i < (size_t)ret); i++)
 			{
 				Buffer[i] = Buffer[i + 2];
 			}

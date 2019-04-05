@@ -72,7 +72,7 @@ static BOOL xf_tsmf_is_format_supported(xfXvContext* xv, UINT32 pixfmt)
 	return FALSE;
 }
 
-int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT* event)
+static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT* event)
 {
 	int i;
 	int x, y;
@@ -87,7 +87,7 @@ int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT
 	int numRects = 0;
 	xfContext* xfc;
 	xfXvContext* xv;
-	XRectangle* xrects;
+	XRectangle* xrects = NULL;
 	XShmSegmentInfo shminfo;
 	BOOL converti420yv12 = FALSE;
 
@@ -281,8 +281,17 @@ int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT
 			break;
 
 		default:
-			CopyMemory(image->data, event->frameData, image->data_size <= event->frameSize ?
-				image->data_size : event->frameSize);
+			if (image->data_size < 0)
+			{
+				free(xrects);
+				return -2000;
+			}
+			else
+			{
+				const size_t size = ((UINT32)image->data_size <= event->frameSize) ?
+				            (UINT32)image->data_size : event->frameSize;
+				CopyMemory(image->data, event->frameData, size);
+			}
 			break;
 	}
 
@@ -397,7 +406,7 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	{
 		xv->xv_pixfmts = (UINT32*) calloc((ret + 1), sizeof(UINT32));
 
-		for (i = 0; i < ret; i++)
+		for (i = 0; i < (unsigned int)ret; i++)
 		{
 			xv->xv_pixfmts[i] = fo[i].id;
 			WLog_DBG(TAG, "%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0], ((char*)(xv->xv_pixfmts + i))[1],
@@ -422,6 +431,7 @@ int xf_tsmf_xv_uninit(xfContext* xfc, TsmfClientContext* tsmf)
 {
 	xfXvContext* xv = (xfXvContext*) xfc->xv_context;
 
+	WINPR_UNUSED(tsmf);
 	if (xv)
 	{
 		if (xv->xv_image_size > 0)

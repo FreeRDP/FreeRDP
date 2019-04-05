@@ -35,7 +35,7 @@
 #include "nsc_types.h"
 #include "nsc_sse2.h"
 
-static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
+static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
         const BYTE* data, UINT32 scanline)
 {
 	UINT16 x;
@@ -55,9 +55,19 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
 	__m128i co_val;
 	__m128i cg_val;
 	UINT32 tempWidth;
+
+	if (!context || !data || (scanline == 0))
+		return FALSE;
+
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
+
+	if (context->priv->PlaneBuffersLength < rw * scanline)
+		return FALSE;
+
+	if (rw < scanline * 2)
+		return FALSE;
 
 	for (y = 0; y < context->height; y++)
 	{
@@ -332,6 +342,8 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
 		CopyMemory(coplane, coplane - rw, rw);
 		CopyMemory(cgplane, cgplane - rw, rw);
 	}
+
+	return TRUE;
 }
 
 static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
@@ -388,12 +400,11 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 static BOOL nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data,
                             UINT32 scanline)
 {
-	nsc_encode_argb_to_aycocg_sse2(context, data, scanline);
+	if (!nsc_encode_argb_to_aycocg_sse2(context, data, scanline))
+		return FALSE;
 
 	if (context->ChromaSubsamplingLevel > 0)
-	{
 		nsc_encode_subsampling_sse2(context);
-	}
 
 	return TRUE;
 }

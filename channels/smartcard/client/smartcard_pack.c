@@ -804,7 +804,7 @@ LONG smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReaders_Return* ret,
         BOOL unicode)
 {
-	int index;
+	size_t index;
 	size_t length;
 	char* mszA = NULL;
 
@@ -1851,7 +1851,7 @@ LONG smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Statu
 
 void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* ret, BOOL unicode)
 {
-	int index;
+	size_t index;
 	size_t length;
 	char* pbAtr = NULL;
 	char* mszReaderNamesA = NULL;

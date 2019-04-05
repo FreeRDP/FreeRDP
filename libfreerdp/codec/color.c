@@ -415,6 +415,9 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 	UINT32 dstVOffset = 0;
 	INT32 dstVMultiplier = 1;
 
+	if ((nHeight > INT32_MAX) || (nWidth > INT32_MAX))
+		return FALSE;
+
 	if (!pDstData || !pSrcData)
 		return FALSE;
 
@@ -441,7 +444,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 			/* Copy down */
 			if (nYDst < nYSrc)
 			{
-				for (y = 0; y < nHeight; y++)
+				for (y = 0; y < (INT32)nHeight; y++)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
 					                                            nSrcStep * srcVMultiplier +
@@ -471,7 +474,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 			/* Copy left */
 			else if (nXSrc > nXDst)
 			{
-				for (y = 0; y < nHeight; y++)
+				for (y = 0; y < (INT32)nHeight; y++)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
 					                                            nSrcStep * srcVMultiplier +
@@ -486,7 +489,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 			/* Copy right */
 			else if (nXSrc < nXDst)
 			{
-				for (y = nHeight - 1; y >= 0; y--)
+				for (y = (INT32)nHeight - 1; y >= 0; y--)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
 					                                            nSrcStep * srcVMultiplier +
@@ -505,7 +508,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 		}
 		else
 		{
-			for (y = 0; y < nHeight; y++)
+			for (y = 0; y < (INT32)nHeight; y++)
 			{
 				const BYTE* srcLine = &pSrcData[(y + nYSrc) *
 				                                            nSrcStep * srcVMultiplier +

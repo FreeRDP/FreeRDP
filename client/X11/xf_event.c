@@ -323,6 +323,7 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 }
 static BOOL xf_event_VisibilityNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
+	WINPR_UNUSED(app);
 	xfc->unobscured = event->xvisibility.state == VisibilityUnobscured;
 	return TRUE;
 }
@@ -463,6 +464,7 @@ static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
 {
 	KeySym keysym;
 	char str[256];
+	WINPR_UNUSED(app);
 	XLookupString((XKeyEvent*) event, str, sizeof(str), &keysym, NULL);
 	xf_keyboard_key_press(xfc, event->xkey.keycode, keysym);
 	return TRUE;
@@ -471,6 +473,7 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
 	KeySym keysym;
 	char str[256];
+	WINPR_UNUSED(app);
 	XLookupString((XKeyEvent*) event, str, sizeof(str), &keysym, NULL);
 	xf_keyboard_key_release(xfc, event->xkey.keycode, keysym);
 	return TRUE;
@@ -527,6 +530,7 @@ static BOOL xf_event_FocusOut(xfContext* xfc, XEvent* event, BOOL app)
 }
 static BOOL xf_event_MappingNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
+	WINPR_UNUSED(app);
 	if (event->xmapping.request == MappingModifier)
 	{
 		if (xfc->modifierMap)
@@ -597,6 +601,7 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, XEvent* event, BOOL app)
 }
 static BOOL xf_event_LeaveNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
+	WINPR_UNUSED(event);
 	if (!app)
 	{
 		xfc->mouse_active = FALSE;
@@ -751,7 +756,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	    (((Atom) event->xproperty.atom == xfc->WM_STATE)
 	     && (event->xproperty.state != PropertyDelete)))
 	{
-		int i;
+		unsigned long i;
 		BOOL status;
 		BOOL maxVert = FALSE;
 		BOOL maxHorz = FALSE;

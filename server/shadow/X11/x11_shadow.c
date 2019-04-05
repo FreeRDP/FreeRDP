@@ -168,6 +168,8 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem,
 {
 	int pam_status;
 	SHADOW_PAM_AUTH_INFO* info;
+	WINPR_UNUSED(subsystem);
+	WINPR_UNUSED(client);
 	info = calloc(1, sizeof(SHADOW_PAM_AUTH_INFO));
 
 	if (!info)
@@ -222,6 +224,8 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem,
 static BOOL x11_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT32 flags)
 {
+	/* TODO: Implement */
+	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
 	return TRUE;
 }
 
@@ -273,6 +277,8 @@ static BOOL x11_shadow_input_unicode_keyboard_event(rdpShadowSubsystem*
         subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
+	/* TODO: Implement */
+	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
 	return TRUE;
 }
 
@@ -557,7 +563,7 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 		y -= surface->y;
 	}
 
-	if ((x != subsystem->common.pointerX) || (y != subsystem->common.pointerY))
+	if ((x != (INT64)subsystem->common.pointerX) || (y != (INT64)subsystem->common.pointerY))
 	{
 		subsystem->common.pointerX = x;
 		subsystem->common.pointerY = y;
@@ -719,7 +725,7 @@ static BOOL x11_shadow_check_resize(x11ShadowSubsystem* subsystem)
 	XGetWindowAttributes(subsystem->display, subsystem->root_window, &attr);
 	XUnlockDisplay(subsystem->display);
 
-	if (attr.width != subsystem->width || attr.height != subsystem->height)
+	if (attr.width != (INT64)subsystem->width || attr.height != (INT64)subsystem->height)
 	{
 		/* Screen size changed. Refresh monitor definitions and trigger screen resize */
 		subsystem->common.numMonitors = x11_shadow_enum_monitors(subsystem->common.monitors, 16);
@@ -1176,8 +1182,8 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 		{
 			screens = XineramaQueryScreens(display, &numMonitors);
 
-			if (numMonitors > maxMonitors)
-				numMonitors = maxMonitors;
+			if (numMonitors > (INT64)maxMonitors)
+				numMonitors = (int)maxMonitors;
 
 			if (screens && (numMonitors > 0))
 			{
@@ -1270,7 +1276,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	{
 		pf = pfs + i;
 
-		if (pf->depth == subsystem->depth)
+		if (pf->depth == (INT64)subsystem->depth)
 		{
 			subsystem->bpp = pf->bits_per_pixel;
 			subsystem->scanline_pad = pf->scanline_pad;
@@ -1295,7 +1301,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	{
 		vi = vis + i;
 
-		if (vi->depth == subsystem->depth)
+		if (vi->depth == (INT64)subsystem->depth)
 		{
 			subsystem->visual = vi->visual;
 			break;

@@ -143,8 +143,8 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 	/* If current window position disagrees with RDP window position, send update to RDP server */
 	if (appWindow->x != appWindow->windowOffsetX ||
 	    appWindow->y != appWindow->windowOffsetY ||
-	    appWindow->width != appWindow->windowWidth ||
-	    appWindow->height != appWindow->windowHeight)
+	    appWindow->width != (INT64)appWindow->windowWidth ||
+	    appWindow->height != (INT64)appWindow->windowHeight)
 	{
 		windowMove.windowId = appWindow->windowId;
 		/*
@@ -504,10 +504,10 @@ static BOOL xf_rail_window_common(rdpContext* context,
 		if (appWindow->rail_state != WINDOW_SHOW_MINIMIZED)
 		{
 			/* Redraw window area if already in the correct position */
-			if (appWindow->x == appWindow->windowOffsetX &&
-			    appWindow->y == appWindow->windowOffsetY &&
-			    appWindow->width == appWindow->windowWidth &&
-			    appWindow->height == appWindow->windowHeight)
+			if (appWindow->x == (INT64)appWindow->windowOffsetX &&
+			    appWindow->y == (INT64)appWindow->windowOffsetY &&
+			    appWindow->width == (INT64)appWindow->windowWidth &&
+			    appWindow->height == (INT64)appWindow->windowHeight)
 			{
 				xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->windowWidth,
 				                    appWindow->windowHeight);
@@ -1266,6 +1266,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 {
+	WINPR_UNUSED(rail);
 	if (xfc->rail)
 	{
 		xfc->rail->custom = NULL;

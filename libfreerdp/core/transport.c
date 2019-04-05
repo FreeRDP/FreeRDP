@@ -546,20 +546,21 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 	}
 }
 
-int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
+SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t bytes)
 {
-	int read = 0;
-	int status = -1;
+	SSIZE_T read = 0;
 
-	if (!transport->frontBio)
+	if (!transport->frontBio || (bytes > SSIZE_MAX))
 	{
 		transport->layer = TRANSPORT_LAYER_CLOSED;
 		return -1;
 	}
 
-	while (read < bytes)
+	while (read < (SSIZE_T)bytes)
 	{
-		status = BIO_read(transport->frontBio, data + read, bytes - read);
+		const SSIZE_T tr = (SSIZE_T)bytes - read;
+		int r = (int)((tr > INT_MAX) ? INT_MAX : tr);
+		int status = status = BIO_read(transport->frontBio, data + read, r);
 
 		if (status <= 0)
 		{
@@ -615,17 +616,20 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
  * @param[in] toRead number of bytes to read
  * @return < 0 on error; 0 if not enough data is available (non blocking mode); 1 toRead bytes read
  */
-static int transport_read_layer_bytes(rdpTransport* transport, wStream* s,
-                                      unsigned int toRead)
+static SSIZE_T transport_read_layer_bytes(rdpTransport* transport, wStream* s,
+                                      size_t toRead)
 {
-	int status;
+	SSIZE_T status;
+	if (toRead > SSIZE_MAX)
+		return 0;
+
 	status = transport_read_layer(transport, Stream_Pointer(s), toRead);
 
 	if (status <= 0)
 		return status;
 
-	Stream_Seek(s, status);
-	return status == toRead ? 1 : 0;
+	Stream_Seek(s, (size_t)status);
+	return status == (SSIZE_T)toRead ? 1 : 0;
 }
 
 /**
@@ -644,7 +648,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 {
 	int status;
 	size_t position;
-	int pduLength;
+	size_t pduLength;
 	BYTE* header;
 	pduLength = 0;
 
@@ -733,7 +737,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			/* min and max values according to ITU-T Rec. T.123 (01/2007) section 8 */
 			if (pduLength < 7 || pduLength > 0xFFFF)
 			{
-				WLog_Print(transport->log, WLOG_ERROR, "tpkt - invalid pduLength: %d", pduLength);
+				WLog_Print(transport->log, WLOG_ERROR, "tpkt - invalid pduLength: %"PRIdz, pduLength);
 				return -1;
 			}
 		}
@@ -759,7 +763,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			 */
 			if (pduLength < 3 || pduLength > 0x8000)
 			{
-				WLog_Print(transport->log, WLOG_ERROR, "fast path - invalid pduLength: %d", pduLength);
+				WLog_Print(transport->log, WLOG_ERROR, "fast path - invalid pduLength: %"PRIdz, pduLength);
 				return -1;
 			}
 		}
