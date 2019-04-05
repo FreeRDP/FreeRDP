@@ -768,10 +768,10 @@ UwacReturnCode UwacNextEvent(UwacDisplay* display, UwacEvent* event)
 	while (!display->pop_queue)
 	{
 		ret = UwacDisplayDispatch(display, 1 * 1000);
-
 		if (ret < 0)
 			return UWAC_ERROR_INTERNAL;
-		else if (ret == 0)
+
+		if (ret == 0)
 			return UWAC_ERROR_CLOSED;
 	}
 

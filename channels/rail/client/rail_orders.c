@@ -948,6 +948,7 @@ out:
 	return error;
 }
 
+#if 0
 /**
  * Function description
  *
@@ -1102,6 +1103,7 @@ static UINT rail_send_client_sysparams_order(railPlugin* rail, RAIL_SYSPARAM_ORD
 
 	return error;
 }
+#endif
 
 /**
  * Function description

@@ -606,6 +606,7 @@ static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
 #endif
 #endif
 	wl_surface_attach(window->surface, buffer->wayland_buffer, 0, 0);
+
 #if 0
 #ifdef HAVE_PIXMAN_REGION
 	box = pixman_region32_rectangles(&buffer->damage, &nrects);

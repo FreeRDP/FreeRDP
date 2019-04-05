@@ -118,6 +118,7 @@ fail:
 	return !failed;
 }
 
+#if 0
 /* ------------------------------------------------------------------------- */
 static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 {
@@ -258,6 +259,7 @@ static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 
 	return TRUE;
 }
+#endif
 
 int TestPrimitivesColors(int argc, char* argv[])
 {

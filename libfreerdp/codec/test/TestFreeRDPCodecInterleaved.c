@@ -95,6 +95,7 @@ fail:
 	return rc2;
 }
 
+#ifdef WITH_PROFILER
 static const char* get_profiler_name(BOOL encode, UINT16 bpp)
 {
 	switch (bpp)
@@ -121,6 +122,7 @@ static const char* get_profiler_name(BOOL encode, UINT16 bpp)
 			return "configuration error!";
 	}
 }
+#endif
 
 static BOOL run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
                               BITMAP_INTERLEAVED_CONTEXT* decoder)

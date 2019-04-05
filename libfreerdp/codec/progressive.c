@@ -292,6 +292,7 @@ static INLINE BOOL progressive_rfx_quant_cmp_equal(RFX_COMPONENT_CODEC_QUANT* q1
 	return TRUE;
 }
 
+#if 0
 static void progressive_rfx_quant_print(RFX_COMPONENT_CODEC_QUANT* q, const char* name)
 {
 	fprintf(stderr,
@@ -299,7 +300,7 @@ static void progressive_rfx_quant_print(RFX_COMPONENT_CODEC_QUANT* q, const char
 	        name, q->HL1, q->LH1, q->HH1, q->HL2, q->LH2, q->HH2, q->HL3, q->LH3, q->HH3,
 	        q->LL3);
 }
-
+#endif
 
 static INLINE BOOL progressive_set_surface_data(PROGRESSIVE_CONTEXT* progressive,
         UINT16 surfaceId, void* pData)

@@ -32,7 +32,9 @@
 
 #define TAG FREERDP_TAG("cache.palette")
 
+#if 0
 static void* palette_cache_get(rdpPaletteCache* palette, UINT32 index);
+#endif
 
 static void palette_cache_put(rdpPaletteCache* palette, UINT32 index, void* entry);
 
@@ -51,6 +53,7 @@ static BOOL update_gdi_cache_color_table(rdpContext* context,
 	return TRUE;
 }
 
+#if 0
 void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 {
 	void* entry;
@@ -71,6 +74,7 @@ void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 
 	return entry;
 }
+#endif
 
 void palette_cache_put(rdpPaletteCache* paletteCache, UINT32 index, void* entry)
 {
