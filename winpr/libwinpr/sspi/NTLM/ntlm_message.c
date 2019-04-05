@@ -462,7 +462,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 		context->ChallengeTargetInfo.pvBuffer = message->TargetInfo.Buffer;
 		context->ChallengeTargetInfo.cbBuffer = message->TargetInfo.Len;
-		AvTimestamp = ntlm_av_pair_get(message->TargetInfo.Buffer,
+		AvTimestamp = ntlm_av_pair_get((NTLM_AV_PAIR*)message->TargetInfo.Buffer,
 		                               message->TargetInfo.Len,
 		                               MsvAvTimestamp, &cbAvTimestamp);
 
