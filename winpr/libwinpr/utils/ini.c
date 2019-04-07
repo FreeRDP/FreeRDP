@@ -390,6 +390,10 @@ int IniFile_Load(wIniFile* ini)
 		else
 		{
 			separator = strchr(line, '=');
+
+			if (separator == NULL)
+				return -1;
+
 			end = separator;
 
 			while ((&end[-1] > line) && ((end[-1] == ' ') || (end[-1] == '\t')))
