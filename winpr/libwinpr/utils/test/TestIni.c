@@ -137,7 +137,10 @@ int TestIni(int argc, char* argv[])
 	status = IniFile_ReadBuffer(ini, TEST_INI_03);
 
 	if (!(status < 0))
+	{
+		IniFile_Free(ini);
 		return -1;
+	}
 
 	IniFile_Free(ini);
 	return 0;
