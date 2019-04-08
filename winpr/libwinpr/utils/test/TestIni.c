@@ -132,11 +132,9 @@ int TestIni(int argc, char* argv[])
 	free(sectionNames);
 	IniFile_Free(ini);
 	/* Third sample - invalid input */
-	int status;
 	ini = IniFile_New();
-	status = IniFile_ReadBuffer(ini, TEST_INI_03);
 
-	if (!(status < 0))
+	if (IniFile_ReadBuffer(ini, TEST_INI_03) != -1)
 	{
 		IniFile_Free(ini);
 		return -1;
