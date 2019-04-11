@@ -23,6 +23,8 @@
 #include "config.h"
 #endif
 
+#include "../core/update.h"
+
 #include <freerdp/log.h>
 #include <freerdp/gdi/gfx.h>
 #include <freerdp/gdi/region.h>
@@ -124,7 +126,7 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	if (!(rects = region16_rects(&surface->invalidRegion, &nbRects)) || !nbRects)
 		return CHANNEL_RC_OK;
 
-	if (!IFCALLRESULT(TRUE, update->BeginPaint, gdi->context))
+	if (!update_begin_paint(update))
 		goto fail;
 
 	for (i = 0; i < nbRects; i++)
@@ -146,11 +148,12 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, width, height);
 	}
 
-	if (!IFCALLRESULT(FALSE, update->EndPaint, gdi->context))
-		goto fail;
-
 	rc = CHANNEL_RC_OK;
 fail:
+
+	if (!update_end_paint(update))
+		rc = ERROR_INTERNAL_ERROR;
+
 	region16_clear(&(surface->invalidRegion));
 	return rc;
 }

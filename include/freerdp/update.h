@@ -252,6 +252,7 @@ struct rdp_update
 	BOOL combineUpdates;
 	rdpBounds currentBounds;
 	rdpBounds previousBounds;
+	CRITICAL_SECTION mux;
 };
 
 #endif /* FREERDP_UPDATE_H */
