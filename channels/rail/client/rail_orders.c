@@ -538,10 +538,10 @@ static UINT rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORD
 
 	if (context->custom)
 	{
-		IFCALLRET(context->ClientHandshakeEx, error, context, handshakeEx);
+		IFCALLRET(context->ServerHandshakeEx, error, context, handshakeEx);
 
 		if (error)
-			WLog_ERR(TAG, "context.ClientHandshakeEx failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "context.ServerHandshakeEx failed with error %"PRIu32"", error);
 	}
 
 	return error;
