@@ -3,6 +3,6 @@
 
 #include <freerdp/freerdp.h>
 
-void register_input_callbacks(rdpInput* input);
+void pf_server_register_input_callbacks(rdpInput* input);
 
 #endif /* FREERDP_SERVER_PROXY_PFINPUT_H */

@@ -27,6 +27,8 @@
 #include <freerdp/client/rdpei.h>
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/server/rdpgfx.h>
+#include "pf_config.h"
+#include "pf_server.h"
 
 /**
  * Proxy context wraps a peer's context, and holds a reference to the other end
@@ -37,6 +39,8 @@ struct proxy_context
 {
 	/* Context of client or server */
 	rdpContext _context;
+
+	rdpProxyServer* server;
 
 	/**
 	 * Context of peer to which the proxy is connected.

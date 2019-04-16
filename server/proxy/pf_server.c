@@ -42,10 +42,12 @@
 #include "pf_server.h"
 #include "pf_common.h"
 #include "pf_log.h"
+#include "pf_config.h"
 #include "pf_client.h"
 #include "pf_context.h"
 #include "pf_input.h"
 #include "pf_update.h"
+#include "proxy.h"
 
 #define TAG PROXY_TAG("server")
 
@@ -218,7 +220,6 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 		*target = malloc(nego->RoutingTokenLength + 1);
 		CopyMemory(*target, (char*)nego->RoutingToken, nego->RoutingTokenLength);
 		*(*target + nego->RoutingTokenLength) = '\0';
-
 		colon = strchr(*target, ':');
 
 		if (colon)
@@ -310,6 +311,8 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 
 	context = (clientToProxyContext*) client->context;
 	pContext = (proxyContext*)context;
+	/* inject server struct to proxyContext */
+	pContext->server = client->ContextExtra;
 	client->settings->SupportGraphicsPipeline = TRUE;
 	client->settings->SupportDynamicChannels = TRUE;
 	/* TODO: Read path from config and default to /etc */
@@ -335,8 +338,8 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	client->settings->RefreshRect = TRUE;
 	client->PostConnect = pf_server_post_connect;
 	client->Activate = pf_server_activate;
-	register_input_callbacks(client->input);
-	register_update_callbacks(client->update);
+	pf_server_register_input_callbacks(client->input);
+	pf_server_register_update_callbacks(client->update);
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
 	WLog_INFO(TAG, "Client connected: %s",
@@ -448,6 +451,7 @@ static BOOL pf_server_client_connected(freerdp_listener* listener,
                                        freerdp_peer* client)
 {
 	HANDLE hThread;
+	client->ContextExtra = listener->info;
 
 	if (!(hThread = CreateThread(NULL, 0, pf_server_handle_client,
 	                             (void*) client, 0, NULL)))
@@ -491,19 +495,22 @@ void pf_server_mainloop(freerdp_listener* listener)
 	listener->Close(listener);
 }
 
-int pf_server_start(char* host, long port, BOOL localOnly)
+int pf_server_start(rdpProxyServer* server)
 {
 	char* localSockPath;
 	char localSockName[MAX_PATH];
 	BOOL success;
 	WSADATA wsaData;
+	proxyConfig* config;
 	freerdp_listener* listener = freerdp_listener_new();
 
 	if (!listener)
 		return -1;
 
+	config = server->config;
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
+	listener->info = server;
 	listener->PeerAccepted = pf_server_client_connected;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
@@ -513,7 +520,7 @@ int pf_server_start(char* host, long port, BOOL localOnly)
 	}
 
 	/* Determine filepath for local socket */
-	sprintf_s(localSockName, sizeof(localSockName), "proxy.%ld", port);
+	sprintf_s(localSockName, sizeof(localSockName), "proxy.%"PRIu16"", config->Port);
 	localSockPath = GetKnownSubPath(KNOWN_PATH_TEMP, localSockName);
 
 	if (!localSockPath)
@@ -527,9 +534,9 @@ int pf_server_start(char* host, long port, BOOL localOnly)
 	success = listener->OpenLocal(listener, localSockPath);
 
 	/* Listen to remote connections */
-	if (!localOnly)
+	if (!config->LocalOnly)
 	{
-		success &= listener->Open(listener, host, port);
+		success &= listener->Open(listener, config->Host, config->Port);
 	}
 
 	if (success)

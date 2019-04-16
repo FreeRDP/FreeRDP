@@ -18,27 +18,44 @@
  * limitations under the License.
  */
 
-#include "pf_update.h"
-#include "pf_context.h"
+#ifndef FREERDP_SERVER_PROXY_PFCONFIG_H
+#define FREERDP_SERVER_PROXY_PFCONFIG_H
 
-BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
-                            const RECTANGLE_16* areas)
-{
-	proxyContext* pContext = (proxyContext*) context;
-	return pContext->peerContext->update->RefreshRect(pContext->peerContext,
-	        count, areas);
-}
+#include <winpr/ini.h>
 
-BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
-                               const RECTANGLE_16* area)
+struct proxy_config
 {
-	proxyContext* pContext = (proxyContext*) context;
-	return pContext->peerContext->update->SuppressOutput(pContext->peerContext,
-	        allow, area);
-}
+	/* server */
+	char* Host;
+	UINT16 Port;
+	BOOL  LocalOnly;
 
-void pf_server_register_update_callbacks(rdpUpdate* update)
-{
-	update->RefreshRect = pf_server_refresh_rect;
-	update->SuppressOutput = pf_server_suppress_output;
-}
+	/* graphics */
+	BOOL GFX;
+	BOOL BitmapUpdate;
+
+	/* input */
+	BOOL Keyboard;
+	BOOL Mouse;
+
+	/* security */
+	BOOL NlaSupport;
+	BOOL TlsSupport;
+	BOOL RdpSupport;
+
+	/* channels */
+	BOOL WhitelistMode;
+
+	char** AllowedChannels;
+	UINT32 AllowedChannelsCount;
+
+	char** BlockedChannels;
+	UINT32 BlockedChannelsCount;
+};
+
+typedef struct proxy_config proxyConfig;
+
+BOOL pf_server_load_config(char* path, proxyConfig* config);
+void pf_server_config_free(proxyConfig* config);
+
+#endif /* FREERDP_SERVER_PROXY_PFCONFIG_H */

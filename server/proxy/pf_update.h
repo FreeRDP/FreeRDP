@@ -3,6 +3,6 @@
 
 #include <freerdp/freerdp.h>
 
-void register_update_callbacks(rdpUpdate* input);
+void pf_server_register_update_callbacks(rdpUpdate* input);
 
 #endif /* FREERDP_SERVER_PROXY_PFUPDATE_H */

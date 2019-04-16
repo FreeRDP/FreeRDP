@@ -18,8 +18,14 @@
  * limitations under the License.
  */
 
+#ifndef FREERDP_SERVER_PROXY_SERVER_H
+#define FREERDP_SERVER_PROXY_SERVER_H
+
 #include <libfreerdp/core/listener.h>
+#include "pf_config.h"
+#include "proxy.h"
 
 #define TAG PROXY_TAG("server")
+int pf_server_start(rdpProxyServer* server);
 
-int pf_server_start(char* host, long port, BOOL localOnly);
+#endif /* FREERDP_SERVER_PROXY_SERVER_H */

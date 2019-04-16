@@ -19,11 +19,49 @@
  */
 
 #include "pf_server.h"
+#include "proxy.h"
+#include "pf_config.h"
+#include "pf_log.h"
 
 int main(int argc, char* argv[])
 {
-	char* host = "0.0.0.0";
-	long port = 3389;
-	BOOL localOnly = FALSE;
-	return pf_server_start(host, port, localOnly);
+	int status = 0;
+	rdpProxyServer* server;
+	proxyConfig* config;
+	server = proxy_server_new();
+
+	if (server == NULL)
+	{
+		WLog_ERR(TAG, "Server instance allocation failed");
+		return -1;
+	}
+
+	config = server->config;
+
+	if (!pf_server_load_config("config.ini", config))
+	{
+		WLog_ERR(TAG, "An error occured while parsing configuration file");
+		status = -1;
+		goto fail;
+	}
+
+	if (config->WhitelistMode)
+	{
+		WLog_INFO(TAG, "Channels mode: WHITELIST");
+
+		for (int i = 0; i < config->AllowedChannelsCount; i++)
+			WLog_INFO(TAG, "Allowing %s", config->AllowedChannels[i]);
+	}
+	else
+	{
+		WLog_INFO(TAG, "Channels mode: BLACKLIST");
+
+		for (int i = 0; i < config->BlockedChannelsCount; i++)
+			WLog_INFO(TAG, "Blocking %s", config->BlockedChannels[i]);
+	}
+
+	status = pf_server_start(server);
+fail:
+	proxy_server_free(server);
+	return status;
 }
