@@ -19,7 +19,6 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
-#include <X11/extensions/Xfixes.h>
 #include <X11/cursorfont.h>
 
 #include "xf_floatbar.h"
