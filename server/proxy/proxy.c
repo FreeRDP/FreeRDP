@@ -19,6 +19,8 @@ rdpProxyServer* proxy_server_new()
 
 void proxy_server_free(rdpProxyServer* server)
 {
-	pf_server_config_free(server->config);
+	if (server->config)
+		pf_server_config_free(server->config);
+		
 	free(server);
 }

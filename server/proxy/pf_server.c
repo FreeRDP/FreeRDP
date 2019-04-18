@@ -246,17 +246,32 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
  */
 BOOL pf_server_post_connect(freerdp_peer* client)
 {
-	proxyContext* pContext = (proxyContext*) client->context;
 	rdpContext* sContext;
+	proxyConfig* config;
 	clientToProxyContext* cContext;
 	HANDLE connectionClosedEvent;
+	proxyContext* pContext;
+	pContext = (proxyContext*) client->context;
+	config = pContext->server->config;
 	char* host = NULL;
 	DWORD port = 3389; // default port
 
-	if (!pf_server_parse_target_from_routing_token(client, &host, &port))
+	if (config->UseLoadBalanceInfo)
 	{
-		WLog_ERR(TAG, "pf_server_parse_target_from_routing_token failed!");
-		return FALSE;
+		if (!pf_server_parse_target_from_routing_token(client, &host, &port))
+		{
+			WLog_ERR(TAG, "pf_server_parse_target_from_routing_token failed!");
+			return FALSE;
+		}
+
+		WLog_DBG(TAG, "Parsed target from load-balance-info: %s:%i", host, port);
+	}
+	else
+	{
+		/* use hardcoded target info from configuration */
+		host = _strdup(config->TargetHost);
+		port = config->TargetPort > 0 ? config->TargetPort : port;
+		WLog_DBG(TAG, "Using hardcoded target host: %s:%i", host, port);
 	}
 
 	/* Start a proxy's client in it's own thread */

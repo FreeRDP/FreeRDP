@@ -21,14 +21,23 @@
 #ifndef FREERDP_SERVER_PROXY_PFCONFIG_H
 #define FREERDP_SERVER_PROXY_PFCONFIG_H
 
+#define CONFIG_PARSE_SUCCESS 0
+#define CONFIG_PARSE_ERROR 	 1
+#define CONFIG_INVALID 		 2
+
 #include <winpr/ini.h>
 
 struct proxy_config
 {
 	/* server */
 	char* Host;
-	UINT16 Port;
+	INT32 Port;
 	BOOL  LocalOnly;
+
+	/* target */
+	BOOL UseLoadBalanceInfo;
+	char* TargetHost;
+	INT32 TargetPort;
 
 	/* graphics */
 	BOOL GFX;
@@ -55,7 +64,7 @@ struct proxy_config
 
 typedef struct proxy_config proxyConfig;
 
-BOOL pf_server_load_config(char* path, proxyConfig* config);
+DWORD pf_server_load_config(char* path, proxyConfig* config);
 void pf_server_config_free(proxyConfig* config);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONFIG_H */

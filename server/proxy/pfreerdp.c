@@ -37,12 +37,20 @@ int main(int argc, char* argv[])
 	}
 
 	config = server->config;
+	status = pf_server_load_config("config.ini", config);
 
-	if (!pf_server_load_config("config.ini", config))
+	switch (status)
 	{
-		WLog_ERR(TAG, "An error occured while parsing configuration file");
-		status = -1;
-		goto fail;
+		case CONFIG_PARSE_SUCCESS:
+			WLog_DBG(TAG, "Configuration parsed successfully");
+			break;
+
+		case CONFIG_PARSE_ERROR:
+			WLog_ERR(TAG, "An error occured while parsing configuration file, exiting...");
+			goto fail;
+
+		case CONFIG_INVALID:
+			goto fail;
 	}
 
 	if (config->WhitelistMode)

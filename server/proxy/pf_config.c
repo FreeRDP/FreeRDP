@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <winpr/crt.h>
+#include "pf_log.h"
+#include "pf_server.h"
 #include "pf_config.h"
 
 #define CHANNELS_SEPERATOR ","
@@ -59,23 +61,59 @@ char** parse_channels_from_str(const char* str, UINT32* length)
 	return tokens;
 }
 
-BOOL pf_server_load_config(char* path, proxyConfig* config)
+BOOL pf_server_is_config_valid(proxyConfig* config)
+{
+	if (config->Host == NULL)
+	{
+		WLog_ERR(TAG, "Configuration value for `Server.Host` is not valid");
+		return FALSE;
+	}
+
+	if (config->Port <= 0)
+	{
+		WLog_ERR(TAG, "Configuration value for `Server.Port` is not valid");
+		return FALSE;
+	}
+
+	if (!config->UseLoadBalanceInfo)
+	{
+		if (config->TargetHost == NULL)
+		{
+			WLog_ERR(TAG, "Configuration value for `Target.Host` is not valid");
+			return FALSE;
+		}
+
+		if (config->TargetPort <= 0)
+		{
+			WLog_ERR(TAG, "Configuration value for `Target.Port` is not valid");
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+DWORD pf_server_load_config(char* path, proxyConfig* config)
 {
 	const char* input;
-	BOOL result = TRUE;
+	BOOL result = CONFIG_PARSE_SUCCESS;
 	wIniFile* ini;
 	ini = IniFile_New();
 
 	if (IniFile_ReadFile(ini, path) < 0)
 	{
-		result = FALSE;
+		result = CONFIG_PARSE_ERROR;
 		goto out;
 	}
 
-	/* Server */
+	/* server */
 	config->Host = _strdup(IniFile_GetKeyValueString(ini, "Server", "Host"));
 	config->LocalOnly = IniFile_GetKeyValueInt(ini, "Server", "LocalOnly");
 	config->Port = IniFile_GetKeyValueInt(ini, "Server", "Port");
+	/* target */
+	config->UseLoadBalanceInfo = IniFile_GetKeyValueInt(ini, "Target", "UseLoadBalanceInfo");
+	config->TargetHost = _strdup(IniFile_GetKeyValueString(ini, "Target", "Host"));
+	config->TargetPort = IniFile_GetKeyValueInt(ini, "Target", "Port");
 	/* graphics */
 	config->GFX = IniFile_GetKeyValueInt(ini, "Graphics", "GFX");
 	config->BitmapUpdate = IniFile_GetKeyValueInt(ini, "Graphics", "BitmapUpdate");
@@ -96,7 +134,7 @@ BOOL pf_server_load_config(char* path, proxyConfig* config)
 
 		if (config->AllowedChannels == NULL)
 		{
-			result = FALSE;
+			result = CONFIG_PARSE_ERROR;
 			goto out;
 		}
 	}
@@ -109,13 +147,19 @@ BOOL pf_server_load_config(char* path, proxyConfig* config)
 
 		if (config->BlockedChannels == NULL)
 		{
-			result = FALSE;
+			result = CONFIG_PARSE_ERROR;
 			goto out;
 		}
 	}
 
 out:
 	IniFile_Free(ini);
+
+	if (!pf_server_is_config_valid(config))
+	{
+		return CONFIG_INVALID;
+	}
+
 	return result;
 }
 
@@ -129,6 +173,7 @@ void pf_server_config_free(proxyConfig* config)
 
 	free(config->AllowedChannels);
 	free(config->BlockedChannels);
+	free(config->TargetHost);
 	free(config->Host);
 	free(config);
 }
