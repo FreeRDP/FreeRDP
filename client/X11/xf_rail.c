@@ -1045,9 +1045,14 @@ static UINT xf_rail_server_handshake(RailClientContext* context,
 	if (status != CHANNEL_RC_OK)
 		return status;
 
-	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
-	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
-	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
+	if (!rail_string_to_unicode_string(settings->RemoteApplicationProgram,
+	                                   &exec.RemoteApplicationProgram) ||
+	    rail_string_to_unicode_string(settings->ShellWorkingDirectory,
+	                                  &exec.RemoteApplicationWorkingDir) ||
+	    rail_string_to_unicode_string(settings->RemoteApplicationCmdLine,
+	                                  &exec.RemoteApplicationArguments))
+		return ERROR_INTERNAL_ERROR;
+
 	return context->ClientExecute(context, &exec);
 }
 
@@ -1267,6 +1272,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 {
 	WINPR_UNUSED(rail);
+
 	if (xfc->rail)
 	{
 		xfc->rail->custom = NULL;

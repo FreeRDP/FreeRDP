@@ -105,46 +105,22 @@ UINT rail_send_channel_data(railPlugin* rail, void* data, size_t length)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_client_execute(RailClientContext* context,
-                                const RAIL_EXEC_ORDER* exec)
+                                RAIL_EXEC_ORDER* exec)
 {
-	char* exeOrFile;
-	UINT error;
 	railPlugin* rail;
-	UINT16 flags;
-	RAIL_UNICODE_STRING ruExeOrFile = { 0 };
-	RAIL_UNICODE_STRING ruWorkingDir = { 0 };
-	RAIL_UNICODE_STRING ruArguments = { 0 };
 
 	if (!context || !exec)
 		return ERROR_INVALID_PARAMETER;
 
 	rail = (railPlugin*) context->handle;
-	exeOrFile = exec->RemoteApplicationProgram;
-	flags = exec->flags;
 
-	if (!exeOrFile)
-		return ERROR_INVALID_PARAMETER;
-
-	if (strnlen(exeOrFile, MAX_PATH) >= 2)
+	if (exec->RemoteApplicationProgram.length >= 2)
 	{
-		if (strncmp(exeOrFile, "||", 2) != 0)
-			flags |= RAIL_EXEC_FLAG_FILE;
+		if (strncmp((char*)exec->RemoteApplicationProgram.string, "||", 2) != 0)
+			exec->flags |= RAIL_EXEC_FLAG_FILE;
 	}
 
-	if (!rail_string_to_unicode_string(exec->RemoteApplicationProgram,
-	                                   &ruExeOrFile) || /* RemoteApplicationProgram */
-	    !rail_string_to_unicode_string(exec->RemoteApplicationWorkingDir,
-	                                   &ruWorkingDir) || /* ShellWorkingDirectory */
-	    !rail_string_to_unicode_string(exec->RemoteApplicationArguments,
-	                                   &ruArguments)) /* RemoteApplicationCmdLine */
-		error = ERROR_INTERNAL_ERROR;
-	else
-		error = rail_send_client_exec_order(rail, flags, &ruExeOrFile, &ruWorkingDir, &ruArguments);
-
-	free(ruExeOrFile.string);
-	free(ruWorkingDir.string);
-	free(ruArguments.string);
-	return error;
+	return rail_send_client_exec_order(rail, exec);
 }
 
 /**
