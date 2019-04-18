@@ -379,6 +379,8 @@ extern "C" {
 #endif
 
 FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
+FREERDP_API BOOL rail_string_to_unicode_string(const char* string,
+        RAIL_UNICODE_STRING* unicode_string);
 
 #ifdef __cplusplus
 }
