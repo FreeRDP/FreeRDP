@@ -2,7 +2,7 @@
 
 ASTYLE=$(which astyle)
 
-if [ ! -x $ASTYLE ]; then
+if [ ! -x "$ASTYLE" ]; then
   echo "No astyle found in path, please install."
   exit 1
 fi
