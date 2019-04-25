@@ -1444,8 +1444,9 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 
 		if (nullTerminated)
 		{
-			while (DstSize > 0 && pDstData[DstSize - 1] == '\0')
-				DstSize--;
+			BYTE* nullTerminator = memchr(pDstData, '\0', DstSize);
+			if (nullTerminator)
+				DstSize = nullTerminator - pDstData;
 		}
 	}
 
