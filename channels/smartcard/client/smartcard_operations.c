@@ -457,7 +457,7 @@ static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD
 {
 	size_t rpos = 0, wpos = 0;
 
-	if(*mszReaders == NULL || LinkedList_Count(list) < 1)
+	if (*mszReaders == NULL || LinkedList_Count(list) < 1)
 		return cchReaders;
 
 	do
@@ -563,7 +563,6 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	cchReaders = filter_device_by_name_a(smartcard->names, &mszReaders, cchReaders);
 	ret.msz = (BYTE*) mszReaders;
 	ret.cBytes = cchReaders;
-
 	smartcard_trace_list_readers_return(smartcard, &ret, FALSE);
 
 	if ((status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret)))
@@ -627,7 +626,6 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders, cchReaders);
 	ret.msz = (BYTE*) mszReaders;
 	ret.cBytes = cchReaders * 2;
-
 	smartcard_trace_list_readers_return(smartcard, &ret, TRUE);
 
 	if ((status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret)))
