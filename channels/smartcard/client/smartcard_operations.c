@@ -457,7 +457,7 @@ static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD
 {
 	size_t rpos = 0, wpos = 0;
 
-	if (LinkedList_Count(list) < 1)
+	if(*mszReaders == NULL || LinkedList_Count(list) < 1)
 		return cchReaders;
 
 	do
