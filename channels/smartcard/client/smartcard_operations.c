@@ -547,9 +547,6 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	cchReaders = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode = SCardListReadersA(operation->hContext, (LPCSTR) call->mszGroups,
 	                          (LPSTR) &mszReaders, &cchReaders);
-	cchReaders = filter_device_by_name_a(smartcard->names, &mszReaders, cchReaders);
-	ret.msz = (BYTE*) mszReaders;
-	ret.cBytes = cchReaders;
 
 	if (call->mszGroups)
 	{
@@ -562,6 +559,10 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 		WLog_ERR(TAG, "SCardListReadersA failed with error %"PRId32"", status);
 		return status;
 	}
+
+	cchReaders = filter_device_by_name_a(smartcard->names, &mszReaders, cchReaders);
+	ret.msz = (BYTE*) mszReaders;
+	ret.cBytes = cchReaders;
 
 	smartcard_trace_list_readers_return(smartcard, &ret, FALSE);
 
@@ -610,9 +611,6 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	cchReaders = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode = SCardListReadersW(operation->hContext,
 	                          (LPCWSTR) call->mszGroups, (LPWSTR) &mszReaders, &cchReaders);
-	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders, cchReaders);
-	ret.msz = (BYTE*) mszReaders;
-	ret.cBytes = cchReaders * 2;
 
 	if (call->mszGroups)
 	{
@@ -625,6 +623,10 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 		WLog_ERR(TAG, "SCardListReadersW failed with error %"PRId32"", status);
 		return status;
 	}
+
+	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders, cchReaders);
+	ret.msz = (BYTE*) mszReaders;
+	ret.cBytes = cchReaders * 2;
 
 	smartcard_trace_list_readers_return(smartcard, &ret, TRUE);
 
