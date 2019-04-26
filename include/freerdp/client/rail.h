@@ -73,7 +73,7 @@ typedef UINT(*pcRailClientGetAppIdRequest)(RailClientContext* context,
 typedef UINT(*pcRailServerGetAppIdResponse)(RailClientContext* context,
         const RAIL_GET_APPID_RESP_ORDER* getAppIdResp);
 typedef UINT(*pcRailServerZOrderSync)(RailClientContext* context,
-                                      const RAIL_ZORDER_ZYNC* zorder);
+                                      const RAIL_ZORDER_SYNC* zorder);
 typedef UINT(*pcRailClientCloak)(RailClientContext* context,
                                  const RAIL_CLOAK* cloak);
 typedef UINT(*pcRailServerPowerDisplayRequest)(RailClientContext* context,
