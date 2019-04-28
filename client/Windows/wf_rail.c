@@ -910,9 +910,15 @@ static UINT wf_rail_server_handshake(RailClientContext* context,
 	sysparam.dragFullWindows = FALSE;
 	context->ClientSystemParam(context, &sysparam);
 	ZeroMemory(&exec, sizeof(RAIL_EXEC_ORDER));
-	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
-	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
-	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
+
+	if (!rail_string_to_unicode_string(settings->RemoteApplicationProgram,
+	                                   &exec.RemoteApplicationProgram) ||
+	    rail_string_to_unicode_string(settings->ShellWorkingDirectory,
+	                                  &exec.RemoteApplicationWorkingDir) ||
+	    rail_string_to_unicode_string(settings->RemoteApplicationCmdLine,
+	                                  &exec.RemoteApplicationArguments))
+		return ERROR_INTERNAL_ERROR;
+
 	context->ClientExecute(context, &exec);
 	return CHANNEL_RC_OK;
 }
