@@ -67,9 +67,10 @@ void proxy_server_reactivate(rdpContext* client, rdpContext* target)
  */
 static BOOL pf_client_begin_paint(rdpContext* context)
 {
-	proxyContext* pContext = (proxyContext*)context;
-	rdpContext* sContext = (rdpContext*)pContext->peerContext;
-	return sContext->update->BeginPaint(sContext);
+	pClientContext* pc = (pClientContext*) context;
+	proxyData* pdata = pc->pdata;
+	rdpContext* ps = (rdpContext*)pdata->ps;
+	return ps->update->BeginPaint(ps);
 }
 
 /**
@@ -79,9 +80,10 @@ static BOOL pf_client_begin_paint(rdpContext* context)
  */
 static BOOL pf_client_end_paint(rdpContext* context)
 {
-	proxyContext* pContext = (proxyContext*)context;
-	rdpContext* sContext = (rdpContext*)pContext->peerContext;
-	return sContext->update->EndPaint(sContext);
+	pClientContext* pc = (pClientContext*) context;
+	proxyData* pdata = pc->pdata;
+	rdpContext* ps = (rdpContext*)pdata->ps;
+	return ps->update->EndPaint(ps);
 }
 
 /**
@@ -127,16 +129,18 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 
 BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
 {
-	proxyContext* pContext = (proxyContext*)context;
-	rdpContext* sContext = (rdpContext*)pContext->peerContext;
-	return sContext->update->BitmapUpdate(sContext, bitmap);
+	pClientContext* pc = (pClientContext*) context;
+	proxyData* pdata = pc->pdata;
+	rdpContext* ps = (rdpContext*)pdata->ps;
+	return ps->update->BitmapUpdate(ps, bitmap);
 }
 
 BOOL pf_client_desktop_resize(rdpContext* context)
 {
-	proxyContext* pContext = (proxyContext*)context;
-	rdpContext* peer = pContext->peerContext;
-	return peer->update->DesktopResize(peer);
+	pClientContext* pc = (pClientContext*) context;
+	proxyData* pdata = pc->pdata;
+	rdpContext* ps = (rdpContext*)pdata->ps;
+	return ps->update->DesktopResize(ps);
 }
 
 /**
@@ -156,6 +160,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	rdpContext* context = instance->context;
 	rdpSettings* settings = instance->settings;
 	rdpUpdate* update = instance->update;
+	pClientContext* pc = (pClientContext*) context;
 
 	if (!pf_register_pointer(context->graphics))
 		return FALSE;
@@ -180,9 +185,8 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	update->EndPaint = pf_client_end_paint;
 	update->BitmapUpdate = pf_client_bitmap_update;
 	update->DesktopResize = pf_client_desktop_resize;
-	proxyContext* pContext = (proxyContext*)context;
-	rdpContext* cContext = (rdpContext*)pContext->peerContext;
-	proxy_server_reactivate(cContext, context);
+	rdpContext* ps = (rdpContext*) pc->pdata->ps;
+	proxy_server_reactivate(ps, context);
 	return TRUE;
 }
 
@@ -192,7 +196,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
  */
 static void pf_client_post_disconnect(freerdp* instance)
 {
-	proxyToServerContext* context;
+	pClientContext* context;
 
 	if (!instance)
 		return;
@@ -200,20 +204,20 @@ static void pf_client_post_disconnect(freerdp* instance)
 	if (!instance->context)
 		return;
 
-	context = (proxyToServerContext*) instance->context;
-	proxyContext* pContext = (proxyContext*)context;
+	context = (pClientContext*) instance->context;
+	proxyData* pdata = context->pdata;
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
 	                                   pf_OnChannelConnectedEventHandler);
 	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
 	                                      pf_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
-	rdpContext* cContext = pContext->peerContext;
+	rdpContext* ps = (rdpContext*) pdata->ps;
 
-	if (!pf_common_connection_aborted_by_peer(pContext))
+	if (!pf_common_connection_aborted_by_peer(pdata))
 	{
-		SetEvent(pContext->connectionClosed);
+		SetEvent(pdata->connectionClosed);
 		WLog_INFO(TAG, "connectionClosed event is not set; closing connection with client");
-		freerdp_peer* peer = cContext->peer;
+		freerdp_peer* peer = ps->peer;
 		peer->Disconnect(peer);
 	}
 
@@ -294,14 +298,14 @@ static void pf_client_global_uninit(void)
 
 static int pf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
-	proxyToServerContext* tf;
+	pClientContext* pc;
 	const char* str_data = freerdp_get_logon_error_info_data(data);
 	const char* str_type = freerdp_get_logon_error_info_type(type);
 
 	if (!instance || !instance->context)
 		return -1;
 
-	tf = (proxyToServerContext*) instance->context;
+	pc = (pClientContext*) instance->context;
 	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
 	return 1;
 }
@@ -394,7 +398,7 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 	pEntryPoints->GlobalInit = pf_client_global_init;
 	pEntryPoints->GlobalUninit = pf_client_global_uninit;
-	pEntryPoints->ContextSize = sizeof(proxyToServerContext);
+	pEntryPoints->ContextSize = sizeof(pClientContext);
 	/* Client init and finish */
 	pEntryPoints->ClientNew = pf_client_client_new;
 	pEntryPoints->ClientFree = pf_client_client_free;

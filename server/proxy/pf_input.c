@@ -23,58 +23,63 @@
 
 BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	proxyContext* context = (proxyContext*)input->context;
-	return freerdp_input_send_synchronize_event(context->peerContext->input,
-	        flags);
+	pServerContext* ps = (pServerContext*)input->context;
+	pClientContext* pc = ps->pdata->pc;
+	rdpContext* context = (rdpContext*) pc;
+	return freerdp_input_send_synchronize_event(context->input, flags);
 }
 
 BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	proxyContext* context = (proxyContext*)input->context;
-	proxyConfig* config = context->server->config;
+	pServerContext* ps = (pServerContext*)input->context;
+	pClientContext* pc = ps->pdata->pc;
+	rdpContext* context = (rdpContext*) pc;
+	proxyConfig* config = ps->pdata->config;
 
 	if (!config->Keyboard)
 		return TRUE;
 
-	return freerdp_input_send_keyboard_event(context->peerContext->input,
-	        flags, code);
+	return freerdp_input_send_keyboard_event(context->input, flags, code);
 }
 
 BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	proxyContext* context = (proxyContext*)input->context;
-	proxyConfig* config = context->server->config;
+	pServerContext* ps = (pServerContext*)input->context;
+	pClientContext* pc = ps->pdata->pc;
+	rdpContext* context = (rdpContext*) pc;
+	proxyConfig* config = ps->pdata->config;
 
 	if (!config->Keyboard)
 		return TRUE;
 
-	return freerdp_input_send_unicode_keyboard_event(context->peerContext->input,
-	        flags, code);
+	return freerdp_input_send_unicode_keyboard_event(context->input, flags, code);
 }
 
 BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	proxyContext* context = (proxyContext*)input->context;
-	proxyConfig* config = context->server->config;
+	pServerContext* ps = (pServerContext*)input->context;
+	pClientContext* pc = ps->pdata->pc;
+	rdpContext* context = (rdpContext*) pc;
+	proxyConfig* config = ps->pdata->config;
 
 	if (!config->Mouse)
 		return TRUE;
 
-	return freerdp_input_send_mouse_event(context->peerContext->input,
-	                                      flags, x, y);
+	return freerdp_input_send_mouse_event(context->input, flags, x, y);
 }
 
 BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
                                     UINT16 y)
 {
-	proxyContext* context = (proxyContext*)input->context;
-	proxyConfig* config = context->server->config;
+	pServerContext* ps = (pServerContext*)input->context;
+	pClientContext* pc = ps->pdata->pc;
+	rdpContext* context = (rdpContext*) pc;
+	proxyConfig* config = ps->pdata->config;
 
 	if (!config->Mouse)
 		return TRUE;
 
-	return freerdp_input_send_extended_mouse_event(context->peerContext->input,
-	        flags, x, y);
+	return freerdp_input_send_extended_mouse_event(context->input, flags, x, y);
 }
 
 void pf_server_register_input_callbacks(rdpInput* input)

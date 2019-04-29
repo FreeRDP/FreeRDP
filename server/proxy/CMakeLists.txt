@@ -43,8 +43,6 @@ set(${MODULE_PREFIX}_SRCS
   pf_config.h
   pf_graphics.c
   pf_graphics.h
-  proxy.c
-  proxy.h
   pf_log.h)
 
 	# On windows create dll version information.

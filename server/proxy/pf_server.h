@@ -26,6 +26,6 @@
 #include "proxy.h"
 
 #define TAG PROXY_TAG("server")
-int pf_server_start(rdpProxyServer* server);
+int pf_server_start(proxyConfig* config);
 
 #endif /* FREERDP_SERVER_PROXY_SERVER_H */

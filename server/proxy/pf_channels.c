@@ -50,14 +50,14 @@ static UINT pf_encomsp_participant_created(EncomspClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-static void pf_encomsp_init(proxyToServerContext* tf, EncomspClientContext* encomsp)
+static void pf_encomsp_init(pClientContext* pc, EncomspClientContext* encomsp)
 {
-	tf->encomsp = encomsp;
-	encomsp->custom = (void*) tf;
+	pc->encomsp = encomsp;
+	encomsp->custom = (void*) pc;
 	encomsp->ParticipantCreated = pf_encomsp_participant_created;
 }
 
-static void pf_encomsp_uninit(proxyToServerContext* tf, EncomspClientContext* encomsp)
+static void pf_encomsp_uninit(pClientContext* pc, EncomspClientContext* encomsp)
 {
 	if (encomsp)
 	{
@@ -65,8 +65,8 @@ static void pf_encomsp_uninit(proxyToServerContext* tf, EncomspClientContext* en
 		encomsp->ParticipantCreated = NULL;
 	}
 
-	if (tf)
-		tf->encomsp = NULL;
+	if (pc)
+		pc->encomsp = NULL;
 }
 
 
@@ -74,12 +74,12 @@ void pf_OnChannelConnectedEventHandler(void* context,
                                        ChannelConnectedEventArgs* e)
 {
 	WLog_DBG(TAG, "Channel connected: %s", e->name);
-	proxyToServerContext* sContext = (proxyToServerContext*) context;
-	clientToProxyContext* cContext = (clientToProxyContext*)((proxyContext*) context)->peerContext;
+	pClientContext* pc = (pClientContext*) context;
+	pServerContext* ps = pc->pdata->ps;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
-		sContext->rdpei = (RdpeiClientContext*) e->pInterface;
+		pc->rdpei = (RdpeiClientContext*) e->pInterface;
 	}
 	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
 	{
@@ -87,7 +87,7 @@ void pf_OnChannelConnectedEventHandler(void* context,
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		RdpgfxClientContext* gfx = (RdpgfxClientContext*) e->pInterface;
-		RdpgfxServerContext* server = cContext->gfx;
+		RdpgfxServerContext* server = ps->gfx;
 		proxy_graphics_pipeline_init(gfx, server);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
@@ -98,27 +98,27 @@ void pf_OnChannelConnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
-		pf_encomsp_init(sContext, (EncomspClientContext*) e->pInterface);
+		pf_encomsp_init(pc, (EncomspClientContext*) e->pInterface);
 	}
 }
 
 void pf_OnChannelDisconnectedEventHandler(void* context,
         ChannelDisconnectedEventArgs* e)
 {
-	proxyToServerContext* proxyToServer = (proxyToServerContext*) context;
+	pClientContext* pc = (pClientContext*) context;
 	rdpSettings* settings;
-	settings = ((rdpContext*)proxyToServer)->settings;
+	settings = ((rdpContext*)pc)->settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
-		proxyToServer->rdpei = NULL;
+		pc->rdpei = NULL;
 	}
 	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
 	{
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_graphics_pipeline_uninit(((rdpContext*)proxyToServer)->gdi,
+		gdi_graphics_pipeline_uninit(((rdpContext*)pc)->gdi,
 		                             (RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
@@ -129,6 +129,6 @@ void pf_OnChannelDisconnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
-		pf_encomsp_uninit(proxyToServer, (EncomspClientContext*) e->pInterface);
+		pf_encomsp_uninit(pc, (EncomspClientContext*) e->pInterface);
 	}
 }

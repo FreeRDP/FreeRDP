@@ -177,34 +177,37 @@ static UINT pf_server_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	return CHANNEL_RC_UNSUPPORTED_VERSION;
 }
 
-BOOL pf_server_rdpgfx_init(clientToProxyContext* cContext)
+BOOL pf_server_rdpgfx_init(pServerContext* ps)
 {
 	RdpgfxServerContext* gfx;
-	gfx = cContext->gfx = rdpgfx_server_context_new(cContext->vcm);
+	gfx = ps->gfx = rdpgfx_server_context_new(ps->vcm);
 
 	if (!gfx)
 	{
 		return FALSE;
 	}
 
-	gfx->rdpcontext = (rdpContext*)cContext;
+	gfx->rdpcontext = (rdpContext*)ps;
 	return TRUE;
 }
 
 void pf_server_handle_client_disconnection(freerdp_peer* client)
 {
-	proxyContext* pContext = (proxyContext*)client->context;
-	clientToProxyContext* cContext = (clientToProxyContext*)client->context;
-	rdpContext* sContext = pContext->peerContext;
+	pServerContext* ps;
+	proxyData* pdata;
+	rdpContext* pc;
+	ps = (pServerContext*)client->context;
+	pc = (rdpContext*) ps->pdata->pc;
+	pdata = ps->pdata;
 	WLog_INFO(TAG, "Client %s disconnected; closing connection with server %s",
-	          client->hostname, sContext->settings->ServerHostname);
+	          client->hostname, pc->settings->ServerHostname);
 	/* Mark connection closed for sContext */
-	SetEvent(pContext->connectionClosed);
-	freerdp_abort_connect(sContext->instance);
+	SetEvent(pdata->connectionClosed);
+	freerdp_abort_connect(pc->instance);
 	/* Close connection to remote host */
 	WLog_DBG(TAG, "Waiting for proxy's client thread to finish");
-	WaitForSingleObject(cContext->thread, INFINITE);
-	CloseHandle(cContext->thread);
+	WaitForSingleObject(ps->thread, INFINITE);
+	CloseHandle(ps->thread);
 }
 
 static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
@@ -253,15 +256,16 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
  */
 BOOL pf_server_post_connect(freerdp_peer* client)
 {
-	rdpContext* sContext;
 	proxyConfig* config;
-	clientToProxyContext* cContext;
+	pServerContext* ps;
+	pClientContext* pc;
 	HANDLE connectionClosedEvent;
-	proxyContext* pContext;
-	pContext = (proxyContext*) client->context;
-	config = pContext->server->config;
+	proxyData* pdata;
 	char* host = NULL;
-	DWORD port = 3389; // default port
+	DWORD port = 3389; /* default port */
+	ps = (pServerContext*)client->context;
+	pdata = ps->pdata;
+	config = pdata->config;
 
 	if (config->UseLoadBalanceInfo)
 	{
@@ -282,18 +286,17 @@ BOOL pf_server_post_connect(freerdp_peer* client)
 	}
 
 	/* Start a proxy's client in it's own thread */
-	sContext = proxy_to_server_context_create(client->settings, host, port);
+	pc = (pClientContext*) p_client_context_create(client->settings, host, port);
+	pc->pdata = ps->pdata;
 	/* Inject proxy's client context to proxy's context */
 	connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	pContext->peerContext = sContext;
-	pContext->connectionClosed = connectionClosedEvent;
-	((proxyContext*)sContext)->peerContext = (rdpContext*)pContext;
-	((proxyContext*)sContext)->connectionClosed = connectionClosedEvent;
-	cContext = (clientToProxyContext*)client->context;
-	pf_server_rdpgfx_init(cContext);
+	pdata->pc = (pClientContext*) pc;
+	pdata->ps = ps;
+	pdata->connectionClosed = connectionClosedEvent;
+	pf_server_rdpgfx_init(ps);
 
-	if (!(cContext->thread = CreateThread(NULL, 0, pf_client_start, sContext, 0,
-	                                      NULL)))
+	if (!(ps->thread = CreateThread(NULL, 0, pf_client_start, (rdpContext*) pc, 0,
+	                                NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		return FALSE;
@@ -321,20 +324,21 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	DWORD eventCount;
 	DWORD tmp;
 	DWORD status;
+	pServerContext* ps;
+	proxyData* pdata;
 	freerdp_peer* client = (freerdp_peer*) arg;
-	clientToProxyContext* context;
-	proxyContext* pContext;
 
-	if (!init_client_to_proxy_context(client))
+	if (!init_p_server_context(client))
 	{
 		freerdp_peer_free(client);
 		return 0;
 	}
 
-	context = (clientToProxyContext*) client->context;
-	pContext = (proxyContext*)context;
-	/* inject server struct to proxyContext */
-	pContext->server = client->ContextExtra;
+	ps = (pServerContext*) client->context;
+	pdata = calloc(1, sizeof(proxyData));
+	ps->pdata = pdata;
+	/* inject configuration to proxyData */
+	pdata->config = client->ContextExtra;
 	client->settings->SupportGraphicsPipeline = TRUE;
 	client->settings->SupportDynamicChannels = TRUE;
 	/* TODO: Read path from config and default to /etc */
@@ -367,7 +371,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	WLog_INFO(TAG, "Client connected: %s",
 	          client->local ? "(local)" : client->hostname);
 	/* Main client event handling loop */
-	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(context->vcm);
+	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(ps->vcm);
 
 	while (1)
 	{
@@ -385,13 +389,13 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 			eventCount += tmp;
 		}
 		eventHandles[eventCount++] = ChannelEvent;
-		eventHandles[eventCount++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);
+		eventHandles[eventCount++] = WTSVirtualChannelManagerGetEventHandle(ps->vcm);
 		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
 		{
 			/* Ignore wait fails that are caused by legitimate client disconnections */
-			if (pf_common_connection_aborted_by_peer(pContext))
+			if (pf_common_connection_aborted_by_peer(pdata))
 				break;
 
 			WLog_ERR(TAG, "WaitForMultipleObjects failed (errno: %d)", errno);
@@ -403,20 +407,20 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 
 		if (WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0)
 		{
-			if (!WTSVirtualChannelManagerCheckFileDescriptor(context->vcm))
+			if (!WTSVirtualChannelManagerCheckFileDescriptor(ps->vcm))
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelManagerCheckFileDescriptor failure");
 				goto fail;
 			}
 		}
 
-		switch (WTSVirtualChannelManagerGetDrdynvcState(context->vcm))
+		switch (WTSVirtualChannelManagerGetDrdynvcState(ps->vcm))
 		{
 			/* Dynamic channel status may have been changed after processing */
 			case DRDYNVC_STATE_NONE:
 
 				/* Initialize drdynvc channel */
-				if (!WTSVirtualChannelManagerCheckFileDescriptor(context->vcm))
+				if (!WTSVirtualChannelManagerCheckFileDescriptor(ps->vcm))
 				{
 					WLog_ERR(TAG, "Failed to initialize drdynvc channel");
 					goto fail;
@@ -428,9 +432,9 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 
 				/* Initialize RDPGFX dynamic channel */
 				if (!gfxOpened && client->settings->SupportGraphicsPipeline &&
-				    context->gfx)
+				    ps->gfx)
 				{
-					if (!context->gfx->Open(context->gfx))
+					if (!ps->gfx->Open(ps->gfx))
 					{
 						WLog_WARN(TAG, "Failed to open GraphicsPipeline");
 						client->settings->SupportGraphicsPipeline = FALSE;
@@ -438,7 +442,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 					}
 
 					gfxOpened = TRUE;
-					context->gfx->CapsAdvertise = pf_server_rdpgfx_caps_advertise;
+					ps->gfx->CapsAdvertise = pf_server_rdpgfx_caps_advertise;
 					WLog_DBG(TAG, "Gfx Pipeline Opened");
 				}
 
@@ -453,16 +457,18 @@ fail:
 
 	if (gfxOpened)
 	{
-		(void)context->gfx->Close(context->gfx);
+		(void)ps->gfx->Close(ps->gfx);
 	}
 
-	if (client->connected && !pf_common_connection_aborted_by_peer(pContext))
+	if (client->connected && !pf_common_connection_aborted_by_peer(pdata))
 	{
 		pf_server_handle_client_disconnection(client);
 	}
 
-	freerdp_client_stop(pContext->peerContext);
-	freerdp_client_context_free(pContext->peerContext);
+	rdpContext* pc = (rdpContext*) pdata->pc;
+	freerdp_client_stop(pc);
+	free(pdata);
+	freerdp_client_context_free(pc);
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
@@ -517,22 +523,20 @@ void pf_server_mainloop(freerdp_listener* listener)
 	listener->Close(listener);
 }
 
-int pf_server_start(rdpProxyServer* server)
+int pf_server_start(proxyConfig* config)
 {
 	char* localSockPath;
 	char localSockName[MAX_PATH];
 	BOOL success;
 	WSADATA wsaData;
-	proxyConfig* config;
 	freerdp_listener* listener = freerdp_listener_new();
 
 	if (!listener)
 		return -1;
 
-	config = server->config;
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
-	listener->info = server;
+	listener->info = config;
 	listener->PeerAccepted = pf_server_client_connected;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)

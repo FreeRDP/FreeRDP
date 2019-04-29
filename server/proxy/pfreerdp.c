@@ -26,17 +26,7 @@
 int main(int argc, char* argv[])
 {
 	int status = 0;
-	rdpProxyServer* server;
-	proxyConfig* config;
-	server = proxy_server_new();
-
-	if (server == NULL)
-	{
-		WLog_ERR(TAG, "Server instance allocation failed");
-		return -1;
-	}
-
-	config = server->config;
+	proxyConfig* config = calloc(1, sizeof(proxyConfig));
 	status = pf_server_load_config("config.ini", config);
 
 	switch (status)
@@ -68,8 +58,8 @@ int main(int argc, char* argv[])
 			WLog_INFO(TAG, "Blocking %s", config->BlockedChannels[i]);
 	}
 
-	status = pf_server_start(server);
+	status = pf_server_start(config);
 fail:
-	proxy_server_free(server);
+	pf_server_config_free(config);
 	return status;
 }
