@@ -211,16 +211,19 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
         char** target, DWORD* port)
 {
 #define TARGET_MAX	(100)
-#define LEN_BEFORE_HOST (13) /* length of "Cookie: + SPACE + msts=" */
+#define ROUTING_TOKEN_PREFIX "Cookie: msts="
 	rdpNego* nego;
 	char* colon;
 	int len;
+	int prefix_len;
+
 	nego = client->context->rdp->nego;
+	prefix_len = strlen(ROUTING_TOKEN_PREFIX);
 
 	if (nego->RoutingToken &&
-	    nego->RoutingTokenLength > LEN_BEFORE_HOST && nego->RoutingTokenLength < TARGET_MAX)
+	    nego->RoutingTokenLength > prefix_len && nego->RoutingTokenLength < TARGET_MAX)
 	{
-		len = nego->RoutingTokenLength - LEN_BEFORE_HOST;
+		len = nego->RoutingTokenLength - prefix_len;
 		*target = malloc(len + 1);
 		CopyMemory(*target, nego->RoutingToken + len, nego->RoutingTokenLength - len);
 		*(*target + len) = '\0';
