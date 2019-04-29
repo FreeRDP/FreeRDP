@@ -99,7 +99,7 @@ UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 	Stream_SetPosition(s, orderLength);
 	WLog_Print(rail->log, WLOG_DEBUG, "Sending %s PDU, length: %"PRIu16"",
 	           RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
-	return rail_send_channel_data(rail, Stream_Buffer(s), orderLength);
+	return rail_send_channel_data(rail, s);
 }
 
 /**
@@ -494,6 +494,7 @@ static UINT rail_write_langbar_info_order(wStream* s, const RAIL_LANGBAR_INFO_OR
 static UINT rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
+	RAIL_HANDSHAKE_ORDER clientHandshake = { 0 };
 	UINT error;
 
 	if (!context || !handshake || !s)
@@ -504,6 +505,14 @@ static UINT rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* ha
 		WLog_ERR(TAG, "rail_read_handshake_order failed with error %"PRIu32"!", error);
 		return error;
 	}
+
+	clientHandshake.buildNumber = 0x00001DB0;
+	/* 2.2.2.2.3 HandshakeEx PDU (TS_RAIL_ORDER_HANDSHAKE_EX)
+	 * Client response is really a Handshake PDU */
+	error = context->ClientHandshake(context, &clientHandshake);
+
+	if (error != CHANNEL_RC_OK)
+		return error;
 
 	if (context->custom)
 	{
@@ -525,6 +534,7 @@ static UINT rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORD
         wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
+	RAIL_HANDSHAKE_ORDER clientHandshake = { 0 };
 	UINT error;
 
 	if (!context || !handshakeEx || !s)
@@ -535,6 +545,14 @@ static UINT rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORD
 		WLog_ERR(TAG, "rail_read_handshake_ex_order failed with error %"PRIu32"!", error);
 		return error;
 	}
+
+	clientHandshake.buildNumber = 0x00001DB0;
+	/* 2.2.2.2.3 HandshakeEx PDU (TS_RAIL_ORDER_HANDSHAKE_EX)
+	 * Client response is really a Handshake PDU */
+	error = context->ClientHandshake(context, &clientHandshake);
+
+	if (error != CHANNEL_RC_OK)
+		return error;
 
 	if (context->custom)
 	{
@@ -736,6 +754,155 @@ static UINT rail_recv_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORD
 	return error;
 }
 
+static UINT rail_read_zorder_sync_order(wStream* s, RAIL_ZORDER_SYNC* zorder)
+{
+	if (!s || !zorder)
+		return ERROR_INVALID_PARAMETER;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		return ERROR_INVALID_DATA;
+	}
+
+	Stream_Read_UINT32(s, zorder->windowIdMarker);
+	return CHANNEL_RC_OK;
+}
+
+static UINT rail_recv_zorder_sync_order(railPlugin* rail, RAIL_ZORDER_SYNC* zorder,
+                                        wStream* s)
+{
+	RailClientContext* context = rail_get_client_interface(rail);
+	UINT error;
+
+	if (!context || !zorder)
+		return ERROR_INVALID_PARAMETER;
+
+	if ((error = rail_read_zorder_sync_order(s, zorder)))
+	{
+		WLog_ERR(TAG, "rail_read_zorder_sync_order failed with error %"PRIu32"!", error);
+		return error;
+	}
+
+	if (context->custom)
+	{
+		IFCALLRET(context->ServerZOrderSync, error, context, zorder);
+
+		if (error)
+			WLog_ERR(TAG, "context.ServerZOrderSync failed with error %"PRIu32"", error);
+	}
+
+	return error;
+}
+
+static UINT rail_read_power_display_request_order(wStream* s, RAIL_POWER_DISPLAY_REQUEST* power)
+{
+	if (!s || !power)
+		return ERROR_INVALID_PARAMETER;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		return ERROR_INVALID_DATA;
+	}
+
+	Stream_Read_UINT32(s, power->active);
+	return CHANNEL_RC_OK;
+}
+
+static UINT rail_recv_power_display_request_order(railPlugin* rail,
+        RAIL_POWER_DISPLAY_REQUEST* power,
+        wStream* s)
+{
+	RailClientContext* context = rail_get_client_interface(rail);
+	UINT error;
+
+	if (!context || !power)
+		return ERROR_INVALID_PARAMETER;
+
+	if ((error = rail_read_power_display_request_order(s, power)))
+	{
+		WLog_ERR(TAG, "rail_read_zorder_sync_order failed with error %"PRIu32"!", error);
+		return error;
+	}
+
+	if (context->custom)
+	{
+		IFCALLRET(context->ServerPowerDisplayRequest, error, context, power);
+
+		if (error)
+			WLog_ERR(TAG, "context.ServerPowerDisplayRequest failed with error %"PRIu32"", error);
+	}
+
+	return error;
+}
+
+
+static UINT rail_read_get_application_id_extended_response_order(wStream* s,
+        RAIL_GET_APPID_RESP_EX* id)
+{
+	if (!s || !id)
+		return ERROR_INVALID_PARAMETER;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		return ERROR_INVALID_DATA;
+	}
+
+	Stream_Read_UINT32(s, id->windowID);
+
+	if (!Stream_Read_UTF16_String(s, id->applicationID, ARRAYSIZE(id->applicationID)))
+		return ERROR_INVALID_DATA;
+
+	if (_wcsnlen(id->applicationID, ARRAYSIZE(id->applicationID)) >= ARRAYSIZE(id->applicationID))
+		return ERROR_INVALID_DATA;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		return ERROR_INVALID_DATA;
+	}
+
+	Stream_Read_UINT32(s, id->processId);
+
+	if (!Stream_Read_UTF16_String(s, id->processImageName, ARRAYSIZE(id->processImageName)))
+		return ERROR_INVALID_DATA;
+
+	if (_wcsnlen(id->applicationID, ARRAYSIZE(id->processImageName)) >= ARRAYSIZE(id->processImageName))
+		return ERROR_INVALID_DATA;
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rail_recv_get_application_id_extended_response_order(railPlugin* rail,
+        RAIL_GET_APPID_RESP_EX* id,
+        wStream* s)
+{
+	RailClientContext* context = rail_get_client_interface(rail);
+	UINT error;
+
+	if (!context || !id)
+		return ERROR_INVALID_PARAMETER;
+
+	if ((error = rail_read_get_application_id_extended_response_order(s, id)))
+	{
+		WLog_ERR(TAG, "rail_read_get_application_id_extended_response_order failed with error %"PRIu32"!",
+		         error);
+		return error;
+	}
+
+	if (context->custom)
+	{
+		IFCALLRET(context->ServerGetAppidResponseExtended, error, context, id);
+
+		if (error)
+			WLog_ERR(TAG, "context.ServerGetAppidResponseExtended failed with error %"PRIu32"", error);
+	}
+
+	return error;
+}
+
 /**
  * Function description
  *
@@ -809,6 +976,24 @@ UINT rail_order_recv(railPlugin* rail, wStream* s)
 			{
 				RAIL_LANGBAR_INFO_ORDER langBarInfo;
 				return rail_recv_langbar_info_order(rail, &langBarInfo, s);
+			}
+
+		case RDP_RAIL_ORDER_ZORDER_SYNC:
+			{
+				RAIL_ZORDER_SYNC val;
+				return rail_recv_zorder_sync_order(rail, &val, s);
+			}
+
+		case RDP_RAIL_ORDER_POWER_DISPLAY_REQUEST:
+			{
+				RAIL_POWER_DISPLAY_REQUEST val;
+				return rail_recv_power_display_request_order(rail, &val, s);
+			}
+
+		case RDP_RAIL_ORDER_GET_APPID_RESP_EX:
+			{
+				RAIL_GET_APPID_RESP_EX val;
+				return rail_recv_get_application_id_extended_response_order(rail, &val, s);
 			}
 
 		default:
@@ -1312,6 +1497,55 @@ UINT rail_send_client_langbar_info_order(railPlugin* rail,
 	if (ERROR_SUCCESS == error)
 		error = rail_send_pdu(rail, s, RDP_RAIL_ORDER_LANGBARINFO);
 
+	Stream_Free(s, TRUE);
+	return error;
+}
+
+UINT rail_send_client_order_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak)
+{
+	wStream* s;
+	UINT error;
+
+	if (!rail || !cloak)
+		return ERROR_INVALID_PARAMETER;
+
+	s = rail_pdu_init(5);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "rail_pdu_init failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	Stream_Write_UINT32(s, cloak->windowId);
+	Stream_Write_UINT8(s, cloak->cloak ? 1 : 0);
+	error = rail_send_pdu(rail, s, RDP_RAIL_ORDER_CLOAK);
+	Stream_Free(s, TRUE);
+	return error;
+}
+
+UINT rail_send_client_order_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap)
+{
+	wStream* s;
+	UINT error;
+
+	if (!rail)
+		return ERROR_INVALID_PARAMETER;
+
+	s = rail_pdu_init(12);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "rail_pdu_init failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	Stream_Write_UINT32(s, snap->windowId);
+	Stream_Write_UINT16(s, snap->left);
+	Stream_Write_UINT16(s, snap->top);
+	Stream_Write_UINT16(s, snap->right);
+	Stream_Write_UINT16(s, snap->bottom);
+	error = rail_send_pdu(rail, s, RDP_RAIL_ORDER_SNAP_ARRANGE);
 	Stream_Free(s, TRUE);
 	return error;
 }

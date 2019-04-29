@@ -984,31 +984,23 @@ static UINT xf_rail_server_execute_result(RailClientContext* context,
 static UINT xf_rail_server_system_param(RailClientContext* context,
                                         const RAIL_SYSPARAM_ORDER* sysparam)
 {
+	// TODO: Actually apply param
 	return CHANNEL_RC_OK;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT xf_rail_server_handshake(RailClientContext* context,
-                                     const RAIL_HANDSHAKE_ORDER* handshake)
+static UINT xf_rail_server_start_cmd(RailClientContext* context)
 {
 	UINT status;
 	RAIL_EXEC_ORDER exec = { 0 };
 	RAIL_SYSPARAM_ORDER sysparam = { 0 };
-	RAIL_HANDSHAKE_ORDER clientHandshake;
 	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
 	xfContext* xfc = (xfContext*) context->custom;
 	rdpSettings* settings = xfc->context.settings;
-	clientHandshake.buildNumber = 0x00001DB0;
-	status = context->ClientHandshake(context, &clientHandshake);
-
-	if (status != CHANNEL_RC_OK)
-		return status;
-
 	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
+
+	if (settings->AutoReconnectionEnabled)
+		clientStatus.flags |= RAIL_CLIENTSTATUS_AUTORECONNECT;
+
 	status = context->ClientInformation(context, &clientStatus);
 
 	if (status != CHANNEL_RC_OK)
@@ -1018,7 +1010,10 @@ static UINT xf_rail_server_handshake(RailClientContext* context,
 	{
 		RAIL_LANGBAR_INFO_ORDER langBarInfo;
 		langBarInfo.languageBarStatus = 0x00000008; /* TF_SFT_HIDDEN */
-		context->ClientLanguageBarInfo(context, &langBarInfo);
+		status = context->ClientLanguageBarInfo(context, &langBarInfo);
+
+		if (status != CHANNEL_RC_OK)
+			return status;
 	}
 
 	sysparam.params = 0;
@@ -1050,6 +1045,16 @@ static UINT xf_rail_server_handshake(RailClientContext* context,
 	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
 	return context->ClientExecute(context, &exec);
 }
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_rail_server_handshake(RailClientContext* context,
+                                     const RAIL_HANDSHAKE_ORDER* handshake)
+{
+	return xf_rail_server_start_cmd(context);
+}
 
 /**
  * Function description
@@ -1059,7 +1064,7 @@ static UINT xf_rail_server_handshake(RailClientContext* context,
 static UINT xf_rail_server_handshake_ex(RailClientContext* context,
                                         const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
-	return CHANNEL_RC_OK;
+	return xf_rail_server_start_cmd(context);
 }
 
 /**
