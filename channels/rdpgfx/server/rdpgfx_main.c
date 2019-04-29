@@ -1202,13 +1202,6 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 	}
 
 	Stream_Read_UINT16(s, pdu.capsSetCount); /* capsSetCount (2 bytes) */
-
-	if (Stream_GetRemainingLength(s) < (pdu.capsSetCount * (RDPGFX_CAPSET_BASE_SIZE + 4)))
-	{
-		WLog_ERR(TAG, "not enough data!");
-		return ERROR_INVALID_DATA;
-	}
-
 	capsSets = calloc(pdu.capsSetCount, (RDPGFX_CAPSET_BASE_SIZE + 4));
 
 	if (!capsSets)
@@ -1219,13 +1212,26 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 	for (index = 0; index < pdu.capsSetCount; index++)
 	{
 		RDPGFX_CAPSET* capsSet = &(pdu.capsSets[index]);
+
+		if (Stream_GetRemainingLength(s) < 8)
+		{
+			WLog_ERR(TAG, "not enough data!");
+			return ERROR_INVALID_DATA;
+		}
+
 		Stream_Read_UINT32(s, capsSet->version); /* version (4 bytes) */
 		Stream_Read_UINT32(s, capsSet->length); /* capsDataLength (4 bytes) */
 
 		if (capsSet->length >= 4)
-			Stream_Peek_UINT32(s, capsSet->flags); /* capsData (4 bytes) */
+		{
+			if (Stream_GetRemainingLength(s) < 4)
+				return ERROR_INVALID_DATA;
 
-		Stream_Seek(s, capsSet->length);
+			Stream_Peek_UINT32(s, capsSet->flags); /* capsData (4 bytes) */
+		}
+
+		if (!Stream_SafeSeek(s, capsSet->length))
+			return ERROR_INVALID_DATA;
 	}
 
 	if (context)
