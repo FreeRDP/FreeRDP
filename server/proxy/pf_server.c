@@ -211,20 +211,24 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
         char** target, DWORD* port)
 {
 #define TARGET_MAX	(100)
-	rdpNego* nego = client->context->rdp->nego;
+#define LEN_BEFORE_HOST (13) /* length of "Cookie: + SPACE + msts=" */
+	rdpNego* nego;
 	char* colon;
+	int len;
+	nego = client->context->rdp->nego;
 
 	if (nego->RoutingToken &&
-	    nego->RoutingTokenLength > 0 && nego->RoutingTokenLength < TARGET_MAX)
+	    nego->RoutingTokenLength > LEN_BEFORE_HOST && nego->RoutingTokenLength < TARGET_MAX)
 	{
-		*target = malloc(nego->RoutingTokenLength + 1);
-		CopyMemory(*target, (char*)nego->RoutingToken, nego->RoutingTokenLength);
-		*(*target + nego->RoutingTokenLength) = '\0';
+		len = nego->RoutingTokenLength - LEN_BEFORE_HOST;
+		*target = malloc(len + 1);
+		CopyMemory(*target, nego->RoutingToken + len, nego->RoutingTokenLength - len);
+		*(*target + len) = '\0';
 		colon = strchr(*target, ':');
 
 		if (colon)
 		{
-			// port is specified
+			/* port is specified */
 			*port = strtoul(colon + 1, NULL, 10);
 			*colon = '\0';
 		}
@@ -232,7 +236,7 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 		return TRUE;
 	}
 
-	// no routing token.
+	/* no routing token */
 	return FALSE;
 }
 
