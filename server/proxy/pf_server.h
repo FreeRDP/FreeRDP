@@ -23,7 +23,6 @@
 
 #include <libfreerdp/core/listener.h>
 #include "pf_config.h"
-#include "proxy.h"
 
 #define TAG PROXY_TAG("server")
 int pf_server_start(proxyConfig* config);

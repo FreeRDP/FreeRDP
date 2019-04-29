@@ -19,7 +19,6 @@
  */
 
 #include "pf_server.h"
-#include "proxy.h"
 #include "pf_config.h"
 #include "pf_log.h"
 

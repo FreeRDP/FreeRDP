@@ -47,7 +47,6 @@
 #include "pf_context.h"
 #include "pf_input.h"
 #include "pf_update.h"
-#include "proxy.h"
 
 #define TAG PROXY_TAG("server")
 
