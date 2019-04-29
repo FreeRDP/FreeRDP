@@ -51,131 +51,6 @@
 
 #define TAG PROXY_TAG("server")
 
-/**
- * Confirms client capabilities on caps advertised received.
- * The server
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT pf_server_rdpgfx_caps_advertise(RdpgfxServerContext* context,
-        RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
-{
-	UINT16 index;
-	rdpSettings* settings = context->rdpcontext->settings;
-	UINT32 flags = 0;
-
-	for (index = 0; index < capsAdvertise->capsSetCount; index++)
-	{
-		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
-
-		if (currentCaps->version == RDPGFX_CAPVERSION_103)
-		{
-			RDPGFX_CAPSET caps = *currentCaps;
-			RDPGFX_CAPS_CONFIRM_PDU pdu;
-			pdu.capsSet = &caps;
-
-			if (settings)
-			{
-				flags = pdu.capsSet->flags;
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 =
-				                            !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
-			}
-
-			return context->CapsConfirm(context, &pdu);
-		}
-	}
-
-	for (index = 0; index < capsAdvertise->capsSetCount; index++)
-	{
-		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
-
-		if (currentCaps->version == RDPGFX_CAPVERSION_102)
-		{
-			RDPGFX_CAPSET caps = *currentCaps;
-			RDPGFX_CAPS_CONFIRM_PDU pdu;
-			pdu.capsSet = &caps;
-
-			if (settings)
-			{
-				flags = pdu.capsSet->flags;
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 =
-				                            !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
-			}
-
-			return context->CapsConfirm(context, &pdu);
-		}
-	}
-
-	for (index = 0; index < capsAdvertise->capsSetCount; index++)
-	{
-		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
-
-		if (currentCaps->version == RDPGFX_CAPVERSION_10)
-		{
-			RDPGFX_CAPSET caps = *currentCaps;
-			RDPGFX_CAPS_CONFIRM_PDU pdu;
-			pdu.capsSet = &caps;
-
-			if (settings)
-			{
-				flags = pdu.capsSet->flags;
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-				settings->GfxAVC444 = settings->GfxH264 = !(flags &
-				                      RDPGFX_CAPS_FLAG_AVC_DISABLED);
-			}
-
-			return context->CapsConfirm(context, &pdu);
-		}
-	}
-
-	for (index = 0; index < capsAdvertise->capsSetCount; index++)
-	{
-		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
-
-		if (currentCaps->version == RDPGFX_CAPVERSION_81)
-		{
-			RDPGFX_CAPSET caps = *currentCaps;
-			RDPGFX_CAPS_CONFIRM_PDU pdu;
-			pdu.capsSet = &caps;
-
-			if (settings)
-			{
-				flags = pdu.capsSet->flags;
-				settings->GfxAVC444v2 = settings->GfxAVC444 = FALSE;
-				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-				settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
-			}
-
-			return context->CapsConfirm(context, &pdu);
-		}
-	}
-
-	for (index = 0; index < capsAdvertise->capsSetCount; index++)
-	{
-		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
-
-		if (currentCaps->version == RDPGFX_CAPVERSION_8)
-		{
-			RDPGFX_CAPSET caps = *currentCaps;
-			RDPGFX_CAPS_CONFIRM_PDU pdu;
-			pdu.capsSet = &caps;
-
-			if (settings)
-			{
-				flags = pdu.capsSet->flags;
-				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-			}
-
-			return context->CapsConfirm(context, &pdu);
-		}
-	}
-
-	return CHANNEL_RC_UNSUPPORTED_VERSION;
-}
 
 BOOL pf_server_rdpgfx_init(pServerContext* ps)
 {
@@ -320,7 +195,6 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 {
 	HANDLE eventHandles[32];
 	HANDLE ChannelEvent;
-	BOOL gfxOpened = FALSE;
 	DWORD eventCount;
 	DWORD tmp;
 	DWORD status;
@@ -429,23 +303,6 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 				break;
 
 			case DRDYNVC_STATE_READY:
-
-				/* Initialize RDPGFX dynamic channel */
-				if (!gfxOpened && client->settings->SupportGraphicsPipeline &&
-				    ps->gfx)
-				{
-					if (!ps->gfx->Open(ps->gfx))
-					{
-						WLog_WARN(TAG, "Failed to open GraphicsPipeline");
-						client->settings->SupportGraphicsPipeline = FALSE;
-						break;
-					}
-
-					gfxOpened = TRUE;
-					ps->gfx->CapsAdvertise = pf_server_rdpgfx_caps_advertise;
-					WLog_DBG(TAG, "Gfx Pipeline Opened");
-				}
-
 				break;
 
 			default:
@@ -454,12 +311,6 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	}
 
 fail:
-
-	if (gfxOpened)
-	{
-		(void)ps->gfx->Close(ps->gfx);
-	}
-
 	if (client->connected && !pf_common_connection_aborted_by_peer(pdata))
 	{
 		pf_server_handle_client_disconnection(client);

@@ -93,6 +93,14 @@ typedef UINT(*pcRdpgfxCapsConfirm)(RdpgfxClientContext* context,
 typedef UINT(*pcRdpgfxFrameAcknowledge)(RdpgfxClientContext* context,
                                         const RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge);
 
+typedef UINT(*pcRdpgfxOnOpen)(RdpgfxClientContext* context, BOOL *do_caps_advertise);
+
+typedef UINT(*pcRdpgfxOnClose)(RdpgfxClientContext* context);
+
+typedef UINT(*pcRdpgfxCapsAdvertise)(RdpgfxClientContext* context, RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise);
+
+typedef UINT(*pcRdpgfxCapsConfirm)(RdpgfxClientContext* context, RDPGFX_CAPS_CONFIRM_PDU* capsConfirm);
+
 struct _rdpgfx_client_context
 {
 	void* handle;
@@ -124,12 +132,11 @@ struct _rdpgfx_client_context
 	pcRdpgfxSetCacheSlotData SetCacheSlotData;
 	pcRdpgfxGetCacheSlotData GetCacheSlotData;
 
-	/* Proxy callbacks */
+	/* proxy callbacks */
 	pcRdpgfxOnOpen OnOpen;
 	pcRdpgfxOnClose OnClose;
 	pcRdpgfxCapsAdvertise CapsAdvertise;
 	pcRdpgfxCapsConfirm CapsConfirm;
-	pcRdpgfxFrameAcknowledge FrameAcknowledge;
 
 	/* No locking required */
 	pcRdpgfxUpdateSurfaces UpdateSurfaces;

@@ -147,9 +147,59 @@ static UINT proxy_MapSurfaceToWindow(RdpgfxClientContext* context,
 	return server->MapSurfaceToWindow(server, surfaceToWindow);
 }
 
+static UINT proxy_OnOpen(RdpgfxClientContext* context, BOOL *do_caps_advertise)
+{
+	WLog_DBG(TAG, "OnOpen");
+	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+
+	if (NULL != do_caps_advertise)
+		*do_caps_advertise = FALSE;
+
+	WLog_DBG(TAG, "calling server's Open()");
+	// TODO: check if proxy server's dynvc is in ready state
+
+	// we do this error check since the server's API doesn't return WTSAPI error codes
+	if (server->Open(server))
+	{
+		return CHANNEL_RC_OK;
+	}
+	return CHANNEL_RC_INITIALIZATION_ERROR;
+}
+
+static UINT proxy_OnClose(RdpgfxClientContext* context)
+{
+	WLog_DBG(TAG, "OnClose");
+	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+
+	WLog_DBG(TAG, "calling server's Close()");
+	return server->Close(server);
+}
+
+static UINT proxy_CapsConfirm(RdpgfxClientContext* context,
+	RDPGFX_CAPS_CONFIRM_PDU *capsConfirm)
+{
+	WLog_DBG(TAG, "CapsConfirm");
+	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+
+	WLog_DBG(TAG, "calling server's CapsConfirm()");
+	return server->CapsConfirm(server, capsConfirm);
+}
+
+/* called when proxy server receives `CapsAdvertise` */
+static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
+	RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
+{
+	RdpgfxClientContext* client = (RdpgfxClientContext*) context->custom;
+	WLog_DBG(TAG, "pf_rdpgfx_caps_advertise, sending caps advertise to target");
+	return client->CapsAdvertise(client, capsAdvertise);
+}
+
+
 void proxy_graphics_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* server)
 {
 	gfx->custom = (void*) server;
+
+	/* set client callbacks */
 	gfx->ResetGraphics = proxy_ResetGraphics;
 	gfx->StartFrame = proxy_StartFrame;
 	gfx->EndFrame = proxy_EndFrame;
@@ -165,4 +215,13 @@ void proxy_graphics_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext*
 	gfx->EvictCacheEntry = proxy_EvictCacheEntry;
 	gfx->MapSurfaceToOutput = proxy_MapSurfaceToOutput;
 	gfx->MapSurfaceToWindow = proxy_MapSurfaceToWindow;
+
+	gfx->OnOpen = proxy_OnOpen;
+	gfx->OnClose = proxy_OnClose;
+	gfx->CapsConfirm = proxy_CapsConfirm;
+
+	server->custom = gfx;
+
+	/* set server callbacks */
+	server->CapsAdvertise = pf_rdpgfx_caps_advertise;
 }
