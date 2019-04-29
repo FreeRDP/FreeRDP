@@ -1516,7 +1516,6 @@ struct rdp_settings
 	 * Extensions
 	 */
 
-	/* Extensions */
 	ALIGN64 int num_extensions; /*  */
 	ALIGN64 struct rdp_ext_set extensions[16]; /*  */
 
@@ -1525,6 +1524,10 @@ struct rdp_settings
 	ALIGN64 char* ActionScript;
 	ALIGN64 DWORD  Floatbar;
 
+	ALIGN64 BOOL WmSkipTaskbar;
+	ALIGN64 BOOL WmSkipTaskbarEnabled;
+	ALIGN64 BOOL WmSkipPager;
+	ALIGN64 BOOL WmSkipPagerEnabled;
 };
 typedef struct rdp_settings rdpSettings;
 

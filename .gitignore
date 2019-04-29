@@ -89,6 +89,9 @@ version.rc
 *.VC.db
 *.VC.opendb
 
+# KDE
+.directory
+
 # Binaries
 *.a
 *.o

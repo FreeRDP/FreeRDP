@@ -189,6 +189,8 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "full window drag" },
 	{ "window-position", COMMAND_LINE_VALUE_REQUIRED, "<xpos>x<ypos>", NULL, NULL, -1, NULL, "window position" },
 	{ "wm-class", COMMAND_LINE_VALUE_REQUIRED, "<class-name>", NULL, NULL, -1, NULL, "Set the WM_CLASS hint for the window instance" },
+    { "wm-skip-taskbar", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Enable the _NET_WM_STATE_SKIP_TASKBAR for the window instance" },
+	{ "wm-skip-pager", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Enable the _NET_WM_STATE_SKIP_PAGER for the window instance" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use available work area" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };

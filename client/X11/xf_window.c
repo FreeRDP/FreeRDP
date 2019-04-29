@@ -429,11 +429,30 @@ void xf_SetWindowDecorations(xfContext* xfc, Window window, BOOL show)
 	                PropModeReplace, (BYTE*) &hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
 }
 
+static Atom xf_SetSkipPager(rdpSettings* s, xfContext* xfc)
+{
+	if(s->WmSkipPagerEnabled)
+		xfc->_NET_WM_STATE_SKIP_PAGER = s->WmSkipPager ?
+					XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False) : 0;
+
+	return xfc->_NET_WM_STATE_SKIP_PAGER;
+}
+
+static Atom xf_SetSkipTaskbar(rdpSettings* s, xfContext* xfc)
+{
+	if(s->WmSkipTaskbarEnabled)
+		xfc->_NET_WM_STATE_SKIP_TASKBAR = s->WmSkipTaskbar ?
+					XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_TASKBAR", False) : 0;
+
+	return xfc->_NET_WM_STATE_SKIP_TASKBAR;
+}
+
 void xf_SetWindowUnlisted(xfContext* xfc, Window window)
 {
 	Atom window_state[2];
-	window_state[0] = xfc->_NET_WM_STATE_SKIP_PAGER;
-	window_state[1] = xfc->_NET_WM_STATE_SKIP_TASKBAR;
+
+	window_state[0] = xf_SetSkipPager(xfc->context.settings, xfc);
+	window_state[1] = xf_SetSkipTaskbar(xfc->context.settings, xfc);
 	XChangeProperty(xfc->display, window, xfc->_NET_WM_STATE,
 	                XA_ATOM, 32, PropModeReplace, (BYTE*) &window_state, 2);
 }
