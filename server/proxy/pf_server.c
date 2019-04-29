@@ -102,7 +102,7 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 	{
 		len = nego->RoutingTokenLength - prefix_len;
 		*target = malloc(len + 1);
-		CopyMemory(*target, nego->RoutingToken + len, nego->RoutingTokenLength - len);
+		CopyMemory(*target, nego->RoutingToken + prefix_len, len);
 		*(*target + len) = '\0';
 		colon = strchr(*target, ':');
 
