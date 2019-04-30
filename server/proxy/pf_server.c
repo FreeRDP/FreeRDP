@@ -93,7 +93,6 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 	char* colon;
 	int len;
 	int prefix_len;
-
 	nego = client->context->rdp->nego;
 	prefix_len = strlen(ROUTING_TOKEN_PREFIX);
 
@@ -310,6 +309,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	}
 
 fail:
+
 	if (client->connected && !pf_common_connection_aborted_by_peer(pdata))
 	{
 		pf_server_handle_client_disconnection(client);
