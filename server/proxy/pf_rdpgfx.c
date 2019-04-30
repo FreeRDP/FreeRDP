@@ -26,7 +26,6 @@
 
 #define TAG PROXY_TAG("client")
 
-
 static UINT proxy_ResetGraphics(RdpgfxClientContext* context,
                                 const RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
@@ -189,10 +188,33 @@ static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
                                      RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
 {
 	RdpgfxClientContext* client = (RdpgfxClientContext*) context->custom;
-	WLog_DBG(TAG, "pf_rdpgfx_caps_advertise, sending caps advertise to target");
-	return client->CapsAdvertise(client, capsAdvertise);
-}
 
+	int index;
+	UINT16 proxySupportedCapsSetCount = 0;
+	RDPGFX_CAPS_ADVERTISE_PDU supportedCapsAdvertise;
+	RDPGFX_CAPSET* proxySupportedCapsSet;
+	RDPGFX_CAPSET proxySupportedCapsSets[RDPGFX_NUMBER_CAPSETS] = { 0 };
+
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
+
+		/* Add cap to supported caps list if supported by FreeRDP */
+		if(currentCaps->version <= RDPGFX_CAPVERSION_103)
+		{
+			proxySupportedCapsSet = &proxySupportedCapsSets[proxySupportedCapsSetCount++];
+			proxySupportedCapsSet->version = currentCaps->version;
+			proxySupportedCapsSet->length = currentCaps->length;
+			proxySupportedCapsSet->flags = currentCaps->flags;
+		}
+	}
+
+	supportedCapsAdvertise.capsSetCount = proxySupportedCapsSetCount;
+	supportedCapsAdvertise.capsSets = proxySupportedCapsSets;
+
+	WLog_DBG(TAG, "pf_rdpgfx_caps_advertise, sending caps advertise to target");
+	return client->CapsAdvertise(client, &supportedCapsAdvertise);
+}
 
 void proxy_graphics_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* server)
 {
