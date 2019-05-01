@@ -317,7 +317,7 @@ static UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_frame_acknowledge_pdu(RdpgfxClientContext* context,
-        const RDPGFX_FRAME_ACKNOWLEDGE_PDU* pdu)
+        RDPGFX_FRAME_ACKNOWLEDGE_PDU* pdu)
 {
 	UINT error;
 	wStream* s;
@@ -1607,10 +1607,11 @@ static UINT rdpgfx_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
 	BOOL do_caps_advertise = TRUE;
+	gfx->sendFrameAcks = TRUE;
 
 	if (context)
 	{
-		IFCALLRET(context->OnOpen, error, context, &do_caps_advertise);
+		IFCALLRET(context->OnOpen, error, context, &do_caps_advertise, &gfx->sendFrameAcks);
 
 		if (error)
 			WLog_Print(gfx->log, WLOG_ERROR, "context->OnOpen failed with error %"PRIu32"", error);
@@ -2017,6 +2018,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->SetCacheSlotData = rdpgfx_set_cache_slot_data;
 		context->GetCacheSlotData = rdpgfx_get_cache_slot_data;
 		context->CapsAdvertise = rdpgfx_send_caps_advertise_pdu;
+		context->FrameAcknowledge = rdpgfx_send_frame_acknowledge_pdu;
 		gfx->iface.pInterface = (void*) context;
 		gfx->zgfx = zgfx_context_new(FALSE);
 
