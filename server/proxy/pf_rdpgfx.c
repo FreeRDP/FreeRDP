@@ -249,7 +249,7 @@ static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 		 * TODO: Have a better way of expressing max supported GFX caps version
 		 * by FreeRDP.
 		 */
-		if (currentCaps->version <= RDPGFX_CAPVERSION_103)
+		if (currentCaps->version <= RDPGFX_CAPVERSION_106)
 		{
 			proxySupportedCapsSet = &proxySupportedCapsSets[proxySupportedCapsSetCount++];
 			proxySupportedCapsSet->version = currentCaps->version;
