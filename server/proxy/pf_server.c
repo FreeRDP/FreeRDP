@@ -157,16 +157,16 @@ BOOL pf_server_post_connect(freerdp_peer* client)
 		WLog_DBG(TAG, "Using hardcoded target host: %s:%i", host, port);
 	}
 
-	/* Start a proxy's client in it's own thread */
 	pc = (pClientContext*) p_client_context_create(client->settings, host, port);
-	pc->pdata = ps->pdata;
-	/* Inject proxy's client context to proxy's context */
 	connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	/* keep both sides of the connection in pdata */
+	pc->pdata = ps->pdata;
 	pdata->pc = (pClientContext*) pc;
 	pdata->ps = ps;
 	pdata->connectionClosed = connectionClosedEvent;
 	pf_server_rdpgfx_init(ps);
 
+	/* Start a proxy's client in it's own thread */
 	if (!(ps->thread = CreateThread(NULL, 0, pf_client_start, (rdpContext*) pc, 0,
 	                                NULL)))
 	{
@@ -210,12 +210,11 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	ps->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL);
 	pdata = calloc(1, sizeof(proxyData));
 	ps->pdata = pdata;
-	/* inject configuration to proxyData */
+	/* keep configuration in proxyData */
 	pdata->config = client->ContextExtra;
 	config = pdata->config;
 	client->settings->SupportGraphicsPipeline = config->GFX;
 	client->settings->SupportDynamicChannels = TRUE;
-	/* TODO: Read path from config and default to /etc */
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->RdpKeyFile = _strdup("server.key");
