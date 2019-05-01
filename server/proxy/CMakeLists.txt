@@ -45,7 +45,7 @@ set(${MODULE_PREFIX}_SRCS
   pf_graphics.h
   pf_log.h)
 
-	# On windows create dll version information.
+# On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
 if (WIN32)
   set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
