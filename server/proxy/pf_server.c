@@ -47,22 +47,9 @@
 #include "pf_context.h"
 #include "pf_input.h"
 #include "pf_update.h"
+#include "pf_rdpgfx.h"
 
 #define TAG PROXY_TAG("server")
-
-BOOL pf_server_rdpgfx_init(pServerContext* ps)
-{
-	RdpgfxServerContext* gfx;
-	gfx = ps->gfx = rdpgfx_server_context_new(ps->vcm);
-
-	if (!gfx)
-	{
-		return FALSE;
-	}
-
-	gfx->rdpcontext = (rdpContext*)ps;
-	return TRUE;
-}
 
 void pf_server_handle_client_disconnection(freerdp_peer* client)
 {
