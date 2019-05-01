@@ -197,6 +197,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	DWORD status;
 	pServerContext* ps;
 	proxyData* pdata;
+	proxyConfig* config;
 	freerdp_peer* client = (freerdp_peer*) arg;
 
 	if (!init_p_server_context(client))
@@ -211,7 +212,8 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	ps->pdata = pdata;
 	/* inject configuration to proxyData */
 	pdata->config = client->ContextExtra;
-	client->settings->SupportGraphicsPipeline = TRUE;
+	config = pdata->config;
+	client->settings->SupportGraphicsPipeline = config->GFX;
 	client->settings->SupportDynamicChannels = TRUE;
 	/* TODO: Read path from config and default to /etc */
 	client->settings->CertificateFile = _strdup("server.crt");
@@ -226,10 +228,9 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		return 0;
 	}
 
-	/* TODO: Read security settings from config */
-	client->settings->RdpSecurity = TRUE;
-	client->settings->TlsSecurity = TRUE;
-	client->settings->NlaSecurity = FALSE;
+	client->settings->RdpSecurity = config->RdpSecurity;
+	client->settings->TlsSecurity = config->TlsSecurity;
+	client->settings->NlaSecurity = config->NlaSecurity;
 	client->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;

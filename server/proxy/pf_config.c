@@ -123,9 +123,9 @@ DWORD pf_server_load_config(char* path, proxyConfig* config)
 	config->Keyboard = IniFile_GetKeyValueInt(ini, "Input", "Keyboard");
 	config->Mouse = IniFile_GetKeyValueInt(ini, "Input", "Mouse");
 	/* security */
-	config->TlsSupport = IniFile_GetKeyValueInt(ini, "Security", "TlsSupport");
-	config->NlaSupport = IniFile_GetKeyValueInt(ini, "Security", "NlaSupport");
-	config->RdpSupport = IniFile_GetKeyValueInt(ini, "Security", "RdpSupport");
+	config->TlsSecurity = IniFile_GetKeyValueInt(ini, "Security", "TlsSecurity");
+	config->NlaSecurity = IniFile_GetKeyValueInt(ini, "Security", "NlaSecurity");
+	config->RdpSecurity = IniFile_GetKeyValueInt(ini, "Security", "RdpSecurity");
 	/* channels filtering */
 	config->WhitelistMode = IniFile_GetKeyValueInt(ini, "Channels", "WhitelistMode");
 	input = IniFile_GetKeyValueString(ini, "Channels", "AllowedChannels");

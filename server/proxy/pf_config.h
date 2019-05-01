@@ -48,9 +48,9 @@ struct proxy_config
 	BOOL Mouse;
 
 	/* security */
-	BOOL NlaSupport;
-	BOOL TlsSupport;
-	BOOL RdpSupport;
+	BOOL NlaSecurity;
+	BOOL TlsSecurity;
+	BOOL RdpSecurity;
 
 	/* channels */
 	BOOL WhitelistMode;
