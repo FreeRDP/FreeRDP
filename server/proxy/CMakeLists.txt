@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
-# FreeRDP Server Common
+# FreeRDP Proxy Server
 #
 # Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
 # Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
