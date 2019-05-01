@@ -1145,7 +1145,7 @@ static JNINativeMethod methods[] =
 	},
 	{
 		"freerdp_send_unicodekey_event",
-		"(JI)Z",
+		"(JIZ)Z",
 		&jni_freerdp_send_unicodekey_event
 	},
 	{
