@@ -73,9 +73,11 @@ static void pf_encomsp_uninit(pClientContext* pc, EncomspClientContext* encomsp)
 void pf_OnChannelConnectedEventHandler(void* context,
                                        ChannelConnectedEventArgs* e)
 {
-	WLog_DBG(TAG, "Channel connected: %s", e->name);
 	pClientContext* pc = (pClientContext*) context;
 	pServerContext* ps = pc->pdata->ps;
+	RdpgfxClientContext* gfx;
+	RdpgfxServerContext* server;
+	WLog_DBG(TAG, "Channel connected: %s", e->name);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -86,9 +88,10 @@ void pf_OnChannelConnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		RdpgfxClientContext* gfx = (RdpgfxClientContext*) e->pInterface;
-		RdpgfxServerContext* server = ps->gfx;
-		proxy_graphics_pipeline_init(gfx, server);
+		gfx = (RdpgfxClientContext*) e->pInterface;
+		pc->gfx = gfx;
+		server = ps->gfx;
+		proxy_graphics_pipeline_init(gfx, server, pc->pdata);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{

@@ -207,6 +207,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	}
 
 	ps = (pServerContext*) client->context;
+	ps->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL);
 	pdata = calloc(1, sizeof(proxyData));
 	ps->pdata = pdata;
 	/* inject configuration to proxyData */
@@ -301,6 +302,11 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 				break;
 
 			case DRDYNVC_STATE_READY:
+				if (WaitForSingleObject(ps->dynvcReady, 0) == WAIT_TIMEOUT)
+				{
+					SetEvent(ps->dynvcReady);
+				}
+
 				break;
 
 			default:

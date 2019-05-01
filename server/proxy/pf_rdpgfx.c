@@ -21,7 +21,10 @@
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/server/rdpgfx.h>
 
+#include <winpr/synch.h>
+
 #include "pf_rdpgfx.h"
+#include "pf_context.h"
 #include "pf_log.h"
 
 #define TAG PROXY_TAG("client")
@@ -30,7 +33,8 @@ static UINT proxy_ResetGraphics(RdpgfxClientContext* context,
                                 const RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
 	WLog_DBG(TAG, "ResetGraphics");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->ResetGraphics(server, resetGraphics);
 }
 
@@ -38,7 +42,8 @@ static UINT proxy_StartFrame(RdpgfxClientContext* context,
                              const RDPGFX_START_FRAME_PDU* startFrame)
 {
 	WLog_DBG(TAG, "StartFrame");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->StartFrame(server, startFrame);
 }
 
@@ -46,7 +51,8 @@ static UINT proxy_EndFrame(RdpgfxClientContext* context,
                            const RDPGFX_END_FRAME_PDU* endFrame)
 {
 	WLog_DBG(TAG, "EndFrame");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->EndFrame(server, endFrame);
 }
 
@@ -54,7 +60,8 @@ static UINT proxy_SurfaceCommand(RdpgfxClientContext* context,
                                  const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	WLog_DBG(TAG, "SurfaceCommand");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->SurfaceCommand(server, cmd);
 }
 
@@ -62,7 +69,8 @@ static UINT proxy_DeleteEncodingContext(RdpgfxClientContext* context,
                                         const RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext)
 {
 	WLog_DBG(TAG, "DeleteEncodingContext");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->DeleteEncodingContext(server, deleteEncodingContext);
 }
 
@@ -70,7 +78,8 @@ static UINT proxy_CreateSurface(RdpgfxClientContext* context,
                                 const RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
 	WLog_DBG(TAG, "CreateSurface");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->CreateSurface(server, createSurface);
 }
 
@@ -78,7 +87,8 @@ static UINT proxy_DeleteSurface(RdpgfxClientContext* context,
                                 const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
 	WLog_DBG(TAG, "DeleteSurface");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->DeleteSurface(server, deleteSurface);
 }
 
@@ -86,7 +96,8 @@ static UINT proxy_SolidFill(RdpgfxClientContext* context,
                             const RDPGFX_SOLID_FILL_PDU* solidFill)
 {
 	WLog_DBG(TAG, "SolidFill");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->SolidFill(server, solidFill);
 }
 
@@ -94,7 +105,8 @@ static UINT proxy_SurfaceToSurface(RdpgfxClientContext* context,
                                    const RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface)
 {
 	WLog_DBG(TAG, "SurfaceToSurface");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->SurfaceToSurface(server, surfaceToSurface);
 }
 
@@ -102,7 +114,8 @@ static UINT proxy_SurfaceToCache(RdpgfxClientContext* context,
                                  const RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
 {
 	WLog_DBG(TAG, "SurfaceToCache");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->SurfaceToCache(server, surfaceToCache);
 }
 
@@ -110,7 +123,8 @@ static UINT proxy_CacheToSurface(RdpgfxClientContext* context,
                                  const RDPGFX_CACHE_TO_SURFACE_PDU* cacheToSurface)
 {
 	WLog_DBG(TAG, "CacheToSurface");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->CacheToSurface(server, cacheToSurface);
 }
 
@@ -118,7 +132,8 @@ static UINT proxy_CacheImportReply(RdpgfxClientContext* context,
                                    const RDPGFX_CACHE_IMPORT_REPLY_PDU* cacheImportReply)
 {
 	WLog_DBG(TAG, "CacheImportReply");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->CacheImportReply(server, cacheImportReply);
 }
 
@@ -126,7 +141,8 @@ static UINT proxy_EvictCacheEntry(RdpgfxClientContext* context,
                                   const RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry)
 {
 	WLog_DBG(TAG, "EvictCacheEntry");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->EvictCacheEntry(server, evictCacheEntry);
 }
 
@@ -134,7 +150,8 @@ static UINT proxy_MapSurfaceToOutput(RdpgfxClientContext* context,
                                      const RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput)
 {
 	WLog_DBG(TAG, "MapSurfaceToOutput");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->MapSurfaceToOutput(server, surfaceToOutput);
 }
 
@@ -142,22 +159,26 @@ static UINT proxy_MapSurfaceToWindow(RdpgfxClientContext* context,
                                      const RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow)
 {
 	WLog_DBG(TAG, "MapSurfaceToWindow");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->MapSurfaceToWindow(server, surfaceToWindow);
 }
 
 static UINT proxy_OnOpen(RdpgfxClientContext* context, BOOL* do_caps_advertise)
 {
 	WLog_DBG(TAG, "OnOpen");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 
 	if (NULL != do_caps_advertise)
 		*do_caps_advertise = FALSE;
 
-	WLog_DBG(TAG, "calling server's Open()");
-	// TODO: check if proxy server's dynvc is in ready state
+	/* Wait for the proxy's server's DYNVC to be in a ready state to safely open
+	 * the GFX DYNVC. */
+	WLog_DBG(TAG, "Waiting for proxy's server dynvc to be ready");
+	WaitForSingleObject(pdata->ps->dynvcReady, INFINITE);
 
-	// we do this error check since the server's API doesn't return WTSAPI error codes
+	/* Check for error since the server's API doesn't return WTSAPI error codes */
 	if (server->Open(server))
 	{
 		return CHANNEL_RC_OK;
@@ -169,8 +190,8 @@ static UINT proxy_OnOpen(RdpgfxClientContext* context, BOOL* do_caps_advertise)
 static UINT proxy_OnClose(RdpgfxClientContext* context)
 {
 	WLog_DBG(TAG, "OnClose");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
-	WLog_DBG(TAG, "calling server's Close()");
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->Close(server);
 }
 
@@ -178,8 +199,8 @@ static UINT proxy_CapsConfirm(RdpgfxClientContext* context,
                               RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
 {
 	WLog_DBG(TAG, "CapsConfirm");
-	RdpgfxServerContext* server = (RdpgfxServerContext*) context->custom;
-	WLog_DBG(TAG, "calling server's CapsConfirm()");
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	return server->CapsConfirm(server, capsConfirm);
 }
 
@@ -187,8 +208,8 @@ static UINT proxy_CapsConfirm(RdpgfxClientContext* context,
 static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
                                      RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
 {
-	RdpgfxClientContext* client = (RdpgfxClientContext*) context->custom;
-
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxClientContext* client = (RdpgfxClientContext*) pdata->pc->gfx;
 	int index;
 	UINT16 proxySupportedCapsSetCount = 0;
 	RDPGFX_CAPS_ADVERTISE_PDU supportedCapsAdvertise;
@@ -199,8 +220,11 @@ static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	{
 		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
 
-		/* Add cap to supported caps list if supported by FreeRDP */
-		if(currentCaps->version <= RDPGFX_CAPVERSION_103)
+		/* Add cap to supported caps list if supported by FreeRDP.
+		 * TODO: Have a better way of expressing max supported GFX caps version
+		 * by FreeRDP.
+		 */
+		if (currentCaps->version <= RDPGFX_CAPVERSION_103)
 		{
 			proxySupportedCapsSet = &proxySupportedCapsSets[proxySupportedCapsSetCount++];
 			proxySupportedCapsSet->version = currentCaps->version;
@@ -211,15 +235,16 @@ static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 	supportedCapsAdvertise.capsSetCount = proxySupportedCapsSetCount;
 	supportedCapsAdvertise.capsSets = proxySupportedCapsSets;
-
 	WLog_DBG(TAG, "pf_rdpgfx_caps_advertise, sending caps advertise to target");
 	return client->CapsAdvertise(client, &supportedCapsAdvertise);
 }
 
-void proxy_graphics_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* server)
+void proxy_graphics_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* server,
+                                  proxyData* pdata)
 {
-	gfx->custom = (void*) server;
-	/* set client callbacks */
+	gfx->custom = (void*) pdata;
+	server->custom = (void*) pdata;
+	/* Set client callbacks */
 	gfx->ResetGraphics = proxy_ResetGraphics;
 	gfx->StartFrame = proxy_StartFrame;
 	gfx->EndFrame = proxy_EndFrame;
@@ -238,7 +263,6 @@ void proxy_graphics_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext*
 	gfx->OnOpen = proxy_OnOpen;
 	gfx->OnClose = proxy_OnClose;
 	gfx->CapsConfirm = proxy_CapsConfirm;
-	server->custom = gfx;
-	/* set server callbacks */
+	/* Set server callbacks */
 	server->CapsAdvertise = pf_rdpgfx_caps_advertise;
 }

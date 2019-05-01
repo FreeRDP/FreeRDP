@@ -30,14 +30,12 @@
 #include "pf_config.h"
 #include "pf_server.h"
 
-/**
- * Proxy context wraps a peer's context, and holds a reference to the other end
- * of the connection. This lets one side of the proxy to forward events to the
- * other.
- */
 
 typedef struct proxy_data proxyData;
 
+/**
+ * Wraps rdpContext and holds the state for the proxy's server.
+ */
 struct p_server_context
 {
 	rdpContext _context;
@@ -46,11 +44,15 @@ struct p_server_context
 
 	HANDLE vcm;
 	HANDLE thread;
+	HANDLE dynvcReady;
 
 	RdpgfxServerContext* gfx;
 };
 typedef struct p_server_context pServerContext;
 
+/**
+ * Wraps rdpContext and holds the state for the proxy's client.
+ */
 struct p_client_context
 {
 	rdpContext _context;
@@ -63,6 +65,9 @@ struct p_client_context
 };
 typedef struct p_client_context pClientContext;
 
+/**
+ * Holds data common to both sides of a proxy's session.
+ */
 struct proxy_data
 {
 	proxyConfig* config;

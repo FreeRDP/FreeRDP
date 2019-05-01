@@ -24,6 +24,9 @@
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/server/rdpgfx.h>
 
-void proxy_graphics_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* server);
+#include "pf_context.h"
+
+void proxy_graphics_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* server,
+                                  proxyData* pdata);
 
 #endif /*FREERDP_SERVER_PROXY_PFRDPGFX_H*/
