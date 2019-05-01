@@ -34,7 +34,6 @@ static UINT pf_rdpgfx_reset_graphics(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-
 	WLog_DBG(TAG, __FUNCTION__);
 	return server->ResetGraphics(server, resetGraphics);
 }
@@ -295,8 +294,8 @@ void pf_rdpgfx_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* serv
 	gfx->EvictCacheEntry = pf_rdpgfx_evict_cache_entry;
 	gfx->MapSurfaceToOutput = pf_rdpgfx_map_surface_to_output;
 	gfx->MapSurfaceToWindow = pf_rdpgfx_map_surface_to_window;
-    gfx->MapSurfaceToScaledOutput = pf_rdpgfx_map_surface_to_scaled_output;
-    gfx->MapSurfaceToScaledWindow = pf_rdpgfx_map_surface_to_scaled_window;
+	gfx->MapSurfaceToScaledOutput = pf_rdpgfx_map_surface_to_scaled_output;
+	gfx->MapSurfaceToScaledWindow = pf_rdpgfx_map_surface_to_scaled_window;
 	gfx->OnOpen = pf_rdpgfx_on_open;
 	gfx->OnClose = pf_rdpgfx_on_close;
 	gfx->CapsConfirm = pf_rdpgfx_caps_confirm;
