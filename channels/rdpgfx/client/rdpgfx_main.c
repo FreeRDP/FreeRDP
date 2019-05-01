@@ -1303,7 +1303,7 @@ static UINT rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callb
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 26)
+	if (Stream_GetRemainingLength(s) < 18)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "not enough data!");
 		return ERROR_INVALID_DATA;
