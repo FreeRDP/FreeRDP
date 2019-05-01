@@ -58,6 +58,9 @@
 void proxy_server_reactivate(rdpContext* client, rdpContext* target)
 {
 	pf_common_copy_settings(client->settings, target->settings);
+	/* DesktopResize causes internal function rdp_server_reactivate to be called,
+	 * which causes the reactivation.
+	 */
 	client->update->DesktopResize(client);
 }
 
