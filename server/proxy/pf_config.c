@@ -25,6 +25,8 @@
 #include "pf_server.h"
 #include "pf_config.h"
 
+#define TAG PROXY_TAG("config")
+
 #define CHANNELS_SEPERATOR ","
 
 char** parse_channels_from_str(const char* str, UINT32* length)

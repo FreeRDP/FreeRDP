@@ -22,6 +22,8 @@
 #include "pf_config.h"
 #include "pf_log.h"
 
+#define TAG PROXY_TAG("server")
+
 int main(int argc, char* argv[])
 {
 	int status = 0;

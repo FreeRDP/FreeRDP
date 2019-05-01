@@ -26,7 +26,7 @@
 
 #include "pf_context.h"
 
-void proxy_graphics_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* server,
-                                  proxyData* pdata);
+void pf_rdpgfx_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* server,
+                             proxyData* pdata);
 
 #endif /*FREERDP_SERVER_PROXY_PFRDPGFX_H*/

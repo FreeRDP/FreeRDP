@@ -50,7 +50,6 @@
 
 #define TAG PROXY_TAG("server")
 
-
 BOOL pf_server_rdpgfx_init(pServerContext* ps)
 {
 	RdpgfxServerContext* gfx;

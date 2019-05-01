@@ -37,7 +37,7 @@
 #include "pf_rdpgfx.h"
 #include "pf_log.h"
 
-#define TAG PROXY_TAG("client")
+#define TAG PROXY_TAG("channels")
 
 /**
  * Function description
@@ -91,7 +91,7 @@ void pf_OnChannelConnectedEventHandler(void* context,
 		gfx = (RdpgfxClientContext*) e->pInterface;
 		pc->gfx = gfx;
 		server = ps->gfx;
-		proxy_graphics_pipeline_init(gfx, server, pc->pdata);
+		pf_rdpgfx_pipeline_init(gfx, server, pc->pdata);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
