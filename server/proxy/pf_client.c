@@ -305,11 +305,6 @@ static BOOL pf_client_global_init(void)
 	return TRUE;
 }
 
-/* Optional global tear down */
-static void pf_client_global_uninit(void)
-{
-}
-
 static int pf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
 	pClientContext* pc;
@@ -394,32 +389,15 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 	return TRUE;
 }
 
-
-static void pf_client_client_free(freerdp* instance, rdpContext* context) {}
-
-static int pf_client_client_start(rdpContext* context)
-{
-	return 0;
-}
-
-static int pf_client_client_stop(rdpContext* context)
-{
-	return 0;
-}
-
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
 	pEntryPoints->Version = RDP_CLIENT_INTERFACE_VERSION;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 	pEntryPoints->GlobalInit = pf_client_global_init;
-	pEntryPoints->GlobalUninit = pf_client_global_uninit;
 	pEntryPoints->ContextSize = sizeof(pClientContext);
 	/* Client init and finish */
 	pEntryPoints->ClientNew = pf_client_client_new;
-	pEntryPoints->ClientFree = pf_client_client_free;
-	pEntryPoints->ClientStart = pf_client_client_start;
-	pEntryPoints->ClientStop = pf_client_client_stop;
 	return 0;
 }
 
