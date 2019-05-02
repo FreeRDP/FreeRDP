@@ -80,9 +80,7 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 	char* colon;
 	int len;
 	int prefix_len;
-
 	DWORD routing_token_length;
-
 	routing_token = freerdp_nego_get_routing_token(client->context, &routing_token_length);
 	prefix_len = strlen(ROUTING_TOKEN_PREFIX);
 
@@ -94,7 +92,6 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 		CopyMemory(*target, routing_token + prefix_len, len);
 		*(*target + len) = '\0';
 		colon = strchr(*target, ':');
-
 		WLog_INFO(TAG, "Target [parsed from routing token]: %s", *target);
 
 		if (colon)
