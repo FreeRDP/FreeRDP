@@ -30,7 +30,6 @@
 #include <freerdp/client/rail.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/rdpgfx.h>
-#include <freerdp/client/encomsp.h>
 
 #include "pf_channels.h"
 #include "pf_client.h"
@@ -39,37 +38,6 @@
 #include "pf_log.h"
 
 #define TAG PROXY_TAG("channels")
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT pf_encomsp_participant_created(EncomspClientContext* context,
-        ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
-{
-	return CHANNEL_RC_OK;
-}
-
-static void pf_encomsp_init(pClientContext* pc, EncomspClientContext* encomsp)
-{
-	pc->encomsp = encomsp;
-	encomsp->custom = (void*) pc;
-	encomsp->ParticipantCreated = pf_encomsp_participant_created;
-}
-
-static void pf_encomsp_uninit(pClientContext* pc, EncomspClientContext* encomsp)
-{
-	if (encomsp)
-	{
-		encomsp->custom = NULL;
-		encomsp->ParticipantCreated = NULL;
-	}
-
-	if (pc)
-		pc->encomsp = NULL;
-}
-
 
 void pf_OnChannelConnectedEventHandler(void* context,
                                        ChannelConnectedEventArgs* e)
@@ -91,10 +59,6 @@ void pf_OnChannelConnectedEventHandler(void* context,
 		server = ps->gfx;
 		pf_rdpgfx_pipeline_init(gfx, server, pc->pdata);
 	}
-	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
-	{
-		pf_encomsp_init(pc, (EncomspClientContext*) e->pInterface);
-	}
 }
 
 void pf_OnChannelDisconnectedEventHandler(void* context,
@@ -112,9 +76,5 @@ void pf_OnChannelDisconnectedEventHandler(void* context,
 	{
 		gdi_graphics_pipeline_uninit(((rdpContext*)pc)->gdi,
 		                             (RdpgfxClientContext*) e->pInterface);
-	}
-	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
-	{
-		pf_encomsp_uninit(pc, (EncomspClientContext*) e->pInterface);
 	}
 }

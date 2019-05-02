@@ -24,7 +24,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/wtsvc.h>
-#include <freerdp/client/encomsp.h>
 #include <freerdp/client/rdpei.h>
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/server/rdpgfx.h>
@@ -62,7 +61,6 @@ struct p_client_context
 
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
-	EncomspClientContext* encomsp;
 };
 typedef struct p_client_context pClientContext;
 
