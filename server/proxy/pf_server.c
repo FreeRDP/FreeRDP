@@ -23,7 +23,7 @@
 #include <signal.h>
 
 #include <freerdp/freerdp.h>
-#include <libfreerdp/core/listener.h>
+#include <freerdp/listener.h>
 
 #include <winpr/crt.h>
 #include <winpr/ssl.h>
@@ -76,21 +76,27 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 {
 #define TARGET_MAX	(100)
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="
-	rdpNego* nego;
 	char* colon;
 	int len;
 	int prefix_len;
-	nego = client->context->rdp->nego;
+
+	char *RoutingToken;
+	size_t RoutingTokenLength;
+
+	freerdp_nego_get_routing_token(client->context, &RoutingToken, &RoutingTokenLength);
+
 	prefix_len = strlen(ROUTING_TOKEN_PREFIX);
 
-	if (nego->RoutingToken &&
-	    nego->RoutingTokenLength > prefix_len && nego->RoutingTokenLength < TARGET_MAX)
+	if (RoutingToken &&
+	    RoutingTokenLength > prefix_len && RoutingTokenLength < TARGET_MAX)
 	{
-		len = nego->RoutingTokenLength - prefix_len;
+		len = RoutingTokenLength - prefix_len;
 		*target = malloc(len + 1);
-		CopyMemory(*target, nego->RoutingToken + prefix_len, len);
+		CopyMemory(*target, RoutingToken + prefix_len, len);
 		*(*target + len) = '\0';
 		colon = strchr(*target, ':');
+
+		WLog_INFO(TAG, "target: %s", *target);
 
 		if (colon)
 		{

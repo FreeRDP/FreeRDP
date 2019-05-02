@@ -34,6 +34,8 @@
 
 #include "transport.h"
 
+#include "rdp.h"
+
 #define TAG FREERDP_TAG("core.nego")
 
 
@@ -1411,4 +1413,14 @@ void nego_free_nla(rdpNego* nego)
 
 	nla_free(nego->transport->nla);
 	nego->transport->nla = NULL;
+}
+
+BOOL freerdp_nego_get_routing_token(rdpContext *context, char **RoutingToken, size_t *RoutingTokenLength)
+{
+	rdpNego *nego = context->rdp->nego;
+
+	// TODO: maybe we want to skip the ROUTING_TOKEN_PREFIX here
+	// TODO: do not pass the pointer, but read only pointer or copy
+	*RoutingToken = nego->RoutingToken;
+	*RoutingTokenLength = nego->RoutingTokenLength;
 }

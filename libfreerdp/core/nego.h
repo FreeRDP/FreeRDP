@@ -26,6 +26,7 @@
 #include <freerdp/settings.h>
 #include <freerdp/log.h>
 #include <freerdp/api.h>
+#include <freerdp/nego.h>
 
 #include <winpr/stream.h>
 
@@ -120,7 +121,7 @@ struct rdp_nego
 
 	rdpTransport* transport;
 };
-typedef struct rdp_nego rdpNego;
+
 
 FREERDP_LOCAL BOOL nego_connect(rdpNego* nego);
 FREERDP_LOCAL BOOL nego_disconnect(rdpNego* nego);

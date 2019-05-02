@@ -1,9 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Proxy Server
+ * RDP Protocol Security Negotiation
  *
- * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
- * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
+ * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2019 Idan Freiberg <speidy@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,11 +18,19 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SERVER_PROXY_SERVER_H
-#define FREERDP_SERVER_PROXY_SERVER_H
+#ifndef FREERDP_NEGO_H
+#define FREERDP_NEGO_H
 
-#include "pf_config.h"
+typedef struct rdp_nego rdpNego;
 
-int pf_server_start(proxyConfig* config);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif /* FREERDP_SERVER_PROXY_SERVER_H */
+FREERDP_API BOOL freerdp_nego_get_routing_token(rdpContext *context, char **RoutingToken, size_t *RoutingTokenLength);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_NEGO_H */
