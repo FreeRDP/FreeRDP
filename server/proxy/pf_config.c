@@ -100,8 +100,7 @@ DWORD pf_server_load_config(char* path, proxyConfig* config)
 {
 	const char* input;
 	BOOL result = CONFIG_PARSE_SUCCESS;
-	wIniFile* ini;
-	ini = IniFile_New();
+	wIniFile* ini = IniFile_New();
 
 	if (IniFile_ReadFile(ini, path) < 0)
 	{
@@ -168,10 +167,12 @@ out:
 
 void pf_server_config_free(proxyConfig* config)
 {
-	for (int i = 0; i < config->AllowedChannelsCount; i++)
+	int i;
+
+	for (i = 0; i < config->AllowedChannelsCount; i++)
 		free(config->AllowedChannels[i]);
 
-	for (int i = 0; i < config->BlockedChannelsCount; i++)
+	for (i = 0; i < config->BlockedChannelsCount; i++)
 		free(config->BlockedChannels[i]);
 
 	free(config->AllowedChannels);

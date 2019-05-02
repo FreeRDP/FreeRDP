@@ -158,13 +158,19 @@ BOOL pf_client_desktop_resize(rdpContext* context)
  */
 static BOOL pf_client_post_connect(freerdp* instance)
 {
+	rdpContext* context;
+	rdpSettings* settings;
+	rdpUpdate* update;
+	pClientContext* pc;
+	rdpContext* ps;
+
 	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
 		return FALSE;
 
-	rdpContext* context = instance->context;
-	rdpSettings* settings = instance->settings;
-	rdpUpdate* update = instance->update;
-	pClientContext* pc = (pClientContext*) context;
+	context = instance->context;
+	settings = instance->settings;
+	update = instance->update;
+	pc = (pClientContext*) context;
 
 	if (!pf_register_pointer(context->graphics))
 		return FALSE;
@@ -189,7 +195,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	update->EndPaint = pf_client_end_paint;
 	update->BitmapUpdate = pf_client_bitmap_update;
 	update->DesktopResize = pf_client_desktop_resize;
-	rdpContext* ps = (rdpContext*) pc->pdata->ps;
+	ps = (rdpContext*) pc->pdata->ps;
 	proxy_server_reactivate(ps, context);
 	return TRUE;
 }
@@ -201,6 +207,9 @@ static BOOL pf_client_post_connect(freerdp* instance)
 static void pf_client_post_disconnect(freerdp* instance)
 {
 	pClientContext* context;
+	proxyData* pdata;
+	rdpContext* ps;
+	freerdp_peer* peer;
 
 	if (!instance)
 		return;
@@ -209,26 +218,25 @@ static void pf_client_post_disconnect(freerdp* instance)
 		return;
 
 	context = (pClientContext*) instance->context;
-	proxyData* pdata = context->pdata;
+	pdata = context->pdata;
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
 	                                   pf_OnChannelConnectedEventHandler);
 	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
 	                                      pf_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
-	rdpContext* ps = (rdpContext*) pdata->ps;
+	ps = (rdpContext*) pdata->ps;
 
 	if (!pf_common_connection_aborted_by_peer(pdata))
 	{
 		SetEvent(pdata->connectionClosed);
 		WLog_INFO(TAG, "connectionClosed event is not set; closing connection with client");
-		freerdp_peer* peer = ps->peer;
+		peer = ps->peer;
 		peer->Disconnect(peer);
 	}
 
-	/*
-	* It's important to avoid calling `freerdp_peer_context_free` and `freerdp_peer_free` here,
-	* in order to avoid double-free. Those objects will be freed by the server when needed.
-	*/
+	/* It's important to avoid calling `freerdp_peer_context_free` and `freerdp_peer_free` here,
+	 * in order to avoid double-free. Those objects will be freed by the server when needed.
+	 */
 }
 
 /**
@@ -284,9 +292,11 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	return 0;
 }
 
-/* Optional global initializer.
+/**
+ * Optional global initializer.
  * Here we just register a signal handler to print out stack traces
- * if available. */
+ * if available.
+ * */
 static BOOL pf_client_global_init(void)
 {
 	if (freerdp_handle_signals() != 0)
@@ -314,20 +324,21 @@ static int pf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	return 1;
 }
 
-/** Callback set in the rdp_freerdp structure, and used to make a certificate validation
- *  when the connection requires it.
- *  This function will actually be called by tls_verify_certificate().
- *  @see rdp_client_connect() and tls_connect()
- *  @param instance     pointer to the rdp_freerdp structure that contains the connection settings
- *  @param host         The host currently connecting to
- *  @param port         The port currently connecting to
- *  @param common_name  The common name of the certificate, should match host or an alias of it
- *  @param subject      The subject of the certificate
- *  @param issuer       The certificate issuer name
- *  @param fingerprint  The fingerprint of the certificate
- *  @param flags        See VERIFY_CERT_FLAG_* for possible values.
+/**
+ * Callback set in the rdp_freerdp structure, and used to make a certificate validation
+ * when the connection requires it.
+ * This function will actually be called by tls_verify_certificate().
+ * @see rdp_client_connect() and tls_connect()
+ * @param instance     pointer to the rdp_freerdp structure that contains the connection settings
+ * @param host         The host currently connecting to
+ * @param port         The port currently connecting to
+ * @param common_name  The common name of the certificate, should match host or an alias of it
+ * @param subject      The subject of the certificate
+ * @param issuer       The certificate issuer name
+ * @param fingerprint  The fingerprint of the certificate
+ * @param flags        See VERIFY_CERT_FLAG_* for possible values.
  *
- *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
+ * @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
  */
 DWORD pf_client_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
                                       const char* common_name,
@@ -338,23 +349,24 @@ DWORD pf_client_verify_certificate_ex(freerdp* instance, const char* host, UINT1
 	return 1;
 }
 
-/** Callback set in the rdp_freerdp structure, and used to make a certificate validation
- *  when a stored certificate does not match the remote counterpart.
- *  This function will actually be called by tls_verify_certificate().
- *  @see rdp_client_connect() and tls_connect()
- *  @param instance        pointer to the rdp_freerdp structure that contains the connection settings
- *  @param host            The host currently connecting to
- *  @param port            The port currently connecting to
- *  @param common_name     The common name of the certificate, should match host or an alias of it
- *  @param subject         The subject of the certificate
- *  @param issuer          The certificate issuer name
- *  @param fingerprint     The fingerprint of the certificate
- *  @param old_subject     The subject of the previous certificate
- *  @param old_issuer      The previous certificate issuer name
- *  @param old_fingerprint The fingerprint of the previous certificate
- *  @param flags           See VERIFY_CERT_FLAG_* for possible values.
+/**
+ * Callback set in the rdp_freerdp structure, and used to make a certificate validation
+ * when a stored certificate does not match the remote counterpart.
+ * This function will actually be called by tls_verify_certificate().
+ * @see rdp_client_connect() and tls_connect()
+ * @param instance        pointer to the rdp_freerdp structure that contains the connection settings
+ * @param host            The host currently connecting to
+ * @param port            The port currently connecting to
+ * @param common_name     The common name of the certificate, should match host or an alias of it
+ * @param subject         The subject of the certificate
+ * @param issuer          The certificate issuer name
+ * @param fingerprint     The fingerprint of the certificate
+ * @param old_subject     The subject of the previous certificate
+ * @param old_issuer      The previous certificate issuer name
+ * @param old_fingerprint The fingerprint of the previous certificate
+ * @param flags           See VERIFY_CERT_FLAG_* for possible values.
  *
- *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
+ * @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
  */
 DWORD pf_client_verify_changed_certificate_ex(freerdp* instance,
         const char* host, UINT16 port,

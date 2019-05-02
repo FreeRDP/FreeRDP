@@ -28,6 +28,7 @@
 int main(int argc, char* argv[])
 {
 	int status = 0;
+	int i;
 	proxyConfig* config = calloc(1, sizeof(proxyConfig));
 	status = pf_server_load_config("config.ini", config);
 
@@ -49,14 +50,14 @@ int main(int argc, char* argv[])
 	{
 		WLog_INFO(TAG, "Channels mode: WHITELIST");
 
-		for (int i = 0; i < config->AllowedChannelsCount; i++)
+		for (i = 0; i < config->AllowedChannelsCount; i++)
 			WLog_INFO(TAG, "Allowing %s", config->AllowedChannels[i]);
 	}
 	else
 	{
 		WLog_INFO(TAG, "Channels mode: BLACKLIST");
 
-		for (int i = 0; i < config->BlockedChannelsCount; i++)
+		for (i = 0; i < config->BlockedChannelsCount; i++)
 			WLog_INFO(TAG, "Blocking %s", config->BlockedChannels[i]);
 	}
 

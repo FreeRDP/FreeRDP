@@ -186,6 +186,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	DWORD tmp;
 	DWORD status;
 	pServerContext* ps;
+	rdpContext* pc;
 	proxyData* pdata;
 	proxyConfig* config;
 	freerdp_peer* client = (freerdp_peer*) arg;
@@ -310,7 +311,7 @@ fail:
 		pf_server_handle_client_disconnection(client);
 	}
 
-	rdpContext* pc = (rdpContext*) pdata->pc;
+	pc = (rdpContext*) pdata->pc;
 	freerdp_client_stop(pc);
 	free(pdata);
 	freerdp_client_context_free(pc);

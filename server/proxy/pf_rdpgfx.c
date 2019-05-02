@@ -128,7 +128,6 @@ static UINT pf_rdpgfx_surface_to_surface(RdpgfxClientContext* context,
 static UINT pf_rdpgfx_surface_to_cache(RdpgfxClientContext* context,
                                        const RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
 {
-	WLog_DBG(TAG, "SurfaceToCache");
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	WLog_DBG(TAG, __FUNCTION__);
