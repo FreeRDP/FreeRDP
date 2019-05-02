@@ -1601,7 +1601,6 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback*
  */
 static UINT rdpgfx_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 {
-	WLog_DBG(TAG, "OnOpen");
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
