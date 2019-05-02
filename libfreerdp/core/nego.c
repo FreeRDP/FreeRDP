@@ -1415,12 +1415,9 @@ void nego_free_nla(rdpNego* nego)
 	nego->transport->nla = NULL;
 }
 
-BOOL freerdp_nego_get_routing_token(rdpContext *context, char **RoutingToken, size_t *RoutingTokenLength)
+const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length)
 {
-	rdpNego *nego = context->rdp->nego;
-
-	// TODO: maybe we want to skip the ROUTING_TOKEN_PREFIX here
-	// TODO: do not pass the pointer, but read only pointer or copy
-	*RoutingToken = nego->RoutingToken;
-	*RoutingTokenLength = nego->RoutingTokenLength;
+	rdpNego* nego = context->rdp->nego;
+	*length = nego->RoutingTokenLength;
+	return (const char*) nego->RoutingToken;
 }

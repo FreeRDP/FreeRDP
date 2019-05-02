@@ -27,7 +27,7 @@ typedef struct rdp_nego rdpNego;
 extern "C" {
 #endif
 
-FREERDP_API BOOL freerdp_nego_get_routing_token(rdpContext *context, char **RoutingToken, size_t *RoutingTokenLength);
+FREERDP_API const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length);
 
 #ifdef __cplusplus
 }

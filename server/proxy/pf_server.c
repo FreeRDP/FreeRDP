@@ -76,27 +76,26 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 {
 #define TARGET_MAX	(100)
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="
+	const char* routing_token;
 	char* colon;
 	int len;
 	int prefix_len;
 
-	char *RoutingToken;
-	size_t RoutingTokenLength;
+	DWORD routing_token_length;
 
-	freerdp_nego_get_routing_token(client->context, &RoutingToken, &RoutingTokenLength);
-
+	routing_token = freerdp_nego_get_routing_token(client->context, &routing_token_length);
 	prefix_len = strlen(ROUTING_TOKEN_PREFIX);
 
-	if (RoutingToken &&
-	    RoutingTokenLength > prefix_len && RoutingTokenLength < TARGET_MAX)
+	if (routing_token &&
+	    routing_token_length > prefix_len && routing_token_length < TARGET_MAX)
 	{
-		len = RoutingTokenLength - prefix_len;
+		len = routing_token_length - prefix_len;
 		*target = malloc(len + 1);
-		CopyMemory(*target, RoutingToken + prefix_len, len);
+		CopyMemory(*target, routing_token + prefix_len, len);
 		*(*target + len) = '\0';
 		colon = strchr(*target, ':');
 
-		WLog_INFO(TAG, "target: %s", *target);
+		WLog_INFO(TAG, "Target [parsed from routing token]: %s", *target);
 
 		if (colon)
 		{
