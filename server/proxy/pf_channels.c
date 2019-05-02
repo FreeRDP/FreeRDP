@@ -84,21 +84,12 @@ void pf_OnChannelConnectedEventHandler(void* context,
 	{
 		pc->rdpei = (RdpeiClientContext*) e->pInterface;
 	}
-	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
-	{
-	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		gfx = (RdpgfxClientContext*) e->pInterface;
 		pc->gfx = gfx;
 		server = ps->gfx;
 		pf_rdpgfx_pipeline_init(gfx, server, pc->pdata);
-	}
-	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
-	{
-	}
-	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
-	{
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
@@ -117,19 +108,10 @@ void pf_OnChannelDisconnectedEventHandler(void* context,
 	{
 		pc->rdpei = NULL;
 	}
-	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
-	{
-	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		gdi_graphics_pipeline_uninit(((rdpContext*)pc)->gdi,
 		                             (RdpgfxClientContext*) e->pInterface);
-	}
-	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
-	{
-	}
-	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
-	{
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
