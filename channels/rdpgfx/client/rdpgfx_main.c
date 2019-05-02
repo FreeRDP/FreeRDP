@@ -48,7 +48,7 @@
 #define TAG CHANNELS_TAG("rdpgfx.client")
 
 static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
-        RDPGFX_CAPS_ADVERTISE_PDU* pdu)
+        const RDPGFX_CAPS_ADVERTISE_PDU* pdu)
 {
 	UINT error = CHANNEL_RC_OK;
 	UINT16 index;
@@ -317,7 +317,7 @@ static UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_frame_acknowledge_pdu(RdpgfxClientContext* context,
-        RDPGFX_FRAME_ACKNOWLEDGE_PDU* pdu)
+        const RDPGFX_FRAME_ACKNOWLEDGE_PDU* pdu)
 {
 	UINT error;
 	wStream* s;

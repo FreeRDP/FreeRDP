@@ -235,7 +235,7 @@ static UINT pf_rdpgfx_on_close(RdpgfxClientContext* context)
 }
 
 static UINT pf_rdpgfx_caps_confirm(RdpgfxClientContext* context,
-                                   RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
+                                   const RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
@@ -245,7 +245,7 @@ static UINT pf_rdpgfx_caps_confirm(RdpgfxClientContext* context,
 
 /* Proxy server side callbacks */
 static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
-                                     RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
+                                     const RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxClientContext* client = (RdpgfxClientContext*) pdata->pc->gfx;
@@ -279,7 +279,7 @@ static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 }
 
 static UINT pf_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
-                                        RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge)
+                                        const RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge)
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxClientContext* client = (RdpgfxClientContext*) pdata->pc->gfx;

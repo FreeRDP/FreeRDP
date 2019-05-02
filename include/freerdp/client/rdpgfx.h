@@ -87,11 +87,11 @@ typedef UINT(*pcRdpgfxOnOpen)(RdpgfxClientContext* context, BOOL* do_caps_advert
                               BOOL* do_frame_acks);
 typedef UINT(*pcRdpgfxOnClose)(RdpgfxClientContext* context);
 typedef UINT(*pcRdpgfxCapsAdvertise)(RdpgfxClientContext* context,
-                                     RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise);
+                                     const RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise);
 typedef UINT(*pcRdpgfxCapsConfirm)(RdpgfxClientContext* context,
-                                   RDPGFX_CAPS_CONFIRM_PDU* capsConfirm);
+                                   const RDPGFX_CAPS_CONFIRM_PDU* capsConfirm);
 typedef UINT(*pcRdpgfxFrameAcknowledge)(RdpgfxClientContext* context,
-                                        RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge);
+                                        const RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge);
 
 struct _rdpgfx_client_context
 {
