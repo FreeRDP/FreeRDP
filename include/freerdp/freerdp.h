@@ -51,7 +51,6 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <winpr/stream.h>
 
 #include <freerdp/input.h>
-#include <freerdp/nego.h>
 #include <freerdp/update.h>
 #include <freerdp/message.h>
 #include <freerdp/autodetect.h>
@@ -490,6 +489,8 @@ FREERDP_API const char* getChannelErrorDescription(rdpContext* context);
 FREERDP_API void setChannelError(rdpContext* context, UINT errorNum,
                                  char* description);
 FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
+
+FREERDP_API const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length);
 
 #ifdef __cplusplus
 }

@@ -34,10 +34,36 @@
 
 #include "transport.h"
 
-#include "rdp.h"
-
 #define TAG FREERDP_TAG("core.nego")
 
+struct rdp_nego
+{
+	UINT16 port;
+	UINT32 flags;
+	const char* hostname;
+	char* cookie;
+	BYTE* RoutingToken;
+	DWORD RoutingTokenLength;
+	BOOL SendPreconnectionPdu;
+	UINT32 PreconnectionId;
+	char* PreconnectionBlob;
+
+	NEGO_STATE state;
+	BOOL TcpConnected;
+	BOOL SecurityConnected;
+	UINT32 CookieMaxLength;
+
+	BOOL sendNegoData;
+	UINT32 SelectedProtocol;
+	UINT32 RequestedProtocols;
+	BOOL NegotiateSecurityLayer;
+	BOOL EnabledProtocols[16];
+	BOOL RestrictedAdminModeRequired;
+	BOOL GatewayEnabled;
+	BOOL GatewayBypassLocal;
+
+	rdpTransport* transport;
+};
 
 static const char* const NEGO_STATE_STRINGS[] =
 {
@@ -1415,9 +1441,11 @@ void nego_free_nla(rdpNego* nego)
 	nego->transport->nla = NULL;
 }
 
-const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length)
+const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength)
 {
-	rdpNego* nego = context->rdp->nego;
-	*length = nego->RoutingTokenLength;
-	return (const char*) nego->RoutingToken;
+	if (!nego)
+		return NULL;
+	if (RoutingTokenLength)
+		*RoutingTokenLength = nego->RoutingTokenLength;
+	return nego->RoutingToken;
 }

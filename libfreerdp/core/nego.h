@@ -26,7 +26,6 @@
 #include <freerdp/settings.h>
 #include <freerdp/log.h>
 #include <freerdp/api.h>
-#include <freerdp/nego.h>
 
 #include <winpr/stream.h>
 
@@ -93,35 +92,7 @@ enum RDP_NEG_MSG
 #define REDIRECTED_AUTHENTICATION_MODE_REQUIRED		0x02
 #define CORRELATION_INFO_PRESENT				0x08
 
-struct rdp_nego
-{
-	UINT16 port;
-	UINT32 flags;
-	const char* hostname;
-	char* cookie;
-	BYTE* RoutingToken;
-	DWORD RoutingTokenLength;
-	BOOL SendPreconnectionPdu;
-	UINT32 PreconnectionId;
-	char* PreconnectionBlob;
-
-	NEGO_STATE state;
-	BOOL TcpConnected;
-	BOOL SecurityConnected;
-	UINT32 CookieMaxLength;
-
-	BOOL sendNegoData;
-	UINT32 SelectedProtocol;
-	UINT32 RequestedProtocols;
-	BOOL NegotiateSecurityLayer;
-	BOOL EnabledProtocols[16];
-	BOOL RestrictedAdminModeRequired;
-	BOOL GatewayEnabled;
-	BOOL GatewayBypassLocal;
-
-	rdpTransport* transport;
-};
-
+typedef struct rdp_nego rdpNego;
 
 FREERDP_LOCAL BOOL nego_connect(rdpNego* nego);
 FREERDP_LOCAL BOOL nego_disconnect(rdpNego* nego);
@@ -148,6 +119,7 @@ FREERDP_LOCAL void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
 FREERDP_LOCAL void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 FREERDP_LOCAL void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
 FREERDP_LOCAL void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
+FREERDP_LOCAL const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength);
 FREERDP_LOCAL BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken,
         DWORD RoutingTokenLength);
 FREERDP_LOCAL BOOL nego_set_cookie(rdpNego* nego, char* cookie);
