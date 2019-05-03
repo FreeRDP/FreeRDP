@@ -33,7 +33,7 @@
 #include "xf_window.h"
 #include "xf_rail.h"
 
-#define OBEY_SERVER_WINDOW_MOVES 0
+#define OBEY_SERVER_WINDOW_MOVES 1
 
 #define TAG CLIENT_TAG("x11")
 
@@ -445,6 +445,20 @@ static BOOL xf_rail_window_common(rdpContext* context,
 	{
 		appWindow->clientAreaWidth = windowState->clientAreaWidth;
 		appWindow->clientAreaHeight = windowState->clientAreaHeight;
+	}
+
+	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
+	{
+		DEBUG_X11("resizeMarginX: 0x%x %d, %d", appWindow->handle, windowState->windowLeftResizeMargin, windowState->windowRightResizeMargin);
+		appWindow->windowLeftResizeMargin = windowState->windowLeftResizeMargin;
+		appWindow->windowRightResizeMargin = windowState->windowRightResizeMargin;
+	}
+
+	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
+	{
+		DEBUG_X11("resizeMarginY: 0x%x %d, %d", appWindow->handle, windowState->windowTopResizeMargin, windowState->windowBottomResizeMargin);
+		appWindow->windowTopResizeMargin = windowState->windowTopResizeMargin;
+		appWindow->windowBottomResizeMargin = windowState->windowBottomResizeMargin;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
@@ -1046,7 +1060,8 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
 	xfContext* xfc = (xfContext*) context->custom;
 	rdpSettings* settings = xfc->context.settings;
-	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
+	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE
+			| RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED;
 
 	if (settings->AutoReconnectionEnabled)
 		clientStatus.flags |= RAIL_CLIENTSTATUS_AUTORECONNECT;
