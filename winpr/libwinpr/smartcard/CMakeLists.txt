@@ -42,7 +42,7 @@ endif()
 winpr_module_add(${${MODULE_PREFIX}_SRCS})
 
 if(PCSC_WINPR_FOUND)
-	winpr_library_add(${PCSC_WINPR_LIBRARY})
+	winpr_library_add_private(${PCSC_WINPR_LIBRARY})
 endif()
 
 if(BUILD_TESTING)

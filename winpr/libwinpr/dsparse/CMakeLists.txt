@@ -18,7 +18,7 @@
 winpr_module_add(dsparse.c)
 
 if(WIN32)
-	winpr_library_add(ntdsapi)
+	winpr_library_add_public(ntdsapi)
 endif()
 
 if(BUILD_TESTING)
