@@ -969,7 +969,7 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* s
         INT16* buffer,	INT16* sign, UINT32 length,
         UINT32 shift, UINT32 bitPos, UINT32 numBits)
 {
-	int index;
+	UINT32 index;
 	INT16 input;
 	wBitStream* raw;
 

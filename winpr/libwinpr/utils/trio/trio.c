@@ -1417,6 +1417,8 @@ TRIO_ARGS4((type, format, offset, parameter),
     {
       ch = format[offset++];
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
       switch (ch)
         {
 	case QUALIFIER_SPACE:
@@ -1680,6 +1682,8 @@ TRIO_ARGS4((type, format, offset, parameter),
 	  /* Bail out completely to make the error more obvious */
 	  return TRIO_ERROR_RETURN(TRIO_EINVAL, offset);
 	}
+#pragma GCC diagnostic pop
+
     } /* while qualifier */
 
   parameter->endOffset = offset;
@@ -1703,6 +1707,8 @@ TRIO_ARGS4((type, format, offset, parameter),
 {
   parameter->baseSpecifier = NO_BASE;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
   switch (format[offset++])
     {
 #if defined(SPECIFIER_CHAR_UPPER)
@@ -1929,6 +1935,7 @@ TRIO_ARGS4((type, format, offset, parameter),
       /* Bail out completely to make the error more obvious */
       return TRIO_ERROR_RETURN(TRIO_EINVAL, offset);
   }
+#pragma GCC diagnostic pop
 
   parameter->endOffset = offset;
 

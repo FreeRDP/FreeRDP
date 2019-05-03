@@ -584,6 +584,9 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 	status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context, surface->surfaceId,
 	                      meta1->numRegionRects, meta1->regionRects);
 
+	if (status != CHANNEL_RC_OK)
+		goto fail;
+
 	for (i = 0; i < meta2->numRegionRects; i++)
 	{
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &(meta2->regionRects[i]));

@@ -95,7 +95,7 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 		return FALSE;
 
 	/* Ignore output if the surface size does not match. */
-	if ((x > geometry.width) || (y > geometry.height))
+	if (((INT64)x > geometry.width) || ((INT64)y > geometry.height))
 		return TRUE;
 
 	area.left = x;
@@ -242,6 +242,7 @@ static BOOL wl_post_connect(freerdp* instance)
 
 	w = (UINT32)gdi->width;
 	h = (UINT32)gdi->height;
+
 	if (settings->SmartSizing && !context->fullscreen)
 	{
 		if (settings->SmartSizingWidth > 0)
@@ -390,6 +391,22 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 	return TRUE;
 }
 
+static BOOL handle_window_events(freerdp* instance)
+{
+	rdpSettings* settings;
+
+	if (!instance || !instance->settings)
+		return FALSE;
+
+	settings = instance->settings;
+
+	if (!settings->AsyncInput)
+	{
+	}
+
+	return TRUE;
+}
+
 static int wlfreerdp_run(freerdp* instance)
 {
 	wlfContext* context;
@@ -438,6 +455,18 @@ static int wlfreerdp_run(freerdp* instance)
 
 		if (freerdp_check_event_handles(instance->context) != TRUE)
 		{
+			if (client_auto_reconnect_ex(instance, handle_window_events))
+				continue;
+			else
+			{
+				/*
+					 * Indicate an unsuccessful connection attempt if reconnect
+					 * did not succeed and no other error was specified.
+					 */
+				if (freerdp_error_info(instance) == 0)
+					status = 42;
+			}
+
 			if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
 				WLog_Print(context->log, WLOG_ERROR, "Failed to check FreeRDP file descriptor");
 
@@ -638,8 +667,8 @@ BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t s
 		size_t i;
 		const size_t baseSrcOffset = area->top * srcStride + area->left * 4;
 		const size_t baseDstOffset = area->top * dstStride + area->left * 4;
-		const size_t width = MIN(area->right - area->left, dstWidth - area->left);
-		const size_t height = MIN(area->bottom - area->top, dstHeight - area->top);
+		const size_t width = MIN((size_t)area->right - area->left, dstWidth - area->left);
+		const size_t height = MIN((size_t)area->bottom - area->top, dstHeight - area->top);
 		const BYTE* psrc = (const BYTE*)src;
 		BYTE* pdst = (BYTE*)dst;
 

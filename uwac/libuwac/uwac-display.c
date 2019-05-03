@@ -35,12 +35,12 @@
 #include "uwac-os.h"
 #include "wayland-cursor.h"
 
-#define TARGET_COMPOSITOR_INTERFACE 3
-#define TARGET_SHM_INTERFACE 1
-#define TARGET_SHELL_INTERFACE 1
-#define TARGET_DDM_INTERFACE 1
-#define TARGET_SEAT_INTERFACE 5
-#define TARGET_XDG_VERSION 5 /* The version of xdg-shell that we implement */
+#define TARGET_COMPOSITOR_INTERFACE 3U
+#define TARGET_SHM_INTERFACE 1U
+#define TARGET_SHELL_INTERFACE 1U
+#define TARGET_DDM_INTERFACE 1U
+#define TARGET_SEAT_INTERFACE 5U
+#define TARGET_XDG_VERSION 5U /* The version of xdg-shell that we implement */
 
 static const char* event_names[] =
 {
@@ -132,8 +132,8 @@ static const struct zwp_fullscreen_shell_v1_listener fullscreen_shell_listener =
 
 static void display_destroy_seat(UwacDisplay* d, uint32_t name)
 {
-	UwacSeat* seat;
-	wl_list_for_each(seat, &d->seats, link)
+	UwacSeat* seat, *tmp;
+	wl_list_for_each_safe(seat, tmp, &d->seats, link)
 	{
 		if (seat->seat_id == name)
 		{
@@ -180,18 +180,6 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	{
 		d->shm = wl_registry_bind(registry, id, &wl_shm_interface, min(TARGET_SHM_INTERFACE, version));
 		wl_shm_add_listener(d->shm, &shm_listener, d);
-
-		d->cursor_theme = wl_cursor_theme_load(NULL, 32, d->shm);
-		if (!d->cursor_theme) {
-			assert(uwacErrorHandler(d, UWAC_ERROR_NOMEMORY, "unable to get wayland cursor theme\n"));
-			return;
-		}
-
-		d->default_cursor = wl_cursor_theme_get_cursor(d->cursor_theme, "left_ptr");
-		if (!d->default_cursor) {
-			assert(uwacErrorHandler(d, UWAC_ERROR_NOMEMORY, "unable to get wayland cursor left_ptr\n"));
-			return;
-		}
 	}
 	else if (strcmp(interface, "wl_output") == 0)
 	{
@@ -237,12 +225,12 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	}
 	else if (strcmp(interface, "wl_data_device_manager") == 0)
 	{
-		UwacSeat* seat;
+		UwacSeat* seat, *tmp;
 
 		d->data_device_manager = wl_registry_bind(registry, id, &wl_data_device_manager_interface,
 		                         min(TARGET_DDM_INTERFACE, version));
 
-		wl_list_for_each(seat, &d->seats, link)
+		wl_list_for_each_safe(seat, tmp, &d->seats, link)
 		{
 			UwacSeatRegisterDDM(seat);
 			UwacSeatRegisterClipboard(seat);
@@ -596,9 +584,6 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 	if (display->shell)
 		wl_shell_destroy(display->shell);
 
-	if (display->cursor_theme)
-		wl_cursor_theme_destroy(display->cursor_theme);
-
 	if (display->shm)
 		wl_shm_destroy(display->shm);
 
@@ -656,12 +641,12 @@ const char* UwacErrorString(UwacReturnCode error)
 UwacReturnCode UwacDisplayQueryInterfaceVersion(const UwacDisplay* display, const char* name,
         uint32_t* version)
 {
-	const UwacGlobal* global;
+	const UwacGlobal* global, *tmp;
 
 	if (!display)
 		return UWAC_ERROR_INVALID_DISPLAY;
 
-	wl_list_for_each(global, &display->globals, link)
+	wl_list_for_each_safe(global, tmp, &display->globals, link)
 	{
 		if (strcmp(global->interface, name) == 0)
 		{
@@ -698,7 +683,7 @@ UwacReturnCode UwacDisplayQueryShmFormats(const UwacDisplay* display, enum wl_sh
 	if (!display)
 		return UWAC_ERROR_INVALID_DISPLAY;
 
-	*filled = min(display->shm_formats_nb, formats_size);
+	*filled = min((int64_t)display->shm_formats_nb, formats_size);
 	memcpy(formats, (const void*)display->shm_formats, *filled * sizeof(enum wl_shm_format));
 	return UWAC_SUCCESS;
 }

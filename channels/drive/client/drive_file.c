@@ -590,13 +590,13 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			DEBUG_WSTR("SetFileTime %s", file->fullpath);
 
+			SetFileAttributesW(file->fullpath, FileAttributes);
 			if (!SetFileTime(file->file_handle, pftCreationTime, pftLastAccessTime, pftLastWriteTime))
 			{
 				WLog_ERR(TAG, "Unable to set file time to %s", file->fullpath);
 				return FALSE;
 			}
 
-			SetFileAttributesW(file->fullpath, FileAttributes);
 			break;
 
 		case FileEndOfFileInformation:

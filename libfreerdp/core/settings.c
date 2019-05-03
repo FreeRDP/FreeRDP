@@ -590,7 +590,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		}
 		else
 		{
-			int i;
+			size_t i;
 			char product[sizeof(FREERDP_PRODUCT_STRING)];
 			memset(product, 0, sizeof(product));
 

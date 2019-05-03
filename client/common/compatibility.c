@@ -402,9 +402,12 @@ static int freerdp_client_old_command_line_pre_filter(void* context, int index, 
 }
 static int freerdp_client_old_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(arg);
+
 	return 0;
 }
-int freerdp_detect_old_command_line_syntax(int argc, char** argv, int* count)
+int freerdp_detect_old_command_line_syntax(int argc, char** argv, size_t* count)
 {
 	int status;
 	DWORD flags;

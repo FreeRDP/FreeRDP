@@ -246,11 +246,16 @@ BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCo
 		}
 
 #else
+
+		while (lReleaseCount > 0)
+		{
 #if defined __APPLE__
-		semaphore_signal(*((winpr_sem_t*) semaphore->sem));
+			semaphore_signal(*((winpr_sem_t*) semaphore->sem));
 #else
-		sem_post((winpr_sem_t*) semaphore->sem);
+			sem_post((winpr_sem_t*) semaphore->sem);
 #endif
+		}
+
 #endif
 		return TRUE;
 	}

@@ -122,7 +122,7 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	{
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 
-		if (depth != xfc->depth)
+		if ((INT64)depth != xfc->depth)
 		{
 			if (!(data = _aligned_malloc(bitmap->width * bitmap->height * 4, 16)))
 				goto unlock;

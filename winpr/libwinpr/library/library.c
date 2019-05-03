@@ -83,17 +83,26 @@
 
 DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
 {
+	/* TODO: Implement */
+	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return NULL;
 }
 
 BOOL RemoveDllDirectory(DLL_DIRECTORY_COOKIE Cookie)
 {
-	return TRUE;
+	/* TODO: Implement */
+	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL SetDefaultDllDirectories(DWORD DirectoryFlags)
 {
-	return TRUE;
+	/* TODO: Implement */
+	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 HMODULE LoadLibraryA(LPCSTR lpLibFileName)
@@ -111,7 +120,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 	if (status < 1)
 		return NULL;
 
-	hModule = LoadPackagedLibrary(filenameW, 0);
+	hModule = LoadLibraryW(filenameW);
 	free(filenameW);
 	return hModule;
 #else
@@ -120,7 +129,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 
 	if (!library)
 	{
-		WLog_ERR(TAG, "LoadLibraryA: %s", dlerror());
+		WLog_ERR(TAG, "%s failed with %s", __FUNCTION__, dlerror());
 		return NULL;
 	}
 
@@ -133,31 +142,39 @@ HMODULE LoadLibraryW(LPCWSTR lpLibFileName)
 #if defined(_UWP)
 	return LoadPackagedLibrary(lpLibFileName, 0);
 #else
-	return (HMODULE) NULL;
+	char* name = NULL;
+	HMODULE module;
+	int rc = ConvertFromUnicode(CP_UTF8, 0, lpLibFileName, -1, &name, 0, NULL, NULL);
+
+	if (rc < 0)
+		return NULL;
+
+	module = LoadLibraryA(name);
+	free(name);
+	return module;
 #endif
 }
 
 HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
-#if !defined(_UWP)
-	HMODULE library;
-	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
+	if (dwFlags != 0)
+		WLog_WARN(TAG, "%s does not support dwFlags 0x%08"PRIx32, __FUNCTION__, dwFlags);
 
-	if (!library)
-	{
-		WLog_ERR(TAG, "LoadLibraryExA: failed to open %s: %s", lpLibFileName, dlerror());
-		return NULL;
-	}
+	if (hFile)
+		WLog_WARN(TAG, "%s does not support hFile != NULL", __FUNCTION__);
 
-	return library;
-#else
-	return (HMODULE)NULL;
-#endif
+	return LoadLibraryA(lpLibFileName);
 }
 
 HMODULE LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
-	return (HMODULE) NULL;
+	if (dwFlags != 0)
+		WLog_WARN(TAG, "%s does not support dwFlags 0x%08"PRIx32, __FUNCTION__, dwFlags);
+
+	if (hFile)
+		WLog_WARN(TAG, "%s does not support hFile != NULL", __FUNCTION__);
+
+	return LoadLibraryW(lpLibFileName);
 }
 
 #endif
@@ -191,11 +208,17 @@ BOOL FreeLibrary(HMODULE hLibModule)
 
 HMODULE GetModuleHandleA(LPCSTR lpModuleName)
 {
+	/* TODO: Implement */
+	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return NULL;
 }
 
 HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
 {
+	/* TODO: Implement */
+	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return NULL;
 }
 
@@ -209,9 +232,35 @@ HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
 
 DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 {
-	WLog_ERR(TAG, "%s is not implemented", __FUNCTION__);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return 0;
+	DWORD status;
+	char* name = calloc(nSize, sizeof(char));
+	if (!name)
+	{
+		SetLastError(ERROR_INTERNAL_ERROR);
+		return 0;
+	}
+	status = GetModuleFileNameA(hModule, name, nSize);
+
+	if ((status > INT_MAX) || (nSize > INT_MAX))
+	{
+		SetLastError(ERROR_INTERNAL_ERROR);
+		status = 0;
+	}
+
+	if (status > 0)
+	{
+		int rc = ConvertToUnicode(CP_UTF8, 0, name, (int)status, &lpFilename, (int)nSize);
+
+		if (rc < 0)
+		{
+			free(name);
+			SetLastError(ERROR_INTERNAL_ERROR);
+			return 0;
+		}
+	}
+
+	free(name);
+	return status;
 }
 
 DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
@@ -251,7 +300,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 
 #elif defined(__MACOSX__)
 	int status;
-	int length;
+	size_t length;
 
 	if (!hModule)
 	{
@@ -278,7 +327,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 		{
 			CopyMemory(lpFilename, buffer, length);
 			lpFilename[length] = '\0';
-			return length;
+			return (DWORD)length;
 		}
 
 		CopyMemory(lpFilename, buffer, nSize - 1);

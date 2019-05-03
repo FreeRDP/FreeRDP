@@ -276,7 +276,7 @@ DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HANDLE* eve
 	if (listener->num_sockfds < 1)
 		return 0;
 
-	if (listener->num_sockfds > nCount)
+	if (listener->num_sockfds > (INT64)nCount)
 		return 0;
 
 	for (index = 0; index < listener->num_sockfds; index++)

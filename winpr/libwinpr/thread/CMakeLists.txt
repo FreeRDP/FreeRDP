@@ -24,7 +24,7 @@ winpr_module_add(
 	tls.c)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
-	winpr_library_add(rt)
+	winpr_library_add_private(rt)
 endif()
 
 if(BUILD_TESTING)

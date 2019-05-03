@@ -27,7 +27,7 @@
 #include <string.h>
 #include <assert.h>
 
-#define TARGET_OUTPUT_INTERFACE 2
+#define TARGET_OUTPUT_INTERFACE 2U
 
 static void output_handle_geometry(void *data, struct wl_output *wl_output, int x, int y,
 			int physical_width, int physical_height, int subpixel,

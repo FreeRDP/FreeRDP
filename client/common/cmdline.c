@@ -1282,7 +1282,7 @@ static BOOL freerdp_client_detect_command_line(int argc, char** argv,
         DWORD* flags)
 {
 	int old_cli_status;
-	int old_cli_count;
+	size_t old_cli_count;
 	int posix_cli_status;
 	size_t posix_cli_count;
 	int windows_cli_status;

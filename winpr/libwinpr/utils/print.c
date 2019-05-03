@@ -33,44 +33,94 @@
 
 #include "../log.h"
 
-void winpr_HexDump(const char* tag, UINT32 level, const BYTE* data, int length)
+void winpr_HexDump(const char* tag, UINT32 level, const BYTE* data, size_t length)
+{
+	wLog* log = WLog_Get(tag);
+	winpr_HexLogDump(log, level, data, length);
+}
+
+void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 {
 	const BYTE* p = data;
-	int i, line, offset = 0;
-	size_t blen = 7 + WINPR_HEXDUMP_LINE_LENGTH * 5;
+	size_t i, line, offset = 0;
+	const int maxlen = 20; /* 64bit SIZE_MAX as decimal */
+	/* String line length:
+	 * prefix          '[1234] '
+	 * hexdump         '01 02 03 04'
+	 * separator       '   '
+	 * ASIC line       'ab..cd'
+	 * zero terminator '\0'
+	 */
+	const size_t blen = ((size_t)maxlen + 3) + (WINPR_HEXDUMP_LINE_LENGTH * 3) + 3 + WINPR_HEXDUMP_LINE_LENGTH + 1;
 	size_t pos = 0;
-	char* buffer = malloc(blen);
+
+
+	char* buffer;
+
+	if (!log || (maxlen < 0))
+		return;
+
+	buffer = malloc(blen);
 
 	if (!buffer)
 	{
-		WLog_ERR(tag, "malloc(%"PRIuz") failed with [%d] %s", blen, errno, strerror(errno));
+		WLog_Print(log, WLOG_ERROR, "malloc(%"PRIuz") failed with [%"PRIuz"] %s", blen, errno,
+		           strerror(errno));
 		return;
 	}
 
 	while (offset < length)
 	{
-		pos += trio_snprintf(&buffer[pos], blen - pos, "%04x ", offset);
+		int rc = trio_snprintf(&buffer[pos], blen - pos, "%04"PRIuz" ", offset);
+
+		if (rc < 0)
+			goto fail;
+
+		pos += (size_t)rc;
 		line = length - offset;
 
 		if (line > WINPR_HEXDUMP_LINE_LENGTH)
 			line = WINPR_HEXDUMP_LINE_LENGTH;
 
 		for (i = 0; i < line; i++)
-			pos += trio_snprintf(&buffer[pos], blen - pos, "%02"PRIx8" ", p[i]);
+		{
+			rc = trio_snprintf(&buffer[pos], blen - pos, "%02"PRIx8" ", p[i]);
+
+			if (rc < 0)
+				goto fail;
+
+			pos += (size_t)rc;
+		}
 
 		for (; i < WINPR_HEXDUMP_LINE_LENGTH; i++)
-			pos += trio_snprintf(&buffer[pos], blen - pos, "   ");
+		{
+			rc = trio_snprintf(&buffer[pos], blen - pos, "   ");
+
+			if (rc < 0)
+				goto fail;
+
+			pos += (size_t)rc;
+		}
 
 		for (i = 0; i < line; i++)
-			pos += trio_snprintf(&buffer[pos], blen - pos, "%c",
-							(p[i] >= 0x20 && p[i] < 0x7F) ? (char) p[i] : '.');
+		{
+			rc = trio_snprintf(&buffer[pos], blen - pos, "%c",
+			                   (p[i] >= 0x20 && p[i] < 0x7F) ? (char) p[i] : '.');
 
-		WLog_LVL(tag, level, "%s", buffer);
+			if (rc < 0)
+				goto fail;
+
+			pos += (size_t)rc;
+		}
+
+		WLog_Print(log, lvl, "%s", buffer);
 		offset += line;
 		p += line;
 		pos = 0;
 	}
 
+	WLog_Print(log, lvl, "[length=%"PRIuz"] ", length);
+fail:
 	free(buffer);
 }
 
@@ -117,6 +167,7 @@ char* winpr_BinToHexString(const BYTE* data, int length, BOOL space)
 	char bin2hex[] = "0123456789ABCDEF";
 	n = space ? 3 : 2;
 	p = (char*) malloc((length + 1) * n);
+
 	if (!p)
 		return NULL;
 

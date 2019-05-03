@@ -96,8 +96,8 @@ static int test_gdi_CreateBitmap(void)
 {
 	int rc = -1;
 	UINT32 format = PIXEL_FORMAT_ARGB32;
-	UINT32 width;
-	UINT32 height;
+	INT32 width;
+	INT32 height;
 	BYTE* data;
 	HGDI_BITMAP hBitmap = NULL;
 	width = 32;
@@ -145,8 +145,8 @@ static int test_gdi_CreateCompatibleBitmap(void)
 {
 	int rc = -1;
 	HGDI_DC hdc;
-	UINT32 width;
-	UINT32 height;
+	INT32 width;
+	INT32 height;
 	HGDI_BITMAP hBitmap = NULL;
 
 	if (!(hdc = gdi_GetDC()))
@@ -268,10 +268,10 @@ fail:
 static int test_gdi_CreateRectRgn(void)
 {
 	int rc = -1;
-	UINT32 x1 = 32;
-	UINT32 y1 = 64;
-	UINT32 x2 = 128;
-	UINT32 y2 = 256;
+	INT32 x1 = 32;
+	INT32 y1 = 64;
+	INT32 x2 = 128;
+	INT32 y2 = 256;
 	HGDI_RGN hRegion = gdi_CreateRectRgn(x1, y1, x2, y2);
 
 	if (!hRegion)
@@ -305,10 +305,10 @@ static int test_gdi_CreateRect(void)
 {
 	int rc = -1;
 	HGDI_RECT hRect;
-	UINT32 x1 = 32;
-	UINT32 y1 = 64;
-	UINT32 x2 = 128;
-	UINT32 y2 = 256;
+	INT32 x1 = 32;
+	INT32 y1 = 64;
+	INT32 x2 = 128;
+	INT32 y2 = 256;
 
 	if (!(hRect = gdi_CreateRect(x1, y1, x2, y2)))
 	{

@@ -97,17 +97,17 @@ int TestInterlockedAccess(int argc, char* argv[])
 		return -1;
 	}
 
-	*Destination = 0xAABBCCDD;
+	*Destination = (LONG)0xAABBCCDDL;
 
-	oldValue = InterlockedCompareExchange(Destination, 0xCCDDEEFF, 0xAABBCCDD);
+	oldValue = InterlockedCompareExchange(Destination, (LONG)0xCCDDEEFFL, (LONG)0xAABBCCDDL);
 
-	if (oldValue != 0xAABBCCDD)
+	if (oldValue != (LONG)0xAABBCCDDL)
 	{
 		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xAABBCCDD\n", oldValue);
 		return -1;
 	}
 
-	if (*Destination != 0xCCDDEEFF)
+	if ((*Destination) != (LONG)0xCCDDEEFFL)
 	{
 		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xCCDDEEFF\n", *Destination);
 		return -1;
@@ -115,17 +115,17 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	/* InterlockedCompareExchange (*Destination != Comparand) */
 
-	*Destination = 0xAABBCCDD;
+	*Destination = (LONG)0xAABBCCDDL;
 
-	oldValue = InterlockedCompareExchange(Destination, 0xCCDDEEFF, 0x66778899);
+	oldValue = InterlockedCompareExchange(Destination, 0xCCDDEEFFL, 0x66778899);
 
-	if (oldValue != 0xAABBCCDD)
+	if (oldValue != (LONG)0xAABBCCDDL)
 	{
 		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xAABBCCDD\n", oldValue);
 		return -1;
 	}
 
-	if (*Destination != 0xAABBCCDD)
+	if ((*Destination) != (LONG)0xAABBCCDDL)
 	{
 		printf("InterlockedCompareExchange failure: Actual: 0x%08"PRIX32", Expected: 0xAABBCCDD\n", *Destination);
 		return -1;
@@ -150,7 +150,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 		return -1;
 	}
 
-	if (*Destination64 != 0x8899AABBCCDDEEFF)
+	if ((*Destination64) != (LONGLONG)0x8899AABBCCDDEEFFLL)
 	{
 		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x8899AABBCCDDEEFF\n", *Destination64);
 		return -1;
@@ -158,17 +158,17 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	/* InterlockedCompareExchange64 (*Destination != Comparand) */
 
-	*Destination64 = 0x66778899AABBCCDD;
+	*Destination64 = 0x66778899AABBCCDDLL;
 
-	oldValue64 = InterlockedCompareExchange64(Destination64, 0x8899AABBCCDDEEFF, 12345);
+	oldValue64 = InterlockedCompareExchange64(Destination64, 0x8899AABBCCDDEEFFLL, 12345);
 
-	if (oldValue64 != 0x66778899AABBCCDD)
+	if (oldValue64 != 0x66778899AABBCCDDLL)
 	{
 		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x66778899AABBCCDD\n", oldValue64);
 		return -1;
 	}
 
-	if (*Destination64 != 0x66778899AABBCCDD)
+	if (*Destination64 != 0x66778899AABBCCDDLL)
 	{
 		printf("InterlockedCompareExchange failure: Actual: 0x%016"PRIX64", Expected: 0x66778899AABBCCDD\n", *Destination64);
 		return -1;

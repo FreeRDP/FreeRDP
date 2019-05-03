@@ -213,7 +213,8 @@ static int urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK* callback, BYTE* da
 	UINT32 usbd_status = USBD_STATUS_SUCCESS;
 	BYTE* OutputBuffer;
 	BYTE* out_data;
-	int i, offset, success = 0;
+	UINT32 i;
+	int offset, success = 0;
 
 	WLog_DBG(TAG, "urbdrc_process__io_control");
 
@@ -427,7 +428,7 @@ static int urbdrc_process_query_device_text(URBDRC_CHANNEL_CALLBACK* callback, B
 
 static void func_select_all_interface_for_msconfig(IUDEVICE* pdev, MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 {
-	int inum;
+	UINT32 inum;
 	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfig->MsInterfaces;
 	BYTE  InterfaceNumber, AlternateSetting;
 	UINT32 NumInterfaces = MsConfig->NumInterfaces;

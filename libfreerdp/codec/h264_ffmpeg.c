@@ -120,13 +120,16 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 	if (!h264 || !h264->subsystem)
 		return FALSE;
 
+	if ((h264->width > INT_MAX) || (h264->height > INT_MAX))
+		return FALSE;
+
 	sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 	recreate = !sys->codecEncoder || !sys->codecEncoderContext;
 
 	if (sys->codecEncoderContext)
 	{
-		if ((sys->codecEncoderContext->width != h264->width) ||
-		    (sys->codecEncoderContext->height != h264->height))
+		if ((sys->codecEncoderContext->width != (int)h264->width) ||
+		    (sys->codecEncoderContext->height != (int)h264->height))
 			recreate = TRUE;
 	}
 

@@ -2018,7 +2018,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dw
 WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwAttrId,
         LPBYTE pbAttr, LPDWORD pcbAttrLen)
 {
-	int length = 0;
+	size_t length = 0;
 	char* namePCSC = NULL;
 	DWORD cbAttrLen = 0;
 	char* pbAttrA = NULL;

@@ -720,10 +720,12 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 
 	if (hasPrefix)
 	{
+		int rc;
 		if (cchPath < 6)
 			return S_FALSE;
 
-		if (cchPath < (lstrlenW(&pszPath[4]) + 1))
+		rc = (lstrlenW(&pszPath[4]) + 1);
+		if ((rc < 0) || ((INT64)cchPath < rc))
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
 		if (IsCharAlphaW(pszPath[4]) && (pszPath[5] == L':')) /* like C: */

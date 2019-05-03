@@ -48,8 +48,6 @@ typedef UINT(*pcRailClientHandshake)(RailClientContext* context,
                                      const RAIL_HANDSHAKE_ORDER* handshake);
 typedef UINT(*pcRailServerHandshake)(RailClientContext* context,
                                      const RAIL_HANDSHAKE_ORDER* handshake);
-typedef UINT(*pcRailClientHandshakeEx)(RailClientContext* context,
-                                       const RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 typedef UINT(*pcRailServerHandshakeEx)(RailClientContext* context,
                                        const RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 typedef UINT(*pcRailClientNotifyEvent)(RailClientContext* context,
@@ -74,6 +72,16 @@ typedef UINT(*pcRailClientGetAppIdRequest)(RailClientContext* context,
         const RAIL_GET_APPID_REQ_ORDER* getAppIdReq);
 typedef UINT(*pcRailServerGetAppIdResponse)(RailClientContext* context,
         const RAIL_GET_APPID_RESP_ORDER* getAppIdResp);
+typedef UINT(*pcRailServerZOrderSync)(RailClientContext* context,
+                                      const RAIL_ZORDER_SYNC* zorder);
+typedef UINT(*pcRailClientCloak)(RailClientContext* context,
+                                 const RAIL_CLOAK* cloak);
+typedef UINT(*pcRailServerPowerDisplayRequest)(RailClientContext* context,
+        const RAIL_POWER_DISPLAY_REQUEST* power);
+typedef UINT(*pcRailClientSnapArrange)(RailClientContext* context,
+                                       const RAIL_SNAP_ARRANGE* snap);
+typedef UINT(*pcRailServerGetAppidResponseExtended)(RailClientContext* context,
+        const RAIL_GET_APPID_RESP_EX* id);
 
 struct _rail_client_context
 {
@@ -87,7 +95,6 @@ struct _rail_client_context
 	pcRailClientSystemCommand ClientSystemCommand;
 	pcRailClientHandshake ClientHandshake;
 	pcRailServerHandshake ServerHandshake;
-	pcRailClientHandshakeEx ClientHandshakeEx;
 	pcRailServerHandshakeEx ServerHandshakeEx;
 	pcRailClientNotifyEvent ClientNotifyEvent;
 	pcRailClientWindowMove ClientWindowMove;
@@ -100,6 +107,11 @@ struct _rail_client_context
 	pcRailServerExecuteResult ServerExecuteResult;
 	pcRailClientGetAppIdRequest ClientGetAppIdRequest;
 	pcRailServerGetAppIdResponse ServerGetAppIdResponse;
+	pcRailServerZOrderSync ServerZOrderSync;
+	pcRailClientCloak ClientCloak;
+	pcRailServerPowerDisplayRequest ServerPowerDisplayRequest;
+	pcRailClientSnapArrange ClientSnapArrange;
+	pcRailServerGetAppidResponseExtended ServerGetAppidResponseExtended;
 };
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_RAIL_H */

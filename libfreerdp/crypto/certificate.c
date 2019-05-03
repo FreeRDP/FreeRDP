@@ -500,6 +500,8 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 				          certificate_known_hosts_file, pline);
 			else
 			{
+				int res;
+
 				/* If this is the replaced hostname, use the updated fingerprint. */
 				if ((strcmp(hostname, certificate_data->hostname) == 0) &&
 				    (port == certificate_data->port))
@@ -508,7 +510,15 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 					rc = TRUE;
 				}
 
-				size = _snprintf(NULL, 0, "%s %"PRIu16" %s %s %s\n", hostname, port, fingerprint, subject, issuer);
+				res = _snprintf(NULL, 0, "%s %"PRIu16" %s %s %s\n", hostname, port, fingerprint, subject, issuer);
+				if (res < 0)
+				{
+					free(data);
+					CloseHandle(fp);
+					return FALSE;
+				}
+				size = (size_t)res;
+
 				tdata = malloc(size + 1);
 
 				if (!tdata)
@@ -520,8 +530,17 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 					return FALSE;
 				}
 
-				if (_snprintf(tdata, size + 1, "%s %"PRIu16" %s %s %s\n", hostname, port, fingerprint, subject,
-				              issuer) != size)
+				res = _snprintf(tdata, size + 1, "%s %"PRIu16" %s %s %s\n", hostname, port, fingerprint, subject,
+				              issuer);
+				if (res < 0)
+				{
+					free(tdata);
+					free(data);
+					CloseHandle(fp);
+					return FALSE;
+				}
+
+				if ((size_t)res != size)
 				{
 					WLog_ERR(TAG, "_snprintf(%s) returned %s [0x%08X]",
 					         certificate_store->file, strerror(errno), errno);
@@ -600,9 +619,10 @@ BOOL certificate_split_line(char* line, char** host, UINT16* port, char** subjec
 BOOL certificate_data_print(rdpCertificateStore* certificate_store,
                             rdpCertificateData* certificate_data)
 {
+	int rc;
 	HANDLE fp;
 	char* tdata;
-	UINT64 size;
+	size_t size;
 	DWORD written;
 	/* reopen in append mode */
 	/* Assure POSIX style paths, CreateFile expects either '/' or '\\' */
@@ -621,10 +641,14 @@ BOOL certificate_data_print(rdpCertificateStore* certificate_store,
 		return FALSE;
 	}
 
-	size = _snprintf(NULL, 0, "%s %"PRIu16" %s %s %s\n", certificate_data->hostname,
+	rc = _snprintf(NULL, 0, "%s %"PRIu16" %s %s %s\n", certificate_data->hostname,
 	                 certificate_data->port,
 	                 certificate_data->fingerprint, certificate_data->subject,
 	                 certificate_data->issuer);
+	if (rc < 0)
+		return FALSE;
+	size = (size_t)rc;
+
 	tdata = malloc(size + 1);
 
 	if (!tdata)
@@ -635,10 +659,12 @@ BOOL certificate_data_print(rdpCertificateStore* certificate_store,
 		return FALSE;
 	}
 
-	if (_snprintf(tdata, size + 1, "%s %"PRIu16" %s %s %s\n", certificate_data->hostname,
+	rc = _snprintf(tdata, size + 1, "%s %"PRIu16" %s %s %s\n", certificate_data->hostname,
 	              certificate_data->port,
 	              certificate_data->fingerprint, certificate_data->subject,
-	              certificate_data->issuer) != size)
+	              certificate_data->issuer);
+
+	if ((rc < 0) || ((size_t)rc != size))
 	{
 		WLog_ERR(TAG, "_snprintf(%s) returned %s [0x%08X]",
 		         certificate_store->file, strerror(errno), errno);

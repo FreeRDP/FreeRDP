@@ -130,7 +130,6 @@ static void input_write_unicode_keyboard_event(wStream* s, UINT16 flags, UINT16 
 static BOOL input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	wStream* s;
-	UINT16 keyboardFlags = 0;
 	rdpRdp* rdp;
 
 	if (!input || !input->context)
@@ -143,16 +142,6 @@ static BOOL input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UIN
 	}
 
 	rdp = input->context->rdp;
-	/*
-	 * According to the specification, the slow path Unicode Keyboard Event
-	 * (TS_UNICODE_KEYBOARD_EVENT) contains KBD_FLAGS_RELEASE flag when key
-	 * is released, but contains no flags when it is pressed.
-	 * This is different from the slow path Keyboard Event
-	 * (TS_KEYBOARD_EVENT) which does contain KBD_FLAGS_DOWN flag when the
-	 * key is pressed.
-	 * There is no KBD_FLAGS_EXTENDED flag in TS_UNICODE_KEYBOARD_EVENT.
-	 */
-	keyboardFlags |= (flags & KBD_FLAGS_RELEASE) ? KBD_FLAGS_RELEASE : 0;
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_UNICODE);
 
 	if (!s)

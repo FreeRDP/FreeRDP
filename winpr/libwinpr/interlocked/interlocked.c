@@ -78,8 +78,14 @@ WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead, WINPR
 		ListEntry->Next = old.s.Next.Next;
 		newHeader.s.Depth = old.s.Depth + 1;
 		newHeader.s.Sequence = old.s.Sequence + 1;
+		if (old.Alignment > INT64_MAX)
+			return NULL;
+		if (newHeader.Alignment > INT64_MAX)
+			return NULL;
+		if (ListHead->Alignment > INT64_MAX)
+			return NULL;
 	}
-	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment, old.Alignment) != old.Alignment);
+	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, (LONGLONG)newHeader.Alignment, (LONGLONG)old.Alignment) != (LONGLONG)old.Alignment);
 
 	return old.s.Next.Next;
 #endif
@@ -134,8 +140,15 @@ WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 		newHeader.s.Next.Next = entry->Next;
 		newHeader.s.Depth = old.s.Depth - 1;
 		newHeader.s.Sequence = old.s.Sequence + 1;
+
+		if (old.Alignment > INT64_MAX)
+			return NULL;
+		if (newHeader.Alignment > INT64_MAX)
+			return NULL;
+		if (ListHead->Alignment > INT64_MAX)
+			return NULL;
 	}
-	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment, old.Alignment) != old.Alignment);
+	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, (LONGLONG)newHeader.Alignment, (LONGLONG)old.Alignment) != (LONGLONG)old.Alignment);
 #endif
 	return entry;
 }
@@ -173,8 +186,15 @@ WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead)
 	{
 		old = *ListHead;
 		newHeader.s.Sequence = old.s.Sequence + 1;
+
+		if (old.Alignment > INT64_MAX)
+			return NULL;
+		if (newHeader.Alignment > INT64_MAX)
+			return NULL;
+		if (ListHead->Alignment > INT64_MAX)
+			return NULL;
 	}
-	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment, old.Alignment) != old.Alignment);
+	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, (LONGLONG)newHeader.Alignment, (LONGLONG)old.Alignment) != (LONGLONG)old.Alignment);
 
 	return old.s.Next.Next;
 #endif

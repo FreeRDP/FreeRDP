@@ -151,13 +151,13 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 
 	DeleteSynchronizationBarrier(&gBarrier);
 
-	if (p.threadCount != dwThreads)
+	if (p.threadCount != (INT64)dwThreads)
 		InterlockedIncrement(&gErrorCount);
 
-	if (p.trueCount != expectedTrueCount)
+	if (p.trueCount != (INT64)expectedTrueCount)
 		InterlockedIncrement(&gErrorCount);
 
-	if (p.falseCount != expectedFalseCount)
+	if (p.falseCount != (INT64)expectedFalseCount)
 		InterlockedIncrement(&gErrorCount);
 
 	printf("%s: error count:  %"PRId32"\n", __FUNCTION__, gErrorCount);

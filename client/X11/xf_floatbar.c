@@ -19,7 +19,6 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
-#include <X11/extensions/Xfixes.h>
 #include <X11/cursorfont.h>
 
 #include "xf_floatbar.h"
@@ -352,6 +351,8 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar, XEvent* event)
 	XPoint shape[5], border[5];
 	int len;
 	Display* display = floatbar->xfc->display;
+	WINPR_UNUSED(event);
+
 	/* create the pixmap that we'll use for shaping the window */
 	pmap = XCreatePixmap(display, floatbar->handle, floatbar->width, floatbar->height, 1);
 	gc = XCreateGC(display, floatbar->handle, 0, 0);
@@ -662,6 +663,7 @@ static void xf_floatbar_event_focusout(xfFloatbar* floatbar, XEvent* event)
 {
 	xfContext* xfc = floatbar->xfc;
 
+	WINPR_UNUSED(event);
 	if (xfc->pointer)
 	{
 		XDefineCursor(xfc->display, xfc->window->handle, xfc->pointer->cursor);
@@ -672,15 +674,12 @@ BOOL xf_floatbar_check_event(xfFloatbar* floatbar, XEvent* event)
 {
 	xfFloatbarButton* button;
 	size_t i, size;
-	xfContext* xfc;
 
 	if (!floatbar || !floatbar->xfc || !event)
 		return FALSE;
 
 	if (!floatbar->created)
 		return FALSE;
-
-	xfc = floatbar->xfc;
 
 	if (event->xany.window == floatbar->handle)
 		return TRUE;

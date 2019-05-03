@@ -726,7 +726,8 @@ public class SessionActivity extends AppCompatActivity implements
 
     @Override
     public void processUnicodeKey(int unicodeKey) {
-        LibFreeRDP.sendUnicodeKeyEvent(session.getInstance(), unicodeKey);
+        LibFreeRDP.sendUnicodeKeyEvent(session.getInstance(), unicodeKey, true);
+        LibFreeRDP.sendUnicodeKeyEvent(session.getInstance(), unicodeKey, false);
     }
 
     @Override

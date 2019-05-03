@@ -401,7 +401,7 @@ BOOL xf_GetWorkArea(xfContext* xfc)
 	if (!status)
 		return FALSE;
 
-	if ((xfc->current_desktop * 4 + 3) >= nitems)
+	if ((xfc->current_desktop * 4 + 3) >= (INT64)nitems)
 	{
 		free(prop);
 		return FALSE;

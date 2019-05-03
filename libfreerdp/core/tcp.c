@@ -814,7 +814,8 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 	int status = 0;
 	int count = 0;
 	u_long arg = 0;
-	DWORD tout = (timeout) ? timeout * 1000 : INFINITE;
+	DWORD tout = (timeout > 0) ? (DWORD)timeout * 1000U : INFINITE;
+
 	handles[count] = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if (!handles[count])

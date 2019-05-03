@@ -5,11 +5,12 @@
 
 int TestArrayList(int argc, char* argv[])
 {
-	int index;
+	size_t index;
 	int count;
+	int rc;
 	size_t val;
 	wArrayList* arrayList;
-	const int elemsToInsert = 10;
+	const size_t elemsToInsert = 10;
 
 	arrayList = ArrayList_New(TRUE);
 	if (!arrayList)
@@ -17,7 +18,7 @@ int TestArrayList(int argc, char* argv[])
 
 	for (index = 0; index < elemsToInsert; index++)
 	{
-		if (ArrayList_Add(arrayList, (void*) (size_t) index) < 0)
+		if (ArrayList_Add(arrayList, (void*) index) < 0)
 			return -1;
 	}
 
@@ -27,7 +28,7 @@ int TestArrayList(int argc, char* argv[])
 
 	index = ArrayList_IndexOf(arrayList, (void*) (size_t) 6, -1, -1);
 
-	printf("ArrayList index: %d\n", index);
+	printf("ArrayList index: %"PRIdz"\n", index);
 
 	if (index != 6)
 		return -1;
@@ -35,32 +36,33 @@ int TestArrayList(int argc, char* argv[])
 	ArrayList_Insert(arrayList, 5, (void*) (size_t) 100);
 
 	index = ArrayList_IndexOf(arrayList, (void*) (size_t) 6, -1, -1);
-	printf("ArrayList index: %d\n", index);
+	printf("ArrayList index: %"PRIdz"\n", index);
 
 	if (index != 7)
 		return -1;
 
 	ArrayList_Remove(arrayList, (void*) (size_t) 100);
 
-	index = ArrayList_IndexOf(arrayList, (void*) (size_t) 6, -1, -1);
-	printf("ArrayList index: %d\n", index);
+	rc = ArrayList_IndexOf(arrayList, (void*) (size_t) 6, -1, -1);
+	printf("ArrayList index: %d\n", rc);
 
-	if (index != 6)
+	if (rc != 6)
 		return -1;
 
 	for (index = 0; index < elemsToInsert; index++) {
 		val = (size_t)ArrayList_GetItem(arrayList, 0);
-		ArrayList_RemoveAt(arrayList, 0);
+		if (!ArrayList_RemoveAt(arrayList, 0))
+			return -1;
 		if (val != index)
 		{
-			printf("ArrayList: shifted %d entries, expected value %d, got %"PRIdz"\n", index, index, val);
+			printf("ArrayList: shifted %"PRIdz" entries, expected value %"PRIdz", got %"PRIdz"\n", index, index, val);
 			return -1;
 		}
 	}
 
-	index = ArrayList_IndexOf(arrayList, (void*) (size_t) elemsToInsert, -1, -1);
-	printf("ArrayList index: %d\n", index);
-	if (index != -1)
+	rc = ArrayList_IndexOf(arrayList, (void*) (size_t) elemsToInsert, -1, -1);
+	printf("ArrayList index: %d\n", rc);
+	if (rc != -1)
 		return -1;
 
 	count = ArrayList_Count(arrayList);

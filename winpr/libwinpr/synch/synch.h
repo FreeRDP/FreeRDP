@@ -51,7 +51,7 @@
 struct winpr_mutex
 {
 	WINPR_HANDLE_DEF();
-
+	char* name;
 	pthread_mutex_t mutex;
 };
 typedef struct winpr_mutex WINPR_MUTEX;
@@ -68,6 +68,7 @@ typedef struct winpr_semaphore WINPR_SEMAPHORE;
 struct winpr_event
 {
 	WINPR_HANDLE_DEF();
+	char* name;
 
 	int pipe_fd[2];
 	BOOL bAttached;
@@ -96,6 +97,7 @@ struct winpr_timer
 	BOOL bManualReset;
 	PTIMERAPCROUTINE pfnCompletionRoutine;
 	LPVOID lpArgToCompletionRoutine;
+	char* name;
 
 #ifdef WITH_POSIX_TIMER
 	timer_t tid;

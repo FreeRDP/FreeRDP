@@ -638,17 +638,20 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 		{
 			int inSamples = rest;
 
-			if (inSamples + context->bufferedSamples > context->context->frame_size)
-				inSamples = context->context->frame_size - context->bufferedSamples;
+			if ((inSamples < 0) || (context->bufferedSamples > (UINT32)(INT_MAX - inSamples)))
+				return FALSE;
+
+			if (inSamples + (int)context->bufferedSamples > context->context->frame_size)
+				inSamples = context->context->frame_size - (int)context->bufferedSamples;
 
 			rc = av_samples_copy(context->buffered->extended_data, context->resampled->extended_data,
-			                     context->bufferedSamples, copied, inSamples,
+			                     (int)context->bufferedSamples, copied, inSamples,
 			                     context->context->channels, context->context->sample_fmt);
 			rest -= inSamples;
 			copied += inSamples;
-			context->bufferedSamples += inSamples;
+			context->bufferedSamples += (UINT32)inSamples;
 
-			if (context->context->frame_size <= context->bufferedSamples)
+			if (context->context->frame_size <= (int)context->bufferedSamples)
 			{
 				/* Encode in desired format. */
 				if (!ffmpeg_encode_frame(context->context, context->buffered,

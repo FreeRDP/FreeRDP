@@ -39,7 +39,6 @@
 static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, size_t size)
 {
 	struct wl_buffer* buffer = NULL;
-	UwacReturnCode ret = UWAC_SUCCESS;
 	int fd;
 	void* data;
 	struct wl_shm_pool* pool;
@@ -53,7 +52,6 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 
 	if (data == MAP_FAILED)
 	{
-		ret = UWAC_ERROR_NOMEMORY;
 		goto error_mmap;
 	}
 	memcpy(data, src, size);
@@ -63,7 +61,6 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	if (!pool)
 	{
 		munmap(data, size);
-		ret = UWAC_ERROR_NOMEMORY;
 		goto error_mmap;
 	}
 
@@ -97,7 +94,7 @@ set_cursor_image(UwacSeat* seat, uint32_t serial)
 	struct wl_surface* surface = NULL;
 	int32_t x = 0, y = 0;
 
-	if (!seat || !seat->display || !seat->display->default_cursor || !seat->display->default_cursor->images)
+	if (!seat || !seat->display || !seat->default_cursor || !seat->default_cursor->images)
 		return UWAC_ERROR_INTERNAL;
 
 	switch(seat->pointer_type) {
@@ -113,7 +110,7 @@ set_cursor_image(UwacSeat* seat, uint32_t serial)
 		case 1: /* NULL pointer */
 			break;
 		default: /* Default system pointer */
-			cursor = seat->display->default_cursor;
+			cursor = seat->default_cursor;
 			if (!cursor)
 				return UWAC_ERROR_INTERNAL;
 			image = cursor->images[0];
@@ -235,7 +232,7 @@ static void keyboard_handle_enter(void *data, struct wl_keyboard *keyboard, uint
 {
 	uint32_t *key, *pressedKey;
 	UwacSeat *input = (UwacSeat *)data;
-	int i, found;
+	size_t i, found;
 	UwacKeyboardEnterLeaveEvent *event;
 
 	event = (UwacKeyboardEnterLeaveEvent *)UwacDisplayNewEvent(input->display, UWAC_EVENT_KEYBOARD_ENTER);
@@ -309,7 +306,7 @@ static int update_key_pressed(UwacSeat *seat, uint32_t key) {
 
 static int update_key_released(UwacSeat *seat, uint32_t key) {
 	uint32_t *keyPtr;
-	int i, toMove;
+	size_t i, toMove;
 	bool found = false;
 
 	for (i = 0, keyPtr = seat->pressed_keys.data; i < seat->pressed_keys.size; i++, keyPtr++) {
@@ -839,6 +836,19 @@ static void seat_handle_capabilities(void *data, struct wl_seat *seat, enum wl_s
 		input->pointer = wl_seat_get_pointer(seat);
 		wl_pointer_set_user_data(input->pointer, input);
 		wl_pointer_add_listener(input->pointer, &pointer_listener, input);
+
+		input->cursor_theme = wl_cursor_theme_load(NULL, 32, input->display->shm);
+		if (!input->cursor_theme) {
+			assert(uwacErrorHandler(input->display, UWAC_ERROR_NOMEMORY, "unable to get wayland cursor theme\n"));
+			return;
+		}
+
+		input->default_cursor = wl_cursor_theme_get_cursor(input->cursor_theme, "left_ptr");
+		if (!input->default_cursor) {
+			assert(uwacErrorHandler(input->display, UWAC_ERROR_NOMEMORY, "unable to get wayland cursor left_ptr\n"));
+			return;
+		}
+
 	} else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && input->pointer) {
 #ifdef WL_POINTER_RELEASE_SINCE_VERSION
 		if (input->seat_version >= WL_POINTER_RELEASE_SINCE_VERSION)
@@ -846,6 +856,11 @@ static void seat_handle_capabilities(void *data, struct wl_seat *seat, enum wl_s
 		else
 #endif
 			wl_pointer_destroy(input->pointer);
+		if (input->cursor_theme)
+			wl_cursor_theme_destroy(input->cursor_theme);
+
+		input->default_cursor = NULL;
+		input->cursor_theme = NULL;
 		input->pointer = NULL;
 	}
 

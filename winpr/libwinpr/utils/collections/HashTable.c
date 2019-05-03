@@ -458,6 +458,7 @@ int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 
 	iKey = 0;
 	count = table->numOfElements;
+	*ppKeys = NULL;
 
 	if (count < 1)
 	{

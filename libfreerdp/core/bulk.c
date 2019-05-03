@@ -169,6 +169,8 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 			         metrics->TotalCompressionRatio, metrics->TotalCompressedBytes,
 			         metrics->TotalUncompressedBytes);
 		}
+#else
+		WINPR_UNUSED(CompressionRatio);
 #endif
 	}
 	else
@@ -234,6 +236,8 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 			         metrics->TotalCompressionRatio, metrics->TotalCompressedBytes,
 			         metrics->TotalUncompressedBytes);
 		}
+#else
+		WINPR_UNUSED(CompressionRatio);
 #endif
 	}
 

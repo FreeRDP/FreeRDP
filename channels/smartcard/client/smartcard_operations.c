@@ -457,7 +457,7 @@ static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD
 {
 	size_t rpos = 0, wpos = 0;
 
-	if (LinkedList_Count(list) < 1)
+	if (*mszReaders == NULL || LinkedList_Count(list) < 1)
 		return cchReaders;
 
 	do
@@ -491,21 +491,26 @@ static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD
 
 static DWORD filter_device_by_name_w(wLinkedList* list, LPWSTR* mszReaders, DWORD cchReaders)
 {
+	int res;
 	DWORD rc;
-	LPSTR readers;
+	LPSTR readers = NULL;
 
 	if (LinkedList_Count(list) < 1)
 		return cchReaders;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, *mszReaders, (int)cchReaders, &readers, 0, NULL,
-	                       NULL) != cchReaders)
+	res = ConvertFromUnicode(CP_UTF8, 0, *mszReaders, (int)cchReaders, &readers, 0, NULL,
+	                         NULL);
+
+	/* When res==0, readers may have been set to NULL by ConvertFromUnicode */
+	if ((res < 0) || ((DWORD)res != cchReaders) || (readers == 0))
 		return 0;
 
 	free(*mszReaders);
 	*mszReaders = NULL;
 	rc = filter_device_by_name_a(list, &readers, cchReaders);
+	res = ConvertToUnicode(CP_UTF8, 0, readers, (int)rc, mszReaders, 0);
 
-	if (ConvertToUnicode(CP_UTF8, 0, readers, (int)rc, mszReaders, 0) != rc)
+	if ((res < 0) || ((DWORD)res != rc))
 		rc = 0;
 
 	free(readers);
@@ -542,9 +547,6 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	cchReaders = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode = SCardListReadersA(operation->hContext, (LPCSTR) call->mszGroups,
 	                          (LPSTR) &mszReaders, &cchReaders);
-	cchReaders = filter_device_by_name_a(smartcard->names, &mszReaders, cchReaders);
-	ret.msz = (BYTE*) mszReaders;
-	ret.cBytes = cchReaders;
 
 	if (call->mszGroups)
 	{
@@ -558,6 +560,9 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 		return status;
 	}
 
+	cchReaders = filter_device_by_name_a(smartcard->names, &mszReaders, cchReaders);
+	ret.msz = (BYTE*) mszReaders;
+	ret.cBytes = cchReaders;
 	smartcard_trace_list_readers_return(smartcard, &ret, FALSE);
 
 	if ((status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret)))
@@ -605,9 +610,6 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	cchReaders = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode = SCardListReadersW(operation->hContext,
 	                          (LPCWSTR) call->mszGroups, (LPWSTR) &mszReaders, &cchReaders);
-	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders, cchReaders);
-	ret.msz = (BYTE*) mszReaders;
-	ret.cBytes = cchReaders * 2;
 
 	if (call->mszGroups)
 	{
@@ -621,6 +623,9 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 		return status;
 	}
 
+	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders, cchReaders);
+	ret.msz = (BYTE*) mszReaders;
+	ret.cBytes = cchReaders * 2;
 	smartcard_trace_list_readers_return(smartcard, &ret, TRUE);
 
 	if ((status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret)))

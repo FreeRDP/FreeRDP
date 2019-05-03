@@ -73,7 +73,7 @@ typedef struct _AudinOSSDevice
 		WLog_ERR(TAG, "%s: %i - %s\n", _text, _error, strerror(_error));
 
 
-static int audin_oss_get_format(const AUDIO_FORMAT* format)
+static UINT32 audin_oss_get_format(const AUDIO_FORMAT* format)
 {
 	switch (format->wFormatTag)
 	{
@@ -151,7 +151,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 	char mixer_name[PATH_MAX] = "/dev/mixer";
 	int pcm_handle = -1, mixer_handle;
 	BYTE* buffer = NULL;
-	int tmp;
+	unsigned long tmp;
 	size_t buffer_size;
 	AudinOSSDevice* oss = (AudinOSSDevice*)arg;
 	UINT error = 0;
@@ -246,6 +246,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 
 	while (1)
 	{
+		SSIZE_T stmp;
 		status = WaitForSingleObject(oss->stopEvent, 0);
 
 		if (status == WAIT_FAILED)
@@ -258,16 +259,16 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 		if (status == WAIT_OBJECT_0)
 			break;
 
-		tmp = read(pcm_handle, buffer, buffer_size);
+		stmp = read(pcm_handle, buffer, buffer_size);
 
 		/* Error happen. */
-		if (tmp < 0)
+		if (stmp < 0)
 		{
 			OSS_LOG_ERR("read() error", errno);
 			continue;
 		}
 
-		if (tmp < buffer_size) /* Not enouth data. */
+		if ((size_t)stmp < buffer_size) /* Not enouth data. */
 			continue;
 
 		if ((error = oss->receive(&oss->format, buffer, buffer_size, oss->user_data)))
@@ -366,7 +367,7 @@ static UINT audin_oss_close(IAudinDevice* device)
 static UINT audin_oss_free(IAudinDevice* device)
 {
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
-	int error;
+	UINT error;
 
 	if (device == NULL)
 		return ERROR_INVALID_PARAMETER;
@@ -434,7 +435,7 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
 					return CHANNEL_RC_NULL_DATA;
 				}
 
-				oss->dev_unit = val;
+				oss->dev_unit = (INT32)val;
 			}
 
 			if (oss->dev_unit < 0 || *eptr != '\0')

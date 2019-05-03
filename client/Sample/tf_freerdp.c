@@ -75,6 +75,8 @@ static BOOL tf_play_sound(rdpContext* context,
                           const PLAY_SOUND_UPDATE* play_sound)
 {
 	/* TODO: Implement */
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(play_sound);
 	return TRUE;
 }
 
@@ -82,6 +84,8 @@ static BOOL tf_play_sound(rdpContext* context,
 static BOOL tf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 {
 	/* TODO: Set local keyboard indicator LED status */
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(led_flags);
 	return TRUE;
 }
 
@@ -168,6 +172,7 @@ static void tf_post_disconnect(freerdp* instance)
 	                                      tf_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
 	/* TODO : Clean up custom stuff */
+	WINPR_UNUSED(context);
 }
 
 /* RDP main loop.
@@ -245,6 +250,8 @@ static int tf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 
 	tf = (tfContext*) instance->context;
 	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
+	WINPR_UNUSED(tf);
+
 	return 1;
 }
 
@@ -264,6 +271,7 @@ static BOOL tf_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = tf_logon_error_info;
 	/* TODO: Client display set up */
+	WINPR_UNUSED(tf);
 	return TRUE;
 }
 
@@ -276,17 +284,20 @@ static void tf_client_free(freerdp* instance, rdpContext* context)
 		return;
 
 	/* TODO: Client display tear down */
+	WINPR_UNUSED(tf);
 }
 
 static int tf_client_start(rdpContext* context)
 {
 	/* TODO: Start client related stuff */
+	WINPR_UNUSED(context);
 	return 0;
 }
 
 static int tf_client_stop(rdpContext* context)
 {
 	/* TODO: Stop client related stuff */
+	WINPR_UNUSED(context);
 	return 0;
 }
 

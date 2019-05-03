@@ -111,10 +111,12 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 	int cnt;
 	int size;
 	int nbits;
-	int offset;
+	size_t offset;
 	INT16 mag;
-	int k, kp;
-	int kr, krp;
+	UINT32 k;
+	INT32 kp;
+	UINT32 kr;
+	INT32 krp;
 	UINT16 code;
 	UINT32 sign;
 	UINT32 nIdx;
@@ -305,7 +307,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 
 			/* write to output stream */
 
-			offset = (int) (pOutput - pDstData);
+			offset = (pOutput - pDstData);
 			size = run;
 
 			if ((offset + size) > DstSize)
@@ -505,7 +507,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 		}
 	}
 
-	offset = (int) (pOutput - pDstData);
+	offset = (pOutput - pDstData);
 
 	if (offset < DstSize)
 	{
@@ -514,7 +516,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 		pOutput += size;
 	}
 
-	offset = (int) (pOutput - pDstData);
+	offset = (pOutput - pDstData);
 
 	if (offset != DstSize)
 		return -1;

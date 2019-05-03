@@ -31,7 +31,7 @@ endif(NOT WITH_ICU)
 if (WITH_ICU)
 	find_package(ICU REQUIRED i18n uc io)
 	include_directories(${ICU_INCLUDE_DIRS})
-	winpr_library_add(${ICU_LIBRARIES})
+	winpr_library_add_private(${ICU_LIBRARIES})
 endif (WITH_ICU)
 
 winpr_module_add(${CRT_FILES})

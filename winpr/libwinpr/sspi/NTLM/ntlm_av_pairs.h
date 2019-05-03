@@ -24,11 +24,11 @@
 
 #include <winpr/stream.h>
 
-ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairListMaxLength);
+ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList);
 void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList);
-PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair, size_t cbAvPairListMaxLength);
-NTLM_AV_PAIR* ntlm_av_pair_get(void* pAvPairList, size_t avPairListLength, NTLM_AV_ID AvId,
-                               size_t* pcbAvPairListRemainingLength);
+PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair);
+NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList,
+                               NTLM_AV_ID AvId, size_t* pcbAvPairListRemaining);
 
 int ntlm_construct_challenge_target_info(NTLM_CONTEXT* context);
 int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context);

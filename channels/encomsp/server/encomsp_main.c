@@ -110,7 +110,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
 			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;

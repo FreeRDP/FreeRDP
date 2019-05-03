@@ -106,9 +106,6 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data,
 	BYTE a_val;
 	UINT32 tempWidth;
 
-	if (!context || data || (scanline == 0))
-		return FALSE;
-
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
@@ -446,6 +443,13 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, const BYTE* data,
 	UINT32 MaxMessageSize;
 	NSC_MESSAGE* messages;
 	UINT32 PaddedMaxPlaneSize;
+
+	if (!context || !data || !numMessages)
+		return NULL;
+
+	if (maxDataSize < 1024)
+		return NULL;
+
 	k = 0;
 	MaxRegionWidth = 64 * 4;
 	MaxRegionHeight = 64 * 2;
@@ -458,6 +462,9 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, const BYTE* data,
 	                                      height);
 	MaxMessageSize = ByteCount[0] + ByteCount[1] + ByteCount[2] + ByteCount[3] + 20;
 	maxDataSize -= 1024; /* reserve enough space for headers */
+	if (maxDataSize < (*numMessages) * sizeof(NSC_MESSAGE))
+		return NULL;
+
 	messages = (NSC_MESSAGE*) calloc(*numMessages, sizeof(NSC_MESSAGE));
 
 	if (!messages)

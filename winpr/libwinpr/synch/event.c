@@ -74,11 +74,9 @@ static int EventGetFd(HANDLE handle)
 	return event->pipe_fd[0];
 }
 
-static BOOL EventCloseHandle(HANDLE handle)
+static BOOL EventCloseHandle_(WINPR_EVENT* event)
 {
-	WINPR_EVENT* event = (WINPR_EVENT*) handle;
-
-	if (!EventIsHandled(handle))
+	if (!event)
 		return FALSE;
 
 	if (!event->bAttached)
@@ -96,8 +94,19 @@ static BOOL EventCloseHandle(HANDLE handle)
 		}
 	}
 
+	free(event->name);
 	free(event);
 	return TRUE;
+}
+
+static BOOL EventCloseHandle(HANDLE handle)
+{
+	WINPR_EVENT* event = (WINPR_EVENT*) handle;
+
+	if (!EventIsHandled(handle))
+		return FALSE;
+
+	return EventCloseHandle_(event);
 }
 
 static HANDLE_OPS ops =
@@ -127,10 +136,35 @@ static HANDLE_OPS ops =
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,
                     LPCWSTR lpName)
 {
+	HANDLE handle;
+	char* name = NULL;
+
+	if (lpName)
+	{
+		int rc = ConvertFromUnicode(CP_UTF8, 0, lpName, -1, &name, 0, NULL, NULL);
+
+		if (rc < 0)
+			return NULL;
+	}
+
+	handle = CreateEventA(lpEventAttributes, bManualReset, bInitialState, name);
+	free(name);
+	return handle;
+}
+
+HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,
+                    LPCSTR lpName)
+{
 	WINPR_EVENT* event = (WINPR_EVENT*) calloc(1, sizeof(WINPR_EVENT));
+
+	if (lpEventAttributes)
+		WLog_WARN(TAG, "%s [%s] does not support lpEventAttributes", __FUNCTION__, lpName);
 
 	if (!event)
 		return NULL;
+
+	if (lpName)
+		event->name = strdup(lpName);
 
 	event->bAttached = FALSE;
 	event->bManualReset = bManualReset;
@@ -163,35 +197,65 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 	return (HANDLE)event;
 fail:
-	free(event);
+	EventCloseHandle_(event);
 	return NULL;
-}
-
-HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,
-                    LPCSTR lpName)
-{
-	return CreateEventW(lpEventAttributes, bManualReset, bInitialState, NULL);
 }
 
 HANDLE CreateEventExW(LPSECURITY_ATTRIBUTES lpEventAttributes, LPCWSTR lpName, DWORD dwFlags,
                       DWORD dwDesiredAccess)
 {
-	return NULL;
+	BOOL initial = FALSE;
+	BOOL manual = FALSE;
+
+	if (dwFlags & CREATE_EVENT_INITIAL_SET)
+		initial = TRUE;
+
+	if (dwFlags & CREATE_EVENT_MANUAL_RESET)
+		manual = TRUE;
+
+	if (dwDesiredAccess != 0)
+		WLog_WARN(TAG, "%s [%s] does not support dwDesiredAccess 0x%08"PRIx32, __FUNCTION__, lpName,
+		          dwDesiredAccess);
+
+	return CreateEventW(lpEventAttributes, manual, initial, lpName);
 }
 
 HANDLE CreateEventExA(LPSECURITY_ATTRIBUTES lpEventAttributes, LPCSTR lpName, DWORD dwFlags,
                       DWORD dwDesiredAccess)
 {
-	return NULL;
+	BOOL initial = FALSE;
+	BOOL manual = FALSE;
+
+	if (dwFlags & CREATE_EVENT_INITIAL_SET)
+		initial = TRUE;
+
+	if (dwFlags & CREATE_EVENT_MANUAL_RESET)
+		manual = TRUE;
+
+	if (dwDesiredAccess != 0)
+		WLog_WARN(TAG, "%s [%s] does not support dwDesiredAccess 0x%08"PRIx32, __FUNCTION__, lpName,
+		          dwDesiredAccess);
+
+	return CreateEventA(lpEventAttributes, manual, initial, lpName);
 }
 
 HANDLE OpenEventW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
 {
+	/* TODO: Implement */
+	WINPR_UNUSED(dwDesiredAccess);
+	WINPR_UNUSED(bInheritHandle);
+	WINPR_UNUSED(lpName);
+	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
 	return NULL;
 }
 
 HANDLE OpenEventA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 {
+	/* TODO: Implement */
+	WINPR_UNUSED(dwDesiredAccess);
+	WINPR_UNUSED(bInheritHandle);
+	WINPR_UNUSED(lpName);
+	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
 	return NULL;
 }
 

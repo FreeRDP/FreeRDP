@@ -132,7 +132,7 @@ static BOOL decode_percent_encoded_byte(const char* str, const char* end, char* 
 {
 	BOOL valid = TRUE;
 
-	if ((end < str) || (end - str < strlen("%20")))
+	if ((end < str) || ((size_t)(end - str) < strlen("%20")))
 		return FALSE;
 
 	*value = 0;
@@ -244,7 +244,7 @@ static WCHAR* concat_remote_name(const WCHAR* dir, const WCHAR* file)
 	WCHAR* buffer = NULL;
 	len_dir = _wcslen(dir);
 	len_file = _wcslen(file);
-	buffer = calloc(len_dir + 1 + len_file + 1, sizeof(WCHAR));
+	buffer = calloc(len_dir + 1 + len_file + 2, sizeof(WCHAR));
 
 	if (!buffer)
 		return NULL;
@@ -418,17 +418,19 @@ static BOOL process_file_name(const char* local_name, wArrayList* files)
 
 static BOOL process_uri(const char* uri, size_t uri_len, wArrayList* files)
 {
+	const char* prefix = "file://";
 	BOOL result = FALSE;
 	char* name = NULL;
+	const size_t prefixLen = strnlen(prefix, sizeof (prefix));
 	WLog_VRB(TAG, "processing URI: %.*s", uri_len, uri);
 
-	if ((uri_len < strlen("file://")) || strncmp(uri, "file://", strlen("file://")))
+	if ((uri_len < prefixLen) || strncmp(uri, prefix, prefixLen))
 	{
 		WLog_ERR(TAG, "non-'file://' URI schemes are not supported");
 		goto out;
 	}
 
-	name = decode_percent_encoded_string(uri + strlen("file://"), uri_len - strlen("file://"));
+	name = decode_percent_encoded_string(uri + prefixLen, uri_len - prefixLen);
 
 	if (!name)
 		goto out;
@@ -687,13 +689,16 @@ static UINT posix_file_read_seek(struct posix_file* file, UINT64 offset)
 	 * an accurate account of the current file offset and do not call
 	 * lseek() if the client requests file content sequentially.
 	 */
-	if (file->offset == offset)
+	if (offset > INT64_MAX)
+		return ERROR_SEEK;
+
+	if (file->offset == (INT64)offset)
 		return NO_ERROR;
 
 	WLog_VRB(TAG, "file %d force seeking to %"PRIu64", current %"PRIu64, file->fd,
 	         offset, file->offset);
 
-	if (lseek(file->fd, offset, SEEK_SET) < 0)
+	if (lseek(file->fd, (off_t)offset, SEEK_SET) < 0)
 	{
 		int err = errno;
 		WLog_ERR(TAG, "failed to seek file: %s", strerror(err));
