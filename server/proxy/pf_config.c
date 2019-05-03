@@ -38,7 +38,7 @@ char** parse_channels_from_str(const char* str, UINT32* length)
 	char** tokens = calloc(tokens_alloc, sizeof(char*));
 	char* token;
 
-	while ((token = strsep(&s, CHANNELS_SEPERATOR)) != NULL)
+	while ((token = StrSep(&s, CHANNELS_SEPERATOR)) != NULL)
 	{
 		if (tokens_count == tokens_alloc)
 		{
