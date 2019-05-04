@@ -361,6 +361,24 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 		Stream_Read_UINT32(s, windowState->clientAreaHeight); /* clientAreaHeight (4 bytes) */
 	}
 
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
+	{
+		if (Stream_GetRemainingLength(s) < 4)
+			return FALSE;
+
+		Stream_Read_UINT32(s, windowState->windowLeftResizeMargin); /* windowLeftResizeMargin (4 bytes) */
+		Stream_Read_UINT32(s, windowState->windowRightResizeMargin); /* windowRightResizeMargin (4 bytes) */
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
+	{
+		if (Stream_GetRemainingLength(s) < 4)
+			return FALSE;
+
+		Stream_Read_UINT32(s, windowState->windowTopResizeMargin); /* windowTopResizeMargin (4 bytes) */
+		Stream_Read_UINT32(s, windowState->windowBottomResizeMargin); /* windowBottomResizeMargin (4 bytes) */
+	}
+
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
 	{
 		if (Stream_GetRemainingLength(s) < 1)

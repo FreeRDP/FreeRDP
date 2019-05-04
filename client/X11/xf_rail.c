@@ -33,8 +33,6 @@
 #include "xf_window.h"
 #include "xf_rail.h"
 
-#define OBEY_SERVER_WINDOW_MOVES 0
-
 #define TAG CLIENT_TAG("x11")
 
 #ifdef WITH_DEBUG_X11
@@ -380,19 +378,38 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	/* Update Parameters */
 
+	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
+	{
+		DEBUG_X11("resizeMarginX: 0x%x %d, %d", appWindow->handle, windowState->windowLeftResizeMargin, windowState->windowRightResizeMargin);
+		appWindow->windowLeftResizeMargin = windowState->windowLeftResizeMargin;
+		appWindow->windowRightResizeMargin = windowState->windowRightResizeMargin;
+	}
+
+	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
+	{
+		DEBUG_X11("resizeMarginY: 0x%x %d, %d", appWindow->handle, windowState->windowTopResizeMargin, windowState->windowBottomResizeMargin);
+		appWindow->windowTopResizeMargin = windowState->windowTopResizeMargin;
+		appWindow->windowBottomResizeMargin = windowState->windowBottomResizeMargin;
+	}
+
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
 			DEBUG_X11("windowOffset: 0x%x (%d, %d)", appWindow->handle,
 					windowState->windowOffsetX, windowState->windowOffsetY);
-			appWindow->windowOffsetX = windowState->windowOffsetX;
-			appWindow->windowOffsetY = windowState->windowOffsetY;
+			appWindow->windowOffsetX = windowState->windowOffsetX - appWindow->windowLeftResizeMargin;
+			appWindow->windowOffsetY = windowState->windowOffsetY - appWindow->windowTopResizeMargin;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
-		DEBUG_X11("window size: 0x%x (%d, %d)", appWindow->handle, windowState->windowWidth, windowState->windowHeight);
-		appWindow->windowWidth = windowState->windowWidth;
-		appWindow->windowHeight = windowState->windowHeight;
+		DEBUG_X11("window size: 0x%x (%d, %d)", appWindow->handle,
+				windowState->windowWidth, windowState->windowHeight);
+		appWindow->windowWidth = windowState->windowWidth
+				+ appWindow->windowLeftResizeMargin
+				+ appWindow->windowRightResizeMargin;
+		appWindow->windowHeight = windowState->windowHeight
+				+ appWindow->windowTopResizeMargin
+				+ appWindow->windowBottomResizeMargin;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_OWNER)
@@ -562,11 +579,9 @@ static BOOL xf_rail_window_common(rdpContext* context,
 			}
 			else
 			{
-#if OBEY_SERVER_WINDOW_MOVES
 					xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX,
 							appWindow->windowOffsetY, appWindow->windowWidth,
 							appWindow->windowHeight);
-#endif
 			}
 
 			xf_SetWindowVisibilityRects(xfc, appWindow, visibilityRectsOffsetX,
@@ -1046,7 +1061,8 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
 	xfContext* xfc = (xfContext*) context->custom;
 	rdpSettings* settings = xfc->context.settings;
-	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
+	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE
+			| RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED;
 
 	if (settings->AutoReconnectionEnabled)
 		clientStatus.flags |= RAIL_CLIENTSTATUS_AUTORECONNECT;
