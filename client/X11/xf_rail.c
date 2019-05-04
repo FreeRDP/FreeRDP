@@ -70,8 +70,6 @@ static const char* movetype_names[] =
 };
 #endif
 
-#define MOVE_THRESHOLD_MS 1000
-
 struct xf_rail_icon
 {
 	long* data;
