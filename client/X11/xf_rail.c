@@ -354,8 +354,6 @@ static BOOL xf_rail_window_common(rdpContext* context,
 	xfContext* xfc = (xfContext*) context;
 	UINT32 fieldFlags = orderInfo->fieldFlags;
 	BOOL position_or_size_updated = FALSE;
-	struct timespec ts;
-	ULONG64 time_since_move;
 
 	DEBUG_X11("new rail window state, fieldFlags=0x%x, geom= %dx%d+%d+%d",
 			orderInfo->fieldFlags, windowState->windowWidth,
