@@ -1065,7 +1065,7 @@ static UINT rdpgfx_send_map_surface_to_scaled_window_pdu(RdpgfxServerContext* co
         RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(
-	                 RDPGFX_CMDID_MAPSURFACETOWINDOW, 18);
+	                 RDPGFX_CMDID_MAPSURFACETOWINDOW, 26);
 
 	if (!s)
 	{
@@ -1077,8 +1077,8 @@ static UINT rdpgfx_send_map_surface_to_scaled_window_pdu(RdpgfxServerContext* co
 	Stream_Write_UINT64(s, pdu->windowId); /* windowId (8 bytes) */
 	Stream_Write_UINT32(s, pdu->mappedWidth); /* mappedWidth (4 bytes) */
 	Stream_Write_UINT32(s, pdu->mappedHeight); /* mappedHeight (4 bytes) */
-	Stream_Write_UINT32(s, pdu->targetWidth);
-	Stream_Write_UINT32(s, pdu->targetHeight);
+	Stream_Write_UINT32(s, pdu->targetWidth); /* targetWidth (4 bytes) */
+	Stream_Write_UINT32(s, pdu->targetHeight); /* targetHeight  (4 bytes) */
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
@@ -1101,8 +1101,7 @@ static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context,
 
 	Stream_Read_UINT32(s, pdu.queueDepth); /* queueDepth (4 bytes) */
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
-	/* totalFramesDecoded (4 bytes) */
-	Stream_Read_UINT32(s, pdu.totalFramesDecoded);
+	Stream_Read_UINT32(s, pdu.totalFramesDecoded); /* totalFramesDecoded (4 bytes) */
 
 	if (context)
 	{
@@ -1284,7 +1283,7 @@ static UINT rdpgfx_send_map_surface_to_scaled_output_pdu(RdpgfxServerContext* co
         RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(
-	                 RDPGFX_CMDID_MAPSURFACETOSCALEDOUTPUT, 12);
+	                 RDPGFX_CMDID_MAPSURFACETOSCALEDOUTPUT, 20);
 
 	if (!s)
 	{
@@ -1296,8 +1295,8 @@ static UINT rdpgfx_send_map_surface_to_scaled_output_pdu(RdpgfxServerContext* co
 	Stream_Write_UINT16(s, 0); /* reserved (2 bytes). Must be 0 */
 	Stream_Write_UINT32(s, pdu->outputOriginX); /* outputOriginX (4 bytes) */
 	Stream_Write_UINT32(s, pdu->outputOriginY); /* outputOriginY (4 bytes) */
-	Stream_Write_UINT32(s, pdu->targetX);
-	Stream_Write_UINT32(s, pdu->targetY);
+	Stream_Write_UINT32(s, pdu->targetWidth); /* targetWidth (4 bytes) */
+	Stream_Write_UINT32(s, pdu->targetHeight); /* targetHeight (4 bytes) */
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
