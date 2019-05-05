@@ -206,7 +206,6 @@ static UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
         wStream* s)
 {
 	RDPGFX_CAPSET capsSet;
-	UINT32 capsDataLength;
 	RDPGFX_CAPS_CONFIRM_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 	pdu.capsSet = &capsSet;
@@ -218,7 +217,7 @@ static UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	}
 
 	Stream_Read_UINT32(s, capsSet.version); /* version (4 bytes) */
-	Stream_Read_UINT32(s, capsDataLength); /* capsDataLength (4 bytes) */
+	Stream_Read_UINT32(s, capsSet.length); /* capsDataLength (4 bytes) */
 	Stream_Read_UINT32(s, capsSet.flags); /* capsData (4 bytes) */
 	gfx->ConnectionCaps = capsSet;
 	WLog_Print(gfx->log, WLOG_DEBUG, "RecvCapsConfirmPdu: version: 0x%08"PRIX32" flags: 0x%08"PRIX32"",
