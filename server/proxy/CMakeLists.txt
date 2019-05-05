@@ -16,11 +16,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "pfreerdp")
+set(MODULE_NAME "freerdp-proxy")
 set(MODULE_PREFIX "FREERDP_SERVER_PROXY")
 
 set(${MODULE_PREFIX}_SRCS
-  pfreerdp.c
+  freerdp_proxy.c
   pf_context.c
   pf_context.h
   pf_channels.c
