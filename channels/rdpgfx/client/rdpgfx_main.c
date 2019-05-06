@@ -47,70 +47,17 @@
 
 #define TAG CHANNELS_TAG("rdpgfx.client")
 
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
 static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
         const RDPGFX_CAPS_ADVERTISE_PDU* pdu)
 {
 	UINT error = CHANNEL_RC_OK;
 	UINT16 index;
 	RDPGFX_HEADER header;
-	RDPGFX_CAPSET* capsSet;
-	RDPGFX_PLUGIN* gfx;
-	RDPGFX_CHANNEL_CALLBACK* callback;
-	wStream* s;
-	gfx = (RDPGFX_PLUGIN*) context->handle;
-	callback = gfx->listener_callback->channel_callback;
-	header.flags = 0;
-	header.cmdId = RDPGFX_CMDID_CAPSADVERTISE;
-	header.pduLength = RDPGFX_HEADER_SIZE + 2;
-
-	for (index = 0; index < pdu->capsSetCount; index++)
-	{
-		capsSet = &(pdu->capsSets[index]);
-		header.pduLength += RDPGFX_CAPSET_BASE_SIZE + capsSet->length;
-	}
-
-	WLog_Print(gfx->log, WLOG_DEBUG, "SendCapsAdvertisePdu %"PRIu16"", pdu->capsSetCount);
-	s = Stream_New(NULL, header.pduLength);
-
-	if (!s)
-	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	if ((error = rdpgfx_write_header(s, &header)))
-		goto fail;
-
-	/* RDPGFX_CAPS_ADVERTISE_PDU */
-	Stream_Write_UINT16(s, pdu->capsSetCount); /* capsSetCount (2 bytes) */
-
-	for (index = 0; index < pdu->capsSetCount; index++)
-	{
-		capsSet = &(pdu->capsSets[index]);
-		Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
-		Stream_Write_UINT32(s, capsSet->length); /* capsDataLength (4 bytes) */
-		Stream_Write_UINT32(s, capsSet->flags); /* capsData (4 bytes) */
-		Stream_Zero(s, capsSet->length - 4);
-	}
-
-	Stream_SealLength(s);
-	error = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s),
-	                                 Stream_Buffer(s), NULL);
-fail:
-	Stream_Free(s, TRUE);
-	return error;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rdpgfx_send_supported_caps(RDPGFX_CHANNEL_CALLBACK* callback)
-{
-	UINT error = CHANNEL_RC_OK;
-	RDPGFX_PLUGIN* gfx;
-	RdpgfxClientContext* context;
 	RDPGFX_CAPSET* capsSet;
 	RDPGFX_PLUGIN* gfx;
 	RDPGFX_CHANNEL_CALLBACK* callback;
