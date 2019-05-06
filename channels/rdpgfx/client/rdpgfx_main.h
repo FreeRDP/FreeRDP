@@ -73,6 +73,7 @@ struct _RDPGFX_PLUGIN
 	UINT32 TotalDecodedFrames;
 	UINT32 StartDecodingTime;
 	BOOL suspendFrameAcks;
+	BOOL sendFrameAcks;
 
 	wHashTable* SurfaceTable;
 

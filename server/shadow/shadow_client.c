@@ -605,7 +605,7 @@ static BOOL shadow_client_surface_frame_acknowledge(rdpShadowClient* client,
 }
 
 static UINT shadow_client_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
-        RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge)
+        const RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge)
 {
 	rdpShadowClient* client = (rdpShadowClient*)context->custom;
 	shadow_client_common_frame_acknowledge(client, frameAcknowledge->frameId);
@@ -619,7 +619,7 @@ static UINT shadow_client_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
-        RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
+        const RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
 {
 	UINT16 index;
 	rdpSettings* settings = context->rdpcontext->settings;
