@@ -34,9 +34,6 @@
 #include <linux/input.h>
 
 #include <uwac/uwac.h>
-#if defined(CAIRO_FOUND)
-#include <cairo.h>
-#endif
 
 #include "wlfreerdp.h"
 #include "wlf_input.h"
@@ -623,44 +620,8 @@ BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t s
 
 	if (scale)
 	{
-#if defined(CAIRO_FOUND)
-		const double sx = (double)dstWidth / (double)srcWidth;
-		const double sy = (double)dstHeight / (double)srcHeight;
-		cairo_t* cairo_context;
-		cairo_surface_t* csrc, *cdst;
-
-		if ((srcWidth > INT_MAX) || (srcHeight > INT_MAX) || (srcStride > INT_MAX))
-			return FALSE;
-
-		if ((dstWidth > INT_MAX) || (dstHeight > INT_MAX) || (dstStride > INT_MAX))
-			return FALSE;
-
-		csrc = cairo_image_surface_create_for_data((void*)src, CAIRO_FORMAT_ARGB32, (int)srcWidth,
-		        (int)srcHeight, (int)srcStride);
-		cdst = cairo_image_surface_create_for_data(dst, CAIRO_FORMAT_ARGB32, (int)dstWidth,
-		        (int)dstHeight, (int)dstStride);
-
-		if (!csrc || !cdst)
-			goto fail;
-
-		cairo_context = cairo_create(cdst);
-
-		if (!cairo_context)
-			goto fail2;
-
-		cairo_scale(cairo_context, sx, sy);
-		cairo_set_operator(cairo_context, CAIRO_OPERATOR_SOURCE);
-		cairo_set_source_surface(cairo_context, csrc, 0, 0);
-		cairo_paint(cairo_context);
-		rc = TRUE;
-	fail2:
-		cairo_destroy(cairo_context);
-	fail:
-		cairo_surface_destroy(csrc);
-		cairo_surface_destroy(cdst);
-#else
-		WLog_WARN(TAG, "SmartScaling requested but compiled without libcairo support!");
-#endif
+		return freerdp_image_scale(dst, PIXEL_FORMAT_BGRA32, dstStride, 0, 0, dstWidth, dstHeight,
+		                           src, PIXEL_FORMAT_BGRA32, srcStride, 0, 0, srcWidth, srcHeight);
 	}
 	else
 	{
@@ -698,8 +659,6 @@ BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fro
 	if (!context->settings->SmartSizing)
 		return TRUE;
 
-	/* If libcairo is not compiled, smart scaling is ignored. */
-#if defined(CAIRO_FOUND)
 	gdi = context->gdi;
 
 	if (UwacWindowGetDrawingBufferGeometry(wlf->window, &geometry, NULL) != UWAC_SUCCESS)
@@ -719,6 +678,5 @@ BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fro
 		*py /= sy;
 	}
 
-#endif
 	return TRUE;
 }
