@@ -1160,44 +1160,47 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 	if (!file->RASessionId || !file->MachineAddresses)
 		return FALSE;
 
-	if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceSessionId, file->RASessionId) != 0)
+	if (!freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceSessionId, file->RASessionId))
 		return FALSE;
 
 	if (file->RCTicket)
 	{
-		if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceRCTicket, file->RCTicket) != 0)
+		if (!freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceRCTicket, file->RCTicket))
 			return FALSE;
 	}
 	else
 	{
-		if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceRCTicket,
-		                             file->ConnectionString2) != 0)
+		if (!freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceRCTicket,
+		                              file->ConnectionString2))
 			return FALSE;
 	}
 
 	if (file->PassStub)
 	{
-		if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistancePassStub, file->PassStub) != 0)
+		if (!freerdp_set_param_string(settings, FreeRDP_RemoteAssistancePassStub, file->PassStub))
 			return FALSE;
 	}
 
-	if (freerdp_set_param_string(settings, FreeRDP_ServerHostname, file->MachineAddresses[0]) != 0)
+	if (!freerdp_set_param_string(settings, FreeRDP_ServerHostname, file->MachineAddresses[0]))
 		return FALSE;
 
-	if (freerdp_set_param_string(settings, FreeRDP_AssistanceFile, file->filename) != 0)
+	if (!freerdp_set_param_string(settings, FreeRDP_AssistanceFile, file->filename))
 		return FALSE;
 
-	if (freerdp_set_param_string(settings, FreeRDP_RemoteAssistancePassword, file->password) != 0)
+	if (!freerdp_set_param_string(settings, FreeRDP_RemoteAssistancePassword, file->password))
 		return FALSE;
 
 	if (file->Username)
 	{
-		if (freerdp_set_param_string(settings, FreeRDP_Username, file->Username) != 0)
+		if (!freerdp_set_param_string(settings, FreeRDP_Username, file->Username))
 			return FALSE;
 	}
 
 	settings->RemoteAssistanceMode = TRUE;
-	freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->MachinePorts[0]);
+
+	if (!freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->MachinePorts[0]))
+		return FALSE;
+
 	freerdp_target_net_addresses_free(settings);
 	settings->TargetNetAddressCount = file->MachineCount;
 
