@@ -1209,7 +1209,7 @@ static UINT rdpgfx_recv_map_surface_to_scaled_output_pdu(RDPGFX_CHANNEL_CALLBACK
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (Stream_GetRemainingLength(s) < 20)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1219,11 +1219,11 @@ static UINT rdpgfx_recv_map_surface_to_scaled_output_pdu(RDPGFX_CHANNEL_CALLBACK
 	Stream_Read_UINT16(s, pdu.reserved); /* reserved (2 bytes) */
 	Stream_Read_UINT32(s, pdu.outputOriginX); /* outputOriginX (4 bytes) */
 	Stream_Read_UINT32(s, pdu.outputOriginY); /* outputOriginY (4 bytes) */
-	Stream_Read_UINT32(s, pdu.targetX);
-	Stream_Read_UINT32(s, pdu.targetY);
+	Stream_Read_UINT32(s, pdu.targetWidth); /* targetWidth (4 bytes) */
+	Stream_Read_UINT32(s, pdu.targetHeight); /* targetHeight (4 bytes) */
 	WLog_Print(gfx->log, WLOG_DEBUG,
-	           "RecvMapSurfaceToOutputPdu: surfaceId: %"PRIu16" outputOriginX: %"PRIu32" outputOriginY: %"PRIu32" targetX: %"PRIu32" targetY: %"PRIu32,
-	           pdu.surfaceId, pdu.outputOriginX, pdu.outputOriginY, pdu.targetX, pdu.targetY);
+	           "RecvMapSurfaceToScaledOutputPdu: surfaceId: %"PRIu16" outputOriginX: %"PRIu32" outputOriginY: %"PRIu32" targetWidth: %"PRIu32" targetHeight: %"PRIu32,
+	           pdu.surfaceId, pdu.outputOriginX, pdu.outputOriginY, pdu.targetWidth, pdu.targetHeight);
 
 	if (context)
 	{
@@ -1283,7 +1283,7 @@ static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(RDPGFX_CHANNEL_CALLBACK
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 18)
+	if (Stream_GetRemainingLength(s) < 26)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1293,11 +1293,11 @@ static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(RDPGFX_CHANNEL_CALLBACK
 	Stream_Read_UINT64(s, pdu.windowId); /* windowId (8 bytes) */
 	Stream_Read_UINT32(s, pdu.mappedWidth); /* mappedWidth (4 bytes) */
 	Stream_Read_UINT32(s, pdu.mappedHeight); /* mappedHeight (4 bytes) */
-	Stream_Read_UINT32(s, pdu.targetWidth);
-	Stream_Read_UINT32(s, pdu.targetHeight);
+	Stream_Read_UINT32(s, pdu.targetWidth); /* targetWidth (4 bytes) */
+	Stream_Read_UINT32(s, pdu.targetHeight); /* targetHeight (4 bytes) */
 	WLog_Print(gfx->log, WLOG_DEBUG,
-	           "RecvMapSurfaceToWindowPdu: surfaceId: %"PRIu16" windowId: 0x%016"PRIX64" mappedWidth: %"PRIu32" mappedHeight: %"PRIu32"",
-	           pdu.surfaceId, pdu.windowId, pdu.mappedWidth, pdu.mappedHeight);
+	           "RecvMapSurfaceToScaledWindowPdu: surfaceId: %"PRIu16" windowId: 0x%016"PRIX64" mappedWidth: %"PRIu32" mappedHeight: %"PRIu32" targetWidth: %"PRIu32" targetHeight: %"PRIu32"",
+	           pdu.surfaceId, pdu.windowId, pdu.mappedWidth, pdu.mappedHeight, pdu.targetWidth, pdu.targetHeight);
 
 	if (context && context->MapSurfaceToScaledWindow)
 	{
@@ -1310,7 +1310,6 @@ static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(RDPGFX_CHANNEL_CALLBACK
 
 	return error;
 }
-
 
 /**
  * Function description

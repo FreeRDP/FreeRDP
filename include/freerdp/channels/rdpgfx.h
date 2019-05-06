@@ -321,8 +321,8 @@ struct _RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU
 	UINT16 reserved;
 	UINT32 outputOriginX;
 	UINT32 outputOriginY;
-	UINT32 targetX;
-	UINT32 targetY;
+	UINT32 targetWidth;
+	UINT32 targetHeight;
 };
 typedef struct _RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU
 	RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU;
