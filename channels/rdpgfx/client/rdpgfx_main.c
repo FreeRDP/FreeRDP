@@ -186,11 +186,6 @@ static UINT rdpgfx_send_supported_caps(RDPGFX_CHANNEL_CALLBACK* callback)
 		if (gfx->ThinClient)
 			caps10Flags |= RDPGFX_CAPS_FLAG_AVC_THINCLIENT;
 
-		/* Reports from Remmina suggest that current H264 decoder settings do
-		 * not work with newer GFX protocol versions.
-		 * Need to investigate this.
-		 * Until resolved, disable the newer protocol versions. */
-#if 0
 		capsSet = &capsSets[pdu.capsSetCount++];
 		capsSet->version = RDPGFX_CAPVERSION_103;
 		capsSet->length = 0x4;
@@ -203,16 +198,10 @@ static UINT rdpgfx_send_supported_caps(RDPGFX_CHANNEL_CALLBACK* callback)
 		capsSet->version = RDPGFX_CAPVERSION_105;
 		capsSet->length = 0x4;
 		capsSet->flags = caps10Flags;
-		/* TODO: Until  RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU and
-		 * RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU are not implemented do not
-		 * announce the following version */
-#if 0
 		capsSet = &capsSets[pdu.capsSetCount++];
 		capsSet->version = RDPGFX_CAPVERSION_106;
 		capsSet->length = 0x4;
 		capsSet->flags = caps10Flags;
-#endif
-#endif
 	}
 
 	if (context)
@@ -684,6 +673,9 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		case RDPGFX_CAPVERSION_10:
 		case RDPGFX_CAPVERSION_102:
 		case RDPGFX_CAPVERSION_103:
+		case RDPGFX_CAPVERSION_104:
+		case RDPGFX_CAPVERSION_105:
+		case RDPGFX_CAPVERSION_106:
 			if (gfx->SendQoeAck)
 			{
 				RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe;

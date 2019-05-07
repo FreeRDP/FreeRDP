@@ -51,6 +51,10 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
                      UINT32 width, UINT32 height);
 
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx);
+void xf_graphics_pipeline_init_ex(xfContext* xfc, RdpgfxClientContext* gfx,
+                                  pcRdpgfxMapWindowForSurface map,
+                                  pcRdpgfxUnmapWindowForSurface unmap,
+                                  pcRdpgfxUpdateSurfaceArea update);
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx);
 
 #endif /* FREERDP_CLIENT_X11_GFX_H */

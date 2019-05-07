@@ -100,13 +100,11 @@ fail:
 static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	UINT32 nXDst, nYDst;
-	UINT32 nXSrc, nYSrc;
-	UINT16 width, height;
 	UINT32 surfaceX, surfaceY;
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* rects;
 	UINT32 i, nbRects;
+	double sx, sy;
 	rdpUpdate* update = gdi->context->update;
 
 	if (gdi->suppressOutput)
@@ -120,6 +118,8 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	surfaceRect.bottom = surface->height;
 	region16_intersect_rect(&(surface->invalidRegion),
 	                        &(surface->invalidRegion), &surfaceRect);
+	sx = surface->outputTargetWidth / (double)surface->width;
+	sy = surface->outputTargetHeight / (double)surface->height;
 
 	if (!(rects = region16_rects(&surface->invalidRegion, &nbRects)) || !nbRects)
 		return CHANNEL_RC_OK;
@@ -129,21 +129,22 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 
 	for (i = 0; i < nbRects; i++)
 	{
-		nXSrc = rects[i].left;
-		nYSrc = rects[i].top;
-		nXDst = surfaceX + nXSrc;
-		nYDst = surfaceY + nYSrc;
-		width = rects[i].right - rects[i].left;
-		height = rects[i].bottom - rects[i].top;
+		const UINT32 nXSrc = rects[i].left;
+		const UINT32 nYSrc = rects[i].top;
+		const UINT32 nXDst = surfaceX + nXSrc * sx;
+		const UINT32 nYDst = surfaceY + nYSrc * sy;
+		const UINT32 swidth = rects[i].right - rects[i].left;
+		const UINT32 sheight = rects[i].bottom - rects[i].top;
+		const UINT32 dwidth = swidth * sx;
+		const UINT32 dheight = sheight * sy;
 
-		if (!freerdp_image_copy(gdi->primary_buffer, gdi->primary->hdc->format,
-		                        gdi->stride,
-		                        nXDst, nYDst, width, height,
-		                        surface->data, surface->format,
-		                        surface->scanline, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
+		if (!freerdp_image_scale(gdi->primary_buffer, gdi->dstFormat,
+		                         gdi->stride, nXDst, nYDst, dwidth, dheight,
+		                         surface->data, surface->format,
+		                         surface->scanline, nXSrc, nYSrc, swidth, sheight))
 			return CHANNEL_RC_NULL_DATA;
 
-		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, width, height);
+		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, dwidth, dheight);
 	}
 
 	if (!IFCALLRESULT(FALSE, update->EndPaint, gdi->context))
@@ -175,10 +176,20 @@ static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 	{
 		surface = (gdiGfxSurface*) context->GetSurfaceData(context, pSurfaceIds[index]);
 
-		if (!surface || !surface->outputMapped)
+		if (!surface)
 			continue;
 
-		status = gdi_OutputUpdate(gdi, surface);
+		/* Already handled in UpdateSurfaceArea callbacks */
+		if (context->UpdateSurfaceArea)
+		{
+			if (surface->windowId != 0)
+				continue;
+		}
+
+		status = ERROR_INTERNAL_ERROR;
+
+		if (surface->outputMapped)
+			status = gdi_OutputUpdate(gdi, surface);
 
 		if (status != CHANNEL_RC_OK)
 			break;
@@ -612,6 +623,41 @@ fail:
 #endif
 }
 
+static BOOL gdi_apply_alpha(BYTE* data, UINT32 format, UINT32 stride,
+                            RECTANGLE_16* rect, UINT32 startOffsetX, UINT32 count, BYTE a)
+{
+	UINT32 y;
+	UINT32 written = 0;
+	BOOL first = TRUE;
+	const UINT32 bpp = GetBytesPerPixel(format);
+
+	for (y = rect->top; y < rect->bottom; y++)
+	{
+		UINT32 x;
+		BYTE* line = &data[stride * y];
+
+		for (x = first ? rect->left + startOffsetX : rect->left; x < rect->right; x++)
+		{
+			UINT32 color;
+			BYTE r, g, b;
+			BYTE* src;
+
+			if (written == count)
+				return TRUE;
+
+			src = &line[x * bpp];
+			color = ReadColor(src, format);
+			SplitColor(color, format, &r, &g, &b, NULL, NULL);
+			color = FreeRDPGetColor(format, r, g, b, a);
+			WriteColor(src, format, color);
+			written ++;
+		}
+
+		first = FALSE;
+	}
+
+	return TRUE;
+}
 /**
  * Function description
  *
@@ -621,9 +667,15 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
                                      const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT status = CHANNEL_RC_OK;
-	UINT32 color;
+	UINT16 alphaSig, compressed;
 	gdiGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
+	wStream s;
+	Stream_StaticInit(&s, cmd->data, cmd->length);
+
+	if (Stream_GetRemainingLength(&s) < 4)
+		return ERROR_INVALID_DATA;
+
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
 	if (!surface)
@@ -633,13 +685,85 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 		return ERROR_NOT_FOUND;
 	}
 
-	WLog_WARN(TAG, "TODO gdi_SurfaceCommand_Alpha: status: %"PRIu32"", status);
-	/* fill with green for now to distinguish from the rest */
-	color = FreeRDPGetColor(surface->format, 0x00, 0xFF, 0x00, 0xFF);
+	Stream_Read_UINT16(&s, alphaSig);
+	Stream_Read_UINT16(&s, compressed);
 
-	if (!freerdp_image_fill(surface->data, surface->format, surface->scanline,
-	                        cmd->left, cmd->top, cmd->width, cmd->height, color))
-		return ERROR_INTERNAL_ERROR;
+	if (alphaSig != 0x414C)
+		return ERROR_INVALID_DATA;
+
+	if (compressed == 0)
+	{
+		UINT32 x, y;
+
+		if (Stream_GetRemainingLength(&s) < cmd->height * cmd->width)
+			return ERROR_INVALID_DATA;
+
+		for (y = cmd->top; y < cmd->top + cmd->height; y++)
+		{
+			BYTE* line = &surface->data[surface->scanline * y];
+
+			for (x = cmd->left; x < cmd->left + cmd->width; x++)
+			{
+				UINT32 color;
+				BYTE r, g, b, a;
+				BYTE* src = &line[x * GetBytesPerPixel(surface->format)];
+				Stream_Read_UINT8(&s, a);
+				color = ReadColor(src, surface->format);
+				SplitColor(color, surface->format, &r, &g, &b, NULL, NULL);
+				color = FreeRDPGetColor(surface->format, r, g, b, a);
+				WriteColor(src, surface->format, color);
+			}
+		}
+	}
+	else
+	{
+		UINT32 startOffsetX = 0;
+		RECTANGLE_16 rect;
+		rect.left = cmd->left;
+		rect.top = cmd->top;
+		rect.right = cmd->left + cmd->width;
+		rect.bottom = cmd->top + cmd->height;
+
+		while (rect.top < rect.bottom)
+		{
+			UINT32 count;
+			BYTE a;
+
+			if (Stream_GetRemainingLength(&s) < 2)
+				return ERROR_INVALID_DATA;
+
+			Stream_Read_UINT8(&s, a);
+			Stream_Read_UINT8(&s, count);
+
+			if (count >= 0xFF)
+			{
+				if (Stream_GetRemainingLength(&s) < 2)
+					return ERROR_INVALID_DATA;
+
+				Stream_Read_UINT16(&s, count);
+
+				if (count >= 0xFFFF)
+				{
+					if (Stream_GetRemainingLength(&s) < 4)
+						return ERROR_INVALID_DATA;
+
+					Stream_Read_UINT32(&s, count);
+				}
+			}
+
+			if (!gdi_apply_alpha(surface->data, surface->format, surface->scanline, &rect, startOffsetX, count,
+			                     a))
+				return ERROR_INTERNAL_ERROR;
+
+			startOffsetX += count;
+
+			while (startOffsetX >= cmd->width)
+			{
+				startOffsetX -= cmd->width;
+				rect.top++;
+			}
+		}
+	}
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;
@@ -896,6 +1020,9 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 
 	if (surface)
 	{
+		if (surface->windowId != 0)
+			rc = IFCALLRESULT(CHANNEL_RC_OK, context->UnmapWindowForSurface, context, surface->windowId);
+
 #ifdef WITH_GFX_H264
 		h264_context_free(surface->h264);
 #endif
@@ -1227,6 +1354,8 @@ static UINT gdi_MapSurfaceToOutput(RdpgfxClientContext* context,
 	surface->outputMapped = TRUE;
 	surface->outputOriginX = surfaceToOutput->outputOriginX;
 	surface->outputOriginY = surfaceToOutput->outputOriginY;
+	surface->outputTargetWidth = surface->width;
+	surface->outputTargetHeight = surface->height;
 	region16_clear(&surface->invalidRegion);
 	rc = CHANNEL_RC_OK;
 fail:
@@ -1249,7 +1378,8 @@ static UINT gdi_MapSurfaceToScaledOutput(RdpgfxClientContext* context,
 	surface->outputMapped = TRUE;
 	surface->outputOriginX = surfaceToOutput->outputOriginX;
 	surface->outputOriginY = surfaceToOutput->outputOriginY;
-	// TODO: Target x,y
+	surface->outputTargetWidth = surfaceToOutput->targetWidth;
+	surface->outputTargetHeight = surfaceToOutput->targetHeight;
 	region16_clear(&surface->invalidRegion);
 	rc = CHANNEL_RC_OK;
 fail:
@@ -1265,16 +1395,74 @@ fail:
 static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
                                    const RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow)
 {
-	return CHANNEL_RC_OK;
+	UINT rc = ERROR_INTERNAL_ERROR;
+	gdiGfxSurface* surface;
+	EnterCriticalSection(&context->mux);
+	surface = (gdiGfxSurface*) context->GetSurfaceData(context,
+	          surfaceToWindow->surfaceId);
+
+	if (!surface)
+		goto fail;
+
+	if (surface->windowId != 0)
+	{
+		if (surface->windowId != surfaceToWindow->windowId)
+			goto fail;
+	}
+
+	surface->windowId = surfaceToWindow->windowId;
+	surface->width = surfaceToWindow->mappedWidth;
+	surface->height = surfaceToWindow->mappedHeight;
+	surface->outputTargetWidth = surfaceToWindow->mappedWidth;
+	surface->outputTargetHeight = surfaceToWindow->mappedHeight;
+	rc = IFCALLRESULT(CHANNEL_RC_OK, context->MapWindowForSurface, context,
+	                  surfaceToWindow->surfaceId,
+	                  surfaceToWindow->windowId);
+fail:
+	LeaveCriticalSection(&context->mux);
+	return rc;
 }
 
 static UINT gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
         const RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU* surfaceToWindow)
 {
-	return CHANNEL_RC_OK;
+	UINT rc = ERROR_INTERNAL_ERROR;
+	gdiGfxSurface* surface;
+	EnterCriticalSection(&context->mux);
+	surface = (gdiGfxSurface*) context->GetSurfaceData(context,
+	          surfaceToWindow->surfaceId);
+
+	if (!surface)
+		goto fail;
+
+	if (surface->windowId != 0)
+	{
+		if (surface->windowId != surfaceToWindow->windowId)
+			goto fail;
+	}
+
+	surface->windowId = surfaceToWindow->windowId;
+	surface->width = surfaceToWindow->mappedWidth;
+	surface->height = surfaceToWindow->mappedHeight;
+	surface->outputTargetWidth = surfaceToWindow->targetWidth;
+	surface->outputTargetHeight = surfaceToWindow->targetHeight;
+	rc = IFCALLRESULT(CHANNEL_RC_OK, context->MapWindowForSurface, context,
+	                  surfaceToWindow->surfaceId,
+	                  surfaceToWindow->windowId);
+fail:
+	LeaveCriticalSection(&context->mux);
+	return rc;
 }
 
 BOOL gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx)
+{
+	return gdi_graphics_pipeline_init_ex(gdi, gfx, NULL, NULL, NULL);
+}
+
+BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
+                                   pcRdpgfxMapWindowForSurface map,
+                                   pcRdpgfxUnmapWindowForSurface unmap,
+                                   pcRdpgfxUpdateSurfaceArea update)
 {
 	if (!gdi || !gfx)
 		return FALSE;
@@ -1299,6 +1487,9 @@ BOOL gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx)
 	gfx->MapSurfaceToScaledOutput = gdi_MapSurfaceToScaledOutput;
 	gfx->MapSurfaceToScaledWindow = gdi_MapSurfaceToScaledWindow;
 	gfx->UpdateSurfaces = gdi_UpdateSurfaces;
+	gfx->MapWindowForSurface = map;
+	gfx->UnmapWindowForSurface = unmap;
+	gfx->UpdateSurfaceArea = update;
 	InitializeCriticalSection(&gfx->mux);
 	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER");
 	return TRUE;
