@@ -636,8 +636,8 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 	Stream_Read_UINT16(s, updateType); /* updateType (2 bytes) */
 	WLog_Print(update->log, WLOG_TRACE, "%s Update Data PDU", UPDATE_TYPE_STRINGS[updateType]);
 
-	if (!IFCALLRESULT(TRUE, update->BeginPaint, context))
-		return FALSE;
+	if (!update_begin_paint(update))
+		goto fail;
 
 	switch (updateType)
 	{
@@ -652,7 +652,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 				if (!bitmap_update)
 				{
 					WLog_ERR(TAG, "UPDATE_TYPE_BITMAP - update_read_bitmap_update() failed");
-					return FALSE;
+					goto fail;
 				}
 
 				rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, bitmap_update);
@@ -667,7 +667,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 				if (!palette_update)
 				{
 					WLog_ERR(TAG, "UPDATE_TYPE_PALETTE - update_read_palette() failed");
-					return FALSE;
+					goto fail;
 				}
 
 				rc = IFCALLRESULT(FALSE, update->Palette, context, palette_update);
@@ -684,14 +684,16 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 			break;
 	}
 
+fail:
+
+	if (!update_end_paint(update))
+		rc = FALSE;
+
 	if (!rc)
 	{
 		WLog_ERR(TAG, "UPDATE_TYPE %s [%"PRIu16"] failed", update_type_to_string(updateType), updateType);
 		return FALSE;
 	}
-
-	if (!IFCALLRESULT(FALSE, update->EndPaint, context))
-		return FALSE;
 
 	return TRUE;
 }
@@ -764,13 +766,16 @@ void update_post_disconnect(rdpUpdate* update)
 	update->initialState = TRUE;
 }
 
-static BOOL update_begin_paint(rdpContext* context)
+static BOOL _update_begin_paint(rdpContext* context)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
 
 	if (update->us)
-		update->EndPaint(context);
+	{
+		if (!update_end_paint(update))
+			return FALSE;
+	}
 
 	s = fastpath_update_pdu_init_new(context->rdp->fastpath);
 
@@ -785,7 +790,7 @@ static BOOL update_begin_paint(rdpContext* context)
 	return TRUE;
 }
 
-static BOOL update_end_paint(rdpContext* context)
+static BOOL _update_end_paint(rdpContext* context)
 {
 	wStream* s;
 	int headerLength;
@@ -821,20 +826,14 @@ static void update_flush(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
-		update->EndPaint(context);
-		update->BeginPaint(context);
+		update_end_paint(update);
+		update_begin_paint(update);
 	}
 }
 
 static void update_force_flush(rdpContext* context)
 {
-	rdpUpdate* update = context->update;
-
-	if (update->numberOrders > 0)
-	{
-		update->EndPaint(context);
-		update->BeginPaint(context);
-	}
+	update_flush(context);
 }
 
 static BOOL update_check_flush(rdpContext* context, int size)
@@ -845,7 +844,7 @@ static BOOL update_check_flush(rdpContext* context, int size)
 
 	if (!update->us)
 	{
-		update->BeginPaint(context);
+		update_begin_paint(update);
 		return FALSE;
 	}
 
@@ -2080,8 +2079,8 @@ static BOOL update_send_set_keyboard_ime_status(rdpContext* context,
 
 void update_register_server_callbacks(rdpUpdate* update)
 {
-	update->BeginPaint = update_begin_paint;
-	update->EndPaint = update_end_paint;
+	update->BeginPaint = _update_begin_paint;
+	update->EndPaint = _update_end_paint;
 	update->SetBounds = update_set_bounds;
 	update->Synchronize = update_send_synchronize;
 	update->DesktopResize = update_send_desktop_resize;
@@ -2095,7 +2094,6 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SetKeyboardImeStatus = update_send_set_keyboard_ime_status;
 	update->SaveSessionInfo = rdp_send_save_session_info;
 	update->ServerStatusInfo = rdp_send_server_status_info;
-
 	update->primary->DstBlt = update_send_dstblt;
 	update->primary->PatBlt = update_send_patblt;
 	update->primary->ScrBlt = update_send_scrblt;
@@ -2103,7 +2101,6 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->primary->LineTo = update_send_line_to;
 	update->primary->MemBlt = update_send_memblt;
 	update->primary->GlyphIndex = update_send_glyph_index;
-
 	update->secondary->CacheBitmap = update_send_cache_bitmap;
 	update->secondary->CacheBitmapV2 = update_send_cache_bitmap_v2;
 	update->secondary->CacheBitmapV3 = update_send_cache_bitmap_v3;
@@ -2111,10 +2108,8 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->secondary->CacheGlyph = update_send_cache_glyph;
 	update->secondary->CacheGlyphV2 = update_send_cache_glyph_v2;
 	update->secondary->CacheBrush = update_send_cache_brush;
-
 	update->altsec->CreateOffscreenBitmap = update_send_create_offscreen_bitmap_order;
 	update->altsec->SwitchSurface = update_send_switch_surface_order;
-
 	update->pointer->PointerSystem = update_send_pointer_system;
 	update->pointer->PointerPosition = update_send_pointer_position;
 	update->pointer->PointerColor = update_send_pointer_color;
@@ -2164,6 +2159,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		return NULL;
 
 	update->log = WLog_Get("com.freerdp.core.update");
+	InitializeCriticalSection(&(update->mux));
 	update->pointer = (rdpPointerUpdate*) calloc(1, sizeof(rdpPointerUpdate));
 
 	if (!update->pointer)
@@ -2241,6 +2237,35 @@ void update_free(rdpUpdate* update)
 		}
 
 		MessageQueue_Free(update->queue);
+		DeleteCriticalSection(&update->mux);
 		free(update);
 	}
+}
+
+
+BOOL update_begin_paint(rdpUpdate* update)
+{
+	if (!update)
+		return FALSE;
+
+	EnterCriticalSection(&update->mux);
+
+	if (!update->BeginPaint)
+		return TRUE;
+
+	return update->BeginPaint(update->context);
+}
+
+BOOL update_end_paint(rdpUpdate* update)
+{
+	BOOL rc = FALSE;
+
+	if (!update)
+		return FALSE;
+
+	if (update->EndPaint)
+		rc = update->EndPaint(update->context);
+
+	LeaveCriticalSection(&update->mux);
+	return rc;
 }

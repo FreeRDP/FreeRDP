@@ -64,4 +64,7 @@ FREERDP_LOCAL void update_register_server_callbacks(rdpUpdate* update);
 FREERDP_LOCAL void update_register_client_callbacks(rdpUpdate* update);
 FREERDP_LOCAL int update_process_messages(rdpUpdate* update);
 
+FREERDP_LOCAL BOOL update_begin_paint(rdpUpdate* update);
+FREERDP_LOCAL BOOL update_end_paint(rdpUpdate* update);
+
 #endif /* FREERDP_LIB_CORE_UPDATE_H */
