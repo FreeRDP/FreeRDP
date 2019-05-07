@@ -258,8 +258,22 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RdpgfxClientContext* context,
 	UINT error;
 	wStream* s;
 	RDPGFX_HEADER header;
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) context->handle;
-	RDPGFX_CHANNEL_CALLBACK* callback = gfx->listener_callback->channel_callback;
+	RDPGFX_PLUGIN* gfx;
+	RDPGFX_CHANNEL_CALLBACK* callback;
+
+	if (!context || !pdu)
+		return ERROR_BAD_ARGUMENTS;
+
+	gfx = (RDPGFX_PLUGIN*) context->handle;
+
+	if (!gfx)
+		return ERROR_BAD_CONFIGURATION;
+
+	callback = gfx->listener_callback->channel_callback;
+
+	if (!callback)
+		return ERROR_BAD_CONFIGURATION;
+
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_FRAMEACKNOWLEDGE;
 	header.pduLength = RDPGFX_HEADER_SIZE + 12;
