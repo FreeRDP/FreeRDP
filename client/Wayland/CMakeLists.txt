@@ -37,16 +37,7 @@ set(${MODULE_PREFIX}_SRCS
 	wlf_channels.h
 	)
 
-find_package(Cairo)
-
 list (APPEND ${MODULE_PREFIX}_LIBS freerdp-client freerdp uwac)
-if (CAIRO_FOUND)
-    add_definitions(-DCAIRO_FOUND=1)
-    include_directories(${CAIRO_INCLUDE_DIR})
-    list(APPEND ${MODULE_PREFIX}_LIBS ${CAIRO_LIBRARY})
-else(CAIRO_FOUND)
-    message(WARNING "libcairo not detected, compiling without wayland smart scaling support!")
-endif(CAIRO_FOUND)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 

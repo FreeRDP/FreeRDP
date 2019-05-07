@@ -79,6 +79,28 @@ macro (freerdp_definition_add)
 		 set (LIBFREERDP_DEFINITIONS ${LIBFREERDP_DEFINITIONS} PARENT_SCOPE)
 endmacro()
 
+if (WITH_SWSCALE)
+    find_package(SWScale REQUIRED)
+endif(WITH_SWSCALE)
+if (WITH_CAIRO)
+    find_package(Cairo REQUIRED)
+endif(WITH_CAIRO)
+
+if (SWScale_FOUND)
+    add_definitions(-DSWSCALE_FOUND=1)
+    include_directories(${SWScale_INCLUDE_DIR})
+    freerdp_library_add(${SWScale_LIBRARY})
+else(SWScale_FOUND)
+
+    if (CAIRO_FOUND)
+        add_definitions(-DCAIRO_FOUND=1)
+        include_directories(${CAIRO_INCLUDE_DIR})
+        freerdp_library_add(${CAIRO_LIBRARY})
+    else(CAIRO_FOUND)
+        message(WARNING "neigter swscale nor libcairo detected, compiling without image scaling support!")
+    endif(CAIRO_FOUND)
+endif(SWScale_FOUND)
+
 set(${MODULE_PREFIX}_SUBMODULES
 	utils
 	common

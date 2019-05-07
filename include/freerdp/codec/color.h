@@ -752,7 +752,7 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
  * @return           The converted pixel color in dstFormat representation
  */
 static INLINE UINT32 FreeRDPConvertColor(UINT32 color, UINT32 srcFormat,
-                                  UINT32 dstFormat, const gdiPalette* palette)
+        UINT32 dstFormat, const gdiPalette* palette)
 {
 	BYTE r = 0;
 	BYTE g = 0;
@@ -861,6 +861,32 @@ FREERDP_API BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
                                     const BYTE* pSrcData, DWORD SrcFormat,
                                     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
                                     const gdiPalette* palette, UINT32 flags);
+
+/***
+ *
+ * @param pDstData   destination buffer
+ * @param DstFormat  destination buffer format
+ * @param nDstStep   destination buffer stride (line in bytes) 0 for default
+ * @param nXDst      destination buffer offset x
+ * @param nYDst      destination buffer offset y
+ * @param nDstWidth  width of destination in pixels
+ * @param nDstHeight height of destination in pixels
+ * @param pSrcData   source buffer
+ * @param SrcFormat  source buffer format
+ * @param nSrcStep   source buffer stride (line in bytes) 0 for default
+ * @param nXSrc      source buffer x offset in pixels
+ * @param nYSrc      source buffer y offset in pixels
+ * @param nSrcWidth  width of source in pixels
+ * @param nSrcHeight height of source in pixels
+ *
+ * @return          TRUE if success, FALSE otherwise
+ */
+FREERDP_API BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat,
+                                     UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                                     UINT32 nDstWidth, UINT32 nDstHeight,
+                                     const BYTE* pSrcData, DWORD SrcFormat,
+                                     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                                     UINT32 nSrcWidth, UINT32 nSrcHeight);
 
 /***
  *
