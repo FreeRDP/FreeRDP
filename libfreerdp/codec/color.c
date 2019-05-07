@@ -608,32 +608,42 @@ BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
                          UINT32 nXSrc, UINT32 nYSrc, UINT32 nSrcWidth, UINT32 nSrcHeight)
 {
 	BOOL rc = FALSE;
-	const BYTE* src = &pSrcData[nXSrc * 4 + nYSrc * nSrcStep];
-	BYTE* dst = &pDstData[nXDst * 4 + nYDst * nDstStep];
+	const BYTE* src = &pSrcData[nXSrc * GetBytesPerPixel(SrcFormat) + nYSrc * nSrcStep];
+	BYTE* dst = &pDstData[nXDst * GetBytesPerPixel(DstFormat) + nYDst * nDstStep];
+
+	/* direct copy is much faster than scaling, so check if we can simply copy... */
+	if ((nDstWidth == nSrcWidth) && (nDstHeight == nSrcHeight))
+	{
+		return freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
+		                          pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc,
+		                          NULL, FREERDP_FLIP_NONE);
+	}
+	else
 #if defined(SWSCALE_FOUND)
 	{
 		int res;
 		struct SwsContext* resize;
 		int srcFormat = av_format_for_buffer(SrcFormat);
 		int dstFormat = av_format_for_buffer(DstFormat);
-		const int srcStep[1] = { nSrcStep };
-		const int dstStep[1] = { nDstStep };
+		const int srcStep[1] = { (int)nSrcStep };
+		const int dstStep[1] = { (int)nDstStep };
 
 		if ((srcFormat == AV_PIX_FMT_NONE) || (dstFormat == AV_PIX_FMT_NONE))
 			return FALSE;
 
-		resize = sws_getContext(nSrcWidth + nXSrc, nSrcHeight + nYSrc, srcFormat,
-		                        nDstWidth + nXDst, nDstHeight + nYDst, dstFormat,
-		                        SWS_BICUBIC, NULL, NULL, NULL);
+		resize = sws_getContext((int)nSrcWidth, (int)nSrcHeight, srcFormat,
+		                        (int)nDstWidth, (int)nDstHeight, dstFormat,
+		                        SWS_BILINEAR, NULL, NULL, NULL);
 
 		if (!resize)
 			goto fail;
 
-		res = sws_scale(resize, &pSrcData, srcStep, 0, nSrcHeight + nYSrc, &pDstData, dstStep);
-		rc = (res == (nDstHeight + nYDst));
+		res = sws_scale(resize, &src, srcStep, 0, (int)nSrcHeight, &dst, dstStep);
+		rc = (res == ((int)nDstHeight));
 	fail:
 		sws_freeContext(resize);
 	}
+
 #elif defined(CAIRO_FOUND)
 	{
 		const double sx = (double)nDstWidth / (double)nSrcWidth;
@@ -672,15 +682,9 @@ BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
 		cairo_surface_destroy(cdst);
 	}
 #else
-
-	if ((nDstWidth == nSrcWidth) && (nDstHeight == nSrcHeight))
 	{
-		return freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
-		                          pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc,
-		                          NULL, FREERDP_FLIP_NONE);
+		WLog_WARN(TAG, "SmartScaling requested but compiled without libcairo support!");
 	}
-
-	WLog_WARN(TAG, "SmartScaling requested but compiled without libcairo support!");
 #endif
 	return rc;
 }
