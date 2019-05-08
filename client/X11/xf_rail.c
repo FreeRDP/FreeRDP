@@ -611,139 +611,6 @@ static xfRailIcon* RailIconCache_Lookup(xfRailIconCache* cache,
 }
 
 /*
- * DIB color palettes are arrays of RGBQUAD structs with colors in BGRX format.
- * They are used only by 1, 2, 4, and 8-bit bitmaps.
- */
-static void fill_gdi_palette_for_icon(ICON_INFO* iconInfo, gdiPalette* palette)
-{
-	UINT32 i;
-	palette->format = PIXEL_FORMAT_BGRX32;
-	ZeroMemory(palette->palette, sizeof(palette->palette));
-
-	if (!iconInfo->cbColorTable)
-		return;
-
-	if ((iconInfo->cbColorTable % 4 != 0) || (iconInfo->cbColorTable / 4 > 256))
-	{
-		WLog_WARN(TAG, "weird palette size: %u", iconInfo->cbColorTable);
-		return;
-	}
-
-	for (i = 0; i < iconInfo->cbColorTable / 4; i++)
-	{
-		palette->palette[i] = ReadColor(&iconInfo->colorTable[4 * i], palette->format);
-	}
-}
-
-static BOOL convert_icon_color_to_argb(ICON_INFO* iconInfo, BYTE* argbPixels)
-{
-	DWORD format;
-	gdiPalette palette;
-
-	/*
-	 * Color formats used by icons are DIB bitmap formats (2-bit format
-	 * is not used by MS-RDPERP). Note that 16-bit is RGB555, not RGB565,
-	 * and that 32-bit format uses BGRA order.
-	 */
-	switch (iconInfo->bpp)
-	{
-		case 1:
-		case 4:
-			/*
-			 * These formats are not supported by freerdp_image_copy().
-			 * PIXEL_FORMAT_MONO and PIXEL_FORMAT_A4 are *not* correct
-			 * color formats for this. Please fix freerdp_image_copy()
-			 * if you came here to fix a broken icon of some weird app
-			 * that still uses 1 or 4bpp format in the 21st century.
-			 */
-			WLog_WARN(TAG, "1bpp and 4bpp icons are not supported");
-			return FALSE;
-
-		case 8:
-			format = PIXEL_FORMAT_RGB8;
-			break;
-
-		case 16:
-			format = PIXEL_FORMAT_RGB15;
-			break;
-
-		case 24:
-			format = PIXEL_FORMAT_RGB24;
-			break;
-
-		case 32:
-			format = PIXEL_FORMAT_BGRA32;
-			break;
-
-		default:
-			WLog_WARN(TAG, "invalid icon bpp: %d", iconInfo->bpp);
-			return FALSE;
-	}
-
-	fill_gdi_palette_for_icon(iconInfo, &palette);
-	return freerdp_image_copy(
-	           argbPixels,
-	           PIXEL_FORMAT_ARGB32,
-	           0, 0, 0,
-	           iconInfo->width,
-	           iconInfo->height,
-	           iconInfo->bitsColor,
-	           format,
-	           0, 0, 0,
-	           &palette,
-	           FREERDP_FLIP_VERTICAL
-	       );
-}
-
-static inline UINT32 div_ceil(UINT32 a, UINT32 b)
-{
-	return (a + (b - 1)) / b;
-}
-
-static inline UINT32 round_up(UINT32 a, UINT32 b)
-{
-	return b * div_ceil(a, b);
-}
-
-static void apply_icon_alpha_mask(ICON_INFO* iconInfo, BYTE* argbPixels)
-{
-	BYTE nextBit;
-	BYTE* maskByte;
-	UINT32 x, y;
-	UINT32 stride;
-
-	if (!iconInfo->cbBitsMask)
-		return;
-
-	/*
-	 * Each byte encodes 8 adjacent pixels (with LSB padding as needed).
-	 * And due to hysterical raisins, stride of DIB bitmaps must be
-	 * a multiple of 4 bytes.
-	 */
-	stride = round_up(div_ceil(iconInfo->width, 8), 4);
-
-	for (y = 0; y < iconInfo->height; y++)
-	{
-		/* ɐᴉlɐɹʇsn∀ uᴉ ǝɹ,ǝʍ ʇɐɥʇ ʇǝƃɹoɟ ʇ,uop */
-		maskByte = &iconInfo->bitsMask[stride * (iconInfo->height - 1 - y)];
-		nextBit = 0x80;
-
-		for (x = 0; x < iconInfo->width; x++)
-		{
-			BYTE alpha = (*maskByte & nextBit) ? 0x00 : 0xFF;
-			argbPixels[4 * (x + y * iconInfo->width)] &= alpha;
-			nextBit >>= 1;
-
-			if (!nextBit)
-			{
-				nextBit = 0x80;
-				maskByte++;
-			}
-		}
-	}
-}
-
-/*
  * _NET_WM_ICON format is defined as "array of CARDINAL" values which for
  * Xlib must be represented with an array of C's "long" values. Note that
  * "long" != "INT32" on 64-bit systems. Therefore we can't simply cast
@@ -755,7 +622,7 @@ static void apply_icon_alpha_mask(ICON_INFO* iconInfo, BYTE* argbPixels)
  */
 static BOOL convert_rail_icon(ICON_INFO* iconInfo, xfRailIcon* railIcon)
 {
-	BYTE* argbPixels;
+	BYTE* argbPixels = NULL;
 	BYTE* nextPixel;
 	long* pixels;
 	int i;
@@ -765,10 +632,14 @@ static BOOL convert_rail_icon(ICON_INFO* iconInfo, xfRailIcon* railIcon)
 	if (!argbPixels)
 		goto error;
 
-	if (!convert_icon_color_to_argb(iconInfo, argbPixels))
+	if (!freerdp_image_copy_from_icon_data(argbPixels,
+		PIXEL_FORMAT_ARGB32, 0, 0, 0,
+		iconInfo->width, iconInfo->height,
+		iconInfo->bitsColor, iconInfo->cbBitsColor,
+		iconInfo->bitsMask, iconInfo->cbBitsMask,
+		iconInfo->colorTable, iconInfo->cbColorTable, iconInfo->bpp))
 		goto error;
 
-	apply_icon_alpha_mask(iconInfo, argbPixels);
 	nelements = 2 + iconInfo->width * iconInfo->height;
 	pixels = realloc(railIcon->data, nelements * sizeof(long));
 

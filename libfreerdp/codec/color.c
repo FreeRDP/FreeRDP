@@ -156,6 +156,151 @@ static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y,
 	return FreeRDPGetColor(format, fill, fill, fill, 0xFF);
 }
 
+
+/*
+ * DIB color palettes are arrays of RGBQUAD structs with colors in BGRX format.
+ * They are used only by 1, 2, 4, and 8-bit bitmaps.
+ */
+static void fill_gdi_palette_for_icon(const BYTE* colorTable, UINT16 cbColorTable, gdiPalette* palette)
+{
+	UINT16 i;
+	palette->format = PIXEL_FORMAT_BGRX32;
+	ZeroMemory(palette->palette, sizeof(palette->palette));
+
+	if (!cbColorTable)
+		return;
+
+	if ((cbColorTable % 4 != 0) || (cbColorTable / 4 > 256))
+	{
+		WLog_WARN(TAG, "weird palette size: %u", cbColorTable);
+		return;
+	}
+
+	for (i = 0; i < cbColorTable / 4; i++)
+	{
+		palette->palette[i] = ReadColor(&colorTable[4 * i], palette->format);
+	}
+}
+
+static INLINE UINT32 div_ceil(UINT32 a, UINT32 b)
+{
+	return (a + (b - 1)) / b;
+}
+
+static INLINE UINT32 round_up(UINT32 a, UINT32 b)
+{
+	return b * div_ceil(a, b);
+}
+
+BOOL freerdp_image_copy_from_icon_data(
+	BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+	UINT32 nXDst, UINT32 nYDst, UINT16 nWidth, UINT16 nHeight,
+	const BYTE* bitsColor, UINT16 cbBitsColor,
+	const BYTE* bitsMask, UINT16 cbBitsMask,
+	const BYTE* colorTable, UINT16 cbColorTable,
+	UINT32 bpp)
+{
+	DWORD format;
+	gdiPalette palette;
+
+	if (!pDstData || !bitsColor)
+		return FALSE;
+
+	/*
+	 * Color formats used by icons are DIB bitmap formats (2-bit format
+	 * is not used by MS-RDPERP). Note that 16-bit is RGB555, not RGB565,
+	 * and that 32-bit format uses BGRA order.
+	 */
+	switch (bpp)
+	{
+		case 1:
+		case 4:
+			/*
+			 * These formats are not supported by freerdp_image_copy().
+			 * PIXEL_FORMAT_MONO and PIXEL_FORMAT_A4 are *not* correct
+			 * color formats for this. Please fix freerdp_image_copy()
+			 * if you came here to fix a broken icon of some weird app
+			 * that still uses 1 or 4bpp format in the 21st century.
+			 */
+			WLog_WARN(TAG, "1bpp and 4bpp icons are not supported");
+			return FALSE;
+
+		case 8:
+			format = PIXEL_FORMAT_RGB8;
+			break;
+
+		case 16:
+			format = PIXEL_FORMAT_RGB15;
+			break;
+
+		case 24:
+			format = PIXEL_FORMAT_RGB24;
+			break;
+
+		case 32:
+			format = PIXEL_FORMAT_BGRA32;
+			break;
+
+		default:
+			WLog_WARN(TAG, "invalid icon bpp: %d", bpp);
+			return FALSE;
+	}
+
+	fill_gdi_palette_for_icon(colorTable, cbColorTable, &palette);
+	if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
+		nWidth, nHeight, bitsColor, format, 0, 0, 0, &palette,
+		FREERDP_FLIP_VERTICAL))
+		return FALSE;
+
+	/* apply alpha mask */
+	if (ColorHasAlpha(DstFormat) && cbBitsMask)
+	{
+		BYTE nextBit;
+		const BYTE* maskByte;
+		UINT32 x, y;
+		UINT32 stride;
+		BYTE r, g, b;
+		BYTE* dstBuf = pDstData;
+		UINT32 dstBpp = GetBytesPerPixel(DstFormat);
+
+		/*
+		 * Each byte encodes 8 adjacent pixels (with LSB padding as needed).
+		 * And due to hysterical raisins, stride of DIB bitmaps must be
+		 * a multiple of 4 bytes.
+		 */
+		stride = round_up(div_ceil(nWidth, 8), 4);
+
+		for (y = 0; y < nHeight; y++)
+		{
+			maskByte = &bitsMask[stride * (nHeight - 1 - y)];
+			nextBit = 0x80;
+
+			for (x = 0; x < nWidth; x++)
+			{
+				UINT32 color;
+				BYTE alpha = (*maskByte & nextBit) ? 0x00 : 0xFF;
+
+				/* read color back, add alpha and write it back */
+				color = ReadColor(dstBuf, DstFormat);
+				SplitColor(color, DstFormat, &r, &g, &b, NULL, &palette);
+				color = FreeRDPGetColor(DstFormat, r, g, b, alpha);
+				WriteColor(dstBuf, DstFormat, color);
+
+				nextBit >>= 1;
+				dstBuf += dstBpp;
+				if (!nextBit)
+				{
+					nextBit = 0x80;
+					maskByte++;
+				}
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+
 /**
  * Drawing Monochrome Pointers:
  * http://msdn.microsoft.com/en-us/library/windows/hardware/ff556143/
