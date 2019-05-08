@@ -577,7 +577,7 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
         const void* data, UINT32* pSize)
 {
 	const FILEDESCRIPTOR* descriptors;
-	UINT32 nrDescriptors;
+	UINT32 nrDescriptors = 0;
 	size_t count, x, alloc, pos, baseLength = 0;
 	const char* src = (const char*) data;
 	char* dst;
@@ -625,15 +625,32 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
 
 	for (x = 0; x < count; x++)
 	{
+		int rc;
 		const FILEDESCRIPTOR* cur = &descriptors[x];
 		size_t curLen = _wcsnlen(cur->cFileName, ARRAYSIZE(cur->cFileName));
 		char* curName = NULL;
-		ConvertFromUnicode(CP_UTF8, 0, cur->cFileName, curLen, &curName, 0, NULL, NULL);
-		pos += _snprintf(&dst[pos], alloc - pos, "%s/%s\r\n", clipboard->delegate.basePath, curName);
+		rc = ConvertFromUnicode(CP_UTF8, 0, cur->cFileName, (int)curLen, &curName, 0, NULL, NULL);
+
+		if (rc != (int)curLen)
+		{
+			free(curName);
+			free(dst);
+			return NULL;
+		}
+
+		rc = _snprintf(&dst[pos], alloc - pos, "%s/%s\r\n", clipboard->delegate.basePath, curName);
 		free(curName);
+
+		if (rc < 0)
+		{
+			free(dst);
+			return NULL;
+		}
+
+		pos += (size_t)rc;
 	}
 
-	*pSize = alloc;
+	*pSize = (UINT32)alloc;
 	clipboard->fileListSequenceNumber = clipboard->sequenceNumber;
 	return dst;
 }
