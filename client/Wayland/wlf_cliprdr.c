@@ -854,6 +854,8 @@ wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 	clipboard->system = ClipboardCreate();
 	clipboard->delegate = ClipboardGetDelegate(clipboard->system);
 	clipboard->delegate->custom = clipboard;
+	/* TODO: set up a filesystem base path for local URI */
+	/* clipboard->delegate->basePath = "file:///tmp/foo/bar/gaga"; */
 	clipboard->delegate->ClipboardFileSizeSuccess = wlf_cliprdr_clipboard_file_size_success;
 	clipboard->delegate->ClipboardFileSizeFailure = wlf_cliprdr_clipboard_file_size_failure;
 	clipboard->delegate->ClipboardFileRangeSuccess = wlf_cliprdr_clipboard_file_range_success;

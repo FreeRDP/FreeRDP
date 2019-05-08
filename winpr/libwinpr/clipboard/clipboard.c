@@ -373,6 +373,7 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 		ZeroMemory(format, sizeof(wClipboardFormat));
 		format->formatId = formatId;
 		format->formatName = _strdup(CF_STANDARD_STRINGS[formatId]);
+
 		if (!format->formatName)
 			goto error;
 	}
@@ -381,13 +382,14 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 		goto error;
 
 	return TRUE;
-
 error:
+
 	for (formatId = 0; formatId < clipboard->numFormats; formatId++)
 	{
 		free(clipboard->formats[formatId].formatName);
 		free(clipboard->formats[formatId].synthesizers);
 	}
+
 	return FALSE;
 }
 
@@ -522,13 +524,12 @@ wClipboardDelegate* ClipboardGetDelegate(wClipboard* clipboard)
 	return &clipboard->delegate;
 }
 
-void ClipboardInitLocalFileSubsystem(wClipboard* clipboard)
+static void ClipboardInitLocalFileSubsystem(wClipboard* clipboard)
 {
 	/*
 	 * There can be only one local file subsystem active.
 	 * Return as soon as initialization succeeds.
 	 */
-
 #ifdef WITH_WCLIPBOARD_POSIX
 	if (ClipboardInitPosixFileSubsystem(clipboard))
 	{
@@ -539,16 +540,16 @@ void ClipboardInitLocalFileSubsystem(wClipboard* clipboard)
 	{
 		WLog_WARN(TAG, "failed to initialize POSIX local file subsystem");
 	}
-#endif
 
+#endif
 	WLog_INFO(TAG, "failed to initialize local file subsystem, file transfer not available");
 }
 
-wClipboard* ClipboardCreate()
+wClipboard* ClipboardCreate(void)
 {
 	wClipboard* clipboard;
-
 	clipboard = (wClipboard*) calloc(1, sizeof(wClipboard));
+
 	if (!clipboard)
 		return NULL;
 
@@ -560,9 +561,9 @@ wClipboard* ClipboardCreate()
 
 	clipboard->numFormats = 0;
 	clipboard->maxFormats = 64;
-
 	clipboard->formats = (wClipboardFormat*)
-		calloc(clipboard->maxFormats, sizeof(wClipboardFormat));
+	                     calloc(clipboard->maxFormats, sizeof(wClipboardFormat));
+
 	if (!clipboard->formats)
 		goto error_free_lock;
 
@@ -570,11 +571,8 @@ wClipboard* ClipboardCreate()
 		goto error_free_formats;
 
 	clipboard->delegate.clipboard = clipboard;
-
 	ClipboardInitLocalFileSubsystem(clipboard);
-
 	return clipboard;
-
 error_free_formats:
 	free(clipboard->formats);
 error_free_lock:
