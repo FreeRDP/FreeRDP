@@ -135,16 +135,6 @@
 #define DRAW_GDIPLUS_CACHE_LEVEL_DEFAULT	0x00000000
 #define DRAW_GDIPLUS_CACHE_LEVEL_ONE		0x00000001
 
-/* RAIL Support Level */
-#define RAIL_LEVEL_SUPPORTED                           0x00000001
-#define RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED            0x00000002
-#define RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED         0x00000004
-#define RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED         0x00000008
-#define RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED 0x00000010
-#define RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED       0x00000020
-#define RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED           0x00000040
-#define RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED              0x00000080
-
 /* Window Support Level */
 #define WINDOW_LEVEL_NOT_SUPPORTED		0x00000000
 #define WINDOW_LEVEL_SUPPORTED			0x00000001
@@ -177,7 +167,6 @@
 FREERDP_LOCAL BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s,
         UINT16* pChannelId);
 FREERDP_LOCAL BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s);
-FREERDP_LOCAL BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings);
 FREERDP_LOCAL BOOL rdp_send_demand_active(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings);

@@ -62,10 +62,14 @@ typedef UINT(*pcRailClientInformation)(RailClientContext* context,
                                        const RAIL_CLIENT_STATUS_ORDER* clientStatus);
 typedef UINT(*pcRailClientSystemMenu)(RailClientContext* context,
                                       const RAIL_SYSMENU_ORDER* sysmenu);
+typedef UINT(*pcRailServerTaskBarInfo)(RailClientContext* context,
+                                       const RAIL_TASKBAR_INFO_ORDER* taskBarInfo);
 typedef UINT(*pcRailClientLanguageBarInfo)(RailClientContext* context,
         const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
 typedef UINT(*pcRailServerLanguageBarInfo)(RailClientContext* context,
         const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
+typedef UINT(*pcRailClientLanguageIMEInfo)(RailClientContext* context,
+        const RAIL_LANGUAGEIME_INFO_ORDER* langBarInfo);
 typedef UINT(*pcRailServerExecuteResult)(RailClientContext* context,
         const RAIL_EXEC_RESULT_ORDER* execResult);
 typedef UINT(*pcRailClientGetAppIdRequest)(RailClientContext* context,
@@ -74,6 +78,8 @@ typedef UINT(*pcRailServerGetAppIdResponse)(RailClientContext* context,
         const RAIL_GET_APPID_RESP_ORDER* getAppIdResp);
 typedef UINT(*pcRailServerZOrderSync)(RailClientContext* context,
                                       const RAIL_ZORDER_SYNC* zorder);
+typedef UINT(*pcRailServerCloak)(RailClientContext* context,
+                                 const RAIL_CLOAK* cloak);
 typedef UINT(*pcRailClientCloak)(RailClientContext* context,
                                  const RAIL_CLOAK* cloak);
 typedef UINT(*pcRailServerPowerDisplayRequest)(RailClientContext* context,
@@ -102,13 +108,16 @@ struct _rail_client_context
 	pcRailServerMinMaxInfo ServerMinMaxInfo;
 	pcRailClientInformation ClientInformation;
 	pcRailClientSystemMenu ClientSystemMenu;
+	pcRailServerTaskBarInfo ServerTaskBarInfo;
 	pcRailClientLanguageBarInfo ClientLanguageBarInfo;
 	pcRailServerLanguageBarInfo ServerLanguageBarInfo;
+	pcRailClientLanguageIMEInfo ClientLanguageIMEInfo;
 	pcRailServerExecuteResult ServerExecuteResult;
 	pcRailClientGetAppIdRequest ClientGetAppIdRequest;
 	pcRailServerGetAppIdResponse ServerGetAppIdResponse;
 	pcRailServerZOrderSync ServerZOrderSync;
 	pcRailClientCloak ClientCloak;
+	pcRailServerCloak ServerCloak;
 	pcRailServerPowerDisplayRequest ServerPowerDisplayRequest;
 	pcRailClientSnapArrange ClientSnapArrange;
 	pcRailServerGetAppidResponseExtended ServerGetAppidResponseExtended;

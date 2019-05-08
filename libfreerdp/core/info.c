@@ -732,13 +732,15 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		flags |= INFO_AUTOLOGON;
 
 	if (settings->RemoteApplicationMode)
+	{
+		if (settings->HiDefRemoteApp)
+			flags |= INFO_HIDEF_RAIL_SUPPORTED;
+
 		flags |= INFO_RAIL;
+	}
 
 	if (settings->RemoteConsoleAudio)
 		flags |= INFO_REMOTECONSOLEAUDIO;
-
-	if (settings->HiDefRemoteApp)
-		flags |= INFO_HIDEF_RAIL_SUPPORTED;
 
 	if (settings->CompressionEnabled)
 	{
@@ -847,7 +849,6 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	/* excludes (!) the length of the mandatory null terminator */
 	cbWorkingDir = cbWorkingDir >= 2 ? cbWorkingDir - 2 : cbWorkingDir;
-
 	Stream_Write_UINT32(s, 0); /* CodePage (4 bytes) */
 	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
 	Stream_Write_UINT16(s, cbDomain); /* cbDomain (2 bytes) */
@@ -885,7 +886,6 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
-
 	free(domainW);
 	free(userNameW);
 	free(alternateShellW);
@@ -1493,6 +1493,5 @@ BOOL rdp_send_server_status_info(rdpContext* context, UINT32 status)
 		return FALSE;
 
 	Stream_Write_UINT32(s, status);
-
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_STATUS_INFO, rdp->mcs->userId);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_STATUS_INFO, rdp->mcs->userId);;
 }

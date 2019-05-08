@@ -27,6 +27,16 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+/* RAIL Support Level */
+#define RAIL_LEVEL_SUPPORTED                           0x00000001
+#define RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED            0x00000002
+#define RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED         0x00000004
+#define RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED         0x00000008
+#define RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED 0x00000010
+#define RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED       0x00000020
+#define RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED           0x00000040
+#define RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED              0x00000080
+
 /* Performance Flags */
 #define PERF_FLAG_NONE                  	0x00000000
 #define PERF_DISABLE_WALLPAPER          	0x00000001
@@ -757,6 +767,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_RemoteAppLanguageBarSupported                      (2124)
 #define FreeRDP_RemoteWndSupportLevel                              (2125)
 #define FreeRDP_RemoteApplicationSupportLevel                      (2126)
+#define FreeRDP_RemoteApplicationSupportMask                       (2127)
 #define FreeRDP_ReceivedCapabilities                               (2240)
 #define FreeRDP_ReceivedCapabilitiesSize                           (2241)
 #define FreeRDP_OsMajorType                                        (2304)
@@ -1256,7 +1267,8 @@ struct rdp_settings
 	ALIGN64 BOOL   RemoteAppLanguageBarSupported;     /* 2124 */
 	ALIGN64 UINT32 RemoteWndSupportLevel;             /* 2125 */
 	ALIGN64 UINT32 RemoteApplicationSupportLevel;     /* 2126 */
-	UINT64 padding2176[2176 - 2127]; /* 2127 */
+	ALIGN64 UINT32 RemoteApplicationSupportMask;      /* 2127 */
+	UINT64 padding2176[2176 - 2128]; /* 2128 */
 	UINT64 padding2240[2240 - 2176]; /* 2176 */
 
 	/**
