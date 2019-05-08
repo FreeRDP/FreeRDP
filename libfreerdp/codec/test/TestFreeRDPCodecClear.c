@@ -74,6 +74,9 @@ fail:
 
 int TestFreeRDPCodecClear(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* Example 1 needs a filled glyph cache
 	if (!test_ClearDecompressExample(1, 8, 9, TEST_CLEAR_EXAMPLE_1,
 	                                 sizeof(TEST_CLEAR_EXAMPLE_1)))

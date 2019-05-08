@@ -269,6 +269,8 @@ static BOOL test_set32s_speed(void)
 
 int TestPrimitivesSet(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	prim_test_setup(FALSE);
 
 	if (!test_set8u_func())

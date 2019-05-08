@@ -39,6 +39,9 @@ static INIT_ONCE primitives_InitOnce = INIT_ONCE_STATIC_INIT;
 /* ------------------------------------------------------------------------- */
 static BOOL CALLBACK primitives_init_generic(PINIT_ONCE once, PVOID param, PVOID* context)
 {
+	WINPR_UNUSED(once);
+	WINPR_UNUSED(param);
+	WINPR_UNUSED(context);
 	primitives_init_add(&pPrimitivesGeneric);
 	primitives_init_andor(&pPrimitivesGeneric);
 	primitives_init_alphaComp(&pPrimitivesGeneric);
@@ -55,6 +58,9 @@ static BOOL CALLBACK primitives_init_generic(PINIT_ONCE once, PVOID param, PVOID
 #if defined(HAVE_OPTIMIZED_PRIMITIVES)
 static BOOL CALLBACK primitives_init(PINIT_ONCE once, PVOID param, PVOID* context)
 {
+	WINPR_UNUSED(once);
+	WINPR_UNUSED(param);
+	WINPR_UNUSED(context);
 	/* Now call each section's initialization routine. */
 	primitives_init_add_opt(&pPrimitives);
 	primitives_init_andor_opt(&pPrimitives);

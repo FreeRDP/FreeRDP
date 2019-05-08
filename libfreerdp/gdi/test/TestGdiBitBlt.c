@@ -583,6 +583,8 @@ int TestGdiBitBlt(int argc, char* argv[])
 		PIXEL_FORMAT_XBGR32
 	};
 	const UINT32 listSize = sizeof(formatList) / sizeof(formatList[0]);
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	for (x = 0; x < listSize; x++)
 	{

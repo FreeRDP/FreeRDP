@@ -530,6 +530,8 @@ fail:
 
 int TestGdiCreate(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	fprintf(stderr, "test_gdi_GetDC()\n");
 
 	if (test_gdi_GetDC() < 0)

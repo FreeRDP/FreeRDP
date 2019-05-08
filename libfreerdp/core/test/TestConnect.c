@@ -282,6 +282,8 @@ int TestConnect(int argc, char* argv[])
 {
 	int randomPort;
 	int random;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	winpr_RAND((BYTE*)&random, sizeof(random));
 	randomPort = 3389 + (random % 200);
 

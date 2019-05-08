@@ -1430,7 +1430,9 @@ static LONG smartcard_AccessStartedEvent_Decode(SMARTCARD_DEVICE* smartcard,
         SMARTCARD_OPERATION* operation)
 {
 	Long_Call* call;
-	IRP* irp = operation->irp;
+	IRP* irp;
+	WINPR_UNUSED(smartcard);
+	irp = operation->irp;
 	operation->call = call = calloc(1, sizeof(Long_Call));
 
 	if (!call)
@@ -1451,6 +1453,7 @@ static LONG smartcard_AccessStartedEvent_Call(SMARTCARD_DEVICE* smartcard,
         SMARTCARD_OPERATION* operation)
 {
 	LONG status = SCARD_S_SUCCESS;
+	WINPR_UNUSED(operation);
 
 	if (!smartcard->StartedEvent)
 		smartcard->StartedEvent = SCardAccessStartedEvent();

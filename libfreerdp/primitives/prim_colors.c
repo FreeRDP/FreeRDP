@@ -299,6 +299,8 @@ static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstForma
                                     const INT16* r, const INT16* g, const INT16* b, DWORD width)
 {
 	DWORD x;
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(DstFormat);
 
 	for (x = 0; x < width; x++)
 	{
@@ -315,6 +317,8 @@ static INLINE void writeScanlineBGR(BYTE* dst, DWORD formatSize, UINT32 DstForma
                                     const INT16* r, const INT16* g, const INT16* b, DWORD width)
 {
 	DWORD x;
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(DstFormat);
 
 	for (x = 0; x < width; x++)
 	{
@@ -331,6 +335,8 @@ static INLINE void writeScanlineBGRX(BYTE* dst, DWORD formatSize, UINT32 DstForm
                                      const INT16* r, const INT16* g, const INT16* b, DWORD width)
 {
 	DWORD x;
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(DstFormat);
 
 	for (x = 0; x < width; x++)
 	{
@@ -348,6 +354,8 @@ static INLINE void writeScanlineRGBX(BYTE* dst, DWORD formatSize, UINT32 DstForm
                                      const INT16* r, const INT16* g, const INT16* b, DWORD width)
 {
 	DWORD x;
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(DstFormat);
 
 	for (x = 0; x < width; x++)
 	{
@@ -365,6 +373,8 @@ static INLINE void writeScanlineXBGR(BYTE* dst, DWORD formatSize, UINT32 DstForm
                                      const INT16* r, const INT16* g, const INT16* b, DWORD width)
 {
 	DWORD x;
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(DstFormat);
 
 	for (x = 0; x < width; x++)
 	{
@@ -382,6 +392,8 @@ static INLINE void writeScanlineXRGB(BYTE* dst, DWORD formatSize, UINT32 DstForm
                                      const INT16* r, const INT16* g, const INT16* b, DWORD width)
 {
 	DWORD x;
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(DstFormat);
 
 	for (x = 0; x < width; x++)
 	{

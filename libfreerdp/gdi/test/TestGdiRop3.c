@@ -207,6 +207,8 @@ static const char* test_ROP3[] =
 int TestGdiRop3(int argc, char* argv[])
 {
 	size_t index;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	for (index = 0; index < sizeof(test_ROP3) / sizeof(test_ROP3[0]); index++)
 	{

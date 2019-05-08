@@ -156,6 +156,8 @@ int TestFreeRDPCodecInterleaved(int argc, char* argv[])
 {
 	BITMAP_INTERLEAVED_CONTEXT* encoder, * decoder;
 	int rc = -1;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	encoder = bitmap_interleaved_context_new(TRUE);
 	decoder = bitmap_interleaved_context_new(FALSE);
 

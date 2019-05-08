@@ -113,6 +113,9 @@ fail:
 
 int TestFreeRDPCodecNCrush(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (!test_NCrushCompressBells())
 		return -1;
 
