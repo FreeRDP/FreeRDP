@@ -613,6 +613,32 @@ static UINT shadow_client_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
 	return CHANNEL_RC_OK;
 }
 
+static BOOL shadow_are_caps_filtered(const rdpSettings* settings, UINT32 caps)
+{
+	const UINT32 filter = settings->GfxCapsFilter;
+	const UINT32 capList[] =
+	{
+		RDPGFX_CAPVERSION_8,
+		RDPGFX_CAPVERSION_81,
+		RDPGFX_CAPVERSION_10,
+		RDPGFX_CAPVERSION_101,
+		RDPGFX_CAPVERSION_102,
+		RDPGFX_CAPVERSION_103,
+		RDPGFX_CAPVERSION_104,
+		RDPGFX_CAPVERSION_105,
+		RDPGFX_CAPVERSION_106
+	};
+	UINT32 x;
+
+	for (x = 0; x < ARRAYSIZE(capList); x++)
+	{
+		if (caps == capList[x])
+			return (filter & (1 << x)) != 0;
+	}
+
+	return TRUE;
+}
+
 static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context,
         const RDPGFX_CAPSET* capsSets,
         UINT32 capsSetCount,
@@ -622,6 +648,9 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context,
 	UINT32 index;
 	rdpSettings* settings;
 	settings = context->rdpcontext->settings;
+
+	if (shadow_are_caps_filtered(settings, capsVersion))
+		return FALSE;
 
 	for (index = 0; index < capsSetCount; index++)
 	{
@@ -697,52 +726,58 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	                                    RDPGFX_CAPVERSION_10, &rc))
 		return rc;
 
-	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	if (!shadow_are_caps_filtered(settings, RDPGFX_CAPVERSION_81))
 	{
-		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
-
-		if (currentCaps->version == RDPGFX_CAPVERSION_81)
+		for (index = 0; index < capsAdvertise->capsSetCount; index++)
 		{
-			RDPGFX_CAPSET caps = *currentCaps;
-			RDPGFX_CAPS_CONFIRM_PDU pdu;
-			pdu.capsSet = &caps;
+			const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
 
-			if (settings)
+			if (currentCaps->version == RDPGFX_CAPVERSION_81)
 			{
-				flags = pdu.capsSet->flags;
-				settings->GfxAVC444v2 = settings->GfxAVC444 = FALSE;
-				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-#ifndef WITH_GFX_H264
-				settings->GfxH264 = FALSE;
-				pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_AVC420_ENABLED;
-#else
-				settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
-#endif
-			}
+				RDPGFX_CAPSET caps = *currentCaps;
+				RDPGFX_CAPS_CONFIRM_PDU pdu;
+				pdu.capsSet = &caps;
 
-			return context->CapsConfirm(context, &pdu);
+				if (settings)
+				{
+					flags = pdu.capsSet->flags;
+					settings->GfxAVC444v2 = settings->GfxAVC444 = FALSE;
+					settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
+					settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+#ifndef WITH_GFX_H264
+					settings->GfxH264 = FALSE;
+					pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_AVC420_ENABLED;
+#else
+					settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
+#endif
+				}
+
+				return context->CapsConfirm(context, &pdu);
+			}
 		}
 	}
 
-	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	if (!shadow_are_caps_filtered(settings, RDPGFX_CAPVERSION_8))
 	{
-		const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
-
-		if (currentCaps->version == RDPGFX_CAPVERSION_8)
+		for (index = 0; index < capsAdvertise->capsSetCount; index++)
 		{
-			RDPGFX_CAPSET caps = *currentCaps;
-			RDPGFX_CAPS_CONFIRM_PDU pdu;
-			pdu.capsSet = &caps;
+			const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
 
-			if (settings)
+			if (currentCaps->version == RDPGFX_CAPVERSION_8)
 			{
-				flags = pdu.capsSet->flags;
-				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-			}
+				RDPGFX_CAPSET caps = *currentCaps;
+				RDPGFX_CAPS_CONFIRM_PDU pdu;
+				pdu.capsSet = &caps;
 
-			return context->CapsConfirm(context, &pdu);
+				if (settings)
+				{
+					flags = pdu.capsSet->flags;
+					settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
+					settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+				}
+
+				return context->CapsConfirm(context, &pdu);
+			}
 		}
 	}
 
