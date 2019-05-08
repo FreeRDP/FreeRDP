@@ -66,7 +66,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		const UINT32 sheight = rects[x].bottom - nYSrc;
 		const UINT32 nXDst = surfaceX + nXSrc * sx;
 		const UINT32 nYDst = surfaceY + nYSrc * sy;
-		const UINT32 dwidth = swidth * sx;;
+		const UINT32 dwidth = swidth * sx;
 		const UINT32 dheight = sheight * sy;
 
 		if (surface->stage)

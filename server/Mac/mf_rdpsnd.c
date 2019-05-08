@@ -91,7 +91,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 
 	recorderState.dataFormat.mSampleRate = agreedFormat->nSamplesPerSec;
 	recorderState.dataFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger |
-	                                        kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;;
+	                                        kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
 	recorderState.dataFormat.mBytesPerPacket = 4;
 	recorderState.dataFormat.mFramesPerPacket = 1;
 	recorderState.dataFormat.mBytesPerFrame = 4;
