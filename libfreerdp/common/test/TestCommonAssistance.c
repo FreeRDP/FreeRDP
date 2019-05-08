@@ -168,7 +168,10 @@ fail:
 
 int TestCommonAssistance(int argc, char* argv[])
 {
-	wLog* log = WLog_Get(__FUNCTION__);
+	wLog* log;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+	log = WLog_Get(__FUNCTION__);
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	if (!test_msrsc_incident_file_type1(log))

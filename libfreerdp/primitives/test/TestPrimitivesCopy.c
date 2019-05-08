@@ -28,7 +28,6 @@ static BOOL test_copy8u_func(void)
 	BYTE ALIGN(data[COPY_TESTSIZE + 15]);
 	int i, soff;
 	BYTE ALIGN(dest[COPY_TESTSIZE + 15]);
-
 	winpr_RAND(data, sizeof(data));
 
 	for (soff = 0; soff < 16; ++soff)
@@ -42,6 +41,7 @@ static BOOL test_copy8u_func(void)
 			for (length = 1; length <= COPY_TESTSIZE - doff; ++length)
 			{
 				memset(dest, 0, sizeof(dest));
+
 				if (prims->copy_8u(data + soff, dest + doff, length) != PRIMITIVES_SUCCESS)
 					return FALSE;
 
@@ -70,15 +70,15 @@ static BOOL test_copy8u_speed(void)
 	BYTE ALIGN(dst[MAX_TEST_SIZE + 4]);
 
 	if (!speed_test("copy_8u", "aligned", g_Iterations,
-			(speed_test_fkt)generic->copy_8u,
-			(speed_test_fkt)optimized->copy_8u,
-			src, dst, MAX_TEST_SIZE))
+	                (speed_test_fkt)generic->copy_8u,
+	                (speed_test_fkt)optimized->copy_8u,
+	                src, dst, MAX_TEST_SIZE))
 		return FALSE;
 
 	if (!speed_test("copy_8u", "unaligned", g_Iterations,
-			(speed_test_fkt)generic->copy_8u,
-			(speed_test_fkt)optimized->copy_8u,
-			src+1, dst+1, MAX_TEST_SIZE))
+	                (speed_test_fkt)generic->copy_8u,
+	                (speed_test_fkt)optimized->copy_8u,
+	                src + 1, dst + 1, MAX_TEST_SIZE))
 		return FALSE;
 
 	return TRUE;
@@ -86,6 +86,8 @@ static BOOL test_copy8u_speed(void)
 
 int TestPrimitivesCopy(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	prim_test_setup(FALSE);
 
 	if (!test_copy8u_func())

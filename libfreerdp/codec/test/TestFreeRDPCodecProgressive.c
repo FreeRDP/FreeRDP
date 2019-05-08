@@ -926,6 +926,8 @@ int TestFreeRDPCodecProgressive(int argc, char* argv[])
 	char* ms_sample_path;
 	char name[8192];
 	SYSTEMTIME systemTime;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	GetSystemTime(&systemTime);
 	sprintf_s(name, sizeof(name),
 	          "EGFX_PROGRESSIVE_MS_SAMPLE-%04"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%04"PRIu16,

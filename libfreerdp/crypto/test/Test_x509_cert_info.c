@@ -6,7 +6,7 @@ typedef struct
 {
 	enum
 	{
-	    DISABLED, ENABLED,
+		DISABLED, ENABLED,
 	} status;
 	const char* field_description;
 	get_field_pr get_field;
@@ -26,18 +26,18 @@ char* certificate_path()
 	Assume that __FILE__ will be a valid path to this file, even from the current working directory where the tests are run.
 	(ie. no chdir occurs between compilation and test running, or __FILE__ is an absolute path).
 	*/
-
 #if defined(_WIN32)
 	static const char dirsep = '\\';
 #else
 	static const char dirsep = '/';
 #endif
-	static const char * filename = "Test_x509_cert_info.pem";
-	const char * file = __FILE__;
-	const char * last_dirsep = strrchr(file, dirsep);
+	static const char* filename = "Test_x509_cert_info.pem";
+	const char* file = __FILE__;
+	const char* last_dirsep = strrchr(file, dirsep);
+
 	if (last_dirsep)
 	{
-		char * result = malloc(last_dirsep - file + 1 + strlen(filename) + 1);
+		char* result = malloc(last_dirsep - file + 1 + strlen(filename) + 1);
 		strncpy(result, file, (last_dirsep - file + 1));
 		strcpy(result + (last_dirsep - file + 1), filename);
 		return result;
@@ -50,7 +50,7 @@ char* certificate_path()
 }
 
 const certificate_test_t certificate_tests[] =
-	{
+{
 
 	{
 		ENABLED,
@@ -150,6 +150,7 @@ int TestCertificateFile(const char* certificate_path, const certificate_test_t* 
 				       certificate_tests[i].expected_result);
 				success = -1;
 			}
+
 			free(result);
 		}
 		else
@@ -168,7 +169,10 @@ fail:
 int Test_x509_cert_info(int argc, char* argv[])
 {
 	char* cert_path = certificate_path();
-	int ret = TestCertificateFile(cert_path, certificate_tests, ARRAYSIZE(certificate_tests));
+	int ret;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+	ret = TestCertificateFile(cert_path, certificate_tests, ARRAYSIZE(certificate_tests));
 	free(cert_path);
 	return ret;
 }

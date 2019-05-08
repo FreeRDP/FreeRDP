@@ -155,6 +155,9 @@ fail:
 
 int TestGdiRect(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (test_gdi_PtInRect() < 0)
 		return -1;
 

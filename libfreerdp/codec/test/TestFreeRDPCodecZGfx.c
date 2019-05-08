@@ -251,6 +251,9 @@ fail:
 
 int TestFreeRDPCodecZGfx(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (test_ZGfxCompressFox() < 0)
 		return -1;
 
