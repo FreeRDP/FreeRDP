@@ -56,7 +56,7 @@
  * Re-negociate with original client after negociation between the proxy
  * and the target has finished.
  */
-void proxy_server_reactivate(rdpContext* client, rdpContext* target)
+static void proxy_server_reactivate(rdpContext* client, rdpContext* target)
 {
 	pf_common_copy_settings(client->settings, target->settings);
 	/* DesktopResize causes internal function rdp_server_reactivate to be called,
@@ -131,7 +131,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 }
 
 
-BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
+static BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
 {
 	pClientContext* pc = (pClientContext*) context;
 	proxyData* pdata = pc->pdata;
@@ -139,7 +139,7 @@ BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
 	return ps->update->BitmapUpdate(ps, bitmap);
 }
 
-BOOL pf_client_desktop_resize(rdpContext* context)
+static BOOL pf_client_desktop_resize(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*) context;
 	proxyData* pdata = pc->pdata;
@@ -335,10 +335,10 @@ static int pf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
  *
  * @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
  */
-DWORD pf_client_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
-                                      const char* common_name,
-                                      const char* subject, const char* issuer,
-                                      const char* fingerprint, DWORD flags)
+static DWORD pf_client_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
+        const char* common_name,
+        const char* subject, const char* issuer,
+        const char* fingerprint, DWORD flags)
 {
 	/* TODO: Add trust level to proxy configurable settings */
 	return 1;
@@ -363,7 +363,7 @@ DWORD pf_client_verify_certificate_ex(freerdp* instance, const char* host, UINT1
  *
  * @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
  */
-DWORD pf_client_verify_changed_certificate_ex(freerdp* instance,
+static DWORD pf_client_verify_changed_certificate_ex(freerdp* instance,
         const char* host, UINT16 port,
         const char* common_name,
         const char* subject, const char* issuer,

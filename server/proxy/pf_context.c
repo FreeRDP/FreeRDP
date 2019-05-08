@@ -24,8 +24,8 @@
 #include "pf_common.h"
 
 /* Proxy context initialization callback */
-BOOL client_to_proxy_context_new(freerdp_peer* client,
-                                 pServerContext* context)
+static BOOL client_to_proxy_context_new(freerdp_peer* client,
+                                        pServerContext* context)
 {
 	context->vcm = WTSOpenServerA((LPSTR) client->context);
 
@@ -39,13 +39,13 @@ fail_open_server:
 }
 
 /* Proxy context free callback */
-void client_to_proxy_context_free(freerdp_peer* client,
-                                  pServerContext* context)
+static void client_to_proxy_context_free(freerdp_peer* client,
+        pServerContext* context)
 {
+	WINPR_UNUSED(client);
+
 	if (context)
-	{
 		WTSCloseServer((HANDLE) context->vcm);
-	}
 }
 
 BOOL init_p_server_context(freerdp_peer* client)

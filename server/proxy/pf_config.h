@@ -32,13 +32,13 @@ struct proxy_config
 {
 	/* server */
 	char* Host;
-	INT32 Port;
+	UINT16 Port;
 	BOOL  LocalOnly;
 
 	/* target */
 	BOOL UseLoadBalanceInfo;
 	char* TargetHost;
-	INT32 TargetPort;
+	UINT16 TargetPort;
 
 	/* graphics */
 	BOOL GFX;
@@ -65,7 +65,7 @@ struct proxy_config
 
 typedef struct proxy_config proxyConfig;
 
-DWORD pf_server_load_config(char* path, proxyConfig* config);
+DWORD pf_server_load_config(const char* path, proxyConfig* config);
 void pf_server_config_free(proxyConfig* config);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONFIG_H */

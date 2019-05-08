@@ -230,7 +230,7 @@ static UINT pf_rdpgfx_on_close(RdpgfxClientContext* context)
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	WLog_DBG(TAG, __FUNCTION__);
-	return server->Close(server);
+	return server->Close(server) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
 static UINT pf_rdpgfx_caps_confirm(RdpgfxClientContext* context,
@@ -248,7 +248,7 @@ static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxClientContext* client = (RdpgfxClientContext*) pdata->pc->gfx;
-	int index;
+	UINT16 index;
 	UINT16 proxySupportedCapsSetCount = 0;
 	RDPGFX_CAPS_ADVERTISE_PDU supportedCapsAdvertise;
 	RDPGFX_CAPSET* proxySupportedCapsSet;

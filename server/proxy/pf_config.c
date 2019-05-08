@@ -30,11 +30,11 @@
 
 #define CHANNELS_SEPERATOR ","
 
-char** parse_channels_from_str(const char* str, UINT32* length)
+static char** parse_channels_from_str(const char* str, UINT32* length)
 {
 	char* s = strdup(str);
-	int tokens_alloc = 1;
-	int tokens_count = 0;
+	size_t tokens_alloc = 1;
+	size_t tokens_count = 0;
 	char** tokens = calloc(tokens_alloc, sizeof(char*));
 	char* token;
 
@@ -49,22 +49,23 @@ char** parse_channels_from_str(const char* str, UINT32* length)
 		tokens[tokens_count++] = strdup(token);
 	}
 
-	if (tokens_count == 0)
+	if ((tokens_count == 0) || (tokens_count > UINT32_MAX))
 	{
 		free(tokens);
 		tokens = NULL;
+		tokens_count = 0;
 	}
 	else
 	{
 		tokens = realloc(tokens, tokens_count * sizeof(char*));
 	}
 
-	*length = tokens_count;
+	*length = (DWORD)tokens_count;
 	free(s);
 	return tokens;
 }
 
-BOOL pf_server_is_config_valid(proxyConfig* config)
+static BOOL pf_server_is_config_valid(proxyConfig* config)
 {
 	if (config->Host == NULL)
 	{
@@ -96,26 +97,37 @@ BOOL pf_server_is_config_valid(proxyConfig* config)
 	return TRUE;
 }
 
-DWORD pf_server_load_config(char* path, proxyConfig* config)
+DWORD pf_server_load_config(const char* path, proxyConfig* config)
 {
 	const char* input;
-	BOOL result = CONFIG_PARSE_SUCCESS;
+	int rc;
+	DWORD result = CONFIG_PARSE_ERROR;
 	wIniFile* ini = IniFile_New();
 
+	if (!ini)
+		return CONFIG_PARSE_ERROR;
+
 	if (IniFile_ReadFile(ini, path) < 0)
-	{
-		result = CONFIG_PARSE_ERROR;
 		goto out;
-	}
 
 	/* server */
 	config->Host = _strdup(IniFile_GetKeyValueString(ini, "Server", "Host"));
 	config->LocalOnly = IniFile_GetKeyValueInt(ini, "Server", "LocalOnly");
-	config->Port = IniFile_GetKeyValueInt(ini, "Server", "Port");
+	rc = IniFile_GetKeyValueInt(ini, "Server", "Port");
+
+	if ((rc < 0) || (rc > UINT16_MAX))
+		goto out;
+
+	config->Port = (UINT16)rc;
 	/* target */
 	config->UseLoadBalanceInfo = IniFile_GetKeyValueInt(ini, "Target", "UseLoadBalanceInfo");
 	config->TargetHost = _strdup(IniFile_GetKeyValueString(ini, "Target", "Host"));
-	config->TargetPort = IniFile_GetKeyValueInt(ini, "Target", "Port");
+	rc = IniFile_GetKeyValueInt(ini, "Target", "Port");
+
+	if ((rc < 0) || (rc > UINT16_MAX))
+		goto out;
+
+	config->TargetPort = (UINT16)rc;
 	/* graphics */
 	config->GFX = IniFile_GetKeyValueInt(ini, "Graphics", "GFX");
 	config->BitmapUpdate = IniFile_GetKeyValueInt(ini, "Graphics", "BitmapUpdate");
@@ -135,10 +147,7 @@ DWORD pf_server_load_config(char* path, proxyConfig* config)
 		config->AllowedChannels = parse_channels_from_str(input, &config->AllowedChannelsCount);
 
 		if (config->AllowedChannels == NULL)
-		{
-			result = CONFIG_PARSE_ERROR;
 			goto out;
-		}
 	}
 
 	input = IniFile_GetKeyValueString(ini, "Channels", "DeniedChannels");
@@ -148,26 +157,22 @@ DWORD pf_server_load_config(char* path, proxyConfig* config)
 		config->BlockedChannels = parse_channels_from_str(input, &config->BlockedChannelsCount);
 
 		if (config->BlockedChannels == NULL)
-		{
-			result = CONFIG_PARSE_ERROR;
 			goto out;
-		}
 	}
 
+	result = CONFIG_PARSE_SUCCESS;
 out:
 	IniFile_Free(ini);
 
 	if (!pf_server_is_config_valid(config))
-	{
 		return CONFIG_INVALID;
-	}
 
 	return result;
 }
 
 void pf_server_config_free(proxyConfig* config)
 {
-	int i;
+	UINT32 i;
 
 	for (i = 0; i < config->AllowedChannelsCount; i++)
 		free(config->AllowedChannels[i]);

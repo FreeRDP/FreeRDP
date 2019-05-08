@@ -22,16 +22,16 @@
 #include "pf_update.h"
 #include "pf_context.h"
 
-BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
-                            const RECTANGLE_16* areas)
+static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
+                                   const RECTANGLE_16* areas)
 {
 	pServerContext* ps = (pServerContext*)context;
 	rdpContext* pc = (rdpContext*) ps->pdata->pc;
 	return pc->update->RefreshRect(pc, count, areas);
 }
 
-BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
-                               const RECTANGLE_16* area)
+static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
+                                      const RECTANGLE_16* area)
 {
 	pServerContext* ps = (pServerContext*)context;
 	rdpContext* pc = (rdpContext*) ps->pdata->pc;

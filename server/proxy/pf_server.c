@@ -52,7 +52,7 @@
 
 #define TAG PROXY_TAG("server")
 
-void pf_server_handle_client_disconnection(freerdp_peer* client)
+static void pf_server_handle_client_disconnection(freerdp_peer* client)
 {
 	pServerContext* ps;
 	proxyData* pdata;
@@ -76,19 +76,21 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 {
 #define TARGET_MAX	(100)
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="
-	const char* routing_token;
 	char* colon;
-	int len;
-	int prefix_len;
+	size_t len;
+	const size_t prefix_len  = strlen(ROUTING_TOKEN_PREFIX);
 	DWORD routing_token_length;
-	routing_token = freerdp_nego_get_routing_token(client->context, &routing_token_length);
-	prefix_len = strlen(ROUTING_TOKEN_PREFIX);
+	const char* routing_token = freerdp_nego_get_routing_token(client->context, &routing_token_length);
 
 	if (routing_token &&
-	    routing_token_length > prefix_len && routing_token_length < TARGET_MAX)
+	    (routing_token_length > prefix_len) && (routing_token_length < TARGET_MAX))
 	{
 		len = routing_token_length - prefix_len;
 		*target = malloc(len + 1);
+
+		if (!(*target))
+			return FALSE;
+
 		CopyMemory(*target, routing_token + prefix_len, len);
 		*(*target + len) = '\0';
 		colon = strchr(*target, ':');
@@ -97,7 +99,12 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 		if (colon)
 		{
 			/* port is specified */
-			*port = strtoul(colon + 1, NULL, 10);
+			unsigned long p = strtoul(colon + 1, NULL, 10);
+
+			if (p > USHRT_MAX)
+				return FALSE;
+
+			*port = (DWORD)p;
 			*colon = '\0';
 		}
 
@@ -116,7 +123,7 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
  * The server may start sending graphics output and receiving keyboard/mouse
  * input after this callback returns.
  */
-BOOL pf_server_post_connect(freerdp_peer* client)
+static BOOL pf_server_post_connect(freerdp_peer* client)
 {
 	proxyConfig* config;
 	pServerContext* ps;
@@ -167,7 +174,7 @@ BOOL pf_server_post_connect(freerdp_peer* client)
 	return TRUE;
 }
 
-BOOL pf_server_activate(freerdp_peer* client)
+static BOOL pf_server_activate(freerdp_peer* client)
 {
 	client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
 	return TRUE;
@@ -335,7 +342,7 @@ static BOOL pf_server_client_connected(freerdp_listener* listener,
 	return TRUE;
 }
 
-void pf_server_mainloop(freerdp_listener* listener)
+static void pf_server_mainloop(freerdp_listener* listener)
 {
 	HANDLE eventHandles[32];
 	DWORD eventCount;

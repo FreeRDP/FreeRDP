@@ -25,11 +25,6 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/client/channels.h>
 
-int pf_on_channel_connected(freerdp* instance, const char* name,
-                            void* pInterface);
-int pf_on_channel_disconnected(freerdp* instance, const char* name,
-                               void* pInterface);
-
 void pf_OnChannelConnectedEventHandler(void* context,
                                        ChannelConnectedEventArgs* e);
 void pf_OnChannelDisconnectedEventHandler(void* context,

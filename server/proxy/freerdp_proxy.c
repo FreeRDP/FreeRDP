@@ -27,12 +27,21 @@
 
 int main(int argc, char* argv[])
 {
+	const char* cfg = "config.ini";
 	int status = 0;
-	int i;
+	DWORD ld;
+	UINT32 i;
 	proxyConfig* config = calloc(1, sizeof(proxyConfig));
-	status = pf_server_load_config("config.ini", config);
 
-	switch (status)
+	if (!config)
+		return -1;
+
+	if (argc > 1)
+		cfg = argv[1];
+
+	ld = pf_server_load_config(cfg, config);
+
+	switch (ld)
 	{
 		case CONFIG_PARSE_SUCCESS:
 			WLog_DBG(TAG, "Configuration parsed successfully");

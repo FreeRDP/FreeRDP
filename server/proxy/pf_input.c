@@ -22,7 +22,7 @@
 #include "pf_input.h"
 #include "pf_context.h"
 
-BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
+static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	pServerContext* ps = (pServerContext*)input->context;
 	pClientContext* pc = ps->pdata->pc;
@@ -30,7 +30,7 @@ BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 	return freerdp_input_send_synchronize_event(context->input, flags);
 }
 
-BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	pServerContext* ps = (pServerContext*)input->context;
 	pClientContext* pc = ps->pdata->pc;
@@ -43,7 +43,7 @@ BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	return freerdp_input_send_keyboard_event(context->input, flags, code);
 }
 
-BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	pServerContext* ps = (pServerContext*)input->context;
 	pClientContext* pc = ps->pdata->pc;
@@ -56,7 +56,7 @@ BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code
 	return freerdp_input_send_unicode_keyboard_event(context->input, flags, code);
 }
 
-BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	pServerContext* ps = (pServerContext*)input->context;
 	pClientContext* pc = ps->pdata->pc;
@@ -69,8 +69,8 @@ BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	return freerdp_input_send_mouse_event(context->input, flags, x, y);
 }
 
-BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
-                                    UINT16 y)
+static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
+        UINT16 y)
 {
 	pServerContext* ps = (pServerContext*)input->context;
 	pClientContext* pc = ps->pdata->pc;
