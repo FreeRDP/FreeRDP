@@ -73,10 +73,7 @@ void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	}
 	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-			gdi_video_control_init(xfc->context.gdi, (VideoClientContext*)e->pInterface);
-		else
-			xf_video_control_init(xfc, (VideoClientContext*)e->pInterface);
+		xf_video_control_init(xfc, (VideoClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
 	{

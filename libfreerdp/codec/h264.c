@@ -298,7 +298,11 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264,
 	UINT32* piDstSize = h264->iYUV444Size;
 	UINT32* piDstStride = h264->iYUV444Stride;
 	BYTE** ppYUVDstData = h264->pYUV444Data;
-	UINT32 padDstHeight = nDstHeight + 16; /* Need alignment to 16x16 blocks */
+	const UINT32 pad = nDstHeight % 16;
+	UINT32 padDstHeight = nDstHeight; /* Need alignment to 16x16 blocks */
+
+	if (pad != 0)
+		padDstHeight += 16 - pad;
 
 	if ((piMainStride[0] != piDstStride[0]) ||
 	    (piDstSize[0] != piMainStride[0] * padDstHeight))
