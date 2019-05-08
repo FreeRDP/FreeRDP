@@ -31,7 +31,7 @@
 
 static DWORD gfx_align_scanline(DWORD widthInBytes, DWORD alignment)
 {
-	const UINT32 align = 16;
+	const UINT32 align = alignment;
 	const UINT32 pad = align - (widthInBytes % alignment);
 	UINT32 scanline = widthInBytes;
 
@@ -114,12 +114,12 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	surfaceY = surface->outputOriginY;
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
-	surfaceRect.right = surface->width;
-	surfaceRect.bottom = surface->height;
+	surfaceRect.right = surface->mappedWidth;
+	surfaceRect.bottom = surface->mappedHeight;
 	region16_intersect_rect(&(surface->invalidRegion),
 	                        &(surface->invalidRegion), &surfaceRect);
-	sx = surface->outputTargetWidth / (double)surface->width;
-	sy = surface->outputTargetHeight / (double)surface->height;
+	sx = surface->outputTargetWidth / (double)surface->mappedWidth;
+	sy = surface->outputTargetHeight / (double)surface->mappedHeight;
 
 	if (!(rects = region16_rects(&surface->invalidRegion, &nbRects)) || !nbRects)
 		return CHANNEL_RC_OK;
@@ -969,8 +969,12 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->surfaceId = createSurface->surfaceId;
-	surface->width = (UINT32) createSurface->width;
-	surface->height = (UINT32) createSurface->height;
+	surface->width = gfx_align_scanline(createSurface->width, 16);
+	surface->height = gfx_align_scanline(createSurface->height, 16);
+	surface->mappedWidth = createSurface->width;
+	surface->mappedHeight = createSurface->height;
+	surface->outputTargetWidth = createSurface->width;
+	surface->outputTargetHeight = createSurface->height;
 
 	switch (createSurface->pixelFormat)
 	{
@@ -1354,8 +1358,8 @@ static UINT gdi_MapSurfaceToOutput(RdpgfxClientContext* context,
 	surface->outputMapped = TRUE;
 	surface->outputOriginX = surfaceToOutput->outputOriginX;
 	surface->outputOriginY = surfaceToOutput->outputOriginY;
-	surface->outputTargetWidth = surface->width;
-	surface->outputTargetHeight = surface->height;
+	surface->outputTargetWidth = surface->mappedWidth;
+	surface->outputTargetHeight = surface->mappedHeight;
 	region16_clear(&surface->invalidRegion);
 	rc = CHANNEL_RC_OK;
 fail:
@@ -1411,8 +1415,8 @@ static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
 	}
 
 	surface->windowId = surfaceToWindow->windowId;
-	surface->width = surfaceToWindow->mappedWidth;
-	surface->height = surfaceToWindow->mappedHeight;
+	surface->mappedWidth = surfaceToWindow->mappedWidth;
+	surface->mappedHeight = surfaceToWindow->mappedHeight;
 	surface->outputTargetWidth = surfaceToWindow->mappedWidth;
 	surface->outputTargetHeight = surfaceToWindow->mappedHeight;
 	rc = IFCALLRESULT(CHANNEL_RC_OK, context->MapWindowForSurface, context,
@@ -1442,8 +1446,8 @@ static UINT gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
 	}
 
 	surface->windowId = surfaceToWindow->windowId;
-	surface->width = surfaceToWindow->mappedWidth;
-	surface->height = surfaceToWindow->mappedHeight;
+	surface->mappedWidth = surfaceToWindow->mappedWidth;
+	surface->mappedHeight = surfaceToWindow->mappedHeight;
 	surface->outputTargetWidth = surfaceToWindow->targetWidth;
 	surface->outputTargetHeight = surfaceToWindow->targetHeight;
 	rc = IFCALLRESULT(CHANNEL_RC_OK, context->MapWindowForSurface, context,

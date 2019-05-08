@@ -30,6 +30,8 @@ struct gdi_gfx_surface
 	H264_CONTEXT* h264;
 	UINT32 width;
 	UINT32 height;
+	UINT32 mappedWidth;
+	UINT32 mappedHeight;
 	BYTE* data;
 	UINT32 scanline;
 	UINT32 format;

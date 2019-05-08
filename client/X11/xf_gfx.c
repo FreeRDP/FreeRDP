@@ -45,15 +45,15 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	surfaceY = surface->gdi.outputOriginY;
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
-	surfaceRect.right = surface->gdi.width;
-	surfaceRect.bottom = surface->gdi.height;
+	surfaceRect.right = surface->gdi.mappedWidth;
+	surfaceRect.bottom = surface->gdi.mappedHeight;
 	XSetClipMask(xfc->display, xfc->gc, None);
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	region16_intersect_rect(&(surface->gdi.invalidRegion),
 	                        &(surface->gdi.invalidRegion), &surfaceRect);
-	sx = surface->gdi.outputTargetWidth / (double)surface->gdi.width;
-	sy = surface->gdi.outputTargetHeight / (double)surface->gdi.height;
+	sx = surface->gdi.outputTargetWidth / (double)surface->gdi.mappedWidth;
+	sy = surface->gdi.outputTargetHeight / (double)surface->gdi.mappedHeight;
 
 	if (!(rects = region16_rects(&surface->gdi.invalidRegion, &nbRects)))
 		return CHANNEL_RC_OK;
@@ -143,9 +143,12 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 		if (!surface)
 			continue;
 
-		/* Already handled in UpdateSurfaceArea callbacks */
-		if (surface->gdi.windowId != 0)
-			continue;
+		/* If UpdateSurfaceArea callback is available, the output has already been updated. */
+		if (context->UpdateSurfaceArea)
+		{
+			if (surface->gdi.windowId != 0)
+				continue;
+		}
 
 		status = ERROR_INTERNAL_ERROR;
 
@@ -267,8 +270,12 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->gdi.surfaceId = createSurface->surfaceId;
-	surface->gdi.width = (UINT32) createSurface->width;
-	surface->gdi.height = (UINT32) createSurface->height;
+	surface->gdi.width = x11_pad_scanline(createSurface->width, 0);
+	surface->gdi.height = x11_pad_scanline(createSurface->height, 0);
+	surface->gdi.mappedWidth = createSurface->width;
+	surface->gdi.mappedHeight = createSurface->height;
+	surface->gdi.outputTargetWidth = createSurface->width;
+	surface->gdi.outputTargetHeight = createSurface->height;
 
 	switch (createSurface->pixelFormat)
 	{
@@ -302,7 +309,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	if (AreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
 	{
 		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-		                              (char*) surface->gdi.data, surface->gdi.width, surface->gdi.height,
+		                              (char*) surface->gdi.data, surface->gdi.mappedWidth, surface->gdi.mappedHeight,
 		                              xfc->scanline_pad, surface->gdi.scanline);
 	}
 	else
@@ -323,7 +330,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		ZeroMemory(surface->stage, size);
 		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 		                              ZPixmap, 0, (char*) surface->stage,
-		                              surface->gdi.width, surface->gdi.height,
+		                              surface->gdi.mappedWidth, surface->gdi.mappedHeight,
 		                              xfc->scanline_pad, surface->stageScanline);
 	}
 
@@ -401,18 +408,15 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	xf_graphics_pipeline_init_ex(xfc, gfx, NULL, NULL, NULL);
-}
-
-void xf_graphics_pipeline_init_ex(xfContext* xfc, RdpgfxClientContext* gfx,
-                                  pcRdpgfxMapWindowForSurface map, pcRdpgfxUnmapWindowForSurface unmap,
-                                  pcRdpgfxUpdateSurfaceArea update)
-{
 	rdpGdi* gdi = xfc->context.gdi;
-	gdi_graphics_pipeline_init_ex(gdi, gfx, map, unmap, update);
-	gfx->UpdateSurfaces = xf_UpdateSurfaces;
-	gfx->CreateSurface = xf_CreateSurface;
-	gfx->DeleteSurface = xf_DeleteSurface;
+	gdi_graphics_pipeline_init(gdi, gfx);
+
+	if (!xfc->context.settings->SoftwareGdi)
+	{
+		gfx->UpdateSurfaces = xf_UpdateSurfaces;
+		gfx->CreateSurface = xf_CreateSurface;
+		gfx->DeleteSurface = xf_DeleteSurface;
+	}
 }
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)

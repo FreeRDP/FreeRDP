@@ -49,10 +49,7 @@ void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_init(xfc->context.gdi, (RdpgfxClientContext*) e->pInterface);
-		else
-			xf_graphics_pipeline_init(xfc, (RdpgfxClientContext*) e->pInterface);
+		xf_graphics_pipeline_init(xfc, (RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -106,10 +103,7 @@ void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEven
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_uninit(xfc->context.gdi, (RdpgfxClientContext*) e->pInterface);
-		else
-			xf_graphics_pipeline_uninit(xfc, (RdpgfxClientContext*) e->pInterface);
+		xf_graphics_pipeline_uninit(xfc, (RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
