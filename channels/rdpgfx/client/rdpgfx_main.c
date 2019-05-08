@@ -106,6 +106,32 @@ fail:
 	return error;
 }
 
+static BOOL rdpgfx_is_capability_filtered(RDPGFX_PLUGIN* gfx, UINT32 caps)
+{
+	const UINT32 filter = gfx->capsFilter;
+	const UINT32 capList[] =
+	{
+		RDPGFX_CAPVERSION_8,
+		RDPGFX_CAPVERSION_81,
+		RDPGFX_CAPVERSION_10,
+		RDPGFX_CAPVERSION_101,
+		RDPGFX_CAPVERSION_102,
+		RDPGFX_CAPVERSION_103,
+		RDPGFX_CAPVERSION_104,
+		RDPGFX_CAPVERSION_105,
+		RDPGFX_CAPVERSION_106
+	};
+	UINT32 x;
+
+	for (x = 0; x < ARRAYSIZE(capList); x++)
+	{
+		if (caps == capList[x])
+			return (filter & (1 << x)) != 0;
+	}
+
+	return TRUE;
+}
+
 /**
  * Function description
  *
@@ -113,54 +139,69 @@ fail:
  */
 static UINT rdpgfx_send_supported_caps(RDPGFX_CHANNEL_CALLBACK* callback)
 {
-	UINT error = CHANNEL_RC_OK;
 	RDPGFX_PLUGIN* gfx;
 	RdpgfxClientContext* context;
 	RDPGFX_CAPSET* capsSet;
 	RDPGFX_CAPSET capsSets[RDPGFX_NUMBER_CAPSETS] = { 0 };
 	RDPGFX_CAPS_ADVERTISE_PDU pdu;
+
+	if (!callback)
+		return ERROR_BAD_ARGUMENTS;
+
 	gfx = (RDPGFX_PLUGIN*) callback->plugin;
+
+	if (!gfx)
+		return ERROR_BAD_CONFIGURATION;
+
 	context = (RdpgfxClientContext*) gfx->iface.pInterface;
+
+	if (!context)
+		return ERROR_BAD_CONFIGURATION;
+
 	pdu.capsSetCount = 0;
 	pdu.capsSets = (RDPGFX_CAPSET*) capsSets;
-	capsSet = &capsSets[pdu.capsSetCount++];
-	capsSet->version = RDPGFX_CAPVERSION_8;
-	capsSet->length = 4;
-	capsSet->flags = 0;
 
-	if (gfx->ThinClient)
-		capsSet->flags |= RDPGFX_CAPS_FLAG_THINCLIENT;
+	if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_8))
+	{
+		capsSet = &capsSets[pdu.capsSetCount++];
+		capsSet->version = RDPGFX_CAPVERSION_8;
+		capsSet->length = 4;
+		capsSet->flags = 0;
 
-	/* in CAPVERSION_8 the spec says that we should not have both
-	 * thinclient and smallcache (and thinclient implies a small cache)
-	 */
-	if (gfx->SmallCache && !gfx->ThinClient)
-		capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
+		if (gfx->ThinClient)
+			capsSet->flags |= RDPGFX_CAPS_FLAG_THINCLIENT;
 
-	capsSet = &capsSets[pdu.capsSetCount++];
-	capsSet->version = RDPGFX_CAPVERSION_81;
-	capsSet->length = 4;
-	capsSet->flags = 0;
+		/* in CAPVERSION_8 the spec says that we should not have both
+		 * thinclient and smallcache (and thinclient implies a small cache)
+		 */
+		if (gfx->SmallCache && !gfx->ThinClient)
+			capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
+	}
 
-	if (gfx->ThinClient)
-		capsSet->flags |= RDPGFX_CAPS_FLAG_THINCLIENT;
+	if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_81))
+	{
+		capsSet = &capsSets[pdu.capsSetCount++];
+		capsSet->version = RDPGFX_CAPVERSION_81;
+		capsSet->length = 4;
+		capsSet->flags = 0;
 
-	if (gfx->SmallCache)
-		capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
+		if (gfx->ThinClient)
+			capsSet->flags |= RDPGFX_CAPS_FLAG_THINCLIENT;
+
+		if (gfx->SmallCache)
+			capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
 #ifdef WITH_GFX_H264
 
-	if (gfx->H264)
-		capsSet->flags |= RDPGFX_CAPS_FLAG_AVC420_ENABLED;
+		if (gfx->H264)
+			capsSet->flags |= RDPGFX_CAPS_FLAG_AVC420_ENABLED;
 
 #endif
+	}
 
 	if (!gfx->H264 || gfx->AVC444)
 	{
 		UINT32 caps10Flags = 0;
-		capsSet = &capsSets[pdu.capsSetCount++];
-		capsSet->version = RDPGFX_CAPVERSION_10;
-		capsSet->length = 4;
 
 		if (gfx->SmallCache)
 			caps10Flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
@@ -173,54 +214,68 @@ static UINT rdpgfx_send_supported_caps(RDPGFX_CHANNEL_CALLBACK* callback)
 #else
 		caps10Flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 #endif
-		capsSet->flags = caps10Flags;
-		capsSet = &capsSets[pdu.capsSetCount++];
-		capsSet->version = RDPGFX_CAPVERSION_101;
-		capsSet->length = 0x10;
-		capsSet->flags = 0;
-		capsSet = &capsSets[pdu.capsSetCount++];
-		capsSet->version = RDPGFX_CAPVERSION_102;
-		capsSet->length = 0x4;
-		capsSet->flags = caps10Flags;
+
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_10))
+		{
+			capsSet = &capsSets[pdu.capsSetCount++];
+			capsSet->version = RDPGFX_CAPVERSION_10;
+			capsSet->length = 4;
+			capsSet->flags = caps10Flags;
+		}
+
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_101))
+		{
+			capsSet = &capsSets[pdu.capsSetCount++];
+			capsSet->version = RDPGFX_CAPVERSION_101;
+			capsSet->length = 0x10;
+			capsSet->flags = 0;
+		}
+
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_102))
+		{
+			capsSet = &capsSets[pdu.capsSetCount++];
+			capsSet->version = RDPGFX_CAPVERSION_102;
+			capsSet->length = 0x4;
+			capsSet->flags = caps10Flags;
+		}
 
 		if (gfx->ThinClient)
 			caps10Flags |= RDPGFX_CAPS_FLAG_AVC_THINCLIENT;
 
-		/* Reports from Remmina suggest that current H264 decoder settings do
-		 * not work with newer GFX protocol versions.
-		 * Need to investigate this.
-		 * Until resolved, disable the newer protocol versions. */
-#if 0
-		capsSet = &capsSets[pdu.capsSetCount++];
-		capsSet->version = RDPGFX_CAPVERSION_103;
-		capsSet->length = 0x4;
-		capsSet->flags = caps10Flags & ~RDPGFX_CAPS_FLAG_SMALL_CACHE;
-		capsSet = &capsSets[pdu.capsSetCount++];
-		capsSet->version = RDPGFX_CAPVERSION_104;
-		capsSet->length = 0x4;
-		capsSet->flags = caps10Flags;
-		capsSet = &capsSets[pdu.capsSetCount++];
-		capsSet->version = RDPGFX_CAPVERSION_105;
-		capsSet->length = 0x4;
-		capsSet->flags = caps10Flags;
-		/* TODO: Until  RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU and
-		 * RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU are not implemented do not
-		 * announce the following version */
-#if 0
-		capsSet = &capsSets[pdu.capsSetCount++];
-		capsSet->version = RDPGFX_CAPVERSION_106;
-		capsSet->length = 0x4;
-		capsSet->flags = caps10Flags;
-#endif
-#endif
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_103))
+		{
+			capsSet = &capsSets[pdu.capsSetCount++];
+			capsSet->version = RDPGFX_CAPVERSION_103;
+			capsSet->length = 0x4;
+			capsSet->flags = caps10Flags & ~RDPGFX_CAPS_FLAG_SMALL_CACHE;
+		}
+
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_104))
+		{
+			capsSet = &capsSets[pdu.capsSetCount++];
+			capsSet->version = RDPGFX_CAPVERSION_104;
+			capsSet->length = 0x4;
+			capsSet->flags = caps10Flags;
+		}
+
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_105))
+		{
+			capsSet = &capsSets[pdu.capsSetCount++];
+			capsSet->version = RDPGFX_CAPVERSION_105;
+			capsSet->length = 0x4;
+			capsSet->flags = caps10Flags;
+		}
+
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_106))
+		{
+			capsSet = &capsSets[pdu.capsSetCount++];
+			capsSet->version = RDPGFX_CAPVERSION_106;
+			capsSet->length = 0x4;
+			capsSet->flags = caps10Flags;
+		}
 	}
 
-	if (context)
-	{
-		IFCALLRET(context->CapsAdvertise, error, context, &pdu);
-	}
-
-	return error;
+	return IFCALLRESULT(ERROR_BAD_CONFIGURATION, context->CapsAdvertise, context, &pdu);
 }
 
 /**
@@ -269,8 +324,22 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RdpgfxClientContext* context,
 	UINT error;
 	wStream* s;
 	RDPGFX_HEADER header;
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) context->handle;
-	RDPGFX_CHANNEL_CALLBACK* callback = gfx->listener_callback->channel_callback;
+	RDPGFX_PLUGIN* gfx;
+	RDPGFX_CHANNEL_CALLBACK* callback;
+
+	if (!context || !pdu)
+		return ERROR_BAD_ARGUMENTS;
+
+	gfx = (RDPGFX_PLUGIN*) context->handle;
+
+	if (!gfx)
+		return ERROR_BAD_CONFIGURATION;
+
+	callback = gfx->listener_callback->channel_callback;
+
+	if (!callback)
+		return ERROR_BAD_CONFIGURATION;
+
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_FRAMEACKNOWLEDGE;
 	header.pduLength = RDPGFX_HEADER_SIZE + 12;
@@ -684,6 +753,9 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		case RDPGFX_CAPVERSION_10:
 		case RDPGFX_CAPVERSION_102:
 		case RDPGFX_CAPVERSION_103:
+		case RDPGFX_CAPVERSION_104:
+		case RDPGFX_CAPVERSION_105:
+		case RDPGFX_CAPVERSION_106:
 			if (gfx->SendQoeAck)
 			{
 				RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe;
@@ -1943,6 +2015,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		gfx->H264 = gfx->settings->GfxH264;
 		gfx->AVC444 = gfx->settings->GfxAVC444;
 		gfx->SendQoeAck = gfx->settings->GfxSendQoeAck;
+		gfx->capsFilter = gfx->settings->GfxCapsFilter;
 
 		if (gfx->H264)
 			gfx->SmallCache = TRUE;

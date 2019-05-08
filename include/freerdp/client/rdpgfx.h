@@ -93,6 +93,10 @@ typedef UINT(*pcRdpgfxCapsConfirm)(RdpgfxClientContext* context,
 typedef UINT(*pcRdpgfxFrameAcknowledge)(RdpgfxClientContext* context,
                                         const RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge);
 
+typedef UINT(*pcRdpgfxMapWindowForSurface)(RdpgfxClientContext* context, UINT16 surfaceID,
+        UINT64 windowID);
+typedef UINT(*pcRdpgfxUnmapWindowForSurface)(RdpgfxClientContext* context, UINT64 windowID);
+
 struct _rdpgfx_client_context
 {
 	void* handle;
@@ -134,6 +138,13 @@ struct _rdpgfx_client_context
 	/* No locking required */
 	pcRdpgfxUpdateSurfaces UpdateSurfaces;
 	pcRdpgfxUpdateSurfaceArea UpdateSurfaceArea;
+
+	/* These callbacks allow crating/destroying a window directly
+	 * mapped to a surface.
+	 * NOTE: The surface is already locked.
+	 */
+	pcRdpgfxMapWindowForSurface MapWindowForSurface;
+	pcRdpgfxUnmapWindowForSurface UnmapWindowForSurface;
 
 	CRITICAL_SECTION mux;
 	PROFILER_DEFINE(SurfaceProfiler)

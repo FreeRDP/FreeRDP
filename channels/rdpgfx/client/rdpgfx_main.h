@@ -67,6 +67,7 @@ struct _RDPGFX_PLUGIN
 	BOOL ProgressiveV2;
 	BOOL H264;
 	BOOL AVC444;
+	UINT32 capsFilter;
 
 	ZGFX_CONTEXT* zgfx;
 	UINT32 UnacknowledgedFrames;

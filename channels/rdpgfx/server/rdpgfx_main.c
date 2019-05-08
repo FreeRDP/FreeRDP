@@ -1193,7 +1193,10 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 	UINT16 index;
 	RDPGFX_CAPSET* capsSets;
 	RDPGFX_CAPS_ADVERTISE_PDU pdu;
-	UINT error = CHANNEL_RC_OK;
+	UINT error = ERROR_INVALID_DATA;
+
+	if (!context)
+		return ERROR_BAD_ARGUMENTS;
 
 	if (Stream_GetRemainingLength(s) < 2)
 	{
@@ -1214,10 +1217,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 		RDPGFX_CAPSET* capsSet = &(pdu.capsSets[index]);
 
 		if (Stream_GetRemainingLength(s) < 8)
-		{
-			WLog_ERR(TAG, "not enough data!");
-			return ERROR_INVALID_DATA;
-		}
+			goto fail;
 
 		Stream_Read_UINT32(s, capsSet->version); /* version (4 bytes) */
 		Stream_Read_UINT32(s, capsSet->length); /* capsDataLength (4 bytes) */
@@ -1225,23 +1225,22 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 		if (capsSet->length >= 4)
 		{
 			if (Stream_GetRemainingLength(s) < 4)
-				return ERROR_INVALID_DATA;
+				goto fail;
 
 			Stream_Peek_UINT32(s, capsSet->flags); /* capsData (4 bytes) */
 		}
 
 		if (!Stream_SafeSeek(s, capsSet->length))
-			return ERROR_INVALID_DATA;
+			goto fail;
 	}
 
-	if (context)
-	{
-		IFCALLRET(context->CapsAdvertise, error, context, &pdu);
+	error = ERROR_BAD_CONFIGURATION;
+	IFCALLRET(context->CapsAdvertise, error, context, &pdu);
 
-		if (error)
-			WLog_ERR(TAG, "context->CapsAdvertise failed with error %"PRIu32"", error);
-	}
+	if (error)
+		WLog_ERR(TAG, "context->CapsAdvertise failed with error %"PRIu32"", error);
 
+fail:
 	free(capsSets);
 	return error;
 }
