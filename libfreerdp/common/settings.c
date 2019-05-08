@@ -697,25 +697,25 @@ void freerdp_performance_flags_split(rdpSettings* settings)
 
 BOOL freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsageMethod)
 {
-	if (!freerdp_set_param_uint32(settings, FreeRDP_GatewayUsageMethod, GatewayUsageMethod))
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_GatewayUsageMethod, GatewayUsageMethod))
 		return FALSE;
 
 	if (GatewayUsageMethod == TSC_PROXY_MODE_NONE_DIRECT)
 	{
-		if (!freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE) ||
-		    !freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayEnabled, FALSE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayBypassLocal, FALSE))
 			return FALSE;
 	}
 	else if (GatewayUsageMethod == TSC_PROXY_MODE_DIRECT)
 	{
-		if (!freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE) ||
-		    !freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayEnabled, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayBypassLocal, FALSE))
 			return FALSE;
 	}
 	else if (GatewayUsageMethod == TSC_PROXY_MODE_DETECT)
 	{
-		if (!freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE) ||
-		    !freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, TRUE))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayEnabled, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayBypassLocal, TRUE))
 			return FALSE;
 	}
 	else if (GatewayUsageMethod == TSC_PROXY_MODE_DEFAULT)
@@ -725,14 +725,14 @@ BOOL freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsage
 		 * which means the client attempts to use gateway group policy settings
 		 * http://technet.microsoft.com/en-us/library/cc770601.aspx
 		 */
-		if (!freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE) ||
-		    !freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayEnabled, FALSE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayBypassLocal, FALSE))
 			return FALSE;
 	}
 	else if (GatewayUsageMethod == TSC_PROXY_MODE_NONE_DETECT)
 	{
-		if (!freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE) ||
-		    !freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayEnabled, FALSE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayBypassLocal, FALSE))
 			return FALSE;
 	}
 
@@ -752,4 +752,54 @@ void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEn
 		GatewayUsageMethod = TSC_PROXY_MODE_DETECT;
 
 	freerdp_set_gateway_usage_method(settings, GatewayUsageMethod);
+}
+
+BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
+{
+	return freerdp_settings_get_bool(settings, (size_t)id);
+}
+
+int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
+{
+	return freerdp_settings_set_bool(settings, (size_t)id, param) ? 0 : -1;
+}
+
+int freerdp_get_param_int(rdpSettings* settings, int id)
+{
+	return freerdp_settings_get_int32(settings, (size_t)id);
+}
+
+int freerdp_set_param_int(rdpSettings* settings, int id, int param)
+{
+	return freerdp_settings_set_int32(settings, (size_t)id, param) ? 0 : -1;
+}
+
+UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
+{
+	return freerdp_settings_get_uint32(settings, (size_t)id);
+}
+
+int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
+{
+	return freerdp_settings_set_uint32(settings, (size_t)id, param) ? 0 : -1;
+}
+
+UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id)
+{
+	return freerdp_settings_get_uint64(settings, (size_t)id);
+}
+
+int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
+{
+	return freerdp_settings_set_uint64(settings, (size_t)id, param) ? 0 : -1;
+}
+
+char* freerdp_get_param_string(rdpSettings* settings, int id)
+{
+	return (char*)freerdp_settings_get_string(settings, (size_t)id);
+}
+
+int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
+{
+	return freerdp_settings_set_string(settings, (size_t)id, param) ? 0 : -1;
 }

@@ -43,7 +43,7 @@ def write_getter(f, entry_dict, entry_type, entry_name):
         f.write('const ' + entry_type)
     else:
         f.write(entry_type)
-    f.write(' freerdp_get_param_' + entry_name.lower() + '(rdpSettings* settings, size_t id)\n')
+    f.write(' freerdp_settings_get_' + entry_name.lower() + '(rdpSettings* settings, size_t id)\n')
     f.write('{\n')
     f.write('\tif (!settings)\n')
     f.write('\t\treturn FALSE;\n\n')
@@ -73,7 +73,7 @@ def write_setter(f, entry_dict, entry_type, entry_name):
     isPointer = 'pointer' in entry_name
     values = get_values(entry_dict, entry_type)
 
-    f.write('BOOL freerdp_set_param_' + entry_name.lower() + '(rdpSettings* settings, size_t id, ')
+    f.write('BOOL freerdp_settings_set_' + entry_name.lower() + '(rdpSettings* settings, size_t id, ')
     if isString or isPointer:
         f.write('const ')
     if not isPointer:

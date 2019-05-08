@@ -343,7 +343,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "sam-file")
 		{
-			freerdp_set_param_string(settings, FreeRDP_NtlmSamFile, arg->Value);
+			freerdp_settings_set_string(settings, FreeRDP_NtlmSamFile, arg->Value);
 		}
 		CommandLineSwitchDefault(arg)
 		{

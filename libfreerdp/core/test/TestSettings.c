@@ -33,9 +33,9 @@ int TestSettings(int argc, char* argv[])
 	for (x = 0; x < ARRAYSIZE(bool_list_indices); x++)
 	{
 		const size_t key = bool_list_indices[x];
-		const BOOL val = freerdp_get_param_bool(settings, key);
+		const BOOL val = freerdp_settings_get_bool(settings, key);
 
-		if (!freerdp_set_param_bool(settings, key, val))
+		if (!freerdp_settings_set_bool(settings, key, val))
 			goto fail;
 	}
 
@@ -45,9 +45,9 @@ int TestSettings(int argc, char* argv[])
 	for (x = 0; x < ARRAYSIZE(int16_list_indices); x++)
 	{
 		const size_t key = int16_list_indices[x];
-		const INT16 val = freerdp_get_param_int16(settings, key);
+		const INT16 val = freerdp_settings_get_int16(settings, key);
 
-		if (!freerdp_set_param_int16(settings, key, val))
+		if (!freerdp_settings_set_int16(settings, key, val))
 			goto fail;
 	}
 
@@ -57,9 +57,9 @@ int TestSettings(int argc, char* argv[])
 	for (x = 0; x < ARRAYSIZE(uint16_list_indices); x++)
 	{
 		const size_t key = uint16_list_indices[x];
-		const UINT16 val = freerdp_get_param_uint16(settings, key);
+		const UINT16 val = freerdp_settings_get_uint16(settings, key);
 
-		if (!freerdp_set_param_uint16(settings, key, val))
+		if (!freerdp_settings_set_uint16(settings, key, val))
 			goto fail;
 	}
 
@@ -69,9 +69,9 @@ int TestSettings(int argc, char* argv[])
 	for (x = 0; x < ARRAYSIZE(uint32_list_indices); x++)
 	{
 		const size_t key = uint32_list_indices[x];
-		const UINT32 val = freerdp_get_param_uint32(settings, key);
+		const UINT32 val = freerdp_settings_get_uint32(settings, key);
 
-		if (!freerdp_set_param_uint32(settings, key, val))
+		if (!freerdp_settings_set_uint32(settings, key, val))
 			goto fail;
 	}
 
@@ -81,9 +81,9 @@ int TestSettings(int argc, char* argv[])
 	for (x = 0; x < ARRAYSIZE(int32_list_indices); x++)
 	{
 		const size_t key = int32_list_indices[x];
-		const INT32 val = freerdp_get_param_int32(settings, key);
+		const INT32 val = freerdp_settings_get_int32(settings, key);
 
-		if (!freerdp_set_param_int32(settings, key, val))
+		if (!freerdp_settings_set_int32(settings, key, val))
 			goto fail;
 	}
 
@@ -93,9 +93,9 @@ int TestSettings(int argc, char* argv[])
 	for (x = 0; x < ARRAYSIZE(uint64_list_indices); x++)
 	{
 		const size_t key = uint64_list_indices[x];
-		const UINT64 val = freerdp_get_param_uint64(settings, key);
+		const UINT64 val = freerdp_settings_get_uint64(settings, key);
 
-		if (!freerdp_set_param_uint64(settings, key, val))
+		if (!freerdp_settings_set_uint64(settings, key, val))
 			goto fail;
 	}
 
@@ -105,9 +105,9 @@ int TestSettings(int argc, char* argv[])
 	for (x = 0; x < ARRAYSIZE(int64_list_indices); x++)
 	{
 		const size_t key = int64_list_indices[x];
-		const INT64 val = freerdp_get_param_int64(settings, key);
+		const INT64 val = freerdp_settings_get_int64(settings, key);
 
-		if (!freerdp_set_param_int64(settings, key, val))
+		if (!freerdp_settings_set_int64(settings, key, val))
 			goto fail;
 	}
 
@@ -117,13 +117,14 @@ int TestSettings(int argc, char* argv[])
 	for (x = 0; x < ARRAYSIZE(string_list_indices); x++)
 	{
 		const size_t key = string_list_indices[x];
-		const char* val = "test-string";
+		const char val[] = "test-string";
 		const char* res;
 
-		if (!freerdp_set_param_string(settings, key, val))
+		if (!freerdp_settings_set_string(settings, key, val))
 			goto fail;
 
-		res = freerdp_get_param_string(settings, key);
+		res = freerdp_settings_get_string(settings, key);
+
 		if (strncmp(val, res, sizeof(val)) != 0)
 			goto fail;
 	}
@@ -134,7 +135,7 @@ int TestSettings(int argc, char* argv[])
 	for (x = 0; x < ARRAYSIZE(pointer_list_indices); x++)
 	{
 		const size_t key = pointer_list_indices[x];
-		const void* val = freerdp_get_param_pointer(settings, key);
+		const void* val = freerdp_settings_get_pointer(settings, key);
 	}
 
 #endif

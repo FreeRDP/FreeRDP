@@ -5,7 +5,7 @@
 
 #define TAG FREERDP_TAG("common.settings")
 
-BOOL freerdp_get_param_bool(rdpSettings* settings, size_t id)
+BOOL freerdp_settings_get_bool(rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -498,7 +498,7 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, size_t id)
 	}
 }
 
-BOOL freerdp_set_param_bool(rdpSettings* settings, size_t id, BOOL val)
+BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 {
 	if (!settings)
 		return FALSE;
@@ -1153,7 +1153,7 @@ BOOL freerdp_set_param_bool(rdpSettings* settings, size_t id, BOOL val)
 	return TRUE;
 }
 
-UINT16 freerdp_get_param_uint16(rdpSettings* settings, size_t id)
+UINT16 freerdp_settings_get_uint16(rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -1172,7 +1172,7 @@ UINT16 freerdp_get_param_uint16(rdpSettings* settings, size_t id)
 	}
 }
 
-BOOL freerdp_set_param_uint16(rdpSettings* settings, size_t id, UINT16 val)
+BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 {
 	if (!settings)
 		return FALSE;
@@ -1195,7 +1195,7 @@ BOOL freerdp_set_param_uint16(rdpSettings* settings, size_t id, UINT16 val)
 	return TRUE;
 }
 
-INT16 freerdp_get_param_int16(rdpSettings* settings, size_t id)
+INT16 freerdp_settings_get_int16(rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -1208,7 +1208,7 @@ INT16 freerdp_get_param_int16(rdpSettings* settings, size_t id)
 	}
 }
 
-BOOL freerdp_set_param_int16(rdpSettings* settings, size_t id, INT16 val)
+BOOL freerdp_settings_set_int16(rdpSettings* settings, size_t id, INT16 val)
 {
 	if (!settings)
 		return FALSE;
@@ -1223,7 +1223,7 @@ BOOL freerdp_set_param_int16(rdpSettings* settings, size_t id, INT16 val)
 	return TRUE;
 }
 
-UINT32 freerdp_get_param_uint32(rdpSettings* settings, size_t id)
+UINT32 freerdp_settings_get_uint32(rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -1425,6 +1425,9 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, size_t id)
 		case FreeRDP_RemoteWndSupportLevel:
 			return settings->RemoteWndSupportLevel;
 
+		case FreeRDP_RemoteApplicationSupportLevel:
+			return settings->RemoteApplicationSupportLevel;
+
 		case FreeRDP_ReceivedCapabilitiesSize:
 			return settings->ReceivedCapabilitiesSize;
 
@@ -1512,6 +1515,9 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, size_t id)
 		case FreeRDP_JpegQuality:
 			return settings->JpegQuality;
 
+		case FreeRDP_GfxCapsFilter:
+			return settings->GfxCapsFilter;
+
 		case FreeRDP_BitmapCacheV3CodecId:
 			return settings->BitmapCacheV3CodecId;
 
@@ -1545,7 +1551,7 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, size_t id)
 	}
 }
 
-BOOL freerdp_set_param_uint32(rdpSettings* settings, size_t id, UINT32 val)
+BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 {
 	if (!settings)
 		return FALSE;
@@ -1812,6 +1818,10 @@ BOOL freerdp_set_param_uint32(rdpSettings* settings, size_t id, UINT32 val)
 			settings->RemoteWndSupportLevel = val;
 			break;
 
+		case FreeRDP_RemoteApplicationSupportLevel:
+			settings->RemoteApplicationSupportLevel = val;
+			break;
+
 		case FreeRDP_ReceivedCapabilitiesSize:
 			settings->ReceivedCapabilitiesSize = val;
 			break;
@@ -1928,6 +1938,10 @@ BOOL freerdp_set_param_uint32(rdpSettings* settings, size_t id, UINT32 val)
 			settings->JpegQuality = val;
 			break;
 
+		case FreeRDP_GfxCapsFilter:
+			settings->GfxCapsFilter = val;
+			break;
+
 		case FreeRDP_BitmapCacheV3CodecId:
 			settings->BitmapCacheV3CodecId = val;
 			break;
@@ -1972,7 +1986,7 @@ BOOL freerdp_set_param_uint32(rdpSettings* settings, size_t id, UINT32 val)
 	return TRUE;
 }
 
-INT32 freerdp_get_param_int32(rdpSettings* settings, size_t id)
+INT32 freerdp_settings_get_int32(rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -1991,7 +2005,7 @@ INT32 freerdp_get_param_int32(rdpSettings* settings, size_t id)
 	}
 }
 
-BOOL freerdp_set_param_int32(rdpSettings* settings, size_t id, INT32 val)
+BOOL freerdp_settings_set_int32(rdpSettings* settings, size_t id, INT32 val)
 {
 	if (!settings)
 		return FALSE;
@@ -2014,7 +2028,7 @@ BOOL freerdp_set_param_int32(rdpSettings* settings, size_t id, INT32 val)
 	return TRUE;
 }
 
-UINT64 freerdp_get_param_uint64(rdpSettings* settings, size_t id)
+UINT64 freerdp_settings_get_uint64(rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -2030,7 +2044,7 @@ UINT64 freerdp_get_param_uint64(rdpSettings* settings, size_t id)
 	}
 }
 
-BOOL freerdp_set_param_uint64(rdpSettings* settings, size_t id, UINT64 val)
+BOOL freerdp_settings_set_uint64(rdpSettings* settings, size_t id, UINT64 val)
 {
 	if (!settings)
 		return FALSE;
@@ -2049,7 +2063,7 @@ BOOL freerdp_set_param_uint64(rdpSettings* settings, size_t id, UINT64 val)
 	return TRUE;
 }
 
-INT64 freerdp_get_param_int64(rdpSettings* settings, size_t id)
+INT64 freerdp_settings_get_int64(rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -2062,7 +2076,7 @@ INT64 freerdp_get_param_int64(rdpSettings* settings, size_t id)
 	}
 }
 
-BOOL freerdp_set_param_int64(rdpSettings* settings, size_t id, INT64 val)
+BOOL freerdp_settings_set_int64(rdpSettings* settings, size_t id, INT64 val)
 {
 	if (!settings)
 		return FALSE;
@@ -2077,7 +2091,7 @@ BOOL freerdp_set_param_int64(rdpSettings* settings, size_t id, INT64 val)
 	return TRUE;
 }
 
-const char* freerdp_get_param_string(rdpSettings* settings, size_t id)
+const char* freerdp_settings_get_string(rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -2279,7 +2293,7 @@ const char* freerdp_get_param_string(rdpSettings* settings, size_t id)
 	}
 }
 
-BOOL freerdp_set_param_string(rdpSettings* settings, size_t id, const char* val)
+BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* val)
 {
 	if (!settings)
 		return FALSE;
@@ -2609,7 +2623,7 @@ BOOL freerdp_set_param_string(rdpSettings* settings, size_t id, const char* val)
 	return TRUE;
 }
 
-const void* freerdp_get_param_pointer(rdpSettings* settings, size_t id)
+const void* freerdp_settings_get_pointer(rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
