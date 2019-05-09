@@ -133,12 +133,13 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId,
 	xfc->rail->ClientSystemCommand(xfc->rail, &syscommand);
 }
 
-static void xf_rail_move_window(xfContext* xfc, xfAppWindow* appWindow, const RAIL_WINDOW_MOVE_ORDER* windowMove)
+static void xf_rail_move_window(xfContext* xfc, xfAppWindow* appWindow,
+                                const RAIL_WINDOW_MOVE_ORDER* windowMove)
 {
 	DEBUG_X11("forwarding geometry from X/internal to RDP server: %dx%d+%d+%d",
-			(windowMove->right - windowMove->left),
-			(windowMove->bottom - windowMove->top),
-			windowMove->left, windowMove->top);
+	          (windowMove->right - windowMove->left),
+	          (windowMove->bottom - windowMove->top),
+	          windowMove->left, windowMove->top);
 	xfc->rail->ClientWindowMove(xfc->rail, windowMove);
 }
 
@@ -216,7 +217,7 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 * receive the RAIL ORDER for the new window size.  This avoids that race condition.
 	 */
 	DEBUG_X11("updating internal offsets from X: %dx%d+%d+%d", appWindow->width,
-			appWindow->height, appWindow->x, appWindow->y);
+	          appWindow->height, appWindow->x, appWindow->y);
 	appWindow->windowOffsetX = appWindow->x;
 	appWindow->windowOffsetY = appWindow->y;
 	appWindow->windowWidth = appWindow->width;
@@ -235,6 +236,7 @@ static void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 	const RECTANGLE_16* extents;
 	REGION16 windowInvalidRegion;
 	region16_init(&windowInvalidRegion);
+
 	if (xfc->railWindows)
 		count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
@@ -287,16 +289,18 @@ void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright,
 /* RemoteApp Core Protocol Extension */
 
 static xfAppWindow* xf_rail_window_new(xfContext* xfc,
-									   const WINDOW_ORDER_INFO* orderInfo,
-									   const WINDOW_STATE_ORDER* windowState)
+                                       const WINDOW_ORDER_INFO* orderInfo,
+                                       const WINDOW_STATE_ORDER* windowState)
 {
 	UINT32 fieldFlags = orderInfo->fieldFlags;
 	xfAppWindow* appWindow = xf_rail_get_window(xfc, orderInfo->windowId);
 
-    if (!appWindow)
-        appWindow = xf_rail_add_window(xfc, orderInfo->windowId, windowState->windowOffsetX,
-                                       windowState->windowOffsetY, windowState->windowWidth,
-                                       windowState->windowHeight, 0xFFFFFFFF);
+	if (!appWindow)
+	{
+		appWindow = xf_rail_add_window(xfc, orderInfo->windowId, windowState->windowOffsetX,
+		                               windowState->windowOffsetY, windowState->windowWidth,
+		                               windowState->windowHeight, 0xFFFFFFFF);
+	}
 
 	if (!appWindow)
 		return NULL;
@@ -317,8 +321,8 @@ static xfAppWindow* xf_rail_window_new(xfContext* xfc,
 				/* error handled below */
 			}
 		}
-			else if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
-				windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
+		else if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
+		                            windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert window title");
 			/* error handled below */
@@ -339,7 +343,6 @@ static xfAppWindow* xf_rail_window_new(xfContext* xfc,
 	}
 
 	xf_AppWindowInit(xfc, appWindow);
-
 	return appWindow;
 }
 
@@ -350,11 +353,10 @@ static BOOL xf_rail_window_common(rdpContext* context,
 	xfContext* xfc = (xfContext*) context;
 	UINT32 fieldFlags = orderInfo->fieldFlags;
 	BOOL position_or_size_updated = FALSE;
-
 	DEBUG_X11("new rail window state, fieldFlags=0x%x, geom= %dx%d+%d+%d",
-			orderInfo->fieldFlags, windowState->windowWidth,
-			windowState->windowHeight, windowState->windowOffsetX,
-			windowState->windowOffsetY);
+	          orderInfo->fieldFlags, windowState->windowWidth,
+	          windowState->windowHeight, windowState->windowOffsetX,
+	          windowState->windowOffsetY);
 
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
@@ -372,36 +374,38 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
 	{
-		DEBUG_X11("resizeMarginX: 0x%x %d, %d", appWindow->handle, windowState->windowLeftResizeMargin, windowState->windowRightResizeMargin);
+		DEBUG_X11("resizeMarginX: 0x%x %d, %d", appWindow->handle, windowState->windowLeftResizeMargin,
+		          windowState->windowRightResizeMargin);
 		appWindow->windowLeftResizeMargin = windowState->windowLeftResizeMargin;
 		appWindow->windowRightResizeMargin = windowState->windowRightResizeMargin;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
 	{
-		DEBUG_X11("resizeMarginY: 0x%x %d, %d", appWindow->handle, windowState->windowTopResizeMargin, windowState->windowBottomResizeMargin);
+		DEBUG_X11("resizeMarginY: 0x%x %d, %d", appWindow->handle, windowState->windowTopResizeMargin,
+		          windowState->windowBottomResizeMargin);
 		appWindow->windowTopResizeMargin = windowState->windowTopResizeMargin;
 		appWindow->windowBottomResizeMargin = windowState->windowBottomResizeMargin;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
-			DEBUG_X11("windowOffset: 0x%x (%d, %d)", appWindow->handle,
-					windowState->windowOffsetX, windowState->windowOffsetY);
-			appWindow->windowOffsetX = windowState->windowOffsetX - appWindow->windowLeftResizeMargin;
-			appWindow->windowOffsetY = windowState->windowOffsetY - appWindow->windowTopResizeMargin;
+		DEBUG_X11("windowOffset: 0x%x (%d, %d)", appWindow->handle,
+		          windowState->windowOffsetX, windowState->windowOffsetY);
+		appWindow->windowOffsetX = windowState->windowOffsetX - appWindow->windowLeftResizeMargin;
+		appWindow->windowOffsetY = windowState->windowOffsetY - appWindow->windowTopResizeMargin;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
 		DEBUG_X11("window size: 0x%x (%d, %d)", appWindow->handle,
-				windowState->windowWidth, windowState->windowHeight);
+		          windowState->windowWidth, windowState->windowHeight);
 		appWindow->windowWidth = windowState->windowWidth
-				+ appWindow->windowLeftResizeMargin
-				+ appWindow->windowRightResizeMargin;
+		                         + appWindow->windowLeftResizeMargin
+		                         + appWindow->windowRightResizeMargin;
 		appWindow->windowHeight = windowState->windowHeight
-				+ appWindow->windowTopResizeMargin
-				+ appWindow->windowBottomResizeMargin;
+		                          + appWindow->windowTopResizeMargin
+		                          + appWindow->windowBottomResizeMargin;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_OWNER)
@@ -445,7 +449,8 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
 	{
-		DEBUG_X11("clientOffset: 0x%x (%d, %d)", appWindow->handle, windowState->clientOffsetX, windowState->clientOffsetY);
+		DEBUG_X11("clientOffset: 0x%x (%d, %d)", appWindow->handle, windowState->clientOffsetX,
+		          windowState->clientOffsetY);
 		appWindow->clientOffsetX = windowState->clientOffsetX;
 		appWindow->clientOffsetY = windowState->clientOffsetY;
 	}
@@ -458,7 +463,8 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
-		DEBUG_X11("windowClientDelta: 0x%x (%d, %d)", appWindow->handle, windowState->windowClientDeltaX, windowState->windowClientDeltaY);
+		DEBUG_X11("windowClientDelta: 0x%x (%d, %d)", appWindow->handle, windowState->windowClientDeltaX,
+		          windowState->windowClientDeltaY);
 		appWindow->windowClientDeltaX = windowState->windowClientDeltaX;
 		appWindow->windowClientDeltaY = windowState->windowClientDeltaY;
 	}
@@ -489,7 +495,7 @@ static BOOL xf_rail_window_common(rdpContext* context,
 	if (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
 	{
 		DEBUG_X11("visibleOffset: 0x%x (%d, %d)", appWindow->handle,
-				windowState->visibleOffsetX, windowState->visibleOffsetY);
+		          windowState->visibleOffsetX, windowState->visibleOffsetY);
 		appWindow->visibleOffsetX = windowState->visibleOffsetX;
 		appWindow->visibleOffsetY = windowState->visibleOffsetY;
 	}
@@ -685,11 +691,11 @@ static BOOL convert_rail_icon(ICON_INFO* iconInfo, xfRailIcon* railIcon)
 		goto error;
 
 	if (!freerdp_image_copy_from_icon_data(argbPixels,
-		PIXEL_FORMAT_ARGB32, 0, 0, 0,
-		iconInfo->width, iconInfo->height,
-		iconInfo->bitsColor, iconInfo->cbBitsColor,
-		iconInfo->bitsMask, iconInfo->cbBitsMask,
-		iconInfo->colorTable, iconInfo->cbColorTable, iconInfo->bpp))
+	                                       PIXEL_FORMAT_ARGB32, 0, 0, 0,
+	                                       iconInfo->width, iconInfo->height,
+	                                       iconInfo->bitsColor, iconInfo->cbBitsColor,
+	                                       iconInfo->bitsMask, iconInfo->cbBitsMask,
+	                                       iconInfo->colorTable, iconInfo->cbColorTable, iconInfo->bpp))
 		goto error;
 
 	nelements = 2 + iconInfo->width * iconInfo->height;

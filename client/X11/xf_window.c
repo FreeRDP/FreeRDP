@@ -769,7 +769,7 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 	XMapWindow(xfc->display, appWindow->handle);
 	/* Move doesn't seem to work until window is mapped. */
 	xf_MoveWindow(xfc, appWindow, appWindow->x, appWindow->y, appWindow->width,
-				  appWindow->height);
+	              appWindow->height);
 	xf_SetWindowText(xfc, appWindow, appWindow->title);
 	return 1;
 }
@@ -838,7 +838,6 @@ int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	             SubstructureRedirectMask | FocusChangeMask | PropertyChangeMask |
 	             ColormapChangeMask | OwnerGrabButtonMask;
 	XSelectInput(xfc->display, appWindow->handle, input_mask);
-
 	return 1;
 }
 
@@ -934,11 +933,14 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y,
 	appWindow->width = width;
 	appWindow->height = height;
 
-	if (resize) {
-		DEBUG_X11("setting new internal & X geometry: %dx%d+%d+%d\tshowState=%d", width, height, x, y, appWindow->showState);
+	if (resize)
+	{
+		DEBUG_X11("setting new internal & X geometry: %dx%d+%d+%d\tshowState=%d", width, height, x, y,
+		          appWindow->showState);
 		XMoveResizeWindow(xfc->display, appWindow->handle, x, y, width, height);
 	}
-	else {
+	else
+	{
 		DEBUG_X11("setting new internal & X location: +%d+%d\tshowState=%d", x, y, appWindow->showState);
 		XMoveWindow(xfc->display, appWindow->handle, x, y);
 	}
