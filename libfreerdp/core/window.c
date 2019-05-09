@@ -108,8 +108,9 @@ static char* rail_get_window_order_strings(UINT32 flags)
 {
 	char* s;
 	int totalLength = 0;
+	int i;
 
-	for (int i = 0; WINDOW_ORDER_VALUES[i] != 0; i++)
+	for (i = 0; WINDOW_ORDER_VALUES[i] != 0; i++)
 	{
 		if (flags & WINDOW_ORDER_VALUES[i])
 		{
@@ -122,7 +123,7 @@ static char* rail_get_window_order_strings(UINT32 flags)
 		s = malloc(totalLength);
 		char* next = s;
 
-		for (int i = 0; WINDOW_ORDER_VALUES[i] != 0; i++)
+		for (i = 0; WINDOW_ORDER_VALUES[i] != 0; i++)
 		{
 			if (flags & WINDOW_ORDER_VALUES[i])
 			{
