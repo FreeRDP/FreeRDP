@@ -318,7 +318,7 @@ struct _RAIL_SYSPARAM_ORDER
 	RECTANGLE_16 displayChange;
 	RECTANGLE_16 taskbarPos;
 	RAIL_HIGH_CONTRAST highContrast;
-	RAIL_HIGH_CONTRAST caretWidth;
+	UINT32 caretWidth;
 	UINT32 stickyKeys;
 	UINT32 toggleKeys;
 	TS_FILTERKEYS filterKeys;

@@ -421,7 +421,10 @@ UINT rail_write_client_sysparam_order(railPlugin* rail, wStream* s,
 			if ((rail->channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) == 0)
 				return ERROR_INVALID_DATA;
 
-			error = rail_write_high_contrast(s, &sysparam->caretWidth);
+			if (sysparam->caretWidth < 0x0001)
+				return ERROR_INVALID_DATA;
+
+			Stream_Write_UINT32(s, sysparam->caretWidth);
 			break;
 
 		case SPI_SETSTICKYKEYS:
@@ -653,7 +656,7 @@ static UINT rail_recv_handshake_ex_order(railPlugin* rail, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_recv_exec_result_order(railPlugin* rail,                    wStream* s)
+static UINT rail_recv_exec_result_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	RAIL_EXEC_RESULT_ORDER execResult = { 0 };
@@ -686,7 +689,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_recv_server_sysparam_order(railPlugin* rail,        wStream* s)
+static UINT rail_recv_server_sysparam_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	RAIL_SYSPARAM_ORDER sysparam;
@@ -748,7 +751,7 @@ static UINT rail_recv_server_minmaxinfo_order(railPlugin* rail, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_recv_server_localmovesize_order(railPlugin* rail,        wStream* s)
+static UINT rail_recv_server_localmovesize_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	RAIL_LOCALMOVESIZE_ORDER localMoveSize = { 0 };
@@ -810,7 +813,7 @@ static UINT rail_recv_server_get_appid_resp_order(railPlugin* rail, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_recv_langbar_info_order(railPlugin* rail,       wStream* s)
+static UINT rail_recv_langbar_info_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	RAIL_LANGBAR_INFO_ORDER langBarInfo = { 0 };
@@ -995,7 +998,7 @@ static UINT rail_read_power_display_request_order(wStream* s, RAIL_POWER_DISPLAY
 	return CHANNEL_RC_OK;
 }
 
-static UINT rail_recv_power_display_request_order(railPlugin* rail,        wStream* s)
+static UINT rail_recv_power_display_request_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	RAIL_POWER_DISPLAY_REQUEST power = { 0 };
