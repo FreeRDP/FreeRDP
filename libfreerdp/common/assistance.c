@@ -1155,7 +1155,9 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
         rdpSettings* settings)
 {
 	UINT32 i;
-	freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceMode, TRUE);
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceMode, TRUE))
+		return FALSE;
 
 	if (!file->RASessionId || !file->MachineAddresses)
 		return FALSE;
