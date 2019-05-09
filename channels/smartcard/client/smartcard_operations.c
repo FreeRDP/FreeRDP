@@ -1299,16 +1299,17 @@ static LONG smartcard_Transmit_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	                               call->cbSendLength, ret.pioRecvPci, ret.pbRecvBuffer, &(ret.cbRecvLength));
 	smartcard_trace_transmit_return(smartcard, &ret);
 
-	if ((status = smartcard_pack_transmit_return(smartcard, irp->output, &ret)))
-	{
-		WLog_ERR(TAG, "smartcard_pack_transmit_return failed with error %"PRId32"", status);
-		return status;
-	}
-
+	status = smartcard_pack_transmit_return(smartcard, irp->output, &ret);
 	free(call->pbSendBuffer);
 	free(ret.pbRecvBuffer);
 	free(call->pioSendPci);
 	free(call->pioRecvPci);
+
+	if (status)
+	{
+		WLog_ERR(TAG, "smartcard_pack_transmit_return failed with error %"PRId32"", status);
+		return status;
+	}
 	return ret.ReturnCode;
 }
 
@@ -1539,7 +1540,10 @@ static LONG smartcard_LocateCardsByATRA_Call(SMARTCARD_DEVICE* smartcard,
 		ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
 
 	if (!ret.rgReaderStates)
+	{
+		free(states);
 		return STATUS_NO_MEMORY;
+	}
 
 	for (i = 0; i < ret.cReaders; i++)
 	{

@@ -118,10 +118,11 @@ void string_hexdump(BYTE* data, int length)
 
 int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, int expected_cchWideChar)
 {
+	int rc = -1;
 	int length;
 	int cbMultiByte;
 	int cchWideChar;
-	LPWSTR lpWideCharStr;
+	LPWSTR lpWideCharStr = NULL;
 
 	cbMultiByte = strlen((char*) lpMultiByteStr);
 	cchWideChar = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) lpMultiByteStr, -1, NULL, 0);
@@ -135,14 +136,14 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 	{
 		printf("MultiByteToWideChar unexpected cchWideChar: actual: %d expected: %d\n",
 			cchWideChar, expected_cchWideChar);
-		return -1;
+		goto fail;
 	}
 
 	lpWideCharStr = (LPWSTR) calloc(cchWideChar, sizeof(WCHAR));
 	if (!lpWideCharStr)
 	{
 		printf("MultiByteToWideChar: unable to allocate memory for test\n");
-		return -1;
+		goto fail;
 	}
 	lpWideCharStr[cchWideChar - 1] = 0xFFFF; /* should be overwritten if null terminator is inserted properly */
 	length = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) lpMultiByteStr, cbMultiByte + 1, lpWideCharStr, cchWideChar);
@@ -153,14 +154,14 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 	{
 		DWORD error = GetLastError();
 		printf("MultiByteToWideChar error: 0x%08"PRIX32"\n", error);
-		return -1;
+		goto fail;
 	}
 
 	if (length != expected_cchWideChar)
 	{
 		printf("MultiByteToWideChar unexpected converted length (WCHAR): actual: %d expected: %d\n",
 			length, expected_cchWideChar);
-		return -1;
+		goto fail;
 	}
 
 	if (_wcscmp(lpWideCharStr, (WCHAR*) expected_lpWideCharStr) != 0)
@@ -176,20 +177,23 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 		printf("UTF16 String (expected):\n");
 		string_hexdump((BYTE*) expected_lpWideCharStr, expected_cchWideChar * sizeof(WCHAR));
 
-		return -1;
+		goto fail;
 	}
 
 	printf("MultiByteToWideChar Output UTF16 String:\n");
 	string_hexdump((BYTE*) lpWideCharStr, length * sizeof(WCHAR));
 	printf("\n");
 
+	rc = length;
+fail:
 	free(lpWideCharStr);
 
-	return length;
+	return rc;
 }
 
 int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, int expected_cbMultiByte)
 {
+	int rc = -1;
 	int length;
 	int cchWideChar;
 	int cbMultiByte;
@@ -207,14 +211,14 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 	{
 		printf("WideCharToMultiByte unexpected cbMultiByte: actual: %d expected: %d\n",
 			cbMultiByte, expected_cbMultiByte);
-		return -1;
+		goto fail;
 	}
 
 	lpMultiByteStr = (LPSTR) malloc(cbMultiByte);
 	if (!lpMultiByteStr)
 	{
 		printf("WideCharToMultiByte: unable to allocate memory for test\n");
-		return -1;
+		goto fail;
 	}
 	lpMultiByteStr[cbMultiByte - 1] = (CHAR)0xFF; /* should be overwritten if null terminator is inserted properly */
 	length = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) lpWideCharStr, cchWideChar + 1, lpMultiByteStr, cbMultiByte, NULL, NULL);
@@ -225,14 +229,14 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 	{
 		DWORD error = GetLastError();
 		printf("WideCharToMultiByte error: 0x%08"PRIX32"\n", error);
-		return -1;
+		goto fail;
 	}
 
 	if (length != expected_cbMultiByte)
 	{
 		printf("WideCharToMultiByte unexpected converted length (BYTE): actual: %d expected: %d\n",
 			length, expected_cbMultiByte);
-		return -1;
+		goto fail;
 	}
 
 	if (strcmp(lpMultiByteStr, (char*) expected_lpMultiByteStr) != 0)
@@ -248,16 +252,18 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 		printf("UTF8 String (expected):\n");
 		string_hexdump((BYTE*) expected_lpMultiByteStr, expected_cbMultiByte);
 
-		return -1;
+		goto fail;
 	}
 
 	printf("WideCharToMultiByte Output UTF8 String:\n");
 	string_hexdump((BYTE*) lpMultiByteStr, cbMultiByte);
 	printf("\n");
 
+	rc = length;
+fail:
 	free(lpMultiByteStr);
 
-	return length;
+	return rc;
 }
 
 BOOL test_unicode_uppercasing(BYTE* lower, BYTE* upper)
