@@ -146,6 +146,10 @@ void ntlm_read_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields->Len > 0)
 	{
+		const UINT64 offset = (UINT64)fields->BufferOffset + (UINT64)fields->Len;
+
+		if (offset > Stream_Length(s))
+			return;
 		fields->Buffer = malloc(fields->Len);
 		Stream_SetPosition(s, fields->BufferOffset);
 		Stream_Read(s, fields->Buffer, fields->Len);
