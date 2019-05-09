@@ -1040,7 +1040,7 @@ struct rdp_settings
 	UINT64 padding0896[896 - 837]; /* 837 */
 
 	/* Client Info (Time Zone) */
-	ALIGN64 LPTIME_ZONE_INFORMATION ClientTimeZone;              /* 896 */
+	ALIGN64 TIME_ZONE_INFORMATION*  ClientTimeZone;              /* 896 */
 	ALIGN64 char*                   DynamicDSTTimeZoneKeyName;   /* 897 */
 	ALIGN64 BOOL                    DynamicDaylightTimeDisabled; /* 898 */
 	UINT64 padding0960[960 - 899]; /* 899 */
@@ -1175,8 +1175,8 @@ struct rdp_settings
 	ALIGN64 char*  WmClass;                 /* 1549 */
 	ALIGN64 BOOL   EmbeddedWindow;          /* 1550 */
 	ALIGN64 BOOL   SmartSizing;             /* 1551 */
-	ALIGN64 int    XPan;                    /* 1552 */
-	ALIGN64 int    YPan;                    /* 1553 */
+	ALIGN64 INT32  XPan;                    /* 1552 */
+	ALIGN64 INT32  YPan;                    /* 1553 */
 	ALIGN64 UINT32 SmartSizingWidth;        /* 1554 */
 	ALIGN64 UINT32 SmartSizingHeight;       /* 1555 */
 	ALIGN64 BOOL   PercentScreenUseWidth;   /* 1556 */
@@ -1531,7 +1531,7 @@ struct rdp_settings
 	 */
 
 	/* Extensions */
-	ALIGN64 int num_extensions; /*  */
+	ALIGN64 INT32 num_extensions; /*  */
 	ALIGN64 struct rdp_ext_set extensions[16]; /*  */
 
 	ALIGN64 BYTE*
@@ -1584,10 +1584,14 @@ FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);
 FREERDP_API void freerdp_performance_flags_make(rdpSettings* settings);
 FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);
 
-FREERDP_API void freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsageMethod);
+FREERDP_API BOOL freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsageMethod);
 FREERDP_API void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEnabled,
         UINT32 GatewayBypassLocal);
 
+/* DEPRECATED:
+ * the functions freerdp_get_param_* and freerdp_set_param_* are deprecated.
+ * use freerdp_settings_get_* and freerdp_settings_set_* as a replacement!
+ */
 FREERDP_API BOOL freerdp_get_param_bool(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param);
 
@@ -1602,6 +1606,32 @@ FREERDP_API int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 p
 
 FREERDP_API char* freerdp_get_param_string(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_string(rdpSettings* settings, int id, const char* param);
+
+FREERDP_API BOOL freerdp_settings_get_bool(rdpSettings* settings, size_t id);
+FREERDP_API BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL param);
+
+FREERDP_API INT16 freerdp_settings_get_int16(rdpSettings* settings, size_t id);
+FREERDP_API BOOL freerdp_settings_set_int16(rdpSettings* settings, size_t id, INT16 param);
+
+FREERDP_API UINT16 freerdp_settings_get_uint16(rdpSettings* settings, size_t id);
+FREERDP_API BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 param);
+
+FREERDP_API INT32 freerdp_settings_get_int32(rdpSettings* settings, size_t id);
+FREERDP_API BOOL freerdp_settings_set_int32(rdpSettings* settings, size_t id, INT32 param);
+
+FREERDP_API UINT32 freerdp_settings_get_uint32(rdpSettings* settings, size_t id);
+FREERDP_API BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 param);
+
+FREERDP_API INT64 freerdp_settings_get_int64(rdpSettings* settings, size_t id);
+FREERDP_API BOOL freerdp_settings_set_int64(rdpSettings* settings, size_t id, INT64 param);
+
+FREERDP_API UINT64 freerdp_settings_get_uint64(rdpSettings* settings, size_t id);
+FREERDP_API BOOL freerdp_settings_set_uint64(rdpSettings* settings, size_t id, UINT64 param);
+
+FREERDP_API const char* freerdp_settings_get_string(rdpSettings* settings, size_t id);
+FREERDP_API BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* param);
+
+FREERDP_API const void* freerdp_settings_get_pointer(rdpSettings* settings, size_t id);
 
 #ifdef __cplusplus
 }
