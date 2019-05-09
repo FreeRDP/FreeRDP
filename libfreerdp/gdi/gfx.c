@@ -133,12 +133,12 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	{
 		const UINT32 nXSrc = rects[i].left;
 		const UINT32 nYSrc = rects[i].top;
-		const UINT32 nXDst = surfaceX + nXSrc * sx;
-		const UINT32 nYDst = surfaceY + nYSrc * sy;
+		const UINT32 nXDst = (UINT32)(surfaceX + nXSrc * sx);
+		const UINT32 nYDst = (UINT32)(surfaceY + nYSrc * sy);
 		const UINT32 swidth = rects[i].right - rects[i].left;
 		const UINT32 sheight = rects[i].bottom - rects[i].top;
-		const UINT32 dwidth = swidth * sx;
-		const UINT32 dheight = sheight * sy;
+		const UINT32 dwidth = (UINT32)(swidth * sx);
+		const UINT32 dheight = (UINT32)(sheight * sy);
 
 		if (!freerdp_image_scale(gdi->primary_buffer, gdi->dstFormat,
 		                         gdi->stride, nXDst, nYDst, dwidth, dheight,
@@ -146,7 +146,7 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 		                         surface->scanline, nXSrc, nYSrc, swidth, sheight))
 			return CHANNEL_RC_NULL_DATA;
 
-		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, dwidth, dheight);
+		gdi_InvalidateRegion(gdi->primary->hdc, (INT32)nXDst, (INT32)nYDst, (INT32)dwidth, (INT32)dheight);
 	}
 
 	rc = CHANNEL_RC_OK;
@@ -189,10 +189,10 @@ static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 				continue;
 		}
 
-		status = ERROR_INTERNAL_ERROR;
+		if (!surface->outputMapped)
+			continue;
 
-		if (surface->outputMapped)
-			status = gdi_OutputUpdate(gdi, surface);
+		status = gdi_OutputUpdate(gdi, surface);
 
 		if (status != CHANNEL_RC_OK)
 			break;

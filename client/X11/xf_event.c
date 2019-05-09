@@ -298,14 +298,13 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 		h = event->xexpose.height;
 	}
 
-	if (xfc->context.gdi->gfx)
-	{
-		xf_OutputExpose(xfc, x, y, w, h);
-		return TRUE;
-	}
-
 	if (!app)
 	{
+		if (xfc->context.gdi->gfx)
+		{
+			xf_OutputExpose(xfc, x, y, w, h);
+			return TRUE;
+		}
 		xf_draw_screen(xfc, x, y, w, h);
 	}
 	else
@@ -531,6 +530,7 @@ static BOOL xf_event_FocusOut(xfContext* xfc, XEvent* event, BOOL app)
 static BOOL xf_event_MappingNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	WINPR_UNUSED(app);
+
 	if (event->xmapping.request == MappingModifier)
 	{
 		if (xfc->modifierMap)
@@ -602,6 +602,7 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, XEvent* event, BOOL app)
 static BOOL xf_event_LeaveNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	WINPR_UNUSED(event);
+
 	if (!app)
 	{
 		xfc->mouse_active = FALSE;
@@ -718,7 +719,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 			 * Doing this here would inhibit the ability to restore a maximized window
 			 * that is minimized back to the maximized state
 			 */
-			//xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
+			xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
 			appWindow->is_mapped = TRUE;
 		}
 	}
@@ -930,6 +931,7 @@ static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow,
 
 	return FALSE;
 }
+
 BOOL xf_event_process(freerdp* instance, XEvent* event)
 {
 	BOOL status = TRUE;

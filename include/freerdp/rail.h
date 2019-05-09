@@ -22,14 +22,22 @@
 #define FREERDP_RAIL_GLOBAL_H
 
 #include <winpr/wnd.h>
+#include <winpr/windows.h>
 
 #include <freerdp/types.h>
 
-/* RAIL PDU flags */
+/* DEPRECATED: RAIL PDU flags use the spec conformant naming with TS_ prefix */
 #define RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY		0x0001
 #define RAIL_EXEC_FLAG_TRANSLATE_FILES			0x0002
 #define RAIL_EXEC_FLAG_FILE				0x0004
 #define RAIL_EXEC_FLAG_EXPAND_ARGUMENTS			0x0008
+
+/* RAIL PDU flags */
+#define TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY 0x0001
+#define TS_RAIL_EXEC_FLAG_TRANSLATE_FILES         0x0002
+#define TS_RAIL_EXEC_FLAG_FILE                    0x0004
+#define TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS        0x0008
+#define TS_RAIL_EXEC_FLAG_APP_USER_MODEL_ID       0x0010
 
 /* Notification Icon Balloon Tooltip */
 #define NIIF_NONE					0x00000000
@@ -55,17 +63,9 @@
 #define RAIL_EXEC_E_FAIL				0x0006
 #define RAIL_EXEC_E_SESSION_LOCKED			0x0007
 
-/* Client System Parameters Update PDU */
-#define SPI_SET_DRAG_FULL_WINDOWS			0x00000025
-#define SPI_SET_KEYBOARD_CUES				0x0000100B
-#define SPI_SET_KEYBOARD_PREF				0x00000045
-#define SPI_SET_MOUSE_BUTTON_SWAP			0x00000021
-#define SPI_SET_WORK_AREA				0x0000002F
-#define SPI_DISPLAY_CHANGE				0x0000F001
-#define SPI_TASKBAR_POS					0x0000F000
-#define SPI_SET_HIGH_CONTRAST				0x00000043
-
-/* Server System Parameters Update PDU */
+/* DEPRECATED: Server System Parameters Update PDU
+ * use the spec conformant naming scheme from winpr/windows.h
+ */
 #define SPI_SET_SCREEN_SAVE_ACTIVE			0x00000011
 #define SPI_SET_SCREEN_SAVE_SECURE			0x00000077
 
@@ -84,6 +84,18 @@ enum SPI_MASK
 	SPI_MASK_SET_SET_SCREEN_SAVE_SECURE	= 0x00000200
 };
 
+/* Client System Parameters Update PDU
+ * some are defined in winuser.h (winpr/windows.h wrapper)
+ */
+#define SPI_SET_DRAG_FULL_WINDOWS  0x00000025
+#define SPI_SET_KEYBOARD_CUES      0x0000100B
+#define SPI_SET_KEYBOARD_PREF      0x00000045
+#define SPI_SET_MOUSE_BUTTON_SWAP  0x00000021
+#define SPI_SET_WORK_AREA          0x0000002F
+#define SPI_DISPLAY_CHANGE         0x0000F001
+#define SPI_TASKBAR_POS	           0x0000F000
+#define SPI_SET_HIGH_CONTRAST      0x00000043
+
 /* Client System Command PDU */
 #define SC_SIZE						0xF000
 #define SC_MOVE						0xF010
@@ -96,66 +108,98 @@ enum SPI_MASK
 
 /* Client Notify Event PDU */
 #ifndef _WIN32
-#define NIN_SELECT					0x00000400
-#define NIN_KEYSELECT					0x00000401
-#define NIN_BALLOONSHOW					0x00000402
-#define NIN_BALLOONHIDE					0x00000403
-#define NIN_BALLOONTIMEOUT				0x00000404
-#define NIN_BALLOONUSERCLICK				0x00000405
+#define NIN_SELECT           0x00000400
+#define NIN_KEYSELECT        0x00000401
+#define NIN_BALLOONSHOW      0x00000402
+#define NIN_BALLOONHIDE      0x00000403
+#define NIN_BALLOONTIMEOUT   0x00000404
+#define NIN_BALLOONUSERCLICK 0x00000405
+#else
+#include <shellapi.h>
 #endif
 
-/* Client Information PDU */
+/* DEPRECATED: Client Information PDU
+ * use the spec conformant naming scheme TS_ below
+ */
 #define RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE		0x00000001
 #define RAIL_CLIENTSTATUS_AUTORECONNECT			0x00000002
 
-/* HIGHCONTRAST flags values */
-#define HCF_AVAILABLE 					0x00000002
-#define HCF_CONFIRMHOTKEY 				0x00000008
-#define HCF_HIGHCONTRASTON 				0x00000001
-#define HCF_HOTKEYACTIVE 				0x00000004
-#define HCF_HOTKEYAVAILABLE				0x00000040
-#define HCF_HOTKEYSOUND 				0x00000010
-#define HCF_INDICATOR 					0x00000020
+/* Client Information PDU */
+#define TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE              0x00000001
+#define TS_RAIL_CLIENTSTATUS_AUTORECONNECT                   0x00000002
+#define TS_RAIL_CLIENTSTATUS_ZORDER_SYNC                     0x00000004
+#define TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED  0x00000010
+#define TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED       0x00000040
+#define TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED 0x00000080
+#define TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED   0x00000200
 
 /* Server Move/Size Start PDU */
-#define RAIL_WMSZ_LEFT					0x0001
-#define RAIL_WMSZ_RIGHT					0x0002
-#define RAIL_WMSZ_TOP					0x0003
-#define RAIL_WMSZ_TOPLEFT				0x0004
-#define RAIL_WMSZ_TOPRIGHT				0x0005
-#define RAIL_WMSZ_BOTTOM				0x0006
-#define RAIL_WMSZ_BOTTOMLEFT				0x0007
-#define RAIL_WMSZ_BOTTOMRIGHT				0x0008
-#define RAIL_WMSZ_MOVE					0x0009
-#define RAIL_WMSZ_KEYMOVE				0x000A
-#define RAIL_WMSZ_KEYSIZE				0x000B
+#define RAIL_WMSZ_LEFT           0x0001
+#define RAIL_WMSZ_RIGHT          0x0002
+#define RAIL_WMSZ_TOP            0x0003
+#define RAIL_WMSZ_TOPLEFT        0x0004
+#define RAIL_WMSZ_TOPRIGHT       0x0005
+#define RAIL_WMSZ_BOTTOM         0x0006
+#define RAIL_WMSZ_BOTTOMLEFT     0x0007
+#define RAIL_WMSZ_BOTTOMRIGHT    0x0008
+#define RAIL_WMSZ_MOVE           0x0009
+#define RAIL_WMSZ_KEYMOVE        0x000A
+#define RAIL_WMSZ_KEYSIZE        0x000B
 
 /* Language Bar Information PDU */
-#define TF_SFT_SHOWNORMAL				0x00000001
-#define TF_SFT_DOCK					0x00000002
-#define TF_SFT_MINIMIZED				0x00000004
-#define TF_SFT_HIDDEN					0x00000008
-#define TF_SFT_NOTRANSPARENCY				0x00000010
-#define TF_SFT_LOWTRANSPARENCY				0x00000020
-#define TF_SFT_HIGHTRANSPARENCY				0x00000040
-#define TF_SFT_LABELS					0x00000080
-#define TF_SFT_NOLABELS					0x00000100
-#define TF_SFT_EXTRAICONSONMINIMIZED			0x00000200
-#define TF_SFT_NOEXTRAICONSONMINIMIZED			0x00000400
-#define TF_SFT_DESKBAND					0x00000800
+#define TF_SFT_SHOWNORMAL               0x00000001
+#define TF_SFT_DOCK                     0x00000002
+#define TF_SFT_MINIMIZED                0x00000004
+#define TF_SFT_HIDDEN                   0x00000008
+#define TF_SFT_NOTRANSPARENCY           0x00000010
+#define TF_SFT_LOWTRANSPARENCY          0x00000020
+#define TF_SFT_HIGHTRANSPARENCY         0x00000040
+#define TF_SFT_LABELS                   0x00000080
+#define TF_SFT_NOLABELS                 0x00000100
+#define TF_SFT_EXTRAICONSONMINIMIZED    0x00000200
+#define TF_SFT_NOEXTRAICONSONMINIMIZED  0x00000400
+#define TF_SFT_DESKBAND                 0x00000800
 
-/* Extended Handshake Flags */
+/* DEPRECATED: Extended Handshake Flags
+ * use the spec conformant naming scheme TS_ below
+ */
 #define RAIL_ORDER_HANDSHAKEEX_FLAGS_HIDEF                    0x00000001
 #define RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED  0x00000002
 #define RAIL_ORDER_HANDSHAKE_EX_FLAGS_SNAP_ARRANGE_SUPPORTED  0x00000004
 
-/* Language Profile Information Flags */
-#define TF_PROFILETYPE_INPUTPROCESSOR			0x00000001
-#define TF_PROFILETYPE_KEYBOARDLAYOUT			0x00000002
+/* Extended Handshake Flags */
+#define TS_RAIL_ORDER_HANDSHAKEEX_FLAGS_HIDEF                    0x00000001
+#define TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED  0x00000002
+#define TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_SNAP_ARRANGE_SUPPORTED  0x00000004
 
+/* Language Profile Information Flags */
+#define TF_PROFILETYPE_INPUTPROCESSOR  0x00000001
+#define TF_PROFILETYPE_KEYBOARDLAYOUT  0x00000002
+
+/* LanguageProfileCLSID and ProfileGUID */
+#ifndef _WIN32
+#define GUID_NULL                   {0x00000000, 0x0000, 0x0000, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+#else
+#include <cguid.h>
+#endif
+#define GUID_MSIME_JPN              {0x03B5835F, 0xF03C, 0x411B, 0x9C, 0xE2, 0xAA, 0x23, 0xE1, 0x17, 0x1E, 0x36}
+#define GUID_MSIME_KOR              {0xA028AE76, 0x01B1, 0x46C2, 0x99, 0xC4, 0xAC, 0xD9, 0x85, 0x8A, 0xE0, 0x02}
+#define GUID_CHSIME                 {0x81D4E9C9, 0x1D3B, 0x41BC, 0x9E, 0x6C, 0x4B, 0x40, 0xBF, 0x79, 0xE3, 0x5E}
+#define GUID_CHTIME                 {0x531FDEBF, 0x9B4C, 0x4A43, 0xA2, 0xAA, 0x96, 0x0E, 0x8F, 0xCD, 0xC7, 0x32}
+#define GUID_PROFILE_NEWPHONETIC    {0xB2F9C502, 0x1742, 0x11D4, 0x97, 0x90, 0x00, 0x80, 0xC8, 0x82, 0x68, 0x7E}
+#define GUID_PROFILE_CHANGJIE       {0x4BDF9F03, 0xC7D3, 0x11D4, 0xB2, 0xAB, 0x00, 0x80, 0xC8, 0x82, 0x68, 0x7E}
+#define GUID_PROFILE_QUICK          {0x6024B45F, 0x5C54, 0x11D4, 0xB9, 0x21, 0x00, 0x80, 0xC8, 0x82, 0x68, 0x7E}
+#define GUID_PROFILE_CANTONESE      {0x0AEC109C, 0x7E96, 0x11D4, 0xB2, 0xEF, 0x00, 0x80, 0xC8, 0x82, 0x68, 0x7E}
+#define GUID_PROFILE_PINYIN	        {0xF3BA9077, 0x6C7E, 0x11D4, 0x97, 0xFA, 0x00, 0x80, 0xC8, 0x82, 0x68, 0x7E}
+#define GUID_PROFILE_SIMPLEFAST     {0xFA550B04, 0x5AD7, 0x411F, 0xA5, 0xAC, 0xCA, 0x03, 0x8E, 0xC5, 0x15, 0xD7}
+#define GUID_GUID_PROFILE_MSIME_JPN {0xA76C93D9, 0x5523, 0x4E90, 0xAA, 0xFA, 0x4D, 0xB1, 0x12, 0xF9, 0xAC, 0x76}
+#define GUID_PROFILE_MSIME_KOR      {0xB5FE1F02, 0xD5F2, 0x4445, 0x9C, 0x03, 0xC5, 0x68, 0xF2, 0x3C, 0x99, 0xA1}
+
+/* ImeState */
 #define IME_STATE_CLOSED				0x00000000
 #define IME_STATE_OPEN					0x00000001
 
+/* ImeConvMode */
 #ifndef _IME_CMODES_
 #define IME_CMODE_NATIVE				0x00000001
 #define IME_CMODE_KATAKANA				0x00000002
@@ -170,6 +214,7 @@ enum SPI_MASK
 #define IME_CMODE_FIXED					0x00000800
 #endif
 
+/* ImeSentenceMode */
 #ifndef _IMM_
 #define IME_SMODE_NONE					0x00000000
 #define IME_SMODE_PLURALCASE				0x00000001
@@ -179,8 +224,23 @@ enum SPI_MASK
 #define IME_SMODE_CONVERSATION				0x00000010
 #endif
 
+/* KANAMode */
 #define KANA_MODE_OFF					0x00000000
 #define KANA_MODE_ON					0x00000001
+
+/* Taskbar */
+#define RAIL_TASKBAR_MSG_TAB_REGISTER   0x00000001
+#define RAIL_TASKBAR_MSG_TAB_UNREGISTER 0x00000002
+#define RAIL_TASKBAR_MSG_TAB_ORDER      0x00000003
+#define RAIL_TASKBAR_MSG_TAB_ACTIVE     0x00000004
+#define RAIL_TASKBAR_MSG_TAB_PROPERTIES 0x00000005
+
+/* Taskbar body */
+#define RAIL_TASKBAR_MSG_TAB_REGISTER   0x00000001
+#define RAIL_TASKBAR_MSG_TAB_UNREGISTER 0x00000002
+#define RAIL_TASKBAR_MSG_TAB_ORDER      0x00000003
+#define RAIL_TASKBAR_MSG_TAB_ACTIVE     0x00000004
+#define RAIL_TASKBAR_MSG_TAB_PROPERTIES 0x00000005
 
 struct _RAIL_UNICODE_STRING
 {
@@ -236,6 +296,16 @@ struct _RAIL_EXEC_RESULT_ORDER
 };
 typedef struct _RAIL_EXEC_RESULT_ORDER RAIL_EXEC_RESULT_ORDER;
 
+struct _TS_FILTERKEYS
+{
+	UINT32 Flags;
+	UINT32 WaitTime;
+	UINT32 DelayTime;
+	UINT32 RepeatTime;
+	UINT32 BounceTime;
+};
+typedef struct _TS_FILTERKEYS TS_FILTERKEYS;
+
 struct _RAIL_SYSPARAM_ORDER
 {
 	UINT32 param;
@@ -248,6 +318,10 @@ struct _RAIL_SYSPARAM_ORDER
 	RECTANGLE_16 displayChange;
 	RECTANGLE_16 taskbarPos;
 	RAIL_HIGH_CONTRAST highContrast;
+	UINT32 caretWidth;
+	UINT32 stickyKeys;
+	UINT32 toggleKeys;
+	TS_FILTERKEYS filterKeys;
 	BOOL setScreenSaveActive;
 	BOOL setScreenSaveSecure;
 };
@@ -336,15 +410,6 @@ struct _RAIL_LANGBAR_INFO_ORDER
 };
 typedef struct _RAIL_LANGBAR_INFO_ORDER RAIL_LANGBAR_INFO_ORDER;
 
-struct _RAIL_LANGUAGE_IME_INFO_ORDER
-{
-	UINT32 ProfileType;
-	UINT32 LanguageId;
-	GUID LanguageProfileClsId;
-	GUID ProfileGuid;
-};
-typedef struct _RAIL_LANGUAGE_IME_INFO_ORDER RAIL_LANGUAGE_IME_INFO_ORDER;
-
 struct _RAIL_COMPARTMENT_INFO_ORDER
 {
 	UINT32 ImeState;
@@ -373,6 +438,24 @@ struct _RAIL_POWER_DISPLAY_REQUEST
 };
 typedef struct _RAIL_POWER_DISPLAY_REQUEST RAIL_POWER_DISPLAY_REQUEST;
 
+struct _RAIL_TASKBAR_INFO_ORDER
+{
+	UINT32 TaskbarMessage;
+	UINT32 WindowIdTab;
+	UINT32 Body;
+};
+typedef struct _RAIL_TASKBAR_INFO_ORDER RAIL_TASKBAR_INFO_ORDER;
+
+struct _RAIL_LANGUAGEIME_INFO_ORDER
+{
+	UINT32 ProfileType;
+	UINT32 LanguageID;
+	GUID LanguageProfileCLSID;
+	GUID ProfileGUID;
+	UINT32 KeyboardLayout;
+};
+typedef struct _RAIL_LANGUAGEIME_INFO_ORDER RAIL_LANGUAGEIME_INFO_ORDER;
+
 struct _RAIL_SNAP_ARRANGE
 {
 	UINT32 windowId;
@@ -392,7 +475,9 @@ struct _RAIL_GET_APPID_RESP_EX
 };
 typedef struct _RAIL_GET_APPID_RESP_EX RAIL_GET_APPID_RESP_EX;
 
-/* RAIL Constants */
+/* DEPRECATED: RAIL Constants
+ * use the spec conformant naming scheme TS_ below
+ */
 
 #define RDP_RAIL_ORDER_EXEC                    0x0001
 #define RDP_RAIL_ORDER_ACTIVATE                0x0002
@@ -418,6 +503,32 @@ typedef struct _RAIL_GET_APPID_RESP_EX RAIL_GET_APPID_RESP_EX;
 #define RDP_RAIL_ORDER_SNAP_ARRANGE            0x0017
 #define RDP_RAIL_ORDER_GET_APPID_RESP_EX       0x0018
 
+/* RAIL Constants */
+
+#define TS_RAIL_ORDER_EXEC                    0x0001
+#define TS_RAIL_ORDER_ACTIVATE                0x0002
+#define TS_RAIL_ORDER_SYSPARAM                0x0003
+#define TS_RAIL_ORDER_SYSCOMMAND              0x0004
+#define TS_RAIL_ORDER_HANDSHAKE               0x0005
+#define TS_RAIL_ORDER_NOTIFY_EVENT            0x0006
+#define TS_RAIL_ORDER_WINDOWMOVE              0x0008
+#define TS_RAIL_ORDER_LOCALMOVESIZE           0x0009
+#define TS_RAIL_ORDER_MINMAXINFO              0x000A
+#define TS_RAIL_ORDER_CLIENTSTATUS            0x000B
+#define TS_RAIL_ORDER_SYSMENU                 0x000C
+#define TS_RAIL_ORDER_LANGBARINFO             0x000D
+#define TS_RAIL_ORDER_GET_APPID_REQ           0x000E
+#define TS_RAIL_ORDER_GET_APPID_RESP          0x000F
+#define TS_RAIL_ORDER_TASKBARINFO             0x0010
+#define TS_RAIL_ORDER_LANGUAGEIMEINFO         0x0011
+#define TS_RAIL_ORDER_COMPARTMENTINFO         0x0012
+#define TS_RAIL_ORDER_HANDSHAKE_EX            0x0013
+#define TS_RAIL_ORDER_ZORDER_SYNC             0x0014
+#define TS_RAIL_ORDER_CLOAK                   0x0015
+#define TS_RAIL_ORDER_POWER_DISPLAY_REQUEST   0x0016
+#define TS_RAIL_ORDER_SNAP_ARRANGE            0x0017
+#define TS_RAIL_ORDER_GET_APPID_RESP_EX       0x0018
+#define TS_RAIL_ORDER_EXEC_RESULT             0x0080
 
 #ifdef __cplusplus
 extern "C" {

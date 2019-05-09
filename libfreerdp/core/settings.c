@@ -322,6 +322,15 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings)
 		return NULL;
 
+	settings->HiDefRemoteApp = FALSE;
+	settings->RemoteApplicationSupportMask = RAIL_LEVEL_SUPPORTED |
+	        RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED            |
+	        RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED         |
+	        RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED         |
+	        RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED |
+	        RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED       |
+	        RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED           |
+	        RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
 	settings->SupportHeartbeatPdu = TRUE;
 	settings->ServerMode = (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE;
 	settings->WaitForOutputBufferFlush = TRUE;
@@ -495,7 +504,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings->ClientDir)
 		goto out_fail;
 
-	settings->RemoteWndSupportLevel = WINDOW_LEVEL_SUPPORTED_EX;
+	settings->RemoteWndSupportLevel = WINDOW_LEVEL_SUPPORTED | WINDOW_LEVEL_SUPPORTED_EX;
 	settings->RemoteAppNumIconCaches = 3;
 	settings->RemoteAppNumIconCacheEntries = 12;
 	settings->VirtualChannelChunkSize = CHANNEL_CHUNK_LENGTH;

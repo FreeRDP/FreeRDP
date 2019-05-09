@@ -36,17 +36,6 @@ struct xf_gfx_surface
 };
 typedef struct xf_gfx_surface xfGfxSurface;
 
-struct xf_gfx_cache_entry
-{
-	UINT64 cacheKey;
-	UINT32 width;
-	UINT32 height;
-	BYTE* data;
-	UINT32 scanline;
-	UINT32 format;
-};
-typedef struct xf_gfx_cache_entry xfGfxCacheEntry;
-
 UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
                      UINT32 width, UINT32 height);
 

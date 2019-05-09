@@ -23,38 +23,54 @@
 #include <freerdp/types.h>
 
 /* Window Order Header Flags */
-#define WINDOW_ORDER_TYPE_WINDOW			0x01000000
-#define WINDOW_ORDER_TYPE_NOTIFY			0x02000000
-#define WINDOW_ORDER_TYPE_DESKTOP			0x04000000
-#define WINDOW_ORDER_STATE_NEW				0x10000000
-#define WINDOW_ORDER_STATE_DELETED			0x20000000
-#define WINDOW_ORDER_FIELD_OWNER			0x00000002
-#define WINDOW_ORDER_FIELD_STYLE			0x00000008
-#define WINDOW_ORDER_FIELD_SHOW				0x00000010
-#define WINDOW_ORDER_FIELD_TITLE			0x00000004
-#define WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET		0x00004000
-#define WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE		0x00010000
-#define WINDOW_ORDER_FIELD_RP_CONTENT			0x00020000
-#define WINDOW_ORDER_FIELD_ROOT_PARENT			0x00040000
-#define WINDOW_ORDER_FIELD_WND_OFFSET			0x00000800
-#define WINDOW_ORDER_FIELD_WND_CLIENT_DELTA		0x00008000
-#define WINDOW_ORDER_FIELD_WND_SIZE			0x00000400
-#define WINDOW_ORDER_FIELD_WND_RECTS			0x00000100
-#define WINDOW_ORDER_FIELD_VIS_OFFSET			0x00001000
-#define WINDOW_ORDER_FIELD_VISIBILITY			0x00000200
-#define WINDOW_ORDER_FIELD_ICON_BIG			0x00002000
-#define WINDOW_ORDER_ICON				0x40000000
-#define WINDOW_ORDER_CACHED_ICON			0x80000000
-#define WINDOW_ORDER_FIELD_NOTIFY_VERSION		0x00000008
-#define WINDOW_ORDER_FIELD_NOTIFY_TIP			0x00000001
-#define WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP		0x00000002
-#define WINDOW_ORDER_FIELD_NOTIFY_STATE			0x00000004
-#define WINDOW_ORDER_FIELD_DESKTOP_NONE			0x00000001
-#define WINDOW_ORDER_FIELD_DESKTOP_HOOKED		0x00000002
-#define WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED	0x00000004
-#define WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN		0x00000008
-#define WINDOW_ORDER_FIELD_DESKTOP_ZORDER		0x00000010
-#define WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND		0x00000020
+#define WINDOW_ORDER_TYPE_WINDOW                   0x01000000
+#define WINDOW_ORDER_TYPE_NOTIFY                   0x02000000
+#define WINDOW_ORDER_TYPE_DESKTOP                  0x04000000
+
+#define WINDOW_ORDER_STATE_NEW                     0x10000000
+#define WINDOW_ORDER_STATE_DELETED                 0x20000000
+
+/* Window Order Update */
+#define WINDOW_ORDER_FIELD_OWNER                   0x00000002
+#define WINDOW_ORDER_FIELD_STYLE                   0x00000008
+#define WINDOW_ORDER_FIELD_SHOW                    0x00000010
+#define WINDOW_ORDER_FIELD_TITLE                   0x00000004
+#define WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET      0x00004000
+#define WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE        0x00010000
+#define WINDOW_ORDER_FIELD_RESIZE_MARGIN_X         0x00000080
+#define WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y         0x08000000
+#define WINDOW_ORDER_FIELD_RP_CONTENT              0x00020000
+#define WINDOW_ORDER_FIELD_ROOT_PARENT             0x00040000
+#define WINDOW_ORDER_FIELD_WND_OFFSET              0x00000800
+#define WINDOW_ORDER_FIELD_WND_CLIENT_DELTA	       0x00008000
+#define WINDOW_ORDER_FIELD_WND_SIZE                0x00000400
+#define WINDOW_ORDER_FIELD_WND_RECTS               0x00000100
+#define WINDOW_ORDER_FIELD_VIS_OFFSET              0x00001000
+#define WINDOW_ORDER_FIELD_VISIBILITY              0x00000200
+#define WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION     0x00400000
+#define WINDOW_ORDER_FIELD_ICON_OVERLAY_NULL       0x00200000
+#define WINDOW_ORDER_FIELD_TASKBAR_BUTTON          0x00800000
+#define WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER   0x00080000
+#define WINDOW_ORDER_FIELD_APPBAR_STATE            0x00000040
+#define WINDOW_ORDER_FIELD_APPBAR_EDGE             0x00000001
+
+/* Window (chached) Icon */
+#define WINDOW_ORDER_ICON                          0x40000000
+#define WINDOW_ORDER_CACHED_ICON                   0x80000000
+#define WINDOW_ORDER_FIELD_ICON_BIG                0x00002000
+#define WINDOW_ORDER_FIELD_ICON_OVERLAY            0x00100000
+
+
+#define WINDOW_ORDER_FIELD_NOTIFY_VERSION          0x00000008
+#define WINDOW_ORDER_FIELD_NOTIFY_TIP              0x00000001
+#define WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP         0x00000002
+#define WINDOW_ORDER_FIELD_NOTIFY_STATE	           0x00000004
+#define WINDOW_ORDER_FIELD_DESKTOP_NONE	           0x00000001
+#define WINDOW_ORDER_FIELD_DESKTOP_HOOKED          0x00000002
+#define WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED   0x00000004
+#define WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN       0x00000008
+#define WINDOW_ORDER_FIELD_DESKTOP_ZORDER          0x00000010
+#define WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND      0x00000020
 
 /* Window Show States */
 #define WINDOW_HIDE					0x00
@@ -190,8 +206,17 @@ struct _WINDOW_STATE_ORDER
 	RECTANGLE_16* windowRects;
 	INT32 visibleOffsetX;
 	INT32 visibleOffsetY;
+	UINT32 resizeMarginLeft;
+	UINT32 resizeMarginTop;
+	UINT32 resizeMarginRight;
+	UINT32 resizeMarginBottom;
 	UINT32 numVisibilityRects;
 	RECTANGLE_16* visibilityRects;
+	RAIL_UNICODE_STRING OverlayDescription;
+	BYTE TaskbarButton;
+	UINT8 EnforceServerZOrder;
+	UINT8 AppBarState;
+	UINT8 AppBarEdge;
 };
 typedef struct _WINDOW_STATE_ORDER WINDOW_STATE_ORDER;
 
@@ -226,16 +251,23 @@ struct _MONITORED_DESKTOP_ORDER
 };
 typedef struct _MONITORED_DESKTOP_ORDER MONITORED_DESKTOP_ORDER;
 
-typedef BOOL (*pWindowCreate)(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
-typedef BOOL (*pWindowUpdate)(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
-typedef BOOL (*pWindowIcon)(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon);
-typedef BOOL (*pWindowCachedIcon)(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon);
-typedef BOOL (*pWindowDelete)(rdpContext* context, WINDOW_ORDER_INFO* orderInfo);
-typedef BOOL (*pNotifyIconCreate)(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state);
-typedef BOOL (*pNotifyIconUpdate)(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state);
-typedef BOOL (*pNotifyIconDelete)(rdpContext* context, WINDOW_ORDER_INFO* orderInfo);
-typedef BOOL (*pMonitoredDesktop)(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop);
-typedef BOOL (*pNonMonitoredDesktop)(rdpContext* context, WINDOW_ORDER_INFO* orderInfo);
+typedef BOOL (*pWindowCreate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                              const WINDOW_STATE_ORDER* window_state);
+typedef BOOL (*pWindowUpdate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                              const WINDOW_STATE_ORDER* window_state);
+typedef BOOL (*pWindowIcon)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                            const WINDOW_ICON_ORDER* window_icon);
+typedef BOOL (*pWindowCachedIcon)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                  const WINDOW_CACHED_ICON_ORDER* window_cached_icon);
+typedef BOOL (*pWindowDelete)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
+typedef BOOL (*pNotifyIconCreate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                  const NOTIFY_ICON_STATE_ORDER* notify_icon_state);
+typedef BOOL (*pNotifyIconUpdate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                  const NOTIFY_ICON_STATE_ORDER* notify_icon_state);
+typedef BOOL (*pNotifyIconDelete)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
+typedef BOOL (*pMonitoredDesktop)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                  const MONITORED_DESKTOP_ORDER* monitored_desktop);
+typedef BOOL (*pNonMonitoredDesktop)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
 
 struct rdp_window_update
 {
@@ -255,13 +287,6 @@ struct rdp_window_update
 	UINT32 paddingB[32 - 26]; /* 26 */
 
 	/* internal */
-
-	WINDOW_ORDER_INFO orderInfo;
-	WINDOW_STATE_ORDER window_state;
-	WINDOW_ICON_ORDER window_icon;
-	WINDOW_CACHED_ICON_ORDER window_cached_icon;
-	NOTIFY_ICON_STATE_ORDER notify_icon_state;
-	MONITORED_DESKTOP_ORDER monitored_desktop;
 };
 typedef struct rdp_window_update rdpWindowUpdate;
 

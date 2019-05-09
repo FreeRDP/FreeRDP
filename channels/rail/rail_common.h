@@ -43,6 +43,7 @@ extern const char* const RAIL_ORDER_TYPE_STRINGS[];
 #define RAIL_WINDOW_MOVE_ORDER_LENGTH		12	/* fixed */
 #define RAIL_GET_APPID_REQ_ORDER_LENGTH		4	/* fixed */
 #define RAIL_LANGBAR_INFO_ORDER_LENGTH		4	/* fixed */
+#define RAIL_LANGUAGEIME_INFO_ORDER_LENGTH		44	/* fixed */
 
 BOOL rail_string_to_unicode_string(const char* string, RAIL_UNICODE_STRING* unicode_string);
 UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);

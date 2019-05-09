@@ -97,7 +97,8 @@ struct xf_app_window
 	int height;
 	char* title;
 
-	UINT32 windowId;
+	UINT32 surfaceId;
+	UINT64 windowId;
 	UINT32 ownerWindowId;
 
 	UINT32 dwStyle;
@@ -160,6 +161,7 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
                           unsigned long* nitems, unsigned long* bytes, BYTE** prop);
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...);
 
+int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow);
 int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, const char* name);
 void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
