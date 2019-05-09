@@ -240,7 +240,10 @@ static UINT rdpgfx_send_supported_caps(RDPGFX_CHANNEL_CALLBACK* callback)
 		}
 
 		if (gfx->ThinClient)
-			caps10Flags |= RDPGFX_CAPS_FLAG_AVC_THINCLIENT;
+		{
+			if ((caps10Flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0)
+				caps10Flags |= RDPGFX_CAPS_FLAG_AVC_THINCLIENT;
+		}
 
 		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_103))
 		{
@@ -305,12 +308,10 @@ static UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	WLog_Print(gfx->log, WLOG_DEBUG, "RecvCapsConfirmPdu: version: 0x%08"PRIX32" flags: 0x%08"PRIX32"",
 	           capsSet.version, capsSet.flags);
 
-	if (context)
-	{
-		IFCALL(context->CapsConfirm, context, &pdu);
-	}
+	if (!context)
+		return ERROR_BAD_CONFIGURATION;
 
-	return CHANNEL_RC_OK;
+	return IFCALLRESULT(CHANNEL_RC_OK, context->CapsConfirm, context, &pdu);
 }
 
 /**
