@@ -59,8 +59,8 @@ struct _NSC_CONTEXT
 	/* color palette allocated by the application */
 	const BYTE* palette;
 
-	void (*decode)(NSC_CONTEXT* context);
-	void (*encode)(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride);
+	BOOL (*decode)(NSC_CONTEXT* context);
+	BOOL (*encode)(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride);
 
 	NSC_CONTEXT_PRIV* priv;
 };

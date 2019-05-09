@@ -20,6 +20,6 @@
 #ifndef __NSC_ENCODE_H
 #define __NSC_ENCODE_H
 
-void nsc_encode(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride);
+BOOL nsc_encode(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride);
 
 #endif

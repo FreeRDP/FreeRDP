@@ -67,7 +67,7 @@ static void nsc_context_initialize_encode(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
+static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
 {
 	UINT16 x;
 	UINT16 y;
@@ -85,10 +85,20 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* bmpdata, int r
 	UINT32 tempWidth;
 	UINT32 tempHeight;
 
+	if (!context || bmpdata || (rowstride == 0))
+		return FALSE;
+
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
 	rw = (context->nsc_stream.ChromaSubSamplingLevel > 0 ? tempWidth : context->width);
 	ccl = context->nsc_stream.ColorLossLevel;
+
+	if (context->priv->plane_buf_length < rw * rowstride)
+		return FALSE;
+
+	if (rw < rowstride * 2)
+		return FALSE;
+
 	yplane = context->priv->plane_buf[0];
 	coplane = context->priv->plane_buf[1];
 	cgplane = context->priv->plane_buf[2];
@@ -196,32 +206,38 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* bmpdata, int r
 		memcpy(coplane + rw, coplane, rw);
 		memcpy(cgplane + rw, cgplane, rw);
 	}
+
+	return TRUE;
 }
 
-static void nsc_encode_subsampling(NSC_CONTEXT* context)
+static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 {
 	UINT16 x;
 	UINT16 y;
-	BYTE* co_dst;
-	BYTE* cg_dst;
-	INT8* co_src0;
-	INT8* co_src1;
-	INT8* cg_src0;
-	INT8* cg_src1;
 	UINT32 tempWidth;
 	UINT32 tempHeight;
+
+
+	if (!context)
+		return FALSE;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
 
+	if (tempHeight == 0)
+		return FALSE;
+
+	if (tempWidth > context->priv->plane_buf_length / tempHeight)
+		return FALSE;
+
 	for (y = 0; y < tempHeight >> 1; y++)
 	{
-		co_dst = context->priv->plane_buf[1] + y * (tempWidth >> 1);
-		cg_dst = context->priv->plane_buf[2] + y * (tempWidth >> 1);
-		co_src0 = (INT8*) context->priv->plane_buf[1] + (y << 1) * tempWidth;
-		co_src1 = co_src0 + tempWidth;
-		cg_src0 = (INT8*) context->priv->plane_buf[2] + (y << 1) * tempWidth;
-		cg_src1 = cg_src0 + tempWidth;
+		BYTE* co_dst = context->priv->plane_buf[1] + y * (tempWidth >> 1);
+		BYTE* cg_dst = context->priv->plane_buf[2] + y * (tempWidth >> 1);
+		const INT8* co_src0 = (INT8*) context->priv->plane_buf[1] + (y << 1) * tempWidth;
+		const INT8* co_src1 = co_src0 + tempWidth;
+		const INT8* cg_src0 = (INT8*) context->priv->plane_buf[2] + (y << 1) * tempWidth;
+		const INT8* cg_src1 = cg_src0 + tempWidth;
 		for (x = 0; x < tempWidth >> 1; x++)
 		{
 			*co_dst++ = (BYTE) (((INT16) *co_src0 + (INT16) *(co_src0 + 1) +
@@ -234,18 +250,28 @@ static void nsc_encode_subsampling(NSC_CONTEXT* context)
 			cg_src1 += 2;
 		}
 	}
+
+	return TRUE;
 }
 
-void nsc_encode(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
+BOOL nsc_encode(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
 {
-	nsc_encode_argb_to_aycocg(context, bmpdata, rowstride);
+	if (!context || !bmpdata || (rowstride == 0))
+		return FALSE;
+
+	if (!nsc_encode_argb_to_aycocg(context, bmpdata, rowstride))
+		return FALSE;
+
 	if (context->nsc_stream.ChromaSubSamplingLevel > 0)
 	{
-		nsc_encode_subsampling(context);
+		if (!nsc_encode_subsampling(context))
+			return FALSE;
 	}
+
+	return TRUE;
 }
 
-static UINT32 nsc_rle_encode(BYTE* in, BYTE* out, UINT32 origsz)
+static UINT32 nsc_rle_encode(const BYTE* in, BYTE* out, UINT32 origsz)
 {
 	UINT32 left;
 	UINT32 runlength = 1;
