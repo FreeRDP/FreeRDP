@@ -1149,7 +1149,6 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
 			return FALSE;
 	}
-
 	return TRUE;
 }
 
@@ -1191,7 +1190,6 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
 			return FALSE;
 	}
-
 	return TRUE;
 }
 
@@ -1219,7 +1217,6 @@ BOOL freerdp_settings_set_int16(rdpSettings* settings, size_t id, INT16 val)
 			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
 			return FALSE;
 	}
-
 	return TRUE;
 }
 
@@ -1427,6 +1424,9 @@ UINT32 freerdp_settings_get_uint32(rdpSettings* settings, size_t id)
 
 		case FreeRDP_RemoteApplicationSupportLevel:
 			return settings->RemoteApplicationSupportLevel;
+
+		case FreeRDP_RemoteApplicationSupportMask:
+			return settings->RemoteApplicationSupportMask;
 
 		case FreeRDP_ReceivedCapabilitiesSize:
 			return settings->ReceivedCapabilitiesSize;
@@ -1822,6 +1822,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 			settings->RemoteApplicationSupportLevel = val;
 			break;
 
+		case FreeRDP_RemoteApplicationSupportMask:
+			settings->RemoteApplicationSupportMask = val;
+			break;
+
 		case FreeRDP_ReceivedCapabilitiesSize:
 			settings->ReceivedCapabilitiesSize = val;
 			break;
@@ -1982,7 +1986,6 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
 			return FALSE;
 	}
-
 	return TRUE;
 }
 
@@ -2024,7 +2027,6 @@ BOOL freerdp_settings_set_int32(rdpSettings* settings, size_t id, INT32 val)
 			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
 			return FALSE;
 	}
-
 	return TRUE;
 }
 
@@ -2059,7 +2061,6 @@ BOOL freerdp_settings_set_uint64(rdpSettings* settings, size_t id, UINT64 val)
 			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
 			return FALSE;
 	}
-
 	return TRUE;
 }
 
@@ -2087,7 +2088,6 @@ BOOL freerdp_settings_set_int64(rdpSettings* settings, size_t id, INT64 val)
 			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
 			return FALSE;
 	}
-
 	return TRUE;
 }
 
@@ -2619,7 +2619,6 @@ BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* v
 			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
 			return FALSE;
 	}
-
 	return TRUE;
 }
 
