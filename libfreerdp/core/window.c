@@ -30,6 +30,8 @@
 
 #define TAG FREERDP_TAG("core.window")
 
+static void update_free_window_icon_info(ICON_INFO* iconInfo);
+
 BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	UINT16 new_len;
@@ -446,7 +448,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 static BOOL update_read_window_icon_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
         WINDOW_ICON_ORDER* window_icon)
 {
-	update_free_window_icon_info(window_icon->iconInfo);
+	WINPR_UNUSED(orderInfo);
 	window_icon->iconInfo = (ICON_INFO*) calloc(1, sizeof(ICON_INFO));
 
 	if (!window_icon->iconInfo)
@@ -458,6 +460,7 @@ static BOOL update_read_window_icon_order(wStream* s, WINDOW_ORDER_INFO* orderIn
 static BOOL update_read_window_cached_icon_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
         WINDOW_CACHED_ICON_ORDER* window_cached_icon)
 {
+	WINPR_UNUSED(orderInfo);
 	return update_read_cached_icon_info(s,
 	                                    &window_cached_icon->cachedIcon); /* cachedIcon (CACHED_ICON_INFO) */
 }
@@ -519,6 +522,7 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 		}
 
 		update_free_window_icon_info(window_icon.iconInfo);
+		free(window_icon.iconInfo);
 	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
 	{
@@ -560,6 +564,15 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 	}
 
 	return result;
+}
+
+static void update_notify_icon_state_order_free(NOTIFY_ICON_STATE_ORDER* notify)
+{
+	free(notify->toolTip.string);
+	free(notify->infoTip.text.string);
+	free(notify->infoTip.title.string);
+	update_free_window_icon_info(&notify->icon);
+	memset(notify, 0, sizeof(NOTIFY_ICON_STATE_ORDER));
 }
 
 static BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
@@ -637,9 +650,10 @@ static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream*
 	else
 	{
 		NOTIFY_ICON_STATE_ORDER notify_icon_state = { 0 };
+		result = update_read_notification_icon_state_order(s, orderInfo, &notify_icon_state);
 
-		if (!update_read_notification_icon_state_order(s, orderInfo, &notify_icon_state))
-			return FALSE;
+		if (!result)
+			goto fail;
 
 		if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
 		{
@@ -651,6 +665,8 @@ static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream*
 			WLog_Print(update->log, WLOG_DEBUG, "NotifyIconUpdate");
 			IFCALLRET(window->NotifyIconUpdate, result, context, orderInfo, &notify_icon_state);
 		}
+		fail:
+			update_notify_icon_state_order_free(&notify_icon_state);
 	}
 
 	return result;
@@ -753,7 +769,6 @@ void update_free_window_icon_info(ICON_INFO* iconInfo)
 	iconInfo->bitsMask = NULL;
 	free(iconInfo->colorTable);
 	iconInfo->colorTable = NULL;
-	free(iconInfo);
 }
 
 BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)
