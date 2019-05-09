@@ -333,13 +333,15 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_encode_sse2(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
+static BOOL nsc_encode_sse2(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
 {
 	nsc_encode_argb_to_aycocg_sse2(context, bmpdata, rowstride);
 	if (context->nsc_stream.ChromaSubSamplingLevel > 0)
 	{
 		nsc_encode_subsampling_sse2(context);
 	}
+
+	return TRUE;
 }
 
 void nsc_init_sse2(NSC_CONTEXT* context)

@@ -45,9 +45,12 @@ struct rdp_credssp
 	LPTSTR SspiModule;
 	rdpSettings* settings;
 	rdpTransport* transport;
+	UINT32 version;
+	UINT32 errorCode;
 	SecBuffer negoToken;
 	SecBuffer pubKeyAuth;
 	SecBuffer authInfo;
+	SecBuffer ClientNonce;
 	SecBuffer PublicKey;
 	SecBuffer ts_credentials;
 	CryptoRc4 rc4_seal_state;
@@ -55,6 +58,12 @@ struct rdp_credssp
 	SEC_WINNT_AUTH_IDENTITY identity;
 	PSecurityFunctionTable table;
 	SecPkgContext_Sizes ContextSizes;
+#if defined(UNICODE)
+	SEC_WCHAR* packageName;
+#else
+	SEC_CHAR* packageName;
+#endif
+	UINT32 peerVersion;
 };
 
 int credssp_authenticate(rdpCredssp* credssp);

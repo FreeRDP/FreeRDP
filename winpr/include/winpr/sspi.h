@@ -103,6 +103,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 
 #define NTLMSP_NAME	_T("NTLM")
 #define NEGOSSP_NAME	_T("Negotiate")
+#define KERBEROS_SSP_NAME       _T("Kerberos")
 
 #endif
 
@@ -1015,6 +1016,7 @@ WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
 
 WINPR_API void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* domain, char* password);
 WINPR_API void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDENTITY* srcIdentity);
+WINPR_API const char* GetSecurityStatusString(SECURITY_STATUS status);
 
 #ifdef __cplusplus
 }

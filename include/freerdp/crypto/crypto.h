@@ -74,6 +74,7 @@ struct crypto_cert_struct
 	X509 * px509;
 };
 
+#define CRYPTO_SHA256_DIGEST_LENGTH	SHA256_DIGEST_LENGTH
 #define	CRYPTO_SHA1_DIGEST_LENGTH	SHA_DIGEST_LENGTH
 typedef struct crypto_sha1_struct* CryptoSha1;
 

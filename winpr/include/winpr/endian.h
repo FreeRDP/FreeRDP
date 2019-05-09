@@ -101,10 +101,10 @@ extern "C" {
 	*((UINT32*) _d) = _v; } while (0)
 
 #define Data_Write_UINT32(_d, _v) do { \
-	*(_d) = (_v) & 0xFF; \
-	*(_d + 1) = ((_v) >> 8) & 0xFF; \
-	*(_d + 2) = ((_v) >> 16) & 0xFF; \
-	*(_d + 3) = ((_v) >> 24) & 0xFF; \
+	*((BYTE *) _d) = (_v) & 0xFF; \
+	*((BYTE *) _d + 1) = ((_v) >> 8) & 0xFF; \
+	*((BYTE *) _d + 2) = ((_v) >> 16) & 0xFF; \
+	*((BYTE *) _d + 3) = ((_v) >> 24) & 0xFF; \
 	} while (0)
 
 #define Data_Write_UINT32_BE(_d, _v) do { \
