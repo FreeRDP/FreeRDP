@@ -242,6 +242,7 @@ static const size_t uint32_list_indices[] =
 	FreeRDP_RemoteAppNumIconCacheEntries,
 	FreeRDP_RemoteWndSupportLevel,
 	FreeRDP_RemoteApplicationSupportLevel,
+	FreeRDP_RemoteApplicationSupportMask,
 	FreeRDP_ReceivedCapabilitiesSize,
 	FreeRDP_OsMajorType,
 	FreeRDP_OsMinorType,
