@@ -50,6 +50,24 @@ static const char* error_code_names[] =
 	"RAIL_EXEC_E_SESSION_LOCKED"
 };
 
+#ifdef WITH_DEBUG_RAIL
+static const char* movetype_names[] =
+{
+	"(invalid)",
+	"RAIL_WMSZ_LEFT",
+	"RAIL_WMSZ_RIGHT",
+	"RAIL_WMSZ_TOP",
+	"RAIL_WMSZ_TOPLEFT",
+	"RAIL_WMSZ_TOPRIGHT",
+	"RAIL_WMSZ_BOTTOM",
+	"RAIL_WMSZ_BOTTOMLEFT",
+	"RAIL_WMSZ_BOTTOMRIGHT",
+	"RAIL_WMSZ_MOVE",
+	"RAIL_WMSZ_KEYMOVE",
+	"RAIL_WMSZ_KEYSIZE"
+};
+#endif
+
 struct xf_rail_icon
 {
 	long* data;

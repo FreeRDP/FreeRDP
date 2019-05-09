@@ -477,6 +477,20 @@ static int xf_input_handle_event_local(xfContext* xfc, XEvent* event)
 	return 0;
 }
 
+#ifdef WITH_DEBUG_X11
+static char* xf_input_touch_state_string(DWORD flags)
+{
+	if (flags & CONTACT_FLAG_DOWN)
+		return "TouchBegin";
+	else if (flags & CONTACT_FLAG_UPDATE)
+		return "TouchUpdate";
+	else if (flags & CONTACT_FLAG_UP)
+		return "TouchEnd";
+	else
+		return "TouchUnknown";
+}
+#endif
+
 static void xf_input_hide_cursor(xfContext* xfc)
 {
 #ifdef WITH_XCURSOR

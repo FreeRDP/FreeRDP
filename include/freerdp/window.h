@@ -26,6 +26,7 @@
 #define WINDOW_ORDER_TYPE_WINDOW                   0x01000000
 #define WINDOW_ORDER_TYPE_NOTIFY                   0x02000000
 #define WINDOW_ORDER_TYPE_DESKTOP                  0x04000000
+
 #define WINDOW_ORDER_STATE_NEW                     0x10000000
 #define WINDOW_ORDER_STATE_DELETED                 0x20000000
 
