@@ -119,7 +119,7 @@ BOOL update_read_bitmap(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bitmap_upd
 
 	if (bitmap_update->number > bitmap_update->count)
 	{
-		UINT16 count;
+		UINT32 count;
 
 		count = bitmap_update->number * 2;
 
