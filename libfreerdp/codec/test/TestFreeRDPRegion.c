@@ -912,6 +912,8 @@ int TestFreeRDPRegion(int argc, char* argv[])
 {
 	int i, testNb = 0;
 	int retCode = -1;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	for (i = 0; tests[i].func; i++)
 	{

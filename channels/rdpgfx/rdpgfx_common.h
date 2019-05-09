@@ -32,16 +32,16 @@ FREERDP_LOCAL const char* rdpgfx_get_cmd_id_string(UINT16 cmdId);
 FREERDP_LOCAL const char* rdpgfx_get_codec_id_string(UINT16 codecId);
 
 FREERDP_LOCAL UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header);
-FREERDP_LOCAL UINT rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header);
+FREERDP_LOCAL UINT rdpgfx_write_header(wStream* s, const RDPGFX_HEADER* header);
 
 FREERDP_LOCAL UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16);
-FREERDP_LOCAL UINT rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16);
+FREERDP_LOCAL UINT rdpgfx_write_point16(wStream* s, const RDPGFX_POINT16* point16);
 
 FREERDP_LOCAL UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16);
-FREERDP_LOCAL UINT rdpgfx_write_rect16(wStream* s, RECTANGLE_16* rect16);
+FREERDP_LOCAL UINT rdpgfx_write_rect16(wStream* s, const RECTANGLE_16* rect16);
 
 FREERDP_LOCAL UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32);
-FREERDP_LOCAL UINT rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32);
+FREERDP_LOCAL UINT rdpgfx_write_color32(wStream* s, const RDPGFX_COLOR32* color32);
 
 #endif /* FREERDP_CHANNEL_RDPGFX_COMMON_H */
 

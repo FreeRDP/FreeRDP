@@ -1024,7 +1024,7 @@ static jboolean JNICALL jni_freerdp_send_clipboard_data(
 	const jbyte* data = jdata != NULL ? (*env)->GetStringUTFChars(env, jdata,
 	                    NULL) : NULL;
 	int data_length = data ? strlen(data) : 0;
-	jboolean ret = JNI_FALSE;;
+	jboolean ret = JNI_FALSE;
 	event = (ANDROID_EVENT*) android_event_clipboard_new((void*)data, data_length);
 
 	if (!event)

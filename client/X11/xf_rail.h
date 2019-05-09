@@ -33,6 +33,16 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow);
 void xf_rail_enable_remoteapp_mode(xfContext* xfc);
 void xf_rail_disable_remoteapp_mode(xfContext* xfc);
 
+xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, UINT32 x, UINT32 y,
+                                UINT32 width, UINT32 height, UINT32 surfaceId);
+xfAppWindow* xf_rail_get_window(xfContext* xfc, UINT64 id);
+
+BOOL xf_rail_del_window(xfContext* xfc, UINT64 id);
+
+BOOL xf_rail_draw_window(xfContext* xfc, xfAppWindow* window, const char* data,
+                         UINT32 scanline, UINT32 width, UINT32 height,
+                         const RECTANGLE_16* src, const RECTANGLE_16* dst);
+
 int xf_rail_init(xfContext* xfc, RailClientContext* rail);
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail);
 

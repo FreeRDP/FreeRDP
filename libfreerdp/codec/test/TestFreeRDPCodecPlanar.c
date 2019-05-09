@@ -3052,6 +3052,8 @@ fail:
 int TestFreeRDPCodecPlanar(int argc, char* argv[])
 {
 	UINT32 x;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	for (x = 0; x < colorFormatCount; x++)
 	{

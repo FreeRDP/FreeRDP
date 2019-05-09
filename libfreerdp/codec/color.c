@@ -33,6 +33,14 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/primitives.h>
 
+#if defined(CAIRO_FOUND)
+#include <cairo.h>
+#endif
+
+#if defined(SWSCALE_FOUND)
+#include <libswscale/swscale.h>
+#endif
+
 #define TAG FREERDP_TAG("color")
 
 BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data)
@@ -147,6 +155,151 @@ static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y,
 #endif
 	return FreeRDPGetColor(format, fill, fill, fill, 0xFF);
 }
+
+
+/*
+ * DIB color palettes are arrays of RGBQUAD structs with colors in BGRX format.
+ * They are used only by 1, 2, 4, and 8-bit bitmaps.
+ */
+static void fill_gdi_palette_for_icon(const BYTE* colorTable, UINT16 cbColorTable, gdiPalette* palette)
+{
+	UINT16 i;
+	palette->format = PIXEL_FORMAT_BGRX32;
+	ZeroMemory(palette->palette, sizeof(palette->palette));
+
+	if (!cbColorTable)
+		return;
+
+	if ((cbColorTable % 4 != 0) || (cbColorTable / 4 > 256))
+	{
+		WLog_WARN(TAG, "weird palette size: %u", cbColorTable);
+		return;
+	}
+
+	for (i = 0; i < cbColorTable / 4; i++)
+	{
+		palette->palette[i] = ReadColor(&colorTable[4 * i], palette->format);
+	}
+}
+
+static INLINE UINT32 div_ceil(UINT32 a, UINT32 b)
+{
+	return (a + (b - 1)) / b;
+}
+
+static INLINE UINT32 round_up(UINT32 a, UINT32 b)
+{
+	return b * div_ceil(a, b);
+}
+
+BOOL freerdp_image_copy_from_icon_data(
+	BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+	UINT32 nXDst, UINT32 nYDst, UINT16 nWidth, UINT16 nHeight,
+	const BYTE* bitsColor, UINT16 cbBitsColor,
+	const BYTE* bitsMask, UINT16 cbBitsMask,
+	const BYTE* colorTable, UINT16 cbColorTable,
+	UINT32 bpp)
+{
+	DWORD format;
+	gdiPalette palette;
+
+	if (!pDstData || !bitsColor)
+		return FALSE;
+
+	/*
+	 * Color formats used by icons are DIB bitmap formats (2-bit format
+	 * is not used by MS-RDPERP). Note that 16-bit is RGB555, not RGB565,
+	 * and that 32-bit format uses BGRA order.
+	 */
+	switch (bpp)
+	{
+		case 1:
+		case 4:
+			/*
+			 * These formats are not supported by freerdp_image_copy().
+			 * PIXEL_FORMAT_MONO and PIXEL_FORMAT_A4 are *not* correct
+			 * color formats for this. Please fix freerdp_image_copy()
+			 * if you came here to fix a broken icon of some weird app
+			 * that still uses 1 or 4bpp format in the 21st century.
+			 */
+			WLog_WARN(TAG, "1bpp and 4bpp icons are not supported");
+			return FALSE;
+
+		case 8:
+			format = PIXEL_FORMAT_RGB8;
+			break;
+
+		case 16:
+			format = PIXEL_FORMAT_RGB15;
+			break;
+
+		case 24:
+			format = PIXEL_FORMAT_RGB24;
+			break;
+
+		case 32:
+			format = PIXEL_FORMAT_BGRA32;
+			break;
+
+		default:
+			WLog_WARN(TAG, "invalid icon bpp: %d", bpp);
+			return FALSE;
+	}
+
+	fill_gdi_palette_for_icon(colorTable, cbColorTable, &palette);
+	if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
+		nWidth, nHeight, bitsColor, format, 0, 0, 0, &palette,
+		FREERDP_FLIP_VERTICAL))
+		return FALSE;
+
+	/* apply alpha mask */
+	if (ColorHasAlpha(DstFormat) && cbBitsMask)
+	{
+		BYTE nextBit;
+		const BYTE* maskByte;
+		UINT32 x, y;
+		UINT32 stride;
+		BYTE r, g, b;
+		BYTE* dstBuf = pDstData;
+		UINT32 dstBpp = GetBytesPerPixel(DstFormat);
+
+		/*
+		 * Each byte encodes 8 adjacent pixels (with LSB padding as needed).
+		 * And due to hysterical raisins, stride of DIB bitmaps must be
+		 * a multiple of 4 bytes.
+		 */
+		stride = round_up(div_ceil(nWidth, 8), 4);
+
+		for (y = 0; y < nHeight; y++)
+		{
+			maskByte = &bitsMask[stride * (nHeight - 1 - y)];
+			nextBit = 0x80;
+
+			for (x = 0; x < nWidth; x++)
+			{
+				UINT32 color;
+				BYTE alpha = (*maskByte & nextBit) ? 0x00 : 0xFF;
+
+				/* read color back, add alpha and write it back */
+				color = ReadColor(dstBuf, DstFormat);
+				SplitColor(color, DstFormat, &r, &g, &b, NULL, &palette);
+				color = FreeRDPGetColor(DstFormat, r, g, b, alpha);
+				WriteColor(dstBuf, DstFormat, color);
+
+				nextBit >>= 1;
+				dstBuf += dstBpp;
+				if (!nextBit)
+				{
+					nextBit = 0x80;
+					maskByte++;
+				}
+			}
+		}
+	}
+
+	return TRUE;
+}
+
 
 /**
  * Drawing Monochrome Pointers:
@@ -569,4 +722,114 @@ BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat,
 	}
 
 	return TRUE;
+}
+
+#if defined(SWSCALE_FOUND)
+static int av_format_for_buffer(UINT32 format)
+{
+	switch (format)
+	{
+		case PIXEL_FORMAT_ARGB32:
+			return AV_PIX_FMT_BGRA;
+
+		case PIXEL_FORMAT_XRGB32:
+			return AV_PIX_FMT_BGR0;
+
+		case PIXEL_FORMAT_BGRA32:
+			return AV_PIX_FMT_RGBA;
+
+		case PIXEL_FORMAT_BGRX32:
+			return AV_PIX_FMT_RGB0;
+
+		default:
+			return AV_PIX_FMT_NONE;
+	}
+}
+#endif
+
+BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
+                         UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
+                         const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
+                         UINT32 nXSrc, UINT32 nYSrc, UINT32 nSrcWidth, UINT32 nSrcHeight)
+{
+	BOOL rc = FALSE;
+	const BYTE* src = &pSrcData[nXSrc * GetBytesPerPixel(SrcFormat) + nYSrc * nSrcStep];
+	BYTE* dst = &pDstData[nXDst * GetBytesPerPixel(DstFormat) + nYDst * nDstStep];
+
+	/* direct copy is much faster than scaling, so check if we can simply copy... */
+	if ((nDstWidth == nSrcWidth) && (nDstHeight == nSrcHeight))
+	{
+		return freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
+		                          pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc,
+		                          NULL, FREERDP_FLIP_NONE);
+	}
+	else
+#if defined(SWSCALE_FOUND)
+	{
+		int res;
+		struct SwsContext* resize;
+		int srcFormat = av_format_for_buffer(SrcFormat);
+		int dstFormat = av_format_for_buffer(DstFormat);
+		const int srcStep[1] = { (int)nSrcStep };
+		const int dstStep[1] = { (int)nDstStep };
+
+		if ((srcFormat == AV_PIX_FMT_NONE) || (dstFormat == AV_PIX_FMT_NONE))
+			return FALSE;
+
+		resize = sws_getContext((int)nSrcWidth, (int)nSrcHeight, srcFormat,
+		                        (int)nDstWidth, (int)nDstHeight, dstFormat,
+		                        SWS_BILINEAR, NULL, NULL, NULL);
+
+		if (!resize)
+			goto fail;
+
+		res = sws_scale(resize, &src, srcStep, 0, (int)nSrcHeight, &dst, dstStep);
+		rc = (res == ((int)nDstHeight));
+	fail:
+		sws_freeContext(resize);
+	}
+
+#elif defined(CAIRO_FOUND)
+	{
+		const double sx = (double)nDstWidth / (double)nSrcWidth;
+		const double sy = (double)nDstHeight / (double)nSrcHeight;
+		cairo_t* cairo_context;
+		cairo_surface_t* csrc, *cdst;
+
+		if ((nSrcWidth > INT_MAX) || (nSrcHeight > INT_MAX) || (nSrcStep > INT_MAX))
+			return FALSE;
+
+		if ((nDstWidth > INT_MAX) || (nDstHeight > INT_MAX) || (nDstStep > INT_MAX))
+			return FALSE;
+
+		csrc = cairo_image_surface_create_for_data((void*)src,
+		        CAIRO_FORMAT_ARGB32, (int)nSrcWidth, (int)nSrcHeight, (int)nSrcStep);
+		cdst = cairo_image_surface_create_for_data(dst,
+		        CAIRO_FORMAT_ARGB32, (int)nDstWidth, (int)nDstHeight, (int)nDstStep);
+
+		if (!csrc || !cdst)
+			goto fail;
+
+		cairo_context = cairo_create(cdst);
+
+		if (!cairo_context)
+			goto fail2;
+
+		cairo_scale(cairo_context, sx, sy);
+		cairo_set_operator(cairo_context, CAIRO_OPERATOR_SOURCE);
+		cairo_set_source_surface(cairo_context, csrc, 0, 0);
+		cairo_paint(cairo_context);
+		rc = TRUE;
+	fail2:
+		cairo_destroy(cairo_context);
+	fail:
+		cairo_surface_destroy(csrc);
+		cairo_surface_destroy(cdst);
+	}
+#else
+	{
+		WLog_WARN(TAG, "SmartScaling requested but compiled without libcairo support!");
+	}
+#endif
+	return rc;
 }

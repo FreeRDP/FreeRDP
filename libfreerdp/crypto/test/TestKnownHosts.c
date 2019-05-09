@@ -102,7 +102,8 @@ int TestKnownHosts(int argc, char* argv[])
 	char sname[8192];
 	char dname[8192];
 	SYSTEMTIME systemTime;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	GetSystemTime(&systemTime);
 	sprintf_s(sname, sizeof(sname),
 	          "TestKnownHostsCurrent-%04"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%04"PRIu16,

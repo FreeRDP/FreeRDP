@@ -625,6 +625,8 @@ int TestGdiLine(int argc, char* argv[])
 		PIXEL_FORMAT_BGRX32
 	};
 	const UINT32 number_formats = sizeof(colorFormats) / sizeof(colorFormats[0]);
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	for (i = 0; i < number_formats; i++)
 	{

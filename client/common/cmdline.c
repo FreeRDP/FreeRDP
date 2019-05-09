@@ -251,7 +251,8 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("    %s connection.rdp /p:Pwd123! /f\n", name);
 	printf("    %s /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com\n", name);
 	printf("    %s /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489\n", name);
-	printf("    %s /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168.1.100\n", name);
+	printf("    %s /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168.1.100\n",
+	       name);
 	printf("\n");
 	printf("Clipboard Redirection: +clipboard\n");
 	printf("\n");
@@ -1165,7 +1166,6 @@ static int freerdp_detect_command_line_pre_filter(void* context, int index,
         int argc, LPSTR* argv)
 {
 	size_t length;
-
 	WINPR_UNUSED(context);
 
 	if (index == 1)
@@ -1421,7 +1421,7 @@ static void activate_smartcard_logon_rdp(rdpSettings* settings)
 {
 	settings->SmartcardLogon = TRUE;
 	/* TODO: why not? settings->UseRdpSecurityLayer = TRUE; */
-	freerdp_set_param_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
+	freerdp_settings_set_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
 }
 
 /**
@@ -1547,7 +1547,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "v")
 		{
 			assert(arg->Value);
-
 			free(settings->ServerHostname);
 			settings->ServerHostname = NULL;
 			p = strchr(arg->Value, '[');
@@ -1617,7 +1616,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			size_t count = 0;
 			char* cur = arg->Value;
 			assert(arg->Value);
-
 			settings->RedirectionPreferType = 0;
 
 			do
@@ -1689,7 +1687,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "size")
 		{
 			assert(arg->Value);
-
 			p = strchr(arg->Value, 'x');
 
 			if (p)
@@ -1968,7 +1965,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
 				assert(arg->Value);
-
 				p = strchr(arg->Value, ':');
 
 				if (p)
@@ -2013,7 +2009,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 				char* atPtr;
 				assert(arg->Value);
-
 				/* value is [scheme://][user:password@]hostname:port */
 				p = strstr(arg->Value, "://");
 
@@ -2555,7 +2550,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
 				assert(arg->Value);
-
 				promptForPassword = (strncmp(arg->Value, "force", 6) == 0);
 
 				if (!promptForPassword)
@@ -2593,7 +2587,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "tls-ciphers")
 		{
 			assert(arg->Value);
-
 			free(settings->AllowedTlsCiphers);
 
 			if (strcmp(arg->Value, "netmon") == 0)
@@ -2754,7 +2747,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "codec-cache")
 		{
 			settings->BitmapCacheV3Enabled = TRUE;
-
 			assert(arg->Value);
 
 			if (strcmp(arg->Value, "rfx") == 0)
@@ -2848,9 +2840,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			BYTE* base64 = NULL;
 			int length;
-			
 			assert(arg->Value);
-
 			crypto_base64_decode((const char*)(arg->Value), (int) strlen(arg->Value),
 			                     &base64, &length);
 
@@ -3080,7 +3070,7 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels,
 {
 	PVIRTUALCHANNELENTRY entry = NULL;
 	PVIRTUALCHANNELENTRYEX entryEx = NULL;
-	entryEx = (PVIRTUALCHANNELENTRYEX) (void*)freerdp_load_channel_addin_entry(name, NULL, NULL,
+	entryEx = (PVIRTUALCHANNELENTRYEX)(void*)freerdp_load_channel_addin_entry(name, NULL, NULL,
 	          FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX);
 
 	if (!entryEx)

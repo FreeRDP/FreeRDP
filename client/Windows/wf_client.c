@@ -823,7 +823,7 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width,
 	{
 		SCROLLINFO si;
 		BOOL horiz = wfc->xScrollVisible;
-		BOOL vert = wfc->yScrollVisible;;
+		BOOL vert = wfc->yScrollVisible;
 
 		if (!horiz && client_width < wfc->context.settings->DesktopWidth)
 		{

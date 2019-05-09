@@ -30,6 +30,8 @@ struct gdi_gfx_surface
 	H264_CONTEXT* h264;
 	UINT32 width;
 	UINT32 height;
+	UINT32 mappedWidth;
+	UINT32 mappedHeight;
 	BYTE* data;
 	UINT32 scanline;
 	UINT32 format;
@@ -37,6 +39,9 @@ struct gdi_gfx_surface
 	UINT32 outputOriginX;
 	UINT32 outputOriginY;
 	REGION16 invalidRegion;
+	UINT64 windowId;
+	UINT32 outputTargetWidth;
+	UINT32 outputTargetHeight;
 };
 typedef struct gdi_gfx_surface gdiGfxSurface;
 
@@ -56,6 +61,10 @@ extern "C" {
 #endif
 
 FREERDP_API BOOL gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx);
+FREERDP_API BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
+        pcRdpgfxMapWindowForSurface map,
+        pcRdpgfxUnmapWindowForSurface unmap,
+        pcRdpgfxUpdateSurfaceArea update);
 FREERDP_API void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx);
 
 #ifdef __cplusplus

@@ -173,7 +173,7 @@ wLogAppender* WLog_JournaldAppender_New(wLog* log)
 {
 	wLogJournaldAppender* appender;
 	DWORD nSize;
-	LPCSTR name = "WLOG_JOURNALD_ID";;
+	LPCSTR name = "WLOG_JOURNALD_ID";
 
 	appender = (wLogJournaldAppender*) calloc(1, sizeof(wLogJournaldAppender));
 	if (!appender)

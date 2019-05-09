@@ -130,7 +130,7 @@ static UINT rail_client_execute(RailClientContext* context,
 	if (strnlen(exeOrFile, MAX_PATH) >= 2)
 	{
 		if (strncmp(exeOrFile, "||", 2) != 0)
-			flags |= RAIL_EXEC_FLAG_FILE;
+			flags |= TS_RAIL_EXEC_FLAG_FILE;
 	}
 
 	if (!rail_string_to_unicode_string(exec->RemoteApplicationProgram,
@@ -216,14 +216,14 @@ static UINT rail_send_client_sysparam(RailClientContext* context,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if ((error = rail_write_client_sysparam_order(s, sysparam)))
+	if ((error = rail_write_client_sysparam_order(rail, s, sysparam)))
 	{
 		WLog_ERR(TAG, "rail_write_client_sysparam_order failed with error %"PRIu32"!", error);
 		Stream_Free(s, TRUE);
 		return error;
 	}
 
-	if ((error = rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSPARAM)))
+	if ((error = rail_send_pdu(rail, s, TS_RAIL_ORDER_SYSPARAM)))
 	{
 		WLog_ERR(TAG, "rail_send_pdu failed with error %"PRIu32"!", error);
 	}
@@ -398,10 +398,13 @@ static UINT rail_server_handshake(RailClientContext* context,
 static UINT rail_server_handshake_ex(RailClientContext* context,
                                      const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
+	railPlugin* rail;
+
 	if (!context || !handshakeEx)
 		return ERROR_INVALID_PARAMETER;
 
-	return CHANNEL_RC_OK; /* stub - should be registered by client */
+	rail = (railPlugin*) context->handle;
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -529,6 +532,18 @@ static UINT rail_server_language_bar_info(RailClientContext* context,
 		return ERROR_INVALID_PARAMETER;
 
 	return CHANNEL_RC_OK; /* stub - should be registered by client */
+}
+
+static UINT rail_client_language_ime_info(RailClientContext* context,
+        const RAIL_LANGUAGEIME_INFO_ORDER* langImeInfo)
+{
+	railPlugin* rail;
+
+	if (!context || !langImeInfo)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
+	return rail_send_client_languageime_info_order(rail, langImeInfo);
 }
 
 /**
@@ -935,6 +950,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		context->ClientSystemMenu = rail_client_system_menu;
 		context->ClientLanguageBarInfo = rail_client_language_bar_info;
 		context->ServerLanguageBarInfo = rail_server_language_bar_info;
+		context->ClientLanguageIMEInfo = rail_client_language_ime_info;
 		context->ServerExecuteResult = rail_server_execute_result;
 		context->ClientGetAppIdRequest = rail_client_get_appid_request;
 		context->ServerGetAppIdResponse = rail_server_get_appid_response;

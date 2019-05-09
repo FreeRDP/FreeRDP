@@ -103,6 +103,8 @@ int TestGdiEllipse(int argc, char* argv[])
 	};
 	const UINT32 number_formats = sizeof(colorFormats) / sizeof(colorFormats[0]);
 	gdiPalette g;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	for (i = 0; i < number_formats; i++)
 	{

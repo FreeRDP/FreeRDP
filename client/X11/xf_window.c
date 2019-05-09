@@ -758,6 +758,24 @@ static void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width,
 
 int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 {
+	if (!xfc || !appWindow)
+		return -1;
+
+	xf_SetWindowDecorations(xfc, appWindow->handle, appWindow->decorations);
+	xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
+	xf_SetWindowPID(xfc, appWindow->handle, 0);
+	xf_ShowWindow(xfc, appWindow, WINDOW_SHOW);
+	XClearWindow(xfc->display, appWindow->handle);
+	XMapWindow(xfc->display, appWindow->handle);
+	/* Move doesn't seem to work until window is mapped. */
+	xf_MoveWindow(xfc, appWindow, appWindow->x, appWindow->y, appWindow->width,
+				  appWindow->height);
+	xf_SetWindowText(xfc, appWindow, appWindow->title);
+	return 1;
+}
+
+int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
+{
 	XGCValues gcv;
 	int input_mask;
 	XWMHints* InputModeHint;
@@ -794,7 +812,7 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 		else
 		{
 			class = malloc(sizeof("RAIL:00000000"));
-			sprintf_s(class, sizeof("RAIL:00000000"), "RAIL:%08"PRIX32"", appWindow->windowId);
+			sprintf_s(class, sizeof("RAIL:00000000"), "RAIL:%08"PRIX64"", appWindow->windowId);
 			class_hints->res_class = class;
 		}
 
@@ -820,16 +838,7 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 	             SubstructureRedirectMask | FocusChangeMask | PropertyChangeMask |
 	             ColormapChangeMask | OwnerGrabButtonMask;
 	XSelectInput(xfc->display, appWindow->handle, input_mask);
-	xf_SetWindowDecorations(xfc, appWindow->handle, appWindow->decorations);
-	xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
-	xf_SetWindowPID(xfc, appWindow->handle, 0);
-	xf_ShowWindow(xfc, appWindow, WINDOW_SHOW);
-	XClearWindow(xfc->display, appWindow->handle);
-	XMapWindow(xfc->display, appWindow->handle);
-	/* Move doesn't seem to work until window is mapped. */
-	xf_MoveWindow(xfc, appWindow, appWindow->x, appWindow->y, appWindow->width,
-	              appWindow->height);
-	xf_SetWindowText(xfc, appWindow, appWindow->title);
+
 	return 1;
 }
 
@@ -990,7 +999,6 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 				xf_SetWindowUnlisted(xfc, appWindow->handle);
 
 			XMapWindow(xfc->display, appWindow->handle);
-
 			break;
 	}
 
@@ -1059,6 +1067,9 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y,
 	if (appWindow == NULL)
 		return;
 
+	if (appWindow->surfaceId < UINT16_MAX)
+		return;
+
 	ax = x + appWindow->windowOffsetX + appWindow->windowLeftResizeMargin;
 	ay = y + appWindow->windowOffsetY + appWindow->windowTopResizeMargin;
 
@@ -1121,7 +1132,10 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 
 	for (index = 0; index < count; index++)
 	{
-		appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows, (void*) pKeys[index]);
+		appWindow = xf_rail_get_window(xfc, *(UINT64*)pKeys[index]);
+
+		if (!appWindow)
+			return NULL;
 
 		if (appWindow->handle == wnd)
 		{

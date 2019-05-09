@@ -1104,8 +1104,8 @@ static BOOL update_message_DrawGdiPlusCacheEnd(
 
 /* Window Update */
 
-static BOOL update_message_WindowCreate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo,
-                                        WINDOW_STATE_ORDER* windowState)
+static BOOL update_message_WindowCreate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                        const WINDOW_STATE_ORDER* windowState)
 {
 	WINDOW_ORDER_INFO* wParam;
 	WINDOW_STATE_ORDER* lParam;
@@ -1132,8 +1132,8 @@ static BOOL update_message_WindowCreate(rdpContext* context, WINDOW_ORDER_INFO* 
 	                         MakeMessageId(WindowUpdate, WindowCreate), (void*) wParam, (void*) lParam);
 }
 
-static BOOL	update_message_WindowUpdate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo,
-                                        WINDOW_STATE_ORDER* windowState)
+static BOOL	update_message_WindowUpdate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                        const WINDOW_STATE_ORDER* windowState)
 {
 	WINDOW_ORDER_INFO* wParam;
 	WINDOW_STATE_ORDER* lParam;
@@ -1160,8 +1160,8 @@ static BOOL	update_message_WindowUpdate(rdpContext* context, WINDOW_ORDER_INFO* 
 	                         MakeMessageId(WindowUpdate, WindowUpdate), (void*) wParam, (void*) lParam);
 }
 
-static BOOL update_message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo,
-                                      WINDOW_ICON_ORDER* windowIcon)
+static BOOL update_message_WindowIcon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                      const WINDOW_ICON_ORDER* windowIcon)
 {
 	WINDOW_ORDER_INFO* wParam;
 	WINDOW_ICON_ORDER* lParam;
@@ -1181,6 +1181,7 @@ static BOOL update_message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* or
 		goto out_fail;
 
 	lParam->iconInfo = calloc(1, sizeof(ICON_INFO));
+
 	if (!lParam->iconInfo)
 		goto out_fail;
 
@@ -1223,6 +1224,7 @@ static BOOL update_message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* or
 	return MessageQueue_Post(context->update->queue, (void*) context,
 	                         MakeMessageId(WindowUpdate, WindowIcon), (void*) wParam, (void*) lParam);
 out_fail:
+
 	if (lParam && lParam->iconInfo)
 	{
 		free(lParam->iconInfo->bitsColor);
@@ -1231,13 +1233,13 @@ out_fail:
 		free(lParam->iconInfo);
 	}
 
-	free(lParam);	
+	free(lParam);
 	free(wParam);
 	return FALSE;
 }
 
-static BOOL update_message_WindowCachedIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo,
-        WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
+static BOOL update_message_WindowCachedIcon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+        const WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
 	WINDOW_ORDER_INFO* wParam;
 	WINDOW_CACHED_ICON_ORDER* lParam;
@@ -1264,7 +1266,7 @@ static BOOL update_message_WindowCachedIcon(rdpContext* context, WINDOW_ORDER_IN
 	                         MakeMessageId(WindowUpdate, WindowCachedIcon), (void*) wParam, (void*) lParam);
 }
 
-static BOOL update_message_WindowDelete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL update_message_WindowDelete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
 	WINDOW_ORDER_INFO* wParam;
 
@@ -1281,8 +1283,8 @@ static BOOL update_message_WindowDelete(rdpContext* context, WINDOW_ORDER_INFO* 
 	                         MakeMessageId(WindowUpdate, WindowDelete), (void*) wParam, NULL);
 }
 
-static BOOL update_message_NotifyIconCreate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo,
-        NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static BOOL update_message_NotifyIconCreate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+        const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	WINDOW_ORDER_INFO* wParam;
 	NOTIFY_ICON_STATE_ORDER* lParam;
@@ -1309,8 +1311,8 @@ static BOOL update_message_NotifyIconCreate(rdpContext* context, WINDOW_ORDER_IN
 	                         MakeMessageId(WindowUpdate, NotifyIconCreate), (void*) wParam, (void*) lParam);
 }
 
-static BOOL update_message_NotifyIconUpdate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo,
-        NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static BOOL update_message_NotifyIconUpdate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+        const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	WINDOW_ORDER_INFO* wParam;
 	NOTIFY_ICON_STATE_ORDER* lParam;
@@ -1337,7 +1339,7 @@ static BOOL update_message_NotifyIconUpdate(rdpContext* context, WINDOW_ORDER_IN
 	                         MakeMessageId(WindowUpdate, NotifyIconUpdate), (void*) wParam, (void*) lParam);
 }
 
-static BOOL update_message_NotifyIconDelete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL update_message_NotifyIconDelete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
 	WINDOW_ORDER_INFO* wParam;
 
@@ -1354,8 +1356,8 @@ static BOOL update_message_NotifyIconDelete(rdpContext* context, WINDOW_ORDER_IN
 	                         MakeMessageId(WindowUpdate, NotifyIconDelete), (void*) wParam, NULL);
 }
 
-static BOOL update_message_MonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo,
-        MONITORED_DESKTOP_ORDER* monitoredDesktop)
+static BOOL update_message_MonitoredDesktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+        const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
 	WINDOW_ORDER_INFO* wParam;
 	MONITORED_DESKTOP_ORDER* lParam;
@@ -1390,7 +1392,8 @@ static BOOL update_message_MonitoredDesktop(rdpContext* context, WINDOW_ORDER_IN
 	                         MakeMessageId(WindowUpdate, MonitoredDesktop), (void*) wParam, (void*) lParam);
 }
 
-static BOOL update_message_NonMonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL update_message_NonMonitoredDesktop(rdpContext* context,
+        const	WINDOW_ORDER_INFO* orderInfo)
 {
 	WINDOW_ORDER_INFO* wParam;
 

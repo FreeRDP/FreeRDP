@@ -567,34 +567,42 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_LICENSING:
-		{
-			LicenseCallbackResult res;
-			if (!client->LicenseCallback)
 			{
-				WLog_ERR(TAG, "peer_recv_callback: LicenseCallback has been removed, assuming licensing is ok (please fix your app)");
-				res = LICENSE_CB_COMPLETED;
-			}
-			else
-				res = client->LicenseCallback(client, s);
+				LicenseCallbackResult res;
 
-			switch(res) {
-			case LICENSE_CB_INTERNAL_ERROR:
-				WLog_ERR(TAG, "peer_recv_callback: CONNECTION_STATE_LICENSING - callback internal error, aborting");
-				return -1;
-			case LICENSE_CB_ABORT:
-				return -1;
-			case LICENSE_CB_IN_PROGRESS:
-				break;
-			case LICENSE_CB_COMPLETED:
-				rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
-				return peer_recv_callback(transport, NULL, extra);
-			default:
-				WLog_ERR(TAG, "peer_recv_callback: CONNECTION_STATE_LICENSING - unknown license callback result %d", (int)res);
+				if (!client->LicenseCallback)
+				{
+					WLog_ERR(TAG,
+					         "peer_recv_callback: LicenseCallback has been removed, assuming licensing is ok (please fix your app)");
+					res = LICENSE_CB_COMPLETED;
+				}
+				else
+					res = client->LicenseCallback(client, s);
+
+				switch (res)
+				{
+					case LICENSE_CB_INTERNAL_ERROR:
+						WLog_ERR(TAG, "peer_recv_callback: CONNECTION_STATE_LICENSING - callback internal error, aborting");
+						return -1;
+
+					case LICENSE_CB_ABORT:
+						return -1;
+
+					case LICENSE_CB_IN_PROGRESS:
+						break;
+
+					case LICENSE_CB_COMPLETED:
+						rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
+						return peer_recv_callback(transport, NULL, extra);
+
+					default:
+						WLog_ERR(TAG, "peer_recv_callback: CONNECTION_STATE_LICENSING - unknown license callback result %d",
+						         (int)res);
+						break;
+				}
+
 				break;
 			}
-
-			break;
-		}
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 			if (!rdp->AwaitCapabilities)
@@ -680,7 +688,7 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 	if (!rdp_send_deactivate_all(client->context->rdp))
 		return FALSE;
 
-	if (freerdp_get_param_bool(client->settings, FreeRDP_SupportErrorInfoPdu))
+	if (freerdp_settings_get_bool(client->settings, FreeRDP_SupportErrorInfoPdu))
 	{
 		rdp_send_error_info(client->context->rdp);
 	}
@@ -717,9 +725,9 @@ static BOOL freerdp_peer_has_more_to_read(freerdp_peer* peer)
 	return peer->context->rdp->transport->haveMoreBytesToRead;
 }
 
-static LicenseCallbackResult freerdp_peer_nolicense(freerdp_peer* peer, wStream *s)
+static LicenseCallbackResult freerdp_peer_nolicense(freerdp_peer* peer, wStream* s)
 {
-	rdpRdp *rdp = peer->context->rdp;
+	rdpRdp* rdp = peer->context->rdp;
 
 	if (!license_send_valid_client_error_packet(rdp))
 	{

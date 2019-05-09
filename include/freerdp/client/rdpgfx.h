@@ -83,8 +83,19 @@ typedef UINT(*pcRdpgfxUpdateSurfaces)(RdpgfxClientContext* context);
 typedef UINT(*pcRdpgfxUpdateSurfaceArea)(RdpgfxClientContext* context, UINT16 surfaceId,
         UINT32 nrRects, const RECTANGLE_16* rects);
 
-typedef BOOL(*pcRdpgfxPreFrameAck)(RdpgfxClientContext* context,
-                                   RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge);
+typedef UINT(*pcRdpgfxOnOpen)(RdpgfxClientContext* context, BOOL* do_caps_advertise,
+                              BOOL* do_frame_acks);
+typedef UINT(*pcRdpgfxOnClose)(RdpgfxClientContext* context);
+typedef UINT(*pcRdpgfxCapsAdvertise)(RdpgfxClientContext* context,
+                                     const RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise);
+typedef UINT(*pcRdpgfxCapsConfirm)(RdpgfxClientContext* context,
+                                   const RDPGFX_CAPS_CONFIRM_PDU* capsConfirm);
+typedef UINT(*pcRdpgfxFrameAcknowledge)(RdpgfxClientContext* context,
+                                        const RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge);
+
+typedef UINT(*pcRdpgfxMapWindowForSurface)(RdpgfxClientContext* context, UINT16 surfaceID,
+        UINT64 windowID);
+typedef UINT(*pcRdpgfxUnmapWindowForSurface)(RdpgfxClientContext* context, UINT64 windowID);
 
 struct _rdpgfx_client_context
 {
@@ -117,11 +128,23 @@ struct _rdpgfx_client_context
 	pcRdpgfxSetCacheSlotData SetCacheSlotData;
 	pcRdpgfxGetCacheSlotData GetCacheSlotData;
 
+	/* Proxy callbacks */
+	pcRdpgfxOnOpen OnOpen;
+	pcRdpgfxOnClose OnClose;
+	pcRdpgfxCapsAdvertise CapsAdvertise;
+	pcRdpgfxCapsConfirm CapsConfirm;
+	pcRdpgfxFrameAcknowledge FrameAcknowledge;
+
 	/* No locking required */
 	pcRdpgfxUpdateSurfaces UpdateSurfaces;
 	pcRdpgfxUpdateSurfaceArea UpdateSurfaceArea;
 
-	pcRdpgfxPreFrameAck PreFrameAck;
+	/* These callbacks allow crating/destroying a window directly
+	 * mapped to a surface.
+	 * NOTE: The surface is already locked.
+	 */
+	pcRdpgfxMapWindowForSurface MapWindowForSurface;
+	pcRdpgfxUnmapWindowForSurface UnmapWindowForSurface;
 
 	CRITICAL_SECTION mux;
 	PROFILER_DEFINE(SurfaceProfiler)

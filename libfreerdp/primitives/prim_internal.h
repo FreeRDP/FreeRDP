@@ -48,6 +48,8 @@
 static INLINE BYTE* writePixelBGRX(BYTE* dst, DWORD formatSize, UINT32 format,
                                    BYTE R, BYTE G, BYTE B, BYTE A)
 {
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(format);
 	*dst++ = B;
 	*dst++ = G;
 	*dst++ = R;
@@ -58,6 +60,8 @@ static INLINE BYTE* writePixelBGRX(BYTE* dst, DWORD formatSize, UINT32 format,
 static INLINE BYTE* writePixelRGBX(BYTE* dst, DWORD formatSize, UINT32 format,
                                    BYTE R, BYTE G, BYTE B, BYTE A)
 {
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(format);
 	*dst++ = R;
 	*dst++ = G;
 	*dst++ = B;
@@ -68,6 +72,8 @@ static INLINE BYTE* writePixelRGBX(BYTE* dst, DWORD formatSize, UINT32 format,
 static INLINE BYTE* writePixelXBGR(BYTE* dst, DWORD formatSize, UINT32 format,
                                    BYTE R, BYTE G, BYTE B, BYTE A)
 {
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(format);
 	*dst++ = A;
 	*dst++ = B;
 	*dst++ = G;
@@ -78,6 +84,8 @@ static INLINE BYTE* writePixelXBGR(BYTE* dst, DWORD formatSize, UINT32 format,
 static INLINE BYTE* writePixelXRGB(BYTE* dst, DWORD formatSize, UINT32 format,
                                    BYTE R, BYTE G, BYTE B, BYTE A)
 {
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(format);
 	*dst++ = A;
 	*dst++ = R;
 	*dst++ = G;

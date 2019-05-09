@@ -147,7 +147,7 @@ rfx_dwt_2d_decode_block_vert_NEON(INT16* l, INT16* h, INT16* dst, int subband_wi
 			// dst[2n] = l[n] - ((h[n-1] + h[n] + 1) >> 1);
 			int16x8_t l_n = vld1q_s16(l_ptr);
 			int16x8_t h_n = vld1q_s16(h_ptr);
-			int16x8_t tmp_n = vaddq_s16(h_n, vdupq_n_s16(1));;
+			int16x8_t tmp_n = vaddq_s16(h_n, vdupq_n_s16(1));
 
 			if (n == 0)
 				tmp_n = vaddq_s16(tmp_n, h_n);

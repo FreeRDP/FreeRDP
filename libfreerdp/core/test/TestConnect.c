@@ -170,7 +170,8 @@ static int testAbort(int port)
 
 static int testSuccess(int port)
 {
-	int rc;
+	int r;
+	int rc = -2;
 	STARTUPINFOA si;
 	PROCESS_INFORMATION process;
 	char arg1[] = "/v:127.0.0.1:XXXXX";
@@ -182,66 +183,42 @@ static int testSuccess(int port)
 		"/rfx",
 		NULL
 	};
-	char* commandLine;
+	char* commandLine = NULL;
 	int commandLineLen;
 	int argc = 4;
-	char* path = TESTING_OUTPUT_DIRECTORY;
-	char* wpath = TESTING_SRC_DIRECTORY;
-	char* exe = GetCombinedPath(path, "server");
-	char* wexe = GetCombinedPath(wpath, "server");
+	char* path = NULL;
+	char* wpath = NULL;
+	char* exe = GetCombinedPath(TESTING_OUTPUT_DIRECTORY, "server");
+	char* wexe = GetCombinedPath(TESTING_SRC_DIRECTORY, "server");
 	_snprintf(arg1, 18, "/v:127.0.0.1:%d", port);
 	clientArgs[1] = arg1;
 
 	if (!exe || !wexe)
-	{
-		free(exe);
-		free(wexe);
-		return -2;
-	}
+		goto fail;
 
 	path = GetCombinedPath(exe, "Sample");
 	wpath = GetCombinedPath(wexe, "Sample");
-	free(exe);
-	free(wexe);
 
 	if (!path || !wpath)
-	{
-		free(path);
-		free(wpath);
-		return -2;
-	}
+		goto fail;
 
 	exe = GetCombinedPath(path, "sfreerdp-server");
 
 	if (!exe)
-	{
-		free(path);
-		free(wpath);
-		return -2;
-	}
+		goto fail;
 
 	printf("Sample Server: %s\n", exe);
 	printf("Workspace: %s\n", wpath);
 
 	if (!PathFileExistsA(exe))
-	{
-		free(path);
-		free(wpath);
-		free(exe);
-		return -2;
-	}
+		goto fail;
 
 	// Start sample server locally.
 	commandLineLen = strlen(exe) + strlen("--local-only --port=XXXXX") + 1;
 	commandLine = malloc(commandLineLen);
 
 	if (!commandLine)
-	{
-		free(path);
-		free(wpath);
-		free(exe);
-		return -2;
-	}
+		goto fail;
 
 	_snprintf(commandLine, commandLineLen, "%s --local-only --port=%d", exe, port);
 	memset(&si, 0, sizeof(si));
@@ -249,39 +226,37 @@ static int testSuccess(int port)
 
 	if (!CreateProcessA(exe, commandLine, NULL, NULL, FALSE, 0, NULL,
 	                    wpath, &si, &process))
-	{
-		free(exe);
-		free(path);
-		free(wpath);
-		return -2;
-	}
+		goto fail;
 
-	free(exe);
-	free(path);
-	free(wpath);
-	free(commandLine);
 	Sleep(1 * 1000); /* let the server start */
-	rc = runInstance(argc, clientArgs, NULL);
+	r = runInstance(argc, clientArgs, NULL);
 
 	if (!TerminateProcess(process.hProcess, 0))
-		return -2;
+		goto fail;
 
 	WaitForSingleObject(process.hProcess, INFINITE);
 	CloseHandle(process.hProcess);
 	CloseHandle(process.hThread);
-	printf("%s: returned %d!\n", __FUNCTION__, rc);
+	printf("%s: returned %d!\n", __FUNCTION__, r);
+	rc = r;
 
-	if (rc)
-		return -1;
+	if (rc == 0)
+		printf("%s: Success!\n", __FUNCTION__);
 
-	printf("%s: Success!\n", __FUNCTION__);
-	return 0;
+fail:
+	free(exe);
+	free(path);
+	free(wpath);
+	free(commandLine);
+	return rc;
 }
 
 int TestConnect(int argc, char* argv[])
 {
 	int randomPort;
 	int random;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	winpr_RAND((BYTE*)&random, sizeof(random));
 	randomPort = 3389 + (random % 200);
 

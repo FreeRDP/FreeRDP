@@ -1387,6 +1387,13 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 			dstFormatId = ClipboardGetFormatId(clipboard->system, "text/html");
 			nullTerminated = TRUE;
 		}
+
+		if (strcmp(clipboard->data_format_name, "FileGroupDescriptorW") == 0)
+		{
+			srcFormatId = ClipboardGetFormatId(clipboard->system, "FileGroupDescriptorW");
+			dstFormatId = ClipboardGetFormatId(clipboard->system, "text/uri-list");
+			nullTerminated = FALSE;
+		}
 	}
 	else
 	{
@@ -1436,10 +1443,10 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 
 		if (!pDstData)
 		{
-			WLog_ERR(TAG, "failed to get clipboard data in format %s [source format %s]",
-			         ClipboardGetFormatName(clipboard->system, dstFormatId),
-			         ClipboardGetFormatName(clipboard->system, srcFormatId));
-			return ERROR_INTERNAL_ERROR;
+			WLog_WARN(TAG, "failed to get clipboard data in format %s [source format %s]",
+			          ClipboardGetFormatName(clipboard->system, dstFormatId),
+			          ClipboardGetFormatName(clipboard->system, srcFormatId));
+			return CHANNEL_RC_OK;
 		}
 
 		if (nullTerminated)
@@ -1716,6 +1723,8 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	clipboard->incr_atom = XInternAtom(xfc->display, "INCR", FALSE);
 	clipboard->delegate = ClipboardGetDelegate(clipboard->system);
 	clipboard->delegate->custom = clipboard;
+	/* TODO: set up a filesystem base path for local URI */
+	/* clipboard->delegate->basePath = "file:///tmp/foo/bar/gaga"; */
 	clipboard->delegate->ClipboardFileSizeSuccess = xf_cliprdr_clipboard_file_size_success;
 	clipboard->delegate->ClipboardFileSizeFailure = xf_cliprdr_clipboard_file_size_failure;
 	clipboard->delegate->ClipboardFileRangeSuccess = xf_cliprdr_clipboard_file_range_success;

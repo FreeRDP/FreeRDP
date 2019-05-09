@@ -145,11 +145,14 @@ endif(WITH_FFMPEG)
 
 option(USE_VERSION_FROM_GIT_TAG "Extract FreeRDP version from git tag." OFF)
 
-if(ANDROID)
-include(ConfigOptionsAndroid)
+option(WITH_CAIRO    "Use CAIRO image library for screen resizing" OFF)
+option(WITH_SWSCALE  "Use SWScale image library for screen resizing" OFF)
+
+if (ANDROID)
+	include(ConfigOptionsAndroid)
 endif(ANDROID)
 
-if(IOS)
-include(ConfigOptionsiOS)
+if (IOS)
+	include(ConfigOptionsiOS)
 endif(IOS)
 
