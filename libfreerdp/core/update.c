@@ -92,6 +92,7 @@ static BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s,
                                     BITMAP_DATA* bitmapData)
 {
+	WINPR_UNUSED(update);
 	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
 
@@ -294,6 +295,7 @@ fail:
 
 static void update_read_synchronize(rdpUpdate* update, wStream* s)
 {
+	WINPR_UNUSED(update);
 	Stream_Seek_UINT16(s); /* pad2Octets (2 bytes) */
 	/**
 	 * The Synchronize Update is an artifact from the
@@ -956,9 +958,10 @@ static int update_prepare_order_info(rdpContext* context,
 }
 
 int update_write_order_info(rdpContext* context, wStream* s,
-                            ORDER_INFO* orderInfo, int offset)
+							ORDER_INFO* orderInfo, size_t offset)
 {
 	size_t position;
+	WINPR_UNUSED(context);
 	position = Stream_GetPosition(s);
 	Stream_SetPosition(s, offset);
 	Stream_Write_UINT8(s, orderInfo->controlFlags); /* controlFlags (1 byte) */
@@ -2152,6 +2155,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	const wObject cb = { NULL, NULL, NULL,  update_free_queued_message, NULL };
 	rdpUpdate* update;
 	OFFSCREEN_DELETE_LIST* deleteList;
+	WINPR_UNUSED(rdp);
 	update = (rdpUpdate*) calloc(1, sizeof(rdpUpdate));
 
 	if (!update)
