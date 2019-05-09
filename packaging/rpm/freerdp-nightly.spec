@@ -127,6 +127,7 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
         -DCHANNEL_URBDRC=ON \
         -DCHANNEL_URBDRC_CLIENT=ON \
         -DWITH_SERVER=ON \
+        -DWITH_CAIRO=ON \
         -DBUILD_TESTING=OFF \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DCMAKE_INSTALL_PREFIX=%{INSTALL_PREFIX} \
