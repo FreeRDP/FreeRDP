@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 
+#include <stdint.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/shape.h>
@@ -98,7 +99,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		BYTE* data, int width, int height, int bpp, int length,
 		BOOL compressed, int codec_id)
 {
-	UINT16 size;
+	UINT32 size;
 	RFX_MESSAGE* msg;
 	BYTE* src;
 	BYTE* dst;
@@ -107,7 +108,16 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	rdpGdi* gdi;
 	BOOL status;
 
-	size = width * height * ((bpp + 7) / 8);
+	size = width * height;
+
+       if (bpp <= 0 || width <= 0 || height <= 0 ||
+	   width > (UINT32_MAX / height) ||
+	   size > (UINT32_MAX / (bpp + 7) / 8))
+       {
+		printf("Invalid parameters, unable to decompress bitmap\n");
+		return;
+       }
+	size *= (bpp + 7) / 8;
 
 	if (bitmap->data == NULL)
 		bitmap->data = (BYTE*) malloc(size);
