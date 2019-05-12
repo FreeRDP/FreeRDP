@@ -134,7 +134,6 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 	proxyConfig* config;
 	pServerContext* ps;
 	pClientContext* pc;
-	HANDLE connectionClosedEvent;
 	proxyData* pdata;
 	char* host = NULL;
 	DWORD port = 3389; /* default port */
@@ -149,8 +148,6 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 			WLog_ERR(TAG, "pf_server_parse_target_from_routing_token failed!");
 			return FALSE;
 		}
-
-		WLog_DBG(TAG, "Parsed target from load-balance-info: %s:%i", host, port);
 	}
 	else
 	{
@@ -161,14 +158,13 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 	}
 
 	pc = (pClientContext*) p_client_context_create(client->settings, host, port);
-	connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	/* keep both sides of the connection in pdata */
 	pc->pdata = ps->pdata;
 	pdata->info->TargetHostname = _strdup(host);
 	pdata->info->Username = _strdup(client->settings->Username);
 	pdata->pc = pc;
 	pdata->ps = ps;
-	pdata->connectionClosed = connectionClosedEvent;
+	pdata->connectionClosed = CreateEvent(NULL, TRUE, FALSE, NULL);
 	pf_server_rdpgfx_init(ps);
 
 	/* Start a proxy's client in it's own thread */
