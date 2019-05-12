@@ -58,8 +58,8 @@ struct proxy_config
 	/* channels */
 	BOOL WhitelistMode;
 
-	char** AllowedChannels;
-	UINT32 AllowedChannelsCount;
+	wArrayList* AllowedChannels;
+	wArrayList* BlockedChannels;
 
 	/* filters */
 	filters_list* Filters;
