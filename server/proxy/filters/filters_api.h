@@ -63,7 +63,9 @@ struct proxy_mouse_event_info {
 #pragma pack(pop)
 
 
-/* implement this method */
+/* implement this method and register callbacks for proxy events
+ * return TRUE if initialization succeeded, otherwise FALSE.
+ **/
 bool filter_init(proxyEvents* events);
 
 #endif /* FREERDP_SERVER_PROXY_FILTERS_API_H */
