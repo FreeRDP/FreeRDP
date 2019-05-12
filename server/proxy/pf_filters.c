@@ -181,11 +181,11 @@ BOOL pf_filters_register_new(filters_list* list, const char* module_path, const 
 		goto error;
 	}
 
-	events = malloc(sizeof(proxyEvents));
+	events = calloc(1, sizeof(proxyEvents));
 
 	if (events == NULL)
 	{
-		WLog_ERR(TAG, "pf_filters_register_new(): failed loading external module: %s", module_path);
+		WLog_ERR(TAG, "pf_filters_register_new(): calloc proxyEvents failed");
 		goto error;
 	}
 
