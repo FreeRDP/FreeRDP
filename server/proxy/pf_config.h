@@ -28,6 +28,8 @@
 
 #include <winpr/ini.h>
 
+#include "pf_filters.h"
+
 struct proxy_config
 {
 	/* server */
@@ -59,8 +61,8 @@ struct proxy_config
 	char** AllowedChannels;
 	UINT32 AllowedChannelsCount;
 
-	char** BlockedChannels;
-	UINT32 BlockedChannelsCount;
+	/* filters */
+	filters_list* Filters;
 };
 
 typedef struct proxy_config proxyConfig;

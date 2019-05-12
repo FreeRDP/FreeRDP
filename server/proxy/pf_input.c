@@ -40,7 +40,13 @@ static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	if (!config->Keyboard)
 		return TRUE;
 
-	return freerdp_input_send_keyboard_event(context->input, flags, code);
+	proxyKeyboardEventInfo info =
+	{
+		.flags = flags,
+		.rdp_scan_code = code
+	};
+	return RUN_FILTER(config->Filters, FILTER_TYPE_KEYBOARD, ps->pdata->info, &info,
+	                  freerdp_input_send_keyboard_event, context->input, flags, code);
 }
 
 static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -66,7 +72,13 @@ static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 	if (!config->Mouse)
 		return TRUE;
 
-	return freerdp_input_send_mouse_event(context->input, flags, x, y);
+	proxyMouseEventInfo info =
+	{
+		.flags = flags,
+		.x = x, .y = y
+	};
+	return RUN_FILTER(config->Filters, FILTER_TYPE_MOUSE, ps->pdata->info, &info,
+	                  freerdp_input_send_mouse_event, context->input, flags, x, y);
 }
 
 static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,

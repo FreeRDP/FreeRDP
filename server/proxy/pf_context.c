@@ -79,3 +79,37 @@ rdpContext* p_client_context_create(rdpSettings* clientSettings,
 	settings->RedirectClipboard = FALSE;
 	return context;
 }
+
+static void pf_context_connection_info_free(connectionInfo* info)
+{
+	free(info->TargetHostname);
+	free(info->ClientHostname);
+	free(info->Username);
+	free(info);
+}
+
+proxyData* pf_context_proxy_data_new()
+{
+	proxyData* pdata = malloc(sizeof(proxyData));
+
+	if (pdata == NULL)
+	{
+		return NULL;
+	}
+
+	pdata->info = pf_context_connection_info_new();
+
+	if (pdata->info == NULL)
+	{
+		free(pdata);
+		return NULL;
+	}
+
+	return pdata;
+}
+
+void pf_context_proxy_data_free(proxyData* pdata)
+{
+	pf_context_connection_info_free(pdata->info);
+	free(pdata);
+}

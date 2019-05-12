@@ -158,7 +158,9 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 	connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	/* keep both sides of the connection in pdata */
 	pc->pdata = ps->pdata;
-	pdata->pc = (pClientContext*) pc;
+	pdata->info->TargetHostname = _strdup(host);
+	pdata->info->Username = _strdup(client->settings->Username);
+	pdata->pc = pc;
 	pdata->ps = ps;
 	pdata->connectionClosed = connectionClosedEvent;
 	pf_server_rdpgfx_init(ps);
@@ -206,7 +208,15 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 
 	ps = (pServerContext*) client->context;
 	ps->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL);
-	pdata = calloc(1, sizeof(proxyData));
+	pdata = pf_context_proxy_data_new();
+
+	if (pdata == NULL)
+	{
+		WLog_ERR(TAG, "pf_context_proxy_data_new failed!");
+		return 0;
+	}
+
+	pdata->info->ClientHostname = _strdup(client->hostname);
 	ps->pdata = pdata;
 	/* keep configuration in proxyData */
 	pdata->config = client->ContextExtra;
@@ -320,7 +330,7 @@ fail:
 
 	pc = (rdpContext*) pdata->pc;
 	freerdp_client_stop(pc);
-	free(pdata);
+	pf_context_proxy_data_free(pdata);
 	freerdp_client_context_free(pc);
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
