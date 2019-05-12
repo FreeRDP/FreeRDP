@@ -85,7 +85,5 @@ BOOL init_p_server_context(freerdp_peer* client);
 rdpContext* p_client_context_create(rdpSettings* clientSettings, char* host, DWORD port);
 proxyData* pf_context_proxy_data_new();
 void pf_context_proxy_data_free(proxyData* pdata);
-connectionInfo* pf_context_connection_info_new();
-void pf_context_connection_info_free(connectionInfo* info);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONTEXT_H */

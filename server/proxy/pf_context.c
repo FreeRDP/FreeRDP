@@ -97,7 +97,7 @@ proxyData* pf_context_proxy_data_new()
 		return NULL;
 	}
 
-	pdata->info = pf_context_connection_info_new();
+	pdata->info = malloc(sizeof(connectionInfo));
 
 	if (pdata->info == NULL)
 	{
