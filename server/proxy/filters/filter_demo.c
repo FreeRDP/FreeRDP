@@ -22,4 +22,6 @@ bool filter_init(proxyEvents* events)
 {
 	events->KeyboardEvent = demo_filter_keyboard_event;
 	events->MouseEvent = demo_filter_mouse_event;
+
+	return true;
 }
