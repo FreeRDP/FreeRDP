@@ -90,14 +90,14 @@ static void pf_context_connection_info_free(connectionInfo* info)
 
 proxyData* pf_context_proxy_data_new()
 {
-	proxyData* pdata = malloc(sizeof(proxyData));
+	proxyData* pdata = calloc(1, sizeof(proxyData));
 
 	if (pdata == NULL)
 	{
 		return NULL;
 	}
 
-	pdata->info = malloc(sizeof(connectionInfo));
+	pdata->info = calloc(1, sizeof(connectionInfo));
 
 	if (pdata->info == NULL)
 	{
