@@ -100,12 +100,13 @@ static int init_external_addin(Plugin *plugin) {
 static void dumpData(char *data, unsigned length) {
 	unsigned const limit = 98;
 	unsigned l = length>limit ? limit/2 : length;
-	for (unsigned i=0; i<l; ++i) {
+    unsigned i;
+	for (i=0; i<l; ++i) {
 		printf("%02hhx", data[i]);
 	}
 	if (length>limit) {
 		printf("...");
-		for (unsigned i=length-l; i<length; ++i)
+		for (i=length-l; i<length; ++i)
 			printf("%02hhx", data[i]);
 	}
 	puts("");
