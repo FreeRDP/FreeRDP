@@ -481,12 +481,11 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 	return TRUE;
 }
 
-static UINT64 FileTimeToUS(const FILETIME* ft)
+static UINT64 FileTimeTo100ns(const FILETIME* ft)
 {
-	const UINT64 EPOCH_DIFF = 11644473600ULL * 1000000ULL;
+	const UINT64 EPOCH_DIFF = 11644473600ULL * 10000000;
 	UINT64 tmp = ((UINT64)ft->dwHighDateTime) << 32
 	             | ft->dwLowDateTime;
-	tmp /= 10; /* 100ns steps to 1us step */
 	tmp -= EPOCH_DIFF;
 	return tmp;
 }
@@ -534,13 +533,13 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	}
 	else
 	{
-		UINT64 tmp = FileTimeToUS(lpLastAccessTime);
+		UINT64 tmp = FileTimeTo100ns(lpLastAccessTime);
 #if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
-		timevals[0].tv_sec = tmp / 1000000ULL;
-		timevals[0].tv_usec = tmp % 1000000ULL;
+		timevals[0].tv_sec = tmp / 10000000;
+		timevals[0].tv_usec = tmp % 10000000 / 10;
 #else
-		times[0].tv_sec = tmp / 1000000ULL;
-		times[0].tv_nsec = (tmp % 1000000ULL) * 1000ULL;
+		times[0].tv_sec = tmp / 10000000;
+		times[0].tv_nsec = tmp % 10000000 * 100;
 #endif
 	}
 
@@ -563,13 +562,13 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	}
 	else
 	{
-		UINT64 tmp = FileTimeToUS(lpLastWriteTime);
+		UINT64 tmp = FileTimeTo100ns(lpLastWriteTime);
 #if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
-		timevals[1].tv_sec = tmp / 1000000ULL;
-		timevals[1].tv_usec = tmp % 1000000ULL;
+		timevals[1].tv_sec = tmp / 10000000;
+		timevals[1].tv_usec = tmp % 10000000 / 10;
 #else
-		times[1].tv_sec = tmp / 1000000ULL;
-		times[1].tv_nsec = (tmp % 1000000ULL) * 1000ULL;
+		times[1].tv_sec = tmp / 10000000;
+		times[1].tv_nsec = tmp % 10000000 * 100;
 #endif
 	}
 

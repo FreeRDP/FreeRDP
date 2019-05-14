@@ -178,6 +178,11 @@
 
 #define EPOCH_DIFF 11644473600LL
 #define STAT_TIME_TO_FILETIME(_t) (((UINT64)(_t) + EPOCH_DIFF) * 10000000LL)
+#ifdef _STAT_VER_LINUX
+#define STAT_TIME_TO_FILETIME2(_t, _tl) (((UINT64)(_tl.tv_sec) + EPOCH_DIFF) * 10000000LL + _tl.tv_nsec/100)
+#else
+#define STAT_TIME_TO_FILETIME2(_t, _tl) STAT_TIME_TO_FILETIME(_t)
+#endif
 
 
 static wArrayList* _HandleCreators;
@@ -818,14 +823,14 @@ static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
 #ifdef _DARWIN_FEATURE_64_BIT_INODE
 	ft = STAT_TIME_TO_FILETIME(fileStat->st_birthtime);
 #else
-	ft = STAT_TIME_TO_FILETIME(fileStat->st_ctime);
+	ft = STAT_TIME_TO_FILETIME2(fileStat->st_ctime, fileStat->st_ctim);
 #endif
 	lpFindFileData->ftCreationTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
 	lpFindFileData->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
-	ft = STAT_TIME_TO_FILETIME(fileStat->st_mtime);
+	ft = STAT_TIME_TO_FILETIME2(fileStat->st_mtime, fileStat->st_mtim);
 	lpFindFileData->ftLastWriteTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
 	lpFindFileData->ftLastWriteTime.dwLowDateTime = ft & 0xFFFFFFFF;
-	ft = STAT_TIME_TO_FILETIME(fileStat->st_atime);
+	ft = STAT_TIME_TO_FILETIME2(fileStat->st_atime, fileStat->st_atim);
 	lpFindFileData->ftLastAccessTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
 	lpFindFileData->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
 	lpFindFileData->nFileSizeHigh = ((UINT64)fileStat->st_size) >> 32ULL;

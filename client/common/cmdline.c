@@ -262,6 +262,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
 	printf("Parallel Port Redirection: /parallel:<name>,<device>\n");
 	printf("Printer Redirection: /printer:<device>,<driver>\n");
+	printf("TCP redirection: /rdp2tcp:/usr/bin/rdp2tcp\n");
 	printf("\n");
 	printf("Audio Output Redirection: /sound:sys:oss,dev:1,format:1\n");
 	printf("Audio Output Redirection: /sound:sys:alsa\n");
@@ -2942,6 +2943,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (!copy_value(arg->Value, &settings->ActionScript))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
+		CommandLineSwitchCase(arg, "rdp2tcp")
+		{
+			free(settings->RDP2TCPArgs);
+
+			if (!(settings->RDP2TCPArgs = _strdup(arg->Value)))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
 		CommandLineSwitchCase(arg, "fipsmode")
 		{
 			settings->FIPSMode = enable;
@@ -3244,6 +3252,11 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "remdesk",
 		        settings))
+			return FALSE;
+	}
+
+	if (settings->RDP2TCPArgs) {
+		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdp2tcp", settings->RDP2TCPArgs))
 			return FALSE;
 	}
 
