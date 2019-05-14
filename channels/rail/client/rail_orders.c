@@ -153,8 +153,7 @@ static UINT rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDE
 	Stream_Read_UINT16(s, execResult->execResult); /* execResult (2 bytes) */
 	Stream_Read_UINT32(s, execResult->rawResult); /* rawResult (4 bytes) */
 	Stream_Seek_UINT16(s); /* padding (2 bytes) */
-	return rail_read_unicode_string(s,
-	                                &execResult->exeOrFile) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR; /* exeOrFile */
+	return rail_read_unicode_string(s, &execResult->exeOrFile) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR; /* exeOrFile */
 }
 
 /**
@@ -269,8 +268,7 @@ static UINT rail_read_server_get_appid_resp_order(wStream* s,
 	}
 
 	Stream_Read_UINT32(s, getAppidResp->windowId); /* windowId (4 bytes) */
-	Stream_Read(s, (BYTE*) & (getAppidResp->applicationId),
-	            512); /* applicationId (256 UNICODE chars) */
+	Stream_Read(s, (BYTE*) & (getAppidResp->applicationId), 512); /* applicationId (256 UNICODE chars) */
 	return CHANNEL_RC_OK;
 }
 
