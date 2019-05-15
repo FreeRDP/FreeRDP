@@ -284,7 +284,6 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 {
 	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
 	CHANNEL_DEF channelDef;
-
 	Plugin* plugin = (Plugin*)calloc(1, sizeof(Plugin));
 
 	if (!plugin)
@@ -301,9 +300,9 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 
 	strcpy(channelDef.name, RDP2TCP_CHAN_NAME);
 	channelDef.options =
-		CHANNEL_OPTION_INITIALIZED |
-		CHANNEL_OPTION_ENCRYPT_RDP |
-		CHANNEL_OPTION_COMPRESS_RDP;
+	    CHANNEL_OPTION_INITIALIZED |
+	    CHANNEL_OPTION_ENCRYPT_RDP |
+	    CHANNEL_OPTION_COMPRESS_RDP;
 
 	if (pEntryPointsEx->pVirtualChannelInitEx(plugin, NULL, pInitHandle, &channelDef, 1,
 	        VIRTUAL_CHANNEL_VERSION_WIN2000, VirtualChannelInitEventEx) != CHANNEL_RC_OK)
