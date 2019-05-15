@@ -1320,6 +1320,16 @@ static UINT rail_send_client_sysparam_order(railPlugin* rail, const RAIL_SYSPARA
 			length += 1;
 			break;
 
+		case SPI_SETCARETWIDTH:
+		case SPI_SETSTICKYKEYS:
+		case SPI_SETTOGGLEKEYS:
+			length += 4;
+			break;
+
+		case SPI_SETFILTERKEYS:
+			length += 20;
+			break;
+
 		case SPI_SET_WORK_AREA:
 		case SPI_DISPLAY_CHANGE:
 		case SPI_TASKBAR_POS:
@@ -1441,6 +1451,50 @@ static UINT rail_send_client_sysparams_order(railPlugin* rail, RAIL_SYSPARAM_ORD
 	if (sysparam->params & SPI_MASK_SET_WORK_AREA)
 	{
 		sysparam->param = SPI_SET_WORK_AREA;
+
+		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
+		{
+			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %"PRIu32"!", error);
+			return error;
+		}
+	}
+
+	if (sysparam->params & SPI_MASK_SET_CARET_WIDTH)
+	{
+		sysparam->param = SPI_SETCARETWIDTH;
+
+		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
+		{
+			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %"PRIu32"!", error);
+			return error;
+		}
+	}
+
+	if (sysparam->params & SPI_MASK_SET_STICKY_KEYS)
+	{
+		sysparam->param = SPI_SETSTICKYKEYS;
+
+		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
+		{
+			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %"PRIu32"!", error);
+			return error;
+		}
+	}
+
+	if (sysparam->params & SPI_MASK_SET_TOGGLE_KEYS)
+	{
+		sysparam->param = SPI_SETTOGGLEKEYS;
+
+		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
+		{
+			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %"PRIu32"!", error);
+			return error;
+		}
+	}
+
+	if (sysparam->params & SPI_MASK_SET_FILTER_KEYS)
+	{
+		sysparam->param = SPI_SETFILTERKEYS;
 
 		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
 		{

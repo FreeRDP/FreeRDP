@@ -203,9 +203,18 @@ static UINT rail_send_client_sysparam(RailClientContext* context,
 			length += sysparam->highContrast.colorSchemeLength + 10;
 			break;
 
-		default:
-			length += 8;
+		case SPI_SETFILTERKEYS:
+			length += 20;
 			break;
+
+		case SPI_SETSTICKYKEYS:
+		case SPI_SETCARETWIDTH:
+		case SPI_SETTOGGLEKEYS:
+			length += 4;
+			break;
+
+		default:
+			return ERROR_BAD_ARGUMENTS;
 	}
 
 	s = rail_pdu_init(length);
