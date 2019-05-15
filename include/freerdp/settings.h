@@ -1518,7 +1518,7 @@ struct rdp_settings
 	ALIGN64 BOOL SupportGeometryTracking; /* 5186 */
 	ALIGN64 BOOL SupportSSHAgentChannel;  /* 5187 */
 	ALIGN64 BOOL SupportVideoOptimized;   /* 5188 */
-	ALIGN64 char *RDP2TCPArgs;            /* 5189 */
+	ALIGN64 char* RDP2TCPArgs;            /* 5189 */
 	UINT64 padding5312[5312 - 5190]; /* 5190 */
 
 	/**

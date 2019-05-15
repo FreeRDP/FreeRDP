@@ -3255,7 +3255,8 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (settings->RDP2TCPArgs) {
+	if (settings->RDP2TCPArgs)
+	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdp2tcp", settings->RDP2TCPArgs))
 			return FALSE;
 	}
