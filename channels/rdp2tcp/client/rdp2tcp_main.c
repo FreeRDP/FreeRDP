@@ -46,19 +46,15 @@ typedef struct
 
 static int init_external_addin(Plugin* plugin)
 {
-	SECURITY_ATTRIBUTES saAttr =
-	{
-		.nLength = sizeof(SECURITY_ATTRIBUTES),
-		.bInheritHandle = TRUE,
-		.lpSecurityDescriptor = NULL
-	};
-	STARTUPINFO siStartInfo =
-	{
-		.cb = sizeof(STARTUPINFO),
-		.hStdError = GetStdHandle(STD_ERROR_HANDLE),
-		.dwFlags = STARTF_USESTDHANDLES
-	};
-	PROCESS_INFORMATION procInfo = {};
+	SECURITY_ATTRIBUTES saAttr;
+	STARTUPINFO siStartInfo;
+	PROCESS_INFORMATION procInfo;
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
+	siStartInfo.cb = sizeof(STARTUPINFO);
+	siStartInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+	siStartInfo.dwFlags = STARTF_USESTDHANDLES;
 
 	// Create pipes
 	if (!CreatePipe(&plugin->hStdOutputRead, &siStartInfo.hStdOutput, &saAttr, 0))
@@ -131,7 +127,7 @@ static void dumpData(char* data, unsigned length)
 	puts("");
 }
 
-static DWORD copyThread(void* data)
+static DWORD WINAPI copyThread(void* data)
 {
 	Plugin* plugin = (Plugin*)data;
 	size_t const bufsize = 16 * 1024;
@@ -286,12 +282,15 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 #endif
 BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle)
 {
+	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
+	CHANNEL_DEF channelDef;
+
 	Plugin* plugin = (Plugin*)calloc(1, sizeof(Plugin));
 
 	if (!plugin)
 		return FALSE;
 
-	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 	assert(pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX) &&
 	       pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER);
 	plugin->initHandle = pInitHandle;
@@ -300,14 +299,11 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	if (init_external_addin(plugin) < 0)
 		return FALSE;
 
-	CHANNEL_DEF channelDef =
-	{
-		.name = RDP2TCP_CHAN_NAME,
-		.options =
+	strcpy(channelDef.name, RDP2TCP_CHAN_NAME);
+	channelDef.options =
 		CHANNEL_OPTION_INITIALIZED |
 		CHANNEL_OPTION_ENCRYPT_RDP |
-		CHANNEL_OPTION_COMPRESS_RDP
-	};
+		CHANNEL_OPTION_COMPRESS_RDP;
 
 	if (pEntryPointsEx->pVirtualChannelInitEx(plugin, NULL, pInitHandle, &channelDef, 1,
 	        VIRTUAL_CHANNEL_VERSION_WIN2000, VirtualChannelInitEventEx) != CHANNEL_RC_OK)
