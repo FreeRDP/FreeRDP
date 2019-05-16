@@ -178,11 +178,6 @@
 
 #define EPOCH_DIFF 11644473600LL
 #define STAT_TIME_TO_FILETIME(_t) (((UINT64)(_t) + EPOCH_DIFF) * 10000000LL)
-#ifdef _STAT_VER_LINUX
-#define STAT_TIME_TO_FILETIME2(_t, _tl) (((UINT64)(_tl.tv_sec) + EPOCH_DIFF) * 10000000LL + _tl.tv_nsec/100)
-#else
-#define STAT_TIME_TO_FILETIME2(_t, _tl) STAT_TIME_TO_FILETIME(_t)
-#endif
 
 
 static wArrayList* _HandleCreators;
