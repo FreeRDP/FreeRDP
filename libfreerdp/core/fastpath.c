@@ -704,6 +704,9 @@ static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, wStream* s
 	if ((eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED))
 		flags |= KBD_FLAGS_EXTENDED;
 
+	if ((eventFlags & FASTPATH_INPUT_KBDFLAGS_PREFIX_E1))
+		flags |= KBD_FLAGS_EXTENDED1;
+
 	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, flags, code);
 }
 
