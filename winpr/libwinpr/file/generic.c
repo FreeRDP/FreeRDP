@@ -818,14 +818,14 @@ static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
 #ifdef _DARWIN_FEATURE_64_BIT_INODE
 	ft = STAT_TIME_TO_FILETIME(fileStat->st_birthtime);
 #else
-	ft = STAT_TIME_TO_FILETIME2(fileStat->st_ctime, fileStat->st_ctim);
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_ctime);
 #endif
 	lpFindFileData->ftCreationTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
 	lpFindFileData->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
-	ft = STAT_TIME_TO_FILETIME2(fileStat->st_mtime, fileStat->st_mtim);
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_mtime);
 	lpFindFileData->ftLastWriteTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
 	lpFindFileData->ftLastWriteTime.dwLowDateTime = ft & 0xFFFFFFFF;
-	ft = STAT_TIME_TO_FILETIME2(fileStat->st_atime, fileStat->st_atim);
+	ft = STAT_TIME_TO_FILETIME(fileStat->st_atime);
 	lpFindFileData->ftLastAccessTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
 	lpFindFileData->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
 	lpFindFileData->nFileSizeHigh = ((UINT64)fileStat->st_size) >> 32ULL;
@@ -1080,12 +1080,10 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			}
 
 			memcpy(fullpath, pFileSearch->lpPath, pathlen);
-
 			/* Ensure path is terminated with a separator, but prevent
 			 * duplicate separators */
-			if (fullpath[pathlen - 1] != '/')
+			if (fullpath[pathlen-1] != '/')
 				fullpath[pathlen++] = '/';
-
 			memcpy(fullpath + pathlen, pFileSearch->pDirent->d_name, namelen);
 			fullpath[pathlen + namelen] = 0;
 
@@ -1144,15 +1142,15 @@ BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 BOOL FindClose(HANDLE hFindFile)
 {
 	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
+
 	/* Since INVALID_HANDLE_VALUE != NULL the analyzer guesses that there
 	 * is a initialized HANDLE that is not freed properly.
 	 * Disable this return to stop confusing the analyzer. */
 #ifndef __clang_analyzer__
-
 	if (!pFileSearch || (pFileSearch == INVALID_HANDLE_VALUE))
 		return FALSE;
-
 #endif
+
 	free(pFileSearch->lpPath);
 	free(pFileSearch->lpPattern);
 
