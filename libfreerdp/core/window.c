@@ -499,7 +499,7 @@ static BOOL window_order_supported(const rdpSettings* settings, UINT32 fieldFlag
 
 
 #define DUMP_APPEND(...) do { \
-		snprintf(tmpBuffer, sizeof(tmpBuffer), __VA_ARGS__); \
+		_snprintf(tmpBuffer, sizeof(tmpBuffer), __VA_ARGS__); \
 		strncat(buffer, tmpBuffer, rem); \
 		rem -= strlen(tmpBuffer); \
 		} while(0)
@@ -511,7 +511,7 @@ static void dump_window_state_order(wLog *log, const char *msg, const WINDOW_ORD
 	char tmpBuffer[100];
 	size_t rem = sizeof(buffer) - 1;
 
-	snprintf(buffer, sizeof(buffer), "%s windowId=0x%"PRIu32"", msg, order->windowId);
+	_snprintf(buffer, sizeof(buffer), "%s windowId=0x%"PRIu32"", msg, order->windowId);
 	rem -= strlen(msg);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
@@ -870,7 +870,7 @@ static void update_read_desktop_non_monitored_order(wStream* s, WINDOW_ORDER_INF
 static void dump_monitored_desktop(wLog *log, const char *msg, const WINDOW_ORDER_INFO* orderInfo,
 		const MONITORED_DESKTOP_ORDER *monitored)
 {
-	char buffer[1000];
+	char buffer[1000] = {0};
 	char tmpBuffer[1000];
 	size_t rem = sizeof(buffer) - 1;
 
