@@ -21,6 +21,7 @@
 #define FREERDP_CHANNEL_RDPGFX_SERVER_RDPGFX_H
 
 #include <freerdp/channels/rdpgfx.h>
+#include <freerdp/freerdp.h>
 
 typedef struct _rdpgfx_server_context RdpgfxServerContext;
 typedef struct _rdpgfx_server_private RdpgfxServerPrivate;
