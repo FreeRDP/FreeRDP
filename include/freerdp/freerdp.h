@@ -490,6 +490,8 @@ FREERDP_API void setChannelError(rdpContext* context, UINT errorNum,
                                  char* description);
 FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
 
+FREERDP_API const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length);
+
 #ifdef __cplusplus
 }
 #endif

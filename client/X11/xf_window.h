@@ -138,6 +138,7 @@ struct xf_app_window
 	xfLocalMove local_move;
 	BYTE rail_state;
 	BOOL rail_ignore_configure;
+	ULONG64 last_move_time;
 };
 
 void xf_ewmhints_init(xfContext* xfc);

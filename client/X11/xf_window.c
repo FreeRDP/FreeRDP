@@ -934,10 +934,14 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y,
 	appWindow->width = width;
 	appWindow->height = height;
 
-	if (resize)
+	if (resize) {
+		DEBUG_X11("setting new internal & X geometry: %dx%d+%d+%d", width, height, x, y);
 		XMoveResizeWindow(xfc->display, appWindow->handle, x, y, width, height);
-	else
+	}
+	else {
+		DEBUG_X11("setting new internal & X location: +%d+%d", x, y);
 		XMoveWindow(xfc->display, appWindow->handle, x, y);
+	}
 
 	xf_UpdateWindowArea(xfc, appWindow, 0, 0, width, height);
 }

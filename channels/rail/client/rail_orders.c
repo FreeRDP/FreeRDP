@@ -1650,8 +1650,10 @@ UINT rail_send_client_window_move_order(railPlugin* rail, const RAIL_WINDOW_MOVE
 
 	error = rail_write_client_window_move_order(s, windowMove);
 
-	if (error == ERROR_SUCCESS)
+	if (error == ERROR_SUCCESS) {
+		WLog_Print(rail->log, WLOG_TRACE, "sending new RAIL window corners: 0x%x (%d, %d), (%d, %d)", windowMove->windowId, windowMove->left, windowMove->top, windowMove->right, windowMove->bottom);
 		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_WINDOWMOVE);
+	}
 
 	Stream_Free(s, TRUE);
 	return error;

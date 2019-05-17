@@ -154,8 +154,10 @@ static const char* x11_event_string(int event)
 
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(...) WLog_DBG(TAG, __VA_ARGS__)
+#define TRACE_X11(...) WLog_VRB(TAG, __VA_ARGS__)
 #else
 #define DEBUG_X11(...) do { } while (0)
+#define TRACE_X11(...) do { } while (0)
 #endif
 
 BOOL xf_event_action_script_init(xfContext* xfc)
@@ -679,6 +681,7 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 		                      0, 0, &appWindow->x, &appWindow->y, &childWindow);
 		appWindow->width = event->xconfigure.width;
 		appWindow->height = event->xconfigure.height;
+		DEBUG_X11("updated internal geometry from X: %dx%d+%d+%d", appWindow->width, appWindow->height, appWindow->x, appWindow->y);
 
 		/*
 		 * Additional checks for not in a local move and not ignoring configure to send
@@ -747,6 +750,25 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 }
 static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
+#ifdef WITH_DEBUG_X11
+	if (WLog_IsLevelActive(WLog_Get(TAG), WLOG_TRACE)) {
+		char* propName = XGetAtomName(xfc->display, event->xproperty.atom);
+		char* state;
+		switch (event->xproperty.state) {
+		case PropertyNewValue:
+			state = "NEW";
+			break;
+		case PropertyDelete:
+			state = "DELETE";
+			break;
+		default:
+			state = "???";
+		}
+		TRACE_X11("prop='%s' state=%s", propName, state);
+		XFree(propName);
+	}
+#endif
+
 	/*
 	 * This section handles sending the appropriate commands to the rail server
 	 * when the window has been minimized, maximized, restored locally

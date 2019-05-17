@@ -1440,3 +1440,12 @@ void nego_free_nla(rdpNego* nego)
 	nla_free(nego->transport->nla);
 	nego->transport->nla = NULL;
 }
+
+const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength)
+{
+	if (!nego)
+		return NULL;
+	if (RoutingTokenLength)
+		*RoutingTokenLength = nego->RoutingTokenLength;
+	return nego->RoutingToken;
+}

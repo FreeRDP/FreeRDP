@@ -1084,3 +1084,11 @@ void setChannelError(rdpContext* context, UINT errorNum, char* description)
 	strncpy(context->errorDescription, description, 499);
 	SetEvent(context->channelErrorEvent);
 }
+
+const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length)
+{
+	if (!context || !context->rdp)
+		return NULL;
+
+	return (const char*)nego_get_routing_token(context->rdp->nego, length);
+}

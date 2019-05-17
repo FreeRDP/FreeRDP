@@ -24,6 +24,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
+#include <time.h>
+#include <errno.h>
 
 #include <winpr/wlog.h>
 #include <winpr/print.h>
@@ -32,6 +34,12 @@
 #include "xf_rail.h"
 
 #define TAG CLIENT_TAG("x11")
+
+#ifdef WITH_DEBUG_X11
+#define DEBUG_X11(...) WLog_DBG(TAG, __VA_ARGS__)
+#else
+#define DEBUG_X11(...) do { } while (0)
+#endif
 
 static const char* error_code_names[] =
 {
@@ -61,6 +69,8 @@ static const char* movetype_names[] =
 	"RAIL_WMSZ_KEYSIZE"
 };
 #endif
+
+#define MOVE_THRESHOLD_MS 1000
 
 struct xf_rail_icon
 {
@@ -127,6 +137,26 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId,
 	xfc->rail->ClientSystemCommand(xfc->rail, &syscommand);
 }
 
+static void xf_rail_move_window(xfContext* xfc, xfAppWindow* appWindow, const RAIL_WINDOW_MOVE_ORDER* windowMove)
+{
+	struct timespec ts;
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+	{
+		WLog_ERR(TAG, "failed to get clock time (errno=%d); window movement may be negatively affected", errno);
+		appWindow->last_move_time = 0;
+	}
+	else
+	{
+		appWindow->last_move_time = ts.tv_sec * 1000 + ts.tv_nsec / 1000000; // convert to ms
+	}
+
+	DEBUG_X11("forwarding geometry from X/internal to RDP server: %dx%d+%d+%d",
+			(windowMove->right - windowMove->left),
+			(windowMove->bottom - windowMove->top),
+			windowMove->left, windowMove->top);
+	xfc->rail->ClientWindowMove(xfc->rail, windowMove);
+}
+
 /**
  * The position of the X window can become out of sync with the RDP window
  * if the X window is moved locally by the window manager.  In this event
@@ -154,7 +184,7 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		windowMove.top = appWindow->y;
 		windowMove.right = windowMove.left + appWindow->width;
 		windowMove.bottom = windowMove.top + appWindow->height;
-		xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
+		xf_rail_move_window(xfc, appWindow, &windowMove);
 	}
 }
 
@@ -181,7 +211,7 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	windowMove.right = windowMove.left +
 	                   appWindow->width; /* In the update to RDP the position is one past the window */
 	windowMove.bottom = windowMove.top + appWindow->height;
-	xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
+	xf_rail_move_window(xfc, appWindow, &windowMove);
 	/*
 	 * Simulate button up at new position to end the local move (per RDP spec)
 	 */
@@ -200,6 +230,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 * we can start to receive GDI orders for the new window dimensions before we
 	 * receive the RAIL ORDER for the new window size.  This avoids that race condition.
 	 */
+	DEBUG_X11("updating internal offsets from X: %dx%d+%d+%d", appWindow->x,
+			appWindow->y, appWindow->width, appWindow->height);
 	appWindow->windowOffsetX = appWindow->x;
 	appWindow->windowOffsetY = appWindow->y;
 	appWindow->windowWidth = appWindow->width;
@@ -272,6 +304,8 @@ void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright,
 static BOOL xf_rail_window_common(rdpContext* context,
                                   const WINDOW_ORDER_INFO* orderInfo, const WINDOW_STATE_ORDER* windowState)
 {
+	DEBUG_X11("new rail window state, fieldFlags=0x%x, geom= %dx%d+%d+%d", orderInfo->fieldFlags, windowState->windowWidth, windowState->windowHeight, windowState->windowOffsetX, windowState->windowOffsetY);
+
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context;
 	UINT32 fieldFlags = orderInfo->fieldFlags;
@@ -347,12 +381,14 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
+		DEBUG_X11("windowOffset: 0x%x (%d, %d)", appWindow->handle, windowState->windowOffsetX, windowState->windowOffsetY);
 		appWindow->windowOffsetX = windowState->windowOffsetX;
 		appWindow->windowOffsetY = windowState->windowOffsetY;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
+		DEBUG_X11("window size: 0x%x (%d, %d)", appWindow->handle, windowState->windowWidth, windowState->windowHeight);
 		appWindow->windowWidth = windowState->windowWidth;
 		appWindow->windowHeight = windowState->windowHeight;
 	}
@@ -398,6 +434,7 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
 	{
+		DEBUG_X11("clientOffset: 0x%x (%d, %d)", appWindow->handle, windowState->clientOffsetX, windowState->clientOffsetY);
 		appWindow->clientOffsetX = windowState->clientOffsetX;
 		appWindow->clientOffsetY = windowState->clientOffsetY;
 	}
@@ -410,6 +447,7 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
+		DEBUG_X11("windowClientDelta: 0x%x (%d, %d)", appWindow->handle, windowState->windowClientDeltaX, windowState->windowClientDeltaY);
 		appWindow->windowClientDeltaX = windowState->windowClientDeltaX;
 		appWindow->windowClientDeltaY = windowState->windowClientDeltaY;
 	}
@@ -439,6 +477,7 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
 	{
+		DEBUG_X11("visibleOffset: 0x%x (%d, %d)", appWindow->handle, windowState->visibleOffsetX, windowState->visibleOffsetY);
 		appWindow->visibleOffsetX = windowState->visibleOffsetX;
 		appWindow->visibleOffsetY = windowState->visibleOffsetY;
 	}
@@ -508,9 +547,47 @@ static BOOL xf_rail_window_common(rdpContext* context,
 			}
 			else
 			{
-				xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX,
-				              appWindow->windowOffsetY,
-				              appWindow->windowWidth, appWindow->windowHeight);
+#ifdef MOVE_HACK
+				/* If the user recently moved it, ignore this message. */
+				struct timespec ts;
+				ULONG64 time_since_move;
+
+				if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+				{
+					WLog_ERR(TAG, "failed to get clock time (errno=%d); window movement may be negatively affected", errno);
+					time_since_move = ULONG_MAX;
+				}
+				else
+				{
+					ULONG64 current_time;
+					current_time = ts.tv_sec * 1000 + ts.tv_nsec / 1000000; // convert to ms
+					time_since_move = current_time - appWindow->last_move_time;
+				}
+
+				if (time_since_move > MOVE_THRESHOLD_MS)
+				{
+#endif
+					xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX,
+							appWindow->windowOffsetY, appWindow->windowWidth,
+							appWindow->windowHeight);
+#ifdef MOVE_HACK
+				}
+				else
+				{
+					RAIL_WINDOW_MOVE_ORDER windowMove;
+
+					DEBUG_X11("ignoring window move message & resending move");
+					windowMove.windowId = appWindow->windowId;
+					/*
+					 * Calculate new size/position for the rail window(new values for windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
+					 */
+					windowMove.left = appWindow->x;
+					windowMove.top = appWindow->y;
+					windowMove.right = windowMove.left + appWindow->width;
+					windowMove.bottom = windowMove.top + appWindow->height;
+					xf_rail_move_window(xfc, appWindow, &windowMove);
+				}
+#endif
 			}
 
 			xf_SetWindowVisibilityRects(xfc, appWindow, visibilityRectsOffsetX,
