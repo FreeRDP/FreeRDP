@@ -112,7 +112,10 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 		unsigned long p = strtoul(colon + 1, NULL, 10);
 
 		if (p > USHRT_MAX)
+		{
+			free(*target);
 			return FALSE;
+		}
 
 		*port = (DWORD)p;
 		*colon = '\0';
