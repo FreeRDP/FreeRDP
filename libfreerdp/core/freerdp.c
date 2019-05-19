@@ -789,6 +789,14 @@ void freerdp_set_error_info(rdpRdp* rdp, UINT32 error)
 	rdp_set_error_info(rdp, error);
 }
 
+BOOL freerdp_send_error_info(rdpRdp* rdp)
+{
+	if (!rdp)
+		return FALSE;
+
+	return rdp_send_error_info(rdp);
+}
+
 UINT32 freerdp_get_last_error(rdpContext* context)
 {
 	return context->LastError;

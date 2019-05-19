@@ -453,6 +453,7 @@ FREERDP_API int freerdp_message_queue_process_pending_messages(
 
 FREERDP_API UINT32 freerdp_error_info(freerdp* instance);
 FREERDP_API void freerdp_set_error_info(rdpRdp* rdp, UINT32 error);
+FREERDP_API BOOL freerdp_send_error_info(rdpRdp* rdp);
 
 FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);
 FREERDP_API const char* freerdp_get_version_string(void);
