@@ -90,6 +90,23 @@ static BOOL pf_client_end_paint(rdpContext* context)
 	return ps->update->EndPaint(ps);
 }
 
+static void pf_OnErrorInfo(void* ctx, ErrorInfoEventArgs* e)
+{
+	pClientContext* pc = (pClientContext*) ctx;
+	proxyData* pdata = pc->pdata;
+	rdpContext* ps = (rdpContext*)pdata->ps;
+
+	if (e->code != ERRINFO_NONE)
+	{
+		const char* errorMessage = freerdp_get_error_info_string(e->code);
+		WLog_DBG(TAG, "Client received error info (0x%08"PRIu32"): %s", e->code, errorMessage);
+		/* forward error back to client */
+		freerdp_set_error_info(ps->rdp, e->code);
+		freerdp_send_error_info(ps->rdp);
+	}
+}
+
+
 /**
  * Called before a connection is established.
  *
@@ -114,6 +131,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	                                 pf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    pf_OnChannelDisconnectedEventHandler);
+	PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_OnErrorInfo);
 	/**
 	 * Load all required plugins / channels / libraries specified by current
 	 * settings.
@@ -219,18 +237,20 @@ static void pf_client_post_disconnect(freerdp* instance)
 
 	context = (pClientContext*) instance->context;
 	pdata = context->pdata;
+	ps = (rdpContext*) pdata->ps;
+	peer = ps->peer;
+
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
 	                                   pf_OnChannelConnectedEventHandler);
 	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
 	                                      pf_OnChannelDisconnectedEventHandler);
+	PubSub_UnsubscribeErrorInfo(instance->context->pubSub, pf_OnErrorInfo);
 	gdi_free(instance);
-	ps = (rdpContext*) pdata->ps;
 
 	if (!pf_common_connection_aborted_by_peer(pdata))
 	{
 		SetEvent(pdata->connectionClosed);
 		WLog_INFO(TAG, "connectionClosed event is not set; closing connection with client");
-		peer = ps->peer;
 		peer->Disconnect(peer);
 	}
 
