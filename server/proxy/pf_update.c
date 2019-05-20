@@ -19,6 +19,8 @@
  * limitations under the License.
  */
 
+#include <freerdp/update.h>
+
 #include "pf_update.h"
 #include "pf_context.h"
 
@@ -83,6 +85,15 @@ static BOOL pf_client_desktop_resize(rdpContext* context)
 	return ps->update->DesktopResize(ps);
 }
 
+static BOOL pf_client_remote_monitors(rdpContext* context, UINT32 count,
+                                      const MONITOR_DEF* monitors)
+{
+	pClientContext* pc = (pClientContext*) context;
+	proxyData* pdata = pc->pdata;
+	rdpContext* ps = (rdpContext*)pdata->ps;
+	return freerdp_display_send_monitor_layout(ps, count, monitors);
+}
+
 static BOOL pf_client_send_pointer_system(rdpContext* context,
                                        const POINTER_SYSTEM_UPDATE* pointer_system)
 {
@@ -134,6 +145,7 @@ void pf_client_register_update_callbacks(rdpUpdate* update)
 	update->EndPaint = pf_client_end_paint;
 	update->BitmapUpdate = pf_client_bitmap_update;
 	update->DesktopResize = pf_client_desktop_resize;
+	update->RemoteMonitors = pf_client_remote_monitors;
 
 	update->pointer->PointerSystem = pf_client_send_pointer_system;
 	update->pointer->PointerPosition = pf_client_send_pointer_position;
