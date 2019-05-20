@@ -129,7 +129,9 @@ set(${MODULE_PREFIX}_SRCS
 	listener.c
 	listener.h
 	peer.c
-	peer.h)
+	peer.h
+	display.c
+	display.h)
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
 

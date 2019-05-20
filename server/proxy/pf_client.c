@@ -29,6 +29,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/display.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/utils/signal.h>
 

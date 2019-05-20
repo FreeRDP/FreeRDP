@@ -223,9 +223,6 @@ FREERDP_LOCAL int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
 
 FREERDP_LOCAL void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
 
-FREERDP_LOCAL BOOL rdp_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount,
-        const rdpMonitor* monitorDefArray);
-
 FREERDP_LOCAL int rdp_recv_callback(rdpTransport* transport, wStream* s,
                                     void* extra);
 
