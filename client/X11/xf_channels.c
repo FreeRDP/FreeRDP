@@ -37,7 +37,6 @@
 void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
-	rdpSettings* settings = xfc->context.settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
