@@ -194,6 +194,10 @@ struct _WINDOW_STATE_ORDER
 	INT32 clientOffsetY;
 	UINT32 clientAreaWidth;
 	UINT32 clientAreaHeight;
+	UINT32 resizeMarginLeft;
+	UINT32 resizeMarginRight;
+	UINT32 resizeMarginTop;
+	UINT32 resizeMarginBottom;
 	UINT32 RPContent;
 	UINT32 rootParentHandle;
 	INT32 windowOffsetX;
@@ -206,10 +210,6 @@ struct _WINDOW_STATE_ORDER
 	RECTANGLE_16* windowRects;
 	INT32 visibleOffsetX;
 	INT32 visibleOffsetY;
-	UINT32 resizeMarginLeft;
-	UINT32 resizeMarginTop;
-	UINT32 resizeMarginRight;
-	UINT32 resizeMarginBottom;
 	UINT32 numVisibilityRects;
 	RECTANGLE_16* visibilityRects;
 	RAIL_UNICODE_STRING OverlayDescription;
