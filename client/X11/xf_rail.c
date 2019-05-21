@@ -349,7 +349,7 @@ static xfAppWindow* xf_rail_window_new(xfContext* xfc,
 }
 
 static BOOL xf_rail_window_common(rdpContext* context,
-                                  WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
+                                  const WINDOW_ORDER_INFO* orderInfo, const WINDOW_STATE_ORDER* windowState)
 {
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context;
@@ -363,6 +363,10 @@ static BOOL xf_rail_window_common(rdpContext* context,
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
 		appWindow = xf_rail_window_new(xfc, orderInfo, windowState);
+	}
+	else
+	{
+		appWindow = xf_rail_get_window(xfc, orderInfo->windowId);
 	}
 
 	if (!appWindow)
@@ -685,7 +689,7 @@ static xfRailIcon* RailIconCache_Lookup(xfRailIconCache* cache,
  */
 static BOOL convert_rail_icon(ICON_INFO* iconInfo, xfRailIcon* railIcon)
 {
-	BYTE* argbPixels = NULL;
+	BYTE* argbPixels;
 	BYTE* nextPixel;
 	long* pixels;
 	int i;

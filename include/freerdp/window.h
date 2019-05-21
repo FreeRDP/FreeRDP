@@ -72,6 +72,9 @@
 #define WINDOW_ORDER_FIELD_DESKTOP_ZORDER          0x00000010
 #define WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND      0x00000020
 
+extern const UINT32 WINDOW_ORDER_VALUES[];
+extern const char* const WINDOW_ORDER_STRINGS[];
+
 /* Window Show States */
 #define WINDOW_HIDE					0x00
 #define WINDOW_SHOW_MINIMIZED				0x02
@@ -210,10 +213,6 @@ struct _WINDOW_STATE_ORDER
 	RECTANGLE_16* windowRects;
 	INT32 visibleOffsetX;
 	INT32 visibleOffsetY;
-	UINT32 resizeMarginLeft;
-	UINT32 resizeMarginTop;
-	UINT32 resizeMarginRight;
-	UINT32 resizeMarginBottom;
 	UINT32 numVisibilityRects;
 	RECTANGLE_16* visibilityRects;
 	RAIL_UNICODE_STRING OverlayDescription;
