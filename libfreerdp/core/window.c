@@ -669,11 +669,7 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
             if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
             {
                 WLog_Print(update->log, WLOG_DEBUG, "WindowCreate 0x%"PRIx32, orderInfo->windowId);
-<<<<<<< HEAD
-                IFCALLRET(window->WindowCreate, result, context, orderInfo, &window_state);
-=======
                 IFCALLRET(window->WindowCreate, result, context, orderInfo, &windowState);
->>>>>>> bugfix-4934
             }
             else
             {
@@ -687,11 +683,7 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
                         free(flagString);
                     }
                 }
-<<<<<<< HEAD
-                IFCALLRET(window->WindowUpdate, result, context, orderInfo, &window_state);
-=======
                 IFCALLRET(window->WindowUpdate, result, context, orderInfo, &windowState);
->>>>>>> bugfix-4934
             }
 		}
 	}
