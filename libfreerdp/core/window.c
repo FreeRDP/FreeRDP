@@ -30,7 +30,7 @@
 
 #define TAG FREERDP_TAG("core.window")
 
-const UINT32 WINDOW_ORDER_VALUES[] =
+static const UINT32 WINDOW_ORDER_VALUES[] =
 {
 	WINDOW_ORDER_TYPE_WINDOW,
 	WINDOW_ORDER_TYPE_NOTIFY,
@@ -64,125 +64,6 @@ const UINT32 WINDOW_ORDER_VALUES[] =
 	WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN,
 	WINDOW_ORDER_FIELD_DESKTOP_ZORDER,
 	WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND,
-	0
-};
-
-const char* const WINDOW_ORDER_STRINGS[] =
-{
-	"WINDOW_ORDER_TYPE_WINDOW",
-	"WINDOW_ORDER_TYPE_NOTIFY",
-	"WINDOW_ORDER_TYPE_DESKTOP",
-	"WINDOW_ORDER_STATE_NEW",
-	"WINDOW_ORDER_STATE_DELETED",
-	"WINDOW_ORDER_FIELD_OWNER",
-	"WINDOW_ORDER_FIELD_STYLE",
-	"WINDOW_ORDER_FIELD_SHOW",
-	"WINDOW_ORDER_FIELD_TITLE",
-	"WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET",
-	"WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE",
-	"WINDOW_ORDER_FIELD_RP_CONTENT",
-	"WINDOW_ORDER_FIELD_ROOT_PARENT",
-	"WINDOW_ORDER_FIELD_WND_OFFSET",
-	"WINDOW_ORDER_FIELD_WND_CLIENT_DELTA",
-	"WINDOW_ORDER_FIELD_WND_SIZE",
-	"WINDOW_ORDER_FIELD_WND_RECTS",
-	"WINDOW_ORDER_FIELD_VIS_OFFSET",
-	"WINDOW_ORDER_FIELD_VISIBILITY",
-	"WINDOW_ORDER_FIELD_ICON_BIG",
-	"WINDOW_ORDER_ICON",
-	"WINDOW_ORDER_CACHED_ICON",
-	"WINDOW_ORDER_FIELD_NOTIFY_VERSION",
-	"WINDOW_ORDER_FIELD_NOTIFY_TIP",
-	"WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP",
-	"WINDOW_ORDER_FIELD_NOTIFY_STATE",
-	"WINDOW_ORDER_FIELD_DESKTOP_NONE",
-	"WINDOW_ORDER_FIELD_DESKTOP_HOOKED",
-	"WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED",
-	"WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN",
-	"WINDOW_ORDER_FIELD_DESKTOP_ZORDER",
-	"WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND",
-	NULL
-};
-
-static char* rail_get_window_order_strings(UINT32 flags)
-{
-	char* s;
-	int totalLength = 0;
-	int i;
-
-	for (i = 0; WINDOW_ORDER_VALUES[i] != 0; i++)
-	{
-		if (flags & WINDOW_ORDER_VALUES[i])
-		{
-			totalLength += strlen(WINDOW_ORDER_STRINGS[i]) + 1;
-		}
-	}
-
-	if (totalLength > 0)
-	{
-		s = malloc(totalLength);
-		char* next = s;
-
-		for (i = 0; WINDOW_ORDER_VALUES[i] != 0; i++)
-		{
-			if (flags & WINDOW_ORDER_VALUES[i])
-			{
-				strcpy(next, WINDOW_ORDER_STRINGS[i]);
-				next += strlen(WINDOW_ORDER_STRINGS[i]);
-				*next = ' ';
-				next++;
-			}
-		}
-
-		if (next != s)
-		{
-			next--;
-			*next = '\000';
-		}
-	}
-	else
-	{
-		s = NULL;
-	}
-
-	return s;
-}
-
-static void update_free_window_icon_info(ICON_INFO* iconInfo);
-
-const UINT32 WINDOW_ORDER_VALUES[] = {
-    WINDOW_ORDER_TYPE_WINDOW,
-    WINDOW_ORDER_TYPE_NOTIFY,
-    WINDOW_ORDER_TYPE_DESKTOP,
-    WINDOW_ORDER_STATE_NEW,
-    WINDOW_ORDER_STATE_DELETED,
-    WINDOW_ORDER_FIELD_OWNER,
-    WINDOW_ORDER_FIELD_STYLE,
-    WINDOW_ORDER_FIELD_SHOW,
-    WINDOW_ORDER_FIELD_TITLE,
-    WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET,
-    WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE,
-    WINDOW_ORDER_FIELD_RP_CONTENT,
-    WINDOW_ORDER_FIELD_ROOT_PARENT,
-    WINDOW_ORDER_FIELD_WND_OFFSET,
-    WINDOW_ORDER_FIELD_WND_CLIENT_DELTA,
-    WINDOW_ORDER_FIELD_WND_SIZE,
-    WINDOW_ORDER_FIELD_WND_RECTS,
-    WINDOW_ORDER_FIELD_VIS_OFFSET,
-    WINDOW_ORDER_FIELD_VISIBILITY,
-    WINDOW_ORDER_FIELD_ICON_BIG,
-    WINDOW_ORDER_ICON,
-    WINDOW_ORDER_CACHED_ICON,
-    WINDOW_ORDER_FIELD_NOTIFY_VERSION,
-    WINDOW_ORDER_FIELD_NOTIFY_TIP,
-    WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP,
-    WINDOW_ORDER_FIELD_NOTIFY_STATE,
-    WINDOW_ORDER_FIELD_DESKTOP_NONE,
-    WINDOW_ORDER_FIELD_DESKTOP_HOOKED,
-    WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED,
-    WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN,
-    WINDOW_ORDER_FIELD_DESKTOP_ZORDER,
-    WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND,
 	0
 };
 
@@ -266,6 +147,8 @@ static char* rail_get_window_order_strings(UINT32 flags)
 
 	return s;
 }
+
+static void update_free_window_icon_info(ICON_INFO* iconInfo);
 
 BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
@@ -786,7 +669,11 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
             if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
             {
                 WLog_Print(update->log, WLOG_DEBUG, "WindowCreate 0x%"PRIx32, orderInfo->windowId);
+<<<<<<< HEAD
                 IFCALLRET(window->WindowCreate, result, context, orderInfo, &window_state);
+=======
+                IFCALLRET(window->WindowCreate, result, context, orderInfo, &windowState);
+>>>>>>> bugfix-4934
             }
             else
             {
@@ -800,7 +687,11 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
                         free(flagString);
                     }
                 }
+<<<<<<< HEAD
                 IFCALLRET(window->WindowUpdate, result, context, orderInfo, &window_state);
+=======
+                IFCALLRET(window->WindowUpdate, result, context, orderInfo, &windowState);
+>>>>>>> bugfix-4934
             }
 		}
 	}
