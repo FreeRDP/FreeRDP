@@ -70,8 +70,6 @@ static const char* movetype_names[] =
 };
 #endif
 
-#define MOVE_THRESHOLD_MS 1000
-
 struct xf_rail_icon
 {
 	long* data;
@@ -137,23 +135,13 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId,
 	xfc->rail->ClientSystemCommand(xfc->rail, &syscommand);
 }
 
-static void xf_rail_move_window(xfContext* xfc, xfAppWindow* appWindow, const RAIL_WINDOW_MOVE_ORDER* windowMove)
+static void xf_rail_move_window(xfContext* xfc, xfAppWindow* appWindow,
+                                const RAIL_WINDOW_MOVE_ORDER* windowMove)
 {
-	struct timespec ts;
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-	{
-		WLog_ERR(TAG, "failed to get clock time (errno=%d); window movement may be negatively affected", errno);
-		appWindow->last_move_time = 0;
-	}
-	else
-	{
-		appWindow->last_move_time = ts.tv_sec * 1000 + ts.tv_nsec / 1000000; // convert to ms
-	}
-
-	DEBUG_X11("forwarding geometry from X/internal to RDP server: %dx%d+%d+%d",
-			(windowMove->right - windowMove->left),
-			(windowMove->bottom - windowMove->top),
-			windowMove->left, windowMove->top);
+	DEBUG_X11("forwarding geometry from X/internal to RDP server: %"PRIu16"x%"PRIu16"+%"PRIu16"+%"PRIu16,
+	          (windowMove->right - windowMove->left),
+	          (windowMove->bottom - windowMove->top),
+	          windowMove->left, windowMove->top);
 	xfc->rail->ClientWindowMove(xfc->rail, windowMove);
 }
 
@@ -230,8 +218,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 * we can start to receive GDI orders for the new window dimensions before we
 	 * receive the RAIL ORDER for the new window size.  This avoids that race condition.
 	 */
-	DEBUG_X11("updating internal offsets from X: %dx%d+%d+%d", appWindow->x,
-			appWindow->y, appWindow->width, appWindow->height);
+	DEBUG_X11("updating internal offsets from X: %"PRIu16"x%"PRIu16"+%"PRIu16"+%"PRIu16,
+              appWindow->width, appWindow->height, appWindow->x, appWindow->y);
 	appWindow->windowOffsetX = appWindow->x;
 	appWindow->windowOffsetY = appWindow->y;
 	appWindow->windowWidth = appWindow->width;
@@ -250,6 +238,7 @@ static void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 	const RECTANGLE_16* extents;
 	REGION16 windowInvalidRegion;
 	region16_init(&windowInvalidRegion);
+
 	if (xfc->railWindows)
 		count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
@@ -301,96 +290,124 @@ void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright,
 
 /* RemoteApp Core Protocol Extension */
 
-static BOOL xf_rail_window_common(rdpContext* context,
-                                  const WINDOW_ORDER_INFO* orderInfo, const WINDOW_STATE_ORDER* windowState)
+static xfAppWindow* xf_rail_window_new(xfContext* xfc,
+                                       const WINDOW_ORDER_INFO* orderInfo,
+                                       const WINDOW_STATE_ORDER* windowState)
 {
-	DEBUG_X11("new rail window state, fieldFlags=0x%x, geom= %dx%d+%d+%d", orderInfo->fieldFlags, windowState->windowWidth, windowState->windowHeight, windowState->windowOffsetX, windowState->windowOffsetY);
+	UINT32 fieldFlags = orderInfo->fieldFlags;
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, orderInfo->windowId);
 
+	if (!appWindow)
+	{
+		appWindow = xf_rail_add_window(xfc, orderInfo->windowId, windowState->windowOffsetX,
+		                               windowState->windowOffsetY, windowState->windowWidth,
+		                               windowState->windowHeight, 0xFFFFFFFF);
+	}
+
+	if (!appWindow)
+		return NULL;
+
+    appWindow->dwStyle = windowState->style;
+    appWindow->dwExStyle = windowState->extendedStyle;
+
+	/* Ensure window always gets a window title */
+	if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
+	{
+		char* title = NULL;
+
+		if (windowState->titleInfo.length == 0)
+		{
+			if (!(title = _strdup("")))
+			{
+				WLog_ERR(TAG, "failed to duplicate empty window title string");
+				/* error handled below */
+			}
+		}
+		else if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
+		                            windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
+		{
+			WLog_ERR(TAG, "failed to convert window title");
+			/* error handled below */
+		}
+
+		appWindow->title = title;
+	}
+	else
+	{
+		if (!(appWindow->title = _strdup("RdpRailWindow")))
+			WLog_ERR(TAG, "failed to duplicate default window title string");
+	}
+
+	if (!appWindow->title)
+	{
+		free(appWindow);
+		return NULL;
+	}
+
+	xf_AppWindowInit(xfc, appWindow);
+	return appWindow;
+}
+
+static BOOL xf_rail_window_common(rdpContext* context,
+                                  WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
+{
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context;
 	UINT32 fieldFlags = orderInfo->fieldFlags;
 	BOOL position_or_size_updated = FALSE;
-	appWindow = xf_rail_get_window(xfc, orderInfo->windowId);
+	DEBUG_X11("new rail window state, fieldFlags=0x%x, geom= %"PRIu16"x%"PRIu16"+%"PRIu16"+%"PRIu16,
+	          orderInfo->fieldFlags, windowState->windowWidth,
+	          windowState->windowHeight, windowState->windowOffsetX,
+	          windowState->windowOffsetY);
 
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
-		if (!appWindow)
-			appWindow = xf_rail_add_window(xfc, orderInfo->windowId, windowState->windowOffsetX,
-			                               windowState->windowOffsetY, windowState->windowWidth,
-			                               windowState->windowHeight, 0xFFFFFFFF);
-
-		if (!appWindow)
-			return FALSE;
-
-		appWindow->dwStyle = windowState->style;
-		appWindow->dwExStyle = windowState->extendedStyle;
-
-		/* Ensure window always gets a window title */
-		if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
-		{
-			char* title = NULL;
-
-			if (windowState->titleInfo.length == 0)
-			{
-				if (!(title = _strdup("")))
-				{
-					WLog_ERR(TAG, "failed to duplicate empty window title string");
-					/* error handled below */
-				}
-			}
-			else if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
-			                            windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
-			{
-				WLog_ERR(TAG, "failed to convert window title");
-				/* error handled below */
-			}
-
-			appWindow->title = title;
-		}
-		else
-		{
-			if (!(appWindow->title = _strdup("RdpRailWindow")))
-				WLog_ERR(TAG, "failed to duplicate default window title string");
-		}
-
-		if (!appWindow->title)
-		{
-			free(appWindow);
-			return FALSE;
-		}
-
-		xf_AppWindowInit(xfc, appWindow);
+		appWindow = xf_rail_window_new(xfc, orderInfo, windowState);
 	}
 
 	if (!appWindow)
 		return FALSE;
 
-	/* Keep track of any position/size update so that we can force a refresh of the window */
-	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) ||
-	    (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)   ||
-	    (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET) ||
-	    (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE) ||
-	    (fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA) ||
-	    (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET) ||
-	    (fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY))
+	/* Update Parameters */
+
+	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
 	{
-		position_or_size_updated = TRUE;
+		DEBUG_X11("resizeMarginX: 0x%"PRIx32" %"PRId32", %PRId32",
+                  appWindow->handle, windowState->resizeMarginLeft,
+                  windowState->resizeMarginRight);
+		appWindow->windowLeftResizeMargin = windowState->resizeMarginLeft;
+		appWindow->windowRightResizeMargin = windowState->resizeMarginRight;
 	}
 
-	/* Update Parameters */
+	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
+	{
+		DEBUG_X11("resizeMarginY: 0x%"PRIx32" %"PRId32", %PRId32",
+                  appWindow->handle, windowState->resizeMarginTop,
+                  windowState->resizeMarginBottom);
+		appWindow->windowTopResizeMargin = windowState->resizeMarginTop;
+		appWindow->windowBottomResizeMargin = windowState->resizeMarginBottom;
+	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
-		DEBUG_X11("windowOffset: 0x%x (%d, %d)", appWindow->handle, windowState->windowOffsetX, windowState->windowOffsetY);
-		appWindow->windowOffsetX = windowState->windowOffsetX;
-		appWindow->windowOffsetY = windowState->windowOffsetY;
+		DEBUG_X11("windowOffset: 0x%"PRIx32" (%"PRIu16", %"PRIu16")",
+                  appWindow->handle, windowState->windowOffsetX,
+                  windowState->windowOffsetY);
+		appWindow->windowOffsetX = windowState->windowOffsetX - appWindow->windowLeftResizeMargin;
+		appWindow->windowOffsetY = windowState->windowOffsetY - appWindow->windowTopResizeMargin;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
-		DEBUG_X11("window size: 0x%x (%d, %d)", appWindow->handle, windowState->windowWidth, windowState->windowHeight);
-		appWindow->windowWidth = windowState->windowWidth;
-		appWindow->windowHeight = windowState->windowHeight;
+		DEBUG_X11("window size: 0x%"PRIx32" (%"PRIu16", %"PRIu16")",
+                  appWindow->handle, windowState->windowWidth,
+                  windowState->windowHeight);
+		appWindow->windowWidth = windowState->windowWidth
+		                         + appWindow->windowLeftResizeMargin
+		                         + appWindow->windowRightResizeMargin;
+		appWindow->windowHeight = windowState->windowHeight
+		                          + appWindow->windowTopResizeMargin
+		                          + appWindow->windowBottomResizeMargin;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_OWNER)
@@ -434,7 +451,9 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
 	{
-		DEBUG_X11("clientOffset: 0x%x (%d, %d)", appWindow->handle, windowState->clientOffsetX, windowState->clientOffsetY);
+		DEBUG_X11("clientOffset: 0x%"PRIx32" (%"PRIu16", %"PRIu16")",
+                  appWindow->handle, windowState->clientOffsetX,
+                  windowState->clientOffsetY);
 		appWindow->clientOffsetX = windowState->clientOffsetX;
 		appWindow->clientOffsetY = windowState->clientOffsetY;
 	}
@@ -447,7 +466,9 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
-		DEBUG_X11("windowClientDelta: 0x%x (%d, %d)", appWindow->handle, windowState->windowClientDeltaX, windowState->windowClientDeltaY);
+		DEBUG_X11("windowClientDelta: 0x%"PRIx32" (%"PRIu16", %"PRIu16")",
+                  appWindow->handle, windowState->windowClientDeltaX,
+                  windowState->windowClientDeltaY);
 		appWindow->windowClientDeltaX = windowState->windowClientDeltaX;
 		appWindow->windowClientDeltaY = windowState->windowClientDeltaY;
 	}
@@ -477,7 +498,9 @@ static BOOL xf_rail_window_common(rdpContext* context,
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
 	{
-		DEBUG_X11("visibleOffset: 0x%x (%d, %d)", appWindow->handle, windowState->visibleOffsetX, windowState->visibleOffsetY);
+		DEBUG_X11("visibleOffset: 0x%"PRIx32" (%"PRIu16", %"PRIu16")",
+                  appWindow->handle, windowState->visibleOffsetX,
+                  windowState->visibleOffsetY);
 		appWindow->visibleOffsetX = windowState->visibleOffsetX;
 		appWindow->visibleOffsetY = windowState->visibleOffsetY;
 	}
@@ -522,6 +545,18 @@ static BOOL xf_rail_window_common(rdpContext* context,
 			xf_SetWindowText(xfc, appWindow, appWindow->title);
 	}
 
+	/* Keep track of any position/size update so that we can force a refresh of the window */
+	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) ||
+	    (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)   ||
+	    (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET) ||
+	    (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE) ||
+	    (fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA) ||
+	    (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET) ||
+	    (fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY))
+	{
+		position_or_size_updated = TRUE;
+	}
+
 	if (position_or_size_updated)
 	{
 		UINT32 visibilityRectsOffsetX = (appWindow->visibleOffsetX -
@@ -547,47 +582,9 @@ static BOOL xf_rail_window_common(rdpContext* context,
 			}
 			else
 			{
-#ifdef MOVE_HACK
-				/* If the user recently moved it, ignore this message. */
-				struct timespec ts;
-				ULONG64 time_since_move;
-
-				if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-				{
-					WLog_ERR(TAG, "failed to get clock time (errno=%d); window movement may be negatively affected", errno);
-					time_since_move = ULONG_MAX;
-				}
-				else
-				{
-					ULONG64 current_time;
-					current_time = ts.tv_sec * 1000 + ts.tv_nsec / 1000000; // convert to ms
-					time_since_move = current_time - appWindow->last_move_time;
-				}
-
-				if (time_since_move > MOVE_THRESHOLD_MS)
-				{
-#endif
 					xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX,
 							appWindow->windowOffsetY, appWindow->windowWidth,
 							appWindow->windowHeight);
-#ifdef MOVE_HACK
-				}
-				else
-				{
-					RAIL_WINDOW_MOVE_ORDER windowMove;
-
-					DEBUG_X11("ignoring window move message & resending move");
-					windowMove.windowId = appWindow->windowId;
-					/*
-					 * Calculate new size/position for the rail window(new values for windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
-					 */
-					windowMove.left = appWindow->x;
-					windowMove.top = appWindow->y;
-					windowMove.right = windowMove.left + appWindow->width;
-					windowMove.bottom = windowMove.top + appWindow->height;
-					xf_rail_move_window(xfc, appWindow, &windowMove);
-				}
-#endif
 			}
 
 			xf_SetWindowVisibilityRects(xfc, appWindow, visibilityRectsOffsetX,
@@ -699,11 +696,11 @@ static BOOL convert_rail_icon(ICON_INFO* iconInfo, xfRailIcon* railIcon)
 		goto error;
 
 	if (!freerdp_image_copy_from_icon_data(argbPixels,
-		PIXEL_FORMAT_ARGB32, 0, 0, 0,
-		iconInfo->width, iconInfo->height,
-		iconInfo->bitsColor, iconInfo->cbBitsColor,
-		iconInfo->bitsMask, iconInfo->cbBitsMask,
-		iconInfo->colorTable, iconInfo->cbColorTable, iconInfo->bpp))
+	                                       PIXEL_FORMAT_ARGB32, 0, 0, 0,
+	                                       iconInfo->width, iconInfo->height,
+	                                       iconInfo->bitsColor, iconInfo->cbBitsColor,
+	                                       iconInfo->bitsMask, iconInfo->cbBitsMask,
+	                                       iconInfo->colorTable, iconInfo->cbColorTable, iconInfo->bpp))
 		goto error;
 
 	nelements = 2 + iconInfo->width * iconInfo->height;

@@ -109,6 +109,10 @@ struct xf_app_window
 	INT32 clientOffsetY;
 	UINT32 clientAreaWidth;
 	UINT32 clientAreaHeight;
+	UINT32 windowLeftResizeMargin;
+	UINT32 windowRightResizeMargin;
+	UINT32 windowTopResizeMargin;
+	UINT32 windowBottomResizeMargin;
 
 	INT32 windowOffsetX;
 	INT32 windowOffsetY;
@@ -138,7 +142,6 @@ struct xf_app_window
 	xfLocalMove local_move;
 	BYTE rail_state;
 	BOOL rail_ignore_configure;
-	ULONG64 last_move_time;
 };
 
 void xf_ewmhints_init(xfContext* xfc);
