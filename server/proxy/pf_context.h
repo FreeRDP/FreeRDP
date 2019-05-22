@@ -27,6 +27,9 @@
 #include <freerdp/client/rdpei.h>
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/server/rdpgfx.h>
+#include <freerdp/client/disp.h>
+#include <freerdp/server/disp.h>
+
 #include "pf_config.h"
 #include "pf_server.h"
 
@@ -47,6 +50,9 @@ struct p_server_context
 	HANDLE dynvcReady;
 
 	RdpgfxServerContext* gfx;
+	DispServerContext* disp;
+
+	BOOL dispOpened;
 };
 typedef struct p_server_context pServerContext;
 
@@ -61,6 +67,7 @@ struct p_client_context
 
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
+	DispClientContext* disp;
 };
 typedef struct p_client_context pClientContext;
 

@@ -30,12 +30,14 @@
 #include <freerdp/client/rail.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/rdpgfx.h>
+#include <freerdp/client/disp.h>
 
 #include "pf_channels.h"
 #include "pf_client.h"
 #include "pf_context.h"
 #include "pf_rdpgfx.h"
 #include "pf_log.h"
+#include "pf_disp.h"
 
 #define TAG PROXY_TAG("channels")
 
@@ -59,6 +61,27 @@ void pf_OnChannelConnectedEventHandler(void* context,
 		server = ps->gfx;
 		pf_rdpgfx_pipeline_init(gfx, server, pc->pdata);
 	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		UINT error;
+		pc->disp = (DispClientContext*) e->pInterface;
+		ps->dispOpened = FALSE;
+
+		if ((error = ps->disp->Open(ps->disp)) != CHANNEL_RC_OK)
+		{
+			if (error == ERROR_NOT_FOUND)
+			{
+				/* disp is not opened by client, ignore */
+				return;
+			}
+
+			WLog_WARN(TAG, "Failed to open disp channel");
+			return;
+		}
+
+		ps->dispOpened = TRUE;
+		pf_disp_register_callbacks(pc->disp, ps->disp, pc->pdata);
+	}
 }
 
 void pf_OnChannelDisconnectedEventHandler(void* context,
@@ -74,7 +97,10 @@ void pf_OnChannelDisconnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_graphics_pipeline_uninit(((rdpContext*)pc)->gdi,
-		                             (RdpgfxClientContext*) e->pInterface);
+		gdi_graphics_pipeline_uninit(((rdpContext*)context)->gdi, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		pc->disp = NULL;
 	}
 }

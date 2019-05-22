@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-#include <freerdp/update.h>
+#include <freerdp/display.h>
 
 #include "pf_update.h"
 #include "pf_context.h"
