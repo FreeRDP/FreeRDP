@@ -361,6 +361,7 @@ static const size_t string_list_indices[] =
 	FreeRDP_RemoteApplicationFile,
 	FreeRDP_RemoteApplicationGuid,
 	FreeRDP_RemoteApplicationCmdLine,
+	FreeRDP_RemoteApplicationWorkingDir,
 	FreeRDP_ImeFileName,
 	FreeRDP_DrivesToRedirect,
 };

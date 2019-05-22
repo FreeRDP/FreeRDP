@@ -2281,6 +2281,9 @@ const char* freerdp_settings_get_string(rdpSettings* settings, size_t id)
 		case FreeRDP_RemoteApplicationCmdLine:
 			return settings->RemoteApplicationCmdLine;
 
+		case FreeRDP_RemoteApplicationWorkingDir:
+			return settings->RemoteApplicationWorkingDir;
+
 		case FreeRDP_ImeFileName:
 			return settings->ImeFileName;
 
@@ -2604,6 +2607,11 @@ BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* v
 			free(settings->RemoteApplicationCmdLine);
 			settings->RemoteApplicationCmdLine = _strdup(val);
 			return settings->RemoteApplicationCmdLine != NULL;
+
+		case FreeRDP_RemoteApplicationWorkingDir:
+			free(settings->RemoteApplicationWorkingDir);
+			settings->RemoteApplicationWorkingDir = _strdup(val);
+			return settings->RemoteApplicationWorkingDir != NULL;
 
 		case FreeRDP_ImeFileName:
 			free(settings->ImeFileName);
