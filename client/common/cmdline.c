@@ -2172,6 +2172,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			settings->DisableWallpaper = TRUE;
 			settings->DisableFullWindowDrag = TRUE;
 		}
+		CommandLineSwitchCase(arg, "app-workdir")
+		{
+			if (!copy_value(arg->Value, &settings->RemoteApplicationWorkingDir))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
 		CommandLineSwitchCase(arg, "load-balance-info")
 		{
 			if (!copy_value(arg->Value, (char**)&settings->LoadBalanceInfo))

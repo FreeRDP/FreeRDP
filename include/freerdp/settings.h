@@ -768,6 +768,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_RemoteWndSupportLevel                              (2125)
 #define FreeRDP_RemoteApplicationSupportLevel                      (2126)
 #define FreeRDP_RemoteApplicationSupportMask                       (2127)
+#define FreeRDP_RemoteApplicationWorkingDir                        (2128)
 #define FreeRDP_ReceivedCapabilities                               (2240)
 #define FreeRDP_ReceivedCapabilitiesSize                           (2241)
 #define FreeRDP_OsMajorType                                        (2304)
@@ -1268,7 +1269,8 @@ struct rdp_settings
 	ALIGN64 UINT32 RemoteWndSupportLevel;             /* 2125 */
 	ALIGN64 UINT32 RemoteApplicationSupportLevel;     /* 2126 */
 	ALIGN64 UINT32 RemoteApplicationSupportMask;      /* 2127 */
-	UINT64 padding2176[2176 - 2128]; /* 2128 */
+	ALIGN64 char*  RemoteApplicationWorkingDir;       /* 2128 */
+	UINT64 padding2176[2176 - 2129]; /* 2129 */
 	UINT64 padding2240[2240 - 2176]; /* 2176 */
 
 	/**
