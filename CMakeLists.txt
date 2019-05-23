@@ -51,6 +51,10 @@ endif()
 include(CheckCmakeCompat)
 
 # Include cmake modules
+if(WITH_CLANG_FORMAT)
+	include(ClangFormat)
+endif()
+
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
