@@ -174,13 +174,10 @@ static BOOL update_write_bitmap_data(rdpUpdate* update, wStream* s,
 	{
 		if (!(bitmapData->flags & NO_BITMAP_COMPRESSION_HDR))
 		{
-			Stream_Write_UINT16(s,
-			                    bitmapData->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
-			Stream_Write_UINT16(s,
-			                    bitmapData->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+			Stream_Write_UINT16(s, bitmapData->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
+			Stream_Write_UINT16(s, bitmapData->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
 			Stream_Write_UINT16(s, bitmapData->cbScanWidth); /* cbScanWidth (2 bytes) */
-			Stream_Write_UINT16(s,
-			                    bitmapData->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+			Stream_Write_UINT16(s, bitmapData->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
 		}
 
 		Stream_Write(s, bitmapData->bitmapDataStream, bitmapData->bitmapLength);
@@ -387,10 +384,8 @@ static BOOL _update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 	if ((pointer_color->width > 96) || (pointer_color->height > 96))
 		goto fail;
 
-	Stream_Read_UINT16(s,
-	                   pointer_color->lengthAndMask); /* lengthAndMask (2 bytes) */
-	Stream_Read_UINT16(s,
-	                   pointer_color->lengthXorMask); /* lengthXorMask (2 bytes) */
+	Stream_Read_UINT16(s, pointer_color->lengthAndMask); /* lengthAndMask (2 bytes) */
+	Stream_Read_UINT16(s, pointer_color->lengthXorMask); /* lengthXorMask (2 bytes) */
 
 	/**
 	 * There does not seem to be any documentation on why
@@ -458,7 +453,7 @@ static BOOL _update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 
 		if (scanlineSize * pointer_color->height != pointer_color->lengthAndMask)
 		{
-			WLog_ERR(TAG,  "invalid lengthAndMask: %"PRIu32" instead of %"PRIu32"",
+			WLog_ERR(TAG, "invalid lengthAndMask: %"PRIu32" instead of %"PRIu32"",
 			         pointer_color->lengthAndMask, scanlineSize * pointer_color->height);
 			goto fail;
 		}
@@ -510,7 +505,7 @@ POINTER_NEW_UPDATE* update_read_pointer_new(rdpUpdate* update, wStream* s)
 
 	if ((pointer_new->xorBpp < 1) || (pointer_new->xorBpp > 32))
 	{
-		WLog_ERR(TAG,  "invalid xorBpp %"PRIu32"", pointer_new->xorBpp);
+		WLog_ERR(TAG, "invalid xorBpp %"PRIu32"", pointer_new->xorBpp);
 		goto fail;
 	}
 
@@ -810,9 +805,8 @@ static BOOL _update_end_paint(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
-		WLog_DBG(TAG,  "sending %"PRIu16" orders", update->numberOrders);
-		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s,
-		                         FALSE);
+		WLog_DBG(TAG, "sending %"PRIu16" orders", update->numberOrders);
+		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s, FALSE);
 	}
 
 	update->combineUpdates = FALSE;
@@ -1011,8 +1005,7 @@ static BOOL update_send_refresh_rect(rdpContext* context, BYTE count,
 	return TRUE;
 }
 
-static void update_write_suppress_output(wStream* s, BYTE allow,
-        const RECTANGLE_16* area)
+static void update_write_suppress_output(wStream* s, BYTE allow, const RECTANGLE_16* area)
 {
 	Stream_Write_UINT8(s, allow); /* allowDisplayUpdates (1 byte) */
 	/* Use zeros for padding (like mstsc) for compatibility with legacy servers */
@@ -1247,6 +1240,7 @@ static BOOL update_send_play_sound(rdpContext* context,
 	Stream_Write_UINT32(s, play_sound->frequency);
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_PLAY_SOUND, rdp->mcs->userId);
 }
+
 /**
  * Primary Drawing Orders
  */
@@ -1260,8 +1254,7 @@ static BOOL update_send_dstblt(rdpContext* context,
 	ORDER_INFO orderInfo;
 	int inf;
 	rdpUpdate* update = context->update;
-	headerLength = update_prepare_order_info(context, &orderInfo,
-	               ORDER_TYPE_DSTBLT);
+	headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_DSTBLT);
 	inf = update_approximate_dstblt_order(&orderInfo, dstblt);
 	update_check_flush(context, headerLength + inf);
 	s = update->us;
@@ -1500,8 +1493,7 @@ static BOOL update_send_cache_bitmap(rdpContext* context,
 	em = Stream_GetPosition(s);
 	orderLength = (em - bm) - 13;
 	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, ORDER_STANDARD |
-	                   ORDER_SECONDARY); /* controlFlags (1 byte) */
+	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, orderType); /* orderType (1 byte) */
