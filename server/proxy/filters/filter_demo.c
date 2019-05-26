@@ -31,10 +31,10 @@ static PF_FILTER_RESULT demo_filter_mouse_event(connectionInfo* info, void* para
 {
 	proxyMouseEventInfo* event_data = (proxyMouseEventInfo*) param;
 
-    if (event_data->x % 100 == 0)
-    {
-        return FILTER_DROP;
-    }
+	if (event_data->x % 100 == 0)
+	{
+		return FILTER_DROP;
+	}
 
 	return FILTER_PASS;
 }

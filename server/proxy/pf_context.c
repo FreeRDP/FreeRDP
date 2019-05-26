@@ -56,8 +56,7 @@ BOOL init_p_server_context(freerdp_peer* client)
 	return freerdp_peer_context_new(client);
 }
 
-rdpContext* p_client_context_create(rdpSettings* clientSettings,
-                                    char* host, DWORD port)
+rdpContext* p_client_context_create(rdpSettings* clientSettings)
 {
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	rdpContext* context;
@@ -73,14 +72,12 @@ rdpContext* p_client_context_create(rdpSettings* clientSettings,
 	settings->Username = _strdup(clientSettings->Username);
 	settings->Password = _strdup(clientSettings->Password);
 	settings->Domain = _strdup(clientSettings->Domain);
-	settings->ServerHostname = host;
-	settings->ServerPort = port;
 	settings->SoftwareGdi = FALSE;
 	settings->RedirectClipboard = FALSE;
 	return context;
 }
 
-static void pf_context_connection_info_free(connectionInfo* info)
+static void connection_info_free(connectionInfo* info)
 {
 	free(info->TargetHostname);
 	free(info->ClientHostname);
@@ -88,7 +85,7 @@ static void pf_context_connection_info_free(connectionInfo* info)
 	free(info);
 }
 
-proxyData* pf_context_proxy_data_new()
+proxyData* proxy_data_new()
 {
 	proxyData* pdata = calloc(1, sizeof(proxyData));
 
@@ -105,11 +102,35 @@ proxyData* pf_context_proxy_data_new()
 		return NULL;
 	}
 
+	if (!(pdata->connectionClosed = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		proxy_data_free(pdata);
+		return NULL;
+	}
+
 	return pdata;
 }
 
-void pf_context_proxy_data_free(proxyData* pdata)
+BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* clientSettings,
+                                    const char* target)
 {
-	pf_context_connection_info_free(pdata->info);
+	if (!(pdata->info->TargetHostname = _strdup(target)))
+		goto out_fail;
+
+	if (!(pdata->info->ClientHostname = _strdup(clientSettings->ClientHostname)))
+		goto out_fail;
+
+	if (!(pdata->info->Username = _strdup(clientSettings->Username)))
+		goto out_fail;
+
+	return TRUE;
+out_fail:
+	proxy_data_free(pdata);
+	return FALSE;
+}
+
+void proxy_data_free(proxyData* pdata)
+{
+	connection_info_free(pdata->info);
 	free(pdata);
 }

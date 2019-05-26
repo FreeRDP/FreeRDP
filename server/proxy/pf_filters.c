@@ -153,12 +153,7 @@ BOOL pf_filters_register_new(filters_list* list, const char* module_path, const 
 	HMODULE handle = NULL;
 	filterInitFn fn;
 
-	if (list == NULL)
-	{
-		WLog_ERR(TAG, "pf_filters_register_new(): list == NULL");
-		goto error;
-	}
-
+	assert(list != NULL);
 	handle = LoadLibraryA(module_path);
 
 	if (handle == NULL)
