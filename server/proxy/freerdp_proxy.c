@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
 	int status = 0;
 	DWORD ld;
 	UINT32 i;
+	UINT32 count;
 	proxyConfig* config = calloc(1, sizeof(proxyConfig));
 
 	if (!config)
@@ -61,15 +62,17 @@ int main(int argc, char* argv[])
 	if (config->WhitelistMode)
 	{
 		WLog_INFO(TAG, "Channels mode: WHITELIST");
+		count = ArrayList_Count(config->AllowedChannels);
 
-		for (i = 0; i < ArrayList_Count(config->AllowedChannels); i++)
+		for (i = 0; i < count; i++)
 			WLog_INFO(TAG, "Allowing %s", (char*) ArrayList_GetItem(config->AllowedChannels, i));
 	}
 	else
 	{
 		WLog_INFO(TAG, "Channels mode: BLACKLIST");
+		count = ArrayList_Count(config->BlockedChannels);
 
-		for (i = 0; i < ArrayList_Count(config->BlockedChannels); i++)
+		for (i = 0; i < count; i++)
 			WLog_INFO(TAG, "Blocking %s", (char*) ArrayList_GetItem(config->BlockedChannels, i));
 	}
 

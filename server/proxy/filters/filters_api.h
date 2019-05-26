@@ -22,8 +22,7 @@
 #ifndef FREERDP_SERVER_PROXY_FILTERS_API_H
 #define FREERDP_SERVER_PROXY_FILTERS_API_H
 
-#include <inttypes.h>
-#include <stdbool.h>
+#include <winpr/winpr.h>
 
 enum pf_filter_result {
     FILTER_PASS = 0,
@@ -51,21 +50,20 @@ struct proxy_events {
 
 #pragma pack(push, 1)
 struct proxy_keyboard_event_info {
-    uint16_t flags;
-    uint16_t rdp_scan_code;
+    UINT16 flags;
+    UINT16 rdp_scan_code;
 };
 
 struct proxy_mouse_event_info {
-    uint16_t flags;
-    uint16_t x;
-    uint16_t y;
+    UINT16 flags;
+    UINT16 x;
+    UINT16 y;
 };
 #pragma pack(pop)
-
 
 /* implement this method and register callbacks for proxy events
  * return TRUE if initialization succeeded, otherwise FALSE.
  **/
-bool filter_init(proxyEvents* events);
+BOOL filter_init(proxyEvents* events);
 
 #endif /* FREERDP_SERVER_PROXY_FILTERS_API_H */
