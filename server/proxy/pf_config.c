@@ -35,6 +35,9 @@
 wArrayList* parse_string_array_from_str(const char* str)
 {
 	wArrayList* list = ArrayList_New(FALSE);
+	char* s;
+	char* temp;
+	char* token;
 
 	if (list == NULL)
 	{
@@ -42,9 +45,13 @@ wArrayList* parse_string_array_from_str(const char* str)
 		return NULL;
 	}
 
-	char* s = _strdup(str);
-	char* temp = s;
-	char* token;
+	
+ 	temp = s = _strdup(str);
+	if (!s)
+	{
+		WLog_ERR(TAG, "parse_string_array_from_str(): strdup failed!");
+		return NULL;
+	}
 
 	if (s == NULL)
 	{
@@ -115,6 +122,7 @@ DWORD pf_server_load_config(const char* path, proxyConfig* config)
 	char** filters_names;
 	int rc;
 	int filters_count = 0;
+	UINT32 index;
 	DWORD result = CONFIG_PARSE_ERROR;
 	wIniFile* ini = IniFile_New();
 
@@ -182,9 +190,9 @@ DWORD pf_server_load_config(const char* path, proxyConfig* config)
 		
 	filters_names = IniFile_GetSectionKeyNames(ini, "Filters", &filters_count);
 
-	for (int i = 0; i < filters_count; i++)
+	for (index = 0; index < filters_count; index++)
 	{
-		char* filter_name = filters_names[i];
+		char* filter_name = filters_names[index];
 		const char* path = IniFile_GetKeyValueString(ini, "Filters", filter_name);
 
 		if (!pf_filters_register_new(config->Filters, path, filter_name))

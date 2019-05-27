@@ -57,19 +57,18 @@ PF_FILTER_RESULT pf_filters_run_by_type(filters_list* list, PF_FILTER_TYPE type,
                                         void* param);
 void pf_filters_unregister_all(filters_list* list);
 
-#define RUN_FILTER(_filters,_type,_conn_info,_event_info,_cb,...) ({ \
-		({ BOOL result; switch(pf_filters_run_by_type(_filters,_type,_conn_info,_event_info)) { \
+#define RUN_FILTER(_filters,_type,_conn_info,_event_info,_ret,_cb,...) do { \
+			switch(pf_filters_run_by_type(_filters,_type,_conn_info,_event_info)) { \
 				case FILTER_PASS:           \
-					result = _cb(__VA_ARGS__);       \
+					_ret = _cb(__VA_ARGS__);       \
 					break; \
 				case FILTER_IGNORE:       \
-					result = TRUE;   \
+					_ret = TRUE;   \
 					break; \
 				case FILTER_DROP:       \
 				default: \
-					result = FALSE;   \
-			}; result; \
-		}); \
-	})
+					_ret = FALSE;   \
+			} \
+		} while(0)
 
 #endif /* FREERDP_SERVER_PROXY_FILTERS_H */

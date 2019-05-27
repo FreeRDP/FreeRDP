@@ -122,7 +122,9 @@ PF_FILTER_RESULT pf_filters_run_by_type(filters_list* list, PF_FILTER_TYPE type,
 static void pf_filters_filter_free(proxyFilter* filter)
 {
 	assert(filter != NULL);
-	FreeLibrary(filter->handle);
+	if (filter->handle)
+		FreeLibrary(filter->handle);
+
 	free(filter->name);
 	free(filter->events);
 	free(filter);
@@ -130,11 +132,13 @@ static void pf_filters_filter_free(proxyFilter* filter)
 
 void pf_filters_unregister_all(filters_list* list)
 {
+	size_t count;
+	size_t index;
+
 	if (list == NULL)
 		return;
 	
-	const size_t count = (size_t) ArrayList_Count(list);
-	size_t index;
+	count = (size_t) ArrayList_Count(list);
 
 	for (index = 0; index < count; index++)
 	{
@@ -159,7 +163,7 @@ BOOL pf_filters_register_new(filters_list* list, const char* module_path, const 
 	if (handle == NULL)
 	{
 		WLog_ERR(TAG, "pf_filters_register_new(): failed loading external module: %s", module_path);
-		goto error;
+		return FALSE;
 	}
 
 	if (!(fn = (filterInitFn) GetProcAddress(handle, FILTER_INIT_METHOD)))
@@ -207,7 +211,6 @@ error:
 	if (handle)
 		FreeLibrary(handle);
 
-	free(events);
-	free(filter);
+	pf_filters_filter_free(filter);
 	return FALSE;
 }
