@@ -366,12 +366,15 @@ fail:
 		disp_server_context_free(ps->disp);
 	}
 
+	if (ps->gfx)
+		rdpgfx_server_context_free(ps->gfx);
+		
 	if (client->connected && !pf_common_connection_aborted_by_peer(pdata))
 	{
 		pf_server_handle_client_disconnection(client);
 	}
 
-	pc = (rdpContext*)pdata->pc;
+	pc = (rdpContext*) pdata->pc;
 	freerdp_client_stop(pc);
 	proxy_data_free(pdata);
 	freerdp_client_context_free(pc);
