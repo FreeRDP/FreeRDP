@@ -44,8 +44,16 @@ static void client_to_proxy_context_free(freerdp_peer* client,
 {
 	WINPR_UNUSED(client);
 
-	if (context)
-		WTSCloseServer((HANDLE) context->vcm);
+	if (!context)
+		return;
+
+	WTSCloseServer((HANDLE) context->vcm);
+
+	if (context->dynvcReady)
+	{
+		CloseHandle(context->dynvcReady);
+		context->dynvcReady = NULL;
+	}
 }
 
 BOOL init_p_server_context(freerdp_peer* client)
@@ -172,5 +180,11 @@ out_fail:
 void proxy_data_free(proxyData* pdata)
 {
 	connection_info_free(pdata->info);
+	if (pdata->connectionClosed)
+	{
+		CloseHandle(pdata->connectionClosed);
+		pdata->connectionClosed = NULL;
+	}
+
 	free(pdata);
 }
