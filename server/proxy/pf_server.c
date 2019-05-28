@@ -61,7 +61,7 @@ static void pf_server_handle_client_disconnection(freerdp_peer* client)
 	ps = (pServerContext*)client->context;
 	pc = (rdpContext*) ps->pdata->pc;
 	pdata = ps->pdata;
-	WLog_INFO(TAG, "Client %s disconnected; closing connection with server %s",
+	WLog_INFO(TAG, "Client %s disconnected; closing proxy's client <> target server connection %s",
 	          client->hostname, pc->settings->ServerHostname);
 	/* Mark connection closed for sContext */
 	SetEvent(pdata->connectionClosed);
@@ -298,16 +298,19 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 			eventCount += tmp;
 		}
 		eventHandles[eventCount++] = ChannelEvent;
+		eventHandles[eventCount++] = pdata->connectionClosed;
 		eventHandles[eventCount++] = WTSVirtualChannelManagerGetEventHandle(ps->vcm);
 		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
 		{
-			/* Ignore wait fails that are caused by legitimate client disconnections */
-			if (pf_common_connection_aborted_by_peer(pdata))
-				break;
-
 			WLog_ERR(TAG, "WaitForMultipleObjects failed (errno: %d)", errno);
+			break;
+		}
+
+		if (pf_common_connection_aborted_by_peer(pdata))
+		{
+			WLog_INFO(TAG, "proxy's client disconnected, closing connection with client %s", client->hostname);
 			break;
 		}
 

@@ -183,8 +183,6 @@ static void pf_client_post_disconnect(freerdp* instance)
 {
 	pClientContext* context;
 	proxyData* pdata;
-	rdpContext* ps;
-	freerdp_peer* peer;
 
 	if (!instance)
 		return;
@@ -194,8 +192,6 @@ static void pf_client_post_disconnect(freerdp* instance)
 
 	context = (pClientContext*) instance->context;
 	pdata = context->pdata;
-	ps = (rdpContext*) pdata->ps;
-	peer = ps->peer;
 
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
 	                                   pf_OnChannelConnectedEventHandler);
@@ -204,13 +200,7 @@ static void pf_client_post_disconnect(freerdp* instance)
 	PubSub_UnsubscribeErrorInfo(instance->context->pubSub, pf_OnErrorInfo);
 	gdi_free(instance);
 
-	if (!pf_common_connection_aborted_by_peer(pdata))
-	{
-		SetEvent(pdata->connectionClosed);
-		WLog_INFO(TAG, "connectionClosed event is not set; closing connection with client");
-		peer->Disconnect(peer);
-	}
-
+	SetEvent(pdata->connectionClosed);
 	/* It's important to avoid calling `freerdp_peer_context_free` and `freerdp_peer_free` here,
 	 * in order to avoid double-free. Those objects will be freed by the server when needed.
 	 */
