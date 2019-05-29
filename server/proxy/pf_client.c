@@ -48,6 +48,7 @@
 #include "pf_common.h"
 #include "pf_client.h"
 #include "pf_context.h"
+#include "pf_update.h"
 #include "pf_log.h"
 
 #define TAG PROXY_TAG("client")
@@ -63,31 +64,6 @@ static void proxy_server_reactivate(rdpContext* client, rdpContext* target)
 	 * which causes the reactivation.
 	 */
 	client->update->DesktopResize(client);
-}
-
-/**
- * This function is called whenever a new frame starts.
- * It can be used to reset invalidated areas.
- */
-static BOOL pf_client_begin_paint(rdpContext* context)
-{
-	pClientContext* pc = (pClientContext*) context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
-	return ps->update->BeginPaint(ps);
-}
-
-/**
- * This function is called when the library completed composing a new
- * frame. Read out the changed areas and blit them to your output device.
- * The image buffer will have the format specified by gdi_init
- */
-static BOOL pf_client_end_paint(rdpContext* context)
-{
-	pClientContext* pc = (pClientContext*) context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
-	return ps->update->EndPaint(ps);
 }
 
 static void pf_OnErrorInfo(void* ctx, ErrorInfoEventArgs* e)
@@ -148,23 +124,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	return TRUE;
 }
 
-
-static BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
-{
-	pClientContext* pc = (pClientContext*) context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
-	return ps->update->BitmapUpdate(ps, bitmap);
-}
-
-static BOOL pf_client_desktop_resize(rdpContext* context)
-{
-	pClientContext* pc = (pClientContext*) context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
-	return ps->update->DesktopResize(ps);
-}
-
 /**
  * Called after a RDP connection was successfully established.
  * Settings might have changed during negociation of client / server feature
@@ -202,17 +161,14 @@ static BOOL pf_client_post_connect(freerdp* instance)
 		}
 
 		pf_gdi_register_update_callbacks(update);
-		brush_cache_register_callbacks(instance->update);
-		glyph_cache_register_callbacks(instance->update);
-		bitmap_cache_register_callbacks(instance->update);
-		offscreen_cache_register_callbacks(instance->update);
-		palette_cache_register_callbacks(instance->update);
+		brush_cache_register_callbacks(update);
+		glyph_cache_register_callbacks(update);
+		bitmap_cache_register_callbacks(update);
+		offscreen_cache_register_callbacks(update);
+		palette_cache_register_callbacks(update);
 	}
-
-	update->BeginPaint = pf_client_begin_paint;
-	update->EndPaint = pf_client_end_paint;
-	update->BitmapUpdate = pf_client_bitmap_update;
-	update->DesktopResize = pf_client_desktop_resize;
+	
+	pf_client_register_update_callbacks(update);
 	ps = (rdpContext*) pc->pdata->ps;
 	proxy_server_reactivate(ps, context);
 	return TRUE;
