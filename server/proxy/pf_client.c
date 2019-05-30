@@ -356,6 +356,22 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 	return TRUE;
 }
 
+static int pf_client_client_stop(rdpContext* context)
+{
+	pClientContext* pc = (pClientContext*) context;
+	pServerContext* ps = pc->pdata->ps;
+	freerdp_abort_connect(context->instance);
+
+	if (ps->thread)
+	{
+		WaitForSingleObject(ps->thread, INFINITE);
+		CloseHandle(ps->thread);
+		ps->thread = NULL;
+	}
+
+	return 0;
+}
+
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
@@ -365,6 +381,7 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ContextSize = sizeof(pClientContext);
 	/* Client init and finish */
 	pEntryPoints->ClientNew = pf_client_client_new;
+	pEntryPoints->ClientStop = pf_client_client_stop;
 	return 0;
 }
 
