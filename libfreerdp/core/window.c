@@ -404,10 +404,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_OVERLAY_NULL)
 	{
-		if (Stream_GetRemainingLength(s) < 1)
-			return FALSE;
-
-		Stream_Read_UINT8(s, windowState->TaskbarButton);
+		/* no data to be read here */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TASKBAR_BUTTON)
