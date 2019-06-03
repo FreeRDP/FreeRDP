@@ -29,7 +29,7 @@
 #include <freerdp/server/rdpgfx.h>
 #include "pf_config.h"
 #include "pf_server.h"
-
+#include "pf_filters.h"
 
 typedef struct proxy_data proxyData;
 
@@ -75,9 +75,16 @@ struct proxy_data
 	pClientContext* pc;
 
 	HANDLE connectionClosed;
+
+	connectionInfo* info;
+	filters_list* filters;
 };
 
 BOOL init_p_server_context(freerdp_peer* client);
-rdpContext* p_client_context_create(rdpSettings* clientSettings, char* host, DWORD port);
+rdpContext* p_client_context_create(rdpSettings* clientSettings);
+proxyData* proxy_data_new();
+BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* clientSettings,
+                                    const char* target);
+void proxy_data_free(proxyData* pdata);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONTEXT_H */

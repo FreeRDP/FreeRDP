@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <winpr/crt.h>
+#include <winpr/collections.h>
+
 #include "pf_log.h"
 #include "pf_server.h"
 #include "pf_config.h"
@@ -30,39 +32,56 @@
 
 #define CHANNELS_SEPERATOR ","
 
-static char** parse_channels_from_str(const char* str, UINT32* length)
+wArrayList* parse_string_array_from_str(const char* str)
 {
-	char* s = strdup(str);
-	size_t tokens_alloc = 1;
-	size_t tokens_count = 0;
-	char** tokens = calloc(tokens_alloc, sizeof(char*));
+	wArrayList* list = ArrayList_New(FALSE);
+	char* s;
+	char* temp;
 	char* token;
 
-	while ((token = StrSep(&s, CHANNELS_SEPERATOR)) != NULL)
+	if (list == NULL)
 	{
-		if (tokens_count == tokens_alloc)
+		WLog_ERR(TAG, "parse_string_array_from_str(): ArrayList_New failed!");
+		return NULL;
+	}
+
+	
+ 	temp = s = _strdup(str);
+	if (!s)
+	{
+		WLog_ERR(TAG, "parse_string_array_from_str(): strdup failed!");
+		return NULL;
+	}
+
+	if (s == NULL)
+	{
+		WLog_ERR(TAG, "parse_string_array_from_str(): strdup failed!");
+		goto error;
+	}
+
+	while ((token = StrSep(&temp, CHANNELS_SEPERATOR)) != NULL)
+	{
+		char* current_token = _strdup(token);
+
+		if (current_token == NULL)
 		{
-			tokens_alloc *= 2;
-			tokens = realloc(tokens, tokens_alloc * sizeof(char*));
+			WLog_ERR(TAG, "parse_string_array_from_str(): strdup failed!");
+			goto error;
 		}
 
-		tokens[tokens_count++] = strdup(token);
+		if (ArrayList_Add(list, current_token) < 0)
+		{
+			free(current_token);
+			goto error;
+		}
 	}
 
-	if ((tokens_count == 0) || (tokens_count > UINT32_MAX))
-	{
-		free(tokens);
-		tokens = NULL;
-		tokens_count = 0;
-	}
-	else
-	{
-		tokens = realloc(tokens, tokens_count * sizeof(char*));
-	}
-
-	*length = (DWORD)tokens_count;
 	free(s);
-	return tokens;
+	return list;
+error:
+	free(s);
+	ArrayList_Free(list);
+	return NULL;
 }
 
 static BOOL pf_server_is_config_valid(proxyConfig* config)
@@ -100,7 +119,10 @@ static BOOL pf_server_is_config_valid(proxyConfig* config)
 DWORD pf_server_load_config(const char* path, proxyConfig* config)
 {
 	const char* input;
+	char** filters_names;
 	int rc;
+	int filters_count = 0;
+	UINT32 index;
 	DWORD result = CONFIG_PARSE_ERROR;
 	wIniFile* ini = IniFile_New();
 
@@ -141,10 +163,11 @@ DWORD pf_server_load_config(const char* path, proxyConfig* config)
 	/* channels filtering */
 	config->WhitelistMode = IniFile_GetKeyValueInt(ini, "Channels", "WhitelistMode");
 	input = IniFile_GetKeyValueString(ini, "Channels", "AllowedChannels");
+	/* filters api */
 
 	if (input)
 	{
-		config->AllowedChannels = parse_channels_from_str(input, &config->AllowedChannelsCount);
+		config->AllowedChannels = parse_string_array_from_str(input);
 
 		if (config->AllowedChannels == NULL)
 			goto out;
@@ -154,13 +177,34 @@ DWORD pf_server_load_config(const char* path, proxyConfig* config)
 
 	if (input)
 	{
-		config->BlockedChannels = parse_channels_from_str(input, &config->BlockedChannelsCount);
+		config->BlockedChannels = parse_string_array_from_str(input);
 
 		if (config->BlockedChannels == NULL)
 			goto out;
 	}
 
 	result = CONFIG_PARSE_SUCCESS;
+
+	if (!pf_filters_init(&config->Filters))
+		goto out;
+		
+	filters_names = IniFile_GetSectionKeyNames(ini, "Filters", &filters_count);
+
+	for (index = 0; index < filters_count; index++)
+	{
+		char* filter_name = filters_names[index];
+		const char* path = IniFile_GetKeyValueString(ini, "Filters", filter_name);
+
+		if (!pf_filters_register_new(config->Filters, path, filter_name))
+		{
+			WLog_DBG(TAG, "pf_server_load_config(): failed to register %s (%s)", filter_name, path);
+		}
+		else
+		{
+			WLog_DBG(TAG, "pf_server_load_config(): registered filter %s (%s) successfully", filter_name, path);
+		}
+	}
+
 out:
 	IniFile_Free(ini);
 
@@ -172,16 +216,9 @@ out:
 
 void pf_server_config_free(proxyConfig* config)
 {
-	UINT32 i;
-
-	for (i = 0; i < config->AllowedChannelsCount; i++)
-		free(config->AllowedChannels[i]);
-
-	for (i = 0; i < config->BlockedChannelsCount; i++)
-		free(config->BlockedChannels[i]);
-
-	free(config->AllowedChannels);
-	free(config->BlockedChannels);
+	pf_filters_unregister_all(config->Filters);
+	ArrayList_Free(config->AllowedChannels);
+	ArrayList_Free(config->BlockedChannels);
 	free(config->TargetHost);
 	free(config->Host);
 	free(config);

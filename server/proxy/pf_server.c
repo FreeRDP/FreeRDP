@@ -71,7 +71,7 @@ static void pf_server_handle_client_disconnection(freerdp_peer* client)
 	CloseHandle(ps->thread);
 }
 
-static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
+static BOOL pf_server_parse_target_from_routing_token(rdpContext* context,
         char** target, DWORD* port)
 {
 #define TARGET_MAX	(100)
@@ -80,39 +80,70 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
 	size_t len;
 	const size_t prefix_len  = strlen(ROUTING_TOKEN_PREFIX);
 	DWORD routing_token_length;
-	const char* routing_token = freerdp_nego_get_routing_token(client->context, &routing_token_length);
+	const char* routing_token = freerdp_nego_get_routing_token(context, &routing_token_length);
 
-	if (routing_token &&
-	    (routing_token_length > prefix_len) && (routing_token_length < TARGET_MAX))
+	if (routing_token == NULL)
 	{
-		len = routing_token_length - prefix_len;
-		*target = malloc(len + 1);
-
-		if (!(*target))
-			return FALSE;
-
-		CopyMemory(*target, routing_token + prefix_len, len);
-		*(*target + len) = '\0';
-		colon = strchr(*target, ':');
-		WLog_INFO(TAG, "Target [parsed from routing token]: %s", *target);
-
-		if (colon)
-		{
-			/* port is specified */
-			unsigned long p = strtoul(colon + 1, NULL, 10);
-
-			if (p > USHRT_MAX)
-				return FALSE;
-
-			*port = (DWORD)p;
-			*colon = '\0';
-		}
-
-		return TRUE;
+		/* no routing token */
+		return FALSE;
 	}
 
-	/* no routing token */
-	return FALSE;
+	if ((routing_token_length <= prefix_len) || (routing_token_length >= TARGET_MAX))
+	{
+		WLog_ERR(TAG, "pf_server_parse_target_from_routing_token: bad routing token length: %i",
+		         routing_token_length);
+		return FALSE;
+	}
+
+	len = routing_token_length - prefix_len;
+	*target = malloc(len + 1);
+
+	if (!(*target))
+		return FALSE;
+
+	CopyMemory(*target, routing_token + prefix_len, len);
+	*(*target + len) = '\0';
+	colon = strchr(*target, ':');
+	WLog_INFO(TAG, "Target [parsed from routing token]: %s", *target);
+
+	if (colon)
+	{
+		/* port is specified */
+		unsigned long p = strtoul(colon + 1, NULL, 10);
+
+		if (p > USHRT_MAX)
+		{
+			free(*target);
+			return FALSE;
+		}
+
+		*port = (DWORD)p;
+		*colon = '\0';
+	}
+
+	return TRUE;
+}
+
+static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings,
+                                      proxyConfig* config)
+{
+	WLog_INFO(TAG, "pf_server_get_target_info: UseLoadBalanceInfo = %d", config->UseLoadBalanceInfo);
+
+	if (config->UseLoadBalanceInfo)
+		return pf_server_parse_target_from_routing_token(context, &settings->ServerHostname,
+		                                                 &settings->ServerPort);
+
+	/* use hardcoded target info from configuration */
+	if (!(settings->ServerHostname = _strdup(config->TargetHost)))
+	{
+		WLog_DBG(TAG, "pf_server_get_target_info(): strdup failed!");
+		return FALSE;
+	}
+
+	settings->ServerPort = config->TargetPort > 0 ? 3389 : settings->ServerPort;
+	WLog_INFO(TAG, "Using target host from config: %s:%i", settings->ServerHostname,
+	          settings->ServerPort);
+	return TRUE;
 }
 
 /* Event callbacks */
@@ -125,47 +156,35 @@ static BOOL pf_server_parse_target_from_routing_token(freerdp_peer* client,
  */
 static BOOL pf_server_post_connect(freerdp_peer* client)
 {
-	proxyConfig* config;
 	pServerContext* ps;
-	pClientContext* pc;
-	HANDLE connectionClosedEvent;
+	rdpContext* pc;
 	proxyData* pdata;
-	char* host = NULL;
-	DWORD port = 3389; /* default port */
+
 	ps = (pServerContext*)client->context;
 	pdata = ps->pdata;
-	config = pdata->config;
 
-	if (config->UseLoadBalanceInfo)
-	{
-		if (!pf_server_parse_target_from_routing_token(client, &host, &port))
-		{
-			WLog_ERR(TAG, "pf_server_parse_target_from_routing_token failed!");
-			return FALSE;
-		}
+	pc = p_client_context_create(client->settings);
 
-		WLog_DBG(TAG, "Parsed target from load-balance-info: %s:%i", host, port);
-	}
-	else
-	{
-		/* use hardcoded target info from configuration */
-		host = _strdup(config->TargetHost);
-		port = config->TargetPort > 0 ? config->TargetPort : port;
-		WLog_DBG(TAG, "Using hardcoded target host: %s:%i", host, port);
-	}
-
-	pc = (pClientContext*) p_client_context_create(client->settings, host, port);
-	connectionClosedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	/* keep both sides of the connection in pdata */
-	pc->pdata = ps->pdata;
-	pdata->pc = (pClientContext*) pc;
-	pdata->ps = ps;
-	pdata->connectionClosed = connectionClosedEvent;
+	((pClientContext*)pc)->pdata = ps->pdata;
+	pdata->pc = (pClientContext*)pc;
+
+	if (!pf_server_get_target_info(client->context, pc->settings, pdata->config))
+	{
+		WLog_ERR(TAG, "pf_server_post_connect(): pf_server_get_target_info failed!");
+		return FALSE;
+	}
+
+	if (!proxy_data_set_connection_info(pdata, client->settings, pc->settings->ServerHostname))
+	{
+		WLog_ERR(TAG, "proxy_data_set_connection_info failed!");
+		return FALSE;
+	}
+
 	pf_server_rdpgfx_init(ps);
 
 	/* Start a proxy's client in it's own thread */
-	if (!(ps->thread = CreateThread(NULL, 0, pf_client_start, (rdpContext*) pc, 0,
-	                                NULL)))
+	if (!(ps->thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		return FALSE;
@@ -202,18 +221,25 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	rdpContext* pc;
 	proxyData* pdata;
 	proxyConfig* config;
-	freerdp_peer* client = (freerdp_peer*) arg;
+	freerdp_peer* client = (freerdp_peer*)arg;
 
 	if (!init_p_server_context(client))
+		goto out_free_peer;
+
+	ps = (pServerContext*)client->context;
+	if (!(ps->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		freerdp_peer_free(client);
-		return 0;
+		WLog_ERR(TAG, "pf_server_post_connect(): CreateEvent failed!");
+		goto out_free_peer;
 	}
 
-	ps = (pServerContext*) client->context;
-	ps->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL);
-	pdata = calloc(1, sizeof(proxyData));
-	ps->pdata = pdata;
+	if (!(pdata = ps->pdata = proxy_data_new()))
+	{
+		WLog_ERR(TAG, "pf_server_post_connect(): proxy_data_new failed!");
+		goto out_free_peer;
+	}
+
+	pdata->ps = ps;
 	/* keep configuration in proxyData */
 	pdata->config = client->ContextExtra;
 	config = pdata->config;
@@ -223,12 +249,11 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->RdpKeyFile = _strdup("server.key");
 
-	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile
-	    || !client->settings->RdpKeyFile)
+	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile ||
+	    !client->settings->RdpKeyFile)
 	{
 		WLog_ERR(TAG, "Memory allocation failed (strdup)");
-		freerdp_peer_free(client);
-		return 0;
+		goto out_free_peer;
 	}
 
 	client->settings->RdpSecurity = config->RdpSecurity;
@@ -247,8 +272,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	pf_server_register_update_callbacks(client->update);
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
-	WLog_INFO(TAG, "Client connected: %s",
-	          client->local ? "(local)" : client->hostname);
+	WLog_INFO(TAG, "Client connected: %s", client->local ? "(local)" : client->hostname);
 	/* Main client event handling loop */
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(ps->vcm);
 
@@ -256,8 +280,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	{
 		eventCount = 0;
 		{
-			tmp = client->GetEventHandles(client, &eventHandles[eventCount],
-			                              32 - eventCount);
+			tmp = client->GetEventHandles(client, &eventHandles[eventCount], 32 - eventCount);
 
 			if (tmp == 0)
 			{
@@ -295,28 +318,28 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 
 		switch (WTSVirtualChannelManagerGetDrdynvcState(ps->vcm))
 		{
-			/* Dynamic channel status may have been changed after processing */
-			case DRDYNVC_STATE_NONE:
+		/* Dynamic channel status may have been changed after processing */
+		case DRDYNVC_STATE_NONE:
 
-				/* Initialize drdynvc channel */
-				if (!WTSVirtualChannelManagerCheckFileDescriptor(ps->vcm))
-				{
-					WLog_ERR(TAG, "Failed to initialize drdynvc channel");
-					goto fail;
-				}
+			/* Initialize drdynvc channel */
+			if (!WTSVirtualChannelManagerCheckFileDescriptor(ps->vcm))
+			{
+				WLog_ERR(TAG, "Failed to initialize drdynvc channel");
+				goto fail;
+			}
 
-				break;
+			break;
 
-			case DRDYNVC_STATE_READY:
-				if (WaitForSingleObject(ps->dynvcReady, 0) == WAIT_TIMEOUT)
-				{
-					SetEvent(ps->dynvcReady);
-				}
+		case DRDYNVC_STATE_READY:
+			if (WaitForSingleObject(ps->dynvcReady, 0) == WAIT_TIMEOUT)
+			{
+				SetEvent(ps->dynvcReady);
+			}
 
-				break;
+			break;
 
-			default:
-				break;
+		default:
+			break;
 		}
 	}
 
@@ -327,24 +350,23 @@ fail:
 		pf_server_handle_client_disconnection(client);
 	}
 
-	pc = (rdpContext*) pdata->pc;
+	pc = (rdpContext*)pdata->pc;
 	freerdp_client_stop(pc);
-	free(pdata);
+	proxy_data_free(pdata);
 	freerdp_client_context_free(pc);
 	client->Disconnect(client);
+out_free_peer:
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
 	return 0;
 }
 
-static BOOL pf_server_client_connected(freerdp_listener* listener,
-                                       freerdp_peer* client)
+static BOOL pf_server_client_connected(freerdp_listener* listener, freerdp_peer* client)
 {
 	HANDLE hThread;
 	client->ContextExtra = listener->info;
 
-	if (!(hThread = CreateThread(NULL, 0, pf_server_handle_client,
-	                             (void*) client, 0, NULL)))
+	if (!(hThread = CreateThread(NULL, 0, pf_server_handle_client, (void*)client, 0, NULL)))
 		return FALSE;
 
 	CloseHandle(hThread);
@@ -408,7 +430,7 @@ int pf_server_start(proxyConfig* config)
 	}
 
 	/* Determine filepath for local socket */
-	sprintf_s(localSockName, sizeof(localSockName), "proxy.%"PRIu16"", config->Port);
+	sprintf_s(localSockName, sizeof(localSockName), "proxy.%" PRIu16 "", config->Port);
 	localSockPath = GetKnownSubPath(KNOWN_PATH_TEMP, localSockName);
 
 	if (!localSockPath)

@@ -32,15 +32,22 @@ static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 
 static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
+	BOOL result = FALSE;
 	pServerContext* ps = (pServerContext*)input->context;
 	pClientContext* pc = ps->pdata->pc;
 	rdpContext* context = (rdpContext*) pc;
 	proxyConfig* config = ps->pdata->config;
+	proxyKeyboardEventInfo event;
 
 	if (!config->Keyboard)
 		return TRUE;
 
-	return freerdp_input_send_keyboard_event(context->input, flags, code);
+	event.flags = flags;
+	event.rdp_scan_code = code;
+
+	RUN_FILTER(config->Filters, FILTER_TYPE_KEYBOARD, ps->pdata->info, &event, result,
+	                  freerdp_input_send_keyboard_event, context->input, flags, code);
+	return result;
 }
 
 static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -58,15 +65,23 @@ static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT
 
 static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
+	BOOL result = FALSE;
 	pServerContext* ps = (pServerContext*)input->context;
 	pClientContext* pc = ps->pdata->pc;
 	rdpContext* context = (rdpContext*) pc;
 	proxyConfig* config = ps->pdata->config;
+	proxyMouseEventInfo event;
 
 	if (!config->Mouse)
 		return TRUE;
 
-	return freerdp_input_send_mouse_event(context->input, flags, x, y);
+	event.flags = flags;
+	event.x = x;
+	event.y = y;
+
+	RUN_FILTER(config->Filters, FILTER_TYPE_MOUSE, ps->pdata->info, &event, result,
+	                  freerdp_input_send_mouse_event, context->input, flags, x, y);
+	return result;
 }
 
 static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,

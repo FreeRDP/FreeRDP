@@ -22,6 +22,9 @@
 #include "pf_server.h"
 #include "pf_config.h"
 #include "pf_log.h"
+#include "pf_filters.h"
+
+#include <winpr/collections.h>
 
 #define TAG PROXY_TAG("server")
 
@@ -31,6 +34,7 @@ int main(int argc, char* argv[])
 	int status = 0;
 	DWORD ld;
 	UINT32 i;
+	UINT32 count;
 	proxyConfig* config = calloc(1, sizeof(proxyConfig));
 
 	if (!config)
@@ -58,16 +62,18 @@ int main(int argc, char* argv[])
 	if (config->WhitelistMode)
 	{
 		WLog_INFO(TAG, "Channels mode: WHITELIST");
+		count = ArrayList_Count(config->AllowedChannels);
 
-		for (i = 0; i < config->AllowedChannelsCount; i++)
-			WLog_INFO(TAG, "Allowing %s", config->AllowedChannels[i]);
+		for (i = 0; i < count; i++)
+			WLog_INFO(TAG, "Allowing %s", (char*) ArrayList_GetItem(config->AllowedChannels, i));
 	}
 	else
 	{
 		WLog_INFO(TAG, "Channels mode: BLACKLIST");
+		count = ArrayList_Count(config->BlockedChannels);
 
-		for (i = 0; i < config->BlockedChannelsCount; i++)
-			WLog_INFO(TAG, "Blocking %s", config->BlockedChannels[i]);
+		for (i = 0; i < count; i++)
+			WLog_INFO(TAG, "Blocking %s", (char*) ArrayList_GetItem(config->BlockedChannels, i));
 	}
 
 	status = pf_server_start(config);
