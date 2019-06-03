@@ -77,5 +77,45 @@ rdpContext* p_client_context_create(rdpSettings* clientSettings,
 	settings->ServerPort = port;
 	settings->SoftwareGdi = FALSE;
 	settings->RedirectClipboard = FALSE;
+	/* Client Monitor Data */
+	settings->MonitorCount = clientSettings->MonitorCount;
+	settings->SpanMonitors = clientSettings->SpanMonitors;
+	settings->UseMultimon = clientSettings->UseMultimon;
+	settings->ForceMultimon = clientSettings->ForceMultimon;
+	settings->DesktopPosX = clientSettings->DesktopPosX;
+	settings->DesktopPosY = clientSettings->DesktopPosY;
+	settings->ListMonitors = clientSettings->ListMonitors;
+	settings->NumMonitorIds = clientSettings->NumMonitorIds;
+	settings->MonitorLocalShiftX = clientSettings->MonitorLocalShiftX;
+	settings->MonitorLocalShiftY = clientSettings->MonitorLocalShiftY;
+	settings->HasMonitorAttributes = clientSettings->HasMonitorAttributes;
+	settings->MonitorCount = clientSettings->MonitorCount;
+	settings->MonitorDefArraySize = clientSettings->MonitorDefArraySize;
+
+	if (clientSettings->MonitorDefArraySize > 0)
+	{
+		settings->MonitorDefArray = (rdpMonitor*) calloc(clientSettings->MonitorDefArraySize,
+		                            sizeof(rdpMonitor));
+
+		if (!settings->MonitorDefArray)
+		{
+			goto error;
+		}
+
+		CopyMemory(settings->MonitorDefArray, clientSettings->MonitorDefArray,
+		           sizeof(rdpMonitor) * clientSettings->MonitorDefArraySize);
+	}
+	else
+		settings->MonitorDefArray = NULL;
+
+	settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
+
+	if (!settings->MonitorIds)
+		goto error;
+
+	CopyMemory(settings->MonitorIds, clientSettings->MonitorIds, 16 * sizeof(UINT32));
 	return context;
+error:
+	freerdp_client_context_free(context);
+	return NULL;
 }

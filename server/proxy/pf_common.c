@@ -51,6 +51,7 @@ void pf_common_copy_settings(rdpSettings* dst, rdpSettings* src)
 	dst->DesktopOrientation = src->DesktopOrientation;
 	dst->DesktopScaleFactor = src->DesktopScaleFactor;
 	dst->DeviceScaleFactor = src->DeviceScaleFactor;
+	dst->SupportMonitorLayoutPdu = src->SupportMonitorLayoutPdu;
 	/* client info */
 	dst->AutoLogonEnabled = src->AutoLogonEnabled;
 	dst->CompressionEnabled = src->CompressionEnabled;

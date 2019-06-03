@@ -22,6 +22,7 @@
 #endif
 
 #include "activation.h"
+#include "display.h"
 
 /*
 static const char* const CTRLACTION_STRINGS[] =
@@ -341,22 +342,25 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 	    peer->AdjustMonitorsLayout(peer))
 	{
 		/* client supports the monitorLayout PDU, let's send him the monitors if any */
-		wStream* st = rdp_data_pdu_init(rdp);
-		BOOL r;
+		MONITOR_DEF* monitors = (MONITOR_DEF*) calloc(settings->MonitorCount, sizeof(MONITOR_DEF));
 
-		if (!st)
+		if (!monitors)
 			return FALSE;
 
-		if (!rdp_write_monitor_layout_pdu(st, settings->MonitorCount, settings->MonitorDefArray))
+		if (!display_convert_rdp_monitor_to_monitor_def(settings->MonitorCount, settings->MonitorDefArray,
+		        &monitors))
 		{
-			Stream_Release(st);
+			free(monitors);
 			return FALSE;
 		}
 
-		r = rdp_send_data_pdu(rdp, st, DATA_PDU_TYPE_MONITOR_LAYOUT, 0);
-
-		if (!r)
+		if (!freerdp_display_send_monitor_layout(rdp->context, settings->MonitorCount, monitors))
+		{
+			free(monitors);
 			return FALSE;
+		}
+
+		free(monitors);
 	}
 
 	if (!rdp_send_server_font_map_pdu(rdp))

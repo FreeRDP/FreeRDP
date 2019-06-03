@@ -180,6 +180,12 @@ static BOOL pf_server_activate(freerdp_peer* client)
 	return TRUE;
 }
 
+static BOOL pf_server_adjust_monitor_layout(freerdp_peer* peer)
+{
+	/* proxy as is, there's no need to do anything here */
+	return TRUE;
+}
+
 /**
  * Handles an incoming client connection, to be run in it's own thread.
  *
@@ -232,8 +238,11 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
 	client->settings->RefreshRect = TRUE;
+	client->settings->UseMultimon = TRUE;
+	client->settings->SupportMonitorLayoutPdu = TRUE;
 	client->PostConnect = pf_server_post_connect;
 	client->Activate = pf_server_activate;
+	client->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
 	pf_server_register_input_callbacks(client->input);
 	pf_server_register_update_callbacks(client->update);
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */

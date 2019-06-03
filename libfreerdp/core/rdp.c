@@ -807,29 +807,6 @@ static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 	return ret;
 }
 
-BOOL rdp_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount,
-                                  const rdpMonitor* monitorDefArray)
-{
-	UINT32 index;
-	const rdpMonitor* monitor;
-
-	if (!Stream_EnsureRemainingCapacity(s, 4 + (monitorCount * 20)))
-		return FALSE;
-
-	Stream_Write_UINT32(s, monitorCount); /* monitorCount (4 bytes) */
-
-	for (index = 0, monitor = monitorDefArray; index < monitorCount; index++, monitor++)
-	{
-		Stream_Write_UINT32(s, monitor->x); /* left (4 bytes) */
-		Stream_Write_UINT32(s, monitor->y); /* top (4 bytes) */
-		Stream_Write_UINT32(s, monitor->x + monitor->width - 1); /* right (4 bytes) */
-		Stream_Write_UINT32(s, monitor->y + monitor->height - 1); /* bottom (4 bytes) */
-		Stream_Write_UINT32(s, monitor->is_primary ? 0x01 : 0x00); /* flags (4 bytes) */
-	}
-
-	return TRUE;
-}
-
 int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 {
 	BYTE type;

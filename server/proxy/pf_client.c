@@ -37,10 +37,10 @@
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/log.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
-#include <freerdp/log.h>
 
 #include "pf_channels.h"
 #include "pf_gdi.h"
@@ -81,7 +81,6 @@ static void pf_OnErrorInfo(void* ctx, ErrorInfoEventArgs* e)
 		freerdp_send_error_info(ps->rdp);
 	}
 }
-
 
 /**
  * Called before a connection is established.
