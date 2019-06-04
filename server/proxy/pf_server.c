@@ -239,6 +239,9 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		goto out_free_peer;
 	}
 
+
+	ZeroMemory(client->settings->OrderSupport, 32);
+	client->update->autoCalculateBitmapData = FALSE;
 	pdata->ps = ps;
 	/* keep configuration in proxyData */
 	pdata->config = client->ContextExtra;
