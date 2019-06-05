@@ -407,6 +407,75 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+static UINT rdpgfx_send_cache_import_offer_pdu(RdpgfxClientContext* context,
+        const RDPGFX_CACHE_IMPORT_OFFER_PDU* pdu)
+{
+	UINT16 index;
+	UINT error = CHANNEL_RC_OK;
+	wStream* s;
+	RDPGFX_PLUGIN* gfx;
+	RDPGFX_CHANNEL_CALLBACK* callback;
+	RDPGFX_HEADER header;
+	RDPGFX_CACHE_ENTRY_METADATA* cacheEntries;
+
+	if (!context || !pdu)
+		return ERROR_BAD_ARGUMENTS;
+
+	gfx = (RDPGFX_PLUGIN*) context->handle;
+
+	if (!gfx)
+		return ERROR_BAD_CONFIGURATION;
+
+	callback = gfx->listener_callback->channel_callback;
+
+	if (!callback)
+		return ERROR_BAD_CONFIGURATION;
+
+	header.flags = 0;
+	header.cmdId = RDPGFX_CMDID_CACHEIMPORTOFFER;
+	header.pduLength = RDPGFX_HEADER_SIZE + 2 + pdu->cacheEntriesCount * 12;
+	DEBUG_RDPGFX(gfx->log, "SendCacheImportOfferPdu: cacheEntriesCount: %"PRIu16"", pdu->cacheEntriesCount);
+	s = Stream_New(NULL, header.pduLength);
+	
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	if ((error = rdpgfx_write_header(s, &header)))
+		goto fail;
+
+	if (pdu->cacheEntriesCount <= 0)
+	{
+		WLog_ERR(TAG, "Invalid cacheEntriesCount: %"PRIu16"", pdu->cacheEntriesCount);
+		error = ERROR_INVALID_DATA;
+		goto fail;
+	}
+
+	/* cacheEntriesCount (2 bytes) */
+	Stream_Write_UINT16(s, pdu->cacheEntriesCount);
+
+	for (index = 0; index < pdu->cacheEntriesCount; index++)
+	{
+		cacheEntries = &(pdu->cacheEntries[index]);
+		Stream_Write_UINT64(s, cacheEntries->cacheKey); /* cacheKey (8 bytes) */
+		Stream_Write_UINT32(s, cacheEntries->bitmapLength); /* bitmapLength (4 bytes) */
+	}
+
+	error = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s),
+	                                 Stream_Buffer(s), NULL);
+
+fail:
+	Stream_Free(s, TRUE);
+	return error;
+}
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
 static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
         wStream* s)
 {
@@ -2035,6 +2104,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->GetCacheSlotData = rdpgfx_get_cache_slot_data;
 		context->CapsAdvertise = rdpgfx_send_caps_advertise_pdu;
 		context->FrameAcknowledge = rdpgfx_send_frame_acknowledge_pdu;
+		context->CacheImportOffer = rdpgfx_send_cache_import_offer_pdu;
+
 		gfx->iface.pInterface = (void*) context;
 		gfx->zgfx = zgfx_context_new(FALSE);
 
