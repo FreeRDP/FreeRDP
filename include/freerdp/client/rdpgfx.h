@@ -92,6 +92,8 @@ typedef UINT(*pcRdpgfxCapsConfirm)(RdpgfxClientContext* context,
                                    const RDPGFX_CAPS_CONFIRM_PDU* capsConfirm);
 typedef UINT(*pcRdpgfxFrameAcknowledge)(RdpgfxClientContext* context,
                                         const RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge);
+typedef UINT(*pcRdpgfxQoeFrameAcknowledge)(RdpgfxClientContext* context,
+                                        const RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoeFrameAcknowledge);
 
 typedef UINT(*pcRdpgfxMapWindowForSurface)(RdpgfxClientContext* context, UINT16 surfaceID,
         UINT64 windowID);
@@ -134,6 +136,7 @@ struct _rdpgfx_client_context
 	pcRdpgfxCapsAdvertise CapsAdvertise;
 	pcRdpgfxCapsConfirm CapsConfirm;
 	pcRdpgfxFrameAcknowledge FrameAcknowledge;
+	pcRdpgfxQoeFrameAcknowledge QoeFrameAcknowledge;
 
 	/* No locking required */
 	pcRdpgfxUpdateSurfaces UpdateSurfaces;
