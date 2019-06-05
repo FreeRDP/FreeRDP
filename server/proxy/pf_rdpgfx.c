@@ -286,6 +286,24 @@ static UINT pf_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
 	return client->FrameAcknowledge(client, frameAcknowledge);
 }
 
+static UINT pf_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext* context,
+                                        const RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoeFrameAcknowledge)
+{
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxClientContext* client = (RdpgfxClientContext*) pdata->pc->gfx;
+	WLog_DBG(TAG, __FUNCTION__);
+	return client->QoeFrameAcknowledge(client, qoeFrameAcknowledge);
+}
+
+static UINT pf_rdpgfx_cache_import_offer(RdpgfxServerContext* context,
+                                        const RDPGFX_CACHE_IMPORT_OFFER_PDU* cacheImportOffer)
+{
+	proxyData* pdata = (proxyData*) context->custom;
+	RdpgfxClientContext* client = (RdpgfxClientContext*) pdata->pc->gfx;
+	WLog_DBG(TAG, __FUNCTION__);
+	return client->CacheImportOffer(client, cacheImportOffer);
+}
+
 void pf_rdpgfx_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* server,
                              proxyData* pdata)
 {
@@ -310,10 +328,13 @@ void pf_rdpgfx_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* serv
 	gfx->MapSurfaceToWindow = pf_rdpgfx_map_surface_to_window;
 	gfx->MapSurfaceToScaledOutput = pf_rdpgfx_map_surface_to_scaled_output;
 	gfx->MapSurfaceToScaledWindow = pf_rdpgfx_map_surface_to_scaled_window;
+
 	gfx->OnOpen = pf_rdpgfx_on_open;
 	gfx->OnClose = pf_rdpgfx_on_close;
 	gfx->CapsConfirm = pf_rdpgfx_caps_confirm;
 	/* Set server callbacks */
 	server->CapsAdvertise = pf_rdpgfx_caps_advertise;
 	server->FrameAcknowledge = pf_rdpgfx_frame_acknowledge;
+	server->CacheImportOffer = pf_rdpgfx_cache_import_offer;
+	server->QoeFrameAcknowledge = pf_rdpgfx_qoe_frame_acknowledge;
 }
