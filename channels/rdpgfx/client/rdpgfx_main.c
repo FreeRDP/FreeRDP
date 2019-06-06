@@ -363,6 +363,10 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RdpgfxClientContext* context,
 	                    pdu->totalFramesDecoded); /* totalFramesDecoded (4 bytes) */
 	error = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s),
 	                                 Stream_Buffer(s), NULL);
+
+	if (error == CHANNEL_RC_OK) /* frame successfully acked */
+		gfx->UnacknowledgedFrames--;
+
 fail:
 	Stream_Free(s, TRUE);
 	return error;
@@ -804,7 +808,6 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		}
 	}
 
-	gfx->UnacknowledgedFrames--;
 	gfx->TotalDecodedFrames++;
 
 	if (!gfx->sendFrameAcks)
