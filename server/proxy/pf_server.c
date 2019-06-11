@@ -55,13 +55,10 @@
 
 static void pf_server_handle_client_disconnection(freerdp_peer* client)
 {
-	pServerContext* ps;
-	proxyData* pdata;
-	rdpContext* pc;
-	ps = (pServerContext*)client->context;
-	pc = (rdpContext*) ps->pdata->pc;
-	pdata = ps->pdata;
-	WLog_INFO(TAG, "Client %s disconnected; closing proxy's client <> target server connection %s",
+	pServerContext* ps = (pServerContext*)client->context;
+	rdpContext* pc = (rdpContext*) ps->pdata->pc;
+	proxyData* pdata = ps->pdata;
+	WLog_INFO(TAG, "Connection with %s was closed; closing proxy's client <> target server connection %s",
 	          client->hostname, pc->settings->ServerHostname);
 	/* Mark connection closed for sContext */
 	SetEvent(pdata->connectionClosed);
@@ -70,6 +67,7 @@ static void pf_server_handle_client_disconnection(freerdp_peer* client)
 	WLog_DBG(TAG, "Waiting for proxy's client thread to finish");
 	WaitForSingleObject(ps->thread, INFINITE);
 	CloseHandle(ps->thread);
+	ps->thread = NULL;
 }
 
 static BOOL pf_server_parse_target_from_routing_token(rdpContext* context,
