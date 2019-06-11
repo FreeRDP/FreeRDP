@@ -142,13 +142,20 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	pClientContext* pc;
 	rdpContext* ps;
 
-	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
-		return FALSE;
-
 	context = instance->context;
 	settings = instance->settings;
 	update = instance->update;
 	pc = (pClientContext*) context;
+	ps = (rdpContext*) pc->pdata->ps;
+
+	if (!proxy_data_set_connection_info(pc->pdata, ps->settings, settings))
+	{
+		WLog_ERR(TAG, "proxy_data_set_connection_info failed!");
+		return FALSE;
+	}
+
+	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
+		return FALSE;
 
 	if (!pf_register_pointer(context->graphics))
 		return FALSE;
@@ -170,7 +177,6 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	}
 	
 	pf_client_register_update_callbacks(update);
-	ps = (rdpContext*) pc->pdata->ps;
 	proxy_server_reactivate(ps, context);
 	return TRUE;
 }

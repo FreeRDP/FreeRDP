@@ -159,16 +159,16 @@ proxyData* proxy_data_new()
 	return pdata;
 }
 
-BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* clientSettings,
-                                    const char* target)
+/* sets connection info values using the settings of both server & client */
+BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* ps, rdpSettings* pc)
 {
-	if (!(pdata->info->TargetHostname = _strdup(target)))
+	if (!(pdata->info->TargetHostname = _strdup(pc->ServerHostname)))
 		goto out_fail;
 
-	if (!(pdata->info->ClientHostname = _strdup(clientSettings->ClientHostname)))
+	if (!(pdata->info->Username = _strdup(pc->Username)))
 		goto out_fail;
 
-	if (!(pdata->info->Username = _strdup(clientSettings->Username)))
+	if (!(pdata->info->ClientHostname = _strdup(ps->ClientHostname)))
 		goto out_fail;
 
 	return TRUE;
