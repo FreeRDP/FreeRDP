@@ -121,7 +121,9 @@ PF_FILTER_RESULT pf_filters_run_by_type(filters_list* list, PF_FILTER_TYPE type,
 
 static void pf_filters_filter_free(proxyFilter* filter)
 {
-	assert(filter != NULL);
+	if (!filter)
+		return;
+
 	if (filter->handle)
 		FreeLibrary(filter->handle);
 
