@@ -176,12 +176,6 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	if (!proxy_data_set_connection_info(pdata, client->settings, pc->settings->ServerHostname))
-	{
-		WLog_ERR(TAG, "proxy_data_set_connection_info failed!");
-		return FALSE;
-	}
-
 	pf_server_rdpgfx_init(ps);
 	pf_server_disp_init(ps);
 

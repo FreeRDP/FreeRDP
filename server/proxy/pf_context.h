@@ -90,8 +90,7 @@ struct proxy_data
 BOOL init_p_server_context(freerdp_peer* client);
 rdpContext* p_client_context_create(rdpSettings* clientSettings);
 proxyData* proxy_data_new();
-BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* clientSettings,
-                                    const char* target);
+BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* ps, rdpSettings* pc);
 void proxy_data_free(proxyData* pdata);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONTEXT_H */
