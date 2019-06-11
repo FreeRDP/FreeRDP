@@ -1,10 +1,10 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Display Update Virtual Channel Extension
+ * FreeRDP Proxy Server
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2015 Thincast Technologies GmbH
- * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
+ * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
+ * Copyright 2019 Idan Freiberg <speidy@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,16 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_DISP_CLIENT_MAIN_H
-#define FREERDP_CHANNEL_DISP_CLIENT_MAIN_H
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <freerdp/dvc.h>
-#include <freerdp/types.h>
-#include <freerdp/addin.h>
-#include <freerdp/channels/log.h>
+#ifndef FREERDP_SERVER_PROXY_RDPEDISP_H
+#define FREERDP_SERVER_PROXY_RDPEDISP_H
 
 #include <freerdp/client/disp.h>
+#include <freerdp/server/disp.h>
 
+#include "pf_context.h"
 
-#define TAG CHANNELS_TAG("disp.client")
+BOOL pf_server_disp_init(pServerContext* ps);
+void pf_disp_register_callbacks(DispClientContext* client, DispServerContext* server,
+                           proxyData* pdata);
 
-#endif /* FREERDP_CHANNEL_DISP_CLIENT_MAIN_H */
-
+#endif /*FREERDP_SERVER_PROXY_RDPEDISP_H*/

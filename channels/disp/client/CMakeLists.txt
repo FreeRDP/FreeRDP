@@ -19,7 +19,9 @@ define_channel_client("disp")
 
 set(${MODULE_PREFIX}_SRCS
 	disp_main.c
-	disp_main.h)
+	disp_main.h
+	../disp_common.c
+	../disp_common.h)
 
 include_directories(..)
 

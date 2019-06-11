@@ -49,6 +49,7 @@
 #include "pf_input.h"
 #include "pf_update.h"
 #include "pf_rdpgfx.h"
+#include "pf_disp.h"
 
 #define TAG PROXY_TAG("server")
 
@@ -182,6 +183,7 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 	}
 
 	pf_server_rdpgfx_init(ps);
+	pf_server_disp_init(ps);
 
 	/* Start a proxy's client in it's own thread */
 	if (!(ps->thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
@@ -256,6 +258,9 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		goto out_free_peer;
 	}
 
+	client->settings->SupportDisplayControl = TRUE;
+	client->settings->SupportMonitorLayoutPdu = TRUE;
+	client->settings->DynamicResolutionUpdate = TRUE;
 	client->settings->RdpSecurity = config->RdpSecurity;
 	client->settings->TlsSecurity = config->TlsSecurity;
 	client->settings->NlaSecurity = config->NlaSecurity;
@@ -263,8 +268,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
 	client->settings->RefreshRect = TRUE;
-	client->settings->UseMultimon = TRUE;
-	client->settings->SupportMonitorLayoutPdu = TRUE;
+	client->settings->DesktopResize = TRUE;
 	client->PostConnect = pf_server_post_connect;
 	client->Activate = pf_server_activate;
 	client->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
@@ -344,6 +348,17 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	}
 
 fail:
+
+	if (ps->disp)
+	{
+		if (ps->dispOpened)
+		{
+			WLog_INFO(TAG, "Closing disp server");
+			(void)ps->disp->Close(ps->disp);
+		}
+
+		disp_server_context_free(ps->disp);
+	}
 
 	if (client->connected && !pf_common_connection_aborted_by_peer(pdata))
 	{

@@ -1,7 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel("disp")
+define_channel_server("disp")
 
-if(WITH_CLIENT_CHANNELS)
-	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
-	
-if(WITH_SERVER_CHANNELS)
-	add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
+set(${MODULE_PREFIX}_SRCS
+	disp_main.c
+	disp_main.h
+	../disp_common.c
+	../disp_common.h
+	)
+
+include_directories(..)
+
+add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DVCPluginEntry")
+
+target_link_libraries(${MODULE_NAME} freerdp)
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Server")

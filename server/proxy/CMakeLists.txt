@@ -33,6 +33,8 @@ set(${MODULE_PREFIX}_SRCS
   pf_update.h
   pf_rdpgfx.c
   pf_rdpgfx.h
+  pf_disp.c
+  pf_disp.h
   pf_server.c
   pf_server.h
   pf_common.c
