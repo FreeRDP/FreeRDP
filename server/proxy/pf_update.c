@@ -82,6 +82,8 @@ static BOOL pf_client_desktop_resize(rdpContext* context)
 	pClientContext* pc = (pClientContext*) context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
+	ps->settings->DesktopWidth = context->settings->DesktopWidth;
+	ps->settings->DesktopHeight = context->settings->DesktopHeight;
 	return ps->update->DesktopResize(ps);
 }
 
