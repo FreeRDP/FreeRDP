@@ -148,16 +148,19 @@ static BOOL update_write_bitmap_data(rdpUpdate* update, wStream* s,
 	if (!Stream_EnsureRemainingCapacity(s, 64 + bitmapData->bitmapLength))
 		return FALSE;
 
-	bitmapData->flags = 0;
-	bitmapData->cbCompFirstRowSize = 0;
-
-	if (bitmapData->compressed)
-		bitmapData->flags |= BITMAP_COMPRESSION;
-
-	if (update->context->settings->NoBitmapCompressionHeader)
+	if (update->autoCalculateBitmapData)
 	{
-		bitmapData->flags |= NO_BITMAP_COMPRESSION_HDR;
-		bitmapData->cbCompMainBodySize = bitmapData->bitmapLength;
+		bitmapData->flags = 0;
+		bitmapData->cbCompFirstRowSize = 0;
+
+		if (bitmapData->compressed)
+			bitmapData->flags |= BITMAP_COMPRESSION;
+
+		if (update->context->settings->NoBitmapCompressionHeader)
+		{
+			bitmapData->flags |= NO_BITMAP_COMPRESSION_HDR;
+			bitmapData->cbCompMainBodySize = bitmapData->bitmapLength;
+		}
 	}
 
 	Stream_Write_UINT16(s, bitmapData->destLeft);
@@ -2190,6 +2193,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	deleteList->cIndices = 0;
 	update->SuppressOutput = update_send_suppress_output;
 	update->initialState = TRUE;
+	update->autoCalculateBitmapData = TRUE;
 	update->queue = MessageQueue_New(&cb);
 
 	if (!update->queue)
