@@ -223,6 +223,43 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
 	return (INT32)(srcp - pSrcData);
 }
 
+static INLINE INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, INT32 nDstStep, UINT32 nXDst,
+                                     UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 nChannel,
+                                     BOOL vFlip)
+{
+	INT32 x, y;
+	INT32 beg, end, inc;
+
+	if ((nHeight > INT32_MAX) || (nWidth > INT32_MAX) || (nDstStep > INT32_MAX))
+		return -1;
+
+	if (vFlip)
+	{
+		beg = (INT32)nHeight - 1;
+		end = -1;
+		inc = -1;
+	}
+	else
+	{
+		beg = 0;
+		end = (INT32)nHeight;
+		inc = 1;
+	}
+
+	for (y = beg; y != end; y += inc)
+	{
+		BYTE* dstp = &pDstData[((nYDst + y) * (INT32)nDstStep) + (nXDst * 4) + nChannel];
+
+		for (x = 0; x < (INT32)nWidth; ++x)
+		{
+			*dstp = bValue;
+			dstp += 4;
+		}
+	}
+
+	return 0;
+}
+
 static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, const BYTE** ppR,
                              const BYTE** ppG, const BYTE** ppB, const BYTE** ppA)
 {
@@ -532,10 +569,13 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 				status = planar_decompress_plane_rle(planes[3], rleSizes[3], pTempData, nTempStep,
 				                                     nXDst, nYDst, nSrcWidth, nSrcHeight, 3,
 				                                     vFlip); /* AlphaPlane */
-
-				if (status < 0)
-					return FALSE;
 			}
+			else
+				status = planar_set_plane(0xFF, pTempData, nTempStep, nXDst, nYDst, nSrcWidth,
+				                          nSrcHeight, 3, vFlip);
+
+			if (status < 0)
+				return FALSE;
 
 			if (alpha)
 				srcp += rleSizes[3];
@@ -1041,8 +1081,9 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, const BYTE*
 			offset += dstSizes[2];
 			context->rlePlanes[3] = &context->rlePlanesBuffer[offset];
 			// WLog_DBG(TAG, "R: [%"PRIu32"/%"PRIu32"] G: [%"PRIu32"/%"PRIu32"] B:
-			// [%"PRIu32"/%"PRIu32"]", 		dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3],
-			//planeSize);
+			// [%"PRIu32"/%"PRIu32"]", 		dstSizes[1], planeSize, dstSizes[2], planeSize,
+			// dstSizes[3],
+			// planeSize);
 		}
 	}
 
