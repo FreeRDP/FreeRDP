@@ -89,7 +89,7 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context,
 
 	if ((routing_token_length <= prefix_len) || (routing_token_length >= TARGET_MAX))
 	{
-		WLog_ERR(TAG, "pf_server_parse_target_from_routing_token: bad routing token length: %i",
+		WLog_ERR(TAG, "pf_server_parse_target_from_routing_token(): invalid routing token length: %"PRIu32"",
 		         routing_token_length);
 		return FALSE;
 	}
@@ -103,7 +103,6 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context,
 	CopyMemory(*target, routing_token + prefix_len, len);
 	*(*target + len) = '\0';
 	colon = strchr(*target, ':');
-	WLog_INFO(TAG, "Target [parsed from routing token]: %s", *target);
 
 	if (colon)
 	{
@@ -126,7 +125,8 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context,
 static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings,
                                       proxyConfig* config)
 {
-	WLog_INFO(TAG, "pf_server_get_target_info: UseLoadBalanceInfo = %d", config->UseLoadBalanceInfo);
+	WLog_INFO(TAG, "pf_server_get_target_info(): fetching target from %s",
+		config->UseLoadBalanceInfo ? "load-balance-info" : "config");
 
 	if (config->UseLoadBalanceInfo)
 		return pf_server_parse_target_from_routing_token(context, &settings->ServerHostname,
@@ -140,8 +140,6 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 	}
 
 	settings->ServerPort = config->TargetPort > 0 ? 3389 : settings->ServerPort;
-	WLog_INFO(TAG, "Using target host from config: %s:%i", settings->ServerHostname,
-	          settings->ServerPort);
 	return TRUE;
 }
 
@@ -173,6 +171,9 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 		WLog_ERR(TAG, "pf_server_post_connect(): pf_server_get_target_info failed!");
 		return FALSE;
 	}
+
+	WLog_INFO(TAG, "pf_server_post_connect(): target == %s:%"PRIu16"", pc->settings->ServerHostname,
+	      pc->settings->ServerPort);
 
 	pf_server_rdpgfx_init(ps);
 	pf_server_disp_init(ps);
@@ -233,7 +234,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		goto out_free_peer;
 	}
 
-
+	/* currently not supporting GDI orders */
 	ZeroMemory(client->settings->OrderSupport, 32);
 	client->update->autoCalculateBitmapData = FALSE;
 	pdata->ps = ps;
@@ -351,7 +352,7 @@ fail:
 	{
 		if (ps->dispOpened)
 		{
-			WLog_INFO(TAG, "Closing disp server");
+			WLog_DBG(TAG, "Closing RDPEDISP server");
 			(void)ps->disp->Close(ps->disp);
 		}
 

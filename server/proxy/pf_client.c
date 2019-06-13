@@ -54,7 +54,7 @@
 #define TAG PROXY_TAG("client")
 
 /**
- * Re-negociate with original client after negociation between the proxy
+ * Re-negotiate with original client after negotiation between the proxy
  * and the target has finished.
  */
 static void proxy_server_reactivate(rdpContext* client, rdpContext* target)
@@ -75,7 +75,7 @@ static void pf_OnErrorInfo(void* ctx, ErrorInfoEventArgs* e)
 	if (e->code != ERRINFO_NONE)
 	{
 		const char* errorMessage = freerdp_get_error_info_string(e->code);
-		WLog_DBG(TAG, "Client received error info (0x%08"PRIu32"): %s", e->code, errorMessage);
+		WLog_WARN(TAG, "Proxy's client received error info pdu from server: (0x%08"PRIu32"): %s", e->code, errorMessage);
 		/* forward error back to client */
 		freerdp_set_error_info(ps->rdp, e->code);
 		freerdp_send_error_info(ps->rdp);
@@ -98,6 +98,8 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 * Only override it if you plan to implement custom order
 	 * callbacks or deactiveate certain features.
 	 */
+
+	/* currently not supporting GDI orders */
 	ZeroMemory(instance->settings->OrderSupport, 32);
 
 	/**
@@ -127,7 +129,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 
 /**
  * Called after a RDP connection was successfully established.
- * Settings might have changed during negociation of client / server feature
+ * Settings might have changed during negotiation of client / server feature
  * support.
  *
  * Set up local framebuffers and painting callbacks.
