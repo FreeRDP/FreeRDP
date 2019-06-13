@@ -156,11 +156,15 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 	pServerContext* ps;
 	rdpContext* pc;
 	proxyData* pdata;
-
 	ps = (pServerContext*)client->context;
 	pdata = ps->pdata;
 
 	pc = p_client_context_create(client->settings);
+	if (pc == NULL)
+	{
+		WLog_ERR(TAG, "pf_server_post_connect(): p_client_context_create failed!");
+		return FALSE;
+	}
 
 	/* keep both sides of the connection in pdata */
 	((pClientContext*)pc)->pdata = ps->pdata;
