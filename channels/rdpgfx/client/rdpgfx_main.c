@@ -363,21 +363,40 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RdpgfxClientContext* context,
 	                    pdu->totalFramesDecoded); /* totalFramesDecoded (4 bytes) */
 	error = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s),
 	                                 Stream_Buffer(s), NULL);
+
+	if (error == CHANNEL_RC_OK) /* frame successfully acked */
+		gfx->UnacknowledgedFrames--;
+
 fail:
 	Stream_Free(s, TRUE);
 	return error;
 }
 
-static UINT rdpgfx_send_qoe_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
+static UINT rdpgfx_send_qoe_frame_acknowledge_pdu(RdpgfxClientContext* context,
         const RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* pdu)
 {
 	UINT error;
 	wStream* s;
 	RDPGFX_HEADER header;
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RDPGFX_CHANNEL_CALLBACK* callback;
+	RDPGFX_PLUGIN* gfx;
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE;
 	header.pduLength = RDPGFX_HEADER_SIZE + 12;
+
+	if (!context || !pdu)
+		return ERROR_BAD_ARGUMENTS;
+
+	gfx = (RDPGFX_PLUGIN*) context->handle;
+
+	if (!gfx)
+		return ERROR_BAD_CONFIGURATION;
+
+	callback = gfx->listener_callback->channel_callback;
+
+	if (!callback)
+		return ERROR_BAD_CONFIGURATION;
+
 	DEBUG_RDPGFX(gfx->log, "SendQoeFrameAcknowledgePdu: %"PRIu32"", pdu->frameId);
 	s = Stream_New(NULL, header.pduLength);
 
@@ -397,6 +416,75 @@ static UINT rdpgfx_send_qoe_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callb
 	Stream_Write_UINT16(s, pdu->timeDiffEDR);
 	error = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s),
 	                                 Stream_Buffer(s), NULL);
+fail:
+	Stream_Free(s, TRUE);
+	return error;
+}
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpgfx_send_cache_import_offer_pdu(RdpgfxClientContext* context,
+        const RDPGFX_CACHE_IMPORT_OFFER_PDU* pdu)
+{
+	UINT16 index;
+	UINT error = CHANNEL_RC_OK;
+	wStream* s;
+	RDPGFX_PLUGIN* gfx;
+	RDPGFX_CHANNEL_CALLBACK* callback;
+	RDPGFX_HEADER header;
+	RDPGFX_CACHE_ENTRY_METADATA* cacheEntries;
+
+	if (!context || !pdu)
+		return ERROR_BAD_ARGUMENTS;
+
+	gfx = (RDPGFX_PLUGIN*) context->handle;
+
+	if (!gfx)
+		return ERROR_BAD_CONFIGURATION;
+
+	callback = gfx->listener_callback->channel_callback;
+
+	if (!callback)
+		return ERROR_BAD_CONFIGURATION;
+
+	header.flags = 0;
+	header.cmdId = RDPGFX_CMDID_CACHEIMPORTOFFER;
+	header.pduLength = RDPGFX_HEADER_SIZE + 2 + pdu->cacheEntriesCount * 12;
+	DEBUG_RDPGFX(gfx->log, "SendCacheImportOfferPdu: cacheEntriesCount: %"PRIu16"", pdu->cacheEntriesCount);
+	s = Stream_New(NULL, header.pduLength);
+	
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	if ((error = rdpgfx_write_header(s, &header)))
+		goto fail;
+
+	if (pdu->cacheEntriesCount <= 0)
+	{
+		WLog_ERR(TAG, "Invalid cacheEntriesCount: %"PRIu16"", pdu->cacheEntriesCount);
+		error = ERROR_INVALID_DATA;
+		goto fail;
+	}
+
+	/* cacheEntriesCount (2 bytes) */
+	Stream_Write_UINT16(s, pdu->cacheEntriesCount);
+
+	for (index = 0; index < pdu->cacheEntriesCount; index++)
+	{
+		cacheEntries = &(pdu->cacheEntries[index]);
+		Stream_Write_UINT64(s, cacheEntries->cacheKey); /* cacheKey (8 bytes) */
+		Stream_Write_UINT32(s, cacheEntries->bitmapLength); /* bitmapLength (4 bytes) */
+	}
+
+	error = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s),
+	                                 Stream_Buffer(s), NULL);
+
 fail:
 	Stream_Free(s, TRUE);
 	return error;
@@ -720,30 +808,30 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		}
 	}
 
-	gfx->UnacknowledgedFrames--;
 	gfx->TotalDecodedFrames++;
+
+	if (!gfx->sendFrameAcks)
+		return error;
+
 	ack.frameId = pdu.frameId;
 	ack.totalFramesDecoded = gfx->TotalDecodedFrames;
 
-	if (gfx->sendFrameAcks)
+	if (gfx->suspendFrameAcks)
 	{
-		if (gfx->suspendFrameAcks)
-		{
-			ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
+		ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
 
-			if (gfx->TotalDecodedFrames == 1)
-				if ((error = rdpgfx_send_frame_acknowledge_pdu(context, &ack)))
-					WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
-					           error);
-		}
-		else
-		{
-			ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
-
+		if (gfx->TotalDecodedFrames == 1)
 			if ((error = rdpgfx_send_frame_acknowledge_pdu(context, &ack)))
 				WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
-				           error);
-		}
+							error);
+	}
+	else
+	{
+		ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
+
+		if ((error = rdpgfx_send_frame_acknowledge_pdu(context, &ack)))
+			WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"",
+						error);
 	}
 
 	switch (gfx->ConnectionCaps.version)
@@ -767,7 +855,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 				qoe.timeDiffSE = diff;
 				qoe.timeDiffEDR = 1;
 
-				if ((error = rdpgfx_send_qoe_frame_acknowledge_pdu(callback, &qoe)))
+				if ((error = rdpgfx_send_qoe_frame_acknowledge_pdu(context, &qoe)))
 					WLog_Print(gfx->log, WLOG_ERROR,
 					           "rdpgfx_send_qoe_frame_acknowledge_pdu failed with error %"PRIu32"",
 					           error);
@@ -2035,6 +2123,9 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->GetCacheSlotData = rdpgfx_get_cache_slot_data;
 		context->CapsAdvertise = rdpgfx_send_caps_advertise_pdu;
 		context->FrameAcknowledge = rdpgfx_send_frame_acknowledge_pdu;
+		context->CacheImportOffer = rdpgfx_send_cache_import_offer_pdu;
+		context->QoeFrameAcknowledge = rdpgfx_send_qoe_frame_acknowledge_pdu;
+
 		gfx->iface.pInterface = (void*) context;
 		gfx->zgfx = zgfx_context_new(FALSE);
 

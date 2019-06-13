@@ -1165,8 +1165,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context,
 	{
 		cacheEntries = &(pdu.cacheEntries[index]);
 		Stream_Read_UINT64(s, cacheEntries->cacheKey); /* cacheKey (8 bytes) */
-		/* bitmapLength (4 bytes) */
-		Stream_Read_UINT32(s, cacheEntries->bitmapLength);
+		Stream_Read_UINT32(s, cacheEntries->bitmapLength); /* bitmapLength (4 bytes) */
 	}
 
 	if (context)
