@@ -24,7 +24,7 @@ static UINT pf_disp_monitor_layout(DispServerContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	DispClientContext* client = (DispClientContext*) pdata->pc->disp;
-	WLog_INFO(TAG, __FUNCTION__);
+	WLog_DBG(TAG, __FUNCTION__);
 	return client->SendMonitorLayout(client, pdu->NumMonitors, pdu->Monitors);
 }
 
@@ -34,7 +34,7 @@ static UINT pf_disp_on_caps_control(DispClientContext* context, UINT32 MaxNumMon
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	DispServerContext* server = (DispServerContext*) pdata->ps->disp;
-	WLog_INFO(TAG, __FUNCTION__);
+	WLog_DBG(TAG, __FUNCTION__);
 	/* Update caps of proxy's disp server */
 	server->MaxMonitorAreaFactorA = MaxMonitorAreaFactorA;
 	server->MaxMonitorAreaFactorB = MaxMonitorAreaFactorB;
