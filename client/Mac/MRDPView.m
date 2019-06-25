@@ -434,6 +434,9 @@ DWORD WINAPI mac_client_thread(void* param)
 		return;
 
 	/* send out all accumulated rotations */
+	if (units > WheelRotationMask)
+		units = WheelRotationMask;
+
 	while (units != 0)
 	{
 		/* limit to maximum value in WheelRotationMask (9bit signed value) */

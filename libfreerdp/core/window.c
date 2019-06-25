@@ -564,7 +564,7 @@ static void dump_window_state_order(wLog *log, const char *msg, const WINDOW_ORD
 		DUMP_APPEND(buffer, bufferSize, " resizeMarginTop=%"PRIu32" resizeMarginBottom=%"PRIu32"",
 				state->resizeMarginTop, state->resizeMarginBottom);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
-		DUMP_APPEND(buffer, bufferSize, " rpContent=0x%"PRIx8"", state->RPContent);
+		DUMP_APPEND(buffer, bufferSize, " rpContent=0x%"PRIx32"", state->RPContent);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
 		DUMP_APPEND(buffer, bufferSize, " rootParent=0x%"PRIx32"", state->rootParentHandle);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)

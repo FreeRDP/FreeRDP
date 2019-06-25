@@ -262,7 +262,9 @@ void AppDelegate_EmbedWindowEventHandler(void* ctx, EmbedWindowEventArgs* e)
 			[[_singleDelegate->window contentView] addSubview:mfc->view];
 		}
 
-		mac_set_view_size(context, mfc->view);
+		dispatch_async(dispatch_get_main_queue(), ^{
+			mac_set_view_size(context, mfc->view);
+		});
 	}
 }
 
@@ -274,7 +276,9 @@ void AppDelegate_ResizeWindowEventHandler(void* ctx, ResizeWindowEventArgs* e)
 	if (_singleDelegate)
 	{
 		mfContext* mfc = (mfContext*) context;
-		mac_set_view_size(context, mfc->view);
+		dispatch_async(dispatch_get_main_queue(), ^{
+			mac_set_view_size(context, mfc->view);
+		});
 	}
 }
 
