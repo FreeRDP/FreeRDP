@@ -28,6 +28,9 @@
 
 #define RDP2TCP_CHAN_NAME "rdp2tcp"
 
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG(RDP2TCP_CHAN_NAME)
+
 static int const debug = 0;
 
 typedef struct
@@ -59,25 +62,25 @@ static int init_external_addin(Plugin* plugin)
 	// Create pipes
 	if (!CreatePipe(&plugin->hStdOutputRead, &siStartInfo.hStdOutput, &saAttr, 0))
 	{
-		perror("stdout CreatePipe");
+		WLog_ERR(TAG, "stdout CreatePipe");
 		return -1;
 	}
 
 	if (!SetHandleInformation(plugin->hStdOutputRead, HANDLE_FLAG_INHERIT, 0))
 	{
-		perror("stdout SetHandleInformation");
+		WLog_ERR(TAG, "stdout SetHandleInformation");
 		return -1;
 	}
 
 	if (!CreatePipe(&siStartInfo.hStdInput, &plugin->hStdInputWrite, &saAttr, 0))
 	{
-		perror("stdin CreatePipe");
+		WLog_ERR(TAG, "stdin CreatePipe");
 		return -1;
 	}
 
 	if (!SetHandleInformation(plugin->hStdInputWrite, HANDLE_FLAG_INHERIT, 0))
 	{
-		perror("stdin SetHandleInformation");
+		WLog_ERR(TAG, "stdin SetHandleInformation");
 		return -1;
 	}
 
@@ -94,7 +97,7 @@ static int init_external_addin(Plugin* plugin)
 	                   &procInfo		// receives PROCESS_INFORMATION
 	                  ))
 	{
-		perror("fork for addin");
+		WLog_ERR(TAG, "fork for addin");
 		return -1;
 	}
 
@@ -220,7 +223,6 @@ static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHa
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
-			;
 			dataReceived(plugin, pData, dataLength, totalLength, dataFlags);
 			break;
 
