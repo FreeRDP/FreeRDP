@@ -418,7 +418,7 @@ static BOOL process_file_name(const char* local_name, wArrayList* files)
 
 static BOOL process_uri(const char* uri, size_t uri_len, wArrayList* files)
 {
-	const char* prefix = "file://";
+	const char prefix []= "file://";
 	BOOL result = FALSE;
 	char* name = NULL;
 	const size_t prefixLen = strnlen(prefix, sizeof(prefix));
