@@ -35,8 +35,10 @@
 
 #define TAG FREERDP_TAG("cache.nine_grid")
 
+#if 0
 static void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index);
 static void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry);
+#endif
 
 
 static BOOL update_gdi_draw_nine_grid(rdpContext* context,
@@ -64,6 +66,7 @@ void nine_grid_cache_register_callbacks(rdpUpdate* update)
 	update->primary->MultiDrawNineGrid = update_gdi_multi_draw_nine_grid;
 }
 
+#if 0
 void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
 {
 	void* entry;
@@ -96,6 +99,7 @@ void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry)
 	free(nine_grid->entries[index].entry);
 	nine_grid->entries[index].entry = entry;
 }
+#endif
 
 rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings)
 {

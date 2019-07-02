@@ -141,6 +141,7 @@ static int rts_connection_timeout_command_read(rdpRpc* rpc, BYTE* buffer, UINT32
 	return 4;
 }
 
+#if 0
 static int rts_connection_timeout_command_write(BYTE* buffer, UINT32 ConnectionTimeout)
 {
 	if (buffer)
@@ -157,6 +158,7 @@ static int rts_cookie_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	/* Cookie (16 bytes) */
 	return 16;
 }
+#endif
 
 static int rts_cookie_command_write(BYTE* buffer, BYTE* Cookie)
 {
@@ -169,11 +171,13 @@ static int rts_cookie_command_write(BYTE* buffer, BYTE* Cookie)
 	return 20;
 }
 
+#if 0
 static int rts_channel_lifetime_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* ChannelLifetime (4 bytes) */
 	return 4;
 }
+#endif
 
 static int rts_channel_lifetime_command_write(BYTE* buffer, UINT32 ChannelLifetime)
 {
@@ -186,11 +190,13 @@ static int rts_channel_lifetime_command_write(BYTE* buffer, UINT32 ChannelLifeti
 	return 8;
 }
 
+#if 0
 static int rts_client_keepalive_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* ClientKeepalive (4 bytes) */
 	return 4;
 }
+#endif
 
 static int rts_client_keepalive_command_write(BYTE* buffer, UINT32 ClientKeepalive)
 {
@@ -225,10 +231,12 @@ static int rts_version_command_write(BYTE* buffer)
 	return 8;
 }
 
+#if 0
 static int rts_empty_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	return 0;
 }
+#endif
 
 static int rts_empty_command_write(BYTE* buffer)
 {
@@ -248,6 +256,7 @@ static SSIZE_T rts_padding_command_read(const BYTE* buffer, size_t length)
 	return ConformanceCount + 4;
 }
 
+#if 0
 static int rts_padding_command_write(BYTE* buffer, UINT32 ConformanceCount)
 {
 	if (buffer)
@@ -289,6 +298,7 @@ static int rts_ance_command_write(BYTE* buffer)
 
 	return 4;
 }
+#endif
 
 static SSIZE_T rts_client_address_command_read(const BYTE* buffer, size_t length)
 {
@@ -309,6 +319,7 @@ static SSIZE_T rts_client_address_command_read(const BYTE* buffer, size_t length
 	}
 }
 
+#if 0
 static int rts_client_address_command_write(BYTE* buffer, UINT32 AddressType, BYTE* ClientAddress)
 {
 	if (buffer)
@@ -339,11 +350,13 @@ static int rts_client_address_command_write(BYTE* buffer, UINT32 AddressType, BY
 	}
 }
 
+
 static int rts_association_group_id_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* AssociationGroupId (16 bytes) */
 	return 16;
 }
+#endif
 
 static int rts_association_group_id_command_write(BYTE* buffer, BYTE* AssociationGroupId)
 {
@@ -376,6 +389,7 @@ static int rts_destination_command_write(BYTE* buffer, UINT32 Destination)
 	return 8;
 }
 
+#if 0
 static int rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* PingTrafficSent (4 bytes) */
@@ -392,6 +406,7 @@ static int rts_ping_traffic_sent_notify_command_write(BYTE* buffer, UINT32 PingT
 
 	return 8;
 }
+#endif
 
 void rts_generate_cookie(BYTE* cookie)
 {
@@ -509,7 +524,7 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 }
 
 /* Out-of-Sequence PDUs */
-
+#if 0
 static int rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
 	int status;
@@ -535,6 +550,7 @@ static int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	free(buffer);
 	return (status > 0) ? 1 : -1;
 }
+#endif
 
 int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {

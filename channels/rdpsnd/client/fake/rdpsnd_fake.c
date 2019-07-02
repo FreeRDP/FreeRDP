@@ -70,11 +70,13 @@ static BOOL rdpsnd_fake_format_supported(rdpsndDevicePlugin* device, const AUDIO
 	return TRUE;
 }
 
+#if 0
 static BOOL rdpsnd_fake_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
                                    int latency)
 {
 	return TRUE;
 }
+#endif
 
 static UINT rdpsnd_fake_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {

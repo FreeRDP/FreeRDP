@@ -618,6 +618,7 @@ static void timespec_add_ms(struct timespec* tspec, UINT32 ms)
 	tspec->tv_nsec = (ns % 1000000000);
 }
 
+#if 0
 static UINT64 timespec_to_ms(struct timespec* tspec)
 {
 	UINT64 ms;
@@ -625,6 +626,7 @@ static UINT64 timespec_to_ms(struct timespec* tspec)
 	ms += tspec->tv_nsec / 1000000;
 	return ms;
 }
+#endif
 
 static void timespec_gettimeofday(struct timespec* tspec)
 {
