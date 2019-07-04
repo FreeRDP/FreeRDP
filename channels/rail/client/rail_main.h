@@ -53,6 +53,7 @@ struct rail_plugin
 	DWORD channelBuildNumber;
 	DWORD channelFlags;
 	RAIL_CLIENT_STATUS_ORDER clientStatus;
+	BOOL sendHandshake;
 };
 typedef struct rail_plugin railPlugin;
 

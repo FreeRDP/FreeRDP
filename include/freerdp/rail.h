@@ -26,6 +26,8 @@
 
 #include <freerdp/types.h>
 
+#define RAIL_SVC_CHANNEL_NAME "rail"
+
 /* DEPRECATED: RAIL PDU flags use the spec conformant naming with TS_ prefix */
 #define RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY 0x0001
 #define RAIL_EXEC_FLAG_TRANSLATE_FILES 0x0002
@@ -580,6 +582,8 @@ extern "C"
 #endif
 
 	FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
+	FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
+	                                            RAIL_UNICODE_STRING* unicode_string);
 
 #ifdef __cplusplus
 }

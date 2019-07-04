@@ -31,9 +31,9 @@
  * Client Interface
  */
 
-#define RAIL_SVC_CHANNEL_NAME "rail"
-
 typedef struct _rail_client_context RailClientContext;
+
+typedef UINT (*pcRailOnOpen)(RailClientContext* context, BOOL* sendHandshake);
 
 typedef UINT (*pcRailClientExecute)(RailClientContext* context, const RAIL_EXEC_ORDER* exec);
 typedef UINT (*pcRailClientActivate)(RailClientContext* context,
@@ -69,7 +69,7 @@ typedef UINT (*pcRailClientLanguageBarInfo)(RailClientContext* context,
 typedef UINT (*pcRailServerLanguageBarInfo)(RailClientContext* context,
                                             const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
 typedef UINT (*pcRailClientLanguageIMEInfo)(RailClientContext* context,
-                                            const RAIL_LANGUAGEIME_INFO_ORDER* langBarInfo);
+                                            const RAIL_LANGUAGEIME_INFO_ORDER* langImeInfo);
 typedef UINT (*pcRailServerExecuteResult)(RailClientContext* context,
                                           const RAIL_EXEC_RESULT_ORDER* execResult);
 typedef UINT (*pcRailClientGetAppIdRequest)(RailClientContext* context,
@@ -84,6 +84,8 @@ typedef UINT (*pcRailServerPowerDisplayRequest)(RailClientContext* context,
 typedef UINT (*pcRailClientSnapArrange)(RailClientContext* context, const RAIL_SNAP_ARRANGE* snap);
 typedef UINT (*pcRailServerGetAppidResponseExtended)(RailClientContext* context,
                                                      const RAIL_GET_APPID_RESP_EX* id);
+typedef UINT (*pcRailClientCompartmentInfo)(RailClientContext* context,
+                                            const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
 
 struct _rail_client_context
 {
@@ -117,6 +119,8 @@ struct _rail_client_context
 	pcRailServerPowerDisplayRequest ServerPowerDisplayRequest;
 	pcRailClientSnapArrange ClientSnapArrange;
 	pcRailServerGetAppidResponseExtended ServerGetAppidResponseExtended;
+	pcRailClientCompartmentInfo ClientCompartmentInfo;
+	pcRailOnOpen OnOpen;
 };
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_RAIL_H */
