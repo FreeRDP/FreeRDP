@@ -59,37 +59,6 @@ UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_high_contrast(wStream* s, const RAIL_HIGH_CONTRAST* highContrast)
-{
-	UINT32 colorSchemeLength;
-
-	if (!s || !highContrast)
-		return ERROR_INVALID_PARAMETER;
-
-	colorSchemeLength = highContrast->colorScheme.length + 2;
-	Stream_Write_UINT32(s, highContrast->flags); /* flags (4 bytes) */
-	Stream_Write_UINT32(s, colorSchemeLength);   /* colorSchemeLength (4 bytes) */
-	return rail_write_unicode_string(s, &highContrast->colorScheme); /* colorScheme */
-}
-
-static UINT rail_write_filterkeys(wStream* s, const TS_FILTERKEYS* filterKeys)
-{
-	if (!s || !filterKeys)
-		return ERROR_INVALID_PARAMETER;
-
-	Stream_Write_UINT32(s, filterKeys->Flags);
-	Stream_Write_UINT32(s, filterKeys->WaitTime);
-	Stream_Write_UINT32(s, filterKeys->DelayTime);
-	Stream_Write_UINT32(s, filterKeys->RepeatTime);
-	Stream_Write_UINT32(s, filterKeys->BounceTime);
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 static UINT rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* execResult)
 {
 	if (!s || !execResult)
@@ -103,49 +72,10 @@ static UINT rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDE
 
 	Stream_Read_UINT16(s, execResult->flags);      /* flags (2 bytes) */
 	Stream_Read_UINT16(s, execResult->execResult); /* execResult (2 bytes) */
-	Stream_Read_UINT32(s, execResult->rawResult);  /* rawResult (4 bytes) */
-	Stream_Seek_UINT16(s);                         /* padding (2 bytes) */
-	return rail_read_unicode_string(s, &execResult->exeOrFile)
-	           ? CHANNEL_RC_OK
-	           : ERROR_INTERNAL_ERROR; /* exeOrFile */
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
-{
-	BYTE body;
-
-	if (!s || !sysparam)
-		return ERROR_INVALID_PARAMETER;
-
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
-		return ERROR_INVALID_DATA;
-	}
-
-	Stream_Read_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
-	Stream_Read_UINT8(s, body);             /* body (1 byte) */
-
-	switch (sysparam->param)
-	{
-		case SPI_SETSCREENSAVEACTIVE:
-			sysparam->setScreenSaveActive = (body != 0) ? TRUE : FALSE;
-			break;
-
-		case SPI_SETSCREENSAVESECURE:
-			sysparam->setScreenSaveSecure = (body != 0) ? TRUE : FALSE;
-			break;
-
-		default:
-			break;
-	}
-
-	return CHANNEL_RC_OK;
+	Stream_Read_UINT32(s, execResult->rawResult); /* rawResult (4 bytes) */
+	Stream_Seek_UINT16(s); /* padding (2 bytes) */
+	return rail_read_unicode_string(s,
+	                                &execResult->exeOrFile) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR; /* exeOrFile */
 }
 
 /**
@@ -652,9 +582,9 @@ static UINT rail_recv_server_sysparam_order(railPlugin* rail, wStream* s)
 	if (!context || !s)
 		return ERROR_INVALID_PARAMETER;
 
-	if ((error = rail_read_server_sysparam_order(s, &sysparam)))
+	if ((error = rail_read_sysparam_order(s, &sysparam, FALSE)))
 	{
-		WLog_ERR(TAG, "rail_read_server_sysparam_order failed with error %" PRIu32 "!", error);
+		WLog_ERR(TAG, "rail_read_sysparam_order failed with error %"PRIu32"!", error);
 		return error;
 	}
 
@@ -1307,9 +1237,10 @@ static UINT rail_send_client_sysparam_order(railPlugin* rail, const RAIL_SYSPARA
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if ((error = rail_write_client_sysparam_order(rail, s, sysparam)))
+	if ((error = rail_write_sysparam_order(s, sysparam,
+	                                       (rail->channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) != 0)))
 	{
-		WLog_ERR(TAG, "rail_write_client_sysparam_order failed with error %" PRIu32 "!", error);
+		WLog_ERR(TAG, "rail_write_sysparam_order failed with error %"PRIu32"!", error);
 		goto out;
 	}
 
