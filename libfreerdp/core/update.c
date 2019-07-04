@@ -86,7 +86,6 @@ static BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* bitmapData)
 {
 	WINPR_UNUSED(update);
-
 	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
 
@@ -2251,7 +2250,6 @@ BOOL update_send_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* order
 	Stream_Write_UINT16(s, orderSize);
 	Stream_SetPosition(s, orderEndPos);
 	update->numberOrders++;
-	/* Write body */
 	return TRUE;
 }
 

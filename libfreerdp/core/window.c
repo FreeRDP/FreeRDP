@@ -68,6 +68,30 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 	return TRUE;
 }
 
+BOOL utf8_string_to_rail_string(const char* string, RAIL_UNICODE_STRING* unicode_string)
+{
+	WCHAR* buffer = NULL;
+	int length = 0;
+	free(unicode_string->string);
+	unicode_string->string = NULL;
+	unicode_string->length = 0;
+
+	if (!string || strlen(string) < 1)
+		return TRUE;
+
+	length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0);
+
+	if ((length < 0) || ((size_t)length * sizeof(WCHAR) > UINT16_MAX))
+	{
+		free(buffer);
+		return FALSE;
+	}
+
+	unicode_string->string = (BYTE*)buffer;
+	unicode_string->length = (UINT16)length * sizeof(WCHAR);
+	return TRUE;
+}
+
 /* See [MS-RDPERP] 2.2.1.2.3 Icon Info (TS_ICON_INFO) */
 static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 {
@@ -993,7 +1017,10 @@ BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)
 	}
 
 	if (!window_order_supported(update->context->settings, orderInfo.fieldFlags))
+	{
+		WLog_INFO(TAG, "Window order %08" PRIx32 " not supported!", orderInfo.fieldFlags);
 		return FALSE;
+	}
 
 	if (orderInfo.fieldFlags & WINDOW_ORDER_TYPE_WINDOW)
 		rc = update_recv_window_info_order(update, s, &orderInfo);
