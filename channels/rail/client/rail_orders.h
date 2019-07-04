@@ -29,9 +29,6 @@
 
 #define TAG CHANNELS_TAG("rail.client")
 
-UINT rail_write_client_sysparam_order(railPlugin* rail, wStream* s,
-                                      const RAIL_SYSPARAM_ORDER* sysparam);
-
 UINT rail_order_recv(railPlugin* rail, wStream* s);
 UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType);
 
@@ -55,7 +52,9 @@ UINT rail_send_client_langbar_info_order(railPlugin* rail,
                                          const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
 UINT rail_send_client_languageime_info_order(railPlugin* rail,
                                              const RAIL_LANGUAGEIME_INFO_ORDER* langImeInfo);
-UINT rail_send_client_order_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak);
-UINT rail_send_client_order_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap);
+UINT rail_send_client_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak);
+UINT rail_send_client_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap);
+UINT rail_send_client_compartment_info_order(railPlugin* rail,
+                                             const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_ORDERS_H */

@@ -37,55 +37,6 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_string)
-{
-	if (!s || !unicode_string)
-		return ERROR_INVALID_PARAMETER;
-
-	if (!Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length))
-	{
-		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	Stream_Write_UINT16(s, unicode_string->length);                  /* cbString (2 bytes) */
-	Stream_Write(s, unicode_string->string, unicode_string->length); /* string */
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unicode_string)
-{
-	size_t length;
-
-	if (!s || !unicode_string)
-		return ERROR_INVALID_PARAMETER;
-
-	length = unicode_string->length;
-
-	if (length > 0)
-	{
-		if (!Stream_EnsureRemainingCapacity(s, length))
-		{
-			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		Stream_Write(s, unicode_string->string, length); /* string */
-	}
-
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 {
 	UINT16 orderLength;
@@ -108,43 +59,12 @@ UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_high_contrast(wStream* s, const RAIL_HIGH_CONTRAST* highContrast)
-{
-	UINT32 colorSchemeLength;
-
-	if (!s || !highContrast)
-		return ERROR_INVALID_PARAMETER;
-
-	colorSchemeLength = highContrast->colorScheme.length + 2;
-	Stream_Write_UINT32(s, highContrast->flags); /* flags (4 bytes) */
-	Stream_Write_UINT32(s, colorSchemeLength);   /* colorSchemeLength (4 bytes) */
-	return rail_write_unicode_string(s, &highContrast->colorScheme); /* colorScheme */
-}
-
-static UINT rail_write_filterkeys(wStream* s, const TS_FILTERKEYS* filterKeys)
-{
-	if (!s || !filterKeys)
-		return ERROR_INVALID_PARAMETER;
-
-	Stream_Write_UINT32(s, filterKeys->Flags);
-	Stream_Write_UINT32(s, filterKeys->WaitTime);
-	Stream_Write_UINT32(s, filterKeys->DelayTime);
-	Stream_Write_UINT32(s, filterKeys->RepeatTime);
-	Stream_Write_UINT32(s, filterKeys->BounceTime);
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 static UINT rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* execResult)
 {
 	if (!s || !execResult)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (Stream_GetRemainingLength(s) < RAIL_EXEC_RESULT_ORDER_LENGTH)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
 		return ERROR_INVALID_DATA;
@@ -164,50 +84,12 @@ static UINT rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDE
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
-{
-	BYTE body;
-
-	if (!s || !sysparam)
-		return ERROR_INVALID_PARAMETER;
-
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
-		return ERROR_INVALID_DATA;
-	}
-
-	Stream_Read_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
-	Stream_Read_UINT8(s, body);             /* body (1 byte) */
-
-	switch (sysparam->param)
-	{
-		case SPI_SETSCREENSAVEACTIVE:
-			sysparam->setScreenSaveActive = (body != 0) ? TRUE : FALSE;
-			break;
-
-		case SPI_SETSCREENSAVESECURE:
-			sysparam->setScreenSaveSecure = (body != 0) ? TRUE : FALSE;
-			break;
-
-		default:
-			break;
-	}
-
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 static UINT rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* minmaxinfo)
 {
 	if (!s || !minmaxinfo)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 20)
+	if (Stream_GetRemainingLength(s) < RAIL_MINMAXINFO_ORDER_LENGTH)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
 		return ERROR_INVALID_DATA;
@@ -238,7 +120,7 @@ static UINT rail_read_server_localmovesize_order(wStream* s,
 	if (!s || !localMoveSize)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (Stream_GetRemainingLength(s) < RAIL_LOCALMOVESIZE_ORDER_LENGTH)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
 		return ERROR_INVALID_DATA;
@@ -264,15 +146,16 @@ static UINT rail_read_server_get_appid_resp_order(wStream* s,
 	if (!s || !getAppidResp)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 524)
+	if (Stream_GetRemainingLength(s) < RAIL_GET_APPID_RESP_ORDER_LENGTH)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
 		return ERROR_INVALID_DATA;
 	}
 
 	Stream_Read_UINT32(s, getAppidResp->windowId); /* windowId (4 bytes) */
-	Stream_Read(s, (BYTE*)&(getAppidResp->applicationId),
-	            520); /* applicationId (260 UNICODE chars) */
+	Stream_Read_UTF16_String(
+	    s, getAppidResp->applicationId,
+	    ARRAYSIZE(getAppidResp->applicationId)); /* applicationId (260 UNICODE chars) */
 	return CHANNEL_RC_OK;
 }
 
@@ -286,7 +169,7 @@ static UINT rail_read_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* la
 	if (!s || !langbarInfo)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (Stream_GetRemainingLength(s) < RAIL_LANGBAR_INFO_ORDER_LENGTH)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
 		return ERROR_INVALID_DATA;
@@ -352,107 +235,6 @@ static UINT rail_write_client_exec_order(wStream* s, UINT16 flags,
 	{
 		WLog_ERR(TAG, "rail_write_unicode_string_value failed with error %" PRIu32 "", error);
 		return error;
-	}
-
-	return error;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-UINT rail_write_client_sysparam_order(railPlugin* rail, wStream* s,
-                                      const RAIL_SYSPARAM_ORDER* sysparam)
-{
-	BYTE body;
-	UINT error = CHANNEL_RC_OK;
-
-	if (!s || !sysparam)
-		return ERROR_INVALID_PARAMETER;
-
-	Stream_Write_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
-
-	switch (sysparam->param)
-	{
-		case SPI_SET_DRAG_FULL_WINDOWS:
-			body = sysparam->dragFullWindows ? 1 : 0;
-			Stream_Write_UINT8(s, body);
-			break;
-
-		case SPI_SET_KEYBOARD_CUES:
-			body = sysparam->keyboardCues ? 1 : 0;
-			Stream_Write_UINT8(s, body);
-			break;
-
-		case SPI_SET_KEYBOARD_PREF:
-			body = sysparam->keyboardPref ? 1 : 0;
-			Stream_Write_UINT8(s, body);
-			break;
-
-		case SPI_SET_MOUSE_BUTTON_SWAP:
-			body = sysparam->mouseButtonSwap ? 1 : 0;
-			Stream_Write_UINT8(s, body);
-			break;
-
-		case SPI_SET_WORK_AREA:
-			Stream_Write_UINT16(s, sysparam->workArea.left);   /* left (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->workArea.top);    /* top (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->workArea.right);  /* right (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->workArea.bottom); /* bottom (2 bytes) */
-			break;
-
-		case SPI_DISPLAY_CHANGE:
-			Stream_Write_UINT16(s, sysparam->displayChange.left);   /* left (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->displayChange.top);    /* top (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->displayChange.right);  /* right (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->displayChange.bottom); /* bottom (2 bytes) */
-			break;
-
-		case SPI_TASKBAR_POS:
-			Stream_Write_UINT16(s, sysparam->taskbarPos.left);   /* left (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->taskbarPos.top);    /* top (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->taskbarPos.right);  /* right (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->taskbarPos.bottom); /* bottom (2 bytes) */
-			break;
-
-		case SPI_SET_HIGH_CONTRAST:
-			error = rail_write_high_contrast(s, &sysparam->highContrast);
-			break;
-
-		case SPI_SETCARETWIDTH:
-			if ((rail->channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) == 0)
-				return ERROR_INVALID_DATA;
-
-			if (sysparam->caretWidth < 0x0001)
-				return ERROR_INVALID_DATA;
-
-			Stream_Write_UINT32(s, sysparam->caretWidth);
-			break;
-
-		case SPI_SETSTICKYKEYS:
-			if ((rail->channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) == 0)
-				return ERROR_INVALID_DATA;
-
-			Stream_Write_UINT32(s, sysparam->stickyKeys);
-			break;
-
-		case SPI_SETTOGGLEKEYS:
-			if ((rail->channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) == 0)
-				return ERROR_INVALID_DATA;
-
-			Stream_Write_UINT32(s, sysparam->toggleKeys);
-			break;
-
-		case SPI_SETFILTERKEYS:
-			if ((rail->channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) == 0)
-				return ERROR_INVALID_DATA;
-
-			error = rail_write_filterkeys(s, &sysparam->filterKeys);
-			break;
-
-		default:
-			return ERROR_INVALID_PARAMETER;
 	}
 
 	return error;
@@ -544,10 +326,23 @@ static UINT rail_write_languageime_info_order(wStream* s,
 		return ERROR_INVALID_PARAMETER;
 
 	Stream_Write_UINT32(s, langImeInfo->ProfileType);
-	Stream_Write_UINT32(s, langImeInfo->LanguageID);
+	Stream_Write_UINT16(s, langImeInfo->LanguageID);
 	Stream_Write(s, &langImeInfo->LanguageProfileCLSID, sizeof(langImeInfo->LanguageProfileCLSID));
 	Stream_Write(s, &langImeInfo->ProfileGUID, sizeof(langImeInfo->ProfileGUID));
 	Stream_Write_UINT32(s, langImeInfo->KeyboardLayout);
+	return ERROR_SUCCESS;
+}
+
+static UINT rail_write_compartment_info_order(wStream* s,
+                                              const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo)
+{
+	if (!s || !compartmentInfo)
+		return ERROR_INVALID_PARAMETER;
+
+	Stream_Write_UINT32(s, compartmentInfo->ImeState);
+	Stream_Write_UINT32(s, compartmentInfo->ImeConvMode);
+	Stream_Write_UINT32(s, compartmentInfo->ImeSentenceMode);
+	Stream_Write_UINT32(s, compartmentInfo->KanaMode);
 	return ERROR_SUCCESS;
 }
 
@@ -560,7 +355,6 @@ static UINT rail_recv_handshake_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	RAIL_HANDSHAKE_ORDER serverHandshake = { 0 };
-	RAIL_HANDSHAKE_ORDER clientHandshake = { 0 };
 	UINT error;
 
 	if (!context || !s)
@@ -573,10 +367,13 @@ static UINT rail_recv_handshake_order(railPlugin* rail, wStream* s)
 	}
 
 	rail->channelBuildNumber = serverHandshake.buildNumber;
-	clientHandshake.buildNumber = 0x00001DB0;
-	/* 2.2.2.2.3 HandshakeEx PDU (TS_RAIL_ORDER_HANDSHAKE_EX)
-	 * Client response is really a Handshake PDU */
-	error = context->ClientHandshake(context, &clientHandshake);
+
+	if (rail->sendHandshake)
+	{
+		RAIL_HANDSHAKE_ORDER clientHandshake = { 0 };
+		clientHandshake.buildNumber = 0x00001DB0;
+		error = context->ClientHandshake(context, &clientHandshake);
+	}
 
 	if (error != CHANNEL_RC_OK)
 		return error;
@@ -618,7 +415,6 @@ static UINT rail_recv_handshake_ex_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	RAIL_HANDSHAKE_EX_ORDER serverHandshake = { 0 };
-	RAIL_HANDSHAKE_ORDER clientHandshake = { 0 };
 	UINT error;
 
 	if (!rail || !context || !s)
@@ -635,10 +431,15 @@ static UINT rail_recv_handshake_ex_order(railPlugin* rail, wStream* s)
 
 	rail->channelBuildNumber = serverHandshake.buildNumber;
 	rail->channelFlags = serverHandshake.railHandshakeFlags;
-	clientHandshake.buildNumber = 0x00001DB0;
-	/* 2.2.2.2.3 HandshakeEx PDU (TS_RAIL_ORDER_HANDSHAKE_EX)
-	 * Client response is really a Handshake PDU */
-	error = context->ClientHandshake(context, &clientHandshake);
+
+	if (rail->sendHandshake)
+	{
+		RAIL_HANDSHAKE_ORDER clientHandshake = { 0 };
+		clientHandshake.buildNumber = 0x00001DB0;
+		/* 2.2.2.2.3 HandshakeEx PDU (TS_RAIL_ORDER_HANDSHAKE_EX)
+		 * Client response is really a Handshake PDU */
+		error = context->ClientHandshake(context, &clientHandshake);
+	}
 
 	if (error != CHANNEL_RC_OK)
 		return error;
@@ -701,9 +502,9 @@ static UINT rail_recv_server_sysparam_order(railPlugin* rail, wStream* s)
 	if (!context || !s)
 		return ERROR_INVALID_PARAMETER;
 
-	if ((error = rail_read_server_sysparam_order(s, &sysparam)))
+	if ((error = rail_read_sysparam_order(s, &sysparam, FALSE)))
 	{
-		WLog_ERR(TAG, "rail_read_server_sysparam_order failed with error %" PRIu32 "!", error);
+		WLog_ERR(TAG, "rail_read_sysparam_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
@@ -851,7 +652,7 @@ static UINT rail_read_taskbar_info_order(wStream* s, RAIL_TASKBAR_INFO_ORDER* ta
 	if (!s || !taskbarInfo)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (Stream_GetRemainingLength(s) < RAIL_TASKBAR_INFO_ORDER_LENGTH)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
 		return ERROR_INVALID_DATA;
@@ -888,7 +689,7 @@ static UINT rail_recv_taskbar_info_order(railPlugin* rail, wStream* s)
 		IFCALLRET(context->ServerTaskBarInfo, error, context, &taskBarInfo);
 
 		if (error)
-			WLog_ERR(TAG, "context.ServerLanguageBarInfo failed with error %" PRIu32 "", error);
+			WLog_ERR(TAG, "context.ServerTaskBarInfo failed with error %" PRIu32 "", error);
 	}
 
 	return error;
@@ -899,7 +700,7 @@ static UINT rail_read_zorder_sync_order(wStream* s, RAIL_ZORDER_SYNC* zorder)
 	if (!s || !zorder)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (Stream_GetRemainingLength(s) < RAIL_Z_ORDER_SYNC_ORDER_LENGTH)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
 		return ERROR_INVALID_DATA;
@@ -938,23 +739,23 @@ static UINT rail_recv_zorder_sync_order(railPlugin* rail, wStream* s)
 	return error;
 }
 
-static UINT rail_read_order_cloak(wStream* s, RAIL_CLOAK* cloak)
+static UINT rail_read_cloak_order(wStream* s, RAIL_CLOAK* cloak)
 {
-	if (!s || !cloak)
-		return ERROR_INVALID_PARAMETER;
+	BYTE cloaked;
 
-	if (Stream_GetRemainingLength(s) < 5)
+	if (Stream_GetRemainingLength(s) < RAIL_CLOAK_ORDER_LENGTH)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT32(s, cloak->windowId);
-	Stream_Read_UINT8(s, cloak->cloak);
+	Stream_Read_UINT32(s, cloak->windowId); /* WindowId (4 bytes) */
+	Stream_Read_UINT8(s, cloaked);          /* Cloaked (1 byte) */
+	cloak->cloak = (cloaked != 0) ? TRUE : FALSE;
 	return CHANNEL_RC_OK;
 }
 
-static UINT rail_recv_order_cloak(railPlugin* rail, wStream* s)
+static UINT rail_recv_cloak_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	RAIL_CLOAK cloak = { 0 };
@@ -968,7 +769,7 @@ static UINT rail_recv_order_cloak(railPlugin* rail, wStream* s)
 	if ((rail->clientStatus.flags & TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED) == 0)
 		return ERROR_INVALID_DATA;
 
-	if ((error = rail_read_order_cloak(s, &cloak)))
+	if ((error = rail_read_cloak_order(s, &cloak)))
 	{
 		WLog_ERR(TAG, "rail_read_zorder_sync_order failed with error %" PRIu32 "!", error);
 		return error;
@@ -987,16 +788,19 @@ static UINT rail_recv_order_cloak(railPlugin* rail, wStream* s)
 
 static UINT rail_read_power_display_request_order(wStream* s, RAIL_POWER_DISPLAY_REQUEST* power)
 {
+	UINT32 active;
+
 	if (!s || !power)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (Stream_GetRemainingLength(s) < RAIL_POWER_DISPLAY_REQUEST_ORDER_LENGTH)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT32(s, power->active);
+	Stream_Read_UINT32(s, active);
+	power->active = active != 0;
 	return CHANNEL_RC_OK;
 }
 
@@ -1156,7 +960,7 @@ UINT rail_order_recv(railPlugin* rail, wStream* s)
 			return rail_recv_zorder_sync_order(rail, s);
 
 		case TS_RAIL_ORDER_CLOAK:
-			return rail_recv_order_cloak(rail, s);
+			return rail_recv_cloak_order(rail, s);
 
 		case TS_RAIL_ORDER_POWER_DISPLAY_REQUEST:
 			return rail_recv_power_display_request_order(rail, s);
@@ -1297,215 +1101,6 @@ UINT rail_send_client_exec_order(railPlugin* rail, UINT16 flags,
 
 out:
 	Stream_Free(s, TRUE);
-	return error;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rail_send_client_sysparam_order(railPlugin* rail, const RAIL_SYSPARAM_ORDER* sysparam)
-{
-	wStream* s;
-	size_t length = RAIL_SYSPARAM_ORDER_LENGTH;
-	UINT error;
-
-	if (!rail || !sysparam)
-		return ERROR_INVALID_PARAMETER;
-
-	switch (sysparam->param)
-	{
-		case SPI_SET_DRAG_FULL_WINDOWS:
-		case SPI_SET_KEYBOARD_CUES:
-		case SPI_SET_KEYBOARD_PREF:
-		case SPI_SET_MOUSE_BUTTON_SWAP:
-			length += 1;
-			break;
-
-		case SPI_SETCARETWIDTH:
-		case SPI_SETSTICKYKEYS:
-		case SPI_SETTOGGLEKEYS:
-			length += 4;
-			break;
-
-		case SPI_SETFILTERKEYS:
-			length += 20;
-			break;
-
-		case SPI_SET_WORK_AREA:
-		case SPI_DISPLAY_CHANGE:
-		case SPI_TASKBAR_POS:
-			length += 8;
-			break;
-
-		case SPI_SET_HIGH_CONTRAST:
-			length += sysparam->highContrast.colorSchemeLength + 10;
-			break;
-
-		default:
-			length += 8;
-			break;
-	}
-
-	s = rail_pdu_init(length);
-
-	if (!s)
-	{
-		WLog_ERR(TAG, "rail_pdu_init failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	if ((error = rail_write_client_sysparam_order(rail, s, sysparam)))
-	{
-		WLog_ERR(TAG, "rail_write_client_sysparam_order failed with error %" PRIu32 "!", error);
-		goto out;
-	}
-
-	if ((error = rail_send_pdu(rail, s, TS_RAIL_ORDER_SYSPARAM)))
-	{
-		WLog_ERR(TAG, "rail_send_pdu failed with error %" PRIu32 "!", error);
-		goto out;
-	}
-
-out:
-	Stream_Free(s, TRUE);
-	return error;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rail_send_client_sysparams_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam)
-{
-	UINT error = CHANNEL_RC_OK;
-
-	if (!rail || !sysparam)
-		return ERROR_INVALID_PARAMETER;
-
-	if (sysparam->params & SPI_MASK_SET_HIGH_CONTRAST)
-	{
-		sysparam->param = SPI_SET_HIGH_CONTRAST;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
-	if (sysparam->params & SPI_MASK_TASKBAR_POS)
-	{
-		sysparam->param = SPI_TASKBAR_POS;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
-	if (sysparam->params & SPI_MASK_SET_MOUSE_BUTTON_SWAP)
-	{
-		sysparam->param = SPI_SET_MOUSE_BUTTON_SWAP;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
-	if (sysparam->params & SPI_MASK_SET_KEYBOARD_PREF)
-	{
-		sysparam->param = SPI_SET_KEYBOARD_PREF;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
-	if (sysparam->params & SPI_MASK_SET_DRAG_FULL_WINDOWS)
-	{
-		sysparam->param = SPI_SET_DRAG_FULL_WINDOWS;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
-	if (sysparam->params & SPI_MASK_SET_KEYBOARD_CUES)
-	{
-		sysparam->param = SPI_SET_KEYBOARD_CUES;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
-	if (sysparam->params & SPI_MASK_SET_WORK_AREA)
-	{
-		sysparam->param = SPI_SET_WORK_AREA;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
-	if (sysparam->params & SPI_MASK_SET_CARET_WIDTH)
-	{
-		sysparam->param = SPI_SETCARETWIDTH;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
-	if (sysparam->params & SPI_MASK_SET_STICKY_KEYS)
-	{
-		sysparam->param = SPI_SETSTICKYKEYS;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
-	if (sysparam->params & SPI_MASK_SET_TOGGLE_KEYS)
-	{
-		sysparam->param = SPI_SETTOGGLEKEYS;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
-	if (sysparam->params & SPI_MASK_SET_FILTER_KEYS)
-	{
-		sysparam->param = SPI_SETFILTERKEYS;
-
-		if ((error = rail_send_client_sysparam_order(rail, sysparam)))
-		{
-			WLog_ERR(TAG, "rail_send_client_sysparam_order failed with error %" PRIu32 "!", error);
-			return error;
-		}
-	}
-
 	return error;
 }
 
@@ -1754,7 +1349,33 @@ UINT rail_send_client_languageime_info_order(railPlugin* rail,
 	return error;
 }
 
-UINT rail_send_client_order_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak)
+UINT rail_send_client_compartment_info_order(railPlugin* rail,
+                                             const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo)
+{
+	wStream* s;
+	UINT error;
+
+	if (!rail || !compartmentInfo)
+		return ERROR_INVALID_PARAMETER;
+
+	s = rail_pdu_init(RAIL_COMPARTMENT_INFO_ORDER_LENGTH);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "rail_pdu_init failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	error = rail_write_compartment_info_order(s, compartmentInfo);
+
+	if (ERROR_SUCCESS == error)
+		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_COMPARTMENTINFO);
+
+	Stream_Free(s, TRUE);
+	return error;
+}
+
+UINT rail_send_client_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak)
 {
 	wStream* s;
 	UINT error;
@@ -1777,7 +1398,7 @@ UINT rail_send_client_order_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloa
 	return error;
 }
 
-UINT rail_send_client_order_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap)
+UINT rail_send_client_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap)
 {
 	wStream* s;
 	UINT error;
