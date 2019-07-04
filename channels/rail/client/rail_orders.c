@@ -37,55 +37,6 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_string)
-{
-	if (!s || !unicode_string)
-		return ERROR_INVALID_PARAMETER;
-
-	if (!Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length))
-	{
-		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	Stream_Write_UINT16(s, unicode_string->length);                  /* cbString (2 bytes) */
-	Stream_Write(s, unicode_string->string, unicode_string->length); /* string */
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unicode_string)
-{
-	size_t length;
-
-	if (!s || !unicode_string)
-		return ERROR_INVALID_PARAMETER;
-
-	length = unicode_string->length;
-
-	if (length > 0)
-	{
-		if (!Stream_EnsureRemainingCapacity(s, length))
-		{
-			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		Stream_Write(s, unicode_string->string, length); /* string */
-	}
-
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 {
 	UINT16 orderLength;

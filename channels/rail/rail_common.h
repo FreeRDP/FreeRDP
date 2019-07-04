@@ -66,4 +66,7 @@ wStream* rail_pdu_init(size_t length);
 UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength);
 void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength);
 
+UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_string);
+UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unicode_string);
+
 #endif /* FREERDP_CHANNEL_RAIL_COMMON_H */
