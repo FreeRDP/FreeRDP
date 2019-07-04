@@ -28,24 +28,35 @@
 
 extern const char* const RAIL_ORDER_TYPE_STRINGS[];
 
-#define RAIL_PDU_HEADER_LENGTH 4
+#define RAIL_PDU_HEADER_LENGTH	4
 
 /* Fixed length of PDUs, excluding variable lengths */
-#define RAIL_HANDSHAKE_ORDER_LENGTH 4         /* fixed */
-#define RAIL_HANDSHAKE_EX_ORDER_LENGTH 8      /* fixed */
-#define RAIL_CLIENT_STATUS_ORDER_LENGTH 4     /* fixed */
-#define RAIL_EXEC_ORDER_LENGTH 8              /* variable */
-#define RAIL_SYSPARAM_ORDER_LENGTH 4          /* variable */
-#define RAIL_ACTIVATE_ORDER_LENGTH 5          /* fixed */
-#define RAIL_SYSMENU_ORDER_LENGTH 8           /* fixed */
-#define RAIL_SYSCOMMAND_ORDER_LENGTH 6        /* fixed */
-#define RAIL_NOTIFY_EVENT_ORDER_LENGTH 12     /* fixed */
-#define RAIL_WINDOW_MOVE_ORDER_LENGTH 12      /* fixed */
-#define RAIL_GET_APPID_REQ_ORDER_LENGTH 4     /* fixed */
-#define RAIL_LANGBAR_INFO_ORDER_LENGTH 4      /* fixed */
-#define RAIL_LANGUAGEIME_INFO_ORDER_LENGTH 44 /* fixed */
-
 BOOL rail_string_to_unicode_string(const char* string, RAIL_UNICODE_STRING* unicode_string);
+#define RAIL_HANDSHAKE_ORDER_LENGTH				4		/* fixed */
+#define RAIL_HANDSHAKE_EX_ORDER_LENGTH			8		/* fixed */
+#define RAIL_CLIENT_STATUS_ORDER_LENGTH			4		/* fixed */
+#define RAIL_EXEC_ORDER_LENGTH					8		/* variable */
+#define RAIL_EXEC_RESULT_ORDER_LENGTH			12		/* variable */
+#define RAIL_SYSPARAM_ORDER_LENGTH				4		/* variable */
+#define RAIL_MINMAXINFO_ORDER_LENGTH			20		/* fixed */
+#define RAIL_LOCALMOVESIZE_ORDER_LENGTH			12		/* fixed */
+#define RAIL_ACTIVATE_ORDER_LENGTH				5		/* fixed */
+#define RAIL_SYSMENU_ORDER_LENGTH				8		/* fixed */
+#define RAIL_SYSCOMMAND_ORDER_LENGTH			6		/* fixed */
+#define RAIL_NOTIFY_EVENT_ORDER_LENGTH			12		/* fixed */
+#define RAIL_WINDOW_MOVE_ORDER_LENGTH			12		/* fixed */
+#define RAIL_SNAP_ARRANGE_ORDER_LENGTH			12		/* fixed */
+#define RAIL_GET_APPID_REQ_ORDER_LENGTH			4		/* fixed */
+#define RAIL_LANGBAR_INFO_ORDER_LENGTH			4		/* fixed */
+#define RAIL_LANGUAGEIME_INFO_ORDER_LENGTH		42		/* fixed */
+#define RAIL_COMPARTMENT_INFO_ORDER_LENGTH		16		/* fixed */
+#define RAIL_CLOAK_ORDER_LENGTH					5		/* fixed */
+#define RAIL_TASKBAR_INFO_ORDER_LENGTH			12		/* fixed */
+#define RAIL_Z_ORDER_SYNC_ORDER_LENGTH			4		/* fixed */
+#define RAIL_POWER_DISPLAY_REQUEST_ORDER_LENGTH	4		/* fixed */
+#define RAIL_GET_APPID_RESP_ORDER_LENGTH		516		/* fixed */
+#define RAIL_GET_APPID_RESP_EX_ORDER_LENGTH		1040	/* fixed */
+
 UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
 void rail_write_handshake_order(wStream* s, const RAIL_HANDSHAKE_ORDER* handshake);
 UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
