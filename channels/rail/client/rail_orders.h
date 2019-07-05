@@ -29,9 +29,6 @@
 
 #define TAG CHANNELS_TAG("rail.client")
 
-UINT rail_write_client_sysparam_order(railPlugin* rail, wStream* s,
-                                      const RAIL_SYSPARAM_ORDER* sysparam);
-
 UINT rail_order_recv(railPlugin* rail, wStream* s);
 UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType);
 
