@@ -760,8 +760,11 @@ static UINT rail_recv_cloak_order(railPlugin* rail, wStream* s)
 	return error;
 }
 
-static UINT rail_read_power_display_request_order(wStream* s, RAIL_POWER_DISPLAY_REQUEST* power)
+static UINT rail_read_power_display_request_order(wStream* s,
+        RAIL_POWER_DISPLAY_REQUEST_ORDER* power)
 {
+	UINT32 active;
+
 	if (!s || !power)
 		return ERROR_INVALID_PARAMETER;
 
@@ -771,14 +774,15 @@ static UINT rail_read_power_display_request_order(wStream* s, RAIL_POWER_DISPLAY
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT32(s, power->active);
+	Stream_Read_UINT32(s, active);
+	power->active = active != 0;
 	return CHANNEL_RC_OK;
 }
 
 static UINT rail_recv_power_display_request_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	RAIL_POWER_DISPLAY_REQUEST power = { 0 };
+	RAIL_POWER_DISPLAY_REQUEST_ORDER power = { 0 };
 	UINT error;
 
 	if (!context)

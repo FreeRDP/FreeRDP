@@ -81,11 +81,11 @@ typedef UINT(*pcRailServerZOrderSync)(RailClientContext* context,
 typedef UINT(*pcRailServerCloak)(RailClientContext* context,
                                  const RAIL_CLOAK_ORDER* cloak);
 typedef UINT(*pcRailServerPowerDisplayRequest)(RailClientContext* context,
-        const RAIL_POWER_DISPLAY_REQUEST* power);
 typedef UINT(*pcRailClientSnapArrange)(RailClientContext* context,
                                        const RAIL_SNAP_ARRANGE* snap);
 typedef UINT(*pcRailServerGetAppidResponseExtended)(RailClientContext* context,
         const RAIL_GET_APPID_RESP_EX* id);
+        const RAIL_POWER_DISPLAY_REQUEST_ORDER* power);
 
 typedef UINT(*pcRailClientExec)(RailClientContext* context,
                                 RAIL_EXEC_ORDER* exec);
