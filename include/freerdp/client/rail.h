@@ -91,6 +91,8 @@ typedef UINT(*pcRailServerGetAppidResponseExtended)(RailClientContext* context,
 
 typedef UINT(*pcRailClientExec)(RailClientContext* context,
                                 RAIL_EXEC_ORDER* exec);
+typedef UINT(*pcRailClientCompartmentInfo)(RailClientContext* context,
+        const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
 struct _rail_client_context
 {
 	void* handle;
@@ -123,6 +125,7 @@ struct _rail_client_context
 	pcRailServerPowerDisplayRequest ServerPowerDisplayRequest;
 	pcRailClientSnapArrange ClientSnapArrange;
 	pcRailServerGetAppidResponseExtended ServerGetAppidResponseExtended;
+	pcRailClientCompartmentInfo ClientCompartmentInfo;
 };
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_RAIL_H */

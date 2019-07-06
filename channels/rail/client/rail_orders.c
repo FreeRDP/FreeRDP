@@ -313,6 +313,19 @@ static UINT rail_write_languageime_info_order(wStream* s,
 	return ERROR_SUCCESS;
 }
 
+static UINT rail_write_compartment_info_order(wStream* s,
+        const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo)
+{
+	if (!s || !compartmentInfo)
+		return ERROR_INVALID_PARAMETER;
+
+	Stream_Write_UINT32(s, compartmentInfo->ImeState);
+	Stream_Write_UINT32(s, compartmentInfo->ImeConvMode);
+	Stream_Write_UINT32(s, compartmentInfo->ImeSentenceMode);
+	Stream_Write_UINT32(s, compartmentInfo->KANAMode);
+	return ERROR_SUCCESS;
+}
+
 /**
  * Function description
  *
@@ -1519,6 +1532,32 @@ UINT rail_send_client_languageime_info_order(railPlugin* rail,
 }
 
 UINT rail_send_client_order_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak)
+UINT rail_send_client_compartment_info_order(railPlugin* rail,
+        const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo)
+{
+	wStream* s;
+	UINT error;
+
+	if (!rail || !compartmentInfo)
+		return ERROR_INVALID_PARAMETER;
+
+	s = rail_pdu_init(RAIL_COMPARTMENT_INFO_ORDER_LENGTH);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "rail_pdu_init failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	error = rail_write_compartment_info_order(s, compartmentInfo);
+
+	if (ERROR_SUCCESS == error)
+		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_COMPARTMENTINFO);
+
+	Stream_Free(s, TRUE);
+	return error;
+}
+
 {
 	wStream* s;
 	UINT error;

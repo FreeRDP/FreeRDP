@@ -453,7 +453,20 @@ static UINT rail_client_get_appid_request(RailClientContext* context,
 	return rail_send_client_get_appid_req_order(rail, getAppIdReq);
 }
 
-static UINT rail_client_cloak(RailClientContext* context, const RAIL_CLOAK* cloak)
+static UINT rail_client_compartment_info(RailClientContext* context,
+        const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo)
+{
+	railPlugin* rail;
+
+	if (!context || !compartmentInfo || !context->handle)
+		return ERROR_INVALID_PARAMETER;
+
+	rail = (railPlugin*) context->handle;
+	return rail_send_client_compartment_info_order(rail, compartmentInfo);
+}
+
+static UINT rail_client_cloak(RailClientContext* context,
+                              const RAIL_CLOAK* cloak)
 {
 	railPlugin* rail;
 
@@ -812,6 +825,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		context->ClientLanguageIMEInfo = rail_client_language_ime_info;
 		context->ClientGetAppIdRequest = rail_client_get_appid_request;
 		context->ClientSnapArrange = rail_client_snap_arrange;
+		context->ClientCompartmentInfo = rail_client_compartment_info;
 		context->ClientCloak = rail_client_cloak;
 		rail->rdpcontext = pEntryPointsEx->context;
 		rail->context = context;
