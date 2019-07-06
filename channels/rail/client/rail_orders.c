@@ -191,51 +191,33 @@ static UINT rail_write_client_status_order(wStream* s, const RAIL_CLIENT_STATUS_
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_client_exec_order(wStream* s, UINT16 flags,
-                                         const RAIL_UNICODE_STRING* exeOrFile,
-                                         const RAIL_UNICODE_STRING* workingDir,
-                                         const RAIL_UNICODE_STRING* arguments)
+static UINT rail_write_client_exec_order(wStream* s, const RAIL_EXEC_ORDER* exec)
 {
-	UINT error;
-
-	if (!s || !exeOrFile || !workingDir || !arguments)
+	if (!s || !exec)
 		return ERROR_INVALID_PARAMETER;
 
 	/* [MS-RDPERP] 2.2.2.3.1 Client Execute PDU (TS_RAIL_ORDER_EXEC)
 	 * Check argument limits */
-	if ((exeOrFile->length > 520) || (workingDir->length > 520) || (arguments->length > 16000))
+	if ((exec->exeOrFile.length > 520) ||
+	    (exec->workingDir.length > 520) ||
+	    (exec->arguments.length > 16000))
 	{
 		WLog_ERR(TAG,
-		         "TS_RAIL_ORDER_EXEC argument limits exceeded: ExeOrFile=%" PRIu16
-		         " [max=520], WorkingDir=%" PRIu16 " [max=520], Arguments=%" PRIu16 " [max=16000]",
-		         exeOrFile->length, workingDir->length, arguments->length);
+		         "TS_RAIL_ORDER_EXEC argument limits exceeded: ExeOrFile=%"PRIu16" [max=520], WorkingDir=%"PRIu16" [max=520], Arguments=%"PRIu16" [max=16000]",
+		         exec->exeOrFile.length,
+		         exec->workingDir.length,
+		         exec->arguments.length);
 		return ERROR_BAD_ARGUMENTS;
 	}
 
-	Stream_Write_UINT16(s, flags);              /* flags (2 bytes) */
-	Stream_Write_UINT16(s, exeOrFile->length);  /* exeOrFileLength (2 bytes) */
-	Stream_Write_UINT16(s, workingDir->length); /* workingDirLength (2 bytes) */
-	Stream_Write_UINT16(s, arguments->length);  /* argumentsLength (2 bytes) */
-
-	if ((error = rail_write_unicode_string_value(s, exeOrFile)))
-	{
-		WLog_ERR(TAG, "rail_write_unicode_string_value failed with error %" PRIu32 "", error);
-		return error;
-	}
-
-	if ((error = rail_write_unicode_string_value(s, workingDir)))
-	{
-		WLog_ERR(TAG, "rail_write_unicode_string_value failed with error %" PRIu32 "", error);
-		return error;
-	}
-
-	if ((error = rail_write_unicode_string_value(s, arguments)))
-	{
-		WLog_ERR(TAG, "rail_write_unicode_string_value failed with error %" PRIu32 "", error);
-		return error;
-	}
-
-	return error;
+	Stream_Write_UINT16(s, exec->flags); /* flags (2 bytes) */
+	Stream_Write_UINT16(s, exec->exeOrFile.length); /* exeOrFileLength (2 bytes) */
+	Stream_Write_UINT16(s, exec->workingDir.length); /* workingDirLength (2 bytes) */
+	Stream_Write_UINT16(s, exec->arguments.length); /* argumentsLength (2 bytes) */
+	Stream_Write(s, exec->exeOrFile.string, exec->exeOrFile.length); /* ExeOrFile (variable) */
+	Stream_Write(s, exec->workingDir.string, exec->workingDir.length); /* WorkingDir (variable) */
+	Stream_Write(s, exec->arguments.string, exec->arguments.length); /* Arguments (variable) */
+	return ERROR_SUCCESS;
 }
 
 static UINT rail_write_client_activate_order(wStream* s, const RAIL_ACTIVATE_ORDER* activate)
@@ -1042,19 +1024,20 @@ UINT rail_send_client_status_order(railPlugin* rail, const RAIL_CLIENT_STATUS_OR
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_send_client_exec_order(railPlugin* rail, UINT16 flags,
-                                 const RAIL_UNICODE_STRING* exeOrFile,
-                                 const RAIL_UNICODE_STRING* workingDir,
-                                 const RAIL_UNICODE_STRING* arguments)
+UINT rail_send_client_exec_order(railPlugin* rail,
+                                 const RAIL_EXEC_ORDER* exec)
 {
 	wStream* s;
 	UINT error;
 	size_t length;
 
-	if (!rail || !exeOrFile || !workingDir || !arguments)
+	if (!rail || !exec)
 		return ERROR_INVALID_PARAMETER;
 
-	length = RAIL_EXEC_ORDER_LENGTH + exeOrFile->length + workingDir->length + arguments->length;
+	length = RAIL_EXEC_ORDER_LENGTH +
+	         exec->exeOrFile.length +
+	         exec->workingDir.length +
+	         exec->arguments.length;
 	s = rail_pdu_init(length);
 
 	if (!s)
@@ -1063,7 +1046,7 @@ UINT rail_send_client_exec_order(railPlugin* rail, UINT16 flags,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if ((error = rail_write_client_exec_order(s, flags, exeOrFile, workingDir, arguments)))
+	if ((error = rail_write_client_exec_order(s, exec)))
 	{
 		WLog_ERR(TAG, "rail_write_client_exec_order failed with error %" PRIu32 "!", error);
 		goto out;

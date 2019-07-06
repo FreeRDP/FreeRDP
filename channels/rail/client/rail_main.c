@@ -111,38 +111,13 @@ UINT rail_send_channel_data(railPlugin* rail, wStream* src)
  */
 static UINT rail_client_execute(RailClientContext* context, const RAIL_EXEC_ORDER* exec)
 {
-	char* exeOrFile;
-	UINT error;
 	railPlugin* rail;
-	UINT16 flags;
-	RAIL_UNICODE_STRING ruExeOrFile = { 0 };
-	RAIL_UNICODE_STRING ruWorkingDir = { 0 };
-	RAIL_UNICODE_STRING ruArguments = { 0 };
 
 	if (!context || !exec)
 		return ERROR_INVALID_PARAMETER;
 
-	rail = (railPlugin*)context->handle;
-	exeOrFile = exec->RemoteApplicationProgram;
-	flags = exec->flags;
-
-	if (!exeOrFile)
-		return ERROR_INVALID_PARAMETER;
-
-	if (!rail_string_to_unicode_string(exec->RemoteApplicationProgram,
-	                                   &ruExeOrFile) || /* RemoteApplicationProgram */
-	    !rail_string_to_unicode_string(exec->RemoteApplicationWorkingDir,
-	                                   &ruWorkingDir) || /* ShellWorkingDirectory */
-	    !rail_string_to_unicode_string(exec->RemoteApplicationArguments,
-	                                   &ruArguments)) /* RemoteApplicationCmdLine */
-		error = ERROR_INTERNAL_ERROR;
-	else
-		error = rail_send_client_exec_order(rail, flags, &ruExeOrFile, &ruWorkingDir, &ruArguments);
-
-	free(ruExeOrFile.string);
-	free(ruWorkingDir.string);
-	free(ruArguments.string);
-	return error;
+	rail = (railPlugin*) context->handle;
+	return rail_send_client_exec_order(rail, exec);
 }
 
 /**
@@ -824,11 +799,11 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 
 		context->handle = (void*)rail;
 		context->custom = NULL;
-		context->ClientExecute = rail_client_execute;
 		context->ClientActivate = rail_client_activate;
 		context->ClientSystemParam = rail_client_system_param;
 		context->ClientSystemCommand = rail_client_system_command;
 		context->ClientHandshake = rail_client_handshake;
+		context->ClientExec = rail_client_execute;
 		context->ClientNotifyEvent = rail_client_notify_event;
 		context->ClientWindowMove = rail_client_window_move;
 		context->ClientInformation = rail_client_information;

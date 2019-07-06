@@ -31,7 +31,6 @@ extern const char* const RAIL_ORDER_TYPE_STRINGS[];
 #define RAIL_PDU_HEADER_LENGTH	4
 
 /* Fixed length of PDUs, excluding variable lengths */
-BOOL rail_string_to_unicode_string(const char* string, RAIL_UNICODE_STRING* unicode_string);
 #define RAIL_HANDSHAKE_ORDER_LENGTH				4		/* fixed */
 #define RAIL_HANDSHAKE_EX_ORDER_LENGTH			8		/* fixed */
 #define RAIL_CLIENT_STATUS_ORDER_LENGTH			4		/* fixed */

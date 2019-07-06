@@ -35,10 +35,7 @@ UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType);
 UINT rail_send_handshake_order(railPlugin* rail, const RAIL_HANDSHAKE_ORDER* handshake);
 UINT rail_send_handshake_ex_order(railPlugin* rail, const RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 UINT rail_send_client_status_order(railPlugin* rail, const RAIL_CLIENT_STATUS_ORDER* clientStatus);
-UINT rail_send_client_exec_order(railPlugin* rail, UINT16 flags,
-                                 const RAIL_UNICODE_STRING* exeOrFile,
-                                 const RAIL_UNICODE_STRING* workingDir,
-                                 const RAIL_UNICODE_STRING* arguments);
+UINT rail_send_client_exec_order(railPlugin* rail, const RAIL_EXEC_ORDER* exec);
 UINT rail_send_client_activate_order(railPlugin* rail, const RAIL_ACTIVATE_ORDER* activate);
 UINT rail_send_client_sysmenu_order(railPlugin* rail, const RAIL_SYSMENU_ORDER* sysmenu);
 UINT rail_send_client_syscommand_order(railPlugin* rail, const RAIL_SYSCOMMAND_ORDER* syscommand);

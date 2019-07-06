@@ -206,6 +206,7 @@ static void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 	const RECTANGLE_16* extents;
 	REGION16 windowInvalidRegion;
 	region16_init(&windowInvalidRegion);
+
 	if (xfc->railWindows)
 		count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
@@ -607,10 +608,12 @@ static BOOL convert_rail_icon(ICON_INFO* iconInfo, xfRailIcon* railIcon)
 	if (!argbPixels)
 		goto error;
 
-	if (!freerdp_image_copy_from_icon_data(
-	        argbPixels, PIXEL_FORMAT_ARGB32, 0, 0, 0, iconInfo->width, iconInfo->height,
-	        iconInfo->bitsColor, iconInfo->cbBitsColor, iconInfo->bitsMask, iconInfo->cbBitsMask,
-	        iconInfo->colorTable, iconInfo->cbColorTable, iconInfo->bpp))
+	if (!freerdp_image_copy_from_icon_data(argbPixels,
+	                                       PIXEL_FORMAT_ARGB32, 0, 0, 0,
+	                                       iconInfo->width, iconInfo->height,
+	                                       iconInfo->bitsColor, iconInfo->cbBitsColor,
+	                                       iconInfo->bitsMask, iconInfo->cbBitsMask,
+	                                       iconInfo->colorTable, iconInfo->cbColorTable, iconInfo->bpp))
 		goto error;
 
 	nelements = 2 + iconInfo->width * iconInfo->height;
@@ -884,10 +887,19 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 	if (status != CHANNEL_RC_OK)
 		return status;
 
-	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
-	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
-	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
-	return context->ClientExecute(context, &exec);
+	if (!utf8_string_to_rail_string(settings->RemoteApplicationProgram,
+	                                &exec.exeOrFile) ||
+	    !utf8_string_to_rail_string(settings->ShellWorkingDirectory,
+	                                &exec.workingDir) ||
+	    !utf8_string_to_rail_string(settings->RemoteApplicationCmdLine,
+	                                &exec.arguments))
+		return ERROR_INTERNAL_ERROR;
+
+	status = context->ClientExec(context, &exec);
+	free(exec.exeOrFile.string);
+	free(exec.workingDir.string);
+	free(exec.arguments.string);
+	return status;
 }
 /**
  * Function description

@@ -325,9 +325,9 @@ typedef struct _RAIL_CLIENT_STATUS_ORDER RAIL_CLIENT_STATUS_ORDER;
 struct _RAIL_EXEC_ORDER
 {
 	UINT16 flags;
-	char* RemoteApplicationProgram;
-	char* RemoteApplicationWorkingDir;
-	char* RemoteApplicationArguments;
+	RAIL_UNICODE_STRING exeOrFile;
+	RAIL_UNICODE_STRING workingDir;
+	RAIL_UNICODE_STRING arguments;
 };
 typedef struct _RAIL_EXEC_ORDER RAIL_EXEC_ORDER;
 
@@ -579,7 +579,9 @@ extern "C"
 {
 #endif
 
-	FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
+FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
+FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
+        RAIL_UNICODE_STRING* unicode_string);
 
 #ifdef __cplusplus
 }

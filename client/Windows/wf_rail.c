@@ -893,10 +893,19 @@ static UINT wf_rail_server_handshake(RailClientContext* context,
 	sysparam.dragFullWindows = FALSE;
 	context->ClientSystemParam(context, &sysparam);
 	ZeroMemory(&exec, sizeof(RAIL_EXEC_ORDER));
-	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
-	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
-	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
-	context->ClientExecute(context, &exec);
+
+	if (!utf8_string_to_rail_string(settings->RemoteApplicationProgram,
+	                                &exec.exeOrFile) ||
+	    !utf8_string_to_rail_string(settings->ShellWorkingDirectory,
+	                                &exec.workingDir) ||
+	    !utf8_string_to_rail_string(settings->RemoteApplicationCmdLine,
+	                                &exec.arguments))
+		return ERROR_INTERNAL_ERROR;
+
+	context->ClientExec(context, &exec);
+	free(exec.exeOrFile.string);
+	free(exec.workingDir.string);
+	free(exec.arguments.string);
 	return CHANNEL_RC_OK;
 }
 
