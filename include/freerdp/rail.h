@@ -493,7 +493,7 @@ typedef struct _RAIL_TASKBAR_INFO_ORDER RAIL_TASKBAR_INFO_ORDER;
 struct _RAIL_LANGUAGEIME_INFO_ORDER
 {
 	UINT32 ProfileType;
-	UINT32 LanguageID;
+	UINT16 LanguageID;
 	GUID LanguageProfileCLSID;
 	GUID ProfileGUID;
 	UINT32 KeyboardLayout;
