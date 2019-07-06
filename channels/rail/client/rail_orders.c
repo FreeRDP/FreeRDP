@@ -713,10 +713,9 @@ static UINT rail_recv_zorder_sync_order(railPlugin* rail, wStream* s)
 	return error;
 }
 
-static UINT rail_read_order_cloak(wStream* s, RAIL_CLOAK* cloak)
+static UINT rail_read_cloak_order(wStream* s, RAIL_CLOAK_ORDER* cloak)
 {
-	if (!s || !cloak)
-		return ERROR_INVALID_PARAMETER;
+	BYTE cloaked;
 
 	if (Stream_GetRemainingLength(s) < RAIL_CLOAK_ORDER_LENGTH)
 	{
@@ -724,15 +723,16 @@ static UINT rail_read_order_cloak(wStream* s, RAIL_CLOAK* cloak)
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT32(s, cloak->windowId);
-	Stream_Read_UINT8(s, cloak->cloak);
+	Stream_Read_UINT32(s, cloak->windowId); /* WindowId (4 bytes) */
+	Stream_Read_UINT8(s, cloaked); /* Cloaked (1 byte) */
+	cloak->cloaked = (cloaked != 0) ? TRUE : FALSE;
 	return CHANNEL_RC_OK;
 }
 
-static UINT rail_recv_order_cloak(railPlugin* rail, wStream* s)
+static UINT rail_recv_cloak_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	RAIL_CLOAK cloak = { 0 };
+	RAIL_CLOAK_ORDER cloak = { 0 };
 	UINT error;
 
 	if (!context)
@@ -743,7 +743,7 @@ static UINT rail_recv_order_cloak(railPlugin* rail, wStream* s)
 	if ((rail->clientStatus.flags & TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED) == 0)
 		return ERROR_INVALID_DATA;
 
-	if ((error = rail_read_order_cloak(s, &cloak)))
+	if ((error = rail_read_cloak_order(s, &cloak)))
 	{
 		WLog_ERR(TAG, "rail_read_zorder_sync_order failed with error %" PRIu32 "!", error);
 		return error;
@@ -931,7 +931,7 @@ UINT rail_order_recv(railPlugin* rail, wStream* s)
 			return rail_recv_zorder_sync_order(rail, s);
 
 		case TS_RAIL_ORDER_CLOAK:
-			return rail_recv_order_cloak(rail, s);
+			return rail_recv_cloak_order(rail, s);
 
 		case TS_RAIL_ORDER_POWER_DISPLAY_REQUEST:
 			return rail_recv_power_display_request_order(rail, s);
@@ -1531,7 +1531,6 @@ UINT rail_send_client_languageime_info_order(railPlugin* rail,
 	return error;
 }
 
-UINT rail_send_client_order_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak)
 UINT rail_send_client_compartment_info_order(railPlugin* rail,
         const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo)
 {
@@ -1558,6 +1557,7 @@ UINT rail_send_client_compartment_info_order(railPlugin* rail,
 	return error;
 }
 
+UINT rail_send_client_cloak_order(railPlugin* rail, const RAIL_CLOAK_ORDER* cloak)
 {
 	wStream* s;
 	UINT error;
@@ -1574,7 +1574,7 @@ UINT rail_send_client_compartment_info_order(railPlugin* rail,
 	}
 
 	Stream_Write_UINT32(s, cloak->windowId);
-	Stream_Write_UINT8(s, cloak->cloak ? 1 : 0);
+	Stream_Write_UINT8(s, cloak->cloaked ? 1 : 0);
 	error = rail_send_pdu(rail, s, TS_RAIL_ORDER_CLOAK);
 	Stream_Free(s, TRUE);
 	return error;

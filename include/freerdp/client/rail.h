@@ -79,9 +79,7 @@ typedef UINT(*pcRailServerGetAppIdResponse)(RailClientContext* context,
 typedef UINT(*pcRailServerZOrderSync)(RailClientContext* context,
                                       const RAIL_ZORDER_SYNC* zorder);
 typedef UINT(*pcRailServerCloak)(RailClientContext* context,
-                                 const RAIL_CLOAK* cloak);
-typedef UINT(*pcRailClientCloak)(RailClientContext* context,
-                                 const RAIL_CLOAK* cloak);
+                                 const RAIL_CLOAK_ORDER* cloak);
 typedef UINT(*pcRailServerPowerDisplayRequest)(RailClientContext* context,
         const RAIL_POWER_DISPLAY_REQUEST* power);
 typedef UINT(*pcRailClientSnapArrange)(RailClientContext* context,
@@ -93,6 +91,8 @@ typedef UINT(*pcRailClientExec)(RailClientContext* context,
                                 RAIL_EXEC_ORDER* exec);
 typedef UINT(*pcRailClientCompartmentInfo)(RailClientContext* context,
         const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
+typedef UINT(*pcRailClientCloak)(RailClientContext* context,
+                                 const RAIL_CLOAK_ORDER* cloak);
 struct _rail_client_context
 {
 	void* handle;
@@ -120,12 +120,12 @@ struct _rail_client_context
 	pcRailClientGetAppIdRequest ClientGetAppIdRequest;
 	pcRailServerGetAppIdResponse ServerGetAppIdResponse;
 	pcRailServerZOrderSync ServerZOrderSync;
-	pcRailClientCloak ClientCloak;
 	pcRailServerCloak ServerCloak;
 	pcRailServerPowerDisplayRequest ServerPowerDisplayRequest;
 	pcRailClientSnapArrange ClientSnapArrange;
 	pcRailServerGetAppidResponseExtended ServerGetAppidResponseExtended;
 	pcRailClientCompartmentInfo ClientCompartmentInfo;
+	pcRailClientCloak ClientCloak;
 };
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_RAIL_H */

@@ -469,12 +469,12 @@ struct _RAIL_ZORDER_SYNC
 };
 typedef struct _RAIL_ZORDER_SYNC RAIL_ZORDER_SYNC;
 
-struct _RAIL_CLOAK
+struct _RAIL_CLOAK_ORDER
 {
 	UINT32 windowId;
-	BOOL cloak;
+	BOOL cloaked;
 };
-typedef struct _RAIL_CLOAK RAIL_CLOAK;
+typedef struct _RAIL_CLOAK_ORDER RAIL_CLOAK_ORDER;
 
 struct _RAIL_POWER_DISPLAY_REQUEST
 {
