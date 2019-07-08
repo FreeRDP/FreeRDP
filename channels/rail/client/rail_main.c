@@ -127,12 +127,6 @@ static UINT rail_client_execute(RailClientContext* context,
 	if (!exeOrFile)
 		return ERROR_INVALID_PARAMETER;
 
-	if (strnlen(exeOrFile, MAX_PATH) >= 2)
-	{
-		if (strncmp(exeOrFile, "||", 2) != 0)
-			flags |= TS_RAIL_EXEC_FLAG_FILE;
-	}
-
 	if (!rail_string_to_unicode_string(exec->RemoteApplicationProgram,
 	                                   &ruExeOrFile) || /* RemoteApplicationProgram */
 	    !rail_string_to_unicode_string(exec->RemoteApplicationWorkingDir,
