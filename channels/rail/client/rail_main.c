@@ -650,6 +650,7 @@ static DWORD WINAPI rail_virtual_channel_client_thread(LPVOID arg)
  */
 static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData, UINT32 dataLength)
 {
+	RailClientContext* context = rail_get_client_interface(rail);
 	UINT status;
 	status = rail->channelEntryPoints.pVirtualChannelOpenEx(rail->InitHandle, &rail->OpenHandle,
 	                                                        rail->channelDef.name,
@@ -660,6 +661,15 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08" PRIX32 "]",
 		         WTSErrorToString(status), status);
 		return status;
+	}
+
+	if (context)
+	{
+		IFCALLRET(context->OnOpen, status, context, &rail->sendHandshake);
+
+		if (status != CHANNEL_RC_OK)
+			WLog_ERR(TAG, "context->OnOpen failed with %s [%08"PRIX32"]",
+			         WTSErrorToString(status), status);
 	}
 
 	rail->queue = MessageQueue_New(NULL);
@@ -795,6 +805,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		return FALSE;
 	}
 
+	/* Default to automatically replying to server handshakes */
+	rail->sendHandshake = TRUE;
 	rail->channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED |
 	    CHANNEL_OPTION_ENCRYPT_RDP |

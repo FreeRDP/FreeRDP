@@ -33,6 +33,8 @@
 
 typedef struct _rail_client_context RailClientContext;
 
+typedef UINT(*pcRailOnOpen)(RailClientContext* context, BOOL* sendHandshake);
+
 /* Callbacks from Server */
 typedef UINT(*pcRailServerHandshake)(RailClientContext* context,
                                      const RAIL_HANDSHAKE_ORDER* handshake);
@@ -96,6 +98,8 @@ struct _rail_client_context
 {
 	void* handle;
 	void* custom;
+
+	pcRailOnOpen OnOpen;
 
 	/* Callbacks from Server */
 	pcRailServerHandshake ServerHandshake;
