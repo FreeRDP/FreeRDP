@@ -26,6 +26,8 @@
 
 #include <freerdp/types.h>
 
+#define RAIL_SVC_CHANNEL_NAME	"rail"
+
 /* DEPRECATED: RAIL PDU flags use the spec conformant naming with TS_ prefix */
 #define RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY 0x0001
 #define RAIL_EXEC_FLAG_TRANSLATE_FILES 0x0002

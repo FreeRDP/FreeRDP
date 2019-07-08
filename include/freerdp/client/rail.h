@@ -31,8 +31,6 @@
  * Client Interface
  */
 
-#define RAIL_SVC_CHANNEL_NAME "rail"
-
 typedef struct _rail_client_context RailClientContext;
 
 /* Callbacks from Server */
