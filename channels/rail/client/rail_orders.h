@@ -34,7 +34,8 @@ UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType);
 
 UINT rail_send_handshake_order(railPlugin* rail, const RAIL_HANDSHAKE_ORDER* handshake);
 UINT rail_send_handshake_ex_order(railPlugin* rail, const RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
-UINT rail_send_client_status_order(railPlugin* rail, const RAIL_CLIENT_STATUS_ORDER* clientStatus);
+UINT rail_send_client_client_status_order(railPlugin* rail,
+        const RAIL_CLIENT_STATUS_ORDER* clientStatus);
 UINT rail_send_client_exec_order(railPlugin* rail, const RAIL_EXEC_ORDER* exec);
 UINT rail_send_client_activate_order(railPlugin* rail, const RAIL_ACTIVATE_ORDER* activate);
 UINT rail_send_client_sysmenu_order(railPlugin* rail, const RAIL_SYSMENU_ORDER* sysmenu);
@@ -49,9 +50,10 @@ UINT rail_send_client_langbar_info_order(railPlugin* rail,
                                          const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
 UINT rail_send_client_languageime_info_order(railPlugin* rail,
         const RAIL_LANGUAGEIME_INFO_ORDER* langImeInfo);
-UINT rail_send_client_order_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap);
 UINT rail_send_client_cloak_order(railPlugin* rail, const RAIL_CLOAK_ORDER* cloak);
 UINT rail_send_client_compartment_info_order(railPlugin* rail,
         const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
+UINT rail_send_client_snap_arrange_order(railPlugin* rail,
+        const RAIL_SNAP_ARRANGE_ORDER* snap);
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_ORDERS_H */
