@@ -135,7 +135,6 @@
 #define WS_EX_TRANSPARENT 0x00000020
 #define WS_EX_WINDOWEDGE 0x00000100
 #endif
-
 /**
  * This is a custom extended window style used by XRDP
  * instructing the client to use local window decorations
@@ -153,14 +152,14 @@ typedef struct _WINDOW_ORDER_INFO WINDOW_ORDER_INFO;
 
 struct _ICON_INFO
 {
-	UINT32 cacheEntry;
-	UINT32 cacheId;
-	UINT32 bpp;
-	UINT32 width;
-	UINT32 height;
-	UINT32 cbColorTable;
-	UINT32 cbBitsMask;
-	UINT32 cbBitsColor;
+	UINT16 cacheEntry;
+	UINT8 cacheId;
+	UINT8 bpp;
+	UINT16 width;
+	UINT16 height;
+	UINT16 cbColorTable;
+	UINT16 cbBitsMask;
+	UINT16 cbBitsColor;
 	BYTE* bitsMask;
 	BYTE* colorTable;
 	BYTE* bitsColor;
@@ -188,13 +187,13 @@ struct _WINDOW_STATE_ORDER
 	UINT32 ownerWindowId;
 	UINT32 style;
 	UINT32 extendedStyle;
-	UINT32 showState;
+	UINT8 showState;
 	RAIL_UNICODE_STRING titleInfo;
 	INT32 clientOffsetX;
 	INT32 clientOffsetY;
 	UINT32 clientAreaWidth;
 	UINT32 clientAreaHeight;
-	UINT32 RPContent;
+	UINT8 RPContent;
 	UINT32 rootParentHandle;
 	INT32 windowOffsetX;
 	INT32 windowOffsetY;

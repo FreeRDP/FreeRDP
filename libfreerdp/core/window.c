@@ -483,8 +483,8 @@ static BOOL update_read_window_cached_icon_order(wStream* s, WINDOW_ORDER_INFO* 
                                                  WINDOW_CACHED_ICON_ORDER* window_cached_icon)
 {
 	WINPR_UNUSED(orderInfo);
-	return update_read_cached_icon_info(
-	    s, &window_cached_icon->cachedIcon); /* cachedIcon (CACHED_ICON_INFO) */
+	return update_read_cached_icon_info(s,
+	                                    &window_cached_icon->cachedIcon); /* cachedIcon (CACHED_ICON_INFO) */
 }
 
 static void update_read_window_delete_order(wStream* s, WINDOW_ORDER_INFO* orderInfo)
@@ -534,30 +534,37 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 {
 	char buffer[3000] = { 0 };
 	const size_t bufferSize = sizeof(buffer) - 1;
-
-	_snprintf(buffer, bufferSize, "%s windowId=0x%" PRIu32 "", msg, order->windowId);
+	_snprintf(buffer, bufferSize, "%s windowId=0x%"PRIu32"", msg, order->windowId);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
-		DUMP_APPEND(buffer, bufferSize, " owner=0x%" PRIx32 "", state->ownerWindowId);
+		DUMP_APPEND(buffer, bufferSize, " owner=0x%"PRIx32"", state->ownerWindowId);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
-		DUMP_APPEND(buffer, bufferSize, " [ex]style=<0x%" PRIx32 ", 0x%" PRIx32 "", state->style,
+		DUMP_APPEND(buffer, bufferSize, " [ex]style=<0x%"PRIx32", 0x%"PRIx32"", state->style,
 		            state->extendedStyle);
+
 		if (state->style & WS_POPUP)
 			DUMP_APPEND(buffer, bufferSize, " popup");
+
 		if (state->style & WS_VISIBLE)
 			DUMP_APPEND(buffer, bufferSize, " visible");
+
 		if (state->style & WS_THICKFRAME)
 			DUMP_APPEND(buffer, bufferSize, " thickframe");
+
 		if (state->style & WS_BORDER)
 			DUMP_APPEND(buffer, bufferSize, " border");
+
 		if (state->style & WS_CAPTION)
 			DUMP_APPEND(buffer, bufferSize, " caption");
 
 		if (state->extendedStyle & WS_EX_NOACTIVATE)
 			DUMP_APPEND(buffer, bufferSize, " noactivate");
+
 		if (state->extendedStyle & WS_EX_TOOLWINDOW)
 			DUMP_APPEND(buffer, bufferSize, " toolWindow");
+
 		if (state->extendedStyle & WS_EX_TOPMOST)
 			DUMP_APPEND(buffer, bufferSize, " topMost");
 
@@ -572,79 +579,95 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 			case 0:
 				showStr = "hidden";
 				break;
+
 			case 2:
 				showStr = "minimized";
 				break;
+
 			case 3:
 				showStr = "maximized";
 				break;
+
 			case 5:
 				showStr = "current";
 				break;
+
 			default:
 				showStr = "<unknown>";
 				break;
 		}
+
 		DUMP_APPEND(buffer, bufferSize, " show=%s", showStr);
 	}
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 		DUMP_APPEND(buffer, bufferSize, " title");
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
-		DUMP_APPEND(buffer, bufferSize, " clientOffset=(%" PRId32 ",%" PRId32 ")",
+		DUMP_APPEND(buffer, bufferSize, " clientOffsetX=%"PRId32" clientOffsetY=%"PRId32"",
 		            state->clientOffsetX, state->clientOffsetY);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
-		DUMP_APPEND(buffer, bufferSize, " clientAreaWidth=%" PRIu32 " clientAreaHeight=%" PRIu32 "",
+		DUMP_APPEND(buffer, bufferSize, " clientAreaWidth=%"PRIu32" clientAreaHeight=%"PRIu32"",
 		            state->clientAreaWidth, state->clientAreaHeight);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
-		DUMP_APPEND(buffer, bufferSize,
-		            " resizeMarginLeft=%" PRIu32 " resizeMarginRight=%" PRIu32 "",
+		DUMP_APPEND(buffer, bufferSize, " resizeMarginLeft=%"PRIu32" resizeMarginRight=%"PRIu32"",
 		            state->resizeMarginLeft, state->resizeMarginRight);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
-		DUMP_APPEND(buffer, bufferSize,
-		            " resizeMarginTop=%" PRIu32 " resizeMarginBottom=%" PRIu32 "",
+		DUMP_APPEND(buffer, bufferSize, " resizeMarginTop=%"PRIu32" resizeMarginBottom=%"PRIu32"",
 		            state->resizeMarginTop, state->resizeMarginBottom);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
-		DUMP_APPEND(buffer, bufferSize, " rpContent=0x%" PRIx32 "", state->RPContent);
+		DUMP_APPEND(buffer, bufferSize, " rpContent=0x%"PRIx8"", state->RPContent);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
-		DUMP_APPEND(buffer, bufferSize, " rootParent=0x%" PRIx32 "", state->rootParentHandle);
+		DUMP_APPEND(buffer, bufferSize, " rootParent=0x%"PRIx32"", state->rootParentHandle);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
-		DUMP_APPEND(buffer, bufferSize, " windowOffset=(%" PRId32 ",%" PRId32 ")",
+		DUMP_APPEND(buffer, bufferSize, " windowOffsetX=%"PRId32" windowOffsetY=%"PRId32"",
 		            state->windowOffsetX, state->windowOffsetY);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
-		DUMP_APPEND(buffer, bufferSize, " windowClientDelta=(%" PRId32 ",%" PRId32 ")",
+		DUMP_APPEND(buffer, bufferSize, " windowClientDeltaX=%"PRId32" windowClientDeltaY=%"PRId32"",
 		            state->windowClientDeltaX, state->windowClientDeltaY);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
-		DUMP_APPEND(buffer, bufferSize, " windowWidth=%" PRIu32 " windowHeight=%" PRIu32 "",
-		            state->windowWidth, state->windowHeight);
+		DUMP_APPEND(buffer, bufferSize, " windowWidth=%"PRIu32" windowHeight=%"PRIu32"", state->windowWidth,
+		            state->windowHeight);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
 		UINT32 i;
 		DUMP_APPEND(buffer, bufferSize, " windowRects=(");
+
 		for (i = 0; i < state->numWindowRects; i++)
 		{
-			DUMP_APPEND(buffer, bufferSize, "(%" PRIu16 ",%" PRIu16 ",%" PRIu16 ",%" PRIu16 ")",
+			DUMP_APPEND(buffer, bufferSize, "(%"PRIu16",%"PRIu16",%"PRIu16",%"PRIu16")",
 			            state->windowRects[i].left, state->windowRects[i].top,
 			            state->windowRects[i].right, state->windowRects[i].bottom);
 		}
+
 		DUMP_APPEND(buffer, bufferSize, ")");
 	}
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
-		DUMP_APPEND(buffer, bufferSize, " visibleOffset=(%" PRId32 ",%" PRId32 ")",
+		DUMP_APPEND(buffer, bufferSize, " visibleOffsetX=%"PRId32" visibleOffsetY=%"PRId32"",
 		            state->visibleOffsetX, state->visibleOffsetY);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
 		UINT32 i;
 		DUMP_APPEND(buffer, bufferSize, " visibilityRects=(");
+
 		for (i = 0; i < state->numVisibilityRects; i++)
 		{
-			DUMP_APPEND(buffer, bufferSize, "(%" PRIu16 ",%" PRIu16 ",%" PRIu16 ",%" PRIu16 ")",
+			DUMP_APPEND(buffer, bufferSize, "(%"PRIu16",%"PRIu16",%"PRIu16",%"PRIu16")",
 			            state->visibilityRects[i].left, state->visibilityRects[i].top,
 			            state->visibilityRects[i].right, state->visibilityRects[i].bottom);
 		}
+
 		DUMP_APPEND(buffer, bufferSize, ")");
 	}
 
@@ -658,31 +681,38 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 		DUMP_APPEND(buffer, bufferSize, " taskBarButton=0x%" PRIx8 "", state->TaskbarButton);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER)
-		DUMP_APPEND(buffer, bufferSize, " enforceServerZOrder=0x%" PRIx8 "",
-		            state->EnforceServerZOrder);
+		DUMP_APPEND(buffer, bufferSize, " enforceServerZOrder=0x%"PRIx8"", state->EnforceServerZOrder);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_APPBAR_STATE)
-		DUMP_APPEND(buffer, bufferSize, " appBarState=0x%" PRIx8 "", state->AppBarState);
+		DUMP_APPEND(buffer, bufferSize, " appBarState=0x%"PRIx8"", state->AppBarState);
+
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_APPBAR_EDGE)
 	{
 		const char* appBarEdgeStr;
+
 		switch (state->AppBarEdge)
 		{
 			case 0:
 				appBarEdgeStr = "left";
 				break;
+
 			case 1:
 				appBarEdgeStr = "top";
 				break;
+
 			case 2:
 				appBarEdgeStr = "right";
 				break;
+
 			case 3:
 				appBarEdgeStr = "bottom";
 				break;
+
 			default:
 				appBarEdgeStr = "<unknown>";
 				break;
 		}
+
 		DUMP_APPEND(buffer, bufferSize, " appBarEdge=%s", appBarEdgeStr);
 	}
 
@@ -789,8 +819,8 @@ static BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_I
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP)
 	{
-		if (!update_read_notify_icon_infotip(
-		        s, &notify_icon_state->infoTip)) /* infoTip (NOTIFY_ICON_INFOTIP) */
+		if (!update_read_notify_icon_infotip(s,
+		                                     &notify_icon_state->infoTip)) /* infoTip (NOTIFY_ICON_INFOTIP) */
 			return FALSE;
 	}
 
@@ -810,8 +840,8 @@ static BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_I
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
 	{
-		if (!update_read_cached_icon_info(
-		        s, &notify_icon_state->cachedIcon)) /* cachedIcon (CACHED_ICON_INFO) */
+		if (!update_read_cached_icon_info(s,
+		                                  &notify_icon_state->cachedIcon)) /* cachedIcon (CACHED_ICON_INFO) */
 			return FALSE;
 	}
 
@@ -928,7 +958,6 @@ static void dump_monitored_desktop(wLog* log, const char* msg, const WINDOW_ORDE
 {
 	char buffer[1000] = { 0 };
 	const size_t bufferSize = sizeof(buffer) - 1;
-
 	DUMP_APPEND(buffer, bufferSize, "%s", msg);
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
@@ -937,14 +966,16 @@ static void dump_monitored_desktop(wLog* log, const char* msg, const WINDOW_ORDE
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 	{
 		UINT32 i;
-
 		DUMP_APPEND(buffer, bufferSize, " windows=(");
+
 		for (i = 0; i < monitored->numWindowIds; i++)
 		{
 			DUMP_APPEND(buffer, bufferSize, "0x%" PRIx32 ",", monitored->windowIds[i]);
 		}
+
 		DUMP_APPEND(buffer, bufferSize, ")");
 	}
+
 	WLog_Print(log, WLOG_DEBUG, buffer);
 }
 
@@ -958,7 +989,7 @@ static BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s,
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_NONE)
 	{
 		update_read_desktop_non_monitored_order(s, orderInfo);
-		WLog_Print(update->log, WLOG_DEBUG, "NonMonitoredDesktop, windowId=0x%" PRIx32 "",
+		WLog_Print(update->log, WLOG_DEBUG, "NonMonitoredDesktop, windowId=0x%"PRIx32"",
 		           orderInfo->windowId);
 		IFCALLRET(window->NonMonitoredDesktop, result, context, orderInfo);
 	}
