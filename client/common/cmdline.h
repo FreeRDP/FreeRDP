@@ -147,6 +147,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	},
 	{ "pth", COMMAND_LINE_VALUE_REQUIRED, "<password-hash>", NULL, NULL, -1, "pass-the-hash", "Pass the hash (restricted admin mode)" },
 	{ "pwidth", COMMAND_LINE_VALUE_REQUIRED, "<width>", NULL, NULL, -1, NULL, "Physical width of display (in millimeters)" },
+	{ "rdp2tcp", COMMAND_LINE_VALUE_REQUIRED, "<executable path[:arg...]>", NULL, NULL, -1, NULL, "TCP redirection" },
 	{ "reconnect-cookie", COMMAND_LINE_VALUE_REQUIRED, "<base64-cookie>", NULL, NULL, -1, NULL, "Pass base64 reconnect cookie to the connection" },
 	{ "redirect-prefer", COMMAND_LINE_VALUE_REQUIRED, "<FQDN|IP|NETBIOS>,[...]", NULL, NULL, -1, NULL, "Override the preferred redirection order" },
 	{ "relax-order-checks", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "relax-order-checks", "Do not check if a RDP order was announced during capability exchange, only use when connecting to a buggy server" },
