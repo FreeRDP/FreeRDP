@@ -1085,6 +1085,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			return FALSE;
 	}
 
+	if (~file->NetworkAutoDetect)
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
+		                               file->NetworkAutoDetect))
+			return FALSE;
+	}
+
 	if (~file->AutoReconnectionEnabled)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AutoReconnectionEnabled,
