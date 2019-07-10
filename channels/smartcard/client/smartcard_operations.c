@@ -1209,15 +1209,19 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 	Status_Call* call = operation->call;
 	DWORD cbAtrLen;
 
-	if (call->cbAtrLen > 32)
-		call->cbAtrLen = 32;
+	/**
+	 * [MS-RDPESC]
+	 * According to 2.2.2.18 Status_Call cbAtrLen is unused an must be ignored upon receipt.
+	 */
+	cbAtrLen = call->cbAtrLen = 32;
+
+	call->cchReaderLen;
 
 	if (call->fmszReaderNamesIsNULL)
 		cchReaderLen = 0;
 	else
 		cchReaderLen = SCARD_AUTOALLOCATE;
 
-	cbAtrLen = call->cbAtrLen;
 	ZeroMemory(ret.pbAtr, 32);
 	status = ret.ReturnCode = SCardStatusW(operation->hCard,
 	                                       call->fmszReaderNamesIsNULL ? NULL : (LPWSTR) &mszReaderNames,
@@ -1236,8 +1240,7 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 		ret.cBytes = cchReaderLen;
 #endif
 
-		if (call->cbAtrLen)
-			ret.cbAtrLen = cbAtrLen;
+		ret.cbAtrLen = cbAtrLen;
 	}
 
 	smartcard_trace_status_return(smartcard, &ret, TRUE);
