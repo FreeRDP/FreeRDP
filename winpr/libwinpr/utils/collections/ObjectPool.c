@@ -74,7 +74,7 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 
 	if ((pool->size + 1) >= pool->capacity)
 	{
-		int new_cap;
+		size_t new_cap;
 		void **new_arr;
 
 		new_cap = pool->capacity * 2;
