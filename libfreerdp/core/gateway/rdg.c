@@ -1050,14 +1050,24 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 
 		StatusCode = http_response_get_status_code(response);
 
-		if (StatusCode == HTTP_STATUS_NOT_FOUND)
+		switch(StatusCode)
 		{
-			WLog_INFO(TAG, "RD Gateway does not support HTTP transport.");
+			case HTTP_STATUS_DENIED:
+				freerdp_set_last_error(rdg->context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
+				http_response_free(response);
+				return FALSE;
 
-			if (rpcFallback) *rpcFallback = TRUE;
+			case HTTP_STATUS_NOT_FOUND:
+			{
+				WLog_INFO(TAG, "RD Gateway does not support HTTP transport.");
 
-			http_response_free(response);
-			return FALSE;
+				if (rpcFallback) *rpcFallback = TRUE;
+
+				http_response_free(response);
+				return FALSE;
+			}
+			default:
+				break;
 		}
 
 		if (!rdg_handle_ntlm_challenge(rdg->ntlm, response))
@@ -1084,8 +1094,16 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 	http_response_free(response);
 	WLog_DBG(TAG, "%s authorization result: %d", method, statusCode);
 
-	if (statusCode != HTTP_STATUS_OK)
-		return FALSE;
+	switch(statusCode)
+	{
+		case HTTP_STATUS_OK:
+			break;
+		case HTTP_STATUS_DENIED:
+			freerdp_set_last_error(rdg->context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
+			return FALSE;
+			default:
+				return FALSE;
+		}
 
 	if (strcmp(method, "RDG_OUT_DATA") == 0)
 	{
