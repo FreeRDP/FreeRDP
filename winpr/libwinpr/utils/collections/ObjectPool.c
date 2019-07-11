@@ -80,7 +80,8 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 		new_cap = pool->capacity * 2;
 		new_arr = (void**) realloc(pool->array, sizeof(void*) * new_cap);
 		if (!new_arr)
-			return;
+			goto out;
+
 		pool->array = new_arr;
 		pool->capacity = new_cap;
 	}
@@ -90,6 +91,7 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 	if (pool->object.fnObjectUninit)
 		pool->object.fnObjectUninit(obj);
 
+out:
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
 }
