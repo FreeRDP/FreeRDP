@@ -1052,11 +1052,6 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 
 		switch(StatusCode)
 		{
-			case HTTP_STATUS_DENIED:
-				freerdp_set_last_error(rdg->context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
-				http_response_free(response);
-				return FALSE;
-
 			case HTTP_STATUS_NOT_FOUND:
 			{
 				WLog_INFO(TAG, "RD Gateway does not support HTTP transport.");
@@ -1101,9 +1096,9 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 		case HTTP_STATUS_DENIED:
 			freerdp_set_last_error(rdg->context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
 			return FALSE;
-			default:
-				return FALSE;
-		}
+		default:
+			return FALSE;
+	}
 
 	if (strcmp(method, "RDG_OUT_DATA") == 0)
 	{
