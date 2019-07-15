@@ -1026,6 +1026,22 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	tls->port = (int)settings->GatewayPort;
 	tls->isGatewayTransport = TRUE;
 	status = tls_connect(tls, bufferedBio);
+	if (status < 1)
+	{
+		rdpContext* context = rdg->context;
+		if (status < 0)
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
+
+		return FALSE;
+	}
 	return (status >= 1);
 }
 

@@ -819,7 +819,6 @@ static int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		{
 			WLog_ERR(TAG, "certificate not trusted, aborting.");
 			tls_send_alert(tls);
-			verify_status = 0;
 		}
 	}
 
@@ -1322,17 +1321,17 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 {
 	int match;
 	int index;
+	DWORD length;
+	BOOL certificate_status;
 	char* common_name = NULL;
 	int common_name_length = 0;
 	char** dns_names = 0;
 	int dns_names_count = 0;
 	int* dns_names_lengths = NULL;
-	BOOL certificate_status;
+	int verification_status = -1;
 	BOOL hostname_match = FALSE;
-	BOOL verification_status = FALSE;
 	rdpCertificateData* certificate_data = NULL;
 	freerdp* instance = (freerdp*) tls->settings->instance;
-	DWORD length;
 	BYTE* pemCert = NULL;
 	DWORD flags = VERIFY_CERT_FLAG_NONE;
 
@@ -1342,7 +1341,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 	/* Check, if we already accepted this key. */
 	if (is_accepted(tls, pemCert, length))
 	{
-		verification_status = TRUE;
+		verification_status = 1;
 		goto end;
 	}
 
@@ -1358,30 +1357,26 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 	/* Certificate management is done by the application */
 	if (tls->settings->ExternalCertificateManagement)
 	{
-		int status = -1;
-
 		if (instance->VerifyX509Certificate)
-			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
+			verification_status = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
 			         port, flags);
 		else
 			WLog_ERR(TAG, "No VerifyX509Certificate callback registered!");
 
-		if (status > 0)
+		if (verification_status > 0)
 			accept_cert(tls, pemCert, length);
-		else if (status < 0)
+		else if (verification_status < 0)
 		{
 			WLog_ERR(TAG, "VerifyX509Certificate failed: (length = %d) status: [%d] %s",
-			         length, status, pemCert);
+					 length, verification_status, pemCert);
 			goto end;
 		}
-
-		verification_status = (status == 0) ? FALSE : TRUE;
 	}
 	/* ignore certificate verification if user explicitly required it (discouraged) */
 	else if (tls->settings->IgnoreCertificate)
-		verification_status = TRUE; /* success! */
+		verification_status = 1; /* success! */
 	else if (!tls->isGatewayTransport && (tls->settings->AuthenticationLevel == 0))
-		verification_status = TRUE; /* success! */
+		verification_status = 1; /* success! */
 	else
 	{
 		/* if user explicitly specified a certificate name, use it instead of the hostname */
@@ -1422,7 +1417,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 
 		/* if the certificate is valid and the certificate name matches, verification succeeds */
 		if (certificate_status && hostname_match)
-			verification_status = TRUE; /* success! */
+			verification_status = 1; /* success! */
 
 		if (!hostname_match)
 			flags |= VERIFY_CERT_FLAG_MISMATCH;
@@ -1553,21 +1548,21 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 					/* user accepted certificate, add entry in known_hosts file */
 					if (match < 0)
 						verification_status = certificate_data_replace(tls->certificate_store,
-						                      certificate_data);
+											  certificate_data) ? 1 : -1;
 					else
 						verification_status = certificate_data_print(tls->certificate_store,
-						                      certificate_data);
+											  certificate_data) ? 1 : -1;
 
 					break;
 
 				case 2:
 					/* user did accept temporaty, do not add to known hosts file */
-					verification_status = TRUE;
+					verification_status = 1;
 					break;
 
 				default:
 					/* user did not accept, abort and do not add entry in known_hosts file */
-					verification_status = FALSE; /* failure! */
+					verification_status = -1; /* failure! */
 					break;
 			}
 
@@ -1576,7 +1571,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname,
 			free(fingerprint);
 		}
 
-		if (verification_status)
+		if (verification_status > 0)
 			accept_cert(tls, pemCert, length);
 	}
 
@@ -1589,7 +1584,7 @@ end:
 		                           dns_names);
 
 	free(pemCert);
-	return (verification_status == 0) ? 0 : 1;
+	return verification_status;
 }
 
 void tls_print_certificate_error(const char* hostname, UINT16 port, const char* fingerprint,
