@@ -739,7 +739,7 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name,
 #define SETTING_MODIFIED(_settings, _field) (WRITE_ALL_SETTINGS || _settings->SettingsModified[FreeRDP_##_field])
 #define SETTING_MODIFIED_SET(_target, _settings, _field) if SETTING_MODIFIED(_settings, _field) _target = _settings->_field
 #define SETTING_MODIFIED_SET_STRING(_target, _settings, _field) do { if SETTING_MODIFIED(_settings, _field) _target = _strdup(_settings->_field); \
-		if (!_target) return FALSE; \
+		if (!_target && _settings->_field) return FALSE; \
 	} while (0)
 
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings)
