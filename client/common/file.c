@@ -189,6 +189,7 @@ struct rdp_file
 	int argc;
 	char** argv;
 	int argSize;
+	void* context;
 };
 
 /*
@@ -553,7 +554,13 @@ static BOOL freerdp_client_parse_rdp_file_option(rdpFile* file, char* option, in
 }
 
 BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer,
-        size_t size)
+										  size_t size)
+{
+	return freerdp_client_parse_rdp_file_buffer_ex(file, buffer, size, NULL);
+}
+
+BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer,
+		size_t size, rdp_file_fkt_parse parse)
 {
 	BOOL rc = FALSE;
 	int index;
@@ -630,7 +637,11 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer,
 			name = beg;
 			value = &d2[1];
 
-			if (*type == 'i')
+			if (parse && parse(file->context, name, *type, value))
+			{
+
+			}
+			else if (*type == 'i')
 			{
 				/* integer type */
 				if (!freerdp_client_parse_rdp_file_integer(file, name, value, index))
@@ -661,6 +672,12 @@ fail:
 }
 
 BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
+{
+    return freerdp_client_parse_rdp_file_ex(file, name, NULL);
+}
+
+BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name,
+									  rdp_file_fkt_parse parse)
 {
 	BOOL status;
 	BYTE* buffer;
@@ -713,7 +730,7 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 
 	buffer[file_size] = '\0';
 	buffer[file_size + 1] = '\0';
-	status = freerdp_client_parse_rdp_file_buffer(file, buffer, file_size);
+	status = freerdp_client_parse_rdp_file_buffer_ex(file, buffer, file_size, parse);
 	free(buffer);
 	return status;
 }
@@ -1615,4 +1632,9 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 		freerdp_client_file_string_check_free(file->WinPosStr);
 		free(file);
 	}
+}
+
+void freerdp_client_rdp_file_set_callback_context(rdpFile* file, void* context)
+{
+	file->context = context;
 }

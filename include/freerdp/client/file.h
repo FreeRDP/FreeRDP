@@ -24,13 +24,21 @@
 #include <freerdp/freerdp.h>
 
 typedef struct rdp_file rdpFile;
+typedef BOOL (*rdp_file_fkt_parse)(void* context, const char* key, char type, const char* value);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* When using freerdp_client_parse_rdp_file_ex or freerdp_client_parse_rdp_file_buffer_ex
+ * set the context for the callback with this function. */
+FREERDP_API void freerdp_client_rdp_file_set_callback_context(rdpFile* file, void* context);
+
 FREERDP_API BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name);
+FREERDP_API BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_fkt_parse parse);
 FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, size_t size);
+FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, size_t size,
+                                                         rdp_file_fkt_parse parse);
 FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings);
 
 FREERDP_API BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings);
