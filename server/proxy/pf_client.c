@@ -208,7 +208,14 @@ static void pf_client_post_disconnect(freerdp* instance)
 	PubSub_UnsubscribeErrorInfo(instance->context->pubSub, pf_OnErrorInfo);
 	gdi_free(instance);
 
-	SetEvent(pdata->connectionClosed);
+	if (!context->during_connect_process)
+	{
+		/* proxy's client failed to connect, and now it's trying to connect without NLA, no need to shutdown
+		 * the connection between proxy's server and the original client.
+		 */
+		SetEvent(pdata->connectionClosed);
+	}
+
 	/* It's important to avoid calling `freerdp_peer_context_free` and `freerdp_peer_free` here,
 	 * in order to avoid double-free. Those objects will be freed by the server when needed.
 	 */
@@ -222,15 +229,37 @@ static void pf_client_post_disconnect(freerdp* instance)
 static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 {
 	freerdp* instance = (freerdp*)arg;
+	pClientContext* pc = (pClientContext*)instance->context;
 	DWORD nCount;
 	DWORD status;
 	HANDLE handles[64];
 
+	pc->during_connect_process = TRUE;
 	if (!freerdp_connect(instance))
 	{
-		WLog_ERR(TAG, "connection failure");
-		return 0;
+		if (instance->settings->NlaSecurity)
+		{
+			WLog_ERR(TAG, "freerdp_connect() failed, trying to connect without NLA");
+			/* disable NLA, enable TLS */
+			instance->settings->NlaSecurity = FALSE;
+			instance->settings->RdpSecurity = TRUE;
+			instance->settings->TlsSecurity = TRUE;
+
+			pc->during_connect_process = FALSE;
+			if (!freerdp_connect(instance))
+			{
+				WLog_ERR(TAG, "connection failure");
+				return 0;
+			}
+		}
+		else
+		{
+			WLog_ERR(TAG, "connection failure");
+			return 0;
+		}
 	}
+
+	pc->during_connect_process = FALSE;
 
 	while (!freerdp_shall_disconnect(instance))
 	{
