@@ -23,153 +23,22 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
-#define RDP_FILE_LINE_FLAG_FORMATTED		0x00000001
-#define RDP_FILE_LINE_FLAG_STANDARD		0x00000002
-#define RDP_FILE_LINE_FLAG_TYPE_STRING		0x00000010
-#define RDP_FILE_LINE_FLAG_TYPE_INTEGER		0x00000020
-#define RDP_FILE_LINE_FLAG_TYPE_BINARY		0x00000040
-
-struct rdp_file_line
-{
-	int index;
-	char* text;
-	DWORD flags;
-	char* name;
-	LPSTR sValue;
-	DWORD iValue;
-	PBYTE bValue;
-	int valueLength;
-};
-typedef struct rdp_file_line rdpFileLine;
-
-struct rdp_file
-{
-	DWORD UseMultiMon; /* use multimon */
-	DWORD ScreenModeId; /* screen mode id */
-	DWORD SpanMonitors; /* span monitors */
-	DWORD SmartSizing; /* smartsizing */
-	DWORD EnableSuperSpan; /* enablesuperpan */
-	DWORD SuperSpanAccelerationFactor; /* superpanaccelerationfactor */
-
-	DWORD DesktopWidth; /* desktopwidth */
-	DWORD DesktopHeight; /* desktopheight */
-	DWORD DesktopSizeId; /* desktop size id */
-	DWORD SessionBpp; /* session bpp */
-
-	DWORD Compression; /* compression */
-	DWORD KeyboardHook; /* keyboardhook */
-	DWORD DisableCtrlAltDel; /* disable ctrl+alt+del */
-
-	DWORD AudioMode; /* audiomode */
-	DWORD AudioQualityMode; /* audioqualitymode */
-	DWORD AudioCaptureMode; /* audiocapturemode */
-	DWORD VideoPlaybackMode; /* videoplaybackmode */
-
-	DWORD ConnectionType; /* connection type */
-
-	DWORD NetworkAutoDetect; /* networkautodetect */
-	DWORD BandwidthAutoDetect; /* bandwidthautodetect */
-
-	DWORD PinConnectionBar; /* pinconnectionbar */
-	DWORD DisplayConnectionBar; /* displayconnectionbar */
-
-	DWORD WorkspaceId; /* workspaceid */
-	DWORD EnableWorkspaceReconnect; /* enableworkspacereconnect */
-
-	DWORD DisableWallpaper; /* disable wallpaper */
-	DWORD AllowFontSmoothing; /* allow font smoothing */
-	DWORD AllowDesktopComposition; /* allow desktop composition */
-	DWORD DisableFullWindowDrag; /* disable full window drag */
-	DWORD DisableMenuAnims; /* disable menu anims */
-	DWORD DisableThemes; /* disable themes */
-	DWORD DisableCursorSetting; /* disable cursor setting */
-
-	DWORD BitmapCacheSize; /* bitmapcachesize */
-	DWORD BitmapCachePersistEnable; /* bitmapcachepersistenable */
-
-	LPSTR Username; /* username */
-	LPSTR Domain; /* domain */
-	LPSTR Password; /*password*/
-	PBYTE Password51; /* password 51 */
-
-	LPSTR FullAddress; /* full address */
-	LPSTR AlternateFullAddress; /* alternate full address */
-	DWORD ServerPort; /* server port */
-
-	DWORD RedirectDrives; /* redirectdrives */
-	DWORD RedirectPrinters; /* redirectprinters */
-	DWORD RedirectComPorts; /* redirectcomports */
-	DWORD RedirectSmartCards; /* redirectsmartcards */
-	DWORD RedirectClipboard; /* redirectclipboard */
-	DWORD RedirectPosDevices; /* redirectposdevices */
-	DWORD RedirectDirectX; /* redirectdirectx */
-	DWORD DisablePrinterRedirection; /* disableprinterredirection */
-	DWORD DisableClipboardRedirection; /* disableclipboardredirection */
-	LPSTR UsbDevicesToRedirect; /* usbdevicestoredirect */
-
-	DWORD ConnectToConsole; /* connect to console */
-	DWORD AdministrativeSession; /* administrative session */
-	DWORD AutoReconnectionEnabled; /* autoreconnection enabled */
-	DWORD AutoReconnectMaxRetries; /* autoreconnect max retries */
-
-	DWORD PublicMode; /* public mode */
-	DWORD AuthenticationLevel; /* authentication level */
-	DWORD PromptCredentialOnce; /* promptcredentialonce */
-	DWORD PromptForCredentials; /* prompt for credentials */
-	DWORD PromptForCredentialsOnce; /* promptcredentialonce */
-	DWORD NegotiateSecurityLayer; /* negotiate security layer */
-	DWORD EnableCredSSPSupport; /* enablecredsspsupport */
-	LPSTR LoadBalanceInfo; /* loadbalanceinfo */
-
-	DWORD RemoteApplicationMode; /* remoteapplicationmode */
-	LPSTR RemoteApplicationName; /* remoteapplicationname */
-	LPSTR RemoteApplicationIcon; /* remoteapplicationicon */
-	LPSTR RemoteApplicationProgram; /* remoteapplicationprogram */
-	LPSTR RemoteApplicationFile; /* remoteapplicationfile */
-	LPSTR RemoteApplicationGuid; /* remoteapplicationguid */
-	LPSTR RemoteApplicationCmdLine; /* remoteapplicationcmdline */
-	DWORD RemoteApplicationExpandCmdLine; /* remoteapplicationexpandcmdline */
-	DWORD RemoteApplicationExpandWorkingDir; /* remoteapplicationexpandworkingdir */
-	DWORD DisableConnectionSharing; /* disableconnectionsharing */
-	DWORD DisableRemoteAppCapsCheck; /* disableremoteappcapscheck */
-
-	LPSTR AlternateShell; /* alternate shell */
-	LPSTR ShellWorkingDirectory; /* shell working directory */
-
-	LPSTR GatewayHostname; /* gatewayhostname */
-	DWORD GatewayUsageMethod; /* gatewayusagemethod */
-	DWORD GatewayProfileUsageMethod; /* gatewayprofileusagemethod */
-	DWORD GatewayCredentialsSource; /* gatewaycredentialssource */
-	LPSTR GatewayAccessToken; /* gatewayaccesstoken */
-
-	DWORD UseRedirectionServerName; /* use redirection server name */
-
-	DWORD RdgIsKdcProxy; /* rdgiskdcproxy */
-	LPSTR KdcProxyName; /* kdcproxyname */
-
-	LPSTR DrivesToRedirect; /* drivestoredirect */
-	LPSTR DevicesToRedirect; /* devicestoredirect */
-	LPSTR WinPosStr; /* winposstr */
-
-	LPSTR PreconnectionBlob; /* pcb */
-
-	int lineCount;
-	int lineSize;
-	rdpFileLine* lines;
-
-	int argc;
-	char** argv;
-	int argSize;
-};
-
 typedef struct rdp_file rdpFile;
+typedef BOOL (*rdp_file_fkt_parse)(void* context, const char* key, char type, const char* value);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* When using freerdp_client_parse_rdp_file_ex or freerdp_client_parse_rdp_file_buffer_ex
+ * set the context for the callback with this function. */
+FREERDP_API void freerdp_client_rdp_file_set_callback_context(rdpFile* file, void* context);
+
 FREERDP_API BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name);
+FREERDP_API BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_fkt_parse parse);
 FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, size_t size);
+FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, size_t size,
+                                                         rdp_file_fkt_parse parse);
 FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings);
 
 FREERDP_API BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings);

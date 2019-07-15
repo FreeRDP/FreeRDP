@@ -136,14 +136,19 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	if (promptPassword)
 	{
-		if (instance->GatewayAuthenticate)
+		if (!instance->settings->PromptForCredentials || !instance->GatewayAuthenticate)
+		{
+			freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+			return 0;
+		}
+		else
 		{
 			BOOL proceed = instance->GatewayAuthenticate(instance,
 			               &settings->GatewayUsername, &settings->GatewayPassword, &settings->GatewayDomain);
 
 			if (!proceed)
 			{
-				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
+				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return 0;
 			}
 

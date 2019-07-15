@@ -623,6 +623,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	settings->ActionScript = _strdup("~/.config/freerdp/action.sh");
 	settings->SmartcardLogon = FALSE;
+	settings->PromptForCredentials = TRUE;
 	settings->TlsSecLevel = 1;
 	settings->OrderSupport = calloc(1, 32);
 

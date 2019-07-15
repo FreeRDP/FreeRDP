@@ -262,103 +262,125 @@ static char testRdpFileUTF8[] =
 
 int TestClientRdpFile(int argc, char* argv[])
 {
-	int index;
+	int rc = -1;
 	int iValue;
-	char* sValue;
+	const char* sValue;
 	rdpFile* file;
-	rdpFileLine* line;
+	rdpSettings* settings;
+
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	/* Unicode */
 	file = freerdp_client_rdp_file_new();
+	settings = freerdp_settings_new(0);
 
-	if (!file)
+	if (!file || !settings)
 	{
 		printf("rdp_file_new failed\n");
-		return -1;
+		goto fail;
 	}
 
-	freerdp_client_parse_rdp_file_buffer(file, testRdpFileUTF16, sizeof(testRdpFileUTF16));
+	if (!freerdp_client_parse_rdp_file_buffer(file, testRdpFileUTF16, sizeof(testRdpFileUTF16)))
+		goto fail;
 
-	if (file->UseMultiMon != 0)
+	if (!freerdp_client_populate_settings_from_rdp_file(file, settings))
+		goto fail;
+
+	if (settings->UseMultimon)
 	{
-		printf("UseMultiMon mismatch: Actual: %"PRIu32", Expected: 0\n", file->UseMultiMon);
-		return -1;
+		printf("UseMultiMon mismatch: Actual: %"PRIu32", Expected: 0\n", settings->UseMultimon);
+		goto fail;
 	}
 
-	if (file->ScreenModeId != 2)
+	if (!settings->Fullscreen)
 	{
-		printf("ScreenModeId mismatch: Actual: %"PRIu32", Expected: 2\n", file->ScreenModeId);
-		return -1;
+		printf("ScreenModeId mismatch: Actual: %"PRIu32", Expected: TRUE\n", settings->Fullscreen);
+		goto fail;
 	}
 
-	if (file->GatewayProfileUsageMethod != 1)
+#if 0 /* TODO: Currently unused */
+	if (settings->GatewayProfileUsageMethod != 1)
 	{
 		printf("GatewayProfileUsageMethod mismatch: Actual: %"PRIu32", Expected: 1\n",
-		       file->GatewayProfileUsageMethod);
-		return -1;
+			   settings->GatewayProfileUsageMethod);
+		goto fail;
 	}
+#endif
 
-	if (strcmp(file->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local") != 0)
+	if (strcmp(settings->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local") != 0)
 	{
 		printf("GatewayHostname mismatch: Actual: %s, Expected: %s\n",
-		       file->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local");
-		return -1;
+			   settings->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local");
+		goto fail;
 	}
 
 	freerdp_client_rdp_file_free(file);
+	freerdp_settings_free(settings);
 	/* Ascii */
 	file = freerdp_client_rdp_file_new();
-	freerdp_client_parse_rdp_file_buffer(file, (BYTE*) testRdpFileUTF8, sizeof(testRdpFileUTF8));
-
-	if (file->UseMultiMon != 0)
+	settings = freerdp_settings_new(0);
+	if (!file || !settings)
 	{
-		printf("UseMultiMon mismatch: Actual: %"PRIu32", Expected: 0\n", file->UseMultiMon);
+		printf("rdp_file_new failed\n");
+		goto fail;
+	}
+
+	if (!freerdp_client_parse_rdp_file_buffer(file, (BYTE*) testRdpFileUTF8, sizeof(testRdpFileUTF8)))
+		goto fail;
+
+	if (!freerdp_client_populate_settings_from_rdp_file(file, settings))
+		goto fail;
+
+	if (settings->UseMultimon != 0)
+	{
+		printf("UseMultiMon mismatch: Actual: %"PRIu32", Expected: 0\n", settings->UseMultimon);
 		return -1;
 	}
 
-	if (file->ScreenModeId != 2)
+	if (!settings->Fullscreen)
 	{
-		printf("ScreenModeId mismatch: Actual: %"PRIu32", Expected: 2\n", file->ScreenModeId);
+		printf("ScreenModeId mismatch: Actual: %"PRIu32", Expected: TRUE\n", settings->Fullscreen);
 		return -1;
 	}
 
-	if (file->GatewayProfileUsageMethod != 1)
+#if 0 /* TODO: Currently unused */
+	if (settings->GatewayProfileUsageMethod != 1)
 	{
 		printf("GatewayProfileUsageMethod mismatch: Actual: %"PRIu32", Expected: 1\n",
-		       file->GatewayProfileUsageMethod);
-		return -1;
+			   settings->GatewayProfileUsageMethod);
+		goto fail;
 	}
+#endif
 
-	if (strcmp(file->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local") != 0)
+	if (strcmp(settings->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local") != 0)
 	{
 		printf("GatewayHostname mismatch: Actual: %s, Expected: %s\n",
-		       file->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local");
-		return -1;
+			   settings->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local");
+		goto fail;
 	}
 
 	iValue = freerdp_client_rdp_file_get_integer_option(file, "vendor integer");
 	if (iValue != 123)
-		return -1;
+		goto fail;
 
 	if (freerdp_client_rdp_file_set_integer_option(file, "vendor integer", 456) == -1)
 	{
 		printf("failed to set integer: vendor integer");
-		return -1;
+		goto fail;
 	}
 
 	iValue = freerdp_client_rdp_file_get_integer_option(file, "vendor integer");
 	if (iValue != 456)
 		return -1;
 
-	sValue = (char*) freerdp_client_rdp_file_get_string_option(file, "vendor string");
+	sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
 	if (strncmp(sValue, "microsoft", 10) != 0)
-		return -1;
+		goto fail;
 
 	freerdp_client_rdp_file_set_string_option(file, "vendor string", "apple");
-	sValue = (char*) freerdp_client_rdp_file_get_string_option(file, "vendor string");
+	sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
 	if (strncmp(sValue, "apple", 6) != 0)
-		return -1;
+		goto fail;
 
 	freerdp_client_rdp_file_set_string_option(file, "fruits", "banana,oranges");
 
@@ -368,27 +390,17 @@ int TestClientRdpFile(int argc, char* argv[])
 		return -1;
 	}
 
-	for (index = 0; index < file->lineCount; index++)
-	{
-		line = &(file->lines[index]);
-
-		if (line->flags & RDP_FILE_LINE_FLAG_FORMATTED)
-		{
-			if (line->flags & RDP_FILE_LINE_FLAG_TYPE_STRING)
-			{
-				printf("line %02d: name: %s value: %s, %s\n",
-				       line->index, line->name, line->sValue,
-				       (line->flags & RDP_FILE_LINE_FLAG_STANDARD) ? "standard" : "non-standard");
-			}
-			else if (line->flags & RDP_FILE_LINE_FLAG_TYPE_INTEGER)
-			{
-				printf("line %02d: name: %s value: %"PRIu32", %s\n",
-				       line->index, line->name, line->iValue,
-				       (line->flags & RDP_FILE_LINE_FLAG_STANDARD) ? "standard" : "non-standard");
-			}
-		}
-	}
-
 	freerdp_client_rdp_file_free(file);
-	return 0;
+	file = freerdp_client_rdp_file_new();
+	if (!file)
+		goto fail;
+
+	if (!freerdp_client_populate_rdp_file_from_settings(file, settings))
+		goto fail;
+
+	rc = 0;
+	fail:
+	freerdp_client_rdp_file_free(file);
+	freerdp_settings_free(settings);
+	return rc;
 }
