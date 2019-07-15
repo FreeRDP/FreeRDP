@@ -867,14 +867,19 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context)
 	if (!settings->GatewayPassword || !settings->GatewayUsername ||
 	    !strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
 	{
-		if (instance->GatewayAuthenticate)
+		if (!instance->settings->PromptForCredentials || !instance->GatewayAuthenticate)
+		{
+			freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+			return FALSE;
+		}
+		else
 		{
 			BOOL proceed = instance->GatewayAuthenticate(instance, &settings->GatewayUsername,
 			               &settings->GatewayPassword, &settings->GatewayDomain);
 
 			if (!proceed)
 			{
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return FALSE;
 			}
 

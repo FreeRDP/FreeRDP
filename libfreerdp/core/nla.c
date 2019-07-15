@@ -279,7 +279,12 @@ static int nla_client_init(rdpNla* nla)
 
 	if (PromptPassword)
 	{
-		if (instance->Authenticate)
+		if (!instance->settings->PromptForCredentials || !instance->Authenticate)
+		{
+			freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+			return 0;
+		}
+		else
 		{
 			BOOL proceed = instance->Authenticate(instance,
 			                                      &settings->Username, &settings->Password, &settings->Domain);

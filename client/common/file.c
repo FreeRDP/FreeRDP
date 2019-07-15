@@ -53,6 +53,144 @@ static BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
 
 #define INVALID_INTEGER_VALUE		0xFFFFFFFF
 
+#define RDP_FILE_LINE_FLAG_FORMATTED		0x00000001
+#define RDP_FILE_LINE_FLAG_STANDARD		0x00000002
+#define RDP_FILE_LINE_FLAG_TYPE_STRING		0x00000010
+#define RDP_FILE_LINE_FLAG_TYPE_INTEGER		0x00000020
+#define RDP_FILE_LINE_FLAG_TYPE_BINARY		0x00000040
+
+struct rdp_file_line
+{
+	int index;
+	char* text;
+	DWORD flags;
+	char* name;
+	LPSTR sValue;
+	DWORD iValue;
+	PBYTE bValue;
+	int valueLength;
+};
+typedef struct rdp_file_line rdpFileLine;
+
+struct rdp_file
+{
+	DWORD UseMultiMon; /* use multimon */
+	DWORD ScreenModeId; /* screen mode id */
+	DWORD SpanMonitors; /* span monitors */
+	DWORD SmartSizing; /* smartsizing */
+	DWORD EnableSuperSpan; /* enablesuperpan */
+	DWORD SuperSpanAccelerationFactor; /* superpanaccelerationfactor */
+
+	DWORD DesktopWidth; /* desktopwidth */
+	DWORD DesktopHeight; /* desktopheight */
+	DWORD DesktopSizeId; /* desktop size id */
+	DWORD SessionBpp; /* session bpp */
+
+	DWORD Compression; /* compression */
+	DWORD KeyboardHook; /* keyboardhook */
+	DWORD DisableCtrlAltDel; /* disable ctrl+alt+del */
+
+	DWORD AudioMode; /* audiomode */
+	DWORD AudioQualityMode; /* audioqualitymode */
+	DWORD AudioCaptureMode; /* audiocapturemode */
+	DWORD VideoPlaybackMode; /* videoplaybackmode */
+
+	DWORD ConnectionType; /* connection type */
+
+	DWORD NetworkAutoDetect; /* networkautodetect */
+	DWORD BandwidthAutoDetect; /* bandwidthautodetect */
+
+	DWORD PinConnectionBar; /* pinconnectionbar */
+	DWORD DisplayConnectionBar; /* displayconnectionbar */
+
+	DWORD WorkspaceId; /* workspaceid */
+	DWORD EnableWorkspaceReconnect; /* enableworkspacereconnect */
+
+	DWORD DisableWallpaper; /* disable wallpaper */
+	DWORD AllowFontSmoothing; /* allow font smoothing */
+	DWORD AllowDesktopComposition; /* allow desktop composition */
+	DWORD DisableFullWindowDrag; /* disable full window drag */
+	DWORD DisableMenuAnims; /* disable menu anims */
+	DWORD DisableThemes; /* disable themes */
+	DWORD DisableCursorSetting; /* disable cursor setting */
+
+	DWORD BitmapCacheSize; /* bitmapcachesize */
+	DWORD BitmapCachePersistEnable; /* bitmapcachepersistenable */
+
+	LPSTR Username; /* username */
+	LPSTR Domain; /* domain */
+	LPSTR Password; /*password*/
+	PBYTE Password51; /* password 51 */
+
+	LPSTR FullAddress; /* full address */
+	LPSTR AlternateFullAddress; /* alternate full address */
+	DWORD ServerPort; /* server port */
+
+	DWORD RedirectDrives; /* redirectdrives */
+	DWORD RedirectPrinters; /* redirectprinters */
+	DWORD RedirectComPorts; /* redirectcomports */
+	DWORD RedirectSmartCards; /* redirectsmartcards */
+	DWORD RedirectClipboard; /* redirectclipboard */
+	DWORD RedirectPosDevices; /* redirectposdevices */
+	DWORD RedirectDirectX; /* redirectdirectx */
+	DWORD DisablePrinterRedirection; /* disableprinterredirection */
+	DWORD DisableClipboardRedirection; /* disableclipboardredirection */
+	LPSTR UsbDevicesToRedirect; /* usbdevicestoredirect */
+
+	DWORD ConnectToConsole; /* connect to console */
+	DWORD AdministrativeSession; /* administrative session */
+	DWORD AutoReconnectionEnabled; /* autoreconnection enabled */
+	DWORD AutoReconnectMaxRetries; /* autoreconnect max retries */
+
+	DWORD PublicMode; /* public mode */
+	DWORD AuthenticationLevel; /* authentication level */
+	DWORD PromptCredentialOnce; /* promptcredentialonce */
+	DWORD PromptForCredentials; /* prompt for credentials */
+	DWORD NegotiateSecurityLayer; /* negotiate security layer */
+	DWORD EnableCredSSPSupport; /* enablecredsspsupport */
+	LPSTR LoadBalanceInfo; /* loadbalanceinfo */
+
+	DWORD RemoteApplicationMode; /* remoteapplicationmode */
+	LPSTR RemoteApplicationName; /* remoteapplicationname */
+	LPSTR RemoteApplicationIcon; /* remoteapplicationicon */
+	LPSTR RemoteApplicationProgram; /* remoteapplicationprogram */
+	LPSTR RemoteApplicationFile; /* remoteapplicationfile */
+	LPSTR RemoteApplicationGuid; /* remoteapplicationguid */
+	LPSTR RemoteApplicationCmdLine; /* remoteapplicationcmdline */
+	DWORD RemoteApplicationExpandCmdLine; /* remoteapplicationexpandcmdline */
+	DWORD RemoteApplicationExpandWorkingDir; /* remoteapplicationexpandworkingdir */
+	DWORD DisableConnectionSharing; /* disableconnectionsharing */
+	DWORD DisableRemoteAppCapsCheck; /* disableremoteappcapscheck */
+
+	LPSTR AlternateShell; /* alternate shell */
+	LPSTR ShellWorkingDirectory; /* shell working directory */
+
+	LPSTR GatewayHostname; /* gatewayhostname */
+	DWORD GatewayUsageMethod; /* gatewayusagemethod */
+	DWORD GatewayProfileUsageMethod; /* gatewayprofileusagemethod */
+	DWORD GatewayCredentialsSource; /* gatewaycredentialssource */
+	LPSTR GatewayAccessToken; /* gatewayaccesstoken */
+
+	DWORD UseRedirectionServerName; /* use redirection server name */
+
+	DWORD RdgIsKdcProxy; /* rdgiskdcproxy */
+	LPSTR KdcProxyName; /* kdcproxyname */
+
+	LPSTR DrivesToRedirect; /* drivestoredirect */
+	LPSTR DevicesToRedirect; /* devicestoredirect */
+	LPSTR WinPosStr; /* winposstr */
+
+	LPSTR PreconnectionBlob; /* pcb */
+
+	int lineCount;
+	int lineSize;
+	rdpFileLine* lines;
+
+	int argc;
+	char** argv;
+	int argSize;
+};
+
 /*
  * Set an integer in a rdpFile
  *
@@ -168,10 +306,9 @@ static int freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, 
 		file->AuthenticationLevel = value;
 	else if (_stricmp(name, "promptcredentialonce") == 0)
 		file->PromptCredentialOnce = value;
-	else if (_stricmp(name, "prompt for credentials") == 0)
+	else if ((_stricmp(name, "prompt for credentials") == 0) ||
+			 (_stricmp(name, "prompt for credentials on client") == 0))
 		file->PromptForCredentials = value;
-	else if (_stricmp(name, "promptcredentialonce") == 0)
-		file->PromptForCredentialsOnce = value;
 	else if (_stricmp(name, "negotiate security layer") == 0)
 		file->NegotiateSecurityLayer = value;
 	else if (_stricmp(name, "enablecredsspsupport") == 0)
@@ -620,6 +757,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	SETTING_MODIFIED_SET_STRING(file->GatewayAccessToken, settings, GatewayAccessToken);
 	SETTING_MODIFIED_SET(file->GatewayUsageMethod, settings, GatewayUsageMethod);
 	SETTING_MODIFIED_SET(file->PromptCredentialOnce, settings, GatewayUseSameCredentials);
+	SETTING_MODIFIED_SET(file->PromptForCredentials, settings, PromptForCredentials);
 	SETTING_MODIFIED_SET(file->RemoteApplicationMode, settings, RemoteApplicationMode);
 	SETTING_MODIFIED_SET_STRING(file->RemoteApplicationProgram, settings, RemoteApplicationProgram);
 	SETTING_MODIFIED_SET_STRING(file->RemoteApplicationName, settings, RemoteApplicationName);
@@ -976,6 +1114,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayUseSameCredentials,
 		                               file->PromptCredentialOnce))
+			return FALSE;
+	}
+
+	if (~file->PromptForCredentials)
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_PromptForCredentials,
+									   file->PromptForCredentials))
 			return FALSE;
 	}
 

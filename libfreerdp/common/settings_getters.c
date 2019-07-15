@@ -204,6 +204,9 @@ BOOL freerdp_settings_get_bool(rdpSettings* settings, size_t id)
 		case FreeRDP_SmartcardLogon:
 			return settings->SmartcardLogon;
 
+		case FreeRDP_PromptForCredentials:
+			return settings->PromptForCredentials;
+
 		case FreeRDP_IgnoreCertificate:
 			return settings->IgnoreCertificate;
 
@@ -759,6 +762,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_SmartcardLogon:
 			settings->SmartcardLogon = val;
+			break;
+
+		case FreeRDP_PromptForCredentials:
+			settings->PromptForCredentials = val;
 			break;
 
 		case FreeRDP_IgnoreCertificate:
@@ -2290,6 +2297,9 @@ const char* freerdp_settings_get_string(rdpSettings* settings, size_t id)
 		case FreeRDP_DrivesToRedirect:
 			return settings->DrivesToRedirect;
 
+		case FreeRDP_RDP2TCPArgs:
+			return settings->RDP2TCPArgs;
+
 		default:
 			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
 			return FALSE;
@@ -2622,6 +2632,11 @@ BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* v
 			free(settings->DrivesToRedirect);
 			settings->DrivesToRedirect = _strdup(val);
 			return settings->DrivesToRedirect != NULL;
+
+		case FreeRDP_RDP2TCPArgs:
+			free(settings->RDP2TCPArgs);
+			settings->RDP2TCPArgs = _strdup(val);
+			return settings->RDP2TCPArgs != NULL;
 
 		default:
 			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);

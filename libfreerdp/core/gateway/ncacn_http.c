@@ -146,14 +146,19 @@ BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel)
 	if (!settings->GatewayPassword || !settings->GatewayUsername ||
 	    !strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
 	{
-		if (instance->GatewayAuthenticate)
+		if (!instance->settings->PromptForCredentials || !instance->GatewayAuthenticate)
+		{
+			freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+			return TRUE;
+		}
+		else
 		{
 			BOOL proceed = instance->GatewayAuthenticate(instance, &settings->GatewayUsername,
 			               &settings->GatewayPassword, &settings->GatewayDomain);
 
 			if (!proceed)
 			{
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return TRUE;
 			}
 

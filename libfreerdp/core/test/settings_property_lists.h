@@ -68,6 +68,7 @@ static const size_t bool_list_indices[] =
 	FreeRDP_MstscCookieMode,
 	FreeRDP_SendPreconnectionPdu,
 	FreeRDP_SmartcardLogon,
+	FreeRDP_PromptForCredentials,
 	FreeRDP_IgnoreCertificate,
 	FreeRDP_ExternalCertificateManagement,
 	FreeRDP_AutoAcceptCertificate,
@@ -364,6 +365,7 @@ static const size_t string_list_indices[] =
 	FreeRDP_RemoteApplicationWorkingDir,
 	FreeRDP_ImeFileName,
 	FreeRDP_DrivesToRedirect,
+	FreeRDP_RDP2TCPArgs,
 };
 
 #define have_pointer_list_indices
