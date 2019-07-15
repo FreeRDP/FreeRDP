@@ -202,7 +202,7 @@ struct rdp_file
 static int freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, int value,
         int index)
 {
-	int standard = 1;
+    int standard = 0;
 #ifdef DEBUG_CLIENT_FILE
 	WLog_DBG(TAG,  "%s:i:%d", name, value);
 #endif
@@ -348,7 +348,7 @@ static int freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, 
 		file->lines[index].flags = RDP_FILE_LINE_FLAG_FORMATTED;
 		file->lines[index].flags |= RDP_FILE_LINE_FLAG_TYPE_INTEGER;
 
-		if (standard)
+		if (standard == 0)
 			file->lines[index].flags |= RDP_FILE_LINE_FLAG_STANDARD;
 
 		file->lines[index].valueLength = 0;
