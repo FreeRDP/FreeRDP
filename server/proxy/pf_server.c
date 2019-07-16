@@ -182,7 +182,7 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 	pf_server_disp_init(ps);
 
 	/* Start a proxy's client in it's own thread */
-	if (!(ps->thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
+	if (!(pdata->client_thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		return FALSE;
@@ -295,19 +295,13 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 			eventCount += tmp;
 		}
 		eventHandles[eventCount++] = ChannelEvent;
-		eventHandles[eventCount++] = pdata->connectionClosed;
+		eventHandles[eventCount++] = pdata->abort_event;
 		eventHandles[eventCount++] = WTSVirtualChannelManagerGetEventHandle(ps->vcm);
 		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForMultipleObjects failed (errno: %d)", errno);
-			break;
-		}
-
-		if (pf_common_connection_aborted_by_peer(pdata))
-		{
-			WLog_INFO(TAG, "proxy's client disconnected, closing connection with client %s", client->hostname);
 			break;
 		}
 
@@ -323,6 +317,13 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 			}
 		}
 
+		/* only disconnect after checking client's and vcm's file descriptors  */
+		if (proxy_data_shall_disconnect(pdata))
+		{
+			WLog_INFO(TAG, "abort_event is set, closing connection with client %s", client->hostname);
+			break;
+		}
+		
 		switch (WTSVirtualChannelManagerGetDrdynvcState(ps->vcm))
 		{
 		/* Dynamic channel status may have been changed after processing */

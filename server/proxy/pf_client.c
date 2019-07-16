@@ -213,7 +213,7 @@ static void pf_client_post_disconnect(freerdp* instance)
 		/* proxy's client failed to connect, and now it's trying to connect without NLA, no need to shutdown
 		 * the connection between proxy's server and the original client.
 		 */
-		SetEvent(pdata->connectionClosed);
+		proxy_data_abort_connect(pdata);
 	}
 
 	/* It's important to avoid calling `freerdp_peer_context_free` and `freerdp_peer_free` here,
@@ -396,14 +396,18 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 static int pf_client_client_stop(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*) context;
-	pServerContext* ps = pc->pdata->ps;
+	proxyData* pdata = pc->pdata;
+	WLog_DBG(TAG, "aborting client connection");
 	freerdp_abort_connect(context->instance);
 
-	if (ps->thread)
+	if (pdata->client_thread)
 	{
-		WaitForSingleObject(ps->thread, INFINITE);
-		CloseHandle(ps->thread);
-		ps->thread = NULL;
+		/* Wait for client thread to finish. No need to call CloseHandle() here, as
+		 * it is the responsibility of `proxy_data_free`.
+		 */
+		WLog_DBG(TAG, "pf_client_client_stop(): waiting for thread to finish");
+		WaitForSingleObject(pdata->client_thread, INFINITE);
+		WLog_DBG(TAG, "pf_client_client_stop(): thread finished");
 	}
 
 	return 0;
