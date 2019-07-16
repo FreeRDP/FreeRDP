@@ -1559,6 +1559,7 @@ extern "C" {
 
 FREERDP_API rdpSettings* freerdp_settings_new(DWORD flags);
 FREERDP_API rdpSettings* freerdp_settings_clone(rdpSettings* settings);
+FREERDP_API BOOL freerdp_settings_copy(rdpSettings* dst, const rdpSettings* src);
 FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
 FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument);

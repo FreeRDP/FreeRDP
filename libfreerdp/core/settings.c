@@ -659,399 +659,9 @@ out_fail:
 	return NULL;
 }
 
-rdpSettings* freerdp_settings_clone(rdpSettings* settings)
+
+static void freerdp_settings_free_internal(rdpSettings* settings)
 {
-	UINT32 index;
-	rdpSettings* _settings;
-	_settings = (rdpSettings*) calloc(1, sizeof(rdpSettings));
-
-	if (_settings)
-	{
-		CopyMemory(_settings, settings, sizeof(rdpSettings));
-		/* char* values */
-#define CHECKED_STRDUP(name) if (settings->name && !(_settings->name = _strdup(settings->name))) goto out_fail
-		CHECKED_STRDUP(ServerHostname);  /* 20 */
-		CHECKED_STRDUP(Username); /* 21 */
-		CHECKED_STRDUP(Password); /* 22 */
-		CHECKED_STRDUP(Domain); /* 23 */
-		CHECKED_STRDUP(PasswordHash); /* 24 */
-		CHECKED_STRDUP(AcceptedCert); /* 27 */
-		_settings->ClientHostname = NULL; /* 134 */
-		_settings->ClientProductId = NULL; /* 135 */
-		CHECKED_STRDUP(AlternateShell); /* 640 */
-		CHECKED_STRDUP(ShellWorkingDirectory); /* 641 */
-		CHECKED_STRDUP(ClientAddress); /* 769 */
-		CHECKED_STRDUP(ClientDir); /* 770 */
-		CHECKED_STRDUP(DynamicDSTTimeZoneKeyName); /* 897 */
-		CHECKED_STRDUP(RemoteAssistanceSessionId); /* 1025 */
-		CHECKED_STRDUP(RemoteAssistancePassStub); /* 1026 */
-		CHECKED_STRDUP(RemoteAssistancePassword); /* 1027 */
-		CHECKED_STRDUP(RemoteAssistanceRCTicket); /* 1028 */
-		CHECKED_STRDUP(AuthenticationServiceClass); /* 1098 */
-		CHECKED_STRDUP(AllowedTlsCiphers); /* 1101 */
-		CHECKED_STRDUP(NtlmSamFile); /* 1103 */
-		CHECKED_STRDUP(PreconnectionBlob); /* 1155 */
-		CHECKED_STRDUP(RedirectionAcceptedCert); /* 1231 */
-		CHECKED_STRDUP(KerberosKdc); /* 1344 */
-		CHECKED_STRDUP(KerberosRealm); /* 1345 */
-		CHECKED_STRDUP(CertificateName); /* 1409 */
-		CHECKED_STRDUP(CertificateFile); /* 1410 */
-		CHECKED_STRDUP(PrivateKeyFile); /* 1411 */
-		CHECKED_STRDUP(RdpKeyFile); /* 1412 */
-		CHECKED_STRDUP(CertificateContent); /* 1416 */
-		CHECKED_STRDUP(PrivateKeyContent); /* 1417 */
-		CHECKED_STRDUP(RdpKeyContent); /* 1418 */
-		CHECKED_STRDUP(WindowTitle); /* 1542 */
-		CHECKED_STRDUP(WmClass); /* 1549 */
-		CHECKED_STRDUP(ComputerName); /* 1664 */
-		CHECKED_STRDUP(ConnectionFile); /* 1728 */
-		CHECKED_STRDUP(AssistanceFile); /* 1729 */
-		CHECKED_STRDUP(HomePath); /* 1792 */
-		CHECKED_STRDUP(ConfigPath); /* 1793 */
-		CHECKED_STRDUP(CurrentPath); /* 1794 */
-		CHECKED_STRDUP(DumpRemoteFxFile); /* 1858 */
-		CHECKED_STRDUP(PlayRemoteFxFile); /* 1859 */
-		CHECKED_STRDUP(GatewayHostname); /* 1986 */
-		CHECKED_STRDUP(GatewayUsername); /* 1987 */
-		CHECKED_STRDUP(GatewayPassword); /* 1988 */
-		CHECKED_STRDUP(GatewayDomain); /* 1989 */
-		CHECKED_STRDUP(GatewayAccessToken); /* 1997 */
-		CHECKED_STRDUP(GatewayAcceptedCert); /* 1998 */
-		CHECKED_STRDUP(ProxyHostname); /* 2016 */
-		CHECKED_STRDUP(RemoteApplicationName); /* 2113 */
-		CHECKED_STRDUP(RemoteApplicationIcon); /* 2114 */
-		CHECKED_STRDUP(RemoteApplicationProgram); /* 2115 */
-		CHECKED_STRDUP(RemoteApplicationFile); /* 2116 */
-		CHECKED_STRDUP(RemoteApplicationGuid); /* 2117 */
-		CHECKED_STRDUP(RemoteApplicationCmdLine); /* 2118 */
-		CHECKED_STRDUP(ImeFileName); /* 2628 */
-		CHECKED_STRDUP(DrivesToRedirect); /* 4290 */
-		CHECKED_STRDUP(ActionScript);
-		/**
-		  * Manual Code
-		  */
-		_settings->LoadBalanceInfo = NULL;
-		_settings->LoadBalanceInfoLength = 0;
-		_settings->TargetNetAddress = NULL;
-		_settings->RedirectionTargetFQDN = NULL;
-		_settings->RedirectionTargetNetBiosName = NULL;
-		_settings->RedirectionUsername = NULL;
-		_settings->RedirectionDomain = NULL;
-		_settings->RedirectionPassword = NULL;
-		_settings->RedirectionPasswordLength = 0;
-		_settings->RedirectionTsvUrl = NULL;
-		_settings->RedirectionTsvUrlLength = 0;
-		_settings->TargetNetAddressCount = 0;
-		_settings->TargetNetAddresses = NULL;
-		_settings->TargetNetPorts = NULL;
-
-		if (settings->LoadBalanceInfo && settings->LoadBalanceInfoLength)
-		{
-			_settings->LoadBalanceInfo = (BYTE*) calloc(1,
-			                             settings->LoadBalanceInfoLength + 2);
-
-			if (!_settings->LoadBalanceInfo)
-				goto out_fail;
-
-			CopyMemory(_settings->LoadBalanceInfo, settings->LoadBalanceInfo,
-			           settings->LoadBalanceInfoLength);
-			_settings->LoadBalanceInfoLength = settings->LoadBalanceInfoLength;
-		}
-
-		if (_settings->ServerRandomLength)
-		{
-			_settings->ServerRandom = (BYTE*) malloc(_settings->ServerRandomLength);
-
-			if (!_settings->ServerRandom)
-				goto out_fail;
-
-			CopyMemory(_settings->ServerRandom, settings->ServerRandom,
-			           _settings->ServerRandomLength);
-			_settings->ServerRandomLength = settings->ServerRandomLength;
-		}
-
-		if (_settings->ClientRandomLength)
-		{
-			_settings->ClientRandom = (BYTE*) malloc(_settings->ClientRandomLength);
-
-			if (!_settings->ClientRandom)
-				goto out_fail;
-
-			CopyMemory(_settings->ClientRandom, settings->ClientRandom,
-			           _settings->ClientRandomLength);
-			_settings->ClientRandomLength = settings->ClientRandomLength;
-		}
-
-		if (settings->RdpServerCertificate)
-		{
-			_settings->RdpServerCertificate = certificate_clone(
-			                                      settings->RdpServerCertificate);
-
-			if (!_settings->RdpServerCertificate)
-				goto out_fail;
-		}
-
-		_settings->ChannelCount = settings->ChannelCount;
-		_settings->ChannelDefArraySize = settings->ChannelDefArraySize;
-
-		if (_settings->ChannelDefArraySize > 0)
-		{
-			_settings->ChannelDefArray = (CHANNEL_DEF*) calloc(settings->ChannelDefArraySize,
-			                             sizeof(CHANNEL_DEF));
-
-			if (!_settings->ChannelDefArray)
-				goto out_fail;
-
-			CopyMemory(_settings->ChannelDefArray, settings->ChannelDefArray,
-			           sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
-		}
-		else
-			_settings->ChannelDefArray = NULL;
-
-		_settings->MonitorCount = settings->MonitorCount;
-		_settings->MonitorDefArraySize = settings->MonitorDefArraySize;
-
-		if (_settings->MonitorDefArraySize > 0)
-		{
-			_settings->MonitorDefArray = (rdpMonitor*) calloc(settings->MonitorDefArraySize,
-			                             sizeof(rdpMonitor));
-
-			if (!_settings->MonitorDefArray)
-				goto out_fail;
-
-			CopyMemory(_settings->MonitorDefArray, settings->MonitorDefArray,
-			           sizeof(rdpMonitor) * settings->MonitorDefArraySize);
-		}
-		else
-			_settings->MonitorDefArray = NULL;
-
-		_settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
-
-		if (!_settings->MonitorIds)
-			goto out_fail;
-
-		CopyMemory(_settings->MonitorIds, settings->MonitorIds, 16 * sizeof(UINT32));
-		_settings->ReceivedCapabilities = malloc(32);
-
-		if (!_settings->ReceivedCapabilities)
-			goto out_fail;
-
-		_settings->OrderSupport = malloc(32);
-
-		if (!_settings->OrderSupport)
-			goto out_fail;
-
-		if (!_settings->ReceivedCapabilities || !_settings->OrderSupport)
-			goto out_fail;
-
-		CopyMemory(_settings->ReceivedCapabilities, settings->ReceivedCapabilities, 32);
-		CopyMemory(_settings->OrderSupport, settings->OrderSupport, 32);
-		_settings->ClientHostname = _strdup(settings->ClientHostname);
-
-		if (!_settings->ClientHostname)
-			goto out_fail;
-
-		_settings->ClientProductId = _strdup(settings->ClientProductId);
-
-		if (!_settings->ClientProductId)
-			goto out_fail;
-
-		_settings->BitmapCacheV2CellInfo = (BITMAP_CACHE_V2_CELL_INFO*) malloc(sizeof(
-		                                       BITMAP_CACHE_V2_CELL_INFO) * 6);
-
-		if (!_settings->BitmapCacheV2CellInfo)
-			goto out_fail;
-
-		CopyMemory(_settings->BitmapCacheV2CellInfo, settings->BitmapCacheV2CellInfo,
-		           sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
-		_settings->GlyphCache = malloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
-
-		if (!_settings->GlyphCache)
-			goto out_fail;
-
-		_settings->FragCache = malloc(sizeof(GLYPH_CACHE_DEFINITION));
-
-		if (!_settings->FragCache)
-			goto out_fail;
-
-		CopyMemory(_settings->GlyphCache, settings->GlyphCache,
-		           sizeof(GLYPH_CACHE_DEFINITION) * 10);
-		CopyMemory(_settings->FragCache, settings->FragCache,
-		           sizeof(GLYPH_CACHE_DEFINITION));
-		_settings->ClientAutoReconnectCookie = (ARC_CS_PRIVATE_PACKET*) malloc(sizeof(
-		        ARC_CS_PRIVATE_PACKET));
-
-		if (!_settings->ClientAutoReconnectCookie)
-			goto out_fail;
-
-		_settings->ServerAutoReconnectCookie = (ARC_SC_PRIVATE_PACKET*) malloc(sizeof(
-		        ARC_SC_PRIVATE_PACKET));
-
-		if (!_settings->ServerAutoReconnectCookie)
-			goto out_fail;
-
-		CopyMemory(_settings->ClientAutoReconnectCookie,
-		           settings->ClientAutoReconnectCookie, sizeof(ARC_CS_PRIVATE_PACKET));
-		CopyMemory(_settings->ServerAutoReconnectCookie,
-		           settings->ServerAutoReconnectCookie, sizeof(ARC_SC_PRIVATE_PACKET));
-		_settings->ClientTimeZone = (LPTIME_ZONE_INFORMATION) malloc(sizeof(
-		                                TIME_ZONE_INFORMATION));
-
-		if (!_settings->ClientTimeZone)
-			goto out_fail;
-
-		CopyMemory(_settings->ClientTimeZone, settings->ClientTimeZone,
-		           sizeof(TIME_ZONE_INFORMATION));
-		_settings->TargetNetAddressCount = settings->TargetNetAddressCount;
-
-		if (settings->TargetNetAddressCount > 0)
-		{
-			_settings->TargetNetAddresses = (char**) calloc(settings->TargetNetAddressCount,
-			                                sizeof(char*));
-
-			if (!_settings->TargetNetAddresses)
-			{
-				_settings->TargetNetAddressCount = 0;
-				goto out_fail;
-			}
-
-			for (index = 0; index < settings->TargetNetAddressCount; index++)
-			{
-				_settings->TargetNetAddresses[index] = _strdup(
-				        settings->TargetNetAddresses[index]);
-
-				if (!_settings->TargetNetAddresses[index])
-				{
-					while (index)
-						free(_settings->TargetNetAddresses[--index]);
-
-					free(_settings->TargetNetAddresses);
-					_settings->TargetNetAddresses = NULL;
-					_settings->TargetNetAddressCount = 0;
-					goto out_fail;
-				}
-			}
-
-			if (settings->TargetNetPorts)
-			{
-				_settings->TargetNetPorts = (UINT32*) calloc(settings->TargetNetAddressCount,
-				                            sizeof(UINT32));
-
-				if (!_settings->TargetNetPorts)
-					goto out_fail;
-
-				for (index = 0; index < settings->TargetNetAddressCount; index++)
-					_settings->TargetNetPorts[index] = settings->TargetNetPorts[index];
-			}
-		}
-
-		_settings->DeviceCount = settings->DeviceCount;
-		_settings->DeviceArraySize = settings->DeviceArraySize;
-		_settings->DeviceArray = (RDPDR_DEVICE**) calloc(_settings->DeviceArraySize,
-		                         sizeof(RDPDR_DEVICE*));
-
-		if (!_settings->DeviceArray && _settings->DeviceArraySize)
-		{
-			_settings->DeviceCount = 0;
-			_settings->DeviceArraySize = 0;
-			goto out_fail;
-		}
-
-		if (_settings->DeviceArraySize < _settings->DeviceCount)
-		{
-			_settings->DeviceCount = 0;
-			_settings->DeviceArraySize = 0;
-			goto out_fail;
-		}
-
-		for (index = 0; index < _settings->DeviceCount; index++)
-		{
-			_settings->DeviceArray[index] = freerdp_device_clone(
-			                                    settings->DeviceArray[index]);
-
-			if (!_settings->DeviceArray[index])
-				goto out_fail;
-		}
-
-		_settings->StaticChannelCount = settings->StaticChannelCount;
-		_settings->StaticChannelArraySize = settings->StaticChannelArraySize;
-		_settings->StaticChannelArray = (ADDIN_ARGV**) calloc(
-		                                    _settings->StaticChannelArraySize, sizeof(ADDIN_ARGV*));
-
-		if (!_settings->StaticChannelArray && _settings->StaticChannelArraySize)
-		{
-			_settings->StaticChannelArraySize  = 0;
-			_settings->ChannelCount = 0;
-			goto out_fail;
-		}
-
-		if (_settings->StaticChannelArraySize < _settings->StaticChannelCount)
-		{
-			_settings->StaticChannelArraySize  = 0;
-			_settings->ChannelCount = 0;
-			goto out_fail;
-		}
-
-		for (index = 0; index < _settings->StaticChannelCount; index++)
-		{
-			_settings->StaticChannelArray[index] = freerdp_static_channel_clone(
-			        settings->StaticChannelArray[index]);
-
-			if (!_settings->StaticChannelArray[index])
-				goto out_fail;
-		}
-
-		_settings->DynamicChannelCount = settings->DynamicChannelCount;
-		_settings->DynamicChannelArraySize = settings->DynamicChannelArraySize;
-		_settings->DynamicChannelArray = (ADDIN_ARGV**) calloc(
-		                                     _settings->DynamicChannelArraySize, sizeof(ADDIN_ARGV*));
-
-		if (!_settings->DynamicChannelArray && _settings->DynamicChannelArraySize)
-		{
-			_settings->DynamicChannelCount = 0;
-			_settings->DynamicChannelArraySize = 0;
-			goto out_fail;
-		}
-
-		if (_settings->DynamicChannelArraySize < _settings->DynamicChannelCount)
-		{
-			_settings->DynamicChannelCount = 0;
-			_settings->DynamicChannelArraySize = 0;
-			goto out_fail;
-		}
-
-		for (index = 0; index < _settings->DynamicChannelCount; index++)
-		{
-			_settings->DynamicChannelArray[index] = freerdp_dynamic_channel_clone(
-			        settings->DynamicChannelArray[index]);
-
-			if (!_settings->DynamicChannelArray[index])
-				goto out_fail;
-		}
-
-		_settings->SettingsModified = (BYTE*) calloc(1, sizeof(rdpSettings) / 8);
-
-		if (!_settings->SettingsModified)
-			goto out_fail;
-	}
-
-	return _settings;
-out_fail:
-	/* In case any memory allocation failed during clone, some bytes might leak.
-	 *
-	 * freerdp_settings_free can't be reliable used at this point since it could
-	 * free memory of pointers copied by CopyMemory and detecting and freeing
-	 * each allocation separately is quite painful.
-	 */
-	free(_settings);
-	return NULL;
-}
-
-void freerdp_settings_free(rdpSettings* settings)
-{
-	if (!settings)
-		return;
-
 	free(settings->ServerHostname);
 	free(settings->Username);
 	free(settings->Password);
@@ -1137,9 +747,398 @@ void freerdp_settings_free(rdpSettings* settings)
 	freerdp_static_channel_collection_free(settings);
 	freerdp_dynamic_channel_collection_free(settings);
 	free(settings->SettingsModified);
+	memset(settings, 0, sizeof(rdpSettings));
+}
+
+void freerdp_settings_free(rdpSettings* settings)
+{
+	if (!settings)
+		return;
+
+	freerdp_settings_free_internal(settings);
 	free(settings);
 }
 
+BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
+{
+	UINT32 index;
+
+	if (!settings || !_settings)
+		return FALSE;
+	freerdp_settings_free_internal(_settings);
+	*_settings = *settings;
+
+	/* char* values */
+#define CHECKED_STRDUP(name) if (settings->name && !(_settings->name = _strdup(settings->name))) goto out_fail
+	CHECKED_STRDUP(ServerHostname);  /* 20 */
+	CHECKED_STRDUP(Username); /* 21 */
+	CHECKED_STRDUP(Password); /* 22 */
+	CHECKED_STRDUP(Domain); /* 23 */
+	CHECKED_STRDUP(PasswordHash); /* 24 */
+	CHECKED_STRDUP(AcceptedCert); /* 27 */
+	CHECKED_STRDUP(AlternateShell); /* 640 */
+	CHECKED_STRDUP(ShellWorkingDirectory); /* 641 */
+	CHECKED_STRDUP(ClientAddress); /* 769 */
+	CHECKED_STRDUP(ClientDir); /* 770 */
+	CHECKED_STRDUP(DynamicDSTTimeZoneKeyName); /* 897 */
+	CHECKED_STRDUP(RemoteAssistanceSessionId); /* 1025 */
+	CHECKED_STRDUP(RemoteAssistancePassStub); /* 1026 */
+	CHECKED_STRDUP(RemoteAssistancePassword); /* 1027 */
+	CHECKED_STRDUP(RemoteAssistanceRCTicket); /* 1028 */
+	CHECKED_STRDUP(AuthenticationServiceClass); /* 1098 */
+	CHECKED_STRDUP(AllowedTlsCiphers); /* 1101 */
+	CHECKED_STRDUP(NtlmSamFile); /* 1103 */
+	CHECKED_STRDUP(PreconnectionBlob); /* 1155 */
+	CHECKED_STRDUP(RedirectionAcceptedCert); /* 1231 */
+	CHECKED_STRDUP(KerberosKdc); /* 1344 */
+	CHECKED_STRDUP(KerberosRealm); /* 1345 */
+	CHECKED_STRDUP(CertificateName); /* 1409 */
+	CHECKED_STRDUP(CertificateFile); /* 1410 */
+	CHECKED_STRDUP(PrivateKeyFile); /* 1411 */
+	CHECKED_STRDUP(RdpKeyFile); /* 1412 */
+	CHECKED_STRDUP(CertificateContent); /* 1416 */
+	CHECKED_STRDUP(PrivateKeyContent); /* 1417 */
+	CHECKED_STRDUP(RdpKeyContent); /* 1418 */
+	CHECKED_STRDUP(WindowTitle); /* 1542 */
+	CHECKED_STRDUP(WmClass); /* 1549 */
+	CHECKED_STRDUP(ComputerName); /* 1664 */
+	CHECKED_STRDUP(ConnectionFile); /* 1728 */
+	CHECKED_STRDUP(AssistanceFile); /* 1729 */
+	CHECKED_STRDUP(HomePath); /* 1792 */
+	CHECKED_STRDUP(ConfigPath); /* 1793 */
+	CHECKED_STRDUP(CurrentPath); /* 1794 */
+	CHECKED_STRDUP(DumpRemoteFxFile); /* 1858 */
+	CHECKED_STRDUP(PlayRemoteFxFile); /* 1859 */
+	CHECKED_STRDUP(GatewayHostname); /* 1986 */
+	CHECKED_STRDUP(GatewayUsername); /* 1987 */
+	CHECKED_STRDUP(GatewayPassword); /* 1988 */
+	CHECKED_STRDUP(GatewayDomain); /* 1989 */
+	CHECKED_STRDUP(GatewayAccessToken); /* 1997 */
+	CHECKED_STRDUP(GatewayAcceptedCert); /* 1998 */
+	CHECKED_STRDUP(ProxyHostname); /* 2016 */
+	CHECKED_STRDUP(RemoteApplicationName); /* 2113 */
+	CHECKED_STRDUP(RemoteApplicationIcon); /* 2114 */
+	CHECKED_STRDUP(RemoteApplicationProgram); /* 2115 */
+	CHECKED_STRDUP(RemoteApplicationFile); /* 2116 */
+	CHECKED_STRDUP(RemoteApplicationGuid); /* 2117 */
+	CHECKED_STRDUP(RemoteApplicationCmdLine); /* 2118 */
+	CHECKED_STRDUP(ImeFileName); /* 2628 */
+	CHECKED_STRDUP(DrivesToRedirect); /* 4290 */
+	CHECKED_STRDUP(ActionScript);
+
+	if (settings->LoadBalanceInfo && settings->LoadBalanceInfoLength)
+	{
+		_settings->LoadBalanceInfo = (BYTE*) calloc(1,
+												   settings->LoadBalanceInfoLength + 2);
+
+		if (!_settings->LoadBalanceInfo)
+			goto out_fail;
+
+		CopyMemory(_settings->LoadBalanceInfo, settings->LoadBalanceInfo,
+				   settings->LoadBalanceInfoLength);
+		_settings->LoadBalanceInfoLength = settings->LoadBalanceInfoLength;
+	}
+
+	if (_settings->ServerRandomLength)
+	{
+		_settings->ServerRandom = (BYTE*) malloc(_settings->ServerRandomLength);
+
+		if (!_settings->ServerRandom)
+			goto out_fail;
+
+		CopyMemory(_settings->ServerRandom, settings->ServerRandom,
+				   _settings->ServerRandomLength);
+		_settings->ServerRandomLength = settings->ServerRandomLength;
+	}
+
+	if (_settings->ClientRandomLength)
+	{
+		_settings->ClientRandom = (BYTE*) malloc(_settings->ClientRandomLength);
+
+		if (!_settings->ClientRandom)
+			goto out_fail;
+
+		CopyMemory(_settings->ClientRandom, settings->ClientRandom,
+				   _settings->ClientRandomLength);
+		_settings->ClientRandomLength = settings->ClientRandomLength;
+	}
+
+	if (settings->RdpServerCertificate)
+	{
+		_settings->RdpServerCertificate = certificate_clone(
+			settings->RdpServerCertificate);
+
+		if (!_settings->RdpServerCertificate)
+			goto out_fail;
+	}
+
+	_settings->ChannelCount = settings->ChannelCount;
+	_settings->ChannelDefArraySize = settings->ChannelDefArraySize;
+
+	if (_settings->ChannelDefArraySize > 0)
+	{
+		_settings->ChannelDefArray = (CHANNEL_DEF*) calloc(settings->ChannelDefArraySize,
+														  sizeof(CHANNEL_DEF));
+
+		if (!_settings->ChannelDefArray)
+			goto out_fail;
+
+		CopyMemory(_settings->ChannelDefArray, settings->ChannelDefArray,
+				   sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
+	}
+	else
+		_settings->ChannelDefArray = NULL;
+
+	_settings->MonitorCount = settings->MonitorCount;
+	_settings->MonitorDefArraySize = settings->MonitorDefArraySize;
+
+	if (_settings->MonitorDefArraySize > 0)
+	{
+		_settings->MonitorDefArray = (rdpMonitor*) calloc(settings->MonitorDefArraySize,
+														 sizeof(rdpMonitor));
+
+		if (!_settings->MonitorDefArray)
+			goto out_fail;
+
+		CopyMemory(_settings->MonitorDefArray, settings->MonitorDefArray,
+				   sizeof(rdpMonitor) * settings->MonitorDefArraySize);
+	}
+	else
+		_settings->MonitorDefArray = NULL;
+
+	_settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
+
+	if (!_settings->MonitorIds)
+		goto out_fail;
+
+	CopyMemory(_settings->MonitorIds, settings->MonitorIds, 16 * sizeof(UINT32));
+	_settings->ReceivedCapabilities = malloc(32);
+
+	if (!_settings->ReceivedCapabilities)
+		goto out_fail;
+
+	_settings->OrderSupport = malloc(32);
+
+	if (!_settings->OrderSupport)
+		goto out_fail;
+
+	if (!_settings->ReceivedCapabilities || !_settings->OrderSupport)
+		goto out_fail;
+
+	CopyMemory(_settings->ReceivedCapabilities, settings->ReceivedCapabilities, 32);
+	CopyMemory(_settings->OrderSupport, settings->OrderSupport, 32);
+	_settings->ClientHostname = _strdup(settings->ClientHostname);
+
+	if (!_settings->ClientHostname)
+		goto out_fail;
+
+	_settings->ClientProductId = _strdup(settings->ClientProductId);
+
+	if (!_settings->ClientProductId)
+		goto out_fail;
+
+	_settings->BitmapCacheV2CellInfo = (BITMAP_CACHE_V2_CELL_INFO*) malloc(sizeof(
+																			  BITMAP_CACHE_V2_CELL_INFO) * 6);
+
+	if (!_settings->BitmapCacheV2CellInfo)
+		goto out_fail;
+
+	CopyMemory(_settings->BitmapCacheV2CellInfo, settings->BitmapCacheV2CellInfo,
+			   sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
+	_settings->GlyphCache = malloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
+
+	if (!_settings->GlyphCache)
+		goto out_fail;
+
+	_settings->FragCache = malloc(sizeof(GLYPH_CACHE_DEFINITION));
+
+	if (!_settings->FragCache)
+		goto out_fail;
+
+	CopyMemory(_settings->GlyphCache, settings->GlyphCache,
+			   sizeof(GLYPH_CACHE_DEFINITION) * 10);
+	CopyMemory(_settings->FragCache, settings->FragCache,
+			   sizeof(GLYPH_CACHE_DEFINITION));
+	_settings->ClientAutoReconnectCookie = (ARC_CS_PRIVATE_PACKET*) malloc(sizeof(
+		ARC_CS_PRIVATE_PACKET));
+
+	if (!_settings->ClientAutoReconnectCookie)
+		goto out_fail;
+
+	_settings->ServerAutoReconnectCookie = (ARC_SC_PRIVATE_PACKET*) malloc(sizeof(
+		ARC_SC_PRIVATE_PACKET));
+
+	if (!_settings->ServerAutoReconnectCookie)
+		goto out_fail;
+
+	CopyMemory(_settings->ClientAutoReconnectCookie,
+			   settings->ClientAutoReconnectCookie, sizeof(ARC_CS_PRIVATE_PACKET));
+	CopyMemory(_settings->ServerAutoReconnectCookie,
+			   settings->ServerAutoReconnectCookie, sizeof(ARC_SC_PRIVATE_PACKET));
+	_settings->ClientTimeZone = (LPTIME_ZONE_INFORMATION) malloc(sizeof(
+		TIME_ZONE_INFORMATION));
+
+	if (!_settings->ClientTimeZone)
+		goto out_fail;
+
+	CopyMemory(_settings->ClientTimeZone, settings->ClientTimeZone,
+			   sizeof(TIME_ZONE_INFORMATION));
+	_settings->TargetNetAddressCount = settings->TargetNetAddressCount;
+
+	if (settings->TargetNetAddressCount > 0)
+	{
+		_settings->TargetNetAddresses = (char**) calloc(settings->TargetNetAddressCount,
+													   sizeof(char*));
+
+		if (!_settings->TargetNetAddresses)
+		{
+			_settings->TargetNetAddressCount = 0;
+			goto out_fail;
+		}
+
+		for (index = 0; index < settings->TargetNetAddressCount; index++)
+		{
+			_settings->TargetNetAddresses[index] = _strdup(
+				settings->TargetNetAddresses[index]);
+
+			if (!_settings->TargetNetAddresses[index])
+			{
+				while (index)
+					free(_settings->TargetNetAddresses[--index]);
+
+				free(_settings->TargetNetAddresses);
+				_settings->TargetNetAddresses = NULL;
+				_settings->TargetNetAddressCount = 0;
+				goto out_fail;
+			}
+		}
+
+		if (settings->TargetNetPorts)
+		{
+			_settings->TargetNetPorts = (UINT32*) calloc(settings->TargetNetAddressCount,
+														sizeof(UINT32));
+
+			if (!_settings->TargetNetPorts)
+				goto out_fail;
+
+			for (index = 0; index < settings->TargetNetAddressCount; index++)
+				_settings->TargetNetPorts[index] = settings->TargetNetPorts[index];
+		}
+	}
+
+	_settings->DeviceCount = settings->DeviceCount;
+	_settings->DeviceArraySize = settings->DeviceArraySize;
+	_settings->DeviceArray = (RDPDR_DEVICE**) calloc(_settings->DeviceArraySize,
+													sizeof(RDPDR_DEVICE*));
+
+	if (!_settings->DeviceArray && _settings->DeviceArraySize)
+	{
+		_settings->DeviceCount = 0;
+		_settings->DeviceArraySize = 0;
+		goto out_fail;
+	}
+
+	if (_settings->DeviceArraySize < _settings->DeviceCount)
+	{
+		_settings->DeviceCount = 0;
+		_settings->DeviceArraySize = 0;
+		goto out_fail;
+	}
+
+	for (index = 0; index < _settings->DeviceCount; index++)
+	{
+		_settings->DeviceArray[index] = freerdp_device_clone(
+			settings->DeviceArray[index]);
+
+		if (!_settings->DeviceArray[index])
+			goto out_fail;
+	}
+
+	_settings->StaticChannelCount = settings->StaticChannelCount;
+	_settings->StaticChannelArraySize = settings->StaticChannelArraySize;
+	_settings->StaticChannelArray = (ADDIN_ARGV**) calloc(
+		_settings->StaticChannelArraySize, sizeof(ADDIN_ARGV*));
+
+	if (!_settings->StaticChannelArray && _settings->StaticChannelArraySize)
+	{
+		_settings->StaticChannelArraySize  = 0;
+		_settings->ChannelCount = 0;
+		goto out_fail;
+	}
+
+	if (_settings->StaticChannelArraySize < _settings->StaticChannelCount)
+	{
+		_settings->StaticChannelArraySize  = 0;
+		_settings->ChannelCount = 0;
+		goto out_fail;
+	}
+
+	for (index = 0; index < _settings->StaticChannelCount; index++)
+	{
+		_settings->StaticChannelArray[index] = freerdp_static_channel_clone(
+			settings->StaticChannelArray[index]);
+
+		if (!_settings->StaticChannelArray[index])
+			goto out_fail;
+	}
+
+	_settings->DynamicChannelCount = settings->DynamicChannelCount;
+	_settings->DynamicChannelArraySize = settings->DynamicChannelArraySize;
+	_settings->DynamicChannelArray = (ADDIN_ARGV**) calloc(
+		_settings->DynamicChannelArraySize, sizeof(ADDIN_ARGV*));
+
+	if (!_settings->DynamicChannelArray && _settings->DynamicChannelArraySize)
+	{
+		_settings->DynamicChannelCount = 0;
+		_settings->DynamicChannelArraySize = 0;
+		goto out_fail;
+	}
+
+	if (_settings->DynamicChannelArraySize < _settings->DynamicChannelCount)
+	{
+		_settings->DynamicChannelCount = 0;
+		_settings->DynamicChannelArraySize = 0;
+		goto out_fail;
+	}
+
+	for (index = 0; index < _settings->DynamicChannelCount; index++)
+	{
+		_settings->DynamicChannelArray[index] = freerdp_dynamic_channel_clone(
+			settings->DynamicChannelArray[index]);
+
+		if (!_settings->DynamicChannelArray[index])
+			goto out_fail;
+	}
+
+	_settings->SettingsModified = (BYTE*) calloc(1, sizeof(rdpSettings) / 8);
+
+	if (!_settings->SettingsModified)
+		goto out_fail;
+
+	return TRUE;
+	out_fail:
+		freerdp_settings_free_internal(_settings);
+		return FALSE;
+}
+
+rdpSettings* freerdp_settings_clone(rdpSettings* settings)
+{
+	rdpSettings* _settings = (rdpSettings*) calloc(1, sizeof(rdpSettings));
+
+	if (!freerdp_settings_copy(_settings, settings))
+		goto out_fail;
+
+	return _settings;
+out_fail:
+	/* In case any memory allocation failed during clone, some bytes might leak.
+	 *
+	 * freerdp_settings_free can't be reliable used at this point since it could
+	 * free memory of pointers copied by CopyMemory and detecting and freeing
+	 * each allocation separately is quite painful.
+	 */
+	free(_settings);
+	return NULL;
+}
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
