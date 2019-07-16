@@ -351,9 +351,13 @@ fail:
 		rdpgfx_server_context_free(ps->gfx);
 
 	pc = (rdpContext*) pdata->pc;
+	WLog_INFO(TAG, "pf_server_handle_client(): starting shutdown of connection (client %s)", client->hostname);
+	WLog_INFO(TAG, "pf_server_handle_client(): stopping proxy's client");
 	freerdp_client_stop(pc);
+	WLog_INFO(TAG, "pf_server_handle_client(): freeing proxy data");
 	proxy_data_free(pdata);
 	freerdp_client_context_free(pc);
+	client->Close(client);
 	client->Disconnect(client);
 out_free_peer:
 	freerdp_peer_context_free(client);
