@@ -70,6 +70,7 @@ struct p_client_context
 	DispClientContext* disp;
 
 	/*
+	 * In a case when freerdp_connect fails,
 	 * Used for NLA fallback feature, to check if the server should close the connection.
 	 * When it is set to TRUE, proxy's client knows it shouldn't signal the server thread to closed
 	 * the connection when pf_client_post_disconnect is called, because it is trying to connect reconnect without NLA.
@@ -101,5 +102,6 @@ rdpContext* p_client_context_create(rdpSettings* clientSettings);
 proxyData* proxy_data_new();
 BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* ps, rdpSettings* pc);
 void proxy_data_free(proxyData* pdata);
+void pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_server);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONTEXT_H */

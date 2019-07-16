@@ -57,13 +57,14 @@
  * Re-negotiate with original client after negotiation between the proxy
  * and the target has finished.
  */
-static void proxy_server_reactivate(rdpContext* client, rdpContext* target)
+static void proxy_server_reactivate(rdpContext* ps, const rdpContext* target)
 {
-	pf_common_copy_settings(client->settings, target->settings);
+	pf_context_copy_settings(ps->settings, target->settings, TRUE);
+
 	/* DesktopResize causes internal function rdp_server_reactivate to be called,
 	 * which causes the reactivation.
 	 */
-	client->update->DesktopResize(client);
+	ps->update->DesktopResize(ps);
 }
 
 static void pf_OnErrorInfo(void* ctx, ErrorInfoEventArgs* e)
