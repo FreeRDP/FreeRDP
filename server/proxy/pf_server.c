@@ -52,23 +52,6 @@
 
 #define TAG PROXY_TAG("server")
 
-static void pf_server_handle_client_disconnection(freerdp_peer* client)
-{
-	pServerContext* ps = (pServerContext*)client->context;
-	rdpContext* pc = (rdpContext*) ps->pdata->pc;
-	proxyData* pdata = ps->pdata;
-	WLog_INFO(TAG, "Connection with %s was closed; closing proxy's client <> target server connection %s",
-	          client->hostname, pc->settings->ServerHostname);
-	/* Mark connection closed for sContext */
-	SetEvent(pdata->connectionClosed);
-	freerdp_abort_connect(pc->instance);
-	/* Close connection to remote host */
-	WLog_DBG(TAG, "Waiting for proxy's client thread to finish");
-	WaitForSingleObject(ps->thread, INFINITE);
-	CloseHandle(ps->thread);
-	ps->thread = NULL;
-}
-
 static BOOL pf_server_parse_target_from_routing_token(rdpContext* context,
         char** target, DWORD* port)
 {
@@ -366,11 +349,6 @@ fail:
 
 	if (ps->gfx)
 		rdpgfx_server_context_free(ps->gfx);
-		
-	if (client->connected && !pf_common_connection_aborted_by_peer(pdata))
-	{
-		pf_server_handle_client_disconnection(client);
-	}
 
 	pc = (rdpContext*) pdata->pc;
 	freerdp_client_stop(pc);
