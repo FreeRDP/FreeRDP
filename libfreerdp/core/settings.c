@@ -1124,9 +1124,9 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 		goto out_fail;
 
 	return TRUE;
-	out_fail:
-		freerdp_settings_free_internal(_settings);
-		return FALSE;
+out_fail:
+	freerdp_settings_free_internal(_settings);
+	return FALSE;
 }
 
 rdpSettings* freerdp_settings_clone(rdpSettings* settings)
