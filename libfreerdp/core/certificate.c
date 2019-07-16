@@ -826,6 +826,44 @@ out_free:
 	return NULL;
 }
 
+rdpRsaKey* key_clone(const rdpRsaKey* key)
+{
+	rdpRsaKey* _key = (rdpRsaKey*) calloc(1, sizeof(rdpRsaKey));
+
+	if (!_key)
+		return NULL;
+
+	CopyMemory(_key, key, sizeof(rdpRsaKey));
+
+	if (key->Modulus)
+	{
+		_key->Modulus = (BYTE*) malloc(key->ModulusLength);
+
+		if (!_key->Modulus)
+			goto out_fail;
+
+		CopyMemory(_key->Modulus, key->Modulus, key->ModulusLength);
+	}
+
+	if (key->PrivateExponent)
+	{
+		_key->PrivateExponent = (BYTE*) malloc(key->PrivateExponentLength);
+
+		if (!_key->PrivateExponent)
+			goto out_fail;
+
+		CopyMemory(_key->PrivateExponent, key->PrivateExponent, key->PrivateExponentLength);
+	}
+
+	return _key;
+out_fail:
+	free(_key->Modulus);
+	free(_key->PrivateExponent);
+	free(_key);
+	return NULL;
+}
+
+
 void key_free(rdpRsaKey* key)
 {
 	if (!key)
