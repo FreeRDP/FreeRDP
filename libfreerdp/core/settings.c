@@ -872,6 +872,14 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 			goto out_fail;
 	}
 
+	if (settings->RdpServerRsaKey)
+	{
+		_settings->RdpServerRsaKey = key_clone(settings->RdpServerRsaKey);
+
+		if (!_settings->RdpServerRsaKey)
+			goto out_fail;
+	}
+
 	_settings->ChannelCount = settings->ChannelCount;
 	_settings->ChannelDefArraySize = settings->ChannelDefArraySize;
 
