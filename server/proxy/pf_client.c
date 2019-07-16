@@ -234,7 +234,12 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	DWORD status;
 	HANDLE handles[64];
 
-	pc->during_connect_process = TRUE;
+	/* Only set the `during_connect_process` flag if NlaSecurity is enabled.
+	 * If NLASecurity isn't enabled, the connection should be closed right after the first failure.
+	 */
+	if (instance->settings->NlaSecurity)
+		pc->during_connect_process = TRUE;
+
 	if (!freerdp_connect(instance))
 	{
 		if (instance->settings->NlaSecurity)
