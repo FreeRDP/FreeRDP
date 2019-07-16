@@ -41,7 +41,6 @@
 #include <freerdp/server/rdpgfx.h>
 
 #include "pf_server.h"
-#include "pf_common.h"
 #include "pf_log.h"
 #include "pf_config.h"
 #include "pf_client.h"

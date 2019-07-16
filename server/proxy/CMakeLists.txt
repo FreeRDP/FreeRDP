@@ -37,8 +37,6 @@ set(${MODULE_PREFIX}_SRCS
   pf_disp.h
   pf_server.c
   pf_server.h
-  pf_common.c
-  pf_common.h
   pf_gdi.c
   pf_gdi.h
   pf_config.c

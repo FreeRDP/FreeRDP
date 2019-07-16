@@ -21,7 +21,6 @@
 
 #include "pf_client.h"
 #include "pf_context.h"
-#include "pf_common.h"
 
 /* Proxy context initialization callback */
 static BOOL client_to_proxy_context_new(freerdp_peer* client,
