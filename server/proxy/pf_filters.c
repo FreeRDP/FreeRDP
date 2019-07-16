@@ -93,7 +93,7 @@ PF_FILTER_RESULT pf_filters_run_by_type(filters_list* list, PF_FILTER_TYPE type,
 	{
 		filter = (proxyFilter*) ArrayList_GetItem(list, index);
 		events = filter->events;
-		WLog_DBG(TAG, "pf_filters_run_by_type(): Running filter: %s", filter->name);
+		WLog_VRB(TAG, "pf_filters_run_by_type(): Running filter: %s", filter->name);
 
 		switch (type)
 		{
