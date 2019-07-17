@@ -1558,7 +1558,7 @@ extern "C" {
 #define FREERDP_SETTINGS_SERVER_MODE	0x00000001
 
 FREERDP_API rdpSettings* freerdp_settings_new(DWORD flags);
-FREERDP_API rdpSettings* freerdp_settings_clone(rdpSettings* settings);
+FREERDP_API rdpSettings* freerdp_settings_clone(const rdpSettings* settings);
 FREERDP_API BOOL freerdp_settings_copy(rdpSettings* dst, const rdpSettings* src);
 FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
