@@ -754,13 +754,27 @@ char* crypto_cert_issuer(X509* xcert)
 	return crypto_print_name(X509_get_issuer_name(xcert));
 }
 
+static int verify_cb (int ok, X509_STORE_CTX *csc)
+{
+	if (ok != 1)
+	{
+		int err = X509_STORE_CTX_get_error(csc);
+		int derr = X509_STORE_CTX_get_error_depth(csc);
+		X509* where = X509_STORE_CTX_get_current_cert(csc);
+		const char* what = X509_verify_cert_error_string(err);
+
+		WLog_WARN(TAG, "Certificate verification failure '%s (%d)' at stack position %d", what, err, derr);
+		WLog_WARN(TAG, "%s", crypto_cert_subject(where));
+	}
+	return ok;
+}
+
 BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path)
 {
 	X509_STORE_CTX* csc;
 	BOOL status = FALSE;
 	X509_STORE* cert_ctx = NULL;
 	X509_LOOKUP* lookup = NULL;
-	X509* xcert = cert->px509;
 	cert_ctx = X509_STORE_new();
 
 	if (cert_ctx == NULL)
@@ -773,6 +787,7 @@ BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path
 	                    | OPENSSL_INIT_ADD_ALL_DIGESTS \
 	                    | OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
+
 	lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
 
 	if (lookup == NULL)
@@ -797,10 +812,11 @@ BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path
 
 	X509_STORE_set_flags(cert_ctx, 0);
 
-	if (!X509_STORE_CTX_init(csc, cert_ctx, xcert, cert->px509chain))
+	if (!X509_STORE_CTX_init(csc, cert_ctx, cert->px509, cert->px509chain))
 		goto end;
 
 	X509_STORE_CTX_set_purpose(csc, X509_PURPOSE_SSL_SERVER);
+	X509_STORE_CTX_set_verify_cb(csc, verify_cb);
 
 	if (X509_verify_cert(csc) == 1)
 		status = TRUE;
