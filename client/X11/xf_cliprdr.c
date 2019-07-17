@@ -1438,7 +1438,6 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 			return CHANNEL_RC_OK;
 		}
 
-		DstSize = 0;
 		pDstData = (BYTE*) ClipboardGetData(clipboard->system, dstFormatId, &DstSize);
 
 		if (!pDstData)
@@ -1446,7 +1445,6 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 			WLog_WARN(TAG, "failed to get clipboard data in format %s [source format %s]",
 			          ClipboardGetFormatName(clipboard->system, dstFormatId),
 			          ClipboardGetFormatName(clipboard->system, srcFormatId));
-			return CHANNEL_RC_OK;
 		}
 
 		if (nullTerminated)
