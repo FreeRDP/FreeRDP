@@ -1226,7 +1226,7 @@ static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
 static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength)
 {
 	BIO* bio;
-	int status;
+	int status, count, x;
 	size_t offset;
 	size_t length = 0;
 	BOOL rc = FALSE;
@@ -1254,6 +1254,21 @@ static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyL
 	{
 		WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
 		goto fail;
+	}
+
+	if (cert->px509chain)
+	{
+		count = sk_BIO_num(cert->px509chain);
+		for (x=0; x<count; x++)
+		{
+			X509* c = sk_BIO_value(cert->px509chain, x);
+			status = PEM_write_bio_X509(bio, c);
+			if (status < 0)
+			{
+				WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
+				goto fail;
+			}
+		}
 	}
 
 	offset = 0;
