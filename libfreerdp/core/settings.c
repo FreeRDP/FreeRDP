@@ -1129,7 +1129,7 @@ out_fail:
 	return FALSE;
 }
 
-rdpSettings* freerdp_settings_clone(rdpSettings* settings)
+rdpSettings* freerdp_settings_clone(const rdpSettings* settings)
 {
 	rdpSettings* _settings = (rdpSettings*) calloc(1, sizeof(rdpSettings));
 
