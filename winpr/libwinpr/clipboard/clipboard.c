@@ -468,7 +468,8 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 		DstSize = SrcSize;
 		pDstData = synthesizer->pfnSynthesize(clipboard, format->formatId, pSrcData,
 		                                      &DstSize);
-		*pSize = DstSize;
+		if (pDstData)
+			*pSize = DstSize;
 	}
 
 	return pDstData;
