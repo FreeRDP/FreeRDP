@@ -234,6 +234,7 @@ static char testRdpFileUTF8[] =
     "disable cursor setting:i:0\n"
     "bitmapcachepersistenable:i:1\n"
     "full address:s:LAB1-W7-DM-01.lab1.awake.local\n"
+    "alternate full address:s:LAB1-W7-DM-01.lab1.awake.global\n"
     "audiomode:i:0\n"
     "redirectprinters:i:1\n"
     "redirectcomports:i:0\n"
@@ -265,6 +266,8 @@ int TestClientRdpFile(int argc, char* argv[])
 	int rc = -1;
 	int iValue;
 	const char* sValue;
+	char* utfname = NULL;
+	char* uniname = NULL;
 	rdpFile* file;
 	rdpSettings* settings;
 
@@ -314,6 +317,13 @@ int TestClientRdpFile(int argc, char* argv[])
 		goto fail;
 	}
 
+	if (strcmp(settings->ServerHostname, "LAB1-W7-DM-01.lab1.awake.local") != 0)
+	{
+		printf("ServerHostname mismatch: Actual: %s, Expected: %s\n",
+			   settings->ServerHostname, "LAB1-W7-DM-01.lab1.awake.local");
+		goto fail;
+	}
+
 	freerdp_client_rdp_file_free(file);
 	freerdp_settings_free(settings);
 	/* Ascii */
@@ -351,6 +361,13 @@ int TestClientRdpFile(int argc, char* argv[])
 		goto fail;
 	}
 #endif
+
+	if (strcmp(settings->ServerHostname, "LAB1-W7-DM-01.lab1.awake.global") != 0)
+	{
+		printf("ServerHostname mismatch: Actual: %s, Expected: %s\n",
+			   settings->ServerHostname, "LAB1-W7-DM-01.lab1.awake.global");
+		goto fail;
+	}
 
 	if (strcmp(settings->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local") != 0)
 	{
@@ -391,15 +408,30 @@ int TestClientRdpFile(int argc, char* argv[])
 	}
 
 	freerdp_client_rdp_file_free(file);
+
+	utfname = _strdup(tmpnam(NULL));
+	uniname = _strdup(tmpnam(NULL));
 	file = freerdp_client_rdp_file_new();
-	if (!file)
+	if (!file || !utfname || !uniname)
 		goto fail;
 
 	if (!freerdp_client_populate_rdp_file_from_settings(file, settings))
 		goto fail;
 
+	if (!freerdp_client_write_rdp_file(file, utfname, FALSE))
+		goto fail;
+
+	if (!freerdp_client_write_rdp_file(file,  uniname, TRUE))
+		goto fail;
+
 	rc = 0;
-	fail:
+fail:
+	if (utfname)
+		DeleteFileA(utfname);
+	if (uniname)
+		DeleteFileA(uniname);
+	free(utfname);
+	free(uniname);
 	freerdp_client_rdp_file_free(file);
 	freerdp_settings_free(settings);
 	return rc;
