@@ -225,14 +225,6 @@ static UINT pf_rdpgfx_on_open(RdpgfxClientContext* context,
 	return CHANNEL_RC_INITIALIZATION_ERROR;
 }
 
-static UINT pf_rdpgfx_on_close(RdpgfxClientContext* context)
-{
-	proxyData* pdata = (proxyData*) context->custom;
-	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_VRB(TAG, __FUNCTION__);
-	return server->Close(server) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
-}
-
 static UINT pf_rdpgfx_caps_confirm(RdpgfxClientContext* context,
                                    const RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
 {
@@ -329,8 +321,8 @@ void pf_rdpgfx_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* serv
 	gfx->MapSurfaceToScaledOutput = pf_rdpgfx_map_surface_to_scaled_output;
 	gfx->MapSurfaceToScaledWindow = pf_rdpgfx_map_surface_to_scaled_window;
 
+	/* No need to register to OnClose callback. GFX termination is handled in pf_server */
 	gfx->OnOpen = pf_rdpgfx_on_open;
-	gfx->OnClose = pf_rdpgfx_on_close;
 	gfx->CapsConfirm = pf_rdpgfx_caps_confirm;
 	/* Set server callbacks */
 	server->CapsAdvertise = pf_rdpgfx_caps_advertise;
