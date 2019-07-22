@@ -34,7 +34,6 @@
 
 #define UWAC_INITIAL_BUFFERS 3
 
-
 static int bppFromShmFormat(enum wl_shm_format format)
 {
 	switch (format)
@@ -82,11 +81,11 @@ void UwacWindowDestroyBuffers(UwacWindow* w)
 int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32_t width,
                               uint32_t height, enum wl_shm_format format);
 
-static void xdg_handle_configure(void *data,
-                                 struct xdg_toplevel *xdg_toplevel,
-                                 int32_t width,
-                                 int32_t height,
-                                 struct wl_array *states)
+static void xdg_handle_toplevel_configure(void *data,
+                                          struct xdg_toplevel *xdg_toplevel,
+                                          int32_t width,
+                                          int32_t height,
+                                          struct wl_array *states)
 {
 	UwacWindow* window = (UwacWindow*)data;
 	UwacConfigureEvent* event;
@@ -157,8 +156,8 @@ static void xdg_handle_configure(void *data,
 	}
 }
 
-static void xdg_handle_close(void *data,
-                             struct xdg_toplevel *xdg_toplevel)
+static void xdg_handle_toplevel_close(void *data,
+                                      struct xdg_toplevel *xdg_toplevel)
 {
 	UwacCloseEvent* event;
 	UwacWindow* window = (UwacWindow*)data;
@@ -176,9 +175,23 @@ static void xdg_handle_close(void *data,
 
 static const struct xdg_toplevel_listener xdg_toplevel_listener =
 {
-	xdg_handle_configure,
-	xdg_handle_close,
+	xdg_handle_toplevel_configure,
+	xdg_handle_toplevel_close,
 };
+
+static void xdg_handle_surface_configure(void *data,
+                                         struct xdg_surface *xdg_surface,
+                                         uint32_t serial) {
+	xdg_surface_ack_configure(xdg_surface, serial);
+	UwacWindow* window = (UwacWindow*)data;
+	wl_surface_commit(window->surface);
+}
+
+static const struct xdg_surface_listener xdg_surface_listener =
+{
+	.configure = xdg_handle_surface_configure,
+};
+
 #if BUILD_IVI
 
 static void ivi_handle_configure(void* data, struct ivi_surface* surface,
@@ -461,6 +474,8 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 			goto out_error_shell;
 		}
 
+		xdg_surface_add_listener(w->xdg_surface, &xdg_surface_listener, w);
+
 		w->xdg_toplevel = xdg_surface_get_toplevel(w->xdg_surface);
 		if (!w->xdg_toplevel)
 		{
@@ -470,6 +485,8 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 
 		assert(w->xdg_surface);
 		xdg_toplevel_add_listener(w->xdg_toplevel, &xdg_toplevel_listener, w);
+		wl_surface_commit(w->surface);
+		wl_display_roundtrip(w->display->display);
 	}
 #if BUILD_IVI
 	else if (display->ivi_application)
@@ -543,7 +560,6 @@ UwacReturnCode UwacDestroyWindow(UwacWindow** pwindow)
 	*pwindow = NULL;
 	return UWAC_SUCCESS;
 }
-
 
 UwacReturnCode UwacWindowSetOpaqueRegion(UwacWindow* window, uint32_t x, uint32_t y, uint32_t width,
         uint32_t height)
