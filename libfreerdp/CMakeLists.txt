@@ -97,7 +97,7 @@ else(SWScale_FOUND)
         include_directories(${CAIRO_INCLUDE_DIR})
         freerdp_library_add(${CAIRO_LIBRARY})
     else(CAIRO_FOUND)
-        message(WARNING "neigter swscale nor libcairo detected, compiling without image scaling support!")
+        message(WARNING "neither swscale nor libcairo detected, compiling without image scaling support!")
     endif(CAIRO_FOUND)
 endif(SWScale_FOUND)
 
