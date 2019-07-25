@@ -619,16 +619,13 @@ static const struct wl_callback_listener frame_listener =
 
 static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
 {
-#if 0
 	UINT32 nrects, i;
 #ifdef HAVE_PIXMAN_REGION
 	const pixman_box32_t* box;
 #else
 	const RECTANGLE_16* box;
 #endif
-#endif
 	wl_surface_attach(window->surface, buffer->wayland_buffer, 0, 0);
-#if 0
 #ifdef HAVE_PIXMAN_REGION
 	box = pixman_region32_rectangles(&buffer->damage, &nrects);
 
@@ -642,9 +639,6 @@ static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
 		wl_surface_damage(window->surface, box->left, box->top, (box->right - box->left),
 		                  (box->bottom - box->top));
 
-#endif
-#else
-	wl_surface_damage(window->surface, 0, 0, window->width, window->height);
 #endif
 	struct wl_callback* frame_callback = wl_surface_frame(window->surface);
 	wl_callback_add_listener(frame_callback, &frame_listener, window);
