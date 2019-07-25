@@ -114,7 +114,7 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)
 		return FALSE;
 
-	if (UwacWindowSubmitBuffer(context_w->window, true) != UWAC_SUCCESS)
+	if (UwacWindowSubmitBuffer(context_w->window, false) != UWAC_SUCCESS)
 		return FALSE;
 
 	return TRUE;
@@ -319,7 +319,7 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_FRAME_DONE:
-				if (UwacWindowSubmitBuffer(context->window, true) != UWAC_SUCCESS)
+				if (UwacWindowSubmitBuffer(context->window, false) != UWAC_SUCCESS)
 					return FALSE;
 
 				break;
