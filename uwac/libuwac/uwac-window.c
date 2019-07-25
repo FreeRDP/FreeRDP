@@ -617,37 +617,40 @@ static const struct wl_callback_listener frame_listener =
 };
 
 
-static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
+#ifdef HAVE_PIXMAN_REGION
+static void damage_surface(UwacWindow* window, UwacBuffer* buffer)
 {
 	UINT32 nrects, i;
-#ifdef HAVE_PIXMAN_REGION
-	const pixman_box32_t* box;
-#else
-	const RECTANGLE_16* box;
-#endif
-	wl_surface_attach(window->surface, buffer->wayland_buffer, 0, 0);
-#ifdef HAVE_PIXMAN_REGION
-	box = pixman_region32_rectangles(&buffer->damage, &nrects);
+	const pixman_box32_t* box = pixman_region32_rectangles(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)
 		wl_surface_damage(window->surface, box->x1, box->y1, (box->x2 - box->x1), (box->y2 - box->y1));
 
+	pixman_region32_clear(&buffer->damage);
+}
 #else
-	box = region16_rects(&buffer->damage, &nrects);
+static void damage_surface(UwacWindow* window, UwacBuffer* buffer)
+{
+	UINT32 nrects, i;
+	const RECTANGLE_16* box = region16_rects(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)
 		wl_surface_damage(window->surface, box->left, box->top, (box->right - box->left),
 		                  (box->bottom - box->top));
 
+	region16_clear(&buffer->damage);
+}
 #endif
+
+static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
+{
+	wl_surface_attach(window->surface, buffer->wayland_buffer, 0, 0);
+
+	damage_surface(window, buffer);
+
 	struct wl_callback* frame_callback = wl_surface_frame(window->surface);
 	wl_callback_add_listener(frame_callback, &frame_listener, window);
 	wl_surface_commit(window->surface);
-#ifdef HAVE_PIXMAN_REGION
-	pixman_region32_clear(&buffer->damage);
-#else
-	region16_clear(&buffer->damage);
-#endif
 }
 
 
@@ -665,14 +668,20 @@ static void frame_done_cb(void* data, struct wl_callback* callback, uint32_t tim
 }
 
 
+#ifdef HAVE_PIXMAN_REGION
 UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, uint32_t width,
                                    uint32_t height)
 {
-#ifdef HAVE_PIXMAN_REGION
-
 	if (!pixman_region32_union_rect(&window->drawingBuffer->damage, &window->drawingBuffer->damage, x,
 	                                y, width, height))
+		return UWAC_ERROR_INTERNAL;
+
+	return UWAC_SUCCESS;
+}
 #else
+UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, uint32_t width,
+                                   uint32_t height)
+{
 	RECTANGLE_16 box;
 
 	box.left = x;
@@ -681,11 +690,11 @@ UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, u
 	box.bottom = y + height;
 
 	if (!region16_union_rect(&window->drawingBuffer->damage, &window->drawingBuffer->damage, &box))
-#endif
 		return UWAC_ERROR_INTERNAL;
 
 	return UWAC_SUCCESS;
 }
+#endif
 
 UwacReturnCode UwacWindowGetDrawingBufferGeometry(UwacWindow* window, UwacSize* geometry, size_t* stride)
 {
