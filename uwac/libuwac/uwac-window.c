@@ -651,6 +651,7 @@ static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
 	struct wl_callback* frame_callback = wl_surface_frame(window->surface);
 	wl_callback_add_listener(frame_callback, &frame_listener, window);
 	wl_surface_commit(window->surface);
+	buffer->dirty = false;
 }
 
 
@@ -672,10 +673,11 @@ static void frame_done_cb(void* data, struct wl_callback* callback, uint32_t tim
 UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, uint32_t width,
                                    uint32_t height)
 {
-	if (!pixman_region32_union_rect(&window->drawingBuffer->damage, &window->drawingBuffer->damage, x,
-	                                y, width, height))
+	UwacBuffer* buf = window->drawingBuffer;
+	if (!pixman_region32_union_rect(&buf->damage, &buf->damage, x, y, width, height))
 		return UWAC_ERROR_INTERNAL;
 
+	buf->dirty = true;
 	return UWAC_SUCCESS;
 }
 #else
@@ -689,9 +691,11 @@ UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, u
 	box.right = x + width;
 	box.bottom = y + height;
 
-	if (!region16_union_rect(&window->drawingBuffer->damage, &window->drawingBuffer->damage, &box))
+	UwacBuffer* buf = window->drawingBuffer;
+	if (!region16_union_rect(&buf->damage, &buf->damage, &box))
 		return UWAC_ERROR_INTERNAL;
 
+	buf->dirty = true;
 	return UWAC_SUCCESS;
 }
 #endif
@@ -717,10 +721,10 @@ UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNex
 {
 	UwacBuffer* drawingBuffer = window->drawingBuffer;
 
-	if (window->pendingBuffer)
+	if (window->pendingBuffer || !drawingBuffer->dirty)
 		return UWAC_SUCCESS;
 
-	window->pendingBuffer = window->drawingBuffer;
+	window->pendingBuffer = drawingBuffer;
 	window->drawingBuffer = UwacWindowFindFreeBuffer(window);
 
 	if (!window->drawingBuffer)
