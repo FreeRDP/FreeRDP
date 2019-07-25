@@ -204,6 +204,7 @@ struct uwac_seat {
 /** @brief a buffer used for drawing a surface frame */
 struct uwac_buffer {
 	bool used;
+	bool dirty;
 #ifdef HAVE_PIXMAN_REGION
 	pixman_region32_t damage;
 #else
