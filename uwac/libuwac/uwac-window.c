@@ -147,7 +147,9 @@ static void xdg_handle_toplevel_configure(void *data,
 			return;
 		}
 
-		window->drawingBuffer = window->pendingBuffer = &window->buffers[0];
+		window->drawingBuffer = &window->buffers[0];
+		if (window->pendingBuffer != NULL)
+			window->pendingBuffer = window->drawingBuffer;
 	}
 	else
 	{
@@ -230,7 +232,9 @@ static void ivi_handle_configure(void* data, struct ivi_surface* surface,
 			return;
 		}
 
-		window->drawingBuffer = window->pendingBuffer = &window->buffers[0];
+		window->drawingBuffer = &window->buffers[0];
+		if (window->pendingBuffer != NULL)
+			window->pendingBuffer = window->drawingBuffer;
 	}
 	else
 	{
@@ -286,7 +290,9 @@ void shell_configure(void* data, struct wl_shell_surface* surface, uint32_t edge
 			return;
 		}
 
-		window->drawingBuffer = window->pendingBuffer = &window->buffers[0];
+		window->drawingBuffer = &window->buffers[0];
+		if (window->pendingBuffer != NULL)
+			window->pendingBuffer = window->drawingBuffer;
 	}
 	else
 	{
