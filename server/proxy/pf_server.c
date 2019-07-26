@@ -41,7 +41,6 @@
 #include <freerdp/server/rdpgfx.h>
 
 #include "pf_server.h"
-#include "pf_common.h"
 #include "pf_log.h"
 #include "pf_config.h"
 #include "pf_client.h"
@@ -52,23 +51,6 @@
 #include "pf_disp.h"
 
 #define TAG PROXY_TAG("server")
-
-static void pf_server_handle_client_disconnection(freerdp_peer* client)
-{
-	pServerContext* ps = (pServerContext*)client->context;
-	rdpContext* pc = (rdpContext*) ps->pdata->pc;
-	proxyData* pdata = ps->pdata;
-	WLog_INFO(TAG, "Connection with %s was closed; closing proxy's client <> target server connection %s",
-	          client->hostname, pc->settings->ServerHostname);
-	/* Mark connection closed for sContext */
-	SetEvent(pdata->connectionClosed);
-	freerdp_abort_connect(pc->instance);
-	/* Close connection to remote host */
-	WLog_DBG(TAG, "Waiting for proxy's client thread to finish");
-	WaitForSingleObject(ps->thread, INFINITE);
-	CloseHandle(ps->thread);
-	ps->thread = NULL;
-}
 
 static BOOL pf_server_parse_target_from_routing_token(rdpContext* context,
         char** target, DWORD* port)
@@ -183,7 +165,7 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 	pf_server_disp_init(ps);
 
 	/* Start a proxy's client in it's own thread */
-	if (!(ps->thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
+	if (!(pdata->client_thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		return FALSE;
@@ -296,19 +278,13 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 			eventCount += tmp;
 		}
 		eventHandles[eventCount++] = ChannelEvent;
-		eventHandles[eventCount++] = pdata->connectionClosed;
+		eventHandles[eventCount++] = pdata->abort_event;
 		eventHandles[eventCount++] = WTSVirtualChannelManagerGetEventHandle(ps->vcm);
 		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForMultipleObjects failed (errno: %d)", errno);
-			break;
-		}
-
-		if (pf_common_connection_aborted_by_peer(pdata))
-		{
-			WLog_INFO(TAG, "proxy's client disconnected, closing connection with client %s", client->hostname);
 			break;
 		}
 
@@ -324,6 +300,13 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 			}
 		}
 
+		/* only disconnect after checking client's and vcm's file descriptors  */
+		if (proxy_data_shall_disconnect(pdata))
+		{
+			WLog_INFO(TAG, "abort_event is set, closing connection with client %s", client->hostname);
+			break;
+		}
+		
 		switch (WTSVirtualChannelManagerGetDrdynvcState(ps->vcm))
 		{
 		/* Dynamic channel status may have been changed after processing */
@@ -366,16 +349,15 @@ fail:
 
 	if (ps->gfx)
 		rdpgfx_server_context_free(ps->gfx);
-		
-	if (client->connected && !pf_common_connection_aborted_by_peer(pdata))
-	{
-		pf_server_handle_client_disconnection(client);
-	}
 
 	pc = (rdpContext*) pdata->pc;
+	WLog_INFO(TAG, "pf_server_handle_client(): starting shutdown of connection (client %s)", client->hostname);
+	WLog_INFO(TAG, "pf_server_handle_client(): stopping proxy's client");
 	freerdp_client_stop(pc);
+	WLog_INFO(TAG, "pf_server_handle_client(): freeing proxy data");
 	proxy_data_free(pdata);
 	freerdp_client_context_free(pc);
+	client->Close(client);
 	client->Disconnect(client);
 out_free_peer:
 	freerdp_peer_context_free(client);

@@ -46,7 +46,6 @@ struct p_server_context
 	proxyData* pdata;
 
 	HANDLE vcm;
-	HANDLE thread;
 	HANDLE dynvcReady;
 
 	RdpgfxServerContext* gfx;
@@ -91,17 +90,25 @@ struct proxy_data
 	pServerContext* ps;
 	pClientContext* pc;
 
-	HANDLE connectionClosed;
+	HANDLE abort_event;
+	HANDLE client_thread;
 
 	connectionInfo* info;
 	filters_list* filters;
 };
 
-BOOL init_p_server_context(freerdp_peer* client);
+/* client */
 rdpContext* p_client_context_create(rdpSettings* clientSettings);
+
+/* pdata */
 proxyData* proxy_data_new();
 BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* ps, rdpSettings* pc);
 void proxy_data_free(proxyData* pdata);
 void pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_server);
+void proxy_data_abort_connect(proxyData* pdata);
+BOOL proxy_data_shall_disconnect(proxyData* pdata);
+
+/* server */
+BOOL init_p_server_context(freerdp_peer* client);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONTEXT_H */

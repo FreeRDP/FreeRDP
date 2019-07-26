@@ -45,7 +45,6 @@
 #include "pf_channels.h"
 #include "pf_gdi.h"
 #include "pf_graphics.h"
-#include "pf_common.h"
 #include "pf_client.h"
 #include "pf_context.h"
 #include "pf_update.h"
@@ -214,7 +213,7 @@ static void pf_client_post_disconnect(freerdp* instance)
 		/* proxy's client failed to connect, and now it's trying to connect without NLA, no need to shutdown
 		 * the connection between proxy's server and the original client.
 		 */
-		SetEvent(pdata->connectionClosed);
+		proxy_data_abort_connect(pdata);
 	}
 
 	/* It's important to avoid calling `freerdp_peer_context_free` and `freerdp_peer_free` here,
@@ -235,7 +234,12 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	DWORD status;
 	HANDLE handles[64];
 
-	pc->during_connect_process = TRUE;
+	/* Only set the `during_connect_process` flag if NlaSecurity is enabled.
+	 * If NLASecurity isn't enabled, the connection should be closed right after the first failure.
+	 */
+	if (instance->settings->NlaSecurity)
+		pc->during_connect_process = TRUE;
+
 	if (!freerdp_connect(instance))
 	{
 		if (instance->settings->NlaSecurity)
@@ -397,14 +401,18 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 static int pf_client_client_stop(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*) context;
-	pServerContext* ps = pc->pdata->ps;
+	proxyData* pdata = pc->pdata;
+	WLog_DBG(TAG, "aborting client connection");
 	freerdp_abort_connect(context->instance);
 
-	if (ps->thread)
+	if (pdata->client_thread)
 	{
-		WaitForSingleObject(ps->thread, INFINITE);
-		CloseHandle(ps->thread);
-		ps->thread = NULL;
+		/* Wait for client thread to finish. No need to call CloseHandle() here, as
+		 * it is the responsibility of `proxy_data_free`.
+		 */
+		WLog_DBG(TAG, "pf_client_client_stop(): waiting for thread to finish");
+		WaitForSingleObject(pdata->client_thread, INFINITE);
+		WLog_DBG(TAG, "pf_client_client_stop(): thread finished");
 	}
 
 	return 0;

@@ -21,7 +21,6 @@
 
 #include "pf_client.h"
 #include "pf_context.h"
-#include "pf_common.h"
 
 /* Proxy context initialization callback */
 static BOOL client_to_proxy_context_new(freerdp_peer* client,
@@ -162,7 +161,7 @@ proxyData* proxy_data_new()
 		return NULL;
 	}
 
-	if (!(pdata->connectionClosed = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(pdata->abort_event = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
 		proxy_data_free(pdata);
 		return NULL;
@@ -192,11 +191,27 @@ out_fail:
 void proxy_data_free(proxyData* pdata)
 {
 	connection_info_free(pdata->info);
-	if (pdata->connectionClosed)
+	if (pdata->abort_event)
 	{
-		CloseHandle(pdata->connectionClosed);
-		pdata->connectionClosed = NULL;
+		CloseHandle(pdata->abort_event);
+		pdata->abort_event = NULL;
+	}
+
+	if (pdata->client_thread)
+	{
+		CloseHandle(pdata->client_thread);
+		pdata->client_thread = NULL;
 	}
 
 	free(pdata);
+}
+
+void proxy_data_abort_connect(proxyData* pdata)
+{
+	SetEvent(pdata->abort_event);
+}
+
+BOOL proxy_data_shall_disconnect(proxyData* pdata)
+{
+	return WaitForSingleObject(pdata->abort_event, 0) == WAIT_OBJECT_0;
 }

@@ -49,7 +49,7 @@ static UINT pf_rdpgfx_reset_graphics(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->ResetGraphics(server, resetGraphics);
 }
 
@@ -58,7 +58,7 @@ static UINT pf_rdpgfx_start_frame(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->StartFrame(server, startFrame);
 }
 
@@ -67,7 +67,7 @@ static UINT pf_rdpgfx_end_frame(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->EndFrame(server, endFrame);
 }
 
@@ -76,7 +76,7 @@ static UINT pf_rdpgfx_surface_command(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->SurfaceCommand(server, cmd);
 }
 
@@ -85,7 +85,7 @@ static UINT pf_rdpgfx_delete_encoding_context(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->DeleteEncodingContext(server, deleteEncodingContext);
 }
 
@@ -94,7 +94,7 @@ static UINT pf_rdpgfx_create_surface(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->CreateSurface(server, createSurface);
 }
 
@@ -103,7 +103,7 @@ static UINT pf_rdpgfx_delete_surface(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->DeleteSurface(server, deleteSurface);
 }
 
@@ -112,7 +112,7 @@ static UINT pf_rdpgfx_solid_fill(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->SolidFill(server, solidFill);
 }
 
@@ -121,7 +121,7 @@ static UINT pf_rdpgfx_surface_to_surface(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->SurfaceToSurface(server, surfaceToSurface);
 }
 
@@ -130,7 +130,7 @@ static UINT pf_rdpgfx_surface_to_cache(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->SurfaceToCache(server, surfaceToCache);
 }
 
@@ -139,7 +139,7 @@ static UINT pf_rdpgfx_cache_to_surface(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->CacheToSurface(server, cacheToSurface);
 }
 
@@ -148,7 +148,7 @@ static UINT pf_rdpgfx_cache_import_reply(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->CacheImportReply(server, cacheImportReply);
 }
 
@@ -157,7 +157,7 @@ static UINT pf_rdpgfx_evict_cache_entry(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->EvictCacheEntry(server, evictCacheEntry);
 }
 
@@ -166,7 +166,7 @@ static UINT pf_rdpgfx_map_surface_to_output(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->MapSurfaceToOutput(server, surfaceToOutput);
 }
 
@@ -175,7 +175,7 @@ static UINT pf_rdpgfx_map_surface_to_window(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->MapSurfaceToWindow(server, surfaceToWindow);
 }
 
@@ -184,7 +184,7 @@ static UINT pf_rdpgfx_map_surface_to_scaled_window(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->MapSurfaceToScaledWindow(server, surfaceToScaledWindow);
 }
 
@@ -194,7 +194,7 @@ static UINT pf_rdpgfx_map_surface_to_scaled_output(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->MapSurfaceToScaledOutput(server, surfaceToScaledOutput);
 }
 
@@ -203,7 +203,7 @@ static UINT pf_rdpgfx_on_open(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 
 	if (NULL != do_caps_advertise)
 		*do_caps_advertise = FALSE;
@@ -229,7 +229,7 @@ static UINT pf_rdpgfx_on_close(RdpgfxClientContext* context)
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->Close(server) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
@@ -238,7 +238,7 @@ static UINT pf_rdpgfx_caps_confirm(RdpgfxClientContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return server->CapsConfirm(server, capsConfirm);
 }
 
@@ -273,7 +273,7 @@ static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 	supportedCapsAdvertise.capsSetCount = proxySupportedCapsSetCount;
 	supportedCapsAdvertise.capsSets = proxySupportedCapsSets;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return client->CapsAdvertise(client, &supportedCapsAdvertise);
 }
 
@@ -282,7 +282,7 @@ static UINT pf_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxClientContext* client = (RdpgfxClientContext*) pdata->pc->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return client->FrameAcknowledge(client, frameAcknowledge);
 }
 
@@ -291,7 +291,7 @@ static UINT pf_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxClientContext* client = (RdpgfxClientContext*) pdata->pc->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return client->QoeFrameAcknowledge(client, qoeFrameAcknowledge);
 }
 
@@ -300,7 +300,7 @@ static UINT pf_rdpgfx_cache_import_offer(RdpgfxServerContext* context,
 {
 	proxyData* pdata = (proxyData*) context->custom;
 	RdpgfxClientContext* client = (RdpgfxClientContext*) pdata->pc->gfx;
-	WLog_DBG(TAG, __FUNCTION__);
+	WLog_VRB(TAG, __FUNCTION__);
 	return client->CacheImportOffer(client, cacheImportOffer);
 }
 
