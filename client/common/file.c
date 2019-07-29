@@ -1562,7 +1562,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 * 	devicestoredirect:s:USB\VID_04A9&PID_30C1\6&4BD985D&0&2;,DynamicDevices
 		 *
 		 */
-		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectDrives, TRUE))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
 			return FALSE;
 	}
 
