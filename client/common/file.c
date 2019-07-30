@@ -789,6 +789,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 			file->AudioMode = AUDIO_MODE_NONE;
 	}
 
+	SETTING_MODIFIED_SET_BOOL(file->AudioCaptureMode, settings, AudioCapture);
 	SETTING_MODIFIED_SET_STRING(file->GatewayHostname, settings, GatewayHostname);
 	SETTING_MODIFIED_SET_STRING(file->GatewayAccessToken, settings, GatewayAccessToken);
 	SETTING_MODIFIED_SET(file->GatewayUsageMethod, settings, GatewayUsageMethod);
@@ -1218,22 +1219,34 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~file->AudioMode)
 	{
-		if (file->AudioMode == AUDIO_MODE_REDIRECT)
+		switch(file->AudioMode)
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, TRUE))
-				return FALSE;
+			case AUDIO_MODE_REDIRECT:
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteConsoleAudio, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, TRUE))
+					return FALSE;
+				break;
+			case AUDIO_MODE_PLAY_ON_SERVER:
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteConsoleAudio, TRUE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, FALSE))
+					return FALSE;
+				break;
+			case AUDIO_MODE_NONE:
+			default:
+				if (!freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteConsoleAudio, FALSE))
+					return FALSE;
+				break;
 		}
-		else if (file->AudioMode == AUDIO_MODE_PLAY_ON_SERVER)
-		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteConsoleAudio, TRUE))
-				return FALSE;
-		}
-		else if (file->AudioMode == AUDIO_MODE_NONE)
-		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, FALSE) ||
-			    !freerdp_settings_set_bool(settings, FreeRDP_RemoteConsoleAudio, FALSE))
-				return FALSE;
-		}
+	}
+
+	if (~file->AudioCaptureMode)
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_AudioCapture, file->AudioCaptureMode != 0))
+			return FALSE;
 	}
 
 	if (~file->Compression)

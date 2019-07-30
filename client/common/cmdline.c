@@ -3114,6 +3114,28 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	UINT32 index;
 	ADDIN_ARGV* args;
 
+	if (settings->AudioPlayback)
+	{
+		char* p[] =
+		{
+			"rdpsnd"
+		};
+
+		if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(p), p))
+			return FALSE;
+	}
+
+	if (settings->AudioCapture)
+	{
+		char* p[] =
+		{
+			"audin"
+		};
+
+		if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(p), p))
+			return FALSE;
+	}
+
 	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||
 	    (freerdp_dynamic_channel_collection_find(settings, "tsmf")))
 	{
