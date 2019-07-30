@@ -789,6 +789,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 			file->AudioMode = AUDIO_MODE_NONE;
 	}
 
+	SETTING_MODIFIED_SET_BOOL(file->AudioCaptureMode, settings, AudioCapture);
 	SETTING_MODIFIED_SET_STRING(file->GatewayHostname, settings, GatewayHostname);
 	SETTING_MODIFIED_SET_STRING(file->GatewayAccessToken, settings, GatewayAccessToken);
 	SETTING_MODIFIED_SET(file->GatewayUsageMethod, settings, GatewayUsageMethod);
@@ -1240,6 +1241,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 					return FALSE;
 				break;
 		}
+	}
+
+	if (~file->AudioCaptureMode)
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_AudioCapture, file->AudioCaptureMode != 0))
+			return FALSE;
 	}
 
 	if (~file->Compression)
