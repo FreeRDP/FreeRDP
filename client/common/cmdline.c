@@ -2908,6 +2908,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				case 100:
 				case 140:
 				case 180:
+					settings->DesktopScaleFactor = (UINT32)val;
 					settings->DeviceScaleFactor = (UINT32)val;
 					break;
 
