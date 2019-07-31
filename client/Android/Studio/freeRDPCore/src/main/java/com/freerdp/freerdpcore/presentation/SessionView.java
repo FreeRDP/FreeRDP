@@ -244,10 +244,17 @@ public class SessionView extends View {
         boolean longPressInProgress = false;
 
         public boolean onDown(MotionEvent e) {
+            MotionEvent mappedEvent = mapTouchEvent(e);
+            sessionViewListener.onSessionViewBeginTouch();
+            sessionViewListener.onSessionViewLeftTouch((int) mappedEvent.getX(), (int) mappedEvent.getY(), true);
+            longPressInProgress = false;
             return true;
         }
 
         public boolean onUp(MotionEvent e) {
+            MotionEvent mappedEvent = mapTouchEvent(e);
+            sessionViewListener.onSessionViewLeftTouch((int) mappedEvent.getX(), (int) mappedEvent.getY(), false);
+            longPressInProgress = false;
             sessionViewListener.onSessionViewEndTouch();
             return true;
         }
