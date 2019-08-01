@@ -217,7 +217,6 @@ static const XKB_VARIANT ca_variants[] =
 	{ "ike",		KBD_INUKTITUT_LATIN }, /* Inuktitut */
 	{ "shs",		0 }, /* Secwepemctsin */
 	{ "kut",		0 }, /* Ktunaxa */
-	{ "eng",		KBD_CANADIAN_ENGLISH }, /* English */
 	{ "",			0 },
 };
 
