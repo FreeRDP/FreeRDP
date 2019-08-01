@@ -50,8 +50,6 @@ struct p_server_context
 
 	RdpgfxServerContext* gfx;
 	DispServerContext* disp;
-
-	BOOL dispOpened;
 };
 typedef struct p_server_context pServerContext;
 

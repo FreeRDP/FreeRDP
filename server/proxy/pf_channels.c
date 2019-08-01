@@ -41,14 +41,13 @@
 
 #define TAG PROXY_TAG("channels")
 
-void pf_OnChannelConnectedEventHandler(void* context,
+void pf_OnChannelConnectedEventHandler(void* data,
                                        ChannelConnectedEventArgs* e)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*) data;
 	pServerContext* ps = pc->pdata->ps;
-	RdpgfxClientContext* gfx;
-	RdpgfxServerContext* server;
-	WLog_DBG(TAG, "Channel connected: %s", e->name);
+
+	WLog_INFO(TAG, "Channel connected: %s", e->name);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -56,40 +55,36 @@ void pf_OnChannelConnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		gfx = (RdpgfxClientContext*) e->pInterface;
-		pc->gfx = gfx;
-		server = ps->gfx;
-		pf_rdpgfx_pipeline_init(gfx, server, pc->pdata);
+		pc->gfx = (RdpgfxClientContext*) e->pInterface;
+		pf_rdpgfx_pipeline_init(pc->gfx, ps->gfx, pc->pdata);
+
+		if (!ps->gfx->Open(ps->gfx))
+		{
+			WLog_ERR(TAG, "failed to open GFX server");
+			return;
+		}
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
-		UINT error;
 		pc->disp = (DispClientContext*) e->pInterface;
-		ps->dispOpened = FALSE;
+		pf_disp_register_callbacks(pc->disp, ps->disp, pc->pdata);
 
-		if ((error = ps->disp->Open(ps->disp)) != CHANNEL_RC_OK)
+		if (ps->disp->Open(ps->disp) != CHANNEL_RC_OK)
 		{
-			if (error == ERROR_NOT_FOUND)
-			{
-				/* disp is not opened by client, ignore */
-				return;
-			}
-
-			WLog_WARN(TAG, "Failed to open disp channel");
+			WLog_ERR(TAG, "failed to open disp channel");
 			return;
 		}
-
-		ps->dispOpened = TRUE;
-		pf_disp_register_callbacks(pc->disp, ps->disp, pc->pdata);
 	}
 }
 
-void pf_OnChannelDisconnectedEventHandler(void* context,
+void pf_OnChannelDisconnectedEventHandler(void* data,
         ChannelDisconnectedEventArgs* e)
 {
+	rdpContext* context = (rdpContext*) data;
 	pClientContext* pc = (pClientContext*) context;
-	rdpSettings* settings;
-	settings = ((rdpContext*)pc)->settings;
+	pServerContext* ps = pc->pdata->ps;
+
+	WLog_INFO(TAG, "Channel disconnected: %s", e->name);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -97,10 +92,42 @@ void pf_OnChannelDisconnectedEventHandler(void* context,
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_graphics_pipeline_uninit(((rdpContext*)context)->gdi, (RdpgfxClientContext*) e->pInterface);
+		if (!ps->gfx->Close(ps->gfx))
+			WLog_ERR(TAG, "failed to close gfx server");
+
+		gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
+		if (ps->disp->Close(ps->disp) != CHANNEL_RC_OK)
+			WLog_ERR(TAG, "failed to close disp server");
+
 		pc->disp = NULL;
+	}
+}
+
+BOOL pf_server_channels_init(pServerContext* ps)
+{
+	if (!pf_server_rdpgfx_init(ps))
+		return FALSE;
+
+	if (!pf_server_disp_init(ps))
+		return FALSE;
+
+	return TRUE;
+}
+
+void pf_server_channels_free(pServerContext* ps)
+{
+	if (ps->gfx)
+	{
+		rdpgfx_server_context_free(ps->gfx);
+		ps->gfx = NULL;
+	}
+
+	if (ps->disp)
+	{
+		disp_server_context_free(ps->disp);
+		ps->disp = NULL;
 	}
 }
