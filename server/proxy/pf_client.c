@@ -208,17 +208,9 @@ static void pf_client_post_disconnect(freerdp* instance)
 	PubSub_UnsubscribeErrorInfo(instance->context->pubSub, pf_OnErrorInfo);
 	gdi_free(instance);
 
+	/* Only close the connection if NLA fallback process is done */
 	if (!context->during_connect_process)
-	{
-		/* proxy's client failed to connect, and now it's trying to connect without NLA, no need to shutdown
-		 * the connection between proxy's server and the original client.
-		 */
 		proxy_data_abort_connect(pdata);
-	}
-
-	/* It's important to avoid calling `freerdp_peer_context_free` and `freerdp_peer_free` here,
-	 * in order to avoid double-free. Those objects will be freed by the server when needed.
-	 */
 }
 
 /**
@@ -230,11 +222,22 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 {
 	freerdp* instance = (freerdp*)arg;
 	pClientContext* pc = (pClientContext*)instance->context;
+	proxyData* pdata = pc->pdata;
 	DWORD nCount;
 	DWORD status;
-	HANDLE handles[64];
+	HANDLE handles[65];
 
-	/* Only set the `during_connect_process` flag if NlaSecurity is enabled.
+	/*
+	 * during redirection, freerdp's abort event might be overriden (reset) by the library, after
+	 * the server set it in order to shutdown the connection. it means that the server might signal
+	 * the client to abort, but the library code will override the signal and the client will
+	 * continue its work instead of exiting. That's why the client must wait on `pdata->abort_event`
+	 * too, which will never be modified by the library.
+	 */
+	handles[64] = pdata->abort_event;
+
+	/*
+	 * Only set the `during_connect_process` flag if NlaSecurity is enabled.
 	 * If NLASecurity isn't enabled, the connection should be closed right after the first failure.
 	 */
 	if (instance->settings->NlaSecurity)
@@ -276,7 +279,7 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 			break;
 		}
 
-		status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
 		{
@@ -286,6 +289,9 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 		}
 
 		if (freerdp_shall_disconnect(instance))
+			break;
+
+		if (proxy_data_shall_disconnect(pdata))
 			break;
 
 		if (!freerdp_check_event_handles(instance->context))
@@ -402,12 +408,15 @@ static int pf_client_client_stop(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*) context;
 	proxyData* pdata = pc->pdata;
+
 	WLog_DBG(TAG, "aborting client connection");
+	proxy_data_abort_connect(pdata);
 	freerdp_abort_connect(context->instance);
 
 	if (pdata->client_thread)
 	{
-		/* Wait for client thread to finish. No need to call CloseHandle() here, as
+		/*
+		 * Wait for client thread to finish. No need to call CloseHandle() here, as
 		 * it is the responsibility of `proxy_data_free`.
 		 */
 		WLog_DBG(TAG, "pf_client_client_stop(): waiting for thread to finish");
