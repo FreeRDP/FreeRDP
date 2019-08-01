@@ -49,6 +49,7 @@
 #include "pf_update.h"
 #include "pf_rdpgfx.h"
 #include "pf_disp.h"
+#include "pf_channels.h"
 
 #define TAG PROXY_TAG("server")
 
@@ -161,8 +162,11 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 	WLog_INFO(TAG, "pf_server_post_connect(): target == %s:%"PRIu16"", pc->settings->ServerHostname,
 	      pc->settings->ServerPort);
 
-	pf_server_rdpgfx_init(ps);
-	pf_server_disp_init(ps);
+	if (!pf_server_channels_init(ps))
+	{
+		WLog_ERR(TAG, "pf_server_post_connect(): failed to initialize server's channels!");
+		return FALSE;
+	}
 
 	/* Start a proxy's client in it's own thread */
 	if (!(pdata->client_thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
@@ -336,24 +340,12 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 
 fail:
 
-	if (ps->disp)
-	{
-		if (ps->dispOpened)
-		{
-			WLog_DBG(TAG, "Closing RDPEDISP server");
-			(void)ps->disp->Close(ps->disp);
-		}
-
-		disp_server_context_free(ps->disp);
-	}
-
-	if (ps->gfx)
-		rdpgfx_server_context_free(ps->gfx);
-
 	pc = (rdpContext*) pdata->pc;
 	WLog_INFO(TAG, "pf_server_handle_client(): starting shutdown of connection (client %s)", client->hostname);
 	WLog_INFO(TAG, "pf_server_handle_client(): stopping proxy's client");
 	freerdp_client_stop(pc);
+	WLog_INFO(TAG, "pf_server_handle_client(): freeing server's channels");
+	pf_server_channels_free(ps);
 	WLog_INFO(TAG, "pf_server_handle_client(): freeing proxy data");
 	proxy_data_free(pdata);
 	freerdp_client_context_free(pc);

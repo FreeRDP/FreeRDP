@@ -25,9 +25,14 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/client/channels.h>
 
+#include "pf_context.h"
+
 void pf_OnChannelConnectedEventHandler(void* context,
                                        ChannelConnectedEventArgs* e);
 void pf_OnChannelDisconnectedEventHandler(void* context,
         ChannelDisconnectedEventArgs* e);
+
+BOOL pf_server_channels_init(pServerContext* ps);
+void pf_server_channels_free(pServerContext* ps);
 
 #endif /* FREERDP_SERVER_PROXY_PFCHANNELS_H */

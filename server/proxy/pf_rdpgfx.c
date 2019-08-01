@@ -202,7 +202,6 @@ static UINT pf_rdpgfx_on_open(RdpgfxClientContext* context,
                               BOOL* do_caps_advertise, BOOL* send_frame_acks)
 {
 	proxyData* pdata = (proxyData*) context->custom;
-	RdpgfxServerContext* server = (RdpgfxServerContext*) pdata->ps->gfx;
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (NULL != do_caps_advertise)
@@ -215,14 +214,7 @@ static UINT pf_rdpgfx_on_open(RdpgfxClientContext* context,
 	 * the GFX DYNVC. */
 	WLog_DBG(TAG, "Waiting for proxy's server dynvc to be ready");
 	WaitForSingleObject(pdata->ps->dynvcReady, INFINITE);
-
-	/* Check for error since the server's API doesn't return WTSAPI error codes */
-	if (server->Open(server))
-	{
-		return CHANNEL_RC_OK;
-	}
-
-	return CHANNEL_RC_INITIALIZATION_ERROR;
+	return CHANNEL_RC_OK;
 }
 
 static UINT pf_rdpgfx_caps_confirm(RdpgfxClientContext* context,
