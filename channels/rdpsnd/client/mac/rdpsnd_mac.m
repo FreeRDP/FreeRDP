@@ -166,7 +166,7 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 	mac->player = [[AVAudioPlayerNode alloc] init];
 	[mac->engine attachNode: mac->player];
 
-	[mac->engine connect: mac->player to: mac->engine.outputNode format: nil];
+	[mac->engine connect: mac->player to: mac->engine.mainMixerNode format: nil];
 
 	if (![mac->engine startAndReturnError: &error])
 	{
@@ -260,7 +260,7 @@ static UINT rdpsnd_mac_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
 	AVAudioPCMBuffer* buffer;
 	AVAudioFormat* format;
-	int16_t * const * db;
+	float * const * db;
 	size_t pos, step, x;
 	AVAudioFrameCount count;
 
@@ -271,17 +271,17 @@ static UINT rdpsnd_mac_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 	rdpsnd_mac_start(device);
 
 	count = size / step;
-	format = [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatInt16 sampleRate:mac->format.nSamplesPerSec channels:mac->format.nChannels interleaved:NO];
+	format = [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32 sampleRate:mac->format.nSamplesPerSec channels:mac->format.nChannels interleaved:NO];
 	buffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:format frameCapacity: count];
 	buffer.frameLength = buffer.frameCapacity;
-	db = buffer.int16ChannelData;
+	db = buffer.floatChannelData;
 
 	for (pos=0; pos<count; pos++)
 	{
 		const BYTE* d = &data[pos*step];
 		for (x=0; x<mac->format.nChannels; x++)
 		{
-			const int16_t val = (int16_t)((uint16_t)d[0] | ((uint16_t)d[1] << 8));
+			const float val = (int16_t)((uint16_t)d[0] | ((uint16_t)d[1] << 8)) / 32768.0f;
 			db[x][pos] = val;
 			d += sizeof(int16_t);
 		}
