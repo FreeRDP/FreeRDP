@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
+
 #include "filters_api.h"
 
 static PF_FILTER_RESULT demo_filter_keyboard_event(connectionInfo* info, void* param)
@@ -33,7 +35,8 @@ static PF_FILTER_RESULT demo_filter_mouse_event(connectionInfo* info, void* para
 
 	if (event_data->x % 100 == 0)
 	{
-		return FILTER_DROP;
+		printf("filter_demo: mouse x is currently %"PRIu16"\n", event_data->x);
+		return FILTER_PASS;
 	}
 
 	return FILTER_PASS;
