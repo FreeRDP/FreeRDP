@@ -134,7 +134,7 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 	Stream_Write_UINT16(s,
 	                    generalCapabilitySet->capabilitySetType); /* capabilitySetType (2 bytes) */
 	Stream_Write_UINT16(s,
-	                    generalCapabilitySet->capabilitySetLength); /* lengthCapability (2 bytes) */
+	                    generalCapabilitySet->capabilitySetLength); /* capabilitySetLength (2 bytes) */
 	Stream_Write_UINT32(s, generalCapabilitySet->version); /* version (4 bytes) */
 	Stream_Write_UINT32(s,
 	                    generalCapabilitySet->generalFlags); /* generalFlags (4 bytes) */
@@ -493,27 +493,25 @@ static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_server_receive_general_capability(CliprdrServerContext*
-        context, wStream* s)
+        context, wStream* s, CLIPRDR_GENERAL_CAPABILITY_SET* cap_set)
 {
-	UINT32 version;
-	UINT32 generalFlags;
-	Stream_Read_UINT32(s, version); /* version (4 bytes) */
-	Stream_Read_UINT32(s, generalFlags); /* generalFlags (4 bytes) */
+	Stream_Read_UINT32(s, cap_set->version); /* version (4 bytes) */
+	Stream_Read_UINT32(s, cap_set->generalFlags); /* generalFlags (4 bytes) */
 
 	if (context->useLongFormatNames)
-		context->useLongFormatNames = (generalFlags & CB_USE_LONG_FORMAT_NAMES) ? TRUE :
+		context->useLongFormatNames = (cap_set->generalFlags & CB_USE_LONG_FORMAT_NAMES) ? TRUE :
 		                              FALSE;
 
 	if (context->streamFileClipEnabled)
-		context->streamFileClipEnabled = (generalFlags & CB_STREAM_FILECLIP_ENABLED) ?
+		context->streamFileClipEnabled = (cap_set->generalFlags & CB_STREAM_FILECLIP_ENABLED) ?
 		                                 TRUE : FALSE;
 
 	if (context->fileClipNoFilePaths)
-		context->fileClipNoFilePaths = (generalFlags & CB_FILECLIP_NO_FILE_PATHS) ?
+		context->fileClipNoFilePaths = (cap_set->generalFlags & CB_FILECLIP_NO_FILE_PATHS) ?
 		                               TRUE : FALSE;
 
 	if (context->canLockClipData)
-		context->canLockClipData = (generalFlags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
+		context->canLockClipData = (cap_set->generalFlags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
 
 	return CHANNEL_RC_OK;
 }
@@ -527,39 +525,65 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context,
         wStream* s, CLIPRDR_HEADER* header)
 {
 	UINT16 index;
-	UINT16 cCapabilitiesSets;
 	UINT16 capabilitySetType;
-	UINT16 lengthCapability;
-	UINT error;
+	UINT16 capabilitySetLength;
+	UINT error = CHANNEL_RC_OK;
+	size_t cap_sets_size = 0;
+	CLIPRDR_CAPABILITIES capabilities;
+	CLIPRDR_CAPABILITY_SET* capSet;
+	void* tmp;
+
+	/* set `capabilitySets` to NULL so `realloc` will know to alloc the first block */
+	capabilities.capabilitySets = NULL;
+
 	WLog_DBG(TAG, "CliprdrClientCapabilities");
-	Stream_Read_UINT16(s, cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
+	Stream_Read_UINT16(s, capabilities.cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
 	Stream_Seek_UINT16(s); /* pad1 (2 bytes) */
 
-	for (index = 0; index < cCapabilitiesSets; index++)
+	for (index = 0; index < capabilities.cCapabilitiesSets; index++)
 	{
 		Stream_Read_UINT16(s, capabilitySetType); /* capabilitySetType (2 bytes) */
-		Stream_Read_UINT16(s, lengthCapability); /* lengthCapability (2 bytes) */
+		Stream_Read_UINT16(s, capabilitySetLength); /* capabilitySetLength (2 bytes) */
 
-		switch (capabilitySetType)
+		cap_sets_size += capabilitySetLength;
+
+		tmp = realloc(capabilities.capabilitySets, cap_sets_size);
+		if (tmp == NULL)
+		{
+			WLog_ERR(TAG, "capabilities.capabilitySets realloc failed!");
+			free(capabilities.capabilitySets);
+			return CHANNEL_RC_NO_MEMORY;
+		}
+
+		capabilities.capabilitySets = (CLIPRDR_CAPABILITY_SET*) tmp;
+
+		capSet = &(capabilities.capabilitySets[index]);
+
+		capSet->capabilitySetType = capabilitySetType;
+		capSet->capabilitySetLength= capabilitySetLength;
+
+		switch (capSet->capabilitySetType)
 		{
 			case CB_CAPSTYPE_GENERAL:
-				if ((error = cliprdr_server_receive_general_capability(context, s)))
+				if ((error = cliprdr_server_receive_general_capability(context, s, (CLIPRDR_GENERAL_CAPABILITY_SET*) capSet)))
 				{
 					WLog_ERR(TAG, "cliprdr_server_receive_general_capability failed with error %"PRIu32"",
 					         error);
-					return error;
+					goto out;
 				}
-
 				break;
 
 			default:
-				WLog_ERR(TAG, "unknown cliprdr capability set: %"PRIu16"", capabilitySetType);
-				return ERROR_INVALID_DATA;
-				break;
+				WLog_ERR(TAG, "unknown cliprdr capability set: %"PRIu16"", capSet->capabilitySetType);
+				error = ERROR_INVALID_DATA;
+				goto out;
 		}
 	}
 
-	return CHANNEL_RC_OK;
+	IFCALLRET(context->ClientCapabilities, error, context, &capabilities);
+out:
+	free(capabilities.capabilitySets);
+	return error;
 }
 
 /**
@@ -1115,7 +1139,7 @@ static UINT cliprdr_server_receive_pdu(CliprdrServerContext* context,
 
 		default:
 			error = ERROR_INVALID_DATA;
-			WLog_DBG(TAG, "Unexpected clipboard PDU type: %"PRIu16"", header->msgType);
+			WLog_ERR(TAG, "Unexpected clipboard PDU type: %"PRIu16"", header->msgType);
 			break;
 	}
 
@@ -1133,7 +1157,7 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
 	CLIPRDR_CAPABILITIES capabilities;
 	CLIPRDR_MONITOR_READY monitorReady;
 	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet;
-	UINT error;
+	UINT error = CHANNEL_RC_OK;
 	ZeroMemory(&capabilities, sizeof(capabilities));
 	ZeroMemory(&monitorReady, sizeof(monitorReady));
 	generalFlags = 0;
