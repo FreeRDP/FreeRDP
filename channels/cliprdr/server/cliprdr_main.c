@@ -1356,10 +1356,13 @@ static DWORD WINAPI cliprdr_server_thread(LPVOID arg)
 	events[nCount++] = cliprdr->StopEvent;
 	events[nCount++] = ChannelEvent;
 
-	if ((error = cliprdr_server_init(context)))
+	if (context->autoInitializationSequence)
 	{
-		WLog_ERR(TAG, "cliprdr_server_init failed with error %"PRIu32"!", error);
-		goto out;
+		if ((error = cliprdr_server_init(context)))
+		{
+			WLog_ERR(TAG, "cliprdr_server_init failed with error %"PRIu32"!", error);
+			goto out;
+		}
 	}
 
 	while (1)
@@ -1566,6 +1569,7 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 
 	if (context)
 	{
+		context->autoInitializationSequence = TRUE;
 		context->Open = cliprdr_server_open;
 		context->Close = cliprdr_server_close;
 		context->Start = cliprdr_server_start;
