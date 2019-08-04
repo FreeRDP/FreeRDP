@@ -295,7 +295,7 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 
 	Stream_Read_UINT32(s, formatDataRequest.requestedFormatId); /* requestedFormatId (4 bytes) */
 
-
+	context->lastRequestedFormatId = formatDataRequest.requestedFormatId;
 	IFCALLRET(context->ServerFormatDataRequest, error, context, &formatDataRequest);
 	if (error)
 		WLog_ERR(TAG, "ServerFormatDataRequest failed with error %"PRIu32"!", error);

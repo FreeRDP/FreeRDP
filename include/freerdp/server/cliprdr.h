@@ -103,6 +103,7 @@ struct _cliprdr_server_context
 	psCliprdrServerFileContentsResponse ServerFileContentsResponse;
 
 	rdpContext* rdpcontext;
+	UINT32 lastRequestedFormatId;
 };
 
 #ifdef __cplusplus
