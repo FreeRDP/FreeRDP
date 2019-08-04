@@ -36,8 +36,9 @@
 #include "pf_client.h"
 #include "pf_context.h"
 #include "pf_rdpgfx.h"
-#include "pf_log.h"
+#include "pf_cliprdr.h"
 #include "pf_disp.h"
+#include "pf_log.h"
 
 #define TAG PROXY_TAG("channels")
 
@@ -75,6 +76,17 @@ void pf_OnChannelConnectedEventHandler(void* data,
 		pc->disp = (DispClientContext*) e->pInterface;
 		pf_disp_register_callbacks(pc->disp, ps->disp, pc->pdata);
 	}
+	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	{
+		if (ps->cliprdr->Start(ps->cliprdr) != CHANNEL_RC_OK)
+		{
+			WLog_ERR(TAG, "failed to open cliprdr channel");
+			return;
+		}
+
+		pc->cliprdr = (CliprdrClientContext*) e->pInterface;
+		pf_cliprdr_register_callbacks(pc->cliprdr, ps->cliprdr, pc->pdata);
+	}
 }
 
 void pf_OnChannelDisconnectedEventHandler(void* data,
@@ -104,6 +116,13 @@ void pf_OnChannelDisconnectedEventHandler(void* data,
 
 		pc->disp = NULL;
 	}
+	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	{
+		if (ps->cliprdr->Stop(ps->cliprdr) != CHANNEL_RC_OK)
+			WLog_ERR(TAG, "failed to stop cliprdr server");
+
+		pc->cliprdr = NULL;
+	}
 }
 
 BOOL pf_server_channels_init(pServerContext* ps)
@@ -123,6 +142,12 @@ BOOL pf_server_channels_init(pServerContext* ps)
 			return FALSE;
 	}
 
+	if (config->Clipboard && WTSVirtualChannelManagerIsChannelJoined(ps->vcm, CLIPRDR_SVC_CHANNEL_NAME))
+	{
+		if (!pf_server_cliprdr_init(ps))
+			return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -138,5 +163,11 @@ void pf_server_channels_free(pServerContext* ps)
 	{
 		disp_server_context_free(ps->disp);
 		ps->disp = NULL;
+	}
+
+	if (ps->cliprdr)
+	{
+		cliprdr_server_context_free(ps->cliprdr);
+		ps->cliprdr = NULL;
 	}
 }

@@ -50,9 +50,14 @@ struct proxy_config
 	/* channels */
 	BOOL GFX;
 	BOOL DisplayControl;
+	BOOL Clipboard;
 
 	/* filters */
 	filters_list* Filters;
+
+	/* clipboard specific settings*/
+	BOOL TextOnly;
+	UINT32 MaxTextLength;
 };
 
 typedef struct proxy_config proxyConfig;

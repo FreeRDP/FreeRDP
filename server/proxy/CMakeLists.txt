@@ -45,7 +45,9 @@ set(${MODULE_PREFIX}_SRCS
   pf_graphics.h
   pf_filters.c
   pf_filters.h
-  pf_log.h)
+  pf_log.h
+  pf_cliprdr.c
+  pf_cliprdr.h)
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt

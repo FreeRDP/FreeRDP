@@ -34,6 +34,7 @@
 #define CONFIG_PRINT_STR(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, config->key)
 #define CONFIG_PRINT_BOOL(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, config->key ? "TRUE" : "FALSE")
 #define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu16"", #key, config->key);
+#define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu32"", #key, config->key);
 
 #define CONFIG_GET_STR(ini, section, key) IniFile_GetKeyValueString(ini, section, key)
 #define CONFIG_GET_BOOL(ini, section, key) IniFile_GetKeyValueInt(ini, section, key)
@@ -79,6 +80,7 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 {
 	config->GFX = CONFIG_GET_BOOL(ini, "Channels", "GFX");
 	config->DisplayControl = CONFIG_GET_BOOL(ini, "Channels", "DisplayControl");
+	config->Clipboard = CONFIG_GET_BOOL(ini, "Channels", "Clipboard");
 	return TRUE;
 }
 
@@ -193,6 +195,12 @@ void pf_server_config_print(proxyConfig* config)
 	CONFIG_PRINT_SECTION("Channels");
 	CONFIG_PRINT_BOOL(config, GFX);
 	CONFIG_PRINT_BOOL(config, DisplayControl);
+	CONFIG_PRINT_BOOL(config, Clipboard);
+
+	CONFIG_PRINT_SECTION("Clipboard");
+	CONFIG_PRINT_BOOL(config, TextOnly);
+	if (config->MaxTextLength > 0)
+		CONFIG_PRINT_UINT32(config, MaxTextLength);
 }
 
 void pf_server_config_free(proxyConfig* config)
