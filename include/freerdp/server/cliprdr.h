@@ -103,6 +103,7 @@ struct _cliprdr_server_context
 	psCliprdrServerFileContentsResponse ServerFileContentsResponse;
 
 	rdpContext* rdpcontext;
+	BOOL autoInitializationSequence;
 	UINT32 lastRequestedFormatId;
 };
 
