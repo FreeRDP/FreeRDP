@@ -29,6 +29,7 @@
 #include <freerdp/server/rdpgfx.h>
 #include <freerdp/client/disp.h>
 #include <freerdp/server/disp.h>
+#include <freerdp/server/cliprdr.h>
 
 #include "pf_config.h"
 #include "pf_server.h"
@@ -50,6 +51,7 @@ struct p_server_context
 
 	RdpgfxServerContext* gfx;
 	DispServerContext* disp;
+	CliprdrServerContext* cliprdr;
 };
 typedef struct p_server_context pServerContext;
 
@@ -65,6 +67,7 @@ struct p_client_context
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	DispClientContext* disp;
+	CliprdrClientContext* cliprdr;
 
 	/*
 	 * In a case when freerdp_connect fails,

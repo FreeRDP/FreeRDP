@@ -47,6 +47,7 @@
 #include "pf_context.h"
 #include "pf_input.h"
 #include "pf_update.h"
+#include "pf_channels.h"
 #include "pf_rdpgfx.h"
 #include "pf_disp.h"
 #include "pf_channels.h"
@@ -232,6 +233,7 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	pdata->config = client->ContextExtra;
 	config = pdata->config;
 	client->settings->UseMultimon = TRUE;
+	client->settings->RedirectClipboard = config->Clipboard;
 	client->settings->SupportGraphicsPipeline = config->GFX;
 	client->settings->SupportDynamicChannels = TRUE;
 	client->settings->CertificateFile = _strdup("server.crt");
