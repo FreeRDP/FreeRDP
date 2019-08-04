@@ -81,6 +81,7 @@ struct _cliprdr_client_context
 	pcCliprdrClientFileContentsResponse ClientFileContentsResponse;
 	pcCliprdrServerFileContentsResponse ServerFileContentsResponse;
 
+	UINT32 lastRequestedFormatId;
 	rdpContext* rdpcontext;
 };
 

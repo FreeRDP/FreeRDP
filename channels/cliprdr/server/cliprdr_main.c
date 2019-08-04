@@ -911,6 +911,7 @@ static UINT cliprdr_server_receive_format_data_request(CliprdrServerContext*
 
 	Stream_Read_UINT32(s,
 	                   formatDataRequest.requestedFormatId); /* requestedFormatId (4 bytes) */
+	context->lastRequestedFormatId = formatDataRequest.requestedFormatId;
 	IFCALLRET(context->ClientFormatDataRequest, error, context, &formatDataRequest);
 
 	if (error)
