@@ -58,6 +58,7 @@ struct proxy_config
 typedef struct proxy_config proxyConfig;
 
 BOOL pf_server_config_load(const char* path, proxyConfig* config);
+void pf_server_config_print(proxyConfig* config);
 void pf_server_config_free(proxyConfig* config);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONFIG_H */

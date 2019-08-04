@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
 	if (!pf_server_config_load(cfg, config))
 		goto fail;
 
+	pf_server_config_print(config);
 	status = pf_server_start(config);
 fail:
 	pf_server_config_free(config);

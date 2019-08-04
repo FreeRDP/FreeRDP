@@ -166,6 +166,35 @@ out:
 	return ok;
 }
 
+void pf_server_config_print(proxyConfig* config)
+{
+	WLog_INFO(TAG, "Proxy configuration:");
+
+	CONFIG_PRINT_SECTION("Server");
+	CONFIG_PRINT_STR(config, Host);
+	CONFIG_PRINT_UINT16(config, Port);
+
+	if (!config->UseLoadBalanceInfo)
+	{
+		CONFIG_PRINT_SECTION("Target");
+		CONFIG_PRINT_STR(config, TargetHost);
+		CONFIG_PRINT_UINT16(config, TargetPort);
+	}
+
+	CONFIG_PRINT_SECTION("Input");
+	CONFIG_PRINT_BOOL(config, Keyboard);
+	CONFIG_PRINT_BOOL(config, Mouse);
+
+	CONFIG_PRINT_SECTION("Security");
+	CONFIG_PRINT_BOOL(config, NlaSecurity);
+	CONFIG_PRINT_BOOL(config, TlsSecurity);
+	CONFIG_PRINT_BOOL(config, RdpSecurity);
+
+	CONFIG_PRINT_SECTION("Channels");
+	CONFIG_PRINT_BOOL(config, GFX);
+	CONFIG_PRINT_BOOL(config, DisplayControl);
+}
+
 void pf_server_config_free(proxyConfig* config)
 {
 	pf_filters_unregister_all(config->Filters);
