@@ -90,6 +90,8 @@ static void pf_OnErrorInfo(void* ctx, ErrorInfoEventArgs* e)
  */
 static BOOL pf_client_pre_connect(freerdp* instance)
 {
+	pClientContext* pc = (pClientContext*) instance->context;
+	pServerContext* ps = pc->pdata->ps;
 	rdpSettings* settings = instance->settings;
 
 	/*
@@ -98,7 +100,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 * GlyphCacheSupport must be explicitly set to GLYPH_SUPPORT_NONE.
 	 */
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
-
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 	/**
@@ -119,6 +120,11 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    pf_OnChannelDisconnectedEventHandler);
 	PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_OnErrorInfo);
+
+	/* before loading client's channels, make sure proxy's dynvc is ready */
+	WLog_DBG(TAG, "pf_client_pre_connect(): Waiting for proxy's server dynvc to be ready");
+	WaitForSingleObject(ps->dynvcReady, INFINITE);
+
 	/**
 	 * Load all required plugins / channels / libraries specified by current
 	 * settings.
