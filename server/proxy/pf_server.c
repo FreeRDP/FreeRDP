@@ -47,9 +47,9 @@
 #include "pf_context.h"
 #include "pf_input.h"
 #include "pf_update.h"
-#include "pf_channels.h"
 #include "pf_rdpgfx.h"
 #include "pf_disp.h"
+#include "pf_rail.h"
 #include "pf_channels.h"
 
 #define TAG PROXY_TAG("server")
@@ -246,6 +246,15 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->RdpKeyFile = _strdup("server.key");
+	client->settings->RemoteApplicationSupportLevel = RAIL_LEVEL_SUPPORTED |
+	        RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED            |
+	        RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED         |
+	        RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED         |
+	        RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED |
+	        RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED       |
+	        RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED           |
+	        RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
+	client->settings->RemoteAppLanguageBarSupported = TRUE;
 
 	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile ||
 	    !client->settings->RdpKeyFile)

@@ -405,7 +405,7 @@ static UINT pf_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 		 * TODO: Have a better way of expressing max supported GFX caps version
 		 * by FreeRDP.
 		 */
-		if (currentCaps->version <= RDPGFX_CAPVERSION_106)
+		if (currentCaps->version <= RDPGFX_CAPVERSION_103)
 		{
 			proxySupportedCapsSet = &proxySupportedCapsSets[proxySupportedCapsSetCount++];
 			proxySupportedCapsSet->version = currentCaps->version;
@@ -429,9 +429,8 @@ static UINT pf_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
 	return client->FrameAcknowledge(client, frameAcknowledge);
 }
 
-static UINT
-pf_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext* context,
-                                const RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoeFrameAcknowledge)
+static UINT pf_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext* context,
+        const RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoeFrameAcknowledge)
 {
 	proxyData* pdata = (proxyData*)context->custom;
 	RdpgfxClientContext* client = (RdpgfxClientContext*)pdata->pc->gfx_proxy;
@@ -440,7 +439,7 @@ pf_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext* context,
 }
 
 static UINT pf_rdpgfx_cache_import_offer(RdpgfxServerContext* context,
-                                         const RDPGFX_CACHE_IMPORT_OFFER_PDU* cacheImportOffer)
+        const RDPGFX_CACHE_IMPORT_OFFER_PDU* cacheImportOffer)
 {
 	proxyData* pdata = (proxyData*)context->custom;
 	RdpgfxClientContext* client = (RdpgfxClientContext*)pdata->pc->gfx_proxy;
@@ -492,7 +491,6 @@ void pf_rdpgfx_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* serv
 	gfx->MapSurfaceToWindow = pf_rdpgfx_map_surface_to_window;
 	gfx->MapSurfaceToScaledOutput = pf_rdpgfx_map_surface_to_scaled_output;
 	gfx->MapSurfaceToScaledWindow = pf_rdpgfx_map_surface_to_scaled_window;
-
 	/* No need to register to OnClose callback. GFX termination is handled in pf_server */
 	gfx->OnOpen = pf_rdpgfx_on_open;
 	gfx->CapsConfirm = pf_rdpgfx_caps_confirm;
