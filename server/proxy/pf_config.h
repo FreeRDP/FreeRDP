@@ -22,10 +22,6 @@
 #ifndef FREERDP_SERVER_PROXY_PFCONFIG_H
 #define FREERDP_SERVER_PROXY_PFCONFIG_H
 
-#define CONFIG_PARSE_SUCCESS 0
-#define CONFIG_PARSE_ERROR 	 1
-#define CONFIG_INVALID 		 2
-
 #include <winpr/ini.h>
 
 #include "pf_filters.h"
@@ -42,10 +38,6 @@ struct proxy_config
 	char* TargetHost;
 	UINT16 TargetPort;
 
-	/* graphics */
-	BOOL GFX;
-	BOOL BitmapUpdate;
-
 	/* input */
 	BOOL Keyboard;
 	BOOL Mouse;
@@ -56,10 +48,8 @@ struct proxy_config
 	BOOL RdpSecurity;
 
 	/* channels */
-	BOOL WhitelistMode;
-
-	wArrayList* AllowedChannels;
-	wArrayList* BlockedChannels;
+	BOOL GFX;
+	BOOL DisplayControl;
 
 	/* filters */
 	filters_list* Filters;
@@ -67,7 +57,8 @@ struct proxy_config
 
 typedef struct proxy_config proxyConfig;
 
-DWORD pf_server_load_config(const char* path, proxyConfig* config);
+BOOL pf_server_config_load(const char* path, proxyConfig* config);
+void pf_server_config_print(proxyConfig* config);
 void pf_server_config_free(proxyConfig* config);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONFIG_H */

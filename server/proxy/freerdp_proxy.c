@@ -32,9 +32,6 @@ int main(int argc, char* argv[])
 {
 	const char* cfg = "config.ini";
 	int status = 0;
-	DWORD ld;
-	UINT32 i;
-	UINT32 count;
 	proxyConfig* config = calloc(1, sizeof(proxyConfig));
 
 	if (!config)
@@ -43,39 +40,10 @@ int main(int argc, char* argv[])
 	if (argc > 1)
 		cfg = argv[1];
 
-	ld = pf_server_load_config(cfg, config);
+	if (!pf_server_config_load(cfg, config))
+		goto fail;
 
-	switch (ld)
-	{
-		case CONFIG_PARSE_SUCCESS:
-			WLog_DBG(TAG, "Configuration parsed successfully");
-			break;
-
-		case CONFIG_PARSE_ERROR:
-			WLog_ERR(TAG, "An error occured while parsing configuration file, exiting...");
-			goto fail;
-
-		case CONFIG_INVALID:
-			goto fail;
-	}
-
-	if (config->WhitelistMode)
-	{
-		WLog_INFO(TAG, "Channels mode: WHITELIST");
-		count = ArrayList_Count(config->AllowedChannels);
-
-		for (i = 0; i < count; i++)
-			WLog_INFO(TAG, "Allowing %s", (char*) ArrayList_GetItem(config->AllowedChannels, i));
-	}
-	else
-	{
-		WLog_INFO(TAG, "Channels mode: BLACKLIST");
-		count = ArrayList_Count(config->BlockedChannels);
-
-		for (i = 0; i < count; i++)
-			WLog_INFO(TAG, "Blocking %s", (char*) ArrayList_GetItem(config->BlockedChannels, i));
-	}
-
+	pf_server_config_print(config);
 	status = pf_server_start(config);
 fail:
 	pf_server_config_free(config);

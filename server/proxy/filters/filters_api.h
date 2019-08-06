@@ -22,7 +22,10 @@
 #ifndef FREERDP_SERVER_PROXY_FILTERS_API_H
 #define FREERDP_SERVER_PROXY_FILTERS_API_H
 
+#include <freerdp/freerdp.h>
 #include <winpr/winpr.h>
+
+#define PROXY_API FREERDP_API
 
 enum pf_filter_result {
     FILTER_PASS = 0,
@@ -64,6 +67,6 @@ struct proxy_mouse_event_info {
 /* implement this method and register callbacks for proxy events
  * return TRUE if initialization succeeded, otherwise FALSE.
  **/
-BOOL filter_init(proxyEvents* events);
+PROXY_API BOOL filter_init(proxyEvents* events);
 
 #endif /* FREERDP_SERVER_PROXY_FILTERS_API_H */

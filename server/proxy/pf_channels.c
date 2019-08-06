@@ -55,25 +55,25 @@ void pf_OnChannelConnectedEventHandler(void* data,
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		pc->gfx = (RdpgfxClientContext*) e->pInterface;
-		pf_rdpgfx_pipeline_init(pc->gfx, ps->gfx, pc->pdata);
-
 		if (!ps->gfx->Open(ps->gfx))
 		{
 			WLog_ERR(TAG, "failed to open GFX server");
 			return;
 		}
+
+		pc->gfx = (RdpgfxClientContext*) e->pInterface;
+		pf_rdpgfx_pipeline_init(pc->gfx, ps->gfx, pc->pdata);
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
-		pc->disp = (DispClientContext*) e->pInterface;
-		pf_disp_register_callbacks(pc->disp, ps->disp, pc->pdata);
-
 		if (ps->disp->Open(ps->disp) != CHANNEL_RC_OK)
 		{
 			WLog_ERR(TAG, "failed to open disp channel");
 			return;
 		}
+
+		pc->disp = (DispClientContext*) e->pInterface;
+		pf_disp_register_callbacks(pc->disp, ps->disp, pc->pdata);
 	}
 }
 
@@ -108,11 +108,20 @@ void pf_OnChannelDisconnectedEventHandler(void* data,
 
 BOOL pf_server_channels_init(pServerContext* ps)
 {
-	if (!pf_server_rdpgfx_init(ps))
-		return FALSE;
+	rdpContext* context = (rdpContext*) ps;
+	proxyConfig* config = ps->pdata->config;
 
-	if (!pf_server_disp_init(ps))
-		return FALSE;
+	if (context->settings->SupportGraphicsPipeline && config->GFX)
+	{
+		if (!pf_server_rdpgfx_init(ps))
+			return FALSE;
+	}
+
+	if (config->DisplayControl)
+	{
+		if (!pf_server_disp_init(ps))
+			return FALSE;
+	}
 
 	return TRUE;
 }

@@ -245,9 +245,9 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		goto out_free_peer;
 	}
 
-	client->settings->SupportDisplayControl = TRUE;
+	client->settings->SupportDisplayControl = config->DisplayControl;
+	client->settings->DynamicResolutionUpdate = config->DisplayControl;
 	client->settings->SupportMonitorLayoutPdu = TRUE;
-	client->settings->DynamicResolutionUpdate = TRUE;
 	client->settings->RdpSecurity = config->RdpSecurity;
 	client->settings->TlsSecurity = config->TlsSecurity;
 	client->settings->NlaSecurity = config->NlaSecurity;
