@@ -152,6 +152,7 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	config->DisplayControl = pf_config_get_bool(ini, "Channels", "DisplayControl");
 	config->Clipboard = pf_config_get_bool(ini, "Channels", "Clipboard");
 	config->AudioOutput = pf_config_get_bool(ini, "Channels", "AudioOutput");
+	config->RemoteApp = pf_config_get_bool(ini, "Channels", "RemoteApp");
 	return TRUE;
 }
 
@@ -324,6 +325,7 @@ void pf_server_config_print(proxyConfig* config)
 	CONFIG_PRINT_BOOL(config, DisplayControl);
 	CONFIG_PRINT_BOOL(config, Clipboard);
 	CONFIG_PRINT_BOOL(config, AudioOutput);
+	CONFIG_PRINT_BOOL(config, RemoteApp);
 
 	CONFIG_PRINT_SECTION("Clipboard");
 	CONFIG_PRINT_BOOL(config, TextOnly);

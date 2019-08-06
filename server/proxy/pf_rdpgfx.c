@@ -492,7 +492,6 @@ void pf_rdpgfx_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* serv
 	gfx->MapSurfaceToWindow = pf_rdpgfx_map_surface_to_window;
 	gfx->MapSurfaceToScaledOutput = pf_rdpgfx_map_surface_to_scaled_output;
 	gfx->MapSurfaceToScaledWindow = pf_rdpgfx_map_surface_to_scaled_window;
-
 	/* No need to register to OnClose callback. GFX termination is handled in pf_server */
 	gfx->OnOpen = pf_rdpgfx_on_open;
 	gfx->CapsConfirm = pf_rdpgfx_caps_confirm;

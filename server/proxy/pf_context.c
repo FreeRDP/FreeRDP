@@ -92,6 +92,7 @@ BOOL pf_context_init_server_context(freerdp_peer* client)
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 {
 	rdpSettings* before_copy = freerdp_settings_clone(dst);
+
 	if (!before_copy)
 		return FALSE;
 
@@ -127,7 +128,6 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 	{
 		/* adjust instance pointer for client's context */
 		dst->instance = before_copy->instance;
-
 		/* RdpServerRsaKey must be set to NULL if `dst` is client's context */
 		dst->RdpServerRsaKey = NULL;
 	}

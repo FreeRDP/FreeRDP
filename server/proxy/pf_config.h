@@ -56,6 +56,7 @@ struct proxy_config
 	BOOL DisplayControl;
 	BOOL Clipboard;
 	BOOL AudioOutput;
+	BOOL RemoteApp;
 
 	/* clipboard specific settings */
 	BOOL TextOnly;
