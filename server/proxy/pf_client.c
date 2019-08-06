@@ -91,6 +91,14 @@ static void pf_OnErrorInfo(void* ctx, ErrorInfoEventArgs* e)
 static BOOL pf_client_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings = instance->settings;
+
+	/*
+	 * as the client's settings are copied from the server's, GlyphSupportLevel might not be
+	 * GLYPH_SUPPORT_NONE. the proxy currently do not support GDI & GLYPH_SUPPORT_CACHE, so
+	 * GlyphCacheSupport must be explicitly set to GLYPH_SUPPORT_NONE.
+	 */
+	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
+
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 	/**
