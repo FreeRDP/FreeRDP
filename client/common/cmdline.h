@@ -143,7 +143,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<driver>]", NULL, NULL, -1, NULL, "Redirect printer device" },
 	{
 		"proxy", COMMAND_LINE_VALUE_REQUIRED, "[<proto>://][<user>:<password>@]<host>:<port>", NULL, NULL, -1, NULL,
-		"Proxy settings: override env.var (see also environment variable below). Protocol \"socks5\" should be given explicitly where \"http\" is default.  Note: socks proxy is not supported by env. variable"
+		"Proxy settings: override env. var (see also environment variable below). Protocol \"socks5\" should be given explicitly where \"http\" is default."
 	},
 	{ "pth", COMMAND_LINE_VALUE_REQUIRED, "<password-hash>", NULL, NULL, -1, "pass-the-hash", "Pass the hash (restricted admin mode)" },
 	{ "pwidth", COMMAND_LINE_VALUE_REQUIRED, "<width>", NULL, NULL, -1, NULL, "Physical width of display (in millimeters)" },

@@ -305,9 +305,14 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri)
 			settings->ProxyType = PROXY_TYPE_HTTP;
 			protocol = "http";
 		}
+		else if (p == uri + 6 && !strncmp("socks5", uri, 6))
+		{
+			settings->ProxyType = PROXY_TYPE_SOCKS;
+			protocol = "socks5";
+		}
 		else
 		{
-			WLog_ERR(TAG, "Only HTTP proxys supported by now");
+			WLog_ERR(TAG, "Only HTTP and SOCKS5 proxies supported by now");
 			return FALSE;
 		}
 
