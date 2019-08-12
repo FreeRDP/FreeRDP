@@ -54,6 +54,21 @@ static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char*
 	return TRUE;
 }
 
+static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char* key, UINT32* result)
+{
+	int val;
+
+	val = IniFile_GetKeyValueInt(ini, section, key);
+	if ((val < 0) || (val > UINT32_MAX))
+	{
+		WLog_ERR(TAG, "pf_config_get_uint32(): invalid value %d for section '%s', key '%s'!", val, section, key);
+		return FALSE;
+	}
+
+	*result = (UINT32) val;
+	return TRUE;
+}
+
 static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
 {
 	config->Host = _strdup(CONFIG_GET_STR(ini, "Server", "Host"));
@@ -81,6 +96,7 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	config->GFX = CONFIG_GET_BOOL(ini, "Channels", "GFX");
 	config->DisplayControl = CONFIG_GET_BOOL(ini, "Channels", "DisplayControl");
 	config->Clipboard = CONFIG_GET_BOOL(ini, "Channels", "Clipboard");
+
 	return TRUE;
 }
 
@@ -96,6 +112,16 @@ static BOOL pf_config_load_security(wIniFile* ini, proxyConfig* config)
 	config->TlsSecurity = CONFIG_GET_BOOL(ini, "Security", "TlsSecurity");
 	config->NlaSecurity = CONFIG_GET_BOOL(ini, "Security", "NlaSecurity");
 	config->RdpSecurity = CONFIG_GET_BOOL(ini, "Security", "RdpSecurity");
+	return TRUE;
+}
+
+static BOOL pf_config_load_clipboard(wIniFile* ini, proxyConfig* config)
+{
+	config->TextOnly = CONFIG_GET_BOOL(ini, "Clipboard", "TextOnly");
+
+	if (!pf_config_get_uint32(ini, "Clipboard", "MaxTextLength", &config->MaxTextLength))
+		return FALSE;
+
 	return TRUE;
 }
 
@@ -160,6 +186,9 @@ BOOL pf_server_config_load(const char* path, proxyConfig* config)
 		goto out;
 
 	if (!pf_config_load_filters(ini, config))
+		goto out;
+
+	if (!pf_config_load_clipboard(ini, config))
 		goto out;
 
 	ok = TRUE;
