@@ -130,12 +130,19 @@ UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s)
 static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
                                         const CLIPRDR_CAPABILITIES* capabilities)
 {
+	size_t offset = 0;
+	UINT32 x;
 	wStream* s;
-	const CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
 	if (capabilities->msgType != CB_CLIP_CAPS)
 		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, capabilities->msgType);
+
+	if (capabilities->cCapabilitiesSets > UINT16_MAX)
+	{
+		WLog_ERR(TAG, "Invalid number of capability sets in clipboard caps");
+		return ERROR_INVALID_PARAMETER;
+	}
 
 	s = cliprdr_server_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
 
@@ -145,17 +152,36 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT16(s, 1); /* cCapabilitiesSets (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)capabilities->cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad1 (2 bytes) */
-	generalCapabilitySet = (const CLIPRDR_GENERAL_CAPABILITY_SET*)
-						   &capabilities->capabilitySets;
-	Stream_Write_UINT16(s,
-	                    generalCapabilitySet->capabilitySetType); /* capabilitySetType (2 bytes) */
-	Stream_Write_UINT16(s,
-	                    generalCapabilitySet->capabilitySetLength); /* capabilitySetLength (2 bytes) */
-	Stream_Write_UINT32(s, generalCapabilitySet->version); /* version (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    generalCapabilitySet->generalFlags); /* generalFlags (4 bytes) */
+	for (x = 0; x < capabilities->cCapabilitiesSets; x++)
+	{
+		const CLIPRDR_CAPABILITY_SET* cap = (const CLIPRDR_CAPABILITY_SET*) (((const BYTE*)capabilities->capabilitySets) + offset);
+		offset += cap->capabilitySetLength;
+
+		switch (cap->capabilitySetType)
+		{
+			case CB_CAPSTYPE_GENERAL:
+			{
+				const CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet = (const CLIPRDR_GENERAL_CAPABILITY_SET*)cap;
+				Stream_Write_UINT16(s, generalCapabilitySet->capabilitySetType); /* capabilitySetType (2 bytes) */
+				Stream_Write_UINT16(s, generalCapabilitySet->capabilitySetLength); /* lengthCapability (2 bytes) */
+				Stream_Write_UINT32(s, generalCapabilitySet->version); /* version (4 bytes) */
+				Stream_Write_UINT32(s, generalCapabilitySet->generalFlags); /* generalFlags (4 bytes) */
+			}
+			break;
+
+			default:
+				WLog_WARN(TAG, "Unknown capability set type %08"PRIx16, cap->capabilitySetType);
+				if (!Stream_SafeSeek(s, cap->capabilitySetLength))
+				{
+					WLog_ERR(TAG, "%s: short stream", __FUNCTION__);
+					return ERROR_NO_DATA;
+				}
+				break;
+		}
+
+	}
 	WLog_DBG(TAG, "ServerCapabilities");
 	return cliprdr_server_packet_send(cliprdr, s);
 }
