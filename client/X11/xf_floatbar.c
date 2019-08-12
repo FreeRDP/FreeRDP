@@ -340,7 +340,6 @@ static unsigned long xf_floatbar_get_color(xfFloatbar* floatbar, char* rgb_value
 	cmap = DefaultColormap(display, XDefaultScreen(display));
 	XParseColor(display, cmap, rgb_value, &color);
 	XAllocColor(display, cmap, &color);
-	XFreeColormap(display, cmap);
 	return color.pixel;
 }
 
