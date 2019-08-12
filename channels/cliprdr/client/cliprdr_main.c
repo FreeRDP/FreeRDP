@@ -184,6 +184,7 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr,
 		return ERROR_INTERNAL_ERROR;
 	}
 
+	capabilities.msgType = CB_CLIP_CAPS;
 	capabilities.cCapabilitiesSets = 1;
 	capabilities.capabilitySets = (CLIPRDR_CAPABILITY_SET*) &
 	                              (generalCapabilitySet);
