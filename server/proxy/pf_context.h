@@ -102,7 +102,7 @@ rdpContext* p_client_context_create(rdpSettings* clientSettings);
 proxyData* proxy_data_new();
 BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* ps, rdpSettings* pc);
 void proxy_data_free(proxyData* pdata);
-void pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_server);
+BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_dst_server);
 void proxy_data_abort_connect(proxyData* pdata);
 BOOL proxy_data_shall_disconnect(proxyData* pdata);
 

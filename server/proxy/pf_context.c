@@ -63,16 +63,21 @@ BOOL init_p_server_context(freerdp_peer* client)
 	return freerdp_peer_context_new(client);
 }
 
-void pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_server)
+/*
+ * pf_context_copy_settings copies settings from `src` to `dst`.
+ * when using this function, is_dst_server must be set to TRUE if the destination
+ * settings are server's settings. otherwise, they must be set to FALSE.
+ */
+BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_dst_server)
 {
 	rdpSettings* before_copy = freerdp_settings_clone(dst);
 	if (!before_copy)
-		return;
+		return FALSE;
 
 	if (!freerdp_settings_copy(dst, src))
 	{
 		freerdp_settings_free(before_copy);
-		return;
+		return FALSE;
 	}
 
 	free(dst->ConfigPath);
@@ -83,10 +88,11 @@ void pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_
 	free(dst->CertificateFile);
 	free(dst->CertificateName);
 	free(dst->CertificateContent);
-	free(dst->ClientRandom);
 
 	/* adjust pointer to instance pointer */
-	dst->ServerMode = is_server;
+	dst->ServerMode = is_dst_server;
+
+	/* revert some values that must not be changed */
 	dst->ConfigPath = _strdup(before_copy->ConfigPath);
 	dst->PrivateKeyContent = _strdup(before_copy->PrivateKeyContent);
 	dst->RdpKeyContent = _strdup(before_copy->RdpKeyContent);
@@ -95,10 +101,8 @@ void pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_
 	dst->CertificateFile = _strdup(before_copy->CertificateFile);
 	dst->CertificateName = _strdup(before_copy->CertificateName);
 	dst->CertificateContent = _strdup(before_copy->CertificateContent);
-	dst->ClientRandomLength = before_copy->ClientRandomLength;
-	CopyMemory(dst->ClientRandom, before_copy->ClientRandom, before_copy->ClientRandomLength);
 
-	if (is_server)
+	if (is_dst_server)
 	{
 		free(dst->ServerCertificate);
 		dst->ServerCertificateLength = before_copy->ServerCertificateLength;
@@ -113,6 +117,7 @@ void pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_
 	}
 
 	freerdp_settings_free(before_copy);
+	return TRUE;
 }
 
 rdpContext* p_client_context_create(rdpSettings* clientSettings)

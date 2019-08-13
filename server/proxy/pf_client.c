@@ -100,8 +100,12 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 * GlyphCacheSupport must be explicitly set to GLYPH_SUPPORT_NONE.
 	 */
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
+
+	/* proxy client should always try to connect with NLA */
+	settings->NlaSecurity = TRUE;
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
+
 	/**
 	 * settings->OrderSupport is initialized at this point.
 	 * Only override it if you plan to implement custom order
@@ -336,14 +340,12 @@ static BOOL pf_client_global_init(void)
 
 static int pf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
-	pClientContext* pc;
 	const char* str_data = freerdp_get_logon_error_info_data(data);
 	const char* str_type = freerdp_get_logon_error_info_type(type);
 
 	if (!instance || !instance->context)
 		return -1;
 
-	pc = (pClientContext*) instance->context;
 	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
 	return 1;
 }
