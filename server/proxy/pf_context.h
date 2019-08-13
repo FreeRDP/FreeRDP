@@ -30,6 +30,7 @@
 #include <freerdp/client/disp.h>
 #include <freerdp/server/disp.h>
 #include <freerdp/server/cliprdr.h>
+#include <freerdp/server/rdpsnd.h>
 
 #include "pf_config.h"
 #include "pf_server.h"
@@ -52,6 +53,7 @@ struct p_server_context
 	RdpgfxServerContext* gfx;
 	DispServerContext* disp;
 	CliprdrServerContext* cliprdr;
+	RdpsndServerContext* rdpsnd;
 
 	/* used to external modules to store per-session info */
 	wHashTable* modules_info;

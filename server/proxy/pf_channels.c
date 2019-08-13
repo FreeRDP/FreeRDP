@@ -40,6 +40,7 @@
 #include "pf_disp.h"
 #include "pf_log.h"
 #include "pf_modules.h"
+#include "pf_rdpsnd.h"
 
 #define TAG PROXY_TAG("channels")
 
@@ -88,6 +89,18 @@ void pf_OnChannelConnectedEventHandler(void* data,
 		pc->cliprdr = (CliprdrClientContext*) e->pInterface;
 		pf_cliprdr_register_callbacks(pc->cliprdr, ps->cliprdr, pc->pdata);
 	}
+	else if (strcmp(e->name, "rdpsnd") == 0)
+	{
+		/* sound is disabled */
+		if (ps->rdpsnd == NULL)
+			return;
+
+		if (ps->rdpsnd->Initialize(ps->rdpsnd, TRUE) != CHANNEL_RC_OK)
+		{
+			WLog_ERR(TAG, "failed to open rdpsnd channel");
+			return;
+		}
+	}
 }
 
 void pf_OnChannelDisconnectedEventHandler(void* data,
@@ -124,6 +137,15 @@ void pf_OnChannelDisconnectedEventHandler(void* data,
 
 		pc->cliprdr = NULL;
 	}
+	else if (strcmp(e->name, "rdpsnd") == 0)
+	{
+		/* sound is disabled */
+		if (ps->rdpsnd == NULL)
+			return;
+
+		if (ps->rdpsnd->Stop(ps->rdpsnd) != CHANNEL_RC_OK)
+			WLog_ERR(TAG, "failed to close rdpsnd server");
+	}
 }
 
 BOOL pf_server_channels_init(pServerContext* ps)
@@ -152,6 +174,12 @@ BOOL pf_server_channels_init(pServerContext* ps)
 			return FALSE;
 	}
 
+	if (config->AudioOutput && WTSVirtualChannelManagerIsChannelJoined(ps->vcm, "rdpsnd"))
+	{
+		if (!pf_server_rdpsnd_init(ps))
+			return FALSE;
+	}
+
 	return pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_INIT, context);
 }
 
@@ -173,6 +201,12 @@ void pf_server_channels_free(pServerContext* ps)
 	{
 		cliprdr_server_context_free(ps->cliprdr);
 		ps->cliprdr = NULL;
+	}
+
+	if (ps->rdpsnd)
+	{
+		rdpsnd_server_context_free(ps->rdpsnd);
+		ps->rdpsnd = NULL;
 	}
 
 	pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_FREE, (rdpContext*) ps);

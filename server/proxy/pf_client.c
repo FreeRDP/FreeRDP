@@ -83,6 +83,32 @@ static void pf_OnErrorInfo(void* ctx, ErrorInfoEventArgs* e)
 	}
 }
 
+static BOOL pf_client_load_rdpsnd(pClientContext* pc, proxyConfig* config)
+{
+	rdpContext* context = (rdpContext*) pc;
+	pServerContext* ps = pc->pdata->ps;
+
+	/*
+	 * if AudioOutput is enabled in proxy and client connected with rdpsnd, use proxy as rdpsnd
+	 * backend. Otherwise, use sys:fake.
+	 */
+	if (!freerdp_static_channel_collection_find(context->settings, "rdpsnd"))
+	{
+		char* params[2];
+		params[0] = "rdpsnd";
+
+		if (config->AudioOutput && WTSVirtualChannelManagerIsChannelJoined(ps->vcm, "rdpsnd"))
+			params[1] = "sys:proxy";
+		else
+			params[1] = "sys:fake";
+		
+		if (!freerdp_client_add_static_channel(context->settings, 2, (char**) params))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 /**
  * Called before a connection is established.
  *
@@ -93,6 +119,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 {
 	pClientContext* pc = (pClientContext*) instance->context;
 	pServerContext* ps = pc->pdata->ps;
+	proxyConfig* config = ps->pdata->config;
 	rdpSettings* settings = instance->settings;
 
 	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_PRE_CONNECT, (rdpContext*)ps))
@@ -119,6 +146,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	/* currently not supporting GDI orders */
 	ZeroMemory(instance->settings->OrderSupport, 32);
 
+	
 	/**
 	 * Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded.
@@ -138,6 +166,12 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 * settings.
 	 */
 	WLog_INFO(TAG, "Loading addins");
+
+	if (!pf_client_load_rdpsnd(pc, config))
+	{
+		WLog_ERR(TAG, "Failed to load rdpsnd client!");
+		return FALSE;
+	}
 
 	if (!freerdp_client_load_addins(instance->context->channels,
 	                                instance->settings))

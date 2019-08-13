@@ -233,6 +233,8 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	pdata->config = client->ContextExtra;
 	config = pdata->config;
 	client->settings->UseMultimon = TRUE;
+	client->settings->AudioPlayback = FALSE;
+	client->settings->DeviceRedirection = TRUE;
 	client->settings->SupportGraphicsPipeline = config->GFX;
 	client->settings->SupportDynamicChannels = TRUE;
 	client->settings->CertificateFile = _strdup("server.crt");
