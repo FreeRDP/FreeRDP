@@ -529,7 +529,12 @@ ULONGLONG winpr_GetTickCount64(void)
 		ticks = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
 
 #elif defined(_WIN32)
-	ticks = (ULONGLONG) GetTickCount();
+	FILETIME ft;
+	ULARGE_INTEGER ul;
+	GetSystemTimeAsFileTime(&ft);
+	ul.LowPart = ft.dwLowDateTime;
+	ul.HighPart = ft.dwHighDateTime;
+	ticks = ul.QuadPart;
 #else
 	/**
 	 * FIXME: this is relative to the Epoch time, and we
