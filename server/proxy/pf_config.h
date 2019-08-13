@@ -53,6 +53,7 @@ struct proxy_config
 	BOOL GFX;
 	BOOL DisplayControl;
 	BOOL Clipboard;
+	BOOL AudioOutput;
 
 	/* clipboard specific settings*/
 	BOOL TextOnly;

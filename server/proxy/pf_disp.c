@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
- #include <freerdp/server/disp.h>
+#include <freerdp/server/disp.h>
 
 #include "pf_disp.h"
 #include "pf_log.h"
