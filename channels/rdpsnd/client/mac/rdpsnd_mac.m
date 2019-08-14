@@ -33,16 +33,10 @@
 
 #include <freerdp/types.h>
 
-#define __COREFOUNDATION_CFPLUGINCOM__ 1
-#define IUNKNOWN_C_GUTS void *_reserved; void* QueryInterface; void* AddRef; void* Release
-
-#include <AudioToolbox/AudioToolbox.h>
-#include <AudioToolbox/AudioQueue.h>
+#include <AVFoundation/AVAudioBuffer.h>
+#include <AVFoundation/AVFoundation.h>
 
 #include "rdpsnd_main.h"
-
-#define MAC_AUDIO_QUEUE_NUM_BUFFERS	10
-#define MAC_AUDIO_QUEUE_BUFFER_SIZE	32768
 
 struct rdpsnd_mac_plugin
 {
@@ -53,61 +47,21 @@ struct rdpsnd_mac_plugin
 
 	UINT32 latency;
 	AUDIO_FORMAT format;
-	size_t lastAudioBufferIndex;
-	size_t audioBufferIndex;
 
-	AudioQueueRef audioQueue;
-	AudioStreamBasicDescription audioFormat;
-	AudioQueueBufferRef audioBuffers[MAC_AUDIO_QUEUE_NUM_BUFFERS];
+	AVAudioEngine* engine;
+	AVAudioPlayerNode* player;
 };
 typedef struct rdpsnd_mac_plugin rdpsndMacPlugin;
-
-static void mac_audio_queue_output_cb(void* inUserData, AudioQueueRef inAQ,
-                                      AudioQueueBufferRef inBuffer)
-{
-	rdpsndMacPlugin* mac = (rdpsndMacPlugin*)inUserData;
-
-	if (inBuffer == mac->audioBuffers[mac->lastAudioBufferIndex])
-	{
-		AudioQueuePause(mac->audioQueue);
-		mac->isPlaying = FALSE;
-	}
-}
 
 static BOOL rdpsnd_mac_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
                                   UINT32 latency)
 {
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
-	mac->latency = (UINT32) latency;
-	CopyMemory(&(mac->format), format, sizeof(AUDIO_FORMAT));
-	mac->audioFormat.mSampleRate = format->nSamplesPerSec;
-	mac->audioFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
-	mac->audioFormat.mFramesPerPacket = 1;
-	mac->audioFormat.mChannelsPerFrame = format->nChannels;
-	mac->audioFormat.mBitsPerChannel = format->wBitsPerSample;
-	mac->audioFormat.mBytesPerFrame = mac->audioFormat.mBitsPerChannel *
-	                                  mac->audioFormat.mChannelsPerFrame / 8;
-	mac->audioFormat.mBytesPerPacket = mac->audioFormat.mBytesPerFrame *
-	                                   mac->audioFormat.mFramesPerPacket;
-	mac->audioFormat.mReserved = 0;
+	if (!mac || !format)
+		return FALSE;
 
-	switch (format->wFormatTag)
-	{
-		case WAVE_FORMAT_ALAW:
-			mac->audioFormat.mFormatID = kAudioFormatALaw;
-			break;
-
-		case WAVE_FORMAT_MULAW:
-			mac->audioFormat.mFormatID = kAudioFormatULaw;
-			break;
-
-		case WAVE_FORMAT_PCM:
-			mac->audioFormat.mFormatID = kAudioFormatLinearPCM;
-			break;
-
-		default:
-			return FALSE;
-	}
+	mac->latency = latency;
+	mac->format = *format;
 
 	audio_format_print(WLog_Get(TAG), WLOG_DEBUG, format);
 	return TRUE;
@@ -172,52 +126,55 @@ static char* FormatError(OSStatus st)
 
 static BOOL rdpsnd_mac_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency)
 {
-	int index;
-	OSStatus status;
+	OSStatus err;
+	NSError* error;
+	AudioDeviceID outputDeviceID;
+	UInt32 propertySize;
+	AudioObjectPropertyAddress propertyAddress = {
+		kAudioHardwarePropertyDefaultSystemOutputDevice,
+		kAudioObjectPropertyScopeGlobal,
+		kAudioObjectPropertyElementMaster };
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
 
 	if (mac->isOpen)
 		return TRUE;
 
-	mac->audioBufferIndex = 0;
-
 	if (!rdpsnd_mac_set_format(device, format, latency))
 		return FALSE;
 
-	status = AudioQueueNewOutput(&(mac->audioFormat),
-	                             mac_audio_queue_output_cb, mac,
-	                             NULL, NULL, 0, &(mac->audioQueue));
-
-	if (status != 0)
+	propertySize = sizeof(outputDeviceID);
+	err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &propertySize, &outputDeviceID);
+	if (err)
 	{
-		const char* err = FormatError(status);
-		WLog_ERR(TAG, "AudioQueueNewOutput failure %s", err);
+		WLog_ERR(TAG, "AudioHardwareGetProperty: %s", FormatError(err));
 		return FALSE;
 	}
 
-	UInt32 DecodeBufferSizeFrames;
-	UInt32 propertySize = sizeof(DecodeBufferSizeFrames);
-	status = AudioQueueGetProperty(mac->audioQueue,
-	                               kAudioQueueProperty_DecodeBufferSizeFrames,
-	                               &DecodeBufferSizeFrames,
-	                               &propertySize);
+	mac->engine = [[AVAudioEngine alloc] init];
+	if (!mac->engine)
+		return FALSE;
 
-	if (status != 0)
+	err = AudioUnitSetProperty(mac->engine.outputNode.audioUnit, kAudioOutputUnitProperty_CurrentDevice,
+							   kAudioUnitScope_Global, 0, &outputDeviceID, sizeof(outputDeviceID));
+	if (err)
 	{
-		WLog_DBG(TAG, "AudioQueueGetProperty failure: kAudioQueueProperty_DecodeBufferSizeFrames\n");
+		[mac->engine release];
+		WLog_ERR(TAG, "AudioUnitSetProperty: %s", FormatError(err));
 		return FALSE;
 	}
 
-	for (index = 0; index < MAC_AUDIO_QUEUE_NUM_BUFFERS; index++)
-	{
-		status = AudioQueueAllocateBuffer(mac->audioQueue, MAC_AUDIO_QUEUE_BUFFER_SIZE,
-		                                  &mac->audioBuffers[index]);
+	mac->player = [[AVAudioPlayerNode alloc] init];
+	[mac->engine attachNode: mac->player];
 
-		if (status != 0)
-		{
-			WLog_ERR(TAG,  "AudioQueueAllocateBuffer failed\n");
-			return FALSE;
-		}
+	[mac->engine connect: mac->player to: mac->engine.mainMixerNode format: nil];
+
+	if (![mac->engine startAndReturnError: &error])
+	{
+		[mac->player release];
+		[mac->engine release];
+
+		WLog_ERR(TAG, "Failed to start audio player %s", [error UTF8String]);
+		return FALSE;
 	}
 
 	mac->isOpen = TRUE;
@@ -230,17 +187,17 @@ static void rdpsnd_mac_close(rdpsndDevicePlugin* device)
 
 	if (mac->isOpen)
 	{
-		size_t index;
 		mac->isOpen = FALSE;
-		AudioQueueStop(mac->audioQueue, true);
 
-		for (index = 0; index < MAC_AUDIO_QUEUE_NUM_BUFFERS; index++)
-		{
-			AudioQueueFreeBuffer(mac->audioQueue, mac->audioBuffers[index]);
-		}
+		// TODO: Close
+		if (mac->isPlaying)
+			[mac->player stop];
+		[mac->engine stop];
+		[mac->engine disconnectNodeInput: mac->player];
+		[mac->engine detachNode: mac->player];
 
-		AudioQueueDispose(mac->audioQueue, true);
-		mac->audioQueue = NULL;
+		[mac->player release];
+		[mac->engine release];
 		mac->isPlaying = FALSE;
 	}
 }
@@ -257,8 +214,8 @@ static BOOL rdpsnd_mac_format_supported(rdpsndDevicePlugin* device, const AUDIO_
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
-		case WAVE_FORMAT_ALAW:
-		case WAVE_FORMAT_MULAW:
+		if (format->wBitsPerSample != 16)
+			return FALSE;
 			return TRUE;
 
 		default:
@@ -274,19 +231,14 @@ static BOOL rdpsnd_mac_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	UINT16 volumeRight;
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
 
-	if (!mac->audioQueue)
+	if (!mac->player)
 		return FALSE;
 
 	volumeLeft = (value & 0xFFFF);
 	volumeRight = ((value >> 16) & 0xFFFF);
 	fVolume = ((float) volumeLeft) / 65535.0;
-	status = AudioQueueSetParameter(mac->audioQueue, kAudioQueueParam_Volume, fVolume);
 
-	if (status != 0)
-	{
-		WLog_ERR(TAG,  "AudioQueueSetParameter kAudioQueueParam_Volume failed: %f\n", fVolume);
-		return FALSE;
-	}
+	mac->player.volume = fVolume;
 
 	return TRUE;
 }
@@ -297,17 +249,7 @@ static void rdpsnd_mac_start(rdpsndDevicePlugin* device)
 
 	if (!mac->isPlaying)
 	{
-		OSStatus status;
-
-		if (!mac->audioQueue)
-			return;
-
-		status = AudioQueueStart(mac->audioQueue, NULL);
-
-		if (status != 0)
-		{
-			WLog_ERR(TAG,  "AudioQueueStart failed\n");
-		}
+		[mac->player play];
 
 		mac->isPlaying = TRUE;
 	}
@@ -315,25 +257,38 @@ static void rdpsnd_mac_start(rdpsndDevicePlugin* device)
 
 static UINT rdpsnd_mac_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {
-	size_t length;
-	AudioQueueBufferRef audioBuffer;
-	AudioTimeStamp outActualStartTime;
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
+	AVAudioPCMBuffer* buffer;
+	AVAudioFormat* format;
+	float * const * db;
+	size_t pos, step, x;
+	AVAudioFrameCount count;
 
 	if (!mac->isOpen)
 		return 0;
 
-	audioBuffer = mac->audioBuffers[mac->audioBufferIndex];
-	length = size > audioBuffer->mAudioDataBytesCapacity ? audioBuffer->mAudioDataBytesCapacity : size;
-	CopyMemory(audioBuffer->mAudioData, data, length);
-	audioBuffer->mAudioDataByteSize = length;
-	audioBuffer->mUserData = mac;
-	AudioQueueEnqueueBufferWithParameters(mac->audioQueue, audioBuffer, 0, 0, 0, 0, 0, NULL, NULL,
-	                                      &outActualStartTime);
-	mac->lastAudioBufferIndex = mac->audioBufferIndex;
-	mac->audioBufferIndex++;
-	mac->audioBufferIndex %= MAC_AUDIO_QUEUE_NUM_BUFFERS;
+	step = 2 * mac->format.nChannels;
 	rdpsnd_mac_start(device);
+
+	count = size / step;
+	format = [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32 sampleRate:mac->format.nSamplesPerSec channels:mac->format.nChannels interleaved:NO];
+	buffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:format frameCapacity: count];
+	buffer.frameLength = buffer.frameCapacity;
+	db = buffer.floatChannelData;
+
+	for (pos=0; pos<count; pos++)
+	{
+		const BYTE* d = &data[pos*step];
+		for (x=0; x<mac->format.nChannels; x++)
+		{
+			const float val = (int16_t)((uint16_t)d[0] | ((uint16_t)d[1] << 8)) / 32768.0f;
+			db[x][pos] = val;
+			d += sizeof(int16_t);
+		}
+	}
+
+	[mac->player scheduleBuffer: buffer completionHandler:nil];
+
 	return 10; /* TODO: Get real latencry in [ms] */
 }
 
