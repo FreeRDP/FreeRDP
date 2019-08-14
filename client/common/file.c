@@ -61,13 +61,15 @@ static BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
 
 struct rdp_file_line
 {
-	size_t index;
 	char* text;
-	DWORD flags;
 	char* name;
 	LPSTR sValue;
-	long iValue;
 	PBYTE bValue;
+
+	size_t index;
+
+	long iValue;
+	DWORD flags;
 	int valueLength;
 };
 typedef struct rdp_file_line rdpFileLine;
@@ -117,6 +119,8 @@ struct rdp_file
 	DWORD BitmapCacheSize;          /* bitmapcachesize */
 	DWORD BitmapCachePersistEnable; /* bitmapcachepersistenable */
 
+	DWORD ServerPort;           /* server port */
+
 	LPSTR Username;   /* username */
 	LPSTR Domain;     /* domain */
 	LPSTR Password;   /*password*/
@@ -124,8 +128,8 @@ struct rdp_file
 
 	LPSTR FullAddress;          /* full address */
 	LPSTR AlternateFullAddress; /* alternate full address */
-	DWORD ServerPort;           /* server port */
 
+	LPSTR UsbDevicesToRedirect;        /* usbdevicestoredirect */
 	DWORD RedirectDrives;              /* redirectdrives */
 	DWORD RedirectPrinters;            /* redirectprinters */
 	DWORD RedirectComPorts;            /* redirectcomports */
@@ -135,7 +139,6 @@ struct rdp_file
 	DWORD RedirectDirectX;             /* redirectdirectx */
 	DWORD DisablePrinterRedirection;   /* disableprinterredirection */
 	DWORD DisableClipboardRedirection; /* disableclipboardredirection */
-	LPSTR UsbDevicesToRedirect;        /* usbdevicestoredirect */
 
 	DWORD ConnectToConsole;        /* connect to console */
 	DWORD AdministrativeSession;   /* administrative session */
@@ -148,9 +151,10 @@ struct rdp_file
 	DWORD PromptForCredentials;   /* prompt for credentials */
 	DWORD NegotiateSecurityLayer; /* negotiate security layer */
 	DWORD EnableCredSSPSupport;   /* enablecredsspsupport */
-	LPSTR LoadBalanceInfo;        /* loadbalanceinfo */
 
 	DWORD RemoteApplicationMode;             /* remoteapplicationmode */
+	LPSTR LoadBalanceInfo;        /* loadbalanceinfo */
+
 	LPSTR RemoteApplicationName;             /* remoteapplicationname */
 	LPSTR RemoteApplicationIcon;             /* remoteapplicationicon */
 	LPSTR RemoteApplicationProgram;          /* remoteapplicationprogram */
@@ -169,18 +173,21 @@ struct rdp_file
 	DWORD GatewayUsageMethod;        /* gatewayusagemethod */
 	DWORD GatewayProfileUsageMethod; /* gatewayprofileusagemethod */
 	DWORD GatewayCredentialsSource;  /* gatewaycredentialssource */
-	LPSTR GatewayAccessToken;        /* gatewayaccesstoken */
 
 	DWORD UseRedirectionServerName; /* use redirection server name */
 
-	DWORD RdgIsKdcProxy; /* rdgiskdcproxy */
-	LPSTR KdcProxyName;  /* kdcproxyname */
+	LPSTR GatewayAccessToken;        /* gatewayaccesstoken */
 
 	LPSTR DrivesToRedirect;  /* drivestoredirect */
 	LPSTR DevicesToRedirect; /* devicestoredirect */
 	LPSTR WinPosStr;         /* winposstr */
 
 	LPSTR PreconnectionBlob; /* pcb */
+
+	LPSTR KdcProxyName;  /* kdcproxyname */
+	DWORD RdgIsKdcProxy; /* rdgiskdcproxy */
+
+	DWORD align1;
 
 	size_t lineCount;
 	size_t lineSize;
@@ -881,11 +888,20 @@ static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* buf
 {
 	va_list ap;
 	SSIZE_T len;
-	char* buf = *buffer;
-	size_t bufSize = *bufferSize;
+	char* buf;
+	size_t bufSize;
+
+	if (!buffer || !bufferSize || !fmt)
+		return -1;
+
+	buf = *buffer;
+	bufSize = *bufferSize;
 
 	va_start(ap, fmt);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 	len = vsnprintf(buf, bufSize, fmt, ap);
+#pragma GCC diagnostic pop
 	va_end(ap);
 	if (len < 0)
 		return -1;
@@ -896,6 +912,9 @@ static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* buf
 	/* we just want to know the size - return it */
 	if (!buf && !bufSize)
 		return len;
+
+	if (!buf)
+		return -1;
 
 	/* update buffer size and buffer position and replace \0 with \n */
 	if (bufSize >= (size_t)len)
