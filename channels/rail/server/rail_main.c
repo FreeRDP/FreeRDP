@@ -1496,6 +1496,12 @@ UINT rail_server_handle_messages(RailServerContext* context)
 	wStream* s = priv->input_stream;
 
 	/* Read header */
+	if (!Stream_EnsureRemainingCapacity(s, RAIL_PDU_HEADER_LENGTH))
+	{
+		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed, RAIL_PDU_HEADER_LENGTH");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
 	if (!WTSVirtualChannelRead(priv->rail_channel, 0, (PCHAR)Stream_Pointer(s),
 	                           RAIL_PDU_HEADER_LENGTH, &bytesReturned))
 	{
@@ -1511,6 +1517,12 @@ UINT rail_server_handle_messages(RailServerContext* context)
 	{
 		WLog_ERR(TAG, "rail_read_pdu_header failed with error %"PRIu32"!", status);
 		return status;
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, orderLength - RAIL_PDU_HEADER_LENGTH))
+	{
+		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed, orderLength - RAIL_PDU_HEADER_LENGTH");
+		return CHANNEL_RC_NO_MEMORY;
 	}
 
 	/* Read body */
