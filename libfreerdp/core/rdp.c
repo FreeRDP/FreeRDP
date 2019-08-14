@@ -1576,7 +1576,8 @@ int rdp_check_fds(rdpRdp* rdp)
 
 	if (status == 1)
 	{
-		status = rdp_client_redirect(rdp); /* session redirection */
+		if (!rdp_client_redirect(rdp)) /* session redirection */
+			return -1;
 	}
 
 	if (status < 0)
