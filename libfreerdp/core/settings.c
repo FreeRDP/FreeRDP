@@ -789,6 +789,11 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	CHECKED_STRDUP(AllowedTlsCiphers); /* 1101 */
 	CHECKED_STRDUP(NtlmSamFile); /* 1103 */
 	CHECKED_STRDUP(PreconnectionBlob); /* 1155 */
+	CHECKED_STRDUP(TargetNetAddress); /* 1217 */
+	CHECKED_STRDUP(RedirectionUsername); /* 1220 */
+	CHECKED_STRDUP(RedirectionDomain); /* 1221 */
+	CHECKED_STRDUP(RedirectionTargetFQDN); /* 1224 */
+	CHECKED_STRDUP(RedirectionTargetNetBiosName); /* 1225 */
 	CHECKED_STRDUP(RedirectionAcceptedCert); /* 1231 */
 	CHECKED_STRDUP(KerberosKdc); /* 1344 */
 	CHECKED_STRDUP(KerberosRealm); /* 1345 */
@@ -991,6 +996,33 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	CopyMemory(_settings->ClientTimeZone, settings->ClientTimeZone,
 			   sizeof(TIME_ZONE_INFORMATION));
+
+	_settings->RedirectionPasswordLength = settings->RedirectionPasswordLength;
+	if (settings->RedirectionPasswordLength > 0)
+	{
+		_settings->RedirectionPassword = malloc(_settings->RedirectionPasswordLength);
+		if (!_settings->RedirectionPassword)
+		{
+			_settings->RedirectionPasswordLength = 0;
+			goto out_fail;
+		}
+
+		CopyMemory(_settings->RedirectionPassword, settings->RedirectionPassword, _settings->RedirectionPasswordLength);
+	}
+
+	_settings->RedirectionTsvUrlLength = settings->RedirectionTsvUrlLength;
+	if (settings->RedirectionTsvUrlLength > 0)
+	{
+		_settings->RedirectionTsvUrl = malloc(_settings->RedirectionTsvUrlLength);
+		if (!_settings->RedirectionTsvUrl)
+		{
+			_settings->RedirectionTsvUrlLength = 0;
+			goto out_fail;
+		}
+
+		CopyMemory(_settings->RedirectionTsvUrl, settings->RedirectionTsvUrl, _settings->RedirectionTsvUrlLength);
+	}
+
 	_settings->TargetNetAddressCount = settings->TargetNetAddressCount;
 
 	if (settings->TargetNetAddressCount > 0)
