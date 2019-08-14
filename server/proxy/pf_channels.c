@@ -158,6 +158,13 @@ void pf_OnChannelDisconnectedEventHandler(void* data, ChannelDisconnectedEventAr
 		gdi_graphics_pipeline_uninit(context->gdi, pc->gfx_decoder);
 		rdpgfx_client_context_free(pc->gfx_decoder);
 	}
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		if (!ps->rail->Stop(ps->rail))
+			WLog_ERR(TAG, "failed to close rail server");
+
+		pc->rail = NULL;
+	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		if (ps->disp->Close(ps->disp) != CHANNEL_RC_OK)
