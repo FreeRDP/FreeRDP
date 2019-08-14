@@ -18,6 +18,9 @@
 set(MODULE_NAME "freerdp")
 set(MODULE_PREFIX "FREERDP")
 
+# CMake modules includes
+include(FindCairo)
+
 # Create imported targets for Intel IPP libraries
 
 if(IPP_FOUND)
