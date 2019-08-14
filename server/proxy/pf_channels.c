@@ -223,8 +223,11 @@ BOOL pf_server_channels_init(pServerContext* ps)
 			return FALSE;
 	}
 
-	if (!pf_rail_context_init(ps))
-		return FALSE;
+	if (config->RemoteApp && WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RAIL_SVC_CHANNEL_NAME))
+	{
+		if (!pf_rail_context_init(ps))
+			return FALSE;
+	}
 
 	return pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_INIT, context);
 
