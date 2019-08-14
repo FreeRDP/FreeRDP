@@ -1278,7 +1278,6 @@ static DWORD WINAPI rail_server_thread(LPVOID arg)
 	UINT error = CHANNEL_RC_OK;
 	events[nCount++] = priv->channelEvent;
 	events[nCount++] = priv->stopEvent;
-	rail_server_handle_messages(context);
 
 	while (TRUE)
 	{
@@ -1303,11 +1302,23 @@ static DWORD WINAPI rail_server_thread(LPVOID arg)
 		if (status == WAIT_OBJECT_0)
 			break;
 
-		if ((error = rail_server_handle_messages(context)))
+		status = WaitForSingleObject(context->priv->channelEvent, 0);
+
+		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "rail_server_handle_messages failed with error %"PRIu32"",
-			         error);
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject(context->priv->channelEvent, 0) failed with error %"PRIu32"!", error);
 			break;
+		}
+
+		if (status == WAIT_OBJECT_0)
+		{
+			if ((error = rail_server_handle_messages(context)))
+			{
+				WLog_ERR(TAG, "rail_server_handle_messages failed with error %"PRIu32"",
+				         error);
+				break;
+			}
 		}
 	}
 
@@ -1609,7 +1620,7 @@ UINT rail_server_handle_messages(RailServerContext* context)
 			}
 
 		default:
-			WLog_ERR(TAG,  "Unknown RAIL PDU order reveived.");
+			WLog_ERR(TAG,  "Unknown RAIL PDU order received.");
 			return ERROR_INVALID_DATA;
 	}
 
