@@ -259,5 +259,11 @@ void pf_server_channels_free(pServerContext* ps)
 		ps->rdpsnd = NULL;
 	}
 
+	if (ps->rail)
+	{
+		rail_server_context_free(ps->rail);
+		ps->rail = NULL;
+	}
+
 	pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_FREE, (rdpContext*)ps);
 }
