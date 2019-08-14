@@ -73,6 +73,7 @@ include(CMakePackageConfigHelpers)
 include(InstallFreeRDPMan)
 include(GetGitRevisionDescription)
 include(SetFreeRDPCMakeInstallDir)
+include(FindCairo)
 
 # Soname versioning
 set(BUILD_NUMBER 0)
