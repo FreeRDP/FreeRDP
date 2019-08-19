@@ -2,7 +2,6 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Proxy Server
  *
- * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
  * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
  * Copyright 2019 Idan Freiberg <speidy@gmail.com>
  *
@@ -24,7 +23,10 @@
 
 #include <winpr/ini.h>
 
-#include "pf_filters.h"
+#define CONFIG_GET_STR(ini, section, key) IniFile_GetKeyValueString(ini, section, key)
+#define CONFIG_GET_BOOL(ini, section, key) IniFile_GetKeyValueInt(ini, section, key)
+
+typedef struct proxy_config proxyConfig;
 
 struct proxy_config
 {
@@ -51,9 +53,6 @@ struct proxy_config
 	BOOL GFX;
 	BOOL DisplayControl;
 	BOOL Clipboard;
-
-	/* filters */
-	filters_list* Filters;
 
 	/* clipboard specific settings*/
 	BOOL TextOnly;

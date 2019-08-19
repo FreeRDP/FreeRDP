@@ -168,12 +168,6 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	pc = (pClientContext*) context;
 	ps = (rdpContext*) pc->pdata->ps;
 
-	if (!proxy_data_set_connection_info(pc->pdata, ps->settings, settings))
-	{
-		WLog_ERR(TAG, "proxy_data_set_connection_info failed!");
-		return FALSE;
-	}
-
 	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
 		return FALSE;
 

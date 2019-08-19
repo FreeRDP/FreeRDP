@@ -22,11 +22,12 @@
 #include "pf_server.h"
 #include "pf_config.h"
 #include "pf_log.h"
-#include "pf_filters.h"
+#include "pf_modules.h"
 
 #include <winpr/collections.h>
 
 #define TAG PROXY_TAG("server")
+
 
 int main(int argc, char* argv[])
 {
@@ -40,12 +41,16 @@ int main(int argc, char* argv[])
 	if (argc > 1)
 		cfg = argv[1];
 
+	if (!pf_modules_init())
+		return FALSE;
+
 	if (!pf_server_config_load(cfg, config))
 		goto fail;
 
 	pf_server_config_print(config);
 	status = pf_server_start(config);
 fail:
+	pf_modules_free();
 	pf_server_config_free(config);
 	return status;
 }
