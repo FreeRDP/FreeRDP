@@ -49,6 +49,7 @@
 #include "pf_context.h"
 #include "pf_update.h"
 #include "pf_log.h"
+#include "pf_modules.h"
 
 #define TAG PROXY_TAG("client")
 
@@ -93,6 +94,9 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	pClientContext* pc = (pClientContext*) instance->context;
 	pServerContext* ps = pc->pdata->ps;
 	rdpSettings* settings = instance->settings;
+
+	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_PRE_CONNECT, (rdpContext*)ps))
+		return FALSE;
 
 	/*
 	 * as the client's settings are copied from the server's, GlyphSupportLevel might not be

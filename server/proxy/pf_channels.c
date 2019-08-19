@@ -39,6 +39,7 @@
 #include "pf_cliprdr.h"
 #include "pf_disp.h"
 #include "pf_log.h"
+#include "pf_modules.h"
 
 #define TAG PROXY_TAG("channels")
 
@@ -151,7 +152,7 @@ BOOL pf_server_channels_init(pServerContext* ps)
 			return FALSE;
 	}
 
-	return TRUE;
+	return pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_INIT, context);
 }
 
 void pf_server_channels_free(pServerContext* ps)
@@ -173,4 +174,6 @@ void pf_server_channels_free(pServerContext* ps)
 		cliprdr_server_context_free(ps->cliprdr);
 		ps->cliprdr = NULL;
 	}
+
+	pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_FREE, (rdpContext*) ps);
 }
