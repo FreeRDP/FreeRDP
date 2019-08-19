@@ -510,7 +510,7 @@ static void* urbdrc_search_usb_device(void* arg)
 	size_t val_size, tm;
 	long idVendor, idProduct;
 	long busnum, devnum;
-	int action, success, error, found, on_close;
+	int action, success, found, on_close;
 	struct sockaddr_un sun;
 	DWORD status;
 	UINT32 error;
@@ -536,7 +536,7 @@ static void* urbdrc_search_usb_device(void* arg)
 
 	/* Get the file descriptor (fd) for the monitor.
 	   This fd will get passed to select() */
-	mon_fd = CreateFileDescriptorEvent(NULL, TRUE, FALSE, devd_skt);
+	mon_fd = CreateFileDescriptorEvent(NULL, TRUE, FALSE, devd_skt, WINPR_FD_READ);
 	listobj[0] = searchman->term_event;
 	listobj[1] = mon_fd;
 
