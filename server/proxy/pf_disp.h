@@ -2,9 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Proxy Server
  *
- * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
  * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
- * Copyright 2019 Idan Freiberg <speidy@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
