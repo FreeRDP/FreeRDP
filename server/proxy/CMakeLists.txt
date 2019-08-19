@@ -3,7 +3,8 @@
 #
 # Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
 # Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
-#
+# Copyright 2019 Idan Freiberg <speidy@gmail.com>
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -43,11 +44,12 @@ set(${MODULE_PREFIX}_SRCS
   pf_config.h
   pf_graphics.c
   pf_graphics.h
-  pf_filters.c
-  pf_filters.h
-  pf_log.h
+  pf_modules.c
+  pf_modules.h
   pf_cliprdr.c
-  pf_cliprdr.h)
+  pf_cliprdr.h
+  pf_log.h
+  )
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
@@ -79,4 +81,4 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/proxy")
 
-add_subdirectory("filters")
+add_subdirectory("modules")

@@ -19,33 +19,40 @@
 
 #include <stdio.h>
 
-#include "filters_api.h"
+#include "modules_api.h"
 
-static PF_FILTER_RESULT demo_filter_keyboard_event(connectionInfo* info, void* param)
+static BOOL demo_filter_keyboard_event(moduleOperations* module, rdpContext* context, void* param)
 {
 	proxyKeyboardEventInfo* event_data = (proxyKeyboardEventInfo*) param;
 	WINPR_UNUSED(event_data);
 
-	return FILTER_PASS;
+	return TRUE;
 }
 
-static PF_FILTER_RESULT demo_filter_mouse_event(connectionInfo* info, void* param)
+static BOOL demo_filter_mouse_event(moduleOperations* module, rdpContext* context, void* param)
 {
  	proxyMouseEventInfo* event_data = (proxyMouseEventInfo*) param;
 
 	if (event_data->x % 100 == 0)
 	{
+		module->AbortConnect(module, context);
 		printf("filter_demo: mouse x is currently %"PRIu16"\n", event_data->x);
-		return FILTER_PASS;
 	}
 
-	return FILTER_PASS;
+	return TRUE;
 }
 
-BOOL filter_init(proxyEvents* events)
+BOOL module_init(moduleOperations* module)
 {
-	events->KeyboardEvent = demo_filter_keyboard_event;
-	events->MouseEvent = demo_filter_mouse_event;
+	module->KeyboardEvent = demo_filter_keyboard_event;
+	module->MouseEvent = demo_filter_mouse_event;
+
+	return TRUE;
+}
+
+BOOL module_exit(moduleOperations* module)
+{
+	printf("bye bye\n");
 
 	return TRUE;
 }

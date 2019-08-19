@@ -2,7 +2,6 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Proxy Server
  *
- * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
  * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
  * Copyright 2019 Idan Freiberg <speidy@gmail.com>
  *
@@ -27,6 +26,7 @@
 #include "pf_log.h"
 #include "pf_server.h"
 #include "pf_config.h"
+#include "pf_modules.h"
 
 #define TAG PROXY_TAG("config")
 
@@ -125,29 +125,26 @@ static BOOL pf_config_load_clipboard(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
-static BOOL pf_config_load_filters(wIniFile* ini, proxyConfig* config)
+static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 {
 	UINT32 index;
-	int filters_count;
-	char** filters_names;
+	int modules_count = 0;
+	char** module_names;
 
-	if (!pf_filters_init(&config->Filters))
-		return FALSE;
+	module_names = IniFile_GetSectionKeyNames(ini, "Modules", &modules_count);
 
-	filters_names = IniFile_GetSectionKeyNames(ini, "Filters", &filters_count);
-
-	for (index = 0; index < filters_count; index++)
+	for (index = 0; index < modules_count; index++)
 	{
-		char* filter_name = filters_names[index];
-		const char* path = CONFIG_GET_STR(ini, "Filters", filter_name);
+		char* module_name = module_names[index];
+		const char* path = CONFIG_GET_STR(ini, "Modules", module_name);
 
-		if (!pf_filters_register_new(config->Filters, path, filter_name))
+		if (!pf_modules_register_new(path, module_name))
 		{
-			WLog_DBG(TAG, "pf_config_load_filters(): failed to register %s (%s)", filter_name, path);
+			WLog_DBG(TAG, "pf_config_load_modules(): failed to register %s (%s)", module_name, path);
 			continue;
 		}
 
-		WLog_DBG(TAG, "pf_config_load_filters(): filter %s is registered", filter_name);
+		WLog_INFO(TAG, "module '%s' is loaded!", module_name);
 	}
 
 	return TRUE;
@@ -185,7 +182,7 @@ BOOL pf_server_config_load(const char* path, proxyConfig* config)
 	if (!pf_config_load_security(ini, config))
 		goto out;
 
-	if (!pf_config_load_filters(ini, config))
+	if (!pf_config_load_modules(ini, config))
 		goto out;
 
 	if (!pf_config_load_clipboard(ini, config))
@@ -234,7 +231,6 @@ void pf_server_config_print(proxyConfig* config)
 
 void pf_server_config_free(proxyConfig* config)
 {
-	pf_filters_unregister_all(config->Filters);
 	free(config->TargetHost);
 	free(config->Host);
 	free(config);

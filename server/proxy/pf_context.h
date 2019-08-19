@@ -33,7 +33,7 @@
 
 #include "pf_config.h"
 #include "pf_server.h"
-#include "pf_filters.h"
+#include "pf_modules.h"
 
 typedef struct proxy_data proxyData;
 
@@ -52,6 +52,9 @@ struct p_server_context
 	RdpgfxServerContext* gfx;
 	DispServerContext* disp;
 	CliprdrServerContext* cliprdr;
+
+	/* used to external modules to store per-session info */
+	wHashTable* modules_info;
 };
 typedef struct p_server_context pServerContext;
 
@@ -93,18 +96,15 @@ struct proxy_data
 
 	HANDLE abort_event;
 	HANDLE client_thread;
-
-	connectionInfo* info;
-	filters_list* filters;
 };
 
 /* client */
 rdpContext* p_client_context_create(rdpSettings* clientSettings);
 
 /* pdata */
-proxyData* proxy_data_new();
-BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* ps, rdpSettings* pc);
+proxyData* proxy_data_new(void);
 void proxy_data_free(proxyData* pdata);
+
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_dst_server);
 void proxy_data_abort_connect(proxyData* pdata);
 BOOL proxy_data_shall_disconnect(proxyData* pdata);

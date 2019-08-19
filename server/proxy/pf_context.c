@@ -26,6 +26,10 @@
 static BOOL client_to_proxy_context_new(freerdp_peer* client,
                                         pServerContext* context)
 {
+	context->modules_info = HashTable_New(TRUE);
+	if (!context->modules_info)
+		return FALSE;
+
 	context->vcm = WTSOpenServerA((LPSTR) client->context);
 
 	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
@@ -33,6 +37,7 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client,
 
 	return TRUE;
 fail_open_server:
+	HashTable_Free(context->modules_info);
 	context->vcm = NULL;
 	return FALSE;
 }
@@ -53,6 +58,8 @@ static void client_to_proxy_context_free(freerdp_peer* client,
 		CloseHandle(context->dynvcReady);
 		context->dynvcReady = NULL;
 	}
+
+	HashTable_Free(context->modules_info);
 }
 
 BOOL init_p_server_context(freerdp_peer* client)
@@ -141,28 +148,12 @@ error:
 	return NULL;
 }
 
-static void connection_info_free(connectionInfo* info)
-{
-	free(info->TargetHostname);
-	free(info->ClientHostname);
-	free(info->Username);
-	free(info);
-}
-
-proxyData* proxy_data_new()
+proxyData* proxy_data_new(void)
 {
 	proxyData* pdata = calloc(1, sizeof(proxyData));
 
 	if (pdata == NULL)
 	{
-		return NULL;
-	}
-
-	pdata->info = calloc(1, sizeof(connectionInfo));
-
-	if (pdata->info == NULL)
-	{
-		free(pdata);
 		return NULL;
 	}
 
@@ -175,27 +166,8 @@ proxyData* proxy_data_new()
 	return pdata;
 }
 
-/* sets connection info values using the settings of both server & client */
-BOOL proxy_data_set_connection_info(proxyData* pdata, rdpSettings* ps, rdpSettings* pc)
-{
-	if (!(pdata->info->TargetHostname = _strdup(pc->ServerHostname)))
-		goto out_fail;
-
-	if (!(pdata->info->Username = _strdup(pc->Username)))
-		goto out_fail;
-
-	if (!(pdata->info->ClientHostname = _strdup(ps->ClientHostname)))
-		goto out_fail;
-
-	return TRUE;
-out_fail:
-	proxy_data_free(pdata);
-	return FALSE;
-}
-
 void proxy_data_free(proxyData* pdata)
 {
-	connection_info_free(pdata->info);
 	if (pdata->abort_event)
 	{
 		CloseHandle(pdata->abort_event);
