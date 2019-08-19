@@ -128,6 +128,7 @@ void pf_OnChannelDisconnectedEventHandler(void* data,
 BOOL pf_server_channels_init(pServerContext* ps)
 {
 	rdpContext* context = (rdpContext*) ps;
+	rdpContext* client = (rdpContext*) ps->pdata->pc;
 	proxyConfig* config = ps->pdata->config;
 
 	if (context->settings->SupportGraphicsPipeline && config->GFX)
@@ -144,6 +145,8 @@ BOOL pf_server_channels_init(pServerContext* ps)
 
 	if (config->Clipboard && WTSVirtualChannelManagerIsChannelJoined(ps->vcm, CLIPRDR_SVC_CHANNEL_NAME))
 	{
+		client->settings->RedirectClipboard = TRUE;
+
 		if (!pf_server_cliprdr_init(ps))
 			return FALSE;
 	}
