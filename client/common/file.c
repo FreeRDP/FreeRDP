@@ -310,8 +310,7 @@ static BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name,
 		file->AuthenticationLevel = (UINT32)value;
 	else if (_stricmp(name, "promptcredentialonce") == 0)
 		file->PromptCredentialOnce = (UINT32)value;
-	else if ((_stricmp(name, "prompt for credentials") == 0) ||
-	         (_stricmp(name, "prompt for credentials on client") == 0))
+	else if ((_stricmp(name, "prompt for credentials") == 0))
 		file->PromptForCredentials = (UINT32)value;
 	else if (_stricmp(name, "negotiate security layer") == 0)
 		file->NegotiateSecurityLayer = (UINT32)value;
