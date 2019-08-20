@@ -136,7 +136,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	if (promptPassword)
 	{
-		if (!instance->settings->PromptForCredentials || !instance->GatewayAuthenticate)
+		if (!instance->GatewayAuthenticate)
 		{
 			freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return 0;
