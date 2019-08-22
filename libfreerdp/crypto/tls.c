@@ -1258,10 +1258,10 @@ static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyL
 
 	if (cert->px509chain)
 	{
-		count = sk_BIO_num(cert->px509chain);
+		count = sk_X509_num(cert->px509chain);
 		for (x=0; x<count; x++)
 		{
-			X509* c = sk_BIO_value(cert->px509chain, x);
+			X509* c = sk_X509_value(cert->px509chain, x);
 			status = PEM_write_bio_X509(bio, c);
 			if (status < 0)
 			{
