@@ -726,14 +726,14 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	PubSub_OnWindowStateChange(context->pubSub, context, &e);
 }
 
-void xf_toggle_control(xfContext* xfc)
+BOOL xf_toggle_control(xfContext* xfc)
 {
 	EncomspClientContext* encomsp;
 	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
 	encomsp = xfc->encomsp;
 
 	if (!encomsp)
-		return;
+		return FALSE;
 
 	pdu.ParticipantId = 0;
 	pdu.Flags = ENCOMSP_REQUEST_VIEW;
@@ -743,6 +743,7 @@ void xf_toggle_control(xfContext* xfc)
 
 	encomsp->ChangeParticipantControlLevel(encomsp, &pdu);
 	xfc->controlToggle = !xfc->controlToggle;
+	return TRUE;
 }
 
 /**

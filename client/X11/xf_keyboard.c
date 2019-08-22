@@ -516,8 +516,8 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		if (mod.Ctrl && mod.Alt)
 		{
 			/* Ctrl-Alt-C: toggle control */
-			xf_toggle_control(xfc);
-			return TRUE;
+			if (xf_toggle_control(xfc))
+				return TRUE;
 		}
 	}
 
