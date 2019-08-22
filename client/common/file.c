@@ -1430,14 +1430,26 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->DisableRemoteAppCapsCheck)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableRemoteAppCapsCheck,
-									   file->DisableRemoteAppCapsCheck != 0))
+		                               file->DisableRemoteAppCapsCheck != 0))
+			return FALSE;
+	}
+
+	if (~file->BandwidthAutoDetect)
+	{
+		if (!freerdp_set_connection_type(settings, file->BandwidthAutoDetect))
 			return FALSE;
 	}
 
 	if (~file->NetworkAutoDetect)
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
-									   file->NetworkAutoDetect != 0))
+		if (file->BandwidthAutoDetect != CONNECTION_TYPE_AUTODETECT)
+		{
+			WLog_WARN(TAG, "Got networkautodetect:i:%"PRIu32" and bandwidthautodetect:i:%"PRIu32". Correcting to bandwidthautodetect:i:%"PRIu32,
+					 file->NetworkAutoDetect, file->BandwidthAutoDetect, CONNECTION_TYPE_AUTODETECT);
+			WLog_WARN(TAG, "Add bandwidthautodetect:i:%"PRIu32" to your RDP file to eliminate this warning.", CONNECTION_TYPE_AUTODETECT);
+		}
+
+		if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
 			return FALSE;
 	}
 
