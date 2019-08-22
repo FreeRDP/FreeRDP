@@ -238,7 +238,7 @@ struct xf_context
 
 BOOL xf_create_window(xfContext* xfc);
 void xf_toggle_fullscreen(xfContext* xfc);
-void xf_toggle_control(xfContext* xfc);
+BOOL xf_toggle_control(xfContext* xfc);
 
 void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp);
 void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp);
