@@ -1098,6 +1098,14 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 		settings->DisableMenuAnims = FALSE;
 		settings->DisableThemes = FALSE;
 		settings->NetworkAutoDetect = TRUE;
+
+		/* Automatically activate GFX and RFX codec support */
+#ifdef WITH_GFX_H264
+		settings->GfxAVC444 = TRUE;
+		settings->GfxH264 = TRUE;
+#endif
+		settings->RemoteFxCodec = TRUE;
+		settings->SupportGraphicsPipeline = TRUE;
 	}
 	else
 	{
@@ -2374,11 +2382,18 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				else if (_strnicmp("AVC420", arg->Value, 7) == 0)
 				{
 					settings->GfxH264 = TRUE;
+					settings->GfxAVC444 = FALSE;
 				}
 				else
 #endif
-					if (_strnicmp("RFX", arg->Value, 4) != 0)
-						return COMMAND_LINE_ERROR;
+				if (_strnicmp("RFX", arg->Value, 4) == 0)
+				{
+					settings->GfxAVC444 = FALSE;
+					settings->GfxH264 = FALSE;
+					settings->RemoteFxCodec = TRUE;
+				}
+				else
+					return COMMAND_LINE_ERROR;
 			}
 		}
 		CommandLineSwitchCase(arg, "gfx-thin-client")
