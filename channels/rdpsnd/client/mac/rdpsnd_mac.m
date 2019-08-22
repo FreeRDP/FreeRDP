@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/types.h>
 
@@ -50,6 +51,7 @@ struct rdpsnd_mac_plugin
 
 	AVAudioEngine* engine;
 	AVAudioPlayerNode* player;
+	UINT64 diff;
 };
 typedef struct rdpsnd_mac_plugin rdpsndMacPlugin;
 
@@ -124,12 +126,21 @@ static char* FormatError(OSStatus st)
 	}
 }
 
+static void rdpsnd_mac_release(rdpsndMacPlugin* mac)
+{
+	if (mac->player)
+		[mac->player release];
+	mac->player = NULL;
+
+	if (mac->engine)
+		[mac->engine release];
+	mac->engine = NULL;
+}
+
 static BOOL rdpsnd_mac_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency)
 {
 	OSStatus err;
 	NSError* error;
-	AudioDeviceID outputDeviceID;
-	UInt32 propertySize;
 	AudioObjectPropertyAddress propertyAddress = {
 		kAudioHardwarePropertyDefaultSystemOutputDevice,
 		kAudioObjectPropertyScopeGlobal,
@@ -142,37 +153,25 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 	if (!rdpsnd_mac_set_format(device, format, latency))
 		return FALSE;
 
-	propertySize = sizeof(outputDeviceID);
-	err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &propertySize, &outputDeviceID);
-	if (err)
-	{
-		WLog_ERR(TAG, "AudioHardwareGetProperty: %s", FormatError(err));
-		return FALSE;
-	}
-
 	mac->engine = [[AVAudioEngine alloc] init];
 	if (!mac->engine)
 		return FALSE;
 
-	err = AudioUnitSetProperty(mac->engine.outputNode.audioUnit, kAudioOutputUnitProperty_CurrentDevice,
-							   kAudioUnitScope_Global, 0, &outputDeviceID, sizeof(outputDeviceID));
-	if (err)
+	mac->player = [[AVAudioPlayerNode alloc] init];
+	if (!mac->player)
 	{
-		[mac->engine release];
-		WLog_ERR(TAG, "AudioUnitSetProperty: %s", FormatError(err));
+		rdpsnd_mac_release(mac);
+		WLog_ERR(TAG, "AVAudioPlayerNode::init() failed");
 		return FALSE;
 	}
 
-	mac->player = [[AVAudioPlayerNode alloc] init];
 	[mac->engine attachNode: mac->player];
 
 	[mac->engine connect: mac->player to: mac->engine.mainMixerNode format: nil];
 
 	if (![mac->engine startAndReturnError: &error])
 	{
-		[mac->player release];
-		[mac->engine release];
-
+		device->Close(device);
 		WLog_ERR(TAG, "Failed to start audio player %s", [error UTF8String]);
 		return FALSE;
 	}
@@ -185,21 +184,19 @@ static void rdpsnd_mac_close(rdpsndDevicePlugin* device)
 {
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
 
+	if (mac->isPlaying)
+	{
+			[mac->player stop];
+			mac->isPlaying = FALSE;
+	}
+
 	if (mac->isOpen)
 	{
-		mac->isOpen = FALSE;
-
-		// TODO: Close
-		if (mac->isPlaying)
-			[mac->player stop];
 		[mac->engine stop];
-		[mac->engine disconnectNodeInput: mac->player];
-		[mac->engine detachNode: mac->player];
-
-		[mac->player release];
-		[mac->engine release];
-		mac->isPlaying = FALSE;
+		mac->isOpen = FALSE;
 	}
+
+	rdpsnd_mac_release(mac);
 }
 
 static void rdpsnd_mac_free(rdpsndDevicePlugin* device)
@@ -252,6 +249,7 @@ static void rdpsnd_mac_start(rdpsndDevicePlugin* device)
 		[mac->player play];
 
 		mac->isPlaying = TRUE;
+		mac->diff = 100; /* Initial latency, corrected after first sample is played. */
 	}
 }
 
@@ -263,16 +261,28 @@ static UINT rdpsnd_mac_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 	float * const * db;
 	size_t pos, step, x;
 	AVAudioFrameCount count;
+	UINT64 start = GetTickCount64();
 
 	if (!mac->isOpen)
 		return 0;
 
 	step = 2 * mac->format.nChannels;
-	rdpsnd_mac_start(device);
 
 	count = size / step;
 	format = [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32 sampleRate:mac->format.nSamplesPerSec channels:mac->format.nChannels interleaved:NO];
+	if (!format)
+	{
+		WLog_WARN(TAG, "AVAudioFormat::init() failed");
+		return 0;
+	}
 	buffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:format frameCapacity: count];
+	if (!buffer)
+	{
+		[format release];
+		WLog_WARN(TAG, "AVAudioPCMBuffer::init() failed");
+		return 0;
+	}
+
 	buffer.frameLength = buffer.frameCapacity;
 	db = buffer.floatChannelData;
 
@@ -287,9 +297,17 @@ static UINT rdpsnd_mac_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 		}
 	}
 
-	[mac->player scheduleBuffer: buffer completionHandler:nil];
+	rdpsnd_mac_start(device);
 
-	return 10; /* TODO: Get real latencry in [ms] */
+	[mac->player scheduleBuffer: buffer completionHandler:^{
+		UINT64 stop = GetTickCount64();
+		if (start > stop)
+			mac->diff = 0;
+		else
+			mac->diff = stop - start;
+	}];
+
+	return mac->diff > UINT_MAX ? UINT_MAX : mac->diff;
 }
 
 #ifdef BUILTIN_CHANNELS
