@@ -44,12 +44,14 @@
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/path.h>
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
 /*#define DEBUG_CLIENT_FILE	1*/
 
-static BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
+static const BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
+static const char DynamicDrives[] = "DynamicDrives";
 
 #define INVALID_INTEGER_VALUE 0xFFFFFFFF
 
@@ -1045,6 +1047,62 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	return totalSize;
 }
 
+static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, const char* name)
+{
+	RDPDR_DRIVE* drive;
+
+	drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
+
+	if (!drive)
+		return FALSE;
+
+	drive->Type = RDPDR_DTYP_FILESYSTEM;
+
+	if (name)
+	{
+		/* Path was entered as secondary argument, swap */
+		if (PathFileExistsA(name))
+		{
+			const char* tmp = path;
+			path = name;
+			name = tmp;
+		}
+	}
+
+	if (name)
+	{
+		if (!(drive->Name = _strdup(name)))
+			goto fail;
+	}
+
+	if (!path)
+		goto fail;
+	else
+	{
+		const BOOL isPath = PathFileExistsA(path);
+		const BOOL isSpecial = (strncmp(path, "*", 2) == 0) ||
+									   (strncmp(path, DynamicDrives, sizeof(DynamicDrives)) == 0) ||
+									   (strncmp(path, "%", 2) == 0) ? TRUE : FALSE;
+
+		if (isSpecial && name)
+			goto fail;
+
+		if ((!isPath && !isSpecial) || !(drive->Path = _strdup(path)))
+			goto fail;
+	}
+
+	if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive))
+		goto fail;
+
+	return TRUE;
+
+	fail:
+		free(drive->Path);
+		free(drive->Name);
+		free(drive);
+		return FALSE;
+}
+
 BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings)
 {
 	if (~((size_t)file->Domain))
@@ -1556,8 +1614,53 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 */
 		const BOOL empty = !file->DrivesToRedirect || (strlen(file->DrivesToRedirect) == 0);
 
-		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectDrives, !empty))
-			return FALSE;
+		if (!empty)
+		{
+			char* value;
+			char* tok;
+			char* context = NULL;
+
+			value = _strdup(file->DrivesToRedirect);
+			if (!value)
+				return FALSE;
+
+			tok = strtok_s(value, ";", &context);
+			if (!tok)
+			{
+				free(value);
+				return FALSE;
+			}
+
+			while(tok)
+			{
+				/* Syntax: Comma seperated list of the following entries:
+				 * '*'              ... Redirect all drives, including hotplug
+				 * 'DynamicDrives'  ... hotplug
+				 * <label>(<path>)  ... One or more paths to redirect.
+				 * <path>(<label>)  ... One or more paths to redirect.
+				 * <path>           ... One or more paths to redirect.
+				 */
+				/* TODO: Need to properly escape labels and paths */
+				const char* name = NULL;
+				const char* drive = tok;
+				char* start = strtok(tok, "(");
+				char* end = strtok(NULL, ")");
+				if (end)
+					name = end;
+
+				if (!freerdp_client_add_drive(settings, drive, name))
+				{
+					free(value);
+					return FALSE;
+				}
+
+				tok = strtok_s(NULL, ";", &context);
+			}
+			free(value);
+
+			if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
+				return FALSE;
+		}
 	}
 
 	if (~file->KeyboardHook)
@@ -1597,6 +1700,7 @@ static rdpFileLine* freerdp_client_rdp_file_find_line_index(rdpFile* file, SSIZE
 	line = &(file->lines[index]);
 	return line;
 }
+
 static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(rdpFile* file, const char* name)
 {
 	size_t index;
