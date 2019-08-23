@@ -359,8 +359,10 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 
 		if (count > 2)
 		{
+			const char DynamicDrives[] = "DynamicDrives";
 			const BOOL isPath = PathFileExistsA(params[2]);
 			const BOOL isSpecial = (strncmp(params[2], "*", 2) == 0) ||
+									(strncmp(params[2], DynamicDrives, sizeof(DynamicDrives)) == 0) ||
 			                       (strncmp(params[2], "%", 2) == 0) ? TRUE : FALSE;
 
 			if ((!isPath && !isSpecial) || !(drive->Path = _strdup(params[2])))
