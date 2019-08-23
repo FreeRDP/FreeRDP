@@ -68,6 +68,25 @@ static BOOL freerdp_path_valid(const char* path, BOOL* special)
 	return isSpecial || isPath;
 }
 
+static BOOL freerdp_sanitize_drive_name(char* name, const char* invalid, const char* replacement)
+{
+	if (!name || !invalid || !replacement)
+		return FALSE;
+	if (strlen(invalid) != strlen(replacement))
+		return FALSE;
+
+	while(*invalid != '\0')
+	{
+		const char what = *invalid++;
+		const char with = *replacement++;
+
+		char* cur = name;
+		while((cur = strchr(cur, what)) != NULL)
+			*cur = with;
+	}
+	return TRUE;
+}
+
 static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, const char* name)
 {
 	RDPDR_DRIVE* drive;
@@ -99,7 +118,7 @@ static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, co
 		if (!(drive->Name = _strdup(path)))
 			goto fail;
 
-	if (!path)
+	if (!path || !freerdp_sanitize_drive_name(drive->Name, "\\/", "__"))
 		goto fail;
 	else
 	{
