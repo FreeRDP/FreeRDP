@@ -1047,6 +1047,25 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	return totalSize;
 }
 
+static BOOL freerdp_path_valid(const char* path, BOOL* special)
+{
+	BOOL isPath = FALSE;
+	BOOL isSpecial;
+	if (!path)
+		return FALSE;
+
+	isSpecial = (strncmp(path, "*", 2) == 0) ||
+								   (strncmp(path, DynamicDrives, sizeof(DynamicDrives)) == 0) ||
+								   (strncmp(path, "%", 2) == 0) ? TRUE : FALSE;
+	if (!isSpecial)
+		isPath = PathFileExistsA(path);
+
+	if (special)
+		*special = isSpecial;
+
+	return isSpecial || isPath;
+}
+
 static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, const char* name)
 {
 	RDPDR_DRIVE* drive;
@@ -1079,10 +1098,8 @@ static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, co
 		goto fail;
 	else
 	{
-		const BOOL isPath = PathFileExistsA(path);
-		const BOOL isSpecial = (strncmp(path, "*", 2) == 0) ||
-									   (strncmp(path, DynamicDrives, sizeof(DynamicDrives)) == 0) ||
-									   (strncmp(path, "%", 2) == 0) ? TRUE : FALSE;
+		BOOL isSpecial = FALSE;
+		BOOL isPath = freerdp_path_valid(path, &isSpecial);
 
 		if (isSpecial && name)
 			goto fail;
@@ -1641,6 +1658,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 				 * <path>           ... One or more paths to redirect.
 				 */
 				/* TODO: Need to properly escape labels and paths */
+				BOOL success;
 				const char* name = NULL;
 				const char* drive = tok;
 				char* start = strtok(tok, "(");
@@ -1648,7 +1666,16 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 				if (end)
 					name = end;
 
-				if (!freerdp_client_add_drive(settings, drive, name))
+				if (freerdp_path_valid(name, NULL) && freerdp_path_valid(drive, NULL))
+				{
+					success = freerdp_client_add_drive(settings, name, NULL);
+					if (success)
+						success = freerdp_client_add_drive(settings, drive, NULL);
+				}
+				else
+					success = freerdp_client_add_drive(settings, drive, name);
+
+				if (!success)
 				{
 					free(value);
 					return FALSE;
