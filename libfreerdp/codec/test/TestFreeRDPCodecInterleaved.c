@@ -152,6 +152,41 @@ fail:
 	PROFILER_FREE(profiler_decomp);
 	return rc;
 }
+
+static BOOL TestColorConversion(void)
+{
+	const UINT32 formats[] = {
+		PIXEL_FORMAT_RGB15,
+		PIXEL_FORMAT_BGR15,
+		PIXEL_FORMAT_ABGR15,
+		PIXEL_FORMAT_ARGB15,
+		PIXEL_FORMAT_BGR16,
+		PIXEL_FORMAT_RGB16
+	};
+	UINT32 x;
+
+	/* Check color conversion 15/16 -> 32bit maps to proper values */
+	for (x=0; x<ARRAYSIZE(formats); x++)
+	{
+		const UINT32 dstFormat = PIXEL_FORMAT_RGBA32;
+		const UINT32 format = formats[x];
+		const UINT32 colorLow = FreeRDPGetColor(format, 0, 0, 0, 255);
+		const UINT32 colorHigh = FreeRDPGetColor(format, 255, 255, 255, 255);
+		const UINT32 colorLow32 = FreeRDPConvertColor(colorLow, format, dstFormat, NULL);
+		const UINT32 colorHigh32 = FreeRDPConvertColor(colorHigh, format, dstFormat, NULL);
+		BYTE r, g, b, a;
+		SplitColor(colorLow32, dstFormat, &r, &g, &b, &a, NULL);
+		if ((r != 0) || (g != 0) || (b != 0))
+			return FALSE;
+
+		SplitColor(colorHigh32, dstFormat, &r, &g, &b, &a, NULL);
+		if ((r != 255) || (g != 255) || (b != 255))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 int TestFreeRDPCodecInterleaved(int argc, char* argv[])
 {
 	BITMAP_INTERLEAVED_CONTEXT* encoder, * decoder;
@@ -171,6 +206,9 @@ int TestFreeRDPCodecInterleaved(int argc, char* argv[])
 		goto fail;
 
 	if (!run_encode_decode(15, encoder, decoder))
+		goto fail;
+
+	if (!TestColorConversion())
 		goto fail;
 
 	rc = 0;
