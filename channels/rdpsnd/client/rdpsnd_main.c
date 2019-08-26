@@ -1255,6 +1255,14 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 		                "rdpsnd_virtual_channel_init_event reported an error");
 }
 
+rdpContext* freerdp_rdpsnd_get_context(rdpsndPlugin* plugin)
+{
+	if (!plugin)
+		return NULL;
+
+	return plugin->rdpcontext;
+}
+
 /* rdpsnd is always built-in */
 #define VirtualChannelEntryEx	rdpsnd_VirtualChannelEntryEx
 
