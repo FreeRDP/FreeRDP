@@ -365,13 +365,25 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 		/* 16bpp formats */
 		case PIXEL_FORMAT_RGB16:
 			if (_r)
-				*_r = (BYTE)(((color >> 11) & 0x1F) << 3);
+			{
+				const UINT32 c = (color >> 11) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_r = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_g)
-				*_g = (BYTE)(((color >> 5) & 0x3F) << 2);
+			{
+				const UINT32 c = (color >> 5) & 0x3F;
+				const UINT32 val = (c << 2) + c / 4 / 2;
+				*_g = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_b)
-				*_b = (BYTE)((color & 0x1F) << 3);
+			{
+				const UINT32 c = (color) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_b = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_a)
 				*_a = 0xFF;
@@ -379,29 +391,53 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			break;
 
 		case PIXEL_FORMAT_BGR16:
-			if (_b)
-				*_b = (BYTE)(((color >> 11) & 0x1F) << 3);
+			if (_r)
+			{
+				const UINT32 c = (color) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_r = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_g)
-				*_g = (BYTE)(((color >> 5) & 0x3F) << 2);
+			{
+				const UINT32 c = (color >> 5) & 0x3F;
+				const UINT32 val = (c << 2) + c / 4 / 2;
+				*_g = (BYTE) (val > 255 ? 255 : val);
+			}
 
-			if (_r)
-				*_r = (BYTE)((color & 0x1F) << 3);
+			if (_b)
+			{
+				const UINT32 c = (color >> 11) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_b = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_a)
 				*_a = 0xFF;
 
 			break;
 
-		case PIXEL_FORMAT_ARGB15:
+		case PIXEL_FORMAT_ARGB15:		
 			if (_r)
-				*_r = (BYTE)(((color >> 10) & 0x1F) << 3);
+			{
+				const UINT32 c = (color >> 10) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_r = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_g)
-				*_g = (BYTE)(((color >> 5) & 0x1F) << 3);
+			{
+				const UINT32 c = (color >> 5) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_g = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_b)
-				*_b = (BYTE)((color & 0x1F) << 3);
+			{
+				const UINT32 c = (color) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_b = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_a)
 				*_a = color & 0x8000 ? 0xFF : 0x00;
@@ -409,14 +445,26 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			break;
 
 		case PIXEL_FORMAT_ABGR15:
-			if (_b)
-				*_b = (BYTE)(((color >> 10) & 0x1F) << 3);
+			if (_r)
+			{
+				const UINT32 c = (color) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_r = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_g)
-				*_g = (BYTE)(((color >> 5) & 0x1F) << 3);
+			{
+				const UINT32 c = (color >> 5) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_g = (BYTE) (val > 255 ? 255 : val);
+			}
 
-			if (_r)
-				*_r = (BYTE)((color & 0x1F) << 3);
+			if (_b)
+			{
+				const UINT32 c = (color >> 10) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_b = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_a)
 				*_a = color & 0x8000 ? 0xFF : 0x00;
@@ -426,13 +474,25 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 		/* 15bpp formats */
 		case PIXEL_FORMAT_RGB15:
 			if (_r)
-				*_r = (BYTE)(((color >> 10) & 0x1F) << 3);
+			{
+				const UINT32 c = (color >> 10) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_r = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_g)
-				*_g = (BYTE)(((color >> 5) & 0x1F) << 3);
+			{
+				const UINT32 c = (color >> 5) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_g = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_b)
-				*_b = (BYTE)((color & 0x1F) << 3);
+			{
+				const UINT32 c = (color) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_b = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_a)
 				*_a = 0xFF;
@@ -440,14 +500,26 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			break;
 
 		case PIXEL_FORMAT_BGR15:
-			if (_b)
-				*_b = (BYTE)(((color >> 10) & 0x1F) << 3);
+			if (_r)
+			{
+				const UINT32 c = (color) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_r = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_g)
-				*_g = (BYTE)(((color >> 5) & 0x1F) << 3);
+			{
+				const UINT32 c = (color >> 5) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_g = (BYTE) (val > 255 ? 255 : val);
+			}
 
-			if (_r)
-				*_r = (BYTE)((color & 0x1F) << 3);
+			if (_b)
+			{
+				const UINT32 c = (color >> 10) & 0x1F;
+				const UINT32 val = (c << 3) + c / 4;
+				*_b = (BYTE) (val > 255 ? 255 : val);
+			}
 
 			if (_a)
 				*_a = 0xFF;
