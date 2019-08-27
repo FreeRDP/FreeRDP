@@ -1003,7 +1003,7 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	WRITE_SETTING_INT("public mode:i:%"PRIu32, file->PublicMode);
 	WRITE_SETTING_INT("authentication level:i:%"PRId32, file->AuthenticationLevel);
 	WRITE_SETTING_INT("promptcredentialonce:i:%"PRIu32, file->PromptCredentialOnce);
-	WRITE_SETTING_INT("prompt for credentials on client:i:%"PRIu32, file->PromptForCredentials);
+	WRITE_SETTING_INT("prompt for credentials:i:%"PRIu32, file->PromptForCredentials);
 	WRITE_SETTING_INT("negotiate security layer:i:%"PRIu32, file->NegotiateSecurityLayer);
 	WRITE_SETTING_INT("enablecredsspsupport:i:%"PRIu32, file->EnableCredSSPSupport);
 	WRITE_SETTING_INT("remoteapplicationmode:i:%"PRIu32, file->RemoteApplicationMode);
