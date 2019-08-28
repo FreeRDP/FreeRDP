@@ -44,6 +44,13 @@
 
 #define TAG PROXY_TAG("channels")
 
+static void pf_channels_wait_for_server_dynvc(pServerContext* ps)
+{
+	WLog_DBG(TAG, "pf_channels_wait_for_server_dynvc(): waiting for server's drdynvc to be ready");
+	WaitForSingleObject(ps->dynvcReady, INFINITE);
+	WLog_DBG(TAG, "pf_channels_wait_for_server_dynvc(): server's drdynvc is ready!");
+}
+
 void pf_OnChannelConnectedEventHandler(void* data,
                                        ChannelConnectedEventArgs* e)
 {
@@ -58,6 +65,8 @@ void pf_OnChannelConnectedEventHandler(void* data,
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
+		pf_channels_wait_for_server_dynvc(ps);
+
 		if (!ps->gfx->Open(ps->gfx))
 		{
 			WLog_ERR(TAG, "failed to open GFX server");
@@ -69,13 +78,28 @@ void pf_OnChannelConnectedEventHandler(void* data,
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
-		if (ps->disp->Open(ps->disp) != CHANNEL_RC_OK)
+		UINT ret;
+
+		ret = ps->disp->Open(ps->disp);
+		if (ret != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "failed to open disp channel");
-			return;
+			if (ret == ERROR_NOT_FOUND)
+			{
+				/* client did not connect with disp */
+				return;
+			}
+		}
+		else
+		{
+			pf_channels_wait_for_server_dynvc(ps);
+			if (ps->disp->Open(ps->disp) != CHANNEL_RC_OK)
+			{
+				WLog_ERR(TAG, "failed to open disp channel");
+				return;
+			}
 		}
 
-		pc->disp = (DispClientContext*) e->pInterface;
+		pc->disp = (DispClientContext*)e->pInterface;
 		pf_disp_register_callbacks(pc->disp, ps->disp, pc->pdata);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)

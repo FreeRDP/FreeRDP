@@ -155,10 +155,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	                                    pf_OnChannelDisconnectedEventHandler);
 	PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_OnErrorInfo);
 
-	/* before loading client's channels, make sure proxy's dynvc is ready */
-	WLog_DBG(TAG, "pf_client_pre_connect(): Waiting for proxy's server dynvc to be ready");
-	WaitForSingleObject(ps->dynvcReady, INFINITE);
-
 	/**
 	 * Load all required plugins / channels / libraries specified by current
 	 * settings.
