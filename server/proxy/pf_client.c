@@ -105,8 +105,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 */
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 
-	/* proxy client should always try to connect with NLA */
-	settings->NlaSecurity = TRUE;
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 
@@ -252,6 +250,9 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	 */
 	handles[64] = pdata->abort_event;
 
+	/* on first try, proxy client should always try to connect with NLA */
+	instance->settings->NlaSecurity = TRUE;
+
 	/*
 	 * Only set the `during_connect_process` flag if NlaSecurity is enabled.
 	 * If NLASecurity isn't enabled, the connection should be closed right after the first failure.
@@ -264,6 +265,7 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 		if (instance->settings->NlaSecurity)
 		{
 			WLog_ERR(TAG, "freerdp_connect() failed, trying to connect without NLA");
+
 			/* disable NLA, enable TLS */
 			instance->settings->NlaSecurity = FALSE;
 			instance->settings->RdpSecurity = TRUE;
