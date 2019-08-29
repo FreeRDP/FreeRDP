@@ -47,6 +47,7 @@
 #cmakedefine WITH_GSTREAMER_1_0
 #cmakedefine WITH_GSTREAMER_0_10
 #cmakedefine WITH_WINMM
+#cmakedefine WITH_DIRECTSOUND
 #cmakedefine WITH_MACAUDIO
 #cmakedefine WITH_OSS
 #cmakedefine WITH_ALSA

@@ -838,6 +838,9 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 #if defined(WITH_MACAUDIO)
 		{"mac", "default"},
 #endif
+#if defined(WITH_DIRECTSOUND)
+		{ "directsound", ""},
+#endif
 #if defined(WITH_WINMM)
 		{ "winmm", ""},
 #endif
