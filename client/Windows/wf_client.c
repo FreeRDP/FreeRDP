@@ -60,7 +60,7 @@
 
 static int wf_create_console(void)
 {
-	if (!AllocConsole())
+	if (!AttachConsole(ATTACH_PARENT_PROCESS))
 		return 1;
 
 	freopen("CONOUT$", "w", stdout);
@@ -916,9 +916,8 @@ static BOOL wfreerdp_client_global_init(void)
 	WSADATA wsaData;
 
 	WSAStartup(0x101, &wsaData);
-#if defined(WITH_DEBUG) || defined(_DEBUG)
+
 	wf_create_console();
-#endif
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 	return TRUE;
 }
