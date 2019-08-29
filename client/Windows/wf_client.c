@@ -65,6 +65,8 @@ static BOOL wf_create_console(void)
 
 	freopen("CONOUT$", "w", stdout);
 	freopen("CONOUT$", "w", stderr);
+	freopen("CONIN$", "r", stdin);
+	clearerr(stdin);
 
 	WLog_INFO(TAG,  "Debug console created.");
 
@@ -422,20 +424,30 @@ static CREDUI_INFOA wfUiInfo =
 static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
                                 char** username, char** password, char** domain)
 {
+	wfContext* wfc;
 	BOOL fSave;
 	DWORD status;
 	DWORD dwFlags;
-	char UserName[CREDUI_MAX_USERNAME_LENGTH + 1];
-	char Password[CREDUI_MAX_PASSWORD_LENGTH + 1];
-	char User[CREDUI_MAX_USERNAME_LENGTH + 1];
-	char Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1];
+	char UserName[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+	char Password[CREDUI_MAX_PASSWORD_LENGTH + 1] = { 0 };
+	char User[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+	char Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
+
+	if (!instance || !instance->context)
+		return FALSE;
+	wfc = (wfContext*) instance->context;
+
 	fSave = FALSE;
-	ZeroMemory(UserName, sizeof(UserName));
-	ZeroMemory(Password, sizeof(Password));
 	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
-	status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0,
-										 UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
-										 Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
+
+	if (wfc->isConsole)
+		status = CredUICmdLinePromptForCredentialsA(title, NULL, 0,
+													UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
+													Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
+	else
+		status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0,
+											 UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
+											 Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
 
 	if (status != NO_ERROR)
 	{
@@ -443,8 +455,6 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
 		return FALSE;
 	}
 
-	ZeroMemory(User, sizeof(User));
-	ZeroMemory(Domain, sizeof(Domain));
 	status = CredUIParseUserNameA(UserName, User, sizeof(User), Domain,
 	                              sizeof(Domain));
 	//WLog_ERR(TAG, "User: %s Domain: %s Password: %s", User, Domain, Password);
@@ -1018,7 +1028,10 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	if (!wfc)
 		return FALSE;
 
-	wfc->isConsole = wf_create_console();
+	// AttachConsole and stdin do not work well.
+	// Use GUI input dialogs instead of command line ones.
+	//wfc->isConsole = wf_create_console();
+	wf_create_console();
 
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
@@ -1028,8 +1041,16 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostDisconnect = wf_post_disconnect;
 	instance->Authenticate = wf_authenticate;
 	instance->GatewayAuthenticate = wf_gw_authenticate;
-	instance->VerifyCertificateEx = wf_verify_certificate_ex;
-	instance->VerifyChangedCertificateEx = wf_verify_changed_certificate_ex;
+	if (wfc->isConsole)
+	{
+		instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
+		instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
+	}
+	else
+	{
+		instance->VerifyCertificateEx = wf_verify_certificate_ex;
+		instance->VerifyChangedCertificateEx = wf_verify_changed_certificate_ex;
+	}
 
 	return TRUE;
 }
