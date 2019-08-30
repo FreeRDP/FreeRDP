@@ -884,6 +884,12 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 	DRIVE_DEVICE* drive;
 	UINT error;
 
+	if (!pEntryPoints || !name || !path)
+	{
+		WLog_ERR(TAG, "[%s] Invalid parameters: pEntryPoints=%p, name=%p, path=%p", pEntryPoints, name, path);
+		return ERROR_INVALID_PARAMETER;
+	}
+
 	if (name[0] && path[0])
 	{
 		size_t pathLength = strnlen(path, MAX_PATH);

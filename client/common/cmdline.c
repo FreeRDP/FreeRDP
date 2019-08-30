@@ -48,6 +48,102 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
+static BOOL freerdp_path_valid(const char* path, BOOL* special)
+{
+	const char DynamicDrives[] = "DynamicDrives";
+	BOOL isPath = FALSE;
+	BOOL isSpecial;
+	if (!path)
+		return FALSE;
+
+	isSpecial = (strncmp(path, "*", 2) == 0) ||
+						(strncmp(path, DynamicDrives, sizeof(DynamicDrives)) == 0) ||
+						(strncmp(path, "%", 2) == 0) ? TRUE : FALSE;
+	if (!isSpecial)
+		isPath = PathFileExistsA(path);
+
+	if (special)
+		*special = isSpecial;
+
+	return isSpecial || isPath;
+}
+
+static BOOL freerdp_sanitize_drive_name(char* name, const char* invalid, const char* replacement)
+{
+	if (!name || !invalid || !replacement)
+		return FALSE;
+	if (strlen(invalid) != strlen(replacement))
+		return FALSE;
+
+	while(*invalid != '\0')
+	{
+		const char what = *invalid++;
+		const char with = *replacement++;
+
+		char* cur = name;
+		while((cur = strchr(cur, what)) != NULL)
+			*cur = with;
+	}
+	return TRUE;
+}
+
+static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, const char* name)
+{
+	RDPDR_DRIVE* drive;
+
+	drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
+
+	if (!drive)
+		return FALSE;
+
+	drive->Type = RDPDR_DTYP_FILESYSTEM;
+
+	if (name)
+	{
+		/* Path was entered as secondary argument, swap */
+		if (PathFileExistsA(name))
+		{
+			const char* tmp = path;
+			path = name;
+			name = tmp;
+		}
+	}
+
+	if (name)
+	{
+		if (!(drive->Name = _strdup(name)))
+			goto fail;
+	}
+	else /* We need a name to send to the server. */
+		if (!(drive->Name = _strdup(path)))
+			goto fail;
+
+	if (!path || !freerdp_sanitize_drive_name(drive->Name, "\\/", "__"))
+		goto fail;
+	else
+	{
+		BOOL isSpecial = FALSE;
+		BOOL isPath = freerdp_path_valid(path, &isSpecial);
+
+		if (isSpecial && name)
+			goto fail;
+
+		if ((!isPath && !isSpecial) || !(drive->Path = _strdup(path)))
+			goto fail;
+	}
+
+	if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive))
+		goto fail;
+
+	return TRUE;
+
+fail:
+	free(drive->Path);
+	free(drive->Name);
+	free(drive);
+	return FALSE;
+}
+
 static BOOL copy_value(const char* value, char** dst)
 {
 	if (!dst || !value)
@@ -335,51 +431,17 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 {
 	if (strcmp(params[0], "drive") == 0)
 	{
-		RDPDR_DRIVE* drive;
-
-		if (count < 3)
+		BOOL rc;
+		if (count < 2)
 			return FALSE;
 
 		settings->DeviceRedirection = TRUE;
-		drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
+		if (count < 3)
+			rc = freerdp_client_add_drive(settings, params[1], NULL);
+		else
+			rc = freerdp_client_add_drive(settings, params[2], params[1]);
 
-		if (!drive)
-			return FALSE;
-
-		drive->Type = RDPDR_DTYP_FILESYSTEM;
-
-		if (count > 1)
-		{
-			if (!(drive->Name = _strdup(params[1])))
-			{
-				free(drive);
-				return FALSE;
-			}
-		}
-
-		if (count > 2)
-		{
-			const BOOL isPath = PathFileExistsA(params[2]);
-			const BOOL isSpecial = (strncmp(params[2], "*", 2) == 0) ||
-			                       (strncmp(params[2], "%", 2) == 0) ? TRUE : FALSE;
-
-			if ((!isPath && !isSpecial) || !(drive->Path = _strdup(params[2])))
-			{
-				free(drive->Name);
-				free(drive);
-				return FALSE;
-			}
-		}
-
-		if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive))
-		{
-			free(drive->Path);
-			free(drive->Name);
-			free(drive);
-			return FALSE;
-		}
-
-		return TRUE;
+		return rc;
 	}
 	else if (strcmp(params[0], "printer") == 0)
 	{
@@ -3171,6 +3233,72 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	{
 		settings->DeviceRedirection =
 		    TRUE; /* these RDP8 features require rdpdr to be registered */
+	}
+
+	if (settings->DrivesToRedirect && (strlen(settings->DrivesToRedirect) != 0))
+	{
+		/*
+		 * Drives to redirect:
+		 *
+		 * Very similar to DevicesToRedirect, but can contain a
+		 * comma-separated list of drive letters to redirect.
+		 */
+		char* value;
+		char* tok;
+		char* context = NULL;
+
+		value = _strdup(settings->DrivesToRedirect);
+		if (!value)
+			return FALSE;
+
+		tok = strtok_s(value, ";", &context);
+		if (!tok)
+		{
+			free(value);
+			return FALSE;
+		}
+
+		while(tok)
+		{
+			/* Syntax: Comma seperated list of the following entries:
+			 * '*'              ... Redirect all drives, including hotplug
+			 * 'DynamicDrives'  ... hotplug
+			 * <label>(<path>)  ... One or more paths to redirect.
+			 * <path>(<label>)  ... One or more paths to redirect.
+			 * <path>           ... One or more paths to redirect.
+			 */
+			/* TODO: Need to properly escape labels and paths */
+			BOOL success;
+			const char* name = NULL;
+			const char* drive = tok;
+			char* start = strtok(tok, "(");
+			char* end = strtok(NULL, ")");
+			if (end)
+				name = end;
+
+			if (freerdp_path_valid(name, NULL) && freerdp_path_valid(drive, NULL))
+			{
+				success = freerdp_client_add_drive(settings, name, NULL);
+				if (success)
+					success = freerdp_client_add_drive(settings, drive, NULL);
+			}
+			else
+				success = freerdp_client_add_drive(settings, drive, name);
+
+			if (!success)
+			{
+				free(value);
+				return FALSE;
+			}
+
+			tok = strtok_s(NULL, ";", &context);
+		}
+		free(value);
+
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
+			return FALSE;
+
+		settings->DeviceRedirection = TRUE;
 	}
 
 	if (settings->RedirectDrives || settings->RedirectHomeDrive

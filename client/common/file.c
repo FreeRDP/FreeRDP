@@ -44,12 +44,13 @@
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/path.h>
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
 /*#define DEBUG_CLIENT_FILE	1*/
 
-static BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
+static const BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
 
 #define INVALID_INTEGER_VALUE 0xFFFFFFFF
 
@@ -784,6 +785,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	SETTING_MODIFIED_SET_STRING(file->AlternateShell, settings, AlternateShell);
 	SETTING_MODIFIED_SET_STRING(file->ShellWorkingDirectory, settings, ShellWorkingDirectory);
 	SETTING_MODIFIED_SET(file->ConnectionType, settings, ConnectionType);
+	SETTING_MODIFIED_SET_STRING(file->DrivesToRedirect, settings, DrivesToRedirect);
 
 	if (SETTING_MODIFIED(settings, AudioPlayback) || SETTING_MODIFIED(settings, RemoteConsoleAudio))
 	{
@@ -1548,15 +1550,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t)file->DrivesToRedirect))
 	{
-		/*
-		 * Drives to redirect:
-		 *
-		 * Very similar to DevicesToRedirect, but can contain a
-		 * comma-separated list of drive letters to redirect.
-		 */
-		const BOOL empty = !file->DrivesToRedirect || (strlen(file->DrivesToRedirect) == 0);
-
-		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectDrives, !empty))
+		if (!freerdp_settings_set_string(settings, FreeRDP_DrivesToRedirect, file->DrivesToRedirect))
 			return FALSE;
 	}
 
@@ -1597,6 +1591,7 @@ static rdpFileLine* freerdp_client_rdp_file_find_line_index(rdpFile* file, SSIZE
 	line = &(file->lines[index]);
 	return line;
 }
+
 static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(rdpFile* file, const char* name)
 {
 	size_t index;

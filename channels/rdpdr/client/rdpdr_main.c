@@ -764,14 +764,14 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	char* line;
 	char* word;
 	unsigned int wlen;
-	hotplug_dev dev_array[MAX_USB_DEVICES];
+	hotplug_dev dev_array[MAX_USB_DEVICES] = { 0 };
 	int i, j;
 	int size = 0;
 	int count;
 	ULONG_PTR* keys = NULL;
 	UINT32 ids[1];
 	UINT error = 0;
-	memset(dev_array, 0, sizeof(dev_array));
+
 	f = fopen("/proc/mounts", "r");
 
 	if (f == NULL)
@@ -1050,11 +1050,14 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 
 		if (device->Type == RDPDR_DTYP_FILESYSTEM)
 		{
+			const char DynamicDrives[] = "DynamicDrives";
 			RDPDR_DRIVE* drive = (RDPDR_DRIVE*)device;
-
-			if (drive->Path && (strcmp(drive->Path, "*") == 0))
+			BOOL hotplugAll = strncmp(drive->Path, "*", 2) == 0;
+			BOOL hotplugLater = strncmp(drive->Path, DynamicDrives, sizeof(DynamicDrives)) == 0;
+			if (drive->Path && (hotplugAll || hotplugLater))
 			{
-				first_hotplug(rdpdr);
+				if (hotplugAll)
+					first_hotplug(rdpdr);
 #ifndef _WIN32
 
 				if (!(rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
