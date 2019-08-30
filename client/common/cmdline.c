@@ -3148,7 +3148,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			"audin"
 		};
 
-		if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(p), p))
+		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
 			return FALSE;
 	}
 
