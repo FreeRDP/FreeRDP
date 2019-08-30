@@ -125,9 +125,6 @@ static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, co
 		BOOL isSpecial = FALSE;
 		BOOL isPath = freerdp_path_valid(path, &isSpecial);
 
-		if (isSpecial && name)
-			goto fail;
-
 		if ((!isPath && !isSpecial) || !(drive->Path = _strdup(path)))
 			goto fail;
 	}
