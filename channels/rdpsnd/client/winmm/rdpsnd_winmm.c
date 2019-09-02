@@ -301,7 +301,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	winmm->device.Close = rdpsnd_winmm_close;
 	winmm->device.Free = rdpsnd_winmm_free;
 	winmm->log = WLog_Get(TAG);
-	winmm->playedEvent = CreateEventA(NULL, FALSE, FALSE, "winmm::sample_played");
+	winmm->playedEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
 
 	args = pEntryPoints->args;
 	rdpsnd_winmm_parse_addin_args((rdpsndDevicePlugin*) winmm, args);

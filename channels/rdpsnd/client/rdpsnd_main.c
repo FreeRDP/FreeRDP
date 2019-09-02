@@ -1064,7 +1064,7 @@ static void rdpsnd_queue_free(void* data)
 static UINT rdpsnd_virtual_channel_event_initialized(rdpsndPlugin* rdpsnd,
         LPVOID pData, UINT32 dataLength)
 {
-	rdpsnd->stopEvent = CreateEventA(NULL, TRUE, FALSE, "rdpsnd->stopEvent");
+    rdpsnd->stopEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
 	if (!rdpsnd->stopEvent)
 		goto fail;
