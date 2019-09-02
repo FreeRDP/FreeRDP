@@ -101,7 +101,7 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 	queue->size++;
 
 	message = &(queue->array[queue->tail]);
-	message->time = (UINT64) GetTickCount();
+	message->time = GetTickCount64();
 
 	if (queue->size > 0)
 		SetEvent(queue->event);

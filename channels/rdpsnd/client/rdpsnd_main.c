@@ -82,7 +82,7 @@ struct rdpsnd_plugin
 	BYTE waveData[4];
 	UINT16 waveDataSize;
 	UINT32 wTimeStamp;
-	UINT32 wArrivalTime;
+	UINT64 wArrivalTime;
 
 	UINT32 latency;
 	BOOL isOpen;
@@ -388,7 +388,7 @@ static UINT rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, wStream* s,
 	if (Stream_GetRemainingLength(s) < 12)
 		return ERROR_BAD_LENGTH;
 
-	rdpsnd->wArrivalTime = GetTickCount();
+	rdpsnd->wArrivalTime = GetTickCount64();
 	Stream_Read_UINT16(s, rdpsnd->wTimeStamp);
 	Stream_Read_UINT16(s, wFormatNo);
 
@@ -440,8 +440,8 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 {
 	BYTE* data;
 	AUDIO_FORMAT* format;
-	DWORD end;
-	DWORD diffMS;
+	UINT64 end;
+	UINT64 diffMS;
 	UINT latency = 0;
 
 	if (Stream_GetRemainingLength(s) < size)
@@ -474,7 +474,7 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 			return status;
 	}
 
-	end = GetTickCount();
+	end = GetTickCount64();
 	diffMS = end - rdpsnd->wArrivalTime + latency;
 	return rdpsnd_send_wave_confirm_pdu(rdpsnd, rdpsnd->wTimeStamp + diffMS, rdpsnd->cBlockNo);
 }
@@ -518,7 +518,7 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 	Stream_Read_UINT32(s, dwAudioTimeStamp);
 	rdpsnd->waveDataSize = BodySize - 12;
 	format = &rdpsnd->ClientFormats[wFormatNo];
-	rdpsnd->wArrivalTime = GetTickCount();
+	rdpsnd->wArrivalTime = GetTickCount64();
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "Wave2PDU: cBlockNo: %"PRIu8" wFormatNo: %"PRIu16", align=%hu",
 	           rdpsnd->cBlockNo, wFormatNo, format->nBlockAlign);
 
@@ -1064,7 +1064,7 @@ static void rdpsnd_queue_free(void* data)
 static UINT rdpsnd_virtual_channel_event_initialized(rdpsndPlugin* rdpsnd,
         LPVOID pData, UINT32 dataLength)
 {
-	rdpsnd->stopEvent = CreateEventA(NULL, TRUE, FALSE, "rdpsnd->stopEvent");
+    rdpsnd->stopEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
 	if (!rdpsnd->stopEvent)
 		goto fail;

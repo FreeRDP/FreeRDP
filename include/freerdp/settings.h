@@ -1599,20 +1599,20 @@ FREERDP_API void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT
  * the functions freerdp_get_param_* and freerdp_set_param_* are deprecated.
  * use freerdp_settings_get_* and freerdp_settings_set_* as a replacement!
  */
-FREERDP_API BOOL freerdp_get_param_bool(rdpSettings* settings, int id);
-FREERDP_API int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param);
+FREERDP_API WINPR_DEPRECATED(BOOL freerdp_get_param_bool(rdpSettings* settings, int id));
+FREERDP_API WINPR_DEPRECATED(int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param));
 
-FREERDP_API int freerdp_get_param_int(rdpSettings* settings, int id);
-FREERDP_API int freerdp_set_param_int(rdpSettings* settings, int id, int param);
+FREERDP_API WINPR_DEPRECATED(int freerdp_get_param_int(rdpSettings* settings, int id));
+FREERDP_API WINPR_DEPRECATED(int freerdp_set_param_int(rdpSettings* settings, int id, int param));
 
-FREERDP_API UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id);
-FREERDP_API int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param);
+FREERDP_API WINPR_DEPRECATED(UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id));
+FREERDP_API WINPR_DEPRECATED(int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param));
 
-FREERDP_API UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id);
-FREERDP_API int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param);
+FREERDP_API WINPR_DEPRECATED(UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id));
+FREERDP_API WINPR_DEPRECATED(int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param));
 
-FREERDP_API char* freerdp_get_param_string(rdpSettings* settings, int id);
-FREERDP_API int freerdp_set_param_string(rdpSettings* settings, int id, const char* param);
+FREERDP_API WINPR_DEPRECATED(char* freerdp_get_param_string(rdpSettings* settings, int id));
+FREERDP_API WINPR_DEPRECATED(int freerdp_set_param_string(rdpSettings* settings, int id, const char* param));
 
 FREERDP_API BOOL freerdp_settings_get_bool(rdpSettings* settings, size_t id);
 FREERDP_API BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL param);

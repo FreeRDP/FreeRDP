@@ -2518,12 +2518,10 @@ BOOL wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr)
 	                                   sizeof(formatMapping))))
 		goto error;
 
-	if (!(clipboard->response_data_event = CreateEvent(NULL, TRUE, FALSE,
-	                                       _T("response_data_event"))))
+	if (!(clipboard->response_data_event = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		goto error;
 
-	if (!(clipboard->req_fevent = CreateEvent(NULL, TRUE, FALSE,
-	                              _T("request_filecontents_event"))))
+	if (!(clipboard->req_fevent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		goto error;
 
 	if (!(clipboard->thread = CreateThread(NULL, 0, cliprdr_thread_func, clipboard, 0, NULL)))

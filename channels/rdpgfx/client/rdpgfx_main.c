@@ -760,7 +760,7 @@ static UINT rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 	DEBUG_RDPGFX(gfx->log, "RecvStartFramePdu: frameId: %"PRIu32" timestamp: 0x%08"PRIX32"",
 	           pdu.frameId, pdu.timestamp);
-	gfx->StartDecodingTime = GetTickCountPrecise();
+	gfx->StartDecodingTime = GetTickCount64();
 
 	if (context)
 	{
@@ -845,7 +845,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 			if (gfx->SendQoeAck)
 			{
 				RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe;
-				UINT32 diff = (GetTickCountPrecise() - gfx->StartDecodingTime);
+				UINT64 diff = (GetTickCount64() - gfx->StartDecodingTime);
 
 				if (diff > 65000)
 					diff = 0;
