@@ -73,7 +73,7 @@ static BOOL autodetect_send_rtt_measure_request(rdpContext* context, UINT16 sequ
 	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST); /* headerTypeId (1 byte) */
 	Stream_Write_UINT16(s, sequenceNumber); /* sequenceNumber (2 bytes) */
 	Stream_Write_UINT16(s, requestType); /* requestType (2 bytes) */
-	context->rdp->autodetect->rttMeasureStartTime = GetTickCountPrecise();
+	context->rdp->autodetect->rttMeasureStartTime = GetTickCount64();
 	return rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
 }
 
@@ -251,9 +251,9 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpRdp* rdp, UINT16 respon
 {
 	BOOL success = TRUE;
 	wStream* s;
-	UINT32 timeDelta;
+	UINT64 timeDelta;
 	/* Compute the total time */
-	timeDelta = GetTickCountPrecise() - rdp->autodetect->bandwidthMeasureStartTime;
+	timeDelta = GetTickCount64() - rdp->autodetect->bandwidthMeasureStartTime;
 	/* Send the result PDU to the server */
 	s = rdp_message_channel_pdu_init(rdp);
 
@@ -352,7 +352,7 @@ static BOOL autodetect_recv_rtt_measure_response(rdpRdp* rdp, wStream* s,
 		return FALSE;
 
 	WLog_VRB(AUTODETECT_TAG, "received RTT Measure Response PDU");
-	rdp->autodetect->netCharAverageRTT = GetTickCountPrecise() - rdp->autodetect->rttMeasureStartTime;
+	rdp->autodetect->netCharAverageRTT = GetTickCount64() - rdp->autodetect->rttMeasureStartTime;
 
 	if (rdp->autodetect->netCharBaseRTT == 0 ||
 	    rdp->autodetect->netCharBaseRTT > rdp->autodetect->netCharAverageRTT)
@@ -369,10 +369,10 @@ static BOOL autodetect_recv_bandwidth_measure_start(rdpRdp* rdp, wStream* s,
 	if (autodetectReqPdu->headerLength != 0x06)
 		return FALSE;
 
-	WLog_VRB(AUTODETECT_TAG, "received Bandwidth Measure Start PDU - time=%"PRIu32"",
-	         GetTickCountPrecise());
+	WLog_VRB(AUTODETECT_TAG, "received Bandwidth Measure Start PDU - time=%"PRIu64"",
+			 GetTickCount64());
 	/* Initialize bandwidth measurement parameters */
-	rdp->autodetect->bandwidthMeasureStartTime = GetTickCountPrecise();
+	rdp->autodetect->bandwidthMeasureStartTime = GetTickCount64();
 	rdp->autodetect->bandwidthMeasureByteCount = 0;
 
 	/* Continuous Auto-Detection: mark the start of the measurement */

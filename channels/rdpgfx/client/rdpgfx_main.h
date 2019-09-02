@@ -72,7 +72,7 @@ struct _RDPGFX_PLUGIN
 	ZGFX_CONTEXT* zgfx;
 	UINT32 UnacknowledgedFrames;
 	UINT32 TotalDecodedFrames;
-	UINT32 StartDecodingTime;
+	UINT64 StartDecodingTime;
 	BOOL suspendFrameAcks;
 	BOOL sendFrameAcks;
 

@@ -991,8 +991,8 @@ int transport_check_fds(rdpTransport* transport)
 	int status;
 	int recv_status;
 	wStream* received;
-	DWORD now = GetTickCount();
-	DWORD dueDate = 0;
+	UINT64 now = GetTickCount64();
+	UINT64 dueDate = 0;
 
 	if (!transport)
 		return -1;
@@ -1056,7 +1056,7 @@ int transport_check_fds(rdpTransport* transport)
 			return -1;
 		}
 
-		now = GetTickCount();
+		now = GetTickCount64();
 	}
 
 	if (now >= dueDate)

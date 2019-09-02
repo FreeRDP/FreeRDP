@@ -35,10 +35,10 @@ struct rdp_autodetect
 {
 	ALIGN64 rdpContext* context; /* 0 */
 	/* RTT measurement */
-	ALIGN64 UINT32 rttMeasureStartTime; /* 1 */
+	ALIGN64 UINT64 rttMeasureStartTime; /* 1 */
 	/* Bandwidth measurement */
-	ALIGN64 UINT32 bandwidthMeasureStartTime; /* 2 */
-	ALIGN64 UINT32 bandwidthMeasureTimeDelta; /* 3 */
+	ALIGN64 UINT64 bandwidthMeasureStartTime; /* 2 */
+	ALIGN64 UINT64 bandwidthMeasureTimeDelta; /* 3 */
 	ALIGN64 UINT32 bandwidthMeasureByteCount; /* 4 */
 	/* Network characteristics (as reported by server) */
 	ALIGN64 UINT32 netCharBandwidth; /* 5 */
