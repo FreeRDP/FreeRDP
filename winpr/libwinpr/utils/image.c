@@ -104,7 +104,7 @@ static BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi)
  * Refer to "Compressed Image File Formats: JPEG, PNG, GIF, XBM, BMP" book
  */
 
-int winpr_bitmap_write(const char* filename, BYTE* data, int width, int height, int bpp)
+int winpr_bitmap_write(const char* filename, const BYTE* data, int width, int height, int bpp)
 {
 	FILE* fp;
 	WINPR_BITMAP_FILE_HEADER bf;
@@ -214,7 +214,7 @@ static int winpr_image_png_read_fp(wImage* image, FILE* fp)
 	return 1;
 }
 
-static int winpr_image_png_read_buffer(wImage* image, BYTE* buffer, size_t size)
+static int winpr_image_png_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 {
 	UINT32 width;
 	UINT32 height;
@@ -318,7 +318,7 @@ fail:
 	return 1;
 }
 
-static int winpr_image_bitmap_read_buffer(wImage* image, BYTE* buffer, size_t size)
+static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 {
 	int rc = -1;
 	int index;
@@ -326,7 +326,7 @@ static int winpr_image_bitmap_read_buffer(wImage* image, BYTE* buffer, size_t si
 	BYTE* pDstData;
 	WINPR_BITMAP_FILE_HEADER bf;
 	WINPR_BITMAP_INFO_HEADER bi;
-	wStream* s = Stream_New(buffer, size);
+	wStream* s = Stream_New((BYTE*) buffer, size);
 
 	if (!s)
 		return -1;
@@ -425,7 +425,7 @@ int winpr_image_read(wImage* image, const char* filename)
 	return status;
 }
 
-int winpr_image_read_buffer(wImage* image, BYTE* buffer, int size)
+int winpr_image_read_buffer(wImage* image, const BYTE* buffer, int size)
 {
 	BYTE sig[8];
 	int status = -1;
