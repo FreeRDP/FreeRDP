@@ -65,8 +65,8 @@ def write_setter_case(f, val, isString, isPointer):
         f.write('\t\t\tbreak;\n\n')
     else:
         f.write('\t\t\tfree(settings->' + val + ');\n')
-        f.write('\t\t\tsettings->' + val + ' = _strdup(val);\n')
-        f.write('\t\t\treturn settings->' + val + ' != NULL;\n\n')
+        f.write('\t\t\tsettings->' + val + ' = (val ? _strdup(val) : NULL);\n')
+        f.write('\t\t\treturn (!val || settings->' + val + ' != NULL);\n\n')
 
 def write_setter(f, entry_dict, entry_type, entry_name):
     isString = 'string' in entry_name
