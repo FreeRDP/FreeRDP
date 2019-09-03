@@ -81,7 +81,7 @@ struct rdpsnd_plugin
 	BOOL expectingWave;
 	BYTE waveData[4];
 	UINT16 waveDataSize;
-	UINT32 wTimeStamp;
+	UINT16 wTimeStamp;
 	UINT64 wArrivalTime;
 
 	UINT32 latency;
@@ -441,7 +441,7 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 	BYTE* data;
 	AUDIO_FORMAT* format;
 	UINT64 end;
-	UINT64 diffMS;
+	UINT64 diffMS, ts;
 	UINT latency = 0;
 
 	if (Stream_GetRemainingLength(s) < size)
@@ -476,7 +476,10 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 
 	end = GetTickCount64();
 	diffMS = end - rdpsnd->wArrivalTime + latency;
-	return rdpsnd_send_wave_confirm_pdu(rdpsnd, rdpsnd->wTimeStamp + diffMS, rdpsnd->cBlockNo);
+	ts = rdpsnd->wTimeStamp + diffMS;
+	if (ts > UINT16_MAX)
+		ts = UINT16_MAX;
+	return rdpsnd_send_wave_confirm_pdu(rdpsnd, (UINT16)ts, rdpsnd->cBlockNo);
 }
 
 
