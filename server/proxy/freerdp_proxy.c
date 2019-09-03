@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 		cfg = argv[1];
 
 	if (!pf_modules_init())
-		return FALSE;
+		goto fail;
 
 	if (!pf_server_config_load(cfg, config))
 		goto fail;
