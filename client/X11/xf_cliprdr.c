@@ -1447,7 +1447,7 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 			          ClipboardGetFormatName(clipboard->system, srcFormatId));
 		}
 
-		if (nullTerminated)
+		if (nullTerminated && pDstData)
 		{
 			BYTE* nullTerminator = memchr(pDstData, '\0', DstSize);
 			if (nullTerminator)
