@@ -139,12 +139,7 @@ static void rdpsnd_mac_release(rdpsndMacPlugin* mac)
 
 static BOOL rdpsnd_mac_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency)
 {
-	OSStatus err;
 	NSError* error;
-	AudioObjectPropertyAddress propertyAddress = {
-		kAudioHardwarePropertyDefaultSystemOutputDevice,
-		kAudioObjectPropertyScopeGlobal,
-		kAudioObjectPropertyElementMaster };
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
 
 	if (mac->isOpen)
@@ -172,7 +167,7 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 	if (![mac->engine startAndReturnError: &error])
 	{
 		device->Close(device);
-		WLog_ERR(TAG, "Failed to start audio player %s", [error UTF8String]);
+		WLog_ERR(TAG, "Failed to start audio player %s", [error.localizedDescription UTF8String]);
 		return FALSE;
 	}
 
@@ -208,6 +203,8 @@ static void rdpsnd_mac_free(rdpsndDevicePlugin* device)
 
 static BOOL rdpsnd_mac_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format)
 {
+	WINPR_UNUSED(device);
+
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
@@ -222,7 +219,6 @@ static BOOL rdpsnd_mac_format_supported(rdpsndDevicePlugin* device, const AUDIO_
 
 static BOOL rdpsnd_mac_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
-	OSStatus status;
 	Float32 fVolume;
 	UINT16 volumeLeft;
 	UINT16 volumeRight;
@@ -233,7 +229,7 @@ static BOOL rdpsnd_mac_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 
 	volumeLeft = (value & 0xFFFF);
 	volumeRight = ((value >> 16) & 0xFFFF);
-	fVolume = ((float) volumeLeft) / 65535.0;
+	fVolume = ((float) volumeLeft) / 65535.0f;
 
 	mac->player.volume = fVolume;
 
