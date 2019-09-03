@@ -872,8 +872,15 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 		langBarInfo.languageBarStatus = 0x00000008; /* TF_SFT_HIDDEN */
 		status = context->ClientLanguageBarInfo(context, &langBarInfo);
 
-		if (status != CHANNEL_RC_OK)
-			return status;
+		/* We want the language bar, but the server might not support it. */
+		switch(status)
+		{
+			case CHANNEL_RC_OK:
+			case ERROR_BAD_CONFIGURATION:
+				break;
+			default:
+				return status;
+		}
 	}
 
 	sysparam.params = 0;
