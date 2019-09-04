@@ -65,29 +65,43 @@ struct rdp_nego
 	rdpTransport* transport;
 };
 
-static const char* const NEGO_STATE_STRINGS[] =
+static const char* nego_state_string(NEGO_STATE state)
 {
-	"NEGO_STATE_INITIAL",
-	"NEGO_STATE_EXT",
-	"NEGO_STATE_NLA",
-	"NEGO_STATE_TLS",
-	"NEGO_STATE_RDP",
-	"NEGO_STATE_FAIL",
-	"NEGO_STATE_FINAL"
-};
+	static const char* const NEGO_STATE_STRINGS[] =
+	{
+	    "NEGO_STATE_INITIAL",
+	    "NEGO_STATE_EXT",
+	    "NEGO_STATE_NLA",
+	    "NEGO_STATE_TLS",
+	    "NEGO_STATE_RDP",
+	    "NEGO_STATE_FAIL",
+	    "NEGO_STATE_FINAL",
+	    "NEGO_STATE_INVALID"
+	};
+	if (state >= ARRAYSIZE(NEGO_STATE_STRINGS))
+		return NEGO_STATE_STRINGS[ARRAYSIZE(NEGO_STATE_STRINGS) - 1];
+	return NEGO_STATE_STRINGS[state];
+}
 
-static const char PROTOCOL_SECURITY_STRINGS[9][4] =
+static const char* protocol_security_string(UINT32 security)
 {
-	"RDP",
-	"TLS",
-	"NLA",
-	"UNK",
-	"UNK",
-	"UNK",
-	"UNK",
-	"UNK",
-	"EXT"
-};
+	static const char* PROTOCOL_SECURITY_STRINGS[] =
+	{
+	    "RDP",
+	    "TLS",
+	    "NLA",
+	    "UNK",
+	    "UNK",
+	    "UNK",
+	    "UNK",
+	    "UNK",
+	    "EXT",
+	    "UNK"
+	};
+	if (security >= ARRAYSIZE(PROTOCOL_SECURITY_STRINGS))
+		return PROTOCOL_SECURITY_STRINGS[ARRAYSIZE(PROTOCOL_SECURITY_STRINGS) - 1];
+	return PROTOCOL_SECURITY_STRINGS[security];
+}
 
 static BOOL nego_transport_connect(rdpNego* nego);
 static BOOL nego_transport_disconnect(rdpNego* nego);
@@ -185,7 +199,7 @@ BOOL nego_connect(rdpNego* nego)
 	{
 		do
 		{
-			WLog_DBG(TAG, "state: %s", NEGO_STATE_STRINGS[nego->state]);
+			WLog_DBG(TAG, "state: %s", nego_state_string(nego->state));
 			nego_send(nego);
 
 			if (nego->state == NEGO_STATE_FAIL)
@@ -200,7 +214,7 @@ BOOL nego_connect(rdpNego* nego)
 		while (nego->state != NEGO_STATE_FINAL);
 	}
 
-	WLog_DBG(TAG, "Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->SelectedProtocol]);
+	WLog_DBG(TAG, "Negotiated %s security", protocol_security_string(nego->SelectedProtocol));
 	/* update settings with negotiated protocol security */
 	settings->RequestedProtocols = nego->RequestedProtocols;
 	settings->SelectedProtocol = nego->SelectedProtocol;
@@ -225,7 +239,7 @@ BOOL nego_connect(rdpNego* nego)
 	if (!nego_security_connect(nego))
 	{
 		WLog_DBG(TAG, "Failed to connect with %s security",
-		         PROTOCOL_SECURITY_STRINGS[nego->SelectedProtocol]);
+		         protocol_security_string(nego->SelectedProtocol));
 		return FALSE;
 	}
 
@@ -428,7 +442,7 @@ static void nego_attempt_ext(rdpNego* nego)
 		return;
 	}
 
-	WLog_DBG(TAG, "state: %s", NEGO_STATE_STRINGS[nego->state]);
+	WLog_DBG(TAG, "state: %s", nego_state_string(nego->state));
 
 	if (nego->state != NEGO_STATE_FINAL)
 	{
@@ -473,7 +487,7 @@ static void nego_attempt_nla(rdpNego* nego)
 		return;
 	}
 
-	WLog_DBG(TAG, "state: %s", NEGO_STATE_STRINGS[nego->state]);
+	WLog_DBG(TAG, "state: %s", nego_state_string(nego->state));
 
 	if (nego->state != NEGO_STATE_FINAL)
 	{
