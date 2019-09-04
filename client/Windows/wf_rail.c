@@ -140,8 +140,8 @@ void PrintExtendedWindowStyles(UINT32 style)
 	}
 }
 
-void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo,
-                          WINDOW_STATE_ORDER* windowState)
+static void PrintRailWindowState(const WINDOW_ORDER_INFO* orderInfo,
+								 const WINDOW_STATE_ORDER* windowState)
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
 		WLog_INFO(TAG, "WindowCreate: WindowId: 0x%08X", orderInfo->windowId);
@@ -255,7 +255,7 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo,
 	WLog_INFO(TAG, "}");
 }
 
-static void PrintRailIconInfo(WINDOW_ORDER_INFO* orderInfo, ICON_INFO* iconInfo)
+static void PrintRailIconInfo(const WINDOW_ORDER_INFO* orderInfo, const ICON_INFO* iconInfo)
 {
 	WLog_INFO(TAG, "ICON_INFO");
 	WLog_INFO(TAG, "{");
@@ -412,7 +412,7 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 #define RAIL_DISABLED_EXTENDED_WINDOW_STYLES (WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE | WS_EX_WINDOWEDGE)
 
 static BOOL wf_rail_window_common(rdpContext* context,
-                                  WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
+								  const WINDOW_ORDER_INFO* orderInfo,const  WINDOW_STATE_ORDER* windowState)
 {
 	wfRailWindow* railWindow = NULL;
 	wfContext* wfc = (wfContext*) context;
@@ -646,7 +646,7 @@ static BOOL wf_rail_window_common(rdpContext* context,
 }
 
 static BOOL wf_rail_window_delete(rdpContext* context,
-                                  WINDOW_ORDER_INFO* orderInfo)
+								  const WINDOW_ORDER_INFO* orderInfo)
 {
 	wfRailWindow* railWindow = NULL;
 	wfContext* wfc = (wfContext*) context;
@@ -665,7 +665,7 @@ static BOOL wf_rail_window_delete(rdpContext* context,
 }
 
 static BOOL wf_rail_window_icon(rdpContext* context,
-                                WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
+								const WINDOW_ORDER_INFO* orderInfo, const WINDOW_ICON_ORDER* windowIcon)
 {
 	HDC hDC;
 	int bpp;
@@ -738,14 +738,14 @@ static BOOL wf_rail_window_icon(rdpContext* context,
 }
 
 static BOOL wf_rail_window_cached_icon(rdpContext* context,
-                                       WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
+									   const WINDOW_ORDER_INFO* orderInfo, const WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
 	WLog_DBG(TAG, "RailWindowCachedIcon");
 	return TRUE;
 }
 
 static void wf_rail_notify_icon_common(rdpContext* context,
-                                       WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+									   const WINDOW_ORDER_INFO* orderInfo, const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION)
 	{
@@ -765,7 +765,7 @@ static void wf_rail_notify_icon_common(rdpContext* context,
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_ICON)
 	{
-		ICON_INFO* iconInfo = &(notifyIconState->icon);
+		const ICON_INFO* iconInfo = &(notifyIconState->icon);
 		PrintRailIconInfo(orderInfo, iconInfo);
 	}
 
@@ -775,7 +775,7 @@ static void wf_rail_notify_icon_common(rdpContext* context,
 }
 
 static BOOL wf_rail_notify_icon_create(rdpContext* context,
-                                       WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+									   const WINDOW_ORDER_INFO* orderInfo, const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
@@ -785,7 +785,7 @@ static BOOL wf_rail_notify_icon_create(rdpContext* context,
 }
 
 static BOOL wf_rail_notify_icon_update(rdpContext* context,
-                                       WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+									   const WINDOW_ORDER_INFO* orderInfo, const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
@@ -795,7 +795,7 @@ static BOOL wf_rail_notify_icon_update(rdpContext* context,
 }
 
 static BOOL wf_rail_notify_icon_delete(rdpContext* context,
-                                       WINDOW_ORDER_INFO* orderInfo)
+									   const WINDOW_ORDER_INFO* orderInfo)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
@@ -804,7 +804,7 @@ static BOOL wf_rail_notify_icon_delete(rdpContext* context,
 }
 
 static BOOL wf_rail_monitored_desktop(rdpContext* context,
-                                      WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitoredDesktop)
+									  const WINDOW_ORDER_INFO* orderInfo, const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
@@ -813,7 +813,7 @@ static BOOL wf_rail_monitored_desktop(rdpContext* context,
 }
 
 static BOOL wf_rail_non_monitored_desktop(rdpContext* context,
-        WINDOW_ORDER_INFO* orderInfo)
+		const WINDOW_ORDER_INFO* orderInfo)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
@@ -844,7 +844,7 @@ void wf_rail_register_update_callbacks(rdpUpdate* update)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_rail_server_execute_result(RailClientContext* context,
-        RAIL_EXEC_RESULT_ORDER* execResult)
+        const RAIL_EXEC_RESULT_ORDER* execResult)
 {
 	WLog_DBG(TAG, "RailServerExecuteResult: 0x%08X", execResult->rawResult);
 	return CHANNEL_RC_OK;
@@ -856,7 +856,7 @@ static UINT wf_rail_server_execute_result(RailClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_rail_server_system_param(RailClientContext* context,
-                                        RAIL_SYSPARAM_ORDER* sysparam)
+                                        const RAIL_SYSPARAM_ORDER* sysparam)
 {
 	return CHANNEL_RC_OK;
 }
@@ -867,7 +867,7 @@ static UINT wf_rail_server_system_param(RailClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_rail_server_handshake(RailClientContext* context,
-                                     RAIL_HANDSHAKE_ORDER* handshake)
+                                     const RAIL_HANDSHAKE_ORDER* handshake)
 {
 	RAIL_EXEC_ORDER exec;
 	RAIL_SYSPARAM_ORDER sysparam;
@@ -923,7 +923,7 @@ static UINT wf_rail_server_handshake(RailClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_rail_server_handshake_ex(RailClientContext* context,
-                                        RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+                                        const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
 	return CHANNEL_RC_OK;
 }
@@ -934,7 +934,7 @@ static UINT wf_rail_server_handshake_ex(RailClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_rail_server_local_move_size(RailClientContext* context,
-        RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
+        const RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
 	return CHANNEL_RC_OK;
 }
@@ -945,7 +945,7 @@ static UINT wf_rail_server_local_move_size(RailClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_rail_server_min_max_info(RailClientContext* context,
-                                        RAIL_MINMAXINFO_ORDER* minMaxInfo)
+                                        const RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
 	return CHANNEL_RC_OK;
 }
@@ -956,7 +956,7 @@ static UINT wf_rail_server_min_max_info(RailClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_rail_server_language_bar_info(RailClientContext* context,
-        RAIL_LANGBAR_INFO_ORDER* langBarInfo)
+        const RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
 	return CHANNEL_RC_OK;
 }
@@ -967,7 +967,7 @@ static UINT wf_rail_server_language_bar_info(RailClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT wf_rail_server_get_appid_response(RailClientContext* context,
-        RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
+        const RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
 {
 	return CHANNEL_RC_OK;
 }

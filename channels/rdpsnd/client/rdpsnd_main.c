@@ -81,7 +81,7 @@ struct rdpsnd_plugin
 	BOOL expectingWave;
 	BYTE waveData[4];
 	UINT16 waveDataSize;
-	UINT32 wTimeStamp;
+	UINT16 wTimeStamp;
 	UINT64 wArrivalTime;
 
 	UINT32 latency;
@@ -99,7 +99,6 @@ struct rdpsnd_plugin
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
 
-static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd);
 static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd);
 
 /**
@@ -343,7 +342,8 @@ static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT32 wFormatNo,
 		BOOL rc;
 		BOOL supported;
 		AUDIO_FORMAT deviceFormat = *format;
-		rdpsnd_recv_close_pdu(rdpsnd);
+
+		IFCALL(rdpsnd->device->Close, rdpsnd->device);
 		supported = IFCALLRESULT(FALSE, rdpsnd->device->FormatSupported, rdpsnd->device, format);
 
 		if (!supported)
@@ -441,8 +441,9 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 	BYTE* data;
 	AUDIO_FORMAT* format;
 	UINT64 end;
-	UINT64 diffMS;
+	UINT64 diffMS, ts;
 	UINT latency = 0;
+
 
 	if (Stream_GetRemainingLength(s) < size)
 		return ERROR_BAD_LENGTH;
@@ -468,7 +469,7 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 		else
 			status = ERROR_INTERNAL_ERROR;
 
-		StreamPool_Return(rdpsnd->pool, pcmData);
+		Stream_Release(pcmData);
 
 		if (status != CHANNEL_RC_OK)
 			return status;
@@ -476,7 +477,10 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 
 	end = GetTickCount64();
 	diffMS = end - rdpsnd->wArrivalTime + latency;
-	return rdpsnd_send_wave_confirm_pdu(rdpsnd, rdpsnd->wTimeStamp + diffMS, rdpsnd->cBlockNo);
+	ts = rdpsnd->wTimeStamp + diffMS;
+	if (ts > UINT16_MAX)
+		ts = UINT16_MAX;
+	return rdpsnd_send_wave_confirm_pdu(rdpsnd, (UINT16)ts, rdpsnd->cBlockNo);
 }
 
 
@@ -532,9 +536,7 @@ static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
 {
 	if (rdpsnd->isOpen)
 	{
-		WLog_Print(rdpsnd->log, WLOG_DEBUG, "Closing device");
-		IFCALL(rdpsnd->device->Close, rdpsnd->device);
-		rdpsnd->isOpen = FALSE;
+		WLog_Print(rdpsnd->log, WLOG_DEBUG, "Closing device");		
 	}
 	else
 		WLog_Print(rdpsnd->log, WLOG_DEBUG, "Device already closed");
@@ -625,7 +627,7 @@ static UINT rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	}
 
 out:
-	StreamPool_Return(rdpsnd->pool, s);
+	Stream_Release(s);
 	return status;
 }
 
@@ -897,7 +899,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 
 static void rdpsnd_process_disconnect(rdpsndPlugin* rdpsnd)
 {
-	rdpsnd_recv_close_pdu(rdpsnd);
+    IFCALL(rdpsnd->device->Close, rdpsnd->device);
 }
 
 /**
