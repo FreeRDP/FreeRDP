@@ -34,9 +34,14 @@
 #include <string.h>
 #include <winspool.h>
 
-#include "printer_main.h"
+#include <freerdp/client/printer.h>
 
-#include "printer_win.h"
+#define PRINTER_TAG CHANNELS_TAG("printer.client")
+#ifdef WITH_DEBUG_WINPR
+#define DEBUG_WINPR(...) WLog_DBG(PRINTER_TAG, __VA_ARGS__)
+#else
+#define DEBUG_WINPR(...) do { } while (0)
+#endif
 
 typedef struct rdp_win_printer_driver rdpWinPrinterDriver;
 typedef struct rdp_win_printer rdpWinPrinter;
@@ -46,7 +51,8 @@ struct rdp_win_printer_driver
 {
 	rdpPrinterDriver driver;
 
-	int id_sequence;
+	size_t id_sequence;
+	size_t references;
 };
 
 struct rdp_win_printer
@@ -66,16 +72,26 @@ struct rdp_win_print_job
 	int printjob_id;
 };
 
-static void printer_win_get_printjob_name(char* buf, int size)
+static WCHAR* printer_win_get_printjob_name(size_t id)
 {
 	time_t tt;
 	struct tm* t;
+	WCHAR* str;
+	size_t len = 1024;
+	int rc;
 
 	tt = time(NULL);
 	t = localtime(&tt);
-	sprintf_s(buf, size - 1, "FreeRDP Print Job %d%02d%02d%02d%02d%02d",
+
+	str = calloc(len, sizeof(WCHAR));
+	if (!str)
+		return NULL;
+
+	rc = swprintf_s(str, len, L"FreeRDP Print %04d-%02d-%02d% 02d-%02d-%02d - Job %lu\0",
 		t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
-		t->tm_hour, t->tm_min, t->tm_sec);
+		t->tm_hour, t->tm_min, t->tm_sec, id);
+
+	return str;
 }
 
 /**
@@ -83,15 +99,21 @@ static void printer_win_get_printjob_name(char* buf, int size)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT printer_win_write_printjob(rdpPrintJob* printjob, BYTE* data, int size)
+static UINT printer_win_write_printjob(rdpPrintJob* printjob, const BYTE* data, size_t size)
 {
-	rdpWinPrintJob* win_printjob = (rdpWinPrintJob*) printjob;
-
-	LPVOID pBuf = data;
+	rdpWinPrinter* printer;
+	LPCVOID pBuf = data;
 	DWORD cbBuf = size;
 	DWORD pcWritten;
 
-	if(!WritePrinter(((rdpWinPrinter*)printjob->printer)->hPrinter, pBuf, cbBuf, &pcWritten))
+	if (!printjob || !data)
+		return ERROR_BAD_ARGUMENTS;
+
+	printer = (rdpWinPrinter*)printjob->printer;
+	if (!printer)
+		return ERROR_BAD_ARGUMENTS;
+
+	if(!WritePrinter(printer->hPrinter, pBuf, cbBuf, &pcWritten))
 		return ERROR_INTERNAL_ERROR;
 	return CHANNEL_RC_OK;
 }
@@ -99,19 +121,28 @@ static UINT printer_win_write_printjob(rdpPrintJob* printjob, BYTE* data, int si
 static void printer_win_close_printjob(rdpPrintJob* printjob)
 {
 	rdpWinPrintJob* win_printjob = (rdpWinPrintJob*) printjob;
+	rdpWinPrinter* win_printer;
 
-	if (!EndPagePrinter(((rdpWinPrinter*) printjob->printer)->hPrinter))
+	if (!printjob)
+		return;
+
+	win_printer = (rdpWinPrinter*)printjob->printer;
+	if (!win_printer)
+		return;
+
+	if (!EndPagePrinter(win_printer->hPrinter))
 	{
 
 	}
 
-	if (!ClosePrinter(((rdpWinPrinter*) printjob->printer)->hPrinter))
+	if (!ClosePrinter(win_printer->hPrinter))
 	{
 
 	}
 
-	((rdpWinPrinter*) printjob->printer)->printjob = NULL;
+	win_printer->printjob = NULL;
 
+	free(win_printjob->di.pDocName);
 	free(win_printjob);
 }
 
@@ -129,7 +160,7 @@ static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, UINT32 id)
 
 	win_printjob->printjob.id = id;
 	win_printjob->printjob.printer = printer;
-	win_printjob->di.pDocName = L"FREERDPjob";
+	win_printjob->di.pDocName = printer_win_get_printjob_name(id);
 	win_printjob->di.pDatatype= NULL;
 	win_printjob->di.pOutputFile = NULL;
 
@@ -137,12 +168,14 @@ static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, UINT32 id)
 
 	if (!win_printjob->handle)
 	{
+		free(win_printjob->di.pDocName);
 		free(win_printjob);
 		return NULL;
 	}
 
 	if (!StartPagePrinter(win_printer->hPrinter))
 	{
+		free(win_printjob->di.pDocName);
 		free(win_printjob);
 		return NULL;
 	}
@@ -152,7 +185,7 @@ static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, UINT32 id)
 
 	win_printer->printjob = win_printjob;
 	
-	return (rdpPrintJob*) win_printjob;
+	return &win_printjob->printjob;
 }
 
 static rdpPrintJob* printer_win_find_printjob(rdpPrinter* printer, UINT32 id)
@@ -175,9 +208,28 @@ static void printer_win_free_printer(rdpPrinter* printer)
 	if (win_printer->printjob)
 		win_printer->printjob->printjob.Close((rdpPrintJob*) win_printer->printjob);
 
+	if (printer->backend)
+			printer->backend->ReleaseRef(printer->backend);
+
 	free(printer->name);
 	free(printer->driver);
 	free(printer);
+}
+
+static void printer_win_add_ref_printer(rdpPrinter* printer)
+{
+	if (printer)
+		printer->references++;
+}
+
+static void printer_win_release_ref_printer(rdpPrinter* printer)
+{
+	if (!printer)
+		return;
+	if (printer->references <= 1)
+		printer_win_free_printer(printer);
+	else
+		printer->references--;
 }
 
 static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
@@ -192,6 +244,7 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
 	if (!win_printer)
 		return NULL;
 
+	win_printer->printer.backend = &win_driver->driver;
 	win_printer->printer.id = win_driver->id_sequence++;
 	if (ConvertFromUnicode(CP_UTF8, 0, name, -1, &win_printer->printer.name, 0, NULL, NULL) < 1)
 	{
@@ -208,7 +261,8 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
 
 	win_printer->printer.CreatePrintJob = printer_win_create_printjob;
 	win_printer->printer.FindPrintJob = printer_win_find_printjob;
-	win_printer->printer.Free = printer_win_free_printer;
+	win_printer->printer.AddRef = printer_win_add_ref_printer;
+	win_printer->printer.ReleaseRef = printer_win_release_ref_printer;
 
 	if (!OpenPrinter(name, &(win_printer->hPrinter), NULL))
 	{
@@ -254,7 +308,22 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
 		return NULL;
 	}
 
-	return (rdpPrinter*)win_printer;
+	win_printer->printer.AddRef(&win_printer->printer);
+	win_printer->printer.backend->AddRef(win_printer->printer.backend);
+	return &win_printer->printer;
+}
+
+static void printer_win_release_enum_printers(rdpPrinter** printers)
+{
+	rdpPrinter** cur = printers;
+
+	while((cur != NULL) && ((*cur) != NULL))
+	{
+		if ((*cur)->ReleaseRef)
+			(*cur)->ReleaseRef(*cur);
+		cur++;
+	}
+	free(printers);
 }
 
 static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
@@ -291,8 +360,16 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 
 	for (i = 0; i < (int) returned; i++)
 	{
-		printers[num_printers++] = printer_win_new_printer((rdpWinPrinterDriver*)driver,
+		rdpPrinter* current = printers[num_printers];
+		current = printer_win_new_printer((rdpWinPrinterDriver*)driver,
 			prninfo[i].pPrinterName, prninfo[i].pDriverName, 0);
+		if (!current)
+		{
+			printer_win_release_enum_printers(printers);
+			printers = NULL;
+			break;
+		}
+		printers[num_printers++] = current;
 	}
 
 	GlobalFree(prninfo);
@@ -303,9 +380,16 @@ static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver,
 	const char* name, const char* driverName)
 {
 	WCHAR* driverNameW = NULL;
+	WCHAR* nameW = NULL;
 	rdpWinPrinterDriver* win_driver = (rdpWinPrinterDriver*)driver;
 	rdpPrinter *myPrinter = NULL;
 	
+	if (name)
+	{
+		ConvertToUnicode(CP_UTF8, 0, name, -1, &nameW, 0);
+		if (!driverNameW)
+			return NULL;
+	}
 	if (driverName)
 	{
 		ConvertToUnicode(CP_UTF8, 0, driverName, -1, &driverNameW, 0);
@@ -313,29 +397,64 @@ static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver,
 			return NULL;
 	}
 
-	myPrinter = printer_win_new_printer(win_driver, name, driverNameW,
+	myPrinter = printer_win_new_printer(win_driver, nameW, driverNameW,
 	win_driver->id_sequence == 1 ? TRUE : FALSE);
 	free(driverNameW);
+	free(nameW);
 
 	return myPrinter;
 }
 
+
+static void printer_win_add_ref_driver(rdpPrinterDriver* driver)
+{
+	rdpWinPrinterDriver* win = (rdpWinPrinterDriver*) driver;
+	if (win)
+		win->references++;
+}
+
+/* Singleton */
 static rdpWinPrinterDriver* win_driver = NULL;
 
-rdpPrinterDriver* printer_win_get_driver(void)
+static void printer_win_release_ref_driver(rdpPrinterDriver* driver)
+{
+	rdpWinPrinterDriver* win = (rdpWinPrinterDriver*) driver;
+	if (win->references <= 1)
+	{
+		free(win);
+		win_driver = NULL;
+	}
+	else
+		win->references--;
+}
+
+#ifdef BUILTIN_CHANNELS
+rdpPrinterDriver *win_freerdp_printer_client_subsystem_entry(void)
+#else
+FREERDP_API rdpPrinterDriver *freerdp_printer_client_subsystem_entry(void)
+#endif
 {
 	if (!win_driver)
 	{
 		win_driver = (rdpWinPrinterDriver*) calloc(1, sizeof(rdpWinPrinterDriver));
+
 		if (!win_driver)
 			return NULL;
 
 		win_driver->driver.EnumPrinters = printer_win_enum_printers;
+		win_driver->driver.ReleaseEnumPrinters = printer_win_release_enum_printers;
 		win_driver->driver.GetPrinter = printer_win_get_printer;
 
+		win_driver->driver.AddRef = printer_win_add_ref_driver;
+		win_driver->driver.ReleaseRef = printer_win_release_ref_driver;
+
 		win_driver->id_sequence = 1;
+		win_driver->driver.AddRef(&win_driver->driver);
 	}
 
-	return (rdpPrinterDriver*) win_driver;
+	return &win_driver->driver;
 }
+
+
+
 

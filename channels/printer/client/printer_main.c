@@ -42,15 +42,7 @@
 
 #include "../printer.h"
 
-#ifdef WITH_CUPS
-#include "printer_cups.h"
-#endif
-
-#include "printer_main.h"
-
-#if defined(_WIN32) && !defined(_UWP)
-#include "printer_win.h"
-#endif
+#include <freerdp/client/printer.h>
 
 #include <freerdp/channels/log.h>
 
@@ -863,7 +855,7 @@ static UINT printer_free(DEVICE* device)
 	_aligned_free(printer_dev->pIrpList);
 
 	if (printer_dev->printer)
-		printer_dev->printer->Free(printer_dev->printer);
+		printer_dev->printer->ReleaseRef(printer_dev->printer);
 
 	Stream_Free(printer_dev->device.data, TRUE);
 	free(printer_dev);
@@ -875,7 +867,7 @@ static UINT printer_free(DEVICE* device)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
+static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
                       rdpPrinter* printer)
 {
 	PRINTER_DEVICE* printer_dev;
@@ -945,39 +937,69 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		goto error_out;
 	}
 
+	printer->AddRef(printer);
 	return CHANNEL_RC_OK;
 error_out:
 	printer_free(&printer_dev->device);
 	return error;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define DeviceServiceEntry	printer_DeviceServiceEntry
-#else
-#define DeviceServiceEntry	FREERDP_API DeviceServiceEntry
-#endif
+static rdpPrinterDriver* printer_load_backend(const char* backend)
+{
+	typedef rdpPrinterDriver* (*backend_load_t)(void);
+
+	backend_load_t entry = (backend_load_t)freerdp_load_channel_addin_entry("printer", backend, NULL, 0);
+	if (!entry)
+		return NULL;
+
+	return entry();
+}
 
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+UINT
+#ifdef BUILTIN_CHANNELS
+printer_DeviceServiceEntry
+#else
+FREERDP_API DeviceServiceEntry
+#endif
+    (PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	int i;
 	char* name;
 	char* driver_name;
-	rdpPrinter* printer;
-	rdpPrinter** printers;
-	RDPDR_PRINTER* device;
+	RDPDR_PRINTER* device = NULL;
 	rdpPrinterDriver* driver = NULL;
-	UINT error;
-#ifdef WITH_CUPS
-	driver = printer_cups_get_driver();
-#endif
-#if defined(_WIN32) && !defined(_UWP)
-	driver = printer_win_get_driver();
-#endif
+	UINT error = CHANNEL_RC_OK;
+	size_t pos;
+
+	if (!pEntryPoints || !pEntryPoints->device)
+		return ERROR_INVALID_PARAMETER;
+
+	device = (RDPDR_PRINTER*) pEntryPoints->device;
+	name = device->Name;
+	driver_name = device->DriverName;
+
+	/* Secondary argument is one of the following:
+	 *
+	 * <driver_name>                ... name of a printer driver
+	 * <driver_name>:<backend_name> ... name of a printer driver and local printer backend to use
+	 */
+	if (driver_name)
+	{
+		char* sep = strstr(driver_name, ":");
+		if (sep)
+		{
+			const char* backend = sep + 1;
+			*sep = '\0';
+			driver = printer_load_backend(backend);
+		}
+	}
+	else
+		driver = printer_load_backend("");
 
 	if (!driver)
 	{
@@ -985,47 +1007,52 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		return CHANNEL_RC_INITIALIZATION_ERROR;
 	}
 
-	device = (RDPDR_PRINTER*) pEntryPoints->device;
-	name = device->Name;
-	driver_name = device->DriverName;
-
 	if (name && name[0])
 	{
-		printer = driver->GetPrinter(driver, name, driver_name);
+		rdpPrinter* printer = driver->GetPrinter(driver, name, driver_name);
 
 		if (!printer)
 		{
 			WLog_ERR(TAG, "Could not get printer %s!", name);
-			return CHANNEL_RC_INITIALIZATION_ERROR;
+			error = CHANNEL_RC_INITIALIZATION_ERROR;
+			goto fail;
 		}
 
 		if (!printer_save_default_config(pEntryPoints->rdpcontext->settings, printer))
-			return CHANNEL_RC_INITIALIZATION_ERROR;
+		{
+			error = CHANNEL_RC_INITIALIZATION_ERROR;
+			printer->ReleaseRef(printer);
+			goto fail;
+		}
 
 		if ((error = printer_register(pEntryPoints, printer)))
 		{
 			WLog_ERR(TAG, "printer_register failed with error %"PRIu32"!", error);
-			return error;
+			printer->ReleaseRef(printer);
+			goto fail;
 		}
 	}
 	else
 	{
-		printers = driver->EnumPrinters(driver);
+		rdpPrinter** printers = driver->EnumPrinters(driver);
+		rdpPrinter** current = printers;
 
-		for (i = 0; printers[i]; i++)
+		for (i = 0; current[i]; i++)
 		{
-			printer = printers[i];
+			rdpPrinter* printer = current[i];
 
 			if ((error = printer_register(pEntryPoints, printer)))
 			{
 				WLog_ERR(TAG, "printer_register failed with error %"PRIu32"!", error);
-				free(printers);
-				return error;
+				break;
 			}
 		}
 
-		free(printers);
+		driver->ReleaseEnumPrinters(printers);
 	}
 
-	return CHANNEL_RC_OK;
+    fail:
+	driver->ReleaseRef(driver);
+
+	return error;
 }
