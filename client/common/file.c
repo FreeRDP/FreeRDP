@@ -1049,6 +1049,8 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 
 BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings)
 {
+	BOOL setDefaultConnectionType = TRUE;
+
 	if (~((size_t)file->Domain))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, file->Domain))
@@ -1233,8 +1235,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~file->ConnectionType)
 	{
-		if (!freerdp_settings_set_uint32(settings, FreeRDP_ConnectionType, file->ConnectionType))
+		if (!freerdp_set_connection_type(settings, file->ConnectionType))
 			return FALSE;
+		setDefaultConnectionType = FALSE;
 	}
 
 	if (~file->AudioMode)
@@ -1438,20 +1441,32 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~file->BandwidthAutoDetect)
 	{
-		if (!freerdp_set_connection_type(settings, file->BandwidthAutoDetect))
+		if (file->BandwidthAutoDetect != 0)
+		{
+			if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
+				return FALSE;
+			setDefaultConnectionType = FALSE;
+		}
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect, file->BandwidthAutoDetect != 0))
 			return FALSE;
 	}
 
 	if (~file->NetworkAutoDetect)
 	{
-		if (file->BandwidthAutoDetect != CONNECTION_TYPE_AUTODETECT)
+		if (file->NetworkAutoDetect == 0)
 		{
-			WLog_WARN(TAG, "Got networkautodetect:i:%"PRIu32" and bandwidthautodetect:i:%"PRIu32". Correcting to bandwidthautodetect:i:%"PRIu32,
-					 file->NetworkAutoDetect, file->BandwidthAutoDetect, CONNECTION_TYPE_AUTODETECT);
-			WLog_WARN(TAG, "Add bandwidthautodetect:i:%"PRIu32" to your RDP file to eliminate this warning.", CONNECTION_TYPE_AUTODETECT);
-		}
+			if (file->BandwidthAutoDetect != CONNECTION_TYPE_AUTODETECT)
+			{
+				WLog_WARN(TAG, "Got networkautodetect:i:%"PRIu32" and bandwidthautodetect:i:%"PRIu32". Correcting to bandwidthautodetect:i:%"PRIu32,
+				         file->NetworkAutoDetect, file->BandwidthAutoDetect, CONNECTION_TYPE_AUTODETECT);
+				WLog_WARN(TAG, "Add bandwidthautodetect:i:%"PRIu32" to your RDP file to eliminate this warning.", CONNECTION_TYPE_AUTODETECT);
+			}
 
-		if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
+			if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
+				return FALSE;
+			setDefaultConnectionType = FALSE;
+		}
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect, file->NetworkAutoDetect == 0))
 			return FALSE;
 	}
 
@@ -1578,6 +1593,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			return FALSE;
 
 		settings->ConnectionFile = ConnectionFile;
+	}
+
+	if (setDefaultConnectionType)
+	{
+		if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
+			return FALSE;
 	}
 
 	return TRUE;
