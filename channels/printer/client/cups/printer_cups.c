@@ -37,9 +37,7 @@
 
 #include <freerdp/channels/rdpdr.h>
 
-#include "printer_main.h"
-
-#include "printer_cups.h"
+#include <freerdp/client/printer.h>
 
 typedef struct rdp_cups_printer_driver rdpCupsPrinterDriver;
 typedef struct rdp_cups_printer rdpCupsPrinter;
@@ -50,6 +48,7 @@ struct rdp_cups_printer_driver
 	rdpPrinterDriver driver;
 
 	int id_sequence;
+	size_t references;
 };
 
 struct rdp_cups_printer
@@ -67,16 +66,16 @@ struct rdp_cups_print_job
 	int printjob_id;
 };
 
-static void printer_cups_get_printjob_name(char* buf, int size)
+static void printer_cups_get_printjob_name(char* buf, size_t size, size_t id)
 {
 	time_t tt;
 	struct tm* t;
 
 	tt = time(NULL);
 	t = localtime(&tt);
-	sprintf_s(buf, size - 1, "FreeRDP Print Job %d%02d%02d%02d%02d%02d",
+	sprintf_s(buf, size - 1, "FreeRDP Print %04d-%02d-%02d %02d-%02d-%02d - Job %"PRIdz,
 		t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
-		t->tm_hour, t->tm_min, t->tm_sec);
+	    t->tm_hour, t->tm_min, t->tm_sec, id);
 }
 
 /**
@@ -126,7 +125,7 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 	{
 		char buf[100];
 
-		printer_cups_get_printjob_name(buf, sizeof(buf));
+		printer_cups_get_printjob_name(buf, sizeof(buf), printjob->id);
 
 		if (cupsPrintFile(printjob->printer->name, (const char*) cups_printjob->printjob_object, buf, 0, NULL) == 0)
 		{
@@ -188,7 +187,7 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 			return NULL;
 		}
 
-		printer_cups_get_printjob_name(buf, sizeof(buf));
+		printer_cups_get_printjob_name(buf, sizeof(buf), cups_printjob->printjob.id);
 
 		cups_printjob->printjob_id = cupsCreateJob((http_t*) cups_printjob->printjob_object,
 			printer->name, buf, 0, NULL);
@@ -230,9 +229,27 @@ static void printer_cups_free_printer(rdpPrinter* printer)
 	if (cups_printer->printjob)
 		cups_printer->printjob->printjob.Close((rdpPrintJob*) cups_printer->printjob);
 
+	if (printer->backend)
+		printer->backend->ReleaseRef(printer->backend);
 	free(printer->name);
 	free(printer->driver);
 	free(printer);
+}
+
+static void printer_cups_add_ref_printer(rdpPrinter* printer)
+{
+	if (printer)
+		printer->references++;
+}
+
+static void printer_cups_release_ref_printer(rdpPrinter* printer)
+{
+	if (!printer)
+		return;
+	if (printer->references <= 1)
+		printer_cups_free_printer(printer);
+	else
+		printer->references--;
 }
 
 static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver,
@@ -243,6 +260,8 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver,
 	cups_printer = (rdpCupsPrinter*) calloc(1, sizeof(rdpCupsPrinter));
 	if (!cups_printer)
 		return NULL;
+
+	cups_printer->printer.backend = &cups_driver->driver;
 
 	cups_printer->printer.id = cups_driver->id_sequence++;
 	cups_printer->printer.name = _strdup(name);
@@ -266,9 +285,26 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver,
 
 	cups_printer->printer.CreatePrintJob = printer_cups_create_printjob;
 	cups_printer->printer.FindPrintJob = printer_cups_find_printjob;
-	cups_printer->printer.Free = printer_cups_free_printer;
+	cups_printer->printer.AddRef = printer_cups_add_ref_printer;
+	cups_printer->printer.ReleaseRef = printer_cups_release_ref_printer;
 
-	return (rdpPrinter*) cups_printer;
+
+	cups_printer->printer.AddRef(&cups_printer->printer);
+	cups_printer->printer.backend->AddRef(cups_printer->printer.backend);
+	return &cups_printer->printer;
+}
+
+static void printer_cups_release_enum_printers(rdpPrinter** printers)
+{
+	rdpPrinter** cur = printers;
+
+	while((cur != NULL) && ((*cur) != NULL))
+	{
+		if ((*cur)->ReleaseRef)
+			(*cur)->ReleaseRef(*cur);
+		cur++;
+	}
+	free(printers);
 }
 
 static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
@@ -291,8 +327,17 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	{
 		if (dest->instance == NULL)
 		{
-			printers[num_printers++] = printer_cups_new_printer((rdpCupsPrinterDriver*) driver,
+			rdpPrinter* current = printers[num_printers];
+			current = printer_cups_new_printer((rdpCupsPrinterDriver*) driver,
 				dest->name, NULL, dest->is_default);
+			if (!current)
+			{
+				printer_cups_release_enum_printers(printers);
+				printers = NULL;
+				break;
+			}
+
+			printers[num_printers++] = current;
 		}
 	}
 	cupsFreeDests(num_dests, dests);
@@ -309,11 +354,35 @@ static rdpPrinter* printer_cups_get_printer(rdpPrinterDriver* driver,
             cups_driver->id_sequence == 1 ? TRUE : FALSE);
 }
 
+static void printer_cups_add_ref_driver(rdpPrinterDriver* driver)
+{
+	rdpCupsPrinterDriver* cups_driver = (rdpCupsPrinterDriver*) driver;
+	if (cups_driver)
+		cups_driver->references++;
+}
+
+/* Singleton */
 static rdpCupsPrinterDriver* cups_driver = NULL;
 
-rdpPrinterDriver* printer_cups_get_driver(void)
+static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 {
-	if (cups_driver == NULL)
+	rdpCupsPrinterDriver* cups_driver = (rdpCupsPrinterDriver*) driver;
+	if (cups_driver->references <= 1)
+	{
+		free(cups_driver);
+		cups_driver = NULL;
+	}
+	else
+		cups_driver->references--;
+}
+
+#ifdef BUILTIN_CHANNELS
+rdpPrinterDriver *cups_freerdp_printer_client_subsystem_entry(void)
+#else
+FREERDP_API rdpPrinterDriver *freerdp_printer_client_subsystem_entry(void)
+#endif
+{
+	if (!cups_driver)
 	{
 		cups_driver = (rdpCupsPrinterDriver*) calloc(1, sizeof(rdpCupsPrinterDriver));
 
@@ -321,11 +390,15 @@ rdpPrinterDriver* printer_cups_get_driver(void)
 			return NULL;
 
 		cups_driver->driver.EnumPrinters = printer_cups_enum_printers;
+		cups_driver->driver.ReleaseEnumPrinters = printer_cups_release_enum_printers;
 		cups_driver->driver.GetPrinter = printer_cups_get_printer;
 
+		cups_driver->driver.AddRef = printer_cups_add_ref_driver;
+		cups_driver->driver.ReleaseRef = printer_cups_release_ref_driver;
+
 		cups_driver->id_sequence = 1;
+		cups_driver->driver.AddRef(&cups_driver->driver);
 	}
 
-	return (rdpPrinterDriver*) cups_driver;
+	return &cups_driver->driver;
 }
-

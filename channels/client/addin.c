@@ -348,29 +348,28 @@ BOOL freerdp_channels_is_virtual_channel_entry_ex(LPCSTR pszName)
 PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPCSTR pszSubsystem,
         LPCSTR pszType, DWORD dwFlags)
 {
-	int i, j;
-	STATIC_SUBSYSTEM_ENTRY* subsystems;
-
-	for (i = 0; CLIENT_STATIC_ADDIN_TABLE[i].name != NULL; i++)
+	const STATIC_ADDIN_TABLE* table = CLIENT_STATIC_ADDIN_TABLE;
+	for (; table->name != NULL; table++)
 	{
-		if (strcmp(CLIENT_STATIC_ADDIN_TABLE[i].name, pszName) == 0)
+		if (strcmp(table->name, pszName) == 0)
 		{
 			if (pszSubsystem != NULL)
 			{
-				subsystems = (STATIC_SUBSYSTEM_ENTRY*) CLIENT_STATIC_ADDIN_TABLE[i].table;
+				const STATIC_SUBSYSTEM_ENTRY* subsystems = (const STATIC_SUBSYSTEM_ENTRY*) table->table;
 
-				for (j = 0; subsystems[j].name != NULL; j++)
+				for (; subsystems->name != NULL; subsystems++)
 				{
-					if (strcmp(subsystems[j].name, pszSubsystem) == 0)
+					/* If the pszSubsystem is an empty string use the default backend. */
+					if ((strlen(pszSubsystem) == 0) || (strcmp(subsystems->name, pszSubsystem) == 0))
 					{
 						if (pszType)
 						{
-							if (strcmp(subsystems[j].type, pszType) == 0)
-								return (PVIRTUALCHANNELENTRY) subsystems[j].entry;
+							if (strcmp(subsystems->type, pszType) == 0)
+								return (PVIRTUALCHANNELENTRY) subsystems->entry;
 						}
 						else
 						{
-							return (PVIRTUALCHANNELENTRY) subsystems[j].entry;
+							return (PVIRTUALCHANNELENTRY) subsystems->entry;
 						}
 					}
 				}
@@ -383,7 +382,7 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 						return NULL;
 				}
 
-				return (PVIRTUALCHANNELENTRY) CLIENT_STATIC_ADDIN_TABLE[i].entry;
+				return (PVIRTUALCHANNELENTRY) table->entry;
 			}
 		}
 	}

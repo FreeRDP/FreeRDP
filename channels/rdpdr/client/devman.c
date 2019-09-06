@@ -167,11 +167,11 @@ DEVICE* devman_get_device_by_type(DEVMAN* devman, UINT32 type)
 	return device;
 }
 
-static char DRIVE_SERVICE_NAME[] = "drive";
-static char PRINTER_SERVICE_NAME[] = "printer";
-static char SMARTCARD_SERVICE_NAME[] = "smartcard";
-static char SERIAL_SERVICE_NAME[] = "serial";
-static char PARALLEL_SERVICE_NAME[] = "parallel";
+static const char DRIVE_SERVICE_NAME[] = "drive";
+static const char PRINTER_SERVICE_NAME[] = "printer";
+static const char SMARTCARD_SERVICE_NAME[] = "smartcard";
+static const char SERIAL_SERVICE_NAME[] = "serial";
+static const char PARALLEL_SERVICE_NAME[] = "parallel";
 
 /**
  * Function description
@@ -180,7 +180,7 @@ static char PARALLEL_SERVICE_NAME[] = "parallel";
  */
 UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext* rdpcontext)
 {
-	char* ServiceName = NULL;
+	const char* ServiceName = NULL;
 	DEVICE_SERVICE_ENTRY_POINTS ep;
 	PDEVICE_SERVICE_ENTRY entry = NULL;
 

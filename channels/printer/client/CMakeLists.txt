@@ -18,39 +18,23 @@
 define_channel_client("printer")
 
 set(${MODULE_PREFIX}_SRCS
-	printer_main.c
-	printer_main.h)
-
-if(WITH_CUPS)
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
-		printer_cups.c
-		printer_cups.h)
-		
-	include_directories(${CUPS_INCLUDE_DIR})
-	add_definitions(-DWITH_CUPS)
-endif()
-
-if(WIN32 AND NOT UWP)
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
-		printer_win.c
-		printer_win.h)
-endif()
+	printer_main.c)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
 
-
-
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
-
-if(WITH_CUPS)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${CUPS_LIBRARIES})
-endif()
-
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
 
 if (WITH_DEBUG_SYMBOLS AND MSVC AND NOT BUILTIN_CHANNELS AND BUILD_SHARED_LIBS)
 	install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${FREERDP_ADDIN_PATH} COMPONENT symbols)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
+
+if(WITH_CUPS)
+    add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "cups" "")
+endif()
+
+if(WIN32 AND NOT UWP)
+    add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "win" "")
+endif()
