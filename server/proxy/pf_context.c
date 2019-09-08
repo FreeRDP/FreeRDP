@@ -75,7 +75,7 @@ BOOL init_p_server_context(freerdp_peer* client)
  * when using this function, is_dst_server must be set to TRUE if the destination
  * settings are server's settings. otherwise, they must be set to FALSE.
  */
-BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_dst_server)
+BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 {
 	rdpSettings* before_copy = freerdp_settings_clone(dst);
 	if (!before_copy)
@@ -97,7 +97,7 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_
 	free(dst->CertificateContent);
 
 	/* adjust pointer to instance pointer */
-	dst->ServerMode = is_dst_server;
+	dst->ServerMode = before_copy->ServerMode;
 
 	/* revert some values that must not be changed */
 	dst->ConfigPath = _strdup(before_copy->ConfigPath);
@@ -109,12 +109,7 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_
 	dst->CertificateName = _strdup(before_copy->CertificateName);
 	dst->CertificateContent = _strdup(before_copy->CertificateContent);
 
-	if (is_dst_server)
-	{
-		free(dst->ServerCertificate);
-		dst->ServerCertificateLength = before_copy->ServerCertificateLength;
-	}
-	else
+	if (!dst->ServerMode)
 	{
 		/* adjust instance pointer for client's context */
 		dst->instance = before_copy->instance;
@@ -137,9 +132,7 @@ rdpContext* p_client_context_create(rdpSettings* clientSettings)
 	if (!context)
 		return NULL;
 
-	pf_context_copy_settings(context->settings, clientSettings, FALSE);
-
-	if (!context->settings)
+	if (!pf_context_copy_settings(context->settings, clientSettings))
 		goto error;
 
 	return context;

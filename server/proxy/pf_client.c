@@ -57,14 +57,18 @@
  * Re-negotiate with original client after negotiation between the proxy
  * and the target has finished.
  */
-static void proxy_server_reactivate(rdpContext* ps, const rdpContext* target)
+static BOOL proxy_server_reactivate(rdpContext* ps, const rdpContext* pc)
 {
-	pf_context_copy_settings(ps->settings, target->settings, TRUE);
+	if (!pf_context_copy_settings(ps->settings, pc->settings))
+		return FALSE;
 
 	/* DesktopResize causes internal function rdp_server_reactivate to be called,
 	 * which causes the reactivation.
 	 */
-	ps->update->DesktopResize(ps);
+	if (!ps->update->DesktopResize(ps))
+		return FALSE;
+
+	return TRUE;
 }
 
 static void pf_OnErrorInfo(void* ctx, ErrorInfoEventArgs* e)
@@ -220,8 +224,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	}
 	
 	pf_client_register_update_callbacks(update);
-	proxy_server_reactivate(ps, context);
-	return TRUE;
+	return proxy_server_reactivate(ps, context);
 }
 
 
