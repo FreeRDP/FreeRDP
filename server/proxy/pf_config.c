@@ -36,9 +36,6 @@
 #define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu16"", #key, config->key);
 #define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu32"", #key, config->key);
 
-#define CONFIG_GET_STR(ini, section, key) IniFile_GetKeyValueString(ini, section, key)
-#define CONFIG_GET_BOOL(ini, section, key) IniFile_GetKeyValueInt(ini, section, key)
-
 static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, UINT16* result)
 {
 	int val;
