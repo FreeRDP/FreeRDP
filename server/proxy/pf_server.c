@@ -397,9 +397,6 @@ static void pf_server_mainloop(freerdp_listener* listener)
 
 int pf_server_start(proxyConfig* config)
 {
-	char* localSockPath;
-	char localSockName[MAX_PATH];
-	BOOL success;
 	WSADATA wsaData;
 	freerdp_listener* listener = freerdp_listener_new();
 
@@ -417,33 +414,11 @@ int pf_server_start(proxyConfig* config)
 		return -1;
 	}
 
-	/* Determine filepath for local socket */
-	sprintf_s(localSockName, sizeof(localSockName), "proxy.%" PRIu16 "", config->Port);
-	localSockPath = GetKnownSubPath(KNOWN_PATH_TEMP, localSockName);
-
-	if (!localSockPath)
-	{
-		freerdp_listener_free(listener);
-		WSACleanup();
-		return -1;
-	}
-
-	/* Listen to local connections */
-	success = listener->OpenLocal(listener, localSockPath);
-
-	/* Listen to remote connections */
-	if (!config->LocalOnly)
-	{
-		success &= listener->Open(listener, config->Host, config->Port);
-	}
-
-	if (success)
+	if (listener->Open(listener, config->Host, config->Port))
 	{
 		pf_server_mainloop(listener);
 	}
 
-	free(localSockPath);
-	freerdp_listener_free(listener);
 	WSACleanup();
 	return 0;
 }
