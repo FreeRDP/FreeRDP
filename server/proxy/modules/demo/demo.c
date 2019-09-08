@@ -35,7 +35,6 @@ static BOOL demo_filter_mouse_event(moduleOperations* module, rdpContext* contex
 
 	if (event_data->x % 100 == 0)
 	{
-		module->AbortConnect(module, context);
 		printf("filter_demo: mouse x is currently %"PRIu16"\n", event_data->x);
 	}
 

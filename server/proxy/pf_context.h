@@ -34,7 +34,6 @@
 
 #include "pf_config.h"
 #include "pf_server.h"
-#include "pf_modules.h"
 
 typedef struct proxy_data proxyData;
 
@@ -43,7 +42,7 @@ typedef struct proxy_data proxyData;
  */
 struct p_server_context
 {
-	rdpContext _context;
+	rdpContext context;
 
 	proxyData* pdata;
 
@@ -65,7 +64,7 @@ typedef struct p_server_context pServerContext;
  */
 struct p_client_context
 {
-	rdpContext _context;
+	rdpContext context;
 
 	proxyData* pdata;
 
@@ -100,18 +99,14 @@ struct proxy_data
 	HANDLE client_thread;
 };
 
-/* client */
-rdpContext* p_client_context_create(rdpSettings* clientSettings);
+BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src);
+BOOL pf_context_init_server_context(freerdp_peer* client);
+rdpContext* pf_context_create_client_context(rdpSettings* clientSettings);
 
-/* pdata */
 proxyData* proxy_data_new(void);
 void proxy_data_free(proxyData* pdata);
 
-BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src);
 BOOL proxy_data_shall_disconnect(proxyData* pdata);
 void proxy_data_abort_connect(proxyData* pdata);
-
-/* server */
-BOOL init_p_server_context(freerdp_peer* client);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONTEXT_H */

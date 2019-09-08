@@ -143,10 +143,10 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 	ps = (pServerContext*)client->context;
 	pdata = ps->pdata;
 
-	pc = p_client_context_create(client->settings);
+	pc = pf_context_create_client_context(client->settings);
 	if (pc == NULL)
 	{
-		WLog_ERR(TAG, "pf_server_post_connect(): p_client_context_create failed!");
+		WLog_ERR(TAG, "pf_server_post_connect(): pf_context_create_client_context failed!");
 		return FALSE;
 	}
 
@@ -209,15 +209,10 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	proxyConfig* config;
 	freerdp_peer* client = (freerdp_peer*)arg;
 
-	if (!init_p_server_context(client))
+	if (!pf_context_init_server_context(client))
 		goto out_free_peer;
 
 	ps = (pServerContext*)client->context;
-	if (!(ps->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL)))
-	{
-		WLog_ERR(TAG, "pf_server_post_connect(): CreateEvent failed!");
-		goto out_free_peer;
-	}
 
 	if (!(pdata = ps->pdata = proxy_data_new()))
 	{
@@ -225,18 +220,15 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		goto out_free_peer;
 	}
 
+	pdata->ps = ps;
+	config = pdata->config = client->ContextExtra;
+
 	/* currently not supporting GDI orders */
 	ZeroMemory(client->settings->OrderSupport, 32);
 	client->update->autoCalculateBitmapData = FALSE;
-	pdata->ps = ps;
-	/* keep configuration in proxyData */
-	pdata->config = client->ContextExtra;
-	config = pdata->config;
-	client->settings->UseMultimon = TRUE;
-	client->settings->AudioPlayback = FALSE;
-	client->settings->DeviceRedirection = TRUE;
+
+	client->settings->SupportMonitorLayoutPdu = TRUE;
 	client->settings->SupportGraphicsPipeline = config->GFX;
-	client->settings->SupportDynamicChannels = TRUE;
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->RdpKeyFile = _strdup("server.key");
@@ -248,9 +240,6 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		goto out_free_peer;
 	}
 
-	client->settings->SupportDisplayControl = config->DisplayControl;
-	client->settings->DynamicResolutionUpdate = config->DisplayControl;
-	client->settings->SupportMonitorLayoutPdu = TRUE;
 	client->settings->RdpSecurity = config->RdpSecurity;
 	client->settings->TlsSecurity = config->TlsSecurity;
 	client->settings->NlaSecurity = config->NlaSecurity;

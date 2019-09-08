@@ -53,16 +53,13 @@
 
 #define TAG PROXY_TAG("client")
 
-/**
- * Re-negotiate with original client after negotiation between the proxy
- * and the target has finished.
- */
 static BOOL proxy_server_reactivate(rdpContext* ps, const rdpContext* pc)
 {
 	if (!pf_context_copy_settings(ps->settings, pc->settings))
 		return FALSE;
 
-	/* DesktopResize causes internal function rdp_server_reactivate to be called,
+	/*
+	 * DesktopResize causes internal function rdp_server_reactivate to be called,
 	 * which causes the reactivation.
 	 */
 	if (!ps->update->DesktopResize(ps))
@@ -74,17 +71,17 @@ static BOOL proxy_server_reactivate(rdpContext* ps, const rdpContext* pc)
 static void pf_OnErrorInfo(void* ctx, ErrorInfoEventArgs* e)
 {
 	pClientContext* pc = (pClientContext*) ctx;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	pServerContext* ps = pc->pdata->ps;
 
-	if (e->code != ERRINFO_NONE)
-	{
-		const char* errorMessage = freerdp_get_error_info_string(e->code);
-		WLog_WARN(TAG, "Proxy's client received error info pdu from server: (0x%08"PRIu32"): %s", e->code, errorMessage);
-		/* forward error back to client */
-		freerdp_set_error_info(ps->rdp, e->code);
-		freerdp_send_error_info(ps->rdp);
-	}
+	if (e->code == ERRINFO_NONE)
+		return;
+
+	WLog_WARN(TAG, "received error info code: 0x%08"PRIu32", msg: %s", e->code,
+	          freerdp_get_error_info_string(e->code));
+
+	/* forward error back to client */
+	freerdp_set_error_info(ps->context.rdp, e->code);
+	freerdp_send_error_info(ps->context.rdp);
 }
 
 static BOOL pf_client_load_rdpsnd(pClientContext* pc, proxyConfig* config)
@@ -130,22 +127,28 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 * as the client's settings are copied from the server's, GlyphSupportLevel might not be
 	 * GLYPH_SUPPORT_NONE. the proxy currently do not support GDI & GLYPH_SUPPORT_CACHE, so
 	 * GlyphCacheSupport must be explicitly set to GLYPH_SUPPORT_NONE.
+	 *
+	 * Also, OrderSupport need to be zeroed, because it is currently not supported.
 	 */
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
+	ZeroMemory(instance->settings->OrderSupport, 32);
 
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 
-	/**
-	 * settings->OrderSupport is initialized at this point.
-	 * Only override it if you plan to implement custom order
-	 * callbacks or deactiveate certain features.
-	 */
+	settings->SupportDynamicChannels = TRUE;
 
-	/* currently not supporting GDI orders */
-	ZeroMemory(instance->settings->OrderSupport, 32);
+	/* Multimon */
+	settings->UseMultimon = TRUE;
 
-	
+	/* Sound */
+	settings->AudioPlayback = FALSE;
+	settings->DeviceRedirection = TRUE;
+
+	/* Display control */
+	settings->SupportDisplayControl = config->DisplayControl;
+	settings->DynamicResolutionUpdate = config->DisplayControl;
+
 	/**
 	 * Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded.
@@ -224,6 +227,12 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	}
 	
 	pf_client_register_update_callbacks(update);
+
+	/*
+	 * after the connection fully established and settings were negotiated with target server, send
+	 * a reactivation sequence to the client with the negotiated settings. This way, settings are
+	 * synchorinized between proxy's peer and and remote target.
+	 */
 	return proxy_server_reactivate(ps, context);
 }
 
@@ -257,6 +266,44 @@ static void pf_client_post_disconnect(freerdp* instance)
 		proxy_data_abort_connect(pdata);
 }
 
+static BOOL pf_client_connect(freerdp* instance)
+{
+	pClientContext* pc = (pClientContext*) instance->context;
+	rdpSettings* settings = pc->context.settings;
+
+	/* on first try, proxy client should always try to connect with NLA */
+	settings->NlaSecurity = TRUE;
+	pc->during_connect_process = TRUE;
+
+	if (!freerdp_connect(instance))
+	{
+		if (settings->NlaSecurity)
+		{
+			WLog_ERR(TAG, "freerdp_connect() failed, trying to connect without NLA");
+
+			/* disable NLA, enable TLS */
+			settings->NlaSecurity = FALSE;
+			settings->RdpSecurity = TRUE;
+			settings->TlsSecurity = TRUE;
+
+			pc->during_connect_process = FALSE;
+			if (!freerdp_connect(instance))
+			{
+				WLog_ERR(TAG, "connection failure");
+				return FALSE;
+			}
+		}
+		else
+		{
+			WLog_ERR(TAG, "connection failure");
+			return FALSE;
+		}
+	}
+
+	pc->during_connect_process = FALSE;
+	return TRUE;
+}
+
 /**
  * RDP main loop.
  * Connects RDP, loops while running and handles event and dispatch, cleans up
@@ -272,9 +319,6 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	DWORD status;
 	HANDLE handles[65];
 
-	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_PRE_CONNECT, (rdpContext*) ps))
-		return FALSE;
-
 	/*
 	 * during redirection, freerdp's abort event might be overriden (reset) by the library, after
 	 * the server set it in order to shutdown the connection. it means that the server might signal
@@ -284,42 +328,11 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	 */
 	handles[64] = pdata->abort_event;
 
-	/* on first try, proxy client should always try to connect with NLA */
-	instance->settings->NlaSecurity = TRUE;
+	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_PRE_CONNECT, (rdpContext*) ps))
+		return FALSE;
 
-	/*
-	 * Only set the `during_connect_process` flag if NlaSecurity is enabled.
-	 * If NLASecurity isn't enabled, the connection should be closed right after the first failure.
-	 */
-	if (instance->settings->NlaSecurity)
-		pc->during_connect_process = TRUE;
-
-	if (!freerdp_connect(instance))
-	{
-		if (instance->settings->NlaSecurity)
-		{
-			WLog_ERR(TAG, "freerdp_connect() failed, trying to connect without NLA");
-
-			/* disable NLA, enable TLS */
-			instance->settings->NlaSecurity = FALSE;
-			instance->settings->RdpSecurity = TRUE;
-			instance->settings->TlsSecurity = TRUE;
-
-			pc->during_connect_process = FALSE;
-			if (!freerdp_connect(instance))
-			{
-				WLog_ERR(TAG, "connection failure");
-				return 0;
-			}
-		}
-		else
-		{
-			WLog_ERR(TAG, "connection failure");
-			return 0;
-		}
-	}
-
-	pc->during_connect_process = FALSE;
+	if (!pf_client_connect(instance))
+		return FALSE;
 
 	while (!freerdp_shall_disconnect(instance))
 	{

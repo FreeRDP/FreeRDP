@@ -26,6 +26,9 @@
 static BOOL client_to_proxy_context_new(freerdp_peer* client,
                                         pServerContext* context)
 {
+	context->dynvcReady = NULL;
+	context->modules_info = NULL;
+
 	context->modules_info = HashTable_New(TRUE);
 	if (!context->modules_info)
 		return FALSE;
@@ -33,12 +36,24 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client,
 	context->vcm = WTSOpenServerA((LPSTR) client->context);
 
 	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
-		goto fail_open_server;
+		goto error;
+
+	if (!(context->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		goto error;
 
 	return TRUE;
-fail_open_server:
+
+error:
 	HashTable_Free(context->modules_info);
+	WTSCloseServer((HANDLE)context->vcm);
 	context->vcm = NULL;
+
+	if (context->dynvcReady)
+	{
+		CloseHandle(context->dynvcReady);
+		context->dynvcReady = NULL;
+	}
+
 	return FALSE;
 }
 
@@ -62,11 +77,12 @@ static void client_to_proxy_context_free(freerdp_peer* client,
 	HashTable_Free(context->modules_info);
 }
 
-BOOL init_p_server_context(freerdp_peer* client)
+BOOL pf_context_init_server_context(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(pServerContext);
 	client->ContextNew = (psPeerContextNew) client_to_proxy_context_new;
 	client->ContextFree = (psPeerContextFree) client_to_proxy_context_free;
+
 	return freerdp_peer_context_new(client);
 }
 
@@ -122,7 +138,7 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 	return TRUE;
 }
 
-rdpContext* p_client_context_create(rdpSettings* clientSettings)
+rdpContext* pf_context_create_client_context(rdpSettings* clientSettings)
 {
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	rdpContext* context;
