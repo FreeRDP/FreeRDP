@@ -122,9 +122,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	proxyConfig* config = ps->pdata->config;
 	rdpSettings* settings = instance->settings;
 
-	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_PRE_CONNECT, (rdpContext*)ps))
-		return FALSE;
-
 	/*
 	 * as the client's settings are copied from the server's, GlyphSupportLevel might not be
 	 * GLYPH_SUPPORT_NONE. the proxy currently do not support GDI & GLYPH_SUPPORT_CACHE, so
@@ -266,10 +263,14 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 {
 	freerdp* instance = (freerdp*)arg;
 	pClientContext* pc = (pClientContext*)instance->context;
+	pServerContext* ps = pc->pdata->ps;
 	proxyData* pdata = pc->pdata;
 	DWORD nCount;
 	DWORD status;
 	HANDLE handles[65];
+
+	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_PRE_CONNECT, (rdpContext*) ps))
+		return FALSE;
 
 	/*
 	 * during redirection, freerdp's abort event might be overriden (reset) by the library, after
