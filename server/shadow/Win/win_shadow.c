@@ -30,6 +30,13 @@
 
 #define TAG SERVER_TAG("shadow.win")
 
+/* https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-mouse_event
+ * does not mention this flag is only supported if building for _WIN32_WINNT >= 0x0600
+ */
+#ifndef MOUSEEVENTF_HWHEEL
+#define MOUSEEVENTF_HWHEEL 0x1000
+#endif
+
 static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT32 flags)
 {
@@ -104,6 +111,15 @@ static BOOL win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
 			event.mi.mouseData *= -1;
 
 		rc = SendInput(1, &event, sizeof(INPUT));
+
+		/* The build target is a system that did not support MOUSEEVENTF_HWHEEL
+		 * but it may run on newer systems supporting it.
+		 * Ignore the return value in these cases.
+		 */
+#if (_WIN32_WINNT < 0x0600)
+		if (flags & PTR_FLAGS_HWHEEL)
+			rc = 1;
+#endif
 	}
 	else
 	{
