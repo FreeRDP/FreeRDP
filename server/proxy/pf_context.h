@@ -81,7 +81,7 @@ struct p_client_context
 	 * It must be set to TRUE before the first try, and to FALSE after the connection fully established,
 	 * to ensure graceful shutdown of the connection when it will be closed.
 	 */
-	BOOL during_connect_process;
+	BOOL allow_next_conn_failure;
 };
 typedef struct p_client_context pClientContext;
 

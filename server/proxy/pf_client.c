@@ -262,7 +262,7 @@ static void pf_client_post_disconnect(freerdp* instance)
 	gdi_free(instance);
 
 	/* Only close the connection if NLA fallback process is done */
-	if (!context->during_connect_process)
+	if (!context->allow_next_conn_failure)
 		proxy_data_abort_connect(pdata);
 }
 
@@ -271,9 +271,14 @@ static BOOL pf_client_connect(freerdp* instance)
 	pClientContext* pc = (pClientContext*) instance->context;
 	rdpSettings* settings = pc->context.settings;
 
-	/* on first try, proxy client should always try to connect with NLA */
-	settings->NlaSecurity = TRUE;
-	pc->during_connect_process = TRUE;
+	/* if credentials are available, always try to connect with NLA on first try */
+	if (settings->Username && settings->Password)
+	{
+		settings->NlaSecurity = TRUE;
+		pc->allow_next_conn_failure = TRUE;
+	}
+	else
+		settings->NlaSecurity = FALSE;
 
 	if (!freerdp_connect(instance))
 	{
@@ -286,7 +291,7 @@ static BOOL pf_client_connect(freerdp* instance)
 			settings->RdpSecurity = TRUE;
 			settings->TlsSecurity = TRUE;
 
-			pc->during_connect_process = FALSE;
+			pc->allow_next_conn_failure = FALSE;
 			if (!freerdp_connect(instance))
 			{
 				WLog_ERR(TAG, "connection failure");
@@ -300,7 +305,7 @@ static BOOL pf_client_connect(freerdp* instance)
 		}
 	}
 
-	pc->during_connect_process = FALSE;
+	pc->allow_next_conn_failure = FALSE;
 	return TRUE;
 }
 
