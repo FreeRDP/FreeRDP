@@ -1625,7 +1625,7 @@ static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(rdpFile* file, con
 
 		if (line->flags & RDP_FILE_LINE_FLAG_FORMATTED)
 		{
-			if (strcmp(name, line->name) == 0)
+			if (_stricmp(name, line->name) == 0)
 			{
 				bFound = TRUE;
 				break;
