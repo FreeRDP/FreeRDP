@@ -125,7 +125,7 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 {
 	UINT32 index;
 	int modules_count = 0;
-	char** module_names;
+	char** module_names = NULL;
 
 	module_names = IniFile_GetSectionKeyNames(ini, "Modules", &modules_count);
 
@@ -143,6 +143,7 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 		WLog_INFO(TAG, "module '%s' is loaded!", module_name);
 	}
 
+	free(module_names);
 	return TRUE;
 }
 

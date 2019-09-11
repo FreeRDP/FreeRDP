@@ -419,6 +419,7 @@ int pf_server_start(proxyConfig* config)
 		pf_server_mainloop(listener);
 	}
 
+	freerdp_listener_free(listener);
 	WSACleanup();
 	return 0;
 }
