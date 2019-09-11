@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#include <windows.h>
+
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
@@ -28,15 +30,24 @@
 
 #define TAG SERVER_TAG("shadow.win")
 
-static int win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
+/* https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-mouse_event
+ * does not mention this flag is only supported if building for _WIN32_WINNT >= 0x0600
+ */
+#ifndef MOUSEEVENTF_HWHEEL
+#define MOUSEEVENTF_HWHEEL 0x1000
+#endif
+
+static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT32 flags)
 {
-	return 0;
+	WLog_WARN(TAG, "%s: TODO: Implement!", __FUNCTION__);
+	return TRUE;
 }
 
-static int win_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem,
+static BOOL win_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
+	UINT rc;
 	INPUT event;
 	event.type = INPUT_KEYBOARD;
 	event.ki.wVk = 0;
@@ -51,12 +62,16 @@ static int win_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem,
 	if (flags & KBD_FLAGS_EXTENDED)
 		event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
 
-	return SendInput(1, &event, sizeof(INPUT));
+	rc = SendInput(1, &event, sizeof(INPUT));
+	if (rc == 0)
+		return FALSE;
+	return TRUE;
 }
 
-static int win_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsystem,
+static BOOL win_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
+	UINT rc;
 	INPUT event;
 	event.type = INPUT_KEYBOARD;
 	event.ki.wVk = 0;
@@ -68,27 +83,43 @@ static int win_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsystem
 	if (flags & KBD_FLAGS_RELEASE)
 		event.ki.dwFlags |= KEYEVENTF_KEYUP;
 
-	return SendInput(1, &event, sizeof(INPUT));
+	rc = SendInput(1, &event, sizeof(INPUT));
+	if (rc == 0)
+		return FALSE;
+	return TRUE;
 }
 
-static int win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
+static BOOL win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
                                         rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
 {
+	UINT rc = 1;
 	INPUT event;
 	float width;
 	float height;
 	ZeroMemory(&event, sizeof(INPUT));
 	event.type = INPUT_MOUSE;
 
-	if (flags & PTR_FLAGS_WHEEL)
+	if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 	{
-		event.mi.dwFlags = MOUSEEVENTF_WHEEL;
+		if (flags & PTR_FLAGS_WHEEL)
+			event.mi.dwFlags = MOUSEEVENTF_WHEEL;
+		else
+			event.mi.dwFlags = MOUSEEVENTF_HWHEEL;
 		event.mi.mouseData = flags & WheelRotationMask;
 
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
 			event.mi.mouseData *= -1;
 
-		SendInput(1, &event, sizeof(INPUT));
+		rc = SendInput(1, &event, sizeof(INPUT));
+
+		/* The build target is a system that did not support MOUSEEVENTF_HWHEEL
+		 * but it may run on newer systems supporting it.
+		 * Ignore the return value in these cases.
+		 */
+#if (_WIN32_WINNT < 0x0600)
+		if (flags & PTR_FLAGS_HWHEEL)
+			rc = 1;
+#endif
 	}
 	else
 	{
@@ -101,7 +132,9 @@ static int win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
 		if (flags & PTR_FLAGS_MOVE)
 		{
 			event.mi.dwFlags |= MOUSEEVENTF_MOVE;
-			SendInput(1, &event, sizeof(INPUT));
+			rc = SendInput(1, &event, sizeof(INPUT));
+			if (rc == 0)
+				return FALSE;
 		}
 
 		event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
@@ -113,7 +146,7 @@ static int win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
 			else
 				event.mi.dwFlags |= MOUSEEVENTF_LEFTUP;
 
-			SendInput(1, &event, sizeof(INPUT));
+			rc = SendInput(1, &event, sizeof(INPUT));
 		}
 		else if (flags & PTR_FLAGS_BUTTON2)
 		{
@@ -122,7 +155,7 @@ static int win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
 			else
 				event.mi.dwFlags |= MOUSEEVENTF_RIGHTUP;
 
-			SendInput(1, &event, sizeof(INPUT));
+			rc = SendInput(1, &event, sizeof(INPUT));
 		}
 		else if (flags & PTR_FLAGS_BUTTON3)
 		{
@@ -131,16 +164,19 @@ static int win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
 			else
 				event.mi.dwFlags |= MOUSEEVENTF_MIDDLEUP;
 
-			SendInput(1, &event, sizeof(INPUT));
+			rc = SendInput(1, &event, sizeof(INPUT));
 		}
 	}
 
-	return 0;
+	if (rc == 0)
+		return FALSE;
+	return TRUE;
 }
 
-static int win_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
+static BOOL win_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
         rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
 {
+	UINT rc = 1;
 	INPUT event;
 	float width;
 	float height;
@@ -157,7 +193,9 @@ static int win_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 			event.mi.dx = (LONG)((float) x * (65535.0f / width));
 			event.mi.dy = (LONG)((float) y * (65535.0f / height));
 			event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-			SendInput(1, &event, sizeof(INPUT));
+			rc = SendInput(1, &event, sizeof(INPUT));
+			if (rc == 0)
+				return FALSE;
 		}
 
 		event.mi.dx = event.mi.dy = event.mi.dwFlags = 0;
@@ -172,10 +210,12 @@ static int win_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 		else if (flags & PTR_XFLAGS_BUTTON2)
 			event.mi.mouseData = XBUTTON2;
 
-		SendInput(1, &event, sizeof(INPUT));
+		rc = SendInput(1, &event, sizeof(INPUT));
 	}
 
-	return 0;
+	if (rc == 0)
+		return FALSE;
+	return TRUE;
 }
 
 
