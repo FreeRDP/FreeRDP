@@ -801,6 +801,7 @@ static BOOL freerdp_tcp_is_hostname_resolvable(rdpContext* context, const char* 
 		return FALSE;
 	}
 
+	freerdp_set_last_error(context, 0);
 	freeaddrinfo(result);
 	return TRUE;
 }
@@ -1127,6 +1128,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 			char* peerAddress;
 			struct addrinfo* addr;
 			struct addrinfo* result;
+
 			result = freerdp_tcp_resolve_host(hostname, port, 0);
 
 			if (!result)
@@ -1136,6 +1138,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 
 				return -1;
 			}
+			freerdp_set_last_error(context, 0);
 
 			addr = result;
 
