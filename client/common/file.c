@@ -370,11 +370,13 @@ static BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name,
 static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* name,
 												  const char* value, SSIZE_T index)
 {
+	char* endptr;
 	long ivalue;
 	errno = 0;
-	ivalue = strtol(value, NULL, 0);
+	ivalue = strtol(value, &endptr, 0);
 
-	if ((errno != 0) || (ivalue > INT32_MAX) || (ivalue < INT32_MIN))
+	if ((endptr == NULL) || (errno != 0) || (endptr == value) ||
+			(ivalue > INT32_MAX) || (ivalue < INT32_MIN))
 	{
 		WLog_ERR(TAG, "Failed to convert RDP file integer option %s [value=%s]", name, value);
 		return FALSE;
