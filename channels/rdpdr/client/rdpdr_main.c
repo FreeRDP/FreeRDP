@@ -437,6 +437,9 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		if (!device_ext || !device_ext->automount)
 			continue;
 
+		if (device_ext->device.type != RDPDR_DTYP_FILESYSTEM)
+			continue;
+
 		if (device_ext->path == NULL)
 			continue;
 
@@ -810,7 +813,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		DEVICE_DRIVE_EXT* device_ext = (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(
 		                                   rdpdr->devman->devices, (void*)keys[j]);
 
-		if (!device_ext || !device_ext->path || !device_ext->automount)
+		if (!device_ext || (device_ext->device.type != RDPDR_DTYP_FILESYSTEM) || !device_ext->path || !device_ext->automount)
 			continue;
 
 		ConvertFromUnicode(CP_UTF8, 0, device_ext->path, -1, &path, 0, NULL, NULL);
