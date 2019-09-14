@@ -123,6 +123,7 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	double yScalingFactor;
 	int x2;
 	int y2;
+	const char* filter;
 	rdpSettings* settings = xfc->context.settings;
 
 	if (xfc->scaledWidth <= 0 || xfc->scaledHeight <= 0)
@@ -167,7 +168,14 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	                                      CPSubwindowMode, &pa);
 	windowPicture = XRenderCreatePicture(xfc->display, xfc->window->handle,
 	                                     picFormat, CPSubwindowMode, &pa);
-	XRenderSetPictureFilter(xfc->display, primaryPicture, FilterBilinear, 0, 0);
+	// avoid blurry filter when scaling factor is 2x, 3x, etc
+	// useful when the client has high-dpi monitor
+	if (xScalingFactor == yScalingFactor && abs(1/xScalingFactor - round(1/xScalingFactor)) < 0.001) {
+		filter = FilterNearest;
+	} else {
+		filter = FilterBilinear;
+	}
+	XRenderSetPictureFilter(xfc->display, primaryPicture, filter, 0, 0);
 	transform.matrix[0][0] = XDoubleToFixed(xScalingFactor);
 	transform.matrix[0][1] = XDoubleToFixed(0.0);
 	transform.matrix[0][2] = XDoubleToFixed(0.0);
