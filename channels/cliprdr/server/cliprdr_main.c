@@ -29,6 +29,7 @@
 
 #include <freerdp/channels/log.h>
 #include "cliprdr_main.h"
+#include "../cliprdr_common.h"
 
 /**
  *                                    Initialization Sequence\n
@@ -384,6 +385,7 @@ static UINT cliprdr_server_format_list_response(CliprdrServerContext* context,
 static UINT cliprdr_server_lock_clipboard_data(CliprdrServerContext* context,
         const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
+	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	if (lockClipboardData->msgType != CB_LOCK_CLIPDATA)
@@ -396,11 +398,16 @@ static UINT cliprdr_server_lock_clipboard_data(CliprdrServerContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s,
-	                    lockClipboardData->clipDataId); /* clipDataId (4 bytes) */
+	if ((error = cliprdr_write_lock_clipdata(s, lockClipboardData)))
+		goto fail;
+
 	WLog_DBG(TAG, "ServerLockClipboardData: clipDataId: 0x%08"PRIX32"",
 	         lockClipboardData->clipDataId);
 	return cliprdr_server_packet_send(cliprdr, s);
+
+fail:
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
@@ -411,6 +418,7 @@ static UINT cliprdr_server_lock_clipboard_data(CliprdrServerContext* context,
 static UINT cliprdr_server_unlock_clipboard_data(CliprdrServerContext* context,
         const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
+	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	if (unlockClipboardData->msgType != CB_UNLOCK_CLIPDATA)
@@ -424,11 +432,16 @@ static UINT cliprdr_server_unlock_clipboard_data(CliprdrServerContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s,
-	                    unlockClipboardData->clipDataId); /* clipDataId (4 bytes) */
+	if ((error = cliprdr_write_unlock_clipdata(s, unlockClipboardData)))
+		goto fail;
+
 	WLog_DBG(TAG, "ServerUnlockClipboardData: clipDataId: 0x%08"PRIX32"",
 	         unlockClipboardData->clipDataId);
 	return cliprdr_server_packet_send(cliprdr, s);
+
+fail:
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
@@ -496,6 +509,7 @@ static UINT cliprdr_server_format_data_response(CliprdrServerContext* context,
 static UINT cliprdr_server_file_contents_request(CliprdrServerContext* context,
         const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
+	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
@@ -510,21 +524,16 @@ static UINT cliprdr_server_file_contents_request(CliprdrServerContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, fileContentsRequest->streamId); /* streamId (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    fileContentsRequest->listIndex); /* listIndex (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->dwFlags); /* dwFlags (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    fileContentsRequest->nPositionLow); /* nPositionLow (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    fileContentsRequest->nPositionHigh); /* nPositionHigh (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    fileContentsRequest->cbRequested); /* cbRequested (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    fileContentsRequest->clipDataId); /* clipDataId (4 bytes) */
+	if ((error = cliprdr_write_file_contents_request(s, fileContentsRequest)))
+		goto fail;
+
 	WLog_DBG(TAG, "ServerFileContentsRequest: streamId: 0x%08"PRIX32"",
 	         fileContentsRequest->streamId);
 	return cliprdr_server_packet_send(cliprdr, s);
+
+fail:
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
@@ -535,19 +544,15 @@ static UINT cliprdr_server_file_contents_request(CliprdrServerContext* context,
 static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context,
         const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
+	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
-	UINT32 cbRequested = fileContentsResponse->cbRequested;
 
 	if (fileContentsResponse->msgType != CB_FILECONTENTS_RESPONSE)
 		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, fileContentsResponse->msgType);
 
-	if (fileContentsResponse->dwFlags & FILECONTENTS_SIZE)
-		cbRequested = sizeof(UINT64);
-
-	s = cliprdr_server_packet_new(CB_FILECONTENTS_RESPONSE,
-	                              fileContentsResponse->msgFlags,
-								  4 + cbRequested);
+	s = cliprdr_server_packet_new(CB_FILECONTENTS_RESPONSE, fileContentsResponse->msgFlags,
+	                              4 + fileContentsResponse->cbRequested);
 
 	if (!s)
 	{
@@ -555,17 +560,16 @@ static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, fileContentsResponse->streamId); /* streamId (4 bytes) */
-	/**
-	 * requestedFileContentsData:
-	 * FILECONTENTS_SIZE: file size as UINT64
-	 * FILECONTENTS_RANGE: file data from requested range
-	 */
-	Stream_Write(s, fileContentsResponse->requestedData,
-				 cbRequested);
-	WLog_DBG(TAG, "ServerFileContentsResponse: streamId: 0x%08"PRIX32"",
+	if ((error = cliprdr_write_file_contents_response(s, fileContentsResponse)))
+		goto fail;
+
+	WLog_DBG(TAG, "ServerFileContentsResponse: streamId: 0x%08" PRIX32 "",
 	         fileContentsResponse->streamId);
 	return cliprdr_server_packet_send(cliprdr, s);
+
+fail:
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
@@ -734,166 +738,15 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext*
 static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context,
         wStream* s, const CLIPRDR_HEADER* header)
 {
-	UINT32 index;
-	UINT32 dataLen;
-	size_t position;
-	BOOL asciiNames;
-	char* szFormatName;
-	WCHAR* wszFormatName;
-	CLIPRDR_FORMAT* formats = NULL;
 	CLIPRDR_FORMAT_LIST formatList;
 	UINT error = CHANNEL_RC_OK;
-	dataLen = header->dataLen;
-	asciiNames = (header->msgFlags & CB_ASCII_NAMES) ? TRUE : FALSE;
+
 	formatList.msgType = CB_FORMAT_LIST;
 	formatList.msgFlags = header->msgFlags;
 	formatList.dataLen = header->dataLen;
-	index = 0;
-	formatList.numFormats = 0;
-	position = Stream_GetPosition(s);
 
-	if (!header->dataLen)
-	{
-		/* empty format list */
-		formatList.formats = NULL;
-		formatList.numFormats = 0;
-	}
-	else if (!context->useLongFormatNames)
-	{
-		formatList.numFormats = (dataLen / 36);
-
-		if ((formatList.numFormats * 36) != dataLen)
-		{
-			WLog_ERR(TAG, "Invalid short format list length: %"PRIu32"", dataLen);
-			return ERROR_INVALID_PARAMETER;
-		}
-
-		if (formatList.numFormats)
-			formats = (CLIPRDR_FORMAT*) calloc(formatList.numFormats,
-			                                   sizeof(CLIPRDR_FORMAT));
-
-		if (!formats)
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		formatList.formats = formats;
-
-		while (dataLen)
-		{
-			Stream_Read_UINT32(s, formats[index].formatId); /* formatId (4 bytes) */
-			dataLen -= 4;
-			formats[index].formatName = NULL;
-
-			/* According to MS-RDPECLIP 2.2.3.1.1.1 formatName is "a 32-byte block containing
-			 * the *null-terminated* name assigned to the Clipboard Format: (32 ASCII 8 characters
-			 * or 16 Unicode characters)"
-			 * However, both Windows RDSH and mstsc violate this specs as seen in the following
-			 * example of a transferred short format name string: [R.i.c.h. .T.e.x.t. .F.o.r.m.a.t.]
-			 * These are 16 unicode charaters - *without* terminating null !
-			 */
-
-			if (asciiNames)
-			{
-				szFormatName = (char*) Stream_Pointer(s);
-
-				if (szFormatName[0])
-				{
-					/* ensure null termination */
-					formats[index].formatName = (char*) malloc(32 + 1);
-					CopyMemory(formats[index].formatName, szFormatName, 32);
-					formats[index].formatName[32] = '\0';
-				}
-			}
-			else
-			{
-				wszFormatName = (WCHAR*) Stream_Pointer(s);
-
-				if (wszFormatName[0])
-				{
-					/* ConvertFromUnicode always returns a null-terminated
-					 * string on success, even if the source string isn't.
-					 */
-					if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, 16,
-					                       &(formats[index].formatName), 0, NULL, NULL) < 1)
-					{
-						WLog_ERR(TAG, "failed to convert short clipboard format name");
-						error = ERROR_INVALID_DATA;
-						goto out;
-					}
-				}
-			}
-
-			Stream_Seek(s, 32);
-			dataLen -= 32;
-			index++;
-		}
-	}
-	else
-	{
-		while (dataLen)
-		{
-			size_t formatNameLength;
-			Stream_Seek(s, 4); /* formatId (4 bytes) */
-			dataLen -= 4;
-			wszFormatName = (WCHAR*) Stream_Pointer(s);
-
-			if (!wszFormatName[0])
-				formatNameLength = 0;
-			else
-				formatNameLength = _wcslen(wszFormatName);
-
-			Stream_Seek(s, (formatNameLength + 1) * 2);
-			dataLen -= ((formatNameLength + 1) * 2);
-			formatList.numFormats++;
-		}
-
-		dataLen = formatList.dataLen;
-		Stream_SetPosition(s, position);
-
-		if (formatList.numFormats)
-			formats = (CLIPRDR_FORMAT*) calloc(formatList.numFormats,
-			                                   sizeof(CLIPRDR_FORMAT));
-
-		if (!formats)
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		formatList.formats = formats;
-
-		while (dataLen)
-		{
-			size_t formatNameLength;
-
-			Stream_Read_UINT32(s, formats[index].formatId); /* formatId (4 bytes) */
-			dataLen -= 4;
-			formats[index].formatName = NULL;
-			wszFormatName = (WCHAR*) Stream_Pointer(s);
-
-			if (!wszFormatName[0])
-				formatNameLength = 0;
-			else
-				formatNameLength = _wcslen(wszFormatName);
-
-			if (formatNameLength)
-			{
-				if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, -1,
-				                       &(formats[index].formatName), 0, NULL, NULL) < 1)
-				{
-					WLog_ERR(TAG, "failed to convert long clipboard format name");
-					error = ERROR_INVALID_DATA;
-					goto out;
-				}
-			}
-
-			Stream_Seek(s, (formatNameLength + 1) * 2);
-			dataLen -= ((formatNameLength + 1) * 2);
-			index++;
-		}
-	}
+	if ((error = cliprdr_read_format_list(s, &formatList, context->useLongFormatNames)))
+		goto out;
 
 	WLog_DBG(TAG, "ClientFormatList: numFormats: %"PRIu32"",
 	         formatList.numFormats);
@@ -903,13 +756,7 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context,
 		WLog_ERR(TAG, "ClientFormatList failed with error %"PRIu32"!", error);
 
 out:
-
-	for (index = 0; index < formatList.numFormats; index++)
-	{
-		free(formatList.formats[index].formatName);
-	}
-
-	free(formatList.formats);
+	cliprdr_free_format_list(&formatList);
 	return error;
 }
 
@@ -979,18 +826,14 @@ static UINT cliprdr_server_receive_unlock_clipdata(CliprdrServerContext*
 	CLIPRDR_UNLOCK_CLIPBOARD_DATA unlockClipboardData;
 	UINT error = CHANNEL_RC_OK;
 	WLog_DBG(TAG, "CliprdrClientUnlockClipData");
+
 	unlockClipboardData.msgType = CB_UNLOCK_CLIPDATA;
 	unlockClipboardData.msgFlags = header->msgFlags;
 	unlockClipboardData.dataLen = header->dataLen;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
-		return ERROR_INVALID_DATA;
-	}
+	if ((error = cliprdr_read_unlock_clipdata(s, &unlockClipboardData)))
+		return error;
 
-	Stream_Read_UINT32(s,
-	                   unlockClipboardData.clipDataId); /* clipDataId (4 bytes) */
 	IFCALLRET(context->ClientUnlockClipboardData, error, context,
 	          &unlockClipboardData);
 
@@ -1015,14 +858,9 @@ static UINT cliprdr_server_receive_format_data_request(CliprdrServerContext*
 	formatDataRequest.msgFlags = header->msgFlags;
 	formatDataRequest.dataLen = header->dataLen;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
-		return ERROR_INVALID_DATA;
-	}
+	if ((error = cliprdr_read_format_data_request(s, &formatDataRequest)))
+		return error;
 
-	Stream_Read_UINT32(s,
-	                   formatDataRequest.requestedFormatId); /* requestedFormatId (4 bytes) */
 	context->lastRequestedFormatId = formatDataRequest.requestedFormatId;
 	IFCALLRET(context->ClientFormatDataRequest, error, context, &formatDataRequest);
 
@@ -1047,16 +885,9 @@ static UINT cliprdr_server_receive_format_data_response(
 	formatDataResponse.msgType = CB_FORMAT_DATA_RESPONSE;
 	formatDataResponse.msgFlags = header->msgFlags;
 	formatDataResponse.dataLen = header->dataLen;
-	formatDataResponse.requestedFormatData = NULL;
 
-	if (header->dataLen)
-		formatDataResponse.requestedFormatData = Stream_Pointer(s);
-
-	if (!Stream_SafeSeek(s, header->dataLen))
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
-		return ERROR_INVALID_DATA;
-	}
+	if ((error = cliprdr_read_format_data_response(s, &formatDataResponse)))
+		return error;
 
 	IFCALLRET(context->ClientFormatDataResponse, error, context,
 	          &formatDataResponse);
@@ -1082,23 +913,8 @@ static UINT cliprdr_server_receive_filecontents_request(
 	request.msgFlags = header->msgFlags;
 	request.dataLen = header->dataLen;
 
-	if (Stream_GetRemainingLength(s) < 24)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
-		return ERROR_INVALID_DATA;
-	}
-
-	Stream_Read_UINT32(s, request.streamId); /* streamId (4 bytes) */
-	Stream_Read_UINT32(s, request.listIndex); /* listIndex (4 bytes) */
-	Stream_Read_UINT32(s, request.dwFlags); /* dwFlags (4 bytes) */
-	Stream_Read_UINT32(s, request.nPositionLow); /* nPositionLow (4 bytes) */
-	Stream_Read_UINT32(s, request.nPositionHigh); /* nPositionHigh (4 bytes) */
-	Stream_Read_UINT32(s, request.cbRequested); /* cbRequested (4 bytes) */
-
-	if (Stream_GetRemainingLength(s) < 4) /* clipDataId (4 bytes) optional */
-		request.clipDataId = 0;
-	else
-		Stream_Read_UINT32(s, request.clipDataId);
+	if ((error = cliprdr_read_file_contents_request(s, &request)))
+		return error;
 
 	IFCALLRET(context->ClientFileContentsRequest, error, context, &request);
 
@@ -1119,19 +935,14 @@ static UINT cliprdr_server_receive_filecontents_response(
 	CLIPRDR_FILE_CONTENTS_RESPONSE response;
 	UINT error = CHANNEL_RC_OK;
 	WLog_DBG(TAG, "CliprdrClientFileContentsResponse");
+
 	response.msgType = CB_FILECONTENTS_RESPONSE;
 	response.msgFlags = header->msgFlags;
 	response.dataLen = header->dataLen;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
-		return ERROR_INVALID_DATA;
-	}
+	if ((error = cliprdr_read_file_contents_response(s, &response)))
+		return error;
 
-	Stream_Read_UINT32(s, response.streamId); /* streamId (4 bytes) */
-	response.cbRequested = header->dataLen - 4;
-	response.requestedData = Stream_Pointer(s); /* requestedFileContentsData */
 	IFCALLRET(context->ClientFileContentsResponse, error, context, &response);
 
 	if (error)
