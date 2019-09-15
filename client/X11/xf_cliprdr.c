@@ -1517,7 +1517,6 @@ static UINT xf_cliprdr_send_file_contents_failure(CliprdrClientContext* context,
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = fileContentsRequest->streamId;
-	response.dwFlags = fileContentsRequest->dwFlags;
 	return context->ClientFileContentsResponse(context, &response);
 }
 
@@ -1560,7 +1559,6 @@ static UINT xf_cliprdr_clipboard_file_size_success(wClipboardDelegate* delegate,
 	xfClipboard* clipboard = delegate->custom;
 	response.msgFlags = CB_RESPONSE_OK;
 	response.streamId = request->streamId;
-	response.dwFlags = FILECONTENTS_SIZE;
 	response.cbRequested = sizeof(UINT64);
 	response.requestedData = (BYTE*) &fileSize;
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
@@ -1575,7 +1573,6 @@ static UINT xf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate,
 
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
-	response.dwFlags = FILECONTENTS_SIZE;
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
@@ -1586,7 +1583,6 @@ static UINT xf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegate
 	xfClipboard* clipboard = delegate->custom;
 	response.msgFlags = CB_RESPONSE_OK;
 	response.streamId = request->streamId;
-	response.dwFlags = FILECONTENTS_RANGE;
 	response.cbRequested = size;
 	response.requestedData = (BYTE*) data;
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
@@ -1601,7 +1597,6 @@ static UINT xf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate
 
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
-	response.dwFlags = FILECONTENTS_RANGE;
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
