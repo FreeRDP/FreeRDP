@@ -30,9 +30,9 @@
 
 static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_REQUEST* request)
 {
-    /*
-     * [MS-RDPECLIP] 2.2.5.3 File Contents Request PDU (CLIPRDR_FILECONTENTS_REQUEST).
-     *
+	/*
+	 * [MS-RDPECLIP] 2.2.5.3 File Contents Request PDU (CLIPRDR_FILECONTENTS_REQUEST).
+	 *
 	 * A request for the size of the file identified by the lindex field. The size MUST be
 	 * returned as a 64-bit, unsigned integer. The cbRequested field MUST be set to
 	 * 0x00000008 and both the nPositionLow and nPositionHigh fields MUST be
@@ -55,7 +55,7 @@ static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_R
 		}
 	}
 
-    return TRUE;
+	return TRUE;
 }
 
 UINT cliprdr_write_file_contents_request(wStream* s, const CLIPRDR_FILE_CONTENTS_REQUEST* request)
@@ -69,43 +69,45 @@ UINT cliprdr_write_file_contents_request(wStream* s, const CLIPRDR_FILE_CONTENTS
 
 	if (request->haveClipDataId)
 		Stream_Write_UINT32(s, request->clipDataId); /* clipDataId (4 bytes) */
-    
-    return CHANNEL_RC_OK;
+
+	return CHANNEL_RC_OK;
 }
 
 static INLINE UINT cliprdr_write_lock_unlock_clipdata(wStream* s, UINT32 clipDataId)
 {
-    Stream_Write_UINT32(s, clipDataId);
-    return CHANNEL_RC_OK;
+	Stream_Write_UINT32(s, clipDataId);
+	return CHANNEL_RC_OK;
 }
 
 UINT cliprdr_write_lock_clipdata(wStream* s, const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
-    return cliprdr_write_lock_unlock_clipdata(s, lockClipboardData->clipDataId);
+	return cliprdr_write_lock_unlock_clipdata(s, lockClipboardData->clipDataId);
 }
 
-UINT cliprdr_write_unlock_clipdata(wStream* s, const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+UINT cliprdr_write_unlock_clipdata(wStream* s,
+                                   const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-    return cliprdr_write_lock_unlock_clipdata(s, unlockClipboardData->clipDataId);
+	return cliprdr_write_lock_unlock_clipdata(s, unlockClipboardData->clipDataId);
 }
 
-UINT cliprdr_write_file_contents_response(wStream* s, const CLIPRDR_FILE_CONTENTS_RESPONSE* response)
+UINT cliprdr_write_file_contents_response(wStream* s,
+                                          const CLIPRDR_FILE_CONTENTS_RESPONSE* response)
 {
 	Stream_Write_UINT32(s, response->streamId); /* streamId (4 bytes) */
 	Stream_Write(s, response->requestedData, response->cbRequested);
-    return CHANNEL_RC_OK;
+	return CHANNEL_RC_OK;
 }
 
 UINT cliprdr_read_unlock_clipdata(wStream* s, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-    if (Stream_GetRemainingLength(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 	{
 		WLog_ERR(TAG, "not enough remaining data");
 		return ERROR_INVALID_DATA;
 	}
 
 	Stream_Read_UINT32(s, unlockClipboardData->clipDataId); /* clipDataId (4 bytes) */
-    return CHANNEL_RC_OK;
+	return CHANNEL_RC_OK;
 }
 
 UINT cliprdr_read_format_data_request(wStream* s, CLIPRDR_FORMAT_DATA_REQUEST* request)
@@ -117,14 +119,14 @@ UINT cliprdr_read_format_data_request(wStream* s, CLIPRDR_FORMAT_DATA_REQUEST* r
 	}
 
 	Stream_Read_UINT32(s, request->requestedFormatId); /* requestedFormatId (4 bytes) */
-    return CHANNEL_RC_OK;
+	return CHANNEL_RC_OK;
 }
 
 UINT cliprdr_read_format_data_response(wStream* s, CLIPRDR_FORMAT_DATA_RESPONSE* response)
 {
-    response->requestedFormatData = NULL;
+	response->requestedFormatData = NULL;
 
-    if (Stream_GetRemainingLength(s) < response->dataLen)
+	if (Stream_GetRemainingLength(s) < response->dataLen)
 	{
 		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
@@ -133,15 +135,15 @@ UINT cliprdr_read_format_data_response(wStream* s, CLIPRDR_FORMAT_DATA_RESPONSE*
 	if (response->dataLen)
 		response->requestedFormatData = Stream_Pointer(s);
 
-    return CHANNEL_RC_OK;
+	return CHANNEL_RC_OK;
 }
 
 UINT cliprdr_read_file_contents_request(wStream* s, CLIPRDR_FILE_CONTENTS_REQUEST* request)
 {
-    if (!cliprdr_validate_file_contents_request(request))
-        return ERROR_BAD_ARGUMENTS;
+	if (!cliprdr_validate_file_contents_request(request))
+		return ERROR_BAD_ARGUMENTS;
 
-    if (Stream_GetRemainingLength(s) < 24)
+	if (Stream_GetRemainingLength(s) < 24)
 	{
 		WLog_ERR(TAG, "not enough remaining data");
 		return ERROR_INVALID_DATA;
@@ -180,13 +182,13 @@ UINT cliprdr_read_file_contents_response(wStream* s, CLIPRDR_FILE_CONTENTS_RESPO
 
 UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL useLongFormatNames)
 {
-    UINT32 index;
+	UINT32 index;
 	size_t position;
 	BOOL asciiNames;
 	int formatNameLength;
 	char* szFormatName;
 	WCHAR* wszFormatName;
-    UINT32 dataLen = formatList->dataLen;
+	UINT32 dataLen = formatList->dataLen;
 	CLIPRDR_FORMAT* formats = NULL;
 	UINT error = CHANNEL_RC_OK;
 
@@ -208,12 +210,12 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 		if ((formatList->numFormats * 36) != dataLen)
 		{
-			WLog_ERR(TAG, "Invalid short format list length: %"PRIu32"", dataLen);
+			WLog_ERR(TAG, "Invalid short format list length: %" PRIu32 "", dataLen);
 			return ERROR_INTERNAL_ERROR;
 		}
 
 		if (formatList->numFormats)
-			formats = (CLIPRDR_FORMAT*) calloc(formatList->numFormats, sizeof(CLIPRDR_FORMAT));
+			formats = (CLIPRDR_FORMAT*)calloc(formatList->numFormats, sizeof(CLIPRDR_FORMAT));
 
 		if (!formats)
 		{
@@ -240,12 +242,12 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 			if (asciiNames)
 			{
-				szFormatName = (char*) Stream_Pointer(s);
+				szFormatName = (char*)Stream_Pointer(s);
 
 				if (szFormatName[0])
 				{
 					/* ensure null termination */
-					formats[index].formatName = (char*) malloc(32 + 1);
+					formats[index].formatName = (char*)malloc(32 + 1);
 					if (!formats[index].formatName)
 					{
 						WLog_ERR(TAG, "malloc failed!");
@@ -258,7 +260,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 			}
 			else
 			{
-				wszFormatName = (WCHAR*) Stream_Pointer(s);
+				wszFormatName = (WCHAR*)Stream_Pointer(s);
 
 				if (wszFormatName[0])
 				{
@@ -266,7 +268,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 					 * string on success, even if the source string isn't.
 					 */
 					if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, 16,
-						&(formats[index].formatName), 0, NULL, NULL) < 1)
+					                       &(formats[index].formatName), 0, NULL, NULL) < 1)
 					{
 						WLog_ERR(TAG, "failed to convert short clipboard format name");
 						error = ERROR_INTERNAL_ERROR;
@@ -287,7 +289,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 			Stream_Seek(s, 4); /* formatId (4 bytes) */
 			dataLen -= 4;
 
-			wszFormatName = (WCHAR*) Stream_Pointer(s);
+			wszFormatName = (WCHAR*)Stream_Pointer(s);
 
 			if (!wszFormatName[0])
 				formatNameLength = 0;
@@ -304,7 +306,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 		Stream_SetPosition(s, position);
 
 		if (formatList->numFormats)
-			formats = (CLIPRDR_FORMAT*) calloc(formatList->numFormats, sizeof(CLIPRDR_FORMAT));
+			formats = (CLIPRDR_FORMAT*)calloc(formatList->numFormats, sizeof(CLIPRDR_FORMAT));
 
 		if (!formats)
 		{
@@ -321,7 +323,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 			formats[index].formatName = NULL;
 
-			wszFormatName = (WCHAR*) Stream_Pointer(s);
+			wszFormatName = (WCHAR*)Stream_Pointer(s);
 
 			if (!wszFormatName[0])
 				formatNameLength = 0;
@@ -330,8 +332,8 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 			if (formatNameLength)
 			{
-				if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, -1,
-					&(formats[index].formatName), 0, NULL, NULL) < 1)
+				if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, -1, &(formats[index].formatName),
+				                       0, NULL, NULL) < 1)
 				{
 					WLog_ERR(TAG, "failed to convert long clipboard format name");
 					error = ERROR_INTERNAL_ERROR;
@@ -346,7 +348,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 		}
 	}
 
-    return error;
+	return error;
 
 error_out:
 	cliprdr_free_format_list(formatList);
@@ -355,12 +357,12 @@ error_out:
 
 void cliprdr_free_format_list(CLIPRDR_FORMAT_LIST* formatList)
 {
-    UINT index = 0;
+	UINT index = 0;
 
-    if (formatList == NULL)
-        return;
+	if (formatList == NULL)
+		return;
 
-    if (formatList->formats)
+	if (formatList->formats)
 	{
 		for (index = 0; index < formatList->numFormats; index++)
 		{
