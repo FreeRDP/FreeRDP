@@ -227,7 +227,6 @@ struct _CLIPRDR_FILE_CONTENTS_RESPONSE
 	DEFINE_CLIPRDR_HEADER_COMMON();
 
 	UINT32 streamId;
-	UINT32 dwFlags;
 	UINT32 cbRequested;
 	const BYTE* requestedData;
 };
