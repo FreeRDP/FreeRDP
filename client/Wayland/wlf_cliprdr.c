@@ -752,7 +752,6 @@ static UINT wlf_cliprdr_send_file_contents_failure(CliprdrClientContext* context
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 	response.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = fileContentsRequest->streamId;
-	response.dwFlags = fileContentsRequest->dwFlags;
 	return context->ClientFileContentsResponse(context, &response);
 }
 

@@ -33,6 +33,7 @@
 
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
+#include "../cliprdr_common.h"
 
 #ifdef WITH_DEBUG_CLIPRDR
 static const char* const CB_MSG_TYPE_STRINGS[] =
@@ -316,28 +317,12 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (Stream_GetRemainingLength(s) < 24)
-	{
-		WLog_ERR(TAG, "not enough remaining data");
-		return ERROR_INVALID_DATA;
-	}
-
 	request.msgType = CB_FILECONTENTS_REQUEST;
 	request.msgFlags = flags;
 	request.dataLen = length;
-	request.haveClipDataId = FALSE;
-	Stream_Read_UINT32(s, request.streamId); /* streamId (4 bytes) */
-	Stream_Read_UINT32(s, request.listIndex); /* listIndex (4 bytes) */
-	Stream_Read_UINT32(s, request.dwFlags); /* dwFlags (4 bytes) */
-	Stream_Read_UINT32(s, request.nPositionLow); /* nPositionLow (4 bytes) */
-	Stream_Read_UINT32(s, request.nPositionHigh); /* nPositionHigh (4 bytes) */
-	Stream_Read_UINT32(s, request.cbRequested); /* cbRequested (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) >= 4)
-	{
-		Stream_Read_UINT32(s, request.clipDataId); /* clipDataId (4 bytes) */
-		request.haveClipDataId = TRUE;
-	}
+	if ((error = cliprdr_read_file_contents_request(s, &request)))
+		return error;
 
 	IFCALLRET(context->ServerFileContentsRequest, error, context, &request);
 
@@ -366,18 +351,13 @@ static UINT cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough remaining data");
-		return ERROR_INVALID_DATA;
-	}
-
 	response.msgType = CB_FILECONTENTS_RESPONSE;
 	response.msgFlags = flags;
 	response.dataLen = length;
-	Stream_Read_UINT32(s, response.streamId); /* streamId (4 bytes) */
-	response.cbRequested = length - 4;
-	response.requestedData = Stream_Pointer(s); /* requestedFileContentsData */
+
+	if ((error = cliprdr_read_file_contents_response(s, &response)))
+		return error;
+
 	IFCALLRET(context->ServerFileContentsResponse, error, context, &response);
 
 	if (error)
@@ -442,16 +422,13 @@ static UINT cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough remaining data");
-		return ERROR_INVALID_DATA;
-	}
+	if ((error = cliprdr_read_unlock_clipdata(s, &unlockClipboardData)))
+		return error;
 
 	unlockClipboardData.msgType = CB_UNLOCK_CLIPDATA;
 	unlockClipboardData.msgFlags = flags;
 	unlockClipboardData.dataLen = length;
-	Stream_Read_UINT32(s, unlockClipboardData.clipDataId); /* clipDataId (4 bytes) */
+
 	IFCALLRET(context->ServerUnlockClipboardData, error, context,
 	          &unlockClipboardData);
 
@@ -797,6 +774,7 @@ static UINT cliprdr_client_format_list_response(CliprdrClientContext* context,
 static UINT cliprdr_client_lock_clipboard_data(CliprdrClientContext* context,
         const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
+	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
 	s = cliprdr_packet_new(CB_LOCK_CLIPDATA, 0, 4);
@@ -807,11 +785,17 @@ static UINT cliprdr_client_lock_clipboard_data(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, lockClipboardData->clipDataId); /* clipDataId (4 bytes) */
+	if ((error = cliprdr_write_lock_clipdata(s, lockClipboardData)))
+		goto fail;
+
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientLockClipboardData: clipDataId: 0x%08"PRIX32"",
 	           lockClipboardData->clipDataId);
 	return cliprdr_packet_send(cliprdr, s);
+
+fail:
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
@@ -822,6 +806,7 @@ static UINT cliprdr_client_lock_clipboard_data(CliprdrClientContext* context,
 static UINT cliprdr_client_unlock_clipboard_data(CliprdrClientContext* context,
         const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
+	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
 	s = cliprdr_packet_new(CB_UNLOCK_CLIPDATA, 0, 4);
@@ -832,11 +817,18 @@ static UINT cliprdr_client_unlock_clipboard_data(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
+	if ((error = cliprdr_write_unlock_clipdata(s, unlockClipboardData)))
+		goto fail;
+
 	Stream_Write_UINT32(s, unlockClipboardData->clipDataId); /* clipDataId (4 bytes) */
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientUnlockClipboardData: clipDataId: 0x%08"PRIX32"",
 	           unlockClipboardData->clipDataId);
 	return cliprdr_packet_send(cliprdr, s);
+
+fail:
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
@@ -897,8 +889,10 @@ static UINT cliprdr_client_format_data_response(CliprdrClientContext* context,
 static UINT cliprdr_client_file_contents_request(CliprdrClientContext* context,
         const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
+	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
 	s = cliprdr_packet_new(CB_FILECONTENTS_REQUEST, 0, 28);
 
 	if (!s)
@@ -907,20 +901,17 @@ static UINT cliprdr_client_file_contents_request(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, fileContentsRequest->streamId); /* streamId (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->listIndex); /* listIndex (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->dwFlags); /* dwFlags (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->nPositionLow); /* nPositionLow (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->nPositionHigh); /* nPositionHigh (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->cbRequested); /* cbRequested (4 bytes) */
-
-	if (fileContentsRequest->haveClipDataId)
-		Stream_Write_UINT32(s, fileContentsRequest->clipDataId); /* clipDataId (4 bytes) */
+	if ((error = cliprdr_write_file_contents_request(s, fileContentsRequest)))
+		goto fail;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientFileContentsRequest: streamId: 0x%08"PRIX32"",
 	           fileContentsRequest->streamId);
 	return cliprdr_packet_send(cliprdr, s);
+
+fail:
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
@@ -931,6 +922,7 @@ static UINT cliprdr_client_file_contents_request(CliprdrClientContext* context,
 static UINT cliprdr_client_file_contents_response(CliprdrClientContext* context,
         const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
+	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
 	s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, fileContentsResponse->msgFlags,
@@ -942,18 +934,17 @@ static UINT cliprdr_client_file_contents_response(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, fileContentsResponse->streamId); /* streamId (4 bytes) */
-	/**
-	 * requestedFileContentsData:
-	 * FILECONTENTS_SIZE: file size as UINT64
-	 * FILECONTENTS_RANGE: file data from requested range
-	 */
-	Stream_Write(s, fileContentsResponse->requestedData,
-	             fileContentsResponse->cbRequested);
+	if ((error = cliprdr_write_file_contents_response(s, fileContentsResponse)))
+		goto fail;
+
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientFileContentsResponse: streamId: 0x%08"PRIX32"",
 	           fileContentsResponse->streamId);
 	return cliprdr_packet_send(cliprdr, s);
+
+fail:
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
