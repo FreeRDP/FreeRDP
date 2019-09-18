@@ -43,10 +43,14 @@ struct proxy_config
 	BOOL Keyboard;
 	BOOL Mouse;
 
-	/* security */
-	BOOL NlaSecurity;
-	BOOL TlsSecurity;
-	BOOL RdpSecurity;
+	/* server security */
+	BOOL ServerTlsSecurity;
+	BOOL ServerRdpSecurity;
+
+	/* client security */
+	BOOL ClientNlaSecurity;
+	BOOL ClientTlsSecurity;
+	BOOL ClientRdpSecurity;
 
 	/* channels */
 	BOOL GFX;
@@ -54,7 +58,7 @@ struct proxy_config
 	BOOL Clipboard;
 	BOOL AudioOutput;
 
-	/* clipboard specific settings*/
+	/* clipboard specific settings */
 	BOOL TextOnly;
 	UINT32 MaxTextLength;
 };
