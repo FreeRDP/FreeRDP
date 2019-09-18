@@ -266,47 +266,94 @@ static void pf_client_post_disconnect(freerdp* instance)
 		proxy_data_abort_connect(pdata);
 }
 
+/*
+ * pf_client_should_retry_without_nla:
+ *
+ * returns TRUE if in case of connection failure, the client should try again without NLA.
+ * Otherwise, returns FALSE.
+ */
+static BOOL pf_client_should_retry_without_nla(pClientContext* pc)
+{
+	rdpSettings* settings = pc->context.settings;
+	proxyConfig* config = pc->pdata->config;
+
+	if (!settings->NlaSecurity)
+		return FALSE;
+
+	return config->ClientTlsSecurity || config->ClientRdpSecurity;
+}
+
+static void pf_client_set_security_settings(pClientContext* pc)
+{
+	rdpSettings* settings = pc->context.settings;
+	proxyConfig* config = pc->pdata->config;
+
+	settings->RdpSecurity = config->ClientRdpSecurity;
+	settings->TlsSecurity = config->ClientTlsSecurity;
+	settings->NlaSecurity = FALSE;
+
+	if (!config->ClientNlaSecurity)
+		return;
+
+	if (!settings->Username || !settings->Password)
+		return;
+
+	settings->NlaSecurity = TRUE;
+}
+
+static BOOL pf_client_connect_without_nla(pClientContext* pc)
+{
+	freerdp* instance = pc->context.instance;
+	rdpSettings* settings = pc->context.settings;
+
+	/* disable NLA */
+	settings->NlaSecurity = FALSE;
+
+	/* do not allow next connection failure */
+	pc->allow_next_conn_failure = FALSE;
+	return freerdp_connect(instance);
+}
+
 static BOOL pf_client_connect(freerdp* instance)
 {
 	pClientContext* pc = (pClientContext*) instance->context;
-	rdpSettings* settings = pc->context.settings;
+	BOOL rc = FALSE;
+	BOOL retry_without_nla = FALSE;
 
-	/* if credentials are available, always try to connect with NLA on first try */
-	if (settings->Username && settings->Password)
-	{
-		settings->NlaSecurity = TRUE;
-		pc->allow_next_conn_failure = TRUE;
-	}
-	else
-		settings->NlaSecurity = FALSE;
+	pf_client_set_security_settings(pc);
+	if (pf_client_should_retry_without_nla(pc))
+		retry_without_nla = pc->allow_next_conn_failure = TRUE;
 
 	if (!freerdp_connect(instance))
 	{
-		if (settings->NlaSecurity)
+		UINT32 last_error = freerdp_get_last_error(instance->context);
+		UINT32 last_error_type = GET_FREERDP_ERROR_TYPE(last_error);
+
+		/* Do not retry if last error is not ERRCONNECT_LOGON_FAILURE */
+		if (last_error_type != ERRCONNECT_LOGON_FAILURE)
+			retry_without_nla = FALSE;
+
+		if (retry_without_nla)
 		{
-			WLog_ERR(TAG, "freerdp_connect() failed, trying to connect without NLA");
+			WLog_ERR(TAG, "failed to connect with NLA. disabling NLA and retyring...");
 
-			/* disable NLA, enable TLS */
-			settings->NlaSecurity = FALSE;
-			settings->RdpSecurity = TRUE;
-			settings->TlsSecurity = TRUE;
-
-			pc->allow_next_conn_failure = FALSE;
-			if (!freerdp_connect(instance))
+			if (!pf_client_connect_without_nla(pc))
 			{
-				WLog_ERR(TAG, "connection failure");
-				return FALSE;
+				WLog_ERR(TAG, "pf_client_connect_without_nla failed!");
+				goto out;
 			}
 		}
 		else
 		{
-			WLog_ERR(TAG, "connection failure");
-			return FALSE;
+			WLog_ERR(TAG, "connection failure!");
+			goto out;
 		}
 	}
 
+	rc = TRUE;
+out:
 	pc->allow_next_conn_failure = FALSE;
-	return TRUE;
+	return rc;
 }
 
 /**
@@ -337,7 +384,10 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 		return FALSE;
 
 	if (!pf_client_connect(instance))
+	{
+		proxy_data_abort_connect(pdata);
 		return FALSE;
+	}
 
 	while (!freerdp_shall_disconnect(instance))
 	{

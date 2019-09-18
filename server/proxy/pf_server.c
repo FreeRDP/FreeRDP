@@ -240,9 +240,9 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		goto out_free_peer;
 	}
 
-	client->settings->RdpSecurity = config->RdpSecurity;
-	client->settings->TlsSecurity = config->TlsSecurity;
-	client->settings->NlaSecurity = config->NlaSecurity;
+	client->settings->RdpSecurity = config->ServerRdpSecurity;
+	client->settings->TlsSecurity = config->ServerTlsSecurity;
+	client->settings->NlaSecurity = FALSE; /* currently NLA is not supported in proxy server */
 	client->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;

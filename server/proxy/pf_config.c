@@ -105,9 +105,12 @@ static BOOL pf_config_load_input(wIniFile* ini, proxyConfig* config)
 
 static BOOL pf_config_load_security(wIniFile* ini, proxyConfig* config)
 {
-	config->TlsSecurity = CONFIG_GET_BOOL(ini, "Security", "TlsSecurity");
-	config->NlaSecurity = CONFIG_GET_BOOL(ini, "Security", "NlaSecurity");
-	config->RdpSecurity = CONFIG_GET_BOOL(ini, "Security", "RdpSecurity");
+	config->ServerTlsSecurity = CONFIG_GET_BOOL(ini, "Security", "ServerTlsSecurity");
+	config->ServerRdpSecurity = CONFIG_GET_BOOL(ini, "Security", "ServerRdpSecurity");
+
+	config->ClientTlsSecurity = CONFIG_GET_BOOL(ini, "Security", "ClientTlsSecurity");
+	config->ClientNlaSecurity = CONFIG_GET_BOOL(ini, "Security", "ClientNlaSecurity");
+	config->ClientRdpSecurity = CONFIG_GET_BOOL(ini, "Security", "ClientRdpSecurity");
 	return TRUE;
 }
 
@@ -210,10 +213,14 @@ void pf_server_config_print(proxyConfig* config)
 	CONFIG_PRINT_BOOL(config, Keyboard);
 	CONFIG_PRINT_BOOL(config, Mouse);
 
-	CONFIG_PRINT_SECTION("Security");
-	CONFIG_PRINT_BOOL(config, NlaSecurity);
-	CONFIG_PRINT_BOOL(config, TlsSecurity);
-	CONFIG_PRINT_BOOL(config, RdpSecurity);
+	CONFIG_PRINT_SECTION("Server Security");
+	CONFIG_PRINT_BOOL(config, ServerTlsSecurity);
+	CONFIG_PRINT_BOOL(config, ServerRdpSecurity);
+
+	CONFIG_PRINT_SECTION("Client Security");
+	CONFIG_PRINT_BOOL(config, ClientNlaSecurity);
+	CONFIG_PRINT_BOOL(config, ClientTlsSecurity);
+	CONFIG_PRINT_BOOL(config, ClientRdpSecurity);
 
 	CONFIG_PRINT_SECTION("Channels");
 	CONFIG_PRINT_BOOL(config, GFX);
