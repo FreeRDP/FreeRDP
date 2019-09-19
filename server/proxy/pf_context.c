@@ -26,6 +26,9 @@
 static BOOL client_to_proxy_context_new(freerdp_peer* client,
                                         pServerContext* context)
 {
+	context->dynvcReady = NULL;
+	context->modules_info = NULL;
+
 	context->modules_info = HashTable_New(TRUE);
 	if (!context->modules_info)
 		return FALSE;
@@ -33,12 +36,24 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client,
 	context->vcm = WTSOpenServerA((LPSTR) client->context);
 
 	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
-		goto fail_open_server;
+		goto error;
+
+	if (!(context->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		goto error;
 
 	return TRUE;
-fail_open_server:
+
+error:
 	HashTable_Free(context->modules_info);
+	WTSCloseServer((HANDLE)context->vcm);
 	context->vcm = NULL;
+
+	if (context->dynvcReady)
+	{
+		CloseHandle(context->dynvcReady);
+		context->dynvcReady = NULL;
+	}
+
 	return FALSE;
 }
 
@@ -62,11 +77,12 @@ static void client_to_proxy_context_free(freerdp_peer* client,
 	HashTable_Free(context->modules_info);
 }
 
-BOOL init_p_server_context(freerdp_peer* client)
+BOOL pf_context_init_server_context(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(pServerContext);
 	client->ContextNew = (psPeerContextNew) client_to_proxy_context_new;
 	client->ContextFree = (psPeerContextFree) client_to_proxy_context_free;
+
 	return freerdp_peer_context_new(client);
 }
 
@@ -75,7 +91,7 @@ BOOL init_p_server_context(freerdp_peer* client)
  * when using this function, is_dst_server must be set to TRUE if the destination
  * settings are server's settings. otherwise, they must be set to FALSE.
  */
-BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_dst_server)
+BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 {
 	rdpSettings* before_copy = freerdp_settings_clone(dst);
 	if (!before_copy)
@@ -97,7 +113,7 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_
 	free(dst->CertificateContent);
 
 	/* adjust pointer to instance pointer */
-	dst->ServerMode = is_dst_server;
+	dst->ServerMode = before_copy->ServerMode;
 
 	/* revert some values that must not be changed */
 	dst->ConfigPath = _strdup(before_copy->ConfigPath);
@@ -109,12 +125,7 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_
 	dst->CertificateName = _strdup(before_copy->CertificateName);
 	dst->CertificateContent = _strdup(before_copy->CertificateContent);
 
-	if (is_dst_server)
-	{
-		free(dst->ServerCertificate);
-		dst->ServerCertificateLength = before_copy->ServerCertificateLength;
-	}
-	else
+	if (!dst->ServerMode)
 	{
 		/* adjust instance pointer for client's context */
 		dst->instance = before_copy->instance;
@@ -127,7 +138,7 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src, BOOL is_
 	return TRUE;
 }
 
-rdpContext* p_client_context_create(rdpSettings* clientSettings)
+rdpContext* pf_context_create_client_context(rdpSettings* clientSettings)
 {
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	rdpContext* context;
@@ -137,9 +148,7 @@ rdpContext* p_client_context_create(rdpSettings* clientSettings)
 	if (!context)
 		return NULL;
 
-	pf_context_copy_settings(context->settings, clientSettings, FALSE);
-
-	if (!context->settings)
+	if (!pf_context_copy_settings(context->settings, clientSettings))
 		goto error;
 
 	return context;

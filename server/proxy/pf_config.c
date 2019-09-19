@@ -36,9 +36,6 @@
 #define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu16"", #key, config->key);
 #define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu32"", #key, config->key);
 
-#define CONFIG_GET_STR(ini, section, key) IniFile_GetKeyValueString(ini, section, key)
-#define CONFIG_GET_BOOL(ini, section, key) IniFile_GetKeyValueInt(ini, section, key)
-
 static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, UINT16* result)
 {
 	int val;
@@ -72,7 +69,6 @@ static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char*
 static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
 {
 	config->Host = _strdup(CONFIG_GET_STR(ini, "Server", "Host"));
-	config->LocalOnly = CONFIG_GET_BOOL(ini, "Server", "LocalOnly");
 	
 	if (!pf_config_get_uint16(ini, "Server", "Port", &config->Port))
 		return FALSE;
@@ -129,7 +125,7 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 {
 	UINT32 index;
 	int modules_count = 0;
-	char** module_names;
+	char** module_names = NULL;
 
 	module_names = IniFile_GetSectionKeyNames(ini, "Modules", &modules_count);
 
@@ -147,6 +143,7 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 		WLog_INFO(TAG, "module '%s' is loaded!", module_name);
 	}
 
+	free(module_names);
 	return TRUE;
 }
 
