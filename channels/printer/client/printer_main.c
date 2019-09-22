@@ -971,10 +971,10 @@ FREERDP_API DeviceServiceEntry
 	int i;
 	char* name;
 	char* driver_name;
+    BOOL default_backend = TRUE;
 	RDPDR_PRINTER* device = NULL;
 	rdpPrinterDriver* driver = NULL;
-	UINT error = CHANNEL_RC_OK;
-	size_t pos;
+    UINT error = CHANNEL_RC_OK;
 
 	if (!pEntryPoints || !pEntryPoints->device)
 		return ERROR_INVALID_PARAMETER;
@@ -996,10 +996,24 @@ FREERDP_API DeviceServiceEntry
 			const char* backend = sep + 1;
 			*sep = '\0';
 			driver = printer_load_backend(backend);
+            default_backend = FALSE;
 		}
 	}
-	else
-		driver = printer_load_backend("");
+
+    if (!driver && default_backend)
+    {
+        const char* backend =
+#if defined(WITH_CUPS)
+        "cups"
+#elif defined(_WIN32)
+        "win"
+#else
+        ""
+#endif
+                ;
+
+        driver = printer_load_backend(backend);
+    }
 
 	if (!driver)
 	{
