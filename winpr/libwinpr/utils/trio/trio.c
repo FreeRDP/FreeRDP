@@ -1391,6 +1391,8 @@ TRIO_ARGS1((base),
  * Description:
  *  Parse the qualifiers of a potential conversion specifier
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 TRIO_PRIVATE int
 TrioParseQualifiers
 TRIO_ARGS4((type, format, offset, parameter),
@@ -1417,8 +1419,6 @@ TRIO_ARGS4((type, format, offset, parameter),
     {
       ch = format[offset++];
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
       switch (ch)
         {
 	case QUALIFIER_SPACE:
@@ -1682,7 +1682,6 @@ TRIO_ARGS4((type, format, offset, parameter),
 	  /* Bail out completely to make the error more obvious */
 	  return TRIO_ERROR_RETURN(TRIO_EINVAL, offset);
 	}
-#pragma GCC diagnostic pop
 
     } /* while qualifier */
 
@@ -1690,6 +1689,7 @@ TRIO_ARGS4((type, format, offset, parameter),
 
   return 0;
 }
+#pragma GCC diagnostic pop
 
 /*************************************************************************
  * TrioParseSpecifier
@@ -1697,6 +1697,8 @@ TRIO_ARGS4((type, format, offset, parameter),
  * Description:
  *  Parse the specifier part of a potential conversion specifier
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 TRIO_PRIVATE int
 TrioParseSpecifier
 TRIO_ARGS4((type, format, offset, parameter),
@@ -1707,8 +1709,6 @@ TRIO_ARGS4((type, format, offset, parameter),
 {
   parameter->baseSpecifier = NO_BASE;
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
   switch (format[offset++])
     {
 #if defined(SPECIFIER_CHAR_UPPER)
@@ -1935,12 +1935,12 @@ TRIO_ARGS4((type, format, offset, parameter),
       /* Bail out completely to make the error more obvious */
       return TRIO_ERROR_RETURN(TRIO_EINVAL, offset);
   }
-#pragma GCC diagnostic pop
 
   parameter->endOffset = offset;
 
   return 0;
 }
+#pragma GCC diagnostic pop
 
 /*************************************************************************
  * TrioParse
