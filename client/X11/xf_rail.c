@@ -76,7 +76,6 @@ struct xf_rail_icon_cache
 	UINT32 numCacheEntries;
 	xfRailIcon scratch;
 };
-typedef struct xf_rail_icon_cache xfRailIconCache;
 
 void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 {
