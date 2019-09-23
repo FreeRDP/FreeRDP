@@ -20,10 +20,9 @@
 #ifndef FREERDP_LIB_CORE_LICENSE_H
 #define FREERDP_LIB_CORE_LICENSE_H
 
-typedef struct rdp_license rdpLicense;
-
 #include "rdp.h"
 
+#include <freerdp/license.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/crypto/certificate.h>
 
