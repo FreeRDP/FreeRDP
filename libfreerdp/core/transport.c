@@ -395,6 +395,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 			if (!transport->tsg)
 				return FALSE;
 
+			/* Reset error condition from RDG */
+			freerdp_set_last_error(context, FREERDP_ERROR_SUCCESS);
 			status = tsg_connect(transport->tsg, hostname, port, timeout);
 
 			if (status)

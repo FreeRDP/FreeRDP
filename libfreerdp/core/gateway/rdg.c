@@ -664,6 +664,7 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 	if (FAILED(errorCode))
 	{
 		WLog_ERR(TAG, "Handshake error %s", error);
+		freerdp_set_last_error(rdg->context, errorCode);
 		return FALSE;
 	}
 
@@ -700,6 +701,7 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 	if (FAILED(errorCode))
 	{
 		WLog_ERR(TAG, "Tunnel creation error %s", error);
+		freerdp_set_last_error(rdg->context, errorCode);
 		return FALSE;
 	}
 
@@ -735,6 +737,7 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	if (FAILED(errorCode))
 	{
 		WLog_ERR(TAG, "Tunnel authorization error %s", error);
+		freerdp_set_last_error(rdg->context, errorCode);
 		return FALSE;
 	}
 
@@ -771,6 +774,7 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 	{
 		WLog_ERR(TAG, "channel response errorCode=%s, fieldsPresent=%s",
 		         error, channel_response_fields_present_to_string(fieldsPresent));
+		freerdp_set_last_error(rdg->context, errorCode);
 		return FALSE;
 	}
 
