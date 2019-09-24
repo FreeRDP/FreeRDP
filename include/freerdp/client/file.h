@@ -23,6 +23,9 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
+/* Ignore invalid integer values */
+#define RDP_FILE_FLAG_PARSE_INT_RELAXED 1
+
 typedef struct rdp_file rdpFile;
 typedef BOOL (*rdp_file_fkt_parse)(void* context, const char* key, char type, const char* value);
 
@@ -52,6 +55,7 @@ FREERDP_API int freerdp_client_rdp_file_set_integer_option(rdpFile* file, const 
 FREERDP_API int freerdp_client_rdp_file_get_integer_option(rdpFile* file, const char* name);
 
 FREERDP_API rdpFile* freerdp_client_rdp_file_new(void);
+FREERDP_API rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags);
 FREERDP_API void freerdp_client_rdp_file_free(rdpFile* file);
 
 #ifdef __cplusplus
