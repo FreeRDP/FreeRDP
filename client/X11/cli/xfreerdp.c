@@ -65,7 +65,9 @@ int main(int argc, char* argv[])
 			xf_list_monitors(xfc);
 
 		freerdp_client_context_free(context);
-		return 0;
+		if (settings->ListMonitors)
+			return 0;
+		return status;
 	}
 
 	freerdp_client_start(context);
