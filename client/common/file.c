@@ -198,6 +198,8 @@ struct rdp_file
 	char** argv;
 	size_t argSize;
 	void* context;
+
+	DWORD flags;
 };
 
 /*
@@ -378,8 +380,16 @@ static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* nam
 	if ((endptr == NULL) || (errno != 0) || (endptr == value) ||
 			(ivalue > INT32_MAX) || (ivalue < INT32_MIN))
 	{
-		WLog_ERR(TAG, "Failed to convert RDP file integer option %s [value=%s]", name, value);
-		return FALSE;
+		if (file->flags & RDP_FILE_FLAG_PARSE_INT_RELAXED)
+		{
+			WLog_WARN(TAG, "Integer option %s has invalid value %s, using default", name, value);
+			return TRUE;
+		}
+		else
+		{
+			WLog_ERR(TAG, "Failed to convert RDP file integer option %s [value=%s]", name, value);
+			return FALSE;
+		}
 	}
 
 	freerdp_client_rdp_file_set_integer(file, name, ivalue, index);
@@ -1775,45 +1785,47 @@ static void freerdp_client_file_string_check_free(LPSTR str)
 	if (~((size_t)str))
 		free(str);
 }
-rdpFile* freerdp_client_rdp_file_new()
+
+rdpFile* freerdp_client_rdp_file_new(void)
 {
-	rdpFile* file;
-	file = (rdpFile*)malloc(sizeof(rdpFile));
+	return freerdp_client_rdp_file_new_ex(0);
+}
 
-	if (file)
-	{
-		FillMemory(file, sizeof(rdpFile), 0xFF);
-		file->lineCount = 0;
-		file->lineSize = 32;
-		file->lines = (rdpFileLine*)calloc(file->lineSize, sizeof(rdpFileLine));
+rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags)
+{
+	rdpFile* file = (rdpFile*)malloc(sizeof(rdpFile));
 
-		if (!file->lines)
-		{
-			free(file);
-			return NULL;
-		}
+	if (!file)
+		return NULL;
 
-		file->argc = 0;
-		file->argSize = 32;
-		file->argv = (char**)calloc(file->argSize, sizeof(char*));
+	file->flags = flags;
 
-		if (!file->argv)
-		{
-			free(file->lines);
-			free(file);
-			return NULL;
-		}
+	FillMemory(file, sizeof(rdpFile), 0xFF);
+	file->argv = NULL;
+	file->lines = NULL;
+	file->lineCount = 0;
+	file->lineSize = 32;
+	file->lines = (rdpFileLine*)calloc(file->lineSize, sizeof(rdpFileLine));
 
-		if (!freerdp_client_add_option(file, "freerdp"))
-		{
-			free(file->argv);
-			free(file->lines);
-			free(file);
-			return NULL;
-		}
-	}
+	if (!file->lines)
+		goto fail;
+
+	file->argc = 0;
+	file->argSize = 32;
+	file->argv = (char**)calloc(file->argSize, sizeof(char*));
+
+	if (!file->argv)
+		goto fail;
+
+	if (!freerdp_client_add_option(file, "freerdp"))
+		goto fail;
 
 	return file;
+fail:
+	free(file->argv);
+	free(file->lines);
+	free(file);
+	return NULL;
 }
 void freerdp_client_rdp_file_free(rdpFile* file)
 {
