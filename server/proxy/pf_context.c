@@ -138,9 +138,10 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 	return TRUE;
 }
 
-rdpContext* pf_context_create_client_context(rdpSettings* clientSettings)
+pClientContext* pf_context_create_client_context(rdpSettings* clientSettings)
 {
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
+	pClientContext* pc;
 	rdpContext* context;
 	RdpClientEntry(&clientEntryPoints);
 	context = freerdp_client_context_new(&clientEntryPoints);
@@ -148,10 +149,12 @@ rdpContext* pf_context_create_client_context(rdpSettings* clientSettings)
 	if (!context)
 		return NULL;
 
+	pc = (pClientContext*) context;
+
 	if (!pf_context_copy_settings(context->settings, clientSettings))
 		goto error;
 
-	return context;
+	return pc;
 error:
 	freerdp_client_context_free(context);
 	return NULL;
