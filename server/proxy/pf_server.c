@@ -179,6 +179,8 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
+	pf_server_register_input_callbacks(client->input);
+	pf_server_register_update_callbacks(client->update);
 	return TRUE;
 }
 
@@ -254,8 +256,6 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	client->PostConnect = pf_server_post_connect;
 	client->Activate = pf_server_activate;
 	client->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
-	pf_server_register_input_callbacks(client->input);
-	pf_server_register_update_callbacks(client->update);
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
 	WLog_INFO(TAG, "Client connected: %s", client->local ? "(local)" : client->hostname);
