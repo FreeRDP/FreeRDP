@@ -138,7 +138,8 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 static BOOL pf_server_post_connect(freerdp_peer* client)
 {
 	pServerContext* ps;
-	rdpContext* pc;
+	pClientContext* pc;
+	rdpSettings* client_settings;
 	proxyData* pdata;
 	ps = (pServerContext*)client->context;
 	pdata = ps->pdata;
@@ -150,18 +151,20 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	/* keep both sides of the connection in pdata */
-	((pClientContext*)pc)->pdata = ps->pdata;
-	pdata->pc = (pClientContext*)pc;
+	client_settings = pc->context.settings;
 
-	if (!pf_server_get_target_info(client->context, pc->settings, pdata->config))
+	/* keep both sides of the connection in pdata */
+	pc->pdata = ps->pdata;
+	pdata->pc = pc;
+
+	if (!pf_server_get_target_info(client->context, client_settings, pdata->config))
 	{
 		WLog_ERR(TAG, "pf_server_post_connect(): pf_server_get_target_info failed!");
 		return FALSE;
 	}
 
-	WLog_INFO(TAG, "pf_server_post_connect(): target == %s:%"PRIu16"", pc->settings->ServerHostname,
-	      pc->settings->ServerPort);
+	WLog_INFO(TAG, "pf_server_post_connect(): target == %s:%"PRIu16"",
+	          client_settings->ServerHostname, client_settings->ServerPort);
 
 	if (!pf_server_channels_init(ps))
 	{

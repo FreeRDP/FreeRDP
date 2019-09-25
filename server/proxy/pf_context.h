@@ -101,7 +101,7 @@ struct proxy_data
 
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src);
 BOOL pf_context_init_server_context(freerdp_peer* client);
-rdpContext* pf_context_create_client_context(rdpSettings* clientSettings);
+pClientContext* pf_context_create_client_context(rdpSettings* clientSettings);
 
 proxyData* proxy_data_new(void);
 void proxy_data_free(proxyData* pdata);
