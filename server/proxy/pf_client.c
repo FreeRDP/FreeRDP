@@ -149,6 +149,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	settings->SupportDisplayControl = config->DisplayControl;
 	settings->DynamicResolutionUpdate = config->DisplayControl;
 
+	settings->AutoReconnectionEnabled = TRUE;
 	/**
 	 * Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded.
