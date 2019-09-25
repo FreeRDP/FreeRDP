@@ -141,6 +141,14 @@ static BOOL pf_client_send_pointer_cached(rdpContext* context,
 	return ps->update->pointer->PointerCached(ps, pointer_cached);
 }
 
+static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* data)
+{
+	pClientContext* pc = (pClientContext*) context;
+	proxyData* pdata = pc->pdata;
+	rdpContext* ps = (rdpContext*)pdata->ps;
+	return ps->update->SaveSessionInfo(ps, type, data);
+}
+
 void pf_client_register_update_callbacks(rdpUpdate* update)
 {
 	update->BeginPaint = pf_client_begin_paint;
@@ -148,6 +156,7 @@ void pf_client_register_update_callbacks(rdpUpdate* update)
 	update->BitmapUpdate = pf_client_bitmap_update;
 	update->DesktopResize = pf_client_desktop_resize;
 	update->RemoteMonitors = pf_client_remote_monitors;
+	update->SaveSessionInfo = pf_client_save_session_info;
 
 	update->pointer->PointerSystem = pf_client_send_pointer_system;
 	update->pointer->PointerPosition = pf_client_send_pointer_position;
