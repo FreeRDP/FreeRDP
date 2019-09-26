@@ -22,6 +22,7 @@
 #endif
 
 #include <errno.h>
+#include <ctype.h>
 
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
@@ -579,6 +580,86 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, siz
 	return freerdp_client_parse_rdp_file_buffer_ex(file, buffer, size, NULL);
 }
 
+static BOOL trim(char** strptr)
+{
+	char* start;
+	char* str;
+	char* end;
+
+	start = str = *strptr;
+	if (!str)
+		return TRUE;
+	if (!(~((size_t)str)))
+		return TRUE;
+	end = str + strlen(str) - 1;
+
+	while(isspace(*str))
+		str++;
+
+	while((end > str) && isspace(*end))
+		end--;
+	end[1] = '\0';
+	if (start == str)
+		*strptr = str;
+	else
+	{
+		*strptr = _strdup(str);
+		free(start);
+		return *strptr != NULL;
+	}
+
+	return TRUE;
+}
+
+static BOOL trim_strings(rdpFile* file)
+{
+	if (!trim(&file->Username))
+		return FALSE;
+	if (!trim(&file->Domain))
+		return FALSE;
+	if (!trim(&file->AlternateFullAddress))
+		return FALSE;
+	if (!trim(&file->FullAddress))
+		return FALSE;
+	if (!trim(&file->UsbDevicesToRedirect))
+		return FALSE;
+	if (!trim(&file->LoadBalanceInfo))
+		return FALSE;
+	if (!trim(&file->GatewayHostname))
+		return FALSE;
+	if (!trim(&file->GatewayAccessToken))
+		return FALSE;
+	if (!trim(&file->RemoteApplicationName))
+		return FALSE;
+	if (!trim(&file->RemoteApplicationIcon))
+		return FALSE;
+	if (!trim(&file->RemoteApplicationProgram))
+		return FALSE;
+	if (!trim(&file->RemoteApplicationFile))
+		return FALSE;
+	if (!trim(&file->RemoteApplicationGuid))
+		return FALSE;
+	if (!trim(&file->RemoteApplicationCmdLine))
+		return FALSE;
+	if (!trim(&file->AlternateShell))
+		return FALSE;
+	if (!trim(&file->ShellWorkingDirectory))
+		return FALSE;
+	if (!trim(&file->DrivesToRedirect))
+		return FALSE;
+	if (!trim(&file->DevicesToRedirect))
+		return FALSE;
+	if (!trim(&file->DevicesToRedirect))
+		return FALSE;
+	if (!trim(&file->WinPosStr))
+		return FALSE;
+	if (!trim(&file->PreconnectionBlob))
+		return FALSE;
+	if (!trim(&file->KdcProxyName))
+		return FALSE;
+	return TRUE;
+}
+
 BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, size_t size,
                                              rdp_file_fkt_parse parse)
 {
@@ -690,7 +771,7 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 		index++;
 	}
 
-	rc = TRUE;
+	rc = trim_strings(file);
 fail:
 	free(copy);
 	return rc;
