@@ -352,6 +352,7 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, DWORD line,
 {
 	BOOL status = FALSE;
 	wLogMessage message = { 0 };
+	message.Type = type;
 	message.Level = level;
 	message.LineNumber = line;
 	message.FileName = file;
