@@ -291,6 +291,7 @@ static BOOL drive_file_init(DRIVE_FILE* file)
 		                                file->FileAttributes, NULL);
 	}
 
+#ifdef WIN32
 	if (file->file_handle == INVALID_HANDLE_VALUE)
 	{
 		/* Get the error message, if any. */
@@ -298,7 +299,6 @@ static BOOL drive_file_init(DRIVE_FILE* file)
 
 		if (errorMessageID != 0)
 		{
-#ifdef WIN32
 			LPSTR messageBuffer = NULL;
 			size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
 			                             FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -306,9 +306,11 @@ static BOOL drive_file_init(DRIVE_FILE* file)
 			WLog_ERR(TAG, "Error in drive_file_init: %s %s", messageBuffer, file->fullpath);
 			/* Free the buffer. */
 			LocalFree(messageBuffer);
-#endif
+			/* restore original error code */
+			SetLastError(errorMessageID);
 		}
 	}
+#endif
 
 	return file->file_handle != INVALID_HANDLE_VALUE;
 }
@@ -343,7 +345,9 @@ DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 Pat
 
 	if (!drive_file_init(file))
 	{
+		DWORD lastError = GetLastError();
 		drive_file_free(file);
+		SetLastError(lastError);
 		return NULL;
 	}
 
