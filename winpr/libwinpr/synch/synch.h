@@ -68,11 +68,11 @@ typedef struct winpr_semaphore WINPR_SEMAPHORE;
 struct winpr_event
 {
 	WINPR_HANDLE_DEF();
-	char* name;
 
 	int pipe_fd[2];
 	BOOL bAttached;
 	BOOL bManualReset;
+	char* name;
 };
 typedef struct winpr_event WINPR_EVENT;
 
@@ -97,7 +97,6 @@ struct winpr_timer
 	BOOL bManualReset;
 	PTIMERAPCROUTINE pfnCompletionRoutine;
 	LPVOID lpArgToCompletionRoutine;
-	char* name;
 
 #ifdef WITH_POSIX_TIMER
 	timer_t tid;
@@ -109,6 +108,7 @@ struct winpr_timer
 	int pipe[2];
 	BOOL running;
 #endif
+	char* name;
 };
 typedef struct winpr_timer WINPR_TIMER;
 
