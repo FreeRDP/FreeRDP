@@ -3300,15 +3300,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 		settings->DeviceRedirection = TRUE;
 	}
-
-	if (settings->RedirectDrives || settings->RedirectHomeDrive
-	    || settings->RedirectSerialPorts
-	    || settings->RedirectSmartCards || settings->RedirectPrinters)
-	{
-		settings->DeviceRedirection = TRUE; /* All of these features require rdpdr */
-	}
-
-	if (settings->RedirectDrives)
+	else if (settings->RedirectDrives)
 	{
 		if (!freerdp_device_collection_find(settings, "drive"))
 		{
@@ -3320,6 +3312,13 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			if (!freerdp_client_add_device_channel(settings, 3, (char**) params))
 				return FALSE;
 		}
+	}
+
+	if (settings->RedirectDrives || settings->RedirectHomeDrive
+	    || settings->RedirectSerialPorts
+	    || settings->RedirectSmartCards || settings->RedirectPrinters)
+	{
+		settings->DeviceRedirection = TRUE; /* All of these features require rdpdr */
 	}
 
 	if (settings->RedirectHomeDrive)
