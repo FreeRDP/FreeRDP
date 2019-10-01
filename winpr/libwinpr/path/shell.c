@@ -521,6 +521,27 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 
 #if !defined(_WIN32) || defined(_UWP)
 
+BOOL PathIsRelativeA(LPCSTR pszPath)
+{
+	if (!pszPath)
+		return FALSE;
+
+	return pszPath[0] != '/';
+}
+
+BOOL PathIsRelativeW(LPCWSTR pszPath)
+{
+	LPSTR lpFileNameA = NULL;
+	BOOL ret;
+
+	if (ConvertFromUnicode(CP_UTF8, 0, pszPath, -1, &lpFileNameA, 0, NULL, NULL) < 1)
+		return FALSE;
+
+	ret = PathIsRelativeA(lpFileNameA);
+	free(lpFileNameA);
+	return ret;
+}
+
 BOOL PathFileExistsA(LPCSTR pszPath)
 {
 	struct stat stat_info;

@@ -103,9 +103,12 @@ static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, co
 		/* Path was entered as secondary argument, swap */
 		if (PathFileExistsA(name))
 		{
-			const char* tmp = path;
-			path = name;
-			name = tmp;
+			if (!PathFileExistsA(path) || (!PathIsRelativeA(name) && PathIsRelativeA(path)))
+			{
+				const char* tmp = path;
+				path = name;
+				name = tmp;
+			}
 		}
 	}
 

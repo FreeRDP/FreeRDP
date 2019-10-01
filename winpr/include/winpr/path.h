@@ -288,6 +288,9 @@ WINPR_API BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
 
 #if !defined(_WIN32) || defined(_UWP)
 
+WINPR_API BOOL PathIsRelativeA(LPCSTR pszPath);
+WINPR_API BOOL PathIsRelativeW(LPCWSTR pszPath);
+
 WINPR_API BOOL PathFileExistsA(LPCSTR pszPath);
 WINPR_API BOOL PathFileExistsW(LPCWSTR pszPath);
 
