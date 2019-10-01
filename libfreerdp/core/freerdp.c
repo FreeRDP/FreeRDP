@@ -31,6 +31,7 @@
 #include "connection.h"
 #include "message.h"
 #include "buildflags.h"
+#include "gateway/rpc_fault.h"
 
 #include <assert.h>
 
@@ -823,7 +824,7 @@ const char* freerdp_get_last_error_name(UINT32 code)
 			break;
 
 		default:
-			name = "Unknown error class";
+			name = rpc_error_to_string(code);
 			break;
 	}
 
@@ -851,7 +852,7 @@ const char* freerdp_get_last_error_string(UINT32 code)
 			break;
 
 		default:
-			string = "Unknown error class";
+			string = rpc_error_to_string(code);
 			break;
 	}
 
