@@ -22,7 +22,6 @@ set(${MODULE_PREFIX}_SRCS
 
 include_directories(..)
 include_directories(${CUPS_INCLUDE_DIR})
-add_definitions(-DWITH_CUPS)
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
