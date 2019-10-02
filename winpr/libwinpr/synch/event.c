@@ -412,30 +412,7 @@ HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
 int GetEventFileDescriptor(HANDLE hEvent)
 {
 #ifndef _WIN32
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_EVENT* event;
-
-	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
-		return -1;
-
-	event = (WINPR_EVENT*) Object;
-
-	if (Type == HANDLE_TYPE_NAMED_PIPE)
-	{
-		WINPR_NAMED_PIPE* named = (WINPR_NAMED_PIPE*)hEvent;
-
-		if (named->ServerMode)
-		{
-			return named->serverfd;
-		}
-		else
-		{
-			return named->clientfd;
-		}
-	}
-
-	return event->pipe_fd[0];
+	return winpr_Handle_getFd(hEvent);
 #else
 	return -1;
 #endif
