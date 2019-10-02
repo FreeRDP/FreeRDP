@@ -180,6 +180,12 @@ static INLINE void Stream_Write_UINT8(wStream* _s, UINT8 _v)
 	*_s->pointer++ = (UINT8)(_v);
 }
 
+static INLINE void Stream_Write_INT16(wStream* _s, INT16 _v)
+{
+	*_s->pointer++ = (_v) & 0xFF;
+	*_s->pointer++ = ((_v) >> 8) & 0xFF;
+}
+
 static INLINE void Stream_Write_UINT16(wStream* _s, UINT16 _v)
 {
 	*_s->pointer++ = (_v) & 0xFF;

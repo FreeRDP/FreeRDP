@@ -133,6 +133,7 @@ enum SPI_MASK
 #define TS_RAIL_CLIENTSTATUS_AUTORECONNECT                   0x00000002
 #define TS_RAIL_CLIENTSTATUS_ZORDER_SYNC                     0x00000004
 #define TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED  0x00000010
+#define TS_RAIL_CLIENTSTATUS_HIGH_DPI_ICONS_SUPPORTED        0x00000020
 #define TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED       0x00000040
 #define TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED 0x00000080
 #define TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED   0x00000200
@@ -341,8 +342,8 @@ typedef struct _RAIL_ACTIVATE_ORDER RAIL_ACTIVATE_ORDER;
 struct _RAIL_SYSMENU_ORDER
 {
 	UINT32 windowId;
-	UINT16 left;
-	UINT16 top;
+	INT16 left;
+	INT16 top;
 };
 typedef struct _RAIL_SYSMENU_ORDER RAIL_SYSMENU_ORDER;
 
@@ -364,14 +365,14 @@ typedef struct _RAIL_NOTIFY_EVENT_ORDER RAIL_NOTIFY_EVENT_ORDER;
 struct _RAIL_MINMAXINFO_ORDER
 {
 	UINT32 windowId;
-	UINT16 maxWidth;
-	UINT16 maxHeight;
-	UINT16 maxPosX;
-	UINT16 maxPosY;
-	UINT16 minTrackWidth;
-	UINT16 minTrackHeight;
-	UINT16 maxTrackWidth;
-	UINT16 maxTrackHeight;
+	INT16 maxWidth;
+	INT16 maxHeight;
+	INT16 maxPosX;
+	INT16 maxPosY;
+	INT16 minTrackWidth;
+	INT16 minTrackHeight;
+	INT16 maxTrackWidth;
+	INT16 maxTrackHeight;
 };
 typedef struct _RAIL_MINMAXINFO_ORDER RAIL_MINMAXINFO_ORDER;
 
@@ -380,18 +381,18 @@ struct _RAIL_LOCALMOVESIZE_ORDER
 	UINT32 windowId;
 	BOOL isMoveSizeStart;
 	UINT16 moveSizeType;
-	UINT16 posX;
-	UINT16 posY;
+	INT16 posX;
+	INT16 posY;
 };
 typedef struct _RAIL_LOCALMOVESIZE_ORDER RAIL_LOCALMOVESIZE_ORDER;
 
 struct _RAIL_WINDOWMOVE_ORDER
 {
 	UINT32 windowId;
-	UINT16 left;
-	UINT16 top;
-	UINT16 right;
-	UINT16 bottom;
+	INT16 left;
+	INT16 top;
+	INT16 right;
+	INT16 bottom;
 };
 typedef struct _RAIL_WINDOWMOVE_ORDER RAIL_WINDOW_MOVE_ORDER;
 
@@ -404,7 +405,7 @@ typedef struct _RAIL_GET_APPID_REQ_ORDER RAIL_GET_APPID_REQ_ORDER;
 struct _RAIL_GET_APPID_RESP_ORDER
 {
 	UINT32 windowId;
-	WCHAR applicationId[256];
+	WCHAR applicationId[260];
 };
 typedef struct _RAIL_GET_APPID_RESP_ORDER RAIL_GET_APPID_RESP_ORDER;
 
@@ -463,19 +464,19 @@ typedef struct _RAIL_LANGUAGEIME_INFO_ORDER RAIL_LANGUAGEIME_INFO_ORDER;
 struct _RAIL_SNAP_ARRANGE
 {
 	UINT32 windowId;
-	UINT16 left;
-	UINT16 top;
-	UINT16 right;
-	UINT16 bottom;
+	INT16 left;
+	INT16 top;
+	INT16 right;
+	INT16 bottom;
 };
 typedef struct _RAIL_SNAP_ARRANGE RAIL_SNAP_ARRANGE;
 
 struct _RAIL_GET_APPID_RESP_EX
 {
 	UINT32 windowID;
-	WCHAR applicationID[512 / sizeof(WCHAR)];
+	WCHAR applicationID[520 / sizeof(WCHAR)];
 	UINT32 processId;
-	WCHAR processImageName[512 / sizeof(WCHAR)];
+	WCHAR processImageName[520 / sizeof(WCHAR)];
 };
 typedef struct _RAIL_GET_APPID_RESP_EX RAIL_GET_APPID_RESP_EX;
 
