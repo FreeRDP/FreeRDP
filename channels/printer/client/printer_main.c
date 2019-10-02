@@ -885,7 +885,7 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 	if (!printer_dev->device.data)
 		goto error_out;
 
-	sprintf_s(printer_dev->port, sizeof(printer_dev->port), "PRN%d", printer->id);
+	sprintf_s(printer_dev->port, sizeof(printer_dev->port), "PRN%"PRIdz, printer->id);
 	printer_dev->device.type = RDPDR_DTYP_PRINT;
 	printer_dev->device.name = printer_dev->port;
 	printer_dev->device.IRPRequest = printer_irp_request;
