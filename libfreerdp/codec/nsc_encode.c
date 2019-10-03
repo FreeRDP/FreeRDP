@@ -110,10 +110,12 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data,
 	rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
 
-	if (context->priv->PlaneBuffersLength < rw * scanline)
+	/* Internal buffer must conatin height * width pixels (aligned) */
+	if (context->priv->PlaneBuffersLength < context->height * rw)
 		return FALSE;
 
-	if (rw < scanline * 2)
+	/* Input stride must contain enough data for width */
+	if (rw * GetBytesPerPixel(context->format) < scanline)
 		return FALSE;
 
 	for (y = 0; y < context->height; y++)
@@ -556,7 +558,7 @@ fail:
 	return NULL;
 }
 
-BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, NSC_MESSAGE* message)
+BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* message)
 {
 	UINT32 totalPlaneByteCount;
 	totalPlaneByteCount = message->LumaPlaneByteCount +
@@ -564,7 +566,7 @@ BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, NSC_MESSAGE* message)
 	                      message->GreenChromaPlaneByteCount + message->AlphaPlaneByteCount;
 
 	if (!Stream_EnsureRemainingCapacity(s, 20 + totalPlaneByteCount))
-		return -1;
+		return FALSE;
 
 	Stream_Write_UINT32(s,
 	                    message->LumaPlaneByteCount); /* LumaPlaneByteCount (4 bytes) */
@@ -600,7 +602,8 @@ BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, NSC_MESSAGE* message)
 
 void nsc_message_free(NSC_CONTEXT* context, NSC_MESSAGE* message)
 {
-	BufferPool_Return(context->priv->PlanePool, message->PlaneBuffer);
+	if (context && message)
+		BufferPool_Return(context->priv->PlanePool, message->PlaneBuffer);
 }
 
 BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data,

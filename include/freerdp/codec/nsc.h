@@ -102,7 +102,7 @@ FREERDP_API NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context,
         UINT32 width, UINT32 height, UINT32 scanline,
         UINT32* numMessages, UINT32 maxDataSize);
 FREERDP_API BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s,
-                                   NSC_MESSAGE* message);
+                                   const NSC_MESSAGE* message);
 FREERDP_API void nsc_message_free(NSC_CONTEXT* context, NSC_MESSAGE* message);
 
 FREERDP_API BOOL nsc_context_reset(NSC_CONTEXT* context, UINT32 width,

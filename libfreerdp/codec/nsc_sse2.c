@@ -40,7 +40,7 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
 {
 	UINT16 x;
 	UINT16 y;
-	UINT16 rw;
+	UINT32 rw;
 	BYTE ccl;
 	const BYTE* src;
 	BYTE* yplane = NULL;
@@ -63,10 +63,12 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
 	rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
 
-	if (context->priv->PlaneBuffersLength < rw * scanline)
+	/* Internal buffer must conatin height * width pixels (aligned) */
+	if (context->priv->PlaneBuffersLength < context->height * rw)
 		return FALSE;
 
-	if (rw < scanline * 2)
+	/* Input stride must contain enough data for width */
+	if (rw * GetBytesPerPixel(context->format) < scanline)
 		return FALSE;
 
 	for (y = 0; y < context->height; y++)
