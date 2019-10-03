@@ -61,11 +61,12 @@ int main(int argc, char* argv[])
 
 	if (status)
 	{
-		if (settings->ListMonitors)
+		BOOL list = settings->ListMonitors;
+		if (list)
 			xf_list_monitors(xfc);
 
 		freerdp_client_context_free(context);
-		if (settings->ListMonitors)
+		if (list)
 			return 0;
 		return status;
 	}
