@@ -26,8 +26,9 @@
 struct _ERRINFO
 {
 	UINT32 code;
-	char* name;
-	char* info;
+	const char* name;
+	const char* info;
+	const char* category;
 };
 typedef struct _ERRINFO ERRINFO;
 

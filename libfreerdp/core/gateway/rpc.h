@@ -405,11 +405,12 @@ typedef struct
 struct _RPC_FAULT_CODE
 {
 	UINT32 code;
-	char* name;
+	const char* name;
+	const char* category;
 };
 typedef struct _RPC_FAULT_CODE RPC_FAULT_CODE;
 
-#define DEFINE_RPC_FAULT_CODE(_code)	{ _code , #_code },
+#define DEFINE_RPC_FAULT_CODE(_code, cat) { _code, #_code, cat },
 
 #define nca_s_comm_failure			0x1C010001
 #define nca_s_op_rng_error			0x1C010002

@@ -25,5 +25,6 @@
 
 FREERDP_LOCAL int rpc_recv_fault_pdu(UINT32 status);
 FREERDP_LOCAL const char* rpc_error_to_string(UINT32 error);
+FREERDP_LOCAL const char* rpc_error_to_category(UINT32 error);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_FAULT_H */

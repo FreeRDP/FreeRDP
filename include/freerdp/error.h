@@ -28,6 +28,17 @@
 extern "C" {
 #endif
 
+/* Error categories */
+#define CAT_NONE "success"
+#define CAT_USE "use"
+#define CAT_BROKER "broker"
+#define CAT_GATEWAY "gateway"
+#define CAT_LICENSING "licensing"
+#define CAT_SERVER "server"
+#define CAT_CONFIG "config"
+#define CAT_PROTOCOL "protocol"
+#define CAT_ADMIN "administrative"
+
 /**
  * Error Info Codes (Error Info PDU)
  */
@@ -163,6 +174,7 @@ extern "C" {
 
 FREERDP_API const char* freerdp_get_error_info_string(UINT32 code);
 FREERDP_API const char* freerdp_get_error_info_name(UINT32 code);
+FREERDP_API const char* freerdp_get_error_info_category(UINT32 code);
 
 /**
 * This static variable holds an error code if the return value from connect is FALSE.
@@ -214,6 +226,7 @@ FREERDP_API extern int connectErrorCode;
 
 FREERDP_API const char* freerdp_get_error_base_string(UINT32 code);
 FREERDP_API const char* freerdp_get_error_base_name(UINT32 code);
+FREERDP_API const char* freerdp_get_error_base_category(UINT32 code);
 
 #define FREERDP_ERROR_SUCCESS						ERRINFO_SUCCESS
 #define FREERDP_ERROR_NONE						ERRINFO_NONE
@@ -278,6 +291,7 @@ FREERDP_API const char* freerdp_get_error_base_name(UINT32 code);
 
 FREERDP_API const char* freerdp_get_error_connect_string(UINT32 code);
 FREERDP_API const char* freerdp_get_error_connect_name(UINT32 code);
+FREERDP_API const char* freerdp_get_error_connect_category(UINT32 code);
 
 #define FREERDP_ERROR_CONNECT_CLASS					(FREERDP_ERROR_BASE + 2)
 
