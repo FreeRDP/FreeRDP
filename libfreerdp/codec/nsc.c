@@ -392,11 +392,32 @@ void nsc_context_free(NSC_CONTEXT* context)
 
 BOOL nsc_context_set_pixel_format(NSC_CONTEXT* context, UINT32 pixel_format)
 {
+	return nsc_context_set_parameters(context, NSC_COLOR_FORMAT, pixel_format);
+}
+
+BOOL nsc_context_set_parameters(NSC_CONTEXT* context, NSC_PARAMETER what,
+								UINT32 value)
+{
 	if (!context)
 		return FALSE;
 
-	context->format = pixel_format;
-	return TRUE;
+	switch(what)
+	{
+	case NSC_COLOR_LOSS_LEVEL:
+		context->ColorLossLevel = value;
+		break;
+	case NSC_ALLOW_SUBSAMPLING:
+		context->ChromaSubsamplingLevel = value;
+		break;
+	case NSC_DYNAMIC_COLOR_FIDELITY:
+		context->DynamicColorFidelity = value != 0;
+		break;
+	case NSC_COLOR_FORMAT:
+		context->format = value;
+		break;
+	default:
+		return FALSE;
+	}
 }
 
 BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,

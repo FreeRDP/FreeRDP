@@ -29,11 +29,13 @@
 #include <winpr/wlog.h>
 #include <winpr/collections.h>
 
-
 #include <freerdp/utils/profiler.h>
+#include <freerdp/codec/nsc.h>
 
-#define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n-1)) + 0x1) & (_n-1)))
-#define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
+#define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n - 1)) + 0x1) & (_n - 1)))
+#define MINMAX(_v, _l, _h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
+
+typedef struct _NSC_MESSAGE NSC_MESSAGE;
 
 struct _NSC_CONTEXT_PRIV
 {

@@ -35,6 +35,37 @@
 #include "nsc_types.h"
 #include "nsc_encode.h"
 
+struct _NSC_MESSAGE
+{
+	UINT32 x;
+	UINT32 y;
+	UINT32 width;
+	UINT32 height;
+	const BYTE* data;
+	UINT32 scanline;
+	BYTE* PlaneBuffer;
+	UINT32 MaxPlaneSize;
+	BYTE* PlaneBuffers[5];
+	UINT32 OrgByteCount[4];
+
+	UINT32 LumaPlaneByteCount;
+	UINT32 OrangeChromaPlaneByteCount;
+	UINT32 GreenChromaPlaneByteCount;
+	UINT32 AlphaPlaneByteCount;
+	UINT32 ColorLossLevel;
+	UINT32 ChromaSubsamplingLevel;
+};
+
+static NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, const BYTE* data, UINT32 x,
+                                             UINT32 y, UINT32 width, UINT32 height,
+                                             UINT32 scanline, UINT32* numMessages,
+                                             UINT32 maxDataSize);
+static NSC_MESSAGE* nsc_read_message(NSC_CONTEXT* context, wStream* s);
+static BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s,
+                                   const NSC_MESSAGE* message);
+
+static void nsc_messages_free(NSC_CONTEXT* context, NSC_MESSAGE* message, size_t count);
+
 static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
 {
 	int i;
@@ -467,7 +498,7 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, const BYTE* data,
 	if (maxDataSize < (*numMessages) * sizeof(NSC_MESSAGE))
 		return NULL;
 
-	messages = (NSC_MESSAGE*) calloc(*numMessages, sizeof(NSC_MESSAGE));
+	messages = (NSC_MESSAGE*) BufferPool_Take(context->priv->PlanePool, (*numMessages) * sizeof(NSC_MESSAGE));
 
 	if (!messages)
 		return NULL;
@@ -554,8 +585,81 @@ fail:
 	for (i = 0; i < *numMessages; i++)
 		BufferPool_Return(context->priv->PlanePool, messages[i].PlaneBuffer);
 
-	free(messages);
+	BufferPool_Return(context->priv->PlanePool, messages);
 	return NULL;
+}
+
+NSC_MESSAGE* nsc_read_message(NSC_CONTEXT* context, wStream* s)
+{
+	UINT32 totalPlaneByteCount;
+	NSC_MESSAGE* msg;
+
+	if (!s)
+		return NULL;
+
+	if (Stream_GetRemainingLength(s) < 20)
+		return NULL;
+
+	msg = BufferPool_Take(context->priv->PlanePool, sizeof(NSC_MESSAGE));
+	if (!msg)
+		return NULL;
+
+	Stream_Read_UINT32(s, msg->LumaPlaneByteCount);
+	Stream_Read_UINT32(s, msg->OrangeChromaPlaneByteCount);
+	Stream_Read_UINT32(s, msg->GreenChromaPlaneByteCount);
+	Stream_Read_UINT32(s, msg->AlphaPlaneByteCount);
+	Stream_Read_UINT8(s, msg->ColorLossLevel);
+	Stream_Read_UINT8(s, msg->ChromaSubsamplingLevel);
+	Stream_Seek(s, 2); /* Reserved (2 bytes) */
+
+	totalPlaneByteCount = msg->LumaPlaneByteCount +
+						  msg->OrangeChromaPlaneByteCount +
+						  msg->GreenChromaPlaneByteCount +
+						  msg->AlphaPlaneByteCount;
+
+	if (Stream_GetRemainingLength(s) < totalPlaneByteCount)
+		goto fail;
+
+	if (msg->LumaPlaneByteCount > 0)
+	{
+		msg->PlaneBuffers[0] = BufferPool_Take(context->priv->PlanePool, msg->LumaPlaneByteCount);
+		if (!msg->PlaneBuffers[0])
+			goto fail;
+		Stream_Read(s, msg->PlaneBuffers[0],
+					 msg->LumaPlaneByteCount); /* LumaPlane */
+	}
+
+	if (msg->OrangeChromaPlaneByteCount)
+	{
+		msg->PlaneBuffers[1] = BufferPool_Take(context->priv->PlanePool, msg->OrangeChromaPlaneByteCount);
+		if (!msg->PlaneBuffers[1])
+			goto fail;
+		Stream_Read(s, msg->PlaneBuffers[1],
+					 msg->OrangeChromaPlaneByteCount); /* OrangeChromaPlane */
+	}
+
+	if (msg->GreenChromaPlaneByteCount)
+	{
+		msg->PlaneBuffers[2] = BufferPool_Take(context->priv->PlanePool, msg->GreenChromaPlaneByteCount);
+		if (!msg->PlaneBuffers[2])
+			goto fail;
+		Stream_Read(s, msg->PlaneBuffers[2],
+					 msg->GreenChromaPlaneByteCount); /* GreenChromaPlane */
+	}
+
+	if (msg->AlphaPlaneByteCount)
+	{
+		msg->PlaneBuffers[3] = BufferPool_Take(context->priv->PlanePool, msg->AlphaPlaneByteCount);
+		if (!msg->PlaneBuffers[3])
+			goto fail;
+		Stream_Read(s, msg->PlaneBuffers[3],
+					 msg->AlphaPlaneByteCount); /* AlphaPlane */
+	}
+
+	return msg;
+	fail:
+		nsc_messages_free(context, msg, 1);
+		return NULL;
 }
 
 BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* message)
@@ -600,10 +704,15 @@ BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* mess
 	return TRUE;
 }
 
-void nsc_message_free(NSC_CONTEXT* context, NSC_MESSAGE* message)
+void nsc_messages_free(NSC_CONTEXT* context, NSC_MESSAGE* message, size_t numMessages)
 {
 	if (context && message)
-		BufferPool_Return(context->priv->PlanePool, message->PlaneBuffer);
+	{
+		size_t x;
+		for (x=0; x<numMessages; x++)
+			BufferPool_Return(context->priv->PlanePool, message[x].PlaneBuffer);
+		BufferPool_Return(context->priv->PlanePool, message);
+	}
 }
 
 BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data,
@@ -636,4 +745,18 @@ BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data,
 	message->ColorLossLevel = context->ColorLossLevel;
 	message->ChromaSubsamplingLevel = context->ChromaSubsamplingLevel;
 	return nsc_write_message(context, s, message);
+}
+
+BOOL nsc_decompose_message(NSC_CONTEXT* context, wStream* s, BYTE* bmpdata,
+                           UINT32 x, UINT32 y, UINT32 width, UINT32 height,
+                           UINT32 rowstride, UINT32 format, UINT32 flip)
+{
+	size_t size = Stream_GetRemainingLength(s);
+	if (!nsc_process_message(context, GetBitsPerPixel(context->format),
+							 width, height, Stream_Pointer(s),
+							 size, bmpdata, format,
+							 rowstride, x, y, width, height, flip))
+		return FALSE;
+	Stream_Seek(s, size);
+	return TRUE;
 }
