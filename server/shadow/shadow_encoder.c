@@ -161,11 +161,14 @@ static int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 	if (!nsc_context_reset(encoder->nsc, encoder->width, encoder->height))
 		goto fail;
 
-	encoder->nsc->ColorLossLevel = settings->NSCodecColorLossLevel;
-	encoder->nsc->ChromaSubsamplingLevel = settings->NSCodecAllowSubsampling ? 1 :
-	                                       0;
-	encoder->nsc->DynamicColorFidelity = settings->NSCodecAllowDynamicColorFidelity;
-	nsc_context_set_pixel_format(encoder->nsc, PIXEL_FORMAT_BGRX32);
+	if (!nsc_context_set_parameters(encoder->nsc, NSC_COLOR_LOSS_LEVEL, settings->NSCodecColorLossLevel))
+		goto fail;
+	if (!nsc_context_set_parameters(encoder->nsc, NSC_ALLOW_SUBSAMPLING, settings->NSCodecAllowSubsampling))
+		goto fail;
+	if (!nsc_context_set_parameters(encoder->nsc, NSC_DYNAMIC_COLOR_FIDELITY, settings->NSCodecAllowDynamicColorFidelity))
+		goto fail;
+	if (!nsc_context_set_pixel_format(encoder->nsc, PIXEL_FORMAT_BGRX32))
+		goto fail;
 	encoder->codecs |= FREERDP_CODEC_NSCODEC;
 	return 1;
 fail:
