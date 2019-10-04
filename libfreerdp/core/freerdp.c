@@ -859,6 +859,34 @@ const char* freerdp_get_last_error_string(UINT32 code)
 	return string;
 }
 
+const char* freerdp_get_last_error_category(UINT32 code)
+{
+	const char* string = NULL;
+	const UINT32 cls = GET_FREERDP_ERROR_CLASS(code);
+	const UINT32 type = GET_FREERDP_ERROR_TYPE(code);
+
+	switch (cls)
+	{
+	case FREERDP_ERROR_ERRBASE_CLASS:
+		string = freerdp_get_error_base_category(type);
+		break;
+
+	case FREERDP_ERROR_ERRINFO_CLASS:
+		string = freerdp_get_error_info_category(type);
+		break;
+
+	case FREERDP_ERROR_CONNECT_CLASS:
+		string = freerdp_get_error_connect_category(type);
+		break;
+
+	default:
+		string = rpc_error_to_category(code);
+		break;
+	}
+
+	return string;
+}
+
 void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 {
 	if (lastError)

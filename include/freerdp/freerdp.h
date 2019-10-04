@@ -472,6 +472,7 @@ FREERDP_API int freerdp_get_disconnect_ultimatum(rdpContext* context);
 FREERDP_API UINT32 freerdp_get_last_error(rdpContext* context);
 FREERDP_API const char* freerdp_get_last_error_name(UINT32 error);
 FREERDP_API const char* freerdp_get_last_error_string(UINT32 error);
+FREERDP_API const char* freerdp_get_last_error_category(UINT32 error);
 FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError);
 
 FREERDP_API const char* freerdp_get_logon_error_info_type(UINT32 type);
