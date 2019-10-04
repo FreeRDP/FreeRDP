@@ -72,7 +72,6 @@ int main(int argc, char** argv)
 	if ((status = shadow_server_parse_command_line(server, argc, argv)) < 0)
 	{
 		shadow_server_command_line_status_print(server, argc, argv, status);
-		WLog_ERR(TAG, "Problem parsing the command line.");
 		goto fail_parse_command_line;
 	}
 
