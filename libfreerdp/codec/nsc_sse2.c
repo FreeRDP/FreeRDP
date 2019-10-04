@@ -63,12 +63,6 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
 	rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
 
-	if (context->priv->PlaneBuffersLength < rw * scanline)
-		return FALSE;
-
-	if (rw < scanline * 2)
-		return FALSE;
-
 	for (y = 0; y < context->height; y++)
 	{
 		src = data + (context->height - 1 - y) * scanline;
