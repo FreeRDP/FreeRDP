@@ -362,7 +362,8 @@ static void openh264_uninit(H264_CONTEXT* h264)
 		}
 
 #if defined (WITH_OPENH264_LOADING)
-		FreeLibrary(sysContexts->lib);
+		if (sysContexts->lib)
+			FreeLibrary(sysContexts->lib);
 #endif
 		free(h264->pSystemData);
 		h264->pSystemData = NULL;
@@ -407,7 +408,7 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 	           sysContexts->version.uMinor,
 	           sysContexts->version.uRevision);
 
-	if ((sysContexts->version.uMajor < 1) || (sysContexts->version.uMinor < 6))
+	if ((sysContexts->version.uMajor < 1) || ((sysContexts->version.uMajor == 1) && (sysContexts->version.uMinor < 6)))
 	{
 		WLog_Print(h264->log, WLOG_ERROR,
 		           "OpenH264 %s %d.%d.%d is too old, need at least version 1.6.0 for dynamic loading",
