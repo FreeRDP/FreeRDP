@@ -640,6 +640,7 @@ static BOOL shadow_are_caps_filtered(const rdpSettings* settings, UINT32 caps)
 }
 
 static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context,
+                                            BOOL h264,
         const RDPGFX_CAPSET* capsSets,
         UINT32 capsSetCount,
         UINT32 capsVersion, UINT* rc)
@@ -666,13 +667,15 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context,
 			{
 				flags = pdu.capsSet->flags;
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-#ifndef WITH_GFX_H264
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
-				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
-#else
-				settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
-				                        RDPGFX_CAPS_FLAG_AVC_DISABLED);
-#endif
+
+				if (h264)
+					settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = !(flags &
+											RDPGFX_CAPS_FLAG_AVC_DISABLED);
+				else
+				{
+					settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
+					pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+				}
 			}
 
 			*rc = context->CapsConfirm(context, &pdu);
@@ -692,37 +695,47 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
         const RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
 {
 	UINT16 index;
-	UINT rc;
+	UINT rc = ERROR_INTERNAL_ERROR;
+	BOOL h264 = FALSE;
 	rdpSettings* settings = context->rdpcontext->settings;
 	UINT32 flags = 0;
-	/* Request full screen update for new gfx channel */
-	shadow_client_refresh_rect((rdpShadowClient*)context->custom, 0, NULL);
+	rdpShadowClient* client = (rdpShadowClient*)context->custom;
 
-	if (shadow_client_caps_test_version(context, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
+#ifdef WITH_GFX_H264
+	if (shadow_encoder_prepare(client->encoder, FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444) >= 0)
+		h264 = TRUE;
+
+#endif
+
+	/* Request full screen update for new gfx channel */
+	if (!shadow_client_refresh_rect((rdpShadowClient*)context->custom, 0, NULL))
+		return rc;
+
+	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
 	                                    RDPGFX_CAPVERSION_106, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
+	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
 	                                    RDPGFX_CAPVERSION_105, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
+	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
 	                                    RDPGFX_CAPVERSION_104, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
+	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
 	                                    RDPGFX_CAPVERSION_103, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
+	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
 	                                    RDPGFX_CAPVERSION_102, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
+	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
 	                                    RDPGFX_CAPVERSION_101, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
+	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets, capsAdvertise->capsSetCount,
 	                                    RDPGFX_CAPVERSION_10, &rc))
 		return rc;
 
@@ -748,7 +761,10 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 					settings->GfxH264 = FALSE;
 					pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_AVC420_ENABLED;
 #else
-					settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
+					if (h264)
+						settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
+					else
+						settings->GfxH264 = FALSE;
 #endif
 				}
 
