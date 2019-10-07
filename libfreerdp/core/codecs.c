@@ -94,7 +94,9 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags,
 		if (!(codecs->h264 = h264_context_new(FALSE)))
 		{
 			WLog_ERR(TAG, "Failed to create h264 codec context");
+#ifndef WITH_OPENH264_LOADING
 			return FALSE;
+#endif
 		}
 	}
 #endif
