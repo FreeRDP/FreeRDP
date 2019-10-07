@@ -754,7 +754,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		status2 = freerdp_assistance_set_connection_string2(file, ConnectionString2, "Shadow123!");
 		free(ConnectionString2);
 
-		if ((status1 < 1) || (status < 0))
+		if ((status1 < 1) || (status2 < 1))
 		{
 			WLog_ERR(TAG, "failed to convert connection string");
 			return -1;

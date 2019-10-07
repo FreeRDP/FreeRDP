@@ -9,6 +9,7 @@
 LPSTR tr_esc_str(LPCSTR arg, bool format)
 {
 	LPSTR tmp = NULL;
+	LPSTR tmp2 = NULL;
 	size_t cs = 0, x, ds, len;
 	size_t s;
 
@@ -25,7 +26,12 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 	ds = s + 1;
 
 	if (s)
-		tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+	{
+		tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+		if (!tmp2)
+			free(tmp);
+		tmp = tmp2;
+	}
 
 	if (NULL == tmp)
 	{
@@ -43,7 +49,10 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 			case '<':
 				len = format ? 13 : 4;
 				ds += len - 1;
-				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+				tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+				if (!tmp2)
+					free(tmp);
+				tmp = tmp2;
 
 				if (NULL == tmp)
 				{
@@ -64,7 +73,10 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 			case '>':
 				len = format ? 14 : 4;
 				ds += len - 1;
-				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+				tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+				if (!tmp2)
+					free(tmp);
+				tmp = tmp2;
 
 				if (NULL == tmp)
 				{
@@ -84,7 +96,10 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 
 			case '\'':
 				ds += 5;
-				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+				tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+				if (!tmp2)
+					free(tmp);
+				tmp = tmp2;
 
 				if (NULL == tmp)
 				{
@@ -102,7 +117,10 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 
 			case '"':
 				ds += 5;
-				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+				tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+				if (!tmp2)
+					free(tmp);
+				tmp = tmp2;
 
 				if (NULL == tmp)
 				{
@@ -120,7 +138,10 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 
 			case '&':
 				ds += 4;
-				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+				tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
+				if (!tmp2)
+					free(tmp);
+				tmp = tmp2;
 
 				if (NULL == tmp)
 				{

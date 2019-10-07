@@ -61,6 +61,7 @@ static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "nla extended protocol security" },
 	{ "sam-file", COMMAND_LINE_VALUE_REQUIRED, "<file>", NULL, NULL, -1, NULL, "NTLM SAM file for NLA authentication" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "Print version" },
+	{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL, -1, NULL, "Print the build configuration" },
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "Print help" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
@@ -144,6 +145,11 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 	{
 		WLog_INFO(TAG, "FreeRDP version %s (git %s)", FREERDP_VERSION_FULL, GIT_REVISION);
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
+	}
+	else if (status == COMMAND_LINE_STATUS_PRINT_BUILDCONFIG)
+	{
+		WLog_INFO(TAG, "%s", freerdp_get_build_config());
+		return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{

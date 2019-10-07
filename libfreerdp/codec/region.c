@@ -467,8 +467,12 @@ static BOOL region16_simplify_bands(REGION16* region)
 
 	if (finalNbRects != nbRects)
 	{
-		int allocSize = sizeof(REGION16_DATA) + (finalNbRects * sizeof(RECTANGLE_16));
-		region->data = realloc(region->data, allocSize);
+		REGION16_DATA* data;
+		size_t allocSize = sizeof(REGION16_DATA) + (finalNbRects * sizeof(RECTANGLE_16));
+		data = realloc(region->data, allocSize);
+		if (!data)
+			free(region->data);
+		region->data = data;
 
 		if (!region->data)
 		{
@@ -485,10 +489,12 @@ static BOOL region16_simplify_bands(REGION16* region)
 
 BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16* rect)
 {
+	REGION16_DATA* data;
 	const RECTANGLE_16* srcExtents;
 	RECTANGLE_16* dstExtents;
 	const RECTANGLE_16* currentBand, *endSrcRect, *nextBand;
 	REGION16_DATA* newItems = NULL;
+	REGION16_DATA* tmpItems = NULL;
 	RECTANGLE_16* dstRect = NULL;
 	UINT32 usedRects, srcNbRects;
 	UINT16 topInterBand;
@@ -673,7 +679,11 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 	dstExtents->bottom = MAX(rect->bottom, srcExtents->bottom);
 	dstExtents->right = MAX(rect->right, srcExtents->right);
 	newItems->size = sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16));
-	dst->data = realloc(newItems, newItems->size);
+	tmpItems = realloc(newItems, newItems->size);
+	if (!tmpItems)
+		free(newItems);
+	newItems = tmpItems;
+	dst->data = newItems;
 
 	if (!dst->data)
 	{
@@ -717,6 +727,7 @@ BOOL region16_intersects_rect(const REGION16* src, const RECTANGLE_16* arg2)
 
 BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16* rect)
 {
+	REGION16_DATA* data;
 	REGION16_DATA* newItems;
 	const RECTANGLE_16* srcPtr, *endPtr, *srcExtents;
 	RECTANGLE_16* dstPtr;
