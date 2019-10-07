@@ -317,8 +317,11 @@ BOOL nsc_context_reset(NSC_CONTEXT* context, UINT32 width, UINT32 height)
 	if (!context)
 		return FALSE;
 
-	context->width = width;
-	context->height = height;
+	if ((width > UINT16_MAX) || (height > UINT16_MAX))
+		return FALSE;
+
+	context->width = (UINT16)width;
+	context->height = (UINT16)height;
 	return TRUE;
 }
 
@@ -340,10 +343,6 @@ NSC_CONTEXT* nsc_context_new(void)
 	context->BitmapData = NULL;
 	context->decode = nsc_decode;
 	context->encode = nsc_encode;
-	context->priv->PlanePool = BufferPool_New(TRUE, 0, 16);
-
-	if (!context->priv->PlanePool)
-		goto error;
 
 	PROFILER_CREATE(context->priv->prof_nsc_rle_decompress_data,
 	                "nsc_rle_decompress_data")
@@ -374,7 +373,6 @@ void nsc_context_free(NSC_CONTEXT* context)
 		for (i = 0; i < 4; i++)
 			free(context->priv->PlaneBuffers[i]);
 
-		BufferPool_Free(context->priv->PlanePool);
 		nsc_profiler_print(context->priv);
 		PROFILER_FREE(context->priv->prof_nsc_rle_decompress_data)
 		PROFILER_FREE(context->priv->prof_nsc_decode)
@@ -389,10 +387,32 @@ void nsc_context_free(NSC_CONTEXT* context)
 
 BOOL nsc_context_set_pixel_format(NSC_CONTEXT* context, UINT32 pixel_format)
 {
+	return nsc_context_set_parameters(context, NSC_COLOR_FORMAT, pixel_format);
+}
+
+BOOL nsc_context_set_parameters(NSC_CONTEXT* context, NSC_PARAMETER what,
+								UINT32 value)
+{
 	if (!context)
 		return FALSE;
 
-	context->format = pixel_format;
+	switch(what)
+	{
+	case NSC_COLOR_LOSS_LEVEL:
+		context->ColorLossLevel = value;
+		break;
+	case NSC_ALLOW_SUBSAMPLING:
+		context->ChromaSubsamplingLevel = value;
+		break;
+	case NSC_DYNAMIC_COLOR_FIDELITY:
+		context->DynamicColorFidelity = value != 0;
+		break;
+	case NSC_COLOR_FORMAT:
+		context->format = value;
+		break;
+	default:
+		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -406,6 +426,9 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 {
 	wStream* s;
 	BOOL ret;
+	if (!context || !data || !pDstData)
+		return FALSE;
+
 	s = Stream_New((BYTE*)data, length);
 
 	if (!s)
