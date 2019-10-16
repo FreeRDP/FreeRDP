@@ -27,6 +27,7 @@
 #endif
 
 #include <assert.h>
+#include <float.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -170,10 +171,15 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	                                     picFormat, CPSubwindowMode, &pa);
 	// avoid blurry filter when scaling factor is 2x, 3x, etc
 	// useful when the client has high-dpi monitor
-	if (xScalingFactor == yScalingFactor && abs(1/xScalingFactor - round(1/xScalingFactor)) < 0.001) {
-		filter = FilterNearest;
-	} else {
-		filter = FilterBilinear;
+	filter = FilterBilinear;
+	if (fabs(xScalingFactor - yScalingFactor) < DBL_EPSILON)
+	{
+		const double inverseX = 1.0 / xScalingFactor;
+		const double inverseRoundedX = round(inverseX);
+		const double absInverse = fabs(inverseX - inverseRoundedX);
+
+		if (absInverse < DBL_EPSILON)
+			filter = FilterNearest;
 	}
 	XRenderSetPictureFilter(xfc->display, primaryPicture, filter, 0, 0);
 	transform.matrix[0][0] = XDoubleToFixed(xScalingFactor);
