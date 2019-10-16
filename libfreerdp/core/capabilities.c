@@ -2999,7 +2999,7 @@ static BOOL rdp_write_nsc_client_capability_container(wStream* s,
 
 #if defined(WITH_JPEG)
 static BOOL rdp_write_jpeg_client_capability_container(wStream* s,
-        rdpSettings* settings)
+		const rdpSettings* settings)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 8))
 		return FALSE;
@@ -3027,7 +3027,7 @@ static BOOL rdp_write_rfx_server_capability_container(wStream* s,
 }
 
 static BOOL rdp_write_jpeg_server_capability_container(wStream* s,
-        rdpSettings* settings)
+		const rdpSettings* settings)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 8))
 		return FALSE;

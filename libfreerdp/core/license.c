@@ -141,7 +141,7 @@ static void license_print_product_info(const LICENSE_PRODUCT_INFO* productInfo)
 
 static void license_print_scope_list(const SCOPE_LIST* scopeList)
 {
-	int index;
+	UINT32 index;
 	const LICENSE_BLOB* scope;
 	WLog_INFO(TAG, "ScopeList (%"PRIu32"):", scopeList->count);
 
