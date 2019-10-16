@@ -874,8 +874,7 @@ static int xcrush_compress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 Src
 				if (status < 0)
 					return status;
 
-				if (status > 0)
-					Flags |= L1_COMPRESSED;
+				Flags |= L1_COMPRESSED;
 			}
 		}
 	}

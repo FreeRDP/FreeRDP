@@ -1000,12 +1000,14 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 	REGION16 updateRegion;
 	UINT32 blockLen;
 	UINT32 blockType;
-	RFX_MESSAGE* message = &context->currentMessage;
 	wStream inStream, *s = &inStream;
 	BOOL ok = TRUE;
+	RFX_MESSAGE* message;
 
 	if (!context || !data || !length)
 		return FALSE;
+
+	message = &context->currentMessage;
 
 	Stream_StaticInit(s, (BYTE*)data, length);
 

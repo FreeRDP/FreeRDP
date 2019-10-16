@@ -68,10 +68,7 @@ static BOOL certificate_line_is_comment(const char* line, size_t length)
 		}
 	}
 
-	if (length < 1)
-		return TRUE;
-
-	return FALSE;
+	return TRUE;
 }
 
 BOOL certificate_store_init(rdpCertificateStore* certificate_store)

@@ -563,9 +563,6 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	if (!pbIn || !pbOut)
 		goto fail;
 
-	if ((EncryptedSize == 0) || (cbPassStubW > UINT32_MAX))
-		goto fail;
-
 	*((UINT32*) pbIn) = (UINT32)cbPassStubW;
 	CopyMemory(&pbIn[4], PassStubW, cbPassStubW);
 	rc4Ctx = winpr_Cipher_New(WINPR_CIPHER_ARC4_128, WINPR_ENCRYPT,

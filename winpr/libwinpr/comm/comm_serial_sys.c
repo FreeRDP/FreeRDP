@@ -1462,13 +1462,6 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 
 		Sleep(100); /* 100 ms */
 	}
-
-	CommLog_Print(WLOG_WARN, "_wait_on_mask, unexpected return, WaitEventMask=0x%08"PRIX32"", pComm->WaitEventMask);
-	EnterCriticalSection(&pComm->EventsLock);
-	pComm->PendingEvents &= ~SERIAL_EV_FREERDP_WAITING;
-	LeaveCriticalSection(&pComm->EventsLock);
-	assert(FALSE);
-	return FALSE;
 }
 
 static BOOL _set_break_on(WINPR_COMM *pComm)

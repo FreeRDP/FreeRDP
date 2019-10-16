@@ -406,9 +406,6 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 		return FALSE;
 	}
 
-	if (!status)
-		return FALSE;
-
 	status = checkChannelErrorEvent(context);
 
 	if (!status)

@@ -678,7 +678,10 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(LPVOID lpUserParam, LPVOID cl
 	if (!pInitHandle)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
 
-	if (!pChannel || (channelCount <= 0) || !pChannelInitEventProcEx)
+	if (!pChannel)
+		return CHANNEL_RC_BAD_CHANNEL;
+
+	if ((channelCount <= 0) || !pChannelInitEventProcEx)
 		return CHANNEL_RC_INITIALIZATION_ERROR;
 
 	pChannelInitData = (CHANNEL_INIT_DATA*) pInitHandle;
@@ -690,9 +693,6 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(LPVOID lpUserParam, LPVOID cl
 
 	if ((channels->openDataCount + channelCount) > CHANNEL_MAX_COUNT)
 		return CHANNEL_RC_TOO_MANY_CHANNELS;
-
-	if (!pChannel)
-		return CHANNEL_RC_BAD_CHANNEL;
 
 	if (channels->connected)
 		return CHANNEL_RC_ALREADY_CONNECTED;
@@ -763,7 +763,10 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle,
 	if (!ppInitHandle || !channels)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
 
-	if (!pChannel || (channelCount <= 0) || !pChannelInitEventProc)
+	if (!pChannel)
+		return CHANNEL_RC_BAD_CHANNEL;
+
+	if ((channelCount <= 0) || !pChannelInitEventProc)
 		return CHANNEL_RC_INITIALIZATION_ERROR;
 
 	pInterface = g_pInterface;
@@ -778,9 +781,6 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle,
 
 	if (channels->openDataCount + channelCount > CHANNEL_MAX_COUNT)
 		return CHANNEL_RC_TOO_MANY_CHANNELS;
-
-	if (!pChannel)
-		return CHANNEL_RC_BAD_CHANNEL;
 
 	if (channels->connected)
 		return CHANNEL_RC_ALREADY_CONNECTED;

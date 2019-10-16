@@ -453,9 +453,6 @@ static BOOL update_gdi_fast_glyph(rdpContext* context,
 		rdpGlyph* glyph;
 		const GLYPH_DATA_V2* glyphData = &fastGlyph->glyphData;
 
-		if (!glyphData)
-			return FALSE;
-
 		glyph = Glyph_Alloc(context, glyphData->x, glyphData->y, glyphData->cx,
 		                    glyphData->cy,
 		                    glyphData->cb, glyphData->aj);
@@ -727,30 +724,27 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 		int i;
 		GLYPH_CACHE* cache = glyphCache->glyphCache;
 
-		if (cache)
+		for (i = 0; i < 10; i++)
 		{
-			for (i = 0; i < 10; i++)
+			UINT32 j;
+			rdpGlyph** entries = cache[i].entries;
+
+			if (!entries)
+				continue;
+
+			for (j = 0; j < cache[i].number; j++)
 			{
-				UINT32 j;
-				rdpGlyph** entries = cache[i].entries;
+				rdpGlyph* glyph = entries[j];
 
-				if (!entries)
-					continue;
-
-				for (j = 0; j < cache[i].number; j++)
+				if (glyph)
 				{
-					rdpGlyph* glyph = entries[j];
-
-					if (glyph)
-					{
-						glyph->Free(glyphCache->context, glyph);
-						entries[j] = NULL;
-					}
+					glyph->Free(glyphCache->context, glyph);
+					entries[j] = NULL;
 				}
-
-				free(entries);
-				cache[i].entries = NULL;
 			}
+
+			free(entries);
+			cache[i].entries = NULL;
 		}
 
 		if (glyphCache->fragCache.entries)
