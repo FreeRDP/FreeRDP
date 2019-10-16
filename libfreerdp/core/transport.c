@@ -562,7 +562,7 @@ SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t bytes)
 	{
 		const SSIZE_T tr = (SSIZE_T)bytes - read;
 		int r = (int)((tr > INT_MAX) ? INT_MAX : tr);
-		int status = status = BIO_read(transport->frontBio, data + read, r);
+		int status = BIO_read(transport->frontBio, data + read, r);
 
 		if (status <= 0)
 		{

@@ -220,6 +220,12 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm, BOOL* pbContinueNeeded)
 {
 	SECURITY_STATUS status;
 
+	if ((!ntlm) || (!ntlm->table))
+	{
+		WLog_ERR(TAG, "ntlm_authenticate: invalid ntlm context");
+		return FALSE;
+	}
+
 	if (ntlm->outputBuffer[0].pvBuffer)
 	{
 		free(ntlm->outputBuffer[0].pvBuffer);
@@ -250,12 +256,6 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm, BOOL* pbContinueNeeded)
 			ntlm->inputBuffer[1].cbBuffer = ntlm->Bindings->BindingsLength;
 			ntlm->inputBuffer[1].pvBuffer = (void*) ntlm->Bindings->Bindings;
 		}
-	}
-
-	if ((!ntlm) || (!ntlm->table))
-	{
-		WLog_ERR(TAG, "ntlm_authenticate: invalid ntlm context");
-		return FALSE;
 	}
 
 	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,

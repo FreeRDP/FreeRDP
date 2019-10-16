@@ -81,6 +81,7 @@ DWORD GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer)
 		}
 
 		memcpy(lpBuffer, cwd, length + 1);
+		free(cwd);
 		return length;
 	}
 

@@ -122,7 +122,7 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 	UINT status = CHANNEL_RC_OK;
 	UINT16* pSurfaceIds = NULL;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
-	xfContext* xfc = (xfContext*) gdi->context;
+	xfContext* xfc;
 
 	if (!gdi)
 		return status;
@@ -133,6 +133,7 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 	if (gdi->suppressOutput)
 		return CHANNEL_RC_OK;
 
+	xfc = (xfContext*) gdi->context;
 	EnterCriticalSection(&context->mux);
 	context->GetSurfaceIds(context, &pSurfaceIds, &count);
 

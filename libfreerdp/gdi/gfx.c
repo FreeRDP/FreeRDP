@@ -542,7 +542,6 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 	RDPGFX_H264_METABLOCK* meta1;
 	RDPGFX_AVC420_BITMAP_STREAM* avc2;
 	RDPGFX_H264_METABLOCK* meta2;
-	RECTANGLE_16* regionRects = NULL;
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
 	if (!surface)
@@ -619,7 +618,6 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 	}
 
 fail:
-	free(regionRects);
 	return status;
 #else
 	return ERROR_NOT_SUPPORTED;
@@ -873,10 +871,12 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context,
                                const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT status = CHANNEL_RC_OK;
-	rdpGdi* gdi = (rdpGdi*) context->custom;
+	rdpGdi* gdi;
 
 	if (!context || !cmd)
 		return ERROR_INVALID_PARAMETER;
+
+	gdi = (rdpGdi*) context->custom;
 
 	EnterCriticalSection(&context->mux);
 	WLog_Print(gdi->log, WLOG_TRACE,
@@ -991,7 +991,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 
 		default:
 			free(surface);
-			return ERROR_INTERNAL_ERROR;
+			goto fail;
 	}
 
 	surface->scanline = gfx_align_scanline(surface->width * 4, 16);

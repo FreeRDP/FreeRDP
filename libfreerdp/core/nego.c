@@ -914,7 +914,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		length += 8;
 	}
 
-	if ((length < 5) || (length > UINT16_MAX))
+	if (length > UINT16_MAX)
 		goto fail;
 
 	em = Stream_GetPosition(s);
