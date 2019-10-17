@@ -184,8 +184,23 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 	if (!context->codecs)
 		return FALSE;
 
-	return freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL,
-	                                     settings->DesktopWidth, settings->DesktopHeight);
+	if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL,
+									   settings->DesktopWidth, settings->DesktopHeight))
+		return FALSE;
+
+/* Runtime H264 detection. (only available if dynamic backend loading is defined)
+ * If no backend is available disable it before the channel is loaded.
+ */
+#if defined(WITH_GFX_H264) && defined(WITH_OPENH264_LOADING)
+	if (!context->codecs->h264)
+	{
+		settings->GfxH264 = FALSE;
+		settings->GfxAVC444 = FALSE;
+		settings->GfxAVC444v2 = FALSE;
+	}
+#endif
+	return TRUE;
+
 }
 
 /**
