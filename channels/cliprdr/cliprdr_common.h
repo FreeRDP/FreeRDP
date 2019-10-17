@@ -29,10 +29,12 @@
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL UINT cliprdr_write_lock_clipdata(wStream* s, const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData);
-FREERDP_LOCAL UINT cliprdr_write_unlock_clipdata(wStream* s, const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData);
-FREERDP_LOCAL UINT cliprdr_write_file_contents_request(wStream* s, const CLIPRDR_FILE_CONTENTS_REQUEST* request);
-FREERDP_LOCAL UINT cliprdr_write_file_contents_response(wStream* s, const CLIPRDR_FILE_CONTENTS_RESPONSE* response);
+FREERDP_LOCAL wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen);
+FREERDP_LOCAL wStream* cliprdr_packet_lock_clipdata_new(const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData);
+FREERDP_LOCAL wStream* cliprdr_packet_unlock_clipdata_new(const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData);
+FREERDP_LOCAL wStream* cliprdr_packet_file_contents_request_new(const CLIPRDR_FILE_CONTENTS_REQUEST* request);
+FREERDP_LOCAL wStream* cliprdr_packet_file_contents_response_new(const CLIPRDR_FILE_CONTENTS_RESPONSE* response);
+FREERDP_LOCAL wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList, BOOL useLongFormatNames);
 
 FREERDP_LOCAL UINT cliprdr_read_lock_clipdata(wStream* s, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData);
 FREERDP_LOCAL UINT cliprdr_read_unlock_clipdata(wStream* s, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData);
