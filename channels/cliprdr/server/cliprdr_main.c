@@ -66,25 +66,6 @@
  *
  */
 
-wStream* cliprdr_server_packet_new(UINT16 msgType, UINT16 msgFlags,
-                                   UINT32 dataLen)
-{
-	wStream* s;
-	s = Stream_New(NULL, dataLen + 8);
-
-	if (!s)
-	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		return NULL;
-	}
-
-	Stream_Write_UINT16(s, msgType);
-	Stream_Write_UINT16(s, msgFlags);
-	/* Write actual length after the entire packet has been constructed. */
-	Stream_Seek(s, 4);
-	return s;
-}
-
 /**
  * Function description
  *
@@ -145,11 +126,11 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 		return ERROR_INVALID_PARAMETER;
 	}
 
-	s = cliprdr_server_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
+	s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -200,12 +181,12 @@ static UINT cliprdr_server_monitor_ready(CliprdrServerContext* context, const CL
 	if (monitorReady->msgType != CB_MONITOR_READY)
 		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, monitorReady->msgType);
 
-	s = cliprdr_server_packet_new(CB_MONITOR_READY,
+	s = cliprdr_packet_new(CB_MONITOR_READY,
 								  monitorReady->msgFlags, monitorReady->dataLen);
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -222,128 +203,13 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context,
                                        const CLIPRDR_FORMAT_LIST* formatList)
 {
 	wStream* s;
-	UINT32 index;
-	int cchWideChar;
-	LPWSTR lpWideCharStr;
-	int formatNameSize;
-	char* szFormatName;
-	WCHAR* wszFormatName;
-	BOOL asciiNames = FALSE;
-	CLIPRDR_FORMAT* format;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
-	if (formatList->msgType != CB_FORMAT_LIST)
-		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, formatList->msgType);
-
-	if (!context->useLongFormatNames)
+	s = cliprdr_packet_format_list_new(formatList, context->useLongFormatNames);
+	if (!s)
 	{
-		UINT32 length = formatList->numFormats * 36;
-		s = cliprdr_server_packet_new(CB_FORMAT_LIST, 0, length);
-
-		if (!s)
-		{
-			WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
-			return ERROR_INTERNAL_ERROR;
-		}
-
-		for (index = 0; index < formatList->numFormats; index++)
-		{
-			size_t formatNameLength = 0;
-			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
-			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
-			formatNameSize = 0;
-
-			szFormatName = format->formatName;
-
-			if (asciiNames)
-			{
-				if (szFormatName)
-					formatNameLength = strlen(szFormatName);
-
-				if (formatNameLength > 31)
-					formatNameLength = 31;
-
-				Stream_Write(s, szFormatName, formatNameLength);
-				Stream_Zero(s, 32 - formatNameLength);
-			}
-			else
-			{
-				wszFormatName = NULL;
-
-				if (szFormatName)
-					formatNameSize = ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName,
-					                                  0);
-
-				if (formatNameSize < 0)
-					return ERROR_INTERNAL_ERROR;
-
-				if (formatNameSize > 15)
-					formatNameSize = 15;
-
-				/* size in bytes  instead of wchar */
-				formatNameSize *= 2;
-
-				if (wszFormatName)
-					Stream_Write(s, wszFormatName, (size_t)formatNameSize);
-
-				Stream_Zero(s, (size_t)(32 - formatNameSize));
-				free(wszFormatName);
-			}
-		}
-	}
-	else
-	{
-		UINT32 length = 0;
-		for (index = 0; index < formatList->numFormats; index++)
-		{
-			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
-			length += 4;
-			formatNameSize = 2;
-
-			if (format->formatName)
-				formatNameSize = MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1, NULL,
-				                                     0) * 2;
-
-			if (formatNameSize < 0)
-				return ERROR_INTERNAL_ERROR;
-
-			length += (UINT32)formatNameSize;
-		}
-
-		s = cliprdr_server_packet_new(CB_FORMAT_LIST, 0, length);
-
-		if (!s)
-		{
-			WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
-			return ERROR_INTERNAL_ERROR;
-		}
-
-		for (index = 0; index < formatList->numFormats; index++)
-		{
-			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
-			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
-
-			if (format->formatName)
-			{
-				const size_t cap = Stream_Capacity(s);
-				const size_t pos = Stream_GetPosition(s);
-				const size_t rem = cap - pos;
-				if ((cap < pos) || ((rem / 2) > INT_MAX))
-					return ERROR_INTERNAL_ERROR;
-
-				lpWideCharStr = (LPWSTR) Stream_Pointer(s);
-				cchWideChar = (int)(rem / 2);
-				formatNameSize = MultiByteToWideChar(CP_UTF8, 0,
-				                                     format->formatName, -1, lpWideCharStr, cchWideChar) * 2;
-				if (formatNameSize < 0)
-					return ERROR_INTERNAL_ERROR;
-				Stream_Seek(s, (size_t)formatNameSize);
-			}
-			else
-			{
-				Stream_Write_UINT16(s, 0);
-			}
-		}
+		WLog_ERR(TAG, "cliprdr_packet_format_list_new failed!");
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	WLog_DBG(TAG, "ServerFormatList: numFormats: %"PRIu32"",
@@ -364,12 +230,12 @@ static UINT cliprdr_server_format_list_response(CliprdrServerContext* context,
 	if (formatListResponse->msgType != CB_FORMAT_LIST_RESPONSE)
 		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, formatListResponse->msgType);
 
-	s = cliprdr_server_packet_new(CB_FORMAT_LIST_RESPONSE,
+	s = cliprdr_packet_new(CB_FORMAT_LIST_RESPONSE,
 	                              formatListResponse->msgFlags, formatListResponse->dataLen);
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -385,29 +251,21 @@ static UINT cliprdr_server_format_list_response(CliprdrServerContext* context,
 static UINT cliprdr_server_lock_clipboard_data(CliprdrServerContext* context,
         const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
-	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	if (lockClipboardData->msgType != CB_LOCK_CLIPDATA)
 		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, lockClipboardData->msgType);
-	s = cliprdr_server_packet_new(CB_LOCK_CLIPDATA, 0, 4);
 
+	s = cliprdr_packet_lock_clipdata_new(lockClipboardData);
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_lock_clipdata_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-
-	if ((error = cliprdr_write_lock_clipdata(s, lockClipboardData)))
-		goto fail;
 
 	WLog_DBG(TAG, "ServerLockClipboardData: clipDataId: 0x%08"PRIX32"",
 	         lockClipboardData->clipDataId);
 	return cliprdr_server_packet_send(cliprdr, s);
-
-fail:
-	Stream_Free(s, TRUE);
-	return error;
 }
 
 /**
@@ -418,30 +276,22 @@ fail:
 static UINT cliprdr_server_unlock_clipboard_data(CliprdrServerContext* context,
         const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	if (unlockClipboardData->msgType != CB_UNLOCK_CLIPDATA)
 		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, unlockClipboardData->msgType);
 
-	s = cliprdr_server_packet_new(CB_UNLOCK_CLIPDATA, 0, 4);
+	s = cliprdr_packet_unlock_clipdata_new(unlockClipboardData);
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_unlock_clipdata_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-
-	if ((error = cliprdr_write_unlock_clipdata(s, unlockClipboardData)))
-		goto fail;
 
 	WLog_DBG(TAG, "ServerUnlockClipboardData: clipDataId: 0x%08"PRIX32"",
 	         unlockClipboardData->clipDataId);
 	return cliprdr_server_packet_send(cliprdr, s);
-
-fail:
-	Stream_Free(s, TRUE);
-	return error;
 }
 
 /**
@@ -457,12 +307,12 @@ static UINT cliprdr_server_format_data_request(CliprdrServerContext* context,
 	if (formatDataRequest->msgType != CB_FORMAT_DATA_REQUEST)
 		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, formatDataRequest->msgType);
 
-	s = cliprdr_server_packet_new(CB_FORMAT_DATA_REQUEST,
+	s = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST,
 	                              formatDataRequest->msgFlags, formatDataRequest->dataLen);
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -486,12 +336,12 @@ static UINT cliprdr_server_format_data_response(CliprdrServerContext* context,
 	if (formatDataResponse->msgType != CB_FORMAT_DATA_RESPONSE)
 		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, formatDataResponse->msgType);
 
-	s = cliprdr_server_packet_new(CB_FORMAT_DATA_RESPONSE,
+	s = cliprdr_packet_new(CB_FORMAT_DATA_RESPONSE,
 	                              formatDataResponse->msgFlags, formatDataResponse->dataLen);
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -509,31 +359,22 @@ static UINT cliprdr_server_format_data_response(CliprdrServerContext* context,
 static UINT cliprdr_server_file_contents_request(CliprdrServerContext* context,
         const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
 	if (fileContentsRequest->msgType != CB_FILECONTENTS_REQUEST)
 		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, fileContentsRequest->msgType);
 
-	s = cliprdr_server_packet_new(CB_FILECONTENTS_REQUEST, 0, 28);
-
+	s = cliprdr_packet_file_contents_request_new(fileContentsRequest);
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_file_contents_request_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-
-	if ((error = cliprdr_write_file_contents_request(s, fileContentsRequest)))
-		goto fail;
 
 	WLog_DBG(TAG, "ServerFileContentsRequest: streamId: 0x%08"PRIX32"",
 	         fileContentsRequest->streamId);
 	return cliprdr_server_packet_send(cliprdr, s);
-
-fail:
-	Stream_Free(s, TRUE);
-	return error;
 }
 
 /**
@@ -544,32 +385,22 @@ fail:
 static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context,
         const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
-	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
 	if (fileContentsResponse->msgType != CB_FILECONTENTS_RESPONSE)
 		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, fileContentsResponse->msgType);
 
-	s = cliprdr_server_packet_new(CB_FILECONTENTS_RESPONSE, fileContentsResponse->msgFlags,
-	                              4 + fileContentsResponse->cbRequested);
-
+	s = cliprdr_packet_file_contents_response_new(fileContentsResponse);
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_file_contents_response_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if ((error = cliprdr_write_file_contents_response(s, fileContentsResponse)))
-		goto fail;
-
-	WLog_DBG(TAG, "ServerFileContentsResponse: streamId: 0x%08" PRIX32 "",
+	WLog_DBG(TAG, "ServerFileContentsResponse: streamId: 0x%08"PRIX32"",
 	         fileContentsResponse->streamId);
 	return cliprdr_server_packet_send(cliprdr, s);
-
-fail:
-	Stream_Free(s, TRUE);
-	return error;
 }
 
 /**

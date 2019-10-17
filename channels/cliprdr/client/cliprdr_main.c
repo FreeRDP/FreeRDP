@@ -64,25 +64,6 @@ CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
 	return pInterface;
 }
 
-static wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags,
-                                   UINT32 dataLen)
-{
-	wStream* s;
-	s = Stream_New(NULL, dataLen + 8);
-
-	if (!s)
-	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		return NULL;
-	}
-
-	Stream_Write_UINT16(s, msgType);
-	Stream_Write_UINT16(s, msgFlags);
-	/* Write actual length after the entire packet has been constructed. */
-	Stream_Seek(s, 4);
-	return s;
-}
-
 /**
  * Function description
  *
@@ -622,120 +603,13 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
                                        const CLIPRDR_FORMAT_LIST* formatList)
 {
 	wStream* s;
-	UINT32 index;
-	UINT32 length = 0;
-	int cchWideChar;
-	LPWSTR lpWideCharStr;
-	size_t formatNameSize;
-	size_t formatNameLength;
-	char* szFormatName;
-	WCHAR* wszFormatName;
-	BOOL asciiNames = FALSE;
-	CLIPRDR_FORMAT* format;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
 
-	if (!cliprdr->useLongFormatNames)
+	s = cliprdr_packet_format_list_new(formatList, cliprdr->useLongFormatNames);
+	if (!s)
 	{
-		length = formatList->numFormats * 36;
-		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, length);
-
-		if (!s)
-		{
-			WLog_ERR(TAG, "cliprdr_packet_new failed!");
-			return ERROR_INTERNAL_ERROR;
-		}
-
-		for (index = 0; index < formatList->numFormats; index++)
-		{
-			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
-			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
-			formatNameSize = 0;
-			formatNameLength = 0;
-			szFormatName = format->formatName;
-
-			if (asciiNames)
-			{
-				if (szFormatName)
-					formatNameLength = strlen(szFormatName);
-
-				if (formatNameLength > 31)
-					formatNameLength = 31;
-
-				Stream_Write(s, szFormatName, formatNameLength);
-				Stream_Zero(s, 32 - formatNameLength);
-			}
-			else
-			{
-				wszFormatName = NULL;
-
-				if (szFormatName)
-				{
-					int rc = ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName, 0);
-
-					if (rc < 0)
-						return ERROR_INTERNAL_ERROR;
-
-					formatNameSize = (size_t)rc;
-				}
-
-				if (formatNameSize > 15)
-					formatNameSize = 15;
-
-				if (wszFormatName)
-					Stream_Write(s, wszFormatName, formatNameSize * 2);
-
-				Stream_Zero(s, 32 - (formatNameSize * 2));
-				free(wszFormatName);
-			}
-		}
-	}
-	else
-	{
-		for (index = 0; index < formatList->numFormats; index++)
-		{
-			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
-			length += 4;
-			formatNameSize = 2;
-
-			if (format->formatName)
-			{
-				int rc = MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1, NULL, 0);
-
-				if (rc < 0)
-					return ERROR_INTERNAL_ERROR;
-
-				formatNameSize = (size_t)rc * 2;
-			}
-
-			length += formatNameSize;
-		}
-
-		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, length);
-
-		if (!s)
-		{
-			WLog_ERR(TAG, "cliprdr_packet_new failed!");
-			return ERROR_INTERNAL_ERROR;
-		}
-
-		for (index = 0; index < formatList->numFormats; index++)
-		{
-			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
-			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
-
-			if (format->formatName)
-			{
-				lpWideCharStr = (LPWSTR) Stream_Pointer(s);
-				cchWideChar = (Stream_Capacity(s) - Stream_GetPosition(s)) / 2;
-				formatNameSize = MultiByteToWideChar(CP_UTF8, 0,
-				                                     format->formatName, -1, lpWideCharStr, cchWideChar) * 2;
-				Stream_Seek(s, formatNameSize);
-			}
-			else
-			{
-				Stream_Write_UINT16(s, 0);
-			}
-		}
+		WLog_ERR(TAG, "cliprdr_packet_format_list_new failed!");
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatList: numFormats: %"PRIu32"",
@@ -774,10 +648,9 @@ static UINT cliprdr_client_format_list_response(CliprdrClientContext* context,
 static UINT cliprdr_client_lock_clipboard_data(CliprdrClientContext* context,
         const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
-	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
-	s = cliprdr_packet_new(CB_LOCK_CLIPDATA, 0, 4);
+	s = cliprdr_packet_lock_clipdata_new(lockClipboardData);
 
 	if (!s)
 	{
@@ -785,17 +658,10 @@ static UINT cliprdr_client_lock_clipboard_data(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if ((error = cliprdr_write_lock_clipdata(s, lockClipboardData)))
-		goto fail;
-
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientLockClipboardData: clipDataId: 0x%08"PRIX32"",
 	           lockClipboardData->clipDataId);
 	return cliprdr_packet_send(cliprdr, s);
-
-fail:
-	Stream_Free(s, TRUE);
-	return error;
 }
 
 /**
@@ -806,10 +672,9 @@ fail:
 static UINT cliprdr_client_unlock_clipboard_data(CliprdrClientContext* context,
         const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
-	s = cliprdr_packet_new(CB_UNLOCK_CLIPDATA, 0, 4);
+	s = cliprdr_packet_unlock_clipdata_new(unlockClipboardData);
 
 	if (!s)
 	{
@@ -817,18 +682,10 @@ static UINT cliprdr_client_unlock_clipboard_data(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if ((error = cliprdr_write_unlock_clipdata(s, unlockClipboardData)))
-		goto fail;
-
-	Stream_Write_UINT32(s, unlockClipboardData->clipDataId); /* clipDataId (4 bytes) */
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientUnlockClipboardData: clipDataId: 0x%08"PRIX32"",
 	           unlockClipboardData->clipDataId);
 	return cliprdr_packet_send(cliprdr, s);
-
-fail:
-	Stream_Free(s, TRUE);
-	return error;
 }
 
 /**
@@ -889,29 +746,21 @@ static UINT cliprdr_client_format_data_response(CliprdrClientContext* context,
 static UINT cliprdr_client_file_contents_request(CliprdrClientContext* context,
         const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
 
-	s = cliprdr_packet_new(CB_FILECONTENTS_REQUEST, 0, 28);
+	s = cliprdr_packet_file_contents_request_new(fileContentsRequest);
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_file_contents_request_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-
-	if ((error = cliprdr_write_file_contents_request(s, fileContentsRequest)))
-		goto fail;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientFileContentsRequest: streamId: 0x%08"PRIX32"",
 	           fileContentsRequest->streamId);
 	return cliprdr_packet_send(cliprdr, s);
-
-fail:
-	Stream_Free(s, TRUE);
-	return error;
 }
 
 /**
@@ -922,11 +771,9 @@ fail:
 static UINT cliprdr_client_file_contents_response(CliprdrClientContext* context,
         const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
-	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
-	s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, fileContentsResponse->msgFlags,
-	                       4 + fileContentsResponse->cbRequested);
+	s = cliprdr_packet_file_contents_response_new(fileContentsResponse);
 
 	if (!s)
 	{
@@ -934,17 +781,10 @@ static UINT cliprdr_client_file_contents_response(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if ((error = cliprdr_write_file_contents_response(s, fileContentsResponse)))
-		goto fail;
-
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientFileContentsResponse: streamId: 0x%08"PRIX32"",
 	           fileContentsResponse->streamId);
 	return cliprdr_packet_send(cliprdr, s);
-
-fail:
-	Stream_Free(s, TRUE);
-	return error;
 }
 
 /**
