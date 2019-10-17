@@ -489,7 +489,6 @@ static BOOL region16_simplify_bands(REGION16* region)
 
 BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16* rect)
 {
-	REGION16_DATA* data;
 	const RECTANGLE_16* srcExtents;
 	RECTANGLE_16* dstExtents;
 	const RECTANGLE_16* currentBand, *endSrcRect, *nextBand;
@@ -727,7 +726,6 @@ BOOL region16_intersects_rect(const REGION16* src, const RECTANGLE_16* arg2)
 
 BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16* rect)
 {
-	REGION16_DATA* data;
 	REGION16_DATA* newItems;
 	const RECTANGLE_16* srcPtr, *endPtr, *srcExtents;
 	RECTANGLE_16* dstPtr;

@@ -33,8 +33,8 @@
 #define CONFIG_PRINT_SECTION(section) WLog_INFO(TAG, "\t%s:", section)
 #define CONFIG_PRINT_STR(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, config->key)
 #define CONFIG_PRINT_BOOL(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, config->key ? "TRUE" : "FALSE")
-#define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu16"", #key, config->key);
-#define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu32"", #key, config->key);
+#define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu16"", #key, config->key)
+#define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu32"", #key, config->key)
 
 static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, UINT16* result)
 {
@@ -56,7 +56,7 @@ static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char*
 	int val;
 
 	val = IniFile_GetKeyValueInt(ini, section, key);
-	if ((val < 0) || (val > UINT32_MAX))
+	if ((val < 0) || (val > INT32_MAX))
 	{
 		WLog_ERR(TAG, "pf_config_get_uint32(): invalid value %d for section '%s', key '%s'!", val, section, key);
 		return FALSE;
@@ -126,7 +126,7 @@ static BOOL pf_config_load_clipboard(wIniFile* ini, proxyConfig* config)
 
 static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 {
-	UINT32 index;
+	int index;
 	int modules_count = 0;
 	char** module_names = NULL;
 

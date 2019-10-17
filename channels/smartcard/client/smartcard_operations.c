@@ -1215,8 +1215,6 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 	 */
 	cbAtrLen = call->cbAtrLen = 32;
 
-	call->cchReaderLen;
-
 	if (call->fmszReaderNamesIsNULL)
 		cchReaderLen = 0;
 	else
