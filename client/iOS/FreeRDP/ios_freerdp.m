@@ -262,103 +262,58 @@ int ios_run_freerdp(freerdp* instance)
 	mfi->connection_state = TSXConnectionConnected;
 	// Connection main loop
 	NSAutoreleasePool* pool;
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	int wcount;
-	void* rfds[32];
-	void* wfds[32];
-	fd_set rfds_set;
-	fd_set wfds_set;
 	struct timeval timeout;
 	int select_status;
-	memset(rfds, 0, sizeof(rfds));
-	memset(wfds, 0, sizeof(wfds));
 
 	while (!freerdp_shall_disconnect(instance))
 	{
-		rcount = wcount = 0;
+		DWORD status;
+		HANDLE ios_handle;
+		HANDLE handles[64];
+		DWORD usedHandles = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));
 		pool = [[NSAutoreleasePool alloc] init];
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+		if (usedHandles == 0)
 		{
-			NSLog(@"%s: inst->rdp_get_fds failed", __func__);
+			NSLog(@"%s: freerdp_get_event_handles failed", __func__);
 			break;
 		}
 
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds,
-		                             &wcount) != TRUE)
+		ios_handle = ios_events_get_event_handle(mfi);
+		handles[usedHandles++] = ios_handle;
+
+		if (ios_handle == INVALID_HANDLE_VALUE)
 		{
-			NSLog(@"%s: freerdp_chanman_get_fds failed", __func__);
+			NSLog(@"%s: ios_events_get_event_handle", __func__);
 			break;
 		}
 
-		if (ios_events_get_fds(mfi, rfds, &rcount, wfds, &wcount) != TRUE)
+		status = WaitForMultipleObjects(usedHandles, handles, FALSE, INFINITE);
+
+		if (status == WAIT_FAILED)
 		{
-			NSLog(@"%s: ios_events_get_fds", __func__);
+			NSLog(@"%s: WaitForMultipleObjects failed", __func__);
 			break;
-		}
-
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-		FD_ZERO(&wfds_set);
-
-		for (i = 0; i < rcount; i++)
-		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
-			break;
-
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
-		select_status = select(max_fds + 1, &rfds_set, NULL, NULL, &timeout);
-
-		// timeout?
-		if (select_status == 0)
-		{
-			continue;
-		}
-		else if (select_status == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-			      (errno == EWOULDBLOCK) ||
-			      (errno == EINPROGRESS) ||
-			      (errno == EINTR))) /* signal occurred */
-			{
-				NSLog(@"%s: select failed!", __func__);
-				break;
-			}
 		}
 
 		// Check the libfreerdp fds
-		if (freerdp_check_fds(instance) != true)
+		if (freerdp_check_event_handles(instance->context) != TRUE)
 		{
-			NSLog(@"%s: inst->rdp_check_fds failed.", __func__);
+			NSLog(@"%s: freerdp_check_event_handles failed.", __func__);
 			break;
 		}
 
 		// Check input event fds
-		if (ios_events_check_fds(mfi, &rfds_set) != TRUE)
+		if (WaitForSingleObject(ios_handle, 0) == WAIT_OBJECT_0)
 		{
-			// This event will fail when the app asks for a disconnect.
-			//NSLog(@"%s: ios_events_check_fds failed: terminating connection.", __func__);
-			break;
-		}
+			if (ios_events_check_event_handles(mfi) != TRUE)
+			{
+				// This event will fail when the app asks for a disconnect.
+				//NSLog(@"%s: ios_events_check_fds failed: terminating connection.", __func__);
+				break;
+			}
 
-		// Check channel fds
-		if (freerdp_channels_check_fds(channels, instance) != TRUE)
-		{
-			NSLog(@"%s: freerdp_chanman_check_fds failed", __func__);
-			break;
+			ResetEvent(ios_handle);
 		}
 
 		[pool release];

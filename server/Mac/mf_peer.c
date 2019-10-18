@@ -26,6 +26,7 @@
 #include <winpr/stream.h>
 #include <freerdp/peer.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/log.h>
 
 #include <winpr/crt.h>
 
@@ -45,6 +46,8 @@
 
 #include "CoreVideo/CoreVideo.h"
 
+#define TAG SERVER_TAG("mac.peer")
+
 //refactor these
 static int info_last_sec = 0;
 static int info_last_nsec = 0;
@@ -58,14 +61,14 @@ static CGLContextObj glContext;
 static CGContextRef bmp;
 static CGImageRef img;
 
-static BOOL mf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
+static HANDLE mf_peer_get_event_handle(freerdp_peer* client)
 {
-	if (info_event_queue->pipe_fd[0] == -1)
-		return TRUE;
+	mfPeerContext* context = (mfPeerContext*)client->context;
 
-	rfds[*rcount] = (void*)(long) info_event_queue->pipe_fd[0];
-	(*rcount)++;
-	return TRUE;
+	if (!client || !client->context)
+		return INVALID_HANDLE_VALUE;
+
+	return context->handle;
 }
 
 
@@ -127,7 +130,7 @@ static void mf_peer_rfx_update(freerdp_peer* client)
 	//clean up... maybe?
 }
 
-static BOOL mf_peer_check_fds(freerdp_peer* client)
+static BOOL mf_peer_check_event_handles(freerdp_peer* client)
 {
 	mfPeerContext* context = (mfPeerContext*) client->context;
 	mfEvent* event;
@@ -210,6 +213,7 @@ static void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 			rdpsnd_server_context_free(context->rdpsnd);
 
 #endif
+		CloseHandle(context->handle);
 		WTSCloseServer(context->vcm);
 	}
 }
@@ -217,6 +221,7 @@ static void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 /* Called when a new client connects */
 static BOOL mf_peer_init(freerdp_peer* client)
 {
+	mfPeerContext* context;
 	client->ContextSize = sizeof(mfPeerContext);
 	client->ContextNew = (psPeerContextNew) mf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) mf_peer_context_free;
@@ -229,6 +234,9 @@ static BOOL mf_peer_init(freerdp_peer* client)
 	                                   DISPATCH_QUEUE_SERIAL);
 	info_timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0,
 	                                    info_queue);
+	context = (mfPeerContext*)client->context;
+	context->handle = CreateFileDescriptorEvent(NULL, FALSE, FALSE, info_event_queue->pipe_fd[0],
+	                  WINPR_FD_READ);
 
 	if (info_timer)
 	{
@@ -325,15 +333,8 @@ static BOOL mf_peer_suppress_output(rdpContext* context, BYTE allow,
 
 static void* mf_peer_main_loop(void* arg)
 {
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	void* rfds[32];
-	fd_set rfds_set;
 	mfPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) arg;
-	memset(rfds, 0, sizeof(rfds));
 
 	if (!mf_peer_init(client))
 	{
@@ -370,59 +371,55 @@ static void* mf_peer_main_loop(void* arg)
 
 	while (1)
 	{
-		rcount = 0;
+		DWORD status;
+		HANDLE handles[64];
+		DWORD usedHandles = client->GetEventHandles(client, handles, ARRAYSIZE(handles));
 
-		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
+		if (usedHandles == 0)
 		{
+			WLog_ERR(TAG, "Failed to get event handles from peer");
 			break;
 		}
 
-		if (mf_peer_get_fds(client, rfds, &rcount) != TRUE)
+		handles[usedHandles++] = mf_peer_get_event_handle(client);
+
+		if (handles[usedHandles - 1] == INVALID_HANDLE_VALUE)
 		{
+			WLog_ERR(TAG, "mf_peer_get_event_handle failed");
 			break;
 		}
 
-		WTSVirtualChannelManagerGetFileDescriptor(context->vcm, rfds, &rcount);
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
+		handles[usedHandles++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);;
 
-		for (i = 0; i < rcount; i++)
+		if (handles[usedHandles - 1] == INVALID_HANDLE_VALUE)
 		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
+			WLog_ERR(TAG, "WTSVirtualChannelManagerGetEventHandle failed");
+			break;
 		}
 
-		if (max_fds == 0)
-			break;
+		status = WaitForMultipleObjects(usedHandles, handles, FALSE, INFINITE);
 
-		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
+		if (status == WAIT_FAILED)
 		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-			      (errno == EWOULDBLOCK) ||
-			      (errno == EINPROGRESS) ||
-			      (errno == EINTR))) /* signal occurred */
-			{
-				break;
-			}
+			WLog_ERR(TAG, "WaitForMultipleObjects failed");
+			break;
 		}
 
 		if (client->CheckFileDescriptor(client) != TRUE)
 		{
+			WLog_ERR(TAG, "peer->CheckFileDescriptor failed");
 			break;
 		}
 
-		if ((mf_peer_check_fds(client)) != TRUE)
+		if ((mf_peer_check_event_handles(client)) != TRUE)
 		{
+			WLog_ERR(TAG, "mf_peer_check_event_handles failed");
 			break;
 		}
 
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
 		{
+			WLog_ERR(TAG, "WTSVirtualChannelManagerCheckFileDescriptor failed");
 			break;
 		}
 	}

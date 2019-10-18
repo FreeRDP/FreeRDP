@@ -99,7 +99,8 @@ FREERDP_LOCAL int transport_write(rdpTransport* transport, wStream* s);
 
 FREERDP_LOCAL void transport_get_fds(rdpTransport* transport, void** rfds,
                                      int* rcount);
-FREERDP_LOCAL int transport_check_fds(rdpTransport* transport);
+
+FREERDP_LOCAL int transport_check_event_handles(rdpTransport* transport);
 
 FREERDP_LOCAL DWORD transport_get_event_handles(rdpTransport* transport,
         HANDLE* events, DWORD nCount);

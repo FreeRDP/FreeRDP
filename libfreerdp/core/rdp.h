@@ -226,7 +226,7 @@ FREERDP_LOCAL void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
 FREERDP_LOCAL int rdp_recv_callback(rdpTransport* transport, wStream* s,
                                     void* extra);
 
-FREERDP_LOCAL int rdp_check_fds(rdpRdp* rdp);
+FREERDP_LOCAL int rdp_check_event_handles(rdpRdp* rdp);
 
 FREERDP_LOCAL rdpRdp* rdp_new(rdpContext* context);
 FREERDP_LOCAL void rdp_reset(rdpRdp* rdp);

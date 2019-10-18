@@ -346,7 +346,7 @@ out:
 /** Callback set in the rdp_freerdp structure, and used to get the user's password,
  *  if required to establish the connection.
  *  This function is actually called in credssp_ntlmssp_client_init()
- *  @see rdp_server_accept_nego() and rdp_check_fds()
+ *  @see rdp_server_accept_nego() and rdp_check_event_handles()
  *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
  *  @param username - unused
  *  @param password - on return: pointer to a character string that will be filled by the password entered by the user.

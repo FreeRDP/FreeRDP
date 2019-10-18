@@ -167,43 +167,37 @@ BOOL wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 
 static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 {
-	int i, fds;
-	int rcount;
-	int max_fds;
-	void* rfds[32];
-	fd_set rfds_set;
 	wfPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) lpParam;
-	ZeroMemory(rfds, sizeof(rfds));
+
+	if (!client || !client->context)
+	{
+		ExitThread(1);
+		return 1;
+	}
+
 	context = (wfPeerContext*) client->context;
 
 	while (1)
 	{
-		rcount = 0;
+		DWORD status;
+		HANDLE handles[64];
+		DWORD usedHandles = client->GetEventHandles(client, handles, ARRAYSIZE(handles));
 
-		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
+		if (usedHandles == 0)
 		{
 			WLog_ERR(TAG, "Failed to get peer file descriptor");
 			break;
 		}
 
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
+		status = WaitForMultipleObjects(usedHandles, handles, FALSE, INFINITE);
 
-		for (i = 0; i < rcount; i++)
+		if (status == WAIT_FAILED)
 		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed");
+			break;
 		}
 
-		if (max_fds == 0)
-			break;
-
-		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
 		SetEvent(context->socketEvent);
 		WaitForSingleObject(context->socketSemaphore, INFINITE);
 
@@ -211,6 +205,7 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 			break;
 	}
 
+	ExitThread(0);
 	return 0;
 }
 

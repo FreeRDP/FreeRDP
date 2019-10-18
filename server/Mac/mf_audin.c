@@ -57,8 +57,9 @@ static UINT mf_peer_audin_open_result(audin_server_context* context, UINT32 resu
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT mf_peer_audin_receive_samples(audin_server_context* context, const void* buf,
-        int nframes)
+static UINT mf_peer_audin_receive_samples(audin_server_context* context,
+        const AUDIO_FORMAT* format, wStream* buf,
+        size_t nframes)
 {
 	return CHANNEL_RC_OK;
 }
@@ -69,8 +70,10 @@ void mf_peer_audin_init(mfPeerContext* context)
 	context->audin->rdpcontext = &context->_p;
 	context->audin->data = context;
 	context->audin->num_server_formats = server_audin_get_formats(&context->audin->server_formats);
+
 	if (context->audin->num_server_formats > 0)
 		context->audin->dst_format = &context->audin->server_formats[0];
+
 	context->audin->Opening = mf_peer_audin_opening;
 	context->audin->OpenResult = mf_peer_audin_open_result;
 	context->audin->ReceiveSamples = mf_peer_audin_receive_samples;
