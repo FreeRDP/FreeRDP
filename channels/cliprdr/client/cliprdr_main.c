@@ -96,8 +96,11 @@ static UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	}
 
 	if (status != CHANNEL_RC_OK)
+	{
+		Stream_Free(s, TRUE);
 		WLog_ERR(TAG, "VirtualChannelWrite failed with %s [%08"PRIX32"]",
 		         WTSErrorToString(status), status);
+	}
 
 	return status;
 }
