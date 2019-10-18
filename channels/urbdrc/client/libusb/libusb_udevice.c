@@ -606,12 +606,12 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 			continue;
 
 		unsigned long tmp_b, tmp_d;
-		tmp_b = strtoul(udev_device_get_property_value(dev, "BUSNUM"), NULL, 0);
+		tmp_b = strtoul(udev_device_get_property_value(dev, "BUSNUM"), NULL, 10);
 
 		if (errno != 0)
 			continue;
 
-		tmp_d = strtoul(udev_device_get_property_value(dev, "DEVNUM"), NULL, 0);
+		tmp_d = strtoul(udev_device_get_property_value(dev, "DEVNUM"), NULL, 10);
 
 		if (errno != 0)
 			continue;
@@ -671,8 +671,8 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 			if (dev != NULL)
 			{
 				hub_found = 1;
-				hub_bus = strtoul(udev_device_get_property_value(dev, "BUSNUM"), NULL, 0);
-				hub_dev = strtoul(udev_device_get_property_value(dev, "DEVNUM"), NULL, 0);
+				hub_bus = strtoul(udev_device_get_property_value(dev, "BUSNUM"), NULL, 10);
+				hub_dev = strtoul(udev_device_get_property_value(dev, "DEVNUM"), NULL, 10);
 				WLog_DBG(TAG, "  Hub BUS/DEV: %d %d", hub_bus, hub_dev);
 			}
 
