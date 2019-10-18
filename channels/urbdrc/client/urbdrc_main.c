@@ -885,12 +885,12 @@ static void* urbdrc_search_usb_device(void* arg)
 						continue;
 					}
 
-					busnum = strtol(udev_device_get_property_value(dev, "BUSNUM"), NULL, 0);
+					busnum = strtol(udev_device_get_property_value(dev, "BUSNUM"), NULL, 10);
 
 					if (errno != 0)
 						continue;
 
-					devnum = strtol(udev_device_get_property_value(dev, "DEVNUM"), NULL, 0);
+					devnum = strtol(udev_device_get_property_value(dev, "DEVNUM"), NULL, 10);
 
 					if (errno != 0)
 						continue;
