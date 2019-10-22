@@ -175,6 +175,10 @@ struct rdp_rdp
 	BOOL resendFocus;
 	BOOL deactivation_reactivation;
 	BOOL AwaitCapabilities;
+	UINT64 inBytes;
+	UINT64 inPackets;
+	UINT64 outBytes;
+	UINT64 outPackets;
 };
 
 FREERDP_LOCAL BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length);
