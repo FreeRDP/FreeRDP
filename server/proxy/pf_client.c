@@ -382,7 +382,10 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	handles[64] = pdata->abort_event;
 
 	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_PRE_CONNECT, (rdpContext*) ps))
+	{
+		proxy_data_abort_connect(pdata);
 		return FALSE;
+	}
 
 	if (!pf_client_connect(instance))
 	{
