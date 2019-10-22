@@ -73,8 +73,8 @@ void pf_OnChannelConnectedEventHandler(void* data,
 			return;
 		}
 
-		pc->gfx = (RdpgfxClientContext*) e->pInterface;
-		pf_rdpgfx_pipeline_init(pc->gfx, ps->gfx, pc->pdata);
+		pc->gfx_proxy = (RdpgfxClientContext*) e->pInterface;
+		pf_rdpgfx_pipeline_init(pc->gfx_proxy, ps->gfx, pc->pdata);
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
@@ -145,7 +145,8 @@ void pf_OnChannelDisconnectedEventHandler(void* data,
 		if (!ps->gfx->Close(ps->gfx))
 			WLog_ERR(TAG, "failed to close gfx server");
 
-		gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
+		gdi_graphics_pipeline_uninit(context->gdi, pc->gfx_decoder);
+		rdpgfx_client_context_free(pc->gfx_decoder);
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{

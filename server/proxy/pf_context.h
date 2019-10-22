@@ -69,7 +69,8 @@ struct p_client_context
 	proxyData* pdata;
 
 	RdpeiClientContext* rdpei;
-	RdpgfxClientContext* gfx;
+	RdpgfxClientContext* gfx_proxy;
+	RdpgfxClientContext* gfx_decoder;
 	DispClientContext* disp;
 	CliprdrClientContext* cliprdr;
 
@@ -82,6 +83,10 @@ struct p_client_context
 	 * to ensure graceful shutdown of the connection when it will be closed.
 	 */
 	BOOL allow_next_conn_failure;
+
+	/* session capture */
+	char* frames_dir;
+	UINT64 frames_count;
 };
 typedef struct p_client_context pClientContext;
 

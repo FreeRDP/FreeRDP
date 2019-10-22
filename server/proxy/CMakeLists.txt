@@ -50,6 +50,8 @@ set(${MODULE_PREFIX}_SRCS
   pf_cliprdr.h
   pf_rdpsnd.c
   pf_rdpsnd.h
+  pf_capture.c
+  pf_capture.h
   pf_log.h
   )
 

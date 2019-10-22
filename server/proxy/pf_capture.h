@@ -1,10 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Proxy Server
+ * FreeRDP Proxy Server Session Capture
  *
- * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
  * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
- * Copyright 2019 Idan Freiberg <speidy@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +17,17 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SERVER_PROXY_PFUPDATE_H
-#define FREERDP_SERVER_PROXY_PFUPDATE_H
+#ifndef FREERDP_SERVER_PROXY_CAPTURE_H
+#define FREERDP_SERVER_PROXY_CAPTURE_H
 
-#include <freerdp/freerdp.h>
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/bitmap.h>
+#include <winpr/image.h>
+#include <winpr/sysinfo.h>
+#include <winpr/path.h>
+#include <winpr/file.h>
 
 #include "pf_context.h"
 
-void pf_server_register_update_callbacks(rdpUpdate* update);
-void pf_client_register_update_callbacks(rdpUpdate* update);
+BOOL pf_capture_create_session_directory(pClientContext* context);
+BOOL pf_capture_save_frame(pClientContext* pc, const BYTE* frame);
 
-#endif /* FREERDP_SERVER_PROXY_PFUPDATE_H */
+#endif /* FREERDP_SERVER_PROXY_CAPTURE_H */
