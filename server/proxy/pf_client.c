@@ -205,7 +205,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	pc = (pClientContext*) context;
 	ps = (rdpContext*) pc->pdata->ps;
 
-	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
+	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
 
 	if (!pf_register_pointer(context->graphics))
