@@ -654,6 +654,8 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	WLog_DBG(TAG, "%s: sending data (type=0x%x size=%"PRIuz" channelId=%"PRIu16")", __FUNCTION__,
 	         type, Stream_Length(s), channel_id);
 
+	rdp->outBytes += Stream_GetRemainingLength(s);
+	rdp->outPackets++;
 	if (transport_write(rdp->transport, s) < 0)
 		goto fail;
 
@@ -1194,6 +1196,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		return -1;
 	}
 
+	rdp->inPackets++;
 	if (freerdp_shall_disconnect(rdp->instance))
 		return 0;
 
@@ -1353,6 +1356,8 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
 	int status = 0;
 	rdpRdp* rdp = (rdpRdp*) extra;
+
+	rdp->inBytes += Stream_GetRemainingLength(s);
 
 	/*
 	 * At any point in the connection sequence between when all
@@ -1584,6 +1589,23 @@ int rdp_check_fds(rdpRdp* rdp)
 		WLog_DBG(TAG, "transport_check_fds() - %i", status);
 
 	return status;
+}
+
+BOOL freerdp_get_stats(rdpRdp* rdp, UINT64 *inBytes, UINT64 *outBytes, UINT64 *inPackets, UINT64 *outPackets)
+{
+	if (!rdp)
+		return FALSE;
+
+	if (inBytes)
+		*inBytes = rdp->inBytes;
+	if (outBytes)
+		*outBytes = rdp->outBytes;
+	if (inPackets)
+		*inPackets = rdp->inPackets;
+	if (outPackets)
+		*outPackets = rdp->outPackets;
+
+	return TRUE;
 }
 
 /**
