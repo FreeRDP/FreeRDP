@@ -153,4 +153,7 @@ struct _rdpgfx_client_context
 	PROFILER_DEFINE(SurfaceProfiler)
 };
 
+FREERDP_API RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings);
+FREERDP_API void rdpgfx_client_context_free(RdpgfxClientContext* context);
+
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_RDPGFX_H */
