@@ -22,6 +22,7 @@
 #define FREERDP_SERVER_PROXY_PFCONFIG_H
 
 #include <winpr/ini.h>
+#include <winpr/path.h>
 
 #define CONFIG_GET_STR(ini, section, key) IniFile_GetKeyValueString(ini, section, key)
 #define CONFIG_GET_BOOL(ini, section, key) IniFile_GetKeyValueInt(ini, section, key)
@@ -61,6 +62,10 @@ struct proxy_config
 	/* clipboard specific settings */
 	BOOL TextOnly;
 	UINT32 MaxTextLength;
+
+	/* session capture */
+	BOOL SessionCapture;
+	char* CapturesDirectory;
 };
 
 typedef struct proxy_config proxyConfig;

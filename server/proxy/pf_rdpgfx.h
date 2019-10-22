@@ -24,6 +24,7 @@
 
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/server/rdpgfx.h>
+#include <freerdp/gdi/gfx.h>
 
 #include "pf_context.h"
 

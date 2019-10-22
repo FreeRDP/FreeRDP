@@ -50,6 +50,7 @@
 #include "pf_update.h"
 #include "pf_log.h"
 #include "pf_modules.h"
+#include "pf_capture.h"
 
 #define TAG PROXY_TAG("client")
 
@@ -196,14 +197,27 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	rdpContext* context;
 	rdpSettings* settings;
 	rdpUpdate* update;
-	pClientContext* pc;
 	rdpContext* ps;
+	pClientContext* pc;
+	proxyConfig* config;
 
 	context = instance->context;
 	settings = instance->settings;
 	update = instance->update;
 	pc = (pClientContext*) context;
 	ps = (rdpContext*) pc->pdata->ps;
+	config = pc->pdata->config;
+
+	if (config->SessionCapture)
+	{
+		if (!pf_capture_create_session_directory(pc))
+		{
+			WLog_ERR(TAG, "pf_capture_create_session_directory failed!");
+			return FALSE;
+		}
+
+		WLog_INFO(TAG, "frames dir created: %s", pc->frames_dir);
+	}
 
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
@@ -523,7 +537,19 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyCertificateEx = pf_client_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = pf_client_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = pf_logon_error_info;
+
 	return TRUE;
+}
+
+static void pf_client_client_free(freerdp* instance, rdpContext* context)
+{
+	pClientContext* pc = (pClientContext*) context;
+
+	if (!pc)
+		return;
+
+	free(pc->frames_dir);
+	pc->frames_dir = NULL;
 }
 
 static int pf_client_client_stop(rdpContext* context)
@@ -558,6 +584,7 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ContextSize = sizeof(pClientContext);
 	/* Client init and finish */
 	pEntryPoints->ClientNew = pf_client_client_new;
+	pEntryPoints->ClientFree = pf_client_client_free;
 	pEntryPoints->ClientStop = pf_client_client_stop;
 	return 0;
 }
