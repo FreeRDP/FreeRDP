@@ -1866,18 +1866,6 @@ static UINT rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 	UINT error = CHANNEL_RC_OK;
 	DEBUG_RDPGFX(gfx->log, "Terminated");
 
-	if (gfx->listener_callback)
-	{
-		free(gfx->listener_callback);
-		gfx->listener_callback = NULL;
-	}
-
-	if (gfx->zgfx)
-	{
-		zgfx_context_free(gfx->zgfx);
-		gfx->zgfx = NULL;
-	}
-
 	count = HashTable_GetKeys(gfx->SurfaceTable, &pKeys);
 
 	for (index = 0; index < count; index++)
@@ -1891,17 +1879,13 @@ static UINT rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 
 			if (error)
 			{
-				WLog_Print(gfx->log, WLOG_ERROR, "context->DeleteSurface failed with error %"PRIu32"", error);
-				free(pKeys);
-				free(context);
-				free(gfx);
-				return error;
+				WLog_Print(gfx->log, WLOG_ERROR,
+				           "context->DeleteSurface failed with error %" PRIu32 "", error);
+				goto out;
 			}
 		}
 	}
 
-	free(pKeys);
-	HashTable_Free(gfx->SurfaceTable);
 
 	for (index = 0; index < gfx->MaxCacheSlot; index++)
 	{
@@ -1916,10 +1900,7 @@ static UINT rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 
 				if (error)
 				{
-					WLog_Print(gfx->log, WLOG_ERROR, "context->EvictCacheEntry failed with error %"PRIu32"", error);
-					free(context);
-					free(gfx);
-					return error;
+					goto out;
 				}
 			}
 
@@ -1927,9 +1908,10 @@ static UINT rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 		}
 	}
 
-	free(context);
-	free(gfx);
-	return CHANNEL_RC_OK;
+out:
+	free(pKeys);
+	rdpgfx_client_context_free(context);
+	return error;
 }
 
 /**
@@ -2047,6 +2029,112 @@ static void* rdpgfx_get_cache_slot_data(RdpgfxClientContext* context, UINT16 cac
 #define DVCPluginEntry		FREERDP_API DVCPluginEntry
 #endif
 
+RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings)
+{
+	RDPGFX_PLUGIN* gfx;
+	RdpgfxClientContext* context;
+
+	gfx = (RDPGFX_PLUGIN*)calloc(1, sizeof(RDPGFX_PLUGIN));
+
+	if (!gfx)
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return NULL;
+	}
+
+	gfx->log = WLog_Get(TAG);
+
+	if (!gfx->log)
+	{
+		free(gfx);
+		WLog_ERR(TAG, "Failed to acquire reference to WLog %s", TAG);
+		return NULL;
+	}
+
+	gfx->settings = settings;
+	gfx->rdpcontext = ((freerdp*)gfx->settings->instance)->context;
+	gfx->SurfaceTable = HashTable_New(TRUE);
+
+	if (!gfx->SurfaceTable)
+	{
+		free(gfx);
+		WLog_ERR(TAG, "HashTable_New failed!");
+		return NULL;
+	}
+
+	gfx->ThinClient = gfx->settings->GfxThinClient;
+	gfx->SmallCache = gfx->settings->GfxSmallCache;
+	gfx->Progressive = gfx->settings->GfxProgressive;
+	gfx->ProgressiveV2 = gfx->settings->GfxProgressiveV2;
+	gfx->H264 = gfx->settings->GfxH264;
+	gfx->AVC444 = gfx->settings->GfxAVC444;
+	gfx->SendQoeAck = gfx->settings->GfxSendQoeAck;
+	gfx->capsFilter = gfx->settings->GfxCapsFilter;
+
+	if (gfx->H264)
+		gfx->SmallCache = TRUE;
+
+	gfx->MaxCacheSlot = gfx->SmallCache ? 4096 : 25600;
+	context = (RdpgfxClientContext*)calloc(1, sizeof(RdpgfxClientContext));
+
+	if (!context)
+	{
+		free(gfx);
+		WLog_ERR(TAG, "calloc failed!");
+		return NULL;
+	}
+
+	context->handle = (void*)gfx;
+	context->GetSurfaceIds = rdpgfx_get_surface_ids;
+	context->SetSurfaceData = rdpgfx_set_surface_data;
+	context->GetSurfaceData = rdpgfx_get_surface_data;
+	context->SetCacheSlotData = rdpgfx_set_cache_slot_data;
+	context->GetCacheSlotData = rdpgfx_get_cache_slot_data;
+	context->CapsAdvertise = rdpgfx_send_caps_advertise_pdu;
+	context->FrameAcknowledge = rdpgfx_send_frame_acknowledge_pdu;
+	context->CacheImportOffer = rdpgfx_send_cache_import_offer_pdu;
+	context->QoeFrameAcknowledge = rdpgfx_send_qoe_frame_acknowledge_pdu;
+
+	gfx->iface.pInterface = (void*)context;
+	gfx->zgfx = zgfx_context_new(FALSE);
+
+	if (!gfx->zgfx)
+	{
+		free(gfx);
+		free(context);
+		WLog_ERR(TAG, "zgfx_context_new failed!");
+		return NULL;
+	}
+
+	return context;
+}
+
+void rdpgfx_client_context_free(RdpgfxClientContext* context)
+{
+	RDPGFX_PLUGIN* gfx;
+
+	if (!context)
+		return;
+
+	gfx = (RDPGFX_PLUGIN*)context->handle;
+
+	if (gfx->listener_callback)
+	{
+		free(gfx->listener_callback);
+		gfx->listener_callback = NULL;
+	}
+
+	if (gfx->zgfx)
+	{
+		zgfx_context_free(gfx->zgfx);
+		gfx->zgfx = NULL;
+	}
+
+	HashTable_Free(gfx->SurfaceTable);
+	free(context);
+	free(gfx);
+}
+
 /**
  * Function description
  *
@@ -2061,81 +2149,20 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (!gfx)
 	{
-		gfx = (RDPGFX_PLUGIN*) calloc(1, sizeof(RDPGFX_PLUGIN));
+		context = rdpgfx_client_context_new((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints));
 
-		if (!gfx)
+		if (!context)
 		{
-			WLog_ERR(TAG, "calloc failed!");
+			WLog_ERR(TAG, "rdpgfx_client_context_new failed!");
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
-		gfx->log = WLog_Get(TAG);
+		gfx = (RDPGFX_PLUGIN*) context->handle;
 
-		if (!gfx->log)
-		{
-			free(gfx);
-			WLog_ERR(TAG, "Failed to acquire reference to WLog %s", TAG);
-			return ERROR_INTERNAL_ERROR;
-		}
-
-		gfx->settings = (rdpSettings*) pEntryPoints->GetRdpSettings(pEntryPoints);
 		gfx->iface.Initialize = rdpgfx_plugin_initialize;
 		gfx->iface.Connected = NULL;
 		gfx->iface.Disconnected = NULL;
 		gfx->iface.Terminated = rdpgfx_plugin_terminated;
-		gfx->rdpcontext = ((freerdp*)gfx->settings->instance)->context;
-		gfx->SurfaceTable = HashTable_New(TRUE);
-
-		if (!gfx->SurfaceTable)
-		{
-			free(gfx);
-			WLog_ERR(TAG, "HashTable_New failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		gfx->ThinClient = gfx->settings->GfxThinClient;
-		gfx->SmallCache = gfx->settings->GfxSmallCache;
-		gfx->Progressive = gfx->settings->GfxProgressive;
-		gfx->ProgressiveV2 = gfx->settings->GfxProgressiveV2;
-		gfx->H264 = gfx->settings->GfxH264;
-		gfx->AVC444 = gfx->settings->GfxAVC444;
-		gfx->SendQoeAck = gfx->settings->GfxSendQoeAck;
-		gfx->capsFilter = gfx->settings->GfxCapsFilter;
-
-		if (gfx->H264)
-			gfx->SmallCache = TRUE;
-
-		gfx->MaxCacheSlot = gfx->SmallCache ? 4096 : 25600;
-		context = (RdpgfxClientContext*)calloc(1, sizeof(RdpgfxClientContext));
-
-		if (!context)
-		{
-			free(gfx);
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		context->handle = (void*) gfx;
-		context->GetSurfaceIds = rdpgfx_get_surface_ids;
-		context->SetSurfaceData = rdpgfx_set_surface_data;
-		context->GetSurfaceData = rdpgfx_get_surface_data;
-		context->SetCacheSlotData = rdpgfx_set_cache_slot_data;
-		context->GetCacheSlotData = rdpgfx_get_cache_slot_data;
-		context->CapsAdvertise = rdpgfx_send_caps_advertise_pdu;
-		context->FrameAcknowledge = rdpgfx_send_frame_acknowledge_pdu;
-		context->CacheImportOffer = rdpgfx_send_cache_import_offer_pdu;
-		context->QoeFrameAcknowledge = rdpgfx_send_qoe_frame_acknowledge_pdu;
-
-		gfx->iface.pInterface = (void*) context;
-		gfx->zgfx = zgfx_context_new(FALSE);
-
-		if (!gfx->zgfx)
-		{
-			free(gfx);
-			free(context);
-			WLog_ERR(TAG, "zgfx_context_new failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpgfx", (IWTSPlugin*) gfx);
 	}
