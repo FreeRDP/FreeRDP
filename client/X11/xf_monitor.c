@@ -281,7 +281,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		   this is required in case of a screen composed of more than one monitor
 		   but user did not enable multimonitor
 		*/
-		if (settings->NumMonitorIds == 1)
+		if ((settings->NumMonitorIds == 1) && (vscreen->nmonitors > current_monitor))
 		{
 			monitor = vscreen->monitors + current_monitor;
 
