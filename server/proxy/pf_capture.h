@@ -20,11 +20,6 @@
 #ifndef FREERDP_SERVER_PROXY_CAPTURE_H
 #define FREERDP_SERVER_PROXY_CAPTURE_H
 
-#include <winpr/image.h>
-#include <winpr/sysinfo.h>
-#include <winpr/path.h>
-#include <winpr/file.h>
-
 #include "pf_context.h"
 
 BOOL pf_capture_create_session_directory(pClientContext* context);
