@@ -24,9 +24,6 @@
 #include <winpr/ini.h>
 #include <winpr/path.h>
 
-#define CONFIG_GET_STR(ini, section, key) IniFile_GetKeyValueString(ini, section, key)
-#define CONFIG_GET_BOOL(ini, section, key) IniFile_GetKeyValueInt(ini, section, key)
-
 typedef struct proxy_config proxyConfig;
 
 struct proxy_config
@@ -69,6 +66,11 @@ struct proxy_config
 };
 
 typedef struct proxy_config proxyConfig;
+
+BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, UINT16* result);
+BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char* key, UINT32* result);
+BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* key);
+const char* pf_config_get_str(wIniFile* ini, const char* section, const char* key);
 
 BOOL pf_server_config_load(const char* path, proxyConfig* config);
 void pf_server_config_print(proxyConfig* config);
