@@ -152,20 +152,18 @@ void first_hotplug(rdpdrPlugin* rdpdr)
 	{
 		if (unitmask & 0x01)
 		{
-			RDPDR_DRIVE* drive;
+			RDPDR_DRIVE drive = { 0 };
 			drive_path[0] = 'A' + i;
 			drive_path[1] = ':';
 
 			if (check_path(drive_path))
 			{
-				drive = (RDPDR_DRIVE*)malloc(sizeof(RDPDR_DRIVE));
-				ZeroMemory(drive, sizeof(RDPDR_DRIVE));
-				drive->Type = RDPDR_DTYP_FILESYSTEM;
-				drive->Path = _strdup(drive_path);
+				drive.Type = RDPDR_DTYP_FILESYSTEM;
+				drive.Path = drive_path;
 				drive_path[1] = '\0';
-				drive->Name = _strdup(drive_path);
-				drive->automount = TRUE;
-				devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE*)drive,
+				drive.Name = drive_path;
+				drive.automount = TRUE;
+				devman_load_device_service(rdpdr->devman, (const RDPDR_DEVICE*)&drive,
 				                           rdpdr->rdpcontext);
 			}
 		}
@@ -197,21 +195,20 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 						for (i = 0; i < 26; i++)
 						{
 							if (unitmask & 0x01)
-							{
-								RDPDR_DRIVE* drive;
+							{								
 								drive_path[0] = 'A' + i;
 								drive_path[1] = ':';
 
 								if (check_path(drive_path))
 								{
-									drive = (RDPDR_DRIVE*) malloc(sizeof(RDPDR_DRIVE));
-									ZeroMemory(drive, sizeof(RDPDR_DRIVE));
-									drive->Type = RDPDR_DTYP_FILESYSTEM;
-									drive->Path = _strdup(drive_path);
+									RDPDR_DRIVE drive = { 0 };
+
+									drive.Type = RDPDR_DTYP_FILESYSTEM;
+									drive.Path = drive_path;
 									drive_path[1] = '\0';
-									drive->automount = TRUE;
-									drive->Name = _strdup(drive_path);
-									devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE*)drive,
+									drive.automount = TRUE;
+									drive.Name = drive_path;
+									devman_load_device_service(rdpdr->devman, (const RDPDR_DEVICE*)&drive,
 									                           rdpdr->rdpcontext);
 									rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 								}
@@ -483,43 +480,27 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	/* add new devices */
 	for (i = 0; i < size; i++)
 	{
-		RDPDR_DRIVE* drive;
-
 		if (dev_array[i].to_add)
 		{
+			RDPDR_DRIVE drive = { 0 };
 			char* name;
-			drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
 
-			if (!drive)
+			drive.Type = RDPDR_DTYP_FILESYSTEM;
+			drive.Path = dev_array[i].path;
+			drive.automount = TRUE;
+			name = strrchr(drive.Path, '/') + 1;
+			drive.Name = name;
+
+			if (!drive.Name)
 			{
-				WLog_ERR(TAG, "calloc failed!");
 				error = CHANNEL_RC_NO_MEMORY;
 				goto cleanup;
 			}
 
-			drive->Type = RDPDR_DTYP_FILESYSTEM;
-			drive->Path = dev_array[i].path;
-			drive->automount = TRUE;
-			dev_array[i].path = NULL;
-			name = strrchr(drive->Path, '/') + 1;
-			drive->Name = _strdup(name);
-
-			if (!drive->Name)
-			{
-				WLog_ERR(TAG, "_strdup failed!");
-				free(drive->Path);
-				free(drive);
-				error = CHANNEL_RC_NO_MEMORY;
-				goto cleanup;
-			}
-
-			if ((error = devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE*)drive,
+			if ((error = devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE*)&drive,
 			                                        rdpdr->rdpcontext)))
 			{
 				WLog_ERR(TAG, "devman_load_device_service failed!");
-				free(drive->Path);
-				free(drive->Name);
-				free(drive);
 				error = CHANNEL_RC_NO_MEMORY;
 				goto cleanup;
 			}
@@ -722,12 +703,12 @@ static char* next_line(FILE* fd, size_t* len)
 	}
 }
 
-static char* get_word(char* str, unsigned int* offset)
+static char* get_word(char* str, size_t* offset)
 {
 	char* p;
 	char* tmp;
 	char* word;
-	int wlen;
+	size_t wlen;
 
 	if (*offset >= strlen(str))
 		return NULL;
@@ -767,11 +748,10 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	size_t len;
 	char* line;
 	char* word;
-	unsigned int wlen;
 	hotplug_dev dev_array[MAX_USB_DEVICES] = { 0 };
-	int i, j;
-	int size = 0;
-	int count;
+	size_t i;
+	size_t size = 0;
+	int count, j;
 	ULONG_PTR* keys = NULL;
 	UINT32 ids[1];
 	UINT error = 0;
@@ -786,12 +766,12 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 
 	while ((line = next_line(f, &len)))
 	{
-		wlen = 0;
+		size_t wlen = 0;
 
 		while ((word = get_word(line, &wlen)))
 		{
 			/* copy hotpluged device mount point to the dev_array */
-			if (isAutomountLocation(word))
+			if (isAutomountLocation(word) && (size <= MAX_USB_DEVICES))
 			{
 				dev_array[size].path = word;
 				dev_array[size++].to_add = TRUE;
@@ -855,43 +835,28 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	/* add new devices */
 	for (i = 0; i < size; i++)
 	{
-		RDPDR_DRIVE* drive;
-
 		if (dev_array[i].to_add)
 		{
+			RDPDR_DRIVE drive = { 0 };
 			char* name;
-			drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
 
-			if (!drive)
-			{
-				WLog_ERR(TAG, "calloc failed!");
-				error = CHANNEL_RC_NO_MEMORY;
-				goto cleanup;
-			}
+			drive.Type = RDPDR_DTYP_FILESYSTEM;
+			drive.Path = dev_array[i].path;
+			drive.automount = TRUE;
+			name = strrchr(drive.Path, '/') + 1;
+			drive.Name = name;
 
-			drive->Type = RDPDR_DTYP_FILESYSTEM;
-			drive->Path = dev_array[i].path;
-			drive->automount = TRUE;
-			dev_array[i].path = NULL;
-			name = strrchr(drive->Path, '/') + 1;
-			drive->Name = _strdup(name);
-
-			if (!drive->Name)
+			if (!drive.Name)
 			{
 				WLog_ERR(TAG, "_strdup failed!");
-				free(drive->Path);
-				free(drive);
 				error = CHANNEL_RC_NO_MEMORY;
 				goto cleanup;
 			}
 
-			if ((error = devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE*)drive,
+			if ((error = devman_load_device_service(rdpdr->devman, (const RDPDR_DEVICE*)&drive,
 			                                        rdpdr->rdpcontext)))
 			{
 				WLog_ERR(TAG, "devman_load_device_service failed!");
-				free(drive->Path);
-				free(drive->Name);
-				free(drive);
 				goto cleanup;
 			}
 		}
@@ -1028,7 +993,6 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 {
 	UINT32 index;
-	RDPDR_DEVICE* device;
 	rdpSettings* settings;
 	UINT error = CHANNEL_RC_OK;
 	rdpdr->devman = devman_new(rdpdr);
@@ -1050,12 +1014,12 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 
 	for (index = 0; index < settings->DeviceCount; index++)
 	{
-		device = settings->DeviceArray[index];
+		const RDPDR_DEVICE* device = settings->DeviceArray[index];
 
 		if (device->Type == RDPDR_DTYP_FILESYSTEM)
 		{
 			const char DynamicDrives[] = "DynamicDrives";
-			RDPDR_DRIVE* drive = (RDPDR_DRIVE*)device;
+			const RDPDR_DRIVE* drive = (const RDPDR_DRIVE*)device;
 			BOOL hotplugAll = strncmp(drive->Path, "*", 2) == 0;
 			BOOL hotplugLater = strncmp(drive->Path, DynamicDrives, sizeof(DynamicDrives)) == 0;
 			if (drive->Path && (hotplugAll || hotplugLater))
