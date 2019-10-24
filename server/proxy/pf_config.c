@@ -36,14 +36,14 @@
 #define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu16"", #key, config->key)
 #define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu32"", #key, config->key)
 
-static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, UINT16* result)
+BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, UINT16* result)
 {
 	int val;
 
 	val = IniFile_GetKeyValueInt(ini, section, key);
 	if ((val < 0) || (val > UINT16_MAX))
 	{
-		WLog_ERR(TAG, "pf_config_get_uint16(): invalid value %d for section '%s', key '%s'!", val, section, key);
+		WLog_ERR(TAG, "[%s]: invalid value %d for key '%s.%s'.", __FUNCTION__, val, section, key);
 		return FALSE;
 	}
 
@@ -51,14 +51,14 @@ static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char*
 	return TRUE;
 }
 
-static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char* key, UINT32* result)
+BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char* key, UINT32* result)
 {
 	int val;
 
 	val = IniFile_GetKeyValueInt(ini, section, key);
 	if ((val < 0) || (val > INT32_MAX))
 	{
-		WLog_ERR(TAG, "pf_config_get_uint32(): invalid value %d for section '%s', key '%s'!", val, section, key);
+		WLog_ERR(TAG, "[%s]: invalid value %d for key '%s.%s'.", __FUNCTION__, val, section, key);
 		return FALSE;
 	}
 
@@ -66,57 +66,114 @@ static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char*
 	return TRUE;
 }
 
-static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
+BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* key)
 {
-	config->Host = _strdup(CONFIG_GET_STR(ini, "Server", "Host"));
+	int num_value;
+	const char* str_value;
 
-	if (!pf_config_get_uint16(ini, "Server", "Port", &config->Port))
+	str_value = IniFile_GetKeyValueString(ini, section, key);
+	if (!str_value)
+	{
+		WLog_WARN(TAG, "[%s]: key '%s.%s' not found, value defaults to false.", __FUNCTION__, key, section);
 		return FALSE;
+	}
 
-	return TRUE;
-}
+	if (strcmp(str_value, "TRUE") == 0 || strcmp(str_value, "true") == 0)
+		return TRUE;
 
-static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
-{
-	config->TargetHost = _strdup(CONFIG_GET_STR(ini, "Target", "Host"));
-	config->UseLoadBalanceInfo = CONFIG_GET_BOOL(ini, "Target", "UseLoadBalanceInfo");
+	num_value = IniFile_GetKeyValueInt(ini, section, key);
 
-	if (pf_config_get_uint16(ini, "Target", "Port", &config->TargetPort))
+	if (num_value == 1)
 		return TRUE;
 
 	return FALSE;
 }
 
+const char* pf_config_get_str(wIniFile* ini, const char* section, const char* key)
+{
+	const char* value;
+
+	value = IniFile_GetKeyValueString(ini, section, key);
+
+	if (!value)
+	{
+		WLog_ERR(TAG, "[%s]: key '%s.%s' not found.", __FUNCTION__, key, section);
+		return NULL;
+	}
+
+	return value;
+}
+
+static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
+{
+	const char* host;
+
+	if (!pf_config_get_uint16(ini, "Server", "Port", &config->Port))
+		return FALSE;
+
+	host = pf_config_get_str(ini, "Server", "Host");
+
+	if (!host)
+		return FALSE;
+
+	config->Host = _strdup(host);
+
+	if (!config->Host)
+		return FALSE;
+	
+	return TRUE;
+}
+
+static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
+{
+	const char* target_host;
+
+	if (!pf_config_get_uint16(ini, "Target", "Port", &config->TargetPort))
+		return FALSE;
+
+	target_host = pf_config_get_str(ini, "Target", "Host");
+
+	if (!target_host)
+		return FALSE;
+
+	config->TargetHost = _strdup(target_host);
+	if (!config->TargetHost)
+		return FALSE;
+
+	config->UseLoadBalanceInfo = pf_config_get_bool(ini, "Target", "UseLoadBalanceInfo");
+	return TRUE;
+}
+
 static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 {
-	config->GFX = CONFIG_GET_BOOL(ini, "Channels", "GFX");
-	config->DisplayControl = CONFIG_GET_BOOL(ini, "Channels", "DisplayControl");
-	config->Clipboard = CONFIG_GET_BOOL(ini, "Channels", "Clipboard");
-	config->AudioOutput = CONFIG_GET_BOOL(ini, "Channels", "AudioOutput");
+	config->GFX = pf_config_get_bool(ini, "Channels", "GFX");
+	config->DisplayControl = pf_config_get_bool(ini, "Channels", "DisplayControl");
+	config->Clipboard = pf_config_get_bool(ini, "Channels", "Clipboard");
+	config->AudioOutput = pf_config_get_bool(ini, "Channels", "AudioOutput");
 	return TRUE;
 }
 
 static BOOL pf_config_load_input(wIniFile* ini, proxyConfig* config)
 {
-	config->Keyboard = CONFIG_GET_BOOL(ini, "Input", "Keyboard");
-	config->Mouse = CONFIG_GET_BOOL(ini, "Input", "Mouse");
+	config->Keyboard = pf_config_get_bool(ini, "Input", "Keyboard");
+	config->Mouse = pf_config_get_bool(ini, "Input", "Mouse");
 	return TRUE;
 }
 
 static BOOL pf_config_load_security(wIniFile* ini, proxyConfig* config)
 {
-	config->ServerTlsSecurity = CONFIG_GET_BOOL(ini, "Security", "ServerTlsSecurity");
-	config->ServerRdpSecurity = CONFIG_GET_BOOL(ini, "Security", "ServerRdpSecurity");
+	config->ServerTlsSecurity = pf_config_get_bool(ini, "Security", "ServerTlsSecurity");
+	config->ServerRdpSecurity = pf_config_get_bool(ini, "Security", "ServerRdpSecurity");
 
-	config->ClientTlsSecurity = CONFIG_GET_BOOL(ini, "Security", "ClientTlsSecurity");
-	config->ClientNlaSecurity = CONFIG_GET_BOOL(ini, "Security", "ClientNlaSecurity");
-	config->ClientRdpSecurity = CONFIG_GET_BOOL(ini, "Security", "ClientRdpSecurity");
+	config->ClientTlsSecurity = pf_config_get_bool(ini, "Security", "ClientTlsSecurity");
+	config->ClientNlaSecurity = pf_config_get_bool(ini, "Security", "ClientNlaSecurity");
+	config->ClientRdpSecurity = pf_config_get_bool(ini, "Security", "ClientRdpSecurity");
 	return TRUE;
 }
 
 static BOOL pf_config_load_clipboard(wIniFile* ini, proxyConfig* config)
 {
-	config->TextOnly = CONFIG_GET_BOOL(ini, "Clipboard", "TextOnly");
+	config->TextOnly = pf_config_get_bool(ini, "Clipboard", "TextOnly");
 
 	if (!pf_config_get_uint32(ini, "Clipboard", "MaxTextLength", &config->MaxTextLength))
 		return FALSE;
@@ -135,11 +192,14 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 	for (index = 0; index < modules_count; index++)
 	{
 		char* module_name = module_names[index];
-		const char* path = CONFIG_GET_STR(ini, "Modules", module_name);
+		const char* path = pf_config_get_str(ini, "Modules", module_name);
+
+		if (!path)
+			continue;
 
 		if (!pf_modules_register_new(path, module_name))
 		{
-			WLog_DBG(TAG, "pf_config_load_modules(): failed to register %s (%s)", module_name, path);
+			WLog_ERR(TAG, "pf_config_load_modules(): failed to register %s (%s)", module_name, path);
 			continue;
 		}
 
@@ -154,8 +214,8 @@ static BOOL pf_config_load_captures(wIniFile* ini, proxyConfig* config)
 {
 	const char* captures_dir;
 
-	config->SessionCapture = CONFIG_GET_BOOL(ini, "SessionCapture", "Enabled");
-	captures_dir = CONFIG_GET_STR(ini, "SessionCapture", "CapturesDirectory");
+	config->SessionCapture = pf_config_get_bool(ini, "SessionCapture", "Enabled");
+	captures_dir = pf_config_get_str(ini, "SessionCapture", "CapturesDirectory");
 
 	if (!captures_dir)
 		return FALSE;
@@ -168,6 +228,8 @@ static BOOL pf_config_load_captures(wIniFile* ini, proxyConfig* config)
 	{
 		if (!CreateDirectoryA(config->CapturesDirectory, NULL))
 		{
+			free(config->CapturesDirectory);
+			config->CapturesDirectory = NULL;
 			return FALSE;
 		}
 	}
@@ -262,8 +324,9 @@ void pf_server_config_print(proxyConfig* config)
 	if (config->MaxTextLength > 0)
 		CONFIG_PRINT_UINT32(config, MaxTextLength);
 
-	if (config->SessionCapture)
-		CONFIG_PRINT_STR(config, CapturesDirectory);
+	CONFIG_PRINT_SECTION("SessionCapture");
+	CONFIG_PRINT_BOOL(config, SessionCapture);
+	CONFIG_PRINT_STR(config, CapturesDirectory);
 }
 
 void pf_server_config_free(proxyConfig* config)
