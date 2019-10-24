@@ -713,7 +713,7 @@ static UINT audin_plugin_terminated(IWTSPlugin* pPlugin)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
 	WLog_Print(audin->log, WLOG_TRACE, "...");
-	audio_format_free(audin->fixed_format);
+	audio_formats_free(audin->fixed_format, 1);
 
 	if (audin->device)
 	{
