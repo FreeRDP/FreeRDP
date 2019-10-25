@@ -385,6 +385,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
                              const BYTE** ppG, const BYTE** ppB, const BYTE** ppA)
 {
 	UINT32 x;
+	const UINT32 dstBytesPerPixel = GetBytesPerPixel(DstFormat);
 
 	if (!ppRgba || !ppR || !ppG || !ppB)
 		return FALSE;
@@ -421,7 +422,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 				BYTE alpha = *(*ppA)++;
 				UINT32 color = FreeRDPGetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
 				WriteColor(*ppRgba, DstFormat, color);
-				*ppRgba += GetBytesPerPixel(DstFormat);
+				*ppRgba += dstBytesPerPixel;
 			}
 		}
 		else
@@ -432,7 +433,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 			{
 				UINT32 color = FreeRDPGetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
 				WriteColor(*ppRgba, DstFormat, color);
-				*ppRgba += GetBytesPerPixel(DstFormat);
+				*ppRgba += dstBytesPerPixel;
 			}
 		}
 
@@ -451,6 +452,7 @@ static INLINE BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4], BYTE* p
 	const BYTE* pG = pSrcData[1];
 	const BYTE* pB = pSrcData[2];
 	const BYTE* pA = pSrcData[3];
+	const UINT32 bpp = GetBytesPerPixel(DstFormat);
 
 	if (vFlip)
 	{
@@ -467,7 +469,7 @@ static INLINE BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4], BYTE* p
 
 	for (y = beg; y != end; y += inc)
 	{
-		BYTE* pRGB = &pDstData[((nYDst + y) * nDstStep) + (nXDst * GetBytesPerPixel(DstFormat))];
+		BYTE* pRGB = &pDstData[((nYDst + y) * nDstStep) + (nXDst * bpp)];
 
 		if (!writeLine(&pRGB, DstFormat, nWidth, &pR, &pG, &pB, &pA))
 			return FALSE;
@@ -856,13 +858,14 @@ static INLINE BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format, U
                                               UINT32 height, UINT32 scanline, BYTE* planes[4])
 {
 	INT32 i, j, k;
+	const UINT32 bpp = GetBytesPerPixel(format);
 	if ((width > INT32_MAX) || (height > INT32_MAX) || (scanline > INT32_MAX))
 		return FALSE;
 
 	k = 0;
 
 	if (scanline == 0)
-		scanline = width * GetBytesPerPixel(format);
+		scanline = width * bpp;
 
 	for (i = (INT32)height - 1; i >= 0; i--)
 	{
@@ -871,7 +874,7 @@ static INLINE BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format, U
 		for (j = 0; j < (INT32)width; j++)
 		{
 			const UINT32 color = ReadColor(pixel, format);
-			pixel += GetBytesPerPixel(format);
+			pixel += bpp;
 			SplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k], &planes[0][k],
 			           NULL);
 			k++;

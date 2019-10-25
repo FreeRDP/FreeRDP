@@ -61,7 +61,7 @@ INLINE UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
 
 INLINE BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
 {
-	UINT32 bpp = GetBytesPerPixel(hBmp->format);
+	const UINT32 bpp = GetBytesPerPixel(hBmp->format);
 	return &hBmp->data[(Y * hBmp->width * bpp) + X * bpp];
 }
 
@@ -143,11 +143,13 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 	if (!hBitmap)
 		return NULL;
 
+	const UINT32 bpp = GetBytesPerPixel(hdc->format);
+
 	hBitmap->objectType = GDIOBJECT_BITMAP;
 	hBitmap->format = hdc->format;
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
-	hBitmap->data = _aligned_malloc(nWidth * nHeight * GetBytesPerPixel(hBitmap->format), 16);
+	hBitmap->data = _aligned_malloc(nWidth * nHeight * bpp, 16);
 	hBitmap->free = _aligned_free;
 
 	if (!hBitmap->data)
@@ -156,7 +158,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 		return NULL;
 	}
 
-	hBitmap->scanline = nWidth * GetBytesPerPixel(hBitmap->format);
+	hBitmap->scanline = nWidth * bpp;
 	return hBitmap;
 }
 

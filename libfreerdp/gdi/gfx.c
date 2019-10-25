@@ -663,6 +663,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 		return ERROR_INVALID_DATA;
 
 	surface = (gdiGfxSurface*)context->GetSurfaceData(context, cmd->surfaceId);
+	const UINT32 bpp = GetBytesPerPixel(surface->format);
 
 	if (!surface)
 	{
@@ -692,7 +693,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 			{
 				UINT32 color;
 				BYTE r, g, b, a;
-				BYTE* src = &line[x * GetBytesPerPixel(surface->format)];
+				BYTE* src = &line[x * bpp];
 				Stream_Read_UINT8(&s, a);
 				color = ReadColor(src, surface->format);
 				SplitColor(color, surface->format, &r, &g, &b, NULL, NULL);

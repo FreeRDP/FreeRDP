@@ -5423,7 +5423,9 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
                           UINT32 width, UINT32 height)
 {
 	double maxDiff;
+	const UINT32 srcABytes = GetBytesPerPixel(srcAFormat);
 	const UINT32 srcABits = GetBitsPerPixel(srcAFormat);
+	const UINT32 srcBBytes = GetBytesPerPixel(srcBFormat);
 	const UINT32 srcBBits = GetBitsPerPixel(srcBFormat);
 	UINT32 diff = fabs((double)srcABits - srcBBits);
 	UINT32 x, y;
@@ -5463,14 +5465,14 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 
 	for (y = 0; y < height; y++)
 	{
-		const BYTE* lineA = &srcA[width * GetBytesPerPixel(srcAFormat) * y];
-		const BYTE* lineB = &srcB[width * GetBytesPerPixel(srcBFormat) * y];
+		const BYTE* lineA = &srcA[width * srcABytes * y];
+		const BYTE* lineB = &srcB[width * srcBBytes * y];
 
 		for (x = 0; x < width; x++)
 		{
 			BYTE sR, sG, sB, sA, dR, dG, dB, dA;
-			const BYTE* a = &lineA[x * GetBytesPerPixel(srcAFormat)];
-			const BYTE* b = &lineB[x * GetBytesPerPixel(srcBFormat)];
+			const BYTE* a = &lineA[x * srcABytes];
+			const BYTE* b = &lineB[x * srcBBytes];
 			UINT32 colorA = ReadColor(a, srcAFormat);
 			UINT32 colorB = ReadColor(b, srcBFormat);
 			SplitColor(colorA, srcAFormat, &sR, &sG, &sB, &sA, NULL);
@@ -5542,6 +5544,8 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 {
 	UINT32 i, j, x, y;
 	BOOL rc = FALSE;
+	const UINT32 srcBpp = GetBytesPerPixel(srcFormat);
+	const UINT32 dstBpp = GetBytesPerPixel(dstFormat);
 	printf("%s: [%s] --> [%s]: ", __FUNCTION__, FreeRDPGetColorFormatName(srcFormat),
 	       FreeRDPGetColorFormatName(dstFormat));
 	fflush(stdout);
@@ -5557,8 +5561,8 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 			const UINT32 width = i;
 			const UINT32 height = i;
 			BOOL failed = TRUE;
-			const UINT32 srcSize = width * height * GetBytesPerPixel(srcFormat);
-			const UINT32 dstSize = width * height * GetBytesPerPixel(dstFormat);
+			const UINT32 srcSize = width * height * srcBpp;
+			const UINT32 dstSize = width * height * dstBpp;
 			BYTE* compressedBitmap = NULL;
 			BYTE* bmp = malloc(srcSize);
 			BYTE* decompressedBitmap = (BYTE*)malloc(dstSize);
@@ -5568,12 +5572,12 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 
 			for (y = 0; y < height; y++)
 			{
-				BYTE* line = &bmp[width * GetBytesPerPixel(srcFormat) * y];
+				BYTE* line = &bmp[width * srcBpp * y];
 
 				for (x = 0; x < width; x++)
 				{
 					WriteColor(line, srcFormat, color);
-					line += GetBytesPerPixel(srcFormat);
+					line += srcBpp;
 				}
 			}
 

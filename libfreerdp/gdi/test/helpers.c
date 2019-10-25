@@ -84,7 +84,7 @@ static void test_dump_data(unsigned char* p, int len, int width, const char* nam
 
 void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
 {
-	UINT32 stride = hBmp->width * GetBytesPerPixel(hBmp->format);
+	const UINT32 stride = hBmp->width * GetBytesPerPixel(hBmp->format);
 	test_dump_data(hBmp->data, hBmp->height * stride, stride, name);
 }
 
@@ -96,6 +96,8 @@ static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2, const gdiPalett
 	UINT32 colorA, colorB;
 	UINT32 minw = (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width;
 	UINT32 minh = (hBmp1->height < hBmp2->height) ? hBmp1->height : hBmp2->height;
+	const UINT32 colorABytes = GetBytesPerPixel(hBmp1->format);
+	const UINT32 colorBBytes = GetBytesPerPixel(hBmp2->format);
 
 	for (y = 0; y < minh; y++)
 	{
@@ -103,8 +105,8 @@ static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2, const gdiPalett
 		{
 			colorA = ReadColor(p1, hBmp1->format);
 			colorB = ReadColor(p2, hBmp2->format);
-			p1 += GetBytesPerPixel(hBmp1->format);
-			p2 += GetBytesPerPixel(hBmp2->format);
+			p1 += colorABytes;
+			p2 += colorBBytes;
 
 			if (hBmp1->format != hBmp2->format)
 				colorB = FreeRDPConvertColor(colorB, hBmp2->format, hBmp1->format, palette);

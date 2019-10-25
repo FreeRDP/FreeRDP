@@ -115,7 +115,7 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat, UINT32
 
 		for (x = 0; x < nWidth; x++)
 		{
-			BYTE* pDstPixel = &pDstLine[((nXDst + x) * GetBytesPerPixel(DstFormat))];
+			BYTE* pDstPixel = &pDstLine[((nXDst + x) * dstBytesPerPixel)];
 			BOOL monoPixel = (*monoBits & monoBit) ? TRUE : FALSE;
 
 			if (!(monoBit >>= 1))
@@ -337,7 +337,7 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(BYTE* pDstData, UINT32 Dst
 		const BYTE* andBits;
 		const BYTE* xorBits;
 		BYTE* pDstPixel =
-		    &pDstData[((nYDst + y) * nDstStep) + (nXDst * GetBytesPerPixel(DstFormat))];
+		    &pDstData[((nYDst + y) * nDstStep) + (nXDst * dstBytesPerPixel)];
 		xorBit = andBit = 0x80;
 
 		if (!vFlip)
@@ -380,7 +380,7 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(BYTE* pDstData, UINT32 Dst
 				color = freerdp_image_inverted_pointer_color(x, y, DstFormat); /* inverted */
 
 			WriteColor(pDstPixel, DstFormat, color);
-			pDstPixel += GetBytesPerPixel(DstFormat);
+			pDstPixel += dstBytesPerPixel;
 		}
 	}
 
@@ -439,7 +439,7 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(BYTE* pDstData, UINT32 Dst
 		const BYTE* xorBits;
 		const BYTE* andBits = NULL;
 		BYTE* pDstPixel =
-		    &pDstData[((nYDst + y) * nDstStep) + (nXDst * GetBytesPerPixel(DstFormat))];
+		    &pDstData[((nYDst + y) * nDstStep) + (nXDst * dstBytesPerPixel)];
 		andBit = 0x80;
 
 		if (!vFlip)
@@ -508,7 +508,7 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(BYTE* pDstData, UINT32 Dst
 
 			color = FreeRDPConvertColor(xorPixel, PIXEL_FORMAT_ARGB32, DstFormat, palette);
 			WriteColor(pDstPixel, DstFormat, color);
-			pDstPixel += GetBytesPerPixel(DstFormat);
+			pDstPixel += dstBytesPerPixel;
 		}
 	}
 
@@ -608,10 +608,10 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 		return FALSE;
 
 	if (nDstStep == 0)
-		nDstStep = nWidth * GetBytesPerPixel(DstFormat);
+		nDstStep = nWidth * dstByte;
 
 	if (nSrcStep == 0)
-		nSrcStep = nWidth * GetBytesPerPixel(SrcFormat);
+		nSrcStep = nWidth * srcByte;
 
 	if (vSrcVFlip)
 	{

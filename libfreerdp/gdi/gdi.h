@@ -34,10 +34,11 @@ static INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 {
 	BYTE* p;
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdcBmp->selectedObject;
+	const UINT32 bpp = GetBytesPerPixel(hdcBmp->format);
 
 	if ((x >= 0) && (y >= 0) && (x < hBmp->width) && (y < hBmp->height))
 	{
-		p = hBmp->data + (y * hBmp->scanline) + (x * GetBytesPerPixel(hdcBmp->format));
+		p = hBmp->data + (y * hBmp->scanline) + (x * bpp);
 		return p;
 	}
 	else
