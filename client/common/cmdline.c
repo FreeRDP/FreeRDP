@@ -1485,7 +1485,7 @@ static BOOL ends_with(const char* str, const char* ext)
 	if (strLen < extLen)
 		return FALSE;
 
-	return strncmp(&str[strLen - extLen], ext, extLen) == 0;
+	return _strnicmp(&str[strLen - extLen], ext, extLen) == 0;
 }
 
 static void activate_smartcard_logon_rdp(rdpSettings* settings)
