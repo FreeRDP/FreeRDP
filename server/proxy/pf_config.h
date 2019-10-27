@@ -21,6 +21,7 @@
 #ifndef FREERDP_SERVER_PROXY_PFCONFIG_H
 #define FREERDP_SERVER_PROXY_PFCONFIG_H
 
+#include <freerdp/api.h>
 #include <winpr/ini.h>
 #include <winpr/path.h>
 
@@ -67,10 +68,10 @@ struct proxy_config
 
 typedef struct proxy_config proxyConfig;
 
-BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, UINT16* result);
-BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char* key, UINT32* result);
-BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* key);
-const char* pf_config_get_str(wIniFile* ini, const char* section, const char* key);
+FREERDP_API BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, UINT16* result);
+FREERDP_API BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char* key, UINT32* result);
+FREERDP_API BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* key);
+FREERDP_API const char* pf_config_get_str(wIniFile* ini, const char* section, const char* key);
 
 BOOL pf_server_config_load(const char* path, proxyConfig* config);
 void pf_server_config_print(proxyConfig* config);
