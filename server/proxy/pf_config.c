@@ -215,6 +215,9 @@ static BOOL pf_config_load_captures(wIniFile* ini, proxyConfig* config)
 	const char* captures_dir;
 
 	config->SessionCapture = pf_config_get_bool(ini, "SessionCapture", "Enabled");
+	if (!config->SessionCapture)
+		return TRUE;
+
 	captures_dir = pf_config_get_str(ini, "SessionCapture", "CapturesDirectory");
 
 	if (!captures_dir)
