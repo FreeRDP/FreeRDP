@@ -1471,10 +1471,16 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	rdpdrPlugin* plugin = (rdpdrPlugin*) rdpdr;
 
 	if (!rdpdr || !s)
+	{
+		Stream_Free(s, TRUE);
 		return CHANNEL_RC_NULL_DATA;
+	}
 
 	if (!plugin)
+	{
+		Stream_Free(s, TRUE);
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
+	}
 	else
 	{
 		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(plugin->InitHandle, plugin->OpenHandle,

@@ -112,7 +112,10 @@ static UINT encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 	UINT status;
 
 	if (!encomsp)
+	{
+		Stream_Free(s, TRUE);
 		return ERROR_INVALID_HANDLE;
+	}
 
 #if 0
 	WLog_INFO(TAG, "EncomspWrite (%"PRIuz")", Stream_Length(s));
@@ -123,9 +126,11 @@ static UINT encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 	         Stream_Buffer(s), (UINT32) Stream_Length(s), s);
 
 	if (status != CHANNEL_RC_OK)
+	{
+		Stream_Free(s, TRUE);
 		WLog_ERR(TAG,  "VirtualChannelWriteEx failed with %s [%08"PRIX32"]",
-		         WTSErrorToString(status), status);
-
+				 WTSErrorToString(status), status);
+	}
 	return status;
 }
 

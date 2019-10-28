@@ -45,6 +45,7 @@ static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 	if (!remdesk)
 	{
 		WLog_ERR(TAG, "remdesk was null!");
+		Stream_Free(s, TRUE);
 		return CHANNEL_RC_INVALID_INSTANCE;
 	}
 
@@ -53,9 +54,11 @@ static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 	         Stream_Buffer(s), (UINT32) Stream_Length(s), s);
 
 	if (status != CHANNEL_RC_OK)
+	{
+		Stream_Free(s, TRUE);
 		WLog_ERR(TAG,  "pVirtualChannelWriteEx failed with %s [%08"PRIX32"]",
 		         WTSErrorToString(status), status);
-
+	}
 	return status;
 }
 
@@ -294,9 +297,6 @@ static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 	if ((error = remdesk_virtual_channel_write(remdesk, s)))
 		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %"PRIu32"!", error);
 
-	if (error != CHANNEL_RC_OK)
-		Stream_Free(s, TRUE);
-
 	return error;
 }
 
@@ -389,9 +389,6 @@ out:
 	free(raConnectionStringW);
 	free(expertBlobW);
 
-	if (error != CHANNEL_RC_OK)
-		Stream_Free(s, TRUE);
-
 	return error;
 }
 
@@ -439,9 +436,6 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 
 out:
 	free(raConnectionStringW);
-
-	if (error != CHANNEL_RC_OK)
-		Stream_Free(s, TRUE);
 
 	return error;
 }
@@ -496,9 +490,6 @@ static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 
 out:
 	free(expertBlobW);
-
-	if (error != CHANNEL_RC_OK)
-		Stream_Free(s, TRUE);
 
 	return error;
 }

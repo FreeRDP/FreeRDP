@@ -56,7 +56,10 @@ static UINT rail_send(railPlugin* rail, wStream* s)
 	UINT status;
 
 	if (!rail)
+	{
+		Stream_Free(s, TRUE);
 		return CHANNEL_RC_BAD_INIT_HANDLE;
+	}
 
 	status = rail->channelEntryPoints.pVirtualChannelWriteEx(rail->InitHandle, rail->OpenHandle,
 	         Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
