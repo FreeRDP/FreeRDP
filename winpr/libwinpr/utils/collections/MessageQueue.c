@@ -70,6 +70,9 @@ BOOL MessageQueue_Wait(wMessageQueue* queue)
 BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 {
 	BOOL ret = FALSE;
+	if (!queue || !message)
+		return FALSE;
+
 	EnterCriticalSection(&queue->lock);
 
 	if (queue->size == queue->capacity)

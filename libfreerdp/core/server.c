@@ -242,6 +242,7 @@ static void wts_read_drdynvc_close_response(rdpPeerChannel* channel)
 {
 	DEBUG_DVC("ChannelId %"PRIu32" close response", channel->channelId);
 	channel->dvc_open_state = DVC_OPEN_STATE_CLOSED;
+	MessageQueue_PostQuit(channel->queue, 0);
 }
 
 static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
