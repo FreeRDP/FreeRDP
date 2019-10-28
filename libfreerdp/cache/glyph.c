@@ -160,7 +160,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context,
 	if (!glyph)
 		return FALSE;
 
-	/* Limit op rectangle to vislble screen. */
+	/* Limit op rectangle to visible screen. */
 	if (opX < 0)
 	{
 		opWidth += opX;
@@ -179,7 +179,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context,
 	if (opHeight < 0)
 		opHeight = 0;
 
-	/* Limit bk rectangle to vislble screen. */
+	/* Limit bk rectangle to visible screen. */
 	if (bkX < 0)
 	{
 		bkWidth += bkX;
