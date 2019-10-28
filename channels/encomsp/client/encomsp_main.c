@@ -1003,6 +1003,10 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 			break;
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
+		{
+			wStream* s = (wStream*)lpUserParam;
+			Stream_Free(s, TRUE);
+		}
 			break;
 
 		case CHANNEL_EVENT_USER:

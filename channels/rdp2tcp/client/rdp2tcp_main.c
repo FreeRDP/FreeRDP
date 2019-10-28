@@ -160,7 +160,7 @@ static DWORD WINAPI copyThread(void* data)
 		}
 
 		if (plugin->channelEntryPoints.pVirtualChannelWriteEx(plugin->initHandle, plugin->openHandle,
-		        buffer, dwRead, NULL) != CHANNEL_RC_OK)
+				buffer, dwRead, buffer) != CHANNEL_RC_OK)
 		{
 			free(buffer);
 			fprintf(stderr, "rdp2tcp copyThread failed %i\n", (int)dwRead);
@@ -234,6 +234,7 @@ static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHa
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			SetEvent(plugin->writeComplete);
+			free(lpUserParam);
 			break;
 	}
 }

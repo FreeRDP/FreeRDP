@@ -867,12 +867,16 @@ static VOID VCAPITYPE cliprdr_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
 			if ((error = cliprdr_virtual_channel_event_data_received(cliprdr, pData, dataLength,
-			             totalLength, dataFlags)))
-				WLog_ERR(TAG, "failed with error %"PRIu32"", error);
+						 totalLength, dataFlags)))
+				WLog_ERR(TAG, "failed with error %" PRIu32 "", error);
 
 			break;
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
+		{
+			wStream* s = (wStream*)lpUserParam;
+			Stream_Free(s, TRUE);
+		}
 			break;
 
 		case CHANNEL_EVENT_USER:
