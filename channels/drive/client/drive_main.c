@@ -835,6 +835,7 @@ static UINT drive_free_int(DRIVE_DEVICE* drive)
 	ListDictionary_Free(drive->files);
 	MessageQueue_Free(drive->IrpQueue);
 	Stream_Free(drive->device.data, TRUE);
+	free(drive->device.name);
 	free(drive->path);
 	free(drive);
 	return error;
@@ -902,7 +903,7 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		}
 
 		drive->device.type = RDPDR_DTYP_FILESYSTEM;
-		drive->device.name = name;
+		drive->device.name = _strdup(name);
 		drive->device.IRPRequest = drive_irp_request;
 		drive->device.Free = drive_free;
 		drive->rdpcontext = pEntryPoints->rdpcontext;
