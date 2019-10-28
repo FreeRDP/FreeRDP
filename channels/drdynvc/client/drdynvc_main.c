@@ -1274,7 +1274,7 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_WRITE_CANCELLED:
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 		{
-			wStream* s = (wStream*)lpUserParam;
+			wStream* s = (wStream*)pData;
 			Stream_Free(s, TRUE);
 		}
 			break;

@@ -86,13 +86,13 @@ static void channel_queue_message_free(wMessage* msg)
 		return;
 
 	ev = (CHANNEL_OPEN_EVENT*)msg->wParam;
-	freerdp_channels_process_message_free(msg, CHANNEL_EVENT_WRITE_CANCELLED);
 	free(ev);
 }
 
 static void channel_queue_free(void* obj)
 {
 	wMessage* msg = (wMessage*)obj;
+	freerdp_channels_process_message_free(msg, CHANNEL_EVENT_WRITE_CANCELLED);
 	channel_queue_message_free(msg);
 }
 

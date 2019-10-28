@@ -233,11 +233,11 @@ static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHa
 			break;
 
 		case CHANNEL_EVENT_WRITE_CANCELLED:
-			free(lpUserParam);
+			free(pData);
 			break;
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			SetEvent(plugin->writeComplete);
-			free(lpUserParam);
+			free(pData);
 			break;
 	}
 }
