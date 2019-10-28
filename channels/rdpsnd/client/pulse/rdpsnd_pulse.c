@@ -519,12 +519,6 @@ static void rdpsnd_pulse_start(rdpsndDevicePlugin* device)
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
 
-static COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] =
-{
-	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 /**
  * Function description
  *
@@ -536,6 +530,11 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
+	COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] =
+		{
+			{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
+			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		};
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv,
 	                                    rdpsnd_pulse_args, flags, pulse, NULL, NULL);

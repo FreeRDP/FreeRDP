@@ -304,12 +304,6 @@ static UINT audin_mac_free(IAudinDevice* device)
 	return CHANNEL_RC_OK;
 }
 
-static COMMAND_LINE_ARGUMENT_A audin_mac_args[] =
-{
-	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 static UINT audin_mac_parse_addin_args(AudinMacDevice* device, ADDIN_ARGV* args)
 {
 	DWORD errCode;
@@ -318,6 +312,12 @@ static UINT audin_mac_parse_addin_args(AudinMacDevice* device, ADDIN_ARGV* args)
 	char* str_num, *eptr;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A audin_mac_args[] =
+	{
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+	};
+
 	AudinMacDevice* mac = (AudinMacDevice*)device;
 
 	if (args->argc == 1)

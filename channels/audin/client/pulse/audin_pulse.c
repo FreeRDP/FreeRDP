@@ -425,12 +425,6 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	return CHANNEL_RC_OK;
 }
 
-static COMMAND_LINE_ARGUMENT_A audin_pulse_args[] =
-{
-	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 /**
  * Function description
  *
@@ -442,6 +436,12 @@ static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* a
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
+	COMMAND_LINE_ARGUMENT_A audin_pulse_args[] =
+		{
+			{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		};
+
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv, audin_pulse_args, flags,
 	                                    pulse, NULL, NULL);

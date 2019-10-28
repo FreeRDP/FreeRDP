@@ -450,16 +450,6 @@ static void udevman_load_interface(UDEVMAN* udevman)
 	udevman->iface.wait_urb = udevman_wait_urb;
 }
 
-COMMAND_LINE_ARGUMENT_A urbdrc_udevman_args[] =
-{
-	{ "dbg", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "debug" },
-	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<devices>", NULL, NULL, -1, NULL, "device list" },
-	{ "id", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "FLAG_ADD_BY_VID_PID" },
-	{ "addr", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "FLAG_ADD_BY_ADDR" },
-	{ "auto", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "FLAG_ADD_BY_AUTO" },
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 static void urbdrc_udevman_register_devices(UDEVMAN* udevman, char* devices)
 {
 	char* token;
@@ -512,6 +502,15 @@ static void urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A urbdrc_udevman_args[] =
+		{
+			{ "dbg", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "debug" },
+			{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<devices>", NULL, NULL, -1, NULL, "device list" },
+			{ "id", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "FLAG_ADD_BY_VID_PID" },
+			{ "addr", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "FLAG_ADD_BY_ADDR" },
+			{ "auto", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "FLAG_ADD_BY_AUTO" },
+			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		};
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 	status = CommandLineParseArgumentsA(args->argc, args->argv,
 	                                    urbdrc_udevman_args, flags, udevman, NULL, NULL);

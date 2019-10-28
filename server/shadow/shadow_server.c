@@ -45,7 +45,7 @@
 
 #define TAG SERVER_TAG("shadow")
 
-static COMMAND_LINE_ARGUMENT_A shadow_args[] =
+static const COMMAND_LINE_ARGUMENT_A shadow_args[] =
 {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL, "Server IPC socket" },

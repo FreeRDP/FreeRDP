@@ -388,12 +388,6 @@ static UINT rdpsnd_oss_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 	return 10; /* TODO: Get real latency in [ms] */
 }
 
-static COMMAND_LINE_ARGUMENT_A rdpsnd_oss_args[] =
-{
-	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
 {
 	int status;
@@ -401,6 +395,11 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* a
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
+	COMMAND_LINE_ARGUMENT_A rdpsnd_oss_args[] =
+		{
+			{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
+			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		};
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_oss_args, flags,
 	                                    oss, NULL, NULL);
