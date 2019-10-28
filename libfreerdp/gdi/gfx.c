@@ -133,12 +133,12 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	{
 		const UINT32 nXSrc = rects[i].left;
 		const UINT32 nYSrc = rects[i].top;
-		const UINT32 nXDst = (UINT32)(surfaceX + nXSrc * sx);
-		const UINT32 nYDst = (UINT32)(surfaceY + nYSrc * sy);
+		const UINT32 nXDst = (UINT32)MIN(surfaceX + nXSrc * sx, gdi->width - 1);
+		const UINT32 nYDst = (UINT32)MIN(surfaceY + nYSrc * sy, gdi->height - 1);
 		const UINT32 swidth = rects[i].right - rects[i].left;
 		const UINT32 sheight = rects[i].bottom - rects[i].top;
-		const UINT32 dwidth = (UINT32)(swidth * sx);
-		const UINT32 dheight = (UINT32)(sheight * sy);
+		const UINT32 dwidth = MIN((UINT32)(swidth * sx), (UINT32)gdi->width - nXDst);
+		const UINT32 dheight = MIN((UINT32)(sheight * sy), (UINT32)gdi->height - nYDst);
 
 		if (!freerdp_image_scale(gdi->primary_buffer, gdi->dstFormat,
 		                         gdi->stride, nXDst, nYDst, dwidth, dheight,
