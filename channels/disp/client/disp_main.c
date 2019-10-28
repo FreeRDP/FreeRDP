@@ -80,7 +80,7 @@ typedef struct _DISP_PLUGIN DISP_PLUGIN;
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback,
+static UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback,
         UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
 	UINT status;
@@ -165,7 +165,7 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	DISP_PLUGIN* disp;
 	DispClientContext* context;
@@ -195,7 +195,7 @@ UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 error;
 	DISPLAY_CONTROL_HEADER header;
@@ -329,7 +329,7 @@ static UINT disp_plugin_terminated(IWTSPlugin* pPlugin)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors,
+static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors,
                               DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
 	DISP_PLUGIN* disp = (DISP_PLUGIN*) context->handle;
