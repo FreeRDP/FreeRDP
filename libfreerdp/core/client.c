@@ -38,7 +38,7 @@ static volatile LONG g_OpenHandleSeq =
     1; /* use global counter to ensure uniqueness across channel manager instances */
 static WINPR_TLS rdpChannelHandles g_ChannelHandles = { NULL, NULL };
 
-static BOOL freerdp_channels_process_message_free(wMessage* message);
+static BOOL freerdp_channels_process_message_free(wMessage* message, DWORD type);
 
 static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(
     rdpChannels* channels, const char* name)
@@ -86,7 +86,7 @@ static void channel_queue_message_free(wMessage* msg)
 		return;
 
 	ev = (CHANNEL_OPEN_EVENT*)msg->wParam;
-	freerdp_channels_process_message_free(msg);
+	freerdp_channels_process_message_free(msg, CHANNEL_EVENT_WRITE_CANCELLED);
 	free(ev);
 }
 
@@ -442,7 +442,7 @@ int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data,
 	return 0;
 }
 
-BOOL freerdp_channels_process_message_free(wMessage* message)
+BOOL freerdp_channels_process_message_free(wMessage* message, DWORD type)
 {
 	if (message->id == WMQ_QUIT)
 	{
@@ -462,14 +462,14 @@ BOOL freerdp_channels_process_message_free(wMessage* message)
 		if (pChannelOpenData->pChannelOpenEventProc)
 		{
 			pChannelOpenData->pChannelOpenEventProc(pChannelOpenData->OpenHandle,
-													CHANNEL_EVENT_WRITE_COMPLETE, item->UserData,
+													type, item->UserData,
 													item->DataLength, item->DataLength, 0);
 		}
 		else if (pChannelOpenData->pChannelOpenEventProcEx)
 		{
 			pChannelOpenData->pChannelOpenEventProcEx(pChannelOpenData->lpUserParam,
 													  pChannelOpenData->OpenHandle,
-													  CHANNEL_EVENT_WRITE_COMPLETE, item->UserData,
+													  type, item->UserData,
 													  item->DataLength, item->DataLength, 0);
 		}
 	}
@@ -501,7 +501,7 @@ static BOOL freerdp_channels_process_message(freerdp* instance, wMessage* messag
 			instance->SendChannelData(instance, channel->ChannelId, item->Data, item->DataLength);
 	}
 
-	if (!freerdp_channels_process_message_free(message))
+	if (!freerdp_channels_process_message_free(message, CHANNEL_EVENT_WRITE_COMPLETE))
 		return FALSE;
 
 	IFCALL(message->Free, message);
