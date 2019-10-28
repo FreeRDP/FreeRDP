@@ -363,6 +363,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		return -1;
 	}
 
+	rdp->inPackets++;
 	if (freerdp_shall_disconnect(rdp->instance))
 		return 0;
 
@@ -450,6 +451,8 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 		                 (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0))
 			return -1;
 	}
+
+	rdp->inPackets++;
 
 	return fastpath_recv_inputs(fastpath, s);
 }

@@ -654,7 +654,6 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	WLog_DBG(TAG, "%s: sending data (type=0x%x size=%"PRIuz" channelId=%"PRIu16")", __FUNCTION__,
 	         type, Stream_Length(s), channel_id);
 
-	rdp->outBytes += Stream_GetRemainingLength(s);
 	rdp->outPackets++;
 	if (transport_write(rdp->transport, s) < 0)
 		goto fail;
@@ -1196,7 +1195,6 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		return -1;
 	}
 
-	rdp->inPackets++;
 	if (freerdp_shall_disconnect(rdp->instance))
 		return 0;
 
@@ -1229,6 +1227,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			 *  - no share control header, nor the 2 byte pad
 			 */
 			Stream_Rewind(s, 2);
+			rdp->inPackets++;
 			return rdp_recv_enhanced_security_redirection_packet(rdp, s);
 		}
 	}
@@ -1247,6 +1246,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 			nextPosition += pduLength;
 			rdp->settings->PduSource = pduSource;
+			rdp->inPackets++;
 
 			switch (pduType)
 			{
@@ -1291,11 +1291,13 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		if (!rdp->settings->UseRdpSecurityLayer)
 			if (!rdp_read_security_header(s, &securityFlags, NULL))
 				return -1;
-
+		rdp->inPackets++;
 		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 	else
 	{
+		rdp->inPackets++;
+
 		if (!freerdp_channel_process(rdp->instance, s, channelId))
 		{
 			WLog_ERR(TAG, "rdp_recv_tpkt_pdu: freerdp_channel_process() fail");
@@ -1356,8 +1358,6 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
 	int status = 0;
 	rdpRdp* rdp = (rdpRdp*) extra;
-
-	rdp->inBytes += Stream_GetRemainingLength(s);
 
 	/*
 	 * At any point in the connection sequence between when all

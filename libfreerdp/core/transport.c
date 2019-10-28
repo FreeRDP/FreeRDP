@@ -551,6 +551,7 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t bytes)
 {
 	SSIZE_T read = 0;
+	rdpRdp *rdp = transport->context->rdp;
 
 	if (!transport->frontBio || (bytes > SSIZE_MAX))
 	{
@@ -598,6 +599,7 @@ SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t bytes)
 		VALGRIND_MAKE_MEM_DEFINED(data + read, bytes - read);
 #endif
 		read += status;
+		rdp->inBytes += status;
 	}
 
 	return read;
@@ -793,6 +795,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 	size_t length;
 	int status = -1;
 	int writtenlength = 0;
+	rdpRdp *rdp = transport->context->rdp;
 
 	if (!s)
 		return -1;
@@ -813,6 +816,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 	if (length > 0)
 	{
+		rdp->outBytes += length;
 		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length,
 		            WLOG_PACKET_OUTBOUND);
 	}
