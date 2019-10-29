@@ -25,18 +25,50 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <errno.h>
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 
 #include <winpr/ini.h>
 
-BOOL IniFile_Load_NextLine(wIniFile* ini, char* str)
+struct _wIniFileKey
 {
-	int length = 0;
+	char* name;
+	char* value;
+};
+typedef struct _wIniFileKey wIniFileKey;
+
+struct _wIniFileSection
+{
+	char* name;
+	size_t nKeys;
+	size_t cKeys;
+	wIniFileKey** keys;
+};
+typedef struct _wIniFileSection wIniFileSection;
+
+struct _wIniFile
+{
+	FILE* fp;
+	char* line;
+	char* nextLine;
+	size_t lineLength;
+	char* tokctx;
+	char* buffer;
+	char* filename;
+	BOOL readOnly;
+	size_t nSections;
+	size_t cSections;
+	wIniFileSection** sections;
+};
+
+static BOOL IniFile_Load_NextLine(wIniFile* ini, char* str)
+{
+	size_t length = 0;
 	ini->nextLine = strtok_s(str, "\n", &ini->tokctx);
 
 	if (ini->nextLine)
-		length = (int) strlen(ini->nextLine);
+		length = strlen(ini->nextLine);
 
 	if (length > 0)
 	{
@@ -53,31 +85,37 @@ BOOL IniFile_Load_NextLine(wIniFile* ini, char* str)
 	return (ini->nextLine) ? TRUE : FALSE;
 }
 
-int IniFile_Load_String(wIniFile* ini, const char* iniString)
+static BOOL IniFile_Load_String(wIniFile* ini, const char* iniString)
 {
-	long int fileSize;
+	size_t fileSize;
+	if (!ini || !iniString)
+		return FALSE;
+
 	ini->line = NULL;
 	ini->nextLine = NULL;
 	ini->buffer = NULL;
-	fileSize = (long int) strlen(iniString);
+	fileSize = strlen(iniString);
 
 	if (fileSize < 1)
-		return -1;
+		return FALSE;
 
 	ini->buffer = (char*) malloc(fileSize + 2);
 
 	if (!ini->buffer)
-		return -1;
+		return FALSE;
 
 	CopyMemory(ini->buffer, iniString, fileSize);
 	ini->buffer[fileSize] = '\n';
 	ini->buffer[fileSize + 1] = '\0';
 	IniFile_Load_NextLine(ini, ini->buffer);
-	return 1;
+	return TRUE;
 }
 
-int IniFile_Open_File(wIniFile* ini, const char* filename)
+static int IniFile_Open_File(wIniFile* ini, const char* filename)
 {
+	if (!ini || !filename)
+		return -1;
+
 	if (ini->readOnly)
 		ini->fp = fopen(filename, "rb");
 	else
@@ -89,7 +127,7 @@ int IniFile_Open_File(wIniFile* ini, const char* filename)
 	return 1;
 }
 
-int IniFile_Load_File(wIniFile* ini, const char* filename)
+static int IniFile_Load_File(wIniFile* ini, const char* filename)
 {
 	INT64 fileSize;
 
@@ -114,12 +152,12 @@ int IniFile_Load_File(wIniFile* ini, const char* filename)
 	if (fileSize < 1)
 		goto out_file;
 
-	ini->buffer = (char*) malloc(fileSize + 2);
+	ini->buffer = (char*) malloc((size_t)fileSize + 2);
 
 	if (!ini->buffer)
 		goto out_file;
 
-	if (fread(ini->buffer, fileSize, 1, ini->fp) != 1)
+	if (fread(ini->buffer, (size_t)fileSize, 1, ini->fp) != 1)
 		goto out_buffer;
 
 	fclose(ini->fp);
@@ -137,7 +175,7 @@ out_file:
 	return -1;
 }
 
-void IniFile_Load_Finish(wIniFile* ini)
+static void IniFile_Load_Finish(wIniFile* ini)
 {
 	if (!ini)
 		return;
@@ -149,7 +187,7 @@ void IniFile_Load_Finish(wIniFile* ini)
 	}
 }
 
-BOOL IniFile_Load_HasNextLine(wIniFile* ini)
+static BOOL IniFile_Load_HasNextLine(wIniFile* ini)
 {
 	if (!ini)
 		return FALSE;
@@ -157,20 +195,25 @@ BOOL IniFile_Load_HasNextLine(wIniFile* ini)
 	return (ini->nextLine) ? TRUE : FALSE;
 }
 
-char* IniFile_Load_GetNextLine(wIniFile* ini)
+static char* IniFile_Load_GetNextLine(wIniFile* ini)
 {
 	if (!ini)
 		return NULL;
 
 	ini->line = ini->nextLine;
-	ini->lineLength = (int) strlen(ini->line);
+	ini->lineLength = strlen(ini->line);
 	IniFile_Load_NextLine(ini, NULL);
 	return ini->line;
 }
 
-wIniFileKey* IniFile_Key_New(const char* name, const char* value)
+static wIniFileKey* IniFile_Key_New(const char* name, const char* value)
 {
-	wIniFileKey* key = malloc(sizeof(wIniFileKey));
+	wIniFileKey* key;
+
+	if (!name || !value)
+		return NULL;
+
+	key = malloc(sizeof(wIniFileKey));
 
 	if (key)
 	{
@@ -189,7 +232,7 @@ wIniFileKey* IniFile_Key_New(const char* name, const char* value)
 	return key;
 }
 
-void IniFile_Key_Free(wIniFileKey* key)
+static void IniFile_Key_Free(wIniFileKey* key)
 {
 	if (!key)
 		return;
@@ -199,9 +242,14 @@ void IniFile_Key_Free(wIniFileKey* key)
 	free(key);
 }
 
-wIniFileSection* IniFile_Section_New(const char* name)
+static wIniFileSection* IniFile_Section_New(const char* name)
 {
-	wIniFileSection* section = malloc(sizeof(wIniFileSection));
+	wIniFileSection* section;
+
+	if (!name)
+		return NULL;
+
+	section = malloc(sizeof(wIniFileSection));
 
 	if (!section)
 		return NULL;
@@ -228,9 +276,9 @@ wIniFileSection* IniFile_Section_New(const char* name)
 	return section;
 }
 
-void IniFile_Section_Free(wIniFileSection* section)
+static void IniFile_Section_Free(wIniFileSection* section)
 {
-	int index;
+	size_t index;
 
 	if (!section)
 		return;
@@ -246,10 +294,13 @@ void IniFile_Section_Free(wIniFileSection* section)
 	free(section);
 }
 
-wIniFileSection* IniFile_GetSection(wIniFile* ini, const char* name)
+static wIniFileSection* IniFile_GetSection(wIniFile* ini, const char* name)
 {
-	int index;
+	size_t index;
 	wIniFileSection* section = NULL;
+
+	if (!ini || !name)
+		return NULL;
 
 	for (index = 0; index < ini->nSections; index++)
 	{
@@ -263,11 +314,11 @@ wIniFileSection* IniFile_GetSection(wIniFile* ini, const char* name)
 	return section;
 }
 
-wIniFileSection* IniFile_AddSection(wIniFile* ini, const char* name)
+static wIniFileSection* IniFile_AddSection(wIniFile* ini, const char* name)
 {
 	wIniFileSection* section;
 
-	if (!name)
+	if (!ini || !name)
 		return NULL;
 
 	section = IniFile_GetSection(ini, name);
@@ -276,7 +327,7 @@ wIniFileSection* IniFile_AddSection(wIniFile* ini, const char* name)
 	{
 		if ((ini->nSections + 1) >= (ini->cSections))
 		{
-			int new_size;
+			size_t new_size;
 			wIniFileSection** new_sect;
 			new_size = ini->cSections * 2;
 			new_sect = (wIniFileSection**) realloc(ini->sections, sizeof(wIniFileSection*) * new_size);
@@ -296,10 +347,13 @@ wIniFileSection* IniFile_AddSection(wIniFile* ini, const char* name)
 	return section;
 }
 
-wIniFileKey* IniFile_GetKey(wIniFile* ini, wIniFileSection* section, const char* name)
+static wIniFileKey* IniFile_GetKey(wIniFile* ini, wIniFileSection* section, const char* name)
 {
-	int index;
+	size_t index;
 	wIniFileKey* key = NULL;
+
+	if (!ini || !section || !name)
+		return NULL;
 
 	for (index = 0; index < section->nKeys; index++)
 	{
@@ -313,12 +367,12 @@ wIniFileKey* IniFile_GetKey(wIniFile* ini, wIniFileSection* section, const char*
 	return key;
 }
 
-wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char* name,
+static wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char* name,
                             const char* value)
 {
 	wIniFileKey* key;
 
-	if (!section || !name)
+	if (!section || !name || !value)
 		return NULL;
 
 	key = IniFile_GetKey(ini, section, name);
@@ -327,7 +381,7 @@ wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char*
 	{
 		if ((section->nKeys + 1) >= (section->cKeys))
 		{
-			int new_size;
+			size_t new_size;
 			wIniFileKey** new_key;
 			new_size = section->cKeys * 2;
 			new_key = (wIniFileKey**) realloc(section->keys, sizeof(wIniFileKey*) * new_size);
@@ -359,7 +413,7 @@ wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char*
 	return key;
 }
 
-int IniFile_Load(wIniFile* ini)
+static int IniFile_Load(wIniFile* ini)
 {
 	char* line;
 	char* name;
@@ -367,6 +421,9 @@ int IniFile_Load(wIniFile* ini)
 	char* separator;
 	char* beg, *end;
 	wIniFileSection* section = NULL;
+
+	if (!ini)
+		return -1;
 
 	while (IniFile_Load_HasNextLine(ini))
 	{
@@ -430,16 +487,18 @@ int IniFile_Load(wIniFile* ini)
 
 int IniFile_ReadBuffer(wIniFile* ini, const char* buffer)
 {
-	int status;
+	BOOL status;
+	if (!ini || !buffer)
+		return -1;
+
 	ini->readOnly = TRUE;
 	ini->filename = NULL;
 	status = IniFile_Load_String(ini, buffer);
 
-	if (status < 0)
-		return status;
+	if (!status)
+		return -1;
 
-	status = IniFile_Load(ini);
-	return status;
+	return IniFile_Load(ini);
 }
 
 int IniFile_ReadFile(wIniFile* ini, const char* filename)
@@ -457,24 +516,30 @@ int IniFile_ReadFile(wIniFile* ini, const char* filename)
 	if (status < 0)
 		return status;
 
-	status = IniFile_Load(ini);
-	return status;
+	return IniFile_Load(ini);
 }
 
 char** IniFile_GetSectionNames(wIniFile* ini, int* count)
 {
 	char* p;
-	int index;
-	int length;
-	int nameLength;
+	size_t index;
+	size_t length;
+	size_t nameLength;
 	char** sectionNames;
 	wIniFileSection* section = NULL;
+
+	if (!ini || !count)
+		return NULL;
+
+	if (ini->nSections > INT_MAX)
+		return NULL;
+
 	length = (sizeof(char*) * ini->nSections) + sizeof(char);
 
 	for (index = 0; index < ini->nSections; index++)
 	{
 		section = ini->sections[index];
-		nameLength = (int) strlen(section->name);
+		nameLength = strlen(section->name);
 		length += (nameLength + 1);
 	}
 
@@ -489,28 +554,35 @@ char** IniFile_GetSectionNames(wIniFile* ini, int* count)
 	{
 		sectionNames[index] = p;
 		section = ini->sections[index];
-		nameLength = (int) strlen(section->name);
+		nameLength = strlen(section->name);
 		CopyMemory(p, section->name, nameLength + 1);
 		p += (nameLength + 1);
 	}
 
 	*p = '\0';
-	*count = ini->nSections;
+	*count = (int)ini->nSections;
 	return sectionNames;
 }
 
 char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, int* count)
 {
 	char* p;
-	int index;
-	int length;
-	int nameLength;
+	size_t index;
+	size_t length;
+	size_t nameLength;
 	char** keyNames;
 	wIniFileKey* pKey = NULL;
 	wIniFileSection* pSection = NULL;
+
+	if (!ini || !section || !count)
+		return NULL;
+
 	pSection = IniFile_GetSection(ini, section);
 
 	if (!pSection)
+		return NULL;
+
+	if (pSection->nKeys > INT_MAX)
 		return NULL;
 
 	length = (sizeof(char*) * pSection->nKeys) + sizeof(char);
@@ -518,7 +590,7 @@ char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, int* count
 	for (index = 0; index < pSection->nKeys; index++)
 	{
 		pKey = pSection->keys[index];
-		nameLength = (int) strlen(pKey->name);
+		nameLength = strlen(pKey->name);
 		length += (nameLength + 1);
 	}
 
@@ -533,13 +605,13 @@ char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, int* count
 	{
 		keyNames[index] = p;
 		pKey = pSection->keys[index];
-		nameLength = (int) strlen(pKey->name);
+		nameLength = strlen(pKey->name);
 		CopyMemory(p, pKey->name, nameLength + 1);
 		p += (nameLength + 1);
 	}
 
 	*p = '\0';
-	*count = pSection->nKeys;
+	*count = (int)pSection->nKeys;
 	return keyNames;
 }
 
@@ -564,6 +636,7 @@ const char* IniFile_GetKeyValueString(wIniFile* ini, const char* section, const 
 
 int IniFile_GetKeyValueInt(wIniFile* ini, const char* section, const char* key)
 {
+	int err;
 	long value = 0;
 	wIniFileKey* pKey = NULL;
 	wIniFileSection* pSection = NULL;
@@ -577,8 +650,15 @@ int IniFile_GetKeyValueInt(wIniFile* ini, const char* section, const char* key)
 	if (!pKey)
 		return 0;
 
+	err = errno;
+	errno = 0;
 	value = strtol(pKey->value, NULL, 0);
-	return value;
+	if ((value < INT_MIN) || (value > INT_MAX) || (errno != 0))
+	{
+		errno = err;
+		return 0;
+	}
+	return (int)value;
 }
 
 int IniFile_SetKeyValueString(wIniFile* ini, const char* section, const char* key,
@@ -626,13 +706,16 @@ int IniFile_SetKeyValueInt(wIniFile* ini, const char* section, const char* key, 
 
 char* IniFile_WriteBuffer(wIniFile* ini)
 {
-	int i, j;
+	size_t i, j;
 	size_t offset;
 	size_t size;
 	char* buffer;
 	wIniFileKey* key;
 	wIniFileSection* section;
 	size = 0;
+
+	if (!ini)
+		return NULL;
 
 	for (i = 0; i < ini->nSections; i++)
 	{
@@ -679,7 +762,7 @@ char* IniFile_WriteBuffer(wIniFile* ini)
 
 int IniFile_WriteFile(wIniFile* ini, const char* filename)
 {
-	int length;
+	size_t length;
 	char* buffer;
 	int ret = 1;
 	buffer = IniFile_WriteBuffer(ini);
@@ -687,7 +770,7 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 	if (!buffer)
 		return -1;
 
-	length = (int) strlen(buffer);
+	length = strlen(buffer);
 	ini->readOnly = FALSE;
 
 	if (!filename)
@@ -707,7 +790,7 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 	return ret;
 }
 
-wIniFile* IniFile_New()
+wIniFile* IniFile_New(void)
 {
 	wIniFile* ini = (wIniFile*) calloc(1, sizeof(wIniFile));
 
@@ -729,7 +812,7 @@ wIniFile* IniFile_New()
 
 void IniFile_Free(wIniFile* ini)
 {
-	int index;
+	size_t index;
 
 	if (!ini)
 		return;
@@ -737,9 +820,7 @@ void IniFile_Free(wIniFile* ini)
 	free(ini->filename);
 
 	for (index = 0; index < ini->nSections; index++)
-	{
 		IniFile_Section_Free(ini->sections[index]);
-	}
 
 	free(ini->sections);
 	free(ini);

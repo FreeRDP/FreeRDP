@@ -23,36 +23,6 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-struct _wIniFileKey
-{
-	char* name;
-	char* value;
-};
-typedef struct _wIniFileKey wIniFileKey;
-
-struct _wIniFileSection
-{
-	char* name;
-	int nKeys;
-	int cKeys;
-	wIniFileKey** keys;
-};
-typedef struct _wIniFileSection wIniFileSection;
-
-struct _wIniFile
-{
-	FILE* fp;
-	char* line;
-	char* nextLine;
-	int lineLength;
-	char* tokctx;
-	char* buffer;
-	char* filename;
-	BOOL readOnly;
-	int nSections;
-	int cSections;
-	wIniFileSection** sections;
-};
 typedef struct _wIniFile wIniFile;
 
 #ifdef __cplusplus
@@ -74,7 +44,7 @@ WINPR_API int IniFile_GetKeyValueInt(wIniFile* ini, const char* section, const c
 WINPR_API int IniFile_SetKeyValueString(wIniFile* ini, const char* section, const char* key, const char* value);
 WINPR_API int IniFile_SetKeyValueInt(wIniFile* ini, const char* section, const char* key, int value);
 
-WINPR_API wIniFile* IniFile_New();
+WINPR_API wIniFile* IniFile_New(void);
 WINPR_API void IniFile_Free(wIniFile* ini);
 
 #ifdef __cplusplus
