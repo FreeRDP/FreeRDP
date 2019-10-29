@@ -11,9 +11,9 @@ int TestCryptoProtectMemory(int argc, char* argv[])
 {
 	int cbPlainText;
 	int cbCipherText;
-	char* pPlainText;
+	const char* pPlainText;
 	BYTE* pCipherText;
-	pPlainText = (char*) SECRET_PASSWORD_TEST;
+	pPlainText = SECRET_PASSWORD_TEST;
 	cbPlainText = strlen(pPlainText) + 1;
 	cbCipherText = cbPlainText + (CRYPTPROTECTMEMORY_BLOCK_SIZE - (cbPlainText % CRYPTPROTECTMEMORY_BLOCK_SIZE));
 	printf("cbPlainText: %d cbCipherText: %d\n", cbPlainText, cbCipherText);

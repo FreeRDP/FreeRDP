@@ -741,7 +741,7 @@ char** crypto_cert_get_dns_names(X509* x509, int* count, int** lengths)
 	for (i = 0; i < list.count; i ++)
 	{
 		result[i] = list.strings[i];
-		(*lengths)[i] = strlen(result[i]);
+		(*lengths)[i] = strnlen(result[i], sizeof(*result));
 	}
 
 	string_list_free(&list);

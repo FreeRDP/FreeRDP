@@ -23,7 +23,7 @@ static BOOL test_crypto_hash_md5(void)
 		fprintf(stderr, "%s: winpr_Digest_Init failed\n", __FUNCTION__);
 		goto out;
 	}
-	if (!winpr_Digest_Update(ctx, (BYTE*) TEST_MD5_DATA, strlen(TEST_MD5_DATA)))
+	if (!winpr_Digest_Update(ctx, (const BYTE*) TEST_MD5_DATA, strnlen(TEST_MD5_DATA, sizeof(TEST_MD5_DATA))))
 	{
 		fprintf(stderr, "%s: winpr_Digest_Update failed\n", __FUNCTION__);
 		goto out;
@@ -74,7 +74,7 @@ static BOOL test_crypto_hash_md4(void)
 		fprintf(stderr, "%s: winpr_Digest_Init failed\n", __FUNCTION__);
 		goto out;
 	}
-	if (!winpr_Digest_Update(ctx, (BYTE*) TEST_MD4_DATA, strlen(TEST_MD4_DATA)))
+	if (!winpr_Digest_Update(ctx, (const BYTE*) TEST_MD4_DATA, strnlen(TEST_MD4_DATA, sizeof(TEST_MD4_DATA))))
 	{
 		fprintf(stderr, "%s: winpr_Digest_Update failed\n", __FUNCTION__);
 		goto out;
@@ -125,7 +125,7 @@ static BOOL test_crypto_hash_sha1(void)
 		fprintf(stderr, "%s: winpr_Digest_Init failed\n", __FUNCTION__);
 		goto out;
 	}
-	if (!winpr_Digest_Update(ctx, (BYTE*) TEST_SHA1_DATA, strlen(TEST_SHA1_DATA)))
+	if (!winpr_Digest_Update(ctx, (const BYTE*) TEST_SHA1_DATA, strnlen(TEST_SHA1_DATA, sizeof(TEST_SHA1_DATA))))
 	{
 		fprintf(stderr, "%s: winpr_Digest_Update failed\n", __FUNCTION__);
 		goto out;
@@ -179,7 +179,7 @@ static BOOL test_crypto_hash_hmac_md5(void)
 		fprintf(stderr, "%s: winpr_HMAC_Init failed\n", __FUNCTION__);
 		goto out;
 	}
-	if (!winpr_HMAC_Update(ctx, (BYTE*) TEST_HMAC_MD5_DATA, strlen(TEST_HMAC_MD5_DATA)))
+	if (!winpr_HMAC_Update(ctx, (const BYTE*) TEST_HMAC_MD5_DATA, strnlen(TEST_HMAC_MD5_DATA, sizeof(TEST_HMAC_MD5_DATA))))
 	{
 		fprintf(stderr, "%s: winpr_HMAC_Update failed\n", __FUNCTION__);
 		goto out;
@@ -233,7 +233,7 @@ static BOOL test_crypto_hash_hmac_sha1(void)
 		fprintf(stderr, "%s: winpr_HMAC_Init failed\n", __FUNCTION__);
 		goto out;
 	}
-	if (!winpr_HMAC_Update(ctx, (BYTE*) TEST_HMAC_SHA1_DATA, strlen(TEST_HMAC_SHA1_DATA)))
+	if (!winpr_HMAC_Update(ctx, (const	BYTE*) TEST_HMAC_SHA1_DATA, strnlen(TEST_HMAC_SHA1_DATA, sizeof(TEST_HMAC_SHA1_DATA))))
 	{
 		fprintf(stderr, "%s: winpr_HMAC_Update failed\n", __FUNCTION__);
 		goto out;

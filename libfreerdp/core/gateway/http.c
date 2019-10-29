@@ -91,7 +91,7 @@ static char* string_strnstr(char* str1, const char* str2, size_t slen)
 
 	if ((c = *str2++) != '\0')
 	{
-		len = strlen(str2);
+		len = strnlen(str2, slen + 1);
 
 		do
 		{

@@ -98,7 +98,7 @@ int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value
 	int i;
 	char* p;
 	char* str;
-	int length;
+	size_t length;
 	char** new_argv;
 	length = strlen(option) + strlen(value) + 1;
 	str = (char*) malloc(length + 1);
@@ -142,7 +142,7 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char*
 {
 	int i;
 	char* str;
-	int length;
+	size_t length;
 	char** new_argv;
 	length = strlen(option) + strlen(value) + 1;
 	str = (char*) malloc(length + 1);

@@ -130,7 +130,9 @@ static BOOL printer_write_setting(const char* path, prn_conf_t type, const void*
 		if (!base64)
 			goto fail;
 
-		b64len = strlen(base64);
+		/* base64 char represents 6bit -> 4*(n/3) is the length which is
+		 * always smaller than 2*n */
+		b64len = strnlen(base64, 2 * length);
 		rc = WriteFile(file, base64, b64len, &written, NULL);
 
 		if (b64len != written)

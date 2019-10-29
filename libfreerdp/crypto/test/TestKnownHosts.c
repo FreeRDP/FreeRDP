@@ -25,13 +25,13 @@
 
 static int prepare(const char* currentFileV2, const char* legacyFileV2, const char* legacyFile)
 {
-	char* legacy[] =
+	const char* legacy[] =
 	{
 		"someurl ff:11:22:dd\r\n",
 		"otherurl aa:bb:cc:dd\r",
 		"legacyurl aa:bb:cc:dd\n"
 	};
-	char* hosts[] =
+	const char* hosts[] =
 	{
 		"#somecomment\r\n"
 		"someurl 3389 ff:11:22:dd subject issuer\r\n"
@@ -51,7 +51,7 @@ static int prepare(const char* currentFileV2, const char* legacyFileV2, const ch
 	if (!fl)
 		goto finish;
 
-	for (i = 0; i < sizeof(hosts) / sizeof(hosts[0]); i++)
+	for (i = 0; i < ARRAYSIZE(hosts); i++)
 	{
 		if (fwrite(hosts[i], strlen(hosts[i]), 1, fl) != 1 ||
 		    fwrite(hosts[i], strlen(hosts[i]), 1, fc) != 1)
@@ -67,7 +67,7 @@ static int prepare(const char* currentFileV2, const char* legacyFileV2, const ch
 	if (!fl)
 		goto finish;
 
-	for (i = 0; i < sizeof(legacy) / sizeof(legacy[0]); i++)
+	for (i = 0; i < ARRAYSIZE(legacy); i++)
 	{
 		if (fwrite(legacy[i], strlen(legacy[i]), 1, fl) != 1)
 			goto finish;

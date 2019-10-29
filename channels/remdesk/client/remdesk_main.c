@@ -192,7 +192,7 @@ static UINT remdesk_write_channel_header(wStream* s,
 		ChannelNameW[index] = (WCHAR) header->ChannelName[index];
 	}
 
-	ChannelNameLen = (strlen(header->ChannelName) + 1) * 2;
+	ChannelNameLen = (strnlen(header->ChannelName, sizeof(header->ChannelName)) + 1) * 2;
 	Stream_Write_UINT32(s, ChannelNameLen); /* ChannelNameLen (4 bytes) */
 	Stream_Write_UINT32(s, header->DataLength); /* DataLen (4 bytes) */
 	Stream_Write(s, ChannelNameW, ChannelNameLen); /* ChannelName (variable) */

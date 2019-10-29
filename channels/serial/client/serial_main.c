@@ -825,7 +825,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	char* driver;
 	RDPDR_SERIAL* device;
 #if defined __linux__ && !defined ANDROID
-	int i, len;
+	size_t i, len;
 	SERIAL_DEVICE* serial;
 #endif /* __linux__ */
 	UINT error = CHANNEL_RC_OK;

@@ -69,7 +69,7 @@ static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 static int shadow_server_print_command_line_help(int argc, char** argv)
 {
 	char* str;
-	int length;
+	size_t length;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
 	if (argc < 1)
@@ -98,7 +98,7 @@ static int shadow_server_print_command_line_help(int argc, char** argv)
 
 			if (arg->Format)
 			{
-				length = (int)(strlen(arg->Name) + strlen(arg->Format) + 2);
+				length = (strlen(arg->Name) + strlen(arg->Format) + 2);
 				str = (char*) malloc(length + 1);
 
 				if (!str)
@@ -117,7 +117,7 @@ static int shadow_server_print_command_line_help(int argc, char** argv)
 		}
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
-			length = (int) strlen(arg->Name) + 32;
+			length = strlen(arg->Name) + 32;
 			str = (char*) malloc(length + 1);
 
 			if (!str)

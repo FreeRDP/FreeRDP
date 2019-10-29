@@ -213,7 +213,7 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 
 static int bio_rdp_tls_puts(BIO* bio, const char* str)
 {
-	int size;
+	size_t size;
 	int status;
 
 	if (!str)

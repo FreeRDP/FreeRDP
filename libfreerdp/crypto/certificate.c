@@ -705,14 +705,14 @@ rdpCertificateData* certificate_data_new(const char* hostname, UINT16 port, cons
 	certdata->hostname = _strdup(hostname);
 
 	if (subject)
-		certdata->subject = crypto_base64_encode((BYTE*)subject, strlen(subject));
+		certdata->subject = crypto_base64_encode((const BYTE*)subject, strlen(subject));
 	else
-		certdata->subject = crypto_base64_encode((BYTE*)"", 0);
+		certdata->subject = crypto_base64_encode((const BYTE*)"", 0);
 
 	if (issuer)
-		certdata->issuer = crypto_base64_encode((BYTE*)issuer, strlen(issuer));
+		certdata->issuer = crypto_base64_encode((const BYTE*)issuer, strlen(issuer));
 	else
-		certdata->issuer = crypto_base64_encode((BYTE*)"", 0);
+		certdata->issuer = crypto_base64_encode((const BYTE*)"", 0);
 
 	certdata->fingerprint = _strdup(fingerprint);
 

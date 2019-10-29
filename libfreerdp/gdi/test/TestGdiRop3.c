@@ -95,11 +95,11 @@
 
 static char* gdi_convert_postfix_to_infix(const char* postfix)
 {
-	int i;
-	int length;
+	size_t i;
+	size_t length;
 	BOOL unary;
 	wStack* stack;
-	int al, bl, cl, dl;
+	size_t al, bl, cl, dl;
 	char* a, *b, *c, *d;
 	bl = cl = dl = 0;
 	stack = Stack_New(FALSE);

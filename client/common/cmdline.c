@@ -210,7 +210,7 @@ BOOL freerdp_client_print_buildconfig(void)
 static char* print_token(char* text, int start_offset, int* current, int limit,
                          const char delimiter)
 {
-	int len = (int)strlen(text);
+    size_t len = strlen(text);
 
 	if (*current < start_offset)
 		*current += printf("%*c", (start_offset - *current), ' ');

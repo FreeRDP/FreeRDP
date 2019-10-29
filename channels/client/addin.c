@@ -163,10 +163,10 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 	size_t cchInstallPrefix;
 	FREERDP_ADDIN** ppAddins;
 	WIN32_FIND_DATAA FindData;
-	cchAddinPath = strlen(pszAddinPath);
-	cchInstallPrefix = strlen(pszInstallPrefix);
+	cchAddinPath = strnlen(pszAddinPath, sizeof(FREERDP_ADDIN_PATH));
+	cchInstallPrefix = strnlen(pszInstallPrefix, sizeof(FREERDP_INSTALL_PREFIX));
 	pszExtension = PathGetSharedLibraryExtensionA(0);
-	cchPattern = 128 + strlen(pszExtension) + 2;
+	cchPattern = 128 + strnlen(pszExtension, MAX_PATH) + 2;
 	pszPattern = (LPSTR) malloc(cchPattern + 1);
 
 	if (!pszPattern)
@@ -196,7 +196,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		          pszExtension);
 	}
 
-	cchPattern = strlen(pszPattern);
+	cchPattern = strnlen(pszPattern, cchPattern);
 	cchSearchPath = cchInstallPrefix + cchAddinPath + cchPattern + 3;
 	pszSearchPath = (LPSTR) malloc(cchSearchPath + 1);
 

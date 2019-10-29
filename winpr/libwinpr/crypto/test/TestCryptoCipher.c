@@ -30,7 +30,7 @@ static BOOL test_crypto_cipher_aes_128_cbc()
 	memset(ibuf, 0, sizeof(ibuf));
 	memset(obuf, 0, sizeof(obuf));
 
-	ilen = strlen(plaintext) + 1;
+	ilen = strnlen(plaintext, sizeof(plaintext)) + 1;
 	memcpy(ibuf, plaintext, ilen);
 
 	ilen = ((ilen + 15) / 16) * 16;
@@ -121,7 +121,7 @@ static BOOL test_crypto_cipher_rc4()
 	BYTE* text = NULL;
 	WINPR_RC4_CTX* ctx;
 
-	len = strlen(TEST_RC4_PLAINTEXT);
+	len = strnlen(TEST_RC4_PLAINTEXT, sizeof(TEST_RC4_PLAINTEXT));
 
 	if (!(text = (BYTE*) calloc(1, len)))
 	{
@@ -129,12 +129,12 @@ static BOOL test_crypto_cipher_rc4()
 		goto out;
 	}
 
-	if ((ctx = winpr_RC4_New(TEST_RC4_KEY, strlen((char*) TEST_RC4_KEY))) == NULL)
+	if ((ctx = winpr_RC4_New(TEST_RC4_KEY, strnlen((const char*)TEST_RC4_KEY, sizeof(TEST_RC4_KEY)))) == NULL)
 	{
 		fprintf(stderr, "%s: winpr_RC4_New failed\n", __FUNCTION__);
 		goto out;
 	}
-	rc = winpr_RC4_Update(ctx, len, (BYTE*) TEST_RC4_PLAINTEXT, text);
+	rc = winpr_RC4_Update(ctx, len, (const BYTE*) TEST_RC4_PLAINTEXT, text);
 	winpr_RC4_Free(ctx);
 	if (!rc)
 	{

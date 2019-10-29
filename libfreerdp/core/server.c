@@ -352,11 +352,11 @@ static void wts_write_drdynvc_header(wStream* s, BYTE Cmd, UINT32 ChannelId)
 static BOOL wts_write_drdynvc_create_request(wStream* s, UINT32 ChannelId,
         const char* ChannelName)
 {
-	UINT32 len;
+	size_t len;
 	wts_write_drdynvc_header(s, CREATE_REQUEST_PDU, ChannelId);
-	len = strlen(ChannelName) + 1;
+	len = strnlen(ChannelName, CHANNEL_NAME_LEN) + 1;
 
-	if (!Stream_EnsureRemainingCapacity(s, (int) len))
+	if (!Stream_EnsureRemainingCapacity(s, len))
 		return FALSE;
 
 	Stream_Write(s, ChannelName, len);
@@ -524,7 +524,7 @@ static rdpMcsChannel* wts_get_joined_channel_by_name(rdpMcs* mcs,
 {
 	UINT32 index;
 
-	if (!mcs || !channel_name || !strlen(channel_name))
+	if (!mcs || !channel_name || !strnlen(channel_name, CHANNEL_NAME_LEN))
 		return NULL;
 
 	for (index = 0; index < mcs->channelCount; index++)
@@ -532,7 +532,7 @@ static rdpMcsChannel* wts_get_joined_channel_by_name(rdpMcs* mcs,
 		if (mcs->channels[index].joined)
 		{
 			if (_strnicmp(mcs->channels[index].Name, channel_name,
-			              strlen(channel_name)) == 0)
+						  strnlen(channel_name, CHANNEL_NAME_LEN)) == 0)
 				return &mcs->channels[index];
 		}
 	}
@@ -990,7 +990,7 @@ BOOL WINAPI FreeRDP_WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask,
 HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId,
         LPSTR pVirtualName)
 {
-	int length;
+	size_t length;
 	UINT32 index;
 	rdpMcs* mcs;
 	BOOL joined = FALSE;

@@ -17,7 +17,7 @@ int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 	nSize = GetEnvironmentVariableA(TEST_NAME, NULL, 0);
 
 	/* check if value returned is len + 1 ) */
-	if (nSize != strlen(TEST_VALUE) + 1)
+	if (nSize != strnlen(TEST_VALUE, sizeof(TEST_VALUE)) + 1)
 	{
 		printf("GetEnvironmentVariableA not found error\n");
 		return -1;
@@ -30,7 +30,7 @@ int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 
 	nSize = GetEnvironmentVariableA(TEST_NAME, lpBuffer, nSize);
 
-	if (nSize != strlen(TEST_VALUE))
+	if (nSize != strnlen(TEST_VALUE, sizeof(TEST_VALUE)))
 	{
 		printf("GetEnvironmentVariableA wrong size returned\n");
 		goto fail;

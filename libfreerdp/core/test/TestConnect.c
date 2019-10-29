@@ -184,7 +184,7 @@ static int testSuccess(int port)
 		NULL
 	};
 	char* commandLine = NULL;
-	int commandLineLen;
+	size_t commandLineLen;
 	int argc = 4;
 	char* path = NULL;
 	char* wpath = NULL;

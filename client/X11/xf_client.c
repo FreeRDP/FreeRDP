@@ -532,7 +532,8 @@ static char* xf_window_get_title(rdpSettings* settings)
 		return _strdup(settings->WindowTitle);
 
 	port = (settings->ServerPort != 3389);
-	size = strlen(name) + 16;
+	/* Just assume a window title is never longer than a filename... */
+	size = strnlen(name, MAX_PATH) + 16;
 	windowTitle = calloc(size, sizeof(char));
 
 	if (!windowTitle)

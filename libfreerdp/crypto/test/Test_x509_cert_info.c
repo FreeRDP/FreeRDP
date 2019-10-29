@@ -31,13 +31,13 @@ char* certificate_path()
 #else
 	static const char dirsep = '/';
 #endif
-	static const char* filename = "Test_x509_cert_info.pem";
+	static const char filename[] = "Test_x509_cert_info.pem";
 	const char* file = __FILE__;
 	const char* last_dirsep = strrchr(file, dirsep);
 
 	if (last_dirsep)
 	{
-		char* result = malloc(last_dirsep - file + 1 + strlen(filename) + 1);
+		char* result = malloc(last_dirsep - file + 1 + strnlen(filename, sizeof(filename)) + 1);
 		strncpy(result, file, (last_dirsep - file + 1));
 		strcpy(result + (last_dirsep - file + 1), filename);
 		return result;

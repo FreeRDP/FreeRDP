@@ -91,6 +91,7 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa,
                                   snd_pcm_t* capture_handle)
 {
 	int error;
+	SSIZE_T s;
 	UINT32 channels = alsa->aformat.nChannels;
 	snd_pcm_hw_params_t* hw_params;
 	snd_pcm_format_t format = audin_alsa_format(alsa->aformat.wFormatTag, alsa->aformat.wBitsPerSample);
@@ -113,8 +114,13 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa,
 	snd_pcm_hw_params(capture_handle, hw_params);
 	snd_pcm_hw_params_free(hw_params);
 	snd_pcm_prepare(capture_handle);
-	alsa->aformat.nChannels = channels;
-	alsa->bytes_per_frame = snd_pcm_format_size(format, 1) * channels;
+	if (channels > UINT16_MAX)
+		return FALSE;
+	s = snd_pcm_format_size(format, 1);
+	if ((s < 0) || (s > UINT16_MAX))
+		return FALSE;
+	alsa->aformat.nChannels = (UINT16)channels;
+	alsa->bytes_per_frame = (size_t)s * channels;
 	return TRUE;
 }
 

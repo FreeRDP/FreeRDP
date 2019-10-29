@@ -392,8 +392,8 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar, XEvent* event)
 	/* draw an border for the floatbar */
 	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BORDER));
 	XDrawLines(display, floatbar->handle, gc, border, 5, CoordModeOrigin);
-	/* draw the host name connected to */
-	len = strlen(floatbar->title);
+	/* draw the host name connected to (limit to maximum file name) */
+	len = strnlen(floatbar->title, MAX_PATH);
 	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_FOREGROUND));
 	XDrawString(display, floatbar->handle, gc, floatbar->width / 2 - len * 2, 15,
 	            floatbar->title, len);

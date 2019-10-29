@@ -107,10 +107,10 @@ static BOOL WLog_BinaryAppender_WriteMessage(wLog* log, wLogAppender* appender, 
 {
 	FILE* fp;
 	wStream* s;
-	int MessageLength;
-	int FileNameLength;
-	int FunctionNameLength;
-	int TextStringLength;
+	size_t MessageLength;
+	size_t FileNameLength;
+	size_t FunctionNameLength;
+	size_t TextStringLength;
 	BOOL ret = TRUE;
 	wLogBinaryAppender* binaryAppender;
 
@@ -124,33 +124,36 @@ static BOOL WLog_BinaryAppender_WriteMessage(wLog* log, wLogAppender* appender, 
 	if (!fp)
 		return FALSE;
 
-	FileNameLength = (int) strlen(message->FileName);
-	FunctionNameLength = (int) strlen(message->FunctionName);
-	TextStringLength = (int) strlen(message->TextString);
+	FileNameLength = strlen(message->FileName);
+	FunctionNameLength = strlen(message->FunctionName);
+	TextStringLength = strlen(message->TextString);
 
 	MessageLength = 16 +
 			(4 + FileNameLength + 1) +
 			(4 + FunctionNameLength + 1) +
 			(4 + TextStringLength + 1);
 
+	if ((MessageLength > UINT32_MAX) || (FileNameLength > UINT32_MAX) || (FunctionNameLength > UINT32_MAX) || (TextStringLength > UINT32_MAX))
+		return FALSE;
+
 	s = Stream_New(NULL, MessageLength);
 	if (!s)
 		return FALSE;
 
-	Stream_Write_UINT32(s, MessageLength);
+	Stream_Write_UINT32(s, (UINT32)MessageLength);
 
 	Stream_Write_UINT32(s, message->Type);
 	Stream_Write_UINT32(s, message->Level);
 
 	Stream_Write_UINT32(s, message->LineNumber);
 
-	Stream_Write_UINT32(s, FileNameLength);
+	Stream_Write_UINT32(s, (UINT32)FileNameLength);
 	Stream_Write(s, message->FileName, FileNameLength + 1);
 
-	Stream_Write_UINT32(s, FunctionNameLength);
+	Stream_Write_UINT32(s, (UINT32)FunctionNameLength);
 	Stream_Write(s, message->FunctionName, FunctionNameLength + 1);
 
-	Stream_Write_UINT32(s, TextStringLength);
+	Stream_Write_UINT32(s, (UINT32)TextStringLength);
 	Stream_Write(s, message->TextString, TextStringLength + 1);
 
 	Stream_SealLength(s);
