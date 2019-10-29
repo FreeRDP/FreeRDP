@@ -167,7 +167,8 @@ BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
 
 BOOL WLog_ConfigureAppender(wLogAppender *appender, const char *setting, void *value)
 {
-	if (!appender || !setting || !strlen(setting))
+	/* Just check the settings string is not empty */
+	if (!appender || !setting || (strnlen(setting, 2) == 0))
 		return FALSE;
 
 	if (appender->Set)

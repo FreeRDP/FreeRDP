@@ -124,9 +124,9 @@ static BOOL WLog_BinaryAppender_WriteMessage(wLog* log, wLogAppender* appender, 
 	if (!fp)
 		return FALSE;
 
-	FileNameLength = strlen(message->FileName);
-	FunctionNameLength = strlen(message->FunctionName);
-	TextStringLength = strlen(message->TextString);
+	FileNameLength = strnlen(message->FileName, UINT32_MAX);
+	FunctionNameLength = strnlen(message->FunctionName, UINT32_MAX);
+	TextStringLength = strnlen(message->TextString, UINT32_MAX);
 
 	MessageLength = 16 +
 			(4 + FileNameLength + 1) +
@@ -180,7 +180,8 @@ static BOOL WLog_BinaryAppender_Set(wLogAppender* appender, const char *setting,
 {
 	wLogBinaryAppender *binaryAppender = (wLogBinaryAppender *) appender;
 
-	if (!value || !strlen(value))
+	/* Just check if the value string is longer than 0 */
+	if (!value || (strnlen(value, 2) == 0))
 		return FALSE;
 
 	if (!strcmp("outputfilename", setting))

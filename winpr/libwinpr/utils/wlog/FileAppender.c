@@ -192,7 +192,8 @@ static BOOL WLog_FileAppender_Set(wLogAppender* appender, const char* setting, v
 {
 	wLogFileAppender* fileAppender = (wLogFileAppender*) appender;
 
-	if (!value || !strlen(value))
+	/* Just check the value string is not empty */
+	if (!value || (strnlen(value, 2) == 0))
 		return FALSE;
 
 	if (!strcmp("outputfilename", setting))

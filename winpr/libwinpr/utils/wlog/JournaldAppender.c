@@ -140,7 +140,8 @@ static BOOL WLog_JournaldAppender_Set(wLogAppender* appender, const char *settin
 {
 	wLogJournaldAppender* journaldAppender = (wLogJournaldAppender *)appender;
 
-	if (!value || !strlen(value))
+	/* Just check the value string is not empty */
+	if (!value || (strnlen(value, 2) == 0))
 		return FALSE;
 
 	if (strcmp("identifier", setting))
