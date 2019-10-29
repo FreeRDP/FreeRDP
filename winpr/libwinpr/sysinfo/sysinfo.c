@@ -391,7 +391,7 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 {
 	char* dot;
-	int length;
+	size_t length;
 	char hostname[256];
 
 	if (!lpnSize)
@@ -403,22 +403,22 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	if (gethostname(hostname, sizeof(hostname)) == -1)
 		return FALSE;
 
-	length = (int) strlen(hostname);
+	length = strnlen(hostname, sizeof(hostname));
 	dot = strchr(hostname, '.');
 
 	if (dot)
-		length = (int)(dot - hostname);
+		length = (dot - hostname);
 
 	if ((*lpnSize <= (DWORD) length) || !lpBuffer)
 	{
 		SetLastError(ERROR_BUFFER_OVERFLOW);
-		*lpnSize = length + 1;
+		*lpnSize = (DWORD)(length + 1);
 		return FALSE;
 	}
 
 	CopyMemory(lpBuffer, hostname, length);
 	lpBuffer[length] = '\0';
-	*lpnSize = length;
+	*lpnSize = (DWORD)length;
 	return TRUE;
 }
 
