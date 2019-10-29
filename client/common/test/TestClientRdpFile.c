@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <winpr/crt.h>
 #include <winpr/windows.h>
+#include <winpr/path.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/client/file.h>
 
@@ -261,6 +263,32 @@ static char testRdpFileUTF8[] =
     "vendor integer:i:123\n"
     "vendor string:s:microsoft\n";
 
+static char* append(const char* fmt, ...)
+{
+	int rc;
+	char* dst;
+	va_list ap;
+
+	va_start(ap, fmt);
+	rc = vsnprintf(NULL, 0, fmt, ap);
+	va_end(ap);
+	if (rc < 0)
+		return NULL;
+	dst = malloc((size_t)rc + 1);
+	if (!dst)
+		return NULL;
+
+	va_start(ap, fmt);
+	rc = vsnprintf(dst, (size_t)rc + 1, fmt, ap);
+	va_end(ap);
+	if (rc < 0)
+	{
+		free(dst);
+		return NULL;
+	}
+	return dst;
+}
+
 int TestClientRdpFile(int argc, char* argv[])
 {
 	int rc = -1;
@@ -268,11 +296,16 @@ int TestClientRdpFile(int argc, char* argv[])
 	const char* sValue;
 	char* utfname = NULL;
 	char* uniname = NULL;
+	char* base = NULL;
+	char* tmp = NULL;
+	UINT64 id;
 	rdpFile* file;
 	rdpSettings* settings;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+	winpr_RAND((BYTE*)&id, sizeof(id));
+
 	/* Unicode */
 	file = freerdp_client_rdp_file_new();
 	settings = freerdp_settings_new(0);
@@ -409,8 +442,17 @@ int TestClientRdpFile(int argc, char* argv[])
 
 	freerdp_client_rdp_file_free(file);
 
-	utfname = _strdup(tmpnam(NULL));
-	uniname = _strdup(tmpnam(NULL));
+	tmp = GetKnownPath(KNOWN_PATH_TEMP);
+	if (!tmp)
+		goto fail;
+
+	base = append("%s/rdp-file-test-%"PRIx64, tmp, id);
+	if (!base)
+		goto fail;
+	if (!CreateDirectoryA(base, NULL))
+		goto fail;
+	utfname = append("%s/utfname", base);
+	uniname = append("%s/uniname", base);
 	file = freerdp_client_rdp_file_new();
 	if (!file || !utfname || !uniname)
 		goto fail;
@@ -430,8 +472,12 @@ fail:
 		DeleteFileA(utfname);
 	if (uniname)
 		DeleteFileA(uniname);
+	if (base)
+		RemoveDirectoryA(base);
 	free(utfname);
 	free(uniname);
+	free(base);
+	free(tmp);
 	freerdp_client_rdp_file_free(file);
 	freerdp_settings_free(settings);
 	return rc;
