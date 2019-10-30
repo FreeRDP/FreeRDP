@@ -139,6 +139,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 	BYTE paletteCount;
 	UINT32 palette[128] = { 0 };
 	const UINT32 dstByte = GetBytesPerPixel(DstFormat);
+	const UINT32 dstBits = GetBitsPerPixel(DstFormat);
 
 	if (Stream_GetRemainingLength(s) < bitmapDataByteCount)
 	{
@@ -251,7 +252,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 			BYTE* pTmpData = &pDstData[(nXDstRel + x) * dstByte + (nYDstRel + y) * nDstStep];
 
 			if ((nXDstRel + x < nDstWidth) && (nYDstRel + y < nDstHeight))
-				WriteColor(pTmpData, DstFormat, color);
+				WriteColor(pTmpData, DstFormat, dstBits, color);
 
 			if (++x >= width)
 			{
@@ -284,7 +285,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 			suiteIndex++;
 
 			if ((nXDstRel + x < nDstWidth) && (nYDstRel + y < nDstHeight))
-				WriteColor(pTmpData, DstFormat, color);
+				WriteColor(pTmpData, DstFormat, dstBits, color);
 
 			if (++x >= width)
 			{
@@ -344,6 +345,7 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 	UINT32 pixelIndex;
 	UINT32 pixelCount;
 	const UINT32 bpp = GetBytesPerPixel(clear->format);
+	const UINT32 bits = GetBitsPerPixel(clear->format);
 
 	if (Stream_GetRemainingLength(s) < residualByteCount)
 	{
@@ -416,7 +418,7 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 
 		for (i = 0; i < runLengthFactor; i++)
 		{
-			WriteColor(dstBuffer, clear->format, color);
+			WriteColor(dstBuffer, clear->format, bits, color);
 			dstBuffer += bpp;
 		}
 
@@ -594,7 +596,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 	UINT32 nXDstRel;
 	UINT32 nYDstRel;
 	const UINT32 bpp = GetBytesPerPixel(clear->format);
+	const UINT32 bits = GetBitsPerPixel(clear->format);
 	const UINT32 dstBytesPerPixel = GetBytesPerPixel(DstFormat);
+	const UINT32 dstBitsPerPixel = GetBitsPerPixel(DstFormat);
 
 	if (Stream_GetRemainingLength(s) < bandsByteCount)
 	{
@@ -747,7 +751,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					Stream_Read_UINT8(s, r);
 					color = FreeRDPGetColor(clear->format, r, g, b, 0xFF);
 
-					if (!WriteColor(dstBuffer, clear->format, color))
+					if (!WriteColor(dstBuffer, clear->format, bits, color))
 						return FALSE;
 				}
 
@@ -809,7 +813,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 				while (count--)
 				{
-					WriteColor(dstBuffer, clear->format, colorBkg);
+					WriteColor(dstBuffer, clear->format, bits, colorBkg);
 					dstBuffer += bpp;
 				}
 
@@ -828,9 +832,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				for (x = 0; x < count; x++)
 				{
 					UINT32 color;
-					color = ReadColor(&pSrcPixel[x * bpp], clear->format);
+					color = ReadColor(&pSrcPixel[x * bpp], clear->format, bits);
 
-					if (!WriteColor(dstBuffer, clear->format, color))
+					if (!WriteColor(dstBuffer, clear->format, bits, color))
 						return FALSE;
 
 					dstBuffer += bpp;
@@ -842,7 +846,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 				while (count--)
 				{
-					if (!WriteColor(dstBuffer, clear->format, colorBkg))
+					if (!WriteColor(dstBuffer, clear->format, bits, colorBkg))
 						return FALSE;
 
 					dstBuffer += bpp;
@@ -877,10 +881,10 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				{
 					BYTE* pDstPixel8 = &pDstData[((nYDstRel + y) * nDstStep) +
 					                             ((nXDstRel + i) * dstBytesPerPixel)];
-					UINT32 color = ReadColor(pSrcPixel, clear->format);
+					UINT32 color = ReadColor(pSrcPixel, clear->format, bits);
 					color = FreeRDPConvertColor(color, clear->format, DstFormat, NULL);
 
-					if (!WriteColor(pDstPixel8, DstFormat, color))
+					if (!WriteColor(pDstPixel8, DstFormat, dstBitsPerPixel, color))
 						return FALSE;
 
 					pSrcPixel += bpp;

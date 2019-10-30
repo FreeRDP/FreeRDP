@@ -39,6 +39,7 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 {
 	size_t x;
 	const UINT32 bpp = GetBytesPerPixel(format);
+	const UINT32 bits = GetBitsPerPixel(format);
 
 	for (x = 0; x < size; x++)
 	{
@@ -46,8 +47,8 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 		UINT32 sColor, dColor;
 		BYTE sR, sG, sB, sA;
 		BYTE dR, dG, dB, dA;
-		sColor = ReadColor(src, format);
-		dColor = ReadColor(dst, format);
+		sColor = ReadColor(src, format, bits);
+		dColor = ReadColor(dst, format, bits);
 		src += bpp;
 		dst += bpp;
 		SplitColor(sColor, format, &sR, &sG, &sB, &sA, NULL);

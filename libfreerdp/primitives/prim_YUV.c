@@ -613,6 +613,7 @@ static pstatus_t general_RGBToYUV444_8u_P3AC4R(const BYTE* pSrc, UINT32 SrcForma
                                                UINT32 dstStep[3], const prim_size_t* roi)
 {
 	const UINT32 bpp = GetBytesPerPixel(SrcFormat);
+	const UINT32 bits = GetBitsPerPixel(SrcFormat);
 	UINT32 x, y;
 	UINT32 nWidth, nHeight;
 	nWidth = roi->width;
@@ -628,7 +629,7 @@ static pstatus_t general_RGBToYUV444_8u_P3AC4R(const BYTE* pSrc, UINT32 SrcForma
 		for (x = 0; x < nWidth; x++)
 		{
 			BYTE B, G, R;
-			const UINT32 color = ReadColor(&pRGB[x * bpp], SrcFormat);
+			const UINT32 color = ReadColor(&pRGB[x * bpp], SrcFormat, bits);
 			SplitColor(color, SrcFormat, &R, &G, &B, NULL, NULL);
 			pY[x] = RGB2Y(R, G, B);
 			pU[x] = RGB2U(R, G, B);
@@ -776,6 +777,7 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(const BYTE* pSrc, UINT32 srcForm
                                                 const prim_size_t* roi)
 {
 	const UINT32 bpp = GetBytesPerPixel(srcFormat);
+	const UINT32 bits = GetBitsPerPixel(srcFormat);
 	UINT32 x, y, i;
 	size_t x1 = 0, x2 = bpp, x3 = srcStep, x4 = srcStep + bpp;
 	size_t y1 = 0, y2 = 1, y3 = dstStep[0], y4 = dstStep[0] + 1;
@@ -795,7 +797,7 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(const BYTE* pSrc, UINT32 srcForm
 			INT32 Ra, Ga, Ba;
 			UINT32 color;
 			/* row 1, pixel 1 */
-			color = ReadColor(src + x1, srcFormat);
+			color = ReadColor(src + x1, srcFormat, bits);
 			SplitColor(color, srcFormat, &R, &G, &B, NULL, NULL);
 			Ra = R;
 			Ga = G;
@@ -805,7 +807,7 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(const BYTE* pSrc, UINT32 srcForm
 			if (x < max_x)
 			{
 				/* row 1, pixel 2 */
-				color = ReadColor(src + x2, srcFormat);
+				color = ReadColor(src + x2, srcFormat, bits);
 				SplitColor(color, srcFormat, &R, &G, &B, NULL, NULL);
 				Ra += R;
 				Ga += G;
@@ -816,7 +818,7 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(const BYTE* pSrc, UINT32 srcForm
 			if (y < max_y)
 			{
 				/* row 2, pixel 1 */
-				color = ReadColor(src + x3, srcFormat);
+				color = ReadColor(src + x3, srcFormat, bits);
 				SplitColor(color, srcFormat, &R, &G, &B, NULL, NULL);
 				Ra += R;
 				Ga += G;
@@ -826,7 +828,7 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(const BYTE* pSrc, UINT32 srcForm
 				if (x < max_x)
 				{
 					/* row 2, pixel 2 */
-					color = ReadColor(src + x4, srcFormat);
+					color = ReadColor(src + x4, srcFormat, bits);
 					SplitColor(color, srcFormat, &R, &G, &B, NULL, NULL);
 					Ra += R;
 					Ga += G;
@@ -1135,6 +1137,7 @@ static INLINE void general_RGBToAVC444YUV_ANY_DOUBLE_ROW(const BYTE* srcEven, co
                                                          BYTE* b5, BYTE* b6, BYTE* b7, UINT32 width)
 {
 	const UINT32 bpp = GetBytesPerPixel(srcFormat);
+	const UINT32 bits = GetBitsPerPixel(srcFormat);
 	UINT32 x;
 
 	for (x = 0; x < width; x += 2)
@@ -1145,7 +1148,7 @@ static INLINE void general_RGBToAVC444YUV_ANY_DOUBLE_ROW(const BYTE* srcEven, co
 		/* Read 4 pixels, 2 from even, 2 from odd lines */
 		{
 			BYTE r, g, b;
-			const UINT32 color = ReadColor(srcEven, srcFormat);
+			const UINT32 color = ReadColor(srcEven, srcFormat, bits);
 			srcEven += bpp;
 			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
 			Y1e = Y2e = Y1o = Y2o = RGB2Y(r, g, b);
@@ -1156,7 +1159,7 @@ static INLINE void general_RGBToAVC444YUV_ANY_DOUBLE_ROW(const BYTE* srcEven, co
 		if (!lastX)
 		{
 			BYTE r, g, b;
-			const UINT32 color = ReadColor(srcEven, srcFormat);
+			const UINT32 color = ReadColor(srcEven, srcFormat, bits);
 			srcEven += bpp;
 			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
 			Y2e = RGB2Y(r, g, b);
@@ -1167,7 +1170,7 @@ static INLINE void general_RGBToAVC444YUV_ANY_DOUBLE_ROW(const BYTE* srcEven, co
 		if (b1Odd)
 		{
 			BYTE r, g, b;
-			const UINT32 color = ReadColor(srcOdd, srcFormat);
+			const UINT32 color = ReadColor(srcOdd, srcFormat, bits);
 			srcOdd += bpp;
 			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
 			Y1o = Y2o = RGB2Y(r, g, b);
@@ -1178,7 +1181,7 @@ static INLINE void general_RGBToAVC444YUV_ANY_DOUBLE_ROW(const BYTE* srcEven, co
 		if (b1Odd && !lastX)
 		{
 			BYTE r, g, b;
-			const UINT32 color = ReadColor(srcOdd, srcFormat);
+			const UINT32 color = ReadColor(srcOdd, srcFormat, bits);
 			srcOdd += bpp;
 			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
 			Y2o = RGB2Y(r, g, b);
@@ -1362,6 +1365,7 @@ static INLINE void general_RGBToAVC444YUVv2_ANY_DOUBLE_ROW(
 {
 	UINT32 x;
 	const UINT32 bpp = GetBytesPerPixel(srcFormat);
+	const UINT32 bits = GetBitsPerPixel(srcFormat);
 
 	for (x = 0; x < width; x += 2)
 	{
@@ -1371,7 +1375,7 @@ static INLINE void general_RGBToAVC444YUVv2_ANY_DOUBLE_ROW(
 		BYTE Yd, Ud, Vd;
 		{
 			BYTE b, g, r;
-			const UINT32 color = ReadColor(srcEven, srcFormat);
+			const UINT32 color = ReadColor(srcEven, srcFormat, bits);
 			srcEven += bpp;
 			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
 			Ya = RGB2Y(r, g, b);
@@ -1382,7 +1386,7 @@ static INLINE void general_RGBToAVC444YUVv2_ANY_DOUBLE_ROW(
 		if (x < width - 1)
 		{
 			BYTE b, g, r;
-			const UINT32 color = ReadColor(srcEven, srcFormat);
+			const UINT32 color = ReadColor(srcEven, srcFormat, bits);
 			srcEven += bpp;
 			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
 			Yb = RGB2Y(r, g, b);
@@ -1399,7 +1403,7 @@ static INLINE void general_RGBToAVC444YUVv2_ANY_DOUBLE_ROW(
 		if (srcOdd)
 		{
 			BYTE b, g, r;
-			const UINT32 color = ReadColor(srcOdd, srcFormat);
+			const UINT32 color = ReadColor(srcOdd, srcFormat, bits);
 			srcOdd += bpp;
 			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
 			Yc = RGB2Y(r, g, b);
@@ -1416,7 +1420,7 @@ static INLINE void general_RGBToAVC444YUVv2_ANY_DOUBLE_ROW(
 		if (srcOdd && (x < width - 1))
 		{
 			BYTE b, g, r;
-			const UINT32 color = ReadColor(srcOdd, srcFormat);
+			const UINT32 color = ReadColor(srcOdd, srcFormat, bits);
 			srcOdd += bpp;
 			SplitColor(color, srcFormat, &r, &g, &b, NULL, NULL);
 			Yd = RGB2Y(r, g, b);

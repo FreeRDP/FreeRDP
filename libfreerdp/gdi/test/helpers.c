@@ -97,14 +97,16 @@ static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2, const gdiPalett
 	UINT32 minw = (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width;
 	UINT32 minh = (hBmp1->height < hBmp2->height) ? hBmp1->height : hBmp2->height;
 	const UINT32 colorABytes = GetBytesPerPixel(hBmp1->format);
+	const UINT32 colorABits = GetBitsPerPixel(hBmp1->format);
 	const UINT32 colorBBytes = GetBytesPerPixel(hBmp2->format);
+	const UINT32 colorBBits = GetBitsPerPixel(hBmp2->format);
 
 	for (y = 0; y < minh; y++)
 	{
 		for (x = 0; x < minw; x++)
 		{
-			colorA = ReadColor(p1, hBmp1->format);
-			colorB = ReadColor(p2, hBmp2->format);
+			colorA = ReadColor(p1, hBmp1->format, colorABits);
+			colorB = ReadColor(p2, hBmp2->format, colorBBits);
 			p1 += colorABytes;
 			p2 += colorBBytes;
 

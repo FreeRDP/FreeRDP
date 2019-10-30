@@ -5473,8 +5473,8 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 			BYTE sR, sG, sB, sA, dR, dG, dB, dA;
 			const BYTE* a = &lineA[x * srcABytes];
 			const BYTE* b = &lineB[x * srcBBytes];
-			UINT32 colorA = ReadColor(a, srcAFormat);
-			UINT32 colorB = ReadColor(b, srcBFormat);
+			UINT32 colorA = ReadColor(a, srcAFormat, srcABits);
+			UINT32 colorB = ReadColor(b, srcBFormat, srcBBits);
 			SplitColor(colorA, srcAFormat, &sR, &sG, &sB, &sA, NULL);
 			SplitColor(colorB, srcBFormat, &dR, &dG, &dB, &dA, NULL);
 
@@ -5545,6 +5545,7 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 	UINT32 i, j, x, y;
 	BOOL rc = FALSE;
 	const UINT32 srcBpp = GetBytesPerPixel(srcFormat);
+	const UINT32 srcBits = GetBitsPerPixel(srcFormat);
 	const UINT32 dstBpp = GetBytesPerPixel(dstFormat);
 	printf("%s: [%s] --> [%s]: ", __FUNCTION__, FreeRDPGetColorFormatName(srcFormat),
 	       FreeRDPGetColorFormatName(dstFormat));
@@ -5576,7 +5577,7 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 
 				for (x = 0; x < width; x++)
 				{
-					WriteColor(line, srcFormat, color);
+					WriteColor(line, srcFormat, bits, color);
 					line += srcBpp;
 				}
 			}

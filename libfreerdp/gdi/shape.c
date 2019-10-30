@@ -139,6 +139,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 	if (!gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL))
 		return TRUE;
 
+	const UINT32 bits = GetBitsPerPixel(hdc->format);
 	switch (hbr->style)
 	{
 		case GDI_BS_SOLID:
@@ -149,7 +150,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x, nYDest);
 
 				if (dstp)
-					WriteColor(dstp, hdc->format, color);
+					WriteColor(dstp, hdc->format, bits, color);
 			}
 
 			srcp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest);
@@ -168,6 +169,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 			monochrome = (hbr->pattern->format == PIXEL_FORMAT_MONO);
 			formatSize = GetBytesPerPixel(hbr->pattern->format);
 
+			const UINT32 patternbits = GetBitsPerPixel(hbr->pattern->format);
 			for (y = 0; y < nHeight; y++)
 			{
 				for (x = 0; x < nWidth; x++)
@@ -190,13 +192,13 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 					}
 					else
 					{
-						dstColor = ReadColor(patp, hbr->pattern->format);
+						dstColor = ReadColor(patp, hbr->pattern->format, patternbits);
 						dstColor =
 						    FreeRDPConvertColor(dstColor, hbr->pattern->format, hdc->format, NULL);
 					}
 
 					if (dstp)
-						WriteColor(dstp, hdc->format, dstColor);
+						WriteColor(dstp, hdc->format, bits, dstColor);
 				}
 			}
 
@@ -249,6 +251,7 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 	if (!gdi_ClipCoords(hdc, &nXDst, &nYDst, &nWidth, &nHeight, NULL, NULL))
 		return TRUE;
 
+	const UINT32 bits = GetBitsPerPixel(hdc->format);
 	color = hdc->textColor;
 
 	for (y = 0; y < nHeight; y++)
@@ -257,10 +260,10 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 		BYTE* dstRight = gdi_get_bitmap_pointer(hdc, nXDst + nWidth - 1, nYDst + y);
 
 		if (dstLeft)
-			WriteColor(dstLeft, hdc->format, color);
+			WriteColor(dstLeft, hdc->format, bits, color);
 
 		if (dstRight)
-			WriteColor(dstRight, hdc->format, color);
+			WriteColor(dstRight, hdc->format, bits, color);
 	}
 
 	for (x = 0; x < nWidth; x++)
@@ -269,10 +272,10 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 		BYTE* dstBottom = gdi_get_bitmap_pointer(hdc, nXDst + x, nYDst + nHeight - 1);
 
 		if (dstTop)
-			WriteColor(dstTop, hdc->format, color);
+			WriteColor(dstTop, hdc->format, bits, color);
 
 		if (dstBottom)
-			WriteColor(dstBottom, hdc->format, color);
+			WriteColor(dstBottom, hdc->format, bits, color);
 	}
 
 	return FALSE;

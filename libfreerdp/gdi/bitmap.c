@@ -56,7 +56,7 @@ INLINE UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdc->selectedObject;
 	BYTE* data = &(hBmp->data[(nYPos * hBmp->scanline) + nXPos * GetBytesPerPixel(hBmp->format)]);
-	return ReadColor(data, hBmp->format);
+	return ReadColor(data, hBmp->format, GetBitsPerPixel(hBmp->format));
 }
 
 INLINE BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
@@ -78,7 +78,7 @@ INLINE BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
 static INLINE UINT32 gdi_SetPixelBmp(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y, UINT32 crColor)
 {
 	BYTE* p = &hBmp->data[(Y * hBmp->scanline) + X * GetBytesPerPixel(hBmp->format)];
-	WriteColor(p, hBmp->format, crColor);
+	WriteColor(p, hBmp->format, GetBitsPerPixel(hBmp->format), crColor);
 	return crColor;
 }
 
@@ -280,6 +280,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 	const INT32 dstX = nXDest + x;
 	const INT32 dstY = nYDest + y;
 	BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, dstX, dstY);
+	const UINT32 bits = GetBitsPerPixel(hdcDest->format);
 
 	if (!dstp)
 	{
@@ -287,7 +288,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 		return FALSE;
 	}
 
-	colorA = ReadColor(dstp, hdcDest->format);
+	colorA = ReadColor(dstp, hdcDest->format, bits);
 
 	if (useSrc)
 	{
@@ -299,7 +300,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 			return FALSE;
 		}
 
-		colorC = ReadColor(srcp, hdcSrc->format);
+		colorC = ReadColor(srcp, hdcSrc->format, GetBitsPerPixel(hdcSrc->format));
 		colorC = FreeRDPConvertColor(colorC, hdcSrc->format, hdcDest->format, palette);
 	}
 
@@ -322,7 +323,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 					return FALSE;
 				}
 
-				colorB = ReadColor(patp, hdcDest->format);
+				colorB = ReadColor(patp, hdcDest->format, bits);
 			}
 			break;
 
@@ -332,7 +333,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 	}
 
 	dstColor = process_rop(colorC, colorA, colorB, rop, hdcDest->format);
-	return WriteColor(dstp, hdcDest->format, dstColor);
+	return WriteColor(dstp, hdcDest->format, bits, dstColor);
 }
 
 static BOOL adjust_src_coordinates(HGDI_DC hdcSrc, INT32 nWidth, INT32 nHeight, INT32* px,

@@ -616,6 +616,7 @@ static BOOL gdi_apply_alpha(BYTE* data, UINT32 format, UINT32 stride, RECTANGLE_
 	UINT32 written = 0;
 	BOOL first = TRUE;
 	const UINT32 bpp = GetBytesPerPixel(format);
+	const UINT32 bits = GetBitsPerPixel(format);
 
 	for (y = rect->top; y < rect->bottom; y++)
 	{
@@ -632,10 +633,10 @@ static BOOL gdi_apply_alpha(BYTE* data, UINT32 format, UINT32 stride, RECTANGLE_
 				return TRUE;
 
 			src = &line[x * bpp];
-			color = ReadColor(src, format);
+			color = ReadColor(src, format, bits);
 			SplitColor(color, format, &r, &g, &b, NULL, NULL);
 			color = FreeRDPGetColor(format, r, g, b, a);
-			WriteColor(src, format, color);
+			WriteColor(src, format, bits, color);
 			written++;
 		}
 
@@ -664,6 +665,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	surface = (gdiGfxSurface*)context->GetSurfaceData(context, cmd->surfaceId);
 	const UINT32 bpp = GetBytesPerPixel(surface->format);
+	const UINT32 bits = GetBitsPerPixel(surface->format);
 
 	if (!surface)
 	{
@@ -695,10 +697,10 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 				BYTE r, g, b, a;
 				BYTE* src = &line[x * bpp];
 				Stream_Read_UINT8(&s, a);
-				color = ReadColor(src, surface->format);
+				color = ReadColor(src, surface->format, bits);
 				SplitColor(color, surface->format, &r, &g, &b, NULL, NULL);
 				color = FreeRDPGetColor(surface->format, r, g, b, a);
-				WriteColor(src, surface->format, color);
+				WriteColor(src, surface->format, bits, color);
 			}
 		}
 	}

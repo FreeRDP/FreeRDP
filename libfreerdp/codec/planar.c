@@ -386,6 +386,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 {
 	UINT32 x;
 	const UINT32 dstBytesPerPixel = GetBytesPerPixel(DstFormat);
+	const UINT32 dstBitsPerPixel = GetBitsPerPixel(DstFormat);
 
 	if (!ppRgba || !ppR || !ppG || !ppB)
 		return FALSE;
@@ -421,7 +422,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 			{
 				BYTE alpha = *(*ppA)++;
 				UINT32 color = FreeRDPGetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
-				WriteColor(*ppRgba, DstFormat, color);
+				WriteColor(*ppRgba, DstFormat, dstBitsPerPixel, color);
 				*ppRgba += dstBytesPerPixel;
 			}
 		}
@@ -432,7 +433,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 			for (x = 0; x < width; x++)
 			{
 				UINT32 color = FreeRDPGetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
-				WriteColor(*ppRgba, DstFormat, color);
+				WriteColor(*ppRgba, DstFormat, dstBitsPerPixel, color);
 				*ppRgba += dstBytesPerPixel;
 			}
 		}
@@ -859,6 +860,7 @@ static INLINE BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format, U
 {
 	INT32 i, j, k;
 	const UINT32 bpp = GetBytesPerPixel(format);
+	const UINT32 bits = GetBitsPerPixel(format);
 	if ((width > INT32_MAX) || (height > INT32_MAX) || (scanline > INT32_MAX))
 		return FALSE;
 
@@ -873,7 +875,7 @@ static INLINE BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format, U
 
 		for (j = 0; j < (INT32)width; j++)
 		{
-			const UINT32 color = ReadColor(pixel, format);
+			const UINT32 color = ReadColor(pixel, format, bits);
 			pixel += bpp;
 			SplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k], &planes[0][k],
 			           NULL);

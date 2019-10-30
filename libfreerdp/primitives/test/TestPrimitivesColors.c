@@ -34,6 +34,7 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	const INT16* ptrs[3];
 	const UINT32 rgbStride = roi.width * 2;
 	const UINT32 dstStride = roi.width * 4;
+	const UINT32 bits = GetBitsPerPixel(DstFormat);
 	PROFILER_DEFINE(genericProf)
 	PROFILER_DEFINE(optProf)
 	PROFILER_CREATE(genericProf, "RGBToRGB_16s8u_P3AC4R-GENERIC")
@@ -88,8 +89,8 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	{
 		for (i = 0; i < roi.width * roi.height; ++i)
 		{
-			const UINT32 o1 = ReadColor(out1 + 4 * i, DstFormat);
-			const UINT32 o2 = ReadColor(out2 + 4 * i, DstFormat);
+			const UINT32 o1 = ReadColor(out1 + 4 * i, DstFormat, bits);
+			const UINT32 o2 = ReadColor(out2 + 4 * i, DstFormat, bits);
 
 			if (o1 != o2)
 			{

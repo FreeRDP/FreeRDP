@@ -711,15 +711,15 @@ extern "C"
 	 * Read a pixel from memory to internal representation
 	 *
 	 * @param src    The source buffer
-	 * @param format The PIXEL_FORMAT_* define the source buffer uses for encoding
+	 * @param bitsPerPixel The bits per pixel of PIXEL_FORMAT_* define the source buffer uses for encoding
 	 *
 	 * @return The pixel color in internal representation
 	 */
-	static INLINE UINT32 ReadColor(const BYTE* src, UINT32 format)
+	static INLINE UINT32 ReadColor(const BYTE* src, UINT32 format, UINT32 bitsPerPixel)
 	{
 		UINT32 color;
 
-		switch (GetBitsPerPixel(format))
+		switch (bitsPerPixel)
 		{
 			case 32:
 				color = ((UINT32)src[0] << 24) | ((UINT32)src[1] << 16) | ((UINT32)src[2] << 8) |
@@ -762,14 +762,14 @@ extern "C"
 	 * Write a pixel from internal representation to memory
 	 *
 	 * @param dst    The destination buffer
-	 * @param format The PIXEL_FORMAT_* define for encoding
+	 * @param bitsPerPixel The bits per pixel of PIXEL_FORMAT_* define for encoding
 	 * @param color  The pixel color in internal representation
 	 *
 	 * @return TRUE if successful, FALSE otherwise
 	 */
-	static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
+	static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 bitsPerPixel, UINT32 color)
 	{
-		switch (GetBitsPerPixel(format))
+		switch (bitsPerPixel)
 		{
 			case 32:
 				dst[0] = (BYTE)(color >> 24);

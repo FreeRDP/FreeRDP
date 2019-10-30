@@ -627,7 +627,7 @@ static BOOL convert_rail_icon(ICON_INFO* iconInfo, xfRailIcon* railIcon)
 
 	for (i = 2; i < nelements; i++)
 	{
-		pixels[i] = ReadColor(nextPixel, PIXEL_FORMAT_BGRA32);
+		pixels[i] = ReadColor(nextPixel, PIXEL_FORMAT_BGRA32, 32 /*GetBitsPerPixel(PIXEL_FORMAT_BGRA32)*/);
 		nextPixel += 4;
 	}
 
