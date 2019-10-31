@@ -333,34 +333,18 @@ static BOOL pf_client_connect(freerdp* instance)
 {
 	pClientContext* pc = (pClientContext*) instance->context;
 	BOOL rc = FALSE;
-	BOOL retry_without_nla = FALSE;
 
 	pf_client_set_security_settings(pc);
 	if (pf_client_should_retry_without_nla(pc))
-		retry_without_nla = pc->allow_next_conn_failure = TRUE;
+		pc->allow_next_conn_failure = TRUE;
 
 	if (!freerdp_connect(instance))
 	{
-		UINT32 last_error = freerdp_get_last_error(instance->context);
-		UINT32 last_error_type = GET_FREERDP_ERROR_TYPE(last_error);
+		WLog_ERR(TAG, "failed to connect with NLA. disabling NLA and retyring...");
 
-		/* Do not retry if last error is not ERRCONNECT_LOGON_FAILURE */
-		if (last_error_type != ERRCONNECT_LOGON_FAILURE)
-			retry_without_nla = FALSE;
-
-		if (retry_without_nla)
+		if (!pf_client_connect_without_nla(pc))
 		{
-			WLog_ERR(TAG, "failed to connect with NLA. disabling NLA and retyring...");
-
-			if (!pf_client_connect_without_nla(pc))
-			{
-				WLog_ERR(TAG, "pf_client_connect_without_nla failed!");
-				goto out;
-			}
-		}
-		else
-		{
-			WLog_ERR(TAG, "connection failure!");
+			WLog_ERR(TAG, "pf_client_connect_without_nla failed!");
 			goto out;
 		}
 	}
