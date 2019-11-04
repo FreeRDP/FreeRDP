@@ -582,7 +582,7 @@ fail:
 	 * a certificate only for this session, 0 otherwise */
 	switch(what)
 	{
-	case IDOK:
+	case IDYES:
 		return 1;
 	case IDNO:
 		return 2;
@@ -641,7 +641,7 @@ fail:
 	 * a certificate only for this session, 0 otherwise */
 	switch(what)
 	{
-	case IDOK:
+	case IDYES:
 		return 1;
 	case IDNO:
 		return 2;
@@ -1030,8 +1030,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	// AttachConsole and stdin do not work well.
 	// Use GUI input dialogs instead of command line ones.
-	//wfc->isConsole = wf_create_console();
-	wf_create_console();
+	wfc->isConsole = wf_create_console();
 
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
