@@ -111,10 +111,10 @@ static BOOL IniFile_Load_String(wIniFile* ini, const char* iniString)
 	return TRUE;
 }
 
-static int IniFile_Open_File(wIniFile* ini, const char* filename)
+static BOOL IniFile_Open_File(wIniFile* ini, const char* filename)
 {
 	if (!ini || !filename)
-		return -1;
+		return FALSE;
 
 	if (ini->readOnly)
 		ini->fp = fopen(filename, "rb");
@@ -122,17 +122,17 @@ static int IniFile_Open_File(wIniFile* ini, const char* filename)
 		ini->fp = fopen(filename, "w+b");
 
 	if (!ini->fp)
-		return -1;
+		return FALSE;
 
-	return 1;
+	return TRUE;
 }
 
-static int IniFile_Load_File(wIniFile* ini, const char* filename)
+static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 {
 	INT64 fileSize;
 
-	if (IniFile_Open_File(ini, filename) < 0)
-		return -1;
+	if (!IniFile_Open_File(ini, filename))
+		return FALSE;
 
 	if (_fseeki64(ini->fp, 0, SEEK_END) < 0)
 		goto out_file;
@@ -165,14 +165,14 @@ static int IniFile_Load_File(wIniFile* ini, const char* filename)
 	ini->buffer[fileSize] = '\n';
 	ini->buffer[fileSize + 1] = '\0';
 	IniFile_Load_NextLine(ini, ini->buffer);
-	return 1;
+	return TRUE;
 out_buffer:
 	free(ini->buffer);
 	ini->buffer = NULL;
 out_file:
 	fclose(ini->fp);
 	ini->fp = NULL;
-	return -1;
+	return FALSE;
 }
 
 static void IniFile_Load_Finish(wIniFile* ini)
@@ -503,7 +503,6 @@ int IniFile_ReadBuffer(wIniFile* ini, const char* buffer)
 
 int IniFile_ReadFile(wIniFile* ini, const char* filename)
 {
-	int status;
 	ini->readOnly = TRUE;
 	free(ini->filename);
 	ini->filename = _strdup(filename);
@@ -511,10 +510,8 @@ int IniFile_ReadFile(wIniFile* ini, const char* filename)
 	if (!ini->filename)
 		return -1;
 
-	status = IniFile_Load_File(ini, filename);
-
-	if (status < 0)
-		return status;
+	if (!IniFile_Load_File(ini, filename))
+		return -1;
 
 	return IniFile_Load(ini);
 }
@@ -776,7 +773,7 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 	if (!filename)
 		filename = ini->filename;
 
-	if (IniFile_Open_File(ini, filename) < 0)
+	if (!IniFile_Open_File(ini, filename))
 	{
 		free(buffer);
 		return -1;
