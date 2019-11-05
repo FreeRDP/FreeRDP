@@ -58,15 +58,19 @@
 
 #define TAG CLIENT_TAG("windows")
 
-static int wf_create_console(void)
+static BOOL wf_create_console(void)
 {
-	if (!AllocConsole())
-		return 1;
+	if (!AttachConsole(ATTACH_PARENT_PROCESS))
+		return FALSE;
 
 	freopen("CONOUT$", "w", stdout);
 	freopen("CONOUT$", "w", stderr);
+	freopen("CONIN$", "r", stdin);
+	clearerr(stdin);
+
 	WLog_INFO(TAG,  "Debug console created.");
-	return 0;
+
+	return TRUE;
 }
 
 static BOOL wf_end_paint(rdpContext* context)
@@ -397,16 +401,15 @@ static BOOL wf_post_connect(freerdp* instance)
 	return TRUE;
 }
 
-static BOOL wf_post_disconnect(freerdp* instance)
+static void wf_post_disconnect(freerdp* instance)
 {
 	wfContext* wfc;
 
 	if (!instance || !instance->context || !instance->settings)
-		return FALSE;
+		return;
 
 	wfc = (wfContext*) instance->context;
 	free(wfc->window_title);
-	return TRUE;
 }
 
 static CREDUI_INFOA wfUiInfo =
@@ -421,20 +424,30 @@ static CREDUI_INFOA wfUiInfo =
 static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
                                 char** username, char** password, char** domain)
 {
+	wfContext* wfc;
 	BOOL fSave;
 	DWORD status;
 	DWORD dwFlags;
-	char UserName[CREDUI_MAX_USERNAME_LENGTH + 1];
-	char Password[CREDUI_MAX_PASSWORD_LENGTH + 1];
-	char User[CREDUI_MAX_USERNAME_LENGTH + 1];
-	char Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1];
+	char UserName[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+	char Password[CREDUI_MAX_PASSWORD_LENGTH + 1] = { 0 };
+	char User[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+	char Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
+
+	if (!instance || !instance->context)
+		return FALSE;
+	wfc = (wfContext*) instance->context;
+
 	fSave = FALSE;
-	ZeroMemory(UserName, sizeof(UserName));
-	ZeroMemory(Password, sizeof(Password));
 	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
-	status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0,
-	                                     UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
-	                                     Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
+
+	if (wfc->isConsole)
+		status = CredUICmdLinePromptForCredentialsA(title, NULL, 0,
+													UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
+													Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
+	else
+		status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0,
+											 UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
+											 Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
 
 	if (status != NO_ERROR)
 	{
@@ -442,8 +455,6 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
 		return FALSE;
 	}
 
-	ZeroMemory(User, sizeof(User));
-	ZeroMemory(Domain, sizeof(Domain));
 	status = CredUIParseUserNameA(UserName, User, sizeof(User), Domain,
 	                              sizeof(Domain));
 	//WLog_ERR(TAG, "User: %s Domain: %s Password: %s", User, Domain, Password);
@@ -494,64 +505,149 @@ static BOOL wf_gw_authenticate(freerdp* instance,
 	return wf_authenticate_raw(instance, tmp, username, password, domain);
 }
 
-static DWORD wf_verify_certificate(freerdp* instance,
-                                   const char* common_name,
-                                   const char* subject,
-                                   const char* issuer,
-                                   const char* fingerprint,
-                                   BOOL host_mismatch)
+static WCHAR* wf_format_text(const WCHAR* fmt, ...)
 {
-#if 0
-	DWORD mode;
-	int read_size;
-	DWORD read_count;
-	TCHAR answer[2];
-	TCHAR* read_buffer;
-	HANDLE input_handle;
-#endif
-	WLog_INFO(TAG, "Certificate details:");
-	WLog_INFO(TAG, "\tCommonName: %s", common_name);
-	WLog_INFO(TAG, "\tSubject: %s", subject);
-	WLog_INFO(TAG, "\tIssuer: %s", issuer);
-	WLog_INFO(TAG, "\tThumbprint: %s", fingerprint);
-	WLog_INFO(TAG, "\tHostMismatch: %s", host_mismatch ? "Yes" : "No");
-	WLog_INFO(TAG,
-	          "The above X.509 certificate could not be verified, possibly because you do not have "
-	          "the CA certificate in your certificate store, or the certificate has expired. "
-	          "Please look at the OpenSSL documentation on how to add a private CA to the store.\n");
-	/* TODO: ask for user validation */
-#if 0
-	input_handle = GetStdHandle(STD_INPUT_HANDLE);
-	GetConsoleMode(input_handle, &mode);
-	mode |= ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT;
-	SetConsoleMode(input_handle, mode);
-#endif
-	/* return 1 to accept and store a certificate, 2 to accept
-	 * a certificate only for this session, 0 otherwise */
-	return 2;
+	int rc;
+	size_t size = 1024;
+	WCHAR* buffer = calloc(size, sizeof(WCHAR));
+	if (!buffer)
+		return NULL;
+
+	do
+	{
+		WCHAR* tmp;
+		va_list ap;
+		va_start(ap, fmt);
+		rc = vswprintf_s(buffer, size, fmt, ap);
+		va_end(ap);
+		if (rc <= 0)
+			goto fail;
+
+		if ((size_t)rc < size)
+			return buffer;
+
+		size = (size_t)rc + 1;
+		tmp = realloc(buffer, size * sizeof(WCHAR));
+		if (!tmp)
+			goto fail;
+
+		buffer = tmp;
+	}
+	while(TRUE);
+
+fail:
+	free(buffer);
+	return NULL;
 }
 
-static DWORD wf_verify_changed_certificate(freerdp* instance,
-        const char* common_name,
-        const char* subject, const char* issuer,
-        const char* fingerprint,
-        const char* old_subject, const char* old_issuer,
-        const char* old_fingerprint)
+static DWORD wf_verify_certificate_ex(freerdp* instance,
+                                      const char* host,
+                                      UINT16 port,
+                                      const char* common_name,
+                                      const char* subject,
+                                      const char* issuer,
+                                      const char* fingerprint,
+                                      DWORD flags)
 {
-	WLog_ERR(TAG, "!!! Certificate has changed !!!");
-	WLog_ERR(TAG, "New Certificate details:");
-	WLog_ERR(TAG, "\tSubject: %s", subject);
-	WLog_ERR(TAG, "\tIssuer: %s", issuer);
-	WLog_ERR(TAG, "\tThumbprint: %s", fingerprint);
-	WLog_ERR(TAG, "Old Certificate details:");
-	WLog_ERR(TAG, "\tSubject: %s", old_subject);
-	WLog_ERR(TAG, "\tIssuer: %s", old_issuer);
-	WLog_ERR(TAG, "\tThumbprint: %s", old_fingerprint);
-	WLog_ERR(TAG,
-	         "The above X.509 certificate does not match the certificate used for previous connections. "
-	         "This may indicate that the certificate has been tampered with."
-	         "Please contact the administrator of the RDP server and clarify.");
-	return 0;
+	WCHAR* buffer;
+	WCHAR* caption;
+	int what = IDCANCEL;
+
+	buffer = wf_format_text(L"Certificate details:\n"
+							L"\tCommonName: %S\n"
+							L"\tSubject: %S\n"
+							L"\tIssuer: %S\n"
+							L"\tThumbprint: %S\n"
+							L"\tHostMismatch: %S\n"
+							L"\n"
+							L"The above X.509 certificate could not be verified, possibly because you do not have "
+							L"the CA certificate in your certificate store, or the certificate has expired. "
+							L"Please look at the OpenSSL documentation on how to add a private CA to the store.\n"
+							L"\n"
+							L"YES\tAccept permanently\n"
+							L"NO\tAccept for this session only\n"
+							L"CANCEL\tAbort connection\n",
+						  common_name, subject, issuer, fingerprint, flags & VERIFY_CERT_FLAG_MISMATCH ? "Yes" : "No");
+	caption = wf_format_text(L"Verify certificate for %S:%hu", host, port);
+
+	if (!buffer || !caption)
+		goto fail;
+
+	what = MessageBoxW(NULL, buffer, caption, MB_YESNOCANCEL);
+fail:
+	free(buffer);
+	free(caption);
+
+	/* return 1 to accept and store a certificate, 2 to accept
+	 * a certificate only for this session, 0 otherwise */
+	switch(what)
+	{
+	case IDYES:
+		return 1;
+	case IDNO:
+		return 2;
+	default:
+		return 0;
+	}
+}
+
+static DWORD wf_verify_changed_certificate_ex(freerdp* instance,
+                                              const char* host,
+                                              UINT16 port,
+                                              const char* common_name,
+                                              const char* subject,
+                                              const char* issuer,
+                                              const char* new_fingerprint,
+                                              const char* old_subject,
+                                              const char* old_issuer,
+                                              const char* old_fingerprint,
+                                              DWORD flags)
+{
+	WCHAR* buffer;
+	WCHAR* caption;
+	int what = IDCANCEL;
+
+	buffer = wf_format_text( L"New Certificate details:\n"
+							L"\tCommonName: %S\n"
+							L"\tSubject: %S\n"
+							L"\tIssuer: %S\n"
+							L"\tThumbprint: %S\n"
+							L"\tHostMismatch: %S\n"
+							L"\n"
+							L"Old Certificate details:\n"
+							L"\tSubject: %S\n"
+							L"\tIssuer: %S\n"
+							L"\tThumbprint: %S"
+							L"The above X.509 certificate could not be verified, possibly because you do not have "
+							L"the CA certificate in your certificate store, or the certificate has expired. "
+							L"Please look at the OpenSSL documentation on how to add a private CA to the store.\n"
+							L"\n"
+							L"YES\tAccept permanently\n"
+							L"NO\tAccept for this session only\n"
+							L"CANCEL\tAbort connection\n",
+							common_name, subject, issuer, new_fingerprint, flags & VERIFY_CERT_FLAG_MISMATCH ? "Yes" : "No",
+							old_subject, old_issuer, old_fingerprint);
+	caption = wf_format_text(L"Verify certificate change for %S:%hu", host, port);
+
+	if (!buffer || !caption)
+		goto fail;
+
+	what = MessageBoxW(NULL, buffer, caption, MB_YESNOCANCEL);
+fail:
+	free(buffer);
+	free(caption);
+
+	/* return 1 to accept and store a certificate, 2 to accept
+	 * a certificate only for this session, 0 otherwise */
+	switch(what)
+	{
+	case IDYES:
+		return 1;
+	case IDNO:
+		return 2;
+	default:
+		return 0;
+	}
 }
 
 static DWORD WINAPI wf_input_thread(LPVOID arg)
@@ -916,9 +1012,7 @@ static BOOL wfreerdp_client_global_init(void)
 	WSADATA wsaData;
 
 	WSAStartup(0x101, &wsaData);
-#if defined(WITH_DEBUG) || defined(_DEBUG)
-	wf_create_console();
-#endif
+
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 	return TRUE;
 }
@@ -930,6 +1024,14 @@ static void wfreerdp_client_global_uninit(void)
 
 static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
+	wfContext* wfc = (wfContext*)context;
+	if (!wfc)
+		return FALSE;
+
+	// AttachConsole and stdin do not work well.
+	// Use GUI input dialogs instead of command line ones.
+	wfc->isConsole = wf_create_console();
+
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
 
@@ -938,8 +1040,17 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostDisconnect = wf_post_disconnect;
 	instance->Authenticate = wf_authenticate;
 	instance->GatewayAuthenticate = wf_gw_authenticate;
-	instance->VerifyCertificate = wf_verify_certificate;
-	instance->VerifyChangedCertificate = wf_verify_changed_certificate;
+	if (wfc->isConsole)
+	{
+		instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
+		instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
+	}
+	else
+	{
+		instance->VerifyCertificateEx = wf_verify_certificate_ex;
+		instance->VerifyChangedCertificateEx = wf_verify_changed_certificate_ex;
+	}
+
 	return TRUE;
 }
 

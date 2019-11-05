@@ -132,6 +132,7 @@ struct wf_context
 
 	RailClientContext* rail;
 	wHashTable* railWindows;
+	BOOL isConsole;
 };
 
 /**
