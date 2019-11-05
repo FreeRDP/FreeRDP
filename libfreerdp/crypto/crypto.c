@@ -449,7 +449,7 @@ static void string_list_allocate(string_list* list, int allocate_count)
 {
 	if (!list->strings && list->allocated == 0)
 	{
-		list->strings = calloc(allocate_count, sizeof(list->strings[0]));
+		list->strings = calloc((size_t)allocate_count, sizeof(char*));
 		list->allocated = list->strings ? allocate_count : -1;
 		list->count = 0;
 	}
@@ -741,7 +741,7 @@ char** crypto_cert_get_dns_names(X509* x509, int* count, int** lengths)
 	for (i = 0; i < list.count; i ++)
 	{
 		result[i] = list.strings[i];
-		(*lengths)[i] = strnlen(result[i], sizeof(*result));
+		(*lengths)[i] = strlen(result[i]);
 	}
 
 	string_list_free(&list);

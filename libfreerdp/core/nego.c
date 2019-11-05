@@ -749,7 +749,7 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 		remain = Stream_GetRemainingLength(s);
 		Stream_Write_UINT16(s, 0);
 
-		if (strnlen((char*)str, remain) == len)
+		if (strnlen((char*)str, len) == len)
 		{
 			if (isToken)
 				result = nego_set_routing_token(nego, str, len);
