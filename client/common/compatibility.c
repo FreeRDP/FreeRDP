@@ -246,7 +246,7 @@ static int freerdp_client_old_command_line_pre_filter(void* context, int index, 
 				return -1;
 			}
 
-			if (_stricmp(&(argv[index])[strnlen(argv[index], 9) - 4], ".rdp") == 0)
+			if (_stricmp(&(argv[index])[strlen(argv[index]) - 4], ".rdp") == 0)
 			{
 				return -1;
 			}
