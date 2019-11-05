@@ -86,14 +86,14 @@ static BYTE ru_Administrator_lower[] =
 static BYTE ru_Administrator_upper[] =
 		"\xd0\x90\xd0\x94\xd0\x9c\xd0\x98\xd0\x9d\xd0\x98\xd0\xa1\xd0\xa2\xd0\xa0\xd0\x90\xd0\xa2\xd0\x9e\xd0\xa0\x00";
 
-void string_hexdump(BYTE* data, int length)
+static void string_hexdump(const BYTE* data, size_t length)
 {
-	BYTE* p = data;
-	int i, line, offset = 0;
+	const BYTE* p = data;
+	size_t i, line, offset = 0;
 
 	while (offset < length)
 	{
-		printf("%04x ", offset);
+		printf("%04"PRIxz" ", offset);
 
 		line = length - offset;
 
@@ -116,11 +116,11 @@ void string_hexdump(BYTE* data, int length)
 	}
 }
 
-int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, int expected_cchWideChar)
+static int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, int expected_cchWideChar)
 {
 	int rc = -1;
 	int length;
-	int cbMultiByte;
+	size_t cbMultiByte;
 	int cchWideChar;
 	LPWSTR lpWideCharStr = NULL;
 
@@ -139,7 +139,7 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 		goto fail;
 	}
 
-	lpWideCharStr = (LPWSTR) calloc(cchWideChar, sizeof(WCHAR));
+	lpWideCharStr = (LPWSTR) calloc((size_t)cchWideChar, sizeof(WCHAR));
 	if (!lpWideCharStr)
 	{
 		printf("MultiByteToWideChar: unable to allocate memory for test\n");
@@ -191,7 +191,7 @@ fail:
 	return rc;
 }
 
-int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, int expected_cbMultiByte)
+static int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, int expected_cbMultiByte)
 {
 	int rc = -1;
 	int length;
@@ -266,7 +266,7 @@ fail:
 	return rc;
 }
 
-BOOL test_unicode_uppercasing(BYTE* lower, BYTE* upper)
+static BOOL test_unicode_uppercasing(BYTE* lower, BYTE* upper)
 {
 	WCHAR* lowerW = NULL;
 	int lowerLength;
@@ -296,12 +296,12 @@ BOOL test_unicode_uppercasing(BYTE* lower, BYTE* upper)
 	return TRUE;
 }
 
-BOOL test_ConvertFromUnicode_wrapper()
+static BOOL test_ConvertFromUnicode_wrapper(void)
 {
-	BYTE src1[] = "\x52\x00\x49\x00\x43\x00\x48\x00\x20\x00\x54\x00\x45\x00\x58\x00\x54\x00\x20\x00\x46\x00\x4f\x00\x52\x00\x4d\x00\x41\x00\x54\x00\x40\x00\x40\x00\x40\x00";
-	BYTE src2[] = "\x52\x00\x49\x00\x43\x00\x48\x00\x20\x00\x54\x00\x45\x00\x58\x00\x54\x00\x20\x00\x46\x00\x4f\x00\x52\x00\x4d\x00\x41\x00\x54\x00\x00\x00";
+	const BYTE src1[] = "\x52\x00\x49\x00\x43\x00\x48\x00\x20\x00\x54\x00\x45\x00\x58\x00\x54\x00\x20\x00\x46\x00\x4f\x00\x52\x00\x4d\x00\x41\x00\x54\x00\x40\x00\x40\x00\x40\x00";
+	const BYTE src2[] = "\x52\x00\x49\x00\x43\x00\x48\x00\x20\x00\x54\x00\x45\x00\x58\x00\x54\x00\x20\x00\x46\x00\x4f\x00\x52\x00\x4d\x00\x41\x00\x54\x00\x00\x00";
 	/*               00  01  02  03  04  05  06  07  08  09  10  11  12  13  14  15  16  17  18 */
-	CHAR  cmp0[] = { 'R','I','C','H',' ','T','E','X','T',' ','F','O','R','M','A','T', 0 };
+	const CHAR  cmp0[] = { 'R','I','C','H',' ','T','E','X','T',' ','F','O','R','M','A','T', 0 };
 	CHAR* dst = NULL;
 	int i;
 
@@ -380,28 +380,30 @@ fail:
 	return FALSE;
 }
 
-BOOL test_ConvertToUnicode_wrapper()
+static BOOL test_ConvertToUnicode_wrapper(void)
 {
 	/*               00  01  02  03  04  05  06  07  08  09  10  11  12  13  14  15  16  17  18 */
-	CHAR  src1[] = { 'R','I','C','H',' ','T','E','X','T',' ','F','O','R','M','A','T','@','@','@' };
-	CHAR  src2[] = { 'R','I','C','H',' ','T','E','X','T',' ','F','O','R','M','A','T', 0 };
-	BYTE cmp0[] = "\x52\x00\x49\x00\x43\x00\x48\x00\x20\x00\x54\x00\x45\x00\x58\x00\x54\x00\x20\x00\x46\x00\x4f\x00\x52\x00\x4d\x00\x41\x00\x54\x00\x00\x00";
+	const CHAR  src1[] = { 'R','I','C','H',' ','T','E','X','T',' ','F','O','R','M','A','T','@','@','@' };
+	const CHAR  src2[] = { 'R','I','C','H',' ','T','E','X','T',' ','F','O','R','M','A','T', 0 };
+	const BYTE cmp0[] = "\x52\x00\x49\x00\x43\x00\x48\x00\x20\x00\x54\x00\x45\x00\x58\x00\x54\x00\x20\x00\x46\x00\x4f\x00\x52\x00\x4d\x00\x41\x00\x54\x00\x00\x00";
 	WCHAR* dst = NULL;
-	int i;
+	int ii;
+	size_t i;
 
 	/* Test unterminated unicode string:
 	 * ConvertToUnicode must always null-terminate, even if the src string isn't
 	 */
 
 	printf("Input UTF8 String:\n");
-	string_hexdump((BYTE*) src1, 19);
+	string_hexdump((const BYTE*) src1, 19);
 
-	i = ConvertToUnicode(CP_UTF8, 0, src1, 16, &dst, 0);
-	if (i != 16)
+	ii = ConvertToUnicode(CP_UTF8, 0, src1, 16, &dst, 0);
+	if (ii != 16)
 	{
-		fprintf(stderr, "ConvertToUnicode failure A1: unexpectedly returned %d instead of 16\n", i);
+		fprintf(stderr, "ConvertToUnicode failure A1: unexpectedly returned %d instead of 16\n", ii);
 		goto fail;
 	}
+	i = (size_t)ii;
 	if (dst == NULL)
 	{
 		fprintf(stderr, "ConvertToUnicode failure A2: destination ist NULL\n");
@@ -412,13 +414,13 @@ BOOL test_ConvertToUnicode_wrapper()
 		fprintf(stderr, "ConvertToUnicode failure A3: dst length is %d instead of 16\n", i);
 		goto fail;
 	}
-	if (_wcscmp(dst, (WCHAR*)cmp0))
+	if (_wcscmp(dst, (const WCHAR*)cmp0))
 	{
 		fprintf(stderr, "ConvertToUnicode failure A4: data mismatch\n");
 		goto fail;
 	}
 	printf("Output UTF16 String:\n");
-	string_hexdump((BYTE*) dst, (i + 1) * sizeof(WCHAR));
+	string_hexdump((const BYTE*) dst, (i + 1) * sizeof(WCHAR));
 
 	free(dst);
 	dst = NULL;
@@ -426,7 +428,7 @@ BOOL test_ConvertToUnicode_wrapper()
 	/* Test null-terminated string */
 
 	printf("Input UTF8 String:\n");
-	string_hexdump((BYTE*) src2, strlen(src2) + 1);
+	string_hexdump((const BYTE*) src2, strlen(src2) + 1);
 
 	i = ConvertToUnicode(CP_UTF8, 0, src2, -1, &dst, 0);
 	if (i != 17)

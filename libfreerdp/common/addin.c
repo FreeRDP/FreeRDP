@@ -241,12 +241,16 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 	const size_t cchBaseFileName = sizeof(FREERDP_SHARED_LIBRARY_PREFIX) + 32;
 	LPCSTR pszExtension;
 	LPCSTR pszPrefix = FREERDP_SHARED_LIBRARY_PREFIX;
+	const size_t nameLen = strnlen(pszName, MAX_PATH);
+	const size_t subsystemLen = strnlen(pszSubsystem, MAX_PATH);
+	const size_t typeLen = strlen(pszType);
+	size_t extensionLen;
 	pszExtension = PathGetSharedLibraryExtensionA(0);
+	extensionLen = strnlen(pszExtension, MAX_PATH);
 
 	if (pszName && pszSubsystem && pszType)
 	{
-		const size_t cchFileName = cchBaseFileName + strlen(pszName) + strlen(pszSubsystem) + strlen(
-		                               pszType) + strlen(pszExtension);
+		const size_t cchFileName = cchBaseFileName + nameLen + subsystemLen + typeLen + extensionLen;
 		pszFileName = (LPSTR) malloc(cchFileName);
 
 		if (!pszFileName)
@@ -257,8 +261,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 	}
 	else if (pszName && pszSubsystem)
 	{
-		const size_t cchFileName = cchBaseFileName + strlen(pszName) + strlen(pszSubsystem) + strlen(
-		                               pszExtension);
+		const size_t cchFileName = cchBaseFileName + nameLen + subsystemLen + extensionLen;
 		pszFileName = (LPSTR) malloc(cchFileName);
 
 		if (!pszFileName)
@@ -269,7 +272,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 	}
 	else if (pszName)
 	{
-		const size_t cchFileName = cchBaseFileName + strlen(pszName) + strlen(pszExtension);
+		const size_t cchFileName = cchBaseFileName + nameLen + extensionLen;
 		pszFileName = (LPSTR) malloc(cchFileName);
 
 		if (!pszFileName)
@@ -288,7 +291,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 		LPSTR pszEntryName;
 		size_t cchEntryName;
 		/* subsystem add-in */
-		cchEntryName = 64 + strlen(pszName);
+		cchEntryName = 64 + nameLen;
 		pszEntryName = (LPSTR) malloc(cchEntryName + 1);
 
 		if (!pszEntryName)

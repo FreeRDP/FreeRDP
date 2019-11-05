@@ -239,12 +239,12 @@ static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
 	wStream* sChunk;
 	char chunkSize[11];
 	sprintf_s(chunkSize, sizeof(chunkSize), "%"PRIXz"\r\n", Stream_Length(sPacket));
-	sChunk = Stream_New(NULL, strlen(chunkSize) + Stream_Length(sPacket) + 2);
+	sChunk = Stream_New(NULL, strnlen(chunkSize, sizeof(chunkSize)) + Stream_Length(sPacket) + 2);
 
 	if (!sChunk)
 		return FALSE;
 
-	Stream_Write(sChunk, chunkSize, strlen(chunkSize));
+	Stream_Write(sChunk, chunkSize, strnlen(chunkSize, sizeof(chunkSize)));
 	Stream_Write(sChunk, Stream_Buffer(sPacket), Stream_Length(sPacket));
 	Stream_Write(sChunk, "\r\n", 2);
 	Stream_SealLength(sChunk);
@@ -1217,12 +1217,12 @@ static int rdg_write_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
 		return 0;
 
 	sprintf_s(chunkSize, sizeof(chunkSize), "%"PRIxz"\r\n", packetSize);
-	sChunk = Stream_New(NULL, strlen(chunkSize) + packetSize + 2);
+	sChunk = Stream_New(NULL, strnlen(chunkSize, sizeof(chunkSize)) + packetSize + 2);
 
 	if (!sChunk)
 		return -1;
 
-	Stream_Write(sChunk, chunkSize, strlen(chunkSize));
+	Stream_Write(sChunk, chunkSize, strnlen(chunkSize, sizeof(chunkSize)));
 	Stream_Write_UINT16(sChunk, PKT_TYPE_DATA);   /* Type */
 	Stream_Write_UINT16(sChunk, 0);   /* Reserved */
 	Stream_Write_UINT32(sChunk, (UINT32)packetSize);   /* Packet length */

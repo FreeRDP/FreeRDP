@@ -48,7 +48,7 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 	if (flags & WTS_CHANNEL_OPTION_DYNAMIC)
 		return NULL; /* not yet supported */
 
-	length = strlen(name);
+	length = strnlen(name, 9);
 
 	if (length > 8)
 		return NULL; /* SVC maximum name length is 8 */

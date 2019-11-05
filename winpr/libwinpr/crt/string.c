@@ -217,13 +217,13 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 
 LPSTR CharUpperA(LPSTR lpsz)
 {
-	int i;
-	int length;
+	size_t i;
+	size_t length;
 
 	if (!lpsz)
 		return NULL;
 
-	length = (int) strlen(lpsz);
+	length = strlen(lpsz);
 
 	if (length < 1)
 		return (LPSTR) NULL;
@@ -287,13 +287,13 @@ DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 
 LPSTR CharLowerA(LPSTR lpsz)
 {
-	int i;
-	int length;
+	size_t i;
+	size_t length;
 
 	if (!lpsz)
 		return (LPSTR) NULL;
 
-	length = (int) strlen(lpsz);
+	length = strlen(lpsz);
 
 	if (length < 1)
 		return (LPSTR) NULL;

@@ -545,7 +545,7 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext*
 		return ERROR_INVALID_DATA;
 	}
 
-	length = strlen(cliprdr->temporaryDirectory);
+	length = strnlen(cliprdr->temporaryDirectory, 520);
 
 	if (length > 519)
 		length = 519;

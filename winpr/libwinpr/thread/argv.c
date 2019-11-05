@@ -91,16 +91,16 @@
 LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 {
 	char* p;
-	int length;
+	size_t length;
 	char* pBeg;
 	char* pEnd;
 	char* buffer;
 	char* pOutput;
 	int numArgs = 0;
 	LPSTR* pArgs;
-	int maxNumArgs;
-	int maxBufferSize;
-	int cmdLineLength;
+	size_t maxNumArgs;
+	size_t maxBufferSize;
+	size_t cmdLineLength;
 	BOOL* lpEscapedChars;
 	LPSTR lpEscapedCmdLine;
 
@@ -112,7 +112,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 	pArgs = NULL;
 	lpEscapedCmdLine = NULL;
-	cmdLineLength = (int) strlen(lpCmdLine);
+	cmdLineLength = strlen(lpCmdLine);
 	lpEscapedChars = (BOOL*) calloc(cmdLineLength + 1, sizeof(BOOL));
 
 	if (!lpEscapedChars)
@@ -120,7 +120,8 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 	if (strstr(lpCmdLine, "\\\""))
 	{
-		int i, n;
+		size_t i;
+		size_t n;
 		char* pLastEnd = NULL;
 		lpEscapedCmdLine = (char*) calloc(cmdLineLength + 1, sizeof(char));
 
@@ -140,7 +141,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 			if (!pBeg)
 			{
-				length = (int) strlen(p);
+				length = strlen(p);
 				CopyMemory(pOutput, p, length);
 				pOutput += length;
 				break;
@@ -159,8 +160,8 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 				pBeg--;
 			}
 
-			n = (int)((pEnd - pBeg) - 1);
-			length = (int)(pBeg - pLastEnd);
+			n = ((pEnd - pBeg) - 1);
+			length = (pBeg - pLastEnd);
 			CopyMemory(pOutput, p, length);
 			pOutput += length;
 			p += length;
@@ -179,7 +180,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 		*pOutput++ = '\0';
 		lpCmdLine = (LPCSTR) lpEscapedCmdLine;
-		cmdLineLength = (int) strlen(lpCmdLine);
+		cmdLineLength = strlen(lpCmdLine);
 	}
 
 	maxNumArgs = 2;
@@ -223,7 +224,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		if (*p != '"')
 		{
 			/* no whitespace escaped with double quotes */
-			length = (int)(p - pBeg);
+			length = (p - pBeg);
 			CopyMemory(pOutput, pBeg, length);
 			pOutput[length] = '\0';
 			pArgs[numArgs++] = pOutput;

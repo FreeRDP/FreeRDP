@@ -74,7 +74,7 @@ char* GetDeviceFileNameWithoutPrefixA(LPCSTR lpName)
 	if (strncmp(lpName, DEVICE_FILE_PREFIX_PATH, sizeof(DEVICE_FILE_PREFIX_PATH) - 1) != 0)
 		return NULL;
 
-	lpFileName = _strdup(&lpName[strlen(DEVICE_FILE_PREFIX_PATH)]);
+	lpFileName = _strdup(&lpName[strnlen(DEVICE_FILE_PREFIX_PATH, sizeof (DEVICE_FILE_PREFIX_PATH))]);
 	return lpFileName;
 }
 

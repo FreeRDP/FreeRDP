@@ -216,7 +216,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList, B
 			if (asciiNames)
 			{
 				if (szFormatName)
-					formatNameLength = strlen(szFormatName);
+					formatNameLength = strnlen(szFormatName, 32);
 
 				if (formatNameLength > 31)
 					formatNameLength = 31;

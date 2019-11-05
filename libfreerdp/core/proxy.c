@@ -406,7 +406,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 	Stream_Write(s, " HTTP/1.1" CRLF "Host: ", 17);
 	Stream_Write(s, hostname, strlen(hostname));
 	Stream_Write_UINT8(s, ':');
-	Stream_Write(s, port_str, strlen(port_str));
+	Stream_Write(s, port_str, strnlen(port_str, sizeof (port_str)));
 	Stream_Write(s, CRLF CRLF, 4);
 	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
 
@@ -468,7 +468,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 	*eol = '\0';
 	WLog_INFO(TAG, "HTTP Proxy: %s", recv_buf);
 
-	if (strlen(recv_buf) < 12)
+	if (strnlen(recv_buf, sizeof(recv_buf)) < 12)
 	{
 		return FALSE;
 	}

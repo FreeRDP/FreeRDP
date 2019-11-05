@@ -168,7 +168,7 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 
 	if (cbMultiByte == -1)
 	{
-		size_t len = strlen((const char*) lpMultiByteStr);
+		size_t len = strnlen((const char*) lpMultiByteStr, INT32_MAX);
 		if (len >= INT32_MAX)
 			return 0;
 		cbMultiByte = (int)len + 1;
@@ -389,7 +389,7 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 
 	if (cbMultiByte == -1)
 	{
-		size_t len = strlen(lpMultiByteStr);
+		size_t len = strnlen(lpMultiByteStr, INT_MAX);
 		if (len >= INT_MAX)
 			return 0;
 		cbMultiByte = (int)(len + 1);

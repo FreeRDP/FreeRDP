@@ -61,7 +61,7 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context,
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="
 	char* colon;
 	size_t len;
-	const size_t prefix_len  = strlen(ROUTING_TOKEN_PREFIX);
+	const size_t prefix_len  = strnlen(ROUTING_TOKEN_PREFIX, sizeof(ROUTING_TOKEN_PREFIX));
 	DWORD routing_token_length;
 	const char* routing_token = freerdp_nego_get_routing_token(context, &routing_token_length);
 

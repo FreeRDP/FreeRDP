@@ -214,7 +214,8 @@ static BOOL WLog_ConsoleAppender_Set(wLogAppender* appender, const char *setting
 {
 	wLogConsoleAppender *consoleAppender = (wLogConsoleAppender *)appender;
 
-	if (!value || !strlen(value))
+	/* Just check the value string is not empty */
+	if (!value || (strnlen(value, 2) == 0))
 		return FALSE;
 
 	if (strcmp("outputstream", setting))

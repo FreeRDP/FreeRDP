@@ -107,7 +107,7 @@ typedef struct _PropMotifWmHints PropMotifWmHints;
 
 static void xf_SetWindowTitleText(xfContext* xfc, Window window, const char* name)
 {
-	const size_t i = strlen(name);
+	const size_t i = strnlen(name, MAX_PATH);
 	XStoreName(xfc->display, window, name);
 	Atom wm_Name = xfc->_NET_WM_NAME;
 	Atom utf8Str = xfc->UTF8_STRING;

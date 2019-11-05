@@ -13,13 +13,13 @@ typedef struct
 	const char* expected_result;
 } certificate_test_t;
 
-char*   crypto_cert_subject_common_name_wo_length(X509* xcert)
+static char*   crypto_cert_subject_common_name_wo_length(X509* xcert)
 {
 	int length;
 	return crypto_cert_subject_common_name(xcert, & length);
 }
 
-char* certificate_path()
+static char* certificate_path(void)
 {
 	/*
 	Assume the .pem file is in the same directory as this source file.
@@ -31,15 +31,19 @@ char* certificate_path()
 #else
 	static const char dirsep = '/';
 #endif
-	static const char* filename = "Test_x509_cert_info.pem";
+	static const char filename[] = "Test_x509_cert_info.pem";
 	const char* file = __FILE__;
 	const char* last_dirsep = strrchr(file, dirsep);
 
 	if (last_dirsep)
 	{
-		char* result = malloc(last_dirsep - file + 1 + strlen(filename) + 1);
-		strncpy(result, file, (last_dirsep - file + 1));
-		strcpy(result + (last_dirsep - file + 1), filename);
+		const size_t filenameLen = strnlen(filename, sizeof(filename));
+		const size_t dirsepLen = last_dirsep - file + 1;
+		char* result = malloc(dirsepLen + filenameLen + 1);
+		if (!result)
+			return NULL;
+		strncpy(result, file, dirsepLen);
+		strncpy(result + dirsepLen, filename, filenameLen + 1);
 		return result;
 	}
 	else
@@ -49,7 +53,7 @@ char* certificate_path()
 	}
 }
 
-const certificate_test_t certificate_tests[] =
+static const certificate_test_t certificate_tests[] =
 {
 
 	{
@@ -98,7 +102,7 @@ const certificate_test_t certificate_tests[] =
 
 
 
-int TestCertificateFile(const char* certificate_path, const certificate_test_t* certificate_tests,
+static int TestCertificateFile(const char* certificate_path, const certificate_test_t* certificate_tests,
                         int count)
 {
 	X509*   certificate;

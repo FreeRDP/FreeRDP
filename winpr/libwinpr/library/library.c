@@ -283,7 +283,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 		}
 
 		buffer[status] = '\0';
-		length = strlen(buffer);
+		length = strnlen(buffer, sizeof(buffer));
 
 		if (length < nSize)
 		{
@@ -321,7 +321,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 		 * so use realpath to find the absolute, canonical path.
 		 */
 		realpath(path, buffer);
-		length = strlen(buffer);
+		length = strnlen(buffer, sizeof(buffer));
 
 		if (length < nSize)
 		{

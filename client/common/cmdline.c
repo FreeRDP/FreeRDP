@@ -207,23 +207,29 @@ BOOL freerdp_client_print_buildconfig(void)
 	return TRUE;
 }
 
-static char* print_token(char* text, int start_offset, int* current, int limit,
+static char* print_token(char* text, size_t start_offset, size_t* current, size_t limit,
                          const char delimiter)
 {
-	int len = (int)strlen(text);
+    int rc;
+    size_t len = strlen(text);
 
 	if (*current < start_offset)
-		*current += printf("%*c", (start_offset - *current), ' ');
+	{
+		rc = printf("%*c", (int)(start_offset - *current), ' ');
+		if (rc < 0)
+			return NULL;
+		*current += (size_t)rc;
+	}
 
 	if (*current + len > limit)
 	{
-		int x;
+		size_t x;
 
 		for (x = MIN(len, limit - start_offset); x > 1; x--)
 		{
 			if (text[x] == delimiter)
 			{
-				printf("%.*s\n", x, text);
+				printf("%.*s\n", (int)x, text);
 				*current = 0;
 				return &text[x];
 			}
@@ -232,11 +238,14 @@ static char* print_token(char* text, int start_offset, int* current, int limit,
 		return NULL;
 	}
 
-	*current += printf("%s", text);
+	rc = printf("%s", text);
+	if (rc < 0)
+		return NULL;
+	*current += (size_t)rc;
 	return NULL;
 }
 
-static int print_optionals(const char* text, int start_offset, int current)
+static size_t print_optionals(const char* text, size_t start_offset, size_t current)
 {
 	const size_t limit = 80;
 	char* str = _strdup(text);
@@ -249,7 +258,7 @@ static int print_optionals(const char* text, int start_offset, int current)
 	return current;
 }
 
-static int print_description(const char* text, int start_offset, int current)
+static size_t print_description(const char* text, size_t start_offset, size_t current)
 {
 	const size_t limit = 80;
 	char* str = _strdup(text);
@@ -273,13 +282,18 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 
 	do
 	{
-		int pos = 0;
-		const int description_offset = 30 + 8;
+		int rc;
+		size_t pos = 0;
+		const size_t description_offset = 30 + 8;
 
 		if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
-			pos += printf("    %s%s", arg->Default ? "-" : "+", arg->Name);
+			rc = printf("    %s%s", arg->Default ? "-" : "+", arg->Name);
 		else
-			pos += printf("    /%s", arg->Name);
+			rc = printf("    /%s", arg->Name);
+
+		if (rc < 0)
+			return;
+		pos += (size_t)rc;
 
 		if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED)
 		    || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
@@ -288,13 +302,22 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 			{
 				if (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL)
 				{
-					pos += printf("[:");
+					rc = printf("[:");
+					if (rc < 0)
+						return;
+					pos += (size_t)rc;
 					pos = print_optionals(arg->Format, pos, pos);
-					pos += printf("]");
+					rc = printf("]");
+					if (rc < 0)
+						return;
+					pos += (size_t)rc;
 				}
 				else
 				{
-					pos += printf(":");
+					rc = printf(":");
+					if (rc < 0)
+						return;
+					pos += (size_t)rc;
 					pos = print_optionals(arg->Format, pos, pos);
 				}
 
@@ -306,10 +329,18 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* arg)
 			}
 		}
 
-		pos += printf("%*c", (description_offset - pos), ' ');
+		rc = printf("%*c", (int)(description_offset - pos), ' ');
+		if (rc < 0)
+			return;
+		pos += (size_t)rc;
 
 		if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
-			pos += printf("%s ", arg->Default ? "Disable" : "Enable");
+		{
+			rc = printf("%s ", arg->Default ? "Disable" : "Enable");
+			if (rc < 0)
+				return;
+			pos += (size_t)rc;
+		}
 
 		print_description(arg->Text, description_offset, pos);
 	}
@@ -426,7 +457,7 @@ static int freerdp_client_command_line_pre_filter(void* context, int index,
 }
 
 
-BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
+BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count,
                                        char** params)
 {
 	if (strcmp(params[0], "drive") == 0)
@@ -642,13 +673,13 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, int count,
 	return FALSE;
 }
 
-BOOL freerdp_client_add_static_channel(rdpSettings* settings, int count,
+BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count,
                                        char** params)
 {
 	int index;
 	ADDIN_ARGV* args;
 
-	if (!settings || !params || !params[0] || (count < 0))
+	if (!settings || !params || !params[0] || (count > INT_MAX))
 		return FALSE;
 
 	if (freerdp_static_channel_collection_find(settings, params[0]))
@@ -659,7 +690,7 @@ BOOL freerdp_client_add_static_channel(rdpSettings* settings, int count,
 	if (!args)
 		return FALSE;
 
-	args->argc = count;
+	args->argc = (int)count;
 	args->argv = (char**) calloc((size_t)args->argc, sizeof(char*));
 
 	if (!args->argv)
@@ -694,13 +725,13 @@ error_argv:
 	return FALSE;
 }
 
-BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, int count,
+BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count,
                                         char** params)
 {
 	int index;
 	ADDIN_ARGV* args;
 
-	if (!settings || !params || !params[0] || (count < 0))
+	if (!settings || !params || !params[0] || (count > INT_MAX))
 		return FALSE;
 
 	if (freerdp_dynamic_channel_collection_find(settings, params[0]))
@@ -711,7 +742,7 @@ BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, int count,
 	if (!args)
 		return FALSE;
 
-	args->argc = count;
+	args->argc = (int)count;
 	args->argv = (char**) calloc((size_t)args->argc, sizeof(char*));
 
 	if (!args->argv)
@@ -1190,7 +1221,7 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 	for (i = 0; layouts[i].code; i++)
 	{
 		if (_stricmp(layouts[i].name, name) == 0)
-			id = layouts[i].code;
+			id = (int)layouts[i].code;
 	}
 
 	freerdp_keyboard_layouts_free(layouts);
@@ -1206,7 +1237,7 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 	for (i = 0; layouts[i].code; i++)
 	{
 		if (_stricmp(layouts[i].name, name) == 0)
-			id = layouts[i].code;
+			id = (int)layouts[i].code;
 	}
 
 	freerdp_keyboard_layouts_free(layouts);
@@ -1222,7 +1253,7 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 	for (i = 0; layouts[i].code; i++)
 	{
 		if (_stricmp(layouts[i].name, name) == 0)
-			id = layouts[i].code;
+			id = (int)layouts[i].code;
 	}
 
 	freerdp_keyboard_layouts_free(layouts);
@@ -3450,7 +3481,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->MultiTouchInput)
 	{
 		char* p[1];
-		int count;
+		size_t count;
 		count = 1;
 		p[0] = "rdpei";
 
@@ -3461,7 +3492,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->SupportGraphicsPipeline)
 	{
 		char* p[1];
-		int count;
+		size_t count;
 		count = 1;
 		p[0] = "rdpgfx";
 
@@ -3472,7 +3503,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->SupportEchoChannel)
 	{
 		char* p[1];
-		int count;
+		size_t count;
 		count = 1;
 		p[0] = "echo";
 
@@ -3483,7 +3514,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->SupportSSHAgentChannel)
 	{
 		char* p[1];
-		int count;
+		size_t count;
 		count = 1;
 		p[0] = "sshagent";
 
@@ -3494,7 +3525,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->SupportDisplayControl)
 	{
 		char* p[1];
-		int count;
+		size_t count;
 		count = 1;
 		p[0] = "disp";
 
@@ -3505,7 +3536,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->SupportGeometryTracking)
 	{
 		char* p[1];
-		int count;
+		size_t count;
 		count = 1;
 		p[0] = "geometry";
 
@@ -3516,7 +3547,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->SupportVideoOptimized)
 	{
 		char* p[1];
-		int count;
+		size_t count;
 		count = 1;
 		p[0] = "video";
 

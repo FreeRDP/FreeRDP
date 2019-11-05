@@ -261,12 +261,12 @@ UINT freerdp_channels_attach(freerdp* instance)
 	UINT error = CHANNEL_RC_OK;
 	int index;
 	char* hostname;
-	int hostnameLength;
+	size_t hostnameLength;
 	rdpChannels* channels;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 	channels = instance->context->channels;
 	hostname = instance->settings->ServerHostname;
-	hostnameLength = (int) strlen(hostname);
+	hostnameLength = strlen(hostname);
 
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
@@ -304,12 +304,12 @@ UINT freerdp_channels_detach(freerdp* instance)
 	UINT error = CHANNEL_RC_OK;
 	int index;
 	char* hostname;
-	int hostnameLength;
+	size_t hostnameLength;
 	rdpChannels* channels;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 	channels = instance->context->channels;
 	hostname = instance->settings->ServerHostname;
-	hostnameLength = (int) strlen(hostname);
+	hostnameLength = strlen(hostname);
 
 	for (index = 0; index < channels->clientDataCount; index++)
 	{

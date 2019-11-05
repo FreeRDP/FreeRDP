@@ -26,7 +26,7 @@ struct Encode64test
 	const char* output;
 };
 
-struct Encode64test encodeTests[] =
+static const struct Encode64test encodeTests[] =
 {
 	{"\x00", 			1, "AA=="},
 	{"\x00\x00", 		2, "AAA="},
@@ -38,7 +38,6 @@ struct Encode64test encodeTests[] =
 
 	{NULL, -1, NULL},  /*  /!\ last one  /!\ */
 };
-
 
 int TestBase64(int argc, char* argv[])
 {

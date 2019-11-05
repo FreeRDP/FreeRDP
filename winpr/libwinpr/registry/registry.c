@@ -291,10 +291,10 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
 			}
 			else if (pValue->type == REG_SZ)
 			{
-				int length;
+				size_t length;
 				char* pData = (char*) lpData;
 
-				length = (int) strlen(pValue->data.string);
+				length = strnlen(pValue->data.string, UINT32_MAX);
 
 				if (pData != NULL)
 				{
@@ -302,7 +302,7 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
 					pData[length] = '\0';
 				}
 
-				*lpcbData = length;
+				*lpcbData = (UINT32)length;
 
 				return ERROR_SUCCESS;
 			}

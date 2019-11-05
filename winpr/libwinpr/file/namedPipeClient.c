@@ -266,7 +266,7 @@ char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
 	if (!IsNamedPipeFileNameA(lpName))
 		return NULL;
 
-	lpFileName = _strdup(&lpName[strlen(NAMED_PIPE_PREFIX_PATH)]);
+	lpFileName = _strdup(&lpName[strnlen(NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH))]);
 	return lpFileName;
 }
 

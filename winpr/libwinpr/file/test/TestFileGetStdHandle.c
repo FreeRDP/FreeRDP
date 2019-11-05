@@ -27,7 +27,7 @@
 int TestFileGetStdHandle(int argc, char* argv[])
 {
 	HANDLE so;
-	char *buf = "happy happy";
+	const char buf[] = "happy happy";
 	DWORD bytesWritten;
 
 	so = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -36,8 +36,8 @@ int TestFileGetStdHandle(int argc, char* argv[])
 		fprintf(stderr, "GetStdHandle failed ;(\n");
 		return -1;
 	}
-	WriteFile(so, buf, strlen(buf), &bytesWritten, FALSE);
-	if (bytesWritten != strlen(buf))
+	WriteFile(so, buf, strnlen(buf, sizeof(buf)), &bytesWritten, FALSE);
+	if (bytesWritten != strnlen(buf, sizeof (buf)))
 	{
 		fprintf(stderr, "write failed\n");
 		return -1;

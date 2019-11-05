@@ -104,9 +104,9 @@ static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender, wLo
 	udpAppender = (wLogUdpAppender*)appender;
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
-	_sendto(udpAppender->sock, message->PrefixString, strlen(message->PrefixString),
+	_sendto(udpAppender->sock, message->PrefixString, (int)strnlen(message->PrefixString, INT_MAX),
 	        0, &udpAppender->targetAddr, udpAppender->targetAddrLen);
-	_sendto(udpAppender->sock, message->TextString, strlen(message->TextString),
+	_sendto(udpAppender->sock, message->TextString, (int)strnlen(message->TextString, INT_MAX),
 	        0, &udpAppender->targetAddr, udpAppender->targetAddrLen);
 	_sendto(udpAppender->sock, "\n", 1, 0, &udpAppender->targetAddr, udpAppender->targetAddrLen);
 	return TRUE;
@@ -132,12 +132,14 @@ static BOOL WLog_UdpAppender_WriteImageMessage(wLog* log, wLogAppender* appender
 
 static BOOL WLog_UdpAppender_Set(wLogAppender* appender, const char* setting, void* value)
 {
+	const char target[] = "target";
 	wLogUdpAppender* udpAppender = (wLogUdpAppender*)appender;
 
-	if (!value || !strlen(value))
+	/* Just check the value string is not empty */
+	if (!value || (strnlen(value, 2) == 0))
 		return FALSE;
 
-	if (strcmp("target", setting))
+	if (strncmp(target, setting, sizeof(target)))
 		return FALSE;
 
 	udpAppender->targetAddrLen = 0;

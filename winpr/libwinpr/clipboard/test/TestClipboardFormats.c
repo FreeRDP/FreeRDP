@@ -47,7 +47,7 @@ int TestClipboardFormats(int argc, char* argv[])
 			return -1;
 		}
 
-		SrcSize = (UINT32)(strlen(pSrcData) + 1);
+		SrcSize = (UINT32)(strnlen(pSrcData, UINT32_MAX - 1) + 1);
 		bSuccess = ClipboardSetData(clipboard, utf8StringFormatId, pSrcData,
 		                            SrcSize);
 		fprintf(stderr, "ClipboardSetData: %"PRId32"\n", bSuccess);

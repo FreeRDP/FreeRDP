@@ -435,7 +435,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD x11_keycode_to_r
 				found = FALSE;
 				CopyMemory(xkb_keyname, xkb->names->keys[i].name, 4);
 
-				if (strlen(xkb_keyname) < 1)
+				if (strnlen(xkb_keyname, sizeof(xkb_keyname)) < 1)
 					continue;
 
 				for (j = 0; j < ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE); j++)

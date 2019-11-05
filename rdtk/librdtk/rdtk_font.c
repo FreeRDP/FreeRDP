@@ -107,8 +107,8 @@ static int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtk
 int rdtk_font_draw_text(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* font,
                         const char* text)
 {
-	int index;
-	int length;
+	size_t index;
+	size_t length;
 	rdtkGlyph* glyph;
 	font = surface->engine->font;
 	length = strlen(text);
@@ -125,8 +125,8 @@ int rdtk_font_draw_text(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* fo
 
 int rdtk_font_text_draw_size(rdtkFont* font, int* width, int* height, const char* text)
 {
-	int index;
-	int length;
+	size_t index;
+	size_t length;
 	int glyphIndex;
 	rdtkGlyph* glyph;
 	*width = 0;
@@ -201,7 +201,7 @@ static char* rdtk_font_load_descriptor_file(const char* filename, int* pSize)
 
 static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, BYTE* utf8)
 {
-	int len = strlen(str);
+	size_t len = strlen(str);
 	*((UINT32*) utf8) = 0;
 
 	if (len < 1)
@@ -587,7 +587,7 @@ static int rdtk_font_load_descriptor(rdtkFont* font, const char* filename)
 rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 {
 	int status;
-	int length;
+	size_t length;
 	rdtkFont* font = NULL;
 	char* fontBaseFile = NULL;
 	char* fontImageFile = NULL;

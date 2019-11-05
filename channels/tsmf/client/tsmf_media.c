@@ -491,7 +491,7 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			fwrite("P5\n", 1, 3, fp);
 			sprintf_s(buf, sizeof(buf), "%"PRIu32" %"PRIu32"\n", sample->stream->width,
 			          sample->stream->height);
-			fwrite(buf, 1, strlen(buf), fp);
+			fwrite(buf, 1, strnlen(buf, sizeof(buf)), fp);
 			fwrite("255\n", 1, 4, fp);
 			fwrite(sample->data, 1, sample->stream->width * sample->stream->height, fp);
 			fflush(fp);
