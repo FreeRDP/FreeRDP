@@ -10,4 +10,3 @@ int TestPathAllocCanonicalize(int argc, char* argv[])
 	printf("Warning: %s is not implemented!\n", __FUNCTION__);
 	return 0;
 }
-

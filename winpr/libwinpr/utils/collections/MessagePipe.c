@@ -30,8 +30,6 @@
  * Properties
  */
 
-
-
 /**
  * Methods
  */
@@ -50,7 +48,7 @@ wMessagePipe* MessagePipe_New()
 {
 	wMessagePipe* pipe = NULL;
 
-	pipe = (wMessagePipe*) malloc(sizeof(wMessagePipe));
+	pipe = (wMessagePipe*)malloc(sizeof(wMessagePipe));
 
 	if (!pipe)
 		return NULL;

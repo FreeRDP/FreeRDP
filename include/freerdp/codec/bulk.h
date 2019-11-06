@@ -25,16 +25,15 @@
 
 /* Level-2 Compression Flags */
 
-#define PACKET_COMPRESSED		0x20
-#define PACKET_AT_FRONT			0x40
-#define PACKET_FLUSHED			0x80
+#define PACKET_COMPRESSED 0x20
+#define PACKET_AT_FRONT 0x40
+#define PACKET_FLUSHED 0x80
 
 /* Level-1 Compression Flags */
 
-#define L1_PACKET_AT_FRONT		0x04
-#define L1_NO_COMPRESSION		0x02
-#define L1_COMPRESSED			0x01
-#define L1_INNER_COMPRESSION		0x10
+#define L1_PACKET_AT_FRONT 0x04
+#define L1_NO_COMPRESSION 0x02
+#define L1_COMPRESSED 0x01
+#define L1_INNER_COMPRESSION 0x10
 
 #endif /* FREERDP_CODEC_BULK_H */
-

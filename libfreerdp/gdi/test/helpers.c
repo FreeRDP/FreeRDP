@@ -19,10 +19,9 @@
  */
 #include "helpers.h"
 
-HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat,
-                                   UINT32 SrcStride,
-                                   UINT32 xSrc, UINT32 ySrc, UINT32 DstFormat, UINT32 DstStride,
-                                   UINT32 xDst, UINT32 yDst, UINT32 nWidth, UINT32 nHeight,
+HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat, UINT32 SrcStride, UINT32 xSrc,
+                                   UINT32 ySrc, UINT32 DstFormat, UINT32 DstStride, UINT32 xDst,
+                                   UINT32 yDst, UINT32 nWidth, UINT32 nHeight,
                                    const gdiPalette* hPalette)
 {
 	HGDI_BITMAP bmp;
@@ -36,8 +35,8 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat,
 	if (!data)
 		return NULL;
 
-	if (!freerdp_image_copy(data, DstFormat, DstStride, xDst, yDst, nWidth, nHeight,
-	                        src, SrcFormat, SrcStride, xSrc, ySrc, hPalette, FREERDP_FLIP_NONE))
+	if (!freerdp_image_copy(data, DstFormat, DstStride, xDst, yDst, nWidth, nHeight, src, SrcFormat,
+	                        SrcStride, xSrc, ySrc, hPalette, FREERDP_FLIP_NONE))
 	{
 		_aligned_free(data);
 		return NULL;
@@ -54,9 +53,7 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat,
 	return bmp;
 }
 
-
-static void test_dump_data(unsigned char* p, int len, int width,
-                           const char* name)
+static void test_dump_data(unsigned char* p, int len, int width, const char* name)
 {
 	unsigned char* line = p;
 	int i, thisline, offset = 0;
@@ -91,8 +88,7 @@ void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
 	test_dump_data(hBmp->data, hBmp->height * stride, stride, name);
 }
 
-static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2,
-                           const gdiPalette* palette)
+static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2, const gdiPalette* palette)
 {
 	UINT32 x, y;
 	const BYTE* p1 = hBmp1->data;
@@ -121,17 +117,14 @@ static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2,
 	return TRUE;
 }
 
-BOOL test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual,
-                               HGDI_BITMAP hBmpExpected,
-                               const char* name,
+BOOL test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual, HGDI_BITMAP hBmpExpected, const char* name,
                                const gdiPalette* palette)
 {
 	BOOL bitmapsEqual = CompareBitmaps(hBmpActual, hBmpExpected, palette);
 
 	if (!bitmapsEqual)
 	{
-		printf("Testing ROP %s [%s|%s]\n", name,
-		       FreeRDPGetColorFormatName(hBmpActual->format),
+		printf("Testing ROP %s [%s|%s]\n", name, FreeRDPGetColorFormatName(hBmpActual->format),
 		       FreeRDPGetColorFormatName(hBmpExpected->format));
 		test_dump_bitmap(hBmpActual, "Actual");
 		test_dump_bitmap(hBmpExpected, "Expected");

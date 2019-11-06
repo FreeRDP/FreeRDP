@@ -84,7 +84,7 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 		old_capacity = queue->capacity;
 		new_capacity = queue->capacity * 2;
 
-		new_arr = (wMessage*) realloc(queue->array, sizeof(wMessage) * new_capacity);
+		new_arr = (wMessage*)realloc(queue->array, sizeof(wMessage) * new_capacity);
 		if (!new_arr)
 			goto out;
 		queue->array = new_arr;
@@ -130,7 +130,7 @@ BOOL MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* w
 
 BOOL MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode)
 {
-	return MessageQueue_Post(queue, NULL, WMQ_QUIT, (void*) (size_t) nExitCode, NULL);
+	return MessageQueue_Post(queue, NULL, WMQ_QUIT, (void*)(size_t)nExitCode, NULL);
 }
 
 int MessageQueue_Get(wMessageQueue* queue, wMessage* message)
@@ -191,16 +191,16 @@ int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
  * Construction, Destruction
  */
 
-wMessageQueue* MessageQueue_New(const wObject *callback)
+wMessageQueue* MessageQueue_New(const wObject* callback)
 {
 	wMessageQueue* queue = NULL;
 
-	queue = (wMessageQueue*) calloc(1, sizeof(wMessageQueue));
+	queue = (wMessageQueue*)calloc(1, sizeof(wMessageQueue));
 	if (!queue)
 		return NULL;
 
 	queue->capacity = 32;
-	queue->array = (wMessage*) calloc(queue->capacity, sizeof(wMessage));
+	queue->array = (wMessage*)calloc(queue->capacity, sizeof(wMessage));
 	if (!queue->array)
 		goto error_array;
 
@@ -239,15 +239,15 @@ void MessageQueue_Free(wMessageQueue* queue)
 	free(queue);
 }
 
-int MessageQueue_Clear(wMessageQueue *queue)
+int MessageQueue_Clear(wMessageQueue* queue)
 {
 	int status = 0;
 
 	EnterCriticalSection(&queue->lock);
 
-	while(queue->size > 0)
+	while (queue->size > 0)
 	{
-		wMessage *msg = &(queue->array[queue->head]);
+		wMessage* msg = &(queue->array[queue->head]);
 
 		/* Free resources of message. */
 		if (queue->object.fnObjectUninit)
@@ -266,4 +266,3 @@ int MessageQueue_Clear(wMessageQueue *queue)
 
 	return status;
 }
-

@@ -45,20 +45,22 @@ struct _NCRUSH_CONTEXT
 typedef struct _NCRUSH_CONTEXT NCRUSH_CONTEXT;
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
-FREERDP_API int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
+	FREERDP_API int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize,
+	                                BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
+	FREERDP_API int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize,
+	                                  BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
 
-FREERDP_API void ncrush_context_reset(NCRUSH_CONTEXT* ncrush, BOOL flush);
+	FREERDP_API void ncrush_context_reset(NCRUSH_CONTEXT* ncrush, BOOL flush);
 
-FREERDP_API NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor);
-FREERDP_API void ncrush_context_free(NCRUSH_CONTEXT* ncrush);
+	FREERDP_API NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor);
+	FREERDP_API void ncrush_context_free(NCRUSH_CONTEXT* ncrush);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* FREERDP_CODEC_NCRUSH_H */
- 

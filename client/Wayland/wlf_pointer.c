@@ -49,11 +49,9 @@ static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		return FALSE;
 
 	if (!freerdp_image_copy_from_pointer_data(
-	        ptr->data, PIXEL_FORMAT_BGRA32,
-	        0, 0, 0, pointer->width, pointer->height,
-	        pointer->xorMaskData, pointer->lengthXorMask,
-	        pointer->andMaskData, pointer->lengthAndMask,
-	        pointer->xorBpp, &context->gdi->palette))
+	        ptr->data, PIXEL_FORMAT_BGRA32, 0, 0, 0, pointer->width, pointer->height,
+	        pointer->xorMaskData, pointer->lengthXorMask, pointer->andMaskData,
+	        pointer->lengthAndMask, pointer->xorBpp, &context->gdi->palette))
 	{
 		_aligned_free(ptr->data);
 		return FALSE;
@@ -71,8 +69,7 @@ static void wlf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 		_aligned_free(ptr->data);
 }
 
-static BOOL wlf_Pointer_Set(rdpContext* context,
-                            const rdpPointer* pointer)
+static BOOL wlf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 {
 	wlfContext* wlf = (wlfContext*)context;
 	wlfPointer* ptr = (wlfPointer*)pointer;
@@ -106,8 +103,8 @@ static BOOL wlf_Pointer_Set(rdpContext* context,
 	area.right = (UINT16)pointer->width;
 	area.bottom = (UINT16)pointer->height;
 
-	if (!wlf_copy_image(ptr->data, pointer->width * 4, pointer->width, pointer->height, data, w * 4, w,
-	                    h, &area, context->settings->SmartSizing))
+	if (!wlf_copy_image(ptr->data, pointer->width * 4, pointer->width, pointer->height, data, w * 4,
+	                    w, h, &area, context->settings->SmartSizing))
 		goto fail;
 
 	rc = UwacSeatSetMouseCursor(wlf->seat, data, size, w, h, x, y);
@@ -157,7 +154,7 @@ BOOL wlf_register_pointer(rdpGraphics* graphics)
 {
 	rdpPointer* pointer = NULL;
 
-	if (!(pointer = (rdpPointer*) calloc(1, sizeof(rdpPointer))))
+	if (!(pointer = (rdpPointer*)calloc(1, sizeof(rdpPointer))))
 		return FALSE;
 
 	pointer->size = sizeof(wlfPointer);

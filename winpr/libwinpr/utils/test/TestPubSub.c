@@ -4,15 +4,15 @@
 #include <winpr/collections.h>
 
 DEFINE_EVENT_BEGIN(MouseMotion)
-	int x;
-	int y;
+int x;
+int y;
 DEFINE_EVENT_END(MouseMotion)
 
 DEFINE_EVENT_BEGIN(MouseButton)
-	int x;
-	int y;
-	int flags;
-	int button;
+int x;
+int y;
+int flags;
+int button;
 DEFINE_EVENT_END(MouseButton)
 
 void MouseMotionEventHandler(void* context, MouseMotionEventArgs* e)
@@ -25,11 +25,8 @@ void MouseButtonEventHandler(void* context, MouseButtonEventArgs* e)
 	printf("MouseButtonEvent: x: %d y: %d flags: %d button: %d\n", e->x, e->y, e->flags, e->button);
 }
 
-static wEventType Node_Events[] =
-{
-	DEFINE_EVENT_ENTRY(MouseMotion)
-	DEFINE_EVENT_ENTRY(MouseButton)
-};
+static wEventType Node_Events[] = { DEFINE_EVENT_ENTRY(MouseMotion)
+	                                    DEFINE_EVENT_ENTRY(MouseButton) };
 
 #define NODE_EVENT_COUNT (sizeof(Node_Events) / sizeof(wEventType))
 
@@ -71,4 +68,3 @@ int TestPubSub(int argc, char* argv[])
 
 	return 0;
 }
-

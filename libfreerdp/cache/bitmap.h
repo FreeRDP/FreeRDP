@@ -27,15 +27,15 @@ FREERDP_LOCAL BITMAP_UPDATE* copy_bitmap_update(rdpContext* context, const BITMA
 FREERDP_LOCAL void free_bitmap_update(rdpContext* context, BITMAP_UPDATE* pointer);
 
 FREERDP_LOCAL CACHE_BITMAP_ORDER* copy_cache_bitmap_order(rdpContext* context,
-        const CACHE_BITMAP_ORDER* order);
+                                                          const CACHE_BITMAP_ORDER* order);
 FREERDP_LOCAL void free_cache_bitmap_order(rdpContext* context, CACHE_BITMAP_ORDER* order);
 
 FREERDP_LOCAL CACHE_BITMAP_V2_ORDER* copy_cache_bitmap_v2_order(rdpContext* context,
-        const CACHE_BITMAP_V2_ORDER* order);
+                                                                const CACHE_BITMAP_V2_ORDER* order);
 FREERDP_LOCAL void free_cache_bitmap_v2_order(rdpContext* context, CACHE_BITMAP_V2_ORDER* order);
 
 FREERDP_LOCAL CACHE_BITMAP_V3_ORDER* copy_cache_bitmap_v3_order(rdpContext* context,
-        const CACHE_BITMAP_V3_ORDER* order);
+                                                                const CACHE_BITMAP_V3_ORDER* order);
 FREERDP_LOCAL void free_cache_bitmap_v3_order(rdpContext* context, CACHE_BITMAP_V3_ORDER* order);
 
 #endif /* FREERDP_LIB_CACHE_BITMAP_H */

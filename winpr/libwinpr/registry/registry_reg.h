@@ -44,8 +44,7 @@ struct _reg_val
 	RegVal* prev;
 	RegVal* next;
 
-	union reg_data
-	{
+	union reg_data {
 		DWORD dword;
 		char* string;
 	} data;
@@ -64,6 +63,6 @@ struct _reg_key
 };
 
 Reg* reg_open(BOOL read_only);
-void reg_close(Reg *reg);
+void reg_close(Reg* reg);
 
 #endif

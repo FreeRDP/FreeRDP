@@ -25,4 +25,3 @@
 #define JAVA_FILE_CLASS "java/io/File"
 
 #endif /* FREERDP_CLIENT_ANDROID_FREERDP_JNI_H */
-

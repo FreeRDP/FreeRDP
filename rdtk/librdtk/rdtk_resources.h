@@ -24,14 +24,14 @@
 #include "rdtk_engine.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-int rdtk_get_embedded_resource_file(const char* filename, BYTE** pData);
+	int rdtk_get_embedded_resource_file(const char* filename, BYTE** pData);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* RDTK_RESOURCES_PRIVATE_H */
-

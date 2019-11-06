@@ -31,34 +31,31 @@
 
 #include "rdpgfx_common.h"
 
-static const char* RDPGFX_CMDID_STRINGS[] =
-{
-	"RDPGFX_CMDID_UNUSED_0000",
-	"RDPGFX_CMDID_WIRETOSURFACE_1",
-	"RDPGFX_CMDID_WIRETOSURFACE_2",
-	"RDPGFX_CMDID_DELETEENCODINGCONTEXT",
-	"RDPGFX_CMDID_SOLIDFILL",
-	"RDPGFX_CMDID_SURFACETOSURFACE",
-	"RDPGFX_CMDID_SURFACETOCACHE",
-	"RDPGFX_CMDID_CACHETOSURFACE",
-	"RDPGFX_CMDID_EVICTCACHEENTRY",
-	"RDPGFX_CMDID_CREATESURFACE",
-	"RDPGFX_CMDID_DELETESURFACE",
-	"RDPGFX_CMDID_STARTFRAME",
-	"RDPGFX_CMDID_ENDFRAME",
-	"RDPGFX_CMDID_FRAMEACKNOWLEDGE",
-	"RDPGFX_CMDID_RESETGRAPHICS",
-	"RDPGFX_CMDID_MAPSURFACETOOUTPUT",
-	"RDPGFX_CMDID_CACHEIMPORTOFFER",
-	"RDPGFX_CMDID_CACHEIMPORTREPLY",
-	"RDPGFX_CMDID_CAPSADVERTISE",
-	"RDPGFX_CMDID_CAPSCONFIRM",
-	"RDPGFX_CMDID_UNUSED_0014",
-	"RDPGFX_CMDID_MAPSURFACETOWINDOW",
-	"RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE",
-	"RDPGFX_CMDID_MAPSURFACETOSCALEDOUTPUT",
-	"RDPGFX_CMDID_MAPSURFACETOSCALEDWINDOW"
-};
+static const char* RDPGFX_CMDID_STRINGS[] = { "RDPGFX_CMDID_UNUSED_0000",
+	                                          "RDPGFX_CMDID_WIRETOSURFACE_1",
+	                                          "RDPGFX_CMDID_WIRETOSURFACE_2",
+	                                          "RDPGFX_CMDID_DELETEENCODINGCONTEXT",
+	                                          "RDPGFX_CMDID_SOLIDFILL",
+	                                          "RDPGFX_CMDID_SURFACETOSURFACE",
+	                                          "RDPGFX_CMDID_SURFACETOCACHE",
+	                                          "RDPGFX_CMDID_CACHETOSURFACE",
+	                                          "RDPGFX_CMDID_EVICTCACHEENTRY",
+	                                          "RDPGFX_CMDID_CREATESURFACE",
+	                                          "RDPGFX_CMDID_DELETESURFACE",
+	                                          "RDPGFX_CMDID_STARTFRAME",
+	                                          "RDPGFX_CMDID_ENDFRAME",
+	                                          "RDPGFX_CMDID_FRAMEACKNOWLEDGE",
+	                                          "RDPGFX_CMDID_RESETGRAPHICS",
+	                                          "RDPGFX_CMDID_MAPSURFACETOOUTPUT",
+	                                          "RDPGFX_CMDID_CACHEIMPORTOFFER",
+	                                          "RDPGFX_CMDID_CACHEIMPORTREPLY",
+	                                          "RDPGFX_CMDID_CAPSADVERTISE",
+	                                          "RDPGFX_CMDID_CAPSCONFIRM",
+	                                          "RDPGFX_CMDID_UNUSED_0014",
+	                                          "RDPGFX_CMDID_MAPSURFACETOWINDOW",
+	                                          "RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE",
+	                                          "RDPGFX_CMDID_MAPSURFACETOSCALEDOUTPUT",
+	                                          "RDPGFX_CMDID_MAPSURFACETOSCALEDWINDOW" };
 
 const char* rdpgfx_get_cmd_id_string(UINT16 cmdId)
 {
@@ -119,8 +116,8 @@ UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	Stream_Read_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
-	Stream_Read_UINT16(s, header->flags); /* flags (2 bytes) */
+	Stream_Read_UINT16(s, header->cmdId);     /* cmdId (2 bytes) */
+	Stream_Read_UINT16(s, header->flags);     /* flags (2 bytes) */
 	Stream_Read_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
 	return CHANNEL_RC_OK;
 }
@@ -132,8 +129,8 @@ UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
  */
 UINT rdpgfx_write_header(wStream* s, const RDPGFX_HEADER* header)
 {
-	Stream_Write_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
-	Stream_Write_UINT16(s, header->flags); /* flags (2 bytes) */
+	Stream_Write_UINT16(s, header->cmdId);     /* cmdId (2 bytes) */
+	Stream_Write_UINT16(s, header->flags);     /* flags (2 bytes) */
 	Stream_Write_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
 	return CHANNEL_RC_OK;
 }
@@ -181,9 +178,9 @@ UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16)
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT16(s, rect16->left); /* left (2 bytes) */
-	Stream_Read_UINT16(s, rect16->top); /* top (2 bytes) */
-	Stream_Read_UINT16(s, rect16->right); /* right (2 bytes) */
+	Stream_Read_UINT16(s, rect16->left);   /* left (2 bytes) */
+	Stream_Read_UINT16(s, rect16->top);    /* top (2 bytes) */
+	Stream_Read_UINT16(s, rect16->right);  /* right (2 bytes) */
 	Stream_Read_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
 	return CHANNEL_RC_OK;
 }
@@ -195,9 +192,9 @@ UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16)
  */
 UINT rdpgfx_write_rect16(wStream* s, const RECTANGLE_16* rect16)
 {
-	Stream_Write_UINT16(s, rect16->left); /* left (2 bytes) */
-	Stream_Write_UINT16(s, rect16->top); /* top (2 bytes) */
-	Stream_Write_UINT16(s, rect16->right); /* right (2 bytes) */
+	Stream_Write_UINT16(s, rect16->left);   /* left (2 bytes) */
+	Stream_Write_UINT16(s, rect16->top);    /* top (2 bytes) */
+	Stream_Write_UINT16(s, rect16->right);  /* right (2 bytes) */
 	Stream_Write_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
 	return CHANNEL_RC_OK;
 }
@@ -215,9 +212,9 @@ UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT8(s, color32->B); /* B (1 byte) */
-	Stream_Read_UINT8(s, color32->G); /* G (1 byte) */
-	Stream_Read_UINT8(s, color32->R); /* R (1 byte) */
+	Stream_Read_UINT8(s, color32->B);  /* B (1 byte) */
+	Stream_Read_UINT8(s, color32->G);  /* G (1 byte) */
+	Stream_Read_UINT8(s, color32->R);  /* R (1 byte) */
 	Stream_Read_UINT8(s, color32->XA); /* XA (1 byte) */
 	return CHANNEL_RC_OK;
 }
@@ -229,9 +226,9 @@ UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
  */
 UINT rdpgfx_write_color32(wStream* s, const RDPGFX_COLOR32* color32)
 {
-	Stream_Write_UINT8(s, color32->B); /* B (1 byte) */
-	Stream_Write_UINT8(s, color32->G); /* G (1 byte) */
-	Stream_Write_UINT8(s, color32->R); /* R (1 byte) */
+	Stream_Write_UINT8(s, color32->B);  /* B (1 byte) */
+	Stream_Write_UINT8(s, color32->G);  /* G (1 byte) */
+	Stream_Write_UINT8(s, color32->R);  /* R (1 byte) */
 	Stream_Write_UINT8(s, color32->XA); /* XA (1 byte) */
 	return CHANNEL_RC_OK;
 }

@@ -18,56 +18,56 @@ static BOOL TestStream_Verify(wStream* s, size_t mincap, size_t len, size_t pos)
 
 	if (Stream_Pointer(s) < Stream_Buffer(s))
 	{
-		printf("stream pointer (%p) or buffer (%p) is invalid\n",
-		       (void*) Stream_Pointer(s), (void*) Stream_Buffer(s));
+		printf("stream pointer (%p) or buffer (%p) is invalid\n", (void*)Stream_Pointer(s),
+		       (void*)Stream_Buffer(s));
 		return FALSE;
 	}
 
 	if (Stream_Capacity(s) < mincap)
 	{
-		printf("stream capacity is %"PRIuz" but minimum expected value is %"PRIuz"\n",
+		printf("stream capacity is %" PRIuz " but minimum expected value is %" PRIuz "\n",
 		       Stream_Capacity(s), mincap);
 		return FALSE;
 	}
 
 	if (Stream_Length(s) != len)
 	{
-		printf("stream has unexpected length (%"PRIuz" instead of %"PRIuz")\n",
+		printf("stream has unexpected length (%" PRIuz " instead of %" PRIuz ")\n",
 		       Stream_Length(s), len);
 		return FALSE;
 	}
 
 	if (Stream_GetPosition(s) != pos)
 	{
-		printf("stream has unexpected position (%"PRIuz" instead of %"PRIuz")\n",
+		printf("stream has unexpected position (%" PRIuz " instead of %" PRIuz ")\n",
 		       Stream_GetPosition(s), pos);
 		return FALSE;
 	}
 
 	if (Stream_GetPosition(s) > Stream_Length(s))
 	{
-		printf("stream position (%"PRIuz") exceeds length (%"PRIuz")\n",
-		       Stream_GetPosition(s), Stream_Length(s));
+		printf("stream position (%" PRIuz ") exceeds length (%" PRIuz ")\n", Stream_GetPosition(s),
+		       Stream_Length(s));
 		return FALSE;
 	}
 
 	if (Stream_GetPosition(s) > Stream_Capacity(s))
 	{
-		printf("stream position (%"PRIuz") exceeds capacity (%"PRIuz")\n",
+		printf("stream position (%" PRIuz ") exceeds capacity (%" PRIuz ")\n",
 		       Stream_GetPosition(s), Stream_Capacity(s));
 		return FALSE;
 	}
 
 	if (Stream_Length(s) > Stream_Capacity(s))
 	{
-		printf("stream length (%"PRIuz") exceeds capacity (%"PRIuz")\n",
-		       Stream_Length(s), Stream_Capacity(s));
+		printf("stream length (%" PRIuz ") exceeds capacity (%" PRIuz ")\n", Stream_Length(s),
+		       Stream_Capacity(s));
 		return FALSE;
 	}
 
 	if (Stream_GetRemainingLength(s) != len - pos)
 	{
-		printf("stream remaining length (%"PRIuz" instead of %"PRIuz")\n",
+		printf("stream remaining length (%" PRIuz " instead of %" PRIuz ")\n",
 		       Stream_GetRemainingLength(s), len - pos);
 		return FALSE;
 	}
@@ -142,14 +142,14 @@ static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 		{
 			if (!(buffer = malloc(cap)))
 			{
-				printf("%s: failed to allocate buffer of size %"PRIuz"\n", __FUNCTION__, cap);
+				printf("%s: failed to allocate buffer of size %" PRIuz "\n", __FUNCTION__, cap);
 				goto fail;
 			}
 		}
 
 		if (!(s = Stream_New(selfAlloc ? buffer : NULL, len)))
 		{
-			printf("%s: Stream_New failed for stream #%"PRIuz"\n", __FUNCTION__, i);
+			printf("%s: Stream_New failed for stream #%" PRIuz "\n", __FUNCTION__, i);
 			goto fail;
 		}
 
@@ -226,7 +226,7 @@ static BOOL TestStream_Extent(UINT32 maxSize)
 
 		if (!TestStream_Verify(s, i, i, i))
 		{
-			printf("%s: failed to verify stream in iteration %"PRIu32"\n", __FUNCTION__, i);
+			printf("%s: failed to verify stream in iteration %" PRIu32 "\n", __FUNCTION__, i);
 			goto fail;
 		}
 	}
@@ -242,50 +242,54 @@ fail:
 	return result;
 }
 
-#define Stream_Peek_UINT8_BE	Stream_Peek_UINT8
-#define Stream_Read_UINT8_BE	Stream_Read_UINT8
-#define Stream_Peek_INT8_BE	Stream_Peek_INT8
-#define Stream_Read_INT8_BE	Stream_Read_INT8
+#define Stream_Peek_UINT8_BE Stream_Peek_UINT8
+#define Stream_Read_UINT8_BE Stream_Read_UINT8
+#define Stream_Peek_INT8_BE Stream_Peek_INT8
+#define Stream_Read_INT8_BE Stream_Read_INT8
 
-#define TestStream_PeekAndRead(_s, _r, _t) do                                \
-	{                                                                            \
-		_t _a, _b;                                                                 \
-		size_t _i;                                                                 \
-		BYTE* _p = Stream_Buffer(_s);                                              \
-		Stream_SetPosition(_s, 0);                                                 \
-		Stream_Peek_ ## _t(_s, _a);                                                \
-		Stream_Read_ ## _t(_s, _b);                                                \
-		if (_a != _b)                                                              \
-		{                                                                          \
-			printf("%s: test1 " #_t "_LE failed\n", __FUNCTION__);                   \
-			_r = FALSE;                                                              \
-		}                                                                          \
-		for (_i=0; _i<sizeof(_t); _i++) {                                          \
-			if (((_a >> (_i * 8)) & 0xFF) != _p[_i]) {                               \
-				printf("%s: test2 " #_t "_LE failed\n", __FUNCTION__);                 \
-				_r = FALSE;                                                            \
-				break;                                                                 \
-			}                                                                        \
-		}                                                                          \
-		/* printf("a: 0x%016llX\n", a); */                                         \
-		Stream_SetPosition(_s, 0);                                                 \
-		Stream_Peek_ ## _t ## _BE(_s, _a);                                         \
-		Stream_Read_ ## _t ## _BE(_s, _b);                                         \
-		if (_a != _b)                                                              \
-		{                                                                          \
-			printf("%s: test1 " #_t "_BE failed\n", __FUNCTION__);                   \
-			_r = FALSE;                                                              \
-		}                                                                          \
-		for (_i=0; _i<sizeof(_t); _i++) {                                          \
-			if (((_a >> (_i * 8)) & 0xFF) != _p[sizeof(_t)-_i-1]) {                  \
-				printf("%s: test2 " #_t "_BE failed\n", __FUNCTION__);                 \
-				_r = FALSE;                                                            \
-				break;                                                                 \
-			}                                                                        \
-		}                                                                          \
-		/* printf("a: 0x%016llX\n", a); */                                         \
+#define TestStream_PeekAndRead(_s, _r, _t)                             \
+	do                                                                 \
+	{                                                                  \
+		_t _a, _b;                                                     \
+		size_t _i;                                                     \
+		BYTE* _p = Stream_Buffer(_s);                                  \
+		Stream_SetPosition(_s, 0);                                     \
+		Stream_Peek_##_t(_s, _a);                                      \
+		Stream_Read_##_t(_s, _b);                                      \
+		if (_a != _b)                                                  \
+		{                                                              \
+			printf("%s: test1 " #_t "_LE failed\n", __FUNCTION__);     \
+			_r = FALSE;                                                \
+		}                                                              \
+		for (_i = 0; _i < sizeof(_t); _i++)                            \
+		{                                                              \
+			if (((_a >> (_i * 8)) & 0xFF) != _p[_i])                   \
+			{                                                          \
+				printf("%s: test2 " #_t "_LE failed\n", __FUNCTION__); \
+				_r = FALSE;                                            \
+				break;                                                 \
+			}                                                          \
+		}                                                              \
+		/* printf("a: 0x%016llX\n", a); */                             \
+		Stream_SetPosition(_s, 0);                                     \
+		Stream_Peek_##_t##_BE(_s, _a);                                 \
+		Stream_Read_##_t##_BE(_s, _b);                                 \
+		if (_a != _b)                                                  \
+		{                                                              \
+			printf("%s: test1 " #_t "_BE failed\n", __FUNCTION__);     \
+			_r = FALSE;                                                \
+		}                                                              \
+		for (_i = 0; _i < sizeof(_t); _i++)                            \
+		{                                                              \
+			if (((_a >> (_i * 8)) & 0xFF) != _p[sizeof(_t) - _i - 1])  \
+			{                                                          \
+				printf("%s: test2 " #_t "_BE failed\n", __FUNCTION__); \
+				_r = FALSE;                                            \
+				break;                                                 \
+			}                                                          \
+		}                                                              \
+		/* printf("a: 0x%016llX\n", a); */                             \
 	} while (0)
-
 
 static BOOL TestStream_Reading(void)
 {
@@ -677,4 +681,3 @@ int TestStream(int argc, char* argv[])
 
 	return 0;
 }
-

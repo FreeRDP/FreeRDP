@@ -79,8 +79,8 @@ int shadow_capture_align_clip_rect(RECTANGLE_16* rect, RECTANGLE_16* clip)
 	return 1;
 }
 
-int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nHeight,
-                           BYTE* pData2, UINT32 nStep2, RECTANGLE_16* rect)
+int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nHeight, BYTE* pData2,
+                           UINT32 nStep2, RECTANGLE_16* rect)
 {
 	BOOL equal;
 	BOOL allEqual;
@@ -88,7 +88,7 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 	UINT32 tx, ty, k;
 	UINT32 nrow, ncol;
 	UINT32 l, t, r, b;
-	BYTE* p1, *p2;
+	BYTE *p1, *p2;
 	BOOL rows[1024];
 #ifdef WITH_DEBUG_SHADOW_CAPTURE
 	BOOL cols[1024];
@@ -211,8 +211,8 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 		WLog_INFO(TAG, "|%s|", rows[ty] ? "O" : "X");
 	}
 
-	WLog_INFO(TAG, "left: %d top: %d right: %d bottom: %d ncol: %d nrow: %d",
-	          l, t, r, b, ncol, nrow);
+	WLog_INFO(TAG, "left: %d top: %d right: %d bottom: %d ncol: %d nrow: %d", l, t, r, b, ncol,
+	          nrow);
 	free(col_str);
 #endif
 	return 1;
@@ -221,7 +221,7 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 rdpShadowCapture* shadow_capture_new(rdpShadowServer* server)
 {
 	rdpShadowCapture* capture;
-	capture = (rdpShadowCapture*) calloc(1, sizeof(rdpShadowCapture));
+	capture = (rdpShadowCapture*)calloc(1, sizeof(rdpShadowCapture));
 
 	if (!capture)
 		return NULL;
@@ -245,4 +245,3 @@ void shadow_capture_free(rdpShadowCapture* capture)
 	DeleteCriticalSection(&(capture->lock));
 	free(capture);
 }
-

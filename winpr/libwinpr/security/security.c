@@ -141,43 +141,50 @@ BOOL IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor)
 }
 
 BOOL GetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-		PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision)
+                                  PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision)
 {
 	return TRUE;
 }
 
 BOOL SetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-		SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest, SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet)
+                                  SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
+                                  SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet)
 {
 	return TRUE;
 }
 
-BOOL GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbDaclPresent, PACL* pDacl, LPBOOL lpbDaclDefaulted)
+BOOL GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbDaclPresent,
+                               PACL* pDacl, LPBOOL lpbDaclDefaulted)
 {
 	return TRUE;
 }
 
-BOOL SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bDaclPresent, PACL pDacl, BOOL bDaclDefaulted)
+BOOL SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bDaclPresent,
+                               PACL pDacl, BOOL bDaclDefaulted)
 {
 	return TRUE;
 }
 
-BOOL GetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pGroup, LPBOOL lpbGroupDefaulted)
+BOOL GetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pGroup,
+                                LPBOOL lpbGroupDefaulted)
 {
 	return TRUE;
 }
 
-BOOL SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pGroup, BOOL bGroupDefaulted)
+BOOL SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pGroup,
+                                BOOL bGroupDefaulted)
 {
 	return TRUE;
 }
 
-BOOL GetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pOwner, LPBOOL lpbOwnerDefaulted)
+BOOL GetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pOwner,
+                                LPBOOL lpbOwnerDefaulted)
 {
 	return TRUE;
 }
 
-BOOL SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pOwner, BOOL bOwnerDefaulted)
+BOOL SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pOwner,
+                                BOOL bOwnerDefaulted)
 {
 	return TRUE;
 }
@@ -192,15 +199,16 @@ DWORD SetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor, PU
 	return 0;
 }
 
-BOOL GetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbSaclPresent, PACL* pSacl, LPBOOL lpbSaclDefaulted)
+BOOL GetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbSaclPresent,
+                               PACL* pSacl, LPBOOL lpbSaclDefaulted)
 {
 	return TRUE;
 }
 
-BOOL SetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bSaclPresent, PACL pSacl, BOOL bSaclDefaulted)
+BOOL SetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bSaclPresent,
+                               PACL pSacl, BOOL bSaclDefaulted)
 {
 	return TRUE;
 }
 
 #endif
-

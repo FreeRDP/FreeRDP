@@ -15,17 +15,17 @@ static DWORD WINAPI test_thread(LPVOID arg)
 	return 0;
 }
 
-static int start_threads(DWORD count, HANDLE *threads)
+static int start_threads(DWORD count, HANDLE* threads)
 {
 	DWORD i;
 
-	for (i=0; i<count; i++)
+	for (i = 0; i < count; i++)
 	{
 		threads[i] = CreateThread(NULL, 0, test_thread, NULL, 0, NULL);
 
 		if (!threads[i])
 		{
-			printf("CreateThread [%"PRIu32"] failure\n", i);
+			printf("CreateThread [%" PRIu32 "] failure\n", i);
 			return -1;
 		}
 	}
@@ -33,15 +33,15 @@ static int start_threads(DWORD count, HANDLE *threads)
 	return 0;
 }
 
-static int close_threads(DWORD count, HANDLE *threads)
+static int close_threads(DWORD count, HANDLE* threads)
 {
 	DWORD i;
 
-	for (i=0; i<count; i++)
+	for (i = 0; i < count; i++)
 	{
 		if (!CloseHandle(threads[i]))
 		{
-			printf("CloseHandle [%"PRIu32"] failure\n", i);
+			printf("CloseHandle [%" PRIu32 "] failure\n", i);
 			return -1;
 		}
 	}
@@ -49,7 +49,7 @@ static int close_threads(DWORD count, HANDLE *threads)
 	return 0;
 }
 
-int TestSynchMultipleThreads(int argc, char *argv[])
+int TestSynchMultipleThreads(int argc, char* argv[])
 {
 #define THREADS 24
 	DWORD rc = 0, ev, i;

@@ -99,13 +99,11 @@ static char* string_strnstr(char* str1, const char* str2, size_t slen)
 			{
 				if (slen-- < 1 || (sc = *str1++) == '\0')
 					return NULL;
-			}
-			while (sc != c);
+			} while (sc != c);
 
 			if (len > slen)
 				return NULL;
-		}
-		while (strncmp(str1, str2, len) != 0);
+		} while (strncmp(str1, str2, len) != 0);
 
 		str1--;
 	}
@@ -123,7 +121,7 @@ static BOOL strings_equals_nocase(const void* obj1, const void* obj2)
 
 HttpContext* http_context_new(void)
 {
-	return (HttpContext*) calloc(1, sizeof(HttpContext));
+	return (HttpContext*)calloc(1, sizeof(HttpContext));
 }
 
 BOOL http_context_set_method(HttpContext* context, const char* Method)
@@ -397,7 +395,7 @@ static BOOL http_encode_body_line(wStream* s, const char* param, const char* val
 
 static BOOL http_encode_content_length_line(wStream* s, size_t ContentLength)
 {
-	return http_encode_print(s, "Content-Length: %"PRIdz"\r\n", ContentLength);
+	return http_encode_print(s, "Content-Length: %" PRIdz "\r\n", ContentLength);
 }
 
 static BOOL http_encode_header_line(wStream* s, const char* Method, const char* URI)
@@ -409,7 +407,7 @@ static BOOL http_encode_header_line(wStream* s, const char* Method, const char* 
 }
 
 static BOOL http_encode_authorization_line(wStream* s, const char* AuthScheme,
-        const char* AuthParam)
+                                           const char* AuthParam)
 {
 	if (!s || !AuthScheme || !AuthParam)
 		return FALSE;
@@ -482,7 +480,7 @@ fail:
 
 HttpRequest* http_request_new(void)
 {
-	return (HttpRequest*) calloc(1, sizeof(HttpRequest));
+	return (HttpRequest*)calloc(1, sizeof(HttpRequest));
 }
 
 void http_request_free(HttpRequest* request)
@@ -549,7 +547,7 @@ fail:
 }
 
 static BOOL http_response_parse_header_field(HttpResponse* response, const char* name,
-        const char* value)
+                                             const char* value)
 {
 	BOOL status = TRUE;
 
@@ -748,7 +746,6 @@ static int print_bio_error(const char* str, size_t len, void* bp)
 	return len;
 }
 
-
 HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 {
 	size_t size;
@@ -799,7 +796,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			continue;
 		else if (position > RESPONSE_SIZE_LIMIT)
 		{
-			WLog_ERR(TAG, "Request header too large! (%"PRIdz" bytes) Aborting!", bodyLength);
+			WLog_ERR(TAG, "Request header too large! (%" PRIdz " bytes) Aborting!", bodyLength);
 			goto out_error;
 		}
 
@@ -816,7 +813,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 	{
 		size_t count = 0;
 		char* buffer = (char*)Stream_Buffer(response->data);
-		char* line = (char*) Stream_Buffer(response->data);
+		char* line = (char*)Stream_Buffer(response->data);
 
 		while ((line = string_strnstr(line, "\r\n", payloadOffset - (line - buffer) - 2UL)))
 		{
@@ -828,7 +825,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 		if (count)
 		{
-			response->lines = (char**) calloc(response->count, sizeof(char*));
+			response->lines = (char**)calloc(response->count, sizeof(char*));
 
 			if (!response->lines)
 				goto out_error;
@@ -872,7 +869,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 		if (bodyLength > RESPONSE_SIZE_LIMIT)
 		{
-			WLog_ERR(TAG, "Expected request body too large! (%"PRIdz" bytes) Aborting!", bodyLength);
+			WLog_ERR(TAG, "Expected request body too large! (%" PRIdz " bytes) Aborting!",
+			         bodyLength);
 			goto out_error;
 		}
 
@@ -884,7 +882,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			if (!Stream_EnsureRemainingCapacity(response->data, bodyLength - response->BodyLength))
 				goto out_error;
 
-			status = BIO_read(tls->bio, Stream_Pointer(response->data), bodyLength - response->BodyLength);
+			status = BIO_read(tls->bio, Stream_Pointer(response->data),
+			                  bodyLength - response->BodyLength);
 
 			if (status <= 0)
 			{
@@ -904,7 +903,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 			if (response->BodyLength > RESPONSE_SIZE_LIMIT)
 			{
-				WLog_ERR(TAG, "Request body too large! (%"PRIdz" bytes) Aborting!", response->BodyLength);
+				WLog_ERR(TAG, "Request body too large! (%" PRIdz " bytes) Aborting!",
+				         response->BodyLength);
 				goto out_error;
 			}
 		}
@@ -914,8 +914,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 		if (bodyLength != response->BodyLength)
 		{
-			WLog_WARN(TAG, "%s: %s unexpected body length: actual: %d, expected: %d",
-			          __FUNCTION__, response->ContentType, response->BodyLength, bodyLength);
+			WLog_WARN(TAG, "%s: %s unexpected body length: actual: %d, expected: %d", __FUNCTION__,
+			          response->ContentType, response->BodyLength, bodyLength);
 
 			if (bodyLength > 0)
 				response->BodyLength = MIN(bodyLength, response->BodyLength);
@@ -930,7 +930,7 @@ out_error:
 
 HttpResponse* http_response_new(void)
 {
-	HttpResponse* response = (HttpResponse*) calloc(1, sizeof(HttpResponse));
+	HttpResponse* response = (HttpResponse*)calloc(1, sizeof(HttpResponse));
 
 	if (!response)
 		return NULL;

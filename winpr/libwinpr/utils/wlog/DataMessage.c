@@ -37,7 +37,7 @@ BOOL WLog_DataMessage_Write(char* filename, void* data, int length)
 
 	if (!fp)
 	{
-		//WLog_ERR(TAG, "failed to open file %s", filename);
+		// WLog_ERR(TAG, "failed to open file %s", filename);
 		return FALSE;
 	}
 

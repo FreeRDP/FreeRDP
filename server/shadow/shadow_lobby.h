@@ -27,10 +27,11 @@
 #include <rdtk/rdtk.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-BOOL shadow_client_init_lobby(rdpShadowServer* server);
+	BOOL shadow_client_init_lobby(rdpShadowServer* server);
 
 #ifdef __cplusplus
 }

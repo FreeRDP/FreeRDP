@@ -11,16 +11,15 @@ static const BYTE TEST_BELLS_DATA_XCRUSH[] =
     "\x65\x6c\x6c\x2e\x74\x6f\x6c\x6c\x73\x2e\x66\x6f\x72\x2e\x74\x68"
     "\x65";
 
-static const BYTE TEST_ISLAND_DATA[] =
-    "No man is an island entire of itself; every man "
-    "is a piece of the continent, a part of the main; "
-    "if a clod be washed away by the sea, Europe "
-    "is the less, as well as if a promontory were, as"
-    "well as any manner of thy friends or of thine "
-    "own were; any man's death diminishes me, "
-    "because I am involved in mankind. "
-    "And therefore never send to know for whom "
-    "the bell tolls; it tolls for thee.";
+static const BYTE TEST_ISLAND_DATA[] = "No man is an island entire of itself; every man "
+                                       "is a piece of the continent, a part of the main; "
+                                       "if a clod be washed away by the sea, Europe "
+                                       "is the less, as well as if a promontory were, as"
+                                       "well as any manner of thy friends or of thine "
+                                       "own were; any man's death diminishes me, "
+                                       "because I am involved in mankind. "
+                                       "And therefore never send to know for whom "
+                                       "the bell tolls; it tolls for thee.";
 
 static const BYTE TEST_ISLAND_DATA_XCRUSH[] =
     "\x12\x61\x4e\x6f\x20\x6d\x61\x6e\x20\x69\x73\x20\xf8\xd2\xd8\xc2"
@@ -56,17 +55,18 @@ int test_XCrushCompressBells()
 	XCRUSH_CONTEXT* xcrush;
 	xcrush = xcrush_context_new(TRUE);
 	SrcSize = sizeof(TEST_BELLS_DATA) - 1;
-	pSrcData = (BYTE*) TEST_BELLS_DATA;
+	pSrcData = (BYTE*)TEST_BELLS_DATA;
 	expectedSize = sizeof(TEST_BELLS_DATA_XCRUSH) - 1;
 	pDstData = OutputBuffer;
 	DstSize = sizeof(OutputBuffer);
 	ZeroMemory(OutputBuffer, sizeof(OutputBuffer));
 	status = xcrush_compress(xcrush, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("status: %d Flags: 0x%08"PRIX32" DstSize: %"PRIu32"\n", status, Flags, DstSize);
+	printf("status: %d Flags: 0x%08" PRIX32 " DstSize: %" PRIu32 "\n", status, Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("XCrushCompressBells: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("XCrushCompressBells: output size mismatch: Actual: %" PRIu32 ", Expected: %" PRIu32
+		       "\n",
 		       DstSize, expectedSize);
 		printf("Actual\n");
 		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
@@ -102,17 +102,18 @@ int test_XCrushCompressIsland()
 	XCRUSH_CONTEXT* xcrush;
 	xcrush = xcrush_context_new(TRUE);
 	SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
-	pSrcData = (BYTE*) TEST_ISLAND_DATA;
+	pSrcData = (BYTE*)TEST_ISLAND_DATA;
 	expectedSize = sizeof(TEST_ISLAND_DATA_XCRUSH) - 1;
 	pDstData = OutputBuffer;
 	DstSize = sizeof(OutputBuffer);
 	ZeroMemory(OutputBuffer, sizeof(OutputBuffer));
 	status = xcrush_compress(xcrush, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("status: %d Flags: 0x%08"PRIX32" DstSize: %"PRIu32"\n", status, Flags, DstSize);
+	printf("status: %d Flags: 0x%08" PRIX32 " DstSize: %" PRIu32 "\n", status, Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("XCrushCompressIsland: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("XCrushCompressIsland: output size mismatch: Actual: %" PRIu32 ", Expected: %" PRIu32
+		       "\n",
 		       DstSize, expectedSize);
 		printf("Actual\n");
 		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
@@ -140,11 +141,10 @@ int TestFreeRDPCodecXCrush(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	//if (test_XCrushCompressBells() < 0)
+	// if (test_XCrushCompressBells() < 0)
 	//	return -1;
 	if (test_XCrushCompressIsland() < 0)
 		return -1;
 
 	return 0;
 }
-

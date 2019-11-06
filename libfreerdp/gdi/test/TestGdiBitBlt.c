@@ -15,8 +15,7 @@
 /* BitBlt() Test Data */
 
 /* source bitmap (16x16) */
-static const BYTE bmp_SRC[256] =
-{
+static const BYTE bmp_SRC[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -36,8 +35,7 @@ static const BYTE bmp_SRC[256] =
 };
 
 /* destination bitmap (16x16) */
-static const BYTE bmp_DST[256] =
-{
+static const BYTE bmp_DST[256] = {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -57,8 +55,7 @@ static const BYTE bmp_DST[256] =
 };
 
 /* SRCCOPY (0x00CC0020) */
-static const BYTE bmp_SRCCOPY[256] =
-{
+static const BYTE bmp_SRCCOPY[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -78,8 +75,7 @@ static const BYTE bmp_SRCCOPY[256] =
 };
 
 /* BLACKNESS (0x00000042) */
-static const BYTE bmp_BLACKNESS[256] =
-{
+static const BYTE bmp_BLACKNESS[256] = {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -99,8 +95,7 @@ static const BYTE bmp_BLACKNESS[256] =
 };
 
 /* WHITENESS (0x00FF0062) */
-static const BYTE bmp_WHITENESS[256] =
-{
+static const BYTE bmp_WHITENESS[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -120,8 +115,7 @@ static const BYTE bmp_WHITENESS[256] =
 };
 
 /* SRCAND (0x008800C6) */
-static const BYTE bmp_SRCAND[256] =
-{
+static const BYTE bmp_SRCAND[256] = {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -141,8 +135,7 @@ static const BYTE bmp_SRCAND[256] =
 };
 
 /* SRCPAINT (0x00EE0086) */
-static const BYTE bmp_SRCPAINT[256] =
-{
+static const BYTE bmp_SRCPAINT[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -162,8 +155,7 @@ static const BYTE bmp_SRCPAINT[256] =
 };
 
 /* SRCINVERT (0x00660046) */
-static const BYTE bmp_SRCINVERT[256] =
-{
+static const BYTE bmp_SRCINVERT[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\xFF\xFF\x00\x00\x00\x00\x00\x00"
@@ -183,8 +175,7 @@ static const BYTE bmp_SRCINVERT[256] =
 };
 
 /* SRCERASE (0x00440328) */
-static const BYTE bmp_SRCERASE[256] =
-{
+static const BYTE bmp_SRCERASE[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -204,8 +195,7 @@ static const BYTE bmp_SRCERASE[256] =
 };
 
 /* NOTSRCCOPY (0x00330008) */
-static const BYTE bmp_NOTSRCCOPY[256] =
-{
+static const BYTE bmp_NOTSRCCOPY[256] = {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00"
@@ -225,8 +215,7 @@ static const BYTE bmp_NOTSRCCOPY[256] =
 };
 
 /* NOTSRCERASE (0x001100A6) */
-static const BYTE bmp_NOTSRCERASE[256] =
-{
+static const BYTE bmp_NOTSRCERASE[256] = {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -246,8 +235,7 @@ static const BYTE bmp_NOTSRCERASE[256] =
 };
 
 /* DSTINVERT (0x00550009) */
-static const BYTE bmp_DSTINVERT[256] =
-{
+static const BYTE bmp_DSTINVERT[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -267,8 +255,7 @@ static const BYTE bmp_DSTINVERT[256] =
 };
 
 /* SPna (0x000C0324) */
-static const BYTE bmp_SPna[256] =
-{
+static const BYTE bmp_SPna[256] = {
 	"\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
 	"\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\x00\x00\x00\x00\xFF\xFF\x00\x00"
@@ -288,8 +275,7 @@ static const BYTE bmp_SPna[256] =
 };
 
 /* MERGEPAINT (0x00BB0226) */
-static const BYTE bmp_MERGEPAINT[256] =
-{
+static const BYTE bmp_MERGEPAINT[256] = {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -309,8 +295,7 @@ static const BYTE bmp_MERGEPAINT[256] =
 };
 
 /* MERGECOPY (0x00C000CA) */
-static const BYTE bmp_MERGECOPY[256] =
-{
+static const BYTE bmp_MERGECOPY[256] = {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
 	"\x00\x00\xFF\xFF\x00\x00\x00\x00\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
@@ -330,8 +315,7 @@ static const BYTE bmp_MERGECOPY[256] =
 };
 
 /* PATPAINT (0x00FB0A09) */
-static const BYTE bmp_PATPAINT[256] =
-{
+static const BYTE bmp_PATPAINT[256] = {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\xFF\xFF\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -351,8 +335,7 @@ static const BYTE bmp_PATPAINT[256] =
 };
 
 /* PATCOPY (0x00F00021) */
-static const BYTE bmp_PATCOPY[256] =
-{
+static const BYTE bmp_PATCOPY[256] = {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
 	"\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
@@ -372,8 +355,7 @@ static const BYTE bmp_PATCOPY[256] =
 };
 
 /* PATINVERT (0x005A0049) */
-static const BYTE bmp_PATINVERT[256] =
-{
+static const BYTE bmp_PATINVERT[256] = {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
 	"\x00\x00\xFF\xFF\x00\x00\xFF\xFF\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
@@ -399,8 +381,7 @@ struct test_bitblt
 	HGDI_BITMAP bmp;
 };
 
-static BOOL test_rop(HGDI_DC hdcDst, HGDI_DC hdcSrc, HGDI_BITMAP hBmpSrc,
-                     HGDI_BITMAP hBmpDst,
+static BOOL test_rop(HGDI_DC hdcDst, HGDI_DC hdcSrc, HGDI_BITMAP hBmpSrc, HGDI_BITMAP hBmpDst,
                      HGDI_BITMAP hBmpDstOriginal, UINT32 rop, HGDI_BITMAP expected,
                      const gdiPalette* hPalette)
 {
@@ -411,15 +392,14 @@ static BOOL test_rop(HGDI_DC hdcDst, HGDI_DC hdcSrc, HGDI_BITMAP hBmpSrc,
 	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY, hPalette))
 		return FALSE;
 
-	if (!test_assert_bitmaps_equal(hBmpDst, hBmpDstOriginal,
-	                               gdi_rop_to_string(GDI_SRCCOPY), hPalette))
-		gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
+	if (!test_assert_bitmaps_equal(hBmpDst, hBmpDstOriginal, gdi_rop_to_string(GDI_SRCCOPY),
+	                               hPalette))
+		gdi_SelectObject(hdcSrc, (HGDIOBJECT)hBmpSrc);
 
 	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, rop, hPalette))
 		return FALSE;
 
-	if (!test_assert_bitmaps_equal(hBmpDst, expected,
-	                               gdi_rop_to_string(rop), hPalette))
+	if (!test_assert_bitmaps_equal(hBmpDst, expected, gdi_rop_to_string(rop), hPalette))
 		return FALSE;
 
 	return TRUE;
@@ -433,50 +413,47 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	HGDI_DC hdcSrc = NULL;
 	HGDI_DC hdcDst = NULL;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
-	struct test_bitblt tests[] =
-	{
-		{GDI_SRCCOPY, bmp_SRCCOPY, NULL},
-		{GDI_SPna, bmp_SPna, NULL},
-		{GDI_BLACKNESS, bmp_BLACKNESS, NULL},
-		{GDI_WHITENESS, bmp_WHITENESS, NULL},
-		{GDI_SRCAND, bmp_SRCAND, NULL},
-		{GDI_SRCPAINT, bmp_SRCPAINT, NULL},
-		{GDI_SRCINVERT, bmp_SRCINVERT, NULL},
-		{GDI_SRCERASE, bmp_SRCERASE, NULL},
-		{GDI_NOTSRCCOPY, bmp_NOTSRCCOPY, NULL},
-		{GDI_NOTSRCERASE, bmp_NOTSRCERASE, NULL},
-		{GDI_DSTINVERT, bmp_DSTINVERT, NULL},
-		{GDI_MERGECOPY, bmp_MERGECOPY, NULL},
-		{GDI_MERGEPAINT, bmp_MERGEPAINT, NULL},
-		{GDI_PATCOPY, bmp_PATCOPY, NULL},
-		{GDI_PATPAINT, bmp_PATPAINT, NULL},
-		{GDI_PATINVERT, bmp_PATINVERT, NULL},
-		{GDI_DSTINVERT, bmp_SRC, NULL},
-		{GDI_DSPDxax, bmp_SRC, NULL},
-		{GDI_PSDPxax, bmp_SRC, NULL},
-		{GDI_DSna, bmp_SRC, NULL},
-		{GDI_DPa, bmp_SRC, NULL},
-		{GDI_PDxn, bmp_SRC, NULL},
-		{GDI_DSxn, bmp_SRC, NULL},
-		{GDI_PSDnox, bmp_SRC, NULL},
-		{GDI_PDSona, bmp_SRC, NULL},
-		{GDI_DSPDxox, bmp_SRC, NULL},
-		{GDI_DPSDonox, bmp_SRC, NULL},
-		{GDI_SPDSxax, bmp_SRC, NULL},
-		{GDI_DPon, bmp_SRC, NULL},
-		{GDI_DPna, bmp_SRC, NULL},
-		{GDI_Pn, bmp_SRC, NULL},
-		{GDI_PDna, bmp_SRC, NULL},
-		{GDI_DPan, bmp_SRC, NULL},
-		{GDI_DSan, bmp_SRC, NULL},
-		{GDI_DSxn, bmp_SRC, NULL},
-		{GDI_DPa, bmp_SRC, NULL},
-		{GDI_DSTCOPY, bmp_SRC, NULL},
-		{GDI_DPno, bmp_SRC, NULL},
-		{GDI_SDno, bmp_SRC, NULL},
-		{GDI_PDno, bmp_SRC, NULL},
-		{GDI_DPo, bmp_SRC, NULL}
-	};
+	struct test_bitblt tests[] = { { GDI_SRCCOPY, bmp_SRCCOPY, NULL },
+		                           { GDI_SPna, bmp_SPna, NULL },
+		                           { GDI_BLACKNESS, bmp_BLACKNESS, NULL },
+		                           { GDI_WHITENESS, bmp_WHITENESS, NULL },
+		                           { GDI_SRCAND, bmp_SRCAND, NULL },
+		                           { GDI_SRCPAINT, bmp_SRCPAINT, NULL },
+		                           { GDI_SRCINVERT, bmp_SRCINVERT, NULL },
+		                           { GDI_SRCERASE, bmp_SRCERASE, NULL },
+		                           { GDI_NOTSRCCOPY, bmp_NOTSRCCOPY, NULL },
+		                           { GDI_NOTSRCERASE, bmp_NOTSRCERASE, NULL },
+		                           { GDI_DSTINVERT, bmp_DSTINVERT, NULL },
+		                           { GDI_MERGECOPY, bmp_MERGECOPY, NULL },
+		                           { GDI_MERGEPAINT, bmp_MERGEPAINT, NULL },
+		                           { GDI_PATCOPY, bmp_PATCOPY, NULL },
+		                           { GDI_PATPAINT, bmp_PATPAINT, NULL },
+		                           { GDI_PATINVERT, bmp_PATINVERT, NULL },
+		                           { GDI_DSTINVERT, bmp_SRC, NULL },
+		                           { GDI_DSPDxax, bmp_SRC, NULL },
+		                           { GDI_PSDPxax, bmp_SRC, NULL },
+		                           { GDI_DSna, bmp_SRC, NULL },
+		                           { GDI_DPa, bmp_SRC, NULL },
+		                           { GDI_PDxn, bmp_SRC, NULL },
+		                           { GDI_DSxn, bmp_SRC, NULL },
+		                           { GDI_PSDnox, bmp_SRC, NULL },
+		                           { GDI_PDSona, bmp_SRC, NULL },
+		                           { GDI_DSPDxox, bmp_SRC, NULL },
+		                           { GDI_DPSDonox, bmp_SRC, NULL },
+		                           { GDI_SPDSxax, bmp_SRC, NULL },
+		                           { GDI_DPon, bmp_SRC, NULL },
+		                           { GDI_DPna, bmp_SRC, NULL },
+		                           { GDI_Pn, bmp_SRC, NULL },
+		                           { GDI_PDna, bmp_SRC, NULL },
+		                           { GDI_DPan, bmp_SRC, NULL },
+		                           { GDI_DSan, bmp_SRC, NULL },
+		                           { GDI_DSxn, bmp_SRC, NULL },
+		                           { GDI_DPa, bmp_SRC, NULL },
+		                           { GDI_DSTCOPY, bmp_SRC, NULL },
+		                           { GDI_DPno, bmp_SRC, NULL },
+		                           { GDI_SDno, bmp_SRC, NULL },
+		                           { GDI_PDno, bmp_SRC, NULL },
+		                           { GDI_DPo, bmp_SRC, NULL } };
 	const UINT32 number_tests = sizeof(tests) / sizeof(tests[0]);
 	HGDI_BITMAP hBmpSrc = NULL;
 	HGDI_BITMAP hBmpDst = NULL;
@@ -504,28 +481,28 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	}
 
 	hdcDst->format = DstFormat;
-	hBmpSrc = test_convert_to_bitmap(bmp_SRC, RawFormat, 0, 0, 0,
-	                                 SrcFormat, 0, 0, 0, 16, 16, hPalette);
+	hBmpSrc =
+	    test_convert_to_bitmap(bmp_SRC, RawFormat, 0, 0, 0, SrcFormat, 0, 0, 0, 16, 16, hPalette);
 
 	if (!hBmpSrc)
 		goto fail;
 
-	hBmpDst = test_convert_to_bitmap(bmp_DST, RawFormat, 0, 0, 0,
-	                                 DstFormat, 0, 0, 0, 16, 16, hPalette);
+	hBmpDst =
+	    test_convert_to_bitmap(bmp_DST, RawFormat, 0, 0, 0, DstFormat, 0, 0, 0, 16, 16, hPalette);
 
 	if (!hBmpDst)
 		goto fail;
 
-	hBmpDstOriginal = test_convert_to_bitmap(bmp_DST, RawFormat, 0, 0, 0,
-	                  SrcFormat, 0, 0, 0, 16, 16, hPalette);
+	hBmpDstOriginal =
+	    test_convert_to_bitmap(bmp_DST, RawFormat, 0, 0, 0, SrcFormat, 0, 0, 0, 16, 16, hPalette);
 
 	if (!hBmpDstOriginal)
 		goto fail;
 
 	for (x = 0; x < number_tests; x++)
 	{
-		tests[x].bmp = test_convert_to_bitmap(tests[x].src, RawFormat, 0, 0, 0,
-		                                      SrcFormat, 0, 0, 0, 16, 16, hPalette);
+		tests[x].bmp = test_convert_to_bitmap(tests[x].src, RawFormat, 0, 0, 0, SrcFormat, 0, 0, 0,
+		                                      16, 16, hPalette);
 
 		if (!tests[x].bmp)
 			goto fail;
@@ -536,8 +513,8 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 
 	for (x = 0; x < number_tests; x++)
 	{
-		if (!test_rop(hdcDst, hdcSrc, hBmpSrc, hBmpDst, hBmpDstOriginal, tests[x].rop,
-		              tests[x].bmp, hPalette))
+		if (!test_rop(hdcDst, hdcSrc, hBmpSrc, hBmpDst, hBmpDstOriginal, tests[x].rop, tests[x].bmp,
+		              hPalette))
 			failed = TRUE;
 	}
 
@@ -555,33 +532,19 @@ fail:
 	gdi_DeleteDC(hdcSrc);
 	gdi_DeleteDC(hdcDst);
 	fprintf(stderr, "%s: TODO Test not implemented!!!\n", __FUNCTION__);
-	return TRUE; //rc;
+	return TRUE; // rc;
 }
 
 int TestGdiBitBlt(int argc, char* argv[])
 {
 	int rc = 0;
 	UINT32 x, y;
-	const UINT32 formatList[] =
-	{
-		PIXEL_FORMAT_RGB8,
-		PIXEL_FORMAT_RGB15,
-		PIXEL_FORMAT_ARGB15,
-		PIXEL_FORMAT_RGB16,
-		PIXEL_FORMAT_RGB24,
-		PIXEL_FORMAT_RGBA32,
-		PIXEL_FORMAT_RGBX32,
-		PIXEL_FORMAT_ARGB32,
-		PIXEL_FORMAT_XRGB32,
-		PIXEL_FORMAT_BGR15,
-		PIXEL_FORMAT_ABGR15,
-		PIXEL_FORMAT_BGR16,
-		PIXEL_FORMAT_BGR24,
-		PIXEL_FORMAT_BGRA32,
-		PIXEL_FORMAT_BGRX32,
-		PIXEL_FORMAT_ABGR32,
-		PIXEL_FORMAT_XBGR32
-	};
+	const UINT32 formatList[] = { PIXEL_FORMAT_RGB8,   PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_ARGB15,
+		                          PIXEL_FORMAT_RGB16,  PIXEL_FORMAT_RGB24,  PIXEL_FORMAT_RGBA32,
+		                          PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_XRGB32,
+		                          PIXEL_FORMAT_BGR15,  PIXEL_FORMAT_ABGR15, PIXEL_FORMAT_BGR16,
+		                          PIXEL_FORMAT_BGR24,  PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32,
+		                          PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_XBGR32 };
 	const UINT32 listSize = sizeof(formatList) / sizeof(formatList[0]);
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

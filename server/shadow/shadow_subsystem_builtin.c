@@ -41,8 +41,7 @@ extern int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
 extern int Win_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
 #endif
 
-static RDP_SHADOW_SUBSYSTEM g_Subsystems[] =
-{
+static RDP_SHADOW_SUBSYSTEM g_Subsystems[] = {
 
 #ifdef WITH_SHADOW_X11
 	{ "X11", X11_ShadowSubsystemEntry },

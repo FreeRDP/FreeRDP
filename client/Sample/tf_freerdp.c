@@ -71,8 +71,7 @@ static BOOL tf_end_paint(rdpContext* context)
 }
 
 /* This function is called to output a System BEEP */
-static BOOL tf_play_sound(rdpContext* context,
-                          const PLAY_SOUND_UPDATE* play_sound)
+static BOOL tf_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_sound)
 {
 	/* TODO: Implement */
 	WINPR_UNUSED(context);
@@ -97,7 +96,8 @@ static BOOL tf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 		return FALSE;
 
 	WLog_WARN(TAG,
-	          "KeyboardSetImeStatus(unitId=%04"PRIx16", imeState=%08"PRIx32", imeConvMode=%08"PRIx32") ignored",
+	          "KeyboardSetImeStatus(unitId=%04" PRIx16 ", imeState=%08" PRIx32
+	          ", imeConvMode=%08" PRIx32 ") ignored",
 	          imeId, imeState, imeConvMode);
 	return TRUE;
 }
@@ -116,15 +116,13 @@ static BOOL tf_pre_connect(freerdp* instance)
 	 * callbacks or deactiveate certain features. */
 	/* Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded. */
-	PubSub_SubscribeChannelConnected(instance->context->pubSub,
-	                                 tf_OnChannelConnectedEventHandler);
+	PubSub_SubscribeChannelConnected(instance->context->pubSub, tf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    tf_OnChannelDisconnectedEventHandler);
 
 	/* Load all required plugins / channels / libraries specified by current
 	 * settings. */
-	if (!freerdp_client_load_addins(instance->context->channels,
-	                                instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
 		return FALSE;
 
 	/* TODO: Any code your client requires */
@@ -165,7 +163,7 @@ static void tf_post_disconnect(freerdp* instance)
 	if (!instance->context)
 		return;
 
-	context = (tfContext*) instance->context;
+	context = (tfContext*)instance->context;
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
 	                                   tf_OnChannelConnectedEventHandler);
 	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
@@ -205,7 +203,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 
 		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %"PRIu32"", __FUNCTION__,
+			WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %" PRIu32 "", __FUNCTION__,
 			         status);
 			break;
 		}
@@ -248,7 +246,7 @@ static int tf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	if (!instance || !instance->context)
 		return -1;
 
-	tf = (tfContext*) instance->context;
+	tf = (tfContext*)instance->context;
 	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
 	WINPR_UNUSED(tf);
 
@@ -257,7 +255,7 @@ static int tf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 
 static BOOL tf_client_new(freerdp* instance, rdpContext* context)
 {
-	tfContext* tf = (tfContext*) context;
+	tfContext* tf = (tfContext*)context;
 
 	if (!instance || !context)
 		return FALSE;
@@ -275,10 +273,9 @@ static BOOL tf_client_new(freerdp* instance, rdpContext* context)
 	return TRUE;
 }
 
-
 static void tf_client_free(freerdp* instance, rdpContext* context)
 {
-	tfContext* tf = (tfContext*) instance->context;
+	tfContext* tf = (tfContext*)instance->context;
 
 	if (!context)
 		return;
@@ -328,10 +325,9 @@ int main(int argc, char* argv[])
 	if (!context)
 		goto fail;
 
-	status = freerdp_client_settings_parse_command_line(context->settings, argc,
-	         argv, FALSE);
-	status = freerdp_client_settings_command_line_status_print(context->settings,
-	         status, argc, argv);
+	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
+	status =
+	    freerdp_client_settings_command_line_status_print(context->settings, status, argc, argv);
 
 	if (status)
 		return 0;

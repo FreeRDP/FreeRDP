@@ -25,15 +25,15 @@
 #include "comm_ioctl.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-SERIAL_DRIVER* SerialSys_s();
+	SERIAL_DRIVER* SerialSys_s();
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* __linux__ */
 

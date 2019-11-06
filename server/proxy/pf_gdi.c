@@ -37,8 +37,7 @@
 #define TAG PROXY_TAG("gdi")
 
 /* TODO: Figure how to use functions decleared in update.c */
-static BOOL pf_gdi_set_bounds(rdpContext* context,
-                              const rdpBounds* bounds)
+static BOOL pf_gdi_set_bounds(rdpContext* context, const rdpBounds* bounds)
 {
 	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
@@ -62,8 +61,7 @@ static BOOL pf_gdi_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 	return TRUE;
 }
 
-static BOOL pf_gdi_opaque_rect(rdpContext* context,
-                               const OPAQUE_RECT_ORDER* opaque_rect)
+static BOOL pf_gdi_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER* opaque_rect)
 {
 	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
@@ -82,8 +80,7 @@ static BOOL pf_gdi_line_to(rdpContext* context, const LINE_TO_ORDER* line_to)
 	return TRUE;
 }
 
-static BOOL pf_gdi_polyline(rdpContext* context,
-                            const POLYLINE_ORDER* polyline)
+static BOOL pf_gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 {
 	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
@@ -101,16 +98,13 @@ static BOOL pf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	return TRUE;
 }
 
-
-static BOOL pf_gdi_polygon_sc(rdpContext* context,
-                              const POLYGON_SC_ORDER* polygon_sc)
+static BOOL pf_gdi_polygon_sc(rdpContext* context, const POLYGON_SC_ORDER* polygon_sc)
 {
 	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
 }
 
-static BOOL pf_gdi_polygon_cb(rdpContext* context,
-                              POLYGON_CB_ORDER* polygon_cb)
+static BOOL pf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
 	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
@@ -123,8 +117,7 @@ static BOOL pf_gdi_surface_frame_marker(rdpContext* context,
 	return TRUE;
 }
 
-static BOOL pf_gdi_surface_bits(rdpContext* context,
-                                const SURFACE_BITS_COMMAND* cmd)
+static BOOL pf_gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cmd)
 {
 	WLog_INFO(TAG, __FUNCTION__);
 	return TRUE;
@@ -148,4 +141,3 @@ void pf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->SurfaceBits = pf_gdi_surface_bits;
 	update->SurfaceFrameMarker = pf_gdi_surface_frame_marker;
 }
-

@@ -31,18 +31,18 @@ struct rdtk_label
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-int rdtk_label_engine_init(rdtkEngine* engine);
-int rdtk_label_engine_uninit(rdtkEngine* engine);
+	int rdtk_label_engine_init(rdtkEngine* engine);
+	int rdtk_label_engine_uninit(rdtkEngine* engine);
 
-rdtkLabel* rdtk_label_new(rdtkEngine* engine);
-void rdtk_label_free(rdtkLabel* label);
+	rdtkLabel* rdtk_label_new(rdtkEngine* engine);
+	void rdtk_label_free(rdtkLabel* label);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* RDTK_LABEL_PRIVATE_H */
-

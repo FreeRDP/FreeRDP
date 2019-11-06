@@ -26,7 +26,6 @@
 
 #if defined __linux__ && !defined ANDROID
 
-
 #include <assert.h>
 #include <errno.h>
 
@@ -37,7 +36,6 @@
 #include "comm_serial_sys.h"
 #include "comm_sercx_sys.h"
 #include "comm_sercx2_sys.h"
-
 
 /* NB: MS-RDPESP's recommendation:
  *
@@ -55,12 +53,11 @@
  * Drivers, and in [MSDN-PORTS].
  */
 
-
 const char* _comm_serial_ioctl_name(ULONG number)
 {
 	int i;
-	
-	for (i=0; _SERIAL_IOCTL_NAMES[i].number != 0; i++)
+
+	for (i = 0; _SERIAL_IOCTL_NAMES[i].number != 0; i++)
 	{
 		if (_SERIAL_IOCTL_NAMES[i].number == number)
 		{
@@ -71,20 +68,20 @@ const char* _comm_serial_ioctl_name(ULONG number)
 	return "(unknown ioctl name)";
 }
 
-
-static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
-				LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
+static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
+                                 DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
+                                 LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
-	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
+	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	SERIAL_DRIVER* pServerSerialDriver = NULL;
 
 	if (hDevice == INVALID_HANDLE_VALUE)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
-                return FALSE;
-        }
+		return FALSE;
+	}
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -129,7 +126,8 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 
 		case SerialDriverUnknown:
 		default:
-			CommLog_Print(WLOG_DEBUG, "Unknown remote serial driver (%d), using SerCx2.sys", pComm->serverSerialDriverId);
+			CommLog_Print(WLOG_DEBUG, "Unknown remote serial driver (%d), using SerCx2.sys",
+			              pComm->serverSerialDriverId);
 			pServerSerialDriver = SerCx2Sys_s();
 			break;
 	}
@@ -140,7 +138,8 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 	{
 		case IOCTL_USBPRINT_GET_1284_ID:
 		{
-			/* FIXME: http://msdn.microsoft.com/en-us/library/windows/hardware/ff551803(v=vs.85).aspx */
+			/* FIXME:
+			 * http://msdn.microsoft.com/en-us/library/windows/hardware/ff551803(v=vs.85).aspx */
 			*lpBytesReturned = nOutBufferSize; /* an empty OutputBuffer will be returned */
 			SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 			return FALSE;
@@ -149,7 +148,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->set_baud_rate)
 			{
-				SERIAL_BAUD_RATE *pBaudRate = (SERIAL_BAUD_RATE*)lpInBuffer;
+				SERIAL_BAUD_RATE* pBaudRate = (SERIAL_BAUD_RATE*)lpInBuffer;
 
 				assert(nInBufferSize >= sizeof(SERIAL_BAUD_RATE));
 				if (nInBufferSize < sizeof(SERIAL_BAUD_RATE))
@@ -166,7 +165,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->get_baud_rate)
 			{
-				SERIAL_BAUD_RATE *pBaudRate = (SERIAL_BAUD_RATE*)lpOutBuffer;
+				SERIAL_BAUD_RATE* pBaudRate = (SERIAL_BAUD_RATE*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(SERIAL_BAUD_RATE));
 				if (nOutBufferSize < sizeof(SERIAL_BAUD_RATE))
@@ -187,7 +186,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->get_properties)
 			{
-				COMMPROP *pProperties = (COMMPROP*)lpOutBuffer;
+				COMMPROP* pProperties = (COMMPROP*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(COMMPROP));
 				if (nOutBufferSize < sizeof(COMMPROP))
@@ -208,7 +207,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->set_serial_chars)
 			{
-				SERIAL_CHARS *pSerialChars = (SERIAL_CHARS*)lpInBuffer;
+				SERIAL_CHARS* pSerialChars = (SERIAL_CHARS*)lpInBuffer;
 
 				assert(nInBufferSize >= sizeof(SERIAL_CHARS));
 				if (nInBufferSize < sizeof(SERIAL_CHARS))
@@ -225,7 +224,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->get_serial_chars)
 			{
-				SERIAL_CHARS *pSerialChars = (SERIAL_CHARS*)lpOutBuffer;
+				SERIAL_CHARS* pSerialChars = (SERIAL_CHARS*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(SERIAL_CHARS));
 				if (nOutBufferSize < sizeof(SERIAL_CHARS))
@@ -246,7 +245,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->set_line_control)
 			{
-				SERIAL_LINE_CONTROL *pLineControl = (SERIAL_LINE_CONTROL*)lpInBuffer;
+				SERIAL_LINE_CONTROL* pLineControl = (SERIAL_LINE_CONTROL*)lpInBuffer;
 
 				assert(nInBufferSize >= sizeof(SERIAL_LINE_CONTROL));
 				if (nInBufferSize < sizeof(SERIAL_LINE_CONTROL))
@@ -263,7 +262,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->get_line_control)
 			{
-				SERIAL_LINE_CONTROL *pLineControl = (SERIAL_LINE_CONTROL*)lpOutBuffer;
+				SERIAL_LINE_CONTROL* pLineControl = (SERIAL_LINE_CONTROL*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(SERIAL_LINE_CONTROL));
 				if (nOutBufferSize < sizeof(SERIAL_LINE_CONTROL))
@@ -284,7 +283,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->set_handflow)
 			{
-				SERIAL_HANDFLOW *pHandflow = (SERIAL_HANDFLOW*)lpInBuffer;
+				SERIAL_HANDFLOW* pHandflow = (SERIAL_HANDFLOW*)lpInBuffer;
 
 				assert(nInBufferSize >= sizeof(SERIAL_HANDFLOW));
 				if (nInBufferSize < sizeof(SERIAL_HANDFLOW))
@@ -301,7 +300,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->get_handflow)
 			{
-				SERIAL_HANDFLOW *pHandflow = (SERIAL_HANDFLOW*)lpOutBuffer;
+				SERIAL_HANDFLOW* pHandflow = (SERIAL_HANDFLOW*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(SERIAL_HANDFLOW));
 				if (nOutBufferSize < sizeof(SERIAL_HANDFLOW))
@@ -322,7 +321,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->set_timeouts)
 			{
-				SERIAL_TIMEOUTS *pHandflow = (SERIAL_TIMEOUTS*)lpInBuffer;
+				SERIAL_TIMEOUTS* pHandflow = (SERIAL_TIMEOUTS*)lpInBuffer;
 
 				assert(nInBufferSize >= sizeof(SERIAL_TIMEOUTS));
 				if (nInBufferSize < sizeof(SERIAL_TIMEOUTS))
@@ -339,7 +338,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->get_timeouts)
 			{
-				SERIAL_TIMEOUTS *pHandflow = (SERIAL_TIMEOUTS*)lpOutBuffer;
+				SERIAL_TIMEOUTS* pHandflow = (SERIAL_TIMEOUTS*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(SERIAL_TIMEOUTS));
 				if (nOutBufferSize < sizeof(SERIAL_TIMEOUTS))
@@ -392,7 +391,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->get_modemstatus)
 			{
-				ULONG *pRegister = (ULONG*)lpOutBuffer;
+				ULONG* pRegister = (ULONG*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
@@ -413,7 +412,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->set_wait_mask)
 			{
-				ULONG *pWaitMask = (ULONG*)lpInBuffer;
+				ULONG* pWaitMask = (ULONG*)lpInBuffer;
 
 				assert(nInBufferSize >= sizeof(ULONG));
 				if (nInBufferSize < sizeof(ULONG))
@@ -430,7 +429,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->get_wait_mask)
 			{
-				ULONG *pWaitMask = (ULONG*)lpOutBuffer;
+				ULONG* pWaitMask = (ULONG*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
@@ -451,7 +450,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->wait_on_mask)
 			{
-				ULONG *pOutputMask = (ULONG*)lpOutBuffer;
+				ULONG* pOutputMask = (ULONG*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
@@ -475,7 +474,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->set_queue_size)
 			{
-				SERIAL_QUEUE_SIZE *pQueueSize = (SERIAL_QUEUE_SIZE*)lpInBuffer;
+				SERIAL_QUEUE_SIZE* pQueueSize = (SERIAL_QUEUE_SIZE*)lpInBuffer;
 
 				assert(nInBufferSize >= sizeof(SERIAL_QUEUE_SIZE));
 				if (nInBufferSize < sizeof(SERIAL_QUEUE_SIZE))
@@ -492,7 +491,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->purge)
 			{
-				ULONG *pPurgeMask = (ULONG*)lpInBuffer;
+				ULONG* pPurgeMask = (ULONG*)lpInBuffer;
 
 				assert(nInBufferSize >= sizeof(ULONG));
 				if (nInBufferSize < sizeof(ULONG))
@@ -509,7 +508,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->get_commstatus)
 			{
-				SERIAL_STATUS *pCommstatus = (SERIAL_STATUS*)lpOutBuffer;
+				SERIAL_STATUS* pCommstatus = (SERIAL_STATUS*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(SERIAL_STATUS));
 				if (nOutBufferSize < sizeof(SERIAL_STATUS))
@@ -562,7 +561,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		{
 			if (pServerSerialDriver->get_dtrrts)
 			{
-				ULONG *pMask = (ULONG*)lpOutBuffer;
+				ULONG* pMask = (ULONG*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
@@ -578,13 +577,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 				return TRUE;
 			}
 			break;
-
 		}
 		case IOCTL_SERIAL_CONFIG_SIZE:
 		{
 			if (pServerSerialDriver->config_size)
 			{
-				ULONG *pSize = (ULONG*)lpOutBuffer;
+				ULONG* pSize = (ULONG*)lpOutBuffer;
 
 				assert(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
@@ -600,13 +598,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 				return TRUE;
 			}
 			break;
-
 		}
 		case IOCTL_SERIAL_IMMEDIATE_CHAR:
 		{
 			if (pServerSerialDriver->immediate_char)
 			{
-				UCHAR *pChar = (UCHAR*)lpInBuffer;
+				UCHAR* pChar = (UCHAR*)lpInBuffer;
 
 				assert(nInBufferSize >= sizeof(UCHAR));
 				if (nInBufferSize < sizeof(UCHAR))
@@ -629,13 +626,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		}
 	}
 
-	CommLog_Print(WLOG_WARN, _T("unsupported IoControlCode=[0x%08"PRIX32"] %s (remote serial driver: %s)"),
-		dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), pServerSerialDriver->name);
+	CommLog_Print(
+	    WLOG_WARN, _T("unsupported IoControlCode=[0x%08" PRIX32 "] %s (remote serial driver: %s)"),
+	    dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), pServerSerialDriver->name);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED); /* => STATUS_NOT_IMPLEMENTED */
 	return FALSE;
-
 }
-
 
 /**
  * FIXME: to be used through winpr-io's DeviceIoControl
@@ -649,39 +645,45 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
  *   ERROR_INSUFFICIENT_BUFFER
  *   ERROR_CALL_NOT_IMPLEMENTED unimplemented ioctl
  */
-BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
-			LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
+BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
+                         DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
+                         LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
-	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
+	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	BOOL result;
 
 	if (hDevice == INVALID_HANDLE_VALUE)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
-                return FALSE;
-        }
+		return FALSE;
+	}
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
 
-	result = _CommDeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize,
-				lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
+	result = _CommDeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer,
+	                              nOutBufferSize, lpBytesReturned, lpOverlapped);
 
 	if (lpBytesReturned && *lpBytesReturned != nOutBufferSize)
 	{
 		/* This might be a hint for a bug, especially when result==TRUE */
-		CommLog_Print(WLOG_WARN, "lpBytesReturned=%"PRIu32" and nOutBufferSize=%"PRIu32" are different!", *lpBytesReturned, nOutBufferSize);
+		CommLog_Print(WLOG_WARN,
+		              "lpBytesReturned=%" PRIu32 " and nOutBufferSize=%" PRIu32 " are different!",
+		              *lpBytesReturned, nOutBufferSize);
 	}
 
 	if (pComm->permissive)
 	{
 		if (!result)
 		{
-			CommLog_Print(WLOG_WARN, "[permissive]: whereas it failed, made to succeed IoControlCode=[0x%08"PRIX32"] %s, last-error: 0x%08"PRIX32"",
-				dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), GetLastError());
+			CommLog_Print(
+			    WLOG_WARN,
+			    "[permissive]: whereas it failed, made to succeed IoControlCode=[0x%08" PRIX32
+			    "] %s, last-error: 0x%08" PRIX32 "",
+			    dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), GetLastError());
 		}
 
 		return TRUE; /* always! */
@@ -690,7 +692,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	return result;
 }
 
-int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *termios_p)
+int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
 {
 	int result;
 	struct termios currentState;
@@ -711,7 +713,8 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 
 	if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
 	{
-		CommLog_Print(WLOG_DEBUG, "all termios parameters are not set yet, doing a second attempt...");
+		CommLog_Print(WLOG_DEBUG,
+		              "all termios parameters are not set yet, doing a second attempt...");
 		if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)
 		{
 			CommLog_Print(WLOG_WARN, "2nd tcsetattr failure, errno: %d", errno);
@@ -727,13 +730,13 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 
 		if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
 		{
-			CommLog_Print(WLOG_WARN, "Failure: all termios parameters are still not set on a second attempt");
+			CommLog_Print(WLOG_WARN,
+			              "Failure: all termios parameters are still not set on a second attempt");
 			return -1;
 		}
 	}
 
 	return 0;
 }
-
 
 #endif /* __linux__ */

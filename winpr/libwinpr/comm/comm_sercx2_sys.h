@@ -25,10 +25,11 @@
 #include "comm_ioctl.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-SERIAL_DRIVER* SerCx2Sys_s();
+	SERIAL_DRIVER* SerCx2Sys_s();
 
 #ifdef __cplusplus
 }

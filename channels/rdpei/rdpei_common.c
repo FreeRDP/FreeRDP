@@ -408,7 +408,7 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 4:
-			*value = ((UINT64) (byte & 0x1F)) << 32;
+			*value = ((UINT64)(byte & 0x1F)) << 32;
 			Stream_Read_UINT8(s, byte);
 			*value |= (byte << 24);
 			Stream_Read_UINT8(s, byte);
@@ -420,9 +420,9 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 5:
-			*value = ((UINT64) (byte & 0x1F)) << 40;
+			*value = ((UINT64)(byte & 0x1F)) << 40;
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64) byte) << 32);
+			*value |= (((UINT64)byte) << 32);
 			Stream_Read_UINT8(s, byte);
 			*value |= (byte << 24);
 			Stream_Read_UINT8(s, byte);
@@ -434,11 +434,11 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 6:
-			*value = ((UINT64) (byte & 0x1F)) << 48;
+			*value = ((UINT64)(byte & 0x1F)) << 48;
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64) byte) << 40);
+			*value |= (((UINT64)byte) << 40);
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64) byte) << 32);
+			*value |= (((UINT64)byte) << 32);
 			Stream_Read_UINT8(s, byte);
 			*value |= (byte << 24);
 			Stream_Read_UINT8(s, byte);
@@ -450,13 +450,13 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 7:
-			*value = ((UINT64) (byte & 0x1F)) << 56;
+			*value = ((UINT64)(byte & 0x1F)) << 56;
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64) byte) << 48);
+			*value |= (((UINT64)byte) << 48);
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64) byte) << 40);
+			*value |= (((UINT64)byte) << 40);
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64) byte) << 32);
+			*value |= (((UINT64)byte) << 32);
 			Stream_Read_UINT8(s, byte);
 			*value |= (byte << 24);
 			Stream_Read_UINT8(s, byte);
@@ -589,7 +589,7 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 	return TRUE;
 }
 
-void touch_event_reset(RDPINPUT_TOUCH_EVENT *event)
+void touch_event_reset(RDPINPUT_TOUCH_EVENT* event)
 {
 	int i;
 
@@ -601,8 +601,7 @@ void touch_event_reset(RDPINPUT_TOUCH_EVENT *event)
 	event->frameCount = 0;
 }
 
-
-void touch_frame_reset(RDPINPUT_TOUCH_FRAME *frame)
+void touch_frame_reset(RDPINPUT_TOUCH_FRAME* frame)
 {
 	free(frame->contacts);
 	frame->contacts = NULL;

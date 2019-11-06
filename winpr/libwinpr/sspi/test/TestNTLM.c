@@ -62,17 +62,17 @@ static const char* TEST_NTLM_USER = "Username";
 static const char* TEST_NTLM_DOMAIN = "Domain";
 static const char* TEST_NTLM_PASSWORD = "P4ss123!";
 
-//static const char* TEST_NTLM_HASH_STRING = "d5922a65c4d5c082ca444af1be0001db";
+// static const char* TEST_NTLM_HASH_STRING = "d5922a65c4d5c082ca444af1be0001db";
 
-static const BYTE TEST_NTLM_HASH[16] =
-{ 0xd5, 0x92, 0x2a, 0x65, 0xc4, 0xd5, 0xc0, 0x82, 0xca, 0x44, 0x4a, 0xf1, 0xbe, 0x00, 0x01, 0xdb };
+static const BYTE TEST_NTLM_HASH[16] = { 0xd5, 0x92, 0x2a, 0x65, 0xc4, 0xd5, 0xc0, 0x82,
+	                                     0xca, 0x44, 0x4a, 0xf1, 0xbe, 0x00, 0x01, 0xdb };
 
-//static const char* TEST_NTLM_HASH_V2_STRING = "4c7f706f7dde05a9d1a0f4e7ffe3bfb8";
+// static const char* TEST_NTLM_HASH_V2_STRING = "4c7f706f7dde05a9d1a0f4e7ffe3bfb8";
 
-static const BYTE TEST_NTLM_V2_HASH[16] =
-{ 0x4c, 0x7f, 0x70, 0x6f, 0x7d, 0xde, 0x05, 0xa9, 0xd1, 0xa0, 0xf4, 0xe7, 0xff, 0xe3, 0xbf, 0xb8 };
+static const BYTE TEST_NTLM_V2_HASH[16] = { 0x4c, 0x7f, 0x70, 0x6f, 0x7d, 0xde, 0x05, 0xa9,
+	                                        0xd1, 0xa0, 0xf4, 0xe7, 0xff, 0xe3, 0xbf, 0xb8 };
 
-#define NTLM_PACKAGE_NAME	NTLM_SSP_NAME
+#define NTLM_PACKAGE_NAME NTLM_SSP_NAME
 
 struct _TEST_NTLM_CLIENT
 {
@@ -108,18 +108,19 @@ int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* 
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%08"PRIX32")\n",
+		fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%08" PRIX32 ")\n",
 		        GetSecurityStatusString(status), status);
 		return -1;
 	}
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
-	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
-	         SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL, &ntlm->credentials, &ntlm->expiration);
+	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME, SECPKG_CRED_OUTBOUND,
+	                                               NULL, &ntlm->identity, NULL, NULL,
+	                                               &ntlm->credentials, &ntlm->expiration);
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%08"PRIX32")\n",
+		fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%08" PRIX32 ")\n",
 		        GetSecurityStatusString(status), status);
 		return -1;
 	}
@@ -236,13 +237,11 @@ int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 		return -1;
 	}
 
-	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,
-	         (ntlm->haveContext) ? &ntlm->context : NULL,
-	         (ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL,
-	         ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
-	         (ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL,
-	         0, &ntlm->context, &ntlm->outputBufferDesc,
-	         &ntlm->pfContextAttr, &ntlm->expiration);
+	status = ntlm->table->InitializeSecurityContext(
+	    &ntlm->credentials, (ntlm->haveContext) ? &ntlm->context : NULL,
+	    (ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL, ntlm->fContextReq, 0,
+	    SECURITY_NATIVE_DREP, (ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL, 0,
+	    &ntlm->context, &ntlm->outputBufferDesc, &ntlm->pfContextAttr, &ntlm->expiration);
 
 	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 	{
@@ -268,7 +267,7 @@ int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 TEST_NTLM_CLIENT* test_ntlm_client_new()
 {
 	TEST_NTLM_CLIENT* ntlm;
-	ntlm = (TEST_NTLM_CLIENT*) calloc(1, sizeof(TEST_NTLM_CLIENT));
+	ntlm = (TEST_NTLM_CLIENT*)calloc(1, sizeof(TEST_NTLM_CLIENT));
 
 	if (!ntlm)
 		return NULL;
@@ -319,19 +318,19 @@ int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%08"PRIX32")\n",
+		fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%08" PRIX32 ")\n",
 		        GetSecurityStatusString(status), status);
 		return -1;
 	}
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
-	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
-	         SECPKG_CRED_INBOUND, NULL, NULL, NULL, NULL,
-	         &ntlm->credentials, &ntlm->expiration);
+	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME, SECPKG_CRED_INBOUND,
+	                                               NULL, NULL, NULL, NULL, &ntlm->credentials,
+	                                               &ntlm->expiration);
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%08"PRIX32")\n",
+		fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%08" PRIX32 ")\n",
 		        GetSecurityStatusString(status), status);
 		return -1;
 	}
@@ -393,10 +392,10 @@ int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 	if (!ntlm->outputBuffer[0].pvBuffer)
 		return -1;
 
-	status = ntlm->table->AcceptSecurityContext(&ntlm->credentials,
-	         ntlm->haveContext ? &ntlm->context : NULL,
-	         &ntlm->inputBufferDesc, ntlm->fContextReq, SECURITY_NATIVE_DREP, &ntlm->context,
-	         &ntlm->outputBufferDesc, &ntlm->pfContextAttr, &ntlm->expiration);
+	status = ntlm->table->AcceptSecurityContext(
+	    &ntlm->credentials, ntlm->haveContext ? &ntlm->context : NULL, &ntlm->inputBufferDesc,
+	    ntlm->fContextReq, SECURITY_NATIVE_DREP, &ntlm->context, &ntlm->outputBufferDesc,
+	    &ntlm->pfContextAttr, &ntlm->expiration);
 
 	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 	{
@@ -405,7 +404,7 @@ int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 		ZeroMemory(&AuthIdentity, sizeof(SecPkgContext_AuthIdentity));
 		ZeroMemory(&AuthNtlmHash, sizeof(SecPkgContext_AuthNtlmHash));
 		status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_AUTH_IDENTITY,
-		         &AuthIdentity);
+		                                             &AuthIdentity);
 
 		if (status == SEC_E_OK)
 		{
@@ -422,8 +421,9 @@ int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 					CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_HASH, 16);
 				}
 
-				status = ntlm->table->SetContextAttributes(&ntlm->context,
-				         SECPKG_ATTR_AUTH_NTLM_HASH, &AuthNtlmHash, sizeof(SecPkgContext_AuthNtlmHash));
+				status = ntlm->table->SetContextAttributes(
+				    &ntlm->context, SECPKG_ATTR_AUTH_NTLM_HASH, &AuthNtlmHash,
+				    sizeof(SecPkgContext_AuthNtlmHash));
 			}
 		}
 
@@ -438,7 +438,7 @@ int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 
 	if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))
 	{
-		fprintf(stderr, "AcceptSecurityContext status: %s (0x%08"PRIX32")\n",
+		fprintf(stderr, "AcceptSecurityContext status: %s (0x%08" PRIX32 ")\n",
 		        GetSecurityStatusString(status), status);
 		return -1; /* Access Denied */
 	}
@@ -450,7 +450,7 @@ int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 TEST_NTLM_SERVER* test_ntlm_server_new()
 {
 	TEST_NTLM_SERVER* ntlm;
-	ntlm = (TEST_NTLM_SERVER*) calloc(1, sizeof(TEST_NTLM_SERVER));
+	ntlm = (TEST_NTLM_SERVER*)calloc(1, sizeof(TEST_NTLM_SERVER));
 
 	if (!ntlm)
 		return NULL;
@@ -531,16 +531,20 @@ int TestNTLM(int argc, char* argv[])
 		CopyMemory(AuthNtlmTimestamp.Timestamp, TEST_NTLM_TIMESTAMP, 8);
 		AuthNtlmTimestamp.ChallengeOrResponse = TRUE;
 		client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
-		                                    &AuthNtlmTimestamp, sizeof(SecPkgContext_AuthNtlmTimestamp));
+		                                    &AuthNtlmTimestamp,
+		                                    sizeof(SecPkgContext_AuthNtlmTimestamp));
 		AuthNtlmTimestamp.ChallengeOrResponse = FALSE;
 		client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
-		                                    &AuthNtlmTimestamp, sizeof(SecPkgContext_AuthNtlmTimestamp));
+		                                    &AuthNtlmTimestamp,
+		                                    sizeof(SecPkgContext_AuthNtlmTimestamp));
 		CopyMemory(AuthNtlmClientChallenge.ClientChallenge, TEST_NTLM_CLIENT_CHALLENGE, 8);
 		CopyMemory(AuthNtlmServerChallenge.ServerChallenge, TEST_NTLM_SERVER_CHALLENGE, 8);
-		client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE,
-		                                    &AuthNtlmClientChallenge, sizeof(SecPkgContext_AuthNtlmClientChallenge));
-		client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE,
-		                                    &AuthNtlmServerChallenge, sizeof(SecPkgContext_AuthNtlmServerChallenge));
+		client->table->SetContextAttributes(
+		    &client->context, SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE, &AuthNtlmClientChallenge,
+		    sizeof(SecPkgContext_AuthNtlmClientChallenge));
+		client->table->SetContextAttributes(
+		    &client->context, SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE, &AuthNtlmServerChallenge,
+		    sizeof(SecPkgContext_AuthNtlmServerChallenge));
 	}
 
 	pSecBuffer = &(client->outputBuffer[0]);
@@ -548,7 +552,7 @@ int TestNTLM(int argc, char* argv[])
 	if (!DynamicTest)
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_NEGOTIATE) - 1;
-		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = (void*)malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
 		{
@@ -559,8 +563,8 @@ int TestNTLM(int argc, char* argv[])
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_NEGOTIATE, pSecBuffer->cbBuffer);
 	}
 
-	fprintf(stderr, "NTLM_NEGOTIATE (length = %"PRIu32"):\n", pSecBuffer->cbBuffer);
-	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+	fprintf(stderr, "NTLM_NEGOTIATE (length = %" PRIu32 "):\n", pSecBuffer->cbBuffer);
+	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*)pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Server <- Negotiate Message
 	 * Server -> Challenge Message
@@ -585,16 +589,20 @@ int TestNTLM(int argc, char* argv[])
 		CopyMemory(AuthNtlmTimestamp.Timestamp, TEST_NTLM_TIMESTAMP, 8);
 		AuthNtlmTimestamp.ChallengeOrResponse = TRUE;
 		client->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
-		                                    &AuthNtlmTimestamp, sizeof(SecPkgContext_AuthNtlmTimestamp));
+		                                    &AuthNtlmTimestamp,
+		                                    sizeof(SecPkgContext_AuthNtlmTimestamp));
 		AuthNtlmTimestamp.ChallengeOrResponse = FALSE;
 		client->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
-		                                    &AuthNtlmTimestamp, sizeof(SecPkgContext_AuthNtlmTimestamp));
+		                                    &AuthNtlmTimestamp,
+		                                    sizeof(SecPkgContext_AuthNtlmTimestamp));
 		CopyMemory(AuthNtlmClientChallenge.ClientChallenge, TEST_NTLM_CLIENT_CHALLENGE, 8);
 		CopyMemory(AuthNtlmServerChallenge.ServerChallenge, TEST_NTLM_SERVER_CHALLENGE, 8);
-		server->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE,
-		                                    &AuthNtlmClientChallenge, sizeof(SecPkgContext_AuthNtlmClientChallenge));
-		server->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE,
-		                                    &AuthNtlmServerChallenge, sizeof(SecPkgContext_AuthNtlmServerChallenge));
+		server->table->SetContextAttributes(
+		    &server->context, SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE, &AuthNtlmClientChallenge,
+		    sizeof(SecPkgContext_AuthNtlmClientChallenge));
+		server->table->SetContextAttributes(
+		    &server->context, SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE, &AuthNtlmServerChallenge,
+		    sizeof(SecPkgContext_AuthNtlmServerChallenge));
 	}
 
 	pSecBuffer = &(server->outputBuffer[0]);
@@ -603,7 +611,7 @@ int TestNTLM(int argc, char* argv[])
 	{
 		SecPkgContext_AuthNtlmMessage AuthNtlmMessage;
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_CHALLENGE) - 1;
-		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = (void*)malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
 		{
@@ -614,13 +622,14 @@ int TestNTLM(int argc, char* argv[])
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_CHALLENGE, pSecBuffer->cbBuffer);
 		AuthNtlmMessage.type = 2;
 		AuthNtlmMessage.length = pSecBuffer->cbBuffer;
-		AuthNtlmMessage.buffer = (BYTE*) pSecBuffer->pvBuffer;
+		AuthNtlmMessage.buffer = (BYTE*)pSecBuffer->pvBuffer;
 		server->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_MESSAGE,
-		                                    &AuthNtlmMessage, sizeof(SecPkgContext_AuthNtlmMessage));
+		                                    &AuthNtlmMessage,
+		                                    sizeof(SecPkgContext_AuthNtlmMessage));
 	}
 
-	fprintf(stderr, "NTLM_CHALLENGE (length = %"PRIu32"):\n", pSecBuffer->cbBuffer);
-	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+	fprintf(stderr, "NTLM_CHALLENGE (length = %" PRIu32 "):\n", pSecBuffer->cbBuffer);
+	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*)pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Client <- Challenge Message
 	 * Client -> Authenticate Message
@@ -642,7 +651,7 @@ int TestNTLM(int argc, char* argv[])
 	if (!DynamicTest)
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_AUTHENTICATE) - 1;
-		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = (void*)malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
 		{
@@ -653,8 +662,8 @@ int TestNTLM(int argc, char* argv[])
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_AUTHENTICATE, pSecBuffer->cbBuffer);
 	}
 
-	fprintf(stderr, "NTLM_AUTHENTICATE (length = %"PRIu32"):\n", pSecBuffer->cbBuffer);
-	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+	fprintf(stderr, "NTLM_AUTHENTICATE (length = %" PRIu32 "):\n", pSecBuffer->cbBuffer);
+	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*)pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Server <- Authenticate Message
 	 */

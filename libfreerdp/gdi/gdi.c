@@ -55,279 +55,274 @@ typedef struct
 	const char* name;
 } rop_table_entry;
 
-static const rop_table_entry rop3_code_table[] =
-{
-	{ GDI_BLACKNESS, "0" },
-	{ GDI_DPSoon, "DPSoon" },
-	{ GDI_DPSona, "DPSona" },
-	{ GDI_PSon, "PSon" },
-	{ GDI_SDPona, "SDPona" },
-	{ GDI_DPon, "DPon" },
-	{ GDI_PDSxnon, "PDSxnon" },
-	{ GDI_PDSaon, "PDSaon" },
-	{ GDI_SDPnaa, "SDPnaa" },
-	{ GDI_PDSxon, "PDSxon" },
-	{ GDI_DPna, "DPna" },
-	{ GDI_PSDnaon, "PSDnaon" },
-	{ GDI_SPna, "SPna" },
-	{ GDI_PDSnaon, "PDSnaon" },
-	{ GDI_PDSonon, "PDSonon" },
-	{ GDI_Pn	, "Pn" },
-	{ GDI_PDSona, "PDSona" },
-	{ GDI_NOTSRCERASE, "DSon" },
-	{ GDI_SDPxnon, "SDPxnon" },
-	{ GDI_SDPaon, "SDPaon" },
-	{ GDI_DPSxnon, "DPSxnon" },
-	{ GDI_DPSaon, "DPSaon" },
-	{ GDI_PSDPSanaxx, "PSDPSanaxx" },
-	{ GDI_SSPxDSxaxn, "SSPxDSxaxn" },
-	{ GDI_SPxPDxa, "SPxPDxa" },
-	{ GDI_SDPSanaxn, "SDPSanaxn" },
-	{ GDI_PDSPaox, "PDSPaox" },
-	{ GDI_SDPSxaxn, "SDPSxaxn" },
-	{ GDI_PSDPaox, "PSDPaox" },
-	{ GDI_DSPDxaxn, "DSPDxaxn" },
-	{ GDI_PDSox, "PDSox" },
-	{ GDI_PDSoan, "PDSoan" },
-	{ GDI_DPSnaa, "DPSnaa" },
-	{ GDI_SDPxon, "SDPxon" },
-	{ GDI_DSna, "DSna" },
-	{ GDI_SPDnaon, "SPDnaon" },
-	{ GDI_SPxDSxa, "SPxDSxa" },
-	{ GDI_PDSPanaxn, "PDSPanaxn" },
-	{ GDI_SDPSaox, "SDPSaox" },
-	{ GDI_SDPSxnox, "SDPSxnox" },
-	{ GDI_DPSxa, "DPSxa" },
-	{ GDI_PSDPSaoxxn, "PSDPSaoxxn" },
-	{ GDI_DPSana, "DPSana" },
-	{ GDI_SSPxPDxaxn, "SSPxPDxaxn" },
-	{ GDI_SPDSoax, "SPDSoax" },
-	{ GDI_PSDnox, "PSDnox" },
-	{ GDI_PSDPxox, "PSDPxox" },
-	{ GDI_PSDnoan, "PSDnoan" },
-	{ GDI_PSna, "PSna" },
-	{ GDI_SDPnaon, "SDPnaon" },
-	{ GDI_SDPSoox, "SDPSoox" },
-	{ GDI_NOTSRCCOPY, "Sn" },
-	{ GDI_SPDSaox, "SPDSaox" },
-	{ GDI_SPDSxnox, "SPDSxnox" },
-	{ GDI_SDPox, "SDPox" },
-	{ GDI_SDPoan, "SDPoan" },
-	{ GDI_PSDPoax, "PSDPoax" },
-	{ GDI_SPDnox, "SPDnox" },
-	{ GDI_SPDSxox, "SPDSxox" },
-	{ GDI_SPDnoan, "SPDnoan" },
-	{ GDI_PSx	, "PSx" },
-	{ GDI_SPDSonox, "SPDSonox" },
-	{ GDI_SPDSnaox, "SPDSnaox" },
-	{ GDI_PSan, "PSan" },
-	{ GDI_PSDnaa, "PSDnaa" },
-	{ GDI_DPSxon, "DPSxon" },
-	{ GDI_SDxPDxa, "SDxPDxa" },
-	{ GDI_SPDSanaxn, "SPDSanaxn" },
-	{ GDI_SRCERASE, "SDna" },
-	{ GDI_DPSnaon, "DPSnaon" },
-	{ GDI_DSPDaox, "DSPDaox" },
-	{ GDI_PSDPxaxn, "PSDPxaxn" },
-	{ GDI_SDPxa, "SDPxa" },
-	{ GDI_PDSPDaoxxn, "PDSPDaoxxn" },
-	{ GDI_DPSDoax, "DPSDoax" },
-	{ GDI_PDSnox, "PDSnox" },
-	{ GDI_SDPana, "SDPana" },
-	{ GDI_SSPxDSxoxn, "SSPxDSxoxn" },
-	{ GDI_PDSPxox, "PDSPxox" },
-	{ GDI_PDSnoan, "PDSnoan" },
-	{ GDI_PDna, "PDna" },
-	{ GDI_DSPnaon, "DSPnaon" },
-	{ GDI_DPSDaox, "DPSDaox" },
-	{ GDI_SPDSxaxn, "SPDSxaxn" },
-	{ GDI_DPSonon, "DPSonon" },
-	{ GDI_DSTINVERT, "Dn" },
-	{ GDI_DPSox, "DPSox" },
-	{ GDI_DPSoan, "DPSoan" },
-	{ GDI_PDSPoax, "PDSPoax" },
-	{ GDI_DPSnox, "DPSnox" },
-	{ GDI_PATINVERT, "DPx" },
-	{ GDI_DPSDonox, "DPSDonox" },
-	{ GDI_DPSDxox, "DPSDxox" },
-	{ GDI_DPSnoan, "DPSnoan" },
-	{ GDI_DPSDnaox, "DPSDnaox" },
-	{ GDI_DPan, "DPan" },
-	{ GDI_PDSxa, "PDSxa" },
-	{ GDI_DSPDSaoxxn, "DSPDSaoxxn" },
-	{ GDI_DSPDoax, "DSPDoax" },
-	{ GDI_SDPnox, "SDPnox" },
-	{ GDI_SDPSoax, "SDPSoax" },
-	{ GDI_DSPnox, "DSPnox" },
-	{ GDI_SRCINVERT, "DSx" },
-	{ GDI_SDPSonox, "SDPSonox" },
-	{ GDI_DSPDSonoxxn, "DSPDSonoxxn" },
-	{ GDI_PDSxxn, "PDSxxn" },
-	{ GDI_DPSax, "DPSax" },
-	{ GDI_PSDPSoaxxn, "PSDPSoaxxn" },
-	{ GDI_SDPax, "SDPax" },
-	{ GDI_PDSPDoaxxn, "PDSPDoaxxn" },
-	{ GDI_SDPSnoax, "SDPSnoax" },
-	{ GDI_PDSxnan, "PDSxnan" },
-	{ GDI_PDSana, "PDSana" },
-	{ GDI_SSDxPDxaxn, "SSDxPDxaxn" },
-	{ GDI_SDPSxox, "SDPSxox" },
-	{ GDI_SDPnoan, "SDPnoan" },
-	{ GDI_DSPDxox, "DSPDxox" },
-	{ GDI_DSPnoan, "DSPnoan" },
-	{ GDI_SDPSnaox, "SDPSnaox" },
-	{ GDI_DSan, "DSan" },
-	{ GDI_PDSax, "PDSax" },
-	{ GDI_DSPDSoaxxn, "DSPDSoaxxn" },
-	{ GDI_DPSDnoax, "DPSDnoax" },
-	{ GDI_SDPxnan, "SDPxnan" },
-	{ GDI_SPDSnoax, "SPDSnoax" },
-	{ GDI_DPSxnan, "DPSxnan" },
-	{ GDI_SPxDSxo, "SPxDSxo" },
-	{ GDI_DPSaan, "DPSaan" },
-	{ GDI_DPSaa, "DPSaa" },
-	{ GDI_SPxDSxon, "SPxDSxon" },
-	{ GDI_DPSxna, "DPSxna" },
-	{ GDI_SPDSnoaxn, "SPDSnoaxn" },
-	{ GDI_SDPxna, "SDPxna" },
-	{ GDI_PDSPnoaxn, "PDSPnoaxn" },
-	{ GDI_DSPDSoaxx, "DSPDSoaxx" },
-	{ GDI_PDSaxn, "PDSaxn" },
-	{ GDI_SRCAND, "DSa" },
-	{ GDI_SDPSnaoxn, "SDPSnaoxn" },
-	{ GDI_DSPnoa, "DSPnoa" },
-	{ GDI_DSPDxoxn, "DSPDxoxn" },
-	{ GDI_SDPnoa, "SDPnoa" },
-	{ GDI_SDPSxoxn, "SDPSxoxn" },
-	{ GDI_SSDxPDxax, "SSDxPDxax" },
-	{ GDI_PDSanan, "PDSanan" },
-	{ GDI_PDSxna, "PDSxna" },
-	{ GDI_SDPSnoaxn, "SDPSnoaxn" },
-	{ GDI_DPSDPoaxx, "DPSDPoaxx" },
-	{ GDI_SPDaxn, "SPDaxn" },
-	{ GDI_PSDPSoaxx, "PSDPSoaxx" },
-	{ GDI_DPSaxn, "DPSaxn" },
-	{ GDI_DPSxx, "DPSxx" },
-	{ GDI_PSDPSonoxx, "PSDPSonoxx" },
-	{ GDI_SDPSonoxn, "SDPSonoxn" },
-	{ GDI_DSxn, "DSxn" },
-	{ GDI_DPSnax, "DPSnax" },
-	{ GDI_SDPSoaxn, "SDPSoaxn" },
-	{ GDI_SPDnax, "SPDnax" },
-	{ GDI_DSPDoaxn, "DSPDoaxn" },
-	{ GDI_DSPDSaoxx, "DSPDSaoxx" },
-	{ GDI_PDSxan, "PDSxan" },
-	{ GDI_DPa	, "DPa" },
-	{ GDI_PDSPnaoxn, "PDSPnaoxn" },
-	{ GDI_DPSnoa, "DPSnoa" },
-	{ GDI_DPSDxoxn, "DPSDxoxn" },
-	{ GDI_PDSPonoxn, "PDSPonoxn" },
-	{ GDI_PDxn, "PDxn" },
-	{ GDI_DSPnax, "DSPnax" },
-	{ GDI_PDSPoaxn, "PDSPoaxn" },
-	{ GDI_DPSoa, "DPSoa" },
-	{ GDI_DPSoxn, "DPSoxn" },
-	{ GDI_DSTCOPY, "D" },
-	{ GDI_DPSono, "DPSono" },
-	{ GDI_SPDSxax, "SPDSxax" },
-	{ GDI_DPSDaoxn, "DPSDaoxn" },
-	{ GDI_DSPnao, "DSPnao" },
-	{ GDI_DPno, "DPno" },
-	{ GDI_PDSnoa, "PDSnoa" },
-	{ GDI_PDSPxoxn, "PDSPxoxn" },
-	{ GDI_SSPxDSxox, "SSPxDSxox" },
-	{ GDI_SDPanan, "SDPanan" },
-	{ GDI_PSDnax, "PSDnax" },
-	{ GDI_DPSDoaxn, "DPSDoaxn" },
-	{ GDI_DPSDPaoxx, "DPSDPaoxx" },
-	{ GDI_SDPxan, "SDPxan" },
-	{ GDI_PSDPxax, "PSDPxax" },
-	{ GDI_DSPDaoxn, "DSPDaoxn" },
-	{ GDI_DPSnao, "DPSnao" },
-	{ GDI_MERGEPAINT, "DSno" },
-	{ GDI_SPDSanax, "SPDSanax" },
-	{ GDI_SDxPDxan, "SDxPDxan" },
-	{ GDI_DPSxo, "DPSxo" },
-	{ GDI_DPSano, "DPSano" },
-	{ GDI_MERGECOPY, "PSa" },
-	{ GDI_SPDSnaoxn, "SPDSnaoxn" },
-	{ GDI_SPDSonoxn, "SPDSonoxn" },
-	{ GDI_PSxn, "PSxn" },
-	{ GDI_SPDnoa, "SPDnoa" },
-	{ GDI_SPDSxoxn, "SPDSxoxn" },
-	{ GDI_SDPnax, "SDPnax" },
-	{ GDI_PSDPoaxn, "PSDPoaxn" },
-	{ GDI_SDPoa, "SDPoa" },
-	{ GDI_SPDoxn, "SPDoxn" },
-	{ GDI_DPSDxax, "DPSDxax" },
-	{ GDI_SPDSaoxn, "SPDSaoxn" },
-	{ GDI_SRCCOPY, "S" },
-	{ GDI_SDPono, "SDPono" },
-	{ GDI_SDPnao, "SDPnao" },
-	{ GDI_SPno, "SPno" },
-	{ GDI_PSDnoa, "PSDnoa" },
-	{ GDI_PSDPxoxn, "PSDPxoxn" },
-	{ GDI_PDSnax, "PDSnax" },
-	{ GDI_SPDSoaxn, "SPDSoaxn" },
-	{ GDI_SSPxPDxax, "SSPxPDxax" },
-	{ GDI_DPSanan, "DPSanan" },
-	{ GDI_PSDPSaoxx, "PSDPSaoxx" },
-	{ GDI_DPSxan, "DPSxan" },
-	{ GDI_PDSPxax, "PDSPxax" },
-	{ GDI_SDPSaoxn, "SDPSaoxn" },
-	{ GDI_DPSDanax, "DPSDanax" },
-	{ GDI_SPxDSxan, "SPxDSxan" },
-	{ GDI_SPDnao, "SPDnao" },
-	{ GDI_SDno, "SDno" },
-	{ GDI_SDPxo, "SDPxo" },
-	{ GDI_SDPano, "SDPano" },
-	{ GDI_PDSoa, "PDSoa" },
-	{ GDI_PDSoxn, "PDSoxn" },
-	{ GDI_DSPDxax, "DSPDxax" },
-	{ GDI_PSDPaoxn, "PSDPaoxn" },
-	{ GDI_SDPSxax, "SDPSxax" },
-	{ GDI_PDSPaoxn, "PDSPaoxn" },
-	{ GDI_SDPSanax, "SDPSanax" },
-	{ GDI_SPxPDxan, "SPxPDxan" },
-	{ GDI_SSPxDSxax, "SSPxDSxax" },
-	{ GDI_DSPDSanaxxn, "DSPDSanaxxn" },
-	{ GDI_DPSao, "DPSao" },
-	{ GDI_DPSxno, "DPSxno" },
-	{ GDI_SDPao, "SDPao" },
-	{ GDI_SDPxno, "SDPxno" },
-	{ GDI_SRCPAINT, "DSo" },
-	{ GDI_SDPnoo, "SDPnoo" },
-	{ GDI_PATCOPY, "P" },
-	{ GDI_PDSono, "PDSono" },
-	{ GDI_PDSnao, "PDSnao" },
-	{ GDI_PSno, "PSno" },
-	{ GDI_PSDnao, "PSDnao" },
-	{ GDI_PDno, "PDno" },
-	{ GDI_PDSxo, "PDSxo" },
-	{ GDI_PDSano, "PDSano" },
-	{ GDI_PDSao, "PDSao" },
-	{ GDI_PDSxno, "PDSxno" },
-	{ GDI_DPo	, "DPo" },
-	{ GDI_PATPAINT, "DPSnoo" },
-	{ GDI_PSo	, "PSo" },
-	{ GDI_PSDnoo, "PSDnoo" },
-	{ GDI_DPSoo, "DPSoo" },
-	{ GDI_WHITENESS, "1" }
-};
+static const rop_table_entry rop3_code_table[] = { { GDI_BLACKNESS, "0" },
+	                                               { GDI_DPSoon, "DPSoon" },
+	                                               { GDI_DPSona, "DPSona" },
+	                                               { GDI_PSon, "PSon" },
+	                                               { GDI_SDPona, "SDPona" },
+	                                               { GDI_DPon, "DPon" },
+	                                               { GDI_PDSxnon, "PDSxnon" },
+	                                               { GDI_PDSaon, "PDSaon" },
+	                                               { GDI_SDPnaa, "SDPnaa" },
+	                                               { GDI_PDSxon, "PDSxon" },
+	                                               { GDI_DPna, "DPna" },
+	                                               { GDI_PSDnaon, "PSDnaon" },
+	                                               { GDI_SPna, "SPna" },
+	                                               { GDI_PDSnaon, "PDSnaon" },
+	                                               { GDI_PDSonon, "PDSonon" },
+	                                               { GDI_Pn, "Pn" },
+	                                               { GDI_PDSona, "PDSona" },
+	                                               { GDI_NOTSRCERASE, "DSon" },
+	                                               { GDI_SDPxnon, "SDPxnon" },
+	                                               { GDI_SDPaon, "SDPaon" },
+	                                               { GDI_DPSxnon, "DPSxnon" },
+	                                               { GDI_DPSaon, "DPSaon" },
+	                                               { GDI_PSDPSanaxx, "PSDPSanaxx" },
+	                                               { GDI_SSPxDSxaxn, "SSPxDSxaxn" },
+	                                               { GDI_SPxPDxa, "SPxPDxa" },
+	                                               { GDI_SDPSanaxn, "SDPSanaxn" },
+	                                               { GDI_PDSPaox, "PDSPaox" },
+	                                               { GDI_SDPSxaxn, "SDPSxaxn" },
+	                                               { GDI_PSDPaox, "PSDPaox" },
+	                                               { GDI_DSPDxaxn, "DSPDxaxn" },
+	                                               { GDI_PDSox, "PDSox" },
+	                                               { GDI_PDSoan, "PDSoan" },
+	                                               { GDI_DPSnaa, "DPSnaa" },
+	                                               { GDI_SDPxon, "SDPxon" },
+	                                               { GDI_DSna, "DSna" },
+	                                               { GDI_SPDnaon, "SPDnaon" },
+	                                               { GDI_SPxDSxa, "SPxDSxa" },
+	                                               { GDI_PDSPanaxn, "PDSPanaxn" },
+	                                               { GDI_SDPSaox, "SDPSaox" },
+	                                               { GDI_SDPSxnox, "SDPSxnox" },
+	                                               { GDI_DPSxa, "DPSxa" },
+	                                               { GDI_PSDPSaoxxn, "PSDPSaoxxn" },
+	                                               { GDI_DPSana, "DPSana" },
+	                                               { GDI_SSPxPDxaxn, "SSPxPDxaxn" },
+	                                               { GDI_SPDSoax, "SPDSoax" },
+	                                               { GDI_PSDnox, "PSDnox" },
+	                                               { GDI_PSDPxox, "PSDPxox" },
+	                                               { GDI_PSDnoan, "PSDnoan" },
+	                                               { GDI_PSna, "PSna" },
+	                                               { GDI_SDPnaon, "SDPnaon" },
+	                                               { GDI_SDPSoox, "SDPSoox" },
+	                                               { GDI_NOTSRCCOPY, "Sn" },
+	                                               { GDI_SPDSaox, "SPDSaox" },
+	                                               { GDI_SPDSxnox, "SPDSxnox" },
+	                                               { GDI_SDPox, "SDPox" },
+	                                               { GDI_SDPoan, "SDPoan" },
+	                                               { GDI_PSDPoax, "PSDPoax" },
+	                                               { GDI_SPDnox, "SPDnox" },
+	                                               { GDI_SPDSxox, "SPDSxox" },
+	                                               { GDI_SPDnoan, "SPDnoan" },
+	                                               { GDI_PSx, "PSx" },
+	                                               { GDI_SPDSonox, "SPDSonox" },
+	                                               { GDI_SPDSnaox, "SPDSnaox" },
+	                                               { GDI_PSan, "PSan" },
+	                                               { GDI_PSDnaa, "PSDnaa" },
+	                                               { GDI_DPSxon, "DPSxon" },
+	                                               { GDI_SDxPDxa, "SDxPDxa" },
+	                                               { GDI_SPDSanaxn, "SPDSanaxn" },
+	                                               { GDI_SRCERASE, "SDna" },
+	                                               { GDI_DPSnaon, "DPSnaon" },
+	                                               { GDI_DSPDaox, "DSPDaox" },
+	                                               { GDI_PSDPxaxn, "PSDPxaxn" },
+	                                               { GDI_SDPxa, "SDPxa" },
+	                                               { GDI_PDSPDaoxxn, "PDSPDaoxxn" },
+	                                               { GDI_DPSDoax, "DPSDoax" },
+	                                               { GDI_PDSnox, "PDSnox" },
+	                                               { GDI_SDPana, "SDPana" },
+	                                               { GDI_SSPxDSxoxn, "SSPxDSxoxn" },
+	                                               { GDI_PDSPxox, "PDSPxox" },
+	                                               { GDI_PDSnoan, "PDSnoan" },
+	                                               { GDI_PDna, "PDna" },
+	                                               { GDI_DSPnaon, "DSPnaon" },
+	                                               { GDI_DPSDaox, "DPSDaox" },
+	                                               { GDI_SPDSxaxn, "SPDSxaxn" },
+	                                               { GDI_DPSonon, "DPSonon" },
+	                                               { GDI_DSTINVERT, "Dn" },
+	                                               { GDI_DPSox, "DPSox" },
+	                                               { GDI_DPSoan, "DPSoan" },
+	                                               { GDI_PDSPoax, "PDSPoax" },
+	                                               { GDI_DPSnox, "DPSnox" },
+	                                               { GDI_PATINVERT, "DPx" },
+	                                               { GDI_DPSDonox, "DPSDonox" },
+	                                               { GDI_DPSDxox, "DPSDxox" },
+	                                               { GDI_DPSnoan, "DPSnoan" },
+	                                               { GDI_DPSDnaox, "DPSDnaox" },
+	                                               { GDI_DPan, "DPan" },
+	                                               { GDI_PDSxa, "PDSxa" },
+	                                               { GDI_DSPDSaoxxn, "DSPDSaoxxn" },
+	                                               { GDI_DSPDoax, "DSPDoax" },
+	                                               { GDI_SDPnox, "SDPnox" },
+	                                               { GDI_SDPSoax, "SDPSoax" },
+	                                               { GDI_DSPnox, "DSPnox" },
+	                                               { GDI_SRCINVERT, "DSx" },
+	                                               { GDI_SDPSonox, "SDPSonox" },
+	                                               { GDI_DSPDSonoxxn, "DSPDSonoxxn" },
+	                                               { GDI_PDSxxn, "PDSxxn" },
+	                                               { GDI_DPSax, "DPSax" },
+	                                               { GDI_PSDPSoaxxn, "PSDPSoaxxn" },
+	                                               { GDI_SDPax, "SDPax" },
+	                                               { GDI_PDSPDoaxxn, "PDSPDoaxxn" },
+	                                               { GDI_SDPSnoax, "SDPSnoax" },
+	                                               { GDI_PDSxnan, "PDSxnan" },
+	                                               { GDI_PDSana, "PDSana" },
+	                                               { GDI_SSDxPDxaxn, "SSDxPDxaxn" },
+	                                               { GDI_SDPSxox, "SDPSxox" },
+	                                               { GDI_SDPnoan, "SDPnoan" },
+	                                               { GDI_DSPDxox, "DSPDxox" },
+	                                               { GDI_DSPnoan, "DSPnoan" },
+	                                               { GDI_SDPSnaox, "SDPSnaox" },
+	                                               { GDI_DSan, "DSan" },
+	                                               { GDI_PDSax, "PDSax" },
+	                                               { GDI_DSPDSoaxxn, "DSPDSoaxxn" },
+	                                               { GDI_DPSDnoax, "DPSDnoax" },
+	                                               { GDI_SDPxnan, "SDPxnan" },
+	                                               { GDI_SPDSnoax, "SPDSnoax" },
+	                                               { GDI_DPSxnan, "DPSxnan" },
+	                                               { GDI_SPxDSxo, "SPxDSxo" },
+	                                               { GDI_DPSaan, "DPSaan" },
+	                                               { GDI_DPSaa, "DPSaa" },
+	                                               { GDI_SPxDSxon, "SPxDSxon" },
+	                                               { GDI_DPSxna, "DPSxna" },
+	                                               { GDI_SPDSnoaxn, "SPDSnoaxn" },
+	                                               { GDI_SDPxna, "SDPxna" },
+	                                               { GDI_PDSPnoaxn, "PDSPnoaxn" },
+	                                               { GDI_DSPDSoaxx, "DSPDSoaxx" },
+	                                               { GDI_PDSaxn, "PDSaxn" },
+	                                               { GDI_SRCAND, "DSa" },
+	                                               { GDI_SDPSnaoxn, "SDPSnaoxn" },
+	                                               { GDI_DSPnoa, "DSPnoa" },
+	                                               { GDI_DSPDxoxn, "DSPDxoxn" },
+	                                               { GDI_SDPnoa, "SDPnoa" },
+	                                               { GDI_SDPSxoxn, "SDPSxoxn" },
+	                                               { GDI_SSDxPDxax, "SSDxPDxax" },
+	                                               { GDI_PDSanan, "PDSanan" },
+	                                               { GDI_PDSxna, "PDSxna" },
+	                                               { GDI_SDPSnoaxn, "SDPSnoaxn" },
+	                                               { GDI_DPSDPoaxx, "DPSDPoaxx" },
+	                                               { GDI_SPDaxn, "SPDaxn" },
+	                                               { GDI_PSDPSoaxx, "PSDPSoaxx" },
+	                                               { GDI_DPSaxn, "DPSaxn" },
+	                                               { GDI_DPSxx, "DPSxx" },
+	                                               { GDI_PSDPSonoxx, "PSDPSonoxx" },
+	                                               { GDI_SDPSonoxn, "SDPSonoxn" },
+	                                               { GDI_DSxn, "DSxn" },
+	                                               { GDI_DPSnax, "DPSnax" },
+	                                               { GDI_SDPSoaxn, "SDPSoaxn" },
+	                                               { GDI_SPDnax, "SPDnax" },
+	                                               { GDI_DSPDoaxn, "DSPDoaxn" },
+	                                               { GDI_DSPDSaoxx, "DSPDSaoxx" },
+	                                               { GDI_PDSxan, "PDSxan" },
+	                                               { GDI_DPa, "DPa" },
+	                                               { GDI_PDSPnaoxn, "PDSPnaoxn" },
+	                                               { GDI_DPSnoa, "DPSnoa" },
+	                                               { GDI_DPSDxoxn, "DPSDxoxn" },
+	                                               { GDI_PDSPonoxn, "PDSPonoxn" },
+	                                               { GDI_PDxn, "PDxn" },
+	                                               { GDI_DSPnax, "DSPnax" },
+	                                               { GDI_PDSPoaxn, "PDSPoaxn" },
+	                                               { GDI_DPSoa, "DPSoa" },
+	                                               { GDI_DPSoxn, "DPSoxn" },
+	                                               { GDI_DSTCOPY, "D" },
+	                                               { GDI_DPSono, "DPSono" },
+	                                               { GDI_SPDSxax, "SPDSxax" },
+	                                               { GDI_DPSDaoxn, "DPSDaoxn" },
+	                                               { GDI_DSPnao, "DSPnao" },
+	                                               { GDI_DPno, "DPno" },
+	                                               { GDI_PDSnoa, "PDSnoa" },
+	                                               { GDI_PDSPxoxn, "PDSPxoxn" },
+	                                               { GDI_SSPxDSxox, "SSPxDSxox" },
+	                                               { GDI_SDPanan, "SDPanan" },
+	                                               { GDI_PSDnax, "PSDnax" },
+	                                               { GDI_DPSDoaxn, "DPSDoaxn" },
+	                                               { GDI_DPSDPaoxx, "DPSDPaoxx" },
+	                                               { GDI_SDPxan, "SDPxan" },
+	                                               { GDI_PSDPxax, "PSDPxax" },
+	                                               { GDI_DSPDaoxn, "DSPDaoxn" },
+	                                               { GDI_DPSnao, "DPSnao" },
+	                                               { GDI_MERGEPAINT, "DSno" },
+	                                               { GDI_SPDSanax, "SPDSanax" },
+	                                               { GDI_SDxPDxan, "SDxPDxan" },
+	                                               { GDI_DPSxo, "DPSxo" },
+	                                               { GDI_DPSano, "DPSano" },
+	                                               { GDI_MERGECOPY, "PSa" },
+	                                               { GDI_SPDSnaoxn, "SPDSnaoxn" },
+	                                               { GDI_SPDSonoxn, "SPDSonoxn" },
+	                                               { GDI_PSxn, "PSxn" },
+	                                               { GDI_SPDnoa, "SPDnoa" },
+	                                               { GDI_SPDSxoxn, "SPDSxoxn" },
+	                                               { GDI_SDPnax, "SDPnax" },
+	                                               { GDI_PSDPoaxn, "PSDPoaxn" },
+	                                               { GDI_SDPoa, "SDPoa" },
+	                                               { GDI_SPDoxn, "SPDoxn" },
+	                                               { GDI_DPSDxax, "DPSDxax" },
+	                                               { GDI_SPDSaoxn, "SPDSaoxn" },
+	                                               { GDI_SRCCOPY, "S" },
+	                                               { GDI_SDPono, "SDPono" },
+	                                               { GDI_SDPnao, "SDPnao" },
+	                                               { GDI_SPno, "SPno" },
+	                                               { GDI_PSDnoa, "PSDnoa" },
+	                                               { GDI_PSDPxoxn, "PSDPxoxn" },
+	                                               { GDI_PDSnax, "PDSnax" },
+	                                               { GDI_SPDSoaxn, "SPDSoaxn" },
+	                                               { GDI_SSPxPDxax, "SSPxPDxax" },
+	                                               { GDI_DPSanan, "DPSanan" },
+	                                               { GDI_PSDPSaoxx, "PSDPSaoxx" },
+	                                               { GDI_DPSxan, "DPSxan" },
+	                                               { GDI_PDSPxax, "PDSPxax" },
+	                                               { GDI_SDPSaoxn, "SDPSaoxn" },
+	                                               { GDI_DPSDanax, "DPSDanax" },
+	                                               { GDI_SPxDSxan, "SPxDSxan" },
+	                                               { GDI_SPDnao, "SPDnao" },
+	                                               { GDI_SDno, "SDno" },
+	                                               { GDI_SDPxo, "SDPxo" },
+	                                               { GDI_SDPano, "SDPano" },
+	                                               { GDI_PDSoa, "PDSoa" },
+	                                               { GDI_PDSoxn, "PDSoxn" },
+	                                               { GDI_DSPDxax, "DSPDxax" },
+	                                               { GDI_PSDPaoxn, "PSDPaoxn" },
+	                                               { GDI_SDPSxax, "SDPSxax" },
+	                                               { GDI_PDSPaoxn, "PDSPaoxn" },
+	                                               { GDI_SDPSanax, "SDPSanax" },
+	                                               { GDI_SPxPDxan, "SPxPDxan" },
+	                                               { GDI_SSPxDSxax, "SSPxDSxax" },
+	                                               { GDI_DSPDSanaxxn, "DSPDSanaxxn" },
+	                                               { GDI_DPSao, "DPSao" },
+	                                               { GDI_DPSxno, "DPSxno" },
+	                                               { GDI_SDPao, "SDPao" },
+	                                               { GDI_SDPxno, "SDPxno" },
+	                                               { GDI_SRCPAINT, "DSo" },
+	                                               { GDI_SDPnoo, "SDPnoo" },
+	                                               { GDI_PATCOPY, "P" },
+	                                               { GDI_PDSono, "PDSono" },
+	                                               { GDI_PDSnao, "PDSnao" },
+	                                               { GDI_PSno, "PSno" },
+	                                               { GDI_PSDnao, "PSDnao" },
+	                                               { GDI_PDno, "PDno" },
+	                                               { GDI_PDSxo, "PDSxo" },
+	                                               { GDI_PDSano, "PDSano" },
+	                                               { GDI_PDSao, "PDSao" },
+	                                               { GDI_PDSxno, "PDSxno" },
+	                                               { GDI_DPo, "DPo" },
+	                                               { GDI_PATPAINT, "DPSnoo" },
+	                                               { GDI_PSo, "PSo" },
+	                                               { GDI_PSDnoo, "PSDnoo" },
+	                                               { GDI_DPSoo, "DPSoo" },
+	                                               { GDI_WHITENESS, "1" } };
 
 /* Hatch Patterns as monochrome data */
-static const BYTE GDI_BS_HATCHED_PATTERNS[] =
-{
+static const BYTE GDI_BS_HATCHED_PATTERNS[] = {
 	0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, /* HS_HORIZONTAL */
 	0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, /* HS_VERTICAL */
 	0xFE, 0xFD, 0xFB, 0xF7, 0xEF, 0xDF, 0xBF, 0x7F, /* HS_FDIAGONAL */
 	0x7F, 0xBF, 0xDF, 0xEF, 0xF7, 0xFB, 0xFD, 0xFE, /* HS_BDIAGONAL */
 	0xF7, 0xF7, 0xF7, 0x00, 0xF7, 0xF7, 0xF7, 0xF7, /* HS_CROSS */
-	0x7E, 0xBD, 0xDB, 0xE7, 0xE7, 0xDB, 0xBD, 0x7E /* HS_DIACROSS */
+	0x7E, 0xBD, 0xDB, 0xE7, 0xE7, 0xDB, 0xBD, 0x7E  /* HS_DIACROSS */
 };
 
-INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor,
-                             UINT32* color, UINT32* format)
+INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor, UINT32* color, UINT32* format)
 {
 	UINT32 SrcFormat;
 	UINT32 ColorDepth;
@@ -419,7 +414,7 @@ UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unsupported color depth %"PRIu32, bitsPerPixel);
+			WLog_ERR(TAG, "Unsupported color depth %" PRIu32, bitsPerPixel);
 			format = 0;
 			break;
 	}
@@ -427,11 +422,10 @@ UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel)
 	return format;
 }
 
-gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp,
-                             BYTE* data)
+gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)
 {
 	gdiBitmap* bitmap;
-	bitmap = (gdiBitmap*) calloc(1, sizeof(gdiBitmap));
+	bitmap = (gdiBitmap*)calloc(1, sizeof(gdiBitmap));
 
 	if (!bitmap)
 		goto fail_bitmap;
@@ -439,8 +433,8 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp,
 	if (!(bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc)))
 		goto fail_hdc;
 
-	WLog_Print(gdi->log, WLOG_DEBUG, "gdi_bitmap_new: width:%d height:%d bpp:%d",
-	           width, height, bpp);
+	WLog_Print(gdi->log, WLOG_DEBUG, "gdi_bitmap_new: width:%d height:%d bpp:%d", width, height,
+	           bpp);
 
 	if (!data)
 		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, width, height);
@@ -450,7 +444,7 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp,
 	if (!bitmap->bitmap)
 		goto fail_bitmap_bitmap;
 
-	gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->bitmap);
+	gdi_SelectObject(bitmap->hdc, (HGDIOBJECT)bitmap->bitmap);
 	bitmap->org_bitmap = NULL;
 	return bitmap;
 fail_bitmap_bitmap:
@@ -465,15 +459,14 @@ void gdi_bitmap_free_ex(gdiBitmap* bitmap)
 {
 	if (bitmap)
 	{
-		gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->org_bitmap);
-		gdi_DeleteObject((HGDIOBJECT) bitmap->bitmap);
+		gdi_SelectObject(bitmap->hdc, (HGDIOBJECT)bitmap->org_bitmap);
+		gdi_DeleteObject((HGDIOBJECT)bitmap->bitmap);
 		gdi_DeleteDC(bitmap->hdc);
 		free(bitmap);
 	}
 }
 
-BOOL gdi_bitmap_update(rdpContext* context,
-                       const BITMAP_UPDATE* bitmapUpdate)
+BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 {
 	UINT32 index;
 
@@ -492,9 +485,8 @@ BOOL gdi_bitmap_update(rdpContext* context,
 		Bitmap_SetRectangle(bmp, bitmap->destLeft, bitmap->destTop, bitmap->destRight,
 		                    bitmap->destBottom);
 
-		if (!bmp->Decompress(context, bmp, bitmap->bitmapDataStream,
-		                     bitmap->width, bitmap->height, bitmap->bitsPerPixel,
-		                     bitmap->bitmapLength, bitmap->compressed,
+		if (!bmp->Decompress(context, bmp, bitmap->bitmapDataStream, bitmap->width, bitmap->height,
+		                     bitmap->bitsPerPixel, bitmap->bitmapLength, bitmap->compressed,
 		                     RDP_CODEC_ID_NONE))
 		{
 			Bitmap_Free(context, bmp);
@@ -519,8 +511,7 @@ BOOL gdi_bitmap_update(rdpContext* context,
 	return TRUE;
 }
 
-static BOOL gdi_palette_update(rdpContext* context,
-                               const PALETTE_UPDATE* palette)
+static BOOL gdi_palette_update(rdpContext* context, const PALETTE_UPDATE* palette)
 {
 	UINT32 index;
 	rdpGdi* gdi;
@@ -569,9 +560,8 @@ static BOOL gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 		return FALSE;
 
 	gdi = context->gdi;
-	return gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
-	                  dstblt->nWidth, dstblt->nHeight, NULL, 0, 0,
-	                  gdi_rop3_code(dstblt->bRop), &gdi->palette);
+	return gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth,
+	                  dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop), &gdi->palette);
 }
 
 static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
@@ -605,61 +595,59 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			break;
 
 		case GDI_BS_HATCHED:
-			{
-				const BYTE* hatched;
-				hatched = GDI_BS_HATCHED_PATTERNS + (8 * brush->hatch);
+		{
+			const BYTE* hatched;
+			hatched = GDI_BS_HATCHED_PATTERNS + (8 * brush->hatch);
 
-				if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0,
-				                                        0, 8, 8,
-				                                        hatched, backColor, foreColor, &gdi->palette))
-					goto out_error;
+			if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0, 0, 8, 8,
+			                                        hatched, backColor, foreColor, &gdi->palette))
+				goto out_error;
 
-				hBmp = gdi_CreateBitmapEx(8, 8, gdi->drawing->hdc->format, 0, data, NULL);
+			hBmp = gdi_CreateBitmapEx(8, 8, gdi->drawing->hdc->format, 0, data, NULL);
 
-				if (!hBmp)
-					goto out_error;
+			if (!hBmp)
+				goto out_error;
 
-				hbrush = gdi_CreateHatchBrush(hBmp);
-			}
-			break;
+			hbrush = gdi_CreateHatchBrush(hBmp);
+		}
+		break;
 
 		case GDI_BS_PATTERN:
+		{
+			UINT32 brushFormat;
+
+			if (brush->bpp > 1)
 			{
-				UINT32 brushFormat;
+				UINT32 bpp = brush->bpp;
 
-				if (brush->bpp > 1)
-				{
-					UINT32 bpp = brush->bpp;
+				if ((bpp == 16) && (context->settings->ColorDepth == 15))
+					bpp = 15;
 
-					if ((bpp == 16) && (context->settings->ColorDepth == 15))
-						bpp = 15;
+				brushFormat = gdi_get_pixel_format(bpp);
 
-					brushFormat = gdi_get_pixel_format(bpp);
-
-					if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0,
-					                        8, 8, brush->data, brushFormat, 0, 0, 0,
-					                        &gdi->palette, FREERDP_FLIP_NONE))
-						goto out_error;
-				}
-				else
-				{
-					if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0,
-					                                        0, 8, 8,
-					                                        brush->data, backColor, foreColor, &gdi->palette))
-						goto out_error;
-				}
-
-				hBmp = gdi_CreateBitmapEx(8, 8, gdi->drawing->hdc->format, 0, data, NULL);
-
-				if (!hBmp)
+				if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0, 8, 8, brush->data,
+				                        brushFormat, 0, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
 					goto out_error;
-
-				hbrush = gdi_CreatePatternBrush(hBmp);
 			}
-			break;
+			else
+			{
+				if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0, 0, 8,
+				                                        8, brush->data, backColor, foreColor,
+				                                        &gdi->palette))
+					goto out_error;
+			}
+
+			hBmp = gdi_CreateBitmapEx(8, 8, gdi->drawing->hdc->format, 0, data, NULL);
+
+			if (!hBmp)
+				goto out_error;
+
+			hbrush = gdi_CreatePatternBrush(hBmp);
+		}
+		break;
 
 		default:
-			WLog_ERR(TAG,  "unimplemented brush style:%"PRIu32"", brush->style);
+			WLog_ERR(TAG, "unimplemented brush style:%" PRIu32 "", brush->style);
 			break;
 	}
 
@@ -668,14 +656,13 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		hbrush->nXOrg = brush->x;
 		hbrush->nYOrg = brush->y;
 		gdi->drawing->hdc->brush = hbrush;
-		ret = gdi_BitBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-		                 patblt->nWidth, patblt->nHeight,
-		                 gdi->primary->hdc, nXSrc, nYSrc, rop, &gdi->palette);
+		ret = gdi_BitBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth,
+		                 patblt->nHeight, gdi->primary->hdc, nXSrc, nYSrc, rop, &gdi->palette);
 	}
 
 out_error:
-	gdi_DeleteObject((HGDIOBJECT) hBmp);
-	gdi_DeleteObject((HGDIOBJECT) hbrush);
+	gdi_DeleteObject((HGDIOBJECT)hBmp);
+	gdi_DeleteObject((HGDIOBJECT)hbrush);
 	gdi->drawing->hdc->brush = originalBrush;
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
 	return ret;
@@ -689,14 +676,12 @@ static BOOL gdi_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 		return FALSE;
 
 	gdi = context->gdi;
-	return gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
-	                  scrblt->nWidth, scrblt->nHeight, gdi->primary->hdc,
-	                  scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop),
-	                  &gdi->palette);
+	return gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect, scrblt->nWidth,
+	                  scrblt->nHeight, gdi->primary->hdc, scrblt->nXSrc, scrblt->nYSrc,
+	                  gdi_rop3_code(scrblt->bRop), &gdi->palette);
 }
 
-static BOOL gdi_opaque_rect(rdpContext* context,
-                            const OPAQUE_RECT_ORDER* opaque_rect)
+static BOOL gdi_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER* opaque_rect)
 {
 	GDI_RECT rect;
 	HGDI_BRUSH hBrush;
@@ -717,7 +702,7 @@ static BOOL gdi_opaque_rect(rdpContext* context,
 		return FALSE;
 
 	ret = gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
-	gdi_DeleteObject((HGDIOBJECT) hBrush);
+	gdi_DeleteObject((HGDIOBJECT)hBrush);
 	return ret;
 }
 
@@ -754,7 +739,7 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 			break;
 	}
 
-	gdi_DeleteObject((HGDIOBJECT) hBrush);
+	gdi_DeleteObject((HGDIOBJECT)hBrush);
 	return ret;
 }
 
@@ -775,15 +760,15 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 	if (!gdi_decode_color(gdi, lineTo->penColor, &color, NULL))
 		return FALSE;
 
-	if (!(hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, color,
-	                           gdi->drawing->hdc->format, &gdi->palette)))
+	if (!(hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, color, gdi->drawing->hdc->format,
+	                           &gdi->palette)))
 		return FALSE;
 
-	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
+	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
 	gdi_SetROP2(gdi->drawing->hdc, lineTo->bRop2);
 	gdi_MoveToEx(gdi->drawing->hdc, lineTo->nXStart, lineTo->nYStart, NULL);
 	gdi_LineTo(gdi->drawing->hdc, lineTo->nXEnd, lineTo->nYEnd);
-	gdi_DeleteObject((HGDIOBJECT) hPen);
+	gdi_DeleteObject((HGDIOBJECT)hPen);
 	return TRUE;
 }
 
@@ -801,11 +786,10 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	if (!gdi_decode_color(gdi, polyline->penColor, &color, NULL))
 		return FALSE;
 
-	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 1, color, gdi->drawing->hdc->format,
-	                           &gdi->palette)))
+	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 1, color, gdi->drawing->hdc->format, &gdi->palette)))
 		return FALSE;
 
-	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
+	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
 	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
 	x = polyline->xStart;
 	y = polyline->yStart;
@@ -822,7 +806,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 		gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 	}
 
-	gdi_DeleteObject((HGDIOBJECT) hPen);
+	gdi_DeleteObject((HGDIOBJECT)hPen);
 	return TRUE;
 }
 
@@ -834,12 +818,11 @@ static BOOL gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	if (!context || !memblt || !context->gdi || !memblt->bitmap)
 		return FALSE;
 
-	bitmap = (gdiBitmap*) memblt->bitmap;
+	bitmap = (gdiBitmap*)memblt->bitmap;
 	gdi = context->gdi;
-	return gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
-	                  memblt->nWidth, memblt->nHeight, bitmap->hdc,
-	                  memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop),
-	                  &gdi->palette);
+	return gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth,
+	                  memblt->nHeight, bitmap->hdc, memblt->nXSrc, memblt->nYSrc,
+	                  gdi_rop3_code(memblt->bRop), &gdi->palette);
 }
 
 static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
@@ -848,7 +831,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = TRUE;
 	const rdpBrush* brush = &mem3blt->brush;
-	gdiBitmap* bitmap = (gdiBitmap*) mem3blt->bitmap;
+	gdiBitmap* bitmap = (gdiBitmap*)mem3blt->bitmap;
 	UINT32 foreColor;
 	UINT32 backColor;
 	UINT32 originalColor;
@@ -874,90 +857,85 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			}
 
 			ret = gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
-			                 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
-			                 mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop),
-			                 &gdi->palette);
-			gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
+			                 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc, mem3blt->nXSrc,
+			                 mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop), &gdi->palette);
+			gdi_DeleteObject((HGDIOBJECT)gdi->drawing->hdc->brush);
 			gdi->drawing->hdc->brush = originalBrush;
 			break;
 
 		case GDI_BS_PATTERN:
+		{
+			HGDI_BITMAP hBmp;
+			UINT32 brushFormat;
+			BYTE* data =
+			    (BYTE*)_aligned_malloc(8 * 8 * GetBytesPerPixel(gdi->drawing->hdc->format), 16);
+
+			if (!data)
 			{
-				HGDI_BITMAP hBmp;
-				UINT32 brushFormat;
-				BYTE* data = (BYTE*) _aligned_malloc(8 * 8 * GetBytesPerPixel(
-				        gdi->drawing->hdc->format),
-				                                     16);
+				ret = FALSE;
+				goto out_fail;
+			}
 
-				if (!data)
-				{
-					ret = FALSE;
-					goto out_fail;
-				}
+			if (brush->bpp > 1)
+			{
+				UINT32 bpp = brush->bpp;
 
-				if (brush->bpp > 1)
-				{
-					UINT32 bpp = brush->bpp;
+				if ((bpp == 16) && (context->settings->ColorDepth == 15))
+					bpp = 15;
 
-					if ((bpp == 16) && (context->settings->ColorDepth == 15))
-						bpp = 15;
+				brushFormat = gdi_get_pixel_format(bpp);
 
-					brushFormat = gdi_get_pixel_format(bpp);
-
-					if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0,
-					                        8, 8, brush->data, brushFormat,
-					                        0, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
-					{
-						ret = FALSE;
-						_aligned_free(data);
-						goto out_fail;
-					}
-				}
-				else
-				{
-					if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0,
-					                                        0, 8, 8,
-					                                        brush->data, backColor, foreColor,
-					                                        &gdi->palette))
-					{
-						ret = FALSE;
-						_aligned_free(data);
-						goto out_fail;
-					}
-				}
-
-				hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->format, data);
-
-				if (!hBmp)
+				if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0, 8, 8, brush->data,
+				                        brushFormat, 0, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
 				{
 					ret = FALSE;
 					_aligned_free(data);
 					goto out_fail;
 				}
-
-				originalBrush = gdi->drawing->hdc->brush;
-				gdi->drawing->hdc->brush = gdi_CreatePatternBrush(hBmp);
-
-				if (!gdi->drawing->hdc->brush)
+			}
+			else
+			{
+				if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0, 0, 8,
+				                                        8, brush->data, backColor, foreColor,
+				                                        &gdi->palette))
 				{
-					gdi_DeleteObject((HGDIOBJECT) hBmp);
+					ret = FALSE;
+					_aligned_free(data);
 					goto out_fail;
 				}
-
-				gdi->drawing->hdc->brush->nXOrg = brush->x;
-				gdi->drawing->hdc->brush->nYOrg = brush->y;
-				ret = gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
-				                 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
-				                 mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop),
-				                 &gdi->palette);
-				gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
-				gdi_DeleteObject((HGDIOBJECT) hBmp);
-				gdi->drawing->hdc->brush = originalBrush;
 			}
-			break;
+
+			hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->format, data);
+
+			if (!hBmp)
+			{
+				ret = FALSE;
+				_aligned_free(data);
+				goto out_fail;
+			}
+
+			originalBrush = gdi->drawing->hdc->brush;
+			gdi->drawing->hdc->brush = gdi_CreatePatternBrush(hBmp);
+
+			if (!gdi->drawing->hdc->brush)
+			{
+				gdi_DeleteObject((HGDIOBJECT)hBmp);
+				goto out_fail;
+			}
+
+			gdi->drawing->hdc->brush->nXOrg = brush->x;
+			gdi->drawing->hdc->brush->nYOrg = brush->y;
+			ret = gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
+			                 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc, mem3blt->nXSrc,
+			                 mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop), &gdi->palette);
+			gdi_DeleteObject((HGDIOBJECT)gdi->drawing->hdc->brush);
+			gdi_DeleteObject((HGDIOBJECT)hBmp);
+			gdi->drawing->hdc->brush = originalBrush;
+		}
+		break;
 
 		default:
-			WLog_ERR(TAG,  "Mem3Blt unimplemented brush style:%"PRIu32"", brush->style);
+			WLog_ERR(TAG, "Mem3Blt unimplemented brush style:%" PRIu32 "", brush->style);
 			break;
 	}
 
@@ -966,8 +944,7 @@ out_fail:
 	return ret;
 }
 
-static BOOL gdi_polygon_sc(rdpContext* context,
-                           const POLYGON_SC_ORDER* polygon_sc)
+static BOOL gdi_polygon_sc(rdpContext* context, const POLYGON_SC_ORDER* polygon_sc)
 {
 	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
 	return FALSE;
@@ -979,32 +956,27 @@ static BOOL gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 	return FALSE;
 }
 
-static BOOL gdi_ellipse_sc(rdpContext* context,
-                           const ELLIPSE_SC_ORDER* ellipse_sc)
+static BOOL gdi_ellipse_sc(rdpContext* context, const ELLIPSE_SC_ORDER* ellipse_sc)
 {
 	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
 	return FALSE;
 }
 
-static BOOL gdi_ellipse_cb(rdpContext* context,
-                           const ELLIPSE_CB_ORDER* ellipse_cb)
+static BOOL gdi_ellipse_cb(rdpContext* context, const ELLIPSE_CB_ORDER* ellipse_cb)
 {
 	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
 	return FALSE;
 }
 
-static BOOL gdi_frame_marker(rdpContext* context,
-                             const FRAME_MARKER_ORDER* frameMarker)
+static BOOL gdi_frame_marker(rdpContext* context, const FRAME_MARKER_ORDER* frameMarker)
 {
 	return TRUE;
 }
 
-BOOL gdi_surface_frame_marker(rdpContext* context,
-                              const SURFACE_FRAME_MARKER* surfaceFrameMarker)
+BOOL gdi_surface_frame_marker(rdpContext* context, const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
-	WLog_Print(context->gdi->log, WLOG_DEBUG, "frameId %"PRIu32" frameAction %"PRIu32"",
-	           surfaceFrameMarker->frameId,
-	           surfaceFrameMarker->frameAction);
+	WLog_Print(context->gdi->log, WLOG_DEBUG, "frameId %" PRIu32 " frameAction %" PRIu32 "",
+	           surfaceFrameMarker->frameId, surfaceFrameMarker->frameAction);
 
 	switch (surfaceFrameMarker->frameAction)
 	{
@@ -1024,8 +996,7 @@ BOOL gdi_surface_frame_marker(rdpContext* context,
 	return TRUE;
 }
 
-static BOOL gdi_surface_bits(rdpContext* context,
-                             const SURFACE_BITS_COMMAND* cmd)
+static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cmd)
 {
 	BOOL result = FALSE;
 	DWORD format;
@@ -1039,12 +1010,13 @@ static BOOL gdi_surface_bits(rdpContext* context,
 		return FALSE;
 
 	gdi = context->gdi;
-	WLog_Print(gdi->log, WLOG_DEBUG,
-	           "destLeft %"PRIu32" destTop %"PRIu32" destRight %"PRIu32" destBottom %"PRIu32" "
-	           "bpp %"PRIu8" flags %"PRIx8" codecID %"PRIu16" width %"PRIu16" height %"PRIu16" length %"PRIu32"",
-	           cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
-	           cmd->bmp.bpp, cmd->bmp.flags, cmd->bmp.codecID, cmd->bmp.width, cmd->bmp.height,
-	           cmd->bmp.bitmapDataLength);
+	WLog_Print(
+	    gdi->log, WLOG_DEBUG,
+	    "destLeft %" PRIu32 " destTop %" PRIu32 " destRight %" PRIu32 " destBottom %" PRIu32 " "
+	    "bpp %" PRIu8 " flags %" PRIx8 " codecID %" PRIu16 " width %" PRIu16 " height %" PRIu16
+	    " length %" PRIu32 "",
+	    cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom, cmd->bmp.bpp, cmd->bmp.flags,
+	    cmd->bmp.codecID, cmd->bmp.width, cmd->bmp.height, cmd->bmp.bitmapDataLength);
 	region16_init(&region);
 	cmdRect.left = cmd->destLeft;
 	cmdRect.top = cmd->destTop;
@@ -1055,10 +1027,9 @@ static BOOL gdi_surface_bits(rdpContext* context,
 	{
 		case RDP_CODEC_ID_REMOTEFX:
 			if (!rfx_process_message(context->codecs->rfx, cmd->bmp.bitmapData,
-			                         cmd->bmp.bitmapDataLength,
-			                         cmd->destLeft, cmd->destTop,
-			                         gdi->primary_buffer, gdi->dstFormat,
-			                         gdi->stride, gdi->height, &region))
+			                         cmd->bmp.bitmapDataLength, cmd->destLeft, cmd->destTop,
+			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride, gdi->height,
+			                         &region))
 			{
 				WLog_ERR(TAG, "Failed to process RemoteFX message");
 				goto out;
@@ -1071,9 +1042,9 @@ static BOOL gdi_surface_bits(rdpContext* context,
 
 			if (!nsc_process_message(context->codecs->nsc, cmd->bmp.bpp, cmd->bmp.width,
 			                         cmd->bmp.height, cmd->bmp.bitmapData,
-			                         cmd->bmp.bitmapDataLength, gdi->primary_buffer,
-			                         format, gdi->stride, cmd->destLeft, cmd->destTop,
-			                         cmd->bmp.width, cmd->bmp.height, FREERDP_FLIP_VERTICAL))
+			                         cmd->bmp.bitmapDataLength, gdi->primary_buffer, format,
+			                         gdi->stride, cmd->destLeft, cmd->destTop, cmd->bmp.width,
+			                         cmd->bmp.height, FREERDP_FLIP_VERTICAL))
 			{
 				WLog_ERR(TAG, "Failed to process NSCodec message");
 				goto out;
@@ -1085,10 +1056,10 @@ static BOOL gdi_surface_bits(rdpContext* context,
 		case RDP_CODEC_ID_NONE:
 			format = gdi_get_pixel_format(cmd->bmp.bpp);
 
-			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-			                        cmd->destLeft, cmd->destTop, cmd->bmp.width, cmd->bmp.height,
-			                        cmd->bmp.bitmapData, format, 0, 0, 0,
-			                        &gdi->palette, FREERDP_FLIP_VERTICAL))
+			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride, cmd->destLeft,
+			                        cmd->destTop, cmd->bmp.width, cmd->bmp.height,
+			                        cmd->bmp.bitmapData, format, 0, 0, 0, &gdi->palette,
+			                        FREERDP_FLIP_VERTICAL))
 			{
 				WLog_ERR(TAG, "Failed to process nocodec message");
 				goto out;
@@ -1098,7 +1069,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unsupported codecID %"PRIu32"", cmd->bmp.codecID);
+			WLog_ERR(TAG, "Unsupported codecID %" PRIu32 "", cmd->bmp.codecID);
 			break;
 	}
 
@@ -1163,10 +1134,10 @@ static void gdi_register_update_callbacks(rdpUpdate* update)
 	update->altsec->FrameMarker = gdi_frame_marker;
 }
 
-static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
-                             BYTE* buffer, void (*pfree)(void*))
+static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* buffer,
+                             void (*pfree)(void*))
 {
-	gdi->primary = (gdiBitmap*) calloc(1, sizeof(gdiBitmap));
+	gdi->primary = (gdiBitmap*)calloc(1, sizeof(gdiBitmap));
 
 	if (format > 0)
 		gdi->dstFormat = format;
@@ -1184,26 +1155,23 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 
 	if (!buffer)
 	{
-		gdi->primary->bitmap = gdi_CreateCompatibleBitmap(
-		                           gdi->hdc, gdi->width, gdi->height);
+		gdi->primary->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, gdi->width, gdi->height);
 	}
 	else
 	{
-		gdi->primary->bitmap = gdi_CreateBitmapEx(gdi->width, gdi->height,
-		                       gdi->dstFormat,
-		                       gdi->stride,
-		                       buffer, pfree);
+		gdi->primary->bitmap =
+		    gdi_CreateBitmapEx(gdi->width, gdi->height, gdi->dstFormat, gdi->stride, buffer, pfree);
 	}
 
 	if (!gdi->primary->bitmap)
 		goto fail_bitmap;
 
 	gdi->stride = gdi->primary->bitmap->scanline;
-	gdi_SelectObject(gdi->primary->hdc, (HGDIOBJECT) gdi->primary->bitmap);
+	gdi_SelectObject(gdi->primary->hdc, (HGDIOBJECT)gdi->primary->bitmap);
 	gdi->primary->org_bitmap = NULL;
 	gdi->primary_buffer = gdi->primary->bitmap->data;
 
-	if (!(gdi->primary->hdc->hwnd = (HGDI_WND) calloc(1, sizeof(GDI_WND))))
+	if (!(gdi->primary->hdc->hwnd = (HGDI_WND)calloc(1, sizeof(GDI_WND))))
 		goto fail_hwnd;
 
 	if (!(gdi->primary->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0)))
@@ -1212,8 +1180,8 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	gdi->primary->hdc->hwnd->count = 32;
 
-	if (!(gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) calloc(
-	            gdi->primary->hdc->hwnd->count, sizeof(GDI_RGN))))
+	if (!(gdi->primary->hdc->hwnd->cinvalid =
+	          (HGDI_RGN)calloc(gdi->primary->hdc->hwnd->count, sizeof(GDI_RGN))))
 		goto fail_hwnd;
 
 	gdi->primary->hdc->hwnd->ninvalid = 0;
@@ -1223,7 +1191,7 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 
 	return TRUE;
 fail_hwnd:
-	gdi_DeleteObject((HGDIOBJECT) gdi->primary->bitmap);
+	gdi_DeleteObject((HGDIOBJECT)gdi->primary->bitmap);
 fail_bitmap:
 	gdi_DeleteDC(gdi->primary->hdc);
 fail_hdc:
@@ -1238,9 +1206,8 @@ BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height)
 	return gdi_resize_ex(gdi, width, height, 0, 0, NULL, NULL);
 }
 
-BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
-                   UINT32 stride, UINT32 format, BYTE* buffer,
-                   void (*pfree)(void*))
+BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT32 format,
+                   BYTE* buffer, void (*pfree)(void*))
 {
 	if (!gdi || !gdi->primary)
 		return FALSE;
@@ -1277,7 +1244,7 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
                  void (*pfree)(void*))
 {
 	UINT32 SrcFormat = gdi_get_pixel_format(instance->settings->ColorDepth);
-	rdpGdi* gdi = (rdpGdi*) calloc(1, sizeof(rdpGdi));
+	rdpGdi* gdi = (rdpGdi*)calloc(1, sizeof(rdpGdi));
 	rdpContext* context = instance->context;
 
 	if (!gdi)
@@ -1323,7 +1290,7 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	return TRUE;
 fail:
 	gdi_free(instance);
-	WLog_ERR(TAG,  "failed to initialize gdi");
+	WLog_ERR(TAG, "failed to initialize gdi");
 	return FALSE;
 }
 
@@ -1347,7 +1314,7 @@ void gdi_free(freerdp* instance)
 	context = instance->context;
 	cache_free(context->cache);
 	context->cache = NULL;
-	instance->context->gdi = (rdpGdi*) NULL;
+	instance->context->gdi = (rdpGdi*)NULL;
 }
 
 BOOL gdi_send_suppress_output(rdpGdi* gdi, BOOL suppress)
@@ -1371,4 +1338,3 @@ BOOL gdi_send_suppress_output(rdpGdi* gdi, BOOL suppress)
 	rect.bottom = settings->DesktopHeight;
 	return update->SuppressOutput(gdi->context, !suppress, &rect);
 }
-

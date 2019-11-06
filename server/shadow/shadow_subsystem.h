@@ -25,21 +25,21 @@
 #include <winpr/synch.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-rdpShadowSubsystem* shadow_subsystem_new(void);
-void shadow_subsystem_free(rdpShadowSubsystem* subsystem);
+	rdpShadowSubsystem* shadow_subsystem_new(void);
+	void shadow_subsystem_free(rdpShadowSubsystem* subsystem);
 
-int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server);
-void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem);
+	int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server);
+	void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem);
 
-int shadow_subsystem_start(rdpShadowSubsystem* subsystem);
-int shadow_subsystem_stop(rdpShadowSubsystem* subsystem);
+	int shadow_subsystem_start(rdpShadowSubsystem* subsystem);
+	int shadow_subsystem_stop(rdpShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_SUBSYSTEM_H */
-

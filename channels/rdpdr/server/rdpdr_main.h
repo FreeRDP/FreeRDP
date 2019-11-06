@@ -48,7 +48,7 @@ struct _rdpdr_server_private
 	UINT32 NextCompletionId;
 };
 
-#define RDPDR_HEADER_LENGTH		4
+#define RDPDR_HEADER_LENGTH 4
 
 struct _RDPDR_HEADER
 {
@@ -57,14 +57,14 @@ struct _RDPDR_HEADER
 };
 typedef struct _RDPDR_HEADER RDPDR_HEADER;
 
-#define RDPDR_VERSION_MAJOR		0x0001
+#define RDPDR_VERSION_MAJOR 0x0001
 
-#define RDPDR_VERSION_MINOR_RDP50	0x0002
-#define RDPDR_VERSION_MINOR_RDP51	0x0005
-#define RDPDR_VERSION_MINOR_RDP52	0x000A
-#define RDPDR_VERSION_MINOR_RDP6X	0x000C
+#define RDPDR_VERSION_MINOR_RDP50 0x0002
+#define RDPDR_VERSION_MINOR_RDP51 0x0005
+#define RDPDR_VERSION_MINOR_RDP52 0x000A
+#define RDPDR_VERSION_MINOR_RDP6X 0x000C
 
-#define RDPDR_CAPABILITY_HEADER_LENGTH	8
+#define RDPDR_CAPABILITY_HEADER_LENGTH 8
 
 struct _RDPDR_CAPABILITY_HEADER
 {
@@ -81,8 +81,10 @@ struct _RDPDR_IRP
 	UINT32 FileId;
 	char PathName[256];
 	char ExtraBuffer[256];
-	void *CallbackData;
-	UINT (*Callback)(RdpdrServerContext* context, wStream* s, struct _RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus);
+	void* CallbackData;
+	UINT(*Callback)
+	(RdpdrServerContext* context, wStream* s, struct _RDPDR_IRP* irp, UINT32 deviceId,
+	 UINT32 completionId, UINT32 ioStatus);
 };
 typedef struct _RDPDR_IRP RDPDR_IRP;
 

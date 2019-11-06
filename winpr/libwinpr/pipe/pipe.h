@@ -27,7 +27,6 @@
 
 #include "../handle/handle.h"
 
-
 struct winpr_pipe
 {
 	WINPR_HANDLE_DEF();
@@ -38,7 +37,7 @@ typedef struct winpr_pipe WINPR_PIPE;
 
 typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
 
-typedef void(*fnUnrefNamedPipe)(WINPR_NAMED_PIPE* pNamedPipe);
+typedef void (*fnUnrefNamedPipe)(WINPR_NAMED_PIPE* pNamedPipe);
 
 struct winpr_named_pipe
 {
@@ -67,12 +66,10 @@ struct winpr_named_pipe
 BOOL winpr_destroy_named_pipe(WINPR_NAMED_PIPE* pNamedPipe);
 
 BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-					LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+                   LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
 BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
-						LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+                    LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 
 #endif
 
 #endif /* WINPR_PIPE_PRIVATE_H */
-
-

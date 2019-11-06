@@ -75,15 +75,15 @@ struct mf_context
 	// These variables are required for horizontal scrolling.
 	BOOL updating_scrollbars;
 	BOOL xScrollVisible;
-	int xMinScroll;       // minimum horizontal scroll value
-	int xCurrentScroll;   // current horizontal scroll value
-	int xMaxScroll;       // maximum horizontal scroll value
+	int xMinScroll;     // minimum horizontal scroll value
+	int xCurrentScroll; // current horizontal scroll value
+	int xMaxScroll;     // maximum horizontal scroll value
 
 	// These variables are required for vertical scrolling.
 	BOOL yScrollVisible;
-	int yMinScroll;       // minimum vertical scroll value
-	int yCurrentScroll;   // current vertical scroll value
-	int yMaxScroll;       // maximum vertical scroll value
+	int yMinScroll;     // minimum vertical scroll value
+	int yCurrentScroll; // current vertical scroll value
+	int yMaxScroll;     // maximum vertical scroll value
 
 	CGEventFlags kbdFlags;
 };

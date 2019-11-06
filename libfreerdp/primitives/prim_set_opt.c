@@ -24,10 +24,10 @@
 #include <winpr/sysinfo.h>
 
 #ifdef WITH_SSE2
-# include <emmintrin.h>
+#include <emmintrin.h>
 #endif /* WITH_SSE2 */
 #ifdef WITH_IPP
-# include <ipps.h>
+#include <ipps.h>
 #endif /* WITH_IPP */
 
 #include "prim_internal.h"
@@ -36,27 +36,26 @@ static primitives_t* generic = NULL;
 
 /* ========================================================================= */
 #ifdef WITH_SSE2
-# if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
-static pstatus_t sse2_set_8u(
-    BYTE val,
-    BYTE* pDst,
-    UINT32 len)
+#if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
+static pstatus_t sse2_set_8u(BYTE val, BYTE* pDst, UINT32 len)
 {
 	BYTE byte, *dptr;
 	__m128i xmm0;
 	size_t count;
 
-	if (len < 16) return generic->set_8u(val, pDst, len);
+	if (len < 16)
+		return generic->set_8u(val, pDst, len);
 
-	byte  = val;
-	dptr = (BYTE*) pDst;
+	byte = val;
+	dptr = (BYTE*)pDst;
 
 	/* Seek 16-byte alignment. */
-	while ((ULONG_PTR) dptr & 0x0f)
+	while ((ULONG_PTR)dptr & 0x0f)
 	{
 		*dptr++ = byte;
 
-		if (--len == 0) return PRIMITIVES_SUCCESS;
+		if (--len == 0)
+			return PRIMITIVES_SUCCESS;
 	}
 
 	xmm0 = _mm_set1_epi8(byte);
@@ -67,37 +66,37 @@ static pstatus_t sse2_set_8u(
 	/* Do 256-byte chunks using one XMM register. */
 	while (count--)
 	{
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
 	}
 
@@ -108,51 +107,51 @@ static pstatus_t sse2_set_8u(
 	/* Do 16-byte chunks using one XMM register. */
 	while (count--)
 	{
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 16;
 	}
 
 	/* Do leftover bytes. */
-	while (len--) *dptr++ = byte;
+	while (len--)
+		*dptr++ = byte;
 
 	return PRIMITIVES_SUCCESS;
 }
-# endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
+#endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
 #endif /* WITH_SSE2 */
 
 /* ------------------------------------------------------------------------- */
 #ifdef WITH_SSE2
-# if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
-static pstatus_t sse2_set_32u(
-    UINT32 val,
-    UINT32* pDst,
-    UINT32 len)
+#if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
+static pstatus_t sse2_set_32u(UINT32 val, UINT32* pDst, UINT32 len)
 {
 	const primitives_t* prim = primitives_get_generic();
-	UINT32* dptr = (UINT32*) pDst;
+	UINT32* dptr = (UINT32*)pDst;
 	__m128i xmm0;
 	size_t count;
 
 	/* If really short, just do it here. */
 	if (len < 32)
 	{
-		while (len--) *dptr++ = val;
+		while (len--)
+			*dptr++ = val;
 
 		return PRIMITIVES_SUCCESS;
 	}
 
 	/* Assure we can reach 16-byte alignment. */
-	if (((ULONG_PTR) dptr & 0x03) != 0)
+	if (((ULONG_PTR)dptr & 0x03) != 0)
 	{
 		return prim->set_32u(val, pDst, len);
 	}
 
 	/* Seek 16-byte alignment. */
-	while ((ULONG_PTR) dptr & 0x0f)
+	while ((ULONG_PTR)dptr & 0x0f)
 	{
 		*dptr++ = val;
 
-		if (--len == 0) return PRIMITIVES_SUCCESS;
+		if (--len == 0)
+			return PRIMITIVES_SUCCESS;
 	}
 
 	xmm0 = _mm_set1_epi32(val);
@@ -163,37 +162,37 @@ static pstatus_t sse2_set_32u(
 	/* Do 256-byte chunks using one XMM register. */
 	while (count--)
 	{
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
 	}
 
@@ -204,38 +203,33 @@ static pstatus_t sse2_set_32u(
 	/* Do 16-byte chunks using one XMM register. */
 	while (count--)
 	{
-		_mm_store_si128((__m128i*) dptr, xmm0);
+		_mm_store_si128((__m128i*)dptr, xmm0);
 		dptr += 4;
 	}
 
 	/* Do leftover bytes. */
-	while (len--) *dptr++ = val;
+	while (len--)
+		*dptr++ = val;
 
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t sse2_set_32s(
-    INT32 val,
-    INT32* pDst,
-    UINT32 len)
+static pstatus_t sse2_set_32s(INT32 val, INT32* pDst, UINT32 len)
 {
-	UINT32 uval = *((UINT32*) &val);
-	return sse2_set_32u(uval, (UINT32*) pDst, len);
+	UINT32 uval = *((UINT32*)&val);
+	return sse2_set_32u(uval, (UINT32*)pDst, len);
 }
-# endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
+#endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
 #endif /* WITH_SSE2 */
 
 #ifdef WITH_IPP
 /* ------------------------------------------------------------------------- */
-static pstatus_t ipp_wrapper_set_32u(
-    UINT32 val,
-    UINT32* pDst,
-    INT32 len)
+static pstatus_t ipp_wrapper_set_32u(UINT32 val, UINT32* pDst, INT32 len)
 {
 	/* A little type conversion, then use the signed version. */
-	INT32 sval = *((INT32*) &val);
-	return ippsSet_32s(sval, (INT32*) pDst, len);
+	INT32 sval = *((INT32*)&val);
+	return ippsSet_32s(sval, (INT32*)pDst, len);
 }
 #endif
 
@@ -246,19 +240,18 @@ void primitives_init_set_opt(primitives_t* prims)
 	primitives_init_set(prims);
 	/* Pick tuned versions if possible. */
 #ifdef WITH_IPP
-	prims->set_8u  = (__set_8u_t)  ippsSet_8u;
-	prims->set_32s = (__set_32s_t) ippsSet_32s;
-	prims->set_32u = (__set_32u_t) ipp_wrapper_set_32u;
-	prims->zero = (__zero_t) ippsZero_8u;
+	prims->set_8u = (__set_8u_t)ippsSet_8u;
+	prims->set_32s = (__set_32s_t)ippsSet_32s;
+	prims->set_32u = (__set_32u_t)ipp_wrapper_set_32u;
+	prims->zero = (__zero_t)ippsZero_8u;
 #elif defined(WITH_SSE2)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
-		prims->set_8u  = sse2_set_8u;
+		prims->set_8u = sse2_set_8u;
 		prims->set_32s = sse2_set_32s;
 		prims->set_32u = sse2_set_32u;
 	}
 
 #endif
 }
-

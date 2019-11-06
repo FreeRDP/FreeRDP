@@ -8,4 +8,3 @@ int TestAsn1Module(int argc, char* argv[])
 {
 	return 0;
 }
-

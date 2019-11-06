@@ -18,7 +18,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
 #include <errno.h>
@@ -40,7 +40,7 @@
 #include <string.h>
 
 #ifdef HAVE_UNISTD_H
-#	include <unistd.h>
+#include <unistd.h>
 #endif
 
 #include <winpr/wtypes.h>
@@ -121,7 +121,7 @@ struct rdp_file
 	DWORD BitmapCacheSize;          /* bitmapcachesize */
 	DWORD BitmapCachePersistEnable; /* bitmapcachepersistenable */
 
-	DWORD ServerPort;           /* server port */
+	DWORD ServerPort; /* server port */
 
 	LPSTR Username;   /* username */
 	LPSTR Domain;     /* domain */
@@ -154,8 +154,8 @@ struct rdp_file
 	DWORD NegotiateSecurityLayer; /* negotiate security layer */
 	DWORD EnableCredSSPSupport;   /* enablecredsspsupport */
 
-	DWORD RemoteApplicationMode;             /* remoteapplicationmode */
-	LPSTR LoadBalanceInfo;        /* loadbalanceinfo */
+	DWORD RemoteApplicationMode; /* remoteapplicationmode */
+	LPSTR LoadBalanceInfo;       /* loadbalanceinfo */
 
 	LPSTR RemoteApplicationName;             /* remoteapplicationname */
 	LPSTR RemoteApplicationIcon;             /* remoteapplicationicon */
@@ -178,7 +178,7 @@ struct rdp_file
 
 	DWORD UseRedirectionServerName; /* use redirection server name */
 
-	LPSTR GatewayAccessToken;        /* gatewayaccesstoken */
+	LPSTR GatewayAccessToken; /* gatewayaccesstoken */
 
 	LPSTR DrivesToRedirect;  /* drivestoredirect */
 	LPSTR DevicesToRedirect; /* devicestoredirect */
@@ -211,7 +211,7 @@ struct rdp_file
  */
 
 static BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, long value,
-											   SSIZE_T index)
+                                                SSIZE_T index)
 {
 	BOOL standard = TRUE;
 #ifdef DEBUG_CLIENT_FILE
@@ -371,15 +371,15 @@ static BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name,
 }
 
 static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* name,
-												  const char* value, SSIZE_T index)
+                                                  const char* value, SSIZE_T index)
 {
 	char* endptr;
 	long ivalue;
 	errno = 0;
 	ivalue = strtol(value, &endptr, 0);
 
-	if ((endptr == NULL) || (errno != 0) || (endptr == value) ||
-			(ivalue > INT32_MAX) || (ivalue < INT32_MIN))
+	if ((endptr == NULL) || (errno != 0) || (endptr == value) || (ivalue > INT32_MAX) ||
+	    (ivalue < INT32_MIN))
 	{
 		if (file->flags & RDP_FILE_FLAG_PARSE_INT_RELAXED)
 		{
@@ -407,7 +407,7 @@ static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* nam
  */
 
 static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, const char* value,
-											  SSIZE_T index)
+                                              SSIZE_T index)
 {
 	int standard = 0;
 	LPSTR* tmp = NULL;
@@ -551,7 +551,8 @@ static SSIZE_T freerdp_client_parse_rdp_file_add_line(rdpFile* file, const char*
 	return index;
 }
 
-static BOOL freerdp_client_parse_rdp_file_string(rdpFile* file, char* name, char* value, SSIZE_T index)
+static BOOL freerdp_client_parse_rdp_file_string(rdpFile* file, char* name, char* value,
+                                                 SSIZE_T index)
 {
 	BOOL ret = TRUE;
 	char* valueA = _strdup(value);
@@ -593,10 +594,10 @@ static BOOL trim(char** strptr)
 		return TRUE;
 	end = str + strlen(str) - 1;
 
-	while(isspace(*str))
+	while (isspace(*str))
 		str++;
 
-	while((end > str) && isspace(*end))
+	while ((end > str) && isspace(*end))
 		end--;
 	end[1] = '\0';
 	if (start == str)
@@ -844,12 +845,14 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 #define SETTING_MODIFIED(_settings, _field) \
 	(WRITE_ALL_SETTINGS || _settings->SettingsModified[FreeRDP_##_field])
 #define SETTING_MODIFIED_SET(_target, _settings, _field) \
-	if SETTING_MODIFIED(_settings, _field)               \
-		_target = _settings->_field
+	if                                                   \
+		SETTING_MODIFIED(_settings, _field)              \
+	_target = _settings->_field
 
 #define SETTING_MODIFIED_SET_BOOL(_target, _settings, _field) \
-	if SETTING_MODIFIED(_settings, _field)                    \
-		_target = _settings->_field ? 1 : 0
+	if                                                        \
+		SETTING_MODIFIED(_settings, _field)                   \
+	_target = _settings->_field ? 1 : 0
 
 #define SETTING_MODIFIED_SET_STRING(_target, _settings, _field)                       \
 	do                                                                                \
@@ -980,7 +983,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* bufferSize,
-                                                     const char* fmt, ...)
+                                                      const char* fmt, ...)
 {
 	va_list ap;
 	SSIZE_T len;
@@ -1031,87 +1034,88 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	if ((!buffer || !size) && (buffer || size))
 		return 0;
 
-#define WRITE_SETTING_(fmt_, param_)                                                 \
-	{                                                                               \
+#define WRITE_SETTING_(fmt_, param_)                                                        \
+	{                                                                                       \
 		SSIZE_T res = freerdp_client_write_setting_to_buffer(&buffer, &size, fmt_, param_); \
-		if (res < 0)                                                                \
-			return 0;                                                              \
+		if (res < 0)                                                                        \
+			return 0;                                                                       \
 		totalSize += (size_t)res;                                                           \
 	}
 
 #define WRITE_SETTING_INT(fmt_, param_) \
 	if (~(param_))                      \
-		WRITE_SETTING_(fmt_, param_)
+	WRITE_SETTING_(fmt_, param_)
 
 #define WRITE_SETTING_STR(fmt_, param_) \
 	if (~(size_t)(param_))              \
-		WRITE_SETTING_(fmt_, param_)
+	WRITE_SETTING_(fmt_, param_)
 
 	/* integer parameters */
-	WRITE_SETTING_INT("use multimon:i:%"PRIu32, file->UseMultiMon);
-	WRITE_SETTING_INT("screen mode id:i:%"PRIu32, file->ScreenModeId);
-	WRITE_SETTING_INT("span monitors:i:%"PRIu32, file->SpanMonitors);
-	WRITE_SETTING_INT("smart sizing:i:%"PRIu32, file->SmartSizing);
-	WRITE_SETTING_INT("enablesuperpan:i:%"PRIu32, file->EnableSuperSpan);
-	WRITE_SETTING_INT("superpanaccelerationfactor:i:%"PRIu32, file->SuperSpanAccelerationFactor);
-	WRITE_SETTING_INT("desktopwidth:i:%"PRIu32, file->DesktopWidth);
-	WRITE_SETTING_INT("desktopheight:i:%"PRIu32, file->DesktopHeight);
-	WRITE_SETTING_INT("desktop size id:i:%"PRIu32, file->DesktopSizeId);
-	WRITE_SETTING_INT("session bpp:i:%"PRIu32, file->SessionBpp);
-	WRITE_SETTING_INT("compression:i:%"PRIu32, file->Compression);
-	WRITE_SETTING_INT("keyboardhook:i:%"PRIu32, file->KeyboardHook);
-	WRITE_SETTING_INT("disable ctrl+alt+del:i:%"PRIu32, file->DisableCtrlAltDel);
-	WRITE_SETTING_INT("audiomode:i:%"PRIu32, file->AudioMode);
-	WRITE_SETTING_INT("audioqualitymode:i:%"PRIu32, file->AudioQualityMode);
-	WRITE_SETTING_INT("audiocapturemode:i:%"PRIu32, file->AudioCaptureMode);
-	WRITE_SETTING_INT("videoplaybackmode:i:%"PRIu32, file->VideoPlaybackMode);
-	WRITE_SETTING_INT("connection type:i:%"PRIu32, file->ConnectionType);
-	WRITE_SETTING_INT("networkautodetect:i:%"PRIu32, file->NetworkAutoDetect);
-	WRITE_SETTING_INT("bandwidthautodetect:i:%"PRIu32, file->BandwidthAutoDetect);
-	WRITE_SETTING_INT("pinconnectionbar:i:%"PRIu32, file->PinConnectionBar);
-	WRITE_SETTING_INT("displayconnectionbar:i:%"PRIu32, file->DisplayConnectionBar);
-	WRITE_SETTING_INT("workspaceid:i:%"PRIu32, file->WorkspaceId);
-	WRITE_SETTING_INT("enableworkspacereconnect:i:%"PRIu32, file->EnableWorkspaceReconnect);
-	WRITE_SETTING_INT("disable wallpaper:i:%"PRIu32, file->DisableWallpaper);
-	WRITE_SETTING_INT("allow font smoothing:i:%"PRIu32, file->AllowFontSmoothing);
-	WRITE_SETTING_INT("allow desktop composition:i:%"PRIu32, file->AllowDesktopComposition);
-	WRITE_SETTING_INT("disable full window drag:i:%"PRIu32, file->DisableFullWindowDrag);
-	WRITE_SETTING_INT("disable menu anims:i:%"PRIu32, file->DisableMenuAnims);
-	WRITE_SETTING_INT("disable themes:i:%"PRIu32, file->DisableThemes);
-	WRITE_SETTING_INT("disable cursor setting:i:%"PRIu32, file->DisableCursorSetting);
-	WRITE_SETTING_INT("bitmapcachesize:i:%"PRIu32, file->BitmapCacheSize);
-	WRITE_SETTING_INT("bitmapcachepersistenable:i:%"PRIu32, file->BitmapCachePersistEnable);
-	WRITE_SETTING_INT("server port:i:%"PRIu32, file->ServerPort);
-	WRITE_SETTING_INT("redirectdrives:i:%"PRIu32, file->RedirectDrives);
-	WRITE_SETTING_INT("redirectprinters:i:%"PRIu32, file->RedirectPrinters);
-	WRITE_SETTING_INT("redirectcomports:i:%"PRIu32, file->RedirectComPorts);
-	WRITE_SETTING_INT("redirectsmartcards:i:%"PRIu32, file->RedirectSmartCards);
-	WRITE_SETTING_INT("redirectclipboard:i:%"PRIu32, file->RedirectClipboard);
-	WRITE_SETTING_INT("redirectposdevices:i:%"PRIu32, file->RedirectPosDevices);
-	WRITE_SETTING_INT("redirectdirectx:i:%"PRIu32, file->RedirectDirectX);
-	WRITE_SETTING_INT("disableprinterredirection:i:%"PRIu32, file->DisablePrinterRedirection);
-	WRITE_SETTING_INT("disableclipboardredirection:i:%"PRIu32, file->DisableClipboardRedirection);
-	WRITE_SETTING_INT("connect to console:i:%"PRIu32, file->ConnectToConsole);
-	WRITE_SETTING_INT("administrative session:i:%"PRIu32, file->AdministrativeSession);
-	WRITE_SETTING_INT("autoreconnection enabled:i:%"PRIu32, file->AutoReconnectionEnabled);
-	WRITE_SETTING_INT("autoreconnect max retries:i:%"PRIu32, file->AutoReconnectMaxRetries);
-	WRITE_SETTING_INT("public mode:i:%"PRIu32, file->PublicMode);
-	WRITE_SETTING_INT("authentication level:i:%"PRId32, file->AuthenticationLevel);
-	WRITE_SETTING_INT("promptcredentialonce:i:%"PRIu32, file->PromptCredentialOnce);
-	WRITE_SETTING_INT("prompt for credentials:i:%"PRIu32, file->PromptForCredentials);
-	WRITE_SETTING_INT("negotiate security layer:i:%"PRIu32, file->NegotiateSecurityLayer);
-	WRITE_SETTING_INT("enablecredsspsupport:i:%"PRIu32, file->EnableCredSSPSupport);
-	WRITE_SETTING_INT("remoteapplicationmode:i:%"PRIu32, file->RemoteApplicationMode);
-	WRITE_SETTING_INT("remoteapplicationexpandcmdline:i:%"PRIu32, file->RemoteApplicationExpandCmdLine);
-	WRITE_SETTING_INT("remoteapplicationexpandworkingdir:i:%"PRIu32,
-				  file->RemoteApplicationExpandWorkingDir);
-	WRITE_SETTING_INT("disableconnectionsharing:i:%"PRIu32, file->DisableConnectionSharing);
-	WRITE_SETTING_INT("disableremoteappcapscheck:i:%"PRIu32, file->DisableRemoteAppCapsCheck);
-	WRITE_SETTING_INT("gatewayusagemethod:i:%"PRIu32, file->GatewayUsageMethod);
-	WRITE_SETTING_INT("gatewayprofileusagemethod:i:%"PRIu32, file->GatewayProfileUsageMethod);
-	WRITE_SETTING_INT("gatewaycredentialssource:i:%"PRIu32, file->GatewayCredentialsSource);
-	WRITE_SETTING_INT("use redirection server name:i:%"PRIu32, file->UseRedirectionServerName);
-	WRITE_SETTING_INT("rdgiskdcproxy:i:%"PRIu32, file->RdgIsKdcProxy);
+	WRITE_SETTING_INT("use multimon:i:%" PRIu32, file->UseMultiMon);
+	WRITE_SETTING_INT("screen mode id:i:%" PRIu32, file->ScreenModeId);
+	WRITE_SETTING_INT("span monitors:i:%" PRIu32, file->SpanMonitors);
+	WRITE_SETTING_INT("smart sizing:i:%" PRIu32, file->SmartSizing);
+	WRITE_SETTING_INT("enablesuperpan:i:%" PRIu32, file->EnableSuperSpan);
+	WRITE_SETTING_INT("superpanaccelerationfactor:i:%" PRIu32, file->SuperSpanAccelerationFactor);
+	WRITE_SETTING_INT("desktopwidth:i:%" PRIu32, file->DesktopWidth);
+	WRITE_SETTING_INT("desktopheight:i:%" PRIu32, file->DesktopHeight);
+	WRITE_SETTING_INT("desktop size id:i:%" PRIu32, file->DesktopSizeId);
+	WRITE_SETTING_INT("session bpp:i:%" PRIu32, file->SessionBpp);
+	WRITE_SETTING_INT("compression:i:%" PRIu32, file->Compression);
+	WRITE_SETTING_INT("keyboardhook:i:%" PRIu32, file->KeyboardHook);
+	WRITE_SETTING_INT("disable ctrl+alt+del:i:%" PRIu32, file->DisableCtrlAltDel);
+	WRITE_SETTING_INT("audiomode:i:%" PRIu32, file->AudioMode);
+	WRITE_SETTING_INT("audioqualitymode:i:%" PRIu32, file->AudioQualityMode);
+	WRITE_SETTING_INT("audiocapturemode:i:%" PRIu32, file->AudioCaptureMode);
+	WRITE_SETTING_INT("videoplaybackmode:i:%" PRIu32, file->VideoPlaybackMode);
+	WRITE_SETTING_INT("connection type:i:%" PRIu32, file->ConnectionType);
+	WRITE_SETTING_INT("networkautodetect:i:%" PRIu32, file->NetworkAutoDetect);
+	WRITE_SETTING_INT("bandwidthautodetect:i:%" PRIu32, file->BandwidthAutoDetect);
+	WRITE_SETTING_INT("pinconnectionbar:i:%" PRIu32, file->PinConnectionBar);
+	WRITE_SETTING_INT("displayconnectionbar:i:%" PRIu32, file->DisplayConnectionBar);
+	WRITE_SETTING_INT("workspaceid:i:%" PRIu32, file->WorkspaceId);
+	WRITE_SETTING_INT("enableworkspacereconnect:i:%" PRIu32, file->EnableWorkspaceReconnect);
+	WRITE_SETTING_INT("disable wallpaper:i:%" PRIu32, file->DisableWallpaper);
+	WRITE_SETTING_INT("allow font smoothing:i:%" PRIu32, file->AllowFontSmoothing);
+	WRITE_SETTING_INT("allow desktop composition:i:%" PRIu32, file->AllowDesktopComposition);
+	WRITE_SETTING_INT("disable full window drag:i:%" PRIu32, file->DisableFullWindowDrag);
+	WRITE_SETTING_INT("disable menu anims:i:%" PRIu32, file->DisableMenuAnims);
+	WRITE_SETTING_INT("disable themes:i:%" PRIu32, file->DisableThemes);
+	WRITE_SETTING_INT("disable cursor setting:i:%" PRIu32, file->DisableCursorSetting);
+	WRITE_SETTING_INT("bitmapcachesize:i:%" PRIu32, file->BitmapCacheSize);
+	WRITE_SETTING_INT("bitmapcachepersistenable:i:%" PRIu32, file->BitmapCachePersistEnable);
+	WRITE_SETTING_INT("server port:i:%" PRIu32, file->ServerPort);
+	WRITE_SETTING_INT("redirectdrives:i:%" PRIu32, file->RedirectDrives);
+	WRITE_SETTING_INT("redirectprinters:i:%" PRIu32, file->RedirectPrinters);
+	WRITE_SETTING_INT("redirectcomports:i:%" PRIu32, file->RedirectComPorts);
+	WRITE_SETTING_INT("redirectsmartcards:i:%" PRIu32, file->RedirectSmartCards);
+	WRITE_SETTING_INT("redirectclipboard:i:%" PRIu32, file->RedirectClipboard);
+	WRITE_SETTING_INT("redirectposdevices:i:%" PRIu32, file->RedirectPosDevices);
+	WRITE_SETTING_INT("redirectdirectx:i:%" PRIu32, file->RedirectDirectX);
+	WRITE_SETTING_INT("disableprinterredirection:i:%" PRIu32, file->DisablePrinterRedirection);
+	WRITE_SETTING_INT("disableclipboardredirection:i:%" PRIu32, file->DisableClipboardRedirection);
+	WRITE_SETTING_INT("connect to console:i:%" PRIu32, file->ConnectToConsole);
+	WRITE_SETTING_INT("administrative session:i:%" PRIu32, file->AdministrativeSession);
+	WRITE_SETTING_INT("autoreconnection enabled:i:%" PRIu32, file->AutoReconnectionEnabled);
+	WRITE_SETTING_INT("autoreconnect max retries:i:%" PRIu32, file->AutoReconnectMaxRetries);
+	WRITE_SETTING_INT("public mode:i:%" PRIu32, file->PublicMode);
+	WRITE_SETTING_INT("authentication level:i:%" PRId32, file->AuthenticationLevel);
+	WRITE_SETTING_INT("promptcredentialonce:i:%" PRIu32, file->PromptCredentialOnce);
+	WRITE_SETTING_INT("prompt for credentials:i:%" PRIu32, file->PromptForCredentials);
+	WRITE_SETTING_INT("negotiate security layer:i:%" PRIu32, file->NegotiateSecurityLayer);
+	WRITE_SETTING_INT("enablecredsspsupport:i:%" PRIu32, file->EnableCredSSPSupport);
+	WRITE_SETTING_INT("remoteapplicationmode:i:%" PRIu32, file->RemoteApplicationMode);
+	WRITE_SETTING_INT("remoteapplicationexpandcmdline:i:%" PRIu32,
+	                  file->RemoteApplicationExpandCmdLine);
+	WRITE_SETTING_INT("remoteapplicationexpandworkingdir:i:%" PRIu32,
+	                  file->RemoteApplicationExpandWorkingDir);
+	WRITE_SETTING_INT("disableconnectionsharing:i:%" PRIu32, file->DisableConnectionSharing);
+	WRITE_SETTING_INT("disableremoteappcapscheck:i:%" PRIu32, file->DisableRemoteAppCapsCheck);
+	WRITE_SETTING_INT("gatewayusagemethod:i:%" PRIu32, file->GatewayUsageMethod);
+	WRITE_SETTING_INT("gatewayprofileusagemethod:i:%" PRIu32, file->GatewayProfileUsageMethod);
+	WRITE_SETTING_INT("gatewaycredentialssource:i:%" PRIu32, file->GatewayCredentialsSource);
+	WRITE_SETTING_INT("use redirection server name:i:%" PRIu32, file->UseRedirectionServerName);
+	WRITE_SETTING_INT("rdgiskdcproxy:i:%" PRIu32, file->RdgIsKdcProxy);
 
 	/* string parameters */
 	WRITE_SETTING_STR("username:s:%s", file->Username);
@@ -1234,27 +1238,29 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~file->ConnectToConsole)
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_ConsoleSession, file->ConnectToConsole != 0))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_ConsoleSession,
+		                               file->ConnectToConsole != 0))
 			return FALSE;
 	}
 
 	if (~file->AdministrativeSession)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_ConsoleSession,
-									   file->AdministrativeSession != 0))
+		                               file->AdministrativeSession != 0))
 			return FALSE;
 	}
 
 	if (~file->NegotiateSecurityLayer)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NegotiateSecurityLayer,
-									   file->NegotiateSecurityLayer != 0))
+		                               file->NegotiateSecurityLayer != 0))
 			return FALSE;
 	}
 
 	if (~file->EnableCredSSPSupport)
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, file->EnableCredSSPSupport != 0))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity,
+		                               file->EnableCredSSPSupport != 0))
 			return FALSE;
 	}
 
@@ -1335,7 +1341,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~file->AudioMode)
 	{
-		switch(file->AudioMode)
+		switch (file->AudioMode)
 		{
 			case AUDIO_MODE_REDIRECT:
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteConsoleAudio, FALSE))
@@ -1367,7 +1373,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~file->Compression)
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_CompressionEnabled, file->Compression != 0))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_CompressionEnabled,
+		                               file->Compression != 0))
 			return FALSE;
 	}
 
@@ -1407,21 +1414,21 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->PromptCredentialOnce)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayUseSameCredentials,
-									   file->PromptCredentialOnce != 0))
+		                               file->PromptCredentialOnce != 0))
 			return FALSE;
 	}
 
 	if (~file->PromptForCredentials)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_PromptForCredentials,
-									   file->PromptForCredentials != 0))
+		                               file->PromptForCredentials != 0))
 			return FALSE;
 	}
 
 	if (~file->RemoteApplicationMode)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteApplicationMode,
-									   file->RemoteApplicationMode != 0))
+		                               file->RemoteApplicationMode != 0))
 			return FALSE;
 	}
 
@@ -1482,26 +1489,28 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->AllowFontSmoothing)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AllowFontSmoothing,
-									   file->AllowFontSmoothing != 0))
+		                               file->AllowFontSmoothing != 0))
 			return FALSE;
 	}
 
 	if (~file->DisableWallpaper)
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableWallpaper, file->DisableWallpaper != 0))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableWallpaper,
+		                               file->DisableWallpaper != 0))
 			return FALSE;
 	}
 
 	if (~file->DisableFullWindowDrag)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableFullWindowDrag,
-									   file->DisableFullWindowDrag != 0))
+		                               file->DisableFullWindowDrag != 0))
 			return FALSE;
 	}
 
 	if (~file->DisableMenuAnims)
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableMenuAnims, file->DisableMenuAnims != 0))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableMenuAnims,
+		                               file->DisableMenuAnims != 0))
 			return FALSE;
 	}
 
@@ -1514,14 +1523,14 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->AllowDesktopComposition)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AllowDesktopComposition,
-									   file->AllowDesktopComposition != 0))
+		                               file->AllowDesktopComposition != 0))
 			return FALSE;
 	}
 
 	if (~file->BitmapCachePersistEnable)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled,
-									   file->BitmapCachePersistEnable != 0))
+		                               file->BitmapCachePersistEnable != 0))
 			return FALSE;
 	}
 
@@ -1540,7 +1549,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 				return FALSE;
 			setDefaultConnectionType = FALSE;
 		}
-		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect, file->BandwidthAutoDetect != 0))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
+		                               file->BandwidthAutoDetect != 0))
 			return FALSE;
 	}
 
@@ -1550,23 +1560,30 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		{
 			if (file->BandwidthAutoDetect != CONNECTION_TYPE_AUTODETECT)
 			{
-				WLog_WARN(TAG, "Got networkautodetect:i:%"PRIu32" and bandwidthautodetect:i:%"PRIu32". Correcting to bandwidthautodetect:i:%"PRIu32,
-				         file->NetworkAutoDetect, file->BandwidthAutoDetect, CONNECTION_TYPE_AUTODETECT);
-				WLog_WARN(TAG, "Add bandwidthautodetect:i:%"PRIu32" to your RDP file to eliminate this warning.", CONNECTION_TYPE_AUTODETECT);
+				WLog_WARN(TAG,
+				          "Got networkautodetect:i:%" PRIu32 " and bandwidthautodetect:i:%" PRIu32
+				          ". Correcting to bandwidthautodetect:i:%" PRIu32,
+				          file->NetworkAutoDetect, file->BandwidthAutoDetect,
+				          CONNECTION_TYPE_AUTODETECT);
+				WLog_WARN(TAG,
+				          "Add bandwidthautodetect:i:%" PRIu32
+				          " to your RDP file to eliminate this warning.",
+				          CONNECTION_TYPE_AUTODETECT);
 			}
 
 			if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
 				return FALSE;
 			setDefaultConnectionType = FALSE;
 		}
-		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect, file->NetworkAutoDetect == 0))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
+		                               file->NetworkAutoDetect == 0))
 			return FALSE;
 	}
 
 	if (~file->AutoReconnectionEnabled)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AutoReconnectionEnabled,
-									   file->AutoReconnectionEnabled != 0))
+		                               file->AutoReconnectionEnabled != 0))
 			return FALSE;
 	}
 
@@ -1580,20 +1597,21 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->RedirectSmartCards)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards,
-									   file->RedirectSmartCards != 0))
+		                               file->RedirectSmartCards != 0))
 			return FALSE;
 	}
 
 	if (~file->RedirectClipboard)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectClipboard,
-									   file->RedirectClipboard != 0))
+		                               file->RedirectClipboard != 0))
 			return FALSE;
 	}
 
 	if (~file->RedirectPrinters)
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectPrinters, file->RedirectPrinters != 0))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectPrinters,
+		                               file->RedirectPrinters != 0))
 			return FALSE;
 	}
 
@@ -1606,18 +1624,18 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->RedirectPosDevices)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectSerialPorts,
-									   file->RedirectComPorts != 0) ||
+		                               file->RedirectComPorts != 0) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_RedirectParallelPorts,
-									   file->RedirectComPorts != 0))
+		                               file->RedirectComPorts != 0))
 			return FALSE;
 	}
 
 	if (~file->RedirectComPorts)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectSerialPorts,
-									   file->RedirectComPorts != 0) ||
+		                               file->RedirectComPorts != 0) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_RedirectParallelPorts,
-									   file->RedirectComPorts != 0))
+		                               file->RedirectComPorts != 0))
 			return FALSE;
 	}
 
@@ -1658,7 +1676,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t)file->DrivesToRedirect))
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_DrivesToRedirect, file->DrivesToRedirect))
+		if (!freerdp_settings_set_string(settings, FreeRDP_DrivesToRedirect,
+		                                 file->DrivesToRedirect))
 			return FALSE;
 	}
 
@@ -1682,7 +1701,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		char* ConnectionFile = settings->ConnectionFile;
 		settings->ConnectionFile = NULL;
 
-		if (freerdp_client_settings_parse_command_line(settings, (int)file->argc, file->argv, FALSE) < 0)
+		if (freerdp_client_settings_parse_command_line(settings, (int)file->argc, file->argv,
+		                                               FALSE) < 0)
 			return FALSE;
 
 		settings->ConnectionFile = ConnectionFile;

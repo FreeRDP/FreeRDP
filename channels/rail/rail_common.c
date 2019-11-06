@@ -24,32 +24,29 @@
 
 #include <winpr/crt.h>
 
-const char* const RAIL_ORDER_TYPE_STRINGS[] =
-{
-	"",
-	"Execute",
-	"Activate",
-	"System Parameters Update",
-	"System Command",
-	"Handshake",
-	"Notify Event",
-	"",
-	"Window Move",
-	"Local Move/Size",
-	"Min Max Info",
-	"Client Status",
-	"System Menu",
-	"Language Bar Info",
-	"Get Application ID Request",
-	"Get Application ID Response",
-	"Execute Result",
-	"",
-	"",
-	"",
-	"",
-	"",
-	""
-};
+const char* const RAIL_ORDER_TYPE_STRINGS[] = { "",
+	                                            "Execute",
+	                                            "Activate",
+	                                            "System Parameters Update",
+	                                            "System Command",
+	                                            "Handshake",
+	                                            "Notify Event",
+	                                            "",
+	                                            "Window Move",
+	                                            "Local Move/Size",
+	                                            "Min Max Info",
+	                                            "Client Status",
+	                                            "System Menu",
+	                                            "Language Bar Info",
+	                                            "Get Application ID Request",
+	                                            "Get Application ID Response",
+	                                            "Execute Result",
+	                                            "",
+	                                            "",
+	                                            "",
+	                                            "",
+	                                            "",
+	                                            "" };
 
 BOOL rail_string_to_unicode_string(const char* string, RAIL_UNICODE_STRING* unicode_string)
 {
@@ -70,8 +67,8 @@ BOOL rail_string_to_unicode_string(const char* string, RAIL_UNICODE_STRING* unic
 		return FALSE;
 	}
 
-	unicode_string->string = (BYTE*) buffer;
-	unicode_string->length = (UINT16) length * sizeof(WCHAR);
+	unicode_string->string = (BYTE*)buffer;
+	unicode_string->length = (UINT16)length * sizeof(WCHAR);
 	return TRUE;
 }
 
@@ -88,14 +85,14 @@ UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
 	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT16(s, *orderType); /* orderType (2 bytes) */
+	Stream_Read_UINT16(s, *orderType);   /* orderType (2 bytes) */
 	Stream_Read_UINT16(s, *orderLength); /* orderLength (2 bytes) */
 	return CHANNEL_RC_OK;
 }
 
 void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength)
 {
-	Stream_Write_UINT16(s, orderType); /* orderType (2 bytes) */
+	Stream_Write_UINT16(s, orderType);   /* orderType (2 bytes) */
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 }
 
@@ -140,13 +137,13 @@ UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshake
 	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, handshakeEx->buildNumber); /* buildNumber (4 bytes) */
+	Stream_Read_UINT32(s, handshakeEx->buildNumber);        /* buildNumber (4 bytes) */
 	Stream_Read_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
 	return CHANNEL_RC_OK;
 }
 
 void rail_write_handshake_ex_order(wStream* s, const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
-	Stream_Write_UINT32(s, handshakeEx->buildNumber); /* buildNumber (4 bytes) */
+	Stream_Write_UINT32(s, handshakeEx->buildNumber);        /* buildNumber (4 bytes) */
 	Stream_Write_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
 }

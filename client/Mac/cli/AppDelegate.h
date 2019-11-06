@@ -12,15 +12,15 @@
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 {
-@public
-	NSWindow* window;
-	rdpContext* context;
-	MRDPView* mrdpView;
+  @public
+	NSWindow *window;
+	rdpContext *context;
+	MRDPView *mrdpView;
 }
 
-- (void) rdpConnectError: (NSString*) customMessage;
+- (void)rdpConnectError:(NSString *)customMessage;
 
-@property (assign) IBOutlet NSWindow *window;
-@property (assign) rdpContext *context;
+@property(assign) IBOutlet NSWindow *window;
+@property(assign) rdpContext *context;
 
 @end

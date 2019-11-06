@@ -3,7 +3,6 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-
 static BOOL test_mutex_basic(void)
 {
 	HANDLE mutex;
@@ -19,7 +18,7 @@ static BOOL test_mutex_basic(void)
 
 	if (rc != WAIT_OBJECT_0)
 	{
-		printf("%s: WaitForSingleObject on mutex failed with %"PRIu32"\n", __FUNCTION__, rc);
+		printf("%s: WaitForSingleObject on mutex failed with %" PRIu32 "\n", __FUNCTION__, rc);
 		return FALSE;
 	}
 
@@ -61,7 +60,8 @@ static BOOL test_mutex_recursive(void)
 
 		if (rc != WAIT_OBJECT_0)
 		{
-			printf("%s: WaitForSingleObject #%"PRIu32" on mutex failed with %"PRIu32"\n", __FUNCTION__, i, rc);
+			printf("%s: WaitForSingleObject #%" PRIu32 " on mutex failed with %" PRIu32 "\n",
+			       __FUNCTION__, i, rc);
 			return FALSE;
 		}
 	}
@@ -70,7 +70,7 @@ static BOOL test_mutex_recursive(void)
 	{
 		if (!ReleaseMutex(mutex))
 		{
-			printf("%s: ReleaseMutex #%"PRIu32" failed\n", __FUNCTION__, i);
+			printf("%s: ReleaseMutex #%" PRIu32 " failed\n", __FUNCTION__, i);
 			return FALSE;
 		}
 	}
@@ -99,7 +99,7 @@ static BOOL test_mutex_recursive(void)
 
 static HANDLE thread1_mutex1 = NULL;
 static HANDLE thread1_mutex2 = NULL;
-static BOOL   thread1_failed = TRUE;
+static BOOL thread1_failed = TRUE;
 
 static DWORD WINAPI test_mutex_thread1(LPVOID lpParam)
 {
@@ -125,7 +125,8 @@ static DWORD WINAPI test_mutex_thread1(LPVOID lpParam)
 	if (rc != WAIT_TIMEOUT)
 	{
 		fprintf(stderr,
-		        "%s: WaitForSingleObject on thread1_mutex1 unexpectedly returned %"PRIu32" instead of WAIT_TIMEOUT (%u)\n",
+		        "%s: WaitForSingleObject on thread1_mutex1 unexpectedly returned %" PRIu32
+		        " instead of WAIT_TIMEOUT (%u)\n",
 		        __FUNCTION__, rc, WAIT_TIMEOUT);
 		return 0;
 	}
@@ -135,14 +136,15 @@ static DWORD WINAPI test_mutex_thread1(LPVOID lpParam)
 	if (rc != WAIT_OBJECT_0)
 	{
 		fprintf(stderr,
-		        "%s: WaitForSingleObject on thread1_mutex2 unexpectedly returned %"PRIu32" instead of WAIT_OBJECT_0\n",
+		        "%s: WaitForSingleObject on thread1_mutex2 unexpectedly returned %" PRIu32
+		        " instead of WAIT_OBJECT_0\n",
 		        __FUNCTION__, rc);
 		return 0;
 	}
 
 	if (!ReleaseMutex(thread1_mutex2))
 	{
-		fprintf(stderr, "%s: ReleaseMutex failed on thread1_mutex2\n",	__FUNCTION__);
+		fprintf(stderr, "%s: ReleaseMutex failed on thread1_mutex2\n", __FUNCTION__);
 		return 0;
 	}
 

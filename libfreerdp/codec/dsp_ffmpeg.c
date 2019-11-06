@@ -137,7 +137,6 @@ static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 	}
 }
 
-
 static int ffmpeg_sample_format(const AUDIO_FORMAT* format)
 {
 	switch (format->wFormatTag)
@@ -344,8 +343,7 @@ fail:
 }
 
 #if defined(SWRESAMPLE_FOUND)
-static BOOL ffmpeg_resample_frame(SwrContext* context,
-                                  AVFrame* in, AVFrame* out)
+static BOOL ffmpeg_resample_frame(SwrContext* context, AVFrame* in, AVFrame* out)
 {
 	int ret;
 
@@ -376,8 +374,7 @@ static BOOL ffmpeg_resample_frame(SwrContext* context,
 	return TRUE;
 }
 #else
-static BOOL ffmpeg_resample_frame(AVAudioResampleContext* context,
-                                  AVFrame* in, AVFrame* out)
+static BOOL ffmpeg_resample_frame(AVAudioResampleContext* context, AVFrame* in, AVFrame* out)
 {
 	int ret;
 
@@ -409,8 +406,8 @@ static BOOL ffmpeg_resample_frame(AVAudioResampleContext* context,
 }
 #endif
 
-static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in,
-                                AVPacket* packet, wStream* out)
+static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in, AVPacket* packet,
+                                wStream* out)
 {
 	int ret;
 	/* send the packet with the compressed data to the encoder */
@@ -419,8 +416,7 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in,
 	if (ret < 0)
 	{
 		const char* err = av_err2str(ret);
-		WLog_ERR(TAG, "Error submitting the packet to the encoder %s [%d]",
-		         err, ret);
+		WLog_ERR(TAG, "Error submitting the packet to the encoder %s [%d]", err, ret);
 		return FALSE;
 	}
 
@@ -448,8 +444,8 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in,
 	return TRUE;
 }
 
-static BOOL ffmpeg_fill_frame(AVFrame* frame, const AUDIO_FORMAT* inputFormat,
-                              const BYTE* data, size_t size)
+static BOOL ffmpeg_fill_frame(AVFrame* frame, const AUDIO_FORMAT* inputFormat, const BYTE* data,
+                              size_t size)
 {
 	int ret, bpp;
 	frame->channels = inputFormat->nChannels;
@@ -459,9 +455,7 @@ static BOOL ffmpeg_fill_frame(AVFrame* frame, const AUDIO_FORMAT* inputFormat,
 	bpp = av_get_bytes_per_sample(frame->format);
 	frame->nb_samples = size / inputFormat->nChannels / bpp;
 
-	if ((ret = avcodec_fill_audio_frame(frame, frame->channels,
-	                                    frame->format,
-	                                    data, size, 1)) < 0)
+	if ((ret = avcodec_fill_audio_frame(frame, frame->channels, frame->format, data, size, 1)) < 0)
 	{
 		const char* err = av_err2str(ret);
 		WLog_ERR(TAG, "Error during audio frame fill %s [%d]", err, ret);
@@ -471,15 +465,11 @@ static BOOL ffmpeg_fill_frame(AVFrame* frame, const AUDIO_FORMAT* inputFormat,
 	return TRUE;
 }
 #if defined(SWRESAMPLE_FOUND)
-static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt,
-                          AVFrame* frame,
-                          SwrContext* resampleContext,
-                          AVFrame* resampled, wStream* out)
+static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame,
+                          SwrContext* resampleContext, AVFrame* resampled, wStream* out)
 #else
-static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt,
-                          AVFrame* frame,
-                          AVAudioResampleContext* resampleContext,
-                          AVFrame* resampled, wStream* out)
+static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame,
+                          AVAudioResampleContext* resampleContext, AVFrame* resampled, wStream* out)
 #endif
 {
 	int ret;
@@ -489,8 +479,7 @@ static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt,
 	if (ret < 0)
 	{
 		const char* err = av_err2str(ret);
-		WLog_ERR(TAG, "Error submitting the packet to the decoder %s [%d]",
-		         err, ret);
+		WLog_ERR(TAG, "Error submitting the packet to the decoder %s [%d]", err, ret);
 		return FALSE;
 	}
 
@@ -619,15 +608,12 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 		return FALSE;
 
 	/* Resample to desired format. */
-	if (!ffmpeg_resample_frame(context->rcontext,
-	                           context->frame,
-	                           context->resampled))
+	if (!ffmpeg_resample_frame(context->rcontext, context->frame, context->resampled))
 		return FALSE;
 
 	if (context->context->frame_size <= 0)
 	{
-		return ffmpeg_encode_frame(context->context, context->resampled,
-		                           context->packet, out);
+		return ffmpeg_encode_frame(context->context, context->resampled, context->packet, out);
 	}
 	else
 	{
@@ -644,9 +630,10 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 			if (inSamples + (int)context->bufferedSamples > context->context->frame_size)
 				inSamples = context->context->frame_size - (int)context->bufferedSamples;
 
-			rc = av_samples_copy(context->buffered->extended_data, context->resampled->extended_data,
-			                     (int)context->bufferedSamples, copied, inSamples,
-			                     context->context->channels, context->context->sample_fmt);
+			rc =
+			    av_samples_copy(context->buffered->extended_data, context->resampled->extended_data,
+			                    (int)context->bufferedSamples, copied, inSamples,
+			                    context->context->channels, context->context->sample_fmt);
 			rest -= inSamples;
 			copied += inSamples;
 			context->bufferedSamples += (UINT32)inSamples;
@@ -654,14 +641,12 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 			if (context->context->frame_size <= (int)context->bufferedSamples)
 			{
 				/* Encode in desired format. */
-				if (!ffmpeg_encode_frame(context->context, context->buffered,
-				                         context->packet, out))
+				if (!ffmpeg_encode_frame(context->context, context->buffered, context->packet, out))
 					return FALSE;
 
 				context->bufferedSamples = 0;
 			}
-		}
-		while (rest > 0);
+		} while (rest > 0);
 
 		return TRUE;
 	}
@@ -676,6 +661,6 @@ BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 	av_init_packet(context->packet);
 	context->packet->data = (uint8_t*)data;
 	context->packet->size = length;
-	return ffmpeg_decode(context->context, context->packet, context->frame,
-	                     context->rcontext, context->resampled, out);
+	return ffmpeg_decode(context->context, context->packet, context->frame, context->rcontext,
+	                     context->resampled, out);
 }

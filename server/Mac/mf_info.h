@@ -23,8 +23,6 @@
 #define FREERDP_SERVER_MAC_INFO_DEFAULT_FPS 1
 #define FREERDP_SERVER_MAC_INFO_MAXPEERS 1
 
-
-
 #include <winpr/wtypes.h>
 #include <freerdp/codec/rfx.h>
 
@@ -45,6 +43,7 @@ void mf_info_clear_invalid_region(mfInfo* mfi);
 void mf_info_invalidate_full_screen(mfInfo* mfi);
 BOOL mf_info_have_invalid_region(mfInfo* mfi);
 void mf_info_getScreenData(mfInfo* mfi, long* width, long* height, BYTE** pBits, int* pitch);
-//BOOL CALLBACK mf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
+// BOOL CALLBACK mf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM
+// dwData);
 
 #endif /* FREERDP_SERVER_MAC_INFO_H */

@@ -28,7 +28,6 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 	 * the path did not have a prefix to remove, or an HRESULT failure code.
 	 */
 
-
 	/* Path with prefix (File Namespace) */
 
 	_tcscpy(Path, testPathPrefixFileNamespace);
@@ -37,13 +36,14 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchStripPrefix status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchStripPrefix status: 0x%08") _T(PRIX32) _T("\n"), status);
 		return -1;
 	}
 
 	if (_tcscmp(Path, testPathNoPrefixFileNamespace) != 0)
 	{
-		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path, testPathNoPrefixFileNamespace);
+		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path,
+		         testPathNoPrefixFileNamespace);
 		return -1;
 	}
 
@@ -55,13 +55,14 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 
 	if (status != S_FALSE)
 	{
-		_tprintf(_T("PathCchStripPrefix status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchStripPrefix status: 0x%08") _T(PRIX32) _T("\n"), status);
 		return -1;
 	}
 
 	if (_tcscmp(Path, testPathPrefixDeviceNamespace) != 0)
 	{
-		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path, testPathPrefixDeviceNamespace);
+		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path,
+		         testPathPrefixDeviceNamespace);
 		return -1;
 	}
 
@@ -69,7 +70,10 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 	status = PathCchStripPrefix(NULL, PATHCCH_MAX_CCH);
 	if (status != E_INVALIDARG)
 	{
-		_tprintf(_T("PathCchStripPrefix with null path unexpectedly succeeded with status 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(
+		    _T("PathCchStripPrefix with null path unexpectedly succeeded with status 0x%08") _T(
+		        PRIX32) _T("\n"),
+		    status);
 		return -1;
 	}
 
@@ -82,7 +86,9 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 		status = PathCchStripPrefix(Path, i);
 		if (status != E_INVALIDARG)
 		{
-			_tprintf(_T("PathCchStripPrefix with invalid cchPath value %d unexpectedly succeeded with status 0x%08")_T(PRIX32)_T("\n"), i, status);
+			_tprintf(_T("PathCchStripPrefix with invalid cchPath value %d unexpectedly succeeded ")
+			         _T("with status 0x%08") _T(PRIX32) _T("\n"),
+			         i, status);
 			return -1;
 		}
 	}
@@ -94,12 +100,15 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 	status = PathCchStripPrefix(Path, i);
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchStripPrefix with minimum valid strippable path length unexpectedly returned status 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchStripPrefix with minimum valid strippable path length unexpectedly ")
+		         _T("returned status 0x%08") _T(PRIX32) _T("\n"),
+		         status);
 		return -1;
 	}
 	if (_tcscmp(Path, testPathNoPrefixFileNamespaceMinimum))
 	{
-		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path, testPathNoPrefixFileNamespaceMinimum);
+		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path,
+		         testPathNoPrefixFileNamespaceMinimum);
 		return -1;
 	}
 
@@ -108,10 +117,10 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 	status = PathCchStripPrefix(Path, 6);
 	if (status == S_OK)
 	{
-		_tprintf(_T("PathCchStripPrefix with invalid drive letter symbol unexpectedly succeeded\n"));
+		_tprintf(
+		    _T("PathCchStripPrefix with invalid drive letter symbol unexpectedly succeeded\n"));
 		return -1;
 	}
 
 	return 0;
 }
-

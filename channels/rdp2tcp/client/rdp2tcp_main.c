@@ -46,7 +46,6 @@ typedef struct
 	char buffer[16 * 1024];
 } Plugin;
 
-
 static int init_external_addin(Plugin* plugin)
 {
 	SECURITY_ATTRIBUTES saAttr;
@@ -86,16 +85,16 @@ static int init_external_addin(Plugin* plugin)
 
 	// Execute plugin
 	if (!CreateProcess(NULL,
-	                   plugin->channelEntryPoints.pExtendedData,			// command line
-	                   NULL,			// process security attributes
-	                   NULL,			// primary thread security attributes
-	                   TRUE,			// handles are inherited
-	                   0,				// creation flags
-	                   NULL,			// use parent's environment
-	                   NULL,			// use parent's current directory
-	                   &siStartInfo,	// STARTUPINFO pointer
-	                   &procInfo		// receives PROCESS_INFORMATION
-	                  ))
+	                   plugin->channelEntryPoints.pExtendedData, // command line
+	                   NULL,                                     // process security attributes
+	                   NULL,         // primary thread security attributes
+	                   TRUE,         // handles are inherited
+	                   0,            // creation flags
+	                   NULL,         // use parent's environment
+	                   NULL,         // use parent's current directory
+	                   &siStartInfo, // STARTUPINFO pointer
+	                   &procInfo     // receives PROCESS_INFORMATION
+	                   ))
 	{
 		WLog_ERR(TAG, "fork for addin");
 		return -1;
@@ -146,7 +145,8 @@ static DWORD WINAPI copyThread(void* data)
 			goto fail;
 		}
 
-		//if (!ReadFile(plugin->hStdOutputRead, plugin->buffer, sizeof plugin->buffer, &dwRead, NULL))
+		// if (!ReadFile(plugin->hStdOutputRead, plugin->buffer, sizeof plugin->buffer, &dwRead,
+		// NULL))
 		if (!ReadFile(plugin->hStdOutputRead, buffer, bufsize, &dwRead, NULL))
 		{
 			free(buffer);
@@ -159,8 +159,8 @@ static DWORD WINAPI copyThread(void* data)
 			dumpData(buffer, dwRead);
 		}
 
-		if (plugin->channelEntryPoints.pVirtualChannelWriteEx(plugin->initHandle, plugin->openHandle,
-				buffer, dwRead, buffer) != CHANNEL_RC_OK)
+		if (plugin->channelEntryPoints.pVirtualChannelWriteEx(
+		        plugin->initHandle, plugin->openHandle, buffer, dwRead, buffer) != CHANNEL_RC_OK)
 		{
 			free(buffer);
 			fprintf(stderr, "rdp2tcp copyThread failed %i\n", (int)dwRead);
@@ -222,7 +222,8 @@ static void dataReceived(Plugin* plugin, void* pData, UINT32 dataLength, UINT32 
 }
 
 static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHandle, UINT event,
-        LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+                                                LPVOID pData, UINT32 dataLength, UINT32 totalLength,
+                                                UINT32 dataFlags)
 {
 	Plugin* plugin = (Plugin*)lpUserParam;
 
@@ -243,7 +244,7 @@ static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHa
 }
 
 static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInitHandle, UINT event,
-        LPVOID pData, UINT dataLength)
+                                                LPVOID pData, UINT dataLength)
 {
 	Plugin* plugin = (Plugin*)lpUserParam;
 
@@ -256,8 +257,9 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 			plugin->writeComplete = CreateEvent(NULL, TRUE, FALSE, NULL);
 			plugin->copyThread = CreateThread(NULL, 0, copyThread, plugin, 0, NULL);
 
-			if (plugin->channelEntryPoints.pVirtualChannelOpenEx(pInitHandle, &plugin->openHandle,
-			        RDP2TCP_CHAN_NAME, VirtualChannelOpenEventEx) != CHANNEL_RC_OK)
+			if (plugin->channelEntryPoints.pVirtualChannelOpenEx(
+			        pInitHandle, &plugin->openHandle, RDP2TCP_CHAN_NAME,
+			        VirtualChannelOpenEventEx) != CHANNEL_RC_OK)
 				return;
 
 			break;
@@ -312,12 +314,11 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 
 	strncpy(channelDef.name, RDP2TCP_CHAN_NAME, sizeof(channelDef.name));
 	channelDef.options =
-	    CHANNEL_OPTION_INITIALIZED |
-	    CHANNEL_OPTION_ENCRYPT_RDP |
-	    CHANNEL_OPTION_COMPRESS_RDP;
+	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;
 
 	if (pEntryPointsEx->pVirtualChannelInitEx(plugin, NULL, pInitHandle, &channelDef, 1,
-	        VIRTUAL_CHANNEL_VERSION_WIN2000, VirtualChannelInitEventEx) != CHANNEL_RC_OK)
+	                                          VIRTUAL_CHANNEL_VERSION_WIN2000,
+	                                          VirtualChannelInitEventEx) != CHANNEL_RC_OK)
 		return FALSE;
 
 	return TRUE;

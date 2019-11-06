@@ -15,20 +15,20 @@ int TestWLog(int argc, char* argv[])
 	char* wlog_file = NULL;
 	int result = 1;
 
-        if (!(tmp_path = GetKnownPath(KNOWN_PATH_TEMP)))
-        {
-                fprintf(stderr, "Failed to get temporary directory!\n");
+	if (!(tmp_path = GetKnownPath(KNOWN_PATH_TEMP)))
+	{
+		fprintf(stderr, "Failed to get temporary directory!\n");
 		goto out;
-        }
+	}
 
 	root = WLog_GetRoot();
 
 	WLog_SetLogAppenderType(root, WLOG_APPENDER_BINARY);
 
 	appender = WLog_GetLogAppender(root);
-	if(!WLog_ConfigureAppender(appender, "outputfilename", "test_w.log"))
+	if (!WLog_ConfigureAppender(appender, "outputfilename", "test_w.log"))
 		goto out;
-	if(!WLog_ConfigureAppender(appender, "outputfilepath", tmp_path))
+	if (!WLog_ConfigureAppender(appender, "outputfilepath", tmp_path))
 		goto out;
 
 	layout = WLog_GetLogLayout(root);

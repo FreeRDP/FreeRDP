@@ -29,24 +29,22 @@ enum
 	MIRROR_UNLOAD = 1
 };
 
-
-
 enum
 {
 	DMF_ESCAPE_BASE_1_VB = 1030,
-	DMF_ESCAPE_BASE_2_VB = 1026, 
+	DMF_ESCAPE_BASE_2_VB = 1026,
 	DMF_ESCAPE_BASE_3_VB = 24
 };
 
-#ifdef  _WIN64
+#ifdef _WIN64
 
-#define CLIENT_64BIT		0x8000
+#define CLIENT_64BIT 0x8000
 
 enum
 {
 	DMF_ESCAPE_BASE_1 = CLIENT_64BIT | DMF_ESCAPE_BASE_1_VB,
-	DMF_ESCAPE_BASE_2 = CLIENT_64BIT | DMF_ESCAPE_BASE_2_VB, 
-	DMF_ESCAPE_BASE_3 = CLIENT_64BIT | DMF_ESCAPE_BASE_3_VB, 
+	DMF_ESCAPE_BASE_2 = CLIENT_64BIT | DMF_ESCAPE_BASE_2_VB,
+	DMF_ESCAPE_BASE_3 = CLIENT_64BIT | DMF_ESCAPE_BASE_3_VB,
 };
 
 #else
@@ -54,8 +52,8 @@ enum
 enum
 {
 	DMF_ESCAPE_BASE_1 = DMF_ESCAPE_BASE_1_VB,
-	DMF_ESCAPE_BASE_2 = DMF_ESCAPE_BASE_2_VB, 
-	DMF_ESCAPE_BASE_3 = DMF_ESCAPE_BASE_3_VB, 
+	DMF_ESCAPE_BASE_2 = DMF_ESCAPE_BASE_2_VB,
+	DMF_ESCAPE_BASE_3 = DMF_ESCAPE_BASE_3_VB,
 };
 
 #endif
@@ -71,8 +69,8 @@ typedef enum
 
 } dmf_escape;
 
-#define CLIP_LIMIT		50
-#define MAXCHANGES_BUF		20000
+#define CLIP_LIMIT 50
+#define MAXCHANGES_BUF 20000
 
 typedef enum
 {
@@ -94,9 +92,9 @@ typedef enum
 	dmf_dfn_assert_off = 65,
 } dmf_UpdEvent;
 
-#define NOCACHE			1
-#define OLDCACHE		2
-#define NEWCACHE		3
+#define NOCACHE 1
+#define OLDCACHE 2
+#define NEWCACHE 3
 
 typedef struct
 {
@@ -118,19 +116,19 @@ typedef struct
 	CHANGES_RECORD pointrect[MAXCHANGES_BUF];
 } CHANGES_BUF;
 
-#define EXT_DEVMODE_SIZE_MAX			3072
-#define	DMF_PIPE_SEC_SIZE_DEFAULT		ALIGN64K(sizeof(CHANGES_BUF))
+#define EXT_DEVMODE_SIZE_MAX 3072
+#define DMF_PIPE_SEC_SIZE_DEFAULT ALIGN64K(sizeof(CHANGES_BUF))
 
 typedef struct
 {
-	 CHANGES_BUF* buffer;
-	 PVOID Userbuffer;
+	CHANGES_BUF* buffer;
+	PVOID Userbuffer;
 } GETCHANGESBUF;
 
-#define	dmf_sprb_ERRORMASK			0x07FF
-#define	dmf_sprb_STRICTSESSION_AFF		0x1FFF
+#define dmf_sprb_ERRORMASK 0x07FF
+#define dmf_sprb_STRICTSESSION_AFF 0x1FFF
 
-typedef	enum
+typedef enum
 {
 	dmf_sprb_internal_error = 0x0001,
 	dmf_sprb_miniport_gen_error = 0x0004,
@@ -144,11 +142,11 @@ typedef	enum
 	dmf_sprb_pdev_detached = 0x2000,
 } dmf_session_prob_status;
 
-#define	DMF_ESC_RET_FAILF			0x80000000
-#define	DMF_ESC_RET_SSTMASK			0x0000FFFF
-#define	DMF_ESC_RET_IMMMASK			0x7FFF0000
+#define DMF_ESC_RET_FAILF 0x80000000
+#define DMF_ESC_RET_SSTMASK 0x0000FFFF
+#define DMF_ESC_RET_IMMMASK 0x7FFF0000
 
-typedef	enum
+typedef enum
 {
 	dmf_escret_generic_ok = 0x00010000,
 	dmf_escret_bad_state = 0x00100000,
@@ -176,8 +174,8 @@ enum
 	esc_qvi_prod_name_max = 16,
 };
 
-#define	ESC_QVI_PROD_MIRAGE		"MIRAGE"
-#define	ESC_QVI_PROD_QUASAR		"QUASAR"
+#define ESC_QVI_PROD_MIRAGE "MIRAGE"
+#define ESC_QVI_PROD_QUASAR "QUASAR"
 
 typedef struct
 {

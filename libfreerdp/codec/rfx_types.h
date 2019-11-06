@@ -36,7 +36,10 @@
 #ifdef WITH_DEBUG_RFX
 #define DEBUG_RFX(...) WLog_DBG(RFX_TAG, __VA_ARGS__)
 #else
-#define DEBUG_RFX(...) do { } while (0)
+#define DEBUG_RFX(...) \
+	do                 \
+	{                  \
+	} while (0)
 #endif
 
 typedef struct _RFX_TILE_COMPOSE_WORK_PARAM RFX_TILE_COMPOSE_WORK_PARAM;

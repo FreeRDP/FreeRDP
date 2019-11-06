@@ -18,9 +18,10 @@
 static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
                                      BITMAP_INTERLEAVED_CONTEXT* decoder
 #if defined(WITH_PROFILER)
-                                     , PROFILER* profiler_comp, PROFILER* profiler_decomp
+                                     ,
+                                     PROFILER* profiler_comp, PROFILER* profiler_decomp
 #endif
-                                    )
+)
 {
 	BOOL rc2 = FALSE;
 	BOOL rc;
@@ -48,16 +49,16 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 		goto fail;
 
 	PROFILER_ENTER(profiler_comp);
-	rc = interleaved_compress(encoder, tmp, &DstSize, w, h, pSrcData,
-	                          format, step, x, y, NULL, bpp);
+	rc =
+	    interleaved_compress(encoder, tmp, &DstSize, w, h, pSrcData, format, step, x, y, NULL, bpp);
 	PROFILER_EXIT(profiler_comp);
 
 	if (!rc)
 		goto fail;
 
 	PROFILER_ENTER(profiler_decomp);
-	rc = interleaved_decompress(decoder, tmp, DstSize, w, h, bpp, pDstData,
-	                            format, step, x, y, w, h, NULL);
+	rc = interleaved_decompress(decoder, tmp, DstSize, w, h, bpp, pDstData, format, step, x, y, w,
+	                            h, NULL);
 	PROFILER_EXIT(profiler_decomp);
 
 	if (!rc)
@@ -136,9 +137,10 @@ static BOOL run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
 	{
 		if (!run_encode_decode_single(bpp, encoder, decoder
 #if defined(WITH_PROFILER)
-		                              , profiler_comp, profiler_decomp
+		                              ,
+		                              profiler_comp, profiler_decomp
 #endif
-		                             ))
+		                              ))
 			goto fail;
 	}
 
@@ -155,18 +157,12 @@ fail:
 
 static BOOL TestColorConversion(void)
 {
-	const UINT32 formats[] = {
-		PIXEL_FORMAT_RGB15,
-		PIXEL_FORMAT_BGR15,
-		PIXEL_FORMAT_ABGR15,
-		PIXEL_FORMAT_ARGB15,
-		PIXEL_FORMAT_BGR16,
-		PIXEL_FORMAT_RGB16
-	};
+	const UINT32 formats[] = { PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_BGR15, PIXEL_FORMAT_ABGR15,
+		                       PIXEL_FORMAT_ARGB15, PIXEL_FORMAT_BGR16, PIXEL_FORMAT_RGB16 };
 	UINT32 x;
 
 	/* Check color conversion 15/16 -> 32bit maps to proper values */
-	for (x=0; x<ARRAYSIZE(formats); x++)
+	for (x = 0; x < ARRAYSIZE(formats); x++)
 	{
 		const UINT32 dstFormat = PIXEL_FORMAT_RGBA32;
 		const UINT32 format = formats[x];
@@ -189,7 +185,7 @@ static BOOL TestColorConversion(void)
 
 int TestFreeRDPCodecInterleaved(int argc, char* argv[])
 {
-	BITMAP_INTERLEAVED_CONTEXT* encoder, * decoder;
+	BITMAP_INTERLEAVED_CONTEXT *encoder, *decoder;
 	int rc = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

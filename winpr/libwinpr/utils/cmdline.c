@@ -55,9 +55,9 @@ static void log_error(DWORD flags, LPCSTR message, int index, LPCSTR argv)
 		WLog_ERR(TAG, message, index, argv);
 }
 
-int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* options,
-                               DWORD flags,
-                               void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter, COMMAND_LINE_POST_FILTER_FN_A postFilter)
+int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* options, DWORD flags,
+                               void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter,
+                               COMMAND_LINE_POST_FILTER_FN_A postFilter)
 {
 	int i, j;
 	int status;
@@ -99,7 +99,8 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 			if (count < 0)
 			{
-				log_error(flags, "Failed for index %d [%s]: PreFilter rule could not be applied", i, argv[i]);
+				log_error(flags, "Failed for index %d [%s]: PreFilter rule could not be applied", i,
+				          argv[i]);
 				status = COMMAND_LINE_ERROR;
 				return status;
 			}
@@ -324,7 +325,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				{
 					if (options[j].Flags & COMMAND_LINE_VALUE_FLAG)
 					{
-						options[j].Value = (LPSTR) 1;
+						options[j].Value = (LPSTR)1;
 						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}
 					else if (options[j].Flags & COMMAND_LINE_VALUE_BOOL)
@@ -358,7 +359,9 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 					if (count < 0)
 					{
-						log_error(flags, "Failed at index %d [%s]: PostFilter rule could not be applied", i, argv[i]);
+						log_error(flags,
+						          "Failed at index %d [%s]: PostFilter rule could not be applied",
+						          i, argv[i]);
 						status = COMMAND_LINE_ERROR;
 						return status;
 					}
@@ -386,8 +389,8 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 }
 
 int CommandLineParseArgumentsW(int argc, LPWSTR* argv, COMMAND_LINE_ARGUMENT_W* options,
-                               DWORD flags,
-                               void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter, COMMAND_LINE_POST_FILTER_FN_W postFilter)
+                               DWORD flags, void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter,
+                               COMMAND_LINE_POST_FILTER_FN_W postFilter)
 {
 	return 0;
 }

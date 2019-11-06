@@ -34,7 +34,8 @@
 #include "../log.h"
 #define TAG WINPR_TAG("rpc")
 
-void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                PFORMAT_STRING pFormat)
 {
 	unsigned char type = *pFormat;
 

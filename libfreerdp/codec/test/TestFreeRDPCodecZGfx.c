@@ -7,10 +7,9 @@
 #include <freerdp/log.h>
 
 /* Sample from [MS-RDPEGFX] */
-static const BYTE TEST_FOX_DATA[] =
-    "The quick brown "
-    "fox jumps over t"
-    "he lazy dog";
+static const BYTE TEST_FOX_DATA[] = "The quick brown "
+                                    "fox jumps over t"
+                                    "he lazy dog";
 
 static const BYTE TEST_FOX_DATA_SINGLE[] =
     "\xE0\x04\x54\x68\x65\x20\x71\x75\x69\x63\x6B\x20\x62\x72\x6F\x77"
@@ -41,7 +40,7 @@ static int test_ZGfxCompressFox(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_FOX_DATA) - 1;
-	pSrcData = (BYTE*) TEST_FOX_DATA;
+	pSrcData = (BYTE*)TEST_FOX_DATA;
 	Flags = 0;
 	expectedSize = sizeof(TEST_FOX_DATA_SINGLE) - 1;
 	status = zgfx_compress(zgfx, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
@@ -49,11 +48,12 @@ static int test_ZGfxCompressFox(void)
 	if (status < 0)
 		goto fail;
 
-	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
+	printf("flags: 0x%08" PRIX32 " size: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("test_ZGfxCompressFox: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("test_ZGfxCompressFox: output size mismatch: Actual: %" PRIu32 ", Expected: %" PRIu32
+		       "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}
@@ -92,7 +92,7 @@ static int test_ZGfxDecompressFoxSingle(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_FOX_DATA_SINGLE) - 1;
-	pSrcData = (BYTE*) TEST_FOX_DATA_SINGLE;
+	pSrcData = (BYTE*)TEST_FOX_DATA_SINGLE;
 	Flags = 0;
 	expectedSize = sizeof(TEST_FOX_DATA) - 1;
 	status = zgfx_decompress(zgfx, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
@@ -100,11 +100,12 @@ static int test_ZGfxDecompressFoxSingle(void)
 	if (status < 0)
 		goto fail;
 
-	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
+	printf("flags: 0x%08" PRIX32 " size: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("test_ZGfxDecompressFoxSingle: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("test_ZGfxDecompressFoxSingle: output size mismatch: Actual: %" PRIu32
+		       ", Expected: %" PRIu32 "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}
@@ -143,7 +144,7 @@ static int test_ZGfxDecompressFoxMultipart(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_FOX_DATA_MULTIPART) - 1;
-	pSrcData = (BYTE*) TEST_FOX_DATA_MULTIPART;
+	pSrcData = (BYTE*)TEST_FOX_DATA_MULTIPART;
 	Flags = 0;
 	expectedSize = sizeof(TEST_FOX_DATA) - 1;
 	status = zgfx_decompress(zgfx, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
@@ -151,11 +152,12 @@ static int test_ZGfxDecompressFoxMultipart(void)
 	if (status < 0)
 		goto fail;
 
-	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
+	printf("flags: 0x%08" PRIX32 " size: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("test_ZGfxDecompressFoxSingle: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("test_ZGfxDecompressFoxSingle: output size mismatch: Actual: %" PRIu32
+		       ", Expected: %" PRIu32 "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}
@@ -200,25 +202,26 @@ static int test_ZGfxCompressConsistent(void)
 
 	/* Compress */
 	expectedSize = SrcSize = sizeof(BigBuffer);
-	pSrcData = (BYTE*) BigBuffer;
+	pSrcData = (BYTE*)BigBuffer;
 	Flags = 0;
 	status = zgfx_compress(zgfx, pSrcData, SrcSize, &pDstData2, &DstSize2, &Flags);
 
 	if (status < 0)
 		goto fail;
 
-	printf("Compress: flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize2);
+	printf("Compress: flags: 0x%08" PRIX32 " size: %" PRIu32 "\n", Flags, DstSize2);
 	/* Decompress */
 	status = zgfx_decompress(zgfx, pDstData2, DstSize2, &pDstData, &DstSize, Flags);
 
 	if (status < 0)
 		goto fail;
 
-	printf("Decompress: flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
+	printf("Decompress: flags: 0x%08" PRIX32 " size: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("test_ZGfxDecompressFoxSingle: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("test_ZGfxDecompressFoxSingle: output size mismatch: Actual: %" PRIu32
+		       ", Expected: %" PRIu32 "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}
@@ -268,4 +271,3 @@ int TestFreeRDPCodecZGfx(int argc, char* argv[])
 
 	return 0;
 }
-

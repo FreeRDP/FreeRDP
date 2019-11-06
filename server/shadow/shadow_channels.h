@@ -31,11 +31,12 @@
 #include "shadow_rdpgfx.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-UINT shadow_client_channels_post_connect(rdpShadowClient* client);
-void shadow_client_channels_free(rdpShadowClient* client);
+	UINT shadow_client_channels_post_connect(rdpShadowClient* client);
+	void shadow_client_channels_free(rdpShadowClient* client);
 
 #ifdef __cplusplus
 }

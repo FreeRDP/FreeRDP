@@ -68,13 +68,10 @@ static const char TEST_MSRC_INCIDENT_FILE_TYPE2[] =
  * Decrypted Connection String 2:
  *
  * <E>
- * <A KH="BNRjdu97DyczQSRuMRrDWoue+HA=" ID="+ULZ6ifjoCa6cGPMLQiGHRPwkg6VyJqGwxMnO6GcelwUh9a6/FBq3It5ADSndmLL"/>
- * <C>
- * <T ID="1" SID="0">
- * 	<L P="49228" N="fe80::1032:53d9:5a01:909b%3"/>
- * 	<L P="49229" N="fe80::3d8f:9b2d:6b4e:6aa%6"/>
- * 	<L P="49230" N="192.168.1.200"/>
- * 	<L P="49231" N="169.254.6.170"/>
+ * <A KH="BNRjdu97DyczQSRuMRrDWoue+HA="
+ * ID="+ULZ6ifjoCa6cGPMLQiGHRPwkg6VyJqGwxMnO6GcelwUh9a6/FBq3It5ADSndmLL"/> <C> <T ID="1" SID="0"> <L
+ * P="49228" N="fe80::1032:53d9:5a01:909b%3"/> <L P="49229" N="fe80::3d8f:9b2d:6b4e:6aa%6"/> <L
+ * P="49230" N="192.168.1.200"/> <L P="49231" N="169.254.6.170"/>
  * </T>
  * </C>
  * </E>
@@ -93,9 +90,9 @@ static BOOL test_msrsc_incident_file_type1(wLog* log)
 	if (!file)
 		return -1;
 
-	status = freerdp_assistance_parse_file_buffer(file,
-	         TEST_MSRC_INCIDENT_FILE_TYPE1, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE1),
-	         TEST_MSRC_INCIDENT_PASSWORD_TYPE1);
+	status = freerdp_assistance_parse_file_buffer(file, TEST_MSRC_INCIDENT_FILE_TYPE1,
+	                                              sizeof(TEST_MSRC_INCIDENT_FILE_TYPE1),
+	                                              TEST_MSRC_INCIDENT_PASSWORD_TYPE1);
 	WLog_Print(log, WLOG_INFO, "freerdp_assistance_parse_file_buffer: %d", status);
 
 	if (status < 0)
@@ -103,7 +100,8 @@ static BOOL test_msrsc_incident_file_type1(wLog* log)
 
 	freerdp_assistance_print_file(file, WLog_Get("foo"), WLOG_INFO);
 
-	if (!freerdp_assistance_get_encrypted_pass_stub(file, &EncryptedPassStub, &EncryptedPassStubLength))
+	if (!freerdp_assistance_get_encrypted_pass_stub(file, &EncryptedPassStub,
+	                                                &EncryptedPassStubLength))
 		goto fail;
 
 	pass = freerdp_assistance_bin_to_hex_string(EncryptedPassStub, EncryptedPassStubLength);
@@ -111,7 +109,7 @@ static BOOL test_msrsc_incident_file_type1(wLog* log)
 	if (!pass)
 		goto fail;
 
-	WLog_Print(log, WLOG_INFO, "freerdp_assistance_decrypt: %d %s [%"PRIdz"]", status, pass,
+	WLog_Print(log, WLOG_INFO, "freerdp_assistance_decrypt: %d %s [%" PRIdz "]", status, pass,
 	           EncryptedPassStubLength);
 	expertBlob = freerdp_assistance_construct_expert_blob("Edgar Olougouna", pass);
 	WLog_Print(log, WLOG_INFO, "expertBlob='%s'", expertBlob);
@@ -135,9 +133,9 @@ static BOOL test_msrsc_incident_file_type2(wLog* log)
 	if (!file)
 		return -1;
 
-	status = freerdp_assistance_parse_file_buffer(file,
-	         TEST_MSRC_INCIDENT_FILE_TYPE2, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE2),
-	         TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
+	status = freerdp_assistance_parse_file_buffer(file, TEST_MSRC_INCIDENT_FILE_TYPE2,
+	                                              sizeof(TEST_MSRC_INCIDENT_FILE_TYPE2),
+	                                              TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
 	printf("freerdp_assistance_parse_file_buffer: %d\n", status);
 
 	if (status < 0)
@@ -145,13 +143,13 @@ static BOOL test_msrsc_incident_file_type2(wLog* log)
 
 	freerdp_assistance_print_file(file, log, WLOG_INFO);
 	status = freerdp_assistance_get_encrypted_pass_stub(file, &EncryptedPassStub,
-	         &EncryptedPassStubLength);
+	                                                    &EncryptedPassStubLength);
 	pass = freerdp_assistance_bin_to_hex_string(EncryptedPassStub, EncryptedPassStubLength);
 
 	if (!pass)
 		goto fail;
 
-	WLog_Print(log, WLOG_INFO, "freerdp_assistance_decrypt: %d %s [%"PRIdz"]", status, pass,
+	WLog_Print(log, WLOG_INFO, "freerdp_assistance_decrypt: %d %s [%" PRIdz "]", status, pass,
 	           EncryptedPassStubLength);
 
 	if (status < 0)
@@ -188,4 +186,3 @@ int TestCommonAssistance(int argc, char* argv[])
 
 	return 0;
 }
-

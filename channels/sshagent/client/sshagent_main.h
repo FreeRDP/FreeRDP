@@ -35,8 +35,10 @@
 #ifdef WITH_DEBUG_SSHAGENT
 #define DEBUG_SSHAGENT(...) WLog_DBG(DVC_TAG, __VA_ARGS__)
 #else
-#define DEBUG_SSHAGENT(...) do { } while (0)
+#define DEBUG_SSHAGENT(...) \
+	do                      \
+	{                       \
+	} while (0)
 #endif
 
 #endif /* SSHAGENT_MAIN_H */
-

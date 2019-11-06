@@ -31,16 +31,15 @@
 #define TAG CHANNELS_TAG("drdynvc.client")
 
 static void dvcman_channel_free(void* channel);
-static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
-                               const BYTE* data, UINT32 dataSize);
+static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const BYTE* data,
+                               UINT32 dataSize);
 
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT dvcman_get_configuration(IWTSListener* pListener,
-                                     void** ppPropertyBag)
+static UINT dvcman_get_configuration(IWTSListener* pListener, void** ppPropertyBag)
 {
 	WINPR_UNUSED(pListener);
 	*ppPropertyBag = NULL;
@@ -54,15 +53,16 @@ static UINT dvcman_get_configuration(IWTSListener* pListener,
  */
 static UINT dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
                                    const char* pszChannelName, ULONG ulFlags,
-                                   IWTSListenerCallback* pListenerCallback, IWTSListener** ppListener)
+                                   IWTSListenerCallback* pListenerCallback,
+                                   IWTSListener** ppListener)
 {
-	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	DVCMAN_LISTENER* listener;
 
 	if (dvcman->num_listeners < MAX_PLUGINS)
 	{
 		WLog_DBG(TAG, "create_listener: %d.%s.", dvcman->num_listeners, pszChannelName);
-		listener = (DVCMAN_LISTENER*) calloc(1, sizeof(DVCMAN_LISTENER));
+		listener = (DVCMAN_LISTENER*)calloc(1, sizeof(DVCMAN_LISTENER));
 
 		if (!listener)
 		{
@@ -86,9 +86,9 @@ static UINT dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 		listener->listener_callback = pListenerCallback;
 
 		if (ppListener)
-			*ppListener = (IWTSListener*) listener;
+			*ppListener = (IWTSListener*)listener;
 
-		dvcman->listeners[dvcman->num_listeners++] = (IWTSListener*) listener;
+		dvcman->listeners[dvcman->num_listeners++] = (IWTSListener*)listener;
 		return CHANNEL_RC_OK;
 	}
 	else
@@ -103,10 +103,10 @@ static UINT dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints,
-                                   const char* name, IWTSPlugin* pPlugin)
+static UINT dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name,
+                                   IWTSPlugin* pPlugin)
 {
-	DVCMAN* dvcman = ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->dvcman;
+	DVCMAN* dvcman = ((DVCMAN_ENTRY_POINTS*)pEntryPoints)->dvcman;
 
 	if (dvcman->num_plugins < MAX_PLUGINS)
 	{
@@ -117,22 +117,19 @@ static UINT dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints,
 	}
 	else
 	{
-		WLog_ERR(TAG, "register_plugin: Maximum DVC plugin number %u reached.",
-		         MAX_PLUGINS);
+		WLog_ERR(TAG, "register_plugin: Maximum DVC plugin number %u reached.", MAX_PLUGINS);
 		return ERROR_INTERNAL_ERROR;
 	}
 }
 
-static IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints,
-                                     const char* name)
+static IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name)
 {
 	int i;
-	DVCMAN* dvcman = ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->dvcman;
+	DVCMAN* dvcman = ((DVCMAN_ENTRY_POINTS*)pEntryPoints)->dvcman;
 
 	for (i = 0; i < dvcman->num_plugins; i++)
 	{
-		if (dvcman->plugin_names[i] == name ||
-		    strcmp(dvcman->plugin_names[i], name) == 0)
+		if (dvcman->plugin_names[i] == name || strcmp(dvcman->plugin_names[i], name) == 0)
 		{
 			return dvcman->plugins[i];
 		}
@@ -143,30 +140,29 @@ static IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints,
 
 static ADDIN_ARGV* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	return ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->args;
+	return ((DVCMAN_ENTRY_POINTS*)pEntryPoints)->args;
 }
 
 static void* dvcman_get_rdp_settings(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	return (void*)((DVCMAN_ENTRY_POINTS*) pEntryPoints)->settings;
+	return (void*)((DVCMAN_ENTRY_POINTS*)pEntryPoints)->settings;
 }
 
 static UINT32 dvcman_get_channel_id(IWTSVirtualChannel* channel)
 {
-	return ((DVCMAN_CHANNEL*) channel)->channel_id;
+	return ((DVCMAN_CHANNEL*)channel)->channel_id;
 }
 
-static IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager*
-        pChannelMgr,
-        UINT32 ChannelId)
+static IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* pChannelMgr,
+                                                     UINT32 ChannelId)
 {
 	int index;
 	BOOL found = FALSE;
 	DVCMAN_CHANNEL* channel;
-	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	ArrayList_Lock(dvcman->channels);
 	index = 0;
-	channel = (DVCMAN_CHANNEL*) ArrayList_GetItem(dvcman->channels, index++);
+	channel = (DVCMAN_CHANNEL*)ArrayList_GetItem(dvcman->channels, index++);
 
 	while (channel)
 	{
@@ -176,17 +172,17 @@ static IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager*
 			break;
 		}
 
-		channel = (DVCMAN_CHANNEL*) ArrayList_GetItem(dvcman->channels, index++);
+		channel = (DVCMAN_CHANNEL*)ArrayList_GetItem(dvcman->channels, index++);
 	}
 
 	ArrayList_Unlock(dvcman->channels);
-	return (found) ? ((IWTSVirtualChannel*) channel) : NULL;
+	return (found) ? ((IWTSVirtualChannel*)channel) : NULL;
 }
 
 static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 {
 	DVCMAN* dvcman;
-	dvcman = (DVCMAN*) calloc(1, sizeof(DVCMAN));
+	dvcman = (DVCMAN*)calloc(1, sizeof(DVCMAN));
 
 	if (!dvcman)
 	{
@@ -218,7 +214,7 @@ static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 		return NULL;
 	}
 
-	return (IWTSVirtualChannelManager*) dvcman;
+	return (IWTSVirtualChannelManager*)dvcman;
 }
 
 /**
@@ -226,17 +222,14 @@ static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT dvcman_load_addin(drdynvcPlugin* drdynvc,
-                              IWTSVirtualChannelManager* pChannelMgr,
-                              ADDIN_ARGV* args,
-                              rdpSettings* settings)
+static UINT dvcman_load_addin(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr,
+                              ADDIN_ARGV* args, rdpSettings* settings)
 {
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
 	WLog_Print(drdynvc->log, WLOG_INFO, "Loading Dynamic Virtual Channel %s", args->argv[0]);
-	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_channel_addin_entry(
-	                      args->argv[0],
-	                      NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
+	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY)freerdp_load_channel_addin_entry(
+	    args->argv[0], NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
 
 	if (pDVCPluginEntry)
 	{
@@ -244,30 +237,30 @@ static UINT dvcman_load_addin(drdynvcPlugin* drdynvc,
 		entryPoints.iface.GetPlugin = dvcman_get_plugin;
 		entryPoints.iface.GetPluginData = dvcman_get_plugin_data;
 		entryPoints.iface.GetRdpSettings = dvcman_get_rdp_settings;
-		entryPoints.dvcman = (DVCMAN*) pChannelMgr;
+		entryPoints.dvcman = (DVCMAN*)pChannelMgr;
 		entryPoints.args = args;
 		entryPoints.settings = settings;
-		return pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
+		return pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*)&entryPoints);
 	}
 
 	return ERROR_INVALID_FUNCTION;
 }
 
 static DVCMAN_CHANNEL* dvcman_channel_new(drdynvcPlugin* drdynvc,
-        IWTSVirtualChannelManager* pChannelMgr,
-        UINT32 ChannelId, const char* ChannelName)
+                                          IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
+                                          const char* ChannelName)
 {
 	DVCMAN_CHANNEL* channel;
 
 	if (dvcman_find_channel_by_id(pChannelMgr, ChannelId))
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "Protocol error: Duplicated ChannelId %"PRIu32" (%s)!",
-		           ChannelId,
+		WLog_Print(drdynvc->log, WLOG_ERROR,
+		           "Protocol error: Duplicated ChannelId %" PRIu32 " (%s)!", ChannelId,
 		           ChannelName);
 		return NULL;
 	}
 
-	channel = (DVCMAN_CHANNEL*) calloc(1, sizeof(DVCMAN_CHANNEL));
+	channel = (DVCMAN_CHANNEL*)calloc(1, sizeof(DVCMAN_CHANNEL));
 
 	if (!channel)
 	{
@@ -275,7 +268,7 @@ static DVCMAN_CHANNEL* dvcman_channel_new(drdynvcPlugin* drdynvc,
 		return NULL;
 	}
 
-	channel->dvcman = (DVCMAN*) pChannelMgr;
+	channel->dvcman = (DVCMAN*)pChannelMgr;
 	channel->channel_id = ChannelId;
 	channel->channel_name = _strdup(ChannelName);
 
@@ -299,20 +292,19 @@ static DVCMAN_CHANNEL* dvcman_channel_new(drdynvcPlugin* drdynvc,
 
 static void dvcman_channel_free(void* arg)
 {
-	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) arg;
+	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*)arg;
 	UINT error = CHANNEL_RC_OK;
 
 	if (channel)
 	{
 		if (channel->channel_callback)
 		{
-			IFCALL(channel->channel_callback->OnClose,
-			       channel->channel_callback);
+			IFCALL(channel->channel_callback->OnClose, channel->channel_callback);
 		}
 
 		if (channel->status == CHANNEL_RC_OK)
 		{
-			IWTSVirtualChannel* ichannel = (IWTSVirtualChannel*) channel;
+			IWTSVirtualChannel* ichannel = (IWTSVirtualChannel*)channel;
 
 			if (channel->dvcman && channel->dvcman->drdynvc)
 			{
@@ -320,8 +312,7 @@ static void dvcman_channel_free(void* arg)
 
 				if (context)
 				{
-					IFCALLRET(context->OnChannelDisconnected, error,
-					          context, channel->channel_name,
+					IFCALLRET(context->OnChannelDisconnected, error, context, channel->channel_name,
 					          channel->pInterface);
 				}
 			}
@@ -329,7 +320,7 @@ static void dvcman_channel_free(void* arg)
 			error = IFCALLRESULT(CHANNEL_RC_OK, ichannel->Close, ichannel);
 
 			if (error != CHANNEL_RC_OK)
-				WLog_ERR(TAG, "Close failed with error %"PRIu32"!", error);
+				WLog_ERR(TAG, "Close failed with error %" PRIu32 "!", error);
 		}
 
 		if (channel->dvc_data)
@@ -347,13 +338,13 @@ static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChan
 	int i;
 	IWTSPlugin* pPlugin;
 	DVCMAN_LISTENER* listener;
-	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	UINT error;
 	ArrayList_Free(dvcman->channels);
 
 	for (i = 0; i < dvcman->num_listeners; i++)
 	{
-		listener = (DVCMAN_LISTENER*) dvcman->listeners[i];
+		listener = (DVCMAN_LISTENER*)dvcman->listeners[i];
 		free(listener->channel_name);
 		free(listener);
 	}
@@ -366,7 +357,8 @@ static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChan
 
 		if (pPlugin->Terminated)
 			if ((error = pPlugin->Terminated(pPlugin)))
-				WLog_Print(drdynvc->log, WLOG_ERROR, "Terminated failed with error %"PRIu32"!", error);
+				WLog_Print(drdynvc->log, WLOG_ERROR, "Terminated failed with error %" PRIu32 "!",
+				           error);
 	}
 
 	dvcman->num_plugins = 0;
@@ -383,7 +375,7 @@ static UINT dvcman_init(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChan
 {
 	int i;
 	IWTSPlugin* pPlugin;
-	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	UINT error;
 
 	for (i = 0; i < dvcman->num_plugins; i++)
@@ -393,7 +385,8 @@ static UINT dvcman_init(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChan
 		if (pPlugin->Initialize)
 			if ((error = pPlugin->Initialize(pPlugin, pChannelMgr)))
 			{
-				WLog_Print(drdynvc->log, WLOG_ERROR, "Initialize failed with error %"PRIu32"!", error);
+				WLog_Print(drdynvc->log, WLOG_ERROR, "Initialize failed with error %" PRIu32 "!",
+				           error);
 				return error;
 			}
 	}
@@ -406,19 +399,18 @@ static UINT dvcman_init(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChan
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT dvcman_write_channel(IWTSVirtualChannel* pChannel, ULONG cbSize,
-                                 const BYTE* pBuffer, void* pReserved)
+static UINT dvcman_write_channel(IWTSVirtualChannel* pChannel, ULONG cbSize, const BYTE* pBuffer,
+                                 void* pReserved)
 {
 	UINT status;
-	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
+	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*)pChannel;
 
 	WINPR_UNUSED(pReserved);
 	if (!channel || !channel->dvcman)
 		return CHANNEL_RC_BAD_CHANNEL;
 
 	EnterCriticalSection(&(channel->lock));
-	status = drdynvc_write_data(channel->dvcman->drdynvc,
-	                            channel->channel_id, pBuffer, cbSize);
+	status = drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize);
 	LeaveCriticalSection(&(channel->lock));
 	return status;
 }
@@ -430,12 +422,12 @@ static UINT dvcman_write_channel(IWTSVirtualChannel* pChannel, ULONG cbSize,
  */
 static UINT dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 {
-	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
+	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*)pChannel;
 
 	if (!channel)
 		return CHANNEL_RC_BAD_CHANNEL;
 
-	WLog_DBG(TAG, "close_channel_iface: id=%"PRIu32"", channel->channel_id);
+	WLog_DBG(TAG, "close_channel_iface: id=%" PRIu32 "", channel->channel_id);
 	return CHANNEL_RC_OK;
 }
 
@@ -444,8 +436,7 @@ static UINT dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT dvcman_create_channel(drdynvcPlugin* drdynvc,
-                                  IWTSVirtualChannelManager* pChannelMgr,
+static UINT dvcman_create_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr,
                                   UINT32 ChannelId, const char* ChannelName)
 {
 	int i;
@@ -454,7 +445,7 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc,
 	DVCMAN_CHANNEL* channel;
 	DrdynvcClientContext* context;
 	IWTSVirtualChannelCallback* pCallback;
-	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	UINT error;
 
 	if (!(channel = dvcman_channel_new(drdynvc, pChannelMgr, ChannelId, ChannelName)))
@@ -468,7 +459,7 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc,
 
 	for (i = 0; i < dvcman->num_listeners; i++)
 	{
-		listener = (DVCMAN_LISTENER*) dvcman->listeners[i];
+		listener = (DVCMAN_LISTENER*)dvcman->listeners[i];
 
 		if (strcmp(listener->channel_name, ChannelName) == 0)
 		{
@@ -478,11 +469,11 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc,
 			pCallback = NULL;
 
 			if ((error = listener->listener_callback->OnNewChannelConnection(
-			                 listener->listener_callback,
-			                 (IWTSVirtualChannel*) channel, NULL, &bAccept, &pCallback)) == CHANNEL_RC_OK
-			    && bAccept)
+			         listener->listener_callback, (IWTSVirtualChannel*)channel, NULL, &bAccept,
+			         &pCallback)) == CHANNEL_RC_OK &&
+			    bAccept)
 			{
-				WLog_Print(drdynvc->log, WLOG_DEBUG, "listener %s created new channel %"PRIu32"",
+				WLog_Print(drdynvc->log, WLOG_DEBUG, "listener %s created new channel %" PRIu32 "",
 				           listener->channel_name, channel->channel_id);
 				channel->status = CHANNEL_RC_OK;
 				channel->channel_callback = pCallback;
@@ -492,8 +483,8 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc,
 				          listener->iface.pInterface);
 
 				if (error)
-					WLog_Print(drdynvc->log, WLOG_ERROR, "context.OnChannelConnected failed with error %"PRIu32"",
-					           error);
+					WLog_Print(drdynvc->log, WLOG_ERROR,
+					           "context.OnChannelConnected failed with error %" PRIu32 "", error);
 
 				return error;
 			}
@@ -501,12 +492,14 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc,
 			{
 				if (error)
 				{
-					WLog_Print(drdynvc->log, WLOG_ERROR, "OnNewChannelConnection failed with error %"PRIu32"!", error);
+					WLog_Print(drdynvc->log, WLOG_ERROR,
+					           "OnNewChannelConnection failed with error %" PRIu32 "!", error);
 					return error;
 				}
 				else
 				{
-					WLog_Print(drdynvc->log, WLOG_ERROR, "OnNewChannelConnection returned with bAccept FALSE!");
+					WLog_Print(drdynvc->log, WLOG_ERROR,
+					           "OnNewChannelConnection returned with bAccept FALSE!");
 					return ERROR_INTERNAL_ERROR;
 				}
 			}
@@ -521,18 +514,17 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT dvcman_open_channel(drdynvcPlugin* drdynvc,
-                                IWTSVirtualChannelManager* pChannelMgr,
+static UINT dvcman_open_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr,
                                 UINT32 ChannelId)
 {
 	DVCMAN_CHANNEL* channel;
 	IWTSVirtualChannelCallback* pCallback;
 	UINT error;
-	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
 	if (!channel)
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "ChannelId %"PRIu32" not found!", ChannelId);
+		WLog_Print(drdynvc->log, WLOG_ERROR, "ChannelId %" PRIu32 " not found!", ChannelId);
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -542,11 +534,11 @@ static UINT dvcman_open_channel(drdynvcPlugin* drdynvc,
 
 		if ((pCallback->OnOpen) && (error = pCallback->OnOpen(pCallback)))
 		{
-			WLog_Print(drdynvc->log, WLOG_ERROR, "OnOpen failed with error %"PRIu32"!", error);
+			WLog_Print(drdynvc->log, WLOG_ERROR, "OnOpen failed with error %" PRIu32 "!", error);
 			return error;
 		}
 
-		WLog_Print(drdynvc->log, WLOG_DEBUG, "open_channel: ChannelId %"PRIu32"", ChannelId);
+		WLog_Print(drdynvc->log, WLOG_DEBUG, "open_channel: ChannelId %" PRIu32 "", ChannelId);
 	}
 
 	return CHANNEL_RC_OK;
@@ -557,20 +549,19 @@ static UINT dvcman_open_channel(drdynvcPlugin* drdynvc,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr,
-                                 UINT32 ChannelId)
+static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
 {
 	DVCMAN_CHANNEL* channel;
 	UINT error = CHANNEL_RC_OK;
-	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
-	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
+	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
 	if (!channel)
 	{
-		//WLog_Print(drdynvc->log, WLOG_ERROR, "ChannelId %"PRIu32" not found!", ChannelId);
+		// WLog_Print(drdynvc->log, WLOG_ERROR, "ChannelId %"PRIu32" not found!", ChannelId);
 		/**
-		 * Windows 8 / Windows Server 2012 send close requests for channels that failed to be created.
-		 * Do not warn, simply return success here.
+		 * Windows 8 / Windows Server 2012 send close requests for channels that failed to be
+		 * created. Do not warn, simply return success here.
 		 */
 		return CHANNEL_RC_OK;
 	}
@@ -585,19 +576,20 @@ static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT dvcman_receive_channel_data_first(drdynvcPlugin* drdynvc,
-        IWTSVirtualChannelManager* pChannelMgr,
-        UINT32 ChannelId, UINT32 length)
+                                              IWTSVirtualChannelManager* pChannelMgr,
+                                              UINT32 ChannelId, UINT32 length)
 {
 	DVCMAN_CHANNEL* channel;
-	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
 	if (!channel)
 	{
 		/**
-		 * Windows Server 2012 R2 can send some messages over Microsoft::Windows::RDS::Geometry::v08.01
-		 * even if the dynamic virtual channel wasn't registered on our side. Ignoring it works.
+		 * Windows Server 2012 R2 can send some messages over
+		 * Microsoft::Windows::RDS::Geometry::v08.01 even if the dynamic virtual channel wasn't
+		 * registered on our side. Ignoring it works.
 		 */
-		WLog_Print(drdynvc->log, WLOG_ERROR, "ChannelId %"PRIu32" not found!", ChannelId);
+		WLog_Print(drdynvc->log, WLOG_ERROR, "ChannelId %" PRIu32 " not found!", ChannelId);
 		return CHANNEL_RC_OK;
 	}
 
@@ -622,19 +614,19 @@ static UINT dvcman_receive_channel_data_first(drdynvcPlugin* drdynvc,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT dvcman_receive_channel_data(drdynvcPlugin* drdynvc,
-                                        IWTSVirtualChannelManager* pChannelMgr,
-                                        UINT32 ChannelId, wStream* data)
+                                        IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
+                                        wStream* data)
 {
 	UINT status = CHANNEL_RC_OK;
 	DVCMAN_CHANNEL* channel;
 	size_t dataSize = Stream_GetRemainingLength(data);
-	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
 	if (!channel)
 	{
 		/* Windows 8.1 tries to open channels not created.
-				 * Ignore cases like this. */
-		WLog_Print(drdynvc->log, WLOG_ERROR, "ChannelId %"PRIu32" not found!", ChannelId);
+		 * Ignore cases like this. */
+		WLog_Print(drdynvc->log, WLOG_ERROR, "ChannelId %" PRIu32 " not found!", ChannelId);
 		return CHANNEL_RC_OK;
 	}
 
@@ -656,15 +648,14 @@ static UINT dvcman_receive_channel_data(drdynvcPlugin* drdynvc,
 			Stream_SealLength(channel->dvc_data);
 			Stream_SetPosition(channel->dvc_data, 0);
 			status = channel->channel_callback->OnDataReceived(channel->channel_callback,
-			         channel->dvc_data);
+			                                                   channel->dvc_data);
 			Stream_Release(channel->dvc_data);
 			channel->dvc_data = NULL;
 		}
 	}
 	else
 	{
-		status = channel->channel_callback->OnDataReceived(channel->channel_callback,
-		         data);
+		status = channel->channel_callback->OnDataReceived(channel->channel_callback, data);
 	}
 
 	return status;
@@ -706,8 +697,9 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 		status = CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	else
 	{
-		status = drdynvc->channelEntryPoints.pVirtualChannelWriteEx(drdynvc->InitHandle,
-		         drdynvc->OpenHandle, Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+		status = drdynvc->channelEntryPoints.pVirtualChannelWriteEx(
+		    drdynvc->InitHandle, drdynvc->OpenHandle, Stream_Buffer(s),
+		    (UINT32)Stream_GetPosition(s), s);
 	}
 
 	switch (status)
@@ -726,9 +718,9 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 
 		default:
 			Stream_Free(s, TRUE);
-			WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08"PRIX32"]",
-			           WTSErrorToString(status),
-			           status);
+			WLog_Print(drdynvc->log, WLOG_ERROR,
+			           "VirtualChannelWriteEx failed with %s [%08" PRIX32 "]",
+			           WTSErrorToString(status), status);
 			return status;
 	}
 }
@@ -738,8 +730,8 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
-                               const BYTE* data, UINT32 dataSize)
+static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const BYTE* data,
+                               UINT32 dataSize)
 {
 	wStream* data_out;
 	size_t pos;
@@ -751,8 +743,8 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
-	WLog_Print(drdynvc->log, WLOG_DEBUG, "write_data: ChannelId=%"PRIu32" size=%"PRIu32"", ChannelId,
-	           dataSize);
+	WLog_Print(drdynvc->log, WLOG_DEBUG, "write_data: ChannelId=%" PRIu32 " size=%" PRIu32 "",
+	           ChannelId, dataSize);
 	data_out = Stream_New(NULL, CHANNEL_CHUNK_LENGTH);
 
 	if (!data_out)
@@ -827,7 +819,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08"PRIX32"]",
+		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08" PRIX32 "]",
 		           WTSErrorToString(status), status);
 		return status;
 	}
@@ -857,14 +849,13 @@ static UINT drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	Stream_Write_UINT16(s,
-	                    0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
+	Stream_Write_UINT16(s, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
 	Stream_Write_UINT16(s, drdynvc->version);
 	status = drdynvc_send(drdynvc, s);
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08"PRIX32"]",
+		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08" PRIX32 "]",
 		           WTSErrorToString(status), status);
 	}
 
@@ -876,8 +867,8 @@ static UINT drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp,
-        int cbChId, wStream* s)
+static UINT drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, int cbChId,
+                                               wStream* s)
 {
 	UINT status;
 
@@ -952,8 +943,7 @@ static UINT32 drdynvc_read_variable_uint(wStream* s, int cbLen)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
-        int cbChId, wStream* s)
+static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	size_t pos;
 	UINT status;
@@ -996,8 +986,8 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 	if (strnlen(name, length) >= length)
 		return ERROR_INVALID_DATA;
 
-	WLog_Print(drdynvc->log, WLOG_DEBUG, "process_create_request: ChannelId=%"PRIu32" ChannelName=%s",
-	           ChannelId, name);
+	WLog_Print(drdynvc->log, WLOG_DEBUG,
+	           "process_create_request: ChannelId=%" PRIu32 " ChannelName=%s", ChannelId, name);
 	channel_status = dvcman_create_channel(drdynvc, drdynvc->channel_mgr, ChannelId, name);
 	data_out = Stream_New(NULL, pos + 4);
 
@@ -1026,7 +1016,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08"PRIX32"]",
+		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08" PRIX32 "]",
 		           WTSErrorToString(status), status);
 		return status;
 	}
@@ -1035,14 +1025,16 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 	{
 		if ((status = dvcman_open_channel(drdynvc, drdynvc->channel_mgr, ChannelId)))
 		{
-			WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_open_channel failed with error %"PRIu32"!", status);
+			WLog_Print(drdynvc->log, WLOG_ERROR,
+			           "dvcman_open_channel failed with error %" PRIu32 "!", status);
 			return status;
 		}
 	}
 	else
 	{
 		if ((status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId)))
-			WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_close_channel failed with error %"PRIu32"!", status);
+			WLog_Print(drdynvc->log, WLOG_ERROR,
+			           "dvcman_close_channel failed with error %" PRIu32 "!", status);
 	}
 
 	return status;
@@ -1053,8 +1045,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp,
-                                       int cbChId, wStream* s)
+static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	UINT status;
 	UINT32 Length;
@@ -1066,10 +1057,9 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp,
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	Length = drdynvc_read_variable_uint(s, Sp);
 	WLog_Print(drdynvc->log, WLOG_DEBUG,
-	           "process_data_first: Sp=%d cbChId=%d, ChannelId=%"PRIu32" Length=%"PRIu32"", Sp,
+	           "process_data_first: Sp=%d cbChId=%d, ChannelId=%" PRIu32 " Length=%" PRIu32 "", Sp,
 	           cbChId, ChannelId, Length);
-	status = dvcman_receive_channel_data_first(drdynvc, drdynvc->channel_mgr, ChannelId,
-	         Length);
+	status = dvcman_receive_channel_data_first(drdynvc, drdynvc->channel_mgr, ChannelId, Length);
 
 	if (status)
 		return status;
@@ -1082,8 +1072,7 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId,
-                                 wStream* s)
+static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	UINT32 ChannelId;
 
@@ -1091,9 +1080,8 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId,
 		return ERROR_INVALID_DATA;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
-	WLog_Print(drdynvc->log, WLOG_TRACE, "process_data: Sp=%d cbChId=%d, ChannelId=%"PRIu32"", Sp,
-	           cbChId,
-	           ChannelId);
+	WLog_Print(drdynvc->log, WLOG_TRACE, "process_data: Sp=%d cbChId=%d, ChannelId=%" PRIu32 "", Sp,
+	           cbChId, ChannelId);
 	return dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s);
 }
 
@@ -1102,8 +1090,7 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp,
-        int cbChId, wStream* s)
+static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	UINT8 value;
 	UINT error;
@@ -1114,13 +1101,14 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp,
 		return ERROR_INVALID_DATA;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
-	WLog_Print(drdynvc->log, WLOG_DEBUG, "process_close_request: Sp=%d cbChId=%d, ChannelId=%"PRIu32"",
-	           Sp,
-	           cbChId, ChannelId);
+	WLog_Print(drdynvc->log, WLOG_DEBUG,
+	           "process_close_request: Sp=%d cbChId=%d, ChannelId=%" PRIu32 "", Sp, cbChId,
+	           ChannelId);
 
 	if ((error = dvcman_close_channel(drdynvc->channel_mgr, ChannelId)))
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_close_channel failed with error %"PRIu32"!", error);
+		WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_close_channel failed with error %" PRIu32 "!",
+		           error);
 		return error;
 	}
 
@@ -1138,7 +1126,7 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp,
 	error = drdynvc_send(drdynvc, data_out);
 
 	if (error)
-		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08"PRIX32"]",
+		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08" PRIX32 "]",
 		           WTSErrorToString(error), error);
 
 	return error;
@@ -1193,8 +1181,9 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc,
-        void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, void* pData,
+                                                        UINT32 dataLength, UINT32 totalLength,
+                                                        UINT32 dataFlags)
 {
 	wStream* data_in;
 
@@ -1239,7 +1228,7 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc,
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		if (!MessageQueue_Post(drdynvc->queue, NULL, 0, (void*) data_in, NULL))
+		if (!MessageQueue_Post(drdynvc->queue, NULL, 0, (void*)data_in, NULL))
 		{
 			WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_Post failed!");
 			return ERROR_INTERNAL_ERROR;
@@ -1250,10 +1239,12 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc,
 }
 
 static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle,
-        UINT event, LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+                                                            UINT event, LPVOID pData,
+                                                            UINT32 dataLength, UINT32 totalLength,
+                                                            UINT32 dataFlags)
 {
 	UINT error = CHANNEL_RC_OK;
-	drdynvcPlugin* drdynvc = (drdynvcPlugin*) lpUserParam;
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*)lpUserParam;
 
 	if (!drdynvc || (drdynvc->OpenHandle != openHandle))
 	{
@@ -1264,10 +1255,12 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
-			if ((error = drdynvc_virtual_channel_event_data_received(drdynvc, pData, dataLength, totalLength,
-			             dataFlags)))
+			if ((error = drdynvc_virtual_channel_event_data_received(drdynvc, pData, dataLength,
+			                                                         totalLength, dataFlags)))
 				WLog_Print(drdynvc->log, WLOG_ERROR,
-				           "drdynvc_virtual_channel_event_data_received failed with error %"PRIu32"", error);
+				           "drdynvc_virtual_channel_event_data_received failed with error %" PRIu32
+				           "",
+				           error);
 
 			break;
 
@@ -1277,14 +1270,15 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 			wStream* s = (wStream*)pData;
 			Stream_Free(s, TRUE);
 		}
-			break;
+		break;
 
 		case CHANNEL_EVENT_USER:
 			break;
 	}
 
 	if (error && drdynvc->rdpcontext)
-		setChannelError(drdynvc->rdpcontext, error, "drdynvc_virtual_channel_open_event reported an error");
+		setChannelError(drdynvc->rdpcontext, error,
+		                "drdynvc_virtual_channel_open_event reported an error");
 }
 
 static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
@@ -1292,11 +1286,11 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 	wStream* data;
 	wMessage message;
 	UINT error = CHANNEL_RC_OK;
-	drdynvcPlugin* drdynvc = (drdynvcPlugin*) arg;
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*)arg;
 
 	if (!drdynvc)
 	{
-		ExitThread((DWORD) CHANNEL_RC_BAD_CHANNEL_HANDLE);
+		ExitThread((DWORD)CHANNEL_RC_BAD_CHANNEL_HANDLE);
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	}
 
@@ -1321,12 +1315,13 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 
 		if (message.id == 0)
 		{
-			data = (wStream*) message.wParam;
+			data = (wStream*)message.wParam;
 
 			if ((error = drdynvc_order_recv(drdynvc, data)))
 			{
 				Stream_Free(data, TRUE);
-				WLog_Print(drdynvc->log, WLOG_ERROR, "drdynvc_order_recv failed with error %"PRIu32"!", error);
+				WLog_Print(drdynvc->log, WLOG_ERROR,
+				           "drdynvc_order_recv failed with error %" PRIu32 "!", error);
 				break;
 			}
 
@@ -1336,14 +1331,14 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 
 	{
 		/* Disconnect remaining dynamic channels that the server did not.
-		* This is required to properly shut down channels by calling the appropriate
-		* event handlers. */
+		 * This is required to properly shut down channels by calling the appropriate
+		 * event handlers. */
 		DVCMAN* drdynvcMgr = (DVCMAN*)drdynvc->channel_mgr;
 
 		while (ArrayList_Count(drdynvcMgr->channels) > 0)
 		{
-			IWTSVirtualChannel* channel = (IWTSVirtualChannel*)
-			                              ArrayList_GetItem(drdynvcMgr->channels, 0);
+			IWTSVirtualChannel* channel =
+			    (IWTSVirtualChannel*)ArrayList_GetItem(drdynvcMgr->channels, 0);
 			const UINT32 ChannelId = drdynvc->channel_mgr->GetChannelId(channel);
 			dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
 		}
@@ -1353,7 +1348,7 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 		setChannelError(drdynvc->rdpcontext, error,
 		                "drdynvc_virtual_channel_client_thread reported an error");
 
-	ExitThread((DWORD) error);
+	ExitThread((DWORD)error);
 	return error;
 }
 
@@ -1377,7 +1372,7 @@ static void drdynvc_queue_object_free(void* obj)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVOID pData,
-        UINT32 dataLength)
+                                                    UINT32 dataLength)
 {
 	UINT error;
 	UINT32 status;
@@ -1391,12 +1386,13 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
-	status = drdynvc->channelEntryPoints.pVirtualChannelOpenEx(drdynvc->InitHandle,
-	         &drdynvc->OpenHandle, drdynvc->channelDef.name, drdynvc_virtual_channel_open_event_ex);
+	status = drdynvc->channelEntryPoints.pVirtualChannelOpenEx(
+	    drdynvc->InitHandle, &drdynvc->OpenHandle, drdynvc->channelDef.name,
+	    drdynvc_virtual_channel_open_event_ex);
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "pVirtualChannelOpen failed with %s [%08"PRIX32"]",
+		WLog_Print(drdynvc->log, WLOG_ERROR, "pVirtualChannelOpen failed with %s [%08" PRIX32 "]",
 		           WTSErrorToString(status), status);
 		return status;
 	}
@@ -1420,7 +1416,7 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 		goto error;
 	}
 
-	settings = (rdpSettings*) drdynvc->channelEntryPoints.pExtendedData;
+	settings = (rdpSettings*)drdynvc->channelEntryPoints.pExtendedData;
 
 	for (index = 0; index < settings->DynamicChannelCount; index++)
 	{
@@ -1433,15 +1429,14 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 	if ((error = dvcman_init(drdynvc, drdynvc->channel_mgr)))
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_init failed with error %"PRIu32"!", error);
+		WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_init failed with error %" PRIu32 "!", error);
 		goto error;
 	}
 
 	drdynvc->state = DRDYNVC_STATE_CAPABILITIES;
 
 	if (!(drdynvc->thread = CreateThread(NULL, 0, drdynvc_virtual_channel_client_thread,
-	                                     (void*) drdynvc,
-	                                     0, NULL)))
+	                                     (void*)drdynvc, 0, NULL)))
 	{
 		error = ERROR_INTERNAL_ERROR;
 		WLog_Print(drdynvc->log, WLOG_ERROR, "CreateThread failed!");
@@ -1470,14 +1465,16 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	if (!MessageQueue_PostQuit(drdynvc->queue, 0))
 	{
 		status = GetLastError();
-		WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_PostQuit failed with error %"PRIu32"", status);
+		WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_PostQuit failed with error %" PRIu32 "",
+		           status);
 		return status;
 	}
 
 	if (WaitForSingleObject(drdynvc->thread, INFINITE) != WAIT_OBJECT_0)
 	{
 		status = GetLastError();
-		WLog_Print(drdynvc->log, WLOG_ERROR, "WaitForSingleObject failed with error %"PRIu32"", status);
+		WLog_Print(drdynvc->log, WLOG_ERROR, "WaitForSingleObject failed with error %" PRIu32 "",
+		           status);
 		return status;
 	}
 
@@ -1486,11 +1483,11 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	drdynvc->queue = NULL;
 	drdynvc->thread = NULL;
 	status = drdynvc->channelEntryPoints.pVirtualChannelCloseEx(drdynvc->InitHandle,
-	         drdynvc->OpenHandle);
+	                                                            drdynvc->OpenHandle);
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "pVirtualChannelClose failed with %s [%08"PRIX32"]",
+		WLog_Print(drdynvc->log, WLOG_ERROR, "pVirtualChannelClose failed with %s [%08" PRIX32 "]",
 		           WTSErrorToString(status), status);
 	}
 
@@ -1535,7 +1532,7 @@ static UINT drdynvc_virtual_channel_event_attached(drdynvcPlugin* drdynvc)
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
-	dvcman = (DVCMAN*) drdynvc->channel_mgr;
+	dvcman = (DVCMAN*)drdynvc->channel_mgr;
 
 	if (!dvcman)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
@@ -1548,7 +1545,8 @@ static UINT drdynvc_virtual_channel_event_attached(drdynvcPlugin* drdynvc)
 		if (pPlugin->Attached)
 			if ((error = pPlugin->Attached(pPlugin)))
 			{
-				WLog_Print(drdynvc->log, WLOG_ERROR, "Attach failed with error %"PRIu32"!", error);
+				WLog_Print(drdynvc->log, WLOG_ERROR, "Attach failed with error %" PRIu32 "!",
+				           error);
 				return error;
 			}
 	}
@@ -1564,7 +1562,7 @@ static UINT drdynvc_virtual_channel_event_detached(drdynvcPlugin* drdynvc)
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
-	dvcman = (DVCMAN*) drdynvc->channel_mgr;
+	dvcman = (DVCMAN*)drdynvc->channel_mgr;
 
 	if (!dvcman)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
@@ -1577,7 +1575,8 @@ static UINT drdynvc_virtual_channel_event_detached(drdynvcPlugin* drdynvc)
 		if (pPlugin->Detached)
 			if ((error = pPlugin->Detached(pPlugin)))
 			{
-				WLog_Print(drdynvc->log, WLOG_ERROR, "Detach failed with error %"PRIu32"!", error);
+				WLog_Print(drdynvc->log, WLOG_ERROR, "Detach failed with error %" PRIu32 "!",
+				           error);
 				return error;
 			}
 	}
@@ -1586,10 +1585,11 @@ static UINT drdynvc_virtual_channel_event_detached(drdynvcPlugin* drdynvc)
 }
 
 static VOID VCAPITYPE drdynvc_virtual_channel_init_event_ex(LPVOID lpUserParam, LPVOID pInitHandle,
-        UINT event, LPVOID pData, UINT dataLength)
+                                                            UINT event, LPVOID pData,
+                                                            UINT dataLength)
 {
 	UINT error = CHANNEL_RC_OK;
-	drdynvcPlugin* drdynvc = (drdynvcPlugin*) lpUserParam;
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*)lpUserParam;
 
 	if (!drdynvc || (drdynvc->InitHandle != pInitHandle))
 	{
@@ -1602,35 +1602,41 @@ static VOID VCAPITYPE drdynvc_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = drdynvc_virtual_channel_event_connected(drdynvc, pData, dataLength)))
 				WLog_Print(drdynvc->log, WLOG_ERROR,
-				           "drdynvc_virtual_channel_event_connected failed with error %"PRIu32"", error);
+				           "drdynvc_virtual_channel_event_connected failed with error %" PRIu32 "",
+				           error);
 
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
-			if ((error =  drdynvc_virtual_channel_event_disconnected(drdynvc)))
+			if ((error = drdynvc_virtual_channel_event_disconnected(drdynvc)))
 				WLog_Print(drdynvc->log, WLOG_ERROR,
-				           "drdynvc_virtual_channel_event_disconnected failed with error %"PRIu32"", error);
+				           "drdynvc_virtual_channel_event_disconnected failed with error %" PRIu32
+				           "",
+				           error);
 
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
-			if ((error =  drdynvc_virtual_channel_event_terminated(drdynvc)))
+			if ((error = drdynvc_virtual_channel_event_terminated(drdynvc)))
 				WLog_Print(drdynvc->log, WLOG_ERROR,
-				           "drdynvc_virtual_channel_event_terminated failed with error %"PRIu32"", error);
+				           "drdynvc_virtual_channel_event_terminated failed with error %" PRIu32 "",
+				           error);
 
 			break;
 
 		case CHANNEL_EVENT_ATTACHED:
-			if ((error =  drdynvc_virtual_channel_event_attached(drdynvc)))
+			if ((error = drdynvc_virtual_channel_event_attached(drdynvc)))
 				WLog_Print(drdynvc->log, WLOG_ERROR,
-				           "drdynvc_virtual_channel_event_attached failed with error %"PRIu32"", error);
+				           "drdynvc_virtual_channel_event_attached failed with error %" PRIu32 "",
+				           error);
 
 			break;
 
 		case CHANNEL_EVENT_DETACHED:
-			if ((error =  drdynvc_virtual_channel_event_detached(drdynvc)))
+			if ((error = drdynvc_virtual_channel_event_detached(drdynvc)))
 				WLog_Print(drdynvc->log, WLOG_ERROR,
-				           "drdynvc_virtual_channel_event_detached failed with error %"PRIu32"", error);
+				           "drdynvc_virtual_channel_event_detached failed with error %" PRIu32 "",
+				           error);
 
 			break;
 
@@ -1649,12 +1655,12 @@ static VOID VCAPITYPE drdynvc_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 
 static int drdynvc_get_version(DrdynvcClientContext* context)
 {
-	drdynvcPlugin* drdynvc = (drdynvcPlugin*) context->handle;
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*)context->handle;
 	return drdynvc->version;
 }
 
 /* drdynvc is always built-in */
-#define VirtualChannelEntryEx	drdynvc_VirtualChannelEntryEx
+#define VirtualChannelEntryEx drdynvc_VirtualChannelEntryEx
 
 BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOID pInitHandle)
 {
@@ -1662,7 +1668,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 	drdynvcPlugin* drdynvc;
 	DrdynvcClientContext* context = NULL;
 	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
-	drdynvc = (drdynvcPlugin*) calloc(1, sizeof(drdynvcPlugin));
+	drdynvc = (drdynvcPlugin*)calloc(1, sizeof(drdynvcPlugin));
 
 	if (!drdynvc)
 	{
@@ -1671,17 +1677,15 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 	}
 
 	drdynvc->channelDef.options =
-	    CHANNEL_OPTION_INITIALIZED |
-	    CHANNEL_OPTION_ENCRYPT_RDP |
-	    CHANNEL_OPTION_COMPRESS_RDP;
+	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;
 	sprintf_s(drdynvc->channelDef.name, ARRAYSIZE(drdynvc->channelDef.name), "drdynvc");
 	drdynvc->state = DRDYNVC_STATE_INITIAL;
-	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*) pEntryPoints;
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
-		context = (DrdynvcClientContext*) calloc(1, sizeof(DrdynvcClientContext));
+		context = (DrdynvcClientContext*)calloc(1, sizeof(DrdynvcClientContext));
 
 		if (!context)
 		{
@@ -1690,7 +1694,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 			return FALSE;
 		}
 
-		context->handle = (void*) drdynvc;
+		context->handle = (void*)drdynvc;
 		context->custom = NULL;
 		drdynvc->context = context;
 		context->GetVersion = drdynvc_get_version;
@@ -1699,14 +1703,16 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 
 	drdynvc->log = WLog_Get(TAG);
 	WLog_Print(drdynvc->log, WLOG_DEBUG, "VirtualChannelEntryEx");
-	CopyMemory(&(drdynvc->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
+	CopyMemory(&(drdynvc->channelEntryPoints), pEntryPoints,
+	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
 	drdynvc->InitHandle = pInitHandle;
-	rc = drdynvc->channelEntryPoints.pVirtualChannelInitEx(drdynvc, context, pInitHandle,
-	        &drdynvc->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, drdynvc_virtual_channel_init_event_ex);
+	rc = drdynvc->channelEntryPoints.pVirtualChannelInitEx(
+	    drdynvc, context, pInitHandle, &drdynvc->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
+	    drdynvc_virtual_channel_init_event_ex);
 
 	if (CHANNEL_RC_OK != rc)
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "pVirtualChannelInit failed with %s [%08"PRIX32"]",
+		WLog_Print(drdynvc->log, WLOG_ERROR, "pVirtualChannelInit failed with %s [%08" PRIX32 "]",
 		           WTSErrorToString(rc), rc);
 		free(drdynvc->context);
 		free(drdynvc);
@@ -1716,4 +1722,3 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 	drdynvc->channelEntryPoints.pInterface = context;
 	return TRUE;
 }
-

@@ -88,7 +88,6 @@ const char* xf_input_get_class_string(int class)
 	return "XIUnknownClass";
 }
 
-
 int xf_input_init(xfContext* xfc, Window window)
 {
 	int i, j;
@@ -137,7 +136,7 @@ int xf_input_init(xfContext* xfc, Window window)
 		for (j = 0; j < dev->num_classes; j++)
 		{
 			XIAnyClassInfo* class = dev->classes[j];
-			XITouchClassInfo* t = (XITouchClassInfo*) class;
+			XITouchClassInfo* t = (XITouchClassInfo*)class;
 
 			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
 			    (strcmp(dev->name, "Virtual core pointer") != 0))
@@ -149,12 +148,11 @@ int xf_input_init(xfContext* xfc, Window window)
 		for (j = 0; j < dev->num_classes; j++)
 		{
 			XIAnyClassInfo* class = dev->classes[j];
-			XITouchClassInfo* t = (XITouchClassInfo*) class;
+			XITouchClassInfo* t = (XITouchClassInfo*)class;
 
 			if (xfc->context.settings->MultiTouchInput)
 			{
-				WLog_INFO(TAG, "%s (%d) \"%s\" id: %d",
-				          xf_input_get_class_string(class->type),
+				WLog_INFO(TAG, "%s (%d) \"%s\" id: %d", xf_input_get_class_string(class->type),
 				          class->type, dev->name, dev->deviceid);
 			}
 
@@ -181,12 +179,11 @@ int xf_input_init(xfContext* xfc, Window window)
 
 			if (xfc->use_xinput)
 			{
-				if (!touch && (class->type == XIButtonClass)
-				    && strcmp(dev->name, "Virtual core pointer"))
+				if (!touch && (class->type == XIButtonClass) &&
+				    strcmp(dev->name, "Virtual core pointer"))
 				{
-					WLog_INFO(TAG, "%s button device (id: %d, mode: %d)",
-					          dev->name,
-					          dev->deviceid, t->mode);
+					WLog_INFO(TAG, "%s button device (id: %d, mode: %d)", dev->name, dev->deviceid,
+					          t->mode);
 					XISetMask(masks[nmasks], XI_ButtonPress);
 					XISetMask(masks[nmasks], XI_ButtonRelease);
 					XISetMask(masks[nmasks], XI_Motion);
@@ -209,10 +206,8 @@ static BOOL xf_input_is_duplicate(XGenericEventCookie* cookie)
 	XIDeviceEvent* event;
 	event = cookie->data;
 
-	if ((lastEvent.time == event->time) &&
-	    (lastEvType == cookie->evtype) &&
-	    (lastEvent.detail == event->detail) &&
-	    (lastEvent.event_x == event->event_x) &&
+	if ((lastEvent.time == event->time) && (lastEvType == cookie->evtype) &&
+	    (lastEvent.detail == event->detail) && (lastEvent.event_x == event->event_x) &&
 	    (lastEvent.event_y == event->event_y))
 	{
 		return TRUE;
@@ -553,8 +548,8 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 
 	xf_input_hide_cursor(xfc);
 	touchId = event->detail;
-	x = (int) event->event_x;
-	y = (int) event->event_y;
+	x = (int)event->event_x;
+	y = (int)event->event_y;
 	xf_event_adjust_coordinates(xfc, &x, &y);
 
 	if (evtype == XI_TouchBegin)
@@ -583,18 +578,18 @@ static int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	switch (evtype)
 	{
 		case XI_ButtonPress:
-			xf_generic_ButtonEvent(xfc, (int) event->event_x, (int) event->event_y,
-			                       event->detail, event->event, xfc->remote_app, TRUE);
+			xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
+			                       event->event, xfc->remote_app, TRUE);
 			break;
 
 		case XI_ButtonRelease:
-			xf_generic_ButtonEvent(xfc, (int) event->event_x, (int) event->event_y,
-			                       event->detail, event->event, xfc->remote_app, FALSE);
+			xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
+			                       event->event, xfc->remote_app, FALSE);
 			break;
 
 		case XI_Motion:
-			xf_generic_MotionNotify(xfc, (int) event->event_x, (int) event->event_y,
-			                        event->detail, event->event, xfc->remote_app);
+			xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y, event->detail,
+			                        event->event, xfc->remote_app);
 			break;
 	}
 

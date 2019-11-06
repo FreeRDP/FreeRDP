@@ -35,8 +35,7 @@
 
 #define TAG FREERDP_TAG("cache.brush")
 
-static BOOL update_gdi_patblt(rdpContext* context,
-                              PATBLT_ORDER* patblt)
+static BOOL update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	BYTE style;
 	BOOL ret = TRUE;
@@ -55,15 +54,13 @@ static BOOL update_gdi_patblt(rdpContext* context,
 	return ret;
 }
 
-static BOOL update_gdi_polygon_sc(rdpContext* context,
-                                  const POLYGON_SC_ORDER* polygon_sc)
+static BOOL update_gdi_polygon_sc(rdpContext* context, const POLYGON_SC_ORDER* polygon_sc)
 {
 	rdpCache* cache = context->cache;
 	return IFCALLRESULT(TRUE, cache->brush->PolygonSC, context, polygon_sc);
 }
 
-static BOOL update_gdi_polygon_cb(rdpContext* context,
-                                  POLYGON_CB_ORDER* polygon_cb)
+static BOOL update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
 	BYTE style;
 	rdpBrush* brush = &polygon_cb->brush;
@@ -82,8 +79,7 @@ static BOOL update_gdi_polygon_cb(rdpContext* context,
 	return ret;
 }
 
-static BOOL update_gdi_cache_brush(rdpContext* context,
-                                   const CACHE_BRUSH_ORDER* cacheBrush)
+static BOOL update_gdi_cache_brush(rdpContext* context, const CACHE_BRUSH_ORDER* cacheBrush)
 {
 	UINT32 length;
 	void* data = NULL;
@@ -113,7 +109,7 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 	{
 		if (index >= brushCache->maxMonoEntries)
 		{
-			WLog_ERR(TAG,  "invalid brush (%"PRIu32" bpp) index: 0x%08"PRIX32"", *bpp, index);
+			WLog_ERR(TAG, "invalid brush (%" PRIu32 " bpp) index: 0x%08" PRIX32 "", *bpp, index);
 			return NULL;
 		}
 
@@ -124,7 +120,7 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 	{
 		if (index >= brushCache->maxEntries)
 		{
-			WLog_ERR(TAG,  "invalid brush (%"PRIu32" bpp) index: 0x%08"PRIX32"", *bpp, index);
+			WLog_ERR(TAG, "invalid brush (%" PRIu32 " bpp) index: 0x%08" PRIX32 "", *bpp, index);
 			return NULL;
 		}
 
@@ -134,7 +130,7 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 
 	if (entry == NULL)
 	{
-		WLog_ERR(TAG,  "invalid brush (%"PRIu32" bpp) at index: 0x%08"PRIX32"", *bpp, index);
+		WLog_ERR(TAG, "invalid brush (%" PRIu32 " bpp) at index: 0x%08" PRIX32 "", *bpp, index);
 		return NULL;
 	}
 
@@ -147,7 +143,7 @@ void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT3
 	{
 		if (index >= brushCache->maxMonoEntries)
 		{
-			WLog_ERR(TAG,  "invalid brush (%"PRIu32" bpp) index: 0x%08"PRIX32"", bpp, index);
+			WLog_ERR(TAG, "invalid brush (%" PRIu32 " bpp) index: 0x%08" PRIX32 "", bpp, index);
 			free(entry);
 			return;
 		}
@@ -160,7 +156,7 @@ void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT3
 	{
 		if (index >= brushCache->maxEntries)
 		{
-			WLog_ERR(TAG,  "invalid brush (%"PRIu32" bpp) index: 0x%08"PRIX32"", bpp, index);
+			WLog_ERR(TAG, "invalid brush (%" PRIu32 " bpp) index: 0x%08" PRIX32 "", bpp, index);
 			free(entry);
 			return;
 		}
@@ -186,7 +182,7 @@ void brush_cache_register_callbacks(rdpUpdate* update)
 rdpBrushCache* brush_cache_new(rdpSettings* settings)
 {
 	rdpBrushCache* brushCache;
-	brushCache = (rdpBrushCache*) calloc(1, sizeof(rdpBrushCache));
+	brushCache = (rdpBrushCache*)calloc(1, sizeof(rdpBrushCache));
 
 	if (!brushCache)
 		return NULL;
@@ -199,7 +195,7 @@ rdpBrushCache* brush_cache_new(rdpSettings* settings)
 	if (!brushCache->entries)
 		goto error_entries;
 
-	brushCache->monoEntries = (BRUSH_ENTRY*) calloc(brushCache->maxMonoEntries, sizeof(BRUSH_ENTRY));
+	brushCache->monoEntries = (BRUSH_ENTRY*)calloc(brushCache->maxMonoEntries, sizeof(BRUSH_ENTRY));
 
 	if (!brushCache->monoEntries)
 		goto error_mono;
@@ -220,7 +216,7 @@ void brush_cache_free(rdpBrushCache* brushCache)
 	{
 		if (brushCache->entries)
 		{
-			for (i = 0; i < (int) brushCache->maxEntries; i++)
+			for (i = 0; i < (int)brushCache->maxEntries; i++)
 				free(brushCache->entries[i].entry);
 
 			free(brushCache->entries);
@@ -228,7 +224,7 @@ void brush_cache_free(rdpBrushCache* brushCache)
 
 		if (brushCache->monoEntries)
 		{
-			for (i = 0; i < (int) brushCache->maxMonoEntries; i++)
+			for (i = 0; i < (int)brushCache->maxMonoEntries; i++)
 				free(brushCache->monoEntries[i].entry);
 
 			free(brushCache->monoEntries);

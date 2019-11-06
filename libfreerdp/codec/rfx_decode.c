@@ -37,8 +37,7 @@
 
 #include "rfx_decode.h"
 
-static void rfx_decode_component(RFX_CONTEXT* context,
-                                 const UINT32* quantization_values,
+static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
                                  const BYTE* data, int size, INT16* buffer)
 {
 	INT16* dwt_buffer;
@@ -63,30 +62,30 @@ static void rfx_decode_component(RFX_CONTEXT* context,
 /* rfx_decode_ycbcr_to_rgb code now resides in the primitives library. */
 
 /* stride is bytes between rows in the output buffer. */
-BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, BYTE* rgb_buffer,
-                    int stride)
+BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, BYTE* rgb_buffer, int stride)
 {
 	BOOL rc = TRUE;
 	BYTE* pBuffer;
 	INT16* pSrcDst[3];
-	UINT32* y_quants, *cb_quants, *cr_quants;
+	UINT32 *y_quants, *cb_quants, *cr_quants;
 	static const prim_size_t roi_64x64 = { 64, 64 };
 	const primitives_t* prims = primitives_get();
 	PROFILER_ENTER(context->priv->prof_rfx_decode_rgb)
 	y_quants = context->quants + (tile->quantIdxY * 10);
 	cb_quants = context->quants + (tile->quantIdxCb * 10);
 	cr_quants = context->quants + (tile->quantIdxCr * 10);
-	pBuffer = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
-	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* y_r_buffer */
-	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* cb_g_buffer */
-	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* cr_b_buffer */
+	pBuffer = (BYTE*)BufferPool_Take(context->priv->BufferPool, -1);
+	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16]));             /* y_r_buffer */
+	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16]));             /* cb_g_buffer */
+	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16]));             /* cr_b_buffer */
 	rfx_decode_component(context, y_quants, tile->YData, tile->YLen, pSrcDst[0]); /* YData */
 	rfx_decode_component(context, cb_quants, tile->CbData, tile->CbLen, pSrcDst[1]); /* CbData */
 	rfx_decode_component(context, cr_quants, tile->CrData, tile->CrLen, pSrcDst[2]); /* CrData */
 	PROFILER_ENTER(context->priv->prof_rfx_ycbcr_to_rgb)
 
-	if (prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**)pSrcDst, 64 * sizeof(INT16),
-	                                   rgb_buffer, stride, context->pixel_format, &roi_64x64) != PRIMITIVES_SUCCESS)
+	if (prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**)pSrcDst, 64 * sizeof(INT16), rgb_buffer,
+	                                   stride, context->pixel_format,
+	                                   &roi_64x64) != PRIMITIVES_SUCCESS)
 		rc = FALSE;
 
 	PROFILER_EXIT(context->priv->prof_rfx_ycbcr_to_rgb)

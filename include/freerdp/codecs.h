@@ -32,16 +32,16 @@
 #include <freerdp/codec/interleaved.h>
 #include <freerdp/codec/progressive.h>
 
-#define FREERDP_CODEC_INTERLEAVED		0x00000001
-#define FREERDP_CODEC_PLANAR			0x00000002
-#define FREERDP_CODEC_NSCODEC			0x00000004
-#define FREERDP_CODEC_REMOTEFX			0x00000008
-#define FREERDP_CODEC_CLEARCODEC		0x00000010
-#define FREERDP_CODEC_ALPHACODEC		0x00000020
-#define FREERDP_CODEC_PROGRESSIVE		0x00000040
-#define FREERDP_CODEC_AVC420			0x00000080
-#define FREERDP_CODEC_AVC444			0x00000100
-#define FREERDP_CODEC_ALL			0xFFFFFFFF
+#define FREERDP_CODEC_INTERLEAVED 0x00000001
+#define FREERDP_CODEC_PLANAR 0x00000002
+#define FREERDP_CODEC_NSCODEC 0x00000004
+#define FREERDP_CODEC_REMOTEFX 0x00000008
+#define FREERDP_CODEC_CLEARCODEC 0x00000010
+#define FREERDP_CODEC_ALPHACODEC 0x00000020
+#define FREERDP_CODEC_PROGRESSIVE 0x00000040
+#define FREERDP_CODEC_AVC420 0x00000080
+#define FREERDP_CODEC_AVC444 0x00000100
+#define FREERDP_CODEC_ALL 0xFFFFFFFF
 
 struct rdp_codecs
 {
@@ -57,20 +57,20 @@ struct rdp_codecs
 };
 
 #ifdef __cplusplus
- extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags,
-					     UINT32 width, UINT32 height);
-FREERDP_API BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags,
-					     UINT32 width, UINT32 height);
+	FREERDP_API BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width,
+	                                               UINT32 height);
+	FREERDP_API BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width,
+	                                             UINT32 height);
 
-FREERDP_API rdpCodecs* codecs_new(rdpContext* context);
-FREERDP_API void codecs_free(rdpCodecs* codecs);
+	FREERDP_API rdpCodecs* codecs_new(rdpContext* context);
+	FREERDP_API void codecs_free(rdpCodecs* codecs);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CODECS_H */
-

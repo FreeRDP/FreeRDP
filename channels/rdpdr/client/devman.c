@@ -43,7 +43,7 @@
 
 static void devman_device_free(void* obj)
 {
-	DEVICE* device = (DEVICE*) obj;
+	DEVICE* device = (DEVICE*)obj;
 
 	if (!device)
 		return;
@@ -58,21 +58,21 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 	if (!rdpdr)
 		return NULL;
 
-	devman = (DEVMAN*) calloc(1, sizeof(DEVMAN));
+	devman = (DEVMAN*)calloc(1, sizeof(DEVMAN));
 
 	if (!devman)
 	{
-		WLog_INFO(TAG,  "calloc failed!");
+		WLog_INFO(TAG, "calloc failed!");
 		return NULL;
 	}
 
-	devman->plugin = (void*) rdpdr;
+	devman->plugin = (void*)rdpdr;
 	devman->id_sequence = 1;
 	devman->devices = ListDictionary_New(TRUE);
 
 	if (!devman->devices)
 	{
-		WLog_INFO(TAG,  "ListDictionary_New failed!");
+		WLog_INFO(TAG, "ListDictionary_New failed!");
 		free(devman);
 		return NULL;
 	}
@@ -94,7 +94,7 @@ void devman_unregister_device(DEVMAN* devman, void* key)
 	if (!devman || !key)
 		return;
 
-	device = (DEVICE*) ListDictionary_Remove(devman->devices, key);
+	device = (DEVICE*)ListDictionary_Remove(devman->devices, key);
 
 	if (device)
 		devman_device_free(device);
@@ -113,11 +113,11 @@ static UINT devman_register_device(DEVMAN* devman, DEVICE* device)
 		return ERROR_INVALID_PARAMETER;
 
 	device->id = devman->id_sequence++;
-	key = (void*)(size_t) device->id;
+	key = (void*)(size_t)device->id;
 
 	if (!ListDictionary_Add(devman->devices, key, device))
 	{
-		WLog_INFO(TAG,  "ListDictionary_Add failed!");
+		WLog_INFO(TAG, "ListDictionary_Add failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -127,12 +127,12 @@ static UINT devman_register_device(DEVMAN* devman, DEVICE* device)
 DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
 {
 	DEVICE* device = NULL;
-	void* key = (void*)(size_t) id;
+	void* key = (void*)(size_t)id;
 
 	if (!devman)
 		return NULL;
 
-	device = (DEVICE*) ListDictionary_GetItemValue(devman->devices, key);
+	device = (DEVICE*)ListDictionary_GetItemValue(devman->devices, key);
 	return device;
 }
 
@@ -150,7 +150,7 @@ DEVICE* devman_get_device_by_type(DEVMAN* devman, UINT32 type)
 
 	for (x = 0; x < count; x++)
 	{
-		DEVICE* cur = (DEVICE*) ListDictionary_GetItemValue(devman->devices, (void*)keys[x]);
+		DEVICE* cur = (DEVICE*)ListDictionary_GetItemValue(devman->devices, (void*)keys[x]);
 
 		if (!cur)
 			continue;
@@ -200,21 +200,21 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 
 	if (!ServiceName)
 	{
-		WLog_INFO(TAG,  "ServiceName %s did not match!", ServiceName);
+		WLog_INFO(TAG, "ServiceName %s did not match!", ServiceName);
 		return ERROR_INVALID_NAME;
 	}
 
 	if (device->Name)
-		WLog_INFO(TAG,  "Loading device service %s [%s] (static)", ServiceName, device->Name);
+		WLog_INFO(TAG, "Loading device service %s [%s] (static)", ServiceName, device->Name);
 	else
-		WLog_INFO(TAG,  "Loading device service %s (static)", ServiceName);
+		WLog_INFO(TAG, "Loading device service %s (static)", ServiceName);
 
-	entry = (PDEVICE_SERVICE_ENTRY) freerdp_load_channel_addin_entry(ServiceName, NULL,
-	        "DeviceServiceEntry", 0);
+	entry = (PDEVICE_SERVICE_ENTRY)freerdp_load_channel_addin_entry(ServiceName, NULL,
+	                                                                "DeviceServiceEntry", 0);
 
 	if (!entry)
 	{
-		WLog_INFO(TAG,  "freerdp_load_channel_addin_entry failed!");
+		WLog_INFO(TAG, "freerdp_load_channel_addin_entry failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 

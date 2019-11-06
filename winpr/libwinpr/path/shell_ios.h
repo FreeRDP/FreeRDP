@@ -7,4 +7,3 @@ char* ios_get_data(void);
 char* ios_get_cache(void);
 
 #endif
-

@@ -39,4 +39,3 @@ struct _remdesk_server_private
 };
 
 #endif /* FREERDP_CHANNEL_REMDESK_SERVER_MAIN_H */
-

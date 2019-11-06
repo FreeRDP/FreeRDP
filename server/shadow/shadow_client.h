@@ -22,11 +22,12 @@
 #include <freerdp/server/shadow.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-BOOL shadow_client_surface_update(rdpShadowClient* client, REGION16* region);
-BOOL shadow_client_accepted(freerdp_listener* instance, freerdp_peer* client);
+	BOOL shadow_client_surface_update(rdpShadowClient* client, REGION16* region);
+	BOOL shadow_client_accepted(freerdp_listener* instance, freerdp_peer* client);
 
 #ifdef __cplusplus
 }

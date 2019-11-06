@@ -24,13 +24,13 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/pointer.h>
 
-FREERDP_LOCAL CACHE_COLOR_TABLE_ORDER* copy_cache_color_table_order(rdpContext* context,
-        const CACHE_COLOR_TABLE_ORDER* order);
+FREERDP_LOCAL CACHE_COLOR_TABLE_ORDER*
+copy_cache_color_table_order(rdpContext* context, const CACHE_COLOR_TABLE_ORDER* order);
 FREERDP_LOCAL void free_cache_color_table_order(rdpContext* context,
-        CACHE_COLOR_TABLE_ORDER* order);
+                                                CACHE_COLOR_TABLE_ORDER* order);
 
 FREERDP_LOCAL SURFACE_BITS_COMMAND* copy_surface_bits_command(rdpContext* context,
-															  const SURFACE_BITS_COMMAND* order);
+                                                              const SURFACE_BITS_COMMAND* order);
 FREERDP_LOCAL void free_surface_bits_command(rdpContext* context, SURFACE_BITS_COMMAND* order);
 
 #endif /* FREERDP_LIB_CACHE_CACHE_H */

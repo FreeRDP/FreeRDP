@@ -61,22 +61,17 @@ FREERDP_LOCAL BOOL rdp_client_disconnect(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_reconnect(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_redirect(rdpRdp* rdp);
-FREERDP_LOCAL BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp,
-        wStream* s);
+FREERDP_LOCAL BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_connect_license(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_transition_to_state(rdpRdp* rdp, int state);
 
 FREERDP_LOCAL BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s);
-FREERDP_LOCAL BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp,
-        wStream* s);
-FREERDP_LOCAL BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp,
-        wStream* s);
-FREERDP_LOCAL BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp,
-        wStream* s);
-FREERDP_LOCAL BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp,
-        wStream* s);
+FREERDP_LOCAL BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_server_reactivate(rdpRdp* rdp);

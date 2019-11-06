@@ -27,4 +27,3 @@
 #include <freerdp/peer.h>
 
 #endif /* FREERDP_LIB_CORE_PEER_H */
-

@@ -35,14 +35,12 @@ struct rdtk_engine
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-
-
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* RDTK_ENGINE_PRIVATE_H */
-

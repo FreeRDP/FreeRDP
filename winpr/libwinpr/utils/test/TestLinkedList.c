@@ -8,9 +8,9 @@ int TestLinkedList(int argc, char* argv[])
 	int count;
 	wLinkedList* list;
 	list = LinkedList_New();
-	LinkedList_AddFirst(list, (void*)(size_t) 1);
-	LinkedList_AddLast(list, (void*)(size_t) 2);
-	LinkedList_AddLast(list, (void*)(size_t) 3);
+	LinkedList_AddFirst(list, (void*)(size_t)1);
+	LinkedList_AddLast(list, (void*)(size_t)2);
+	LinkedList_AddLast(list, (void*)(size_t)3);
 	count = LinkedList_Count(list);
 
 	if (count != 3)
@@ -23,12 +23,12 @@ int TestLinkedList(int argc, char* argv[])
 
 	while (LinkedList_Enumerator_MoveNext(list))
 	{
-		printf("\t%"PRIuz"\n", (size_t) LinkedList_Enumerator_Current(list));
+		printf("\t%" PRIuz "\n", (size_t)LinkedList_Enumerator_Current(list));
 	}
 
 	printf("\n");
-	printf("LinkedList First: %"PRIuz" Last: %"PRIuz"\n",
-	       (size_t) LinkedList_First(list), (size_t) LinkedList_Last(list));
+	printf("LinkedList First: %" PRIuz " Last: %" PRIuz "\n", (size_t)LinkedList_First(list),
+	       (size_t)LinkedList_Last(list));
 	LinkedList_RemoveFirst(list);
 	LinkedList_RemoveLast(list);
 	count = LinkedList_Count(list);
@@ -43,12 +43,12 @@ int TestLinkedList(int argc, char* argv[])
 
 	while (LinkedList_Enumerator_MoveNext(list))
 	{
-		printf("\t%"PRIuz"\n", (size_t) LinkedList_Enumerator_Current(list));
+		printf("\t%" PRIuz "\n", (size_t)LinkedList_Enumerator_Current(list));
 	}
 
 	printf("\n");
-	printf("LinkedList First: %"PRIuz" Last: %"PRIuz"\n",
-	       (size_t) LinkedList_First(list), (size_t) LinkedList_Last(list));
+	printf("LinkedList First: %" PRIuz " Last: %" PRIuz "\n", (size_t)LinkedList_First(list),
+	       (size_t)LinkedList_Last(list));
 	LinkedList_RemoveFirst(list);
 	LinkedList_RemoveLast(list);
 	count = LinkedList_Count(list);
@@ -59,9 +59,9 @@ int TestLinkedList(int argc, char* argv[])
 		return -1;
 	}
 
-	LinkedList_AddFirst(list, (void*)(size_t) 4);
-	LinkedList_AddLast(list, (void*)(size_t) 5);
-	LinkedList_AddLast(list, (void*)(size_t) 6);
+	LinkedList_AddFirst(list, (void*)(size_t)4);
+	LinkedList_AddLast(list, (void*)(size_t)5);
+	LinkedList_AddLast(list, (void*)(size_t)6);
 	count = LinkedList_Count(list);
 
 	if (count != 3)
@@ -74,23 +74,23 @@ int TestLinkedList(int argc, char* argv[])
 
 	while (LinkedList_Enumerator_MoveNext(list))
 	{
-		printf("\t%"PRIuz"\n", (size_t) LinkedList_Enumerator_Current(list));
+		printf("\t%" PRIuz "\n", (size_t)LinkedList_Enumerator_Current(list));
 	}
 
 	printf("\n");
-	printf("LinkedList First: %"PRIuz" Last: %"PRIuz"\n",
-	       (size_t) LinkedList_First(list), (size_t) LinkedList_Last(list));
-	LinkedList_Remove(list, (void*)(size_t) 5);
+	printf("LinkedList First: %" PRIuz " Last: %" PRIuz "\n", (size_t)LinkedList_First(list),
+	       (size_t)LinkedList_Last(list));
+	LinkedList_Remove(list, (void*)(size_t)5);
 	LinkedList_Enumerator_Reset(list);
 
 	while (LinkedList_Enumerator_MoveNext(list))
 	{
-		printf("\t%"PRIuz"\n", (size_t) LinkedList_Enumerator_Current(list));
+		printf("\t%" PRIuz "\n", (size_t)LinkedList_Enumerator_Current(list));
 	}
 
 	printf("\n");
-	printf("LinkedList First: %"PRIuz" Last: %"PRIuz"\n",
-	       (size_t) LinkedList_First(list), (size_t) LinkedList_Last(list));
+	printf("LinkedList First: %" PRIuz " Last: %" PRIuz "\n", (size_t)LinkedList_First(list),
+	       (size_t)LinkedList_Last(list));
 	LinkedList_Free(list);
 	/* Test enumerator robustness */
 	/* enumerator on an empty list */
@@ -99,24 +99,23 @@ int TestLinkedList(int argc, char* argv[])
 
 	while (LinkedList_Enumerator_MoveNext(list))
 	{
-		printf("\terror: %"PRIuz"\n", (size_t) LinkedList_Enumerator_Current(list));
+		printf("\terror: %" PRIuz "\n", (size_t)LinkedList_Enumerator_Current(list));
 	}
 
 	printf("\n");
 	LinkedList_Free(list);
 	/* Use an enumerator without reset */
 	list = LinkedList_New();
-	LinkedList_AddFirst(list, (void*)(size_t) 4);
-	LinkedList_AddLast(list, (void*)(size_t) 5);
-	LinkedList_AddLast(list, (void*)(size_t) 6);
+	LinkedList_AddFirst(list, (void*)(size_t)4);
+	LinkedList_AddLast(list, (void*)(size_t)5);
+	LinkedList_AddLast(list, (void*)(size_t)6);
 
 	while (LinkedList_Enumerator_MoveNext(list))
 	{
-		printf("\t%"PRIuz"\n", (size_t) LinkedList_Enumerator_Current(list));
+		printf("\t%" PRIuz "\n", (size_t)LinkedList_Enumerator_Current(list));
 	}
 
 	printf("\n");
 	LinkedList_Free(list);
 	return 0;
 }
-

@@ -33,31 +33,31 @@ typedef struct _PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 #include <freerdp/codec/region.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* progressive,
-                                    const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
+	FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
+	                                     UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
 
-FREERDP_API INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
-        const BYTE* pSrcData, UINT32 SrcSize,
-        BYTE* pDstData, UINT32 DstFormat,
-        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-        REGION16* invalidRegion, UINT16 surfaceId);
+	FREERDP_API INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
+	                                         UINT32 SrcSize, BYTE* pDstData, UINT32 DstFormat,
+	                                         UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+	                                         REGION16* invalidRegion, UINT16 surfaceId);
 
-FREERDP_API INT32 progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive,
-		UINT16 surfaceId, UINT32 width, UINT32 height);
-FREERDP_API int progressive_delete_surface_context(PROGRESSIVE_CONTEXT* progressive,
-		UINT16 surfaceId);
+	FREERDP_API INT32 progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive,
+	                                                     UINT16 surfaceId, UINT32 width,
+	                                                     UINT32 height);
+	FREERDP_API int progressive_delete_surface_context(PROGRESSIVE_CONTEXT* progressive,
+	                                                   UINT16 surfaceId);
 
-FREERDP_API BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive);
+	FREERDP_API BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive);
 
-FREERDP_API PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor);
-FREERDP_API void progressive_context_free(PROGRESSIVE_CONTEXT* progressive);
+	FREERDP_API PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor);
+	FREERDP_API void progressive_context_free(PROGRESSIVE_CONTEXT* progressive);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* FREERDP_CODEC_PROGRESSIVE_H */
-

@@ -23,49 +23,49 @@
 #include <freerdp/types.h>
 #include <freerdp/primary.h>
 
-#define GLYPH_FRAGMENT_NOP			0x00
-#define GLYPH_FRAGMENT_USE			0xFE
-#define GLYPH_FRAGMENT_ADD			0xFF
+#define GLYPH_FRAGMENT_NOP 0x00
+#define GLYPH_FRAGMENT_USE 0xFE
+#define GLYPH_FRAGMENT_ADD 0xFF
 
-#define CBR2_HEIGHT_SAME_AS_WIDTH		0x01
-#define CBR2_PERSISTENT_KEY_PRESENT		0x02
-#define CBR2_NO_BITMAP_COMPRESSION_HDR		0x08
-#define CBR2_DO_NOT_CACHE			0x10
+#define CBR2_HEIGHT_SAME_AS_WIDTH 0x01
+#define CBR2_PERSISTENT_KEY_PRESENT 0x02
+#define CBR2_NO_BITMAP_COMPRESSION_HDR 0x08
+#define CBR2_DO_NOT_CACHE 0x10
 
-#define SCREEN_BITMAP_SURFACE			0xFFFF
-#define BITMAP_CACHE_WAITING_LIST_INDEX 	0x7FFF
+#define SCREEN_BITMAP_SURFACE 0xFFFF
+#define BITMAP_CACHE_WAITING_LIST_INDEX 0x7FFF
 
-#define CACHED_BRUSH				0x80
+#define CACHED_BRUSH 0x80
 
-#define BMF_1BPP				0x1
-#define BMF_8BPP				0x3
-#define BMF_16BPP				0x4
-#define BMF_24BPP				0x5
-#define BMF_32BPP				0x6
+#define BMF_1BPP 0x1
+#define BMF_8BPP 0x3
+#define BMF_16BPP 0x4
+#define BMF_24BPP 0x5
+#define BMF_32BPP 0x6
 
 #ifndef _WIN32
-#define BS_SOLID				0x00
-#define BS_NULL					0x01
-#define BS_HATCHED				0x02
-#define BS_PATTERN				0x03
+#define BS_SOLID 0x00
+#define BS_NULL 0x01
+#define BS_HATCHED 0x02
+#define BS_PATTERN 0x03
 #endif
 
 #ifndef _WIN32
-#define HS_HORIZONTAL				0x00
-#define HS_VERTICAL				0x01
-#define HS_FDIAGONAL				0x02
-#define HS_BDIAGONAL				0x03
-#define HS_CROSS				0x04
-#define HS_DIAGCROSS				0x05
+#define HS_HORIZONTAL 0x00
+#define HS_VERTICAL 0x01
+#define HS_FDIAGONAL 0x02
+#define HS_BDIAGONAL 0x03
+#define HS_CROSS 0x04
+#define HS_DIAGCROSS 0x05
 #endif
 
-#define SO_FLAG_DEFAULT_PLACEMENT		0x01
-#define SO_HORIZONTAL				0x02
-#define SO_VERTICAL				0x04
-#define SO_REVERSED				0x08
-#define SO_ZERO_BEARINGS			0x10
-#define SO_CHAR_INC_EQUAL_BM_BASE		0x20
-#define SO_MAXEXT_EQUAL_BM_SIDE			0x40
+#define SO_FLAG_DEFAULT_PLACEMENT 0x01
+#define SO_HORIZONTAL 0x02
+#define SO_VERTICAL 0x04
+#define SO_REVERSED 0x08
+#define SO_ZERO_BEARINGS 0x10
+#define SO_CHAR_INC_EQUAL_BM_BASE 0x20
+#define SO_MAXEXT_EQUAL_BM_SIDE 0x40
 
 struct _CACHE_BITMAP_ORDER
 {
@@ -163,34 +163,29 @@ struct _CACHE_BRUSH_ORDER
 };
 typedef struct _CACHE_BRUSH_ORDER CACHE_BRUSH_ORDER;
 
-typedef BOOL (*pCacheBitmap)(rdpContext* context,
-                             const CACHE_BITMAP_ORDER* cache_bitmap_order);
-typedef BOOL (*pCacheBitmapV2)(rdpContext* context,
-                               CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
-typedef BOOL (*pCacheBitmapV3)(rdpContext* context,
-                               CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
+typedef BOOL (*pCacheBitmap)(rdpContext* context, const CACHE_BITMAP_ORDER* cache_bitmap_order);
+typedef BOOL (*pCacheBitmapV2)(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
+typedef BOOL (*pCacheBitmapV3)(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
 typedef BOOL (*pCacheColorTable)(rdpContext* context,
                                  const CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
-typedef BOOL (*pCacheGlyph)(rdpContext* context,
-                            const CACHE_GLYPH_ORDER* cache_glyph_order);
+typedef BOOL (*pCacheGlyph)(rdpContext* context, const CACHE_GLYPH_ORDER* cache_glyph_order);
 typedef BOOL (*pCacheGlyphV2)(rdpContext* context,
                               const CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
-typedef BOOL (*pCacheBrush)(rdpContext* context,
-                            const CACHE_BRUSH_ORDER* cache_brush_order);
+typedef BOOL (*pCacheBrush)(rdpContext* context, const CACHE_BRUSH_ORDER* cache_brush_order);
 
 struct rdp_secondary_update
 {
-	rdpContext* context; /* 0 */
+	rdpContext* context;     /* 0 */
 	UINT32 paddingA[16 - 1]; /* 1 */
 
-	pCacheBitmap CacheBitmap; /* 16 */
-	pCacheBitmapV2 CacheBitmapV2; /* 17 */
-	pCacheBitmapV3 CacheBitmapV3; /* 18 */
+	pCacheBitmap CacheBitmap;         /* 16 */
+	pCacheBitmapV2 CacheBitmapV2;     /* 17 */
+	pCacheBitmapV3 CacheBitmapV3;     /* 18 */
 	pCacheColorTable CacheColorTable; /* 19 */
-	pCacheGlyph CacheGlyph; /* 20 */
-	pCacheGlyphV2 CacheGlyphV2; /* 21 */
-	pCacheBrush CacheBrush; /* 22 */
-	UINT32 paddingE[32 - 23]; /* 23 */
+	pCacheGlyph CacheGlyph;           /* 20 */
+	pCacheGlyphV2 CacheGlyphV2;       /* 21 */
+	pCacheBrush CacheBrush;           /* 22 */
+	UINT32 paddingE[32 - 23];         /* 23 */
 
 	/* internal */
 

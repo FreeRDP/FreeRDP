@@ -30,7 +30,7 @@
 
 void* MIDL_user_allocate(size_t cBytes)
 {
-    return (malloc(cBytes));
+	return (malloc(cBytes));
 }
 
 void MIDL_user_free(void* p)

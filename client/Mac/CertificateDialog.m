@@ -23,9 +23,9 @@
 
 #import <CoreGraphics/CoreGraphics.h>
 
-@interface CertificateDialog()
+@interface CertificateDialog ()
 
-	@property int result;
+@property int result;
 
 @end
 
@@ -54,57 +54,63 @@
 - (void)windowDidLoad
 {
 	[super windowDidLoad];
-	// Implement this method to handle any initialization after your window controller's window has been loaded from its nib file.
+	// Implement this method to handle any initialization after your window controller's window has
+	// been loaded from its nib file.
 	[self.window setTitle:self.serverHostname];
 	if (self.changed)
 		[self.messageLabel setStringValue:[NSString stringWithFormat:@"Changed certificate for %@",
-	                              self.serverHostname]];
+		                                                             self.serverHostname]];
 	else
 		[self.messageLabel setStringValue:[NSString stringWithFormat:@"New Certificate for %@",
-									  self.serverHostname]];
+		                                                             self.serverHostname]];
 
 	if (!self.hostMismatch)
-        [self.textMismatch setStringValue:[NSString stringWithFormat:@"NOTE: The server name matches the certificate, good."]];
+		[self.textMismatch
+		    setStringValue:[NSString stringWithFormat:
+		                                 @"NOTE: The server name matches the certificate, good."]];
 	else
-		[self.textMismatch setStringValue:[NSString stringWithFormat:@"ATTENTION: The common name does not match the server name!"]];
+		[self.textMismatch
+		    setStringValue:[NSString
+		                       stringWithFormat:
+		                           @"ATTENTION: The common name does not match the server name!"]];
 	[self.textCommonName setStringValue:self.commonName];
 	[self.textFingerprint setStringValue:self.fingerprint];
 	[self.textIssuer setStringValue:self.issuer];
 	[self.textSubject setStringValue:self.subject];
 }
 
-- (IBAction)onAccept:(NSObject*)sender
+- (IBAction)onAccept:(NSObject *)sender
 {
 	[NSApp stopModalWithCode:1];
 }
 
-- (IBAction)onTemporary:(NSObject*)sender
+- (IBAction)onTemporary:(NSObject *)sender
 {
 	[NSApp stopModalWithCode:2];
 }
 
-- (IBAction)onCancel:(NSObject*)sender
+- (IBAction)onCancel:(NSObject *)sender
 {
 	[NSApp stopModalWithCode:0];
 }
 
-- (int)runModal:(NSWindow*)mainWindow
+- (int)runModal:(NSWindow *)mainWindow
 {
 	if ([mainWindow respondsToSelector:@selector(beginSheet:completionHandler:)])
 	{
 		[mainWindow beginSheet:self.window completionHandler:nil];
-		self.result = [NSApp runModalForWindow: self.window];
-		[mainWindow endSheet: self.window];
+		self.result = [NSApp runModalForWindow:self.window];
+		[mainWindow endSheet:self.window];
 	}
 	else
 	{
-		[NSApp beginSheet: self.window
-		 modalForWindow: mainWindow
-		 modalDelegate: nil
-		 didEndSelector: nil
-		 contextInfo: nil];
-		self.result = [NSApp runModalForWindow: self.window];
-		[NSApp endSheet: self.window];
+		[NSApp beginSheet:self.window
+		    modalForWindow:mainWindow
+		     modalDelegate:nil
+		    didEndSelector:nil
+		       contextInfo:nil];
+		self.result = [NSApp runModalForWindow:self.window];
+		[NSApp endSheet:self.window];
 	}
 
 	[self.window orderOut:nil];

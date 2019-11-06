@@ -34,4 +34,3 @@ struct rdtk_surface
 	BOOL owner;
 };
 #endif /* RDTK_SURFACE_PRIVATE_H */
-

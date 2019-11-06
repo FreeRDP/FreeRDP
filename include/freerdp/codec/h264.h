@@ -31,11 +31,9 @@ typedef struct _H264_CONTEXT H264_CONTEXT;
 typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* h264);
 typedef void (*pfnH264SubsystemUninit)(H264_CONTEXT* h264);
 
-typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* h264, const BYTE* pSrcData,
-        UINT32 SrcSize);
+typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize);
 typedef int (*pfnH264SubsystemCompress)(H264_CONTEXT* h264, const BYTE** pSrcYuv,
-                                        const UINT32* pStride,
-                                        BYTE** ppDstData, UINT32* pDstSize);
+                                        const UINT32* pStride, BYTE** ppDstData, UINT32* pDstSize);
 
 struct _H264_CONTEXT_SUBSYSTEM
 {
@@ -82,43 +80,38 @@ struct _H264_CONTEXT
 	wLog* log;
 };
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData,
-                                  DWORD SrcFormat, UINT32 nSrcStep,
-                                  UINT32 nSrcWidth, UINT32 nSrcHeight,
-                                  BYTE** ppDstData, UINT32* pDstSize);
+	FREERDP_API INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
+	                                  UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
+	                                  BYTE** ppDstData, UINT32* pDstSize);
 
-FREERDP_API INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
-                                    UINT32 SrcSize, BYTE* pDstData,
-                                    DWORD DstFormat, UINT32 nDstStep,
-                                    UINT32 nDstWidth, UINT32 nDstHeight,
-                                    RECTANGLE_16* regionRects, UINT32 numRegionRect);
+	FREERDP_API INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
+	                                    BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
+	                                    UINT32 nDstWidth, UINT32 nDstHeight,
+	                                    RECTANGLE_16* regionRects, UINT32 numRegionRect);
 
-FREERDP_API INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
-                                  UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
-                                  BYTE version, BYTE* op,
-                                  BYTE** pDstData, UINT32* pDstSize,
-                                  BYTE** pAuxDstData, UINT32* pAuxDstSize);
+	FREERDP_API INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
+	                                  UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
+	                                  BYTE version, BYTE* op, BYTE** pDstData, UINT32* pDstSize,
+	                                  BYTE** pAuxDstData, UINT32* pAuxDstSize);
 
-FREERDP_API INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
-                                    RECTANGLE_16* regionRects, UINT32 numRegionRect,
-                                    const BYTE* pSrcData, UINT32 SrcSize,
-                                    RECTANGLE_16* auxRegionRects, UINT32 numAuxRegionRect,
-                                    const BYTE* pAuxSrcData, UINT32 AuxSrcSize,
-                                    BYTE* pDstData, DWORD DstFormat,
-                                    UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight,
-                                    UINT32 codecId);
+	FREERDP_API INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, RECTANGLE_16* regionRects,
+	                                    UINT32 numRegionRect, const BYTE* pSrcData, UINT32 SrcSize,
+	                                    RECTANGLE_16* auxRegionRects, UINT32 numAuxRegionRect,
+	                                    const BYTE* pAuxSrcData, UINT32 AuxSrcSize, BYTE* pDstData,
+	                                    DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth,
+	                                    UINT32 nDstHeight, UINT32 codecId);
 
-FREERDP_API BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height);
+	FREERDP_API BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height);
 
-FREERDP_API H264_CONTEXT* h264_context_new(BOOL Compressor);
-FREERDP_API void h264_context_free(H264_CONTEXT* h264);
+	FREERDP_API H264_CONTEXT* h264_context_new(BOOL Compressor);
+	FREERDP_API void h264_context_free(H264_CONTEXT* h264);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* FREERDP_CODEC_H264_H */
-

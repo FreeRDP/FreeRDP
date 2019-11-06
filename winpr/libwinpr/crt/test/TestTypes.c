@@ -3,51 +3,52 @@
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 
-#define EXPECTED_SIZEOF_BYTE		1
-#define EXPECTED_SIZEOF_BOOLEAN		1
-#define EXPECTED_SIZEOF_CHAR		1
-#define EXPECTED_SIZEOF_UCHAR		1
-#define EXPECTED_SIZEOF_INT8		1
-#define EXPECTED_SIZEOF_UINT8		1
-#define EXPECTED_SIZEOF_INT16		2
-#define EXPECTED_SIZEOF_UINT16		2
-#define EXPECTED_SIZEOF_WORD		2
-#define EXPECTED_SIZEOF_WCHAR		2
-#define EXPECTED_SIZEOF_SHORT		2
-#define EXPECTED_SIZEOF_USHORT		2
-#define EXPECTED_SIZEOF_BOOL		4
-#define EXPECTED_SIZEOF_INT		4
-#define EXPECTED_SIZEOF_UINT		4
-#define EXPECTED_SIZEOF_INT32		4
-#define EXPECTED_SIZEOF_UINT32		4
-#define EXPECTED_SIZEOF_DWORD		4
-#define EXPECTED_SIZEOF_DWORD32		4
-#define EXPECTED_SIZEOF_LONG		4
-#define EXPECTED_SIZEOF_LONG32		4
-#define EXPECTED_SIZEOF_INT64		8
-#define EXPECTED_SIZEOF_UINT64		8
-#define EXPECTED_SIZEOF_DWORD64		8
-#define EXPECTED_SIZEOF_DWORDLONG	8
-#define EXPECTED_SIZEOF_LONG64		8
-#define EXPECTED_SIZEOF_ULONGLONG	8
-#define EXPECTED_SIZEOF_LUID		8
-#define EXPECTED_SIZEOF_FILETIME	8
-#define EXPECTED_SIZEOF_LARGE_INTEGER	8
-#define EXPECTED_SIZEOF_ULARGE_INTEGER	8
-#define EXPECTED_SIZEOF_GUID		16
-#define EXPECTED_SIZEOF_SYSTEMTIME	16
-#define EXPECTED_SIZEOF_SIZE_T		sizeof(void*)
-#define EXPECTED_SIZEOF_INT_PTR		sizeof(void*)
-#define EXPECTED_SIZEOF_UINT_PTR	sizeof(void*)
-#define EXPECTED_SIZEOF_DWORD_PTR	sizeof(void*)
-#define EXPECTED_SIZEOF_LONG_PTR	sizeof(void*)
-#define EXPECTED_SIZEOF_ULONG_PTR	sizeof(void*)
+#define EXPECTED_SIZEOF_BYTE 1
+#define EXPECTED_SIZEOF_BOOLEAN 1
+#define EXPECTED_SIZEOF_CHAR 1
+#define EXPECTED_SIZEOF_UCHAR 1
+#define EXPECTED_SIZEOF_INT8 1
+#define EXPECTED_SIZEOF_UINT8 1
+#define EXPECTED_SIZEOF_INT16 2
+#define EXPECTED_SIZEOF_UINT16 2
+#define EXPECTED_SIZEOF_WORD 2
+#define EXPECTED_SIZEOF_WCHAR 2
+#define EXPECTED_SIZEOF_SHORT 2
+#define EXPECTED_SIZEOF_USHORT 2
+#define EXPECTED_SIZEOF_BOOL 4
+#define EXPECTED_SIZEOF_INT 4
+#define EXPECTED_SIZEOF_UINT 4
+#define EXPECTED_SIZEOF_INT32 4
+#define EXPECTED_SIZEOF_UINT32 4
+#define EXPECTED_SIZEOF_DWORD 4
+#define EXPECTED_SIZEOF_DWORD32 4
+#define EXPECTED_SIZEOF_LONG 4
+#define EXPECTED_SIZEOF_LONG32 4
+#define EXPECTED_SIZEOF_INT64 8
+#define EXPECTED_SIZEOF_UINT64 8
+#define EXPECTED_SIZEOF_DWORD64 8
+#define EXPECTED_SIZEOF_DWORDLONG 8
+#define EXPECTED_SIZEOF_LONG64 8
+#define EXPECTED_SIZEOF_ULONGLONG 8
+#define EXPECTED_SIZEOF_LUID 8
+#define EXPECTED_SIZEOF_FILETIME 8
+#define EXPECTED_SIZEOF_LARGE_INTEGER 8
+#define EXPECTED_SIZEOF_ULARGE_INTEGER 8
+#define EXPECTED_SIZEOF_GUID 16
+#define EXPECTED_SIZEOF_SYSTEMTIME 16
+#define EXPECTED_SIZEOF_SIZE_T sizeof(void*)
+#define EXPECTED_SIZEOF_INT_PTR sizeof(void*)
+#define EXPECTED_SIZEOF_UINT_PTR sizeof(void*)
+#define EXPECTED_SIZEOF_DWORD_PTR sizeof(void*)
+#define EXPECTED_SIZEOF_LONG_PTR sizeof(void*)
+#define EXPECTED_SIZEOF_ULONG_PTR sizeof(void*)
 
-#define TEST_SIZEOF_TYPE(_name) \
-	if (sizeof(_name) != EXPECTED_SIZEOF_ ##_name) { \
-		fprintf(stderr, "sizeof(%s) mismatch: Actual: %"PRIuz", Expected: %"PRIuz"\n", \
-			#_name, sizeof(_name), (size_t) EXPECTED_SIZEOF_ ##_name); \
-		status = -1; \
+#define TEST_SIZEOF_TYPE(_name)                                                                    \
+	if (sizeof(_name) != EXPECTED_SIZEOF_##_name)                                                  \
+	{                                                                                              \
+		fprintf(stderr, "sizeof(%s) mismatch: Actual: %" PRIuz ", Expected: %" PRIuz "\n", #_name, \
+		        sizeof(_name), (size_t)EXPECTED_SIZEOF_##_name);                                   \
+		status = -1;                                                                               \
 	}
 
 int TestTypes(int argc, char* argv[])
@@ -71,7 +72,7 @@ int TestTypes(int argc, char* argv[])
 	TEST_SIZEOF_TYPE(USHORT)
 
 	/* fails on OS X */
-	//TEST_SIZEOF_TYPE(BOOL)
+	// TEST_SIZEOF_TYPE(BOOL)
 
 	TEST_SIZEOF_TYPE(INT)
 	TEST_SIZEOF_TYPE(UINT)
@@ -109,4 +110,3 @@ int TestTypes(int argc, char* argv[])
 
 	return status;
 }
-

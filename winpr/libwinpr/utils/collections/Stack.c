@@ -130,7 +130,7 @@ void Stack_Push(wStack* stack, void* obj)
 		int new_cap;
 		void** new_arr;
 		new_cap = stack->capacity * 2;
-		new_arr = (void**) realloc(stack->array, sizeof(void*) * new_cap);
+		new_arr = (void**)realloc(stack->array, sizeof(void*) * new_cap);
 
 		if (!new_arr)
 			return;
@@ -185,7 +185,6 @@ void* Stack_Peek(wStack* stack)
 	return obj;
 }
 
-
 static BOOL default_stack_equals(const void* obj1, const void* obj2)
 {
 	return (obj1 == obj2);
@@ -206,7 +205,7 @@ wStack* Stack_New(BOOL synchronized)
 	stack->object.fnObjectEquals = default_stack_equals;
 	stack->synchronized = synchronized;
 	stack->capacity = 32;
-	stack->array = (void**) calloc(stack->capacity, sizeof(void*));
+	stack->array = (void**)calloc(stack->capacity, sizeof(void*));
 
 	if (!stack->array)
 		goto out_free;

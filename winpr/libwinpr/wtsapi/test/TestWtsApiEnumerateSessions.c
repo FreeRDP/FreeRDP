@@ -29,19 +29,17 @@ int TestWtsApiEnumerateSessions(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSEnumerateSessions failed: %"PRIu32"\n", GetLastError());
+		printf("WTSEnumerateSessions failed: %" PRIu32 "\n", GetLastError());
 		return 0;
 	}
 
-	printf("WTSEnumerateSessions count: %"PRIu32"\n", count);
+	printf("WTSEnumerateSessions count: %" PRIu32 "\n", count);
 
 	for (index = 0; index < count; index++)
 	{
-		printf("[%"PRIu32"] SessionId: %"PRIu32" WinstationName: '%s' State: %s (%u)\n", index,
-			pSessionInfo[index].SessionId,
-			pSessionInfo[index].pWinStationName,
-			WTSSessionStateToString(pSessionInfo[index].State),
-			pSessionInfo[index].State);
+		printf("[%" PRIu32 "] SessionId: %" PRIu32 " WinstationName: '%s' State: %s (%u)\n", index,
+		       pSessionInfo[index].SessionId, pSessionInfo[index].pWinStationName,
+		       WTSSessionStateToString(pSessionInfo[index].State), pSessionInfo[index].State);
 	}
 
 	WTSFreeMemory(pSessionInfo);

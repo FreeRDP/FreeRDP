@@ -39,8 +39,8 @@
 #define TAG FREERDP_TAG("gdi")
 /* Bitmap Class */
 
-HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight,
-                              UINT32 SrcFormat, BYTE* data)
+HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32 SrcFormat,
+                              BYTE* data)
 {
 	UINT32 nSrcStep;
 	UINT32 nDstStep;
@@ -60,9 +60,8 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight,
 	pSrcData = data;
 	nSrcStep = nWidth * GetBytesPerPixel(SrcFormat);
 
-	if (!freerdp_image_copy(pDstData, gdi->dstFormat, nDstStep, 0, 0,
-	                        nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, 0, 0,
-	                        &gdi->palette, FREERDP_FLIP_NONE))
+	if (!freerdp_image_copy(pDstData, gdi->dstFormat, nDstStep, 0, 0, nWidth, nHeight, pSrcData,
+	                        SrcFormat, nSrcStep, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
 	{
 		_aligned_free(pDstData);
 		return NULL;
@@ -76,22 +75,19 @@ static BOOL gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 {
 	gdiBitmap* gdi_bitmap;
 	rdpGdi* gdi = context->gdi;
-	gdi_bitmap = (gdiBitmap*) bitmap;
+	gdi_bitmap = (gdiBitmap*)bitmap;
 	gdi_bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
 
 	if (!gdi_bitmap->hdc)
 		return FALSE;
 
 	if (!bitmap->data)
-		gdi_bitmap->bitmap = gdi_CreateCompatibleBitmap(
-		                         gdi->hdc, bitmap->width,
-		                         bitmap->height);
+		gdi_bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, bitmap->width, bitmap->height);
 	else
 	{
 		UINT32 format = bitmap->format;
-		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width,
-		                                       bitmap->height,
-		                                       format, bitmap->data);
+		gdi_bitmap->bitmap =
+		    gdi_create_bitmap(gdi, bitmap->width, bitmap->height, format, bitmap->data);
 	}
 
 	if (!gdi_bitmap->bitmap)
@@ -101,21 +97,21 @@ static BOOL gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	}
 
 	gdi_bitmap->hdc->format = gdi_bitmap->bitmap->format;
-	gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->bitmap);
+	gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT)gdi_bitmap->bitmap);
 	gdi_bitmap->org_bitmap = NULL;
 	return TRUE;
 }
 
 static void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
-	gdiBitmap* gdi_bitmap = (gdiBitmap*) bitmap;
+	gdiBitmap* gdi_bitmap = (gdiBitmap*)bitmap;
 
 	if (gdi_bitmap)
 	{
 		if (gdi_bitmap->hdc)
-			gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->org_bitmap);
+			gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT)gdi_bitmap->org_bitmap);
 
-		gdi_DeleteObject((HGDIOBJECT) gdi_bitmap->bitmap);
+		gdi_DeleteObject((HGDIOBJECT)gdi_bitmap->bitmap);
 		gdi_DeleteDC(gdi_bitmap->hdc);
 		_aligned_free(bitmap->data);
 	}
@@ -125,19 +121,16 @@ static void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 
 static BOOL gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 {
-	gdiBitmap* gdi_bitmap = (gdiBitmap*) bitmap;
+	gdiBitmap* gdi_bitmap = (gdiBitmap*)bitmap;
 	UINT32 width = bitmap->right - bitmap->left + 1;
 	UINT32 height = bitmap->bottom - bitmap->top + 1;
-	return gdi_BitBlt(context->gdi->primary->hdc,
-	                  bitmap->left, bitmap->top,
-	                  width, height, gdi_bitmap->hdc,
-	                  0, 0, GDI_SRCCOPY, &context->gdi->palette);
+	return gdi_BitBlt(context->gdi->primary->hdc, bitmap->left, bitmap->top, width, height,
+	                  gdi_bitmap->hdc, 0, 0, GDI_SRCCOPY, &context->gdi->palette);
 }
 
-static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-                                  const BYTE* pSrcData, UINT32 DstWidth, UINT32 DstHeight,
-                                  UINT32 bpp, UINT32 length, BOOL compressed,
-                                  UINT32 codecId)
+static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const BYTE* pSrcData,
+                                  UINT32 DstWidth, UINT32 DstHeight, UINT32 bpp, UINT32 length,
+                                  BOOL compressed, UINT32 codecId)
 {
 	UINT32 SrcSize = length;
 	rdpGdi* gdi = context->gdi;
@@ -145,14 +138,14 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	bitmap->compressed = FALSE;
 	bitmap->format = gdi->dstFormat;
 
-	if ((GetBytesPerPixel(bitmap->format) == 0) ||
-	    (DstWidth == 0) || (DstHeight == 0) || (DstWidth > UINT32_MAX / DstHeight) ||
+	if ((GetBytesPerPixel(bitmap->format) == 0) || (DstWidth == 0) || (DstHeight == 0) ||
+	    (DstWidth > UINT32_MAX / DstHeight) ||
 	    (size > (UINT32_MAX / GetBytesPerPixel(bitmap->format))))
 		return FALSE;
 
 	size *= GetBytesPerPixel(bitmap->format);
 	bitmap->length = size;
-	bitmap->data = (BYTE*) _aligned_malloc(bitmap->length, 16);
+	bitmap->data = (BYTE*)_aligned_malloc(bitmap->length, 16);
 
 	if (!bitmap->data)
 		return FALSE;
@@ -161,21 +154,16 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		if (bpp < 32)
 		{
-			if (!interleaved_decompress(context->codecs->interleaved,
-			                            pSrcData, SrcSize,
-			                            DstWidth, DstHeight,
-			                            bpp,
-			                            bitmap->data, bitmap->format,
-			                            0, 0, 0, DstWidth, DstHeight,
-			                            &gdi->palette))
+			if (!interleaved_decompress(context->codecs->interleaved, pSrcData, SrcSize, DstWidth,
+			                            DstHeight, bpp, bitmap->data, bitmap->format, 0, 0, 0,
+			                            DstWidth, DstHeight, &gdi->palette))
 				return FALSE;
 		}
 		else
 		{
-			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize,
-			                       DstWidth, DstHeight,
-			                       bitmap->data, bitmap->format, 0, 0, 0,
-			                       DstWidth, DstHeight, TRUE))
+			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize, DstWidth, DstHeight,
+			                       bitmap->data, bitmap->format, 0, 0, 0, DstWidth, DstHeight,
+			                       TRUE))
 				return FALSE;
 		}
 	}
@@ -191,21 +179,19 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		{
 			const size_t dstSize = SrcSize * dbpp / sbpp;
 
-			if (dstSize  < bitmap->length)
+			if (dstSize < bitmap->length)
 				return FALSE;
 		}
 
-		if (!freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0,
-		                        DstWidth, DstHeight, pSrcData, SrcFormat,
-		                        0, 0, 0, &gdi->palette, FREERDP_FLIP_VERTICAL))
+		if (!freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0, DstWidth, DstHeight,
+		                        pSrcData, SrcFormat, 0, 0, 0, &gdi->palette, FREERDP_FLIP_VERTICAL))
 			return FALSE;
 	}
 
 	return TRUE;
 }
 
-static BOOL gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
-                                  BOOL primary)
+static BOOL gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
 	rdpGdi* gdi;
 
@@ -220,7 +206,7 @@ static BOOL gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
 	if (primary)
 		gdi->drawing = gdi->primary;
 	else
-		gdi->drawing = (gdiBitmap*) bitmap;
+		gdi->drawing = (gdiBitmap*)bitmap;
 
 	return TRUE;
 }
@@ -234,7 +220,7 @@ static BOOL gdi_Glyph_New(rdpContext* context, const rdpGlyph* glyph)
 	if (!context || !glyph)
 		return FALSE;
 
-	gdi_glyph = (gdiGlyph*) glyph;
+	gdi_glyph = (gdiGlyph*)glyph;
 	gdi_glyph->hdc = gdi_GetDC();
 
 	if (!gdi_glyph->hdc)
@@ -249,8 +235,7 @@ static BOOL gdi_Glyph_New(rdpContext* context, const rdpGlyph* glyph)
 		return FALSE;
 	}
 
-	gdi_glyph->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, PIXEL_FORMAT_MONO,
-	                                     data);
+	gdi_glyph->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, PIXEL_FORMAT_MONO, data);
 
 	if (!gdi_glyph->bitmap)
 	{
@@ -259,7 +244,7 @@ static BOOL gdi_Glyph_New(rdpContext* context, const rdpGlyph* glyph)
 		return FALSE;
 	}
 
-	gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT) gdi_glyph->bitmap);
+	gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT)gdi_glyph->bitmap);
 	gdi_glyph->org_bitmap = NULL;
 	return TRUE;
 }
@@ -267,20 +252,20 @@ static BOOL gdi_Glyph_New(rdpContext* context, const rdpGlyph* glyph)
 static void gdi_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 {
 	gdiGlyph* gdi_glyph;
-	gdi_glyph = (gdiGlyph*) glyph;
+	gdi_glyph = (gdiGlyph*)glyph;
 
 	if (gdi_glyph)
 	{
-		gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT) gdi_glyph->org_bitmap);
-		gdi_DeleteObject((HGDIOBJECT) gdi_glyph->bitmap);
+		gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT)gdi_glyph->org_bitmap);
+		gdi_DeleteObject((HGDIOBJECT)gdi_glyph->bitmap);
 		gdi_DeleteDC(gdi_glyph->hdc);
 		free(glyph->aj);
 		free(glyph);
 	}
 }
 
-static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x,
-                           INT32 y, INT32 w, INT32 h, INT32 sx, INT32 sy, BOOL fOpRedundant)
+static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, INT32 y, INT32 w,
+                           INT32 h, INT32 sx, INT32 sy, BOOL fOpRedundant)
 {
 	gdiGlyph* gdi_glyph;
 	rdpGdi* gdi;
@@ -291,7 +276,7 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x,
 		return FALSE;
 
 	gdi = context->gdi;
-	gdi_glyph = (gdiGlyph*) glyph;
+	gdi_glyph = (gdiGlyph*)glyph;
 
 	if (!fOpRedundant && 0)
 	{
@@ -327,8 +312,8 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x,
 		return FALSE;
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)brush);
-	rc = gdi_BitBlt(gdi->drawing->hdc, x, y, w, h, gdi_glyph->hdc, sx, sy,
-	                GDI_GLYPH_ORDER, &context->gdi->palette);
+	rc = gdi_BitBlt(gdi->drawing->hdc, x, y, w, h, gdi_glyph->hdc, sx, sy, GDI_GLYPH_ORDER,
+	                &context->gdi->palette);
 	gdi_DeleteObject((HGDIOBJECT)brush);
 	return rc;
 }
@@ -348,9 +333,8 @@ static BOOL gdi_Glyph_SetBounds(rdpContext* context, INT32 x, INT32 y, INT32 wid
 	return gdi_SetClipRgn(gdi->drawing->hdc, x, y, width, height);
 }
 
-static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y,
-                                INT32 width, INT32 height, UINT32 bgcolor,
-                                UINT32 fgcolor, BOOL fOpRedundant)
+static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 width, INT32 height,
+                                UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
 	rdpGdi* gdi;
 
@@ -403,8 +387,8 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y,
 	return TRUE;
 }
 
-static BOOL gdi_Glyph_EndDraw(rdpContext* context, INT32 x, INT32 y,
-                              INT32 width, INT32 height, UINT32 bgcolor, UINT32 fgcolor)
+static BOOL gdi_Glyph_EndDraw(rdpContext* context, INT32 x, INT32 y, INT32 width, INT32 height,
+                              UINT32 bgcolor, UINT32 fgcolor)
 {
 	rdpGdi* gdi;
 

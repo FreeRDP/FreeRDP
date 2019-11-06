@@ -22,19 +22,19 @@
 
 #include <freerdp/types.h>
 
-#define DSDNG_STRETCH 			0x00000001
-#define DSDNG_TILE 			0x00000002
-#define DSDNG_PERPIXELALPHA 		0x00000004
-#define DSDNG_TRANSPARENT 		0x00000008
-#define DSDNG_MUSTFLIP 			0x00000010
-#define DSDNG_TRUESIZE 			0x00000020
+#define DSDNG_STRETCH 0x00000001
+#define DSDNG_TILE 0x00000002
+#define DSDNG_PERPIXELALPHA 0x00000004
+#define DSDNG_TRANSPARENT 0x00000008
+#define DSDNG_MUSTFLIP 0x00000010
+#define DSDNG_TRUESIZE 0x00000020
 
-#define FRAME_START			0x00000000
-#define FRAME_END			0x00000001
+#define FRAME_START 0x00000000
+#define FRAME_END 0x00000001
 
-#define STREAM_BITMAP_END		0x01
-#define STREAM_BITMAP_COMPRESSED	0x02
-#define STREAM_BITMAP_V2		0x04
+#define STREAM_BITMAP_END 0x01
+#define STREAM_BITMAP_COMPRESSED 0x02
+#define STREAM_BITMAP_V2 0x04
 
 struct _OFFSCREEN_DELETE_LIST
 {
@@ -165,14 +165,12 @@ struct _DRAW_GDIPLUS_CACHE_END_ORDER
 };
 typedef struct _DRAW_GDIPLUS_CACHE_END_ORDER DRAW_GDIPLUS_CACHE_END_ORDER;
 
-typedef BOOL (*pCreateOffscreenBitmap)(rdpContext* context,
-                                       const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap);
-typedef BOOL (*pSwitchSurface)(rdpContext* context,
-                               const SWITCH_SURFACE_ORDER* switch_surface);
+typedef BOOL (*pCreateOffscreenBitmap)(
+    rdpContext* context, const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap);
+typedef BOOL (*pSwitchSurface)(rdpContext* context, const SWITCH_SURFACE_ORDER* switch_surface);
 typedef BOOL (*pCreateNineGridBitmap)(rdpContext* context,
                                       const CREATE_NINE_GRID_BITMAP_ORDER* create_nine_grid_bitmap);
-typedef BOOL (*pFrameMarker)(rdpContext* context,
-                             const FRAME_MARKER_ORDER* frame_marker);
+typedef BOOL (*pFrameMarker)(rdpContext* context, const FRAME_MARKER_ORDER* frame_marker);
 typedef BOOL (*pStreamBitmapFirst)(rdpContext* context,
                                    const STREAM_BITMAP_FIRST_ORDER* stream_bitmap_first);
 typedef BOOL (*pStreamBitmapNext)(rdpContext* context,
@@ -183,8 +181,8 @@ typedef BOOL (*pDrawGdiPlusNext)(rdpContext* context,
                                  const DRAW_GDIPLUS_NEXT_ORDER* draw_gdiplus_next);
 typedef BOOL (*pDrawGdiPlusEnd)(rdpContext* context,
                                 const DRAW_GDIPLUS_END_ORDER* draw_gdiplus_end);
-typedef BOOL (*pDrawGdiPlusCacheFirst)(rdpContext* context,
-                                       const DRAW_GDIPLUS_CACHE_FIRST_ORDER* draw_gdiplus_cache_first);
+typedef BOOL (*pDrawGdiPlusCacheFirst)(
+    rdpContext* context, const DRAW_GDIPLUS_CACHE_FIRST_ORDER* draw_gdiplus_cache_first);
 typedef BOOL (*pDrawGdiPlusCacheNext)(rdpContext* context,
                                       const DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next);
 typedef BOOL (*pDrawGdiPlusCacheEnd)(rdpContext* context,
@@ -192,22 +190,22 @@ typedef BOOL (*pDrawGdiPlusCacheEnd)(rdpContext* context,
 
 struct rdp_altsec_update
 {
-	rdpContext* context; /* 0 */
+	rdpContext* context;     /* 0 */
 	UINT32 paddingA[16 - 1]; /* 1 */
 
 	pCreateOffscreenBitmap CreateOffscreenBitmap; /* 16 */
-	pSwitchSurface SwitchSurface; /* 17 */
-	pCreateNineGridBitmap CreateNineGridBitmap; /* 18 */
-	pFrameMarker FrameMarker; /* 19 */
-	pStreamBitmapFirst StreamBitmapFirst; /* 20 */
-	pStreamBitmapNext StreamBitmapNext; /* 21 */
-	pDrawGdiPlusFirst DrawGdiPlusFirst; /* 22 */
-	pDrawGdiPlusNext DrawGdiPlusNext; /* 23 */
-	pDrawGdiPlusEnd DrawGdiPlusEnd; /* 24 */
+	pSwitchSurface SwitchSurface;                 /* 17 */
+	pCreateNineGridBitmap CreateNineGridBitmap;   /* 18 */
+	pFrameMarker FrameMarker;                     /* 19 */
+	pStreamBitmapFirst StreamBitmapFirst;         /* 20 */
+	pStreamBitmapNext StreamBitmapNext;           /* 21 */
+	pDrawGdiPlusFirst DrawGdiPlusFirst;           /* 22 */
+	pDrawGdiPlusNext DrawGdiPlusNext;             /* 23 */
+	pDrawGdiPlusEnd DrawGdiPlusEnd;               /* 24 */
 	pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst; /* 25 */
-	pDrawGdiPlusCacheNext DrawGdiPlusCacheNext; /* 26 */
-	pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd; /* 27 */
-	UINT32 paddingB[32 - 28]; /* 28 */
+	pDrawGdiPlusCacheNext DrawGdiPlusCacheNext;   /* 26 */
+	pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;     /* 27 */
+	UINT32 paddingB[32 - 28];                     /* 28 */
 
 	/* internal */
 

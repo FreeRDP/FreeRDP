@@ -7,7 +7,8 @@
 
 #if DEFINE_UNICODE
 
-HRESULT PATH_CCH_ADD_SEPARATOR_EX(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining)
+HRESULT PATH_CCH_ADD_SEPARATOR_EX(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
+                                  size_t* pcchRemaining)
 {
 	size_t pszPathLength;
 
@@ -32,7 +33,8 @@ HRESULT PATH_CCH_ADD_SEPARATOR_EX(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 
 #else
 
-HRESULT PATH_CCH_ADD_SEPARATOR_EX(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining)
+HRESULT PATH_CCH_ADD_SEPARATOR_EX(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
+                                  size_t* pcchRemaining)
 {
 	size_t pszPathLength;
 
@@ -62,4 +64,3 @@ HRESULT PATH_CCH_ADD_SEPARATOR_EX(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, s
 #undef _PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR_EX
 */
-

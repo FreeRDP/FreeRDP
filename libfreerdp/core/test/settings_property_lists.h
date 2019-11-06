@@ -2,8 +2,7 @@
 #define TEST_SETTINGS_PROPERTY_LISTS
 
 #define have_bool_list_indices
-static const size_t bool_list_indices[] =
-{
+static const size_t bool_list_indices[] = {
 	FreeRDP_ServerMode,
 	FreeRDP_WaitForOutputBufferFlush,
 	FreeRDP_NetworkAutoDetect,
@@ -168,15 +167,13 @@ static const size_t bool_list_indices[] =
 };
 
 #define have_uint16_list_indices
-static const size_t uint16_list_indices[] =
-{
+static const size_t uint16_list_indices[] = {
 	FreeRDP_DesktopOrientation,
 	FreeRDP_ProxyPort,
 };
 
 #define have_uint32_list_indices
-static const size_t uint32_list_indices[] =
-{
+static const size_t uint32_list_indices[] = {
 	FreeRDP_ShareId,
 	FreeRDP_PduSource,
 	FreeRDP_ServerPort,
@@ -286,21 +283,18 @@ static const size_t uint32_list_indices[] =
 };
 
 #define have_int32_list_indices
-static const size_t int32_list_indices[] =
-{
+static const size_t int32_list_indices[] = {
 	FreeRDP_XPan,
 	FreeRDP_YPan,
 };
 
 #define have_uint64_list_indices
-static const size_t uint64_list_indices[] =
-{
+static const size_t uint64_list_indices[] = {
 	FreeRDP_ParentWindowId,
 };
 
 #define have_string_list_indices
-static const size_t string_list_indices[] =
-{
+static const size_t string_list_indices[] = {
 	FreeRDP_ServerHostname,
 	FreeRDP_Username,
 	FreeRDP_Password,
@@ -369,8 +363,7 @@ static const size_t string_list_indices[] =
 };
 
 #define have_pointer_list_indices
-static const size_t pointer_list_indices[] =
-{
+static const size_t pointer_list_indices[] = {
 	FreeRDP_StaticChannelArray,
 	FreeRDP_DynamicChannelArray,
 	FreeRDP_instance,
@@ -400,4 +393,3 @@ static const size_t pointer_list_indices[] =
 };
 
 #endif /* TEST_SETTINGS_PROPERTY_LISTS */
-

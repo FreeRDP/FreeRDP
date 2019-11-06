@@ -32,14 +32,14 @@
 #else
 
 #define DUMMYUNIONNAME u
-#define DUMMYUNIONNAME1	u1
-#define DUMMYUNIONNAME2	u2
-#define DUMMYUNIONNAME3	u3
-#define DUMMYUNIONNAME4	u4
-#define DUMMYUNIONNAME5	u5
-#define DUMMYUNIONNAME6	u6
-#define DUMMYUNIONNAME7	u7
-#define DUMMYUNIONNAME8	u8
+#define DUMMYUNIONNAME1 u1
+#define DUMMYUNIONNAME2 u2
+#define DUMMYUNIONNAME3 u3
+#define DUMMYUNIONNAME4 u4
+#define DUMMYUNIONNAME5 u5
+#define DUMMYUNIONNAME6 u6
+#define DUMMYUNIONNAME7 u7
+#define DUMMYUNIONNAME8 u8
 
 #define DUMMYSTRUCTNAME s
 #define DUMMYSTRUCTNAME1 s1
@@ -58,7 +58,7 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
 #define DECLSPEC_ALIGN(x) __declspec(align(x))
 #elif defined(__GNUC__)
-#define DECLSPEC_ALIGN(x) __attribute__ ((__aligned__ (x)))
+#define DECLSPEC_ALIGN(x) __attribute__((__aligned__(x)))
 #else
 #define DECLSPEC_ALIGN(x)
 #endif
@@ -105,8 +105,8 @@
 #define __deref_opt_in_opt
 #define __deref_opt_in_ecount_opt(size)
 #define __deref_opt_in_bcount_opt(size)
-#define __out_awcount(expr,size)
-#define __in_awcount(expr,size)
+#define __out_awcount(expr, size)
+#define __in_awcount(expr, size)
 #define __nullnullterminated
 #define __in_data_source(src_sym)
 #define __kernel_entry
@@ -129,7 +129,7 @@
 #define _COM_Outptr_result_maybenull_
 #define _Const_
 #define _Deref_in_bound_
-#define _Deref_in_range_(lb,ub)
+#define _Deref_in_range_(lb, ub)
 #define _Deref_inout_bound_
 #define _Deref_inout_z_
 #define _Deref_inout_z_bytecap_c_(size)
@@ -142,7 +142,7 @@
 #define _Deref_out_bound_
 #define _Deref_out_opt_
 #define _Deref_out_opt_z_
-#define _Deref_out_range_(lb,ub)
+#define _Deref_out_range_(lb, ub)
 #define _Deref_out_z_
 #define _Deref_out_z_bytecap_c_(size)
 #define _Deref_out_z_cap_c_(size)
@@ -293,10 +293,10 @@
 #define _Deref_prepost_z_cap_(size)
 #define _Deref_ret_bound_
 #define _Deref_ret_opt_z_
-#define _Deref_ret_range_(lb,ub)
+#define _Deref_ret_range_(lb, ub)
 #define _Deref_ret_z_
 #define _Deref2_pre_readonly_
-#define _Field_range_(min,max)
+#define _Field_range_(min, max)
 #define _Field_size_(size)
 #define _Field_size_bytes_(size)
 #define _Field_size_bytes_full_(size)
@@ -335,7 +335,7 @@
 #define _In_opt_z_count_(size)
 #define _In_opt_z_count_c_(size)
 #define _In_ptrdiff_count_(size)
-#define _In_range_(lb,ub)
+#define _In_range_(lb, ub)
 #define _In_reads_(size)
 #define _In_reads_bytes_(size)
 #define _In_reads_bytes_opt_(size)
@@ -399,12 +399,12 @@
 #define _Inout_updates_bytes_all_(size)
 #define _Inout_updates_bytes_all_opt_(size)
 #define _Inout_updates_bytes_opt_(size)
-#define _Inout_updates_bytes_to_(size,count)
-#define _Inout_updates_bytes_to_opt_(size,count)
+#define _Inout_updates_bytes_to_(size, count)
+#define _Inout_updates_bytes_to_opt_(size, count)
 #define _Inout_updates_opt_(size)
 #define _Inout_updates_opt_z_(size)
-#define _Inout_updates_to_(size,count)
-#define _Inout_updates_to_opt_(size,count)
+#define _Inout_updates_to_(size, count)
+#define _Inout_updates_to_opt_(size, count)
 #define _Inout_updates_z_(size)
 #define _Inout_z_
 #define _Inout_z_bytecap_(size)
@@ -435,14 +435,14 @@
 #define _Out_bound_
 #define _Out_bytecap_(size)
 #define _Out_bytecap_c_(size)
-#define _Out_bytecap_post_bytecount_(cap,count)
+#define _Out_bytecap_post_bytecount_(cap, count)
 #define _Out_bytecap_x_(size)
 #define _Out_bytecapcount_(capcount)
 #define _Out_bytecapcount_x_(capcount)
 #define _Out_cap_(size)
 #define _Out_cap_c_(size)
-#define _Out_cap_m_(mult,size)
-#define _Out_cap_post_count_(cap,count)
+#define _Out_cap_m_(mult, size)
+#define _Out_cap_post_count_(cap, count)
 #define _Out_cap_x_(size)
 #define _Out_capcount_(capcount)
 #define _Out_capcount_x_(capcount)
@@ -450,31 +450,31 @@
 #define _Out_opt_
 #define _Out_opt_bytecap_(size)
 #define _Out_opt_bytecap_c_(size)
-#define _Out_opt_bytecap_post_bytecount_(cap,count)
+#define _Out_opt_bytecap_post_bytecount_(cap, count)
 #define _Out_opt_bytecap_x_(size)
 #define _Out_opt_bytecapcount_(capcount)
 #define _Out_opt_bytecapcount_x_(capcount)
 #define _Out_opt_cap_(size)
 #define _Out_opt_cap_c_(size)
-#define _Out_opt_cap_m_(mult,size)
-#define _Out_opt_cap_post_count_(cap,count)
+#define _Out_opt_cap_m_(mult, size)
+#define _Out_opt_cap_post_count_(cap, count)
 #define _Out_opt_cap_x_(size)
 #define _Out_opt_capcount_(capcount)
 #define _Out_opt_capcount_x_(capcount)
 #define _Out_opt_ptrdiff_cap_(size)
 #define _Out_opt_z_bytecap_(size)
 #define _Out_opt_z_bytecap_c_(size)
-#define _Out_opt_z_bytecap_post_bytecount_(cap,count)
+#define _Out_opt_z_bytecap_post_bytecount_(cap, count)
 #define _Out_opt_z_bytecap_x_(size)
 #define _Out_opt_z_bytecapcount_(capcount)
 #define _Out_opt_z_cap_(size)
 #define _Out_opt_z_cap_c_(size)
-#define _Out_opt_z_cap_m_(mult,size)
-#define _Out_opt_z_cap_post_count_(cap,count)
+#define _Out_opt_z_cap_m_(mult, size)
+#define _Out_opt_z_cap_post_count_(cap, count)
 #define _Out_opt_z_cap_x_(size)
 #define _Out_opt_z_capcount_(capcount)
 #define _Out_ptrdiff_cap_(size)
-#define _Out_range_(lb,ub)
+#define _Out_range_(lb, ub)
 #define _Out_writes_(size)
 #define _Out_writes_all_(size)
 #define _Out_writes_all_opt_(size)
@@ -482,12 +482,12 @@
 #define _Out_writes_bytes_all_(size)
 #define _Out_writes_bytes_all_opt_(size)
 #define _Out_writes_bytes_opt_(size)
-#define _Out_writes_bytes_to_(size,count)
-#define _Out_writes_bytes_to_opt_(size,count)
+#define _Out_writes_bytes_to_(size, count)
+#define _Out_writes_bytes_to_opt_(size, count)
 #define _Out_writes_opt_(size)
 #define _Out_writes_opt_z_(size)
-#define _Out_writes_to_(size,count)
-#define _Out_writes_to_opt_(size,count)
+#define _Out_writes_to_(size, count)
+#define _Out_writes_to_opt_(size, count)
 #define _Out_writes_to_ptr_(ptr)
 #define _Out_writes_to_ptr_opt_(ptr)
 #define _Out_writes_to_ptr_opt_z_(ptr)
@@ -495,13 +495,13 @@
 #define _Out_writes_z_(size)
 #define _Out_z_bytecap_(size)
 #define _Out_z_bytecap_c_(size)
-#define _Out_z_bytecap_post_bytecount_(cap,count)
+#define _Out_z_bytecap_post_bytecount_(cap, count)
 #define _Out_z_bytecap_x_(size)
 #define _Out_z_bytecapcount_(capcount)
 #define _Out_z_cap_(size)
 #define _Out_z_cap_c_(size)
-#define _Out_z_cap_m_(mult,size)
-#define _Out_z_cap_post_count_(cap,count)
+#define _Out_z_cap_m_(mult, size)
+#define _Out_z_cap_post_count_(cap, count)
 #define _Out_z_cap_x_(size)
 #define _Out_z_capcount_(capcount)
 #define _Outptr_
@@ -595,7 +595,7 @@
 #define _Pre_cap_c_(size)
 #define _Pre_cap_c_one_
 #define _Pre_cap_for_(param)
-#define _Pre_cap_m_(mult,size)
+#define _Pre_cap_m_(mult, size)
 #define _Pre_cap_x_(size)
 #define _Pre_count_(size)
 #define _Pre_count_c_(size)
@@ -616,7 +616,7 @@
 #define _Pre_opt_cap_c_(size)
 #define _Pre_opt_cap_c_one_
 #define _Pre_opt_cap_for_(param)
-#define _Pre_opt_cap_m_(mult,size)
+#define _Pre_opt_cap_m_(mult, size)
 #define _Pre_opt_cap_x_(size)
 #define _Pre_opt_count_(size)
 #define _Pre_opt_count_c_(size)
@@ -723,17 +723,17 @@
 #define _Ret_opt_z_bytecount_(size)
 #define _Ret_opt_z_cap_(size)
 #define _Ret_opt_z_count_(size)
-#define _Ret_range_(lb,ub)
+#define _Ret_range_(lb, ub)
 #define _Ret_valid_
 #define _Ret_writes_(size)
 #define _Ret_writes_bytes_(size)
 #define _Ret_writes_bytes_maybenull_(size)
-#define _Ret_writes_bytes_to_(size,count)
-#define _Ret_writes_bytes_to_maybenull_(size,count)
+#define _Ret_writes_bytes_to_(size, count)
+#define _Ret_writes_bytes_to_maybenull_(size, count)
 #define _Ret_writes_maybenull_(size)
 #define _Ret_writes_maybenull_z_(size)
-#define _Ret_writes_to_(size,count)
-#define _Ret_writes_to_maybenull_(size,count)
+#define _Ret_writes_to_(size, count)
+#define _Ret_writes_to_maybenull_(size, count)
 #define _Ret_writes_z_(size)
 #define _Ret_z_
 #define _Ret_z_bytecap_(size)
@@ -752,7 +752,6 @@
 #define _Writable_bytes_(size)
 #define _Writable_elements_(size)
 
-
 #define __bcount(size)
 #define __bcount_opt(size)
 #define __deref_bcount(size)
@@ -770,14 +769,14 @@
 #define __deref_inout_bcount_full(size)
 #define __deref_inout_bcount_full_opt(size)
 #define __deref_inout_bcount_opt(size)
-#define __deref_inout_bcount_part(size,length)
-#define __deref_inout_bcount_part_opt(size,length)
+#define __deref_inout_bcount_part(size, length)
+#define __deref_inout_bcount_part_opt(size, length)
 #define __deref_inout_ecount(size)
 #define __deref_inout_ecount_full(size)
 #define __deref_inout_ecount_full_opt(size)
 #define __deref_inout_ecount_opt(size)
-#define __deref_inout_ecount_part(size,length)
-#define __deref_inout_ecount_part_opt(size,length)
+#define __deref_inout_ecount_part(size, length)
+#define __deref_inout_ecount_part_opt(size, length)
 #define __deref_inout_opt
 #define __deref_opt_bcount(size)
 #define __deref_opt_bcount_opt(size)
@@ -794,42 +793,42 @@
 #define __deref_opt_inout_bcount_full(size)
 #define __deref_opt_inout_bcount_full_opt(size)
 #define __deref_opt_inout_bcount_opt(size)
-#define __deref_opt_inout_bcount_part(size,length)
-#define __deref_opt_inout_bcount_part_opt(size,length)
+#define __deref_opt_inout_bcount_part(size, length)
+#define __deref_opt_inout_bcount_part_opt(size, length)
 #define __deref_opt_inout_ecount(size)
 #define __deref_opt_inout_ecount_full(size)
 #define __deref_opt_inout_ecount_full_opt(size)
 #define __deref_opt_inout_ecount_opt(size)
-#define __deref_opt_inout_ecount_part(size,length)
-#define __deref_opt_inout_ecount_part_opt(size,length)
+#define __deref_opt_inout_ecount_part(size, length)
+#define __deref_opt_inout_ecount_part_opt(size, length)
 #define __deref_opt_inout_opt
 #define __deref_opt_out
 #define __deref_opt_out_bcount(size)
 #define __deref_opt_out_bcount_full(size)
 #define __deref_opt_out_bcount_full_opt(size)
 #define __deref_opt_out_bcount_opt(size)
-#define __deref_opt_out_bcount_part(size,length)
-#define __deref_opt_out_bcount_part_opt(size,length)
+#define __deref_opt_out_bcount_part(size, length)
+#define __deref_opt_out_bcount_part_opt(size, length)
 #define __deref_opt_out_ecount(size)
 #define __deref_opt_out_ecount_full(size)
 #define __deref_opt_out_ecount_full_opt(size)
 #define __deref_opt_out_ecount_opt(size)
-#define __deref_opt_out_ecount_part(size,length)
-#define __deref_opt_out_ecount_part_opt(size,length)
+#define __deref_opt_out_ecount_part(size, length)
+#define __deref_opt_out_ecount_part_opt(size, length)
 #define __deref_opt_out_opt
 #define __deref_out
 #define __deref_out_bcount(size)
 #define __deref_out_bcount_full(size)
 #define __deref_out_bcount_full_opt(size)
 #define __deref_out_bcount_opt(size)
-#define __deref_out_bcount_part(size,length)
-#define __deref_out_bcount_part_opt(size,length)
+#define __deref_out_bcount_part(size, length)
+#define __deref_out_bcount_part_opt(size, length)
 #define __deref_out_ecount(size)
 #define __deref_out_ecount_full(size)
 #define __deref_out_ecount_full_opt(size)
 #define __deref_out_ecount_opt(size)
-#define __deref_out_ecount_part(size,length)
-#define __deref_out_ecount_part_opt(size,length)
+#define __deref_out_ecount_part(size, length)
+#define __deref_out_ecount_part_opt(size, length)
 #define __deref_out_opt
 #define __ecount(size)
 #define __ecount_opt(size)
@@ -844,38 +843,38 @@
 #define __inout_bcount_full(size)
 #define __inout_bcount_full_opt(size)
 #define __inout_bcount_opt(size)
-#define __inout_bcount_part(size,length)
-#define __inout_bcount_part_opt(size,length)
+#define __inout_bcount_part(size, length)
+#define __inout_bcount_part_opt(size, length)
 #define __inout_ecount(size)
 #define __inout_ecount_full(size)
 #define __inout_ecount_full_opt(size)
 #define __inout_ecount_opt(size)
-#define __inout_ecount_part(size,length)
-#define __inout_ecount_part_opt(size,length)
+#define __inout_ecount_part(size, length)
+#define __inout_ecount_part_opt(size, length)
 #define __inout_opt
 //#define __out			/* Conflicts with libstdc++ header macros */
 #define __out_bcount(size)
 #define __out_bcount_full(size)
 #define __out_bcount_full_opt(size)
 #define __out_bcount_opt(size)
-#define __out_bcount_part(size,length)
-#define __out_bcount_part_opt(size,length)
+#define __out_bcount_part(size, length)
+#define __out_bcount_part_opt(size, length)
 #define __out_ecount(size)
 #define __out_ecount_full(size)
 #define __out_ecount_full_opt(size)
 #define __out_ecount_opt(size)
-#define __out_ecount_part(size,length)
-#define __out_ecount_part_opt(size,length)
+#define __out_ecount_part(size, length)
+#define __out_ecount_part_opt(size, length)
 #define __out_opt
 
 #define __blocksOn(resource)
 #define __callback
 #define __checkReturn
 #define __format_string
-#define __in_awcount(expr,size)
+#define __in_awcount(expr, size)
 #define __nullnullterminated
 #define __nullterminated
-#define __out_awcount(expr,size)
+#define __out_awcount(expr, size)
 #define __override
 //#define __reserved			/* Conflicts with header included by CarbonCore.h on OS X */
 #define __success(expr)
@@ -885,9 +884,10 @@
 #ifndef __cplusplus
 #define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 #else
-extern "C++" {
-template <typename _CountofType, size_t _SizeOfArray>
-char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
+extern "C++"
+{
+	template <typename _CountofType, size_t _SizeOfArray>
+	char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
 #define _countof(_Array) sizeof(*__countof_helper(_Array))
 }
 #endif
@@ -897,32 +897,32 @@ char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
  * RTL Definitions
  */
 
-#define MINCHAR		0x80
-#define MAXCHAR		0x7F
+#define MINCHAR 0x80
+#define MAXCHAR 0x7F
 
 #ifndef MINSHORT
-#define MINSHORT	0x8000
+#define MINSHORT 0x8000
 #endif
 
 #ifndef MAXSHORT
-#define MAXSHORT	0x7FFF
+#define MAXSHORT 0x7FFF
 #endif
 
-#define MINLONG		0x80000000
-#define MAXLONG		0x7FFFFFFF
-#define MAXBYTE		0xFF
-#define MAXWORD		0xFFFF
-#define MAXDWORD	0xFFFFFFFF
+#define MINLONG 0x80000000
+#define MAXLONG 0x7FFFFFFF
+#define MAXBYTE 0xFF
+#define MAXWORD 0xFFFF
+#define MAXDWORD 0xFFFFFFFF
 
-#define FIELD_OFFSET(type, field) ((LONG)(LONG_PTR)&(((type *)0)->field))
+#define FIELD_OFFSET(type, field) ((LONG)(LONG_PTR) & (((type*)0)->field))
 
-#define RTL_FIELD_SIZE(type, field) (sizeof(((type *)0)->field))
+#define RTL_FIELD_SIZE(type, field) (sizeof(((type*)0)->field))
 
 #define RTL_SIZEOF_THROUGH_FIELD(type, field) \
 	(FIELD_OFFSET(type, field) + RTL_FIELD_SIZE(type, field))
 
 #define RTL_CONTAINS_FIELD(Struct, Size, Field) \
-	((((PCHAR)(&(Struct)->Field)) + sizeof((Struct)->Field)) <= (((PCHAR)(Struct))+(Size)))
+	((((PCHAR)(&(Struct)->Field)) + sizeof((Struct)->Field)) <= (((PCHAR)(Struct)) + (Size)))
 
 #define RTL_NUMBER_OF_V1(A) (sizeof(A) / sizeof((A)[0]))
 #define RTL_NUMBER_OF_V2(A) RTL_NUMBER_OF_V1(A)
@@ -936,10 +936,10 @@ char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
 
 #define RTL_NUMBER_OF_FIELD(type, field) (RTL_NUMBER_OF(RTL_FIELD_TYPE(type, field)))
 
-#define RTL_PADDING_BETWEEN_FIELDS(T, F1, F2) \
-	((FIELD_OFFSET(T, F2) > FIELD_OFFSET(T, F1)) \
-	? (FIELD_OFFSET(T, F2) - FIELD_OFFSET(T, F1) - RTL_FIELD_SIZE(T, F1)) \
-	: (FIELD_OFFSET(T, F1) - FIELD_OFFSET(T, F2) - RTL_FIELD_SIZE(T, F2)))
+#define RTL_PADDING_BETWEEN_FIELDS(T, F1, F2)                                  \
+	((FIELD_OFFSET(T, F2) > FIELD_OFFSET(T, F1))                               \
+	     ? (FIELD_OFFSET(T, F2) - FIELD_OFFSET(T, F1) - RTL_FIELD_SIZE(T, F1)) \
+	     : (FIELD_OFFSET(T, F1) - FIELD_OFFSET(T, F2) - RTL_FIELD_SIZE(T, F2)))
 
 #if defined(__cplusplus)
 #define RTL_CONST_CAST(type) const_cast<type>
@@ -952,27 +952,26 @@ char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
 #define RTL_BITS_OF_FIELD(type, field) (RTL_BITS_OF(RTL_FIELD_TYPE(type, field)))
 
 #define CONTAINING_RECORD(address, type, field) \
-	((type *)((PCHAR)(address) - (ULONG_PTR)(&((type *)0)->field)))
+	((type*)((PCHAR)(address) - (ULONG_PTR)(&((type*)0)->field)))
 
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-  #ifdef __GNUC__
-    #define DECLSPEC_EXPORT __attribute__((dllexport))
-    #define DECLSPEC_IMPORT __attribute__((dllimport))
-  #else
-    #define DECLSPEC_EXPORT __declspec(dllexport)
-    #define DECLSPEC_IMPORT __declspec(dllimport)
-  #endif
+#ifdef __GNUC__
+#define DECLSPEC_EXPORT __attribute__((dllexport))
+#define DECLSPEC_IMPORT __attribute__((dllimport))
 #else
-  #if defined(__GNUC__) && __GNUC__ >= 4
-    #define DECLSPEC_EXPORT __attribute__ ((visibility("default")))
-    #define DECLSPEC_IMPORT
-  #else
-    #define DECLSPEC_EXPORT
-    #define DECLSPEC_IMPORT
-  #endif
+#define DECLSPEC_EXPORT __declspec(dllexport)
+#define DECLSPEC_IMPORT __declspec(dllimport)
+#endif
+#else
+#if defined(__GNUC__) && __GNUC__ >= 4
+#define DECLSPEC_EXPORT __attribute__((visibility("default")))
+#define DECLSPEC_IMPORT
+#else
+#define DECLSPEC_EXPORT
+#define DECLSPEC_IMPORT
+#endif
 #endif
 
 #endif /* WINPR_SPEC_H */
-

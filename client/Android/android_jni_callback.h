@@ -20,12 +20,9 @@
 FREERDP_LOCAL jint init_callback_environment(JavaVM* vm, JNIEnv* env);
 FREERDP_LOCAL jboolean jni_attach_thread(JNIEnv** env);
 FREERDP_LOCAL void jni_detach_thread(void);
-FREERDP_LOCAL void freerdp_callback(const char* callback, const char* signature,
-                                    ...);
-FREERDP_LOCAL jboolean freerdp_callback_bool_result(const char* callback,
-        const char* signature, ...);
-FREERDP_LOCAL jint freerdp_callback_int_result(const char* callback,
-        const char* signature, ...);
+FREERDP_LOCAL void freerdp_callback(const char* callback, const char* signature, ...);
+FREERDP_LOCAL jboolean freerdp_callback_bool_result(const char* callback, const char* signature,
+                                                    ...);
+FREERDP_LOCAL jint freerdp_callback_int_result(const char* callback, const char* signature, ...);
 
 #endif /* FREERDP_CLIENT_ANDROID_JNI_CALLBACK_H */
-

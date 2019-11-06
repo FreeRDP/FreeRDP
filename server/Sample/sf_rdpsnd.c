@@ -25,7 +25,6 @@
 
 #include <freerdp/server/audin.h>
 
-
 #include "sf_rdpsnd.h"
 
 #include <freerdp/server/server-common.h>
@@ -43,7 +42,8 @@ BOOL sf_peer_rdpsnd_init(testPeerContext* context)
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->rdpcontext = &context->_p;
 	context->rdpsnd->data = context;
-	context->rdpsnd->num_server_formats = server_rdpsnd_get_formats(&context->rdpsnd->server_formats);
+	context->rdpsnd->num_server_formats =
+	    server_rdpsnd_get_formats(&context->rdpsnd->server_formats);
 
 	if (context->rdpsnd->num_server_formats > 0)
 		context->rdpsnd->src_format = &context->rdpsnd->server_formats[0];

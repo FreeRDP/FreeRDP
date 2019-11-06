@@ -5,22 +5,19 @@
 #include <winpr/wtsapi.h>
 #include <winpr/library.h>
 
-const char* WM_WTS_STRINGS[] =
-{
-	"",
-	"WTS_CONSOLE_CONNECT",
-	"WTS_CONSOLE_DISCONNECT",
-	"WTS_REMOTE_CONNECT",
-	"WTS_REMOTE_DISCONNECT",
-	"WTS_SESSION_LOGON",
-	"WTS_SESSION_LOGOFF",
-	"WTS_SESSION_LOCK",
-	"WTS_SESSION_UNLOCK",
-	"WTS_SESSION_REMOTE_CONTROL",
-	"WTS_SESSION_CREATE",
-	"WTS_SESSION_TERMINATE",
-	""
-};
+const char* WM_WTS_STRINGS[] = { "",
+	                             "WTS_CONSOLE_CONNECT",
+	                             "WTS_CONSOLE_DISCONNECT",
+	                             "WTS_REMOTE_CONNECT",
+	                             "WTS_REMOTE_DISCONNECT",
+	                             "WTS_SESSION_LOGON",
+	                             "WTS_SESSION_LOGOFF",
+	                             "WTS_SESSION_LOCK",
+	                             "WTS_SESSION_UNLOCK",
+	                             "WTS_SESSION_REMOTE_CONTROL",
+	                             "WTS_SESSION_CREATE",
+	                             "WTS_SESSION_TERMINATE",
+	                             "" };
 
 static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -29,15 +26,15 @@ static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		case WM_WTSSESSION_CHANGE:
 			if (wParam && (wParam < 13))
 			{
-				PWTSSESSION_NOTIFICATION pNotification = (PWTSSESSION_NOTIFICATION) lParam;
+				PWTSSESSION_NOTIFICATION pNotification = (PWTSSESSION_NOTIFICATION)lParam;
 
-				printf("WM_WTSSESSION_CHANGE: %s SessionId: %"PRIu32"\n",
-						WM_WTS_STRINGS[wParam], (int) pNotification->dwSessionId);
+				printf("WM_WTSSESSION_CHANGE: %s SessionId: %" PRIu32 "\n", WM_WTS_STRINGS[wParam],
+				       (int)pNotification->dwSessionId);
 			}
 			break;
 
 		default:
-			printf("TestWndProc: uMsg: 0x%08"PRIX32"\n", uMsg);
+			printf("TestWndProc: uMsg: 0x%08" PRIX32 "\n", uMsg);
 			return DefWindowProc(hwnd, uMsg, wParam, lParam);
 			break;
 	}
@@ -77,8 +74,8 @@ int TestWndCreateWindowEx(int argc, char* argv[])
 
 	hInstance = wndClassEx.hInstance;
 
-	hWnd = CreateWindowEx(0, wndClassEx.lpszClassName,
-		0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInstance, NULL);
+	hWnd = CreateWindowEx(0, wndClassEx.lpszClassName, 0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInstance,
+	                      NULL);
 
 	if (!hWnd)
 	{
@@ -89,10 +86,9 @@ int TestWndCreateWindowEx(int argc, char* argv[])
 	wtsSessionNotification.cbSize = sizeof(WTSSESSION_NOTIFICATION);
 	wtsSessionNotification.dwSessionId = 123;
 
-	SendMessage(hWnd, WM_WTSSESSION_CHANGE, WTS_SESSION_LOGON, (LPARAM) &wtsSessionNotification);
+	SendMessage(hWnd, WM_WTSSESSION_CHANGE, WTS_SESSION_LOGON, (LPARAM)&wtsSessionNotification);
 
 	DestroyWindow(hWnd);
 
 	return 0;
 }
-

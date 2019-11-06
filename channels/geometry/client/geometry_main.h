@@ -29,6 +29,4 @@
 #include <freerdp/addin.h>
 #include <freerdp/client/geometry.h>
 
-
 #endif /* FREERDP_CHANNEL_GEOMETRY_CLIENT_MAIN_H */
-

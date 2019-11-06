@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 	unsigned long background;
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
- 
+
 	display = XOpenDisplay(NULL);
 
 	if (!display)
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 		return 1;
 
 	scanline = width * 4;
-	buffer = (BYTE*) calloc(height, scanline);
+	buffer = (BYTE*)calloc(height, scanline);
 	if (!buffer)
 		return 1;
 
@@ -111,8 +111,7 @@ int main(int argc, char** argv)
 	rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button");
 	rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field");
 
-	window = XCreateSimpleWindow(display, root_window,
-			x, y, width, height, 1, border, background);
+	window = XCreateSimpleWindow(display, root_window, x, y, width, height, 1, border, background);
 
 	XSelectInput(display, window, ExposureMask | KeyPressMask);
 	XMapWindow(display, window);
@@ -122,9 +121,9 @@ int main(int argc, char** argv)
 
 	pixmap = XCreatePixmap(display, window, width, height, depth);
 
-	image = XCreateImage(display, visual, depth, ZPixmap, 0,
-			(char*) buffer, width, height, scanline_pad, 0);
- 
+	image = XCreateImage(display, visual, depth, ZPixmap, 0, (char*)buffer, width, height,
+	                     scanline_pad, 0);
+
 	while (1)
 	{
 		XNextEvent(display, &event);

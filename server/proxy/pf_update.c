@@ -32,19 +32,17 @@
 
 /* server callbacks */
 
-static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count,
-                                   const RECTANGLE_16* areas)
+static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
 	pServerContext* ps = (pServerContext*)context;
-	rdpContext* pc = (rdpContext*) ps->pdata->pc;
+	rdpContext* pc = (rdpContext*)ps->pdata->pc;
 	return pc->update->RefreshRect(pc, count, areas);
 }
 
-static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
-                                      const RECTANGLE_16* area)
+static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
 	pServerContext* ps = (pServerContext*)context;
-	rdpContext* pc = (rdpContext*) ps->pdata->pc;
+	rdpContext* pc = (rdpContext*)ps->pdata->pc;
 	return pc->update->SuppressOutput(pc, allow, area);
 }
 
@@ -56,7 +54,7 @@ static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow,
  */
 static BOOL pf_client_begin_paint(rdpContext* context)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	return ps->update->BeginPaint(ps);
@@ -69,7 +67,7 @@ static BOOL pf_client_begin_paint(rdpContext* context)
  */
 static BOOL pf_client_end_paint(rdpContext* context)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	rdpGdi* gdi = context->gdi;
@@ -97,7 +95,7 @@ static BOOL pf_client_end_paint(rdpContext* context)
 
 static BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	return ps->update->BitmapUpdate(ps, bitmap);
@@ -105,7 +103,7 @@ static BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bi
 
 static BOOL pf_client_desktop_resize(rdpContext* context)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	ps->settings->DesktopWidth = context->settings->DesktopWidth;
@@ -116,52 +114,51 @@ static BOOL pf_client_desktop_resize(rdpContext* context)
 static BOOL pf_client_remote_monitors(rdpContext* context, UINT32 count,
                                       const MONITOR_DEF* monitors)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	return freerdp_display_send_monitor_layout(ps, count, monitors);
 }
 
 static BOOL pf_client_send_pointer_system(rdpContext* context,
-                                       const POINTER_SYSTEM_UPDATE* pointer_system)
+                                          const POINTER_SYSTEM_UPDATE* pointer_system)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	return ps->update->pointer->PointerSystem(ps, pointer_system);
 }
 
 static BOOL pf_client_send_pointer_position(rdpContext* context,
-        const POINTER_POSITION_UPDATE* pointerPosition)
+                                            const POINTER_POSITION_UPDATE* pointerPosition)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	return ps->update->pointer->PointerPosition(ps, pointerPosition);
 }
 
 static BOOL pf_client_send_pointer_color(rdpContext* context,
-                                      const POINTER_COLOR_UPDATE* pointer_color)
+                                         const POINTER_COLOR_UPDATE* pointer_color)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	return ps->update->pointer->PointerColor(ps, pointer_color);
 }
 
-static BOOL pf_client_send_pointer_new(rdpContext* context,
-                                    const POINTER_NEW_UPDATE* pointer_new)
+static BOOL pf_client_send_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	return ps->update->pointer->PointerNew(ps, pointer_new);
 }
 
 static BOOL pf_client_send_pointer_cached(rdpContext* context,
-                                       const POINTER_CACHED_UPDATE* pointer_cached)
+                                          const POINTER_CACHED_UPDATE* pointer_cached)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	return ps->update->pointer->PointerCached(ps, pointer_cached);
@@ -169,7 +166,7 @@ static BOOL pf_client_send_pointer_cached(rdpContext* context,
 
 static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* data)
 {
-	pClientContext* pc = (pClientContext*) context;
+	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	return ps->update->SaveSessionInfo(ps, type, data);

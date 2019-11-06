@@ -33,7 +33,8 @@ static INLINE UINT16 GETPIXEL16(const void* d, UINT32 x, UINT32 y, UINT32 w)
 static INLINE UINT32 GETPIXEL32(const void* d, UINT32 x, UINT32 y, UINT32 w)
 {
 	const BYTE* src = (const BYTE*)d + ((y * w + x) * sizeof(UINT32));
-	return (((UINT32)src[3]) << 24) | (((UINT32)src[2]) << 16) | (((UINT32)src[1]) << 8) | (src[0] & 0xFF);
+	return (((UINT32)src[3]) << 24) | (((UINT32)src[2]) << 16) | (((UINT32)src[1]) << 8) |
+	       (src[0] & 0xFF);
 }
 
 /*****************************************************************************/
@@ -115,7 +116,7 @@ static UINT16 out_color_count_3(UINT16 in_count, wStream* in_s, UINT32 in_data)
 		}
 
 		Stream_Write_UINT8(in_s, in_data & 0xFF);
-		\
+
 		Stream_Write_UINT8(in_s, (in_data >> 8) & 0xFF);
 		Stream_Write_UINT8(in_s, (in_data >> 16) & 0xFF);
 	}
@@ -193,7 +194,7 @@ static INLINE UINT16 out_copy_count_3(UINT16 in_count, wStream* in_s, wStream* i
 /*****************************************************************************/
 /* bicolor */
 static INLINE UINT16 out_bicolor_count_2(UINT16 in_count, wStream* in_s, UINT16 in_color1,
-        UINT16 in_color2)
+                                         UINT16 in_color2)
 {
 	if (in_count > 0)
 	{
@@ -227,7 +228,7 @@ static INLINE UINT16 out_bicolor_count_2(UINT16 in_count, wStream* in_s, UINT16 
 /*****************************************************************************/
 /* bicolor */
 static INLINE UINT16 out_bicolor_count_3(UINT16 in_count, wStream* in_s, UINT32 in_color1,
-        UINT32 in_color2)
+                                         UINT32 in_color2)
 {
 	if (in_count > 0)
 	{
@@ -288,8 +289,7 @@ static INLINE UINT16 out_fill_count_2(UINT16 in_count, wStream* in_s)
 	return 0;
 }
 
-#define OUT_FILL_COUNT2(in_count, in_s) \
-	in_count = out_fill_count_2(in_count, in_s)
+#define OUT_FILL_COUNT2(in_count, in_s) in_count = out_fill_count_2(in_count, in_s)
 
 /*****************************************************************************/
 /* fill */
@@ -316,8 +316,7 @@ static INLINE UINT16 out_fill_count_3(UINT16 in_count, wStream* in_s)
 
 	return 0;
 }
-#define OUT_FILL_COUNT3(in_count, in_s) \
-	in_count = out_fill_count_3(in_count, in_s)
+#define OUT_FILL_COUNT3(in_count, in_s) in_count = out_fill_count_3(in_count, in_s)
 
 /*****************************************************************************/
 /* mix */
@@ -345,8 +344,7 @@ static INLINE UINT16 out_mix_count_2(UINT16 in_count, wStream* in_s)
 
 	return 0;
 }
-#define OUT_MIX_COUNT2(in_count, in_s) \
-	in_count = out_mix_count_2(in_count, in_s)
+#define OUT_MIX_COUNT2(in_count, in_s) in_count = out_mix_count_2(in_count, in_s)
 
 /*****************************************************************************/
 /* mix */
@@ -375,8 +373,7 @@ static INLINE UINT16 out_mix_count_3(UINT16 in_count, wStream* in_s)
 	return 0;
 }
 
-#define OUT_MIX_COUNT3(in_count, in_s) \
-	in_count = out_mix_count_3(in_count, in_s)
+#define OUT_MIX_COUNT3(in_count, in_s) in_count = out_mix_count_3(in_count, in_s)
 
 /*****************************************************************************/
 /* fom */
@@ -442,35 +439,28 @@ static INLINE UINT16 out_from_count_3(UINT16 in_count, wStream* in_s, const char
 #define OUT_FOM_COUNT3(in_count, in_s, in_mask, in_mask_len) \
 	in_count = out_from_count_3(in_count, in_s, in_mask, in_mask_len)
 
-#define TEST_FILL \
-	((last_line == 0 && pixel == 0) || \
-	 (last_line != 0 && pixel == ypixel))
-#define TEST_MIX \
-	((last_line == 0 && pixel == mix) || \
-	 (last_line != 0 && pixel == (ypixel ^ mix)))
+#define TEST_FILL ((last_line == 0 && pixel == 0) || (last_line != 0 && pixel == ypixel))
+#define TEST_MIX ((last_line == 0 && pixel == mix) || (last_line != 0 && pixel == (ypixel ^ mix)))
 #define TEST_FOM TEST_FILL || TEST_MIX
 #define TEST_COLOR pixel == last_pixel
-#define TEST_BICOLOR \
-	( \
-	  (pixel != last_pixel) && \
-	  ( \
-	    (!bicolor_spin && (pixel == bicolor1) && (last_pixel == bicolor2)) || \
-	    (bicolor_spin && (pixel == bicolor2) && (last_pixel == bicolor1)) \
-	  ) \
-	)
-#define RESET_COUNTS \
-	{ \
-		bicolor_count = 0; \
-		fill_count = 0; \
-		color_count = 0; \
-		mix_count = 0; \
-		fom_count = 0; \
-		fom_mask_len = 0; \
+#define TEST_BICOLOR                                                        \
+	((pixel != last_pixel) &&                                               \
+	 ((!bicolor_spin && (pixel == bicolor1) && (last_pixel == bicolor2)) || \
+	  (bicolor_spin && (pixel == bicolor2) && (last_pixel == bicolor1))))
+#define RESET_COUNTS          \
+	{                         \
+		bicolor_count = 0;    \
+		fill_count = 0;       \
+		color_count = 0;      \
+		mix_count = 0;        \
+		fom_count = 0;        \
+		fom_mask_len = 0;     \
 		bicolor_spin = FALSE; \
 	}
 
 static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UINT32 height,
-        wStream* s, UINT32 byte_limit, UINT32 start_line, wStream* temp_s, UINT32 e)
+                                          wStream* s, UINT32 byte_limit, UINT32 start_line,
+                                          wStream* temp_s, UINT32 e)
 {
 	char fom_mask[8192]; /* good for up to 64K bitmap */
 	SSIZE_T lines_sent = 0;
@@ -498,10 +488,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 		UINT32 j;
 		size_t i = Stream_GetPosition(s) + count * 3U;
 
-		if ((i - (color_count * 3) >= byte_limit) &&
-		    (i - (bicolor_count * 3) >= byte_limit) &&
-		    (i - (fill_count * 3) >= byte_limit) &&
-		    (i - (mix_count * 3) >= byte_limit) &&
+		if ((i - (color_count * 3) >= byte_limit) && (i - (bicolor_count * 3) >= byte_limit) &&
+		    (i - (fill_count * 3) >= byte_limit) && (i - (mix_count * 3) >= byte_limit) &&
 		    (i - (fom_count * 3) >= byte_limit))
 		{
 			break;
@@ -513,15 +501,12 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 		{
 			/* read next pixel */
 			const UINT32 pixel = IN_PIXEL32(line, j, 0, width, last_pixel);
-			const UINT32  ypixel = IN_PIXEL32(last_line, j, 0, width, last_ypixel);
+			const UINT32 ypixel = IN_PIXEL32(last_line, j, 0, width, last_ypixel);
 
 			if (!TEST_FILL)
 			{
-				if (fill_count > 3 &&
-				    fill_count >= color_count &&
-				    fill_count >= bicolor_count &&
-				    fill_count >= mix_count &&
-				    fill_count >= fom_count)
+				if (fill_count > 3 && fill_count >= color_count && fill_count >= bicolor_count &&
+				    fill_count >= mix_count && fill_count >= fom_count)
 				{
 					if (fill_count > count)
 						return -1;
@@ -537,11 +522,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 
 			if (!TEST_MIX)
 			{
-				if (mix_count > 3 &&
-				    mix_count >= fill_count &&
-				    mix_count >= bicolor_count &&
-				    mix_count >= color_count &&
-				    mix_count >= fom_count)
+				if (mix_count > 3 && mix_count >= fill_count && mix_count >= bicolor_count &&
+				    mix_count >= color_count && mix_count >= fom_count)
 				{
 					if (mix_count > count)
 						return -1;
@@ -557,11 +539,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 
 			if (!(TEST_COLOR))
 			{
-				if (color_count > 3 &&
-				    color_count >= fill_count &&
-				    color_count >= bicolor_count &&
-				    color_count >= mix_count &&
-				    color_count >= fom_count)
+				if (color_count > 3 && color_count >= fill_count && color_count >= bicolor_count &&
+				    color_count >= mix_count && color_count >= fom_count)
 				{
 					if (color_count > count)
 						return -1;
@@ -577,10 +556,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 
 			if (!TEST_BICOLOR)
 			{
-				if (bicolor_count > 3 &&
-				    bicolor_count >= fill_count &&
-				    bicolor_count >= color_count &&
-				    bicolor_count >= mix_count &&
+				if (bicolor_count > 3 && bicolor_count >= fill_count &&
+				    bicolor_count >= color_count && bicolor_count >= mix_count &&
 				    bicolor_count >= fom_count)
 				{
 					if ((bicolor_count % 2) != 0)
@@ -603,11 +580,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 
 			if (!(TEST_FOM))
 			{
-				if (fom_count > 3 &&
-				    fom_count >= fill_count &&
-				    fom_count >= color_count &&
-				    fom_count >= mix_count &&
-				    fom_count >= bicolor_count)
+				if (fom_count > 3 && fom_count >= fill_count && fom_count >= color_count &&
+				    fom_count >= mix_count && fom_count >= bicolor_count)
 				{
 					if (fom_count > count)
 						return -1;
@@ -670,11 +644,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 		/* can't take fix, mix, or fom past first line */
 		if (last_line == 0)
 		{
-			if (fill_count > 3 &&
-			    fill_count >= color_count &&
-			    fill_count >= bicolor_count &&
-			    fill_count >= mix_count &&
-			    fill_count >= fom_count)
+			if (fill_count > 3 && fill_count >= color_count && fill_count >= bicolor_count &&
+			    fill_count >= mix_count && fill_count >= fom_count)
 			{
 				if (fill_count > count)
 					return -1;
@@ -687,11 +658,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 
 			fill_count = 0;
 
-			if (mix_count > 3 &&
-			    mix_count >= fill_count &&
-			    mix_count >= bicolor_count &&
-			    mix_count >= color_count &&
-			    mix_count >= fom_count)
+			if (mix_count > 3 && mix_count >= fill_count && mix_count >= bicolor_count &&
+			    mix_count >= color_count && mix_count >= fom_count)
 			{
 				if (mix_count > count)
 					return -1;
@@ -704,11 +672,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 
 			mix_count = 0;
 
-			if (fom_count > 3 &&
-			    fom_count >= fill_count &&
-			    fom_count >= color_count &&
-			    fom_count >= mix_count &&
-			    fom_count >= bicolor_count)
+			if (fom_count > 3 && fom_count >= fill_count && fom_count >= color_count &&
+			    fom_count >= mix_count && fom_count >= bicolor_count)
 			{
 				if (fom_count > count)
 					return -1;
@@ -731,11 +696,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 
 	Stream_SetPosition(temp_s, 0);
 
-	if (fill_count > 3 &&
-	    fill_count >= color_count &&
-	    fill_count >= bicolor_count &&
-	    fill_count >= mix_count &&
-	    fill_count >= fom_count)
+	if (fill_count > 3 && fill_count >= color_count && fill_count >= bicolor_count &&
+	    fill_count >= mix_count && fill_count >= fom_count)
 	{
 		if (fill_count > count)
 			return -1;
@@ -744,11 +706,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 		OUT_COPY_COUNT3(count, s, temp_s);
 		OUT_FILL_COUNT3(fill_count, s);
 	}
-	else if (mix_count > 3 &&
-	         mix_count >= color_count &&
-	         mix_count >= bicolor_count &&
-	         mix_count >= fill_count &&
-	         mix_count >= fom_count)
+	else if (mix_count > 3 && mix_count >= color_count && mix_count >= bicolor_count &&
+	         mix_count >= fill_count && mix_count >= fom_count)
 	{
 		if (mix_count > count)
 			return -1;
@@ -757,11 +716,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 		OUT_COPY_COUNT3(count, s, temp_s);
 		OUT_MIX_COUNT3(mix_count, s);
 	}
-	else if (color_count > 3 &&
-	         color_count >= mix_count &&
-	         color_count >= bicolor_count &&
-	         color_count >= fill_count &&
-	         color_count >= fom_count)
+	else if (color_count > 3 && color_count >= mix_count && color_count >= bicolor_count &&
+	         color_count >= fill_count && color_count >= fom_count)
 	{
 		if (color_count > count)
 			return -1;
@@ -770,11 +726,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 		OUT_COPY_COUNT3(count, s, temp_s);
 		OUT_COLOR_COUNT3(color_count, s, last_pixel);
 	}
-	else if (bicolor_count > 3 &&
-	         bicolor_count >= mix_count &&
-	         bicolor_count >= color_count &&
-	         bicolor_count >= fill_count &&
-	         bicolor_count >= fom_count)
+	else if (bicolor_count > 3 && bicolor_count >= mix_count && bicolor_count >= color_count &&
+	         bicolor_count >= fill_count && bicolor_count >= fom_count)
 	{
 		if ((bicolor_count % 2) != 0)
 			bicolor_count--;
@@ -793,11 +746,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 		OUT_COPY_COUNT3(count, s, temp_s);
 		OUT_BICOLOR_COUNT3(bicolor_count, s, bicolor1, bicolor2);
 	}
-	else if (fom_count > 3 &&
-	         fom_count >= mix_count &&
-	         fom_count >= color_count &&
-	         fom_count >= fill_count &&
-	         fom_count >= bicolor_count)
+	else if (fom_count > 3 && fom_count >= mix_count && fom_count >= color_count &&
+	         fom_count >= fill_count && fom_count >= bicolor_count)
 	{
 		if (fom_count > count)
 			return -1;
@@ -815,7 +765,8 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 }
 
 static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UINT32 height,
-        wStream* s, UINT32 bpp, UINT32 byte_limit, UINT32 start_line, wStream* temp_s, UINT32 e)
+                                          wStream* s, UINT32 bpp, UINT32 byte_limit,
+                                          UINT32 start_line, wStream* temp_s, UINT32 e)
 {
 	char fom_mask[8192]; /* good for up to 64K bitmap */
 	SSIZE_T lines_sent = 0;
@@ -834,7 +785,7 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 	const UINT32 mix = (bpp == 15) ? 0xBA1F : 0xFFFF;
 	UINT16 fom_count = 0;
 	size_t fom_mask_len = 0;
-	const char* start = (const char*) srcData;
+	const char* start = (const char*)srcData;
 	const char* line = start + width * start_line * 2;
 	const char* last_line = NULL;
 
@@ -843,10 +794,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 		UINT32 j;
 		size_t i = Stream_GetPosition(s) + count * 2;
 
-		if ((i - (color_count * 2) >= byte_limit) &&
-		    (i - (bicolor_count * 2) >= byte_limit) &&
-		    (i - (fill_count * 2) >= byte_limit) &&
-		    (i - (mix_count * 2) >= byte_limit) &&
+		if ((i - (color_count * 2) >= byte_limit) && (i - (bicolor_count * 2) >= byte_limit) &&
+		    (i - (fill_count * 2) >= byte_limit) && (i - (mix_count * 2) >= byte_limit) &&
 		    (i - (fom_count * 2) >= byte_limit))
 		{
 			break;
@@ -862,11 +811,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 
 			if (!TEST_FILL)
 			{
-				if (fill_count > 3 &&
-				    fill_count >= color_count &&
-				    fill_count >= bicolor_count &&
-				    fill_count >= mix_count &&
-				    fill_count >= fom_count)
+				if (fill_count > 3 && fill_count >= color_count && fill_count >= bicolor_count &&
+				    fill_count >= mix_count && fill_count >= fom_count)
 				{
 					if (fill_count > count)
 						return -1;
@@ -882,11 +828,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 
 			if (!TEST_MIX)
 			{
-				if (mix_count > 3 &&
-				    mix_count >= fill_count &&
-				    mix_count >= bicolor_count &&
-				    mix_count >= color_count &&
-				    mix_count >= fom_count)
+				if (mix_count > 3 && mix_count >= fill_count && mix_count >= bicolor_count &&
+				    mix_count >= color_count && mix_count >= fom_count)
 				{
 					if (mix_count > count)
 						return -1;
@@ -902,11 +845,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 
 			if (!(TEST_COLOR))
 			{
-				if (color_count > 3 &&
-				    color_count >= fill_count &&
-				    color_count >= bicolor_count &&
-				    color_count >= mix_count &&
-				    color_count >= fom_count)
+				if (color_count > 3 && color_count >= fill_count && color_count >= bicolor_count &&
+				    color_count >= mix_count && color_count >= fom_count)
 				{
 					if (color_count > count)
 						return -1;
@@ -922,10 +862,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 
 			if (!TEST_BICOLOR)
 			{
-				if ((bicolor_count > 3) &&
-				    (bicolor_count >= fill_count) &&
-				    (bicolor_count >= color_count) &&
-				    (bicolor_count >= mix_count) &&
+				if ((bicolor_count > 3) && (bicolor_count >= fill_count) &&
+				    (bicolor_count >= color_count) && (bicolor_count >= mix_count) &&
 				    (bicolor_count >= fom_count))
 				{
 					if ((bicolor_count % 2) != 0)
@@ -948,11 +886,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 
 			if (!(TEST_FOM))
 			{
-				if (fom_count > 3 &&
-				    fom_count >= fill_count &&
-				    fom_count >= color_count &&
-				    fom_count >= mix_count &&
-				    fom_count >= bicolor_count)
+				if (fom_count > 3 && fom_count >= fill_count && fom_count >= color_count &&
+				    fom_count >= mix_count && fom_count >= bicolor_count)
 				{
 					if (fom_count > count)
 						return -1;
@@ -1013,11 +948,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 		/* can't take fix, mix, or fom past first line */
 		if (last_line == 0)
 		{
-			if (fill_count > 3 &&
-			    fill_count >= color_count &&
-			    fill_count >= bicolor_count &&
-			    fill_count >= mix_count &&
-			    fill_count >= fom_count)
+			if (fill_count > 3 && fill_count >= color_count && fill_count >= bicolor_count &&
+			    fill_count >= mix_count && fill_count >= fom_count)
 			{
 				if (fill_count > count)
 					return -1;
@@ -1030,11 +962,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 
 			fill_count = 0;
 
-			if (mix_count > 3 &&
-			    mix_count >= fill_count &&
-			    mix_count >= bicolor_count &&
-			    mix_count >= color_count &&
-			    mix_count >= fom_count)
+			if (mix_count > 3 && mix_count >= fill_count && mix_count >= bicolor_count &&
+			    mix_count >= color_count && mix_count >= fom_count)
 			{
 				if (mix_count > count)
 					return -1;
@@ -1047,11 +976,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 
 			mix_count = 0;
 
-			if (fom_count > 3 &&
-			    fom_count >= fill_count &&
-			    fom_count >= color_count &&
-			    fom_count >= mix_count &&
-			    fom_count >= bicolor_count)
+			if (fom_count > 3 && fom_count >= fill_count && fom_count >= color_count &&
+			    fom_count >= mix_count && fom_count >= bicolor_count)
 			{
 				if (fom_count > count)
 					return -1;
@@ -1074,11 +1000,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 
 	Stream_SetPosition(temp_s, 0);
 
-	if (fill_count > 3 &&
-	    fill_count >= color_count &&
-	    fill_count >= bicolor_count &&
-	    fill_count >= mix_count &&
-	    fill_count >= fom_count)
+	if (fill_count > 3 && fill_count >= color_count && fill_count >= bicolor_count &&
+	    fill_count >= mix_count && fill_count >= fom_count)
 	{
 		if (fill_count > count)
 			return -1;
@@ -1087,11 +1010,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 		OUT_COPY_COUNT2(count, s, temp_s);
 		OUT_FILL_COUNT2(fill_count, s);
 	}
-	else if (mix_count > 3 &&
-	         mix_count >= color_count &&
-	         mix_count >= bicolor_count &&
-	         mix_count >= fill_count &&
-	         mix_count >= fom_count)
+	else if (mix_count > 3 && mix_count >= color_count && mix_count >= bicolor_count &&
+	         mix_count >= fill_count && mix_count >= fom_count)
 	{
 		if (mix_count > count)
 			return -1;
@@ -1100,11 +1020,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 		OUT_COPY_COUNT2(count, s, temp_s);
 		OUT_MIX_COUNT2(mix_count, s);
 	}
-	else if (color_count > 3 &&
-	         color_count >= mix_count &&
-	         color_count >= bicolor_count &&
-	         color_count >= fill_count &&
-	         color_count >= fom_count)
+	else if (color_count > 3 && color_count >= mix_count && color_count >= bicolor_count &&
+	         color_count >= fill_count && color_count >= fom_count)
 	{
 		if (color_count > count)
 			return -1;
@@ -1113,11 +1030,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 		OUT_COPY_COUNT2(count, s, temp_s);
 		OUT_COLOR_COUNT2(color_count, s, last_pixel);
 	}
-	else if (bicolor_count > 3 &&
-	         bicolor_count >= mix_count &&
-	         bicolor_count >= color_count &&
-	         bicolor_count >= fill_count &&
-	         bicolor_count >= fom_count)
+	else if (bicolor_count > 3 && bicolor_count >= mix_count && bicolor_count >= color_count &&
+	         bicolor_count >= fill_count && bicolor_count >= fom_count)
 	{
 		if ((bicolor_count % 2) != 0)
 			bicolor_count--;
@@ -1136,11 +1050,8 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 		OUT_COPY_COUNT2(count, s, temp_s);
 		OUT_BICOLOR_COUNT2(bicolor_count, s, bicolor1, bicolor2);
 	}
-	else if (fom_count > 3 &&
-	         fom_count >= mix_count &&
-	         fom_count >= color_count &&
-	         fom_count >= fill_count &&
-	         fom_count >= bicolor_count)
+	else if (fom_count > 3 && fom_count >= mix_count && fom_count >= color_count &&
+	         fom_count >= fill_count && fom_count >= bicolor_count)
 	{
 		if (fom_count > count)
 			return -1;
@@ -1157,8 +1068,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 	return lines_sent;
 }
 
-SSIZE_T freerdp_bitmap_compress(const void* srcData, UINT32 width, UINT32 height,
-                                wStream* s, UINT32 bpp, UINT32 byte_limit, UINT32 start_line, wStream* temp_s, UINT32 e)
+SSIZE_T freerdp_bitmap_compress(const void* srcData, UINT32 width, UINT32 height, wStream* s,
+                                UINT32 bpp, UINT32 byte_limit, UINT32 start_line, wStream* temp_s,
+                                UINT32 e)
 {
 	Stream_SetPosition(temp_s, 0);
 
@@ -1166,12 +1078,12 @@ SSIZE_T freerdp_bitmap_compress(const void* srcData, UINT32 width, UINT32 height
 	{
 		case 15:
 		case 16:
-			return freerdp_bitmap_compress_16(srcData, width, height, s, bpp,
-			                                  byte_limit, start_line, temp_s, e);
+			return freerdp_bitmap_compress_16(srcData, width, height, s, bpp, byte_limit,
+			                                  start_line, temp_s, e);
 
 		case 24:
-			return freerdp_bitmap_compress_24(srcData, width, height, s,
-			                                  byte_limit, start_line, temp_s, e);
+			return freerdp_bitmap_compress_24(srcData, width, height, s, byte_limit, start_line,
+			                                  temp_s, e);
 
 		default:
 			return -1;

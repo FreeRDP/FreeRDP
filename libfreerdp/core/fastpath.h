@@ -110,7 +110,7 @@ enum FASTPATH_INPUT_KBDFLAGS
 {
 	FASTPATH_INPUT_KBDFLAGS_RELEASE = 0x01,
 	FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02,
-	FASTPATH_INPUT_KBDFLAGS_PREFIX_E1 = 0x04		/* for pause sequence */
+	FASTPATH_INPUT_KBDFLAGS_PREFIX_E1 = 0x04 /* for pause sequence */
 };
 
 struct _FASTPATH_UPDATE_PDU_HEADER
@@ -151,25 +151,24 @@ struct rdp_fastpath
 
 FREERDP_LOCAL UINT16 fastpath_header_length(wStream* s);
 FREERDP_LOCAL UINT16 fastpath_read_header(rdpFastPath* fastpath, wStream* s);
-FREERDP_LOCAL BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s,
-        UINT16* length);
+FREERDP_LOCAL BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16* length);
 FREERDP_LOCAL int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s);
 FREERDP_LOCAL int fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s);
 
 FREERDP_LOCAL wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath);
-FREERDP_LOCAL wStream* fastpath_input_pdu_init(rdpFastPath* fastpath,
-        BYTE eventFlags, BYTE eventCode);
-FREERDP_LOCAL BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath,
-        wStream* s, int iEventCount);
+FREERDP_LOCAL wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags,
+                                               BYTE eventCode);
+FREERDP_LOCAL BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s,
+                                                    int iEventCount);
 FREERDP_LOCAL BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s);
 
 FREERDP_LOCAL wStream* fastpath_update_pdu_init(rdpFastPath* fastpath);
 FREERDP_LOCAL wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath);
-FREERDP_LOCAL BOOL fastpath_send_update_pdu(rdpFastPath* fastpath,
-        BYTE updateCode, wStream* s, BOOL skipCompression);
+FREERDP_LOCAL BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s,
+                                            BOOL skipCompression);
 
-FREERDP_LOCAL BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath,
-        UINT16 frameAction, UINT32 frameId);
+FREERDP_LOCAL BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, UINT16 frameAction,
+                                                      UINT32 frameId);
 
 FREERDP_LOCAL rdpFastPath* fastpath_new(rdpRdp* rdp);
 FREERDP_LOCAL void fastpath_free(rdpFastPath* fastpath);

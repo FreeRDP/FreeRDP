@@ -8,4 +8,3 @@ int TestAsn1Encoder(int argc, char* argv[])
 {
 	return 0;
 }
-

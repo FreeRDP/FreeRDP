@@ -35,7 +35,6 @@ static BOOL test_SerialSys(HANDLE hComm)
 	return TRUE;
 }
 
-
 int TestHandflow(int argc, char* argv[])
 {
 	struct stat statbuf;
@@ -55,9 +54,7 @@ int TestHandflow(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	hComm = CreateFile("COM1",
-			GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+	hComm = CreateFile("COM1", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());
@@ -84,7 +81,6 @@ int TestHandflow(int argc, char* argv[])
 	/* 	fprintf(stderr, "test_SerCxSys failure\n"); */
 	/* 	return EXIT_FAILURE; */
 	/* } */
-
 
 	if (!CloseHandle(hComm))
 	{

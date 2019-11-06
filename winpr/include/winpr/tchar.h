@@ -36,31 +36,31 @@ typedef CHAR TCHAR;
 #endif
 
 #ifdef UNICODE
-#define _tprintf	wprintf
-#define _tcslen		_wcslen
-#define _tcsdup		_wcsdup
-#define _tcscmp		wcscmp
-#define _tcsncmp	wcsncmp
-#define _tcscpy		wcscpy
-#define _tcscat		wcscat
-#define _tcschr		wcschr
-#define _tcsrchr	wcsrchr
-#define _tcsstr		wcsstr
-#define _stprintf_s	swprintf_s
-#define _tcsnccmp	wcsncmp
+#define _tprintf wprintf
+#define _tcslen _wcslen
+#define _tcsdup _wcsdup
+#define _tcscmp wcscmp
+#define _tcsncmp wcsncmp
+#define _tcscpy wcscpy
+#define _tcscat wcscat
+#define _tcschr wcschr
+#define _tcsrchr wcsrchr
+#define _tcsstr wcsstr
+#define _stprintf_s swprintf_s
+#define _tcsnccmp wcsncmp
 #else
-#define _tprintf	printf
-#define _tcslen		strlen
-#define _tcsdup		_strdup
-#define _tcscmp		strcmp
-#define _tcsncmp	strncmp
-#define _tcscpy		strcpy
-#define _tcscat		strcat
-#define _tcschr		strchr
-#define _tcsrchr	strrchr
-#define _tcsstr		strstr
-#define _stprintf_s	sprintf_s
-#define _tcsnccmp	strncmp
+#define _tprintf printf
+#define _tcslen strlen
+#define _tcsdup _strdup
+#define _tcscmp strcmp
+#define _tcsncmp strncmp
+#define _tcscpy strcpy
+#define _tcscat strcat
+#define _tcschr strchr
+#define _tcsrchr strrchr
+#define _tcsstr strstr
+#define _stprintf_s sprintf_s
+#define _tcsnccmp strncmp
 #endif
 
 #endif

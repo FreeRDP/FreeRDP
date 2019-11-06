@@ -31,24 +31,32 @@
 
 #ifdef _WIN32
 static INIT_ONCE init_once_module = INIT_ONCE_STATIC_INIT;
-static VOID (WINAPI * pSetEventWhenCallbackReturns)(PTP_CALLBACK_INSTANCE pci, HANDLE evt);
-static VOID (WINAPI * pReleaseSemaphoreWhenCallbackReturns)(PTP_CALLBACK_INSTANCE pci, HANDLE sem, DWORD crel);
-static VOID (WINAPI * pReleaseMutexWhenCallbackReturns)(PTP_CALLBACK_INSTANCE pci, HANDLE mut);
-static VOID (WINAPI * pLeaveCriticalSectionWhenCallbackReturns)(PTP_CALLBACK_INSTANCE pci, PCRITICAL_SECTION pcs);
-static VOID (WINAPI * pFreeLibraryWhenCallbackReturns)(PTP_CALLBACK_INSTANCE pci, HMODULE mod);
-static VOID (WINAPI * pDisassociateCurrentThreadFromCallback)(PTP_CALLBACK_INSTANCE pci);
+static VOID(WINAPI* pSetEventWhenCallbackReturns)(PTP_CALLBACK_INSTANCE pci, HANDLE evt);
+static VOID(WINAPI* pReleaseSemaphoreWhenCallbackReturns)(PTP_CALLBACK_INSTANCE pci, HANDLE sem,
+                                                          DWORD crel);
+static VOID(WINAPI* pReleaseMutexWhenCallbackReturns)(PTP_CALLBACK_INSTANCE pci, HANDLE mut);
+static VOID(WINAPI* pLeaveCriticalSectionWhenCallbackReturns)(PTP_CALLBACK_INSTANCE pci,
+                                                              PCRITICAL_SECTION pcs);
+static VOID(WINAPI* pFreeLibraryWhenCallbackReturns)(PTP_CALLBACK_INSTANCE pci, HMODULE mod);
+static VOID(WINAPI* pDisassociateCurrentThreadFromCallback)(PTP_CALLBACK_INSTANCE pci);
 
-static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID *context)
+static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	HMODULE kernel32 = LoadLibraryA("kernel32.dll");
 	if (kernel32)
 	{
-		pSetEventWhenCallbackReturns = (void*)GetProcAddress(kernel32, "SetEventWhenCallbackReturns");
-		pReleaseSemaphoreWhenCallbackReturns = (void*)GetProcAddress(kernel32, "ReleaseSemaphoreWhenCallbackReturns");
-		pReleaseMutexWhenCallbackReturns = (void*)GetProcAddress(kernel32, "ReleaseMutexWhenCallbackReturns");
-		pLeaveCriticalSectionWhenCallbackReturns = (void*)GetProcAddress(kernel32, "LeaveCriticalSectionWhenCallbackReturns");
-		pFreeLibraryWhenCallbackReturns = (void*)GetProcAddress(kernel32, "FreeLibraryWhenCallbackReturns");
-		pDisassociateCurrentThreadFromCallback = (void*)GetProcAddress(kernel32, "DisassociateCurrentThreadFromCallback");
+		pSetEventWhenCallbackReturns =
+		    (void*)GetProcAddress(kernel32, "SetEventWhenCallbackReturns");
+		pReleaseSemaphoreWhenCallbackReturns =
+		    (void*)GetProcAddress(kernel32, "ReleaseSemaphoreWhenCallbackReturns");
+		pReleaseMutexWhenCallbackReturns =
+		    (void*)GetProcAddress(kernel32, "ReleaseMutexWhenCallbackReturns");
+		pLeaveCriticalSectionWhenCallbackReturns =
+		    (void*)GetProcAddress(kernel32, "LeaveCriticalSectionWhenCallbackReturns");
+		pFreeLibraryWhenCallbackReturns =
+		    (void*)GetProcAddress(kernel32, "FreeLibraryWhenCallbackReturns");
+		pDisassociateCurrentThreadFromCallback =
+		    (void*)GetProcAddress(kernel32, "DisassociateCurrentThreadFromCallback");
 	}
 	return TRUE;
 }
@@ -132,4 +140,3 @@ VOID DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE pci)
 }
 
 #endif /* WINPR_THREAD_POOL defined */
-

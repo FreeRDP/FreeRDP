@@ -23,8 +23,8 @@ int TestClientChannels(int argc, char* argv[])
 	{
 		pAddin = ppAddins[index];
 
-		printf("Addin: Name: %s Subsystem: %s Type: %s\n",
-				pAddin->cName, pAddin->cSubsystem, pAddin->cType);
+		printf("Addin: Name: %s Subsystem: %s Type: %s\n", pAddin->cName, pAddin->cSubsystem,
+		       pAddin->cType);
 	}
 
 	freerdp_channels_addin_list_free(ppAddins);
@@ -36,8 +36,8 @@ int TestClientChannels(int argc, char* argv[])
 	{
 		pAddin = ppAddins[index];
 
-		printf("Addin: Name: %s Subsystem: %s Type: %s\n",
-				pAddin->cName, pAddin->cSubsystem, pAddin->cType);
+		printf("Addin: Name: %s Subsystem: %s Type: %s\n", pAddin->cName, pAddin->cSubsystem,
+		       pAddin->cType);
 	}
 
 	freerdp_channels_addin_list_free(ppAddins);
@@ -49,8 +49,8 @@ int TestClientChannels(int argc, char* argv[])
 	{
 		pAddin = ppAddins[index];
 
-		printf("Addin: Name: %s Subsystem: %s Type: %s\n",
-				pAddin->cName, pAddin->cSubsystem, pAddin->cType);
+		printf("Addin: Name: %s Subsystem: %s Type: %s\n", pAddin->cName, pAddin->cSubsystem,
+		       pAddin->cType);
 	}
 
 	freerdp_channels_addin_list_free(ppAddins);
@@ -61,8 +61,8 @@ int TestClientChannels(int argc, char* argv[])
 	{
 		pAddin = ppAddins[index];
 
-		printf("Addin: Name: %s Subsystem: %s Type: %s\n",
-				pAddin->cName, pAddin->cSubsystem, pAddin->cType);
+		printf("Addin: Name: %s Subsystem: %s Type: %s\n", pAddin->cName, pAddin->cSubsystem,
+		       pAddin->cType);
 	}
 
 	freerdp_channels_addin_list_free(ppAddins);
@@ -76,8 +76,8 @@ int TestClientChannels(int argc, char* argv[])
 	{
 		pAddin = ppAddins[index];
 
-		printf("Addin: Name: %s Subsystem: %s Type: %s\n",
-				pAddin->cName, pAddin->cSubsystem, pAddin->cType);
+		printf("Addin: Name: %s Subsystem: %s Type: %s\n", pAddin->cName, pAddin->cSubsystem,
+		       pAddin->cType);
 	}
 
 	freerdp_channels_addin_list_free(ppAddins);

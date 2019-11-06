@@ -19,12 +19,12 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 	if (status != SEC_E_OK)
 	{
 		sspi_GlobalFinish();
-		return -1;	
+		return -1;
 	}
 
-	_tprintf(_T("\nEnumerateSecurityPackages (%")_T(PRIu32)_T("):\n"), cPackages);
+	_tprintf(_T("\nEnumerateSecurityPackages (%") _T(PRIu32) _T("):\n"), cPackages);
 
-	for (index = 0; index < (int) cPackages; index++)
+	for (index = 0; index < (int)cPackages; index++)
 	{
 		_tprintf(_T("\"%s\", \"%s\"\n"), pPackageInfo[index].Name, pPackageInfo[index].Comment);
 	}
@@ -34,4 +34,3 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 
 	return 0;
 }
-

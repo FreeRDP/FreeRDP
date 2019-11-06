@@ -31,8 +31,7 @@ typedef struct rdp_redirection rdpRedirection;
 #include <winpr/wlog.h>
 #include <winpr/stream.h>
 
-FREERDP_LOCAL int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp,
-        wStream* s);
+FREERDP_LOCAL int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
 
 FREERDP_LOCAL int rdp_redirection_apply_settings(rdpRdp* rdp);
 
@@ -43,7 +42,10 @@ FREERDP_LOCAL void redirection_free(rdpRedirection* redirection);
 #ifdef WITH_DEBUG_REDIR
 #define DEBUG_REDIR(...) WLog_DBG(REDIR_TAG, __VA_ARGS__)
 #else
-#define DEBUG_REDIR(...) do { } while (0)
+#define DEBUG_REDIR(...) \
+	do                   \
+	{                    \
+	} while (0)
 #endif
 
 #endif /* FREERDP_LIB_CORE_REDIRECTION_H */

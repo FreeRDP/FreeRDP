@@ -25,7 +25,7 @@
 #include <freerdp/pointer.h>
 
 FREERDP_LOCAL CACHE_BRUSH_ORDER* copy_cache_brush_order(rdpContext* context,
-        const CACHE_BRUSH_ORDER* order);
+                                                        const CACHE_BRUSH_ORDER* order);
 FREERDP_LOCAL void free_cache_brush_order(rdpContext* context, CACHE_BRUSH_ORDER* order);
 
 #endif /* FREERDP_LIB_CACHE_BRUSH_H */

@@ -26,37 +26,30 @@
 #include "prim_internal.h"
 
 /* ========================================================================= */
-static pstatus_t general_set_8u(
-    BYTE val,
-    BYTE* pDst,
-    UINT32 len)
+static pstatus_t general_set_8u(BYTE val, BYTE* pDst, UINT32 len)
 {
-	memset((void*) pDst, (int) val, (size_t) len);
+	memset((void*)pDst, (int)val, (size_t)len);
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_zero(
-    void* pDst,
-    size_t len)
+static pstatus_t general_zero(void* pDst, size_t len)
 {
 	memset(pDst, 0, len);
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ========================================================================= */
-static pstatus_t general_set_32s(
-    INT32 val,
-    INT32* pDst,
-    UINT32 len)
+static pstatus_t general_set_32s(INT32 val, INT32* pDst, UINT32 len)
 {
-	INT32* dptr = (INT32*) pDst;
+	INT32* dptr = (INT32*)pDst;
 	size_t span, remaining;
 	primitives_t* prims;
 
 	if (len < 256)
 	{
-		while (len--) *dptr++ = val;
+		while (len--)
+			*dptr++ = val;
 
 		return PRIMITIVES_SUCCESS;
 	}
@@ -71,9 +64,10 @@ static pstatus_t general_set_32s(
 	{
 		size_t thiswidth = span;
 
-		if (thiswidth > remaining) thiswidth = remaining;
+		if (thiswidth > remaining)
+			thiswidth = remaining;
 
-		prims->copy_8u((BYTE*) dptr, (BYTE*)(dptr + span), thiswidth << 2);
+		prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), thiswidth << 2);
 		remaining -= thiswidth;
 		span <<= 1;
 	}
@@ -82,18 +76,16 @@ static pstatus_t general_set_32s(
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_set_32u(
-    UINT32 val,
-    UINT32* pDst,
-    UINT32 len)
+static pstatus_t general_set_32u(UINT32 val, UINT32* pDst, UINT32 len)
 {
-	UINT32* dptr = (UINT32*) pDst;
+	UINT32* dptr = (UINT32*)pDst;
 	size_t span, remaining;
 	primitives_t* prims;
 
 	if (len < 256)
 	{
-		while (len--) *dptr++ = val;
+		while (len--)
+			*dptr++ = val;
 
 		return PRIMITIVES_SUCCESS;
 	}
@@ -108,9 +100,10 @@ static pstatus_t general_set_32u(
 	{
 		size_t thiswidth = span;
 
-		if (thiswidth > remaining) thiswidth = remaining;
+		if (thiswidth > remaining)
+			thiswidth = remaining;
 
-		prims->copy_8u((BYTE*) dptr, (BYTE*)(dptr + span), thiswidth << 2);
+		prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), thiswidth << 2);
 		remaining -= thiswidth;
 		span <<= 1;
 	}
@@ -119,13 +112,11 @@ static pstatus_t general_set_32u(
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_set(
-    primitives_t* prims)
+void primitives_init_set(primitives_t* prims)
 {
 	/* Start with the default. */
-	prims->set_8u  = general_set_8u;
+	prims->set_8u = general_set_8u;
 	prims->set_32s = general_set_32s;
 	prims->set_32u = general_set_32u;
 	prims->zero = general_zero;
 }
-

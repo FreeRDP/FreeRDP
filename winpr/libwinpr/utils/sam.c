@@ -37,9 +37,9 @@
 #endif
 
 #ifdef _WIN32
-#define WINPR_SAM_FILE		"C:\\SAM"
+#define WINPR_SAM_FILE "C:\\SAM"
 #else
-#define WINPR_SAM_FILE		"/etc/winpr/SAM"
+#define WINPR_SAM_FILE "/etc/winpr/SAM"
 #endif
 #define TAG WINPR_TAG("utils")
 
@@ -63,7 +63,7 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 
 	if (fp)
 	{
-		sam = (WINPR_SAM*) malloc(sizeof(WINPR_SAM));
+		sam = (WINPR_SAM*)malloc(sizeof(WINPR_SAM));
 
 		if (!sam)
 		{
@@ -98,7 +98,7 @@ static BOOL SamLookupStart(WINPR_SAM* sam)
 	if (fileSize < 1)
 		return FALSE;
 
-	sam->buffer = (char*) malloc(fileSize + 2);
+	sam->buffer = (char*)malloc(fileSize + 2);
 
 	if (!sam->buffer)
 		return FALSE;
@@ -191,7 +191,7 @@ BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 		return FALSE;
 
 	entry->UserLength = (UINT32)(p[1] - p[0] - 1);
-	entry->User = (LPSTR) malloc(entry->UserLength + 1);
+	entry->User = (LPSTR)malloc(entry->UserLength + 1);
 
 	if (!entry->User)
 		return FALSE;
@@ -202,7 +202,7 @@ BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 
 	if (entry->DomainLength > 0)
 	{
-		entry->Domain = (LPSTR) malloc(entry->DomainLength + 1);
+		entry->Domain = (LPSTR)malloc(entry->DomainLength + 1);
 
 		if (!entry->Domain)
 		{
@@ -218,10 +218,10 @@ BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 		entry->Domain = NULL;
 
 	if (LmHashLength == 32)
-		HexStrToBin(p[2], (BYTE*) entry->LmHash, 16);
+		HexStrToBin(p[2], (BYTE*)entry->LmHash, 16);
 
 	if (NtHashLength == 32)
-		HexStrToBin(p[3], (BYTE*) entry->NtHash, 16);
+		HexStrToBin(p[3], (BYTE*)entry->NtHash, 16);
 
 	return TRUE;
 }
@@ -267,7 +267,7 @@ WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, L
 	size_t length;
 	BOOL found = FALSE;
 	WINPR_SAM_ENTRY* entry;
-	entry = (WINPR_SAM_ENTRY*) calloc(1, sizeof(WINPR_SAM_ENTRY));
+	entry = (WINPR_SAM_ENTRY*)calloc(1, sizeof(WINPR_SAM_ENTRY));
 
 	if (!entry)
 		return NULL;
@@ -328,7 +328,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 	UINT32 EntryDomainLength;
 	WINPR_SAM_ENTRY* entry;
 
-	if (!(entry = (WINPR_SAM_ENTRY*) calloc(1, sizeof(WINPR_SAM_ENTRY))))
+	if (!(entry = (WINPR_SAM_ENTRY*)calloc(1, sizeof(WINPR_SAM_ENTRY))))
 		return NULL;
 
 	if (!SamLookupStart(sam))
@@ -355,14 +355,14 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 				{
 					if (entry->DomainLength > 0)
 					{
-						EntryDomainLength = (UINT32) strlen(entry->Domain) * 2;
-						EntryDomain = (LPWSTR) malloc(EntryDomainLength + 2);
+						EntryDomainLength = (UINT32)strlen(entry->Domain) * 2;
+						EntryDomain = (LPWSTR)malloc(EntryDomainLength + 2);
 
 						if (!EntryDomain)
 							goto out_fail;
 
 						MultiByteToWideChar(CP_ACP, 0, entry->Domain, EntryDomainLength / 2,
-						                    (LPWSTR) EntryDomain, EntryDomainLength / 2);
+						                    (LPWSTR)EntryDomain, EntryDomainLength / 2);
 
 						if (DomainLength == EntryDomainLength)
 						{
@@ -386,14 +386,14 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 
 				if (DomainMatch)
 				{
-					EntryUserLength = (UINT32) strlen(entry->User) * 2;
-					EntryUser = (LPWSTR) malloc(EntryUserLength + 2);
+					EntryUserLength = (UINT32)strlen(entry->User) * 2;
+					EntryUser = (LPWSTR)malloc(EntryUserLength + 2);
 
 					if (!EntryUser)
 						goto out_fail;
 
 					MultiByteToWideChar(CP_ACP, 0, entry->User, EntryUserLength / 2,
-					                    (LPWSTR) EntryUser, EntryUserLength / 2);
+					                    (LPWSTR)EntryUser, EntryUserLength / 2);
 
 					if (UserLength == EntryUserLength)
 					{

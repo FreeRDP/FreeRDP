@@ -41,44 +41,44 @@
 #include "rfx_rlgr.h"
 
 /* Constants used in RLGR1/RLGR3 algorithm */
-#define KPMAX	(80)	/* max value for kp or krp */
-#define LSGR	(3)	/* shift count to convert kp to k */
-#define UP_GR	(4)	/* increase in kp after a zero run in RL mode */
-#define DN_GR	(6)	/* decrease in kp after a nonzero symbol in RL mode */
-#define UQ_GR	(3)	/* increase in kp after nonzero symbol in GR mode */
-#define DQ_GR	(3)	/* decrease in kp after zero symbol in GR mode */
+#define KPMAX (80) /* max value for kp or krp */
+#define LSGR (3)   /* shift count to convert kp to k */
+#define UP_GR (4)  /* increase in kp after a zero run in RL mode */
+#define DN_GR (6)  /* decrease in kp after a nonzero symbol in RL mode */
+#define UQ_GR (3)  /* increase in kp after nonzero symbol in GR mode */
+#define DQ_GR (3)  /* decrease in kp after zero symbol in GR mode */
 
 /* Returns the least number of bits required to represent a given value */
 #define GetMinBits(_val, _nbits) \
-{ \
-	UINT32 _v = _val; \
-	_nbits = 0; \
-	while (_v) \
-	{ \
-		_v >>= 1; \
-		_nbits++; \
-	} \
-}
+	{                            \
+		UINT32 _v = _val;        \
+		_nbits = 0;              \
+		while (_v)               \
+		{                        \
+			_v >>= 1;            \
+			_nbits++;            \
+		}                        \
+	}
 
 /*
  * Update the passed parameter and clamp it to the range [0, KPMAX]
  * Return the value of parameter right-shifted by LSGR
  */
 #define UpdateParam(_param, _deltaP, _k) \
-{ \
-	_param += _deltaP; \
-	if (_param > KPMAX) \
-		_param = KPMAX; \
-	if (_param < 0) \
-		_param = 0; \
-	_k = (_param >> LSGR); \
-}
+	{                                    \
+		_param += _deltaP;               \
+		if (_param > KPMAX)              \
+			_param = KPMAX;              \
+		if (_param < 0)                  \
+			_param = 0;                  \
+		_k = (_param >> LSGR);           \
+	}
 
 static BOOL g_LZCNT = FALSE;
 
 static INIT_ONCE rfx_rlgr_init_once = INIT_ONCE_STATIC_INIT;
 
-static BOOL CALLBACK rfx_rlgr_init(PINIT_ONCE once, PVOID param, PVOID *context)
+static BOOL CALLBACK rfx_rlgr_init(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	g_LZCNT = IsProcessorFeaturePresentEx(PF_EX_LZCNT);
 	return TRUE;
@@ -88,23 +88,46 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 {
 	if (!x)
 		return 32;
-	
+
 	if (!g_LZCNT)
 	{
 		UINT32 y;
 		int n = 32;
-		y = x >> 16;  if (y != 0) { n = n - 16; x = y; }
-		y = x >>  8;  if (y != 0) { n = n -  8; x = y; }
-		y = x >>  4;  if (y != 0) { n = n -  4; x = y; }
-		y = x >>  2;  if (y != 0) { n = n -  2; x = y; }
-		y = x >>  1;  if (y != 0) return n - 2;
+		y = x >> 16;
+		if (y != 0)
+		{
+			n = n - 16;
+			x = y;
+		}
+		y = x >> 8;
+		if (y != 0)
+		{
+			n = n - 8;
+			x = y;
+		}
+		y = x >> 4;
+		if (y != 0)
+		{
+			n = n - 4;
+			x = y;
+		}
+		y = x >> 2;
+		if (y != 0)
+		{
+			n = n - 2;
+			x = y;
+		}
+		y = x >> 1;
+		if (y != 0)
+			return n - 2;
 		return n - x;
 	}
 
 	return __lzcnt(x);
 }
 
-int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 DstSize)
+int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData,
+                    UINT32 DstSize)
 {
 	int vk;
 	int run;
@@ -259,7 +282,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 				break;
 
 			bs->mask = ((1 << kr) - 1);
-			code = (UINT16) ((bs->accumulator >> (32 - kr)) & bs->mask);
+			code = (UINT16)((bs->accumulator >> (32 - kr)) & bs->mask);
 			BitStream_Shift(bs, kr);
 
 			/* add (vk << kr) to code */
@@ -301,9 +324,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 			/* compute magnitude from code */
 
 			if (sign)
-				mag = ((INT16) (code + 1)) * -1;
+				mag = ((INT16)(code + 1)) * -1;
 			else
-				mag = (INT16) (code + 1);
+				mag = (INT16)(code + 1);
 
 			/* write to output stream */
 
@@ -367,7 +390,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 				break;
 
 			bs->mask = ((1 << kr) - 1);
-			code = (UINT16) ((bs->accumulator >> (32 - kr)) & bs->mask);
+			code = (UINT16)((bs->accumulator >> (32 - kr)) & bs->mask);
 			BitStream_Shift(bs, kr);
 
 			/* add (vk << kr) to code */
@@ -429,9 +452,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 					 */
 
 					if (code & 1)
-						mag = ((INT16) ((code + 1) >> 1)) * -1;
+						mag = ((INT16)((code + 1) >> 1)) * -1;
 					else
-						mag = (INT16) (code >> 1);
+						mag = (INT16)(code >> 1);
 				}
 
 				if ((pOutput - pDstData) < DstSize)
@@ -446,7 +469,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 
 				if (code)
 				{
-					mag = (UINT32) code;
+					mag = (UINT32)code;
 					nIdx = 32 - lzcnt_s(mag);
 				}
 
@@ -483,9 +506,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 				}
 
 				if (val1 & 1)
-					mag = ((INT16) ((val1 + 1) >> 1)) * -1;
+					mag = ((INT16)((val1 + 1) >> 1)) * -1;
 				else
-					mag = (INT16) (val1 >> 1);
+					mag = (INT16)(val1 >> 1);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
@@ -494,9 +517,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 				}
 
 				if (val2 & 1)
-					mag = ((INT16) ((val2 + 1) >> 1)) * -1;
+					mag = ((INT16)((val2 + 1) >> 1)) * -1;
 				else
-					mag = (INT16) (val2 >> 1);
+					mag = (INT16)(val2 >> 1);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
@@ -525,33 +548,34 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 }
 
 /* Returns the next coefficient (a signed int) to encode, from the input stream */
-#define GetNextInput(_n) \
-{ \
-	if (data_size > 0) \
-	{ \
-		_n = *data++; \
-		data_size--; \
-	} \
-	else \
-	{ \
-		_n = 0; \
-	} \
-}
+#define GetNextInput(_n)   \
+	{                      \
+		if (data_size > 0) \
+		{                  \
+			_n = *data++;  \
+			data_size--;   \
+		}                  \
+		else               \
+		{                  \
+			_n = 0;        \
+		}                  \
+	}
 
 /* Emit bitPattern to the output bitstream */
 #define OutputBits(numBits, bitPattern) rfx_bitstream_put_bits(bs, bitPattern, numBits)
 
 /* Emit a bit (0 or 1), count number of times, to the output bitstream */
-#define OutputBit(count, bit) \
-{	\
-	UINT16 _b = (bit ? 0xFFFF : 0); \
-	int _c = (count); \
-	for (; _c > 0; _c -= 16) \
-		rfx_bitstream_put_bits(bs, _b, (_c > 16 ? 16 : _c)); \
-}
+#define OutputBit(count, bit)                                    \
+	{                                                            \
+		UINT16 _b = (bit ? 0xFFFF : 0);                          \
+		int _c = (count);                                        \
+		for (; _c > 0; _c -= 16)                                 \
+			rfx_bitstream_put_bits(bs, _b, (_c > 16 ? 16 : _c)); \
+	}
 
-/* Converts the input value to (2 * abs(input) - sign(input)), where sign(input) = (input < 0 ? 1 : 0) and returns it */
-#define Get2MagSign(input) ((input) >= 0 ? 2 * (input) : -2 * (input) - 1)
+/* Converts the input value to (2 * abs(input) - sign(input)), where sign(input) = (input < 0 ? 1 :
+ * 0) and returns it */
+#define Get2MagSign(input) ((input) >= 0 ? 2 * (input) : -2 * (input)-1)
 
 /* Outputs the Golomb/Rice encoding of a non-negative integer */
 #define CodeGR(krp, val) rfx_rlgr_code_gr(bs, krp, val)
@@ -577,13 +601,14 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
 	{
 		UpdateParam(*krp, -2, kr);
 	}
- 	else if (vk > 1)
+	else if (vk > 1)
 	{
 		UpdateParam(*krp, vk, kr);
 	}
 }
 
-int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* buffer, UINT32 buffer_size)
+int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* buffer,
+                    UINT32 buffer_size)
 {
 	int k;
 	int kp;
@@ -591,7 +616,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* b
 	RFX_BITSTREAM* bs;
 	int processed_size;
 
-	if (!(bs = (RFX_BITSTREAM*) calloc(1, sizeof(RFX_BITSTREAM))))
+	if (!(bs = (RFX_BITSTREAM*)calloc(1, sizeof(RFX_BITSTREAM))))
 		return 0;
 
 	rfx_bitstream_attach(bs, buffer, buffer_size);
@@ -645,9 +670,9 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* b
 
 			/* encode the nonzero value using GR coding */
 			mag = (input < 0 ? -input : input); /* absolute value of input coefficient */
-			sign = (input < 0 ? 1 : 0);  /* sign of input coefficient */
+			sign = (input < 0 ? 1 : 0);         /* sign of input coefficient */
 
-			OutputBit(1, sign); /* output the sign bit */
+			OutputBit(1, sign);              /* output the sign bit */
 			CodeGR(&krp, mag ? mag - 1 : 0); /* output GR code for (mag - 1) */
 
 			UpdateParam(kp, -DN_GR, k);

@@ -38,38 +38,38 @@ LONG smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_WARN(TAG, "CommonTypeHeader is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "CommonTypeHeader is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	/* Process CommonTypeHeader */
-	Stream_Read_UINT8(s, version); /* Version (1 byte) */
-	Stream_Read_UINT8(s, endianness); /* Endianness (1 byte) */
+	Stream_Read_UINT8(s, version);             /* Version (1 byte) */
+	Stream_Read_UINT8(s, endianness);          /* Endianness (1 byte) */
 	Stream_Read_UINT16(s, commonHeaderLength); /* CommonHeaderLength (2 bytes) */
-	Stream_Read_UINT32(s, filler); /* Filler (4 bytes), should be 0xCCCCCCCC */
+	Stream_Read_UINT32(s, filler);             /* Filler (4 bytes), should be 0xCCCCCCCC */
 
 	if (version != 1)
 	{
-		WLog_WARN(TAG, "Unsupported CommonTypeHeader Version %"PRIu8"", version);
+		WLog_WARN(TAG, "Unsupported CommonTypeHeader Version %" PRIu8 "", version);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (endianness != 0x10)
 	{
-		WLog_WARN(TAG, "Unsupported CommonTypeHeader Endianness %"PRIu8"", endianness);
+		WLog_WARN(TAG, "Unsupported CommonTypeHeader Endianness %" PRIu8 "", endianness);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (commonHeaderLength != 8)
 	{
-		WLog_WARN(TAG, "Unsupported CommonTypeHeader CommonHeaderLength %"PRIu16"", commonHeaderLength);
+		WLog_WARN(TAG, "Unsupported CommonTypeHeader CommonHeaderLength %" PRIu16 "",
+		          commonHeaderLength);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (filler != 0xCCCCCCCC)
 	{
-		WLog_WARN(TAG, "Unexpected CommonTypeHeader Filler 0x%08"PRIX32"", filler);
+		WLog_WARN(TAG, "Unexpected CommonTypeHeader Filler 0x%08" PRIX32 "", filler);
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -79,9 +79,9 @@ LONG smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s
 void smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s)
 {
 	WINPR_UNUSED(smartcard);
-	Stream_Write_UINT8(s, 1); /* Version (1 byte) */
-	Stream_Write_UINT8(s, 0x10); /* Endianness (1 byte) */
-	Stream_Write_UINT16(s, 8); /* CommonHeaderLength (2 bytes) */
+	Stream_Write_UINT8(s, 1);           /* Version (1 byte) */
+	Stream_Write_UINT8(s, 0x10);        /* Endianness (1 byte) */
+	Stream_Write_UINT16(s, 8);          /* CommonHeaderLength (2 bytes) */
 	Stream_Write_UINT32(s, 0xCCCCCCCC); /* Filler (4 bytes), should be 0xCCCCCCCC */
 }
 
@@ -93,24 +93,24 @@ LONG smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* 
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_WARN(TAG, "PrivateTypeHeader is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "PrivateTypeHeader is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, objectBufferLength); /* ObjectBufferLength (4 bytes) */
-	Stream_Read_UINT32(s, filler); /* Filler (4 bytes), should be 0x00000000 */
+	Stream_Read_UINT32(s, filler);             /* Filler (4 bytes), should be 0x00000000 */
 
 	if (filler != 0x00000000)
 	{
-		WLog_WARN(TAG, "Unexpected PrivateTypeHeader Filler 0x%08"PRIX32"", filler);
+		WLog_WARN(TAG, "Unexpected PrivateTypeHeader Filler 0x%08" PRIX32 "", filler);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (objectBufferLength != Stream_GetRemainingLength(s))
 	{
 		WLog_WARN(TAG,
-		          "PrivateTypeHeader ObjectBufferLength mismatch: Actual: %"PRIu32", Expected: %"PRIuz"",
+		          "PrivateTypeHeader ObjectBufferLength mismatch: Actual: %" PRIu32
+		          ", Expected: %" PRIuz "",
 		          objectBufferLength, Stream_GetRemainingLength(s));
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -123,7 +123,7 @@ void smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s,
 {
 	WINPR_UNUSED(smartcard);
 	Stream_Write_UINT32(s, objectBufferLength); /* ObjectBufferLength (4 bytes) */
-	Stream_Write_UINT32(s, 0x00000000); /* Filler (4 bytes), should be 0x00000000 */
+	Stream_Write_UINT32(s, 0x00000000);         /* Filler (4 bytes), should be 0x00000000 */
 }
 
 LONG smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size,
@@ -165,7 +165,7 @@ LONG smartcard_pack_write_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UI
 }
 
 SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartcard,
-        REDIR_SCARDCONTEXT* context)
+                                                       REDIR_SCARDCONTEXT* context)
 {
 	SCARDCONTEXT hContext = { 0 };
 	WINPR_UNUSED(smartcard);
@@ -173,7 +173,8 @@ SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartca
 	if ((context->cbContext != sizeof(ULONG_PTR)) && (context->cbContext != 0))
 	{
 		WLog_WARN(TAG,
-		          "REDIR_SCARDCONTEXT does not match native size: Actual: %"PRIu32", Expected: %"PRIuz"",
+		          "REDIR_SCARDCONTEXT does not match native size: Actual: %" PRIu32
+		          ", Expected: %" PRIuz "",
 		          context->cbContext, sizeof(ULONG_PTR));
 		return 0;
 	}
@@ -185,7 +186,7 @@ SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartca
 }
 
 void smartcard_scard_context_native_to_redir(SMARTCARD_DEVICE* smartcard,
-        REDIR_SCARDCONTEXT* context, SCARDCONTEXT hContext)
+                                             REDIR_SCARDCONTEXT* context, SCARDCONTEXT hContext)
 {
 	WINPR_UNUSED(smartcard);
 	ZeroMemory(context, sizeof(REDIR_SCARDCONTEXT));
@@ -194,7 +195,7 @@ void smartcard_scard_context_native_to_redir(SMARTCARD_DEVICE* smartcard,
 }
 
 SCARDHANDLE smartcard_scard_handle_native_from_redir(SMARTCARD_DEVICE* smartcard,
-        REDIR_SCARDHANDLE* handle)
+                                                     REDIR_SCARDHANDLE* handle)
 {
 	SCARDHANDLE hCard = 0;
 	WINPR_UNUSED(smartcard);
@@ -202,7 +203,8 @@ SCARDHANDLE smartcard_scard_handle_native_from_redir(SMARTCARD_DEVICE* smartcard
 	if (handle->cbHandle != sizeof(ULONG_PTR))
 	{
 		WLog_WARN(TAG,
-		          "REDIR_SCARDHANDLE does not match native size: Actual: %"PRIu32", Expected: %"PRIuz"",
+		          "REDIR_SCARDHANDLE does not match native size: Actual: %" PRIu32
+		          ", Expected: %" PRIuz "",
 		          handle->cbHandle, sizeof(ULONG_PTR));
 		return 0;
 	}
@@ -214,7 +216,7 @@ SCARDHANDLE smartcard_scard_handle_native_from_redir(SMARTCARD_DEVICE* smartcard
 }
 
 void smartcard_scard_handle_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_SCARDHANDLE* handle,
-        SCARDHANDLE hCard)
+                                            SCARDHANDLE hCard)
 {
 	WINPR_UNUSED(smartcard);
 	ZeroMemory(handle, sizeof(REDIR_SCARDHANDLE));
@@ -223,7 +225,7 @@ void smartcard_scard_handle_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_S
 }
 
 LONG smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDCONTEXT* context)
+                                          REDIR_SCARDCONTEXT* context)
 {
 	UINT32 pbContextNdrPtr;
 	WINPR_UNUSED(smartcard);
@@ -231,8 +233,7 @@ LONG smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* 
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
@@ -240,30 +241,33 @@ LONG smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* 
 
 	if (Stream_GetRemainingLength(s) < context->cbContext)
 	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %"PRIuz", Expected: %"PRIu32"",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %" PRIuz ", Expected: %" PRIu32 "",
 		          Stream_GetRemainingLength(s), context->cbContext);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	if ((context->cbContext != 0) && (context->cbContext != 4) && (context->cbContext != 8))
 	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT length is not 0, 4 or 8: %"PRIu32"", context->cbContext);
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT length is not 0, 4 or 8: %" PRIu32 "",
+		          context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	Stream_Read_UINT32(s, pbContextNdrPtr); /* pbContextNdrPtr (4 bytes) */
 
-	if (((context->cbContext == 0) && pbContextNdrPtr) || ((context->cbContext != 0) &&
-	        !pbContextNdrPtr))
+	if (((context->cbContext == 0) && pbContextNdrPtr) ||
+	    ((context->cbContext != 0) && !pbContextNdrPtr))
 	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT cbContext (%"PRIu32") pbContextNdrPtr (%"PRIu32") inconsistency",
+		WLog_WARN(TAG,
+		          "REDIR_SCARDCONTEXT cbContext (%" PRIu32 ") pbContextNdrPtr (%" PRIu32
+		          ") inconsistency",
 		          context->cbContext, pbContextNdrPtr);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (context->cbContext > Stream_GetRemainingLength(s))
 	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too long: Actual: %"PRIuz", Expected: %"PRIu32"",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too long: Actual: %" PRIuz ", Expected: %" PRIu32 "",
 		          Stream_GetRemainingLength(s), context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -278,12 +282,12 @@ LONG smartcard_pack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s,
 	WINPR_UNUSED(smartcard);
 	pbContextNdrPtr = (context->cbContext) ? 0x00020001 : 0;
 	Stream_Write_UINT32(s, context->cbContext); /* cbContext (4 bytes) */
-	Stream_Write_UINT32(s, pbContextNdrPtr); /* pbContextNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, pbContextNdrPtr);    /* pbContextNdrPtr (4 bytes) */
 	return SCARD_S_SUCCESS;
 }
 
 LONG smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDCONTEXT* context)
+                                              REDIR_SCARDCONTEXT* context)
 {
 	UINT32 length;
 	WINPR_UNUSED(smartcard);
@@ -293,7 +297,7 @@ LONG smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStre
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %"PRIuz", Expected: 4",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %" PRIuz ", Expected: 4",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -302,20 +306,20 @@ LONG smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStre
 
 	if (length != context->cbContext)
 	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT length (%"PRIu32") cbContext (%"PRIu32") mismatch",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT length (%" PRIu32 ") cbContext (%" PRIu32 ") mismatch",
 		          length, context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((context->cbContext != 0) && (context->cbContext != 4) && (context->cbContext != 8))
 	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT length is not 4 or 8: %"PRIu32"", context->cbContext);
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT length is not 4 or 8: %" PRIu32 "", context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (Stream_GetRemainingLength(s) < context->cbContext)
 	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %"PRIuz", Expected: %"PRIu32"",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %" PRIuz ", Expected: %" PRIu32 "",
 		          Stream_GetRemainingLength(s), context->cbContext);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -329,7 +333,7 @@ LONG smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStre
 }
 
 LONG smartcard_pack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDCONTEXT* context)
+                                            REDIR_SCARDCONTEXT* context)
 {
 	WINPR_UNUSED(smartcard);
 	Stream_Write_UINT32(s, context->cbContext); /* Length (4 bytes) */
@@ -343,7 +347,7 @@ LONG smartcard_pack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream
 }
 
 LONG smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDHANDLE* handle)
+                                         REDIR_SCARDHANDLE* handle)
 {
 	UINT32 pbHandleNdrPtr;
 	WINPR_UNUSED(smartcard);
@@ -351,8 +355,7 @@ LONG smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "SCARDHANDLE is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "SCARDHANDLE is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
@@ -360,7 +363,7 @@ LONG smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s
 
 	if ((Stream_GetRemainingLength(s) < handle->cbHandle) || (!handle->cbHandle))
 	{
-		WLog_WARN(TAG, "SCARDHANDLE is too short: Actual: %"PRIuz", Expected: %"PRIu32"",
+		WLog_WARN(TAG, "SCARDHANDLE is too short: Actual: %" PRIuz ", Expected: %" PRIu32 "",
 		          Stream_GetRemainingLength(s), handle->cbHandle);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -376,19 +379,19 @@ LONG smartcard_pack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s,
 	WINPR_UNUSED(smartcard);
 	pbHandleNdrPtr = (handle->cbHandle) ? 0x00020002 : 0;
 	Stream_Write_UINT32(s, handle->cbHandle); /* cbHandle (4 bytes) */
-	Stream_Write_UINT32(s, pbHandleNdrPtr); /* pbHandleNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, pbHandleNdrPtr);   /* pbHandleNdrPtr (4 bytes) */
 	return SCARD_S_SUCCESS;
 }
 
 LONG smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDHANDLE* handle)
+                                             REDIR_SCARDHANDLE* handle)
 {
 	UINT32 length;
 	WINPR_UNUSED(smartcard);
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "REDIR_SCARDHANDLE is too short: Actual: %"PRIuz", Expected: 4",
+		WLog_WARN(TAG, "REDIR_SCARDHANDLE is too short: Actual: %" PRIuz ", Expected: 4",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -397,20 +400,20 @@ LONG smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStrea
 
 	if (length != handle->cbHandle)
 	{
-		WLog_WARN(TAG, "REDIR_SCARDHANDLE length (%"PRIu32") cbHandle (%"PRIu32") mismatch",
+		WLog_WARN(TAG, "REDIR_SCARDHANDLE length (%" PRIu32 ") cbHandle (%" PRIu32 ") mismatch",
 		          length, handle->cbHandle);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((handle->cbHandle != 4) && (handle->cbHandle != 8))
 	{
-		WLog_WARN(TAG, "REDIR_SCARDHANDLE length is not 4 or 8: %"PRIu32"", handle->cbHandle);
+		WLog_WARN(TAG, "REDIR_SCARDHANDLE length is not 4 or 8: %" PRIu32 "", handle->cbHandle);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((Stream_GetRemainingLength(s) < handle->cbHandle) || (!handle->cbHandle))
 	{
-		WLog_WARN(TAG, "REDIR_SCARDHANDLE is too short: Actual: %"PRIuz", Expected: %"PRIu32"",
+		WLog_WARN(TAG, "REDIR_SCARDHANDLE is too short: Actual: %" PRIuz ", Expected: %" PRIu32 "",
 		          Stream_GetRemainingLength(s), handle->cbHandle);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -422,7 +425,7 @@ LONG smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStrea
 }
 
 LONG smartcard_pack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDHANDLE* handle)
+                                           REDIR_SCARDHANDLE* handle)
 {
 	WINPR_UNUSED(smartcard);
 	Stream_Write_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
@@ -434,13 +437,13 @@ LONG smartcard_pack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream*
 }
 
 LONG smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        EstablishContext_Call* call)
+                                             EstablishContext_Call* call)
 {
 	WINPR_UNUSED(smartcard);
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "EstablishContext_Call is too short: Actual: %"PRIuz", Expected: 4",
+		WLog_WARN(TAG, "EstablishContext_Call is too short: Actual: %" PRIuz ", Expected: 4",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -450,7 +453,7 @@ LONG smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStrea
 }
 
 void smartcard_trace_establish_context_call(SMARTCARD_DEVICE* smartcard,
-		const EstablishContext_Call* call)
+                                            const EstablishContext_Call* call)
 {
 	WINPR_UNUSED(smartcard);
 
@@ -458,30 +461,31 @@ void smartcard_trace_establish_context_call(SMARTCARD_DEVICE* smartcard,
 		return;
 
 	WLog_DBG(TAG, "EstablishContext_Call {");
-	WLog_DBG(TAG, "dwScope: %s (0x%08"PRIX32")",
-	         SCardGetScopeString(call->dwScope), call->dwScope);
+	WLog_DBG(TAG, "dwScope: %s (0x%08" PRIX32 ")", SCardGetScopeString(call->dwScope),
+	         call->dwScope);
 	WLog_DBG(TAG, "}");
 }
 
 LONG smartcard_pack_establish_context_return(SMARTCARD_DEVICE* smartcard, wStream* s,
-        EstablishContext_Return* ret)
+                                             EstablishContext_Return* ret)
 {
 	LONG status;
 
 	if ((status = smartcard_pack_redir_scard_context(smartcard, s, &(ret->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_pack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_pack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if ((status = smartcard_pack_redir_scard_context_ref(smartcard, s, &(ret->hContext))))
-		WLog_ERR(TAG, "smartcard_pack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_pack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 
 	return status;
 }
 
 void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard,
-		const EstablishContext_Return* ret)
+                                              const EstablishContext_Return* ret)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -490,19 +494,20 @@ void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard,
 		return;
 
 	WLog_DBG(TAG, "EstablishContext_Return {");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIX32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	pb = (BYTE*) & (ret->hContext.pbContext);
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIX32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
+	pb = (BYTE*)&(ret->hContext.pbContext);
 
 	if (ret->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], ret->hContext.cbContext);
 	}
 
@@ -515,17 +520,19 @@ LONG smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 
 	return status;
 }
 
-void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, const Context_Call* call, const char* name)
+void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, const Context_Call* call,
+                                  const char* name)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -534,24 +541,26 @@ void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, const Context_Cal
 		return;
 
 	WLog_DBG(TAG, "%s_Call {", name);
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
 	WLog_DBG(TAG, "}");
 }
 
-void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, const Long_Return* ret, const char* name)
+void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, const Long_Return* ret,
+                                 const char* name)
 {
 	WINPR_UNUSED(smartcard);
 
@@ -559,13 +568,13 @@ void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, const Long_Return*
 		return;
 
 	WLog_DBG(TAG, "%s_Return {", name);
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIX32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIX32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
 	WLog_DBG(TAG, "}");
 }
 
 LONG smartcard_unpack_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        ListReaderGroups_Call* call)
+                                              ListReaderGroups_Call* call)
 {
 	LONG status;
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
@@ -575,13 +584,12 @@ LONG smartcard_unpack_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, wStre
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_WARN(TAG, "ListReaderGroups_Call is too short: %d",
-		          (int) Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "ListReaderGroups_Call is too short: %d", (int)Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->fmszGroupsIsNULL); /* fmszGroupsIsNULL (4 bytes) */
-	Stream_Read_UINT32(s, call->cchGroups); /* cchGroups (4 bytes) */
+	Stream_Read_UINT32(s, call->cchGroups);        /* cchGroups (4 bytes) */
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
 
 	if (status)
@@ -591,7 +599,7 @@ LONG smartcard_unpack_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, wStre
 }
 
 void smartcard_trace_list_reader_groups_call(SMARTCARD_DEVICE* smartcard,
-		const ListReaderGroups_Call* call, BOOL unicode)
+                                             const ListReaderGroups_Call* call, BOOL unicode)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -600,33 +608,34 @@ void smartcard_trace_list_reader_groups_call(SMARTCARD_DEVICE* smartcard,
 		return;
 
 	WLog_DBG(TAG, "ListReaderGroups%S_Call {", unicode ? "W" : "A");
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8
+		         "%02" PRIx8 "%02" PRIx8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	WLog_DBG(TAG, "fmszGroupsIsNULL: %"PRId32" cchGroups: 0x%08"PRIx32,
-	         call->fmszGroupsIsNULL, call->cchGroups);
+	WLog_DBG(TAG, "fmszGroupsIsNULL: %" PRId32 " cchGroups: 0x%08" PRIx32, call->fmszGroupsIsNULL,
+	         call->cchGroups);
 	WLog_DBG(TAG, "}");
 }
 
 LONG smartcard_pack_list_reader_groups_return(SMARTCARD_DEVICE* smartcard, wStream* s,
-        ListReaderGroups_Return* ret)
+                                              ListReaderGroups_Return* ret)
 {
 	UINT32 mszNdrPtr;
 	mszNdrPtr = (ret->cBytes) ? 0x00020008 : 0;
 	Stream_EnsureRemainingCapacity(s, ret->cBytes + 32);
 	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
-	Stream_Write_UINT32(s, mszNdrPtr); /* mszNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, mszNdrPtr);   /* mszNdrPtr (4 bytes) */
 
 	if (mszNdrPtr)
 	{
@@ -644,7 +653,7 @@ LONG smartcard_pack_list_reader_groups_return(SMARTCARD_DEVICE* smartcard, wStre
 }
 
 void smartcard_trace_list_reader_groups_return(SMARTCARD_DEVICE* smartcard,
-		const ListReaderGroups_Return* ret, BOOL unicode)
+                                               const ListReaderGroups_Return* ret, BOOL unicode)
 {
 	int index;
 	int length;
@@ -657,12 +666,12 @@ void smartcard_trace_list_reader_groups_return(SMARTCARD_DEVICE* smartcard,
 	if (unicode)
 	{
 		length = ret->cBytes / 2;
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->msz, length, &mszA, 0, NULL, NULL);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)ret->msz, length, &mszA, 0, NULL, NULL);
 	}
 	else
 	{
 		length = ret->cBytes;
-		mszA = (char*) malloc(length);
+		mszA = (char*)malloc(length);
 		CopyMemory(mszA, ret->msz, ret->cBytes);
 	}
 
@@ -673,9 +682,9 @@ void smartcard_trace_list_reader_groups_return(SMARTCARD_DEVICE* smartcard,
 	}
 
 	WLog_DBG(TAG, "ListReaderGroups%s_Return {", unicode ? "W" : "A");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIx32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	WLog_DBG(TAG, "cBytes: %"PRIu32" msz: %s", ret->cBytes, mszA);
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIx32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
+	WLog_DBG(TAG, "cBytes: %" PRIu32 " msz: %s", ret->cBytes, mszA);
 	WLog_DBG(TAG, "}");
 	free(mszA);
 }
@@ -690,32 +699,33 @@ LONG smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 16)
 	{
-		WLog_WARN(TAG, "ListReaders_Call is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "ListReaders_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, call->cBytes); /* cBytes (4 bytes) */
-	Stream_Read_UINT32(s, mszGroupsNdrPtr); /* mszGroupsNdrPtr (4 bytes) */
+	Stream_Read_UINT32(s, call->cBytes);            /* cBytes (4 bytes) */
+	Stream_Read_UINT32(s, mszGroupsNdrPtr);         /* mszGroupsNdrPtr (4 bytes) */
 	Stream_Read_UINT32(s, call->fmszReadersIsNULL); /* fmszReadersIsNULL (4 bytes) */
-	Stream_Read_UINT32(s, call->cchReaders); /* cchReaders (4 bytes) */
+	Stream_Read_UINT32(s, call->cchReaders);        /* cchReaders (4 bytes) */
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if ((mszGroupsNdrPtr && !call->cBytes) || (!mszGroupsNdrPtr && call->cBytes))
 	{
 		WLog_WARN(TAG,
-		          "ListReaders_Call mszGroupsNdrPtr (0x%08"PRIX32") and cBytes (0x%08"PRIX32") inconsistency",
+		          "ListReaders_Call mszGroupsNdrPtr (0x%08" PRIX32 ") and cBytes (0x%08" PRIX32
+		          ") inconsistency",
 		          mszGroupsNdrPtr, call->cBytes);
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -726,19 +736,22 @@ LONG smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 
 		if (count != call->cBytes)
 		{
-			WLog_WARN(TAG, "ListReaders_Call NdrCount (0x%08"PRIX32") and cBytes (0x%08"PRIX32") inconsistency",
+			WLog_WARN(TAG,
+			          "ListReaders_Call NdrCount (0x%08" PRIX32 ") and cBytes (0x%08" PRIX32
+			          ") inconsistency",
 			          count, call->cBytes);
 			return STATUS_INVALID_PARAMETER;
 		}
 
 		if (Stream_GetRemainingLength(s) < call->cBytes)
 		{
-			WLog_WARN(TAG, "ListReaders_Call is too short: Actual: %"PRIuz", Expected: %"PRIu32"",
+			WLog_WARN(TAG,
+			          "ListReaders_Call is too short: Actual: %" PRIuz ", Expected: %" PRIu32 "",
 			          Stream_GetRemainingLength(s), call->cBytes);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
-		call->mszGroups = (BYTE*) calloc(1, call->cBytes + 4);
+		call->mszGroups = (BYTE*)calloc(1, call->cBytes + 4);
 
 		if (!call->mszGroups)
 		{
@@ -764,26 +777,28 @@ void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard, const ListRe
 		return;
 
 	if (unicode)
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) call->mszGroups, call->cBytes / 2, &mszGroupsA, 0, NULL,
-		                   NULL);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)call->mszGroups, call->cBytes / 2, &mszGroupsA, 0,
+		                   NULL, NULL);
 
 	WLog_DBG(TAG, "ListReaders%s_Call {", unicode ? "W" : "A");
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
 	WLog_DBG(TAG,
-	         "cBytes: %"PRIu32" mszGroups: %s fmszReadersIsNULL: %"PRId32" cchReaders: 0x%08"PRIX32"",
+	         "cBytes: %" PRIu32 " mszGroups: %s fmszReadersIsNULL: %" PRId32
+	         " cchReaders: 0x%08" PRIX32 "",
 	         call->cBytes, mszGroupsA, call->fmszReadersIsNULL, call->cchReaders);
 	WLog_DBG(TAG, "}");
 
@@ -809,7 +824,7 @@ LONG smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 	}
 
 	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
-	Stream_Write_UINT32(s, mszNdrPtr); /* mszNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, mszNdrPtr);   /* mszNdrPtr (4 bytes) */
 
 	if (mszNdrPtr)
 	{
@@ -822,7 +837,7 @@ LONG smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 
 		if ((error = smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4)))
 		{
-			WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %"PRId32"", error);
+			WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %" PRId32 "", error);
 			return error;
 		}
 	}
@@ -831,7 +846,7 @@ LONG smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 }
 
 void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, const ListReaders_Return* ret,
-        BOOL unicode)
+                                         BOOL unicode)
 {
 	size_t index;
 	size_t length;
@@ -842,8 +857,8 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, const List
 		return;
 
 	WLog_DBG(TAG, "ListReaders%s_Return {", unicode ? "W" : "A");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIX32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIX32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
 
 	if (ret->ReturnCode != SCARD_S_SUCCESS)
 	{
@@ -855,8 +870,7 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, const List
 	{
 		length = ret->cBytes / 2;
 
-		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->msz, (int)length,
-		                       &mszA, 0, NULL, NULL) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)ret->msz, (int)length, &mszA, 0, NULL, NULL) < 1)
 		{
 			WLog_ERR(TAG, "ConvertFromUnicode failed");
 			return;
@@ -865,7 +879,7 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, const List
 	else
 	{
 		length = ret->cBytes;
-		mszA = (char*) malloc(length);
+		mszA = (char*)malloc(length);
 
 		if (!mszA)
 		{
@@ -882,7 +896,7 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, const List
 			mszA[index] = ',';
 	}
 
-	WLog_DBG(TAG, "cBytes: %"PRIu32" msz: %s", ret->cBytes, mszA);
+	WLog_DBG(TAG, "cBytes: %" PRIu32 " msz: %s", ret->cBytes, mszA);
 	WLog_DBG(TAG, "}");
 	free(mszA);
 }
@@ -894,18 +908,17 @@ LONG smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s,
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_WARN(TAG, "Connect_Common is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "Connect_Common is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(common->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
-	Stream_Read_UINT32(s, common->dwShareMode); /* dwShareMode (4 bytes) */
+	Stream_Read_UINT32(s, common->dwShareMode);          /* dwShareMode (4 bytes) */
 	Stream_Read_UINT32(s, common->dwPreferredProtocols); /* dwPreferredProtocols (4 bytes) */
 	return SCARD_S_SUCCESS;
 }
@@ -918,8 +931,7 @@ LONG smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "ConnectA_Call is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "ConnectA_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
@@ -927,15 +939,15 @@ LONG smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 	if ((status = smartcard_unpack_connect_common(smartcard, s, &(call->Common))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_connect_common failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_connect_common failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	/* szReader */
-	Stream_Seek_UINT32(s); /* NdrMaxCount (4 bytes) */
-	Stream_Seek_UINT32(s); /* NdrOffset (4 bytes) */
+	Stream_Seek_UINT32(s);        /* NdrMaxCount (4 bytes) */
+	Stream_Seek_UINT32(s);        /* NdrOffset (4 bytes) */
 	Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
-	call->szReader = (unsigned char*) malloc(count + 1);
+	call->szReader = (unsigned char*)malloc(count + 1);
 
 	if (!call->szReader)
 	{
@@ -948,7 +960,8 @@ LONG smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	call->szReader[count] = '\0';
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.hContext))))
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 
 	return status;
 }
@@ -962,24 +975,28 @@ void smartcard_trace_connect_a_call(SMARTCARD_DEVICE* smartcard, const ConnectA_
 		return;
 
 	WLog_DBG(TAG, "ConnectA_Call {");
-	pb = (BYTE*) & (call->Common.hContext.pbContext);
+	pb = (BYTE*)&(call->Common.hContext.pbContext);
 
 	if (call->Common.hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
-		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Common.hContext.cbContext);
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
+		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7],
+		         call->Common.hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->Common.hContext.cbContext);
 	}
 
 	WLog_DBG(TAG,
-	         "szReader: %s dwShareMode: %s (0x%08"PRIX32") dwPreferredProtocols: %s (0x%08"PRIX32")",
-	         call->szReader, SCardGetShareModeString(call->Common.dwShareMode), call->Common.dwShareMode,
-	         SCardGetProtocolString(call->Common.dwPreferredProtocols), call->Common.dwPreferredProtocols);
+	         "szReader: %s dwShareMode: %s (0x%08" PRIX32 ") dwPreferredProtocols: %s (0x%08" PRIX32
+	         ")",
+	         call->szReader, SCardGetShareModeString(call->Common.dwShareMode),
+	         call->Common.dwShareMode, SCardGetProtocolString(call->Common.dwPreferredProtocols),
+	         call->Common.dwPreferredProtocols);
 	WLog_DBG(TAG, "}");
 }
 
@@ -991,8 +1008,7 @@ LONG smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "ConnectW_Call is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "ConnectW_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
@@ -1000,15 +1016,15 @@ LONG smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 	if ((status = smartcard_unpack_connect_common(smartcard, s, &(call->Common))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_connect_common failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_connect_common failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	/* szReader */
-	Stream_Seek_UINT32(s); /* NdrMaxCount (4 bytes) */
-	Stream_Seek_UINT32(s); /* NdrOffset (4 bytes) */
+	Stream_Seek_UINT32(s);        /* NdrMaxCount (4 bytes) */
+	Stream_Seek_UINT32(s);        /* NdrOffset (4 bytes) */
 	Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
-	call->szReader = (WCHAR*) calloc((count + 1), 2);
+	call->szReader = (WCHAR*)calloc((count + 1), 2);
 
 	if (!call->szReader)
 	{
@@ -1021,7 +1037,8 @@ LONG smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	call->szReader[count] = '\0';
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.hContext))))
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 
 	return status;
 }
@@ -1037,24 +1054,28 @@ void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, const ConnectW_
 
 	ConvertFromUnicode(CP_UTF8, 0, call->szReader, -1, &szReaderA, 0, NULL, NULL);
 	WLog_DBG(TAG, "ConnectW_Call {");
-	pb = (BYTE*) & (call->Common.hContext.pbContext);
+	pb = (BYTE*)&(call->Common.hContext.pbContext);
 
 	if (call->Common.hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
-		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Common.hContext.cbContext);
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
+		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7],
+		         call->Common.hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->Common.hContext.cbContext);
 	}
 
 	WLog_DBG(TAG,
-	         "szReader: %s dwShareMode: %s (0x%08"PRIX32") dwPreferredProtocols: %s (0x%08"PRIX32")",
+	         "szReader: %s dwShareMode: %s (0x%08" PRIX32 ") dwPreferredProtocols: %s (0x%08" PRIX32
+	         ")",
 	         szReaderA, SCardGetShareModeString(call->Common.dwShareMode), call->Common.dwShareMode,
-	         SCardGetProtocolString(call->Common.dwPreferredProtocols), call->Common.dwPreferredProtocols);
+	         SCardGetProtocolString(call->Common.dwPreferredProtocols),
+	         call->Common.dwPreferredProtocols);
 	WLog_DBG(TAG, "}");
 	free(szReaderA);
 }
@@ -1065,13 +1086,13 @@ LONG smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Conn
 
 	if ((status = smartcard_pack_redir_scard_context(smartcard, s, &(ret->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_pack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_pack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if ((status = smartcard_pack_redir_scard_handle(smartcard, s, &(ret->hCard))))
 	{
-		WLog_ERR(TAG, "smartcard_pack_redir_scard_handle failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_pack_redir_scard_handle failed with error %" PRId32 "", status);
 		return status;
 	}
 
@@ -1079,12 +1100,14 @@ LONG smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Conn
 
 	if ((status = smartcard_pack_redir_scard_context_ref(smartcard, s, &(ret->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_pack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_pack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if ((status = smartcard_pack_redir_scard_handle_ref(smartcard, s, &(ret->hCard))))
-		WLog_ERR(TAG, "smartcard_pack_redir_scard_handle_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_pack_redir_scard_handle_ref failed with error %" PRId32 "",
+		         status);
 
 	return status;
 }
@@ -1098,37 +1121,39 @@ void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, const Connect_R
 		return;
 
 	WLog_DBG(TAG, "Connect_Return {");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIX32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	pb = (BYTE*) & (ret->hContext.pbContext);
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIX32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
+	pb = (BYTE*)&(ret->hContext.pbContext);
 
 	if (ret->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], ret->hContext.cbContext);
 	}
 
-	pb = (BYTE*) & (ret->hCard.pbHandle);
+	pb = (BYTE*)&(ret->hCard.pbHandle);
 
 	if (ret->hCard.cbHandle > 4)
 	{
 		WLog_DBG(TAG,
-		         "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], ret->hCard.cbHandle);
 	}
 
-	WLog_DBG(TAG, "dwActiveProtocol: %s (0x%08"PRIX32")",
+	WLog_DBG(TAG, "dwActiveProtocol: %s (0x%08" PRIX32 ")",
 	         SCardGetProtocolString(ret->dwActiveProtocol), ret->dwActiveProtocol);
 	WLog_DBG(TAG, "}");
 }
@@ -1139,35 +1164,36 @@ LONG smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Re
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_WARN(TAG, "Reconnect_Call is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "Reconnect_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, call->dwShareMode); /* dwShareMode (4 bytes) */
+	Stream_Read_UINT32(s, call->dwShareMode);          /* dwShareMode (4 bytes) */
 	Stream_Read_UINT32(s, call->dwPreferredProtocols); /* dwPreferredProtocols (4 bytes) */
-	Stream_Read_UINT32(s, call->dwInitialization); /* dwInitialization (4 bytes) */
+	Stream_Read_UINT32(s, call->dwInitialization);     /* dwInitialization (4 bytes) */
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %" PRId32 "",
+		         status);
 
 	return status;
 }
@@ -1181,36 +1207,39 @@ void smartcard_trace_reconnect_call(SMARTCARD_DEVICE* smartcard, const Reconnect
 		return;
 
 	WLog_DBG(TAG, "Reconnect_Call {");
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	pb = (BYTE*) & (call->hCard.pbHandle);
+	pb = (BYTE*)&(call->hCard.pbHandle);
 
 	if (call->hCard.cbHandle > 4)
 	{
 		WLog_DBG(TAG,
-		         "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
 	WLog_DBG(TAG,
-	         "dwShareMode: %s (0x%08"PRIX32") dwPreferredProtocols: %s (0x%08"PRIX32") dwInitialization: %s (0x%08"PRIX32")",
+	         "dwShareMode: %s (0x%08" PRIX32 ") dwPreferredProtocols: %s (0x%08" PRIX32
+	         ") dwInitialization: %s (0x%08" PRIX32 ")",
 	         SCardGetShareModeString(call->dwShareMode), call->dwShareMode,
 	         SCardGetProtocolString(call->dwPreferredProtocols), call->dwPreferredProtocols,
 	         SCardGetDispositionString(call->dwInitialization), call->dwInitialization);
@@ -1232,33 +1261,33 @@ void smartcard_trace_reconnect_return(SMARTCARD_DEVICE* smartcard, const Reconne
 		return;
 
 	WLog_DBG(TAG, "Reconnect_Return {");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIX32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	WLog_DBG(TAG, "dwActiveProtocol: %s (0x%08"PRIX32")",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIX32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
+	WLog_DBG(TAG, "dwActiveProtocol: %s (0x%08" PRIX32 ")",
 	         SCardGetProtocolString(ret->dwActiveProtocol), ret->dwActiveProtocol);
 	WLog_DBG(TAG, "}");
 }
 
 LONG smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        HCardAndDisposition_Call* call)
+                                                 HCardAndDisposition_Call* call)
 {
 	LONG status;
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "HCardAndDisposition_Call is too short: %"PRIuz"",
+		WLog_WARN(TAG, "HCardAndDisposition_Call is too short: %" PRIuz "",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1267,18 +1296,20 @@ LONG smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %" PRId32 "",
+		         status);
 
 	return status;
 }
 
 void smartcard_trace_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard,
-        HCardAndDisposition_Call* call, const char* name)
+                                                HCardAndDisposition_Call* call, const char* name)
 {
 	BYTE* pb;
 	WINPR_UNUSED(smartcard);
@@ -1287,41 +1318,43 @@ void smartcard_trace_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard,
 		return;
 
 	WLog_DBG(TAG, "%s_Call {", name);
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	pb = (BYTE*) & (call->hCard.pbHandle);
+	pb = (BYTE*)&(call->hCard.pbHandle);
 
 	if (call->hCard.cbHandle > 4)
 	{
 		WLog_DBG(TAG,
-		         "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
-	WLog_DBG(TAG, "dwDisposition: %s (0x%08"PRIX32")",
+	WLog_DBG(TAG, "dwDisposition: %s (0x%08" PRIX32 ")",
 	         SCardGetDispositionString(call->dwDisposition), call->dwDisposition);
 	WLog_DBG(TAG, "}");
 }
 
 LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        GetStatusChangeA_Call* call)
+                                               GetStatusChangeA_Call* call)
 {
 	UINT32 index;
 	UINT32 count;
@@ -1335,30 +1368,31 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %"PRIuz"",
+		WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %" PRIuz "",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
-	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
+	Stream_Read_UINT32(s, call->dwTimeOut);      /* dwTimeOut (4 bytes) */
+	Stream_Read_UINT32(s, call->cReaders);       /* cReaders (4 bytes) */
 	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %"PRIuz"",
+		WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %" PRIuz "",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1368,14 +1402,16 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 	if (count != call->cReaders)
 	{
 		WLog_WARN(TAG,
-		          "GetStatusChangeA_Call unexpected reader count: Actual: %"PRIu32", Expected: %"PRIu32"",
+		          "GetStatusChangeA_Call unexpected reader count: Actual: %" PRIu32
+		          ", Expected: %" PRIu32 "",
 		          count, call->cReaders);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (call->cReaders > 0)
 	{
-		call->rgReaderStates = (LPSCARD_READERSTATEA) calloc(call->cReaders, sizeof(SCARD_READERSTATEA));
+		call->rgReaderStates =
+		    (LPSCARD_READERSTATEA)calloc(call->cReaders, sizeof(SCARD_READERSTATEA));
 
 		if (!call->rgReaderStates)
 		{
@@ -1389,17 +1425,17 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 
 			if (Stream_GetRemainingLength(s) < 52)
 			{
-				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %"PRIuz"",
+				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %" PRIuz "",
 				          Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
-			Stream_Read_UINT32(s, szReaderNdrPtr); /* szReaderNdrPtr (4 bytes) */
+			Stream_Read_UINT32(s, szReaderNdrPtr);              /* szReaderNdrPtr (4 bytes) */
 			Stream_Read_UINT32(s, readerState->dwCurrentState); /* dwCurrentState (4 bytes) */
-			Stream_Read_UINT32(s, readerState->dwEventState); /* dwEventState (4 bytes) */
-			Stream_Read_UINT32(s, readerState->cbAtr); /* cbAtr (4 bytes) */
-			Stream_Read(s, readerState->rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
-			Stream_Seek(s, 4); /* rgbAtr [32..36] (4 bytes) */
+			Stream_Read_UINT32(s, readerState->dwEventState);   /* dwEventState (4 bytes) */
+			Stream_Read_UINT32(s, readerState->cbAtr);          /* cbAtr (4 bytes) */
+			Stream_Read(s, readerState->rgbAtr, 32);            /* rgbAtr [0..32] (32 bytes) */
+			Stream_Seek(s, 4);                                  /* rgbAtr [32..36] (4 bytes) */
 		}
 
 		for (index = 0; index < call->cReaders; index++)
@@ -1408,23 +1444,23 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 
 			if (Stream_GetRemainingLength(s) < 12)
 			{
-				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %"PRIuz"",
+				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %" PRIuz "",
 				          Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
 			Stream_Read_UINT32(s, maxCount); /* NdrMaxCount (4 bytes) */
-			Stream_Read_UINT32(s, offset); /* NdrOffset (4 bytes) */
-			Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
+			Stream_Read_UINT32(s, offset);   /* NdrOffset (4 bytes) */
+			Stream_Read_UINT32(s, count);    /* NdrActualCount (4 bytes) */
 
 			if (Stream_GetRemainingLength(s) < count)
 			{
-				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %"PRIuz"",
+				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %" PRIuz "",
 				          Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
-			readerState->szReader = (LPCSTR) malloc(count + 1);
+			readerState->szReader = (LPCSTR)malloc(count + 1);
 
 			if (!readerState->szReader)
 			{
@@ -1432,9 +1468,9 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 				return STATUS_NO_MEMORY;
 			}
 
-			Stream_Read(s, (void*) readerState->szReader, count);
+			Stream_Read(s, (void*)readerState->szReader, count);
 			smartcard_unpack_read_size_align(smartcard, s, count, 4);
-			((char*) readerState->szReader)[count] = '\0';
+			((char*)readerState->szReader)[count] = '\0';
 
 			if (!readerState->szReader)
 			{
@@ -1448,7 +1484,7 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 }
 
 void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard,
-		const GetStatusChangeA_Call* call)
+                                              const GetStatusChangeA_Call* call)
 {
 	BYTE* pb;
 	UINT32 index;
@@ -1461,34 +1497,35 @@ void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard,
 		return;
 
 	WLog_DBG(TAG, "GetStatusChangeA_Call {");
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	WLog_DBG(TAG, "dwTimeOut: 0x%08"PRIX32" cReaders: %"PRIu32"",
-	         call->dwTimeOut, call->cReaders);
+	WLog_DBG(TAG, "dwTimeOut: 0x%08" PRIX32 " cReaders: %" PRIu32 "", call->dwTimeOut,
+	         call->cReaders);
 
 	for (index = 0; index < call->cReaders; index++)
 	{
 		readerState = &call->rgReaderStates[index];
-		WLog_DBG(TAG, "\t[%"PRIu32"]: szReader: %s cbAtr: %"PRIu32"",
-		         index, readerState->szReader, readerState->cbAtr);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: szReader: %s cbAtr: %" PRIu32 "", index,
+		         readerState->szReader, readerState->cbAtr);
 		szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);
 		szEventState = SCardGetReaderStateString(readerState->dwEventState);
-		WLog_DBG(TAG, "\t[%"PRIu32"]: dwCurrentState: %s (0x%08"PRIX32")",
-		         index, szCurrentState, readerState->dwCurrentState);
-		WLog_DBG(TAG, "\t[%"PRIu32"]: dwEventState: %s (0x%08"PRIX32")",
-		         index, szEventState, readerState->dwEventState);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: dwCurrentState: %s (0x%08" PRIX32 ")", index,
+		         szCurrentState, readerState->dwCurrentState);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: dwEventState: %s (0x%08" PRIX32 ")", index, szEventState,
+		         readerState->dwEventState);
 		free(szCurrentState);
 		free(szEventState);
 	}
@@ -1497,7 +1534,7 @@ void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard,
 }
 
 LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        GetStatusChangeW_Call* call)
+                                               GetStatusChangeW_Call* call)
 {
 	UINT32 index;
 	UINT32 count;
@@ -1511,30 +1548,31 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %"PRIuz"",
+		WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %" PRIuz "",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
-	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
+	Stream_Read_UINT32(s, call->dwTimeOut);      /* dwTimeOut (4 bytes) */
+	Stream_Read_UINT32(s, call->cReaders);       /* cReaders (4 bytes) */
 	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %"PRIuz"",
+		WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %" PRIuz "",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1543,7 +1581,8 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 
 	if (call->cReaders > 0)
 	{
-		call->rgReaderStates = (LPSCARD_READERSTATEW) calloc(call->cReaders, sizeof(SCARD_READERSTATEW));
+		call->rgReaderStates =
+		    (LPSCARD_READERSTATEW)calloc(call->cReaders, sizeof(SCARD_READERSTATEW));
 
 		if (!call->rgReaderStates)
 		{
@@ -1557,17 +1596,17 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 
 			if (Stream_GetRemainingLength(s) < 52)
 			{
-				WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %"PRIuz"",
+				WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %" PRIuz "",
 				          Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
-			Stream_Read_UINT32(s, szReaderNdrPtr); /* (4 bytes) */
+			Stream_Read_UINT32(s, szReaderNdrPtr);              /* (4 bytes) */
 			Stream_Read_UINT32(s, readerState->dwCurrentState); /* dwCurrentState (4 bytes) */
-			Stream_Read_UINT32(s, readerState->dwEventState); /* dwEventState (4 bytes) */
-			Stream_Read_UINT32(s, readerState->cbAtr); /* cbAtr (4 bytes) */
-			Stream_Read(s, readerState->rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
-			Stream_Seek(s, 4); /* rgbAtr [32..36] (4 bytes) */
+			Stream_Read_UINT32(s, readerState->dwEventState);   /* dwEventState (4 bytes) */
+			Stream_Read_UINT32(s, readerState->cbAtr);          /* cbAtr (4 bytes) */
+			Stream_Read(s, readerState->rgbAtr, 32);            /* rgbAtr [0..32] (32 bytes) */
+			Stream_Seek(s, 4);                                  /* rgbAtr [32..36] (4 bytes) */
 		}
 
 		for (index = 0; index < call->cReaders; index++)
@@ -1576,23 +1615,23 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 
 			if (Stream_GetRemainingLength(s) < 12)
 			{
-				WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %"PRIuz"",
+				WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %" PRIuz "",
 				          Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
 			Stream_Read_UINT32(s, maxCount); /* NdrMaxCount (4 bytes) */
-			Stream_Read_UINT32(s, offset); /* NdrOffset (4 bytes) */
-			Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
+			Stream_Read_UINT32(s, offset);   /* NdrOffset (4 bytes) */
+			Stream_Read_UINT32(s, count);    /* NdrActualCount (4 bytes) */
 
 			if (Stream_GetRemainingLength(s) < (count * 2))
 			{
-				WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %"PRIuz"",
+				WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %" PRIuz "",
 				          Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
-			readerState->szReader = (WCHAR*) calloc((count + 1), 2);
+			readerState->szReader = (WCHAR*)calloc((count + 1), 2);
 
 			if (!readerState->szReader)
 			{
@@ -1600,9 +1639,9 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 				return STATUS_NO_MEMORY;
 			}
 
-			Stream_Read(s, (void*) readerState->szReader, (count * 2));
+			Stream_Read(s, (void*)readerState->szReader, (count * 2));
 			smartcard_unpack_read_size_align(smartcard, s, (count * 2), 4);
-			((WCHAR*) readerState->szReader)[count] = '\0';
+			((WCHAR*)readerState->szReader)[count] = '\0';
 
 			if (!readerState->szReader)
 			{
@@ -1616,7 +1655,7 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 }
 
 void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard,
-        GetStatusChangeW_Call* call)
+                                              GetStatusChangeW_Call* call)
 {
 	BYTE* pb;
 	UINT32 index;
@@ -1629,36 +1668,37 @@ void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard,
 		return;
 
 	WLog_DBG(TAG, "GetStatusChangeW_Call {");
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	WLog_DBG(TAG, "dwTimeOut: 0x%08"PRIX32" cReaders: %"PRIu32"",
-	         call->dwTimeOut, call->cReaders);
+	WLog_DBG(TAG, "dwTimeOut: 0x%08" PRIX32 " cReaders: %" PRIu32 "", call->dwTimeOut,
+	         call->cReaders);
 
 	for (index = 0; index < call->cReaders; index++)
 	{
 		char* szReaderA = NULL;
 		readerState = &call->rgReaderStates[index];
 		ConvertFromUnicode(CP_UTF8, 0, readerState->szReader, -1, &szReaderA, 0, NULL, NULL);
-		WLog_DBG(TAG, "\t[%"PRIu32"]: szReader: %s cbAtr: %"PRIu32"",
-		         index, szReaderA, readerState->cbAtr);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: szReader: %s cbAtr: %" PRIu32 "", index, szReaderA,
+		         readerState->cbAtr);
 		szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);
 		szEventState = SCardGetReaderStateString(readerState->dwEventState);
-		WLog_DBG(TAG, "\t[%"PRIu32"]: dwCurrentState: %s (0x%08"PRIX32")",
-		         index, szCurrentState, readerState->dwCurrentState);
-		WLog_DBG(TAG, "\t[%"PRIu32"]: dwEventState: %s (0x%08"PRIX32")",
-		         index, szEventState, readerState->dwEventState);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: dwCurrentState: %s (0x%08" PRIX32 ")", index,
+		         szCurrentState, readerState->dwCurrentState);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: dwEventState: %s (0x%08" PRIX32 ")", index, szEventState,
+		         readerState->dwEventState);
 		free(szCurrentState);
 		free(szEventState);
 		free(szReaderA);
@@ -1668,30 +1708,30 @@ void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard,
 }
 
 LONG smartcard_pack_get_status_change_return(SMARTCARD_DEVICE* smartcard, wStream* s,
-        GetStatusChange_Return* ret)
+                                             GetStatusChange_Return* ret)
 {
 	UINT32 index;
 	ReaderState_Return* rgReaderState;
 	WINPR_UNUSED(smartcard);
 	Stream_Write_UINT32(s, ret->cReaders); /* cReaders (4 bytes) */
-	Stream_Write_UINT32(s, 0x00020100); /* rgReaderStatesNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020100);    /* rgReaderStatesNdrPtr (4 bytes) */
 	Stream_Write_UINT32(s, ret->cReaders); /* rgReaderStatesNdrCount (4 bytes) */
 
 	for (index = 0; index < ret->cReaders; index++)
 	{
 		rgReaderState = &(ret->rgReaderStates[index]);
 		Stream_Write_UINT32(s, rgReaderState->dwCurrentState); /* dwCurrentState (4 bytes) */
-		Stream_Write_UINT32(s, rgReaderState->dwEventState); /* dwEventState (4 bytes) */
-		Stream_Write_UINT32(s, rgReaderState->cbAtr); /* cbAtr (4 bytes) */
-		Stream_Write(s, rgReaderState->rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
-		Stream_Zero(s, 4); /* rgbAtr [32..36] (32 bytes) */
+		Stream_Write_UINT32(s, rgReaderState->dwEventState);   /* dwEventState (4 bytes) */
+		Stream_Write_UINT32(s, rgReaderState->cbAtr);          /* cbAtr (4 bytes) */
+		Stream_Write(s, rgReaderState->rgbAtr, 32);            /* rgbAtr [0..32] (32 bytes) */
+		Stream_Zero(s, 4);                                     /* rgbAtr [32..36] (32 bytes) */
 	}
 
 	return SCARD_S_SUCCESS;
 }
 
 void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard,
-		const GetStatusChange_Return* ret, BOOL unicode)
+                                              const GetStatusChange_Return* ret, BOOL unicode)
 {
 	UINT32 index;
 	char* rgbAtr;
@@ -1704,22 +1744,22 @@ void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard,
 		return;
 
 	WLog_DBG(TAG, "GetStatusChange%s_Return {", unicode ? "W" : "A");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIX32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	WLog_DBG(TAG, "cReaders: %"PRIu32"", ret->cReaders);
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIX32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
+	WLog_DBG(TAG, "cReaders: %" PRIu32 "", ret->cReaders);
 
 	for (index = 0; index < ret->cReaders; index++)
 	{
 		rgReaderState = &(ret->rgReaderStates[index]);
 		szCurrentState = SCardGetReaderStateString(rgReaderState->dwCurrentState);
 		szEventState = SCardGetReaderStateString(rgReaderState->dwEventState);
-		rgbAtr = winpr_BinToHexString((BYTE*) & (rgReaderState->rgbAtr), rgReaderState->cbAtr, FALSE);
-		WLog_DBG(TAG, "\t[%"PRIu32"]: dwCurrentState: %s (0x%08"PRIX32")",
-		         index, szCurrentState, rgReaderState->dwCurrentState);
-		WLog_DBG(TAG, "\t[%"PRIu32"]: dwEventState: %s (0x%08"PRIX32")",
-		         index, szEventState, rgReaderState->dwEventState);
-		WLog_DBG(TAG, "\t[%"PRIu32"]: cbAtr: %"PRIu32" rgbAtr: %s",
-		         index, rgReaderState->cbAtr, rgbAtr);
+		rgbAtr = winpr_BinToHexString((BYTE*)&(rgReaderState->rgbAtr), rgReaderState->cbAtr, FALSE);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: dwCurrentState: %s (0x%08" PRIX32 ")", index,
+		         szCurrentState, rgReaderState->dwCurrentState);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: dwEventState: %s (0x%08" PRIX32 ")", index, szEventState,
+		         rgReaderState->dwEventState);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: cbAtr: %" PRIu32 " rgbAtr: %s", index, rgReaderState->cbAtr,
+		         rgbAtr);
 		free(szCurrentState);
 		free(szEventState);
 		free(rgbAtr);
@@ -1734,34 +1774,35 @@ LONG smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, State_
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_WARN(TAG, "State_Call is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "State_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->fpbAtrIsNULL); /* fpbAtrIsNULL (4 bytes) */
-	Stream_Read_UINT32(s, call->cbAtrLen); /* cbAtrLen (4 bytes) */
+	Stream_Read_UINT32(s, call->cbAtrLen);     /* cbAtrLen (4 bytes) */
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %" PRId32 "",
+		         status);
 
 	return status;
 }
@@ -1769,15 +1810,15 @@ LONG smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, State_
 LONG smartcard_pack_state_return(SMARTCARD_DEVICE* smartcard, wStream* s, State_Return* ret)
 {
 	LONG status;
-	Stream_Write_UINT32(s, ret->dwState); /* dwState (4 bytes) */
-	Stream_Write_UINT32(s, ret->dwProtocol); /* dwProtocol (4 bytes) */
-	Stream_Write_UINT32(s, ret->cbAtrLen); /* cbAtrLen (4 bytes) */
-	Stream_Write_UINT32(s, 0x00020020); /* rgAtrNdrPtr (4 bytes) */
-	Stream_Write_UINT32(s, ret->cbAtrLen); /* rgAtrLength (4 bytes) */
+	Stream_Write_UINT32(s, ret->dwState);       /* dwState (4 bytes) */
+	Stream_Write_UINT32(s, ret->dwProtocol);    /* dwProtocol (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbAtrLen);      /* cbAtrLen (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020020);         /* rgAtrNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbAtrLen);      /* rgAtrLength (4 bytes) */
 	Stream_Write(s, ret->rgAtr, ret->cbAtrLen); /* rgAtr */
 
 	if ((status = smartcard_pack_write_size_align(smartcard, s, ret->cbAtrLen, 4)))
-		WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %" PRId32 "", status);
 
 	return status;
 }
@@ -1788,35 +1829,36 @@ LONG smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Statu
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_WARN(TAG, "Status_Call is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "Status_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->fmszReaderNamesIsNULL); /* fmszReaderNamesIsNULL (4 bytes) */
-	Stream_Read_UINT32(s, call->cchReaderLen); /* cchReaderLen (4 bytes) */
-	Stream_Read_UINT32(s, call->cbAtrLen); /* cbAtrLen (4 bytes) */
+	Stream_Read_UINT32(s, call->cchReaderLen);          /* cchReaderLen (4 bytes) */
+	Stream_Read_UINT32(s, call->cbAtrLen);              /* cbAtrLen (4 bytes) */
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %" PRId32 "",
+		         status);
 
 	return status;
 }
@@ -1830,35 +1872,38 @@ void smartcard_trace_status_call(SMARTCARD_DEVICE* smartcard, const Status_Call*
 		return;
 
 	WLog_DBG(TAG, "Status%s_Call {", unicode ? "W" : "A");
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	pb = (BYTE*) & (call->hCard.pbHandle);
+	pb = (BYTE*)&(call->hCard.pbHandle);
 
 	if (call->hCard.cbHandle > 4)
 	{
 		WLog_DBG(TAG,
-		         "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
-	WLog_DBG(TAG, "fmszReaderNamesIsNULL: %"PRId32" cchReaderLen: %"PRIu32" cbAtrLen: %"PRIu32"",
+	WLog_DBG(TAG,
+	         "fmszReaderNamesIsNULL: %" PRId32 " cchReaderLen: %" PRIu32 " cbAtrLen: %" PRIu32 "",
 	         call->fmszReaderNamesIsNULL, call->cchReaderLen, call->cbAtrLen);
 	WLog_DBG(TAG, "}");
 }
@@ -1873,13 +1918,13 @@ LONG smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Statu
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
-	Stream_Write_UINT32(s, 0x00020010); /* mszReaderNamesNdrPtr (4 bytes) */
-	Stream_Write_UINT32(s, ret->dwState); /* dwState (4 bytes) */
+	Stream_Write_UINT32(s, ret->cBytes);     /* cBytes (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020010);      /* mszReaderNamesNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, ret->dwState);    /* dwState (4 bytes) */
 	Stream_Write_UINT32(s, ret->dwProtocol); /* dwProtocol (4 bytes) */
-	Stream_Write(s, ret->pbAtr, 32); /* pbAtr (32 bytes) */
-	Stream_Write_UINT32(s, ret->cbAtrLen); /* cbAtrLen (4 bytes) */
-	Stream_Write_UINT32(s, ret->cBytes); /* mszReaderNamesNdrLen (4 bytes) */
+	Stream_Write(s, ret->pbAtr, 32);         /* pbAtr (32 bytes) */
+	Stream_Write_UINT32(s, ret->cbAtrLen);   /* cbAtrLen (4 bytes) */
+	Stream_Write_UINT32(s, ret->cBytes);     /* mszReaderNamesNdrLen (4 bytes) */
 
 	if (ret->mszReaderNames)
 		Stream_Write(s, ret->mszReaderNames, ret->cBytes);
@@ -1887,12 +1932,13 @@ LONG smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Statu
 		Stream_Zero(s, ret->cBytes);
 
 	if ((status = smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4)))
-		WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %" PRId32 "", status);
 
 	return status;
 }
 
-void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Status_Return* ret, BOOL unicode)
+void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Status_Return* ret,
+                                   BOOL unicode)
 {
 	size_t index;
 	size_t length;
@@ -1909,7 +1955,7 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Status_Ret
 		{
 			length = ret->cBytes / 2;
 
-			if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->mszReaderNames, (int) length,
+			if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)ret->mszReaderNames, (int)length,
 			                       &mszReaderNamesA, 0, NULL, NULL) < 1)
 			{
 				WLog_ERR(TAG, "ConvertFromUnicode failed");
@@ -1918,8 +1964,8 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Status_Ret
 		}
 		else
 		{
-			length = (int) ret->cBytes;
-			mszReaderNamesA = (char*) malloc(length);
+			length = (int)ret->cBytes;
+			mszReaderNamesA = (char*)malloc(length);
 
 			if (!mszReaderNamesA)
 			{
@@ -1944,19 +1990,18 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Status_Ret
 
 	pbAtr = winpr_BinToHexString(ret->pbAtr, ret->cbAtrLen, FALSE);
 	WLog_DBG(TAG, "Status%s_Return {", unicode ? "W" : "A");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIX32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	WLog_DBG(TAG, "dwState: %s (0x%08"PRIX32") dwProtocol: %s (0x%08"PRIX32")",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIX32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
+	WLog_DBG(TAG, "dwState: %s (0x%08" PRIX32 ") dwProtocol: %s (0x%08" PRIX32 ")",
 	         SCardGetCardStateString(ret->dwState), ret->dwState,
 	         SCardGetProtocolString(ret->dwProtocol), ret->dwProtocol);
 
 	if (mszReaderNamesA)
 	{
-		WLog_DBG(TAG, "cBytes: %"PRIu32" mszReaderNames: %s",
-		         ret->cBytes, mszReaderNamesA);
+		WLog_DBG(TAG, "cBytes: %" PRIu32 " mszReaderNames: %s", ret->cBytes, mszReaderNamesA);
 	}
 
-	WLog_DBG(TAG, "cbAtrLen: %"PRIu32" pbAtr: %s", ret->cbAtrLen, pbAtr);
+	WLog_DBG(TAG, "cbAtrLen: %" PRIu32 " pbAtr: %s", ret->cbAtrLen, pbAtr);
 	WLog_DBG(TAG, "}");
 	free(mszReaderNamesA);
 	free(pbAtr);
@@ -1968,35 +2013,36 @@ LONG smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, G
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_WARN(TAG, "GetAttrib_Call is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "GetAttrib_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, call->dwAttrId); /* dwAttrId (4 bytes) */
+	Stream_Read_UINT32(s, call->dwAttrId);      /* dwAttrId (4 bytes) */
 	Stream_Read_UINT32(s, call->fpbAttrIsNULL); /* fpbAttrIsNULL (4 bytes) */
-	Stream_Read_UINT32(s, call->cbAttrLen); /* cbAttrLen (4 bytes) */
+	Stream_Read_UINT32(s, call->cbAttrLen);     /* cbAttrLen (4 bytes) */
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %" PRId32 "",
+		         status);
 
 	return status;
 }
@@ -2010,36 +2056,40 @@ void smartcard_trace_get_attrib_call(SMARTCARD_DEVICE* smartcard, GetAttrib_Call
 		return;
 
 	WLog_DBG(TAG, "GetAttrib_Call {");
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	pb = (BYTE*) & (call->hCard.pbHandle);
+	pb = (BYTE*)&(call->hCard.pbHandle);
 
 	if (call->hCard.cbHandle > 4)
 	{
 		WLog_DBG(TAG,
-		         "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
-	WLog_DBG(TAG, "dwAttrId: %s (0x%08"PRIX32") fpbAttrIsNULL: %"PRId32" cbAttrLen: 0x%08"PRIX32"",
-	         SCardGetAttributeString(call->dwAttrId), call->dwAttrId, call->fpbAttrIsNULL, call->cbAttrLen);
+	WLog_DBG(TAG,
+	         "dwAttrId: %s (0x%08" PRIX32 ") fpbAttrIsNULL: %" PRId32 " cbAttrLen: 0x%08" PRIX32 "",
+	         SCardGetAttributeString(call->dwAttrId), call->dwAttrId, call->fpbAttrIsNULL,
+	         call->cbAttrLen);
 	WLog_DBG(TAG, "}");
 }
 
@@ -2055,7 +2105,7 @@ LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 	}
 
 	Stream_Write_UINT32(s, ret->cbAttrLen); /* cbAttrLen (4 bytes) */
-	Stream_Write_UINT32(s, 0x00020080); /* pbAttrNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020080);     /* pbAttrNdrPtr (4 bytes) */
 	Stream_Write_UINT32(s, ret->cbAttrLen); /* pbAttrNdrCount (4 bytes) */
 
 	if (!ret->pbAttr)
@@ -2064,7 +2114,7 @@ LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 		Stream_Write(s, ret->pbAttr, ret->cbAttrLen); /* pbAttr */
 
 	if ((status = smartcard_pack_write_size_align(smartcard, s, ret->cbAttrLen, 4)))
-		WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %" PRId32 "", status);
 
 	return status;
 }
@@ -2078,19 +2128,19 @@ void smartcard_trace_get_attrib_return(SMARTCARD_DEVICE* smartcard, const GetAtt
 		return;
 
 	WLog_DBG(TAG, "GetAttrib_Return {");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIX32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	WLog_DBG(TAG, "dwAttrId: %s (0x%08"PRIX32") cbAttrLen: 0x%08"PRIX32"",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIX32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
+	WLog_DBG(TAG, "dwAttrId: %s (0x%08" PRIX32 ") cbAttrLen: 0x%08" PRIX32 "",
 	         SCardGetAttributeString(dwAttrId), dwAttrId, ret->cbAttrLen);
 
 	if (dwAttrId == SCARD_ATTR_VENDOR_NAME)
 	{
-		WLog_DBG(TAG, "pbAttr: %.*s", ret->cbAttrLen, (char*) ret->pbAttr);
+		WLog_DBG(TAG, "pbAttr: %.*s", ret->cbAttrLen, (char*)ret->pbAttr);
 	}
 	else if (dwAttrId == SCARD_ATTR_CURRENT_PROTOCOL_TYPE)
 	{
-		UINT32 dwProtocolType = *((UINT32*) ret->pbAttr);
-		WLog_DBG(TAG, "dwProtocolType: %s (0x%08"PRIX32")",
+		UINT32 dwProtocolType = *((UINT32*)ret->pbAttr);
+		WLog_DBG(TAG, "dwProtocolType: %s (0x%08" PRIX32 ")",
 		         SCardGetProtocolString(dwProtocolType), dwProtocolType);
 	}
 
@@ -2105,38 +2155,39 @@ LONG smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 20)
 	{
-		WLog_WARN(TAG, "Control_Call is too short: %"PRIuz"",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "Control_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, call->dwControlCode); /* dwControlCode (4 bytes) */
-	Stream_Read_UINT32(s, call->cbInBufferSize); /* cbInBufferSize (4 bytes) */
-	Stream_Seek_UINT32(s); /* pvInBufferNdrPtr (4 bytes) */
+	Stream_Read_UINT32(s, call->dwControlCode);      /* dwControlCode (4 bytes) */
+	Stream_Read_UINT32(s, call->cbInBufferSize);     /* cbInBufferSize (4 bytes) */
+	Stream_Seek_UINT32(s);                           /* pvInBufferNdrPtr (4 bytes) */
 	Stream_Read_UINT32(s, call->fpvOutBufferIsNULL); /* fpvOutBufferIsNULL (4 bytes) */
-	Stream_Read_UINT32(s, call->cbOutBufferSize); /* cbOutBufferSize (4 bytes) */
+	Stream_Read_UINT32(s, call->cbOutBufferSize);    /* cbOutBufferSize (4 bytes) */
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
@@ -2144,8 +2195,7 @@ LONG smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 		{
-			WLog_WARN(TAG, "Control_Call is too short: %"PRIuz"",
-			          Stream_GetRemainingLength(s));
+			WLog_WARN(TAG, "Control_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
@@ -2153,12 +2203,11 @@ LONG smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 
 		if (Stream_GetRemainingLength(s) < length)
 		{
-			WLog_WARN(TAG, "Control_Call is too short: %"PRIuz"",
-			          Stream_GetRemainingLength(s));
+			WLog_WARN(TAG, "Control_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
-		call->pvInBuffer = (BYTE*) malloc(length);
+		call->pvInBuffer = (BYTE*)malloc(length);
 
 		if (!call->pvInBuffer)
 		{
@@ -2182,37 +2231,41 @@ void smartcard_trace_control_call(SMARTCARD_DEVICE* smartcard, const Control_Cal
 		return;
 
 	WLog_DBG(TAG, "Control_Call {");
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	pb = (BYTE*) & (call->hCard.pbHandle);
+	pb = (BYTE*)&(call->hCard.pbHandle);
 
 	if (call->hCard.cbHandle > 4)
 	{
 		WLog_DBG(TAG,
-		         "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
 	WLog_DBG(TAG,
-	         "dwControlCode: 0x%08"PRIX32" cbInBufferSize: %"PRIu32" fpvOutBufferIsNULL: %"PRId32" cbOutBufferSize: %"PRIu32"",
-	         call->dwControlCode, call->cbInBufferSize, call->fpvOutBufferIsNULL, call->cbOutBufferSize);
+	         "dwControlCode: 0x%08" PRIX32 " cbInBufferSize: %" PRIu32
+	         " fpvOutBufferIsNULL: %" PRId32 " cbOutBufferSize: %" PRIu32 "",
+	         call->dwControlCode, call->cbInBufferSize, call->fpvOutBufferIsNULL,
+	         call->cbOutBufferSize);
 
 	if (call->pvInBuffer)
 	{
@@ -2239,7 +2292,7 @@ LONG smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 	}
 
 	Stream_Write_UINT32(s, ret->cbOutBufferSize); /* cbOutBufferSize (4 bytes) */
-	Stream_Write_UINT32(s, 0x00020040); /* pvOutBufferPointer (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020040);           /* pvOutBufferPointer (4 bytes) */
 	Stream_Write_UINT32(s, ret->cbOutBufferSize); /* pvOutBufferLength (4 bytes) */
 
 	if (ret->cbOutBufferSize > 0)
@@ -2248,7 +2301,7 @@ LONG smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 
 		if ((error = smartcard_pack_write_size_align(smartcard, s, ret->cbOutBufferSize, 4)))
 		{
-			WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %"PRId32"", error);
+			WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %" PRId32 "", error);
 			return error;
 		}
 	}
@@ -2264,9 +2317,9 @@ void smartcard_trace_control_return(SMARTCARD_DEVICE* smartcard, const Control_R
 		return;
 
 	WLog_DBG(TAG, "Control_Return {");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIX32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	WLog_DBG(TAG, "cbOutBufferSize: %"PRIu32"", ret->cbOutBufferSize);
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIX32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
+	WLog_DBG(TAG, "cbOutBufferSize: %" PRIu32 "", ret->cbOutBufferSize);
 
 	if (ret->pvOutBuffer)
 	{
@@ -2298,61 +2351,65 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 32)
 	{
-		WLog_WARN(TAG, "Transmit_Call is too short: Actual: %"PRIuz", Expected: 32",
+		WLog_WARN(TAG, "Transmit_Call is too short: Actual: %" PRIuz ", Expected: 32",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, ioSendPci.dwProtocol); /* dwProtocol (4 bytes) */
-	Stream_Read_UINT32(s, ioSendPci.cbExtraBytes); /* cbExtraBytes (4 bytes) */
-	Stream_Read_UINT32(s, pbExtraBytesNdrPtr); /* pbExtraBytesNdrPtr (4 bytes) */
-	Stream_Read_UINT32(s, call->cbSendLength); /* cbSendLength (4 bytes) */
-	Stream_Read_UINT32(s, pbSendBufferNdrPtr); /* pbSendBufferNdrPtr (4 bytes) */
-	Stream_Read_UINT32(s, pioRecvPciNdrPtr); /* pioRecvPciNdrPtr (4 bytes) */
+	Stream_Read_UINT32(s, ioSendPci.dwProtocol);      /* dwProtocol (4 bytes) */
+	Stream_Read_UINT32(s, ioSendPci.cbExtraBytes);    /* cbExtraBytes (4 bytes) */
+	Stream_Read_UINT32(s, pbExtraBytesNdrPtr);        /* pbExtraBytesNdrPtr (4 bytes) */
+	Stream_Read_UINT32(s, call->cbSendLength);        /* cbSendLength (4 bytes) */
+	Stream_Read_UINT32(s, pbSendBufferNdrPtr);        /* pbSendBufferNdrPtr (4 bytes) */
+	Stream_Read_UINT32(s, pioRecvPciNdrPtr);          /* pioRecvPciNdrPtr (4 bytes) */
 	Stream_Read_UINT32(s, call->fpbRecvBufferIsNULL); /* fpbRecvBufferIsNULL (4 bytes) */
-	Stream_Read_UINT32(s, call->cbRecvLength); /* cbRecvLength (4 bytes) */
+	Stream_Read_UINT32(s, call->cbRecvLength);        /* cbRecvLength (4 bytes) */
 
 	if (ioSendPci.cbExtraBytes > 1024)
 	{
-		WLog_WARN(TAG, "Transmit_Call ioSendPci.cbExtraBytes is out of bounds: %"PRIu32" (max: 1024)",
+		WLog_WARN(TAG,
+		          "Transmit_Call ioSendPci.cbExtraBytes is out of bounds: %" PRIu32 " (max: 1024)",
 		          ioSendPci.cbExtraBytes);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (call->cbSendLength > 66560)
 	{
-		WLog_WARN(TAG, "Transmit_Call cbSendLength is out of bounds: %"PRIu32" (max: 66560)",
+		WLog_WARN(TAG, "Transmit_Call cbSendLength is out of bounds: %" PRIu32 " (max: 66560)",
 		          ioSendPci.cbExtraBytes);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if (ioSendPci.cbExtraBytes && !pbExtraBytesNdrPtr)
 	{
-		WLog_WARN(TAG, "Transmit_Call ioSendPci.cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
+		WLog_WARN(
+		    TAG, "Transmit_Call ioSendPci.cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -2360,7 +2417,7 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 		{
-			WLog_WARN(TAG, "Transmit_Call is too short: %"PRIuz" (ioSendPci.pbExtraBytes)",
+			WLog_WARN(TAG, "Transmit_Call is too short: %" PRIuz " (ioSendPci.pbExtraBytes)",
 			          Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -2370,13 +2427,15 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 		if (Stream_GetRemainingLength(s) < ioSendPci.cbExtraBytes)
 		{
 			WLog_WARN(TAG,
-			          "Transmit_Call is too short: Actual: %"PRIuz", Expected: %"PRIu32" (ioSendPci.cbExtraBytes)",
+			          "Transmit_Call is too short: Actual: %" PRIuz ", Expected: %" PRIu32
+			          " (ioSendPci.cbExtraBytes)",
 			          Stream_GetRemainingLength(s), ioSendPci.cbExtraBytes);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
 		ioSendPci.pbExtraBytes = Stream_Pointer(s);
-		call->pioSendPci = (LPSCARD_IO_REQUEST) malloc(sizeof(SCARD_IO_REQUEST) + ioSendPci.cbExtraBytes);
+		call->pioSendPci =
+		    (LPSCARD_IO_REQUEST)malloc(sizeof(SCARD_IO_REQUEST) + ioSendPci.cbExtraBytes);
 
 		if (!call->pioSendPci)
 		{
@@ -2386,13 +2445,13 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 
 		call->pioSendPci->dwProtocol = ioSendPci.dwProtocol;
 		call->pioSendPci->cbPciLength = (DWORD)(ioSendPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST));
-		pbExtraBytes = &((BYTE*) call->pioSendPci)[sizeof(SCARD_IO_REQUEST)];
+		pbExtraBytes = &((BYTE*)call->pioSendPci)[sizeof(SCARD_IO_REQUEST)];
 		Stream_Read(s, pbExtraBytes, ioSendPci.cbExtraBytes);
 		smartcard_unpack_read_size_align(smartcard, s, ioSendPci.cbExtraBytes, 4);
 	}
 	else
 	{
-		call->pioSendPci = (LPSCARD_IO_REQUEST) calloc(1, sizeof(SCARD_IO_REQUEST));
+		call->pioSendPci = (LPSCARD_IO_REQUEST)calloc(1, sizeof(SCARD_IO_REQUEST));
 
 		if (!call->pioSendPci)
 		{
@@ -2408,8 +2467,7 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 		{
-			WLog_WARN(TAG, "Transmit_Call is too short: %"PRIuz"",
-			          Stream_GetRemainingLength(s));
+			WLog_WARN(TAG, "Transmit_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
@@ -2418,19 +2476,22 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 		if (length != call->cbSendLength)
 		{
 			WLog_WARN(TAG,
-			          "Transmit_Call unexpected length: Actual: %"PRIu32", Expected: %"PRIu32" (cbSendLength)",
+			          "Transmit_Call unexpected length: Actual: %" PRIu32 ", Expected: %" PRIu32
+			          " (cbSendLength)",
 			          length, call->cbSendLength);
 			return STATUS_INVALID_PARAMETER;
 		}
 
 		if (Stream_GetRemainingLength(s) < call->cbSendLength)
 		{
-			WLog_WARN(TAG, "Transmit_Call is too short: Actual: %"PRIuz", Expected: %"PRIu32" (cbSendLength)",
+			WLog_WARN(TAG,
+			          "Transmit_Call is too short: Actual: %" PRIuz ", Expected: %" PRIu32
+			          " (cbSendLength)",
 			          Stream_GetRemainingLength(s), call->cbSendLength);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
-		call->pbSendBuffer = (BYTE*) malloc(call->cbSendLength);
+		call->pbSendBuffer = (BYTE*)malloc(call->cbSendLength);
 
 		if (!call->pbSendBuffer)
 		{
@@ -2446,18 +2507,20 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 	{
 		if (Stream_GetRemainingLength(s) < 12)
 		{
-			WLog_WARN(TAG, "Transmit_Call is too short: Actual: %"PRIuz", Expected: 12",
+			WLog_WARN(TAG, "Transmit_Call is too short: Actual: %" PRIuz ", Expected: 12",
 			          Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
-		Stream_Read_UINT32(s, ioRecvPci.dwProtocol); /* dwProtocol (4 bytes) */
+		Stream_Read_UINT32(s, ioRecvPci.dwProtocol);   /* dwProtocol (4 bytes) */
 		Stream_Read_UINT32(s, ioRecvPci.cbExtraBytes); /* cbExtraBytes (4 bytes) */
-		Stream_Read_UINT32(s, pbExtraBytesNdrPtr); /* pbExtraBytesNdrPtr (4 bytes) */
+		Stream_Read_UINT32(s, pbExtraBytesNdrPtr);     /* pbExtraBytesNdrPtr (4 bytes) */
 
 		if (ioRecvPci.cbExtraBytes && !pbExtraBytesNdrPtr)
 		{
-			WLog_WARN(TAG, "Transmit_Call ioRecvPci.cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
+			WLog_WARN(
+			    TAG,
+			    "Transmit_Call ioRecvPci.cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
 			return STATUS_INVALID_PARAMETER;
 		}
 
@@ -2465,7 +2528,7 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 		{
 			if (Stream_GetRemainingLength(s) < 4)
 			{
-				WLog_WARN(TAG, "Transmit_Call is too short: %"PRIuz" (ioRecvPci.pbExtraBytes)",
+				WLog_WARN(TAG, "Transmit_Call is too short: %" PRIuz " (ioRecvPci.pbExtraBytes)",
 				          Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
@@ -2474,7 +2537,9 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 
 			if (ioRecvPci.cbExtraBytes > 1024)
 			{
-				WLog_WARN(TAG, "Transmit_Call ioRecvPci.cbExtraBytes is out of bounds: %"PRIu32" (max: 1024)",
+				WLog_WARN(TAG,
+				          "Transmit_Call ioRecvPci.cbExtraBytes is out of bounds: %" PRIu32
+				          " (max: 1024)",
 				          ioRecvPci.cbExtraBytes);
 				return STATUS_INVALID_PARAMETER;
 			}
@@ -2482,7 +2547,8 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 			if (length != ioRecvPci.cbExtraBytes)
 			{
 				WLog_WARN(TAG,
-				          "Transmit_Call unexpected length: Actual: %"PRIu32", Expected: %"PRIu32" (ioRecvPci.cbExtraBytes)",
+				          "Transmit_Call unexpected length: Actual: %" PRIu32 ", Expected: %" PRIu32
+				          " (ioRecvPci.cbExtraBytes)",
 				          length, ioRecvPci.cbExtraBytes);
 				return STATUS_INVALID_PARAMETER;
 			}
@@ -2490,13 +2556,15 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 			if (Stream_GetRemainingLength(s) < ioRecvPci.cbExtraBytes)
 			{
 				WLog_WARN(TAG,
-				          "Transmit_Call is too short: Actual: %"PRIuz", Expected: %"PRIu32" (ioRecvPci.cbExtraBytes)",
+				          "Transmit_Call is too short: Actual: %" PRIuz ", Expected: %" PRIu32
+				          " (ioRecvPci.cbExtraBytes)",
 				          Stream_GetRemainingLength(s), ioRecvPci.cbExtraBytes);
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
 			ioRecvPci.pbExtraBytes = Stream_Pointer(s);
-			call->pioRecvPci = (LPSCARD_IO_REQUEST) malloc(sizeof(SCARD_IO_REQUEST) + ioRecvPci.cbExtraBytes);
+			call->pioRecvPci =
+			    (LPSCARD_IO_REQUEST)malloc(sizeof(SCARD_IO_REQUEST) + ioRecvPci.cbExtraBytes);
 
 			if (!call->pioRecvPci)
 			{
@@ -2505,14 +2573,15 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 			}
 
 			call->pioRecvPci->dwProtocol = ioRecvPci.dwProtocol;
-			call->pioRecvPci->cbPciLength = (DWORD)(ioRecvPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST));
-			pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+			call->pioRecvPci->cbPciLength =
+			    (DWORD)(ioRecvPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST));
+			pbExtraBytes = &((BYTE*)call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
 			Stream_Read(s, pbExtraBytes, ioRecvPci.cbExtraBytes);
 			smartcard_unpack_read_size_align(smartcard, s, ioRecvPci.cbExtraBytes, 4);
 		}
 		else
 		{
-			call->pioRecvPci = (LPSCARD_IO_REQUEST) calloc(1, sizeof(SCARD_IO_REQUEST));
+			call->pioRecvPci = (LPSCARD_IO_REQUEST)calloc(1, sizeof(SCARD_IO_REQUEST));
 
 			if (!call->pioRecvPci)
 			{
@@ -2539,39 +2608,41 @@ void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, const Transmit_C
 		return;
 
 	WLog_DBG(TAG, "Transmit_Call {");
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	pb = (BYTE*) & (call->hCard.pbHandle);
+	pb = (BYTE*)&(call->hCard.pbHandle);
 
 	if (call->hCard.cbHandle > 4)
 	{
 		WLog_DBG(TAG,
-		         "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hCard: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hCard: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
 	if (call->pioSendPci)
 	{
 		cbExtraBytes = (UINT32)(call->pioSendPci->cbPciLength - sizeof(SCARD_IO_REQUEST));
-		pbExtraBytes = &((BYTE*) call->pioSendPci)[sizeof(SCARD_IO_REQUEST)];
-		WLog_DBG(TAG, "pioSendPci: dwProtocol: %"PRIu32" cbExtraBytes: %"PRIu32"",
+		pbExtraBytes = &((BYTE*)call->pioSendPci)[sizeof(SCARD_IO_REQUEST)];
+		WLog_DBG(TAG, "pioSendPci: dwProtocol: %" PRIu32 " cbExtraBytes: %" PRIu32 "",
 		         call->pioSendPci->dwProtocol, cbExtraBytes);
 
 		if (cbExtraBytes)
@@ -2586,7 +2657,7 @@ void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, const Transmit_C
 		WLog_DBG(TAG, "pioSendPci: null");
 	}
 
-	WLog_DBG(TAG, "cbSendLength: %"PRIu32"", call->cbSendLength);
+	WLog_DBG(TAG, "cbSendLength: %" PRIu32 "", call->cbSendLength);
 
 	if (call->pbSendBuffer)
 	{
@@ -2602,8 +2673,8 @@ void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, const Transmit_C
 	if (call->pioRecvPci)
 	{
 		cbExtraBytes = (UINT32)(call->pioRecvPci->cbPciLength - sizeof(SCARD_IO_REQUEST));
-		pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
-		WLog_DBG(TAG, "pioRecvPci: dwProtocol: %"PRIu32" cbExtraBytes: %"PRIu32"",
+		pbExtraBytes = &((BYTE*)call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+		WLog_DBG(TAG, "pioRecvPci: dwProtocol: %" PRIu32 " cbExtraBytes: %" PRIu32 "",
 		         call->pioRecvPci->dwProtocol, cbExtraBytes);
 
 		if (cbExtraBytes)
@@ -2618,7 +2689,7 @@ void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, const Transmit_C
 		WLog_DBG(TAG, "pioRecvPci: null");
 	}
 
-	WLog_DBG(TAG, "fpbRecvBufferIsNULL: %"PRId32" cbRecvLength: %"PRIu32"",
+	WLog_DBG(TAG, "fpbRecvBufferIsNULL: %" PRId32 " cbRecvLength: %" PRIu32 "",
 	         call->fpbRecvBufferIsNULL, call->cbRecvLength);
 	WLog_DBG(TAG, "}");
 }
@@ -2637,14 +2708,14 @@ LONG smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 
 	pioRecvPciNdrPtr = (ret->pioRecvPci) ? 0x00020000 : 0;
 	pbRecvBufferNdrPtr = (ret->pbRecvBuffer) ? 0x00020004 : 0;
-	Stream_Write_UINT32(s, pioRecvPciNdrPtr); /* pioRecvPciNdrPtr (4 bytes) */
-	Stream_Write_UINT32(s, ret->cbRecvLength); /* cbRecvLength (4 bytes) */
+	Stream_Write_UINT32(s, pioRecvPciNdrPtr);   /* pioRecvPciNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbRecvLength);  /* cbRecvLength (4 bytes) */
 	Stream_Write_UINT32(s, pbRecvBufferNdrPtr); /* pbRecvBufferNdrPtr (4 bytes) */
 
 	if (pioRecvPciNdrPtr)
 	{
 		cbExtraBytes = (UINT32)(ret->pioRecvPci->cbPciLength - sizeof(SCARD_IO_REQUEST));
-		pbExtraBytes = &((BYTE*) ret->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+		pbExtraBytes = &((BYTE*)ret->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
 		pbExtraBytesNdrPtr = cbExtraBytes ? 0x00020008 : 0;
 
 		if (!Stream_EnsureRemainingCapacity(s, cbExtraBytes + 16))
@@ -2654,8 +2725,8 @@ LONG smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 		}
 
 		Stream_Write_UINT32(s, ret->pioRecvPci->dwProtocol); /* dwProtocol (4 bytes) */
-		Stream_Write_UINT32(s, cbExtraBytes); /* cbExtraBytes (4 bytes) */
-		Stream_Write_UINT32(s, pbExtraBytesNdrPtr); /* pbExtraBytesNdrPtr (4 bytes) */
+		Stream_Write_UINT32(s, cbExtraBytes);                /* cbExtraBytes (4 bytes) */
+		Stream_Write_UINT32(s, pbExtraBytesNdrPtr);          /* pbExtraBytesNdrPtr (4 bytes) */
 
 		if (pbExtraBytesNdrPtr)
 		{
@@ -2664,7 +2735,8 @@ LONG smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 
 			if ((error = smartcard_pack_write_size_align(smartcard, s, cbExtraBytes, 4)))
 			{
-				WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %"PRId32"!", error);
+				WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %" PRId32 "!",
+				         error);
 				return error;
 			}
 		}
@@ -2683,7 +2755,7 @@ LONG smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 
 		if ((error = smartcard_pack_write_size_align(smartcard, s, ret->cbRecvLength, 4)))
 		{
-			WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %"PRId32"!", error);
+			WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %" PRId32 "!", error);
 			return error;
 		}
 	}
@@ -2701,14 +2773,14 @@ void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, const Transmit
 		return;
 
 	WLog_DBG(TAG, "Transmit_Return {");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIX32")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIX32 ")", SCardGetErrorString(ret->ReturnCode),
+	         ret->ReturnCode);
 
 	if (ret->pioRecvPci)
 	{
 		cbExtraBytes = (UINT32)(ret->pioRecvPci->cbPciLength - sizeof(SCARD_IO_REQUEST));
-		pbExtraBytes = &((BYTE*) ret->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
-		WLog_DBG(TAG, "pioRecvPci: dwProtocol: %"PRIu32" cbExtraBytes: %"PRIu32"",
+		pbExtraBytes = &((BYTE*)ret->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+		WLog_DBG(TAG, "pioRecvPci: dwProtocol: %" PRIu32 " cbExtraBytes: %" PRIu32 "",
 		         ret->pioRecvPci->dwProtocol, cbExtraBytes);
 
 		if (cbExtraBytes)
@@ -2723,7 +2795,7 @@ void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, const Transmit
 		WLog_DBG(TAG, "pioRecvPci: null");
 	}
 
-	WLog_DBG(TAG, "cbRecvLength: %"PRIu32"", ret->cbRecvLength);
+	WLog_DBG(TAG, "cbRecvLength: %" PRIu32 "", ret->cbRecvLength);
 
 	if (ret->pbRecvBuffer)
 	{
@@ -2740,7 +2812,7 @@ void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, const Transmit
 }
 
 LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        LocateCardsByATRA_Call* call)
+                                                 LocateCardsByATRA_Call* call)
 {
 	UINT32 index;
 	UINT32 count;
@@ -2755,31 +2827,32 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %" PRId32 "", status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 16)
 	{
-		WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: %"PRIuz"",
+		WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: %" PRIuz "",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->cAtrs);
 	Stream_Read_UINT32(s, rgAtrMasksNdrPtr);
-	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
+	Stream_Read_UINT32(s, call->cReaders);       /* cReaders (4 bytes) */
 	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
-		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %"PRId32"", status);
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
 		return status;
 	}
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: %"PRIuz"",
+		WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: %" PRIuz "",
 		          Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -2787,7 +2860,8 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 	if ((rgAtrMasksNdrPtr && !call->cAtrs) || (!rgAtrMasksNdrPtr && call->cAtrs))
 	{
 		WLog_WARN(TAG,
-		          "LocateCardsByATRA_Call rgAtrMasksNdrPtr (0x%08"PRIX32") and cAtrs (0x%08"PRIX32") inconsistency",
+		          "LocateCardsByATRA_Call rgAtrMasksNdrPtr (0x%08" PRIX32
+		          ") and cAtrs (0x%08" PRIX32 ") inconsistency",
 		          rgAtrMasksNdrPtr, call->cAtrs);
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -2799,14 +2873,17 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 		if (count != call->cAtrs)
 		{
 			WLog_WARN(TAG,
-			          "LocateCardsByATRA_Call NdrCount (0x%08"PRIX32") and cAtrs (0x%08"PRIX32") inconsistency",
+			          "LocateCardsByATRA_Call NdrCount (0x%08" PRIX32 ") and cAtrs (0x%08" PRIX32
+			          ") inconsistency",
 			          count, call->cAtrs);
 			return STATUS_INVALID_PARAMETER;
 		}
 
 		if (Stream_GetRemainingLength(s) < call->cAtrs)
 		{
-			WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: Actual: %"PRIuz", Expected: %"PRIu32"",
+			WLog_WARN(TAG,
+			          "LocateCardsByATRA_Call is too short: Actual: %" PRIuz ", Expected: %" PRIu32
+			          "",
 			          Stream_GetRemainingLength(s), call->cAtrs);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -2832,7 +2909,8 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 	if (count != call->cReaders)
 	{
 		WLog_WARN(TAG,
-		          "GetStatusChangeA_Call unexpected reader count: Actual: %"PRIu32", Expected: %"PRIu32"",
+		          "GetStatusChangeA_Call unexpected reader count: Actual: %" PRIu32
+		          ", Expected: %" PRIu32 "",
 		          count, call->cReaders);
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -2849,46 +2927,46 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 		for (index = 0; index < call->cReaders; index++)
 		{
-			readerState = (LPSCARD_READERSTATEA) &call->rgReaderStates[index];
+			readerState = (LPSCARD_READERSTATEA)&call->rgReaderStates[index];
 
 			if (Stream_GetRemainingLength(s) < 52)
 			{
-				WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: %"PRIuz"",
+				WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: %" PRIuz "",
 				          Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
-			Stream_Read_UINT32(s, szReaderNdrPtr); /* szReaderNdrPtr (4 bytes) */
+			Stream_Read_UINT32(s, szReaderNdrPtr);              /* szReaderNdrPtr (4 bytes) */
 			Stream_Read_UINT32(s, readerState->dwCurrentState); /* dwCurrentState (4 bytes) */
-			Stream_Read_UINT32(s, readerState->dwEventState); /* dwEventState (4 bytes) */
-			Stream_Read_UINT32(s, readerState->cbAtr); /* cbAtr (4 bytes) */
-			Stream_Read(s, readerState->rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
-			Stream_Seek(s, 4); /* rgbAtr [32..36] (4 bytes) */
+			Stream_Read_UINT32(s, readerState->dwEventState);   /* dwEventState (4 bytes) */
+			Stream_Read_UINT32(s, readerState->cbAtr);          /* cbAtr (4 bytes) */
+			Stream_Read(s, readerState->rgbAtr, 32);            /* rgbAtr [0..32] (32 bytes) */
+			Stream_Seek(s, 4);                                  /* rgbAtr [32..36] (4 bytes) */
 		}
 
 		for (index = 0; index < call->cReaders; index++)
 		{
-			readerState = (LPSCARD_READERSTATEA)  &call->rgReaderStates[index];
+			readerState = (LPSCARD_READERSTATEA)&call->rgReaderStates[index];
 
 			if (Stream_GetRemainingLength(s) < 12)
 			{
-				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %"PRIuz"",
+				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %" PRIuz "",
 				          Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
 			Stream_Read_UINT32(s, maxCount); /* NdrMaxCount (4 bytes) */
-			Stream_Read_UINT32(s, offset); /* NdrOffset (4 bytes) */
-			Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
+			Stream_Read_UINT32(s, offset);   /* NdrOffset (4 bytes) */
+			Stream_Read_UINT32(s, count);    /* NdrActualCount (4 bytes) */
 
 			if (Stream_GetRemainingLength(s) < count)
 			{
-				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %"PRIuz"",
+				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %" PRIuz "",
 				          Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
-			readerState->szReader = (LPCSTR) malloc(count + 1);
+			readerState->szReader = (LPCSTR)malloc(count + 1);
 
 			if (!readerState->szReader)
 			{
@@ -2896,9 +2974,9 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 				return STATUS_NO_MEMORY;
 			}
 
-			Stream_Read(s, (void*) readerState->szReader, count);
+			Stream_Read(s, (void*)readerState->szReader, count);
 			smartcard_unpack_read_size_align(smartcard, s, count, 4);
-			((char*) readerState->szReader)[count] = '\0';
+			((char*)readerState->szReader)[count] = '\0';
 
 			if (!readerState->szReader)
 			{
@@ -2912,7 +2990,7 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 }
 
 void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard,
-		const LocateCardsByATRA_Call* call)
+                                                const LocateCardsByATRA_Call* call)
 {
 	BYTE* pb;
 	UINT32 index;
@@ -2926,42 +3004,42 @@ void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard,
 		return;
 
 	WLog_DBG(TAG, "LocateCardsByATRA_Call {");
-	pb = (BYTE*) & (call->hContext.pbContext);
+	pb = (BYTE*)&(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
 		WLog_DBG(TAG,
-		         "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		         "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
+		         "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8" (%"PRIu32")",
+		WLog_DBG(TAG, "hContext: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 " (%" PRIu32 ")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
 	for (index = 0; index < call->cReaders; index++)
 	{
-		readerState = (LPSCARD_READERSTATEA) &call->rgReaderStates[index];
-		WLog_DBG(TAG, "\t[%"PRIu32"]: szReader: %s cbAtr: %"PRIu32"",
-		         index, readerState->szReader, readerState->cbAtr);
+		readerState = (LPSCARD_READERSTATEA)&call->rgReaderStates[index];
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: szReader: %s cbAtr: %" PRIu32 "", index,
+		         readerState->szReader, readerState->cbAtr);
 		szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);
 		szEventState = SCardGetReaderStateString(readerState->dwEventState);
-		rgbAtr = winpr_BinToHexString((BYTE*) & (readerState->rgbAtr), readerState->cbAtr, FALSE);
-		WLog_DBG(TAG, "\t[%"PRIu32"]: dwCurrentState: %s (0x%08"PRIX32")",
-		         index, szCurrentState, readerState->dwCurrentState);
-		WLog_DBG(TAG, "\t[%"PRIu32"]: dwEventState: %s (0x%08"PRIX32")",
-		         index, szEventState, readerState->dwEventState);
+		rgbAtr = winpr_BinToHexString((BYTE*)&(readerState->rgbAtr), readerState->cbAtr, FALSE);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: dwCurrentState: %s (0x%08" PRIX32 ")", index,
+		         szCurrentState, readerState->dwCurrentState);
+		WLog_DBG(TAG, "\t[%" PRIu32 "]: dwEventState: %s (0x%08" PRIX32 ")", index, szEventState,
+		         readerState->dwEventState);
 
 		if (rgbAtr)
 		{
-			WLog_DBG(TAG, "\t[%"PRIu32"]: cbAtr: %"PRIu32" rgbAtr: %s",
-			         index, readerState->cbAtr, rgbAtr);
+			WLog_DBG(TAG, "\t[%" PRIu32 "]: cbAtr: %" PRIu32 " rgbAtr: %s", index,
+			         readerState->cbAtr, rgbAtr);
 		}
 		else
 		{
-			WLog_DBG(TAG, "\t[%"PRIu32"]: cbAtr: 0 rgbAtr: n/a",
-			         index);
+			WLog_DBG(TAG, "\t[%" PRIu32 "]: cbAtr: 0 rgbAtr: n/a", index);
 		}
 
 		free(szCurrentState);

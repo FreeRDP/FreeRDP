@@ -39,7 +39,7 @@ struct _PALETTE_TABLE_ENTRY
 
 struct rdp_palette_cache
 {
-	UINT32 maxEntries; /* 0 */
+	UINT32 maxEntries;            /* 0 */
 	PALETTE_TABLE_ENTRY* entries; /* 1 */
 
 	/* internal */
@@ -48,13 +48,14 @@ struct rdp_palette_cache
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API void palette_cache_register_callbacks(rdpUpdate* update);
+	FREERDP_API void palette_cache_register_callbacks(rdpUpdate* update);
 
-FREERDP_API rdpPaletteCache* palette_cache_new(rdpSettings* settings);
-FREERDP_API void palette_cache_free(rdpPaletteCache* palette_cache);
+	FREERDP_API rdpPaletteCache* palette_cache_new(rdpSettings* settings);
+	FREERDP_API void palette_cache_free(rdpPaletteCache* palette_cache);
 
 #ifdef __cplusplus
 }

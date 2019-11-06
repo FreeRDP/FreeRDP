@@ -37,7 +37,7 @@ struct _PROFILER
 
 PROFILER* profiler_create(const char* name)
 {
-	PROFILER* profiler = (PROFILER*) calloc(1, sizeof(PROFILER));
+	PROFILER* profiler = (PROFILER*)calloc(1, sizeof(PROFILER));
 
 	if (!profiler)
 		return NULL;
@@ -77,20 +77,24 @@ void profiler_exit(PROFILER* profiler)
 
 void profiler_print_header(void)
 {
-	WLog_INFO(TAG, "-------------------------------+------------+-------------+-----------+-------");
-	WLog_INFO(TAG, "PROFILER NAME                  |      COUNT |       TOTAL |       AVG |    IPS");
-	WLog_INFO(TAG, "-------------------------------+------------+-------------+-----------+-------");
+	WLog_INFO(TAG,
+	          "-------------------------------+------------+-------------+-----------+-------");
+	WLog_INFO(TAG,
+	          "PROFILER NAME                  |      COUNT |       TOTAL |       AVG |    IPS");
+	WLog_INFO(TAG,
+	          "-------------------------------+------------+-------------+-----------+-------");
 }
 
 void profiler_print(PROFILER* profiler)
 {
 	double s = stopwatch_get_elapsed_time_in_seconds(profiler->stopwatch);
 	double avg = profiler->stopwatch->count == 0 ? 0 : s / profiler->stopwatch->count;
-	WLog_INFO(TAG, "%-30s | %10u | %10.4fs | %8.6fs | %6.0f",
-	          profiler->name, profiler->stopwatch->count, s, avg, profiler->stopwatch->count / s);
+	WLog_INFO(TAG, "%-30s | %10u | %10.4fs | %8.6fs | %6.0f", profiler->name,
+	          profiler->stopwatch->count, s, avg, profiler->stopwatch->count / s);
 }
 
 void profiler_print_footer(void)
 {
-	WLog_INFO(TAG, "-------------------------------+------------+-------------+-----------+-------");
+	WLog_INFO(TAG,
+	          "-------------------------------+------------+-------------+-----------+-------");
 }

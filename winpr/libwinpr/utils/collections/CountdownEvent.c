@@ -100,7 +100,8 @@ void CountdownEvent_AddCount(wCountdownEvent* countdown, DWORD signalCount)
 }
 
 /**
- * Registers multiple signals with the CountdownEvent, decrementing the value of CurrentCount by the specified amount.
+ * Registers multiple signals with the CountdownEvent, decrementing the value of CurrentCount by the
+ * specified amount.
  */
 
 BOOL CountdownEvent_Signal(wCountdownEvent* countdown, DWORD signalCount)
@@ -152,7 +153,7 @@ wCountdownEvent* CountdownEvent_New(DWORD initialCount)
 {
 	wCountdownEvent* countdown = NULL;
 
-	if (!(countdown = (wCountdownEvent*) calloc(1, sizeof(wCountdownEvent))))
+	if (!(countdown = (wCountdownEvent*)calloc(1, sizeof(wCountdownEvent))))
 		return NULL;
 
 	countdown->count = initialCount;

@@ -1,30 +1,29 @@
 /**
-* FreeRDP: A Remote Desktop Protocol Implementation
-* FreeRDP Proxy Server
-*
-* Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
-* Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
-* Copyright 2019 Idan Freiberg <speidy@gmail.com>
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * FreeRDP Proxy Server
+ *
+ * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
+ * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
+ * Copyright 2019 Idan Freiberg <speidy@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include "pf_client.h"
 #include "pf_context.h"
 
 /* Proxy context initialization callback */
-static BOOL client_to_proxy_context_new(freerdp_peer* client,
-                                        pServerContext* context)
+static BOOL client_to_proxy_context_new(freerdp_peer* client, pServerContext* context)
 {
 	context->dynvcReady = NULL;
 	context->modules_info = NULL;
@@ -33,7 +32,7 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client,
 	if (!context->modules_info)
 		return FALSE;
 
-	context->vcm = WTSOpenServerA((LPSTR) client->context);
+	context->vcm = WTSOpenServerA((LPSTR)client->context);
 
 	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
 		goto error;
@@ -58,15 +57,14 @@ error:
 }
 
 /* Proxy context free callback */
-static void client_to_proxy_context_free(freerdp_peer* client,
-        pServerContext* context)
+static void client_to_proxy_context_free(freerdp_peer* client, pServerContext* context)
 {
 	WINPR_UNUSED(client);
 
 	if (!context)
 		return;
 
-	WTSCloseServer((HANDLE) context->vcm);
+	WTSCloseServer((HANDLE)context->vcm);
 
 	if (context->dynvcReady)
 	{
@@ -80,8 +78,8 @@ static void client_to_proxy_context_free(freerdp_peer* client,
 BOOL pf_context_init_server_context(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(pServerContext);
-	client->ContextNew = (psPeerContextNew) client_to_proxy_context_new;
-	client->ContextFree = (psPeerContextFree) client_to_proxy_context_free;
+	client->ContextNew = (psPeerContextNew)client_to_proxy_context_new;
+	client->ContextFree = (psPeerContextFree)client_to_proxy_context_free;
 
 	return freerdp_peer_context_new(client);
 }
@@ -149,7 +147,7 @@ pClientContext* pf_context_create_client_context(rdpSettings* clientSettings)
 	if (!context)
 		return NULL;
 
-	pc = (pClientContext*) context;
+	pc = (pClientContext*)context;
 
 	if (!pf_context_copy_settings(context->settings, clientSettings))
 		goto error;

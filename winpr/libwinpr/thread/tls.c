@@ -50,15 +50,15 @@ LPVOID TlsGetValue(DWORD dwTlsIndex)
 {
 	LPVOID value;
 	pthread_key_t key;
-	key = (pthread_key_t) dwTlsIndex;
-	value = (LPVOID) pthread_getspecific(key);
+	key = (pthread_key_t)dwTlsIndex;
+	value = (LPVOID)pthread_getspecific(key);
 	return value;
 }
 
 BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue)
 {
 	pthread_key_t key;
-	key = (pthread_key_t) dwTlsIndex;
+	key = (pthread_key_t)dwTlsIndex;
 	pthread_setspecific(key, lpTlsValue);
 	return TRUE;
 }
@@ -66,10 +66,9 @@ BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue)
 BOOL TlsFree(DWORD dwTlsIndex)
 {
 	pthread_key_t key;
-	key = (pthread_key_t) dwTlsIndex;
+	key = (pthread_key_t)dwTlsIndex;
 	pthread_key_delete(key);
 	return TRUE;
 }
 
 #endif
-

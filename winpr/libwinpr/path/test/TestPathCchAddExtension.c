@@ -20,10 +20,10 @@ int TestPathCchAddExtension(int argc, char* argv[])
 	_tcscpy(Path, testPathNoExtension);
 
 	status = PathCchAddExtension(Path, PATHCCH_MAX_CCH, testExtDot);
-	
+
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchAddExtension status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAddExtension status: 0x%08") _T(PRIX32) _T("\n"), status);
 		return -1;
 	}
 
@@ -38,10 +38,10 @@ int TestPathCchAddExtension(int argc, char* argv[])
 	_tcscpy(Path, testPathNoExtension);
 
 	status = PathCchAddExtension(Path, PATHCCH_MAX_CCH, testExtNoDot);
-	
+
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchAddExtension status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAddExtension status: 0x%08") _T(PRIX32) _T("\n"), status);
 		return -1;
 	}
 
@@ -56,10 +56,10 @@ int TestPathCchAddExtension(int argc, char* argv[])
 	_tcscpy(Path, testPathExtension);
 
 	status = PathCchAddExtension(Path, PATHCCH_MAX_CCH, testExtDot);
-	
+
 	if (status != S_FALSE)
 	{
-		_tprintf(_T("PathCchAddExtension status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAddExtension status: 0x%08") _T(PRIX32) _T("\n"), status);
 		return -1;
 	}
 
@@ -74,10 +74,10 @@ int TestPathCchAddExtension(int argc, char* argv[])
 	_tcscpy(Path, testPathExtension);
 
 	status = PathCchAddExtension(Path, PATHCCH_MAX_CCH, testExtDot);
-	
+
 	if (status != S_FALSE)
 	{
-		_tprintf(_T("PathCchAddExtension status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAddExtension status: 0x%08") _T(PRIX32) _T("\n"), status);
 		return -1;
 	}
 
@@ -92,7 +92,9 @@ int TestPathCchAddExtension(int argc, char* argv[])
 	status = PathCchAddExtension(NULL, PATHCCH_MAX_CCH, testExtDot);
 	if (status != E_INVALIDARG)
 	{
-		_tprintf(_T("PathCchAddExtension with null buffer returned status: 0x%08")_T(PRIX32)_T(" (expected E_INVALIDARG)\n"), status);
+		_tprintf(_T("PathCchAddExtension with null buffer returned status: 0x%08") _T(
+		             PRIX32) _T(" (expected E_INVALIDARG)\n"),
+		         status);
 		return -1;
 	}
 
@@ -101,7 +103,9 @@ int TestPathCchAddExtension(int argc, char* argv[])
 	status = PathCchAddExtension(Path, PATHCCH_MAX_CCH, NULL);
 	if (status != E_INVALIDARG)
 	{
-		_tprintf(_T("PathCchAddExtension with null extension returned status: 0x%08")_T(PRIX32)_T(" (expected E_INVALIDARG)\n"), status);
+		_tprintf(_T("PathCchAddExtension with null extension returned status: 0x%08") _T(
+		             PRIX32) _T(" (expected E_INVALIDARG)\n"),
+		         status);
 		return -1;
 	}
 
@@ -111,7 +115,9 @@ int TestPathCchAddExtension(int argc, char* argv[])
 	status = PathCchAddExtension(Path, 9 + 4, _T(".jpg"));
 	if (SUCCEEDED(status))
 	{
-		_tprintf(_T("PathCchAddExtension with insufficient buffer unexpectedly succeeded with status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAddExtension with insufficient buffer unexpectedly succeeded with ")
+		         _T("status: 0x%08") _T(PRIX32) _T("\n"),
+		         status);
 		return -1;
 	}
 
@@ -121,11 +127,11 @@ int TestPathCchAddExtension(int argc, char* argv[])
 	status = PathCchAddExtension(Path, 9 + 4 + 1, _T(".jpg"));
 	if (FAILED(status))
 	{
-		_tprintf(_T("PathCchAddExtension with sufficient buffer unexpectedly failed with status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathCchAddExtension with sufficient buffer unexpectedly failed with status: ")
+		         _T("0x%08") _T(PRIX32) _T("\n"),
+		         status);
 		return -1;
 	}
 
-
 	return 0;
 }
-

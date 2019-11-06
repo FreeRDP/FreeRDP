@@ -13,24 +13,13 @@
 #include "brush.h"
 #include "drawing.h"
 
-static const UINT32 colorFormatList[] =
-{
-	PIXEL_FORMAT_RGB15,
-	PIXEL_FORMAT_BGR15,
-	PIXEL_FORMAT_RGB16,
-	PIXEL_FORMAT_BGR16,
-	PIXEL_FORMAT_RGB24,
-	PIXEL_FORMAT_BGR24,
-	PIXEL_FORMAT_ARGB32,
-	PIXEL_FORMAT_ABGR32,
-	PIXEL_FORMAT_XRGB32,
-	PIXEL_FORMAT_XBGR32,
-	PIXEL_FORMAT_RGBX32,
-	PIXEL_FORMAT_BGRX32
+static const UINT32 colorFormatList[] = {
+	PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_BGR15,  PIXEL_FORMAT_RGB16,  PIXEL_FORMAT_BGR16,
+	PIXEL_FORMAT_RGB24,  PIXEL_FORMAT_BGR24,  PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_ABGR32,
+	PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_BGRX32
 
 };
-static const UINT32 colorFormatCount = sizeof(colorFormatList) / sizeof(
-        colorFormatList[0]);
+static const UINT32 colorFormatCount = sizeof(colorFormatList) / sizeof(colorFormatList[0]);
 
 static int test_gdi_GetDC(void)
 {
@@ -103,7 +92,7 @@ static int test_gdi_CreateBitmap(void)
 	width = 32;
 	height = 16;
 
-	if (!(data = (BYTE*) _aligned_malloc(width * height * 4, 16)))
+	if (!(data = (BYTE*)_aligned_malloc(width * height * 4, 16)))
 	{
 		printf("failed to allocate aligned bitmap data memory\n");
 		return -1;
@@ -134,7 +123,7 @@ static int test_gdi_CreateBitmap(void)
 fail:
 
 	if (hBitmap)
-		gdi_DeleteObject((HGDIOBJECT) hBitmap);
+		gdi_DeleteObject((HGDIOBJECT)hBitmap);
 	else
 		free(data);
 
@@ -179,7 +168,7 @@ static int test_gdi_CreateCompatibleBitmap(void)
 fail:
 
 	if (hBitmap)
-		gdi_DeleteObject((HGDIOBJECT) hBitmap);
+		gdi_DeleteObject((HGDIOBJECT)hBitmap);
 
 	gdi_DeleteDC(hdc);
 	return rc;
@@ -189,8 +178,7 @@ static int test_gdi_CreatePen(void)
 {
 	int rc = -1;
 	const UINT32 format = PIXEL_FORMAT_RGBA32;
-	HGDI_PEN hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD,
-	                              format, NULL);
+	HGDI_PEN hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD, format, NULL);
 
 	if (!hPen)
 	{
@@ -209,7 +197,7 @@ static int test_gdi_CreatePen(void)
 
 	rc = 0;
 fail:
-	gdi_DeleteObject((HGDIOBJECT) hPen);
+	gdi_DeleteObject((HGDIOBJECT)hPen);
 	return rc;
 }
 
@@ -229,7 +217,7 @@ static int test_gdi_CreateSolidBrush(void)
 
 	rc = 0;
 fail:
-	gdi_DeleteObject((HGDIOBJECT) hBrush);
+	gdi_DeleteObject((HGDIOBJECT)hBrush);
 	return rc;
 }
 
@@ -257,10 +245,10 @@ static int test_gdi_CreatePatternBrush(void)
 fail:
 
 	if (hBitmap)
-		gdi_DeleteObject((HGDIOBJECT) hBitmap);
+		gdi_DeleteObject((HGDIOBJECT)hBitmap);
 
 	if (hBrush)
-		gdi_DeleteObject((HGDIOBJECT) hBrush);
+		gdi_DeleteObject((HGDIOBJECT)hBrush);
 
 	return rc;
 }
@@ -297,7 +285,7 @@ static int test_gdi_CreateRectRgn(void)
 
 	rc = 0;
 fail:
-	gdi_DeleteObject((HGDIOBJECT) hRegion);
+	gdi_DeleteObject((HGDIOBJECT)hRegion);
 	return rc;
 }
 
@@ -333,7 +321,7 @@ static int test_gdi_CreateRect(void)
 
 	rc = 0;
 fail:
-	gdi_DeleteObject((HGDIOBJECT) hRect);
+	gdi_DeleteObject((HGDIOBJECT)hRect);
 	return rc;
 }
 
@@ -366,7 +354,7 @@ static BOOL test_gdi_GetPixel(void)
 			return -1;
 		}
 
-		gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
+		gdi_SelectObject(hdc, (HGDIOBJECT)hBitmap);
 		bpp = GetBytesPerPixel(hBitmap->format);
 
 		for (i = 0; i < height; i++)
@@ -374,9 +362,9 @@ static BOOL test_gdi_GetPixel(void)
 			for (j = 0; j < width; j++)
 			{
 				UINT32 pixel;
-				const UINT32 color = FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
-				WriteColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format,
-				           color);
+				const UINT32 color =
+				    FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
+				WriteColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format, color);
 				pixel = gdi_GetPixel(hdc, j, i);
 
 				if (pixel != color)
@@ -390,7 +378,7 @@ static BOOL test_gdi_GetPixel(void)
 				break;
 		}
 
-		gdi_DeleteObject((HGDIOBJECT) hBitmap);
+		gdi_DeleteObject((HGDIOBJECT)hBitmap);
 		gdi_DeleteDC(hdc);
 	}
 
@@ -418,7 +406,7 @@ static BOOL test_gdi_SetPixel(void)
 
 		hdc->format = colorFormatList[x];
 		hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
-		gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
+		gdi_SelectObject(hdc, (HGDIOBJECT)hBitmap);
 		bpp = GetBytesPerPixel(hBitmap->format);
 
 		for (i = 0; i < height; i++)
@@ -426,10 +414,10 @@ static BOOL test_gdi_SetPixel(void)
 			for (j = 0; j < width; j++)
 			{
 				UINT32 pixel;
-				const UINT32 color = FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
+				const UINT32 color =
+				    FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
 				gdi_SetPixel(hdc, j, i, color);
-				pixel = ReadColor(&hBitmap->data[i * hBitmap->scanline + j * bpp],
-				                  hBitmap->format);
+				pixel = ReadColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format);
 
 				if (pixel != color)
 				{
@@ -442,7 +430,7 @@ static BOOL test_gdi_SetPixel(void)
 				break;
 		}
 
-		gdi_DeleteObject((HGDIOBJECT) hBitmap);
+		gdi_DeleteObject((HGDIOBJECT)hBitmap);
 		gdi_DeleteDC(hdc);
 	}
 
@@ -492,7 +480,7 @@ static int test_gdi_MoveToEx(void)
 		goto fail;
 	}
 
-	gdi_SelectObject(hdc, (HGDIOBJECT) hPen);
+	gdi_SelectObject(hdc, (HGDIOBJECT)hPen);
 	gdi_MoveToEx(hdc, 128, 256, NULL);
 
 	if (hdc->pen->posX != 128)
@@ -501,7 +489,7 @@ static int test_gdi_MoveToEx(void)
 	if (hdc->pen->posY != 256)
 		goto fail;
 
-	prevPoint = (HGDI_POINT) malloc(sizeof(GDI_POINT));
+	prevPoint = (HGDI_POINT)malloc(sizeof(GDI_POINT));
 	ZeroMemory(prevPoint, sizeof(GDI_POINT));
 	gdi_MoveToEx(hdc, 64, 128, prevPoint);
 
@@ -599,4 +587,3 @@ int TestGdiCreate(int argc, char* argv[])
 
 	return 0;
 }
-

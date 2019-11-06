@@ -145,4 +145,3 @@ fail:
 	freerdp_settings_free(settings);
 	return rc;
 }
-

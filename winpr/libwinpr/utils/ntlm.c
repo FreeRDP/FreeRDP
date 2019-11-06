@@ -37,7 +37,7 @@ BOOL NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 	if (!Password || !NtHash)
 		return FALSE;
 
-	if (!winpr_Digest(WINPR_MD_MD4, (BYTE*) Password, (size_t) PasswordLength, NtHash,
+	if (!winpr_Digest(WINPR_MD_MD4, (BYTE*)Password, (size_t)PasswordLength, NtHash,
 	                  WINPR_MD4_DIGEST_LENGTH))
 		return FALSE;
 
@@ -52,7 +52,7 @@ BOOL NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 	if (!NtHash)
 		return FALSE;
 
-	if (!(PasswordW = (LPWSTR) calloc(PasswordLength, 2)))
+	if (!(PasswordW = (LPWSTR)calloc(PasswordLength, 2)))
 		return FALSE;
 
 	MultiByteToWideChar(CP_ACP, 0, Password, PasswordLength, PasswordW, PasswordLength);
@@ -73,8 +73,8 @@ out_fail:
  * EndDefine
  */
 
-BOOL NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User,
-              UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash)
+BOOL NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User, UINT32 UserLength, LPWSTR Domain,
+              UINT32 DomainLength, BYTE* NtHash)
 {
 	BYTE* buffer;
 	BYTE NtHashV1[16];
@@ -86,15 +86,16 @@ BOOL NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User,
 	if (!NTOWFv1W(Password, PasswordLength, NtHashV1))
 		return FALSE;
 
-	if (!(buffer = (BYTE*) malloc(UserLength + DomainLength)))
+	if (!(buffer = (BYTE*)malloc(UserLength + DomainLength)))
 		return FALSE;
 
 	/* Concatenate(UpperCase(User), Domain) */
 	CopyMemory(buffer, User, UserLength);
-	CharUpperBuffW((LPWSTR) buffer, UserLength / 2);
+	CharUpperBuffW((LPWSTR)buffer, UserLength / 2);
 	CopyMemory(&buffer[UserLength], Domain, DomainLength);
 
-	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
+	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is
+	 * the NTLMv2 hash */
 	if (!winpr_HMAC(WINPR_MD_MD5, NtHashV1, 16, buffer, UserLength + DomainLength, NtHash,
 	                WINPR_MD4_DIGEST_LENGTH))
 		goto out_fail;
@@ -105,8 +106,8 @@ out_fail:
 	return result;
 }
 
-BOOL NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User,
-              UINT32 UserLength, LPSTR Domain, UINT32 DomainLength, BYTE* NtHash)
+BOOL NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User, UINT32 UserLength, LPSTR Domain,
+              UINT32 DomainLength, BYTE* NtHash)
 {
 	LPWSTR UserW = NULL;
 	LPWSTR DomainW = NULL;
@@ -116,9 +117,9 @@ BOOL NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User,
 	if (!NtHash)
 		return FALSE;
 
-	UserW = (LPWSTR) calloc(UserLength, 2);
-	DomainW = (LPWSTR) calloc(DomainLength, 2);
-	PasswordW = (LPWSTR) calloc(PasswordLength, 2);
+	UserW = (LPWSTR)calloc(UserLength, 2);
+	DomainW = (LPWSTR)calloc(DomainLength, 2);
+	PasswordW = (LPWSTR)calloc(PasswordLength, 2);
 
 	if (!UserW || !DomainW || !PasswordW)
 		goto out_fail;
@@ -148,19 +149,20 @@ BOOL NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Dom
 	if (!User || !NtHash)
 		return FALSE;
 
-	if (!(buffer = (BYTE*) malloc(UserLength + DomainLength)))
+	if (!(buffer = (BYTE*)malloc(UserLength + DomainLength)))
 		return FALSE;
 
 	/* Concatenate(UpperCase(User), Domain) */
 	CopyMemory(buffer, User, UserLength);
-	CharUpperBuffW((LPWSTR) buffer, UserLength / 2);
+	CharUpperBuffW((LPWSTR)buffer, UserLength / 2);
 
 	if (DomainLength > 0)
 	{
 		CopyMemory(&buffer[UserLength], Domain, DomainLength);
 	}
 
-	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
+	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is
+	 * the NTLMv2 hash */
 	if (!winpr_HMAC(WINPR_MD_MD5, NtHashV1, 16, buffer, UserLength + DomainLength, NtHash,
 	                WINPR_MD4_DIGEST_LENGTH))
 		goto out_fail;
@@ -181,8 +183,8 @@ BOOL NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength, LPSTR Domai
 	if (!NtHash)
 		return FALSE;
 
-	UserW = (LPWSTR) calloc(UserLength, 2);
-	DomainW = (LPWSTR) calloc(DomainLength, 2);
+	UserW = (LPWSTR)calloc(UserLength, 2);
+	DomainW = (LPWSTR)calloc(DomainLength, 2);
 
 	if (!UserW || !DomainW)
 		goto out_fail;

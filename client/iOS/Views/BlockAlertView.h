@@ -5,15 +5,16 @@
 
 #import <UIKit/UIKit.h>
 
-@interface BlockAlertView : NSObject {
-@protected
-    UIView *_view;
-    NSMutableArray *_blocks;
-    CGFloat _height;
-    NSString *_title;
-    NSString *_message;
-    BOOL _shown;
-    BOOL _cancelBounce;
+@interface BlockAlertView : NSObject
+{
+  @protected
+	UIView *_view;
+	NSMutableArray *_blocks;
+	CGFloat _height;
+	NSString *_title;
+	NSString *_message;
+	BOOL _shown;
+	BOOL _cancelBounce;
 }
 
 + (BlockAlertView *)alertWithTitle:(NSString *)title message:(NSString *)message;
@@ -34,8 +35,8 @@
 
 - (void)setupDisplay;
 
-@property (nonatomic, retain) UIImage *backgroundImage;
-@property (nonatomic, readonly) UIView *view;
-@property (nonatomic, readwrite) BOOL vignetteBackground;
+@property(nonatomic, retain) UIImage *backgroundImage;
+@property(nonatomic, readonly) UIView *view;
+@property(nonatomic, readwrite) BOOL vignetteBackground;
 
 @end

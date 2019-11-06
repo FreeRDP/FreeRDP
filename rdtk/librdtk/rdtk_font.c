@@ -169,7 +169,7 @@ static char* rdtk_font_load_descriptor_file(const char* filename, int* pSize)
 		return NULL;
 	}
 
-	buffer = (BYTE*) malloc(fileSize + 2);
+	buffer = (BYTE*)malloc(fileSize + 2);
 
 	if (!buffer)
 	{
@@ -195,14 +195,14 @@ static char* rdtk_font_load_descriptor_file(const char* filename, int* pSize)
 
 	buffer[fileSize] = '\0';
 	buffer[fileSize + 1] = '\0';
-	*pSize = (int) fileSize;
-	return (char*) buffer;
+	*pSize = (int)fileSize;
+	return (char*)buffer;
 }
 
 static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, BYTE* utf8)
 {
 	size_t len = strlen(str);
-	*((UINT32*) utf8) = 0;
+	*((UINT32*)utf8) = 0;
 
 	if (len < 1)
 		return 1;
@@ -245,7 +245,7 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, BYTE* buffer, int s
 	int index;
 	int count;
 	rdtkGlyph* glyph;
-	p = strstr((char*) buffer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+	p = strstr((char*)buffer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>");
 
 	if (!p)
 		return -1;
@@ -359,7 +359,7 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, BYTE* buffer, int s
 		return -1;
 
 	p = q + 1;
-	//printf("size: %d family: %s height: %d style: %s\n",
+	// printf("size: %d family: %s height: %d style: %s\n",
 	//		font->size, font->family, font->height, font->style);
 	beg = p;
 	count = 0;
@@ -387,7 +387,7 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, BYTE* buffer, int s
 	font->glyphs = NULL;
 
 	if (count > 0)
-		font->glyphs = (rdtkGlyph*) calloc(font->glyphCount, sizeof(rdtkGlyph));
+		font->glyphs = (rdtkGlyph*)calloc(font->glyphCount, sizeof(rdtkGlyph));
 
 	if (!font->glyphs)
 		return -1;
@@ -582,7 +582,7 @@ static int rdtk_font_load_descriptor(rdtkFont* font, const char* filename)
 	if (!buffer)
 		return -1;
 
-	return rdtk_font_parse_descriptor_buffer(font, (BYTE*) buffer, size);
+	return rdtk_font_parse_descriptor_buffer(font, (BYTE*)buffer, size);
 }
 rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 {
@@ -598,13 +598,13 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 		goto cleanup;
 
 	length = strlen(fontBaseFile);
-	fontImageFile = (char*) malloc(length + 8);
+	fontImageFile = (char*)malloc(length + 8);
 
 	if (!fontImageFile)
 		goto cleanup;
 
 	sprintf_s(fontImageFile, length + 8, "%s.png", fontBaseFile);
-	fontDescriptorFile = (char*) malloc(length + 8);
+	fontDescriptorFile = (char*)malloc(length + 8);
 
 	if (!fontDescriptorFile)
 		goto cleanup;
@@ -617,7 +617,7 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 	if (!PathFileExistsA(fontDescriptorFile))
 		goto cleanup;
 
-	font = (rdtkFont*) calloc(1, sizeof(rdtkFont));
+	font = (rdtkFont*)calloc(1, sizeof(rdtkFont));
 
 	if (!font)
 		goto cleanup;
@@ -664,7 +664,7 @@ static rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int
 	int status;
 	BYTE* buffer;
 	rdtkFont* font;
-	font = (rdtkFont*) calloc(1, sizeof(rdtkFont));
+	font = (rdtkFont*)calloc(1, sizeof(rdtkFont));
 
 	if (!font)
 		return NULL;
@@ -688,7 +688,7 @@ static rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int
 	}
 
 	size = descriptorSize;
-	buffer = (BYTE*) malloc(size);
+	buffer = (BYTE*)malloc(size);
 
 	if (!buffer)
 	{
@@ -730,13 +730,14 @@ int rdtk_font_engine_init(rdtkEngine* engine)
 		BYTE* imageData = NULL;
 		BYTE* descriptorData = NULL;
 		imageSize = rdtk_get_embedded_resource_file("source_serif_pro_regular_12.png", &imageData);
-		descriptorSize = rdtk_get_embedded_resource_file("source_serif_pro_regular_12.xml",
-		                 &descriptorData);
+		descriptorSize =
+		    rdtk_get_embedded_resource_file("source_serif_pro_regular_12.xml", &descriptorData);
 
 		if ((imageSize < 0) || (descriptorSize < 0))
 			return -1;
 
-		engine->font = rdtk_embedded_font_new(engine, imageData, imageSize, descriptorData, descriptorSize);
+		engine->font =
+		    rdtk_embedded_font_new(engine, imageData, imageSize, descriptorData, descriptorSize);
 	}
 
 	return 1;

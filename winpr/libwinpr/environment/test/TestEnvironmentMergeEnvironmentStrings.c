@@ -14,7 +14,7 @@ int TestEnvironmentMergeEnvironmentStrings(int argc, char* argv[])
 	LPTCH lpszMergedEnvironmentBlock;
 	lpszEnvironmentBlock = GetEnvironmentStrings();
 	lpszMergedEnvironmentBlock = MergeEnvironmentStrings(lpszEnvironmentBlock, lpsz2Merge);
-	p = (TCHAR*) lpszMergedEnvironmentBlock;
+	p = (TCHAR*)lpszMergedEnvironmentBlock;
 
 	while (p[0] && p[1])
 	{
@@ -28,4 +28,3 @@ int TestEnvironmentMergeEnvironmentStrings(int argc, char* argv[])
 #endif
 	return 0;
 }
-

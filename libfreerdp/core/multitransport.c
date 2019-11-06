@@ -33,10 +33,10 @@ int rdp_recv_multitransport_packet(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) < 24)
 		return -1;
 
-	Stream_Read_UINT32(s, requestId); /* requestId (4 bytes) */
+	Stream_Read_UINT32(s, requestId);         /* requestId (4 bytes) */
 	Stream_Read_UINT16(s, requestedProtocol); /* requestedProtocol (2 bytes) */
-	Stream_Read_UINT16(s, reserved); /* reserved (2 bytes) */
-	Stream_Read(s, securityCookie, 16); /* securityCookie (16 bytes) */
+	Stream_Read_UINT16(s, reserved);          /* reserved (2 bytes) */
+	Stream_Read(s, securityCookie, 16);       /* securityCookie (16 bytes) */
 
 	return 0;
 }

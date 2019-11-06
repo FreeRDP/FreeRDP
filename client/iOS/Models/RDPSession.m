@@ -4,7 +4,8 @@
  Copyright 2013 Thincast Technologies GmbH, Authors: Martin Fleisz, Dorian Johnson
 
  This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
- If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ If a copy of the MPL was not distributed with this file, You can obtain one at
+ http://mozilla.org/MPL/2.0/.
  */
 
 #import "ios_freerdp.h"
@@ -16,14 +17,13 @@
 #import "Bookmark.h"
 #import "ConnectionParams.h"
 
-NSString* TSXSessionDidDisconnectNotification = @"TSXSessionDidDisconnect";
-NSString* TSXSessionDidFailToConnectNotification =
-    @"TSXSessionDidFailToConnect";
+NSString *TSXSessionDidDisconnectNotification = @"TSXSessionDidDisconnect";
+NSString *TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect";
 
-@interface RDPSession(Private)
+@interface RDPSession (Private)
 - (void)runSession;
-- (void)runSessionFinished:(NSNumber*)result;
-- (mfInfo*)mfi;
+- (void)runSessionFinished:(NSNumber *)result;
+- (mfInfo *)mfi;
 
 // The connection thread calls these on the main thread.
 - (void)sessionWillConnect;
@@ -36,20 +36,19 @@ NSString* TSXSessionDidFailToConnectNotification =
 
 @implementation RDPSession
 
-@synthesize delegate = _delegate, params = _params,
-            toolbarVisible = _toolbar_visible, uiRequestCompleted = _ui_request_completed,
-            bookmark = _bookmark;
+@synthesize delegate = _delegate, params = _params, toolbarVisible = _toolbar_visible,
+            uiRequestCompleted = _ui_request_completed, bookmark = _bookmark;
 
 + (void)initialize
 {
 	ios_init_freerdp();
 }
 
-static BOOL addArgument(int* argc, char** *argv, const char* fmt, ...)
+static BOOL addArgument(int *argc, char ***argv, const char *fmt, ...)
 {
 	va_list ap;
-	char* arg = NULL;
-	char** tmp = realloc(*argv, (*argc + 1) * sizeof(char*));
+	char *arg = NULL;
+	char **tmp = realloc(*argv, (*argc + 1) * sizeof(char *));
 
 	if (!tmp)
 		return FALSE;
@@ -63,12 +62,12 @@ static BOOL addArgument(int* argc, char** *argv, const char* fmt, ...)
 	return TRUE;
 }
 
-static BOOL addFlag(int* argc, char** *argv, const char* str, BOOL flag)
+static BOOL addFlag(int *argc, char ***argv, const char *str, BOOL flag)
 {
 	return addArgument(argc, argv, "%s%s", flag ? "+" : "-", str);
 }
 
-static void freeArguments(int argc, char** argv)
+static void freeArguments(int argc, char **argv)
 {
 	int i;
 
@@ -79,18 +78,18 @@ static void freeArguments(int argc, char** argv)
 }
 
 // Designated initializer.
-- (id)initWithBookmark:(ComputerBookmark*)bookmark
+- (id)initWithBookmark:(ComputerBookmark *)bookmark
 {
 	int status;
-	char** argv = NULL;
+	char **argv = NULL;
 	int argc = 0;
 
 	if (!(self = [super init]))
 		return nil;
 
 	if (!bookmark)
-		[NSException raise:NSInvalidArgumentException format:
-		 @"%s: params may not be nil.", __func__];
+		[NSException raise:NSInvalidArgumentException
+		            format:@"%s: params may not be nil.", __func__];
 
 	_bookmark = [bookmark retain];
 	_params = [[bookmark params] copy];
@@ -107,13 +106,13 @@ static void freeArguments(int argc, char** argv)
 	if (!addArgument(&argc, &argv, "/gdi:sw"))
 		goto out_free;
 
-	// Screen Size is set on connect (we need a valid delegate in case the user choose an automatic screen size)
+	// Screen Size is set on connect (we need a valid delegate in case the user choose an automatic
+	// screen size)
 
 	// Other simple numeric settings
 	if ([_params hasValueForKey:@"colors"])
-		if (!addArgument(&argc, &argv,
-		                 "/bpp:%d", [_params intForKey:@"colors" with3GEnabled:
-		                             connected_via_3g]))
+		if (!addArgument(&argc, &argv, "/bpp:%d",
+		                 [_params intForKey:@"colors" with3GEnabled:connected_via_3g]))
 			goto out_free;
 
 	if ([_params hasValueForKey:@"port"])
@@ -124,43 +123,38 @@ static void freeArguments(int argc, char** argv)
 		if (!addArgument(&argc, &argv, "/admin"))
 			goto out_free;
 
-	if (!addArgument(&argc, &argv, "/v:%s", [_params UTF8StringForKey:
-	                 @"hostname"]))
+	if (!addArgument(&argc, &argv, "/v:%s", [_params UTF8StringForKey:@"hostname"]))
 		goto out_free;
 
 	// String settings
 	if ([[_params StringForKey:@"username"] length])
 	{
-		if (!addArgument(&argc, &argv, "/u:%s", [_params UTF8StringForKey:
-		                 @"username"]))
+		if (!addArgument(&argc, &argv, "/u:%s", [_params UTF8StringForKey:@"username"]))
 			goto out_free;
 	}
 
 	if ([[_params StringForKey:@"password"] length])
 	{
-		if (!addArgument(&argc, &argv, "/p:%s", [_params UTF8StringForKey:
-		                 @"password"]))
+		if (!addArgument(&argc, &argv, "/p:%s", [_params UTF8StringForKey:@"password"]))
 			goto out_free;
 	}
 
 	if ([[_params StringForKey:@"domain"] length])
 	{
-		if (!addArgument(&argc, &argv, "/d:%s", [_params UTF8StringForKey:
-		                 @"domain"]))
+		if (!addArgument(&argc, &argv, "/d:%s", [_params UTF8StringForKey:@"domain"]))
 			goto out_free;
 	}
 
 	if ([[_params StringForKey:@"working_directory"] length])
 	{
-		if (!addArgument(&argc, &argv, "/shell-dir:%s", [_params UTF8StringForKey:
-		                 @"working_directory"]))
+		if (!addArgument(&argc, &argv, "/shell-dir:%s",
+		                 [_params UTF8StringForKey:@"working_directory"]))
 			goto out_free;
 	}
 
 	if ([[_params StringForKey:@"remote_program"] length])
 	{
-		if (!addArgument(&argc, &argv, "/shell:%s", [_params UTF8StringForKey:
-		                 @"remote_program"]))
+		if (!addArgument(&argc, &argv, "/shell:%s", [_params UTF8StringForKey:@"remote_program"]))
 			goto out_free;
 	}
 
@@ -186,30 +180,28 @@ static void freeArguments(int argc, char** argv)
 	if (!addFlag(&argc, &argv, "bitmap-cache", TRUE))
 		goto out_free;
 
-	if (!addFlag(&argc, &argv, "wallpaper", [_params boolForKey:@"perf_show_desktop"
-	             with3GEnabled:connected_via_3g]))
+	if (!addFlag(&argc, &argv, "wallpaper",
+	             [_params boolForKey:@"perf_show_desktop" with3GEnabled:connected_via_3g]))
 		goto out_free;
 
-	if (!addFlag(&argc, &argv,
-	             "window-drag", [_params boolForKey:@"perf_window_dragging"
-	                             with3GEnabled:connected_via_3g]))
+	if (!addFlag(&argc, &argv, "window-drag",
+	             [_params boolForKey:@"perf_window_dragging" with3GEnabled:connected_via_3g]))
 		goto out_free;
 
-	if (!addFlag(&argc, &argv,
-	             "menu-anims", [_params boolForKey:@"perf_menu_animation"
-	                            with3GEnabled:connected_via_3g]))
+	if (!addFlag(&argc, &argv, "menu-anims",
+	             [_params boolForKey:@"perf_menu_animation" with3GEnabled:connected_via_3g]))
 		goto out_free;
 
-	if (!addFlag(&argc, &argv, "themes", [_params boolForKey:@"perf_windows_themes"
-	                                      with3GEnabled:connected_via_3g]))
+	if (!addFlag(&argc, &argv, "themes",
+	             [_params boolForKey:@"perf_windows_themes" with3GEnabled:connected_via_3g]))
 		goto out_free;
 
-	if (!addFlag(&argc, &argv, "fonts", [_params boolForKey:@"perf_font_smoothing"
-	                                     with3GEnabled:connected_via_3g]))
+	if (!addFlag(&argc, &argv, "fonts",
+	             [_params boolForKey:@"perf_font_smoothing" with3GEnabled:connected_via_3g]))
 		goto out_free;
 
-	if (!addFlag(&argc, &argv, "aero", [_params boolForKey:
-	                                    @"perf_desktop_composition" with3GEnabled:connected_via_3g]))
+	if (!addFlag(&argc, &argv, "aero",
+	             [_params boolForKey:@"perf_desktop_composition" with3GEnabled:connected_via_3g]))
 		goto out_free;
 
 	if ([_params hasValueForKey:@"width"])
@@ -248,8 +240,7 @@ static void freeArguments(int argc, char** argv)
 	// ts gateway settings
 	if ([_params boolForKey:@"enable_tsg_settings"])
 	{
-		if (!addArgument(&argc, &argv,
-		                 "/g:%s", [_params UTF8StringForKey:@"tsg_hostname"]))
+		if (!addArgument(&argc, &argv, "/g:%s", [_params UTF8StringForKey:@"tsg_hostname"]))
 			goto out_free;
 
 		if (!addArgument(&argc, &argv, "/gp:%d", [_params intForKey:@"tsg_port"]))
@@ -269,9 +260,7 @@ static void freeArguments(int argc, char** argv)
 	if (!addArgument(&argc, &argv, "/kbd:%d", 0x409))
 		goto out_free;
 
-	status = freerdp_client_settings_parse_command_line(_freerdp->settings, argc,
-	         argv,
-	         FALSE);
+	status = freerdp_client_settings_parse_command_line(_freerdp->settings, argc, argv, FALSE);
 
 	if (0 != status)
 		goto out_free;
@@ -307,7 +296,7 @@ out_free:
 - (void)connect
 {
 	// Set Screen Size to automatic if widht or height are still 0
-	rdpSettings* settings = _freerdp->settings;
+	rdpSettings *settings = _freerdp->settings;
 
 	if (settings->DesktopWidth == 0 || settings->DesktopHeight == 0)
 	{
@@ -325,7 +314,8 @@ out_free:
 		}
 	}
 
-	// TODO: This is a hack to ensure connections to RDVH with 16bpp don't have an odd screen resolution width
+	// TODO: This is a hack to ensure connections to RDVH with 16bpp don't have an odd screen
+	// resolution width
 	//       Otherwise this could result in screen corruption ..
 	if (settings->ColorDepth <= 16)
 		settings->DesktopWidth &= (~1);
@@ -335,9 +325,8 @@ out_free:
 
 - (void)disconnect
 {
-	mfInfo* mfi = [self mfi];
-	ios_events_send(mfi, [NSDictionary dictionaryWithObject:@"disconnect" forKey:
-	                      @"type"]);
+	mfInfo *mfi = [self mfi];
+	ios_events_send(mfi, [NSDictionary dictionaryWithObject:@"disconnect" forKey:@"type"]);
 
 	if (mfi->connection_state == TSXConnectionConnecting)
 	{
@@ -353,7 +342,7 @@ out_free:
 }
 
 // suspends the session
--(void)suspend
+- (void)suspend
 {
 	if (!_suspended)
 	{
@@ -363,7 +352,7 @@ out_free:
 }
 
 // resumes a previously suspended session
--(void)resume
+- (void)resume
 {
 	if (_suspended)
 	{
@@ -380,7 +369,7 @@ out_free:
 }
 
 // returns YES if the session is started
--(BOOL)isSuspended
+- (BOOL)isSuspended
 {
 	return _suspended;
 }
@@ -388,7 +377,7 @@ out_free:
 #pragma mark -
 #pragma mark Input events
 
-- (void)sendInputEvent:(NSDictionary*)eventDescriptor
+- (void)sendInputEvent:(NSDictionary *)eventDescriptor
 {
 	if ([self mfi]->connection_state == TSXConnectionConnected)
 		ios_events_send([self mfi], eventDescriptor);
@@ -397,17 +386,16 @@ out_free:
 #pragma mark -
 #pragma mark Server events (main thread)
 
-- (void)setNeedsDisplayInRectAsValue:(NSValue*)rect_value
+- (void)setNeedsDisplayInRectAsValue:(NSValue *)rect_value
 {
 	if ([[self delegate] respondsToSelector:@selector(session:needsRedrawInRect:)])
 		[[self delegate] session:self needsRedrawInRect:[rect_value CGRectValue]];
 }
 
-
 #pragma mark -
 #pragma mark interface functions
 
-- (UIImage*)getScreenshotWithSize:(CGSize)size
+- (UIImage *)getScreenshotWithSize:(CGSize)size
 {
 	NSAssert([self mfi]->bitmap_context != nil,
 	         @"Screenshot requested while having no valid RDP drawing context");
@@ -415,20 +403,20 @@ out_free:
 	UIGraphicsBeginImageContext(size);
 	CGContextTranslateCTM(UIGraphicsGetCurrentContext(), 0, size.height);
 	CGContextScaleCTM(UIGraphicsGetCurrentContext(), 1.0, -1.0);
-	CGContextDrawImage(UIGraphicsGetCurrentContext(), CGRectMake(0, 0, size.width,
-	                   size.height), cgImage);
-	UIImage* viewImage = UIGraphicsGetImageFromCurrentImageContext();
+	CGContextDrawImage(UIGraphicsGetCurrentContext(), CGRectMake(0, 0, size.width, size.height),
+	                   cgImage);
+	UIImage *viewImage = UIGraphicsGetImageFromCurrentImageContext();
 	UIGraphicsEndImageContext();
 	CGImageRelease(cgImage);
 	return viewImage;
 }
 
-- (rdpSettings*)getSessionParams
+- (rdpSettings *)getSessionParams
 {
 	return _freerdp->settings;
 }
 
-- (NSString*)sessionName
+- (NSString *)sessionName
 {
 	return _name;
 }
@@ -436,9 +424,9 @@ out_free:
 @end
 
 #pragma mark -
-@implementation RDPSession(Private)
+@implementation RDPSession (Private)
 
-- (mfInfo*)mfi
+- (mfInfo *)mfi
 {
 	return MFI_FROM_INSTANCE(_freerdp);
 }
@@ -446,19 +434,21 @@ out_free:
 // Blocks until rdp session finishes.
 - (void)runSession
 {
-	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	// Run the session
-	[self performSelectorOnMainThread:@selector(sessionWillConnect) withObject:nil
-	 waitUntilDone:YES];
+	[self performSelectorOnMainThread:@selector(sessionWillConnect)
+	                       withObject:nil
+	                    waitUntilDone:YES];
 	int result_code = ios_run_freerdp(_freerdp);
 	[self mfi]->connection_state = TSXConnectionDisconnected;
-	[self performSelectorOnMainThread:@selector(runSessionFinished:) withObject:
-	 [NSNumber numberWithInt:result_code] waitUntilDone:YES];
+	[self performSelectorOnMainThread:@selector(runSessionFinished:)
+	                       withObject:[NSNumber numberWithInt:result_code]
+	                    waitUntilDone:YES];
 	[pool release];
 }
 
 // Main thread.
-- (void)runSessionFinished:(NSNumber*)result
+- (void)runSessionFinished:(NSNumber *)result
 {
 	int result_code = [result intValue];
 
@@ -497,8 +487,9 @@ out_free:
 
 - (void)sessionDidFailToConnect:(int)reason
 {
-	[[NSNotificationCenter defaultCenter] postNotificationName:
-	 TSXSessionDidFailToConnectNotification object:self];
+	[[NSNotificationCenter defaultCenter]
+	    postNotificationName:TSXSessionDidFailToConnectNotification
+	                  object:self];
 
 	if ([[self delegate] respondsToSelector:@selector(session:didFailToConnect:)])
 		[[self delegate] session:self didFailToConnect:reason];
@@ -506,8 +497,8 @@ out_free:
 
 - (void)sessionDidDisconnect
 {
-	[[NSNotificationCenter defaultCenter] postNotificationName:
-	 TSXSessionDidDisconnectNotification object:self];
+	[[NSNotificationCenter defaultCenter] postNotificationName:TSXSessionDidDisconnectNotification
+	                                                    object:self];
 
 	if ([[self delegate] respondsToSelector:@selector(sessionDidDisconnect:)])
 		[[self delegate] sessionDidDisconnect:self];
@@ -515,29 +506,25 @@ out_free:
 
 - (void)sessionBitmapContextWillChange
 {
-	if ([[self delegate] respondsToSelector:@selector(
-	         sessionBitmapContextWillChange:)])
+	if ([[self delegate] respondsToSelector:@selector(sessionBitmapContextWillChange:)])
 		[[self delegate] sessionBitmapContextWillChange:self];
 }
 
 - (void)sessionBitmapContextDidChange
 {
-	if ([[self delegate] respondsToSelector:@selector(sessionBitmapContextDidChange
-	        :)])
+	if ([[self delegate] respondsToSelector:@selector(sessionBitmapContextDidChange:)])
 		[[self delegate] sessionBitmapContextDidChange:self];
 }
 
-- (void)sessionRequestsAuthenticationWithParams:(NSMutableDictionary*)params
+- (void)sessionRequestsAuthenticationWithParams:(NSMutableDictionary *)params
 {
-	if ([[self delegate] respondsToSelector:@selector(session:
-	        requestsAuthenticationWithParams:)])
+	if ([[self delegate] respondsToSelector:@selector(session:requestsAuthenticationWithParams:)])
 		[[self delegate] session:self requestsAuthenticationWithParams:params];
 }
 
-- (void)sessionVerifyCertificateWithParams:(NSMutableDictionary*)params
+- (void)sessionVerifyCertificateWithParams:(NSMutableDictionary *)params
 {
-	if ([[self delegate] respondsToSelector:@selector(session:
-	        verifyCertificateWithParams:)])
+	if ([[self delegate] respondsToSelector:@selector(session:verifyCertificateWithParams:)])
 		[[self delegate] session:self verifyCertificateWithParams:params];
 }
 

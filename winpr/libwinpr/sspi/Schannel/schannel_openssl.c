@@ -160,7 +160,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 	}
 
 	SSL_set_bio(context->ssl, context->bioRead, context->bioWrite);
-	context->ReadBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
+	context->ReadBuffer = (BYTE*)malloc(SCHANNEL_CB_MAX_TOKEN);
 
 	if (!context->ReadBuffer)
 	{
@@ -168,7 +168,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 		goto out_read_alloc;
 	}
 
-	context->WriteBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
+	context->WriteBuffer = (BYTE*)malloc(SCHANNEL_CB_MAX_TOKEN);
 
 	if (!context->WriteBuffer)
 	{
@@ -301,7 +301,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 	}
 
 	SSL_set_bio(context->ssl, context->bioRead, context->bioWrite);
-	context->ReadBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
+	context->ReadBuffer = (BYTE*)malloc(SCHANNEL_CB_MAX_TOKEN);
 
 	if (!context->ReadBuffer)
 	{
@@ -309,7 +309,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 		goto out_read_buffer;
 	}
 
-	context->WriteBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
+	context->WriteBuffer = (BYTE*)malloc(SCHANNEL_CB_MAX_TOKEN);
 
 	if (!context->WriteBuffer)
 	{
@@ -337,7 +337,8 @@ out_rsa_key:
 }
 
 SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context,
-        PSecBufferDesc pInput, PSecBufferDesc pOutput)
+                                                       PSecBufferDesc pInput,
+                                                       PSecBufferDesc pOutput)
 {
 	int status;
 	int ssl_error;
@@ -381,7 +382,7 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 
 		if (status > 0)
 		{
-			if (pBuffer->cbBuffer < (unsigned long) status)
+			if (pBuffer->cbBuffer < (unsigned long)status)
 				return SEC_E_INSUFFICIENT_MEMORY;
 
 			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
@@ -399,7 +400,8 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 }
 
 SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context,
-        PSecBufferDesc pInput, PSecBufferDesc pOutput)
+                                                       PSecBufferDesc pInput,
+                                                       PSecBufferDesc pOutput)
 {
 	int status;
 	int ssl_error;
@@ -439,7 +441,7 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 
 		if (status > 0)
 		{
-			if (pBuffer->cbBuffer < (unsigned long) status)
+			if (pBuffer->cbBuffer < (unsigned long)status)
 				return SEC_E_INSUFFICIENT_MEMORY;
 
 			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
@@ -486,18 +488,17 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 		size_t length;
 		size_t offset = 0;
 
-		length = (pStreamHeaderBuffer->cbBuffer > ustatus) ? ustatus :
-		         pStreamHeaderBuffer->cbBuffer;
+		length =
+		    (pStreamHeaderBuffer->cbBuffer > ustatus) ? ustatus : pStreamHeaderBuffer->cbBuffer;
 		CopyMemory(pStreamHeaderBuffer->pvBuffer, &context->ReadBuffer[offset], length);
 		ustatus -= length;
 		offset += length;
-		length = (pStreamBodyBuffer->cbBuffer > ustatus) ? ustatus :
-		         pStreamBodyBuffer->cbBuffer;
+		length = (pStreamBodyBuffer->cbBuffer > ustatus) ? ustatus : pStreamBodyBuffer->cbBuffer;
 		CopyMemory(pStreamBodyBuffer->pvBuffer, &context->ReadBuffer[offset], length);
 		ustatus -= length;
 		offset += length;
-		length = (pStreamTrailerBuffer->cbBuffer > ustatus) ? ustatus :
-		         pStreamTrailerBuffer->cbBuffer;
+		length =
+		    (pStreamTrailerBuffer->cbBuffer > ustatus) ? ustatus : pStreamTrailerBuffer->cbBuffer;
 		CopyMemory(pStreamTrailerBuffer->pvBuffer, &context->ReadBuffer[offset], length);
 	}
 
@@ -542,7 +543,7 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSec
 SCHANNEL_OPENSSL* schannel_openssl_new()
 {
 	SCHANNEL_OPENSSL* context;
-	context = (SCHANNEL_OPENSSL*) calloc(1, sizeof(SCHANNEL_OPENSSL));
+	context = (SCHANNEL_OPENSSL*)calloc(1, sizeof(SCHANNEL_OPENSSL));
 
 	if (context != NULL)
 	{
@@ -576,13 +577,15 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 }
 
 SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context,
-        PSecBufferDesc pInput, PSecBufferDesc pOutput)
+                                                       PSecBufferDesc pInput,
+                                                       PSecBufferDesc pOutput)
 {
 	return SEC_E_OK;
 }
 
 SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context,
-        PSecBufferDesc pInput, PSecBufferDesc pOutput)
+                                                       PSecBufferDesc pInput,
+                                                       PSecBufferDesc pOutput)
 {
 	return SEC_E_OK;
 }

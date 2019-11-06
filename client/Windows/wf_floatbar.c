@@ -25,38 +25,38 @@
 #include "wf_client.h"
 #include "wf_floatbar.h"
 #include "wf_gdi.h"
-#pragma comment( lib, "Msimg32.lib" )
+#pragma comment(lib, "Msimg32.lib")
 
 #define TAG CLIENT_TAG("windows.floatbar")
 
 typedef struct _Button Button;
 
 /* TIMERs */
-#define TIMER_HIDE          1
-#define TIMER_ANIMAT_SHOW   2
-#define TIMER_ANIMAT_HIDE   3
+#define TIMER_HIDE 1
+#define TIMER_ANIMAT_SHOW 2
+#define TIMER_ANIMAT_HIDE 3
 
 /* Button Type */
-#define BUTTON_LOCKPIN      0
-#define BUTTON_MINIMIZE     1
-#define BUTTON_RESTORE      2
-#define BUTTON_CLOSE        3
-#define BTN_MAX             4
+#define BUTTON_LOCKPIN 0
+#define BUTTON_MINIMIZE 1
+#define BUTTON_RESTORE 2
+#define BUTTON_CLOSE 3
+#define BTN_MAX 4
 
 /* bmp size */
-#define BACKGROUND_W        576
-#define BACKGROUND_H        27
-#define BUTTON_OFFSET       5
-#define BUTTON_Y            2
-#define BUTTON_WIDTH        23
-#define BUTTON_HEIGHT       21
-#define BUTTON_SPACING      1
+#define BACKGROUND_W 576
+#define BACKGROUND_H 27
+#define BUTTON_OFFSET 5
+#define BUTTON_Y 2
+#define BUTTON_WIDTH 23
+#define BUTTON_HEIGHT 21
+#define BUTTON_SPACING 1
 
-#define LOCK_X              ( BACKGROUND_H + BUTTON_OFFSET )
-#define CLOSE_X             ( (BACKGROUND_W - ( BACKGROUND_H + BUTTON_OFFSET ) ) - BUTTON_WIDTH )
-#define RESTORE_X           ( CLOSE_X - ( BUTTON_WIDTH + BUTTON_SPACING ) )
-#define MINIMIZE_X          ( RESTORE_X - ( BUTTON_WIDTH + BUTTON_SPACING ) )
-#define TEXT_X              ( BACKGROUND_H + ( ( BUTTON_WIDTH + BUTTON_SPACING ) * 3 ) + 5 )
+#define LOCK_X (BACKGROUND_H + BUTTON_OFFSET)
+#define CLOSE_X ((BACKGROUND_W - (BACKGROUND_H + BUTTON_OFFSET)) - BUTTON_WIDTH)
+#define RESTORE_X (CLOSE_X - (BUTTON_WIDTH + BUTTON_SPACING))
+#define MINIMIZE_X (RESTORE_X - (BUTTON_WIDTH + BUTTON_SPACING))
+#define TEXT_X (BACKGROUND_H + ((BUTTON_WIDTH + BUTTON_SPACING) * 3) + 5)
 
 struct _Button
 {
@@ -96,12 +96,7 @@ struct _FloatBar
 static BOOL floatbar_kill_timers(wfFloatBar* floatbar)
 {
 	size_t x;
-	UINT_PTR timers[] =
-	{
-		TIMER_HIDE,
-		TIMER_ANIMAT_HIDE,
-		TIMER_ANIMAT_SHOW
-	};
+	UINT_PTR timers[] = { TIMER_HIDE, TIMER_ANIMAT_HIDE, TIMER_ANIMAT_SHOW };
 
 	if (!floatbar)
 		return FALSE;
@@ -115,7 +110,7 @@ static BOOL floatbar_kill_timers(wfFloatBar* floatbar)
 
 static BOOL floatbar_animation(wfFloatBar* const floatbar, const BOOL show)
 {
-	UINT_PTR timer =  show ? TIMER_ANIMAT_SHOW : TIMER_ANIMAT_HIDE;
+	UINT_PTR timer = show ? TIMER_ANIMAT_SHOW : TIMER_ANIMAT_HIDE;
 
 	if (!floatbar)
 		return FALSE;
@@ -131,7 +126,7 @@ static BOOL floatbar_animation(wfFloatBar* const floatbar, const BOOL show)
 	if (SetTimer(floatbar->hwnd, timer, USER_TIMER_MINIMUM, NULL) == NULL)
 	{
 		DWORD err = GetLastError();
-		WLog_ERR(TAG, "SetTimer failed with %08"PRIx32, err);
+		WLog_ERR(TAG, "SetTimer failed with %08" PRIx32, err);
 		return FALSE;
 	}
 
@@ -148,7 +143,7 @@ static BOOL floatbar_trigger_hide(wfFloatBar* floatbar)
 		if (SetTimer(floatbar->hwnd, TIMER_HIDE, 3000, NULL) == NULL)
 		{
 			DWORD err = GetLastError();
-			WLog_ERR(TAG, "SetTimer failed with %08"PRIx32, err);
+			WLog_ERR(TAG, "SetTimer failed with %08" PRIx32, err);
 			return FALSE;
 		}
 	}
@@ -163,11 +158,11 @@ static BOOL floatbar_hide(wfFloatBar* floatbar)
 
 	floatbar->offset = floatbar->height - 2;
 
-	if (!MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset,
-	                floatbar->width, floatbar->height, TRUE))
+	if (!MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset, floatbar->width,
+	                floatbar->height, TRUE))
 	{
 		DWORD err = GetLastError();
-		WLog_ERR(TAG, "MoveWindow failed with %08"PRIx32, err);
+		WLog_ERR(TAG, "MoveWindow failed with %08" PRIx32, err);
 		return FALSE;
 	}
 
@@ -186,11 +181,11 @@ static BOOL floatbar_show(wfFloatBar* floatbar)
 
 	floatbar->offset = 0;
 
-	if (!MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset,
-	                floatbar->width, floatbar->height, TRUE))
+	if (!MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset, floatbar->width,
+	                floatbar->height, TRUE))
 	{
 		DWORD err = GetLastError();
-		WLog_ERR(TAG, "MoveWindow failed with %08"PRIx32, err);
+		WLog_ERR(TAG, "MoveWindow failed with %08" PRIx32, err);
 		return FALSE;
 	}
 
@@ -235,7 +230,7 @@ static BOOL update_locked_state(wfFloatBar* floatbar)
 	return TRUE;
 }
 
-static int button_hit(Button* const  button)
+static int button_hit(Button* const button)
 {
 	wfFloatBar* const floatbar = button->floatbar;
 
@@ -276,17 +271,18 @@ static int button_paint(const Button* const button, const HDC hdc)
 		bf.BlendFlags = 0;
 		bf.SourceConstantAlpha = 255;
 		bf.AlphaFormat = AC_SRC_ALPHA;
-		AlphaBlend(hdc, button->x, button->y, button->w, button->h, floatbar->hdcmem, 0, 0, button->w,
-		           button->h, bf);
+		AlphaBlend(hdc, button->x, button->y, button->w, button->h, floatbar->hdcmem, 0, 0,
+		           button->w, button->h, bf);
 	}
 
 	return 0;
 }
 
 static Button* floatbar_create_button(wfFloatBar* const floatbar, const int type, const int resid,
-                                      const int resid_act, const int x, const int y, const int h, const int w)
+                                      const int resid_act, const int x, const int y, const int h,
+                                      const int w)
 {
-	Button* button = (Button*) calloc(1, sizeof(Button));
+	Button* button = (Button*)calloc(1, sizeof(Button));
 
 	if (!button)
 		return NULL;
@@ -306,12 +302,12 @@ static Button* floatbar_create_button(wfFloatBar* const floatbar, const int type
 }
 
 static Button* floatbar_create_lock_button(wfFloatBar* const floatbar, const int unlock_resid,
-        const int unlock_resid_act, const int lock_resid, const int lock_resid_act, const int x,
-        const int y, const int h, const int w)
+                                           const int unlock_resid_act, const int lock_resid,
+                                           const int lock_resid_act, const int x, const int y,
+                                           const int h, const int w)
 {
-	Button* button = floatbar_create_button(floatbar, BUTTON_LOCKPIN, unlock_resid, unlock_resid_act, x,
-	                                        y, h,
-	                                        w);
+	Button* button = floatbar_create_button(floatbar, BUTTON_LOCKPIN, unlock_resid,
+	                                        unlock_resid_act, x, y, h, w);
 
 	if (!button)
 		return NULL;
@@ -320,8 +316,9 @@ static Button* floatbar_create_lock_button(wfFloatBar* const floatbar, const int
 	button->unlocked_bmp_act = button->bmp_act;
 	button->locked_bmp = (HBITMAP)LoadImage(floatbar->wfc->hInstance, MAKEINTRESOURCE(lock_resid),
 	                                        IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
-	button->locked_bmp_act = (HBITMAP)LoadImage(floatbar->wfc->hInstance,
-	                         MAKEINTRESOURCE(lock_resid_act), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
+	button->locked_bmp_act =
+	    (HBITMAP)LoadImage(floatbar->wfc->hInstance, MAKEINTRESOURCE(lock_resid_act), IMAGE_BITMAP,
+	                       0, 0, LR_DEFAULTCOLOR);
 	return button;
 }
 
@@ -358,21 +355,18 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 	int bottom = BACKGROUND_H - 1;
 	int right = BACKGROUND_W - 1;
 	const int angleOffset = BACKGROUND_H - 1;
-	TRIVERTEX triVertext[2] =
-	{
-		left,
-		top,
-		GetRValue(rgbTop) << 8,
-		                  GetGValue(rgbTop) << 8,
-		                  GetBValue(rgbTop) << 8,
-		                  0x0000,
-		                  right,
-		                  bottom,
-		                  GetRValue(rgbBottom) << 8,
-		                  GetGValue(rgbBottom) << 8,
-		                  GetBValue(rgbBottom) << 8,
-		                  0x0000
-	};
+	TRIVERTEX triVertext[2] = { left,
+		                        top,
+		                        GetRValue(rgbTop) << 8,
+		                        GetGValue(rgbTop) << 8,
+		                        GetBValue(rgbTop) << 8,
+		                        0x0000,
+		                        right,
+		                        bottom,
+		                        GetRValue(rgbBottom) << 8,
+		                        GetGValue(rgbBottom) << 8,
+		                        GetBValue(rgbBottom) << 8,
+		                        0x0000 };
 
 	if (!floatbar)
 		return FALSE;
@@ -397,7 +391,8 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 	LineTo(hdc, right + 1, top - 1);
 	DeleteObject(hpen);
 	SelectObject(hdc, orig);
-	DrawText(hdc, floatbar->wfc->window_title, wcslen(floatbar->wfc->window_title), &floatbar->textRect,
+	DrawText(hdc, floatbar->wfc->window_title, wcslen(floatbar->wfc->window_title),
+	         &floatbar->textRect,
 	         DT_CENTER | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX | DT_SINGLELINE);
 
 	/* paint buttons */
@@ -427,7 +422,7 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 	switch (Msg)
 	{
 		case WM_CREATE:
-			floatbar = ((wfFloatBar*)((CREATESTRUCT*) lParam)->lpCreateParams);
+			floatbar = ((wfFloatBar*)((CREATESTRUCT*)lParam)->lpCreateParams);
 			floatbar->hwnd = hWnd;
 			GetWindowRect(floatbar->hwnd, &floatbar->rect);
 			floatbar->width = floatbar->rect.right - floatbar->rect.left;
@@ -537,22 +532,22 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 			break;
 
 		case WM_MOUSELEAVE:
+		{
+			int i;
+
+			for (i = 0; i < BTN_MAX; i++)
 			{
-				int i;
-
-				for (i = 0; i < BTN_MAX; i++)
+				if (floatbar->buttons[i] != NULL)
 				{
-					if (floatbar->buttons[i] != NULL)
-					{
-						floatbar->buttons[i]->active = FALSE;
-					}
+					floatbar->buttons[i]->active = FALSE;
 				}
-
-				InvalidateRect(hWnd, NULL, FALSE);
-				UpdateWindow(hWnd);
-				floatbar_trigger_hide(floatbar);
-				break;
 			}
+
+			InvalidateRect(hWnd, NULL, FALSE);
+			UpdateWindow(hWnd);
+			floatbar_trigger_hide(floatbar);
+			break;
+		}
 
 		case WM_TIMER:
 			switch (wParam)
@@ -562,28 +557,28 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 					break;
 
 				case TIMER_ANIMAT_SHOW:
-					{
-						floatbar->offset--;
-						MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset, floatbar->width,
-						           floatbar->height, TRUE);
+				{
+					floatbar->offset--;
+					MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset,
+					           floatbar->width, floatbar->height, TRUE);
 
-						if (floatbar->offset <= 0)
-							floatbar_show(floatbar);
+					if (floatbar->offset <= 0)
+						floatbar_show(floatbar);
 
-						break;
-					}
+					break;
+				}
 
 				case TIMER_ANIMAT_HIDE:
-					{
-						floatbar->offset++;
-						MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset,
-						           floatbar->width, floatbar->height, TRUE);
+				{
+					floatbar->offset++;
+					MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset,
+					           floatbar->width, floatbar->height, TRUE);
 
-						if (floatbar->offset >= floatbar->height - 2)
-							floatbar_hide(floatbar);
+					if (floatbar->offset >= floatbar->height - 2)
+						floatbar_hide(floatbar);
 
-						break;
-					}
+					break;
+				}
 
 				default:
 					break;
@@ -619,22 +614,21 @@ static BOOL floatbar_window_create(wfFloatBar* floatbar)
 		return FALSE;
 
 	x = (rect.right - rect.left - BACKGROUND_W) / 2;
-	wnd_cls.cbSize        = sizeof(WNDCLASSEX);
-	wnd_cls.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-	wnd_cls.lpfnWndProc   = floatbar_proc;
-	wnd_cls.cbClsExtra    = 0;
-	wnd_cls.cbWndExtra    = 0;
-	wnd_cls.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
-	wnd_cls.hCursor       = LoadCursor(floatbar->root_window, IDC_ARROW);
+	wnd_cls.cbSize = sizeof(WNDCLASSEX);
+	wnd_cls.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	wnd_cls.lpfnWndProc = floatbar_proc;
+	wnd_cls.cbClsExtra = 0;
+	wnd_cls.cbWndExtra = 0;
+	wnd_cls.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wnd_cls.hCursor = LoadCursor(floatbar->root_window, IDC_ARROW);
 	wnd_cls.hbrBackground = NULL;
-	wnd_cls.lpszMenuName  = NULL;
+	wnd_cls.lpszMenuName = NULL;
 	wnd_cls.lpszClassName = L"floatbar";
-	wnd_cls.hInstance     = floatbar->root_window;
-	wnd_cls.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
+	wnd_cls.hInstance = floatbar->root_window;
+	wnd_cls.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 	RegisterClassEx(&wnd_cls);
-	barWnd = CreateWindowEx(WS_EX_TOPMOST, L"floatbar", L"floatbar", WS_CHILD, x, 0,
-	                        BACKGROUND_W, BACKGROUND_H, floatbar->parent, NULL,
-	                        floatbar->root_window, floatbar);
+	barWnd = CreateWindowEx(WS_EX_TOPMOST, L"floatbar", L"floatbar", WS_CHILD, x, 0, BACKGROUND_W,
+	                        BACKGROUND_H, floatbar->parent, NULL, floatbar->root_window, floatbar);
 
 	if (barWnd == NULL)
 		return FALSE;
@@ -672,7 +666,7 @@ wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags)
 		return NULL;
 
 	// TODO: Disable for remote app
-	floatbar = (wfFloatBar*) calloc(1, sizeof(wfFloatBar));
+	floatbar = (wfFloatBar*)calloc(1, sizeof(wfFloatBar));
 
 	if (!floatbar)
 		return NULL;
@@ -688,10 +682,12 @@ wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags)
 
 	if (wfc->fullscreen_toggle)
 	{
-		floatbar->buttons[0] = floatbar_create_button(floatbar, BUTTON_MINIMIZE, IDB_MINIMIZE,
-		                       IDB_MINIMIZE_ACT, MINIMIZE_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
-		floatbar->buttons[1] = floatbar_create_button(floatbar, BUTTON_RESTORE, IDB_RESTORE,
-		                       IDB_RESTORE_ACT, RESTORE_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
+		floatbar->buttons[0] =
+		    floatbar_create_button(floatbar, BUTTON_MINIMIZE, IDB_MINIMIZE, IDB_MINIMIZE_ACT,
+		                           MINIMIZE_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
+		floatbar->buttons[1] =
+		    floatbar_create_button(floatbar, BUTTON_RESTORE, IDB_RESTORE, IDB_RESTORE_ACT,
+		                           RESTORE_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
 	}
 	else
 	{
@@ -700,9 +696,10 @@ wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags)
 	}
 
 	floatbar->buttons[2] = floatbar_create_button(floatbar, BUTTON_CLOSE, IDB_CLOSE, IDB_CLOSE_ACT,
-	                       CLOSE_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
-	floatbar->buttons[3] = floatbar_create_lock_button(floatbar, IDB_UNLOCK, IDB_UNLOCK_ACT, IDB_LOCK,
-	                       IDB_LOCK_ACT, LOCK_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
+	                                              CLOSE_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
+	floatbar->buttons[3] =
+	    floatbar_create_lock_button(floatbar, IDB_UNLOCK, IDB_UNLOCK_ACT, IDB_LOCK, IDB_LOCK_ACT,
+	                                LOCK_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
 
 	if (!floatbar_window_create(floatbar))
 		goto fail;

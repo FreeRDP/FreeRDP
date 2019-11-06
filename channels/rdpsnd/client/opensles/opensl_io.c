@@ -6,14 +6,14 @@ All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
-	* Redistributions of source code must retain the above copyright
-	  notice, this list of conditions and the following disclaimer.
-	* Redistributions in binary form must reproduce the above copyright
-	  notice, this list of conditions and the following disclaimer in the
-	  documentation and/or other materials provided with the distribution.
-	* Neither the name of the <organization> nor the
-	  names of its contributors may be used to endorse or promote products
-	  derived from this software without specific prior written permission.
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "rdpsnd_main.h"
 #include "opensl_io.h"
 #define CONV16BIT 32768
-#define CONVMYFLT (1./32768.)
+#define CONVMYFLT (1. / 32768.)
 
 static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context);
 
@@ -42,22 +42,24 @@ static SLresult openSLCreateEngine(OPENSL_STREAM* p)
 	SLresult result;
 	// create engine
 	result = slCreateEngine(&(p->engineObject), 0, NULL, 0, NULL, NULL);
-	DEBUG_SND("engineObject=%p", (void*) p->engineObject);
+	DEBUG_SND("engineObject=%p", (void*)p->engineObject);
 
-	if (result != SL_RESULT_SUCCESS) goto  engine_end;
+	if (result != SL_RESULT_SUCCESS)
+		goto engine_end;
 
 	// realize the engine
 	result = (*p->engineObject)->Realize(p->engineObject, SL_BOOLEAN_FALSE);
-	DEBUG_SND("Realize=%"PRIu32"", result);
+	DEBUG_SND("Realize=%" PRIu32 "", result);
 
-	if (result != SL_RESULT_SUCCESS) goto engine_end;
+	if (result != SL_RESULT_SUCCESS)
+		goto engine_end;
 
 	// get the engine interface, which is needed in order to create other objects
-	result = (*p->engineObject)->GetInterface(p->engineObject, SL_IID_ENGINE,
-	         &(p->engineEngine));
-	DEBUG_SND("engineEngine=%p", (void*) p->engineEngine);
+	result = (*p->engineObject)->GetInterface(p->engineObject, SL_IID_ENGINE, &(p->engineEngine));
+	DEBUG_SND("engineEngine=%p", (void*)p->engineEngine);
 
-	if (result != SL_RESULT_SUCCESS) goto  engine_end;
+	if (result != SL_RESULT_SUCCESS)
+		goto engine_end;
 
 engine_end:
 	return result;
@@ -68,18 +70,15 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 {
 	SLresult result;
 	SLuint32 sr = p->sr;
-	SLuint32  channels = p->outchannels;
+	SLuint32 channels = p->outchannels;
 	assert(p->engineObject);
 	assert(p->engineEngine);
 
 	if (channels)
 	{
 		// configure audio source
-		SLDataLocator_AndroidSimpleBufferQueue loc_bufq =
-		{
-			SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
-			p->queuesize
-		};
+		SLDataLocator_AndroidSimpleBufferQueue loc_bufq = { SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
+			                                                p->queuesize };
 
 		switch (sr)
 		{
@@ -135,90 +134,102 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 				return -1;
 		}
 
-		const SLInterfaceID ids[] = {SL_IID_VOLUME};
-		const SLboolean req[] = {SL_BOOLEAN_FALSE};
-		result = (*p->engineEngine)->CreateOutputMix(p->engineEngine,
-		         &(p->outputMixObject), 1, ids, req);
-		DEBUG_SND("engineEngine=%p", (void*) p->engineEngine);
+		const SLInterfaceID ids[] = { SL_IID_VOLUME };
+		const SLboolean req[] = { SL_BOOLEAN_FALSE };
+		result = (*p->engineEngine)
+		             ->CreateOutputMix(p->engineEngine, &(p->outputMixObject), 1, ids, req);
+		DEBUG_SND("engineEngine=%p", (void*)p->engineEngine);
 		assert(!result);
 
-		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
+		if (result != SL_RESULT_SUCCESS)
+			goto end_openaudio;
 
 		// realize the output mix
 		result = (*p->outputMixObject)->Realize(p->outputMixObject, SL_BOOLEAN_FALSE);
-		DEBUG_SND("Realize=%"PRIu32"", result);
+		DEBUG_SND("Realize=%" PRIu32 "", result);
 		assert(!result);
 
-		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
+		if (result != SL_RESULT_SUCCESS)
+			goto end_openaudio;
 
 		int speakers;
 
 		if (channels > 1)
 			speakers = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
-		else speakers = SL_SPEAKER_FRONT_CENTER;
+		else
+			speakers = SL_SPEAKER_FRONT_CENTER;
 
-		SLDataFormat_PCM format_pcm = {SL_DATAFORMAT_PCM, channels, sr,
-		                               SL_PCMSAMPLEFORMAT_FIXED_16, SL_PCMSAMPLEFORMAT_FIXED_16,
-		                               speakers, SL_BYTEORDER_LITTLEENDIAN
-		                              };
-		SLDataSource audioSrc = {&loc_bufq, &format_pcm};
+		SLDataFormat_PCM format_pcm = { SL_DATAFORMAT_PCM,
+			                            channels,
+			                            sr,
+			                            SL_PCMSAMPLEFORMAT_FIXED_16,
+			                            SL_PCMSAMPLEFORMAT_FIXED_16,
+			                            speakers,
+			                            SL_BYTEORDER_LITTLEENDIAN };
+		SLDataSource audioSrc = { &loc_bufq, &format_pcm };
 		// configure audio sink
-		SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX, p->outputMixObject};
-		SLDataSink audioSnk = {&loc_outmix, NULL};
+		SLDataLocator_OutputMix loc_outmix = { SL_DATALOCATOR_OUTPUTMIX, p->outputMixObject };
+		SLDataSink audioSnk = { &loc_outmix, NULL };
 		// create audio player
-		const SLInterfaceID ids1[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, SL_IID_VOLUME};
-		const SLboolean req1[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
-		result = (*p->engineEngine)->CreateAudioPlayer(p->engineEngine,
-		         &(p->bqPlayerObject), &audioSrc, &audioSnk, 2, ids1, req1);
-		DEBUG_SND("bqPlayerObject=%p", (void*) p->bqPlayerObject);
+		const SLInterfaceID ids1[] = { SL_IID_ANDROIDSIMPLEBUFFERQUEUE, SL_IID_VOLUME };
+		const SLboolean req1[] = { SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE };
+		result = (*p->engineEngine)
+		             ->CreateAudioPlayer(p->engineEngine, &(p->bqPlayerObject), &audioSrc,
+		                                 &audioSnk, 2, ids1, req1);
+		DEBUG_SND("bqPlayerObject=%p", (void*)p->bqPlayerObject);
 		assert(!result);
 
-		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
+		if (result != SL_RESULT_SUCCESS)
+			goto end_openaudio;
 
 		// realize the player
 		result = (*p->bqPlayerObject)->Realize(p->bqPlayerObject, SL_BOOLEAN_FALSE);
-		DEBUG_SND("Realize=%"PRIu32"", result);
+		DEBUG_SND("Realize=%" PRIu32 "", result);
 		assert(!result);
 
-		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
+		if (result != SL_RESULT_SUCCESS)
+			goto end_openaudio;
 
 		// get the play interface
-		result = (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject, SL_IID_PLAY,
-		         &(p->bqPlayerPlay));
-		DEBUG_SND("bqPlayerPlay=%p", (void*) p->bqPlayerPlay);
+		result =
+		    (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject, SL_IID_PLAY, &(p->bqPlayerPlay));
+		DEBUG_SND("bqPlayerPlay=%p", (void*)p->bqPlayerPlay);
 		assert(!result);
 
-		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
+		if (result != SL_RESULT_SUCCESS)
+			goto end_openaudio;
 
 		// get the volume interface
-		result = (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject, SL_IID_VOLUME,
-		         &(p->bqPlayerVolume));
-		DEBUG_SND("bqPlayerVolume=%p", (void*) p->bqPlayerVolume);
+		result = (*p->bqPlayerObject)
+		             ->GetInterface(p->bqPlayerObject, SL_IID_VOLUME, &(p->bqPlayerVolume));
+		DEBUG_SND("bqPlayerVolume=%p", (void*)p->bqPlayerVolume);
 		assert(!result);
 
-		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
+		if (result != SL_RESULT_SUCCESS)
+			goto end_openaudio;
 
 		// get the buffer queue interface
-		result = (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject,
-		         SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
-		         &(p->bqPlayerBufferQueue));
-		DEBUG_SND("bqPlayerBufferQueue=%p", (void*) p->bqPlayerBufferQueue);
+		result = (*p->bqPlayerObject)
+		             ->GetInterface(p->bqPlayerObject, SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
+		                            &(p->bqPlayerBufferQueue));
+		DEBUG_SND("bqPlayerBufferQueue=%p", (void*)p->bqPlayerBufferQueue);
 		assert(!result);
 
-		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
+		if (result != SL_RESULT_SUCCESS)
+			goto end_openaudio;
 
 		// register callback on the buffer queue
-		result = (*p->bqPlayerBufferQueue)->RegisterCallback(p->bqPlayerBufferQueue,
-		         bqPlayerCallback, p);
-		DEBUG_SND("bqPlayerCallback=%p", (void*) p->bqPlayerCallback);
+		result = (*p->bqPlayerBufferQueue)
+		             ->RegisterCallback(p->bqPlayerBufferQueue, bqPlayerCallback, p);
+		DEBUG_SND("bqPlayerCallback=%p", (void*)p->bqPlayerCallback);
 		assert(!result);
 
-		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
+		if (result != SL_RESULT_SUCCESS)
+			goto end_openaudio;
 
 		// set the player's state to playing
-		result = (*p->bqPlayerPlay)->SetPlayState(p->bqPlayerPlay,
-		         SL_PLAYSTATE_PLAYING);
-		DEBUG_SND("SetPlayState=%"PRIu32"", result);
+		result = (*p->bqPlayerPlay)->SetPlayState(p->bqPlayerPlay, SL_PLAYSTATE_PLAYING);
+		DEBUG_SND("SetPlayState=%" PRIu32 "", result);
 		assert(!result);
 	end_openaudio:
 		assert(!result);
@@ -258,13 +269,11 @@ static void openSLDestroyEngine(OPENSL_STREAM* p)
 	}
 }
 
-
 // open the android audio device for and/or output
-OPENSL_STREAM* android_OpenAudioDevice(int sr, int outchannels,
-                                       int bufferframes)
+OPENSL_STREAM* android_OpenAudioDevice(int sr, int outchannels, int bufferframes)
 {
 	OPENSL_STREAM* p;
-	p = (OPENSL_STREAM*) calloc(1, sizeof(OPENSL_STREAM));
+	p = (OPENSL_STREAM*)calloc(1, sizeof(OPENSL_STREAM));
 
 	if (!p)
 		return NULL;
@@ -313,7 +322,7 @@ void android_CloseAudioDevice(OPENSL_STREAM* p)
 // this callback handler is called every time a buffer finishes playing
 static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context)
 {
-	OPENSL_STREAM* p = (OPENSL_STREAM*) context;
+	OPENSL_STREAM* p = (OPENSL_STREAM*)context;
 	assert(p);
 	assert(p->queue);
 	void* data = Queue_Dequeue(p->queue);
@@ -328,8 +337,8 @@ int android_AudioOut(OPENSL_STREAM* p, const short* buffer, int size)
 	assert(size > 0);
 
 	/* Assure, that the queue is not full. */
-	if (p->queuesize <= Queue_Count(p->queue)
-	    && WaitForSingleObject(p->queue->event, INFINITE) == WAIT_FAILED)
+	if (p->queuesize <= Queue_Count(p->queue) &&
+	    WaitForSingleObject(p->queue->event, INFINITE) == WAIT_FAILED)
 	{
 		DEBUG_SND("WaitForSingleObject failed!");
 		return -1;
@@ -345,8 +354,7 @@ int android_AudioOut(OPENSL_STREAM* p, const short* buffer, int size)
 
 	memcpy(data, buffer, size * sizeof(short));
 	Queue_Enqueue(p->queue, data);
-	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue,
-	                                   data, sizeof(short) * size);
+	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue, data, sizeof(short) * size);
 	return size;
 }
 
@@ -394,15 +402,13 @@ int android_GetOutputVolumeMax(OPENSL_STREAM* p)
 	SLmillibel level;
 	assert(p);
 	assert(p->bqPlayerVolume);
-	SLresult rc = (*p->bqPlayerVolume)->GetMaxVolumeLevel(p->bqPlayerVolume,
-	              &level);
+	SLresult rc = (*p->bqPlayerVolume)->GetMaxVolumeLevel(p->bqPlayerVolume, &level);
 
 	if (SL_RESULT_SUCCESS != rc)
 		return 0;
 
 	return level;
 }
-
 
 BOOL android_SetOutputVolume(OPENSL_STREAM* p, int level)
 {
@@ -413,4 +419,3 @@ BOOL android_SetOutputVolume(OPENSL_STREAM* p, int level)
 
 	return TRUE;
 }
-

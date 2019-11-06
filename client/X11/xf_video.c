@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 
-
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 #include <freerdp/gdi/video.h>
@@ -33,7 +32,7 @@ typedef struct
 } xfVideoSurface;
 
 static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, BYTE* data, UINT32 x, UINT32 y,
-        UINT32 width, UINT32 height)
+                                          UINT32 width, UINT32 height)
 {
 	xfContext* xfc = (xfContext*)video->custom;
 	xfVideoSurface* ret = calloc(1, sizeof(*ret));
@@ -46,8 +45,8 @@ static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, BYTE* data,
 	ret->base.y = y;
 	ret->base.w = width;
 	ret->base.h = height;
-	ret->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-	                          (char*)data, width, height, 8, width * 4);
+	ret->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, (char*)data, width,
+	                          height, 8, width * 4);
 
 	if (!ret->image)
 	{
@@ -59,26 +58,23 @@ static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, BYTE* data,
 	return &ret->base;
 }
 
-
 static BOOL xfVideoShowSurface(VideoClientContext* video, VideoSurface* surface)
 {
 	xfVideoSurface* xfSurface = (xfVideoSurface*)surface;
 	xfContext* xfc = video->custom;
 #ifdef WITH_XRENDER
 
-	if (xfc->context.settings->SmartSizing
-	    || xfc->context.settings->MultiTouchGestures)
+	if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
 	{
-		XPutImage(xfc->display, xfc->primary, xfc->gc, xfSurface->image,
-		          0, 0, surface->x, surface->y, surface->w, surface->h);
+		XPutImage(xfc->display, xfc->primary, xfc->gc, xfSurface->image, 0, 0, surface->x,
+		          surface->y, surface->w, surface->h);
 		xf_draw_screen(xfc, surface->x, surface->y, surface->w, surface->h);
 	}
 	else
 #endif
 	{
-		XPutImage(xfc->display, xfc->drawable, xfc->gc, xfSurface->image,
-		          0, 0,
-		          surface->x, surface->y, surface->w, surface->h);
+		XPutImage(xfc->display, xfc->drawable, xfc->gc, xfSurface->image, 0, 0, surface->x,
+		          surface->y, surface->w, surface->h);
 	}
 
 	return TRUE;
@@ -104,7 +100,6 @@ void xf_video_control_init(xfContext* xfc, VideoClientContext* video)
 	video->showSurface = xfVideoShowSurface;
 	video->deleteSurface = xfVideoDeleteSurface;
 }
-
 
 void xf_video_control_uninit(xfContext* xfc, VideoClientContext* video)
 {

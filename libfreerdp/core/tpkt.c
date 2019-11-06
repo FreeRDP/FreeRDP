@@ -121,7 +121,7 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 
 void tpkt_write_header(wStream* s, UINT16 length)
 {
-	Stream_Write_UINT8(s, 3); /* version */
-	Stream_Write_UINT8(s, 0); /* reserved */
+	Stream_Write_UINT8(s, 3);          /* version */
+	Stream_Write_UINT8(s, 0);          /* reserved */
 	Stream_Write_UINT16_BE(s, length); /* length */
 }

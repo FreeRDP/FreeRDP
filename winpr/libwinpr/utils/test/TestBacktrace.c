@@ -19,7 +19,7 @@ int TestBacktrace(int argc, char* argv[])
 	if (msg)
 	{
 		for (x = 0; x < used; x++)
-			printf("%"PRIuz": %s\n", x, msg[x]);
+			printf("%" PRIuz ": %s\n", x, msg[x]);
 
 		rc = 0;
 	}

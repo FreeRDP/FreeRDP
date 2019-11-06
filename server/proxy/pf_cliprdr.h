@@ -28,7 +28,6 @@
 
 BOOL pf_server_cliprdr_init(pServerContext* ps);
 void pf_cliprdr_register_callbacks(CliprdrClientContext* cliprdr_client,
-                                 CliprdrServerContext* cliprdr_server,
-                                 proxyData* pdata);
+                                   CliprdrServerContext* cliprdr_server, proxyData* pdata);
 
 #endif /* FREERDP_SERVER_PROXY_PFCLIPRDR_H */

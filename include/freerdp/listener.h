@@ -28,40 +28,44 @@ typedef struct rdp_freerdp_listener freerdp_listener;
 #include <freerdp/peer.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-typedef BOOL (*psListenerOpen)(freerdp_listener* instance, const char* bind_address, UINT16 port);
-typedef BOOL (*psListenerOpenLocal)(freerdp_listener* instance, const char* path);
-typedef BOOL (*psListenerOpenFromSocket)(freerdp_listener* instance, int fd);
-typedef BOOL (*psListenerGetFileDescriptor)(freerdp_listener* instance, void** rfds, int* rcount);
-typedef DWORD (*psListenerGetEventHandles)(freerdp_listener* instance, HANDLE* events, DWORD nCount);
-typedef BOOL (*psListenerCheckFileDescriptor)(freerdp_listener* instance);
-typedef void (*psListenerClose)(freerdp_listener* instance);
-typedef BOOL (*psPeerAccepted)(freerdp_listener* instance, freerdp_peer* client);
+	typedef BOOL (*psListenerOpen)(freerdp_listener* instance, const char* bind_address,
+	                               UINT16 port);
+	typedef BOOL (*psListenerOpenLocal)(freerdp_listener* instance, const char* path);
+	typedef BOOL (*psListenerOpenFromSocket)(freerdp_listener* instance, int fd);
+	typedef BOOL (*psListenerGetFileDescriptor)(freerdp_listener* instance, void** rfds,
+	                                            int* rcount);
+	typedef DWORD (*psListenerGetEventHandles)(freerdp_listener* instance, HANDLE* events,
+	                                           DWORD nCount);
+	typedef BOOL (*psListenerCheckFileDescriptor)(freerdp_listener* instance);
+	typedef void (*psListenerClose)(freerdp_listener* instance);
+	typedef BOOL (*psPeerAccepted)(freerdp_listener* instance, freerdp_peer* client);
 
-struct rdp_freerdp_listener
-{
-	void* info;
-	void* listener;
-	void* param1;
-	void* param2;
-	void* param3;
-	void* param4;
+	struct rdp_freerdp_listener
+	{
+		void* info;
+		void* listener;
+		void* param1;
+		void* param2;
+		void* param3;
+		void* param4;
 
-	psListenerOpen Open;
-	psListenerOpenLocal OpenLocal;
-	psListenerGetFileDescriptor GetFileDescriptor;
-	psListenerGetEventHandles GetEventHandles;
-	psListenerCheckFileDescriptor CheckFileDescriptor;
-	psListenerClose Close;
+		psListenerOpen Open;
+		psListenerOpenLocal OpenLocal;
+		psListenerGetFileDescriptor GetFileDescriptor;
+		psListenerGetEventHandles GetEventHandles;
+		psListenerCheckFileDescriptor CheckFileDescriptor;
+		psListenerClose Close;
 
-	psPeerAccepted PeerAccepted;
-	psListenerOpenFromSocket OpenFromSocket;
-};
+		psPeerAccepted PeerAccepted;
+		psListenerOpenFromSocket OpenFromSocket;
+	};
 
-FREERDP_API freerdp_listener* freerdp_listener_new(void);
-FREERDP_API void freerdp_listener_free(freerdp_listener* instance);
+	FREERDP_API freerdp_listener* freerdp_listener_new(void);
+	FREERDP_API void freerdp_listener_free(freerdp_listener* instance);
 
 #ifdef __cplusplus
 }

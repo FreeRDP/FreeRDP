@@ -287,7 +287,7 @@ static BOOL add_directory_entry_to_list(const char* local_dir_name, const WCHAR*
 }
 
 static BOOL do_add_directory_contents_to_list(const char* local_name, const WCHAR* remote_name,
-        DIR* dirp, wArrayList* files)
+                                              DIR* dirp, wArrayList* files)
 {
 	/*
 	 * For some reason POSIX does not require readdir() to be thread-safe.
@@ -327,7 +327,7 @@ static BOOL do_add_directory_contents_to_list(const char* local_name, const WCHA
 }
 
 static BOOL add_directory_contents_to_list(const char* local_name, const WCHAR* remote_name,
-        wArrayList* files)
+                                           wArrayList* files)
 {
 	BOOL result = FALSE;
 	DIR* dirp = NULL;
@@ -418,7 +418,7 @@ static BOOL process_file_name(const char* local_name, wArrayList* files)
 
 static BOOL process_uri(const char* uri, size_t uri_len, wArrayList* files)
 {
-	const char prefix []= "file://";
+	const char prefix[] = "file://";
 	BOOL result = FALSE;
 	char* name = NULL;
 	const size_t prefixLen = strnlen(prefix, sizeof(prefix));
@@ -496,7 +496,7 @@ static BOOL process_uri_list(const char* data, size_t length, wArrayList* files)
 }
 
 static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
-        FILEDESCRIPTOR* descriptor)
+                                                 FILEDESCRIPTOR* descriptor)
 {
 	size_t remote_len = 0;
 	descriptor->dwFlags = FD_ATTRIBUTES | FD_FILESIZE | FD_SHOWPROGRESSUI;
@@ -518,7 +518,7 @@ static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
 
 	if (remote_len + 1 > ARRAYSIZE(descriptor->cFileName))
 	{
-		WLog_ERR(TAG, "file name too long (%"PRIuz" characters)", remote_len);
+		WLog_ERR(TAG, "file name too long (%" PRIuz " characters)", remote_len);
 		return FALSE;
 	}
 
@@ -552,7 +552,7 @@ error:
 }
 
 static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
-        const void* data, UINT32* pSize)
+                                                 const void* data, UINT32* pSize)
 {
 	FILEDESCRIPTOR* descriptors = NULL;
 
@@ -562,7 +562,7 @@ static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 f
 	if (formatId != ClipboardGetFormatId(clipboard, "text/uri-list"))
 		return NULL;
 
-	if (!process_uri_list((const char*) data, *pSize, clipboard->localFiles))
+	if (!process_uri_list((const char*)data, *pSize, clipboard->localFiles))
 		return NULL;
 
 	descriptors = convert_local_file_list_to_filedescriptors(clipboard->localFiles);
@@ -576,12 +576,12 @@ static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 f
 }
 
 static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 formatId,
-        const void* data, UINT32* pSize)
+                                                 const void* data, UINT32* pSize)
 {
 	const FILEDESCRIPTOR* descriptors;
 	UINT32 nrDescriptors = 0;
 	size_t count, x, alloc, pos, baseLength = 0;
-	const char* src = (const char*) data;
+	const char* src = (const char*)data;
 	char* dst;
 
 	if (!clipboard || !data || !pSize)
@@ -674,13 +674,11 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 
 	ArrayList_Object(clipboard->localFiles)->fnObjectFree = free_posix_file;
 
-	if (!ClipboardRegisterSynthesizer(clipboard,
-	                                  local_file_format_id, file_group_format_id,
+	if (!ClipboardRegisterSynthesizer(clipboard, local_file_format_id, file_group_format_id,
 	                                  convert_uri_list_to_filedescriptors))
 		goto error_free_local_files;
 
-	if (!ClipboardRegisterSynthesizer(clipboard,
-	                                  file_group_format_id, local_file_format_id,
+	if (!ClipboardRegisterSynthesizer(clipboard, file_group_format_id, local_file_format_id,
 	                                  convert_filedescriptors_to_uri_list))
 		goto error_free_local_files;
 
@@ -764,7 +762,7 @@ static UINT posix_file_read_open(struct posix_file* file)
 	file->offset = 0;
 	file->size = statbuf.st_size;
 	WLog_VRB(TAG, "open file %d -> %s", file->fd, file->local_name);
-	WLog_VRB(TAG, "file %d size: %"PRIu64" bytes", file->fd, file->size);
+	WLog_VRB(TAG, "file %d size: %" PRIu64 " bytes", file->fd, file->size);
 	return NO_ERROR;
 }
 
@@ -782,8 +780,8 @@ static UINT posix_file_read_seek(struct posix_file* file, UINT64 offset)
 	if (file->offset == (INT64)offset)
 		return NO_ERROR;
 
-	WLog_VRB(TAG, "file %d force seeking to %"PRIu64", current %"PRIu64, file->fd,
-	         offset, file->offset);
+	WLog_VRB(TAG, "file %d force seeking to %" PRIu64 ", current %" PRIu64, file->fd, offset,
+	         file->offset);
 
 	if (lseek(file->fd, (off_t)offset, SEEK_SET) < 0)
 	{
@@ -795,17 +793,17 @@ static UINT posix_file_read_seek(struct posix_file* file, UINT64 offset)
 	return NO_ERROR;
 }
 
-static UINT posix_file_read_perform(struct posix_file* file, UINT32 size,
-                                    BYTE** actual_data, UINT32* actual_size)
+static UINT posix_file_read_perform(struct posix_file* file, UINT32 size, BYTE** actual_data,
+                                    UINT32* actual_size)
 {
 	BYTE* buffer = NULL;
 	ssize_t amount = 0;
-	WLog_VRB(TAG, "file %d request read %"PRIu32" bytes", file->fd, size);
+	WLog_VRB(TAG, "file %d request read %" PRIu32 " bytes", file->fd, size);
 	buffer = malloc(size);
 
 	if (!buffer)
 	{
-		WLog_ERR(TAG, "failed to allocate %"PRIu32" buffer bytes", size);
+		WLog_ERR(TAG, "failed to allocate %" PRIu32 " buffer bytes", size);
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
@@ -821,8 +819,8 @@ static UINT posix_file_read_perform(struct posix_file* file, UINT32 size,
 	*actual_data = buffer;
 	*actual_size = amount;
 	file->offset += amount;
-	WLog_VRB(TAG, "file %d actual read %"PRIu32" bytes (offset %"PRIu64")", file->fd,
-	         amount, file->offset);
+	WLog_VRB(TAG, "file %d actual read %" PRIu32 " bytes (offset %" PRIu64 ")", file->fd, amount,
+	         file->offset);
 	return NO_ERROR;
 error:
 	free(buffer);
@@ -898,7 +896,7 @@ static UINT posix_file_request_range(wClipboardDelegate* delegate,
 	if (!file)
 		return ERROR_INDEX_ABSENT;
 
-	offset = (((UINT64) request->nPositionHigh) << 32) | ((UINT64) request->nPositionLow);
+	offset = (((UINT64)request->nPositionHigh) << 32) | ((UINT64)request->nPositionLow);
 	error = posix_file_get_range(file, offset, request->cbRequested, &data, &size);
 
 	if (error)
@@ -926,7 +924,8 @@ static UINT dummy_file_size_failure(wClipboardDelegate* delegate,
 }
 
 static UINT dummy_file_range_success(wClipboardDelegate* delegate,
-                                     const wClipboardFileRangeRequest* request, const BYTE* data, UINT32 size)
+                                     const wClipboardFileRangeRequest* request, const BYTE* data,
+                                     UINT32 size)
 {
 	return ERROR_NOT_SUPPORTED;
 }

@@ -24,11 +24,10 @@
 
 #include "shadow_surface.h"
 #define ALIGN_SCREEN_SIZE(size, align) ((size + align - 1) & (~(align - 1)))
-rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y,
-                                     int width, int height)
+rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y, int width, int height)
 {
 	rdpShadowSurface* surface;
-	surface = (rdpShadowSurface*) calloc(1, sizeof(rdpShadowSurface));
+	surface = (rdpShadowSurface*)calloc(1, sizeof(rdpShadowSurface));
 
 	if (!surface)
 		return NULL;
@@ -40,8 +39,7 @@ rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y,
 	surface->height = height;
 	surface->scanline = ALIGN_SCREEN_SIZE(surface->width, 4) * 4;
 	surface->format = PIXEL_FORMAT_BGRX32;
-	surface->data = (BYTE*) calloc(ALIGN_SCREEN_SIZE(surface->height, 4),
-	                               surface->scanline);
+	surface->data = (BYTE*)calloc(ALIGN_SCREEN_SIZE(surface->height, 4), surface->scanline);
 
 	if (!surface->data)
 	{
@@ -71,11 +69,10 @@ void shadow_surface_free(rdpShadowSurface* surface)
 	free(surface);
 }
 
-BOOL shadow_surface_resize(rdpShadowSurface* surface, int x, int y, int width,
-                           int height)
+BOOL shadow_surface_resize(rdpShadowSurface* surface, int x, int y, int width, int height)
 {
 	BYTE* buffer = NULL;
-	int scanline =  ALIGN_SCREEN_SIZE(width, 4) * 4;
+	int scanline = ALIGN_SCREEN_SIZE(width, 4) * 4;
 
 	if (!surface)
 		return FALSE;
@@ -88,8 +85,7 @@ BOOL shadow_surface_resize(rdpShadowSurface* surface, int x, int y, int width,
 		return TRUE;
 	}
 
-	buffer = (BYTE*) realloc(surface->data, scanline * ALIGN_SCREEN_SIZE(height,
-	                         4));
+	buffer = (BYTE*)realloc(surface->data, scanline * ALIGN_SCREEN_SIZE(height, 4));
 
 	if (buffer)
 	{

@@ -34,21 +34,20 @@
 
 /* Intel x86 (_M_IX86) */
 
-#if defined(i386) || defined(__i386) || defined(__i386__) || \
-	defined(__i486__) || defined(__i586__) || defined(__i686__) || \
-	defined(__X86__) || defined(_X86_) || defined(__I86__) || \
-	defined(__IA32__) || defined(__THW_INTEL__) || defined(__INTEL__)
+#if defined(i386) || defined(__i386) || defined(__i386__) || defined(__i486__) ||   \
+    defined(__i586__) || defined(__i686__) || defined(__X86__) || defined(_X86_) || \
+    defined(__I86__) || defined(__IA32__) || defined(__THW_INTEL__) || defined(__INTEL__)
 #ifndef _M_IX86
-#define _M_IX86		1
+#define _M_IX86 1
 #endif
 #endif
 
 /* AMD64 (_M_AMD64) */
 
-#if defined(__amd64) || defined(__amd64__) || \
-	defined(__x86_64) || defined(__x86_64__) || defined(_M_X64)
+#if defined(__amd64) || defined(__amd64__) || defined(__x86_64) || defined(__x86_64__) || \
+    defined(_M_X64)
 #ifndef _M_AMD64
-#define _M_AMD64	1
+#define _M_AMD64 1
 #endif
 #endif
 
@@ -56,16 +55,16 @@
 
 #if defined(_M_IX86) || defined(_M_AMD64)
 #ifndef _M_IX86_AMD64
-#define _M_IX86_AMD64	1
+#define _M_IX86_AMD64 1
 #endif
 #endif
 
 /* ARM (_M_ARM) */
 
-#if defined(__arm__) || defined(__thumb__) || \
-	defined(__TARGET_ARCH_ARM) || defined(__TARGET_ARCH_THUMB)
+#if defined(__arm__) || defined(__thumb__) || defined(__TARGET_ARCH_ARM) || \
+    defined(__TARGET_ARCH_THUMB)
 #ifndef _M_ARM
-#define _M_ARM		1
+#define _M_ARM 1
 #endif
 #endif
 
@@ -73,43 +72,40 @@
 
 #if defined(__aarch64__)
 #ifndef _M_ARM64
-#define _M_ARM64	1
+#define _M_ARM64 1
 #endif
 #endif
 
 /* MIPS (_M_MIPS) */
 
-#if defined(mips) || defined(__mips) || \
-	defined(__mips__) || defined(__MIPS__)
+#if defined(mips) || defined(__mips) || defined(__mips__) || defined(__MIPS__)
 #ifndef _M_MIPS
-#define	 _M_MIPS	1
+#define _M_MIPS 1
 #endif
 #endif
 
 /* MIPS64 (_M_MIPS64) */
 
-#if defined(mips64) || defined(__mips64) || \
-	defined(__mips64__) || defined(__MIPS64__)
+#if defined(mips64) || defined(__mips64) || defined(__mips64__) || defined(__MIPS64__)
 #ifndef _M_MIPS64
-#define	 _M_MIPS64	1
+#define _M_MIPS64 1
 #endif
 #endif
 
 /* PowerPC (_M_PPC) */
 
-#if defined(__ppc__) || defined(__powerpc) || \
-	defined(__powerpc__) || defined(__POWERPC__) || defined(_ARCH_PPC)
+#if defined(__ppc__) || defined(__powerpc) || defined(__powerpc__) || defined(__POWERPC__) || \
+    defined(_ARCH_PPC)
 #ifndef _M_PPC
-#define	 _M_PPC		1
+#define _M_PPC 1
 #endif
 #endif
 
 /* Intel Itanium (_M_IA64) */
 
-#if defined(__ia64) || defined(__ia64__) || \
-	defined(_IA64) || defined(__IA64__)
+#if defined(__ia64) || defined(__ia64__) || defined(_IA64) || defined(__IA64__)
 #ifndef _M_IA64
-#define _M_IA64		1
+#define _M_IA64 1
 #endif
 #endif
 
@@ -117,7 +113,7 @@
 
 #if defined(__alpha) || defined(__alpha__)
 #ifndef _M_ALPHA
-#define _M_ALPHA	1
+#define _M_ALPHA 1
 #endif
 #endif
 
@@ -125,7 +121,7 @@
 
 #if defined(__sparc) || defined(__sparc__)
 #ifndef _M_SPARC
-#define _M_SPARC	1
+#define _M_SPARC 1
 #endif
 #endif
 
@@ -141,14 +137,14 @@
 #if defined(WINAPI_FAMILY)
 #if (WINAPI_FAMILY == WINAPI_FAMILY_APP)
 #ifndef _WINRT
-#define _WINRT		1
+#define _WINRT 1
 #endif
 #endif
 #endif
 
 #if defined(__cplusplus_winrt)
 #ifndef _WINRT
-#define _WINRT		1
+#define _WINRT 1
 #endif
 #endif
 
@@ -156,7 +152,7 @@
 
 #if defined(linux) || defined(__linux)
 #ifndef __linux__
-#define __linux__	1
+#define __linux__ 1
 #endif
 #endif
 
@@ -173,7 +169,7 @@
 /* iOS (__IOS__) */
 
 #ifndef __IOS__
-#define __IOS__		1
+#define __IOS__ 1
 #endif
 
 #elif (TARGET_OS_MAC == 1)
@@ -181,7 +177,7 @@
 /* Mac OS X (__MACOSX__) */
 
 #ifndef __MACOSX__
-#define __MACOSX__	1
+#define __MACOSX__ 1
 #endif
 
 #endif
@@ -203,7 +199,7 @@
 
 #if defined(sun)
 #ifndef __sun
-#define __sun	1
+#define __sun 1
 #endif
 #endif
 
@@ -211,7 +207,7 @@
 
 #if defined(sgi)
 #ifndef __sgi
-#define __sgi		1
+#define __sgi 1
 #endif
 #endif
 
@@ -219,7 +215,7 @@
 
 #if defined(__TOS_AIX__)
 #ifndef _AIX
-#define _AIX		1
+#define _AIX 1
 #endif
 #endif
 
@@ -227,7 +223,7 @@
 
 #if defined(hpux) || defined(_hpux)
 #ifndef __hpux
-#define __hpux		1
+#define __hpux 1
 #endif
 #endif
 
@@ -244,8 +240,8 @@
 #include <endian.h>
 #endif
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || \
-	defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
+    defined(__DragonFly__) || defined(__APPLE__)
 #include <sys/param.h>
 #endif
 
@@ -255,16 +251,16 @@
 
 #if (__BYTE_ORDER == __BIG_ENDIAN)
 #ifndef __BIG_ENDIAN__
-#define __BIG_ENDIAN__		1
+#define __BIG_ENDIAN__ 1
 #endif
 #endif
 
 #else
 
-#if defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || \
-	defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
+#if defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || defined(_MIPSEB) || \
+    defined(__MIPSEB) || defined(__MIPSEB__)
 #ifndef __BIG_ENDIAN__
-#define __BIG_ENDIAN__		1
+#define __BIG_ENDIAN__ 1
 #endif
 #endif
 
@@ -276,16 +272,16 @@
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #ifndef __LITTLE_ENDIAN__
-#define __LITTLE_ENDIAN__	1
+#define __LITTLE_ENDIAN__ 1
 #endif
 #endif
 
 #else
 
-#if defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) || \
-	defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
+#if defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) || defined(_MIPSEL) || \
+    defined(__MIPSEL) || defined(__MIPSEL__)
 #ifndef __LITTLE_ENDIAN__
-#define __LITTLE_ENDIAN__	1
+#define __LITTLE_ENDIAN__ 1
 #endif
 #endif
 

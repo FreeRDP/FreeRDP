@@ -71,7 +71,7 @@ static int test_hash_table_pointer(void)
 		goto fail;
 	}
 
-	value = (char*) HashTable_GetItemValue(table, key1);
+	value = (char*)HashTable_GetItemValue(table, key1);
 
 	if (strcmp(value, val1) != 0)
 	{
@@ -79,7 +79,7 @@ static int test_hash_table_pointer(void)
 		goto fail;
 	}
 
-	value = (char*) HashTable_GetItemValue(table, key2);
+	value = (char*)HashTable_GetItemValue(table, key2);
 
 	if (strcmp(value, val2) != 0)
 	{
@@ -87,7 +87,7 @@ static int test_hash_table_pointer(void)
 		goto fail;
 	}
 
-	value = (char*) HashTable_GetItemValue(table, key3);
+	value = (char*)HashTable_GetItemValue(table, key3);
 
 	if (strcmp(value, val3) != 0)
 	{
@@ -96,7 +96,7 @@ static int test_hash_table_pointer(void)
 	}
 
 	HashTable_SetItemValue(table, key2, "apple");
-	value = (char*) HashTable_GetItemValue(table, key2);
+	value = (char*)HashTable_GetItemValue(table, key2);
 
 	if (strcmp(value, "apple") != 0)
 	{
@@ -204,7 +204,7 @@ static int test_hash_table_string(void)
 		goto fail;
 	}
 
-	value = (char*) HashTable_GetItemValue(table, key1);
+	value = (char*)HashTable_GetItemValue(table, key1);
 
 	if (strcmp(value, val1) != 0)
 	{
@@ -212,7 +212,7 @@ static int test_hash_table_string(void)
 		goto fail;
 	}
 
-	value = (char*) HashTable_GetItemValue(table, key2);
+	value = (char*)HashTable_GetItemValue(table, key2);
 
 	if (strcmp(value, val2) != 0)
 	{
@@ -220,7 +220,7 @@ static int test_hash_table_string(void)
 		goto fail;
 	}
 
-	value = (char*) HashTable_GetItemValue(table, key3);
+	value = (char*)HashTable_GetItemValue(table, key3);
 
 	if (strcmp(value, val3) != 0)
 	{
@@ -229,7 +229,7 @@ static int test_hash_table_string(void)
 	}
 
 	HashTable_SetItemValue(table, key2, "apple");
-	value = (char*) HashTable_GetItemValue(table, key2);
+	value = (char*)HashTable_GetItemValue(table, key2);
 
 	if (strcmp(value, "apple") != 0)
 	{

@@ -26,7 +26,8 @@
 #include <freerdp/channels/rdpei.h>
 
 /** @brief input event ids */
-enum {
+enum
+{
 	EVENTID_SC_READY = 0x0001,
 	EVENTID_CS_READY = 0x0002,
 	EVENTID_TOUCH = 0x0003,
@@ -46,8 +47,7 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value);
 BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value);
 BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value);
 
-void touch_event_reset(RDPINPUT_TOUCH_EVENT *event);
-void touch_frame_reset(RDPINPUT_TOUCH_FRAME *frame);
+void touch_event_reset(RDPINPUT_TOUCH_EVENT* event);
+void touch_frame_reset(RDPINPUT_TOUCH_FRAME* frame);
 
 #endif /* FREERDP_CHANNEL_RDPEI_COMMON_H */
-

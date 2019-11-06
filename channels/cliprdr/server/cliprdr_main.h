@@ -30,7 +30,7 @@
 
 #define TAG CHANNELS_TAG("cliprdr.server")
 
-#define CLIPRDR_HEADER_LENGTH	8
+#define CLIPRDR_HEADER_LENGTH 8
 
 struct _cliprdr_server_private
 {

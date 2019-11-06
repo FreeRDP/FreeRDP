@@ -51,7 +51,8 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 	{
 		if ((pszPathLength + pszMoreLength + 1) < cchPath)
 		{
-			swprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _PATH_SEPARATOR_STR L"%s", pszMore);
+			swprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _PATH_SEPARATOR_STR L"%s",
+			           pszMore);
 			return S_OK;
 		}
 	}
@@ -104,7 +105,8 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 	{
 		if ((pszPathLength + pszMoreLength + 1) < cchPath)
 		{
-			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _PATH_SEPARATOR_STR "%s", pszMore);
+			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _PATH_SEPARATOR_STR "%s",
+			          pszMore);
 			return S_OK;
 		}
 	}
@@ -115,9 +117,8 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 #endif
 
 /*
-#undef DEFINE_UNICODE	
-#undef _PATH_SEPARATOR_CHR	
-#undef _PATH_SEPARATOR_STR	
-#undef PATH_CCH_APPEND	
+#undef DEFINE_UNICODE
+#undef _PATH_SEPARATOR_CHR
+#undef _PATH_SEPARATOR_STR
+#undef PATH_CCH_APPEND
 */
-

@@ -91,13 +91,13 @@ BOOL wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 		if (!wfi)
 			return FALSE;
 
-		//width and height of primary screen (even in multimon setups
-		width = (float) GetSystemMetrics(SM_CXSCREEN);
-		height = (float) GetSystemMetrics(SM_CYSCREEN);
+		// width and height of primary screen (even in multimon setups
+		width = (float)GetSystemMetrics(SM_CXSCREEN);
+		height = (float)GetSystemMetrics(SM_CYSCREEN);
 		x += wfi->servscreen_xoffset;
 		y += wfi->servscreen_yoffset;
-		mouse_event.mi.dx = (LONG)((float) x * (65535.0f / width));
-		mouse_event.mi.dy = (LONG)((float) y * (65535.0f / height));
+		mouse_event.mi.dx = (LONG)((float)x * (65535.0f / width));
+		mouse_event.mi.dy = (LONG)((float)y * (65535.0f / height));
 		mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
 
 		if (flags & PTR_FLAGS_MOVE)
@@ -157,13 +157,13 @@ BOOL wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 			if (!wfi)
 				return FALSE;
 
-			//width and height of primary screen (even in multimon setups
-			width = (float) GetSystemMetrics(SM_CXSCREEN);
-			height = (float) GetSystemMetrics(SM_CYSCREEN);
+			// width and height of primary screen (even in multimon setups
+			width = (float)GetSystemMetrics(SM_CXSCREEN);
+			height = (float)GetSystemMetrics(SM_CYSCREEN);
 			x += wfi->servscreen_xoffset;
 			y += wfi->servscreen_yoffset;
-			mouse_event.mi.dx = (LONG)((float) x * (65535.0f / width));
-			mouse_event.mi.dy = (LONG)((float) y * (65535.0f / height));
+			mouse_event.mi.dx = (LONG)((float)x * (65535.0f / width));
+			mouse_event.mi.dy = (LONG)((float)y * (65535.0f / height));
 			mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
 			SendInput(1, &mouse_event, sizeof(INPUT));
 		}

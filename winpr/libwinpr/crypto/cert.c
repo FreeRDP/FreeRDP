@@ -157,11 +157,11 @@
 #include "crypto.h"
 
 HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingType,
-		HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags, const void* pvPara)
+                         HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags, const void* pvPara)
 {
 	WINPR_CERTSTORE* certstore;
 
-	certstore = (WINPR_CERTSTORE*) calloc(1, sizeof(WINPR_CERTSTORE));
+	certstore = (WINPR_CERTSTORE*)calloc(1, sizeof(WINPR_CERTSTORE));
 
 	if (certstore)
 	{
@@ -169,7 +169,7 @@ HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingTyp
 		certstore->dwMsgAndCertEncodingType = dwMsgAndCertEncodingType;
 	}
 
-	return (HCERTSTORE) certstore;
+	return (HCERTSTORE)certstore;
 }
 
 HCERTSTORE CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv, LPCWSTR szSubsystemProtocol)
@@ -190,7 +190,7 @@ BOOL CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
 	WINPR_CERTSTORE* certstore;
 
-	certstore = (WINPR_CERTSTORE*) hCertStore;
+	certstore = (WINPR_CERTSTORE*)hCertStore;
 
 	free(certstore);
 
@@ -198,27 +198,27 @@ BOOL CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 }
 
 PCCERT_CONTEXT CertFindCertificateInStore(HCERTSTORE hCertStore, DWORD dwCertEncodingType,
-		DWORD dwFindFlags, DWORD dwFindType, const void* pvFindPara, PCCERT_CONTEXT pPrevCertContext)
+                                          DWORD dwFindFlags, DWORD dwFindType,
+                                          const void* pvFindPara, PCCERT_CONTEXT pPrevCertContext)
 {
-	return (PCCERT_CONTEXT) 1;
+	return (PCCERT_CONTEXT)1;
 }
 
 PCCERT_CONTEXT CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrevCertContext)
 {
-	return (PCCERT_CONTEXT) NULL;
+	return (PCCERT_CONTEXT)NULL;
 }
 
-DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
-		DWORD dwFlags, void* pvTypePara, LPWSTR pszNameString, DWORD cchNameString)
+DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType, DWORD dwFlags, void* pvTypePara,
+                         LPWSTR pszNameString, DWORD cchNameString)
 {
 	return 0;
 }
 
-DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
-		DWORD dwFlags, void* pvTypePara, LPSTR pszNameString, DWORD cchNameString)
+DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType, DWORD dwFlags, void* pvTypePara,
+                         LPSTR pszNameString, DWORD cchNameString)
 {
 	return 0;
 }
 
 #endif
-

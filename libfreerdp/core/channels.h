@@ -23,11 +23,8 @@
 #include <freerdp/api.h>
 #include "client.h"
 
-FREERDP_LOCAL BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId,
-                                        const BYTE* data, int size);
-FREERDP_LOCAL BOOL freerdp_channel_process(freerdp* instance, wStream* s,
-        UINT16 channelId);
-FREERDP_LOCAL BOOL freerdp_channel_peer_process(freerdp_peer* client,
-        wStream* s, UINT16 channelId);
+FREERDP_LOCAL BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, int size);
+FREERDP_LOCAL BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId);
+FREERDP_LOCAL BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 channelId);
 
 #endif /* FREERDP_LIB_CORE_CHANNELS_H */

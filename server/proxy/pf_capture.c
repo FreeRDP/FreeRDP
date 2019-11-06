@@ -41,19 +41,20 @@ static BOOL pf_capture_create_user_captures_dir(const char* base_dir, const char
 	char* buf = NULL;
 	BOOL ret = FALSE;
 
-	/* create sub-directory in base captures directory for current username, if it doesn't already exists. */
+	/* create sub-directory in base captures directory for current username, if it doesn't already
+	 * exists. */
 	rc = _snprintf(NULL, 0, "%s/%s", base_dir, username);
 	if (rc < 0)
 		return FALSE;
 
-	size = (size_t) rc;
+	size = (size_t)rc;
 
 	buf = malloc(size + 1);
 	if (!buf)
 		return FALSE;
 
 	rc = sprintf(buf, "%s/%s", base_dir, username);
-	if (rc < 0 || (size_t) rc != size)
+	if (rc < 0 || (size_t)rc != size)
 		goto out;
 
 	if (!pf_capture_create_dir_if_not_exists(buf))
@@ -70,7 +71,7 @@ static BOOL pf_capture_create_current_session_captures_dir(pClientContext* pc)
 {
 	proxyConfig* config = pc->pdata->config;
 	rdpSettings* settings = pc->context.settings;
-	const char* fmt = "%s/%s/%s_%02u-%02u-%"PRIu16"_%02u-%02u-%02u-%03u";
+	const char* fmt = "%s/%s/%s_%02u-%02u-%" PRIu16 "_%02u-%02u-%02u-%03u";
 	int rc;
 	size_t size;
 	SYSTEMTIME localTime;
@@ -79,13 +80,13 @@ static BOOL pf_capture_create_current_session_captures_dir(pClientContext* pc)
 
 	/* create sub-directory in current user's captures directory, for the specific session. */
 	rc = _snprintf(NULL, 0, fmt, config->CapturesDirectory, settings->Username,
-	          settings->ServerHostname, localTime.wDay, localTime.wMonth, localTime.wYear,
-	          localTime.wHour, localTime.wMinute, localTime.wSecond, localTime.wMilliseconds);
+	               settings->ServerHostname, localTime.wDay, localTime.wMonth, localTime.wYear,
+	               localTime.wHour, localTime.wMinute, localTime.wSecond, localTime.wMilliseconds);
 
 	if (rc < 0)
 		return FALSE;
 
-	size = (size_t) rc;
+	size = (size_t)rc;
 
 	/* `pc->frames_dir` will be used by proxy client for saving frames to storage. */
 	pc->frames_dir = malloc(size + 1);
@@ -93,10 +94,10 @@ static BOOL pf_capture_create_current_session_captures_dir(pClientContext* pc)
 		return FALSE;
 
 	rc = sprintf(pc->frames_dir, fmt, config->CapturesDirectory, settings->Username,
-	          settings->ServerHostname, localTime.wDay, localTime.wMonth, localTime.wYear,
-	          localTime.wHour, localTime.wMinute, localTime.wSecond, localTime.wMilliseconds);
+	             settings->ServerHostname, localTime.wDay, localTime.wMonth, localTime.wYear,
+	             localTime.wHour, localTime.wMinute, localTime.wSecond, localTime.wMilliseconds);
 
-	if (rc < 0 || (size_t) rc != size)
+	if (rc < 0 || (size_t)rc != size)
 		goto error;
 
 	if (!pf_capture_create_dir_if_not_exists(pc->frames_dir))
@@ -108,7 +109,6 @@ error:
 	free(pc->frames_dir);
 	return FALSE;
 }
-
 
 /* creates a directory to store captured session frames.
  *
@@ -139,7 +139,7 @@ BOOL pf_capture_save_frame(pClientContext* pc, const BYTE* frame)
 {
 	rdpSettings* settings = pc->context.settings;
 	int rc;
-	const char* fmt = "%s/%"PRIu64".bmp";
+	const char* fmt = "%s/%" PRIu64 ".bmp";
 	char* file_path = NULL;
 	size_t size;
 
@@ -150,17 +150,17 @@ BOOL pf_capture_save_frame(pClientContext* pc, const BYTE* frame)
 	if (rc < 0)
 		return FALSE;
 
-	size = (size_t) rc;
+	size = (size_t)rc;
 	file_path = malloc(size + 1);
 	if (!file_path)
 		return FALSE;
 
 	rc = sprintf(file_path, fmt, pc->frames_dir, pc->frames_count++);
-	if (rc < 0 || (size_t) rc != size)
+	if (rc < 0 || (size_t)rc != size)
 		goto out;
 
 	rc = winpr_bitmap_write(file_path, frame, settings->DesktopWidth, settings->DesktopHeight,
-	                          settings->ColorDepth);
+	                        settings->ColorDepth);
 
 out:
 	free(file_path);

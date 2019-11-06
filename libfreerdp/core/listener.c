@@ -46,7 +46,6 @@
 
 #include "listener.h"
 
-
 #define TAG FREERDP_TAG("core.listener")
 
 static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_address, UINT16 port)
@@ -59,7 +58,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 	int option_value;
 	struct addrinfo* ai;
 	struct addrinfo* res;
-	rdpListener* listener = (rdpListener*) instance->listener;
+	rdpListener* listener = (rdpListener*)instance->listener;
 #ifdef _WIN32
 	u_long arg;
 #endif
@@ -92,14 +91,15 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		}
 
 		if (ai->ai_family == AF_INET)
-			sin_addr = &(((struct sockaddr_in*) ai->ai_addr)->sin_addr);
+			sin_addr = &(((struct sockaddr_in*)ai->ai_addr)->sin_addr);
 		else
-			sin_addr = &(((struct sockaddr_in6*) ai->ai_addr)->sin6_addr);
+			sin_addr = &(((struct sockaddr_in6*)ai->ai_addr)->sin6_addr);
 
 		inet_ntop(ai->ai_family, sin_addr, addr, sizeof(addr));
 		option_value = 1;
 
-		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void*) &option_value, sizeof(option_value)) == -1)
+		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void*)&option_value,
+		               sizeof(option_value)) == -1)
 			WLog_ERR(TAG, "setsockopt");
 
 #ifndef _WIN32
@@ -108,20 +108,20 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		arg = 1;
 		ioctlsocket(sockfd, FIONBIO, &arg);
 #endif
-		status = _bind((SOCKET) sockfd, ai->ai_addr, ai->ai_addrlen);
+		status = _bind((SOCKET)sockfd, ai->ai_addr, ai->ai_addrlen);
 
 		if (status != 0)
 		{
-			closesocket((SOCKET) sockfd);
+			closesocket((SOCKET)sockfd);
 			continue;
 		}
 
-		status = _listen((SOCKET) sockfd, 10);
+		status = _listen((SOCKET)sockfd, 10);
 
 		if (status != 0)
 		{
 			WLog_ERR(TAG, "listen");
-			closesocket((SOCKET) sockfd);
+			closesocket((SOCKET)sockfd);
 			continue;
 		}
 
@@ -135,7 +135,8 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 			break;
 		}
 
-		WSAEventSelect(sockfd, listener->events[listener->num_sockfds], FD_READ | FD_ACCEPT | FD_CLOSE);
+		WSAEventSelect(sockfd, listener->events[listener->num_sockfds],
+		               FD_READ | FD_ACCEPT | FD_CLOSE);
 		listener->num_sockfds++;
 		WLog_INFO(TAG, "Listening on %s:%d", addr, port);
 	}
@@ -150,7 +151,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	int status;
 	int sockfd;
 	struct sockaddr_un addr = { 0 };
-	rdpListener* listener = (rdpListener*) instance->listener;
+	rdpListener* listener = (rdpListener*)instance->listener;
 	HANDLE hevent;
 
 	if (listener->num_sockfds == MAX_LISTENER_HANDLES)
@@ -171,12 +172,12 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
 	unlink(path);
-	status = _bind(sockfd, (struct sockaddr*) &addr, sizeof(addr));
+	status = _bind(sockfd, (struct sockaddr*)&addr, sizeof(addr));
 
 	if (status != 0)
 	{
 		WLog_ERR(TAG, "bind");
-		closesocket((SOCKET) sockfd);
+		closesocket((SOCKET)sockfd);
 		return FALSE;
 	}
 
@@ -185,7 +186,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	if (status != 0)
 	{
 		WLog_ERR(TAG, "listen");
-		closesocket((SOCKET) sockfd);
+		closesocket((SOCKET)sockfd);
 		return FALSE;
 	}
 
@@ -194,7 +195,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	if (!hevent)
 	{
 		WLog_ERR(TAG, "failed to create sockfd event");
-		closesocket((SOCKET) sockfd);
+		closesocket((SOCKET)sockfd);
 		return FALSE;
 	}
 
@@ -211,7 +212,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd)
 {
 #ifndef _WIN32
-	rdpListener* listener = (rdpListener*) instance->listener;
+	rdpListener* listener = (rdpListener*)instance->listener;
 
 	if (listener->num_sockfds == MAX_LISTENER_HANDLES)
 	{
@@ -240,11 +241,11 @@ static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd
 static void freerdp_listener_close(freerdp_listener* instance)
 {
 	int i;
-	rdpListener* listener = (rdpListener*) instance->listener;
+	rdpListener* listener = (rdpListener*)instance->listener;
 
 	for (i = 0; i < listener->num_sockfds; i++)
 	{
-		closesocket((SOCKET) listener->sockfds[i]);
+		closesocket((SOCKET)listener->sockfds[i]);
 		CloseHandle(listener->events[i]);
 	}
 
@@ -254,7 +255,7 @@ static void freerdp_listener_close(freerdp_listener* instance)
 static BOOL freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, int* rcount)
 {
 	int index;
-	rdpListener* listener = (rdpListener*) instance->listener;
+	rdpListener* listener = (rdpListener*)instance->listener;
 
 	if (listener->num_sockfds < 1)
 		return FALSE;
@@ -271,7 +272,7 @@ static BOOL freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, in
 DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HANDLE* events, DWORD nCount)
 {
 	int index;
-	rdpListener* listener = (rdpListener*) instance->listener;
+	rdpListener* listener = (rdpListener*)instance->listener;
 
 	if (listener->num_sockfds < 1)
 		return 0;
@@ -295,7 +296,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 	freerdp_peer* client = NULL;
 	int peer_addr_size;
 	struct sockaddr_storage peer_addr;
-	rdpListener* listener = (rdpListener*) instance->listener;
+	rdpListener* listener = (rdpListener*)instance->listener;
 	static const BYTE localhost6_bytes[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 	BOOL peer_accepted;
 
@@ -306,7 +307,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 	{
 		WSAResetEvent(listener->events[i]);
 		peer_addr_size = sizeof(peer_addr);
-		peer_sockfd = _accept(listener->sockfds[i], (struct sockaddr*) &peer_addr, &peer_addr_size);
+		peer_sockfd = _accept(listener->sockfds[i], (struct sockaddr*)&peer_addr, &peer_addr_size);
 		peer_accepted = FALSE;
 
 		if (peer_sockfd == -1)
@@ -333,7 +334,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 		if (!client)
 		{
-			closesocket((SOCKET) peer_sockfd);
+			closesocket((SOCKET)peer_sockfd);
 			return FALSE;
 		}
 
@@ -341,14 +342,14 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 		if (peer_addr.ss_family == AF_INET)
 		{
-			sin_addr = &(((struct sockaddr_in*) &peer_addr)->sin_addr);
+			sin_addr = &(((struct sockaddr_in*)&peer_addr)->sin_addr);
 
-			if ((*(UINT32*) sin_addr) == 0x0100007f)
+			if ((*(UINT32*)sin_addr) == 0x0100007f)
 				client->local = TRUE;
 		}
 		else if (peer_addr.ss_family == AF_INET6)
 		{
-			sin_addr = &(((struct sockaddr_in6*) &peer_addr)->sin6_addr);
+			sin_addr = &(((struct sockaddr_in6*)&peer_addr)->sin6_addr);
 
 			if (memcmp(sin_addr, localhost6_bytes, 16) == 0)
 				client->local = TRUE;
@@ -368,7 +369,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 		if (!peer_accepted)
 		{
 			WLog_ERR(TAG, "PeerAccepted callback failed");
-			closesocket((SOCKET) peer_sockfd);
+			closesocket((SOCKET)peer_sockfd);
 			freerdp_peer_free(client);
 		}
 	}
@@ -380,7 +381,7 @@ freerdp_listener* freerdp_listener_new(void)
 {
 	freerdp_listener* instance;
 	rdpListener* listener;
-	instance = (freerdp_listener*) calloc(1, sizeof(freerdp_listener));
+	instance = (freerdp_listener*)calloc(1, sizeof(freerdp_listener));
 
 	if (!instance)
 		return NULL;
@@ -392,7 +393,7 @@ freerdp_listener* freerdp_listener_new(void)
 	instance->GetEventHandles = freerdp_listener_get_event_handles;
 	instance->CheckFileDescriptor = freerdp_listener_check_fds;
 	instance->Close = freerdp_listener_close;
-	listener = (rdpListener*) calloc(1, sizeof(rdpListener));
+	listener = (rdpListener*)calloc(1, sizeof(rdpListener));
 
 	if (!listener)
 	{
@@ -401,7 +402,7 @@ freerdp_listener* freerdp_listener_new(void)
 	}
 
 	listener->instance = instance;
-	instance->listener = (void*) listener;
+	instance->listener = (void*)listener;
 	return instance;
 }
 
@@ -413,4 +414,3 @@ void freerdp_listener_free(freerdp_listener* instance)
 		free(instance);
 	}
 }
-

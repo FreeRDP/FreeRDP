@@ -182,16 +182,16 @@ const char* GetRDPSessionEventString(DISPID id)
 	return "OnUnknown";
 }
 
-static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_QueryInterface(
-    __RPC__in _IRDPSessionEvents* This,
-    /* [in] */ __RPC__in REFIID riid,
-    /* [annotation][iid_is][out] */
-    _COM_Outptr_  void** ppvObject)
+static HRESULT STDMETHODCALLTYPE
+Shadow_IRDPSessionEvents_QueryInterface(__RPC__in _IRDPSessionEvents* This,
+                                        /* [in] */ __RPC__in REFIID riid,
+                                        /* [annotation][iid_is][out] */
+                                        _COM_Outptr_ void** ppvObject)
 {
 	*ppvObject = NULL;
 
-	if (IsEqualIID(riid, &DIID__IRDPSessionEvents) ||
-	    IsEqualIID(riid, &IID_IDispatch) || IsEqualIID(riid, &IID_IUnknown))
+	if (IsEqualIID(riid, &DIID__IRDPSessionEvents) || IsEqualIID(riid, &IID_IDispatch) ||
+	    IsEqualIID(riid, &IID_IUnknown))
 	{
 		*ppvObject = This;
 	}
@@ -203,15 +203,13 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_QueryInterface(
 	return S_OK;
 }
 
-static ULONG STDMETHODCALLTYPE Shadow_IRDPSessionEvents_AddRef(
-    __RPC__in _IRDPSessionEvents* This)
+static ULONG STDMETHODCALLTYPE Shadow_IRDPSessionEvents_AddRef(__RPC__in _IRDPSessionEvents* This)
 {
 	Shadow_IRDPSessionEvents_RefCount++;
 	return Shadow_IRDPSessionEvents_RefCount;
 }
 
-static ULONG STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Release(
-    __RPC__in _IRDPSessionEvents* This)
+static ULONG STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Release(__RPC__in _IRDPSessionEvents* This)
 {
 	if (!Shadow_IRDPSessionEvents_RefCount)
 		return 0;
@@ -220,20 +218,20 @@ static ULONG STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Release(
 	return Shadow_IRDPSessionEvents_RefCount;
 }
 
-static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_GetTypeInfoCount(
-    __RPC__in _IRDPSessionEvents* This,
-    /* [out] */ __RPC__out UINT* pctinfo)
+static HRESULT STDMETHODCALLTYPE
+Shadow_IRDPSessionEvents_GetTypeInfoCount(__RPC__in _IRDPSessionEvents* This,
+                                          /* [out] */ __RPC__out UINT* pctinfo)
 {
 	WLog_INFO(TAG, "Shadow_IRDPSessionEvents_GetTypeInfoCount");
 	*pctinfo = 1;
 	return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_GetTypeInfo(
-    __RPC__in _IRDPSessionEvents* This,
-    /* [in] */ UINT iTInfo,
-    /* [in] */ LCID lcid,
-    /* [out] */ __RPC__deref_out_opt ITypeInfo** ppTInfo)
+static HRESULT STDMETHODCALLTYPE
+Shadow_IRDPSessionEvents_GetTypeInfo(__RPC__in _IRDPSessionEvents* This,
+                                     /* [in] */ UINT iTInfo,
+                                     /* [in] */ LCID lcid,
+                                     /* [out] */ __RPC__deref_out_opt ITypeInfo** ppTInfo)
 {
 	WLog_INFO(TAG, "Shadow_IRDPSessionEvents_GetTypeInfo");
 	return E_NOTIMPL;
@@ -251,24 +249,23 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_GetIDsOfNames(
 	return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
-    _IRDPSessionEvents* This,
-    /* [annotation][in] */
-    _In_  DISPID dispIdMember,
-    /* [annotation][in] */
-    _In_  REFIID riid,
-    /* [annotation][in] */
-    _In_  LCID lcid,
-    /* [annotation][in] */
-    _In_  WORD wFlags,
-    /* [annotation][out][in] */
-    _In_  DISPPARAMS* pDispParams,
-    /* [annotation][out] */
-    _Out_opt_  VARIANT* pVarResult,
-    /* [annotation][out] */
-    _Out_opt_  EXCEPINFO* pExcepInfo,
-    /* [annotation][out] */
-    _Out_opt_  UINT* puArgErr)
+static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(_IRDPSessionEvents* This,
+                                                                 /* [annotation][in] */
+                                                                 _In_ DISPID dispIdMember,
+                                                                 /* [annotation][in] */
+                                                                 _In_ REFIID riid,
+                                                                 /* [annotation][in] */
+                                                                 _In_ LCID lcid,
+                                                                 /* [annotation][in] */
+                                                                 _In_ WORD wFlags,
+                                                                 /* [annotation][out][in] */
+                                                                 _In_ DISPPARAMS* pDispParams,
+                                                                 /* [annotation][out] */
+                                                                 _Out_opt_ VARIANT* pVarResult,
+                                                                 /* [annotation][out] */
+                                                                 _Out_opt_ EXCEPINFO* pExcepInfo,
+                                                                 /* [annotation][out] */
+                                                                 _Out_opt_ UINT* puArgErr)
 {
 	HRESULT hr;
 	VARIANT vr;
@@ -278,45 +275,46 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 	switch (dispIdMember)
 	{
 		case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_CONNECTED:
+		{
+			int level;
+			IDispatch* pDispatch;
+			IRDPSRAPIAttendee* pAttendee;
+			vr.vt = VT_DISPATCH;
+			vr.pdispVal = NULL;
+			hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
+
+			if (FAILED(hr))
 			{
-				int level;
-				IDispatch* pDispatch;
-				IRDPSRAPIAttendee* pAttendee;
-				vr.vt = VT_DISPATCH;
-				vr.pdispVal = NULL;
-				hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
-
-				if (FAILED(hr))
-				{
-					WLog_ERR(TAG, "%s DispGetParam(0, VT_DISPATCH) failure: 0x%08lX",
-					         GetRDPSessionEventString(dispIdMember), hr);
-					return hr;
-				}
-
-				pDispatch = vr.pdispVal;
-				hr = pDispatch->lpVtbl->QueryInterface(pDispatch, &IID_IRDPSRAPIAttendee, (void**) &pAttendee);
-
-				if (FAILED(hr))
-				{
-					WLog_INFO(TAG, "%s IDispatch::QueryInterface(IRDPSRAPIAttendee) failure: 0x%08lX",
-					          GetRDPSessionEventString(dispIdMember), hr);
-					return hr;
-				}
-
-				level = CTRL_LEVEL_VIEW;
-				//level = CTRL_LEVEL_INTERACTIVE;
-				hr = pAttendee->lpVtbl->put_ControlLevel(pAttendee, level);
-
-				if (FAILED(hr))
-				{
-					WLog_INFO(TAG, "%s IRDPSRAPIAttendee::put_ControlLevel() failure: 0x%08lX",
-					          GetRDPSessionEventString(dispIdMember), hr);
-					return hr;
-				}
-
-				pAttendee->lpVtbl->Release(pAttendee);
+				WLog_ERR(TAG, "%s DispGetParam(0, VT_DISPATCH) failure: 0x%08lX",
+				         GetRDPSessionEventString(dispIdMember), hr);
+				return hr;
 			}
-			break;
+
+			pDispatch = vr.pdispVal;
+			hr = pDispatch->lpVtbl->QueryInterface(pDispatch, &IID_IRDPSRAPIAttendee,
+			                                       (void**)&pAttendee);
+
+			if (FAILED(hr))
+			{
+				WLog_INFO(TAG, "%s IDispatch::QueryInterface(IRDPSRAPIAttendee) failure: 0x%08lX",
+				          GetRDPSessionEventString(dispIdMember), hr);
+				return hr;
+			}
+
+			level = CTRL_LEVEL_VIEW;
+			// level = CTRL_LEVEL_INTERACTIVE;
+			hr = pAttendee->lpVtbl->put_ControlLevel(pAttendee, level);
+
+			if (FAILED(hr))
+			{
+				WLog_INFO(TAG, "%s IRDPSRAPIAttendee::put_ControlLevel() failure: 0x%08lX",
+				          GetRDPSessionEventString(dispIdMember), hr);
+				return hr;
+			}
+
+			pAttendee->lpVtbl->Release(pAttendee);
+		}
+		break;
 
 		case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_DISCONNECTED:
 			break;
@@ -340,55 +338,56 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 			break;
 
 		case DISPID_RDPSRAPI_EVENT_ON_CTRLLEVEL_CHANGE_REQUEST:
+		{
+			int level;
+			IDispatch* pDispatch;
+			IRDPSRAPIAttendee* pAttendee;
+			vr.vt = VT_INT;
+			vr.pdispVal = NULL;
+			hr = DispGetParam(pDispParams, 1, VT_INT, &vr, &uArgErr);
+
+			if (FAILED(hr))
 			{
-				int level;
-				IDispatch* pDispatch;
-				IRDPSRAPIAttendee* pAttendee;
-				vr.vt = VT_INT;
-				vr.pdispVal = NULL;
-				hr = DispGetParam(pDispParams, 1, VT_INT, &vr, &uArgErr);
-
-				if (FAILED(hr))
-				{
-					WLog_INFO(TAG, "%s DispGetParam(1, VT_INT) failure: 0x%08lX",
-					          GetRDPSessionEventString(dispIdMember), hr);
-					return hr;
-				}
-
-				level = vr.intVal;
-				vr.vt = VT_DISPATCH;
-				vr.pdispVal = NULL;
-				hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
-
-				if (FAILED(hr))
-				{
-					WLog_ERR(TAG, "%s DispGetParam(0, VT_DISPATCH) failure: 0x%08lX",
-					         GetRDPSessionEventString(dispIdMember), hr);
-					return hr;
-				}
-
-				pDispatch = vr.pdispVal;
-				hr = pDispatch->lpVtbl->QueryInterface(pDispatch, &IID_IRDPSRAPIAttendee, (void**) &pAttendee);
-
-				if (FAILED(hr))
-				{
-					WLog_INFO(TAG, "%s IDispatch::QueryInterface(IRDPSRAPIAttendee) failure: 0x%08lX",
-					          GetRDPSessionEventString(dispIdMember), hr);
-					return hr;
-				}
-
-				hr = pAttendee->lpVtbl->put_ControlLevel(pAttendee, level);
-
-				if (FAILED(hr))
-				{
-					WLog_INFO(TAG, "%s IRDPSRAPIAttendee::put_ControlLevel() failure: 0x%08lX",
-					          GetRDPSessionEventString(dispIdMember), hr);
-					return hr;
-				}
-
-				pAttendee->lpVtbl->Release(pAttendee);
+				WLog_INFO(TAG, "%s DispGetParam(1, VT_INT) failure: 0x%08lX",
+				          GetRDPSessionEventString(dispIdMember), hr);
+				return hr;
 			}
-			break;
+
+			level = vr.intVal;
+			vr.vt = VT_DISPATCH;
+			vr.pdispVal = NULL;
+			hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
+
+			if (FAILED(hr))
+			{
+				WLog_ERR(TAG, "%s DispGetParam(0, VT_DISPATCH) failure: 0x%08lX",
+				         GetRDPSessionEventString(dispIdMember), hr);
+				return hr;
+			}
+
+			pDispatch = vr.pdispVal;
+			hr = pDispatch->lpVtbl->QueryInterface(pDispatch, &IID_IRDPSRAPIAttendee,
+			                                       (void**)&pAttendee);
+
+			if (FAILED(hr))
+			{
+				WLog_INFO(TAG, "%s IDispatch::QueryInterface(IRDPSRAPIAttendee) failure: 0x%08lX",
+				          GetRDPSessionEventString(dispIdMember), hr);
+				return hr;
+			}
+
+			hr = pAttendee->lpVtbl->put_ControlLevel(pAttendee, level);
+
+			if (FAILED(hr))
+			{
+				WLog_INFO(TAG, "%s IRDPSRAPIAttendee::put_ControlLevel() failure: 0x%08lX",
+				          GetRDPSessionEventString(dispIdMember), hr);
+				return hr;
+			}
+
+			pAttendee->lpVtbl->Release(pAttendee);
+		}
+		break;
 
 		case DISPID_RDPSRAPI_EVENT_ON_GRAPHICS_STREAM_PAUSED:
 			break;
@@ -445,24 +444,17 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 	return S_OK;
 }
 
-static _IRDPSessionEventsVtbl Shadow_IRDPSessionEventsVtbl =
-{
+static _IRDPSessionEventsVtbl Shadow_IRDPSessionEventsVtbl = {
 	/* IUnknown */
-	Shadow_IRDPSessionEvents_QueryInterface,
-	Shadow_IRDPSessionEvents_AddRef,
+	Shadow_IRDPSessionEvents_QueryInterface, Shadow_IRDPSessionEvents_AddRef,
 	Shadow_IRDPSessionEvents_Release,
 
 	/* IDispatch */
-	Shadow_IRDPSessionEvents_GetTypeInfoCount,
-	Shadow_IRDPSessionEvents_GetTypeInfo,
-	Shadow_IRDPSessionEvents_GetIDsOfNames,
-	Shadow_IRDPSessionEvents_Invoke
+	Shadow_IRDPSessionEvents_GetTypeInfoCount, Shadow_IRDPSessionEvents_GetTypeInfo,
+	Shadow_IRDPSessionEvents_GetIDsOfNames, Shadow_IRDPSessionEvents_Invoke
 };
 
-static _IRDPSessionEvents Shadow_IRDPSessionEvents =
-{
-	&Shadow_IRDPSessionEventsVtbl
-};
+static _IRDPSessionEvents Shadow_IRDPSessionEvents = { &Shadow_IRDPSessionEventsVtbl };
 
 static LRESULT CALLBACK ShadowWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -511,8 +503,8 @@ int win_shadow_wds_wnd_init(winShadowSubsystem* subsystem)
 	}
 
 	hInstance = wndClassEx.hInstance;
-	subsystem->hWnd = CreateWindowEx(0, wndClassEx.lpszClassName,
-	                                 0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInstance, NULL);
+	subsystem->hWnd = CreateWindowEx(0, wndClassEx.lpszClassName, 0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0,
+	                                 hInstance, NULL);
 
 	if (!subsystem->hWnd)
 	{
@@ -558,8 +550,8 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	hr = CoCreateInstance(&CLSID_RDPSession, NULL, CLSCTX_ALL,
-	                      &IID_IRDPSRAPISharingSession, (void**) & (subsystem->pSharingSession));
+	hr = CoCreateInstance(&CLSID_RDPSession, NULL, CLSCTX_ALL, &IID_IRDPSRAPISharingSession,
+	                      (void**)&(subsystem->pSharingSession));
 
 	if (FAILED(hr))
 	{
@@ -567,8 +559,8 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	pUnknown = (IUnknown*) subsystem->pSharingSession;
-	hr = pUnknown->lpVtbl->QueryInterface(pUnknown, &IID_IConnectionPointContainer, (void**) &pCPC);
+	pUnknown = (IUnknown*)subsystem->pSharingSession;
+	hr = pUnknown->lpVtbl->QueryInterface(pUnknown, &IID_IConnectionPointContainer, (void**)&pCPC);
 
 	if (FAILED(hr))
 	{
@@ -580,15 +572,17 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IConnectionPointContainer::FindConnectionPoint(_IRDPSessionEvents) failure: 0x%08lX",
-		         hr);
+		WLog_ERR(
+		    TAG,
+		    "IConnectionPointContainer::FindConnectionPoint(_IRDPSessionEvents) failure: 0x%08lX",
+		    hr);
 		return -1;
 	}
 
 	dwCookie = 0;
 	subsystem->pSessionEvents = &Shadow_IRDPSessionEvents;
 	subsystem->pSessionEvents->lpVtbl->AddRef(subsystem->pSessionEvents);
-	hr = pCP->lpVtbl->Advise(pCP, (IUnknown*) subsystem->pSessionEvents, &dwCookie);
+	hr = pCP->lpVtbl->Advise(pCP, (IUnknown*)subsystem->pSessionEvents, &dwCookie);
 
 	if (FAILED(hr))
 	{
@@ -604,8 +598,8 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	hr = subsystem->pSharingSession->lpVtbl->GetDesktopSharedRect(subsystem->pSharingSession,
-	        &left, &top, &right, &bottom);
+	hr = subsystem->pSharingSession->lpVtbl->GetDesktopSharedRect(subsystem->pSharingSession, &left,
+	                                                              &top, &right, &bottom);
 
 	if (FAILED(hr))
 	{
@@ -615,11 +609,12 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	width = right - left;
 	height = bottom - top;
-	WLog_INFO(TAG,
-	          "GetDesktopSharedRect(): left: %ld top: %ld right: %ld bottom: %ld width: %ld height: %ld",
-	          left, top, right, bottom, width, height);
-	hr = subsystem->pSharingSession->lpVtbl->get_VirtualChannelManager(subsystem->pSharingSession,
-	        &(subsystem->pVirtualChannelMgr));
+	WLog_INFO(
+	    TAG,
+	    "GetDesktopSharedRect(): left: %ld top: %ld right: %ld bottom: %ld width: %ld height: %ld",
+	    left, top, right, bottom, width, height);
+	hr = subsystem->pSharingSession->lpVtbl->get_VirtualChannelManager(
+	    subsystem->pSharingSession, &(subsystem->pVirtualChannelMgr));
 
 	if (FAILED(hr))
 	{
@@ -627,8 +622,8 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	hr = subsystem->pSharingSession->lpVtbl->get_ApplicationFilter(subsystem->pSharingSession,
-	        &(subsystem->pApplicationFilter));
+	hr = subsystem->pSharingSession->lpVtbl->get_ApplicationFilter(
+	    subsystem->pSharingSession, &(subsystem->pApplicationFilter));
 
 	if (FAILED(hr))
 	{
@@ -637,7 +632,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	}
 
 	hr = subsystem->pSharingSession->lpVtbl->get_Attendees(subsystem->pSharingSession,
-	        &(subsystem->pAttendeeMgr));
+	                                                       &(subsystem->pAttendeeMgr));
 
 	if (FAILED(hr))
 	{
@@ -646,7 +641,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	}
 
 	hr = subsystem->pSharingSession->lpVtbl->get_Properties(subsystem->pSharingSession,
-	        &(subsystem->pSessionProperties));
+	                                                        &(subsystem->pSessionProperties));
 
 	if (FAILED(hr))
 	{
@@ -658,7 +653,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	varPropertyValue.vt = VT_I4;
 	varPropertyValue.intVal = 40000;
 	hr = subsystem->pSessionProperties->lpVtbl->put_Property(subsystem->pSessionProperties,
-	        bstrPropertyName, varPropertyValue);
+	                                                         bstrPropertyName, varPropertyValue);
 	SysFreeString(bstrPropertyName);
 
 	if (FAILED(hr))
@@ -671,27 +666,29 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	varPropertyValue.vt = VT_BOOL;
 	varPropertyValue.boolVal = VARIANT_TRUE;
 	hr = subsystem->pSessionProperties->lpVtbl->put_Property(subsystem->pSessionProperties,
-	        bstrPropertyName, varPropertyValue);
+	                                                         bstrPropertyName, varPropertyValue);
 	SysFreeString(bstrPropertyName);
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IRDPSRAPISessionProperties::put_Property(DrvConAttach) failure: 0x%08lX", hr);
+		WLog_ERR(TAG, "IRDPSRAPISessionProperties::put_Property(DrvConAttach) failure: 0x%08lX",
+		         hr);
 		return -1;
 	}
 
 	bstrPropertyName = SysAllocString(L"PortProtocol");
 	varPropertyValue.vt = VT_I4;
-	//varPropertyValue.intVal = 0; // AF_UNSPEC
+	// varPropertyValue.intVal = 0; // AF_UNSPEC
 	varPropertyValue.intVal = 2; // AF_INET
-	//varPropertyValue.intVal = 23; // AF_INET6
+	// varPropertyValue.intVal = 23; // AF_INET6
 	hr = subsystem->pSessionProperties->lpVtbl->put_Property(subsystem->pSessionProperties,
-	        bstrPropertyName, varPropertyValue);
+	                                                         bstrPropertyName, varPropertyValue);
 	SysFreeString(bstrPropertyName);
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IRDPSRAPISessionProperties::put_Property(PortProtocol) failure: 0x%08lX", hr);
+		WLog_ERR(TAG, "IRDPSRAPISessionProperties::put_Property(PortProtocol) failure: 0x%08lX",
+		         hr);
 		return -1;
 	}
 
@@ -704,7 +701,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	}
 
 	hr = subsystem->pSharingSession->lpVtbl->get_Invitations(subsystem->pSharingSession,
-	        &(subsystem->pInvitationMgr));
+	                                                         &(subsystem->pInvitationMgr));
 
 	if (FAILED(hr))
 	{
@@ -715,8 +712,9 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	bstrAuthString = SysAllocString(L"Shadow");
 	bstrGroupName = SysAllocString(L"ShadowGroup");
 	bstrPassword = SysAllocString(L"Shadow123!");
-	hr = subsystem->pInvitationMgr->lpVtbl->CreateInvitation(subsystem->pInvitationMgr, bstrAuthString,
-	        bstrGroupName, bstrPassword, 5, &(subsystem->pInvitation));
+	hr = subsystem->pInvitationMgr->lpVtbl->CreateInvitation(
+	    subsystem->pInvitationMgr, bstrAuthString, bstrGroupName, bstrPassword, 5,
+	    &(subsystem->pInvitation));
 	SysFreeString(bstrAuthString);
 	SysFreeString(bstrGroupName);
 	SysFreeString(bstrPassword);
@@ -740,7 +738,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		char* ConnectionString2;
 		BSTR bstrConnectionString;
 		hr = subsystem->pInvitation->lpVtbl->get_ConnectionString(subsystem->pInvitation,
-		        &bstrConnectionString);
+		                                                          &bstrConnectionString);
 
 		if (FAILED(hr))
 		{
@@ -748,8 +746,9 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 			return -1;
 		}
 
-		status1 = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) bstrConnectionString,
-		                             ((UINT32*) bstrConnectionString)[-1], &(ConnectionString2), 0, NULL, NULL);
+		status1 = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)bstrConnectionString,
+		                             ((UINT32*)bstrConnectionString)[-1], &(ConnectionString2), 0,
+		                             NULL, NULL);
 		SysFreeString(bstrConnectionString);
 		status2 = freerdp_assistance_set_connection_string2(file, ConnectionString2, "Shadow123!");
 		free(ConnectionString2);

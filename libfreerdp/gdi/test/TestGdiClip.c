@@ -30,7 +30,7 @@ static int test_gdi_ClipCoords(void)
 
 	hdc->format = format;
 	bmp = gdi_CreateBitmapEx(1024, 768, PIXEL_FORMAT_XRGB32, 0, NULL, NULL);
-	gdi_SelectObject(hdc, (HGDIOBJECT) bmp);
+	gdi_SelectObject(hdc, (HGDIOBJECT)bmp);
 	gdi_SetNullClipRgn(hdc);
 	rgn1 = gdi_CreateRectRgn(0, 0, 0, 0);
 	rgn2 = gdi_CreateRectRgn(0, 0, 0, 0);
@@ -58,8 +58,7 @@ static int test_gdi_ClipCoords(void)
 	gdi_SetClipRgn(hdc, 300, 300, 100, 100);
 	gdi_SetRgn(rgn1, 20, 20, 100, 100);
 	gdi_SetRgn(rgn2, 0, 0, 0, 0);
-	draw = gdi_ClipCoords(hdc, &(rgn1->x), &(rgn1->y), &(rgn1->w), &(rgn1->h), NULL,
-	                      NULL);
+	draw = gdi_ClipCoords(hdc, &(rgn1->x), &(rgn1->y), &(rgn1->w), &(rgn1->h), NULL, NULL);
 
 	if (draw)
 		goto fail;
@@ -68,8 +67,7 @@ static int test_gdi_ClipCoords(void)
 	gdi_SetClipRgn(hdc, 300, 300, 100, 100);
 	gdi_SetRgn(rgn1, 420, 420, 100, 100);
 	gdi_SetRgn(rgn2, 0, 0, 0, 0);
-	draw = gdi_ClipCoords(hdc, &(rgn1->x), &(rgn1->y), &(rgn1->w), &(rgn1->h), NULL,
-	                      NULL);
+	draw = gdi_ClipCoords(hdc, &(rgn1->x), &(rgn1->y), &(rgn1->w), &(rgn1->h), NULL, NULL);
 
 	if (draw)
 		goto fail;
@@ -78,8 +76,7 @@ static int test_gdi_ClipCoords(void)
 	gdi_SetClipRgn(hdc, 300, 300, 100, 100);
 	gdi_SetRgn(rgn1, 300, 20, 100, 100);
 	gdi_SetRgn(rgn2, 0, 0, 0, 0);
-	draw = gdi_ClipCoords(hdc, &(rgn1->x), &(rgn1->y), &(rgn1->w), &(rgn1->h), NULL,
-	                      NULL);
+	draw = gdi_ClipCoords(hdc, &(rgn1->x), &(rgn1->y), &(rgn1->w), &(rgn1->h), NULL, NULL);
 
 	if (draw)
 		goto fail;
@@ -88,8 +85,7 @@ static int test_gdi_ClipCoords(void)
 	gdi_SetClipRgn(hdc, 300, 300, 100, 100);
 	gdi_SetRgn(rgn1, 300, 420, 100, 100);
 	gdi_SetRgn(rgn2, 0, 0, 0, 0);
-	draw = gdi_ClipCoords(hdc, &(rgn1->x), &(rgn1->y), &(rgn1->w), &(rgn1->h), NULL,
-	                      NULL);
+	draw = gdi_ClipCoords(hdc, &(rgn1->x), &(rgn1->y), &(rgn1->w), &(rgn1->h), NULL, NULL);
 
 	if (draw)
 		goto fail;
@@ -184,14 +180,14 @@ static int test_gdi_InvalidateRegion(void)
 
 	hdc->format = format;
 	bmp = gdi_CreateBitmapEx(1024, 768, PIXEL_FORMAT_XRGB32, 0, NULL, NULL);
-	gdi_SelectObject(hdc, (HGDIOBJECT) bmp);
+	gdi_SelectObject(hdc, (HGDIOBJECT)bmp);
 	gdi_SetNullClipRgn(hdc);
-	hdc->hwnd = (HGDI_WND) calloc(1, sizeof(GDI_WND));
+	hdc->hwnd = (HGDI_WND)calloc(1, sizeof(GDI_WND));
 	hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
 	hdc->hwnd->invalid->null = TRUE;
 	invalid = hdc->hwnd->invalid;
 	hdc->hwnd->count = 16;
-	hdc->hwnd->cinvalid = (HGDI_RGN) calloc(hdc->hwnd->count, sizeof(GDI_RGN));
+	hdc->hwnd->cinvalid = (HGDI_RGN)calloc(hdc->hwnd->count, sizeof(GDI_RGN));
 	rgn1 = gdi_CreateRectRgn(0, 0, 0, 0);
 	rgn2 = gdi_CreateRectRgn(0, 0, 0, 0);
 	rgn1->null = TRUE;
@@ -347,4 +343,3 @@ int TestGdiClip(int argc, char* argv[])
 
 	return 0;
 }
-

@@ -175,8 +175,8 @@ typedef struct _LocateCardsW_Call
 typedef struct _LocateCards_ATRMask
 {
 	/* [range] */ DWORD cbAtr;
-	BYTE rgbAtr[ 36 ];
-	BYTE rgbMask[ 36 ];
+	BYTE rgbAtr[36];
+	BYTE rgbMask[36];
 } LocateCards_ATRMask;
 
 typedef struct _LocateCardsByATRA_Call
@@ -431,8 +431,8 @@ typedef struct _WriteCacheW_Call
 	WriteCache_Common Common;
 } WriteCacheW_Call;
 
-#define SMARTCARD_COMMON_TYPE_HEADER_LENGTH	8
-#define SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH	8
+#define SMARTCARD_COMMON_TYPE_HEADER_LENGTH 8
+#define SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH 8
 
 #include "smartcard_main.h"
 
@@ -442,14 +442,14 @@ LONG smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, U
                                       UINT32 alignment);
 
 SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartcard,
-        REDIR_SCARDCONTEXT* context);
+                                                       REDIR_SCARDCONTEXT* context);
 void smartcard_scard_context_native_to_redir(SMARTCARD_DEVICE* smartcard,
-        REDIR_SCARDCONTEXT* context, SCARDCONTEXT hContext);
+                                             REDIR_SCARDCONTEXT* context, SCARDCONTEXT hContext);
 
 SCARDHANDLE smartcard_scard_handle_native_from_redir(SMARTCARD_DEVICE* smartcard,
-        REDIR_SCARDHANDLE* handle);
+                                                     REDIR_SCARDHANDLE* handle);
 void smartcard_scard_handle_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_SCARDHANDLE* handle,
-        SCARDHANDLE hCard);
+                                            SCARDHANDLE hCard);
 
 LONG smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
 void smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
@@ -459,50 +459,51 @@ void smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         UINT32 objectBufferLength);
 
 LONG smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDCONTEXT* context);
+                                          REDIR_SCARDCONTEXT* context);
 LONG smartcard_pack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         REDIR_SCARDCONTEXT* context);
 
 LONG smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDCONTEXT* context);
+                                              REDIR_SCARDCONTEXT* context);
 LONG smartcard_pack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDCONTEXT* context);
+                                            REDIR_SCARDCONTEXT* context);
 
 LONG smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDHANDLE* handle);
+                                         REDIR_SCARDHANDLE* handle);
 LONG smartcard_pack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s,
                                        REDIR_SCARDHANDLE* handle);
 
 LONG smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDHANDLE* handle);
+                                             REDIR_SCARDHANDLE* handle);
 LONG smartcard_pack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
-        REDIR_SCARDHANDLE* handle);
+                                           REDIR_SCARDHANDLE* handle);
 
 LONG smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        EstablishContext_Call* call);
+                                             EstablishContext_Call* call);
 void smartcard_trace_establish_context_call(SMARTCARD_DEVICE* smartcard,
-		const EstablishContext_Call* call);
+                                            const EstablishContext_Call* call);
 
 LONG smartcard_pack_establish_context_return(SMARTCARD_DEVICE* smartcard, wStream* s,
-        EstablishContext_Return* ret);
+                                             EstablishContext_Return* ret);
 void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard,
-		const EstablishContext_Return* ret);
+                                              const EstablishContext_Return* ret);
 
 LONG smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Context_Call* call);
 void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, const Context_Call* call,
                                   const char* name);
 
-void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, const Long_Return* ret, const char* name);
+void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, const Long_Return* ret,
+                                 const char* name);
 
 LONG smartcard_unpack_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        ListReaderGroups_Call* call);
+                                              ListReaderGroups_Call* call);
 void smartcard_trace_list_reader_groups_call(SMARTCARD_DEVICE* smartcard,
-		const ListReaderGroups_Call* call, BOOL unicode);
+                                             const ListReaderGroups_Call* call, BOOL unicode);
 
 LONG smartcard_pack_list_reader_groups_return(SMARTCARD_DEVICE* smartcard, wStream* s,
-        ListReaderGroups_Return* ret);
+                                              ListReaderGroups_Return* ret);
 void smartcard_trace_list_reader_groups_return(SMARTCARD_DEVICE* smartcard,
-		const ListReaderGroups_Return* ret, BOOL unicode);
+                                               const ListReaderGroups_Return* ret, BOOL unicode);
 
 LONG smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         ListReaders_Call* call);
@@ -512,7 +513,7 @@ void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard, const ListRe
 LONG smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         ListReaders_Return* ret);
 void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, const ListReaders_Return* ret,
-        BOOL unicode);
+                                         BOOL unicode);
 
 LONG smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, ConnectA_Call* call);
 void smartcard_trace_connect_a_call(SMARTCARD_DEVICE* smartcard, const ConnectA_Call* call);
@@ -531,33 +532,35 @@ LONG smartcard_pack_reconnect_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 void smartcard_trace_reconnect_return(SMARTCARD_DEVICE* smartcard, const Reconnect_Return* ret);
 
 LONG smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        HCardAndDisposition_Call* call);
+                                                 HCardAndDisposition_Call* call);
 void smartcard_trace_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard,
-        HCardAndDisposition_Call* call, const char* name);
+                                                HCardAndDisposition_Call* call, const char* name);
 
 LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        GetStatusChangeA_Call* call);
+                                               GetStatusChangeA_Call* call);
 void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard,
-		const GetStatusChangeA_Call* call);
+                                              const GetStatusChangeA_Call* call);
 
 LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        GetStatusChangeW_Call* call);
+                                               GetStatusChangeW_Call* call);
 void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard,
-        GetStatusChangeW_Call* call);
+                                              GetStatusChangeW_Call* call);
 
 LONG smartcard_pack_get_status_change_return(SMARTCARD_DEVICE* smartcard, wStream* s,
-        GetStatusChange_Return* ret);
+                                             GetStatusChange_Return* ret);
 void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard,
-		const GetStatusChange_Return* ret, BOOL unicode);
+                                              const GetStatusChange_Return* ret, BOOL unicode);
 
 LONG smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, State_Call* call);
 LONG smartcard_pack_state_return(SMARTCARD_DEVICE* smartcard, wStream* s, State_Return* ret);
 
 LONG smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Status_Call* call);
-void smartcard_trace_status_call(SMARTCARD_DEVICE* smartcard, const Status_Call* call, BOOL unicode);
+void smartcard_trace_status_call(SMARTCARD_DEVICE* smartcard, const Status_Call* call,
+                                 BOOL unicode);
 
 LONG smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Status_Return* ret);
-void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Status_Return* ret, BOOL unicode);
+void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Status_Return* ret,
+                                   BOOL unicode);
 
 LONG smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s,
                                       GetAttrib_Call* call);
@@ -581,9 +584,8 @@ LONG smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, const Transmit_Return* ret);
 
 LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-        LocateCardsByATRA_Call* call);
+                                                 LocateCardsByATRA_Call* call);
 void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard,
-		const LocateCardsByATRA_Call* call);
-
+                                                const LocateCardsByATRA_Call* call);
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_PACK_H */

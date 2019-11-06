@@ -20,7 +20,8 @@
 #define _CORKSCREW_BACKTRACE_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include <sys/types.h>
@@ -33,9 +34,9 @@ extern "C" {
 	 */
 	typedef struct
 	{
-		uintptr_t absolute_pc;     /* absolute PC offset */
-		uintptr_t stack_top;       /* top of stack for this frame */
-		size_t stack_size;         /* size of this stack frame */
+		uintptr_t absolute_pc; /* absolute PC offset */
+		uintptr_t stack_top;   /* top of stack for this frame */
+		size_t stack_size;     /* size of this stack frame */
 	} backtrace_frame_t;
 
 	/*
@@ -43,13 +44,13 @@ extern "C" {
 	 */
 	typedef struct
 	{
-		uintptr_t relative_pc;       /* relative frame PC offset from the start of the library,
-                                    or the absolute PC if the library is unknown */
+		uintptr_t relative_pc;          /* relative frame PC offset from the start of the library,
+		                               or the absolute PC if the library is unknown */
 		uintptr_t relative_symbol_addr; /* relative offset of the symbol from the start of the
-                                    library or 0 if the library is unknown */
-		char *map_name;              /* executable or library name, or NULL if unknown */
-		char *symbol_name;           /* symbol name, or NULL if unknown */
-		char *demangled_name;        /* demangled symbol name, or NULL if unknown */
+		                            library or 0 if the library is unknown */
+		char* map_name;                 /* executable or library name, or NULL if unknown */
+		char* symbol_name;              /* symbol name, or NULL if unknown */
+		char* demangled_name;           /* demangled symbol name, or NULL if unknown */
 	} backtrace_symbol_t;
 
 	/*
@@ -57,7 +58,7 @@ extern "C" {
 	 * Populates the backtrace array with the program counters from the call stack.
 	 * Returns the number of frames collected, or -1 if an error occurred.
 	 */
-	ssize_t unwind_backtrace(backtrace_frame_t *backtrace, size_t ignore_depth, size_t max_depth);
+	ssize_t unwind_backtrace(backtrace_frame_t* backtrace, size_t ignore_depth, size_t max_depth);
 
 	/*
 	 * Unwinds the call stack for a thread within this process.
@@ -66,38 +67,39 @@ extern "C" {
 	 *
 	 * The task is briefly suspended while the backtrace is being collected.
 	 */
-	ssize_t unwind_backtrace_thread(pid_t tid, backtrace_frame_t *backtrace,
-									size_t ignore_depth, size_t max_depth);
+	ssize_t unwind_backtrace_thread(pid_t tid, backtrace_frame_t* backtrace, size_t ignore_depth,
+	                                size_t max_depth);
 
 	/*
 	 * Unwinds the call stack of a task within a remote process using ptrace().
 	 * Populates the backtrace array with the program counters from the call stack.
 	 * Returns the number of frames collected, or -1 if an error occurred.
 	 */
-	ssize_t unwind_backtrace_ptrace(pid_t tid, const ptrace_context_t *context,
-									backtrace_frame_t *backtrace, size_t ignore_depth, size_t max_depth);
+	ssize_t unwind_backtrace_ptrace(pid_t tid, const ptrace_context_t* context,
+	                                backtrace_frame_t* backtrace, size_t ignore_depth,
+	                                size_t max_depth);
 
 	/*
 	 * Gets the symbols for each frame of a backtrace.
 	 * The symbols array must be big enough to hold one symbol record per frame.
 	 * The symbols must later be freed using free_backtrace_symbols.
 	 */
-	void get_backtrace_symbols(const backtrace_frame_t *backtrace, size_t frames,
-							   backtrace_symbol_t *backtrace_symbols);
+	void get_backtrace_symbols(const backtrace_frame_t* backtrace, size_t frames,
+	                           backtrace_symbol_t* backtrace_symbols);
 
 	/*
 	 * Gets the symbols for each frame of a backtrace from a remote process.
 	 * The symbols array must be big enough to hold one symbol record per frame.
 	 * The symbols must later be freed using free_backtrace_symbols.
 	 */
-	void get_backtrace_symbols_ptrace(const ptrace_context_t *context,
-									  const backtrace_frame_t *backtrace, size_t frames,
-									  backtrace_symbol_t *backtrace_symbols);
+	void get_backtrace_symbols_ptrace(const ptrace_context_t* context,
+	                                  const backtrace_frame_t* backtrace, size_t frames,
+	                                  backtrace_symbol_t* backtrace_symbols);
 
 	/*
 	 * Frees the storage associated with backtrace symbols.
 	 */
-	void free_backtrace_symbols(backtrace_symbol_t *backtrace_symbols, size_t frames);
+	void free_backtrace_symbols(backtrace_symbol_t* backtrace_symbols, size_t frames);
 
 	enum
 	{
@@ -108,8 +110,8 @@ extern "C" {
 	/**
 	 * Formats a line from a backtrace as a zero-terminated string into the specified buffer.
 	 */
-	void format_backtrace_line(unsigned frameNumber, const backtrace_frame_t *frame,
-							   const backtrace_symbol_t *symbol, char *buffer, size_t bufferSize);
+	void format_backtrace_line(unsigned frameNumber, const backtrace_frame_t* frame,
+	                           const backtrace_symbol_t* symbol, char* buffer, size_t bufferSize);
 
 #ifdef __cplusplus
 }

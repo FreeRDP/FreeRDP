@@ -112,7 +112,6 @@ UINT32 gdi_GetBkMode(HGDI_DC hdc)
  * @return previous background mode on success, 0 on failure
  */
 
-
 INT32 gdi_SetBkMode(HGDI_DC hdc, INT32 iBkMode)
 {
 	if (iBkMode == GDI_OPAQUE || iBkMode == GDI_TRANSPARENT)

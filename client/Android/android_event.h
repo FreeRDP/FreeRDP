@@ -14,11 +14,11 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/api.h>
 
-#define EVENT_TYPE_KEY			1
-#define EVENT_TYPE_CURSOR		2
-#define EVENT_TYPE_DISCONNECT		3
-#define EVENT_TYPE_KEY_UNICODE		4
-#define EVENT_TYPE_CLIPBOARD	5
+#define EVENT_TYPE_KEY 1
+#define EVENT_TYPE_CURSOR 2
+#define EVENT_TYPE_DISCONNECT 3
+#define EVENT_TYPE_KEY_UNICODE 4
+#define EVENT_TYPE_CLIPBOARD 5
 
 struct _ANDROID_EVENT
 {
@@ -65,14 +65,11 @@ FREERDP_LOCAL BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event);
 FREERDP_LOCAL HANDLE android_get_handle(freerdp* inst);
 FREERDP_LOCAL BOOL android_check_handle(freerdp* inst);
 
-FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_key_new(int flags,
-        UINT16 scancode);
+FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode);
 FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 flags, UINT16 key);
-FREERDP_LOCAL ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags,
-        UINT16 x, UINT16 y);
+FREERDP_LOCAL ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y);
 FREERDP_LOCAL ANDROID_EVENT* android_event_disconnect_new(void);
-FREERDP_LOCAL ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data,
-        int data_length);
+FREERDP_LOCAL ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length);
 
 FREERDP_LOCAL void android_event_free(ANDROID_EVENT* event);
 

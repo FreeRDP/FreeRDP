@@ -6,8 +6,7 @@
 #include <freerdp/codec/mppc.h>
 #include <freerdp/log.h>
 
-static const BYTE TEST_RDP5_COMPRESSED_DATA[] =
-{
+static const BYTE TEST_RDP5_COMPRESSED_DATA[] = {
 	0x24, 0x02, 0x03, 0x09, 0x00, 0x20, 0x0c, 0x05, 0x10, 0x01, 0x40, 0x0a, 0xbf, 0xdf, 0xc3, 0x20,
 	0x80, 0x00, 0x1f, 0x0a, 0x00, 0x00, 0x07, 0x43, 0x4e, 0x00, 0x68, 0x02, 0x00, 0x22, 0x00, 0x34,
 	0xcb, 0xfb, 0xf8, 0x18, 0x40, 0x01, 0x00, 0x27, 0xe2, 0x90, 0x0f, 0xc3, 0x91, 0xa8, 0x00, 0x08,
@@ -188,8 +187,7 @@ static const BYTE TEST_RDP5_COMPRESSED_DATA[] =
 	0x7f, 0x52, 0x00
 };
 
-static const BYTE TEST_RDP5_UNCOMPRESSED_DATA[] =
-{
+static const BYTE TEST_RDP5_UNCOMPRESSED_DATA[] = {
 	0x24, 0x02, 0x03, 0x09, 0x00, 0x20, 0x0c, 0x05, 0x10, 0x01, 0x40, 0x0a, 0xff, 0xff, 0x0c, 0x84,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1d, 0x0d, 0x38, 0x01, 0xc0, 0x10, 0x01, 0x10,
 	0x01, 0xcc, 0xff, 0x7f, 0x03, 0x08, 0x00, 0x20, 0x04, 0x05, 0x10, 0x01, 0x40, 0x0a, 0x00, 0x0c,
@@ -705,16 +703,15 @@ static const BYTE TEST_MPPC_BELLS_RDP5[] =
     "\x6c\x2e\x74\x6f\x6c\x6c\x73\x2c\xfa\x1b\x97\x33\x7e\x87\xe3\x32"
     "\x90\x80";
 
-static const BYTE TEST_ISLAND_DATA[] =
-    "No man is an island entire of itself; every man "
-    "is a piece of the continent, a part of the main; "
-    "if a clod be washed away by the sea, Europe "
-    "is the less, as well as if a promontory were, as"
-    "well as any manner of thy friends or of thine "
-    "own were; any man's death diminishes me, "
-    "because I am involved in mankind. "
-    "And therefore never send to know for whom "
-    "the bell tolls; it tolls for thee.";
+static const BYTE TEST_ISLAND_DATA[] = "No man is an island entire of itself; every man "
+                                       "is a piece of the continent, a part of the main; "
+                                       "if a clod be washed away by the sea, Europe "
+                                       "is the less, as well as if a promontory were, as"
+                                       "well as any manner of thy friends or of thine "
+                                       "own were; any man's death diminishes me, "
+                                       "because I am involved in mankind. "
+                                       "And therefore never send to know for whom "
+                                       "the bell tolls; it tolls for thee.";
 
 static const BYTE TEST_ISLAND_DATA_RDP5[] =
     "\x4e\x6f\x20\x6d\x61\x6e\x20\x69\x73\x20\xf8\xd2\xd8\xc2\xdc\xc8"
@@ -755,7 +752,7 @@ static int test_MppcCompressBellsRdp5(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
-	pSrcData = (BYTE*) TEST_MPPC_BELLS;
+	pSrcData = (BYTE*)TEST_MPPC_BELLS;
 	expectedSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
@@ -764,11 +761,12 @@ static int test_MppcCompressBellsRdp5(void)
 	if (status < 0)
 		goto fail;
 
-	printf("Flags: 0x%08"PRIX32" DstSize: %"PRIu32"\n", Flags, DstSize);
+	printf("Flags: 0x%08" PRIX32 " DstSize: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcCompressBellsRdp5: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("MppcCompressBellsRdp5: output size mismatch: Actual: %" PRIu32
+		       ", Expected: %" PRIu32 "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}
@@ -807,7 +805,7 @@ static int test_MppcCompressBellsRdp4(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
-	pSrcData = (BYTE*) TEST_MPPC_BELLS;
+	pSrcData = (BYTE*)TEST_MPPC_BELLS;
 	expectedSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
@@ -816,11 +814,12 @@ static int test_MppcCompressBellsRdp4(void)
 	if (status < 0)
 		goto fail;
 
-	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
+	printf("flags: 0x%08" PRIX32 " size: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcCompressBellsRdp4: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("MppcCompressBellsRdp4: output size mismatch: Actual: %" PRIu32
+		       ", Expected: %" PRIu32 "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}
@@ -858,7 +857,7 @@ static int test_MppcDecompressBellsRdp5(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
-	pSrcData = (BYTE*) TEST_MPPC_BELLS_RDP5;
+	pSrcData = (BYTE*)TEST_MPPC_BELLS_RDP5;
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
 	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
@@ -866,11 +865,12 @@ static int test_MppcDecompressBellsRdp5(void)
 	if (status < 0)
 		goto fail;
 
-	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
+	printf("flags: 0x%08" PRIX32 " size: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcDecompressBellsRdp5: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("MppcDecompressBellsRdp5: output size mismatch: Actual: %" PRIu32
+		       ", Expected: %" PRIu32 "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}
@@ -904,7 +904,7 @@ static int test_MppcDecompressBellsRdp4(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
-	pSrcData = (BYTE*) TEST_MPPC_BELLS_RDP4;
+	pSrcData = (BYTE*)TEST_MPPC_BELLS_RDP4;
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 0;
 	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
@@ -912,11 +912,12 @@ static int test_MppcDecompressBellsRdp4(void)
 	if (status < 0)
 		goto fail;
 
-	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
+	printf("flags: 0x%08" PRIX32 " size: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcDecompressBellsRdp4: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("MppcDecompressBellsRdp4: output size mismatch: Actual: %" PRIu32
+		       ", Expected: %" PRIu32 "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}
@@ -951,7 +952,7 @@ static int test_MppcCompressIslandRdp5(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
-	pSrcData = (BYTE*) TEST_ISLAND_DATA;
+	pSrcData = (BYTE*)TEST_ISLAND_DATA;
 	expectedSize = sizeof(TEST_ISLAND_DATA_RDP5) - 1;
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
@@ -960,11 +961,12 @@ static int test_MppcCompressIslandRdp5(void)
 	if (status < 0)
 		goto fail;
 
-	printf("Flags: 0x%08"PRIX32" DstSize: %"PRIu32"\n", Flags, DstSize);
+	printf("Flags: 0x%08" PRIX32 " DstSize: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcCompressIslandRdp5: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("MppcCompressIslandRdp5: output size mismatch: Actual: %" PRIu32
+		       ", Expected: %" PRIu32 "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}
@@ -1003,7 +1005,7 @@ static int test_MppcCompressBufferRdp5(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
-	pSrcData = (BYTE*) TEST_RDP5_UNCOMPRESSED_DATA;
+	pSrcData = (BYTE*)TEST_RDP5_UNCOMPRESSED_DATA;
 	expectedSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
@@ -1012,18 +1014,20 @@ static int test_MppcCompressBufferRdp5(void)
 	if (status < 0)
 		goto fail;
 
-	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
+	printf("flags: 0x%08" PRIX32 " size: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcCompressBufferRdp5: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("MppcCompressBufferRdp5: output size mismatch: Actual: %" PRIu32
+		       ", Expected: %" PRIu32 "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}
 
 	if (memcmp(pDstData, TEST_RDP5_COMPRESSED_DATA, DstSize) != 0)
 	{
-		printf("MppcCompressBufferRdp5: output mismatch: compressed output does not match Microsoft implementation\n");
+		printf("MppcCompressBufferRdp5: output mismatch: compressed output does not match "
+		       "Microsoft implementation\n");
 		goto fail;
 	}
 
@@ -1050,7 +1054,7 @@ static int test_MppcDecompressBufferRdp5(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
-	pSrcData = (BYTE*) TEST_RDP5_COMPRESSED_DATA;
+	pSrcData = (BYTE*)TEST_RDP5_COMPRESSED_DATA;
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
 	expectedSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
@@ -1058,11 +1062,12 @@ static int test_MppcDecompressBufferRdp5(void)
 	if (status < 0)
 		goto fail;
 
-	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
+	printf("flags: 0x%08" PRIX32 " size: %" PRIu32 "\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcDecompressBufferRdp5: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n",
+		printf("MppcDecompressBufferRdp5: output size mismatch: Actual: %" PRIu32
+		       ", Expected: %" PRIu32 "\n",
 		       DstSize, expectedSize);
 		goto fail;
 	}

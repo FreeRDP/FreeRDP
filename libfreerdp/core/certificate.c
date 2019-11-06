@@ -128,29 +128,25 @@
  *
  */
 
-static const char* certificate_read_errors[] =
-{
-	"Certificate tag",
-	"TBSCertificate",
-	"Explicit Contextual Tag [0]",
-	"version",
-	"CertificateSerialNumber",
-	"AlgorithmIdentifier",
-	"Issuer Name",
-	"Validity",
-	"Subject Name",
-	"SubjectPublicKeyInfo Tag",
-	"subjectPublicKeyInfo::AlgorithmIdentifier",
-	"subjectPublicKeyInfo::subjectPublicKey",
-	"RSAPublicKey Tag",
-	"modulusLength",
-	"zero padding",
-	"modulusLength",
-	"modulus",
-	"publicExponent length",
-	"publicExponent"
-};
-
+static const char* certificate_read_errors[] = { "Certificate tag",
+	                                             "TBSCertificate",
+	                                             "Explicit Contextual Tag [0]",
+	                                             "version",
+	                                             "CertificateSerialNumber",
+	                                             "AlgorithmIdentifier",
+	                                             "Issuer Name",
+	                                             "Validity",
+	                                             "Subject Name",
+	                                             "SubjectPublicKeyInfo Tag",
+	                                             "subjectPublicKeyInfo::AlgorithmIdentifier",
+	                                             "subjectPublicKeyInfo::subjectPublicKey",
+	                                             "RSAPublicKey Tag",
+	                                             "modulusLength",
+	                                             "zero padding",
+	                                             "modulusLength",
+	                                             "modulus",
+	                                             "publicExponent length",
+	                                             "publicExponent" };
 
 /**
  * Read X.509 Certificate
@@ -189,7 +185,7 @@ static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* in
 
 	error++;
 
-	if (!ber_read_contextual_tag(s, 0, &length, TRUE))	/* Explicit Contextual Tag [0] */
+	if (!ber_read_contextual_tag(s, 0, &length, TRUE)) /* Explicit Contextual Tag [0] */
 		goto error1;
 
 	error++;
@@ -276,8 +272,7 @@ static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* in
 
 			modulus_length--;
 		}
-	}
-	while (padding == 0);
+	} while (padding == 0);
 
 	error++;
 
@@ -288,7 +283,7 @@ static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* in
 		goto error1;
 
 	info->ModulusLength = (UINT32)modulus_length;
-	info->Modulus = (BYTE*) malloc(info->ModulusLength);
+	info->Modulus = (BYTE*)malloc(info->ModulusLength);
 
 	if (!info->Modulus)
 		goto error1;
@@ -328,13 +323,13 @@ error1:
 static rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count)
 {
 	rdpX509CertChain* x509_cert_chain;
-	x509_cert_chain = (rdpX509CertChain*) malloc(sizeof(rdpX509CertChain));
+	x509_cert_chain = (rdpX509CertChain*)malloc(sizeof(rdpX509CertChain));
 
 	if (!x509_cert_chain)
 		return NULL;
 
 	x509_cert_chain->count = count;
-	x509_cert_chain->array = (rdpCertBlob*) calloc(count, sizeof(rdpCertBlob));
+	x509_cert_chain->array = (rdpCertBlob*)calloc(count, sizeof(rdpCertBlob));
 
 	if (!x509_cert_chain->array)
 	{
@@ -367,7 +362,7 @@ static void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_
 }
 
 static BOOL certificate_process_server_public_key(rdpCertificate* certificate, wStream* s,
-        UINT32 length)
+                                                  UINT32 length)
 {
 	BYTE magic[4];
 	UINT32 keylen;
@@ -405,7 +400,8 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 }
 
 static BOOL certificate_process_server_public_signature(rdpCertificate* certificate,
-        const BYTE* sigdata, size_t sigdatalen, wStream* s, UINT32 siglen)
+                                                        const BYTE* sigdata, size_t sigdatalen,
+                                                        wStream* s, UINT32 siglen)
 {
 #if defined(CERT_VALIDATE_PADDING) || defined(CERT_VALIDATE_RSA)
 	size_t i, sum;
@@ -422,10 +418,12 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	(void)sigdatalen;
 #endif
 	(void)certificate;
-	/* Do not bother with validation of server proprietary certificate. The use of MD5 here is not allowed under FIPS.
-	 * Since the validation is not protecting against anything since the private/public keys are well known and documented in
-	 * MS-RDPBCGR section 5.3.3.1, we are not gaining any security by using MD5 for signature comparison. Rather then use MD5
-	 * here we just dont do the validation to avoid its use. Historically, freerdp has been ignoring a failed validation anyways. */
+	/* Do not bother with validation of server proprietary certificate. The use of MD5 here is not
+	 * allowed under FIPS. Since the validation is not protecting against anything since the
+	 * private/public keys are well known and documented in MS-RDPBCGR section 5.3.3.1, we are not
+	 * gaining any security by using MD5 for signature comparison. Rather then use MD5
+	 * here we just dont do the validation to avoid its use. Historically, freerdp has been ignoring
+	 * a failed validation anyways. */
 #if defined(CERT_VALIDATE_MD5)
 
 	if (!winpr_Digest(WINPR_MD_MD5, sigdata, sigdatalen, md5hash, sizeof(md5hash)))
@@ -437,7 +435,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	if (siglen < 8)
 		return FALSE;
 
-	/* Last 8 bytes shall be all zero. */
+		/* Last 8 bytes shall be all zero. */
 #if defined(CERT_VALIDATE_PADDING)
 
 	for (sum = 0, i = sizeof(encsig) - 8; i < sizeof(encsig); i++)
@@ -517,7 +515,9 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 
 	if (!((dwSigAlgId == SIGNATURE_ALG_RSA) && (dwKeyAlgId == KEY_EXCHANGE_ALG_RSA)))
 	{
-		WLog_ERR(TAG, "unsupported signature or key algorithm, dwSigAlgId=%"PRIu32" dwKeyAlgId=%"PRIu32"",
+		WLog_ERR(TAG,
+		         "unsupported signature or key algorithm, dwSigAlgId=%" PRIu32
+		         " dwKeyAlgId=%" PRIu32 "",
 		         dwSigAlgId, dwKeyAlgId);
 		return FALSE;
 	}
@@ -526,7 +526,7 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 
 	if (wPublicKeyBlobType != BB_RSA_KEY_BLOB)
 	{
-		WLog_ERR(TAG, "unsupported public key blob type %"PRIu16"", wPublicKeyBlobType);
+		WLog_ERR(TAG, "unsupported public key blob type %" PRIu16 "", wPublicKeyBlobType);
 		return FALSE;
 	}
 
@@ -534,7 +534,7 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 
 	if (Stream_GetRemainingLength(s) < wPublicKeyBlobLen)
 	{
-		WLog_ERR(TAG, "not enough bytes for public key(len=%"PRIu16")", wPublicKeyBlobLen);
+		WLog_ERR(TAG, "not enough bytes for public key(len=%" PRIu16 ")", wPublicKeyBlobLen);
 		return FALSE;
 	}
 
@@ -552,7 +552,7 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
 	{
-		WLog_ERR(TAG, "unsupported blob signature %"PRIu16"", wSignatureBlobType);
+		WLog_ERR(TAG, "unsupported blob signature %" PRIu16 "", wSignatureBlobType);
 		return FALSE;
 	}
 
@@ -560,18 +560,18 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 
 	if (Stream_GetRemainingLength(s) < wSignatureBlobLen)
 	{
-		WLog_ERR(TAG, "not enough bytes for signature(len=%"PRIu16")", wSignatureBlobLen);
+		WLog_ERR(TAG, "not enough bytes for signature(len=%" PRIu16 ")", wSignatureBlobLen);
 		return FALSE;
 	}
 
 	if (wSignatureBlobLen != 72)
 	{
-		WLog_ERR(TAG, "invalid signature length (got %"PRIu16", expected 72)", wSignatureBlobLen);
+		WLog_ERR(TAG, "invalid signature length (got %" PRIu16 ", expected 72)", wSignatureBlobLen);
 		return FALSE;
 	}
 
 	if (!certificate_process_server_public_signature(certificate, sigdata, sigdatalen, s,
-	        wSignatureBlobLen))
+	                                                 wSignatureBlobLen))
 	{
 		WLog_ERR(TAG, "unable to parse server public signature");
 		return FALSE;
@@ -613,8 +613,8 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
 		if (Stream_GetRemainingLength(s) < certLength)
 			return FALSE;
 
-		DEBUG_CERTIFICATE("X.509 Certificate #%d, length:%"PRIu32"", i + 1, certLength);
-		certificate->x509_cert_chain->array[i].data = (BYTE*) malloc(certLength);
+		DEBUG_CERTIFICATE("X.509 Certificate #%d, length:%" PRIu32 "", i + 1, certLength);
+		certificate->x509_cert_chain->array[i].data = (BYTE*)malloc(certLength);
 
 		if (!certificate->x509_cert_chain->array[i].data)
 			return FALSE;
@@ -626,8 +626,9 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
 		{
 			rdpCertInfo cert_info = { 0 };
 			DEBUG_CERTIFICATE("License Server Certificate");
-			ret = certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
-			DEBUG_LICENSE("modulus length:%"PRIu32"", cert_info.ModulusLength);
+			ret = certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i],
+			                                        &cert_info);
+			DEBUG_LICENSE("modulus length:%" PRIu32 "", cert_info.ModulusLength);
 			free(cert_info.Modulus);
 
 			if (!ret)
@@ -646,7 +647,7 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
 			                                       &certificate->cert_info))
 				return FALSE;
 
-			DEBUG_CERTIFICATE("modulus length:%"PRIu32"", certificate->cert_info.ModulusLength);
+			DEBUG_CERTIFICATE("modulus length:%" PRIu32 "", certificate->cert_info.ModulusLength);
 		}
 	}
 
@@ -661,13 +662,13 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
  */
 
 BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert,
-        size_t length)
+                                         size_t length)
 {
 	BOOL ret;
 	wStream* s;
 	UINT32 dwVersion;
 
-	if (length < 4)  /* NULL certificate is not an error see #1795 */
+	if (length < 4) /* NULL certificate is not an error see #1795 */
 		return TRUE;
 
 	s = Stream_New(server_cert, length);
@@ -691,7 +692,8 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 			break;
 
 		default:
-			WLog_ERR(TAG, "invalid certificate chain version:%"PRIu32"", dwVersion & CERT_CHAIN_VERSION_MASK);
+			WLog_ERR(TAG, "invalid certificate chain version:%" PRIu32 "",
+			         dwVersion & CERT_CHAIN_VERSION_MASK);
 			ret = FALSE;
 			break;
 	}
@@ -708,7 +710,7 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	const BIGNUM* rsa_e = NULL;
 	const BIGNUM* rsa_n = NULL;
 	const BIGNUM* rsa_d = NULL;
-	key = (rdpRsaKey*) calloc(1, sizeof(rdpRsaKey));
+	key = (rdpRsaKey*)calloc(1, sizeof(rdpRsaKey));
 
 	if (!key)
 		return NULL;
@@ -738,7 +740,8 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 			break;
 
 		default:
-			WLog_ERR(TAG, "unexpected error when checking RSA key from %s: %s.", keyfile, strerror(errno));
+			WLog_ERR(TAG, "unexpected error when checking RSA key from %s: %s.", keyfile,
+			         strerror(errno));
 			goto out_free_rsa;
 	}
 
@@ -751,7 +754,7 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	}
 
 	key->ModulusLength = BN_num_bytes(rsa_n);
-	key->Modulus = (BYTE*) malloc(key->ModulusLength);
+	key->Modulus = (BYTE*)malloc(key->ModulusLength);
 
 	if (!key->Modulus)
 		goto out_free_rsa;
@@ -759,7 +762,7 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	BN_bn2bin(rsa_n, key->Modulus);
 	crypto_reverse(key->Modulus, key->ModulusLength);
 	key->PrivateExponentLength = BN_num_bytes(rsa_d);
-	key->PrivateExponent = (BYTE*) malloc(key->PrivateExponentLength);
+	key->PrivateExponent = (BYTE*)malloc(key->PrivateExponentLength);
 
 	if (!key->PrivateExponent)
 		goto out_free_modulus;
@@ -779,7 +782,6 @@ out_free:
 	free(key);
 	return NULL;
 }
-
 
 rdpRsaKey* key_new(const char* keyfile)
 {
@@ -809,7 +811,7 @@ rdpRsaKey* key_new(const char* keyfile)
 	if (!buffer)
 		goto out_free;
 
-	if (fread((void*) buffer, length, 1, fp) != 1)
+	if (fread((void*)buffer, length, 1, fp) != 1)
 		goto out_free;
 
 	fclose(fp);
@@ -828,7 +830,7 @@ out_free:
 
 rdpRsaKey* key_clone(const rdpRsaKey* key)
 {
-	rdpRsaKey* _key = (rdpRsaKey*) calloc(1, sizeof(rdpRsaKey));
+	rdpRsaKey* _key = (rdpRsaKey*)calloc(1, sizeof(rdpRsaKey));
 
 	if (!_key)
 		return NULL;
@@ -837,7 +839,7 @@ rdpRsaKey* key_clone(const rdpRsaKey* key)
 
 	if (key->Modulus)
 	{
-		_key->Modulus = (BYTE*) malloc(key->ModulusLength);
+		_key->Modulus = (BYTE*)malloc(key->ModulusLength);
 
 		if (!_key->Modulus)
 			goto out_fail;
@@ -847,7 +849,7 @@ rdpRsaKey* key_clone(const rdpRsaKey* key)
 
 	if (key->PrivateExponent)
 	{
-		_key->PrivateExponent = (BYTE*) malloc(key->PrivateExponentLength);
+		_key->PrivateExponent = (BYTE*)malloc(key->PrivateExponentLength);
 
 		if (!_key->PrivateExponent)
 			goto out_fail;
@@ -863,7 +865,6 @@ out_fail:
 	return NULL;
 }
 
-
 void key_free(rdpRsaKey* key)
 {
 	if (!key)
@@ -877,7 +878,7 @@ void key_free(rdpRsaKey* key)
 rdpCertificate* certificate_clone(rdpCertificate* certificate)
 {
 	UINT32 index;
-	rdpCertificate* _certificate = (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
+	rdpCertificate* _certificate = (rdpCertificate*)calloc(1, sizeof(rdpCertificate));
 
 	if (!_certificate)
 		return NULL;
@@ -886,7 +887,7 @@ rdpCertificate* certificate_clone(rdpCertificate* certificate)
 
 	if (certificate->cert_info.ModulusLength)
 	{
-		_certificate->cert_info.Modulus = (BYTE*) malloc(certificate->cert_info.ModulusLength);
+		_certificate->cert_info.Modulus = (BYTE*)malloc(certificate->cert_info.ModulusLength);
 
 		if (!_certificate->cert_info.Modulus)
 			goto out_fail;
@@ -898,17 +899,18 @@ rdpCertificate* certificate_clone(rdpCertificate* certificate)
 
 	if (certificate->x509_cert_chain)
 	{
-		_certificate->x509_cert_chain = (rdpX509CertChain*) malloc(sizeof(rdpX509CertChain));
+		_certificate->x509_cert_chain = (rdpX509CertChain*)malloc(sizeof(rdpX509CertChain));
 
 		if (!_certificate->x509_cert_chain)
 			goto out_fail;
 
-		CopyMemory(_certificate->x509_cert_chain, certificate->x509_cert_chain, sizeof(rdpX509CertChain));
+		CopyMemory(_certificate->x509_cert_chain, certificate->x509_cert_chain,
+		           sizeof(rdpX509CertChain));
 
 		if (certificate->x509_cert_chain->count)
 		{
-			_certificate->x509_cert_chain->array = (rdpCertBlob*) calloc(certificate->x509_cert_chain->count,
-			                                       sizeof(rdpCertBlob));
+			_certificate->x509_cert_chain->array =
+			    (rdpCertBlob*)calloc(certificate->x509_cert_chain->count, sizeof(rdpCertBlob));
 
 			if (!_certificate->x509_cert_chain->array)
 				goto out_fail;
@@ -920,15 +922,15 @@ rdpCertificate* certificate_clone(rdpCertificate* certificate)
 
 				if (certificate->x509_cert_chain->array[index].length)
 				{
-					_certificate->x509_cert_chain->array[index].data = (BYTE*) malloc(
-					            certificate->x509_cert_chain->array[index].length);
+					_certificate->x509_cert_chain->array[index].data =
+					    (BYTE*)malloc(certificate->x509_cert_chain->array[index].length);
 
 					if (!_certificate->x509_cert_chain->array[index].data)
 					{
 						for (; index > 0; --index)
 						{
-							if (certificate->x509_cert_chain->array[index-1].length)
-								free(_certificate->x509_cert_chain->array[index-1].data);
+							if (certificate->x509_cert_chain->array[index - 1].length)
+								free(_certificate->x509_cert_chain->array[index - 1].data);
 						}
 
 						goto out_fail;
@@ -964,7 +966,7 @@ out_fail:
 
 rdpCertificate* certificate_new(void)
 {
-	return (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
+	return (rdpCertificate*)calloc(1, sizeof(rdpCertificate));
 }
 
 /**

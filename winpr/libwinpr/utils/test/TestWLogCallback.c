@@ -3,37 +3,29 @@
 #include <winpr/path.h>
 #include <winpr/wlog.h>
 
-typedef struct 
+typedef struct
 {
 	UINT32 level;
-	char *msg;
-	char *channel;
+	char* msg;
+	char* channel;
 } test_t;
 
+static const char* function = NULL;
+static const char* channels[] = { "com.test.channelA", "com.test.channelB" };
 
-static const char *function = NULL;
-static const char *channels[] = 
-{
-	"com.test.channelA",
-	"com.test.channelB"
-};
-
-static const test_t messages[] =
-{
-	{WLOG_INFO, "this is a test", "com.test.channelA"},
-	{WLOG_INFO, "Just some info", "com.test.channelB"},
-	{WLOG_WARN, "this is a %dnd %s", "com.test.channelA"},
-	{WLOG_WARN, "we're warning a %dnd %s", "com.test.channelB"},
-	{WLOG_ERROR, "this is an error", "com.test.channelA"},
-	{WLOG_ERROR, "we've got an error", "com.test.channelB"},
-	{WLOG_TRACE, "this is a trace output", "com.test.channelA"},
-	{WLOG_TRACE, "leaving a trace behind", "com.test.channelB"}
-};
+static const test_t messages[] = { { WLOG_INFO, "this is a test", "com.test.channelA" },
+	                               { WLOG_INFO, "Just some info", "com.test.channelB" },
+	                               { WLOG_WARN, "this is a %dnd %s", "com.test.channelA" },
+	                               { WLOG_WARN, "we're warning a %dnd %s", "com.test.channelB" },
+	                               { WLOG_ERROR, "this is an error", "com.test.channelA" },
+	                               { WLOG_ERROR, "we've got an error", "com.test.channelB" },
+	                               { WLOG_TRACE, "this is a trace output", "com.test.channelA" },
+	                               { WLOG_TRACE, "leaving a trace behind", "com.test.channelB" } };
 
 static BOOL success = TRUE;
 static int pos = 0;
 
-static BOOL check(const wLogMessage *msg)
+static BOOL check(const wLogMessage* msg)
 {
 	BOOL rc = TRUE;
 	if (!msg)
@@ -58,25 +50,25 @@ static BOOL check(const wLogMessage *msg)
 	return rc;
 }
 
-BOOL CallbackAppenderMessage(const wLogMessage *msg)
+BOOL CallbackAppenderMessage(const wLogMessage* msg)
 {
 	check(msg);
 	return TRUE;
 }
 
-BOOL CallbackAppenderData(const wLogMessage *msg)
+BOOL CallbackAppenderData(const wLogMessage* msg)
 {
 	fprintf(stdout, "%s\n", __FUNCTION__);
 	return TRUE;
 }
 
-BOOL CallbackAppenderImage(const wLogMessage *msg)
+BOOL CallbackAppenderImage(const wLogMessage* msg)
 {
 	fprintf(stdout, "%s\n", __FUNCTION__);
 	return TRUE;
 }
 
-BOOL CallbackAppenderPackage(const wLogMessage *msg)
+BOOL CallbackAppenderPackage(const wLogMessage* msg)
 {
 	fprintf(stdout, "%s\n", __FUNCTION__);
 	return TRUE;
@@ -104,7 +96,7 @@ int TestWLogCallback(int argc, char* argv[])
 	callbacks.message = CallbackAppenderMessage;
 	callbacks.package = CallbackAppenderPackage;
 
-	if (!WLog_ConfigureAppender(appender, "callbacks", (void *)&callbacks))
+	if (!WLog_ConfigureAppender(appender, "callbacks", (void*)&callbacks))
 		return -1;
 
 	layout = WLog_GetLogLayout(root);
@@ -131,4 +123,3 @@ int TestWLogCallback(int argc, char* argv[])
 
 	return success ? 0 : -1;
 }
-

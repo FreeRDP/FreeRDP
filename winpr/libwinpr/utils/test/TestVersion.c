@@ -48,4 +48,3 @@ int TestVersion(int argc, char* argv[])
 
 	return 0;
 }
-

@@ -24,7 +24,7 @@
 #include <freerdp/update.h>
 
 FREERDP_LOCAL PALETTE_UPDATE* copy_palette_update(rdpContext* context,
-        const PALETTE_UPDATE* pointer);
+                                                  const PALETTE_UPDATE* pointer);
 FREERDP_LOCAL void free_palette_update(rdpContext* context, PALETTE_UPDATE* pointer);
 
 #endif /* FREERDP_LIB_CACHE_PALETTE_H */

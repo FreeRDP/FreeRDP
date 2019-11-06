@@ -30,11 +30,11 @@ FREERDP_LOCAL void rpc_ncacn_http_ntlm_uninit(RpcChannel* channel);
 
 FREERDP_LOCAL BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel);
 FREERDP_LOCAL BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel,
-        HttpResponse* response);
+                                                           HttpResponse* response);
 
 FREERDP_LOCAL BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel,
-        BOOL replacement);
+                                                           BOOL replacement);
 FREERDP_LOCAL BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel,
-        HttpResponse* response);
+                                                            HttpResponse* response);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_NCACN_HTTP_H */

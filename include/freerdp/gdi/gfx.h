@@ -57,19 +57,19 @@ struct gdi_gfx_cache_entry
 typedef struct gdi_gfx_cache_entry gdiGfxCacheEntry;
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API BOOL gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx);
-FREERDP_API BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
-        pcRdpgfxMapWindowForSurface map,
-        pcRdpgfxUnmapWindowForSurface unmap,
-        pcRdpgfxUpdateSurfaceArea update);
-FREERDP_API void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx);
+	FREERDP_API BOOL gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx);
+	FREERDP_API BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
+	                                               pcRdpgfxMapWindowForSurface map,
+	                                               pcRdpgfxUnmapWindowForSurface unmap,
+	                                               pcRdpgfxUpdateSurfaceArea update);
+	FREERDP_API void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* FREERDP_GDI_GFX_H */
-

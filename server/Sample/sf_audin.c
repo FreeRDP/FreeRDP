@@ -23,8 +23,6 @@
 #include "config.h"
 #endif
 
-
-
 #include "sfreerdp.h"
 
 #include "sf_audin.h"
@@ -55,7 +53,7 @@ static UINT sf_peer_audin_open_result(audin_server_context* context, UINT32 resu
 {
 	/* TODO: Implement */
 	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
-	WLog_DBG(TAG, "AUDIN open result %"PRIu32".", result);
+	WLog_DBG(TAG, "AUDIN open result %" PRIu32 ".", result);
 	return CHANNEL_RC_OK;
 }
 
@@ -64,13 +62,12 @@ static UINT sf_peer_audin_open_result(audin_server_context* context, UINT32 resu
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT sf_peer_audin_receive_samples(audin_server_context* context,
-        const AUDIO_FORMAT* format, wStream* buf,
-        size_t nframes)
+static UINT sf_peer_audin_receive_samples(audin_server_context* context, const AUDIO_FORMAT* format,
+                                          wStream* buf, size_t nframes)
 {
 	/* TODO: Implement */
 	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
-	WLog_DBG(TAG, "%s receive %"PRIdz" frames.", __FUNCTION__, nframes);
+	WLog_DBG(TAG, "%s receive %" PRIdz " frames.", __FUNCTION__, nframes);
 	return CHANNEL_RC_OK;
 }
 

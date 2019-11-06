@@ -100,8 +100,8 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	area.right = x + w;
 	area.bottom = y + h;
 
-	if (!wlf_copy_image(gdi->primary_buffer, gdi->stride, gdi->width, gdi->height,
-	                    data, stride, geometry.width, geometry.height, &area,
+	if (!wlf_copy_image(gdi->primary_buffer, gdi->stride, gdi->width, gdi->height, data, stride,
+	                    geometry.width, geometry.height, &area,
 	                    context_w->context.settings->SmartSizing))
 		return FALSE;
 
@@ -139,7 +139,7 @@ static BOOL wl_end_paint(rdpContext* context)
 	y = gdi->primary->hdc->hwnd->invalid->y;
 	w = gdi->primary->hdc->hwnd->invalid->w;
 	h = gdi->primary->hdc->hwnd->invalid->h;
-	context_w = (wlfContext*) context;
+	context_w = (wlfContext*)context;
 	return wl_update_buffer(context_w, x, y, w, h);
 }
 
@@ -176,7 +176,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 	if (!instance)
 		return FALSE;
 
-	context = (wlfContext*) instance->context;
+	context = (wlfContext*)instance->context;
 	settings = instance->settings;
 
 	if (!context || !settings)
@@ -184,8 +184,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_WAYLAND;
-	PubSub_SubscribeChannelConnected(instance->context->pubSub,
-	                                 wlf_OnChannelConnectedEventHandler);
+	PubSub_SubscribeChannelConnected(instance->context->pubSub, wlf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    wlf_OnChannelDisconnectedEventHandler);
 
@@ -196,8 +195,8 @@ static BOOL wl_pre_connect(freerdp* instance)
 
 		if (output != NULL && UwacOutputGetResolution(output, &resolution) == UWAC_SUCCESS)
 		{
-			settings->DesktopWidth = (UINT32) resolution.width;
-			settings->DesktopHeight = (UINT32) resolution.height;
+			settings->DesktopWidth = (UINT32)resolution.width;
+			settings->DesktopHeight = (UINT32)resolution.height;
 		}
 		else
 		{
@@ -205,8 +204,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 		}
 	}
 
-	if (!freerdp_client_load_addins(instance->context->channels,
-	                                instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
 		return FALSE;
 
 	return TRUE;
@@ -223,7 +221,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	if (!instance || !instance->context)
 		return FALSE;
 
-	context = (wlfContext*) instance->context;
+	context = (wlfContext*)instance->context;
 	settings = instance->context->settings;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
@@ -283,7 +281,7 @@ static void wl_post_disconnect(freerdp* instance)
 	if (!instance->context)
 		return;
 
-	context = (wlfContext*) instance->context;
+	context = (wlfContext*)instance->context;
 	gdi_free(instance);
 	wlf_clipboard_free(context->clipboard);
 	wlf_disp_free(context->disp);
@@ -364,7 +362,8 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_CONFIGURE:
-				if (!wlf_disp_handle_configure(context->disp, event.configure.width, event.configure.height))
+				if (!wlf_disp_handle_configure(context->disp, event.configure.width,
+				                               event.configure.height))
 					return FALSE;
 
 				if (!wl_refresh_display(context))
@@ -457,9 +456,9 @@ static int wlfreerdp_run(freerdp* instance)
 			else
 			{
 				/*
-					 * Indicate an unsuccessful connection attempt if reconnect
-					 * did not succeed and no other error was specified.
-					 */
+				 * Indicate an unsuccessful connection attempt if reconnect
+				 * did not succeed and no other error was specified.
+				 */
 				if (freerdp_error_info(instance) == 0)
 					status = 42;
 			}
@@ -498,15 +497,15 @@ static int wlf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	if (!instance || !instance->context)
 		return -1;
 
-	wlf = (wlfContext*) instance->context;
-	WLog_Print(wlf->log, WLOG_INFO,  "Logon Error Info %s [%s]", str_data, str_type);
+	wlf = (wlfContext*)instance->context;
+	WLog_Print(wlf->log, WLOG_INFO, "Logon Error Info %s [%s]", str_data, str_type);
 	return 1;
 }
 
 static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 {
 	UwacReturnCode status;
-	wlfContext* wfl = (wlfContext*) context;
+	wlfContext* wfl = (wlfContext*)context;
 
 	if (!instance || !context)
 		return FALSE;
@@ -526,7 +525,7 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 		return FALSE;
 
 	wfl->displayHandle = CreateFileDescriptorEvent(NULL, FALSE, FALSE,
-	                     UwacDisplayGetFd(wfl->display), WINPR_FD_READ);
+	                                               UwacDisplayGetFd(wfl->display), WINPR_FD_READ);
 
 	if (!wfl->displayHandle)
 		return FALSE;
@@ -534,10 +533,9 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	return TRUE;
 }
 
-
 static void wlf_client_free(freerdp* instance, rdpContext* context)
 {
-	wlfContext* wlf = (wlfContext*) instance->context;
+	wlfContext* wlf = (wlfContext*)instance->context;
 
 	if (!context)
 		return;
@@ -588,10 +586,9 @@ int main(int argc, char* argv[])
 	if (!context)
 		goto fail;
 
-	status = freerdp_client_settings_parse_command_line(context->settings, argc,
-	         argv, FALSE);
-	status = freerdp_client_settings_command_line_status_print(context->settings,
-	         status, argc, argv);
+	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
+	status =
+	    freerdp_client_settings_command_line_status_print(context->settings, status, argc, argv);
 
 	if (status)
 		return 0;
@@ -609,9 +606,9 @@ fail:
 	return rc;
 }
 
-BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t srcHeight,
-                    void* dst, size_t dstStride, size_t dstWidth, size_t dstHeight,
-                    const RECTANGLE_16* area, BOOL scale)
+BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t srcHeight, void* dst,
+                    size_t dstStride, size_t dstWidth, size_t dstHeight, const RECTANGLE_16* area,
+                    BOOL scale)
 {
 	BOOL rc = FALSE;
 

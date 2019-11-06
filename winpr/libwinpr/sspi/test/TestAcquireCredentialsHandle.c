@@ -19,9 +19,9 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 	SecPkgCredentials_Names credential_names;
 	sspi_GlobalInit();
 	table = InitSecurityInterface();
-	identity.User = (UINT16*) _strdup(test_User);
-	identity.Domain = (UINT16*) _strdup(test_Domain);
-	identity.Password = (UINT16*) _strdup(test_Password);
+	identity.User = (UINT16*)_strdup(test_User);
+	identity.Domain = (UINT16*)_strdup(test_Domain);
+	identity.Password = (UINT16*)_strdup(test_Password);
 
 	if (!identity.User || !identity.Domain || !identity.Password)
 		goto fail;
@@ -30,13 +30,14 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 	identity.DomainLength = strlen(test_Domain);
 	identity.PasswordLength = strlen(test_Password);
 	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-	status = table->AcquireCredentialsHandle(NULL, NTLM_SSP_NAME,
-	         SECPKG_CRED_OUTBOUND, NULL, &identity, NULL, NULL, &credentials, &expiration);
+	status = table->AcquireCredentialsHandle(NULL, NTLM_SSP_NAME, SECPKG_CRED_OUTBOUND, NULL,
+	                                         &identity, NULL, NULL, &credentials, &expiration);
 
 	if (status != SEC_E_OK)
 		goto fail;
 
-	status = table->QueryCredentialsAttributes(&credentials, SECPKG_CRED_ATTR_NAMES, &credential_names);
+	status =
+	    table->QueryCredentialsAttributes(&credentials, SECPKG_CRED_ATTR_NAMES, &credential_names);
 
 	if (status != SEC_E_OK)
 		goto fail;
@@ -53,4 +54,3 @@ fail:
 	sspi_GlobalFinish();
 	return rc;
 }
-

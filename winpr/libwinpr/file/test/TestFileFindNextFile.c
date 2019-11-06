@@ -21,7 +21,7 @@ int TestFileFindNextFile(int argc, char* argv[])
 	str = argv[1];
 #ifdef UNICODE
 	length = MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);
-	BasePath = (WCHAR*) calloc((length + 1), sizeof(WCHAR));
+	BasePath = (WCHAR*)calloc((length + 1), sizeof(WCHAR));
 
 	if (!BasePath)
 	{
@@ -29,7 +29,7 @@ int TestFileFindNextFile(int argc, char* argv[])
 		return -1;
 	}
 
-	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR) BasePath, length * sizeof(WCHAR));
+	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR)BasePath, length * sizeof(WCHAR));
 	BasePath[length] = 0;
 #else
 	BasePath = _strdup(str);
@@ -67,8 +67,8 @@ int TestFileFindNextFile(int argc, char* argv[])
 	if ((_tcscmp(FindData.cFileName, testDirectory2File1) != 0) &&
 	    (_tcscmp(FindData.cFileName, testDirectory2File2) != 0))
 	{
-		_tprintf(_T("FindFirstFile failure: Expected: %s, Actual: %s\n"),
-		         testDirectory2File1, FindData.cFileName);
+		_tprintf(_T("FindFirstFile failure: Expected: %s, Actual: %s\n"), testDirectory2File1,
+		         FindData.cFileName);
 		return -1;
 	}
 
@@ -76,15 +76,15 @@ int TestFileFindNextFile(int argc, char* argv[])
 
 	if (!status)
 	{
-		_tprintf(_T("FindNextFile failure: Expected: TRUE, Actual: %")_T(PRId32)_T("\n"), status);
+		_tprintf(_T("FindNextFile failure: Expected: TRUE, Actual: %") _T(PRId32) _T("\n"), status);
 		return -1;
 	}
 
 	if ((_tcscmp(FindData.cFileName, testDirectory2File1) != 0) &&
 	    (_tcscmp(FindData.cFileName, testDirectory2File2) != 0))
 	{
-		_tprintf(_T("FindNextFile failure: Expected: %s, Actual: %s\n"),
-		         testDirectory2File2, FindData.cFileName);
+		_tprintf(_T("FindNextFile failure: Expected: %s, Actual: %s\n"), testDirectory2File2,
+		         FindData.cFileName);
 		return -1;
 	}
 
@@ -92,11 +92,11 @@ int TestFileFindNextFile(int argc, char* argv[])
 
 	if (status)
 	{
-		_tprintf(_T("FindNextFile failure: Expected: FALSE, Actual: %")_T(PRId32)_T("\n"), status);
+		_tprintf(_T("FindNextFile failure: Expected: FALSE, Actual: %") _T(PRId32) _T("\n"),
+		         status);
 		return -1;
 	}
 
 	FindClose(hFind);
 	return 0;
 }
-

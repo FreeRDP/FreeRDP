@@ -1,11 +1,12 @@
-// compile against PCSC  gcc -o scardtest TestSmartCardStatus.c -DPCSC=1 -I /usr/include/PCSC -lpcsclite
+// compile against PCSC  gcc -o scardtest TestSmartCardStatus.c -DPCSC=1 -I /usr/include/PCSC
+// -lpcsclite
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #if defined(__APPLE__) || defined(PCSC)
 #include <PCSC/winscard.h>
 #include <PCSC/wintypes.h>
-#elif defined (__linux__)
+#elif defined(__linux__)
 #include <winpr/crt.h>
 #include <winpr/smartcard.h>
 #include <winpr/synch.h>
@@ -66,8 +67,8 @@ int TestSmartCardStatus(int argc, char* argv[])
 	}
 
 	printf("Reader: %s\n", mszReaders);
-	err = SCardConnect(hContext, mszReaders, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,
-	                   &hCard, &dwActiveProtocol);
+	err = SCardConnect(hContext, mszReaders, SCARD_SHARE_SHARED,
+	                   SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &hCard, &dwActiveProtocol);
 
 	if (err != SCARD_S_SUCCESS)
 	{
@@ -76,7 +77,6 @@ int TestSmartCardStatus(int argc, char* argv[])
 	}
 
 	free(mszReaders);
-
 
 	printf("# test 1 - get reader length\n");
 	err = SCardStatus(hCard, NULL, &len, NULL, NULL, NULL, NULL);
@@ -87,7 +87,6 @@ int TestSmartCardStatus(int argc, char* argv[])
 	}
 	printf("reader name length: %u\n", len);
 
-
 	printf("# test 2 - get reader name value\n");
 	err = SCardStatus(hCard, name, &len, NULL, NULL, NULL, NULL);
 	if (err != SCARD_S_SUCCESS)
@@ -96,7 +95,6 @@ int TestSmartCardStatus(int argc, char* argv[])
 		return -1;
 	}
 	printf("Reader name: %s (%ld)\n", name, strlen(name));
-
 
 	printf("# test 3 - get all values - pre allocated\n");
 	err = SCardStatus(hCard, name, &len, &status, &protocol, atr, &atrlen);
@@ -109,7 +107,6 @@ int TestSmartCardStatus(int argc, char* argv[])
 	printf("status: 0x%08X\n", status);
 	printf("proto: 0x%08X\n", protocol);
 	printf("atrlen: %u\n", atrlen);
-
 
 	printf("# test 4 - get all values - auto allocate\n");
 	len = atrlen = SCARD_AUTOALLOCATE;
@@ -126,7 +123,6 @@ int TestSmartCardStatus(int argc, char* argv[])
 	SCardFreeMemory(hContext, aname);
 	SCardFreeMemory(hContext, aatr);
 
-
 	printf("# test 5 - get status and protocol only\n");
 	err = SCardStatus(hCard, NULL, NULL, &status, &protocol, NULL, NULL);
 	if (err != SCARD_S_SUCCESS)
@@ -136,7 +132,6 @@ int TestSmartCardStatus(int argc, char* argv[])
 	}
 	printf("status: 0x%08X\n", status);
 	printf("proto: 0x%08X\n", protocol);
-
 
 	printf("# test 6 - get atr only auto allocated\n");
 	atrlen = SCARD_AUTOALLOCATE;
@@ -148,7 +143,6 @@ int TestSmartCardStatus(int argc, char* argv[])
 	}
 	printf("atrlen: %u\n", atrlen);
 	SCardFreeMemory(hContext, aatr);
-
 
 	printf("# test 7 - get atr only pre allocated\n");
 	atrlen = 32;

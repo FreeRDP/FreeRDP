@@ -4,8 +4,8 @@
 #include <winpr/file.h>
 #include <winpr/synch.h>
 
-#define FIRE_COUNT	5
-#define TIMER_COUNT	5
+#define FIRE_COUNT 5
+#define TIMER_COUNT 5
 
 struct apc_data
 {
@@ -29,15 +29,16 @@ VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 	if (!lpParam)
 		return;
 
-	apcData = (APC_DATA*) lpParam;
+	apcData = (APC_DATA*)lpParam;
 
 	TimerTime = CurrentTime - apcData->StartTime;
 	expectedTime = apcData->DueTime + (apcData->Period * apcData->FireCount);
 
 	apcData->FireCount++;
 
-	printf("TimerRoutine: TimerId: %"PRIu32" FireCount: %"PRIu32" ActualTime: %"PRIu32" ExpectedTime: %"PRIu32" Discrepancy: %"PRIu32"\n",
-			apcData->TimerId, apcData->FireCount, TimerTime, expectedTime, TimerTime - expectedTime);
+	printf("TimerRoutine: TimerId: %" PRIu32 " FireCount: %" PRIu32 " ActualTime: %" PRIu32
+	       " ExpectedTime: %" PRIu32 " Discrepancy: %" PRIu32 "\n",
+	       apcData->TimerId, apcData->FireCount, TimerTime, expectedTime, TimerTime - expectedTime);
 
 	Sleep(50);
 
@@ -58,7 +59,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 
 	if (!hTimerQueue)
 	{
-		printf("CreateTimerQueue failed (%"PRIu32")\n", GetLastError());
+		printf("CreateTimerQueue failed (%" PRIu32 ")\n", GetLastError());
 		return -1;
 	}
 
@@ -73,14 +74,16 @@ int TestSynchTimerQueue(int argc, char* argv[])
 
 		if (!(apcData[index].CompletionEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		{
-			printf("Failed to create apcData[%"PRIu32"] event (%"PRIu32")\n", index, GetLastError());
+			printf("Failed to create apcData[%" PRIu32 "] event (%" PRIu32 ")\n", index,
+			       GetLastError());
 			return -1;
 		}
 
-		if (!CreateTimerQueueTimer(&hTimers[index], hTimerQueue, (WAITORTIMERCALLBACK) TimerRoutine,
-				&apcData[index], apcData[index].DueTime, apcData[index].Period, 0))
+		if (!CreateTimerQueueTimer(&hTimers[index], hTimerQueue, (WAITORTIMERCALLBACK)TimerRoutine,
+		                           &apcData[index], apcData[index].DueTime, apcData[index].Period,
+		                           0))
 		{
-			printf("CreateTimerQueueTimer failed (%"PRIu32")\n", GetLastError());
+			printf("CreateTimerQueueTimer failed (%" PRIu32 ")\n", GetLastError());
 			return -1;
 		}
 	}
@@ -89,7 +92,8 @@ int TestSynchTimerQueue(int argc, char* argv[])
 	{
 		if (WaitForSingleObject(apcData[index].CompletionEvent, 20000) != WAIT_OBJECT_0)
 		{
-			printf("Failed to wait for timer queue timer #%"PRIu32" (%"PRIu32")\n", index, GetLastError());
+			printf("Failed to wait for timer queue timer #%" PRIu32 " (%" PRIu32 ")\n", index,
+			       GetLastError());
 			return -1;
 		}
 	}
@@ -102,7 +106,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		 */
 		if (!DeleteTimerQueueTimer(hTimerQueue, hTimers[index], INVALID_HANDLE_VALUE))
 		{
-			printf("DeleteTimerQueueTimer failed (%"PRIu32")\n", GetLastError());
+			printf("DeleteTimerQueueTimer failed (%" PRIu32 ")\n", GetLastError());
 			return -1;
 		}
 		CloseHandle(apcData[index].CompletionEvent);
@@ -110,7 +114,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 
 	if (!DeleteTimerQueue(hTimerQueue))
 	{
-		printf("DeleteTimerQueue failed (%"PRIu32")\n", GetLastError());
+		printf("DeleteTimerQueue failed (%" PRIu32 ")\n", GetLastError());
 		return -1;
 	}
 

@@ -34,7 +34,6 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/log.h>
 
-
 #include <freerdp/server/disp.h>
 #include "../disp_common.h"
 
@@ -63,7 +62,7 @@ static wStream* disp_server_single_packet_new(UINT32 type, UINT32 length)
 
 	if ((error = disp_write_header(s, &header)))
 	{
-		WLog_ERR(TAG, "Failed to write header with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "Failed to write header with error %" PRIu32 "!", error);
 		goto error;
 	}
 
@@ -78,21 +77,21 @@ static BOOL disp_server_is_monitor_layout_valid(DISPLAY_CONTROL_MONITOR_LAYOUT* 
 	if (monitor->Width < DISPLAY_CONTROL_MIN_MONITOR_WIDTH ||
 	    monitor->Width > DISPLAY_CONTROL_MAX_MONITOR_WIDTH)
 	{
-		WLog_WARN(TAG, "Received invalid value for monitor->Width: %"PRIu32"", monitor->Width);
+		WLog_WARN(TAG, "Received invalid value for monitor->Width: %" PRIu32 "", monitor->Width);
 		return FALSE;
 	}
 
 	if (monitor->Height < DISPLAY_CONTROL_MIN_MONITOR_HEIGHT ||
 	    monitor->Height > DISPLAY_CONTROL_MAX_MONITOR_HEIGHT)
 	{
-		WLog_WARN(TAG, "Received invalid value for monitor->Height: %"PRIu32"", monitor->Width);
+		WLog_WARN(TAG, "Received invalid value for monitor->Height: %" PRIu32 "", monitor->Width);
 		return FALSE;
 	}
 
 	if (monitor->PhysicalWidth < DISPLAY_CONTROL_MIN_PHYSICAL_MONITOR_WIDTH ||
 	    monitor->PhysicalWidth > DISPLAY_CONTROL_MAX_PHYSICAL_MONITOR_WIDTH)
 	{
-		WLog_WARN(TAG, "Received invalid value for monitor->PhysicalWidth: %"PRIu32"",
+		WLog_WARN(TAG, "Received invalid value for monitor->PhysicalWidth: %" PRIu32 "",
 		          monitor->PhysicalWidth);
 		return FALSE;
 	}
@@ -100,7 +99,8 @@ static BOOL disp_server_is_monitor_layout_valid(DISPLAY_CONTROL_MONITOR_LAYOUT* 
 	if (monitor->PhysicalHeight < DISPLAY_CONTROL_MIN_PHYSICAL_MONITOR_HEIGHT ||
 	    monitor->PhysicalHeight > DISPLAY_CONTROL_MAX_PHYSICAL_MONITOR_HEIGHT)
 	{
-		WLog_WARN(TAG, "Received invalid value for monitor->Height: %"PRIu32"", monitor->PhysicalHeight);
+		WLog_WARN(TAG, "Received invalid value for monitor->Height: %" PRIu32 "",
+		          monitor->PhysicalHeight);
 		return FALSE;
 	}
 
@@ -113,7 +113,7 @@ static BOOL disp_server_is_monitor_layout_valid(DISPLAY_CONTROL_MONITOR_LAYOUT* 
 			break;
 
 		default:
-			WLog_WARN(TAG, "Received incorrect value for monitor->Orientation: %"PRIu32"",
+			WLog_WARN(TAG, "Received incorrect value for monitor->Orientation: %" PRIu32 "",
 			          monitor->Orientation);
 			return FALSE;
 	}
@@ -138,8 +138,8 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 
 	if (pdu.MonitorLayoutSize != DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE)
 	{
-		WLog_ERR(TAG, "MonitorLayoutSize is set to %"PRIu32". expected %"PRIu32"", pdu.MonitorLayoutSize,
-		         DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE);
+		WLog_ERR(TAG, "MonitorLayoutSize is set to %" PRIu32 ". expected %" PRIu32 "",
+		         pdu.MonitorLayoutSize, DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE);
 		return ERROR_INVALID_DATA;
 	}
 
@@ -147,8 +147,8 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 
 	if (pdu.NumMonitors > context->MaxNumMonitors)
 	{
-		WLog_ERR(TAG, "NumMonitors (%"PRIu32")> server MaxNumMonitors (%"PRIu32")", pdu.NumMonitors,
-		         context->MaxNumMonitors);
+		WLog_ERR(TAG, "NumMonitors (%" PRIu32 ")> server MaxNumMonitors (%" PRIu32 ")",
+		         pdu.NumMonitors, context->MaxNumMonitors);
 		return ERROR_INVALID_DATA;
 	}
 
@@ -158,8 +158,8 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 		return ERROR_INVALID_DATA;
 	}
 
-	pdu.Monitors = (DISPLAY_CONTROL_MONITOR_LAYOUT*) calloc(pdu.NumMonitors,
-	               sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
+	pdu.Monitors = (DISPLAY_CONTROL_MONITOR_LAYOUT*)calloc(pdu.NumMonitors,
+	                                                       sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
 
 	if (!pdu.Monitors)
 	{
@@ -167,30 +167,31 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	WLog_DBG(TAG, "disp_recv_display_control_monitor_layout_pdu: NumMonitors=%"PRIu32"",
+	WLog_DBG(TAG, "disp_recv_display_control_monitor_layout_pdu: NumMonitors=%" PRIu32 "",
 	         pdu.NumMonitors);
 
 	for (index = 0; index < pdu.NumMonitors; index++)
 	{
 		monitor = &(pdu.Monitors[index]);
-		Stream_Read_UINT32(s, monitor->Flags); 				/* Flags (4 bytes) */
-		Stream_Read_UINT32(s, monitor->Left); 				/* Left (4 bytes) */
-		Stream_Read_UINT32(s, monitor->Top); 				/* Top (4 bytes) */
-		Stream_Read_UINT32(s, monitor->Width); 				/* Width (4 bytes) */
-		Stream_Read_UINT32(s, monitor->Height); 			/* Height (4 bytes) */
-		Stream_Read_UINT32(s, monitor->PhysicalWidth); 		/* PhysicalWidth (4 bytes) */
-		Stream_Read_UINT32(s, monitor->PhysicalHeight); 	/* PhysicalHeight (4 bytes) */
-		Stream_Read_UINT32(s, monitor->Orientation); 		/* Orientation (4 bytes) */
+		Stream_Read_UINT32(s, monitor->Flags);              /* Flags (4 bytes) */
+		Stream_Read_UINT32(s, monitor->Left);               /* Left (4 bytes) */
+		Stream_Read_UINT32(s, monitor->Top);                /* Top (4 bytes) */
+		Stream_Read_UINT32(s, monitor->Width);              /* Width (4 bytes) */
+		Stream_Read_UINT32(s, monitor->Height);             /* Height (4 bytes) */
+		Stream_Read_UINT32(s, monitor->PhysicalWidth);      /* PhysicalWidth (4 bytes) */
+		Stream_Read_UINT32(s, monitor->PhysicalHeight);     /* PhysicalHeight (4 bytes) */
+		Stream_Read_UINT32(s, monitor->Orientation);        /* Orientation (4 bytes) */
 		Stream_Read_UINT32(s, monitor->DesktopScaleFactor); /* DesktopScaleFactor (4 bytes) */
-		Stream_Read_UINT32(s, monitor->DeviceScaleFactor); 	/* DeviceScaleFactor (4 bytes) */
+		Stream_Read_UINT32(s, monitor->DeviceScaleFactor);  /* DeviceScaleFactor (4 bytes) */
 		WLog_DBG(TAG,
-		         "\t%d : Flags: 0x%08"PRIX32" Left/Top: (%"PRId32",%"PRId32") W/H=%"PRIu32"x%"PRIu32")", index,
-		         monitor->Flags, monitor->Left, monitor->Top,
-		         monitor->Width,
+		         "\t%d : Flags: 0x%08" PRIX32 " Left/Top: (%" PRId32 ",%" PRId32 ") W/H=%" PRIu32
+		         "x%" PRIu32 ")",
+		         index, monitor->Flags, monitor->Left, monitor->Top, monitor->Width,
 		         monitor->Height);
-		WLog_DBG(TAG, "\t   PhysicalWidth: %"PRIu32" PhysicalHeight: %"PRIu32" Orientation: %"PRIu32"",
-		         monitor->PhysicalWidth, monitor->PhysicalHeight,
-		         monitor->Orientation);
+		WLog_DBG(TAG,
+		         "\t   PhysicalWidth: %" PRIu32 " PhysicalHeight: %" PRIu32 " Orientation: %" PRIu32
+		         "",
+		         monitor->PhysicalWidth, monitor->PhysicalHeight, monitor->Orientation);
 
 		if (!disp_server_is_monitor_layout_valid(monitor))
 		{
@@ -207,7 +208,6 @@ out:
 	return error;
 }
 
-
 static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -217,7 +217,7 @@ static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 
 	if ((error = disp_read_header(s, &header)))
 	{
-		WLog_ERR(TAG, "disp_read_header failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "disp_read_header failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
@@ -225,14 +225,16 @@ static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 	{
 		case DISPLAY_CONTROL_PDU_TYPE_MONITOR_LAYOUT:
 			if ((error = disp_recv_display_control_monitor_layout_pdu(s, context)))
-				WLog_ERR(TAG, "disp_recv_display_control_monitor_layout_pdu "
-				         "failed with error %"PRIu32"!", error);
+				WLog_ERR(TAG,
+				         "disp_recv_display_control_monitor_layout_pdu "
+				         "failed with error %" PRIu32 "!",
+				         error);
 
 			break;
 
 		default:
 			error = CHANNEL_RC_BAD_PROC;
-			WLog_WARN(TAG, "Received unknown PDU type: %"PRIu32"", header.type);
+			WLog_WARN(TAG, "Received unknown PDU type: %" PRIu32 "", header.type);
 			break;
 	}
 
@@ -240,8 +242,8 @@ static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 
 	if (end != (beg + header.length))
 	{
-		WLog_ERR(TAG,  "Unexpected DISP pdu end: Actual: %d, Expected: %"PRIu32"",
-		         end, (beg + header.length));
+		WLog_ERR(TAG, "Unexpected DISP pdu end: Actual: %d, Expected: %" PRIu32 "", end,
+		         (beg + header.length));
 		Stream_SetPosition(s, (beg + header.length));
 	}
 
@@ -259,9 +261,8 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 	/* Check whether the dynamic channel is ready */
 	if (!priv->isReady)
 	{
-		if (WTSVirtualChannelQuery(priv->disp_channel,
-		                           WTSVirtualChannelReady,
-		                           &buffer, &BytesReturned) == FALSE)
+		if (WTSVirtualChannelQuery(priv->disp_channel, WTSVirtualChannelReady, &buffer,
+		                           &BytesReturned) == FALSE)
 		{
 			if (GetLastError() == ERROR_NO_DATA)
 				return ERROR_NO_DATA;
@@ -270,15 +271,14 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		priv->isReady = *((BOOL*) buffer);
+		priv->isReady = *((BOOL*)buffer);
 		WTSFreeMemory(buffer);
 	}
 
 	/* Consume channel event only after the gfx dynamic channel is ready */
 	Stream_SetPosition(s, 0);
 
-	if (!WTSVirtualChannelRead(priv->disp_channel,
-	                           0, NULL, 0, &BytesReturned))
+	if (!WTSVirtualChannelRead(priv->disp_channel, 0, NULL, 0, &BytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)
 			return ERROR_NO_DATA;
@@ -296,9 +296,8 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if (WTSVirtualChannelRead(priv->disp_channel, 0,
-	                          (PCHAR) Stream_Buffer(s),
-	                          Stream_Capacity(s), &BytesReturned) == FALSE)
+	if (WTSVirtualChannelRead(priv->disp_channel, 0, (PCHAR)Stream_Buffer(s), Stream_Capacity(s),
+	                          &BytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 		return ERROR_INTERNAL_ERROR;
@@ -311,8 +310,10 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 	{
 		if ((ret = disp_server_receive_pdu(context, s)))
 		{
-			WLog_ERR(TAG, "disp_server_receive_pdu "
-			         "failed with error %"PRIu32"!", ret);
+			WLog_ERR(TAG,
+			         "disp_server_receive_pdu "
+			         "failed with error %" PRIu32 "!",
+			         ret);
 			return ret;
 		}
 	}
@@ -322,7 +323,7 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 
 static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 {
-	DispServerContext* context = (DispServerContext*) arg;
+	DispServerContext* context = (DispServerContext*)arg;
 	DispServerPrivate* priv = context->priv;
 	DWORD status;
 	DWORD nCount;
@@ -340,7 +341,7 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %" PRIu32 "", error);
 			break;
 		}
 
@@ -350,8 +351,7 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 
 		if ((error = disp_server_handle_messages(context)))
 		{
-			WLog_ERR(TAG, "disp_server_handle_messages failed with error %"PRIu32"",
-			         error);
+			WLog_ERR(TAG, "disp_server_handle_messages failed with error %" PRIu32 "", error);
 			break;
 		}
 	}
@@ -359,7 +359,6 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 	ExitThread(error);
 	return error;
 }
-
 
 /**
  * Function description
@@ -376,19 +375,17 @@ static UINT disp_server_open(DispServerContext* context)
 	buffer = NULL;
 	priv->SessionId = WTS_CURRENT_SESSION;
 
-	if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION,
-	                                WTSSessionId, (LPSTR*) &pSessionId,
-	                                &BytesReturned) == FALSE)
+	if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
+	                                (LPSTR*)&pSessionId, &BytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSQuerySessionInformationA failed!");
 		rc = ERROR_INTERNAL_ERROR;
 		goto out_close;
 	}
 
-	priv->SessionId = (DWORD) * pSessionId;
-	priv->disp_channel = (HANDLE) WTSVirtualChannelOpenEx(priv->SessionId,
-	                     DISP_DVC_CHANNEL_NAME,
-	                     WTS_CHANNEL_OPTION_DYNAMIC);
+	priv->SessionId = (DWORD)*pSessionId;
+	priv->disp_channel = (HANDLE)WTSVirtualChannelOpenEx(priv->SessionId, DISP_DVC_CHANNEL_NAME,
+	                                                     WTS_CHANNEL_OPTION_DYNAMIC);
 
 	if (!priv->disp_channel)
 	{
@@ -398,12 +395,13 @@ static UINT disp_server_open(DispServerContext* context)
 	}
 
 	/* Query for channel event handle */
-	if (!WTSVirtualChannelQuery(priv->disp_channel, WTSVirtualEventHandle,
-	                            &buffer, &BytesReturned)
-	    || (BytesReturned != sizeof(HANDLE)))
+	if (!WTSVirtualChannelQuery(priv->disp_channel, WTSVirtualEventHandle, &buffer,
+	                            &BytesReturned) ||
+	    (BytesReturned != sizeof(HANDLE)))
 	{
-		WLog_ERR(TAG, "WTSVirtualChannelQuery failed "
-		         "or invalid returned size(%"PRIu32")",
+		WLog_ERR(TAG,
+		         "WTSVirtualChannelQuery failed "
+		         "or invalid returned size(%" PRIu32 ")",
 		         BytesReturned);
 
 		if (buffer)
@@ -424,7 +422,8 @@ static UINT disp_server_open(DispServerContext* context)
 			rc = ERROR_INTERNAL_ERROR;
 		}
 
-		if (!(priv->thread = CreateThread(NULL, 0, disp_server_thread_func, (void*) context, 0, NULL)))
+		if (!(priv->thread =
+		          CreateThread(NULL, 0, disp_server_thread_func, (void*)context, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			CloseHandle(priv->stopEvent);
@@ -446,8 +445,7 @@ static UINT disp_server_packet_send(DispServerContext* context, wStream* s)
 	UINT ret;
 	ULONG written;
 
-	if (!WTSVirtualChannelWrite(context->priv->disp_channel,
-	                            (PCHAR) Stream_Buffer(s),
+	if (!WTSVirtualChannelWrite(context->priv->disp_channel, (PCHAR)Stream_Buffer(s),
 	                            Stream_GetPosition(s), &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
@@ -457,8 +455,8 @@ static UINT disp_server_packet_send(DispServerContext* context, wStream* s)
 
 	if (written < Stream_GetPosition(s))
 	{
-		WLog_WARN(TAG, "Unexpected bytes written: %"PRIu32"/%"PRIuz"",
-		          written, Stream_GetPosition(s));
+		WLog_WARN(TAG, "Unexpected bytes written: %" PRIu32 "/%" PRIuz "", written,
+		          Stream_GetPosition(s));
 	}
 
 	ret = CHANNEL_RC_OK;
@@ -482,7 +480,7 @@ static UINT disp_server_send_caps_pdu(DispServerContext* context)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	Stream_Write_UINT32(s, context->MaxNumMonitors); /* MaxNumMonitors (4 bytes) */
+	Stream_Write_UINT32(s, context->MaxNumMonitors);        /* MaxNumMonitors (4 bytes) */
 	Stream_Write_UINT32(s, context->MaxMonitorAreaFactorA); /* MaxMonitorAreaFactorA (4 bytes) */
 	Stream_Write_UINT32(s, context->MaxMonitorAreaFactorB); /* MaxMonitorAreaFactorB (4 bytes) */
 	return disp_server_packet_send(context, s);
@@ -505,7 +503,7 @@ static UINT disp_server_close(DispServerContext* context)
 		if (WaitForSingleObject(priv->thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
 			return error;
 		}
 
@@ -522,7 +520,7 @@ DispServerContext* disp_server_context_new(HANDLE vcm)
 {
 	DispServerContext* context;
 	DispServerPrivate* priv;
-	context = (DispServerContext*) calloc(1, sizeof(DispServerContext));
+	context = (DispServerContext*)calloc(1, sizeof(DispServerContext));
 
 	if (!context)
 	{
@@ -530,7 +528,7 @@ DispServerContext* disp_server_context_new(HANDLE vcm)
 		goto out_free;
 	}
 
-	priv = context->priv = (DispServerPrivate*) calloc(1, sizeof(DispServerPrivate));
+	priv = context->priv = (DispServerPrivate*)calloc(1, sizeof(DispServerPrivate));
 
 	if (!context->priv)
 	{

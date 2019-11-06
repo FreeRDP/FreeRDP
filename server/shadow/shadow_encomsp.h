@@ -25,11 +25,12 @@
 #include <winpr/synch.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-int shadow_client_encomsp_init(rdpShadowClient* client);
-void shadow_client_encomsp_uninit(rdpShadowClient* client);
+	int shadow_client_encomsp_init(rdpShadowClient* client);
+	void shadow_client_encomsp_uninit(rdpShadowClient* client);
 
 #ifdef __cplusplus
 }

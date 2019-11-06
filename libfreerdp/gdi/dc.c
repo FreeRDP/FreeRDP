@@ -43,7 +43,7 @@
 
 HGDI_DC gdi_GetDC(void)
 {
-	HGDI_DC hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC));
+	HGDI_DC hDC = (HGDI_DC)calloc(1, sizeof(GDI_DC));
 
 	if (!hDC)
 		return NULL;
@@ -73,7 +73,7 @@ HGDI_DC gdi_CreateDC(UINT32 format)
 {
 	HGDI_DC hDC;
 
-	if (!(hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC))))
+	if (!(hDC = (HGDI_DC)calloc(1, sizeof(GDI_DC))))
 		return NULL;
 
 	hDC->drawMode = GDI_R2_BLACK;
@@ -85,7 +85,7 @@ HGDI_DC gdi_CreateDC(UINT32 format)
 	hDC->hwnd = NULL;
 	hDC->format = format;
 
-	if (!(hDC->hwnd = (HGDI_WND) calloc(1, sizeof(GDI_WND))))
+	if (!(hDC->hwnd = (HGDI_WND)calloc(1, sizeof(GDI_WND))))
 		goto fail;
 
 	if (!(hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0)))
@@ -94,8 +94,7 @@ HGDI_DC gdi_CreateDC(UINT32 format)
 	hDC->hwnd->invalid->null = TRUE;
 	hDC->hwnd->count = 32;
 
-	if (!(hDC->hwnd->cinvalid = (HGDI_RGN) calloc(hDC->hwnd->count,
-	                            sizeof(GDI_RGN))))
+	if (!(hDC->hwnd->cinvalid = (HGDI_RGN)calloc(hDC->hwnd->count, sizeof(GDI_RGN))))
 		goto fail;
 
 	hDC->hwnd->ninvalid = 0;
@@ -114,7 +113,7 @@ fail:
 
 HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 {
-	HGDI_DC hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC));
+	HGDI_DC hDC = (HGDI_DC)calloc(1, sizeof(GDI_DC));
 
 	if (!hDC)
 		return NULL;
@@ -153,23 +152,23 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_PEN)
 	{
-		previousSelectedObject = (HGDIOBJECT) hdc->pen;
-		hdc->pen = (HGDI_PEN) hgdiobject;
+		previousSelectedObject = (HGDIOBJECT)hdc->pen;
+		hdc->pen = (HGDI_PEN)hgdiobject;
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_BRUSH)
 	{
-		previousSelectedObject = (HGDIOBJECT) hdc->brush;
-		hdc->brush = (HGDI_BRUSH) hgdiobject;
+		previousSelectedObject = (HGDIOBJECT)hdc->brush;
+		hdc->brush = (HGDI_BRUSH)hgdiobject;
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_REGION)
 	{
 		hdc->selectedObject = hgdiobject;
-		previousSelectedObject = (HGDIOBJECT) COMPLEXREGION;
+		previousSelectedObject = (HGDIOBJECT)COMPLEXREGION;
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_RECT)
 	{
 		hdc->selectedObject = hgdiobject;
-		previousSelectedObject = (HGDIOBJECT) SIMPLEREGION;
+		previousSelectedObject = (HGDIOBJECT)SIMPLEREGION;
 	}
 	else
 	{
@@ -194,7 +193,7 @@ BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 
 	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{
-		HGDI_BITMAP hBitmap = (HGDI_BITMAP) hgdiobject;
+		HGDI_BITMAP hBitmap = (HGDI_BITMAP)hgdiobject;
 
 		if (hBitmap->data && hBitmap->free)
 		{
@@ -206,12 +205,12 @@ BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_PEN)
 	{
-		HGDI_PEN hPen = (HGDI_PEN) hgdiobject;
+		HGDI_PEN hPen = (HGDI_PEN)hgdiobject;
 		free(hPen);
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_BRUSH)
 	{
-		HGDI_BRUSH hBrush = (HGDI_BRUSH) hgdiobject;
+		HGDI_BRUSH hBrush = (HGDI_BRUSH)hgdiobject;
 		free(hBrush);
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_REGION)
@@ -231,7 +230,6 @@ BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 
 	return TRUE;
 }
-
 
 /**
  * Delete device context.\n

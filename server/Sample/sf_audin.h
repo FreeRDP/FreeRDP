@@ -29,4 +29,3 @@
 void sf_peer_audin_init(testPeerContext* context);
 
 #endif /* FREERDP_SERVER_SAMPLE_SF_AUDIN_H */
-

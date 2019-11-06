@@ -28,19 +28,16 @@
 #include <libavcodec/version.h>
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57, 48, 101)
-#error "DSP module requires libavcodec version >= 57.48.101. Upgrade or set WITH_DSP_FFMPEG=OFF to continue"
+#error \
+    "DSP module requires libavcodec version >= 57.48.101. Upgrade or set WITH_DSP_FFMPEG=OFF to continue"
 #endif
 
 FREERDP_DSP_CONTEXT* freerdp_dsp_ffmpeg_context_new(BOOL encode);
 BOOL freerdp_dsp_ffmpeg_supports_format(const AUDIO_FORMAT* format, BOOL encode);
-BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context,
-                               const AUDIO_FORMAT* srcFormat,
-                               const BYTE* data, size_t length,
-                               wStream* out);
-BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context,
-                               const AUDIO_FORMAT* srcFormat,
-                               const BYTE* data, size_t length,
-                               wStream* out);
+BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
+                               const BYTE* data, size_t length, wStream* out);
+BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
+                               const BYTE* data, size_t length, wStream* out);
 void freerdp_dsp_ffmpeg_context_free(FREERDP_DSP_CONTEXT* context);
 BOOL freerdp_dsp_ffmpeg_context_reset(FREERDP_DSP_CONTEXT* context,
                                       const AUDIO_FORMAT* targetFormat);

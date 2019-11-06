@@ -36,11 +36,11 @@ void er_read_length(wStream* s, int* length)
 
 	if (!length)
 		return;
-	
+
 	*length = 0;
 	if (!s)
 		return;
-	
+
 	if (byte & 0x80)
 	{
 		byte &= ~(0x80);
@@ -286,7 +286,7 @@ BOOL er_write_bit_string_tag(wStream* s, UINT32 length, BYTE padding, BOOL flag)
 
 BOOL er_read_octet_string(wStream* s, int* length)
 {
-	if(!er_read_universal_tag(s, ER_TAG_OCTET_STRING, FALSE))
+	if (!er_read_universal_tag(s, ER_TAG_OCTET_STRING, FALSE))
 		return FALSE;
 	er_read_length(s, length);
 

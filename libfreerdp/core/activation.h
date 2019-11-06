@@ -25,18 +25,18 @@
 #include <freerdp/api.h>
 #include <freerdp/settings.h>
 
-#define SYNCMSGTYPE_SYNC		0x0001
+#define SYNCMSGTYPE_SYNC 0x0001
 
-#define CTRLACTION_REQUEST_CONTROL	0x0001
-#define CTRLACTION_GRANTED_CONTROL	0x0002
-#define CTRLACTION_DETACH		0x0003
-#define CTRLACTION_COOPERATE		0x0004
+#define CTRLACTION_REQUEST_CONTROL 0x0001
+#define CTRLACTION_GRANTED_CONTROL 0x0002
+#define CTRLACTION_DETACH 0x0003
+#define CTRLACTION_COOPERATE 0x0004
 
-#define PERSIST_FIRST_PDU		0x01
-#define PERSIST_LAST_PDU		0x02
+#define PERSIST_FIRST_PDU 0x01
+#define PERSIST_LAST_PDU 0x02
 
-#define FONTLIST_FIRST			0x0001
-#define FONTLIST_LAST			0x0002
+#define FONTLIST_FIRST 0x0001
+#define FONTLIST_LAST 0x0002
 
 FREERDP_LOCAL BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_deactivate_all(rdpRdp* rdp);
@@ -59,9 +59,7 @@ FREERDP_LOCAL BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp);
 
-FREERDP_LOCAL BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp,
-        wStream* s);
-FREERDP_LOCAL BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp,
-        wStream* s);
+FREERDP_LOCAL BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s);
 
 #endif /* FREERDP_LIB_CORE_ACTIVATION_H */

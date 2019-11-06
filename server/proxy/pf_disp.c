@@ -41,18 +41,17 @@ BOOL pf_server_disp_init(pServerContext* ps)
 static UINT pf_disp_monitor_layout(DispServerContext* context,
                                    const DISPLAY_CONTROL_MONITOR_LAYOUT_PDU* pdu)
 {
-	proxyData* pdata = (proxyData*) context->custom;
-	DispClientContext* client = (DispClientContext*) pdata->pc->disp;
+	proxyData* pdata = (proxyData*)context->custom;
+	DispClientContext* client = (DispClientContext*)pdata->pc->disp;
 	WLog_DBG(TAG, __FUNCTION__);
 	return client->SendMonitorLayout(client, pdu->NumMonitors, pdu->Monitors);
 }
 
 static UINT pf_disp_on_caps_control(DispClientContext* context, UINT32 MaxNumMonitors,
-                                    UINT32 MaxMonitorAreaFactorA,
-                                    UINT32 MaxMonitorAreaFactorB)
+                                    UINT32 MaxMonitorAreaFactorA, UINT32 MaxMonitorAreaFactorB)
 {
-	proxyData* pdata = (proxyData*) context->custom;
-	DispServerContext* server = (DispServerContext*) pdata->ps->disp;
+	proxyData* pdata = (proxyData*)context->custom;
+	DispServerContext* server = (DispServerContext*)pdata->ps->disp;
 	WLog_DBG(TAG, __FUNCTION__);
 	/* Update caps of proxy's disp server */
 	server->MaxMonitorAreaFactorA = MaxMonitorAreaFactorA;
@@ -63,10 +62,10 @@ static UINT pf_disp_on_caps_control(DispClientContext* context, UINT32 MaxNumMon
 }
 
 void pf_disp_register_callbacks(DispClientContext* client, DispServerContext* server,
-                           proxyData* pdata)
+                                proxyData* pdata)
 {
-	client->custom = (void*) pdata;
-	server->custom = (void*) pdata;
+	client->custom = (void*)pdata;
+	server->custom = (void*)pdata;
 	/* client receives from server, forward using disp server to original client */
 	client->DisplayControlCaps = pf_disp_on_caps_control;
 	/* server receives from client, forward to target server using disp client */

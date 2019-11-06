@@ -66,14 +66,14 @@ static UINT echo_server_open_channel(echo_server* echo)
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 
-	if (WTSQuerySessionInformationA(echo->context.vcm, WTS_CURRENT_SESSION,
-	                                WTSSessionId, (LPSTR*) &pSessionId, &BytesReturned) == FALSE)
+	if (WTSQuerySessionInformationA(echo->context.vcm, WTS_CURRENT_SESSION, WTSSessionId,
+	                                (LPSTR*)&pSessionId, &BytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSQuerySessionInformationA failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	echo->SessionId = (DWORD) * pSessionId;
+	echo->SessionId = (DWORD)*pSessionId;
 	WTSFreeMemory(pSessionId);
 	hEvent = WTSVirtualChannelManagerGetEventHandle(echo->context.vcm);
 	StartTick = GetTickCount();
@@ -83,12 +83,12 @@ static UINT echo_server_open_channel(echo_server* echo)
 		if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
 		{
 			Error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", Error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", Error);
 			return Error;
 		}
 
-		echo->echo_channel = WTSVirtualChannelOpenEx(echo->SessionId,
-		                     "ECHO", WTS_CHANNEL_OPTION_DYNAMIC);
+		echo->echo_channel =
+		    WTSVirtualChannelOpenEx(echo->SessionId, "ECHO", WTS_CHANNEL_OPTION_DYNAMIC);
 
 		if (echo->echo_channel)
 			break;
@@ -114,19 +114,19 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	BOOL ready = FALSE;
 	HANDLE ChannelEvent;
 	DWORD BytesReturned = 0;
-	echo_server* echo = (echo_server*) arg;
+	echo_server* echo = (echo_server*)arg;
 	UINT error;
 	DWORD status;
 
 	if ((error = echo_server_open_channel(echo)))
 	{
 		UINT error2 = 0;
-		WLog_ERR(TAG, "echo_server_open_channel failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "echo_server_open_channel failed with error %" PRIu32 "!", error);
 		IFCALLRET(echo->context.OpenResult, error2, &echo->context,
 		          ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED);
 
 		if (error2)
-			WLog_ERR(TAG, "echo server's OpenResult callback failed with error %"PRIu32"",
+			WLog_ERR(TAG, "echo server's OpenResult callback failed with error %" PRIu32 "",
 			         error2);
 
 		goto out;
@@ -158,7 +158,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %" PRIu32 "", error);
 			break;
 		}
 
@@ -168,7 +168,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			          ECHO_SERVER_OPEN_RESULT_CLOSED);
 
 			if (error)
-				WLog_ERR(TAG, "OpenResult failed with error %"PRIu32"!", error);
+				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
 
 			break;
 		}
@@ -180,21 +180,20 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			          ECHO_SERVER_OPEN_RESULT_ERROR);
 
 			if (error)
-				WLog_ERR(TAG, "OpenResult failed with error %"PRIu32"!", error);
+				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
 
 			break;
 		}
 
-		ready = *((BOOL*) buffer);
+		ready = *((BOOL*)buffer);
 		WTSFreeMemory(buffer);
 
 		if (ready)
 		{
-			IFCALLRET(echo->context.OpenResult, error, &echo->context,
-			          ECHO_SERVER_OPEN_RESULT_OK);
+			IFCALLRET(echo->context.OpenResult, error, &echo->context, ECHO_SERVER_OPEN_RESULT_OK);
 
 			if (error)
-				WLog_ERR(TAG, "OpenResult failed with error %"PRIu32"!", error);
+				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
 
 			break;
 		}
@@ -217,7 +216,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %" PRIu32 "", error);
 			break;
 		}
 
@@ -237,20 +236,20 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			break;
 		}
 
-		if (WTSVirtualChannelRead(echo->echo_channel, 0, (PCHAR) Stream_Buffer(s),
-		                          (ULONG) Stream_Capacity(s), &BytesReturned) == FALSE)
+		if (WTSVirtualChannelRead(echo->echo_channel, 0, (PCHAR)Stream_Buffer(s),
+		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
 
-		IFCALLRET(echo->context.Response, error, &echo->context,
-		          (BYTE*) Stream_Buffer(s), BytesReturned);
+		IFCALLRET(echo->context.Response, error, &echo->context, (BYTE*)Stream_Buffer(s),
+		          BytesReturned);
 
 		if (error)
 		{
-			WLog_ERR(TAG, "Response failed with error %"PRIu32"!", error);
+			WLog_ERR(TAG, "Response failed with error %" PRIu32 "!", error);
 			break;
 		}
 	}
@@ -275,7 +274,7 @@ out:
  */
 static UINT echo_server_open(echo_server_context* context)
 {
-	echo_server* echo = (echo_server*) context;
+	echo_server* echo = (echo_server*)context;
 
 	if (echo->thread == NULL)
 	{
@@ -285,7 +284,7 @@ static UINT echo_server_open(echo_server_context* context)
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		if (!(echo->thread = CreateThread(NULL, 0, echo_server_thread_func, (void*) echo, 0, NULL)))
+		if (!(echo->thread = CreateThread(NULL, 0, echo_server_thread_func, (void*)echo, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			CloseHandle(echo->stopEvent);
@@ -305,7 +304,7 @@ static UINT echo_server_open(echo_server_context* context)
 static UINT echo_server_close(echo_server_context* context)
 {
 	UINT error = CHANNEL_RC_OK;
-	echo_server* echo = (echo_server*) context;
+	echo_server* echo = (echo_server*)context;
 
 	if (echo->thread)
 	{
@@ -314,7 +313,7 @@ static UINT echo_server_close(echo_server_context* context)
 		if (WaitForSingleObject(echo->thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
 			return error;
 		}
 
@@ -327,17 +326,16 @@ static UINT echo_server_close(echo_server_context* context)
 	return error;
 }
 
-static BOOL echo_server_request(echo_server_context* context,
-                                const BYTE* buffer, UINT32 length)
+static BOOL echo_server_request(echo_server_context* context, const BYTE* buffer, UINT32 length)
 {
-	echo_server* echo = (echo_server*) context;
-	return WTSVirtualChannelWrite(echo->echo_channel, (PCHAR) buffer, length, NULL);
+	echo_server* echo = (echo_server*)context;
+	return WTSVirtualChannelWrite(echo->echo_channel, (PCHAR)buffer, length, NULL);
 }
 
 echo_server_context* echo_server_context_new(HANDLE vcm)
 {
 	echo_server* echo;
-	echo = (echo_server*) calloc(1, sizeof(echo_server));
+	echo = (echo_server*)calloc(1, sizeof(echo_server));
 
 	if (echo)
 	{
@@ -349,12 +347,12 @@ echo_server_context* echo_server_context_new(HANDLE vcm)
 	else
 		WLog_ERR(TAG, "calloc failed!");
 
-	return (echo_server_context*) echo;
+	return (echo_server_context*)echo;
 }
 
 void echo_server_context_free(echo_server_context* context)
 {
-	echo_server* echo = (echo_server*) context;
+	echo_server* echo = (echo_server*)context;
 	echo_server_close(context);
 	free(echo);
 }

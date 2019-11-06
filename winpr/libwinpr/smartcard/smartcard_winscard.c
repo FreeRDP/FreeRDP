@@ -31,8 +31,7 @@
 
 static HMODULE g_WinSCardModule = NULL;
 
-SCardApiFunctionTable WinSCard_SCardApiFunctionTable =
-{
+SCardApiFunctionTable WinSCard_SCardApiFunctionTable = {
 	0, /* dwVersion */
 	0, /* dwFlags */
 
@@ -111,7 +110,7 @@ SCardApiFunctionTable WinSCard_SCardApiFunctionTable =
 	NULL, /* SCardGetReaderDeviceInstanceIdW */
 	NULL, /* SCardListReadersWithDeviceInstanceIdA */
 	NULL, /* SCardListReadersWithDeviceInstanceIdW */
-	NULL /* SCardAudit */
+	NULL  /* SCardAudit */
 };
 
 PSCardApiFunctionTable WinSCard_GetSCardApiFunctionTable(void)

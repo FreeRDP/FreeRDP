@@ -29,7 +29,7 @@
 
 #include "../handle/handle.h"
 
-typedef void *(*pthread_start_routine)(void *);
+typedef void* (*pthread_start_routine)(void*);
 
 struct winpr_thread
 {
@@ -51,8 +51,8 @@ struct winpr_thread
 	LPTHREAD_START_ROUTINE lpStartAddress;
 	LPSECURITY_ATTRIBUTES lpThreadAttributes;
 #if defined(WITH_DEBUG_THREADS)
-	void *create_stack;
-	void *exit_stack;
+	void* create_stack;
+	void* exit_stack;
 #endif
 };
 typedef struct winpr_thread WINPR_THREAD;
@@ -70,4 +70,3 @@ typedef struct winpr_process WINPR_PROCESS;
 #endif
 
 #endif /* WINPR_THREAD_PRIVATE_H */
-

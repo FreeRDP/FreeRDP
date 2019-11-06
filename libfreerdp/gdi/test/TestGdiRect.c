@@ -98,7 +98,7 @@ int test_gdi_FillRect(void)
 
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
 	ZeroMemory(hBitmap->data, width * height * GetBytesPerPixel(hdc->format));
-	gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
+	gdi_SelectObject(hdc, (HGDIOBJECT)hBitmap);
 	color = FreeRDPGetColor(PIXEL_FORMAT_ARGB32, 0xAA, 0xBB, 0xCC, 0xFF);
 	hBrush = gdi_CreateSolidBrush(color);
 	gdi_FillRect(hdc, hRect, hBrush);
@@ -120,7 +120,8 @@ int test_gdi_FillRect(void)
 				}
 				else
 				{
-					printf("actual:%08"PRIX32" expected:%08"PRIX32"\n", gdi_GetPixel(hdc, x, y), color);
+					printf("actual:%08" PRIX32 " expected:%08" PRIX32 "\n", gdi_GetPixel(hdc, x, y),
+					       color);
 					badPixels++;
 				}
 			}
@@ -146,8 +147,8 @@ int test_gdi_FillRect(void)
 
 	rc = 0;
 fail:
-	gdi_DeleteObject((HGDIOBJECT) hBrush);
-	gdi_DeleteObject((HGDIOBJECT) hBitmap);
+	gdi_DeleteObject((HGDIOBJECT)hBrush);
+	gdi_DeleteObject((HGDIOBJECT)hBitmap);
 	gdi_DeleteObject((HGDIOBJECT)hRect);
 	gdi_DeleteDC(hdc);
 	return rc;
@@ -166,4 +167,3 @@ int TestGdiRect(int argc, char* argv[])
 
 	return 0;
 }
-

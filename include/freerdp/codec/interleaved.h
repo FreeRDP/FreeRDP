@@ -39,36 +39,30 @@ struct _BITMAP_INTERLEAVED_CONTEXT
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
-                                        const BYTE* pSrcData, UINT32 SrcSize,
-                                        UINT32 nSrcWidth, UINT32 nSrcHeight,
-                                        UINT32 bpp,
-                                        BYTE* pDstData, UINT32 DstFormat,
-                                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-                                        UINT32 nDstWidth, UINT32 nDstHeight,
-                                        const gdiPalette* palette);
+	FREERDP_API BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
+	                                        const BYTE* pSrcData, UINT32 SrcSize, UINT32 nSrcWidth,
+	                                        UINT32 nSrcHeight, UINT32 bpp, BYTE* pDstData,
+	                                        UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
+	                                        UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
+	                                        const gdiPalette* palette);
 
-FREERDP_API BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
-                                      BYTE* pDstData, UINT32* pDstSize,
-                                      UINT32 nWidth, UINT32 nHeight,
-                                      const BYTE* pSrcData, UINT32 SrcFormat,
-                                      UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-                                      const gdiPalette* palette, UINT32 bpp);
+	FREERDP_API BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData,
+	                                      UINT32* pDstSize, UINT32 nWidth, UINT32 nHeight,
+	                                      const BYTE* pSrcData, UINT32 SrcFormat, UINT32 nSrcStep,
+	                                      UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* palette,
+	                                      UINT32 bpp);
 
-FREERDP_API BOOL bitmap_interleaved_context_reset(
-    BITMAP_INTERLEAVED_CONTEXT* interleaved);
+	FREERDP_API BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved);
 
-FREERDP_API BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(
-    BOOL Compressor);
-FREERDP_API void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT*
-        interleaved);
+	FREERDP_API BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor);
+	FREERDP_API void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* FREERDP_CODEC_INTERLEAVED_H */
-

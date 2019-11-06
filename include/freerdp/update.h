@@ -182,12 +182,10 @@ typedef BOOL (*pSuppressOutput)(rdpContext* context, BYTE allow, const RECTANGLE
 typedef BOOL (*pRemoteMonitors)(rdpContext* context, UINT32 count, const MONITOR_DEF* monitors);
 
 typedef BOOL (*pSurfaceCommand)(rdpContext* context, wStream* s);
-typedef BOOL (*pSurfaceBits)(rdpContext* context,
-                             const SURFACE_BITS_COMMAND* surfaceBitsCommand);
+typedef BOOL (*pSurfaceBits)(rdpContext* context, const SURFACE_BITS_COMMAND* surfaceBitsCommand);
 typedef BOOL (*pSurfaceFrameMarker)(rdpContext* context,
                                     const SURFACE_FRAME_MARKER* surfaceFrameMarker);
-typedef BOOL (*pSurfaceFrameBits)(rdpContext* context,
-                                  const SURFACE_BITS_COMMAND* cmd, BOOL first,
+typedef BOOL (*pSurfaceFrameBits)(rdpContext* context, const SURFACE_BITS_COMMAND* cmd, BOOL first,
                                   BOOL last, UINT32 frameId);
 typedef BOOL (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
 
@@ -198,41 +196,41 @@ typedef BOOL (*pServerStatusInfo)(rdpContext* context, UINT32 status);
 
 struct rdp_update
 {
-	rdpContext* context; /* 0 */
+	rdpContext* context;     /* 0 */
 	UINT32 paddingA[16 - 1]; /* 1 */
 
-	pBeginPaint BeginPaint; /* 16 */
-	pEndPaint EndPaint; /* 17 */
-	pSetBounds SetBounds; /* 18 */
-	pSynchronize Synchronize; /* 19 */
-	pDesktopResize DesktopResize; /* 20 */
-	pBitmapUpdate BitmapUpdate; /* 21 */
-	pPalette Palette; /* 22 */
-	pPlaySound PlaySound; /* 23 */
+	pBeginPaint BeginPaint;                       /* 16 */
+	pEndPaint EndPaint;                           /* 17 */
+	pSetBounds SetBounds;                         /* 18 */
+	pSynchronize Synchronize;                     /* 19 */
+	pDesktopResize DesktopResize;                 /* 20 */
+	pBitmapUpdate BitmapUpdate;                   /* 21 */
+	pPalette Palette;                             /* 22 */
+	pPlaySound PlaySound;                         /* 23 */
 	pSetKeyboardIndicators SetKeyboardIndicators; /* 24 */
-	pSetKeyboardImeStatus SetKeyboardImeStatus; /* 25 */
-	UINT32 paddingB[32 - 26]; /* 26 */
+	pSetKeyboardImeStatus SetKeyboardImeStatus;   /* 25 */
+	UINT32 paddingB[32 - 26];                     /* 26 */
 
-	rdpPointerUpdate* pointer; /* 32 */
-	rdpPrimaryUpdate* primary; /* 33 */
+	rdpPointerUpdate* pointer;     /* 32 */
+	rdpPrimaryUpdate* primary;     /* 33 */
 	rdpSecondaryUpdate* secondary; /* 34 */
-	rdpAltSecUpdate* altsec; /* 35 */
-	rdpWindowUpdate* window; /* 36 */
-	UINT32 paddingC[48 - 37]; /* 37 */
+	rdpAltSecUpdate* altsec;       /* 35 */
+	rdpWindowUpdate* window;       /* 36 */
+	UINT32 paddingC[48 - 37];      /* 37 */
 
-	pRefreshRect RefreshRect; /* 48 */
+	pRefreshRect RefreshRect;       /* 48 */
 	pSuppressOutput SuppressOutput; /* 49 */
 	pRemoteMonitors RemoteMonitors; /* 50 */
-	UINT32 paddingD[64 - 51]; /* 51 */
+	UINT32 paddingD[64 - 51];       /* 51 */
 
-	pSurfaceCommand SurfaceCommand; /* 64 */
-	pSurfaceBits SurfaceBits; /* 65 */
-	pSurfaceFrameMarker SurfaceFrameMarker; /* 66 */
-	pSurfaceFrameBits SurfaceFrameBits; /* 67 */
+	pSurfaceCommand SurfaceCommand;                   /* 64 */
+	pSurfaceBits SurfaceBits;                         /* 65 */
+	pSurfaceFrameMarker SurfaceFrameMarker;           /* 66 */
+	pSurfaceFrameBits SurfaceFrameBits;               /* 67 */
 	pSurfaceFrameAcknowledge SurfaceFrameAcknowledge; /* 68 */
-	pSaveSessionInfo SaveSessionInfo; /* 69 */
-	pServerStatusInfo ServerStatusInfo; /* 70 */
-	UINT32 paddingE[80 - 71]; /* 71 */
+	pSaveSessionInfo SaveSessionInfo;                 /* 69 */
+	pServerStatusInfo ServerStatusInfo;               /* 70 */
+	UINT32 paddingE[80 - 71];                         /* 71 */
 
 	/* internal */
 
@@ -254,9 +252,9 @@ struct rdp_update
 	rdpBounds previousBounds;
 	CRITICAL_SECTION mux;
 
-	/* if autoCalculateBitmapData is set to TRUE, the server automatically 
+	/* if autoCalculateBitmapData is set to TRUE, the server automatically
 	 * fills BITMAP_DATA struct members: flags, cbCompMainBodySize and cbCompFirstRowSize.
-	*/
+	 */
 	BOOL autoCalculateBitmapData;
 };
 

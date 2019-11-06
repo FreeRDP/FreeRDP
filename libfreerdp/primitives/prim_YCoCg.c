@@ -27,12 +27,9 @@
 #include "prim_internal.h"
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_YCoCgToRGB_8u_AC4R(
-    const BYTE* pSrc, INT32 srcStep,
-    BYTE* pDst, UINT32 DstFormat, INT32 dstStep,
-    UINT32 width, UINT32 height,
-    UINT8 shift,
-    BOOL withAlpha)
+static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYTE* pDst,
+                                            UINT32 DstFormat, INT32 dstStep, UINT32 width,
+                                            UINT32 height, UINT8 shift, BOOL withAlpha)
 {
 	BYTE A;
 	UINT32 x, y;
@@ -41,7 +38,7 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(
 	INT16 Cg, Co, Y, T, R, G, B;
 	const DWORD formatSize = GetBytesPerPixel(DstFormat);
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
-	int cll = shift - 1;  /* -1 builds in the /2's */
+	int cll = shift - 1; /* -1 builds in the /2's */
 	UINT32 srcPad = srcStep - (width * 4);
 	UINT32 dstPad = dstStep - (width * formatSize);
 
@@ -52,18 +49,17 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(
 			/* Note: shifts must be done before sign-conversion. */
 			Cg = (INT16)((INT8)((*sptr++) << cll));
 			Co = (INT16)((INT8)((*sptr++) << cll));
-			Y = (INT16)(*sptr++);	/* UINT8->INT16 */
+			Y = (INT16)(*sptr++); /* UINT8->INT16 */
 			A = *sptr++;
 
 			if (!withAlpha)
 				A = 0xFFU;
 
-			T  = Y - Cg;
-			R  = T + Co;
-			G  = Y + Cg;
-			B  = T - Co;
-			dptr = (*writePixel)(dptr, formatSize, DstFormat, CLIP(R),
-			                     CLIP(G), CLIP(B), A);
+			T = Y - Cg;
+			R = T + Co;
+			G = Y + Cg;
+			B = T - Co;
+			dptr = (*writePixel)(dptr, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), A);
 		}
 
 		sptr += srcPad;

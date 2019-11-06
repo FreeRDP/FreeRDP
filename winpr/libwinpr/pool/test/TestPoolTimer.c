@@ -6,4 +6,3 @@ int TestPoolTimer(int argc, char* argv[])
 {
 	return 0;
 }
-

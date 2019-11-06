@@ -56,8 +56,7 @@ static BOOL pf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 	return TRUE;
 }
 
-static BOOL pf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
-                                 BOOL primary)
+static BOOL pf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
 	return TRUE;
 }
@@ -72,8 +71,7 @@ static void pf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
 }
 
-static BOOL pf_Pointer_Set(rdpContext* context,
-                           const rdpPointer* pointer)
+static BOOL pf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 {
 	return TRUE;
 }
@@ -103,22 +101,19 @@ static void pf_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 {
 }
 
-static BOOL pf_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x,
-                          INT32 y, INT32 w, INT32 h, INT32 sx, INT32 sy,
-                          BOOL fOpRedundant)
+static BOOL pf_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, INT32 y, INT32 w,
+                          INT32 h, INT32 sx, INT32 sy, BOOL fOpRedundant)
 {
 	return TRUE;
 }
 
-static BOOL pf_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y,
-                               INT32 width, INT32 height, UINT32 bgcolor,
-                               UINT32 fgcolor, BOOL fOpRedundant)
+static BOOL pf_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 width, INT32 height,
+                               UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
 	return TRUE;
 }
 
-static BOOL pf_Glyph_EndDraw(rdpContext* context, INT32 x, INT32 y,
-                             INT32 width, INT32 height,
+static BOOL pf_Glyph_EndDraw(rdpContext* context, INT32 x, INT32 y, INT32 width, INT32 height,
                              UINT32 bgcolor, UINT32 fgcolor)
 {
 	return TRUE;
@@ -129,7 +124,7 @@ BOOL pf_register_pointer(rdpGraphics* graphics)
 {
 	rdpPointer* pointer = NULL;
 
-	if (!(pointer = (rdpPointer*) calloc(1, sizeof(rdpPointer))))
+	if (!(pointer = (rdpPointer*)calloc(1, sizeof(rdpPointer))))
 		return FALSE;
 
 	pointer->size = sizeof(rdpPointer);

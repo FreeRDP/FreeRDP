@@ -32,4 +32,3 @@ FREERDP_LOCAL void rfx_init_neon(RFX_CONTEXT* context);
 #endif
 
 #endif /* FREERDP_LIB_CODEC_RFX_NEON_H */
-

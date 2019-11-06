@@ -24,7 +24,4 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
-
-
 #endif /* FREERDP_CHANNEL_AUDIN_H */
-

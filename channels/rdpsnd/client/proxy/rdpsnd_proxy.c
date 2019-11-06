@@ -44,7 +44,8 @@ struct rdpsnd_proxy_plugin
 	RdpsndServerContext* rdpsnd_server;
 };
 
-static BOOL rdpsnd_proxy_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency)
+static BOOL rdpsnd_proxy_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
+                              UINT32 latency)
 {
 	rdpsndProxyPlugin* proxy = (rdpsndProxyPlugin*)device;
 
@@ -67,7 +68,7 @@ static BOOL rdpsnd_proxy_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 
 static void rdpsnd_proxy_free(rdpsndDevicePlugin* device)
 {
-	rdpsndProxyPlugin* proxy = (rdpsndProxyPlugin*) device;
+	rdpsndProxyPlugin* proxy = (rdpsndProxyPlugin*)device;
 
 	if (!proxy)
 		return;
@@ -105,11 +106,10 @@ static void rdpsnd_proxy_start(rdpsndDevicePlugin* device)
  * @return 0 on success, otherwise a Win32 error code
  */
 
-
 #ifdef BUILTIN_CHANNELS
-#define freerdp_rdpsnd_client_subsystem_entry	proxy_freerdp_rdpsnd_client_subsystem_entry
+#define freerdp_rdpsnd_client_subsystem_entry proxy_freerdp_rdpsnd_client_subsystem_entry
 #else
-#define freerdp_rdpsnd_client_subsystem_entry	FREERDP_API freerdp_rdpsnd_client_subsystem_entry
+#define freerdp_rdpsnd_client_subsystem_entry FREERDP_API freerdp_rdpsnd_client_subsystem_entry
 #endif
 
 /**
@@ -122,7 +122,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	ADDIN_ARGV* args;
 	rdpsndProxyPlugin* proxy;
 	pClientContext* pc;
-	proxy = (rdpsndProxyPlugin*) calloc(1, sizeof(rdpsndProxyPlugin));
+	proxy = (rdpsndProxyPlugin*)calloc(1, sizeof(rdpsndProxyPlugin));
 
 	if (!proxy)
 		return CHANNEL_RC_NO_MEMORY;
@@ -137,7 +137,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	args = pEntryPoints->args;
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, &proxy->device);
-	pc = (pClientContext*) freerdp_rdpsnd_get_context(pEntryPoints->rdpsnd);
+	pc = (pClientContext*)freerdp_rdpsnd_get_context(pEntryPoints->rdpsnd);
 	if (pc == NULL)
 	{
 		free(proxy);

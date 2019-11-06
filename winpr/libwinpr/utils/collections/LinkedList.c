@@ -166,7 +166,7 @@ void LinkedList_Clear(wLinkedList* list)
 
 static wLinkedListNode* LinkedList_Create(wLinkedList* list, void* value)
 {
-	wLinkedListNode* node = (wLinkedListNode*) calloc(1, sizeof(wLinkedListNode));
+	wLinkedListNode* node = (wLinkedListNode*)calloc(1, sizeof(wLinkedListNode));
 
 	if (!node)
 		return NULL;
@@ -332,7 +332,7 @@ static BOOL default_equal_function(const void* objA, const void* objB)
 wLinkedList* LinkedList_New(void)
 {
 	wLinkedList* list = NULL;
-	list = (wLinkedList*) calloc(1, sizeof(wLinkedList));
+	list = (wLinkedList*)calloc(1, sizeof(wLinkedList));
 
 	if (list)
 	{

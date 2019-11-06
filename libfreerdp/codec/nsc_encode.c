@@ -57,8 +57,7 @@ struct _NSC_MESSAGE
 };
 typedef struct _NSC_MESSAGE NSC_MESSAGE;
 
-static BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s,
-								   const NSC_MESSAGE* message);
+static BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* message);
 
 static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
 {
@@ -75,7 +74,7 @@ static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
 	{
 		for (i = 0; i < 5; i++)
 		{
-			BYTE* tmp = (BYTE*) realloc(context->priv->PlaneBuffers[i], length);
+			BYTE* tmp = (BYTE*)realloc(context->priv->PlaneBuffers[i], length);
 
 			if (!tmp)
 				goto fail;
@@ -113,8 +112,7 @@ fail:
 	return FALSE;
 }
 
-static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data,
-                                      UINT32 scanline)
+static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
 {
 	UINT16 x;
 	UINT16 y;
@@ -208,34 +206,34 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data,
 					break;
 
 				case PIXEL_FORMAT_A4:
-					{
-						int shift;
-						BYTE idx;
-						shift = (7 - (x % 8));
-						idx = ((*src) >> shift) & 1;
-						idx |= (((*(src + 1)) >> shift) & 1) << 1;
-						idx |= (((*(src + 2)) >> shift) & 1) << 2;
-						idx |= (((*(src + 3)) >> shift) & 1) << 3;
-						idx *= 3;
-						r_val = (INT16) context->palette[idx];
-						g_val = (INT16) context->palette[idx + 1];
-						b_val = (INT16) context->palette[idx + 2];
+				{
+					int shift;
+					BYTE idx;
+					shift = (7 - (x % 8));
+					idx = ((*src) >> shift) & 1;
+					idx |= (((*(src + 1)) >> shift) & 1) << 1;
+					idx |= (((*(src + 2)) >> shift) & 1) << 2;
+					idx |= (((*(src + 3)) >> shift) & 1) << 3;
+					idx *= 3;
+					r_val = (INT16)context->palette[idx];
+					g_val = (INT16)context->palette[idx + 1];
+					b_val = (INT16)context->palette[idx + 2];
 
-						if (shift == 0)
-							src += 4;
-					}
+					if (shift == 0)
+						src += 4;
+				}
 
 					a_val = 0xFF;
 					break;
 
 				case PIXEL_FORMAT_RGB8:
-					{
-						int idx = (*src) * 3;
-						r_val = (INT16) context->palette[idx];
-						g_val = (INT16) context->palette[idx + 1];
-						b_val = (INT16) context->palette[idx + 2];
-						src++;
-					}
+				{
+					int idx = (*src) * 3;
+					r_val = (INT16)context->palette[idx];
+					g_val = (INT16)context->palette[idx + 1];
+					b_val = (INT16)context->palette[idx + 2];
+					src++;
+				}
 
 					a_val = 0xFF;
 					break;
@@ -292,21 +290,23 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 	if (tempWidth > context->priv->PlaneBuffersLength / tempHeight)
 		return FALSE;
 
-	for (y = 0; y < tempHeight >> 1; y++)
+	for (y = 0; y<tempHeight>> 1; y++)
 	{
 		BYTE* co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
 		BYTE* cg_dst = context->priv->PlaneBuffers[2] + y * (tempWidth >> 1);
-		const INT8* co_src0 = (INT8*) context->priv->PlaneBuffers[1] + (y << 1) * tempWidth;
+		const INT8* co_src0 = (INT8*)context->priv->PlaneBuffers[1] + (y << 1) * tempWidth;
 		const INT8* co_src1 = co_src0 + tempWidth;
-		const INT8* cg_src0 = (INT8*) context->priv->PlaneBuffers[2] + (y << 1) * tempWidth;
+		const INT8* cg_src0 = (INT8*)context->priv->PlaneBuffers[2] + (y << 1) * tempWidth;
 		const INT8* cg_src1 = cg_src0 + tempWidth;
 
-		for (x = 0; x < tempWidth >> 1; x++)
+		for (x = 0; x<tempWidth>> 1; x++)
 		{
-			*co_dst++ = (BYTE)(((INT16) * co_src0 + (INT16) * (co_src0 + 1) +
-			                    (INT16) * co_src1 + (INT16) * (co_src1 + 1)) >> 2);
-			*cg_dst++ = (BYTE)(((INT16) * cg_src0 + (INT16) * (cg_src0 + 1) +
-			                    (INT16) * cg_src1 + (INT16) * (cg_src1 + 1)) >> 2);
+			*co_dst++ = (BYTE)(((INT16)*co_src0 + (INT16) * (co_src0 + 1) + (INT16)*co_src1 +
+			                    (INT16) * (co_src1 + 1)) >>
+			                   2);
+			*cg_dst++ = (BYTE)(((INT16)*cg_src0 + (INT16) * (cg_src0 + 1) + (INT16)*cg_src1 +
+			                    (INT16) * (cg_src1 + 1)) >>
+			                   2);
 			co_src0 += 2;
 			co_src1 += 2;
 			cg_src0 += 2;
@@ -418,8 +418,7 @@ static void nsc_rle_compress_data(NSC_CONTEXT* context)
 	}
 }
 
-UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount,
-                              UINT32 width, UINT32 height)
+UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount, UINT32 width, UINT32 height)
 {
 	UINT32 tempWidth;
 	UINT32 tempHeight;
@@ -449,29 +448,24 @@ UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount,
 BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* message)
 {
 	UINT32 totalPlaneByteCount;
-	totalPlaneByteCount = message->LumaPlaneByteCount +
-	                      message->OrangeChromaPlaneByteCount +
+	totalPlaneByteCount = message->LumaPlaneByteCount + message->OrangeChromaPlaneByteCount +
 	                      message->GreenChromaPlaneByteCount + message->AlphaPlaneByteCount;
 
 	if (!Stream_EnsureRemainingCapacity(s, 20 + totalPlaneByteCount))
 		return FALSE;
 
-	Stream_Write_UINT32(s,
-	                    message->LumaPlaneByteCount); /* LumaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    message->OrangeChromaPlaneByteCount); /* OrangeChromaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    message->GreenChromaPlaneByteCount); /* GreenChromaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT32(s,
-	                    message->AlphaPlaneByteCount); /* AlphaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT8(s, message->ColorLossLevel); /* ColorLossLevel (1 byte) */
-	Stream_Write_UINT8(s,
-	                   message->ChromaSubsamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
-	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
+	Stream_Write_UINT32(s, message->LumaPlaneByteCount); /* LumaPlaneByteCount (4 bytes) */
+	Stream_Write_UINT32(
+	    s, message->OrangeChromaPlaneByteCount); /* OrangeChromaPlaneByteCount (4 bytes) */
+	Stream_Write_UINT32(
+	    s, message->GreenChromaPlaneByteCount);           /* GreenChromaPlaneByteCount (4 bytes) */
+	Stream_Write_UINT32(s, message->AlphaPlaneByteCount); /* AlphaPlaneByteCount (4 bytes) */
+	Stream_Write_UINT8(s, message->ColorLossLevel);       /* ColorLossLevel (1 byte) */
+	Stream_Write_UINT8(s, message->ChromaSubsamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
+	Stream_Write_UINT16(s, 0);                              /* Reserved (2 bytes) */
 
 	if (message->LumaPlaneByteCount)
-		Stream_Write(s, message->PlaneBuffers[0],
-		             message->LumaPlaneByteCount); /* LumaPlane */
+		Stream_Write(s, message->PlaneBuffers[0], message->LumaPlaneByteCount); /* LumaPlane */
 
 	if (message->OrangeChromaPlaneByteCount)
 		Stream_Write(s, message->PlaneBuffers[1],
@@ -482,14 +476,13 @@ BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* mess
 		             message->GreenChromaPlaneByteCount); /* GreenChromaPlane */
 
 	if (message->AlphaPlaneByteCount)
-		Stream_Write(s, message->PlaneBuffers[3],
-		             message->AlphaPlaneByteCount); /* AlphaPlane */
+		Stream_Write(s, message->PlaneBuffers[3], message->AlphaPlaneByteCount); /* AlphaPlane */
 
 	return TRUE;
 }
 
-BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data,
-                         UINT32 width, UINT32 height, UINT32 scanline)
+BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data, UINT32 width,
+                         UINT32 height, UINT32 scanline)
 {
 	BOOL rc;
 	NSC_MESSAGE message = { 0 };
@@ -527,18 +520,17 @@ BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data,
 	return nsc_write_message(context, s, &message);
 }
 
-BOOL nsc_decompose_message(NSC_CONTEXT* context, wStream* s, BYTE* bmpdata,
-                           UINT32 x, UINT32 y, UINT32 width, UINT32 height,
-                           UINT32 rowstride, UINT32 format, UINT32 flip)
+BOOL nsc_decompose_message(NSC_CONTEXT* context, wStream* s, BYTE* bmpdata, UINT32 x, UINT32 y,
+                           UINT32 width, UINT32 height, UINT32 rowstride, UINT32 format,
+                           UINT32 flip)
 {
 	size_t size = Stream_GetRemainingLength(s);
 	if (size > UINT32_MAX)
 		return FALSE;
 
-	if (!nsc_process_message(context, (UINT16)GetBitsPerPixel(context->format),
-							 width, height, Stream_Pointer(s),
-							 (UINT32)size, bmpdata, format,
-							 rowstride, x, y, width, height, flip))
+	if (!nsc_process_message(context, (UINT16)GetBitsPerPixel(context->format), width, height,
+	                         Stream_Pointer(s), (UINT32)size, bmpdata, format, rowstride, x, y,
+	                         width, height, flip))
 		return FALSE;
 	Stream_Seek(s, size);
 	return TRUE;

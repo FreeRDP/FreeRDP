@@ -26,29 +26,26 @@
 
 #ifdef WINPR_THREAD_POOL
 
-PTP_IO winpr_CreateThreadpoolIo(HANDLE fl, PTP_WIN32_IO_CALLBACK pfnio, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
+PTP_IO winpr_CreateThreadpoolIo(HANDLE fl, PTP_WIN32_IO_CALLBACK pfnio, PVOID pv,
+                                PTP_CALLBACK_ENVIRON pcbe)
 {
 	return NULL;
 }
 
 VOID winpr_CloseThreadpoolIo(PTP_IO pio)
 {
-
 }
 
 VOID winpr_StartThreadpoolIo(PTP_IO pio)
 {
-
 }
 
 VOID winpr_CancelThreadpoolIo(PTP_IO pio)
 {
-
 }
 
 VOID winpr_WaitForThreadpoolIoCallbacks(PTP_IO pio, BOOL fCancelPendingCallbacks)
 {
-
 }
 
 #endif

@@ -40,26 +40,27 @@ static void mfreerdp_client_global_uninit(void)
 {
 }
 
-static int mfreerdp_client_start(rdpContext* context)
+static int mfreerdp_client_start(rdpContext *context)
 {
-	MRDPView* view;
-	mfContext* mfc = (mfContext*) context;
+	MRDPView *view;
+	mfContext *mfc = (mfContext *)context;
 
 	if (mfc->view == NULL)
 	{
 		// view not specified beforehand. Create view dynamically
-		mfc->view = [[MRDPView alloc] initWithFrame : NSMakeRect(0, 0,
-		                              context->settings->DesktopWidth, context->settings->DesktopHeight)];
+		mfc->view =
+		    [[MRDPView alloc] initWithFrame:NSMakeRect(0, 0, context->settings->DesktopWidth,
+		                                               context->settings->DesktopHeight)];
 		mfc->view_ownership = TRUE;
 	}
 
-	view = (MRDPView*) mfc->view;
+	view = (MRDPView *)mfc->view;
 	return [view rdpStart:context];
 }
 
-static int mfreerdp_client_stop(rdpContext* context)
+static int mfreerdp_client_stop(rdpContext *context)
 {
-	mfContext* mfc = (mfContext*) context;
+	mfContext *mfc = (mfContext *)context;
 
 	if (mfc->thread)
 	{
@@ -71,7 +72,7 @@ static int mfreerdp_client_stop(rdpContext* context)
 
 	if (mfc->view_ownership)
 	{
-		MRDPView* view = (MRDPView*) mfc->view;
+		MRDPView *view = (MRDPView *)mfc->view;
 		[view releaseResources];
 		[view release];
 		mfc->view = nil;
@@ -80,11 +81,11 @@ static int mfreerdp_client_stop(rdpContext* context)
 	return 0;
 }
 
-static BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
+static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 {
-	mfContext* mfc;
-	rdpSettings* settings;
-	mfc = (mfContext*) instance->context;
+	mfContext *mfc;
+	rdpSettings *settings;
+	mfc = (mfContext *)instance->context;
 	mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
@@ -101,18 +102,18 @@ static BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
 	return TRUE;
 }
 
-static void mfreerdp_client_free(freerdp* instance, rdpContext* context)
+static void mfreerdp_client_free(freerdp *instance, rdpContext *context)
 {
-	mfContext* mfc;
+	mfContext *mfc;
 
 	if (!instance || !context)
 		return;
 
-	mfc = (mfContext*) instance->context;
+	mfc = (mfContext *)instance->context;
 	CloseHandle(mfc->stopEvent);
 }
 
-static void mf_scale_mouse_coordinates(mfContext* mfc, UINT16* px, UINT16* py)
+static void mf_scale_mouse_coordinates(mfContext *mfc, UINT16 *px, UINT16 *py)
 {
 	UINT16 x = *px;
 	UINT16 y = *py;
@@ -128,7 +129,6 @@ static void mf_scale_mouse_coordinates(mfContext* mfc, UINT16* px, UINT16* py)
 
 		y -= (dh - wh);
 		x -= (dw - ww);
-
 	}
 	else
 	{
@@ -140,11 +140,10 @@ static void mf_scale_mouse_coordinates(mfContext* mfc, UINT16* px, UINT16* py)
 	*py = y;
 }
 
-void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags,
-                          UINT16 x, UINT16 y)
+void mf_scale_mouse_event(void *context, rdpInput *input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	mfContext* mfc = (mfContext*) context;
-	MRDPView* view = (MRDPView*) mfc->view;
+	mfContext *mfc = (mfContext *)context;
+	MRDPView *view = (MRDPView *)mfc->view;
 	// Convert to windows coordinates
 	y = [view frame].size.height - y;
 
@@ -153,11 +152,10 @@ void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags,
 	freerdp_input_send_mouse_event(input, flags, x, y);
 }
 
-void mf_scale_mouse_event_ex(void* context, rdpInput* input, UINT16 flags,
-                             UINT16 x, UINT16 y)
+void mf_scale_mouse_event_ex(void *context, rdpInput *input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	mfContext* mfc = (mfContext*) context;
-	MRDPView* view = (MRDPView*) mfc->view;
+	mfContext *mfc = (mfContext *)context;
+	MRDPView *view = (MRDPView *)mfc->view;
 	// Convert to windows coordinates
 	y = [view frame].size.height - y;
 
@@ -165,7 +163,7 @@ void mf_scale_mouse_event_ex(void* context, rdpInput* input, UINT16 flags,
 	freerdp_input_send_extended_mouse_event(input, flags, x, y);
 }
 
-void mf_press_mouse_button(void* context, rdpInput* input, int button, int x, int y, BOOL down)
+void mf_press_mouse_button(void *context, rdpInput *input, int button, int x, int y, BOOL down)
 {
 	UINT16 flags = 0;
 	UINT16 xflags = 0;
@@ -179,28 +177,23 @@ void mf_press_mouse_button(void* context, rdpInput* input, int button, int x, in
 	switch (button)
 	{
 		case 0:
-			mf_scale_mouse_event(context, input,
-			                     flags | PTR_FLAGS_BUTTON1, x, y);
+			mf_scale_mouse_event(context, input, flags | PTR_FLAGS_BUTTON1, x, y);
 			break;
 
 		case 1:
-			mf_scale_mouse_event(context, input,
-			                     flags | PTR_FLAGS_BUTTON2, x, y);
+			mf_scale_mouse_event(context, input, flags | PTR_FLAGS_BUTTON2, x, y);
 			break;
 
 		case 2:
-			mf_scale_mouse_event(context, input,
-			                     flags | PTR_FLAGS_BUTTON3, x, y);
+			mf_scale_mouse_event(context, input, flags | PTR_FLAGS_BUTTON3, x, y);
 			break;
 
 		case 3:
-			mf_scale_mouse_event_ex(context, input,
-			                        xflags | PTR_XFLAGS_BUTTON1, x, y);
+			mf_scale_mouse_event_ex(context, input, xflags | PTR_XFLAGS_BUTTON1, x, y);
 			break;
 
 		case 4:
-			mf_scale_mouse_event_ex(context, input,
-			                        xflags | PTR_XFLAGS_BUTTON2, x, y);
+			mf_scale_mouse_event_ex(context, input, xflags | PTR_XFLAGS_BUTTON2, x, y);
 			break;
 
 		default:
@@ -208,7 +201,7 @@ void mf_press_mouse_button(void* context, rdpInput* input, int button, int x, in
 	}
 }
 
-int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
+int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS *pEntryPoints)
 {
 	pEntryPoints->Version = 1;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);

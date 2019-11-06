@@ -18,8 +18,6 @@
  * limitations under the License.
  */
 
-
-
 #ifndef FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_UDEVICE_H
 #define FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_UDEVICE_H
 
@@ -33,13 +31,13 @@
 #include "request_queue.h"
 #include "urbdrc_main.h"
 
-typedef struct libusb_device				LIBUSB_DEVICE;
-typedef struct libusb_device_handle			LIBUSB_DEVICE_HANDLE;
-typedef struct libusb_device_descriptor		LIBUSB_DEVICE_DESCRIPTOR;
-typedef struct libusb_config_descriptor		LIBUSB_CONFIG_DESCRIPTOR;
-typedef struct libusb_interface			LIBUSB_INTERFACE;
-typedef struct libusb_interface_descriptor		LIBUSB_INTERFACE_DESCRIPTOR;
-typedef struct libusb_endpoint_descriptor		LIBUSB_ENDPOINT_DESCEIPTOR;
+typedef struct libusb_device LIBUSB_DEVICE;
+typedef struct libusb_device_handle LIBUSB_DEVICE_HANDLE;
+typedef struct libusb_device_descriptor LIBUSB_DEVICE_DESCRIPTOR;
+typedef struct libusb_config_descriptor LIBUSB_CONFIG_DESCRIPTOR;
+typedef struct libusb_interface LIBUSB_INTERFACE;
+typedef struct libusb_interface_descriptor LIBUSB_INTERFACE_DESCRIPTOR;
+typedef struct libusb_endpoint_descriptor LIBUSB_ENDPOINT_DESCEIPTOR;
 
 typedef struct _UDEVICE UDEVICE;
 
@@ -47,37 +45,37 @@ struct _UDEVICE
 {
 	IUDEVICE iface;
 
-	void * udev;
-	void * prev;
-	void * next;
+	void* udev;
+	void* prev;
+	void* next;
 
-	UINT32	UsbDevice; /* An unique interface ID */
-	UINT32	ReqCompletion; /* An unique interface ID */
-	UINT32	channel_id;
-	UINT16	status;
-	UINT16	bus_number;
-	UINT16	dev_number;
-	char	path[17];
-	int	port_number;
-	int	isCompositeDevice;
+	UINT32 UsbDevice;     /* An unique interface ID */
+	UINT32 ReqCompletion; /* An unique interface ID */
+	UINT32 channel_id;
+	UINT16 status;
+	UINT16 bus_number;
+	UINT16 dev_number;
+	char path[17];
+	int port_number;
+	int isCompositeDevice;
 
-	LIBUSB_DEVICE_HANDLE * libusb_handle;
-	LIBUSB_DEVICE_HANDLE * hub_handle;
-	LIBUSB_DEVICE * libusb_dev;
-	LIBUSB_DEVICE_DESCRIPTOR * devDescriptor;
-	MSUSB_CONFIG_DESCRIPTOR * MsConfig;
-	LIBUSB_CONFIG_DESCRIPTOR * LibusbConfig;
+	LIBUSB_DEVICE_HANDLE* libusb_handle;
+	LIBUSB_DEVICE_HANDLE* hub_handle;
+	LIBUSB_DEVICE* libusb_dev;
+	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor;
+	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
+	LIBUSB_CONFIG_DESCRIPTOR* LibusbConfig;
 
-	REQUEST_QUEUE * request_queue;
+	REQUEST_QUEUE* request_queue;
 	/* Used in isochronous transfer */
-	void * isoch_queue;
+	void* isoch_queue;
 
 	pthread_mutex_t mutex_isoch;
-	sem_t   sem_id;
+	sem_t sem_id;
 };
-typedef UDEVICE * PUDEVICE;
+typedef UDEVICE* PUDEVICE;
 
-int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE ***devArray);
+int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray);
 IUDEVICE* udev_new_by_addr(int bus_number, int dev_number);
 
 extern int libusb_debug;

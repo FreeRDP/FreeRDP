@@ -64,7 +64,7 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 
 	if ((bmp->bpp < 1) || (bmp->bpp > 32))
 	{
-		WLog_ERR(TAG, "invalid bpp value %"PRIu32"", bmp->bpp);
+		WLog_ERR(TAG, "invalid bpp value %" PRIu32 "", bmp->bpp);
 		return FALSE;
 	}
 
@@ -87,7 +87,7 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s)
 {
-	SURFACE_BITS_COMMAND cmd = {0};
+	SURFACE_BITS_COMMAND cmd = { 0 };
 
 	if (Stream_GetRemainingLength(s) < 8)
 		goto fail;
@@ -120,9 +120,9 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 
 	Stream_Read_UINT16(s, marker.frameAction);
 	Stream_Read_UINT32(s, marker.frameId);
-	WLog_Print(update->log, WLOG_DEBUG, "SurfaceFrameMarker: action: %s (%"PRIu32") id: %"PRIu32"",
-	           (!marker.frameAction) ? "Begin" : "End",
-	           marker.frameAction, marker.frameId);
+	WLog_Print(update->log, WLOG_DEBUG,
+	           "SurfaceFrameMarker: action: %s (%" PRIu32 ") id: %" PRIu32 "",
+	           (!marker.frameAction) ? "Begin" : "End", marker.frameAction, marker.frameId);
 
 	if (!update->SurfaceFrameMarker)
 	{
@@ -160,7 +160,7 @@ int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 				break;
 
 			default:
-				WLog_ERR(TAG, "unknown cmdType 0x%04"PRIX16"", cmdType);
+				WLog_ERR(TAG, "unknown cmdType 0x%04" PRIX16 "", cmdType);
 				return -1;
 		}
 
@@ -177,7 +177,7 @@ int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 }
 
 static BOOL update_write_surfcmd_bitmap_header_ex(wStream* s,
-        const TS_COMPRESSED_BITMAP_HEADER_EX* header)
+                                                  const TS_COMPRESSED_BITMAP_HEADER_EX* header)
 {
 	if (!s || !header)
 		return FALSE;

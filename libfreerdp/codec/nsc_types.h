@@ -32,8 +32,8 @@
 #include <freerdp/utils/profiler.h>
 #include <freerdp/codec/nsc.h>
 
-#define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n-1)) + 0x1) & (_n-1)))
-#define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
+#define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n - 1)) + 0x1) & (_n - 1)))
+#define MINMAX(_v, _l, _h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
 
 struct _NSC_CONTEXT_PRIV
 {
@@ -49,30 +49,30 @@ struct _NSC_CONTEXT_PRIV
 	PROFILER_DEFINE(prof_nsc_encode)
 };
 
-	typedef struct _NSC_CONTEXT_PRIV NSC_CONTEXT_PRIV;
+typedef struct _NSC_CONTEXT_PRIV NSC_CONTEXT_PRIV;
 
-	struct _NSC_CONTEXT
-	{
-		UINT32 OrgByteCount[4];
-		UINT32 format;
-		UINT16 width;
-		UINT16 height;
-		BYTE* BitmapData;
-		UINT32 BitmapDataLength;
+struct _NSC_CONTEXT
+{
+	UINT32 OrgByteCount[4];
+	UINT32 format;
+	UINT16 width;
+	UINT16 height;
+	BYTE* BitmapData;
+	UINT32 BitmapDataLength;
 
-		BYTE* Planes;
-		UINT32 PlaneByteCount[4];
-		UINT32 ColorLossLevel;
-		UINT32 ChromaSubsamplingLevel;
-		BOOL DynamicColorFidelity;
+	BYTE* Planes;
+	UINT32 PlaneByteCount[4];
+	UINT32 ColorLossLevel;
+	UINT32 ChromaSubsamplingLevel;
+	BOOL DynamicColorFidelity;
 
-		/* color palette allocated by the application */
-		const BYTE* palette;
+	/* color palette allocated by the application */
+	const BYTE* palette;
 
-		BOOL (*decode)(NSC_CONTEXT* context);
-		BOOL (*encode)(NSC_CONTEXT* context, const BYTE* BitmapData, UINT32 rowstride);
+	BOOL (*decode)(NSC_CONTEXT* context);
+	BOOL (*encode)(NSC_CONTEXT* context, const BYTE* BitmapData, UINT32 rowstride);
 
-		NSC_CONTEXT_PRIV* priv;
-	};
+	NSC_CONTEXT_PRIV* priv;
+};
 
 #endif /* FREERDP_LIB_CODEC_NSC_TYPES_H */

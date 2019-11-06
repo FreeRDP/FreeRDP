@@ -81,95 +81,110 @@
  * 	data sent between client and server is wrapped in an X.224 Data Protocol Data Unit (PDU).
  *
  * 2.	Basic Settings Exchange: Basic settings are exchanged between the client and server by
- * 	using the MCS Connect Initial PDU (section 2.2.1.3) and MCS Connect Response PDU (section 2.2.1.4).
- * 	The Connect Initial PDU contains a Generic Conference Control (GCC) Conference Create Request,
- * 	while the Connect Response PDU contains a GCC Conference Create Response. These two GCC packets
- * 	contain concatenated blocks of settings data (such as core data, security data, and network data)
- * 	which are read by client and server.
+ * 	using the MCS Connect Initial PDU (section 2.2.1.3) and MCS Connect Response PDU
+ *(section 2.2.1.4). The Connect Initial PDU contains a Generic Conference Control (GCC) Conference
+ *Create Request, while the Connect Response PDU contains a GCC Conference Create Response. These
+ *two GCC packets contain concatenated blocks of settings data (such as core data, security data,
+ *and network data) which are read by client and server.
  *
  * 3.	Channel Connection: The client sends an MCS Erect Domain Request PDU (section 2.2.1.5),
  * 	followed by an MCS Attach User Request PDU (section 2.2.1.6) to attach the primary user identity
  * 	to the MCS domain. The server responds with an MCS Attach User Confirm PDU (section 2.2.1.7)
  * 	containing the User Channel ID. The client then proceeds to join the user channel, the
  * 	input/output (I/O) channel, and all of the static virtual channels (the I/O and static virtual
- * 	channel IDs are obtained from the data embedded in the GCC packets) by using multiple MCS Channel
- * 	Join Request PDUs (section 2.2.1.8). The server confirms each channel with an MCS Channel Join
- * 	Confirm PDU (section 2.2.1.9). (The client only sends a Channel Join Request after it has received
- * 	the Channel Join Confirm for the previously sent request.)
+ * 	channel IDs are obtained from the data embedded in the GCC packets) by using multiple MCS
+ *Channel Join Request PDUs (section 2.2.1.8). The server confirms each channel with an MCS Channel
+ *Join Confirm PDU (section 2.2.1.9). (The client only sends a Channel Join Request after it has
+ *received the Channel Join Confirm for the previously sent request.)
  *
- * 	From this point, all subsequent data sent from the client to the server is wrapped in an MCS Send
- * 	Data Request PDU, while data sent from the server to the client is wrapped in an MCS Send Data
- * 	Indication PDU. This is in addition to the data being wrapped by an X.224 Data PDU.
+ * 	From this point, all subsequent data sent from the client to the server is wrapped in an MCS
+ *Send Data Request PDU, while data sent from the server to the client is wrapped in an MCS Send
+ *Data Indication PDU. This is in addition to the data being wrapped by an X.224 Data PDU.
  *
- * 4.	RDP Security Commencement: If Standard RDP Security mechanisms (section 5.3) are being employed and
- * 	encryption is in force (this is determined by examining the data embedded in the GCC Conference Create
- * 	Response packet) then the client sends a Security Exchange PDU (section 2.2.1.10) containing an encrypted
- * 	32-byte random number to the server. This random number is encrypted with the public key of the server
- * 	as described in section 5.3.4.1 (the server's public key, as well as a 32-byte server-generated random
- * 	number, are both obtained from the data embedded in the GCC Conference Create Response packet). The client
- * 	and server then utilize the two 32-byte random numbers to generate session keys which are used to encrypt
- * 	and validate the integrity of subsequent RDP traffic.
+ * 4.	RDP Security Commencement: If Standard RDP Security mechanisms (section 5.3) are being
+ *employed and encryption is in force (this is determined by examining the data embedded in the GCC
+ *Conference Create Response packet) then the client sends a Security Exchange PDU
+ *(section 2.2.1.10) containing an encrypted 32-byte random number to the server. This random number
+ *is encrypted with the public key of the server as described in section 5.3.4.1 (the server's
+ *public key, as well as a 32-byte server-generated random number, are both obtained from the data
+ *embedded in the GCC Conference Create Response packet). The client and server then utilize the two
+ *32-byte random numbers to generate session keys which are used to encrypt and validate the
+ *integrity of subsequent RDP traffic.
  *
- * 	From this point, all subsequent RDP traffic can be encrypted and a security header is included with the
- * 	data if encryption is in force. (The Client Info PDU (section 2.2.1.11) and licensing PDUs ([MS-RDPELE]
- * 	section 2.2.2) are an exception in that they always have a security header). The Security Header follows
- * 	the X.224 and MCS Headers and indicates whether the attached data is encrypted. Even if encryption is in
- * 	force, server-to-client traffic may not always be encrypted, while client-to-server traffic must always be
- * 	encrypted (encryption of licensing PDUs is optional, however).
+ * 	From this point, all subsequent RDP traffic can be encrypted and a security header is included
+ *with the data if encryption is in force. (The Client Info PDU (section 2.2.1.11) and licensing
+ *PDUs ([MS-RDPELE] section 2.2.2) are an exception in that they always have a security header). The
+ *Security Header follows the X.224 and MCS Headers and indicates whether the attached data is
+ *encrypted. Even if encryption is in force, server-to-client traffic may not always be encrypted,
+ *while client-to-server traffic must always be encrypted (encryption of licensing PDUs is optional,
+ *however).
  *
- * 5.	Secure Settings Exchange: Secure client data (such as the username, password, and auto-reconnect cookie)
- * 	is sent to the server by using the Client Info PDU (section 2.2.1.11).
+ * 5.	Secure Settings Exchange: Secure client data (such as the username, password, and
+ *auto-reconnect cookie) is sent to the server by using the Client Info PDU (section 2.2.1.11).
  *
- * 6.	Optional Connect-Time Auto-Detection: During the optional connect-time auto-detect phase the goal is to
- * 	determine characteristics of the network, such as the round-trip latency time and the bandwidth of the link
- * 	between the server and client. This is accomplished by exchanging a collection of PDUs (specified in section 2.2.1.4)
- * 	over a predetermined period of time with enough data to ensure that the results are statistically relevant.
+ * 6.	Optional Connect-Time Auto-Detection: During the optional connect-time auto-detect phase the
+ *goal is to determine characteristics of the network, such as the round-trip latency time and the
+ *bandwidth of the link between the server and client. This is accomplished by exchanging a
+ *collection of PDUs (specified in section 2.2.1.4) over a predetermined period of time with enough
+ *data to ensure that the results are statistically relevant.
  *
- * 7.	Licensing: The goal of the licensing exchange is to transfer a license from the server to the client.
- * 	The client stores this license and on subsequent connections sends the license to the server for validation.
- * 	However, in some situations the client may not be issued a license to store. In effect, the packets exchanged
- * 	during this phase of the protocol depend on the licensing mechanisms employed by the server. Within the context
- * 	of this document, it is assumed that the client will not be issued a license to store. For details regarding
- * 	more advanced licensing scenarios that take place during the Licensing Phase, see [MS-RDPELE] section 1.3.
+ * 7.	Licensing: The goal of the licensing exchange is to transfer a license from the server to
+ *the client. The client stores this license and on subsequent connections sends the license to the
+ *server for validation. However, in some situations the client may not be issued a license to
+ *store. In effect, the packets exchanged during this phase of the protocol depend on the licensing
+ *mechanisms employed by the server. Within the context of this document, it is assumed that the
+ *client will not be issued a license to store. For details regarding more advanced licensing
+ *scenarios that take place during the Licensing Phase, see [MS-RDPELE] section 1.3.
  *
- * 8.	Optional Multitransport Bootstrapping: After the connection has been secured and the Licensing Phase has run
- * 	to completion, the server can choose to initiate multitransport connections ([MS-RDPEMT] section 1.3).
- * 	The Initiate Multitransport Request PDU (section 2.2.15.1) is sent by the server to the client and results
- * 	in the out-of-band creation of a multitransport connection using messages from the RDP-UDP, TLS, DTLS, and
- * 	multitransport protocols ([MS-RDPEMT] section 1.3.1).
+ * 8.	Optional Multitransport Bootstrapping: After the connection has been secured and the
+ *Licensing Phase has run to completion, the server can choose to initiate multitransport
+ *connections ([MS-RDPEMT] section 1.3). The Initiate Multitransport Request PDU (section 2.2.15.1)
+ *is sent by the server to the client and results in the out-of-band creation of a multitransport
+ *connection using messages from the RDP-UDP, TLS, DTLS, and multitransport protocols ([MS-RDPEMT]
+ *section 1.3.1).
  *
- * 9.	Capabilities Exchange: The server sends the set of capabilities it supports to the client in a Demand Active PDU
- * 	(section 2.2.1.13.1). The client responds with its capabilities by sending a Confirm Active PDU (section 2.2.1.13.2).
+ * 9.	Capabilities Exchange: The server sends the set of capabilities it supports to the client in
+ *a Demand Active PDU (section 2.2.1.13.1). The client responds with its capabilities by sending a
+ *Confirm Active PDU (section 2.2.1.13.2).
  *
- * 10.	Connection Finalization: The client and server exchange PDUs to finalize the connection details. The client-to-server
- * 	PDUs sent during this phase have no dependencies on any of the server-to-client PDUs; they may be sent as a single batch,
- * 	provided that sequencing is maintained.
+ * 10.	Connection Finalization: The client and server exchange PDUs to finalize the connection
+ *details. The client-to-server PDUs sent during this phase have no dependencies on any of the
+ *server-to-client PDUs; they may be sent as a single batch, provided that sequencing is maintained.
  *
- * 	- The Client Synchronize PDU (section 2.2.1.14) is sent after transmitting the Confirm Active PDU.
- * 	- The Client Control (Cooperate) PDU (section 2.2.1.15) is sent after transmitting the Client Synchronize PDU.
- * 	- The Client Control (Request Control) PDU (section 2.2.1.16) is sent after transmitting the Client Control (Cooperate) PDU.
- * 	- The optional Persistent Key List PDUs (section 2.2.1.17) are sent after transmitting the Client Control (Request Control) PDU.
- * 	- The Font List PDU (section 2.2.1.18) is sent after transmitting the Persistent Key List PDUs or, if the Persistent Key List
- * 	  PDUs were not sent, it is sent after transmitting the Client Control (Request Control) PDU (section 2.2.1.16).
+ * 	- The Client Synchronize PDU (section 2.2.1.14) is sent after transmitting the Confirm Active
+ *PDU.
+ * 	- The Client Control (Cooperate) PDU (section 2.2.1.15) is sent after transmitting the Client
+ *Synchronize PDU.
+ * 	- The Client Control (Request Control) PDU (section 2.2.1.16) is sent after transmitting the
+ *Client Control (Cooperate) PDU.
+ * 	- The optional Persistent Key List PDUs (section 2.2.1.17) are sent after transmitting the
+ *Client Control (Request Control) PDU.
+ * 	- The Font List PDU (section 2.2.1.18) is sent after transmitting the Persistent Key List PDUs
+ *or, if the Persistent Key List PDUs were not sent, it is sent after transmitting the Client
+ *Control (Request Control) PDU (section 2.2.1.16).
  *
- *	The server-to-client PDUs sent during the Connection Finalization Phase have dependencies on the client-to-server PDUs.
+ *	The server-to-client PDUs sent during the Connection Finalization Phase have dependencies on the
+ *client-to-server PDUs.
  *
- *	- The optional Monitor Layout PDU (section 2.2.12.1) has no dependency on any client-to-server PDUs and is sent after the Demand Active PDU.
+ *	- The optional Monitor Layout PDU (section 2.2.12.1) has no dependency on any client-to-server
+ *PDUs and is sent after the Demand Active PDU.
  *	- The Server Synchronize PDU (section 2.2.1.19) is sent in response to the Confirm Active PDU.
- *	- The Server Control (Cooperate) PDU (section 2.2.1.20) is sent after transmitting the Server Synchronize PDU.
- *	- The Server Control (Granted Control) PDU (section 2.2.1.21) is sent in response to the Client Control (Request Control) PDU.
+ *	- The Server Control (Cooperate) PDU (section 2.2.1.20) is sent after transmitting the Server
+ *Synchronize PDU.
+ *	- The Server Control (Granted Control) PDU (section 2.2.1.21) is sent in response to the Client
+ *Control (Request Control) PDU.
  *	- The Font Map PDU (section 2.2.1.22) is sent in response to the Font List PDU.
  *
- *	Once the client has sent the Confirm Active PDU, it can start sending mouse and keyboard input to the server, and upon receipt
- *	of the Font List PDU the server can start sending graphics output to the client.
+ *	Once the client has sent the Confirm Active PDU, it can start sending mouse and keyboard input
+ *to the server, and upon receipt of the Font List PDU the server can start sending graphics output
+ *to the client.
  *
- *	Besides input and graphics data, other data that can be exchanged between client and server after the connection has been
- *	finalized includes connection management information and virtual channel messages (exchanged between client-side plug-ins
- *	and server-side applications).
+ *	Besides input and graphics data, other data that can be exchanged between client and server
+ *after the connection has been finalized includes connection management information and virtual
+ *channel messages (exchanged between client-side plug-ins and server-side applications).
  */
 
 static int rdp_client_connect_finalize(rdpRdp* rdp);
-
 
 static BOOL rdp_client_reset_codecs(rdpContext* context)
 {
@@ -184,8 +199,8 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 	if (!context->codecs)
 		return FALSE;
 
-	if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL,
-									   settings->DesktopWidth, settings->DesktopHeight))
+	if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL, settings->DesktopWidth,
+	                                   settings->DesktopHeight))
 		return FALSE;
 
 /* Runtime H264 detection. (only available if dynamic backend loading is defined)
@@ -200,7 +215,6 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 	}
 #endif
 	return TRUE;
-
 }
 
 /**
@@ -215,7 +229,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	UINT32 SelectedProtocol;
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
-	/* make sure SSL is initialize for earlier enough for crypto, by taking advantage of winpr SSL FIPS flag for openssl initialization */
+	/* make sure SSL is initialize for earlier enough for crypto, by taking advantage of winpr SSL
+	 * FIPS flag for openssl initialization */
 	DWORD flags = WINPR_SSL_INIT_DEFAULT;
 
 	if (!rdp_client_reset_codecs(rdp->context))
@@ -228,7 +243,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	/* FIPS Mode forces the following and overrides the following(by happening later */
 	/* in the command line processing): */
-	/* 1. Disables NLA Security since NLA in freerdp uses NTLM(no Kerberos support yet) which uses algorithms */
+	/* 1. Disables NLA Security since NLA in freerdp uses NTLM(no Kerberos support yet) which uses
+	 * algorithms */
 	/*      not allowed in FIPS for sensitive data. So, we disallow NLA when FIPS is required. */
 	/* 2. Forces the only supported RDP encryption method to be FIPS. */
 	if (settings->FIPSMode || winpr_FIPSMode())
@@ -262,7 +278,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 		domain_length = strlen(domain);
 		cookie_length = domain_length + 1 + user_length;
-		cookie = (char*) malloc(cookie_length + 1);
+		cookie = (char*)malloc(cookie_length + 1);
 
 		if (!cookie)
 			return FALSE;
@@ -305,7 +321,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if (settings->LoadBalanceInfo && (settings->LoadBalanceInfoLength > 0))
 	{
-		if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength))
+		if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo,
+		                            settings->LoadBalanceInfoLength))
 			return FALSE;
 	}
 
@@ -326,8 +343,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if ((SelectedProtocol & PROTOCOL_SSL) || (SelectedProtocol == PROTOCOL_RDP))
 	{
-		if ((settings->Username != NULL) && ((settings->Password != NULL) ||
-		                                     (settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
+		if ((settings->Username != NULL) &&
+		    ((settings->Password != NULL) ||
+		     (settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
 			settings->AutoLogonEnabled = TRUE;
 	}
 
@@ -420,7 +438,8 @@ static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 	}
 
 	if (context->instance->ConnectionCallbackState == CLIENT_STATE_POSTCONNECT_PASSED)
-		status = (freerdp_channels_post_connect(context->channels, context->instance) == CHANNEL_RC_OK);
+		status =
+		    (freerdp_channels_post_connect(context->channels, context->instance) == CHANNEL_RC_OK);
 
 	return status;
 }
@@ -440,7 +459,8 @@ static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
 {
 	if (settings->RedirectionFlags & LB_TARGET_FQDN)
 	{
-		if (settings->GatewayEnabled || rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
+		if (settings->GatewayEnabled ||
+		    rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
@@ -475,7 +495,8 @@ static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 {
 	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 	{
-		if (settings->GatewayEnabled || rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
+		if (settings->GatewayEnabled ||
+		    rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
@@ -510,7 +531,8 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	{
 		if (settings->LoadBalanceInfo && (settings->LoadBalanceInfoLength > 0))
 		{
-			if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength))
+			if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo,
+			                            settings->LoadBalanceInfoLength))
 				return FALSE;
 		}
 	}
@@ -535,8 +557,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 				haveRedirectAddress = rdp_client_redirect_try_netbios(settings);
 
 			redirectionMask >>= 3;
-		}
-		while (!haveRedirectAddress && (redirectionMask != 0));
+		} while (!haveRedirectAddress && (redirectionMask != 0));
 	}
 
 	if (settings->RedirectionFlags & LB_USERNAME)
@@ -625,8 +646,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (!crypt_client_random)
 		return FALSE;
 
-	crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, key_len, mod, exp,
-	                          crypt_client_random);
+	crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, key_len, mod,
+	                          exp, crypt_client_random);
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
 	s = Stream_New(NULL, length);
@@ -662,10 +683,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
-		                                     WINPR_ENCRYPT,
-		                                     rdp->fips_encrypt_key,
-		                                     fips_ivec);
+		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_ENCRYPT,
+		                                     rdp->fips_encrypt_key, fips_ivec);
 
 		if (!rdp->fips_encrypt)
 		{
@@ -673,10 +692,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 			goto end;
 		}
 
-		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
-		                                     WINPR_DECRYPT,
-		                                     rdp->fips_decrypt_key,
-		                                     fips_ivec);
+		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_DECRYPT,
+		                                     rdp->fips_decrypt_key, fips_ivec);
 
 		if (!rdp->fips_decrypt)
 		{
@@ -801,10 +818,8 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
-		                                     WINPR_ENCRYPT,
-		                                     rdp->fips_encrypt_key,
-		                                     fips_ivec);
+		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_ENCRYPT,
+		                                     rdp->fips_encrypt_key, fips_ivec);
 
 		if (!rdp->fips_encrypt)
 		{
@@ -812,10 +827,8 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 			goto end;
 		}
 
-		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
-		                                     WINPR_DECRYPT,
-		                                     rdp->fips_decrypt_key,
-		                                     fips_ivec);
+		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_DECRYPT,
+		                                     rdp->fips_decrypt_key, fips_ivec);
 
 		if (!rdp->fips_decrypt)
 		{
@@ -1069,8 +1082,9 @@ int rdp_client_connect_finalize(rdpRdp* rdp)
 {
 	/**
 	 * [MS-RDPBCGR] 1.3.1.1 - 8.
-	 * The client-to-server PDUs sent during this phase have no dependencies on any of the server-to-
-	 * client PDUs; they may be sent as a single batch, provided that sequencing is maintained.
+	 * The client-to-server PDUs sent during this phase have no dependencies on any of the
+	 * server-to- client PDUs; they may be sent as a single batch, provided that sequencing is
+	 * maintained.
 	 */
 	if (!rdp_send_client_synchronize_pdu(rdp))
 		return -1;
@@ -1192,9 +1206,8 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	WLog_INFO(TAG, "Client Security: NLA:%d TLS:%d RDP:%d",
 	          (RequestedProtocols & PROTOCOL_HYBRID) ? 1 : 0,
 	          (RequestedProtocols & PROTOCOL_SSL) ? 1 : 0,
-	          (RequestedProtocols == PROTOCOL_RDP) ? 1 : 0
-	         );
-	WLog_INFO(TAG, "Server Security: NLA:%"PRId32" TLS:%"PRId32" RDP:%"PRId32"",
+	          (RequestedProtocols == PROTOCOL_RDP) ? 1 : 0);
+	WLog_INFO(TAG, "Server Security: NLA:%" PRId32 " TLS:%" PRId32 " RDP:%" PRId32 "",
 	          settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
 	if ((settings->NlaSecurity) && (RequestedProtocols & PROTOCOL_HYBRID))
@@ -1244,8 +1257,7 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 		WLog_INFO(TAG, "Negotiated Security: NLA:%d TLS:%d RDP:%d",
 		          (SelectedProtocol & PROTOCOL_HYBRID) ? 1 : 0,
 		          (SelectedProtocol & PROTOCOL_SSL) ? 1 : 0,
-		          (SelectedProtocol == PROTOCOL_RDP) ? 1 : 0
-		         );
+		          (SelectedProtocol == PROTOCOL_RDP) ? 1 : 0);
 	}
 
 	if (!nego_set_selected_protocol(nego, SelectedProtocol))
@@ -1345,8 +1357,8 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 			allJoined = FALSE;
 	}
 
-	if ((mcs->userChannelJoined) && (mcs->globalChannelJoined) && (mcs->messageChannelId == 0 ||
-	        mcs->messageChannelJoined) && allJoined)
+	if ((mcs->userChannelJoined) && (mcs->globalChannelJoined) &&
+	    (mcs->messageChannelId == 0 || mcs->messageChannelJoined) && allJoined)
 	{
 		rdp_server_transition_to_state(rdp, CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT);
 	}

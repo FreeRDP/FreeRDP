@@ -32,18 +32,19 @@ BOOL display_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount,
 
 	for (index = 0, monitor = monitorDefArray; index < monitorCount; index++, monitor++)
 	{
-		Stream_Write_UINT32(s, monitor->left); /* left (4 bytes) */
-		Stream_Write_UINT32(s, monitor->top); /* top (4 bytes) */
-		Stream_Write_UINT32(s, monitor->right); /* right (4 bytes) */
+		Stream_Write_UINT32(s, monitor->left);   /* left (4 bytes) */
+		Stream_Write_UINT32(s, monitor->top);    /* top (4 bytes) */
+		Stream_Write_UINT32(s, monitor->right);  /* right (4 bytes) */
 		Stream_Write_UINT32(s, monitor->bottom); /* bottom (4 bytes) */
-		Stream_Write_UINT32(s, monitor->flags); /* flags (4 bytes) */
+		Stream_Write_UINT32(s, monitor->flags);  /* flags (4 bytes) */
 	}
 
 	return TRUE;
 }
 
 BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
-        const rdpMonitor* monitorDefArray, MONITOR_DEF** result)
+                                                const rdpMonitor* monitorDefArray,
+                                                MONITOR_DEF** result)
 {
 	UINT32 index;
 	const rdpMonitor* monitor;
@@ -54,10 +55,10 @@ BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
 	for (index = 0, monitor = monitorDefArray; index < monitorCount; index++, monitor++)
 	{
 		MONITOR_DEF* current = (*result + index);
-		current->left = monitor->x; /* left (4 bytes) */
-		current->top = monitor->y; /* top (4 bytes) */
-		current->right = monitor->x + monitor->width - 1; /* right (4 bytes) */
-		current->bottom = monitor->y + monitor->height - 1; /* bottom (4 bytes) */
+		current->left = monitor->x;                                   /* left (4 bytes) */
+		current->top = monitor->y;                                    /* top (4 bytes) */
+		current->right = monitor->x + monitor->width - 1;             /* right (4 bytes) */
+		current->bottom = monitor->y + monitor->height - 1;           /* bottom (4 bytes) */
 		current->flags = monitor->is_primary ? MONITOR_PRIMARY : 0x0; /* flags (4 bytes) */
 	}
 
@@ -65,7 +66,7 @@ BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
 }
 
 BOOL freerdp_display_send_monitor_layout(rdpContext* context, UINT32 monitorCount,
-        const MONITOR_DEF* monitorDefArray)
+                                         const MONITOR_DEF* monitorDefArray)
 {
 	rdpRdp* rdp = context->rdp;
 	wStream* st = rdp_data_pdu_init(rdp);

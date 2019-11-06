@@ -33,8 +33,8 @@
 #include "rdpsnd_main.h"
 #include "TPCircularBuffer.h"
 
-#define INPUT_BUFFER_SIZE       32768
-#define CIRCULAR_BUFFER_SIZE    (INPUT_BUFFER_SIZE * 4)
+#define INPUT_BUFFER_SIZE 32768
+#define CIRCULAR_BUFFER_SIZE (INPUT_BUFFER_SIZE * 4)
 
 typedef struct rdpsnd_ios_plugin
 {
@@ -47,14 +47,10 @@ typedef struct rdpsnd_ios_plugin
 
 #define THIS(__ptr) ((rdpsndIOSPlugin*)__ptr)
 
-static OSStatus rdpsnd_ios_render_cb(
-    void* inRefCon,
-    AudioUnitRenderActionFlags __unused* ioActionFlags,
-    const AudioTimeStamp __unused* inTimeStamp,
-    UInt32 inBusNumber,
-    UInt32 __unused inNumberFrames,
-    AudioBufferList* ioData
-)
+static OSStatus rdpsnd_ios_render_cb(void* inRefCon,
+                                     AudioUnitRenderActionFlags __unused* ioActionFlags,
+                                     const AudioTimeStamp __unused* inTimeStamp, UInt32 inBusNumber,
+                                     UInt32 __unused inNumberFrames, AudioBufferList* ioData)
 {
 	unsigned int i;
 
@@ -182,22 +178,17 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 		return FALSE;
 
 	/* Set the format for the AudioUnit. */
-	AudioStreamBasicDescription audioFormat = {0};
-	audioFormat.mSampleRate       = format->nSamplesPerSec;
-	audioFormat.mFormatID         = kAudioFormatLinearPCM;
-	audioFormat.mFormatFlags      = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
-	audioFormat.mFramesPerPacket  = 1; /* imminent property of the Linear PCM */
+	AudioStreamBasicDescription audioFormat = { 0 };
+	audioFormat.mSampleRate = format->nSamplesPerSec;
+	audioFormat.mFormatID = kAudioFormatLinearPCM;
+	audioFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+	audioFormat.mFramesPerPacket = 1; /* imminent property of the Linear PCM */
 	audioFormat.mChannelsPerFrame = format->nChannels;
-	audioFormat.mBitsPerChannel   = format->wBitsPerSample;
-	audioFormat.mBytesPerFrame    = (format->wBitsPerSample * format->nChannels) / 8;
-	audioFormat.mBytesPerPacket   = audioFormat.mBytesPerFrame * audioFormat.mFramesPerPacket;
-	status = AudioUnitSetProperty(
-	             p->audio_unit,
-	             kAudioUnitProperty_StreamFormat,
-	             kAudioUnitScope_Input,
-	             0,
-	             &audioFormat,
-	             sizeof(audioFormat));
+	audioFormat.mBitsPerChannel = format->wBitsPerSample;
+	audioFormat.mBytesPerFrame = (format->wBitsPerSample * format->nChannels) / 8;
+	audioFormat.mBytesPerPacket = audioFormat.mBytesPerFrame * audioFormat.mFramesPerPacket;
+	status = AudioUnitSetProperty(p->audio_unit, kAudioUnitProperty_StreamFormat,
+	                              kAudioUnitScope_Input, 0, &audioFormat, sizeof(audioFormat));
 
 	if (status != 0)
 	{
@@ -207,16 +198,12 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	}
 
 	/* Set up the AudioUnit callback. */
-	AURenderCallbackStruct callbackStruct = {0};
+	AURenderCallbackStruct callbackStruct = { 0 };
 	callbackStruct.inputProc = rdpsnd_ios_render_cb;
 	callbackStruct.inputProcRefCon = p;
-	status = AudioUnitSetProperty(
-	             p->audio_unit,
-	             kAudioUnitProperty_SetRenderCallback,
-	             kAudioUnitScope_Input,
-	             0,
-	             &callbackStruct,
-	             sizeof(callbackStruct));
+	status =
+	    AudioUnitSetProperty(p->audio_unit, kAudioUnitProperty_SetRenderCallback,
+	                         kAudioUnitScope_Input, 0, &callbackStruct, sizeof(callbackStruct));
 
 	if (status != 0)
 	{
@@ -279,9 +266,9 @@ static void rdpsnd_ios_free(rdpsndDevicePlugin* device)
 }
 
 #ifdef BUILTIN_CHANNELS
-#define freerdp_rdpsnd_client_subsystem_entry	ios_freerdp_rdpsnd_client_subsystem_entry
+#define freerdp_rdpsnd_client_subsystem_entry ios_freerdp_rdpsnd_client_subsystem_entry
 #else
-#define freerdp_rdpsnd_client_subsystem_entry	FREERDP_API freerdp_rdpsnd_client_subsystem_entry
+#define freerdp_rdpsnd_client_subsystem_entry FREERDP_API freerdp_rdpsnd_client_subsystem_entry
 #endif
 
 /**
@@ -291,7 +278,7 @@ static void rdpsnd_ios_free(rdpsndDevicePlugin* device)
  */
 UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	rdpsndIOSPlugin* p = (rdpsndIOSPlugin*) calloc(1, sizeof(rdpsndIOSPlugin));
+	rdpsndIOSPlugin* p = (rdpsndIOSPlugin*)calloc(1, sizeof(rdpsndIOSPlugin));
 
 	if (!p)
 		return CHANNEL_RC_NO_MEMORY;

@@ -60,15 +60,16 @@ struct rdp_shadow_encoder
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-int shadow_encoder_reset(rdpShadowEncoder* encoder);
-int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs);
-UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
+	int shadow_encoder_reset(rdpShadowEncoder* encoder);
+	int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs);
+	UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
 
-rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client);
-void shadow_encoder_free(rdpShadowEncoder* encoder);
+	rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client);
+	void shadow_encoder_free(rdpShadowEncoder* encoder);
 
 #ifdef __cplusplus
 }

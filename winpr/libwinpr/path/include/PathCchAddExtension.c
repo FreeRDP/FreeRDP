@@ -97,4 +97,3 @@ HRESULT PATH_CCH_ADD_EXTENSION(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 #undef _PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_EXTENSION
 */
-

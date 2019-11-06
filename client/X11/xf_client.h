@@ -36,15 +36,15 @@
 #include <freerdp/channels/channels.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/**
- * Client Interface
- */
+	/**
+	 * Client Interface
+	 */
 
-
-FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+	FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 #ifdef __cplusplus
 }
