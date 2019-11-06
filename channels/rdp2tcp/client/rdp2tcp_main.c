@@ -143,12 +143,15 @@ static DWORD WINAPI copyThread(void* data)
 		if (!buffer)
 		{
 			fprintf(stderr, "rdp2tcp copyThread: malloc failed\n");
-			return -1;
+			goto fail;
 		}
 
 		//if (!ReadFile(plugin->hStdOutputRead, plugin->buffer, sizeof plugin->buffer, &dwRead, NULL))
 		if (!ReadFile(plugin->hStdOutputRead, buffer, bufsize, &dwRead, NULL))
-			return -1;
+		{
+			free(buffer);
+			goto fail;
+		}
 
 		if (debug > 1)
 		{
@@ -157,16 +160,19 @@ static DWORD WINAPI copyThread(void* data)
 		}
 
 		if (plugin->channelEntryPoints.pVirtualChannelWriteEx(plugin->initHandle, plugin->openHandle,
-		        buffer, dwRead, NULL) != CHANNEL_RC_OK)
+				buffer, dwRead, buffer) != CHANNEL_RC_OK)
 		{
+			free(buffer);
 			fprintf(stderr, "rdp2tcp copyThread failed %i\n", (int)dwRead);
-			return -1;
+			goto fail;
 		}
 
 		WaitForSingleObject(plugin->writeComplete, INFINITE);
 		ResetEvent(plugin->writeComplete);
 	}
 
+fail:
+	ExitThread(0);
 	return 0;
 }
 
@@ -226,8 +232,12 @@ static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHa
 			dataReceived(plugin, pData, dataLength, totalLength, dataFlags);
 			break;
 
+		case CHANNEL_EVENT_WRITE_CANCELLED:
+			free(pData);
+			break;
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			SetEvent(plugin->writeComplete);
+			free(pData);
 			break;
 	}
 }

@@ -990,7 +990,12 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, D
 
 			break;
 
+		case CHANNEL_EVENT_WRITE_CANCELLED:
 		case CHANNEL_EVENT_WRITE_COMPLETE:
+		{
+			wStream* s = (wStream*)pData;
+			Stream_Free(s, TRUE);
+		}
 			break;
 
 		case CHANNEL_EVENT_USER:

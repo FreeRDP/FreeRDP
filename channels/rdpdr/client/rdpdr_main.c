@@ -1471,10 +1471,16 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	rdpdrPlugin* plugin = (rdpdrPlugin*) rdpdr;
 
 	if (!rdpdr || !s)
+	{
+		Stream_Free(s, TRUE);
 		return CHANNEL_RC_NULL_DATA;
+	}
 
 	if (!plugin)
+	{
+		Stream_Free(s, TRUE);
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
+	}
 	else
 	{
 		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(plugin->InitHandle, plugin->OpenHandle,
@@ -1581,7 +1587,12 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DW
 
 			break;
 
+		case CHANNEL_EVENT_WRITE_CANCELLED:
 		case CHANNEL_EVENT_WRITE_COMPLETE:
+		{
+			wStream* s = (wStream*)pData;
+			Stream_Free(s, TRUE);
+		}
 			break;
 
 		case CHANNEL_EVENT_USER:
