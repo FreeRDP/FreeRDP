@@ -353,9 +353,11 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 }
 
 BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
-        COMMAND_LINE_ARGUMENT_A* custom)
+		COMMAND_LINE_ARGUMENT_A* custom)
 {
 	const char* name = "FreeRDP";
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
+	memcpy(largs, args, sizeof(args));
 
 	if (argc > 0)
 		name = argv[0];
@@ -372,7 +374,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')\n");
 	printf("\n");
 	freerdp_client_print_command_line_args(custom);
-	freerdp_client_print_command_line_args(args);
+	freerdp_client_print_command_line_args(largs);
 	printf("\n");
 	printf("Examples:\n");
 	printf("    %s connection.rdp /p:Pwd123! /f\n", name);
@@ -1304,6 +1306,9 @@ static int freerdp_detect_windows_style_command_line_syntax(int argc, char** arg
 	DWORD flags;
 	int detect_status;
 	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
+	memcpy(largs, args, sizeof(args));
+
 	flags = COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SILENCE_PARSER;
 	flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 
@@ -1314,14 +1319,14 @@ static int freerdp_detect_windows_style_command_line_syntax(int argc, char** arg
 
 	*count = 0;
 	detect_status = 0;
-	CommandLineClearArgumentsA(args);
-	status = CommandLineParseArgumentsA(argc, argv, args, flags,
+	CommandLineClearArgumentsA(largs);
+	status = CommandLineParseArgumentsA(argc, argv, largs, flags,
 	                                    NULL, freerdp_detect_command_line_pre_filter, NULL);
 
 	if (status < 0)
 		return status;
 
-	arg = args;
+	arg = largs;
 
 	do
 	{
@@ -1345,6 +1350,9 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 	DWORD flags;
 	int detect_status;
 	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
+	memcpy(largs, args, sizeof(args));
+
 	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SILENCE_PARSER;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
@@ -1356,14 +1364,14 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 
 	*count = 0;
 	detect_status = 0;
-	CommandLineClearArgumentsA(args);
-	status = CommandLineParseArgumentsA(argc, argv, args, flags,
+	CommandLineClearArgumentsA(largs);
+	status = CommandLineParseArgumentsA(argc, argv, largs, flags,
 	                                    NULL, freerdp_detect_command_line_pre_filter, NULL);
 
 	if (status < 0)
 		return status;
 
-	arg = args;
+	arg = largs;
 
 	do
 	{
@@ -1439,9 +1447,11 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings,
 }
 
 int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings,
-        int status, int argc, char** argv, COMMAND_LINE_ARGUMENT_A* custom)
+		int status, int argc, char** argv, COMMAND_LINE_ARGUMENT_A* custom)
 {
 	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
+	memcpy(largs, args, sizeof(args));
 
 	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
@@ -1457,7 +1467,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings,
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{
-		arg = CommandLineFindArgumentA(args, "kbd-list");
+		arg = CommandLineFindArgumentA(largs, "kbd-list");
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
@@ -1490,7 +1500,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings,
 			printf("\n");
 		}
 
-		arg = CommandLineFindArgumentA(args, "monitor-list");
+		arg = CommandLineFindArgumentA(largs, "monitor-list");
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
@@ -1582,6 +1592,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	BOOL promptForPassword = FALSE;
 	BOOL compatibility = FALSE;
 	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
+	memcpy(largs, args, sizeof(args));
 
 	/* Command line detection fails if only a .rdp or .msrcIncident file
 	 * is supplied. Check this case first, only then try to detect
@@ -1624,8 +1636,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 
-		CommandLineClearArgumentsA(args);
-		status = CommandLineParseArgumentsA(argc, argv, args, flags,
+		CommandLineClearArgumentsA(largs);
+		status = CommandLineParseArgumentsA(argc, argv, largs, flags,
 		                                    settings,
 		                                    freerdp_client_command_line_pre_filter,
 		                                    freerdp_client_command_line_post_filter);
@@ -1634,8 +1646,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			return status;
 	}
 
-	CommandLineFindArgumentA(args, "v");
-	arg = args;
+	CommandLineFindArgumentA(largs, "v");
+	arg = largs;
 	errno = 0;
 
 	do
@@ -3158,7 +3170,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		settings->ColorDepth = 32;
 	}
 
-	arg = CommandLineFindArgumentA(args, "port");
+	arg = CommandLineFindArgumentA(largs, "port");
 
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
@@ -3170,14 +3182,14 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		settings->ServerPort = (UINT32)val;
 	}
 
-	arg = CommandLineFindArgumentA(args, "p");
+	arg = CommandLineFindArgumentA(largs, "p");
 
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
 
-	arg = CommandLineFindArgumentA(args, "gp");
+	arg = CommandLineFindArgumentA(largs, "gp");
 
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{

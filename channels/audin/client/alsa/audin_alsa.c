@@ -352,12 +352,6 @@ static UINT audin_alsa_close(IAudinDevice* device)
 	return error;
 }
 
-static COMMAND_LINE_ARGUMENT_A audin_alsa_args[] =
-{
-	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 /**
  * Function description
  *
@@ -370,6 +364,11 @@ static UINT audin_alsa_parse_addin_args(AudinALSADevice* device,
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
+	COMMAND_LINE_ARGUMENT_A audin_alsa_args[] =
+		{
+			{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		};
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON |
 	        COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv,

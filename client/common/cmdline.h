@@ -22,7 +22,8 @@
 
 #include <winpr/cmdline.h>
 
-static COMMAND_LINE_ARGUMENT_A args[] = {
+static const COMMAND_LINE_ARGUMENT_A args[] =
+{
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, "<addin>[,<options>]", NULL, NULL, -1, "addin", "Addin" },
 	{ "action-script", COMMAND_LINE_VALUE_REQUIRED, "<file-name>", "~/.config/freerdp/action.sh",
 	  NULL, -1, NULL, "Action script" },
@@ -327,12 +328,9 @@ static COMMAND_LINE_ARGUMENT_A args[] = {
 	  "Hyper-V console (use port 2179, disable negotiation)" },
 	{ "w", COMMAND_LINE_VALUE_REQUIRED, "<width>", "1024", NULL, -1, NULL, "Width" },
 	{ "wallpaper", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "wallpaper" },
-	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "full window drag" },
-	{ "window-position", COMMAND_LINE_VALUE_REQUIRED, "<xpos>x<ypos>", NULL, NULL, -1, NULL,
-	  "window position" },
-	{ "wm-class", COMMAND_LINE_VALUE_REQUIRED, "<class-name>", NULL, NULL, -1, NULL,
-	  "Set the WM_CLASS hint for the window instance" },
+	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "full window drag" },
+	{ "window-position", COMMAND_LINE_VALUE_REQUIRED, "<xpos>x<ypos>", NULL, NULL, -1, NULL, "window position" },
+	{ "wm-class", COMMAND_LINE_VALUE_REQUIRED, "<class-name>", NULL, NULL, -1, NULL, "Set the WM_CLASS hint for the window instance" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use available work area" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };

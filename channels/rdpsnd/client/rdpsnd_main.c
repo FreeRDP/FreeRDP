@@ -686,18 +686,6 @@ BOOL rdpsnd_set_device_name(rdpsndPlugin* rdpsnd, const char* device_name)
 	return (rdpsnd->device_name != NULL);
 }
 
-static COMMAND_LINE_ARGUMENT_A rdpsnd_args[] =
-{
-	{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },
-	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
-	{ "format", COMMAND_LINE_VALUE_REQUIRED, "<format>", NULL, NULL, -1, NULL, "format" },
-	{ "rate", COMMAND_LINE_VALUE_REQUIRED, "<rate>", NULL, NULL, -1, NULL, "rate" },
-	{ "channel", COMMAND_LINE_VALUE_REQUIRED, "<channel>", NULL, NULL, -1, NULL, "channel" },
-	{ "latency", COMMAND_LINE_VALUE_REQUIRED, "<latency>", NULL, NULL, -1, NULL, "latency" },
-	{ "quality", COMMAND_LINE_VALUE_REQUIRED, "<quality mode>", NULL, NULL, -1, NULL, "quality mode" },
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 /**
  * Function description
  *
@@ -708,6 +696,17 @@ static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A rdpsnd_args[] =
+		{
+			{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },
+			{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
+			{ "format", COMMAND_LINE_VALUE_REQUIRED, "<format>", NULL, NULL, -1, NULL, "format" },
+			{ "rate", COMMAND_LINE_VALUE_REQUIRED, "<rate>", NULL, NULL, -1, NULL, "rate" },
+			{ "channel", COMMAND_LINE_VALUE_REQUIRED, "<channel>", NULL, NULL, -1, NULL, "channel" },
+			{ "latency", COMMAND_LINE_VALUE_REQUIRED, "<latency>", NULL, NULL, -1, NULL, "latency" },
+			{ "quality", COMMAND_LINE_VALUE_REQUIRED, "<quality mode>", NULL, NULL, -1, NULL, "quality mode" },
+			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		};
 	rdpsnd->wQualityMode = HIGH_QUALITY; /* default quality mode */
 
 	if (args->argc > 1)

@@ -402,12 +402,6 @@ static UINT audin_winmm_open(IAudinDevice* device, AudinReceive receive, void* u
 	return CHANNEL_RC_OK;
 }
 
-static COMMAND_LINE_ARGUMENT_A audin_winmm_args[] =
-{
-	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 /**
  * Function description
  *
@@ -419,6 +413,12 @@ static UINT audin_winmm_parse_addin_args(AudinWinmmDevice* device, ADDIN_ARGV* a
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
+	COMMAND_LINE_ARGUMENT_A audin_winmm_args[] =
+	{
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+	};
+
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv, audin_winmm_args, flags,
 	                                    winmm, NULL, NULL);

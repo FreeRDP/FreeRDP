@@ -381,12 +381,6 @@ static UINT audin_oss_free(IAudinDevice* device)
 	return CHANNEL_RC_OK;
 }
 
-static COMMAND_LINE_ARGUMENT_A audin_oss_args[] =
-{
-	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 /**
  * Function description
  *
@@ -399,6 +393,13 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
+	COMMAND_LINE_ARGUMENT_A audin_oss_args[] =
+		{
+			{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		};
+
+
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON |
 	        COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv,

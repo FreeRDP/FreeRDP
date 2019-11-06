@@ -489,14 +489,6 @@ static UINT tsmf_plugin_terminated(IWTSPlugin* pPlugin)
 	return CHANNEL_RC_OK;
 }
 
-COMMAND_LINE_ARGUMENT_A tsmf_args[] =
-{
-	{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "audio subsystem" },
-	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
-	{ "decoder", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "decoder subsystem" },
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 /**
  * Function description
  *
@@ -508,6 +500,13 @@ static UINT tsmf_process_addin_args(IWTSPlugin* pPlugin, ADDIN_ARGV* args)
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*) pPlugin;
+	COMMAND_LINE_ARGUMENT_A tsmf_args[] =
+		{
+			{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "audio subsystem" },
+			{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+			{ "decoder", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "decoder subsystem" },
+			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		};
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 	status = CommandLineParseArgumentsA(args->argc, args->argv,
 	                                    tsmf_args, flags, tsmf, NULL, NULL);

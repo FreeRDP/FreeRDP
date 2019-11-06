@@ -85,11 +85,6 @@ static void rdpsnd_fake_start(rdpsndDevicePlugin* device)
 {
 }
 
-static COMMAND_LINE_ARGUMENT_A rdpsnd_fake_args[] =
-{
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 /**
  * Function description
  *
@@ -100,6 +95,10 @@ static UINT rdpsnd_fake_parse_addin_args(rdpsndFakePlugin* fake, ADDIN_ARGV* arg
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A rdpsnd_fake_args[] =
+		{
+			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		};
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv,
 	                                    rdpsnd_fake_args, flags, fake, NULL, NULL);

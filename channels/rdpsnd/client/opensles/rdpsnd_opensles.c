@@ -296,15 +296,6 @@ static void rdpsnd_opensles_start(rdpsndDevicePlugin* device)
 	DEBUG_SND("opensles=%p", (void*) opensles);
 }
 
-static COMMAND_LINE_ARGUMENT_A rdpsnd_opensles_args[] =
-{
-	{
-		"dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
-		NULL, NULL, -1, NULL, "device"
-	},
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
         ADDIN_ARGV* args)
 {
@@ -312,6 +303,15 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
+	COMMAND_LINE_ARGUMENT_A rdpsnd_opensles_args[] =
+	{
+		{
+			"dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
+			NULL, NULL, -1, NULL, "device"
+		},
+		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+	};
+
 	assert(opensles);
 	assert(args);
 	DEBUG_SND("opensles=%p, args=%p", (void*) opensles, (void*) args);

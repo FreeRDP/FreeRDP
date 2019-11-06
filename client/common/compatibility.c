@@ -41,7 +41,7 @@
 
 #define TAG CLIENT_TAG("common.compatibility")
 
-static COMMAND_LINE_ARGUMENT_A old_args[] =
+static const COMMAND_LINE_ARGUMENT_A old_args[] =
 {
 	{ "0", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "connect to console session" },
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "set color depth in bits, default is 16" },
@@ -414,6 +414,9 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, size_t* count)
 	int detect_status;
 	rdpSettings* settings;
 	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(old_args)];
+	memcpy(largs, old_args, sizeof(old_args));
+
 	*count = 0;
 	detect_status = 0;
 	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SILENCE_PARSER;
@@ -424,8 +427,8 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, size_t* count)
 	if (!settings)
 		return -1;
 
-	CommandLineClearArgumentsA(old_args);
-	status = CommandLineParseArgumentsA(argc, argv, old_args, flags, settings,
+	CommandLineClearArgumentsA(largs);
+	status = CommandLineParseArgumentsA(argc, argv, largs, flags, settings,
 	                                    freerdp_client_old_command_line_pre_filter, NULL);
 
 	if (status < 0)
@@ -434,7 +437,7 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, size_t* count)
 		return status;
 	}
 
-	arg = old_args;
+	arg = largs;
 
 	do
 	{
@@ -479,12 +482,15 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(old_args)];
+	memcpy(largs, old_args, sizeof(old_args));
+
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 	flags = COMMAND_LINE_SEPARATOR_SPACE;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
 	flags |= COMMAND_LINE_SIGIL_NOT_ESCAPED;
-	status = CommandLineParseArgumentsA(argc, argv, old_args, flags, settings,
+	status = CommandLineParseArgumentsA(argc, argv, largs, flags, settings,
 	                                    freerdp_client_old_command_line_pre_filter, freerdp_client_old_command_line_post_filter);
 
 	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
@@ -506,7 +512,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		return COMMAND_LINE_STATUS_PRINT_HELP;
 	}
 
-	arg = old_args;
+	arg = largs;
 	errno = 0;
 	settings->BitmapCacheEnabled = TRUE;
 	settings->OffscreenSupportLevel = TRUE;

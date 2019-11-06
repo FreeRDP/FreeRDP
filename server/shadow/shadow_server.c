@@ -45,7 +45,7 @@
 
 #define TAG SERVER_TAG("shadow")
 
-static COMMAND_LINE_ARGUMENT_A shadow_args[] =
+static const COMMAND_LINE_ARGUMENT_A shadow_args[] =
 {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL, "Server IPC socket" },
@@ -71,7 +71,8 @@ static int shadow_server_print_command_line_help(int argc, char** argv)
 	char* str;
 	size_t length;
 	COMMAND_LINE_ARGUMENT_A* arg;
-
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(shadow_args)];
+	memcpy(largs, shadow_args, sizeof(shadow_args));
 	if (argc < 1)
 		return -1;
 
@@ -82,7 +83,7 @@ static int shadow_server_print_command_line_help(int argc, char** argv)
 	WLog_INFO(TAG, "    /option:<value> (specifies option with value)");
 	WLog_INFO(TAG, "    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')");
 	WLog_INFO(TAG, "");
-	arg = shadow_args;
+	arg = largs;
 
 	do
 	{
@@ -172,20 +173,22 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	rdpSettings* settings = server->settings;
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(shadow_args)];
+	memcpy(largs, shadow_args, sizeof(shadow_args));
 
 	if (argc < 2)
 		return 1;
 
-	CommandLineClearArgumentsA(shadow_args);
+	CommandLineClearArgumentsA(largs);
 	flags = COMMAND_LINE_SEPARATOR_COLON;
 	flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
-	status = CommandLineParseArgumentsA(argc, argv, shadow_args, flags, server, NULL,
+	status = CommandLineParseArgumentsA(argc, argv, largs, flags, server, NULL,
 	                                    NULL);
 
 	if (status < 0)
 		return status;
 
-	arg = shadow_args;
+	arg = largs;
 	errno = 0;
 
 	do
@@ -358,7 +361,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	arg = CommandLineFindArgumentA(shadow_args, "monitors");
+	arg = CommandLineFindArgumentA(largs, "monitors");
 
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{

@@ -247,15 +247,6 @@ UINT audin_opensles_close(IAudinDevice* device)
 	return CHANNEL_RC_OK;
 }
 
-static COMMAND_LINE_ARGUMENT_A audin_opensles_args[] =
-{
-	{
-		"dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
-		NULL, NULL, -1, NULL, "audio device name"
-	},
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
-
 /**
  * Function description
  *
@@ -268,6 +259,15 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device,
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
+	COMMAND_LINE_ARGUMENT_A audin_opensles_args[] =
+	{
+		{
+			"dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
+			NULL, NULL, -1, NULL, "audio device name"
+		},
+		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+	};
+
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, args=%p", (void*) device, (void*) args);
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv,
