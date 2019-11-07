@@ -34,6 +34,7 @@
 
 /* hints to know which kind of primitives to use */
 static primitive_hints primitivesHints = PRIMITIVES_AUTODETECT;
+static BOOL primitives_init_optimized(primitives_t* prims);
 
 void primitives_set_hints(primitive_hints hints)
 {
@@ -49,6 +50,17 @@ primitive_hints primitives_get_hints(void)
 /* Singleton pointer used throughout the program when requested. */
 static primitives_t pPrimitivesGeneric = { 0 };
 static INIT_ONCE generic_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
+
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+static primitives_t pPrimitivesCpu = { 0 };
+#endif
+#if defined(WITH_OPENCL)
+static primitives_t pPrimitivesGpu = { 0 };
+#endif
+
+#if defined(HAVE_OPTIMIZED_PRIMITIVES)
+static INIT_ONCE auto_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
+#endif
 
 static primitives_t pPrimitives = { 0 };
 static INIT_ONCE primitives_InitOnce = INIT_ONCE_STATIC_INIT;
@@ -190,12 +202,16 @@ static BOOL primitives_autodetect_best(primitives_t *prims)
 {
 	BOOL ret = FALSE;
 	UINT64 benchDuration = 150; // 100 ms
-	UINT32 genericCount = 0, optimizedCount = 0, openclCount = 0;
+	UINT32 genericCount = 0;
 	UINT32 bestCount;
-	primitives_t *genericPrims = primitives_get_generic();
-	primitives_t optimizedPrims;
+	primitives_t* genericPrims = primitives_get_generic();
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+	primitives_t* optimizedPrims = primitives_get_by_type(PRIMITIVES_ONLY_CPU);
+	UINT32 optimizedCount = 0;
+#endif
 #if defined(WITH_OPENCL)
-	primitives_t openclPrims;
+	primitives_t* openclPrims = primitives_get_by_type(PRIMITIVES_ONLY_GPU);
+	UINT32 openclCount = 0;
 #endif
 	const char *primName = "generic";
 
@@ -209,29 +225,19 @@ static BOOL primitives_autodetect_best(primitives_t *prims)
 		goto out;
 	}
 
-	if (!primitives_init_optimized(&optimizedPrims))
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+	if (!primitives_YUV_benchmark_run(yuvBench, optimizedPrims, benchDuration, &optimizedCount))
 	{
-		WLog_ERR(TAG, "error initializing CPU optimized primitives");
+		WLog_ERR(TAG, "error running optimized YUV bench");
 		goto out;
 	}
-
-	if(optimizedPrims.flags & PRIM_FLAGS_HAVE_EXTCPU) /* run the test only if we really have optimizations */
-	{
-		if (!primitives_YUV_benchmark_run(yuvBench, &optimizedPrims, benchDuration, &optimizedCount))
-		{
-			WLog_ERR(TAG, "error running optimized YUV bench");
-			goto out;
-		}
-	}
+#endif
 
 #if defined(WITH_OPENCL)
-	if (primitives_init_opencl(&openclPrims))
+	if (!primitives_YUV_benchmark_run(yuvBench, openclPrims, benchDuration, &openclCount))
 	{
-		if (!primitives_YUV_benchmark_run(yuvBench, &openclPrims, benchDuration, &openclCount))
-		{
-			WLog_ERR(TAG, "error running opencl YUV bench");
-			goto out;
-		}
+		WLog_ERR(TAG, "error running opencl YUV bench");
+		goto out;
 	}
 #endif
 
@@ -239,23 +245,43 @@ static BOOL primitives_autodetect_best(primitives_t *prims)
 	bestCount = genericCount;
 	*prims = *genericPrims;
 
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
 	if (bestCount < optimizedCount)
 	{
 		bestCount = optimizedCount;
-		*prims = optimizedPrims;
+		*prims = *optimizedPrims;
 		primName = "optimized";
 	}
+#endif
 
 #if defined(WITH_OPENCL)
 	if (bestCount < openclCount)
 	{
 		bestCount = openclCount;
-		*prims = openclPrims;
+		*prims = *openclPrims;
 		primName = "openCL";
 	}
 #endif
 
-	WLog_DBG(TAG, "benchmark result: generic=%d optimized=%d openCL=%d", genericCount, optimizedCount, openclCount);
+	WLog_DBG(TAG,
+	         "benchmark result: generic=%" PRIu32
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+	         " optimized=%" PRIu32
+#endif
+#if defined(WITH_OPENCL)
+	         " openCL=%" PRIu32
+#endif
+	         ,
+	         genericCount
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+	         ,
+	         optimizedCount
+#endif
+#if defined(WITH_OPENCL)
+	         ,
+	         openclCount
+#endif
+	);
 	WLog_INFO(TAG, "primitives autodetect, using %s", primName);
 	ret = TRUE;
 out:
@@ -269,223 +295,49 @@ static BOOL CALLBACK primitives_init_cb(PINIT_ONCE once, PVOID param, PVOID* con
 	WINPR_UNUSED(param);
 	WINPR_UNUSED(context);
 
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+	if (!primitives_init_optimized(&pPrimitivesCpu))
+		return FALSE;
+#endif
+#if defined(WITH_OPENCL)
+	if (!primitives_init_opencl(&pPrimitivesGpu))
+		return FALSE;
+#endif
+
+	return TRUE;
+}
+
+static BOOL CALLBACK primitives_auto_init_cb(PINIT_ONCE once, PVOID param, PVOID* context)
+{
+	WINPR_UNUSED(once);
+	WINPR_UNUSED(param);
+	WINPR_UNUSED(context);
+
 	return primitives_init(&pPrimitives, primitivesHints);
 }
 
-
-#if defined(WITH_OPENCL)
-static primitives_opencl_context openclContext;
-
-primitives_opencl_context *primitives_get_opencl_context(void)
-{
-	return &openclContext;
-}
-
-pstatus_t primitives_uninit_opencl(void)
-{
-	if (!openclContext.support)
-		return PRIMITIVES_SUCCESS;
-
-	clReleaseProgram(openclContext.program);
-	clReleaseCommandQueue(openclContext.commandQueue);
-	clReleaseContext(openclContext.context);
-	clReleaseDevice(openclContext.deviceId);
-	openclContext.support = FALSE;
-	return PRIMITIVES_SUCCESS;
-}
-
-BOOL primitives_init_opencl_context(primitives_opencl_context *cl)
-{
-	cl_platform_id *platform_ids = NULL;
-	cl_uint ndevices, nplatforms, i;
-	cl_kernel kernel;
-	cl_int ret;
-	char sourcePath[1000];
-	primitives_t optimized;
-
-	BOOL gotGPU = FALSE;
-	FILE *f;
-	size_t programLen;
-	char *programSource;
-
-	if (!primitives_init_optimized(&optimized))
-		return FALSE;
-	cl->YUV420ToRGB_backup = optimized.YUV420ToRGB_8u_P3AC4R;
-
-	ret = clGetPlatformIDs(0, NULL, &nplatforms);
-	if (ret != CL_SUCCESS || nplatforms < 1)
-		return FALSE;
-
-	platform_ids = calloc(nplatforms, sizeof(*platform_ids));
-	if (!platform_ids)
-		return FALSE;
-
-	ret = clGetPlatformIDs(nplatforms, platform_ids, &nplatforms);
-	if (ret != CL_SUCCESS)
-	{
-		free(platform_ids);
-		return FALSE;
-	}
-
-	for (i = 0; (i < nplatforms) && !gotGPU; i++)
-	{
-		cl_device_id device_id;
-		cl_context context;
-		char platformName[1000];
-		char deviceName[1000];
-
-		ret = clGetPlatformInfo(platform_ids[i], CL_PLATFORM_NAME, sizeof(platformName), platformName, NULL);
-		if (ret != CL_SUCCESS)
-			continue;
-
-		ret = clGetDeviceIDs(platform_ids[i], CL_DEVICE_TYPE_GPU, 1, &device_id, &ndevices);
-		if (ret != CL_SUCCESS)
-			continue;
-
-		ret = clGetDeviceInfo(device_id, CL_DEVICE_NAME, sizeof(deviceName), deviceName, NULL);
-		if (ret != CL_SUCCESS)
-		{
-			WLog_ERR(TAG, "openCL: unable get device name for platform %s", platformName);
-			clReleaseDevice(device_id);
-			continue;
-		}
-
-		context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
-		if (ret != CL_SUCCESS)
-		{
-			WLog_ERR(TAG, "openCL: unable to create context for platform %s, device %s", platformName, deviceName);
-			clReleaseDevice(device_id);
-			continue;
-		}
-
-		cl->commandQueue = clCreateCommandQueue(context, device_id, 0, &ret);
-		if (ret != CL_SUCCESS)
-		{
-			WLog_ERR(TAG, "openCL: unable to create command queue");
-			clReleaseContext(context);
-			clReleaseDevice(device_id);
-			continue;
-		}
-
-		WLog_INFO(TAG, "openCL: using platform=%s device=%s", platformName, deviceName);
-
-		cl->platformId = platform_ids[i];
-		cl->deviceId = device_id;
-		cl->context = context;
-		gotGPU = TRUE;
-	}
-
-	free(platform_ids);
-
-	if (!gotGPU)
-	{
-		WLog_ERR(TAG, "openCL: no GPU found");
-		return FALSE;
-	}
-
-	snprintf(sourcePath, sizeof(sourcePath), "%s/primitives.cl", OPENCL_SOURCE_PATH);
-
-	f = fopen(sourcePath, "r");
-	if (!f)
-	{
-		WLog_ERR(TAG, "openCL: unable to open source file %s", sourcePath);
-		goto error_source_file;
-	}
-
-	fseek(f, 0, SEEK_END);
-	programLen = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	programSource = malloc(programLen);
-	if (!programSource) {
-		WLog_ERR(TAG, "openCL: unable to allocate memory(%d bytes) for source file %s",
-				programLen, sourcePath);
-		fclose(f);
-		goto error_source_file;
-	}
-
-	if (fread(programSource, programLen, 1, f) <= 0)
-	{
-		WLog_ERR(TAG, "openCL: unable to read openCL program in %s", sourcePath);
-		free(programSource);
-		fclose(f);
-		goto error_source_file;
-	}
-	fclose(f);
-
-	cl->program = clCreateProgramWithSource(cl->context, 1, (const char **)&programSource,
-			&programLen, &ret);
-	if (ret != CL_SUCCESS) {
-		WLog_ERR(TAG, "openCL: unable to create command queue");
-		goto out_program_create;
-	}
-	free(programSource);
-
-	ret = clBuildProgram(cl->program, 1, &cl->deviceId, NULL, NULL, NULL);
-	if (ret != CL_SUCCESS)
-	{
-		size_t length;
-		char buffer[2048];
-		ret = clGetProgramBuildInfo(cl->program, cl->deviceId, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &length);
-		if (ret != CL_SUCCESS)
-		{
-			WLog_ERR(TAG, "openCL: building program failed but unable to retrieve buildLog, error=%d", ret);
-		}
-		else
-		{
-			WLog_ERR(TAG, "openCL: unable to build program, errorLog=%s", buffer);
-		}
-		goto out_program_build;
-	}
-
-	kernel = clCreateKernel(cl->program, "yuv420_to_bgra_1b", &ret);
-	if (ret != CL_SUCCESS)
-	{
-		WLog_ERR(TAG, "openCL: unable to create yuv420_to_bgra_1b kernel");
-		goto out_program_build;
-	}
-	clReleaseKernel(kernel);
-
-	cl->support = TRUE;
-	return TRUE;
-
-out_program_build:
-	clReleaseProgram(cl->program);
-error_source_file:
-out_program_create:
-	clReleaseCommandQueue(cl->commandQueue);
-	clReleaseContext(cl->context);
-	clReleaseDevice(cl->deviceId);
-	return FALSE;
-}
-
-BOOL primitives_init_opencl(primitives_t* prims)
-{
-	if (!primitives_init_opencl_context(&openclContext))
-		return FALSE;
-
-	primitives_init_optimized(prims);
-	primitives_init_YUV_opencl(prims);
-	prims->flags |= PRIM_FLAGS_HAVE_EXTGPU;
-	prims->uninit = primitives_uninit_opencl;
-	return TRUE;
-}
-
-#endif
-
-BOOL primitives_init(primitives_t *p, primitive_hints hints)
+BOOL primitives_init(primitives_t* p, primitive_hints hints)
 {
 	switch(hints)
 	{
-	case PRIMITIVES_PURE_SOFT:
-		return primitives_init_generic(p);
-	case PRIMITIVES_ONLY_CPU:
-		return primitives_init_optimized(p);
-	case PRIMITIVES_AUTODETECT:
-		return primitives_autodetect_best(p);
-	default:
-		WLog_ERR(TAG, "unknown hint %d", hints);
-		return FALSE;
+		case PRIMITIVES_AUTODETECT:
+			return primitives_autodetect_best(p);
+		case PRIMITIVES_PURE_SOFT:
+			*p = pPrimitivesGeneric;
+			return TRUE;
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+		case PRIMITIVES_ONLY_CPU:
+			*p = pPrimitivesCpu;
+			return TRUE;
+#endif
+#if defined(WITH_OPENCL)
+		case PRIMITIVES_ONLY_GPU:
+			*p = pPrimitivesGpu;
+			return TRUE;
+#endif
+		default:
+			WLog_ERR(TAG, "unknown hint %d", hints);
+			return FALSE;
 	}
 }
 
@@ -495,15 +347,17 @@ void primitives_uninit() {
 }
 
 /* ------------------------------------------------------------------------- */
-primitives_t* primitives_get(void)
+static void setup(void)
 {
 	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, NULL, NULL);
-#if defined(HAVE_OPTIMIZED_PRIMITIVES)
 	InitOnceExecuteOnce(&primitives_InitOnce, primitives_init_cb, NULL, NULL);
+	InitOnceExecuteOnce(&auto_primitives_InitOnce, primitives_auto_init_cb, NULL, NULL);
+}
+
+primitives_t* primitives_get(void)
+{
+	setup();
 	return &pPrimitives;
-#else
-	return &pPrimitivesGeneric;
-#endif
 }
 
 primitives_t* primitives_get_generic(void)
@@ -512,7 +366,28 @@ primitives_t* primitives_get_generic(void)
 	return &pPrimitivesGeneric;
 }
 
-DWORD primitives_flags(primitives_t *p)
+primitives_t* primitives_get_by_type(DWORD type)
+{
+	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, NULL, NULL);
+	switch (type)
+	{
+#if defined(WITH_OPENCL)
+		case PRIMITIVES_ONLY_GPU:
+			InitOnceExecuteOnce(&primitives_InitOnce, primitives_init_cb, NULL, NULL);
+			return &pPrimitivesGpu;
+#endif
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+		case PRIMITIVES_ONLY_CPU:
+			InitOnceExecuteOnce(&primitives_InitOnce, primitives_init_cb, NULL, NULL);
+			return &pPrimitivesCpu;
+#endif
+		case PRIMITIVES_PURE_SOFT:
+		default:
+			return &pPrimitivesGeneric;
+	}
+}
+
+DWORD primitives_flags(primitives_t* p)
 {
 	return p->flags;
 }

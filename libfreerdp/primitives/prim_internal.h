@@ -209,6 +209,7 @@ FREERDP_LOCAL void primitives_init_YUV_opt(primitives_t* prims);
 #endif
 
 #if defined(WITH_OPENCL)
+<<<<<<< HEAD
 #ifdef __APPLE__
 #include "OpenCL/opencl.h"
 #else
@@ -230,8 +231,14 @@ typedef struct
 FREERDP_LOCAL BOOL primitives_init_opencl(primitives_t* prims);
 FREERDP_LOCAL pstatus_t primitives_uninit_opencl(void);
 FREERDP_LOCAL primitives_opencl_context *primitives_get_opencl_context(void);
+=======
+FREERDP_LOCAL BOOL primitives_init_opencl(primitives_t* prims);
+FREERDP_LOCAL pstatus_t primitives_uninit_opencl(void);
+>>>>>>> 79139d536... Cleaned up primitives code.
 
 FREERDP_LOCAL void primitives_init_YUV_opencl(primitives_t* prims);
 #endif
+
+FREERDP_LOCAL primitives_t* primitives_get_by_type(DWORD type);
 
 #endif /* FREERDP_LIB_PRIM_INTERNAL_H */
