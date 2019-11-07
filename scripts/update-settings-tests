@@ -5,11 +5,11 @@ import sys
 def get_values(entry_dict, entry_type):
     values = []
     if '*' == entry_type:
-        for key in entry_dict.keys():
+        for key in list(entry_dict.keys()):
             if entry_type in key:
                 values += entry_dict[key]
                 entry_dict.pop(key, None)
-    elif entry_type in entry_dict:
+    elif entry_type in dict(entry_dict):
         values = entry_dict[entry_type]
         entry_dict.pop(entry_type, None)
     return values
@@ -43,7 +43,7 @@ def write_getter(f, entry_dict, entry_type, entry_name):
         f.write('const ' + entry_type)
     else:
         f.write(entry_type)
-    f.write(' freerdp_settings_get_' + entry_name.lower() + '(rdpSettings* settings, size_t id)\n')
+    f.write(' freerdp_settings_get_' + entry_name.lower() + '(const rdpSettings* settings, size_t id)\n')
     f.write('{\n')
     f.write('\tif (!settings)\n')
     f.write('\t\treturn FALSE;\n\n')
@@ -103,7 +103,7 @@ print('begin parsing settings header')
 try:
     type_list = dict()
 
-    with open(name + "/../include/freerdp/settings.h", "rb") as f:
+    with open(name + "/../include/freerdp/settings.h", "r") as f:
         lines = f.readlines()
         started = False
         for line in lines:

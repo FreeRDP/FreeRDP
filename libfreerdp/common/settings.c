@@ -755,7 +755,7 @@ void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEn
 	freerdp_set_gateway_usage_method(settings, GatewayUsageMethod);
 }
 
-BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
+BOOL freerdp_get_param_bool(const rdpSettings* settings, int id)
 {
 	return freerdp_settings_get_bool(settings, (size_t)id);
 }
@@ -765,7 +765,7 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 	return freerdp_settings_set_bool(settings, (size_t)id, param) ? 0 : -1;
 }
 
-int freerdp_get_param_int(rdpSettings* settings, int id)
+int freerdp_get_param_int(const rdpSettings* settings, int id)
 {
 	return freerdp_settings_get_int32(settings, (size_t)id);
 }
@@ -775,7 +775,7 @@ int freerdp_set_param_int(rdpSettings* settings, int id, int param)
 	return freerdp_settings_set_int32(settings, (size_t)id, param) ? 0 : -1;
 }
 
-UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
+UINT32 freerdp_get_param_uint32(const rdpSettings* settings, int id)
 {
 	return freerdp_settings_get_uint32(settings, (size_t)id);
 }
@@ -785,7 +785,7 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 	return freerdp_settings_set_uint32(settings, (size_t)id, param) ? 0 : -1;
 }
 
-UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id)
+UINT64 freerdp_get_param_uint64(const rdpSettings* settings, int id)
 {
 	return freerdp_settings_get_uint64(settings, (size_t)id);
 }
@@ -795,7 +795,7 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 	return freerdp_settings_set_uint64(settings, (size_t)id, param) ? 0 : -1;
 }
 
-char* freerdp_get_param_string(rdpSettings* settings, int id)
+char* freerdp_get_param_string(const rdpSettings* settings, int id)
 {
 	return (char*)freerdp_settings_get_string(settings, (size_t)id);
 }

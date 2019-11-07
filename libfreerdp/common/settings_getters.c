@@ -5,7 +5,7 @@
 
 #define TAG FREERDP_TAG("common.settings")
 
-BOOL freerdp_settings_get_bool(rdpSettings* settings, size_t id)
+BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -494,6 +494,9 @@ BOOL freerdp_settings_get_bool(rdpSettings* settings, size_t id)
 
 		case FreeRDP_SupportVideoOptimized:
 			return settings->SupportVideoOptimized;
+
+		case FreeRDP_TcpKeepAlive:
+			return settings->TcpKeepAlive;
 
 		default:
 			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
@@ -1152,6 +1155,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 			settings->SupportVideoOptimized = val;
 			break;
 
+		case FreeRDP_TcpKeepAlive:
+			settings->TcpKeepAlive = val;
+			break;
+
 		default:
 			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
@@ -1159,7 +1166,7 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 	return TRUE;
 }
 
-UINT16 freerdp_settings_get_uint16(rdpSettings* settings, size_t id)
+UINT16 freerdp_settings_get_uint16(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -1200,7 +1207,7 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 	return TRUE;
 }
 
-INT16 freerdp_settings_get_int16(rdpSettings* settings, size_t id)
+INT16 freerdp_settings_get_int16(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -1227,7 +1234,7 @@ BOOL freerdp_settings_set_int16(rdpSettings* settings, size_t id, INT16 val)
 	return TRUE;
 }
 
-UINT32 freerdp_settings_get_uint32(rdpSettings* settings, size_t id)
+UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -1996,7 +2003,7 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 	return TRUE;
 }
 
-INT32 freerdp_settings_get_int32(rdpSettings* settings, size_t id)
+INT32 freerdp_settings_get_int32(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -2037,7 +2044,7 @@ BOOL freerdp_settings_set_int32(rdpSettings* settings, size_t id, INT32 val)
 	return TRUE;
 }
 
-UINT64 freerdp_settings_get_uint64(rdpSettings* settings, size_t id)
+UINT64 freerdp_settings_get_uint64(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -2071,7 +2078,7 @@ BOOL freerdp_settings_set_uint64(rdpSettings* settings, size_t id, UINT64 val)
 	return TRUE;
 }
 
-INT64 freerdp_settings_get_int64(rdpSettings* settings, size_t id)
+INT64 freerdp_settings_get_int64(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -2098,7 +2105,7 @@ BOOL freerdp_settings_set_int64(rdpSettings* settings, size_t id, INT64 val)
 	return TRUE;
 }
 
-const char* freerdp_settings_get_string(rdpSettings* settings, size_t id)
+const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -2645,7 +2652,7 @@ BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* v
 	return TRUE;
 }
 
-const void* freerdp_settings_get_pointer(rdpSettings* settings, size_t id)
+const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;
@@ -2654,54 +2661,6 @@ const void* freerdp_settings_get_pointer(rdpSettings* settings, size_t id)
 	{
 		case FreeRDP_instance:
 			return settings->instance;
-
-		case FreeRDP_RdpServerCertificate:
-			return settings->RdpServerCertificate;
-
-		case FreeRDP_ServerAutoReconnectCookie:
-			return settings->ServerAutoReconnectCookie;
-
-		case FreeRDP_BitmapCacheV2CellInfo:
-			return settings->BitmapCacheV2CellInfo;
-
-		case FreeRDP_RdpServerRsaKey:
-			return settings->RdpServerRsaKey;
-
-		case FreeRDP_MonitorIds:
-			return settings->MonitorIds;
-
-		case FreeRDP_TargetNetPorts:
-			return settings->TargetNetPorts;
-
-		case FreeRDP_MonitorDefArray:
-			return settings->MonitorDefArray;
-
-		case FreeRDP_ChannelDefArray:
-			return settings->ChannelDefArray;
-
-		case FreeRDP_ClientAutoReconnectCookie:
-			return settings->ClientAutoReconnectCookie;
-
-		case FreeRDP_TargetNetAddresses:
-			return settings->TargetNetAddresses;
-
-		case FreeRDP_StaticChannelArray:
-			return settings->StaticChannelArray;
-
-		case FreeRDP_DynamicChannelArray:
-			return settings->DynamicChannelArray;
-
-		case FreeRDP_DeviceArray:
-			return settings->DeviceArray;
-
-		case FreeRDP_GlyphCache:
-			return settings->GlyphCache;
-
-		case FreeRDP_FragCache:
-			return settings->FragCache;
-
-		case FreeRDP_ClientTimeZone:
-			return settings->ClientTimeZone;
 
 		case FreeRDP_ServerRandom:
 			return settings->ServerRandom;
@@ -2729,6 +2688,54 @@ const void* freerdp_settings_get_pointer(rdpSettings* settings, size_t id)
 
 		case FreeRDP_OrderSupport:
 			return settings->OrderSupport;
+
+		case FreeRDP_ChannelDefArray:
+			return settings->ChannelDefArray;
+
+		case FreeRDP_MonitorDefArray:
+			return settings->MonitorDefArray;
+
+		case FreeRDP_MonitorIds:
+			return settings->MonitorIds;
+
+		case FreeRDP_TargetNetPorts:
+			return settings->TargetNetPorts;
+
+		case FreeRDP_ClientAutoReconnectCookie:
+			return settings->ClientAutoReconnectCookie;
+
+		case FreeRDP_ServerAutoReconnectCookie:
+			return settings->ServerAutoReconnectCookie;
+
+		case FreeRDP_ClientTimeZone:
+			return settings->ClientTimeZone;
+
+		case FreeRDP_TargetNetAddresses:
+			return settings->TargetNetAddresses;
+
+		case FreeRDP_RdpServerRsaKey:
+			return settings->RdpServerRsaKey;
+
+		case FreeRDP_RdpServerCertificate:
+			return settings->RdpServerCertificate;
+
+		case FreeRDP_BitmapCacheV2CellInfo:
+			return settings->BitmapCacheV2CellInfo;
+
+		case FreeRDP_GlyphCache:
+			return settings->GlyphCache;
+
+		case FreeRDP_FragCache:
+			return settings->FragCache;
+
+		case FreeRDP_DeviceArray:
+			return settings->DeviceArray;
+
+		case FreeRDP_StaticChannelArray:
+			return settings->StaticChannelArray;
+
+		case FreeRDP_DynamicChannelArray:
+			return settings->DynamicChannelArray;
 
 		default:
 			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
