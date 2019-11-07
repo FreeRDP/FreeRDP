@@ -1559,6 +1559,15 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_DynamicChannelArraySize:
 			return settings->DynamicChannelArraySize;
 
+		case FreeRDP_TcpKeepAliveRetries:
+			return settings->TcpKeepAliveRetries;
+
+		case FreeRDP_TcpKeepAliveInterval:
+			return settings->TcpKeepAliveInterval;
+
+		case FreeRDP_TcpAckTimeout:
+			return settings->TcpAckTimeout;
+
 		default:
 			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
@@ -1994,6 +2003,18 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_DynamicChannelArraySize:
 			settings->DynamicChannelArraySize = val;
+			break;
+
+		case FreeRDP_TcpKeepAliveRetries:
+			settings->TcpKeepAliveRetries = val;
+			break;
+
+		case FreeRDP_TcpKeepAliveInterval:
+			settings->TcpKeepAliveInterval = val;
+			break;
+
+		case FreeRDP_TcpAckTimeout:
+			settings->TcpAckTimeout = val;
 			break;
 
 		default:
