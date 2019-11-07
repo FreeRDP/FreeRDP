@@ -77,7 +77,7 @@ PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat)
 			 * { pointer_instance<8> }*
 			 */
 			pFormat += 8;
-			number_of_pointers = *(unsigned short*) pFormat;
+			number_of_pointers = *(unsigned short*)pFormat;
 			pFormat += 2 + (number_of_pointers * 8);
 		}
 		else if (*pFormat == FC_VARIABLE_REPEAT)
@@ -92,7 +92,7 @@ PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat)
 			 * { pointer_instance<8> }*
 			 */
 			pFormat += 6;
-			number_of_pointers = *(unsigned short*) pFormat;
+			number_of_pointers = *(unsigned short*)pFormat;
 			pFormat += 2 + (number_of_pointers * 8);
 		}
 		else
@@ -120,7 +120,8 @@ PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat)
  * offset_to_complex_description<2>
  */
 
-void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL_STUB_MESSAGE pStubMsg)
+void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat,
+                           PMIDL_STUB_MESSAGE pStubMsg)
 {
 	unsigned char type;
 	unsigned char attributes;
@@ -133,7 +134,7 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 	if (attributes & FC_SIMPLE_POINTER)
 		pNextFormat = pFormat;
 	else
-		pNextFormat = pFormat + *(SHORT*) pFormat;
+		pNextFormat = pFormat + *(SHORT*)pFormat;
 
 	switch (type)
 	{
@@ -152,7 +153,7 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 	}
 
 	if ((attributes & FC_POINTER_DEREF) && pMemory)
-		pMemory = *(unsigned char**) pMemory;
+		pMemory = *(unsigned char**)pMemory;
 
 	pfnSizeRoutine = pfnSizeRoutines[*pNextFormat];
 
@@ -160,7 +161,9 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 		pfnSizeRoutine(pStubMsg, pMemory, pNextFormat);
 }
 
-PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat, unsigned char** ppMemory)
+PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
+                                                   unsigned char* pMemory, PFORMAT_STRING pFormat,
+                                                   unsigned char** ppMemory)
 {
 	ULONG_PTR MaxCount;
 	unsigned char* Memory;
@@ -178,7 +181,7 @@ PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, 
 	if (*pFormat == FC_FIXED_REPEAT)
 	{
 		pFormat += 2;
-		MaxCount = *(unsigned short*) pFormat;
+		MaxCount = *(unsigned short*)pFormat;
 	}
 	else
 	{
@@ -192,17 +195,17 @@ PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, 
 
 		if (pFormat[1] == FC_VARIABLE_OFFSET)
 		{
-			pMemory += pStubMsg->Offset * (*(unsigned short*) &pFormat[1]);
+			pMemory += pStubMsg->Offset * (*(unsigned short*)&pFormat[1]);
 		}
 	}
 
 	pFormat += 2;
-	increment = *(unsigned short*) pFormat;
+	increment = *(unsigned short*)pFormat;
 	pFormat += 2;
-	offset_to_array = *(unsigned short*) pFormat;
+	offset_to_array = *(unsigned short*)pFormat;
 	pStubMsg->Memory = Memory + offset_to_array;
 	pFormat += 2;
-	number_of_pointers = *(unsigned short*) pFormat;
+	number_of_pointers = *(unsigned short*)pFormat;
 	pFormat += 2;
 	pFormatPointers = pFormat;
 
@@ -219,17 +222,15 @@ PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, 
 				do
 				{
 					pointer_count--;
-					MemoryPointer = &pMemory[*(unsigned short*) pFormatNext];
+					MemoryPointer = &pMemory[*(unsigned short*)pFormatNext];
 					NdrpPointerBufferSize(MemoryPointer, pFormatNext + 4, pStubMsg);
 					pFormatNext += 8;
-				}
-				while (pointer_count);
+				} while (pointer_count);
 			}
 
 			pMemory += increment;
 			pStubMsg->Memory += increment;
-		}
-		while (MaxCount);
+		} while (MaxCount);
 
 		Memory = MemoryCopy;
 	}
@@ -239,7 +240,8 @@ PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, 
 	return pFormat;
 }
 
-PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                             PFORMAT_STRING pFormat)
 {
 	ULONG_PTR MaxCount;
 	unsigned long Offset;
@@ -296,7 +298,8 @@ PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsign
 	return pFormat;
 }
 
-void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                          PFORMAT_STRING pFormat)
 {
 	if (*pFormat != FC_RP)
 	{
@@ -307,7 +310,8 @@ void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, P
 	NdrpPointerBufferSize(pMemory, pFormat, pStubMsg);
 }
 
-void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                   PFORMAT_STRING pFormat)
 {
 	WLog_ERR(TAG, "warning: NdrByteCountPointerBufferSize unimplemented");
 }

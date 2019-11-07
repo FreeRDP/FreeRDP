@@ -46,16 +46,12 @@ int TestControlSettings(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	hComm = CreateFile("COM1",
-			GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+	hComm = CreateFile("COM1", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
-
-
 
 	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
@@ -91,7 +87,6 @@ int TestControlSettings(int argc, char* argv[])
 		return FALSE;
 	}
 
-
 	/* Test 2 */
 
 	dcb.ByteSize = 8;
@@ -117,7 +112,6 @@ int TestControlSettings(int argc, char* argv[])
 		fprintf(stderr, "test2 failed.\n");
 		return FALSE;
 	}
-
 
 	if (!CloseHandle(hComm))
 	{

@@ -11,7 +11,7 @@ static void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* con
 	BYTE a[1024];
 	BYTE b[1024];
 	BYTE c[1024];
-	printf("Hello %s: %03"PRId32" (thread: 0x%08"PRIX32")\n", (char*) context,
+	printf("Hello %s: %03" PRId32 " (thread: 0x%08" PRIX32 ")\n", (char*)context,
 	       InterlockedIncrement(&count), GetCurrentThreadId());
 
 	for (index = 0; index < 100; index++)
@@ -40,8 +40,9 @@ static BOOL test1(void)
 	}
 
 	/**
-	 * You can post a work object one or more times (up to MAXULONG) without waiting for prior callbacks to complete.
-	 * The callbacks will execute in parallel. To improve efficiency, the thread pool may throttle the threads.
+	 * You can post a work object one or more times (up to MAXULONG) without waiting for prior
+	 * callbacks to complete. The callbacks will execute in parallel. To improve efficiency, the
+	 * thread pool may throttle the threads.
 	 */
 
 	for (index = 0; index < 10; index++)
@@ -107,11 +108,11 @@ fail:
 		CloseThreadpoolCleanupGroup(cleanupGroup);
 		DestroyThreadpoolEnvironment(&environment);
 		/**
-		 * See Remarks at https://msdn.microsoft.com/en-us/library/windows/desktop/ms682043(v=vs.85).aspx
-		 * If there is a cleanup group associated with the work object,
-		 * it is not necessary to call CloseThreadpoolWork !
-		 * calling the CloseThreadpoolCleanupGroupMembers function releases the work, wait,
-		 * and timer objects associated with the cleanup group.
+		 * See Remarks at
+		 * https://msdn.microsoft.com/en-us/library/windows/desktop/ms682043(v=vs.85).aspx If there
+		 * is a cleanup group associated with the work object, it is not necessary to call
+		 * CloseThreadpoolWork ! calling the CloseThreadpoolCleanupGroupMembers function releases
+		 * the work, wait, and timer objects associated with the cleanup group.
 		 */
 #if 0
 		CloseThreadpoolWork(work); // this would segfault, see comment above. */

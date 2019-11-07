@@ -48,49 +48,43 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 	/* Visual Studio 2010 doesn't like _mm_set_epi32 in array initializer list */
 	/* Note: This also applies to Visual Studio 2013 before Update 4 */
 #if !defined(_MSC_VER) || (_MSC_VER > 1600)
-	const __m128i mapY[] =
-	{
-		_mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
-		_mm_set_epi32(0x80800780, 0x80800680, 0x80800580, 0x80800480),
-		_mm_set_epi32(0x80800B80, 0x80800A80, 0x80800980, 0x80800880),
-		_mm_set_epi32(0x80800F80, 0x80800E80, 0x80800D80, 0x80800C80)
-	};
-	const __m128i mapUV[] =
-	{
-		_mm_set_epi32(0x80038002, 0x80018000, 0x80808080, 0x80808080),
-		_mm_set_epi32(0x80078006, 0x80058004, 0x80808080, 0x80808080),
-		_mm_set_epi32(0x800B800A, 0x80098008, 0x80808080, 0x80808080),
-		_mm_set_epi32(0x800F800E, 0x800D800C, 0x80808080, 0x80808080)
-	};
-	const __m128i mask[] =
-	{
-		_mm_set_epi32(0x80038080, 0x80028080, 0x80018080, 0x80008080),
-		_mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
-		_mm_set_epi32(0x80808003, 0x80808002, 0x80808001, 0x80808000)
-	};
+	const __m128i mapY[] = { _mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
+		                     _mm_set_epi32(0x80800780, 0x80800680, 0x80800580, 0x80800480),
+		                     _mm_set_epi32(0x80800B80, 0x80800A80, 0x80800980, 0x80800880),
+		                     _mm_set_epi32(0x80800F80, 0x80800E80, 0x80800D80, 0x80800C80) };
+	const __m128i mapUV[] = { _mm_set_epi32(0x80038002, 0x80018000, 0x80808080, 0x80808080),
+		                      _mm_set_epi32(0x80078006, 0x80058004, 0x80808080, 0x80808080),
+		                      _mm_set_epi32(0x800B800A, 0x80098008, 0x80808080, 0x80808080),
+		                      _mm_set_epi32(0x800F800E, 0x800D800C, 0x80808080, 0x80808080) };
+	const __m128i mask[] = { _mm_set_epi32(0x80038080, 0x80028080, 0x80018080, 0x80008080),
+		                     _mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
+		                     _mm_set_epi32(0x80808003, 0x80808002, 0x80808001, 0x80808000) };
 #else
 	/* Note: must be in little-endian format ! */
-	const __m128i mapY[] =
-	{
-		{ 0x80, 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80, 0x80, 0x80, 0x03, 0x80, 0x80 },
-		{ 0x80, 0x04, 0x80, 0x80, 0x80, 0x05, 0x80, 0x80, 0x80, 0x06, 0x80, 0x80, 0x80, 0x07, 0x80, 0x80 },
-		{ 0x80, 0x08, 0x80, 0x80, 0x80, 0x09, 0x80, 0x80, 0x80, 0x0a, 0x80, 0x80, 0x80, 0x0b, 0x80, 0x80 },
-		{ 0x80, 0x0c, 0x80, 0x80, 0x80, 0x0d, 0x80, 0x80, 0x80, 0x0e, 0x80, 0x80, 0x80, 0x0f, 0x80, 0x80 }
+	const __m128i mapY[] = { { 0x80, 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80,
+		                       0x80, 0x80, 0x03, 0x80, 0x80 },
+		                     { 0x80, 0x04, 0x80, 0x80, 0x80, 0x05, 0x80, 0x80, 0x80, 0x06, 0x80,
+		                       0x80, 0x80, 0x07, 0x80, 0x80 },
+		                     { 0x80, 0x08, 0x80, 0x80, 0x80, 0x09, 0x80, 0x80, 0x80, 0x0a, 0x80,
+		                       0x80, 0x80, 0x0b, 0x80, 0x80 },
+		                     { 0x80, 0x0c, 0x80, 0x80, 0x80, 0x0d, 0x80, 0x80, 0x80, 0x0e, 0x80,
+		                       0x80, 0x80, 0x0f, 0x80, 0x80 }
 
 	};
-	const __m128i mapUV[] =
-	{
-		{ 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00, 0x80, 0x01, 0x80, 0x02, 0x80, 0x03, 0x80 },
-		{ 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x04, 0x80, 0x05, 0x80, 0x06, 0x80, 0x07, 0x80 },
-		{ 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x08, 0x80, 0x09, 0x80, 0x0a, 0x80, 0x0b, 0x80 },
-		{ 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x0c, 0x80, 0x0d, 0x80, 0x0e, 0x80, 0x0f, 0x80 }
-	};
-	const __m128i mask[] =
-	{
-		{ 0x80, 0x80, 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80, 0x80, 0x80, 0x03, 0x80 },
-		{ 0x80, 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80, 0x80, 0x80, 0x03, 0x80, 0x80 },
-		{ 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80, 0x80, 0x80, 0x03, 0x80, 0x80, 0x80 }
-	};
+	const __m128i mapUV[] = { { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00, 0x80, 0x01,
+		                        0x80, 0x02, 0x80, 0x03, 0x80 },
+		                      { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x04, 0x80, 0x05,
+		                        0x80, 0x06, 0x80, 0x07, 0x80 },
+		                      { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x08, 0x80, 0x09,
+		                        0x80, 0x0a, 0x80, 0x0b, 0x80 },
+		                      { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x0c, 0x80, 0x0d,
+		                        0x80, 0x0e, 0x80, 0x0f, 0x80 } };
+	const __m128i mask[] = { { 0x80, 0x80, 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02,
+		                       0x80, 0x80, 0x80, 0x03, 0x80 },
+		                     { 0x80, 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80,
+		                       0x80, 0x80, 0x03, 0x80, 0x80 },
+		                     { 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80, 0x80,
+		                       0x80, 0x03, 0x80, 0x80, 0x80 } };
 #endif
 	const __m128i c128 = _mm_set1_epi16(128);
 	__m128i BGRX = _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000);
@@ -103,17 +97,18 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 		/* Load U values and expand to 32 bit */
 		{
 			const __m128i U = _mm_shuffle_epi8(Uraw, mapUV[pos]); /* Reorder dcba */
-			D = _mm_sub_epi16(U, c128); /* D = U - 128 */
+			D = _mm_sub_epi16(U, c128);                           /* D = U - 128 */
 		}
 		/* Load V values and expand to 32 bit */
 		{
 			const __m128i V = _mm_shuffle_epi8(Vraw, mapUV[pos]); /* Reorder dcba */
-			E = _mm_sub_epi16(V, c128); /* E = V - 128 */
+			E = _mm_sub_epi16(V, c128);                           /* E = V - 128 */
 		}
 		/* Get the R value */
 		{
 			const __m128i c403 = _mm_set1_epi16(403);
-			const __m128i e403 = _mm_unpackhi_epi16(_mm_mullo_epi16(E, c403), _mm_mulhi_epi16(E, c403));
+			const __m128i e403 =
+			    _mm_unpackhi_epi16(_mm_mullo_epi16(E, c403), _mm_mulhi_epi16(E, c403));
 			const __m128i Rs = _mm_add_epi32(C, e403);
 			const __m128i R32 = _mm_srai_epi32(Rs, 8);
 			const __m128i R16 = _mm_packs_epi32(R32, _mm_setzero_si128());
@@ -124,9 +119,11 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 		/* Get the G value */
 		{
 			const __m128i c48 = _mm_set1_epi16(48);
-			const __m128i d48 = _mm_unpackhi_epi16(_mm_mullo_epi16(D, c48), _mm_mulhi_epi16(D, c48));
+			const __m128i d48 =
+			    _mm_unpackhi_epi16(_mm_mullo_epi16(D, c48), _mm_mulhi_epi16(D, c48));
 			const __m128i c120 = _mm_set1_epi16(120);
-			const __m128i e120 = _mm_unpackhi_epi16(_mm_mullo_epi16(E, c120), _mm_mulhi_epi16(E, c120));
+			const __m128i e120 =
+			    _mm_unpackhi_epi16(_mm_mullo_epi16(E, c120), _mm_mulhi_epi16(E, c120));
 			const __m128i de = _mm_add_epi32(d48, e120);
 			const __m128i Gs = _mm_sub_epi32(C, de);
 			const __m128i G32 = _mm_srai_epi32(Gs, 8);
@@ -138,7 +135,8 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 		/* Get the B value */
 		{
 			const __m128i c475 = _mm_set1_epi16(475);
-			const __m128i d475 = _mm_unpackhi_epi16(_mm_mullo_epi16(D, c475), _mm_mulhi_epi16(D, c475));
+			const __m128i d475 =
+			    _mm_unpackhi_epi16(_mm_mullo_epi16(D, c475), _mm_mulhi_epi16(D, c475));
 			const __m128i Bs = _mm_add_epi32(C, d475);
 			const __m128i B32 = _mm_srai_epi32(Bs, 8);
 			const __m128i B16 = _mm_packs_epi32(B32, _mm_setzero_si128());
@@ -151,10 +149,8 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 	return dst;
 }
 
-static pstatus_t ssse3_YUV420ToRGB_BGRX(
-    const BYTE** pSrc, const UINT32* srcStep,
-    BYTE* pDst, UINT32 dstStep,
-    const prim_size_t* roi)
+static pstatus_t ssse3_YUV420ToRGB_BGRX(const BYTE** pSrc, const UINT32* srcStep, BYTE* pDst,
+                                        UINT32 dstStep, const prim_size_t* roi)
 {
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
@@ -207,10 +203,8 @@ static pstatus_t ssse3_YUV420ToRGB_BGRX(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t ssse3_YUV420ToRGB(
-    const BYTE** pSrc, const UINT32* srcStep,
-    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
-    const prim_size_t* roi)
+static pstatus_t ssse3_YUV420ToRGB(const BYTE** pSrc, const UINT32* srcStep, BYTE* pDst,
+                                   UINT32 dstStep, UINT32 DstFormat, const prim_size_t* roi)
 {
 	switch (DstFormat)
 	{
@@ -223,10 +217,9 @@ static pstatus_t ssse3_YUV420ToRGB(
 	}
 }
 
-static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(
-    const BYTE** pSrc, const UINT32* srcStep,
-    BYTE* pDst, UINT32 dstStep,
-    const prim_size_t* roi)
+static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE** pSrc, const UINT32* srcStep,
+                                                  BYTE* pDst, UINT32 dstStep,
+                                                  const prim_size_t* roi)
 {
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
@@ -270,9 +263,9 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* srcStep,
-        BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
-        const prim_size_t* roi)
+static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* srcStep, BYTE* pDst,
+                                             UINT32 dstStep, UINT32 DstFormat,
+                                             const prim_size_t* roi)
 {
 	if ((unsigned long)pSrc[0] % 16 || (unsigned long)pSrc[1] % 16 || (unsigned long)pSrc[2] % 16 ||
 	    srcStep[0] % 16 || srcStep[1] % 16 || srcStep[2] % 16)
@@ -292,7 +285,6 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* sr
 /****************************************************************************/
 /* SSSE3 RGB -> YUV420 conversion                                          **/
 /****************************************************************************/
-
 
 /**
  * Note (nfedera):
@@ -316,8 +308,10 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* sr
  */
 
 #define BGRX_Y_FACTORS _mm_set_epi8(0, 27, 92, 9, 0, 27, 92, 9, 0, 27, 92, 9, 0, 27, 92, 9)
-#define BGRX_U_FACTORS _mm_set_epi8(0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127)
-#define BGRX_V_FACTORS _mm_set_epi8(0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12)
+#define BGRX_U_FACTORS \
+	_mm_set_epi8(0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127)
+#define BGRX_V_FACTORS \
+	_mm_set_epi8(0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12)
 #define CONST128_FACTORS _mm_set1_epi8(-128)
 
 #define Y_SHIFT 7
@@ -341,17 +335,15 @@ PRIM_ALIGN_128 static const BYTE rgbx_v_factors[] = {
 };
 */
 
-
 /* compute the luma (Y) component from a single rgb source line */
 
-static INLINE void ssse3_RGBToYUV420_BGRX_Y(
-    const BYTE* src, BYTE* dst, UINT32 width)
+static INLINE void ssse3_RGBToYUV420_BGRX_Y(const BYTE* src, BYTE* dst, UINT32 width)
 {
 	UINT32 x;
 	__m128i x0, x1, x2, x3;
 	const __m128i y_factors = BGRX_Y_FACTORS;
-	const __m128i* argb = (const __m128i*) src;
-	__m128i* ydst = (__m128i*) dst;
+	const __m128i* argb = (const __m128i*)src;
+	__m128i* ydst = (__m128i*)dst;
 
 	for (x = 0; x < width; x += 16)
 	{
@@ -380,9 +372,8 @@ static INLINE void ssse3_RGBToYUV420_BGRX_Y(
 
 /* compute the chrominance (UV) components from two rgb source lines */
 
-static INLINE void ssse3_RGBToYUV420_BGRX_UV(
-    const BYTE* src1, const BYTE* src2,
-    BYTE* dst1, BYTE* dst2, UINT32 width)
+static INLINE void ssse3_RGBToYUV420_BGRX_UV(const BYTE* src1, const BYTE* src2, BYTE* dst1,
+                                             BYTE* dst2, UINT32 width)
 {
 	UINT32 x;
 	const __m128i u_factors = BGRX_U_FACTORS;
@@ -443,10 +434,8 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(
 	}
 }
 
-static pstatus_t ssse3_RGBToYUV420_BGRX(
-    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-    BYTE* pDst[3], UINT32 dstStep[3],
-    const prim_size_t* roi)
+static pstatus_t ssse3_RGBToYUV420_BGRX(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+                                        BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
 {
 	UINT32 y;
 	const BYTE* argb = pSrc;
@@ -487,10 +476,8 @@ static pstatus_t ssse3_RGBToYUV420_BGRX(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t ssse3_RGBToYUV420(
-    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-    BYTE* pDst[3], UINT32 dstStep[3],
-    const prim_size_t* roi)
+static pstatus_t ssse3_RGBToYUV420(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+                                   BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
 {
 	switch (srcFormat)
 	{
@@ -503,18 +490,18 @@ static pstatus_t ssse3_RGBToYUV420(
 	}
 }
 
-
 /****************************************************************************/
 /* SSSE3 RGB -> AVC444-YUV conversion                                      **/
 /****************************************************************************/
 
-static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
-    const BYTE* srcEven, const BYTE* srcOdd, BYTE* b1Even, BYTE* b1Odd, BYTE* b2,
-    BYTE* b3, BYTE* b4, BYTE* b5, BYTE* b6, BYTE* b7, UINT32 width)
+static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(const BYTE* srcEven, const BYTE* srcOdd,
+                                                        BYTE* b1Even, BYTE* b1Odd, BYTE* b2,
+                                                        BYTE* b3, BYTE* b4, BYTE* b5, BYTE* b6,
+                                                        BYTE* b7, UINT32 width)
 {
 	UINT32 x;
-	const __m128i* argbEven = (const __m128i*) srcEven;
-	const __m128i* argbOdd = (const __m128i*) srcOdd;
+	const __m128i* argbEven = (const __m128i*)srcEven;
+	const __m128i* argbOdd = (const __m128i*)srcOdd;
 	const __m128i y_factors = BGRX_Y_FACTORS;
 	const __m128i u_factors = BGRX_U_FACTORS;
 	const __m128i v_factors = BGRX_V_FACTORS;
@@ -527,21 +514,25 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 		const __m128i xe2 = _mm_load_si128(argbEven++); // 2nd 4 pixels
 		const __m128i xe3 = _mm_load_si128(argbEven++); // 3rd 4 pixels
 		const __m128i xe4 = _mm_load_si128(argbEven++); // 4th 4 pixels
-		const __m128i xo1 = _mm_load_si128(argbOdd++); // 1st 4 pixels
-		const __m128i xo2 = _mm_load_si128(argbOdd++); // 2nd 4 pixels
-		const __m128i xo3 = _mm_load_si128(argbOdd++); // 3rd 4 pixels
-		const __m128i xo4 = _mm_load_si128(argbOdd++); // 4th 4 pixels
+		const __m128i xo1 = _mm_load_si128(argbOdd++);  // 1st 4 pixels
+		const __m128i xo2 = _mm_load_si128(argbOdd++);  // 2nd 4 pixels
+		const __m128i xo3 = _mm_load_si128(argbOdd++);  // 3rd 4 pixels
+		const __m128i xo4 = _mm_load_si128(argbOdd++);  // 4th 4 pixels
 		{
 			/* Y: multiplications with subtotals and horizontal sums */
 			const __m128i ye1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, y_factors),
-			                                   _mm_maddubs_epi16(xe2, y_factors)), Y_SHIFT);
+			                                                  _mm_maddubs_epi16(xe2, y_factors)),
+			                                   Y_SHIFT);
 			const __m128i ye2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, y_factors),
-			                                   _mm_maddubs_epi16(xe4, y_factors)), Y_SHIFT);
+			                                                  _mm_maddubs_epi16(xe4, y_factors)),
+			                                   Y_SHIFT);
 			const __m128i ye = _mm_packus_epi16(ye1, ye2);
 			const __m128i yo1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, y_factors),
-			                                   _mm_maddubs_epi16(xo2, y_factors)), Y_SHIFT);
+			                                                  _mm_maddubs_epi16(xo2, y_factors)),
+			                                   Y_SHIFT);
 			const __m128i yo2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, y_factors),
-			                                   _mm_maddubs_epi16(xo4, y_factors)), Y_SHIFT);
+			                                                  _mm_maddubs_epi16(xo4, y_factors)),
+			                                   Y_SHIFT);
 			const __m128i yo = _mm_packus_epi16(yo1, yo2);
 			/* store y [b1] */
 			_mm_storeu_si128((__m128i*)b1Even, ye);
@@ -555,26 +546,34 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 		}
 		{
 			/* We have now
-			   * 16 even U values in ue
-			   * 16 odd U values in uo
-			   *
-			   * We need to split these according to
-			   * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
+			 * 16 even U values in ue
+			 * 16 odd U values in uo
+			 *
+			 * We need to split these according to
+			 * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
 			__m128i ue, uo;
 			{
-				const __m128i ue1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
-				                                   _mm_maddubs_epi16(xe2, u_factors)), U_SHIFT);
-				const __m128i ue2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, u_factors),
-				                                   _mm_maddubs_epi16(xe4, u_factors)), U_SHIFT);
+				const __m128i ue1 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
+				                                  _mm_maddubs_epi16(xe2, u_factors)),
+				                   U_SHIFT);
+				const __m128i ue2 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, u_factors),
+				                                  _mm_maddubs_epi16(xe4, u_factors)),
+				                   U_SHIFT);
 				ue = _mm_sub_epi8(_mm_packs_epi16(ue1, ue2), vector128);
 			}
 
 			if (b1Odd)
 			{
-				const __m128i uo1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, u_factors),
-				                                   _mm_maddubs_epi16(xo2, u_factors)), U_SHIFT);
-				const __m128i uo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, u_factors),
-				                                   _mm_maddubs_epi16(xo4, u_factors)), U_SHIFT);
+				const __m128i uo1 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, u_factors),
+				                                  _mm_maddubs_epi16(xo2, u_factors)),
+				                   U_SHIFT);
+				const __m128i uo2 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, u_factors),
+				                                  _mm_maddubs_epi16(xo4, u_factors)),
+				                   U_SHIFT);
 				uo = _mm_sub_epi8(_mm_packs_epi16(uo1, uo2), vector128);
 			}
 
@@ -622,26 +621,34 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 		}
 		{
 			/* We have now
-			   * 16 even V values in ue
-			   * 16 odd V values in uo
-			   *
-			   * We need to split these according to
-			   * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
+			 * 16 even V values in ue
+			 * 16 odd V values in uo
+			 *
+			 * We need to split these according to
+			 * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
 			__m128i ve, vo;
 			{
-				const __m128i ve1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
-				                                   _mm_maddubs_epi16(xe2, v_factors)), V_SHIFT);
-				const __m128i ve2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, v_factors),
-				                                   _mm_maddubs_epi16(xe4, v_factors)), V_SHIFT);
+				const __m128i ve1 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
+				                                  _mm_maddubs_epi16(xe2, v_factors)),
+				                   V_SHIFT);
+				const __m128i ve2 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, v_factors),
+				                                  _mm_maddubs_epi16(xe4, v_factors)),
+				                   V_SHIFT);
 				ve = _mm_sub_epi8(_mm_packs_epi16(ve1, ve2), vector128);
 			}
 
 			if (b1Odd)
 			{
-				const __m128i vo1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, v_factors),
-				                                   _mm_maddubs_epi16(xo2, v_factors)), V_SHIFT);
-				const __m128i vo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, v_factors),
-				                                   _mm_maddubs_epi16(xo4, v_factors)), V_SHIFT);
+				const __m128i vo1 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, v_factors),
+				                                  _mm_maddubs_epi16(xo2, v_factors)),
+				                   V_SHIFT);
+				const __m128i vo2 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, v_factors),
+				                                  _mm_maddubs_epi16(xo4, v_factors)),
+				                   V_SHIFT);
 				vo = _mm_sub_epi8(_mm_packs_epi16(vo1, vo2), vector128);
 			}
 
@@ -690,12 +697,9 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 	}
 }
 
-
-static pstatus_t ssse3_RGBToAVC444YUV_BGRX(
-    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-    BYTE* pDst1[3], const UINT32 dst1Step[3],
-    BYTE* pDst2[3], const UINT32 dst2Step[3],
-    const prim_size_t* roi)
+static pstatus_t ssse3_RGBToAVC444YUV_BGRX(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+                                           BYTE* pDst1[3], const UINT32 dst1Step[3], BYTE* pDst2[3],
+                                           const UINT32 dst2Step[3], const prim_size_t* roi)
 {
 	UINT32 y;
 	const BYTE* pMaxSrc = pSrc + (roi->height - 1) * srcStep;
@@ -704,7 +708,8 @@ static pstatus_t ssse3_RGBToAVC444YUV_BGRX(
 		return !PRIMITIVES_SUCCESS;
 
 	if (roi->width % 16 || (unsigned long)pSrc % 16 || srcStep % 16)
-		return generic->RGBToAVC444YUV(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+		return generic->RGBToAVC444YUV(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step,
+		                               roi);
 
 	for (y = 0; y < roi->height; y += 2)
 	{
@@ -728,20 +733,20 @@ static pstatus_t ssse3_RGBToAVC444YUV_BGRX(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t ssse3_RGBToAVC444YUV(
-    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-    BYTE* pDst1[3], const UINT32 dst1Step[3],
-    BYTE* pDst2[3], const UINT32 dst2Step[3],
-    const prim_size_t* roi)
+static pstatus_t ssse3_RGBToAVC444YUV(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+                                      BYTE* pDst1[3], const UINT32 dst1Step[3], BYTE* pDst2[3],
+                                      const UINT32 dst2Step[3], const prim_size_t* roi)
 {
 	switch (srcFormat)
 	{
 		case PIXEL_FORMAT_BGRX32:
 		case PIXEL_FORMAT_BGRA32:
-			return ssse3_RGBToAVC444YUV_BGRX(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+			return ssse3_RGBToAVC444YUV_BGRX(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2,
+			                                 dst2Step, roi);
 
 		default:
-			return generic->RGBToAVC444YUV(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+			return generic->RGBToAVC444YUV(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2,
+			                               dst2Step, roi);
 	}
 }
 
@@ -759,19 +764,15 @@ static pstatus_t ssse3_RGBToAVC444YUV(
  * b9              -> vChromaDst2
  */
 static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
-    const BYTE* srcEven, const BYTE* srcOdd,
-    BYTE* yLumaDstEven, BYTE* yLumaDstOdd,
-    BYTE* uLumaDst, BYTE* vLumaDst,
-    BYTE* yEvenChromaDst1, BYTE* yEvenChromaDst2,
-    BYTE* yOddChromaDst1, BYTE* yOddChromaDst2,
-    BYTE* uChromaDst1, BYTE* uChromaDst2,
-    BYTE* vChromaDst1, BYTE* vChromaDst2,
-    UINT32 width)
+    const BYTE* srcEven, const BYTE* srcOdd, BYTE* yLumaDstEven, BYTE* yLumaDstOdd, BYTE* uLumaDst,
+    BYTE* vLumaDst, BYTE* yEvenChromaDst1, BYTE* yEvenChromaDst2, BYTE* yOddChromaDst1,
+    BYTE* yOddChromaDst2, BYTE* uChromaDst1, BYTE* uChromaDst2, BYTE* vChromaDst1,
+    BYTE* vChromaDst2, UINT32 width)
 {
 	UINT32 x;
 	const __m128i vector128 = CONST128_FACTORS;
-	const __m128i* argbEven = (const __m128i*) srcEven;
-	const __m128i* argbOdd = (const __m128i*) srcOdd;
+	const __m128i* argbEven = (const __m128i*)srcEven;
+	const __m128i* argbOdd = (const __m128i*)srcOdd;
 
 	for (x = 0; x < width; x += 16)
 	{
@@ -782,17 +783,19 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 		const __m128i xe2 = _mm_load_si128(argbEven++); /* 2nd 4 pixels */
 		const __m128i xe3 = _mm_load_si128(argbEven++); /* 3rd 4 pixels */
 		const __m128i xe4 = _mm_load_si128(argbEven++); /* 4th 4 pixels */
-		const __m128i xo1 = _mm_load_si128(argbOdd++); /* 1st 4 pixels */
-		const __m128i xo2 = _mm_load_si128(argbOdd++); /* 2nd 4 pixels */
-		const __m128i xo3 = _mm_load_si128(argbOdd++); /* 3rd 4 pixels */
-		const __m128i xo4 = _mm_load_si128(argbOdd++); /* 4th 4 pixels */
+		const __m128i xo1 = _mm_load_si128(argbOdd++);  /* 1st 4 pixels */
+		const __m128i xo2 = _mm_load_si128(argbOdd++);  /* 2nd 4 pixels */
+		const __m128i xo3 = _mm_load_si128(argbOdd++);  /* 3rd 4 pixels */
+		const __m128i xo4 = _mm_load_si128(argbOdd++);  /* 4th 4 pixels */
 		{
 			/* Y: multiplications with subtotals and horizontal sums */
 			const __m128i y_factors = BGRX_Y_FACTORS;
 			const __m128i ye1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, y_factors),
-			                                   _mm_maddubs_epi16(xe2, y_factors)), Y_SHIFT);
+			                                                  _mm_maddubs_epi16(xe2, y_factors)),
+			                                   Y_SHIFT);
 			const __m128i ye2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, y_factors),
-			                                   _mm_maddubs_epi16(xe4, y_factors)), Y_SHIFT);
+			                                                  _mm_maddubs_epi16(xe4, y_factors)),
+			                                   Y_SHIFT);
 			const __m128i ye = _mm_packus_epi16(ye1, ye2);
 			/* store y [b1] */
 			_mm_storeu_si128((__m128i*)yLumaDstEven, ye);
@@ -803,9 +806,11 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 		{
 			const __m128i y_factors = BGRX_Y_FACTORS;
 			const __m128i yo1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, y_factors),
-			                                   _mm_maddubs_epi16(xo2, y_factors)), Y_SHIFT);
+			                                                  _mm_maddubs_epi16(xo2, y_factors)),
+			                                   Y_SHIFT);
 			const __m128i yo2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, y_factors),
-			                                   _mm_maddubs_epi16(xo4, y_factors)), Y_SHIFT);
+			                                                  _mm_maddubs_epi16(xo4, y_factors)),
+			                                   Y_SHIFT);
 			const __m128i yo = _mm_packus_epi16(yo1, yo2);
 			_mm_storeu_si128((__m128i*)yLumaDstOdd, yo);
 			yLumaDstOdd += 16;
@@ -813,29 +818,37 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 
 		{
 			/* We have now
-			   * 16 even U values in ue
-			   * 16 odd U values in uo
-			   *
-			   * We need to split these according to
-			   * 3.3.8.3.3 YUV420p Stream Combination for YUV444v2 mode */
+			 * 16 even U values in ue
+			 * 16 odd U values in uo
+			 *
+			 * We need to split these according to
+			 * 3.3.8.3.3 YUV420p Stream Combination for YUV444v2 mode */
 			/* U: multiplications with subtotals and horizontal sums */
 			__m128i ue, uo, uavg;
 			{
 				const __m128i u_factors = BGRX_U_FACTORS;
-				const __m128i ue1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
-				                                   _mm_maddubs_epi16(xe2, u_factors)), U_SHIFT);
-				const __m128i ue2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, u_factors),
-				                                   _mm_maddubs_epi16(xe4, u_factors)), U_SHIFT);
+				const __m128i ue1 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
+				                                  _mm_maddubs_epi16(xe2, u_factors)),
+				                   U_SHIFT);
+				const __m128i ue2 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, u_factors),
+				                                  _mm_maddubs_epi16(xe4, u_factors)),
+				                   U_SHIFT);
 				const __m128i ueavg = _mm_hadd_epi16(ue1, ue2);
 				ue = _mm_sub_epi8(_mm_packs_epi16(ue1, ue2), vector128);
 				uavg = ueavg;
 			}
 			{
 				const __m128i u_factors = BGRX_U_FACTORS;
-				const __m128i uo1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, u_factors),
-				                                   _mm_maddubs_epi16(xo2, u_factors)), U_SHIFT);
-				const __m128i uo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, u_factors),
-				                                   _mm_maddubs_epi16(xo4, u_factors)), U_SHIFT);
+				const __m128i uo1 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, u_factors),
+				                                  _mm_maddubs_epi16(xo2, u_factors)),
+				                   U_SHIFT);
+				const __m128i uo2 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, u_factors),
+				                                  _mm_maddubs_epi16(xo4, u_factors)),
+				                   U_SHIFT);
 				const __m128i uoavg = _mm_hadd_epi16(uo1, uo2);
 				uo = _mm_sub_epi8(_mm_packs_epi16(uo1, uo2), vector128);
 				uavg = _mm_add_epi16(uavg, uoavg);
@@ -899,20 +912,28 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 			__m128i ve, vo, vavg;
 			{
 				const __m128i v_factors = BGRX_V_FACTORS;
-				const __m128i ve1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
-				                                   _mm_maddubs_epi16(xe2, v_factors)), V_SHIFT);
-				const __m128i ve2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, v_factors),
-				                                   _mm_maddubs_epi16(xe4, v_factors)), V_SHIFT);
+				const __m128i ve1 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
+				                                  _mm_maddubs_epi16(xe2, v_factors)),
+				                   V_SHIFT);
+				const __m128i ve2 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, v_factors),
+				                                  _mm_maddubs_epi16(xe4, v_factors)),
+				                   V_SHIFT);
 				const __m128i veavg = _mm_hadd_epi16(ve1, ve2);
 				ve = _mm_sub_epi8(_mm_packs_epi16(ve1, ve2), vector128);
 				vavg = veavg;
 			}
 			{
 				const __m128i v_factors = BGRX_V_FACTORS;
-				const __m128i vo1 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, v_factors),
-				                                   _mm_maddubs_epi16(xo2, v_factors)), V_SHIFT);
-				const __m128i vo2 = _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, v_factors),
-				                                   _mm_maddubs_epi16(xo4, v_factors)), V_SHIFT);
+				const __m128i vo1 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, v_factors),
+				                                  _mm_maddubs_epi16(xo2, v_factors)),
+				                   V_SHIFT);
+				const __m128i vo2 =
+				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, v_factors),
+				                                  _mm_maddubs_epi16(xo4, v_factors)),
+				                   V_SHIFT);
 				const __m128i voavg = _mm_hadd_epi16(vo1, vo2);
 				vo = _mm_sub_epi8(_mm_packs_epi16(vo1, vo2), vector128);
 				vavg = _mm_add_epi16(vavg, voavg);
@@ -973,11 +994,10 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 	}
 }
 
-static pstatus_t ssse3_RGBToAVC444YUVv2_BGRX(
-    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-    BYTE* pDst1[3], const UINT32 dst1Step[3],
-    BYTE* pDst2[3], const UINT32 dst2Step[3],
-    const prim_size_t* roi)
+static pstatus_t ssse3_RGBToAVC444YUVv2_BGRX(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+                                             BYTE* pDst1[3], const UINT32 dst1Step[3],
+                                             BYTE* pDst2[3], const UINT32 dst2Step[3],
+                                             const prim_size_t* roi)
 {
 	UINT32 y;
 
@@ -985,7 +1005,8 @@ static pstatus_t ssse3_RGBToAVC444YUVv2_BGRX(
 		return !PRIMITIVES_SUCCESS;
 
 	if (roi->width % 16 || (unsigned long)pSrc % 16 || srcStep % 16)
-		return generic->RGBToAVC444YUVv2(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+		return generic->RGBToAVC444YUVv2(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step,
+		                                 roi);
 
 	for (y = 0; y < roi->height; y += 2)
 	{
@@ -1003,32 +1024,29 @@ static pstatus_t ssse3_RGBToAVC444YUVv2_BGRX(
 		BYTE* dstChromaV1 = (pDst2[2] + (y / 2) * dst2Step[2]);
 		BYTE* dstChromaU2 = dstChromaU1 + roi->width / 4;
 		BYTE* dstChromaV2 = dstChromaV1 + roi->width / 4;
-		ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(srcEven, srcOdd, dstLumaYEven,
-		                                       dstLumaYOdd, dstLumaU, dstLumaV,
-		                                       dstEvenChromaY1, dstEvenChromaY2,
-		                                       dstOddChromaY1, dstOddChromaY2,
-		                                       dstChromaU1, dstChromaU2,
-		                                       dstChromaV1, dstChromaV2,
-		                                       roi->width);
+		ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(srcEven, srcOdd, dstLumaYEven, dstLumaYOdd, dstLumaU,
+		                                       dstLumaV, dstEvenChromaY1, dstEvenChromaY2,
+		                                       dstOddChromaY1, dstOddChromaY2, dstChromaU1,
+		                                       dstChromaU2, dstChromaV1, dstChromaV2, roi->width);
 	}
 
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t ssse3_RGBToAVC444YUVv2(
-    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-    BYTE* pDst1[3], const UINT32 dst1Step[3],
-    BYTE* pDst2[3], const UINT32 dst2Step[3],
-    const prim_size_t* roi)
+static pstatus_t ssse3_RGBToAVC444YUVv2(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+                                        BYTE* pDst1[3], const UINT32 dst1Step[3], BYTE* pDst2[3],
+                                        const UINT32 dst2Step[3], const prim_size_t* roi)
 {
 	switch (srcFormat)
 	{
 		case PIXEL_FORMAT_BGRX32:
 		case PIXEL_FORMAT_BGRA32:
-			return ssse3_RGBToAVC444YUVv2_BGRX(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+			return ssse3_RGBToAVC444YUVv2_BGRX(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2,
+			                                   dst2Step, roi);
 
 		default:
-			return generic->RGBToAVC444YUVv2(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+			return generic->RGBToAVC444YUVv2(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2,
+			                                 dst2Step, roi);
 	}
 }
 
@@ -1046,18 +1064,12 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep
 	const UINT32 evenY = 0;
 	const UINT32 oddX = 1;
 	const UINT32 evenX = 0;
-	const BYTE* pSrc[3] =
-	{
-		pSrcRaw[0] + roi->top* srcStep[0] + roi->left,
-		pSrcRaw[1] + roi->top / 2 * srcStep[1] + roi->left / 2,
-		pSrcRaw[2] + roi->top / 2 * srcStep[2] + roi->left / 2
-	};
-	BYTE* pDst[3] =
-	{
-		pDstRaw[0] + roi->top* dstStep[0] + roi->left,
-		pDstRaw[1] + roi->top* dstStep[1] + roi->left,
-		pDstRaw[2] + roi->top* dstStep[2] + roi->left
-	};
+	const BYTE* pSrc[3] = { pSrcRaw[0] + roi->top * srcStep[0] + roi->left,
+		                    pSrcRaw[1] + roi->top / 2 * srcStep[1] + roi->left / 2,
+		                    pSrcRaw[2] + roi->top / 2 * srcStep[2] + roi->left / 2 };
+	BYTE* pDst[3] = { pDstRaw[0] + roi->top * dstStep[0] + roi->left,
+		              pDstRaw[1] + roi->top * dstStep[1] + roi->left,
+		              pDstRaw[2] + roi->top * dstStep[2] + roi->left };
 
 	/* Y data is already here... */
 	/* B1 */
@@ -1084,7 +1096,8 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep
 		for (x = 0; x < halfWidth - halfPad; x += 16)
 		{
 			const __m128i unpackHigh = _mm_set_epi8(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0);
-			const __m128i unpackLow = _mm_set_epi8(15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 8, 8);
+			const __m128i unpackLow =
+			    _mm_set_epi8(15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 8, 8);
 			{
 				const __m128i u = _mm_loadu_si128((__m128i*)&Um[x]);
 				const __m128i uHigh = _mm_shuffle_epi8(u, unpackHigh);
@@ -1125,10 +1138,10 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep
 
 static INLINE void ssse3_filter(BYTE* pSrcDst, const BYTE* pSrc2)
 {
-	const __m128i even = _mm_set_epi8(0x80, 14, 0x80, 12, 0x80, 10, 0x80, 8, 0x80, 6, 0x80, 4, 0x80, 2,
-	                                  0x80, 0);
-	const __m128i odd = _mm_set_epi8(0x80, 15, 0x80, 13, 0x80, 11, 0x80, 9, 0x80, 7, 0x80, 5, 0x80, 3,
-	                                 0x80, 1);
+	const __m128i even =
+	    _mm_set_epi8(0x80, 14, 0x80, 12, 0x80, 10, 0x80, 8, 0x80, 6, 0x80, 4, 0x80, 2, 0x80, 0);
+	const __m128i odd =
+	    _mm_set_epi8(0x80, 15, 0x80, 13, 0x80, 11, 0x80, 9, 0x80, 7, 0x80, 5, 0x80, 3, 0x80, 1);
 	const __m128i interleave = _mm_set_epi8(15, 7, 14, 6, 13, 5, 12, 4, 11, 3, 10, 2, 9, 1, 8, 0);
 	const __m128i u = _mm_loadu_si128((__m128i*)pSrcDst);
 	const __m128i u1 = _mm_loadu_si128((__m128i*)pSrc2);
@@ -1145,8 +1158,7 @@ static INLINE void ssse3_filter(BYTE* pSrcDst, const BYTE* pSrc2)
 	_mm_storeu_si128((__m128i*)pSrcDst, interleaved);
 }
 
-static pstatus_t ssse3_ChromaFilter(BYTE* pDst[3], const UINT32 dstStep[3],
-                                    const RECTANGLE_16* roi)
+static pstatus_t ssse3_ChromaFilter(BYTE* pDst[3], const UINT32 dstStep[3], const RECTANGLE_16* roi)
 {
 	const UINT32 oddY = 1;
 	const UINT32 evenY = 0;
@@ -1217,21 +1229,15 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 src
 	/* The auxilary frame is aligned to multiples of 16x16.
 	 * We need the padded height for B4 and B5 conversion. */
 	const UINT32 padHeigth = nHeight + 16 - nHeight % 16;
-	const BYTE* pSrc[3] =
-	{
-		pSrcRaw[0] + roi->top* srcStep[0] + roi->left,
-		pSrcRaw[1] + roi->top / 2 * srcStep[1] + roi->left / 2,
-		pSrcRaw[2] + roi->top / 2 * srcStep[2] + roi->left / 2
-	};
-	BYTE* pDst[3] =
-	{
-		pDstRaw[0] + roi->top* dstStep[0] + roi->left,
-		pDstRaw[1] + roi->top* dstStep[1] + roi->left,
-		pDstRaw[2] + roi->top* dstStep[2] + roi->left
-	};
+	const BYTE* pSrc[3] = { pSrcRaw[0] + roi->top * srcStep[0] + roi->left,
+		                    pSrcRaw[1] + roi->top / 2 * srcStep[1] + roi->left / 2,
+		                    pSrcRaw[2] + roi->top / 2 * srcStep[2] + roi->left / 2 };
+	BYTE* pDst[3] = { pDstRaw[0] + roi->top * dstStep[0] + roi->left,
+		              pDstRaw[1] + roi->top * dstStep[1] + roi->left,
+		              pDstRaw[2] + roi->top * dstStep[2] + roi->left };
 	const __m128i zero = _mm_setzero_si128();
-	const __m128i mask = _mm_set_epi8(0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0,
-	                                  0x80);
+	const __m128i mask =
+	    _mm_set_epi8(0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80);
 
 	/* The second half of U and V is a bit more tricky... */
 	/* B4 and B5 */
@@ -1302,9 +1308,8 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 src
 }
 
 static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep[3],
-                                        UINT32 nTotalWidth, UINT32 nTotalHeight,
-                                        BYTE* pDst[3], const UINT32 dstStep[3],
-                                        const RECTANGLE_16* roi)
+                                        UINT32 nTotalWidth, UINT32 nTotalHeight, BYTE* pDst[3],
+                                        const UINT32 dstStep[3], const RECTANGLE_16* roi)
 {
 	UINT32 x, y;
 	const UINT32 nWidth = roi->right - roi->left;
@@ -1315,14 +1320,14 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcSte
 	const UINT32 quaterWidth = (nWidth + 3) / 4;
 	const UINT32 quaterPad = quaterWidth % 16;
 	const __m128i zero = _mm_setzero_si128();
-	const __m128i mask = _mm_set_epi8(0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0,
-	                                  0x80, 0);
-	const __m128i mask2 = _mm_set_epi8(0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0,
-	                                   0x80);
-	const __m128i shuffle1 = _mm_set_epi8(0x80, 15, 0x80, 14, 0x80, 13, 0x80, 12, 0x80, 11, 0x80, 10,
-	                                      0x80, 9, 0x80, 8);
-	const __m128i shuffle2 = _mm_set_epi8(0x80, 7, 0x80, 6, 0x80, 5, 0x80, 4, 0x80, 3, 0x80, 2, 0x80, 1,
-	                                      0x80, 0);
+	const __m128i mask =
+	    _mm_set_epi8(0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0);
+	const __m128i mask2 =
+	    _mm_set_epi8(0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80);
+	const __m128i shuffle1 =
+	    _mm_set_epi8(0x80, 15, 0x80, 14, 0x80, 13, 0x80, 12, 0x80, 11, 0x80, 10, 0x80, 9, 0x80, 8);
+	const __m128i shuffle2 =
+	    _mm_set_epi8(0x80, 7, 0x80, 6, 0x80, 5, 0x80, 4, 0x80, 3, 0x80, 2, 0x80, 1, 0x80, 0);
 
 	/* B4 and B5: odd UV values for width/2, height */
 	for (y = 0; y < nHeight; y++)
@@ -1413,12 +1418,10 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcSte
 	return ssse3_ChromaFilter(pDst, dstStep, roi);
 }
 
-static pstatus_t ssse3_YUV420CombineToYUV444(
-    avc444_frame_type type,
-    const BYTE* pSrc[3], const UINT32 srcStep[3],
-    UINT32 nWidth, UINT32 nHeight,
-    BYTE* pDst[3], const UINT32 dstStep[3],
-    const RECTANGLE_16* roi)
+static pstatus_t ssse3_YUV420CombineToYUV444(avc444_frame_type type, const BYTE* pSrc[3],
+                                             const UINT32 srcStep[3], UINT32 nWidth, UINT32 nHeight,
+                                             BYTE* pDst[3], const UINT32 dstStep[3],
+                                             const RECTANGLE_16* roi)
 {
 	if (!pSrc || !pSrc[0] || !pSrc[1] || !pSrc[2])
 		return -1;
@@ -1450,8 +1453,8 @@ void primitives_init_YUV_opt(primitives_t* prims)
 	generic = primitives_get_generic();
 	primitives_init_YUV(prims);
 
-	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3)
-	    && IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
+	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3) &&
+	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->RGBToYUV420_8u_P3AC4R = ssse3_RGBToYUV420;
 		prims->RGBToAVC444YUV = ssse3_RGBToAVC444YUV;

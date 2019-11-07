@@ -51,17 +51,16 @@ static void pf_channels_wait_for_server_dynvc(pServerContext* ps)
 	WLog_DBG(TAG, "pf_channels_wait_for_server_dynvc(): server's drdynvc is ready!");
 }
 
-void pf_OnChannelConnectedEventHandler(void* data,
-                                       ChannelConnectedEventArgs* e)
+void pf_OnChannelConnectedEventHandler(void* data, ChannelConnectedEventArgs* e)
 {
-	pClientContext* pc = (pClientContext*) data;
+	pClientContext* pc = (pClientContext*)data;
 	pServerContext* ps = pc->pdata->ps;
 
 	WLog_INFO(TAG, "Channel connected: %s", e->name);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
-		pc->rdpei = (RdpeiClientContext*) e->pInterface;
+		pc->rdpei = (RdpeiClientContext*)e->pInterface;
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
@@ -73,7 +72,7 @@ void pf_OnChannelConnectedEventHandler(void* data,
 			return;
 		}
 
-		pc->gfx_proxy = (RdpgfxClientContext*) e->pInterface;
+		pc->gfx_proxy = (RdpgfxClientContext*)e->pInterface;
 		pf_rdpgfx_pipeline_init(pc->gfx_proxy, ps->gfx, pc->pdata);
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
@@ -110,7 +109,7 @@ void pf_OnChannelConnectedEventHandler(void* data,
 			return;
 		}
 
-		pc->cliprdr = (CliprdrClientContext*) e->pInterface;
+		pc->cliprdr = (CliprdrClientContext*)e->pInterface;
 		pf_cliprdr_register_callbacks(pc->cliprdr, ps->cliprdr, pc->pdata);
 	}
 	else if (strcmp(e->name, "rdpsnd") == 0)
@@ -127,11 +126,10 @@ void pf_OnChannelConnectedEventHandler(void* data,
 	}
 }
 
-void pf_OnChannelDisconnectedEventHandler(void* data,
-        ChannelDisconnectedEventArgs* e)
+void pf_OnChannelDisconnectedEventHandler(void* data, ChannelDisconnectedEventArgs* e)
 {
-	rdpContext* context = (rdpContext*) data;
-	pClientContext* pc = (pClientContext*) context;
+	rdpContext* context = (rdpContext*)data;
+	pClientContext* pc = (pClientContext*)context;
 	pServerContext* ps = pc->pdata->ps;
 
 	WLog_INFO(TAG, "Channel disconnected: %s", e->name);
@@ -175,8 +173,8 @@ void pf_OnChannelDisconnectedEventHandler(void* data,
 
 BOOL pf_server_channels_init(pServerContext* ps)
 {
-	rdpContext* context = (rdpContext*) ps;
-	rdpContext* client = (rdpContext*) ps->pdata->pc;
+	rdpContext* context = (rdpContext*)ps;
+	rdpContext* client = (rdpContext*)ps->pdata->pc;
 	proxyConfig* config = ps->pdata->config;
 
 	if (context->settings->SupportGraphicsPipeline && config->GFX)
@@ -191,7 +189,8 @@ BOOL pf_server_channels_init(pServerContext* ps)
 			return FALSE;
 	}
 
-	if (config->Clipboard && WTSVirtualChannelManagerIsChannelJoined(ps->vcm, CLIPRDR_SVC_CHANNEL_NAME))
+	if (config->Clipboard &&
+	    WTSVirtualChannelManagerIsChannelJoined(ps->vcm, CLIPRDR_SVC_CHANNEL_NAME))
 	{
 		client->settings->RedirectClipboard = TRUE;
 
@@ -234,5 +233,5 @@ void pf_server_channels_free(pServerContext* ps)
 		ps->rdpsnd = NULL;
 	}
 
-	pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_FREE, (rdpContext*) ps);
+	pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_FREE, (rdpContext*)ps);
 }

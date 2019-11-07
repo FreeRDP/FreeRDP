@@ -31,12 +31,12 @@
 
 #ifdef _WIN32
 static INIT_ONCE init_once_module = INIT_ONCE_STATIC_INIT;
-static PTP_POOL (WINAPI * pCreateThreadpool)(PVOID reserved);
-static VOID (WINAPI * pCloseThreadpool)(PTP_POOL ptpp);
-static BOOL (WINAPI * pSetThreadpoolThreadMinimum)(PTP_POOL ptpp, DWORD cthrdMic);
-static VOID (WINAPI * pSetThreadpoolThreadMaximum)(PTP_POOL ptpp, DWORD cthrdMost);
+static PTP_POOL(WINAPI* pCreateThreadpool)(PVOID reserved);
+static VOID(WINAPI* pCloseThreadpool)(PTP_POOL ptpp);
+static BOOL(WINAPI* pSetThreadpoolThreadMinimum)(PTP_POOL ptpp, DWORD cthrdMic);
+static VOID(WINAPI* pSetThreadpoolThreadMaximum)(PTP_POOL ptpp, DWORD cthrdMost);
 
-static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID *context)
+static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	HMODULE kernel32 = LoadLibraryA("kernel32.dll");
 	if (kernel32)
@@ -50,8 +50,7 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID *context)
 }
 #endif
 
-static TP_POOL DEFAULT_POOL =
-{
+static TP_POOL DEFAULT_POOL = {
 	0,    /* DWORD Minimum */
 	500,  /* DWORD Maximum */
 	NULL, /* wArrayList* Threads */
@@ -68,7 +67,7 @@ static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 	HANDLE events[2];
 	PTP_CALLBACK_INSTANCE callbackInstance;
 
-	pool = (PTP_POOL) arg;
+	pool = (PTP_POOL)arg;
 
 	events[0] = pool->TerminateEvent;
 	events[1] = Queue_Event(pool->PendingQueue);
@@ -83,7 +82,7 @@ static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 		if (status != (WAIT_OBJECT_0 + 1))
 			break;
 
-		callbackInstance = (PTP_CALLBACK_INSTANCE) Queue_Dequeue(pool->PendingQueue);
+		callbackInstance = (PTP_CALLBACK_INSTANCE)Queue_Dequeue(pool->PendingQueue);
 
 		if (callbackInstance)
 		{
@@ -98,7 +97,7 @@ static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 	return 0;
 }
 
-static void threads_close(void *thread)
+static void threads_close(void* thread)
 {
 	WaitForSingleObject(thread, INFINITE);
 	CloseHandle(thread);
@@ -131,9 +130,7 @@ static BOOL InitializeThreadpool(PTP_POOL pool)
 
 	for (index = 0; index < 4; index++)
 	{
-		if (!(thread = CreateThread(NULL, 0,
-					thread_pool_work_func,
-					(void*) pool, 0, NULL)))
+		if (!(thread = CreateThread(NULL, 0, thread_pool_work_func, (void*)pool, 0, NULL)))
 		{
 			goto fail_create_threads;
 		}
@@ -182,7 +179,7 @@ PTP_POOL winpr_CreateThreadpool(PVOID reserved)
 	if (pCreateThreadpool)
 		return pCreateThreadpool(reserved);
 #endif
-	if (!(pool = (PTP_POOL) calloc(1, sizeof(TP_POOL))))
+	if (!(pool = (PTP_POOL)calloc(1, sizeof(TP_POOL))))
 		return NULL;
 
 	if (!InitializeThreadpool(pool))
@@ -236,9 +233,7 @@ BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 
 	while (ArrayList_Count(ptpp->Threads) < (INT64)ptpp->Minimum)
 	{
-		if (!(thread = CreateThread(NULL, 0,
-				thread_pool_work_func,
-				(void*) ptpp, 0, NULL)))
+		if (!(thread = CreateThread(NULL, 0, thread_pool_work_func, (void*)ptpp, 0, NULL)))
 		{
 			return FALSE;
 		}

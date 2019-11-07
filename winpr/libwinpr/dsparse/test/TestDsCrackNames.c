@@ -5,7 +5,7 @@
 #include <winpr/tchar.h>
 #include <winpr/dsparse.h>
 
-//LPCTSTR testName = _T("LAB1\\JohnDoe");
+// LPCTSTR testName = _T("LAB1\\JohnDoe");
 
 int TestDsCrackNames(int argc, char* argv[])
 {
@@ -47,4 +47,3 @@ int TestDsCrackNames(int argc, char* argv[])
 
 	return 0;
 }
-

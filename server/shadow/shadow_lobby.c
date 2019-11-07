@@ -43,7 +43,8 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 		return FALSE;
 	}
 
-	if (!(surface = rdtk_surface_new(engine, lobby->data, lobby->width, lobby->height, lobby->scanline)))
+	if (!(surface =
+	          rdtk_surface_new(engine, lobby->data, lobby->width, lobby->height, lobby->scanline)))
 	{
 		rdtk_engine_free(engine);
 		return FALSE;
@@ -63,9 +64,10 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 	height = invalidRect.bottom - invalidRect.top;
 	rdtk_surface_fill(surface, invalidRect.left, invalidRect.top, width, height, 0x3BB9FF);
 
-	rdtk_label_draw(surface, invalidRect.left, invalidRect.top, width, height, NULL, "Welcome", 0, 0);
-	//rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button");
-	//rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field");
+	rdtk_label_draw(surface, invalidRect.left, invalidRect.top, width, height, NULL, "Welcome", 0,
+	                0);
+	// rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button");
+	// rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field");
 
 	rdtk_surface_free(surface);
 

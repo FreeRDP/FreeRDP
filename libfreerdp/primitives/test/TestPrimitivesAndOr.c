@@ -19,14 +19,13 @@
 
 #include "prim_test.h"
 
-#define FUNC_TEST_SIZE	65536
+#define FUNC_TEST_SIZE 65536
 
 #define VALUE (0xA5A5A5A5U)
 
 /* ========================================================================= */
-static BOOL test_and_32u_impl(const char* name, __andC_32u_t fkt,
-			      const UINT32* src, const UINT32 val,
-			      UINT32* dst, size_t size)
+static BOOL test_and_32u_impl(const char* name, __andC_32u_t fkt, const UINT32* src,
+                              const UINT32 val, UINT32* dst, size_t size)
 {
 	size_t i;
 	pstatus_t status = fkt(src, val, dst, size);
@@ -38,8 +37,9 @@ static BOOL test_and_32u_impl(const char* name, __andC_32u_t fkt,
 		if (dst[i] != (src[i] & val))
 		{
 
-			printf("AND %s FAIL[%"PRIuz"] 0x%08"PRIx32"&0x%08"PRIx32"=0x%08"PRIx32", got 0x%08"PRIx32"\n",
-				name, i, src[i], val, (src[i] & val), dst[i]);
+			printf("AND %s FAIL[%" PRIuz "] 0x%08" PRIx32 "&0x%08" PRIx32 "=0x%08" PRIx32
+			       ", got 0x%08" PRIx32 "\n",
+			       name, i, src[i], val, (src[i] & val), dst[i]);
 
 			return FALSE;
 		}
@@ -54,17 +54,17 @@ static BOOL test_and_32u_func(void)
 
 	winpr_RAND((BYTE*)src, sizeof(src));
 
-	if (!test_and_32u_impl("generic->andC_32u aligned", generic->andC_32u,
-			       src + 1, VALUE, dst + 1, FUNC_TEST_SIZE))
+	if (!test_and_32u_impl("generic->andC_32u aligned", generic->andC_32u, src + 1, VALUE, dst + 1,
+	                       FUNC_TEST_SIZE))
 		return FALSE;
-	if (!test_and_32u_impl("generic->andC_32u unaligned", generic->andC_32u,
-			       src + 1, VALUE, dst + 2, FUNC_TEST_SIZE))
+	if (!test_and_32u_impl("generic->andC_32u unaligned", generic->andC_32u, src + 1, VALUE,
+	                       dst + 2, FUNC_TEST_SIZE))
 		return FALSE;
-	if (!test_and_32u_impl("optimized->andC_32u aligned", optimized->andC_32u,
-			       src + 1, VALUE, dst + 1, FUNC_TEST_SIZE))
+	if (!test_and_32u_impl("optimized->andC_32u aligned", optimized->andC_32u, src + 1, VALUE,
+	                       dst + 1, FUNC_TEST_SIZE))
 		return FALSE;
-	if (!test_and_32u_impl("optimized->andC_32u unaligned", optimized->andC_32u,
-			       src + 1, VALUE, dst + 2, FUNC_TEST_SIZE))
+	if (!test_and_32u_impl("optimized->andC_32u unaligned", optimized->andC_32u, src + 1, VALUE,
+	                       dst + 2, FUNC_TEST_SIZE))
 		return FALSE;
 
 	return TRUE;
@@ -77,15 +77,11 @@ static BOOL test_and_32u_speed(void)
 
 	winpr_RAND((BYTE*)src, sizeof(src));
 
-	if (!speed_test("andC_32u", "aligned", g_Iterations,
-			(speed_test_fkt)generic->andC_32u,
-			(speed_test_fkt)optimized->andC_32u,
-			src + 1, VALUE, dst + 1, MAX_TEST_SIZE))
+	if (!speed_test("andC_32u", "aligned", g_Iterations, (speed_test_fkt)generic->andC_32u,
+	                (speed_test_fkt)optimized->andC_32u, src + 1, VALUE, dst + 1, MAX_TEST_SIZE))
 		return FALSE;
-	if (!speed_test("andC_32u", "unaligned", g_Iterations,
-			(speed_test_fkt)generic->andC_32u,
-			(speed_test_fkt)optimized->andC_32u,
-			src + 1, VALUE, dst + 2, MAX_TEST_SIZE))
+	if (!speed_test("andC_32u", "unaligned", g_Iterations, (speed_test_fkt)generic->andC_32u,
+	                (speed_test_fkt)optimized->andC_32u, src + 1, VALUE, dst + 2, MAX_TEST_SIZE))
 		return FALSE;
 
 	return TRUE;
@@ -100,7 +96,8 @@ static BOOL check(const UINT32* src, const UINT32* dst, UINT32 size, UINT32 valu
 	{
 		if (dst[i] != (src[i] | value))
 		{
-			printf("OR-general general FAIL[%"PRIu32"] 0x%08"PRIx32"&0x%08"PRIx32"=0x%08"PRIx32", got 0x%08"PRIx32"\n",
+			printf("OR-general general FAIL[%" PRIu32 "] 0x%08" PRIx32 "&0x%08" PRIx32
+			       "=0x%08" PRIx32 ", got 0x%08" PRIx32 "\n",
 			       i, src[i], value, src[i] | value, dst[i]);
 			return FALSE;
 		}
@@ -141,10 +138,8 @@ static BOOL test_or_32u_speed(void)
 	testStr[0] = '\0';
 	winpr_RAND((BYTE*)src, sizeof(src));
 
-	if (!speed_test("add16s", "aligned", g_Iterations,
-			(speed_test_fkt)generic->orC_32u,
-			(speed_test_fkt)optimized->orC_32u,
-			src + 1, VALUE, dst + 1, FUNC_TEST_SIZE))
+	if (!speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->orC_32u,
+	                (speed_test_fkt)optimized->orC_32u, src + 1, VALUE, dst + 1, FUNC_TEST_SIZE))
 		return FALSE;
 
 	return TRUE;

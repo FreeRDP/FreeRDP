@@ -51,9 +51,9 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 	 * ASIC line       'ab..cd'
 	 * zero terminator '\0'
 	 */
-	const size_t blen = ((size_t)maxlen + 3) + (WINPR_HEXDUMP_LINE_LENGTH * 3) + 3 + WINPR_HEXDUMP_LINE_LENGTH + 1;
+	const size_t blen =
+	    ((size_t)maxlen + 3) + (WINPR_HEXDUMP_LINE_LENGTH * 3) + 3 + WINPR_HEXDUMP_LINE_LENGTH + 1;
 	size_t pos = 0;
-
 
 	char* buffer;
 
@@ -64,14 +64,14 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 
 	if (!buffer)
 	{
-		WLog_Print(log, WLOG_ERROR, "malloc(%"PRIuz") failed with [%"PRIuz"] %s", blen, errno,
+		WLog_Print(log, WLOG_ERROR, "malloc(%" PRIuz ") failed with [%" PRIuz "] %s", blen, errno,
 		           strerror(errno));
 		return;
 	}
 
 	while (offset < length)
 	{
-		int rc = trio_snprintf(&buffer[pos], blen - pos, "%04"PRIuz" ", offset);
+		int rc = trio_snprintf(&buffer[pos], blen - pos, "%04" PRIuz " ", offset);
 
 		if (rc < 0)
 			goto fail;
@@ -84,7 +84,7 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 
 		for (i = 0; i < line; i++)
 		{
-			rc = trio_snprintf(&buffer[pos], blen - pos, "%02"PRIx8" ", p[i]);
+			rc = trio_snprintf(&buffer[pos], blen - pos, "%02" PRIx8 " ", p[i]);
 
 			if (rc < 0)
 				goto fail;
@@ -105,7 +105,7 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 		for (i = 0; i < line; i++)
 		{
 			rc = trio_snprintf(&buffer[pos], blen - pos, "%c",
-			                   (p[i] >= 0x20 && p[i] < 0x7F) ? (char) p[i] : '.');
+			                   (p[i] >= 0x20 && p[i] < 0x7F) ? (char)p[i] : '.');
 
 			if (rc < 0)
 				goto fail;
@@ -119,7 +119,7 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 		pos = 0;
 	}
 
-	WLog_Print(log, lvl, "[length=%"PRIuz"] ", length);
+	WLog_Print(log, lvl, "[length=%" PRIuz "] ", length);
 fail:
 	free(buffer);
 }
@@ -134,7 +134,7 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const BYTE* data, int lengt
 
 	if (!buffer)
 	{
-		WLog_ERR(tag, "malloc(%"PRIuz") failed with [%d] %s", llen, errno, strerror(errno));
+		WLog_ERR(tag, "malloc(%" PRIuz ") failed with [%d] %s", llen, errno, strerror(errno));
 		return;
 	}
 
@@ -148,7 +148,7 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const BYTE* data, int lengt
 		pos = 0;
 
 		for (i = 0; i < line; i++)
-			pos += trio_snprintf(&buffer[pos], llen - pos, "\\x%02"PRIX8"", p[i]);
+			pos += trio_snprintf(&buffer[pos], llen - pos, "\\x%02" PRIX8 "", p[i]);
 
 		WLog_LVL(tag, level, "%s", buffer);
 		offset += line;
@@ -166,7 +166,7 @@ char* winpr_BinToHexString(const BYTE* data, int length, BOOL space)
 	int ln, hn;
 	char bin2hex[] = "0123456789ABCDEF";
 	n = space ? 3 : 2;
-	p = (char*) malloc((length + 1) * n);
+	p = (char*)malloc((length + 1) * n);
 
 	if (!p)
 		return NULL;

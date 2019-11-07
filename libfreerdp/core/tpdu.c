@@ -34,7 +34,8 @@
  * TPDUs are defined in:
  *
  * http://www.itu.int/rec/T-REC-X.224-199511-I/
- * X.224: Information technology - Open Systems Interconnection - Protocol for providing the connection-mode transport service
+ * X.224: Information technology - Open Systems Interconnection - Protocol for providing the
+ * connection-mode transport service
  *
  * RDP uses only TPDUs of class 0, the "simple class" defined in section 8 of X.224
  *
@@ -76,7 +77,7 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li)
 	if (Stream_GetRemainingLength(s) < 3)
 		return FALSE;
 
-	Stream_Read_UINT8(s, *li); /* LI */
+	Stream_Read_UINT8(s, *li);   /* LI */
 	Stream_Read_UINT8(s, *code); /* Code */
 
 	if (*code == X224_TPDU_DATA)
@@ -105,7 +106,7 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li)
 void tpdu_write_header(wStream* s, UINT16 length, BYTE code)
 {
 	Stream_Write_UINT8(s, length); /* LI */
-	Stream_Write_UINT8(s, code); /* code */
+	Stream_Write_UINT8(s, code);   /* code */
 
 	if (code == X224_TPDU_DATA)
 	{
@@ -115,7 +116,7 @@ void tpdu_write_header(wStream* s, UINT16 length, BYTE code)
 	{
 		Stream_Write_UINT16(s, 0); /* DST-REF */
 		Stream_Write_UINT16(s, 0); /* SRC-REF */
-		Stream_Write_UINT8(s, 0); /* Class 0 */
+		Stream_Write_UINT8(s, 0);  /* Class 0 */
 	}
 }
 
@@ -134,7 +135,7 @@ BOOL tpdu_read_connection_request(wStream* s, BYTE* li)
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
 	{
-		WLog_ERR(TAG,  "Error: expected X224_TPDU_CONNECTION_REQUEST");
+		WLog_ERR(TAG, "Error: expected X224_TPDU_CONNECTION_REQUEST");
 		return FALSE;
 	}
 
@@ -172,7 +173,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
 	{
-		WLog_ERR(TAG,  "Error: expected X224_TPDU_CONNECTION_CONFIRM");
+		WLog_ERR(TAG, "Error: expected X224_TPDU_CONNECTION_CONFIRM");
 		return FALSE;
 	}
 	/*
@@ -184,7 +185,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 	 */
 	bytes_read = (Stream_GetPosition(s) - position) - 1;
 
-	return (Stream_GetRemainingLength(s) >= (size_t) (*li - bytes_read));
+	return (Stream_GetRemainingLength(s) >= (size_t)(*li - bytes_read));
 }
 
 /**

@@ -32,9 +32,10 @@
 
 #define CONFIG_PRINT_SECTION(section) WLog_INFO(TAG, "\t%s:", section)
 #define CONFIG_PRINT_STR(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, config->key)
-#define CONFIG_PRINT_BOOL(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, config->key ? "TRUE" : "FALSE")
-#define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu16"", #key, config->key)
-#define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %"PRIu32"", #key, config->key)
+#define CONFIG_PRINT_BOOL(config, key) \
+	WLog_INFO(TAG, "\t\t%s: %s", #key, config->key ? "TRUE" : "FALSE")
+#define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu16 "", #key, config->key)
+#define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu32 "", #key, config->key)
 
 BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, UINT16* result)
 {
@@ -47,7 +48,7 @@ BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, U
 		return FALSE;
 	}
 
-	*result = (UINT16) val;
+	*result = (UINT16)val;
 	return TRUE;
 }
 
@@ -62,7 +63,7 @@ BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char* key, U
 		return FALSE;
 	}
 
-	*result = (UINT32) val;
+	*result = (UINT32)val;
 	return TRUE;
 }
 
@@ -74,7 +75,8 @@ BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* key)
 	str_value = IniFile_GetKeyValueString(ini, section, key);
 	if (!str_value)
 	{
-		WLog_WARN(TAG, "[%s]: key '%s.%s' not found, value defaults to false.", __FUNCTION__, key, section);
+		WLog_WARN(TAG, "[%s]: key '%s.%s' not found, value defaults to false.", __FUNCTION__, key,
+		          section);
 		return FALSE;
 	}
 
@@ -120,7 +122,7 @@ static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
 
 	if (!config->Host)
 		return FALSE;
-	
+
 	return TRUE;
 }
 
@@ -199,7 +201,8 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 
 		if (!pf_modules_register_new(path, module_name))
 		{
-			WLog_ERR(TAG, "pf_config_load_modules(): failed to register %s (%s)", module_name, path);
+			WLog_ERR(TAG, "pf_config_load_modules(): failed to register %s (%s)", module_name,
+			         path);
 			continue;
 		}
 

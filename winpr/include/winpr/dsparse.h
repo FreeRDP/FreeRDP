@@ -35,7 +35,7 @@
 #include <winpr/error.h>
 
 typedef enum
-{ 
+{
 	DS_NAME_NO_FLAGS = 0x0,
 	DS_NAME_FLAG_SYNTACTICAL_ONLY = 0x1,
 	DS_NAME_FLAG_EVAL_AT_DC = 0x2,
@@ -44,7 +44,7 @@ typedef enum
 } DS_NAME_FLAGS;
 
 typedef enum
-{ 
+{
 	DS_UNKNOWN_NAME = 0,
 	DS_FQDN_1779_NAME = 1,
 	DS_NT4_ACCOUNT_NAME = 2,
@@ -59,7 +59,7 @@ typedef enum
 } DS_NAME_FORMAT;
 
 typedef enum
-{ 
+{
 	DS_NAME_NO_ERROR = 0,
 	DS_NAME_ERROR_RESOLVING = 1,
 	DS_NAME_ERROR_NOT_FOUND = 2,
@@ -94,35 +94,40 @@ typedef struct
 } DS_NAME_RESULT, *PDS_NAME_RESULT;
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-WINPR_API DWORD DsCrackSpnW(LPCWSTR pszSpn, DWORD* pcServiceClass, LPWSTR ServiceClass, DWORD* pcServiceName,
-		LPWSTR ServiceName, DWORD* pcInstanceName, LPWSTR InstanceName, USHORT* pInstancePort);
+	WINPR_API DWORD DsCrackSpnW(LPCWSTR pszSpn, DWORD* pcServiceClass, LPWSTR ServiceClass,
+	                            DWORD* pcServiceName, LPWSTR ServiceName, DWORD* pcInstanceName,
+	                            LPWSTR InstanceName, USHORT* pInstancePort);
 
-WINPR_API DWORD DsCrackSpnA(LPCSTR pszSpn, LPDWORD pcServiceClass, LPSTR ServiceClass, LPDWORD pcServiceName,
-		LPSTR ServiceName, LPDWORD pcInstanceName, LPSTR InstanceName, USHORT* pInstancePort);
+	WINPR_API DWORD DsCrackSpnA(LPCSTR pszSpn, LPDWORD pcServiceClass, LPSTR ServiceClass,
+	                            LPDWORD pcServiceName, LPSTR ServiceName, LPDWORD pcInstanceName,
+	                            LPSTR InstanceName, USHORT* pInstancePort);
 
 #ifdef UNICODE
-#define DsCrackSpn	DsCrackSpnW
+#define DsCrackSpn DsCrackSpnW
 #else
-#define DsCrackSpn	DsCrackSpnA
+#define DsCrackSpn DsCrackSpnA
 #endif
 
-WINPR_API DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName,
-		USHORT InstancePort, LPCWSTR Referrer, DWORD* pcSpnLength, LPWSTR pszSpn);
+	WINPR_API DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName,
+	                           USHORT InstancePort, LPCWSTR Referrer, DWORD* pcSpnLength,
+	                           LPWSTR pszSpn);
 
-WINPR_API DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName,
-		USHORT InstancePort, LPCSTR Referrer, DWORD* pcSpnLength, LPSTR pszSpn);
+	WINPR_API DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName,
+	                           USHORT InstancePort, LPCSTR Referrer, DWORD* pcSpnLength,
+	                           LPSTR pszSpn);
 
 #ifdef __cplusplus
 }
 #endif
 
 #ifdef UNICODE
-#define DsMakeSpn	DsMakeSpnW
+#define DsMakeSpn DsMakeSpnW
 #else
-#define DsMakeSpn	DsMakeSpnA
+#define DsMakeSpn DsMakeSpnA
 #endif
 
 #endif

@@ -24,7 +24,7 @@
 
 #include "../sspi.h"
 
-#define NTLM_OID            "1.3.6.1.4.1.311.2.2.10"
+#define NTLM_OID "1.3.6.1.4.1.311.2.2.10"
 
 enum _NEGOTIATE_STATE
 {
@@ -51,4 +51,3 @@ struct _NEGOTIATE_CONTEXT
 typedef struct _NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT;
 
 #endif /* WINPR_SSPI_NEGOTIATE_PRIVATE_H */
-

@@ -34,15 +34,8 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 	UINT32 i, x;
 	const UINT32 srcStride = width * 4;
 	const UINT32 size = srcStride * height;
-	const UINT32 formats[] =
-	{
-		PIXEL_FORMAT_ARGB32,
-		PIXEL_FORMAT_ABGR32,
-		PIXEL_FORMAT_RGBA32,
-		PIXEL_FORMAT_RGBX32,
-		PIXEL_FORMAT_BGRA32,
-		PIXEL_FORMAT_BGRX32
-	};
+	const UINT32 formats[] = { PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_RGBA32,
+		                       PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
 	PROFILER_DEFINE(genericProf)
 	PROFILER_DEFINE(optProf)
 	in = _aligned_malloc(size, 16);
@@ -62,18 +55,16 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		PROFILER_CREATE(genericProf, "YCoCgRToRGB_8u_AC4R-GENERIC")
 		PROFILER_CREATE(optProf, "YCoCgRToRGB_8u_AC4R-OPT")
 		PROFILER_ENTER(genericProf)
-		status = generic->YCoCgToRGB_8u_AC4R(
-		             in, srcStride,
-		             out_c, format, dstStride, width, height, 2, TRUE);
+		status = generic->YCoCgToRGB_8u_AC4R(in, srcStride, out_c, format, dstStride, width, height,
+		                                     2, TRUE);
 		PROFILER_EXIT(genericProf)
 
 		if (status != PRIMITIVES_SUCCESS)
 			goto loop_fail;
 
 		PROFILER_ENTER(optProf)
-		status = optimized->YCoCgToRGB_8u_AC4R(
-		             in, srcStride,
-		             out_sse, format, dstStride, width, height, 2, TRUE);
+		status = optimized->YCoCgToRGB_8u_AC4R(in, srcStride, out_sse, format, dstStride, width,
+		                                       height, 2, TRUE);
 		PROFILER_EXIT(optProf)
 
 		if (status != PRIMITIVES_SUCCESS)
@@ -88,14 +79,16 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 
 				if (c != sse)
 				{
-					printf("optimized->YCoCgRToRGB FAIL[%s] [%"PRIu32"]: 0x%08"PRIx32" -> C 0x%08"PRIx32" vs optimized 0x%08"PRIx32"\n",
+					printf("optimized->YCoCgRToRGB FAIL[%s] [%" PRIu32 "]: 0x%08" PRIx32
+					       " -> C 0x%08" PRIx32 " vs optimized 0x%08" PRIx32 "\n",
 					       formatName, i, in[i + 1], c, sse);
 					status = -1;
 				}
 			}
 		}
 
-		printf("--------------------------- [%s] [%"PRIu32"x%"PRIu32"] ---------------------------\n",
+		printf("--------------------------- [%s] [%" PRIu32 "x%" PRIu32
+		       "] ---------------------------\n",
 		       formatName, width, height);
 		PROFILER_PRINT_HEADER
 		PROFILER_PRINT(genericProf)
@@ -133,15 +126,13 @@ int TestPrimitivesYCoCg(int argc, char* argv[])
 			{
 				winpr_RAND((BYTE*)&w, sizeof(w));
 				w %= 2048;
-			}
-			while (w < 16);
+			} while (w < 16);
 
 			do
 			{
 				winpr_RAND((BYTE*)&h, sizeof(h));
 				h %= 2048;
-			}
-			while (h < 16);
+			} while (h < 16);
 
 			if (!test_YCoCgRToRGB_8u_AC4R_func(w, h))
 				return 1;

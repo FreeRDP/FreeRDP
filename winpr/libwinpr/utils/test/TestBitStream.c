@@ -60,20 +60,20 @@ int TestBitStream(int argc, char* argv[])
 		return 1;
 	BitStream_Attach(bs, buffer, sizeof(buffer));
 	BitStream_Write_Bits(bs, 0xAF, 8); /* 11110101 */
-	BitStream_Write_Bits(bs, 0xF, 4); /* 1111 */
-	BitStream_Write_Bits(bs, 0xA, 4); /* 0101 */
+	BitStream_Write_Bits(bs, 0xF, 4);  /* 1111 */
+	BitStream_Write_Bits(bs, 0xA, 4);  /* 0101 */
 	BitStream_Flush(bs);
 	BitDump(__FUNCTION__, WLOG_INFO, buffer, bs->position, BITDUMP_MSB_FIRST);
-	BitStream_Write_Bits(bs, 3, 2); /* 11 */
-	BitStream_Write_Bits(bs, 0, 3); /* 000 */
+	BitStream_Write_Bits(bs, 3, 2);    /* 11 */
+	BitStream_Write_Bits(bs, 0, 3);    /* 000 */
 	BitStream_Write_Bits(bs, 0x2D, 6); /* 101101 */
 	BitStream_Write_Bits(bs, 0x19, 5); /* 11001 */
-	//BitStream_Flush(bs); /* flush should be done automatically here (32 bits written) */
+	// BitStream_Flush(bs); /* flush should be done automatically here (32 bits written) */
 	BitDump(__FUNCTION__, WLOG_INFO, buffer, bs->position, BITDUMP_MSB_FIRST);
 	BitStream_Write_Bits(bs, 3, 2); /* 11 */
 	BitStream_Flush(bs);
 	BitDump(__FUNCTION__, WLOG_INFO, buffer, bs->position, BITDUMP_MSB_FIRST);
-	BitStream_Write_Bits(bs, 00, 2); /* 00 */
+	BitStream_Write_Bits(bs, 00, 2);  /* 00 */
 	BitStream_Write_Bits(bs, 0xF, 4); /* 1111 */
 	BitStream_Write_Bits(bs, 0, 20);
 	BitStream_Write_Bits(bs, 0xAFF, 12); /* 111111110101 */
@@ -82,4 +82,3 @@ int TestBitStream(int argc, char* argv[])
 	BitStream_Free(bs);
 	return 0;
 }
-

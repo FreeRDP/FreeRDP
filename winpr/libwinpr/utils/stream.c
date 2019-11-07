@@ -41,21 +41,19 @@ BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 		do
 		{
 			new_capacity *= 2;
-		}
-		while (new_capacity < size);
-
+		} while (new_capacity < size);
 
 		position = Stream_GetPosition(s);
 
 		if (!s->isOwner)
 		{
-			new_buf = (BYTE *)malloc(new_capacity);
+			new_buf = (BYTE*)malloc(new_capacity);
 			CopyMemory(new_buf, s->buffer, s->capacity);
 			s->isOwner = TRUE;
 		}
 		else
 		{
-			new_buf = (BYTE*) realloc(s->buffer, new_capacity);
+			new_buf = (BYTE*)realloc(s->buffer, new_capacity);
 		}
 
 		if (!new_buf)
@@ -91,7 +89,7 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	if (buffer)
 		s->buffer = buffer;
 	else
-		s->buffer = (BYTE*) malloc(size);
+		s->buffer = (BYTE*)malloc(size);
 
 	if (!s->buffer)
 	{
@@ -110,7 +108,7 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	return s;
 }
 
-void Stream_StaticInit(wStream *s, BYTE *buffer, size_t size)
+void Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
 {
 	assert(s);
 	assert(buffer);

@@ -41,21 +41,20 @@ struct rdp_autodetect
 	ALIGN64 UINT64 bandwidthMeasureTimeDelta; /* 3 */
 	ALIGN64 UINT32 bandwidthMeasureByteCount; /* 4 */
 	/* Network characteristics (as reported by server) */
-	ALIGN64 UINT32 netCharBandwidth; /* 5 */
-	ALIGN64 UINT32 netCharBaseRTT; /* 6 */
-	ALIGN64 UINT32 netCharAverageRTT; /* 7 */
+	ALIGN64 UINT32 netCharBandwidth;      /* 5 */
+	ALIGN64 UINT32 netCharBaseRTT;        /* 6 */
+	ALIGN64 UINT32 netCharAverageRTT;     /* 7 */
 	ALIGN64 BOOL bandwidthMeasureStarted; /* 8 */
-	UINT64 paddingA[16 - 9]; /* 9 */
+	UINT64 paddingA[16 - 9];              /* 9 */
 
-	ALIGN64 pRTTMeasureRequest RTTMeasureRequest; /* 16 */
-	ALIGN64 pRTTMeasureResponse RTTMeasureResponse; /* 17 */
-	ALIGN64 pBandwidthMeasureStart BandwidthMeasureStart; /* 18 */
-	ALIGN64 pBandwidthMeasureStop BandwidthMeasureStop; /* 19 */
-	ALIGN64 pBandwidthMeasureResults BandwidthMeasureResults; /* 20 */
+	ALIGN64 pRTTMeasureRequest RTTMeasureRequest;                       /* 16 */
+	ALIGN64 pRTTMeasureResponse RTTMeasureResponse;                     /* 17 */
+	ALIGN64 pBandwidthMeasureStart BandwidthMeasureStart;               /* 18 */
+	ALIGN64 pBandwidthMeasureStop BandwidthMeasureStop;                 /* 19 */
+	ALIGN64 pBandwidthMeasureResults BandwidthMeasureResults;           /* 20 */
 	ALIGN64 pNetworkCharacteristicsResult NetworkCharacteristicsResult; /* 21 */
 	ALIGN64 pClientBandwidthMeasureResult ClientBandwidthMeasureResult; /* 22 */
-	UINT64 paddingB[32 - 23]; /* 23 */
+	UINT64 paddingB[32 - 23];                                           /* 23 */
 };
-
 
 #endif /* FREERDP_AUTODETECT_H */

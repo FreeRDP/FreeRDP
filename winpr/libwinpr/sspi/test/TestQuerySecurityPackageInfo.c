@@ -25,4 +25,3 @@ int TestQuerySecurityPackageInfo(int argc, char* argv[])
 	sspi_GlobalFinish();
 	return rc;
 }
-

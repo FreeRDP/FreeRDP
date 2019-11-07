@@ -40,15 +40,15 @@ struct _BRUSH_ENTRY
 
 struct rdp_brush_cache
 {
-	pPatBlt PatBlt; /* 0 */
-	pCacheBrush CacheBrush; /* 1 */
-	pPolygonSC PolygonSC; /* 2 */
-	pPolygonCB PolygonCB; /* 3 */
+	pPatBlt PatBlt;          /* 0 */
+	pCacheBrush CacheBrush;  /* 1 */
+	pPolygonSC PolygonSC;    /* 2 */
+	pPolygonCB PolygonCB;    /* 3 */
 	UINT32 paddingA[16 - 4]; /* 4 */
 
-	UINT32 maxEntries; /* 16 */
-	UINT32 maxMonoEntries; /* 17 */
-	BRUSH_ENTRY* entries; /* 18 */
+	UINT32 maxEntries;        /* 16 */
+	UINT32 maxMonoEntries;    /* 17 */
+	BRUSH_ENTRY* entries;     /* 18 */
 	BRUSH_ENTRY* monoEntries; /* 19 */
 	UINT32 paddingB[32 - 20]; /* 20 */
 
@@ -58,18 +58,17 @@ struct rdp_brush_cache
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API void* brush_cache_get(rdpBrushCache* brush, UINT32 index,
-                                  UINT32* bpp);
-FREERDP_API void brush_cache_put(rdpBrushCache* brush, UINT32 index,
-                                 void* entry, UINT32 bpp);
+	FREERDP_API void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp);
+	FREERDP_API void brush_cache_put(rdpBrushCache* brush, UINT32 index, void* entry, UINT32 bpp);
 
-FREERDP_API void brush_cache_register_callbacks(rdpUpdate* update);
+	FREERDP_API void brush_cache_register_callbacks(rdpUpdate* update);
 
-FREERDP_API rdpBrushCache* brush_cache_new(rdpSettings* settings);
-FREERDP_API void brush_cache_free(rdpBrushCache* brush);
+	FREERDP_API rdpBrushCache* brush_cache_new(rdpSettings* settings);
+	FREERDP_API void brush_cache_free(rdpBrushCache* brush);
 
 #ifdef __cplusplus
 }

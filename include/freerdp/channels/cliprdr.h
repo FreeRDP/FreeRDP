@@ -25,55 +25,55 @@
 
 #include <winpr/shell.h>
 
-#define CLIPRDR_SVC_CHANNEL_NAME	"cliprdr"
+#define CLIPRDR_SVC_CHANNEL_NAME "cliprdr"
 
 /**
  * Clipboard Formats
  */
 
-#define CB_FORMAT_HTML			0xD010
-#define CB_FORMAT_PNG			0xD011
-#define CB_FORMAT_JPEG			0xD012
-#define CB_FORMAT_GIF			0xD013
-#define CB_FORMAT_TEXTURILIST		0xD014
+#define CB_FORMAT_HTML 0xD010
+#define CB_FORMAT_PNG 0xD011
+#define CB_FORMAT_JPEG 0xD012
+#define CB_FORMAT_GIF 0xD013
+#define CB_FORMAT_TEXTURILIST 0xD014
 
 /* CLIPRDR_HEADER.msgType */
-#define CB_MONITOR_READY		0x0001
-#define CB_FORMAT_LIST			0x0002
-#define CB_FORMAT_LIST_RESPONSE		0x0003
-#define CB_FORMAT_DATA_REQUEST		0x0004
-#define CB_FORMAT_DATA_RESPONSE		0x0005
-#define CB_TEMP_DIRECTORY		0x0006
-#define CB_CLIP_CAPS			0x0007
-#define CB_FILECONTENTS_REQUEST		0x0008
-#define CB_FILECONTENTS_RESPONSE	0x0009
-#define CB_LOCK_CLIPDATA		0x000A
-#define CB_UNLOCK_CLIPDATA		0x000B
+#define CB_MONITOR_READY 0x0001
+#define CB_FORMAT_LIST 0x0002
+#define CB_FORMAT_LIST_RESPONSE 0x0003
+#define CB_FORMAT_DATA_REQUEST 0x0004
+#define CB_FORMAT_DATA_RESPONSE 0x0005
+#define CB_TEMP_DIRECTORY 0x0006
+#define CB_CLIP_CAPS 0x0007
+#define CB_FILECONTENTS_REQUEST 0x0008
+#define CB_FILECONTENTS_RESPONSE 0x0009
+#define CB_LOCK_CLIPDATA 0x000A
+#define CB_UNLOCK_CLIPDATA 0x000B
 
 /* CLIPRDR_HEADER.msgFlags */
-#define CB_RESPONSE_OK			0x0001
-#define CB_RESPONSE_FAIL		0x0002
-#define CB_ASCII_NAMES			0x0004
+#define CB_RESPONSE_OK 0x0001
+#define CB_RESPONSE_FAIL 0x0002
+#define CB_ASCII_NAMES 0x0004
 
 /* CLIPRDR_CAPS_SET.capabilitySetType */
-#define CB_CAPSTYPE_GENERAL		0x0001
+#define CB_CAPSTYPE_GENERAL 0x0001
 
 /* CLIPRDR_GENERAL_CAPABILITY.lengthCapability */
-#define CB_CAPSTYPE_GENERAL_LEN		12
+#define CB_CAPSTYPE_GENERAL_LEN 12
 
 /* CLIPRDR_GENERAL_CAPABILITY.version */
-#define CB_CAPS_VERSION_1		0x00000001
-#define CB_CAPS_VERSION_2		0x00000002
+#define CB_CAPS_VERSION_1 0x00000001
+#define CB_CAPS_VERSION_2 0x00000002
 
 /* CLIPRDR_GENERAL_CAPABILITY.generalFlags */
-#define CB_USE_LONG_FORMAT_NAMES	0x00000002
-#define CB_STREAM_FILECLIP_ENABLED	0x00000004
-#define CB_FILECLIP_NO_FILE_PATHS	0x00000008
-#define CB_CAN_LOCK_CLIPDATA		0x00000010
+#define CB_USE_LONG_FORMAT_NAMES 0x00000002
+#define CB_STREAM_FILECLIP_ENABLED 0x00000004
+#define CB_FILECLIP_NO_FILE_PATHS 0x00000008
+#define CB_CAN_LOCK_CLIPDATA 0x00000010
 
 /* File Contents Request Flags */
-#define FILECONTENTS_SIZE		0x00000001
-#define FILECONTENTS_RANGE		0x00000002
+#define FILECONTENTS_SIZE 0x00000001
+#define FILECONTENTS_RANGE 0x00000002
 
 /* Special Clipboard Response Formats */
 
@@ -88,13 +88,16 @@ struct _CLIPRDR_MFPICT
 typedef struct _CLIPRDR_MFPICT CLIPRDR_MFPICT;
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
-		FILEDESCRIPTOR** file_descriptor_array, UINT32* file_descriptor_count);
-FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
-		UINT32 file_descriptor_count, BYTE** format_data, UINT32* format_data_length);
+	FREERDP_API UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
+	                                         FILEDESCRIPTOR** file_descriptor_array,
+	                                         UINT32* file_descriptor_count);
+	FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
+	                                             UINT32 file_descriptor_count, BYTE** format_data,
+	                                             UINT32* format_data_length);
 
 #ifdef __cplusplus
 }
@@ -103,8 +106,8 @@ FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descript
 /* Clipboard Messages */
 
 #define DEFINE_CLIPRDR_HEADER_COMMON() \
-	UINT16 msgType; \
-	UINT16 msgFlags; \
+	UINT16 msgType;                    \
+	UINT16 msgFlags;                   \
 	UINT32 dataLen
 
 struct _CLIPRDR_HEADER
@@ -233,4 +236,3 @@ struct _CLIPRDR_FILE_CONTENTS_RESPONSE
 typedef struct _CLIPRDR_FILE_CONTENTS_RESPONSE CLIPRDR_FILE_CONTENTS_RESPONSE;
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_H */
-

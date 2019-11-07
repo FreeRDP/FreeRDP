@@ -48,102 +48,101 @@ typedef struct wf_context wfContext;
 #include "wf_cliprdr.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 // System menu constants
 #define SYSCOMMAND_ID_SMARTSIZING 1000
 
-struct wf_bitmap
-{
-	rdpBitmap _bitmap;
-	HDC hdc;
-	HBITMAP bitmap;
-	HBITMAP org_bitmap;
-	BYTE* pdata;
-};
-typedef struct wf_bitmap wfBitmap;
+	struct wf_bitmap
+	{
+		rdpBitmap _bitmap;
+		HDC hdc;
+		HBITMAP bitmap;
+		HBITMAP org_bitmap;
+		BYTE* pdata;
+	};
+	typedef struct wf_bitmap wfBitmap;
 
-struct wf_pointer
-{
-	rdpPointer pointer;
-	HCURSOR cursor;
-};
-typedef struct wf_pointer wfPointer;
+	struct wf_pointer
+	{
+		rdpPointer pointer;
+		HCURSOR cursor;
+	};
+	typedef struct wf_pointer wfPointer;
 
-struct wf_context
-{
-	rdpContext context;
-	DEFINE_RDP_CLIENT_COMMON();
+	struct wf_context
+	{
+		rdpContext context;
+		DEFINE_RDP_CLIENT_COMMON();
 
-	int offset_x;
-	int offset_y;
-	int fullscreen_toggle;
-	int fullscreen;
-	int percentscreen;
-	WCHAR* window_title;
-	int client_x;
-	int client_y;
-	int client_width;
-	int client_height;
+		int offset_x;
+		int offset_y;
+		int fullscreen_toggle;
+		int fullscreen;
+		int percentscreen;
+		WCHAR* window_title;
+		int client_x;
+		int client_y;
+		int client_width;
+		int client_height;
 
-	HANDLE keyboardThread;
+		HANDLE keyboardThread;
 
-	HICON icon;
-	HWND hWndParent;
-	HINSTANCE hInstance;
-	WNDCLASSEX wndClass;
-	LPCTSTR wndClassName;
-	HCURSOR hDefaultCursor;
+		HICON icon;
+		HWND hWndParent;
+		HINSTANCE hInstance;
+		WNDCLASSEX wndClass;
+		LPCTSTR wndClassName;
+		HCURSOR hDefaultCursor;
 
-	HWND hwnd;
-	POINT diff;
+		HWND hwnd;
+		POINT diff;
 
-	wfBitmap* primary;
-	wfBitmap* drawing;
-	HCURSOR cursor;
-	HBRUSH brush;
-	HBRUSH org_brush;
-	RECT update_rect;
-	RECT scale_update_rect;
+		wfBitmap* primary;
+		wfBitmap* drawing;
+		HCURSOR cursor;
+		HBRUSH brush;
+		HBRUSH org_brush;
+		RECT update_rect;
+		RECT scale_update_rect;
 
-	DWORD mainThreadId;
-	DWORD keyboardThreadId;
+		DWORD mainThreadId;
+		DWORD keyboardThreadId;
 
-	rdpFile* connectionRdpFile;
+		rdpFile* connectionRdpFile;
 
-	BOOL disablewindowtracking;
+		BOOL disablewindowtracking;
 
-	BOOL updating_scrollbars;
-	BOOL xScrollVisible;
-	int xMinScroll;
-	int xCurrentScroll;
-	int xMaxScroll;
+		BOOL updating_scrollbars;
+		BOOL xScrollVisible;
+		int xMinScroll;
+		int xCurrentScroll;
+		int xMaxScroll;
 
-	BOOL yScrollVisible;
-	int yMinScroll;
-	int yCurrentScroll;
-	int yMaxScroll;
+		BOOL yScrollVisible;
+		int yMinScroll;
+		int yCurrentScroll;
+		int yMaxScroll;
 
-	void* clipboard;
-	CliprdrClientContext* cliprdr;
+		void* clipboard;
+		CliprdrClientContext* cliprdr;
 
-	wfFloatBar* floatbar;
+		wfFloatBar* floatbar;
 
-	RailClientContext* rail;
-	wHashTable* railWindows;
-	BOOL isConsole;
-};
+		RailClientContext* rail;
+		wHashTable* railWindows;
+		BOOL isConsole;
+	};
 
-/**
- * Client Interface
- */
+	/**
+	 * Client Interface
+	 */
 
-FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
-FREERDP_API int freerdp_client_set_window_size(wfContext* wfc, int width,
-        int height);
-FREERDP_API void wf_size_scrollbars(wfContext* wfc, UINT32 client_width,
-                                    UINT32 client_height);
+	FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+	FREERDP_API int freerdp_client_set_window_size(wfContext* wfc, int width, int height);
+	FREERDP_API void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_height);
 
 #ifdef __cplusplus
 }

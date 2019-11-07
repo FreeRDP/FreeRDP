@@ -28,22 +28,23 @@
 #include <winpr/wtypes.h>
 #include <winpr/wlog.h>
 
-#define WINPR_HEXDUMP_LINE_LENGTH	16
+#define WINPR_HEXDUMP_LINE_LENGTH 16
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-WINPR_API void winpr_HexDump(const char* tag, UINT32 lvl, const BYTE* data, size_t length);
-WINPR_API void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length);
-WINPR_API void winpr_CArrayDump(const char* tag, UINT32 lvl, const BYTE* data, int length,
-                                int width);
+	WINPR_API void winpr_HexDump(const char* tag, UINT32 lvl, const BYTE* data, size_t length);
+	WINPR_API void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length);
+	WINPR_API void winpr_CArrayDump(const char* tag, UINT32 lvl, const BYTE* data, int length,
+	                                int width);
 
-WINPR_API char* winpr_BinToHexString(const BYTE* data, int length, BOOL space);
+	WINPR_API char* winpr_BinToHexString(const BYTE* data, int length, BOOL space);
 
-WINPR_API int wprintfx(const char* fmt, ...);
-WINPR_API int wvprintfx(const char* fmt, va_list args);
-WINPR_API int wvsnprintfx(char* buffer, size_t bufferSize, const char* fmt, va_list args);
+	WINPR_API int wprintfx(const char* fmt, ...);
+	WINPR_API int wvprintfx(const char* fmt, va_list args);
+	WINPR_API int wvsnprintfx(char* buffer, size_t bufferSize, const char* fmt, va_list args);
 
 #ifdef __cplusplus
 }

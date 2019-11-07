@@ -8,7 +8,7 @@ static DWORD WINAPI message_queue_consumer_thread(LPVOID arg)
 	wMessage message;
 	wMessageQueue* queue;
 
-	queue = (wMessageQueue*) arg;
+	queue = (wMessageQueue*)arg;
 
 	while (MessageQueue_Wait(queue))
 	{
@@ -17,7 +17,7 @@ static DWORD WINAPI message_queue_consumer_thread(LPVOID arg)
 			if (message.id == WMQ_QUIT)
 				break;
 
-			printf("Message.Type: %"PRIu32"\n", message.id);
+			printf("Message.Type: %" PRIu32 "\n", message.id);
 		}
 	}
 
@@ -35,7 +35,7 @@ int TestMessageQueue(int argc, char* argv[])
 		return 1;
 	}
 
-	if (!(thread = CreateThread(NULL, 0, message_queue_consumer_thread, (void*) queue, 0, NULL)))
+	if (!(thread = CreateThread(NULL, 0, message_queue_consumer_thread, (void*)queue, 0, NULL)))
 	{
 		printf("failed to create thread\n");
 		MessageQueue_Free(queue);
@@ -43,10 +43,9 @@ int TestMessageQueue(int argc, char* argv[])
 	}
 
 	if (!MessageQueue_Post(queue, NULL, 123, NULL, NULL) ||
-			!MessageQueue_Post(queue, NULL, 456, NULL, NULL) ||
-			!MessageQueue_Post(queue, NULL, 789, NULL, NULL) ||
-			!MessageQueue_PostQuit(queue, 0) ||
-			WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0)
+	    !MessageQueue_Post(queue, NULL, 456, NULL, NULL) ||
+	    !MessageQueue_Post(queue, NULL, 789, NULL, NULL) || !MessageQueue_PostQuit(queue, 0) ||
+	    WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0)
 		return -1;
 
 	MessageQueue_Free(queue);

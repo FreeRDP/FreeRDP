@@ -18,7 +18,7 @@ int TestArrayList(int argc, char* argv[])
 
 	for (index = 0; index < elemsToInsert; index++)
 	{
-		if (ArrayList_Add(arrayList, (void*) index) < 0)
+		if (ArrayList_Add(arrayList, (void*)index) < 0)
 			return -1;
 	}
 
@@ -26,41 +26,44 @@ int TestArrayList(int argc, char* argv[])
 
 	printf("ArrayList count: %d\n", count);
 
-	index = ArrayList_IndexOf(arrayList, (void*) (size_t) 6, -1, -1);
+	index = ArrayList_IndexOf(arrayList, (void*)(size_t)6, -1, -1);
 
-	printf("ArrayList index: %"PRIdz"\n", index);
+	printf("ArrayList index: %" PRIdz "\n", index);
 
 	if (index != 6)
 		return -1;
 
-	ArrayList_Insert(arrayList, 5, (void*) (size_t) 100);
+	ArrayList_Insert(arrayList, 5, (void*)(size_t)100);
 
-	index = ArrayList_IndexOf(arrayList, (void*) (size_t) 6, -1, -1);
-	printf("ArrayList index: %"PRIdz"\n", index);
+	index = ArrayList_IndexOf(arrayList, (void*)(size_t)6, -1, -1);
+	printf("ArrayList index: %" PRIdz "\n", index);
 
 	if (index != 7)
 		return -1;
 
-	ArrayList_Remove(arrayList, (void*) (size_t) 100);
+	ArrayList_Remove(arrayList, (void*)(size_t)100);
 
-	rc = ArrayList_IndexOf(arrayList, (void*) (size_t) 6, -1, -1);
+	rc = ArrayList_IndexOf(arrayList, (void*)(size_t)6, -1, -1);
 	printf("ArrayList index: %d\n", rc);
 
 	if (rc != 6)
 		return -1;
 
-	for (index = 0; index < elemsToInsert; index++) {
+	for (index = 0; index < elemsToInsert; index++)
+	{
 		val = (size_t)ArrayList_GetItem(arrayList, 0);
 		if (!ArrayList_RemoveAt(arrayList, 0))
 			return -1;
 		if (val != index)
 		{
-			printf("ArrayList: shifted %"PRIdz" entries, expected value %"PRIdz", got %"PRIdz"\n", index, index, val);
+			printf("ArrayList: shifted %" PRIdz " entries, expected value %" PRIdz ", got %" PRIdz
+			       "\n",
+			       index, index, val);
 			return -1;
 		}
 	}
 
-	rc = ArrayList_IndexOf(arrayList, (void*) (size_t) elemsToInsert, -1, -1);
+	rc = ArrayList_IndexOf(arrayList, (void*)(size_t)elemsToInsert, -1, -1);
 	printf("ArrayList index: %d\n", rc);
 	if (rc != -1)
 		return -1;

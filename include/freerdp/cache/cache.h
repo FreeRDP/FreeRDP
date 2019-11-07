@@ -36,21 +36,22 @@
 
 struct rdp_cache
 {
-	rdpGlyphCache* glyph; /* 0 */
-	rdpBrushCache* brush; /* 1 */
-	rdpPointerCache* pointer; /* 2 */
-	rdpBitmapCache* bitmap; /* 3 */
+	rdpGlyphCache* glyph;         /* 0 */
+	rdpBrushCache* brush;         /* 1 */
+	rdpPointerCache* pointer;     /* 2 */
+	rdpBitmapCache* bitmap;       /* 3 */
 	rdpOffscreenCache* offscreen; /* 4 */
-	rdpPaletteCache* palette; /* 5 */
-	rdpNineGridCache* nine_grid; /* 6 */
+	rdpPaletteCache* palette;     /* 5 */
+	rdpNineGridCache* nine_grid;  /* 6 */
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API rdpCache* cache_new(rdpSettings* settings);
-FREERDP_API void cache_free(rdpCache* cache);
+	FREERDP_API rdpCache* cache_new(rdpSettings* settings);
+	FREERDP_API void cache_free(rdpCache* cache);
 
 #ifdef __cplusplus
 }

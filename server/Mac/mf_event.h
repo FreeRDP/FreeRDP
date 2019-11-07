@@ -52,7 +52,7 @@ struct mf_event_queue
 struct mf_event_region
 {
 	int type;
-	
+
 	int x;
 	int y;
 	int width;

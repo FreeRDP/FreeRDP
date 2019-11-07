@@ -75,4 +75,3 @@ struct _TP_CLEANUP_GROUP
 PTP_POOL GetDefaultThreadpool(void);
 
 #endif /* WINPR_POOL_PRIVATE_H */
-

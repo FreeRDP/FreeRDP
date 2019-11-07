@@ -57,7 +57,7 @@ static BOOL rdpsnd_fake_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 
 static void rdpsnd_fake_free(rdpsndDevicePlugin* device)
 {
-	rdpsndFakePlugin* fake = (rdpsndFakePlugin*) device;
+	rdpsndFakePlugin* fake = (rdpsndFakePlugin*)device;
 
 	if (!fake)
 		return;
@@ -95,13 +95,11 @@ static UINT rdpsnd_fake_parse_addin_args(rdpsndFakePlugin* fake, ADDIN_ARGV* arg
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
-	COMMAND_LINE_ARGUMENT_A rdpsnd_fake_args[] =
-		{
-			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-		};
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, args->argv,
-	                                    rdpsnd_fake_args, flags, fake, NULL, NULL);
+	COMMAND_LINE_ARGUMENT_A rdpsnd_fake_args[] = { { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
+	flags =
+	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+	status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_fake_args, flags, fake, NULL,
+	                                    NULL);
 
 	if (status < 0)
 		return ERROR_INVALID_DATA;
@@ -113,18 +111,16 @@ static UINT rdpsnd_fake_parse_addin_args(rdpsndFakePlugin* fake, ADDIN_ARGV* arg
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 			continue;
 
-		CommandLineSwitchStart(arg)
-		CommandLineSwitchEnd(arg)
-	}
-	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+		CommandLineSwitchStart(arg) CommandLineSwitchEnd(arg)
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
 	return CHANNEL_RC_OK;
 }
 
 #ifdef BUILTIN_CHANNELS
-#define freerdp_rdpsnd_client_subsystem_entry	fake_freerdp_rdpsnd_client_subsystem_entry
+#define freerdp_rdpsnd_client_subsystem_entry fake_freerdp_rdpsnd_client_subsystem_entry
 #else
-#define freerdp_rdpsnd_client_subsystem_entry	FREERDP_API freerdp_rdpsnd_client_subsystem_entry
+#define freerdp_rdpsnd_client_subsystem_entry FREERDP_API freerdp_rdpsnd_client_subsystem_entry
 #endif
 
 /**
@@ -137,7 +133,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	ADDIN_ARGV* args;
 	rdpsndFakePlugin* fake;
 	UINT ret = CHANNEL_RC_OK;
-	fake = (rdpsndFakePlugin*) calloc(1, sizeof(rdpsndFakePlugin));
+	fake = (rdpsndFakePlugin*)calloc(1, sizeof(rdpsndFakePlugin));
 
 	if (!fake)
 		return CHANNEL_RC_NO_MEMORY;

@@ -54,14 +54,14 @@
 
 #define TAG PROXY_TAG("server")
 
-static BOOL pf_server_parse_target_from_routing_token(rdpContext* context,
-        char** target, DWORD* port)
+static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char** target,
+                                                      DWORD* port)
 {
-#define TARGET_MAX	(100)
+#define TARGET_MAX (100)
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="
 	char* colon;
 	size_t len;
-	const size_t prefix_len  = strnlen(ROUTING_TOKEN_PREFIX, sizeof(ROUTING_TOKEN_PREFIX));
+	const size_t prefix_len = strnlen(ROUTING_TOKEN_PREFIX, sizeof(ROUTING_TOKEN_PREFIX));
 	DWORD routing_token_length;
 	const char* routing_token = freerdp_nego_get_routing_token(context, &routing_token_length);
 
@@ -73,8 +73,11 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context,
 
 	if ((routing_token_length <= prefix_len) || (routing_token_length >= TARGET_MAX))
 	{
-		WLog_ERR(TAG, "pf_server_parse_target_from_routing_token(): invalid routing token length: %"PRIu32"",
-		         routing_token_length);
+		WLog_ERR(
+		    TAG,
+		    "pf_server_parse_target_from_routing_token(): invalid routing token length: %" PRIu32
+		    "",
+		    routing_token_length);
 		return FALSE;
 	}
 
@@ -110,7 +113,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
                                       proxyConfig* config)
 {
 	WLog_INFO(TAG, "pf_server_get_target_info(): fetching target from %s",
-		config->UseLoadBalanceInfo ? "load-balance-info" : "config");
+	          config->UseLoadBalanceInfo ? "load-balance-info" : "config");
 
 	if (config->UseLoadBalanceInfo)
 		return pf_server_parse_target_from_routing_token(context, &settings->ServerHostname,
@@ -169,7 +172,7 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	WLog_INFO(TAG, "pf_server_post_connect(): target == %s:%"PRIu16"",
+	WLog_INFO(TAG, "pf_server_post_connect(): target == %s:%" PRIu16 "",
 	          client_settings->ServerHostname, client_settings->ServerPort);
 
 	if (!pf_server_channels_init(ps))
@@ -308,41 +311,43 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 		/* only disconnect after checking client's and vcm's file descriptors  */
 		if (proxy_data_shall_disconnect(pdata))
 		{
-			WLog_INFO(TAG, "abort_event is set, closing connection with client %s", client->hostname);
+			WLog_INFO(TAG, "abort_event is set, closing connection with client %s",
+			          client->hostname);
 			break;
 		}
-		
+
 		switch (WTSVirtualChannelManagerGetDrdynvcState(ps->vcm))
 		{
-		/* Dynamic channel status may have been changed after processing */
-		case DRDYNVC_STATE_NONE:
+			/* Dynamic channel status may have been changed after processing */
+			case DRDYNVC_STATE_NONE:
 
-			/* Initialize drdynvc channel */
-			if (!WTSVirtualChannelManagerCheckFileDescriptor(ps->vcm))
-			{
-				WLog_ERR(TAG, "Failed to initialize drdynvc channel");
-				goto fail;
-			}
+				/* Initialize drdynvc channel */
+				if (!WTSVirtualChannelManagerCheckFileDescriptor(ps->vcm))
+				{
+					WLog_ERR(TAG, "Failed to initialize drdynvc channel");
+					goto fail;
+				}
 
-			break;
+				break;
 
-		case DRDYNVC_STATE_READY:
-			if (WaitForSingleObject(ps->dynvcReady, 0) == WAIT_TIMEOUT)
-			{
-				SetEvent(ps->dynvcReady);
-			}
+			case DRDYNVC_STATE_READY:
+				if (WaitForSingleObject(ps->dynvcReady, 0) == WAIT_TIMEOUT)
+				{
+					SetEvent(ps->dynvcReady);
+				}
 
-			break;
+				break;
 
-		default:
-			break;
+			default:
+				break;
 		}
 	}
 
 fail:
 
-	pc = (rdpContext*) pdata->pc;
-	WLog_INFO(TAG, "pf_server_handle_client(): starting shutdown of connection (client %s)", client->hostname);
+	pc = (rdpContext*)pdata->pc;
+	WLog_INFO(TAG, "pf_server_handle_client(): starting shutdown of connection (client %s)",
+	          client->hostname);
 	WLog_INFO(TAG, "pf_server_handle_client(): stopping proxy's client");
 	freerdp_client_stop(pc);
 	WLog_INFO(TAG, "pf_server_handle_client(): freeing server's channels");

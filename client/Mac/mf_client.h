@@ -25,21 +25,22 @@
 #include <freerdp/client.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API void mf_press_mouse_button(void* context, rdpInput* intput, int button, int x, int y,
-                                       BOOL down);
-FREERDP_API void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags, UINT16 x,
-                                      UINT16 y);
-FREERDP_API void mf_scale_mouse_event_ex(void* context, rdpInput* input, UINT16 flags, UINT16 x,
-        UINT16 y);
+	FREERDP_API void mf_press_mouse_button(void* context, rdpInput* intput, int button, int x,
+	                                       int y, BOOL down);
+	FREERDP_API void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags, UINT16 x,
+	                                      UINT16 y);
+	FREERDP_API void mf_scale_mouse_event_ex(void* context, rdpInput* input, UINT16 flags, UINT16 x,
+	                                         UINT16 y);
 
-/**
- * Client Interface
- */
+	/**
+	 * Client Interface
+	 */
 
-FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+	FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 #ifdef __cplusplus
 }

@@ -58,7 +58,7 @@ int ArrayList_Count(wArrayList* arrayList)
 
 int ArrayList_Items(wArrayList* arrayList, ULONG_PTR** ppItems)
 {
-	*ppItems = (ULONG_PTR*) arrayList->array;
+	*ppItems = (ULONG_PTR*)arrayList->array;
 	return arrayList->size;
 }
 
@@ -169,7 +169,8 @@ BOOL ArrayList_Shift(wArrayList* arrayList, int index, int count)
 		int chunk = arrayList->size - index + count;
 
 		if (chunk > 0)
-			MoveMemory(&arrayList->array[index], &arrayList->array[index - count], chunk * sizeof(void*));
+			MoveMemory(&arrayList->array[index], &arrayList->array[index - count],
+			           chunk * sizeof(void*));
 
 		arrayList->size += count;
 	}
@@ -353,13 +354,16 @@ BOOL ArrayList_RemoveAt(wArrayList* arrayList, int index)
 }
 
 /**
- * Searches for the specified Object and returns the zero-based index of the first occurrence within the entire ArrayList.
+ * Searches for the specified Object and returns the zero-based index of the first occurrence within
+ * the entire ArrayList.
  *
- * Searches for the specified Object and returns the zero-based index of the last occurrence within the range of elements
- * in the ArrayList that extends from the first element to the specified index.
+ * Searches for the specified Object and returns the zero-based index of the last occurrence within
+ * the range of elements in the ArrayList that extends from the first element to the specified
+ * index.
  *
- * Searches for the specified Object and returns the zero-based index of the last occurrence within the range of elements
- * in the ArrayList that contains the specified number of elements and ends at the specified index.
+ * Searches for the specified Object and returns the zero-based index of the last occurrence within
+ * the range of elements in the ArrayList that contains the specified number of elements and ends at
+ * the specified index.
  */
 
 int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int count)
@@ -395,13 +399,16 @@ int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int coun
 }
 
 /**
- * Searches for the specified Object and returns the zero-based index of the last occurrence within the entire ArrayList.
+ * Searches for the specified Object and returns the zero-based index of the last occurrence within
+ * the entire ArrayList.
  *
- * Searches for the specified Object and returns the zero-based index of the last occurrence within the range of elements
- * in the ArrayList that extends from the first element to the specified index.
+ * Searches for the specified Object and returns the zero-based index of the last occurrence within
+ * the range of elements in the ArrayList that extends from the first element to the specified
+ * index.
  *
- * Searches for the specified Object and returns the zero-based index of the last occurrence within the range of elements
- * in the ArrayList that contains the specified number of elements and ends at the specified index.
+ * Searches for the specified Object and returns the zero-based index of the last occurrence within
+ * the range of elements in the ArrayList that contains the specified number of elements and ends at
+ * the specified index.
  */
 
 int ArrayList_LastIndexOf(wArrayList* arrayList, void* obj, int startIndex, int count)

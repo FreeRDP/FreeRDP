@@ -26,4 +26,3 @@
 #include <freerdp/codec/audio.h>
 
 #endif /* FREERDP_CHANNEL_RDPSND_H */
-

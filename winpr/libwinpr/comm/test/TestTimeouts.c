@@ -33,11 +33,11 @@ static BOOL test_generic(HANDLE hComm)
 {
 	COMMTIMEOUTS timeouts, timeouts2;
 
-	timeouts.ReadIntervalTimeout         = 1;
-	timeouts.ReadTotalTimeoutMultiplier  = 2;
-	timeouts.ReadTotalTimeoutConstant    = 3;
+	timeouts.ReadIntervalTimeout = 1;
+	timeouts.ReadTotalTimeoutMultiplier = 2;
+	timeouts.ReadTotalTimeoutConstant = 3;
 	timeouts.WriteTotalTimeoutMultiplier = 4;
-	timeouts.WriteTotalTimeoutConstant   = 5;
+	timeouts.WriteTotalTimeoutConstant = 5;
 
 	if (!SetCommTimeouts(hComm, &timeouts))
 	{
@@ -59,23 +59,28 @@ static BOOL test_generic(HANDLE hComm)
 	}
 
 	/* not supported combination */
-	timeouts.ReadIntervalTimeout         = MAXULONG;
-	timeouts.ReadTotalTimeoutConstant    = MAXULONG;
+	timeouts.ReadIntervalTimeout = MAXULONG;
+	timeouts.ReadTotalTimeoutConstant = MAXULONG;
 	if (SetCommTimeouts(hComm, &timeouts))
 	{
-		fprintf(stderr, "SetCommTimeouts succeeded with ReadIntervalTimeout and ReadTotalTimeoutConstant set to MAXULONG. GetLastError: 0x%08x\n", GetLastError());
+		fprintf(stderr,
+		        "SetCommTimeouts succeeded with ReadIntervalTimeout and ReadTotalTimeoutConstant "
+		        "set to MAXULONG. GetLastError: 0x%08x\n",
+		        GetLastError());
 		return FALSE;
 	}
 
 	if (GetLastError() != ERROR_INVALID_PARAMETER)
 	{
-		fprintf(stderr, "SetCommTimeouts failure, expected GetLastError to return ERROR_INVALID_PARAMETER and got: 0x%08x\n", GetLastError());
+		fprintf(stderr,
+		        "SetCommTimeouts failure, expected GetLastError to return ERROR_INVALID_PARAMETER "
+		        "and got: 0x%08x\n",
+		        GetLastError());
 		return FALSE;
 	}
 
 	return TRUE;
 }
-
 
 int TestTimeouts(int argc, char* argv[])
 {
@@ -96,9 +101,7 @@ int TestTimeouts(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	hComm = CreateFile("COM1",
-			GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+	hComm = CreateFile("COM1", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());

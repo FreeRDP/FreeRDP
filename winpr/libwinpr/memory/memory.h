@@ -25,10 +25,6 @@
 #include <winpr/crt.h>
 #include <winpr/memory.h>
 
-
-
 #endif
 
 #endif /* WINPR_MEMORY_PRIVATE_H */
-
-

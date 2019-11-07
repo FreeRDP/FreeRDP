@@ -22,7 +22,6 @@
 
 #include <freerdp/codec/rfx.h>
 
-
 int mf_mlion_display_info(UINT32* disp_width, UINT32* dispHeight, UINT32* scale);
 
 int mf_mlion_screen_updates_init(void);
@@ -34,6 +33,6 @@ int mf_mlion_get_dirty_region(RFX_RECT* invalid);
 int mf_mlion_peek_dirty_region(RFX_RECT* invalid);
 int mf_mlion_clear_dirty_region(void);
 
-int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE **pxData);
+int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE** pxData);
 
 #endif /* FREERDP_SERVER_MAC_MLION_H */

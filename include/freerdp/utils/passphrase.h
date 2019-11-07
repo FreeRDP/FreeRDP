@@ -24,10 +24,12 @@
 #include <freerdp/api.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin);
+	FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz,
+	                                          int from_stdin);
 
 #ifdef __cplusplus
 }

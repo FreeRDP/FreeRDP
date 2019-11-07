@@ -27,7 +27,8 @@
 #include <uwac/uwac.h>
 
 /** @brief */
-struct uwac_touch_point {
+struct uwac_touch_point
+{
 	uint32_t id;
 	wl_fixed_t x, y;
 };
@@ -40,14 +41,13 @@ typedef struct uwac_touch_automata UwacTouchAutomata;
  *
  * @param automata
  */
-UWAC_API void UwacTouchAutomataInit(UwacTouchAutomata *automata);
+UWAC_API void UwacTouchAutomataInit(UwacTouchAutomata* automata);
 
 /**
  *
  * @param automata
  */
-UWAC_API void UwacTouchAutomataReset(UwacTouchAutomata *automata);
-
+UWAC_API void UwacTouchAutomataReset(UwacTouchAutomata* automata);
 
 /**
  *
@@ -55,6 +55,6 @@ UWAC_API void UwacTouchAutomataReset(UwacTouchAutomata *automata);
  * @param event
  * @return
  */
-UWAC_API bool UwacTouchAutomataInjectEvent(UwacTouchAutomata *automata, UwacEvent *event);
+UWAC_API bool UwacTouchAutomataInjectEvent(UwacTouchAutomata* automata, UwacEvent* event);
 
 #endif /* UWAC_TOOLS_H_ */

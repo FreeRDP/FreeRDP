@@ -73,23 +73,26 @@
 #include <unistd.h>
 #include <winpr/wtypes.h>
 
-static  pthread_once_t     g_once;
-static  int                g_inited;
-static  AndroidCpuFamily   g_cpuFamily;
-static  uint64_t           g_cpuFeatures;
-static  int                g_cpuCount;
+static pthread_once_t g_once;
+static int g_inited;
+static AndroidCpuFamily g_cpuFamily;
+static uint64_t g_cpuFeatures;
+static int g_cpuCount;
 
 #ifdef __arm__
-static  uint32_t           g_cpuIdArm;
+static uint32_t g_cpuIdArm;
 #endif
 
 static const int android_cpufeatures_debug = 0;
 
-#define  D(...) \
-	do { \
-		if (android_cpufeatures_debug) { \
-			printf(__VA_ARGS__); fflush(stdout); \
-		} \
+#define D(...)                         \
+	do                                 \
+	{                                  \
+		if (android_cpufeatures_debug) \
+		{                              \
+			printf(__VA_ARGS__);       \
+			fflush(stdout);            \
+		}                              \
 	} while (0)
 
 #ifdef __i386__
@@ -98,14 +101,12 @@ static __inline__ void x86_cpuid(int func, int values[4])
 	int a, b, c, d;
 	/* We need to preserve ebx since we're compiling PIC code */
 	/* this means we can't use "=b" for the second output register */
-	__asm__ __volatile__(\
-	                     "push %%ebx\n"
-	                     "cpuid\n" \
+	__asm__ __volatile__("push %%ebx\n"
+	                     "cpuid\n"
 	                     "mov %%ebx, %1\n"
 	                     "pop %%ebx\n"
-	                     : "=a"(a), "=r"(b), "=c"(c), "=d"(d) \
-	                     : "a"(func) \
-	                    );
+	                     : "=a"(a), "=r"(b), "=c"(c), "=d"(d)
+	                     : "a"(func));
 	values[0] = a;
 	values[1] = b;
 	values[2] = c;
@@ -117,14 +118,12 @@ static __inline__ void x86_cpuid(int func, int values[4])
 	int64_t a, b, c, d;
 	/* We need to preserve ebx since we're compiling PIC code */
 	/* this means we can't use "=b" for the second output register */
-	__asm__ __volatile__(\
-	                     "push %%rbx\n"
-	                     "cpuid\n" \
+	__asm__ __volatile__("push %%rbx\n"
+	                     "cpuid\n"
 	                     "mov %%rbx, %1\n"
 	                     "pop %%rbx\n"
-	                     : "=a"(a), "=r"(b), "=c"(c), "=d"(d) \
-	                     : "a"(func) \
-	                    );
+	                     : "=a"(a), "=r"(b), "=c"(c), "=d"(d)
+	                     : "a"(func));
 	values[0] = a;
 	values[1] = b;
 	values[2] = c;
@@ -136,8 +135,7 @@ static __inline__ void x86_cpuid(int func, int values[4])
  * because files under /proc do not always return a valid size when
  * using fseek(0, SEEK_END) + ftell(). Nor can they be mmap()-ed.
  */
-static int
-get_file_size(const char* pathname)
+static int get_file_size(const char* pathname)
 {
 	int fd, result = 0;
 	char buffer[256];
@@ -177,10 +175,9 @@ get_file_size(const char* pathname)
  * zero-terminate the content. Will not read more
  * than 'buffsize' bytes.
  */
-static int
-read_file(const char*  pathname, char*  buffer, size_t  buffsize)
+static int read_file(const char* pathname, char* buffer, size_t buffsize)
 {
-	int  fd, count;
+	int fd, count;
 	fd = open(pathname, O_RDONLY);
 
 	if (fd < 0)
@@ -225,14 +222,13 @@ read_file(const char*  pathname, char*  buffer, size_t  buffsize)
  *
  * Return NULL if not found
  */
-static char*
-extract_cpuinfo_field(const char* buffer, int buflen, const char* field)
+static char* extract_cpuinfo_field(const char* buffer, int buflen, const char* field)
 {
-	int  fieldlen = strlen(field);
+	int fieldlen = strlen(field);
 	const char* bufend = buffer + buflen;
 	char* result = NULL;
 	int len;
-	const char* p, *q;
+	const char *p, *q;
 	/* Look for first field occurence, and ensures it starts the line. */
 	p = buffer;
 
@@ -251,7 +247,7 @@ extract_cpuinfo_field(const char* buffer, int buflen, const char* field)
 
 	/* Skip to the first column followed by a space */
 	p += fieldlen;
-	p  = memchr(p, ':', bufend - p);
+	p = memchr(p, ':', bufend - p);
 
 	if (p == NULL || p[1] != ' ')
 		goto EXIT;
@@ -279,10 +275,9 @@ EXIT:
 /* Checks that a space-separated list of items contains one given 'item'.
  * Returns 1 if found, 0 otherwise.
  */
-static int
-has_list_item(const char* list, const char* item)
+static int has_list_item(const char* list, const char* item)
 {
-	const char*  p = list;
+	const char* p = list;
 	int itemlen = strlen(item);
 
 	if (list == NULL)
@@ -290,7 +285,7 @@ has_list_item(const char* list, const char* item)
 
 	while (*p)
 	{
-		const char*  q;
+		const char* q;
 
 		/* skip spaces */
 		while (*p == ' ' || *p == '\t')
@@ -323,8 +318,7 @@ has_list_item(const char* list, const char* item)
  * position after the decimal number in case of success (which will always
  * be <= 'limit').
  */
-static const char*
-parse_number(const char* input, const char* limit, int base, int* result)
+static const char* parse_number(const char* input, const char* limit, int base, int* result)
 {
 	const char* p = input;
 	int val = 0;
@@ -360,15 +354,13 @@ parse_number(const char* input, const char* limit, int base, int* result)
 	return p;
 }
 
-static const char*
-parse_decimal(const char* input, const char* limit, int* result)
+static const char* parse_decimal(const char* input, const char* limit, int* result)
 {
 	return parse_number(input, limit, 10, result);
 }
 
 #ifdef __arm__
-static const char*
-parse_hexadecimal(const char* input, const char* limit, int* result)
+static const char* parse_hexadecimal(const char* input, const char* limit, int* result)
 {
 	return parse_number(input, limit, 16, result);
 }
@@ -385,20 +377,17 @@ typedef struct
 	uint32_t mask;
 } CpuList;
 
-static __inline__ void
-cpulist_init(CpuList* list)
+static __inline__ void cpulist_init(CpuList* list)
 {
 	list->mask = 0;
 }
 
-static __inline__ void
-cpulist_and(CpuList* list1, CpuList* list2)
+static __inline__ void cpulist_and(CpuList* list1, CpuList* list2)
 {
 	list1->mask &= list2->mask;
 }
 
-static __inline__ void
-cpulist_set(CpuList* list, int index)
+static __inline__ void cpulist_set(CpuList* list, int index)
 {
 	if ((unsigned)index < 32)
 	{
@@ -406,8 +395,7 @@ cpulist_set(CpuList* list, int index)
 	}
 }
 
-static __inline__ int
-cpulist_count(CpuList* list)
+static __inline__ int cpulist_count(CpuList* list)
 {
 	return __builtin_popcount(list->mask);
 }
@@ -422,8 +410,7 @@ cpulist_count(CpuList* list)
  *             2,4-127,128-143
  *             0-1
  */
-static void
-cpulist_parse(CpuList* list, const char* line, int line_len)
+static void cpulist_parse(CpuList* list, const char* line, int line_len)
 {
 	const char* p = line;
 	const char* end = p + line_len;
@@ -475,16 +462,14 @@ cpulist_parse(CpuList* list, const char* line, int line_len)
 			p++;
 	}
 
-BAD_FORMAT:
-	;
+BAD_FORMAT:;
 }
 
 /* Read a CPU list from one sysfs file */
-static void
-cpulist_read_from(CpuList* list, const char* filename)
+static void cpulist_read_from(CpuList* list, const char* filename)
 {
-	char   file[64];
-	int    filelen;
+	char file[64];
+	int filelen;
 	cpulist_init(list);
 	filelen = read_file(filename, file, sizeof file);
 
@@ -498,50 +483,45 @@ cpulist_read_from(CpuList* list, const char* filename)
 }
 #if defined(__aarch64__)
 // see <uapi/asm/hwcap.h> kernel header
-#define HWCAP_FP                (1 << 0)
-#define HWCAP_ASIMD             (1 << 1)
-#define HWCAP_AES               (1 << 3)
-#define HWCAP_PMULL             (1 << 4)
-#define HWCAP_SHA1              (1 << 5)
-#define HWCAP_SHA2              (1 << 6)
-#define HWCAP_CRC32             (1 << 7)
+#define HWCAP_FP (1 << 0)
+#define HWCAP_ASIMD (1 << 1)
+#define HWCAP_AES (1 << 3)
+#define HWCAP_PMULL (1 << 4)
+#define HWCAP_SHA1 (1 << 5)
+#define HWCAP_SHA2 (1 << 6)
+#define HWCAP_CRC32 (1 << 7)
 #endif
 
 #if defined(__arm__)
 
 // See <asm/hwcap.h> kernel header.
-#define HWCAP_VFP       (1 << 6)
-#define HWCAP_IWMMXT    (1 << 9)
-#define HWCAP_NEON      (1 << 12)
-#define HWCAP_VFPv3     (1 << 13)
-#define HWCAP_VFPv3D16  (1 << 14)
-#define HWCAP_VFPv4     (1 << 16)
-#define HWCAP_IDIVA     (1 << 17)
-#define HWCAP_IDIVT     (1 << 18)
+#define HWCAP_VFP (1 << 6)
+#define HWCAP_IWMMXT (1 << 9)
+#define HWCAP_NEON (1 << 12)
+#define HWCAP_VFPv3 (1 << 13)
+#define HWCAP_VFPv3D16 (1 << 14)
+#define HWCAP_VFPv4 (1 << 16)
+#define HWCAP_IDIVA (1 << 17)
+#define HWCAP_IDIVT (1 << 18)
 
 // see <uapi/asm/hwcap.h> kernel header
-#define HWCAP2_AES     (1 << 0)
-#define HWCAP2_PMULL   (1 << 1)
-#define HWCAP2_SHA1    (1 << 2)
-#define HWCAP2_SHA2    (1 << 3)
-#define HWCAP2_CRC32   (1 << 4)
+#define HWCAP2_AES (1 << 0)
+#define HWCAP2_PMULL (1 << 1)
+#define HWCAP2_SHA1 (1 << 2)
+#define HWCAP2_SHA2 (1 << 3)
+#define HWCAP2_CRC32 (1 << 4)
 
 // This is the list of 32-bit ARMv7 optional features that are _always_
 // supported by ARMv8 CPUs, as mandated by the ARM Architecture Reference
 // Manual.
-#define HWCAP_SET_FOR_ARMV8  \
-	( HWCAP_VFP | \
-	  HWCAP_NEON | \
-	  HWCAP_VFPv3 | \
-	  HWCAP_VFPv4 | \
-	  HWCAP_IDIVA | \
-	  HWCAP_IDIVT )
+#define HWCAP_SET_FOR_ARMV8 \
+	(HWCAP_VFP | HWCAP_NEON | HWCAP_VFPv3 | HWCAP_VFPv4 | HWCAP_IDIVA | HWCAP_IDIVT)
 #endif
 
 #if defined(__mips__)
 // see <uapi/asm/hwcap.h> kernel header
-#define HWCAP_MIPS_R6           (1 << 0)
-#define HWCAP_MIPS_MSA          (1 << 1)
+#define HWCAP_MIPS_R6 (1 << 0)
+#define HWCAP_MIPS_MSA (1 << 1)
 #endif
 
 #if defined(__arm__) || defined(__aarch64__) || defined(__mips__)
@@ -563,8 +543,7 @@ cpulist_read_from(CpuList* list, const char* filename)
 // its implementation does not parse /proc/self/auxv. Instead it depends
 // on values  that are passed by the kernel at process-init time to the
 // C runtime initialization layer.
-static uint32_t
-get_elf_hwcap_from_getauxval(int hwcap_type)
+static uint32_t get_elf_hwcap_from_getauxval(int hwcap_type)
 {
 	typedef unsigned long getauxval_func_t(unsigned long);
 	dlerror();
@@ -577,8 +556,7 @@ get_elf_hwcap_from_getauxval(int hwcap_type)
 	}
 
 	uint32_t ret = 0;
-	getauxval_func_t* func = (getauxval_func_t*)
-	                         dlsym(libc_handle, "getauxval");
+	getauxval_func_t* func = (getauxval_func_t*)dlsym(libc_handle, "getauxval");
 
 	if (!func)
 	{
@@ -600,8 +578,7 @@ get_elf_hwcap_from_getauxval(int hwcap_type)
 // current CPU. Note that this file is not accessible from regular
 // application processes on some Android platform releases.
 // On success, return new ELF hwcaps, or 0 on failure.
-static uint32_t
-get_elf_hwcap_from_proc_self_auxv(void)
+static uint32_t get_elf_hwcap_from_proc_self_auxv(void)
 {
 	const char filepath[] = "/proc/self/auxv";
 	int fd = TEMP_FAILURE_RETRY(open(filepath, O_RDONLY));
@@ -650,8 +627,7 @@ get_elf_hwcap_from_proc_self_auxv(void)
  * features the device's CPU supports, on top of its reference
  * architecture.
  */
-static uint32_t
-get_elf_hwcap_from_proc_cpuinfo(const char* cpuinfo, int cpuinfo_len)
+static uint32_t get_elf_hwcap_from_proc_cpuinfo(const char* cpuinfo, int cpuinfo_len)
 {
 	uint32_t hwcaps = 0;
 	long architecture = 0;
@@ -711,7 +687,7 @@ get_elf_hwcap_from_proc_cpuinfo(const char* cpuinfo, int cpuinfo_len)
 
 	return hwcaps;
 }
-#endif  /* __arm__ */
+#endif /* __arm__ */
 
 /* Return the number of cpus present on a given device.
  *
@@ -719,8 +695,7 @@ get_elf_hwcap_from_proc_cpuinfo(const char* cpuinfo, int cpuinfo_len)
  * intersection of the 'present' and 'possible' CPU lists and count
  * the result.
  */
-static int
-get_cpu_count(void)
+static int get_cpu_count(void)
 {
 	CpuList cpus_present[1];
 	CpuList cpus_possible[1];
@@ -733,8 +708,7 @@ get_cpu_count(void)
 	return cpulist_count(cpus_present);
 }
 
-static void
-android_cpuInitFamily(void)
+static void android_cpuInitFamily(void)
 {
 #if defined(__arm__)
 	g_cpuFamily = ANDROID_CPU_FAMILY_ARM;
@@ -754,15 +728,14 @@ android_cpuInitFamily(void)
 #endif
 }
 
-static void
-android_cpuInit(void)
+static void android_cpuInit(void)
 {
 	char* cpuinfo = NULL;
-	int   cpuinfo_len;
+	int cpuinfo_len;
 	android_cpuInitFamily();
 	g_cpuFeatures = 0;
-	g_cpuCount    = 1;
-	g_inited      = 1;
+	g_cpuCount = 1;
+	g_inited = 1;
 	cpuinfo_len = get_file_size("/proc/cpuinfo");
 
 	if (cpuinfo_len < 0)
@@ -780,10 +753,9 @@ android_cpuInit(void)
 	}
 
 	cpuinfo_len = read_file("/proc/cpuinfo", cpuinfo, cpuinfo_len);
-	D("cpuinfo_len is (%d):\n%.*s\n", cpuinfo_len,
-	  cpuinfo_len >= 0 ? cpuinfo_len : 0, cpuinfo);
+	D("cpuinfo_len is (%d):\n%.*s\n", cpuinfo_len, cpuinfo_len >= 0 ? cpuinfo_len : 0, cpuinfo);
 
-	if (cpuinfo_len < 0)  /* should not happen */
+	if (cpuinfo_len < 0) /* should not happen */
 	{
 		free(cpuinfo);
 		return;
@@ -812,9 +784,9 @@ android_cpuInit(void)
 
 		if (cpuArch != NULL)
 		{
-			char*  end;
-			long   archNumber;
-			int    hasARMv7 = 0;
+			char* end;
+			long archNumber;
+			int hasARMv7 = 0;
 			D("found cpuArch = '%s'\n", cpuArch);
 			/* read the initial decimal number, ignore the rest */
 			archNumber = strtol(cpuArch, &end, 10);
@@ -837,8 +809,7 @@ android_cpuInit(void)
 			 */
 			if (hasARMv7)
 			{
-				char* cpuProc = extract_cpuinfo_field(cpuinfo, cpuinfo_len,
-				                                      "Processor");
+				char* cpuProc = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "Processor");
 
 				if (cpuProc != NULL)
 				{
@@ -903,8 +874,7 @@ android_cpuInit(void)
 
 			// 'vfpv4' implies VFPv3|VFP_FMA|FP16
 			if (has_vfpv4)
-				g_cpuFeatures |= ANDROID_CPU_ARM_FEATURE_VFPv3    |
-				                 ANDROID_CPU_ARM_FEATURE_VFP_FP16 |
+				g_cpuFeatures |= ANDROID_CPU_ARM_FEATURE_VFPv3 | ANDROID_CPU_ARM_FEATURE_VFP_FP16 |
 				                 ANDROID_CPU_ARM_FEATURE_VFP_FMA;
 
 			// 'vfpv3' or 'vfpv3d16' imply VFPv3. Note that unlike GCC,
@@ -928,8 +898,7 @@ android_cpuInit(void)
 			// Neon implies VFPv3|D32, and if vfpv4 is detected, NEON_FMA
 			if (has_neon)
 			{
-				g_cpuFeatures |= ANDROID_CPU_ARM_FEATURE_VFPv3 |
-				                 ANDROID_CPU_ARM_FEATURE_NEON |
+				g_cpuFeatures |= ANDROID_CPU_ARM_FEATURE_VFPv3 | ANDROID_CPU_ARM_FEATURE_NEON |
 				                 ANDROID_CPU_ARM_FEATURE_VFP_D32;
 
 				if (has_vfpv4)
@@ -938,8 +907,7 @@ android_cpuInit(void)
 
 			// VFPv3 implies VFPv2 and ARMv7
 			if (g_cpuFeatures & ANDROID_CPU_ARM_FEATURE_VFPv3)
-				g_cpuFeatures |= ANDROID_CPU_ARM_FEATURE_VFPv2 |
-				                 ANDROID_CPU_ARM_FEATURE_ARMv7;
+				g_cpuFeatures |= ANDROID_CPU_ARM_FEATURE_VFPv2 | ANDROID_CPU_ARM_FEATURE_ARMv7;
 
 			if (has_idiva)
 				g_cpuFeatures |= ANDROID_CPU_ARM_FEATURE_IDIV_ARM;
@@ -957,11 +925,11 @@ android_cpuInit(void)
 
 		if (hwcaps2 != 0)
 		{
-			int has_aes     = (hwcaps2 & HWCAP2_AES);
-			int has_pmull   = (hwcaps2 & HWCAP2_PMULL);
-			int has_sha1    = (hwcaps2 & HWCAP2_SHA1);
-			int has_sha2    = (hwcaps2 & HWCAP2_SHA2);
-			int has_crc32   = (hwcaps2 & HWCAP2_CRC32);
+			int has_aes = (hwcaps2 & HWCAP2_AES);
+			int has_pmull = (hwcaps2 & HWCAP2_PMULL);
+			int has_sha1 = (hwcaps2 & HWCAP2_SHA1);
+			int has_sha2 = (hwcaps2 & HWCAP2_SHA2);
+			int has_crc32 = (hwcaps2 & HWCAP2_CRC32);
 
 			if (has_aes)
 				g_cpuFeatures |= ANDROID_CPU_ARM_FEATURE_AES;
@@ -985,11 +953,10 @@ android_cpuInit(void)
 		static const struct CpuIdEntry
 		{
 			const char* field;
-			char        format;
-			char        bit_lshift;
-			char        bit_length;
-		} cpu_id_entries[] =
-		{
+			char format;
+			char bit_lshift;
+			char bit_length;
+		} cpu_id_entries[] = {
 			{ "CPU implementer", 'x', 24, 8 },
 			{ "CPU variant", 'x', 20, 4 },
 			{ "CPU part", 'x', 4, 12 },
@@ -998,14 +965,10 @@ android_cpuInit(void)
 		size_t i;
 		D("Parsing /proc/cpuinfo to recover CPUID\n");
 
-		for (i = 0;
-		     i < sizeof(cpu_id_entries) / sizeof(cpu_id_entries[0]);
-		     ++i)
+		for (i = 0; i < sizeof(cpu_id_entries) / sizeof(cpu_id_entries[0]); ++i)
 		{
 			const struct CpuIdEntry* entry = &cpu_id_entries[i];
-			char* value = extract_cpuinfo_field(cpuinfo,
-			                                    cpuinfo_len,
-			                                    entry->field);
+			char* value = extract_cpuinfo_field(cpuinfo, cpuinfo_len, entry->field);
 
 			if (value == NULL)
 				continue;
@@ -1030,7 +993,7 @@ android_cpuInit(void)
 			{
 				val &= ((1 << entry->bit_length) - 1);
 				val <<= entry->bit_lshift;
-				g_cpuIdArm |= (uint32_t) val;
+				g_cpuIdArm |= (uint32_t)val;
 			}
 
 			free(value);
@@ -1040,20 +1003,13 @@ android_cpuInit(void)
 		// reporting of CPU features.
 		static const struct CpuFix
 		{
-			uint32_t  cpuid;
-			uint64_t  or_flags;
-		} cpu_fixes[] =
-		{
+			uint32_t cpuid;
+			uint64_t or_flags;
+		} cpu_fixes[] = {
 			/* The Nexus 4 (Qualcomm Krait) kernel configuration
 			 * forgets to report IDIV support. */
-			{
-				0x510006f2, ANDROID_CPU_ARM_FEATURE_IDIV_ARM |
-				ANDROID_CPU_ARM_FEATURE_IDIV_THUMB2
-			},
-			{
-				0x510006f3, ANDROID_CPU_ARM_FEATURE_IDIV_ARM |
-				ANDROID_CPU_ARM_FEATURE_IDIV_THUMB2
-			},
+			{ 0x510006f2, ANDROID_CPU_ARM_FEATURE_IDIV_ARM | ANDROID_CPU_ARM_FEATURE_IDIV_THUMB2 },
+			{ 0x510006f3, ANDROID_CPU_ARM_FEATURE_IDIV_ARM | ANDROID_CPU_ARM_FEATURE_IDIV_THUMB2 },
 		};
 		size_t n;
 
@@ -1070,14 +1026,11 @@ android_cpuInit(void)
 		// Technically, this is a feature of the virtual CPU implemented
 		// by the emulator. Note that it could also support Thumb IDIV
 		// in the future, and this will have to be slightly updated.
-		char* hardware = extract_cpuinfo_field(cpuinfo,
-		                                       cpuinfo_len,
-		                                       "Hardware");
+		char* hardware = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "Hardware");
 
 		if (hardware)
 		{
-			if (!strcmp(hardware, "Goldfish") &&
-			    g_cpuIdArm == 0x4100c080 &&
+			if (!strcmp(hardware, "Goldfish") && g_cpuIdArm == 0x4100c080 &&
 			    (g_cpuFamily & ANDROID_CPU_ARM_FEATURE_ARMv7) != 0)
 			{
 				g_cpuFeatures |= ANDROID_CPU_ARM_FEATURE_IDIV_ARM;
@@ -1095,17 +1048,18 @@ android_cpuInit(void)
 
 		if (hwcaps != 0)
 		{
-			int has_fp      = (hwcaps & HWCAP_FP);
-			int has_asimd   = (hwcaps & HWCAP_ASIMD);
-			int has_aes     = (hwcaps & HWCAP_AES);
-			int has_pmull   = (hwcaps & HWCAP_PMULL);
-			int has_sha1    = (hwcaps & HWCAP_SHA1);
-			int has_sha2    = (hwcaps & HWCAP_SHA2);
-			int has_crc32   = (hwcaps & HWCAP_CRC32);
+			int has_fp = (hwcaps & HWCAP_FP);
+			int has_asimd = (hwcaps & HWCAP_ASIMD);
+			int has_aes = (hwcaps & HWCAP_AES);
+			int has_pmull = (hwcaps & HWCAP_PMULL);
+			int has_sha1 = (hwcaps & HWCAP_SHA1);
+			int has_sha2 = (hwcaps & HWCAP_SHA2);
+			int has_crc32 = (hwcaps & HWCAP_CRC32);
 
 			if (has_fp == 0)
 			{
-				D("ERROR: Floating-point unit missing, but is required by Android on AArch64 CPUs\n");
+				D("ERROR: Floating-point unit missing, but is required by Android on AArch64 "
+				  "CPUs\n");
 			}
 
 			if (has_asimd == 0)
@@ -1139,13 +1093,12 @@ android_cpuInit(void)
 #if defined(__i386__) || defined(__x86_64__)
 	int regs[4];
 	/* According to http://en.wikipedia.org/wiki/CPUID */
-#define VENDOR_INTEL_b  0x756e6547
-#define VENDOR_INTEL_c  0x6c65746e
-#define VENDOR_INTEL_d  0x49656e69
+#define VENDOR_INTEL_b 0x756e6547
+#define VENDOR_INTEL_c 0x6c65746e
+#define VENDOR_INTEL_d 0x49656e69
 	x86_cpuid(0, regs);
-	int vendorIsIntel = (regs[1] == VENDOR_INTEL_b &&
-	                     regs[2] == VENDOR_INTEL_c &&
-	                     regs[3] == VENDOR_INTEL_d);
+	int vendorIsIntel =
+	    (regs[1] == VENDOR_INTEL_b && regs[2] == VENDOR_INTEL_c && regs[3] == VENDOR_INTEL_d);
 	x86_cpuid(1, regs);
 
 	if ((regs[2] & (1 << 9)) != 0)
@@ -1201,7 +1154,7 @@ android_cpuInit(void)
 	}
 
 #endif
-#if defined( __mips__)
+#if defined(__mips__)
 	{
 		/* MIPS and MIPS64 */
 		/* Extract the list of CPU features from ELF hwcaps */
@@ -1210,8 +1163,8 @@ android_cpuInit(void)
 
 		if (hwcaps != 0)
 		{
-			int has_r6      = (hwcaps & HWCAP_MIPS_R6);
-			int has_msa     = (hwcaps & HWCAP_MIPS_MSA);
+			int has_r6 = (hwcaps & HWCAP_MIPS_R6);
+			int has_msa = (hwcaps & HWCAP_MIPS_MSA);
 
 			if (has_r6)
 				g_cpuFeatures |= ANDROID_CPU_MIPS_FEATURE_R6;
@@ -1224,38 +1177,30 @@ android_cpuInit(void)
 	free(cpuinfo);
 }
 
-
-AndroidCpuFamily
-android_getCpuFamily(void)
+AndroidCpuFamily android_getCpuFamily(void)
 {
 	pthread_once(&g_once, android_cpuInit);
 	return g_cpuFamily;
 }
 
-
-uint64_t
-android_getCpuFeatures(void)
+uint64_t android_getCpuFeatures(void)
 {
 	pthread_once(&g_once, android_cpuInit);
 	return g_cpuFeatures;
 }
 
-
-int
-android_getCpuCount(void)
+int android_getCpuCount(void)
 {
 	pthread_once(&g_once, android_cpuInit);
 	return g_cpuCount;
 }
 
-static void
-android_cpuInitDummy(void)
+static void android_cpuInitDummy(void)
 {
 	g_inited = 1;
 }
 
-int
-android_setCpu(int cpu_count, uint64_t cpu_features)
+int android_setCpu(int cpu_count, uint64_t cpu_features)
 {
 	/* Fail if the library was already initialized. */
 	if (g_inited)
@@ -1269,15 +1214,13 @@ android_setCpu(int cpu_count, uint64_t cpu_features)
 }
 
 #ifdef __arm__
-uint32_t
-android_getCpuIdArm(void)
+uint32_t android_getCpuIdArm(void)
 {
 	pthread_once(&g_once, android_cpuInit);
 	return g_cpuIdArm;
 }
 
-int
-android_setCpuArm(int cpu_count, uint64_t cpu_features, uint32_t cpu_id)
+int android_setCpuArm(int cpu_count, uint64_t cpu_features, uint32_t cpu_id)
 {
 	if (!android_setCpu(cpu_count, cpu_features))
 		return 0;
@@ -1285,7 +1228,7 @@ android_setCpuArm(int cpu_count, uint64_t cpu_features, uint32_t cpu_id)
 	g_cpuIdArm = cpu_id;
 	return 1;
 }
-#endif  /* __arm__ */
+#endif /* __arm__ */
 
 /*
  * Technical note: Making sense of ARM's FPU architecture versions.

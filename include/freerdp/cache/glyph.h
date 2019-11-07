@@ -63,13 +63,14 @@ struct rdp_glyph_cache
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API void glyph_cache_register_callbacks(rdpUpdate* update);
+	FREERDP_API void glyph_cache_register_callbacks(rdpUpdate* update);
 
-FREERDP_API rdpGlyphCache* glyph_cache_new(rdpSettings* settings);
-FREERDP_API void glyph_cache_free(rdpGlyphCache* glyph);
+	FREERDP_API rdpGlyphCache* glyph_cache_new(rdpSettings* settings);
+	FREERDP_API void glyph_cache_free(rdpGlyphCache* glyph);
 
 #ifdef __cplusplus
 }

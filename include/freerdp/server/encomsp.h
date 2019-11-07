@@ -38,17 +38,29 @@ typedef struct _encomsp_server_private EncomspServerPrivate;
 typedef UINT (*psEncomspStart)(EncomspServerContext* context);
 typedef UINT (*psEncomspStop)(EncomspServerContext* context);
 
-typedef UINT (*psEncomspFilterUpdated)(EncomspServerContext* context, ENCOMSP_FILTER_UPDATED_PDU* filterUpdated);
-typedef UINT (*psEncomspApplicationCreated)(EncomspServerContext* context, ENCOMSP_APPLICATION_CREATED_PDU* applicationCreated);
-typedef UINT (*psEncomspApplicationRemoved)(EncomspServerContext* context, ENCOMSP_APPLICATION_REMOVED_PDU* applicationRemoved);
-typedef UINT (*psEncomspWindowCreated)(EncomspServerContext* context, ENCOMSP_WINDOW_CREATED_PDU* windowCreated);
-typedef UINT (*psEncomspWindowRemoved)(EncomspServerContext* context, ENCOMSP_WINDOW_REMOVED_PDU* windowRemoved);
-typedef UINT (*psEncomspShowWindow)(EncomspServerContext* context, ENCOMSP_SHOW_WINDOW_PDU* showWindow);
-typedef UINT (*psEncomspParticipantCreated)(EncomspServerContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated);
-typedef UINT (*psEncomspParticipantRemoved)(EncomspServerContext* context, ENCOMSP_PARTICIPANT_REMOVED_PDU* participantRemoved);
-typedef UINT (*psEncomspChangeParticipantControlLevel)(EncomspServerContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* changeParticipantControlLevel);
-typedef UINT (*psEncomspGraphicsStreamPaused)(EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU* graphicsStreamPaused);
-typedef UINT (*psEncomspGraphicsStreamResumed)(EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU* graphicsStreamResumed);
+typedef UINT (*psEncomspFilterUpdated)(EncomspServerContext* context,
+                                       ENCOMSP_FILTER_UPDATED_PDU* filterUpdated);
+typedef UINT (*psEncomspApplicationCreated)(EncomspServerContext* context,
+                                            ENCOMSP_APPLICATION_CREATED_PDU* applicationCreated);
+typedef UINT (*psEncomspApplicationRemoved)(EncomspServerContext* context,
+                                            ENCOMSP_APPLICATION_REMOVED_PDU* applicationRemoved);
+typedef UINT (*psEncomspWindowCreated)(EncomspServerContext* context,
+                                       ENCOMSP_WINDOW_CREATED_PDU* windowCreated);
+typedef UINT (*psEncomspWindowRemoved)(EncomspServerContext* context,
+                                       ENCOMSP_WINDOW_REMOVED_PDU* windowRemoved);
+typedef UINT (*psEncomspShowWindow)(EncomspServerContext* context,
+                                    ENCOMSP_SHOW_WINDOW_PDU* showWindow);
+typedef UINT (*psEncomspParticipantCreated)(EncomspServerContext* context,
+                                            ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated);
+typedef UINT (*psEncomspParticipantRemoved)(EncomspServerContext* context,
+                                            ENCOMSP_PARTICIPANT_REMOVED_PDU* participantRemoved);
+typedef UINT (*psEncomspChangeParticipantControlLevel)(
+    EncomspServerContext* context,
+    ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* changeParticipantControlLevel);
+typedef UINT (*psEncomspGraphicsStreamPaused)(
+    EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU* graphicsStreamPaused);
+typedef UINT (*psEncomspGraphicsStreamResumed)(
+    EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU* graphicsStreamResumed);
 
 struct _encomsp_server_context
 {
@@ -76,14 +88,15 @@ struct _encomsp_server_context
 };
 
 #ifdef __cplusplus
- extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API EncomspServerContext* encomsp_server_context_new(HANDLE vcm);
-FREERDP_API void encomsp_server_context_free(EncomspServerContext* context);
+	FREERDP_API EncomspServerContext* encomsp_server_context_new(HANDLE vcm);
+	FREERDP_API void encomsp_server_context_free(EncomspServerContext* context);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CHANNEL_ENCOMSP_SERVER_ENCOMSP_H */

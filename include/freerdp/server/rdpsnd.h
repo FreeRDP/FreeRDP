@@ -29,18 +29,18 @@ typedef struct _rdpsnd_server_context RdpsndServerContext;
 typedef struct _rdpsnd_server_context rdpsnd_server_context;
 typedef struct _rdpsnd_server_private RdpsndServerPrivate;
 
-typedef UINT(*psRdpsndStart)(RdpsndServerContext* context);
-typedef UINT(*psRdpsndStop)(RdpsndServerContext* context);
+typedef UINT (*psRdpsndStart)(RdpsndServerContext* context);
+typedef UINT (*psRdpsndStop)(RdpsndServerContext* context);
 
-typedef UINT(*psRdpsndServerInitialize)(RdpsndServerContext* context, BOOL ownThread);
-typedef UINT(*psRdpsndServerSelectFormat)(RdpsndServerContext* context, UINT16 client_format_index);
-typedef UINT(*psRdpsndServerSendSamples)(RdpsndServerContext* context, const void* buf, int nframes,
-        UINT16 wTimestamp);
-typedef UINT(*psRdpsndServerConfirmBlock)(RdpsndServerContext* context, BYTE confirmBlockNum,
-        UINT16 wtimestamp);
-typedef UINT(*psRdpsndServerSetVolume)(RdpsndServerContext* context, int left, int right);
-typedef UINT(*psRdpsndServerClose)(RdpsndServerContext* context);
-
+typedef UINT (*psRdpsndServerInitialize)(RdpsndServerContext* context, BOOL ownThread);
+typedef UINT (*psRdpsndServerSelectFormat)(RdpsndServerContext* context,
+                                           UINT16 client_format_index);
+typedef UINT (*psRdpsndServerSendSamples)(RdpsndServerContext* context, const void* buf,
+                                          int nframes, UINT16 wTimestamp);
+typedef UINT (*psRdpsndServerConfirmBlock)(RdpsndServerContext* context, BYTE confirmBlockNum,
+                                           UINT16 wtimestamp);
+typedef UINT (*psRdpsndServerSetVolume)(RdpsndServerContext* context, int left, int right);
+typedef UINT (*psRdpsndServerClose)(RdpsndServerContext* context);
 
 typedef void (*psRdpsndServerActivated)(RdpsndServerContext* context);
 
@@ -122,15 +122,15 @@ struct _rdpsnd_server_context
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm);
-FREERDP_API void rdpsnd_server_context_reset(RdpsndServerContext*);
-FREERDP_API void rdpsnd_server_context_free(RdpsndServerContext* context);
-FREERDP_API HANDLE rdpsnd_server_get_event_handle(RdpsndServerContext* context);
-FREERDP_API UINT rdpsnd_server_handle_messages(RdpsndServerContext* context);
-
+	FREERDP_API RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm);
+	FREERDP_API void rdpsnd_server_context_reset(RdpsndServerContext*);
+	FREERDP_API void rdpsnd_server_context_free(RdpsndServerContext* context);
+	FREERDP_API HANDLE rdpsnd_server_get_event_handle(RdpsndServerContext* context);
+	FREERDP_API UINT rdpsnd_server_handle_messages(RdpsndServerContext* context);
 
 #ifdef __cplusplus
 }

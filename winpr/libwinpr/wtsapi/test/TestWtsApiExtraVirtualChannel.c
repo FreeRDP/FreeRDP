@@ -14,30 +14,31 @@ int TestWtsApiExtraVirtualChannel(int argc, char* argv[])
 
 	length = sizeof(buffer);
 
-	hVirtualChannel = WTSVirtualChannelOpen(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, "sample");
+	hVirtualChannel =
+	    WTSVirtualChannelOpen(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, "sample");
 
 	if (hVirtualChannel == INVALID_HANDLE_VALUE)
 	{
-		printf("WTSVirtualChannelOpen failed: %"PRIu32"\n", GetLastError());
+		printf("WTSVirtualChannelOpen failed: %" PRIu32 "\n", GetLastError());
 		return -1;
 	}
 	printf("WTSVirtualChannelOpen opend");
 	bytesWritten = 0;
-	bSuccess = WTSVirtualChannelWrite(hVirtualChannel, (PCHAR) buffer, length, &bytesWritten);
+	bSuccess = WTSVirtualChannelWrite(hVirtualChannel, (PCHAR)buffer, length, &bytesWritten);
 
 	if (!bSuccess)
 	{
-		printf("WTSVirtualChannelWrite failed: %"PRIu32"\n", GetLastError());
+		printf("WTSVirtualChannelWrite failed: %" PRIu32 "\n", GetLastError());
 		return -1;
 	}
 	printf("WTSVirtualChannelWrite written");
 
 	bytesRead = 0;
-	bSuccess = WTSVirtualChannelRead(hVirtualChannel, 5000, (PCHAR) buffer, length, &bytesRead);
+	bSuccess = WTSVirtualChannelRead(hVirtualChannel, 5000, (PCHAR)buffer, length, &bytesRead);
 
 	if (!bSuccess)
 	{
-		printf("WTSVirtualChannelRead failed: %"PRIu32"\n", GetLastError());
+		printf("WTSVirtualChannelRead failed: %" PRIu32 "\n", GetLastError());
 		return -1;
 	}
 	printf("WTSVirtualChannelRead read");
@@ -50,4 +51,3 @@ int TestWtsApiExtraVirtualChannel(int argc, char* argv[])
 
 	return 0;
 }
-

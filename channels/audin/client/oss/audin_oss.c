@@ -69,9 +69,8 @@ typedef struct _AudinOSSDevice
 } AudinOSSDevice;
 
 #define OSS_LOG_ERR(_text, _error) \
-	if (_error != 0) \
+	if (_error != 0)               \
 		WLog_ERR(TAG, "%s: %i - %s\n", _text, _error, strerror(_error));
-
 
 static UINT32 audin_oss_get_format(const AUDIO_FORMAT* format)
 {
@@ -99,8 +98,7 @@ static UINT32 audin_oss_get_format(const AUDIO_FORMAT* format)
 	return 0;
 }
 
-static BOOL audin_oss_format_supported(IAudinDevice* device,
-                                       const AUDIO_FORMAT* format)
+static BOOL audin_oss_format_supported(IAudinDevice* device, const AUDIO_FORMAT* format)
 {
 	if (device == NULL || format == NULL)
 		return FALSE;
@@ -108,8 +106,7 @@ static BOOL audin_oss_format_supported(IAudinDevice* device,
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
-			if (format->cbSize != 0 ||
-			    format->nSamplesPerSec > 48000 ||
+			if (format->cbSize != 0 || format->nSamplesPerSec > 48000 ||
 			    (format->wBitsPerSample != 8 && format->wBitsPerSample != 16) ||
 			    (format->nChannels != 1 && format->nChannels != 2))
 				return FALSE;
@@ -233,8 +230,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 	if (ioctl(pcm_handle, SNDCTL_DSP_SETFRAGMENT, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
 
-	buffer_size = (oss->FramesPerPacket * oss->format.nChannels *
-	               (oss->format.wBitsPerSample / 8));
+	buffer_size = (oss->FramesPerPacket * oss->format.nChannels * (oss->format.wBitsPerSample / 8));
 	buffer = (BYTE*)calloc((buffer_size + sizeof(void*)), sizeof(BYTE));
 
 	if (NULL == buffer)
@@ -252,7 +248,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
 			goto err_out;
 		}
 
@@ -273,7 +269,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 
 		if ((error = oss->receive(&oss->format, buffer, buffer_size, oss->user_data)))
 		{
-			WLog_ERR(TAG, "oss->receive failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "oss->receive failed with error %" PRIu32 "", error);
 			break;
 		}
 	}
@@ -281,8 +277,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 err_out:
 
 	if (error && oss && oss->rdpcontext)
-		setChannelError(oss->rdpcontext, error,
-		                "audin_oss_thread_func reported an error");
+		setChannelError(oss->rdpcontext, error, "audin_oss_thread_func reported an error");
 
 	if (pcm_handle != -1)
 	{
@@ -300,8 +295,7 @@ err_out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_oss_open(IAudinDevice* device, AudinReceive receive,
-                           void* user_data)
+static UINT audin_oss_open(IAudinDevice* device, AudinReceive receive, void* user_data)
 {
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 	oss->receive = receive;
@@ -344,7 +338,7 @@ static UINT audin_oss_close(IAudinDevice* device)
 		if (WaitForSingleObject(oss->thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
 			return error;
 		}
 
@@ -389,21 +383,18 @@ static UINT audin_oss_free(IAudinDevice* device)
 static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
 {
 	int status;
-	char* str_num, *eptr;
+	char *str_num, *eptr;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
-	COMMAND_LINE_ARGUMENT_A audin_oss_args[] =
-		{
-			{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
-			{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-		};
+	COMMAND_LINE_ARGUMENT_A audin_oss_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
+		                                           NULL, NULL, -1, NULL, "audio device name" },
+		                                         { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
 
-
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON |
-	        COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, args->argv,
-	                                    audin_oss_args, flags, oss, NULL, NULL);
+	flags =
+	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+	status =
+	    CommandLineParseArgumentsA(args->argc, args->argv, audin_oss_args, flags, oss, NULL, NULL);
 
 	if (status < 0)
 		return ERROR_INVALID_PARAMETER;
@@ -416,8 +407,7 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 			continue;
 
-		CommandLineSwitchStart(arg)
-		CommandLineSwitchCase(arg, "dev")
+		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "dev")
 		{
 			str_num = _strdup(arg->Value);
 
@@ -445,16 +435,15 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
 			free(str_num);
 		}
 		CommandLineSwitchEnd(arg)
-	}
-	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
 	return CHANNEL_RC_OK;
 }
 
 #ifdef BUILTIN_CHANNELS
-#define freerdp_audin_client_subsystem_entry	oss_freerdp_audin_client_subsystem_entry
+#define freerdp_audin_client_subsystem_entry oss_freerdp_audin_client_subsystem_entry
 #else
-#define freerdp_audin_client_subsystem_entry	FREERDP_API freerdp_audin_client_subsystem_entry
+#define freerdp_audin_client_subsystem_entry FREERDP_API freerdp_audin_client_subsystem_entry
 #endif
 
 /**
@@ -462,8 +451,7 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS
-        pEntryPoints)
+UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	AudinOSSDevice* oss;
@@ -487,14 +475,13 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS
 
 	if ((error = audin_oss_parse_addin_args(oss, args)))
 	{
-		WLog_ERR(TAG, "audin_oss_parse_addin_args failed with errorcode %"PRIu32"!", error);
+		WLog_ERR(TAG, "audin_oss_parse_addin_args failed with errorcode %" PRIu32 "!", error);
 		goto error_out;
 	}
 
-	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin,
-	             (IAudinDevice*) oss)))
+	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*)oss)))
 	{
-		WLog_ERR(TAG, "RegisterAudinDevice failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "RegisterAudinDevice failed with error %" PRIu32 "!", error);
 		goto error_out;
 	}
 

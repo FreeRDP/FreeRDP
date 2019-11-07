@@ -29,25 +29,23 @@
 
 #include "prim_internal.h"
 
-#define ALPHA(_k_)	(((_k_) & 0xFF000000U) >> 24)
-#define RED(_k_)	(((_k_) & 0x00FF0000U) >> 16)
-#define GRN(_k_)	(((_k_) & 0x0000FF00U) >> 8)
-#define BLU(_k_)	(((_k_) & 0x000000FFU))
+#define ALPHA(_k_) (((_k_)&0xFF000000U) >> 24)
+#define RED(_k_) (((_k_)&0x00FF0000U) >> 16)
+#define GRN(_k_) (((_k_)&0x0000FF00U) >> 8)
+#define BLU(_k_) (((_k_)&0x000000FFU))
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_alphaComp_argb(
-    const BYTE* pSrc1,  UINT32 src1Step,
-    const BYTE* pSrc2,  UINT32 src2Step,
-    BYTE* pDst,  UINT32 dstStep,
-    UINT32 width,  UINT32 height)
+static pstatus_t general_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2,
+                                        UINT32 src2Step, BYTE* pDst, UINT32 dstStep, UINT32 width,
+                                        UINT32 height)
 {
 	UINT32 y;
 
 	for (y = 0; y < height; y++)
 	{
-		const UINT32* sptr1 = (const UINT32*) (pSrc1 + y * src1Step);
-		const UINT32* sptr2 = (const UINT32*) (pSrc2 + y * src2Step);
-		UINT32* dptr = (UINT32*) (pDst + y * dstStep);
+		const UINT32* sptr1 = (const UINT32*)(pSrc1 + y * src1Step);
+		const UINT32* sptr2 = (const UINT32*)(pSrc2 + y * src2Step);
+		UINT32* dptr = (UINT32*)(pDst + y * dstStep);
 		UINT32 x;
 
 		for (x = 0; x < width; x++)
@@ -83,8 +81,8 @@ static pstatus_t general_alphaComp_argb(
 				UINT32 dag = s1ag - s2ag;
 				drb *= alpha;
 				dag *= alpha;
-				rb  = ((drb >> 8) + s2rb)       & 0x00FF00FFU;
-				ag  = (((dag >> 8) + s2ag) << 8) & 0xFF00FF00U;
+				rb = ((drb >> 8) + s2rb) & 0x00FF00FFU;
+				ag = (((dag >> 8) + s2ag) << 8) & 0xFF00FF00U;
 				*dptr++ = rb | ag;
 			}
 		}
@@ -98,4 +96,3 @@ void primitives_init_alphaComp(primitives_t* prims)
 {
 	prims->alphaComp_argb = general_alphaComp_argb;
 }
-

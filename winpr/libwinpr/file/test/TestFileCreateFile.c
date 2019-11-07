@@ -20,9 +20,10 @@ int TestFileCreateFile(int argc, char* argv[])
 	SYSTEMTIME systemTime;
 	GetSystemTime(&systemTime);
 	sprintf_s(sname, sizeof(sname),
-	          "CreateFile-%04"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%04"PRIu16,
-	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour, systemTime.wMinute,
-	          systemTime.wSecond, systemTime.wMilliseconds);
+	          "CreateFile-%04" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16
+	          "%02" PRIu16 "%04" PRIu16,
+	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour,
+	          systemTime.wMinute, systemTime.wSecond, systemTime.wMilliseconds);
 	name = GetKnownSubPath(KNOWN_PATH_TEMP, sname);
 
 	if (!name)
@@ -35,8 +36,8 @@ int TestFileCreateFile(int argc, char* argv[])
 	if (FAILED(hr))
 		rc = -1;
 
-	handle = CreateFileA(name, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-	                     CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	handle = CreateFileA(name, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW,
+	                     FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if (!handle)
 	{

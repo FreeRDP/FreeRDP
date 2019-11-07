@@ -24,6 +24,7 @@
 #include "rdp.h"
 
 FREERDP_LOCAL BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
-        const rdpMonitor* monitorDefArray, MONITOR_DEF** result);
+                                                              const rdpMonitor* monitorDefArray,
+                                                              MONITOR_DEF** result);
 
 #endif /* FREERDP_LIB_CORE_DISPLAY_H */

@@ -23,4 +23,3 @@
 #include <freerdp/api.h>
 
 #endif /* FREERDP_CHANNELS_SERVER_H */
-

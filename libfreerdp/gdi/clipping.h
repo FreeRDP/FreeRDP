@@ -26,15 +26,16 @@
 #include <freerdp/gdi/gdi.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_LOCAL BOOL gdi_SetClipRgn(HGDI_DC hdc, INT32 nXLeft, INT32 nYLeft,
-                                  INT32 nWidth, INT32 nHeight);
-FREERDP_LOCAL HGDI_RGN gdi_GetClipRgn(HGDI_DC hdc);
-FREERDP_LOCAL BOOL gdi_SetNullClipRgn(HGDI_DC hdc);
-FREERDP_LOCAL BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y,
-                                  INT32* w, INT32* h, INT32* srcx, INT32* srcy);
+	FREERDP_LOCAL BOOL gdi_SetClipRgn(HGDI_DC hdc, INT32 nXLeft, INT32 nYLeft, INT32 nWidth,
+	                                  INT32 nHeight);
+	FREERDP_LOCAL HGDI_RGN gdi_GetClipRgn(HGDI_DC hdc);
+	FREERDP_LOCAL BOOL gdi_SetNullClipRgn(HGDI_DC hdc);
+	FREERDP_LOCAL BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h,
+	                                  INT32* srcx, INT32* srcy);
 
 #ifdef __cplusplus
 }

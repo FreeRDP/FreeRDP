@@ -24,7 +24,7 @@ int TestWtsApiShutdownSystem(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSShutdownSystem failed: %"PRIu32"\n", GetLastError());
+		printf("WTSShutdownSystem failed: %" PRIu32 "\n", GetLastError());
 		return -1;
 	}
 

@@ -82,10 +82,8 @@ static void mf_server_main_loop(freerdp_listener* instance)
 		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
 		{
 			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
+			if (!((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINPROGRESS) ||
+			      (errno == EINTR))) /* signal occurred */
 			{
 				break;
 			}
@@ -107,7 +105,7 @@ int main(int argc, char* argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
-	
+
 	if (!(instance = freerdp_listener_new()))
 		return 1;
 

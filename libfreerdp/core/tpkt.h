@@ -26,7 +26,7 @@
 #include <winpr/stream.h>
 #include <freerdp/api.h>
 
-#define TPKT_HEADER_LENGTH	4
+#define TPKT_HEADER_LENGTH 4
 
 FREERDP_LOCAL BOOL tpkt_verify_header(wStream* s);
 FREERDP_LOCAL BOOL tpkt_read_header(wStream* s, UINT16* length);

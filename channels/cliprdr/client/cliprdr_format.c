@@ -40,7 +40,8 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
+UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
+                                 UINT16 msgFlags)
 {
 	CLIPRDR_FORMAT_LIST formatList;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
@@ -59,13 +60,13 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	if ((error = cliprdr_read_format_list(s, &formatList, cliprdr->useLongFormatNames)))
 		goto error_out;
 
-	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList: numFormats: %"PRIu32"",
-			formatList.numFormats);
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList: numFormats: %" PRIu32 "",
+	           formatList.numFormats);
 
 	if (context->ServerFormatList)
 	{
 		if ((error = context->ServerFormatList(context, &formatList)))
-			WLog_ERR(TAG, "ServerFormatList failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "ServerFormatList failed with error %" PRIu32 "", error);
 	}
 
 error_out:
@@ -78,7 +79,8 @@ error_out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
+UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
+                                          UINT16 msgFlags)
 {
 	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
@@ -98,7 +100,7 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	IFCALLRET(context->ServerFormatListResponse, error, context, &formatListResponse);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatListResponse failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "ServerFormatListResponse failed with error %" PRIu32 "!", error);
 
 	return error;
 }
@@ -108,7 +110,8 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
+UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
+                                         UINT16 msgFlags)
 {
 	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
@@ -132,7 +135,7 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 	context->lastRequestedFormatId = formatDataRequest.requestedFormatId;
 	IFCALLRET(context->ServerFormatDataRequest, error, context, &formatDataRequest);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatDataRequest failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "ServerFormatDataRequest failed with error %" PRIu32 "!", error);
 
 	return error;
 }
@@ -142,7 +145,8 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
+UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
+                                          UINT16 msgFlags)
 {
 	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
@@ -165,7 +169,7 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	IFCALLRET(context->ServerFormatDataResponse, error, context, &formatDataResponse);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatDataResponse failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "ServerFormatDataResponse failed with error %" PRIu32 "!", error);
 
 	return error;
 }
@@ -173,17 +177,17 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 static UINT64 filetime_to_uint64(FILETIME value)
 {
 	UINT64 converted = 0;
-	converted |= (UINT32) value.dwHighDateTime;
+	converted |= (UINT32)value.dwHighDateTime;
 	converted <<= 32;
-	converted |= (UINT32) value.dwLowDateTime;
+	converted |= (UINT32)value.dwLowDateTime;
 	return converted;
 }
 
 static FILETIME uint64_to_filetime(UINT64 value)
 {
 	FILETIME converted;
-	converted.dwLowDateTime = (UINT32) (value >> 0);
-	converted.dwHighDateTime = (UINT32) (value >> 32);
+	converted.dwLowDateTime = (UINT32)(value >> 0);
+	converted.dwHighDateTime = (UINT32)(value >> 32);
 	return converted;
 }
 
@@ -202,7 +206,7 @@ static FILETIME uint64_to_filetime(UINT64 value)
  * @returns 0 on success, otherwise a Win32 error code.
  */
 UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
-		FILEDESCRIPTOR** file_descriptor_array, UINT32* file_descriptor_count)
+                             FILEDESCRIPTOR** file_descriptor_array, UINT32* file_descriptor_count)
 {
 	UINT result = NO_ERROR;
 	UINT32 i;
@@ -212,7 +216,7 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	if (!format_data || !file_descriptor_array || !file_descriptor_count)
 		return ERROR_BAD_ARGUMENTS;
 
-	s = Stream_New((BYTE*) format_data, format_data_length);
+	s = Stream_New((BYTE*)format_data, format_data_length);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -228,9 +232,8 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 
 	if (Stream_GetRemainingLength(s) / CLIPRDR_FILEDESCRIPTOR_SIZE < count)
 	{
-		WLog_ERR(TAG, "packed file list is too short: expected %"PRIuz", have %"PRIuz,
-			((size_t) count) * CLIPRDR_FILEDESCRIPTOR_SIZE,
-			Stream_GetRemainingLength(s));
+		WLog_ERR(TAG, "packed file list is too short: expected %" PRIuz ", have %" PRIuz,
+		         ((size_t)count) * CLIPRDR_FILEDESCRIPTOR_SIZE, Stream_GetRemainingLength(s));
 
 		result = ERROR_INCORRECT_SIZE;
 		goto out;
@@ -250,21 +253,21 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 		UINT64 lastWriteTime;
 		FILEDESCRIPTOR* file = &((*file_descriptor_array)[i]);
 
-		Stream_Read_UINT32(s, file->dwFlags); /* flags (4 bytes) */
-		Stream_Seek(s, 32); /* reserved1 (32 bytes) */
+		Stream_Read_UINT32(s, file->dwFlags);          /* flags (4 bytes) */
+		Stream_Seek(s, 32);                            /* reserved1 (32 bytes) */
 		Stream_Read_UINT32(s, file->dwFileAttributes); /* fileAttributes (4 bytes) */
-		Stream_Seek(s, 16); /* reserved2 (16 bytes) */
-		Stream_Read_UINT64(s, lastWriteTime); /* lastWriteTime (8 bytes) */
+		Stream_Seek(s, 16);                            /* reserved2 (16 bytes) */
+		Stream_Read_UINT64(s, lastWriteTime);          /* lastWriteTime (8 bytes) */
 		file->ftLastWriteTime = uint64_to_filetime(lastWriteTime);
 		Stream_Read_UINT32(s, file->nFileSizeHigh); /* fileSizeHigh (4 bytes) */
-		Stream_Read_UINT32(s, file->nFileSizeLow); /* fileSizeLow (4 bytes) */
-		for (c = 0; c < 260; c++) /* cFileName (520 bytes) */
+		Stream_Read_UINT32(s, file->nFileSizeLow);  /* fileSizeLow (4 bytes) */
+		for (c = 0; c < 260; c++)                   /* cFileName (520 bytes) */
 			Stream_Read_UINT16(s, file->cFileName[c]);
 	}
 
 	if (Stream_GetRemainingLength(s) > 0)
-		WLog_WARN(TAG, "packed file list has %"PRIuz" excess bytes",
-			Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "packed file list has %" PRIuz " excess bytes",
+		          Stream_GetRemainingLength(s));
 out:
 	Stream_Free(s, FALSE);
 
@@ -286,7 +289,8 @@ out:
  * @returns 0 on success, otherwise a Win32 error code.
  */
 UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
-		UINT32 file_descriptor_count, BYTE** format_data, UINT32* format_data_length)
+                                 UINT32 file_descriptor_count, BYTE** format_data,
+                                 UINT32* format_data_length)
 {
 	UINT result = NO_ERROR;
 	UINT32 i;
@@ -321,15 +325,15 @@ UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
 			goto error;
 		}
 
-		Stream_Write_UINT32(s, file->dwFlags); /* flags (4 bytes) */
-		Stream_Zero(s, 32); /* reserved1 (32 bytes) */
+		Stream_Write_UINT32(s, file->dwFlags);          /* flags (4 bytes) */
+		Stream_Zero(s, 32);                             /* reserved1 (32 bytes) */
 		Stream_Write_UINT32(s, file->dwFileAttributes); /* fileAttributes (4 bytes) */
-		Stream_Zero(s, 16); /* reserved2 (16 bytes) */
+		Stream_Zero(s, 16);                             /* reserved2 (16 bytes) */
 		lastWriteTime = filetime_to_uint64(file->ftLastWriteTime);
-		Stream_Write_UINT64(s, lastWriteTime); /* lastWriteTime (8 bytes) */
+		Stream_Write_UINT64(s, lastWriteTime);       /* lastWriteTime (8 bytes) */
 		Stream_Write_UINT32(s, file->nFileSizeHigh); /* fileSizeHigh (4 bytes) */
-		Stream_Write_UINT32(s, file->nFileSizeLow); /* fileSizeLow (4 bytes) */
-		for (c = 0; c < 260; c++) /* cFileName (520 bytes) */
+		Stream_Write_UINT32(s, file->nFileSizeLow);  /* fileSizeLow (4 bytes) */
+		for (c = 0; c < 260; c++)                    /* cFileName (520 bytes) */
 			Stream_Write_UINT16(s, file->cFileName[c]);
 	}
 

@@ -35,11 +35,12 @@ struct rdp_shadow_capture
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-rdpShadowCapture* shadow_capture_new(rdpShadowServer* server);
-void shadow_capture_free(rdpShadowCapture* capture);
+	rdpShadowCapture* shadow_capture_new(rdpShadowServer* server);
+	void shadow_capture_free(rdpShadowCapture* capture);
 
 #ifdef __cplusplus
 }

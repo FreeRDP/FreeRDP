@@ -41,4 +41,3 @@ DWORD GetCurrentProcessorNumber(VOID)
 }
 
 #endif
-

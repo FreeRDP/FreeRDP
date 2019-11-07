@@ -40,28 +40,25 @@
 #include <freerdp/build-config.h>
 #include <ctype.h>
 
-
 #ifdef _WIN32
 #pragma warning(push)
-#pragma warning(disable: 4244)
+#pragma warning(disable : 4244)
 #endif
 
 static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 
-#define REG_QUERY_DWORD_VALUE(_key, _subkey, _type, _value, _size, _result) \
-	_size = sizeof(DWORD); \
-	if (RegQueryValueEx(_key, _subkey, NULL, &_type, (BYTE*) &_value, &_size) == ERROR_SUCCESS) \
-		_result = _value
+#define REG_QUERY_DWORD_VALUE(_key, _subkey, _type, _value, _size, _result)                    \
+	_size = sizeof(DWORD);                                                                     \
+	if (RegQueryValueEx(_key, _subkey, NULL, &_type, (BYTE*)&_value, &_size) == ERROR_SUCCESS) \
+	_result = _value
 
-#define REG_QUERY_BOOL_VALUE(_key, _subkey, _type, _value, _size, _result) \
-	_size = sizeof(DWORD); \
-	if (RegQueryValueEx(_key, _subkey, NULL, &_type, (BYTE*) &_value, &_size) == ERROR_SUCCESS) \
-		_result = _value ? TRUE : FALSE
+#define REG_QUERY_BOOL_VALUE(_key, _subkey, _type, _value, _size, _result)                     \
+	_size = sizeof(DWORD);                                                                     \
+	if (RegQueryValueEx(_key, _subkey, NULL, &_type, (BYTE*)&_value, &_size) == ERROR_SUCCESS) \
+	_result = _value ? TRUE : FALSE
 
-#define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" \
-	FREERDP_PRODUCT_STRING "\\Server"
-#define CLIENT_KEY "Software\\" FREERDP_VENDOR_STRING "\\" \
-	FREERDP_PRODUCT_STRING "\\Client"
+#define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\Server"
+#define CLIENT_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\Client"
 #define BITMAP_CACHE_KEY CLIENT_KEY "\\BitmapCacheV2"
 #define GLYPH_CACHE_KEY CLIENT_KEY "\\GlyphCache"
 #define POINTER_CACHE_KEY CLIENT_KEY "\\PointerCache"
@@ -73,8 +70,7 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 	DWORD dwType;
 	DWORD dwSize;
 	DWORD dwValue;
-	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, CLIENT_KEY, 0,
-	                       KEY_READ | KEY_WOW64_64KEY, &hKey);
+	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, CLIENT_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status == ERROR_SUCCESS)
 	{
@@ -82,8 +78,7 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		                      settings->DesktopWidth);
 		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopHeight"), dwType, dwValue, dwSize,
 		                      settings->DesktopHeight);
-		REG_QUERY_BOOL_VALUE(hKey, _T("Fullscreen"), dwType, dwValue, dwSize,
-		                     settings->Fullscreen);
+		REG_QUERY_BOOL_VALUE(hKey, _T("Fullscreen"), dwType, dwValue, dwSize, settings->Fullscreen);
 		REG_QUERY_DWORD_VALUE(hKey, _T("ColorDepth"), dwType, dwValue, dwSize,
 		                      settings->ColorDepth);
 		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardType"), dwType, dwValue, dwSize,
@@ -110,15 +105,15 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		                     settings->BitmapCacheEnabled);
 		REG_QUERY_BOOL_VALUE(hKey, _T("OffscreenBitmapCache"), dwType, dwValue, dwSize,
 		                     settings->OffscreenSupportLevel);
-		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheSize"), dwType, dwValue,
-		                      dwSize, settings->OffscreenCacheSize);
-		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheEntries"), dwType, dwValue,
-		                      dwSize, settings->OffscreenCacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheSize"), dwType, dwValue, dwSize,
+		                      settings->OffscreenCacheSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheEntries"), dwType, dwValue, dwSize,
+		                      settings->OffscreenCacheEntries);
 		RegCloseKey(hKey);
 	}
 
-	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, BITMAP_CACHE_KEY, 0,
-	                       KEY_READ | KEY_WOW64_64KEY, &hKey);
+	status =
+	    RegOpenKeyExA(HKEY_LOCAL_MACHINE, BITMAP_CACHE_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status == ERROR_SUCCESS)
 	{
@@ -149,8 +144,8 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		RegCloseKey(hKey);
 	}
 
-	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, GLYPH_CACHE_KEY,
-	                       0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+	status =
+	    RegOpenKeyExA(HKEY_LOCAL_MACHINE, GLYPH_CACHE_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status == ERROR_SUCCESS)
 	{
@@ -203,8 +198,8 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		RegCloseKey(hKey);
 	}
 
-	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, POINTER_CACHE_KEY,
-	                       0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+	status =
+	    RegOpenKeyExA(HKEY_LOCAL_MACHINE, POINTER_CACHE_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status == ERROR_SUCCESS)
 	{
@@ -225,20 +220,15 @@ static void settings_server_load_hkey_local_machine(rdpSettings* settings)
 	DWORD dwType;
 	DWORD dwSize;
 	DWORD dwValue;
-	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, SERVER_KEY,
-	                       0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, SERVER_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status != ERROR_SUCCESS)
 		return;
 
-	REG_QUERY_BOOL_VALUE(hKey, _T("ExtSecurity"), dwType, dwValue, dwSize,
-	                     settings->ExtSecurity);
-	REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize,
-	                     settings->NlaSecurity);
-	REG_QUERY_BOOL_VALUE(hKey, _T("TlsSecurity"), dwType, dwValue, dwSize,
-	                     settings->TlsSecurity);
-	REG_QUERY_BOOL_VALUE(hKey, _T("RdpSecurity"), dwType, dwValue, dwSize,
-	                     settings->RdpSecurity);
+	REG_QUERY_BOOL_VALUE(hKey, _T("ExtSecurity"), dwType, dwValue, dwSize, settings->ExtSecurity);
+	REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize, settings->NlaSecurity);
+	REG_QUERY_BOOL_VALUE(hKey, _T("TlsSecurity"), dwType, dwValue, dwSize, settings->TlsSecurity);
+	REG_QUERY_BOOL_VALUE(hKey, _T("RdpSecurity"), dwType, dwValue, dwSize, settings->RdpSecurity);
 	RegCloseKey(hKey);
 }
 
@@ -303,9 +293,12 @@ BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
 	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
 	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = settings->BitmapCacheEnabled;
 	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = settings->GlyphSupportLevel != GLYPH_SUPPORT_NONE;
-	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = settings->GlyphSupportLevel != GLYPH_SUPPORT_NONE;
-	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = settings->GlyphSupportLevel != GLYPH_SUPPORT_NONE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] =
+	    settings->GlyphSupportLevel != GLYPH_SUPPORT_NONE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] =
+	    settings->GlyphSupportLevel != GLYPH_SUPPORT_NONE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] =
+	    settings->GlyphSupportLevel != GLYPH_SUPPORT_NONE;
 	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
@@ -317,20 +310,17 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 {
 	char* base;
 	rdpSettings* settings;
-	settings = (rdpSettings*) calloc(1, sizeof(rdpSettings));
+	settings = (rdpSettings*)calloc(1, sizeof(rdpSettings));
 
 	if (!settings)
 		return NULL;
 
 	settings->HiDefRemoteApp = FALSE;
-	settings->RemoteApplicationSupportMask = RAIL_LEVEL_SUPPORTED |
-	        RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED            |
-	        RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED         |
-	        RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED         |
-	        RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED |
-	        RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED       |
-	        RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED           |
-	        RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
+	settings->RemoteApplicationSupportMask =
+	    RAIL_LEVEL_SUPPORTED | RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED |
+	    RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED | RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED |
+	    RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED | RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED |
+	    RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED | RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
 	settings->SupportHeartbeatPdu = TRUE;
 	settings->ServerMode = (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE;
 	settings->WaitForOutputBufferFlush = TRUE;
@@ -388,8 +378,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->AuthenticationLevel = 2;
 	settings->ChannelCount = 0;
 	settings->ChannelDefArraySize = 32;
-	settings->ChannelDefArray = (CHANNEL_DEF*) calloc(settings->ChannelDefArraySize,
-	                            sizeof(CHANNEL_DEF));
+	settings->ChannelDefArray =
+	    (CHANNEL_DEF*)calloc(settings->ChannelDefArraySize, sizeof(CHANNEL_DEF));
 
 	if (!settings->ChannelDefArray)
 		goto out_fail;
@@ -397,15 +387,15 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->SupportMonitorLayoutPdu = FALSE;
 	settings->MonitorCount = 0;
 	settings->MonitorDefArraySize = 32;
-	settings->MonitorDefArray = (rdpMonitor*) calloc(settings->MonitorDefArraySize,
-	                            sizeof(rdpMonitor));
+	settings->MonitorDefArray =
+	    (rdpMonitor*)calloc(settings->MonitorDefArraySize, sizeof(rdpMonitor));
 
 	if (!settings->MonitorDefArray)
 		goto out_fail;
 
 	settings->MonitorLocalShiftX = 0;
 	settings->MonitorLocalShiftY = 0;
-	settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
+	settings->MonitorIds = (UINT32*)calloc(16, sizeof(UINT32));
 
 	if (!settings->MonitorIds)
 		goto out_fail;
@@ -442,8 +432,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->SurfaceFrameMarkerEnabled = TRUE;
 	settings->AllowCacheWaitingList = TRUE;
 	settings->BitmapCacheV2NumCells = 5;
-	settings->BitmapCacheV2CellInfo = (BITMAP_CACHE_V2_CELL_INFO*) malloc(sizeof(
-	                                      BITMAP_CACHE_V2_CELL_INFO) * 6);
+	settings->BitmapCacheV2CellInfo =
+	    (BITMAP_CACHE_V2_CELL_INFO*)malloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
 
 	if (!settings->BitmapCacheV2CellInfo)
 		goto out_fail;
@@ -508,8 +498,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->RemoteAppNumIconCaches = 3;
 	settings->RemoteAppNumIconCacheEntries = 12;
 	settings->VirtualChannelChunkSize = CHANNEL_CHUNK_LENGTH;
-	settings->MultifragMaxRequestSize = (flags & FREERDP_SETTINGS_SERVER_MODE) ?
-	                                    0 : 0xFFFF;
+	settings->MultifragMaxRequestSize = (flags & FREERDP_SETTINGS_SERVER_MODE) ? 0 : 0xFFFF;
 	settings->GatewayUseSameCredentials = FALSE;
 	settings->GatewayBypassLocal = FALSE;
 	settings->GatewayRpcTransport = TRUE;
@@ -532,41 +521,40 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->GfxH264 = FALSE;
 	settings->GfxAVC444 = FALSE;
 	settings->GfxSendQoeAck = FALSE;
-	settings->ClientAutoReconnectCookie = (ARC_CS_PRIVATE_PACKET*) calloc(1,
-	                                      sizeof(ARC_CS_PRIVATE_PACKET));
+	settings->ClientAutoReconnectCookie =
+	    (ARC_CS_PRIVATE_PACKET*)calloc(1, sizeof(ARC_CS_PRIVATE_PACKET));
 
 	if (!settings->ClientAutoReconnectCookie)
 		goto out_fail;
 
-	settings->ServerAutoReconnectCookie = (ARC_SC_PRIVATE_PACKET*) calloc(1,
-	                                      sizeof(ARC_SC_PRIVATE_PACKET));
+	settings->ServerAutoReconnectCookie =
+	    (ARC_SC_PRIVATE_PACKET*)calloc(1, sizeof(ARC_SC_PRIVATE_PACKET));
 
 	if (!settings->ServerAutoReconnectCookie)
 		goto out_fail;
 
-	settings->ClientTimeZone = (LPTIME_ZONE_INFORMATION) calloc(1,
-	                           sizeof(TIME_ZONE_INFORMATION));
+	settings->ClientTimeZone = (LPTIME_ZONE_INFORMATION)calloc(1, sizeof(TIME_ZONE_INFORMATION));
 
 	if (!settings->ClientTimeZone)
 		goto out_fail;
 
 	settings->DeviceArraySize = 16;
-	settings->DeviceArray = (RDPDR_DEVICE**) calloc(1,
-	                        sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
+	settings->DeviceArray =
+	    (RDPDR_DEVICE**)calloc(1, sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
 
 	if (!settings->DeviceArray)
 		goto out_fail;
 
 	settings->StaticChannelArraySize = 16;
-	settings->StaticChannelArray = (ADDIN_ARGV**)
-	                               calloc(1, sizeof(ADDIN_ARGV*) * settings->StaticChannelArraySize);
+	settings->StaticChannelArray =
+	    (ADDIN_ARGV**)calloc(1, sizeof(ADDIN_ARGV*) * settings->StaticChannelArraySize);
 
 	if (!settings->StaticChannelArray)
 		goto out_fail;
 
 	settings->DynamicChannelArraySize = 16;
-	settings->DynamicChannelArray = (ADDIN_ARGV**)
-	                                calloc(1, sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
+	settings->DynamicChannelArray =
+	    (ADDIN_ARGV**)calloc(1, sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
 
 	if (!settings->DynamicChannelArray)
 		goto out_fail;
@@ -585,14 +573,11 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		 * Custom builds use <Vendor>/<Product> as config folder. */
 		if (_stricmp(FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING))
 		{
-			base = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME,
-			                       FREERDP_VENDOR_STRING);
+			base = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, FREERDP_VENDOR_STRING);
 
 			if (base)
 			{
-				settings->ConfigPath = GetCombinedPath(
-				                           base,
-				                           FREERDP_PRODUCT_STRING);
+				settings->ConfigPath = GetCombinedPath(base, FREERDP_PRODUCT_STRING);
 			}
 
 			free(base);
@@ -606,9 +591,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 			for (i = 0; i < sizeof(product); i++)
 				product[i] = tolower(FREERDP_PRODUCT_STRING[i]);
 
-			settings->ConfigPath = GetKnownSubPath(
-			                           KNOWN_PATH_XDG_CONFIG_HOME,
-			                           product);
+			settings->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
 		}
 
 		if (!settings->ConfigPath)
@@ -616,7 +599,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	}
 
 	settings_load_hkey_local_machine(settings);
-	settings->SettingsModified = (BYTE*) calloc(1, sizeof(rdpSettings) / 8);
+	settings->SettingsModified = (BYTE*)calloc(1, sizeof(rdpSettings) / 8);
 
 	if (!settings->SettingsModified)
 		goto out_fail;
@@ -657,7 +640,6 @@ out_fail:
 	free(settings);
 	return NULL;
 }
-
 
 static void freerdp_settings_free_internal(rdpSettings* settings)
 {
@@ -768,109 +750,107 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	*_settings = *settings;
 
 	/* char* values */
-#define CHECKED_STRDUP(name) if (settings->name && !(_settings->name = _strdup(settings->name))) goto out_fail
-	CHECKED_STRDUP(ServerHostname);  /* 20 */
-	CHECKED_STRDUP(Username); /* 21 */
-	CHECKED_STRDUP(Password); /* 22 */
-	CHECKED_STRDUP(Domain); /* 23 */
-	CHECKED_STRDUP(PasswordHash); /* 24 */
-	CHECKED_STRDUP(AcceptedCert); /* 27 */
-	CHECKED_STRDUP(AlternateShell); /* 640 */
-	CHECKED_STRDUP(ShellWorkingDirectory); /* 641 */
-	CHECKED_STRDUP(ClientAddress); /* 769 */
-	CHECKED_STRDUP(ClientDir); /* 770 */
-	CHECKED_STRDUP(DynamicDSTTimeZoneKeyName); /* 897 */
-	CHECKED_STRDUP(RemoteAssistanceSessionId); /* 1025 */
-	CHECKED_STRDUP(RemoteAssistancePassStub); /* 1026 */
-	CHECKED_STRDUP(RemoteAssistancePassword); /* 1027 */
-	CHECKED_STRDUP(RemoteAssistanceRCTicket); /* 1028 */
-	CHECKED_STRDUP(AuthenticationServiceClass); /* 1098 */
-	CHECKED_STRDUP(AllowedTlsCiphers); /* 1101 */
-	CHECKED_STRDUP(NtlmSamFile); /* 1103 */
-	CHECKED_STRDUP(PreconnectionBlob); /* 1155 */
-	CHECKED_STRDUP(TargetNetAddress); /* 1217 */
-	CHECKED_STRDUP(RedirectionUsername); /* 1220 */
-	CHECKED_STRDUP(RedirectionDomain); /* 1221 */
-	CHECKED_STRDUP(RedirectionTargetFQDN); /* 1224 */
+#define CHECKED_STRDUP(name)                                            \
+	if (settings->name && !(_settings->name = _strdup(settings->name))) \
+	goto out_fail
+	CHECKED_STRDUP(ServerHostname);               /* 20 */
+	CHECKED_STRDUP(Username);                     /* 21 */
+	CHECKED_STRDUP(Password);                     /* 22 */
+	CHECKED_STRDUP(Domain);                       /* 23 */
+	CHECKED_STRDUP(PasswordHash);                 /* 24 */
+	CHECKED_STRDUP(AcceptedCert);                 /* 27 */
+	CHECKED_STRDUP(AlternateShell);               /* 640 */
+	CHECKED_STRDUP(ShellWorkingDirectory);        /* 641 */
+	CHECKED_STRDUP(ClientAddress);                /* 769 */
+	CHECKED_STRDUP(ClientDir);                    /* 770 */
+	CHECKED_STRDUP(DynamicDSTTimeZoneKeyName);    /* 897 */
+	CHECKED_STRDUP(RemoteAssistanceSessionId);    /* 1025 */
+	CHECKED_STRDUP(RemoteAssistancePassStub);     /* 1026 */
+	CHECKED_STRDUP(RemoteAssistancePassword);     /* 1027 */
+	CHECKED_STRDUP(RemoteAssistanceRCTicket);     /* 1028 */
+	CHECKED_STRDUP(AuthenticationServiceClass);   /* 1098 */
+	CHECKED_STRDUP(AllowedTlsCiphers);            /* 1101 */
+	CHECKED_STRDUP(NtlmSamFile);                  /* 1103 */
+	CHECKED_STRDUP(PreconnectionBlob);            /* 1155 */
+	CHECKED_STRDUP(TargetNetAddress);             /* 1217 */
+	CHECKED_STRDUP(RedirectionUsername);          /* 1220 */
+	CHECKED_STRDUP(RedirectionDomain);            /* 1221 */
+	CHECKED_STRDUP(RedirectionTargetFQDN);        /* 1224 */
 	CHECKED_STRDUP(RedirectionTargetNetBiosName); /* 1225 */
-	CHECKED_STRDUP(RedirectionAcceptedCert); /* 1231 */
-	CHECKED_STRDUP(KerberosKdc); /* 1344 */
-	CHECKED_STRDUP(KerberosRealm); /* 1345 */
-	CHECKED_STRDUP(CertificateName); /* 1409 */
-	CHECKED_STRDUP(CertificateFile); /* 1410 */
-	CHECKED_STRDUP(PrivateKeyFile); /* 1411 */
-	CHECKED_STRDUP(RdpKeyFile); /* 1412 */
-	CHECKED_STRDUP(CertificateContent); /* 1416 */
-	CHECKED_STRDUP(PrivateKeyContent); /* 1417 */
-	CHECKED_STRDUP(RdpKeyContent); /* 1418 */
-	CHECKED_STRDUP(WindowTitle); /* 1542 */
-	CHECKED_STRDUP(WmClass); /* 1549 */
-	CHECKED_STRDUP(ComputerName); /* 1664 */
-	CHECKED_STRDUP(ConnectionFile); /* 1728 */
-	CHECKED_STRDUP(AssistanceFile); /* 1729 */
-	CHECKED_STRDUP(HomePath); /* 1792 */
-	CHECKED_STRDUP(ConfigPath); /* 1793 */
-	CHECKED_STRDUP(CurrentPath); /* 1794 */
-	CHECKED_STRDUP(DumpRemoteFxFile); /* 1858 */
-	CHECKED_STRDUP(PlayRemoteFxFile); /* 1859 */
-	CHECKED_STRDUP(GatewayHostname); /* 1986 */
-	CHECKED_STRDUP(GatewayUsername); /* 1987 */
-	CHECKED_STRDUP(GatewayPassword); /* 1988 */
-	CHECKED_STRDUP(GatewayDomain); /* 1989 */
-	CHECKED_STRDUP(GatewayAccessToken); /* 1997 */
-	CHECKED_STRDUP(GatewayAcceptedCert); /* 1998 */
-	CHECKED_STRDUP(ProxyHostname); /* 2016 */
-	CHECKED_STRDUP(RemoteApplicationName); /* 2113 */
-	CHECKED_STRDUP(RemoteApplicationIcon); /* 2114 */
-	CHECKED_STRDUP(RemoteApplicationProgram); /* 2115 */
-	CHECKED_STRDUP(RemoteApplicationFile); /* 2116 */
-	CHECKED_STRDUP(RemoteApplicationGuid); /* 2117 */
-	CHECKED_STRDUP(RemoteApplicationCmdLine); /* 2118 */
-	CHECKED_STRDUP(ImeFileName); /* 2628 */
-	CHECKED_STRDUP(DrivesToRedirect); /* 4290 */
+	CHECKED_STRDUP(RedirectionAcceptedCert);      /* 1231 */
+	CHECKED_STRDUP(KerberosKdc);                  /* 1344 */
+	CHECKED_STRDUP(KerberosRealm);                /* 1345 */
+	CHECKED_STRDUP(CertificateName);              /* 1409 */
+	CHECKED_STRDUP(CertificateFile);              /* 1410 */
+	CHECKED_STRDUP(PrivateKeyFile);               /* 1411 */
+	CHECKED_STRDUP(RdpKeyFile);                   /* 1412 */
+	CHECKED_STRDUP(CertificateContent);           /* 1416 */
+	CHECKED_STRDUP(PrivateKeyContent);            /* 1417 */
+	CHECKED_STRDUP(RdpKeyContent);                /* 1418 */
+	CHECKED_STRDUP(WindowTitle);                  /* 1542 */
+	CHECKED_STRDUP(WmClass);                      /* 1549 */
+	CHECKED_STRDUP(ComputerName);                 /* 1664 */
+	CHECKED_STRDUP(ConnectionFile);               /* 1728 */
+	CHECKED_STRDUP(AssistanceFile);               /* 1729 */
+	CHECKED_STRDUP(HomePath);                     /* 1792 */
+	CHECKED_STRDUP(ConfigPath);                   /* 1793 */
+	CHECKED_STRDUP(CurrentPath);                  /* 1794 */
+	CHECKED_STRDUP(DumpRemoteFxFile);             /* 1858 */
+	CHECKED_STRDUP(PlayRemoteFxFile);             /* 1859 */
+	CHECKED_STRDUP(GatewayHostname);              /* 1986 */
+	CHECKED_STRDUP(GatewayUsername);              /* 1987 */
+	CHECKED_STRDUP(GatewayPassword);              /* 1988 */
+	CHECKED_STRDUP(GatewayDomain);                /* 1989 */
+	CHECKED_STRDUP(GatewayAccessToken);           /* 1997 */
+	CHECKED_STRDUP(GatewayAcceptedCert);          /* 1998 */
+	CHECKED_STRDUP(ProxyHostname);                /* 2016 */
+	CHECKED_STRDUP(RemoteApplicationName);        /* 2113 */
+	CHECKED_STRDUP(RemoteApplicationIcon);        /* 2114 */
+	CHECKED_STRDUP(RemoteApplicationProgram);     /* 2115 */
+	CHECKED_STRDUP(RemoteApplicationFile);        /* 2116 */
+	CHECKED_STRDUP(RemoteApplicationGuid);        /* 2117 */
+	CHECKED_STRDUP(RemoteApplicationCmdLine);     /* 2118 */
+	CHECKED_STRDUP(ImeFileName);                  /* 2628 */
+	CHECKED_STRDUP(DrivesToRedirect);             /* 4290 */
 	CHECKED_STRDUP(ActionScript);
 
 	if (settings->LoadBalanceInfo && settings->LoadBalanceInfoLength)
 	{
-		_settings->LoadBalanceInfo = (BYTE*) calloc(1,
-												   settings->LoadBalanceInfoLength + 2);
+		_settings->LoadBalanceInfo = (BYTE*)calloc(1, settings->LoadBalanceInfoLength + 2);
 
 		if (!_settings->LoadBalanceInfo)
 			goto out_fail;
 
 		CopyMemory(_settings->LoadBalanceInfo, settings->LoadBalanceInfo,
-				   settings->LoadBalanceInfoLength);
+		           settings->LoadBalanceInfoLength);
 		_settings->LoadBalanceInfoLength = settings->LoadBalanceInfoLength;
 	}
 
 	if (_settings->ServerRandomLength)
 	{
-		_settings->ServerRandom = (BYTE*) malloc(_settings->ServerRandomLength);
+		_settings->ServerRandom = (BYTE*)malloc(_settings->ServerRandomLength);
 
 		if (!_settings->ServerRandom)
 			goto out_fail;
 
-		CopyMemory(_settings->ServerRandom, settings->ServerRandom,
-				   _settings->ServerRandomLength);
+		CopyMemory(_settings->ServerRandom, settings->ServerRandom, _settings->ServerRandomLength);
 		_settings->ServerRandomLength = settings->ServerRandomLength;
 	}
 
 	if (_settings->ClientRandomLength)
 	{
-		_settings->ClientRandom = (BYTE*) malloc(_settings->ClientRandomLength);
+		_settings->ClientRandom = (BYTE*)malloc(_settings->ClientRandomLength);
 
 		if (!_settings->ClientRandom)
 			goto out_fail;
 
-		CopyMemory(_settings->ClientRandom, settings->ClientRandom,
-				   _settings->ClientRandomLength);
+		CopyMemory(_settings->ClientRandom, settings->ClientRandom, _settings->ClientRandomLength);
 		_settings->ClientRandomLength = settings->ClientRandomLength;
 	}
 
 	if (settings->RdpServerCertificate)
 	{
-		_settings->RdpServerCertificate = certificate_clone(
-			settings->RdpServerCertificate);
+		_settings->RdpServerCertificate = certificate_clone(settings->RdpServerCertificate);
 
 		if (!_settings->RdpServerCertificate)
 			goto out_fail;
@@ -889,14 +869,14 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	if (_settings->ChannelDefArraySize > 0)
 	{
-		_settings->ChannelDefArray = (CHANNEL_DEF*) calloc(settings->ChannelDefArraySize,
-														  sizeof(CHANNEL_DEF));
+		_settings->ChannelDefArray =
+		    (CHANNEL_DEF*)calloc(settings->ChannelDefArraySize, sizeof(CHANNEL_DEF));
 
 		if (!_settings->ChannelDefArray)
 			goto out_fail;
 
 		CopyMemory(_settings->ChannelDefArray, settings->ChannelDefArray,
-				   sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
+		           sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
 	}
 	else
 		_settings->ChannelDefArray = NULL;
@@ -906,19 +886,19 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	if (_settings->MonitorDefArraySize > 0)
 	{
-		_settings->MonitorDefArray = (rdpMonitor*) calloc(settings->MonitorDefArraySize,
-														 sizeof(rdpMonitor));
+		_settings->MonitorDefArray =
+		    (rdpMonitor*)calloc(settings->MonitorDefArraySize, sizeof(rdpMonitor));
 
 		if (!_settings->MonitorDefArray)
 			goto out_fail;
 
 		CopyMemory(_settings->MonitorDefArray, settings->MonitorDefArray,
-				   sizeof(rdpMonitor) * settings->MonitorDefArraySize);
+		           sizeof(rdpMonitor) * settings->MonitorDefArraySize);
 	}
 	else
 		_settings->MonitorDefArray = NULL;
 
-	_settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
+	_settings->MonitorIds = (UINT32*)calloc(16, sizeof(UINT32));
 
 	if (!_settings->MonitorIds)
 		goto out_fail;
@@ -949,14 +929,14 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	if (!_settings->ClientProductId)
 		goto out_fail;
 
-	_settings->BitmapCacheV2CellInfo = (BITMAP_CACHE_V2_CELL_INFO*) malloc(sizeof(
-																			  BITMAP_CACHE_V2_CELL_INFO) * 6);
+	_settings->BitmapCacheV2CellInfo =
+	    (BITMAP_CACHE_V2_CELL_INFO*)malloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
 
 	if (!_settings->BitmapCacheV2CellInfo)
 		goto out_fail;
 
 	CopyMemory(_settings->BitmapCacheV2CellInfo, settings->BitmapCacheV2CellInfo,
-			   sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
+	           sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
 	_settings->GlyphCache = malloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
 
 	if (!_settings->GlyphCache)
@@ -967,34 +947,30 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	if (!_settings->FragCache)
 		goto out_fail;
 
-	CopyMemory(_settings->GlyphCache, settings->GlyphCache,
-			   sizeof(GLYPH_CACHE_DEFINITION) * 10);
-	CopyMemory(_settings->FragCache, settings->FragCache,
-			   sizeof(GLYPH_CACHE_DEFINITION));
-	_settings->ClientAutoReconnectCookie = (ARC_CS_PRIVATE_PACKET*) malloc(sizeof(
-		ARC_CS_PRIVATE_PACKET));
+	CopyMemory(_settings->GlyphCache, settings->GlyphCache, sizeof(GLYPH_CACHE_DEFINITION) * 10);
+	CopyMemory(_settings->FragCache, settings->FragCache, sizeof(GLYPH_CACHE_DEFINITION));
+	_settings->ClientAutoReconnectCookie =
+	    (ARC_CS_PRIVATE_PACKET*)malloc(sizeof(ARC_CS_PRIVATE_PACKET));
 
 	if (!_settings->ClientAutoReconnectCookie)
 		goto out_fail;
 
-	_settings->ServerAutoReconnectCookie = (ARC_SC_PRIVATE_PACKET*) malloc(sizeof(
-		ARC_SC_PRIVATE_PACKET));
+	_settings->ServerAutoReconnectCookie =
+	    (ARC_SC_PRIVATE_PACKET*)malloc(sizeof(ARC_SC_PRIVATE_PACKET));
 
 	if (!_settings->ServerAutoReconnectCookie)
 		goto out_fail;
 
-	CopyMemory(_settings->ClientAutoReconnectCookie,
-			   settings->ClientAutoReconnectCookie, sizeof(ARC_CS_PRIVATE_PACKET));
-	CopyMemory(_settings->ServerAutoReconnectCookie,
-			   settings->ServerAutoReconnectCookie, sizeof(ARC_SC_PRIVATE_PACKET));
-	_settings->ClientTimeZone = (LPTIME_ZONE_INFORMATION) malloc(sizeof(
-		TIME_ZONE_INFORMATION));
+	CopyMemory(_settings->ClientAutoReconnectCookie, settings->ClientAutoReconnectCookie,
+	           sizeof(ARC_CS_PRIVATE_PACKET));
+	CopyMemory(_settings->ServerAutoReconnectCookie, settings->ServerAutoReconnectCookie,
+	           sizeof(ARC_SC_PRIVATE_PACKET));
+	_settings->ClientTimeZone = (LPTIME_ZONE_INFORMATION)malloc(sizeof(TIME_ZONE_INFORMATION));
 
 	if (!_settings->ClientTimeZone)
 		goto out_fail;
 
-	CopyMemory(_settings->ClientTimeZone, settings->ClientTimeZone,
-			   sizeof(TIME_ZONE_INFORMATION));
+	CopyMemory(_settings->ClientTimeZone, settings->ClientTimeZone, sizeof(TIME_ZONE_INFORMATION));
 
 	_settings->RedirectionPasswordLength = settings->RedirectionPasswordLength;
 	if (settings->RedirectionPasswordLength > 0)
@@ -1006,7 +982,8 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 			goto out_fail;
 		}
 
-		CopyMemory(_settings->RedirectionPassword, settings->RedirectionPassword, _settings->RedirectionPasswordLength);
+		CopyMemory(_settings->RedirectionPassword, settings->RedirectionPassword,
+		           _settings->RedirectionPasswordLength);
 	}
 
 	_settings->RedirectionTsvUrlLength = settings->RedirectionTsvUrlLength;
@@ -1019,15 +996,16 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 			goto out_fail;
 		}
 
-		CopyMemory(_settings->RedirectionTsvUrl, settings->RedirectionTsvUrl, _settings->RedirectionTsvUrlLength);
+		CopyMemory(_settings->RedirectionTsvUrl, settings->RedirectionTsvUrl,
+		           _settings->RedirectionTsvUrlLength);
 	}
 
 	_settings->TargetNetAddressCount = settings->TargetNetAddressCount;
 
 	if (settings->TargetNetAddressCount > 0)
 	{
-		_settings->TargetNetAddresses = (char**) calloc(settings->TargetNetAddressCount,
-													   sizeof(char*));
+		_settings->TargetNetAddresses =
+		    (char**)calloc(settings->TargetNetAddressCount, sizeof(char*));
 
 		if (!_settings->TargetNetAddresses)
 		{
@@ -1037,8 +1015,7 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 		for (index = 0; index < settings->TargetNetAddressCount; index++)
 		{
-			_settings->TargetNetAddresses[index] = _strdup(
-				settings->TargetNetAddresses[index]);
+			_settings->TargetNetAddresses[index] = _strdup(settings->TargetNetAddresses[index]);
 
 			if (!_settings->TargetNetAddresses[index])
 			{
@@ -1054,8 +1031,8 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 		if (settings->TargetNetPorts)
 		{
-			_settings->TargetNetPorts = (UINT32*) calloc(settings->TargetNetAddressCount,
-														sizeof(UINT32));
+			_settings->TargetNetPorts =
+			    (UINT32*)calloc(settings->TargetNetAddressCount, sizeof(UINT32));
 
 			if (!_settings->TargetNetPorts)
 				goto out_fail;
@@ -1067,8 +1044,8 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	_settings->DeviceCount = settings->DeviceCount;
 	_settings->DeviceArraySize = settings->DeviceArraySize;
-	_settings->DeviceArray = (RDPDR_DEVICE**) calloc(_settings->DeviceArraySize,
-													sizeof(RDPDR_DEVICE*));
+	_settings->DeviceArray =
+	    (RDPDR_DEVICE**)calloc(_settings->DeviceArraySize, sizeof(RDPDR_DEVICE*));
 
 	if (!_settings->DeviceArray && _settings->DeviceArraySize)
 	{
@@ -1086,8 +1063,7 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	for (index = 0; index < _settings->DeviceCount; index++)
 	{
-		_settings->DeviceArray[index] = freerdp_device_clone(
-			settings->DeviceArray[index]);
+		_settings->DeviceArray[index] = freerdp_device_clone(settings->DeviceArray[index]);
 
 		if (!_settings->DeviceArray[index])
 			goto out_fail;
@@ -1095,27 +1071,27 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	_settings->StaticChannelCount = settings->StaticChannelCount;
 	_settings->StaticChannelArraySize = settings->StaticChannelArraySize;
-	_settings->StaticChannelArray = (ADDIN_ARGV**) calloc(
-		_settings->StaticChannelArraySize, sizeof(ADDIN_ARGV*));
+	_settings->StaticChannelArray =
+	    (ADDIN_ARGV**)calloc(_settings->StaticChannelArraySize, sizeof(ADDIN_ARGV*));
 
 	if (!_settings->StaticChannelArray && _settings->StaticChannelArraySize)
 	{
-		_settings->StaticChannelArraySize  = 0;
+		_settings->StaticChannelArraySize = 0;
 		_settings->ChannelCount = 0;
 		goto out_fail;
 	}
 
 	if (_settings->StaticChannelArraySize < _settings->StaticChannelCount)
 	{
-		_settings->StaticChannelArraySize  = 0;
+		_settings->StaticChannelArraySize = 0;
 		_settings->ChannelCount = 0;
 		goto out_fail;
 	}
 
 	for (index = 0; index < _settings->StaticChannelCount; index++)
 	{
-		_settings->StaticChannelArray[index] = freerdp_static_channel_clone(
-			settings->StaticChannelArray[index]);
+		_settings->StaticChannelArray[index] =
+		    freerdp_static_channel_clone(settings->StaticChannelArray[index]);
 
 		if (!_settings->StaticChannelArray[index])
 			goto out_fail;
@@ -1123,8 +1099,8 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	_settings->DynamicChannelCount = settings->DynamicChannelCount;
 	_settings->DynamicChannelArraySize = settings->DynamicChannelArraySize;
-	_settings->DynamicChannelArray = (ADDIN_ARGV**) calloc(
-		_settings->DynamicChannelArraySize, sizeof(ADDIN_ARGV*));
+	_settings->DynamicChannelArray =
+	    (ADDIN_ARGV**)calloc(_settings->DynamicChannelArraySize, sizeof(ADDIN_ARGV*));
 
 	if (!_settings->DynamicChannelArray && _settings->DynamicChannelArraySize)
 	{
@@ -1142,14 +1118,14 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	for (index = 0; index < _settings->DynamicChannelCount; index++)
 	{
-		_settings->DynamicChannelArray[index] = freerdp_dynamic_channel_clone(
-			settings->DynamicChannelArray[index]);
+		_settings->DynamicChannelArray[index] =
+		    freerdp_dynamic_channel_clone(settings->DynamicChannelArray[index]);
 
 		if (!_settings->DynamicChannelArray[index])
 			goto out_fail;
 	}
 
-	_settings->SettingsModified = (BYTE*) calloc(1, sizeof(rdpSettings) / 8);
+	_settings->SettingsModified = (BYTE*)calloc(1, sizeof(rdpSettings) / 8);
 
 	if (!_settings->SettingsModified)
 		goto out_fail;
@@ -1162,7 +1138,7 @@ out_fail:
 
 rdpSettings* freerdp_settings_clone(const rdpSettings* settings)
 {
-	rdpSettings* _settings = (rdpSettings*) calloc(1, sizeof(rdpSettings));
+	rdpSettings* _settings = (rdpSettings*)calloc(1, sizeof(rdpSettings));
 
 	if (!freerdp_settings_copy(_settings, settings))
 		goto out_fail;
@@ -1181,4 +1157,3 @@ out_fail:
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
-

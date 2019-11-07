@@ -31,7 +31,7 @@ rdtkEngine* rdtk_engine_new()
 {
 	rdtkEngine* engine;
 
-	engine = (rdtkEngine*) calloc(1, sizeof(rdtkEngine));
+	engine = (rdtkEngine*)calloc(1, sizeof(rdtkEngine));
 
 	if (!engine)
 		return NULL;

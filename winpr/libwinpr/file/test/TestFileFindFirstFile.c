@@ -19,7 +19,7 @@ int TestFileFindFirstFile(int argc, char* argv[])
 	str = argv[1];
 #ifdef UNICODE
 	length = MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);
-	BasePath = (WCHAR*) calloc((length + 1), sizeof(WCHAR));
+	BasePath = (WCHAR*)calloc((length + 1), sizeof(WCHAR));
 
 	if (!BasePath)
 	{
@@ -27,7 +27,7 @@ int TestFileFindFirstFile(int argc, char* argv[])
 		return -1;
 	}
 
-	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR) BasePath, length * sizeof(WCHAR));
+	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR)BasePath, length * sizeof(WCHAR));
 	BasePath[length] = 0;
 #else
 	BasePath = _strdup(str);
@@ -58,8 +58,8 @@ int TestFileFindFirstFile(int argc, char* argv[])
 
 	if (_tcscmp(FindData.cFileName, testFile1) != 0)
 	{
-		_tprintf(_T("FindFirstFile failure: Expected: %s, Actual: %s\n"),
-		         testFile1, FindData.cFileName);
+		_tprintf(_T("FindFirstFile failure: Expected: %s, Actual: %s\n"), testFile1,
+		         FindData.cFileName);
 		return -1;
 	}
 

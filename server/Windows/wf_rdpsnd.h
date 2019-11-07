@@ -30,6 +30,4 @@ int wf_rdpsnd_lock(void);
 int wf_rdpsnd_unlock(void);
 BOOL wf_peer_rdpsnd_init(wfPeerContext* context);
 
-
 #endif /* FREERDP_SERVER_WIN_RDPSND_H */
-

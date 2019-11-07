@@ -29,16 +29,15 @@ typedef struct rdp_listener rdpListener;
 
 #include <freerdp/listener.h>
 
-#define MAX_LISTENER_HANDLES	5
+#define MAX_LISTENER_HANDLES 5
 
 struct rdp_listener
 {
 	freerdp_listener* instance;
 
 	int num_sockfds;
- 	int sockfds[MAX_LISTENER_HANDLES];
- 	HANDLE events[MAX_LISTENER_HANDLES];
+	int sockfds[MAX_LISTENER_HANDLES];
+	HANDLE events[MAX_LISTENER_HANDLES];
 };
 
 #endif /* FREERDP_LIB_CORE_LISTENER_H */
-

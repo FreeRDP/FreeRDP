@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 		return 1;
 
 	settings = context->settings;
-	xfc = (xfContext*) context;
+	xfc = (xfContext*)context;
 
 	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
 

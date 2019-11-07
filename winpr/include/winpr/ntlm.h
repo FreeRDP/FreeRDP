@@ -28,40 +28,41 @@
 #include <winpr/sspi.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-typedef SECURITY_STATUS(*psPeerComputeNtlmHash)(void* client,
-        const SEC_WINNT_AUTH_IDENTITY* authIdentity,
-        const SecBuffer* ntproofvalue, const BYTE* randkey, const BYTE* mic, const SecBuffer* micvalue,
-        BYTE* ntlmhash);
+	typedef SECURITY_STATUS (*psPeerComputeNtlmHash)(void* client,
+	                                                 const SEC_WINNT_AUTH_IDENTITY* authIdentity,
+	                                                 const SecBuffer* ntproofvalue,
+	                                                 const BYTE* randkey, const BYTE* mic,
+	                                                 const SecBuffer* micvalue, BYTE* ntlmhash);
 
-WINPR_API BOOL NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash);
-WINPR_API BOOL NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash);
+	WINPR_API BOOL NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash);
+	WINPR_API BOOL NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash);
 
-WINPR_API BOOL NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User,
-                        UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash);
-WINPR_API BOOL NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User,
-                        UINT32 UserLength, LPSTR Domain, UINT32 DomainLength, BYTE* NtHash);
+	WINPR_API BOOL NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User, UINT32 UserLength,
+	                        LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash);
+	WINPR_API BOOL NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User, UINT32 UserLength,
+	                        LPSTR Domain, UINT32 DomainLength, BYTE* NtHash);
 
-WINPR_API BOOL NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength,
-                                LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash);
-WINPR_API BOOL NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength,
-                                LPSTR Domain, UINT32 DomainLength, BYTE* NtHash);
+	WINPR_API BOOL NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Domain,
+	                                UINT32 DomainLength, BYTE* NtHash);
+	WINPR_API BOOL NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength, LPSTR Domain,
+	                                UINT32 DomainLength, BYTE* NtHash);
 
 #ifdef __cplusplus
 }
 #endif
 
 #ifdef UNICODE
-#define NTOWFv1 		NTOWFv1W
-#define NTOWFv2 		NTOWFv2W
-#define NTOWFv2FromHash		NTOWFv2FromHashW
+#define NTOWFv1 NTOWFv1W
+#define NTOWFv2 NTOWFv2W
+#define NTOWFv2FromHash NTOWFv2FromHashW
 #else
-#define NTOWFv1 		NTOWFv1A
-#define NTOWFv2 		NTOWFv2A
-#define NTOWFv2FromHash		NTOWFv2FromHashA
+#define NTOWFv1 NTOWFv1A
+#define NTOWFv2 NTOWFv2A
+#define NTOWFv2FromHash NTOWFv2FromHashA
 #endif
 
 #endif /* WINPR_UTILS_NTLM_H */
-

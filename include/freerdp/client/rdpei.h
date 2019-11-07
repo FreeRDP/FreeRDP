@@ -33,9 +33,12 @@ typedef struct _rdpei_client_context RdpeiClientContext;
 typedef int (*pcRdpeiGetVersion)(RdpeiClientContext* context);
 typedef UINT (*pcRdpeiAddContact)(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact);
 
-typedef UINT (*pcRdpeiTouchBegin)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
-typedef UINT (*pcRdpeiTouchUpdate)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
-typedef UINT (*pcRdpeiTouchEnd)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
+typedef UINT (*pcRdpeiTouchBegin)(RdpeiClientContext* context, int externalId, int x, int y,
+                                  int* contactId);
+typedef UINT (*pcRdpeiTouchUpdate)(RdpeiClientContext* context, int externalId, int x, int y,
+                                   int* contactId);
+typedef UINT (*pcRdpeiTouchEnd)(RdpeiClientContext* context, int externalId, int x, int y,
+                                int* contactId);
 
 typedef UINT (*pcRdpeiSuspendTouch)(RdpeiClientContext* context);
 typedef UINT (*pcRdpeiResumeTouch)(RdpeiClientContext* context);

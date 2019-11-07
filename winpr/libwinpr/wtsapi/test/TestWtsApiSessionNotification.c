@@ -18,10 +18,12 @@ int TestWtsApiSessionNotification(int argc, char* argv[])
 	}
 #else
 	/* We create a message-only window and use the predefined class name "STATIC" for simplicity */
-	hWnd = CreateWindowA("STATIC", "TestWtsApiSessionNotification", 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
+	hWnd = CreateWindowA("STATIC", "TestWtsApiSessionNotification", 0, 0, 0, 0, 0, HWND_MESSAGE,
+	                     NULL, NULL, NULL);
 	if (!hWnd)
 	{
-		printf("%s: error creating message-only window: %"PRIu32"\n", __FUNCTION__, GetLastError());
+		printf("%s: error creating message-only window: %" PRIu32 "\n", __FUNCTION__,
+		       GetLastError());
 		return -1;
 	}
 #endif
@@ -32,7 +34,8 @@ int TestWtsApiSessionNotification(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("%s: WTSRegisterSessionNotification failed: %"PRIu32"\n", __FUNCTION__, GetLastError());
+		printf("%s: WTSRegisterSessionNotification failed: %" PRIu32 "\n", __FUNCTION__,
+		       GetLastError());
 		return -1;
 	}
 
@@ -48,7 +51,8 @@ int TestWtsApiSessionNotification(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("%s: WTSUnRegisterSessionNotification failed: %"PRIu32"\n", __FUNCTION__, GetLastError());
+		printf("%s: WTSUnRegisterSessionNotification failed: %" PRIu32 "\n", __FUNCTION__,
+		       GetLastError());
 		return -1;
 	}
 

@@ -25,7 +25,7 @@
 #include "rdtk_label.h"
 
 int rdtk_label_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
-		rdtkLabel* label, const char* text, int hAlign, int vAlign)
+                    rdtkLabel* label, const char* text, int hAlign, int vAlign)
 {
 	int offsetX;
 	int offsetY;
@@ -60,7 +60,7 @@ rdtkLabel* rdtk_label_new(rdtkEngine* engine)
 {
 	rdtkLabel* label;
 
-	label = (rdtkLabel*) calloc(1, sizeof(rdtkLabel));
+	label = (rdtkLabel*)calloc(1, sizeof(rdtkLabel));
 
 	if (!label)
 		return NULL;

@@ -30,6 +30,4 @@
 
 #include <freerdp/channels/video.h>
 
-
 #endif /* FREERDP_CHANNEL_GEOMETRY_CLIENT_MAIN_H */
-

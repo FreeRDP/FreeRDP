@@ -147,7 +147,7 @@ BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 	e = dx - dy;
 	x = x1;
 	y = y1;
-	bmp = (HGDI_BITMAP) hdc->selectedObject;
+	bmp = (HGDI_BITMAP)hdc->selectedObject;
 
 	if (hdc->clip->null)
 	{
@@ -271,8 +271,7 @@ BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32 cPoints)
  * @param cCount count of entries in lpdwPolyPoints
  * @return nonzero on success, 0 otherwise
  */
-BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32* lpdwPolyPoints,
-                      DWORD cCount)
+BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32* lpdwPolyPoints, DWORD cCount)
 {
 	UINT32 cPoints;
 	DWORD i, j = 0;

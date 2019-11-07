@@ -82,7 +82,7 @@ WNDCLASSEXA* FindWindowClass(LPCSTR lpClassName)
 
 	for (index = 0; index < count; index++)
 	{
-		lpwcx = (WNDCLASSEXA*) ArrayList_GetItem(g_WindowClasses, index);
+		lpwcx = (WNDCLASSEXA*)ArrayList_GetItem(g_WindowClasses, index);
 
 		if (strcmp(lpClassName, lpwcx->lpszClassName) == 0)
 		{
@@ -154,7 +154,7 @@ BOOL WINAPI DestroyWindow(HWND hWnd)
 {
 	WINPR_WND* pWnd;
 
-	pWnd = (WINPR_WND*) hWnd;
+	pWnd = (WINPR_WND*)hWnd;
 
 	if (!pWnd)
 		return FALSE;
@@ -170,7 +170,6 @@ BOOL WINAPI DestroyWindow(HWND hWnd)
 
 VOID WINAPI PostQuitMessage(int nExitCode)
 {
-
 }
 
 ATOM WINAPI RegisterClassA(CONST WNDCLASSA* lpWndClass)
@@ -192,7 +191,7 @@ ATOM WINAPI RegisterClassExA(CONST WNDCLASSEXA* lpwcx)
 
 	_lpwcx = CloneWindowClass(lpwcx);
 
-	return ArrayList_Add(g_WindowClasses, (void*) _lpwcx) >= 0;
+	return ArrayList_Add(g_WindowClasses, (void*)_lpwcx) >= 0;
 }
 
 ATOM WINAPI RegisterClassExW(CONST WNDCLASSEXW* lpwcx)
@@ -210,9 +209,9 @@ BOOL WINAPI UnregisterClassW(LPCWSTR lpClassName, HINSTANCE hInstance)
 	return TRUE;
 }
 
-HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName,
-		LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight,
-		HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
+HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle,
+                            int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu,
+                            HINSTANCE hInstance, LPVOID lpParam)
 {
 	HWND hWnd;
 	WINPR_WND* pWnd;
@@ -228,12 +227,12 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName,
 	if (!lpwcx)
 		return NULL;
 
-	pWnd = (WINPR_WND*) calloc(1, sizeof(WINPR_WND));
+	pWnd = (WINPR_WND*)calloc(1, sizeof(WINPR_WND));
 
 	if (!pWnd)
 		return NULL;
 
-	hWnd = (HWND) pWnd;
+	hWnd = (HWND)pWnd;
 
 	pWnd->X = X;
 	pWnd->Y = Y;
@@ -265,9 +264,9 @@ out_fail:
 	return NULL;
 }
 
-HWND WINAPI CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
-		LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight,
-		HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
+HWND WINAPI CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName,
+                            DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent,
+                            HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
 {
 	return NULL;
 }
@@ -287,7 +286,8 @@ HWND WINAPI FindWindowExA(HWND hWndParent, HWND hWndChildAfter, LPCSTR lpszClass
 	return NULL;
 }
 
-HWND WINAPI FindWindowExW(HWND hWndParent, HWND hWndChildAfter, LPCWSTR lpszClass, LPCWSTR lpszWindow)
+HWND WINAPI FindWindowExW(HWND hWndParent, HWND hWndChildAfter, LPCWSTR lpszClass,
+                          LPCWSTR lpszWindow)
 {
 	return NULL;
 }
@@ -333,7 +333,7 @@ LRESULT WINAPI SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	WINPR_WND* pWnd;
 	WNDPROC lpfnWndProc;
 
-	pWnd = (WINPR_WND*) hWnd;
+	pWnd = (WINPR_WND*)hWnd;
 
 	if (!pWnd)
 		return 0;
@@ -353,14 +353,14 @@ LRESULT WINAPI SendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT WINAPI SendMessageTimeoutA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam,
-		UINT fuFlags, UINT uTimeout, PDWORD_PTR lpdwResult)
+LRESULT WINAPI SendMessageTimeoutA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, UINT fuFlags,
+                                   UINT uTimeout, PDWORD_PTR lpdwResult)
 {
 	return 0;
 }
 
-LRESULT WINAPI SendMessageTimeoutW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam,
-		UINT fuFlags, UINT uTimeout, PDWORD_PTR lpdwResult)
+LRESULT WINAPI SendMessageTimeoutW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, UINT fuFlags,
+                                   UINT uTimeout, PDWORD_PTR lpdwResult)
 {
 	return 0;
 }
@@ -376,13 +376,13 @@ BOOL WINAPI SendNotifyMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 }
 
 BOOL WINAPI SendMessageCallbackA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam,
-		SENDASYNCPROC lpResultCallBack, ULONG_PTR dwData)
+                                 SENDASYNCPROC lpResultCallBack, ULONG_PTR dwData)
 {
 	return TRUE;
 }
 
 BOOL WINAPI SendMessageCallbackW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam,
-		SENDASYNCPROC lpResultCallBack, ULONG_PTR dwData)
+                                 SENDASYNCPROC lpResultCallBack, ULONG_PTR dwData)
 {
 	return TRUE;
 }
@@ -402,12 +402,14 @@ LRESULT WINAPI DispatchMessageW(CONST MSG* lpMsg)
 	return 0;
 }
 
-BOOL WINAPI PeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
+BOOL WINAPI PeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax,
+                         UINT wRemoveMsg)
 {
 	return TRUE;
 }
 
-BOOL WINAPI PeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
+BOOL WINAPI PeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax,
+                         UINT wRemoveMsg)
 {
 	return TRUE;
 }
@@ -422,12 +424,14 @@ BOOL WINAPI WaitMessage(VOID)
 	return TRUE;
 }
 
-LRESULT WINAPI CallWindowProcA(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI CallWindowProcA(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam,
+                               LPARAM lParam)
 {
 	return 0;
 }
 
-LRESULT WINAPI CallWindowProcW(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI CallWindowProcW(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam,
+                               LPARAM lParam)
 {
 	return 0;
 }

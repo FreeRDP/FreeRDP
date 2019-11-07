@@ -26,8 +26,8 @@
 
 #include "rdtk_nine_patch.h"
 
-int rdtk_image_copy_alpha_blend(BYTE* pDstData, int nDstStep, int nXDst, int nYDst,
-                                int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc)
+int rdtk_image_copy_alpha_blend(BYTE* pDstData, int nDstStep, int nXDst, int nYDst, int nWidth,
+                                int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc)
 {
 	int x, y;
 	BYTE A, R, G, B;
@@ -102,8 +102,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = 0;
 	width = ninePatch->scaleLeft;
 	height = ninePatch->scaleTop;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y,
-	                            width, height, pSrcData, nSrcStep, nXSrc, nYSrc);
+	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
+	                            nSrcStep, nXSrc, nYSrc);
 	x += width;
 	/* top middle (scalable) */
 	nXSrc = ninePatch->scaleLeft;
@@ -117,8 +117,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 		if (width > ninePatch->scaleWidth)
 			width = ninePatch->scaleWidth;
 
-		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y,
-		                            width, height, pSrcData, nSrcStep, nXSrc, nYSrc);
+		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
+		                            pSrcData, nSrcStep, nXSrc, nYSrc);
 		x += width;
 	}
 
@@ -127,8 +127,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = 0;
 	width = ninePatch->width - ninePatch->scaleRight;
 	height = ninePatch->scaleTop;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y,
-	                            width, height, pSrcData, nSrcStep, nXSrc, nYSrc);
+	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
+	                            nSrcStep, nXSrc, nYSrc);
 	/* middle */
 	x = 0;
 	y = ninePatch->scaleTop;
@@ -137,8 +137,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = ninePatch->scaleTop;
 	width = ninePatch->scaleLeft;
 	height = ninePatch->scaleHeight;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y,
-	                            width, height, pSrcData, nSrcStep, nXSrc, nYSrc);
+	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
+	                            nSrcStep, nXSrc, nYSrc);
 	x += width;
 	/* middle (scalable) */
 	nXSrc = ninePatch->scaleLeft;
@@ -152,8 +152,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 		if (width > ninePatch->scaleWidth)
 			width = ninePatch->scaleWidth;
 
-		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y,
-		                            width, height, pSrcData, nSrcStep, nXSrc, nYSrc);
+		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
+		                            pSrcData, nSrcStep, nXSrc, nYSrc);
 		x += width;
 	}
 
@@ -162,8 +162,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = ninePatch->scaleTop;
 	width = ninePatch->width - ninePatch->scaleRight;
 	height = ninePatch->scaleHeight;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y,
-	                            width, height, pSrcData, nSrcStep, nXSrc, nYSrc);
+	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
+	                            nSrcStep, nXSrc, nYSrc);
 	/* bottom */
 	x = 0;
 	y = ninePatch->scaleBottom;
@@ -172,8 +172,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = ninePatch->scaleBottom;
 	width = ninePatch->scaleLeft;
 	height = ninePatch->height - ninePatch->scaleBottom;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y,
-	                            width, height, pSrcData, nSrcStep, nXSrc, nYSrc);
+	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
+	                            nSrcStep, nXSrc, nYSrc);
 	x += width;
 	/* bottom middle (scalable) */
 	nXSrc = ninePatch->scaleLeft;
@@ -187,8 +187,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 		if (width > ninePatch->scaleWidth)
 			width = ninePatch->scaleWidth;
 
-		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y,
-		                            width, height, pSrcData, nSrcStep, nXSrc, nYSrc);
+		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
+		                            pSrcData, nSrcStep, nXSrc, nYSrc);
 		x += width;
 	}
 
@@ -197,8 +197,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = ninePatch->scaleBottom;
 	width = ninePatch->width - ninePatch->scaleRight;
 	height = ninePatch->height - ninePatch->scaleBottom;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y,
-	                            width, height, pSrcData, nSrcStep, nXSrc, nYSrc);
+	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
+	                            nSrcStep, nXSrc, nYSrc);
 	return 1;
 }
 
@@ -217,7 +217,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 	data = image->data;
 	/* parse scalable area */
 	beg = end = -1;
-	pixel = (UINT32*) &data[4]; /* (1, 0) */
+	pixel = (UINT32*)&data[4]; /* (1, 0) */
 
 	for (x = 1; x < width - 1; x++)
 	{
@@ -244,7 +244,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 	ninePatch->scaleRight = end - 1;
 	ninePatch->scaleWidth = ninePatch->scaleRight - ninePatch->scaleLeft;
 	beg = end = -1;
-	pixel = (UINT32*) &data[scanline]; /* (0, 1) */
+	pixel = (UINT32*)&data[scanline]; /* (0, 1) */
 
 	for (y = 1; y < height - 1; y++)
 	{
@@ -264,7 +264,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 			}
 		}
 
-		pixel = (UINT32*) & ((BYTE*) pixel)[scanline];
+		pixel = (UINT32*)&((BYTE*)pixel)[scanline];
 	}
 
 	ninePatch->scaleTop = beg - 1;
@@ -272,7 +272,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 	ninePatch->scaleHeight = ninePatch->scaleBottom - ninePatch->scaleTop;
 	/* parse fillable area */
 	beg = end = -1;
-	pixel = (UINT32*) &data[((height - 1) * scanline) + 4]; /* (1, height - 1) */
+	pixel = (UINT32*)&data[((height - 1) * scanline) + 4]; /* (1, height - 1) */
 
 	for (x = 1; x < width - 1; x++)
 	{
@@ -299,7 +299,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 	ninePatch->fillRight = end - 1;
 	ninePatch->fillWidth = ninePatch->fillRight - ninePatch->fillLeft;
 	beg = end = -1;
-	pixel = (UINT32*) &data[((width - 1) * 4) + scanline]; /* (width - 1, 1) */
+	pixel = (UINT32*)&data[((width - 1) * 4) + scanline]; /* (width - 1, 1) */
 
 	for (y = 1; y < height - 1; y++)
 	{
@@ -319,7 +319,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 			}
 		}
 
-		pixel = (UINT32*) & ((BYTE*) pixel)[scanline];
+		pixel = (UINT32*)&((BYTE*)pixel)[scanline];
 	}
 
 	ninePatch->fillTop = beg - 1;
@@ -345,7 +345,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 rdtkNinePatch* rdtk_nine_patch_new(rdtkEngine* engine)
 {
 	rdtkNinePatch* ninePatch;
-	ninePatch = (rdtkNinePatch*) calloc(1, sizeof(rdtkNinePatch));
+	ninePatch = (rdtkNinePatch*)calloc(1, sizeof(rdtkNinePatch));
 
 	if (!ninePatch)
 		return NULL;

@@ -13,7 +13,7 @@ int TestCryptoRand(int argc, char* argv[])
 	winpr_RAND(rnd, sizeof(rnd));
 
 	str = winpr_BinToHexString(rnd, sizeof(rnd), FALSE);
-	//fprintf(stderr, "Rand: %s\n", str);
+	// fprintf(stderr, "Rand: %s\n", str);
 	free(str);
 
 	if (memcmp(rnd, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16) == 0)

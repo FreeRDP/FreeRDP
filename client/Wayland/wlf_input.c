@@ -117,7 +117,6 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 	return FALSE;
 }
 
-
 BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 {
 	rdpInput* input;
@@ -159,7 +158,7 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 	step = (uint32_t)abs(direction);
 	if (step > WheelRotationMask)
 		step = WheelRotationMask;
-	flags |=  step;
+	flags |= step;
 
 	return freerdp_input_send_mouse_event(input, flags, (UINT16)x, (UINT16)y);
 }

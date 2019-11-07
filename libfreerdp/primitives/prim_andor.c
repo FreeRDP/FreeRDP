@@ -25,11 +25,7 @@
 /* ----------------------------------------------------------------------------
  * 32-bit AND with a constant.
  */
-static pstatus_t general_andC_32u(
-    const UINT32* pSrc,
-    UINT32 val,
-    UINT32* pDst,
-    INT32 len)
+static pstatus_t general_andC_32u(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len)
 {
 	if (val == 0)
 		return PRIMITIVES_SUCCESS;
@@ -43,11 +39,7 @@ static pstatus_t general_andC_32u(
 /* ----------------------------------------------------------------------------
  * 32-bit OR with a constant.
  */
-static pstatus_t general_orC_32u(
-    const UINT32* pSrc,
-    UINT32 val,
-    UINT32* pDst,
-    INT32 len)
+static pstatus_t general_orC_32u(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len)
 {
 	if (val == 0)
 		return PRIMITIVES_SUCCESS;
@@ -59,10 +51,9 @@ static pstatus_t general_orC_32u(
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_andor(
-    primitives_t* prims)
+void primitives_init_andor(primitives_t* prims)
 {
 	/* Start with the default. */
 	prims->andC_32u = general_andC_32u;
-	prims->orC_32u  = general_orC_32u;
+	prims->orC_32u = general_orC_32u;
 }

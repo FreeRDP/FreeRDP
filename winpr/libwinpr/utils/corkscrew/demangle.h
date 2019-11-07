@@ -23,17 +23,18 @@
 #include <stdbool.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/*
- * Demangles a C++ symbol name.
- * If name is NULL or if the name cannot be demangled, returns NULL.
- * Otherwise, returns a newly allocated string that contains the demangled name.
- *
- * The caller must free the returned string using free().
- */
-char* demangle_symbol_name(const char* name);
+	/*
+	 * Demangles a C++ symbol name.
+	 * If name is NULL or if the name cannot be demangled, returns NULL.
+	 * Otherwise, returns a newly allocated string that contains the demangled name.
+	 *
+	 * The caller must free the returned string using free().
+	 */
+	char* demangle_symbol_name(const char* name);
 
 #ifdef __cplusplus
 }

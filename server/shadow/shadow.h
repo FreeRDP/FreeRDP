@@ -33,14 +33,12 @@
 #include "shadow_mcevent.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-
-
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* FREERDP_SERVER_SHADOW_SHADOW_H */
-

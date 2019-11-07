@@ -43,7 +43,7 @@ static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_R
 	{
 		if (request->cbRequested != sizeof(UINT64))
 		{
-			WLog_ERR(TAG, "[%s]: cbRequested must be %"PRIu32", got %"PRIu32"", __FUNCTION__,
+			WLog_ERR(TAG, "[%s]: cbRequested must be %" PRIu32 ", got %" PRIu32 "", __FUNCTION__,
 			         sizeof(UINT64), request->cbRequested);
 			return FALSE;
 		}
@@ -58,8 +58,7 @@ static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_R
 	return TRUE;
 }
 
-wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags,
-                                   UINT32 dataLen)
+wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
 {
 	wStream* s;
 	s = Stream_New(NULL, dataLen + 8);
@@ -77,7 +76,8 @@ wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags,
 	return s;
 }
 
-static void cliprdr_write_file_contents_request(wStream* s, const CLIPRDR_FILE_CONTENTS_REQUEST* request)
+static void cliprdr_write_file_contents_request(wStream* s,
+                                                const CLIPRDR_FILE_CONTENTS_REQUEST* request)
 {
 	Stream_Write_UINT32(s, request->streamId);      /* streamId (4 bytes) */
 	Stream_Write_UINT32(s, request->listIndex);     /* listIndex (4 bytes) */
@@ -95,19 +95,20 @@ static INLINE void cliprdr_write_lock_unlock_clipdata(wStream* s, UINT32 clipDat
 	Stream_Write_UINT32(s, clipDataId);
 }
 
-static void cliprdr_write_lock_clipdata(wStream* s, const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
+static void cliprdr_write_lock_clipdata(wStream* s,
+                                        const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
 	cliprdr_write_lock_unlock_clipdata(s, lockClipboardData->clipDataId);
 }
 
 static void cliprdr_write_unlock_clipdata(wStream* s,
-                                   const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+                                          const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
 	cliprdr_write_lock_unlock_clipdata(s, unlockClipboardData->clipDataId);
 }
 
 static void cliprdr_write_file_contents_response(wStream* s,
-                                          const CLIPRDR_FILE_CONTENTS_RESPONSE* response)
+                                                 const CLIPRDR_FILE_CONTENTS_RESPONSE* response)
 {
 	Stream_Write_UINT32(s, response->streamId); /* streamId (4 bytes) */
 	Stream_Write(s, response->requestedData, response->cbRequested);
@@ -129,7 +130,8 @@ wStream* cliprdr_packet_lock_clipdata_new(const CLIPRDR_LOCK_CLIPBOARD_DATA* loc
 	return s;
 }
 
-wStream* cliprdr_packet_unlock_clipdata_new(const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+wStream*
+cliprdr_packet_unlock_clipdata_new(const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
 	wStream* s;
 
@@ -168,8 +170,7 @@ wStream* cliprdr_packet_file_contents_response_new(const CLIPRDR_FILE_CONTENTS_R
 	if (!response)
 		return NULL;
 
-	s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, response->msgFlags,
-	                              4 + response->cbRequested);
+	s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, response->msgFlags, 4 + response->cbRequested);
 
 	if (!s)
 		return NULL;
@@ -178,7 +179,8 @@ wStream* cliprdr_packet_file_contents_response_new(const CLIPRDR_FILE_CONTENTS_R
 	return s;
 }
 
-wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList, BOOL useLongFormatNames)
+wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
+                                        BOOL useLongFormatNames)
 {
 	wStream* s;
 	UINT32 index;
@@ -191,7 +193,8 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList, B
 	CLIPRDR_FORMAT* format;
 
 	if (formatList->msgType != CB_FORMAT_LIST)
-		WLog_WARN(TAG, "[%s] called with invalid type %08"PRIx32, __FUNCTION__, formatList->msgType);
+		WLog_WARN(TAG, "[%s] called with invalid type %08" PRIx32, __FUNCTION__,
+		          formatList->msgType);
 
 	if (!useLongFormatNames)
 	{
@@ -207,7 +210,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList, B
 		for (index = 0; index < formatList->numFormats; index++)
 		{
 			size_t formatNameLength = 0;
-			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
+			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
 			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
 			formatNameSize = 0;
 
@@ -229,8 +232,8 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList, B
 				wszFormatName = NULL;
 
 				if (szFormatName)
-					formatNameSize = ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName,
-					                                  0);
+					formatNameSize =
+					    ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName, 0);
 
 				if (formatNameSize < 0)
 					return NULL;
@@ -254,13 +257,13 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList, B
 		UINT32 length = 0;
 		for (index = 0; index < formatList->numFormats; index++)
 		{
-			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
+			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
 			length += 4;
 			formatNameSize = 2;
 
 			if (format->formatName)
-				formatNameSize = MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1, NULL,
-				                                     0) * 2;
+				formatNameSize =
+				    MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1, NULL, 0) * 2;
 
 			if (formatNameSize < 0)
 				return NULL;
@@ -278,7 +281,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList, B
 
 		for (index = 0; index < formatList->numFormats; index++)
 		{
-			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
+			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
 			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
 
 			if (format->formatName)
@@ -289,10 +292,11 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList, B
 				if ((cap < pos) || ((rem / 2) > INT_MAX))
 					return NULL;
 
-				lpWideCharStr = (LPWSTR) Stream_Pointer(s);
+				lpWideCharStr = (LPWSTR)Stream_Pointer(s);
 				cchWideChar = (int)(rem / 2);
-				formatNameSize = MultiByteToWideChar(CP_UTF8, 0,
-				                                     format->formatName, -1, lpWideCharStr, cchWideChar) * 2;
+				formatNameSize = MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1,
+				                                     lpWideCharStr, cchWideChar) *
+				                 2;
 				if (formatNameSize < 0)
 					return NULL;
 				Stream_Seek(s, (size_t)formatNameSize);

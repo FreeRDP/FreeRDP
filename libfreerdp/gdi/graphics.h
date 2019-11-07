@@ -26,9 +26,8 @@
 #include <freerdp/graphics.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 width,
-        UINT32 height,
-        UINT32 format, BYTE* data);
+FREERDP_LOCAL HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 format,
+                                            BYTE* data);
 
 FREERDP_LOCAL BOOL gdi_register_graphics(rdpGraphics* graphics);
 

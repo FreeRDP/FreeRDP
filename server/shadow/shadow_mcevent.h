@@ -26,15 +26,15 @@
 #include <winpr/collections.h>
 
 /*
- * This file implemented a model that an event is consumed 
+ * This file implemented a model that an event is consumed
  * by multiple clients. All clients should wait others before continue
  * Server should wait for all clients before continue
  */
 struct rdp_shadow_multiclient_event
 {
-	HANDLE event; /* Kickoff event */
+	HANDLE event;        /* Kickoff event */
 	HANDLE barrierEvent; /* Represents that all clients have consumed event */
-	HANDLE doneEvent; /* Event handling finished. Server could continue */
+	HANDLE doneEvent;    /* Event handling finished. Server could continue */
 	wArrayList* subscribers;
 	CRITICAL_SECTION lock;
 	int consuming;
@@ -45,18 +45,19 @@ struct rdp_shadow_multiclient_event
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-rdpShadowMultiClientEvent* shadow_multiclient_new();
-void shadow_multiclient_free(rdpShadowMultiClientEvent* event);
-void shadow_multiclient_publish(rdpShadowMultiClientEvent* event);
-void shadow_multiclient_wait(rdpShadowMultiClientEvent* event);
-void shadow_multiclient_publish_and_wait(rdpShadowMultiClientEvent* event);
-void* shadow_multiclient_get_subscriber(rdpShadowMultiClientEvent* event);
-void shadow_multiclient_release_subscriber(void* subscriber);
-BOOL shadow_multiclient_consume(void* subscriber);
-HANDLE shadow_multiclient_getevent(void* subscriber);
+	rdpShadowMultiClientEvent* shadow_multiclient_new();
+	void shadow_multiclient_free(rdpShadowMultiClientEvent* event);
+	void shadow_multiclient_publish(rdpShadowMultiClientEvent* event);
+	void shadow_multiclient_wait(rdpShadowMultiClientEvent* event);
+	void shadow_multiclient_publish_and_wait(rdpShadowMultiClientEvent* event);
+	void* shadow_multiclient_get_subscriber(rdpShadowMultiClientEvent* event);
+	void shadow_multiclient_release_subscriber(void* subscriber);
+	BOOL shadow_multiclient_consume(void* subscriber);
+	HANDLE shadow_multiclient_getevent(void* subscriber);
 
 #ifdef __cplusplus
 }

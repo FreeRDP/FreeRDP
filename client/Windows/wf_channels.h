@@ -28,9 +28,7 @@
 
 #include "wf_client.h"
 
-void wf_OnChannelConnectedEventHandler(void* context,
-                                       ChannelConnectedEventArgs* e);
-void wf_OnChannelDisconnectedEventHandler(void* context,
-        ChannelDisconnectedEventArgs* e);
+void wf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e);
+void wf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e);
 
 #endif /* FREERDP_CLIENT_WIN_CHANNELS_H */

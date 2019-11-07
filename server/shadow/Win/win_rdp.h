@@ -40,14 +40,15 @@ struct shw_context
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-int win_shadow_rdp_init(winShadowSubsystem* subsystem);
-int win_shadow_rdp_uninit(winShadowSubsystem* subsystem);
+	int win_shadow_rdp_init(winShadowSubsystem* subsystem);
+	int win_shadow_rdp_uninit(winShadowSubsystem* subsystem);
 
-int win_shadow_rdp_start(winShadowSubsystem* subsystem);
-int win_shadow_rdp_stop(winShadowSubsystem* subsystem);
+	int win_shadow_rdp_start(winShadowSubsystem* subsystem);
+	int win_shadow_rdp_stop(winShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
 }

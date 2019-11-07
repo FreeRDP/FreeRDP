@@ -33,7 +33,10 @@
 #ifdef WITH_DEBUG_TSMF
 #define DEBUG_TSMF(...) WLog_DBG(TAG, __VA_ARGS__)
 #else
-#define DEBUG_TSMF(...) do { } while (0)
+#define DEBUG_TSMF(...) \
+	do                  \
+	{                   \
+	} while (0)
 #endif
 
 typedef struct _TS_AM_MEDIA_TYPE
@@ -58,4 +61,3 @@ typedef struct _TS_AM_MEDIA_TYPE
 } TS_AM_MEDIA_TYPE;
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_TYPES_H */
-

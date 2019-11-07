@@ -26,27 +26,25 @@
 /* ----------------------------------------------------------------------------
  * 16-bit signed add with saturation (under and over).
  */
-static pstatus_t general_add_16s(
-    const INT16* pSrc1,
-    const INT16* pSrc2,
-    INT16* pDst,
-    UINT32 len)
+static pstatus_t general_add_16s(const INT16* pSrc1, const INT16* pSrc2, INT16* pDst, UINT32 len)
 {
 	while (len--)
 	{
 		INT32 k = (INT32)(*pSrc1++) + (INT32)(*pSrc2++);
 
-		if (k > 32767) *pDst++ = ((INT16) 32767);
-		else if (k < -32768) *pDst++ = ((INT16) - 32768);
-		else *pDst++ = (INT16) k;
+		if (k > 32767)
+			*pDst++ = ((INT16)32767);
+		else if (k < -32768)
+			*pDst++ = ((INT16)-32768);
+		else
+			*pDst++ = (INT16)k;
 	}
 
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_add(
-    primitives_t* prims)
+void primitives_init_add(primitives_t* prims)
 {
 	prims->add_16s = general_add_16s;
 }

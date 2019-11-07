@@ -31,11 +31,13 @@
 
 #define TAG FREERDP_TAG("codec.mppc")
 
-#define MPPC_MATCH_INDEX(_sym1, _sym2, _sym3) \
-	((((MPPC_MATCH_TABLE[_sym3] << 16) + (MPPC_MATCH_TABLE[_sym2] << 8) + MPPC_MATCH_TABLE[_sym1]) & 0x07FFF000) >> 12)
+#define MPPC_MATCH_INDEX(_sym1, _sym2, _sym3)                             \
+	((((MPPC_MATCH_TABLE[_sym3] << 16) + (MPPC_MATCH_TABLE[_sym2] << 8) + \
+	   MPPC_MATCH_TABLE[_sym1]) &                                         \
+	  0x07FFF000) >>                                                      \
+	 12)
 
-static const UINT32 MPPC_MATCH_TABLE[256] =
-{
+static const UINT32 MPPC_MATCH_TABLE[256] = {
 	0x00000000, 0x009CCF93, 0x01399F26, 0x01D66EB9, 0x02733E4C, 0x03100DDF, 0x03ACDD72, 0x0449AD05,
 	0x04E67C98, 0x05834C2B, 0x06201BBE, 0x06BCEB51, 0x0759BAE4, 0x07F68A77, 0x08935A0A, 0x0930299D,
 	0x09CCF930, 0x0A69C8C3, 0x0B069856, 0x0BA367E9, 0x0C40377C, 0x0CDD070F, 0x0D79D6A2, 0x0E16A635,
@@ -125,7 +127,7 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 
 		if (HistoryPtr > HistoryBufferEnd)
 		{
-			WLog_ERR(TAG,  "history buffer index out of range");
+			WLog_ERR(TAG, "history buffer index out of range");
 			return -1004;
 		}
 
@@ -384,23 +386,22 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		}
 
 #ifdef DEBUG_MPPC
-		WLog_DBG(TAG, "<%"PRIu32",%"PRIu32">", CopyOffset, LengthOfMatch);
+		WLog_DBG(TAG, "<%" PRIu32 ",%" PRIu32 ">", CopyOffset, LengthOfMatch);
 #endif
 
 		if ((HistoryPtr + LengthOfMatch - 1) > HistoryBufferEnd)
 		{
-			WLog_ERR(TAG,  "history buffer overflow");
+			WLog_ERR(TAG, "history buffer overflow");
 			return -1005;
 		}
 
-		SrcPtr = &HistoryBuffer[(HistoryPtr - HistoryBuffer - CopyOffset) & (CompressionLevel ? 0xFFFF :
-		                        0x1FFF)];
+		SrcPtr = &HistoryBuffer[(HistoryPtr - HistoryBuffer - CopyOffset) &
+		                        (CompressionLevel ? 0xFFFF : 0x1FFF)];
 
 		do
 		{
 			*HistoryPtr++ = *SrcPtr++;
-		}
-		while (--LengthOfMatch);
+		} while (--LengthOfMatch);
 	}
 
 	*pDstSize = (UINT32)(HistoryPtr - mppc->HistoryPtr);
@@ -496,7 +497,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 
 			accumulator = Sym1;
 #ifdef DEBUG_MPPC
-			WLog_DBG(TAG, "%"PRIu32"", accumulator);
+			WLog_DBG(TAG, "%" PRIu32 "", accumulator);
 #endif
 
 			if (accumulator < 0x80)
@@ -528,7 +529,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 			}
 
 #ifdef DEBUG_MPPC
-			WLog_DBG(TAG, "<%"PRIu32",%"PRIu32">", CopyOffset, LengthOfMatch);
+			WLog_DBG(TAG, "<%" PRIu32 ",%" PRIu32 ">", CopyOffset, LengthOfMatch);
 #endif
 
 			/* Encode CopyOffset */
@@ -665,19 +666,22 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 				accumulator = 0xFFE000 | (LengthOfMatch & 0x0FFF);
 				BitStream_Write_Bits(bs, accumulator, 24);
 			}
-			else if (((LengthOfMatch >= 8192) && (LengthOfMatch < 16384)) && CompressionLevel) /* RDP5 */
+			else if (((LengthOfMatch >= 8192) && (LengthOfMatch < 16384)) &&
+			         CompressionLevel) /* RDP5 */
 			{
 				/* 1111111111110 + 13 lower bits of LengthOfMatch */
 				accumulator = 0x3FFC000 | (LengthOfMatch & 0x1FFF);
 				BitStream_Write_Bits(bs, accumulator, 26);
 			}
-			else if (((LengthOfMatch >= 16384) && (LengthOfMatch < 32768)) && CompressionLevel) /* RDP5 */
+			else if (((LengthOfMatch >= 16384) && (LengthOfMatch < 32768)) &&
+			         CompressionLevel) /* RDP5 */
 			{
 				/* 11111111111110 + 14 lower bits of LengthOfMatch */
 				accumulator = 0xFFF8000 | (LengthOfMatch & 0x3FFF);
 				BitStream_Write_Bits(bs, accumulator, 28);
 			}
-			else if (((LengthOfMatch >= 32768) && (LengthOfMatch < 65536)) && CompressionLevel) /* RDP5 */
+			else if (((LengthOfMatch >= 32768) && (LengthOfMatch < 65536)) &&
+			         CompressionLevel) /* RDP5 */
 			{
 				/* 111111111111110 + 15 lower bits of LengthOfMatch */
 				accumulator = 0x3FFF0000 | (LengthOfMatch & 0x7FFF);
@@ -702,7 +706,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 
 		accumulator = *pSrcPtr;
 #ifdef DEBUG_MPPC
-		WLog_DBG(TAG, "%"PRIu32"", accumulator);
+		WLog_DBG(TAG, "%" PRIu32 "", accumulator);
 #endif
 
 		if (accumulator < 0x80)

@@ -22,8 +22,8 @@ static VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwT
 	if (!lpArg)
 		return;
 
-	apcData = (APC_DATA*) lpArg;
-	printf("TimerAPCProc: time: %"PRIu32"\n", CurrentTime - apcData->StartTime);
+	apcData = (APC_DATA*)lpArg;
+	printf("TimerAPCProc: time: %" PRIu32 "\n", CurrentTime - apcData->StartTime);
 	g_Count++;
 
 	if (g_Count >= 5)
@@ -62,16 +62,17 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 		goto cleanup;
 
 	/**
-	 * See Remarks at https://msdn.microsoft.com/en-us/library/windows/desktop/ms686786(v=vs.85).aspx
-	 * The SetWaitableTimer completion routine is executed by the thread that activates the timer
-	 * using SetWaitableTimer. However, the thread must be in an ALERTABLE state.
+	 * See Remarks at
+	 * https://msdn.microsoft.com/en-us/library/windows/desktop/ms686786(v=vs.85).aspx The
+	 * SetWaitableTimer completion routine is executed by the thread that activates the timer using
+	 * SetWaitableTimer. However, the thread must be in an ALERTABLE state.
 	 */
 
 	/**
 	 * Note: On WIN32 we need to use WaitForSingleObjectEx with parameter bAlertable = TRUE
-	 * However, WinPR currently (May 2016) does not have a working WaitForSingleObjectEx implementation
-	 * but its non-WIN32 WaitForSingleObject implementations seem to be alertable by WinPR's
-	 * timer implementations.
+	 * However, WinPR currently (May 2016) does not have a working WaitForSingleObjectEx
+	 *implementation but its non-WIN32 WaitForSingleObject implementations seem to be alertable by
+	 *WinPR's timer implementations.
 	 **/
 
 	for (;;)
@@ -89,7 +90,7 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 		if (rc == 0x000000C0L) /* WAIT_IO_COMPLETION */
 			continue;
 
-		printf("Failed to wait for completion event (%"PRIu32")\n", GetLastError());
+		printf("Failed to wait for completion event (%" PRIu32 ")\n", GetLastError());
 		goto cleanup;
 	}
 
@@ -104,4 +105,3 @@ cleanup:
 
 	return status;
 }
-

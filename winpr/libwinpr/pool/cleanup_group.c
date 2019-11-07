@@ -32,9 +32,10 @@
 #ifdef _WIN32
 static INIT_ONCE init_once_module = INIT_ONCE_STATIC_INIT;
 static PTP_CLEANUP_GROUP(WINAPI* pCreateThreadpoolCleanupGroup)();
-static VOID (WINAPI* pCloseThreadpoolCleanupGroupMembers)(PTP_CLEANUP_GROUP ptpcg,
-        BOOL fCancelPendingCallbacks, PVOID pvCleanupContext);
-static VOID (WINAPI* pCloseThreadpoolCleanupGroup)(PTP_CLEANUP_GROUP ptpcg);
+static VOID(WINAPI* pCloseThreadpoolCleanupGroupMembers)(PTP_CLEANUP_GROUP ptpcg,
+                                                         BOOL fCancelPendingCallbacks,
+                                                         PVOID pvCleanupContext);
+static VOID(WINAPI* pCloseThreadpoolCleanupGroup)(PTP_CLEANUP_GROUP ptpcg);
 
 static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 {
@@ -42,10 +43,12 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 
 	if (kernel32)
 	{
-		pCreateThreadpoolCleanupGroup = (void*)GetProcAddress(kernel32, "CreateThreadpoolCleanupGroup");
-		pCloseThreadpoolCleanupGroupMembers = (void*)GetProcAddress(kernel32,
-		                                      "CloseThreadpoolCleanupGroupMembers");
-		pCloseThreadpoolCleanupGroup = (void*)GetProcAddress(kernel32, "CloseThreadpoolCleanupGroup");
+		pCreateThreadpoolCleanupGroup =
+		    (void*)GetProcAddress(kernel32, "CreateThreadpoolCleanupGroup");
+		pCloseThreadpoolCleanupGroupMembers =
+		    (void*)GetProcAddress(kernel32, "CloseThreadpoolCleanupGroupMembers");
+		pCloseThreadpoolCleanupGroup =
+		    (void*)GetProcAddress(kernel32, "CloseThreadpoolCleanupGroup");
 	}
 
 	return TRUE;
@@ -63,7 +66,7 @@ PTP_CLEANUP_GROUP winpr_CreateThreadpoolCleanupGroup(void)
 
 	return cleanupGroup;
 #else
-	cleanupGroup = (PTP_CLEANUP_GROUP) calloc(1, sizeof(TP_CLEANUP_GROUP));
+	cleanupGroup = (PTP_CLEANUP_GROUP)calloc(1, sizeof(TP_CLEANUP_GROUP));
 
 	if (!cleanupGroup)
 		return NULL;
@@ -81,7 +84,7 @@ PTP_CLEANUP_GROUP winpr_CreateThreadpoolCleanupGroup(void)
 }
 
 VOID winpr_SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEANUP_GROUP ptpcg,
-        PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng)
+                                             PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng)
 {
 	pcbe->CleanupGroup = ptpcg;
 	pcbe->CleanupGroupCancelCallback = pfng;
@@ -91,7 +94,7 @@ VOID winpr_SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEA
 }
 
 VOID winpr_CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks,
-        PVOID pvCleanupContext)
+                                              PVOID pvCleanupContext)
 {
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
@@ -137,4 +140,3 @@ VOID winpr_CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
 }
 
 #endif /* WINPR_THREAD_POOL defined */
-

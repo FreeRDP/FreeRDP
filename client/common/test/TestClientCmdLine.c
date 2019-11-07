@@ -6,34 +6,34 @@
 #include <winpr/strlst.h>
 #include <winpr/collections.h>
 
-
 typedef BOOL (*validate_settings_pr)(rdpSettings* settings);
 
 #define printref() printf("%s:%d: in function %-40s:", __FILE__, __LINE__, __FUNCTION__)
 
-#define ERROR(format, ...)                                              \
-	do{                                                             \
-		fprintf(stderr, format, ##__VA_ARGS__);                 \
-		printref();                                             \
-		printf(format, ##__VA_ARGS__);                          \
-		fflush(stdout);                                         \
-	}while(0)
+#define ERROR(format, ...)                      \
+	do                                          \
+	{                                           \
+		fprintf(stderr, format, ##__VA_ARGS__); \
+		printref();                             \
+		printf(format, ##__VA_ARGS__);          \
+		fflush(stdout);                         \
+	} while (0)
 
-#define FAILURE(format, ...)                                            \
-	do{                                                             \
-		printref();                                             \
-		printf(" FAILURE ");                                    \
-		printf(format, ##__VA_ARGS__);                          \
-		fflush(stdout);                                         \
-	}while(0)
-
+#define FAILURE(format, ...)           \
+	do                                 \
+	{                                  \
+		printref();                    \
+		printf(" FAILURE ");           \
+		printf(format, ##__VA_ARGS__); \
+		fflush(stdout);                \
+	} while (0)
 
 static void print_test_title(int argc, char** argv)
 {
 	int i;
 	printf("Running test:");
 
-	for (i = 0; i < argc; i ++)
+	for (i = 0; i < argc; i++)
 	{
 		printf(" %s", argv[i]);
 	}
@@ -41,8 +41,8 @@ static void print_test_title(int argc, char** argv)
 	printf("\n");
 }
 
-static INLINE BOOL testcase(const char* name, char** argv, size_t argc,
-                            int expected_return, validate_settings_pr validate_settings)
+static INLINE BOOL testcase(const char* name, char** argv, size_t argc, int expected_return,
+                            validate_settings_pr validate_settings)
 {
 	int status;
 	BOOL valid_settings = TRUE;
@@ -113,117 +113,96 @@ typedef struct
 	struct
 	{
 		int index;
-		const char*   expected_value;
+		const char* expected_value;
 	} modified_arguments[8];
 } test;
 
-static test tests[] =
-{
-	{
-		COMMAND_LINE_STATUS_PRINT_HELP, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "--help", 0},
-		{{0}}
-	},
-	{
-		COMMAND_LINE_STATUS_PRINT_HELP, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "/help", 0},
-		{{0}}
-	},
-	{
-		COMMAND_LINE_STATUS_PRINT_HELP, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "-help", 0},
-		{{0}}
-	},
-	{
-		COMMAND_LINE_STATUS_PRINT_VERSION, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "--version", 0},
-		{{0}}
-	},
-	{
-		COMMAND_LINE_STATUS_PRINT_VERSION, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "/version", 0},
-		{{0}}
-	},
-	{
-		COMMAND_LINE_STATUS_PRINT_VERSION, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "-version", 0},
-		{{0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "test.freerdp.com", 0},
-		{{0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "-v", "test.freerdp.com", 0},
-		{{0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "--v", "test.freerdp.com", 0},
-		{{0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "/v:test.freerdp.com", 0},
-		{{0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "--plugin", "rdpsnd", "--plugin", "rdpdr", "--data", "disk:media:"DRIVE_REDIRECT_PATH, "--", "test.freerdp.com", 0},
-		{{0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "/sound", "/drive:media,"DRIVE_REDIRECT_PATH, "/v:test.freerdp.com", 0},
-		{{0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "-u", "test", "-p", "test", "test.freerdp.com", 0},
-		{{4, "****"}, {0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "-u", "test", "-p", "test", "-v", "test.freerdp.com", 0},
-		{{4, "****"}, {0}}
-	},
-	{
-		0, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "/u:test", "/p:test", "/v:test.freerdp.com", 0},
-		{{2, "/p:****"}, {0}}
-	},
-	{
-		COMMAND_LINE_ERROR_NO_KEYWORD, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "-invalid", 0},
-		{{0}}
-	},
-	{
-		COMMAND_LINE_ERROR_NO_KEYWORD, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "--invalid", 0},
-		{{0}}
-	},
-	{
-		COMMAND_LINE_STATUS_PRINT, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "/kbd-list", 0},
-		{{0}}
-	},
-	{
-		COMMAND_LINE_STATUS_PRINT, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "/monitor-list", 0},
-		{{0}}
-	},
-	{
-		COMMAND_LINE_ERROR, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "/sound", "/drive:media:"DRIVE_REDIRECT_PATH, "/v:test.freerdp.com", 0},
-		{{0}}
-	},
-	{
-		COMMAND_LINE_ERROR, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "/sound", "/drive:media,/foo/bar/blabla", "/v:test.freerdp.com", 0},
-		{{0}}
-	},
+static test tests[] = {
+	{ COMMAND_LINE_STATUS_PRINT_HELP,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "--help", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_STATUS_PRINT_HELP,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/help", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_STATUS_PRINT_HELP,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "-help", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_STATUS_PRINT_VERSION,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "--version", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_STATUS_PRINT_VERSION,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/version", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_STATUS_PRINT_VERSION,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "-version", 0 },
+	  { { 0 } } },
+	{ 0,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "test.freerdp.com", 0 },
+	  { { 0 } } },
+	{ 0,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "-v", "test.freerdp.com", 0 },
+	  { { 0 } } },
+	{ 0,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "--v", "test.freerdp.com", 0 },
+	  { { 0 } } },
+	{ 0,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/v:test.freerdp.com", 0 },
+	  { { 0 } } },
+	{ 0,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "--plugin", "rdpsnd", "--plugin", "rdpdr", "--data",
+	    "disk:media:" DRIVE_REDIRECT_PATH, "--", "test.freerdp.com", 0 },
+	  { { 0 } } },
+	{ 0,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/sound", "/drive:media," DRIVE_REDIRECT_PATH, "/v:test.freerdp.com", 0 },
+	  { { 0 } } },
+	{ 0,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "-u", "test", "-p", "test", "test.freerdp.com", 0 },
+	  { { 4, "****" }, { 0 } } },
+	{ 0,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "-u", "test", "-p", "test", "-v", "test.freerdp.com", 0 },
+	  { { 4, "****" }, { 0 } } },
+	{ 0,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/u:test", "/p:test", "/v:test.freerdp.com", 0 },
+	  { { 2, "/p:****" }, { 0 } } },
+	{ COMMAND_LINE_ERROR_NO_KEYWORD,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "-invalid", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_ERROR_NO_KEYWORD,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "--invalid", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_STATUS_PRINT,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/kbd-list", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_STATUS_PRINT,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/monitor-list", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_ERROR,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/sound", "/drive:media:" DRIVE_REDIRECT_PATH, "/v:test.freerdp.com", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_ERROR,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/sound", "/drive:media,/foo/bar/blabla", "/v:test.freerdp.com", 0 },
+	  { { 0 } } },
 
 #if 0
 	{
@@ -234,13 +213,12 @@ static test tests[] =
 #endif
 };
 
-
 void check_modified_arguments(test* test, char** command_line, int* rc)
 {
 	int k;
-	const char*   expected_argument;
+	const char* expected_argument;
 
-	for (k = 0; (expected_argument = test->modified_arguments[k].expected_value); k ++)
+	for (k = 0; (expected_argument = test->modified_arguments[k].expected_value); k++)
 	{
 		int index = test->modified_arguments[k].index;
 		char* actual_argument = command_line[index];
@@ -248,10 +226,10 @@ void check_modified_arguments(test* test, char** command_line, int* rc)
 		if (0 != strcmp(actual_argument, expected_argument))
 		{
 			printref();
-			printf("Failure: overridden argument %d is %s but it should be %s\n",
-			       index, actual_argument, expected_argument);
+			printf("Failure: overridden argument %d is %s but it should be %s\n", index,
+			       actual_argument, expected_argument);
 			fflush(stdout);
-			* rc = -1;
+			*rc = -1;
 		}
 	}
 }
@@ -263,24 +241,24 @@ int TestClientCmdLine(int argc, char* argv[])
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i ++)
+	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
 	{
 		int failure = 0;
 		char** command_line = string_list_copy(tests[i].command_line);
 
-		if (!testcase(__FUNCTION__,
-		              command_line, string_list_length((const char * const*)command_line),
+		if (!testcase(__FUNCTION__, command_line,
+		              string_list_length((const char* const*)command_line),
 		              tests[i].expected_status, tests[i].validate_settings))
 		{
 			FAILURE("parsing arguments.\n");
 			failure = 1;
 		}
 
-		check_modified_arguments(& tests[i], command_line, & failure);
+		check_modified_arguments(&tests[i], command_line, &failure);
 
 		if (failure)
 		{
-			string_list_print(stdout, (const char * const*)command_line);
+			string_list_print(stdout, (const char* const*)command_line);
 			rc = -1;
 		}
 

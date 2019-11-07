@@ -29,11 +29,10 @@
 
 #define TAG SERVER_TAG("shadow.mac")
 
-
 static macShadowSubsystem* g_Subsystem = NULL;
 
 static BOOL mac_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
-        rdpShadowClient* client, UINT32 flags)
+                                               rdpShadowClient* client, UINT32 flags)
 {
 	if (!subsystem || !client)
 		return FALSE;
@@ -41,8 +40,8 @@ static BOOL mac_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
 	return TRUE;
 }
 
-static BOOL mac_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem,
-        rdpShadowClient* client, UINT16 flags, UINT16 code)
+static BOOL mac_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+                                            UINT16 flags, UINT16 code)
 {
 	DWORD vkcode;
 	DWORD keycode;
@@ -72,13 +71,13 @@ static BOOL mac_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem,
 
 	if (flags & KBD_FLAGS_DOWN)
 	{
-		kbdEvent = CGEventCreateKeyboardEvent(source, (CGKeyCode) keycode, TRUE);
+		kbdEvent = CGEventCreateKeyboardEvent(source, (CGKeyCode)keycode, TRUE);
 		CGEventPost(kCGHIDEventTap, kbdEvent);
 		CFRelease(kbdEvent);
 	}
 	else if (flags & KBD_FLAGS_RELEASE)
 	{
-		kbdEvent = CGEventCreateKeyboardEvent(source, (CGKeyCode) keycode, FALSE);
+		kbdEvent = CGEventCreateKeyboardEvent(source, (CGKeyCode)keycode, FALSE);
 		CGEventPost(kCGHIDEventTap, kbdEvent);
 		CFRelease(kbdEvent);
 	}
@@ -87,8 +86,9 @@ static BOOL mac_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem,
 	return TRUE;
 }
 
-static BOOL mac_shadow_input_unicode_keyboard_event(rdpShadowSubsystem*
-        subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code)
+static BOOL mac_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsystem,
+                                                    rdpShadowClient* client, UINT16 flags,
+                                                    UINT16 code)
 {
 	if (!subsystem || !client)
 		return FALSE;
@@ -96,8 +96,8 @@ static BOOL mac_shadow_input_unicode_keyboard_event(rdpShadowSubsystem*
 	return TRUE;
 }
 
-static BOOL mac_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
-        rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
+static BOOL mac_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+                                         UINT16 flags, UINT16 x, UINT16 y)
 {
 	macShadowSubsystem* mac = (macShadowSubsystem*)subsystem;
 	UINT32 scrollX = 0;
@@ -120,19 +120,16 @@ static BOOL mac_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
 			scrollY = (flags & WheelRotationMask) / 120;
 		}
 
-		CGEventSourceRef source = CGEventSourceCreate(
-		                              kCGEventSourceStateHIDSystemState);
-		CGEventRef scroll = CGEventCreateScrollWheelEvent(source,
-		                    kCGScrollEventUnitLine,
-		                    wheelCount, scrollY, scrollX);
+		CGEventSourceRef source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
+		CGEventRef scroll = CGEventCreateScrollWheelEvent(source, kCGScrollEventUnitLine,
+		                                                  wheelCount, scrollY, scrollX);
 		CGEventPost(kCGHIDEventTap, scroll);
 		CFRelease(scroll);
 		CFRelease(source);
 	}
 	else
 	{
-		CGEventSourceRef source = CGEventSourceCreate(
-		                              kCGEventSourceStateHIDSystemState);
+		CGEventSourceRef source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
 		CGEventType mouseType = kCGEventNull;
 		CGMouseButton mouseButton = kCGMouseButtonLeft;
 
@@ -147,8 +144,8 @@ static BOOL mac_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
 			else
 				mouseType = kCGEventMouseMoved;
 
-			CGEventRef move = CGEventCreateMouseEvent(source, mouseType, CGPointMake(x, y),
-			                  mouseButton);
+			CGEventRef move =
+			    CGEventCreateMouseEvent(source, mouseType, CGPointMake(x, y), mouseButton);
 			CGEventPost(kCGHIDEventTap, move);
 			CFRelease(move);
 		}
@@ -199,8 +196,8 @@ static BOOL mac_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
 			}
 		}
 
-		CGEventRef mouseEvent = CGEventCreateMouseEvent(source, mouseType,
-		                        CGPointMake(x, y), mouseButton);
+		CGEventRef mouseEvent =
+		    CGEventCreateMouseEvent(source, mouseType, CGPointMake(x, y), mouseButton);
 		CGEventPost(kCGHIDEventTap, mouseEvent);
 		CFRelease(mouseEvent);
 		CFRelease(source);
@@ -210,7 +207,8 @@ static BOOL mac_shadow_input_mouse_event(rdpShadowSubsystem* subsystem,
 }
 
 static BOOL mac_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
-        rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
+                                                  rdpShadowClient* client, UINT16 flags, UINT16 x,
+                                                  UINT16 y)
 {
 	if (!subsystem || !client)
 		return FALSE;
@@ -282,18 +280,18 @@ static int mac_shadow_capture_get_dirty_region(macShadowSubsystem* subsystem)
 	const CGRect* rects;
 	RECTANGLE_16 invalidRect;
 	rdpShadowSurface* surface = subsystem->common.server->surface;
-	rects = CGDisplayStreamUpdateGetRects(subsystem->lastUpdate,
-	                                      kCGDisplayStreamUpdateDirtyRects, &numRects);
+	rects = CGDisplayStreamUpdateGetRects(subsystem->lastUpdate, kCGDisplayStreamUpdateDirtyRects,
+	                                      &numRects);
 
 	if (!numRects)
 		return -1;
 
 	for (index = 0; index < numRects; index++)
 	{
-		invalidRect.left = (UINT16) rects[index].origin.x;
-		invalidRect.top = (UINT16) rects[index].origin.y;
-		invalidRect.right = invalidRect.left + (UINT16) rects[index].size.width;
-		invalidRect.bottom = invalidRect.top + (UINT16) rects[index].size.height;
+		invalidRect.left = (UINT16)rects[index].origin.x;
+		invalidRect.top = (UINT16)rects[index].origin.y;
+		invalidRect.right = invalidRect.left + (UINT16)rects[index].size.width;
+		invalidRect.bottom = invalidRect.top + (UINT16)rects[index].size.height;
 
 		if (subsystem->retina)
 		{
@@ -304,16 +302,15 @@ static int mac_shadow_capture_get_dirty_region(macShadowSubsystem* subsystem)
 			invalidRect.bottom /= 2;
 		}
 
-		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-		                    &invalidRect);
+		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
 	}
 
 	return 0;
 }
 
-static int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat,
-        int nDstStep, int nXDst, int nYDst,
-        int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc)
+static int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst,
+                                          int nYDst, int nWidth, int nHeight, BYTE* pSrcData,
+                                          int nSrcStep, int nXSrc, int nYSrc)
 {
 	BYTE* pSrcPixel;
 	BYTE* pDstPixel;
@@ -348,12 +345,9 @@ static int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat,
 			UINT32 R, G, B;
 			UINT32 color;
 			/* simple box filter scaling, could be improved with better algorithm */
-			B = pSrcPixel[0] + pSrcPixel[4] + pSrcPixel[nSrcStep + 0] + pSrcPixel[nSrcStep +
-			        4];
-			G = pSrcPixel[1] + pSrcPixel[5] + pSrcPixel[nSrcStep + 1] + pSrcPixel[nSrcStep +
-			        5];
-			R = pSrcPixel[2] + pSrcPixel[6] + pSrcPixel[nSrcStep + 2] + pSrcPixel[nSrcStep +
-			        6];
+			B = pSrcPixel[0] + pSrcPixel[4] + pSrcPixel[nSrcStep + 0] + pSrcPixel[nSrcStep + 4];
+			G = pSrcPixel[1] + pSrcPixel[5] + pSrcPixel[nSrcStep + 1] + pSrcPixel[nSrcStep + 5];
+			R = pSrcPixel[2] + pSrcPixel[6] + pSrcPixel[nSrcStep + 2] + pSrcPixel[nSrcStep + 6];
 			pSrcPixel += 8;
 			color = FreeRDPGetColor(DstFormat, R >> 2, G >> 2, B >> 2, 0xFF);
 			WriteColor(pDstPixel, DstFormat, color);
@@ -367,109 +361,106 @@ static int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat,
 	return 1;
 }
 
-static void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t,
-        IOSurfaceRef, CGDisplayStreamUpdateRef) =
-            ^(CGDisplayStreamFrameStatus status, uint64_t displayTime,
-              IOSurfaceRef frameSurface, CGDisplayStreamUpdateRef updateRef)
-{
-	int x, y;
-	int count;
-	int width;
-	int height;
-	int nSrcStep;
-	BYTE* pSrcData;
-	RECTANGLE_16 surfaceRect;
-	const RECTANGLE_16* extents;
-	macShadowSubsystem* subsystem = g_Subsystem;
-	rdpShadowServer* server = subsystem->common.server;
-	rdpShadowSurface* surface = server->surface;
-	count = ArrayList_Count(server->clients);
+static void (^mac_capture_stream_handler)(
+    CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef,
+    CGDisplayStreamUpdateRef) = ^(CGDisplayStreamFrameStatus status, uint64_t displayTime,
+                                  IOSurfaceRef frameSurface, CGDisplayStreamUpdateRef updateRef) {
+  int x, y;
+  int count;
+  int width;
+  int height;
+  int nSrcStep;
+  BYTE* pSrcData;
+  RECTANGLE_16 surfaceRect;
+  const RECTANGLE_16* extents;
+  macShadowSubsystem* subsystem = g_Subsystem;
+  rdpShadowServer* server = subsystem->common.server;
+  rdpShadowSurface* surface = server->surface;
+  count = ArrayList_Count(server->clients);
 
-	if (count < 1)
-		return;
+  if (count < 1)
+	  return;
 
-	mac_shadow_capture_get_dirty_region(subsystem);
-	surfaceRect.left = 0;
-	surfaceRect.top = 0;
-	surfaceRect.right = surface->width;
-	surfaceRect.bottom = surface->height;
-	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-	                        &surfaceRect);
+  mac_shadow_capture_get_dirty_region(subsystem);
+  surfaceRect.left = 0;
+  surfaceRect.top = 0;
+  surfaceRect.right = surface->width;
+  surfaceRect.bottom = surface->height;
+  region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
 
-	if (!region16_is_empty(&(surface->invalidRegion)))
-	{
-		extents = region16_extents(&(surface->invalidRegion));
-		x = extents->left;
-		y = extents->top;
-		width = extents->right - extents->left;
-		height = extents->bottom - extents->top;
-		IOSurfaceLock(frameSurface, kIOSurfaceLockReadOnly, NULL);
-		pSrcData = (BYTE*) IOSurfaceGetBaseAddress(frameSurface);
-		nSrcStep = (int) IOSurfaceGetBytesPerRow(frameSurface);
+  if (!region16_is_empty(&(surface->invalidRegion)))
+  {
+	  extents = region16_extents(&(surface->invalidRegion));
+	  x = extents->left;
+	  y = extents->top;
+	  width = extents->right - extents->left;
+	  height = extents->bottom - extents->top;
+	  IOSurfaceLock(frameSurface, kIOSurfaceLockReadOnly, NULL);
+	  pSrcData = (BYTE*)IOSurfaceGetBaseAddress(frameSurface);
+	  nSrcStep = (int)IOSurfaceGetBytesPerRow(frameSurface);
 
-		if (subsystem->retina)
-		{
-			freerdp_image_copy_from_retina(surface->data, surface->format,
-			                               surface->scanline,
-			                               x, y, width, height, pSrcData, nSrcStep, x, y);
-		}
-		else
-		{
-			freerdp_image_copy(surface->data, surface->format, surface->scanline,
-			                   x, y, width, height, pSrcData, PIXEL_FORMAT_BGRX32, nSrcStep, x, y, NULL, FREERDP_FLIP_NONE);
-		}
+	  if (subsystem->retina)
+	  {
+		  freerdp_image_copy_from_retina(surface->data, surface->format, surface->scanline, x, y,
+			                             width, height, pSrcData, nSrcStep, x, y);
+	  }
+	  else
+	  {
+		  freerdp_image_copy(surface->data, surface->format, surface->scanline, x, y, width, height,
+			                 pSrcData, PIXEL_FORMAT_BGRX32, nSrcStep, x, y, NULL,
+			                 FREERDP_FLIP_NONE);
+	  }
 
-		IOSurfaceUnlock(frameSurface, kIOSurfaceLockReadOnly, NULL);
-		ArrayList_Lock(server->clients);
-		count = ArrayList_Count(server->clients);
-		EnterCriticalSection(&(surface->lock));
-		shadow_subsystem_frame_update(&subsystem->common);
-		LeaveCriticalSection(&(surface->lock));
+	  IOSurfaceUnlock(frameSurface, kIOSurfaceLockReadOnly, NULL);
+	  ArrayList_Lock(server->clients);
+	  count = ArrayList_Count(server->clients);
+	  EnterCriticalSection(&(surface->lock));
+	  shadow_subsystem_frame_update(&subsystem->common);
+	  LeaveCriticalSection(&(surface->lock));
 
-		if (count == 1)
-		{
-			rdpShadowClient* client;
-			client = (rdpShadowClient*) ArrayList_GetItem(server->clients, 0);
+	  if (count == 1)
+	  {
+		  rdpShadowClient* client;
+		  client = (rdpShadowClient*)ArrayList_GetItem(server->clients, 0);
 
-			if (client)
-			{
-				subsystem->common.captureFrameRate = shadow_encoder_preferred_fps(client->encoder);
-			}
-		}
+		  if (client)
+		  {
+			  subsystem->common.captureFrameRate = shadow_encoder_preferred_fps(client->encoder);
+		  }
+	  }
 
-		ArrayList_Unlock(server->clients);
-		region16_clear(&(surface->invalidRegion));
-	}
+	  ArrayList_Unlock(server->clients);
+	  region16_clear(&(surface->invalidRegion));
+  }
 
-	if (status != kCGDisplayStreamFrameStatusFrameComplete)
-	{
-		switch (status)
-		{
-			case kCGDisplayStreamFrameStatusFrameIdle:
-				break;
+  if (status != kCGDisplayStreamFrameStatusFrameComplete)
+  {
+	  switch (status)
+	  {
+		  case kCGDisplayStreamFrameStatusFrameIdle:
+			  break;
 
-			case kCGDisplayStreamFrameStatusStopped:
-				break;
+		  case kCGDisplayStreamFrameStatusStopped:
+			  break;
 
-			case kCGDisplayStreamFrameStatusFrameBlank:
-				break;
+		  case kCGDisplayStreamFrameStatusFrameBlank:
+			  break;
 
-			default:
-				break;
-		}
-	}
-	else if (!subsystem->lastUpdate)
-	{
-		CFRetain(updateRef);
-		subsystem->lastUpdate = updateRef;
-	}
-	else
-	{
-		CGDisplayStreamUpdateRef tmpRef = subsystem->lastUpdate;
-		subsystem->lastUpdate = CGDisplayStreamUpdateCreateMergedUpdate(tmpRef,
-		                        updateRef);
-		CFRelease(tmpRef);
-	}
+		  default:
+			  break;
+	  }
+  }
+  else if (!subsystem->lastUpdate)
+  {
+	  CFRetain(updateRef);
+	  subsystem->lastUpdate = updateRef;
+  }
+  else
+  {
+	  CGDisplayStreamUpdateRef tmpRef = subsystem->lastUpdate;
+	  subsystem->lastUpdate = CGDisplayStreamUpdateCreateMergedUpdate(tmpRef, updateRef);
+	  CFRelease(tmpRef);
+  }
 };
 
 static int mac_shadow_capture_init(macShadowSubsystem* subsystem)
@@ -480,13 +471,13 @@ static int mac_shadow_capture_init(macShadowSubsystem* subsystem)
 	CGDirectDisplayID displayId;
 	displayId = CGMainDisplayID();
 	subsystem->captureQueue = dispatch_queue_create("mac.shadow.capture", NULL);
-	keys[0] = (void*) kCGDisplayStreamShowCursor;
-	values[0] = (void*) kCFBooleanFalse;
-	opts = CFDictionaryCreate(kCFAllocatorDefault, (const void**) keys,
-	                          (const void**) values, 1, NULL, NULL);
-	subsystem->stream = CGDisplayStreamCreateWithDispatchQueue(displayId,
-	                    subsystem->pixelWidth, subsystem->pixelHeight,
-	                    'BGRA', opts, subsystem->captureQueue, mac_capture_stream_handler);
+	keys[0] = (void*)kCGDisplayStreamShowCursor;
+	values[0] = (void*)kCFBooleanFalse;
+	opts = CFDictionaryCreate(kCFAllocatorDefault, (const void**)keys, (const void**)values, 1,
+	                          NULL, NULL);
+	subsystem->stream = CGDisplayStreamCreateWithDispatchQueue(
+	    displayId, subsystem->pixelWidth, subsystem->pixelHeight, 'BGRA', opts,
+	    subsystem->captureQueue, mac_capture_stream_handler);
 	CFRelease(opts);
 	return 1;
 }
@@ -496,8 +487,7 @@ static int mac_shadow_screen_grab(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-static int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem,
-        wMessage* message)
+static int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem, wMessage* message)
 {
 	rdpShadowServer* server = subsystem->common.server;
 	rdpShadowSurface* surface = server->surface;
@@ -511,7 +501,7 @@ static int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem,
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unknown message id: %"PRIu32"", message->id);
+			WLog_ERR(TAG, "Unknown message id: %" PRIu32 "", message->id);
 			break;
 	}
 
@@ -586,8 +576,8 @@ static int mac_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
 	monitor = &monitors[index];
 	monitor->left = 0;
 	monitor->top = 0;
-	monitor->right = (int) wide;
-	monitor->bottom = (int) high;
+	monitor->right = (int)wide;
+	monitor->bottom = (int)high;
 	monitor->flags = 1;
 	return numMonitors;
 }
@@ -623,8 +613,7 @@ static int mac_shadow_subsystem_start(macShadowSubsystem* subsystem)
 
 	mac_shadow_capture_start(subsystem);
 
-	if (!(thread = CreateThread(NULL, 0, mac_shadow_subsystem_thread,
-	                            (void*) subsystem, 0, NULL)))
+	if (!(thread = CreateThread(NULL, 0, mac_shadow_subsystem_thread, (void*)subsystem, 0, NULL)))
 	{
 		WLog_ERR(TAG, "Failed to create thread");
 		return -1;
@@ -653,7 +642,7 @@ static void mac_shadow_subsystem_free(macShadowSubsystem* subsystem)
 static macShadowSubsystem* mac_shadow_subsystem_new(void)
 {
 	macShadowSubsystem* subsystem;
-	subsystem = (macShadowSubsystem*) calloc(1, sizeof(macShadowSubsystem));
+	subsystem = (macShadowSubsystem*)calloc(1, sizeof(macShadowSubsystem));
 
 	if (!subsystem)
 		return NULL;
@@ -668,12 +657,12 @@ static macShadowSubsystem* mac_shadow_subsystem_new(void)
 
 FREERDP_API int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
-	pEntryPoints->New = (pfnShadowSubsystemNew) mac_shadow_subsystem_new;
-	pEntryPoints->Free = (pfnShadowSubsystemFree) mac_shadow_subsystem_free;
-	pEntryPoints->Init = (pfnShadowSubsystemInit) mac_shadow_subsystem_init;
-	pEntryPoints->Uninit = (pfnShadowSubsystemInit) mac_shadow_subsystem_uninit;
-	pEntryPoints->Start = (pfnShadowSubsystemStart) mac_shadow_subsystem_start;
-	pEntryPoints->Stop = (pfnShadowSubsystemStop) mac_shadow_subsystem_stop;
-	pEntryPoints->EnumMonitors = (pfnShadowEnumMonitors) mac_shadow_enum_monitors;
+	pEntryPoints->New = (pfnShadowSubsystemNew)mac_shadow_subsystem_new;
+	pEntryPoints->Free = (pfnShadowSubsystemFree)mac_shadow_subsystem_free;
+	pEntryPoints->Init = (pfnShadowSubsystemInit)mac_shadow_subsystem_init;
+	pEntryPoints->Uninit = (pfnShadowSubsystemInit)mac_shadow_subsystem_uninit;
+	pEntryPoints->Start = (pfnShadowSubsystemStart)mac_shadow_subsystem_start;
+	pEntryPoints->Stop = (pfnShadowSubsystemStop)mac_shadow_subsystem_stop;
+	pEntryPoints->EnumMonitors = (pfnShadowEnumMonitors)mac_shadow_enum_monitors;
 	return 1;
 }

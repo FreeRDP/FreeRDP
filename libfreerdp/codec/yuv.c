@@ -18,14 +18,13 @@ struct _YUV_CONTEXT
 	TP_CALLBACK_ENVIRON ThreadPoolEnv;
 };
 
-
 struct _YUV_PROCESS_WORK_PARAM
 {
 	YUV_CONTEXT* context;
 	const BYTE* pYUVData[3];
 	UINT32 iStride[3];
 	DWORD DstFormat;
-	BYTE *dest;
+	BYTE* dest;
 	UINT32 nDstStep;
 	UINT32 y;
 	UINT32 height;
@@ -33,7 +32,7 @@ struct _YUV_PROCESS_WORK_PARAM
 typedef struct _YUV_PROCESS_WORK_PARAM YUV_PROCESS_WORK_PARAM;
 
 static void CALLBACK yuv_process_work_callback(PTP_CALLBACK_INSTANCE instance, void* context,
-		PTP_WORK work)
+                                               PTP_WORK work)
 {
 	prim_size_t roi;
 	YUV_PROCESS_WORK_PARAM* param = (YUV_PROCESS_WORK_PARAM*)context;
@@ -41,13 +40,12 @@ static void CALLBACK yuv_process_work_callback(PTP_CALLBACK_INSTANCE instance, v
 
 	roi.width = param->context->width;
 	roi.height = param->height;
-	if( prims->YUV420ToRGB_8u_P3AC4R(param->pYUVData, param->iStride, param->dest, param->nDstStep,
-				        param->DstFormat, &roi) != PRIMITIVES_SUCCESS)
+	if (prims->YUV420ToRGB_8u_P3AC4R(param->pYUVData, param->iStride, param->dest, param->nDstStep,
+	                                 param->DstFormat, &roi) != PRIMITIVES_SUCCESS)
 	{
 		WLog_ERR(TAG, "error when decoding lines");
 	}
 }
-
 
 void yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
 {
@@ -55,7 +53,6 @@ void yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
 	context->height = height;
 	context->heightStep = (height / context->nthreads);
 }
-
 
 YUV_CONTEXT* yuv_context_new(BOOL encoder)
 {
@@ -93,7 +90,6 @@ error_threadpool:
 	return NULL;
 }
 
-
 void yuv_context_free(YUV_CONTEXT* context)
 {
 	if (context->useThreads)
@@ -104,13 +100,12 @@ void yuv_context_free(YUV_CONTEXT* context)
 	free(context);
 }
 
-
 BOOL yuv_context_decode(YUV_CONTEXT* context, const BYTE* pYUVData[3], UINT32 iStride[3],
-						DWORD DstFormat, BYTE *dest, UINT32 nDstStep)
+                        DWORD DstFormat, BYTE* dest, UINT32 nDstStep)
 {
 	UINT32 y, nobjects, i;
-	PTP_WORK *work_objects = NULL;
-	YUV_PROCESS_WORK_PARAM *params;
+	PTP_WORK* work_objects = NULL;
+	YUV_PROCESS_WORK_PARAM* params;
 	UINT32 waitCount = 0;
 	BOOL ret = TRUE;
 
@@ -120,19 +115,19 @@ BOOL yuv_context_decode(YUV_CONTEXT* context, const BYTE* pYUVData[3], UINT32 iS
 		prim_size_t roi;
 		roi.width = context->width;
 		roi.height = context->height;
-		return prims->YUV420ToRGB_8u_P3AC4R(pYUVData, iStride, dest, nDstStep,
-					        DstFormat, &roi) == PRIMITIVES_SUCCESS;
+		return prims->YUV420ToRGB_8u_P3AC4R(pYUVData, iStride, dest, nDstStep, DstFormat, &roi) ==
+		       PRIMITIVES_SUCCESS;
 	}
 
 	/* case where we use threads */
 	nobjects = (context->height + context->heightStep - 1) / context->heightStep;
-	work_objects = (PTP_WORK *)calloc(nobjects, sizeof(PTP_WORK));
+	work_objects = (PTP_WORK*)calloc(nobjects, sizeof(PTP_WORK));
 	if (!work_objects)
 	{
 		return FALSE;
 	}
 
-	params = (YUV_PROCESS_WORK_PARAM *)calloc(nobjects, sizeof(*params));
+	params = (YUV_PROCESS_WORK_PARAM*)calloc(nobjects, sizeof(*params));
 	if (!params)
 	{
 		free(work_objects);
@@ -159,8 +154,8 @@ BOOL yuv_context_decode(YUV_CONTEXT* context, const BYTE* pYUVData[3], UINT32 iS
 		else
 			params[i].height = context->height % context->heightStep;
 
-		work_objects[i] = CreateThreadpoolWork(yuv_process_work_callback,
-					                        (void*) &params[i], &context->ThreadPoolEnv);
+		work_objects[i] = CreateThreadpoolWork(yuv_process_work_callback, (void*)&params[i],
+		                                       &context->ThreadPoolEnv);
 		if (!work_objects[i])
 		{
 			ret = FALSE;

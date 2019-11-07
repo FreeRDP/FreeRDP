@@ -41,8 +41,8 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	int i, j;
 	BOOL formatAgreed = FALSE;
 	AUDIO_FORMAT* agreedFormat = NULL;
-	//we should actually loop through the list of client formats here
-	//and see if we can send the client something that it supports...
+	// we should actually loop through the list of client formats here
+	// and see if we can send the client something that it supports...
 	WLog_DBG(TAG, "Client supports the following %d formats: ", context->num_client_formats);
 
 	for (i = 0; i < context->num_client_formats; i++)
@@ -52,7 +52,8 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 		{
 			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
 			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
-			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
+			    (context->client_formats[i].nSamplesPerSec ==
+			     context->server_formats[j].nSamplesPerSec))
 			{
 				WLog_DBG(TAG, "agreed on format!");
 				formatAgreed = TRUE;
@@ -90,44 +91,34 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	}
 
 	recorderState.dataFormat.mSampleRate = agreedFormat->nSamplesPerSec;
-	recorderState.dataFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger |
-	                                        kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
+	recorderState.dataFormat.mFormatFlags =
+	    kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
 	recorderState.dataFormat.mBytesPerPacket = 4;
 	recorderState.dataFormat.mFramesPerPacket = 1;
 	recorderState.dataFormat.mBytesPerFrame = 4;
 	recorderState.dataFormat.mChannelsPerFrame = agreedFormat->nChannels;
 	recorderState.dataFormat.mBitsPerChannel = agreedFormat->wBitsPerSample;
 	recorderState.snd_context = context;
-	status = AudioQueueNewInput(&recorderState.dataFormat,
-	                            mf_peer_rdpsnd_input_callback,
-	                            &recorderState,
-	                            NULL,
-	                            kCFRunLoopCommonModes,
-	                            0,
-	                            &recorderState.queue);
+	status =
+	    AudioQueueNewInput(&recorderState.dataFormat, mf_peer_rdpsnd_input_callback, &recorderState,
+	                       NULL, kCFRunLoopCommonModes, 0, &recorderState.queue);
 
 	if (status != noErr)
 	{
-		WLog_DBG(TAG, "Failed to create a new Audio Queue. Status code: %"PRId32"", status);
+		WLog_DBG(TAG, "Failed to create a new Audio Queue. Status code: %" PRId32 "", status);
 	}
 
 	UInt32 dataFormatSize = sizeof(recorderState.dataFormat);
-	AudioQueueGetProperty(recorderState.queue,
-	                      kAudioConverterCurrentInputStreamDescription,
-	                      &recorderState.dataFormat,
-	                      &dataFormatSize);
+	AudioQueueGetProperty(recorderState.queue, kAudioConverterCurrentInputStreamDescription,
+	                      &recorderState.dataFormat, &dataFormatSize);
 	mf_rdpsnd_derive_buffer_size(recorderState.queue, &recorderState.dataFormat, 0.05,
 	                             &recorderState.bufferByteSize);
 
 	for (i = 0; i < SND_NUMBUFFERS; ++i)
 	{
-		AudioQueueAllocateBuffer(recorderState.queue,
-		                         recorderState.bufferByteSize,
+		AudioQueueAllocateBuffer(recorderState.queue, recorderState.bufferByteSize,
 		                         &recorderState.buffers[i]);
-		AudioQueueEnqueueBuffer(recorderState.queue,
-		                        recorderState.buffers[i],
-		                        0,
-		                        NULL);
+		AudioQueueEnqueueBuffer(recorderState.queue, recorderState.buffers[i], 0, NULL);
 	}
 
 	recorderState.currentPacket = 0;
@@ -140,7 +131,8 @@ BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->rdpcontext = &context->_p;
 	context->rdpsnd->data = context;
-	context->rdpsnd->num_server_formats = server_rdpsnd_get_formats(&context->rdpsnd->server_formats);
+	context->rdpsnd->num_server_formats =
+	    server_rdpsnd_get_formats(&context->rdpsnd->server_formats);
 
 	if (context->rdpsnd->num_server_formats > 0)
 		context->rdpsnd->src_format = &context->rdpsnd->server_formats[0];
@@ -157,12 +149,10 @@ BOOL mf_peer_rdpsnd_stop()
 	return TRUE;
 }
 
-void mf_peer_rdpsnd_input_callback(void*                                inUserData,
-                                   AudioQueueRef                       inAQ,
-                                   AudioQueueBufferRef                 inBuffer,
-                                   const AudioTimeStamp*                inStartTime,
-                                   UInt32                              inNumberPacketDescriptions,
-                                   const AudioStreamPacketDescription*  inPacketDescs)
+void mf_peer_rdpsnd_input_callback(void* inUserData, AudioQueueRef inAQ,
+                                   AudioQueueBufferRef inBuffer, const AudioTimeStamp* inStartTime,
+                                   UInt32 inNumberPacketDescriptions,
+                                   const AudioStreamPacketDescription* inPacketDescs)
 {
 	OSStatus status;
 	AQRecorderState* rState;
@@ -170,32 +160,29 @@ void mf_peer_rdpsnd_input_callback(void*                                inUserDa
 
 	if (inNumberPacketDescriptions == 0 && rState->dataFormat.mBytesPerPacket != 0)
 	{
-		inNumberPacketDescriptions = inBuffer->mAudioDataByteSize / rState->dataFormat.mBytesPerPacket;
+		inNumberPacketDescriptions =
+		    inBuffer->mAudioDataByteSize / rState->dataFormat.mBytesPerPacket;
 	}
 
 	if (rState->isRunning == 0)
 	{
-		return ;
+		return;
 	}
 
 	rState->snd_context->SendSamples(rState->snd_context, inBuffer->mAudioData,
-	                                 inBuffer->mAudioDataByteSize / 4, (UINT16)(GetTickCount() & 0xffff));
-	status = AudioQueueEnqueueBuffer(
-	             rState->queue,
-	             inBuffer,
-	             0,
-	             NULL);
+	                                 inBuffer->mAudioDataByteSize / 4,
+	                                 (UINT16)(GetTickCount() & 0xffff));
+	status = AudioQueueEnqueueBuffer(rState->queue, inBuffer, 0, NULL);
 
 	if (status != noErr)
 	{
-		WLog_DBG(TAG, "AudioQueueEnqueueBuffer() returned status = %"PRId32"", status);
+		WLog_DBG(TAG, "AudioQueueEnqueueBuffer() returned status = %" PRId32 "", status);
 	}
 }
 
-void mf_rdpsnd_derive_buffer_size(AudioQueueRef                audioQueue,
-                                  AudioStreamBasicDescription*  ASBDescription,
-                                  Float64                      seconds,
-                                  UInt32*                       outBufferSize)
+void mf_rdpsnd_derive_buffer_size(AudioQueueRef audioQueue,
+                                  AudioStreamBasicDescription* ASBDescription, Float64 seconds,
+                                  UInt32* outBufferSize)
 {
 	static const int maxBufferSize = 0x50000;
 	int maxPacketSize = ASBDescription->mBytesPerPacket;
@@ -203,17 +190,12 @@ void mf_rdpsnd_derive_buffer_size(AudioQueueRef                audioQueue,
 	if (maxPacketSize == 0)
 	{
 		UInt32 maxVBRPacketSize = sizeof(maxPacketSize);
-		AudioQueueGetProperty(audioQueue,
-		                      kAudioQueueProperty_MaximumOutputPacketSize,
+		AudioQueueGetProperty(audioQueue, kAudioQueueProperty_MaximumOutputPacketSize,
 		                      // in Mac OS X v10.5, instead use
 		                      //   kAudioConverterPropertyMaximumOutputPacketSize
-		                      &maxPacketSize,
-		                      &maxVBRPacketSize
-		                     );
+		                      &maxPacketSize, &maxVBRPacketSize);
 	}
 
-	Float64 numBytesForTime =
-	    ASBDescription->mSampleRate * maxPacketSize * seconds;
+	Float64 numBytesForTime = ASBDescription->mSampleRate * maxPacketSize * seconds;
 	*outBufferSize = (UInt32)(numBytesForTime < maxBufferSize ? numBytesForTime : maxBufferSize);
 }
-

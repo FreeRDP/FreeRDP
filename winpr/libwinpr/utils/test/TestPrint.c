@@ -34,11 +34,12 @@ int TestPrint(int argc, char* argv[])
 
 	a = 15;
 	b = a / 2;
-	_printf("%d\n",b);
-	_printf("%3d\n",b);
-	_printf("%03d\n",b);
-	c = 15.3f; d = c / 3;
-	_printf("%3.2f\n",d);
+	_printf("%d\n", b);
+	_printf("%3d\n", b);
+	_printf("%03d\n", b);
+	c = 15.3f;
+	d = c / 3;
+	_printf("%3.2f\n", d);
 
 	/**
 	 *   0 -17.778

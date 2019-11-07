@@ -34,17 +34,18 @@ static BOOL test_generic(HANDLE hComm)
 	result = GetCommState(hComm, &dcb);
 	if (result)
 	{
-		printf("GetCommState failure, should have returned false because dcb.DCBlength has been let uninitialized\n");
+		printf("GetCommState failure, should have returned false because dcb.DCBlength has been "
+		       "let uninitialized\n");
 		return FALSE;
 	}
-
 
 	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB) / 2; /* improper value */
 	result = GetCommState(hComm, &dcb);
 	if (result)
 	{
-		printf("GetCommState failure, should have return false because dcb.DCBlength was not correctly initialized\n");
+		printf("GetCommState failure, should have return false because dcb.DCBlength was not "
+		       "correctly initialized\n");
 		return FALSE;
 	}
 
@@ -92,9 +93,7 @@ int TestGetCommState(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	hComm = CreateFileA("COM1",
-			GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+	hComm = CreateFileA("COM1", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (hComm == INVALID_HANDLE_VALUE)
 	{

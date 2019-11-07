@@ -22,39 +22,39 @@
 
 @interface CertificateDialog : NSWindowController
 {
-@public
-	NSTextField* textCommonName;
-	NSTextField* textSubject;
-	NSTextField* textIssuer;
-	NSTextField* textFingerprint;
-	NSTextField* textMismatch;
-	NSTextField* messageLabel;
-	NSString* serverHostname;
+  @public
+	NSTextField *textCommonName;
+	NSTextField *textSubject;
+	NSTextField *textIssuer;
+	NSTextField *textFingerprint;
+	NSTextField *textMismatch;
+	NSTextField *messageLabel;
+	NSString *serverHostname;
 
 	BOOL hostMismatch;
 	BOOL changed;
 	int result;
 }
-@property(retain) IBOutlet NSTextField* textCommonName;
-@property(retain) IBOutlet NSTextField* textSubject;
-@property(retain) IBOutlet NSTextField* textIssuer;
-@property(retain) IBOutlet NSTextField* textFingerprint;
-@property(retain) IBOutlet NSTextField* textMismatch;
-@property(retain) IBOutlet NSTextField* messageLabel;
+@property(retain) IBOutlet NSTextField *textCommonName;
+@property(retain) IBOutlet NSTextField *textSubject;
+@property(retain) IBOutlet NSTextField *textIssuer;
+@property(retain) IBOutlet NSTextField *textFingerprint;
+@property(retain) IBOutlet NSTextField *textMismatch;
+@property(retain) IBOutlet NSTextField *messageLabel;
 
-- (IBAction)onAccept:(NSObject*)sender;
-- (IBAction)onTemporary:(NSObject*)sender;
-- (IBAction)onCancel:(NSObject*)sender;
+- (IBAction)onAccept:(NSObject *)sender;
+- (IBAction)onTemporary:(NSObject *)sender;
+- (IBAction)onCancel:(NSObject *)sender;
 
-@property(retain) NSString* serverHostname;
-@property(retain) NSString* commonName;
-@property(retain) NSString* subject;
-@property(retain) NSString* issuer;
-@property(retain) NSString* fingerprint;
+@property(retain) NSString *serverHostname;
+@property(retain) NSString *commonName;
+@property(retain) NSString *subject;
+@property(retain) NSString *issuer;
+@property(retain) NSString *fingerprint;
 @property BOOL hostMismatch;
 @property BOOL changed;
 @property(readonly) int result;
 
-- (int) runModal:(NSWindow*)mainWindow;
+- (int)runModal:(NSWindow *)mainWindow;
 
 @end

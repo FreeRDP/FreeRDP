@@ -111,9 +111,9 @@ static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 	/* TODO: Multimonitor support for wayland
 	if (wlc->fullscreen && (settings->MonitorCount > 0))
 	{
-		if (wlf_disp_sendLayout(wlfDisp->disp, settings->MonitorDefArray,
-		                       settings->MonitorCount) != CHANNEL_RC_OK)
-			return FALSE;
+	    if (wlf_disp_sendLayout(wlfDisp->disp, settings->MonitorDefArray,
+	                           settings->MonitorCount) != CHANNEL_RC_OK)
+	        return FALSE;
 	}
 	else
 	*/
@@ -334,7 +334,8 @@ static UINT wlf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitor
 	wlfDispContext* wlfDisp = (wlfDispContext*)disp->custom;
 	rdpSettings* settings = wlfDisp->wlc->context.settings;
 	WLog_DBG(TAG,
-	         "DisplayControlCapsPdu: MaxNumMonitors: %"PRIu32" MaxMonitorAreaFactorA: %"PRIu32" MaxMonitorAreaFactorB: %"PRIu32"",
+	         "DisplayControlCapsPdu: MaxNumMonitors: %" PRIu32 " MaxMonitorAreaFactorA: %" PRIu32
+	         " MaxMonitorAreaFactorB: %" PRIu32 "",
 	         maxNumMonitors, maxMonitorAreaFactorA, maxMonitorAreaFactorB);
 	wlfDisp->activated = TRUE;
 
@@ -358,7 +359,7 @@ BOOL wlf_disp_init(wlfDispContext* wlfDisp, DispClientContext* disp)
 		return FALSE;
 
 	wlfDisp->disp = disp;
-	disp->custom = (void*) wlfDisp;
+	disp->custom = (void*)wlfDisp;
 
 	if (settings->DynamicResolutionUpdate)
 	{

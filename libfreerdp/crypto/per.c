@@ -160,7 +160,7 @@ void per_write_number_of_sets(wStream* s, BYTE number)
 
 BOOL per_read_padding(wStream* s, int length)
 {
-	if (((int) Stream_GetRemainingLength(s)) < length)
+	if (((int)Stream_GetRemainingLength(s)) < length)
 		return FALSE;
 
 	Stream_Seek(s, length);
@@ -337,9 +337,8 @@ BOOL per_read_object_identifier(wStream* s, BYTE oid[6])
 	Stream_Read_UINT8(s, a_oid[4]); /* tuple 5 */
 	Stream_Read_UINT8(s, a_oid[5]); /* tuple 6 */
 
-	if ((a_oid[0] == oid[0]) && (a_oid[1] == oid[1]) &&
-		(a_oid[2] == oid[2]) && (a_oid[3] == oid[3]) &&
-		(a_oid[4] == oid[4]) && (a_oid[5] == oid[5]))
+	if ((a_oid[0] == oid[0]) && (a_oid[1] == oid[1]) && (a_oid[2] == oid[2]) &&
+	    (a_oid[3] == oid[3]) && (a_oid[4] == oid[4]) && (a_oid[5] == oid[5]))
 	{
 		return TRUE;
 	}
@@ -359,8 +358,8 @@ BOOL per_read_object_identifier(wStream* s, BYTE oid[6])
 void per_write_object_identifier(wStream* s, BYTE oid[6])
 {
 	BYTE t12 = oid[0] * 40 + oid[1];
-	Stream_Write_UINT8(s, 5); /* length */
-	Stream_Write_UINT8(s, t12); /* first two tuples */
+	Stream_Write_UINT8(s, 5);      /* length */
+	Stream_Write_UINT8(s, t12);    /* first two tuples */
 	Stream_Write_UINT8(s, oid[2]); /* tuple 3 */
 	Stream_Write_UINT8(s, oid[3]); /* tuple 4 */
 	Stream_Write_UINT8(s, oid[4]); /* tuple 5 */
@@ -403,7 +402,7 @@ BOOL per_read_octet_string(wStream* s, BYTE* oct_str, int length, int min)
 	if (mlength + min != length)
 		return FALSE;
 
-	if (((int) Stream_GetRemainingLength(s)) < length)
+	if (((int)Stream_GetRemainingLength(s)) < length)
 		return FALSE;
 
 	a_oct_str = Stream_Pointer(s);
@@ -457,7 +456,7 @@ BOOL per_read_numeric_string(wStream* s, int min)
 
 	length = (mlength + min + 1) / 2;
 
-	if (((int) Stream_GetRemainingLength(s)) < length)
+	if (((int)Stream_GetRemainingLength(s)) < length)
 		return FALSE;
 
 	Stream_Seek(s, length);

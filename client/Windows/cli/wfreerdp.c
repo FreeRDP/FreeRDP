@@ -42,8 +42,7 @@
 
 #include <shellapi.h>
 
-INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                   LPSTR lpCmdLine, int nCmdShow)
+INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	int status;
 	HANDLE thread;
@@ -94,19 +93,17 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		if (!argv[i])
 			goto out;
 
-		if (WideCharToMultiByte(CP_UTF8, 0, args[i], -1, argv[i], size, NULL,
-		                        NULL) != size)
+		if (WideCharToMultiByte(CP_UTF8, 0, args[i], -1, argv[i], size, NULL, NULL) != size)
 			goto out;
 	}
 
 	settings = context->settings;
-	wfc = (wfContext*) context;
+	wfc = (wfContext*)context;
 
 	if (!settings || !wfc)
 		goto out;
 
-	status = freerdp_client_settings_parse_command_line(settings, argc, argv,
-	         FALSE);
+	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
 
 	if (status)
 	{

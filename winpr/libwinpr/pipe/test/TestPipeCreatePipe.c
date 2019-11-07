@@ -5,7 +5,7 @@
 #include <winpr/tchar.h>
 #include <winpr/winpr.h>
 
-#define BUFFER_SIZE	16
+#define BUFFER_SIZE 16
 
 int TestPipeCreatePipe(int argc, char* argv[])
 {
@@ -36,8 +36,9 @@ int TestPipeCreatePipe(int argc, char* argv[])
 
 	if (dwWrite != sizeof(writeBuffer))
 	{
-		_tprintf(_T("WriteFile: unexpected number of bytes written: Actual: %")_T(PRIu32)_T(", Expected: %")_T(PRIuz)_T("\n"),
-			dwWrite, sizeof(writeBuffer));
+		_tprintf(_T("WriteFile: unexpected number of bytes written: Actual: %") _T(
+		             PRIu32) _T(", Expected: %") _T(PRIuz) _T("\n"),
+		         dwWrite, sizeof(writeBuffer));
 		return -1;
 	}
 
@@ -52,8 +53,9 @@ int TestPipeCreatePipe(int argc, char* argv[])
 
 	if (dwRead != sizeof(readBuffer))
 	{
-		_tprintf(_T("ReadFile: unexpected number of bytes read: Actual: %")_T(PRIu32)_T(", Expected: %")_T(PRIuz)_T("\n"),
-			dwWrite, sizeof(readBuffer));
+		_tprintf(_T("ReadFile: unexpected number of bytes read: Actual: %") _T(
+		             PRIu32) _T(", Expected: %") _T(PRIuz) _T("\n"),
+		         dwWrite, sizeof(readBuffer));
 		return -1;
 	}
 

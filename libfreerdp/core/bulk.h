@@ -43,16 +43,16 @@ struct rdp_bulk
 	BYTE OutputBuffer[65536];
 };
 
-#define BULK_COMPRESSION_FLAGS_MASK	0xE0
-#define BULK_COMPRESSION_TYPE_MASK	0x0F
+#define BULK_COMPRESSION_FLAGS_MASK 0xE0
+#define BULK_COMPRESSION_TYPE_MASK 0x0F
 
 FREERDP_LOCAL UINT32 bulk_compression_level(rdpBulk* bulk);
 FREERDP_LOCAL UINT32 bulk_compression_max_size(rdpBulk* bulk);
 
-FREERDP_LOCAL int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize,
-                                  BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
-FREERDP_LOCAL int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize,
-                                BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
+FREERDP_LOCAL int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
+                                  UINT32* pDstSize, UINT32 flags);
+FREERDP_LOCAL int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
+                                UINT32* pDstSize, UINT32* pFlags);
 
 FREERDP_LOCAL void bulk_reset(rdpBulk* bulk);
 

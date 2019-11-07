@@ -33,14 +33,16 @@
 #include <winpr/stream.h>
 
 FREERDP_LOCAL BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings);
-FREERDP_LOCAL BOOL rdp_write_client_time_zone(wStream* s,
-        rdpSettings* settings);
+FREERDP_LOCAL BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings);
 
 #define TIMEZONE_TAG FREERDP_TAG("core.timezone")
 #ifdef WITH_DEBUG_TIMEZONE
 #define DEBUG_TIMEZONE(...) WLog_DBG(TIMEZONE_TAG, __VA_ARGS__)
 #else
-#define DEBUG_TIMEZONE(...) do { } while (0)
+#define DEBUG_TIMEZONE(...) \
+	do                      \
+	{                       \
+	} while (0)
 #endif
 
 #endif /* FREERDP_LIB_CORE_TIMEZONE_H */

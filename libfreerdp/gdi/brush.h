@@ -26,22 +26,23 @@
 #include <freerdp/gdi/gdi.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_LOCAL const char* gdi_rop_to_string(UINT32 code);
+	FREERDP_LOCAL const char* gdi_rop_to_string(UINT32 code);
 
-FREERDP_LOCAL HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor);
-FREERDP_LOCAL HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
-FREERDP_LOCAL HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp);
+	FREERDP_LOCAL HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor);
+	FREERDP_LOCAL HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
+	FREERDP_LOCAL HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp);
 
-static INLINE UINT32 gdi_GetBrushStyle(HGDI_DC hdc)
-{
-	if (!hdc || !hdc->brush)
-		return GDI_BS_NULL;
+	static INLINE UINT32 gdi_GetBrushStyle(HGDI_DC hdc)
+	{
+		if (!hdc || !hdc->brush)
+			return GDI_BS_NULL;
 
-	return hdc->brush->style;
-}
+		return hdc->brush->style;
+	}
 
 #ifdef __cplusplus
 }

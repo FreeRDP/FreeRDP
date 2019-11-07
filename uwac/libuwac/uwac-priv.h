@@ -49,21 +49,22 @@
 
 #include <uwac/uwac.h>
 
-
 extern UwacErrorHandler uwacErrorHandler;
 
 typedef struct uwac_task UwacTask;
 
 /** @brief */
-struct uwac_task {
-	void (*run)(UwacTask *task, uint32_t events);
+struct uwac_task
+{
+	void (*run)(UwacTask* task, uint32_t events);
 	struct wl_list link;
 };
 
 /** @brief a global registry object */
-struct uwac_global {
+struct uwac_global
+{
 	uint32_t name;
-	char *interface;
+	char* interface;
 	uint32_t version;
 	struct wl_list link;
 };
@@ -73,42 +74,43 @@ struct uwac_event_list_item;
 typedef struct uwac_event_list_item UwacEventListItem;
 
 /** @brief */
-struct uwac_event_list_item {
+struct uwac_event_list_item
+{
 	UwacEvent event;
 	UwacEventListItem *tail, *head;
 };
 
-
 /** @brief main connection object to a wayland display */
-struct uwac_display {
+struct uwac_display
+{
 	struct wl_list globals;
 
-	struct wl_display *display;
-	struct wl_registry *registry;
-	struct wl_compositor *compositor;
-	struct wl_subcompositor *subcompositor;
-	struct wl_shell *shell;
-	struct xdg_toplevel *xdg_toplevel;
-	struct xdg_wm_base *xdg_base;
+	struct wl_display* display;
+	struct wl_registry* registry;
+	struct wl_compositor* compositor;
+	struct wl_subcompositor* subcompositor;
+	struct wl_shell* shell;
+	struct xdg_toplevel* xdg_toplevel;
+	struct xdg_wm_base* xdg_base;
 	struct wl_data_device_manager* devicemanager;
-	struct zwp_keyboard_shortcuts_inhibit_manager_v1 *keyboard_inhibit_manager;
-	struct zxdg_decoration_manager_v1 *deco_manager;
-	struct org_kde_kwin_server_decoration_manager *kde_deco_manager;
+	struct zwp_keyboard_shortcuts_inhibit_manager_v1* keyboard_inhibit_manager;
+	struct zxdg_decoration_manager_v1* deco_manager;
+	struct org_kde_kwin_server_decoration_manager* kde_deco_manager;
 #ifdef BUILD_IVI
-	struct ivi_application *ivi_application;
+	struct ivi_application* ivi_application;
 #endif
 #ifdef BUILD_FULLSCREEN_SHELL
-	struct zwp_fullscreen_shell_v1 *fullscreen_shell;
+	struct zwp_fullscreen_shell_v1* fullscreen_shell;
 #endif
 
-	struct wl_shm *shm;
-	enum wl_shm_format *shm_formats;
+	struct wl_shm* shm;
+	enum wl_shm_format* shm_formats;
 	uint32_t shm_formats_nb;
 	bool has_rgb565;
 
-	struct wl_data_device_manager *data_device_manager;
-	struct text_cursor_position *text_cursor_position;
-	struct workspace_manager *workspace_manager;
+	struct wl_data_device_manager* data_device_manager;
+	struct text_cursor_position* text_cursor_position;
+	struct workspace_manager* workspace_manager;
 
 	struct wl_list seats;
 
@@ -128,8 +130,9 @@ struct uwac_display {
 };
 
 /** @brief an output on a wayland display */
-struct uwac_output {
-	UwacDisplay *display;
+struct uwac_output
+{
+	UwacDisplay* display;
 
 	bool doneNeeded;
 	bool doneReceived;
@@ -137,40 +140,42 @@ struct uwac_output {
 	UwacSize resolution;
 	int transform;
 	int scale;
-	char *make;
-	char *model;
+	char* make;
+	char* model;
 	uint32_t server_output_id;
-	struct wl_output *output;
+	struct wl_output* output;
 
 	struct wl_list link;
 };
 
 /** @brief a seat attached to a wayland display */
-struct uwac_seat {
-	UwacDisplay *display;
-	char *name;
-	struct wl_seat *seat;
+struct uwac_seat
+{
+	UwacDisplay* display;
+	char* name;
+	struct wl_seat* seat;
 	uint32_t seat_id;
 	uint32_t seat_version;
 	struct wl_data_device* data_device;
 	struct wl_data_source* data_source;
-	struct wl_pointer *pointer;
-	struct wl_surface *pointer_surface;
-	struct wl_cursor_image *pointer_image;
-	struct wl_cursor_theme *cursor_theme;
-	struct wl_cursor *default_cursor;
-	void *pointer_data;
+	struct wl_pointer* pointer;
+	struct wl_surface* pointer_surface;
+	struct wl_cursor_image* pointer_image;
+	struct wl_cursor_theme* cursor_theme;
+	struct wl_cursor* default_cursor;
+	void* pointer_data;
 	size_t pointer_size;
 	int pointer_type;
-	struct wl_keyboard *keyboard;
-	struct wl_touch *touch;
+	struct wl_keyboard* keyboard;
+	struct wl_touch* touch;
 	struct wl_data_offer* offer;
-	struct xkb_context *xkb_context;
-	struct zwp_keyboard_shortcuts_inhibitor_v1 *keyboard_inhibitor;
+	struct xkb_context* xkb_context;
+	struct zwp_keyboard_shortcuts_inhibitor_v1* keyboard_inhibitor;
 
-	struct {
-		struct xkb_keymap *keymap;
-		struct xkb_state *state;
+	struct
+	{
+		struct xkb_keymap* keymap;
+		struct xkb_state* state;
 		xkb_mod_mask_t control_mask;
 		xkb_mod_mask_t alt_mask;
 		xkb_mod_mask_t shift_mask;
@@ -182,11 +187,11 @@ struct uwac_seat {
 
 	struct wl_array pressed_keys;
 
-	UwacWindow *pointer_focus;
+	UwacWindow* pointer_focus;
 
-	UwacWindow *keyboard_focus;
+	UwacWindow* keyboard_focus;
 
-	UwacWindow *touch_focus;
+	UwacWindow* touch_focus;
 	bool touch_frame_started;
 
 	int repeat_timer_fd;
@@ -200,9 +205,9 @@ struct uwac_seat {
 	bool ignore_announcement;
 };
 
-
 /** @brief a buffer used for drawing a surface frame */
-struct uwac_buffer {
+struct uwac_buffer
+{
 	bool used;
 	bool dirty;
 #ifdef HAVE_PIXMAN_REGION
@@ -210,33 +215,33 @@ struct uwac_buffer {
 #else
 	REGION16 damage;
 #endif
-	struct wl_buffer *wayland_buffer;
-	void *data;
+	struct wl_buffer* wayland_buffer;
+	void* data;
 };
 typedef struct uwac_buffer UwacBuffer;
 
-
 /** @brief a window */
-struct uwac_window {
-	UwacDisplay *display;
+struct uwac_window
+{
+	UwacDisplay* display;
 	int width, height, stride;
 	int surfaceStates;
 	enum wl_shm_format format;
 
 	int nbuffers;
-	UwacBuffer *buffers;
+	UwacBuffer* buffers;
 
-	struct wl_region *opaque_region;
-	struct wl_region *input_region;
+	struct wl_region* opaque_region;
+	struct wl_region* input_region;
 	UwacBuffer *drawingBuffer, *pendingBuffer;
-	struct wl_surface *surface;
-	struct wl_shell_surface *shell_surface;
-	struct xdg_surface *xdg_surface;
-	struct xdg_toplevel *xdg_toplevel;
-	struct zxdg_toplevel_decoration_v1 *deco;
-	struct org_kde_kwin_server_decoration *kde_deco;
+	struct wl_surface* surface;
+	struct wl_shell_surface* shell_surface;
+	struct xdg_surface* xdg_surface;
+	struct xdg_toplevel* xdg_toplevel;
+	struct zxdg_toplevel_decoration_v1* deco;
+	struct org_kde_kwin_server_decoration* kde_deco;
 #ifdef BUILD_IVI
-	struct ivi_surface *ivi_surface;
+	struct ivi_surface* ivi_surface;
 #endif
 	struct wl_list link;
 
@@ -245,19 +250,17 @@ struct uwac_window {
 	int pointer_current_cursor;
 };
 
-
 /* in uwa-display.c */
-UwacEvent *UwacDisplayNewEvent(UwacDisplay *d, int type);
-int UwacDisplayWatchFd(UwacDisplay *display, int fd, uint32_t events, UwacTask *task);
-
+UwacEvent* UwacDisplayNewEvent(UwacDisplay* d, int type);
+int UwacDisplayWatchFd(UwacDisplay* display, int fd, uint32_t events, UwacTask* task);
 
 /* in uwac-input.c */
-UwacSeat *UwacSeatNew(UwacDisplay *d, uint32_t id, uint32_t version);
-void UwacSeatDestroy(UwacSeat *s);
+UwacSeat* UwacSeatNew(UwacDisplay* d, uint32_t id, uint32_t version);
+void UwacSeatDestroy(UwacSeat* s);
 
 /* in uwac-output.c */
-UwacOutput *UwacCreateOutput(UwacDisplay *d, uint32_t id, uint32_t version);
-int UwacDestroyOutput(UwacOutput *output);
+UwacOutput* UwacCreateOutput(UwacDisplay* d, uint32_t id, uint32_t version);
+int UwacDestroyOutput(UwacOutput* output);
 
 UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s);
 

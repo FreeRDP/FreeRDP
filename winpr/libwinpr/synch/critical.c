@@ -73,15 +73,15 @@ BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwS
 	lpCriticalSection->SpinCount = 0;
 	lpCriticalSection->RecursionCount = 0;
 	lpCriticalSection->OwningThread = NULL;
-	lpCriticalSection->LockSemaphore = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
+	lpCriticalSection->LockSemaphore = (winpr_sem_t*)malloc(sizeof(winpr_sem_t));
 
 	if (!lpCriticalSection->LockSemaphore)
 		return FALSE;
 
 #if defined(__APPLE__)
 
-	if (semaphore_create(mach_task_self(), lpCriticalSection->LockSemaphore, SYNC_POLICY_FIFO,
-	                     0) != KERN_SUCCESS)
+	if (semaphore_create(mach_task_self(), lpCriticalSection->LockSemaphore, SYNC_POLICY_FIFO, 0) !=
+	    KERN_SUCCESS)
 		goto out_fail;
 
 #else
@@ -127,18 +127,18 @@ DWORD SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dw
 static VOID _WaitForCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 #if defined(__APPLE__)
-	semaphore_wait(*((winpr_sem_t*) lpCriticalSection->LockSemaphore));
+	semaphore_wait(*((winpr_sem_t*)lpCriticalSection->LockSemaphore));
 #else
-	sem_wait((winpr_sem_t*) lpCriticalSection->LockSemaphore);
+	sem_wait((winpr_sem_t*)lpCriticalSection->LockSemaphore);
 #endif
 }
 
 static VOID _UnWaitCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 #if defined __APPLE__
-	semaphore_signal(*((winpr_sem_t*) lpCriticalSection->LockSemaphore));
+	semaphore_signal(*((winpr_sem_t*)lpCriticalSection->LockSemaphore));
 #else
-	sem_post((winpr_sem_t*) lpCriticalSection->LockSemaphore);
+	sem_post((winpr_sem_t*)lpCriticalSection->LockSemaphore);
 #endif
 }
 
@@ -158,7 +158,7 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		if (InterlockedCompareExchange(&lpCriticalSection->LockCount, 0, -1) == -1)
 		{
 			lpCriticalSection->RecursionCount = 1;
-			lpCriticalSection->OwningThread = (HANDLE)(ULONG_PTR) GetCurrentThreadId();
+			lpCriticalSection->OwningThread = (HANDLE)(ULONG_PTR)GetCurrentThreadId();
 			return;
 		}
 
@@ -180,7 +180,7 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 	if (InterlockedIncrement(&lpCriticalSection->LockCount))
 	{
 		/* Section is already locked. Check if it is owned by the current thread. */
-		if (lpCriticalSection->OwningThread == (HANDLE)(ULONG_PTR) GetCurrentThreadId())
+		if (lpCriticalSection->OwningThread == (HANDLE)(ULONG_PTR)GetCurrentThreadId())
 		{
 			/* Recursion. No need to wait. */
 			lpCriticalSection->RecursionCount++;
@@ -193,12 +193,12 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 
 	/* We got the lock. Own it ... */
 	lpCriticalSection->RecursionCount = 1;
-	lpCriticalSection->OwningThread = (HANDLE)(ULONG_PTR) GetCurrentThreadId();
+	lpCriticalSection->OwningThread = (HANDLE)(ULONG_PTR)GetCurrentThreadId();
 }
 
 BOOL TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	HANDLE current_thread = (HANDLE)(ULONG_PTR) GetCurrentThreadId();
+	HANDLE current_thread = (HANDLE)(ULONG_PTR)GetCurrentThreadId();
 
 	/* Atomically acquire the the lock if the section is free. */
 	if (InterlockedCompareExchange(&lpCriticalSection->LockCount, 0, -1) == -1)
@@ -250,9 +250,9 @@ VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 	if (lpCriticalSection->LockSemaphore != NULL)
 	{
 #if defined __APPLE__
-		semaphore_destroy(mach_task_self(), *((winpr_sem_t*) lpCriticalSection->LockSemaphore));
+		semaphore_destroy(mach_task_self(), *((winpr_sem_t*)lpCriticalSection->LockSemaphore));
 #else
-		sem_destroy((winpr_sem_t*) lpCriticalSection->LockSemaphore);
+		sem_destroy((winpr_sem_t*)lpCriticalSection->LockSemaphore);
 #endif
 		free(lpCriticalSection->LockSemaphore);
 		lpCriticalSection->LockSemaphore = NULL;

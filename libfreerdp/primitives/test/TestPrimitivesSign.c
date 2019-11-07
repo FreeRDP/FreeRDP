@@ -65,16 +65,12 @@ static int test_sign16s_speed(void)
 	INT16 ALIGN(src[MAX_TEST_SIZE + 3]), ALIGN(dst[MAX_TEST_SIZE + 3]);
 	winpr_RAND((BYTE*)src, sizeof(src));
 
-	if (!speed_test("sign16s", "aligned", g_Iterations,
-	                (speed_test_fkt)generic->sign_16s,
-	                (speed_test_fkt)optimized->sign_16s, src + 1, dst + 1,
-	                MAX_TEST_SIZE))
+	if (!speed_test("sign16s", "aligned", g_Iterations, (speed_test_fkt)generic->sign_16s,
+	                (speed_test_fkt)optimized->sign_16s, src + 1, dst + 1, MAX_TEST_SIZE))
 		return FALSE;
 
-	if (!speed_test("sign16s", "unaligned", g_Iterations,
-	                (speed_test_fkt)generic->sign_16s,
-	                (speed_test_fkt)optimized->sign_16s, src + 1, dst + 2,
-	                MAX_TEST_SIZE))
+	if (!speed_test("sign16s", "unaligned", g_Iterations, (speed_test_fkt)generic->sign_16s,
+	                (speed_test_fkt)optimized->sign_16s, src + 1, dst + 2, MAX_TEST_SIZE))
 		return FALSE;
 
 	return TRUE;

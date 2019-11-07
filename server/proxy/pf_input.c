@@ -81,8 +81,7 @@ static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 	return TRUE;
 }
 
-static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
-        UINT16 y)
+static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	pServerContext* ps = (pServerContext*)input->context;
 	pClientContext* pc = ps->pdata->pc;

@@ -23,7 +23,7 @@
 
 static BOOL demo_filter_keyboard_event(moduleOperations* module, rdpContext* context, void* param)
 {
-	proxyKeyboardEventInfo* event_data = (proxyKeyboardEventInfo*) param;
+	proxyKeyboardEventInfo* event_data = (proxyKeyboardEventInfo*)param;
 	WINPR_UNUSED(event_data);
 
 	return TRUE;
@@ -31,11 +31,11 @@ static BOOL demo_filter_keyboard_event(moduleOperations* module, rdpContext* con
 
 static BOOL demo_filter_mouse_event(moduleOperations* module, rdpContext* context, void* param)
 {
- 	proxyMouseEventInfo* event_data = (proxyMouseEventInfo*) param;
+	proxyMouseEventInfo* event_data = (proxyMouseEventInfo*)param;
 
 	if (event_data->x % 100 == 0)
 	{
-		printf("filter_demo: mouse x is currently %"PRIu16"\n", event_data->x);
+		printf("filter_demo: mouse x is currently %" PRIu16 "\n", event_data->x);
 	}
 
 	return TRUE;

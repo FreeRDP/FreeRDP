@@ -16,7 +16,7 @@ int TestEnvironmentGetEnvironmentStrings(int argc, char* argv[])
 
 	lpszEnvironmentBlock = GetEnvironmentStrings();
 
-	p = (TCHAR*) lpszEnvironmentBlock;
+	p = (TCHAR*)lpszEnvironmentBlock;
 
 	while (p[0] && p[1])
 	{
@@ -35,4 +35,3 @@ fail:
 
 	return r;
 }
-

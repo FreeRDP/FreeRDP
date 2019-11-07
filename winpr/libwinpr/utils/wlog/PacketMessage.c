@@ -45,7 +45,7 @@ static int gettimeofday(struct timeval* tp, void* tz)
 {
 	struct _timeb timebuffer;
 	_ftime(&timebuffer);
-	tp->tv_sec = (long) timebuffer.time;
+	tp->tv_sec = (long)timebuffer.time;
 	tp->tv_usec = timebuffer.millitm * 1000;
 	return 0;
 }
@@ -53,13 +53,13 @@ static int gettimeofday(struct timeval* tp, void* tz)
 
 static BOOL Pcap_Read_Header(wPcap* pcap, wPcapHeader* header)
 {
-	if (pcap && pcap->fp && fread((void*) header, sizeof(wPcapHeader), 1, pcap->fp) == 1)
+	if (pcap && pcap->fp && fread((void*)header, sizeof(wPcapHeader), 1, pcap->fp) == 1)
 		return TRUE;
 	return FALSE;
 }
 
 /* currently unused code */
-# if 0
+#if 0
 static BOOL Pcap_Read_RecordHeader(wPcap* pcap, wPcapRecordHeader* record)
 {
 	if (pcap && pcap->fp && (fread((void*) record, sizeof(wPcapRecordHeader), 1, pcap->fp) == 1))
@@ -158,17 +158,16 @@ static BOOL Pcap_GetNext_Record(wPcap* pcap, wPcapRecord* record)
 }
 #endif
 
-
 static BOOL Pcap_Write_Header(wPcap* pcap, wPcapHeader* header)
 {
-	if (pcap && pcap->fp && fwrite((void*) header, sizeof(wPcapHeader), 1, pcap->fp) == 1)
+	if (pcap && pcap->fp && fwrite((void*)header, sizeof(wPcapHeader), 1, pcap->fp) == 1)
 		return TRUE;
 	return FALSE;
 }
 
 static BOOL Pcap_Write_RecordHeader(wPcap* pcap, wPcapRecordHeader* record)
 {
-	if (pcap && pcap->fp && fwrite((void *) record, sizeof(wPcapRecordHeader), 1, pcap->fp) == 1)
+	if (pcap && pcap->fp && fwrite((void*)record, sizeof(wPcapRecordHeader), 1, pcap->fp) == 1)
 		return TRUE;
 	return FALSE;
 }
@@ -182,8 +181,7 @@ static BOOL Pcap_Write_RecordContent(wPcap* pcap, wPcapRecord* record)
 
 static BOOL Pcap_Write_Record(wPcap* pcap, wPcapRecord* record)
 {
-	return Pcap_Write_RecordHeader(pcap, &record->header) &&
-		Pcap_Write_RecordContent(pcap, record);
+	return Pcap_Write_RecordHeader(pcap, &record->header) && Pcap_Write_RecordContent(pcap, record);
 }
 
 wPcap* Pcap_Open(char* name, BOOL write)
@@ -193,11 +191,11 @@ wPcap* Pcap_Open(char* name, BOOL write)
 
 	if (!pcap_fp)
 	{
-		WLog_ERR(TAG,"opening pcap file");
+		WLog_ERR(TAG, "opening pcap file");
 		return NULL;
 	}
 
-	pcap = (wPcap*) calloc(1, sizeof(wPcap));
+	pcap = (wPcap*)calloc(1, sizeof(wPcap));
 
 	if (!pcap)
 		goto out_fail;
@@ -294,7 +292,7 @@ static UINT16 IPv4Checksum(BYTE* ipv4, int length)
 
 	while (length > 1)
 	{
-		tmp16 = *((UINT16*) ipv4);
+		tmp16 = *((UINT16*)ipv4);
 		checksum += tmp16;
 		length -= 2;
 		ipv4 += 2;
@@ -331,7 +329,7 @@ static BOOL WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 	Stream_Write_UINT16(s, ipv4->HeaderChecksum);
 	Stream_Write_UINT32_BE(s, ipv4->SourceAddress);
 	Stream_Write_UINT32_BE(s, ipv4->DestinationAddress);
-	ipv4->HeaderChecksum = IPv4Checksum((BYTE*) buffer, 20);
+	ipv4->HeaderChecksum = IPv4Checksum((BYTE*)buffer, 20);
 	Stream_Rewind(s, 10);
 	Stream_Write_UINT16(s, ipv4->HeaderChecksum);
 	Stream_Seek(s, 8);
@@ -436,12 +434,12 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags
 
 	if (flags & WLOG_PACKET_OUTBOUND)
 	{
-		ipv4.SourceAddress = 0xC0A80196; /* 192.168.1.150 */
+		ipv4.SourceAddress = 0xC0A80196;      /* 192.168.1.150 */
 		ipv4.DestinationAddress = 0x4A7D64C8; /* 74.125.100.200 */
 	}
 	else
 	{
-		ipv4.SourceAddress = 0x4A7D64C8; /* 74.125.100.200 */
+		ipv4.SourceAddress = 0x4A7D64C8;      /* 74.125.100.200 */
 		ipv4.DestinationAddress = 0xC0A80196; /* 192.168.1.150 */
 	}
 
@@ -476,10 +474,9 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags
 	record.header.ts_sec = tp.tv_sec;
 	record.header.ts_usec = tp.tv_usec;
 	if (!Pcap_Write_RecordHeader(pcap, &record.header) ||
-		!WLog_PacketMessage_Write_EthernetHeader(pcap, &ethernet) ||
-		!WLog_PacketMessage_Write_IPv4Header(pcap, &ipv4) ||
-		!WLog_PacketMessage_Write_TcpHeader(pcap, &tcp) ||
-		!Pcap_Write_RecordContent(pcap, &record))
+	    !WLog_PacketMessage_Write_EthernetHeader(pcap, &ethernet) ||
+	    !WLog_PacketMessage_Write_IPv4Header(pcap, &ipv4) ||
+	    !WLog_PacketMessage_Write_TcpHeader(pcap, &tcp) || !Pcap_Write_RecordContent(pcap, &record))
 		return FALSE;
 	fflush(pcap->fp);
 	return TRUE;

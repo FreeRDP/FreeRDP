@@ -37,4 +37,3 @@
 void WLog_Appender_Free(wLog* log, wLogAppender* appender);
 
 #endif /* WINPR_WLOG_APPENDER_PRIVATE_H */
- 

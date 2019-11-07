@@ -23,7 +23,4 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-
-
 #endif /* FREERDP_CHANNEL_RAIL_H */
-

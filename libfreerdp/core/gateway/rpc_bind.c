@@ -38,33 +38,30 @@
 
 /* Syntax UUIDs */
 
-const p_uuid_t TSGU_UUID =
-{
-	0x44E265DD, /* time_low */
-	0x7DAF, /* time_mid */
-	0x42CD, /* time_hi_and_version */
-	0x85, /* clock_seq_hi_and_reserved */
-	0x60, /* clock_seq_low */
+const p_uuid_t TSGU_UUID = {
+	0x44E265DD,                            /* time_low */
+	0x7DAF,                                /* time_mid */
+	0x42CD,                                /* time_hi_and_version */
+	0x85,                                  /* clock_seq_hi_and_reserved */
+	0x60,                                  /* clock_seq_low */
 	{ 0x3C, 0xDB, 0x6E, 0x7A, 0x27, 0x29 } /* node[6] */
 };
 
-const p_uuid_t NDR_UUID =
-{
-	0x8A885D04, /* time_low */
-	0x1CEB, /* time_mid */
-	0x11C9, /* time_hi_and_version */
-	0x9F, /* clock_seq_hi_and_reserved */
-	0xE8, /* clock_seq_low */
+const p_uuid_t NDR_UUID = {
+	0x8A885D04,                            /* time_low */
+	0x1CEB,                                /* time_mid */
+	0x11C9,                                /* time_hi_and_version */
+	0x9F,                                  /* clock_seq_hi_and_reserved */
+	0xE8,                                  /* clock_seq_low */
 	{ 0x08, 0x00, 0x2B, 0x10, 0x48, 0x60 } /* node[6] */
 };
 
-const p_uuid_t BTFN_UUID =
-{
-	0x6CB71C2C, /* time_low */
-	0x9812, /* time_mid */
-	0x4540, /* time_hi_and_version */
-	0x03, /* clock_seq_hi_and_reserved */
-	0x00, /* clock_seq_low */
+const p_uuid_t BTFN_UUID = {
+	0x6CB71C2C,                            /* time_low */
+	0x9812,                                /* time_mid */
+	0x4540,                                /* time_hi_and_version */
+	0x03,                                  /* clock_seq_hi_and_reserved */
+	0x00,                                  /* clock_seq_low */
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } /* node[6] */
 };
 
@@ -117,7 +114,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	rpcconn_bind_hdr_t* bind_pdu = NULL;
 	BOOL promptPassword = FALSE;
 	rdpSettings* settings = rpc->settings;
-	freerdp* instance = (freerdp*) settings->instance;
+	freerdp* instance = (freerdp*)settings->instance;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	RpcInChannel* inChannel = connection->DefaultInChannel;
 	const SecBuffer* sbuffer = NULL;
@@ -128,8 +125,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	if (!rpc->ntlm)
 		goto fail;
 
-	if ((!settings->GatewayPassword) || (!settings->GatewayUsername)
-	    || (!strlen(settings->GatewayPassword)) || (!strlen(settings->GatewayUsername)))
+	if ((!settings->GatewayPassword) || (!settings->GatewayUsername) ||
+	    (!strlen(settings->GatewayPassword)) || (!strlen(settings->GatewayUsername)))
 	{
 		promptPassword = TRUE;
 	}
@@ -138,17 +135,20 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	{
 		if (!instance->GatewayAuthenticate)
 		{
-			freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+			freerdp_set_last_error(instance->context,
+			                       FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return 0;
 		}
 		else
 		{
-			BOOL proceed = instance->GatewayAuthenticate(instance,
-			               &settings->GatewayUsername, &settings->GatewayPassword, &settings->GatewayDomain);
+			BOOL proceed =
+			    instance->GatewayAuthenticate(instance, &settings->GatewayUsername,
+			                                  &settings->GatewayPassword, &settings->GatewayDomain);
 
 			if (!proceed)
 			{
-				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+				freerdp_set_last_error(instance->context,
+				                       FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return 0;
 			}
 
@@ -177,7 +177,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	if (!continueNeeded)
 		goto fail;
 
-	bind_pdu = (rpcconn_bind_hdr_t*) calloc(1, sizeof(rpcconn_bind_hdr_t));
+	bind_pdu = (rpcconn_bind_hdr_t*)calloc(1, sizeof(rpcconn_bind_hdr_t));
 
 	if (!bind_pdu)
 		goto fail;
@@ -187,8 +187,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	if (!sbuffer)
 		goto fail;
 
-	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) bind_pdu);
-	bind_pdu->auth_length = (UINT16) sbuffer->cbBuffer;
+	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*)bind_pdu);
+	bind_pdu->auth_length = (UINT16)sbuffer->cbBuffer;
 	bind_pdu->auth_verifier.auth_value = sbuffer->pvBuffer;
 	bind_pdu->ptype = PTYPE_BIND;
 	bind_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_SUPPORT_HEADER_SIGN | PFC_CONC_MPX;
@@ -199,8 +199,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->p_context_elem.n_context_elem = 2;
 	bind_pdu->p_context_elem.reserved = 0;
 	bind_pdu->p_context_elem.reserved2 = 0;
-	bind_pdu->p_context_elem.p_cont_elem = calloc(bind_pdu->p_context_elem.n_context_elem,
-	                                       sizeof(p_cont_elem_t));
+	bind_pdu->p_context_elem.p_cont_elem =
+	    calloc(bind_pdu->p_context_elem.n_context_elem, sizeof(p_cont_elem_t));
 
 	if (!bind_pdu->p_context_elem.p_cont_elem)
 		goto fail;
@@ -239,7 +239,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->auth_verifier.auth_context_id = 0x00000000;
 	offset += (8 + bind_pdu->auth_length);
 	bind_pdu->frag_length = offset;
-	buffer = (BYTE*) malloc(bind_pdu->frag_length);
+	buffer = (BYTE*)malloc(bind_pdu->frag_length);
 
 	if (!buffer)
 		goto fail;
@@ -289,16 +289,18 @@ fail:
 /**
  * Maximum Transmit/Receive Fragment Size Negotiation
  *
- * The client determines, and then sends in the bind PDU, its desired maximum size for transmitting fragments,
- * and its desired maximum receive fragment size. Similarly, the server determines its desired maximum sizes
- * for transmitting and receiving fragments. Transmit and receive sizes may be different to help preserve buffering.
- * When the server receives the client’s values, it sets its operational transmit size to the minimum of the client’s
- * receive size (from the bind PDU) and its own desired transmit size. Then it sets its actual receive size to the
- * minimum of the client’s transmit size (from the bind) and its own desired receive size. The server then returns its
- * operational values in the bind_ack PDU. The client then sets its operational values from the received bind_ack PDU.
- * The received transmit size becomes the client’s receive size, and the received receive size becomes the client’s
- * transmit size. Either party may use receive buffers larger than negotiated — although this will not provide any
- * advantage — but may not transmit larger fragments than negotiated.
+ * The client determines, and then sends in the bind PDU, its desired maximum size for transmitting
+ * fragments, and its desired maximum receive fragment size. Similarly, the server determines its
+ * desired maximum sizes for transmitting and receiving fragments. Transmit and receive sizes may be
+ * different to help preserve buffering. When the server receives the client’s values, it sets its
+ * operational transmit size to the minimum of the client’s receive size (from the bind PDU) and its
+ * own desired transmit size. Then it sets its actual receive size to the minimum of the client’s
+ * transmit size (from the bind) and its own desired receive size. The server then returns its
+ * operational values in the bind_ack PDU. The client then sets its operational values from the
+ * received bind_ack PDU. The received transmit size becomes the client’s receive size, and the
+ * received receive size becomes the client’s transmit size. Either party may use receive buffers
+ * larger than negotiated — although this will not provide any advantage — but may not transmit
+ * larger fragments than negotiated.
  */
 
 /**
@@ -306,7 +308,8 @@ fail:
  * SECURE_BIND_ACK: RPC bind_ack PDU with sec_trailer and auth_token. The PFC_SUPPORT_HEADER_SIGN
  * flag in the PDU header is also set in this example. Auth_token is generated by the server in the
  * previous step. Upon receiving that PDU, the client calls the implementation equivalent of the
- * abstract GSS_Init_sec_context call, which returns an auth_token and continue status in this example.
+ * abstract GSS_Init_sec_context call, which returns an auth_token and continue status in this
+ * example.
  */
 
 int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
@@ -314,7 +317,7 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	BOOL continueNeeded = FALSE;
 	BYTE* auth_data;
 	rpcconn_hdr_t* header;
-	header = (rpcconn_hdr_t*) buffer;
+	header = (rpcconn_hdr_t*)buffer;
 	WLog_DBG(TAG, "Receiving BindAck PDU");
 
 	if (!rpc || !rpc->ntlm)
@@ -333,7 +336,7 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	if (continueNeeded)
 		return -1;
 
-	return (int) length;
+	return (int)length;
 }
 
 /**
@@ -355,7 +358,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	RpcInChannel* inChannel = connection->DefaultInChannel;
 	WLog_DBG(TAG, "Sending RpcAuth3 PDU");
-	auth_3_pdu = (rpcconn_rpc_auth_3_hdr_t*) calloc(1, sizeof(rpcconn_rpc_auth_3_hdr_t));
+	auth_3_pdu = (rpcconn_rpc_auth_3_hdr_t*)calloc(1, sizeof(rpcconn_rpc_auth_3_hdr_t));
 
 	if (!auth_3_pdu)
 		return -1;
@@ -368,8 +371,8 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 		return -1;
 	}
 
-	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) auth_3_pdu);
-	auth_3_pdu->auth_length = (UINT16) sbuffer->cbBuffer;
+	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*)auth_3_pdu);
+	auth_3_pdu->auth_length = (UINT16)sbuffer->cbBuffer;
 	auth_3_pdu->auth_verifier.auth_value = sbuffer->pvBuffer;
 	auth_3_pdu->ptype = PTYPE_RPC_AUTH_3;
 	auth_3_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;
@@ -384,7 +387,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	auth_3_pdu->auth_verifier.auth_context_id = 0x00000000;
 	offset += (8 + auth_3_pdu->auth_length);
 	auth_3_pdu->frag_length = offset;
-	buffer = (BYTE*) malloc(auth_3_pdu->frag_length);
+	buffer = (BYTE*)malloc(auth_3_pdu->frag_length);
 
 	if (!buffer)
 	{

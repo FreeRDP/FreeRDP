@@ -19,11 +19,11 @@ int TestPathIsUNCEx(int argc, char* argv[])
 
 	_tcscpy(Path, testPathUNC);
 
-	status = PathIsUNCEx(Path, (LPCTSTR*) &Server);
+	status = PathIsUNCEx(Path, (LPCTSTR*)&Server);
 
 	if (!status)
 	{
-		_tprintf(_T("PathIsUNCEx status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathIsUNCEx status: 0x%08") _T(PRIX32) _T("\n"), status);
 		return -1;
 	}
 
@@ -37,14 +37,13 @@ int TestPathIsUNCEx(int argc, char* argv[])
 
 	_tcscpy(Path, testPathNotUNC);
 
-	status = PathIsUNCEx(Path, (LPCTSTR*) &Server);
+	status = PathIsUNCEx(Path, (LPCTSTR*)&Server);
 
 	if (status)
 	{
-		_tprintf(_T("PathIsUNCEx status: 0x%08")_T(PRIX32)_T("\n"), status);
+		_tprintf(_T("PathIsUNCEx status: 0x%08") _T(PRIX32) _T("\n"), status);
 		return -1;
 	}
 
 	return 0;
 }
-

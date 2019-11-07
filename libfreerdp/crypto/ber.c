@@ -271,8 +271,7 @@ BOOL ber_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 {
 	size_t length;
 
-	if (!ber_read_universal_tag(s, BER_TAG_ENUMERATED, FALSE) ||
-	    !ber_read_length(s, &length))
+	if (!ber_read_universal_tag(s, BER_TAG_ENUMERATED, FALSE) || !ber_read_length(s, &length))
 		return FALSE;
 
 	if (length != 1 || Stream_GetRemainingLength(s) < 1)
@@ -296,8 +295,7 @@ void ber_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
 
 BOOL ber_read_bit_string(wStream* s, size_t* length, BYTE* padding)
 {
-	if (!ber_read_universal_tag(s, BER_TAG_BIT_STRING, FALSE) ||
-	    !ber_read_length(s, length))
+	if (!ber_read_universal_tag(s, BER_TAG_BIT_STRING, FALSE) || !ber_read_length(s, length))
 		return FALSE;
 
 	if (Stream_GetRemainingLength(s) < 1)
@@ -326,9 +324,7 @@ size_t ber_write_octet_string(wStream* s, const BYTE* oct_str, size_t length)
 
 BOOL ber_read_octet_string_tag(wStream* s, size_t* length)
 {
-	return
-	    ber_read_universal_tag(s, BER_TAG_OCTET_STRING, FALSE) &&
-	    ber_read_length(s, length);
+	return ber_read_universal_tag(s, BER_TAG_OCTET_STRING, FALSE) && ber_read_length(s, length);
 }
 
 size_t ber_write_octet_string_tag(wStream* s, size_t length)
@@ -354,8 +350,7 @@ BOOL ber_read_BOOL(wStream* s, BOOL* value)
 	size_t length;
 	BYTE v;
 
-	if (!ber_read_universal_tag(s, BER_TAG_BOOLEAN, FALSE) ||
-	    !ber_read_length(s, &length))
+	if (!ber_read_universal_tag(s, BER_TAG_BOOLEAN, FALSE) || !ber_read_length(s, &length))
 		return FALSE;
 
 	if (length != 1 || Stream_GetRemainingLength(s) < 1)
@@ -383,8 +378,7 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 {
 	size_t length;
 
-	if (!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) ||
-	    !ber_read_length(s, &length) ||
+	if (!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) || !ber_read_length(s, &length) ||
 	    (Stream_GetRemainingLength(s) < length))
 		return FALSE;
 
@@ -415,12 +409,12 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 	}
 	else if (length == 8)
 	{
-		WLog_ERR(TAG,  "should implement reading an 8 bytes integer");
+		WLog_ERR(TAG, "should implement reading an 8 bytes integer");
 		return FALSE;
 	}
 	else
 	{
-		WLog_ERR(TAG,  "should implement reading an integer with length=%d", length);
+		WLog_ERR(TAG, "should implement reading an integer with length=%d", length);
 		return FALSE;
 	}
 
@@ -435,21 +429,21 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 
 size_t ber_write_integer(wStream* s, UINT32 value)
 {
-	if (value <  0x80)
+	if (value < 0x80)
 	{
 		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
 		ber_write_length(s, 1);
 		Stream_Write_UINT8(s, value);
 		return 3;
 	}
-	else if (value <  0x8000)
+	else if (value < 0x8000)
 	{
 		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
 		ber_write_length(s, 2);
 		Stream_Write_UINT16_BE(s, value);
 		return 4;
 	}
-	else if (value <  0x800000)
+	else if (value < 0x800000)
 	{
 		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
 		ber_write_length(s, 3);
@@ -457,7 +451,7 @@ size_t ber_write_integer(wStream* s, UINT32 value)
 		Stream_Write_UINT16_BE(s, (value & 0xFFFF));
 		return 5;
 	}
-	else if (value <  0x80000000)
+	else if (value < 0x80000000)
 	{
 		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
 		ber_write_length(s, 4);
@@ -505,7 +499,5 @@ size_t ber_sizeof_integer(UINT32 value)
 
 BOOL ber_read_integer_length(wStream* s, size_t* length)
 {
-	return
-	    ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) &&
-	    ber_read_length(s, length);
+	return ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) && ber_read_length(s, length);
 }

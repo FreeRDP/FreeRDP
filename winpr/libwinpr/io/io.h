@@ -37,4 +37,3 @@ struct _DEVICE_OBJECT_EX
 #endif
 
 #endif /* WINPR_IO_PRIVATE_H */
-

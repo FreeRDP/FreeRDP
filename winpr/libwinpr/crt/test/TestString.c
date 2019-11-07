@@ -3,35 +3,29 @@
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 
-static WCHAR testStringW[] =
-{
-	'T', 'h', 'e', ' ', 'q', 'u', 'i', 'c', 'k', ' ', 'b', 'r', 'o', 'w', 'n', ' ',
-	'f', 'o', 'x', ' ', 'j', 'u', 'm', 'p', 's', ' ', 'o', 'v', 'e', 'r', ' ',
-	't', 'h', 'e', ' ', 'l', 'a', 'z', 'y', ' ', 'd', 'o', 'g', '\0'
-};
+static WCHAR testStringW[] = { 'T', 'h', 'e', ' ', 'q', 'u', 'i', 'c', 'k', ' ', 'b',
+	                           'r', 'o', 'w', 'n', ' ', 'f', 'o', 'x', ' ', 'j', 'u',
+	                           'm', 'p', 's', ' ', 'o', 'v', 'e', 'r', ' ', 't', 'h',
+	                           'e', ' ', 'l', 'a', 'z', 'y', ' ', 'd', 'o', 'g', '\0' };
 
-#define testStringW_Length	((sizeof(testStringW) / sizeof(WCHAR)) - 1)
+#define testStringW_Length ((sizeof(testStringW) / sizeof(WCHAR)) - 1)
 
-static WCHAR testToken1W[] = { 	'q', 'u', 'i', 'c', 'k', '\0' };
-static WCHAR testToken2W[] = { 	'b', 'r', 'o', 'w', 'n', '\0' };
+static WCHAR testToken1W[] = { 'q', 'u', 'i', 'c', 'k', '\0' };
+static WCHAR testToken2W[] = { 'b', 'r', 'o', 'w', 'n', '\0' };
 static WCHAR testToken3W[] = { 'f', 'o', 'x', '\0' };
 
-#define testToken1W_Length	((sizeof(testToken1W) / sizeof(WCHAR)) - 1)
-#define testToken2W_Length	((sizeof(testToken2W) / sizeof(WCHAR)) - 1)
-#define testToken3W_Length	((sizeof(testToken3W) / sizeof(WCHAR)) - 1)
+#define testToken1W_Length ((sizeof(testToken1W) / sizeof(WCHAR)) - 1)
+#define testToken2W_Length ((sizeof(testToken2W) / sizeof(WCHAR)) - 1)
+#define testToken3W_Length ((sizeof(testToken3W) / sizeof(WCHAR)) - 1)
 
-static WCHAR testTokensW[] =
-{
-	'q', 'u', 'i', 'c', 'k', '\r', '\n',
-	'b', 'r', 'o', 'w', 'n', '\r', '\n',
-	'f', 'o', 'x', '\r', '\n', '\0'
-};
+static WCHAR testTokensW[] = { 'q', 'u', 'i',  'c',  'k', '\r', '\n', 'b',  'r',  'o',
+	                           'w', 'n', '\r', '\n', 'f', 'o',  'x',  '\r', '\n', '\0' };
 
-#define testTokensW_Length	((sizeof(testTokensW) / sizeof(WCHAR)) - 1)
+#define testTokensW_Length ((sizeof(testTokensW) / sizeof(WCHAR)) - 1)
 
 static WCHAR testDelimiter[] = { '\r', '\n', '\0' };
 
-#define testDelimiter_Length	((sizeof(testDelimiter) / sizeof(WCHAR)) - 1)
+#define testDelimiter_Length ((sizeof(testDelimiter) / sizeof(WCHAR)) - 1)
 
 int TestString(int argc, char* argv[])
 {
@@ -56,7 +50,8 @@ int TestString(int argc, char* argv[])
 
 	if (length != testStringW_Length)
 	{
-		printf("_wcslen error: length mismatch: Actual: %"PRIuz", Expected: %"PRIuz"\n", length, testStringW_Length);
+		printf("_wcslen error: length mismatch: Actual: %" PRIuz ", Expected: %" PRIuz "\n", length,
+		       testStringW_Length);
 		return -1;
 	}
 
@@ -67,7 +62,7 @@ int TestString(int argc, char* argv[])
 
 	if (pos != 11)
 	{
-		printf("_wcschr error: position mismatch: Actual: %"PRIuz", Expected: 11\n", pos);
+		printf("_wcschr error: position mismatch: Actual: %" PRIuz ", Expected: 11\n", pos);
 		return -1;
 	}
 
@@ -76,7 +71,7 @@ int TestString(int argc, char* argv[])
 
 	if (pos != 29)
 	{
-		printf("_wcschr error: position mismatch: Actual: %"PRIuz", Expected: 29\n", pos);
+		printf("_wcschr error: position mismatch: Actual: %" PRIuz ", Expected: 29\n", pos);
 		return -1;
 	}
 
@@ -84,7 +79,7 @@ int TestString(int argc, char* argv[])
 
 	if (p != NULL)
 	{
-		printf("_wcschr error: return value mismatch: Actual: %p, Expected: NULL\n", (void*) p);
+		printf("_wcschr error: return value mismatch: Actual: %p, Expected: NULL\n", (void*)p);
 		return -1;
 	}
 
@@ -124,4 +119,3 @@ int TestString(int argc, char* argv[])
 
 	return 0;
 }
-

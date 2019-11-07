@@ -25,12 +25,14 @@
 #include <winpr/synch.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y, int width, int height);
-void shadow_surface_free(rdpShadowSurface* surface);
-BOOL shadow_surface_resize(rdpShadowSurface *surface, int x, int y, int width, int height);
+	rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y, int width,
+	                                     int height);
+	void shadow_surface_free(rdpShadowSurface* surface);
+	BOOL shadow_surface_resize(rdpShadowSurface* surface, int x, int y, int width, int height);
 
 #ifdef __cplusplus
 }

@@ -26,8 +26,8 @@
 
 /* RDP_VIDEO_FRAME_EVENT.frame_pixfmt */
 /* http://www.fourcc.org/yuv.php */
-#define RDP_PIXFMT_I420		0x30323449
-#define RDP_PIXFMT_YV12		0x32315659
+#define RDP_PIXFMT_I420 0x30323449
+#define RDP_PIXFMT_YV12 0x32315659
 
 struct _TSMF_VIDEO_FRAME_EVENT
 {

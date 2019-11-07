@@ -24,13 +24,15 @@
 #include <freerdp/types.h>
 
 #ifdef __cplusplus
- extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API BOOL jpeg_decompress(BYTE* input, BYTE* output, int width, int height, int size, int bpp);
+	FREERDP_API BOOL jpeg_decompress(BYTE* input, BYTE* output, int width, int height, int size,
+	                                 int bpp);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CODEC_JPEG_H */

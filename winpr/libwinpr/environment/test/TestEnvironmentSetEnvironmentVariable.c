@@ -23,7 +23,7 @@ int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 		return -1;
 	}
 
-	lpBuffer = (LPSTR) malloc(nSize);
+	lpBuffer = (LPSTR)malloc(nSize);
 
 	if (!lpBuffer)
 		return -1;
@@ -66,4 +66,3 @@ fail:
 	free(lpBuffer);
 	return rc;
 }
-

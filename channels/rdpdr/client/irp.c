@@ -63,7 +63,7 @@ static UINT irp_complete(IRP* irp)
 	rdpdrPlugin* rdpdr;
 	UINT error;
 
-	rdpdr = (rdpdrPlugin*) irp->devman->plugin;
+	rdpdr = (rdpdrPlugin*)irp->devman->plugin;
 
 	pos = Stream_GetPosition(irp->output);
 	Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4);
@@ -102,7 +102,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 		return NULL;
 	};
 
-	irp = (IRP*) _aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
+	irp = (IRP*)_aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
 
 	if (!irp)
 	{
@@ -112,15 +112,14 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 		return NULL;
 	}
 
-
 	ZeroMemory(irp, sizeof(IRP));
 
 	irp->input = s;
 	irp->device = device;
 	irp->devman = devman;
 
-	Stream_Read_UINT32(s, irp->FileId); /* FileId (4 bytes) */
-	Stream_Read_UINT32(s, irp->CompletionId); /* CompletionId (4 bytes) */
+	Stream_Read_UINT32(s, irp->FileId);        /* FileId (4 bytes) */
+	Stream_Read_UINT32(s, irp->CompletionId);  /* CompletionId (4 bytes) */
 	Stream_Read_UINT32(s, irp->MajorFunction); /* MajorFunction (4 bytes) */
 	Stream_Read_UINT32(s, irp->MinorFunction); /* MinorFunction (4 bytes) */
 
@@ -133,11 +132,11 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 			*error = CHANNEL_RC_NO_MEMORY;
 		return NULL;
 	}
-	Stream_Write_UINT16(irp->output, RDPDR_CTYP_CORE); /* Component (2 bytes) */
+	Stream_Write_UINT16(irp->output, RDPDR_CTYP_CORE);                /* Component (2 bytes) */
 	Stream_Write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION); /* PacketId (2 bytes) */
-	Stream_Write_UINT32(irp->output, DeviceId); /* DeviceId (4 bytes) */
-	Stream_Write_UINT32(irp->output, irp->CompletionId); /* CompletionId (4 bytes) */
-	Stream_Write_UINT32(irp->output, 0); /* IoStatus (4 bytes) */
+	Stream_Write_UINT32(irp->output, DeviceId);                       /* DeviceId (4 bytes) */
+	Stream_Write_UINT32(irp->output, irp->CompletionId);              /* CompletionId (4 bytes) */
+	Stream_Write_UINT32(irp->output, 0);                              /* IoStatus (4 bytes) */
 
 	irp->Complete = irp_complete;
 	irp->Discard = irp_free;

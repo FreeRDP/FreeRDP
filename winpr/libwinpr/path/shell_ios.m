@@ -26,32 +26,31 @@
 
 #include "shell_ios.h"
 
-NSString* ios_get_directory_for_search_path(NSString* searchPath)
+NSString *ios_get_directory_for_search_path(NSString *searchPath)
 {
-	return [NSSearchPathForDirectoriesInDomains(searchPath,
-										 NSUserDomainMask, YES) lastObject];
+	return [NSSearchPathForDirectoriesInDomains(searchPath, NSUserDomainMask, YES) lastObject];
 }
 
-char* ios_get_home(void)
+char *ios_get_home(void)
 {
-	NSString* path = ios_get_directory_for_search_path(NSDocumentDirectory);
+	NSString *path = ios_get_directory_for_search_path(NSDocumentDirectory);
 	return strdup([path UTF8String]);
 }
 
-char* ios_get_temp(void)
+char *ios_get_temp(void)
 {
-	NSString* tmp_path = NSTemporaryDirectory();
+	NSString *tmp_path = NSTemporaryDirectory();
 	return strdup([tmp_path UTF8String]);
 }
 
-char* ios_get_data(void)
+char *ios_get_data(void)
 {
-	NSString* path = ios_get_directory_for_search_path(NSApplicationSupportDirectory);
+	NSString *path = ios_get_directory_for_search_path(NSApplicationSupportDirectory);
 	return strdup([path UTF8String]);
 }
 
-char* ios_get_cache(void)
+char *ios_get_cache(void)
 {
-	NSString* path = ios_get_directory_for_search_path(NSCachesDirectory);
+	NSString *path = ios_get_directory_for_search_path(NSCachesDirectory);
 	return strdup([path UTF8String]);
 }

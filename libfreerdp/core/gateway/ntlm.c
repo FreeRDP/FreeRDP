@@ -64,12 +64,12 @@ static ULONG cast_from_size_(size_t size, const char* fkt, const char* file, int
 {
 	if (size > ULONG_MAX)
 	{
-		WLog_ERR(TAG, "[%s %s:%d] Size %"PRIdz" is larger than INT_MAX %lu", fkt, file, line, size,
-		         ULONG_MAX);
+		WLog_ERR(TAG, "[%s %s:%d] Size %" PRIdz " is larger than INT_MAX %lu", fkt, file, line,
+		         size, ULONG_MAX);
 		return 0;
 	}
 
-	return (ULONG) size;
+	return (ULONG)size;
 }
 
 #define cast_from_size(size) cast_from_size_(size, __FUNCTION__, __FILE__, __LINE__)
@@ -90,19 +90,19 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, LPCTSTR user, LPCTSTR domain, LP
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [0x%08"PRIX32"]",
+		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [0x%08" PRIX32 "]",
 		         GetSecurityStatusString(status), status);
 		return FALSE;
 	}
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
-	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_SSP_NAME,
-	         SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL,
-	         &ntlm->credentials, &ntlm->expiration);
+	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_SSP_NAME, SECPKG_CRED_OUTBOUND, NULL,
+	                                               &ntlm->identity, NULL, NULL, &ntlm->credentials,
+	                                               &ntlm->expiration);
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [0x%08"PRIX32"]",
+		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [0x%08" PRIX32 "]",
 		         GetSecurityStatusString(status), status);
 		return FALSE;
 	}
@@ -122,11 +122,11 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, LPCTSTR user, LPCTSTR domain, LP
 	else
 	{
 		/**
-		* flags for RPC authentication:
-		* RPC_C_AUTHN_LEVEL_PKT_INTEGRITY:
-		* ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH |
-		* ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT
-		*/
+		 * flags for RPC authentication:
+		 * RPC_C_AUTHN_LEVEL_PKT_INTEGRITY:
+		 * ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH |
+		 * ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT
+		 */
 		ntlm->fContextReq |= ISC_REQ_USE_DCE_STYLE;
 		ntlm->fContextReq |= ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH;
 		ntlm->fContextReq |= ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT;
@@ -141,7 +141,7 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, LPCTSTR hostname)
 	DWORD SpnLength = 0;
 	LPTSTR hostnameX = NULL;
 #ifdef UNICODE
-	ConvertToUnicode(CP_UTF8, 0, hostname, -1, (LPWSTR*) &hostnameX, 0);
+	ConvertToUnicode(CP_UTF8, 0, hostname, -1, (LPWSTR*)&hostnameX, 0);
 #else
 	hostnameX = _strdup(hostname);
 #endif
@@ -151,7 +151,7 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, LPCTSTR hostname)
 
 	if (!ServiceClass)
 	{
-		ntlm->ServicePrincipalName = (LPTSTR) _tcsdup(hostnameX);
+		ntlm->ServicePrincipalName = (LPTSTR)_tcsdup(hostnameX);
 		free(hostnameX);
 
 		if (!ntlm->ServicePrincipalName)
@@ -160,16 +160,17 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, LPCTSTR hostname)
 		return TRUE;
 	}
 
-	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL) != ERROR_BUFFER_OVERFLOW)
+	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL) !=
+	    ERROR_BUFFER_OVERFLOW)
 		goto error;
 
-	ntlm->ServicePrincipalName = (LPTSTR) calloc(SpnLength, sizeof(TCHAR));
+	ntlm->ServicePrincipalName = (LPTSTR)calloc(SpnLength, sizeof(TCHAR));
 
 	if (!ntlm->ServicePrincipalName)
 		goto error;
 
-	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength,
-	              ntlm->ServicePrincipalName) != ERROR_SUCCESS)
+	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName) !=
+	    ERROR_SUCCESS)
 		goto error;
 
 	status = TRUE;
@@ -254,18 +255,16 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm, BOOL* pbContinueNeeded)
 			ntlm->inputBufferDesc.cBuffers++;
 			ntlm->inputBuffer[1].BufferType = SECBUFFER_CHANNEL_BINDINGS;
 			ntlm->inputBuffer[1].cbBuffer = ntlm->Bindings->BindingsLength;
-			ntlm->inputBuffer[1].pvBuffer = (void*) ntlm->Bindings->Bindings;
+			ntlm->inputBuffer[1].pvBuffer = (void*)ntlm->Bindings->Bindings;
 		}
 	}
 
-	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,
-	         (ntlm->haveContext) ? &ntlm->context : NULL,
-	         (ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL,
-	         ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
-	         (ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL,
-	         0, &ntlm->context, &ntlm->outputBufferDesc,
-	         &ntlm->pfContextAttr, &ntlm->expiration);
-	WLog_VRB(TAG, "InitializeSecurityContext status %s [0x%08"PRIX32"]",
+	status = ntlm->table->InitializeSecurityContext(
+	    &ntlm->credentials, (ntlm->haveContext) ? &ntlm->context : NULL,
+	    (ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL, ntlm->fContextReq, 0,
+	    SECURITY_NATIVE_DREP, (ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL, 0,
+	    &ntlm->context, &ntlm->outputBufferDesc, &ntlm->pfContextAttr, &ntlm->expiration);
+	WLog_VRB(TAG, "InitializeSecurityContext status %s [0x%08" PRIX32 "]",
 	         GetSecurityStatusString(status), status);
 
 	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) ||
@@ -278,18 +277,18 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm, BOOL* pbContinueNeeded)
 
 			if (cStatus != SEC_E_OK)
 			{
-				WLog_WARN(TAG, "CompleteAuthToken status  %s [0x%08"PRIX32"]",
+				WLog_WARN(TAG, "CompleteAuthToken status  %s [0x%08" PRIX32 "]",
 				          GetSecurityStatusString(cStatus), cStatus);
 				return FALSE;
 			}
 		}
 
 		status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES,
-		         &ntlm->ContextSizes);
+		                                             &ntlm->ContextSizes);
 
 		if (status != SEC_E_OK)
 		{
-			WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08"PRIX32"]",
+			WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08" PRIX32 "]",
 			         GetSecurityStatusString(status), status);
 			return FALSE;
 		}
@@ -333,7 +332,7 @@ static void ntlm_client_uninit(rdpNtlm* ntlm)
 
 		if (status != SEC_E_OK)
 		{
-			WLog_WARN(TAG, "FreeCredentialsHandle status %s [0x%08"PRIX32"]",
+			WLog_WARN(TAG, "FreeCredentialsHandle status %s [0x%08" PRIX32 "]",
 			          GetSecurityStatusString(status), status);
 		}
 
@@ -341,7 +340,7 @@ static void ntlm_client_uninit(rdpNtlm* ntlm)
 
 		if (status != SEC_E_OK)
 		{
-			WLog_WARN(TAG, "FreeContextBuffer status %s [0x%08"PRIX32"]",
+			WLog_WARN(TAG, "FreeContextBuffer status %s [0x%08" PRIX32 "]",
 			          GetSecurityStatusString(status), status);
 		}
 
@@ -349,7 +348,7 @@ static void ntlm_client_uninit(rdpNtlm* ntlm)
 
 		if (status != SEC_E_OK)
 		{
-			WLog_WARN(TAG, "DeleteSecurityContext status %s [0x%08"PRIX32"]",
+			WLog_WARN(TAG, "DeleteSecurityContext status %s [0x%08" PRIX32 "]",
 			          GetSecurityStatusString(status), status);
 		}
 
@@ -360,7 +359,7 @@ static void ntlm_client_uninit(rdpNtlm* ntlm)
 rdpNtlm* ntlm_new(void)
 {
 	rdpNtlm* ntlm;
-	ntlm = (rdpNtlm*) calloc(1, sizeof(rdpNtlm));
+	ntlm = (rdpNtlm*)calloc(1, sizeof(rdpNtlm));
 	return ntlm;
 }
 
@@ -386,7 +385,8 @@ SSIZE_T ntlm_client_get_context_max_size(rdpNtlm* ntlm)
 
 	if (ntlm->ContextSizes.cbMaxSignature > UINT16_MAX)
 	{
-		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES ContextSizes.cbMaxSignature > 0xFFFF");
+		WLog_ERR(TAG,
+		         "QueryContextAttributes SECPKG_ATTR_SIZES ContextSizes.cbMaxSignature > 0xFFFF");
 		return -1;
 	}
 
@@ -400,12 +400,12 @@ SSIZE_T ntlm_client_query_auth_size(rdpNtlm* ntlm)
 	if (!ntlm || !ntlm->table || !ntlm->table->QueryContextAttributes)
 		return -1;
 
-	status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES,
-	         &ntlm->ContextSizes);
+	status =
+	    ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes);
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08"PRIX32"]",
+		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08" PRIX32 "]",
 		         GetSecurityStatusString(status), status);
 		return -1;
 	}
@@ -425,7 +425,7 @@ BOOL ntlm_client_encrypt(rdpNtlm* ntlm, ULONG fQOP, SecBufferDesc* Message, size
 
 	if (encrypt_status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "EncryptMessage status %s [0x%08"PRIX32"]",
+		WLog_ERR(TAG, "EncryptMessage status %s [0x%08" PRIX32 "]",
 		         GetSecurityStatusString(encrypt_status), encrypt_status);
 		return FALSE;
 	}

@@ -53,20 +53,20 @@ struct rdtk_font
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-int rdtk_font_text_draw_size(rdtkFont* font, int* width, int* height, const char* text);
+	int rdtk_font_text_draw_size(rdtkFont* font, int* width, int* height, const char* text);
 
-int rdtk_font_engine_init(rdtkEngine* engine);
-int rdtk_font_engine_uninit(rdtkEngine* engine);
+	int rdtk_font_engine_init(rdtkEngine* engine);
+	int rdtk_font_engine_uninit(rdtkEngine* engine);
 
-rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file);
-void rdtk_font_free(rdtkFont* font);
+	rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file);
+	void rdtk_font_free(rdtkFont* font);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* RDTK_FONT_PRIVATE_H */
-

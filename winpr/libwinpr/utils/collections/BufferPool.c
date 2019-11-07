@@ -40,22 +40,25 @@ static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 	{
 		if (pool->aSize + count > pool->aCapacity)
 		{
-			wBufferPoolItem *newArray;
+			wBufferPoolItem* newArray;
 			int newCapacity = pool->aCapacity * 2;
 
-			newArray = (wBufferPoolItem*) realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
+			newArray =
+			    (wBufferPoolItem*)realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
 			if (!newArray)
 				return FALSE;
 			pool->aArray = newArray;
 			pool->aCapacity = newCapacity;
 		}
 
-		MoveMemory(&pool->aArray[index + count], &pool->aArray[index], (pool->aSize - index) * sizeof(wBufferPoolItem));
+		MoveMemory(&pool->aArray[index + count], &pool->aArray[index],
+		           (pool->aSize - index) * sizeof(wBufferPoolItem));
 		pool->aSize += count;
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&pool->aArray[index], &pool->aArray[index - count], (pool->aSize - index) * sizeof(wBufferPoolItem));
+		MoveMemory(&pool->aArray[index], &pool->aArray[index - count],
+		           (pool->aSize - index) * sizeof(wBufferPoolItem));
 		pool->aSize += count;
 	}
 	return TRUE;
@@ -68,19 +71,22 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
 		if (pool->uSize + count > pool->uCapacity)
 		{
 			int newUCapacity = pool->uCapacity * 2;
-			wBufferPoolItem *newUArray = (wBufferPoolItem *)realloc(pool->uArray, sizeof(wBufferPoolItem) *newUCapacity);
+			wBufferPoolItem* newUArray =
+			    (wBufferPoolItem*)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
 			if (!newUArray)
 				return FALSE;
 			pool->uCapacity = newUCapacity;
 			pool->uArray = newUArray;
 		}
 
-		MoveMemory(&pool->uArray[index + count], &pool->uArray[index], (pool->uSize - index) * sizeof(wBufferPoolItem));
+		MoveMemory(&pool->uArray[index + count], &pool->uArray[index],
+		           (pool->uSize - index) * sizeof(wBufferPoolItem));
 		pool->uSize += count;
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&pool->uArray[index], &pool->uArray[index - count], (pool->uSize - index) * sizeof(wBufferPoolItem));
+		MoveMemory(&pool->uArray[index], &pool->uArray[index - count],
+		           (pool->uSize - index) * sizeof(wBufferPoolItem));
 		pool->uSize += count;
 	}
 	return TRUE;
@@ -241,7 +247,7 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 
 			if (maxSize < size)
 			{
-				void *newBuffer;
+				void* newBuffer;
 				if (pool->alignment)
 					newBuffer = _aligned_realloc(buffer, size, pool->alignment);
 				else
@@ -263,7 +269,8 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 		if (pool->uSize + 1 > pool->uCapacity)
 		{
 			int newUCapacity = pool->uCapacity * 2;
-			wBufferPoolItem *newUArray = (wBufferPoolItem *)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
+			wBufferPoolItem* newUArray =
+			    (wBufferPoolItem*)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
 			if (!newUArray)
 				goto out_error;
 
@@ -312,7 +319,7 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 		if ((pool->size + 1) >= pool->capacity)
 		{
 			int newCapacity = pool->capacity * 2;
-			void **newArray = (void **)realloc(pool->array, sizeof(void*) * newCapacity);
+			void** newArray = (void**)realloc(pool->array, sizeof(void*) * newCapacity);
 			if (!newArray)
 				goto out_error;
 
@@ -347,7 +354,8 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 			if ((pool->aSize + 1) >= pool->aCapacity)
 			{
 				int newCapacity = pool->aCapacity * 2;
-				wBufferPoolItem *newArray = (wBufferPoolItem*) realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
+				wBufferPoolItem* newArray =
+				    (wBufferPoolItem*)realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
 				if (!newArray)
 					goto out_error;
 
@@ -431,7 +439,7 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 {
 	wBufferPool* pool = NULL;
 
-	pool = (wBufferPool*) malloc(sizeof(wBufferPool));
+	pool = (wBufferPool*)malloc(sizeof(wBufferPool));
 
 	if (pool)
 	{
@@ -452,7 +460,7 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 
 			pool->size = 0;
 			pool->capacity = 32;
-			pool->array = (void**) calloc(pool->capacity, sizeof(void*));
+			pool->array = (void**)calloc(pool->capacity, sizeof(void*));
 			if (!pool->array)
 				goto out_error;
 		}
@@ -462,13 +470,13 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 
 			pool->aSize = 0;
 			pool->aCapacity = 32;
-			pool->aArray = (wBufferPoolItem*) calloc(pool->aCapacity, sizeof(wBufferPoolItem));
+			pool->aArray = (wBufferPoolItem*)calloc(pool->aCapacity, sizeof(wBufferPoolItem));
 			if (!pool->aArray)
 				goto out_error;
 
 			pool->uSize = 0;
 			pool->uCapacity = 32;
-			pool->uArray = (wBufferPoolItem*) calloc(pool->uCapacity, sizeof(wBufferPoolItem));
+			pool->uArray = (wBufferPoolItem*)calloc(pool->uCapacity, sizeof(wBufferPoolItem));
 			if (!pool->uArray)
 			{
 				free(pool->aArray);

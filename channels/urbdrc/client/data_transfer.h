@@ -26,10 +26,8 @@
 #define DEVICE_CTX(dev) ((dev)->ctx)
 #define HANDLE_CTX(handle) (DEVICE_CTX((handle)->dev))
 #define TRANSFER_CTX(transfer) (HANDLE_CTX((transfer)->dev_handle))
-#define ITRANSFER_CTX(transfer) \
-	(TRANSFER_CTX(__USBI_TRANSFER_TO_LIBUSB_TRANSFER(transfer)))
+#define ITRANSFER_CTX(transfer) (TRANSFER_CTX(__USBI_TRANSFER_TO_LIBUSB_TRANSFER(transfer)))
 
-void *urbdrc_process_udev_data_transfer(void* arg);
+void* urbdrc_process_udev_data_transfer(void* arg);
 
 #endif /* FREERDP_CHANNEL_URBDRC_CLIENT_DATA_TRANSFER_H */
-

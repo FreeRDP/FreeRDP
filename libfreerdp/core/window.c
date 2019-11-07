@@ -53,7 +53,7 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 		return TRUE;
 	}
 
-	new_str = (BYTE*) realloc(unicode_string->string, new_len);
+	new_str = (BYTE*)realloc(unicode_string->string, new_len);
 
 	if (!new_str)
 	{
@@ -77,16 +77,16 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 		return FALSE;
 
 	Stream_Read_UINT16(s, iconInfo->cacheEntry); /* cacheEntry (2 bytes) */
-	Stream_Read_UINT8(s, iconInfo->cacheId); /* cacheId (1 byte) */
-	Stream_Read_UINT8(s, iconInfo->bpp); /* bpp (1 byte) */
+	Stream_Read_UINT8(s, iconInfo->cacheId);     /* cacheId (1 byte) */
+	Stream_Read_UINT8(s, iconInfo->bpp);         /* bpp (1 byte) */
 
 	if ((iconInfo->bpp < 1) || (iconInfo->bpp > 32))
 	{
-		WLog_ERR(TAG, "invalid bpp value %"PRIu32"", iconInfo->bpp);
+		WLog_ERR(TAG, "invalid bpp value %" PRIu32 "", iconInfo->bpp);
 		return FALSE;
 	}
 
-	Stream_Read_UINT16(s, iconInfo->width); /* width (2 bytes) */
+	Stream_Read_UINT16(s, iconInfo->width);  /* width (2 bytes) */
 	Stream_Read_UINT16(s, iconInfo->height); /* height (2 bytes) */
 
 	/* cbColorTable is only present when bpp is 1, 4 or 8 */
@@ -109,14 +109,14 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	Stream_Read_UINT16(s, iconInfo->cbBitsMask); /* cbBitsMask (2 bytes) */
+	Stream_Read_UINT16(s, iconInfo->cbBitsMask);  /* cbBitsMask (2 bytes) */
 	Stream_Read_UINT16(s, iconInfo->cbBitsColor); /* cbBitsColor (2 bytes) */
 
 	if (Stream_GetRemainingLength(s) < iconInfo->cbBitsMask + iconInfo->cbBitsColor)
 		return FALSE;
 
 	/* bitsMask */
-	newBitMask = (BYTE*) realloc(iconInfo->bitsMask, iconInfo->cbBitsMask);
+	newBitMask = (BYTE*)realloc(iconInfo->bitsMask, iconInfo->cbBitsMask);
 
 	if (!newBitMask)
 	{
@@ -133,7 +133,7 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	{
 		if (iconInfo->cbColorTable)
 		{
-			iconInfo->colorTable = (BYTE*) malloc(iconInfo->cbColorTable);
+			iconInfo->colorTable = (BYTE*)malloc(iconInfo->cbColorTable);
 
 			if (!iconInfo->colorTable)
 				return FALSE;
@@ -142,7 +142,7 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	else if (iconInfo->cbColorTable)
 	{
 		BYTE* new_tab;
-		new_tab = (BYTE*) realloc(iconInfo->colorTable, iconInfo->cbColorTable);
+		new_tab = (BYTE*)realloc(iconInfo->colorTable, iconInfo->cbColorTable);
 
 		if (!new_tab)
 		{
@@ -183,7 +183,7 @@ static BOOL update_read_cached_icon_info(wStream* s, CACHED_ICON_INFO* cachedIco
 		return FALSE;
 
 	Stream_Read_UINT16(s, cachedIconInfo->cacheEntry); /* cacheEntry (2 bytes) */
-	Stream_Read_UINT8(s, cachedIconInfo->cacheId); /* cacheId (1 byte) */
+	Stream_Read_UINT8(s, cachedIconInfo->cacheId);     /* cacheId (1 byte) */
 	return TRUE;
 }
 
@@ -192,14 +192,14 @@ static BOOL update_read_notify_icon_infotip(wStream* s, NOTIFY_ICON_INFOTIP* not
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Read_UINT32(s, notifyIconInfoTip->timeout); /* timeout (4 bytes) */
-	Stream_Read_UINT32(s, notifyIconInfoTip->flags); /* infoFlags (4 bytes) */
+	Stream_Read_UINT32(s, notifyIconInfoTip->timeout);              /* timeout (4 bytes) */
+	Stream_Read_UINT32(s, notifyIconInfoTip->flags);                /* infoFlags (4 bytes) */
 	return rail_read_unicode_string(s, &notifyIconInfoTip->text) && /* infoTipText */
-	       rail_read_unicode_string(s, &notifyIconInfoTip->title); /* title */
+	       rail_read_unicode_string(s, &notifyIconInfoTip->title);  /* title */
 }
 
 static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
-        WINDOW_STATE_ORDER* windowState)
+                                           WINDOW_STATE_ORDER* windowState)
 {
 	UINT32 i;
 	size_t size;
@@ -218,7 +218,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
 
-		Stream_Read_UINT32(s, windowState->style); /* style (4 bytes) */
+		Stream_Read_UINT32(s, windowState->style);         /* style (4 bytes) */
 		Stream_Read_UINT32(s, windowState->extendedStyle); /* extendedStyle (4 bytes) */
 	}
 
@@ -250,7 +250,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
 
-		Stream_Read_UINT32(s, windowState->clientAreaWidth); /* clientAreaWidth (4 bytes) */
+		Stream_Read_UINT32(s, windowState->clientAreaWidth);  /* clientAreaWidth (4 bytes) */
 		Stream_Read_UINT32(s, windowState->clientAreaHeight); /* clientAreaHeight (4 bytes) */
 	}
 
@@ -285,7 +285,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 
-		Stream_Read_UINT32(s, windowState->rootParentHandle);/* rootParentHandle (4 bytes) */
+		Stream_Read_UINT32(s, windowState->rootParentHandle); /* rootParentHandle (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
@@ -311,7 +311,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
 
-		Stream_Read_UINT32(s, windowState->windowWidth); /* windowWidth (4 bytes) */
+		Stream_Read_UINT32(s, windowState->windowWidth);  /* windowWidth (4 bytes) */
 		Stream_Read_UINT32(s, windowState->windowHeight); /* windowHeight (4 bytes) */
 	}
 
@@ -345,9 +345,9 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 		/* windowRects */
 		for (i = 0; i < windowState->numWindowRects; i++)
 		{
-			Stream_Read_UINT16(s, windowState->windowRects[i].left); /* left (2 bytes) */
-			Stream_Read_UINT16(s, windowState->windowRects[i].top); /* top (2 bytes) */
-			Stream_Read_UINT16(s, windowState->windowRects[i].right); /* right (2 bytes) */
+			Stream_Read_UINT16(s, windowState->windowRects[i].left);   /* left (2 bytes) */
+			Stream_Read_UINT16(s, windowState->windowRects[i].top);    /* top (2 bytes) */
+			Stream_Read_UINT16(s, windowState->windowRects[i].right);  /* right (2 bytes) */
 			Stream_Read_UINT16(s, windowState->windowRects[i].bottom); /* bottom (2 bytes) */
 		}
 	}
@@ -388,10 +388,11 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 			/* visibilityRects */
 			for (i = 0; i < windowState->numVisibilityRects; i++)
 			{
-				Stream_Read_UINT16(s, windowState->visibilityRects[i].left); /* left (2 bytes) */
-				Stream_Read_UINT16(s, windowState->visibilityRects[i].top); /* top (2 bytes) */
+				Stream_Read_UINT16(s, windowState->visibilityRects[i].left);  /* left (2 bytes) */
+				Stream_Read_UINT16(s, windowState->visibilityRects[i].top);   /* top (2 bytes) */
 				Stream_Read_UINT16(s, windowState->visibilityRects[i].right); /* right (2 bytes) */
-				Stream_Read_UINT16(s, windowState->visibilityRects[i].bottom); /* bottom (2 bytes) */
+				Stream_Read_UINT16(s,
+				                   windowState->visibilityRects[i].bottom); /* bottom (2 bytes) */
 			}
 		}
 	}
@@ -443,10 +444,10 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 }
 
 static BOOL update_read_window_icon_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
-        WINDOW_ICON_ORDER* window_icon)
+                                          WINDOW_ICON_ORDER* window_icon)
 {
 	WINPR_UNUSED(orderInfo);
-	window_icon->iconInfo = (ICON_INFO*) calloc(1, sizeof(ICON_INFO));
+	window_icon->iconInfo = (ICON_INFO*)calloc(1, sizeof(ICON_INFO));
 
 	if (!window_icon->iconInfo)
 		return FALSE;
@@ -455,10 +456,11 @@ static BOOL update_read_window_icon_order(wStream* s, WINDOW_ORDER_INFO* orderIn
 }
 
 static BOOL update_read_window_cached_icon_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
-        WINDOW_CACHED_ICON_ORDER* window_cached_icon)
+                                                 WINDOW_CACHED_ICON_ORDER* window_cached_icon)
 {
 	WINPR_UNUSED(orderInfo);
-	return update_read_cached_icon_info(s, &window_cached_icon->cachedIcon); /* cachedIcon (CACHED_ICON_INFO) */
+	return update_read_cached_icon_info(
+	    s, &window_cached_icon->cachedIcon); /* cachedIcon (CACHED_ICON_INFO) */
 }
 
 static void update_read_window_delete_order(wStream* s, WINDOW_ORDER_INFO* orderInfo)
@@ -494,26 +496,29 @@ static BOOL window_order_supported(const rdpSettings* settings, UINT32 fieldFlag
 	}
 }
 
-#define DUMP_APPEND(buffer, size, ...) \
-	do { \
-		char* b = (buffer); \
-		size_t s = (size); \
-		size_t pos = strnlen(b, s); \
+#define DUMP_APPEND(buffer, size, ...)            \
+	do                                            \
+	{                                             \
+		char* b = (buffer);                       \
+		size_t s = (size);                        \
+		size_t pos = strnlen(b, s);               \
 		_snprintf(&b[pos], s - pos, __VA_ARGS__); \
-	} while(0)
+	} while (0)
 
-static void dump_window_state_order(wLog *log, const char *msg, const WINDOW_ORDER_INFO* order, const WINDOW_STATE_ORDER *state)
+static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORDER_INFO* order,
+                                    const WINDOW_STATE_ORDER* state)
 {
 	char buffer[3000] = { 0 };
 	const size_t bufferSize = sizeof(buffer) - 1;
 
-	_snprintf(buffer, bufferSize, "%s windowId=0x%"PRIu32"", msg, order->windowId);
+	_snprintf(buffer, bufferSize, "%s windowId=0x%" PRIu32 "", msg, order->windowId);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
-		DUMP_APPEND(buffer, bufferSize, " owner=0x%"PRIx32"", state->ownerWindowId);
+		DUMP_APPEND(buffer, bufferSize, " owner=0x%" PRIx32 "", state->ownerWindowId);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
-		DUMP_APPEND(buffer, bufferSize, " [ex]style=<0x%"PRIx32", 0x%"PRIx32"", state->style, state->extendedStyle);
+		DUMP_APPEND(buffer, bufferSize, " [ex]style=<0x%" PRIx32 ", 0x%" PRIx32 "", state->style,
+		            state->extendedStyle);
 		if (state->style & WS_POPUP)
 			DUMP_APPEND(buffer, bufferSize, " popup");
 		if (state->style & WS_VISIBLE)
@@ -537,14 +542,24 @@ static void dump_window_state_order(wLog *log, const char *msg, const WINDOW_ORD
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
 	{
-		const char *showStr;
-		switch(state->showState)
+		const char* showStr;
+		switch (state->showState)
 		{
-		case 0: showStr = "hidden"; break;
-		case 2: showStr = "minimized"; break;
-		case 3: showStr = "maximized"; break;
-		case 5: showStr = "current"; break;
-		default: showStr = "<unknown>"; break;
+			case 0:
+				showStr = "hidden";
+				break;
+			case 2:
+				showStr = "minimized";
+				break;
+			case 3:
+				showStr = "maximized";
+				break;
+			case 5:
+				showStr = "current";
+				break;
+			default:
+				showStr = "<unknown>";
+				break;
 		}
 		DUMP_APPEND(buffer, bufferSize, " show=%s", showStr);
 	}
@@ -552,54 +567,60 @@ static void dump_window_state_order(wLog *log, const char *msg, const WINDOW_ORD
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 		DUMP_APPEND(buffer, bufferSize, " title");
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
-		DUMP_APPEND(buffer, bufferSize, " clientOffsetX=%"PRId32" clientOffsetY=%"PRId32"",
-				state->clientOffsetX, state->clientOffsetY);
+		DUMP_APPEND(buffer, bufferSize, " clientOffsetX=%" PRId32 " clientOffsetY=%" PRId32 "",
+		            state->clientOffsetX, state->clientOffsetY);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
-		DUMP_APPEND(buffer, bufferSize, " clientAreaWidth=%"PRIu32" clientAreaHeight=%"PRIu32"",
-				state->clientAreaWidth, state->clientAreaHeight);
+		DUMP_APPEND(buffer, bufferSize, " clientAreaWidth=%" PRIu32 " clientAreaHeight=%" PRIu32 "",
+		            state->clientAreaWidth, state->clientAreaHeight);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
-		DUMP_APPEND(buffer, bufferSize, " resizeMarginLeft=%"PRIu32" resizeMarginRight=%"PRIu32"",
-				state->resizeMarginLeft, state->resizeMarginRight);
+		DUMP_APPEND(buffer, bufferSize,
+		            " resizeMarginLeft=%" PRIu32 " resizeMarginRight=%" PRIu32 "",
+		            state->resizeMarginLeft, state->resizeMarginRight);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
-		DUMP_APPEND(buffer, bufferSize, " resizeMarginTop=%"PRIu32" resizeMarginBottom=%"PRIu32"",
-				state->resizeMarginTop, state->resizeMarginBottom);
+		DUMP_APPEND(buffer, bufferSize,
+		            " resizeMarginTop=%" PRIu32 " resizeMarginBottom=%" PRIu32 "",
+		            state->resizeMarginTop, state->resizeMarginBottom);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
-		DUMP_APPEND(buffer, bufferSize, " rpContent=0x%"PRIx32"", state->RPContent);
+		DUMP_APPEND(buffer, bufferSize, " rpContent=0x%" PRIx32 "", state->RPContent);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
-		DUMP_APPEND(buffer, bufferSize, " rootParent=0x%"PRIx32"", state->rootParentHandle);
+		DUMP_APPEND(buffer, bufferSize, " rootParent=0x%" PRIx32 "", state->rootParentHandle);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
-		DUMP_APPEND(buffer, bufferSize, " windowOffsetX=%"PRId32" windowOffsetY=%"PRId32"", state->windowOffsetX, state->windowOffsetY);
+		DUMP_APPEND(buffer, bufferSize, " windowOffsetX=%" PRId32 " windowOffsetY=%" PRId32 "",
+		            state->windowOffsetX, state->windowOffsetY);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
-		DUMP_APPEND(buffer, bufferSize, " windowClientDeltaX=%"PRId32" windowClientDeltaY=%"PRId32"",
-				state->windowClientDeltaX, state->windowClientDeltaY);
+		DUMP_APPEND(buffer, bufferSize,
+		            " windowClientDeltaX=%" PRId32 " windowClientDeltaY=%" PRId32 "",
+		            state->windowClientDeltaX, state->windowClientDeltaY);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
-		DUMP_APPEND(buffer, bufferSize, " windowWidth=%"PRIu32" windowHeight=%"PRIu32"", state->windowWidth, state->windowHeight);
+		DUMP_APPEND(buffer, bufferSize, " windowWidth=%" PRIu32 " windowHeight=%" PRIu32 "",
+		            state->windowWidth, state->windowHeight);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
 		UINT32 i;
 		DUMP_APPEND(buffer, bufferSize, " windowRects=(");
-		for(i = 0; i < state->numWindowRects; i++)
+		for (i = 0; i < state->numWindowRects; i++)
 		{
-			DUMP_APPEND(buffer, bufferSize, "(%"PRIu16",%"PRIu16",%"PRIu16",%"PRIu16")",
-					state->windowRects[i].left, state->windowRects[i].top,
-					state->windowRects[i].right, state->windowRects[i].bottom);
+			DUMP_APPEND(buffer, bufferSize, "(%" PRIu16 ",%" PRIu16 ",%" PRIu16 ",%" PRIu16 ")",
+			            state->windowRects[i].left, state->windowRects[i].top,
+			            state->windowRects[i].right, state->windowRects[i].bottom);
 		}
 		DUMP_APPEND(buffer, bufferSize, ")");
 	}
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
-		DUMP_APPEND(buffer, bufferSize, " visibleOffsetX=%"PRId32" visibleOffsetY=%"PRId32"", state->visibleOffsetX, state->visibleOffsetY);
+		DUMP_APPEND(buffer, bufferSize, " visibleOffsetX=%" PRId32 " visibleOffsetY=%" PRId32 "",
+		            state->visibleOffsetX, state->visibleOffsetY);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
 		UINT32 i;
 		DUMP_APPEND(buffer, bufferSize, " visibilityRects=(");
-		for(i = 0; i < state->numVisibilityRects; i++)
+		for (i = 0; i < state->numVisibilityRects; i++)
 		{
-			DUMP_APPEND(buffer, bufferSize, "(%"PRIu16",%"PRIu16",%"PRIu16",%"PRIu16")",
-					state->visibilityRects[i].left, state->visibilityRects[i].top,
-					state->visibilityRects[i].right, state->visibilityRects[i].bottom);
+			DUMP_APPEND(buffer, bufferSize, "(%" PRIu16 ",%" PRIu16 ",%" PRIu16 ",%" PRIu16 ")",
+			            state->visibilityRects[i].left, state->visibilityRects[i].top,
+			            state->visibilityRects[i].right, state->visibilityRects[i].bottom);
 		}
 		DUMP_APPEND(buffer, bufferSize, ")");
 	}
@@ -611,22 +632,33 @@ static void dump_window_state_order(wLog *log, const char *msg, const WINDOW_ORD
 		DUMP_APPEND(buffer, bufferSize, " iconOverlayNull");
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_TASKBAR_BUTTON)
-		DUMP_APPEND(buffer, bufferSize, " taskBarButton=0x%"PRIx8"", state->TaskbarButton);
+		DUMP_APPEND(buffer, bufferSize, " taskBarButton=0x%" PRIx8 "", state->TaskbarButton);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER)
-		DUMP_APPEND(buffer, bufferSize, " enforceServerZOrder=0x%"PRIx8"", state->EnforceServerZOrder);
+		DUMP_APPEND(buffer, bufferSize, " enforceServerZOrder=0x%" PRIx8 "",
+		            state->EnforceServerZOrder);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_APPBAR_STATE)
-		DUMP_APPEND(buffer, bufferSize, " appBarState=0x%"PRIx8"", state->AppBarState);
+		DUMP_APPEND(buffer, bufferSize, " appBarState=0x%" PRIx8 "", state->AppBarState);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_APPBAR_EDGE)
 	{
-		const char *appBarEdgeStr;
+		const char* appBarEdgeStr;
 		switch (state->AppBarEdge)
 		{
-		case 0: appBarEdgeStr = "left"; break;
-		case 1: appBarEdgeStr = "top"; break;
-		case 2: appBarEdgeStr = "right"; break;
-		case 3: appBarEdgeStr = "bottom"; break;
-		default: appBarEdgeStr = "<unknown>"; break;
+			case 0:
+				appBarEdgeStr = "left";
+				break;
+			case 1:
+				appBarEdgeStr = "top";
+				break;
+			case 2:
+				appBarEdgeStr = "right";
+				break;
+			case 3:
+				appBarEdgeStr = "bottom";
+				break;
+			default:
+				appBarEdgeStr = "<unknown>";
+				break;
 		}
 		DUMP_APPEND(buffer, bufferSize, " appBarEdge=%s", appBarEdgeStr);
 	}
@@ -635,7 +667,7 @@ static void dump_window_state_order(wLog *log, const char *msg, const WINDOW_ORD
 }
 
 static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
-        WINDOW_ORDER_INFO* orderInfo)
+                                          WINDOW_ORDER_INFO* orderInfo)
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
@@ -653,7 +685,8 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 
 		if (result)
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "WindowIcon windowId=0x%"PRIx32"", orderInfo->windowId);
+			WLog_Print(update->log, WLOG_DEBUG, "WindowIcon windowId=0x%" PRIx32 "",
+			           orderInfo->windowId);
 			IFCALLRET(window->WindowIcon, result, context, orderInfo, &window_icon);
 		}
 
@@ -667,14 +700,16 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 
 		if (result)
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "WindowCachedIcon windowId=0x%"PRIx32"", orderInfo->windowId);
+			WLog_Print(update->log, WLOG_DEBUG, "WindowCachedIcon windowId=0x%" PRIx32 "",
+			           orderInfo->windowId);
 			IFCALLRET(window->WindowCachedIcon, result, context, orderInfo, &window_cached_icon);
 		}
 	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
 		update_read_window_delete_order(s, orderInfo);
-		WLog_Print(update->log, WLOG_DEBUG, "WindowDelete windowId=0x%"PRIx32"", orderInfo->windowId);
+		WLog_Print(update->log, WLOG_DEBUG, "WindowDelete windowId=0x%" PRIx32 "",
+		           orderInfo->windowId);
 		IFCALLRET(window->WindowDelete, result, context, orderInfo);
 	}
 	else
@@ -712,7 +747,7 @@ static void update_notify_icon_state_order_free(NOTIFY_ICON_STATE_ORDER* notify)
 }
 
 static BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
-        NOTIFY_ICON_STATE_ORDER* notify_icon_state)
+                                                      NOTIFY_ICON_STATE_ORDER* notify_icon_state)
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION)
 	{
@@ -724,13 +759,15 @@ static BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_I
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_TIP)
 	{
-		if (!rail_read_unicode_string(s, &notify_icon_state->toolTip)) /* toolTip (UNICODE_STRING) */
+		if (!rail_read_unicode_string(s,
+		                              &notify_icon_state->toolTip)) /* toolTip (UNICODE_STRING) */
 			return FALSE;
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP)
 	{
-		if (!update_read_notify_icon_infotip(s, &notify_icon_state->infoTip)) /* infoTip (NOTIFY_ICON_INFOTIP) */
+		if (!update_read_notify_icon_infotip(
+		        s, &notify_icon_state->infoTip)) /* infoTip (NOTIFY_ICON_INFOTIP) */
 			return FALSE;
 	}
 
@@ -750,7 +787,8 @@ static BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_I
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
 	{
-		if (!update_read_cached_icon_info(s, &notify_icon_state->cachedIcon)) /* cachedIcon (CACHED_ICON_INFO) */
+		if (!update_read_cached_icon_info(
+		        s, &notify_icon_state->cachedIcon)) /* cachedIcon (CACHED_ICON_INFO) */
 			return FALSE;
 	}
 
@@ -763,7 +801,7 @@ static void update_read_notification_icon_delete_order(wStream* s, WINDOW_ORDER_
 }
 
 static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream* s,
-        WINDOW_ORDER_INFO* orderInfo)
+                                                     WINDOW_ORDER_INFO* orderInfo)
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
@@ -772,7 +810,7 @@ static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream*
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Read_UINT32(s, orderInfo->windowId); /* windowId (4 bytes) */
+	Stream_Read_UINT32(s, orderInfo->windowId);     /* windowId (4 bytes) */
 	Stream_Read_UINT32(s, orderInfo->notifyIconId); /* notifyIconId (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
@@ -799,15 +837,15 @@ static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream*
 			WLog_Print(update->log, WLOG_DEBUG, "NotifyIconUpdate");
 			IFCALLRET(window->NotifyIconUpdate, result, context, orderInfo, &notify_icon_state);
 		}
-		fail:
-			update_notify_icon_state_order_free(&notify_icon_state);
+	fail:
+		update_notify_icon_state_order_free(&notify_icon_state);
 	}
 
 	return result;
 }
 
 static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
-        MONITORED_DESKTOP_ORDER* monitored_desktop)
+                                                         MONITORED_DESKTOP_ORDER* monitored_desktop)
 {
 	int i;
 	int size;
@@ -862,8 +900,8 @@ static void update_read_desktop_non_monitored_order(wStream* s, WINDOW_ORDER_INF
 	/* non-monitored desktop notification event */
 }
 
-static void dump_monitored_desktop(wLog *log, const char *msg, const WINDOW_ORDER_INFO* orderInfo,
-		const MONITORED_DESKTOP_ORDER *monitored)
+static void dump_monitored_desktop(wLog* log, const char* msg, const WINDOW_ORDER_INFO* orderInfo,
+                                   const MONITORED_DESKTOP_ORDER* monitored)
 {
 	char buffer[1000] = { 0 };
 	const size_t bufferSize = sizeof(buffer) - 1;
@@ -871,7 +909,7 @@ static void dump_monitored_desktop(wLog *log, const char *msg, const WINDOW_ORDE
 	DUMP_APPEND(buffer, bufferSize, "%s", msg);
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
-		DUMP_APPEND(buffer, bufferSize, " activeWindowId=0x%"PRIx32"", monitored->activeWindowId);
+		DUMP_APPEND(buffer, bufferSize, " activeWindowId=0x%" PRIx32 "", monitored->activeWindowId);
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 	{
@@ -880,7 +918,7 @@ static void dump_monitored_desktop(wLog *log, const char *msg, const WINDOW_ORDE
 		DUMP_APPEND(buffer, bufferSize, " windows=(");
 		for (i = 0; i < monitored->numWindowIds; i++)
 		{
-			DUMP_APPEND(buffer, bufferSize, "0x%"PRIx32",", monitored->windowIds[i]);
+			DUMP_APPEND(buffer, bufferSize, "0x%" PRIx32 ",", monitored->windowIds[i]);
 		}
 		DUMP_APPEND(buffer, bufferSize, ")");
 	}
@@ -888,7 +926,7 @@ static void dump_monitored_desktop(wLog *log, const char *msg, const WINDOW_ORDE
 }
 
 static BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s,
-        WINDOW_ORDER_INFO* orderInfo)
+                                           WINDOW_ORDER_INFO* orderInfo)
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
@@ -897,7 +935,8 @@ static BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s,
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_NONE)
 	{
 		update_read_desktop_non_monitored_order(s, orderInfo);
-		WLog_Print(update->log, WLOG_DEBUG, "NonMonitoredDesktop, windowId=0x%"PRIx32"", orderInfo->windowId);
+		WLog_Print(update->log, WLOG_DEBUG, "NonMonitoredDesktop, windowId=0x%" PRIx32 "",
+		           orderInfo->windowId);
 		IFCALLRET(window->NonMonitoredDesktop, result, context, orderInfo);
 	}
 	else
@@ -907,7 +946,8 @@ static BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s,
 
 		if (result)
 		{
-			dump_monitored_desktop(update->log, "ActivelyMonitoredDesktop", orderInfo, &monitored_desktop);
+			dump_monitored_desktop(update->log, "ActivelyMonitoredDesktop", orderInfo,
+			                       &monitored_desktop);
 			IFCALLRET(window->MonitoredDesktop, result, context, orderInfo, &monitored_desktop);
 		}
 
@@ -944,7 +984,7 @@ BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)
 		return FALSE;
 	}
 
-	Stream_Read_UINT16(s, orderSize); /* orderSize (2 bytes) */
+	Stream_Read_UINT16(s, orderSize);            /* orderSize (2 bytes) */
 	Stream_Read_UINT32(s, orderInfo.fieldFlags); /* FieldsPresentFlags (4 bytes) */
 
 	if (remaining + 1 < orderSize)
@@ -964,9 +1004,8 @@ BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)
 		rc = update_recv_desktop_info_order(update, s, &orderInfo);
 
 	if (!rc)
-		WLog_Print(update->log, WLOG_ERROR, "windoworder flags %08"PRIx32" failed",
+		WLog_Print(update->log, WLOG_ERROR, "windoworder flags %08" PRIx32 " failed",
 		           orderInfo.fieldFlags);
 
 	return rc;
 }
-

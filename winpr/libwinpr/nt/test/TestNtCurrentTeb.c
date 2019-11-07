@@ -18,4 +18,3 @@ int TestNtCurrentTeb(int argc, char* argv[])
 #endif
 	return 0;
 }
-

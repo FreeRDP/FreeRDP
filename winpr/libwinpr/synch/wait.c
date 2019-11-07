@@ -83,8 +83,7 @@
 /* clock_gettime is not implemented on OSX prior to 10.12 */
 int _mach_clock_gettime(int clk_id, struct timespec* t);
 
-int
-_mach_clock_gettime(int clk_id, struct timespec* t)
+int _mach_clock_gettime(int clk_id, struct timespec* t)
 {
 	UINT64 time;
 	double seconds;
@@ -92,8 +91,8 @@ _mach_clock_gettime(int clk_id, struct timespec* t)
 	mach_timebase_info_data_t timebase;
 	mach_timebase_info(&timebase);
 	time = mach_absolute_time();
-	nseconds = ((double) time * (double) timebase.numer) / ((double) timebase.denom);
-	seconds = ((double) time * (double) timebase.numer) / ((double) timebase.denom * 1e9);
+	nseconds = ((double)time * (double)timebase.numer) / ((double)timebase.denom);
+	seconds = ((double)time * (double)timebase.numer) / ((double)timebase.denom * 1e9);
 	t->tv_sec = seconds;
 	t->tv_nsec = nseconds;
 	return 0;
@@ -105,8 +104,7 @@ _mach_clock_gettime(int clk_id, struct timespec* t)
  * * but it may be NULL at runtime. So we need to check before using it. */
 int _mach_safe_clock_gettime(int clk_id, struct timespec* t);
 
-int
-_mach_safe_clock_gettime(int clk_id, struct timespec* t)
+int _mach_safe_clock_gettime(int clk_id, struct timespec* t)
 {
 	if (clock_gettime)
 	{
@@ -123,9 +121,7 @@ _mach_safe_clock_gettime(int clk_id, struct timespec* t)
 
 #endif
 
-
-static long long ts_difftime(const struct timespec* o,
-                             const struct timespec* n)
+static long long ts_difftime(const struct timespec* o, const struct timespec* n)
 {
 	long long oldValue = o->tv_sec * 1000000000LL + o->tv_nsec;
 	long long newValue = n->tv_sec * 1000000000LL + n->tv_nsec;
@@ -200,8 +196,7 @@ static int waitOnFd(int fd, ULONG mode, DWORD dwMilliseconds)
 	do
 	{
 		status = poll(&pollfds, 1, dwMilliseconds);
-	}
-	while ((status < 0) && (errno == EINTR));
+	} while ((status < 0) && (errno == EINTR));
 
 #else
 	struct timeval timeout;
@@ -229,9 +224,9 @@ static int waitOnFd(int fd, ULONG mode, DWORD dwMilliseconds)
 
 	do
 	{
-		status = select(fd + 1, prfds, pwfds, pefds, (dwMilliseconds == INFINITE) ? NULL : &timeout);
-	}
-	while (status < 0 && (errno == EINTR));
+		status =
+		    select(fd + 1, prfds, pwfds, pefds, (dwMilliseconds == INFINITE) ? NULL : &timeout);
+	} while (status < 0 && (errno == EINTR));
 
 #endif
 	return status;
@@ -252,7 +247,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	if (Type == HANDLE_TYPE_PROCESS)
 	{
 		WINPR_PROCESS* process;
-		process = (WINPR_PROCESS*) Object;
+		process = (WINPR_PROCESS*)Object;
 
 		if (process->pid != waitpid(process->pid, &(process->status), 0))
 		{
@@ -261,13 +256,13 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			return WAIT_FAILED;
 		}
 
-		process->dwExitCode = (DWORD) process->status;
+		process->dwExitCode = (DWORD)process->status;
 		return WAIT_OBJECT_0;
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
 		WINPR_MUTEX* mutex;
-		mutex = (WINPR_MUTEX*) Object;
+		mutex = (WINPR_MUTEX*)Object;
 
 		if (dwMilliseconds != INFINITE)
 		{
@@ -356,7 +351,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 	if (!nCount || (nCount > MAXIMUM_WAIT_OBJECTS))
 	{
-		WLog_ERR(TAG, "invalid handles count(%"PRIu32")", nCount);
+		WLog_ERR(TAG, "invalid handles count(%" PRIu32 ")", nCount);
 		return WAIT_FAILED;
 	}
 
@@ -441,8 +436,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		do
 		{
 			status = poll(pollfds, polled, dwMilliseconds);
-		}
-		while (status < 0 && errno == EINTR);
+		} while (status < 0 && errno == EINTR);
 
 #else
 
@@ -454,20 +448,19 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 		do
 		{
-			status = select(maxfd + 1, prfds, pwfds, 0,
-			                (dwMilliseconds == INFINITE) ? NULL : &timeout);
-		}
-		while (status < 0 && errno == EINTR);
+			status =
+			    select(maxfd + 1, prfds, pwfds, 0, (dwMilliseconds == INFINITE) ? NULL : &timeout);
+		} while (status < 0 && errno == EINTR);
 
 #endif
 
 		if (status < 0)
 		{
 #ifdef HAVE_POLL_H
-			WLog_ERR(TAG, "poll() handle %d (%"PRIu32") failure [%d] %s", index, nCount, errno,
+			WLog_ERR(TAG, "poll() handle %d (%" PRIu32 ") failure [%d] %s", index, nCount, errno,
 			         strerror(errno));
 #else
-			WLog_ERR(TAG, "select() handle %d (%"PRIu32") failure [%d] %s", index, nCount, errno,
+			WLog_ERR(TAG, "select() handle %d (%" PRIu32 ") failure [%d] %s", index, nCount, errno,
 			         strerror(errno));
 #endif
 			winpr_log_backtrace(TAG, WLOG_ERROR, 20);
@@ -557,8 +550,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 				signal_handled = TRUE;
 			}
 		}
-	}
-	while (bWaitAll || !signal_handled);
+	} while (bWaitAll || !signal_handled);
 
 	WLog_ERR(TAG, "failed (unknown error)");
 	SetLastError(ERROR_INTERNAL_ERROR);
@@ -587,4 +579,3 @@ DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD 
 }
 
 #endif
-

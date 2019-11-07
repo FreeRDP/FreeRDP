@@ -36,10 +36,13 @@ typedef struct _echo_server_context echo_server_context;
 
 typedef UINT (*psEchoServerOpen)(echo_server_context* context);
 typedef UINT (*psEchoServerClose)(echo_server_context* context);
-typedef BOOL (*psEchoServerRequest)(echo_server_context* context, const BYTE* buffer, UINT32 length);
+typedef BOOL (*psEchoServerRequest)(echo_server_context* context, const BYTE* buffer,
+                                    UINT32 length);
 
-typedef UINT (*psEchoServerOpenResult)(echo_server_context* context, ECHO_SERVER_OPEN_RESULT result);
-typedef UINT (*psEchoServerResponse)(echo_server_context* context, const BYTE* buffer, UINT32 length);
+typedef UINT (*psEchoServerOpenResult)(echo_server_context* context,
+                                       ECHO_SERVER_OPEN_RESULT result);
+typedef UINT (*psEchoServerResponse)(echo_server_context* context, const BYTE* buffer,
+                                     UINT32 length);
 
 struct _echo_server_context
 {
@@ -76,11 +79,12 @@ struct _echo_server_context
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API echo_server_context* echo_server_context_new(HANDLE vcm);
-FREERDP_API void echo_server_context_free(echo_server_context* context);
+	FREERDP_API echo_server_context* echo_server_context_new(HANDLE vcm);
+	FREERDP_API void echo_server_context_free(echo_server_context* context);
 
 #ifdef __cplusplus
 }

@@ -32,7 +32,7 @@
 
 #ifndef _WIN32
 
-#define WINPR_PIPE_SEMAPHORE	1
+#define WINPR_PIPE_SEMAPHORE 1
 
 #if defined __APPLE__
 #include <pthread.h>

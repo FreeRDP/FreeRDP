@@ -5,7 +5,8 @@
 
 /**
  * Ternary Raster Operations:
- * See "Windows Graphics Programming: Win32 GDI and DirectDraw", chapter 11. Advanced Bitmap Graphics
+ * See "Windows Graphics Programming: Win32 GDI and DirectDraw", chapter 11. Advanced Bitmap
+ * Graphics
  *
  * Operators:
  *
@@ -100,7 +101,7 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 	BOOL unary;
 	wStack* stack;
 	size_t al, bl, cl, dl;
-	char* a, *b, *c, *d;
+	char *a, *b, *c, *d;
 	bl = cl = dl = 0;
 	stack = Stack_New(FALSE);
 	length = strlen(postfix);
@@ -113,7 +114,7 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 			a = malloc(2);
 			a[0] = postfix[i];
 			a[1] = '\0';
-			//printf("Operand: %s\n", a);
+			// printf("Operand: %s\n", a);
 			Stack_Push(stack, a);
 		}
 		else
@@ -146,13 +147,13 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 				printf("invalid operator: %c\n", c[0]);
 			}
 
-			//printf("Operator: %s\n", c);
-			a = (char*) Stack_Pop(stack);
+			// printf("Operator: %s\n", c);
+			a = (char*)Stack_Pop(stack);
 
 			if (unary)
 				b = NULL;
 			else
-				b = (char*) Stack_Pop(stack);
+				b = (char*)Stack_Pop(stack);
 
 			al = strlen(a);
 
@@ -170,39 +171,16 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 		}
 	}
 
-	d = (char*) Stack_Pop(stack);
+	d = (char*)Stack_Pop(stack);
 	Stack_Free(stack);
 	return d;
 }
 
-static const char* test_ROP3[] =
-{
-	"DSPDxax",
-	"PSDPxax",
-	"SPna",
-	"DSna",
-	"DPa",
-	"PDxn",
-	"DSxn",
-	"PSDnox",
-	"PDSona",
-	"DSPDxox",
-	"DPSDonox",
-	"SPDSxax",
-	"DPon",
-	"DPna",
-	"Pn",
-	"PDna",
-	"DPan",
-	"DSan",
-	"DSxn",
-	"DPa",
-	"D",
-	"DPno",
-	"SDno",
-	"PDno",
-	"DPo"
-};
+static const char* test_ROP3[] = { "DSPDxax",  "PSDPxax", "SPna",   "DSna",   "DPa",
+	                               "PDxn",     "DSxn",    "PSDnox", "PDSona", "DSPDxox",
+	                               "DPSDonox", "SPDSxax", "DPon",   "DPna",   "Pn",
+	                               "PDna",     "DPan",    "DSan",   "DSxn",   "DPa",
+	                               "D",        "DPno",    "SDno",   "PDno",   "DPo" };
 
 int TestGdiRop3(int argc, char* argv[])
 {

@@ -15,9 +15,7 @@ int TestIoDevice(int argc, char* argv[])
 	_RtlInitAnsiString(&aString, "\\Device\\Example");
 	_RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
 
-	NtStatus = _IoCreateDeviceEx(NULL, 0,
-			&uString, FILE_DEVICE_UNKNOWN,
-			0, FALSE, &pDeviceObject);
+	NtStatus = _IoCreateDeviceEx(NULL, 0, &uString, FILE_DEVICE_UNKNOWN, 0, FALSE, &pDeviceObject);
 
 	if (NtStatus != STATUS_SUCCESS)
 		return -1;
@@ -28,4 +26,3 @@ int TestIoDevice(int argc, char* argv[])
 #endif
 	return 0;
 }
-

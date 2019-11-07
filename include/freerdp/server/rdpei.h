@@ -26,7 +26,6 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpei.h>
 
-
 typedef struct _rdpei_server_context RdpeiServerContext;
 typedef struct _rdpei_server_private RdpeiServerPrivate;
 
@@ -41,32 +40,31 @@ struct _rdpei_server_context
 	UINT32 protocolFlags;
 
 	/** callbacks that can be set by the user */
-	UINT (*onClientReady)(RdpeiServerContext *context);
-	UINT (*onTouchEvent)(RdpeiServerContext *context, RDPINPUT_TOUCH_EVENT *touchEvent);
-	UINT (*onTouchReleased)(RdpeiServerContext *context, BYTE contactId);
+	UINT (*onClientReady)(RdpeiServerContext* context);
+	UINT (*onTouchEvent)(RdpeiServerContext* context, RDPINPUT_TOUCH_EVENT* touchEvent);
+	UINT (*onTouchReleased)(RdpeiServerContext* context, BYTE contactId);
 
-	void *user_data; /* user data, useful for callbacks */
+	void* user_data; /* user data, useful for callbacks */
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API RdpeiServerContext* rdpei_server_context_new(HANDLE vcm);
-FREERDP_API void rdpei_server_context_reset(RdpeiServerContext *context);
-FREERDP_API void rdpei_server_context_free(RdpeiServerContext* context);
-FREERDP_API HANDLE rdpei_server_get_event_handle(RdpeiServerContext *context);
-FREERDP_API UINT rdpei_server_init(RdpeiServerContext *context);
-FREERDP_API UINT rdpei_server_handle_messages(RdpeiServerContext *context);
+	FREERDP_API RdpeiServerContext* rdpei_server_context_new(HANDLE vcm);
+	FREERDP_API void rdpei_server_context_reset(RdpeiServerContext* context);
+	FREERDP_API void rdpei_server_context_free(RdpeiServerContext* context);
+	FREERDP_API HANDLE rdpei_server_get_event_handle(RdpeiServerContext* context);
+	FREERDP_API UINT rdpei_server_init(RdpeiServerContext* context);
+	FREERDP_API UINT rdpei_server_handle_messages(RdpeiServerContext* context);
 
-FREERDP_API UINT rdpei_server_send_sc_ready(RdpeiServerContext *context, UINT32 version);
-FREERDP_API UINT rdpei_server_suspend(RdpeiServerContext *context);
-FREERDP_API UINT rdpei_server_resume(RdpeiServerContext *context);
+	FREERDP_API UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version);
+	FREERDP_API UINT rdpei_server_suspend(RdpeiServerContext* context);
+	FREERDP_API UINT rdpei_server_resume(RdpeiServerContext* context);
 
 #ifdef __cplusplus
 }
 #endif
-
-
 
 #endif /* FREERDP_CHANNEL_RDPEI_SERVER_H */

@@ -28,7 +28,7 @@ int TestWtsApiEnumerateProcesses(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSEnumerateProcesses failed: %"PRIu32"\n", GetLastError());
+		printf("WTSEnumerateProcesses failed: %" PRIu32 "\n", GetLastError());
 		return -1;
 	}
 

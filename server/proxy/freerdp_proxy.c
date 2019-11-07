@@ -28,7 +28,6 @@
 
 #define TAG PROXY_TAG("server")
 
-
 int main(int argc, char* argv[])
 {
 	const char* cfg = "config.ini";

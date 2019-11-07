@@ -30,19 +30,19 @@
 
 @interface MRDPView : NSView
 {
-	mfContext* mfc;
-	NSBitmapImageRep* bmiRep;
-	NSMutableArray* cursors;
-	NSMutableArray* windows;
-	NSTimer* pasteboard_timer;
-	NSCursor* currentCursor;
+	mfContext *mfc;
+	NSBitmapImageRep *bmiRep;
+	NSMutableArray *cursors;
+	NSMutableArray *windows;
+	NSTimer *pasteboard_timer;
+	NSCursor *currentCursor;
 	NSRect prevWinPosition;
-	freerdp* instance;
-	rdpContext* context;
+	freerdp *instance;
+	rdpContext *context;
 	CGContextRef bitmap_context;
-	char* pixel_data;
+	char *pixel_data;
 	int argc;
-	char** argv;
+	char **argv;
 	DWORD kbdModFlags;
 	BOOL initialized;
 	NSPoint savedDragLocation;
@@ -51,57 +51,51 @@
 	BOOL skipResizeOnce;
 	BOOL saveInitialDragLoc;
 	BOOL skipMoveWindowOnce;
-@public
-	NSPasteboard* pasteboard_rd;
-	NSPasteboard* pasteboard_wr;
+  @public
+	NSPasteboard *pasteboard_rd;
+	NSPasteboard *pasteboard_wr;
 	int pasteboard_changecount;
 	int pasteboard_format;
 	int is_connected;
 }
 
-- (int)  rdpStart :(rdpContext*) rdp_context;
-- (void) setCursor: (NSCursor*) cursor;
-- (void) setScrollOffset:(int)xOffset y:(int)yOffset w:(int)width h:(int)height;
+- (int)rdpStart:(rdpContext *)rdp_context;
+- (void)setCursor:(NSCursor *)cursor;
+- (void)setScrollOffset:(int)xOffset y:(int)yOffset w:(int)width h:(int)height;
 
-- (void) onPasteboardTimerFired :(NSTimer*) timer;
-- (void) pause;
-- (void) resume;
-- (void) releaseResources;
+- (void)onPasteboardTimerFired:(NSTimer *)timer;
+- (void)pause;
+- (void)resume;
+- (void)releaseResources;
 
 @property(assign) int is_connected;
 
 @end
 
 /* Pointer Flags */
-#define PTR_FLAGS_WHEEL                 0x0200
-#define PTR_FLAGS_WHEEL_NEGATIVE        0x0100
-#define PTR_FLAGS_MOVE                  0x0800
-#define PTR_FLAGS_DOWN                  0x8000
-#define PTR_FLAGS_BUTTON1               0x1000
-#define PTR_FLAGS_BUTTON2               0x2000
-#define PTR_FLAGS_BUTTON3               0x4000
-#define WheelRotationMask               0x01FF
+#define PTR_FLAGS_WHEEL 0x0200
+#define PTR_FLAGS_WHEEL_NEGATIVE 0x0100
+#define PTR_FLAGS_MOVE 0x0800
+#define PTR_FLAGS_DOWN 0x8000
+#define PTR_FLAGS_BUTTON1 0x1000
+#define PTR_FLAGS_BUTTON2 0x2000
+#define PTR_FLAGS_BUTTON3 0x4000
+#define WheelRotationMask 0x01FF
 
-BOOL mac_pre_connect(freerdp* instance);
-BOOL mac_post_connect(freerdp*	instance);
-void mac_post_disconnect(freerdp* instance);
-BOOL mac_authenticate(freerdp* instance, char** username, char** password,
-                      char** domain);
-BOOL mac_gw_authenticate(freerdp* instance, char** username, char** password,
-                         char** domain);
+BOOL mac_pre_connect(freerdp *instance);
+BOOL mac_post_connect(freerdp *instance);
+void mac_post_disconnect(freerdp *instance);
+BOOL mac_authenticate(freerdp *instance, char **username, char **password, char **domain);
+BOOL mac_gw_authenticate(freerdp *instance, char **username, char **password, char **domain);
 
-DWORD mac_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
-                                const char* common_name, const char* subject,
-                                const char* issuer, const char* fingerprint,
-                                DWORD flags);
-DWORD mac_verify_changed_certificate_ex(freerdp* instance, const char* host,
-                                        UINT16 port, const char* common_name,
-                                        const char* subject, const char* issuer,
-                                        const char* fingerprint,
-                                        const char* old_subject,
-                                        const char* old_issuer,
-                                        const char* old_fingerprint,
-                                        DWORD flags);
+DWORD mac_verify_certificate_ex(freerdp *instance, const char *host, UINT16 port,
+                                const char *common_name, const char *subject, const char *issuer,
+                                const char *fingerprint, DWORD flags);
+DWORD mac_verify_changed_certificate_ex(freerdp *instance, const char *host, UINT16 port,
+                                        const char *common_name, const char *subject,
+                                        const char *issuer, const char *fingerprint,
+                                        const char *old_subject, const char *old_issuer,
+                                        const char *old_fingerprint, DWORD flags);
 
-int mac_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
+int mac_logon_error_info(freerdp *instance, UINT32 data, UINT32 type);
 #endif /* FREERDP_CLIENT_MAC_MRDPVIEW_H */

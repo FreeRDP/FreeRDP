@@ -1,30 +1,31 @@
 #include <freerdp/crypto/crypto.h>
 
-
-typedef char*   (*get_field_pr)(X509*);
+typedef char* (*get_field_pr)(X509*);
 typedef struct
 {
 	enum
 	{
-		DISABLED, ENABLED,
+		DISABLED,
+		ENABLED,
 	} status;
 	const char* field_description;
 	get_field_pr get_field;
 	const char* expected_result;
 } certificate_test_t;
 
-static char*   crypto_cert_subject_common_name_wo_length(X509* xcert)
+static char* crypto_cert_subject_common_name_wo_length(X509* xcert)
 {
 	int length;
-	return crypto_cert_subject_common_name(xcert, & length);
+	return crypto_cert_subject_common_name(xcert, &length);
 }
 
 static char* certificate_path(void)
 {
 	/*
 	Assume the .pem file is in the same directory as this source file.
-	Assume that __FILE__ will be a valid path to this file, even from the current working directory where the tests are run.
-	(ie. no chdir occurs between compilation and test running, or __FILE__ is an absolute path).
+	Assume that __FILE__ will be a valid path to this file, even from the current working directory
+	where the tests are run. (ie. no chdir occurs between compilation and test running, or __FILE__
+	is an absolute path).
 	*/
 #if defined(_WIN32)
 	static const char dirsep = '\\';
@@ -53,60 +54,34 @@ static char* certificate_path(void)
 	}
 }
 
-static const certificate_test_t certificate_tests[] =
-{
+static const certificate_test_t certificate_tests[] = {
 
-	{
-		ENABLED,
-		"Certificate Common Name",
-		crypto_cert_subject_common_name_wo_length,
-		"TESTJEAN TESTMARTIN 9999999"
-	},
+	{ ENABLED, "Certificate Common Name", crypto_cert_subject_common_name_wo_length,
+	  "TESTJEAN TESTMARTIN 9999999" },
 
-	{
-		ENABLED,
-		"Certificate subject",
-		crypto_cert_subject,
-		"CN = TESTJEAN TESTMARTIN 9999999, C = FR, O = MINISTERE DES TESTS, OU = 0002 110014016, OU = PERSONNES, UID = 9999999, GN = TESTJEAN, SN = TESTMARTIN"
-	},
+	{ ENABLED, "Certificate subject", crypto_cert_subject,
+	  "CN = TESTJEAN TESTMARTIN 9999999, C = FR, O = MINISTERE DES TESTS, OU = 0002 110014016, OU "
+	  "= PERSONNES, UID = 9999999, GN = TESTJEAN, SN = TESTMARTIN" },
 
-	{
-		DISABLED,
-		"Kerberos principal name",
-		0,
-		"testjean.testmartin@kpn.test.example.com"
-	},
+	{ DISABLED, "Kerberos principal name", 0, "testjean.testmartin@kpn.test.example.com" },
 
-	{
-		ENABLED,
-		"Certificate e-mail",
-		crypto_cert_get_email,
-		"testjean.testmartin@test.example.com"
+	{ ENABLED, "Certificate e-mail", crypto_cert_get_email, "testjean.testmartin@test.example.com"
 
 	},
 
-	{
-		ENABLED,
-		"Microsoft's Universal Principal Name",
-		crypto_cert_get_upn,
-		"testjean.testmartin.9999999@upn.test.example.com"
-	},
+	{ ENABLED, "Microsoft's Universal Principal Name", crypto_cert_get_upn,
+	  "testjean.testmartin.9999999@upn.test.example.com" },
 
-	{
-		ENABLED,
-		"Certificate issuer",
-		crypto_cert_issuer,
-		"CN = ADMINISTRATION CENTRALE DES TESTS, C = FR, O = MINISTERE DES TESTS, OU = 0002 110014016"
-	},
+	{ ENABLED, "Certificate issuer", crypto_cert_issuer,
+	  "CN = ADMINISTRATION CENTRALE DES TESTS, C = FR, O = MINISTERE DES TESTS, OU = 0002 "
+	  "110014016" },
 };
 
-
-
-static int TestCertificateFile(const char* certificate_path, const certificate_test_t* certificate_tests,
-                        int count)
+static int TestCertificateFile(const char* certificate_path,
+                               const certificate_test_t* certificate_tests, int count)
 {
-	X509*   certificate;
-	FILE*   certificate_file = fopen(certificate_path, "r");
+	X509* certificate;
+	FILE* certificate_file = fopen(certificate_path, "r");
 	int success = 0;
 	int i;
 
@@ -126,7 +101,7 @@ static int TestCertificateFile(const char* certificate_path, const certificate_t
 		goto fail;
 	}
 
-	for (i = 0; i < count; i ++)
+	for (i = 0; i < count; i++)
 	{
 		char* result;
 
@@ -135,22 +110,17 @@ static int TestCertificateFile(const char* certificate_path, const certificate_t
 			continue;
 		}
 
-		result = (certificate_tests[i].get_field
-		          ? certificate_tests[i].get_field(certificate)
-		          : 0);
+		result = (certificate_tests[i].get_field ? certificate_tests[i].get_field(certificate) : 0);
 
 		if (result)
 		{
 			printf("%s: crypto got %-40s -> \"%s\"\n", __FUNCTION__,
-			       certificate_tests[i].field_description,
-			       result);
+			       certificate_tests[i].field_description, result);
 
 			if (0 != strcmp(result, certificate_tests[i].expected_result))
 			{
-				printf("%s: failure: for %s, actual: \"%s\", expected \"%s\"\n",
-				       __FUNCTION__,
-				       certificate_tests[i].field_description,
-				       result,
+				printf("%s: failure: for %s, actual: \"%s\", expected \"%s\"\n", __FUNCTION__,
+				       certificate_tests[i].field_description, result,
 				       certificate_tests[i].expected_result);
 				success = -1;
 			}
@@ -169,7 +139,6 @@ fail:
 	return success;
 }
 
-
 int Test_x509_cert_info(int argc, char* argv[])
 {
 	char* cert_path = certificate_path();
@@ -180,4 +149,3 @@ int Test_x509_cert_info(int argc, char* argv[])
 	free(cert_path);
 	return ret;
 }
-

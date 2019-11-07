@@ -17,8 +17,7 @@
 #include "helpers.h"
 
 /* LineTo() Test Data */
-static const BYTE line_to_case_1[256] =
-{
+static const BYTE line_to_case_1[256] = {
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -37,8 +36,7 @@ static const BYTE line_to_case_1[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_case_2[256] =
-{
+static const BYTE line_to_case_2[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -57,8 +55,7 @@ static const BYTE line_to_case_2[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 };
 
-static const BYTE line_to_case_3[256] =
-{
+static const BYTE line_to_case_3[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xFF\xFF"
@@ -77,8 +74,7 @@ static const BYTE line_to_case_3[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_case_4[256] =
-{
+static const BYTE line_to_case_4[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xFF\xFF"
@@ -97,8 +93,7 @@ static const BYTE line_to_case_4[256] =
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_case_5[256] =
-{
+static const BYTE line_to_case_5[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -117,8 +112,7 @@ static const BYTE line_to_case_5[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_case_6[256] =
-{
+static const BYTE line_to_case_6[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -137,8 +131,7 @@ static const BYTE line_to_case_6[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_case_7[256] =
-{
+static const BYTE line_to_case_7[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -157,8 +150,7 @@ static const BYTE line_to_case_7[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_case_8[256] =
-{
+static const BYTE line_to_case_8[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -177,8 +169,7 @@ static const BYTE line_to_case_8[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_case_9[256] =
-{
+static const BYTE line_to_case_9[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -197,8 +188,7 @@ static const BYTE line_to_case_9[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_case_10[256] =
-{
+static const BYTE line_to_case_10[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -217,8 +207,7 @@ static const BYTE line_to_case_10[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_case_11[256] =
-{
+static const BYTE line_to_case_11[256] = {
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -237,23 +226,12 @@ static const BYTE line_to_case_11[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 };
 
-static const BYTE* line_to_case[] =
-{
-	line_to_case_1,
-	line_to_case_2,
-	line_to_case_3,
-	line_to_case_4,
-	line_to_case_5,
-	line_to_case_6,
-	line_to_case_7,
-	line_to_case_8,
-	line_to_case_9,
-	line_to_case_10,
-	line_to_case_11
-};
+static const BYTE* line_to_case[] = { line_to_case_1,  line_to_case_2, line_to_case_3,
+	                                  line_to_case_4,  line_to_case_5, line_to_case_6,
+	                                  line_to_case_7,  line_to_case_8, line_to_case_9,
+	                                  line_to_case_10, line_to_case_11 };
 
-static const BYTE line_to_R2_BLACK[256] =
-{
+static const BYTE line_to_R2_BLACK[256] = {
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -272,8 +250,7 @@ static const BYTE line_to_R2_BLACK[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 };
 
-static const BYTE line_to_R2_NOTMERGEPEN[256] =
-{
+static const BYTE line_to_R2_NOTMERGEPEN[256] = {
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -292,8 +269,7 @@ static const BYTE line_to_R2_NOTMERGEPEN[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 };
 
-static const BYTE line_to_R2_MASKNOTPEN[256] =
-{
+static const BYTE line_to_R2_MASKNOTPEN[256] = {
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -312,8 +288,7 @@ static const BYTE line_to_R2_MASKNOTPEN[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 };
 
-static const BYTE line_to_R2_NOTCOPYPEN[256] =
-{
+static const BYTE line_to_R2_NOTCOPYPEN[256] = {
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -332,8 +307,7 @@ static const BYTE line_to_R2_NOTCOPYPEN[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 };
 
-static const BYTE line_to_R2_MASKPENNOT[256] =
-{
+static const BYTE line_to_R2_MASKPENNOT[256] = {
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -352,8 +326,7 @@ static const BYTE line_to_R2_MASKPENNOT[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 };
 
-static const BYTE line_to_R2_NOT[256] =
-{
+static const BYTE line_to_R2_NOT[256] = {
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -372,8 +345,7 @@ static const BYTE line_to_R2_NOT[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 };
 
-static const BYTE line_to_R2_XORPEN[256] =
-{
+static const BYTE line_to_R2_XORPEN[256] = {
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -392,8 +364,7 @@ static const BYTE line_to_R2_XORPEN[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 };
 
-static const BYTE line_to_R2_NOTMASKPEN[256] =
-{
+static const BYTE line_to_R2_NOTMASKPEN[256] = {
 	"\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -412,8 +383,7 @@ static const BYTE line_to_R2_NOTMASKPEN[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00"
 };
 
-static const BYTE line_to_R2_MASKPEN[256] =
-{
+static const BYTE line_to_R2_MASKPEN[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -432,8 +402,7 @@ static const BYTE line_to_R2_MASKPEN[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_R2_NOTXORPEN[256] =
-{
+static const BYTE line_to_R2_NOTXORPEN[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -452,8 +421,7 @@ static const BYTE line_to_R2_NOTXORPEN[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_R2_NOP[256] =
-{
+static const BYTE line_to_R2_NOP[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -472,8 +440,7 @@ static const BYTE line_to_R2_NOP[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_R2_MERGENOTPEN[256] =
-{
+static const BYTE line_to_R2_MERGENOTPEN[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -492,8 +459,7 @@ static const BYTE line_to_R2_MERGENOTPEN[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_R2_COPYPEN[256] =
-{
+static const BYTE line_to_R2_COPYPEN[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -512,8 +478,7 @@ static const BYTE line_to_R2_COPYPEN[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_R2_MERGEPENNOT[256] =
-{
+static const BYTE line_to_R2_MERGEPENNOT[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -532,8 +497,7 @@ static const BYTE line_to_R2_MERGEPENNOT[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_R2_MERGEPEN[256] =
-{
+static const BYTE line_to_R2_MERGEPEN[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -552,8 +516,7 @@ static const BYTE line_to_R2_MERGEPEN[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-static const BYTE line_to_R2_WHITE[256] =
-{
+static const BYTE line_to_R2_WHITE[256] = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -580,9 +543,9 @@ struct ropMap
 	const BYTE* src;
 };
 
-static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX,
-                      UINT32 mY, UINT32 lX, UINT32 lY, HGDI_BITMAP hBmp,
-                      HGDI_BITMAP hOrgBmp, UINT32 cX, UINT32 cY, UINT32 cW, UINT32 cH)
+static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX, UINT32 mY, UINT32 lX,
+                      UINT32 lY, HGDI_BITMAP hBmp, HGDI_BITMAP hOrgBmp, UINT32 cX, UINT32 cY,
+                      UINT32 cW, UINT32 cH)
 {
 	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS, hPalette))
 		return FALSE;
@@ -605,25 +568,12 @@ int TestGdiLine(int argc, char* argv[])
 	UINT32 x, i;
 	gdiPalette g;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
-	const UINT32 colorFormats[] =
-	{
-		PIXEL_FORMAT_RGB15,
-		PIXEL_FORMAT_ARGB15,
-		PIXEL_FORMAT_RGB16,
-		PIXEL_FORMAT_RGB24,
-		PIXEL_FORMAT_ARGB32,
-		PIXEL_FORMAT_XRGB32,
-		PIXEL_FORMAT_RGBA32,
-		PIXEL_FORMAT_RGBX32,
-		PIXEL_FORMAT_BGR15,
-		PIXEL_FORMAT_ABGR15,
-		PIXEL_FORMAT_BGR16,
-		PIXEL_FORMAT_BGR24,
-		PIXEL_FORMAT_ABGR32,
-		PIXEL_FORMAT_XBGR32,
-		PIXEL_FORMAT_BGRA32,
-		PIXEL_FORMAT_BGRX32
-	};
+	const UINT32 colorFormats[] = { PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_ARGB15, PIXEL_FORMAT_RGB16,
+		                            PIXEL_FORMAT_RGB24,  PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_XRGB32,
+		                            PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_BGR15,
+		                            PIXEL_FORMAT_ABGR15, PIXEL_FORMAT_BGR16,  PIXEL_FORMAT_BGR24,
+		                            PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_BGRA32,
+		                            PIXEL_FORMAT_BGRX32 };
 	const UINT32 number_formats = sizeof(colorFormats) / sizeof(colorFormats[0]);
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -633,27 +583,24 @@ int TestGdiLine(int argc, char* argv[])
 		HGDI_DC hdc = NULL;
 		HGDI_PEN pen = NULL;
 		HGDI_BITMAP hBmp = NULL;
-		struct ropMap rop_map[] =
-		{
-			{GDI_R2_BLACK, NULL, line_to_R2_BLACK},
-			{GDI_R2_NOTMERGEPEN, NULL, line_to_R2_NOTMERGEPEN},
-			{GDI_R2_MASKNOTPEN, NULL, line_to_R2_MASKNOTPEN},
-			{GDI_R2_NOTCOPYPEN, NULL, line_to_R2_NOTCOPYPEN},
-			{GDI_R2_MASKPENNOT, NULL, line_to_R2_MASKPENNOT},
-			{GDI_R2_NOT, NULL, line_to_R2_NOT},
-			{GDI_R2_XORPEN, NULL, line_to_R2_XORPEN},
-			{GDI_R2_NOTMASKPEN, NULL, line_to_R2_NOTMASKPEN},
-			{GDI_R2_MASKPEN, NULL, line_to_R2_MASKPEN},
-			{GDI_R2_NOTXORPEN, NULL, line_to_R2_NOTXORPEN},
-			{GDI_R2_NOP, NULL, line_to_R2_NOP},
-			{GDI_R2_MERGENOTPEN, NULL, line_to_R2_MERGENOTPEN},
-			{GDI_R2_COPYPEN, NULL, line_to_R2_COPYPEN},
-			{GDI_R2_MERGEPENNOT, NULL, line_to_R2_MERGEPENNOT},
-			{GDI_R2_MERGEPEN, NULL, line_to_R2_MERGEPEN},
-			{GDI_R2_WHITE, NULL, line_to_R2_WHITE}
-		};
+		struct ropMap rop_map[] = { { GDI_R2_BLACK, NULL, line_to_R2_BLACK },
+			                        { GDI_R2_NOTMERGEPEN, NULL, line_to_R2_NOTMERGEPEN },
+			                        { GDI_R2_MASKNOTPEN, NULL, line_to_R2_MASKNOTPEN },
+			                        { GDI_R2_NOTCOPYPEN, NULL, line_to_R2_NOTCOPYPEN },
+			                        { GDI_R2_MASKPENNOT, NULL, line_to_R2_MASKPENNOT },
+			                        { GDI_R2_NOT, NULL, line_to_R2_NOT },
+			                        { GDI_R2_XORPEN, NULL, line_to_R2_XORPEN },
+			                        { GDI_R2_NOTMASKPEN, NULL, line_to_R2_NOTMASKPEN },
+			                        { GDI_R2_MASKPEN, NULL, line_to_R2_MASKPEN },
+			                        { GDI_R2_NOTXORPEN, NULL, line_to_R2_NOTXORPEN },
+			                        { GDI_R2_NOP, NULL, line_to_R2_NOP },
+			                        { GDI_R2_MERGENOTPEN, NULL, line_to_R2_MERGENOTPEN },
+			                        { GDI_R2_COPYPEN, NULL, line_to_R2_COPYPEN },
+			                        { GDI_R2_MERGEPENNOT, NULL, line_to_R2_MERGEPENNOT },
+			                        { GDI_R2_MERGEPEN, NULL, line_to_R2_MERGEPEN },
+			                        { GDI_R2_WHITE, NULL, line_to_R2_WHITE } };
 		const UINT32 map_size = sizeof(rop_map) / sizeof(rop_map[0]);
-		HGDI_BITMAP hBmp_LineTo[LINTETO_NUMBER] = {NULL};
+		HGDI_BITMAP hBmp_LineTo[LINTETO_NUMBER] = { NULL };
 		gdiPalette* hPalette = &g;
 		UINT32 penColor;
 		const UINT32 format = colorFormats[i];
@@ -680,14 +627,14 @@ int TestGdiLine(int argc, char* argv[])
 			goto fail;
 		}
 
-		gdi_SelectObject(hdc, (HGDIOBJECT) pen);
+		gdi_SelectObject(hdc, (HGDIOBJECT)pen);
 		hBmp = gdi_CreateCompatibleBitmap(hdc, 16, 16);
-		gdi_SelectObject(hdc, (HGDIOBJECT) hBmp);
+		gdi_SelectObject(hdc, (HGDIOBJECT)hBmp);
 
 		for (x = 0; x < LINTETO_NUMBER; x++)
 		{
-			hBmp_LineTo[x] = test_convert_to_bitmap(line_to_case[x], RawFormat, 0, 0, 0,
-			                                        format, 0, 0, 0, 16, 16, hPalette);
+			hBmp_LineTo[x] = test_convert_to_bitmap(line_to_case[x], RawFormat, 0, 0, 0, format, 0,
+			                                        0, 0, 16, 16, hPalette);
 
 			if (!hBmp_LineTo[x])
 				goto fail;
@@ -695,8 +642,8 @@ int TestGdiLine(int argc, char* argv[])
 
 		for (x = 0; x < map_size; x++)
 		{
-			rop_map[x].bmp = test_convert_to_bitmap(rop_map[x].src, RawFormat, 0, 0, 0,
-			                                        format, 0, 0, 0, 16, 16, hPalette);
+			rop_map[x].bmp = test_convert_to_bitmap(rop_map[x].src, RawFormat, 0, 0, 0, format, 0,
+			                                        0, 0, 16, 16, hPalette);
 
 			if (!rop_map[x].bmp)
 				goto fail;
@@ -732,8 +679,7 @@ int TestGdiLine(int argc, char* argv[])
 		if (!test_line(hdc, hPalette, 0, 0, 16, 16, hBmp, hBmp_LineTo[9], 5, 5, 8, 8))
 			goto fail;
 
-		if (!test_line(hdc, hPalette, 0, 0, 26, 26, hBmp, hBmp_LineTo[10], 0, 0, 16,
-		               16))
+		if (!test_line(hdc, hPalette, 0, 0, 26, 26, hBmp, hBmp_LineTo[10], 0, 0, 16, 16))
 			goto fail;
 
 		for (x = 0; x < map_size; x++)
@@ -754,9 +700,7 @@ int TestGdiLine(int argc, char* argv[])
 			gdi_SetROP2(hdc, rop_map[x].rop);
 			gdi_LineTo(hdc, 16, 16);
 
-			if (!test_assert_bitmaps_equal(hBmp, rop_map[x].bmp,
-			                               name,
-			                               hPalette))
+			if (!test_assert_bitmaps_equal(hBmp, rop_map[x].bmp, name, hPalette))
 				goto fail;
 		}
 
@@ -764,13 +708,13 @@ int TestGdiLine(int argc, char* argv[])
 	fail:
 
 		for (x = 0; x < LINTETO_NUMBER; x++)
-			gdi_DeleteObject((HGDIOBJECT) hBmp_LineTo[x]);
+			gdi_DeleteObject((HGDIOBJECT)hBmp_LineTo[x]);
 
 		for (x = 0; x < map_size; x++)
-			gdi_DeleteObject((HGDIOBJECT) rop_map[x].bmp);
+			gdi_DeleteObject((HGDIOBJECT)rop_map[x].bmp);
 
 		gdi_DeleteObject((HGDIOBJECT)hBmp);
-		gdi_DeleteObject((HGDIOBJECT) pen);
+		gdi_DeleteObject((HGDIOBJECT)pen);
 		gdi_DeleteDC(hdc);
 
 		if (rc != 0)

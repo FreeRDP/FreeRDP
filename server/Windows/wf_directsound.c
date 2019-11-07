@@ -3,7 +3,6 @@
 #include "wf_info.h"
 #include "wf_rdpsnd.h"
 
-
 #include <winpr/windows.h>
 
 #define INITGUID
@@ -34,8 +33,8 @@ int wf_directsound_activate(RdpsndServerContext* context)
 	HRESULT hr;
 	wfInfo* wfi;
 	HANDLE hThread;
-	
-	LPDIRECTSOUNDCAPTUREBUFFER  pDSCB;
+
+	LPDIRECTSOUNDCAPTUREBUFFER pDSCB;
 
 	wfi = wf_info_get_instance();
 	if (!wfi)
@@ -97,11 +96,11 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 	wfPeerContext* context;
 	wfInfo* wfi;
 
-	VOID* pbCaptureData  = NULL;
+	VOID* pbCaptureData = NULL;
 	DWORD dwCaptureLength = 0;
 	VOID* pbCaptureData2 = NULL;
 	DWORD dwCaptureLength2 = 0;
-	VOID* pbPlayData   = NULL;
+	VOID* pbPlayData = NULL;
 	DWORD dwReadPos = 0;
 	LONG lLockSize = 0;
 
@@ -137,7 +136,7 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 
 		if (wf_rdpsnd_lock() > 0)
 		{
-			//check for main exit condition
+			// check for main exit condition
 			if (wfi->snd_stop == TRUE)
 			{
 				wf_rdpsnd_unlock();
@@ -152,10 +151,12 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 				break;
 			}
 
-			lLockSize = dwReadPos - lastPos;//dscbd.dwBufferBytes;
-			if (lLockSize < 0) lLockSize += dscbd.dwBufferBytes;
+			lLockSize = dwReadPos - lastPos; // dscbd.dwBufferBytes;
+			if (lLockSize < 0)
+				lLockSize += dscbd.dwBufferBytes;
 
-			//WLog_DBG(TAG, "Last, read, lock = [%"PRIu32", %"PRIu32", %"PRId32"]\n", lastPos, dwReadPos, lLockSize);
+			// WLog_DBG(TAG, "Last, read, lock = [%"PRIu32", %"PRIu32", %"PRId32"]\n", lastPos,
+			// dwReadPos, lLockSize);
 
 			if (lLockSize == 0)
 			{
@@ -163,8 +164,8 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 				continue;
 			}
 
-			
-			hr = capBuf->lpVtbl->Lock(capBuf, lastPos, lLockSize, &pbCaptureData, &dwCaptureLength, &pbCaptureData2, &dwCaptureLength2, 0L);
+			hr = capBuf->lpVtbl->Lock(capBuf, lastPos, lLockSize, &pbCaptureData, &dwCaptureLength,
+			                          &pbCaptureData2, &dwCaptureLength2, 0L);
 			if (FAILED(hr))
 			{
 				WLog_ERR(TAG, "Failed to lock sound capture buffer");
@@ -172,16 +173,18 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 				break;
 			}
 
-			//fwrite(pbCaptureData, 1, dwCaptureLength, pFile);
-			//fwrite(pbCaptureData2, 1, dwCaptureLength2, pFile);
+			// fwrite(pbCaptureData, 1, dwCaptureLength, pFile);
+			// fwrite(pbCaptureData2, 1, dwCaptureLength2, pFile);
 
-			//FIXME: frames = bytes/(bytespersample * channels)
-		
-			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData, dwCaptureLength/4, (UINT16)(beg & 0xffff));
-			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData2, dwCaptureLength2/4, (UINT16)(beg & 0xffff));
+			// FIXME: frames = bytes/(bytespersample * channels)
 
+			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData, dwCaptureLength / 4,
+			                             (UINT16)(beg & 0xffff));
+			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData2, dwCaptureLength2 / 4,
+			                             (UINT16)(beg & 0xffff));
 
-			hr = capBuf->lpVtbl->Unlock(capBuf, pbCaptureData, dwCaptureLength, pbCaptureData2, dwCaptureLength2);
+			hr = capBuf->lpVtbl->Unlock(capBuf, pbCaptureData, dwCaptureLength, pbCaptureData2,
+			                            dwCaptureLength2);
 			if (FAILED(hr))
 			{
 				WLog_ERR(TAG, "Failed to unlock sound capture buffer");
@@ -189,7 +192,7 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 				return 0;
 			}
 
-			//TODO keep track of location in buffer
+			// TODO keep track of location in buffer
 			lastPos += dwCaptureLength;
 			lastPos %= dscbd.dwBufferBytes;
 			lastPos += dwCaptureLength2;
@@ -197,8 +200,6 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 
 			wf_rdpsnd_unlock();
 		}
-
-		
 	}
 
 	WLog_INFO(TAG, "Trying to stop sound capture");

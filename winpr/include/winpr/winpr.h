@@ -38,19 +38,19 @@
 #endif
 #else
 #if __GNUC__ >= 4
-#define WINPR_API   __attribute__ ((visibility("default")))
+#define WINPR_API __attribute__((visibility("default")))
 #else
 #define WINPR_API
 #endif
 #endif
 #else /* WINPR_DLL */
-#define WINPR_API	
+#define WINPR_API
 #endif
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 #define WINPR_DEPRECATED(obj) __declspec(deprecated) obj
 #elif defined(__GNUC__)
-#define WINPR_DEPRECATED(obj) obj __attribute__ ((deprecated))
+#define WINPR_DEPRECATED(obj) obj __attribute__((deprecated))
 #else
 #define WINPR_DEPRECATED(obj) obj
 #endif
@@ -70,11 +70,10 @@
 #define WINPR_TLS
 #endif
 
-
 #ifdef _WIN32
-#define INLINE	__inline
+#define INLINE __inline
 #else
-#define INLINE	inline
+#define INLINE inline
 #endif
 
 WINPR_API void winpr_get_version(int* major, int* minor, int* revision);

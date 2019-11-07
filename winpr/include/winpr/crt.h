@@ -70,36 +70,30 @@ static INLINE UINT64 _rotr64(UINT64 value, int shift)
 
 #if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2))
 
-#define _byteswap_ulong(_val)	__builtin_bswap32(_val)
-#define _byteswap_uint64(_val)	__builtin_bswap64(_val)
+#define _byteswap_ulong(_val) __builtin_bswap32(_val)
+#define _byteswap_uint64(_val) __builtin_bswap64(_val)
 
 #else
 
 static INLINE UINT32 _byteswap_ulong(UINT32 _val)
 {
-	return (((_val) >> 24) | \
-	        (((_val) & 0x00FF0000) >> 8) | \
-	        (((_val) & 0x0000FF00) << 8) | \
+	return (((_val) >> 24) | (((_val)&0x00FF0000) >> 8) | (((_val)&0x0000FF00) << 8) |
 	        ((_val) << 24));
 }
 
 static INLINE UINT64 _byteswap_uint64(UINT64 _val)
 {
-	return (((_val) << 56) | \
-	        (((_val) << 40) & 0xFF000000000000) | \
-	        (((_val) << 24) & 0xFF0000000000) | \
-	        (((_val) << 8)  & 0xFF00000000) | \
-	        (((_val) >> 8)  & 0xFF000000) | \
-	        (((_val) >> 24) & 0xFF0000) | \
-	        (((_val) >> 40) & 0xFF00) | \
-	        ((_val)  >> 56));
+	return (((_val) << 56) | (((_val) << 40) & 0xFF000000000000) |
+	        (((_val) << 24) & 0xFF0000000000) | (((_val) << 8) & 0xFF00000000) |
+	        (((_val) >> 8) & 0xFF000000) | (((_val) >> 24) & 0xFF0000) | (((_val) >> 40) & 0xFF00) |
+	        ((_val) >> 56));
 }
 
 #endif
 
 #if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8))
 
-#define _byteswap_ushort(_val)	__builtin_bswap16(_val)
+#define _byteswap_ushort(_val) __builtin_bswap16(_val)
 
 #else
 
@@ -110,18 +104,17 @@ static INLINE UINT16 _byteswap_ushort(UINT16 _val)
 
 #endif
 
-
-
-#define CopyMemory(Destination, Source, Length)		memcpy((Destination), (Source), (Length))
-#define MoveMemory(Destination, Source, Length)		memmove((Destination), (Source), (Length))
-#define	FillMemory(Destination, Length, Fill)		memset((Destination), (Fill), (Length))
-#define ZeroMemory(Destination, Length)			memset((Destination), 0, (Length))
+#define CopyMemory(Destination, Source, Length) memcpy((Destination), (Source), (Length))
+#define MoveMemory(Destination, Source, Length) memmove((Destination), (Source), (Length))
+#define FillMemory(Destination, Length, Fill) memset((Destination), (Fill), (Length))
+#define ZeroMemory(Destination, Length) memset((Destination), 0, (Length))
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-WINPR_API PVOID SecureZeroMemory(PVOID ptr, SIZE_T cnt);
+	WINPR_API PVOID SecureZeroMemory(PVOID ptr, SIZE_T cnt);
 
 #ifdef __cplusplus
 }
@@ -135,36 +128,37 @@ typedef int errno_t;
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-WINPR_API void* _aligned_malloc(size_t size, size_t alignment);
-WINPR_API void* _aligned_realloc(void* memblock, size_t size, size_t alignment);
-WINPR_API void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment);
+	WINPR_API void* _aligned_malloc(size_t size, size_t alignment);
+	WINPR_API void* _aligned_realloc(void* memblock, size_t size, size_t alignment);
+	WINPR_API void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment);
 
-WINPR_API void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset);
-WINPR_API void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment,
-                                        size_t offset);
-WINPR_API void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment,
-        size_t offset);
+	WINPR_API void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset);
+	WINPR_API void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment,
+	                                        size_t offset);
+	WINPR_API void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size,
+	                                         size_t alignment, size_t offset);
 
-WINPR_API size_t _aligned_msize(void* memblock, size_t alignment, size_t offset);
+	WINPR_API size_t _aligned_msize(void* memblock, size_t alignment, size_t offset);
 
-WINPR_API void _aligned_free(void* memblock);
+	WINPR_API void _aligned_free(void* memblock);
 
-/* Data Conversion */
+	/* Data Conversion */
 
-WINPR_API errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix);
+	WINPR_API errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix);
 
-/* Buffer Manipulation */
+	/* Buffer Manipulation */
 
-WINPR_API errno_t memmove_s(void* dest, size_t numberOfElements, const void* src, size_t count);
-WINPR_API errno_t wmemmove_s(WCHAR* dest, size_t numberOfElements, const WCHAR* src, size_t count);
+	WINPR_API errno_t memmove_s(void* dest, size_t numberOfElements, const void* src, size_t count);
+	WINPR_API errno_t wmemmove_s(WCHAR* dest, size_t numberOfElements, const WCHAR* src,
+	                             size_t count);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif
 

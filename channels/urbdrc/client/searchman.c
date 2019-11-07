@@ -18,7 +18,6 @@
  * limitations under the License.
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,16 +46,16 @@ static USB_SEARCHDEV* searchman_get_next(USB_SEARCHMAN* searchman)
 	USB_SEARCHDEV* search;
 
 	search = searchman->idev;
-	searchman->idev = (USB_SEARCHDEV*) searchman->idev->next;
+	searchman->idev = (USB_SEARCHDEV*)searchman->idev->next;
 
 	return search;
 }
 
 static BOOL searchman_list_add(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct)
 {
-	USB_SEARCHDEV*	search;
+	USB_SEARCHDEV* search;
 
-	search = (USB_SEARCHDEV*) calloc(1, sizeof(USB_SEARCHDEV));
+	search = (USB_SEARCHDEV*)calloc(1, sizeof(USB_SEARCHDEV));
 	if (!search)
 		return FALSE;
 
@@ -92,8 +91,7 @@ static int searchman_list_remove(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT
 	{
 		point = searchman_get_next(searchman);
 
-		if (point->idVendor == idVendor &&
-		    point->idProduct == idProduct)
+		if (point->idVendor == idVendor && point->idProduct == idProduct)
 		{
 			/* set previous device to point to next device */
 
@@ -160,27 +158,27 @@ static void searchman_list_show(USB_SEARCHMAN* self)
 {
 	int num = 0;
 	USB_SEARCHDEV* usb;
-	WLog_DBG(TAG,  "=========== Usb Search List =========");
+	WLog_DBG(TAG, "=========== Usb Search List =========");
 	self->rewind(self);
 	while (self->has_next(self))
 	{
 		usb = self->get_next(self);
-		WLog_DBG(TAG,  "  USB %d: ", num++);
-		WLog_DBG(TAG,  "	idVendor: 0x%04"PRIX16"", usb->idVendor);
-		WLog_DBG(TAG,  "	idProduct: 0x%04"PRIX16"", usb->idProduct);
+		WLog_DBG(TAG, "  USB %d: ", num++);
+		WLog_DBG(TAG, "	idVendor: 0x%04" PRIX16 "", usb->idVendor);
+		WLog_DBG(TAG, "	idProduct: 0x%04" PRIX16 "", usb->idProduct);
 	}
 
-	WLog_DBG(TAG,  "================= END ===============");
+	WLog_DBG(TAG, "================= END ===============");
 }
 
 void searchman_free(USB_SEARCHMAN* self)
 {
-	USB_SEARCHDEV * dev;
+	USB_SEARCHDEV* dev;
 
 	while (self->head != NULL)
 	{
-		dev = (USB_SEARCHDEV *)self->head;
-		self->remove (self, dev->idVendor, dev->idProduct);
+		dev = (USB_SEARCHDEV*)self->head;
+		self->remove(self, dev->idVendor, dev->idProduct);
 	}
 
 	/* free searchman */
@@ -189,12 +187,12 @@ void searchman_free(USB_SEARCHMAN* self)
 	free(self);
 }
 
-USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
+USB_SEARCHMAN* searchman_new(void* urbdrc, UINT32 UsbDevice)
 {
 	int ret;
 	USB_SEARCHMAN* searchman;
 
-	searchman = (USB_SEARCHMAN*) calloc(1, sizeof(USB_SEARCHMAN));
+	searchman = (USB_SEARCHMAN*)calloc(1, sizeof(USB_SEARCHMAN));
 	if (!searchman)
 		return NULL;
 

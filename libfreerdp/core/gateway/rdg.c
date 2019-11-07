@@ -1,21 +1,21 @@
 /**
-* FreeRDP: A Remote Desktop Protocol Implementation
-* Remote Desktop Gateway (RDG)
-*
-* Copyright 2015 Denis Vincent <dvincent@devolutions.net>
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Remote Desktop Gateway (RDG)
+ *
+ * Copyright 2015 Denis Vincent <dvincent@devolutions.net>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -41,7 +41,6 @@
 
 #define TAG FREERDP_TAG("core.gateway.rdg")
 
-
 /* HTTP channel response fields present flags. */
 #define HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID 0x1
 #define HTTP_CHANNEL_RESPONSE_OPTIONAL 0x2
@@ -49,9 +48,9 @@
 
 /* HTTP extended auth. */
 #define HTTP_EXTENDED_AUTH_NONE 0x0
-#define HTTP_EXTENDED_AUTH_SC 0x1   /* Smart card authentication. */
-#define HTTP_EXTENDED_AUTH_PAA 0x02   /* Pluggable authentication. */
-#define HTTP_EXTENDED_AUTH_SSPI_NTLM 0x04   /* NTLM extended authentication. */
+#define HTTP_EXTENDED_AUTH_SC 0x1         /* Smart card authentication. */
+#define HTTP_EXTENDED_AUTH_PAA 0x02       /* Pluggable authentication. */
+#define HTTP_EXTENDED_AUTH_SSPI_NTLM 0x04 /* NTLM extended authentication. */
 
 /* HTTP packet types. */
 #define PKT_TYPE_HANDSHAKE_REQUEST 0x1
@@ -154,38 +153,36 @@ typedef struct
 	const char* name;
 } t_err_mapping;
 
-static const t_err_mapping tunnel_response_fields_present[] =
-{
-	{HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID,   "HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID"},
-	{HTTP_TUNNEL_RESPONSE_FIELD_CAPS, "HTTP_TUNNEL_RESPONSE_FIELD_CAPS"},
-	{HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ,     "HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ"},
-	{HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG,     "HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG"}
+static const t_err_mapping tunnel_response_fields_present[] = {
+	{ HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID, "HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID" },
+	{ HTTP_TUNNEL_RESPONSE_FIELD_CAPS, "HTTP_TUNNEL_RESPONSE_FIELD_CAPS" },
+	{ HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ, "HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ" },
+	{ HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG, "HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG" }
 };
 
-static const t_err_mapping channel_response_fields_present[] =
-{
-	{HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID,   "HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID"},
-	{HTTP_CHANNEL_RESPONSE_OPTIONAL, "HTTP_CHANNEL_RESPONSE_OPTIONAL"},
-	{HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT,     "HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT"}
+static const t_err_mapping channel_response_fields_present[] = {
+	{ HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID, "HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID" },
+	{ HTTP_CHANNEL_RESPONSE_OPTIONAL, "HTTP_CHANNEL_RESPONSE_OPTIONAL" },
+	{ HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT, "HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT" }
 };
 
-static const t_err_mapping tunnel_authorization_response_fields_present[] =
-{
-	{HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS,  "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS"},
-	{HTTP_TUNNEL_AUTH_RESPONSE_FIELD_IDLE_TIMEOUT, "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_IDLE_TIMEOUT"},
-	{HTTP_TUNNEL_AUTH_RESPONSE_FIELD_SOH_RESPONSE, "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_SOH_RESPONSE"}
+static const t_err_mapping tunnel_authorization_response_fields_present[] = {
+	{ HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS, "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS" },
+	{ HTTP_TUNNEL_AUTH_RESPONSE_FIELD_IDLE_TIMEOUT,
+	  "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_IDLE_TIMEOUT" },
+	{ HTTP_TUNNEL_AUTH_RESPONSE_FIELD_SOH_RESPONSE,
+	  "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_SOH_RESPONSE" }
 };
 
-static const t_err_mapping extended_auth[] =
-{
-	{HTTP_EXTENDED_AUTH_NONE, "HTTP_EXTENDED_AUTH_NONE"},
-	{HTTP_EXTENDED_AUTH_SC, "HTTP_EXTENDED_AUTH_SC"},
-	{HTTP_EXTENDED_AUTH_PAA, "HTTP_EXTENDED_AUTH_PAA"},
-	{HTTP_EXTENDED_AUTH_SSPI_NTLM, "HTTP_EXTENDED_AUTH_SSPI_NTLM"}
+static const t_err_mapping extended_auth[] = {
+	{ HTTP_EXTENDED_AUTH_NONE, "HTTP_EXTENDED_AUTH_NONE" },
+	{ HTTP_EXTENDED_AUTH_SC, "HTTP_EXTENDED_AUTH_SC" },
+	{ HTTP_EXTENDED_AUTH_PAA, "HTTP_EXTENDED_AUTH_PAA" },
+	{ HTTP_EXTENDED_AUTH_SSPI_NTLM, "HTTP_EXTENDED_AUTH_SSPI_NTLM" }
 };
 
 static const char* fields_present_to_string(UINT16 fieldsPresent, const t_err_mapping* map,
-        size_t elements)
+                                            size_t elements)
 {
 	size_t x = 0;
 	static char buffer[1024] = { 0 };
@@ -201,7 +198,7 @@ static const char* fields_present_to_string(UINT16 fieldsPresent, const t_err_ma
 			strcat(buffer, map[x].name);
 	}
 
-	sprintf_s(fields, ARRAYSIZE(fields), " [%04"PRIx16"]", fieldsPresent);
+	sprintf_s(fields, ARRAYSIZE(fields), " [%04" PRIx16 "]", fieldsPresent);
 	strcat(buffer, fields);
 	return buffer;
 }
@@ -238,7 +235,7 @@ static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
 	int status;
 	wStream* sChunk;
 	char chunkSize[11];
-	sprintf_s(chunkSize, sizeof(chunkSize), "%"PRIXz"\r\n", Stream_Length(sPacket));
+	sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIXz "\r\n", Stream_Length(sPacket));
 	sChunk = Stream_New(NULL, strnlen(chunkSize, sizeof(chunkSize)) + Stream_Length(sPacket) + 2);
 
 	if (!sChunk)
@@ -313,8 +310,7 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 		return NULL;
 	}
 
-	if (!rdg_read_all(rdg->tlsOut, Stream_Buffer(s) + header,
-	                  (int)packetLength - (int)header))
+	if (!rdg_read_all(rdg->tlsOut, Stream_Buffer(s) + header, (int)packetLength - (int)header))
 	{
 		Stream_Free(s, TRUE);
 		return NULL;
@@ -334,12 +330,12 @@ static BOOL rdg_send_handshake(rdpRdg* rdg)
 		return FALSE;
 
 	Stream_Write_UINT16(s, PKT_TYPE_HANDSHAKE_REQUEST); /* Type (2 bytes) */
-	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
-	Stream_Write_UINT32(s, 14); /* PacketLength (4 bytes) */
-	Stream_Write_UINT8(s, 1); /* VersionMajor (1 byte) */
-	Stream_Write_UINT8(s, 0); /* VersionMinor (1 byte) */
-	Stream_Write_UINT16(s, 0); /* ClientVersion (2 bytes), must be 0 */
-	Stream_Write_UINT16(s, rdg->extAuth); /* ExtendedAuthentication (2 bytes) */
+	Stream_Write_UINT16(s, 0);                          /* Reserved (2 bytes) */
+	Stream_Write_UINT32(s, 14);                         /* PacketLength (4 bytes) */
+	Stream_Write_UINT8(s, 1);                           /* VersionMajor (1 byte) */
+	Stream_Write_UINT8(s, 0);                           /* VersionMinor (1 byte) */
+	Stream_Write_UINT16(s, 0);                          /* ClientVersion (2 bytes), must be 0 */
+	Stream_Write_UINT16(s, rdg->extAuth);               /* ExtendedAuthentication (2 bytes) */
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
 	Stream_Free(s, TRUE);
@@ -363,7 +359,8 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
 	{
-		PAACookieLen = ConvertToUnicode(CP_UTF8, 0, rdg->settings->GatewayAccessToken, -1, &PAACookie, 0);
+		PAACookieLen =
+		    ConvertToUnicode(CP_UTF8, 0, rdg->settings->GatewayAccessToken, -1, &PAACookie, 0);
 
 		if (!PAACookie || (PAACookieLen < 0) || (PAACookieLen > UINT16_MAX / 2))
 		{
@@ -383,12 +380,12 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 		return FALSE;
 	}
 
-	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_CREATE); /* Type (2 bytes) */
-	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
-	Stream_Write_UINT32(s, packetSize); /* PacketLength (4 bytes) */
+	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_CREATE);        /* Type (2 bytes) */
+	Stream_Write_UINT16(s, 0);                             /* Reserved (2 bytes) */
+	Stream_Write_UINT32(s, packetSize);                    /* PacketLength (4 bytes) */
 	Stream_Write_UINT32(s, HTTP_CAPABILITY_TYPE_QUAR_SOH); /* CapabilityFlags (4 bytes) */
-	Stream_Write_UINT16(s, fieldsPresent); /* FieldsPresent (2 bytes) */
-	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes), must be 0 */
+	Stream_Write_UINT16(s, fieldsPresent);                 /* FieldsPresent (2 bytes) */
+	Stream_Write_UINT16(s, 0);                             /* Reserved (2 bytes), must be 0 */
 
 	if (PAACookie)
 	{
@@ -415,7 +412,8 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	BOOL status;
 	WCHAR* clientName = NULL;
 	UINT32 packetSize;
-	int clientNameLen = ConvertToUnicode(CP_UTF8, 0, rdg->settings->ClientHostname, -1, &clientName, 0);
+	int clientNameLen =
+	    ConvertToUnicode(CP_UTF8, 0, rdg->settings->ClientHostname, -1, &clientName, 0);
 
 	if (!clientName || (clientNameLen < 0) || (clientNameLen > UINT16_MAX / 2))
 	{
@@ -432,10 +430,10 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 		return FALSE;
 	}
 
-	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_AUTH); /* Type (2 bytes) */
-	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
-	Stream_Write_UINT32(s, packetSize); /* PacketLength (4 bytes) */
-	Stream_Write_UINT16(s, 0); /* FieldsPresent (2 bytes) */
+	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_AUTH);      /* Type (2 bytes) */
+	Stream_Write_UINT16(s, 0);                         /* Reserved (2 bytes) */
+	Stream_Write_UINT32(s, packetSize);                /* PacketLength (4 bytes) */
+	Stream_Write_UINT16(s, 0);                         /* FieldsPresent (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)clientNameLen * 2); /* Client name string length */
 	Stream_Write_UTF16_String(s, clientName, (size_t)clientNameLen);
 	Stream_SealLength(s);
@@ -456,7 +454,8 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	wStream* s = NULL;
 	BOOL status = FALSE;
 	WCHAR* serverName = NULL;
-	int serverNameLen = ConvertToUnicode(CP_UTF8, 0, rdg->settings->ServerHostname, -1, &serverName, 0);
+	int serverNameLen =
+	    ConvertToUnicode(CP_UTF8, 0, rdg->settings->ServerHostname, -1, &serverName, 0);
 	UINT32 packetSize = 16 + ((UINT32)serverNameLen) * 2;
 
 	if ((serverNameLen < 0) || (serverNameLen > UINT16_MAX / 2))
@@ -468,12 +467,12 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 		goto fail;
 
 	Stream_Write_UINT16(s, PKT_TYPE_CHANNEL_CREATE); /* Type (2 bytes) */
-	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
-	Stream_Write_UINT32(s, packetSize); /* PacketLength (4 bytes) */
-	Stream_Write_UINT8(s, 1); /* Number of resources. (1 byte) */
-	Stream_Write_UINT8(s, 0); /* Number of alternative resources (1 byte) */
+	Stream_Write_UINT16(s, 0);                       /* Reserved (2 bytes) */
+	Stream_Write_UINT32(s, packetSize);              /* PacketLength (4 bytes) */
+	Stream_Write_UINT8(s, 1);                        /* Number of resources. (1 byte) */
+	Stream_Write_UINT8(s, 0);                        /* Number of alternative resources (1 byte) */
 	Stream_Write_UINT16(s, (UINT16)rdg->settings->ServerPort); /* Resource port (2 bytes) */
-	Stream_Write_UINT16(s, 3); /* Protocol number (2 bytes) */
+	Stream_Write_UINT16(s, 3);                                 /* Protocol number (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)serverNameLen * 2);
 	Stream_Write_UTF16_String(s, serverName, (size_t)serverNameLen);
 	Stream_SealLength(s);
@@ -530,8 +529,7 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 	if (!request)
 		return NULL;
 
-	if (!http_request_set_method(request, method) ||
-	    !http_request_set_uri(request, uri))
+	if (!http_request_set_method(request, method) || !http_request_set_uri(request, uri))
 		goto out;
 
 	if (rdg->ntlm)
@@ -571,8 +569,7 @@ static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 
 	if (StatusCode != HTTP_STATUS_DENIED)
 	{
-		WLog_DBG(TAG, "Unexpected NTLM challenge HTTP status: %ld",
-		         StatusCode);
+		WLog_DBG(TAG, "Unexpected NTLM challenge HTTP status: %ld", StatusCode);
 		return FALSE;
 	}
 
@@ -621,8 +618,7 @@ static BOOL rdg_skip_seed_payload(rdpTls* tls, SSIZE_T lastResponseLength)
 	 */
 	if (lastResponseLength < (SSIZE_T)size)
 	{
-		if (!rdg_read_all(tls, seed_payload,
-		                  size - lastResponseLength))
+		if (!rdg_read_all(tls, seed_payload, size - lastResponseLength))
 		{
 			return FALSE;
 		}
@@ -646,8 +642,8 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 10)
 	{
-		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected 10",
-		         __FUNCTION__, Stream_GetRemainingLength(s));
+		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 10", __FUNCTION__,
+		         Stream_GetRemainingLength(s));
 		return FALSE;
 	}
 
@@ -658,7 +654,8 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 	Stream_Read_UINT16(s, extendedAuth);
 	error = rpc_error_to_string(errorCode);
 	WLog_DBG(TAG,
-	         "errorCode=%s, verMajor=%"PRId8", verMinor=%"PRId8", serverVersion=%"PRId16", extendedAuth=%s",
+	         "errorCode=%s, verMajor=%" PRId8 ", verMinor=%" PRId8 ", serverVersion=%" PRId16
+	         ", extendedAuth=%s",
 	         error, verMajor, verMinor, serverVersion, extended_auth_to_string(extendedAuth));
 
 	if (FAILED(errorCode))
@@ -685,8 +682,8 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 10)
 	{
-		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected 10",
-		         __FUNCTION__, Stream_GetRemainingLength(s));
+		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 10", __FUNCTION__,
+		         Stream_GetRemainingLength(s));
 		return FALSE;
 	}
 
@@ -695,8 +692,8 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 	Stream_Read_UINT16(s, fieldsPresent);
 	Stream_Seek_UINT16(s); /* reserved */
 	error = rpc_error_to_string(errorCode);
-	WLog_DBG(TAG, "serverVersion=%"PRId16", errorCode=%s, fieldsPresent=%s",
-	         serverVersion, error, tunnel_response_fields_present_to_string(fieldsPresent));
+	WLog_DBG(TAG, "serverVersion=%" PRId16 ", errorCode=%s, fieldsPresent=%s", serverVersion, error,
+	         tunnel_response_fields_present_to_string(fieldsPresent));
 
 	if (FAILED(errorCode))
 	{
@@ -722,8 +719,8 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected 8",
-		         __FUNCTION__, Stream_GetRemainingLength(s));
+		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 8", __FUNCTION__,
+		         Stream_GetRemainingLength(s));
 		return FALSE;
 	}
 
@@ -731,8 +728,8 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	Stream_Read_UINT16(s, fieldsPresent);
 	Stream_Seek_UINT16(s); /* reserved */
 	error = rpc_error_to_string(errorCode);
-	WLog_DBG(TAG, "errorCode=%s, fieldsPresent=%s",
-	         error, tunnel_authorization_response_fields_present_to_string(fieldsPresent));
+	WLog_DBG(TAG, "errorCode=%s, fieldsPresent=%s", error,
+	         tunnel_authorization_response_fields_present_to_string(fieldsPresent));
 
 	if (FAILED(errorCode))
 	{
@@ -758,8 +755,8 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected 8",
-		         __FUNCTION__, Stream_GetRemainingLength(s));
+		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 8", __FUNCTION__,
+		         Stream_GetRemainingLength(s));
 		return FALSE;
 	}
 
@@ -767,13 +764,13 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 	Stream_Read_UINT16(s, fieldsPresent);
 	Stream_Seek_UINT16(s); /* reserved */
 	error = rpc_error_to_string(errorCode);
-	WLog_DBG(TAG, "channel response errorCode=%s, fieldsPresent=%s",
-	         error, channel_response_fields_present_to_string(fieldsPresent));
+	WLog_DBG(TAG, "channel response errorCode=%s, fieldsPresent=%s", error,
+	         channel_response_fields_present_to_string(fieldsPresent));
 
 	if (FAILED(errorCode))
 	{
-		WLog_ERR(TAG, "channel response errorCode=%s, fieldsPresent=%s",
-		         error, channel_response_fields_present_to_string(fieldsPresent));
+		WLog_ERR(TAG, "channel response errorCode=%s, fieldsPresent=%s", error,
+		         channel_response_fields_present_to_string(fieldsPresent));
 		freerdp_set_last_error(rdg->context, errorCode);
 		return FALSE;
 	}
@@ -791,8 +788,8 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected 8",
-		         __FUNCTION__, Stream_GetRemainingLength(s));
+		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 8", __FUNCTION__,
+		         Stream_GetRemainingLength(s));
 		return FALSE;
 	}
 
@@ -802,8 +799,8 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 
 	if (Stream_Length(s) < packetLength)
 	{
-		WLog_ERR(TAG, "[%s] Short packet %"PRIuz", expected %"PRIuz,
-		         __FUNCTION__, Stream_Length(s), packetLength);
+		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected %" PRIuz, __FUNCTION__,
+		         Stream_Length(s), packetLength);
 		return FALSE;
 	}
 
@@ -878,8 +875,9 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context)
 		}
 		else
 		{
-			BOOL proceed = instance->GatewayAuthenticate(instance, &settings->GatewayUsername,
-			               &settings->GatewayPassword, &settings->GatewayDomain);
+			BOOL proceed =
+			    instance->GatewayAuthenticate(instance, &settings->GatewayUsername,
+			                                  &settings->GatewayPassword, &settings->GatewayDomain);
 
 			if (!proceed)
 			{
@@ -974,15 +972,14 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	rdpSettings* settings = rdg->settings;
 	const char* peerHostname = settings->GatewayHostname;
 	UINT16 peerPort = (UINT16)settings->GatewayPort;
-	const char* proxyUsername, *proxyPassword;
-	BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername,
-	                                       &proxyPassword);
+	const char *proxyUsername, *proxyPassword;
+	BOOL isProxyConnection =
+	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 
 	if (settings->GatewayPort > UINT16_MAX)
 		return FALSE;
 
-	sockfd = freerdp_tcp_connect(rdg->context, settings,
-	                             peerAddress ? peerAddress : peerHostname,
+	sockfd = freerdp_tcp_connect(rdg->context, settings, peerAddress ? peerAddress : peerHostname,
 	                             peerPort, timeout);
 
 	if (sockfd < 0)
@@ -1012,8 +1009,8 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 
 	if (isProxyConnection)
 	{
-		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword, settings->GatewayHostname,
-		                   (UINT16)settings->GatewayPort))
+		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,
+		                   settings->GatewayHostname, (UINT16)settings->GatewayPort))
 		{
 			BIO_free_all(bufferedBio);
 			return FALSE;
@@ -1049,8 +1046,8 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	return (status >= 1);
 }
 
-static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
-        const char* method, const char* peerAddress, int timeout, BOOL* rpcFallback)
+static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* method,
+                                          const char* peerAddress, int timeout, BOOL* rpcFallback)
 {
 	HttpResponse* response = NULL;
 	long statusCode;
@@ -1075,13 +1072,14 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 
 		StatusCode = http_response_get_status_code(response);
 
-		switch(StatusCode)
+		switch (StatusCode)
 		{
 			case HTTP_STATUS_NOT_FOUND:
 			{
 				WLog_INFO(TAG, "RD Gateway does not support HTTP transport.");
 
-				if (rpcFallback) *rpcFallback = TRUE;
+				if (rpcFallback)
+					*rpcFallback = TRUE;
 
 				http_response_free(response);
 				return FALSE;
@@ -1114,7 +1112,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls,
 	http_response_free(response);
 	WLog_DBG(TAG, "%s authorization result: %d", method, statusCode);
 
-	switch(statusCode)
+	switch (statusCode)
 	{
 		case HTTP_STATUS_OK:
 			break;
@@ -1172,8 +1170,8 @@ BOOL rdg_connect(rdpRdg* rdg, int timeout, BOOL* rpcFallback)
 	SOCKET outConnSocket = 0;
 	char* peerAddress = NULL;
 	assert(rdg != NULL);
-	status = rdg_establish_data_connection(
-	             rdg, rdg->tlsOut, "RDG_OUT_DATA", NULL, timeout, rpcFallback);
+	status =
+	    rdg_establish_data_connection(rdg, rdg->tlsOut, "RDG_OUT_DATA", NULL, timeout, rpcFallback);
 
 	if (status)
 	{
@@ -1182,8 +1180,8 @@ BOOL rdg_connect(rdpRdg* rdg, int timeout, BOOL* rpcFallback)
 		 */
 		BIO_get_socket(rdg->tlsOut->underlying, &outConnSocket);
 		peerAddress = freerdp_tcp_get_peer_address(outConnSocket);
-		status = rdg_establish_data_connection(
-		             rdg, rdg->tlsIn, "RDG_IN_DATA", peerAddress, timeout, NULL);
+		status = rdg_establish_data_connection(rdg, rdg->tlsIn, "RDG_IN_DATA", peerAddress, timeout,
+		                                       NULL);
 		free(peerAddress);
 	}
 
@@ -1216,18 +1214,18 @@ static int rdg_write_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
 	if (size < 1)
 		return 0;
 
-	sprintf_s(chunkSize, sizeof(chunkSize), "%"PRIxz"\r\n", packetSize);
+	sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIxz "\r\n", packetSize);
 	sChunk = Stream_New(NULL, strnlen(chunkSize, sizeof(chunkSize)) + packetSize + 2);
 
 	if (!sChunk)
 		return -1;
 
 	Stream_Write(sChunk, chunkSize, strnlen(chunkSize, sizeof(chunkSize)));
-	Stream_Write_UINT16(sChunk, PKT_TYPE_DATA);   /* Type */
-	Stream_Write_UINT16(sChunk, 0);   /* Reserved */
-	Stream_Write_UINT32(sChunk, (UINT32)packetSize);   /* Packet length */
-	Stream_Write_UINT16(sChunk, (UINT16)size);   /* Data size */
-	Stream_Write(sChunk, buf, size);   /* Data */
+	Stream_Write_UINT16(sChunk, PKT_TYPE_DATA);      /* Type */
+	Stream_Write_UINT16(sChunk, 0);                  /* Reserved */
+	Stream_Write_UINT32(sChunk, (UINT32)packetSize); /* Packet length */
+	Stream_Write_UINT16(sChunk, (UINT16)size);       /* Data size */
+	Stream_Write(sChunk, buf, size);                 /* Data */
 	Stream_Write(sChunk, "\r\n", 2);
 	Stream_SealLength(sChunk);
 	s = Stream_Length(sChunk);
@@ -1251,7 +1249,7 @@ static BOOL rdg_process_close_packet(rdpRdg* rdg)
 	wStream* sChunk;
 	UINT32 packetSize = 12;
 	char chunkSize[11];
-	int chunkLen = sprintf_s(chunkSize, sizeof(chunkSize), "%"PRIx32"\r\n", packetSize);
+	int chunkLen = sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIx32 "\r\n", packetSize);
 
 	if (chunkLen < 0)
 		return FALSE;
@@ -1262,10 +1260,10 @@ static BOOL rdg_process_close_packet(rdpRdg* rdg)
 		return FALSE;
 
 	Stream_Write(sChunk, chunkSize, (size_t)chunkLen);
-	Stream_Write_UINT16(sChunk, PKT_TYPE_CLOSE_CHANNEL_RESPONSE);   /* Type */
-	Stream_Write_UINT16(sChunk, 0);   /* Reserved */
-	Stream_Write_UINT32(sChunk, packetSize);   /* Packet length */
-	Stream_Write_UINT32(sChunk, 0);   /* Status code */
+	Stream_Write_UINT16(sChunk, PKT_TYPE_CLOSE_CHANNEL_RESPONSE); /* Type */
+	Stream_Write_UINT16(sChunk, 0);                               /* Reserved */
+	Stream_Write_UINT32(sChunk, packetSize);                      /* Packet length */
+	Stream_Write_UINT32(sChunk, 0);                               /* Status code */
 	Stream_Write(sChunk, "\r\n", 2);
 	Stream_SealLength(sChunk);
 	s = Stream_Length(sChunk);
@@ -1284,7 +1282,7 @@ static BOOL rdg_process_keep_alive_packet(rdpRdg* rdg)
 	wStream* sChunk;
 	size_t packetSize = 8;
 	char chunkSize[11];
-	int chunkLen = sprintf_s(chunkSize, sizeof(chunkSize), "%"PRIxz"\r\n", packetSize);
+	int chunkLen = sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIxz "\r\n", packetSize);
 
 	if ((chunkLen < 0) || (packetSize > UINT32_MAX))
 		return FALSE;
@@ -1295,9 +1293,9 @@ static BOOL rdg_process_keep_alive_packet(rdpRdg* rdg)
 		return FALSE;
 
 	Stream_Write(sChunk, chunkSize, (size_t)chunkLen);
-	Stream_Write_UINT16(sChunk, PKT_TYPE_KEEPALIVE);   /* Type */
-	Stream_Write_UINT16(sChunk, 0);   /* Reserved */
-	Stream_Write_UINT32(sChunk, (UINT32)packetSize);   /* Packet length */
+	Stream_Write_UINT16(sChunk, PKT_TYPE_KEEPALIVE); /* Type */
+	Stream_Write_UINT16(sChunk, 0);                  /* Reserved */
+	Stream_Write_UINT32(sChunk, (UINT32)packetSize); /* Packet length */
 	Stream_Write(sChunk, "\r\n", 2);
 	Stream_SealLength(sChunk);
 	s = Stream_Length(sChunk);
@@ -1338,8 +1336,8 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 
 		while (readCount < payloadSize)
 		{
-			status = BIO_read(rdg->tlsOut->bio, Stream_Pointer(s),
-			                  (int)payloadSize - (int)readCount);
+			status =
+			    BIO_read(rdg->tlsOut->bio, Stream_Pointer(s), (int)payloadSize - (int)readCount);
 
 			if (status <= 0)
 			{
@@ -1470,10 +1468,10 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 static int rdg_bio_write(BIO* bio, const char* buf, int num)
 {
 	int status;
-	rdpRdg* rdg = (rdpRdg*) BIO_get_data(bio);
+	rdpRdg* rdg = (rdpRdg*)BIO_get_data(bio);
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 	EnterCriticalSection(&rdg->writeSection);
-	status = rdg_write_data_packet(rdg, (const BYTE*) buf, num);
+	status = rdg_write_data_packet(rdg, (const BYTE*)buf, num);
 	LeaveCriticalSection(&rdg->writeSection);
 
 	if (status < 0)
@@ -1497,8 +1495,8 @@ static int rdg_bio_write(BIO* bio, const char* buf, int num)
 static int rdg_bio_read(BIO* bio, char* buf, int size)
 {
 	int status;
-	rdpRdg* rdg = (rdpRdg*) BIO_get_data(bio);
-	status = rdg_read_data_packet(rdg, (BYTE*) buf, size);
+	rdpRdg* rdg = (rdpRdg*)BIO_get_data(bio);
+	status = rdg_read_data_packet(rdg, (BYTE*)buf, size);
 
 	if (status < 0)
 	{
@@ -1537,7 +1535,7 @@ static int rdg_bio_gets(BIO* bio, char* str, int size)
 static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	long status = -1;
-	rdpRdg* rdg = (rdpRdg*) BIO_get_data(bio);
+	rdpRdg* rdg = (rdpRdg*)BIO_get_data(bio);
 	rdpTls* tlsOut = rdg->tlsOut;
 	rdpTls* tlsIn = rdg->tlsIn;
 
@@ -1563,7 +1561,7 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_WAIT_READ)
 	{
-		int timeout = (int) arg1;
+		int timeout = (int)arg1;
 		BIO* bio = tlsOut->bio;
 
 		if (BIO_read_blocked(bio))
@@ -1575,7 +1573,7 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_WAIT_WRITE)
 	{
-		int timeout = (int) arg1;
+		int timeout = (int)arg1;
 		BIO* bio = tlsIn->bio;
 
 		if (BIO_write_blocked(bio))
@@ -1645,7 +1643,7 @@ rdpRdg* rdg_new(rdpContext* context)
 	if (!context)
 		return NULL;
 
-	rdg = (rdpRdg*) calloc(1, sizeof(rdpRdg));
+	rdg = (rdpRdg*)calloc(1, sizeof(rdpRdg));
 
 	if (rdg)
 	{
@@ -1703,7 +1701,8 @@ rdpRdg* rdg_new(rdpContext* context)
 					break;
 
 				default:
-					WLog_DBG(TAG, "RDG extended authentication method %d not supported", rdg->extAuth);
+					WLog_DBG(TAG, "RDG extended authentication method %d not supported",
+					         rdg->extAuth);
 			}
 		}
 

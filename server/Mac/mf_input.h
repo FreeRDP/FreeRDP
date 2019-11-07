@@ -27,7 +27,7 @@ BOOL mf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 BOOL mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 BOOL mf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
-//dummy versions
+// dummy versions
 BOOL mf_input_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code);
 BOOL mf_input_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code);
 BOOL mf_input_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);

@@ -36,7 +36,6 @@
 
 #ifndef _WIN32
 
-
 #ifdef ANDROID
 #include <sys/vfs.h>
 #else
@@ -51,7 +50,7 @@ static HANDLE_CREATOR _NamedPipeClientHandleCreator;
 
 static BOOL NamedPipeClientIsHandled(HANDLE handle)
 {
-	WINPR_NAMED_PIPE* pFile = (WINPR_NAMED_PIPE*) handle;
+	WINPR_NAMED_PIPE* pFile = (WINPR_NAMED_PIPE*)handle;
 
 	if (!pFile || (pFile->Type != HANDLE_TYPE_NAMED_PIPE) || (pFile == INVALID_HANDLE_VALUE))
 	{
@@ -64,20 +63,20 @@ static BOOL NamedPipeClientIsHandled(HANDLE handle)
 
 BOOL NamedPipeClientCloseHandle(HANDLE handle)
 {
-	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*) handle;
+	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*)handle;
 
 	if (!NamedPipeClientIsHandled(handle))
 		return FALSE;
 
 	if (pNamedPipe->clientfd != -1)
 	{
-		//WLOG_DBG(TAG, "closing clientfd %d", pNamedPipe->clientfd);
+		// WLOG_DBG(TAG, "closing clientfd %d", pNamedPipe->clientfd);
 		close(pNamedPipe->clientfd);
 	}
 
 	if (pNamedPipe->serverfd != -1)
 	{
-		//WLOG_DBG(TAG, "closing serverfd %d", pNamedPipe->serverfd);
+		// WLOG_DBG(TAG, "closing serverfd %d", pNamedPipe->serverfd);
 		close(pNamedPipe->serverfd);
 	}
 
@@ -104,8 +103,7 @@ static int NamedPipeClientGetFd(HANDLE handle)
 		return file->clientfd;
 }
 
-static HANDLE_OPS ops =
-{
+static HANDLE_OPS ops = {
 	NamedPipeClientIsHandled,
 	NamedPipeClientCloseHandle,
 	NamedPipeClientGetFd,
@@ -129,8 +127,10 @@ static HANDLE_OPS ops =
 };
 
 static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess,
-        DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-        DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+                                         DWORD dwShareMode,
+                                         LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+                                         DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
+                                         HANDLE hTemplateFile)
 {
 	char* name;
 	int status;
@@ -157,7 +157,7 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 		return INVALID_HANDLE_VALUE;
 
 	free(name);
-	pNamedPipe = (WINPR_NAMED_PIPE*) calloc(1, sizeof(WINPR_NAMED_PIPE));
+	pNamedPipe = (WINPR_NAMED_PIPE*)calloc(1, sizeof(WINPR_NAMED_PIPE));
 
 	if (!pNamedPipe)
 	{
@@ -165,7 +165,7 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 		return INVALID_HANDLE_VALUE;
 	}
 
-	hNamedPipe = (HANDLE) pNamedPipe;
+	hNamedPipe = (HANDLE)pNamedPipe;
 	WINPR_HANDLE_SET_TYPE_AND_MODE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE, WINPR_FD_READ);
 	pNamedPipe->name = _strdup(lpFileName);
 
@@ -208,15 +208,15 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	ZeroMemory(&s, sizeof(struct sockaddr_un));
 	s.sun_family = AF_UNIX;
 	sprintf_s(s.sun_path, ARRAYSIZE(s.sun_path), "%s", pNamedPipe->lpFilePath);
-	status = connect(pNamedPipe->clientfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
+	status = connect(pNamedPipe->clientfd, (struct sockaddr*)&s, sizeof(struct sockaddr_un));
 	pNamedPipe->ops = &ops;
 
 	if (status != 0)
 	{
 		close(pNamedPipe->clientfd);
-		free((char*) pNamedPipe->name);
-		free((char*) pNamedPipe->lpFileName);
-		free((char*) pNamedPipe->lpFilePath);
+		free((char*)pNamedPipe->name);
+		free((char*)pNamedPipe->lpFileName);
+		free((char*)pNamedPipe->lpFilePath);
 		free(pNamedPipe);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -246,7 +246,7 @@ HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void)
 
 /* Extended API */
 
-#define NAMED_PIPE_PREFIX_PATH		"\\\\.\\pipe\\"
+#define NAMED_PIPE_PREFIX_PATH "\\\\.\\pipe\\"
 
 BOOL IsNamedPipeFileNameA(LPCSTR lpName)
 {
@@ -291,7 +291,7 @@ char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName)
 	char* lpFilePath;
 	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
 	lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
-	lpFilePath = GetCombinedPath(lpPipePath, (char*) lpFileName);
+	lpFilePath = GetCombinedPath(lpPipePath, (char*)lpFileName);
 	free(lpPipePath);
 	free(lpFileName);
 	return lpFilePath;
@@ -302,7 +302,7 @@ int GetNamePipeFileDescriptor(HANDLE hNamedPipe)
 #ifndef _WIN32
 	int fd;
 	WINPR_NAMED_PIPE* pNamedPipe;
-	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
+	pNamedPipe = (WINPR_NAMED_PIPE*)hNamedPipe;
 
 	if (!pNamedPipe || pNamedPipe->Type != HANDLE_TYPE_NAMED_PIPE)
 		return -1;
@@ -313,4 +313,3 @@ int GetNamePipeFileDescriptor(HANDLE hNamedPipe)
 	return -1;
 #endif
 }
-

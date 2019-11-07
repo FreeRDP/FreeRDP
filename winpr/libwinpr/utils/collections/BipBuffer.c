@@ -32,11 +32,10 @@
  * http://www.codeproject.com/Articles/3479/The-Bip-Buffer-The-Circular-Buffer-with-a-Twist
  */
 
-#define BipBlock_Clear(_bbl) \
-	_bbl.index = _bbl.size = 0
+#define BipBlock_Clear(_bbl) _bbl.index = _bbl.size = 0
 
 #define BipBlock_Copy(_dst, _src) \
-	_dst.index = _src.index; \
+	_dst.index = _src.index;      \
 	_dst.size = _src.size
 
 void BipBuffer_Clear(wBipBuffer* bb)
@@ -53,7 +52,7 @@ BOOL BipBuffer_AllocBuffer(wBipBuffer* bb, size_t size)
 		return FALSE;
 
 	size += size % bb->pageSize;
-	bb->buffer = (BYTE*) malloc(size);
+	bb->buffer = (BYTE*)malloc(size);
 
 	if (!bb->buffer)
 		return FALSE;
@@ -73,7 +72,7 @@ BOOL BipBuffer_Grow(wBipBuffer* bb, size_t size)
 	if (size <= bb->size)
 		return TRUE;
 
-	buffer = (BYTE*) malloc(size);
+	buffer = (BYTE*)malloc(size);
 
 	if (!buffer)
 		return FALSE;
@@ -403,13 +402,13 @@ SSIZE_T BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size)
 wBipBuffer* BipBuffer_New(size_t size)
 {
 	wBipBuffer* bb;
-	bb = (wBipBuffer*) calloc(1, sizeof(wBipBuffer));
+	bb = (wBipBuffer*)calloc(1, sizeof(wBipBuffer));
 
 	if (bb)
 	{
 		SYSTEM_INFO si;
 		GetSystemInfo(&si);
-		bb->pageSize = (size_t) si.dwPageSize;
+		bb->pageSize = (size_t)si.dwPageSize;
 
 		if (bb->pageSize < 4096)
 			bb->pageSize = 4096;

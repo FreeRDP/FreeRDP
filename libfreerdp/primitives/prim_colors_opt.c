@@ -39,28 +39,27 @@ static primitives_t* generic = NULL;
 #ifdef WITH_SSE2
 
 #ifdef __GNUC__
-# define GNU_INLINE \
-	__attribute__((__gnu_inline__, __always_inline__, __artificial__))
+#define GNU_INLINE __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 #else
-# define GNU_INLINE
+#define GNU_INLINE
 #endif
 
-#define CACHE_LINE_BYTES	64
+#define CACHE_LINE_BYTES 64
 
-#define _mm_between_epi16(_val, _min, _max) \
-	do { _val = _mm_min_epi16(_max, _mm_max_epi16(_val, _min)); } while (0)
+#define _mm_between_epi16(_val, _min, _max)                    \
+	do                                                         \
+	{                                                          \
+		_val = _mm_min_epi16(_max, _mm_max_epi16(_val, _min)); \
+	} while (0)
 
 #ifdef DO_PREFETCH
 /*---------------------------------------------------------------------------*/
-static inline void GNU_INLINE _mm_prefetch_buffer(
-    char* buffer,
-    int num_bytes)
+static inline void GNU_INLINE _mm_prefetch_buffer(char* buffer, int num_bytes)
 {
-	__m128i* buf = (__m128i*) buffer;
+	__m128i* buf = (__m128i*)buffer;
 	unsigned int i;
 
-	for (i = 0; i < (num_bytes / sizeof(__m128i));
-	     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
+	for (i = 0; i < (num_bytes / sizeof(__m128i)); i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 	{
 		_mm_prefetch((char*)(&buf[i]), _MM_HINT_NTA);
 	}
@@ -68,45 +67,36 @@ static inline void GNU_INLINE _mm_prefetch_buffer(
 #endif /* DO_PREFETCH */
 
 /*---------------------------------------------------------------------------*/
-static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(
-    const INT16* pSrc[3],
-    int srcStep,
-    INT16* pDst[3],
-    int dstStep,
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(const INT16* pSrc[3], int srcStep, INT16* pDst[3],
+                                             int dstStep,
+                                             const prim_size_t* roi) /* region of interest */
 {
 	__m128i zero, max, r_cr, g_cb, g_cr, b_cb, c4096;
-	__m128i* y_buf, *cb_buf, *cr_buf, *r_buf, *g_buf, *b_buf;
+	__m128i *y_buf, *cb_buf, *cr_buf, *r_buf, *g_buf, *b_buf;
 	UINT32 yp;
 	int srcbump, dstbump, imax;
 
-	if (((ULONG_PTR)(pSrc[0]) & 0x0f)
-	    || ((ULONG_PTR)(pSrc[1]) & 0x0f)
-	    || ((ULONG_PTR)(pSrc[2]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[0]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[1]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[2]) & 0x0f)
-	    || (roi->width & 0x07)
-	    || (srcStep & 127)
-	    || (dstStep & 127))
+	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
+	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst[0]) & 0x0f) ||
+	    ((ULONG_PTR)(pDst[1]) & 0x0f) || ((ULONG_PTR)(pDst[2]) & 0x0f) || (roi->width & 0x07) ||
+	    (srcStep & 127) || (dstStep & 127))
 	{
 		/* We can't maintain 16-byte alignment. */
-		return generic->yCbCrToRGB_16s16s_P3P3(pSrc, srcStep,
-		                                       pDst, dstStep, roi);
+		return generic->yCbCrToRGB_16s16s_P3P3(pSrc, srcStep, pDst, dstStep, roi);
 	}
 
 	zero = _mm_setzero_si128();
 	max = _mm_set1_epi16(255);
-	y_buf  = (__m128i*)(pSrc[0]);
+	y_buf = (__m128i*)(pSrc[0]);
 	cb_buf = (__m128i*)(pSrc[1]);
 	cr_buf = (__m128i*)(pSrc[2]);
-	r_buf  = (__m128i*)(pDst[0]);
-	g_buf  = (__m128i*)(pDst[1]);
-	b_buf  = (__m128i*)(pDst[2]);
-	r_cr = _mm_set1_epi16(22986);	/*  1.403 << 14 */
-	g_cb = _mm_set1_epi16(-5636);	/* -0.344 << 14 */
-	g_cr = _mm_set1_epi16(-11698);	/* -0.714 << 14 */
-	b_cb = _mm_set1_epi16(28999);	/*  1.770 << 14 */
+	r_buf = (__m128i*)(pDst[0]);
+	g_buf = (__m128i*)(pDst[1]);
+	b_buf = (__m128i*)(pDst[2]);
+	r_cr = _mm_set1_epi16(22986);  /*  1.403 << 14 */
+	g_cb = _mm_set1_epi16(-5636);  /* -0.344 << 14 */
+	g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
+	b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
 	c4096 = _mm_set1_epi16(4096);
 	srcbump = srcStep / sizeof(__m128i);
 	dstbump = dstStep / sizeof(__m128i);
@@ -120,17 +110,17 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(
 		for (i = 0; i < roi->width * sizeof(INT16) / sizeof(__m128i);
 		     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 		{
-			_mm_prefetch((char*)(&y_buf[i]),  _MM_HINT_NTA);
+			_mm_prefetch((char*)(&y_buf[i]), _MM_HINT_NTA);
 			_mm_prefetch((char*)(&cb_buf[i]), _MM_HINT_NTA);
 			_mm_prefetch((char*)(&cr_buf[i]), _MM_HINT_NTA);
 		}
 
-		y_buf  += srcbump;
+		y_buf += srcbump;
 		cb_buf += srcbump;
 		cr_buf += srcbump;
 	}
 
-	y_buf  = (__m128i*)(pSrc[0]);
+	y_buf = (__m128i*)(pSrc[0]);
 	cb_buf = (__m128i*)(pSrc[1]);
 	cr_buf = (__m128i*)(pSrc[2]);
 #endif /* DO_PREFETCH */
@@ -191,7 +181,7 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(
 			_mm_store_si128(b_buf + i, b);
 		}
 
-		y_buf  += srcbump;
+		y_buf += srcbump;
 		cb_buf += srcbump;
 		cr_buf += srcbump;
 		r_buf += dstbump;
@@ -203,17 +193,16 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(
 }
 
 /*---------------------------------------------------------------------------*/
-static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(
-    const INT16* pSrc[3], UINT32 srcStep,
-    BYTE* pDst, UINT32 dstStep,
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* pSrc[3], UINT32 srcStep, BYTE* pDst,
+                                                   UINT32 dstStep,
+                                                   const prim_size_t* roi) /* region of interest */
 {
 	const __m128i zero = _mm_setzero_si128();
 	const __m128i max = _mm_set1_epi16(255);
-	const __m128i r_cr = _mm_set1_epi16(22986);	/*  1.403 << 14 */
-	const __m128i g_cb = _mm_set1_epi16(-5636);	/* -0.344 << 14 */
-	const __m128i g_cr = _mm_set1_epi16(-11698);	/* -0.714 << 14 */
-	const __m128i b_cb = _mm_set1_epi16(28999);	/*  1.770 << 14 */
+	const __m128i r_cr = _mm_set1_epi16(22986);  /*  1.403 << 14 */
+	const __m128i g_cb = _mm_set1_epi16(-5636);  /* -0.344 << 14 */
+	const __m128i g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
+	const __m128i b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
 	const __m128i c4096 = _mm_set1_epi16(4096);
 	const INT16* y_buf = (INT16*)pSrc[0];
 	const INT16* cb_buf = (INT16*)pSrc[1];
@@ -231,20 +220,19 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(
 	{
 		int i;
 
-		for (i = 0; i < imax;
-		     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
+		for (i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 		{
-			_mm_prefetch((char*)(&((__m128i*)y_buf)[i]),  _MM_HINT_NTA);
+			_mm_prefetch((char*)(&((__m128i*)y_buf)[i]), _MM_HINT_NTA);
 			_mm_prefetch((char*)(&((__m128i*)cb_buf)[i]), _MM_HINT_NTA);
 			_mm_prefetch((char*)(&((__m128i*)cr_buf)[i]), _MM_HINT_NTA);
 		}
 
-		y_buf  += srcStep / sizeof(INT16);
+		y_buf += srcStep / sizeof(INT16);
 		cb_buf += srcStep / sizeof(INT16);
 		cr_buf += srcStep / sizeof(INT16);
 	}
 
-	y_buf  = (INT16*)pSrc[0];
+	y_buf = (INT16*)pSrc[0];
 	cb_buf = (INT16*)pSrc[1];
 	cr_buf = (INT16*)pSrc[2];
 #endif /* DO_PREFETCH */
@@ -333,28 +321,28 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(
 				/* The comments below pretend these are 8-byte registers
 				 * rather than 16-byte, for readability.
 				 */
-				R0 = b1; /* R0 = 00B300B200B100B0 */
-				R1 = b2; /* R1 = 00B700B600B500B4 */
-				R0 = _mm_packus_epi16(R0, R1);	/* R0 = B7B6B5B4B3B2B1B0 */
-				R1 = g1;		/* R1 = 00G300G200G100G0 */
-				R2 = g2;		/* R2 = 00G700G600G500G4 */
-				R1 = _mm_packus_epi16(R1, R2);				/* R1 = G7G6G5G4G3G2G1G0 */
-				R2 = R1;						/* R2 = G7G6G5G4G3G2G1G0 */
-				R2 = _mm_unpacklo_epi8(R0, R2);				/* R2 = B3G3B2G2B1G1B0G0 */
-				R1 = _mm_unpackhi_epi8(R0, R1);				/* R1 = B7G7B6G6B5G5B4G4 */
-				R0 = r1;		/* R0 = 00R300R200R100R0 */
-				R3 = r2;		/* R3 = 00R700R600R500R4 */
-				R0 = _mm_packus_epi16(R0, R3);				/* R0 = R7R6R5R4R3R2R1R0 */
-				R3 = _mm_set1_epi32(0xFFFFFFFFU);				/* R3 = FFFFFFFFFFFFFFFF */
-				R4 = R3;						/* R4 = FFFFFFFFFFFFFFFF */
-				R4 = _mm_unpacklo_epi8(R0, R4);				/* R4 = R3FFR2FFR1FFR0FF */
-				R3 = _mm_unpackhi_epi8(R0, R3);				/* R3 = R7FFR6FFR5FFR4FF */
-				R0 = R4;						/* R0 = R4               */
-				R0 = _mm_unpacklo_epi16(R2, R0);				/* R0 = B1G1R1FFB0G0R0FF */
-				R4 = _mm_unpackhi_epi16(R2, R4);				/* R4 = B3G3R3FFB2G2R2FF */
-				R2 = R3;						/* R2 = R3               */
-				R2 = _mm_unpacklo_epi16(R1, R2);				/* R2 = B5G5R5FFB4G4R4FF */
-				R3 = _mm_unpackhi_epi16(R1, R3);				/* R3 = B7G7R7FFB6G6R6FF */
+				R0 = b1;                              /* R0 = 00B300B200B100B0 */
+				R1 = b2;                              /* R1 = 00B700B600B500B4 */
+				R0 = _mm_packus_epi16(R0, R1);        /* R0 = B7B6B5B4B3B2B1B0 */
+				R1 = g1;                              /* R1 = 00G300G200G100G0 */
+				R2 = g2;                              /* R2 = 00G700G600G500G4 */
+				R1 = _mm_packus_epi16(R1, R2);        /* R1 = G7G6G5G4G3G2G1G0 */
+				R2 = R1;                              /* R2 = G7G6G5G4G3G2G1G0 */
+				R2 = _mm_unpacklo_epi8(R0, R2);       /* R2 = B3G3B2G2B1G1B0G0 */
+				R1 = _mm_unpackhi_epi8(R0, R1);       /* R1 = B7G7B6G6B5G5B4G4 */
+				R0 = r1;                              /* R0 = 00R300R200R100R0 */
+				R3 = r2;                              /* R3 = 00R700R600R500R4 */
+				R0 = _mm_packus_epi16(R0, R3);        /* R0 = R7R6R5R4R3R2R1R0 */
+				R3 = _mm_set1_epi32(0xFFFFFFFFU);     /* R3 = FFFFFFFFFFFFFFFF */
+				R4 = R3;                              /* R4 = FFFFFFFFFFFFFFFF */
+				R4 = _mm_unpacklo_epi8(R0, R4);       /* R4 = R3FFR2FFR1FFR0FF */
+				R3 = _mm_unpackhi_epi8(R0, R3);       /* R3 = R7FFR6FFR5FFR4FF */
+				R0 = R4;                              /* R0 = R4               */
+				R0 = _mm_unpacklo_epi16(R2, R0);      /* R0 = B1G1R1FFB0G0R0FF */
+				R4 = _mm_unpackhi_epi16(R2, R4);      /* R4 = B3G3R3FFB2G2R2FF */
+				R2 = R3;                              /* R2 = R3               */
+				R2 = _mm_unpacklo_epi16(R1, R2);      /* R2 = B5G5R5FFB4G4R4FF */
+				R3 = _mm_unpackhi_epi16(R1, R3);      /* R3 = B7G7R7FFB6G6R6FF */
 				_mm_store_si128((__m128i*)d_buf, R0); /* B1G1R1FFB0G0R0FF      */
 				d_buf += sizeof(__m128i);
 				_mm_store_si128((__m128i*)d_buf, R4); /* B3G3R3FFB2G2R2FF      */
@@ -392,17 +380,16 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(
 }
 
 /*---------------------------------------------------------------------------*/
-static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(
-    const INT16* pSrc[3], UINT32 srcStep,
-    BYTE* pDst, UINT32 dstStep,
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* pSrc[3], UINT32 srcStep, BYTE* pDst,
+                                                   UINT32 dstStep,
+                                                   const prim_size_t* roi) /* region of interest */
 {
 	const __m128i zero = _mm_setzero_si128();
 	const __m128i max = _mm_set1_epi16(255);
-	const __m128i r_cr = _mm_set1_epi16(22986);	/*  1.403 << 14 */
-	const __m128i g_cb = _mm_set1_epi16(-5636);	/* -0.344 << 14 */
-	const __m128i g_cr = _mm_set1_epi16(-11698);	/* -0.714 << 14 */
-	const __m128i b_cb = _mm_set1_epi16(28999);	/*  1.770 << 14 */
+	const __m128i r_cr = _mm_set1_epi16(22986);  /*  1.403 << 14 */
+	const __m128i g_cb = _mm_set1_epi16(-5636);  /* -0.344 << 14 */
+	const __m128i g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
+	const __m128i b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
 	const __m128i c4096 = _mm_set1_epi16(4096);
 	const INT16* y_buf = (INT16*)pSrc[0];
 	const INT16* cb_buf = (INT16*)pSrc[1];
@@ -420,20 +407,19 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(
 	{
 		int i;
 
-		for (i = 0; i < imax;
-		     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
+		for (i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 		{
-			_mm_prefetch((char*)(&((__m128i*)y_buf)[i]),  _MM_HINT_NTA);
+			_mm_prefetch((char*)(&((__m128i*)y_buf)[i]), _MM_HINT_NTA);
 			_mm_prefetch((char*)(&((__m128i*)cb_buf)[i]), _MM_HINT_NTA);
 			_mm_prefetch((char*)(&((__m128i*)cr_buf)[i]), _MM_HINT_NTA);
 		}
 
-		y_buf  += srcStep / sizeof(INT16);
+		y_buf += srcStep / sizeof(INT16);
 		cb_buf += srcStep / sizeof(INT16);
 		cr_buf += srcStep / sizeof(INT16);
 	}
 
-	y_buf  = (INT16*)(pSrc[0]);
+	y_buf = (INT16*)(pSrc[0]);
 	cb_buf = (INT16*)(pSrc[1]);
 	cr_buf = (INT16*)(pSrc[2]);
 #endif /* DO_PREFETCH */
@@ -522,28 +508,28 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(
 				/* The comments below pretend these are 8-byte registers
 				 * rather than 16-byte, for readability.
 				 */
-				R0 = r1; /* R0 = 00R300R200R100R0 */
-				R1 = r2; /* R1 = 00R700R600R500R4 */
-				R0 = _mm_packus_epi16(R0, R1);	/* R0 = R7R6R5R4R3R2R1R0 */
-				R1 = g1;		/* R1 = 00G300G200G100G0 */
-				R2 = g2;		/* R2 = 00G700G600G500G4 */
-				R1 = _mm_packus_epi16(R1, R2);				/* R1 = G7G6G5G4G3G2G1G0 */
-				R2 = R1;						/* R2 = G7G6G5G4G3G2G1G0 */
-				R2 = _mm_unpacklo_epi8(R0, R2);				/* R2 = R3G3R2G2R1G1R0G0 */
-				R1 = _mm_unpackhi_epi8(R0, R1);				/* R1 = R7G7R6G6R5G5R4G4 */
-				R0 = b1;		/* R0 = 00B300B200B100B0 */
-				R3 = b2;		/* R3 = 00B700B600B500B4 */
-				R0 = _mm_packus_epi16(R0, R3);				/* R0 = B7B6B5B4B3B2B1B0 */
-				R3 = _mm_set1_epi32(0xFFFFFFFFU);				/* R3 = FFFFFFFFFFFFFFFF */
-				R4 = R3;						/* R4 = FFFFFFFFFFFFFFFF */
-				R4 = _mm_unpacklo_epi8(R0, R4);				/* R4 = B3FFB2FFB1FFB0FF */
-				R3 = _mm_unpackhi_epi8(R0, R3);				/* R3 = B7FFB6FFB5FFB4FF */
-				R0 = R4;						/* R0 = R4               */
-				R0 = _mm_unpacklo_epi16(R2, R0);				/* R0 = R1G1B1FFR0G0B0FF */
-				R4 = _mm_unpackhi_epi16(R2, R4);				/* R4 = R3G3B3FFR2G2B2FF */
-				R2 = R3;						/* R2 = R3               */
-				R2 = _mm_unpacklo_epi16(R1, R2);				/* R2 = R5G5B5FFR4G4B4FF */
-				R3 = _mm_unpackhi_epi16(R1, R3);				/* R3 = R7G7B7FFR6G6B6FF */
+				R0 = r1;                              /* R0 = 00R300R200R100R0 */
+				R1 = r2;                              /* R1 = 00R700R600R500R4 */
+				R0 = _mm_packus_epi16(R0, R1);        /* R0 = R7R6R5R4R3R2R1R0 */
+				R1 = g1;                              /* R1 = 00G300G200G100G0 */
+				R2 = g2;                              /* R2 = 00G700G600G500G4 */
+				R1 = _mm_packus_epi16(R1, R2);        /* R1 = G7G6G5G4G3G2G1G0 */
+				R2 = R1;                              /* R2 = G7G6G5G4G3G2G1G0 */
+				R2 = _mm_unpacklo_epi8(R0, R2);       /* R2 = R3G3R2G2R1G1R0G0 */
+				R1 = _mm_unpackhi_epi8(R0, R1);       /* R1 = R7G7R6G6R5G5R4G4 */
+				R0 = b1;                              /* R0 = 00B300B200B100B0 */
+				R3 = b2;                              /* R3 = 00B700B600B500B4 */
+				R0 = _mm_packus_epi16(R0, R3);        /* R0 = B7B6B5B4B3B2B1B0 */
+				R3 = _mm_set1_epi32(0xFFFFFFFFU);     /* R3 = FFFFFFFFFFFFFFFF */
+				R4 = R3;                              /* R4 = FFFFFFFFFFFFFFFF */
+				R4 = _mm_unpacklo_epi8(R0, R4);       /* R4 = B3FFB2FFB1FFB0FF */
+				R3 = _mm_unpackhi_epi8(R0, R3);       /* R3 = B7FFB6FFB5FFB4FF */
+				R0 = R4;                              /* R0 = R4               */
+				R0 = _mm_unpacklo_epi16(R2, R0);      /* R0 = R1G1B1FFR0G0B0FF */
+				R4 = _mm_unpackhi_epi16(R2, R4);      /* R4 = R3G3B3FFR2G2B2FF */
+				R2 = R3;                              /* R2 = R3               */
+				R2 = _mm_unpacklo_epi16(R1, R2);      /* R2 = R5G5B5FFR4G4B4FF */
+				R3 = _mm_unpackhi_epi16(R1, R3);      /* R3 = R7G7B7FFR6G6B6FF */
 				_mm_store_si128((__m128i*)d_buf, R0); /* R1G1B1FFR0G0B0FF      */
 				d_buf += sizeof(__m128i);
 				_mm_store_si128((__m128i*)d_buf, R4); /* R3G3B3FFR2G2B2FF      */
@@ -580,21 +566,16 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R(
-    const INT16* pSrc[3], UINT32 srcStep,
-    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], UINT32 srcStep, BYTE* pDst,
+                                              UINT32 dstStep, UINT32 DstFormat,
+                                              const prim_size_t* roi) /* region of interest */
 {
-	if (((ULONG_PTR)(pSrc[0]) & 0x0f)
-	    || ((ULONG_PTR)(pSrc[1]) & 0x0f)
-	    || ((ULONG_PTR)(pSrc[2]) & 0x0f)
-	    || ((ULONG_PTR)(pDst) & 0x0f)
-	    || (srcStep & 0x0f)
-	    || (dstStep & 0x0f))
+	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
+	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst)&0x0f) || (srcStep & 0x0f) ||
+	    (dstStep & 0x0f))
 	{
 		/* We can't maintain 16-byte alignment. */
-		return generic->yCbCrToRGB_16s8u_P3AC4R(pSrc, srcStep,
-		                                        pDst, dstStep, DstFormat, roi);
+		return generic->yCbCrToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 	}
 
 	switch (DstFormat)
@@ -614,44 +595,35 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R(
 /* The encodec YCbCr coeffectients are represented as 11.5 fixed-point
  * numbers. See the general code above.
  */
-static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(
-    const INT16* pSrc[3],
-    int srcStep,
-    INT16* pDst[3],
-    int dstStep,
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(const INT16* pSrc[3], int srcStep, INT16* pDst[3],
+                                             int dstStep,
+                                             const prim_size_t* roi) /* region of interest */
 {
 	__m128i min, max, y_r, y_g, y_b, cb_r, cb_g, cb_b, cr_r, cr_g, cr_b;
-	__m128i* r_buf, *g_buf, *b_buf, *y_buf, *cb_buf, *cr_buf;
+	__m128i *r_buf, *g_buf, *b_buf, *y_buf, *cb_buf, *cr_buf;
 	UINT32 yp;
 	int srcbump, dstbump, imax;
 
-	if (((ULONG_PTR)(pSrc[0]) & 0x0f)
-	    || ((ULONG_PTR)(pSrc[1]) & 0x0f)
-	    || ((ULONG_PTR)(pSrc[2]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[0]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[1]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[2]) & 0x0f)
-	    || (roi->width & 0x07)
-	    || (srcStep & 127)
-	    || (dstStep & 127))
+	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
+	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst[0]) & 0x0f) ||
+	    ((ULONG_PTR)(pDst[1]) & 0x0f) || ((ULONG_PTR)(pDst[2]) & 0x0f) || (roi->width & 0x07) ||
+	    (srcStep & 127) || (dstStep & 127))
 	{
 		/* We can't maintain 16-byte alignment. */
-		return generic->RGBToYCbCr_16s16s_P3P3(pSrc, srcStep,
-		                                       pDst, dstStep, roi);
+		return generic->RGBToYCbCr_16s16s_P3P3(pSrc, srcStep, pDst, dstStep, roi);
 	}
 
 	min = _mm_set1_epi16(-128 * 32);
 	max = _mm_set1_epi16(127 * 32);
-	r_buf  = (__m128i*)(pSrc[0]);
-	g_buf  = (__m128i*)(pSrc[1]);
-	b_buf  = (__m128i*)(pSrc[2]);
-	y_buf  = (__m128i*)(pDst[0]);
+	r_buf = (__m128i*)(pSrc[0]);
+	g_buf = (__m128i*)(pSrc[1]);
+	b_buf = (__m128i*)(pSrc[2]);
+	y_buf = (__m128i*)(pDst[0]);
 	cb_buf = (__m128i*)(pDst[1]);
 	cr_buf = (__m128i*)(pDst[2]);
-	y_r  = _mm_set1_epi16(9798);   /*  0.299000 << 15 */
-	y_g  = _mm_set1_epi16(19235);  /*  0.587000 << 15 */
-	y_b  = _mm_set1_epi16(3735);   /*  0.114000 << 15 */
+	y_r = _mm_set1_epi16(9798);    /*  0.299000 << 15 */
+	y_g = _mm_set1_epi16(19235);   /*  0.587000 << 15 */
+	y_b = _mm_set1_epi16(3735);    /*  0.114000 << 15 */
 	cb_r = _mm_set1_epi16(-5535);  /* -0.168935 << 15 */
 	cb_g = _mm_set1_epi16(-10868); /* -0.331665 << 15 */
 	cb_b = _mm_set1_epi16(16403);  /*  0.500590 << 15 */
@@ -735,7 +707,7 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(
 			_mm_store_si128(cr_buf + i, cr);
 		}
 
-		y_buf  += srcbump;
+		y_buf += srcbump;
 		cb_buf += srcbump;
 		cr_buf += srcbump;
 		r_buf += dstbump;
@@ -747,12 +719,12 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(
 }
 
 /*---------------------------------------------------------------------------*/
-static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
-    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
-    UINT32 srcStep,			/* bytes between rows in source data */
-    BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
-    UINT32 dstStep,			/* bytes between rows in dest data */
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t
+sse2_RGBToRGB_16s8u_P3AC4R_BGRX(const INT16* const pSrc[3], /* 16-bit R,G, and B arrays */
+                                UINT32 srcStep,             /* bytes between rows in source data */
+                                BYTE* pDst,             /* 32-bit interleaved ARGB (ABGR?) data */
+                                UINT32 dstStep,         /* bytes between rows in dest data */
+                                const prim_size_t* roi) /* region of interest */
 {
 	const UINT16* pr = (const UINT16*)(pSrc[0]);
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
@@ -761,7 +733,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out;
 	UINT32 srcbump, dstbump, y;
-	out = (BYTE*) pDst;
+	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
@@ -778,54 +750,54 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pb);
-				pb += 8;		/* R0 = 00B300B200B100B0 */
+				pb += 8; /* R0 = 00B300B200B100B0 */
 				R1 = _mm_load_si128((__m128i*)pb);
-				pb += 8;		/* R1 = 00B700B600B500B4 */
-				b = _mm_packus_epi16(R0, R1);				/* b = B7B6B5B4B3B2B1B0 */
+				pb += 8;                      /* R1 = 00B700B600B500B4 */
+				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pg);
-				pg += 8;		/* R1 = 00G300G200G100G0 */
+				pg += 8; /* R1 = 00G300G200G100G0 */
 				R1 = _mm_load_si128((__m128i*)pg);
-				pg += 8;		/* R2 = 00G700G600G500G4 */
-				g = _mm_packus_epi16(R0, R1);				/* g = G7G6G5G4G3G2G1G0 */
+				pg += 8;                      /* R2 = 00G700G600G500G4 */
+				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pr);
-				pr += 8;		/* R0 = 00R300R200R100R0 */
+				pr += 8; /* R0 = 00R300R200R100R0 */
 				R1 = _mm_load_si128((__m128i*)pr);
-				pr += 8;		/* R3 = 00R700R600R500R4 */
-				r = _mm_packus_epi16(R0, R1);				/* r = R7R6R5R4R3R2R1R0 */
+				pr += 8;                      /* R3 = 00R700R600R500R4 */
+				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
 			{
 				__m128i gbHi, gbLo, arHi, arLo;
 				{
-					gbLo = _mm_unpacklo_epi8(b, g);	/* R0 = G7G6G5G4G3G2G1G0 */
-					gbHi = _mm_unpackhi_epi8(b, g);	/* R1 = G7B7G6B7G5B5G4B4 */
-					arLo = _mm_unpacklo_epi8(r, a);	/* R4 = FFR3FFR2FFR1FFR0 */
-					arHi = _mm_unpackhi_epi8(r, a);	/* R3 = FFR7FFR6FFR5FFR4 */
+					gbLo = _mm_unpacklo_epi8(b, g); /* R0 = G7G6G5G4G3G2G1G0 */
+					gbHi = _mm_unpackhi_epi8(b, g); /* R1 = G7B7G6B7G5B5G4B4 */
+					arLo = _mm_unpacklo_epi8(r, a); /* R4 = FFR3FFR2FFR1FFR0 */
+					arHi = _mm_unpackhi_epi8(r, a); /* R3 = FFR7FFR6FFR5FFR4 */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbLo, arLo);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR1G1B1FFR0G0B0      */
+					out += 16; /* FFR1G1B1FFR0G0B0      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbLo, arLo);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR3G3B3FFR2G2B2      */
+					out += 16; /* FFR3G3B3FFR2G2B2      */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbHi, arHi);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR5G5B5FFR4G4B4      */
+					out += 16; /* FFR5G5B5FFR4G4B4      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbHi, arHi);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR7G7B7FFR6G6B6      */
+					out += 16; /* FFR7G7B7FFR6G6B6      */
 				}
 			}
 		}
@@ -851,12 +823,12 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
-    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
-    UINT32 srcStep,			/* bytes between rows in source data */
-    BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
-    UINT32 dstStep,			/* bytes between rows in dest data */
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t
+sse2_RGBToRGB_16s8u_P3AC4R_RGBX(const INT16* const pSrc[3], /* 16-bit R,G, and B arrays */
+                                UINT32 srcStep,             /* bytes between rows in source data */
+                                BYTE* pDst,             /* 32-bit interleaved ARGB (ABGR?) data */
+                                UINT32 dstStep,         /* bytes between rows in dest data */
+                                const prim_size_t* roi) /* region of interest */
 {
 	const UINT16* pr = (const UINT16*)(pSrc[0]);
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
@@ -865,7 +837,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out;
 	UINT32 srcbump, dstbump, y;
-	out = (BYTE*) pDst;
+	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
@@ -882,54 +854,54 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pb);
-				pb += 8;		/* R0 = 00B300B200B100B0 */
+				pb += 8; /* R0 = 00B300B200B100B0 */
 				R1 = _mm_load_si128((__m128i*)pb);
-				pb += 8;		/* R1 = 00B700B600B500B4 */
-				b = _mm_packus_epi16(R0, R1);				/* b = B7B6B5B4B3B2B1B0 */
+				pb += 8;                      /* R1 = 00B700B600B500B4 */
+				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pg);
-				pg += 8;		/* R1 = 00G300G200G100G0 */
+				pg += 8; /* R1 = 00G300G200G100G0 */
 				R1 = _mm_load_si128((__m128i*)pg);
-				pg += 8;		/* R2 = 00G700G600G500G4 */
-				g = _mm_packus_epi16(R0, R1);				/* g = G7G6G5G4G3G2G1G0 */
+				pg += 8;                      /* R2 = 00G700G600G500G4 */
+				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pr);
-				pr += 8;		/* R0 = 00R300R200R100R0 */
+				pr += 8; /* R0 = 00R300R200R100R0 */
 				R1 = _mm_load_si128((__m128i*)pr);
-				pr += 8;		/* R3 = 00R700R600R500R4 */
-				r = _mm_packus_epi16(R0, R1);				/* r = R7R6R5R4R3R2R1R0 */
+				pr += 8;                      /* R3 = 00R700R600R500R4 */
+				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
 			{
 				__m128i gbHi, gbLo, arHi, arLo;
 				{
-					gbLo = _mm_unpacklo_epi8(r, g);	/* R0 = G7G6G5G4G3G2G1G0 */
-					gbHi = _mm_unpackhi_epi8(r, g);	/* R1 = G7B7G6B7G5B5G4B4 */
-					arLo = _mm_unpacklo_epi8(b, a);	/* R4 = FFR3FFR2FFR1FFR0 */
-					arHi = _mm_unpackhi_epi8(b, a);	/* R3 = FFR7FFR6FFR5FFR4 */
+					gbLo = _mm_unpacklo_epi8(r, g); /* R0 = G7G6G5G4G3G2G1G0 */
+					gbHi = _mm_unpackhi_epi8(r, g); /* R1 = G7B7G6B7G5B5G4B4 */
+					arLo = _mm_unpacklo_epi8(b, a); /* R4 = FFR3FFR2FFR1FFR0 */
+					arHi = _mm_unpackhi_epi8(b, a); /* R3 = FFR7FFR6FFR5FFR4 */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbLo, arLo);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR1G1B1FFR0G0B0      */
+					out += 16; /* FFR1G1B1FFR0G0B0      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbLo, arLo);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR3G3B3FFR2G2B2      */
+					out += 16; /* FFR3G3B3FFR2G2B2      */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbHi, arHi);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR5G5B5FFR4G4B4      */
+					out += 16; /* FFR5G5B5FFR4G4B4      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbHi, arHi);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR7G7B7FFR6G6B6      */
+					out += 16; /* FFR7G7B7FFR6G6B6      */
 				}
 			}
 		}
@@ -955,12 +927,12 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
-    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
-    UINT32 srcStep,			/* bytes between rows in source data */
-    BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
-    UINT32 dstStep,			/* bytes between rows in dest data */
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t
+sse2_RGBToRGB_16s8u_P3AC4R_XBGR(const INT16* const pSrc[3], /* 16-bit R,G, and B arrays */
+                                UINT32 srcStep,             /* bytes between rows in source data */
+                                BYTE* pDst,             /* 32-bit interleaved ARGB (ABGR?) data */
+                                UINT32 dstStep,         /* bytes between rows in dest data */
+                                const prim_size_t* roi) /* region of interest */
 {
 	const UINT16* pr = (const UINT16*)(pSrc[0]);
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
@@ -969,7 +941,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out;
 	UINT32 srcbump, dstbump, y;
-	out = (BYTE*) pDst;
+	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
@@ -986,54 +958,54 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pb);
-				pb += 8;		/* R0 = 00B300B200B100B0 */
+				pb += 8; /* R0 = 00B300B200B100B0 */
 				R1 = _mm_load_si128((__m128i*)pb);
-				pb += 8;		/* R1 = 00B700B600B500B4 */
-				b = _mm_packus_epi16(R0, R1);				/* b = B7B6B5B4B3B2B1B0 */
+				pb += 8;                      /* R1 = 00B700B600B500B4 */
+				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pg);
-				pg += 8;		/* R1 = 00G300G200G100G0 */
+				pg += 8; /* R1 = 00G300G200G100G0 */
 				R1 = _mm_load_si128((__m128i*)pg);
-				pg += 8;		/* R2 = 00G700G600G500G4 */
-				g = _mm_packus_epi16(R0, R1);				/* g = G7G6G5G4G3G2G1G0 */
+				pg += 8;                      /* R2 = 00G700G600G500G4 */
+				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pr);
-				pr += 8;		/* R0 = 00R300R200R100R0 */
+				pr += 8; /* R0 = 00R300R200R100R0 */
 				R1 = _mm_load_si128((__m128i*)pr);
-				pr += 8;		/* R3 = 00R700R600R500R4 */
-				r = _mm_packus_epi16(R0, R1);				/* r = R7R6R5R4R3R2R1R0 */
+				pr += 8;                      /* R3 = 00R700R600R500R4 */
+				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
 			{
 				__m128i gbHi, gbLo, arHi, arLo;
 				{
-					gbLo = _mm_unpacklo_epi8(a, b);	/* R0 = G7G6G5G4G3G2G1G0 */
-					gbHi = _mm_unpackhi_epi8(a, b);	/* R1 = G7B7G6B7G5B5G4B4 */
-					arLo = _mm_unpacklo_epi8(g, r);	/* R4 = FFR3FFR2FFR1FFR0 */
-					arHi = _mm_unpackhi_epi8(g, r);	/* R3 = FFR7FFR6FFR5FFR4 */
+					gbLo = _mm_unpacklo_epi8(a, b); /* R0 = G7G6G5G4G3G2G1G0 */
+					gbHi = _mm_unpackhi_epi8(a, b); /* R1 = G7B7G6B7G5B5G4B4 */
+					arLo = _mm_unpacklo_epi8(g, r); /* R4 = FFR3FFR2FFR1FFR0 */
+					arHi = _mm_unpackhi_epi8(g, r); /* R3 = FFR7FFR6FFR5FFR4 */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbLo, arLo);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR1G1B1FFR0G0B0      */
+					out += 16; /* FFR1G1B1FFR0G0B0      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbLo, arLo);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR3G3B3FFR2G2B2      */
+					out += 16; /* FFR3G3B3FFR2G2B2      */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbHi, arHi);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR5G5B5FFR4G4B4      */
+					out += 16; /* FFR5G5B5FFR4G4B4      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbHi, arHi);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR7G7B7FFR6G6B6      */
+					out += 16; /* FFR7G7B7FFR6G6B6      */
 				}
 			}
 		}
@@ -1059,12 +1031,12 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
-    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
-    UINT32 srcStep,			/* bytes between rows in source data */
-    BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
-    UINT32 dstStep,			/* bytes between rows in dest data */
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t
+sse2_RGBToRGB_16s8u_P3AC4R_XRGB(const INT16* const pSrc[3], /* 16-bit R,G, and B arrays */
+                                UINT32 srcStep,             /* bytes between rows in source data */
+                                BYTE* pDst,             /* 32-bit interleaved ARGB (ABGR?) data */
+                                UINT32 dstStep,         /* bytes between rows in dest data */
+                                const prim_size_t* roi) /* region of interest */
 {
 	const UINT16* pr = (const UINT16*)(pSrc[0]);
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
@@ -1073,7 +1045,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	const UINT32 pad = roi->width % 16;
 	BYTE* out;
 	UINT32 srcbump, dstbump, y;
-	out = (BYTE*) pDst;
+	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
@@ -1090,54 +1062,54 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pb);
-				pb += 8;		/* R0 = 00B300B200B100B0 */
+				pb += 8; /* R0 = 00B300B200B100B0 */
 				R1 = _mm_load_si128((__m128i*)pb);
-				pb += 8;		/* R1 = 00B700B600B500B4 */
-				b = _mm_packus_epi16(R0, R1);				/* b = B7B6B5B4B3B2B1B0 */
+				pb += 8;                      /* R1 = 00B700B600B500B4 */
+				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pg);
-				pg += 8;		/* R1 = 00G300G200G100G0 */
+				pg += 8; /* R1 = 00G300G200G100G0 */
 				R1 = _mm_load_si128((__m128i*)pg);
-				pg += 8;		/* R2 = 00G700G600G500G4 */
-				g = _mm_packus_epi16(R0, R1);				/* g = G7G6G5G4G3G2G1G0 */
+				pg += 8;                      /* R2 = 00G700G600G500G4 */
+				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
 				R0 = _mm_load_si128((__m128i*)pr);
-				pr += 8;		/* R0 = 00R300R200R100R0 */
+				pr += 8; /* R0 = 00R300R200R100R0 */
 				R1 = _mm_load_si128((__m128i*)pr);
-				pr += 8;		/* R3 = 00R700R600R500R4 */
-				r = _mm_packus_epi16(R0, R1);				/* r = R7R6R5R4R3R2R1R0 */
+				pr += 8;                      /* R3 = 00R700R600R500R4 */
+				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
 			{
 				__m128i gbHi, gbLo, arHi, arLo;
 				{
-					gbLo = _mm_unpacklo_epi8(a, r);	/* R0 = G7G6G5G4G3G2G1G0 */
-					gbHi = _mm_unpackhi_epi8(a, r);	/* R1 = G7B7G6B7G5B5G4B4 */
-					arLo = _mm_unpacklo_epi8(g, b);	/* R4 = FFR3FFR2FFR1FFR0 */
-					arHi = _mm_unpackhi_epi8(g, b);	/* R3 = FFR7FFR6FFR5FFR4 */
+					gbLo = _mm_unpacklo_epi8(a, r); /* R0 = G7G6G5G4G3G2G1G0 */
+					gbHi = _mm_unpackhi_epi8(a, r); /* R1 = G7B7G6B7G5B5G4B4 */
+					arLo = _mm_unpacklo_epi8(g, b); /* R4 = FFR3FFR2FFR1FFR0 */
+					arHi = _mm_unpackhi_epi8(g, b); /* R3 = FFR7FFR6FFR5FFR4 */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbLo, arLo);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR1G1B1FFR0G0B0      */
+					out += 16; /* FFR1G1B1FFR0G0B0      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbLo, arLo);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR3G3B3FFR2G2B2      */
+					out += 16; /* FFR3G3B3FFR2G2B2      */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbHi, arHi);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR5G5B5FFR4G4B4      */
+					out += 16; /* FFR5G5B5FFR4G4B4      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbHi, arHi);
 					_mm_store_si128((__m128i*)out, bgrx);
-					out += 16;	/* FFR7G7B7FFR6G6B6      */
+					out += 16; /* FFR7G7B7FFR6G6B6      */
 				}
 			}
 		}
@@ -1163,13 +1135,12 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
-    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
-    UINT32 srcStep,			/* bytes between rows in source data */
-    BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
-    UINT32 dstStep,			/* bytes between rows in dest data */
-    UINT32 DstFormat,
-    const prim_size_t* roi)
+static pstatus_t
+sse2_RGBToRGB_16s8u_P3AC4R(const INT16* const pSrc[3], /* 16-bit R,G, and B arrays */
+                           UINT32 srcStep,             /* bytes between rows in source data */
+                           BYTE* pDst,                 /* 32-bit interleaved ARGB (ABGR?) data */
+                           UINT32 dstStep,             /* bytes between rows in dest data */
+                           UINT32 DstFormat, const prim_size_t* roi)
 {
 	if (((ULONG_PTR)pSrc[0] & 0x0f) || ((ULONG_PTR)pSrc[1] & 0x0f) || ((ULONG_PTR)pSrc[2] & 0x0f) ||
 	    (srcStep & 0x0f) || ((ULONG_PTR)pDst & 0x0f) || (dstStep & 0x0f))
@@ -1201,25 +1172,24 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
 
 /*---------------------------------------------------------------------------*/
 #ifdef WITH_NEON
-static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
-    const INT16* pSrc[3],  INT32 srcStep,
-    INT16* pDst[3],  INT32 dstStep,
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(const INT16* pSrc[3], INT32 srcStep, INT16* pDst[3],
+                                             INT32 dstStep,
+                                             const prim_size_t* roi) /* region of interest */
 {
 	/* TODO: If necessary, check alignments and call the general version. */
 	int16x8_t zero = vdupq_n_s16(0);
 	int16x8_t max = vdupq_n_s16(255);
-	int16x8_t r_cr = vdupq_n_s16(22986);	//  1.403 << 14
-	int16x8_t g_cb = vdupq_n_s16(-5636);	// -0.344 << 14
-	int16x8_t g_cr = vdupq_n_s16(-11698);	// -0.714 << 14
-	int16x8_t b_cb = vdupq_n_s16(28999);	//  1.770 << 14
+	int16x8_t r_cr = vdupq_n_s16(22986);  //  1.403 << 14
+	int16x8_t g_cb = vdupq_n_s16(-5636);  // -0.344 << 14
+	int16x8_t g_cr = vdupq_n_s16(-11698); // -0.714 << 14
+	int16x8_t b_cb = vdupq_n_s16(28999);  //  1.770 << 14
 	int16x8_t c4096 = vdupq_n_s16(4096);
-	int16x8_t* y_buf  = (int16x8_t*) pSrc[0];
-	int16x8_t* cb_buf = (int16x8_t*) pSrc[1];
-	int16x8_t* cr_buf = (int16x8_t*) pSrc[2];
-	int16x8_t* r_buf  = (int16x8_t*) pDst[0];
-	int16x8_t* g_buf  = (int16x8_t*) pDst[1];
-	int16x8_t* b_buf  = (int16x8_t*) pDst[2];
+	int16x8_t* y_buf = (int16x8_t*)pSrc[0];
+	int16x8_t* cb_buf = (int16x8_t*)pSrc[1];
+	int16x8_t* cr_buf = (int16x8_t*)pSrc[2];
+	int16x8_t* r_buf = (int16x8_t*)pDst[0];
+	int16x8_t* g_buf = (int16x8_t*)pDst[1];
+	int16x8_t* b_buf = (int16x8_t*)pDst[2];
 	int srcbump = srcStep / sizeof(int16x8_t);
 	int dstbump = dstStep / sizeof(int16x8_t);
 	int yp;
@@ -1232,30 +1202,30 @@ static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 		for (i = 0; i < imax; i++)
 		{
 			/*
-				In order to use NEON signed 16-bit integer multiplication we need to convert
-				the floating point factors to signed int without loosing information.
-				The result of this multiplication is 32 bit and we have a NEON instruction
-				that returns the hi word of the saturated double.
-				Thus we will multiply the factors by the highest possible 2^n, take the
-				upper 16 bits of the signed 32-bit result (vqdmulhq_s16 followed by a right
-				shift by 1 to reverse the doubling) and correct	this result by multiplying it
-				by 2^(16-n).
-				For the given factors in the conversion matrix the best possible n is 14.
+			    In order to use NEON signed 16-bit integer multiplication we need to convert
+			    the floating point factors to signed int without loosing information.
+			    The result of this multiplication is 32 bit and we have a NEON instruction
+			    that returns the hi word of the saturated double.
+			    Thus we will multiply the factors by the highest possible 2^n, take the
+			    upper 16 bits of the signed 32-bit result (vqdmulhq_s16 followed by a right
+			    shift by 1 to reverse the doubling) and correct	this result by multiplying it
+			    by 2^(16-n).
+			    For the given factors in the conversion matrix the best possible n is 14.
 
-				Example for calculating r:
-				r = (y>>5) + 128 + (cr*1.403)>>5                       // our base formula
-				r = (y>>5) + 128 + (HIWORD(cr*(1.403<<14)<<2))>>5      // see above
-				r = (y+4096)>>5 + (HIWORD(cr*22986)<<2)>>5             // simplification
-				r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
+			    Example for calculating r:
+			    r = (y>>5) + 128 + (cr*1.403)>>5                       // our base formula
+			    r = (y>>5) + 128 + (HIWORD(cr*(1.403<<14)<<2))>>5      // see above
+			    r = (y+4096)>>5 + (HIWORD(cr*22986)<<2)>>5             // simplification
+			    r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
 			*/
 			/* y = (y_buf[i] + 4096) >> 2 */
-			int16x8_t y = vld1q_s16((INT16*) &y_buf[i]);
+			int16x8_t y = vld1q_s16((INT16*)&y_buf[i]);
 			y = vaddq_s16(y, c4096);
 			y = vshrq_n_s16(y, 2);
 			/* cb = cb_buf[i]; */
 			int16x8_t cb = vld1q_s16((INT16*)&cb_buf[i]);
 			/* cr = cr_buf[i]; */
-			int16x8_t cr = vld1q_s16((INT16*) &cr_buf[i]);
+			int16x8_t cr = vld1q_s16((INT16*)&cr_buf[i]);
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			int16x8_t r = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cr, r_cr), 1));
 			r = vshrq_n_s16(r, 3);
@@ -1277,7 +1247,7 @@ static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 			vst1q_s16((INT16*)&b_buf[i], b);
 		}
 
-		y_buf  += srcbump;
+		y_buf += srcbump;
 		cb_buf += srcbump;
 		cr_buf += srcbump;
 		r_buf += dstbump;
@@ -1288,18 +1258,14 @@ static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R_X(
-    const INT16* pSrc[3], UINT32 srcStep,
-    BYTE* pDst, UINT32 dstStep,
-    const prim_size_t* roi,
-    uint8_t rPos,
-    uint8_t gPos,
-    uint8_t bPos,
-    uint8_t aPos)
+static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R_X(const INT16* pSrc[3], UINT32 srcStep, BYTE* pDst,
+                                                UINT32 dstStep, const prim_size_t* roi,
+                                                uint8_t rPos, uint8_t gPos, uint8_t bPos,
+                                                uint8_t aPos)
 {
 	UINT32 x, y;
 	BYTE* pRGB = pDst;
-	const INT16* pY  = pSrc[0];
+	const INT16* pY = pSrc[0];
 	const INT16* pCb = pSrc[1];
 	const INT16* pCr = pSrc[2];
 	const size_t srcPad = (srcStep - (roi->width * sizeof(INT16))) / sizeof(INT16);
@@ -1338,8 +1304,8 @@ static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R_X(
 			}
 			{
 				/* G */
-				const int32x4_t CbGh = vmull_n_s16(Cbh, 22527); /* 0.343730 * 2^16 */
-				const int32x4_t CbGl = vmull_n_s16(Cbl, 22527); /* 0.343730 * 2^16 */
+				const int32x4_t CbGh = vmull_n_s16(Cbh, 22527);            /* 0.343730 * 2^16 */
+				const int32x4_t CbGl = vmull_n_s16(Cbl, 22527);            /* 0.343730 * 2^16 */
 				const int32x4_t CrGh = vmulq_n_s32(vmovl_s16(Crh), 46819); /* 0.714401 * 2^16 */
 				const int32x4_t CrGl = vmulq_n_s32(vmovl_s16(Crl), 46819); /* 0.714401 * 2^16 */
 				const int32x4_t CbCrGh = vaddq_s32(CbGh, CrGh);
@@ -1408,10 +1374,9 @@ static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R_X(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R(
-    const INT16* pSrc[3], UINT32 srcStep,
-    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
-    const prim_size_t* roi)
+static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], UINT32 srcStep, BYTE* pDst,
+                                              UINT32 dstStep, UINT32 DstFormat,
+                                              const prim_size_t* roi)
 {
 	switch (DstFormat)
 	{
@@ -1436,16 +1401,13 @@ static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R(
 	}
 }
 
-static pstatus_t neon_RGBToRGB_16s8u_P3AC4R_X(
-    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
-    UINT32 srcStep,			/* bytes between rows in source data */
-    BYTE* pDst,			/* 32-bit interleaved ARGB (ABGR?) data */
-    UINT32 dstStep,			/* bytes between rows in dest data */
-    const prim_size_t* roi,	/* region of interest */
-    uint8_t rPos,
-    uint8_t gPos,
-    uint8_t bPos,
-    uint8_t aPos)
+static pstatus_t
+neon_RGBToRGB_16s8u_P3AC4R_X(const INT16* const pSrc[3], /* 16-bit R,G, and B arrays */
+                             UINT32 srcStep,             /* bytes between rows in source data */
+                             BYTE* pDst,                 /* 32-bit interleaved ARGB (ABGR?) data */
+                             UINT32 dstStep,             /* bytes between rows in dest data */
+                             const prim_size_t* roi,     /* region of interest */
+                             uint8_t rPos, uint8_t gPos, uint8_t bPos, uint8_t aPos)
 {
 	UINT32 x, y;
 	UINT32 pad = roi->width % 8;
@@ -1474,7 +1436,7 @@ static pstatus_t neon_RGBToRGB_16s8u_P3AC4R_X(
 			dst += 32;
 		}
 
-		for (x = 0; x < pad; x ++)
+		for (x = 0; x < pad; x++)
 		{
 			BYTE bgrx[4];
 			bgrx[bPos] = *pb++;
@@ -1491,13 +1453,12 @@ static pstatus_t neon_RGBToRGB_16s8u_P3AC4R_X(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t neon_RGBToRGB_16s8u_P3AC4R(
-    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
-    UINT32 srcStep,			/* bytes between rows in source data */
-    BYTE* pDst,			/* 32-bit interleaved ARGB (ABGR?) data */
-    UINT32 dstStep,			/* bytes between rows in dest data */
-    UINT32 DstFormat,
-    const prim_size_t* roi)	/* region of interest */
+static pstatus_t
+neon_RGBToRGB_16s8u_P3AC4R(const INT16* const pSrc[3], /* 16-bit R,G, and B arrays */
+                           UINT32 srcStep,             /* bytes between rows in source data */
+                           BYTE* pDst,                 /* 32-bit interleaved ARGB (ABGR?) data */
+                           UINT32 dstStep,             /* bytes between rows in dest data */
+                           UINT32 DstFormat, const prim_size_t* roi) /* region of interest */
 {
 	switch (DstFormat)
 	{
@@ -1536,7 +1497,7 @@ void primitives_init_colors_opt(primitives_t* prims)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
-		prims->RGBToRGB_16s8u_P3AC4R  = sse2_RGBToRGB_16s8u_P3AC4R;
+		prims->RGBToRGB_16s8u_P3AC4R = sse2_RGBToRGB_16s8u_P3AC4R;
 		prims->yCbCrToRGB_16s16s_P3P3 = sse2_yCbCrToRGB_16s16s_P3P3;
 		prims->yCbCrToRGB_16s8u_P3AC4R = sse2_yCbCrToRGB_16s8u_P3AC4R;
 		prims->RGBToYCbCr_16s16s_P3P3 = sse2_RGBToYCbCr_16s16s_P3P3;
@@ -1546,11 +1507,10 @@ void primitives_init_colors_opt(primitives_t* prims)
 
 	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 	{
-		prims->RGBToRGB_16s8u_P3AC4R  = neon_RGBToRGB_16s8u_P3AC4R;
+		prims->RGBToRGB_16s8u_P3AC4R = neon_RGBToRGB_16s8u_P3AC4R;
 		prims->yCbCrToRGB_16s8u_P3AC4R = neon_yCbCrToRGB_16s8u_P3AC4R;
 		prims->yCbCrToRGB_16s16s_P3P3 = neon_yCbCrToRGB_16s16s_P3P3;
 	}
 
 #endif /* WITH_SSE2 */
 }
-

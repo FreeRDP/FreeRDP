@@ -46,4 +46,3 @@ errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
 }
 
 #endif
-

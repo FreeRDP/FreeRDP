@@ -24,25 +24,25 @@
 /* Don't do any export */
 #if 0
 #if defined _WIN32 || defined __CYGWIN__
-	#ifdef RDTK_EXPORTS
-		#ifdef __GNUC__
-			#define RDTK_EXPORT __attribute__((dllexport))
-		#else
-			#define RDTK_EXPORT __declspec(dllexport)
-		#endif
-	#else
-		#ifdef __GNUC__
-			#define RDTK_EXPORT __attribute__((dllimport))
-		#else
-			#define RDTK_EXPORT __declspec(dllimport)
-		#endif
-	#endif
+#ifdef RDTK_EXPORTS
+#ifdef __GNUC__
+#define RDTK_EXPORT __attribute__((dllexport))
 #else
-	#if __GNUC__ >= 4
-		#define RDTK_EXPORT   __attribute__ ((visibility("default")))
-	#else
-		#define RDTK_EXPORT
-	#endif
+#define RDTK_EXPORT __declspec(dllexport)
+#endif
+#else
+#ifdef __GNUC__
+#define RDTK_EXPORT __attribute__((dllimport))
+#else
+#define RDTK_EXPORT __declspec(dllimport)
+#endif
+#endif
+#else
+#if __GNUC__ >= 4
+#define RDTK_EXPORT __attribute__((visibility("default")))
+#else
+#define RDTK_EXPORT
+#endif
 #endif
 #endif
 #define RDTK_EXPORT

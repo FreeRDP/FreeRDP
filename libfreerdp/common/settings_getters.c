@@ -496,7 +496,7 @@ BOOL freerdp_settings_get_bool(rdpSettings* settings, size_t id)
 			return settings->SupportVideoOptimized;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 }
@@ -1153,7 +1153,7 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 			break;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 	return TRUE;
@@ -1173,7 +1173,7 @@ UINT16 freerdp_settings_get_uint16(rdpSettings* settings, size_t id)
 			return settings->ProxyPort;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 }
@@ -1194,7 +1194,7 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 			break;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 	return TRUE;
@@ -1208,7 +1208,7 @@ INT16 freerdp_settings_get_int16(rdpSettings* settings, size_t id)
 	switch (id)
 	{
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 }
@@ -1221,7 +1221,7 @@ BOOL freerdp_settings_set_int16(rdpSettings* settings, size_t id, INT16 val)
 	switch (id)
 	{
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 	return TRUE;
@@ -1553,7 +1553,7 @@ UINT32 freerdp_settings_get_uint32(rdpSettings* settings, size_t id)
 			return settings->DynamicChannelArraySize;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 }
@@ -1990,7 +1990,7 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 			break;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 	return TRUE;
@@ -2010,7 +2010,7 @@ INT32 freerdp_settings_get_int32(rdpSettings* settings, size_t id)
 			return settings->YPan;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 }
@@ -2031,7 +2031,7 @@ BOOL freerdp_settings_set_int32(rdpSettings* settings, size_t id, INT32 val)
 			break;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 	return TRUE;
@@ -2048,7 +2048,7 @@ UINT64 freerdp_settings_get_uint64(rdpSettings* settings, size_t id)
 			return settings->ParentWindowId;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 }
@@ -2065,7 +2065,7 @@ BOOL freerdp_settings_set_uint64(rdpSettings* settings, size_t id, UINT64 val)
 			break;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 	return TRUE;
@@ -2079,7 +2079,7 @@ INT64 freerdp_settings_get_int64(rdpSettings* settings, size_t id)
 	switch (id)
 	{
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 }
@@ -2092,7 +2092,7 @@ BOOL freerdp_settings_set_int64(rdpSettings* settings, size_t id, INT64 val)
 	switch (id)
 	{
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 	return TRUE;
@@ -2301,7 +2301,7 @@ const char* freerdp_settings_get_string(rdpSettings* settings, size_t id)
 			return settings->RDP2TCPArgs;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 }
@@ -2639,7 +2639,7 @@ BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* v
 			return (!val || settings->RDP2TCPArgs != NULL);
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 	return TRUE;
@@ -2731,9 +2731,7 @@ const void* freerdp_settings_get_pointer(rdpSettings* settings, size_t id)
 			return settings->OrderSupport;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid key index %"PRIuz, __FUNCTION__,  id);
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
 	}
 }
-
-

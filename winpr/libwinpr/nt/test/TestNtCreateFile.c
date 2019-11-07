@@ -26,7 +26,7 @@ int TestNtCreateFile(int argc, char* argv[])
 
 	if (ntstatus != STATUS_SUCCESS)
 	{
-		printf("_RtlAnsiStringToUnicodeString failure: 0x%08"PRIX32"\n", ntstatus);
+		printf("_RtlAnsiStringToUnicodeString failure: 0x%08" PRIX32 "\n", ntstatus);
 		goto out;
 	}
 
@@ -36,12 +36,12 @@ int TestNtCreateFile(int argc, char* argv[])
 	DesiredAccess = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
 	CreateOptions = FILE_DIRECTORY_FILE | FILE_WRITE_THROUGH;
 	CreateDisposition = FILE_OVERWRITE_IF;
-	ntstatus = _NtCreateFile(&handle, DesiredAccess, &attributes, &ioStatusBlock,
-	                         0, 0, CreateDisposition, CreateOptions, 0, 0, 0);
+	ntstatus = _NtCreateFile(&handle, DesiredAccess, &attributes, &ioStatusBlock, 0, 0,
+	                         CreateDisposition, CreateOptions, 0, 0, 0);
 
 	if (ntstatus != STATUS_SUCCESS)
 	{
-		printf("_NtCreateFile failure: 0x%08"PRIX32"\n", ntstatus);
+		printf("_NtCreateFile failure: 0x%08" PRIX32 "\n", ntstatus);
 		goto out;
 	}
 
@@ -49,7 +49,7 @@ int TestNtCreateFile(int argc, char* argv[])
 
 	if (ntstatus != STATUS_SUCCESS)
 	{
-		printf("_NtClose failure: 0x%08"PRIX32"\n", ntstatus);
+		printf("_NtClose failure: 0x%08" PRIX32 "\n", ntstatus);
 		goto out;
 	}
 
@@ -66,8 +66,7 @@ out:
 	}
 	else
 	{
-		printf("%s: This test is currently expected to fail on this platform.\n",
-		       __FUNCTION__);
+		printf("%s: This test is currently expected to fail on this platform.\n", __FUNCTION__);
 		result = 0;
 	}
 

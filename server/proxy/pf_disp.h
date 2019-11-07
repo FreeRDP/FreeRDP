@@ -27,6 +27,6 @@
 
 BOOL pf_server_disp_init(pServerContext* ps);
 void pf_disp_register_callbacks(DispClientContext* client, DispServerContext* server,
-                           proxyData* pdata);
+                                proxyData* pdata);
 
 #endif /*FREERDP_SERVER_PROXY_RDPEDISP_H*/

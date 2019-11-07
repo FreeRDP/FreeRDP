@@ -26,44 +26,74 @@
 typedef struct _PROFILER PROFILER;
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API PROFILER* profiler_create(const char* name);
-FREERDP_API void profiler_free(PROFILER* profiler);
+	FREERDP_API PROFILER* profiler_create(const char* name);
+	FREERDP_API void profiler_free(PROFILER* profiler);
 
-FREERDP_API void profiler_enter(PROFILER* profiler);
-FREERDP_API void profiler_exit(PROFILER* profiler);
+	FREERDP_API void profiler_enter(PROFILER* profiler);
+	FREERDP_API void profiler_exit(PROFILER* profiler);
 
-FREERDP_API void profiler_print_header(void);
-FREERDP_API void profiler_print(PROFILER* profiler);
-FREERDP_API void profiler_print_footer(void);
+	FREERDP_API void profiler_print_header(void);
+	FREERDP_API void profiler_print(PROFILER* profiler);
+	FREERDP_API void profiler_print_footer(void);
 
 #ifdef __cplusplus
 }
 #endif
 
 #ifdef WITH_PROFILER
-#define PROFILER_RENAME(prof, name)	do { profiler_free(prof); prof = profiler_create(name); } while(0)
-#define PROFILER_DEFINE(prof)		PROFILER* prof;
-#define PROFILER_CREATE(prof,name)	prof = profiler_create(name);
-#define PROFILER_FREE(prof)			profiler_free(prof);
-#define PROFILER_ENTER(prof)		profiler_enter(prof);
-#define PROFILER_EXIT(prof)			profiler_exit(prof);
-#define PROFILER_PRINT_HEADER		profiler_print_header();
-#define PROFILER_PRINT(prof)		profiler_print(prof);
-#define PROFILER_PRINT_FOOTER		profiler_print_footer();
+#define PROFILER_RENAME(prof, name)   \
+	do                                \
+	{                                 \
+		profiler_free(prof);          \
+		prof = profiler_create(name); \
+	} while (0)
+#define PROFILER_DEFINE(prof) PROFILER* prof;
+#define PROFILER_CREATE(prof, name) prof = profiler_create(name);
+#define PROFILER_FREE(prof) profiler_free(prof);
+#define PROFILER_ENTER(prof) profiler_enter(prof);
+#define PROFILER_EXIT(prof) profiler_exit(prof);
+#define PROFILER_PRINT_HEADER profiler_print_header();
+#define PROFILER_PRINT(prof) profiler_print(prof);
+#define PROFILER_PRINT_FOOTER profiler_print_footer();
 #else
-#define PROFILER_RENAME(prof, name)		do { } while (0)
+#define PROFILER_RENAME(prof, name) \
+	do                              \
+	{                               \
+	} while (0)
 
 #define PROFILER_DEFINE(prof)
-#define PROFILER_CREATE(prof,name)	do { } while (0);
-#define PROFILER_FREE(prof)		do { } while (0);
-#define PROFILER_ENTER(prof)		do { } while (0);
-#define PROFILER_EXIT(prof)		do { } while (0);
-#define PROFILER_PRINT_HEADER		do { } while (0);
-#define PROFILER_PRINT(prof)		do { } while (0);
-#define PROFILER_PRINT_FOOTER		do { } while (0);
+#define PROFILER_CREATE(prof, name) \
+	do                              \
+	{                               \
+	} while (0);
+#define PROFILER_FREE(prof) \
+	do                      \
+	{                       \
+	} while (0);
+#define PROFILER_ENTER(prof) \
+	do                       \
+	{                        \
+	} while (0);
+#define PROFILER_EXIT(prof) \
+	do                      \
+	{                       \
+	} while (0);
+#define PROFILER_PRINT_HEADER \
+	do                        \
+	{                         \
+	} while (0);
+#define PROFILER_PRINT(prof) \
+	do                       \
+	{                        \
+	} while (0);
+#define PROFILER_PRINT_FOOTER \
+	do                        \
+	{                         \
+	} while (0);
 #endif
 
 #endif /* FREERDP_UTILS_PROFILER_H */

@@ -22,10 +22,11 @@
 #include <freerdp/server/shadow.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-void shadow_input_register_callbacks(rdpInput* input);
+	void shadow_input_register_callbacks(rdpInput* input);
 
 #ifdef __cplusplus
 }

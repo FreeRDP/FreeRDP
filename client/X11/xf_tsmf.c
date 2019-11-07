@@ -94,12 +94,12 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 	if (!tsmf)
 		return -1;
 
-	xfc = (xfContext*) tsmf->custom;
+	xfc = (xfContext*)tsmf->custom;
 
 	if (!xfc)
 		return -1;
 
-	xv = (xfXvContext*) xfc->xv_context;
+	xv = (xfXvContext*)xfc->xv_context;
 
 	if (!xv)
 		return -1;
@@ -118,7 +118,7 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 
 	if (numRects > 0)
 	{
-		xrects = (XRectangle*) calloc(numRects, sizeof(XRectangle));
+		xrects = (XRectangle*)calloc(numRects, sizeof(XRectangle));
 
 		if (!xrects)
 			return -1;
@@ -186,13 +186,13 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 	}
 	else
 	{
-		WLog_DBG(TAG, "pixel format 0x%"PRIX32" not supported by hardware.", pixfmt);
+		WLog_DBG(TAG, "pixel format 0x%" PRIX32 " not supported by hardware.", pixfmt);
 		free(xrects);
 		return -1003;
 	}
 
-	image = XvShmCreateImage(xfc->display, xv->xv_port,
-		xvpixfmt, 0, event->frameWidth, event->frameHeight, &shminfo);
+	image = XvShmCreateImage(xfc->display, xv->xv_port, xvpixfmt, 0, event->frameWidth,
+	                         event->frameHeight, &shminfo);
 
 	if (xv->xv_image_size != image->data_size)
 	{
@@ -228,17 +228,15 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 			/* Y */
 			if (image->pitches[0] == event->frameWidth)
 			{
-				CopyMemory(image->data + image->offsets[0],
-					event->frameData,
-					event->frameWidth * event->frameHeight);
+				CopyMemory(image->data + image->offsets[0], event->frameData,
+				           event->frameWidth * event->frameHeight);
 			}
 			else
 			{
 				for (i = 0; i < event->frameHeight; i++)
 				{
 					CopyMemory(image->data + image->offsets[0] + i * image->pitches[0],
-						event->frameData + i * event->frameWidth,
-						event->frameWidth);
+					           event->frameData + i * event->frameWidth, event->frameWidth);
 				}
 			}
 			/* UV */
@@ -247,35 +245,31 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 			{
 				data1 = event->frameData + event->frameWidth * event->frameHeight;
 				data2 = event->frameData + event->frameWidth * event->frameHeight +
-					event->frameWidth * event->frameHeight / 4;
+				        event->frameWidth * event->frameHeight / 4;
 			}
 			else
 			{
 				data2 = event->frameData + event->frameWidth * event->frameHeight;
 				data1 = event->frameData + event->frameWidth * event->frameHeight +
-					event->frameWidth * event->frameHeight / 4;
+				        event->frameWidth * event->frameHeight / 4;
 				image->id = pixfmt == RDP_PIXFMT_I420 ? RDP_PIXFMT_YV12 : RDP_PIXFMT_I420;
 			}
 
 			if (image->pitches[1] * 2 == event->frameWidth)
 			{
-				CopyMemory(image->data + image->offsets[1],
-					data1,
-					event->frameWidth * event->frameHeight / 4);
-				CopyMemory(image->data + image->offsets[2],
-					data2,
-					event->frameWidth * event->frameHeight / 4);
+				CopyMemory(image->data + image->offsets[1], data1,
+				           event->frameWidth * event->frameHeight / 4);
+				CopyMemory(image->data + image->offsets[2], data2,
+				           event->frameWidth * event->frameHeight / 4);
 			}
 			else
 			{
 				for (i = 0; i < event->frameHeight / 2; i++)
 				{
 					CopyMemory(image->data + image->offsets[1] + i * image->pitches[1],
-						data1 + i * event->frameWidth / 2,
-						event->frameWidth / 2);
+					           data1 + i * event->frameWidth / 2, event->frameWidth / 2);
 					CopyMemory(image->data + image->offsets[2] + i * image->pitches[2],
-						data2 + i * event->frameWidth / 2,
-						event->frameWidth / 2);
+					           data2 + i * event->frameWidth / 2, event->frameWidth / 2);
 				}
 			}
 			break;
@@ -288,16 +282,17 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 			}
 			else
 			{
-				const size_t size = ((UINT32)image->data_size <= event->frameSize) ?
-				            (UINT32)image->data_size : event->frameSize;
+				const size_t size = ((UINT32)image->data_size <= event->frameSize)
+				                        ? (UINT32)image->data_size
+				                        : event->frameSize;
 				CopyMemory(image->data, event->frameData, size);
 			}
 			break;
 	}
 
-	XvShmPutImage(xfc->display, xv->xv_port, xfc->window->handle, xfc->gc,
-			image, 0, 0, image->width, image->height,
-			event->x, event->y, event->width, event->height, FALSE);
+	XvShmPutImage(xfc->display, xv->xv_port, xfc->window->handle, xfc->gc, image, 0, 0,
+	              image->width, image->height, event->x, event->y, event->width, event->height,
+	              FALSE);
 
 	if (xv->xv_colorkey_atom == None)
 		XSetClipMask(xfc->display, xfc->gc, None);
@@ -330,7 +325,7 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	if (xfc->xv_context)
 		return 1; /* context already created */
 
-	xv = (xfXvContext*) calloc(1, sizeof(xfXvContext));
+	xv = (xfXvContext*)calloc(1, sizeof(xfXvContext));
 
 	if (!xv)
 		return -1;
@@ -347,7 +342,8 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 		return -1;
 	}
 
-	ret = XvQueryExtension(xfc->display, &version, &release, &request_base, &event_base, &error_base);
+	ret =
+	    XvQueryExtension(xfc->display, &version, &release, &request_base, &event_base, &error_base);
 
 	if (ret != Success)
 	{
@@ -357,8 +353,7 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 
 	WLog_DBG(TAG, "version %u release %u", version, release);
 
-	ret = XvQueryAdaptors(xfc->display, DefaultRootWindow(xfc->display),
-		&num_adaptors, &ai);
+	ret = XvQueryAdaptors(xfc->display, DefaultRootWindow(xfc->display), &num_adaptors, &ai);
 
 	if (ret != Success)
 	{
@@ -369,7 +364,7 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	for (i = 0; i < num_adaptors; i++)
 	{
 		WLog_DBG(TAG, "adapter port %lu-%lu (%s)", ai[i].base_id,
-			ai[i].base_id + ai[i].num_ports - 1, ai[i].name);
+		         ai[i].base_id + ai[i].num_ports - 1, ai[i].name);
 
 		if (xv->xv_port == 0 && i == num_adaptors - 1)
 			xv->xv_port = ai[i].base_id;
@@ -392,7 +387,8 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 		if (strcmp(attr[i].name, "XV_COLORKEY") == 0)
 		{
 			xv->xv_colorkey_atom = XInternAtom(xfc->display, "XV_COLORKEY", FALSE);
-			XvSetPortAttribute(xfc->display, xv->xv_port, xv->xv_colorkey_atom, attr[i].min_value + 1);
+			XvSetPortAttribute(xfc->display, xv->xv_port, xv->xv_colorkey_atom,
+			                   attr[i].min_value + 1);
 			break;
 		}
 	}
@@ -404,13 +400,14 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 
 	if (ret > 0)
 	{
-		xv->xv_pixfmts = (UINT32*) calloc((ret + 1), sizeof(UINT32));
+		xv->xv_pixfmts = (UINT32*)calloc((ret + 1), sizeof(UINT32));
 
 		for (i = 0; i < (unsigned int)ret; i++)
 		{
 			xv->xv_pixfmts[i] = fo[i].id;
-			WLog_DBG(TAG, "%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0], ((char*)(xv->xv_pixfmts + i))[1],
-					 ((char*)(xv->xv_pixfmts + i))[2], ((char*)(xv->xv_pixfmts + i))[3]);
+			WLog_DBG(TAG, "%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0],
+			         ((char*)(xv->xv_pixfmts + i))[1], ((char*)(xv->xv_pixfmts + i))[2],
+			         ((char*)(xv->xv_pixfmts + i))[3]);
 		}
 		xv->xv_pixfmts[i] = 0;
 	}
@@ -419,7 +416,7 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	if (tsmf)
 	{
 		xfc->tsmf = tsmf;
-		tsmf->custom = (void*) xfc;
+		tsmf->custom = (void*)xfc;
 
 		tsmf->FrameEvent = xf_tsmf_xv_video_frame_event;
 	}
@@ -429,7 +426,7 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 
 int xf_tsmf_xv_uninit(xfContext* xfc, TsmfClientContext* tsmf)
 {
-	xfXvContext* xv = (xfXvContext*) xfc->xv_context;
+	xfXvContext* xv = (xfXvContext*)xfc->xv_context;
 
 	WINPR_UNUSED(tsmf);
 	if (xv)
@@ -476,4 +473,3 @@ int xf_tsmf_uninit(xfContext* xfc, TsmfClientContext* tsmf)
 
 	return 1;
 }
-

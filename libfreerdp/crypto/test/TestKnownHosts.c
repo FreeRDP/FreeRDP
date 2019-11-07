@@ -25,19 +25,12 @@
 
 static int prepare(const char* currentFileV2, const char* legacyFileV2, const char* legacyFile)
 {
-	const char* legacy[] =
-	{
-		"someurl ff:11:22:dd\r\n",
-		"otherurl aa:bb:cc:dd\r",
-		"legacyurl aa:bb:cc:dd\n"
-	};
-	const char* hosts[] =
-	{
-		"#somecomment\r\n"
-		"someurl 3389 ff:11:22:dd subject issuer\r\n"
-		" \t#anothercomment\r\n"
-		"otherurl\t3389\taa:bb:cc:dd\tsubject2\tissuer2\r"
-	};
+	const char* legacy[] = { "someurl ff:11:22:dd\r\n", "otherurl aa:bb:cc:dd\r",
+		                     "legacyurl aa:bb:cc:dd\n" };
+	const char* hosts[] = { "#somecomment\r\n"
+		                    "someurl 3389 ff:11:22:dd subject issuer\r\n"
+		                    " \t#anothercomment\r\n"
+		                    "otherurl\t3389\taa:bb:cc:dd\tsubject2\tissuer2\r" };
 	FILE* fl = NULL;
 	FILE* fc = NULL;
 	size_t i;
@@ -106,13 +99,15 @@ int TestKnownHosts(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 	GetSystemTime(&systemTime);
 	sprintf_s(sname, sizeof(sname),
-	          "TestKnownHostsCurrent-%04"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%04"PRIu16,
-	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour, systemTime.wMinute,
-	          systemTime.wSecond, systemTime.wMilliseconds);
+	          "TestKnownHostsCurrent-%04" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16
+	          "%02" PRIu16 "%04" PRIu16,
+	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour,
+	          systemTime.wMinute, systemTime.wSecond, systemTime.wMilliseconds);
 	sprintf_s(dname, sizeof(dname),
-	          "TestKnownHostsLegacy-%04"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%02"PRIu16"%04"PRIu16,
-	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour, systemTime.wMinute,
-	          systemTime.wSecond, systemTime.wMilliseconds);
+	          "TestKnownHostsLegacy-%04" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16
+	          "%02" PRIu16 "%04" PRIu16,
+	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour,
+	          systemTime.wMinute, systemTime.wSecond, systemTime.wMilliseconds);
 
 	current.ConfigPath = GetKnownSubPath(KNOWN_PATH_TEMP, sname);
 	legacy.ConfigPath = GetKnownSubPath(KNOWN_PATH_TEMP, dname);
@@ -341,10 +336,10 @@ finish:
 		certificate_data_free(data);
 
 	DeleteFileA(currentFileV2);
-	//RemoveDirectoryA(current.ConfigPath);
+	// RemoveDirectoryA(current.ConfigPath);
 	DeleteFileA(legacyFileV2);
 	DeleteFileA(legacyFile);
-	//RemoveDirectoryA(legacy.ConfigPath);
+	// RemoveDirectoryA(legacy.ConfigPath);
 	free(currentFileV2);
 	free(legacyFileV2);
 	free(legacyFile);

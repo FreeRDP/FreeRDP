@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 	if (!GetExitCodeThread(server->thread, &dwExitCode))
 		status = -1;
 	else
-		status = (int) dwExitCode;
+		status = (int)dwExitCode;
 
 fail_server_start:
 	shadow_server_uninit(server);
@@ -111,4 +111,3 @@ fail_parse_command_line:
 fail_server_new:
 	return status;
 }
-

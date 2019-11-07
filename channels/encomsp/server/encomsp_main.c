@@ -43,7 +43,7 @@ static UINT encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT16(s, header->Type); /* Type (2 bytes) */
+	Stream_Read_UINT16(s, header->Type);   /* Type (2 bytes) */
 	Stream_Read_UINT16(s, header->Length); /* Length (2 bytes) */
 	return CHANNEL_RC_OK;
 }
@@ -83,13 +83,14 @@ static int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT encomsp_recv_change_participant_control_level_pdu(
-    EncomspServerContext* context, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerContext* context,
+                                                              wStream* s,
+                                                              ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
-	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+	beg = ((int)Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
 	if (Stream_GetRemainingLength(s) < 6)
@@ -98,9 +99,9 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT16(s, pdu.Flags); /* Flags (2 bytes) */
+	Stream_Read_UINT16(s, pdu.Flags);         /* Flags (2 bytes) */
 	Stream_Read_UINT32(s, pdu.ParticipantId); /* ParticipantId (4 bytes) */
-	end = (int) Stream_GetPosition(s);
+	end = (int)Stream_GetPosition(s);
 
 	if ((beg + header->Length) < end)
 	{
@@ -122,7 +123,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 	IFCALLRET(context->ChangeParticipantControlLevel, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %"PRIu32"",
+		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %" PRIu32 "",
 		         error);
 
 	return error;
@@ -133,8 +134,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT encomsp_server_receive_pdu(EncomspServerContext* context,
-                                       wStream* s)
+static UINT encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
 	ENCOMSP_ORDER_HEADER header;
@@ -143,21 +143,22 @@ static UINT encomsp_server_receive_pdu(EncomspServerContext* context,
 	{
 		if ((error = encomsp_read_header(s, &header)))
 		{
-			WLog_ERR(TAG, "encomsp_read_header failed with error %"PRIu32"!", error);
+			WLog_ERR(TAG, "encomsp_read_header failed with error %" PRIu32 "!", error);
 			return error;
 		}
 
-		WLog_INFO(TAG, "EncomspReceive: Type: %"PRIu16" Length: %"PRIu16"", header.Type,
+		WLog_INFO(TAG, "EncomspReceive: Type: %" PRIu16 " Length: %" PRIu16 "", header.Type,
 		          header.Length);
 
 		switch (header.Type)
 		{
 			case ODTYPE_PARTICIPANT_CTRL_CHANGED:
-				if ((error = encomsp_recv_change_participant_control_level_pdu(context, s,
-				             &header)))
+				if ((error =
+				         encomsp_recv_change_participant_control_level_pdu(context, s, &header)))
 				{
 					WLog_ERR(TAG,
-					         "encomsp_recv_change_participant_control_level_pdu failed with error %"PRIu32"!",
+					         "encomsp_recv_change_participant_control_level_pdu failed with error "
+					         "%" PRIu32 "!",
 					         error);
 					return error;
 				}
@@ -165,7 +166,7 @@ static UINT encomsp_server_receive_pdu(EncomspServerContext* context,
 				break;
 
 			default:
-				WLog_ERR(TAG, "header.Type unknown %"PRIu16"!", header.Type);
+				WLog_ERR(TAG, "header.Type unknown %" PRIu16 "!", header.Type);
 				return ERROR_INVALID_DATA;
 				break;
 		}
@@ -186,7 +187,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 	EncomspServerContext* context;
 	UINT error = CHANNEL_RC_OK;
 	DWORD status;
-	context = (EncomspServerContext*) arg;
+	context = (EncomspServerContext*)arg;
 
 	buffer = NULL;
 	BytesReturned = 0;
@@ -200,8 +201,8 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 		goto out;
 	}
 
-	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle,
-	                           &buffer, &BytesReturned) == TRUE)
+	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer,
+	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
 			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
@@ -220,7 +221,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %" PRIu32 "", error);
 			break;
 		}
 
@@ -229,7 +230,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
 			break;
 		}
 
@@ -250,8 +251,8 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 			break;
 		}
 
-		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
-		                           (PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
+		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR)Stream_Buffer(s),
+		                           Stream_Capacity(s), &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			error = ERROR_INTERNAL_ERROR;
@@ -260,7 +261,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 
 		if (Stream_GetPosition(s) >= ENCOMSP_ORDER_HEADER_SIZE)
 		{
-			header = (ENCOMSP_ORDER_HEADER*) Stream_Buffer(s);
+			header = (ENCOMSP_ORDER_HEADER*)Stream_Buffer(s);
 
 			if (header->Length >= Stream_GetPosition(s))
 			{
@@ -269,7 +270,8 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 
 				if ((error = encomsp_server_receive_pdu(context, s)))
 				{
-					WLog_ERR(TAG, "encomsp_server_receive_pdu failed with error %"PRIu32"!", error);
+					WLog_ERR(TAG, "encomsp_server_receive_pdu failed with error %" PRIu32 "!",
+					         error);
 					break;
 				}
 
@@ -282,8 +284,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 out:
 
 	if (error && context->rdpcontext)
-		setChannelError(context->rdpcontext, error,
-		                "encomsp_server_thread reported an error");
+		setChannelError(context->rdpcontext, error, "encomsp_server_thread reported an error");
 
 	ExitThread(error);
 	return error;
@@ -296,8 +297,8 @@ out:
  */
 static UINT encomsp_server_start(EncomspServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm,
-	                               WTS_CURRENT_SESSION, "encomsp");
+	context->priv->ChannelHandle =
+	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "encomsp");
 
 	if (!context->priv->ChannelHandle)
 		return CHANNEL_RC_BAD_CHANNEL;
@@ -308,8 +309,8 @@ static UINT encomsp_server_start(EncomspServerContext* context)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(context->priv->Thread = CreateThread(NULL, 0,
-								  encomsp_server_thread, (void*) context, 0, NULL)))
+	if (!(context->priv->Thread =
+	          CreateThread(NULL, 0, encomsp_server_thread, (void*)context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(context->priv->StopEvent);
@@ -333,7 +334,7 @@ static UINT encomsp_server_stop(EncomspServerContext* context)
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
 		return error;
 	}
 
@@ -345,14 +346,14 @@ static UINT encomsp_server_stop(EncomspServerContext* context)
 EncomspServerContext* encomsp_server_context_new(HANDLE vcm)
 {
 	EncomspServerContext* context;
-	context = (EncomspServerContext*) calloc(1, sizeof(EncomspServerContext));
+	context = (EncomspServerContext*)calloc(1, sizeof(EncomspServerContext));
 
 	if (context)
 	{
 		context->vcm = vcm;
 		context->Start = encomsp_server_start;
 		context->Stop = encomsp_server_stop;
-		context->priv = (EncomspServerPrivate*) calloc(1, sizeof(EncomspServerPrivate));
+		context->priv = (EncomspServerPrivate*)calloc(1, sizeof(EncomspServerPrivate));
 
 		if (!context->priv)
 		{
@@ -371,7 +372,7 @@ void encomsp_server_context_free(EncomspServerContext* context)
 	{
 		if (context->priv->ChannelHandle != INVALID_HANDLE_VALUE)
 			WTSVirtualChannelClose(context->priv->ChannelHandle);
-		
+
 		free(context->priv);
 		free(context);
 	}

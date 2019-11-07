@@ -44,21 +44,23 @@ struct winpr_sam_entry
 typedef struct winpr_sam_entry WINPR_SAM_ENTRY;
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-WINPR_API WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, LPSTR Domain, UINT32 DomainLength);
-WINPR_API WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength);
+	WINPR_API WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength,
+	                                          LPSTR Domain, UINT32 DomainLength);
+	WINPR_API WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength,
+	                                          LPWSTR Domain, UINT32 DomainLength);
 
-WINPR_API void SamResetEntry(WINPR_SAM_ENTRY* entry);
-WINPR_API void SamFreeEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry);
+	WINPR_API void SamResetEntry(WINPR_SAM_ENTRY* entry);
+	WINPR_API void SamFreeEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry);
 
-WINPR_API WINPR_SAM* SamOpen(const char* filename, BOOL readOnly);
-WINPR_API void SamClose(WINPR_SAM* sam);
+	WINPR_API WINPR_SAM* SamOpen(const char* filename, BOOL readOnly);
+	WINPR_API void SamClose(WINPR_SAM* sam);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* WINPR_UTILS_SAM_H */
-

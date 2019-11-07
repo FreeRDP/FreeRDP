@@ -6,10 +6,8 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-const-variable"
 /* [MS-RDPEGFX] 4.1.1.1 Example 1 */
-static const BYTE PREPARE_CLEAR_EXAMPLE_1[] =
-    "\x03\xc3\x11\x00";
-static const BYTE TEST_CLEAR_EXAMPLE_1[] =
-    "\x03\xc3\x11\x00";
+static const BYTE PREPARE_CLEAR_EXAMPLE_1[] = "\x03\xc3\x11\x00";
+static const BYTE TEST_CLEAR_EXAMPLE_1[] = "\x03\xc3\x11\x00";
 #pragma GCC diagnostic pop
 
 /* [MS-RDPEGFX] 4.1.1.1 Example 2 */
@@ -47,10 +45,8 @@ static const BYTE TEST_CLEAR_EXAMPLE_4[] =
     "\xb6\xff\xff\xff\xff\xff\xff\xff\xff\xff\x46\x91\x47\x91\x48\x91"
     "\x49\x91\x4a\x91\x1b\x91";
 
-
 static BOOL test_ClearDecompressExample(UINT32 nr, UINT32 width, UINT32 height,
-                                        const BYTE* pSrcData,
-                                        const UINT32 SrcSize)
+                                        const BYTE* pSrcData, const UINT32 SrcSize)
 {
 	BOOL rc = FALSE;
 	int status;
@@ -60,10 +56,9 @@ static BOOL test_ClearDecompressExample(UINT32 nr, UINT32 width, UINT32 height,
 	if (!clear || !pDstData)
 		goto fail;
 
-	status = clear_decompress(clear, pSrcData, SrcSize, width, height,
-	                          pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, width, height,
-	                          NULL);
-	printf("clear_decompress example %"PRIu32" status: %d\n", nr, status);
+	status = clear_decompress(clear, pSrcData, SrcSize, width, height, pDstData,
+	                          PIXEL_FORMAT_XRGB32, 0, 0, 0, width, height, NULL);
+	printf("clear_decompress example %" PRIu32 " status: %d\n", nr, status);
 	fflush(stdout);
 	rc = (status == 0);
 fail:
@@ -80,20 +75,16 @@ int TestFreeRDPCodecClear(int argc, char* argv[])
 	/* Example 1 needs a filled glyph cache
 	if (!test_ClearDecompressExample(1, 8, 9, TEST_CLEAR_EXAMPLE_1,
 	                                 sizeof(TEST_CLEAR_EXAMPLE_1)))
-		return -1;
+	    return -1;
 	*/
-	if (!test_ClearDecompressExample(2, 78, 17, TEST_CLEAR_EXAMPLE_2,
-	                                 sizeof(TEST_CLEAR_EXAMPLE_2)))
+	if (!test_ClearDecompressExample(2, 78, 17, TEST_CLEAR_EXAMPLE_2, sizeof(TEST_CLEAR_EXAMPLE_2)))
 		return -1;
 
-	if (!test_ClearDecompressExample(3, 64, 24, TEST_CLEAR_EXAMPLE_3,
-	                                 sizeof(TEST_CLEAR_EXAMPLE_3)))
+	if (!test_ClearDecompressExample(3, 64, 24, TEST_CLEAR_EXAMPLE_3, sizeof(TEST_CLEAR_EXAMPLE_3)))
 		return -1;
 
-	if (!test_ClearDecompressExample(4, 7, 15, TEST_CLEAR_EXAMPLE_4,
-	                                 sizeof(TEST_CLEAR_EXAMPLE_4)))
+	if (!test_ClearDecompressExample(4, 7, 15, TEST_CLEAR_EXAMPLE_4, sizeof(TEST_CLEAR_EXAMPLE_4)))
 		return -1;
 
 	return 0;
 }
-

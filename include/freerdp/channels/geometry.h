@@ -27,8 +27,8 @@
 
 enum
 {
-	GEOMETRY_UPDATE	= 1,
-	GEOMETRY_CLEAR	= 2
+	GEOMETRY_UPDATE = 1,
+	GEOMETRY_CLEAR = 2
 };
 
 enum
@@ -40,11 +40,10 @@ struct _FREERDP_RGNDATA
 {
 	RDP_RECT boundingRect;
 	UINT32 nRectCount;
-	RDP_RECT *rects;
+	RDP_RECT* rects;
 };
 
 typedef struct _FREERDP_RGNDATA FREERDP_RGNDATA;
-
 
 struct _MAPPED_GEOMETRY_PACKET
 {

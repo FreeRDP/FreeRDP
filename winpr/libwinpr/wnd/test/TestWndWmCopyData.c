@@ -11,23 +11,23 @@ static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	switch (uMsg)
 	{
 		case WM_COPYDATA:
-			{
-				pCopyData = (PCOPYDATASTRUCT) lParam;
+		{
+			pCopyData = (PCOPYDATASTRUCT)lParam;
 
-				if (!pCopyData)
-					break;
+			if (!pCopyData)
+				break;
 
-				printf("WM_COPYDATA: cbData: %"PRIu32" dwData: %"PRIu32"\n",
-						(int) pCopyData->cbData, (int) pCopyData->dwData);
-			}
-			break;
+			printf("WM_COPYDATA: cbData: %" PRIu32 " dwData: %" PRIu32 "\n", (int)pCopyData->cbData,
+			       (int)pCopyData->dwData);
+		}
+		break;
 
 		case WM_CLOSE:
 			printf("WM_CLOSE\n");
 			break;
 
 		default:
-			printf("TestWndProc: uMsg: 0x%08"PRIX32"\n", uMsg);
+			printf("TestWndProc: uMsg: 0x%08" PRIX32 "\n", uMsg);
 			return DefWindowProc(hwnd, uMsg, wParam, lParam);
 			break;
 	}
@@ -66,8 +66,8 @@ int TestWndWmCopyData(int argc, char* argv[])
 
 	hInstance = wndClassEx.hInstance;
 
-	hWnd = CreateWindowEx(0, wndClassEx.lpszClassName,
-		0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInstance, NULL);
+	hWnd = CreateWindowEx(0, wndClassEx.lpszClassName, 0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInstance,
+	                      NULL);
 
 	if (!hWnd)
 	{
@@ -81,4 +81,3 @@ int TestWndWmCopyData(int argc, char* argv[])
 
 	return 0;
 }
-

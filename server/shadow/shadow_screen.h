@@ -39,11 +39,12 @@ struct rdp_shadow_screen
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-rdpShadowScreen* shadow_screen_new(rdpShadowServer* server);
-void shadow_screen_free(rdpShadowScreen* screen);
+	rdpShadowScreen* shadow_screen_new(rdpShadowServer* server);
+	void shadow_screen_free(rdpShadowScreen* screen);
 
 #ifdef __cplusplus
 }

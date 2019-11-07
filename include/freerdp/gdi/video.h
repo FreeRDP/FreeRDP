@@ -39,5 +39,4 @@ FREERDP_API void gdi_video_data_uninit(rdpGdi* gdi, VideoClientContext* context)
 FREERDP_API gdiVideoContext* gdi_video_new(rdpGdi* gdi);
 FREERDP_API void gdi_video_free(gdiVideoContext* context);
 
-
 #endif /* FREERDP_GDI_VIDEO_H_ */

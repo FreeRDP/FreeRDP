@@ -33,8 +33,6 @@
 
 #include <freerdp/client/disp.h>
 
-
 #define TAG CHANNELS_TAG("disp.client")
 
 #endif /* FREERDP_CHANNEL_DISP_CLIENT_MAIN_H */
-

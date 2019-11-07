@@ -40,16 +40,16 @@ struct _BITMAP_V2_CELL
 
 struct rdp_bitmap_cache
 {
-	pMemBlt MemBlt; /* 0 */
-	pMem3Blt Mem3Blt; /* 1 */
-	pCacheBitmap CacheBitmap; /* 2 */
+	pMemBlt MemBlt;               /* 0 */
+	pMem3Blt Mem3Blt;             /* 1 */
+	pCacheBitmap CacheBitmap;     /* 2 */
 	pCacheBitmapV2 CacheBitmapV2; /* 3 */
 	pCacheBitmapV3 CacheBitmapV3; /* 4 */
-	pBitmapUpdate BitmapUpdate; /* 5 */
-	UINT32 paddingA[16 - 6]; /* 6 */
+	pBitmapUpdate BitmapUpdate;   /* 5 */
+	UINT32 paddingA[16 - 6];      /* 6 */
 
-	UINT32 maxCells; /* 16 */
-	BITMAP_V2_CELL* cells; /* 17 */
+	UINT32 maxCells;          /* 16 */
+	BITMAP_V2_CELL* cells;    /* 17 */
 	UINT32 paddingB[32 - 18]; /* 18 */
 
 	/* internal */
@@ -59,13 +59,14 @@ struct rdp_bitmap_cache
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API void bitmap_cache_register_callbacks(rdpUpdate* update);
+	FREERDP_API void bitmap_cache_register_callbacks(rdpUpdate* update);
 
-FREERDP_API rdpBitmapCache* bitmap_cache_new(rdpSettings* settings);
-FREERDP_API void bitmap_cache_free(rdpBitmapCache* bitmap_cache);
+	FREERDP_API rdpBitmapCache* bitmap_cache_new(rdpSettings* settings);
+	FREERDP_API void bitmap_cache_free(rdpBitmapCache* bitmap_cache);
 
 #ifdef __cplusplus
 }

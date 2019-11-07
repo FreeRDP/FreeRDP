@@ -62,22 +62,26 @@ BOOL CredEnumerateA(LPCSTR Filter, DWORD Flags, DWORD* Count, PCREDENTIALA** Cre
 	return TRUE;
 }
 
-BOOL CredWriteDomainCredentialsW(PCREDENTIAL_TARGET_INFORMATIONW TargetInfo, PCREDENTIALW Credential, DWORD Flags)
+BOOL CredWriteDomainCredentialsW(PCREDENTIAL_TARGET_INFORMATIONW TargetInfo,
+                                 PCREDENTIALW Credential, DWORD Flags)
 {
 	return TRUE;
 }
 
-BOOL CredWriteDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInfo, PCREDENTIALA Credential, DWORD Flags)
+BOOL CredWriteDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInfo,
+                                 PCREDENTIALA Credential, DWORD Flags)
 {
 	return TRUE;
 }
 
-BOOL CredReadDomainCredentialsW(PCREDENTIAL_TARGET_INFORMATIONW TargetInfo, DWORD Flags, DWORD* Count, PCREDENTIALW** Credential)
+BOOL CredReadDomainCredentialsW(PCREDENTIAL_TARGET_INFORMATIONW TargetInfo, DWORD Flags,
+                                DWORD* Count, PCREDENTIALW** Credential)
 {
 	return TRUE;
 }
 
-BOOL CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInfo, DWORD Flags, DWORD* Count, PCREDENTIALA** Credential)
+BOOL CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInfo, DWORD Flags,
+                                DWORD* Count, PCREDENTIALA** Credential)
 {
 	return TRUE;
 }
@@ -102,7 +106,8 @@ BOOL CredRenameA(LPCSTR OldTargetName, LPCSTR NewTargetName, DWORD Type, DWORD F
 	return TRUE;
 }
 
-BOOL CredGetTargetInfoW(LPCWSTR TargetName, DWORD Flags, PCREDENTIAL_TARGET_INFORMATIONW* TargetInfo)
+BOOL CredGetTargetInfoW(LPCWSTR TargetName, DWORD Flags,
+                        PCREDENTIAL_TARGET_INFORMATIONW* TargetInfo)
 {
 	return TRUE;
 }
@@ -112,22 +117,26 @@ BOOL CredGetTargetInfoA(LPCSTR TargetName, DWORD Flags, PCREDENTIAL_TARGET_INFOR
 	return TRUE;
 }
 
-BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential, LPWSTR* MarshaledCredential)
+BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential,
+                            LPWSTR* MarshaledCredential)
 {
 	return TRUE;
 }
 
-BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential, LPSTR* MarshaledCredential)
+BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
+                            LPSTR* MarshaledCredential)
 {
 	return TRUE;
 }
 
-BOOL CredUnmarshalCredentialW(LPCWSTR MarshaledCredential, PCRED_MARSHAL_TYPE CredType, PVOID* Credential)
+BOOL CredUnmarshalCredentialW(LPCWSTR MarshaledCredential, PCRED_MARSHAL_TYPE CredType,
+                              PVOID* Credential)
 {
 	return TRUE;
 }
 
-BOOL CredUnmarshalCredentialA(LPCSTR MarshaledCredential, PCRED_MARSHAL_TYPE CredType, PVOID* Credential)
+BOOL CredUnmarshalCredentialA(LPCSTR MarshaledCredential, PCRED_MARSHAL_TYPE CredType,
+                              PVOID* Credential)
 {
 	return TRUE;
 }
@@ -143,25 +152,27 @@ BOOL CredIsMarshaledCredentialA(LPCSTR MarshaledCredential)
 }
 
 BOOL CredProtectW(BOOL fAsSelf, LPWSTR pszCredentials, DWORD cchCredentials,
-		LPWSTR pszProtectedCredentials, DWORD* pcchMaxChars, CRED_PROTECTION_TYPE* ProtectionType)
+                  LPWSTR pszProtectedCredentials, DWORD* pcchMaxChars,
+                  CRED_PROTECTION_TYPE* ProtectionType)
 {
 	return TRUE;
 }
 
 BOOL CredProtectA(BOOL fAsSelf, LPSTR pszCredentials, DWORD cchCredentials,
-		LPSTR pszProtectedCredentials, DWORD* pcchMaxChars, CRED_PROTECTION_TYPE* ProtectionType)
+                  LPSTR pszProtectedCredentials, DWORD* pcchMaxChars,
+                  CRED_PROTECTION_TYPE* ProtectionType)
 {
 	return TRUE;
 }
 
-BOOL CredUnprotectW(BOOL fAsSelf, LPWSTR pszProtectedCredentials,
-		DWORD cchCredentials, LPWSTR pszCredentials, DWORD* pcchMaxChars)
+BOOL CredUnprotectW(BOOL fAsSelf, LPWSTR pszProtectedCredentials, DWORD cchCredentials,
+                    LPWSTR pszCredentials, DWORD* pcchMaxChars)
 {
 	return TRUE;
 }
 
-BOOL CredUnprotectA(BOOL fAsSelf, LPSTR pszProtectedCredentials,
-		DWORD cchCredentials, LPSTR pszCredentials, DWORD* pcchMaxChars)
+BOOL CredUnprotectA(BOOL fAsSelf, LPSTR pszProtectedCredentials, DWORD cchCredentials,
+                    LPSTR pszCredentials, DWORD* pcchMaxChars)
 {
 	return TRUE;
 }
@@ -193,7 +204,6 @@ BOOL CredGetSessionTypes(DWORD MaximumPersistCount, LPDWORD MaximumPersist)
 
 VOID CredFree(PVOID Buffer)
 {
-
 }
 
 #endif

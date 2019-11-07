@@ -27,7 +27,7 @@
 #include <stdbool.h>
 
 #if __GNUC__ >= 4
-#define UWAC_API   __attribute__ ((visibility("default")))
+#define UWAC_API __attribute__((visibility("default")))
 #else
 #define UWAC_API
 #endif
@@ -38,7 +38,6 @@ typedef struct uwac_output UwacOutput;
 typedef struct uwac_window UwacWindow;
 typedef struct uwac_seat UwacSeat;
 typedef uint32_t UwacSeatId;
-
 
 /** @brief error codes */
 typedef enum
@@ -59,7 +58,7 @@ typedef enum
 /** @brief input modifiers */
 enum
 {
-	UWAC_MOD_SHIFT_MASK	= 0x01,
+	UWAC_MOD_SHIFT_MASK = 0x01,
 	UWAC_MOD_ALT_MASK = 0x02,
 	UWAC_MOD_CONTROL_MASK = 0x04,
 };
@@ -70,7 +69,6 @@ struct uwac_size
 	int width;
 	int height;
 };
-
 
 /** @brief event types */
 enum
@@ -103,10 +101,10 @@ enum
 /** @brief window states */
 enum
 {
-	UWAC_WINDOW_MAXIMIZED 	= 0x1,
-	UWAC_WINDOW_RESIZING 	= 0x2,
-	UWAC_WINDOW_FULLSCREEN 	= 0x4,
-	UWAC_WINDOW_ACTIVATED 	= 0x8,
+	UWAC_WINDOW_MAXIMIZED = 0x1,
+	UWAC_WINDOW_RESIZING = 0x2,
+	UWAC_WINDOW_FULLSCREEN = 0x4,
+	UWAC_WINDOW_ACTIVATED = 0x8,
 };
 
 struct uwac_new_output_event
@@ -122,7 +120,6 @@ struct uwac_new_seat_event
 	UwacSeat* seat;
 };
 typedef struct uwac_new_seat_event UwacSeatNewEvent;
-
 
 struct uwac_removed_seat_event
 {
@@ -253,15 +250,14 @@ struct uwac_output_geometry_event
 	int physical_width;
 	int physical_height;
 	int subpixel;
-	const char *make;
-	const char *model;
+	const char* make;
+	const char* model;
 	int transform;
 };
 typedef struct uwac_output_geometry_event UwacOutputGeometryEvent;
 
 /** @brief */
-union uwac_event
-{
+union uwac_event {
 	int type;
 	UwacOutputNewEvent output_new;
 	UwacOutputGeometryEvent output_geometry;
@@ -291,314 +287,320 @@ typedef void (*UwacDataTransferHandler)(UwacSeat* seat, void* context, const cha
 typedef void (*UwacCancelDataTransferHandler)(UwacSeat* seat, void* context);
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/**
- *	install a handler that will be called when UWAC encounter internal errors. The
- *	handler is supposed to answer if the execution can continue. I can also be used
- *	to log things.
- *
- * @param handler
- */
-UWAC_API void UwacInstallErrorHandler(UwacErrorHandler handler);
+	/**
+	 *	install a handler that will be called when UWAC encounter internal errors. The
+	 *	handler is supposed to answer if the execution can continue. I can also be used
+	 *	to log things.
+	 *
+	 * @param handler
+	 */
+	UWAC_API void UwacInstallErrorHandler(UwacErrorHandler handler);
 
+	/**
+	 *	Opens the corresponding wayland display, using NULL you will open the default
+	 *	display.
+	 *
+	 * @param name the name of the display to open
+	 * @return the created UwacDisplay object
+	 */
+	UWAC_API UwacDisplay* UwacOpenDisplay(const char* name, UwacReturnCode* err);
 
-/**
- *	Opens the corresponding wayland display, using NULL you will open the default
- *	display.
- *
- * @param name the name of the display to open
- * @return the created UwacDisplay object
- */
-UWAC_API UwacDisplay* UwacOpenDisplay(const char* name, UwacReturnCode* err);
+	/**
+	 *	closes the corresponding UwacDisplay
+	 *
+	 * @param pdisplay a pointer on the display to close
+	 * @return UWAC_SUCCESS if the operation was successful, the corresponding error otherwise
+	 */
+	UWAC_API UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay);
 
-/**
- *	closes the corresponding UwacDisplay
- *
- * @param pdisplay a pointer on the display to close
- * @return UWAC_SUCCESS if the operation was successful, the corresponding error otherwise
- */
-UWAC_API UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay);
+	/**
+	 * Returns the file descriptor associated with the UwacDisplay, this is useful when
+	 * you want to poll that file descriptor for activity.
+	 *
+	 * @param display an opened UwacDisplay
+	 * @return the corresponding descriptor
+	 */
+	UWAC_API int UwacDisplayGetFd(UwacDisplay* display);
 
-/**
- * Returns the file descriptor associated with the UwacDisplay, this is useful when
- * you want to poll that file descriptor for activity.
- *
- * @param display an opened UwacDisplay
- * @return the corresponding descriptor
- */
-UWAC_API int UwacDisplayGetFd(UwacDisplay* display);
+	/**
+	 *	Returns a human readable form of a Uwac error code
+	 *
+	 * @param error the error number
+	 * @return the associated string
+	 */
+	UWAC_API const char* UwacErrorString(UwacReturnCode error);
 
-/**
- *	Returns a human readable form of a Uwac error code
- *
- * @param error the error number
- * @return the associated string
- */
-UWAC_API const char* UwacErrorString(UwacReturnCode error);
+	/**
+	 * returns the last error that occurred on a display
+	 *
+	 * @param display the display
+	 * @return the last error that have been set for this display
+	 */
+	UWAC_API UwacReturnCode UwacDisplayGetLastError(const UwacDisplay* display);
 
-/**
- * returns the last error that occurred on a display
- *
- * @param display the display
- * @return the last error that have been set for this display
- */
-UWAC_API UwacReturnCode UwacDisplayGetLastError(const UwacDisplay* display);
+	/**
+	 * retrieves the version of a given interface
+	 *
+	 * @param display the display connection
+	 * @param name the name of the interface
+	 * @param version the output variable for the version
+	 * @return UWAC_SUCCESS if the interface was found, UWAC_NOT_FOUND otherwise
+	 */
+	UWAC_API UwacReturnCode UwacDisplayQueryInterfaceVersion(const UwacDisplay* display,
+	                                                         const char* name, uint32_t* version);
 
-/**
- * retrieves the version of a given interface
- *
- * @param display the display connection
- * @param name the name of the interface
- * @param version the output variable for the version
- * @return UWAC_SUCCESS if the interface was found, UWAC_NOT_FOUND otherwise
- */
-UWAC_API UwacReturnCode UwacDisplayQueryInterfaceVersion(const UwacDisplay* display,
-        const char* name, uint32_t* version);
+	/**
+	 *	returns the number SHM formats that have been reported by the compositor
+	 *
+	 * @param display a connected UwacDisplay
+	 * @return the number of SHM formats supported
+	 */
+	UWAC_API uint32_t UwacDisplayQueryGetNbShmFormats(UwacDisplay* display);
 
-/**
- *	returns the number SHM formats that have been reported by the compositor
- *
- * @param display a connected UwacDisplay
- * @return the number of SHM formats supported
- */
-UWAC_API uint32_t UwacDisplayQueryGetNbShmFormats(UwacDisplay* display);
+	/**
+	 *	returns the supported ShmFormats
+	 *
+	 * @param display a connected UwacDisplay
+	 * @param formats a pointer on an array of wl_shm_format with enough place for formats_size
+	 *items
+	 * @param formats_size the size of the formats array
+	 * @param filled the number of filled entries in the formats array
+	 * @return UWAC_SUCCESS on success, an error otherwise
+	 */
+	UWAC_API UwacReturnCode UwacDisplayQueryShmFormats(const UwacDisplay* display,
+	                                                   enum wl_shm_format* formats,
+	                                                   int formats_size, int* filled);
 
-/**
- *	returns the supported ShmFormats
- *
- * @param display a connected UwacDisplay
- * @param formats a pointer on an array of wl_shm_format with enough place for formats_size items
- * @param formats_size the size of the formats array
- * @param filled the number of filled entries in the formats array
- * @return UWAC_SUCCESS on success, an error otherwise
- */
-UWAC_API UwacReturnCode UwacDisplayQueryShmFormats(const UwacDisplay* display,
-        enum wl_shm_format* formats, int formats_size, int* filled);
+	/**
+	 *	returns the number of registered outputs
+	 *
+	 * @param display the display to query
+	 * @return the number of outputs
+	 */
+	UWAC_API uint32_t UwacDisplayGetNbOutputs(UwacDisplay* display);
 
-/**
- *	returns the number of registered outputs
- *
- * @param display the display to query
- * @return the number of outputs
- */
-UWAC_API uint32_t UwacDisplayGetNbOutputs(UwacDisplay* display);
+	/**
+	 *	retrieve a particular UwacOutput object
+	 *
+	 * @param display the display to query
+	 * @param index index of the output
+	 * @return the given UwacOutput, NULL if something failed (so you should query
+	 *UwacDisplayGetLastError() to have the reason)
+	 */
+	UWAC_API UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index);
 
-/**
- *	retrieve a particular UwacOutput object
- *
- * @param display the display to query
- * @param index index of the output
- * @return the given UwacOutput, NULL if something failed (so you should query UwacDisplayGetLastError() to have the reason)
- */
-UWAC_API UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index);
+	/**
+	 * retrieve the resolution of a given UwacOutput
+	 *
+	 * @param output the UwacOutput
+	 * @param resolution a pointer on the
+	 * @return UWAC_SUCCESS on success
+	 */
+	UWAC_API UwacReturnCode UwacOutputGetResolution(UwacOutput* output, UwacSize* resolution);
 
-/**
- * retrieve the resolution of a given UwacOutput
- *
- * @param output the UwacOutput
- * @param resolution a pointer on the
- * @return UWAC_SUCCESS on success
- */
-UWAC_API UwacReturnCode UwacOutputGetResolution(UwacOutput* output, UwacSize* resolution);
+	/**
+	 *	creates a window using a SHM surface
+	 *
+	 * @param display the display to attach the window to
+	 * @param width the width of the window
+	 * @param height the heigh of the window
+	 * @param format format to use for the SHM surface
+	 * @return the created UwacWindow, NULL if something failed (use UwacDisplayGetLastError() to
+	 *know more about this)
+	 */
+	UWAC_API UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t height,
+	                                         enum wl_shm_format format);
 
+	/**
+	 *	destroys the corresponding UwacWindow
+	 *
+	 * @param window a pointer on the UwacWindow to destroy
+	 * @return if the operation completed successfully
+	 */
+	UWAC_API UwacReturnCode UwacDestroyWindow(UwacWindow** window);
 
-/**
- *	creates a window using a SHM surface
- *
- * @param display the display to attach the window to
- * @param width the width of the window
- * @param height the heigh of the window
- * @param format format to use for the SHM surface
- * @return the created UwacWindow, NULL if something failed (use UwacDisplayGetLastError() to know more about this)
- */
-UWAC_API UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t height,
-        enum wl_shm_format format);
+	/**
+	 *	Sets the region that should be considered opaque to the compositor.
+	 *
+	 * @param window the UwacWindow
+	 * @param x
+	 * @param y
+	 * @param width
+	 * @param height
+	 * @return UWAC_SUCCESS on success, an error otherwise
+	 */
+	UWAC_API UwacReturnCode UwacWindowSetOpaqueRegion(UwacWindow* window, uint32_t x, uint32_t y,
+	                                                  uint32_t width, uint32_t height);
 
-/**
- *	destroys the corresponding UwacWindow
- *
- * @param window a pointer on the UwacWindow to destroy
- * @return if the operation completed successfully
- */
-UWAC_API UwacReturnCode UwacDestroyWindow(UwacWindow** window);
+	/**
+	 *	Sets the region of the window that can trigger input events
+	 *
+	 * @param window the UwacWindow
+	 * @param x
+	 * @param y
+	 * @param width
+	 * @param height
+	 * @return
+	 */
+	UWAC_API UwacReturnCode UwacWindowSetInputRegion(UwacWindow* window, uint32_t x, uint32_t y,
+	                                                 uint32_t width, uint32_t height);
 
-/**
- *	Sets the region that should be considered opaque to the compositor.
- *
- * @param window the UwacWindow
- * @param x
- * @param y
- * @param width
- * @param height
- * @return UWAC_SUCCESS on success, an error otherwise
- */
-UWAC_API UwacReturnCode UwacWindowSetOpaqueRegion(UwacWindow* window, uint32_t x, uint32_t y,
-        uint32_t width, uint32_t height);
+	/**
+	 *	retrieves a pointer on the current window content to draw a frame
+	 * @param window the UwacWindow
+	 * @return a pointer on the current window content
+	 */
+	UWAC_API void* UwacWindowGetDrawingBuffer(UwacWindow* window);
 
-/**
- *	Sets the region of the window that can trigger input events
- *
- * @param window the UwacWindow
- * @param x
- * @param y
- * @param width
- * @param height
- * @return
- */
-UWAC_API UwacReturnCode UwacWindowSetInputRegion(UwacWindow* window, uint32_t x, uint32_t y,
-        uint32_t width, uint32_t height);
+	/**
+	 *	sets a rectangle as dirty for the next frame of a window
+	 *
+	 * @param window the UwacWindow
+	 * @param x left coordinate
+	 * @param y top coordinate
+	 * @param width the width of the dirty rectangle
+	 * @param height the height of the dirty rectangle
+	 * @return UWAC_SUCCESS on success, an Uwac error otherwise
+	 */
+	UWAC_API UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y,
+	                                            uint32_t width, uint32_t height);
 
-/**
- *	retrieves a pointer on the current window content to draw a frame
- * @param window the UwacWindow
- * @return a pointer on the current window content
- */
-UWAC_API void* UwacWindowGetDrawingBuffer(UwacWindow* window);
+	/**
+	 *	returns the geometry of the given UwacWindow buffer
+	 *
+	 * @param window   the UwacWindow
+	 * @param geometry the geometry to fill
+	 * @param stride   the length of a buffer line in bytes
+	 * @return UWAC_SUCCESS on success, an Uwac error otherwise
+	 */
+	UWAC_API UwacReturnCode UwacWindowGetDrawingBufferGeometry(UwacWindow* window,
+	                                                           UwacSize* geometry, size_t* stride);
 
-/**
- *	sets a rectangle as dirty for the next frame of a window
- *
- * @param window the UwacWindow
- * @param x left coordinate
- * @param y top coordinate
- * @param width the width of the dirty rectangle
- * @param height the height of the dirty rectangle
- * @return UWAC_SUCCESS on success, an Uwac error otherwise
- */
-UWAC_API UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y,
-        uint32_t width, uint32_t height);
+	/**
+	 *	Sends a frame to the compositor with the content of the drawing buffer
+	 *
+	 * @param window the UwacWindow to refresh
+	 * @param copyContentForNextFrame if true the content to display is copied in the next drawing
+	 *buffer
+	 * @return UWAC_SUCCESS if the operation was successful
+	 */
+	UWAC_API UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window,
+	                                               bool copyContentForNextFrame);
 
-/**
- *	returns the geometry of the given UwacWindow buffer
- *
- * @param window   the UwacWindow
- * @param geometry the geometry to fill
- * @param stride   the length of a buffer line in bytes
- * @return UWAC_SUCCESS on success, an Uwac error otherwise
- */
-UWAC_API UwacReturnCode UwacWindowGetDrawingBufferGeometry(UwacWindow* window, UwacSize* geometry, size_t* stride);
+	/**
+	 *	returns the geometry of the given UwacWindows
+	 *
+	 * @param window the UwacWindow
+	 * @param geometry the geometry to fill
+	 * @return UWAC_SUCCESS on success, an Uwac error otherwise
+	 */
+	UWAC_API UwacReturnCode UwacWindowGetGeometry(UwacWindow* window, UwacSize* geometry);
 
-/**
- *	Sends a frame to the compositor with the content of the drawing buffer
- *
- * @param window the UwacWindow to refresh
- * @param copyContentForNextFrame if true the content to display is copied in the next drawing buffer
- * @return UWAC_SUCCESS if the operation was successful
- */
-UWAC_API UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNextFrame);
+	/**
+	 *	Sets or unset the fact that the window is set fullscreen. After this call the
+	 *	application should get prepared to receive a configure event. The output is used
+	 *	only when going fullscreen, it is optional and not used when exiting fullscreen.
+	 *
+	 * @param window the UwacWindow
+	 * @param output an optional UwacOutput to put the window fullscreen on
+	 * @param isFullscreen set or unset fullscreen
+	 * @return UWAC_SUCCESS if the operation was a success
+	 */
+	UWAC_API UwacReturnCode UwacWindowSetFullscreenState(UwacWindow* window, UwacOutput* output,
+	                                                     bool isFullscreen);
 
-/**
- *	returns the geometry of the given UwacWindows
- *
- * @param window the UwacWindow
- * @param geometry the geometry to fill
- * @return UWAC_SUCCESS on success, an Uwac error otherwise
- */
-UWAC_API UwacReturnCode UwacWindowGetGeometry(UwacWindow* window, UwacSize* geometry);
+	/**
+	 *	When possible (depending on the shell) sets the title of the UwacWindow
+	 *
+	 * @param window the UwacWindow
+	 * @param name title
+	 */
+	UWAC_API void UwacWindowSetTitle(UwacWindow* window, const char* name);
 
-/**
- *	Sets or unset the fact that the window is set fullscreen. After this call the
- *	application should get prepared to receive a configure event. The output is used
- *	only when going fullscreen, it is optional and not used when exiting fullscreen.
- *
- * @param window the UwacWindow
- * @param output an optional UwacOutput to put the window fullscreen on
- * @param isFullscreen set or unset fullscreen
- * @return UWAC_SUCCESS if the operation was a success
- */
-UWAC_API UwacReturnCode UwacWindowSetFullscreenState(UwacWindow* window, UwacOutput* output,
-        bool isFullscreen);
+	/**
+	 *
+	 * @param display
+	 * @param timeout
+	 * @return
+	 */
+	UWAC_API int UwacDisplayDispatch(UwacDisplay* display, int timeout);
 
-/**
- *	When possible (depending on the shell) sets the title of the UwacWindow
- *
- * @param window the UwacWindow
- * @param name title
- */
-UWAC_API void UwacWindowSetTitle(UwacWindow* window, const char* name);
+	/**
+	 *	Returns if you have some pending events, and you can UwacNextEvent() without blocking
+	 *
+	 * @param display the UwacDisplay
+	 * @return if there's some pending events
+	 */
+	UWAC_API bool UwacHasEvent(UwacDisplay* display);
 
-/**
- *
- * @param display
- * @param timeout
- * @return
- */
-UWAC_API int UwacDisplayDispatch(UwacDisplay* display, int timeout);
+	/** Waits until an event occurs, and when it's there copy the event from the queue to
+	 * event.
+	 *
+	 * @param display the Uwac display
+	 * @param event the event to fill
+	 * @return if the operation completed successfully
+	 */
+	UWAC_API UwacReturnCode UwacNextEvent(UwacDisplay* display, UwacEvent* event);
 
-/**
- *	Returns if you have some pending events, and you can UwacNextEvent() without blocking
- *
- * @param display the UwacDisplay
- * @return if there's some pending events
- */
-UWAC_API bool UwacHasEvent(UwacDisplay* display);
+	/**
+	 * returns the name of the given UwacSeat
+	 *
+	 * @param seat the UwacSeat
+	 * @return the name of the seat
+	 */
+	UWAC_API const char* UwacSeatGetName(const UwacSeat* seat);
 
-/** Waits until an event occurs, and when it's there copy the event from the queue to
- * event.
- *
- * @param display the Uwac display
- * @param event the event to fill
- * @return if the operation completed successfully
- */
-UWAC_API UwacReturnCode UwacNextEvent(UwacDisplay* display, UwacEvent* event);
+	/**
+	 * returns the id of the given UwacSeat
+	 *
+	 * @param seat the UwacSeat
+	 * @return the id of the seat
+	 */
+	UWAC_API UwacSeatId UwacSeatGetId(const UwacSeat* seat);
 
-/**
- * returns the name of the given UwacSeat
- *
- * @param seat the UwacSeat
- * @return the name of the seat
- */
-UWAC_API const char* UwacSeatGetName(const UwacSeat* seat);
+	/**
+	 *
+	 */
+	UWAC_API UwacReturnCode UwacClipboardOfferDestroy(UwacSeat* seat);
+	UWAC_API UwacReturnCode UwacClipboardOfferCreate(UwacSeat* seat, const char* mime);
+	UWAC_API UwacReturnCode UwacClipboardOfferAnnounce(UwacSeat* seat, void* context,
+	                                                   UwacDataTransferHandler transfer,
+	                                                   UwacCancelDataTransferHandler cancel);
+	UWAC_API void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size);
 
-/**
- * returns the id of the given UwacSeat
- *
- * @param seat the UwacSeat
- * @return the id of the seat
- */
-UWAC_API UwacSeatId UwacSeatGetId(const UwacSeat* seat);
+	/**
+	 * Inhibits or restores keyboard shortcuts.
+	 *
+	 * @param seat    The UwacSeat to inhibit the shortcuts for
+	 * @param inhibit Inhibit or restore keyboard shortcuts
+	 *
+	 * @return UWAC_SUCCESS or an appropriate error code.
+	 */
+	UWAC_API UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* seat, bool inhibit);
 
-/**
- *
- */
-UWAC_API UwacReturnCode UwacClipboardOfferDestroy(UwacSeat* seat);
-UWAC_API UwacReturnCode UwacClipboardOfferCreate(UwacSeat* seat, const char* mime);
-UWAC_API UwacReturnCode UwacClipboardOfferAnnounce(UwacSeat* seat,
-        void* context,
-        UwacDataTransferHandler transfer,
-        UwacCancelDataTransferHandler cancel);
-UWAC_API void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size);
-
-/**
- * Inhibits or restores keyboard shortcuts.
- *
- * @param seat    The UwacSeat to inhibit the shortcuts for
- * @param inhibit Inhibit or restore keyboard shortcuts
- *
- * @return UWAC_SUCCESS or an appropriate error code.
- */
-UWAC_API UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* seat, bool inhibit);
-
-/**
- * @brief UwacSeatSetMouseCursor Sets the specified image as the new mouse cursor.
- *                               Special values: If data == NULL && lenght == 0
- *                               the cursor is hidden, if data == NULL && length != 0
- *                               the default system cursor is used.
- *
- * @param seat   The UwacSeat to apply the cursor image to
- * @param data   A pointer to the image data
- * @param length The size of the image data
- * @param width  The image width in pixel
- * @param height The image height in pixel
- * @param hot_x  The hotspot horizontal offset in pixel
- * @param hot_y  The hotspot vertical offset in pixel
- *
- * @return UWAC_SUCCESS if successful, an appropriate error otherwise.
- */
-UWAC_API UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t length,
-                                               size_t width, size_t height, size_t hot_x, size_t hot_y);
+	/**
+	 * @brief UwacSeatSetMouseCursor Sets the specified image as the new mouse cursor.
+	 *                               Special values: If data == NULL && lenght == 0
+	 *                               the cursor is hidden, if data == NULL && length != 0
+	 *                               the default system cursor is used.
+	 *
+	 * @param seat   The UwacSeat to apply the cursor image to
+	 * @param data   A pointer to the image data
+	 * @param length The size of the image data
+	 * @param width  The image width in pixel
+	 * @param height The image height in pixel
+	 * @param hot_x  The hotspot horizontal offset in pixel
+	 * @param hot_y  The hotspot vertical offset in pixel
+	 *
+	 * @return UWAC_SUCCESS if successful, an appropriate error otherwise.
+	 */
+	UWAC_API UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t length,
+	                                               size_t width, size_t height, size_t hot_x,
+	                                               size_t hot_y);
 
 #ifdef __cplusplus
 }

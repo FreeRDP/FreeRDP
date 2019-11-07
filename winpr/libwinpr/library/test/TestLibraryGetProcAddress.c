@@ -20,7 +20,7 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 
 	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))
 	{
-		printf("%s: GetModuleFilenameA failed: 0x%08"PRIX32"\n", __FUNCTION__, GetLastError());
+		printf("%s: GetModuleFilenameA failed: 0x%08" PRIX32 "\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 
@@ -40,17 +40,17 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 
 	if (!(library = LoadLibraryA(LibraryPath)))
 	{
-		printf("%s: LoadLibraryA failure: 0x%08"PRIX32"\n", __FUNCTION__, GetLastError());
+		printf("%s: LoadLibraryA failure: 0x%08" PRIX32 "\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 
-	if (!(pFunctionA = (TEST_AB_FN) GetProcAddress(library, "FunctionA")))
+	if (!(pFunctionA = (TEST_AB_FN)GetProcAddress(library, "FunctionA")))
 	{
 		printf("%s: GetProcAddress failure (FunctionA)\n", __FUNCTION__);
 		return -1;
 	}
 
-	if (!(pFunctionB = (TEST_AB_FN) GetProcAddress(library, "FunctionB")))
+	if (!(pFunctionB = (TEST_AB_FN)GetProcAddress(library, "FunctionB")))
 	{
 		printf("%s: GetProcAddress failure (FunctionB)\n", __FUNCTION__);
 		return -1;
@@ -78,7 +78,7 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 
 	if (!FreeLibrary(library))
 	{
-		printf("%s: FreeLibrary failure: 0x%08"PRIX32"\n", __FUNCTION__, GetLastError());
+		printf("%s: FreeLibrary failure: 0x%08" PRIX32 "\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 

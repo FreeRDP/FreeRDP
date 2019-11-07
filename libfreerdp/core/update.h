@@ -30,13 +30,13 @@
 
 #include <winpr/stream.h>
 
-#define UPDATE_TYPE_ORDERS		0x0000
-#define UPDATE_TYPE_BITMAP		0x0001
-#define UPDATE_TYPE_PALETTE		0x0002
-#define UPDATE_TYPE_SYNCHRONIZE		0x0003
+#define UPDATE_TYPE_ORDERS 0x0000
+#define UPDATE_TYPE_BITMAP 0x0001
+#define UPDATE_TYPE_PALETTE 0x0002
+#define UPDATE_TYPE_SYNCHRONIZE 0x0003
 
-#define BITMAP_COMPRESSION		0x0001
-#define NO_BITMAP_COMPRESSION_HDR	0x0400
+#define BITMAP_COMPRESSION 0x0001
+#define NO_BITMAP_COMPRESSION_HDR 0x0400
 
 FREERDP_LOCAL rdpUpdate* update_new(rdpRdp* rdp);
 FREERDP_LOCAL void update_free(rdpUpdate* update);
@@ -54,7 +54,7 @@ FREERDP_LOCAL PALETTE_UPDATE* update_read_palette(rdpUpdate* update, wStream* s)
 FREERDP_LOCAL POINTER_SYSTEM_UPDATE* update_read_pointer_system(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL POINTER_POSITION_UPDATE* update_read_pointer_position(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL POINTER_COLOR_UPDATE* update_read_pointer_color(rdpUpdate* update, wStream* s,
-        BYTE xorBpp);
+                                                              BYTE xorBpp);
 FREERDP_LOCAL POINTER_NEW_UPDATE* update_read_pointer_new(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL POINTER_CACHED_UPDATE* update_read_pointer_cached(rdpUpdate* update, wStream* s);
 

@@ -21,7 +21,7 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 		return -1;
 
 	/* Get the variable itself */
-	p = (LPSTR) malloc(length);
+	p = (LPSTR)malloc(length);
 
 	if (!p)
 		goto fail;
@@ -100,7 +100,7 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 	}
 
 	free(lpszEnvironmentBlockNew);
-	lpszEnvironmentBlockNew = (LPTCH) calloc(1024, sizeof(TCHAR));
+	lpszEnvironmentBlockNew = (LPTCH)calloc(1024, sizeof(TCHAR));
 
 	if (!lpszEnvironmentBlockNew)
 		goto fail;
@@ -132,4 +132,3 @@ fail:
 #endif
 	return rc;
 }
-

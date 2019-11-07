@@ -45,24 +45,38 @@
 
 #define TAG SERVER_TAG("shadow")
 
-static const COMMAND_LINE_ARGUMENT_A shadow_args[] =
-{
+static const COMMAND_LINE_ARGUMENT_A shadow_args[] = {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
-	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL, "Server IPC socket" },
-	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL, "Select or list monitors" },
-	{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL, "Select rectangle within monitor to share" },
-	{ "auth", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Clients must authenticate" },
-	{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may view without prompt" },
-	{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may interact without prompt" },
-	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "<rdp|tls|nla|ext>", NULL, NULL, -1, NULL, "force specific protocol security" },
-	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "rdp protocol security" },
-	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "tls protocol security" },
-	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "nla protocol security" },
-	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "nla extended protocol security" },
-	{ "sam-file", COMMAND_LINE_VALUE_REQUIRED, "<file>", NULL, NULL, -1, NULL, "NTLM SAM file for NLA authentication" },
-	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "Print version" },
-	{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL, -1, NULL, "Print the build configuration" },
-	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "Print help" },
+	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL,
+	  "Server IPC socket" },
+	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL,
+	  "Select or list monitors" },
+	{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL,
+	  "Select rectangle within monitor to share" },
+	{ "auth", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "Clients must authenticate" },
+	{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "Clients may view without prompt" },
+	{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "Clients may interact without prompt" },
+	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "<rdp|tls|nla|ext>", NULL, NULL, -1, NULL,
+	  "force specific protocol security" },
+	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "rdp protocol security" },
+	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "tls protocol security" },
+	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "nla protocol security" },
+	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "nla extended protocol security" },
+	{ "sam-file", COMMAND_LINE_VALUE_REQUIRED, "<file>", NULL, NULL, -1, NULL,
+	  "NTLM SAM file for NLA authentication" },
+	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL,
+	  "Print version" },
+	{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL, -1,
+	  NULL, "Print the build configuration" },
+	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?",
+	  "Print help" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -81,7 +95,8 @@ static int shadow_server_print_command_line_help(int argc, char** argv)
 	WLog_INFO(TAG, "Syntax:");
 	WLog_INFO(TAG, "    /flag (enables flag)");
 	WLog_INFO(TAG, "    /option:<value> (specifies option with value)");
-	WLog_INFO(TAG, "    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')");
+	WLog_INFO(TAG,
+	          "    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')");
 	WLog_INFO(TAG, "");
 	arg = largs;
 
@@ -93,14 +108,15 @@ static int shadow_server_print_command_line_help(int argc, char** argv)
 			WLog_INFO(TAG, "%-20s", arg->Name);
 			WLog_INFO(TAG, "\t%s", arg->Text);
 		}
-		else if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED) || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
+		else if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED) ||
+		         (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 		{
 			WLog_INFO(TAG, "    %s", "/");
 
 			if (arg->Format)
 			{
 				length = (strlen(arg->Name) + strlen(arg->Format) + 2);
-				str = (char*) malloc(length + 1);
+				str = (char*)malloc(length + 1);
 
 				if (!str)
 					return -1;
@@ -119,26 +135,24 @@ static int shadow_server_print_command_line_help(int argc, char** argv)
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
 			length = strlen(arg->Name) + 32;
-			str = (char*) malloc(length + 1);
+			str = (char*)malloc(length + 1);
 
 			if (!str)
 				return -1;
 
-			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
-			          arg->Default ? "on" : "off");
+			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name, arg->Default ? "on" : "off");
 			WLog_INFO(TAG, "    %s", arg->Default ? "-" : "+");
 			WLog_INFO(TAG, "%-20s", str);
 			free(str);
 			WLog_INFO(TAG, "\t%s", arg->Text);
 		}
-	}
-	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
 	return 1;
 }
 
 int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, char** argv,
-        int status)
+                                            int status)
 {
 	WINPR_UNUSED(server);
 
@@ -182,8 +196,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	CommandLineClearArgumentsA(largs);
 	flags = COMMAND_LINE_SEPARATOR_COLON;
 	flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
-	status = CommandLineParseArgumentsA(argc, argv, largs, flags, server, NULL,
-	                                    NULL);
+	status = CommandLineParseArgumentsA(argc, argv, largs, flags, server, NULL, NULL);
 
 	if (status < 0)
 		return status;
@@ -196,15 +209,14 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 			continue;
 
-		CommandLineSwitchStart(arg)
-		CommandLineSwitchCase(arg, "port")
+		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "port")
 		{
 			long val = strtol(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
 				return -1;
 
-			server->port = (DWORD) val;
+			server->port = (DWORD)val;
 		}
 		CommandLineSwitchCase(arg, "ipc-socket")
 		{
@@ -358,8 +370,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 		}
 		CommandLineSwitchEnd(arg)
-	}
-	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
 	arg = CommandLineFindArgumentA(largs, "monitors");
 
@@ -392,9 +403,9 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 				monitor = &monitors[index];
 				width = monitor->right - monitor->left;
 				height = monitor->bottom - monitor->top;
-				WLog_INFO(TAG, "      %s [%d] %dx%d\t+%"PRId32"+%"PRId32"",
-				          (monitor->flags == 1) ? "*" : " ", index,
-				          width, height, monitor->left, monitor->top);
+				WLog_INFO(TAG, "      %s [%d] %dx%d\t+%" PRId32 "+%" PRId32 "",
+				          (monitor->flags == 1) ? "*" : " ", index, width, height, monitor->left,
+				          monitor->top);
 			}
 
 			status = COMMAND_LINE_STATUS_PRINT;
@@ -435,20 +446,20 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 				break;
 
 			default:
+			{
+				if (!listener->CheckFileDescriptor(listener))
 				{
-					if (!listener->CheckFileDescriptor(listener))
-					{
-						WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
-						running = FALSE;
-					}
-					else
-					{
-#ifdef _WIN32
-						Sleep(100); /* FIXME: listener event handles */
-#endif
-					}
+					WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
+					running = FALSE;
 				}
-				break;
+				else
+				{
+#ifdef _WIN32
+					Sleep(100); /* FIXME: listener event handles */
+#endif
+				}
+			}
+			break;
 		}
 	}
 
@@ -500,17 +511,18 @@ int shadow_server_start(rdpShadowServer* server)
 	}
 
 	if (!server->ipcSocket)
-		status = server->listener->Open(server->listener, NULL, (UINT16) server->port);
+		status = server->listener->Open(server->listener, NULL, (UINT16)server->port);
 	else
 		status = server->listener->OpenLocal(server->listener, server->ipcSocket);
 
 	if (!status)
 	{
-		WLog_ERR(TAG, "Problem creating listener. (Port already used or insufficient permissions?)");
+		WLog_ERR(TAG,
+		         "Problem creating listener. (Port already used or insufficient permissions?)");
 		return -1;
 	}
 
-	if (!(server->thread = CreateThread(NULL, 0, shadow_server_thread, (void*) server, 0, NULL)))
+	if (!(server->thread = CreateThread(NULL, 0, shadow_server_thread, (void*)server, 0, NULL)))
 	{
 		return -1;
 	}
@@ -567,8 +579,7 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 
 		if (userLibraryPath)
 		{
-			if (!PathFileExistsA(userLibraryPath) &&
-			    !PathMakePathA(userLibraryPath, 0))
+			if (!PathFileExistsA(userLibraryPath) && !PathMakePathA(userLibraryPath, 0))
 			{
 				WLog_ERR(TAG, "Failed to create directory '%s'", userLibraryPath);
 				free(userLibraryPath);
@@ -605,8 +616,7 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 
 		if (configHome)
 		{
-			if (!PathFileExistsA(configHome) &&
-			    !PathMakePathA(configHome, 0))
+			if (!PathFileExistsA(configHome) && !PathMakePathA(configHome, 0))
 			{
 				WLog_ERR(TAG, "Failed to create directory '%s'", configHome);
 				free(configHome);
@@ -629,18 +639,10 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	char* filepath;
 	MAKECERT_CONTEXT* makecert = NULL;
 	BOOL ret = FALSE;
-	const char* makecert_argv[6] =
-	{
-		"makecert",
-		"-rdp",
-		"-live",
-		"-silent",
-		"-y", "5"
-	};
+	const char* makecert_argv[6] = { "makecert", "-rdp", "-live", "-silent", "-y", "5" };
 	int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
 
-	if (!PathFileExistsA(server->ConfigPath) &&
-	    !PathMakePathA(server->ConfigPath, 0))
+	if (!PathFileExistsA(server->ConfigPath) && !PathMakePathA(server->ConfigPath, 0))
 	{
 		WLog_ERR(TAG, "Failed to create directory '%s'", server->ConfigPath);
 		return FALSE;
@@ -649,8 +651,7 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	if (!(filepath = GetCombinedPath(server->ConfigPath, "shadow")))
 		return FALSE;
 
-	if (!PathFileExistsA(filepath) &&
-	    !PathMakePathA(filepath, 0))
+	if (!PathFileExistsA(filepath) && !PathMakePathA(filepath, 0))
 	{
 		if (!CreateDirectoryA(filepath, 0))
 		{
@@ -665,15 +666,14 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	if (!server->CertificateFile || !server->PrivateKeyFile)
 		goto out_fail;
 
-	if ((!PathFileExistsA(server->CertificateFile)) ||
-	    (!PathFileExistsA(server->PrivateKeyFile)))
+	if ((!PathFileExistsA(server->CertificateFile)) || (!PathFileExistsA(server->PrivateKeyFile)))
 	{
 		makecert = makecert_context_new();
 
 		if (!makecert)
 			goto out_fail;
 
-		if (makecert_context_process(makecert, makecert_argc, (char**) makecert_argv) < 0)
+		if (makecert_context_process(makecert, makecert_argc, (char**)makecert_argv) < 0)
 			goto out_fail;
 
 		if (makecert_context_set_output_file_name(makecert, "shadow") != 1)
@@ -729,7 +729,7 @@ int shadow_server_init(rdpShadowServer* server)
 	if (!server->listener)
 		goto fail_listener;
 
-	server->listener->info = (void*) server;
+	server->listener->info = (void*)server;
 	server->listener->PeerAccepted = shadow_client_accepted;
 	server->subsystem = shadow_subsystem_new();
 
@@ -793,7 +793,7 @@ int shadow_server_uninit(rdpShadowServer* server)
 rdpShadowServer* shadow_server_new(void)
 {
 	rdpShadowServer* server;
-	server = (rdpShadowServer*) calloc(1, sizeof(rdpShadowServer));
+	server = (rdpShadowServer*)calloc(1, sizeof(rdpShadowServer));
 
 	if (!server)
 		return NULL;
@@ -822,4 +822,3 @@ void shadow_server_free(rdpShadowServer* server)
 	server->settings = NULL;
 	free(server);
 }
-

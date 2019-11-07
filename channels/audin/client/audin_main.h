@@ -33,4 +33,3 @@
 #define TAG CHANNELS_TAG("audin.client")
 
 #endif /* FREERDP_CHANNEL_AUDIN_CLIENT_MAIN_H */
-

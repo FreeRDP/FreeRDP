@@ -26,4 +26,3 @@
 FREERDP_LOCAL void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile);
 
 #endif /* FREERDP_LIB_CODEC_RFX_ENCODE_H */
-

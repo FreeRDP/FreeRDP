@@ -103,17 +103,17 @@ BOOL pf_modules_run_hook(PF_HOOK_TYPE type, rdpContext* context)
 
 		switch (type)
 		{
-		case HOOK_TYPE_CLIENT_PRE_CONNECT:
-			IFCALLRET(ops->ClientPreConnect, ok, ops, context);
-			break;
+			case HOOK_TYPE_CLIENT_PRE_CONNECT:
+				IFCALLRET(ops->ClientPreConnect, ok, ops, context);
+				break;
 
-		case HOOK_TYPE_SERVER_CHANNELS_INIT:
-			IFCALLRET(ops->ServerChannelsInit, ok, ops, context);
-			break;
+			case HOOK_TYPE_SERVER_CHANNELS_INIT:
+				IFCALLRET(ops->ServerChannelsInit, ok, ops, context);
+				break;
 
-		case HOOK_TYPE_SERVER_CHANNELS_FREE:
-			IFCALLRET(ops->ServerChannelsFree, ok, ops, context);
-			break;
+			case HOOK_TYPE_SERVER_CHANNELS_FREE:
+				IFCALLRET(ops->ServerChannelsFree, ok, ops, context);
+				break;
 		}
 
 		if (!ok)
@@ -149,13 +149,13 @@ BOOL pf_modules_run_filter(PF_FILTER_TYPE type, rdpContext* server, void* param)
 
 		switch (type)
 		{
-		case FILTER_TYPE_KEYBOARD:
-			IFCALLRET(ops->KeyboardEvent, result, ops, server, param);
-			break;
+			case FILTER_TYPE_KEYBOARD:
+				IFCALLRET(ops->KeyboardEvent, result, ops, server, param);
+				break;
 
-		case FILTER_TYPE_MOUSE:
-			IFCALLRET(ops->MouseEvent, result, ops, server, param);
-			break;
+			case FILTER_TYPE_MOUSE:
+				IFCALLRET(ops->MouseEvent, result, ops, server, param);
+				break;
 		}
 
 		if (!result)
@@ -236,7 +236,7 @@ static BOOL pf_modules_set_session_data(moduleOperations* module, rdpContext* co
 	if (data == NULL) /* no need to store anything */
 		return FALSE;
 
-	ps = (pServerContext*) context;
+	ps = (pServerContext*)context;
 	if (HashTable_Add(ps->modules_info, (void*)module, data) < 0)
 	{
 		WLog_ERR(TAG, "[%s]: HashTable_Add failed!");

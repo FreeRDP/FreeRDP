@@ -23,13 +23,14 @@
 #include <winpr/rpc.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #ifndef _WIN32
 
-WINPR_API void* MIDL_user_allocate(size_t cBytes);
-WINPR_API void MIDL_user_free(void* p);
+	WINPR_API void* MIDL_user_allocate(size_t cBytes);
+	WINPR_API void MIDL_user_free(void* p);
 
 #endif
 

@@ -28,16 +28,17 @@
 
 typedef struct _audin_server_context audin_server_context;
 
-typedef UINT(*psAudinServerSelectFormat)(audin_server_context* context, size_t client_format_index);
+typedef UINT (*psAudinServerSelectFormat)(audin_server_context* context,
+                                          size_t client_format_index);
 typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
 typedef BOOL (*psAudinServerIsOpen)(audin_server_context* context);
 typedef BOOL (*psAudinServerClose)(audin_server_context* context);
 
-typedef UINT(*psAudinServerOpening)(audin_server_context* context);
-typedef UINT(*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
-typedef UINT(*psAudinServerReceiveSamples)(audin_server_context* context,
-        const AUDIO_FORMAT* format, wStream* buf,
-        size_t nframes);
+typedef UINT (*psAudinServerOpening)(audin_server_context* context);
+typedef UINT (*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
+typedef UINT (*psAudinServerReceiveSamples)(audin_server_context* context,
+                                            const AUDIO_FORMAT* format, wStream* buf,
+                                            size_t nframes);
 
 struct _audin_server_context
 {
@@ -101,11 +102,12 @@ struct _audin_server_context
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API audin_server_context* audin_server_context_new(HANDLE vcm);
-FREERDP_API void audin_server_context_free(audin_server_context* context);
+	FREERDP_API audin_server_context* audin_server_context_new(HANDLE vcm);
+	FREERDP_API void audin_server_context_free(audin_server_context* context);
 
 #ifdef __cplusplus
 }

@@ -31,71 +31,70 @@
  */
 
 #if !defined(__APPLE__)
-	#ifndef WINPR_PRAGMA_PACK_EXT
-	#define WINPR_PRAGMA_PACK_EXT
-	#endif
+#ifndef WINPR_PRAGMA_PACK_EXT
+#define WINPR_PRAGMA_PACK_EXT
+#endif
 #endif
 
 #ifdef PRAGMA_PACK_PUSH
-	#ifndef PRAGMA_PACK_PUSH1
-	#define PRAGMA_PACK_PUSH1
-	#endif
+#ifndef PRAGMA_PACK_PUSH1
+#define PRAGMA_PACK_PUSH1
+#endif
 #undef PRAGMA_PACK_PUSH
 #endif
 
 #ifdef PRAGMA_PACK_PUSH1
-	#ifdef WINPR_PRAGMA_PACK_EXT
-	#pragma pack(push, 1)
-	#else
-	#pragma pack(1)
-	#endif
+#ifdef WINPR_PRAGMA_PACK_EXT
+#pragma pack(push, 1)
+#else
+#pragma pack(1)
+#endif
 #undef PRAGMA_PACK_PUSH1
 #endif
 
 #ifdef PRAGMA_PACK_PUSH2
-	#ifdef WINPR_PRAGMA_PACK_EXT
-	#pragma pack(push, 2)
-	#else
-	#pragma pack(2)
-	#endif
+#ifdef WINPR_PRAGMA_PACK_EXT
+#pragma pack(push, 2)
+#else
+#pragma pack(2)
+#endif
 #undef PRAGMA_PACK_PUSH2
 #endif
 
 #ifdef PRAGMA_PACK_PUSH4
-	#ifdef WINPR_PRAGMA_PACK_EXT
-	#pragma pack(push, 4)
-	#else
-	#pragma pack(4)
-	#endif
+#ifdef WINPR_PRAGMA_PACK_EXT
+#pragma pack(push, 4)
+#else
+#pragma pack(4)
+#endif
 #undef PRAGMA_PACK_PUSH4
 #endif
 
 #ifdef PRAGMA_PACK_PUSH8
-	#ifdef WINPR_PRAGMA_PACK_EXT
-	#pragma pack(push, 8)
-	#else
-	#pragma pack(8)
-	#endif
+#ifdef WINPR_PRAGMA_PACK_EXT
+#pragma pack(push, 8)
+#else
+#pragma pack(8)
+#endif
 #undef PRAGMA_PACK_PUSH8
 #endif
 
 #ifdef PRAGMA_PACK_PUSH16
-	#ifdef WINPR_PRAGMA_PACK_EXT
-	#pragma pack(push, 16)
-	#else
-	#pragma pack(16)
-	#endif
+#ifdef WINPR_PRAGMA_PACK_EXT
+#pragma pack(push, 16)
+#else
+#pragma pack(16)
+#endif
 #undef PRAGMA_PACK_PUSH16
 #endif
 
 #ifdef PRAGMA_PACK_POP
-	#ifdef WINPR_PRAGMA_PACK_EXT
-	#pragma pack(pop)
-	#else
-	#pragma pack()
-	#endif
+#ifdef WINPR_PRAGMA_PACK_EXT
+#pragma pack(pop)
+#else
+#pragma pack()
+#endif
 #undef PRAGMA_PACK_POP
 #endif
 
 #undef WINPR_PRAGMA_PACK_EXT
-

@@ -34,4 +34,3 @@ CREDSSP_CONTEXT* credssp_ContextNew(void);
 void credssp_ContextFree(CREDSSP_CONTEXT* context);
 
 #endif /* WINPR_SSPI_CREDSSP_PRIVATE_H */
-

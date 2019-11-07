@@ -52,7 +52,7 @@ UINT tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(ifman->input, CapabilityValue);
-	DEBUG_TSMF("server CapabilityValue %"PRIu32"", CapabilityValue);
+	DEBUG_TSMF("server CapabilityValue %" PRIu32 "", CapabilityValue);
 
 	if (!Stream_EnsureRemainingCapacity(ifman->output, 8))
 		return ERROR_INVALID_DATA;
@@ -108,7 +108,7 @@ UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 					return ERROR_INVALID_DATA;
 
 				Stream_Read_UINT32(ifman->output, v);
-				DEBUG_TSMF("server protocol version %"PRIu32"", v);
+				DEBUG_TSMF("server protocol version %" PRIu32 "", v);
 				break;
 
 			case 2: /* Supported platform */
@@ -116,14 +116,14 @@ UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 					return ERROR_INVALID_DATA;
 
 				Stream_Peek_UINT32(ifman->output, v);
-				DEBUG_TSMF("server supported platform %"PRIu32"", v);
+				DEBUG_TSMF("server supported platform %" PRIu32 "", v);
 				/* Claim that we support both MF and DShow platforms. */
-				Stream_Write_UINT32(ifman->output,
-				                    MMREDIR_CAPABILITY_PLATFORM_MF | MMREDIR_CAPABILITY_PLATFORM_DSHOW);
+				Stream_Write_UINT32(ifman->output, MMREDIR_CAPABILITY_PLATFORM_MF |
+				                                       MMREDIR_CAPABILITY_PLATFORM_DSHOW);
 				break;
 
 			default:
-				WLog_ERR(TAG, "skipping unknown capability type %"PRIu32"", CapabilityType);
+				WLog_ERR(TAG, "skipping unknown capability type %" PRIu32 "", CapabilityType);
 				break;
 		}
 
@@ -152,7 +152,7 @@ UINT tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
 	Stream_Read_UINT32(ifman->input, PlatformCookie);
 	Stream_Seek_UINT32(ifman->input); /* NoRolloverFlags (4 bytes) */
 	Stream_Read_UINT32(ifman->input, numMediaType);
-	DEBUG_TSMF("PlatformCookie %"PRIu32" numMediaType %"PRIu32"", PlatformCookie, numMediaType);
+	DEBUG_TSMF("PlatformCookie %" PRIu32 " numMediaType %" PRIu32 "", PlatformCookie, numMediaType);
 
 	if (!tsmf_codec_check_media_type(ifman->decoder_name, ifman->input))
 		FormatSupported = 0;
@@ -343,12 +343,12 @@ UINT tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
 	}
 	else
 	{
-		Left = tsmf_stream_read_float(ifman->input); /* Left (4 bytes) */
-		Top = tsmf_stream_read_float(ifman->input); /* Top (4 bytes) */
-		Right = tsmf_stream_read_float(ifman->input); /* Right (4 bytes) */
+		Left = tsmf_stream_read_float(ifman->input);   /* Left (4 bytes) */
+		Top = tsmf_stream_read_float(ifman->input);    /* Top (4 bytes) */
+		Right = tsmf_stream_read_float(ifman->input);  /* Right (4 bytes) */
 		Bottom = tsmf_stream_read_float(ifman->input); /* Bottom (4 bytes) */
-		DEBUG_TSMF("SetSourceVideoRect: Left: %f Top: %f Right: %f Bottom: %f",
-		           Left, Top, Right, Bottom);
+		DEBUG_TSMF("SetSourceVideoRect: Left: %f Top: %f Right: %f Bottom: %f", Left, Top, Right,
+		           Bottom);
 	}
 
 	ifman->output_pending = TRUE;
@@ -411,9 +411,9 @@ UINT tsmf_ifman_on_stream_volume(TSMF_IFMAN* ifman)
 
 	Stream_Seek(ifman->input, 16);
 	Stream_Read_UINT32(ifman->input, newVolume);
-	DEBUG_TSMF("on stream volume: new volume=[%"PRIu32"]", newVolume);
+	DEBUG_TSMF("on stream volume: new volume=[%" PRIu32 "]", newVolume);
 	Stream_Read_UINT32(ifman->input, muted);
-	DEBUG_TSMF("on stream volume: muted=[%"PRIu32"]", muted);
+	DEBUG_TSMF("on stream volume: muted=[%" PRIu32 "]", muted);
 
 	if (!tsmf_presentation_volume_changed(presentation, newVolume, muted))
 		return ERROR_INVALID_OPERATION;
@@ -443,9 +443,9 @@ UINT tsmf_ifman_on_channel_volume(TSMF_IFMAN* ifman)
 		UINT32 changedChannel;
 		Stream_Seek(ifman->input, 16);
 		Stream_Read_UINT32(ifman->input, channelVolume);
-		DEBUG_TSMF("on channel volume: channel volume=[%"PRIu32"]", channelVolume);
+		DEBUG_TSMF("on channel volume: channel volume=[%" PRIu32 "]", channelVolume);
 		Stream_Read_UINT32(ifman->input, changedChannel);
-		DEBUG_TSMF("on stream volume: changed channel=[%"PRIu32"]", changedChannel);
+		DEBUG_TSMF("on stream volume: changed channel=[%" PRIu32 "]", changedChannel);
 	}
 
 	ifman->output_pending = TRUE;
@@ -503,12 +503,13 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	Stream_SetPosition(ifman->input, pos + numGeometryInfo);
 	Stream_Read_UINT32(ifman->input, cbVisibleRect);
 	num_rects = cbVisibleRect / 16;
-	DEBUG_TSMF("numGeometryInfo %"PRIu32" Width %"PRIu32" Height %"PRIu32" Left %"PRIu32" Top %"PRIu32" cbVisibleRect %"PRIu32" num_rects %d",
+	DEBUG_TSMF("numGeometryInfo %" PRIu32 " Width %" PRIu32 " Height %" PRIu32 " Left %" PRIu32
+	           " Top %" PRIu32 " cbVisibleRect %" PRIu32 " num_rects %d",
 	           numGeometryInfo, Width, Height, Left, Top, cbVisibleRect, num_rects);
 
 	if (num_rects > 0)
 	{
-		rects = (RDP_RECT*) calloc(num_rects, sizeof(RDP_RECT));
+		rects = (RDP_RECT*)calloc(num_rects, sizeof(RDP_RECT));
 
 		for (i = 0; i < num_rects; i++)
 		{
@@ -522,12 +523,13 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 			Stream_Seek_UINT16(ifman->input);
 			rects[i].width -= rects[i].x;
 			rects[i].height -= rects[i].y;
-			DEBUG_TSMF("rect %d: %"PRId16" %"PRId16" %"PRId16" %"PRId16"", i,
-			           rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+			DEBUG_TSMF("rect %d: %" PRId16 " %" PRId16 " %" PRId16 " %" PRId16 "", i, rects[i].x,
+			           rects[i].y, rects[i].width, rects[i].height);
 		}
 	}
 
-	if (!tsmf_presentation_set_geometry_info(presentation, Left, Top, Width, Height, num_rects, rects))
+	if (!tsmf_presentation_set_geometry_info(presentation, Left, Top, Width, Height, num_rects,
+	                                         rects))
 		return ERROR_INVALID_OPERATION;
 
 	ifman->output_pending = TRUE;
@@ -592,10 +594,11 @@ UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 	if (Stream_GetRemainingLength(ifman->input) < cbData)
 		return ERROR_INVALID_DATA;
 
-	DEBUG_TSMF("MessageId %"PRIu32" StreamId %"PRIu32" SampleStartTime %"PRIu64" SampleEndTime %"PRIu64" "
-	           "ThrottleDuration %"PRIu64" SampleExtensions %"PRIu32" cbData %"PRIu32"",
-	           ifman->message_id, StreamId, SampleStartTime, SampleEndTime,
-	           ThrottleDuration, SampleExtensions, cbData);
+	DEBUG_TSMF("MessageId %" PRIu32 " StreamId %" PRIu32 " SampleStartTime %" PRIu64
+	           " SampleEndTime %" PRIu64 " "
+	           "ThrottleDuration %" PRIu64 " SampleExtensions %" PRIu32 " cbData %" PRIu32 "",
+	           ifman->message_id, StreamId, SampleStartTime, SampleEndTime, ThrottleDuration,
+	           SampleExtensions, cbData);
 	presentation = tsmf_presentation_find_by_id(ifman->presentation_id);
 
 	if (!presentation)
@@ -612,9 +615,9 @@ UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 		return ERROR_NOT_FOUND;
 	}
 
-	if (!tsmf_stream_push_sample(stream, ifman->channel_callback,
-	                             ifman->message_id, SampleStartTime, SampleEndTime,
-	                             ThrottleDuration, SampleExtensions, cbData, Stream_Pointer(ifman->input)))
+	if (!tsmf_stream_push_sample(stream, ifman->channel_callback, ifman->message_id,
+	                             SampleStartTime, SampleEndTime, ThrottleDuration, SampleExtensions,
+	                             cbData, Stream_Pointer(ifman->input)))
 	{
 		WLog_ERR(TAG, "unable to push sample");
 		return ERROR_OUTOFMEMORY;
@@ -622,7 +625,7 @@ UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 
 	if ((error = tsmf_presentation_sync(presentation)))
 	{
-		WLog_ERR(TAG, "tsmf_presentation_sync failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "tsmf_presentation_sync failed with error %" PRIu32 "", error);
 		return error;
 	}
 
@@ -646,7 +649,7 @@ UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 
 	Stream_Seek(ifman->input, 16);
 	Stream_Read_UINT32(ifman->input, StreamId);
-	DEBUG_TSMF("StreamId %"PRIu32"", StreamId);
+	DEBUG_TSMF("StreamId %" PRIu32 "", StreamId);
 	presentation = tsmf_presentation_find_by_id(ifman->presentation_id);
 
 	if (!presentation)
@@ -698,7 +701,7 @@ UINT tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 			tsmf_stream_end(stream, ifman->message_id, ifman->channel_callback);
 	}
 
-	DEBUG_TSMF("StreamId %"PRIu32"", StreamId);
+	DEBUG_TSMF("StreamId %" PRIu32 "", StreamId);
 	ifman->output_pending = TRUE;
 	ifman->output_interface_id = TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY;
 	return CHANNEL_RC_OK;
@@ -727,10 +730,10 @@ UINT tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
 	if (!Stream_EnsureRemainingCapacity(ifman->output, 16))
 		return ERROR_OUTOFMEMORY;
 
-	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
-	Stream_Write_UINT32(ifman->output, 0); /* StreamId */
+	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION);         /* FunctionId */
+	Stream_Write_UINT32(ifman->output, 0);                                 /* StreamId */
 	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_START_COMPLETED); /* EventId */
-	Stream_Write_UINT32(ifman->output, 0); /* cbData */
+	Stream_Write_UINT32(ifman->output, 0);                                 /* cbData */
 	ifman->output_interface_id = TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY;
 	return CHANNEL_RC_OK;
 }
@@ -805,10 +808,10 @@ UINT tsmf_ifman_on_playback_stopped(TSMF_IFMAN* ifman)
 	if (!Stream_EnsureRemainingCapacity(ifman->output, 16))
 		return ERROR_OUTOFMEMORY;
 
-	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
-	Stream_Write_UINT32(ifman->output, 0); /* StreamId */
+	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION);        /* FunctionId */
+	Stream_Write_UINT32(ifman->output, 0);                                /* StreamId */
 	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_STOP_COMPLETED); /* EventId */
-	Stream_Write_UINT32(ifman->output, 0); /* cbData */
+	Stream_Write_UINT32(ifman->output, 0);                                /* cbData */
 	ifman->output_interface_id = TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY;
 	return CHANNEL_RC_OK;
 }
@@ -825,10 +828,10 @@ UINT tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN* ifman)
 	if (!Stream_EnsureRemainingCapacity(ifman->output, 16))
 		return ERROR_OUTOFMEMORY;
 
-	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
-	Stream_Write_UINT32(ifman->output, 0); /* StreamId */
+	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION);        /* FunctionId */
+	Stream_Write_UINT32(ifman->output, 0);                                /* StreamId */
 	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_MONITORCHANGED); /* EventId */
-	Stream_Write_UINT32(ifman->output, 0); /* cbData */
+	Stream_Write_UINT32(ifman->output, 0);                                /* cbData */
 	ifman->output_interface_id = TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY;
 	return CHANNEL_RC_OK;
 }

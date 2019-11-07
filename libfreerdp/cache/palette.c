@@ -37,17 +37,17 @@ static void* palette_cache_get(rdpPaletteCache* palette, UINT32 index);
 static void palette_cache_put(rdpPaletteCache* palette, UINT32 index, void* entry);
 
 static BOOL update_gdi_cache_color_table(rdpContext* context,
-        const CACHE_COLOR_TABLE_ORDER* cacheColorTable)
+                                         const CACHE_COLOR_TABLE_ORDER* cacheColorTable)
 {
 	UINT32* colorTable;
 	rdpCache* cache = context->cache;
-	colorTable = (UINT32*) malloc(sizeof(UINT32) * 256);
+	colorTable = (UINT32*)malloc(sizeof(UINT32) * 256);
 
 	if (!colorTable)
 		return FALSE;
 
 	CopyMemory(colorTable, cacheColorTable->colorTable, sizeof(UINT32) * 256);
-	palette_cache_put(cache->palette, cacheColorTable->cacheIndex, (void*) colorTable);
+	palette_cache_put(cache->palette, cacheColorTable->cacheIndex, (void*)colorTable);
 	return TRUE;
 }
 
@@ -57,7 +57,7 @@ void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 
 	if (index >= paletteCache->maxEntries)
 	{
-		WLog_ERR(TAG,  "invalid color table index: 0x%08"PRIX32"", index);
+		WLog_ERR(TAG, "invalid color table index: 0x%08" PRIX32 "", index);
 		return NULL;
 	}
 
@@ -65,7 +65,7 @@ void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 
 	if (!entry)
 	{
-		WLog_ERR(TAG,  "invalid color table at index: 0x%08"PRIX32"", index);
+		WLog_ERR(TAG, "invalid color table at index: 0x%08" PRIX32 "", index);
 		return NULL;
 	}
 
@@ -76,7 +76,7 @@ void palette_cache_put(rdpPaletteCache* paletteCache, UINT32 index, void* entry)
 {
 	if (index >= paletteCache->maxEntries)
 	{
-		WLog_ERR(TAG,  "invalid color table index: 0x%08"PRIX32"", index);
+		WLog_ERR(TAG, "invalid color table index: 0x%08" PRIX32 "", index);
 		free(entry);
 		return;
 	}
@@ -93,14 +93,14 @@ void palette_cache_register_callbacks(rdpUpdate* update)
 rdpPaletteCache* palette_cache_new(rdpSettings* settings)
 {
 	rdpPaletteCache* paletteCache;
-	paletteCache = (rdpPaletteCache*) calloc(1, sizeof(rdpPaletteCache));
+	paletteCache = (rdpPaletteCache*)calloc(1, sizeof(rdpPaletteCache));
 
 	if (paletteCache)
 	{
 		paletteCache->settings = settings;
 		paletteCache->maxEntries = 6;
-		paletteCache->entries = (PALETTE_TABLE_ENTRY*) calloc(paletteCache->maxEntries,
-		                        sizeof(PALETTE_TABLE_ENTRY));
+		paletteCache->entries =
+		    (PALETTE_TABLE_ENTRY*)calloc(paletteCache->maxEntries, sizeof(PALETTE_TABLE_ENTRY));
 	}
 
 	return paletteCache;

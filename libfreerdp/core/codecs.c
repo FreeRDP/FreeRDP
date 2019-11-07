@@ -27,8 +27,7 @@
 
 #define TAG FREERDP_TAG("core.codecs")
 
-BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags,
-                                   UINT32 width, UINT32 height)
+BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width, UINT32 height)
 {
 	if ((flags & FREERDP_CODEC_INTERLEAVED) && !codecs->interleaved)
 	{
@@ -104,8 +103,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags,
 	return freerdp_client_codecs_reset(codecs, flags, width, height);
 }
 
-BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width,
-                                 UINT32 height)
+BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width, UINT32 height)
 {
 	BOOL rc = TRUE;
 
@@ -177,7 +175,7 @@ BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width,
 rdpCodecs* codecs_new(rdpContext* context)
 {
 	rdpCodecs* codecs;
-	codecs = (rdpCodecs*) calloc(1, sizeof(rdpCodecs));
+	codecs = (rdpCodecs*)calloc(1, sizeof(rdpCodecs));
 
 	if (codecs)
 		codecs->context = context;
@@ -236,4 +234,3 @@ void codecs_free(rdpCodecs* codecs)
 
 	free(codecs);
 }
-

@@ -23,12 +23,11 @@
 
 #include "CallbackAppender.h"
 
-
 struct _wLogCallbackAppender
 {
 	WLOG_APPENDER_COMMON();
 
-	wLogCallbacks *callbacks;
+	wLogCallbacks* callbacks;
 };
 typedef struct _wLogCallbackAppender wLogCallbackAppender;
 
@@ -42,7 +41,8 @@ static BOOL WLog_CallbackAppender_Close(wLog* log, wLogAppender* appender)
 	return TRUE;
 }
 
-static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
+static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender,
+                                               wLogMessage* message)
 {
 	char prefix[WLOG_MAX_PREFIX_SIZE];
 	wLogCallbackAppender* callbackAppender;
@@ -53,7 +53,7 @@ static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
-	callbackAppender = (wLogCallbackAppender *)appender;
+	callbackAppender = (wLogCallbackAppender*)appender;
 
 	if (callbackAppender->callbacks && callbackAppender->callbacks->message)
 		return callbackAppender->callbacks->message(message);
@@ -61,7 +61,8 @@ static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender
 		return FALSE;
 }
 
-static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
+static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
+                                                   wLogMessage* message)
 {
 	char prefix[WLOG_MAX_PREFIX_SIZE];
 	wLogCallbackAppender* callbackAppender;
@@ -72,14 +73,15 @@ static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appe
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
-	callbackAppender = (wLogCallbackAppender *)appender;
+	callbackAppender = (wLogCallbackAppender*)appender;
 	if (callbackAppender->callbacks && callbackAppender->callbacks->data)
 		return callbackAppender->callbacks->data(message);
 	else
 		return FALSE;
 }
 
-static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
+static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
+                                                    wLogMessage* message)
 {
 	char prefix[WLOG_MAX_PREFIX_SIZE];
 	wLogCallbackAppender* callbackAppender;
@@ -90,14 +92,15 @@ static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* app
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
-	callbackAppender = (wLogCallbackAppender *)appender;
+	callbackAppender = (wLogCallbackAppender*)appender;
 	if (callbackAppender->callbacks && callbackAppender->callbacks->image)
 		return callbackAppender->callbacks->image(message);
 	else
 		return FALSE;
 }
 
-static BOOL WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
+static BOOL WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogAppender* appender,
+                                                     wLogMessage* message)
 {
 	char prefix[WLOG_MAX_PREFIX_SIZE];
 	wLogCallbackAppender* callbackAppender;
@@ -108,21 +111,22 @@ static BOOL WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogAppender* ap
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
-	callbackAppender = (wLogCallbackAppender *)appender;
+	callbackAppender = (wLogCallbackAppender*)appender;
 	if (callbackAppender->callbacks && callbackAppender->callbacks->package)
 		return callbackAppender->callbacks->package(message);
 	else
 		return FALSE;
 }
 
-static BOOL WLog_CallbackAppender_Set(wLogAppender* appender, const char *setting, void *value)
+static BOOL WLog_CallbackAppender_Set(wLogAppender* appender, const char* setting, void* value)
 {
-	wLogCallbackAppender *callbackAppender = (wLogCallbackAppender *)appender;
+	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
 
 	if (!value || strcmp(setting, "callbacks"))
 		return FALSE;
 
-	if (!(callbackAppender->callbacks = calloc(1, sizeof(wLogCallbacks)))) {
+	if (!(callbackAppender->callbacks = calloc(1, sizeof(wLogCallbacks))))
+	{
 		return FALSE;
 	}
 
@@ -132,12 +136,13 @@ static BOOL WLog_CallbackAppender_Set(wLogAppender* appender, const char *settin
 
 static void WLog_CallbackAppender_Free(wLogAppender* appender)
 {
-	wLogCallbackAppender *callbackAppender;
-	if (!appender) {
+	wLogCallbackAppender* callbackAppender;
+	if (!appender)
+	{
 		return;
 	}
 
-	callbackAppender = (wLogCallbackAppender *)appender;
+	callbackAppender = (wLogCallbackAppender*)appender;
 
 	free(callbackAppender->callbacks);
 	free(appender);
@@ -147,7 +152,7 @@ wLogAppender* WLog_CallbackAppender_New(wLog* log)
 {
 	wLogCallbackAppender* CallbackAppender;
 
-	CallbackAppender = (wLogCallbackAppender*) calloc(1, sizeof(wLogCallbackAppender));
+	CallbackAppender = (wLogCallbackAppender*)calloc(1, sizeof(wLogCallbackAppender));
 	if (!CallbackAppender)
 		return NULL;
 
@@ -162,5 +167,5 @@ wLogAppender* WLog_CallbackAppender_New(wLog* log)
 	CallbackAppender->Free = WLog_CallbackAppender_Free;
 	CallbackAppender->Set = WLog_CallbackAppender_Set;
 
-	return (wLogAppender *)CallbackAppender;
+	return (wLogAppender*)CallbackAppender;
 }

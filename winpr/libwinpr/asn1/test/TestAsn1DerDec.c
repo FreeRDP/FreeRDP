@@ -8,4 +8,3 @@ int TestAsn1DerDec(int argc, char* argv[])
 {
 	return 0;
 }
-

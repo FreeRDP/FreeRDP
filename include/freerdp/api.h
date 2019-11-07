@@ -29,9 +29,9 @@
 #endif
 
 #ifdef _WIN32
-#define INLINE	__inline
+#define INLINE __inline
 #else
-#define INLINE	inline
+#define INLINE inline
 #endif
 
 #ifdef _WIN32
@@ -54,7 +54,7 @@
 #endif
 #else
 #if __GNUC__ >= 4
-#define FREERDP_API __attribute__ ((visibility("default")))
+#define FREERDP_API __attribute__((visibility("default")))
 #else
 #define FREERDP_API
 #endif
@@ -67,7 +67,7 @@
 #define FREERDP_LOCAL
 #else
 #if __GNUC__ >= 4
-#define FREERDP_LOCAL __attribute__ ((visibility("hidden")))
+#define FREERDP_LOCAL __attribute__((visibility("hidden")))
 #else
 #define FREERDP_LOCAL
 #endif
@@ -75,13 +75,28 @@
 #endif
 
 #ifdef FREERDP_TEST_EXPORTS
-#define FREERDP_TEST_API	FREERDP_API
+#define FREERDP_TEST_API FREERDP_API
 #else
 #define FREERDP_TEST_API
 #endif
 
-#define IFCALL(_cb, ...) do { if (_cb != NULL) { _cb( __VA_ARGS__ ); } } while (0)
-#define IFCALLRET(_cb, _ret, ...) do { if (_cb != NULL) { _ret = _cb( __VA_ARGS__ ); } } while (0)
-#define IFCALLRESULT(_default_return, _cb, ...) ((_cb != NULL) ? _cb( __VA_ARGS__ ) : (_default_return))
+#define IFCALL(_cb, ...)      \
+	do                        \
+	{                         \
+		if (_cb != NULL)      \
+		{                     \
+			_cb(__VA_ARGS__); \
+		}                     \
+	} while (0)
+#define IFCALLRET(_cb, _ret, ...)    \
+	do                               \
+	{                                \
+		if (_cb != NULL)             \
+		{                            \
+			_ret = _cb(__VA_ARGS__); \
+		}                            \
+	} while (0)
+#define IFCALLRESULT(_default_return, _cb, ...) \
+	((_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return))
 
 #endif /* FREERDP_API */

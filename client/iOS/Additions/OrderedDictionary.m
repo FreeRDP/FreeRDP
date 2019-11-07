@@ -129,18 +129,18 @@ NSString *DescriptionForObject(NSObject *object, id locale, NSUInteger indent)
 
 - (NSUInteger)indexForKey:(id)key
 {
-    return [array indexOfObject:key];
+	return [array indexOfObject:key];
 }
 
 - (NSUInteger)indexForValue:(id)value
 {
-    NSArray* keys = [self allKeysForObject:value];
-    if ([keys count] > 0)
-    {
-        return [self indexForKey:[keys objectAtIndex:0]];
-    }
-    
-    return NSNotFound;
+	NSArray *keys = [self allKeysForObject:value];
+	if ([keys count] > 0)
+	{
+		return [self indexForKey:[keys objectAtIndex:0]];
+	}
+
+	return NSNotFound;
 }
 
 - (NSString *)descriptionWithLocale:(id)locale indent:(NSUInteger)level
@@ -151,15 +151,14 @@ NSString *DescriptionForObject(NSObject *object, id locale, NSUInteger indent)
 	{
 		[indentString appendFormat:@"    "];
 	}
-	
+
 	NSMutableString *description = [NSMutableString string];
 	[description appendFormat:@"%@{\n", indentString];
 	for (NSObject *key in self)
 	{
-		[description appendFormat:@"%@    %@ = %@;\n",
-			indentString,
-			DescriptionForObject(key, locale, level),
-			DescriptionForObject([self objectForKey:key], locale, level)];
+		[description appendFormat:@"%@    %@ = %@;\n", indentString,
+		                          DescriptionForObject(key, locale, level),
+		                          DescriptionForObject([self objectForKey:key], locale, level)];
 	}
 	[description appendFormat:@"%@}\n", indentString];
 	return description;

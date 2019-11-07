@@ -37,7 +37,7 @@ int uwac_os_socket_cloexec(int domain, int type, int protocol);
 
 int uwac_os_dupfd_cloexec(int fd, long minfd);
 
-ssize_t uwac_os_recvmsg_cloexec(int sockfd, struct msghdr *msg, int flags);
+ssize_t uwac_os_recvmsg_cloexec(int sockfd, struct msghdr* msg, int flags);
 
 int uwac_os_epoll_create_cloexec(void);
 

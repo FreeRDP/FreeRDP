@@ -16,7 +16,7 @@ int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 {
 	int index;
 	DWORD status;
-	LPTSTR pszNameString; 
+	LPTSTR pszNameString;
 	HCERTSTORE hCertStore = NULL;
 	PCCERT_CONTEXT pCertContext = NULL;
 
@@ -27,11 +27,13 @@ int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 
 	/**
 	 * Requires elevated rights:
-	 * hCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, (HCRYPTPROV_LEGACY) NULL, CERT_SYSTEM_STORE_LOCAL_MACHINE, _T("Remote Desktop"));
+	 * hCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, (HCRYPTPROV_LEGACY) NULL,
+	 * CERT_SYSTEM_STORE_LOCAL_MACHINE, _T("Remote Desktop"));
 	 */
 
-	hCertStore = CertOpenSystemStore((HCRYPTPROV_LEGACY) NULL, _T("MY"));
-	// hCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, (HCRYPTPROV_LEGACY) NULL, CERT_SYSTEM_STORE_CURRENT_USER, _T("MY"));
+	hCertStore = CertOpenSystemStore((HCRYPTPROV_LEGACY)NULL, _T("MY"));
+	// hCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, (HCRYPTPROV_LEGACY) NULL,
+	// CERT_SYSTEM_STORE_CURRENT_USER, _T("MY"));
 
 	if (!hCertStore)
 	{
@@ -47,17 +49,18 @@ int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 		if (status == 0)
 			return -1;
 
-		pszNameString = (LPTSTR) calloc(status, sizeof(TCHAR));
+		pszNameString = (LPTSTR)calloc(status, sizeof(TCHAR));
 		if (!pszNameString)
 		{
 			printf("Unable to allocate memory\n");
 			return -1;
 		}
 
-		status = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, pszNameString, status);
+		status = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL,
+		                           pszNameString, status);
 		if (status == 0)
 		{
-			free (pszNameString);
+			free(pszNameString);
 			return -1;
 		}
 
@@ -78,4 +81,3 @@ int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 
 	return 0;
 }
-

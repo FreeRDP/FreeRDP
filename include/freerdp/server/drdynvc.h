@@ -47,14 +47,15 @@ struct _drdynvc_client_context
 };
 
 #ifdef __cplusplus
- extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm);
-FREERDP_API void drdynvc_server_context_free(DrdynvcServerContext* context);
+	FREERDP_API DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm);
+	FREERDP_API void drdynvc_server_context_free(DrdynvcServerContext* context);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_CHANNEL_DRDYNVC_SERVER_DRDYNVC_H */

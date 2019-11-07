@@ -17,7 +17,7 @@ int TestBipBuffer(int argc, char* argv[])
 	if (data)
 		rc = 0;
 
-	fprintf(stderr, "BipBuffer_BufferSize: %"PRIuz"\n", BipBuffer_BufferSize(bb));
+	fprintf(stderr, "BipBuffer_BufferSize: %" PRIuz "\n", BipBuffer_BufferSize(bb));
 	BipBuffer_Free(bb);
 	return rc;
 }

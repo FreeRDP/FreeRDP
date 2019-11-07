@@ -26,18 +26,19 @@
 #include <freerdp/gdi/gdi.h>
 
 #ifdef __cplusplus
- extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API HGDI_DC gdi_GetDC(void);
-FREERDP_API HGDI_DC gdi_CreateDC(UINT32 format);
-FREERDP_API HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc);
-FREERDP_API HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject);
-FREERDP_API BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject);
-FREERDP_API BOOL gdi_DeleteDC(HGDI_DC hdc);
+	FREERDP_API HGDI_DC gdi_GetDC(void);
+	FREERDP_API HGDI_DC gdi_CreateDC(UINT32 format);
+	FREERDP_API HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc);
+	FREERDP_API HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject);
+	FREERDP_API BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject);
+	FREERDP_API BOOL gdi_DeleteDC(HGDI_DC hdc);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_GDI_DC_H */

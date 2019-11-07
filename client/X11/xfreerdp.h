@@ -295,4 +295,3 @@ void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h);
 FREERDP_API DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 
 #endif /* FREERDP_CLIENT_X11_FREERDP_H */
-

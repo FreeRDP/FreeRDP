@@ -34,10 +34,11 @@ FREERDP_API extern struct termios new_flags;
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-FREERDP_API int freerdp_handle_signals(void);
+	FREERDP_API int freerdp_handle_signals(void);
 
 #ifdef __cplusplus
 }

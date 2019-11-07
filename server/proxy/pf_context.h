@@ -78,9 +78,10 @@ struct p_client_context
 	 * In a case when freerdp_connect fails,
 	 * Used for NLA fallback feature, to check if the server should close the connection.
 	 * When it is set to TRUE, proxy's client knows it shouldn't signal the server thread to closed
-	 * the connection when pf_client_post_disconnect is called, because it is trying to connect reconnect without NLA.
-	 * It must be set to TRUE before the first try, and to FALSE after the connection fully established,
-	 * to ensure graceful shutdown of the connection when it will be closed.
+	 * the connection when pf_client_post_disconnect is called, because it is trying to connect
+	 * reconnect without NLA. It must be set to TRUE before the first try, and to FALSE after the
+	 * connection fully established, to ensure graceful shutdown of the connection when it will be
+	 * closed.
 	 */
 	BOOL allow_next_conn_failure;
 

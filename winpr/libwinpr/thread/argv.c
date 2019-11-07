@@ -42,16 +42,17 @@
  * when they are followed by a quotation mark character ("), as follows:
  *
  * 2n backslashes followed by a quotation mark produce n backslashes followed by a quotation mark.
- * (2n) + 1 backslashes followed by a quotation mark again produce n backslashes followed by a quotation mark.
- * n backslashes not followed by a quotation mark simply produce n backslashes.
+ * (2n) + 1 backslashes followed by a quotation mark again produce n backslashes followed by a
+ * quotation mark. n backslashes not followed by a quotation mark simply produce n backslashes.
  *
- * The address returned by CommandLineToArgvW is the address of the first element in an array of LPWSTR values;
- * the number of pointers in this array is indicated by pNumArgs. Each pointer to a null-terminated Unicode
- * string represents an individual argument found on the command line.
+ * The address returned by CommandLineToArgvW is the address of the first element in an array of
+ * LPWSTR values; the number of pointers in this array is indicated by pNumArgs. Each pointer to a
+ * null-terminated Unicode string represents an individual argument found on the command line.
  *
  * CommandLineToArgvW allocates a block of contiguous memory for pointers to the argument strings,
  * and for the argument strings themselves; the calling application must free the memory used by the
- * argument list when it is no longer needed. To free the memory, use a single call to the LocalFree function.
+ * argument list when it is no longer needed. To free the memory, use a single call to the LocalFree
+ * function.
  */
 
 /**
@@ -113,7 +114,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	pArgs = NULL;
 	lpEscapedCmdLine = NULL;
 	cmdLineLength = strlen(lpCmdLine);
-	lpEscapedChars = (BOOL*) calloc(cmdLineLength + 1, sizeof(BOOL));
+	lpEscapedChars = (BOOL*)calloc(cmdLineLength + 1, sizeof(BOOL));
 
 	if (!lpEscapedChars)
 		return NULL;
@@ -123,7 +124,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		size_t i;
 		size_t n;
 		char* pLastEnd = NULL;
-		lpEscapedCmdLine = (char*) calloc(cmdLineLength + 1, sizeof(char));
+		lpEscapedCmdLine = (char*)calloc(cmdLineLength + 1, sizeof(char));
 
 		if (!lpEscapedCmdLine)
 		{
@@ -131,9 +132,9 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 			return NULL;
 		}
 
-		p = (char*) lpCmdLine;
-		pLastEnd = (char*) lpCmdLine;
-		pOutput = (char*) lpEscapedCmdLine;
+		p = (char*)lpCmdLine;
+		pLastEnd = (char*)lpCmdLine;
+		pOutput = (char*)lpEscapedCmdLine;
 
 		while (p < &lpCmdLine[cmdLineLength])
 		{
@@ -179,12 +180,12 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		}
 
 		*pOutput++ = '\0';
-		lpCmdLine = (LPCSTR) lpEscapedCmdLine;
+		lpCmdLine = (LPCSTR)lpEscapedCmdLine;
 		cmdLineLength = strlen(lpCmdLine);
 	}
 
 	maxNumArgs = 2;
-	p = (char*) lpCmdLine;
+	p = (char*)lpCmdLine;
 
 	while (p < lpCmdLine + cmdLineLength)
 	{
@@ -194,7 +195,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	}
 
 	maxBufferSize = (maxNumArgs * (sizeof(char*))) + (cmdLineLength + 1);
-	buffer = (char*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, maxBufferSize);
+	buffer = (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, maxBufferSize);
 
 	if (!buffer)
 	{
@@ -203,9 +204,9 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		return NULL;
 	}
 
-	pArgs = (LPSTR*) buffer;
-	pOutput = (char*) &buffer[maxNumArgs * (sizeof(char*))];
-	p = (char*) lpCmdLine;
+	pArgs = (LPSTR*)buffer;
+	pOutput = (char*)&buffer[maxNumArgs * (sizeof(char*))];
+	p = (char*)lpCmdLine;
 
 	while (p < lpCmdLine + cmdLineLength)
 	{

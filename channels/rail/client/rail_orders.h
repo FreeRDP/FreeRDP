@@ -39,21 +39,22 @@ UINT rail_send_handshake_order(railPlugin* rail, const RAIL_HANDSHAKE_ORDER* han
 UINT rail_send_handshake_ex_order(railPlugin* rail, const RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 UINT rail_send_client_status_order(railPlugin* rail, const RAIL_CLIENT_STATUS_ORDER* clientStatus);
 UINT rail_send_client_exec_order(railPlugin* rail, UINT16 flags,
-                                 const RAIL_UNICODE_STRING* exeOrFile, const RAIL_UNICODE_STRING* workingDir,
+                                 const RAIL_UNICODE_STRING* exeOrFile,
+                                 const RAIL_UNICODE_STRING* workingDir,
                                  const RAIL_UNICODE_STRING* arguments);
 UINT rail_send_client_activate_order(railPlugin* rail, const RAIL_ACTIVATE_ORDER* activate);
 UINT rail_send_client_sysmenu_order(railPlugin* rail, const RAIL_SYSMENU_ORDER* sysmenu);
 UINT rail_send_client_syscommand_order(railPlugin* rail, const RAIL_SYSCOMMAND_ORDER* syscommand);
 
 UINT rail_send_client_notify_event_order(railPlugin* rail,
-        const RAIL_NOTIFY_EVENT_ORDER* notifyEvent);
+                                         const RAIL_NOTIFY_EVENT_ORDER* notifyEvent);
 UINT rail_send_client_window_move_order(railPlugin* rail, const RAIL_WINDOW_MOVE_ORDER* windowMove);
 UINT rail_send_client_get_appid_req_order(railPlugin* rail,
-        const RAIL_GET_APPID_REQ_ORDER* getAppIdReq);
+                                          const RAIL_GET_APPID_REQ_ORDER* getAppIdReq);
 UINT rail_send_client_langbar_info_order(railPlugin* rail,
-        const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
+                                         const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
 UINT rail_send_client_languageime_info_order(railPlugin* rail,
-        const RAIL_LANGUAGEIME_INFO_ORDER* langImeInfo);
+                                             const RAIL_LANGUAGEIME_INFO_ORDER* langImeInfo);
 UINT rail_send_client_order_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak);
 UINT rail_send_client_order_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap);
 
