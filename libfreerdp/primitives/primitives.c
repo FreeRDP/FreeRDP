@@ -119,30 +119,42 @@ typedef struct {
 	UINT32 testedFormat;
 } primitives_YUV_benchmark;
 
-static primitives_YUV_benchmark* primitives_YUV_benchmark_init(void)
+static void primitives_YUV_benchmark_free(primitives_YUV_benchmark* bench)
 {
 	int i;
-	primitives_YUV_benchmark *ret = calloc(1, sizeof(*ret));
-	prim_size_t *roi;
+	if (!bench)
+		return;
+
+	free(bench->outputBuffer);
+
+	for (i = 0; i < 3; i++)
+		free(bench->channels[i]);
+	memset(bench, 0, sizeof(primitives_YUV_benchmark));
+}
+
+static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_benchmark* ret)
+{
+	int i;
+	prim_size_t* roi;
 	if (!ret)
 		return NULL;
 
+	memset(ret, 0, sizeof(primitives_YUV_benchmark));
 	roi = &ret->roi;
 	roi->width = 1024;
 	roi->height = 768;
-
-	ret->outputStride = roi->width *4;
+	ret->outputStride = roi->width * 4;
 	ret->testedFormat = PIXEL_FORMAT_BGRA32;
 
-	ret->outputBuffer = malloc(roi->width * roi->height * 4);
+	ret->outputBuffer = malloc(ret->outputStride * roi->height);
 	if (!ret->outputBuffer)
-		goto error_output;
+		goto fail;
 
 	for (i = 0; i < 3; i++)
 	{
 		BYTE *buf = ret->channels[i] = malloc(roi->width * roi->height);
 		if (!buf)
-			goto error_channels;
+			goto fail;
 
 		winpr_RAND(buf, roi->width * roi->height);
 		ret->steps[i] = roi->width;
@@ -150,29 +162,9 @@ static primitives_YUV_benchmark* primitives_YUV_benchmark_init(void)
 
 	return ret;
 
-error_channels:
-	for(i = 0; i < 3; i++)
-		free(ret->channels[i]);
-error_output:
-	free(ret);
-	return NULL;
-}
-
-static void primitives_YUV_benchmark_free(primitives_YUV_benchmark **pbench)
-{
-	int i;
-	primitives_YUV_benchmark *bench;
-	if (!*pbench)
-		return;
-	bench = *pbench;
-
-	free(bench->outputBuffer);
-
-	for (i = 0; i < 3; i++)
-		free(bench->channels[i]);
-
-	free(bench);
-	*pbench = NULL;
+fail:
+	primitives_YUV_benchmark_free(ret);
+	return ret;
 }
 
 static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark *bench, primitives_t *prims,
@@ -213,9 +205,9 @@ static BOOL primitives_autodetect_best(primitives_t *prims)
 	primitives_t* openclPrims = primitives_get_by_type(PRIMITIVES_ONLY_GPU);
 	UINT32 openclCount = 0;
 #endif
-	const char *primName = "generic";
-
-	primitives_YUV_benchmark *yuvBench = primitives_YUV_benchmark_init();
+	const char* primName = "generic";
+	primitives_YUV_benchmark bench;
+	primitives_YUV_benchmark* yuvBench = primitives_YUV_benchmark_init(&bench);
 	if (!yuvBench)
 		return FALSE;
 
@@ -285,7 +277,7 @@ static BOOL primitives_autodetect_best(primitives_t *prims)
 	WLog_INFO(TAG, "primitives autodetect, using %s", primName);
 	ret = TRUE;
 out:
-	primitives_YUV_benchmark_free(&yuvBench);
+	primitives_YUV_benchmark_free(yuvBench);
 	return ret;
 }
 
@@ -341,9 +333,18 @@ BOOL primitives_init(primitives_t* p, primitive_hints hints)
 	}
 }
 
-void primitives_uninit() {
-	if (pPrimitives.uninit)
-		pPrimitives.uninit();
+void primitives_uninit()
+{
+#if defined(WITH_OPENCL)
+	if (pPrimitivesGpu.uninit)
+		pPrimitivesGpu.uninit();
+#endif
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+	if (pPrimitivesCpu.uninit)
+		pPrimitivesCpu.uninit();
+#endif
+	if (pPrimitivesGeneric.uninit)
+		pPrimitivesGeneric.uninit();
 }
 
 /* ------------------------------------------------------------------------- */
