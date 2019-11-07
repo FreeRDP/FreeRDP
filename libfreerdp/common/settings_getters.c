@@ -1562,6 +1562,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_TcpKeepAliveRetries:
 			return settings->TcpKeepAliveRetries;
 
+		case FreeRDP_TcpKeepAliveDelay:
+			return settings->TcpKeepAliveDelay;
+
 		case FreeRDP_TcpKeepAliveInterval:
 			return settings->TcpKeepAliveInterval;
 
@@ -2007,6 +2010,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_TcpKeepAliveRetries:
 			settings->TcpKeepAliveRetries = val;
+			break;
+
+		case FreeRDP_TcpKeepAliveDelay:
+			settings->TcpKeepAliveDelay = val;
 			break;
 
 		case FreeRDP_TcpKeepAliveInterval:

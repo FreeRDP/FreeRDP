@@ -561,7 +561,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	settings->TcpKeepAlive = TRUE;
 	settings->TcpKeepAliveRetries = 3;
-	settings->TcpKeepAliveInterval = 5;
+	settings->TcpKeepAliveDelay = 5;
+	settings->TcpKeepAliveInterval = 2;
 	settings->TcpAckTimeout = 9000;
 
 	if (!settings->ServerMode)

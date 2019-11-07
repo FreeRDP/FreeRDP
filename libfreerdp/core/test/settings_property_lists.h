@@ -282,6 +282,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_DynamicChannelCount,
 	FreeRDP_DynamicChannelArraySize,
 	FreeRDP_TcpKeepAliveRetries,
+	FreeRDP_TcpKeepAliveDelay,
 	FreeRDP_TcpKeepAliveInterval,
 	FreeRDP_TcpAckTimeout,
 };

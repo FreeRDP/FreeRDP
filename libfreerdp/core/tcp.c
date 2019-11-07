@@ -1006,7 +1006,7 @@ static BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int soc
 
 #ifndef _WIN32
 #ifdef TCP_KEEPIDLE
-	optval = keepalive ? freerdp_settings_get_uint32(settings, FreeRDP_TcpKeepAliveInterval) : 0;
+	optval = keepalive ? freerdp_settings_get_uint32(settings, FreeRDP_TcpKeepAliveDelay) : 0;
 	optlen = sizeof(optval);
 
 	if (setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*)&optval, optlen) < 0)
