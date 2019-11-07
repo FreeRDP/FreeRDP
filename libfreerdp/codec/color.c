@@ -421,6 +421,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 			{
 				UINT32 xorBytesPerPixel = xorBpp >> 3;
 				xorStep = nWidth * xorBytesPerPixel;
+				xorStep += (xorStep % 2);
 
 				if (xorBpp == 8 && !palette)
 				{
