@@ -100,8 +100,8 @@ typedef struct _WINPR_BIO_SIMPLE_SOCKET WINPR_BIO_SIMPLE_SOCKET;
 static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
 static int transport_bio_simple_uninit(BIO* bio);
 
-long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
-                                   long ret)
+static long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
+                                          long ret)
 {
 	return 1;
 }
@@ -459,8 +459,8 @@ struct _WINPR_BIO_BUFFERED_SOCKET
 };
 typedef struct _WINPR_BIO_BUFFERED_SOCKET WINPR_BIO_BUFFERED_SOCKET;
 
-long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
-                                     long ret)
+static long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int argi,
+                                            long argl, long ret)
 {
 	return 1;
 }
@@ -991,12 +991,12 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT
 	return sockfd;
 }
 
-BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
+static BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd)
 {
-#ifndef _WIN32
+	const BOOL keepalive = (freerdp_settings_get_bool(settings, FreeRDP_TcpKeepAlive));
 	UINT32 optval;
 	socklen_t optlen;
-	optval = 1;
+	optval = keepalive ? 1 : 0;
 	optlen = sizeof(optval);
 
 	if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*)&optval, optlen) < 0)
@@ -1004,8 +1004,9 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_KEEPALIVE");
 	}
 
+#ifndef _WIN32
 #ifdef TCP_KEEPIDLE
-	optval = 5;
+	optval = keepalive ? freerdp_settings_get_uint32(settings, FreeRDP_TcpKeepAliveInterval) : 0;
 	optlen = sizeof(optval);
 
 	if (setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*)&optval, optlen) < 0)
@@ -1019,7 +1020,7 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 #define SOL_TCP 6
 #endif
 #ifdef TCP_KEEPCNT
-	optval = 3;
+	optval = keepalive ? freerdp_settings_get_uint32(settings, FreeRDP_TcpKeepAliveRetries) : 0;
 	optlen = sizeof(optval);
 
 	if (setsockopt(sockfd, SOL_TCP, TCP_KEEPCNT, (void*)&optval, optlen) < 0)
@@ -1029,7 +1030,7 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 
 #endif
 #ifdef TCP_KEEPINTVL
-	optval = 2;
+	optval = keepalive ? freerdp_settings_get_uint32(settings, FreeRDP_TcpKeepAliveInterval) : 0;
 	optlen = sizeof(optval);
 
 	if (setsockopt(sockfd, SOL_TCP, TCP_KEEPINTVL, (void*)&optval, optlen) < 0)
@@ -1050,7 +1051,7 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 
 #endif
 #ifdef TCP_USER_TIMEOUT
-	optval = 9000;
+	optval = freerdp_settings_get_uint32(settings, FreeRDP_TcpAckTimeout);
 	optlen = sizeof(optval);
 
 	if (setsockopt(sockfd, SOL_TCP, TCP_USER_TIMEOUT, (void*)&optval, optlen) < 0)
@@ -1231,7 +1232,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 
 	if (!ipcSocket && !useExternalDefinedSocket)
 	{
-		if (!freerdp_tcp_set_keep_alive_mode(sockfd))
+		if (!freerdp_tcp_set_keep_alive_mode(settings, sockfd))
 		{
 			close(sockfd);
 
