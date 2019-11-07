@@ -408,49 +408,65 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
  * @param settings settings
  */
 
-static void rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
+static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 {
-	int clientAddressFamily;
+	BOOL ret = FALSE;
+	int rc;
+	UINT16 clientAddressFamily;
 	WCHAR* clientAddress = NULL;
-	int cbClientAddress;
+	UINT16 cbClientAddress;
 	WCHAR* clientDir = NULL;
-	int cbClientDir;
-	int cbAutoReconnectCookie;
-	rdpSettings* settings = rdp->settings;
+	UINT16 cbClientDir;
+	UINT16 cbAutoReconnectCookie;
+	rdpSettings* settings;
+	if (!rdp || !rdp->settings || !s)
+		return FALSE;
+	settings = rdp->settings;
 	clientAddressFamily = settings->IPv6Enabled ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
-	cbClientAddress =
-	    ConvertToUnicode(CP_UTF8, 0, settings->ClientAddress, -1, &clientAddress, 0) * 2;
-	cbClientDir = ConvertToUnicode(CP_UTF8, 0, settings->ClientDir, -1, &clientDir, 0) * 2;
-	cbAutoReconnectCookie = (int)settings->ServerAutoReconnectCookie->cbLen;
+	rc = ConvertToUnicode(CP_UTF8, 0, settings->ClientAddress, -1, &clientAddress, 0);
+	if ((rc < 0) || (rc > (UINT16_MAX / 2)))
+		goto fail;
+	cbClientAddress = (UINT16)rc * 2;
+
+	rc = ConvertToUnicode(CP_UTF8, 0, settings->ClientDir, -1, &clientDir, 0) * 2;
+	if ((rc < 0) || (rc > (UINT16_MAX / 2)))
+		goto fail;
+	cbClientDir = (UINT16)rc * 2;
+
+	if (settings->ServerAutoReconnectCookie->cbLen > UINT16_MAX)
+		goto fail;
+	cbAutoReconnectCookie = (UINT16)settings->ServerAutoReconnectCookie->cbLen;
 	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
 	Stream_Write_UINT16(s, cbClientAddress + 2); /* cbClientAddress (2 bytes) */
 
-	if (cbClientAddress > 0)
-		Stream_Write(s, clientAddress, cbClientAddress); /* clientAddress */
+	Stream_Write(s, clientAddress, cbClientAddress); /* clientAddress */
 
 	Stream_Write_UINT16(s, 0);
 	Stream_Write_UINT16(s, cbClientDir + 2); /* cbClientDir (2 bytes) */
 
-	if (cbClientDir > 0)
-		Stream_Write(s, clientDir, cbClientDir); /* clientDir */
+	Stream_Write(s, clientDir, cbClientDir); /* clientDir */
 
 	Stream_Write_UINT16(s, 0);
-	rdp_write_client_time_zone(s, settings); /* clientTimeZone (172 bytes) */
-	Stream_Write_UINT32(s, 0);               /* clientSessionId (4 bytes), should be set to 0 */
+	if (!rdp_write_client_time_zone(s, settings)) /* clientTimeZone (172 bytes) */
+		goto fail;
+	Stream_Write_UINT32(s, 0); /* clientSessionId (4 bytes), should be set to 0 */
 	freerdp_performance_flags_make(settings);
 	Stream_Write_UINT32(s, settings->PerformanceFlags); /* performanceFlags (4 bytes) */
 	Stream_Write_UINT16(s, cbAutoReconnectCookie);      /* cbAutoReconnectCookie (2 bytes) */
 
 	if (cbAutoReconnectCookie > 0)
 	{
-		rdp_compute_client_auto_reconnect_cookie(rdp);
+		if (!rdp_compute_client_auto_reconnect_cookie(rdp))
+			goto fail;
 		rdp_write_client_auto_reconnect_cookie(rdp, s); /* autoReconnectCookie */
 		Stream_Write_UINT16(s, 0);                      /* reserved1 (2 bytes) */
 		Stream_Write_UINT16(s, 0);                      /* reserved2 (2 bytes) */
 	}
-
+	ret = TRUE;
+fail:
 	free(clientAddress);
 	free(clientDir);
+	return ret;
 }
 
 /**
@@ -692,21 +708,28 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
  * @param settings settings
  */
 
-static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
+static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 {
+	BOOL ret = FALSE;
 	UINT32 flags;
 	WCHAR* domainW = NULL;
-	int cbDomain = 0;
+	UINT16 cbDomain = 0;
 	WCHAR* userNameW = NULL;
-	int cbUserName = 0;
+	UINT16 cbUserName = 0;
 	WCHAR* passwordW = NULL;
-	int cbPassword = 0;
+	UINT16 cbPassword = 0;
 	WCHAR* alternateShellW = NULL;
-	int cbAlternateShell = 0;
+	UINT16 cbAlternateShell = 0;
 	WCHAR* workingDirW = NULL;
-	int cbWorkingDir = 0;
+	UINT16 cbWorkingDir = 0;
 	BOOL usedPasswordCookie = FALSE;
-	rdpSettings* settings = rdp->settings;
+	rdpSettings* settings;
+
+	if (!rdp || !s || !rdp->settings)
+		return FALSE;
+
+	settings = rdp->settings;
+
 	flags = INFO_MOUSE | INFO_UNICODE | INFO_LOGONERRORS | INFO_MAXIMIZESHELL |
 	        INFO_ENABLEWINDOWSKEY | INFO_DISABLECTRLALTDEL | INFO_MOUSE_HAS_WHEEL |
 	        INFO_FORCE_ENCRYPTED_CS_PDU;
@@ -764,7 +787,10 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (settings->Domain)
 	{
-		cbDomain = ConvertToUnicode(CP_UTF8, 0, settings->Domain, -1, &domainW, 0) * 2;
+		const int rc = ConvertToUnicode(CP_UTF8, 0, settings->Domain, -1, &domainW, 0);
+		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
+			goto fail;
+		cbDomain = (UINT16)rc * 2;
 	}
 	else
 	{
@@ -776,8 +802,12 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	cbDomain = cbDomain >= 2 ? cbDomain - 2 : cbDomain;
 
 	/* user name provided by the expert for connecting to the novice computer */
-	cbUserName = ConvertToUnicode(CP_UTF8, 0, settings->Username, -1, &userNameW, 0) * 2;
-
+	{
+		const int rc = ConvertToUnicode(CP_UTF8, 0, settings->Username, -1, &userNameW, 0);
+		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
+			goto fail;
+		cbUserName = (UINT16)rc * 2;
+	}
 	/* excludes (!) the length of the mandatory null terminator */
 	cbUserName = cbUserName >= 2 ? cbUserName - 2 : cbUserName;
 
@@ -785,19 +815,27 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	{
 		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
 		{
+			if (settings->RedirectionPasswordLength > UINT16_MAX)
+				return FALSE;
 			usedPasswordCookie = TRUE;
 			passwordW = (WCHAR*)settings->RedirectionPassword;
-			cbPassword = settings->RedirectionPasswordLength;
+			cbPassword = (UINT16)settings->RedirectionPasswordLength;
 		}
 		else
 		{
-			cbPassword = ConvertToUnicode(CP_UTF8, 0, settings->Password, -1, &passwordW, 0) * 2;
+			const int rc = ConvertToUnicode(CP_UTF8, 0, settings->Password, -1, &passwordW, 0);
+			if ((rc < 0) || (rc > (UINT16_MAX / 2)))
+				goto fail;
+			cbPassword = (UINT16)rc * 2;
 		}
 	}
 	else
 	{
 		/* This field MUST be filled with "*" */
-		cbPassword = ConvertToUnicode(CP_UTF8, 0, "*", -1, &passwordW, 0) * 2;
+		const int rc = ConvertToUnicode(CP_UTF8, 0, "*", -1, &passwordW, 0);
+		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
+			goto fail;
+		cbPassword = (UINT16)rc * 2;
 	}
 
 	/* excludes (!) the length of the mandatory null terminator */
@@ -805,23 +843,29 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (!settings->RemoteAssistanceMode)
 	{
-		cbAlternateShell =
-		    ConvertToUnicode(CP_UTF8, 0, settings->AlternateShell, -1, &alternateShellW, 0) * 2;
+		const int rc =
+		    ConvertToUnicode(CP_UTF8, 0, settings->AlternateShell, -1, &alternateShellW, 0);
+		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
+			goto fail;
+		cbAlternateShell = (UINT16)rc * 2;
 	}
 	else
 	{
+		int rc;
 		if (settings->RemoteAssistancePassStub)
 		{
 			/* This field MUST be filled with "*" */
-			cbAlternateShell = ConvertToUnicode(CP_UTF8, 0, "*", -1, &alternateShellW, 0) * 2;
+			rc = ConvertToUnicode(CP_UTF8, 0, "*", -1, &alternateShellW, 0);
 		}
 		else
 		{
 			/* This field must contain the remote assistance password */
-			cbAlternateShell = ConvertToUnicode(CP_UTF8, 0, settings->RemoteAssistancePassword, -1,
-			                                    &alternateShellW, 0) *
-			                   2;
+			rc = ConvertToUnicode(CP_UTF8, 0, settings->RemoteAssistancePassword, -1,
+			                      &alternateShellW, 0);
 		}
+		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
+			goto fail;
+		cbAlternateShell = (UINT16)rc * 2;
 	}
 
 	/* excludes (!) the length of the mandatory null terminator */
@@ -829,15 +873,20 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (!settings->RemoteAssistanceMode)
 	{
-		cbWorkingDir =
-		    ConvertToUnicode(CP_UTF8, 0, settings->ShellWorkingDirectory, -1, &workingDirW, 0) * 2;
+		const int rc =
+		    ConvertToUnicode(CP_UTF8, 0, settings->ShellWorkingDirectory, -1, &workingDirW, 0);
+		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
+			goto fail;
+		cbWorkingDir = (UINT16)rc * 2;
 	}
 	else
 	{
 		/* Remote Assistance Session Id */
-		cbWorkingDir =
-		    ConvertToUnicode(CP_UTF8, 0, settings->RemoteAssistanceSessionId, -1, &workingDirW, 0) *
-		    2;
+		const int rc =
+		    ConvertToUnicode(CP_UTF8, 0, settings->RemoteAssistanceSessionId, -1, &workingDirW, 0);
+		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
+			goto fail;
+		cbWorkingDir = (UINT16)rc * 2;
 	}
 
 	/* excludes (!) the length of the mandatory null terminator */
@@ -850,35 +899,32 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	Stream_Write_UINT16(s, cbAlternateShell); /* cbAlternateShell (2 bytes) */
 	Stream_Write_UINT16(s, cbWorkingDir);     /* cbWorkingDir (2 bytes) */
 
-	if (cbDomain > 0)
-		Stream_Write(s, domainW, cbDomain);
+	Stream_Write(s, domainW, cbDomain);
 
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
-	if (cbUserName > 0)
 		Stream_Write(s, userNameW, cbUserName);
 
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
-	if (cbPassword > 0)
 		Stream_Write(s, passwordW, cbPassword);
 
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
-	if (cbAlternateShell > 0)
 		Stream_Write(s, alternateShellW, cbAlternateShell);
 
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
-	if (cbWorkingDir > 0)
 		Stream_Write(s, workingDirW, cbWorkingDir);
 
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
+	ret = TRUE;
+fail:
 	free(domainW);
 	free(userNameW);
 	free(alternateShellW);
@@ -887,8 +933,13 @@ static void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	if (!usedPasswordCookie)
 		free(passwordW);
 
+	if (!ret)
+		return FALSE;
+
 	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
-		rdp_write_extended_info_packet(rdp, s); /* extraInfo */
+		ret = rdp_write_extended_info_packet(rdp, s); /* extraInfo */
+
+	return TRUE;
 }
 
 /**
