@@ -2003,6 +2003,19 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			settings->KeyboardLayout = (UINT32)val;
 		}
+		CommandLineSwitchCase(arg, "kbd-lang")
+		{
+			LONGLONG val;
+
+			if (!value_to_int(arg->Value, &val, 1, UINT32_MAX))
+			{
+				WLog_ERR(TAG, "Could not identify keyboard active language %s", arg->Value);
+				WLog_ERR(TAG, "Use /kbd-list to list available layouts");
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
+
+			settings->KeyboardCodePage = (UINT32)val;
+		}
 		CommandLineSwitchCase(arg, "kbd-type")
 		{
 			LONGLONG val;

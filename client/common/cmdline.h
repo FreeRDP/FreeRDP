@@ -172,6 +172,8 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 #endif
 	{ "kbd", COMMAND_LINE_VALUE_REQUIRED, "0x<id> or <name>", NULL, NULL, -1, NULL,
 	  "Keyboard layout" },
+	{ "kbd-lang", COMMAND_LINE_VALUE_REQUIRED, "0x<id>", NULL, NULL, -1, NULL,
+	  "Keyboard active language identifier" },
 	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<value>", NULL, NULL, -1, NULL,
 	  "Function key value" },
 	{ "kbd-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
