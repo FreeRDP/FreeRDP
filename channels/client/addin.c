@@ -332,14 +332,13 @@ extern const STATIC_ENTRY CLIENT_VirtualChannelEntryEx_TABLE[];
 
 BOOL freerdp_channels_is_virtual_channel_entry_ex(LPCSTR pszName)
 {
-	int i;
-	STATIC_ENTRY* entry;
+	size_t i;
 
 	for (i = 0; CLIENT_VirtualChannelEntryEx_TABLE[i].name != NULL; i++)
 	{
-		entry = (STATIC_ENTRY*)&CLIENT_VirtualChannelEntryEx_TABLE[i];
+		const STATIC_ENTRY* entry = &CLIENT_VirtualChannelEntryEx_TABLE[i];
 
-		if (!strcmp(entry->name, pszName))
+		if (!strncmp(entry->name, pszName, MAX_PATH))
 			return TRUE;
 	}
 
@@ -350,24 +349,27 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
                                                               LPCSTR pszType, DWORD dwFlags)
 {
 	const STATIC_ADDIN_TABLE* table = CLIENT_STATIC_ADDIN_TABLE;
+	if (!pszName)
+		return NULL;
+
 	for (; table->name != NULL; table++)
 	{
-		if (strcmp(table->name, pszName) == 0)
+		if (strncmp(table->name, pszName, MAX_PATH) == 0)
 		{
 			if (pszSubsystem != NULL)
 			{
-				const STATIC_SUBSYSTEM_ENTRY* subsystems =
-				    (const STATIC_SUBSYSTEM_ENTRY*)table->table;
+				const STATIC_SUBSYSTEM_ENTRY* subsystems = table->table;
 
 				for (; subsystems->name != NULL; subsystems++)
 				{
 					/* If the pszSubsystem is an empty string use the default backend. */
-					if ((strlen(pszSubsystem) == 0) ||
-					    (strcmp(subsystems->name, pszSubsystem) == 0))
+					if ((strnlen(pszSubsystem, 1) ==
+					     0) || /* we only want to know if strnlen is > 0 */
+					    (strncmp(subsystems->name, pszSubsystem, MAX_PATH) == 0))
 					{
 						if (pszType)
 						{
-							if (strcmp(subsystems->type, pszType) == 0)
+							if (strncmp(subsystems->type, pszType, MAX_PATH) == 0)
 								return (PVIRTUALCHANNELENTRY)subsystems->entry;
 						}
 						else

@@ -241,12 +241,19 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LP
 	const size_t cchBaseFileName = sizeof(FREERDP_SHARED_LIBRARY_PREFIX) + 32;
 	LPCSTR pszExtension;
 	LPCSTR pszPrefix = FREERDP_SHARED_LIBRARY_PREFIX;
-	const size_t nameLen = strnlen(pszName, MAX_PATH);
-	const size_t subsystemLen = strnlen(pszSubsystem, MAX_PATH);
-	const size_t typeLen = strlen(pszType);
-	size_t extensionLen;
+	size_t nameLen = 0;
+	size_t subsystemLen = 0;
+	size_t typeLen = 0;
+	size_t extensionLen = 0;
 	pszExtension = PathGetSharedLibraryExtensionA(0);
-	extensionLen = strnlen(pszExtension, MAX_PATH);
+	if (pszName)
+		nameLen = strnlen(pszName, MAX_PATH);
+	if (pszSubsystem)
+		subsystemLen = strnlen(pszSubsystem, MAX_PATH);
+	if (pszType)
+		typeLen = strnlen(pszType, MAX_PATH);
+	if (pszExtension)
+		extensionLen = strnlen(pszExtension, MAX_PATH);
 
 	if (pszName && pszSubsystem && pszType)
 	{
