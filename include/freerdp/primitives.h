@@ -191,9 +191,10 @@ typedef struct
 
 typedef enum
 {
-	PRIMITIVES_PURE_SOFT,	/** use generic software implementation */
-	PRIMITIVES_ONLY_CPU,	/** use generic software or cpu optimized routines */
-	PRIMITIVES_AUTODETECT	/** detect the best routines */
+	PRIMITIVES_PURE_SOFT, /** use generic software implementation */
+	PRIMITIVES_ONLY_CPU,  /** use generic software or cpu optimized routines */
+	PRIMITIVES_ONLY_GPU,  /** use opencl optimized routines */
+	PRIMITIVES_AUTODETECT /** detect the best routines */
 } primitive_hints;
 
 #ifdef __cplusplus

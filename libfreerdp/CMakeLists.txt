@@ -296,8 +296,8 @@ if (WITH_OPENCL)
 	freerdp_definition_add(-DOPENCL_SOURCE_PATH="${CMAKE_INSTALL_PREFIX}/${FREERDP_PLUGIN_PATH}")
 	set(PRIMITIVES_OPENCL_SRCS primitives/prim_YUV_opencl.c)
 
-	freerdp_include_directory_add(${OPENCL_INCLUDE_DIRS})
-	freerdp_library_add(${OPENCL_LIBRARIES})
+        freerdp_include_directory_add(${OpenCL_INCLUDE_DIRS})
+        freerdp_library_add(OpenCL::OpenCL)
 
 	install(FILES primitives/primitives.cl DESTINATION ${FREERDP_PLUGIN_PATH})
 endif()
