@@ -53,9 +53,13 @@ static INIT_ONCE generic_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
 
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
 static primitives_t pPrimitivesCpu = { 0 };
+static INIT_ONCE cpu_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
+
 #endif
 #if defined(WITH_OPENCL)
 static primitives_t pPrimitivesGpu = { 0 };
+static INIT_ONCE gpu_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
+
 #endif
 
 #if defined(HAVE_OPTIMIZED_PRIMITIVES)
@@ -63,7 +67,6 @@ static INIT_ONCE auto_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
 #endif
 
 static primitives_t pPrimitives = { 0 };
-static INIT_ONCE primitives_InitOnce = INIT_ONCE_STATIC_INIT;
 
 /* ------------------------------------------------------------------------- */
 static BOOL primitives_init_generic(primitives_t *prims)
@@ -281,23 +284,33 @@ out:
 	return ret;
 }
 
-static BOOL CALLBACK primitives_init_cb(PINIT_ONCE once, PVOID param, PVOID* context)
+#if defined(WITH_OPENCL)
+static BOOL CALLBACK primitives_init_gpu_cb(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	WINPR_UNUSED(once);
 	WINPR_UNUSED(param);
 	WINPR_UNUSED(context);
 
-#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-	if (!primitives_init_optimized(&pPrimitivesCpu))
-		return FALSE;
-#endif
-#if defined(WITH_OPENCL)
 	if (!primitives_init_opencl(&pPrimitivesGpu))
 		return FALSE;
-#endif
 
 	return TRUE;
 }
+#endif
+
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+static BOOL CALLBACK primitives_init_cpu_cb(PINIT_ONCE once, PVOID param, PVOID* context)
+{
+	WINPR_UNUSED(once);
+	WINPR_UNUSED(param);
+	WINPR_UNUSED(context);
+
+	if (!primitives_init_optimized(&pPrimitivesCpu))
+		return FALSE;
+
+	return TRUE;
+}
+#endif
 
 static BOOL CALLBACK primitives_auto_init_cb(PINIT_ONCE once, PVOID param, PVOID* context)
 {
@@ -351,7 +364,12 @@ void primitives_uninit()
 static void setup(void)
 {
 	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, NULL, NULL);
-	InitOnceExecuteOnce(&primitives_InitOnce, primitives_init_cb, NULL, NULL);
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+	InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, NULL, NULL);
+#endif
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
+	InitOnceExecuteOnce(&gpu_primitives_InitOnce, primitives_init_gpu_cb, NULL, NULL);
+#endif
 	InitOnceExecuteOnce(&auto_primitives_InitOnce, primitives_auto_init_cb, NULL, NULL);
 }
 
@@ -374,12 +392,12 @@ primitives_t* primitives_get_by_type(DWORD type)
 	{
 #if defined(WITH_OPENCL)
 		case PRIMITIVES_ONLY_GPU:
-			InitOnceExecuteOnce(&primitives_InitOnce, primitives_init_cb, NULL, NULL);
+			InitOnceExecuteOnce(&gpu_primitives_InitOnce, primitives_init_cpu_cb, NULL, NULL);
 			return &pPrimitivesGpu;
 #endif
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
 		case PRIMITIVES_ONLY_CPU:
-			InitOnceExecuteOnce(&primitives_InitOnce, primitives_init_cb, NULL, NULL);
+			InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, NULL, NULL);
 			return &pPrimitivesCpu;
 #endif
 		case PRIMITIVES_PURE_SOFT:
