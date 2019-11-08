@@ -551,7 +551,7 @@ static BOOL rdp_write_order_capability_set(wStream* s, const rdpSettings* settin
 
 	/* see [MSDN-CP]: http://msdn.microsoft.com/en-us/library/dd317756 */
 	if (!settings->ServerMode)
-		textANSICodePage = 65001; /* Unicode (UTF-8) */
+		textANSICodePage = CP_UTF8; /* Unicode (UTF-8) */
 
 	orderSupportExFlags = 0;
 	orderFlags = NEGOTIATE_ORDER_SUPPORT | ZERO_BOUNDS_DELTA_SUPPORT | COLOR_INDEX_SUPPORT;
