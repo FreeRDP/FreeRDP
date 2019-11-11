@@ -347,7 +347,7 @@ static BOOL wts_write_drdynvc_create_request(wStream* s, UINT32 ChannelId, const
 {
 	size_t len;
 	wts_write_drdynvc_header(s, CREATE_REQUEST_PDU, ChannelId);
-	len = strnlen(ChannelName, CHANNEL_NAME_LEN) + 1;
+	len = strlen(ChannelName) + 1;
 
 	if (!Stream_EnsureRemainingCapacity(s, len))
 		return FALSE;
