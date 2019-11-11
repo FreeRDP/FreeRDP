@@ -428,7 +428,7 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 		goto fail;
 	cbClientAddress = (UINT16)rc * 2;
 
-	rc = ConvertToUnicode(CP_UTF8, 0, settings->ClientDir, -1, &clientDir, 0) * 2;
+	rc = ConvertToUnicode(CP_UTF8, 0, settings->ClientDir, -1, &clientDir, 0);
 	if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 		goto fail;
 	cbClientDir = (UINT16)rc * 2;
@@ -436,6 +436,7 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (settings->ServerAutoReconnectCookie->cbLen > UINT16_MAX)
 		goto fail;
 	cbAutoReconnectCookie = (UINT16)settings->ServerAutoReconnectCookie->cbLen;
+
 	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
 	Stream_Write_UINT16(s, cbClientAddress + 2); /* cbClientAddress (2 bytes) */
 
@@ -449,6 +450,7 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	Stream_Write_UINT16(s, 0);
 	if (!rdp_write_client_time_zone(s, settings)) /* clientTimeZone (172 bytes) */
 		goto fail;
+
 	Stream_Write_UINT32(s, 0); /* clientSessionId (4 bytes), should be set to 0 */
 	freerdp_performance_flags_make(settings);
 	Stream_Write_UINT32(s, settings->PerformanceFlags); /* performanceFlags (4 bytes) */
