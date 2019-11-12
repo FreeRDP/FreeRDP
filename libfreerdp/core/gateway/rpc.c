@@ -634,62 +634,71 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	int sockfd;
 	rdpTls* tls;
 	int tlsStatus;
-	BIO* socketBio;
 	BIO* bufferedBio;
 	rdpContext* context;
 	rdpSettings* settings;
-	const char* proxyUsername;
-	const char* proxyPassword;
+	char* ProxyHostname = NULL;
+	char* ProxyUsername = NULL;
+	char* ProxyPassword = NULL;
+	UINT16 ProxyPort;
+	DWORD ProxyType;
+	BOOL useProxy;
+	const char* host;
+	UINT16 port;
 
 	if (!channel || !channel->client || !channel->client->context ||
 	    !channel->client->context->settings)
 		return FALSE;
 
+	useProxy = proxy_prepare(settings, &ProxyType, &ProxyHostname, &ProxyPort, &ProxyUsername,
+	                         &ProxyPassword);
+
 	context = channel->client->context;
 	settings = context->settings;
-	proxyUsername = settings->ProxyUsername;
-	proxyPassword = settings->ProxyPassword;
-	{
-		sockfd = freerdp_tcp_connect(context, settings, channel->client->host,
-		                             channel->client->port, timeout);
 
-		if (sockfd < 0)
-			return FALSE;
+	host = channel->client->host;
+	port = channel->client->port;
+	if (useProxy)
+	{
+		host = ProxyHostname;
+		port = ProxyPort;
 	}
-	socketBio = BIO_new(BIO_s_simple_socket());
-
-	if (!socketBio)
+	sockfd = freerdp_tcp_connect(context, settings, host, port, timeout, useProxy);
+	free(ProxyHostname);
+	if (sockfd < 0)
 	{
-		closesocket(sockfd);
+		free(ProxyUsername);
+		free(ProxyPassword);
 		return FALSE;
 	}
 
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
-
+	bufferedBio = freerdp_tcp_to_buffered_bio(sockfd, TRUE);
 	if (!bufferedBio)
 	{
-		BIO_free_all(socketBio);
+		closesocket((SOCKET)sockfd);
+		free(ProxyUsername);
+		free(ProxyPassword);
 		return FALSE;
 	}
 
-	bufferedBio = BIO_push(bufferedBio, socketBio);
-
-	if (!BIO_set_nonblock(bufferedBio, TRUE))
+	if (useProxy)
 	{
-		BIO_free_all(bufferedBio);
-		return FALSE;
-	}
+		BOOL rc;
 
-	if (channel->client->isProxy)
-	{
-		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,
-		                   settings->GatewayHostname, settings->GatewayPort))
+		rc = proxy_connect(ProxyType, bufferedBio, ProxyUsername, ProxyPassword,
+		                   settings->GatewayHostname, (UINT16)settings->GatewayPort);
+		free(ProxyUsername);
+		free(ProxyPassword);
+		if (!rc)
 		{
 			BIO_free_all(bufferedBio);
+			free(ProxyUsername);
+			free(ProxyPassword);
 			return FALSE;
 		}
 	}
+	free(ProxyUsername);
+	free(ProxyPassword);
 
 	channel->bio = bufferedBio;
 	tls = channel->tls = tls_new(settings);

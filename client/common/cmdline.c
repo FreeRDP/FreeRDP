@@ -2093,88 +2093,20 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				char* atPtr;
 				assert(arg->Value);
-				/* value is [scheme://][user:password@]hostname:port */
-				p = strstr(arg->Value, "://");
-
-				if (p)
+				if (_stricmp("no-proxy", arg->Value) == 0)
 				{
-					*p = '\0';
-
-					if (_stricmp("no_proxy", arg->Value) == 0)
-						settings->ProxyType = PROXY_TYPE_IGNORE;
-
-					if (_stricmp("http", arg->Value) == 0)
-						settings->ProxyType = PROXY_TYPE_HTTP;
-					else if (_stricmp("socks5", arg->Value) == 0)
-						settings->ProxyType = PROXY_TYPE_SOCKS;
-					else
-					{
-						WLog_ERR(TAG, "Only HTTP and SOCKS5 proxies supported by now");
+					if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType,
+					                                 PROXY_TYPE_IGNORE))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					}
-
-					arg->Value = p + 3;
 				}
-
-				/* arg->Value is now [user:password@]hostname:port */
-				atPtr = strrchr(arg->Value, '@');
-
-				if (atPtr)
+				else
 				{
-					/* got a login / password,
-					 *               atPtr
-					 *               v
-					 * [user:password@]hostname:port
-					 *      ^
-					 *      colonPtr
-					 */
-					char* colonPtr = strchr(arg->Value, ':');
-
-					if (!colonPtr || (colonPtr > atPtr))
-					{
-						WLog_ERR(
-						    TAG,
-						    "invalid syntax for proxy, expected syntax is user:password@host:port");
+					if (!freerdp_settings_proxy_parse_uri(
+					        arg->Value, &settings->ProxyType, &settings->ProxyHostname,
+					        &settings->ProxyPort, &settings->ProxyUsername,
+					        &settings->ProxyPassword))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					}
-
-					*colonPtr = '\0';
-					settings->ProxyUsername = _strdup(arg->Value);
-
-					if (!settings->ProxyUsername)
-					{
-						WLog_ERR(TAG, "unable to allocate proxy username");
-						return COMMAND_LINE_ERROR_MEMORY;
-					}
-
-					*atPtr = '\0';
-					settings->ProxyPassword = _strdup(colonPtr + 1);
-
-					if (!settings->ProxyPassword)
-					{
-						WLog_ERR(TAG, "unable to allocate proxy password");
-						return COMMAND_LINE_ERROR_MEMORY;
-					}
-
-					arg->Value = atPtr + 1;
-				}
-
-				p = strchr(arg->Value, ':');
-
-				if (p)
-				{
-					LONGLONG val;
-
-					if (!value_to_int(&p[1], &val, 0, UINT16_MAX))
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-					length = (size_t)(p - arg->Value);
-					settings->ProxyPort = (UINT16)val;
-					settings->ProxyHostname = (char*)malloc(length + 1);
-					strncpy(settings->ProxyHostname, arg->Value, length);
-					settings->ProxyHostname[length] = '\0';
 				}
 			}
 			else

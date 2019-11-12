@@ -60,11 +60,10 @@
 #define BIO_wait_read(b, c) BIO_ctrl(b, BIO_C_WAIT_READ, c, NULL)
 #define BIO_wait_write(b, c) BIO_ctrl(b, BIO_C_WAIT_WRITE, c, NULL)
 
-FREERDP_LOCAL BIO_METHOD* BIO_s_simple_socket(void);
-FREERDP_LOCAL BIO_METHOD* BIO_s_buffered_socket(void);
+FREERDP_LOCAL BIO* freerdp_tcp_to_buffered_bio(int socket, BOOL nonblocking);
 
 FREERDP_LOCAL int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
-                                      const char* hostname, int port, int timeout);
+                                      const char* hostname, int port, int timeout, BOOL proxy);
 
 FREERDP_LOCAL char* freerdp_tcp_get_peer_address(SOCKET sockfd);
 

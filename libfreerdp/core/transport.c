@@ -227,28 +227,16 @@ wStream* transport_send_stream_init(rdpTransport* transport, int size)
 
 BOOL transport_attach(rdpTransport* transport, int sockfd)
 {
-	BIO* socketBio = NULL;
-	BIO* bufferedBio;
-	socketBio = BIO_new(BIO_s_simple_socket());
-
-	if (!socketBio)
-		goto fail;
-
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
+	BIO* bufferedBio = freerdp_tcp_to_buffered_bio(sockfd, FALSE);
 
 	if (!bufferedBio)
 		goto fail;
 
-	bufferedBio = BIO_push(bufferedBio, socketBio);
 	transport->frontBio = bufferedBio;
 	return TRUE;
 fail:
 
-	if (socketBio)
-		BIO_free_all(socketBio);
-	else
-		close(sockfd);
+	close(sockfd);
 
 	return FALSE;
 }
@@ -416,29 +404,38 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	else
 	{
 		UINT16 peerPort;
-		const char *proxyHostname, *proxyUsername, *proxyPassword;
-		BOOL isProxyConnection =
-		    proxy_prepare(settings, &proxyHostname, &peerPort, &proxyUsername, &proxyPassword);
+		DWORD ProxyType;
+		char *proxyHostname = NULL, *proxyUsername = NULL, *proxyPassword = NULL;
+		BOOL isProxyConnection = proxy_prepare(settings, &ProxyType, &proxyHostname, &peerPort,
+		                                       &proxyUsername, &proxyPassword);
 
 		if (isProxyConnection)
-			sockfd = freerdp_tcp_connect(context, settings, proxyHostname, peerPort, timeout);
+			sockfd = freerdp_tcp_connect(context, settings, proxyHostname, peerPort, timeout, TRUE);
 		else
-			sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout);
+			sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout, FALSE);
 
+		status = FALSE;
 		if (sockfd < 0)
-			return FALSE;
+			goto fail;
 
 		if (!transport_attach(transport, sockfd))
-			return FALSE;
+			goto fail;
 
 		if (isProxyConnection)
 		{
-			if (!proxy_connect(settings, transport->frontBio, proxyUsername, proxyPassword,
+			if (!proxy_connect(ProxyType, transport->frontBio, proxyUsername, proxyPassword,
 			                   hostname, port))
-				return FALSE;
+			{
+				transport_disconnect(transport);
+				goto fail;
+			}
 		}
 
 		status = TRUE;
+	fail:
+		free(proxyHostname);
+		free(proxyUsername);
+		free(proxyPassword);
 	}
 
 	return status;

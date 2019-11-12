@@ -427,7 +427,7 @@ static int transport_bio_simple_free(BIO* bio)
 	return 1;
 }
 
-BIO_METHOD* BIO_s_simple_socket(void)
+static BIO_METHOD* BIO_s_simple_socket(void)
 {
 	static BIO_METHOD* bio_methods = NULL;
 
@@ -638,7 +638,7 @@ static int transport_bio_buffered_free(BIO* bio)
 	return 1;
 }
 
-BIO_METHOD* BIO_s_buffered_socket(void)
+static BIO_METHOD* BIO_s_buffered_socket(void)
 {
 	static BIO_METHOD* bio_methods = NULL;
 
@@ -1062,8 +1062,63 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 	return TRUE;
 }
 
+static int freerdp_tcp_connect_simple(rdpContext* context, const char* hostname, UINT16 port,
+                                      int timeout)
+{
+	int sockfd;
+	char* peerAddress;
+	struct addrinfo* addr;
+	struct addrinfo* result;
+	const BOOL PreferIPv6OverIPv4 = context->settings->PreferIPv6OverIPv4;
+	result = freerdp_tcp_resolve_host(hostname, port, 0);
+
+	if (!result)
+		return -1;
+
+	addr = result;
+
+	if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0) && !PreferIPv6OverIPv4)
+	{
+		while ((addr = addr->ai_next))
+		{
+			if (addr->ai_family == AF_INET)
+				break;
+		}
+
+		if (!addr)
+			addr = result;
+	}
+
+	sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+
+	if (sockfd < 0)
+	{
+		freeaddrinfo(result);
+		return -2;
+	}
+
+	if ((peerAddress = freerdp_tcp_address_to_string((const struct sockaddr_storage*)addr->ai_addr,
+	                                                 NULL)) != NULL)
+	{
+		WLog_DBG(TAG, "connecting to peer %s", peerAddress);
+		free(peerAddress);
+	}
+
+	if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr, addr->ai_addrlen, timeout))
+	{
+		freeaddrinfo(result);
+		close(sockfd);
+
+		WLog_ERR(TAG, "failed to connect to %s", hostname);
+		return -2;
+	}
+
+	freeaddrinfo(result);
+	return sockfd;
+}
+
 int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* hostname, int port,
-                        int timeout)
+                        int timeout, BOOL proxy)
 {
 	int sockfd;
 	UINT32 optval;
@@ -1103,7 +1158,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 	{
 		sockfd = -1;
 
-		if (!settings->GatewayEnabled)
+		if (!settings->GatewayEnabled && !proxy)
 		{
 			if (!freerdp_tcp_is_hostname_resolvable(context, hostname) ||
 			    settings->RemoteAssistanceMode)
@@ -1119,68 +1174,21 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 
 		if (sockfd <= 0)
 		{
-			char* peerAddress;
-			struct addrinfo* addr;
-			struct addrinfo* result;
-
-			result = freerdp_tcp_resolve_host(hostname, port, 0);
-
-			if (!result)
-			{
-				if (!freerdp_get_last_error(context))
-					freerdp_set_last_error(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
-
-				return -1;
-			}
 			freerdp_set_last_error(context, 0);
-
-			addr = result;
-
-			if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0) &&
-			    !settings->PreferIPv6OverIPv4)
-			{
-				while ((addr = addr->ai_next))
-				{
-					if (addr->ai_family == AF_INET)
-						break;
-				}
-
-				if (!addr)
-					addr = result;
-			}
-
-			sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-
+			sockfd = freerdp_tcp_connect_simple(context, hostname, (UINT16)port, timeout);
 			if (sockfd < 0)
 			{
-				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-					freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_FAILED);
-
-				freeaddrinfo(result);
-				return -1;
+				switch (sockfd)
+				{
+					case -1:
+						freerdp_set_last_error(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
+						break;
+					default:
+						freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_FAILED);
+						break;
+				}
+				return sockfd;
 			}
-
-			if ((peerAddress = freerdp_tcp_address_to_string(
-			         (const struct sockaddr_storage*)addr->ai_addr, NULL)) != NULL)
-			{
-				WLog_DBG(TAG, "connecting to peer %s", peerAddress);
-				free(peerAddress);
-			}
-
-			if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr, addr->ai_addrlen,
-			                                 timeout))
-			{
-				freeaddrinfo(result);
-				close(sockfd);
-
-				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-					freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_FAILED);
-
-				WLog_ERR(TAG, "failed to connect to %s", hostname);
-				return -1;
-			}
-
-			freeaddrinfo(result);
 		}
 	}
 
@@ -1254,4 +1262,32 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 	}
 
 	return sockfd;
+}
+
+BIO* freerdp_tcp_to_buffered_bio(int sockfd, BOOL nonblocking)
+{
+	long status;
+	BIO* socketBio;
+	BIO* bufferedBio;
+	if (sockfd < 0)
+		return FALSE;
+
+	socketBio = BIO_new(BIO_s_simple_socket());
+
+	if (!socketBio)
+		return NULL;
+
+	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
+	bufferedBio = BIO_new(BIO_s_buffered_socket());
+
+	if (!bufferedBio)
+	{
+		BIO_free_all(socketBio);
+		return NULL;
+	}
+
+	bufferedBio = BIO_push(bufferedBio, socketBio);
+	status = BIO_set_nonblock(bufferedBio, nonblocking);
+
+	return bufferedBio;
 }

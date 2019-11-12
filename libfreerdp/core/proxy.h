@@ -23,10 +23,11 @@
 #include "freerdp/settings.h"
 #include <openssl/bio.h>
 
-BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* lpPeerPort,
-                   const char** lpProxyUsername, const char** lpProxyPassword);
-BOOL proxy_parse_uri(rdpSettings* settings, const char* uri);
-BOOL proxy_connect(rdpSettings* settings, BIO* bio, const char* proxyUsername,
-                   const char* proxyPassword, const char* hostname, UINT16 port);
+BOOL proxy_prepare(const rdpSettings* settings, DWORD* pProxyType, char** lpPeerHostname,
+                   UINT16* lpPeerPort, char** lpProxyUsername, char** lpProxyPassword);
+BOOL proxy_connect(DWORD ProxyType, BIO* bio, const char* proxyUsername, const char* proxyPassword,
+                   const char* hostname, UINT16 port);
+BOOL proxy_resolve(DWORD ProxyType, const char* ProxyHostname, UINT16 ProxyPort,
+                   const char* ProxyUsername, const char* ProxyPassword, const char* hostname);
 
 #endif /* FREERDP_LIB_CORE_HTTP_PROXY_H */
