@@ -173,6 +173,12 @@ proxyData* proxy_data_new(void)
 		return NULL;
 	}
 
+	if (!(pdata->gfx_server_ready = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		proxy_data_free(pdata);
+		return NULL;
+	}
+
 	return pdata;
 }
 
@@ -188,6 +194,12 @@ void proxy_data_free(proxyData* pdata)
 	{
 		CloseHandle(pdata->client_thread);
 		pdata->client_thread = NULL;
+	}
+
+	if (pdata->gfx_server_ready)
+	{
+		CloseHandle(pdata->gfx_server_ready);
+		pdata->gfx_server_ready = NULL;
 	}
 
 	free(pdata);

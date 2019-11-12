@@ -103,6 +103,7 @@ struct proxy_data
 
 	HANDLE abort_event;
 	HANDLE client_thread;
+	HANDLE gfx_server_ready;
 };
 
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src);
