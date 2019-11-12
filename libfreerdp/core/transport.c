@@ -403,14 +403,15 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	}
 	else
 	{
-		UINT16 peerPort;
+		UINT16 proxyPort;
 		DWORD ProxyType;
 		char *proxyHostname = NULL, *proxyUsername = NULL, *proxyPassword = NULL;
-		BOOL isProxyConnection = proxy_prepare(settings, &ProxyType, &proxyHostname, &peerPort,
+		BOOL isProxyConnection = proxy_prepare(settings, &ProxyType, &proxyHostname, &proxyPort,
 		                                       &proxyUsername, &proxyPassword);
 
 		if (isProxyConnection)
-			sockfd = freerdp_tcp_connect(context, settings, proxyHostname, peerPort, timeout, TRUE);
+			sockfd =
+			    freerdp_tcp_connect(context, settings, proxyHostname, proxyPort, timeout, TRUE);
 		else
 			sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout, FALSE);
 
@@ -426,8 +427,42 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			if (!proxy_connect(ProxyType, transport->frontBio, proxyUsername, proxyPassword,
 			                   hostname, port))
 			{
-				transport_disconnect(transport);
-				goto fail;
+				if (!settings->GatewayEnabled && (settings->TargetNetAddressCount > 0))
+				{
+					BOOL success = FALSE;
+					size_t x;
+
+					for (x = 0; x < settings->TargetNetAddressCount; x++)
+					{
+						UINT16 port = settings->TargetNetPorts[x];
+						const char* host = settings->TargetNetAddresses[x];
+
+						BIO_free_all(transport->frontBio);
+						transport->frontBio = NULL;
+
+						sockfd = freerdp_tcp_connect(context, settings, proxyHostname, proxyPort,
+						                             timeout, TRUE);
+						if (sockfd < 0)
+							continue;
+						if (!transport_attach(transport, sockfd))
+							continue;
+						if (!proxy_connect(ProxyType, transport->frontBio, proxyUsername,
+						                   proxyPassword, host, port))
+							continue;
+						success = TRUE;
+					}
+
+					if (!success)
+					{
+						transport_disconnect(transport);
+						goto fail;
+					}
+				}
+				else
+				{
+					transport_disconnect(transport);
+					goto fail;
+				}
 			}
 		}
 
