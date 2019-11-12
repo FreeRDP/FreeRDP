@@ -232,8 +232,7 @@ BOOL transport_attach(rdpTransport* transport, int sockfd)
 	if (!bufferedBio)
 		goto fail;
 
-	transport->frontBio = bufferedBio;
-	return TRUE;
+	return transport_set_bio(transport, bufferedBio);
 fail:
 
 	close(sockfd);
@@ -289,7 +288,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 		return FALSE;
 	}
 
-	transport->frontBio = tls->bio;
+	transport_set_bio(transport, tls->bio);
 	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK, (bio_info_cb*)(void*)transport_ssl_cb);
 	SSL_set_app_data(tls->ssl, transport);
 
@@ -365,7 +364,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 			if (status)
 			{
-				transport->frontBio = rdg_get_front_bio_and_take_ownership(transport->rdg);
+				BIO* bio = rdg_get_front_bio_and_take_ownership(transport->rdg);
+				transport_set_bio(transport, bio);
 				BIO_set_nonblock(transport->frontBio, 0);
 				transport->layer = TRANSPORT_LAYER_TSG;
 				status = TRUE;
@@ -390,9 +390,9 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 			if (status)
 			{
-				transport->frontBio = tsg_get_bio(transport->tsg);
+				BIO* bio = tsg_get_bio(transport->tsg);
+				status = transport_set_bio(transport, bio);
 				transport->layer = TRANSPORT_LAYER_TSG;
-				status = TRUE;
 			}
 			else
 			{
@@ -424,45 +424,23 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 		if (isProxyConnection)
 		{
-			if (!proxy_connect(ProxyType, transport->frontBio, proxyUsername, proxyPassword,
-			                   hostname, port))
+			if (!settings->GatewayEnabled && (settings->TargetNetAddressCount > 0))
 			{
-				if (!settings->GatewayEnabled && (settings->TargetNetAddressCount > 0))
-				{
-					BOOL success = FALSE;
-					size_t x;
-
-					for (x = 0; x < settings->TargetNetAddressCount; x++)
-					{
-						UINT16 port = settings->TargetNetPorts[x];
-						const char* host = settings->TargetNetAddresses[x];
-
-						BIO_free_all(transport->frontBio);
-						transport->frontBio = NULL;
-
-						sockfd = freerdp_tcp_connect(context, settings, proxyHostname, proxyPort,
-						                             timeout, TRUE);
-						if (sockfd < 0)
-							continue;
-						if (!transport_attach(transport, sockfd))
-							continue;
-						if (!proxy_connect(ProxyType, transport->frontBio, proxyUsername,
-						                   proxyPassword, host, port))
-							continue;
-						success = TRUE;
-					}
-
-					if (!success)
-					{
-						transport_disconnect(transport);
-						goto fail;
-					}
-				}
-				else
+				BIO* bio = proxy_multi_connect(
+				    context, ProxyType, proxyHostname, proxyPort, proxyUsername, proxyPassword,
+				    settings->TargetNetAddresses, settings->TargetNetPorts,
+				    settings->TargetNetAddressCount, timeout);
+				if (!bio || !transport_set_bio(transport, bio))
 				{
 					transport_disconnect(transport);
 					goto fail;
 				}
+			}
+			else if (!proxy_connect(ProxyType, transport->frontBio, proxyUsername, proxyPassword,
+			                        hostname, port))
+			{
+				transport_disconnect(transport);
+				goto fail;
 			}
 		}
 
@@ -494,8 +472,7 @@ BOOL transport_accept_tls(rdpTransport* transport)
 	if (!tls_accept(transport->tls, transport->frontBio, settings))
 		return FALSE;
 
-	transport->frontBio = transport->tls->bio;
-	return TRUE;
+	return transport_set_bio(transport, transport->tls->bio);
 }
 
 BOOL transport_accept_nla(rdpTransport* transport)
@@ -511,7 +488,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	if (!tls_accept(transport->tls, transport->frontBio, settings))
 		return FALSE;
 
-	transport->frontBio = transport->tls->bio;
+	transport_set_bio(transport, transport->tls->bio);
 
 	/* Network Level Authentication */
 
@@ -1143,8 +1120,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 	}
 	else
 	{
-		if (transport->frontBio)
-			BIO_free_all(transport->frontBio);
+		transport_set_bio(transport, NULL);
 	}
 
 	if (transport->tsg)
@@ -1159,7 +1135,6 @@ BOOL transport_disconnect(rdpTransport* transport)
 		transport->rdg = NULL;
 	}
 
-	transport->frontBio = NULL;
 	transport->layer = TRANSPORT_LAYER_TCP;
 	return status;
 }
@@ -1243,4 +1218,16 @@ void transport_free(rdpTransport* transport)
 	DeleteCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->WriteLock));
 	free(transport);
+}
+
+BOOL transport_set_bio(rdpTransport* transport, BIO* bio)
+{
+	if (!transport)
+	{
+		BIO_free_all(bio);
+		return FALSE;
+	}
+	if (transport->frontBio)
+		BIO_free_all(transport->frontBio);
+	transport->frontBio = bio;
 }

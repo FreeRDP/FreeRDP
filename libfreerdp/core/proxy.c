@@ -819,3 +819,34 @@ BOOL proxy_resolve(DWORD ProxyType, const char* ProxyHostname, UINT16 ProxyPort,
 	return TRUE;
 #endif
 }
+
+BIO* proxy_multi_connect(rdpContext* context, DWORD ProxyType, const char* ProxyHost,
+                         UINT16 ProxyPort, const char* ProxyUsername, const char* ProxyPassword,
+                         const char** hostnames, const UINT16* ports, size_t count, int timeout)
+{
+	size_t x;
+	int sockfd;
+	BIO* bufferedBio;
+
+	for (x = 0; x < count; x++)
+	{
+		const char* host = hostnames[x];
+		const UINT16 port = ports[x];
+
+		sockfd =
+		    freerdp_tcp_connect(context, context->settings, ProxyHost, ProxyPort, timeout, TRUE);
+		if (sockfd < 0)
+			continue;
+		bufferedBio = freerdp_tcp_to_buffered_bio(sockfd, FALSE);
+		if (!bufferedBio)
+			continue;
+		if (!proxy_connect(ProxyType, bufferedBio, ProxyUsername, ProxyPassword, host, port))
+		{
+			BIO_free_all(bufferedBio);
+			continue;
+		}
+		return bufferedBio;
+	}
+
+	return NULL;
+}

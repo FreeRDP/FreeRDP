@@ -22,11 +22,15 @@
 
 #include "freerdp/settings.h"
 #include <openssl/bio.h>
+#include "transport.h"
 
 BOOL proxy_prepare(const rdpSettings* settings, DWORD* pProxyType, char** lpPeerHostname,
                    UINT16* lpPeerPort, char** lpProxyUsername, char** lpProxyPassword);
 BOOL proxy_connect(DWORD ProxyType, BIO* bio, const char* proxyUsername, const char* proxyPassword,
                    const char* hostname, UINT16 port);
+BIO* proxy_multi_connect(rdpContext* context, DWORD ProxyType, const char* ProxyHost,
+                         UINT16 ProxyPort, const char* ProxyUsername, const char* ProxyPassword,
+                         const char** hostnames, const UINT16* ports, size_t count, int timeout);
 BOOL proxy_resolve(DWORD ProxyType, const char* ProxyHostname, UINT16 ProxyPort,
                    const char* ProxyUsername, const char* ProxyPassword, const char* hostname);
 
