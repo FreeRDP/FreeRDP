@@ -352,9 +352,6 @@ UINT cliprdr_read_format_data_response(wStream* s, CLIPRDR_FORMAT_DATA_RESPONSE*
 
 UINT cliprdr_read_file_contents_request(wStream* s, CLIPRDR_FILE_CONTENTS_REQUEST* request)
 {
-	if (!cliprdr_validate_file_contents_request(request))
-		return ERROR_BAD_ARGUMENTS;
-
 	if (Stream_GetRemainingLength(s) < 24)
 	{
 		WLog_ERR(TAG, "not enough remaining data");
@@ -374,6 +371,9 @@ UINT cliprdr_read_file_contents_request(wStream* s, CLIPRDR_FILE_CONTENTS_REQUES
 		Stream_Read_UINT32(s, request->clipDataId); /* clipDataId (4 bytes) */
 		request->haveClipDataId = TRUE;
 	}
+
+	if (!cliprdr_validate_file_contents_request(request))
+		return ERROR_BAD_ARGUMENTS;
 
 	return CHANNEL_RC_OK;
 }
