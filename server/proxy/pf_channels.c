@@ -65,6 +65,8 @@ void pf_OnChannelConnectedEventHandler(void* data, ChannelConnectedEventArgs* e)
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		pf_channels_wait_for_server_dynvc(ps);
+		pc->gfx_proxy = (RdpgfxClientContext*)e->pInterface;
+		pf_rdpgfx_pipeline_init(pc->gfx_proxy, ps->gfx, pc->pdata);
 
 		if (!ps->gfx->Open(ps->gfx))
 		{
@@ -72,8 +74,7 @@ void pf_OnChannelConnectedEventHandler(void* data, ChannelConnectedEventArgs* e)
 			return;
 		}
 
-		pc->gfx_proxy = (RdpgfxClientContext*)e->pInterface;
-		pf_rdpgfx_pipeline_init(pc->gfx_proxy, ps->gfx, pc->pdata);
+		SetEvent(pc->pdata->gfx_server_ready);
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{

@@ -362,6 +362,7 @@ static UINT pf_rdpgfx_map_surface_to_scaled_output(
 static UINT pf_rdpgfx_on_open(RdpgfxClientContext* context, BOOL* do_caps_advertise,
                               BOOL* send_frame_acks)
 {
+	proxyData* pdata = (proxyData*)context->custom;
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (NULL != do_caps_advertise)
@@ -370,6 +371,8 @@ static UINT pf_rdpgfx_on_open(RdpgfxClientContext* context, BOOL* do_caps_advert
 	if (NULL != send_frame_acks)
 		*send_frame_acks = FALSE;
 
+	/* do not open the channel before gfx server side is in ready state */
+	WaitForSingleObject(pdata->gfx_server_ready, INFINITE);
 	return CHANNEL_RC_OK;
 }
 
