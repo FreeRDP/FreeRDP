@@ -56,6 +56,8 @@
 
 #define TAG FREERDP_TAG("core.transport")
 
+static BOOL transport_set_bio(rdpTransport* transport, BIO* bio);
+
 #define BUFFER_SIZE 16384
 
 #ifdef WITH_GSSAPI
@@ -1120,7 +1122,8 @@ BOOL transport_disconnect(rdpTransport* transport)
 	}
 	else
 	{
-		transport_set_bio(transport, NULL);
+		if (transport->frontBio)
+			BIO_free_all(transport->frontBio);
 	}
 
 	if (transport->tsg)
@@ -1135,6 +1138,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 		transport->rdg = NULL;
 	}
 
+	transport_set_bio(transport, NULL);
 	transport->layer = TRANSPORT_LAYER_TCP;
 	return status;
 }
@@ -1223,11 +1227,7 @@ void transport_free(rdpTransport* transport)
 BOOL transport_set_bio(rdpTransport* transport, BIO* bio)
 {
 	if (!transport)
-	{
-		BIO_free_all(bio);
 		return FALSE;
-	}
-	if (transport->frontBio)
-		BIO_free_all(transport->frontBio);
+
 	transport->frontBio = bio;
 }

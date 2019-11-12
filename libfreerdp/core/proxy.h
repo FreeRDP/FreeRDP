@@ -20,9 +20,8 @@
 #ifndef FREERDP_LIB_CORE_HTTP_PROXY_H
 #define FREERDP_LIB_CORE_HTTP_PROXY_H
 
-#include "freerdp/settings.h"
+#include "freerdp/freerdp.h"
 #include <openssl/bio.h>
-#include "transport.h"
 
 BOOL proxy_prepare(const rdpSettings* settings, DWORD* pProxyType, char** lpPeerHostname,
                    UINT16* lpPeerPort, char** lpProxyUsername, char** lpProxyPassword);
