@@ -31,7 +31,8 @@ BOOL proxy_connect(DWORD ProxyType, BIO* bio, const char* proxyUsername, const c
 BIO* proxy_multi_connect(rdpContext* context, DWORD ProxyType, const char* ProxyHost,
                          UINT16 ProxyPort, const char* ProxyUsername, const char* ProxyPassword,
                          const char** hostnames, const UINT16* ports, size_t count, int timeout);
-BOOL proxy_resolve(DWORD ProxyType, const char* ProxyHostname, UINT16 ProxyPort,
-                   const char* ProxyUsername, const char* ProxyPassword, const char* hostname);
+BOOL proxy_resolve(rdpContext* context, DWORD ProxyType, const char* ProxyHostname,
+                   UINT16 ProxyPort, const char* ProxyUsername, const char* ProxyPassword,
+                   const char* hostname, UINT16 port);
 
 #endif /* FREERDP_LIB_CORE_HTTP_PROXY_H */

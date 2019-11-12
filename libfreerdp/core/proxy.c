@@ -788,36 +788,15 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	return FALSE;
 }
 
-BOOL proxy_resolve(DWORD ProxyType, const char* ProxyHostname, UINT16 ProxyPort,
-                   const char* ProxyUsername, const char* ProxyPassword, const char* hostname)
+BOOL proxy_resolve(rdpContext* context, DWORD ProxyType, const char* ProxyHostname,
+                   UINT16 ProxyPort, const char* ProxyUsername, const char* ProxyPassword,
+                   const char* hostname, UINT16 port)
 {
-#if 0
-	int sockfd;
-	long status;
-	BOOL rc;
-	BIO *bufferedBio;
-	if (ProxyType == PROXY_TYPE_NONE)
-		return FALSE;
-
-	sockfd = freerdp_tcp_connect(rdg->context, settings, ProxyHostname, ProxyPort, timeout);
-
-	if (sockfd < 0)
-		return FALSE;
-
-	bufferedBio = freerdp_tcp_to_buffered_bio(sockfd, TRUE);
-
-	if (!bufferedBio)
-	{
-		closesocket((SOCKET)sockfd);
-		return FALSE;
-	}
-
-	rc = proxy_connect(ProxyType, bufferedBio, ProxyUsername, ProxyPassword, hostname, 0);
-	BIO_free_all(bufferedBio);
-	return rc;
-#else
-	return TRUE;
-#endif
+	BIO* bio = proxy_multi_connect(context, ProxyType, ProxyHostname, ProxyPort, ProxyUsername,
+	                               ProxyPassword, &hostname, &port, 1, 5);
+	if (bio)
+		BIO_free_all(bio);
+	return bio != NULL;
 }
 
 BIO* proxy_multi_connect(rdpContext* context, DWORD ProxyType, const char* ProxyHost,
