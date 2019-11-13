@@ -706,7 +706,7 @@ static void remdesk_process_connect(remdeskPlugin* remdesk)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, void* pData,
+static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, const void* pData,
                                                         UINT32 dataLength, UINT32 totalLength,
                                                         UINT32 dataFlags)
 {
@@ -733,7 +733,7 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 
 	data_in = remdesk->data_in;
 
-	if (!Stream_EnsureRemainingCapacity(data_in, (int)dataLength))
+	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
 	{
 		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 		return CHANNEL_RC_NO_MEMORY;
@@ -792,7 +792,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_WRITE_CANCELLED:
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 		{
-			wStream* s = (wStream*)lpUserParam;
+			wStream* s = (wStream*)pData;
 			Stream_Free(s, TRUE);
 		}
 		break;
