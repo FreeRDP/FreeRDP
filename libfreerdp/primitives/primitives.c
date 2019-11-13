@@ -173,7 +173,8 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 {
 	ULONGLONG dueDate;
 	const BYTE* channels[3];
-	int i;
+	size_t i;
+	pstatus_t status;
 
 	*computations = 0;
 
@@ -181,9 +182,8 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 		channels[i] = bench->channels[i];
 
 	/* do a first dry run to initialize cache and such */
-	pstatus_t status =
-	    prims->YUV420ToRGB_8u_P3AC4R(channels, bench->steps, bench->outputBuffer,
-	                                 bench->outputStride, bench->testedFormat, &bench->roi);
+	status = prims->YUV420ToRGB_8u_P3AC4R(channels, bench->steps, bench->outputBuffer,
+	                                      bench->outputStride, bench->testedFormat, &bench->roi);
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
@@ -203,78 +203,64 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 
 static BOOL primitives_autodetect_best(primitives_t* prims)
 {
+	size_t x;
 	BOOL ret = FALSE;
 	UINT64 benchDuration = 150; /* 150 ms */
-	UINT32 genericCount = 0;
-	UINT32 bestCount;
-	primitives_t* genericPrims = primitives_get_generic();
+	struct prim_benchmark
+	{
+		const char* name;
+		primitives_t* prims;
+		UINT32 flags;
+		UINT32 count;
+	};
+
+	struct prim_benchmark testcases[] =
+	{
+		{ "generic", NULL, PRIMITIVES_PURE_SOFT, 0 },
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-	primitives_t* optimizedPrims = primitives_get_by_type(PRIMITIVES_ONLY_CPU);
-	UINT32 optimizedCount = 0;
+		{ "optimized", NULL, PRIMITIVES_ONLY_CPU, 0 },
 #endif
 #if defined(WITH_OPENCL)
-	primitives_t* openclPrims = primitives_get_by_type(PRIMITIVES_ONLY_GPU);
-	UINT32 openclCount = 0;
+		{ "opencl", NULL, PRIMITIVES_ONLY_GPU, 0 },
 #endif
-	const char* primName = "generic";
+	};
+	const struct prim_benchmark* best = NULL;
+
 	primitives_YUV_benchmark bench;
 	primitives_YUV_benchmark* yuvBench = primitives_YUV_benchmark_init(&bench);
 	if (!yuvBench)
 		return FALSE;
 
-	if (!primitives_YUV_benchmark_run(yuvBench, genericPrims, benchDuration, &genericCount))
-	{
-		WLog_ERR(TAG, "error running generic YUV bench");
-		goto out;
-	}
-
-#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-	if (!primitives_YUV_benchmark_run(yuvBench, optimizedPrims, benchDuration, &optimizedCount))
-	{
-		WLog_ERR(TAG, "error running optimized YUV bench");
-		goto out;
-	}
-#endif
-
-#if defined(WITH_OPENCL)
-	if (!primitives_YUV_benchmark_run(yuvBench, openclPrims, benchDuration, &openclCount))
-	{
-		WLog_ERR(TAG, "error running opencl YUV bench");
-		goto out;
-	}
-#endif
-
-	/* finally compute the results */
-	bestCount = genericCount;
-	*prims = *genericPrims;
-
-#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-	if (bestCount < optimizedCount)
-	{
-		bestCount = optimizedCount;
-		*prims = *optimizedPrims;
-		primName = "optimized";
-	}
-#endif
-
-#if defined(WITH_OPENCL)
-	if (bestCount < openclCount)
-	{
-		bestCount = openclCount;
-		*prims = *openclPrims;
-		primName = "openCL";
-	}
-#endif
-
 	WLog_DBG(TAG, "primitives benchmark result:");
-	WLog_DBG(TAG, " * generic=%" PRIu32, genericCount);
-#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-	WLog_DBG(TAG, " * optimized=%" PRIu32, optimizedCount);
-#endif
-#if defined(WITH_OPENCL)
-	WLog_DBG(TAG, " * openCL=%" PRIu32, openclCount);
-#endif
-	WLog_INFO(TAG, "primitives autodetect, using %s", primName);
+	for (x = 0; x < ARRAYSIZE(testcases); x++)
+	{
+		struct prim_benchmark* cur = &testcases[x];
+		cur->prims = primitives_get_by_type(cur->flags);
+		if (!cur->prims)
+		{
+			WLog_ERR(TAG, "Failed to initialize %s primitives", cur->name);
+			goto out;
+		}
+		if (!primitives_YUV_benchmark_run(yuvBench, cur->prims, benchDuration, &cur->count))
+		{
+			WLog_ERR(TAG, "error running %s YUV bench", cur->name);
+			goto out;
+		}
+
+		WLog_DBG(TAG, " * %s\t= %" PRIu32, cur->name, cur->count);
+		if (!best || (best->count < cur->count))
+			best = cur;
+	}
+
+	if (!best)
+	{
+		WLog_ERR(TAG, "No primitives to test, aborting.");
+		goto out;
+	}
+	/* finally compute the results */
+	*prims = *best->prims;
+
+	WLog_INFO(TAG, "primitives autodetect, using %s", best->name);
 	ret = TRUE;
 out:
 	primitives_YUV_benchmark_free(yuvBench);
@@ -287,9 +273,6 @@ static BOOL CALLBACK primitives_init_gpu_cb(PINIT_ONCE once, PVOID param, PVOID*
 	WINPR_UNUSED(once);
 	WINPR_UNUSED(param);
 	WINPR_UNUSED(context);
-
-	if (!primitives_init_optimized(&pPrimitivesGpu))
-		return FALSE;
 
 	if (!primitives_init_opencl(&pPrimitivesGpu))
 		return FALSE;
@@ -305,8 +288,10 @@ static BOOL CALLBACK primitives_init_cpu_cb(PINIT_ONCE once, PVOID param, PVOID*
 	WINPR_UNUSED(param);
 	WINPR_UNUSED(context);
 
+	if (!primitives_init_optimized(&pPrimitivesCpu))
+		return FALSE;
 
-	return primitives_init_optimized(&pPrimitivesCpu);
+	return TRUE;
 }
 #endif
 
@@ -331,16 +316,12 @@ BOOL primitives_init(primitives_t* p, primitive_hints hints)
 		case PRIMITIVES_ONLY_CPU:
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
 			*p = pPrimitivesCpu;
-#else
-			*p = pPrimitivesGeneric;
-#endif
 			return TRUE;
+#endif
 		case PRIMITIVES_ONLY_GPU:
 #if defined(WITH_OPENCL)
 			*p = pPrimitivesGpu;
 			return TRUE;
-#else
-			return FALSE;
 #endif
 		default:
 			WLog_ERR(TAG, "unknown hint %d", hints);
@@ -348,7 +329,7 @@ BOOL primitives_init(primitives_t* p, primitive_hints hints)
 	}
 }
 
-void primitives_uninit()
+void primitives_uninit(void)
 {
 #if defined(WITH_OPENCL)
 	if (pPrimitivesGpu.uninit)
@@ -395,18 +376,16 @@ primitives_t* primitives_get_by_type(DWORD type)
 	{
 		case PRIMITIVES_ONLY_GPU:
 #if defined(WITH_OPENCL)
-			if (InitOnceExecuteOnce(&gpu_primitives_InitOnce, primitives_init_gpu_cb, NULL, NULL))
-				return &pPrimitivesGpu;
+			if (!InitOnceExecuteOnce(&gpu_primitives_InitOnce, primitives_init_gpu_cb, NULL, NULL))
+				return NULL;
+			return &pPrimitivesGpu;
 #endif
-			return NULL;
-
 		case PRIMITIVES_ONLY_CPU:
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-			if (InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, NULL, NULL))
-				return &pPrimitivesCpu;
+			if (!InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, NULL, NULL))
+				return NULL;
+			return &pPrimitivesCpu;
 #endif
-			return NULL;
-
 		case PRIMITIVES_PURE_SOFT:
 		default:
 			return &pPrimitivesGeneric;

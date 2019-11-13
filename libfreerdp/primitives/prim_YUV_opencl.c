@@ -48,12 +48,12 @@ typedef struct
 
 static primitives_opencl_context* primitives_get_opencl_context(void);
 
-static pstatus_t opencl_YUV420ToRGB(const char* kernelName, const BYTE* pSrc[3],
-                                    const UINT32 srcStep[3], BYTE* pDst, UINT32 dstStep,
-                                    const prim_size_t* roi)
+static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* pSrc[3],
+                                 const UINT32 srcStep[3], BYTE* pDst, UINT32 dstStep,
+                                 const prim_size_t* roi)
 {
 	cl_int ret;
-	int i;
+	cl_uint i;
 	cl_mem objs[3] = { NULL, NULL, NULL };
 	cl_mem destObj;
 	cl_kernel kernel;
@@ -98,14 +98,14 @@ static pstatus_t opencl_YUV420ToRGB(const char* kernelName, const BYTE* pSrc[3],
 	/* push source + stride arguments*/
 	for (i = 0; i < 3; i++)
 	{
-		ret = clSetKernelArg(kernel, i * 2, sizeof(cl_mem), (void*)&objs[i]);
+		ret = clSetKernelArg(kernel, i * 2, sizeof(cl_mem), &objs[i]);
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to set arg for %sobj", sourceNames[i]);
 			goto error_set_args;
 		}
 
-		ret = clSetKernelArg(kernel, i * 2 + 1, sizeof(cl_int), (void*)&srcStep[i]);
+		ret = clSetKernelArg(kernel, i * 2 + 1, sizeof(cl_int), &srcStep[i]);
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to set arg stride for %sobj", sourceNames[i]);
@@ -113,14 +113,14 @@ static pstatus_t opencl_YUV420ToRGB(const char* kernelName, const BYTE* pSrc[3],
 		}
 	}
 
-	ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), (void*)&destObj);
+	ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), &destObj);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to set arg destObj");
 		goto error_set_args;
 	}
 
-	ret = clSetKernelArg(kernel, 7, sizeof(cl_int), (void*)&dstStep);
+	ret = clSetKernelArg(kernel, 7, sizeof(cl_int), &dstStep);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to set arg dstStep");
@@ -168,12 +168,12 @@ error_objs:
 
 static primitives_opencl_context openclContext;
 
-primitives_opencl_context* primitives_get_opencl_context(void)
+static primitives_opencl_context* primitives_get_opencl_context(void)
 {
 	return &openclContext;
 }
 
-pstatus_t primitives_uninit_opencl(void)
+static pstatus_t primitives_uninit_opencl(void)
 {
 	if (!openclContext.support)
 		return PRIMITIVES_SUCCESS;
@@ -190,7 +190,7 @@ static const char* openclProgram =
 #include "primitives.cl"
     ;
 
-BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
+static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 {
 	cl_platform_id* platform_ids = NULL;
 	cl_uint ndevices, nplatforms, i;
@@ -322,17 +322,6 @@ out_program_create:
 	return FALSE;
 }
 
-BOOL primitives_init_opencl(primitives_t* prims)
-{
-	if (!primitives_init_opencl_context(&openclContext))
-		return FALSE;
-
-	primitives_init_YUV_opencl(prims);
-	prims->flags |= PRIM_FLAGS_HAVE_EXTGPU;
-	prims->uninit = primitives_uninit_opencl;
-	return TRUE;
-}
-
 static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 srcStep[3],
                                               BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                               const prim_size_t* roi)
@@ -353,17 +342,26 @@ static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 
 		{
 			primitives_t* p = primitives_get_by_type(PRIMITIVES_ONLY_CPU);
 			if (!p)
-				p = primitives_get_by_type(PRIMITIVES_PURE_SOFT);
-			if (!p)
 				return -1;
 			return p->YUV420ToRGB_8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 		}
 	}
 
-	return opencl_YUV420ToRGB(kernel_name, pSrc, srcStep, pDst, dstStep, roi);
+	return opencl_YUVToRGB(kernel_name, pSrc, srcStep, pDst, dstStep, roi);
 }
 
-void primitives_init_YUV_opencl(primitives_t* prims)
+BOOL primitives_init_opencl(primitives_t* prims)
 {
+	primitives_t* p = primitives_get_by_type(PRIMITIVES_ONLY_CPU);
+	if (!prims || !p)
+		return FALSE;
+	*prims = *p;
+
+	if (!primitives_init_opencl_context(&openclContext))
+		return FALSE;
+
 	prims->YUV420ToRGB_8u_P3AC4R = opencl_YUV420ToRGB_8u_P3AC4R;
+	prims->flags |= PRIM_FLAGS_HAVE_EXTGPU;
+	prims->uninit = primitives_uninit_opencl;
+	return TRUE;
 }
