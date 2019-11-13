@@ -1230,4 +1230,5 @@ BOOL transport_set_bio(rdpTransport* transport, BIO* bio)
 		return FALSE;
 
 	transport->frontBio = bio;
+	return TRUE;
 }
