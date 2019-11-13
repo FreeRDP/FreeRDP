@@ -1448,7 +1448,6 @@ static pstatus_t ssse3_YUV420CombineToYUV444(avc444_frame_type type, const BYTE*
 	}
 }
 
-
 void primitives_init_YUV_opt(primitives_t* prims)
 {
 	generic = primitives_get_generic();

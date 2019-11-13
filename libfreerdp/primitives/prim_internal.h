@@ -40,7 +40,6 @@
 #define HAVE_CPU_OPTIMIZED_PRIMITIVES 1
 #endif
 
-
 #if defined(WITH_SSE2)
 /* Use lddqu for unaligned; load for 16-byte aligned. */
 #define LOAD_SI128(_ptr_)                                           \
