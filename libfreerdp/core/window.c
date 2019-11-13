@@ -567,8 +567,8 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 		DUMP_APPEND(buffer, bufferSize, " title");
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
-		DUMP_APPEND(buffer, bufferSize, " clientOffset=(%"PRId32",%"PRId32")",
-				state->clientOffsetX, state->clientOffsetY);
+		DUMP_APPEND(buffer, bufferSize, " clientOffset=(%" PRId32 ",%" PRId32 ")",
+		            state->clientOffsetX, state->clientOffsetY);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
 		DUMP_APPEND(buffer, bufferSize, " clientAreaWidth=%" PRIu32 " clientAreaHeight=%" PRIu32 "",
 		            state->clientAreaWidth, state->clientAreaHeight);
@@ -585,10 +585,11 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
 		DUMP_APPEND(buffer, bufferSize, " rootParent=0x%" PRIx32 "", state->rootParentHandle);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
-		DUMP_APPEND(buffer, bufferSize, " windowOffset=(%"PRId32",%"PRId32")", state->windowOffsetX, state->windowOffsetY);
+		DUMP_APPEND(buffer, bufferSize, " windowOffset=(%" PRId32 ",%" PRId32 ")",
+		            state->windowOffsetX, state->windowOffsetY);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
-		DUMP_APPEND(buffer, bufferSize, " windowClientDelta=(%"PRId32",%"PRId32")",
-				state->windowClientDeltaX, state->windowClientDeltaY);
+		DUMP_APPEND(buffer, bufferSize, " windowClientDelta=(%" PRId32 ",%" PRId32 ")",
+		            state->windowClientDeltaX, state->windowClientDeltaY);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 		DUMP_APPEND(buffer, bufferSize, " windowWidth=%" PRIu32 " windowHeight=%" PRIu32 "",
 		            state->windowWidth, state->windowHeight);
@@ -607,8 +608,8 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 	}
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
-		DUMP_APPEND(buffer, bufferSize, " visibleOffset=(%"PRId32",%"PRId32")", state->visibleOffsetX, 
-				state->visibleOffsetY);
+		DUMP_APPEND(buffer, bufferSize, " visibleOffset=(%" PRId32 ",%" PRId32 ")",
+		            state->visibleOffsetX, state->visibleOffsetY);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{

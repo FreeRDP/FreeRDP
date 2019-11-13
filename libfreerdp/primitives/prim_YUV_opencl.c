@@ -54,12 +54,13 @@ static pstatus_t opencl_YUV420ToRGB(const char* kernelName, const BYTE* pSrc[3],
 {
 	cl_int ret;
 	int i;
-	cl_mem objs[3] = {NULL, NULL, NULL};
+	cl_mem objs[3] = { NULL, NULL, NULL };
 	cl_mem destObj;
 	cl_kernel kernel;
+	cl_event events[3];
 	size_t indexes[2];
-	const char *sourceNames[] = {"Y", "U", "V"};
-	primitives_opencl_context *cl = primitives_get_opencl_context();
+	const char* sourceNames[] = { "Y", "U", "V" };
+	primitives_opencl_context* cl = primitives_get_opencl_context();
 
 	kernel = clCreateKernel(cl->program, kernelName, &ret);
 	if (ret != CL_SUCCESS)
@@ -70,15 +71,16 @@ static pstatus_t opencl_YUV420ToRGB(const char* kernelName, const BYTE* pSrc[3],
 
 	for (i = 0; i < 3; i++)
 	{
-		objs[i] = clCreateBuffer(cl->context, CL_MEM_READ_ONLY, srcStep[i] * roi->height, NULL, &ret);
+		objs[i] =
+		    clCreateBuffer(cl->context, CL_MEM_READ_ONLY, srcStep[i] * roi->height, NULL, &ret);
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to create %sobj", sourceNames[i]);
 			goto error_objs;
 		}
 
-		ret = clEnqueueWriteBuffer(cl->commandQueue, objs[i], CL_TRUE, 0, srcStep[i] * roi->height,
-				pSrc[i], 0, NULL, NULL);
+		ret = clEnqueueWriteBuffer(cl->commandQueue, objs[i], CL_FALSE, 0, srcStep[i] * roi->height,
+		                           pSrc[i], 0, NULL, &events[i]);
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to enqueue write command for %sobj", sourceNames[i]);
@@ -96,14 +98,14 @@ static pstatus_t opencl_YUV420ToRGB(const char* kernelName, const BYTE* pSrc[3],
 	/* push source + stride arguments*/
 	for (i = 0; i < 3; i++)
 	{
-		ret = clSetKernelArg(kernel, i * 2, sizeof(cl_mem), (void *)&objs[i]);
+		ret = clSetKernelArg(kernel, i * 2, sizeof(cl_mem), (void*)&objs[i]);
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to set arg for %sobj", sourceNames[i]);
 			goto error_set_args;
 		}
 
-		ret = clSetKernelArg(kernel, i * 2 + 1, sizeof(cl_int), (void *)&srcStep[i]);
+		ret = clSetKernelArg(kernel, i * 2 + 1, sizeof(cl_int), (void*)&srcStep[i]);
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to set arg stride for %sobj", sourceNames[i]);
@@ -111,14 +113,14 @@ static pstatus_t opencl_YUV420ToRGB(const char* kernelName, const BYTE* pSrc[3],
 		}
 	}
 
-	ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), (void *)&destObj);
+	ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), (void*)&destObj);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to set arg destObj");
 		goto error_set_args;
 	}
 
-	ret = clSetKernelArg(kernel, 7, sizeof(cl_int), (void *)&dstStep);
+	ret = clSetKernelArg(kernel, 7, sizeof(cl_int), (void*)&dstStep);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to set arg dstStep");
@@ -127,8 +129,7 @@ static pstatus_t opencl_YUV420ToRGB(const char* kernelName, const BYTE* pSrc[3],
 
 	indexes[0] = roi->width;
 	indexes[1] = roi->height;
-	ret = clEnqueueNDRangeKernel(cl->commandQueue, kernel, 2, NULL, indexes, NULL,
-			0, NULL, NULL);
+	ret = clEnqueueNDRangeKernel(cl->commandQueue, kernel, 2, NULL, indexes, NULL, 3, events, NULL);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to enqueue call kernel");
@@ -136,7 +137,8 @@ static pstatus_t opencl_YUV420ToRGB(const char* kernelName, const BYTE* pSrc[3],
 	}
 
 	/* Transfer result to host */
-	ret = clEnqueueReadBuffer(cl->commandQueue, destObj, CL_TRUE, 0, roi->height * dstStep, pDst, 0, NULL, NULL);
+	ret = clEnqueueReadBuffer(cl->commandQueue, destObj, CL_TRUE, 0, roi->height * dstStep, pDst, 0,
+	                          NULL, NULL);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to read back buffer");
@@ -184,18 +186,19 @@ pstatus_t primitives_uninit_opencl(void)
 	return PRIMITIVES_SUCCESS;
 }
 
+static const char* openclProgram =
+#include "primitives.cl"
+    ;
+
 BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 {
 	cl_platform_id* platform_ids = NULL;
 	cl_uint ndevices, nplatforms, i;
 	cl_kernel kernel;
 	cl_int ret;
-	char sourcePath[1000];
 
 	BOOL gotGPU = FALSE;
-	FILE* f;
 	size_t programLen;
-	char* programSource;
 
 	ret = clGetPlatformIDs(0, NULL, &nplatforms);
 	if (ret != CL_SUCCESS || nplatforms < 1)
@@ -270,45 +273,14 @@ BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 		return FALSE;
 	}
 
-	snprintf(sourcePath, sizeof(sourcePath), "%s/primitives.cl", OPENCL_SOURCE_PATH);
-
-	f = fopen(sourcePath, "r");
-	if (!f)
-	{
-		WLog_ERR(TAG, "openCL: unable to open source file %s", sourcePath);
-		goto error_source_file;
-	}
-
-	fseek(f, 0, SEEK_END);
-	programLen = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	programSource = malloc(programLen);
-	if (!programSource)
-	{
-		WLog_ERR(TAG, "openCL: unable to allocate memory(%d bytes) for source file %s", programLen,
-		         sourcePath);
-		fclose(f);
-		goto error_source_file;
-	}
-
-	if (fread(programSource, programLen, 1, f) <= 0)
-	{
-		WLog_ERR(TAG, "openCL: unable to read openCL program in %s", sourcePath);
-		free(programSource);
-		fclose(f);
-		goto error_source_file;
-	}
-	fclose(f);
-
+	programLen = strlen(openclProgram);
 	cl->program =
-	    clCreateProgramWithSource(cl->context, 1, (const char**)&programSource, &programLen, &ret);
+	    clCreateProgramWithSource(cl->context, 1, (const char**)&openclProgram, &programLen, &ret);
 	if (ret != CL_SUCCESS)
 	{
-		WLog_ERR(TAG, "openCL: unable to create command queue");
+		WLog_ERR(TAG, "openCL: unable to create program");
 		goto out_program_create;
 	}
-	free(programSource);
 
 	ret = clBuildProgram(cl->program, 1, &cl->deviceId, NULL, NULL, NULL);
 	if (ret != CL_SUCCESS)
@@ -343,7 +315,6 @@ BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 
 out_program_build:
 	clReleaseProgram(cl->program);
-error_source_file:
 out_program_create:
 	clReleaseCommandQueue(cl->commandQueue);
 	clReleaseContext(cl->context);
@@ -363,11 +334,12 @@ BOOL primitives_init_opencl(primitives_t* prims)
 }
 
 static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 srcStep[3],
-    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat, const prim_size_t* roi)
+                                              BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+                                              const prim_size_t* roi)
 {
-	const char *kernel_name;
+	const char* kernel_name;
 
-	switch(DstFormat)
+	switch (DstFormat)
 	{
 		case PIXEL_FORMAT_BGRA32:
 		case PIXEL_FORMAT_BGRX32:
@@ -394,7 +366,4 @@ static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 
 void primitives_init_YUV_opencl(primitives_t* prims)
 {
 	prims->YUV420ToRGB_8u_P3AC4R = opencl_YUV420ToRGB_8u_P3AC4R;
-
 }
-
-

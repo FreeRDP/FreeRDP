@@ -142,7 +142,6 @@ typedef pstatus_t (*__andC_32u_t)(const UINT32* pSrc, UINT32 val, UINT32* pDst, 
 typedef pstatus_t (*__orC_32u_t)(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len);
 typedef pstatus_t (*primitives_uninit_t)(void);
 
-
 typedef struct
 {
 	/* Memory-to-memory copy routines */
@@ -206,10 +205,9 @@ extern "C"
 	FREERDP_API void primitives_set_hints(primitive_hints hints);
 	FREERDP_API primitive_hints primitives_get_hints(void);
 	FREERDP_API primitives_t* primitives_get_generic(void);
-	FREERDP_API DWORD primitives_flags(primitives_t *p);
-	FREERDP_API BOOL primitives_init(primitives_t *p, primitive_hints hints);
+	FREERDP_API DWORD primitives_flags(primitives_t* p);
+	FREERDP_API BOOL primitives_init(primitives_t* p, primitive_hints hints);
 	FREERDP_API void primitives_uninit();
-
 
 #ifdef __cplusplus
 }

@@ -1,22 +1,24 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Optimized operations using openCL
+ * vi:ts=4 sw=4
  *
  * Copyright 2019 David Fort <contact@hardening-consulting.com>
+ * Copyright 2019 Rangee Gmbh
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 
+#define STRINGIFY(x) #x
+
+STRINGIFY(
 unsigned char clamp_uc(int v, int l, int h)
 {
     if (v > h)
@@ -79,4 +81,4 @@ __kernel void yuv420_to_bgra_1b(
 	destPtr[2] = clamp_uc((y256 + (403 * V)) >> 8, 0, 255); 	/* R */
 	destPtr[3] = 0xff; /* A */
 }
-
+)
