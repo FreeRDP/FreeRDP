@@ -209,7 +209,7 @@ extern "C"
 	FREERDP_API primitives_t* primitives_get_generic(void);
 	FREERDP_API DWORD primitives_flags(primitives_t* p);
 	FREERDP_API BOOL primitives_init(primitives_t* p, primitive_hints hints);
-	FREERDP_API void primitives_uninit();
+	FREERDP_API void primitives_uninit(void);
 
 #ifdef __cplusplus
 }
