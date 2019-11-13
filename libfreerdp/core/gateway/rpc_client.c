@@ -99,7 +99,7 @@ static int rpc_client_receive_pipe_write(RpcClient* client, const BYTE* buffer, 
 int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer, size_t length)
 {
 	int index = 0;
-	int status = 0;
+	size_t status = 0;
 	int nchunks = 0;
 	DataChunk chunks[2];
 
@@ -172,7 +172,7 @@ static int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
 
 static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 {
-	int status = -1;
+	SSIZE_T status = -1;
 	rpcconn_rts_hdr_t* rts;
 	rdpTsg* tsg = rpc->transport->tsg;
 
@@ -462,7 +462,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 
 static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 {
-	int status = -1;
+	SSIZE_T status = -1;
 	UINT32 statusCode;
 	HttpResponse* response;
 	RpcInChannel* inChannel;
@@ -887,7 +887,7 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length
 
 BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 {
-	UINT32 offset;
+	size_t offset;
 	BYTE* buffer = NULL;
 	UINT32 stub_data_pad;
 	SecBuffer Buffers[2] = { 0 };
