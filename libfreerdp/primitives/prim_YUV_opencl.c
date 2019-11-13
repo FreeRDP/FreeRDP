@@ -350,6 +350,34 @@ static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 
 	return opencl_YUVToRGB(kernel_name, pSrc, srcStep, pDst, dstStep, roi);
 }
 
+static pstatus_t opencl_YUV444ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 srcStep[3],
+                                              BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+                                              const prim_size_t* roi)
+{
+	const char* kernel_name;
+
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			kernel_name = "yuv444_to_bgra_1b";
+			break;
+		case PIXEL_FORMAT_XRGB32:
+		case PIXEL_FORMAT_ARGB32:
+			kernel_name = "yuv444_to_argb_1b";
+			break;
+		default:
+		{
+			primitives_t* p = primitives_get_by_type(PRIMITIVES_ONLY_CPU);
+			if (!p)
+				return -1;
+			return p->YUV444ToRGB_8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+		}
+	}
+
+	return opencl_YUVToRGB(kernel_name, pSrc, srcStep, pDst, dstStep, roi);
+}
+
 BOOL primitives_init_opencl(primitives_t* prims)
 {
 	primitives_t* p = primitives_get_by_type(PRIMITIVES_ONLY_CPU);
@@ -361,6 +389,7 @@ BOOL primitives_init_opencl(primitives_t* prims)
 		return FALSE;
 
 	prims->YUV420ToRGB_8u_P3AC4R = opencl_YUV420ToRGB_8u_P3AC4R;
+	prims->YUV444ToRGB_8u_P3AC4R = opencl_YUV444ToRGB_8u_P3AC4R;
 	prims->flags |= PRIM_FLAGS_HAVE_EXTGPU;
 	prims->uninit = primitives_uninit_opencl;
 	return TRUE;

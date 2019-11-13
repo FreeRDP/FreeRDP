@@ -19,29 +19,29 @@
 #define STRINGIFY(x) #x
 
 STRINGIFY(
-unsigned char clamp_uc(int v, int l, int h)
+uchar clamp_uc(int v, short l, short h)
 {
     if (v > h)
         v = h;
     if (v < l)
         v = l;
-    return (unsigned char)v;
+    return (uchar)v;
 }
 
 __kernel void yuv420_to_argb_1b(
-	__global unsigned char *bufY, int strideY,
-	__global unsigned char *bufU, int strideU,
-	__global unsigned char *bufV, int strideV,
-	__global unsigned char *dest, int strideDest)
+	__global const uchar *bufY, int strideY,
+	__global const uchar *bufU, int strideU,
+	__global const uchar *bufV, int strideV,
+	__global uchar *dest, int strideDest)
 {
 	unsigned int x = get_global_id(0);
 	unsigned int y = get_global_id(1);
 
-	int Y = bufY[y * strideY + x];
-	int Udim = bufU[(y / 2) * strideU + (x / 2)] - 128;
-	int Vdim = bufV[(y / 2) * strideV + (x / 2)] - 128;
+	short Y = bufY[y * strideY + x];
+	short Udim = bufU[(y / 2) * strideU + (x / 2)] - 128;
+	short Vdim = bufV[(y / 2) * strideV + (x / 2)] - 128;
 
-	__global unsigned char *destPtr = dest + (strideDest * y) + (x * 4);
+	__global uchar *destPtr = dest + (strideDest * y) + (x * 4);
 
 	/**
 	 * | R |   ( | 256     0    403 | |    Y    | )
@@ -56,19 +56,19 @@ __kernel void yuv420_to_argb_1b(
 }
 
 __kernel void yuv420_to_bgra_1b(
-	__global unsigned char *bufY, int strideY,
-	__global unsigned char *bufU, int strideU,
-	__global unsigned char *bufV, int strideV,
-	__global unsigned char *dest, int strideDest)
+	__global const uchar *bufY, int strideY,
+	__global const uchar *bufU, int strideU,
+	__global const uchar *bufV, int strideV,
+	__global uchar *dest, int strideDest)
 {
 	unsigned int x = get_global_id(0);
 	unsigned int y = get_global_id(1);
 
-	int Y = bufY[y * strideY + x];
-	int U = bufU[(y / 2) * strideU + (x / 2)] - 128;
-	int V = bufV[(y / 2) * strideV + (x / 2)] - 128;
+	short Y = bufY[y * strideY + x];
+	short U = bufU[(y / 2) * strideU + (x / 2)] - 128;
+	short V = bufV[(y / 2) * strideV + (x / 2)] - 128;
 
-	__global unsigned char *destPtr = dest + (strideDest * y) + (x * 4);
+	__global uchar *destPtr = dest + (strideDest * y) + (x * 4);
 
 	/**
 	 * | R |   ( | 256     0    403 | |    Y    | )
@@ -80,5 +80,59 @@ __kernel void yuv420_to_bgra_1b(
 	destPtr[1] = clamp_uc((y256 - ( 48 * U) - (120 * V)) >> 8 , 0, 255);	/* G */
 	destPtr[2] = clamp_uc((y256 + (403 * V)) >> 8, 0, 255); 	/* R */
 	destPtr[3] = 0xff; /* A */
+}
+
+__kernel void yuv444_to_bgra_1b(
+	__global const uchar *bufY, int strideY,
+	__global const uchar *bufU, int strideU,
+	__global const uchar *bufV, int strideV,
+	__global uchar *dest, int strideDest)
+{
+	unsigned int x = get_global_id(0);
+	unsigned int y = get_global_id(1);
+
+	short Y = bufY[y * strideY + x];
+	short U = bufU[y * strideU + x] - 128;
+	short V = bufV[y * strideV + x] - 128;
+
+	__global uchar *destPtr = dest + (strideDest * y) + (x * 4);
+
+	/**
+	 * | R |   ( | 256     0    403 | |    Y    | )
+	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
+	 * | B |   ( | 256   475      0 | | V - 128 | )
+	 */
+	int y256 = 256 * Y;
+	destPtr[0] = clamp_uc((y256 + (475 * U)) >> 8, 0, 255); /* B */
+	destPtr[1] = clamp_uc((y256 - ( 48 * U) - (120 * V)) >> 8 , 0, 255);	/* G */
+	destPtr[2] = clamp_uc((y256 + (403 * V)) >> 8, 0, 255); 	/* R */
+	destPtr[3] = 0xff; /* A */
+}
+
+__kernel void yuv444_to_argb_1b(
+	__global const uchar *bufY, int strideY,
+	__global const uchar *bufU, int strideU,
+	__global const uchar *bufV, int strideV,
+	__global uchar *dest, int strideDest)
+{
+	unsigned int x = get_global_id(0);
+	unsigned int y = get_global_id(1);
+
+	short Y = bufY[y * strideY + x];
+	short U = bufU[y * strideU + x] - 128;
+	short V = bufV[y * strideV + x] - 128;
+
+	__global uchar *destPtr = dest + (strideDest * y) + (x * 4);
+
+	/**
+	 * | R |   ( | 256     0    403 | |    Y    | )
+	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
+	 * | B |   ( | 256   475      0 | | V - 128 | )
+	 */
+	int y256 = 256 * Y;
+	destPtr[3] = clamp_uc((y256 + (475 * U)) >> 8, 0, 255); /* B */
+	destPtr[2] = clamp_uc((y256 - ( 48 * U) - (120 * V)) >> 8 , 0, 255);	/* G */
+	destPtr[1] = clamp_uc((y256 + (403 * V)) >> 8, 0, 255); 	/* R */
+	destPtr[0] = 0xff; /* A */
 }
 )
