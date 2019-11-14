@@ -29,10 +29,24 @@
 
 #include <freerdp/log.h>
 #include <freerdp/cache/offscreen.h>
+#include <freerdp/cache/cache.h>
 
 #include "../core/graphics.h"
 
 #define TAG FREERDP_TAG("cache.offscreen")
+
+struct rdp_offscreen_cache
+{
+	UINT32 maxSize;        /* 0 */
+	UINT32 maxEntries;     /* 1 */
+	rdpBitmap** entries;   /* 2 */
+	UINT32 currentSurface; /* 3 */
+
+	/* internal */
+
+	rdpUpdate* update;
+	rdpSettings* settings;
+};
 
 static void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, UINT32 index,
                                 rdpBitmap* bitmap);
