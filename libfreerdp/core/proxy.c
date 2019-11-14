@@ -67,36 +67,48 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
                                 const char* proxyPassword, const char* hostname, UINT16 port);
 static DWORD proxy_read_environment(const char* envname, char** pProxyHostname, UINT16* pPort,
                                     char** pProxyUsername, char** pProxyPassword);
-static BOOL check_no_proxy(const char* ServerHostname, const char* no_proxy);
+static BOOL check_no_proxy(const char* ServerHostname, char* no_proxy);
+
+static char* get_from_env(const char* var)
+{
+	char* buffer;
+	DWORD s, size = GetEnvironmentVariableA(var, NULL, 0);
+	if (size == 0)
+		return NULL;
+	buffer = calloc(size, sizeof(char));
+	if (!buffer)
+		return NULL;
+	s = GetEnvironmentVariableA(var, buffer, size);
+	if (s != size - 1)
+	{
+		free(buffer);
+		return NULL;
+	}
+	return buffer;
+}
 
 static BOOL proxy_no_proxy(const char* ServerHostname)
 {
 	BOOL rc = FALSE;
-	const char* next;
-	char* env = GetEnvironmentStringsA();
-	if (!env)
-		return FALSE;
 
-	next = env;
-	while (next)
+	const char* const var[] = { "NO_PROXY", "no_proxy", NULL };
+	const char* const* next = var;
+
+	while ((*next != NULL) && !rc)
 	{
-		const char* cur = next;
-		const size_t len = strlen(cur);
+		const char* cur = *next++;
+		char* buffer = get_from_env(cur);
+		if (!buffer)
+			continue;
 
-		if (check_no_proxy(ServerHostname, cur))
+		if (check_no_proxy(ServerHostname, buffer))
 		{
-			WLog_INFO(TAG, "deactivating proxy: %s [%s=%s]", ServerHostname, cur, env);
+			WLog_INFO(TAG, "deactivating proxy: %s [%s=%s]", ServerHostname, cur, buffer);
 			rc = TRUE;
-			break;
 		}
-
-		if (len > 0)
-			next += len + 1;
-		else
-			next = NULL;
+		free(buffer);
 	}
 
-	FreeEnvironmentStringsA(env);
 	return rc;
 }
 
@@ -195,12 +207,11 @@ static BOOL cidr6_match(const struct in6_addr* address, const struct in6_addr* n
 	return TRUE;
 }
 
-BOOL check_no_proxy(const char* ServerHostname, const char* no_proxy)
+BOOL check_no_proxy(const char* ServerHostname, char* no_proxy)
 {
 	const char* delimiter = ",";
 	BOOL result = FALSE;
 	char* current;
-	char* copy;
 	size_t host_len;
 	struct sockaddr_in sa4;
 	struct sockaddr_in6 sa6;
@@ -210,21 +221,14 @@ BOOL check_no_proxy(const char* ServerHostname, const char* no_proxy)
 	if (!no_proxy || !ServerHostname)
 		return FALSE;
 
-	if (_strnicmp("NO_PROXY=", no_proxy, 9) != 0)
-		return FALSE;
-
 	if (inet_pton(AF_INET, ServerHostname, &sa4.sin_addr) == 1)
 		is_ipv4 = TRUE;
 	else if (inet_pton(AF_INET6, ServerHostname, &sa6.sin6_addr) == 1)
 		is_ipv6 = TRUE;
 
 	host_len = strnlen(ServerHostname, MAX_PATH);
-	copy = _strdup(&no_proxy[9]);
 
-	if (!copy)
-		return FALSE;
-
-	current = strtok(copy, delimiter);
+	current = strtok(no_proxy, delimiter);
 
 	while (current && !result)
 	{
@@ -306,7 +310,6 @@ BOOL check_no_proxy(const char* ServerHostname, const char* no_proxy)
 		current = strtok(NULL, delimiter);
 	}
 
-	free(copy);
 	return result;
 }
 
@@ -325,24 +328,11 @@ DWORD proxy_read_environment(const char* envname, char** pProxyHostname, UINT16*
 	while (*next && (ProxyType == PROXY_TYPE_NONE))
 	{
 		BOOL rc;
-		DWORD size = 0;
-		char* buffer = NULL;
 		const char* cur = *next++;
+		char* buffer = get_from_env(cur);
 
-		size = GetEnvironmentVariableA(cur, buffer, size);
-		if (size == 0)
-			continue;
-
-		buffer = calloc(size + 1, sizeof(char));
 		if (!buffer)
-			goto fail;
-
-		size = GetEnvironmentVariableA(cur, buffer, size);
-		if (size != strnlen(buffer, size))
-		{
-			free(buffer);
-			goto fail;
-		}
+			continue;
 
 		rc = freerdp_settings_proxy_parse_uri(buffer, &ProxyType, &ProxyUsername, &ProxyPort,
 		                                      &ProxyUsername, &ProxyPassword);
@@ -369,7 +359,7 @@ DWORD proxy_read_environment(const char* envname, char** pProxyHostname, UINT16*
 		else
 			free(ProxyPassword);
 	}
-fail:
+
 	return ProxyType;
 }
 
