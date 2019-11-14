@@ -35,6 +35,32 @@
 
 #define TAG FREERDP_TAG("cache.brush")
 
+struct _BRUSH_ENTRY
+{
+	UINT32 bpp;
+	void* entry;
+};
+typedef struct _BRUSH_ENTRY BRUSH_ENTRY;
+
+struct rdp_brush_cache
+{
+	pPatBlt PatBlt;          /* 0 */
+	pCacheBrush CacheBrush;  /* 1 */
+	pPolygonSC PolygonSC;    /* 2 */
+	pPolygonCB PolygonCB;    /* 3 */
+	UINT32 paddingA[16 - 4]; /* 4 */
+
+	UINT32 maxEntries;        /* 16 */
+	UINT32 maxMonoEntries;    /* 17 */
+	BRUSH_ENTRY* entries;     /* 18 */
+	BRUSH_ENTRY* monoEntries; /* 19 */
+	UINT32 paddingB[32 - 20]; /* 20 */
+
+	/* internal */
+
+	rdpSettings* settings;
+};
+
 static BOOL update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	BYTE style;
