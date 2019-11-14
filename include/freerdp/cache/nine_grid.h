@@ -27,31 +27,9 @@
 
 #include <winpr/stream.h>
 
-typedef struct _NINE_GRID_ENTRY NINE_GRID_ENTRY;
 typedef struct rdp_nine_grid_cache rdpNineGridCache;
 
 #include <freerdp/cache/cache.h>
-
-struct _NINE_GRID_ENTRY
-{
-	void* entry;
-};
-
-struct rdp_nine_grid_cache
-{
-	pDrawNineGrid DrawNineGrid;           /* 0 */
-	pMultiDrawNineGrid MultiDrawNineGrid; /* 1 */
-	UINT32 paddingA[16 - 2];              /* 2 */
-
-	UINT32 maxEntries;        /* 16 */
-	UINT32 maxSize;           /* 17 */
-	NINE_GRID_ENTRY* entries; /* 18 */
-	UINT32 paddingB[32 - 19]; /* 19 */
-
-	/* internal */
-
-	rdpSettings* settings;
-};
 
 #ifdef __cplusplus
 extern "C"
