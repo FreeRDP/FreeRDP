@@ -317,12 +317,12 @@ DWORD proxy_read_environment(const char* envname, char** pProxyHostname, UINT16*
 	char* ProxyHostname = NULL;
 	char* ProxyUsername = NULL;
 	char* ProxyPassword = NULL;
-	const char* tries[] = { envname, NULL };
+	const char* const tries[] = { envname, NULL };
 	UINT16 ProxyPort = 0;
 	DWORD ProxyType = PROXY_TYPE_NONE;
 
 	next = tries;
-	while (next && (ProxyType == PROXY_TYPE_NONE))
+	while (*next && (ProxyType == PROXY_TYPE_NONE))
 	{
 		BOOL rc;
 		DWORD size = 0;
@@ -351,21 +351,24 @@ DWORD proxy_read_environment(const char* envname, char** pProxyHostname, UINT16*
 			continue;
 	}
 
-	if (pPort)
-		*pPort = ProxyPort;
+	if (ProxyType != PROXY_TYPE_NONE)
+	{
+		if (pPort)
+			*pPort = ProxyPort;
 
-	if (pProxyHostname)
-		*pProxyHostname = ProxyHostname;
-	else
-		free(ProxyHostname);
-	if (pProxyUsername)
-		*pProxyUsername = ProxyUsername;
-	else
-		free(ProxyUsername);
-	if (pProxyPassword)
-		*pProxyPassword = ProxyPassword;
-	else
-		free(ProxyPassword);
+		if (pProxyHostname)
+			*pProxyHostname = ProxyHostname;
+		else
+			free(ProxyHostname);
+		if (pProxyUsername)
+			*pProxyUsername = ProxyUsername;
+		else
+			free(ProxyUsername);
+		if (pProxyPassword)
+			*pProxyPassword = ProxyPassword;
+		else
+			free(ProxyPassword);
+	}
 fail:
 	return ProxyType;
 }
