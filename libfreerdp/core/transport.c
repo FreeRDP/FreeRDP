@@ -430,7 +430,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			{
 				BIO* bio = proxy_multi_connect(
 				    context, ProxyType, proxyHostname, proxyPort, proxyUsername, proxyPassword,
-				    settings->TargetNetAddresses, settings->TargetNetPorts,
+				    (const char* const*)settings->TargetNetAddresses, settings->TargetNetPorts,
 				    settings->TargetNetAddressCount, timeout);
 				if (!bio || !transport_set_bio(transport, bio))
 				{

@@ -792,8 +792,9 @@ BOOL proxy_resolve(rdpContext* context, DWORD ProxyType, const char* ProxyHostna
                    UINT16 ProxyPort, const char* ProxyUsername, const char* ProxyPassword,
                    const char* hostname, UINT16 port)
 {
+	UINT32 p = port;
 	BIO* bio = proxy_multi_connect(context, ProxyType, ProxyHostname, ProxyPort, ProxyUsername,
-	                               ProxyPassword, &hostname, &port, 1, 5);
+	                               ProxyPassword, &hostname, &p, 1, 5);
 	if (bio)
 		BIO_free_all(bio);
 	return bio != NULL;
@@ -801,7 +802,8 @@ BOOL proxy_resolve(rdpContext* context, DWORD ProxyType, const char* ProxyHostna
 
 BIO* proxy_multi_connect(rdpContext* context, DWORD ProxyType, const char* ProxyHost,
                          UINT16 ProxyPort, const char* ProxyUsername, const char* ProxyPassword,
-                         const char** hostnames, const UINT16* ports, size_t count, int timeout)
+                         char const* const* hostnames, const UINT32* ports, size_t count,
+                         int timeout)
 {
 	size_t x;
 	int sockfd;
@@ -810,7 +812,7 @@ BIO* proxy_multi_connect(rdpContext* context, DWORD ProxyType, const char* Proxy
 	for (x = 0; x < count; x++)
 	{
 		const char* host = hostnames[x];
-		const UINT16 port = ports[x];
+		const UINT16 port = (UINT16)ports[x];
 
 		sockfd =
 		    freerdp_tcp_connect(context, context->settings, ProxyHost, ProxyPort, timeout, TRUE);

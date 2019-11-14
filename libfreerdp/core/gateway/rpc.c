@@ -149,16 +149,16 @@ void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header)
 	header->common.packed_drep[3] = rpc->packed_drep[3];
 }
 
-UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment)
+size_t rpc_offset_align(size_t* offset, size_t alignment)
 {
-	UINT32 pad;
+	size_t pad;
 	pad = *offset;
 	*offset = (*offset + alignment - 1) & ~(alignment - 1);
 	pad = *offset - pad;
 	return pad;
 }
 
-UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
+size_t rpc_offset_pad(size_t* offset, size_t pad)
 {
 	*offset += pad;
 	return pad;
@@ -239,17 +239,17 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
  *
  */
 
-BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* length)
+BOOL rpc_get_stub_data_info(rdpRpc* rpc, const BYTE* buffer, size_t* offset, size_t* length)
 {
 	UINT32 alloc_hint = 0;
-	rpcconn_hdr_t* header;
+	const rpcconn_hdr_t* header;
 	UINT32 frag_length;
 	UINT32 auth_length;
 	UINT32 auth_pad_length;
 	UINT32 sec_trailer_offset;
-	rpc_sec_trailer* sec_trailer;
+	const rpc_sec_trailer* sec_trailer;
 	*offset = RPC_COMMON_FIELDS_LENGTH;
-	header = ((rpcconn_hdr_t*)buffer);
+	header = ((const rpcconn_hdr_t*)buffer);
 
 	switch (header->common.ptype)
 	{
@@ -649,12 +649,11 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	if (!channel || !channel->client || !channel->client->context ||
 	    !channel->client->context->settings)
 		return FALSE;
+	context = channel->client->context;
+	settings = context->settings;
 
 	useProxy = proxy_prepare(settings, &ProxyType, &ProxyHostname, &ProxyPort, &ProxyUsername,
 	                         &ProxyPassword);
-
-	context = channel->client->context;
-	settings = context->settings;
 
 	host = channel->client->host;
 	port = channel->client->port;

@@ -303,13 +303,13 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 {
 	BYTE* buffer;
 	RPC_PDU* pdu;
-	UINT32 StubOffset;
-	UINT32 StubLength;
+	size_t StubOffset;
+	size_t StubLength;
 	RpcClientCall* call;
-	rpcconn_hdr_t* header;
+	const rpcconn_hdr_t* header;
 	pdu = rpc->client->pdu;
 	buffer = (BYTE*)Stream_Buffer(fragment);
-	header = (rpcconn_hdr_t*)Stream_Buffer(fragment);
+	header = (const rpcconn_hdr_t*)Stream_Buffer(fragment);
 
 	if (header->common.ptype == PTYPE_RESPONSE)
 	{

@@ -29,7 +29,8 @@ BOOL proxy_connect(DWORD ProxyType, BIO* bio, const char* proxyUsername, const c
                    const char* hostname, UINT16 port);
 BIO* proxy_multi_connect(rdpContext* context, DWORD ProxyType, const char* ProxyHost,
                          UINT16 ProxyPort, const char* ProxyUsername, const char* ProxyPassword,
-                         const char** hostnames, const UINT16* ports, size_t count, int timeout);
+                         const char* const* hostnames, const UINT32* ports, size_t count,
+                         int timeout);
 BOOL proxy_resolve(rdpContext* context, DWORD ProxyType, const char* ProxyHostname,
                    UINT16 ProxyPort, const char* ProxyUsername, const char* ProxyPassword,
                    const char* hostname, UINT16 port);

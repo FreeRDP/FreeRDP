@@ -131,7 +131,6 @@ if (WIN32)
 
   set (WINPR_SRCS ${WINPR_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
   winpr_library_add_public("shlwapi")
-  winpr_library_add_public("kernel32")
 endif()
 
 add_library(${MODULE_NAME} ${WINPR_SRCS})
