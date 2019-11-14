@@ -27,17 +27,6 @@
 
 #include <freerdp/codec/bulk.h>
 
-struct _MPPC_CONTEXT
-{
-	wBitStream* bs;
-	BOOL Compressor;
-	BYTE* HistoryPtr;
-	UINT32 HistoryOffset;
-	UINT32 HistoryBufferSize;
-	BYTE HistoryBuffer[65536];
-	UINT16 MatchBuffer[32768];
-	UINT32 CompressionLevel;
-};
 typedef struct _MPPC_CONTEXT MPPC_CONTEXT;
 
 #ifdef __cplusplus
