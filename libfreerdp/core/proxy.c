@@ -528,6 +528,7 @@ BOOL proxy_connect(DWORD ProxyType, BIO* bufferedBio, const char* proxyUsername,
 
 static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 {
+	size_t pos;
 	int status;
 	wStream* s;
 	char port_str[10], recv_buf[256] = { 0 }, *eol;
@@ -549,10 +550,11 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 	Stream_Write_UINT8(s, ':');
 	Stream_Write(s, port_str, portLen);
 	Stream_Write(s, CRLF CRLF, 4);
-	status = BIO_write(bufferedBio, Stream_Buffer(s), (int)Stream_GetPosition(s));
+	pos = Stream_GetPosition(s);
+	status = BIO_write(bufferedBio, Stream_Buffer(s), (int)pos);
 	Stream_Free(s, TRUE);
 
-	if ((status < 0) || ((size_t)status != Stream_GetPosition(s)))
+	if ((status < 0) || ((size_t)status != pos))
 	{
 		WLog_ERR(TAG, "HTTP proxy: failed to write CONNECT request");
 		return FALSE;
