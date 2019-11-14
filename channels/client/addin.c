@@ -46,7 +46,7 @@ extern const STATIC_ENTRY_TABLE CLIENT_STATIC_ENTRY_TABLES[];
 void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABLE* table,
                                                   const char* identifier)
 {
-	int index = 0;
+	size_t index = 0;
 	STATIC_ENTRY* pEntry;
 	pEntry = (STATIC_ENTRY*)&table->table[index++];
 
@@ -65,7 +65,7 @@ void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABLE* tabl
 
 void* freerdp_channels_client_find_static_entry(const char* name, const char* identifier)
 {
-	int index = 0;
+	size_t index = 0;
 	STATIC_ENTRY_TABLE* pEntry;
 	pEntry = (STATIC_ENTRY_TABLE*)&CLIENT_STATIC_ENTRY_TABLES[index++];
 
