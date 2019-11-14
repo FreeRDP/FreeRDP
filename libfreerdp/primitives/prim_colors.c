@@ -31,7 +31,7 @@
 #define MINMAX(_v_, _l_, _h_) ((_v_) < (_l_) ? (_l_) : ((_v_) > (_h_) ? (_h_) : (_v_)))
 #endif /* !MINMAX */
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* pSrc[3], UINT32 srcStep,
+static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const pSrc[3], UINT32 srcStep,
                                                       BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                       const prim_size_t* roi)
 {
@@ -72,7 +72,7 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* pSrc[3], UINT
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* pSrc[3], UINT32 srcStep,
+static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const pSrc[3], UINT32 srcStep,
                                                          BYTE* pDst, UINT32 dstStep,
                                                          UINT32 DstFormat, const prim_size_t* roi)
 {
@@ -114,8 +114,8 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* pSrc[3], U
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], UINT32 srcStep, BYTE* pDst,
-                                                 UINT32 dstStep, UINT32 DstFormat,
+static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* const pSrc[3], UINT32 srcStep,
+                                                 BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                  const prim_size_t* roi)
 {
 	switch (DstFormat)
@@ -133,8 +133,8 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], UINT32 sr
 
 /* ------------------------------------------------------------------------- */
 
-static pstatus_t general_yCbCrToRGB_16s16s_P3P3(const INT16* pSrc[3], INT32 srcStep, INT16* pDst[3],
-                                                INT32 dstStep,
+static pstatus_t general_yCbCrToRGB_16s16s_P3P3(const INT16* const pSrc[3], INT32 srcStep,
+                                                INT16* pDst[3], INT32 dstStep,
                                                 const prim_size_t* roi) /* region of interest */
 {
 	/**
@@ -212,8 +212,8 @@ static pstatus_t general_yCbCrToRGB_16s16s_P3P3(const INT16* pSrc[3], INT32 srcS
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_RGBToYCbCr_16s16s_P3P3(const INT16* pSrc[3], INT32 srcStep, INT16* pDst[3],
-                                                INT32 dstStep,
+static pstatus_t general_RGBToYCbCr_16s16s_P3P3(const INT16* const pSrc[3], INT32 srcStep,
+                                                INT16* pDst[3], INT32 dstStep,
                                                 const prim_size_t* roi) /* region of interest */
 {
 	/* The encoded YCbCr coefficients are represented as 11.5 fixed-point

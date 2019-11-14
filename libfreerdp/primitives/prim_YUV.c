@@ -30,7 +30,7 @@
 #include <freerdp/codec/color.h>
 #include "prim_internal.h"
 
-static pstatus_t general_LumaToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep[3],
+static pstatus_t general_LumaToYUV444(const BYTE* const pSrcRaw[3], const UINT32 srcStep[3],
                                       BYTE* pDstRaw[3], const UINT32 dstStep[3],
                                       const RECTANGLE_16* roi)
 {
@@ -136,7 +136,7 @@ static pstatus_t general_ChromaFilter(BYTE* pDst[3], const UINT32 dstStep[3],
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep[3],
+static pstatus_t general_ChromaV1ToYUV444(const BYTE* const pSrcRaw[3], const UINT32 srcStep[3],
                                           BYTE* pDstRaw[3], const UINT32 dstStep[3],
                                           const RECTANGLE_16* roi)
 {
@@ -211,7 +211,7 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 s
 	return general_ChromaFilter(pDst, dstStep, roi);
 }
 
-static pstatus_t general_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep[3],
+static pstatus_t general_ChromaV2ToYUV444(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                           UINT32 nTotalWidth, UINT32 nTotalHeight, BYTE* pDst[3],
                                           const UINT32 dstStep[3], const RECTANGLE_16* roi)
 {
@@ -261,7 +261,7 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcS
 	return general_ChromaFilter(pDst, dstStep, roi);
 }
 
-static pstatus_t general_YUV420CombineToYUV444(avc444_frame_type type, const BYTE* pSrc[3],
+static pstatus_t general_YUV420CombineToYUV444(avc444_frame_type type, const BYTE* const pSrc[3],
                                                const UINT32 srcStep[3], UINT32 nWidth,
                                                UINT32 nHeight, BYTE* pDst[3],
                                                const UINT32 dstStep[3], const RECTANGLE_16* roi)
@@ -291,7 +291,7 @@ static pstatus_t general_YUV420CombineToYUV444(avc444_frame_type type, const BYT
 	}
 }
 
-static pstatus_t general_YUV444SplitToYUV420(const BYTE* pSrc[3], const UINT32 srcStep[3],
+static pstatus_t general_YUV444SplitToYUV420(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                              BYTE* pMainDst[3], const UINT32 dstMainStep[3],
                                              BYTE* pAuxDst[3], const UINT32 dstAuxStep[3],
                                              const prim_size_t* roi)
@@ -377,8 +377,9 @@ static pstatus_t general_YUV444SplitToYUV420(const BYTE* pSrc[3], const UINT32 s
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(const BYTE* pSrc[3], const UINT32 srcStep[3],
-                                                       BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(const BYTE* const pSrc[3],
+                                                       const UINT32 srcStep[3], BYTE* pDst,
+                                                       UINT32 dstStep, UINT32 DstFormat,
                                                        const prim_size_t* roi)
 {
 	UINT32 x, y;
@@ -410,8 +411,9 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(const BYTE* pSrc[3], cons
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* pSrc[3], const UINT32 srcStep[3],
-                                                    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* const pSrc[3],
+                                                    const UINT32 srcStep[3], BYTE* pDst,
+                                                    UINT32 dstStep, UINT32 DstFormat,
                                                     const prim_size_t* roi)
 {
 	UINT32 x, y;
@@ -442,7 +444,7 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* pSrc[3], const U
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_YUV444ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 srcStep[3],
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                                BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* roi)
 {
@@ -462,7 +464,7 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32
  * | G | = (  | 256   -48   -120 | | U - 128 |  ) >> 8
  * | B |    ( | 256   475      0 | | V - 128 | )
  */
-static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 srcStep[3],
+static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                                BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* roi)
 {

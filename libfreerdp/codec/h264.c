@@ -354,7 +354,7 @@ static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	UINT32* piDstStride = h264->iYUV444Stride;
 	BYTE** ppYUVDstData = h264->pYUV444Data;
 	const UINT32* piStride = h264->iStride;
-	const BYTE** ppYUVData = (const BYTE**)h264->pYUVData;
+	const BYTE* const* ppYUVData = (const BYTE* const*)h264->pYUVData;
 
 	if (h264->subsystem->Decompress(h264, pSrcData, SrcSize) < 0)
 		return FALSE;
