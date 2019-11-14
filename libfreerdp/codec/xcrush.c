@@ -32,6 +32,76 @@
 
 #define TAG FREERDP_TAG("codec")
 
+#pragma pack(push, 1)
+
+struct _XCRUSH_MATCH_INFO
+{
+	UINT32 MatchOffset;
+	UINT32 ChunkOffset;
+	UINT32 MatchLength;
+};
+typedef struct _XCRUSH_MATCH_INFO XCRUSH_MATCH_INFO;
+
+struct _XCRUSH_CHUNK
+{
+	UINT32 offset;
+	UINT32 next;
+};
+typedef struct _XCRUSH_CHUNK XCRUSH_CHUNK;
+
+struct _XCRUSH_SIGNATURE
+{
+	UINT16 seed;
+	UINT16 size;
+};
+typedef struct _XCRUSH_SIGNATURE XCRUSH_SIGNATURE;
+
+struct _RDP61_MATCH_DETAILS
+{
+	UINT16 MatchLength;
+	UINT16 MatchOutputOffset;
+	UINT32 MatchHistoryOffset;
+};
+typedef struct _RDP61_MATCH_DETAILS RDP61_MATCH_DETAILS;
+
+struct _RDP61_COMPRESSED_DATA
+{
+	BYTE Level1ComprFlags;
+	BYTE Level2ComprFlags;
+	UINT16 MatchCount;
+	RDP61_MATCH_DETAILS* MatchDetails;
+	BYTE* Literals;
+};
+typedef struct _RDP61_COMPRESSED_DATA RDP61_COMPRESSED_DATA;
+
+#pragma pack(pop)
+
+struct _XCRUSH_CONTEXT
+{
+	BOOL Compressor;
+	MPPC_CONTEXT* mppc;
+	BYTE* HistoryPtr;
+	UINT32 HistoryOffset;
+	UINT32 HistoryBufferSize;
+	BYTE HistoryBuffer[2000000];
+	BYTE BlockBuffer[16384];
+	UINT32 CompressionFlags;
+
+	UINT32 SignatureIndex;
+	UINT32 SignatureCount;
+	XCRUSH_SIGNATURE Signatures[1000];
+
+	UINT32 ChunkHead;
+	UINT32 ChunkTail;
+	XCRUSH_CHUNK Chunks[65534];
+	UINT16 NextChunks[65536];
+
+	UINT32 OriginalMatchCount;
+	UINT32 OptimizedMatchCount;
+	XCRUSH_MATCH_INFO OriginalMatches[1000];
+	XCRUSH_MATCH_INFO OptimizedMatches[1000];
+};
+
 #ifdef DEBUG_XCRUSH
 static const char* xcrush_get_level_2_compression_flags_string(UINT32 flags)
 {
@@ -99,9 +169,9 @@ static const char* xcrush_get_level_1_compression_flags_string(UINT32 flags)
 }
 #endif
 
-static UINT32 xcrush_update_hash(BYTE* data, UINT32 size)
+static UINT32 xcrush_update_hash(const BYTE* data, UINT32 size)
 {
-	BYTE* end;
+	const BYTE* end;
 	UINT32 seed = 5381; /* same value as in djb2 */
 
 	if (size > 32)
@@ -121,7 +191,7 @@ static UINT32 xcrush_update_hash(BYTE* data, UINT32 size)
 	return (UINT16)seed;
 }
 
-static int xcrush_append_chunk(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32* beg, UINT32 end)
+static int xcrush_append_chunk(XCRUSH_CONTEXT* xcrush, const BYTE* data, UINT32* beg, UINT32 end)
 {
 	UINT16 seed;
 	UINT32 size;
@@ -146,7 +216,8 @@ static int xcrush_append_chunk(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32* beg, 
 	return 1;
 }
 
-static int xcrush_compute_chunks(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32 size, UINT32* pIndex)
+static int xcrush_compute_chunks(XCRUSH_CONTEXT* xcrush, const BYTE* data, UINT32 size,
+                                 UINT32* pIndex)
 {
 	UINT32 i = 0;
 	UINT32 offset = 0;
@@ -215,7 +286,7 @@ static int xcrush_compute_chunks(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32 size
 	return 0;
 }
 
-static UINT32 xcrush_compute_signatures(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32 size)
+static UINT32 xcrush_compute_signatures(XCRUSH_CONTEXT* xcrush, const BYTE* data, UINT32 size)
 {
 	UINT32 index = 0;
 
@@ -661,9 +732,9 @@ static int xcrush_generate_output(XCRUSH_CONTEXT* xcrush, BYTE* OutputBuffer, UI
 	return 1;
 }
 
-static int xcrush_copy_bytes(BYTE* dst, BYTE* src, int num)
+static size_t xcrush_copy_bytes(BYTE* dst, const BYTE* src, size_t num)
 {
-	int index;
+	size_t index;
 
 	for (index = 0; index < num; index++)
 	{
@@ -673,15 +744,15 @@ static int xcrush_copy_bytes(BYTE* dst, BYTE* src, int num)
 	return num;
 }
 
-static int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize,
+static int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize,
                                 BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
-	BYTE* pSrcEnd = NULL;
-	BYTE* Literals = NULL;
+	const BYTE* pSrcEnd = NULL;
+	const BYTE* Literals = NULL;
 	UINT16 MatchCount = 0;
 	UINT16 MatchIndex = 0;
 	BYTE* OutputPtr = NULL;
-	int OutputLength = 0;
+	size_t OutputLength = 0;
 	UINT32 OutputOffset = 0;
 	BYTE* HistoryPtr = NULL;
 	BYTE* HistoryBuffer = NULL;
@@ -813,10 +884,8 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BY
 
 	if (!(Level2ComprFlags & PACKET_COMPRESSED))
 	{
-		pDstData = pSrcData;
-		DstSize = SrcSize;
 		status =
-		    xcrush_decompress_l1(xcrush, pDstData, DstSize, ppDstData, pDstSize, Level1ComprFlags);
+		    xcrush_decompress_l1(xcrush, pSrcData, SrcSize, ppDstData, pDstSize, Level1ComprFlags);
 		return status;
 	}
 
@@ -830,7 +899,7 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	return status;
 }
 
-static int xcrush_compress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize,
+static int xcrush_compress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize,
                               BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	int status = 0;
