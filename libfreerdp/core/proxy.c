@@ -313,37 +313,43 @@ BOOL check_no_proxy(const char* ServerHostname, const char* no_proxy)
 DWORD proxy_read_environment(const char* envname, char** pProxyHostname, UINT16* pPort,
                              char** pProxyUsername, char** pProxyPassword)
 {
-	const char* next;
-	size_t envLen = strlen(envname);
-	char* env;
+	const char* const* next;
 	char* ProxyHostname = NULL;
 	char* ProxyUsername = NULL;
 	char* ProxyPassword = NULL;
+	const char* tries[] = { envname, NULL };
 	UINT16 ProxyPort = 0;
 	DWORD ProxyType = PROXY_TYPE_NONE;
 
-	env = GetEnvironmentStringsA();
-	if (!env)
-		return PROXY_TYPE_NONE;
-
-	next = env;
+	next = tries;
 	while (next && (ProxyType == PROXY_TYPE_NONE))
 	{
-		const char* cur = next;
-		const size_t len = strlen(cur);
+		BOOL rc;
+		DWORD size = 0;
+		char* buffer = NULL;
+		const char* cur = *next++;
 
-		if (_strnicmp(cur, envname, envLen) == 0)
+		size = GetEnvironmentVariableA(cur, buffer, size);
+		if (size == 0)
+			continue;
+
+		buffer = calloc(size + 1, sizeof(char));
+		if (!buffer)
+			goto fail;
+
+		size = GetEnvironmentVariableA(cur, buffer, size);
+		if (size != strnlen(buffer, size))
 		{
-			freerdp_settings_proxy_parse_uri(&cur[envLen + 1], &ProxyType, &ProxyUsername,
-			                                 &ProxyPort, &ProxyUsername, &ProxyPassword);
+			free(buffer);
+			goto fail;
 		}
-		if (len > 0)
-			next += len + 1;
-		else
-			next = NULL;
-	}
 
-	FreeEnvironmentStringsA(env);
+		rc = freerdp_settings_proxy_parse_uri(buffer, &ProxyType, &ProxyUsername, &ProxyPort,
+		                                      &ProxyUsername, &ProxyPassword);
+		free(buffer);
+		if (!rc)
+			continue;
+	}
 
 	if (pPort)
 		*pPort = ProxyPort;
@@ -360,6 +366,7 @@ DWORD proxy_read_environment(const char* envname, char** pProxyHostname, UINT16*
 		*pProxyPassword = ProxyPassword;
 	else
 		free(ProxyPassword);
+fail:
 	return ProxyType;
 }
 
