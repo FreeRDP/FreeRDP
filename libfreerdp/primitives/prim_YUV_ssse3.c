@@ -149,7 +149,7 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 	return dst;
 }
 
-static pstatus_t ssse3_YUV420ToRGB_BGRX(const BYTE** pSrc, const UINT32* srcStep, BYTE* pDst,
+static pstatus_t ssse3_YUV420ToRGB_BGRX(const BYTE* const* pSrc, const UINT32* srcStep, BYTE* pDst,
                                         UINT32 dstStep, const prim_size_t* roi)
 {
 	const UINT32 nWidth = roi->width;
@@ -203,7 +203,7 @@ static pstatus_t ssse3_YUV420ToRGB_BGRX(const BYTE** pSrc, const UINT32* srcStep
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t ssse3_YUV420ToRGB(const BYTE** pSrc, const UINT32* srcStep, BYTE* pDst,
+static pstatus_t ssse3_YUV420ToRGB(const BYTE* const* pSrc, const UINT32* srcStep, BYTE* pDst,
                                    UINT32 dstStep, UINT32 DstFormat, const prim_size_t* roi)
 {
 	switch (DstFormat)
@@ -217,7 +217,7 @@ static pstatus_t ssse3_YUV420ToRGB(const BYTE** pSrc, const UINT32* srcStep, BYT
 	}
 }
 
-static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE** pSrc, const UINT32* srcStep,
+static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* const* pSrc, const UINT32* srcStep,
                                                   BYTE* pDst, UINT32 dstStep,
                                                   const prim_size_t* roi)
 {
@@ -263,8 +263,8 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE** pSrc, const UINT3
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* srcStep, BYTE* pDst,
-                                             UINT32 dstStep, UINT32 DstFormat,
+static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE* const* pSrc, const UINT32* srcStep,
+                                             BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                              const prim_size_t* roi)
 {
 	if ((unsigned long)pSrc[0] % 16 || (unsigned long)pSrc[1] % 16 || (unsigned long)pSrc[2] % 16 ||
@@ -1050,7 +1050,7 @@ static pstatus_t ssse3_RGBToAVC444YUVv2(const BYTE* pSrc, UINT32 srcFormat, UINT
 	}
 }
 
-static pstatus_t ssse3_LumaToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep[3],
+static pstatus_t ssse3_LumaToYUV444(const BYTE* const pSrcRaw[3], const UINT32 srcStep[3],
                                     BYTE* pDstRaw[3], const UINT32 dstStep[3],
                                     const RECTANGLE_16* roi)
 {
@@ -1210,7 +1210,7 @@ static pstatus_t ssse3_ChromaFilter(BYTE* pDst[3], const UINT32 dstStep[3], cons
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 srcStep[3],
+static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* const pSrcRaw[3], const UINT32 srcStep[3],
                                         BYTE* pDstRaw[3], const UINT32 dstStep[3],
                                         const RECTANGLE_16* roi)
 {
@@ -1307,7 +1307,7 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* pSrcRaw[3], const UINT32 src
 	return ssse3_ChromaFilter(pDst, dstStep, roi);
 }
 
-static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcStep[3],
+static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                         UINT32 nTotalWidth, UINT32 nTotalHeight, BYTE* pDst[3],
                                         const UINT32 dstStep[3], const RECTANGLE_16* roi)
 {
@@ -1418,7 +1418,7 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* pSrc[3], const UINT32 srcSte
 	return ssse3_ChromaFilter(pDst, dstStep, roi);
 }
 
-static pstatus_t ssse3_YUV420CombineToYUV444(avc444_frame_type type, const BYTE* pSrc[3],
+static pstatus_t ssse3_YUV420CombineToYUV444(avc444_frame_type type, const BYTE* const pSrc[3],
                                              const UINT32 srcStep[3], UINT32 nWidth, UINT32 nHeight,
                                              BYTE* pDst[3], const UINT32 dstStep[3],
                                              const RECTANGLE_16* roi)

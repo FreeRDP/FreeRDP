@@ -91,13 +91,15 @@ typedef pstatus_t (*__rShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSr
 typedef pstatus_t (*__shiftC_16s_t)(const INT16* pSrc, INT32 val, INT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__shiftC_16u_t)(const UINT16* pSrc, INT32 val, UINT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__sign_16s_t)(const INT16* pSrc, INT16* pDst, UINT32 len);
-typedef pstatus_t (*__yCbCrToRGB_16s8u_P3AC4R_t)(const INT16* pSrc[3], UINT32 srcStep, BYTE* pDst,
-                                                 UINT32 dstStep, UINT32 DstFormat,
+typedef pstatus_t (*__yCbCrToRGB_16s8u_P3AC4R_t)(const INT16* const pSrc[3], UINT32 srcStep,
+                                                 BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                  const prim_size_t* roi);
-typedef pstatus_t (*__yCbCrToRGB_16s16s_P3P3_t)(const INT16* pSrc[3], INT32 srcStep, INT16* pDst[3],
-                                                INT32 dstStep, const prim_size_t* roi);
-typedef pstatus_t (*__RGBToYCbCr_16s16s_P3P3_t)(const INT16* pSrc[3], INT32 srcStep, INT16* pDst[3],
-                                                INT32 dstStep, const prim_size_t* roi);
+typedef pstatus_t (*__yCbCrToRGB_16s16s_P3P3_t)(const INT16* const pSrc[3], INT32 srcStep,
+                                                INT16* pDst[3], INT32 dstStep,
+                                                const prim_size_t* roi);
+typedef pstatus_t (*__RGBToYCbCr_16s16s_P3P3_t)(const INT16* const pSrc[3], INT32 srcStep,
+                                                INT16* pDst[3], INT32 dstStep,
+                                                const prim_size_t* roi);
 typedef pstatus_t (*__RGBToRGB_16s8u_P3AC4R_t)(const INT16* const pSrc[3], UINT32 srcStep,
                                                BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* roi);
@@ -107,10 +109,10 @@ typedef pstatus_t (*__YCoCgToRGB_8u_AC4R_t)(const BYTE* pSrc, INT32 srcStep, BYT
 typedef pstatus_t (*__RGB565ToARGB_16u32u_C3C4_t)(const UINT16* pSrc, INT32 srcStep, UINT32* pDst,
                                                   INT32 dstStep, UINT32 width, UINT32 height,
                                                   UINT32 format);
-typedef pstatus_t (*__YUV420ToRGB_8u_P3AC4R_t)(const BYTE* pSrc[3], const UINT32 srcStep[3],
+typedef pstatus_t (*__YUV420ToRGB_8u_P3AC4R_t)(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                                BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* roi);
-typedef pstatus_t (*__YUV444ToRGB_8u_P3AC4R_t)(const BYTE* pSrc[3], const UINT32 srcStep[3],
+typedef pstatus_t (*__YUV444ToRGB_8u_P3AC4R_t)(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                                BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* roi);
 typedef pstatus_t (*__RGBToYUV420_8u_P3AC4R_t)(const BYTE* pSrc, UINT32 SrcFormat, UINT32 srcStep,
@@ -119,11 +121,11 @@ typedef pstatus_t (*__RGBToYUV420_8u_P3AC4R_t)(const BYTE* pSrc, UINT32 SrcForma
 typedef pstatus_t (*__RGBToYUV444_8u_P3AC4R_t)(const BYTE* pSrc, UINT32 SrcFormat, UINT32 srcStep,
                                                BYTE* pDst[3], UINT32 dstStep[3],
                                                const prim_size_t* roi);
-typedef pstatus_t (*__YUV420CombineToYUV444_t)(avc444_frame_type type, const BYTE* pSrc[3],
+typedef pstatus_t (*__YUV420CombineToYUV444_t)(avc444_frame_type type, const BYTE* const pSrc[3],
                                                const UINT32 srcStep[3], UINT32 nWidth,
                                                UINT32 nHeight, BYTE* pDst[3],
                                                const UINT32 dstStep[3], const RECTANGLE_16* roi);
-typedef pstatus_t (*__YUV444SplitToYUV420_t)(const BYTE* pSrc[3], const UINT32 srcStep[3],
+typedef pstatus_t (*__YUV444SplitToYUV420_t)(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                              BYTE* pMainDst[3], const UINT32 dstMainStep[3],
                                              BYTE* pAuxDst[3], const UINT32 srcAuxStep[3],
                                              const prim_size_t* roi);
