@@ -111,7 +111,7 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 	return rdpdr_send(rdpdr, s);
 }
 
-#ifdef _UWP
+#if defined(_UWP) || defined(__IOS__)
 
 void first_hotplug(rdpdrPlugin* rdpdr)
 {
@@ -358,7 +358,7 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 	return error;
 }
 
-#elif __MACOSX__
+#elif defined(__MACOSX__)
 
 #define MAX_USB_DEVICES 100
 
@@ -579,6 +579,7 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 
 #else
 
+#include <mntent.h>
 #define MAX_USB_DEVICES 100
 
 typedef struct _hotplug_dev
@@ -636,99 +637,6 @@ static BOOL isAutomountLocation(const char* path)
 	return FALSE;
 }
 
-static char* next_line(FILE* fd, size_t* len)
-{
-	size_t newsiz;
-	int c;
-	char* newbuf;
-	char* lrbuf;
-	size_t lrsiz;
-	*len = 0;
-	lrsiz = 0;
-	lrbuf = NULL;
-	newbuf = NULL;
-
-	for (;;)
-	{
-		c = fgetc(fd);
-
-		if (ferror(fd))
-		{
-			free(newbuf);
-			return NULL;
-		}
-
-		if (c == EOF)
-		{
-			if (*len == 0)
-				return NULL;
-			else
-			{
-				lrbuf[(*len)] = '\0';
-				return lrbuf;
-			}
-		}
-		else
-		{
-			if (*len == lrsiz)
-			{
-				newsiz = lrsiz + 4096;
-				newbuf = realloc(lrbuf, newsiz);
-
-				if (newbuf == NULL)
-					return NULL;
-
-				lrbuf = newbuf;
-				lrsiz = newsiz;
-			}
-
-			lrbuf[(*len)] = c;
-
-			if (c == '\n')
-			{
-				lrbuf[(*len)] = '\0';
-				return lrbuf;
-			}
-
-			(*len)++;
-		}
-	}
-}
-
-static char* get_word(char* str, size_t* offset)
-{
-	char* p;
-	char* tmp;
-	char* word;
-	size_t wlen;
-
-	if (*offset >= strlen(str))
-		return NULL;
-
-	p = str + *offset;
-	tmp = p;
-
-	while (*tmp != ' ' && *tmp != '\0')
-		tmp++;
-
-	wlen = tmp - p;
-	*offset += wlen;
-
-	/* in case there are more than one space between words */
-	while (*(str + *offset) == ' ')
-		(*offset)++;
-
-	word = malloc(wlen + 1);
-
-	if (word != NULL)
-	{
-		CopyMemory(word, p, wlen);
-		word[wlen] = '\0';
-	}
-
-	return word;
-}
-
 /**
  * Function description
  *
@@ -737,13 +645,11 @@ static char* get_word(char* str, size_t* offset)
 static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 {
 	FILE* f;
-	size_t len;
-	char* line;
-	char* word;
 	hotplug_dev dev_array[MAX_USB_DEVICES] = { 0 };
 	size_t i;
 	size_t size = 0;
 	int count, j;
+	struct mntent* ent;
 	ULONG_PTR* keys = NULL;
 	UINT32 ids[1];
 	UINT error = 0;
@@ -756,23 +662,18 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		return ERROR_OPEN_FAILED;
 	}
 
-	while ((line = next_line(f, &len)))
+	while ((ent = getmntent(f)) != NULL)
 	{
-		size_t wlen = 0;
-
-		while ((word = get_word(line, &wlen)))
+		/* Copy the line, path must obviously be shorter */
+		const char* path = ent->mnt_dir;
+		if (!path)
+			continue;
+		/* copy hotpluged device mount point to the dev_array */
+		if (isAutomountLocation(path) && (size <= MAX_USB_DEVICES))
 		{
-			/* copy hotpluged device mount point to the dev_array */
-			if (isAutomountLocation(word) && (size <= MAX_USB_DEVICES))
-			{
-				dev_array[size].path = word;
-				dev_array[size++].to_add = TRUE;
-			}
-			else
-				free(word);
+			dev_array[size].path = _strdup(path);
+			dev_array[size++].to_add = TRUE;
 		}
-
-		free(line);
 	}
 
 	fclose(f);
@@ -942,7 +843,7 @@ out:
 
 #endif
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__IOS__)
 /**
  * Function description
  *
