@@ -832,7 +832,6 @@ static UINT drive_free_int(DRIVE_DEVICE* drive)
 	ListDictionary_Free(drive->files);
 	MessageQueue_Free(drive->IrpQueue);
 	Stream_Free(drive->device.data, TRUE);
-	free(drive->device.name);
 	free(drive->path);
 	free(drive);
 	return error;
@@ -901,7 +900,6 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		}
 
 		drive->device.type = RDPDR_DTYP_FILESYSTEM;
-		drive->device.name = _strdup(name);
 		drive->device.IRPRequest = drive_irp_request;
 		drive->device.Free = drive_free;
 		drive->rdpcontext = pEntryPoints->rdpcontext;
@@ -916,8 +914,31 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 			goto out_error;
 		}
 
-		for (i = 0; i <= length; i++)
-			Stream_Write_UINT8(drive->device.data, name[i] < 0 ? '_' : name[i]);
+		for (i = 0; i < length; i++)
+		{
+			/* Filter 2.2.1.3 Device Announce Header (DEVICE_ANNOUNCE) forbidden symbols */
+			switch (name[i])
+			{
+				case ':':
+				case '<':
+				case '>':
+				case '\"':
+				case '/':
+				case '\\':
+				case '|':
+				case ' ':
+					Stream_Write_UINT8(drive->device.data, '_');
+					break;
+				default:
+					Stream_Write_UINT8(drive->device.data, (BYTE)name[i]);
+					break;
+			}
+		}
+		Stream_Write_UINT8(drive->device.data, '\0');
+
+		drive->device.name = (const char*)Stream_Buffer(drive->device.data);
+		if (!drive->device.name)
+			goto out_error;
 
 		if ((pathLength > 1) && (path[pathLength - 1] == '/'))
 			pathLength--;
