@@ -163,7 +163,7 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	UINT32 CreateOptions;
 	UINT32 PathLength;
 	UINT64 allocationSize;
-	const WCHAR* path;
+	const WCHAR* path = NULL;
 
 	if (!drive || !irp || !irp->devman || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
@@ -182,7 +182,8 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	if (Stream_GetRemainingLength(irp->input) < PathLength)
 		return ERROR_INVALID_DATA;
 
-	path = (WCHAR*)Stream_Pointer(irp->input);
+	if (PathLength > 0)
+		path = (const WCHAR*)Stream_Pointer(irp->input);
 	FileId = irp->devman->id_sequence++;
 	file = drive_file_new(drive->path, path, PathLength, FileId, DesiredAccess, CreateDisposition,
 	                      CreateOptions, FileAttributes, SharedAccess);
