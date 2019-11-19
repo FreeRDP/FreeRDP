@@ -559,6 +559,12 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings->DynamicChannelArray)
 		goto out_fail;
 
+	settings->TcpKeepAlive = TRUE;
+	settings->TcpKeepAliveRetries = 3;
+	settings->TcpKeepAliveDelay = 5;
+	settings->TcpKeepAliveInterval = 2;
+	settings->TcpAckTimeout = 9000;
+
 	if (!settings->ServerMode)
 	{
 		settings->RedirectClipboard = TRUE;
