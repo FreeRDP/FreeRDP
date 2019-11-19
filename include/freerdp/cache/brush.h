@@ -27,35 +27,9 @@
 
 #include <winpr/stream.h>
 
-typedef struct _BRUSH_ENTRY BRUSH_ENTRY;
 typedef struct rdp_brush_cache rdpBrushCache;
 
 #include <freerdp/cache/cache.h>
-
-struct _BRUSH_ENTRY
-{
-	UINT32 bpp;
-	void* entry;
-};
-
-struct rdp_brush_cache
-{
-	pPatBlt PatBlt;          /* 0 */
-	pCacheBrush CacheBrush;  /* 1 */
-	pPolygonSC PolygonSC;    /* 2 */
-	pPolygonCB PolygonCB;    /* 3 */
-	UINT32 paddingA[16 - 4]; /* 4 */
-
-	UINT32 maxEntries;        /* 16 */
-	UINT32 maxMonoEntries;    /* 17 */
-	BRUSH_ENTRY* entries;     /* 18 */
-	BRUSH_ENTRY* monoEntries; /* 19 */
-	UINT32 paddingB[32 - 20]; /* 20 */
-
-	/* internal */
-
-	rdpSettings* settings;
-};
 
 #ifdef __cplusplus
 extern "C"

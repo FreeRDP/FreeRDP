@@ -32,6 +32,22 @@
 
 #define TAG FREERDP_TAG("codec")
 
+struct _NCRUSH_CONTEXT
+{
+	BOOL Compressor;
+	BYTE* HistoryPtr;
+	UINT32 HistoryOffset;
+	UINT32 HistoryEndOffset;
+	UINT32 HistoryBufferSize;
+	BYTE HistoryBuffer[65536];
+	UINT32 HistoryBufferFence;
+	UINT32 OffsetCache[4];
+	UINT16 HashTable[65536];
+	UINT16 MatchTable[65536];
+	BYTE HuffTableCopyOffset[1024];
+	BYTE HuffTableLOM[4096];
+};
+
 static const UINT16 HuffTableLEC[8192] = {
 	0x510B, 0x611F, 0x610D, 0x9027, 0x6000, 0x7105, 0x6117, 0xA068, 0x5111, 0x7007, 0x6113, 0x90C0,
 	0x6108, 0x8018, 0x611B, 0xA0B3, 0x510F, 0x7003, 0x6110, 0x9042, 0x6002, 0x800B, 0x6119, 0xA091,

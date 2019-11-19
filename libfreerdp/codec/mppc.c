@@ -37,6 +37,18 @@
 	  0x07FFF000) >>                                                      \
 	 12)
 
+struct _MPPC_CONTEXT
+{
+	wBitStream* bs;
+	BOOL Compressor;
+	BYTE* HistoryPtr;
+	UINT32 HistoryOffset;
+	UINT32 HistoryBufferSize;
+	BYTE HistoryBuffer[65536];
+	UINT16 MatchBuffer[32768];
+	UINT32 CompressionLevel;
+};
+
 static const UINT32 MPPC_MATCH_TABLE[256] = {
 	0x00000000, 0x009CCF93, 0x01399F26, 0x01D66EB9, 0x02733E4C, 0x03100DDF, 0x03ACDD72, 0x0449AD05,
 	0x04E67C98, 0x05834C2B, 0x06201BBE, 0x06BCEB51, 0x0759BAE4, 0x07F68A77, 0x08935A0A, 0x0930299D,

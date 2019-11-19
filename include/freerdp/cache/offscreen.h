@@ -29,21 +29,6 @@
 
 typedef struct rdp_offscreen_cache rdpOffscreenCache;
 
-#include <freerdp/cache/cache.h>
-
-struct rdp_offscreen_cache
-{
-	UINT32 maxSize;        /* 0 */
-	UINT32 maxEntries;     /* 1 */
-	rdpBitmap** entries;   /* 2 */
-	UINT32 currentSurface; /* 3 */
-
-	/* internal */
-
-	rdpUpdate* update;
-	rdpSettings* settings;
-};
-
 #ifdef __cplusplus
 extern "C"
 {

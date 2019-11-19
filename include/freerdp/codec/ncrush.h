@@ -27,21 +27,6 @@
 
 #include <winpr/bitstream.h>
 
-struct _NCRUSH_CONTEXT
-{
-	BOOL Compressor;
-	BYTE* HistoryPtr;
-	UINT32 HistoryOffset;
-	UINT32 HistoryEndOffset;
-	UINT32 HistoryBufferSize;
-	BYTE HistoryBuffer[65536];
-	UINT32 HistoryBufferFence;
-	UINT32 OffsetCache[4];
-	UINT16 HashTable[65536];
-	UINT16 MatchTable[65536];
-	BYTE HuffTableCopyOffset[1024];
-	BYTE HuffTableLOM[4096];
-};
 typedef struct _NCRUSH_CONTEXT NCRUSH_CONTEXT;
 
 #ifdef __cplusplus

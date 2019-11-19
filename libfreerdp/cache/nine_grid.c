@@ -34,6 +34,28 @@
 
 #define TAG FREERDP_TAG("cache.nine_grid")
 
+struct _NINE_GRID_ENTRY
+{
+	void* entry;
+};
+typedef struct _NINE_GRID_ENTRY NINE_GRID_ENTRY;
+
+struct rdp_nine_grid_cache
+{
+	pDrawNineGrid DrawNineGrid;           /* 0 */
+	pMultiDrawNineGrid MultiDrawNineGrid; /* 1 */
+	UINT32 paddingA[16 - 2];              /* 2 */
+
+	UINT32 maxEntries;        /* 16 */
+	UINT32 maxSize;           /* 17 */
+	NINE_GRID_ENTRY* entries; /* 18 */
+	UINT32 paddingB[32 - 19]; /* 19 */
+
+	/* internal */
+
+	rdpSettings* settings;
+};
+
 static void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index);
 static void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry);
 
