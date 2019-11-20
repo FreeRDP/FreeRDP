@@ -94,7 +94,7 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 	WCHAR* fullpath;
 	size_t base_path_length;
 
-	if (!base_path || !path)
+	if (!base_path || (!path && (PathLength > 0)))
 		return NULL;
 
 	base_path_length = _wcslen(base_path) * 2;
@@ -338,7 +338,7 @@ DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 Pat
 {
 	DRIVE_FILE* file;
 
-	if (!base_path || !path)
+	if (!base_path || (!path && (PathLength > 0)))
 		return NULL;
 
 	file = (DRIVE_FILE*)calloc(1, sizeof(DRIVE_FILE));
