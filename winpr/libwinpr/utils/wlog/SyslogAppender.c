@@ -114,7 +114,7 @@ static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogAppender* appen
 	return TRUE;
 }
 
-void WLog_SyslogAppender_Free(wLogAppender* appender)
+static void WLog_SyslogAppender_Free(wLogAppender* appender)
 {
 	free(appender);
 }

@@ -269,7 +269,8 @@ static BOOL freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, in
 	return TRUE;
 }
 
-DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HANDLE* events, DWORD nCount)
+static DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HANDLE* events,
+                                                DWORD nCount)
 {
 	int index;
 	rdpListener* listener = (rdpListener*)instance->listener;

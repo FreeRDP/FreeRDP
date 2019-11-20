@@ -26,8 +26,9 @@
 
 #include "rdtk_nine_patch.h"
 
-int rdtk_image_copy_alpha_blend(BYTE* pDstData, int nDstStep, int nXDst, int nYDst, int nWidth,
-                                int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc)
+static int rdtk_image_copy_alpha_blend(BYTE* pDstData, int nDstStep, int nXDst, int nYDst,
+                                       int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep,
+                                       int nXSrc, int nYSrc)
 {
 	int x, y;
 	BYTE A, R, G, B;

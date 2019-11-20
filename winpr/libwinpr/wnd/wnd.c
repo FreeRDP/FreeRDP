@@ -36,7 +36,7 @@
 
 static wArrayList* g_WindowClasses = NULL;
 
-BOOL InitializeWindowClasses()
+static BOOL InitializeWindowClasses(void)
 {
 	if (g_WindowClasses)
 		return TRUE;
@@ -45,7 +45,7 @@ BOOL InitializeWindowClasses()
 	return g_WindowClasses != NULL;
 }
 
-WNDCLASSEXA* CloneWindowClass(CONST WNDCLASSEXA* lpwcx)
+static WNDCLASSEXA* CloneWindowClass(CONST WNDCLASSEXA* lpwcx)
 {
 	WNDCLASSEXA* _lpwcx = NULL;
 
@@ -69,7 +69,7 @@ WNDCLASSEXA* CloneWindowClass(CONST WNDCLASSEXA* lpwcx)
 	return _lpwcx;
 }
 
-WNDCLASSEXA* FindWindowClass(LPCSTR lpClassName)
+static WNDCLASSEXA* FindWindowClass(LPCSTR lpClassName)
 {
 	int index;
 	int count;

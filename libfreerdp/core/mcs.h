@@ -154,14 +154,6 @@ struct rdp_mcs
 #define MCS_TYPE_CONNECT_INITIAL 0x65
 #define MCS_TYPE_CONNECT_RESPONSE 0x66
 
-FREERDP_LOCAL BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
-                                               DomainParameters* minimumParameters,
-                                               DomainParameters* maximumParameters,
-                                               DomainParameters* pOutParameters);
-
-FREERDP_LOCAL BOOL mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData);
-FREERDP_LOCAL BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData);
-
 FREERDP_LOCAL BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s);
 FREERDP_LOCAL BOOL mcs_send_connect_initial(rdpMcs* mcs);
 FREERDP_LOCAL BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s);
@@ -178,8 +170,7 @@ FREERDP_LOCAL BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16
 FREERDP_LOCAL BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channelId);
 FREERDP_LOCAL BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason);
 FREERDP_LOCAL BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs);
-FREERDP_LOCAL BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU,
-                                                 UINT16* length);
+
 FREERDP_LOCAL void mcs_write_domain_mcspdu_header(wStream* s, enum DomainMCSPDU domainMCSPDU,
                                                   UINT16 length, BYTE options);
 

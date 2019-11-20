@@ -121,7 +121,7 @@ void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo)
 	WLog_INFO(TAG, "\tNTLMRevisionCurrent: 0x%02" PRIX8 "", versionInfo->NTLMRevisionCurrent);
 }
 
-int ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* challenge)
+static int ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* challenge)
 {
 	size_t size;
 	Stream_Read_UINT8(s, challenge->RespType);
@@ -146,7 +146,7 @@ int ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* chal
 	return 1;
 }
 
-int ntlm_write_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* challenge)
+static int ntlm_write_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* challenge)
 {
 	ULONG length;
 	Stream_Write_UINT8(s, challenge->RespType);
@@ -201,7 +201,7 @@ void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 		ntlm_current_time(context->Timestamp);
 }
 
-int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
+static int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 {
 	WINPR_SAM* sam;
 	WINPR_SAM_ENTRY* entry;
@@ -256,7 +256,7 @@ int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	return 1;
 }
 
-int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
+static int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
 {
 	int status;
 	int i, hn, ln;
@@ -589,7 +589,8 @@ void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
  * @param signing_key Destination signing key
  */
 
-int ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic, BYTE* signing_key)
+static int ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic,
+                                     BYTE* signing_key)
 {
 	int length;
 	BYTE* value;
@@ -649,7 +650,8 @@ void ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
  * @param sealing_key Destination sealing key
  */
 
-int ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic, BYTE* sealing_key)
+static int ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic,
+                                     BYTE* sealing_key)
 {
 	BYTE* p;
 	SecBuffer buffer;

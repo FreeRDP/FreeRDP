@@ -33,6 +33,39 @@
 
 #define TAG FREERDP_TAG("core.gcc")
 
+static BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
+static BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
+static BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length);
+static BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length);
+static BOOL gcc_read_user_data_header(wStream* s, UINT16* type, UINT16* length);
+static void gcc_write_user_data_header(wStream* s, UINT16 type, UINT16 length);
+
+static void gcc_write_client_core_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_write_server_core_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_client_security_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
+static void gcc_write_client_security_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
+static void gcc_write_client_network_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_write_server_network_data(wStream* s, rdpMcs* mcs);
+static void gcc_write_client_cluster_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
+static void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
+static void gcc_write_client_monitor_extended_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_client_message_channel_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
+static void gcc_write_client_message_channel_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_server_message_channel_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_write_server_message_channel_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_client_multitransport_channel_data(wStream* s, rdpMcs* mcs,
+                                                        UINT16 blockLength);
+static void gcc_write_client_multitransport_channel_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_read_server_multitransport_channel_data(wStream* s, rdpMcs* mcs);
+static void gcc_write_server_multitransport_channel_data(wStream* s, rdpMcs* mcs);
+
 static DWORD rdp_version_common(DWORD serverVersion, DWORD clientVersion)
 {
 	DWORD version = MIN(serverVersion, clientVersion);

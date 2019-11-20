@@ -143,7 +143,7 @@ void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj)
  * Shift a section of the list.
  */
 
-BOOL ArrayList_Shift(wArrayList* arrayList, int index, int count)
+static BOOL ArrayList_Shift(wArrayList* arrayList, int index, int count)
 {
 	if (count > 0)
 	{

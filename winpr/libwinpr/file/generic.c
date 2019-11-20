@@ -183,10 +183,10 @@ static wArrayList* _HandleCreators;
 
 static pthread_once_t _HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 
-HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void);
+extern HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void);
 
 #if defined __linux__ && !defined ANDROID
-HANDLE_CREATOR* GetCommHandleCreator(void);
+extern HANDLE_CREATOR* GetCommHandleCreator(void);
 #endif /* __linux__ && !defined ANDROID */
 
 static void _HandleCreatorsInit()

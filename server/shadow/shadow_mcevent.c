@@ -26,13 +26,27 @@
 
 #define TAG SERVER_TAG("shadow.mcevent")
 
+struct rdp_shadow_multiclient_event
+{
+	HANDLE event;        /* Kickoff event */
+	HANDLE barrierEvent; /* Represents that all clients have consumed event */
+	HANDLE doneEvent;    /* Event handling finished. Server could continue */
+	wArrayList* subscribers;
+	CRITICAL_SECTION lock;
+	int consuming;
+	int waiting;
+
+	/* For debug */
+	int eventid;
+};
+
 struct rdp_shadow_multiclient_subscriber
 {
 	rdpShadowMultiClientEvent* ref;
 	BOOL pleaseHandle; /* Indicate if server expects my handling in this turn */
 };
 
-rdpShadowMultiClientEvent* shadow_multiclient_new()
+rdpShadowMultiClientEvent* shadow_multiclient_new(void)
 {
 	rdpShadowMultiClientEvent* event =
 	    (rdpShadowMultiClientEvent*)calloc(1, sizeof(rdpShadowMultiClientEvent));

@@ -143,11 +143,12 @@ static char* FindApplicationPath(char* application)
 static HANDLE CreateProcessHandle(pid_t pid);
 static BOOL ProcessHandleCloseHandle(HANDLE handle);
 
-BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplicationName,
-                       LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-                       LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
-                       DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
-                       LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplicationName,
+                              LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                              LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
+                              DWORD dwCreationFlags, LPVOID lpEnvironment,
+                              LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
+                              LPPROCESS_INFORMATION lpProcessInformation)
 {
 	pid_t pid;
 	int numArgs;
@@ -451,17 +452,6 @@ HANDLE _GetCurrentProcess(VOID)
 DWORD GetCurrentProcessId(VOID)
 {
 	return ((DWORD)getpid());
-}
-
-DWORD GetProcessId(HANDLE Process)
-{
-	WINPR_PROCESS* process;
-	process = (WINPR_PROCESS*)Process;
-
-	if (!process)
-		return 0;
-
-	return (DWORD)process->pid;
 }
 
 BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)

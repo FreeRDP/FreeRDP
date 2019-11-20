@@ -99,7 +99,7 @@ void mappedGeometryUnref(MAPPED_GEOMETRY* g)
 	free(g);
 }
 
-void freerdp_rgndata_reset(FREERDP_RGNDATA* data)
+static void freerdp_rgndata_reset(FREERDP_RGNDATA* data)
 {
 	data->nRectCount = 0;
 }

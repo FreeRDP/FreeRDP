@@ -174,7 +174,7 @@ static void video_client_context_set_geometry(VideoClientContext* video,
 	video->priv->geometry = geometry;
 }
 
-VideoClientContextPriv* VideoClientContextPriv_new(VideoClientContext* video)
+static VideoClientContextPriv* VideoClientContextPriv_new(VideoClientContext* video)
 {
 	VideoClientContextPriv* ret = calloc(1, sizeof(*ret));
 	if (!ret)

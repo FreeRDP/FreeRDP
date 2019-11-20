@@ -43,7 +43,7 @@
  * RC4
  */
 
-WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOOL override_fips)
+static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOOL override_fips)
 {
 	WINPR_RC4_CTX* ctx = NULL;
 #if defined(WITH_OPENSSL)
@@ -136,7 +136,7 @@ extern mbedtls_md_type_t winpr_mbedtls_get_md_type(int md);
 #endif
 
 #if defined(WITH_OPENSSL)
-const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
+static const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
 {
 	const EVP_CIPHER* evp = NULL;
 

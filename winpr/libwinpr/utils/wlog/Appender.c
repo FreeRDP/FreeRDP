@@ -93,7 +93,7 @@ BOOL WLog_CloseAppender(wLog* log)
 	return status;
 }
 
-wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
+static wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 {
 	wLogAppender* appender;
 

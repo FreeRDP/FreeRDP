@@ -186,15 +186,10 @@ FREERDP_LOCAL void rdp_write_security_header(wStream* s, UINT16 flags);
 
 FREERDP_LOCAL BOOL rdp_read_share_control_header(wStream* s, UINT16* length, UINT16* type,
                                                  UINT16* channel_id);
-FREERDP_LOCAL void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type,
-                                                  UINT16 channel_id);
 
 FREERDP_LOCAL BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type,
                                               UINT32* share_id, BYTE* compressed_type,
                                               UINT16* compressed_len);
-
-FREERDP_LOCAL void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type,
-                                               UINT32 share_id);
 
 FREERDP_LOCAL wStream* rdp_send_stream_init(rdpRdp* rdp);
 FREERDP_LOCAL wStream* rdp_send_stream_pdu_init(rdpRdp* rdp);
@@ -217,8 +212,6 @@ FREERDP_LOCAL BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 
 FREERDP_LOCAL int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securityFlags);
 
 FREERDP_LOCAL int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
-
-FREERDP_LOCAL void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
 
 FREERDP_LOCAL int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra);
 

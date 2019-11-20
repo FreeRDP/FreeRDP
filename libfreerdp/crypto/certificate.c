@@ -70,7 +70,7 @@ static BOOL certificate_line_is_comment(const char* line, size_t length)
 	return TRUE;
 }
 
-BOOL certificate_store_init(rdpCertificateStore* certificate_store)
+static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 {
 	char* server_path = NULL;
 	rdpSettings* settings;

@@ -34,8 +34,13 @@ static const char* const CTRLACTION_STRINGS[] =
         "CTRLACTION_COOPERATE"
 };
 */
+static BOOL rdp_recv_server_synchronize_pdu(rdpRdp* rdp, wStream* s);
+static BOOL rdp_recv_client_font_list_pdu(wStream* s);
+static BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, wStream* s);
+static BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, wStream* s);
+static BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp);
 
-void rdp_write_synchronize_pdu(wStream* s, rdpSettings* settings)
+static void rdp_write_synchronize_pdu(wStream* s, rdpSettings* settings)
 {
 	Stream_Write_UINT16(s, SYNCMSGTYPE_SYNC);    /* messageType (2 bytes) */
 	Stream_Write_UINT16(s, settings->PduSource); /* targetUser (2 bytes) */
@@ -87,7 +92,7 @@ BOOL rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->userId);
 }
 
-BOOL rdp_recv_control_pdu(wStream* s, UINT16* action)
+static BOOL rdp_recv_control_pdu(wStream* s, UINT16* action)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
@@ -98,7 +103,7 @@ BOOL rdp_recv_control_pdu(wStream* s, UINT16* action)
 	return TRUE;
 }
 
-void rdp_write_client_control_pdu(wStream* s, UINT16 action)
+static void rdp_write_client_control_pdu(wStream* s, UINT16 action)
 {
 	Stream_Write_UINT16(s, action); /* action (2 bytes) */
 	Stream_Write_UINT16(s, 0);      /* grantId (2 bytes) */
@@ -152,13 +157,13 @@ BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action)
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->userId);
 }
 
-void rdp_write_persistent_list_entry(wStream* s, UINT32 key1, UINT32 key2)
+static void rdp_write_persistent_list_entry(wStream* s, UINT32 key1, UINT32 key2)
 {
 	Stream_Write_UINT32(s, key1); /* key1 (4 bytes) */
 	Stream_Write_UINT32(s, key2); /* key2 (4 bytes) */
 }
 
-void rdp_write_client_persistent_key_list_pdu(wStream* s, rdpSettings* settings)
+static void rdp_write_client_persistent_key_list_pdu(wStream* s, rdpSettings* settings)
 {
 	Stream_Write_UINT16(s, 0);                                   /* numEntriesCache0 (2 bytes) */
 	Stream_Write_UINT16(s, 0);                                   /* numEntriesCache1 (2 bytes) */
@@ -192,7 +197,7 @@ BOOL rdp_recv_client_font_list_pdu(wStream* s)
 	return TRUE;
 }
 
-void rdp_write_client_font_list_pdu(wStream* s, UINT16 flags)
+static void rdp_write_client_font_list_pdu(wStream* s, UINT16 flags)
 {
 	Stream_Write_UINT16(s, 0);     /* numberFonts (2 bytes) */
 	Stream_Write_UINT16(s, 0);     /* totalNumFonts (2 bytes) */

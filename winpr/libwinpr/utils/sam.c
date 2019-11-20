@@ -154,7 +154,7 @@ static void HexStrToBin(char* str, BYTE* bin, int length)
 	}
 }
 
-BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
+static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
 	char* p[5];
 	size_t LmHashLength;

@@ -65,7 +65,8 @@ static const char* rplstat[] = { "succeeded",
 static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port);
 static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
                                 const char* proxyPassword, const char* hostname, UINT16 port);
-void proxy_read_environment(rdpSettings* settings, char* envname);
+static void proxy_read_environment(rdpSettings* settings, char* envname);
+static BOOL proxy_parse_uri(rdpSettings* settings, const char* uri);
 
 BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* lpPeerPort,
                    const char** lpProxyUsername, const char** lpProxyPassword)

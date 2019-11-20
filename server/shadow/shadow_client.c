@@ -1483,7 +1483,7 @@ static BOOL shadow_client_send_resize(rdpShadowClient* client, SHADOW_GFX_STATUS
  *
  * @return TRUE on success
  */
-BOOL shadow_client_surface_update(rdpShadowClient* client, REGION16* region)
+static BOOL shadow_client_surface_update(rdpShadowClient* client, REGION16* region)
 {
 	UINT32 numRects = 0;
 	const RECTANGLE_16* rects;

@@ -48,7 +48,7 @@ struct _XKB_KEY_NAME_SCANCODE
 };
 typedef struct _XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE;
 
-XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] = {
+static const XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] = {
 	{ "AB00", RDP_SCANCODE_LSHIFT },
 	{ "AB01", RDP_SCANCODE_KEY_Z },      // evdev 52
 	{ "AB02", RDP_SCANCODE_KEY_X },      // evdev 53
@@ -310,7 +310,11 @@ XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] = {
 	{ "XFER", RDP_SCANCODE_CONVERT_JP },  // JP alias of evdev 100 Henkan
 };
 
-void* freerdp_keyboard_xkb_init()
+static int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId);
+static int freerdp_keyboard_load_map_from_xkbfile(void* display,
+                                                  DWORD x11_keycode_to_rdp_scancode[256]);
+
+static void* freerdp_keyboard_xkb_init(void)
 {
 	int status;
 

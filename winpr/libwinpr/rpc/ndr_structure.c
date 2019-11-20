@@ -102,7 +102,7 @@ void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
 	WLog_ERR(TAG, "warning: NdrConformantVaryingStructBufferSize unimplemented");
 }
 
-ULONG NdrComplexStructMemberSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
+static ULONG NdrComplexStructMemberSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
 {
 	ULONG size = 0;
 

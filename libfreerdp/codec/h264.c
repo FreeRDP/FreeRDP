@@ -524,7 +524,7 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 	return i > 0;
 }
 
-BOOL h264_context_init(H264_CONTEXT* h264)
+static BOOL h264_context_init(H264_CONTEXT* h264)
 {
 	int i;
 

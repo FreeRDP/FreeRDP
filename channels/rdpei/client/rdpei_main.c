@@ -115,22 +115,22 @@ typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_send_frame(RdpeiClientContext* context);
+static UINT rdpei_send_frame(RdpeiClientContext* context);
 
-const char* RDPEI_EVENTID_STRINGS[] = { "",
-	                                    "EVENTID_SC_READY",
-	                                    "EVENTID_CS_READY",
-	                                    "EVENTID_TOUCH",
-	                                    "EVENTID_SUSPEND_TOUCH",
-	                                    "EVENTID_RESUME_TOUCH",
-	                                    "EVENTID_DISMISS_HOVERING_CONTACT" };
+static const char* RDPEI_EVENTID_STRINGS[] = { "",
+	                                           "EVENTID_SC_READY",
+	                                           "EVENTID_CS_READY",
+	                                           "EVENTID_TOUCH",
+	                                           "EVENTID_SUSPEND_TOUCH",
+	                                           "EVENTID_RESUME_TOUCH",
+	                                           "EVENTID_DISMISS_HOVERING_CONTACT" };
 
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_add_frame(RdpeiClientContext* context)
+static UINT rdpei_add_frame(RdpeiClientContext* context)
 {
 	int i;
 	RDPINPUT_CONTACT_DATA* contact;
@@ -241,7 +241,8 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_send_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId, UINT32 pduLength)
+static UINT rdpei_send_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId,
+                           UINT32 pduLength)
 {
 	UINT status;
 	Stream_SetPosition(s, 0);
@@ -263,7 +264,7 @@ UINT rdpei_send_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
+static UINT rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
 {
 	UINT status;
 	wStream* s;
@@ -292,7 +293,7 @@ UINT rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
 	return status;
 }
 
-void rdpei_print_contact_flags(UINT32 contactFlags)
+static void rdpei_print_contact_flags(UINT32 contactFlags)
 {
 	if (contactFlags & CONTACT_FLAG_DOWN)
 		WLog_DBG(TAG, " CONTACT_FLAG_DOWN");
@@ -318,7 +319,7 @@ void rdpei_print_contact_flags(UINT32 contactFlags)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
+static UINT rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 {
 	UINT32 index;
 	int rectSize = 2;
@@ -401,7 +402,8 @@ UINT rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback, RDPINPUT_TOUCH_FRAME* frame)
+static UINT rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback,
+                                       RDPINPUT_TOUCH_FRAME* frame)
 {
 	UINT status;
 	wStream* s;
@@ -443,7 +445,7 @@ UINT rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback, RDPINPUT_TOUCH
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 protocolVersion;
 	Stream_Read_UINT32(s, protocolVersion); /* protocolVersion (4 bytes) */
@@ -464,7 +466,7 @@ UINT rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RdpeiClientContext* rdpei = (RdpeiClientContext*)callback->plugin->pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -481,7 +483,7 @@ UINT rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RdpeiClientContext* rdpei = (RdpeiClientContext*)callback->plugin->pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -498,7 +500,7 @@ UINT rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT16 eventId;
 	UINT32 pduLength;
@@ -699,7 +701,7 @@ static UINT rdpei_plugin_terminated(IWTSPlugin* pPlugin)
  * Channel Client Interface
  */
 
-int rdpei_get_version(RdpeiClientContext* context)
+static int rdpei_get_version(RdpeiClientContext* context)
 {
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
 	return rdpei->version;
@@ -745,7 +747,7 @@ UINT rdpei_send_frame(RdpeiClientContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact)
+static UINT rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact)
 {
 	RDPINPUT_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
@@ -763,7 +765,8 @@ UINT rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* conta
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_touch_begin(RdpeiClientContext* context, int externalId, int x, int y, int* contactId)
+static UINT rdpei_touch_begin(RdpeiClientContext* context, int externalId, int x, int y,
+                              int* contactId)
 {
 	unsigned int i;
 	int contactIdlocal = -1;
@@ -812,7 +815,8 @@ UINT rdpei_touch_begin(RdpeiClientContext* context, int externalId, int x, int y
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_touch_update(RdpeiClientContext* context, int externalId, int x, int y, int* contactId)
+static UINT rdpei_touch_update(RdpeiClientContext* context, int externalId, int x, int y,
+                               int* contactId)
 {
 	unsigned int i;
 	int contactIdlocal = -1;
@@ -858,7 +862,8 @@ UINT rdpei_touch_update(RdpeiClientContext* context, int externalId, int x, int 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y, int* contactId)
+static UINT rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y,
+                            int* contactId)
 {
 	unsigned int i;
 	int contactIdlocal = -1;

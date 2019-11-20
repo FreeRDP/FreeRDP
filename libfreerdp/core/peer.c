@@ -108,8 +108,8 @@ static BOOL freerdp_peer_virtual_channel_close(freerdp_peer* client, HANDLE hCha
 	return TRUE;
 }
 
-int freerdp_peer_virtual_channel_read(freerdp_peer* client, HANDLE hChannel, BYTE* buffer,
-                                      UINT32 length)
+static int freerdp_peer_virtual_channel_read(freerdp_peer* client, HANDLE hChannel, BYTE* buffer,
+                                             UINT32 length)
 {
 	return 0; /* this needs to be implemented by the server application */
 }
@@ -181,7 +181,7 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 	return 1;
 }
 
-void* freerdp_peer_virtual_channel_get_data(freerdp_peer* client, HANDLE hChannel)
+static void* freerdp_peer_virtual_channel_get_data(freerdp_peer* client, HANDLE hChannel)
 {
 	rdpPeerChannel* peerChannel = (rdpPeerChannel*)hChannel;
 
@@ -191,7 +191,7 @@ void* freerdp_peer_virtual_channel_get_data(freerdp_peer* client, HANDLE hChanne
 	return peerChannel->extra;
 }
 
-int freerdp_peer_virtual_channel_set_data(freerdp_peer* client, HANDLE hChannel, void* data)
+static int freerdp_peer_virtual_channel_set_data(freerdp_peer* client, HANDLE hChannel, void* data)
 {
 	rdpPeerChannel* peerChannel = (rdpPeerChannel*)hChannel;
 

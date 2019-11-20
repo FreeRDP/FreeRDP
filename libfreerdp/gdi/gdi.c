@@ -973,7 +973,8 @@ static BOOL gdi_frame_marker(rdpContext* context, const FRAME_MARKER_ORDER* fram
 	return TRUE;
 }
 
-BOOL gdi_surface_frame_marker(rdpContext* context, const SURFACE_FRAME_MARKER* surfaceFrameMarker)
+static BOOL gdi_surface_frame_marker(rdpContext* context,
+                                     const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	WLog_Print(context->gdi->log, WLOG_DEBUG, "frameId %" PRIu32 " frameAction %" PRIu32 "",
 	           surfaceFrameMarker->frameId, surfaceFrameMarker->frameAction);

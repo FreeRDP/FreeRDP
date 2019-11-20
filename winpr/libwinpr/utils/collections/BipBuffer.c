@@ -46,7 +46,7 @@ void BipBuffer_Clear(wBipBuffer* bb)
 	BipBlock_Clear(bb->writeR);
 }
 
-BOOL BipBuffer_AllocBuffer(wBipBuffer* bb, size_t size)
+static BOOL BipBuffer_AllocBuffer(wBipBuffer* bb, size_t size)
 {
 	if (size < 1)
 		return FALSE;
@@ -104,7 +104,7 @@ BOOL BipBuffer_Grow(wBipBuffer* bb, size_t size)
 	return TRUE;
 }
 
-void BipBuffer_FreeBuffer(wBipBuffer* bb)
+static void BipBuffer_FreeBuffer(wBipBuffer* bb)
 {
 	if (bb->buffer)
 	{

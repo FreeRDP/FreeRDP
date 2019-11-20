@@ -65,6 +65,8 @@
  * |         ...        |
  */
 
+static void tpdu_write_header(wStream* s, UINT16 length, BYTE code);
+
 /**
  * Read TPDU header.
  * @param s stream

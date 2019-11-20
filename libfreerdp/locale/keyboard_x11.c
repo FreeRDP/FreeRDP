@@ -146,7 +146,7 @@ int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 	return 0;
 }
 
-char* freerdp_detect_keymap_from_xkb()
+static char* freerdp_detect_keymap_from_xkb(void)
 {
 	char* pch;
 	char* beg;

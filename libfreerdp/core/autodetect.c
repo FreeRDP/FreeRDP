@@ -316,7 +316,7 @@ static BOOL autodetect_send_netchar_result(rdpContext* context, UINT16 sequenceN
 	return rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
 }
 
-BOOL autodetect_send_netchar_sync(rdpRdp* rdp, UINT16 sequenceNumber)
+static BOOL autodetect_send_netchar_sync(rdpRdp* rdp, UINT16 sequenceNumber)
 {
 	wStream* s;
 	/* Send the response PDU to the server */

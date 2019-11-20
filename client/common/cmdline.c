@@ -1192,7 +1192,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 	return TRUE;
 }
 
-int freerdp_map_keyboard_layout_name_to_id(char* name)
+static int freerdp_map_keyboard_layout_name_to_id(char* name)
 {
 	int i;
 	int id = 0;
@@ -1323,8 +1323,8 @@ static int freerdp_detect_windows_style_command_line_syntax(int argc, char** arg
 	return detect_status;
 }
 
-int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv, size_t* count,
-                                                   BOOL ignoreUnknown)
+static int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv, size_t* count,
+                                                          BOOL ignoreUnknown)
 {
 	int status;
 	DWORD flags;

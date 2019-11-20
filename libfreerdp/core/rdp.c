@@ -34,7 +34,7 @@
 
 #define TAG FREERDP_TAG("core.rdp")
 
-const char* DATA_PDU_TYPE_STRINGS[80] = {
+static const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?",
 	"?",      /* 0x00 - 0x01 */
 	"Update", /* 0x02 */
@@ -101,6 +101,11 @@ const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?",
 	"?" /* 0x41 - 0x46 */
 };
+
+static void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
+static void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type,
+                                           UINT16 channel_id);
+static void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id);
 
 /**
  * Read RDP Security Header.\n

@@ -34,40 +34,7 @@ FREERDP_LOCAL BOOL gcc_read_conference_create_request(wStream* s, rdpMcs* mcs);
 FREERDP_LOCAL void gcc_write_conference_create_request(wStream* s, wStream* userData);
 FREERDP_LOCAL BOOL gcc_read_conference_create_response(wStream* s, rdpMcs* mcs);
 FREERDP_LOCAL void gcc_write_conference_create_response(wStream* s, wStream* userData);
-FREERDP_LOCAL BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length);
 FREERDP_LOCAL void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length);
 FREERDP_LOCAL BOOL gcc_write_server_data_blocks(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_user_data_header(wStream* s, UINT16* type, UINT16* length);
-FREERDP_LOCAL void gcc_write_user_data_header(wStream* s, UINT16 type, UINT16 length);
-FREERDP_LOCAL BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
-FREERDP_LOCAL void gcc_write_client_core_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_write_server_core_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_client_security_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
-FREERDP_LOCAL void gcc_write_client_security_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
-FREERDP_LOCAL void gcc_write_client_network_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_write_server_network_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
-FREERDP_LOCAL void gcc_write_client_cluster_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
-FREERDP_LOCAL void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs,
-                                                         UINT16 blockLength);
-FREERDP_LOCAL void gcc_write_client_monitor_extended_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_client_message_channel_data(wStream* s, rdpMcs* mcs,
-                                                        UINT16 blockLength);
-FREERDP_LOCAL void gcc_write_client_message_channel_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_server_message_channel_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_write_server_message_channel_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_client_multitransport_channel_data(wStream* s, rdpMcs* mcs,
-                                                               UINT16 blockLength);
-FREERDP_LOCAL void gcc_write_client_multitransport_channel_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL BOOL gcc_read_server_multitransport_channel_data(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL void gcc_write_server_multitransport_channel_data(wStream* s, rdpMcs* mcs);
 
 #endif /* FREERDP_LIB_CORE_GCC_H */

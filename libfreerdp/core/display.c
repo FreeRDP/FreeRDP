@@ -19,8 +19,8 @@
 
 #include "display.h"
 
-BOOL display_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount,
-                                      const MONITOR_DEF* monitorDefArray)
+static BOOL display_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount,
+                                             const MONITOR_DEF* monitorDefArray)
 {
 	UINT32 index;
 	const MONITOR_DEF* monitor;

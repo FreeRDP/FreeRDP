@@ -56,7 +56,7 @@ static WtsApiFunctionTable WtsApi32_WtsApiFunctionTable = { 0 };
 	WtsApi32_WtsApiFunctionTable.p##_name = (##_type)GetProcAddress(g_WtsApi32Module, "WT" \
 	                                                                                  "S" #_name);
 
-BOOL WtsApi32_InitializeWtsApi(void)
+static BOOL WtsApi32_InitializeWtsApi(void)
 {
 	g_WtsApi32Module = LoadLibraryA("wtsapi32.dll");
 

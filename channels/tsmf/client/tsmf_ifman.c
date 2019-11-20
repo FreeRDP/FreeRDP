@@ -309,7 +309,7 @@ UINT tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 	return status;
 }
 
-float tsmf_stream_read_float(wStream* s)
+static float tsmf_stream_read_float(wStream* s)
 {
 	float fValue;
 	UINT32 iValue;

@@ -43,7 +43,6 @@ enum X224_TPDU_TYPE
 #define TPDU_DISCONNECT_REQUEST_LENGTH (TPKT_HEADER_LENGTH + TPDU_DISCONNECT_REQUEST_HEADER_LENGTH)
 
 FREERDP_LOCAL BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li);
-FREERDP_LOCAL void tpdu_write_header(wStream* s, UINT16 length, BYTE code);
 FREERDP_LOCAL BOOL tpdu_read_connection_request(wStream* s, BYTE* li);
 FREERDP_LOCAL void tpdu_write_connection_request(wStream* s, UINT16 length);
 FREERDP_LOCAL BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li);

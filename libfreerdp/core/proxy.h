@@ -25,7 +25,7 @@
 
 BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* lpPeerPort,
                    const char** lpProxyUsername, const char** lpProxyPassword);
-BOOL proxy_parse_uri(rdpSettings* settings, const char* uri);
+
 BOOL proxy_connect(rdpSettings* settings, BIO* bio, const char* proxyUsername,
                    const char* proxyPassword, const char* hostname, UINT16 port);
 

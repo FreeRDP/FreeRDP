@@ -864,7 +864,7 @@ static BOOL update_set_bounds(rdpContext* context, const rdpBounds* bounds)
 	return TRUE;
 }
 
-BOOL update_bounds_is_null(rdpBounds* bounds)
+static BOOL update_bounds_is_null(rdpBounds* bounds)
 {
 	if ((bounds->left == 0) && (bounds->top == 0) && (bounds->right == 0) && (bounds->bottom == 0))
 		return TRUE;
@@ -872,7 +872,7 @@ BOOL update_bounds_is_null(rdpBounds* bounds)
 	return FALSE;
 }
 
-BOOL update_bounds_equals(rdpBounds* bounds1, rdpBounds* bounds2)
+static BOOL update_bounds_equals(rdpBounds* bounds1, rdpBounds* bounds2)
 {
 	if ((bounds1->left == bounds2->left) && (bounds1->top == bounds2->top) &&
 	    (bounds1->right == bounds2->right) && (bounds1->bottom == bounds2->bottom))
@@ -881,7 +881,7 @@ BOOL update_bounds_equals(rdpBounds* bounds1, rdpBounds* bounds2)
 	return FALSE;
 }
 
-int update_prepare_bounds(rdpContext* context, ORDER_INFO* orderInfo)
+static int update_prepare_bounds(rdpContext* context, ORDER_INFO* orderInfo)
 {
 	int length = 0;
 	rdpUpdate* update = context->update;
@@ -946,7 +946,8 @@ static int update_prepare_order_info(rdpContext* context, ORDER_INFO* orderInfo,
 	return length;
 }
 
-int update_write_order_info(rdpContext* context, wStream* s, ORDER_INFO* orderInfo, size_t offset)
+static int update_write_order_info(rdpContext* context, wStream* s, ORDER_INFO* orderInfo,
+                                   size_t offset)
 {
 	size_t position;
 	WINPR_UNUSED(context);
