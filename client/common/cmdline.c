@@ -3278,7 +3278,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			const char* drive = tok;
 			char* start = strtok(tok, "(");
 			char* end = strtok(NULL, ")");
-			if (end)
+			if (start && end)
 				name = end;
 
 			if (freerdp_path_valid(name, NULL) && freerdp_path_valid(drive, NULL))

@@ -107,7 +107,8 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 	}
 
 	CopyMemory(fullpath, base_path, base_path_length);
-	CopyMemory((char*)fullpath + base_path_length, path, PathLength);
+	if (path)
+		CopyMemory((char*)fullpath + base_path_length, path, PathLength);
 	drive_file_fix_path(fullpath);
 	return fullpath;
 }

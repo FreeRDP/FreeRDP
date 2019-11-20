@@ -879,7 +879,7 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 {
 	size_t i, length;
 	DRIVE_DEVICE* drive;
-	UINT error;
+	UINT error = ERROR_INTERNAL_ERROR;
 
 	if (!pEntryPoints || !name || !path)
 	{
