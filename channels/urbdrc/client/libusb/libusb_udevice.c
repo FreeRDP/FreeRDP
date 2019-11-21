@@ -1017,7 +1017,7 @@ static int libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextType
 			}
 			else
 			{
-				*BufferSize = ret;
+				*BufferSize = _wcslen((WCHAR*)Buffer) * 2;
 			}
 
 			break;
