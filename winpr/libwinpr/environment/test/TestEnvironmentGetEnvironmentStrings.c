@@ -16,16 +16,22 @@ int TestEnvironmentGetEnvironmentStrings(int argc, char* argv[])
 
 	lpszEnvironmentBlock = GetEnvironmentStrings();
 
-	p = (TCHAR*)lpszEnvironmentBlock;
+	p = lpszEnvironmentBlock;
 
 	while (p[0] && p[1])
 	{
-		const int rc = _tprintf(_T("%s\n"), p);
+		const int rc = _sntprintf(NULL, 0, _T("%s\n"), p);
 		if (rc < 1)
+		{
+			_tprintf(_T("test failed: return %d\n"), rc);
 			goto fail;
+		}
 		length = _tcslen(p);
 		if (length != (size_t)(rc - 1))
+		{
+			_tprintf(_T("test failed: length %") _T(PRIuz) _T(" != %d [%s]\n"), length, rc - 1, p);
 			goto fail;
+		}
 		p += (length + 1);
 	}
 
