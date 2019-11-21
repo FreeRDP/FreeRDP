@@ -297,7 +297,7 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD
 				size_t length;
 				char* pData = (char*)lpData;
 
-				length = strnlen(pValue->data.string, UINT32_MAX);
+				length = strnlen(pValue->data.string, INT_MAX);
 
 				if (pData != NULL)
 				{
