@@ -379,12 +379,9 @@ static UINT urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, wStr
 	UINT32 FunctionId;
 	UINT32 InterfaceId;
 	UINT error = CHANNEL_RC_OK;
-	URBDRC_PLUGIN* urbdrc;
 
-	if (!callback || !data || !callback->plugin)
+	if (!data)
 		return ERROR_INVALID_PARAMETER;
-
-	urbdrc = (URBDRC_PLUGIN*)callback->plugin;
 
 	if (Stream_GetRemainingLength(data) < 8)
 		return ERROR_INVALID_DATA;

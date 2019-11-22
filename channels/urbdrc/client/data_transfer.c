@@ -1743,7 +1743,7 @@ UINT urbdrc_process_udev_data_transfer(URBDRC_CHANNEL_CALLBACK* callback, URBDRC
 
 	len = Stream_GetRemainingLength(data);
 
-	if (Stream_GetRemainingCapacity(data) < 8)
+	if (len < 8)
 		goto fail;
 
 	Stream_Rewind_UINT32(data);
