@@ -1,7 +1,8 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2019 Armin Novak <armin.novak@thincast.com>
+# Copyright 2019 Thincast Technologies GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +16,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel("urbdrc")
+set(SRCS
+    urbdrc_types.h
+    urbdrc_helpers.h
+    urbdrc_helpers.c
+    msusb.h
+    msusb.c)
 
-include_directories(common)
-add_subdirectory(common)
-
-if(WITH_CLIENT_CHANNELS)
-    find_package(libusb-1.0 REQUIRED)
-    include_directories(${LIBUSB_1_INCLUDE_DIRS})
-
-    add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
+add_library(urbdrc-common OBJECT ${SRCS})

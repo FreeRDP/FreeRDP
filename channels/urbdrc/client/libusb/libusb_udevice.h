@@ -21,14 +21,10 @@
 #ifndef FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_UDEVICE_H
 #define FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_UDEVICE_H
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
 #include <libusb.h>
-#else
-#include <libusb-1.0/libusb.h>
-#endif
+#include <semaphore.h>
 
 #include "urbdrc_types.h"
-#include "request_queue.h"
 #include "urbdrc_main.h"
 
 typedef struct libusb_device LIBUSB_DEVICE;
@@ -51,10 +47,11 @@ struct _UDEVICE
 
 	UINT32 UsbDevice;     /* An unique interface ID */
 	UINT32 ReqCompletion; /* An unique interface ID */
-	UINT32 channel_id;
+	IWTSVirtualChannelManager* channelManager;
+	UINT32 channelID;
 	UINT16 status;
-	UINT16 bus_number;
-	UINT16 dev_number;
+	BYTE bus_number;
+	BYTE dev_number;
 	char path[17];
 	int port_number;
 	int isCompositeDevice;
@@ -66,18 +63,14 @@ struct _UDEVICE
 	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
 	LIBUSB_CONFIG_DESCRIPTOR* LibusbConfig;
 
-	REQUEST_QUEUE* request_queue;
-	/* Used in isochronous transfer */
-	void* isoch_queue;
+	wHashTable* request_queue;
 
-	pthread_mutex_t mutex_isoch;
-	sem_t sem_id;
+	URBDRC_PLUGIN* urbdrc;
 };
 typedef UDEVICE* PUDEVICE;
 
-int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray);
-IUDEVICE* udev_new_by_addr(int bus_number, int dev_number);
-
-extern int libusb_debug;
+size_t udev_new_by_id(URBDRC_PLUGIN* urbdrc, UINT16 idVendor, UINT16 idProduct,
+                      IUDEVICE*** devArray);
+IUDEVICE* udev_new_by_addr(URBDRC_PLUGIN* urbdrc, BYTE bus_number, BYTE dev_number);
 
 #endif /* FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_UDEVICE_H */
