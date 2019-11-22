@@ -48,7 +48,7 @@ typedef struct
 
 static primitives_opencl_context* primitives_get_opencl_context(void);
 
-static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* pSrc[3],
+static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[3],
                                  const UINT32 srcStep[3], BYTE* pDst, UINT32 dstStep,
                                  const prim_size_t* roi)
 {
@@ -322,7 +322,7 @@ out_program_create:
 	return FALSE;
 }
 
-static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 srcStep[3],
+static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                               BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                               const prim_size_t* roi)
 {
@@ -350,7 +350,7 @@ static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 
 	return opencl_YUVToRGB(kernel_name, pSrc, srcStep, pDst, dstStep, roi);
 }
 
-static pstatus_t opencl_YUV444ToRGB_8u_P3AC4R(const BYTE* pSrc[3], const UINT32 srcStep[3],
+static pstatus_t opencl_YUV444ToRGB_8u_P3AC4R(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                               BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                               const prim_size_t* roi)
 {
