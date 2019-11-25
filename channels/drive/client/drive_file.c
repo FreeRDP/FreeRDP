@@ -594,29 +594,29 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (liCreationTime.QuadPart != 0)
 			{
-				ftCreationTime.dwHighDateTime = liCreationTime.HighPart;
-				ftCreationTime.dwLowDateTime = liCreationTime.LowPart;
+				ftCreationTime.dwHighDateTime = liCreationTime.u.HighPart;
+				ftCreationTime.dwLowDateTime = liCreationTime.u.LowPart;
 				pftCreationTime = &ftCreationTime;
 			}
 
 			if (liLastAccessTime.QuadPart != 0)
 			{
-				ftLastAccessTime.dwHighDateTime = liLastAccessTime.HighPart;
-				ftLastAccessTime.dwLowDateTime = liLastAccessTime.LowPart;
+				ftLastAccessTime.dwHighDateTime = liLastAccessTime.u.HighPart;
+				ftLastAccessTime.dwLowDateTime = liLastAccessTime.u.LowPart;
 				pftLastAccessTime = &ftLastAccessTime;
 			}
 
 			if (liLastWriteTime.QuadPart != 0)
 			{
-				ftLastWriteTime.dwHighDateTime = liLastWriteTime.HighPart;
-				ftLastWriteTime.dwLowDateTime = liLastWriteTime.LowPart;
+				ftLastWriteTime.dwHighDateTime = liLastWriteTime.u.HighPart;
+				ftLastWriteTime.dwLowDateTime = liLastWriteTime.u.LowPart;
 				pftLastWriteTime = &ftLastWriteTime;
 			}
 
 			if (liChangeTime.QuadPart != 0 && liChangeTime.QuadPart > liLastWriteTime.QuadPart)
 			{
-				ftLastWriteTime.dwHighDateTime = liChangeTime.HighPart;
-				ftLastWriteTime.dwLowDateTime = liChangeTime.LowPart;
+				ftLastWriteTime.dwHighDateTime = liChangeTime.u.HighPart;
+				ftLastWriteTime.dwLowDateTime = liChangeTime.u.LowPart;
 				pftLastWriteTime = &ftLastWriteTime;
 			}
 
