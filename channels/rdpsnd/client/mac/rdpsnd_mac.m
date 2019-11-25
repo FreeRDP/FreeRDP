@@ -139,8 +139,14 @@ static void rdpsnd_mac_release(rdpsndMacPlugin *mac)
 
 static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *format, UINT32 latency)
 {
+	AudioDeviceID outputDeviceID;
+	UInt32 propertySize;
+	OSStatus err;
 	NSError *error;
 	rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
+	AudioObjectPropertyAddress propertyAddress = { kAudioHardwarePropertyDefaultSystemOutputDevice,
+		                                           kAudioObjectPropertyScopeGlobal,
+		                                           kAudioObjectPropertyElementMaster };
 
 	if (mac->isOpen)
 		return TRUE;
@@ -148,9 +154,28 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *form
 	if (!rdpsnd_mac_set_format(device, format, latency))
 		return FALSE;
 
+	propertySize = sizeof(outputDeviceID);
+	err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL,
+	                                 &propertySize, &outputDeviceID);
+	if (err)
+	{
+		WLog_ERR(TAG, "AudioHardwareGetProperty: %s", FormatError(err));
+		return FALSE;
+	}
+
 	mac->engine = [[AVAudioEngine alloc] init];
 	if (!mac->engine)
 		return FALSE;
+
+	err = AudioUnitSetProperty(mac->engine.outputNode.audioUnit,
+	                           kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0,
+	                           &outputDeviceID, sizeof(outputDeviceID));
+	if (err)
+	{
+		rdpsnd_mac_release(mac);
+		WLog_ERR(TAG, "AudioUnitSetProperty: %s", FormatError(err));
+		return FALSE;
+	}
 
 	mac->player = [[AVAudioPlayerNode alloc] init];
 	if (!mac->player)
