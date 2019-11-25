@@ -165,6 +165,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_LyncRdpMode:
 			return settings->LyncRdpMode;
 
+		case FreeRDP_RemoteAssistanceRequestControl:
+			return settings->RemoteAssistanceRequestControl;
+
 		case FreeRDP_TlsSecurity:
 			return settings->TlsSecurity;
 
@@ -713,6 +716,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_LyncRdpMode:
 			settings->LyncRdpMode = val;
+			break;
+
+		case FreeRDP_RemoteAssistanceRequestControl:
+			settings->RemoteAssistanceRequestControl = val;
 			break;
 
 		case FreeRDP_TlsSecurity:

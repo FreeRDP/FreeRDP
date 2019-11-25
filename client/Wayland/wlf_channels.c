@@ -28,6 +28,23 @@
 #include "wlf_disp.h"
 #include "wlfreerdp.h"
 
+BOOL encomsp_toggle_control(EncomspClientContext* encomsp, BOOL control)
+{
+	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
+
+	if (!encomsp)
+		return FALSE;
+
+	pdu.ParticipantId = 0;
+	pdu.Flags = ENCOMSP_REQUEST_VIEW;
+
+	if (control)
+		pdu.Flags |= ENCOMSP_REQUEST_INTERACT;
+
+	encomsp->ChangeParticipantControlLevel(encomsp, &pdu);
+	return TRUE;
+}
+
 /**
  * Function description
  *
@@ -37,6 +54,27 @@ static UINT
 wlf_encomsp_participant_created(EncomspClientContext* context,
                                 const ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
 {
+	wlfContext* wlf;
+	rdpSettings* settings;
+	BOOL request;
+
+	if (!context || !context->custom || !participantCreated)
+		return ERROR_INVALID_PARAMETER;
+
+	wlf = (wlfContext*)context->custom;
+	settings = wlf->context.settings;
+
+	if (!settings)
+		return ERROR_INVALID_PARAMETER;
+
+	request = freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceRequestControl);
+	if (request && (participantCreated->Flags & ENCOMSP_MAY_VIEW) &&
+	    !(participantCreated->Flags & ENCOMSP_MAY_INTERACT))
+	{
+		if (!encomsp_toggle_control(context, TRUE))
+			return ERROR_INTERNAL_ERROR;
+	}
+
 	return CHANNEL_RC_OK;
 }
 

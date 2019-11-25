@@ -773,11 +773,10 @@ xf_encomsp_participant_created(EncomspClientContext* context,
 	if (!settings)
 		return ERROR_INVALID_PARAMETER;
 
-#if 0 // TODO
-	request = freerdp_settings_get_bool(settings, FreeRDP_RequestControl);
-	if (request && (participantCreated->Flags & ENCOMSP_MAY_VIEW) && !(participantCreated->Flags & ENCOMSP_MAY_INTERACT))
-			xf_toggle_control(xfc);
-#endif
+	request = freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceRequestControl);
+	if (request && (participantCreated->Flags & ENCOMSP_MAY_VIEW) &&
+	    !(participantCreated->Flags & ENCOMSP_MAY_INTERACT))
+		xf_toggle_control(xfc);
 
 	return CHANNEL_RC_OK;
 }

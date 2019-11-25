@@ -633,6 +633,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_EncomspVirtualChannel (1029)
 #define FreeRDP_RemdeskVirtualChannel (1030)
 #define FreeRDP_LyncRdpMode (1031)
+#define FreeRDP_RemoteAssistanceRequestControl (1032)
 #define FreeRDP_TlsSecurity (1088)
 #define FreeRDP_NlaSecurity (1089)
 #define FreeRDP_RdpSecurity (1090)
@@ -1063,15 +1064,16 @@ struct rdp_settings
 	UINT64 padding1024[1024 - 969];       /* 969 */
 
 	/* Remote Assistance */
-	ALIGN64 BOOL RemoteAssistanceMode;       /* 1024 */
-	ALIGN64 char* RemoteAssistanceSessionId; /* 1025 */
-	ALIGN64 char* RemoteAssistancePassStub;  /* 1026 */
-	ALIGN64 char* RemoteAssistancePassword;  /* 1027 */
-	ALIGN64 char* RemoteAssistanceRCTicket;  /* 1028 */
-	ALIGN64 BOOL EncomspVirtualChannel;      /* 1029 */
-	ALIGN64 BOOL RemdeskVirtualChannel;      /* 1030 */
-	ALIGN64 BOOL LyncRdpMode;                /* 1031 */
-	UINT64 padding1088[1088 - 1032];         /* 1032 */
+	ALIGN64 BOOL RemoteAssistanceMode;           /* 1024 */
+	ALIGN64 char* RemoteAssistanceSessionId;     /* 1025 */
+	ALIGN64 char* RemoteAssistancePassStub;      /* 1026 */
+	ALIGN64 char* RemoteAssistancePassword;      /* 1027 */
+	ALIGN64 char* RemoteAssistanceRCTicket;      /* 1028 */
+	ALIGN64 BOOL EncomspVirtualChannel;          /* 1029 */
+	ALIGN64 BOOL RemdeskVirtualChannel;          /* 1030 */
+	ALIGN64 BOOL LyncRdpMode;                    /* 1031 */
+	ALIGN64 BOOL RemoteAssistanceRequestControl; /* 1032 */
+	UINT64 padding1088[1088 - 1033];             /* 1033 */
 
 	/**
 	 * X.224 Connection Request/Confirm
