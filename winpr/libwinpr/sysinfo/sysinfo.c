@@ -275,8 +275,8 @@ VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 	/* time represented in tenths of microseconds since midnight of January 1, 1601 */
 	time64.QuadPart = time(NULL) + 11644473600LL; /* Seconds since January 1, 1601 */
 	time64.QuadPart *= 10000000;                  /* Convert timestamp to tenths of a microsecond */
-	lpSystemTimeAsFileTime->dwLowDateTime = time64.LowPart;
-	lpSystemTimeAsFileTime->dwHighDateTime = time64.HighPart;
+	lpSystemTimeAsFileTime->dwLowDateTime = time64.u.LowPart;
+	lpSystemTimeAsFileTime->dwHighDateTime = time64.u.HighPart;
 }
 
 BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
