@@ -1699,6 +1699,9 @@ void gcc_write_client_cluster_data(wStream* s, rdpMcs* mcs)
 	if (settings->ConsoleSession || settings->RedirectedSessionId)
 		flags |= REDIRECTED_SESSIONID_FIELD_VALID;
 
+	if (settings->RedirectSmartCards)
+		flags |= REDIRECTED_SMARTCARD;
+
 	Stream_Write_UINT32(s, flags);                         /* flags */
 	Stream_Write_UINT32(s, settings->RedirectedSessionId); /* redirectedSessionID */
 }
