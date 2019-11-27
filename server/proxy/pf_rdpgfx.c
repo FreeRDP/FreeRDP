@@ -429,8 +429,9 @@ static UINT pf_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
 	return client->FrameAcknowledge(client, frameAcknowledge);
 }
 
-static UINT pf_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext* context,
-        const RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoeFrameAcknowledge)
+static UINT
+pf_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext* context,
+                                const RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoeFrameAcknowledge)
 {
 	proxyData* pdata = (proxyData*)context->custom;
 	RdpgfxClientContext* client = (RdpgfxClientContext*)pdata->pc->gfx_proxy;
@@ -439,7 +440,7 @@ static UINT pf_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext* context,
 }
 
 static UINT pf_rdpgfx_cache_import_offer(RdpgfxServerContext* context,
-        const RDPGFX_CACHE_IMPORT_OFFER_PDU* cacheImportOffer)
+                                         const RDPGFX_CACHE_IMPORT_OFFER_PDU* cacheImportOffer)
 {
 	proxyData* pdata = (proxyData*)context->custom;
 	RdpgfxClientContext* client = (RdpgfxClientContext*)pdata->pc->gfx_proxy;

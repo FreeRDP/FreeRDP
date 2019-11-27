@@ -907,22 +907,22 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
-		Stream_Write(s, userNameW, cbUserName);
+	Stream_Write(s, userNameW, cbUserName);
 
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
-		Stream_Write(s, passwordW, cbPassword);
+	Stream_Write(s, passwordW, cbPassword);
 
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
-		Stream_Write(s, alternateShellW, cbAlternateShell);
+	Stream_Write(s, alternateShellW, cbAlternateShell);
 
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);
 
-		Stream_Write(s, workingDirW, cbWorkingDir);
+	Stream_Write(s, workingDirW, cbWorkingDir);
 
 	/* the mandatory null terminator */
 	Stream_Write_UINT16(s, 0);

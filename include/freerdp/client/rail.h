@@ -33,67 +33,60 @@
 
 typedef struct _rail_client_context RailClientContext;
 
-typedef UINT(*pcRailOnOpen)(RailClientContext* context, BOOL* sendHandshake);
+typedef UINT (*pcRailOnOpen)(RailClientContext* context, BOOL* sendHandshake);
 
-/* Callbacks from Server */
-typedef UINT(*pcRailServerHandshake)(RailClientContext* context,
-                                     const RAIL_HANDSHAKE_ORDER* handshake);
-typedef UINT(*pcRailServerHandshakeEx)(RailClientContext* context,
-                                       const RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
-typedef UINT(*pcRailServerSysparam)(RailClientContext* context,
-                                    const RAIL_SYSPARAM_ORDER* sysparam);
-typedef UINT(*pcRailServerLocalMoveSize)(RailClientContext* context,
-        const RAIL_LOCALMOVESIZE_ORDER* localMoveSize);
-typedef UINT(*pcRailServerMinMaxInfo)(RailClientContext* context,
-                                      const RAIL_MINMAXINFO_ORDER* minMaxInfo);
-typedef UINT(*pcRailServerTaskbarInfo)(RailClientContext* context,
-                                       const RAIL_TASKBAR_INFO_ORDER* taskBarInfo);
-typedef UINT(*pcRailServerLangbarInfo)(RailClientContext* context,
-                                       const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
-typedef UINT(*pcRailServerExecResult)(RailClientContext* context,
-                                      const RAIL_EXEC_RESULT_ORDER* execResult);
-typedef UINT(*pcRailServerZOrderSync)(RailClientContext* context,
-                                      const RAIL_ZORDER_SYNC_ORDER* zorder);
-typedef UINT(*pcRailServerCloak)(RailClientContext* context,
-                                 const RAIL_CLOAK_ORDER* cloak);
-typedef UINT(*pcRailServerPowerDisplayRequest)(RailClientContext* context,
-        const RAIL_POWER_DISPLAY_REQUEST_ORDER* power);
-typedef UINT(*pcRailServerGetAppidResp)(RailClientContext* context,
-                                        const RAIL_GET_APPID_RESP_ORDER* getAppidResp);
-typedef UINT(*pcRailServerGetAppidRespEx)(RailClientContext* context,
-        const RAIL_GET_APPID_RESP_EX_ORDER* id);
-
-/* Methods for sending client side messages */
-typedef UINT(*pcRailClientHandshake)(RailClientContext* context,
-                                     const RAIL_HANDSHAKE_ORDER* handshake);
-typedef UINT(*pcRailClientClientStatus)(RailClientContext* context,
+typedef UINT (*pcRailClientExecute)(RailClientContext* context, const RAIL_EXEC_ORDER* exec);
+typedef UINT (*pcRailClientActivate)(RailClientContext* context,
+                                     const RAIL_ACTIVATE_ORDER* activate);
+typedef UINT (*pcRailClientSystemParam)(RailClientContext* context,
+                                        const RAIL_SYSPARAM_ORDER* sysparam);
+typedef UINT (*pcRailServerSystemParam)(RailClientContext* context,
+                                        const RAIL_SYSPARAM_ORDER* sysparam);
+typedef UINT (*pcRailClientSystemCommand)(RailClientContext* context,
+                                          const RAIL_SYSCOMMAND_ORDER* syscommand);
+typedef UINT (*pcRailClientHandshake)(RailClientContext* context,
+                                      const RAIL_HANDSHAKE_ORDER* handshake);
+typedef UINT (*pcRailServerHandshake)(RailClientContext* context,
+                                      const RAIL_HANDSHAKE_ORDER* handshake);
+typedef UINT (*pcRailServerHandshakeEx)(RailClientContext* context,
+                                        const RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
+typedef UINT (*pcRailClientNotifyEvent)(RailClientContext* context,
+                                        const RAIL_NOTIFY_EVENT_ORDER* notifyEvent);
+typedef UINT (*pcRailClientWindowMove)(RailClientContext* context,
+                                       const RAIL_WINDOW_MOVE_ORDER* windowMove);
+typedef UINT (*pcRailServerLocalMoveSize)(RailClientContext* context,
+                                          const RAIL_LOCALMOVESIZE_ORDER* localMoveSize);
+typedef UINT (*pcRailServerMinMaxInfo)(RailClientContext* context,
+                                       const RAIL_MINMAXINFO_ORDER* minMaxInfo);
+typedef UINT (*pcRailClientInformation)(RailClientContext* context,
                                         const RAIL_CLIENT_STATUS_ORDER* clientStatus);
-typedef UINT(*pcRailClientExec)(RailClientContext* context,
-                                RAIL_EXEC_ORDER* exec);
-typedef UINT(*pcRailClientSysparam)(RailClientContext* context,
-                                    const RAIL_SYSPARAM_ORDER* sysparam);
-typedef UINT(*pcRailClientActivate)(RailClientContext* context,
-                                    const RAIL_ACTIVATE_ORDER* activate);
-typedef UINT(*pcRailClientSysmenu)(RailClientContext* context,
-                                   const RAIL_SYSMENU_ORDER* sysmenu);
-typedef UINT(*pcRailClientSyscommand)(RailClientContext* context,
-                                      const RAIL_SYSCOMMAND_ORDER* syscommand);
-typedef UINT(*pcRailClientNotifyEvent)(RailClientContext* context,
-                                       const RAIL_NOTIFY_EVENT_ORDER* notifyEvent);
-typedef UINT(*pcRailClientGetAppidReq)(RailClientContext* context,
-                                       const RAIL_GET_APPID_REQ_ORDER* getAppidReq);
-typedef UINT(*pcRailClientWindowMove)(RailClientContext* context,
-                                      const RAIL_WINDOW_MOVE_ORDER* windowMove);
-typedef UINT(*pcRailClientSnapArrange)(RailClientContext* context,
-                                       const RAIL_SNAP_ARRANGE_ORDER* snap);
-typedef UINT(*pcRailClientLangbarInfo)(RailClientContext* context,
-                                       const RAIL_LANGBAR_INFO_ORDER* langbarInfo);
-typedef UINT(*pcRailClientLanguageImeInfo)(RailClientContext* context,
-        const RAIL_LANGUAGEIME_INFO_ORDER* languageIme);
-typedef UINT(*pcRailClientCompartmentInfo)(RailClientContext* context,
-        const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
-typedef UINT(*pcRailClientCloak)(RailClientContext* context,
-                                 const RAIL_CLOAK_ORDER* cloak);
+typedef UINT (*pcRailClientSystemMenu)(RailClientContext* context,
+                                       const RAIL_SYSMENU_ORDER* sysmenu);
+typedef UINT (*pcRailServerTaskBarInfo)(RailClientContext* context,
+                                        const RAIL_TASKBAR_INFO_ORDER* taskBarInfo);
+typedef UINT (*pcRailClientLanguageBarInfo)(RailClientContext* context,
+                                            const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
+typedef UINT (*pcRailServerLanguageBarInfo)(RailClientContext* context,
+                                            const RAIL_LANGBAR_INFO_ORDER* langBarInfo);
+typedef UINT (*pcRailClientLanguageIMEInfo)(RailClientContext* context,
+                                            const RAIL_LANGUAGEIME_INFO_ORDER* langImeInfo);
+typedef UINT (*pcRailServerExecuteResult)(RailClientContext* context,
+                                          const RAIL_EXEC_RESULT_ORDER* execResult);
+typedef UINT (*pcRailClientGetAppIdRequest)(RailClientContext* context,
+                                            const RAIL_GET_APPID_REQ_ORDER* getAppIdReq);
+typedef UINT (*pcRailServerGetAppIdResponse)(RailClientContext* context,
+                                             const RAIL_GET_APPID_RESP_ORDER* getAppIdResp);
+typedef UINT (*pcRailServerZOrderSync)(RailClientContext* context, const RAIL_ZORDER_SYNC* zorder);
+typedef UINT (*pcRailServerCloak)(RailClientContext* context, const RAIL_CLOAK* cloak);
+typedef UINT (*pcRailClientCloak)(RailClientContext* context, const RAIL_CLOAK* cloak);
+typedef UINT (*pcRailServerPowerDisplayRequest)(RailClientContext* context,
+                                                const RAIL_POWER_DISPLAY_REQUEST* power);
+typedef UINT (*pcRailClientSnapArrange)(RailClientContext* context, const RAIL_SNAP_ARRANGE* snap);
+typedef UINT (*pcRailServerGetAppidResponseExtended)(RailClientContext* context,
+                                                     const RAIL_GET_APPID_RESP_EX* id);
+typedef UINT (*pcRailClientCompartmentInfo)(RailClientContext* context,
+                                            const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
+
 struct _rail_client_context
 {
 	void* handle;
@@ -101,37 +94,34 @@ struct _rail_client_context
 
 	pcRailOnOpen OnOpen;
 
-	/* Callbacks from Server */
+	pcRailClientExecute ClientExecute;
+	pcRailClientActivate ClientActivate;
+	pcRailClientSystemParam ClientSystemParam;
+	pcRailServerSystemParam ServerSystemParam;
+	pcRailClientSystemCommand ClientSystemCommand;
+	pcRailClientHandshake ClientHandshake;
 	pcRailServerHandshake ServerHandshake;
 	pcRailServerHandshakeEx ServerHandshakeEx;
-	pcRailServerSysparam ServerSysparam;
+	pcRailClientNotifyEvent ClientNotifyEvent;
+	pcRailClientWindowMove ClientWindowMove;
 	pcRailServerLocalMoveSize ServerLocalMoveSize;
 	pcRailServerMinMaxInfo ServerMinMaxInfo;
-	pcRailServerTaskbarInfo ServerTaskbarInfo;
-	pcRailServerLangbarInfo ServerLangbarInfo;
-	pcRailServerExecResult ServerExecResult;
+	pcRailClientInformation ClientInformation;
+	pcRailClientSystemMenu ClientSystemMenu;
+	pcRailServerTaskBarInfo ServerTaskBarInfo;
+	pcRailClientLanguageBarInfo ClientLanguageBarInfo;
+	pcRailServerLanguageBarInfo ServerLanguageBarInfo;
+	pcRailClientLanguageIMEInfo ClientLanguageIMEInfo;
+	pcRailServerExecuteResult ServerExecuteResult;
+	pcRailClientGetAppIdRequest ClientGetAppIdRequest;
+	pcRailServerGetAppIdResponse ServerGetAppIdResponse;
 	pcRailServerZOrderSync ServerZOrderSync;
+	pcRailClientCloak ClientCloak;
 	pcRailServerCloak ServerCloak;
 	pcRailServerPowerDisplayRequest ServerPowerDisplayRequest;
-	pcRailServerGetAppidResp ServerGetAppidResp;
-	pcRailServerGetAppidRespEx ServerGetAppidRespEx;
-
-	/* Methods for sending client side messages */
-	pcRailClientHandshake ClientHandshake;
-	pcRailClientClientStatus ClientClientStatus;
-	pcRailClientExec ClientExec;
-	pcRailClientSysparam ClientSysparam;
-	pcRailClientActivate ClientActivate;
-	pcRailClientSysmenu ClientSysmenu;
-	pcRailClientSyscommand ClientSyscommand;
-	pcRailClientNotifyEvent ClientNotifyEvent;
-	pcRailClientGetAppidReq ClientGetAppidReq;
-	pcRailClientWindowMove ClientWindowMove;
 	pcRailClientSnapArrange ClientSnapArrange;
-	pcRailClientLangbarInfo ClientLangbarInfo;
-	pcRailClientLanguageImeInfo ClientLanguageImeInfo;
+	pcRailServerGetAppidResponseExtended ServerGetAppidResponseExtended;
 	pcRailClientCompartmentInfo ClientCompartmentInfo;
-	pcRailClientCloak ClientCloak;
 };
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_RAIL_H */

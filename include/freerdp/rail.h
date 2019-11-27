@@ -26,7 +26,7 @@
 
 #include <freerdp/types.h>
 
-#define RAIL_SVC_CHANNEL_NAME	"rail"
+#define RAIL_SVC_CHANNEL_NAME "rail"
 
 /* DEPRECATED: RAIL PDU flags use the spec conformant naming with TS_ prefix */
 #define RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY 0x0001
@@ -461,28 +461,28 @@ struct _RAIL_COMPARTMENT_INFO_ORDER
 	UINT32 ImeState;
 	UINT32 ImeConvMode;
 	UINT32 ImeSentenceMode;
-	UINT32 KANAMode;
+	UINT32 KanaMode;
 };
 typedef struct _RAIL_COMPARTMENT_INFO_ORDER RAIL_COMPARTMENT_INFO_ORDER;
 
-struct _RAIL_ZORDER_SYNC_ORDER
+struct _RAIL_ZORDER_SYNC
 {
 	UINT32 windowIdMarker;
 };
-typedef struct _RAIL_ZORDER_SYNC_ORDER RAIL_ZORDER_SYNC_ORDER;
+typedef struct _RAIL_ZORDER_SYNC RAIL_ZORDER_SYNC;
 
-struct _RAIL_CLOAK_ORDER
+struct _RAIL_CLOAK
 {
 	UINT32 windowId;
-	BOOL cloaked;
+	BOOL cloak;
 };
-typedef struct _RAIL_CLOAK_ORDER RAIL_CLOAK_ORDER;
+typedef struct _RAIL_CLOAK RAIL_CLOAK;
 
-struct _RAIL_POWER_DISPLAY_REQUEST_ORDER
+struct _RAIL_POWER_DISPLAY_REQUEST
 {
-	BOOL active;
+	UINT32 active;
 };
-typedef struct _RAIL_POWER_DISPLAY_REQUEST_ORDER RAIL_POWER_DISPLAY_REQUEST_ORDER;
+typedef struct _RAIL_POWER_DISPLAY_REQUEST RAIL_POWER_DISPLAY_REQUEST;
 
 struct _RAIL_TASKBAR_INFO_ORDER
 {
@@ -502,7 +502,7 @@ struct _RAIL_LANGUAGEIME_INFO_ORDER
 };
 typedef struct _RAIL_LANGUAGEIME_INFO_ORDER RAIL_LANGUAGEIME_INFO_ORDER;
 
-struct _RAIL_SNAP_ARRANGE_ORDER
+struct _RAIL_SNAP_ARRANGE
 {
 	UINT32 windowId;
 	INT16 left;
@@ -510,16 +510,16 @@ struct _RAIL_SNAP_ARRANGE_ORDER
 	INT16 right;
 	INT16 bottom;
 };
-typedef struct _RAIL_SNAP_ARRANGE_ORDER RAIL_SNAP_ARRANGE_ORDER;
+typedef struct _RAIL_SNAP_ARRANGE RAIL_SNAP_ARRANGE;
 
-struct _RAIL_GET_APPID_RESP_EX_ORDER
+struct _RAIL_GET_APPID_RESP_EX
 {
 	UINT32 windowID;
 	WCHAR applicationID[520 / sizeof(WCHAR)];
 	UINT32 processId;
 	WCHAR processImageName[520 / sizeof(WCHAR)];
 };
-typedef struct _RAIL_GET_APPID_RESP_EX_ORDER RAIL_GET_APPID_RESP_EX_ORDER;
+typedef struct _RAIL_GET_APPID_RESP_EX RAIL_GET_APPID_RESP_EX;
 
 /* DEPRECATED: RAIL Constants
  * use the spec conformant naming scheme TS_ below
@@ -581,9 +581,9 @@ extern "C"
 {
 #endif
 
-FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
-FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
-        RAIL_UNICODE_STRING* unicode_string);
+	FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
+	FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
+	                                            RAIL_UNICODE_STRING* unicode_string);
 
 #ifdef __cplusplus
 }

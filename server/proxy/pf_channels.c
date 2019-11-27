@@ -64,8 +64,8 @@ void pf_OnChannelConnectedEventHandler(void* data, ChannelConnectedEventArgs* e)
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
-		pc->rail = (RailClientContext*) e->pInterface;
-	
+		pc->rail = (RailClientContext*)e->pInterface;
+
 		if (ps->rail->Start(ps->rail) != CHANNEL_RC_OK)
 		{
 			WLog_ERR(TAG, "failed to start RAIL server");
@@ -223,14 +223,14 @@ BOOL pf_server_channels_init(pServerContext* ps)
 			return FALSE;
 	}
 
-	if (config->RemoteApp && WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RAIL_SVC_CHANNEL_NAME))
+	if (config->RemoteApp &&
+	    WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RAIL_SVC_CHANNEL_NAME))
 	{
 		if (!pf_rail_context_init(ps))
 			return FALSE;
 	}
 
 	return pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_INIT, context);
-
 }
 
 void pf_server_channels_free(pServerContext* ps)

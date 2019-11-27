@@ -45,9 +45,8 @@ static UINT rail_send(RailServerContext* context, wStream* s, ULONG length)
 	if (!context)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
 
-	if (!WTSVirtualChannelWrite(context->priv->rail_channel,
-	                            (PCHAR) Stream_Buffer(s),
-	                            length, &written))
+	if (!WTSVirtualChannelWrite(context->priv->rail_channel, (PCHAR)Stream_Buffer(s), length,
+	                            &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		status = ERROR_INTERNAL_ERROR;
@@ -68,11 +67,11 @@ UINT rail_send_pdu(RailServerContext* context, wStream* s, UINT16 orderType)
 	if (!context || !s)
 		return ERROR_INVALID_PARAMETER;
 
-	orderLength = (UINT16) Stream_GetPosition(s);
+	orderLength = (UINT16)Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	rail_write_pdu_header(s, orderType, orderLength);
 	Stream_SetPosition(s, orderLength);
-	WLog_DBG(TAG, "Sending %s PDU, length: %"PRIu16"",
+	WLog_DBG(TAG, "Sending %s PDU, length: %" PRIu16 "",
 	         RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
 	return rail_send(context, s, orderLength);
 }
@@ -83,16 +82,16 @@ UINT rail_send_pdu(RailServerContext* context, wStream* s, UINT16 orderType)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_write_local_move_size_order(wStream* s,
-        const RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
+                                             const RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
 	if (!s || !localMoveSize)
 		return ERROR_INVALID_PARAMETER;
 
-	Stream_Write_UINT32(s, localMoveSize->windowId); /* WindowId (4 bytes) */
+	Stream_Write_UINT32(s, localMoveSize->windowId);                /* WindowId (4 bytes) */
 	Stream_Write_UINT16(s, localMoveSize->isMoveSizeStart ? 1 : 0); /* IsMoveSizeStart (2 bytes) */
-	Stream_Write_UINT16(s, localMoveSize->moveSizeType); /* MoveSizeType (2 bytes) */
-	Stream_Write_UINT16(s, localMoveSize->posX); /* PosX (2 bytes) */
-	Stream_Write_UINT16(s, localMoveSize->posY); /* PosY (2 bytes) */
+	Stream_Write_UINT16(s, localMoveSize->moveSizeType);            /* MoveSizeType (2 bytes) */
+	Stream_Write_UINT16(s, localMoveSize->posX);                    /* PosX (2 bytes) */
+	Stream_Write_UINT16(s, localMoveSize->posY);                    /* PosY (2 bytes) */
 	return ERROR_SUCCESS;
 }
 
@@ -101,20 +100,19 @@ static UINT rail_write_local_move_size_order(wStream* s,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_min_max_info_order(wStream* s,
-        const RAIL_MINMAXINFO_ORDER* minMaxInfo)
+static UINT rail_write_min_max_info_order(wStream* s, const RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
 	if (!s || !minMaxInfo)
 		return ERROR_INVALID_PARAMETER;
 
-	Stream_Write_UINT32(s, minMaxInfo->windowId); /* WindowId (4 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxWidth); /* MaxWidth (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxHeight); /* MaxHeight (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxPosX); /* MaxPosX (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxPosY); /* MaxPosY (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->minTrackWidth); /* MinTrackWidth (2 bytes) */
+	Stream_Write_UINT32(s, minMaxInfo->windowId);       /* WindowId (4 bytes) */
+	Stream_Write_UINT16(s, minMaxInfo->maxWidth);       /* MaxWidth (2 bytes) */
+	Stream_Write_UINT16(s, minMaxInfo->maxHeight);      /* MaxHeight (2 bytes) */
+	Stream_Write_UINT16(s, minMaxInfo->maxPosX);        /* MaxPosX (2 bytes) */
+	Stream_Write_UINT16(s, minMaxInfo->maxPosY);        /* MaxPosY (2 bytes) */
+	Stream_Write_UINT16(s, minMaxInfo->minTrackWidth);  /* MinTrackWidth (2 bytes) */
 	Stream_Write_UINT16(s, minMaxInfo->minTrackHeight); /* MinTrackHeight (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxTrackWidth); /* MaxTrackWidth (2 bytes) */
+	Stream_Write_UINT16(s, minMaxInfo->maxTrackWidth);  /* MaxTrackWidth (2 bytes) */
 	Stream_Write_UINT16(s, minMaxInfo->maxTrackHeight); /* MaxTrackHeight (2 bytes) */
 	return ERROR_SUCCESS;
 }
@@ -124,15 +122,14 @@ static UINT rail_write_min_max_info_order(wStream* s,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_taskbar_info_order(wStream* s,
-        const RAIL_TASKBAR_INFO_ORDER* taskbarInfo)
+static UINT rail_write_taskbar_info_order(wStream* s, const RAIL_TASKBAR_INFO_ORDER* taskbarInfo)
 {
 	if (!s || !taskbarInfo)
 		return ERROR_INVALID_PARAMETER;
 
 	Stream_Write_UINT32(s, taskbarInfo->TaskbarMessage); /* TaskbarMessage (4 bytes) */
-	Stream_Write_UINT32(s, taskbarInfo->WindowIdTab); /* WindowIdTab (4 bytes) */
-	Stream_Write_UINT32(s, taskbarInfo->Body); /* Body (4 bytes) */
+	Stream_Write_UINT32(s, taskbarInfo->WindowIdTab);    /* WindowIdTab (4 bytes) */
+	Stream_Write_UINT32(s, taskbarInfo->Body);           /* Body (4 bytes) */
 	return ERROR_SUCCESS;
 }
 
@@ -141,8 +138,7 @@ static UINT rail_write_taskbar_info_order(wStream* s,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_langbar_info_order(wStream* s,
-        const RAIL_LANGBAR_INFO_ORDER* langbarInfo)
+static UINT rail_write_langbar_info_order(wStream* s, const RAIL_LANGBAR_INFO_ORDER* langbarInfo)
 {
 	if (!s || !langbarInfo)
 		return ERROR_INVALID_PARAMETER;
@@ -156,8 +152,7 @@ static UINT rail_write_langbar_info_order(wStream* s,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_exec_result_order(wStream* s,
-        const RAIL_EXEC_RESULT_ORDER* execResult)
+static UINT rail_write_exec_result_order(wStream* s, const RAIL_EXEC_RESULT_ORDER* execResult)
 {
 	if (!s || !execResult)
 		return ERROR_INVALID_PARAMETER;
@@ -165,10 +160,10 @@ static UINT rail_write_exec_result_order(wStream* s,
 	if (execResult->exeOrFile.length > 520 || execResult->exeOrFile.length < 1)
 		return ERROR_INVALID_DATA;
 
-	Stream_Write_UINT16(s, execResult->flags); /* Flags (2 bytes) */
-	Stream_Write_UINT16(s, execResult->execResult); /* ExecResult (2 bytes) */
-	Stream_Write_UINT32(s, execResult->rawResult); /* RawResult (4 bytes) */
-	Stream_Write_UINT16(s, 0); /* Padding (2 bytes) */
+	Stream_Write_UINT16(s, execResult->flags);            /* Flags (2 bytes) */
+	Stream_Write_UINT16(s, execResult->execResult);       /* ExecResult (2 bytes) */
+	Stream_Write_UINT32(s, execResult->rawResult);        /* RawResult (4 bytes) */
+	Stream_Write_UINT16(s, 0);                            /* Padding (2 bytes) */
 	Stream_Write_UINT16(s, execResult->exeOrFile.length); /* ExeOrFileLength (2 bytes) */
 	Stream_Write(s, execResult->exeOrFile.string,
 	             execResult->exeOrFile.length); /* ExeOrFile (variable) */
@@ -180,8 +175,7 @@ static UINT rail_write_exec_result_order(wStream* s,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_z_order_sync_order(wStream* s,
-        const RAIL_ZORDER_SYNC_ORDER* zOrderSync)
+static UINT rail_write_z_order_sync_order(wStream* s, const RAIL_ZORDER_SYNC* zOrderSync)
 {
 	if (!s || !zOrderSync)
 		return ERROR_INVALID_PARAMETER;
@@ -195,14 +189,13 @@ static UINT rail_write_z_order_sync_order(wStream* s,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_cloak_order(wStream* s,
-                                   const RAIL_CLOAK_ORDER* cloak)
+static UINT rail_write_cloak_order(wStream* s, const RAIL_CLOAK* cloak)
 {
 	if (!s || !cloak)
 		return ERROR_INVALID_PARAMETER;
 
-	Stream_Write_UINT32(s, cloak->windowId); /* WindowId (4 bytes) */
-	Stream_Write_UINT8(s, cloak->cloaked ? 1 : 0); /* Cloaked (1 byte) */
+	Stream_Write_UINT32(s, cloak->windowId);     /* WindowId (4 bytes) */
+	Stream_Write_UINT8(s, cloak->cloak ? 1 : 0); /* Cloaked (1 byte) */
 	return ERROR_SUCCESS;
 }
 
@@ -211,8 +204,9 @@ static UINT rail_write_cloak_order(wStream* s,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_write_power_display_request_order(wStream* s,
-        const RAIL_POWER_DISPLAY_REQUEST_ORDER* powerDisplayRequest)
+static UINT
+rail_write_power_display_request_order(wStream* s,
+                                       const RAIL_POWER_DISPLAY_REQUEST* powerDisplayRequest)
 {
 	if (!s || !powerDisplayRequest)
 		return ERROR_INVALID_PARAMETER;
@@ -227,12 +221,12 @@ static UINT rail_write_power_display_request_order(wStream* s,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_write_get_app_id_resp_order(wStream* s,
-        const RAIL_GET_APPID_RESP_ORDER* getAppidResp)
+                                             const RAIL_GET_APPID_RESP_ORDER* getAppidResp)
 {
 	if (!s || !getAppidResp)
 		return ERROR_INVALID_PARAMETER;
 
-	Stream_Write_UINT32(s, getAppidResp->windowId); /* WindowId (4 bytes) */
+	Stream_Write_UINT32(s, getAppidResp->windowId);                 /* WindowId (4 bytes) */
 	Stream_Write(s, (const void*)getAppidResp->applicationId, 512); /* ApplicationId (512 bytes) */
 	return ERROR_SUCCESS;
 }
@@ -243,13 +237,14 @@ static UINT rail_write_get_app_id_resp_order(wStream* s,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_write_get_appid_resp_ex_order(wStream* s,
-        const RAIL_GET_APPID_RESP_EX_ORDER* getAppidRespEx)
+                                               const RAIL_GET_APPID_RESP_EX* getAppidRespEx)
 {
 	if (!s || !getAppidRespEx)
 		return ERROR_INVALID_PARAMETER;
 
 	Stream_Write_UINT32(s, getAppidRespEx->windowID); /* WindowId (4 bytes) */
-	Stream_Write(s, (const void*)getAppidRespEx->applicationID, 512); /* ApplicationId (512 bytes) */
+	Stream_Write(s, (const void*)getAppidRespEx->applicationID,
+	             512);                                 /* ApplicationId (512 bytes) */
 	Stream_Write_UINT32(s, getAppidRespEx->processId); /* ProcessId (4 bytes) */
 	Stream_Write(s, (const void*)getAppidRespEx->processImageName,
 	             520); /* ProcessImageName (520 bytes) */
@@ -290,7 +285,7 @@ static UINT rail_send_server_handshake(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_send_server_handshake_ex(RailServerContext* context,
-        const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+                                          const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
 	wStream* s;
 	UINT error;
@@ -335,8 +330,8 @@ static UINT rail_send_server_sysparam(RailServerContext* context,
 	if (!priv)
 		return ERROR_INVALID_PARAMETER;
 
-	extendedSpiSupported = !((priv->channelFlags &
-	                          TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) == 0);
+	extendedSpiSupported =
+	    !((priv->channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) == 0);
 	s = rail_pdu_init(RAIL_SYSPARAM_ORDER_LENGTH);
 
 	if (!s)
@@ -357,7 +352,7 @@ static UINT rail_send_server_sysparam(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_send_server_local_move_size(RailServerContext* context,
-        const RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
+                                             const RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
 	wStream* s;
 	UINT error;
@@ -385,7 +380,7 @@ static UINT rail_send_server_local_move_size(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_send_server_min_max_info(RailServerContext* context,
-        const RAIL_MINMAXINFO_ORDER* minMaxInfo)
+                                          const RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
 	wStream* s;
 	UINT error;
@@ -413,7 +408,7 @@ static UINT rail_send_server_min_max_info(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_send_server_taskbar_info(RailServerContext* context,
-        const RAIL_TASKBAR_INFO_ORDER* taskbarInfo)
+                                          const RAIL_TASKBAR_INFO_ORDER* taskbarInfo)
 {
 	wStream* s;
 	UINT error;
@@ -441,7 +436,7 @@ static UINT rail_send_server_taskbar_info(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_send_server_langbar_info(RailServerContext* context,
-        const RAIL_LANGBAR_INFO_ORDER* langbarInfo)
+                                          const RAIL_LANGBAR_INFO_ORDER* langbarInfo)
 {
 	wStream* s;
 	UINT error;
@@ -469,7 +464,7 @@ static UINT rail_send_server_langbar_info(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_send_server_exec_result(RailServerContext* context,
-        const RAIL_EXEC_RESULT_ORDER* execResult)
+                                         const RAIL_EXEC_RESULT_ORDER* execResult)
 {
 	wStream* s;
 	UINT error;
@@ -497,7 +492,7 @@ static UINT rail_send_server_exec_result(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_send_server_z_order_sync(RailServerContext* context,
-        const RAIL_ZORDER_SYNC_ORDER* zOrderSync)
+                                          const RAIL_ZORDER_SYNC* zOrderSync)
 {
 	wStream* s;
 	UINT error;
@@ -524,8 +519,7 @@ static UINT rail_send_server_z_order_sync(RailServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_send_server_cloak(RailServerContext* context,
-                                   const RAIL_CLOAK_ORDER* cloak)
+static UINT rail_send_server_cloak(RailServerContext* context, const RAIL_CLOAK* cloak)
 {
 	wStream* s;
 	UINT error;
@@ -552,8 +546,9 @@ static UINT rail_send_server_cloak(RailServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_send_server_power_display_request(RailServerContext* context,
-        const RAIL_POWER_DISPLAY_REQUEST_ORDER* powerDisplayRequest)
+static UINT
+rail_send_server_power_display_request(RailServerContext* context,
+                                       const RAIL_POWER_DISPLAY_REQUEST* powerDisplayRequest)
 {
 	wStream* s;
 	UINT error;
@@ -581,7 +576,7 @@ static UINT rail_send_server_power_display_request(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error coie
  */
 static UINT rail_send_server_get_app_id_resp(RailServerContext* context,
-        const RAIL_GET_APPID_RESP_ORDER* getAppidResp)
+                                             const RAIL_GET_APPID_RESP_ORDER* getAppidResp)
 {
 	wStream* s;
 	UINT error;
@@ -609,7 +604,7 @@ static UINT rail_send_server_get_app_id_resp(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_send_server_get_appid_resp_ex(RailServerContext* context,
-        const RAIL_GET_APPID_RESP_EX_ORDER* getAppidRespEx)
+                                               const RAIL_GET_APPID_RESP_EX* getAppidRespEx)
 {
 	wStream* s;
 	UINT error;
@@ -655,24 +650,24 @@ static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
 	if (Stream_GetRemainingLength(s) < RAIL_EXEC_ORDER_LENGTH)
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT16(s, exec->flags); /* Flags (2 bytes) */
-	Stream_Read_UINT16(s, exec->exeOrFile.length); /* ExeOrFileLength (2 bytes) */
+	Stream_Read_UINT16(s, exec->flags);             /* Flags (2 bytes) */
+	Stream_Read_UINT16(s, exec->exeOrFile.length);  /* ExeOrFileLength (2 bytes) */
 	Stream_Read_UINT16(s, exec->workingDir.length); /* WorkingDirLength (2 bytes) */
-	Stream_Read_UINT16(s, exec->arguments.length); /* ArgumentsLength (2 bytes) */
+	Stream_Read_UINT16(s, exec->arguments.length);  /* ArgumentsLength (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < exec->exeOrFile.length +
-	    exec->workingDir.length + exec->arguments.length)
+	if (Stream_GetRemainingLength(s) <
+	    exec->exeOrFile.length + exec->workingDir.length + exec->arguments.length)
 		return ERROR_INVALID_DATA;
 
 	free(exec->exeOrFile.string);
-	exec->exeOrFile.string = (BYTE*) realloc(exec->exeOrFile.string, exec->exeOrFile.length);
+	exec->exeOrFile.string = (BYTE*)realloc(exec->exeOrFile.string, exec->exeOrFile.length);
 	free(exec->workingDir.string);
-	exec->workingDir.string = (BYTE*) realloc(exec->workingDir.string, exec->workingDir.length);
+	exec->workingDir.string = (BYTE*)realloc(exec->workingDir.string, exec->workingDir.length);
 	free(exec->arguments.string);
-	exec->arguments.string = (BYTE*) realloc(exec->arguments.string, exec->arguments.length);
-	Stream_Read(s, exec->exeOrFile.string, exec->exeOrFile.length); /* ExeOrFile (variable) */
+	exec->arguments.string = (BYTE*)realloc(exec->arguments.string, exec->arguments.length);
+	Stream_Read(s, exec->exeOrFile.string, exec->exeOrFile.length);   /* ExeOrFile (variable) */
 	Stream_Read(s, exec->workingDir.string, exec->workingDir.length); /* WorkingDir (variable) */
-	Stream_Read(s, exec->arguments.string, exec->arguments.length); /* Arguments (variable) */
+	Stream_Read(s, exec->arguments.string, exec->arguments.length);   /* Arguments (variable) */
 	return CHANNEL_RC_OK;
 }
 
@@ -689,7 +684,7 @@ static UINT rail_read_activate_order(wStream* s, RAIL_ACTIVATE_ORDER* activate)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, activate->windowId); /* WindowId (4 bytes) */
-	Stream_Read_UINT8(s, enabled); /* Enabled (1 byte) */
+	Stream_Read_UINT8(s, enabled);             /* Enabled (1 byte) */
 	activate->enabled = (enabled != 0) ? TRUE : FALSE;
 	return CHANNEL_RC_OK;
 }
@@ -705,8 +700,8 @@ static UINT rail_read_sysmenu_order(wStream* s, RAIL_SYSMENU_ORDER* sysmenu)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, sysmenu->windowId); /* WindowId (4 bytes) */
-	Stream_Read_INT16(s, sysmenu->left); /* Left (2 bytes) */
-	Stream_Read_INT16(s, sysmenu->top); /* Top (2 bytes) */
+	Stream_Read_INT16(s, sysmenu->left);      /* Left (2 bytes) */
+	Stream_Read_INT16(s, sysmenu->top);       /* Top (2 bytes) */
 	return CHANNEL_RC_OK;
 }
 
@@ -721,7 +716,7 @@ static UINT rail_read_syscommand_order(wStream* s, RAIL_SYSCOMMAND_ORDER* syscom
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, syscommand->windowId); /* WindowId (4 bytes) */
-	Stream_Read_UINT16(s, syscommand->command); /* Command (2 bytes) */
+	Stream_Read_UINT16(s, syscommand->command);  /* Command (2 bytes) */
 	return CHANNEL_RC_OK;
 }
 
@@ -735,9 +730,9 @@ static UINT rail_read_notify_event_order(wStream* s, RAIL_NOTIFY_EVENT_ORDER* no
 	if (Stream_GetRemainingLength(s) < RAIL_NOTIFY_EVENT_ORDER_LENGTH)
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, notifyEvent->windowId); /* WindowId (4 bytes) */
+	Stream_Read_UINT32(s, notifyEvent->windowId);     /* WindowId (4 bytes) */
 	Stream_Read_UINT32(s, notifyEvent->notifyIconId); /* NotifyIconId (4 bytes) */
-	Stream_Read_UINT32(s, notifyEvent->message); /* Message (4 bytes) */
+	Stream_Read_UINT32(s, notifyEvent->message);      /* Message (4 bytes) */
 	return CHANNEL_RC_OK;
 }
 
@@ -766,10 +761,10 @@ static UINT rail_read_window_move_order(wStream* s, RAIL_WINDOW_MOVE_ORDER* wind
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, windowMove->windowId); /* WindowId (4 bytes) */
-	Stream_Read_UINT16(s, windowMove->left); /* Left (2 bytes) */
-	Stream_Read_UINT16(s, windowMove->top); /* Top (2 bytes) */
-	Stream_Read_UINT16(s, windowMove->right); /* Right (2 bytes) */
-	Stream_Read_UINT16(s, windowMove->bottom); /* Bottom (2 bytes) */
+	Stream_Read_UINT16(s, windowMove->left);     /* Left (2 bytes) */
+	Stream_Read_UINT16(s, windowMove->top);      /* Top (2 bytes) */
+	Stream_Read_UINT16(s, windowMove->right);    /* Right (2 bytes) */
+	Stream_Read_UINT16(s, windowMove->bottom);   /* Bottom (2 bytes) */
 	return CHANNEL_RC_OK;
 }
 
@@ -778,16 +773,16 @@ static UINT rail_read_window_move_order(wStream* s, RAIL_WINDOW_MOVE_ORDER* wind
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_read_snap_arange_order(wStream* s, RAIL_SNAP_ARRANGE_ORDER* snapArrange)
+static UINT rail_read_snap_arange_order(wStream* s, RAIL_SNAP_ARRANGE* snapArrange)
 {
 	if (Stream_GetRemainingLength(s) < RAIL_SNAP_ARRANGE_ORDER_LENGTH)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, snapArrange->windowId); /* WindowId (4 bytes) */
-	Stream_Read_UINT16(s, snapArrange->left); /* Left (2 bytes) */
-	Stream_Read_UINT16(s, snapArrange->top); /* Top (2 bytes) */
-	Stream_Read_UINT16(s, snapArrange->right); /* Right (2 bytes) */
-	Stream_Read_UINT16(s, snapArrange->bottom); /* Bottom (2 bytes) */
+	Stream_Read_UINT16(s, snapArrange->left);     /* Left (2 bytes) */
+	Stream_Read_UINT16(s, snapArrange->top);      /* Top (2 bytes) */
+	Stream_Read_UINT16(s, snapArrange->right);    /* Right (2 bytes) */
+	Stream_Read_UINT16(s, snapArrange->bottom);   /* Bottom (2 bytes) */
 	return CHANNEL_RC_OK;
 }
 
@@ -811,17 +806,18 @@ static UINT rail_read_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* la
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_read_language_ime_info_order(wStream* s,
-        RAIL_LANGUAGEIME_INFO_ORDER* languageImeInfo)
+                                              RAIL_LANGUAGEIME_INFO_ORDER* languageImeInfo)
 {
 	if (Stream_GetRemainingLength(s) < RAIL_LANGUAGEIME_INFO_ORDER_LENGTH)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, languageImeInfo->ProfileType); /* ProfileType (4 bytes) */
-	Stream_Read_UINT16(s, languageImeInfo->LanguageID); /* LanguageID (2 bytes) */
-	Stream_Read(s, &languageImeInfo->LanguageProfileCLSID,
-	            sizeof(languageImeInfo->LanguageProfileCLSID)); /* LanguageProfileCLSID (16 bytes) */
+	Stream_Read_UINT16(s, languageImeInfo->LanguageID);  /* LanguageID (2 bytes) */
+	Stream_Read(
+	    s, &languageImeInfo->LanguageProfileCLSID,
+	    sizeof(languageImeInfo->LanguageProfileCLSID)); /* LanguageProfileCLSID (16 bytes) */
 	Stream_Read(s, &languageImeInfo->ProfileGUID,
-	            sizeof(languageImeInfo->ProfileGUID));/* ProfileGUID (16 bytes) */
+	            sizeof(languageImeInfo->ProfileGUID));      /* ProfileGUID (16 bytes) */
 	Stream_Read_UINT32(s, languageImeInfo->KeyboardLayout); /* KeyboardLayout (4 bytes) */
 	return CHANNEL_RC_OK;
 }
@@ -832,15 +828,15 @@ static UINT rail_read_language_ime_info_order(wStream* s,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_read_compartment_info_order(wStream* s,
-        RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo)
+                                             RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo)
 {
 	if (Stream_GetRemainingLength(s) < RAIL_COMPARTMENT_INFO_ORDER_LENGTH)
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, compartmentInfo->ImeState); /* ImeState (4 bytes) */
-	Stream_Read_UINT32(s, compartmentInfo->ImeConvMode); /* ImeConvMode (4 bytes) */
+	Stream_Read_UINT32(s, compartmentInfo->ImeState);        /* ImeState (4 bytes) */
+	Stream_Read_UINT32(s, compartmentInfo->ImeConvMode);     /* ImeConvMode (4 bytes) */
 	Stream_Read_UINT32(s, compartmentInfo->ImeSentenceMode); /* ImeSentenceMode (4 bytes) */
-	Stream_Read_UINT32(s, compartmentInfo->KANAMode); /* KANAMode (4 bytes) */
+	Stream_Read_UINT32(s, compartmentInfo->KanaMode);        /* KANAMode (4 bytes) */
 	return CHANNEL_RC_OK;
 }
 
@@ -849,7 +845,7 @@ static UINT rail_read_compartment_info_order(wStream* s,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_read_cloak_order(wStream* s, RAIL_CLOAK_ORDER* cloak)
+static UINT rail_read_cloak_order(wStream* s, RAIL_CLOAK* cloak)
 {
 	BYTE cloaked;
 
@@ -857,11 +853,10 @@ static UINT rail_read_cloak_order(wStream* s, RAIL_CLOAK_ORDER* cloak)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, cloak->windowId); /* WindowId (4 bytes) */
-	Stream_Read_UINT8(s, cloaked); /* Cloaked (1 byte) */
-	cloak->cloaked = (cloaked != 0) ? TRUE : FALSE;
+	Stream_Read_UINT8(s, cloaked);          /* Cloaked (1 byte) */
+	cloak->cloak = (cloaked != 0) ? TRUE : FALSE;
 	return CHANNEL_RC_OK;
 }
-
 
 /**
  * Function description
@@ -869,7 +864,7 @@ static UINT rail_read_cloak_order(wStream* s, RAIL_CLOAK_ORDER* cloak)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_handshake_order(RailServerContext* context,
-        RAIL_HANDSHAKE_ORDER* handshake, wStream* s)
+                                             RAIL_HANDSHAKE_ORDER* handshake, wStream* s)
 {
 	UINT error;
 
@@ -878,14 +873,14 @@ static UINT rail_recv_client_handshake_order(RailServerContext* context,
 
 	if ((error = rail_read_handshake_order(s, handshake)))
 	{
-		WLog_ERR(TAG, "rail_read_handshake_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_handshake_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientHandshake, error, context, handshake);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientHandshake failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientHandshake failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -896,7 +891,7 @@ static UINT rail_recv_client_handshake_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_client_status_order(RailServerContext* context,
-        RAIL_CLIENT_STATUS_ORDER* clientStatus, wStream* s)
+                                                 RAIL_CLIENT_STATUS_ORDER* clientStatus, wStream* s)
 {
 	UINT error;
 
@@ -905,14 +900,14 @@ static UINT rail_recv_client_client_status_order(RailServerContext* context,
 
 	if ((error = rail_read_client_status_order(s, clientStatus)))
 	{
-		WLog_ERR(TAG, "rail_read_client_status_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_client_status_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientClientStatus, error, context, clientStatus);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientClientStatus failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientClientStatus failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -922,8 +917,8 @@ static UINT rail_recv_client_client_status_order(RailServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_recv_client_exec_order(RailServerContext* context,
-                                        RAIL_EXEC_ORDER* exec, wStream* s)
+static UINT rail_recv_client_exec_order(RailServerContext* context, RAIL_EXEC_ORDER* exec,
+                                        wStream* s)
 {
 	UINT error;
 
@@ -932,14 +927,14 @@ static UINT rail_recv_client_exec_order(RailServerContext* context,
 
 	if ((error = rail_read_exec_order(s, exec)))
 	{
-		WLog_ERR(TAG, "rail_read_client_status_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_client_status_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientExec, error, context, exec);
 
 	if (error)
-		WLog_ERR(TAG, "context.Exec failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.Exec failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -950,7 +945,7 @@ static UINT rail_recv_client_exec_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_sysparam_order(RailServerContext* context,
-        RAIL_SYSPARAM_ORDER* sysparam, wStream* s)
+                                            RAIL_SYSPARAM_ORDER* sysparam, wStream* s)
 {
 	UINT error;
 
@@ -959,14 +954,14 @@ static UINT rail_recv_client_sysparam_order(RailServerContext* context,
 
 	if ((error = rail_read_sysparam_order(s, sysparam, FALSE)))
 	{
-		WLog_ERR(TAG, "rail_read_sysparam_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_sysparam_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientSysparam, error, context, sysparam);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientSysparam failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientSysparam failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -977,7 +972,7 @@ static UINT rail_recv_client_sysparam_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_activate_order(RailServerContext* context,
-        RAIL_ACTIVATE_ORDER* activate, wStream* s)
+                                            RAIL_ACTIVATE_ORDER* activate, wStream* s)
 {
 	UINT error;
 
@@ -986,14 +981,14 @@ static UINT rail_recv_client_activate_order(RailServerContext* context,
 
 	if ((error = rail_read_activate_order(s, activate)))
 	{
-		WLog_ERR(TAG, "rail_read_activate_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_activate_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientActivate, error, context, activate);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientActivate failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientActivate failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1003,8 +998,8 @@ static UINT rail_recv_client_activate_order(RailServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_recv_client_sysmenu_order(RailServerContext* context,
-        RAIL_SYSMENU_ORDER* sysmenu, wStream* s)
+static UINT rail_recv_client_sysmenu_order(RailServerContext* context, RAIL_SYSMENU_ORDER* sysmenu,
+                                           wStream* s)
 {
 	UINT error;
 
@@ -1013,14 +1008,14 @@ static UINT rail_recv_client_sysmenu_order(RailServerContext* context,
 
 	if ((error = rail_read_sysmenu_order(s, sysmenu)))
 	{
-		WLog_ERR(TAG, "rail_read_sysmenu_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_sysmenu_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientSysmenu, error, context, sysmenu);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientSysmenu failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientSysmenu failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1031,7 +1026,7 @@ static UINT rail_recv_client_sysmenu_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_syscommand_order(RailServerContext* context,
-        RAIL_SYSCOMMAND_ORDER* syscommand, wStream* s)
+                                              RAIL_SYSCOMMAND_ORDER* syscommand, wStream* s)
 {
 	UINT error;
 
@@ -1040,14 +1035,14 @@ static UINT rail_recv_client_syscommand_order(RailServerContext* context,
 
 	if ((error = rail_read_syscommand_order(s, syscommand)))
 	{
-		WLog_ERR(TAG, "rail_read_syscommand_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_syscommand_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientSyscommand, error, context, syscommand);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientSyscommand failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientSyscommand failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1058,7 +1053,7 @@ static UINT rail_recv_client_syscommand_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_notify_event_order(RailServerContext* context,
-        RAIL_NOTIFY_EVENT_ORDER* notifyEvent, wStream* s)
+                                                RAIL_NOTIFY_EVENT_ORDER* notifyEvent, wStream* s)
 {
 	UINT error;
 
@@ -1067,14 +1062,14 @@ static UINT rail_recv_client_notify_event_order(RailServerContext* context,
 
 	if ((error = rail_read_notify_event_order(s, notifyEvent)))
 	{
-		WLog_ERR(TAG, "rail_read_notify_event_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_notify_event_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientNotifyEvent, error, context, notifyEvent);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientNotifyEvent failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientNotifyEvent failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1085,7 +1080,7 @@ static UINT rail_recv_client_notify_event_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_window_move_order(RailServerContext* context,
-        RAIL_WINDOW_MOVE_ORDER* windowMove, wStream* s)
+                                               RAIL_WINDOW_MOVE_ORDER* windowMove, wStream* s)
 {
 	UINT error;
 
@@ -1094,14 +1089,14 @@ static UINT rail_recv_client_window_move_order(RailServerContext* context,
 
 	if ((error = rail_read_window_move_order(s, windowMove)))
 	{
-		WLog_ERR(TAG, "rail_read_window_move_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_window_move_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientWindowMove, error, context, windowMove);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientWindowMove failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientWindowMove failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1112,7 +1107,7 @@ static UINT rail_recv_client_window_move_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_snap_arrange_order(RailServerContext* context,
-        RAIL_SNAP_ARRANGE_ORDER* snapArrange, wStream* s)
+                                                RAIL_SNAP_ARRANGE* snapArrange, wStream* s)
 {
 	UINT error;
 
@@ -1121,14 +1116,14 @@ static UINT rail_recv_client_snap_arrange_order(RailServerContext* context,
 
 	if ((error = rail_read_snap_arange_order(s, snapArrange)))
 	{
-		WLog_ERR(TAG, "rail_read_snap_arange_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_snap_arange_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientSnapArrange, error, context, snapArrange);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientSnapArrange failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientSnapArrange failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1139,7 +1134,7 @@ static UINT rail_recv_client_snap_arrange_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_get_appid_req_order(RailServerContext* context,
-        RAIL_GET_APPID_REQ_ORDER* getAppidReq, wStream* s)
+                                                 RAIL_GET_APPID_REQ_ORDER* getAppidReq, wStream* s)
 {
 	UINT error;
 
@@ -1148,14 +1143,14 @@ static UINT rail_recv_client_get_appid_req_order(RailServerContext* context,
 
 	if ((error = rail_read_get_appid_req_order(s, getAppidReq)))
 	{
-		WLog_ERR(TAG, "rail_read_get_appid_req_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_get_appid_req_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientGetAppidReq, error, context, getAppidReq);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientGetAppidReq failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientGetAppidReq failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1166,7 +1161,7 @@ static UINT rail_recv_client_get_appid_req_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_langbar_info_order(RailServerContext* context,
-        RAIL_LANGBAR_INFO_ORDER* langbarInfo, wStream* s)
+                                                RAIL_LANGBAR_INFO_ORDER* langbarInfo, wStream* s)
 {
 	UINT error;
 
@@ -1175,14 +1170,14 @@ static UINT rail_recv_client_langbar_info_order(RailServerContext* context,
 
 	if ((error = rail_read_langbar_info_order(s, langbarInfo)))
 	{
-		WLog_ERR(TAG, "rail_read_langbar_info_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_langbar_info_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientLangbarInfo, error, context, langbarInfo);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientLangbarInfo failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientLangbarInfo failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1193,7 +1188,8 @@ static UINT rail_recv_client_langbar_info_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_language_ime_info_order(RailServerContext* context,
-        RAIL_LANGUAGEIME_INFO_ORDER* languageImeInfo, wStream* s)
+                                                     RAIL_LANGUAGEIME_INFO_ORDER* languageImeInfo,
+                                                     wStream* s)
 {
 	UINT error;
 
@@ -1202,14 +1198,14 @@ static UINT rail_recv_client_language_ime_info_order(RailServerContext* context,
 
 	if ((error = rail_read_language_ime_info_order(s, languageImeInfo)))
 	{
-		WLog_ERR(TAG, "rail_read_language_ime_info_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_language_ime_info_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientLanguageImeInfo, error, context, languageImeInfo);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientLanguageImeInfo failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientLanguageImeInfo failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1220,7 +1216,8 @@ static UINT rail_recv_client_language_ime_info_order(RailServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rail_recv_client_compartment_info(RailServerContext* context,
-        RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo, wStream* s)
+                                              RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo,
+                                              wStream* s)
 {
 	UINT error;
 
@@ -1229,14 +1226,14 @@ static UINT rail_recv_client_compartment_info(RailServerContext* context,
 
 	if ((error = rail_read_compartment_info_order(s, compartmentInfo)))
 	{
-		WLog_ERR(TAG, "rail_read_compartment_info_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_compartment_info_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientCompartmentInfo, error, context, compartmentInfo);
 
 	if (error)
-		WLog_ERR(TAG, "context.ClientCompartmentInfo failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.ClientCompartmentInfo failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1246,8 +1243,7 @@ static UINT rail_recv_client_compartment_info(RailServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_recv_client_cloak_order(RailServerContext* context,
-        RAIL_CLOAK_ORDER* cloak, wStream* s)
+static UINT rail_recv_client_cloak_order(RailServerContext* context, RAIL_CLOAK* cloak, wStream* s)
 {
 	UINT error;
 
@@ -1256,21 +1252,21 @@ static UINT rail_recv_client_cloak_order(RailServerContext* context,
 
 	if ((error = rail_read_cloak_order(s, cloak)))
 	{
-		WLog_ERR(TAG, "rail_read_cloak_order failed with error %"PRIu32"!", error);
+		WLog_ERR(TAG, "rail_read_cloak_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientCloak, error, context, cloak);
 
 	if (error)
-		WLog_ERR(TAG, "context.Cloak failed with error %"PRIu32"", error);
+		WLog_ERR(TAG, "context.Cloak failed with error %" PRIu32 "", error);
 
 	return error;
 }
 
 static DWORD WINAPI rail_server_thread(LPVOID arg)
 {
-	RailServerContext* context = (RailServerContext*) arg;
+	RailServerContext* context = (RailServerContext*)arg;
 	RailServerPrivate* priv = context->priv;
 	DWORD status;
 	DWORD nCount = 0;
@@ -1286,7 +1282,7 @@ static DWORD WINAPI rail_server_thread(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %" PRIu32 "!", error);
 			break;
 		}
 
@@ -1295,7 +1291,7 @@ static DWORD WINAPI rail_server_thread(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", error);
 			break;
 		}
 
@@ -1307,7 +1303,11 @@ static DWORD WINAPI rail_server_thread(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject(context->priv->channelEvent, 0) failed with error %"PRIu32"!", error);
+			WLog_ERR(
+			    TAG,
+			    "WaitForSingleObject(context->priv->channelEvent, 0) failed with error %" PRIu32
+			    "!",
+			    error);
 			break;
 		}
 
@@ -1315,16 +1315,14 @@ static DWORD WINAPI rail_server_thread(LPVOID arg)
 		{
 			if ((error = rail_server_handle_messages(context)))
 			{
-				WLog_ERR(TAG, "rail_server_handle_messages failed with error %"PRIu32"",
-				         error);
+				WLog_ERR(TAG, "rail_server_handle_messages failed with error %" PRIu32 "", error);
 				break;
 			}
 		}
 	}
 
 	if (error && context->rdpContext)
-		setChannelError(context->rdpContext, error,
-		                "rail_server_thread reported an error");
+		setChannelError(context->rdpContext, error, "rail_server_thread reported an error");
 
 	ExitThread(error);
 	return error;
@@ -1341,8 +1339,8 @@ static UINT rail_server_start(RailServerContext* context)
 	DWORD bytesReturned;
 	RailServerPrivate* priv = context->priv;
 	UINT error = ERROR_INTERNAL_ERROR;
-	priv->rail_channel = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION,
-	                     RAIL_SVC_CHANNEL_NAME);
+	priv->rail_channel =
+	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, RAIL_SVC_CHANNEL_NAME);
 
 	if (!priv->rail_channel)
 	{
@@ -1351,10 +1349,12 @@ static UINT rail_server_start(RailServerContext* context)
 	}
 
 	if (!WTSVirtualChannelQuery(priv->rail_channel, WTSVirtualEventHandle, &buffer,
-	                            &bytesReturned) || (bytesReturned != sizeof(HANDLE)))
+	                            &bytesReturned) ||
+	    (bytesReturned != sizeof(HANDLE)))
 	{
 		WLog_ERR(TAG,
-		         "error during WTSVirtualChannelQuery(WTSVirtualEventHandle) or invalid returned size(%"PRIu32")",
+		         "error during WTSVirtualChannelQuery(WTSVirtualEventHandle) or invalid returned "
+		         "size(%" PRIu32 ")",
 		         bytesReturned);
 
 		if (buffer)
@@ -1373,8 +1373,7 @@ static UINT rail_server_start(RailServerContext* context)
 		goto out_close;
 	}
 
-	context->priv->thread = CreateThread(NULL, 0,
-	                                     rail_server_thread, (void*) context, 0, NULL);
+	context->priv->thread = CreateThread(NULL, 0, rail_server_thread, (void*)context, 0, NULL);
 
 	if (!context->priv->thread)
 	{
@@ -1394,7 +1393,7 @@ out_close:
 
 static BOOL rail_server_stop(RailServerContext* context)
 {
-	RailServerPrivate* priv = (RailServerPrivate*) context->priv;
+	RailServerPrivate* priv = (RailServerPrivate*)context->priv;
 
 	if (priv->thread)
 	{
@@ -1402,8 +1401,7 @@ static BOOL rail_server_stop(RailServerContext* context)
 
 		if (WaitForSingleObject(priv->thread, INFINITE) == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"",
-			         GetLastError());
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", GetLastError());
 			return FALSE;
 		}
 
@@ -1451,8 +1449,7 @@ RailServerContext* rail_server_context_new(HANDLE vcm)
 	context->ServerCloak = rail_send_server_cloak;
 	context->ServerPowerDisplayRequest = rail_send_server_power_display_request;
 	context->ServerGetAppidRespEx = rail_send_server_get_appid_resp_ex;
-	context->priv = priv = (RailServerPrivate*)calloc(1,
-	                       sizeof(RailServerPrivate));
+	context->priv = priv = (RailServerPrivate*)calloc(1, sizeof(RailServerPrivate));
 
 	if (!priv)
 	{
@@ -1508,20 +1505,21 @@ UINT rail_server_handle_messages(RailServerContext* context)
 		if (GetLastError() == ERROR_NO_DATA)
 			return ERROR_NO_DATA;
 
-		WLog_ERR(TAG,  "channel connection closed");
+		WLog_ERR(TAG, "channel connection closed");
 		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Parse header */
 	if ((status = rail_read_pdu_header(s, &orderType, &orderLength)) != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "rail_read_pdu_header failed with error %"PRIu32"!", status);
+		WLog_ERR(TAG, "rail_read_pdu_header failed with error %" PRIu32 "!", status);
 		return status;
 	}
 
 	if (!Stream_EnsureRemainingCapacity(s, orderLength - RAIL_PDU_HEADER_LENGTH))
 	{
-		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed, orderLength - RAIL_PDU_HEADER_LENGTH");
+		WLog_ERR(TAG,
+		         "Stream_EnsureRemainingCapacity failed, orderLength - RAIL_PDU_HEADER_LENGTH");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -1532,111 +1530,110 @@ UINT rail_server_handle_messages(RailServerContext* context)
 		if (GetLastError() == ERROR_NO_DATA)
 			return ERROR_NO_DATA;
 
-		WLog_ERR(TAG,  "channel connection closed");
+		WLog_ERR(TAG, "channel connection closed");
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	WLog_DBG(TAG, "Received %s PDU, length:%"PRIu16"",
+	WLog_DBG(TAG, "Received %s PDU, length:%" PRIu16 "",
 	         RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
 
 	switch (orderType)
 	{
 		case TS_RAIL_ORDER_HANDSHAKE:
-			{
-				RAIL_HANDSHAKE_ORDER handshake;
-				return rail_recv_client_handshake_order(context, &handshake, s);
-			}
+		{
+			RAIL_HANDSHAKE_ORDER handshake;
+			return rail_recv_client_handshake_order(context, &handshake, s);
+		}
 
 		case TS_RAIL_ORDER_CLIENTSTATUS:
-			{
-				RAIL_CLIENT_STATUS_ORDER clientStatus;
-				return rail_recv_client_client_status_order(context, &clientStatus, s);
-			}
+		{
+			RAIL_CLIENT_STATUS_ORDER clientStatus;
+			return rail_recv_client_client_status_order(context, &clientStatus, s);
+		}
 
 		case TS_RAIL_ORDER_EXEC:
-			{
-				RAIL_EXEC_ORDER exec = { 0 };
-				return rail_recv_client_exec_order(context, &exec, s);
-			}
+		{
+			RAIL_EXEC_ORDER exec = { 0 };
+			return rail_recv_client_exec_order(context, &exec, s);
+		}
 
 		case TS_RAIL_ORDER_SYSPARAM:
-			{
-				RAIL_SYSPARAM_ORDER sysparam = { 0 };
-				return rail_recv_client_sysparam_order(context, &sysparam, s);
-			}
+		{
+			RAIL_SYSPARAM_ORDER sysparam = { 0 };
+			return rail_recv_client_sysparam_order(context, &sysparam, s);
+		}
 
 		case TS_RAIL_ORDER_ACTIVATE:
-			{
-				RAIL_ACTIVATE_ORDER activate;
-				return rail_recv_client_activate_order(context, &activate, s);
-			}
+		{
+			RAIL_ACTIVATE_ORDER activate;
+			return rail_recv_client_activate_order(context, &activate, s);
+		}
 
 		case TS_RAIL_ORDER_SYSMENU:
-			{
-				RAIL_SYSMENU_ORDER sysmenu;
-				return rail_recv_client_sysmenu_order(context, &sysmenu, s);
-			}
+		{
+			RAIL_SYSMENU_ORDER sysmenu;
+			return rail_recv_client_sysmenu_order(context, &sysmenu, s);
+		}
 
 		case TS_RAIL_ORDER_SYSCOMMAND:
-			{
-				RAIL_SYSCOMMAND_ORDER syscommand;
-				return rail_recv_client_syscommand_order(context, &syscommand, s);
-			}
+		{
+			RAIL_SYSCOMMAND_ORDER syscommand;
+			return rail_recv_client_syscommand_order(context, &syscommand, s);
+		}
 
 		case TS_RAIL_ORDER_NOTIFY_EVENT:
-			{
-				RAIL_NOTIFY_EVENT_ORDER notifyEvent;
-				return rail_recv_client_notify_event_order(context, &notifyEvent, s);
-			}
+		{
+			RAIL_NOTIFY_EVENT_ORDER notifyEvent;
+			return rail_recv_client_notify_event_order(context, &notifyEvent, s);
+		}
 
 		case TS_RAIL_ORDER_WINDOWMOVE:
-			{
-				RAIL_WINDOW_MOVE_ORDER windowMove;
-				return rail_recv_client_window_move_order(context, &windowMove, s);
-			}
+		{
+			RAIL_WINDOW_MOVE_ORDER windowMove;
+			return rail_recv_client_window_move_order(context, &windowMove, s);
+		}
 
 		case TS_RAIL_ORDER_SNAP_ARRANGE:
-			{
-				RAIL_SNAP_ARRANGE_ORDER snapArrange;
-				return rail_recv_client_snap_arrange_order(context, &snapArrange, s);
-			}
+		{
+			RAIL_SNAP_ARRANGE snapArrange;
+			return rail_recv_client_snap_arrange_order(context, &snapArrange, s);
+		}
 
 		case TS_RAIL_ORDER_GET_APPID_REQ:
-			{
-				RAIL_GET_APPID_REQ_ORDER getAppidReq;
-				return rail_recv_client_get_appid_req_order(context, &getAppidReq, s);
-			}
+		{
+			RAIL_GET_APPID_REQ_ORDER getAppidReq;
+			return rail_recv_client_get_appid_req_order(context, &getAppidReq, s);
+		}
 
 		case TS_RAIL_ORDER_LANGBARINFO:
-			{
-				RAIL_LANGBAR_INFO_ORDER langbarInfo;
-				return rail_recv_client_langbar_info_order(context, &langbarInfo, s);
-			}
+		{
+			RAIL_LANGBAR_INFO_ORDER langbarInfo;
+			return rail_recv_client_langbar_info_order(context, &langbarInfo, s);
+		}
 
 		case TS_RAIL_ORDER_LANGUAGEIMEINFO:
-			{
-				RAIL_LANGUAGEIME_INFO_ORDER languageImeInfo;
-				return rail_recv_client_language_ime_info_order(context, &languageImeInfo, s);
-			}
+		{
+			RAIL_LANGUAGEIME_INFO_ORDER languageImeInfo;
+			return rail_recv_client_language_ime_info_order(context, &languageImeInfo, s);
+		}
 
 		case TS_RAIL_ORDER_COMPARTMENTINFO:
-			{
-				RAIL_COMPARTMENT_INFO_ORDER compartmentInfo;
-				return rail_recv_client_compartment_info(context, &compartmentInfo, s);
-			}
+		{
+			RAIL_COMPARTMENT_INFO_ORDER compartmentInfo;
+			return rail_recv_client_compartment_info(context, &compartmentInfo, s);
+		}
 
 		case TS_RAIL_ORDER_CLOAK:
-			{
-				RAIL_CLOAK_ORDER cloak;
-				return rail_recv_client_cloak_order(context, &cloak, s);
-			}
+		{
+			RAIL_CLOAK cloak;
+			return rail_recv_client_cloak_order(context, &cloak, s);
+		}
 
 		default:
-			WLog_ERR(TAG,  "Unknown RAIL PDU order received.");
+			WLog_ERR(TAG, "Unknown RAIL PDU order received.");
 			return ERROR_INVALID_DATA;
 	}
 
 	Stream_SetPosition(s, 0);
 	return status;
 }
-

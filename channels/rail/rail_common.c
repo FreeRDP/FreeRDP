@@ -143,7 +143,7 @@ UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_st
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	Stream_Write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+	Stream_Write_UINT16(s, unicode_string->length);                  /* cbString (2 bytes) */
 	Stream_Write(s, unicode_string->string, unicode_string->length); /* string */
 	return CHANNEL_RC_OK;
 }
@@ -160,7 +160,7 @@ UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unic
 	if (!s || !unicode_string)
 		return ERROR_INVALID_PARAMETER;
 
-	length =  unicode_string->length;
+	length = unicode_string->length;
 
 	if (length > 0)
 	{
@@ -186,7 +186,7 @@ static UINT rail_read_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast
 	if (!s || !highContrast)
 		return ERROR_INVALID_PARAMETER;
 
-	Stream_Read_UINT32(s, highContrast->flags); /* flags (4 bytes) */
+	Stream_Read_UINT32(s, highContrast->flags);             /* flags (4 bytes) */
 	Stream_Read_UINT32(s, highContrast->colorSchemeLength); /* colorSchemeLength (4 bytes) */
 	return rail_read_unicode_string(s, &highContrast->colorScheme); /* colorScheme */
 }
@@ -205,7 +205,7 @@ static UINT rail_write_high_contrast(wStream* s, const RAIL_HIGH_CONTRAST* highC
 
 	colorSchemeLength = highContrast->colorScheme.length + 2;
 	Stream_Write_UINT32(s, highContrast->flags); /* flags (4 bytes) */
-	Stream_Write_UINT32(s, colorSchemeLength); /* colorSchemeLength (4 bytes) */
+	Stream_Write_UINT32(s, colorSchemeLength);   /* colorSchemeLength (4 bytes) */
 	return rail_write_unicode_string(s, &highContrast->colorScheme); /* colorScheme */
 }
 
@@ -232,8 +232,7 @@ static UINT rail_write_filterkeys(wStream* s, const TS_FILTERKEYS* filterKeys)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam,
-                              BOOL extendedSpiSupported)
+UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL extendedSpiSupported)
 {
 	BYTE body;
 	UINT error = CHANNEL_RC_OK;
@@ -279,9 +278,9 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam,
 				return ERROR_INVALID_DATA;
 			}
 
-			Stream_Read_UINT16(s, sysparam->workArea.left); /* left (2 bytes) */
-			Stream_Read_UINT16(s, sysparam->workArea.top); /* top (2 bytes) */
-			Stream_Read_UINT16(s, sysparam->workArea.right); /* right (2 bytes) */
+			Stream_Read_UINT16(s, sysparam->workArea.left);   /* left (2 bytes) */
+			Stream_Read_UINT16(s, sysparam->workArea.top);    /* top (2 bytes) */
+			Stream_Read_UINT16(s, sysparam->workArea.right);  /* right (2 bytes) */
 			Stream_Read_UINT16(s, sysparam->workArea.bottom); /* bottom (2 bytes) */
 			break;
 
@@ -292,9 +291,9 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam,
 				return ERROR_INVALID_DATA;
 			}
 
-			Stream_Read_UINT16(s, sysparam->displayChange.left); /* left (2 bytes) */
-			Stream_Read_UINT16(s, sysparam->displayChange.top); /* top (2 bytes) */
-			Stream_Read_UINT16(s, sysparam->displayChange.right); /* right (2 bytes) */
+			Stream_Read_UINT16(s, sysparam->displayChange.left);   /* left (2 bytes) */
+			Stream_Read_UINT16(s, sysparam->displayChange.top);    /* top (2 bytes) */
+			Stream_Read_UINT16(s, sysparam->displayChange.right);  /* right (2 bytes) */
 			Stream_Read_UINT16(s, sysparam->displayChange.bottom); /* bottom (2 bytes) */
 			break;
 
@@ -305,9 +304,9 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam,
 				return ERROR_INVALID_DATA;
 			}
 
-			Stream_Read_UINT16(s, sysparam->taskbarPos.left); /* left (2 bytes) */
-			Stream_Read_UINT16(s, sysparam->taskbarPos.top); /* top (2 bytes) */
-			Stream_Read_UINT16(s, sysparam->taskbarPos.right); /* right (2 bytes) */
+			Stream_Read_UINT16(s, sysparam->taskbarPos.left);   /* left (2 bytes) */
+			Stream_Read_UINT16(s, sysparam->taskbarPos.top);    /* top (2 bytes) */
+			Stream_Read_UINT16(s, sysparam->taskbarPos.right);  /* right (2 bytes) */
 			Stream_Read_UINT16(s, sysparam->taskbarPos.bottom); /* bottom (2 bytes) */
 			break;
 
@@ -400,8 +399,7 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam,
  *
  * @return 0 on success, otherwise a Win32 err2or code
  */
-UINT rail_write_sysparam_order(wStream* s,
-                               const RAIL_SYSPARAM_ORDER* sysparam,
+UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
                                BOOL extendedSpiSupported)
 {
 	BYTE body;
@@ -436,23 +434,23 @@ UINT rail_write_sysparam_order(wStream* s,
 			break;
 
 		case SPI_SET_WORK_AREA:
-			Stream_Write_UINT16(s, sysparam->workArea.left); /* left (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->workArea.top); /* top (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->workArea.right); /* right (2 bytes) */
+			Stream_Write_UINT16(s, sysparam->workArea.left);   /* left (2 bytes) */
+			Stream_Write_UINT16(s, sysparam->workArea.top);    /* top (2 bytes) */
+			Stream_Write_UINT16(s, sysparam->workArea.right);  /* right (2 bytes) */
 			Stream_Write_UINT16(s, sysparam->workArea.bottom); /* bottom (2 bytes) */
 			break;
 
 		case SPI_DISPLAY_CHANGE:
-			Stream_Write_UINT16(s, sysparam->displayChange.left); /* left (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->displayChange.top); /* top (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->displayChange.right); /* right (2 bytes) */
+			Stream_Write_UINT16(s, sysparam->displayChange.left);   /* left (2 bytes) */
+			Stream_Write_UINT16(s, sysparam->displayChange.top);    /* top (2 bytes) */
+			Stream_Write_UINT16(s, sysparam->displayChange.right);  /* right (2 bytes) */
 			Stream_Write_UINT16(s, sysparam->displayChange.bottom); /* bottom (2 bytes) */
 			break;
 
 		case SPI_TASKBAR_POS:
-			Stream_Write_UINT16(s, sysparam->taskbarPos.left); /* left (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->taskbarPos.top); /* top (2 bytes) */
-			Stream_Write_UINT16(s, sysparam->taskbarPos.right); /* right (2 bytes) */
+			Stream_Write_UINT16(s, sysparam->taskbarPos.left);   /* left (2 bytes) */
+			Stream_Write_UINT16(s, sysparam->taskbarPos.top);    /* top (2 bytes) */
+			Stream_Write_UINT16(s, sysparam->taskbarPos.right);  /* right (2 bytes) */
 			Stream_Write_UINT16(s, sysparam->taskbarPos.bottom); /* bottom (2 bytes) */
 			break;
 

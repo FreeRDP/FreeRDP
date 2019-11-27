@@ -110,7 +110,7 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 
 	RAIL_SYSCOMMAND_ORDER syscommand;
 	syscommand.windowId = windowId;
 	syscommand.command = command;
-	xfc->rail->ClientSyscommand(xfc->rail, &syscommand);
+	xfc->rail->ClientSystemCommand(xfc->rail, &syscommand);
 }
 
 /**
@@ -206,7 +206,6 @@ static void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 	const RECTANGLE_16* extents;
 	REGION16 windowInvalidRegion;
 	region16_init(&windowInvalidRegion);
-
 	if (xfc->railWindows)
 		count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
@@ -608,12 +607,10 @@ static BOOL convert_rail_icon(ICON_INFO* iconInfo, xfRailIcon* railIcon)
 	if (!argbPixels)
 		goto error;
 
-	if (!freerdp_image_copy_from_icon_data(argbPixels,
-	                                       PIXEL_FORMAT_ARGB32, 0, 0, 0,
-	                                       iconInfo->width, iconInfo->height,
-	                                       iconInfo->bitsColor, iconInfo->cbBitsColor,
-	                                       iconInfo->bitsMask, iconInfo->cbBitsMask,
-	                                       iconInfo->colorTable, iconInfo->cbColorTable, iconInfo->bpp))
+	if (!freerdp_image_copy_from_icon_data(
+	        argbPixels, PIXEL_FORMAT_ARGB32, 0, 0, 0, iconInfo->width, iconInfo->height,
+	        iconInfo->bitsColor, iconInfo->cbBitsColor, iconInfo->bitsMask, iconInfo->cbBitsMask,
+	        iconInfo->colorTable, iconInfo->cbColorTable, iconInfo->bpp))
 		goto error;
 
 	nelements = 2 + iconInfo->width * iconInfo->height;
@@ -792,8 +789,8 @@ static void xf_rail_register_update_callbacks(rdpUpdate* update)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT xf_rail_server_exec_result(RailClientContext* context,
-                                       const RAIL_EXEC_RESULT_ORDER* execResult)
+static UINT xf_rail_server_execute_result(RailClientContext* context,
+                                          const RAIL_EXEC_RESULT_ORDER* execResult)
 {
 	xfContext* xfc = (xfContext*)context->custom;
 
@@ -841,7 +838,7 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED;
 	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED;
 	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED;
-	status = context->ClientClientStatus(context, &clientStatus);
+	status = context->ClientInformation(context, &clientStatus);
 
 	if (status != CHANNEL_RC_OK)
 		return status;
@@ -850,7 +847,7 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 	{
 		RAIL_LANGBAR_INFO_ORDER langBarInfo;
 		langBarInfo.languageBarStatus = 0x00000008; /* TF_SFT_HIDDEN */
-		status = context->ClientLangbarInfo(context, &langBarInfo);
+		status = context->ClientLanguageBarInfo(context, &langBarInfo);
 
 		/* We want the language bar, but the server might not support it. */
 		switch (status)
@@ -882,20 +879,17 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 	sysparam.workArea.right = settings->DesktopWidth;
 	sysparam.workArea.bottom = settings->DesktopHeight;
 	sysparam.dragFullWindows = FALSE;
-	status = context->ClientSysparam(context, &sysparam);
+	status = context->ClientSystemParam(context, &sysparam);
 
 	if (status != CHANNEL_RC_OK)
 		return status;
 
-	if (!utf8_string_to_rail_string(settings->RemoteApplicationProgram,
-	                                &exec.exeOrFile) ||
-	    !utf8_string_to_rail_string(settings->ShellWorkingDirectory,
-	                                &exec.workingDir) ||
-	    !utf8_string_to_rail_string(settings->RemoteApplicationCmdLine,
-	                                &exec.arguments))
+	if (!utf8_string_to_rail_string(settings->RemoteApplicationProgram, &exec.exeOrFile) ||
+	    !utf8_string_to_rail_string(settings->ShellWorkingDirectory, &exec.workingDir) ||
+	    !utf8_string_to_rail_string(settings->RemoteApplicationCmdLine, &exec.arguments))
 		return ERROR_INTERNAL_ERROR;
 
-	status = context->ClientExec(context, &exec);
+	status = context->ClientExecute(context, &exec);
 	free(exec.exeOrFile.string);
 	free(exec.workingDir.string);
 	free(exec.arguments.string);
@@ -1099,15 +1093,15 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 
 	xfc->rail = rail;
 	xf_rail_register_update_callbacks(context->update);
-	rail->custom = (void*) xfc;
-	rail->ServerExecResult = xf_rail_server_exec_result;
-	rail->ServerSysparam = xf_rail_server_system_param;
+	rail->custom = (void*)xfc;
+	rail->ServerExecuteResult = xf_rail_server_execute_result;
+	rail->ServerSystemParam = xf_rail_server_system_param;
 	rail->ServerHandshake = xf_rail_server_handshake;
 	rail->ServerHandshakeEx = xf_rail_server_handshake_ex;
 	rail->ServerLocalMoveSize = xf_rail_server_local_move_size;
 	rail->ServerMinMaxInfo = xf_rail_server_min_max_info;
-	rail->ServerLangbarInfo = xf_rail_server_language_bar_info;
-	rail->ServerGetAppidResp = xf_rail_server_get_appid_response;
+	rail->ServerLanguageBarInfo = xf_rail_server_language_bar_info;
+	rail->ServerGetAppIdResponse = xf_rail_server_get_appid_response;
 	xfc->railWindows = HashTable_New(TRUE);
 
 	if (!xfc->railWindows)

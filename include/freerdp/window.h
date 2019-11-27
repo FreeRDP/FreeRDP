@@ -135,6 +135,7 @@
 #define WS_EX_TRANSPARENT 0x00000020
 #define WS_EX_WINDOWEDGE 0x00000100
 #endif
+
 /**
  * This is a custom extended window style used by XRDP
  * instructing the client to use local window decorations
