@@ -1001,6 +1001,7 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 	BOOL result = FALSE;
 	DWORD format;
 	rdpGdi* gdi;
+	size_t size;
 	REGION16 region;
 	RECTANGLE_16 cmdRect;
 	UINT32 i, nbRects;
@@ -1055,7 +1056,13 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 
 		case RDP_CODEC_ID_NONE:
 			format = gdi_get_pixel_format(cmd->bmp.bpp);
-
+			size = cmd->bmp.width * cmd->bmp.height * GetBytesPerPixel(format);
+			if (size > cmd->bmp.bitmapDataLength)
+			{
+				WLog_ERR(TAG, "Short nocodec message: got %" PRIu32 " bytes, require %" PRIuz,
+				         cmd->bmp.bitmapDataLength, size);
+				goto out;
+			}
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride, cmd->destLeft,
 			                        cmd->destTop, cmd->bmp.width, cmd->bmp.height,
 			                        cmd->bmp.bitmapData, format, 0, 0, 0, &gdi->palette,
