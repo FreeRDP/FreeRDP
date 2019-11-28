@@ -1312,9 +1312,11 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 */
 		if (~(file->DesktopWidth) && ~(file->DesktopHeight))
 		{
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingWidth, file->DesktopWidth))
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingWidth,
+			                                 file->DesktopWidth))
 				return FALSE;
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingHeight, file->DesktopHeight))
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingHeight,
+			                                 file->DesktopHeight))
 				return FALSE;
 		}
 	}
