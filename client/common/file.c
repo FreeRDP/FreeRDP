@@ -1310,7 +1310,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 *
 		 *  Equivalent of doing /smart-sizing:WxH
 		 */
-		if (~(file->DesktopWidth) && ~(file->DesktopHeight))
+		if (~(file->DesktopWidth) && ~(file->DesktopHeight) && file->SmartSizing == 1)
 		{
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingWidth,
 			                                 file->DesktopWidth))
