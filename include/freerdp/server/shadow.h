@@ -41,6 +41,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/collections.h>
+#include <winpr/cmdline.h>
 
 typedef struct rdp_shadow_client rdpShadowClient;
 typedef struct rdp_shadow_server rdpShadowServer;
@@ -290,10 +291,11 @@ extern "C"
 	    BYTE* pixels, BOOL premultiplied, UINT32 width, UINT32 height,
 	    SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* pointerColor);
 
-	FREERDP_API int shadow_server_parse_command_line(rdpShadowServer* server, int argc,
-	                                                 char** argv);
+	FREERDP_API int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** argv,
+	                                                 COMMAND_LINE_ARGUMENT_A* cargs);
 	FREERDP_API int shadow_server_command_line_status_print(rdpShadowServer* server, int argc,
-	                                                        char** argv, int status);
+	                                                        char** argv, int status,
+	                                                        COMMAND_LINE_ARGUMENT_A* cargs);
 
 	FREERDP_API int shadow_server_start(rdpShadowServer* server);
 	FREERDP_API int shadow_server_stop(rdpShadowServer* server);

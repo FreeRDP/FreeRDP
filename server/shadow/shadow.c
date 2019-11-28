@@ -45,6 +45,48 @@ int main(int argc, char** argv)
 	DWORD dwExitCode;
 	rdpSettings* settings;
 	rdpShadowServer* server;
+	COMMAND_LINE_ARGUMENT_A shadow_args[] = {
+		{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<tag>:<level>[,<tag>:<level>[,...]]", NULL,
+		  NULL, -1, NULL, "Set logger filters, see wLog(7) for details" },
+		{ "log-level", COMMAND_LINE_VALUE_REQUIRED, "[OFF|FATAL|ERROR|WARN|INFO|DEBUG|TRACE]", NULL,
+		  NULL, -1, NULL, "Set the default log level, see wLog(7) for details" },
+		{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
+		{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL,
+		  "Server IPC socket" },
+		{ "bind-address", COMMAND_LINE_VALUE_REQUIRED, "<bind-address>[,<another address>, ...]",
+		  NULL, NULL, -1, NULL,
+		  "An address to bind to. Use '[<ipv6>]' for IPv6 addresses, e.g. '[::1]' for "
+		  "localhost" },
+		{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL,
+		  "Select or list monitors" },
+		{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL,
+		  "Select rectangle within monitor to share" },
+		{ "auth", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+		  "Clients must authenticate" },
+		{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+		  "Clients may view without prompt" },
+		{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+		  "Clients may interact without prompt" },
+		{ "sec", COMMAND_LINE_VALUE_REQUIRED, "<rdp|tls|nla|ext>", NULL, NULL, -1, NULL,
+		  "force specific protocol security" },
+		{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+		  "rdp protocol security" },
+		{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+		  "tls protocol security" },
+		{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+		  "nla protocol security" },
+		{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+		  "nla extended protocol security" },
+		{ "sam-file", COMMAND_LINE_VALUE_REQUIRED, "<file>", NULL, NULL, -1, NULL,
+		  "NTLM SAM file for NLA authentication" },
+		{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1,
+		  NULL, "Print version" },
+		{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL,
+		  -1, NULL, "Print the build configuration" },
+		{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?",
+		  "Print help" },
+		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+	};
 
 	shadow_subsystem_set_entry_builtin(NULL);
 
@@ -59,7 +101,7 @@ int main(int argc, char** argv)
 
 	settings = server->settings;
 
-	settings->NlaSecurity = FALSE;
+	settings->NlaSecurity = TRUE;
 	settings->TlsSecurity = TRUE;
 	settings->RdpSecurity = TRUE;
 
@@ -69,9 +111,9 @@ int main(int argc, char** argv)
 	server->authentication = FALSE;
 #endif
 
-	if ((status = shadow_server_parse_command_line(server, argc, argv)) < 0)
+	if ((status = shadow_server_parse_command_line(server, argc, argv, shadow_args)) < 0)
 	{
-		shadow_server_command_line_status_print(server, argc, argv, status);
+		shadow_server_command_line_status_print(server, argc, argv, status, shadow_args);
 		goto fail_parse_command_line;
 	}
 
