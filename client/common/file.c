@@ -1301,6 +1301,22 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		if (!freerdp_settings_set_bool(settings, FreeRDP_SmartSizing,
 		                               (file->SmartSizing == 1) ? TRUE : FALSE))
 			return FALSE;
+		/**
+		 *  SmartSizingWidth and SmartSizingHeight:
+		 *
+		 *  Adding this option to use the DesktopHeight	and DesktopWidth as
+		 *  parameters for the SmartSizingWidth and SmartSizingHeight, as there
+		 *  are no options for that in standard RDP files.
+		 *
+		 *  Equivalent of doing /smart-sizing:WxH
+		 */
+		if (~(file->DesktopWidth) && ~(file->DesktopHeight))
+		{
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingWidth, file->DesktopWidth))
+				return FALSE;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingHeight, file->DesktopHeight))
+				return FALSE;
+		}
 	}
 
 	if (~((size_t)file->LoadBalanceInfo))
