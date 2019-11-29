@@ -99,7 +99,7 @@ static int rpc_client_receive_pipe_write(RpcClient* client, const BYTE* buffer, 
 int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer, size_t length)
 {
 	int index = 0;
-	int status = 0;
+	size_t status = 0;
 	int nchunks = 0;
 	DataChunk chunks[2];
 
@@ -172,7 +172,7 @@ static int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
 
 static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 {
-	int status = -1;
+	SSIZE_T status = -1;
 	rpcconn_rts_hdr_t* rts;
 	rdpTsg* tsg = rpc->transport->tsg;
 
@@ -303,13 +303,13 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 {
 	BYTE* buffer;
 	RPC_PDU* pdu;
-	UINT32 StubOffset;
-	UINT32 StubLength;
+	size_t StubOffset;
+	size_t StubLength;
 	RpcClientCall* call;
-	rpcconn_hdr_t* header;
+	const rpcconn_hdr_t* header;
 	pdu = rpc->client->pdu;
 	buffer = (BYTE*)Stream_Buffer(fragment);
-	header = (rpcconn_hdr_t*)Stream_Buffer(fragment);
+	header = (const rpcconn_hdr_t*)Stream_Buffer(fragment);
 
 	if (header->common.ptype == PTYPE_RESPONSE)
 	{
@@ -458,13 +458,11 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 		WLog_ERR(TAG, "unexpected RPC PDU type 0x%02" PRIX8 "", header->common.ptype);
 		return -1;
 	}
-
-	return 1;
 }
 
 static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 {
-	int status = -1;
+	SSIZE_T status = -1;
 	UINT32 statusCode;
 	HttpResponse* response;
 	RpcInChannel* inChannel;
@@ -889,7 +887,7 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length
 
 BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 {
-	UINT32 offset;
+	size_t offset;
 	BYTE* buffer = NULL;
 	UINT32 stub_data_pad;
 	SecBuffer Buffers[2] = { 0 };
@@ -1020,27 +1018,36 @@ fail:
 	return rc;
 }
 
-static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT16* port,
+static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT16* pPort,
                                        BOOL* isProxy)
 {
 	struct addrinfo* result;
 
-	if (!settings || !host || !port || !isProxy)
+	if (!settings || !host || !pPort || !isProxy)
 		return FALSE;
 	else
 	{
+		BOOL proxy;
+		UINT16 port;
+		char* proxyHostname = NULL;
 		const char* peerHostname = settings->GatewayHostname;
-		const char* proxyUsername = settings->ProxyUsername;
-		const char* proxyPassword = settings->ProxyPassword;
-		*port = settings->GatewayPort;
-		*isProxy = proxy_prepare(settings, &peerHostname, port, &proxyUsername, &proxyPassword);
-		result = freerdp_tcp_resolve_host(peerHostname, *port, 0);
+		port = (UINT16)settings->GatewayPort;
+		proxy = proxy_prepare(settings, NULL, &proxyHostname, &port, NULL, NULL);
+		if (proxy)
+			peerHostname = proxyHostname;
+		result = freerdp_tcp_resolve_host(peerHostname, port, 0);
+		free(proxyHostname);
 
 		if (!result)
 			return FALSE;
 
-		*host =
-		    freerdp_tcp_address_to_string((const struct sockaddr_storage*)result->ai_addr, NULL);
+		if (isProxy)
+			*isProxy = proxy;
+		if (pPort)
+			*pPort = port;
+		if (host)
+			*host = freerdp_tcp_address_to_string((const struct sockaddr_storage*)result->ai_addr,
+			                                      NULL);
 		freeaddrinfo(result);
 		return TRUE;
 	}

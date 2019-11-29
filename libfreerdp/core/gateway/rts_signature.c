@@ -284,7 +284,7 @@ static const RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_TABLE[] = {
 BOOL rts_match_pdu_signature(const RtsPduSignature* signature, const rpcconn_rts_hdr_t* rts)
 {
 	UINT16 i;
-	int status;
+	SSIZE_T status;
 	const BYTE* buffer;
 	UINT32 length;
 	UINT32 offset;
@@ -328,7 +328,7 @@ BOOL rts_match_pdu_signature(const RtsPduSignature* signature, const rpcconn_rts
 BOOL rts_extract_pdu_signature(RtsPduSignature* signature, const rpcconn_rts_hdr_t* rts)
 {
 	int i;
-	int status;
+	SSIZE_T status;
 	BYTE* buffer;
 	UINT32 length;
 	UINT32 offset;

@@ -29,6 +29,7 @@
 
 #include "connection.h"
 #include "transport.h"
+#include "proxy.h"
 
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
@@ -444,9 +445,27 @@ static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 	return status;
 }
 
-static BOOL rdp_client_redirect_resolvable(const char* host)
+static BOOL rdp_client_redirect_resolvable(rdpContext* context, const char* host, UINT16 port)
 {
-	struct addrinfo* result = freerdp_tcp_resolve_host(host, -1, 0);
+	struct addrinfo* result;
+	DWORD ProxyType;
+	UINT16 ProxyPort;
+	char* ProxyHostname = NULL;
+	char* ProxyUsername = NULL;
+	char* ProxyPassword = NULL;
+	const BOOL isProxy = proxy_prepare(context->settings, &ProxyType, &ProxyHostname, &ProxyPort,
+	                                   &ProxyUsername, &ProxyPassword);
+	if (isProxy)
+	{
+		const BOOL rc = proxy_resolve(context, ProxyType, ProxyHostname, ProxyPort, ProxyUsername,
+		                              ProxyPassword, host, port);
+		free(ProxyHostname);
+		free(ProxyUsername);
+		free(ProxyPassword);
+		return rc;
+	}
+
+	result = freerdp_tcp_resolve_host(host, -1, 0);
 
 	if (!result)
 		return FALSE;
@@ -455,12 +474,15 @@ static BOOL rdp_client_redirect_resolvable(const char* host)
 	return TRUE;
 }
 
-static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
+static BOOL rdp_client_redirect_try_fqdn(rdpContext* context)
 {
+	rdpSettings* settings = context->settings;
+
 	if (settings->RedirectionFlags & LB_TARGET_FQDN)
 	{
 		if (settings->GatewayEnabled ||
-		    rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
+		    rdp_client_redirect_resolvable(context, settings->RedirectionTargetFQDN,
+		                                   settings->ServerPort))
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
@@ -475,8 +497,10 @@ static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
 	return FALSE;
 }
 
-static BOOL rdp_client_redirect_try_ip(rdpSettings* settings)
+static BOOL rdp_client_redirect_try_ip(rdpContext* context)
 {
+	rdpSettings* settings = context->settings;
+
 	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 	{
 		free(settings->ServerHostname);
@@ -491,12 +515,14 @@ static BOOL rdp_client_redirect_try_ip(rdpSettings* settings)
 	return FALSE;
 }
 
-static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
+static BOOL rdp_client_redirect_try_netbios(rdpContext* context)
 {
+	rdpSettings* settings = context->settings;
 	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 	{
 		if (settings->GatewayEnabled ||
-		    rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
+		    rdp_client_redirect_resolvable(context, settings->RedirectionTargetNetBiosName,
+		                                   settings->ServerPort))
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
@@ -548,13 +574,13 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 			const BOOL tryNetbios = (redirectionMask & 0x04) == 0;
 
 			if (tryFQDN && !haveRedirectAddress)
-				haveRedirectAddress = rdp_client_redirect_try_fqdn(settings);
+				haveRedirectAddress = rdp_client_redirect_try_fqdn(rdp->context);
 
 			if (tryNetAddress && !haveRedirectAddress)
-				haveRedirectAddress = rdp_client_redirect_try_ip(settings);
+				haveRedirectAddress = rdp_client_redirect_try_ip(rdp->context);
 
 			if (tryNetbios && !haveRedirectAddress)
-				haveRedirectAddress = rdp_client_redirect_try_netbios(settings);
+				haveRedirectAddress = rdp_client_redirect_try_netbios(rdp->context);
 
 			redirectionMask >>= 3;
 		} while (!haveRedirectAddress && (redirectionMask != 0));

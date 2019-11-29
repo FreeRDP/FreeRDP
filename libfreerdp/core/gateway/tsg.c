@@ -833,10 +833,10 @@ fail:
 
 static BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
 {
-	UINT32 pad;
+	size_t pad;
 	wStream* s;
 	size_t count;
-	UINT32 offset;
+	size_t offset;
 	rdpRpc* rpc;
 
 	if (!tsg || !tsg->rpc || !tunnelContext || !tsg->MachineName)

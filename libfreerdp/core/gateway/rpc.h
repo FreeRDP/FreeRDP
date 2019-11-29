@@ -770,11 +770,11 @@ struct rdp_rpc
 FREERDP_LOCAL void rpc_pdu_header_print(rpcconn_hdr_t* header);
 FREERDP_LOCAL void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);
 
-FREERDP_LOCAL UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment);
-FREERDP_LOCAL UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
+FREERDP_LOCAL size_t rpc_offset_align(size_t* offset, size_t alignment);
+FREERDP_LOCAL size_t rpc_offset_pad(size_t* offset, size_t pad);
 
-FREERDP_LOCAL BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset,
-                                          UINT32* length);
+FREERDP_LOCAL BOOL rpc_get_stub_data_info(rdpRpc* rpc, const BYTE* header, size_t* offset,
+                                          size_t* length);
 
 FREERDP_LOCAL SSIZE_T rpc_channel_write(RpcChannel* channel, const BYTE* data, size_t length);
 

@@ -1663,6 +1663,10 @@ extern "C"
 
 	FREERDP_API const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id);
 
+	FREERDP_API BOOL freerdp_settings_proxy_parse_uri(const char* uri, DWORD* pProxyType,
+	                                                  char** pProxyHostname, UINT16* pPort,
+	                                                  char** pProxyUsername, char** pProxyPassword);
+
 #ifdef __cplusplus
 }
 #endif

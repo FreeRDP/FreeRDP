@@ -404,7 +404,7 @@ void rts_generate_cookie(BYTE* cookie)
 
 int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 {
-	int status;
+	SSIZE_T status;
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
 	UINT32 ReceiveWindowSize;
@@ -450,7 +450,7 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 {
-	int status;
+	SSIZE_T status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
@@ -517,7 +517,7 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 static int rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
-	int status;
+	SSIZE_T status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
@@ -543,7 +543,7 @@ static int rts_send_keep_alive_pdu(rdpRpc* rpc)
 
 int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
-	int status;
+	SSIZE_T status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
@@ -637,7 +637,7 @@ static int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buf
 
 static int rts_send_ping_pdu(rdpRpc* rpc)
 {
-	int status;
+	SSIZE_T status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
@@ -661,7 +661,7 @@ static int rts_send_ping_pdu(rdpRpc* rpc)
 
 SSIZE_T rts_command_length(UINT32 CommandType, const BYTE* buffer, size_t length)
 {
-	int CommandLength = 0;
+	SSIZE_T CommandLength = 0;
 
 	switch (CommandType)
 	{
@@ -764,7 +764,7 @@ static int rts_send_OUT_R2_A7_pdu(rdpRpc* rpc)
 
 static int rts_send_OUT_R2_C1_pdu(rdpRpc* rpc)
 {
-	int status;
+	SSIZE_T status;
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
 	RpcOutChannel* nextOutChannel = rpc->VirtualConnection->NonDefaultOutChannel;
@@ -787,7 +787,7 @@ static int rts_send_OUT_R2_C1_pdu(rdpRpc* rpc)
 
 int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 {
-	int status;
+	SSIZE_T status;
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
 	UINT32 ReceiveWindowSize;

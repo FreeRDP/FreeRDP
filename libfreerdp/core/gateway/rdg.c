@@ -967,55 +967,58 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 {
 	int sockfd = 0;
 	long status = 0;
-	BIO* socketBio = NULL;
 	BIO* bufferedBio = NULL;
 	rdpSettings* settings = rdg->settings;
 	const char* peerHostname = settings->GatewayHostname;
+	char* proxyHostname = NULL;
 	UINT16 peerPort = (UINT16)settings->GatewayPort;
-	const char *proxyUsername, *proxyPassword;
-	BOOL isProxyConnection =
-	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
+	char* proxyUsername = NULL;
+	char* proxyPassword = NULL;
+	DWORD proxyType;
+	BOOL isProxyConnection;
 
 	if (settings->GatewayPort > UINT16_MAX)
 		return FALSE;
 
-	sockfd = freerdp_tcp_connect(rdg->context, settings, peerAddress ? peerAddress : peerHostname,
-	                             peerPort, timeout);
+	isProxyConnection = proxy_prepare(settings, &proxyType, &proxyHostname, &peerPort,
+	                                  &proxyUsername, &proxyPassword);
+	if (isProxyConnection)
+		peerHostname = proxyHostname;
+	else
+		peerHostname = peerAddress ? peerAddress : peerHostname;
+	sockfd = freerdp_tcp_connect(rdg->context, settings, peerHostname, peerPort, timeout,
+	                             isProxyConnection);
+
+	free(proxyHostname);
 
 	if (sockfd < 0)
 	{
+		free(proxyUsername);
+		free(proxyPassword);
 		return FALSE;
 	}
-
-	socketBio = BIO_new(BIO_s_simple_socket());
-
-	if (!socketBio)
-	{
-		closesocket((SOCKET)sockfd);
-		return FALSE;
-	}
-
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
-
+	bufferedBio = freerdp_tcp_to_buffered_bio(sockfd, TRUE);
 	if (!bufferedBio)
 	{
-		BIO_free_all(socketBio);
+		closesocket((SOCKET)sockfd);
+		free(proxyUsername);
+		free(proxyPassword);
 		return FALSE;
 	}
-
-	bufferedBio = BIO_push(bufferedBio, socketBio);
-	status = BIO_set_nonblock(bufferedBio, TRUE);
 
 	if (isProxyConnection)
 	{
-		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,
+		if (!proxy_connect(proxyType, bufferedBio, proxyUsername, proxyPassword,
 		                   settings->GatewayHostname, (UINT16)settings->GatewayPort))
 		{
 			BIO_free_all(bufferedBio);
+			free(proxyUsername);
+			free(proxyPassword);
 			return FALSE;
 		}
 	}
+	free(proxyUsername);
+	free(proxyPassword);
 
 	if (!status)
 	{

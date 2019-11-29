@@ -149,16 +149,16 @@ void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header)
 	header->common.packed_drep[3] = rpc->packed_drep[3];
 }
 
-UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment)
+size_t rpc_offset_align(size_t* offset, size_t alignment)
 {
-	UINT32 pad;
+	size_t pad;
 	pad = *offset;
 	*offset = (*offset + alignment - 1) & ~(alignment - 1);
 	pad = *offset - pad;
 	return pad;
 }
 
-UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
+size_t rpc_offset_pad(size_t* offset, size_t pad)
 {
 	*offset += pad;
 	return pad;
@@ -239,17 +239,17 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
  *
  */
 
-BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* length)
+BOOL rpc_get_stub_data_info(rdpRpc* rpc, const BYTE* buffer, size_t* offset, size_t* length)
 {
 	UINT32 alloc_hint = 0;
-	rpcconn_hdr_t* header;
+	const rpcconn_hdr_t* header;
 	UINT32 frag_length;
 	UINT32 auth_length;
 	UINT32 auth_pad_length;
 	UINT32 sec_trailer_offset;
-	rpc_sec_trailer* sec_trailer;
+	const rpc_sec_trailer* sec_trailer;
 	*offset = RPC_COMMON_FIELDS_LENGTH;
-	header = ((rpcconn_hdr_t*)buffer);
+	header = ((const rpcconn_hdr_t*)buffer);
 
 	switch (header->common.ptype)
 	{
@@ -634,62 +634,70 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	int sockfd;
 	rdpTls* tls;
 	int tlsStatus;
-	BIO* socketBio;
 	BIO* bufferedBio;
 	rdpContext* context;
 	rdpSettings* settings;
-	const char* proxyUsername;
-	const char* proxyPassword;
+	char* ProxyHostname = NULL;
+	char* ProxyUsername = NULL;
+	char* ProxyPassword = NULL;
+	UINT16 ProxyPort;
+	DWORD ProxyType;
+	BOOL useProxy;
+	const char* host;
+	UINT16 port;
 
 	if (!channel || !channel->client || !channel->client->context ||
 	    !channel->client->context->settings)
 		return FALSE;
-
 	context = channel->client->context;
 	settings = context->settings;
-	proxyUsername = settings->ProxyUsername;
-	proxyPassword = settings->ProxyPassword;
-	{
-		sockfd = freerdp_tcp_connect(context, settings, channel->client->host,
-		                             channel->client->port, timeout);
 
-		if (sockfd < 0)
-			return FALSE;
+	useProxy = proxy_prepare(settings, &ProxyType, &ProxyHostname, &ProxyPort, &ProxyUsername,
+	                         &ProxyPassword);
+
+	host = channel->client->host;
+	port = channel->client->port;
+	if (useProxy)
+	{
+		host = ProxyHostname;
+		port = ProxyPort;
 	}
-	socketBio = BIO_new(BIO_s_simple_socket());
-
-	if (!socketBio)
+	sockfd = freerdp_tcp_connect(context, settings, host, port, timeout, useProxy);
+	free(ProxyHostname);
+	if (sockfd < 0)
 	{
-		closesocket(sockfd);
+		free(ProxyUsername);
+		free(ProxyPassword);
 		return FALSE;
 	}
 
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
-
+	bufferedBio = freerdp_tcp_to_buffered_bio(sockfd, TRUE);
 	if (!bufferedBio)
 	{
-		BIO_free_all(socketBio);
+		closesocket((SOCKET)sockfd);
+		free(ProxyUsername);
+		free(ProxyPassword);
 		return FALSE;
 	}
 
-	bufferedBio = BIO_push(bufferedBio, socketBio);
-
-	if (!BIO_set_nonblock(bufferedBio, TRUE))
+	if (useProxy)
 	{
-		BIO_free_all(bufferedBio);
-		return FALSE;
-	}
+		BOOL rc;
 
-	if (channel->client->isProxy)
-	{
-		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,
-		                   settings->GatewayHostname, settings->GatewayPort))
+		rc = proxy_connect(ProxyType, bufferedBio, ProxyUsername, ProxyPassword,
+		                   settings->GatewayHostname, (UINT16)settings->GatewayPort);
+		free(ProxyUsername);
+		free(ProxyPassword);
+		if (!rc)
 		{
 			BIO_free_all(bufferedBio);
+			free(ProxyUsername);
+			free(ProxyPassword);
 			return FALSE;
 		}
 	}
+	free(ProxyUsername);
+	free(ProxyPassword);
 
 	channel->bio = bufferedBio;
 	tls = channel->tls = tls_new(settings);

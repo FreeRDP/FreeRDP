@@ -107,8 +107,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	BOOL continueNeeded = FALSE;
 	int status = -1;
 	BYTE* buffer = NULL;
-	UINT32 offset;
-	UINT32 length;
+	size_t offset;
+	size_t length;
 	RpcClientCall* clientCall;
 	p_cont_elem_t* p_cont_elem;
 	rpcconn_bind_hdr_t* bind_pdu = NULL;
@@ -350,8 +350,8 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 {
 	int status = -1;
 	BYTE* buffer;
-	UINT32 offset;
-	UINT32 length;
+	size_t offset;
+	size_t length;
 	const SecBuffer* sbuffer;
 	RpcClientCall* clientCall;
 	rpcconn_rpc_auth_3_hdr_t* auth_3_pdu;
