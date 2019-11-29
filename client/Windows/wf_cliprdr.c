@@ -166,6 +166,18 @@ static void CliprdrEnumFORMATETC_Delete(CliprdrEnumFORMATETC* instance);
 
 static void CliprdrStream_Delete(CliprdrStream* instance);
 
+static BOOL try_open_clipboard(HWND hwnd)
+{
+	size_t x;
+	for (x = 0; x < 10; x++)
+	{
+		if (OpenClipboard(hwnd))
+			return TRUE;
+		Sleep(10);
+	}
+	return FALSE;
+}
+
 /**
  * IStream
  */
@@ -1190,10 +1202,13 @@ static BOOL cliprdr_GetUpdatedClipboardFormats(wfClipboard* clipboard, PUINT lpu
 	if (!clipboard->legacyApi)
 		return clipboard->GetUpdatedClipboardFormats(lpuiFormats, cFormats, pcFormatsOut);
 
-	clipboardOpen = OpenClipboard(clipboard->hwnd);
+	clipboardOpen = try_open_clipboard(clipboard->hwnd);
 
 	if (!clipboardOpen)
-		return FALSE;
+	{
+		*pcFormatsOut = 0;
+		return TRUE; /* Other app holding clipboard */
+	}
 
 	while (index < cFormats)
 	{
@@ -1214,12 +1229,12 @@ static BOOL cliprdr_GetUpdatedClipboardFormats(wfClipboard* clipboard, PUINT lpu
 static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 {
 	UINT rc;
-	int count;
+	int count = 0;
 	UINT32 index;
-	UINT32 numFormats;
+	UINT32 numFormats = 0;
 	UINT32 formatId = 0;
 	char formatName[1024];
-	CLIPRDR_FORMAT* formats;
+	CLIPRDR_FORMAT* formats = NULL;
 	CLIPRDR_FORMAT_LIST formatList;
 
 	if (!clipboard)
@@ -1227,45 +1242,46 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 
 	ZeroMemory(&formatList, sizeof(CLIPRDR_FORMAT_LIST));
 
-	if (!OpenClipboard(clipboard->hwnd))
-		return ERROR_INTERNAL_ERROR;
-
-	count = CountClipboardFormats();
-	numFormats = (UINT32)count;
-	formats = (CLIPRDR_FORMAT*)calloc(numFormats, sizeof(CLIPRDR_FORMAT));
-
-	if (!formats)
+	/* Ignore if other app is holding clipboard */
+	if (try_open_clipboard(clipboard->hwnd))
 	{
-		CloseClipboard();
-		return CHANNEL_RC_NO_MEMORY;
-	}
+		count = CountClipboardFormats();
+		numFormats = (UINT32)count;
+		formats = (CLIPRDR_FORMAT*)calloc(numFormats, sizeof(CLIPRDR_FORMAT));
 
-	index = 0;
-
-	if (IsClipboardFormatAvailable(CF_HDROP))
-	{
-		formats[index++].formatId = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
-		formats[index++].formatId = RegisterClipboardFormat(CFSTR_FILECONTENTS);
-	}
-	else
-	{
-		while (formatId = EnumClipboardFormats(formatId))
-			formats[index++].formatId = formatId;
-	}
-
-	numFormats = index;
-
-	if (!CloseClipboard())
-	{
-		free(formats);
-		return ERROR_INTERNAL_ERROR;
-	}
-
-	for (index = 0; index < numFormats; index++)
-	{
-		if (GetClipboardFormatNameA(formats[index].formatId, formatName, sizeof(formatName)))
+		if (!formats)
 		{
-			formats[index].formatName = _strdup(formatName);
+			CloseClipboard();
+			return CHANNEL_RC_NO_MEMORY;
+		}
+
+		index = 0;
+
+		if (IsClipboardFormatAvailable(CF_HDROP))
+		{
+			formats[index++].formatId = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
+			formats[index++].formatId = RegisterClipboardFormat(CFSTR_FILECONTENTS);
+		}
+		else
+		{
+			while (formatId = EnumClipboardFormats(formatId))
+				formats[index++].formatId = formatId;
+		}
+
+		numFormats = index;
+
+		if (!CloseClipboard())
+		{
+			free(formats);
+			return ERROR_INTERNAL_ERROR;
+		}
+
+		for (index = 0; index < numFormats; index++)
+		{
+			if (GetClipboardFormatNameA(formats[index].formatId, formatName, sizeof(formatName)))
+			{
+				formats[index].formatName = _strdup(formatName);
+			}
 		}
 	}
 
@@ -1400,7 +1416,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			DEBUG_CLIPRDR("info: WM_RENDERALLFORMATS");
 
 			/* discard all contexts in clipboard */
-			if (!OpenClipboard(clipboard->hwnd))
+			if (!try_open_clipboard(clipboard->hwnd))
 			{
 				DEBUG_CLIPRDR("OpenClipboard failed with 0x%x", GetLastError());
 				break;
@@ -1917,8 +1933,8 @@ static UINT wf_cliprdr_server_format_list(CliprdrClientContext* context,
 	}
 	else
 	{
-		if (!OpenClipboard(clipboard->hwnd))
-			return ERROR_INTERNAL_ERROR;
+		if (!try_open_clipboard(clipboard->hwnd))
+			return CHANNEL_RC_OK; /* Ignore, other app holding clipboard */
 
 		if (EmptyClipboard())
 		{
@@ -2133,23 +2149,24 @@ wf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	}
 	else
 	{
-		if (!OpenClipboard(clipboard->hwnd))
-			return ERROR_INTERNAL_ERROR;
-
-		hClipdata = GetClipboardData(requestedFormatId);
-
-		if (!hClipdata)
+		/* Ignore if other app is holding the clipboard */
+		if (try_open_clipboard(clipboard->hwnd))
 		{
-			CloseClipboard();
-			return ERROR_INTERNAL_ERROR;
-		}
+			hClipdata = GetClipboardData(requestedFormatId);
 
-		globlemem = (char*)GlobalLock(hClipdata);
-		size = (int)GlobalSize(hClipdata);
-		buff = malloc(size);
-		CopyMemory(buff, globlemem, size);
-		GlobalUnlock(hClipdata);
-		CloseClipboard();
+			if (!hClipdata)
+			{
+				CloseClipboard();
+				return ERROR_INTERNAL_ERROR;
+			}
+
+			globlemem = (char*)GlobalLock(hClipdata);
+			size = (int)GlobalSize(hClipdata);
+			buff = malloc(size);
+			CopyMemory(buff, globlemem, size);
+			GlobalUnlock(hClipdata);
+			CloseClipboard();
+		}
 	}
 
 	response.msgFlags = CB_RESPONSE_OK;
