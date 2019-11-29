@@ -1218,6 +1218,45 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			return FALSE;
 	}
 
+	if (~file->DesktopSizeId)
+	{
+		switch (file->DesktopSizeId)
+		{
+			case 0:
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 640))
+					return FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 480))
+					return FALSE;
+				break;
+			case 1:
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 800))
+					return FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 600))
+					return FALSE;
+				break;
+			case 2:
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 1024))
+					return FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 768))
+					return FALSE;
+				break;
+			case 3:
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 1280))
+					return FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 1024))
+					return FALSE;
+				break;
+			case 4:
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 1600))
+					return FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 1200))
+					return FALSE;
+				break;
+			default:
+				WLog_WARN(TAG, "Unsupported 'desktop size id' value %" PRIu32, file->DesktopSizeId);
+				break;
+		}
+	}
 	if (~file->DesktopWidth)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, file->DesktopWidth))
