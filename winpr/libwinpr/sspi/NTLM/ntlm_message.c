@@ -1037,7 +1037,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 #endif
 	context->state = NTLM_STATE_FINAL;
 	Stream_Free(s, FALSE);
-	return SEC_I_COMPLETE_NEEDED;
+	return SEC_E_OK;
 }
 
 SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
