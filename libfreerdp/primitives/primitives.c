@@ -247,7 +247,7 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 			goto out;
 		}
 
-		WLog_DBG(TAG, " * %s\t= %" PRIu32, cur->name, cur->count);
+		WLog_DBG(TAG, " * %s= %" PRIu32, cur->name, cur->count);
 		if (!best || (best->count < cur->count))
 			best = cur;
 	}

@@ -57,7 +57,6 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 	cl_mem objs[3] = { NULL, NULL, NULL };
 	cl_mem destObj;
 	cl_kernel kernel;
-	cl_event events[3];
 	size_t indexes[2];
 	const char* sourceNames[] = { "Y", "U", "V" };
 	primitives_opencl_context* cl = primitives_get_opencl_context();
@@ -71,19 +70,11 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 
 	for (i = 0; i < 3; i++)
 	{
-		objs[i] =
-		    clCreateBuffer(cl->context, CL_MEM_READ_ONLY, srcStep[i] * roi->height, NULL, &ret);
+		objs[i] = clCreateBuffer(cl->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+		                         srcStep[i] * roi->height, (char*)pSrc[i], &ret);
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to create %sobj", sourceNames[i]);
-			goto error_objs;
-		}
-
-		ret = clEnqueueWriteBuffer(cl->commandQueue, objs[i], CL_FALSE, 0, srcStep[i] * roi->height,
-		                           pSrc[i], 0, NULL, &events[i]);
-		if (ret != CL_SUCCESS)
-		{
-			WLog_ERR(TAG, "unable to enqueue write command for %sobj", sourceNames[i]);
 			goto error_objs;
 		}
 	}
@@ -129,7 +120,7 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 
 	indexes[0] = roi->width;
 	indexes[1] = roi->height;
-	ret = clEnqueueNDRangeKernel(cl->commandQueue, kernel, 2, NULL, indexes, NULL, 3, events, NULL);
+	ret = clEnqueueNDRangeKernel(cl->commandQueue, kernel, 2, NULL, indexes, NULL, 0, NULL, NULL);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to enqueue call kernel");
