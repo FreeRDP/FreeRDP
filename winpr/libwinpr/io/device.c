@@ -64,7 +64,7 @@
 
 #define DEVICE_FILE_PREFIX_PATH "\\Device\\"
 
-char* GetDeviceFileNameWithoutPrefixA(LPCSTR lpName)
+static char* GetDeviceFileNameWithoutPrefixA(LPCSTR lpName)
 {
 	char* lpFileName;
 
@@ -79,7 +79,7 @@ char* GetDeviceFileNameWithoutPrefixA(LPCSTR lpName)
 	return lpFileName;
 }
 
-char* GetDeviceFileUnixDomainSocketBaseFilePathA()
+static char* GetDeviceFileUnixDomainSocketBaseFilePathA(void)
 {
 	char* lpTempPath;
 	char* lpPipePath;
@@ -93,7 +93,7 @@ char* GetDeviceFileUnixDomainSocketBaseFilePathA()
 	return lpPipePath;
 }
 
-char* GetDeviceFileUnixDomainSocketFilePathA(LPCSTR lpName)
+static char* GetDeviceFileUnixDomainSocketFilePathA(LPCSTR lpName)
 {
 	char* lpPipePath = NULL;
 	char* lpFileName = NULL;
@@ -239,7 +239,8 @@ VOID _IoDeleteDeviceEx(PDEVICE_OBJECT_EX DeviceObject)
  * http://msdn.microsoft.com/en-us/library/windows/hardware/ff549043/
  */
 
-NTSTATUS _IoCreateSymbolicLinkEx(PUNICODE_STRING SymbolicLinkName, PUNICODE_STRING DeviceName)
+static NTSTATUS _IoCreateSymbolicLinkEx(PUNICODE_STRING SymbolicLinkName,
+                                        PUNICODE_STRING DeviceName)
 {
 	return STATUS_SUCCESS;
 }
@@ -249,7 +250,7 @@ NTSTATUS _IoCreateSymbolicLinkEx(PUNICODE_STRING SymbolicLinkName, PUNICODE_STRI
  * http://msdn.microsoft.com/en-us/library/windows/hardware/ff549085/
  */
 
-NTSTATUS _IoDeleteSymbolicLinkEx(PUNICODE_STRING SymbolicLinkName)
+static NTSTATUS _IoDeleteSymbolicLinkEx(PUNICODE_STRING SymbolicLinkName)
 {
 	return STATUS_SUCCESS;
 }

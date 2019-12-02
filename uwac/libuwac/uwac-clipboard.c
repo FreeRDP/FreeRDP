@@ -126,7 +126,7 @@ static void UwacRegisterDeviceListener(UwacSeat* s)
 	wl_data_device_add_listener(s->data_device, &data_device_listener, s);
 }
 
-UwacReturnCode UwacCreateDataSource(UwacSeat* s)
+static UwacReturnCode UwacCreateDataSource(UwacSeat* s)
 {
 	if (!s)
 		return UWAC_ERROR_INTERNAL;

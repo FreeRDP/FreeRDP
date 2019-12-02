@@ -29,7 +29,7 @@
  * Methods
  */
 
-void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
+static void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
 {
 	if (count > 0)
 	{
@@ -66,7 +66,7 @@ void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
  * Adds a used stream to the pool.
  */
 
-void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
+static void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
 {
 	if ((pool->uSize + 1) >= pool->uCapacity)
 	{
@@ -88,7 +88,7 @@ void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
  * Removes a used stream from the pool.
  */
 
-void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
+static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 {
 	int index;
 	BOOL found = FALSE;
@@ -106,7 +106,7 @@ void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 		StreamPool_ShiftUsed(pool, index, -1);
 }
 
-void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
+static void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
 {
 	if (count > 0)
 	{
@@ -241,7 +241,7 @@ out_fail:
  * Lock the stream pool
  */
 
-void StreamPool_Lock(wStreamPool* pool)
+static void StreamPool_Lock(wStreamPool* pool)
 {
 	EnterCriticalSection(&pool->lock);
 }
@@ -250,7 +250,7 @@ void StreamPool_Lock(wStreamPool* pool)
  * Unlock the stream pool
  */
 
-void StreamPool_Unlock(wStreamPool* pool)
+static void StreamPool_Unlock(wStreamPool* pool)
 {
 	LeaveCriticalSection(&pool->lock);
 }

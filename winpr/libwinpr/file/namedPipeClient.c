@@ -61,7 +61,7 @@ static BOOL NamedPipeClientIsHandled(HANDLE handle)
 	return TRUE;
 }
 
-BOOL NamedPipeClientCloseHandle(HANDLE handle)
+static BOOL NamedPipeClientCloseHandle(HANDLE handle)
 {
 	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*)handle;
 

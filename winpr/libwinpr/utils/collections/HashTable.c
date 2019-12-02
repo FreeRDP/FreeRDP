@@ -104,7 +104,7 @@ static long HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 	return idealNumOfBuckets;
 }
 
-void HashTable_Rehash(wHashTable* table, int numOfBuckets)
+static void HashTable_Rehash(wHashTable* table, int numOfBuckets)
 {
 	int index;
 	UINT32 hashValue;
@@ -148,8 +148,8 @@ void HashTable_Rehash(wHashTable* table, int numOfBuckets)
 	table->numOfBuckets = numOfBuckets;
 }
 
-void HashTable_SetIdealRatio(wHashTable* table, float idealRatio, float lowerRehashThreshold,
-                             float upperRehashThreshold)
+static void HashTable_SetIdealRatio(wHashTable* table, float idealRatio, float lowerRehashThreshold,
+                                    float upperRehashThreshold)
 {
 	table->idealRatio = idealRatio;
 	table->lowerRehashThreshold = lowerRehashThreshold;

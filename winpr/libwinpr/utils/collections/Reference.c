@@ -34,7 +34,7 @@
  * http://msdn.microsoft.com/en-us/library/windows/desktop/ms693431/
  */
 
-wReference* ReferenceTable_FindEntry(wReferenceTable* referenceTable, void* ptr)
+static wReference* ReferenceTable_FindEntry(wReferenceTable* referenceTable, void* ptr)
 {
 	UINT32 index = 0;
 	BOOL found = FALSE;
@@ -51,7 +51,7 @@ wReference* ReferenceTable_FindEntry(wReferenceTable* referenceTable, void* ptr)
 	return (found) ? reference : NULL;
 }
 
-wReference* ReferenceTable_GetFreeEntry(wReferenceTable* referenceTable)
+static wReference* ReferenceTable_GetFreeEntry(wReferenceTable* referenceTable)
 {
 	UINT32 index = 0;
 	BOOL found = FALSE;

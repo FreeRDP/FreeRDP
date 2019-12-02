@@ -97,7 +97,7 @@ static SECURITY_STATUS SEC_ENTRY credssp_QueryContextAttributes(PCtxtHandle phCo
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleW(
+static SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleW(
     SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)

@@ -35,7 +35,7 @@
  * This part is an adaptation of client/window.c from the weston project.
  */
 
-void* fail_on_null(void* p)
+static void* fail_on_null(void* p)
 {
 	if (p == NULL)
 	{

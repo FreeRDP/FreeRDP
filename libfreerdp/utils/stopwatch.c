@@ -32,7 +32,7 @@ LARGE_INTEGER stopwatch_freq = { 0, 0 };
 #include <sys/time.h>
 #endif
 
-void stopwatch_set_time(UINT64* usecs)
+static void stopwatch_set_time(UINT64* usecs)
 {
 #ifdef _WIN32
 	LARGE_INTEGER perfcount;
@@ -45,7 +45,7 @@ void stopwatch_set_time(UINT64* usecs)
 #endif
 }
 
-STOPWATCH* stopwatch_create()
+STOPWATCH* stopwatch_create(void)
 {
 	STOPWATCH* sw;
 #ifdef _WIN32

@@ -28,9 +28,9 @@
 
 #include "../sspi.h"
 
-char* SCHANNEL_PACKAGE_NAME = "Schannel";
+static char* SCHANNEL_PACKAGE_NAME = "Schannel";
 
-SCHANNEL_CONTEXT* schannel_ContextNew()
+SCHANNEL_CONTEXT* schannel_ContextNew(void)
 {
 	SCHANNEL_CONTEXT* context;
 	context = (SCHANNEL_CONTEXT*)calloc(1, sizeof(SCHANNEL_CONTEXT));
@@ -58,14 +58,14 @@ void schannel_ContextFree(SCHANNEL_CONTEXT* context)
 	free(context);
 }
 
-SCHANNEL_CREDENTIALS* schannel_CredentialsNew()
+static SCHANNEL_CREDENTIALS* schannel_CredentialsNew(void)
 {
 	SCHANNEL_CREDENTIALS* credentials;
 	credentials = (SCHANNEL_CREDENTIALS*)calloc(1, sizeof(SCHANNEL_CREDENTIALS));
 	return credentials;
 }
 
-void schannel_CredentialsFree(SCHANNEL_CREDENTIALS* credentials)
+static void schannel_CredentialsFree(SCHANNEL_CREDENTIALS* credentials)
 {
 	free(credentials);
 }
@@ -87,8 +87,9 @@ static ALG_ID schannel_SupportedAlgs[] = { CALG_AES_128,
 	                                       CALG_DSS_SIGN,
 	                                       CALG_ECDSA };
 
-SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(PCredHandle phCredential,
-                                                               ULONG ulAttribute, void* pBuffer)
+static SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(PCredHandle phCredential,
+                                                                      ULONG ulAttribute,
+                                                                      void* pBuffer)
 {
 	if (ulAttribute == SECPKG_ATTR_SUPPORTED_ALGS)
 	{
@@ -115,13 +116,14 @@ SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(PCredHandle phCre
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesA(PCredHandle phCredential,
-                                                               ULONG ulAttribute, void* pBuffer)
+static SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesA(PCredHandle phCredential,
+                                                                      ULONG ulAttribute,
+                                                                      void* pBuffer)
 {
 	return schannel_QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleW(
+static SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleW(
     SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
@@ -156,7 +158,7 @@ SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleW(
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(
+static SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(
     SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
@@ -174,7 +176,7 @@ SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_FreeCredentialsHandle(PCredHandle phCredential)
+static SECURITY_STATUS SEC_ENTRY schannel_FreeCredentialsHandle(PCredHandle phCredential)
 {
 	SCHANNEL_CREDENTIALS* credentials;
 
@@ -190,7 +192,7 @@ SECURITY_STATUS SEC_ENTRY schannel_FreeCredentialsHandle(PCredHandle phCredentia
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(
+static SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(
     PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR* pszTargetName, ULONG fContextReq,
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
@@ -219,7 +221,7 @@ SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextA(
+static SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextA(
     PCredHandle phCredential, PCtxtHandle phContext, SEC_CHAR* pszTargetName, ULONG fContextReq,
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
@@ -239,7 +241,7 @@ SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextA(
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(
+static SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(
     PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput, ULONG fContextReq,
     ULONG TargetDataRep, PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr,
     PTimeStamp ptsTimeStamp)
@@ -265,7 +267,7 @@ SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_DeleteSecurityContext(PCtxtHandle phContext)
+static SECURITY_STATUS SEC_ENTRY schannel_DeleteSecurityContext(PCtxtHandle phContext)
 {
 	SCHANNEL_CONTEXT* context;
 	context = (SCHANNEL_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
@@ -277,8 +279,8 @@ SECURITY_STATUS SEC_ENTRY schannel_DeleteSecurityContext(PCtxtHandle phContext)
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_QueryContextAttributes(PCtxtHandle phContext, ULONG ulAttribute,
-                                                          void* pBuffer)
+static SECURITY_STATUS SEC_ENTRY schannel_QueryContextAttributes(PCtxtHandle phContext,
+                                                                 ULONG ulAttribute, void* pBuffer)
 {
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
@@ -309,20 +311,22 @@ SECURITY_STATUS SEC_ENTRY schannel_QueryContextAttributes(PCtxtHandle phContext,
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
-                                                 PSecBufferDesc pMessage, ULONG MessageSeqNo)
+static SECURITY_STATUS SEC_ENTRY schannel_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
+                                                        PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage,
-                                                   ULONG MessageSeqNo, ULONG* pfQOP)
+static SECURITY_STATUS SEC_ENTRY schannel_VerifySignature(PCtxtHandle phContext,
+                                                          PSecBufferDesc pMessage,
+                                                          ULONG MessageSeqNo, ULONG* pfQOP)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
-                                                  PSecBufferDesc pMessage, ULONG MessageSeqNo)
+static SECURITY_STATUS SEC_ENTRY schannel_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
+                                                         PSecBufferDesc pMessage,
+                                                         ULONG MessageSeqNo)
 {
 	SECURITY_STATUS status;
 	SCHANNEL_CONTEXT* context;
@@ -335,8 +339,9 @@ SECURITY_STATUS SEC_ENTRY schannel_EncryptMessage(PCtxtHandle phContext, ULONG f
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
-                                                  ULONG MessageSeqNo, ULONG* pfQOP)
+static SECURITY_STATUS SEC_ENTRY schannel_DecryptMessage(PCtxtHandle phContext,
+                                                         PSecBufferDesc pMessage,
+                                                         ULONG MessageSeqNo, ULONG* pfQOP)
 {
 	SECURITY_STATUS status;
 	SCHANNEL_CONTEXT* context;

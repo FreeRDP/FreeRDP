@@ -76,7 +76,7 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s)
+static UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s)
 {
 	UINT rc;
 	size_t pos, size;
@@ -970,7 +970,7 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT cliprdr_server_read(CliprdrServerContext* context)
+static UINT cliprdr_server_read(CliprdrServerContext* context)
 {
 	wStream* s;
 	size_t position;

@@ -52,7 +52,7 @@ static void buffer_release(void* data, struct wl_buffer* buffer)
 
 static const struct wl_buffer_listener buffer_listener = { buffer_release };
 
-void UwacWindowDestroyBuffers(UwacWindow* w)
+static void UwacWindowDestroyBuffers(UwacWindow* w)
 {
 	int i;
 
@@ -72,8 +72,8 @@ void UwacWindowDestroyBuffers(UwacWindow* w)
 	w->buffers = NULL;
 }
 
-int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32_t width,
-                              uint32_t height, enum wl_shm_format format);
+static int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32_t width,
+                                     uint32_t height, enum wl_shm_format format);
 
 static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_toplevel,
                                           int32_t width, int32_t height, struct wl_array* states)
@@ -238,13 +238,13 @@ static const struct ivi_surface_listener ivi_surface_listener = {
 };
 #endif
 
-void shell_ping(void* data, struct wl_shell_surface* surface, uint32_t serial)
+static void shell_ping(void* data, struct wl_shell_surface* surface, uint32_t serial)
 {
 	wl_shell_surface_pong(surface, serial);
 }
 
-void shell_configure(void* data, struct wl_shell_surface* surface, uint32_t edges, int32_t width,
-                     int32_t height)
+static void shell_configure(void* data, struct wl_shell_surface* surface, uint32_t edges,
+                            int32_t width, int32_t height)
 {
 	UwacWindow* window = (UwacWindow*)data;
 	UwacConfigureEvent* event;
@@ -291,7 +291,7 @@ void shell_configure(void* data, struct wl_shell_surface* surface, uint32_t edge
 	}
 }
 
-void shell_popup_done(void* data, struct wl_shell_surface* surface)
+static void shell_popup_done(void* data, struct wl_shell_surface* surface)
 {
 }
 
@@ -358,7 +358,7 @@ error_mmap:
 	return ret;
 }
 
-UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w)
+static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w)
 {
 	int i, ret;
 

@@ -43,8 +43,8 @@
  * LL3		4032		8x8		64
  */
 
-void rfx_quantization_decode_block(const primitives_t* prims, INT16* buffer, int buffer_size,
-                                   UINT32 factor)
+static void rfx_quantization_decode_block(const primitives_t* prims, INT16* buffer, int buffer_size,
+                                          UINT32 factor)
 {
 	if (factor == 0)
 		return;

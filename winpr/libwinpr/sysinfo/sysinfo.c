@@ -386,6 +386,28 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 
 #if !defined(_WIN32) || defined(_UWP)
 
+BOOL GetComputerNameW(LPWSTR lpBuffer, LPDWORD lpnSize)
+{
+	BOOL rc;
+	LPSTR buffer = NULL;
+	if (!lpnSize || (*lpnSize > INT_MAX))
+		return FALSE;
+
+	if (*lpnSize > 0)
+	{
+		buffer = malloc(*lpnSize);
+		if (!buffer)
+			return FALSE;
+	}
+	rc = GetComputerNameA(buffer, lpnSize);
+
+	if (rc && (*lpnSize > 0))
+		ConvertToUnicode(CP_UTF8, 0, buffer, (int)*lpnSize, &lpBuffer, (int)*lpnSize);
+	free(buffer);
+
+	return rc;
+}
+
 BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 {
 	char* dot;

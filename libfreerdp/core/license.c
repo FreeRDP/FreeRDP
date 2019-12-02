@@ -321,7 +321,7 @@ error_path:
  * @return if the operation completed successfully
  */
 
-BOOL license_read_preamble(wStream* s, BYTE* bMsgType, BYTE* flags, UINT16* wMsgSize)
+static BOOL license_read_preamble(wStream* s, BYTE* bMsgType, BYTE* flags, UINT16* wMsgSize)
 {
 	/* preamble (4 bytes) */
 	if (Stream_GetRemainingLength(s) < 4)
@@ -634,7 +634,7 @@ BOOL license_generate_hwid(rdpLicense* license)
 	                               WINPR_MD5_DIGEST_LENGTH);
 }
 
-BOOL license_get_server_rsa_public_key(rdpLicense* license)
+static BOOL license_get_server_rsa_public_key(rdpLicense* license)
 {
 	BYTE* Exponent;
 	BYTE* Modulus;
@@ -907,8 +907,8 @@ BOOL license_write_binary_blob(wStream* s, const LICENSE_BLOB* blob)
 	return TRUE;
 }
 
-BOOL license_write_encrypted_premaster_secret_blob(wStream* s, const LICENSE_BLOB* blob,
-                                                   UINT32 ModulusLength)
+static BOOL license_write_encrypted_premaster_secret_blob(wStream* s, const LICENSE_BLOB* blob,
+                                                          UINT32 ModulusLength)
 {
 	UINT32 length;
 	length = ModulusLength + 8;

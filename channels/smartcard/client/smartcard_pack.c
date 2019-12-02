@@ -901,8 +901,8 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, const List
 	free(mszA);
 }
 
-LONG smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s,
-                                     Connect_Common* common)
+static LONG smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s,
+                                            Connect_Common* common)
 {
 	LONG status;
 

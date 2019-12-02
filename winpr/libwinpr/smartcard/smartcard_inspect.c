@@ -1307,7 +1307,7 @@ SCardApiFunctionTable Inspect_SCardApiFunctionTable = {
 #define SMARTCARD_INSPECT_FILEPATH "C:\\Windows\\Temp"
 #endif
 
-void Inspect_InitLog()
+static void Inspect_InitLog(void)
 {
 	wLogLayout* layout;
 	wLogAppender* appender;

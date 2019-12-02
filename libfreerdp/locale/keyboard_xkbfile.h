@@ -27,8 +27,4 @@
 FREERDP_LOCAL int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId,
                                                 DWORD x11_keycode_to_rdp_scancode[256]);
 
-FREERDP_LOCAL int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId);
-FREERDP_LOCAL int freerdp_keyboard_load_map_from_xkbfile(void* display,
-                                                         DWORD x11_keycode_to_rdp_scancode[256]);
-
 #endif /* FREERDP_LIB_LOCALE_KEYBOARD_XKB_H */

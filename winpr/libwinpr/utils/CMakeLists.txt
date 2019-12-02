@@ -29,7 +29,6 @@ set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/LinkedList.c
 	collections/HashTable.c
 	collections/ListDictionary.c
-	collections/KeyValuePair.c
 	collections/CountdownEvent.c
 	collections/BufferPool.c
 	collections/ObjectPool.c
@@ -76,7 +75,6 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/Layout.h
 	wlog/Message.c
 	wlog/Message.h
-	wlog/TextMessage.c
 	wlog/DataMessage.c
 	wlog/DataMessage.h
 	wlog/ImageMessage.c

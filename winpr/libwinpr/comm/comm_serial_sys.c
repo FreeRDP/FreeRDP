@@ -1520,7 +1520,7 @@ static BOOL _set_xon(WINPR_COMM* pComm)
 	return TRUE;
 }
 
-BOOL _get_dtrrts(WINPR_COMM* pComm, ULONG* pMask)
+static BOOL _get_dtrrts(WINPR_COMM* pComm, ULONG* pMask)
 {
 	UINT32 lines = 0;
 	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
@@ -1540,7 +1540,7 @@ BOOL _get_dtrrts(WINPR_COMM* pComm, ULONG* pMask)
 	return TRUE;
 }
 
-BOOL _config_size(WINPR_COMM* pComm, ULONG* pSize)
+static BOOL _config_size(WINPR_COMM* pComm, ULONG* pSize)
 {
 	/* http://msdn.microsoft.com/en-us/library/ff546548%28v=vs.85%29.aspx */
 	if (!pSize)
@@ -1550,7 +1550,7 @@ BOOL _config_size(WINPR_COMM* pComm, ULONG* pSize)
 	return TRUE;
 }
 
-BOOL _immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
+static BOOL _immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
 {
 	BOOL result;
 	DWORD nbBytesWritten = -1;
@@ -1568,7 +1568,7 @@ BOOL _immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
 	return result;
 }
 
-BOOL _reset_device(WINPR_COMM* pComm)
+static BOOL _reset_device(WINPR_COMM* pComm)
 {
 	/* http://msdn.microsoft.com/en-us/library/dn265347%28v=vs.85%29.aspx */
 	return TRUE;

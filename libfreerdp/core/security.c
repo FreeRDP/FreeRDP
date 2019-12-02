@@ -188,7 +188,7 @@ void security_mac_salt_key(const BYTE* session_key_blob, const BYTE* client_rand
 	memcpy(output, session_key_blob, 16);
 }
 
-BOOL security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BYTE* output)
+static BOOL security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BYTE* output)
 {
 	WINPR_DIGEST_CTX* md5 = NULL;
 	BOOL result = FALSE;
@@ -217,8 +217,8 @@ out:
 	return result;
 }
 
-BOOL security_md5_16_32_32_Allow_FIPS(const BYTE* in0, const BYTE* in1, const BYTE* in2,
-                                      BYTE* output)
+static BOOL security_md5_16_32_32_Allow_FIPS(const BYTE* in0, const BYTE* in1, const BYTE* in2,
+                                             BYTE* output)
 {
 	WINPR_DIGEST_CTX* md5 = NULL;
 	BOOL result = FALSE;
@@ -253,7 +253,7 @@ BOOL security_licensing_encryption_key(const BYTE* session_key_blob, const BYTE*
 	                                        output);
 }
 
-void security_UINT32_le(BYTE* output, UINT32 value)
+static void security_UINT32_le(BYTE* output, UINT32 value)
 {
 	output[0] = (value)&0xFF;
 	output[1] = (value >> 8) & 0xFF;
@@ -645,7 +645,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 	return TRUE;
 }
 
-BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
+static BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 {
 	BYTE sha1h[WINPR_SHA1_DIGEST_LENGTH];
 	WINPR_DIGEST_CTX* sha1 = NULL;

@@ -30,26 +30,13 @@
  * by multiple clients. All clients should wait others before continue
  * Server should wait for all clients before continue
  */
-struct rdp_shadow_multiclient_event
-{
-	HANDLE event;        /* Kickoff event */
-	HANDLE barrierEvent; /* Represents that all clients have consumed event */
-	HANDLE doneEvent;    /* Event handling finished. Server could continue */
-	wArrayList* subscribers;
-	CRITICAL_SECTION lock;
-	int consuming;
-	int waiting;
-
-	/* For debug */
-	int eventid;
-};
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	rdpShadowMultiClientEvent* shadow_multiclient_new();
+	rdpShadowMultiClientEvent* shadow_multiclient_new(void);
 	void shadow_multiclient_free(rdpShadowMultiClientEvent* event);
 	void shadow_multiclient_publish(rdpShadowMultiClientEvent* event);
 	void shadow_multiclient_wait(rdpShadowMultiClientEvent* event);

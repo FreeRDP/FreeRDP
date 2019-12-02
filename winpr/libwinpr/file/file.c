@@ -863,7 +863,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	return pFile;
 }
 
-BOOL IsFileDevice(LPCTSTR lpDeviceName)
+static BOOL IsFileDevice(LPCTSTR lpDeviceName)
 {
 	return TRUE;
 }

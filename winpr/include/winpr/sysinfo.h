@@ -291,14 +291,19 @@ extern "C"
 
 #define MAX_COMPUTERNAME_LENGTH 31
 
+	WINPR_API BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize);
+	WINPR_API BOOL GetComputerNameW(LPWSTR lpBuffer, LPDWORD lpnSize);
+
 	WINPR_API BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer,
 	                                  LPDWORD lpnSize);
 	WINPR_API BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer,
 	                                  LPDWORD lpnSize);
 
 #ifdef UNICODE
+#define GetComputerName GetComputerNameW
 #define GetComputerNameEx GetComputerNameExW
 #else
+#define GetComputerName GetComputerNameA
 #define GetComputerNameEx GetComputerNameExA
 #endif
 

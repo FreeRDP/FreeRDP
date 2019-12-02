@@ -49,7 +49,8 @@ static const char* event_names[] = {
 	"touch cancel",  "touch frame end",   "frame done",      "close",        NULL
 };
 
-bool uwac_default_error_handler(UwacDisplay* display, UwacReturnCode code, const char* msg, ...)
+static bool uwac_default_error_handler(UwacDisplay* display, UwacReturnCode code, const char* msg,
+                                       ...)
 {
 	va_list args;
 	va_start(args, msg);
@@ -298,15 +299,15 @@ static void registry_handle_global_remove(void* data, struct wl_registry* regist
 	}
 }
 
-void UwacDestroyGlobal(UwacGlobal* global)
+static void UwacDestroyGlobal(UwacGlobal* global)
 {
 	free(global->interface);
 	wl_list_remove(&global->link);
 	free(global);
 }
 
-void* display_bind(UwacDisplay* display, uint32_t name, const struct wl_interface* interface,
-                   uint32_t version)
+static void* display_bind(UwacDisplay* display, uint32_t name, const struct wl_interface* interface,
+                          uint32_t version)
 {
 	return wl_registry_bind(display->registry, name, interface, version);
 }
@@ -322,7 +323,7 @@ int UwacDisplayWatchFd(UwacDisplay* display, int fd, uint32_t events, UwacTask* 
 	return epoll_ctl(display->epoll_fd, EPOLL_CTL_ADD, fd, &ep);
 }
 
-void UwacDisplayUnwatchFd(UwacDisplay* display, int fd)
+static void UwacDisplayUnwatchFd(UwacDisplay* display, int fd)
 {
 	epoll_ctl(display->epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 }

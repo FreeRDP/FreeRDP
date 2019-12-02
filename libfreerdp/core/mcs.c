@@ -192,6 +192,16 @@ static const char* const mcs_result_enumerated[] =
 };
 */
 
+static BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
+                                        DomainParameters* minimumParameters,
+                                        DomainParameters* maximumParameters,
+                                        DomainParameters* pOutParameters);
+
+static BOOL mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData);
+static BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData);
+static BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU,
+                                          UINT16* length);
+
 static int mcs_initialize_client_channels(rdpMcs* mcs, rdpSettings* settings)
 {
 	UINT32 index;

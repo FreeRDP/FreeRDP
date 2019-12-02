@@ -677,7 +677,7 @@ static BOOL rdpsnd_set_subsystem(rdpsndPlugin* rdpsnd, const char* subsystem)
 	return (rdpsnd->subsystem != NULL);
 }
 
-BOOL rdpsnd_set_device_name(rdpsndPlugin* rdpsnd, const char* device_name)
+static BOOL rdpsnd_set_device_name(rdpsndPlugin* rdpsnd, const char* device_name)
 {
 	free(rdpsnd->device_name);
 	rdpsnd->device_name = _strdup(device_name);

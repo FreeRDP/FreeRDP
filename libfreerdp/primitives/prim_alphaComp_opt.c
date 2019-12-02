@@ -45,9 +45,9 @@ static primitives_t* generic = NULL;
 #ifdef WITH_SSE2
 #if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 
-pstatus_t sse2_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2,
-                              UINT32 src2Step, BYTE* pDst, UINT32 dstStep, UINT32 width,
-                              UINT32 height)
+static pstatus_t sse2_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2,
+                                     UINT32 src2Step, BYTE* pDst, UINT32 dstStep, UINT32 width,
+                                     UINT32 height)
 {
 	const UINT32* sptr1 = (const UINT32*)pSrc1;
 	const UINT32* sptr2 = (const UINT32*)pSrc2;

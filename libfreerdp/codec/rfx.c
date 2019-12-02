@@ -1391,7 +1391,7 @@ static BOOL computeRegion(const RFX_RECT* rects, int numRects, REGION16* region,
 
 #define TILE_NO(v) ((v) / 64)
 
-BOOL setupWorkers(RFX_CONTEXT* context, int nbTiles)
+static BOOL setupWorkers(RFX_CONTEXT* context, int nbTiles)
 {
 	RFX_CONTEXT_PRIV* priv = context->priv;
 	void* pmem;
@@ -1647,8 +1647,8 @@ skip_encoding_loop:
 	return NULL;
 }
 
-RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message, int* numMessages,
-                               int maxDataSize)
+static RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message, int* numMessages,
+                                      int maxDataSize)
 {
 	int i, j;
 	UINT32 tileDataSize;
@@ -1813,7 +1813,7 @@ static BOOL rfx_write_message_region(RFX_CONTEXT* context, wStream* s, RFX_MESSA
 	return TRUE;
 }
 
-BOOL rfx_write_message_frame_end(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message)
+static BOOL rfx_write_message_frame_end(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 8))
 		return FALSE;

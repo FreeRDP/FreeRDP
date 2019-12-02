@@ -118,22 +118,6 @@ extern "C"
 #define OpenEvent OpenEventA
 #endif
 
-	/* Slim Reader/Writer (SRW) Lock */
-
-	typedef PVOID RTL_SRWLOCK;
-	typedef RTL_SRWLOCK SRWLOCK, *PSRWLOCK;
-
-	WINPR_API VOID InitializeSRWLock(PSRWLOCK SRWLock);
-
-	WINPR_API VOID AcquireSRWLockExclusive(PSRWLOCK SRWLock);
-	WINPR_API VOID AcquireSRWLockShared(PSRWLOCK SRWLock);
-
-	WINPR_API BOOL TryAcquireSRWLockExclusive(PSRWLOCK SRWLock);
-	WINPR_API BOOL TryAcquireSRWLockShared(PSRWLOCK SRWLock);
-
-	WINPR_API VOID ReleaseSRWLockExclusive(PSRWLOCK SRWLock);
-	WINPR_API VOID ReleaseSRWLockShared(PSRWLOCK SRWLock);
-
 	/* Condition Variable */
 
 	typedef PVOID RTL_CONDITION_VARIABLE;

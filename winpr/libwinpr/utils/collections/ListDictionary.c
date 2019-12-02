@@ -72,7 +72,7 @@ int ListDictionary_Count(wListDictionary* listDictionary)
  * Gets a value indicating whether the ListDictionary has a fixed size.
  */
 
-BOOL ListDictionary_IsFixedSized(wListDictionary* listDictionary)
+static BOOL ListDictionary_IsFixedSized(wListDictionary* listDictionary)
 {
 	return FALSE;
 }
@@ -81,7 +81,7 @@ BOOL ListDictionary_IsFixedSized(wListDictionary* listDictionary)
  * Gets a value indicating whether the ListDictionary is read-only.
  */
 
-BOOL ListDictionary_IsReadOnly(wListDictionary* listDictionary)
+static BOOL ListDictionary_IsReadOnly(wListDictionary* listDictionary)
 {
 	return FALSE;
 }
@@ -90,7 +90,7 @@ BOOL ListDictionary_IsReadOnly(wListDictionary* listDictionary)
  * Gets a value indicating whether the ListDictionary is synchronized (thread safe).
  */
 
-BOOL ListDictionary_IsSynchronized(wListDictionary* listDictionary)
+static BOOL ListDictionary_IsSynchronized(wListDictionary* listDictionary)
 {
 	return listDictionary->synchronized;
 }

@@ -337,7 +337,7 @@ static RegKey* reg_load_key(Reg* reg, RegKey* key)
 	return subkey;
 }
 
-void reg_load(Reg* reg)
+static void reg_load(Reg* reg)
 {
 	reg_load_start(reg);
 
@@ -388,7 +388,7 @@ static void reg_unload_key(Reg* reg, RegKey* key)
 	free(key);
 }
 
-void reg_unload(Reg* reg)
+static void reg_unload(Reg* reg)
 {
 	RegKey* pKey;
 	RegKey* pKeyNext;
@@ -490,7 +490,7 @@ void reg_print_key(Reg* reg, RegKey* key)
 	}
 }
 
-void reg_print(Reg* reg)
+static void reg_print(Reg* reg)
 {
 	RegKey* pKey;
 	pKey = reg->root_key->subkeys;

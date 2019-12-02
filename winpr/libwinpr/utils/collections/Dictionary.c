@@ -45,7 +45,7 @@ int Dictionary_Count(wDictionary* dictionary)
  * Gets a value indicating whether the Dictionary has a fixed size.
  */
 
-BOOL Dictionary_IsFixedSized(wDictionary* dictionary)
+static BOOL Dictionary_IsFixedSized(wDictionary* dictionary)
 {
 	return FALSE;
 }
@@ -54,7 +54,7 @@ BOOL Dictionary_IsFixedSized(wDictionary* dictionary)
  * Gets a value indicating whether the Dictionary is read-only.
  */
 
-BOOL Dictionary_IsReadOnly(wDictionary* dictionary)
+static BOOL Dictionary_IsReadOnly(wDictionary* dictionary)
 {
 	return FALSE;
 }
@@ -63,7 +63,7 @@ BOOL Dictionary_IsReadOnly(wDictionary* dictionary)
  * Gets a value indicating whether the Dictionary is synchronized (thread safe).
  */
 
-BOOL Dictionary_IsSynchronized(wDictionary* dictionary)
+static BOOL Dictionary_IsSynchronized(wDictionary* dictionary)
 {
 	return dictionary->synchronized;
 }

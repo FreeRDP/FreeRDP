@@ -43,8 +43,8 @@
 
 extern const STATIC_ENTRY_TABLE CLIENT_STATIC_ENTRY_TABLES[];
 
-void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABLE* table,
-                                                  const char* identifier)
+static void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABLE* table,
+                                                         const char* identifier)
 {
 	size_t index = 0;
 	STATIC_ENTRY* pEntry;
@@ -330,7 +330,7 @@ void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins)
 
 extern const STATIC_ENTRY CLIENT_VirtualChannelEntryEx_TABLE[];
 
-BOOL freerdp_channels_is_virtual_channel_entry_ex(LPCSTR pszName)
+static BOOL freerdp_channels_is_virtual_channel_entry_ex(LPCSTR pszName)
 {
 	size_t i;
 

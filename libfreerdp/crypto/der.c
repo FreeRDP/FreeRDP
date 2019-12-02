@@ -77,7 +77,7 @@ int der_write_contextual_tag(wStream* s, BYTE tag, int length, BOOL pc)
 	return der_write_length(s, length) + 1;
 }
 
-void der_write_universal_tag(wStream* s, BYTE tag, BOOL pc)
+static void der_write_universal_tag(wStream* s, BYTE tag, BOOL pc)
 {
 	Stream_Write_UINT8(s, (ER_CLASS_UNIV | ER_PC(pc)) | (ER_TAG_MASK & tag));
 }

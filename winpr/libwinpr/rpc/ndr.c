@@ -47,7 +47,7 @@
  * http://dvlabs.tippingpoint.com/blog/2007/11/24/msrpc-ndr-types/
  */
 
-void NdrPrintParamAttributes(PARAM_ATTRIBUTES attributes)
+static void NdrPrintParamAttributes(PARAM_ATTRIBUTES attributes)
 {
 	if (attributes.ServerAllocSize)
 		WLog_INFO(TAG, "ServerAllocSize, ");
@@ -86,8 +86,8 @@ void NdrPrintParamAttributes(PARAM_ATTRIBUTES attributes)
 		WLog_INFO(TAG, "MustSize, ");
 }
 
-void NdrProcessParam(PMIDL_STUB_MESSAGE pStubMsg, NDR_PHASE phase, unsigned char* pMemory,
-                     NDR_PARAM* param)
+static void NdrProcessParam(PMIDL_STUB_MESSAGE pStubMsg, NDR_PHASE phase, unsigned char* pMemory,
+                            NDR_PARAM* param)
 {
 	unsigned char type;
 	PFORMAT_STRING pFormat;
@@ -144,8 +144,8 @@ void NdrProcessParam(PMIDL_STUB_MESSAGE pStubMsg, NDR_PHASE phase, unsigned char
 	}
 }
 
-void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_PHASE phase,
-                      void** fpuArgs, unsigned short numberParams)
+static void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_PHASE phase,
+                             void** fpuArgs, unsigned short numberParams)
 {
 	unsigned int i;
 	NDR_PARAM* params;
@@ -183,8 +183,8 @@ void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_P
 	}
 }
 
-void NdrClientInitializeNew(PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg,
-                            PMIDL_STUB_DESC pStubDesc, unsigned int ProcNum)
+static void NdrClientInitializeNew(PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg,
+                                   PMIDL_STUB_DESC pStubDesc, unsigned int ProcNum)
 {
 	pRpcMessage->Handle = NULL;
 	pRpcMessage->RpcFlags = 0;
@@ -202,7 +202,7 @@ void NdrClientInitializeNew(PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMs
 	pStubMsg->PointerLength = 0;
 }
 
-void NdrPrintOptFlags(INTERPRETER_OPT_FLAGS optFlags)
+static void NdrPrintOptFlags(INTERPRETER_OPT_FLAGS optFlags)
 {
 	if (optFlags.ClientMustSize)
 		WLog_INFO(TAG, "ClientMustSize, ");
@@ -226,7 +226,7 @@ void NdrPrintOptFlags(INTERPRETER_OPT_FLAGS optFlags)
 		WLog_INFO(TAG, "HasExtensions, ");
 }
 
-void NdrPrintExtFlags(INTERPRETER_OPT_FLAGS2 extFlags)
+static void NdrPrintExtFlags(INTERPRETER_OPT_FLAGS2 extFlags)
 {
 	if (extFlags.HasNewCorrDesc)
 		WLog_INFO(TAG, "HasNewCorrDesc, ");

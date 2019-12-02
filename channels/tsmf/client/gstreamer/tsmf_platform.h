@@ -63,8 +63,6 @@ typedef struct _TSMFGstreamerDecoder
 
 } TSMFGstreamerDecoder;
 
-const char* get_type(TSMFGstreamerDecoder* mdecoder);
-
 const char* tsmf_platform_get_video_sink(void);
 const char* tsmf_platform_get_audio_sink(void);
 

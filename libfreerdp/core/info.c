@@ -67,7 +67,7 @@ static struct
 	{ INFO_HIDEF_RAIL_SUPPORTED, "INFO_HIDEF_RAIL_SUPPORTED" },
 };
 
-FREERDP_LOCAL char* rdp_info_package_flags_description(UINT32 flags)
+static char* rdp_info_package_flags_description(UINT32 flags)
 {
 	char* result;
 	size_t maximum_size = 1; /* Reserve space for the terminating '\0' by strcat if all flags set */

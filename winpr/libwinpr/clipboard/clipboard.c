@@ -44,7 +44,7 @@
  * http://www.w3.org/TR/clipboard-apis/
  */
 
-const char* CF_STANDARD_STRINGS[CF_MAX] = {
+static const char* CF_STANDARD_STRINGS[CF_MAX] = {
 	"CF_RAW",          /* 0 */
 	"CF_TEXT",         /* 1 */
 	"CF_BITMAP",       /* 2 */
@@ -65,7 +65,8 @@ const char* CF_STANDARD_STRINGS[CF_MAX] = {
 	"CF_DIBV5"         /* 17 */
 };
 
-wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId, const char* name)
+static wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId,
+                                             const char* name)
 {
 	UINT32 index;
 	wClipboardFormat* format = NULL;
@@ -113,7 +114,7 @@ wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId, co
 	return format;
 }
 
-wClipboardSynthesizer* ClipboardFindSynthesizer(wClipboardFormat* format, UINT32 formatId)
+static wClipboardSynthesizer* ClipboardFindSynthesizer(wClipboardFormat* format, UINT32 formatId)
 {
 	UINT32 index;
 	wClipboardSynthesizer* synthesizer;
@@ -354,7 +355,7 @@ UINT32 ClipboardGetFormatIds(wClipboard* clipboard, UINT32** ppFormatIds)
 	return count;
 }
 
-BOOL ClipboardInitFormats(wClipboard* clipboard)
+static BOOL ClipboardInitFormats(wClipboard* clipboard)
 {
 	UINT32 formatId = 0;
 	wClipboardFormat* format;

@@ -373,7 +373,7 @@ void per_write_object_identifier(wStream* s, BYTE oid[6])
  * @param length string length
  */
 
-void per_write_string(wStream* s, BYTE* str, int length)
+static void per_write_string(wStream* s, BYTE* str, int length)
 {
 	int i;
 

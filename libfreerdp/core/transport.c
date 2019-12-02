@@ -550,7 +550,7 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 	}
 }
 
-SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t bytes)
+static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t bytes)
 {
 	SSIZE_T read = 0;
 	rdpRdp* rdp = transport->context->rdp;

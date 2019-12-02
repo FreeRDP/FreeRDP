@@ -50,7 +50,7 @@ rfx_quantization_decode_block_NEON(INT16* buffer, const int buffer_size, const U
 	} while (buf < buf_end);
 }
 
-void rfx_quantization_decode_NEON(INT16* buffer, const UINT32* quantVals)
+static void rfx_quantization_decode_NEON(INT16* buffer, const UINT32* quantVals)
 {
 	rfx_quantization_decode_block_NEON(&buffer[0], 1024, quantVals[8] - 1);    /* HL1 */
 	rfx_quantization_decode_block_NEON(&buffer[1024], 1024, quantVals[7] - 1); /* LH1 */
@@ -220,7 +220,7 @@ rfx_dwt_2d_decode_block_NEON(INT16* buffer, INT16* idwt, int subband_width)
 	rfx_dwt_2d_decode_block_vert_NEON(l_dst, h_dst, buffer, subband_width);
 }
 
-void rfx_dwt_2d_decode_NEON(INT16* buffer, INT16* dwt_buffer)
+static void rfx_dwt_2d_decode_NEON(INT16* buffer, INT16* dwt_buffer)
 {
 	rfx_dwt_2d_decode_block_NEON(buffer + 3840, dwt_buffer, 8);
 	rfx_dwt_2d_decode_block_NEON(buffer + 3072, dwt_buffer, 16);

@@ -62,7 +62,7 @@ static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder* mdecoder,
                                              GstState desired_state);
 static BOOL tsmf_gstreamer_buffer_level(ITSMFDecoder* decoder);
 
-const char* get_type(TSMFGstreamerDecoder* mdecoder)
+static const char* get_type(TSMFGstreamerDecoder* mdecoder)
 {
 	if (!mdecoder)
 		return NULL;
@@ -995,7 +995,7 @@ static BOOL tsmf_gstreamer_update_rendering_area(ITSMFDecoder* decoder, int newX
 	return TRUE;
 }
 
-BOOL tsmf_gstreamer_ack(ITSMFDecoder* decoder, BOOL (*cb)(void*, BOOL), void* stream)
+static BOOL tsmf_gstreamer_ack(ITSMFDecoder* decoder, BOOL (*cb)(void*, BOOL), void* stream)
 {
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder*)decoder;
 	DEBUG_TSMF("");
@@ -1004,7 +1004,7 @@ BOOL tsmf_gstreamer_ack(ITSMFDecoder* decoder, BOOL (*cb)(void*, BOOL), void* st
 	return TRUE;
 }
 
-BOOL tsmf_gstreamer_sync(ITSMFDecoder* decoder, void (*cb)(void*), void* stream)
+static BOOL tsmf_gstreamer_sync(ITSMFDecoder* decoder, void (*cb)(void*), void* stream)
 {
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder*)decoder;
 	DEBUG_TSMF("");

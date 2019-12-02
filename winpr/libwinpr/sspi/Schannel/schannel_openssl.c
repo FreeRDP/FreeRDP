@@ -49,7 +49,7 @@ struct _SCHANNEL_OPENSSL
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.schannel")
 
-char* openssl_get_ssl_error_string(int ssl_error)
+static char* openssl_get_ssl_error_string(int ssl_error)
 {
 	switch (ssl_error)
 	{
