@@ -91,6 +91,8 @@ struct _IWTSVirtualChannelManager
 	UINT32 (*GetChannelId)(IWTSVirtualChannel* channel);
 	IWTSVirtualChannel* (*FindChannelById)(IWTSVirtualChannelManager* pChannelMgr,
 	                                       UINT32 ChannelId);
+	const char* (*GetChannelName)(IWTSVirtualChannel* channel);
+	UINT (*DestroyListener)(IWTSVirtualChannelManager* pChannelMgr, IWTSListener* ppListener);
 };
 
 struct _IWTSPlugin

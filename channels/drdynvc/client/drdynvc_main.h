@@ -45,11 +45,11 @@ struct _DVCMAN
 
 	drdynvcPlugin* drdynvc;
 
-	int num_plugins;
+	size_t num_plugins;
 	const char* plugin_names[MAX_PLUGINS];
 	IWTSPlugin* plugins[MAX_PLUGINS];
 
-	int num_listeners;
+	size_t num_listeners;
 	IWTSListener* listeners[MAX_PLUGINS];
 
 	wArrayList* channels;
