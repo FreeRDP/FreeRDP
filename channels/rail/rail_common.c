@@ -186,8 +186,12 @@ static UINT rail_read_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast
 	if (!s || !highContrast)
 		return ERROR_INVALID_PARAMETER;
 
-	Stream_Read_UINT32(s, highContrast->flags);                   /* flags (4 bytes) */
-	Stream_Read_UINT32(s, highContrast->colorSchemeLength);       /* colorSchemeLength (4 bytes) */
+	if (Stream_GetRemainingLength(s) < 8)
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, highContrast->flags);             /* flags (4 bytes) */
+	Stream_Read_UINT32(s, highContrast->colorSchemeLength); /* colorSchemeLength (4 bytes) */
+
 	if (!rail_read_unicode_string(s, &highContrast->colorScheme)) /* colorScheme */
 		return ERROR_INTERNAL_ERROR;
 	return CHANNEL_RC_OK;
@@ -212,6 +216,27 @@ static UINT rail_write_high_contrast(wStream* s, const RAIL_HIGH_CONTRAST* highC
 	Stream_Write_UINT32(s, highContrast->flags); /* flags (4 bytes) */
 	Stream_Write_UINT32(s, colorSchemeLength);   /* colorSchemeLength (4 bytes) */
 	return rail_write_unicode_string(s, &highContrast->colorScheme); /* colorScheme */
+}
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rail_read_filterkeys(wStream* s, TS_FILTERKEYS* filterKeys)
+{
+	if (!s || !filterKeys)
+		return ERROR_INVALID_PARAMETER;
+
+	if (Stream_GetRemainingLength(s) < 20)
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, filterKeys->Flags);
+	Stream_Read_UINT32(s, filterKeys->WaitTime);
+	Stream_Read_UINT32(s, filterKeys->DelayTime);
+	Stream_Read_UINT32(s, filterKeys->RepeatTime);
+	Stream_Read_UINT32(s, filterKeys->BounceTime);
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -256,30 +281,38 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 
 	Stream_Read_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 
+	sysparam->params = 0; /* bitflags of received params */
+
 	switch (sysparam->param)
 	{
 		/* Client sysparams */
 		case SPI_SET_DRAG_FULL_WINDOWS:
+			sysparam->params |= SPI_MASK_SET_DRAG_FULL_WINDOWS;
 			Stream_Read_UINT8(s, body); /* body (1 byte) */
 			sysparam->dragFullWindows = body != 0;
 			break;
 
 		case SPI_SET_KEYBOARD_CUES:
+			sysparam->params |= SPI_MASK_SET_KEYBOARD_CUES;
 			Stream_Read_UINT8(s, body); /* body (1 byte) */
 			sysparam->keyboardCues = body != 0;
 			break;
 
 		case SPI_SET_KEYBOARD_PREF:
+			sysparam->params |= SPI_MASK_SET_KEYBOARD_PREF;
 			Stream_Read_UINT8(s, body); /* body (1 byte) */
 			sysparam->keyboardPref = body != 0;
 			break;
 
 		case SPI_SET_MOUSE_BUTTON_SWAP:
+			sysparam->params |= SPI_MASK_SET_MOUSE_BUTTON_SWAP;
 			Stream_Read_UINT8(s, body); /* body (1 byte) */
 			sysparam->mouseButtonSwap = body != 0;
 			break;
 
 		case SPI_SET_WORK_AREA:
+			sysparam->params |= SPI_MASK_SET_WORK_AREA;
+
 			if (Stream_GetRemainingLength(s) < 8)
 			{
 				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
@@ -293,6 +326,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			break;
 
 		case SPI_DISPLAY_CHANGE:
+			sysparam->params |= SPI_MASK_DISPLAY_CHANGE;
+
 			if (Stream_GetRemainingLength(s) < 8)
 			{
 				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
@@ -306,6 +341,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			break;
 
 		case SPI_TASKBAR_POS:
+			sysparam->params |= SPI_MASK_TASKBAR_POS;
+
 			if (Stream_GetRemainingLength(s) < 8)
 			{
 				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
@@ -319,6 +356,7 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			break;
 
 		case SPI_SET_HIGH_CONTRAST:
+			sysparam->params |= SPI_MASK_SET_HIGH_CONTRAST;
 			if (Stream_GetRemainingLength(s) < 8)
 			{
 				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
@@ -329,7 +367,9 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			break;
 
 		case SPI_SETCARETWIDTH:
-			if (extendedSpiSupported)
+			sysparam->params |= SPI_MASK_SET_CARET_WIDTH;
+
+			if (!extendedSpiSupported)
 				return ERROR_INVALID_DATA;
 
 			if (Stream_GetRemainingLength(s) < 4)
@@ -346,7 +386,9 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			break;
 
 		case SPI_SETSTICKYKEYS:
-			if (extendedSpiSupported)
+			sysparam->params |= SPI_MASK_SET_STICKY_KEYS;
+
+			if (!extendedSpiSupported)
 				return ERROR_INVALID_DATA;
 
 			if (Stream_GetRemainingLength(s) < 4)
@@ -355,11 +397,13 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 				return ERROR_INVALID_DATA;
 			}
 
-			Stream_Write_UINT32(s, sysparam->stickyKeys);
+			Stream_Read_UINT32(s, sysparam->stickyKeys);
 			break;
 
 		case SPI_SETTOGGLEKEYS:
-			if (extendedSpiSupported)
+			sysparam->params |= SPI_MASK_SET_TOGGLE_KEYS;
+
+			if (!extendedSpiSupported)
 				return ERROR_INVALID_DATA;
 
 			if (Stream_GetRemainingLength(s) < 4)
@@ -368,11 +412,13 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 				return ERROR_INVALID_DATA;
 			}
 
-			Stream_Write_UINT32(s, sysparam->toggleKeys);
+			Stream_Read_UINT32(s, sysparam->toggleKeys);
 			break;
 
 		case SPI_SETFILTERKEYS:
-			if (extendedSpiSupported)
+			sysparam->params |= SPI_MASK_SET_FILTER_KEYS;
+
+			if (!extendedSpiSupported)
 				return ERROR_INVALID_DATA;
 
 			if (Stream_GetRemainingLength(s) < 20)
@@ -381,16 +427,20 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 				return ERROR_INVALID_DATA;
 			}
 
-			error = rail_write_filterkeys(s, &sysparam->filterKeys);
+			error = rail_read_filterkeys(s, &sysparam->filterKeys);
 			break;
 
 		/* Server sysparams */
 		case SPI_SETSCREENSAVEACTIVE:
+			sysparam->params |= SPI_MASK_SET_SCREEN_SAVE_ACTIVE;
+
 			Stream_Read_UINT8(s, body); /* body (1 byte) */
 			sysparam->setScreenSaveActive = body != 0;
 			break;
 
 		case SPI_SETSCREENSAVESECURE:
+			sysparam->params |= SPI_MASK_SET_SET_SCREEN_SAVE_SECURE;
+
 			Stream_Read_UINT8(s, body); /* body (1 byte) */
 			sysparam->setScreenSaveSecure = body != 0;
 			break;
