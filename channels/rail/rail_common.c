@@ -186,9 +186,11 @@ static UINT rail_read_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast
 	if (!s || !highContrast)
 		return ERROR_INVALID_PARAMETER;
 
-	Stream_Read_UINT32(s, highContrast->flags);             /* flags (4 bytes) */
-	Stream_Read_UINT32(s, highContrast->colorSchemeLength); /* colorSchemeLength (4 bytes) */
-	return rail_read_unicode_string(s, &highContrast->colorScheme); /* colorScheme */
+	Stream_Read_UINT32(s, highContrast->flags);                   /* flags (4 bytes) */
+	Stream_Read_UINT32(s, highContrast->colorSchemeLength);       /* colorSchemeLength (4 bytes) */
+	if (!rail_read_unicode_string(s, &highContrast->colorScheme)) /* colorScheme */
+		return ERROR_INTERNAL_ERROR;
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -202,6 +204,9 @@ static UINT rail_write_high_contrast(wStream* s, const RAIL_HIGH_CONTRAST* highC
 
 	if (!s || !highContrast)
 		return ERROR_INVALID_PARAMETER;
+
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return CHANNEL_RC_NO_MEMORY;
 
 	colorSchemeLength = highContrast->colorScheme.length + 2;
 	Stream_Write_UINT32(s, highContrast->flags); /* flags (4 bytes) */
@@ -218,6 +223,9 @@ static UINT rail_write_filterkeys(wStream* s, const TS_FILTERKEYS* filterKeys)
 {
 	if (!s || !filterKeys)
 		return ERROR_INVALID_PARAMETER;
+
+	if (!Stream_EnsureRemainingCapacity(s, 20))
+		return CHANNEL_RC_NO_MEMORY;
 
 	Stream_Write_UINT32(s, filterKeys->Flags);
 	Stream_Write_UINT32(s, filterKeys->WaitTime);
@@ -407,6 +415,9 @@ UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
 
 	if (!s || !sysparam)
 		return ERROR_INVALID_PARAMETER;
+
+	if (!Stream_EnsureRemainingCapacity(s, 12))
+		return CHANNEL_RC_NO_MEMORY;
 
 	Stream_Write_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 
