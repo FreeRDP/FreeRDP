@@ -206,6 +206,14 @@ extern "C"
 		*_s->pointer++ = (_v)&0xFF;
 	}
 
+	static INLINE void Stream_Write_INT32(wStream* _s, INT32 _v)
+	{
+		*_s->pointer++ = (_v)&0xFF;
+		*_s->pointer++ = ((_v) >> 8) & 0xFF;
+		*_s->pointer++ = ((_v) >> 16) & 0xFF;
+		*_s->pointer++ = ((_v) >> 24) & 0xFF;
+	}
+
 	static INLINE void Stream_Write_UINT32(wStream* _s, UINT32 _v)
 	{
 		*_s->pointer++ = (_v)&0xFF;
