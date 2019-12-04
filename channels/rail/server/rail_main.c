@@ -105,15 +105,15 @@ static UINT rail_write_min_max_info_order(wStream* s, const RAIL_MINMAXINFO_ORDE
 	if (!s || !minMaxInfo)
 		return ERROR_INVALID_PARAMETER;
 
-	Stream_Write_UINT32(s, minMaxInfo->windowId);       /* WindowId (4 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxWidth);       /* MaxWidth (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxHeight);      /* MaxHeight (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxPosX);        /* MaxPosX (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxPosY);        /* MaxPosY (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->minTrackWidth);  /* MinTrackWidth (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->minTrackHeight); /* MinTrackHeight (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxTrackWidth);  /* MaxTrackWidth (2 bytes) */
-	Stream_Write_UINT16(s, minMaxInfo->maxTrackHeight); /* MaxTrackHeight (2 bytes) */
+	Stream_Write_UINT32(s, minMaxInfo->windowId);      /* WindowId (4 bytes) */
+	Stream_Write_INT16(s, minMaxInfo->maxWidth);       /* MaxWidth (2 bytes) */
+	Stream_Write_INT16(s, minMaxInfo->maxHeight);      /* MaxHeight (2 bytes) */
+	Stream_Write_INT16(s, minMaxInfo->maxPosX);        /* MaxPosX (2 bytes) */
+	Stream_Write_INT16(s, minMaxInfo->maxPosY);        /* MaxPosY (2 bytes) */
+	Stream_Write_INT16(s, minMaxInfo->minTrackWidth);  /* MinTrackWidth (2 bytes) */
+	Stream_Write_INT16(s, minMaxInfo->minTrackHeight); /* MinTrackHeight (2 bytes) */
+	Stream_Write_INT16(s, minMaxInfo->maxTrackWidth);  /* MaxTrackWidth (2 bytes) */
+	Stream_Write_INT16(s, minMaxInfo->maxTrackHeight); /* MaxTrackHeight (2 bytes) */
 	return ERROR_SUCCESS;
 }
 
@@ -796,10 +796,10 @@ static UINT rail_read_window_move_order(wStream* s, RAIL_WINDOW_MOVE_ORDER* wind
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, windowMove->windowId); /* WindowId (4 bytes) */
-	Stream_Read_UINT16(s, windowMove->left);     /* Left (2 bytes) */
-	Stream_Read_UINT16(s, windowMove->top);      /* Top (2 bytes) */
-	Stream_Read_UINT16(s, windowMove->right);    /* Right (2 bytes) */
-	Stream_Read_UINT16(s, windowMove->bottom);   /* Bottom (2 bytes) */
+	Stream_Read_INT16(s, windowMove->left);      /* Left (2 bytes) */
+	Stream_Read_INT16(s, windowMove->top);       /* Top (2 bytes) */
+	Stream_Read_INT16(s, windowMove->right);     /* Right (2 bytes) */
+	Stream_Read_INT16(s, windowMove->bottom);    /* Bottom (2 bytes) */
 	return CHANNEL_RC_OK;
 }
 
@@ -814,10 +814,10 @@ static UINT rail_read_snap_arange_order(wStream* s, RAIL_SNAP_ARRANGE* snapArran
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, snapArrange->windowId); /* WindowId (4 bytes) */
-	Stream_Read_UINT16(s, snapArrange->left);     /* Left (2 bytes) */
-	Stream_Read_UINT16(s, snapArrange->top);      /* Top (2 bytes) */
-	Stream_Read_UINT16(s, snapArrange->right);    /* Right (2 bytes) */
-	Stream_Read_UINT16(s, snapArrange->bottom);   /* Bottom (2 bytes) */
+	Stream_Read_INT16(s, snapArrange->left);      /* Left (2 bytes) */
+	Stream_Read_INT16(s, snapArrange->top);       /* Top (2 bytes) */
+	Stream_Read_INT16(s, snapArrange->right);     /* Right (2 bytes) */
+	Stream_Read_INT16(s, snapArrange->bottom);    /* Bottom (2 bytes) */
 	return CHANNEL_RC_OK;
 }
 
