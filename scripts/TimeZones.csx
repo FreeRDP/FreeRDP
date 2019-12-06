@@ -69,31 +69,7 @@ stream.WriteLine(" * Automatically generated with scripts/TimeZones.csx");
 stream.WriteLine(" */ ");
 stream.WriteLine();
 
-stream.WriteLine("#pragma pack(push, 1)");
-stream.WriteLine("struct _TIME_ZONE_RULE_ENTRY");
-stream.WriteLine("{");
-stream.WriteLine("\tUINT64 TicksStart;");
-stream.WriteLine("\tUINT64 TicksEnd;");
-stream.WriteLine("\tINT32 DaylightDelta;");
-stream.WriteLine("\tSYSTEMTIME StandardDate;");
-stream.WriteLine("\tSYSTEMTIME DaylightDate;");
-stream.WriteLine("};");
-stream.WriteLine("typedef struct _TIME_ZONE_RULE_ENTRY TIME_ZONE_RULE_ENTRY;");
-stream.WriteLine();
-
-stream.WriteLine("struct _TIME_ZONE_ENTRY");
-stream.WriteLine("{");
-stream.WriteLine("\tconst char* Id;");
-stream.WriteLine("\tINT32 Bias;");
-stream.WriteLine("\tBOOL SupportsDST;");
-stream.WriteLine("\tconst char* DisplayName;");
-stream.WriteLine("\tconst char* StandardName;");
-stream.WriteLine("\tconst char* DaylightName;");
-stream.WriteLine("\tconst TIME_ZONE_RULE_ENTRY* RuleTable;");
-stream.WriteLine("\tUINT32 RuleTableCount;");
-stream.WriteLine("};");
-stream.WriteLine("typedef struct _TIME_ZONE_ENTRY TIME_ZONE_ENTRY;");
-stream.WriteLine("#pragma pack(pop)");
+stream.WriteLine("#include \"TimeZones.h\"");
 stream.WriteLine();
 
 index = 0;
@@ -175,7 +151,7 @@ foreach (TimeZoneInfo timeZone in timeZones)
 }
 
 index = 0;
-stream.WriteLine("static const TIME_ZONE_ENTRY TimeZoneTable[] =");
+stream.WriteLine("const TIME_ZONE_ENTRY TimeZoneTable[] =");
 stream.WriteLine("{");
 
 foreach (TimeZoneInfo timeZone in timeZones)
@@ -221,6 +197,8 @@ foreach (TimeZoneInfo timeZone in timeZones)
         stream.WriteLine("\t}");
 }
 stream.WriteLine("};");
+stream.WriteLine();
+stream.WriteLine("const size_t TimeZoneTableNrElements = ARRAYSIZE(TimeZoneTable);");
 stream.WriteLine();
 
 stream.Close();
