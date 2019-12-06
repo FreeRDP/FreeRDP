@@ -1140,6 +1140,40 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	return rdpdr_send(rdpdr, s);
 }
 
+static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
+{
+
+	UINT32 DeviceId;
+	UINT32 FileId;
+	UINT32 CompletionId;
+
+	wStream* output = Stream_New(NULL, 256); // RDPDR_DEVICE_IO_RESPONSE_LENGTH
+	if (!output)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	Stream_SetPosition(s, 4); /* see "rdpdr_process_receive" */
+
+	Stream_Read_UINT32(s, DeviceId);     /* DeviceId (4 bytes) */
+	Stream_Read_UINT32(s, FileId);       /* FileId (4 bytes) */
+	Stream_Read_UINT32(s, CompletionId); /* CompletionId (4 bytes) */
+
+	Stream_Write_UINT16(output, RDPDR_CTYP_CORE);                /* Component (2 bytes) */
+	Stream_Write_UINT16(output, PAKID_CORE_DEVICE_IOCOMPLETION); /* PacketId (2 bytes) */
+	Stream_Write_UINT32(output, DeviceId);                       /* DeviceId (4 bytes) */
+	Stream_Write_UINT32(output, CompletionId);                   /* CompletionId (4 bytes) */
+	Stream_Write_UINT32(output, STATUS_UNSUCCESSFUL);            /* IoStatus (4 bytes) */
+
+	Stream_Zero(output, 256 - RDPDR_DEVICE_IO_RESPONSE_LENGTH);
+	// or usage
+	// Stream_Write_UINT32(output, 0); /* Length */
+	// Stream_Write_UINT8(output, 0);  /* Padding */
+
+	return rdpdr_send(rdpdr, output);
+}
+
 /**
  * Function description
  *
@@ -1154,6 +1188,12 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	if (!irp)
 	{
 		WLog_ERR(TAG, "irp_new failed with %" PRIu32 "!", error);
+
+		if (error == CHANNEL_RC_OK)
+		{
+			return dummy_irp_response(rdpdr, s);
+		}
+
 		return error;
 	}
 
