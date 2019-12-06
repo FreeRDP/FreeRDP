@@ -33,11 +33,8 @@
 #include <time.h>
 #include <unistd.h>
 
-/* Table generated with TimeZones.csx */
-#include "TimeZones.c"
-
-/* Table generated with WindowsZones.csx */
-#include "WindowsZones.c"
+#include "TimeZones.h"
+#include "WindowsZones.h"
 
 static UINT64 winpr_windows_gmtime(void)
 {
@@ -277,7 +274,7 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 {
 	size_t i, j;
 	char* tzid;
-	TIME_ZONE_ENTRY* timezone;
+
 	tzid = winpr_get_unix_timezone_identifier_from_file();
 
 	if (tzid == NULL)
@@ -286,18 +283,21 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 	if (tzid == NULL)
 		return NULL;
 
-	for (i = 0; i < ARRAYSIZE(TimeZoneTable); i++)
+	for (i = 0; i < TimeZoneTableNrElements; i++)
 	{
-		for (j = 0; j < ARRAYSIZE(WindowsTimeZoneIdTable); j++)
+		const TIME_ZONE_ENTRY* tze = &TimeZoneTable[i];
+
+		for (j = 0; j < WindowsTimeZoneIdTableNrElements; j++)
 		{
-			if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
+			const WINDOWS_TZID_ENTRY* wzid = &WindowsTimeZoneIdTable[j];
+
+			if (strcmp(tze->Id, wzid->windows) != 0)
 				continue;
 
-			if (winpr_match_unix_timezone_identifier_with_list(tzid,
-			                                                   WindowsTimeZoneIdTable[j].tzid))
+			if (winpr_match_unix_timezone_identifier_with_list(tzid, wzid->tzid))
 			{
+				TIME_ZONE_ENTRY* timezone = (TIME_ZONE_ENTRY*)malloc(sizeof(TIME_ZONE_ENTRY));
 				free(tzid);
-				timezone = (TIME_ZONE_ENTRY*)malloc(sizeof(TIME_ZONE_ENTRY));
 
 				if (!timezone)
 					return NULL;

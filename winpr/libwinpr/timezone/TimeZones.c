@@ -2,30 +2,7 @@
  * Automatically generated with scripts/TimeZones.csx
  */
 
-#pragma pack(push, 1)
-struct _TIME_ZONE_RULE_ENTRY
-{
-	UINT64 TicksStart;
-	UINT64 TicksEnd;
-	INT32 DaylightDelta;
-	SYSTEMTIME StandardDate;
-	SYSTEMTIME DaylightDate;
-};
-typedef struct _TIME_ZONE_RULE_ENTRY TIME_ZONE_RULE_ENTRY;
-
-struct _TIME_ZONE_ENTRY
-{
-	const char* Id;
-	INT32 Bias;
-	BOOL SupportsDST;
-	const char* DisplayName;
-	const char* StandardName;
-	const char* DaylightName;
-	const TIME_ZONE_RULE_ENTRY* RuleTable;
-	UINT32 RuleTableCount;
-};
-typedef struct _TIME_ZONE_ENTRY TIME_ZONE_ENTRY;
-#pragma pack(pop)
+#include "TimeZones.h"
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_2[] = { {
 	                                                            633031164000000000ULL,
@@ -3551,7 +3528,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_135[] = { {
 	                                                              { 0, 9, 0, 5, 3, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_ENTRY TimeZoneTable[] = {
+const TIME_ZONE_ENTRY TimeZoneTable[] = {
 	{ "Dateline Standard Time", 720, FALSE, "(UTC-12:00) International Date Line West",
 	  "Dateline Standard Time", "Dateline Daylight Time", NULL, 0 },
 	{ "UTC-11", 660, FALSE, "(UTC-11:00) Coordinated Universal Time-11", "UTC-11", "UTC-11", NULL,
@@ -3833,3 +3810,5 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] = {
 	{ "Line Islands Standard Time", -840, FALSE, "(UTC+14:00) Kiritimati Island",
 	  "Line Islands Standard Time", "Line Islands Daylight Time", NULL, 0 }
 };
+
+const size_t TimeZoneTableNrElements = ARRAYSIZE(TimeZoneTable);
