@@ -55,7 +55,6 @@ struct rdpsnd_plugin
 	CHANNEL_DEF channelDef;
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
 
-	HANDLE thread;
 	wStreamPool* pool;
 	wStream* data_in;
 
@@ -63,7 +62,6 @@ struct rdpsnd_plugin
 	DWORD OpenHandle;
 
 	wLog* log;
-	HANDLE stopEvent;
 
 	BYTE cBlockNo;
 	UINT16 wQualityMode;
@@ -95,7 +93,6 @@ struct rdpsnd_plugin
 	rdpsndDevicePlugin* device;
 	rdpContext* rdpcontext;
 
-	wQueue* queue;
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
 
@@ -653,8 +650,7 @@ static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, AD
 	PFREERDP_RDPSND_DEVICE_ENTRY entry;
 	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
 	UINT error;
-	entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_channel_addin_entry("rdpsnd", (LPSTR)name,
-	                                                                       NULL, 0);
+	entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_channel_addin_entry("rdpsnd", name, NULL, 0);
 
 	if (!entry)
 		return ERROR_INTERNAL_ERROR;
@@ -890,11 +886,6 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 	return CHANNEL_RC_OK;
 }
 
-static void rdpsnd_process_disconnect(rdpsndPlugin* rdpsnd)
-{
-	IFCALL(rdpsnd->device->Close, rdpsnd->device);
-}
-
 /**
  * Function description
  *
@@ -948,14 +939,14 @@ static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin, voi
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
+		UINT error;
+
 		Stream_SealLength(plugin->data_in);
 		Stream_SetPosition(plugin->data_in, 0);
 
-		if (!Queue_Enqueue(plugin->queue, plugin->data_in))
-		{
-			WLog_ERR(TAG, "Queue_Enqueue failed!");
-			return ERROR_INTERNAL_ERROR;
-		}
+		error = rdpsnd_recv_pdu(plugin, plugin->data_in);
+		if (error)
+			return error;
 
 		plugin->data_in = NULL;
 	}
@@ -1005,78 +996,6 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, D
 		                "rdpsnd_virtual_channel_open_event_ex reported an error");
 }
 
-static DWORD WINAPI rdpsnd_virtual_channel_client_thread(LPVOID arg)
-{
-	BOOL running = TRUE;
-	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)arg;
-	DWORD error = CHANNEL_RC_OK;
-	HANDLE events[2];
-
-	if ((error = rdpsnd_process_connect(rdpsnd)))
-	{
-		WLog_ERR(TAG, "error connecting sound channel");
-		goto out;
-	}
-
-	events[1] = rdpsnd->stopEvent;
-	events[0] = Queue_Event(rdpsnd->queue);
-
-	do
-	{
-		const DWORD status = WaitForMultipleObjects(ARRAYSIZE(events), events, FALSE, INFINITE);
-
-		switch (status)
-		{
-			case WAIT_OBJECT_0:
-			{
-				wStream* s = Queue_Dequeue(rdpsnd->queue);
-				error = rdpsnd_recv_pdu(rdpsnd, s);
-			}
-			break;
-
-			case WAIT_OBJECT_0 + 1:
-				running = FALSE;
-				break;
-
-			default:
-				error = status;
-				break;
-		}
-	} while ((error == CHANNEL_RC_OK) && running);
-
-out:
-
-	if (error && rdpsnd->rdpcontext)
-		setChannelError(rdpsnd->rdpcontext, error,
-		                "rdpsnd_virtual_channel_client_thread reported an error");
-
-	rdpsnd_process_disconnect(rdpsnd);
-	ExitThread((DWORD)error);
-	return error;
-}
-
-/* Called during cleanup.
- * All streams still in the queue have been removed
- * from the streampool and nead cleanup. */
-static void rdpsnd_queue_free(void* data)
-{
-	wStream* s = (wStream*)data;
-	Stream_Free(s, TRUE);
-}
-
-static UINT rdpsnd_virtual_channel_event_initialized(rdpsndPlugin* rdpsnd, LPVOID pData,
-                                                     UINT32 dataLength)
-{
-	rdpsnd->stopEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
-
-	if (!rdpsnd->stopEvent)
-		goto fail;
-
-	return CHANNEL_RC_OK;
-fail:
-	return ERROR_INTERNAL_ERROR;
-}
-
 /**
  * Function description
  *
@@ -1102,35 +1021,15 @@ static UINT rdpsnd_virtual_channel_event_connected(rdpsndPlugin* rdpsnd, LPVOID 
 	if (!rdpsnd->dsp_context)
 		goto fail;
 
-	rdpsnd->queue = Queue_New(TRUE, 32, 2);
-
-	if (!rdpsnd->queue)
-		goto fail;
-
-	rdpsnd->queue->object.fnObjectFree = rdpsnd_queue_free;
 	rdpsnd->pool = StreamPool_New(TRUE, 4096);
 
 	if (!rdpsnd->pool)
 		goto fail;
 
-	ResetEvent(rdpsnd->stopEvent);
-	rdpsnd->thread =
-	    CreateThread(NULL, 0, rdpsnd_virtual_channel_client_thread, (void*)rdpsnd, 0, NULL);
-
-	if (!rdpsnd->thread)
-		goto fail;
-
-	return CHANNEL_RC_OK;
+	return rdpsnd_process_connect(rdpsnd);
 fail:
 	freerdp_dsp_context_free(rdpsnd->dsp_context);
 	StreamPool_Free(rdpsnd->pool);
-	Queue_Free(rdpsnd->queue);
-
-	if (rdpsnd->stopEvent)
-		CloseHandle(rdpsnd->stopEvent);
-
-	if (rdpsnd->thread)
-		CloseHandle(rdpsnd->thread);
 
 	return CHANNEL_RC_NO_MEMORY;
 }
@@ -1147,16 +1046,8 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	if (rdpsnd->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	SetEvent(rdpsnd->stopEvent);
+	IFCALL(rdpsnd->device->Close, rdpsnd->device);
 
-	if (WaitForSingleObject(rdpsnd->thread, INFINITE) == WAIT_FAILED)
-	{
-		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", error);
-		return error;
-	}
-
-	CloseHandle(rdpsnd->thread);
 	error =
 	    rdpsnd->channelEntryPoints.pVirtualChannelCloseEx(rdpsnd->InitHandle, rdpsnd->OpenHandle);
 
@@ -1171,7 +1062,7 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	freerdp_dsp_context_free(rdpsnd->dsp_context);
 	StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
 	StreamPool_Free(rdpsnd->pool);
-	Queue_Free(rdpsnd->queue);
+
 	audio_formats_free(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
 	rdpsnd->NumberOfClientFormats = 0;
 	rdpsnd->ClientFormats = NULL;
@@ -1195,7 +1086,6 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 		audio_formats_free(rdpsnd->fixed_format, 1);
 		free(rdpsnd->subsystem);
 		free(rdpsnd->device_name);
-		CloseHandle(rdpsnd->stopEvent);
 		rdpsnd->InitHandle = 0;
 	}
 
@@ -1218,11 +1108,6 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 	switch (event)
 	{
 		case CHANNEL_EVENT_INITIALIZED:
-			if ((error = rdpsnd_virtual_channel_event_initialized(plugin, pData, dataLength)))
-				WLog_ERR(TAG,
-				         "rdpsnd_virtual_channel_event_initialized failed with error %" PRIu32 "!",
-				         error);
-
 			break;
 
 		case CHANNEL_EVENT_CONNECTED:

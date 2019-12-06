@@ -525,13 +525,13 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 
 	pa_context_set_state_callback(pulse->context, audin_pulse_context_state_callback, pulse);
 
-	if ((error = audin_pulse_connect((IAudinDevice*)pulse)))
+	if ((error = audin_pulse_connect(&pulse->iface)))
 	{
 		WLog_Print(pulse->log, WLOG_ERROR, "audin_pulse_connect failed");
 		goto error_out;
 	}
 
-	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*)pulse)))
+	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, &pulse->iface)))
 	{
 		WLog_Print(pulse->log, WLOG_ERROR, "RegisterAudinDevice failed with error %" PRIu32 "!",
 		           error);
@@ -540,6 +540,6 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 
 	return CHANNEL_RC_OK;
 error_out:
-	audin_pulse_free((IAudinDevice*)pulse);
+	audin_pulse_free(&pulse->iface);
 	return error;
 }
