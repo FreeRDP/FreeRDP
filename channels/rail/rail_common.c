@@ -567,3 +567,8 @@ UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
 
 	return error;
 }
+
+BOOL rail_is_extended_spi_supported(UINT32 channelFlags)
+{
+	return channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED;
+}

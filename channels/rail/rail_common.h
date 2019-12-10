@@ -71,5 +71,6 @@ UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unic
 UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL extendedSpiSupported);
 UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
                                BOOL extendedSpiSupported);
+BOOL rail_is_extended_spi_supported(UINT32 channelsFlags);
 
 #endif /* FREERDP_CHANNEL_RAIL_COMMON_H */

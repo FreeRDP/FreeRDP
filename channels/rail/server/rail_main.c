@@ -334,8 +334,7 @@ static UINT rail_send_server_sysparam(RailServerContext* context,
 	if (!priv)
 		return ERROR_INVALID_PARAMETER;
 
-	extendedSpiSupported =
-	    !((priv->channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) == 0);
+	extendedSpiSupported = rail_is_extended_spi_supported(context->priv->channelFlags);
 	s = rail_pdu_init(RAIL_SYSPARAM_ORDER_LENGTH);
 
 	if (!s)
@@ -986,11 +985,13 @@ static UINT rail_recv_client_sysparam_order(RailServerContext* context,
                                             RAIL_SYSPARAM_ORDER* sysparam, wStream* s)
 {
 	UINT error;
+	BOOL extendedSpiSupported;
 
 	if (!context || !sysparam || !s)
 		return ERROR_INVALID_PARAMETER;
 
-	if ((error = rail_read_sysparam_order(s, sysparam, FALSE)))
+	extendedSpiSupported = rail_is_extended_spi_supported(context->priv->channelFlags);
+	if ((error = rail_read_sysparam_order(s, sysparam, extendedSpiSupported)))
 	{
 		WLog_ERR(TAG, "rail_read_sysparam_order failed with error %" PRIu32 "!", error);
 		return error;

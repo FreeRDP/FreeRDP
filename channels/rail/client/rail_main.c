@@ -172,6 +172,7 @@ static UINT rail_send_client_sysparam(RailClientContext* context, RAIL_SYSPARAM_
 	size_t length = RAIL_SYSPARAM_ORDER_LENGTH;
 	railPlugin* rail;
 	UINT error;
+	BOOL extendedSpiSupported;
 
 	if (!context || !sysparam)
 		return ERROR_INVALID_PARAMETER;
@@ -219,9 +220,8 @@ static UINT rail_send_client_sysparam(RailClientContext* context, RAIL_SYSPARAM_
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if ((error = rail_write_sysparam_order(
-	         s, sysparam,
-	         (rail->channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) != 0)))
+	extendedSpiSupported = rail_is_extended_spi_supported(rail->channelFlags);
+	if ((error = rail_write_sysparam_order(s, sysparam, extendedSpiSupported)))
 	{
 		WLog_ERR(TAG, "rail_write_client_sysparam_order failed with error %" PRIu32 "!", error);
 		Stream_Free(s, TRUE);
