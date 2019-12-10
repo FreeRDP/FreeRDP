@@ -134,6 +134,13 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 	ZeroMemory(instance->settings->OrderSupport, 32);
 
+	/*
+	 * currently, there are some glitches in GFX while connecting with HiDefRemoteApp = TRUE,
+	 * so for now we force it to be FALSE.
+	 */
+	if (settings->RemoteApplicationMode)
+		settings->HiDefRemoteApp = FALSE;
+
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 
