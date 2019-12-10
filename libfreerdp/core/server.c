@@ -1233,6 +1233,10 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, 
 	}
 
 	messageCtx = (wtsChannelMessage*)(UINT_PTR)message.context;
+
+	if (messageCtx == NULL)
+		return FALSE;
+
 	buffer = (BYTE*)(messageCtx + 1);
 	*pBytesRead = messageCtx->length - messageCtx->offset;
 
