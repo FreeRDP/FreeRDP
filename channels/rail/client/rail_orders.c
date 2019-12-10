@@ -498,11 +498,13 @@ static UINT rail_recv_server_sysparam_order(railPlugin* rail, wStream* s)
 	RailClientContext* context = rail_get_client_interface(rail);
 	RAIL_SYSPARAM_ORDER sysparam;
 	UINT error;
+	BOOL extendedSpiSupported;
 
 	if (!context || !s)
 		return ERROR_INVALID_PARAMETER;
 
-	if ((error = rail_read_sysparam_order(s, &sysparam, FALSE)))
+	extendedSpiSupported = rail_is_extended_spi_supported(rail->channelFlags);
+	if ((error = rail_read_sysparam_order(s, &sysparam, extendedSpiSupported)))
 	{
 		WLog_ERR(TAG, "rail_read_sysparam_order failed with error %" PRIu32 "!", error);
 		return error;
