@@ -1035,7 +1035,7 @@ static UINT
 rdpgfx_send_map_surface_to_scaled_window_pdu(RdpgfxServerContext* context,
                                              const RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU* pdu)
 {
-	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_MAPSURFACETOWINDOW, 26);
+	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_MAPSURFACETOSCALEDWINDOW, 26);
 
 	if (!s)
 	{
