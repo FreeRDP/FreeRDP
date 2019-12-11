@@ -2307,8 +2307,9 @@ BOOL update_send_new_or_existing_notification_icons(rdpContext* context,
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
 	UINT16 orderSize = 15;
 	size_t orderSizePos, orderEndPos;
-	s = update->us;
+	BOOL versionFieldPresent = FALSE;
 
+	s = update->us;
 	if (!s)
 		return FALSE;
 
@@ -2323,6 +2324,8 @@ BOOL update_send_new_or_existing_notification_icons(rdpContext* context,
 	/* Write body */
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION) != 0)
 	{
+		versionFieldPresent = TRUE;
+
 		orderSize += 4;
 		Stream_Write_UINT32(s, iconStateOrder->version);
 	}
@@ -2334,10 +2337,14 @@ BOOL update_send_new_or_existing_notification_icons(rdpContext* context,
 		Stream_Write(s, iconStateOrder->toolTip.string, iconStateOrder->toolTip.length);
 	}
 
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP) != 0 &&
-	    iconStateOrder->version != 0)
+	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP) != 0)
 	{
 		NOTIFY_ICON_INFOTIP infoTip = iconStateOrder->infoTip;
+
+		/* info tip should not be sent when version is 0 */
+		if (versionFieldPresent && iconStateOrder->version == 0)
+			return FALSE;
+
 		orderSize += 12 + infoTip.text.length + infoTip.title.length;
 		Stream_Write_UINT32(s, infoTip.timeout);     /* Timeout (4 bytes) */
 		Stream_Write_UINT32(s, infoTip.flags);       /* InfoFlags (4 bytes) */
