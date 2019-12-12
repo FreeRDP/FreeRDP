@@ -2,7 +2,7 @@
 include(FindPkgConfig)
 
 if (PKG_CONFIG_FOUND)
-	pkg_check_modules(SWScale swscale)
+	pkg_check_modules(SWScale libswscale)
 endif()
 
 find_path(SWScale_INCLUDE_DIR libswscale / swscale.h PATHS $ {SWScale_INCLUDE_DIRS})
