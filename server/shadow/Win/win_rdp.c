@@ -80,6 +80,7 @@ static BOOL shw_end_paint(rdpContext* context)
 
 BOOL shw_desktop_resize(rdpContext* context)
 {
+	WLog_WARN(TAG, "Desktop resizing not implemented!");
 	return TRUE;
 }
 
@@ -92,18 +93,21 @@ static BOOL shw_surface_frame_marker(rdpContext* context,
 
 static BOOL shw_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
+	WLog_WARN(TAG, "Authentication not implemented, access granted to everyone!");
 	return TRUE;
 }
 
 static DWORD shw_verify_certificate(freerdp* instance, const char* common_name, const char* subject,
                                     const char* issuer, const char* fingerprint, BOOL host_mismatch)
 {
+	WLog_WARN(TAG, "Certificate checks not implemented, access granted to everyone!");
 	return 1;
 }
 
 static int shw_verify_x509_certificate(freerdp* instance, BYTE* data, int length,
                                        const char* hostname, int port, DWORD flags)
 {
+	WLog_WARN(TAG, "Certificate checks not implemented, access granted to everyone!");
 	return 1;
 }
 
