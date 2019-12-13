@@ -309,7 +309,7 @@ typedef union _ULARGE_INTEGER
 	{
 		DWORD LowPart;
 		DWORD HighPart;
-	} DUMMYSTRUCTNAME;
+	};
 
 	struct
 	{
@@ -326,7 +326,7 @@ typedef union _LARGE_INTEGER
 	{
 		DWORD LowPart;
 		LONG  HighPart;
-	} DUMMYSTRUCTNAME;
+	};
 
 	struct
 	{
@@ -367,7 +367,7 @@ typedef struct _RPC_SID
 	UCHAR Revision;
 	UCHAR SubAuthorityCount;
 	RPC_SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
-	ULONG SubAuthority[1];
+	ULONG SubAuthority[];
 } RPC_SID, *PRPC_SID, *PSID;
 
 typedef struct _ACL
