@@ -132,10 +132,10 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	{ "gestures", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Consume multitouch input locally" },
 #ifdef WITH_GFX_H264
-	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "[RFX|AVC420|AVC444]", NULL, NULL, -1, NULL,
-	  "RDP8 graphics pipeline" },
-	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL, "[AVC420|AVC444]", NULL, NULL, -1, NULL,
-	  "RDP8.1 graphics pipeline using H264 codec" },
+	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "[[RFX|AVC420|AVC444],mask:<value>]", NULL, NULL, -1,
+	  NULL, "RDP8 graphics pipeline" },
+	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL, "[[AVC420|AVC444],mask:<value>]", NULL, NULL, -1,
+	  NULL, "RDP8.1 graphics pipeline using H264 codec" },
 #else
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "RFX", NULL, NULL, -1, NULL, "RDP8 graphics pipeline" },
 #endif
