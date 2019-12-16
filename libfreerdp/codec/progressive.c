@@ -35,6 +35,7 @@
 
 #include "rfx_differential.h"
 #include "rfx_quantization.h"
+#include "rfx_dwt.h"
 #include "rfx_rlgr.h"
 #include "progressive.h"
 
@@ -764,8 +765,7 @@ static INLINE size_t progressive_rfx_get_band_h_count(size_t level)
 		return (64 + (1 << (level - 1))) >> level;
 }
 
-static INLINE void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* temp, size_t level,
-                                                       BOOL extrapolate)
+static INLINE void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* temp, size_t level)
 {
 	size_t nDstStepX;
 	size_t nDstStepY;
@@ -776,6 +776,7 @@ static INLINE void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* tem
 	const size_t nBandL = progressive_rfx_get_band_l_count(level);
 	const size_t nBandH = progressive_rfx_get_band_h_count(level);
 	size_t offset = 0;
+
 	HL = &buffer[offset];
 	offset += (nBandH * nBandL);
 	LH = &buffer[offset];
@@ -802,18 +803,40 @@ static INLINE void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* tem
 	                       nBandL + nBandH);
 }
 
-static INLINE void progressive_rfx_dwt_2d_decode(INT16* buffer, INT16* temp, INT16* current,
-                                                 INT16* sign, BOOL diff, BOOL extrapolate)
+static INLINE int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* progressive, INT16* buffer,
+                                                INT16* current, BOOL coeffDiff, BOOL extrapolate,
+                                                BOOL reverse)
 {
 	const primitives_t* prims = primitives_get();
+	INT16* temp;
 
-	if (diff)
+	if (!progressive || !buffer || !current)
+		return -1;
+
+	if (coeffDiff)
 		prims->add_16s(buffer, current, buffer, 4096);
 
-	CopyMemory(current, buffer, 4096 * 2);
-	progressive_rfx_dwt_2d_decode_block(&buffer[3807], temp, 3, extrapolate);
-	progressive_rfx_dwt_2d_decode_block(&buffer[3007], temp, 2, extrapolate);
-	progressive_rfx_dwt_2d_decode_block(&buffer[0], temp, 1, extrapolate);
+	if (reverse)
+		CopyMemory(buffer, current, 4096 * 2);
+	else
+		CopyMemory(current, buffer, 4096 * 2);
+	temp = (INT16*)BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
+	if (!temp)
+		return -2;
+	if (!extrapolate)
+	{
+		rfx_dwt_2d_decode_block(&buffer[3840], temp, 8);
+		rfx_dwt_2d_decode_block(&buffer[3072], temp, 16);
+		rfx_dwt_2d_decode_block(&buffer[0], temp, 32);
+	}
+	else
+	{
+		progressive_rfx_dwt_2d_decode_block(&buffer[3807], temp, 3);
+		progressive_rfx_dwt_2d_decode_block(&buffer[3007], temp, 2);
+		progressive_rfx_dwt_2d_decode_block(&buffer[0], temp, 1);
+	}
+	BufferPool_Return(progressive->bufferPool, temp);
+	return 1;
 }
 
 static INLINE void progressive_rfx_decode_block(const primitives_t* prims, INT16* buffer,
@@ -828,12 +851,15 @@ static INLINE void progressive_rfx_decode_block(const primitives_t* prims, INT16
 static INLINE int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
                                                    const RFX_COMPONENT_CODEC_QUANT* shift,
                                                    const BYTE* data, UINT32 length, INT16* buffer,
-                                                   INT16* current, INT16* sign, BOOL diff,
+                                                   INT16* current, INT16* sign, BOOL coeffDiff,
                                                    BOOL subbandDiff, BOOL extrapolate)
 {
 	int status;
-	INT16* temp;
 	const primitives_t* prims = primitives_get();
+
+	if (!subbandDiff)
+		WLog_WARN(TAG, "PROGRESSIVE_BLOCK_CONTEXT::flags & RFX_SUBBAND_DIFFING not set");
+
 	status = rfx_rlgr_decode(RLGR1, data, length, buffer, 4096);
 
 	if (status < 0)
@@ -853,10 +879,8 @@ static INLINE int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progress
 	rfx_differential_decode(&buffer[4015], 81);                           /* LL3 */
 	progressive_rfx_decode_block(prims, &buffer[4015], 81, shift->LL3);   /* LL3 */
 
-	temp = (INT16*)BufferPool_Take(progressive->bufferPool, -1);          /* DWT buffer */
-	progressive_rfx_dwt_2d_decode(buffer, temp, current, sign, diff, extrapolate);
-	BufferPool_Return(progressive->bufferPool, temp);
-	return 1;
+	return progressive_rfx_dwt_2d_decode(progressive, buffer, current, coeffDiff, extrapolate,
+	                                     FALSE);
 }
 
 static INLINE int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive,
@@ -949,13 +973,6 @@ static INLINE int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progres
 	tile->cbProgQuant = *quantProgCb;
 	tile->crProgQuant = *quantProgCr;
 
-	if (!(region->flags & RFX_DWT_REDUCE_EXTRAPOLATE))
-		WLog_Print(progressive->log, WLOG_WARN,
-		           "RFX_PROGRESSIVE_REGION::flags & RFX_DWT_REDUCE_EXTRAPOLATE not set");
-
-	if (!(context->flags & RFX_SUBBAND_DIFFING))
-		WLog_WARN(TAG, "PROGRESSIVE_BLOCK_CONTEXT::flags & RFX_SUBBAND_DIFFING not set");
-
 	progressive_rfx_quant_add(quantY, quantProgY, &(tile->yBitPos));
 	progressive_rfx_quant_add(quantCb, quantProgCb, &(tile->cbBitPos));
 	progressive_rfx_quant_add(quantCr, quantProgCr, &(tile->crBitPos));
@@ -991,6 +1008,7 @@ static INLINE int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progres
 	rc = progressive_rfx_decode_component(progressive, &shiftCr, tile->crData, tile->crLen,
 	                                      pSrcDst[2], pCurrent[2], pSign[2], diff, sub,
 	                                      extrapolate); /* Cr */
+
 	if (rc < 0)
 		goto fail;
 
@@ -1175,10 +1193,9 @@ static INLINE int progressive_rfx_upgrade_component(
     PROGRESSIVE_CONTEXT* progressive, const RFX_COMPONENT_CODEC_QUANT* shift,
     const RFX_COMPONENT_CODEC_QUANT* bitPos, const RFX_COMPONENT_CODEC_QUANT* numBits,
     INT16* buffer, INT16* current, INT16* sign, const BYTE* srlData, UINT32 srlLen,
-    const BYTE* rawData, UINT32 rawLen, BOOL subbandDiff, BOOL extrapolate)
+    const BYTE* rawData, UINT32 rawLen, BOOL coeffDiff, BOOL subbandDiff, BOOL extrapolate)
 {
 	int rc;
-	INT16* temp;
 	UINT32 aRawLen;
 	UINT32 aSrlLen;
 	wBitStream s_srl = { 0 };
@@ -1263,13 +1280,8 @@ static INLINE int progressive_rfx_upgrade_component(
 		return -1;
 	}
 
-	temp = (INT16*)BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
-	CopyMemory(buffer, current, 4096 * 2);
-	progressive_rfx_dwt_2d_decode_block(&buffer[3807], temp, 3, extrapolate);
-	progressive_rfx_dwt_2d_decode_block(&buffer[3007], temp, 2, extrapolate);
-	progressive_rfx_dwt_2d_decode_block(&buffer[0], temp, 1, extrapolate);
-	BufferPool_Return(progressive->bufferPool, temp);
-	return 1;
+	return progressive_rfx_dwt_2d_decode(progressive, buffer, current, coeffDiff, extrapolate,
+	                                     TRUE);
 }
 
 static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive,
@@ -1278,7 +1290,7 @@ static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progr
                                                       const PROGRESSIVE_BLOCK_CONTEXT* context)
 {
 	int status;
-	BOOL sub, extrapolate;
+	BOOL coeffDiff, sub, extrapolate;
 	BYTE* pBuffer;
 	INT16* pSign[3] = { 0 };
 	INT16* pSrcDst[3] = { 0 };
@@ -1302,6 +1314,7 @@ static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progr
 	static const prim_size_t roi_64x64 = { 64, 64 };
 	const primitives_t* prims = primitives_get();
 
+	coeffDiff = tile->flags & RFX_TILE_DIFFERENCE;
 	sub = context->flags & RFX_SUBBAND_DIFFING;
 	extrapolate = region->flags & RFX_DWT_REDUCE_EXTRAPOLATE;
 
@@ -1370,10 +1383,6 @@ static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progr
 	if (!progressive_rfx_quant_cmp_equal(quantCr, &(tile->crQuant)))
 		WLog_Print(progressive->log, WLOG_WARN, "non-progressive quantCr has changed!");
 
-	if (!(region->flags & RFX_DWT_REDUCE_EXTRAPOLATE))
-		WLog_Print(progressive->log, WLOG_WARN,
-		           "RFX_PROGRESSIVE_REGION::flags & RFX_DWT_REDUCE_EXTRAPOLATE not set");
-
 	if (!(context->flags & RFX_SUBBAND_DIFFING))
 		WLog_WARN(TAG, "PROGRESSIVE_BLOCK_CONTEXT::flags & RFX_SUBBAND_DIFFING not set");
 
@@ -1413,25 +1422,26 @@ static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progr
 	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
 	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
-	status = progressive_rfx_upgrade_component(
-	    progressive, &shiftY, quantProgY, &yNumBits, pSrcDst[0], pCurrent[0], pSign[0],
-	    tile->ySrlData, tile->ySrlLen, tile->yRawData, tile->yRawLen, sub, extrapolate); /* Y */
+	status = progressive_rfx_upgrade_component(progressive, &shiftY, quantProgY, &yNumBits,
+	                                           pSrcDst[0], pCurrent[0], pSign[0], tile->ySrlData,
+	                                           tile->ySrlLen, tile->yRawData, tile->yRawLen,
+	                                           coeffDiff, sub, extrapolate); /* Y */
 
 	if (status < 0)
 		goto fail;
 
 	status = progressive_rfx_upgrade_component(progressive, &shiftCb, quantProgCb, &cbNumBits,
 	                                           pSrcDst[1], pCurrent[1], pSign[1], tile->cbSrlData,
-	                                           tile->cbSrlLen, tile->cbRawData, tile->cbRawLen, sub,
-	                                           extrapolate); /* Cb */
+	                                           tile->cbSrlLen, tile->cbRawData, tile->cbRawLen,
+	                                           coeffDiff, sub, extrapolate); /* Cb */
 
 	if (status < 0)
 		goto fail;
 
 	status = progressive_rfx_upgrade_component(progressive, &shiftCr, quantProgCr, &crNumBits,
 	                                           pSrcDst[2], pCurrent[2], pSign[2], tile->crSrlData,
-	                                           tile->crSrlLen, tile->crRawData, tile->crRawLen, sub,
-	                                           extrapolate); /* Cr */
+	                                           tile->crSrlLen, tile->crRawData, tile->crRawLen,
+	                                           coeffDiff, sub, extrapolate); /* Cr */
 
 	if (status < 0)
 		goto fail;
