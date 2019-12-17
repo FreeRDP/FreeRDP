@@ -23,14 +23,13 @@
 #include <string.h>
 
 #include <winpr/sysinfo.h>
+#include <winpr/collections.h>
 
 #include <errno.h>
 
 #include "libusb_udevice.h"
+#include "../common/urbdrc_types.h"
 
-#define SEM_MAX_COUNT 2
-
-#define HAVE_NEW_LIBUSB
 #define BASIC_STATE_FUNC_DEFINED(_arg, _type)             \
 	static _type udev_get_##_arg(IUDEVICE* idev)          \
 	{                                                     \

@@ -130,7 +130,7 @@ static UINT urbdrc_process_register_request_callback(IUDEVICE* pdev,
 
 	WLog_Print(urbdrc->log, WLOG_DEBUG, "urbdrc_process_register_request_callback");
 
-	if (Stream_GetRemainingCapacity(s) >= 8)
+	if (Stream_GetRemainingLength(s) >= 8)
 	{
 		Stream_Read_UINT32(s, NumRequestCompletion); /** must be 1 */
 		/** RequestCompletion:
@@ -138,7 +138,7 @@ static UINT urbdrc_process_register_request_callback(IUDEVICE* pdev,
 		Stream_Read_UINT32(s, RequestCompletion);
 		pdev->set_ReqCompletion(pdev, RequestCompletion);
 	}
-	else if (Stream_GetRemainingCapacity(s) >= 4) /** Unregister the device */
+	else if (Stream_GetRemainingLength(s) >= 4) /** Unregister the device */
 	{
 		Stream_Read_UINT32(s, RequestCompletion);
 
@@ -161,7 +161,7 @@ static UINT urbdrc_process_cancel_request(IUDEVICE* pdev, wStream* s, IUDEVMAN* 
 
 	urbdrc = (URBDRC_PLUGIN*)udevman->plugin;
 
-	if (Stream_GetRemainingCapacity(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, CancelId);
@@ -186,7 +186,7 @@ static UINT urbdrc_process_retract_device_request(IUDEVICE* pdev, wStream* s, IU
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, Reason); /** Reason */
@@ -228,13 +228,13 @@ static UINT urbdrc_process_io_control(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* c
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, IoControlCode);
 	Stream_Read_UINT32(s, InputBufferSize);
 
-	if (Stream_GetRemainingCapacity(s) < InputBufferSize + 8)
+	if (Stream_GetRemainingLength(s) < InputBufferSize + 8)
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, InputBufferSize);
@@ -309,13 +309,13 @@ static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, URBDRC_CHANNEL_CA
 	if (!pdev || !callback || !s || !udevman)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, IoControlCode);
 	Stream_Read_UINT32(s, InputBufferSize);
 
-	if (Stream_GetRemainingCapacity(s) < InputBufferSize + 8)
+	if (Stream_GetRemainingLength(s) < InputBufferSize + 8)
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, InputBufferSize);
@@ -349,7 +349,7 @@ static UINT urbdrc_process_query_device_text(IUDEVICE* pdev, URBDRC_CHANNEL_CALL
 	if (!pdev || !callback || !s || !udevman)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, TextType);
@@ -421,7 +421,7 @@ static UINT urb_select_configuration(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* ca
 		return ERROR_INVALID_PARAMETER;
 	}
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
@@ -534,14 +534,14 @@ static UINT urb_select_interface(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callba
 		return ERROR_INVALID_PARAMETER;
 	}
 
-	if (Stream_GetRemainingCapacity(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
 
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
 	Stream_Read_UINT32(s, ConfigurationHandle);
 	MsInterface = msusb_msinterface_read(s);
 
-	if ((Stream_GetRemainingCapacity(s) < 4) || !MsInterface)
+	if ((Stream_GetRemainingLength(s) < 4) || !MsInterface)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, OutputBufferSize);
@@ -613,7 +613,7 @@ static UINT urb_control_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callba
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
@@ -625,7 +625,7 @@ static UINT urb_control_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callba
 	switch (External)
 	{
 		case URB_CONTROL_TRANSFER_EXTERNAL:
-			if (Stream_GetRemainingCapacity(s) < 4)
+			if (Stream_GetRemainingLength(s) < 4)
 				return ERROR_INVALID_DATA;
 
 			Stream_Read_UINT32(s, Timeout); /** TransferFlags */
@@ -636,7 +636,7 @@ static UINT urb_control_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callba
 	}
 
 	/** SetupPacket 8 bytes */
-	if (Stream_GetRemainingCapacity(s) < 12)
+	if (Stream_GetRemainingLength(s) < 12)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT8(s, bmRequestType);
@@ -703,7 +703,7 @@ static UINT urb_bulk_or_interrupt_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 	if (!pdev || !callback || !s || !udevman)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 12)
+	if (Stream_GetRemainingLength(s) < 12)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, PipeHandle);
@@ -781,7 +781,7 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback
 	if (!pdev || !callback || !udevman)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 20)
+	if (Stream_GetRemainingLength(s) < 20)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, PipeHandle);
@@ -791,7 +791,7 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback
 	Stream_Read_UINT32(s, NumberOfPackets); /** NumberOfPackets */
 	Stream_Read_UINT32(s, ErrorCount);      /** ErrorCount */
 
-	if (Stream_GetRemainingCapacity(s) < NumberOfPackets * 12 + 4)
+	if (Stream_GetRemainingLength(s) < NumberOfPackets * 12 + 4)
 		return ERROR_INVALID_DATA;
 
 	packetDescriptorData = Stream_Pointer(s);
@@ -824,7 +824,7 @@ static UINT urb_control_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
@@ -835,7 +835,7 @@ static UINT urb_control_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 
 	if (transferDir == USBD_TRANSFER_DIRECTION_OUT)
 	{
-		if (Stream_GetRemainingCapacity(s) < OutputBufferSize)
+		if (Stream_GetRemainingLength(s) < OutputBufferSize)
 			return ERROR_INVALID_DATA;
 	}
 
@@ -909,7 +909,7 @@ static UINT urb_control_get_status_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 		return ERROR_INVALID_PARAMETER;
 	}
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
@@ -960,7 +960,7 @@ static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, URBDRC_CHANNEL_C
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 16)
+	if (Stream_GetRemainingLength(s) < 16)
 		return ERROR_INVALID_DATA;
 
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
@@ -974,7 +974,7 @@ static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, URBDRC_CHANNEL_C
 
 	if (transferDir == USBD_TRANSFER_DIRECTION_OUT)
 	{
-		if (Stream_GetRemainingCapacity(s) < OutputBufferSize)
+		if (Stream_GetRemainingLength(s) < OutputBufferSize)
 			return ERROR_INVALID_DATA;
 	}
 
@@ -1040,7 +1040,7 @@ static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 12)
+	if (Stream_GetRemainingLength(s) < 12)
 		return ERROR_INVALID_DATA;
 
 	/* 2.2.9.15 TS_URB_OS_FEATURE_DESCRIPTOR_REQUEST */
@@ -1055,7 +1055,7 @@ static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 	switch (transferDir)
 	{
 		case USBD_TRANSFER_DIRECTION_OUT:
-			if (Stream_GetRemainingCapacity(s) < OutputBufferSize)
+			if (Stream_GetRemainingLength(s) < OutputBufferSize)
 				return ERROR_INVALID_DATA;
 
 			break;
@@ -1122,7 +1122,7 @@ static UINT urb_pipe_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, 
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
 	if (transferDir == 0)
@@ -1199,7 +1199,7 @@ static UINT urb_get_current_frame_number(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
 
 	if (transferDir == 0)
@@ -1268,7 +1268,7 @@ static UINT urb_control_get_configuration_request(IUDEVICE* pdev, URBDRC_CHANNEL
 		return ERROR_INVALID_PARAMETER;
 	}
 
-	if (Stream_GetRemainingCapacity(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, OutputBufferSize);
@@ -1314,7 +1314,7 @@ static UINT urb_control_get_interface_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
 	if (transferDir == 0)
@@ -1370,7 +1370,7 @@ static UINT urb_control_feature_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK*
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
@@ -1381,7 +1381,7 @@ static UINT urb_control_feature_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK*
 	switch (transferDir)
 	{
 		case USBD_TRANSFER_DIRECTION_OUT:
-			if (Stream_GetRemainingCapacity(s) < OutputBufferSize)
+			if (Stream_GetRemainingLength(s) < OutputBufferSize)
 				return ERROR_INVALID_DATA;
 
 			break;
@@ -1461,7 +1461,7 @@ static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLB
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingCapacity(s) < 12)
+	if (Stream_GetRemainingLength(s) < 12)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, CbTsUrb); /** CbTsUrb */
