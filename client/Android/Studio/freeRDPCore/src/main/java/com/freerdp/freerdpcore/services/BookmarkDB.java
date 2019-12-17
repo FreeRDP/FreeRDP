@@ -247,7 +247,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 	private void insertDefault(SQLiteDatabase db)
 	{
 		ContentValues screenValues = new ContentValues();
-		screenValues.put(DB_KEY_SCREEN_COLORS, 32);
+		screenValues.put(DB_KEY_SCREEN_COLORS, 16);
 		screenValues.put(DB_KEY_SCREEN_RESOLUTION, 1);
 		screenValues.put(DB_KEY_SCREEN_WIDTH, 1024);
 		screenValues.put(DB_KEY_SCREEN_HEIGHT, 768);
@@ -256,8 +256,8 @@ public class BookmarkDB extends SQLiteOpenHelper
 		final long idScreen3g = db.insert(DB_TABLE_SCREEN, null, screenValues);
 
 		ContentValues performanceValues = new ContentValues();
-		performanceValues.put(DB_KEY_PERFORMANCE_RFX, 1);
-		performanceValues.put(DB_KEY_PERFORMANCE_GFX, 1);
+		performanceValues.put(DB_KEY_PERFORMANCE_RFX, 0);
+		performanceValues.put(DB_KEY_PERFORMANCE_GFX, 0);
 		performanceValues.put(DB_KEY_PERFORMANCE_H264, 0);
 		performanceValues.put(DB_KEY_PERFORMANCE_WALLPAPER, 0);
 		performanceValues.put(DB_KEY_PERFORMANCE_THEME, 0);
@@ -293,6 +293,8 @@ public class BookmarkDB extends SQLiteOpenHelper
 		bookmarkValues.put(DB_KEY_BOOKMARK_ASYNC_UPDATE, 1);
 		bookmarkValues.put(DB_KEY_BOOKMARK_CONSOLE_MODE, 0);
 		bookmarkValues.put(DB_KEY_BOOKMARK_DEBUG_LEVEL, "INFO");
+		bookmarkValues.put(DB_KEY_BOOKMARK_GW_HOSTNAME, "");
+		bookmarkValues.put(DB_KEY_BOOKMARK_GW_PORT, "");
 
 		db.insert(DB_TABLE_BOOKMARK, null, bookmarkValues);
 	}
