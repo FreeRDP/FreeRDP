@@ -176,6 +176,7 @@ static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* 
 	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
+	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->SaveSessionInfo(ps, type, data);
 }
 
@@ -185,6 +186,23 @@ static BOOL pf_client_server_status_info(rdpContext* context, UINT32 status)
 	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->ServerStatusInfo(ps, status);
+}
+
+static BOOL pf_client_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
+{
+	pClientContext* pc = (pClientContext*)context;
+	rdpContext* ps = (rdpContext*)pc->pdata->ps;
+	WLog_DBG(TAG, __FUNCTION__);
+	return ps->update->SetKeyboardIndicators(ps, led_flags);
+}
+
+static BOOL pf_client_set_keyboard_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
+                                              UINT32 imeConvMode)
+{
+	pClientContext* pc = (pClientContext*)context;
+	rdpContext* ps = (rdpContext*)pc->pdata->ps;
+	WLog_DBG(TAG, __FUNCTION__);
+	return ps->update->SetKeyboardImeStatus(ps, imeId, imeState, imeConvMode);
 }
 
 static BOOL pf_client_window_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
@@ -289,6 +307,8 @@ void pf_client_register_update_callbacks(rdpUpdate* update)
 	update->RemoteMonitors = pf_client_remote_monitors;
 	update->SaveSessionInfo = pf_client_save_session_info;
 	update->ServerStatusInfo = pf_client_server_status_info;
+	update->SetKeyboardIndicators = pf_client_set_keyboard_indicators;
+	update->SetKeyboardImeStatus = pf_client_set_keyboard_ime_status;
 	/* Rail window updates */
 	update->window->WindowCreate = pf_client_window_create;
 	update->window->WindowUpdate = pf_client_window_update;
