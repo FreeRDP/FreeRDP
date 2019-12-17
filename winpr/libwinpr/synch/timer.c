@@ -241,10 +241,7 @@ static int InitializeWaitableTimer(WINPR_TIMER* timer)
 		timer->fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 
 		if (timer->fd <= 0)
-		{
-			free(timer);
 			return -1;
-		}
 
 #elif defined(__APPLE__)
 #else
