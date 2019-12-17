@@ -334,6 +334,8 @@ public class SessionView extends View
 			sessionViewListener.onSessionViewBeginTouch();
 			switch (e.getButtonState())
 			{
+      		         // If it's 0 then it's normal touch, or BUTTON_PRIMARY then Samsung DeX or any other physical mouse left click.
+				case 0:
 				case MotionEvent.BUTTON_PRIMARY:
 					sessionViewListener.onSessionViewLeftTouch((int)mappedEvent.getX(),
 					                                           (int)mappedEvent.getY(), true);
