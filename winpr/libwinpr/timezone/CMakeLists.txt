@@ -15,4 +15,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-winpr_module_add(timezone.c)
+winpr_module_add(timezone.c TimeZones.c WindowsZones.c TimeZones.h WindowsZones.h)
