@@ -341,7 +341,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->RestrictedAdminModeRequired = FALSE;
 	settings->MstscCookieMode = FALSE;
 	settings->CookieMaxLength = DEFAULT_COOKIE_MAX_LENGTH;
-	settings->ClientBuild = 2600;
+	settings->ClientBuild = 18363; /* Windows 10, Version 1909 */
 	settings->KeyboardType = 4;
 	settings->KeyboardSubType = 0;
 	settings->KeyboardFunctionKey = 12;
