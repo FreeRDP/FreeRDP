@@ -101,11 +101,6 @@ struct _RDPEI_PLUGIN
 	RDPINPUT_CONTACT_DATA contacts[MAX_CONTACTS];
 	RDPINPUT_CONTACT_POINT* contactPoints;
 
-	HANDLE event;
-	HANDLE stopEvent;
-	HANDLE thread;
-
-	CRITICAL_SECTION lock;
 	rdpContext* rdpcontext;
 };
 typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
@@ -164,76 +159,6 @@ static UINT rdpei_add_frame(RdpeiClientContext* context)
 	}
 
 	return CHANNEL_RC_OK;
-}
-
-static DWORD WINAPI rdpei_schedule_thread(LPVOID arg)
-{
-	DWORD status;
-	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)arg;
-	UINT error = CHANNEL_RC_OK;
-	RdpeiClientContext* context;
-	HANDLE hdl[2];
-
-	if (!rdpei)
-	{
-		error = ERROR_INVALID_PARAMETER;
-		goto out;
-	}
-
-	context = (RdpeiClientContext*)rdpei->iface.pInterface;
-	hdl[0] = rdpei->event;
-	hdl[1] = rdpei->stopEvent;
-
-	if (!context)
-	{
-		error = ERROR_INVALID_PARAMETER;
-		goto out;
-	}
-
-	while (1)
-	{
-		status = WaitForMultipleObjects(2, hdl, FALSE, 20);
-
-		if (status == WAIT_FAILED)
-		{
-			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %" PRIu32 "!", error);
-			break;
-		}
-
-		if (status == WAIT_OBJECT_0 + 1)
-			break;
-
-		EnterCriticalSection(&rdpei->lock);
-
-		if ((error = rdpei_add_frame(context)))
-		{
-			WLog_ERR(TAG, "rdpei_add_frame failed with error %" PRIu32 "!", error);
-			break;
-		}
-
-		if (rdpei->frame.contactCount > 0)
-		{
-			if ((error = rdpei_send_frame(context)))
-			{
-				WLog_ERR(TAG, "rdpei_send_frame failed with error %" PRIu32 "!", error);
-				break;
-			}
-		}
-
-		if (status == WAIT_OBJECT_0)
-			ResetEvent(rdpei->event);
-
-		LeaveCriticalSection(&rdpei->lock);
-	}
-
-out:
-
-	if (error && rdpei && rdpei->rdpcontext)
-		setChannelError(rdpei->rdpcontext, error, "rdpei_schedule_thread reported an error");
-
-	ExitThread(error);
-	return error;
 }
 
 /**
@@ -636,30 +561,9 @@ static UINT rdpei_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 	}
 
 	rdpei->listener->pInterface = rdpei->iface.pInterface;
-	InitializeCriticalSection(&rdpei->lock);
-
-	if (!(rdpei->event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-	{
-		WLog_ERR(TAG, "CreateEvent failed!");
-		goto error_out;
-	}
-
-	if (!(rdpei->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-	{
-		WLog_ERR(TAG, "CreateEvent failed!");
-		goto error_out;
-	}
-
-	if (!(rdpei->thread = CreateThread(NULL, 0, rdpei_schedule_thread, (void*)rdpei, 0, NULL)))
-	{
-		WLog_ERR(TAG, "CreateThread failed!");
-		goto error_out;
-	}
 
 	return error;
 error_out:
-	CloseHandle(rdpei->stopEvent);
-	CloseHandle(rdpei->event);
 	free(rdpei->listener_callback);
 	return error;
 }
@@ -672,25 +576,10 @@ error_out:
 static UINT rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)pPlugin;
-	UINT error;
 
 	if (!pPlugin)
 		return ERROR_INVALID_PARAMETER;
 
-	SetEvent(rdpei->stopEvent);
-	EnterCriticalSection(&rdpei->lock);
-
-	if (WaitForSingleObject(rdpei->thread, INFINITE) == WAIT_FAILED)
-	{
-		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", error);
-		return error;
-	}
-
-	CloseHandle(rdpei->stopEvent);
-	CloseHandle(rdpei->event);
-	CloseHandle(rdpei->thread);
-	DeleteCriticalSection(&rdpei->lock);
 	free(rdpei->listener_callback);
 	free(rdpei->context);
 	free(rdpei);
@@ -747,16 +636,32 @@ UINT rdpei_send_frame(RdpeiClientContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact)
+static UINT rdpei_add_contact(RdpeiClientContext* context, const RDPINPUT_CONTACT_DATA* contact)
 {
+	UINT error;
 	RDPINPUT_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
-	EnterCriticalSection(&rdpei->lock);
+
 	contactPoint = (RDPINPUT_CONTACT_POINT*)&rdpei->contactPoints[contact->contactId];
 	CopyMemory(&(contactPoint->data), contact, sizeof(RDPINPUT_CONTACT_DATA));
 	contactPoint->dirty = TRUE;
-	SetEvent(rdpei->event);
-	LeaveCriticalSection(&rdpei->lock);
+
+	error = rdpei_add_frame(context);
+	if (error != CHANNEL_RC_OK)
+	{
+		WLog_ERR(TAG, "rdpei_add_frame failed with error %" PRIu32 "!", error);
+		return error;
+	}
+
+	if (rdpei->frame.contactCount > 0)
+	{
+		error = rdpei_send_frame(context);
+		if (error != CHANNEL_RC_OK)
+		{
+			WLog_ERR(TAG, "rdpei_send_frame failed with error %" PRIu32 "!", error);
+			return error;
+		}
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -769,7 +674,7 @@ static UINT rdpei_touch_begin(RdpeiClientContext* context, int externalId, int x
                               int* contactId)
 {
 	unsigned int i;
-	int contactIdlocal = -1;
+	INT64 contactIdlocal = -1;
 	RDPINPUT_CONTACT_DATA contact;
 	RDPINPUT_CONTACT_POINT* contactPoint = NULL;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
