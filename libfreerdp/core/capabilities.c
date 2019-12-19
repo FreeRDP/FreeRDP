@@ -2479,7 +2479,16 @@ static BOOL rdp_read_large_pointer_capability_set(wStream* s, UINT16 length, rdp
 		return FALSE;
 
 	Stream_Read_UINT16(s, largePointerSupportFlags); /* largePointerSupportFlags (2 bytes) */
-	settings->LargePointerFlag = (largePointerSupportFlags & LARGE_POINTER_FLAG_96x96) ? 1 : 0;
+	settings->LargePointerFlag =
+	    largePointerSupportFlags & (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384);
+	if ((largePointerSupportFlags & ~(LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384)) != 0)
+	{
+		WLog_WARN(
+		    TAG,
+		    "TS_LARGE_POINTER_CAPABILITYSET with unsupported flags %04X (all flags %04X) received",
+		    largePointerSupportFlags & ~(LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384),
+		    largePointerSupportFlags);
+	}
 	return TRUE;
 }
 
@@ -2499,7 +2508,8 @@ static BOOL rdp_write_large_pointer_capability_set(wStream* s, const rdpSettings
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	largePointerSupportFlags = (settings->LargePointerFlag) ? LARGE_POINTER_FLAG_96x96 : 0;
+	largePointerSupportFlags =
+	    settings->LargePointerFlag & (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384);
 	Stream_Write_UINT16(s, largePointerSupportFlags); /* largePointerSupportFlags (2 bytes) */
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_LARGE_POINTER);
 	return TRUE;

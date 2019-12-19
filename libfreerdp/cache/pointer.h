@@ -28,6 +28,10 @@ FREERDP_LOCAL POINTER_COLOR_UPDATE* copy_pointer_color_update(rdpContext* contex
                                                               const POINTER_COLOR_UPDATE* pointer);
 FREERDP_LOCAL void free_pointer_color_update(rdpContext* context, POINTER_COLOR_UPDATE* pointer);
 
+FREERDP_LOCAL POINTER_LARGE_UPDATE* copy_pointer_large_update(rdpContext* context,
+                                                              const POINTER_LARGE_UPDATE* pointer);
+FREERDP_LOCAL void free_pointer_large_update(rdpContext* context, POINTER_LARGE_UPDATE* pointer);
+
 FREERDP_LOCAL POINTER_NEW_UPDATE* copy_pointer_new_update(rdpContext* context,
                                                           const POINTER_NEW_UPDATE* pointer);
 FREERDP_LOCAL void free_pointer_new_update(rdpContext* context, POINTER_NEW_UPDATE* pointer);

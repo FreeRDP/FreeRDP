@@ -421,7 +421,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	gethostname(settings->ClientHostname, 31);
 	settings->ClientHostname[31] = 0;
 	settings->ColorPointerFlag = TRUE;
-	settings->LargePointerFlag = TRUE;
+	settings->LargePointerFlag = (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384);
 	settings->PointerCacheSize = 20;
 	settings->SoundBeepsEnabled = TRUE;
 	settings->DrawGdiPlusEnabled = FALSE;

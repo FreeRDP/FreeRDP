@@ -489,6 +489,130 @@ fail:
 	return NULL;
 }
 
+static BOOL _update_read_pointer_large(wStream* s, POINTER_LARGE_UPDATE* pointer)
+{
+	BYTE* newMask;
+	UINT32 scanlineSize;
+
+	if (!pointer)
+		goto fail;
+
+	if (Stream_GetRemainingLength(s) < 14)
+		goto fail;
+
+	Stream_Read_UINT16(s, pointer->xorBpp);
+	Stream_Read_UINT16(s, pointer->cacheIndex); /* cacheIndex (2 bytes) */
+	Stream_Read_UINT16(s, pointer->hotSpotX);   /* xPos (2 bytes) */
+	Stream_Read_UINT16(s, pointer->hotSpotY);   /* yPos (2 bytes) */
+
+	Stream_Read_UINT16(s, pointer->width);  /* width (2 bytes) */
+	Stream_Read_UINT16(s, pointer->height); /* height (2 bytes) */
+
+	if ((pointer->width > 384) || (pointer->height > 384))
+		goto fail;
+
+	Stream_Read_UINT16(s, pointer->lengthAndMask); /* lengthAndMask (2 bytes) */
+	Stream_Read_UINT16(s, pointer->lengthXorMask); /* lengthXorMask (2 bytes) */
+
+	if (pointer->hotSpotX >= pointer->width)
+		pointer->hotSpotX = 0;
+
+	if (pointer->hotSpotY >= pointer->height)
+		pointer->hotSpotY = 0;
+
+	if (pointer->lengthXorMask > 0)
+	{
+		/**
+		 * Spec states that:
+		 *
+		 * xorMaskData (variable): A variable-length array of bytes. Contains the 24-bpp, bottom-up
+		 * XOR mask scan-line data. The XOR mask is padded to a 2-byte boundary for each encoded
+		 * scan-line. For example, if a 3x3 pixel cursor is being sent, then each scan-line will
+		 * consume 10 bytes (3 pixels per scan-line multiplied by 3 bytes per pixel, rounded up to
+		 * the next even number of bytes).
+		 *
+		 * In fact instead of 24-bpp, the bpp parameter is given by the containing packet.
+		 */
+		if (Stream_GetRemainingLength(s) < pointer->lengthXorMask)
+			goto fail;
+
+		scanlineSize = (7 + pointer->xorBpp * pointer->width) / 8;
+		scanlineSize = ((scanlineSize + 1) / 2) * 2;
+
+		if (scanlineSize * pointer->height != pointer->lengthXorMask)
+		{
+			WLog_ERR(TAG,
+			         "invalid lengthXorMask: width=%" PRIu32 " height=%" PRIu32 ", %" PRIu32
+			         " instead of %" PRIu32 "",
+			         pointer->width, pointer->height, pointer->lengthXorMask,
+			         scanlineSize * pointer->height);
+			goto fail;
+		}
+
+		newMask = realloc(pointer->xorMaskData, pointer->lengthXorMask);
+
+		if (!newMask)
+			goto fail;
+
+		pointer->xorMaskData = newMask;
+		Stream_Read(s, pointer->xorMaskData, pointer->lengthXorMask);
+	}
+
+	if (pointer->lengthAndMask > 0)
+	{
+		/**
+		 * andMaskData (variable): A variable-length array of bytes. Contains the 1-bpp, bottom-up
+		 * AND mask scan-line data. The AND mask is padded to a 2-byte boundary for each encoded
+		 * scan-line. For example, if a 7x7 pixel cursor is being sent, then each scan-line will
+		 * consume 2 bytes (7 pixels per scan-line multiplied by 1 bpp, rounded up to the next even
+		 * number of bytes).
+		 */
+		if (Stream_GetRemainingLength(s) < pointer->lengthAndMask)
+			goto fail;
+
+		scanlineSize = ((7 + pointer->width) / 8);
+		scanlineSize = ((1 + scanlineSize) / 2) * 2;
+
+		if (scanlineSize * pointer->height != pointer->lengthAndMask)
+		{
+			WLog_ERR(TAG, "invalid lengthAndMask: %" PRIu32 " instead of %" PRIu32 "",
+			         pointer->lengthAndMask, scanlineSize * pointer->height);
+			goto fail;
+		}
+
+		newMask = realloc(pointer->andMaskData, pointer->lengthAndMask);
+
+		if (!newMask)
+			goto fail;
+
+		pointer->andMaskData = newMask;
+		Stream_Read(s, pointer->andMaskData, pointer->lengthAndMask);
+	}
+
+	if (Stream_GetRemainingLength(s) > 0)
+		Stream_Seek_UINT8(s); /* pad (1 byte) */
+
+	return TRUE;
+fail:
+	return FALSE;
+}
+
+POINTER_LARGE_UPDATE* update_read_pointer_large(rdpUpdate* update, wStream* s)
+{
+	POINTER_LARGE_UPDATE* pointer = calloc(1, sizeof(POINTER_LARGE_UPDATE));
+
+	if (!pointer)
+		goto fail;
+
+	if (!_update_read_pointer_large(s, pointer))
+		goto fail;
+
+	return pointer;
+fail:
+	free_pointer_large_update(update->context, pointer);
+	return NULL;
+}
+
 POINTER_NEW_UPDATE* update_read_pointer_new(rdpUpdate* update, wStream* s)
 {
 	POINTER_NEW_UPDATE* pointer_new = calloc(1, sizeof(POINTER_NEW_UPDATE));
@@ -581,6 +705,18 @@ BOOL update_recv_pointer(rdpUpdate* update, wStream* s)
 			{
 				rc = IFCALLRESULT(FALSE, pointer->PointerColor, context, pointer_color);
 				free_pointer_color_update(context, pointer_color);
+			}
+		}
+		break;
+
+		case PTR_MSG_TYPE_POINTER_LARGE:
+		{
+			POINTER_LARGE_UPDATE* pointer_large = update_read_pointer_large(update, s);
+
+			if (pointer_large)
+			{
+				rc = IFCALLRESULT(FALSE, pointer->PointerLarge, context, pointer_large);
+				free_pointer_large_update(context, pointer_large);
 			}
 		}
 		break;
@@ -1888,6 +2024,44 @@ out_fail:
 	return ret;
 }
 
+static BOOL update_write_pointer_large(wStream* s, const POINTER_LARGE_UPDATE* pointer)
+{
+	if (!Stream_EnsureRemainingCapacity(s, 32 + pointer->lengthAndMask + pointer->lengthXorMask))
+		return FALSE;
+
+	Stream_Write_UINT16(s, pointer->xorBpp);
+	Stream_Write_UINT16(s, pointer->cacheIndex);
+	Stream_Write_UINT16(s, pointer->hotSpotX);
+	Stream_Write_UINT16(s, pointer->hotSpotY);
+	Stream_Write_UINT16(s, pointer->width);
+	Stream_Write_UINT16(s, pointer->height);
+	Stream_Write_UINT32(s, pointer->lengthAndMask);
+	Stream_Write_UINT32(s, pointer->lengthXorMask);
+	Stream_Write(s, pointer->xorMaskData, pointer->lengthXorMask);
+	Stream_Write(s, pointer->andMaskData, pointer->lengthAndMask);
+	Stream_Write_UINT8(s, 0); /* pad (1 byte) */
+	return TRUE;
+}
+
+static BOOL update_send_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE* pointer)
+{
+	wStream* s;
+	rdpRdp* rdp = context->rdp;
+	BOOL ret = FALSE;
+	s = fastpath_update_pdu_init(rdp->fastpath);
+
+	if (!s)
+		return FALSE;
+
+	if (!update_write_pointer_large(s, pointer))
+		goto out_fail;
+
+	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_LARGE_POINTER, s, FALSE);
+out_fail:
+	Stream_Release(s);
+	return ret;
+}
+
 static BOOL update_send_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new)
 {
 	wStream* s;
@@ -2635,6 +2809,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->pointer->PointerSystem = update_send_pointer_system;
 	update->pointer->PointerPosition = update_send_pointer_position;
 	update->pointer->PointerColor = update_send_pointer_color;
+	update->pointer->PointerLarge = update_send_pointer_large;
 	update->pointer->PointerNew = update_send_pointer_new;
 	update->pointer->PointerCached = update_send_pointer_cached;
 	update->window->WindowCreate = update_send_window_create;

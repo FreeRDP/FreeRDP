@@ -470,6 +470,17 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 		}
 		break;
 
+		case FASTPATH_UPDATETYPE_LARGE_POINTER:
+		{
+			POINTER_LARGE_UPDATE* pointer_large = update_read_pointer_large(update, s);
+
+			if (pointer_large)
+			{
+				rc = IFCALLRESULT(FALSE, pointer->PointerLarge, context, pointer_large);
+				free_pointer_large_update(context, pointer_large);
+			}
+		}
+		break;
 		default:
 			break;
 	}
