@@ -623,6 +623,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	return settings;
 out_fail:
+	free(settings->ActionScript);
+	free(settings->SettingsModified);
 	free(settings->HomePath);
 	free(settings->ConfigPath);
 	free(settings->DynamicChannelArray);
