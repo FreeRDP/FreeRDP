@@ -558,7 +558,7 @@ BOOL ThreadCloseHandle(HANDLE handle)
 
 		if ((thread->started) && (WaitForSingleObject(thread, 0) != WAIT_OBJECT_0))
 		{
-			WLog_ERR(TAG, "Thread running, setting to detached state!");
+			WLog_DBG(TAG, "Thread running, setting to detached state!");
 			thread->detached = TRUE;
 			pthread_detach(thread->thread);
 		}
