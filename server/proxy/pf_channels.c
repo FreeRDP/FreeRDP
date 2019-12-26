@@ -52,11 +52,11 @@ static void pf_channels_wait_for_server_dynvc(pServerContext* ps)
 	WLog_DBG(TAG, "pf_channels_wait_for_server_dynvc(): server's drdynvc is ready!");
 }
 
-void pf_OnChannelConnectedEventHandler(void* data, ChannelConnectedEventArgs* e)
+void pf_channels_on_client_channel_connect(void* data, ChannelConnectedEventArgs* e)
 {
 	pClientContext* pc = (pClientContext*)data;
 	pServerContext* ps = pc->pdata->ps;
-	WLog_INFO(TAG, "Channel connected: %s", e->name);
+	LOG_INFO(TAG, pc, "Channel connected: %s", e->name);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -139,12 +139,12 @@ void pf_OnChannelConnectedEventHandler(void* data, ChannelConnectedEventArgs* e)
 	}
 }
 
-void pf_OnChannelDisconnectedEventHandler(void* data, ChannelDisconnectedEventArgs* e)
+void pf_channels_on_client_channel_disconnect(void* data, ChannelDisconnectedEventArgs* e)
 {
 	rdpContext* context = (rdpContext*)data;
 	pClientContext* pc = (pClientContext*)context;
 	pServerContext* ps = pc->pdata->ps;
-	WLog_INFO(TAG, "Channel disconnected: %s", e->name);
+	LOG_INFO(TAG, pc, "Channel disconnected: %s", e->name);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{

@@ -27,8 +27,8 @@
 
 #include "pf_context.h"
 
-void pf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e);
-void pf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e);
+void pf_channels_on_client_channel_connect(void* context, ChannelConnectedEventArgs* e);
+void pf_channels_on_client_channel_disconnect(void* context, ChannelDisconnectedEventArgs* e);
 
 BOOL pf_server_channels_init(pServerContext* ps);
 void pf_server_channels_free(pServerContext* ps);
