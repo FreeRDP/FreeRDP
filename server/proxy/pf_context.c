@@ -19,6 +19,9 @@
  * limitations under the License.
  */
 
+#include <winpr/crypto.h>
+#include <winpr/print.h>
+
 #include "pf_client.h"
 #include "pf_context.h"
 
@@ -160,6 +163,7 @@ error:
 
 proxyData* proxy_data_new(void)
 {
+	BYTE temp[16];
 	proxyData* pdata = calloc(1, sizeof(proxyData));
 
 	if (pdata == NULL)
@@ -179,7 +183,28 @@ proxyData* proxy_data_new(void)
 		return NULL;
 	}
 
+	winpr_RAND((BYTE*)&temp, 16);
+	if (!(pdata->session_id = winpr_BinToHexString(temp, 16, FALSE)))
+	{
+		proxy_data_free(pdata);
+		return NULL;
+	}
+
 	return pdata;
+}
+
+/* updates circular pointers between proxyData and pClientContext instances */
+void proxy_data_set_client_context(proxyData* pdata, pClientContext* context)
+{
+	pdata->pc = context;
+	context->pdata = pdata;
+}
+
+/* updates circular pointers between proxyData and pServerContext instances */
+void proxy_data_set_server_context(proxyData* pdata, pServerContext* context)
+{
+	pdata->ps = context;
+	context->pdata = pdata;
 }
 
 void proxy_data_free(proxyData* pdata)
@@ -201,6 +226,9 @@ void proxy_data_free(proxyData* pdata)
 		CloseHandle(pdata->gfx_server_ready);
 		pdata->gfx_server_ready = NULL;
 	}
+
+	if (pdata->session_id)
+		free(pdata->session_id);
 
 	free(pdata);
 }

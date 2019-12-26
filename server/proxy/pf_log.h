@@ -26,4 +26,25 @@
 
 #define PROXY_TAG(tag) "proxy." tag
 
+/*
+ * log format in proxy is:
+ * "[SessionID=%s] - [__FUNCTION__]: Log message"
+ * both SessionID and __FUNCTION__ are optional, but if they should be written to the log,
+ * that's the format.
+ */
+
+/* log macros that prepends session id and function name tp the log message */
+#define LOG_INFO(_tag, _context, _format, ...)                                                \
+	WLog_INFO(TAG, "[SessionID=%s][%s]: " _format, _context->pdata->session_id, __FUNCTION__, \
+	          ##__VA_ARGS__)
+#define LOG_ERR(_tag, _context, _format, ...)                                                \
+	WLog_ERR(TAG, "[SessionID=%s][%s]: " _format, _context->pdata->session_id, __FUNCTION__, \
+	         ##__VA_ARGS__)
+#define LOG_DBG(_tag, _context, _format, ...)                                                \
+	WLog_DBG(TAG, "[SessionID=%s][%s]: " _format, _context->pdata->session_id, __FUNCTION__, \
+	         ##__VA_ARGS__)
+#define LOG_WARN(_tag, _context, _format, ...)                                                \
+	WLog_WARN(TAG, "[SessionID=%s][%s]: " _format, _context->pdata->session_id, __FUNCTION__, \
+	          ##__VA_ARGS__)
+
 #endif /* FREERDP_SERVER_PROXY_PFLOG_H */

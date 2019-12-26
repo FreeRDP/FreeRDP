@@ -61,9 +61,10 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char*
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="
 	char* colon;
 	size_t len;
-	const size_t prefix_len = strnlen(ROUTING_TOKEN_PREFIX, sizeof(ROUTING_TOKEN_PREFIX));
 	DWORD routing_token_length;
+	const size_t prefix_len = strnlen(ROUTING_TOKEN_PREFIX, sizeof(ROUTING_TOKEN_PREFIX));
 	const char* routing_token = freerdp_nego_get_routing_token(context, &routing_token_length);
+	pServerContext* ps = (pServerContext*)context;
 
 	if (routing_token == NULL)
 	{
@@ -73,11 +74,7 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char*
 
 	if ((routing_token_length <= prefix_len) || (routing_token_length >= TARGET_MAX))
 	{
-		WLog_ERR(
-		    TAG,
-		    "pf_server_parse_target_from_routing_token(): invalid routing token length: %" PRIu32
-		    "",
-		    routing_token_length);
+		LOG_ERR(TAG, ps, "invalid routing token length: %" PRIu32 "", routing_token_length);
 		return FALSE;
 	}
 
@@ -112,8 +109,10 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char*
 static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings,
                                       proxyConfig* config)
 {
-	WLog_INFO(TAG, "pf_server_get_target_info(): fetching target from %s",
-	          config->UseLoadBalanceInfo ? "load-balance-info" : "config");
+	pServerContext* ps = (pServerContext*)context;
+
+	LOG_INFO(TAG, ps, "fetching target from %s",
+	         config->UseLoadBalanceInfo ? "load-balance-info" : "config");
 
 	if (config->UseLoadBalanceInfo)
 		return pf_server_parse_target_from_routing_token(context, &settings->ServerHostname,
@@ -122,7 +121,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 	/* use hardcoded target info from configuration */
 	if (!(settings->ServerHostname = _strdup(config->TargetHost)))
 	{
-		WLog_DBG(TAG, "pf_server_get_target_info(): strdup failed!");
+		LOG_ERR(TAG, ps, "strdup failed!");
 		return FALSE;
 	}
 
@@ -149,42 +148,42 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 
 	if (pdata->config->SessionCapture && !peer->settings->SupportGraphicsPipeline)
 	{
-		WLog_ERR(TAG, "Session capture feature is enabled, only accepting connections with GFX");
+		LOG_ERR(TAG, ps, "Session capture feature is enabled, only accepting connections with GFX");
 		return FALSE;
 	}
 
 	pc = pf_context_create_client_context(peer->settings);
 	if (pc == NULL)
 	{
-		WLog_ERR(TAG, "pf_server_post_connect(): pf_context_create_client_context failed!");
+		LOG_ERR(TAG, ps, "[%s]: pf_context_create_client_context failed!");
 		return FALSE;
 	}
 
 	client_settings = pc->context.settings;
 
 	/* keep both sides of the connection in pdata */
-	pc->pdata = ps->pdata;
-	pdata->pc = pc;
+	proxy_data_set_client_context(pdata, pc);
 
 	if (!pf_server_get_target_info(peer->context, client_settings, pdata->config))
 	{
-		WLog_ERR(TAG, "pf_server_post_connect(): pf_server_get_target_info failed!");
+
+		LOG_INFO(TAG, ps, "pf_server_get_target_info failed!");
 		return FALSE;
 	}
 
-	WLog_INFO(TAG, "pf_server_post_connect(): target == %s:%" PRIu16 "",
-	          client_settings->ServerHostname, client_settings->ServerPort);
+	LOG_INFO(TAG, ps, "remote target is %s:%" PRIu16 "", client_settings->ServerHostname,
+	         client_settings->ServerPort);
 
 	if (!pf_server_channels_init(ps))
 	{
-		WLog_ERR(TAG, "pf_server_post_connect(): failed to initialize server's channels!");
+		LOG_INFO(TAG, ps, "failed to initialize server's channels!");
 		return FALSE;
 	}
 
 	/* Start a proxy's client in it's own thread */
 	if (!(pdata->client_thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
 	{
-		WLog_ERR(TAG, "CreateThread failed!");
+		LOG_ERR(TAG, ps, "failed to create client thread");
 		return FALSE;
 	}
 
@@ -336,8 +335,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 		/* only disconnect after checking client's and vcm's file descriptors  */
 		if (proxy_data_shall_disconnect(pdata))
 		{
-			WLog_INFO(TAG, "abort_event is set, closing connection with client %s",
-			          client->hostname);
+			WLog_INFO(TAG, "abort event is set, closing connection with peer %s", client->hostname);
 			break;
 		}
 
@@ -371,13 +369,12 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 fail:
 
 	pc = (rdpContext*)pdata->pc;
-	WLog_INFO(TAG, "pf_server_handle_client(): starting shutdown of connection (client %s)",
-	          client->hostname);
-	WLog_INFO(TAG, "pf_server_handle_client(): stopping proxy's client");
+	LOG_INFO(TAG, ps, "starting shutdown of connection");
+	LOG_INFO(TAG, ps, "stopping proxy's client");
 	freerdp_client_stop(pc);
-	WLog_INFO(TAG, "pf_server_handle_client(): freeing server's channels");
+	LOG_INFO(TAG, ps, "freeing server's channels");
 	pf_server_channels_free(ps);
-	WLog_INFO(TAG, "pf_server_handle_client(): freeing proxy data");
+	LOG_INFO(TAG, ps, "freeing proxy data");
 	proxy_data_free(pdata);
 	freerdp_client_context_free(pc);
 	client->Close(client);
@@ -393,7 +390,7 @@ static BOOL pf_server_peer_accepted(freerdp_listener* listener, freerdp_peer* cl
 	HANDLE hThread;
 	client->ContextExtra = listener->info;
 
-	if (!(hThread = CreateThread(NULL, 0, pf_server_handle_client, (void*)client, 0, NULL)))
+	if (!(hThread = CreateThread(NULL, 0, pf_server_handle_peer, (void*)client, 0, NULL)))
 		return FALSE;
 
 	CloseHandle(hThread);
