@@ -1318,7 +1318,7 @@ static BOOL _get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 
 	if (currentCounters.rx != pComm->counters.rx)
 	{
-		pComm->PendingEvents |= SERIAL_EV_RXFLAG;
+		pComm->PendingEvents |= SERIAL_EV_RXFLAG | SERIAL_EV_RXCHAR;
 	}
 
 	if ((currentCounters.tx != pComm->counters.tx) && /* at least a transmission occurred AND ...*/
