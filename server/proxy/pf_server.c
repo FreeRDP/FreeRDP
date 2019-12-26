@@ -138,22 +138,22 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
  * The server may start sending graphics output and receiving keyboard/mouse
  * input after this callback returns.
  */
-static BOOL pf_server_post_connect(freerdp_peer* client)
+static BOOL pf_server_post_connect(freerdp_peer* peer)
 {
 	pServerContext* ps;
 	pClientContext* pc;
 	rdpSettings* client_settings;
 	proxyData* pdata;
-	ps = (pServerContext*)client->context;
+	ps = (pServerContext*)peer->context;
 	pdata = ps->pdata;
 
-	if (pdata->config->SessionCapture && !client->settings->SupportGraphicsPipeline)
+	if (pdata->config->SessionCapture && !peer->settings->SupportGraphicsPipeline)
 	{
 		WLog_ERR(TAG, "Session capture feature is enabled, only accepting connections with GFX");
 		return FALSE;
 	}
 
-	pc = pf_context_create_client_context(client->settings);
+	pc = pf_context_create_client_context(peer->settings);
 	if (pc == NULL)
 	{
 		WLog_ERR(TAG, "pf_server_post_connect(): pf_context_create_client_context failed!");
@@ -166,7 +166,7 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 	pc->pdata = ps->pdata;
 	pdata->pc = pc;
 
-	if (!pf_server_get_target_info(client->context, client_settings, pdata->config))
+	if (!pf_server_get_target_info(peer->context, client_settings, pdata->config))
 	{
 		WLog_ERR(TAG, "pf_server_post_connect(): pf_server_get_target_info failed!");
 		return FALSE;
@@ -188,14 +188,14 @@ static BOOL pf_server_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	pf_server_register_input_callbacks(client->input);
-	pf_server_register_update_callbacks(client->update);
+	pf_server_register_input_callbacks(peer->input);
+	pf_server_register_update_callbacks(peer->update);
 	return TRUE;
 }
 
-static BOOL pf_server_activate(freerdp_peer* client)
+static BOOL pf_server_activate(freerdp_peer* peer)
 {
-	client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
+	peer->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
 	return TRUE;
 }
 
@@ -205,12 +205,72 @@ static BOOL pf_server_adjust_monitor_layout(freerdp_peer* peer)
 	return TRUE;
 }
 
+static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
+{
+	pServerContext* ps = (pServerContext*)peer->context;
+	proxyData* pdata;
+	proxyConfig* config;
+	rdpSettings* settings = peer->settings;
+
+	if (!ps)
+		return FALSE;
+
+	pdata = proxy_data_new();
+	if (!pdata)
+		return FALSE;
+
+	proxy_data_set_server_context(pdata, ps);
+	config = pdata->config = peer->ContextExtra;
+
+	/* currently not supporting GDI orders */
+	ZeroMemory(settings->OrderSupport, 32);
+	peer->update->autoCalculateBitmapData = FALSE;
+
+	settings->SupportMonitorLayoutPdu = TRUE;
+	settings->SupportGraphicsPipeline = config->GFX;
+	settings->CertificateFile = _strdup("server.crt");
+	settings->PrivateKeyFile = _strdup("server.key");
+	settings->RdpKeyFile = _strdup("server.key");
+
+	if (config->RemoteApp)
+	{
+		settings->RemoteApplicationSupportLevel =
+		    RAIL_LEVEL_SUPPORTED | RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED |
+		    RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED | RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED |
+		    RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED |
+		    RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED | RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED |
+		    RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
+		settings->RemoteAppLanguageBarSupported = TRUE;
+	}
+
+	if (!settings->CertificateFile || !settings->PrivateKeyFile || !settings->RdpKeyFile)
+	{
+		WLog_ERR(TAG, "Memory allocation failed (strdup)");
+		return FALSE;
+	}
+
+	settings->RdpSecurity = config->ServerRdpSecurity;
+	settings->TlsSecurity = config->ServerTlsSecurity;
+	settings->NlaSecurity = FALSE; /* currently NLA is not supported in proxy server */
+	settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+	settings->ColorDepth = 32;
+	settings->SuppressOutput = TRUE;
+	settings->RefreshRect = TRUE;
+	settings->DesktopResize = TRUE;
+
+	peer->PostConnect = pf_server_post_connect;
+	peer->Activate = pf_server_activate;
+	peer->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
+	peer->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
+	return TRUE;
+}
+
 /**
  * Handles an incoming client connection, to be run in it's own thread.
  *
  * arg is a pointer to a freerdp_peer representing the client.
  */
-static DWORD WINAPI pf_server_handle_client(LPVOID arg)
+static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 {
 	HANDLE eventHandles[32];
 	HANDLE ChannelEvent;
@@ -220,65 +280,19 @@ static DWORD WINAPI pf_server_handle_client(LPVOID arg)
 	pServerContext* ps;
 	rdpContext* pc;
 	proxyData* pdata;
-	proxyConfig* config;
 	freerdp_peer* client = (freerdp_peer*)arg;
 
 	if (!pf_context_init_server_context(client))
 		goto out_free_peer;
 
+	if (!pf_server_initialize_peer_connection(client))
+		goto out_free_peer;
+
 	ps = (pServerContext*)client->context;
+	pdata = ps->pdata;
 
-	if (!(pdata = ps->pdata = proxy_data_new()))
-	{
-		WLog_ERR(TAG, "pf_server_post_connect(): proxy_data_new failed!");
-		goto out_free_peer;
-	}
-
-	pdata->ps = ps;
-	config = pdata->config = client->ContextExtra;
-
-	/* currently not supporting GDI orders */
-	ZeroMemory(client->settings->OrderSupport, 32);
-	client->update->autoCalculateBitmapData = FALSE;
-
-	client->settings->SupportMonitorLayoutPdu = TRUE;
-	client->settings->SupportGraphicsPipeline = config->GFX;
-	client->settings->CertificateFile = _strdup("server.crt");
-	client->settings->PrivateKeyFile = _strdup("server.key");
-	client->settings->RdpKeyFile = _strdup("server.key");
-
-	if (config->RemoteApp)
-	{
-		client->settings->RemoteApplicationSupportLevel =
-		    RAIL_LEVEL_SUPPORTED | RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED |
-		    RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED | RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED |
-		    RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED |
-		    RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED | RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED |
-		    RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
-		client->settings->RemoteAppLanguageBarSupported = TRUE;
-	}
-
-	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile ||
-	    !client->settings->RdpKeyFile)
-	{
-		WLog_ERR(TAG, "Memory allocation failed (strdup)");
-		goto out_free_peer;
-	}
-
-	client->settings->RdpSecurity = config->ServerRdpSecurity;
-	client->settings->TlsSecurity = config->ServerTlsSecurity;
-	client->settings->NlaSecurity = FALSE; /* currently NLA is not supported in proxy server */
-	client->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
-	client->settings->ColorDepth = 32;
-	client->settings->SuppressOutput = TRUE;
-	client->settings->RefreshRect = TRUE;
-	client->settings->DesktopResize = TRUE;
-	client->PostConnect = pf_server_post_connect;
-	client->Activate = pf_server_activate;
-	client->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
-	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 	client->Initialize(client);
-	WLog_INFO(TAG, "Client connected: %s", client->local ? "(local)" : client->hostname);
+	LOG_INFO(TAG, ps, "peer connected: %s", client->hostname);
 	/* Main client event handling loop */
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(ps->vcm);
 
@@ -374,7 +388,7 @@ out_free_peer:
 	return 0;
 }
 
-static BOOL pf_server_client_connected(freerdp_listener* listener, freerdp_peer* client)
+static BOOL pf_server_peer_accepted(freerdp_listener* listener, freerdp_peer* client)
 {
 	HANDLE hThread;
 	client->ContextExtra = listener->info;
@@ -431,7 +445,7 @@ int pf_server_start(proxyConfig* config)
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	listener->info = config;
-	listener->PeerAccepted = pf_server_client_connected;
+	listener->PeerAccepted = pf_server_peer_accepted;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
