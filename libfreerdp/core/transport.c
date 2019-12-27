@@ -1005,6 +1005,12 @@ int transport_check_fds(rdpTransport* transport)
 	if (!transport)
 		return -1;
 
+	if (transport->layer == TRANSPORT_LAYER_CLOSED)
+	{
+		WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds: transport layer closed");
+		return -1;
+	}
+
 	dueDate = now + transport->settings->MaxTimeInCheckLoop;
 
 	if (transport->haveMoreBytesToRead)
