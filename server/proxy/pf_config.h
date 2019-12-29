@@ -50,6 +50,7 @@ struct proxy_config
 	BOOL ClientNlaSecurity;
 	BOOL ClientTlsSecurity;
 	BOOL ClientRdpSecurity;
+	BOOL ClientAllowFallbackToTls;
 
 	/* channels */
 	BOOL GFX;

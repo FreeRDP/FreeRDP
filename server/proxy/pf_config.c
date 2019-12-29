@@ -75,8 +75,8 @@ BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* key)
 	str_value = IniFile_GetKeyValueString(ini, section, key);
 	if (!str_value)
 	{
-		WLog_WARN(TAG, "[%s]: key '%s.%s' not found, value defaults to false.", __FUNCTION__, key,
-		          section);
+		WLog_WARN(TAG, "[%s]: key '%s.%s' not found, value defaults to false.", __FUNCTION__,
+		          section, key);
 		return FALSE;
 	}
 
@@ -171,6 +171,8 @@ static BOOL pf_config_load_security(wIniFile* ini, proxyConfig* config)
 	config->ClientTlsSecurity = pf_config_get_bool(ini, "Security", "ClientTlsSecurity");
 	config->ClientNlaSecurity = pf_config_get_bool(ini, "Security", "ClientNlaSecurity");
 	config->ClientRdpSecurity = pf_config_get_bool(ini, "Security", "ClientRdpSecurity");
+	config->ClientAllowFallbackToTls =
+	    pf_config_get_bool(ini, "Security", "ClientAllowFallbackToTls");
 	return TRUE;
 }
 
@@ -319,6 +321,7 @@ void pf_server_config_print(proxyConfig* config)
 	CONFIG_PRINT_BOOL(config, ClientNlaSecurity);
 	CONFIG_PRINT_BOOL(config, ClientTlsSecurity);
 	CONFIG_PRINT_BOOL(config, ClientRdpSecurity);
+	CONFIG_PRINT_BOOL(config, ClientAllowFallbackToTls);
 
 	CONFIG_PRINT_SECTION("Channels");
 	CONFIG_PRINT_BOOL(config, GFX);

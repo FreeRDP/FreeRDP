@@ -289,7 +289,7 @@ static BOOL pf_client_should_retry_without_nla(pClientContext* pc)
 	rdpSettings* settings = pc->context.settings;
 	proxyConfig* config = pc->pdata->config;
 
-	if (!settings->NlaSecurity)
+	if (!config->ClientAllowFallbackToTls || !settings->NlaSecurity)
 		return FALSE;
 
 	return config->ClientTlsSecurity || config->ClientRdpSecurity;
@@ -330,14 +330,18 @@ static BOOL pf_client_connect(freerdp* instance)
 {
 	pClientContext* pc = (pClientContext*)instance->context;
 	BOOL rc = FALSE;
+	BOOL retry = FALSE;
 
 	pf_client_set_security_settings(pc);
 	if (pf_client_should_retry_without_nla(pc))
-		pc->allow_next_conn_failure = TRUE;
+		retry = pc->allow_next_conn_failure = TRUE;
 
 	if (!freerdp_connect(instance))
 	{
-		WLog_ERR(TAG, "failed to connect with NLA. disabling NLA and retyring...");
+		if (!retry)
+			goto out;
+
+		WLog_ERR(TAG, "failed to connect with NLA. retrying to connect without NLA");
 
 		if (!pf_client_connect_without_nla(pc))
 		{
