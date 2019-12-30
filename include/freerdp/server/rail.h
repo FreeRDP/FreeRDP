@@ -130,7 +130,7 @@ struct _rail_server_context
 	psRailServerGetAppidRespEx ServerGetAppidRespEx;
 
 	RailServerPrivate* priv;
-	rdpContext* rdpContext;
+	rdpContext* rdpcontext;
 };
 
 #ifdef __cplusplus

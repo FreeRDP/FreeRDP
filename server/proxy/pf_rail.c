@@ -38,7 +38,7 @@ BOOL pf_rail_context_init(pServerContext* ps)
 		return FALSE;
 	}
 
-	rail->rdpContext = (rdpContext*)ps;
+	rail->rdpcontext = (rdpContext*)ps;
 	return TRUE;
 }
 

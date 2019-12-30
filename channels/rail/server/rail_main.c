@@ -1360,8 +1360,8 @@ static DWORD WINAPI rail_server_thread(LPVOID arg)
 		}
 	}
 
-	if (error && context->rdpContext)
-		setChannelError(context->rdpContext, error, "rail_server_thread reported an error");
+	if (error && context->rdpcontext)
+		setChannelError(context->rdpcontext, error, "rail_server_thread reported an error");
 
 	ExitThread(error);
 	return error;
