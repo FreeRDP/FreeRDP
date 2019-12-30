@@ -1061,13 +1061,19 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	}
 
 	if (audin->device == NULL)
+	{
+		/* If we have no audin device do not register plugin but still return OK or the client will
+		 * just disconnect due to a missing microphone. */
 		WLog_Print(audin->log, WLOG_ERROR, "no sound device.");
+		error = CHANNEL_RC_OK;
+		goto out;
+	}
 
 	error = pEntryPoints->RegisterPlugin(pEntryPoints, "audin", (IWTSPlugin*)audin);
+	if (error == CHANNEL_RC_OK)
+		return error;
+
 out:
-
-	if (error != CHANNEL_RC_OK)
-		audin_plugin_terminated((IWTSPlugin*)audin);
-
+	audin_plugin_terminated((IWTSPlugin*)audin);
 	return error;
 }

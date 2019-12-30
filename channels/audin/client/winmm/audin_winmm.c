@@ -463,6 +463,10 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 	ADDIN_ARGV* args;
 	AudinWinmmDevice* winmm;
 	UINT error;
+
+	if (waveInGetNumDevs() == 0)
+		return ERROR_DEVICE_NOT_AVAILABLE;
+
 	winmm = (AudinWinmmDevice*)calloc(1, sizeof(AudinWinmmDevice));
 
 	if (!winmm)

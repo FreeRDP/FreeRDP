@@ -308,6 +308,9 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	if (!winmm)
 		return CHANNEL_RC_NO_MEMORY;
 
+	if (waveOutGetNumDevs() == 0)
+		return ERROR_DEVICE_NOT_AVAILABLE;
+
 	winmm->device.Open = rdpsnd_winmm_open;
 	winmm->device.FormatSupported = rdpsnd_winmm_format_supported;
 	winmm->device.GetVolume = rdpsnd_winmm_get_volume;
