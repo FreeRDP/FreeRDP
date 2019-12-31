@@ -20,9 +20,11 @@
 
 #include <assert.h>
 
+#include <winpr/file.h>
 #include <winpr/wlog.h>
 #include <winpr/library.h>
 #include <freerdp/api.h>
+#include <freerdp/build-config.h>
 
 #include "pf_log.h"
 #include "pf_modules.h"
@@ -30,14 +32,12 @@
 
 #define TAG PROXY_TAG("modules")
 
-#define MODULE_INIT_METHOD "module_init"
-#define MODULE_EXIT_METHOD "module_exit"
+#define MODULE_ENTRY_POINT "proxy_module_entry_point"
 
-static modules_list* proxy_modules = NULL;
+static wArrayList* plugins_list = NULL; /* list of all loaded plugins */
+static wArrayList* handles_list = NULL; /* list of module handles to free at shutdown */
 
-/* module init/exit methods */
-typedef BOOL (*moduleInitFn)(moduleOperations* ops);
-typedef BOOL (*moduleExitFn)(moduleOperations* ops);
+typedef BOOL (*moduleEntryPoint)(proxyPluginsManager* plugins_manager);
 
 static const char* FILTER_TYPE_STRINGS[] = {
 	"KEYBOARD_EVENT",
@@ -45,14 +45,13 @@ static const char* FILTER_TYPE_STRINGS[] = {
 };
 
 static const char* HOOK_TYPE_STRINGS[] = {
-	"CLIENT_PRE_CONNECT",
-	"SERVER_CHANNELS_INIT",
-	"SERVER_CHANNELS_FREE",
+	"CLIENT_PRE_CONNECT",   "CLIENT_LOGIN_FAILURE", "SERVER_POST_CONNECT",
+	"SERVER_CHANNELS_INIT", "SERVER_CHANNELS_FREE",
 };
 
 static const char* pf_modules_get_filter_type_string(PF_FILTER_TYPE result)
 {
-	if (result >= FILTER_TYPE_KEYBOARD && result <= FILTER_TYPE_MOUSE)
+	if (result >= FILTER_TYPE_KEYBOARD && result < FILTER_LAST)
 		return FILTER_TYPE_STRINGS[result];
 	else
 		return "FILTER_UNKNOWN";
@@ -60,23 +59,10 @@ static const char* pf_modules_get_filter_type_string(PF_FILTER_TYPE result)
 
 static const char* pf_modules_get_hook_type_string(PF_HOOK_TYPE result)
 {
-	if (result >= HOOK_TYPE_CLIENT_PRE_CONNECT && result <= HOOK_TYPE_SERVER_CHANNELS_FREE)
+	if (result >= HOOK_TYPE_CLIENT_PRE_CONNECT && result < HOOK_LAST)
 		return HOOK_TYPE_STRINGS[result];
 	else
 		return "HOOK_UNKNOWN";
-}
-
-BOOL pf_modules_init(void)
-{
-	proxy_modules = ArrayList_New(FALSE);
-
-	if (proxy_modules == NULL)
-	{
-		WLog_ERR(TAG, "pf_modules_init(): ArrayList_New failed!");
-		return FALSE;
-	}
-
-	return TRUE;
 }
 
 /*
@@ -85,40 +71,45 @@ BOOL pf_modules_init(void)
  * @type: hook type to run.
  * @server: pointer of server's rdpContext struct of the current session.
  */
-BOOL pf_modules_run_hook(PF_HOOK_TYPE type, rdpContext* context)
+BOOL pf_modules_run_hook(PF_HOOK_TYPE type, proxyData* pdata)
 {
-
-	proxyModule* module;
-	moduleOperations* ops;
 	BOOL ok = TRUE;
-	const size_t count = (size_t)ArrayList_Count(proxy_modules);
 	size_t index;
+	proxyPlugin* plugin;
 
-	for (index = 0; index < count; index++)
+	ArrayList_ForEach(plugins_list, proxyPlugin*, index, plugin)
 	{
-		module = (proxyModule*)ArrayList_GetItem(proxy_modules, index);
-		ops = module->ops;
-		WLog_VRB(TAG, "[%s]: Running module %s, hook %s", __FUNCTION__, module->name,
-		         pf_modules_get_hook_type_string(type));
+		WLog_VRB(TAG, "running hook %s.%s", plugin->name, pf_modules_get_hook_type_string(type));
 
 		switch (type)
 		{
 			case HOOK_TYPE_CLIENT_PRE_CONNECT:
-				IFCALLRET(ops->ClientPreConnect, ok, ops, context);
+				IFCALLRET(plugin->ClientPreConnect, ok, pdata);
+				break;
+
+			case HOOK_TYPE_CLIENT_LOGIN_FAILURE:
+				IFCALLRET(plugin->ClientLoginFailure, ok, pdata);
+				break;
+
+			case HOOK_TYPE_SERVER_POST_CONNECT:
+				IFCALLRET(plugin->ServerPostConnect, ok, pdata);
 				break;
 
 			case HOOK_TYPE_SERVER_CHANNELS_INIT:
-				IFCALLRET(ops->ServerChannelsInit, ok, ops, context);
+				IFCALLRET(plugin->ServerChannelsInit, ok, pdata);
 				break;
 
 			case HOOK_TYPE_SERVER_CHANNELS_FREE:
-				IFCALLRET(ops->ServerChannelsFree, ok, ops, context);
+				IFCALLRET(plugin->ServerChannelsFree, ok, pdata);
 				break;
+
+			default:
+				WLog_ERR(TAG, "invalid hook called");
 		}
 
 		if (!ok)
 		{
-			WLog_INFO(TAG, "Module %s, hook %s failed!", module->name,
+			WLog_INFO(TAG, "plugin %s, hook %s failed!", plugin->name,
 			          pf_modules_get_hook_type_string(type));
 			return FALSE;
 		}
@@ -133,35 +124,34 @@ BOOL pf_modules_run_hook(PF_HOOK_TYPE type, rdpContext* context)
  * @type: filter type to run.
  * @server: pointer of server's rdpContext struct of the current session.
  */
-BOOL pf_modules_run_filter(PF_FILTER_TYPE type, rdpContext* server, void* param)
+BOOL pf_modules_run_filter(PF_FILTER_TYPE type, proxyData* pdata, void* param)
 {
-	proxyModule* module;
-	moduleOperations* ops;
 	BOOL result = TRUE;
-	const size_t count = (size_t)ArrayList_Count(proxy_modules);
 	size_t index;
+	proxyPlugin* plugin;
 
-	for (index = 0; index < count; index++)
+	ArrayList_ForEach(plugins_list, proxyPlugin*, index, plugin)
 	{
-		module = (proxyModule*)ArrayList_GetItem(proxy_modules, index);
-		ops = module->ops;
-		WLog_VRB(TAG, "[%s]: running filter: %s", __FUNCTION__, module->name);
+		WLog_VRB(TAG, "[%s]: running filter: %s", __FUNCTION__, plugin->name);
 
 		switch (type)
 		{
 			case FILTER_TYPE_KEYBOARD:
-				IFCALLRET(ops->KeyboardEvent, result, ops, server, param);
+				IFCALLRET(plugin->KeyboardEvent, result, pdata, param);
 				break;
 
 			case FILTER_TYPE_MOUSE:
-				IFCALLRET(ops->MouseEvent, result, ops, server, param);
+				IFCALLRET(plugin->MouseEvent, result, pdata, param);
 				break;
+
+			default:
+				WLog_ERR(TAG, "invalid filter called");
 		}
 
 		if (!result)
 		{
 			/* current filter return FALSE, no need to run other filters. */
-			WLog_INFO(TAG, "module %s, filter type [%s] returned FALSE", module->name,
+			WLog_INFO(TAG, "plugin %s, filter type [%s] returned FALSE", plugin->name,
 			          pf_modules_get_filter_type_string(type));
 			return result;
 		}
@@ -171,73 +161,20 @@ BOOL pf_modules_run_filter(PF_FILTER_TYPE type, rdpContext* server, void* param)
 	return TRUE;
 }
 
-static void pf_modules_module_free(proxyModule* module)
-{
-	moduleExitFn exitFn;
-
-	assert(module);
-	assert(module->handle);
-
-	exitFn = (moduleExitFn)GetProcAddress(module->handle, MODULE_EXIT_METHOD);
-
-	if (!exitFn)
-	{
-		WLog_ERR(TAG, "[%s]: GetProcAddress module_exit for %s failed!", __FUNCTION__,
-		         module->name);
-	}
-	else
-	{
-		if (!exitFn(module->ops))
-		{
-			WLog_ERR(TAG, "[%s]: module_exit failed for %s!", __FUNCTION__, module->name);
-		}
-	}
-
-	FreeLibrary(module->handle);
-	module->handle = NULL;
-
-	free(module->name);
-	free(module->ops);
-	free(module);
-}
-
-void pf_modules_free(void)
-{
-	size_t index, count;
-
-	if (proxy_modules == NULL)
-		return;
-
-	count = (size_t)ArrayList_Count(proxy_modules);
-
-	for (index = 0; index < count; index++)
-	{
-		proxyModule* module = (proxyModule*)ArrayList_GetItem(proxy_modules, index);
-		WLog_INFO(TAG, "[%s]: freeing module: %s", __FUNCTION__, module->name);
-		pf_modules_module_free(module);
-	}
-
-	ArrayList_Free(proxy_modules);
-}
-
 /*
- * stores per-session data needed by module.
+ * stores per-session data needed by a plugin.
  *
  * @context: current session server's rdpContext instance.
  * @info: pointer to per-session data.
  */
-static BOOL pf_modules_set_session_data(moduleOperations* module, rdpContext* context, void* data)
+static BOOL pf_modules_set_plugin_data(const char* plugin_name, proxyData* pdata, void* data)
 {
-	pServerContext* ps;
-
-	assert(module);
-	assert(context);
+	assert(plugin_name);
 
 	if (data == NULL) /* no need to store anything */
 		return FALSE;
 
-	ps = (pServerContext*)context;
-	if (HashTable_Add(ps->modules_info, (void*)module, data) < 0)
+	if (HashTable_Add(pdata->modules_info, (void*)plugin_name, data) < 0)
 	{
 		WLog_ERR(TAG, "[%s]: HashTable_Add failed!");
 		return FALSE;
@@ -247,104 +184,215 @@ static BOOL pf_modules_set_session_data(moduleOperations* module, rdpContext* co
 }
 
 /*
- * returns per-session data needed by module.
+ * returns per-session data needed a plugin.
  *
  * @context: current session server's rdpContext instance.
- * if there's no data related to `module` in `context` (current session), a NULL will be returned.
+ * if there's no data related to `plugin_name` in `context` (current session), a NULL will be
+ * returned.
  */
-static void* pf_modules_get_session_data(moduleOperations* module, rdpContext* context)
+static void* pf_modules_get_plugin_data(const char* plugin_name, proxyData* pdata)
 {
-	pServerContext* ps;
+	assert(plugin_name);
+	assert(pdata);
 
-	assert(module);
-	assert(context);
-
-	ps = (pServerContext*)context;
-	return HashTable_GetItemValue(ps->modules_info, module);
+	return HashTable_GetItemValue(pdata->modules_info, (void*)plugin_name);
 }
 
-static void pf_modules_abort_connect(moduleOperations* module, rdpContext* context)
+static void pf_modules_abort_connect(proxyData* pdata)
 {
-	pServerContext* ps;
-
-	assert(module);
-	assert(context);
-
-	WLog_INFO(TAG, "%s is called!", __FUNCTION__);
-
-	ps = (pServerContext*)context;
-	proxy_data_abort_connect(ps->pdata);
+	assert(pdata);
+	WLog_DBG(TAG, "%s is called!", __FUNCTION__);
+	proxy_data_abort_connect(pdata);
 }
 
-BOOL pf_modules_register_new(const char* module_path, const char* module_name)
+static BOOL pf_modules_register_plugin(proxyPlugin* plugin_to_register)
 {
-	moduleOperations* ops = NULL;
-	proxyModule* module = NULL;
+	size_t index;
+	proxyPlugin* plugin;
+
+	assert(plugins_list != NULL);
+
+	/* make sure there's no other loaded plugin with the same name of `plugin_to_register`. */
+	ArrayList_ForEach(plugins_list, proxyPlugin*, index, plugin)
+	{
+		if (strcmp(plugin->name, plugin_to_register->name) == 0)
+		{
+			WLog_ERR(TAG, "can not register plugin '%s', it is already registered!");
+			return FALSE;
+		}
+	}
+
+	if (ArrayList_Add(plugins_list, plugin_to_register) < 0)
+	{
+		WLog_ERR(TAG, "[%s]: failed adding plugin to list: %s", __FUNCTION__, plugin->name);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL pf_modules_is_plugin_loaded(const char* plugin_name)
+{
+	size_t i;
+	proxyPlugin* plugin;
+
+	if (plugins_list == NULL)
+		return FALSE;
+
+	ArrayList_ForEach(plugins_list, proxyPlugin*, i, plugin)
+	{
+		if (strcmp(plugin->name, plugin_name) == 0)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+void pf_modules_list_loaded_plugins(void)
+{
+	size_t count;
+	size_t i;
+	proxyPlugin* plugin;
+
+	if (plugins_list == NULL)
+		return;
+
+	count = (size_t)ArrayList_Count(plugins_list);
+
+	if (count > 0)
+		WLog_INFO(TAG, "Loaded plugins:");
+
+	ArrayList_ForEach(plugins_list, proxyPlugin*, i, plugin)
+	{
+
+		WLog_INFO(TAG, "\tName: %s", plugin->name);
+		WLog_INFO(TAG, "\tDescription: %s", plugin->description);
+	}
+}
+
+static proxyPluginsManager plugins_manager = { pf_modules_register_plugin,
+	                                           pf_modules_set_plugin_data,
+	                                           pf_modules_get_plugin_data,
+	                                           pf_modules_abort_connect };
+
+static BOOL pf_modules_load_module(const char* module_path)
+{
 	HMODULE handle = NULL;
-	moduleInitFn fn;
-
-	assert(proxy_modules != NULL);
+	moduleEntryPoint pEntryPoint;
 	handle = LoadLibraryA(module_path);
 
 	if (handle == NULL)
 	{
-		WLog_ERR(TAG, "pf_modules_register_new(): failed loading external module: %s", module_path);
+		WLog_ERR(TAG, "[%s]: failed loading external library: %s", __FUNCTION__, module_path);
 		return FALSE;
 	}
 
-	if (!(fn = (moduleInitFn)GetProcAddress(handle, MODULE_INIT_METHOD)))
+	if (!(pEntryPoint = (moduleEntryPoint)GetProcAddress(handle, MODULE_ENTRY_POINT)))
 	{
-		WLog_ERR(TAG, "pf_modules_register_new(): GetProcAddress failed while loading %s",
-		         module_path);
+		WLog_ERR(TAG, "[%s]: GetProcAddress failed while loading %s", __FUNCTION__, module_path);
 		goto error;
 	}
 
-	module = (proxyModule*)calloc(1, sizeof(proxyModule));
-
-	if (module == NULL)
+	if (!pEntryPoint(&plugins_manager))
 	{
-		WLog_ERR(TAG, "pf_modules_register_new(): malloc failed");
+		WLog_ERR(TAG, "[%s]: module %s entry point failed!", __FUNCTION__, module_path);
 		goto error;
 	}
 
-	ops = calloc(1, sizeof(moduleOperations));
-
-	if (ops == NULL)
+	/* save module handle for freeing the module later */
+	if (ArrayList_Add(handles_list, handle) < 0)
 	{
-		WLog_ERR(TAG, "pf_modules_register_new(): calloc moduleOperations failed");
-		goto error;
-	}
-
-	ops->AbortConnect = pf_modules_abort_connect;
-	ops->SetSessionData = pf_modules_set_session_data;
-	ops->GetSessionData = pf_modules_get_session_data;
-
-	if (!fn(ops))
-	{
-		WLog_ERR(TAG, "pf_modules_register_new(): failed to initialize module %s", module_path);
-		goto error;
-	}
-
-	module->name = _strdup(module_name);
-	if (!module->name)
-	{
-		WLog_ERR(TAG, "pf_modules_register_new(): _strdup failed while loading %s", module_path);
-		goto error;
-	}
-
-	module->handle = handle;
-	module->ops = ops;
-	module->enabled = TRUE;
-
-	if (ArrayList_Add(proxy_modules, module) < 0)
-	{
-		WLog_ERR(TAG, "pf_modules_register_new(): failed adding module to list: %s", module_path);
-		goto error;
+		WLog_ERR(TAG, "ArrayList_Add failed!");
+		return FALSE;
 	}
 
 	return TRUE;
 
 error:
-	pf_modules_module_free(module);
+	FreeLibrary(handle);
 	return FALSE;
+}
+
+BOOL pf_modules_init(const char* modules_directory)
+{
+	WIN32_FIND_DATA ffd;
+	HANDLE hFind = INVALID_HANDLE_VALUE;
+
+	WLog_DBG(TAG, "Searching plugins in directory %s", modules_directory);
+
+	hFind = FindFirstFile(modules_directory, &ffd);
+
+	if (INVALID_HANDLE_VALUE == hFind)
+	{
+		WLog_ERR(TAG, "FindFirstFile failed!");
+		return FALSE;
+	}
+
+	plugins_list = ArrayList_New(FALSE);
+
+	if (plugins_list == NULL)
+	{
+		WLog_ERR(TAG, "[%s]: ArrayList_New failed!", __FUNCTION__);
+		return FALSE;
+	}
+
+	handles_list = ArrayList_New(FALSE);
+	if (handles_list == NULL)
+	{
+		ArrayList_Free(plugins_list);
+		plugins_list = NULL;
+
+		WLog_ERR(TAG, "[%s]: ArrayList_New failed!", __FUNCTION__);
+		return FALSE;
+	}
+
+	do
+	{
+		if ((ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+		{
+			char* fullpath = GetCombinedPath(modules_directory, ffd.cFileName);
+			char* dot = strrchr(ffd.cFileName, '.');
+
+			if (dot && strcmp(dot, FREERDP_SHARED_LIBRARY_SUFFIX) == 0)
+				pf_modules_load_module(fullpath);
+
+			free(fullpath);
+		}
+	} while (FindNextFile(hFind, &ffd) != 0);
+
+	FindClose(hFind);
+	return TRUE;
+}
+
+void pf_modules_free(void)
+{
+	size_t index;
+
+	if (plugins_list)
+	{
+		proxyPlugin* plugin;
+
+		ArrayList_ForEach(plugins_list, proxyPlugin*, index, plugin)
+		{
+			if (!IFCALLRESULT(TRUE, plugin->PluginUnload))
+				WLog_WARN(TAG, "PluginUnload failed for plugin '%s'", plugin->name);
+		}
+
+		ArrayList_Free(plugins_list);
+		plugins_list = NULL;
+	}
+
+	if (handles_list)
+	{
+		HANDLE handle;
+
+		ArrayList_ForEach(handles_list, HANDLE, index, handle)
+		{
+			if (handle)
+				FreeLibrary(handle);
+		};
+
+		ArrayList_Free(handles_list);
+		handles_list = NULL;
+	}
 }

@@ -982,6 +982,14 @@ set(FREERDP_ADDIN_PATH "${FREERDP_PLUGIN_PATH}")
 # Path to put extensions
 set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp${FREERDP_VERSION_MAJOR}/extensions")
 
+# Proxy plugins path
+if(NOT DEFINED PROXY_PLUGINDIR)
+	message("using default plugins location")
+  	set(FREERDP_PROXY_PLUGINDIR "${CMAKE_BINARY_DIR}/server/proxy/plugins")
+else()
+	set(FREERDP_PROXY_PLUGINDIR "${PROXY_PLUGINDIR}")
+endif()
+
 # Include directories
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)

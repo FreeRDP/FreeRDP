@@ -230,7 +230,7 @@ BOOL pf_server_channels_init(pServerContext* ps)
 			return FALSE;
 	}
 
-	return pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_INIT, context);
+	return pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_INIT, ps->pdata);
 }
 
 void pf_server_channels_free(pServerContext* ps)
@@ -265,5 +265,5 @@ void pf_server_channels_free(pServerContext* ps)
 		ps->rail = NULL;
 	}
 
-	pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_FREE, (rdpContext*)ps);
+	pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_FREE, ps->pdata);
 }

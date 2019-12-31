@@ -26,39 +26,34 @@
 
 #include "modules/modules_api.h"
 
-typedef wArrayList modules_list;
-typedef struct proxy_module proxyModule;
-
 typedef enum _PF_FILTER_TYPE PF_FILTER_TYPE;
 enum _PF_FILTER_TYPE
 {
 	FILTER_TYPE_KEYBOARD,
-	FILTER_TYPE_MOUSE
+	FILTER_TYPE_MOUSE,
+
+	FILTER_LAST
 };
 
 typedef enum _PF_HOOK_TYPE PF_HOOK_TYPE;
 enum _PF_HOOK_TYPE
 {
 	HOOK_TYPE_CLIENT_PRE_CONNECT,
+	HOOK_TYPE_CLIENT_LOGIN_FAILURE,
+
+	HOOK_TYPE_SERVER_POST_CONNECT,
 	HOOK_TYPE_SERVER_CHANNELS_INIT,
 	HOOK_TYPE_SERVER_CHANNELS_FREE,
+
+	HOOK_LAST
 };
 
-struct proxy_module
-{
-	/* Handle to the loaded library. Used for freeing the library */
-	HMODULE handle;
+BOOL pf_modules_init(const char* modules_directory_path);
+BOOL pf_modules_is_plugin_loaded(const char* plugin_name);
+void pf_modules_list_loaded_plugins(void);
 
-	char* name;
-	BOOL enabled;
-	moduleOperations* ops;
-};
-
-BOOL pf_modules_init(void);
-BOOL pf_modules_register_new(const char* module_path, const char* module_name);
-
-BOOL pf_modules_run_filter(PF_FILTER_TYPE type, rdpContext* server, void* param);
-BOOL pf_modules_run_hook(PF_HOOK_TYPE type, rdpContext* context);
+BOOL pf_modules_run_filter(PF_FILTER_TYPE type, proxyData* pdata, void* param);
+BOOL pf_modules_run_hook(PF_HOOK_TYPE type, proxyData* pdata);
 
 void pf_modules_free(void);
 

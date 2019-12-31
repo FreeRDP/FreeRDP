@@ -24,6 +24,7 @@
 #include "pf_log.h"
 #include "pf_modules.h"
 
+#include <freerdp/build-config.h>
 #include <winpr/collections.h>
 
 #define TAG PROXY_TAG("server")
@@ -40,8 +41,13 @@ int main(int argc, char* argv[])
 	if (argc > 1)
 		cfg = argv[1];
 
-	if (!pf_modules_init())
+	if (!pf_modules_init(FREERDP_PROXY_PLUGINDIR))
+	{
+		WLog_ERR(TAG, "failed to initialize proxy plugins!");
 		goto fail;
+	}
+
+	pf_modules_list_loaded_plugins();
 
 	if (!pf_server_config_load(cfg, config))
 		goto fail;
