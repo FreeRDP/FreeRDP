@@ -275,7 +275,7 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 		WTSFreeMemory(buffer);
 	}
 
-	/* Consume channel event only after the gfx dynamic channel is ready */
+	/* Consume channel event only after the disp dynamic channel is ready */
 	Stream_SetPosition(s, 0);
 
 	if (!WTSVirtualChannelRead(priv->disp_channel, 0, NULL, 0, &BytesReturned))
@@ -384,6 +384,7 @@ static UINT disp_server_open(DispServerContext* context)
 	}
 
 	priv->SessionId = (DWORD)*pSessionId;
+	WTSFreeMemory(pSessionId);
 	priv->disp_channel = (HANDLE)WTSVirtualChannelOpenEx(priv->SessionId, DISP_DVC_CHANNEL_NAME,
 	                                                     WTS_CHANNEL_OPTION_DYNAMIC);
 
@@ -511,6 +512,12 @@ static UINT disp_server_close(DispServerContext* context)
 		CloseHandle(priv->stopEvent);
 		priv->thread = NULL;
 		priv->stopEvent = NULL;
+	}
+
+	if (priv->disp_channel)
+	{
+		WTSVirtualChannelClose(priv->disp_channel);
+		priv->disp_channel = NULL;
 	}
 
 	return error;

@@ -1214,6 +1214,7 @@ static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
 	                        cacheEntry->width, cacheEntry->height, surface->data, surface->format,
 	                        surface->scanline, rect->left, rect->top, NULL, FREERDP_FLIP_NONE))
 	{
+		free(cacheEntry->data);
 		free(cacheEntry);
 		goto fail;
 	}
