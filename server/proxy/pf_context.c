@@ -29,11 +29,6 @@
 static BOOL client_to_proxy_context_new(freerdp_peer* client, pServerContext* context)
 {
 	context->dynvcReady = NULL;
-	context->modules_info = NULL;
-
-	context->modules_info = HashTable_New(TRUE);
-	if (!context->modules_info)
-		return FALSE;
 
 	context->vcm = WTSOpenServerA((LPSTR)client->context);
 
@@ -46,7 +41,6 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, pServerContext* co
 	return TRUE;
 
 error:
-	HashTable_Free(context->modules_info);
 	WTSCloseServer((HANDLE)context->vcm);
 	context->vcm = NULL;
 
@@ -74,8 +68,6 @@ static void client_to_proxy_context_free(freerdp_peer* client, pServerContext* c
 		CloseHandle(context->dynvcReady);
 		context->dynvcReady = NULL;
 	}
-
-	HashTable_Free(context->modules_info);
 }
 
 BOOL pf_context_init_server_context(freerdp_peer* client)
@@ -198,6 +190,17 @@ proxyData* proxy_data_new(void)
 		return NULL;
 	}
 
+	if (!(pdata->modules_info = HashTable_New(FALSE)))
+	{
+		proxy_data_free(pdata);
+		return NULL;
+	}
+
+	/* modules_info maps between plugin name to custom data */
+	pdata->modules_info->hash = HashTable_StringHash;
+	pdata->modules_info->keyCompare = HashTable_StringCompare;
+	pdata->modules_info->keyClone = HashTable_StringClone;
+	pdata->modules_info->keyFree = HashTable_StringFree;
 	return pdata;
 }
 
@@ -237,6 +240,9 @@ void proxy_data_free(proxyData* pdata)
 
 	if (pdata->session_id)
 		free(pdata->session_id);
+
+	if (pdata->modules_info)
+		HashTable_Free(pdata->modules_info);
 
 	free(pdata);
 }

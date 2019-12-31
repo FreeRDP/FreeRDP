@@ -51,6 +51,7 @@
 #include "pf_disp.h"
 #include "pf_rail.h"
 #include "pf_channels.h"
+#include "pf_modules.h"
 
 #define TAG PROXY_TAG("server")
 
@@ -189,7 +190,7 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 
 	pf_server_register_input_callbacks(peer->input);
 	pf_server_register_update_callbacks(peer->update);
-	return TRUE;
+	return pf_modules_run_hook(HOOK_TYPE_SERVER_POST_CONNECT, pdata);
 }
 
 static BOOL pf_server_activate(freerdp_peer* peer)

@@ -99,7 +99,7 @@ const char* pf_config_get_str(wIniFile* ini, const char* section, const char* ke
 
 	if (!value)
 	{
-		WLog_ERR(TAG, "[%s]: key '%s.%s' not found.", __FUNCTION__, key, section);
+		WLog_ERR(TAG, "[%s]: key '%s.%s' not found.", __FUNCTION__, section, key);
 		return NULL;
 	}
 
@@ -188,31 +188,27 @@ static BOOL pf_config_load_clipboard(wIniFile* ini, proxyConfig* config)
 
 static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 {
-	int index;
-	int modules_count = 0;
-	char** module_names = NULL;
+	const char* required_modules;
+	char* tmp;
 
-	module_names = IniFile_GetSectionKeyNames(ini, "Modules", &modules_count);
+	/* make sure that all required modules are loaded */
+	required_modules = IniFile_GetKeyValueString(ini, "Plugins", "Required");
+	if (!required_modules)
+		return TRUE;
 
-	for (index = 0; index < modules_count; index++)
+	tmp = strtok((char*)required_modules, ",");
+
+	while (tmp != NULL)
 	{
-		char* module_name = module_names[index];
-		const char* path = pf_config_get_str(ini, "Modules", module_name);
-
-		if (!path)
-			continue;
-
-		if (!pf_modules_register_new(path, module_name))
+		if (!pf_modules_is_plugin_loaded(tmp))
 		{
-			WLog_ERR(TAG, "pf_config_load_modules(): failed to register %s (%s)", module_name,
-			         path);
-			continue;
+			WLog_ERR(TAG, "Required plugin '%s' is not loaded. stopping.", tmp);
+			return FALSE;
 		}
 
-		WLog_INFO(TAG, "module '%s' is loaded!", module_name);
+		tmp = strtok(NULL, ",");
 	}
 
-	free(module_names);
 	return TRUE;
 }
 

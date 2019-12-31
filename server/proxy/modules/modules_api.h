@@ -24,78 +24,89 @@
 #include <freerdp/freerdp.h>
 #include <winpr/winpr.h>
 
-#define PROXY_API FREERDP_API
+#include "../pf_context.h"
 
-typedef struct module_operations moduleOperations;
+#define MODULE_TAG(module) "proxy.modules." module
 
-/* used for filtering */
-typedef BOOL (*proxyFilterFn)(moduleOperations*, rdpContext*, void*);
-
-/* used for hooks */
-typedef BOOL (*proxyHookFn)(moduleOperations*, rdpContext*);
+/* hook callback. should return TRUE on success or FALSE on error. */
+typedef BOOL (*proxyHookFn)(proxyData*);
 
 /*
- * used for per-session info.
- *
- * each module is allowed to store data per session.
- * it is useful, for example, when a module wants to create a server channel in runtime,
- * or to save information about a session (for example, the count of mouse clicks in the last
- * minute), and then do something with this information (maybe abort the connection).
+ * Filter callback:
+ * 	It MUST return TRUE if the related event should be proxied,
+ * 	or FALSE if it should be ignored.
  */
-typedef BOOL (*moduleSetSessionData)(moduleOperations*, rdpContext*, void*);
-typedef void* (*moduleGetSessionData)(moduleOperations*, rdpContext*);
+typedef BOOL (*proxyFilterFn)(proxyData*, void*);
 
-/*
- * used for connection management. when a module wants to forcibly close a connection, it should
- * call this method.
- */
-typedef void (*moduleAbortConnect)(moduleOperations*, rdpContext*);
-
-typedef struct connection_info connectionInfo;
-typedef struct proxy_keyboard_event_info proxyKeyboardEventInfo;
-typedef struct proxy_mouse_event_info proxyMouseEventInfo;
-
-/* represents a set of operations that a module can do */
-struct module_operations
+/* describes a plugin: name, description and callbacks to execute. */
+typedef struct proxy_plugin
 {
-	/* per-session API. a module must not change these function pointers. */
-	moduleSetSessionData SetSessionData;
-	moduleGetSessionData GetSessionData;
-	moduleAbortConnect AbortConnect;
+	const char* name;        /* unique module name */
+	const char* description; /* module description */
 
-	/* proxy hooks. a module can set these function pointers to register hooks. */
+	/* proxy hooks. a module can set these function pointers to register hooks */
 	proxyHookFn ClientPreConnect;
+	proxyHookFn ClientLoginFailure;
+	proxyHookFn ServerPostConnect;
 	proxyHookFn ServerChannelsInit;
 	proxyHookFn ServerChannelsFree;
 
-	/* proxy filters a module can set these function pointers to register filters. */
+	/* proxy filters. a module can set these function pointers to register filters */
 	proxyFilterFn KeyboardEvent;
 	proxyFilterFn MouseEvent;
-};
+
+	BOOL (*PluginUnload)();
+} proxyPlugin;
+
+/*
+ * Main API for use by external modules.
+ * Supports:
+ *  - Registering a plugin.
+ *  - Setting/getting plugin's per-session specific data.
+ *  - Aborting a session.
+ */
+typedef struct proxy_plugins_manager
+{
+	/* used for registering a fresh new proxy plugin. */
+	BOOL (*RegisterPlugin)(proxyPlugin* plugin);
+
+	/* used for setting plugin's per-session info. */
+	BOOL (*SetPluginData)(const char*, proxyData*, void*);
+
+	/* used for getting plugin's per-session info. */
+	void* (*GetPluginData)(const char*, proxyData*);
+
+	/* used for aborting a session. */
+	void (*AbortConnect)(proxyData*);
+} proxyPluginsManager;
 
 /* filter events parameters */
 #define WINPR_PACK_PUSH
 #include <winpr/pack.h>
-struct proxy_keyboard_event_info
+typedef struct proxy_keyboard_event_info
 {
 	UINT16 flags;
 	UINT16 rdp_scan_code;
-};
+} proxyKeyboardEventInfo;
 
-struct proxy_mouse_event_info
+typedef struct proxy_mouse_event_info
 {
 	UINT16 flags;
 	UINT16 x;
 	UINT16 y;
-};
+} proxyMouseEventInfo;
 #define WINPR_PACK_POP
 #include <winpr/pack.h>
 
-/*
- * these two functions must be implemented by any proxy module.
- * module_init: used for module initialization, hooks and filters registration.
- */
-PROXY_API BOOL module_init(moduleOperations* module);
-PROXY_API BOOL module_exit(moduleOperations* module);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	FREERDP_API BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* FREERDP_SERVER_PROXY_MODULES_API_H */
