@@ -152,6 +152,11 @@ extern "C"
 
 #define ArrayList_Object(_arrayList) (&_arrayList->object)
 
+#define ArrayList_ForEach(_lst, _type, index, value)                                       \
+	for (index = 0;                                                                        \
+	     index < ArrayList_Count(_lst) && (value = (_type)ArrayList_GetItem(_lst, index)); \
+	     index++)
+
 	WINPR_API void ArrayList_Clear(wArrayList* arrayList);
 	WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, void* obj);
 
