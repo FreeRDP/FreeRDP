@@ -336,10 +336,12 @@ void pf_server_config_print(proxyConfig* config)
 	CONFIG_PRINT_STR(config, CapturesDirectory);
 }
 
-void pf_server_config_free(proxyConfig* config)
+void pf_server_config_free_internal(proxyConfig* config)
 {
+	if (config == NULL)
+		return;
+
 	free(config->CapturesDirectory);
 	free(config->TargetHost);
 	free(config->Host);
-	free(config);
 }
