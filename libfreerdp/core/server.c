@@ -719,12 +719,27 @@ HANDLE WINAPI FreeRDP_WTSOpenServerW(LPWSTR pServerName)
 	return INVALID_HANDLE_VALUE;
 }
 
+static void wts_virtual_channel_manager_free_message(void* obj)
+{
+	wMessage* msg = (wMessage*)obj;
+
+	if (msg)
+	{
+		BYTE* buffer = (BYTE*)msg->wParam;
+
+		if (buffer)
+			free(buffer);
+	}
+}
+
 HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 {
 	rdpContext* context;
 	freerdp_peer* client;
 	WTSVirtualChannelManager* vcm;
 	HANDLE hServer = INVALID_HANDLE_VALUE;
+	wObject queueCallbacks = { 0 };
+
 	context = (rdpContext*)pServerName;
 
 	if (!context)
@@ -758,7 +773,8 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 	if (HashTable_Add(g_ServerHandles, (void*)(UINT_PTR)vcm->SessionId, (void*)vcm) < 0)
 		goto error_free;
 
-	vcm->queue = MessageQueue_New(NULL);
+	queueCallbacks.fnObjectFree = wts_virtual_channel_manager_free_message;
+	vcm->queue = MessageQueue_New(&queueCallbacks);
 
 	if (!vcm->queue)
 		goto error_queue;
