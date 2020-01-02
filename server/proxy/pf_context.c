@@ -131,7 +131,15 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 	{
 		/* adjust instance pointer for client's context */
 		dst->instance = before_copy->instance;
-		/* RdpServerRsaKey must be set to NULL if `dst` is client's context */
+
+		/*
+		 * RdpServerRsaKey must be set to NULL if `dst` is client's context
+		 * it must be freed before setting it to NULL to avoid a memory leak!
+		 */
+
+		free(dst->RdpServerRsaKey->Modulus);
+		free(dst->RdpServerRsaKey->PrivateExponent);
+		free(dst->RdpServerRsaKey);
 		dst->RdpServerRsaKey = NULL;
 	}
 
