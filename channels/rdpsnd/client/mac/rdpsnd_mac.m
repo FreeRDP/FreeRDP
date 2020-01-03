@@ -167,14 +167,22 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *form
 	if (!mac->engine)
 		return FALSE;
 
-	err = AudioUnitSetProperty(mac->engine.outputNode.audioUnit,
-	                           kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0,
-	                           &outputDeviceID, sizeof(outputDeviceID));
-	if (err)
+	if (@available(macOS 10.15, *))
 	{
-		rdpsnd_mac_release(mac);
-		WLog_ERR(TAG, "AudioUnitSetProperty: %s", FormatError(err));
-		return FALSE;
+		/* Setting the output audio device on 10.15 or later breaks sound playback. Do not set for
+		 * now until we find a proper fix for #5747 */
+	}
+	else
+	{
+		err = AudioUnitSetProperty(mac->engine.outputNode.audioUnit,
+		                           kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global,
+		                           0, &outputDeviceID, sizeof(outputDeviceID));
+		if (err)
+		{
+			rdpsnd_mac_release(mac);
+			WLog_ERR(TAG, "AudioUnitSetProperty: %s", FormatError(err));
+			return FALSE;
+		}
 	}
 
 	mac->player = [[AVAudioPlayerNode alloc] init];
