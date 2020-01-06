@@ -21,21 +21,14 @@ define_channel_client("urbdrc")
 set(${MODULE_PREFIX}_SRCS
 	searchman.c
 	searchman.h
-	isoch_queue.c
-	isoch_queue.h
 	data_transfer.c
 	data_transfer.h
 	urbdrc_main.c
 	urbdrc_main.h
-	urbdrc_types.h)
-
-include_directories(..)
+        $<TARGET_OBJECTS:urbdrc-common>
+	)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
-
-
-
-#set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} libusb-devman)
 
 set(${MODULE_PREFIX}_LIBS)
 if (UDEV_FOUND AND UDEV_LIBRARIES)

@@ -21,9 +21,7 @@ define_channel_client_subsystem("urbdrc" "libusb" "")
 set(${MODULE_PREFIX}_SRCS
 	libusb_udevman.c
 	libusb_udevice.c
-	libusb_udevice.h
-	request_queue.c
-	request_queue.h)
+	libusb_udevice.h)
 
 include_directories(..)
 
@@ -38,7 +36,7 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 	${LIBUSB_1_LIBRARIES})
 
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr urbdrc-client)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

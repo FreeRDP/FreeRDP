@@ -55,8 +55,9 @@
 static char* test_pcap_file = NULL;
 static BOOL test_dump_rfx_realtime = TRUE;
 
-BOOL test_peer_context_new(freerdp_peer* client, testPeerContext* context)
+static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 {
+	testPeerContext* context = (testPeerContext*)ctx;
 	if (!(context->rfx_context = rfx_context_new(TRUE)))
 		goto fail_rfx_context;
 
@@ -97,8 +98,9 @@ fail_rfx_context:
 	return FALSE;
 }
 
-void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
+static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 {
+	testPeerContext* context = (testPeerContext*)ctx;
 	WINPR_UNUSED(client);
 
 	if (context)
@@ -119,8 +121,7 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 		if (context->debug_channel)
 			WTSVirtualChannelClose(context->debug_channel);
 
-		if (context->audin)
-			audin_server_context_free(context->audin);
+		sf_peer_audin_uninit(context);
 
 		if (context->rdpsnd)
 			rdpsnd_server_context_free(context->rdpsnd);
@@ -135,8 +136,8 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 static BOOL test_peer_init(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(testPeerContext);
-	client->ContextNew = (psPeerContextNew)test_peer_context_new;
-	client->ContextFree = (psPeerContextFree)test_peer_context_free;
+	client->ContextNew = test_peer_context_new;
+	client->ContextFree = test_peer_context_free;
 	return freerdp_peer_context_new(client);
 }
 
@@ -598,7 +599,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 		sf_peer_rdpsnd_init(context); /* Audio Output */
 	}
 
-	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "encomsp"))
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, ENCOMSP_SVC_CHANNEL_NAME))
 	{
 		sf_peer_encomsp_init(context); /* Lync Multiparty */
 	}
@@ -680,16 +681,7 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	}
 	else if ((flags & 0x4000) && code == 0x13) /* 'r' key */
 	{
-		if (!context->audin_open)
-		{
-			context->audin->Open(context->audin);
-			context->audin_open = TRUE;
-		}
-		else
-		{
-			context->audin->Close(context->audin);
-			context->audin_open = FALSE;
-		}
+		context->audin_open = !context->audin_open;
 	}
 	else if ((flags & 0x4000) && code == 0x1F) /* 's' key */
 	{
@@ -760,6 +752,7 @@ static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow, const RECTA
 
 static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 {
+	DWORD error = CHANNEL_RC_OK;
 	HANDLE handles[32];
 	DWORD count;
 	DWORD status;
@@ -810,7 +803,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	context = (testPeerContext*)client->context;
 	WLog_INFO(TAG, "We've got a client %s", client->local ? "(local)" : client->hostname);
 
-	while (1)
+	while (error == CHANNEL_RC_OK)
 	{
 		count = 0;
 		{
@@ -838,13 +831,43 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
 			break;
+
+		/* Handle dynamic virtual channel intializations */
+		if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "drdynvc"))
+		{
+			switch (WTSVirtualChannelManagerGetDrdynvcState(context->vcm))
+			{
+				case DRDYNVC_STATE_NONE:
+					break;
+
+				case DRDYNVC_STATE_INITIALIZED:
+					break;
+
+				case DRDYNVC_STATE_READY:
+
+					/* Here is the correct state to start dynamic virtual channels */
+					if (sf_peer_audin_running(context) != context->audin_open)
+					{
+						if (!sf_peer_audin_running(context))
+							sf_peer_audin_start(context);
+						else
+							sf_peer_audin_stop(context);
+					}
+
+					break;
+
+				case DRDYNVC_STATE_FAILED:
+				default:
+					break;
+			}
+		}
 	}
 
 	WLog_INFO(TAG, "Client %s disconnected.", client->local ? "(local)" : client->hostname);
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
-	return 0;
+	return error;
 }
 
 static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
@@ -895,6 +918,10 @@ static void test_server_mainloop(freerdp_listener* instance)
 
 int main(int argc, char* argv[])
 {
+	const char spcap[] = "--";
+	const char sfast[] = "--fast";
+	const char sport[] = "--port=";
+	const char slocal_only[] = "--local_only";
 	WSADATA wsaData;
 	freerdp_listener* instance;
 	char* file;
@@ -907,9 +934,9 @@ int main(int argc, char* argv[])
 	{
 		char* arg = argv[i];
 
-		if (strncmp(arg, "--fast", 7) == 0)
+		if (strncmp(arg, sfast, sizeof(sfast)) == 0)
 			test_dump_rfx_realtime = FALSE;
-		else if (strncmp(arg, "--port=", 7) == 0)
+		else if (strncmp(arg, sport, sizeof(sport) - 1) == 0)
 		{
 			StrSep(&arg, "=");
 
@@ -921,9 +948,9 @@ int main(int argc, char* argv[])
 			if ((port < 1) || (port > 0xFFFF) || (errno != 0))
 				return -1;
 		}
-		else if (strcmp(arg, "--local-only"))
+		else if (strncmp(arg, slocal_only, sizeof(slocal_only)) == 0)
 			localOnly = TRUE;
-		else if (strncmp(arg, "--", 2))
+		else if (strncmp(arg, spcap, sizeof(spcap)) == 0)
 			test_pcap_file = arg;
 	}
 

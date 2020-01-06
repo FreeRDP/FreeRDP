@@ -21,6 +21,8 @@
 #ifndef FREERDP_CHANNEL_URBDRC_CLIENT_DATA_TRANSFER_H
 #define FREERDP_CHANNEL_URBDRC_CLIENT_DATA_TRANSFER_H
 
+#include <winpr/pool.h>
+
 #include "urbdrc_main.h"
 
 #define DEVICE_CTX(dev) ((dev)->ctx)
@@ -28,6 +30,7 @@
 #define TRANSFER_CTX(transfer) (HANDLE_CTX((transfer)->dev_handle))
 #define ITRANSFER_CTX(transfer) (TRANSFER_CTX(__USBI_TRANSFER_TO_LIBUSB_TRANSFER(transfer)))
 
-void* urbdrc_process_udev_data_transfer(void* arg);
+UINT urbdrc_process_udev_data_transfer(URBDRC_CHANNEL_CALLBACK* callback, URBDRC_PLUGIN* urbdrc,
+                                       IUDEVMAN* udevman, wStream* data);
 
 #endif /* FREERDP_CHANNEL_URBDRC_CLIENT_DATA_TRANSFER_H */

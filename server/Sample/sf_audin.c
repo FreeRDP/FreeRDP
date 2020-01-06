@@ -85,3 +85,33 @@ void sf_peer_audin_init(testPeerContext* context)
 	context->audin->OpenResult = sf_peer_audin_open_result;
 	context->audin->ReceiveSamples = sf_peer_audin_receive_samples;
 }
+
+BOOL sf_peer_audin_start(testPeerContext* context)
+{
+	if (!context || !context->audin || !context->audin->Open)
+		return FALSE;
+
+	return context->audin->Open(context->audin);
+}
+
+BOOL sf_peer_audin_stop(testPeerContext* context)
+{
+	if (!context || !context->audin || !context->audin->Close)
+		return FALSE;
+
+	return context->audin->Close(context->audin);
+}
+
+BOOL sf_peer_audin_running(testPeerContext* context)
+{
+	if (!context || !context->audin || !context->audin->IsOpen)
+		return FALSE;
+
+	return context->audin->IsOpen(context->audin);
+}
+
+void sf_peer_audin_uninit(testPeerContext* context)
+{
+	if (context)
+		audin_server_context_free(context->audin);
+}

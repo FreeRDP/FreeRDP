@@ -38,6 +38,7 @@
 #include <freerdp/locale/keyboard.h>
 
 #include <freerdp/utils/passphrase.h>
+#include <freerdp/channels/urbdrc.h>
 
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
@@ -941,7 +942,8 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values_offset("urbdrc", arg->Value, &count);
+		p = freerdp_command_line_parse_comma_separated_values_offset(URBDRC_CHANNEL_NAME,
+		                                                             arg->Value, &count);
 		status = freerdp_client_add_dynamic_channel(settings, count, p);
 		free(p);
 	}

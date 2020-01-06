@@ -26,10 +26,6 @@ set(${MODULE_PREFIX}_SRCS
 	signal.c
 	stopwatch.c)
 
-if(NOT WIN32)
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} msusb.c)
-endif()
-
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
 freerdp_library_add(${CMAKE_THREAD_LIBS_INIT})

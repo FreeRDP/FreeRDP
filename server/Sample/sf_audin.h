@@ -27,5 +27,10 @@
 #include "sfreerdp.h"
 
 void sf_peer_audin_init(testPeerContext* context);
+void sf_peer_audin_uninit(testPeerContext* context);
+
+BOOL sf_peer_audin_running(testPeerContext* context);
+BOOL sf_peer_audin_start(testPeerContext* context);
+BOOL sf_peer_audin_stop(testPeerContext* context);
 
 #endif /* FREERDP_SERVER_SAMPLE_SF_AUDIN_H */
