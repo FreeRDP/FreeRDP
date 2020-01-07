@@ -623,27 +623,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	return settings;
 out_fail:
-	free(settings->HomePath);
-	free(settings->ConfigPath);
-	free(settings->DynamicChannelArray);
-	free(settings->StaticChannelArray);
-	free(settings->DeviceArray);
-	free(settings->ClientTimeZone);
-	free(settings->ServerAutoReconnectCookie);
-	free(settings->ClientAutoReconnectCookie);
-	free(settings->ClientDir);
-	free(settings->FragCache);
-	free(settings->GlyphCache);
-	free(settings->BitmapCacheV2CellInfo);
-	free(settings->ClientProductId);
-	free(settings->ClientHostname);
-	free(settings->OrderSupport);
-	free(settings->ReceivedCapabilities);
-	free(settings->ComputerName);
-	free(settings->MonitorIds);
-	free(settings->MonitorDefArray);
-	free(settings->ChannelDefArray);
-	free(settings);
+	freerdp_settings_free(settings);
 	return NULL;
 }
 
