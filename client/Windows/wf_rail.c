@@ -498,6 +498,15 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		                                   hInstance,             /* hInstance */
 		                                   NULL                   /* lpParam */
 		);
+
+		if (!railWindow->hWnd) {
+			free(titleW);
+			free(railWindow->title);
+			free(railWindow);
+			WLog_ERR(TAG, "CreateWindowExW failed with error %" PRIu32 "", GetLastError());
+			return FALSE;
+		}
+
 		SetWindowLongPtr(railWindow->hWnd, GWLP_USERDATA, (LONG_PTR)railWindow);
 		HashTable_Add(wfc->railWindows, (void*)(UINT_PTR)orderInfo->windowId, (void*)railWindow);
 		free(titleW);
