@@ -388,6 +388,18 @@ BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* proxyUse
 	}
 }
 
+static const char* get_response_header(char* response)
+{
+	char* current_pos = strchr(response, '\r');
+	if (!current_pos)
+		current_pos = strchr(response, '\n');
+
+	if (current_pos)
+		*current_pos = '\0';
+
+	return response;
+}
+
 static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 {
 	int status;
@@ -425,7 +437,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 	{
 		if (resultsize >= sizeof(recv_buf) - 1)
 		{
-			WLog_ERR(TAG, "HTTP Reply headers too long.");
+			WLog_ERR(TAG, "HTTP Reply headers too long: %s", get_response_header(recv_buf));
 			return FALSE;
 		}
 
