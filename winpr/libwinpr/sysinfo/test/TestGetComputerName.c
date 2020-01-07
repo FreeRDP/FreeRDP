@@ -4,12 +4,7 @@
 #include <winpr/sysinfo.h>
 #include <winpr/error.h>
 
-/* FreeRDP does not seem to export this function */
-#ifndef _WIN32
-BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize);
-#endif
-
-BOOL Test_GetComputerName(void)
+static BOOL Test_GetComputerName(void)
 {
 	/**
 	 * BOOL WINAPI GetComputerName(LPTSTR lpBuffer, LPDWORD lpnSize);
@@ -158,7 +153,7 @@ BOOL Test_GetComputerName(void)
 	return TRUE;
 }
 
-BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
+static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 {
 	/**
 	 * BOOL WINAPI GetComputerNameEx(COMPUTER_NAME_FORMAT NameType, LPTSTR lpBuffer, LPDWORD
