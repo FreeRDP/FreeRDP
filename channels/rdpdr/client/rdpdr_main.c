@@ -142,24 +142,24 @@ BOOL check_path(char* path)
 
 void first_hotplug(rdpdrPlugin* rdpdr)
 {
-	int i;
-	char drive_path[5] = { 'c', ':', '\\', '\0' };
+	size_t i;
 	DWORD unitmask = GetLogicalDrives();
 
 	for (i = 0; i < 26; i++)
 	{
 		if (unitmask & 0x01)
 		{
+			char drive_path[] = { 'c', ':', '\\', '\0' };
+			char drive_name[] = { 'c', '\0' };
 			RDPDR_DRIVE drive = { 0 };
-			drive_path[0] = 'A' + i;
-			drive_path[1] = ':';
+			drive_path[0] = 'A' + (char)i;
+			drive_name[0] = 'A' + (char)i;
 
 			if (check_path(drive_path))
 			{
 				drive.Type = RDPDR_DTYP_FILESYSTEM;
 				drive.Path = drive_path;
-				drive_path[1] = '\0';
-				drive.Name = drive_path;
+				drive.Name = drive_name;
 				drive.automount = TRUE;
 				devman_load_device_service(rdpdr->devman, (const RDPDR_DEVICE*)&drive,
 				                           rdpdr->rdpcontext);
@@ -188,14 +188,15 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 						PDEV_BROADCAST_VOLUME lpdbv = (PDEV_BROADCAST_VOLUME)lpdb;
 						DWORD unitmask = lpdbv->dbcv_unitmask;
 						int i;
-						char drive_path[4] = { 'c', ':', '/', '\0' };
 
 						for (i = 0; i < 26; i++)
 						{
 							if (unitmask & 0x01)
 							{
-								drive_path[0] = 'A' + i;
-								drive_path[1] = ':';
+								char drive_path[] = { 'c', ':', '/', '\0' };
+								char drive_name[] = { 'c', '\0' };
+								drive_path[0] = 'A' + (char)i;
+								drive_name[0] = 'A' + (char)i;
 
 								if (check_path(drive_path))
 								{
@@ -205,7 +206,7 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 									drive.Path = drive_path;
 									drive_path[1] = '\0';
 									drive.automount = TRUE;
-									drive.Name = drive_path;
+									drive.Name = drive_name;
 									devman_load_device_service(rdpdr->devman,
 									                           (const RDPDR_DEVICE*)&drive,
 									                           rdpdr->rdpcontext);
