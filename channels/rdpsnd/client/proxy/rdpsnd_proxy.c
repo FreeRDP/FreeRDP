@@ -95,10 +95,6 @@ static UINT rdpsnd_proxy_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	return GetTickCount() - start;
 }
 
-static void rdpsnd_proxy_start(rdpsndDevicePlugin* device)
-{
-	/* do nothing */
-}
 
 /**
  * Function description
@@ -131,7 +127,6 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	proxy->device.FormatSupported = rdpsnd_proxy_format_supported;
 	proxy->device.SetVolume = rdpsnd_proxy_set_volume;
 	proxy->device.Play = rdpsnd_proxy_play;
-	proxy->device.Start = rdpsnd_proxy_start;
 	proxy->device.Close = rdpsnd_proxy_close;
 	proxy->device.Free = rdpsnd_proxy_free;
 	args = pEntryPoints->args;
