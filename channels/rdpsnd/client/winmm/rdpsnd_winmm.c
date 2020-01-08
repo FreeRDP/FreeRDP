@@ -170,6 +170,10 @@ static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
 		for (x = 0; x < SEM_COUNT_MAX; x++)
 			WaitForSingleObject(winmm->semaphore, INFINITE);
 #endif
+		mmResult = waveOutReset(winmm->hWaveOut);
+		if (mmResult != MMSYSERR_NOERROR)
+			WLog_Print(winmm->log, WLOG_ERROR, "waveOutReset failure: %" PRIu32 "", mmResult);
+
 		mmResult = waveOutClose(winmm->hWaveOut);
 		if (mmResult != MMSYSERR_NOERROR)
 			WLog_Print(winmm->log, WLOG_ERROR, "waveOutClose failure: %" PRIu32 "", mmResult);
