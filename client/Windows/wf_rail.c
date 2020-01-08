@@ -499,7 +499,8 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		                                   NULL                   /* lpParam */
 		);
 
-		if (!railWindow->hWnd) {
+		if (!railWindow->hWnd)
+		{
 			free(titleW);
 			free(railWindow->title);
 			free(railWindow);
