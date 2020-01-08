@@ -303,13 +303,16 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 {
 	ADDIN_ARGV* args;
 	rdpsndWinmmPlugin* winmm;
-	winmm = (rdpsndWinmmPlugin*)calloc(1, sizeof(rdpsndWinmmPlugin));
-
-	if (!winmm)
-		return CHANNEL_RC_NO_MEMORY;
 
 	if (waveOutGetNumDevs() == 0)
+	{
+		WLog_Print(winmm->log, WLOG_ERROR, "No sound playback device available!");
 		return ERROR_DEVICE_NOT_AVAILABLE;
+	}
+
+	winmm = (rdpsndWinmmPlugin*)calloc(1, sizeof(rdpsndWinmmPlugin));
+	if (!winmm)
+		return CHANNEL_RC_NO_MEMORY;
 
 	winmm->device.Open = rdpsnd_winmm_open;
 	winmm->device.FormatSupported = rdpsnd_winmm_format_supported;

@@ -851,7 +851,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 	{
 		if ((status = rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args)))
 		{
-			WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %" PRIu32 "",
+			WLog_ERR(TAG, "Unable to load sound playback subsystem %s because of error %" PRIu32 "",
 			         rdpsnd->subsystem, status);
 			return status;
 		}
@@ -866,7 +866,8 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			const char* device_name = backends[x].device;
 
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %" PRIu32 "",
+				WLog_ERR(TAG,
+				         "Unable to load sound playback subsystem %s because of error %" PRIu32 "",
 				         subsystem_name, status);
 
 			if (!rdpsnd->device)
