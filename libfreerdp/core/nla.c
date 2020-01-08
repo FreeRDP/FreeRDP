@@ -276,8 +276,8 @@ static int nla_client_init(rdpNla* nla)
 	{
 		if (!instance->Authenticate)
 		{
-			freerdp_set_last_error(instance->context,
-			                       FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+			freerdp_set_last_error_log(instance->context,
+			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return 0;
 		}
 		else
@@ -287,8 +287,8 @@ static int nla_client_init(rdpNla* nla)
 
 			if (!proceed)
 			{
-				freerdp_set_last_error(instance->context,
-				                       FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+				freerdp_set_last_error_log(instance->context,
+				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return 0;
 			}
 		}
@@ -2178,7 +2178,7 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 				break;
 		}
 
-		freerdp_set_last_error(nla->instance->context, code);
+		freerdp_set_last_error_log(nla->instance->context, code);
 		return -1;
 	}
 

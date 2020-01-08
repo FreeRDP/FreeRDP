@@ -707,12 +707,12 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 		if (tlsStatus < 0)
 		{
 			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+				freerdp_set_last_error_log(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
 		}
 		else
 		{
 			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+				freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_CANCELLED);
 		}
 
 		return FALSE;

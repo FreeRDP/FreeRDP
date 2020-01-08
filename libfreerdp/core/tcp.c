@@ -794,12 +794,12 @@ static BOOL freerdp_tcp_is_hostname_resolvable(rdpContext* context, const char* 
 	if (!result)
 	{
 		if (!freerdp_get_last_error(context))
-			freerdp_set_last_error(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
+			freerdp_set_last_error_log(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
 
 		return FALSE;
 	}
 
-	freerdp_set_last_error(context, 0);
+	freerdp_set_last_error_log(context, 0);
 	freeaddrinfo(result);
 	return TRUE;
 }
@@ -850,7 +850,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 	if (WAIT_OBJECT_0 != status)
 	{
 		if (status == WAIT_OBJECT_0 + 1)
-			freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_CANCELLED);
 
 		goto fail;
 	}
@@ -981,7 +981,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT
 		peers[sindex].s = INVALID_SOCKET;
 	}
 	else
-		freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_CANCELLED);
 
 	for (index = 0; index < count; index++)
 		peer_free(&peers[index]);
@@ -1075,7 +1075,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 	if (!hostname)
 	{
 		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-			freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_FAILED);
+			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_FAILED);
 
 		return -1;
 	}
@@ -1093,7 +1093,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 		if (sockfd < 0)
 		{
 			if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_FAILED);
+				freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_FAILED);
 
 			return -1;
 		}
@@ -1129,11 +1129,11 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 			if (!result)
 			{
 				if (!freerdp_get_last_error(context))
-					freerdp_set_last_error(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
+					freerdp_set_last_error_log(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
 
 				return -1;
 			}
-			freerdp_set_last_error(context, 0);
+			freerdp_set_last_error_log(context, 0);
 
 			addr = result;
 
@@ -1155,7 +1155,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 			if (sockfd < 0)
 			{
 				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-					freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_FAILED);
+					freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_FAILED);
 
 				freeaddrinfo(result);
 				return -1;
@@ -1175,7 +1175,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 				close(sockfd);
 
 				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-					freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_FAILED);
+					freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_FAILED);
 
 				WLog_ERR(TAG, "failed to connect to %s", hostname);
 				return -1;
@@ -1194,7 +1194,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 			close(sockfd);
 
 		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-			freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_FAILED);
+			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_FAILED);
 
 		WLog_ERR(TAG, "Couldn't get socket ip address");
 		return -1;
@@ -1222,7 +1222,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 				close(sockfd);
 
 				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-					freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_FAILED);
+					freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_FAILED);
 
 				WLog_ERR(TAG, "unable to set receive buffer len");
 				return -1;
@@ -1237,7 +1237,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 			close(sockfd);
 
 			if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_FAILED);
+				freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_FAILED);
 
 			WLog_ERR(TAG, "Couldn't set keep alive mode.");
 			return -1;
@@ -1249,7 +1249,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 		close(sockfd);
 
 		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-			freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_CANCELLED);
 
 		return -1;
 	}
