@@ -1009,6 +1009,8 @@ int transport_check_fds(rdpTransport* transport)
 	if (transport->layer == TRANSPORT_LAYER_CLOSED)
 	{
 		WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds: transport layer closed");
+		if (freerdp_get_last_error(transport->context) == FREERDP_ERROR_SUCCESS)
+			freerdp_set_last_error_log(transport->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 		return -1;
 	}
 
