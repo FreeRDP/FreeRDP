@@ -1027,9 +1027,10 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	{
 		if ((error = audin_load_device_plugin(audin, audin->subsystem, args)))
 		{
-			WLog_Print(audin->log, WLOG_ERROR,
-			           "audin_load_device_plugin %s failed with error %" PRIu32 "!",
-			           audin->subsystem, error);
+			WLog_Print(
+			    audin->log, WLOG_ERROR,
+			    "Unable to load microphone redirection subsystem %s because of error %" PRIu32 "",
+			    audin->subsystem, error);
 			goto out;
 		}
 	}
@@ -1064,7 +1065,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	{
 		/* If we have no audin device do not register plugin but still return OK or the client will
 		 * just disconnect due to a missing microphone. */
-		WLog_Print(audin->log, WLOG_ERROR, "no sound device.");
+		WLog_Print(audin->log, WLOG_ERROR, "No microphone device could be found.");
 		error = CHANNEL_RC_OK;
 		goto out;
 	}
