@@ -555,6 +555,7 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 	if (!transport->frontBio || (bytes > SSIZE_MAX))
 	{
 		transport->layer = TRANSPORT_LAYER_CLOSED;
+		freerdp_set_last_error_if_not(transport->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 		return -1;
 	}
 
@@ -577,6 +578,8 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 
 				WLog_ERR_BIO(transport, "BIO_read", transport->frontBio);
 				transport->layer = TRANSPORT_LAYER_CLOSED;
+				freerdp_set_last_error_if_not(transport->context,
+				                              FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 				return -1;
 			}
 
@@ -804,6 +807,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 	if (!transport->frontBio)
 	{
 		transport->layer = TRANSPORT_LAYER_CLOSED;
+		freerdp_set_last_error_if_not(transport->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 		goto fail;
 	}
 
@@ -882,6 +886,7 @@ out_cleanup:
 	{
 		/* A write error indicates that the peer has dropped the connection */
 		transport->layer = TRANSPORT_LAYER_CLOSED;
+		freerdp_set_last_error_if_not(transport->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 	}
 
 	LeaveCriticalSection(&(transport->WriteLock));
