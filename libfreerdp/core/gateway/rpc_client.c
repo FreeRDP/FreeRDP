@@ -549,8 +549,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 			if (statusCode == HTTP_STATUS_DENIED)
 			{
-				if (!freerdp_get_last_error(rpc->context))
-					freerdp_set_last_error_log(rpc->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+				freerdp_set_last_error_if_not(rpc->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 			}
 
 			http_response_free(response);
