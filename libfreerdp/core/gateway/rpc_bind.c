@@ -135,8 +135,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	{
 		if (!instance->GatewayAuthenticate)
 		{
-			freerdp_set_last_error(instance->context,
-			                       FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+			freerdp_set_last_error_log(instance->context,
+			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return 0;
 		}
 		else
@@ -147,8 +147,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 			if (!proceed)
 			{
-				freerdp_set_last_error(instance->context,
-				                       FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+				freerdp_set_last_error_log(instance->context,
+				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return 0;
 			}
 

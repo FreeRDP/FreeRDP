@@ -147,7 +147,7 @@ BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel)
 	{
 		if (!instance->GatewayAuthenticate)
 		{
-			freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return TRUE;
 		}
 		else
@@ -158,7 +158,8 @@ BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel)
 
 			if (!proceed)
 			{
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+				freerdp_set_last_error_log(context,
+				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return TRUE;
 			}
 

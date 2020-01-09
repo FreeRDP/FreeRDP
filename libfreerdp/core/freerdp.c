@@ -164,7 +164,7 @@ BOOL freerdp_connect(freerdp* instance)
 	/* We always set the return code to 0 before we start the connect sequence*/
 	instance->ConnectionCallbackState = CLIENT_STATE_INITIAL;
 	connectErrorCode = 0;
-	instance->context->LastError = FREERDP_ERROR_SUCCESS;
+	freerdp_set_last_error_log(instance->context, FREERDP_ERROR_SUCCESS);
 	clearChannelError(instance->context);
 	ResetEvent(instance->context->abortEvent);
 	rdp = instance->context->rdp;
@@ -189,7 +189,7 @@ BOOL freerdp_connect(freerdp* instance)
 	if (!status || (status2 != CHANNEL_RC_OK))
 	{
 		if (!freerdp_get_last_error(rdp->context))
-			freerdp_set_last_error(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
+			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
 
 		WLog_ERR(TAG, "freerdp_pre_connect failed");
 		goto freerdp_connect_finally;
@@ -234,7 +234,7 @@ BOOL freerdp_connect(freerdp* instance)
 		WLog_ERR(TAG, "freerdp_post_connect failed");
 
 		if (!freerdp_get_last_error(rdp->context))
-			freerdp_set_last_error(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
+			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
 
 		status = FALSE;
 		goto freerdp_connect_finally;
@@ -288,7 +288,7 @@ BOOL freerdp_connect(freerdp* instance)
 	}
 
 	if (rdp->errorInfo == ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES)
-		freerdp_set_last_error(instance->context, FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
+		freerdp_set_last_error_log(instance->context, FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
 
 	SetEvent(rdp->transport->connectedEvent);
 freerdp_connect_finally:
@@ -871,17 +871,23 @@ const char* freerdp_get_last_error_category(UINT32 code)
 
 void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 {
+	freerdp_set_last_error_ex(context, lastError, NULL, NULL, -1);
+}
+
+void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char* fkt,
+                               const char* file, int line)
+{
 	if (lastError)
-		WLog_ERR(TAG, "%s %s [0x%08" PRIX32 "]", __FUNCTION__,
+		WLog_ERR(TAG, "%s:%s %s [0x%08" PRIX32 "]", fkt, __FUNCTION__,
 		         freerdp_get_last_error_name(lastError), lastError);
 
 	if (lastError == FREERDP_ERROR_SUCCESS)
 	{
-		WLog_INFO(TAG, "%s resetting error state", __FUNCTION__);
+		WLog_INFO(TAG, "%s:%s resetting error state", fkt, __FUNCTION__);
 	}
-	else if (context->LastError != 0)
+	else if (context->LastError != FREERDP_ERROR_SUCCESS)
 	{
-		WLog_ERR(TAG, "TODO: Trying to set error code %s, but %s already set!",
+		WLog_ERR(TAG, "%s: TODO: Trying to set error code %s, but %s already set!", fkt,
 		         freerdp_get_last_error_name(lastError),
 		         freerdp_get_last_error_name(context->LastError));
 	}

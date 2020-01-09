@@ -308,7 +308,7 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 
 		if (context)
 		{
-			context->LastError = MAKE_FREERDP_ERROR(ERRINFO, errorInfo);
+			freerdp_set_last_error_log(context, MAKE_FREERDP_ERROR(ERRINFO, errorInfo));
 
 			if (context->pubSub)
 			{
@@ -318,10 +318,12 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 				PubSub_OnErrorInfo(context->pubSub, context, &e);
 			}
 		}
+		else
+			WLog_ERR(TAG, "%s missing context=%p", __FUNCTION__, context);
 	}
 	else
 	{
-		rdp->context->LastError = FREERDP_ERROR_SUCCESS;
+		freerdp_set_last_error_log(rdp->context, FREERDP_ERROR_SUCCESS);
 	}
 
 	return TRUE;

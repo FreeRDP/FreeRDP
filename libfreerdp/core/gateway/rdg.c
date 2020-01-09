@@ -661,7 +661,7 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 	if (FAILED(errorCode))
 	{
 		WLog_ERR(TAG, "Handshake error %s", error);
-		freerdp_set_last_error(rdg->context, errorCode);
+		freerdp_set_last_error_log(rdg->context, errorCode);
 		return FALSE;
 	}
 
@@ -698,7 +698,7 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 	if (FAILED(errorCode))
 	{
 		WLog_ERR(TAG, "Tunnel creation error %s", error);
-		freerdp_set_last_error(rdg->context, errorCode);
+		freerdp_set_last_error_log(rdg->context, errorCode);
 		return FALSE;
 	}
 
@@ -734,7 +734,7 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	if (FAILED(errorCode))
 	{
 		WLog_ERR(TAG, "Tunnel authorization error %s", error);
-		freerdp_set_last_error(rdg->context, errorCode);
+		freerdp_set_last_error_log(rdg->context, errorCode);
 		return FALSE;
 	}
 
@@ -771,7 +771,7 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 	{
 		WLog_ERR(TAG, "channel response errorCode=%s, fieldsPresent=%s", error,
 		         channel_response_fields_present_to_string(fieldsPresent));
-		freerdp_set_last_error(rdg->context, errorCode);
+		freerdp_set_last_error_log(rdg->context, errorCode);
 		return FALSE;
 	}
 
@@ -870,7 +870,7 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context)
 	{
 		if (!instance->GatewayAuthenticate)
 		{
-			freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return FALSE;
 		}
 		else
@@ -881,7 +881,8 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context)
 
 			if (!proceed)
 			{
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+				freerdp_set_last_error_log(context,
+				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return FALSE;
 			}
 
@@ -1033,12 +1034,12 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 		if (status < 0)
 		{
 			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+				freerdp_set_last_error_log(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
 		}
 		else
 		{
 			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+				freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_CANCELLED);
 		}
 
 		return FALSE;
@@ -1117,7 +1118,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 		case HTTP_STATUS_OK:
 			break;
 		case HTTP_STATUS_DENIED:
-			freerdp_set_last_error(rdg->context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
+			freerdp_set_last_error_log(rdg->context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
 			return FALSE;
 		default:
 			return FALSE;
