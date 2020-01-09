@@ -25,6 +25,9 @@
 #include <winpr/library.h>
 #include <winpr/smartcard.h>
 #include <winpr/synch.h>
+#include <winpr/wlog.h>
+
+#include "../log.h"
 
 #include "smartcard.h"
 
@@ -33,10 +36,19 @@
 static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
 static PSCardApiFunctionTable g_SCardApi = NULL;
 
-#define SCARDAPI_STUB_CALL_LONG(_name, ...)                                   \
-	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL); \
-	if (!g_SCardApi || !g_SCardApi->pfn##_name)                               \
-		return SCARD_E_NO_SERVICE;                                            \
+#define TAG WINPR_TAG("smartcard")
+
+#define xstr(s) str(s)
+#define str(s) #s
+
+#define SCARDAPI_STUB_CALL_LONG(_name, ...)                                              \
+	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL);            \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
+	{                                                                                    \
+		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p", \
+		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
+		return SCARD_E_NO_SERVICE;                                                       \
+	}                                                                                    \
 	return g_SCardApi->pfn##_name(__VA_ARGS__)
 
 #define SCARDAPI_STUB_CALL_HANDLE(_name, ...)                                 \
@@ -775,8 +787,6 @@ WINSCARDAPI const char* WINAPI SCardGetErrorString(LONG errorCode)
 		default:
 			return "SCARD_E_UNKNOWN";
 	}
-
-	return "SCARD_E_UNKNOWN";
 }
 
 WINSCARDAPI const char* WINAPI SCardGetAttributeString(DWORD dwAttrId)
@@ -785,182 +795,136 @@ WINSCARDAPI const char* WINAPI SCardGetAttributeString(DWORD dwAttrId)
 	{
 		case SCARD_ATTR_VENDOR_NAME:
 			return "SCARD_ATTR_VENDOR_NAME";
-			break;
 
 		case SCARD_ATTR_VENDOR_IFD_TYPE:
 			return "SCARD_ATTR_VENDOR_IFD_TYPE";
-			break;
 
 		case SCARD_ATTR_VENDOR_IFD_VERSION:
 			return "SCARD_ATTR_VENDOR_IFD_VERSION";
-			break;
 
 		case SCARD_ATTR_VENDOR_IFD_SERIAL_NO:
 			return "SCARD_ATTR_VENDOR_IFD_SERIAL_NO";
-			break;
 
 		case SCARD_ATTR_CHANNEL_ID:
 			return "SCARD_ATTR_CHANNEL_ID";
-			break;
 
 		case SCARD_ATTR_PROTOCOL_TYPES:
 			return "SCARD_ATTR_PROTOCOL_TYPES";
-			break;
 
 		case SCARD_ATTR_DEFAULT_CLK:
 			return "SCARD_ATTR_DEFAULT_CLK";
-			break;
 
 		case SCARD_ATTR_MAX_CLK:
 			return "SCARD_ATTR_MAX_CLK";
-			break;
 
 		case SCARD_ATTR_DEFAULT_DATA_RATE:
 			return "SCARD_ATTR_DEFAULT_DATA_RATE";
-			break;
 
 		case SCARD_ATTR_MAX_DATA_RATE:
 			return "SCARD_ATTR_MAX_DATA_RATE";
-			break;
 
 		case SCARD_ATTR_MAX_IFSD:
 			return "SCARD_ATTR_MAX_IFSD";
-			break;
 
 		case SCARD_ATTR_POWER_MGMT_SUPPORT:
 			return "SCARD_ATTR_POWER_MGMT_SUPPORT";
-			break;
 
 		case SCARD_ATTR_USER_TO_CARD_AUTH_DEVICE:
 			return "SCARD_ATTR_USER_TO_CARD_AUTH_DEVICE";
-			break;
 
 		case SCARD_ATTR_USER_AUTH_INPUT_DEVICE:
 			return "SCARD_ATTR_USER_AUTH_INPUT_DEVICE";
-			break;
 
 		case SCARD_ATTR_CHARACTERISTICS:
 			return "SCARD_ATTR_CHARACTERISTICS";
-			break;
 
 		case SCARD_ATTR_CURRENT_PROTOCOL_TYPE:
 			return "SCARD_ATTR_CURRENT_PROTOCOL_TYPE";
-			break;
 
 		case SCARD_ATTR_CURRENT_CLK:
 			return "SCARD_ATTR_CURRENT_CLK";
-			break;
 
 		case SCARD_ATTR_CURRENT_F:
 			return "SCARD_ATTR_CURRENT_F";
-			break;
 
 		case SCARD_ATTR_CURRENT_D:
 			return "SCARD_ATTR_CURRENT_D";
-			break;
 
 		case SCARD_ATTR_CURRENT_N:
 			return "SCARD_ATTR_CURRENT_N";
-			break;
 
 		case SCARD_ATTR_CURRENT_W:
 			return "SCARD_ATTR_CURRENT_W";
-			break;
 
 		case SCARD_ATTR_CURRENT_IFSC:
 			return "SCARD_ATTR_CURRENT_IFSC";
-			break;
 
 		case SCARD_ATTR_CURRENT_IFSD:
 			return "SCARD_ATTR_CURRENT_IFSD";
-			break;
 
 		case SCARD_ATTR_CURRENT_BWT:
 			return "SCARD_ATTR_CURRENT_BWT";
-			break;
 
 		case SCARD_ATTR_CURRENT_CWT:
 			return "SCARD_ATTR_CURRENT_CWT";
-			break;
 
 		case SCARD_ATTR_CURRENT_EBC_ENCODING:
 			return "SCARD_ATTR_CURRENT_EBC_ENCODING";
-			break;
 
 		case SCARD_ATTR_EXTENDED_BWT:
 			return "SCARD_ATTR_EXTENDED_BWT";
-			break;
 
 		case SCARD_ATTR_ICC_PRESENCE:
 			return "SCARD_ATTR_ICC_PRESENCE";
-			break;
 
 		case SCARD_ATTR_ICC_INTERFACE_STATUS:
 			return "SCARD_ATTR_ICC_INTERFACE_STATUS";
-			break;
 
 		case SCARD_ATTR_CURRENT_IO_STATE:
 			return "SCARD_ATTR_CURRENT_IO_STATE";
-			break;
 
 		case SCARD_ATTR_ATR_STRING:
 			return "SCARD_ATTR_ATR_STRING";
-			break;
 
 		case SCARD_ATTR_ICC_TYPE_PER_ATR:
 			return "SCARD_ATTR_ICC_TYPE_PER_ATR";
-			break;
 
 		case SCARD_ATTR_ESC_RESET:
 			return "SCARD_ATTR_ESC_RESET";
-			break;
 
 		case SCARD_ATTR_ESC_CANCEL:
 			return "SCARD_ATTR_ESC_CANCEL";
-			break;
 
 		case SCARD_ATTR_ESC_AUTHREQUEST:
 			return "SCARD_ATTR_ESC_AUTHREQUEST";
-			break;
 
 		case SCARD_ATTR_MAXINPUT:
 			return "SCARD_ATTR_MAXINPUT";
-			break;
 
 		case SCARD_ATTR_DEVICE_UNIT:
 			return "SCARD_ATTR_DEVICE_UNIT";
-			break;
 
 		case SCARD_ATTR_DEVICE_IN_USE:
 			return "SCARD_ATTR_DEVICE_IN_USE";
-			break;
 
 		case SCARD_ATTR_DEVICE_FRIENDLY_NAME_A:
 			return "SCARD_ATTR_DEVICE_FRIENDLY_NAME_A";
-			break;
 
 		case SCARD_ATTR_DEVICE_SYSTEM_NAME_A:
 			return "SCARD_ATTR_DEVICE_SYSTEM_NAME_A";
-			break;
 
 		case SCARD_ATTR_DEVICE_FRIENDLY_NAME_W:
 			return "SCARD_ATTR_DEVICE_FRIENDLY_NAME_W";
-			break;
 
 		case SCARD_ATTR_DEVICE_SYSTEM_NAME_W:
 			return "SCARD_ATTR_DEVICE_SYSTEM_NAME_W";
-			break;
 
 		case SCARD_ATTR_SUPRESS_T1_IFS_REQUEST:
 			return "SCARD_ATTR_SUPRESS_T1_IFS_REQUEST";
-			break;
 
 		default:
 			return "SCARD_ATTR_UNKNOWN";
-			break;
 	}
-
-	return "SCARD_ATTR_UNKNOWN";
 }
 
 WINSCARDAPI const char* WINAPI SCardGetProtocolString(DWORD dwProtocols)
@@ -1001,22 +965,16 @@ WINSCARDAPI const char* WINAPI SCardGetShareModeString(DWORD dwShareMode)
 	{
 		case SCARD_SHARE_EXCLUSIVE:
 			return "SCARD_SHARE_EXCLUSIVE";
-			break;
 
 		case SCARD_SHARE_SHARED:
 			return "SCARD_SHARE_SHARED";
-			break;
 
 		case SCARD_SHARE_DIRECT:
 			return "SCARD_SHARE_DIRECT";
-			break;
 
 		default:
 			return "SCARD_SHARE_UNKNOWN";
-			break;
 	}
-
-	return "SCARD_SHARE_UNKNOWN";
 }
 
 WINSCARDAPI const char* WINAPI SCardGetDispositionString(DWORD dwDisposition)
@@ -1025,22 +983,16 @@ WINSCARDAPI const char* WINAPI SCardGetDispositionString(DWORD dwDisposition)
 	{
 		case SCARD_LEAVE_CARD:
 			return "SCARD_LEAVE_CARD";
-			break;
 
 		case SCARD_RESET_CARD:
 			return "SCARD_RESET_CARD";
-			break;
 
 		case SCARD_UNPOWER_CARD:
 			return "SCARD_UNPOWER_CARD";
-			break;
 
 		default:
 			return "SCARD_UNKNOWN_CARD";
-			break;
 	}
-
-	return "SCARD_UNKNOWN_CARD";
 }
 
 WINSCARDAPI const char* WINAPI SCardGetScopeString(DWORD dwScope)
@@ -1049,22 +1001,16 @@ WINSCARDAPI const char* WINAPI SCardGetScopeString(DWORD dwScope)
 	{
 		case SCARD_SCOPE_USER:
 			return "SCARD_SCOPE_USER";
-			break;
 
 		case SCARD_SCOPE_TERMINAL:
 			return "SCARD_SCOPE_TERMINAL";
-			break;
 
 		case SCARD_SCOPE_SYSTEM:
 			return "SCARD_SCOPE_SYSTEM";
-			break;
 
 		default:
 			return "SCARD_SCOPE_UNKNOWN";
-			break;
 	}
-
-	return "SCARD_SCOPE_UNKNOWN";
 }
 
 WINSCARDAPI const char* WINAPI SCardGetCardStateString(DWORD dwCardState)
@@ -1073,38 +1019,28 @@ WINSCARDAPI const char* WINAPI SCardGetCardStateString(DWORD dwCardState)
 	{
 		case SCARD_UNKNOWN:
 			return "SCARD_UNKNOWN";
-			break;
 
 		case SCARD_ABSENT:
 			return "SCARD_ABSENT";
-			break;
 
 		case SCARD_PRESENT:
 			return "SCARD_PRESENT";
-			break;
 
 		case SCARD_SWALLOWED:
 			return "SCARD_SWALLOWED";
-			break;
 
 		case SCARD_POWERED:
 			return "SCARD_POWERED";
-			break;
 
 		case SCARD_NEGOTIABLE:
 			return "SCARD_NEGOTIABLE";
-			break;
 
 		case SCARD_SPECIFIC:
 			return "SCARD_SPECIFIC";
-			break;
 
 		default:
 			return "SCARD_UNKNOWN";
-			break;
 	}
-
-	return "SCARD_UNKNOWN";
 }
 
 WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState)
