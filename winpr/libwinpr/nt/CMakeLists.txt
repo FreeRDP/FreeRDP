@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-winpr_module_add(nt.c)
+winpr_module_add(nt.c ntstatus.c)
 
 winpr_library_add_private(
 	${CMAKE_THREAD_LIBS_INIT}

@@ -1600,6 +1600,8 @@ extern "C"
 	WINPR_API NTSTATUS _NtWaitForSingleObject(HANDLE Handle, BOOLEAN Alertable,
 	                                          PLARGE_INTEGER Timeout);
 
+	WINPR_API const char* NtStatus2Tag(DWORD ntstatus);
+
 #ifdef __cplusplus
 }
 #endif
