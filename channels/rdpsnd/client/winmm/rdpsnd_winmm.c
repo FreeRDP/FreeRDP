@@ -41,7 +41,9 @@
 
 #include "rdpsnd_main.h"
 
-#define SEM_COUNT_MAX 4
+#if defined(WITH_WINMM_SEMAPHORE)
+#define SEM_COUNT_MAX 6
+#endif
 
 typedef struct rdpsnd_winmm_plugin rdpsndWinmmPlugin;
 
@@ -54,7 +56,9 @@ struct rdpsnd_winmm_plugin
 	UINT32 volume;
 	wLog* log;
 	UINT32 latency;
+#if defined(WITH_WINMM_SEMAPHORE)
 	HANDLE semaphore;
+#endif
 };
 
 static BOOL rdpsnd_winmm_convert_format(const AUDIO_FORMAT* in, WAVEFORMATEX* out)
@@ -107,8 +111,11 @@ static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, 
 			break;
 		case WOM_DONE:
 			waveOutUnprepareHeader(hwo, lpWaveHdr, sizeof(WAVEHDR));
+			free(lpWaveHdr->lpData);
 			free(lpWaveHdr);
+#if defined(WITH_WINMM_SEMAPHORE)
 			ReleaseSemaphore(winmm->semaphore, 1, NULL);
+#endif
 			break;
 		default:
 			break;
@@ -136,7 +143,9 @@ static BOOL rdpsnd_winmm_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* fo
 		return FALSE;
 	}
 
+#if defined(WITH_WINMM_SEMAPHORE)
 	ReleaseSemaphore(winmm->semaphore, SEM_COUNT_MAX, NULL);
+#endif
 
 	mmResult = waveOutSetVolume(winmm->hWaveOut, winmm->volume);
 
@@ -151,14 +160,20 @@ static BOOL rdpsnd_winmm_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* fo
 
 static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
 {
-	size_t x;
 	MMRESULT mmResult;
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*)device;
 
 	if (winmm->hWaveOut)
 	{
+#if defined(WITH_WINMM_SEMAPHORE)
+		size_t x;
 		for (x = 0; x < SEM_COUNT_MAX; x++)
 			WaitForSingleObject(winmm->semaphore, INFINITE);
+#endif
+		mmResult = waveOutReset(winmm->hWaveOut);
+		if (mmResult != MMSYSERR_NOERROR)
+			WLog_Print(winmm->log, WLOG_ERROR, "waveOutReset failure: %" PRIu32 "", mmResult);
+
 		mmResult = waveOutClose(winmm->hWaveOut);
 		if (mmResult != MMSYSERR_NOERROR)
 			WLog_Print(winmm->log, WLOG_ERROR, "waveOutClose failure: %" PRIu32 "", mmResult);
@@ -174,7 +189,9 @@ static void rdpsnd_winmm_free(rdpsndDevicePlugin* device)
 	if (winmm)
 	{
 		rdpsnd_winmm_close(device);
+#if defined(WITH_WINMM_SEMAPHORE)
 		CloseHandle(winmm->semaphore);
+#endif
 		free(winmm);
 	}
 }
@@ -232,12 +249,6 @@ static BOOL rdpsnd_winmm_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	return TRUE;
 }
 
-static void rdpsnd_winmm_start(rdpsndDevicePlugin* device)
-{
-	// rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) device;
-	WINPR_UNUSED(device);
-}
-
 static UINT rdpsnd_winmm_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {
 	MMRESULT mmResult;
@@ -256,7 +267,10 @@ static UINT rdpsnd_winmm_play(rdpsndDevicePlugin* device, const BYTE* data, size
 
 	lpWaveHdr->dwFlags = 0;
 	lpWaveHdr->dwLoops = 0;
-	lpWaveHdr->lpData = (LPSTR)data;
+	lpWaveHdr->lpData = malloc(size);
+	if (!lpWaveHdr->lpData)
+		goto fail;
+	memcpy(lpWaveHdr->lpData, data, size);
 	lpWaveHdr->dwBufferLength = (DWORD)size;
 
 	mmResult = waveOutPrepareHeader(winmm->hWaveOut, lpWaveHdr, sizeof(WAVEHDR));
@@ -264,22 +278,27 @@ static UINT rdpsnd_winmm_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	if (mmResult != MMSYSERR_NOERROR)
 	{
 		WLog_Print(winmm->log, WLOG_ERROR, "waveOutPrepareHeader failure: %" PRIu32 "", mmResult);
-		free(lpWaveHdr);
-		return 0;
+		goto fail;
 	}
 
+#if defined(WITH_WINMM_SEMAPHORE)
 	WaitForSingleObject(winmm->semaphore, INFINITE);
+#endif
 	mmResult = waveOutWrite(winmm->hWaveOut, lpWaveHdr, sizeof(WAVEHDR));
 
 	if (mmResult != MMSYSERR_NOERROR)
 	{
 		WLog_Print(winmm->log, WLOG_ERROR, "waveOutWrite failure: %" PRIu32 "", mmResult);
 		waveOutUnprepareHeader(winmm->hWaveOut, lpWaveHdr, sizeof(WAVEHDR));
-		free(lpWaveHdr);
-		return 0;
+		goto fail;
 	}
 
 	return winmm->latency;
+fail:
+	if (lpWaveHdr)
+		free(lpWaveHdr->lpData);
+	free(lpWaveHdr);
+	return 0;
 }
 
 static void rdpsnd_winmm_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
@@ -311,6 +330,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	}
 
 	winmm = (rdpsndWinmmPlugin*)calloc(1, sizeof(rdpsndWinmmPlugin));
+
 	if (!winmm)
 		return CHANNEL_RC_NO_MEMORY;
 
@@ -318,14 +338,15 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	winmm->device.FormatSupported = rdpsnd_winmm_format_supported;
 	winmm->device.GetVolume = rdpsnd_winmm_get_volume;
 	winmm->device.SetVolume = rdpsnd_winmm_set_volume;
-	winmm->device.Start = rdpsnd_winmm_start;
 	winmm->device.Play = rdpsnd_winmm_play;
 	winmm->device.Close = rdpsnd_winmm_close;
 	winmm->device.Free = rdpsnd_winmm_free;
 	winmm->log = WLog_Get(TAG);
+#if defined(WITH_WINMM_SEMAPHORE)
 	winmm->semaphore = CreateSemaphore(NULL, 0, SEM_COUNT_MAX, NULL);
 	if (!winmm->semaphore)
 		goto fail;
+#endif
 	args = pEntryPoints->args;
 	rdpsnd_winmm_parse_addin_args((rdpsndDevicePlugin*)winmm, args);
 	winmm->volume = 0xFFFFFFFF;

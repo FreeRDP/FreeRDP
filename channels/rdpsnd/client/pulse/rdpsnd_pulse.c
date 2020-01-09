@@ -390,6 +390,29 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 	free(pulse);
 }
 
+static BOOL rdpsnd_pulse_default_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT* desired,
+                                        AUDIO_FORMAT* defaultFormat)
+{
+	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
+	if (!pulse || !defaultFormat)
+		return FALSE;
+
+	*defaultFormat = *desired;
+	defaultFormat->data = NULL;
+	defaultFormat->cbSize = 0;
+	defaultFormat->wFormatTag = WAVE_FORMAT_PCM;
+	if ((defaultFormat->nChannels < 1) || (defaultFormat->nChannels > PA_CHANNELS_MAX))
+		defaultFormat->nChannels = 2;
+	if ((defaultFormat->nSamplesPerSec < 1) || (defaultFormat->nSamplesPerSec > PA_RATE_MAX))
+		defaultFormat->nSamplesPerSec = 44100;
+	if ((defaultFormat->wBitsPerSample != 8) && (defaultFormat->wBitsPerSample != 16))
+		defaultFormat->wBitsPerSample = 16;
+
+	defaultFormat->nBlockAlign = defaultFormat->nChannels * defaultFormat->wBitsPerSample / 8;
+	defaultFormat->nAvgBytesPerSec = defaultFormat->nBlockAlign * defaultFormat->nSamplesPerSec;
+	return TRUE;
+}
+
 BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format)
 {
 	switch (format->wFormatTag)
@@ -507,18 +530,6 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	return latency / 1000;
 }
 
-static void rdpsnd_pulse_start(rdpsndDevicePlugin* device)
-{
-	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
-
-	if (!pulse->stream)
-		return;
-
-	pa_threaded_mainloop_lock(pulse->mainloop);
-	pa_stream_trigger(pulse->stream, NULL, NULL);
-	pa_threaded_mainloop_unlock(pulse->mainloop);
-}
-
 /**
  * Function description
  *
@@ -587,9 +598,9 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	pulse->device.GetVolume = rdpsnd_pulse_get_volume;
 	pulse->device.SetVolume = rdpsnd_pulse_set_volume;
 	pulse->device.Play = rdpsnd_pulse_play;
-	pulse->device.Start = rdpsnd_pulse_start;
 	pulse->device.Close = rdpsnd_pulse_close;
 	pulse->device.Free = rdpsnd_pulse_free;
+	pulse->device.DefaultFormat = rdpsnd_pulse_default_format;
 	args = pEntryPoints->args;
 
 	if (args->argc > 1)

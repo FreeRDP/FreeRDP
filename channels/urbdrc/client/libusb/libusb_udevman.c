@@ -34,6 +34,10 @@
 
 #include "libusb_udevice.h"
 
+#if LIBUSB_API_VERSION < 0x01000102
+#define LIBUSB_HOTPLUG_NO_FLAGS 0
+#endif
+
 #define BASIC_STATE_FUNC_DEFINED(_arg, _type)                   \
 	static _type udevman_get_##_arg(IUDEVMAN* idevman)          \
 	{                                                           \
