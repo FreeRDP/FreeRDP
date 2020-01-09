@@ -188,8 +188,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (!status || (status2 != CHANNEL_RC_OK))
 	{
-		if (!freerdp_get_last_error(rdp->context))
-			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
+		freerdp_set_last_error_if_not(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
 
 		WLog_ERR(TAG, "freerdp_pre_connect failed");
 		goto freerdp_connect_finally;
@@ -233,8 +232,7 @@ BOOL freerdp_connect(freerdp* instance)
 	{
 		WLog_ERR(TAG, "freerdp_post_connect failed");
 
-		if (!freerdp_get_last_error(rdp->context))
-			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
+		freerdp_set_last_error_if_not(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
 
 		status = FALSE;
 		goto freerdp_connect_finally;

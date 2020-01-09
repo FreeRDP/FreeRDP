@@ -365,8 +365,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	{
 		if (rdp_check_fds(rdp) < 0)
 		{
-			if (!freerdp_get_last_error(rdp->context))
-				freerdp_set_last_error_log(rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+			freerdp_set_last_error_if_not(rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 
 			return FALSE;
 		}

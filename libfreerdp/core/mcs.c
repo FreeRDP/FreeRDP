@@ -1236,8 +1236,7 @@ BOOL mcs_client_begin(rdpMcs* mcs)
 
 	if (!mcs_send_connect_initial(mcs))
 	{
-		if (!freerdp_get_last_error(context))
-			freerdp_set_last_error_log(context, FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR);
+		freerdp_set_last_error_if_not(context, FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR);
 
 		WLog_ERR(TAG, "Error: unable to send MCS Connect Initial");
 		return FALSE;

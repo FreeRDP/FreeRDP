@@ -482,6 +482,13 @@ extern "C"
 
 	FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError);
 
+#define freerdp_set_last_error_if_not(context, lastError)             \
+	do                                                                \
+	{                                                                 \
+		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS) \
+			freerdp_set_last_error_log(context, lastError);           \
+	} while (0)
+
 #define freerdp_set_last_error_log(context, lastError) \
 	freerdp_set_last_error_ex((context), (lastError), __FUNCTION__, __FILE__, __LINE__)
 	FREERDP_API void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError,
