@@ -416,7 +416,7 @@ int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor, ULONG mode)
 
 	event = (WINPR_EVENT*)Object;
 
-	if (!event->bAttached && event->pipe_fd[0] >= 0)
+	if (!event->bAttached && event->pipe_fd[0] >= 0 && event->pipe_fd[0] != FileDescriptor)
 		close(event->pipe_fd[0]);
 
 	event->bAttached = TRUE;
