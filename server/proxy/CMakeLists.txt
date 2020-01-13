@@ -88,4 +88,6 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/proxy")
 
-add_subdirectory("modules")
+if (WITH_PROXY_MODULES)
+  add_subdirectory("modules")
+endif()

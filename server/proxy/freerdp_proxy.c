@@ -58,9 +58,11 @@ int main(int argc, char* argv[])
 
 	/* Register cleanup handler for graceful termination */
 	signal(SIGINT, cleanup_handler);
-	signal(SIGQUIT, cleanup_handler);
 	signal(SIGTERM, cleanup_handler);
+#ifndef _WIN32
+	signal(SIGQUIT, cleanup_handler);
 	signal(SIGKILL, cleanup_handler);
+#endif
 
 	if (!pf_modules_init(FREERDP_PROXY_PLUGINDIR))
 	{
