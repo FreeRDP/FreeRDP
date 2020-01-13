@@ -25,7 +25,7 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 	/* Prepare a initial buffer with the size of the result string. */
 	ds = s + 1;
 
-	if (s)
+	if (ds)
 	{
 		tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 		if (!tmp2)
