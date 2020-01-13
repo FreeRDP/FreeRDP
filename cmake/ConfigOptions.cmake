@@ -160,3 +160,7 @@ if (IOS)
 	include(ConfigOptionsiOS)
 endif(IOS)
 
+if (WITH_SERVER)
+	# Proxy Options
+	option(WITH_PROXY_MODULES "Compile proxy modules" OFF)
+endif()

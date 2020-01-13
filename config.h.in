@@ -171,4 +171,7 @@
 #cmakedefine WITH_DEBUG_XV
 #cmakedefine WITH_DEBUG_RINGBUFFER
 
+/* Proxy */
+#cmakedefine WITH_PROXY_MODULES
+
 #endif /* FREERDP_CONFIG_H */
