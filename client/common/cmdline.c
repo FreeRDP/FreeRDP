@@ -2831,6 +2831,15 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			settings->ParentWindowId = (UINT64)val;
 		}
+		CommandLineSwitchCase(arg, "client-build-number")
+		{
+			ULONGLONG val;
+
+			if (!value_to_uint(arg->Value, &val, 0, UINT32_MAX))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_ClientBuild, (UINT32)val))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+		}
 		CommandLineSwitchCase(arg, "bitmap-cache")
 		{
 			settings->BitmapCacheEnabled = enable;
