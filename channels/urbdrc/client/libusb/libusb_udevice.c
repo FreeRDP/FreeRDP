@@ -58,6 +58,10 @@
 	_dev->iface.get_##_arg = udev_get_##_arg; \
 	_dev->iface.set_##_arg = udev_set_##_arg
 
+#if LIBUSB_API_VERSION >= 0x01000103
+#define HAVE_STREAM_ID_API 1
+#endif
+
 typedef struct _ASYNC_TRANSFER_USER_DATA ASYNC_TRANSFER_USER_DATA;
 
 struct _ASYNC_TRANSFER_USER_DATA
@@ -72,6 +76,9 @@ struct _ASYNC_TRANSFER_USER_DATA
 	URBDRC_CHANNEL_CALLBACK* callback;
 	t_isoch_transfer_cb cb;
 	wHashTable* queue;
+#if !defined(HAVE_STREAM_ID_API)
+	UINT32 streamID;
+#endif
 };
 
 static ASYNC_TRANSFER_USER_DATA* async_transfer_user_data_new(IUDEVICE* idev, UINT32 MessageId,
@@ -119,7 +126,11 @@ static void async_transfer_user_data_free(ASYNC_TRANSFER_USER_DATA* user_data)
 static void func_iso_callback(struct libusb_transfer* transfer)
 {
 	ASYNC_TRANSFER_USER_DATA* user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
+#if defined(HAVE_STREAM_ID_API)
 	const UINT32 streamID = libusb_transfer_get_stream_id(transfer);
+#else
+	const UINT32 streamID = user_data->streamID;
+#endif
 
 	switch (transfer->status)
 	{
@@ -225,7 +236,11 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		return;
 	}
 
+#if defined(HAVE_STREAM_ID_API)
 	streamID = libusb_transfer_get_stream_id(transfer);
+#else
+	streamID = user_data->streamID;
+#endif
 
 	if (HashTable_Contains(user_data->queue, (void*)(size_t)streamID))
 	{
@@ -1091,7 +1106,11 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 	libusb_fill_iso_transfer(iso_transfer, pdev->libusb_handle, EndpointAddress,
 	                         Stream_Pointer(user_data->data), BufferSize, NumberOfPackets,
 	                         func_iso_callback, user_data, Timeout);
+#if defined(HAVE_STREAM_ID_API)
 	libusb_transfer_set_stream_id(iso_transfer, streamID);
+#else
+	user_data->streamID = streamID;
+#endif
 	libusb_set_iso_packet_lengths(iso_transfer, iso_packet_size);
 	HashTable_Add(pdev->request_queue, (void*)(size_t)streamID, iso_transfer);
 	return libusb_submit_transfer(iso_transfer);
@@ -1199,7 +1218,11 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 			return -1;
 	}
 
+#if defined(HAVE_STREAM_ID_API)
 	libusb_transfer_set_stream_id(transfer, streamID);
+#else
+	user_data->streamID = streamID;
+#endif
 	HashTable_Add(pdev->request_queue, (void*)(size_t)streamID, transfer);
 	return libusb_submit_transfer(transfer);
 }
