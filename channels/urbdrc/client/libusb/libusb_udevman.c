@@ -34,7 +34,7 @@
 
 #include "libusb_udevice.h"
 
-#if !defined(LIBUSB_API_VERSION) || (LIBUSB_API_VERSION < 0x01000102)
+#if !defined(LIBUSB_HOTPLUG_NO_FLAGS)
 #define LIBUSB_HOTPLUG_NO_FLAGS 0
 #endif
 
