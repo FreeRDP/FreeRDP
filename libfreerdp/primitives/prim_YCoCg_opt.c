@@ -411,13 +411,13 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYTE
 	{
 		case PIXEL_FORMAT_BGRX32:
 		case PIXEL_FORMAT_BGRA32:
-			return ssse3_YCoCgRToRGB_8u_AC4R_no_invert(pSrc, srcStep, pDst, DstFormat, dstStep,
-			                                           width, height, shift, withAlpha);
+			return ssse3_YCoCgRToRGB_8u_AC4R_invert(pSrc, srcStep, pDst, DstFormat, dstStep, width,
+			                                        height, shift, withAlpha);
 
 		case PIXEL_FORMAT_RGBX32:
 		case PIXEL_FORMAT_RGBA32:
-			return ssse3_YCoCgRToRGB_8u_AC4R_invert(pSrc, srcStep, pDst, DstFormat, dstStep, width,
-			                                        height, shift, withAlpha);
+			return ssse3_YCoCgRToRGB_8u_AC4R_no_invert(pSrc, srcStep, pDst, DstFormat, dstStep,
+			                                           width, height, shift, withAlpha);
 
 		default:
 			return generic->YCoCgToRGB_8u_AC4R(pSrc, srcStep, pDst, DstFormat, dstStep, width,
