@@ -602,14 +602,46 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 		if (!pTempData)
 			return FALSE;
 
-		if (cs)
-		{
-			WLog_ERR(TAG, "Chroma subsampling unimplemented");
-			return FALSE;
-		}
-
 		if (!rle) /* RAW */
 		{
+			if (cs)
+			{ /* Chroma subsampling for Co and Cg:
+			   * Each pixel contains the value that should be expanded to
+			   * [2x,2y;2x+1,2y;2x+1,2y+1;2x;2y+1] */
+				UINT32 y;
+				for (y = 0; y < nSrcHeight; y++)
+				{
+					const BYTE* src = planes[1] + y * rawWidths[1] / 2;
+					UINT32 x;
+
+					for (x = 0; x < nSrcWidth; x++)
+					{
+						planar->deltaPlanes[0][x] = src[x / 2];
+					}
+				}
+
+				planes[1] = planar->deltaPlanes[0];
+				rawSizes[1] = planeSize; /* OrangeChromaOrGreenPlane */
+				rawWidths[1] = nSrcWidth;
+				rawHeights[1] = nSrcHeight;
+
+				for (y = 0; y < nSrcHeight; y++)
+				{
+					const BYTE* src = planes[2] + y * rawWidths[2] / 2;
+					UINT32 x;
+
+					for (x = 0; x < nSrcWidth; x++)
+					{
+						planar->deltaPlanes[1][x] = src[x / 2];
+					}
+				}
+
+				planes[2] = planar->deltaPlanes[1];
+				rawSizes[2] = planeSize; /* GreenChromaOrBluePlane */
+				rawWidths[2] = nSrcWidth;
+				rawHeights[2] = nSrcHeight;
+			}
+
 			if (!planar_decompress_planes_raw(planes, pTempData, TempFormat, nTempStep, nXDst,
 			                                  nYDst, nSrcWidth, nSrcHeight, vFlip))
 				return FALSE;
@@ -643,6 +675,15 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 
 			if (status < 0)
 				return FALSE;
+
+			if (cs)
+			{
+
+				/* TODO: Need to implement chroma subsampling for runlength encoded
+				 * planes */
+				WLog_ERR(TAG, "Chroma subsampling unimplemented for RLE planes");
+				return FALSE;
+			}
 
 			status = planar_decompress_plane_rle(planes[1], rleSizes[1], pTempData, nTempStep,
 			                                     nXDst, nYDst, nSrcWidth, nSrcHeight, 1,
@@ -1220,7 +1261,7 @@ BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* context, UINT32 
 	free(context->deltaPlanesBuffer);
 	free(context->rlePlanesBuffer);
 	context->planesBuffer = calloc(context->maxPlaneSize, 4);
-	context->pTempData = calloc(context->maxPlaneSize, 4);
+	context->pTempData = calloc(context->maxPlaneSize, 6);
 	context->deltaPlanesBuffer = calloc(context->maxPlaneSize, 4);
 	context->rlePlanesBuffer = calloc(context->maxPlaneSize, 4);
 
