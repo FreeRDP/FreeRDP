@@ -315,12 +315,14 @@ error:
 
 BOOL pf_modules_init(const char* modules_directory)
 {
-	WIN32_FIND_DATA ffd;
 	HANDLE hFind = INVALID_HANDLE_VALUE;
+	WIN32_FIND_DATA ffd;
+	char* find_path;
 
-	WLog_DBG(TAG, "Searching plugins in directory %s", modules_directory);
-
-	hFind = FindFirstFile(modules_directory, &ffd);
+	WLog_DBG(TAG, "searching plugins in directory %s", modules_directory);
+	find_path = GetCombinedPath(modules_directory, "*");
+	hFind = FindFirstFile(find_path, &ffd);
+	free(find_path);
 
 	if (INVALID_HANDLE_VALUE == hFind)
 	{
@@ -333,17 +335,15 @@ BOOL pf_modules_init(const char* modules_directory)
 	if (plugins_list == NULL)
 	{
 		WLog_ERR(TAG, "[%s]: ArrayList_New failed!", __FUNCTION__);
-		return FALSE;
+		goto error;
 	}
 
 	handles_list = ArrayList_New(FALSE);
 	if (handles_list == NULL)
 	{
-		ArrayList_Free(plugins_list);
-		plugins_list = NULL;
 
 		WLog_ERR(TAG, "[%s]: ArrayList_New failed!", __FUNCTION__);
-		return FALSE;
+		goto error;
 	}
 
 	do
@@ -362,6 +362,14 @@ BOOL pf_modules_init(const char* modules_directory)
 
 	FindClose(hFind);
 	return TRUE;
+
+error:
+	FindClose(hFind);
+	ArrayList_Free(plugins_list);
+	plugins_list = NULL;
+	ArrayList_Free(handles_list);
+	handles_list = NULL;
+	return FALSE;
 }
 
 void pf_modules_free(void)
