@@ -123,6 +123,7 @@ struct rdp_update_proxy
 	pPointerColor PointerColor;
 	pPointerNew PointerNew;
 	pPointerCached PointerCached;
+	pPointerLarge PointerLarge;
 
 	HANDLE thread;
 };

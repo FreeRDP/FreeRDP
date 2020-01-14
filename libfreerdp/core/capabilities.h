@@ -146,6 +146,7 @@
 
 /* Large Pointer Support Flags */
 #define LARGE_POINTER_FLAG_96x96 0x00000001
+#define LARGE_POINTER_FLAG_384x384 0x00000002
 
 /* Surface Commands Flags */
 #define SURFCMDS_SET_SURFACE_BITS 0x00000002

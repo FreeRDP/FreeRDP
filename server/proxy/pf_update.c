@@ -152,6 +152,16 @@ static BOOL pf_client_send_pointer_color(rdpContext* context,
 	return ps->update->pointer->PointerColor(ps, pointer_color);
 }
 
+static BOOL pf_client_send_pointer_large(rdpContext* context,
+                                         const POINTER_LARGE_UPDATE* pointer_large)
+{
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata = pc->pdata;
+	rdpContext* ps = (rdpContext*)pdata->ps;
+	WLog_DBG(TAG, __FUNCTION__);
+	return ps->update->pointer->PointerLarge(ps, pointer_large);
+}
+
 static BOOL pf_client_send_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new)
 {
 	pClientContext* pc = (pClientContext*)context;
@@ -324,6 +334,7 @@ void pf_client_register_update_callbacks(rdpUpdate* update)
 	update->pointer->PointerSystem = pf_client_send_pointer_system;
 	update->pointer->PointerPosition = pf_client_send_pointer_position;
 	update->pointer->PointerColor = pf_client_send_pointer_color;
+	update->pointer->PointerLarge = pf_client_send_pointer_large;
 	update->pointer->PointerNew = pf_client_send_pointer_new;
 	update->pointer->PointerCached = pf_client_send_pointer_cached;
 }

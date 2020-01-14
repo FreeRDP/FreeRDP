@@ -331,7 +331,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->Fullscreen = FALSE;
 	settings->GrabKeyboard = TRUE;
 	settings->Decorations = TRUE;
-	settings->RdpVersion = RDP_VERSION_10_6;
+	settings->RdpVersion = RDP_VERSION_10_7;
 	settings->ColorDepth = 16;
 	settings->ExtSecurity = FALSE;
 	settings->NlaSecurity = TRUE;
@@ -421,7 +421,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	gethostname(settings->ClientHostname, 31);
 	settings->ClientHostname[31] = 0;
 	settings->ColorPointerFlag = TRUE;
-	settings->LargePointerFlag = TRUE;
+	settings->LargePointerFlag = (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384);
 	settings->PointerCacheSize = 20;
 	settings->SoundBeepsEnabled = TRUE;
 	settings->DrawGdiPlusEnabled = FALSE;

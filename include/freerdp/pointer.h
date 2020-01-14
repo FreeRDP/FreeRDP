@@ -27,6 +27,7 @@
 #define PTR_MSG_TYPE_COLOR 0x0006
 #define PTR_MSG_TYPE_CACHED 0x0007
 #define PTR_MSG_TYPE_POINTER 0x0008
+#define PTR_MSG_TYPE_POINTER_LARGE 0x0009
 
 #define SYSPTR_NULL 0x00000000
 #define SYSPTR_DEFAULT 0x00007F00
@@ -58,6 +59,21 @@ struct _POINTER_COLOR_UPDATE
 };
 typedef struct _POINTER_COLOR_UPDATE POINTER_COLOR_UPDATE;
 
+struct _POINTER_LARGE_UPDATE
+{
+	UINT16 xorBpp;
+	UINT16 cacheIndex;
+	UINT16 hotSpotX;
+	UINT16 hotSpotY;
+	UINT16 width;
+	UINT16 height;
+	UINT32 lengthAndMask;
+	UINT32 lengthXorMask;
+	BYTE* xorMaskData;
+	BYTE* andMaskData;
+};
+typedef struct _POINTER_LARGE_UPDATE POINTER_LARGE_UPDATE;
+
 struct _POINTER_NEW_UPDATE
 {
 	UINT32 xorBpp;
@@ -77,6 +93,7 @@ typedef BOOL (*pPointerSystem)(rdpContext* context, const POINTER_SYSTEM_UPDATE*
 typedef BOOL (*pPointerColor)(rdpContext* context, const POINTER_COLOR_UPDATE* pointer_color);
 typedef BOOL (*pPointerNew)(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new);
 typedef BOOL (*pPointerCached)(rdpContext* context, const POINTER_CACHED_UPDATE* pointer_cached);
+typedef BOOL (*pPointerLarge)(rdpContext* context, const POINTER_LARGE_UPDATE* pointer_large);
 
 struct rdp_pointer_update
 {
@@ -88,7 +105,8 @@ struct rdp_pointer_update
 	pPointerColor PointerColor;       /* 18 */
 	pPointerNew PointerNew;           /* 19 */
 	pPointerCached PointerCached;     /* 20 */
-	UINT32 paddingB[32 - 21];         /* 21 */
+	pPointerLarge PointerLarge;       /* 21 */
+	UINT32 paddingB[32 - 22];         /* 22 */
 };
 typedef struct rdp_pointer_update rdpPointerUpdate;
 

@@ -212,12 +212,14 @@
 #define PointerUpdate_PointerColor 3
 #define PointerUpdate_PointerNew 4
 #define PointerUpdate_PointerCached 5
+#define PointerUpdate_PointerLarge 6
 
 #define FREERDP_POINTER_UPDATE_ POINTER_POSITION MakeMessageId(PointerUpdate, PointerPosition)
 #define FREERDP_POINTER_UPDATE_POINTER_SYSTEM MakeMessageId(PointerUpdate, PointerSystem)
 #define FREERDP_POINTER_UPDATE_POINTER_COLOR MakeMessageId(PointerUpdate, PointerColor)
 #define FREERDP_POINTER_UPDATE_POINTER_NEW MakeMessageId(PointerUpdate, PointerNew)
 #define FREERDP_POINTER_UPDATE_POINTER_CACHED MakeMessageId(PointerUpdate, PointerCached)
+#define FREERDP_POINTER_UPDATE_POINTER_LARGE MakeMessageId(PointerUpdate, PointerLarge)
 
 /**
  * Input Message Queue

@@ -1440,6 +1440,22 @@ static BOOL update_message_PointerColor(rdpContext* context,
 	                         MakeMessageId(PointerUpdate, PointerColor), (void*)wParam, NULL);
 }
 
+static BOOL update_message_PointerLarge(rdpContext* context, const POINTER_LARGE_UPDATE* pointer)
+{
+	POINTER_LARGE_UPDATE* wParam;
+
+	if (!context || !context->update || !pointer)
+		return FALSE;
+
+	wParam = copy_pointer_large_update(context, pointer);
+
+	if (!wParam)
+		return FALSE;
+
+	return MessageQueue_Post(context->update->queue, (void*)context,
+	                         MakeMessageId(PointerUpdate, PointerLarge), (void*)wParam, NULL);
+}
+
 static BOOL update_message_PointerNew(rdpContext* context, const POINTER_NEW_UPDATE* pointerNew)
 {
 	POINTER_NEW_UPDATE* wParam;
@@ -2640,11 +2656,13 @@ static BOOL update_message_register_interface(rdpUpdateProxy* message, rdpUpdate
 	message->PointerPosition = pointer->PointerPosition;
 	message->PointerSystem = pointer->PointerSystem;
 	message->PointerColor = pointer->PointerColor;
+	message->PointerLarge = pointer->PointerLarge;
 	message->PointerNew = pointer->PointerNew;
 	message->PointerCached = pointer->PointerCached;
 	pointer->PointerPosition = update_message_PointerPosition;
 	pointer->PointerSystem = update_message_PointerSystem;
 	pointer->PointerColor = update_message_PointerColor;
+	pointer->PointerLarge = update_message_PointerLarge;
 	pointer->PointerNew = update_message_PointerNew;
 	pointer->PointerCached = update_message_PointerCached;
 	return TRUE;
