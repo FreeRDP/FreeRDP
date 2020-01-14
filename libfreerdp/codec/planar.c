@@ -475,6 +475,35 @@ static INLINE BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4], BYTE* p
 	return TRUE;
 }
 
+static BOOL planar_subsample_expand(const BYTE* plane, size_t planeLength, UINT32 nWidth,
+                                    UINT32 nHeight, UINT32 nPlaneWidth, UINT32 nPlaneHeight,
+                                    BYTE* deltaPlane)
+{
+	size_t pos = 0;
+	UINT32 y;
+	if (!plane || !deltaPlane)
+		return FALSE;
+
+	if (nWidth > nPlaneWidth * 2)
+		return FALSE;
+
+	if (nHeight > nPlaneHeight * 2)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		const BYTE* src = plane + y / 2 * nPlaneWidth;
+		UINT32 x;
+
+		for (x = 0; x < nWidth; x++)
+		{
+			deltaPlane[pos++] = src[x / 2];
+		}
+	}
+
+	return TRUE;
+}
+
 BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT32 SrcSize,
                        UINT32 nSrcWidth, UINT32 nSrcHeight, BYTE* pDstData, UINT32 DstFormat,
                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,
@@ -525,7 +554,10 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 	// alpha);
 
 	if (!cll && cs)
+	{
+		WLog_ERR(TAG, "Chroma subsampling requires YCoCg and does not work with RGB data");
 		return FALSE; /* Chroma subsampling requires YCoCg */
+	}
 
 	subWidth = (nSrcWidth / 2) + (nSrcWidth % 2);
 	subHeight = (nSrcHeight / 2) + (nSrcHeight % 2);
@@ -767,7 +799,10 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 			if (status < 0)
 				return FALSE;
 
-			*planes = *rleBuffer;
+			planes[0] = rleBuffer[0];
+			planes[1] = rleBuffer[1];
+			planes[2] = rleBuffer[2];
+			planes[3] = rleBuffer[3];
 		}
 
 		/* RAW */
@@ -776,33 +811,18 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 			{ /* Chroma subsampling for Co and Cg:
 			   * Each pixel contains the value that should be expanded to
 			   * [2x,2y;2x+1,2y;2x+1,2y+1;2x;2y+1] */
-				UINT32 y;
-				for (y = 0; y < nSrcHeight; y++)
-				{
-					const BYTE* src = planes[1] + y * rawWidths[1] / 2;
-					UINT32 x;
-
-					for (x = 0; x < nSrcWidth; x++)
-					{
-						planar->deltaPlanes[0][x] = src[x / 2];
-					}
-				}
+				if (!planar_subsample_expand(planes[1], rawSizes[1], nSrcWidth, nSrcHeight,
+				                             rawWidths[1], rawHeights[1], planar->deltaPlanes[0]))
+					return FALSE;
 
 				planes[1] = planar->deltaPlanes[0];
 				rawSizes[1] = planeSize; /* OrangeChromaOrGreenPlane */
 				rawWidths[1] = nSrcWidth;
 				rawHeights[1] = nSrcHeight;
 
-				for (y = 0; y < nSrcHeight; y++)
-				{
-					const BYTE* src = planes[2] + y * rawWidths[2] / 2;
-					UINT32 x;
-
-					for (x = 0; x < nSrcWidth; x++)
-					{
-						planar->deltaPlanes[1][x] = src[x / 2];
-					}
-				}
+				if (!planar_subsample_expand(planes[2], rawSizes[2], nSrcWidth, nSrcHeight,
+				                             rawWidths[2], rawHeights[2], planar->deltaPlanes[1]))
+					return FALSE;
 
 				planes[2] = planar->deltaPlanes[1];
 				rawSizes[2] = planeSize; /* GreenChromaOrBluePlane */
