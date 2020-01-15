@@ -426,8 +426,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->SoundBeepsEnabled = TRUE;
 	settings->DrawGdiPlusEnabled = FALSE;
 	settings->DrawAllowSkipAlpha = TRUE;
-	settings->DrawAllowColorSubsampling = FALSE;
-	settings->DrawAllowDynamicColorFidelity = FALSE;
+	settings->DrawAllowColorSubsampling = TRUE;
+	settings->DrawAllowDynamicColorFidelity = TRUE;
 	settings->FrameMarkerCommandEnabled = TRUE;
 	settings->SurfaceFrameMarkerEnabled = TRUE;
 	settings->AllowCacheWaitingList = TRUE;

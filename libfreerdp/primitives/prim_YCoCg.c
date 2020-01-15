@@ -56,9 +56,9 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYT
 				A = 0xFFU;
 
 			T = Y - Cg;
-			R = T + Co;
+			B = T + Co;
 			G = Y + Cg;
-			B = T - Co;
+			R = T - Co;
 			dptr = (*writePixel)(dptr, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), A);
 		}
 
