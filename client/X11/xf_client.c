@@ -960,7 +960,6 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 {
 #ifdef WITH_XI
 	int opcode, event, error;
-	int xid;
 	XDevice* ptr_dev;
 	XExtensionVersion* version;
 	XDeviceInfo* devices1;
@@ -970,7 +969,7 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 	if (XQueryExtension(xfc->display, "XInputExtension", &opcode, &event, &error))
 	{
 		WLog_DBG(TAG, "Searching for XInput pointer device");
-		xid = INVALID_XID;
+		ptr_dev = NULL;
 		/* loop through every device, looking for a pointer */
 		version = XGetExtensionVersion(xfc->display, INAME);
 
@@ -986,8 +985,9 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 					if ((devices2[i].use == XISlavePointer) &&
 					    (strncmp(devices2[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
 					{
-						xid = devices2[i].deviceid;
-						break;
+						ptr_dev = XOpenDevice(xfc->display, devices2[i].deviceid);
+						if (ptr_dev)
+							break;
 					}
 				}
 
@@ -1006,8 +1006,9 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 					if ((devices1[i].use == IsXExtensionPointer) &&
 					    (strncmp(devices1[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
 					{
-						xid = devices1[i].id;
-						break;
+						ptr_dev = XOpenDevice(xfc->display, devices1[i].id);
+						if (ptr_dev)
+							break;
 					}
 				}
 
@@ -1019,10 +1020,9 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 
 		/* get button mapping from input extension if there is a pointer device; */
 		/* otherwise leave unchanged.                                            */
-		if (xid != INVALID_XID)
+		if (ptr_dev)
 		{
-			WLog_DBG(TAG, "Pointer device: %d", xid);
-			ptr_dev = XOpenDevice(xfc->display, xid);
+			WLog_DBG(TAG, "Pointer device: %d", ptr_dev->device_id);
 			XGetDeviceButtonMapping(xfc->display, ptr_dev, x11_map, NUM_BUTTONS_MAPPED);
 			XCloseDevice(xfc->display, ptr_dev);
 		}
