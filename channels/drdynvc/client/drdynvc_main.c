@@ -1319,10 +1319,8 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 
 			if ((error = drdynvc_order_recv(drdynvc, data)))
 			{
-				Stream_Free(data, TRUE);
-				WLog_Print(drdynvc->log, WLOG_ERROR,
+				WLog_Print(drdynvc->log, WLOG_WARN,
 				           "drdynvc_order_recv failed with error %" PRIu32 "!", error);
-				break;
 			}
 
 			Stream_Free(data, TRUE);
