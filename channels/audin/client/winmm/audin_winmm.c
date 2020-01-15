@@ -466,7 +466,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 
 	if (waveInGetNumDevs() == 0)
 	{
-		WLog_Print(winmm->log, WLOG_ERROR, "No microphone available!");
+		WLog_Print(WLog_Get(TAG), WLOG_ERROR, "No microphone available!");
 		return ERROR_DEVICE_NOT_AVAILABLE;
 	}
 
