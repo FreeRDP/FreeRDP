@@ -2306,8 +2306,8 @@ BOOL update_send_new_or_existing_window(rdpContext* context, const WINDOW_ORDER_
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET) != 0)
 	{
-		Stream_Write_UINT32(s, stateOrder->clientOffsetX);
-		Stream_Write_UINT32(s, stateOrder->clientOffsetY);
+		Stream_Write_INT32(s, stateOrder->clientOffsetX);
+		Stream_Write_INT32(s, stateOrder->clientOffsetY);
 	}
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE) != 0)
@@ -2340,14 +2340,14 @@ BOOL update_send_new_or_existing_window(rdpContext* context, const WINDOW_ORDER_
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) != 0)
 	{
-		Stream_Write_UINT32(s, stateOrder->windowOffsetX);
-		Stream_Write_UINT32(s, stateOrder->windowOffsetY);
+		Stream_Write_INT32(s, stateOrder->windowOffsetX);
+		Stream_Write_INT32(s, stateOrder->windowOffsetY);
 	}
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA) != 0)
 	{
-		Stream_Write_UINT32(s, stateOrder->windowClientDeltaX);
-		Stream_Write_UINT32(s, stateOrder->windowClientDeltaY);
+		Stream_Write_INT32(s, stateOrder->windowClientDeltaX);
+		Stream_Write_INT32(s, stateOrder->windowClientDeltaY);
 	}
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE) != 0)
