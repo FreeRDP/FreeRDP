@@ -37,20 +37,6 @@
 
 #define TAG CHANNELS_TAG("encomsp.client")
 
-struct encomsp_plugin
-{
-	CHANNEL_DEF channelDef;
-	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
-
-	EncomspClientContext* context;
-
-	HANDLE thread;
-	wStream* data_in;
-	void* InitHandle;
-	DWORD OpenHandle;
-	wMessageQueue* queue;
-	rdpContext* rdpcontext;
-};
 typedef struct encomsp_plugin encomspPlugin;
 
 #endif /* FREERDP_CHANNEL_ENCOMSP_CLIENT_MAIN_H */

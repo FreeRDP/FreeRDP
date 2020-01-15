@@ -54,6 +54,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_EncomspVirtualChannel,
 	FreeRDP_RemdeskVirtualChannel,
 	FreeRDP_LyncRdpMode,
+	FreeRDP_RemoteAssistanceRequestControl,
 	FreeRDP_TlsSecurity,
 	FreeRDP_NlaSecurity,
 	FreeRDP_RdpSecurity,

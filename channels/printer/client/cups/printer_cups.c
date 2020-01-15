@@ -326,9 +326,8 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	{
 		if (dest->instance == NULL)
 		{
-			rdpPrinter* current = printers[num_printers];
-			current = printer_cups_new_printer((rdpCupsPrinterDriver*)driver, dest->name, NULL,
-			                                   dest->is_default);
+			rdpPrinter* current = printer_cups_new_printer((rdpCupsPrinterDriver*)driver,
+			                                               dest->name, NULL, dest->is_default);
 			if (!current)
 			{
 				printer_cups_release_enum_printers(printers);

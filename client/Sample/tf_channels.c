@@ -39,8 +39,9 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT tf_encomsp_participant_created(EncomspClientContext* context,
-                                           ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
+static UINT
+tf_encomsp_participant_created(EncomspClientContext* context,
+                               const ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
 {
 	WINPR_UNUSED(context);
 	WINPR_UNUSED(participantCreated);

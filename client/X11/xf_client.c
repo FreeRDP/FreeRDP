@@ -756,9 +756,28 @@ BOOL xf_toggle_control(xfContext* xfc)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT xf_encomsp_participant_created(EncomspClientContext* context,
-                                           ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
+static UINT
+xf_encomsp_participant_created(EncomspClientContext* context,
+                               const ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
 {
+	xfContext* xfc;
+	rdpSettings* settings;
+	BOOL request;
+
+	if (!context || !context->custom || !participantCreated)
+		return ERROR_INVALID_PARAMETER;
+
+	xfc = context->custom;
+	settings = xfc->context.settings;
+
+	if (!settings)
+		return ERROR_INVALID_PARAMETER;
+
+	request = freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceRequestControl);
+	if (request && (participantCreated->Flags & ENCOMSP_MAY_VIEW) &&
+	    !(participantCreated->Flags & ENCOMSP_MAY_INTERACT))
+		xf_toggle_control(xfc);
+
 	return CHANNEL_RC_OK;
 }
 
