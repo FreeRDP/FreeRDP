@@ -2261,8 +2261,9 @@ static UINT16 update_calculate_new_or_existing_window(const WINDOW_ORDER_INFO* o
 	return orderSize;
 }
 
-BOOL update_send_new_or_existing_window(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                        const WINDOW_STATE_ORDER* stateOrder)
+static BOOL update_send_new_or_existing_window(rdpContext* context,
+                                               const WINDOW_ORDER_INFO* orderInfo,
+                                               const WINDOW_STATE_ORDER* stateOrder)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
@@ -2406,14 +2407,14 @@ BOOL update_send_new_or_existing_window(rdpContext* context, const WINDOW_ORDER_
 	return TRUE;
 }
 
-BOOL update_send_window_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                               const WINDOW_STATE_ORDER* stateOrder)
+static BOOL update_send_window_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                      const WINDOW_STATE_ORDER* stateOrder)
 {
 	return update_send_new_or_existing_window(context, orderInfo, stateOrder);
 }
 
-BOOL update_send_window_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                               const WINDOW_STATE_ORDER* stateOrder)
+static BOOL update_send_window_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                      const WINDOW_STATE_ORDER* stateOrder)
 {
 	return update_send_new_or_existing_window(context, orderInfo, stateOrder);
 }
@@ -2432,8 +2433,8 @@ static UINT16 update_calculate_window_icon_order(const WINDOW_ORDER_INFO* orderI
 	return orderSize;
 }
 
-BOOL update_send_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                             const WINDOW_ICON_ORDER* iconOrder)
+static BOOL update_send_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                    const WINDOW_ICON_ORDER* iconOrder)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
@@ -2483,8 +2484,8 @@ BOOL update_send_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* order
 	return TRUE;
 }
 
-BOOL update_send_window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                    const WINDOW_CACHED_ICON_ORDER* cachedIconOrder)
+static BOOL update_send_window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                           const WINDOW_CACHED_ICON_ORDER* cachedIconOrder)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
@@ -2513,7 +2514,7 @@ BOOL update_send_window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO
 	return TRUE;
 }
 
-BOOL update_send_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
+static BOOL update_send_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
@@ -2580,9 +2581,10 @@ static UINT16 update_calculate_new_or_existing_notification_icons_order(
 	return orderSize;
 }
 
-BOOL update_send_new_or_existing_notification_icons(rdpContext* context,
-                                                    const WINDOW_ORDER_INFO* orderInfo,
-                                                    const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
+static BOOL
+update_send_new_or_existing_notification_icons(rdpContext* context,
+                                               const WINDOW_ORDER_INFO* orderInfo,
+                                               const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
@@ -2682,19 +2684,19 @@ BOOL update_send_new_or_existing_notification_icons(rdpContext* context,
 	return TRUE;
 }
 
-BOOL update_send_notify_icon_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                    const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
+static BOOL update_send_notify_icon_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                           const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
 {
 	return update_send_new_or_existing_notification_icons(context, orderInfo, iconStateOrder);
 }
 
-BOOL update_send_notify_icon_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                    const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
+static BOOL update_send_notify_icon_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                           const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
 {
 	return update_send_new_or_existing_notification_icons(context, orderInfo, iconStateOrder);
 }
 
-BOOL update_send_notify_icon_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
+static BOOL update_send_notify_icon_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
@@ -2735,10 +2737,10 @@ static UINT16 update_calculate_monitored_desktop(const WINDOW_ORDER_INFO* orderI
 	return orderSize;
 }
 
-BOOL update_send_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                   const MONITORED_DESKTOP_ORDER* monitoredDesktop)
+static BOOL update_send_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                          const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
-	int i;
+	UINT32 i;
 	wStream* s;
 	rdpUpdate* update = context->update;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
@@ -2764,7 +2766,7 @@ BOOL update_send_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO*
 		Stream_Write_UINT8(s, monitoredDesktop->numWindowIds); /* numWindowIds (1 byte) */
 
 		/* windowIds */
-		for (i = 0; i < (int)monitoredDesktop->numWindowIds; i++)
+		for (i = 0; i < monitoredDesktop->numWindowIds; i++)
 		{
 			Stream_Write_UINT32(s, monitoredDesktop->windowIds[i]);
 		}
@@ -2774,7 +2776,8 @@ BOOL update_send_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO*
 	return TRUE;
 }
 
-BOOL update_send_non_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
+static BOOL update_send_non_monitored_desktop(rdpContext* context,
+                                              const WINDOW_ORDER_INFO* orderInfo)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
