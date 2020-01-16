@@ -703,7 +703,7 @@ static UINT encomsp_send_change_participant_control_level_pdu(
 	encomsp = (encomspPlugin*)context->handle;
 	header.Type = ODTYPE_PARTICIPANT_CTRL_CHANGED;
 	header.Length = ENCOMSP_ORDER_HEADER_SIZE + 6;
-	s = Stream_New(NULL, pdu->Length);
+	s = Stream_New(NULL, header.Length);
 
 	if (!s)
 	{

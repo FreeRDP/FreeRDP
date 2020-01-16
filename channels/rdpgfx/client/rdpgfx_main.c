@@ -47,6 +47,55 @@
 
 #define TAG CHANNELS_TAG("rdpgfx.client")
 
+static void free_surfaces(RdpgfxClientContext* context, wHashTable* SurfaceTable)
+{
+	UINT error = 0;
+	ULONG_PTR* pKeys = NULL;
+	int count;
+	int index;
+
+	count = HashTable_GetKeys(SurfaceTable, &pKeys);
+
+	for (index = 0; index < count; index++)
+	{
+		RDPGFX_DELETE_SURFACE_PDU pdu;
+		pdu.surfaceId = ((UINT16)pKeys[index]) - 1;
+
+		if (context)
+		{
+			IFCALLRET(context->DeleteSurface, error, context, &pdu);
+
+			if (error)
+			{
+				WLog_ERR(TAG, "context->DeleteSurface failed with error %" PRIu32 "", error);
+			}
+		}
+	}
+
+	free(pKeys);
+}
+
+static void evict_cache_slots(RdpgfxClientContext* context, UINT16 MaxCacheSlot, void** CacheSlots)
+{
+	UINT16 index;
+
+	for (index = 0; index < MaxCacheSlot; index++)
+	{
+		if (CacheSlots[index])
+		{
+			RDPGFX_EVICT_CACHE_ENTRY_PDU pdu;
+			pdu.cacheSlot = (UINT16)index;
+
+			if (context && context->EvictCacheEntry)
+			{
+				context->EvictCacheEntry(context, &pdu);
+			}
+
+			CacheSlots[index] = NULL;
+		}
+	}
+}
+
 /**
  * Function description
  *
@@ -1767,7 +1816,17 @@ static UINT rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*)pChannelCallback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
+
 	DEBUG_RDPGFX(gfx->log, "OnClose");
+	free_surfaces(context, gfx->SurfaceTable);
+	evict_cache_slots(context, gfx->MaxCacheSlot, gfx->CacheSlots);
+
+	if (gfx->listener_callback)
+	{
+		free(gfx->listener_callback);
+		gfx->listener_callback = NULL;
+	}
+
 	free(callback);
 	gfx->UnacknowledgedFrames = 0;
 	gfx->TotalDecodedFrames = 0;
@@ -2049,58 +2108,14 @@ void rdpgfx_client_context_free(RdpgfxClientContext* context)
 {
 
 	RDPGFX_PLUGIN* gfx;
-	int count;
-	int index;
-	ULONG_PTR* pKeys = NULL;
-	UINT error = CHANNEL_RC_OK;
 
 	if (!context)
 		return;
 
 	gfx = (RDPGFX_PLUGIN*)context->handle;
 
-	count = HashTable_GetKeys(gfx->SurfaceTable, &pKeys);
-
-	for (index = 0; index < count; index++)
-	{
-		RDPGFX_DELETE_SURFACE_PDU pdu;
-		pdu.surfaceId = ((UINT16)pKeys[index]) - 1;
-
-		if (context)
-		{
-			IFCALLRET(context->DeleteSurface, error, context, &pdu);
-
-			if (error)
-			{
-				WLog_Print(gfx->log, WLOG_ERROR,
-				           "context->DeleteSurface failed with error %" PRIu32 "", error);
-			}
-		}
-	}
-
-	free(pKeys);
-
-	for (index = 0; index < gfx->MaxCacheSlot; index++)
-	{
-		if (gfx->CacheSlots[index])
-		{
-			RDPGFX_EVICT_CACHE_ENTRY_PDU pdu;
-			pdu.cacheSlot = (UINT16)index;
-
-			if (context)
-			{
-				IFCALLRET(context->EvictCacheEntry, error, context, &pdu);
-
-				if (error)
-				{
-					WLog_Print(gfx->log, WLOG_ERROR,
-					           "context->EvictCacheEntry failed with error %" PRIu32 "", error);
-				}
-			}
-
-			gfx->CacheSlots[index] = NULL;
-		}
-	}
+	free_surfaces(context, gfx->SurfaceTable);
+	evict_cache_slots(context, gfx->MaxCacheSlot, gfx->CacheSlots);
 
 	if (gfx->listener_callback)
 	{
