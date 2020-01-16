@@ -985,6 +985,11 @@ BOOL WINAPI FreeRDP_WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* p
 	return FALSE;
 }
 
+static void peer_channel_queue_free_message(void* obj)
+{
+	free(obj);
+}
+
 HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
 {
 	size_t length;
@@ -1033,6 +1038,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 
 	if (!channel)
 	{
+		wObject queueCallbacks = { 0 };
 		channel = (rdpPeerChannel*)calloc(1, sizeof(rdpPeerChannel));
 
 		if (!channel)
@@ -1051,7 +1057,8 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 			goto error_receiveData;
 		}
 
-		channel->queue = MessageQueue_New(NULL);
+		queueCallbacks.fnObjectFree = peer_channel_queue_free_message;
+		channel->queue = MessageQueue_New(&queueCallbacks);
 
 		if (!channel->queue)
 			goto error_queue;
@@ -1270,7 +1277,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, 
 	if (messageCtx->offset >= messageCtx->length)
 	{
 		MessageQueue_Peek(channel->queue, &message, TRUE);
-		free(messageCtx);
+		peer_channel_queue_free_message(messageCtx);
 	}
 
 	return TRUE;
