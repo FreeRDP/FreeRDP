@@ -2261,19 +2261,21 @@ static UINT16 update_calculate_new_or_existing_window(const WINDOW_ORDER_INFO* o
 	return orderSize;
 }
 
-BOOL update_send_new_or_existing_window(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                        const WINDOW_STATE_ORDER* stateOrder)
+static BOOL update_send_new_or_existing_window(rdpContext* context,
+                                               const WINDOW_ORDER_INFO* orderInfo,
+                                               const WINDOW_STATE_ORDER* stateOrder)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
-	UINT16 orderSize;
+	UINT16 orderSize = update_calculate_new_or_existing_window(orderInfo, stateOrder);
+
+	update_check_flush(context, orderSize);
+
 	s = update->us;
 
 	if (!s)
 		return FALSE;
-
-	orderSize = update_calculate_new_or_existing_window(orderInfo, stateOrder);
 
 	if (!Stream_EnsureRemainingCapacity(s, orderSize))
 		return FALSE;
@@ -2305,8 +2307,8 @@ BOOL update_send_new_or_existing_window(rdpContext* context, const WINDOW_ORDER_
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET) != 0)
 	{
-		Stream_Write_UINT32(s, stateOrder->clientOffsetX);
-		Stream_Write_UINT32(s, stateOrder->clientOffsetY);
+		Stream_Write_INT32(s, stateOrder->clientOffsetX);
+		Stream_Write_INT32(s, stateOrder->clientOffsetY);
 	}
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE) != 0)
@@ -2339,14 +2341,14 @@ BOOL update_send_new_or_existing_window(rdpContext* context, const WINDOW_ORDER_
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) != 0)
 	{
-		Stream_Write_UINT32(s, stateOrder->windowOffsetX);
-		Stream_Write_UINT32(s, stateOrder->windowOffsetY);
+		Stream_Write_INT32(s, stateOrder->windowOffsetX);
+		Stream_Write_INT32(s, stateOrder->windowOffsetY);
 	}
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA) != 0)
 	{
-		Stream_Write_UINT32(s, stateOrder->windowClientDeltaX);
-		Stream_Write_UINT32(s, stateOrder->windowClientDeltaY);
+		Stream_Write_INT32(s, stateOrder->windowClientDeltaX);
+		Stream_Write_INT32(s, stateOrder->windowClientDeltaY);
 	}
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE) != 0)
@@ -2405,14 +2407,14 @@ BOOL update_send_new_or_existing_window(rdpContext* context, const WINDOW_ORDER_
 	return TRUE;
 }
 
-BOOL update_send_window_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                               const WINDOW_STATE_ORDER* stateOrder)
+static BOOL update_send_window_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                      const WINDOW_STATE_ORDER* stateOrder)
 {
 	return update_send_new_or_existing_window(context, orderInfo, stateOrder);
 }
 
-BOOL update_send_window_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                               const WINDOW_STATE_ORDER* stateOrder)
+static BOOL update_send_window_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                      const WINDOW_STATE_ORDER* stateOrder)
 {
 	return update_send_new_or_existing_window(context, orderInfo, stateOrder);
 }
@@ -2431,20 +2433,22 @@ static UINT16 update_calculate_window_icon_order(const WINDOW_ORDER_INFO* orderI
 	return orderSize;
 }
 
-BOOL update_send_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                             const WINDOW_ICON_ORDER* iconOrder)
+static BOOL update_send_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                    const WINDOW_ICON_ORDER* iconOrder)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
-	UINT16 orderSize;
 	ICON_INFO* iconInfo = iconOrder->iconInfo;
+	UINT16 orderSize = update_calculate_window_icon_order(orderInfo, iconOrder);
+
+	update_check_flush(context, orderSize);
+
 	s = update->us;
 
 	if (!s || !iconInfo)
 		return FALSE;
 
-	orderSize = update_calculate_window_icon_order(orderInfo, iconOrder);
 	if (!Stream_EnsureRemainingCapacity(s, orderSize))
 		return FALSE;
 
@@ -2480,16 +2484,18 @@ BOOL update_send_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* order
 	return TRUE;
 }
 
-BOOL update_send_window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                    const WINDOW_CACHED_ICON_ORDER* cachedIconOrder)
+static BOOL update_send_window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                           const WINDOW_CACHED_ICON_ORDER* cachedIconOrder)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
 	UINT16 orderSize = 14;
 	CACHED_ICON_INFO cachedIcon = cachedIconOrder->cachedIcon;
-	s = update->us;
 
+	update_check_flush(context, orderSize);
+
+	s = update->us;
 	if (!s)
 		return FALSE;
 
@@ -2508,12 +2514,14 @@ BOOL update_send_window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO
 	return TRUE;
 }
 
-BOOL update_send_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
+static BOOL update_send_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
 	UINT16 orderSize = 11;
+	update_check_flush(context, orderSize);
+
 	s = update->us;
 
 	if (!s)
@@ -2573,22 +2581,23 @@ static UINT16 update_calculate_new_or_existing_notification_icons_order(
 	return orderSize;
 }
 
-BOOL update_send_new_or_existing_notification_icons(rdpContext* context,
-                                                    const WINDOW_ORDER_INFO* orderInfo,
-                                                    const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
+static BOOL
+update_send_new_or_existing_notification_icons(rdpContext* context,
+                                               const WINDOW_ORDER_INFO* orderInfo,
+                                               const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
-	UINT16 orderSize;
 	BOOL versionFieldPresent = FALSE;
+	UINT16 orderSize =
+	    update_calculate_new_or_existing_notification_icons_order(orderInfo, iconStateOrder);
+
+	update_check_flush(context, orderSize);
 
 	s = update->us;
 	if (!s)
 		return FALSE;
-
-	orderSize =
-	    update_calculate_new_or_existing_notification_icons_order(orderInfo, iconStateOrder);
 
 	if (!Stream_EnsureRemainingCapacity(s, orderSize))
 		return FALSE;
@@ -2675,24 +2684,26 @@ BOOL update_send_new_or_existing_notification_icons(rdpContext* context,
 	return TRUE;
 }
 
-BOOL update_send_notify_icon_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                    const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
+static BOOL update_send_notify_icon_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                           const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
 {
 	return update_send_new_or_existing_notification_icons(context, orderInfo, iconStateOrder);
 }
 
-BOOL update_send_notify_icon_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                    const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
+static BOOL update_send_notify_icon_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                           const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
 {
 	return update_send_new_or_existing_notification_icons(context, orderInfo, iconStateOrder);
 }
 
-BOOL update_send_notify_icon_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
+static BOOL update_send_notify_icon_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
 	UINT16 orderSize = 15;
+	update_check_flush(context, orderSize);
+
 	s = update->us;
 
 	if (!s)
@@ -2708,59 +2719,72 @@ BOOL update_send_notify_icon_delete(rdpContext* context, const WINDOW_ORDER_INFO
 	return TRUE;
 }
 
-BOOL update_send_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                   const MONITORED_DESKTOP_ORDER* monitoredDesktop)
+static UINT16 update_calculate_monitored_desktop(const WINDOW_ORDER_INFO* orderInfo,
+                                                 const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
-	int i;
-	wStream* s;
-	rdpUpdate* update = context->update;
-	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
 	UINT16 orderSize = 7;
-	size_t orderSizePos, orderEndPos;
-	s = update->us;
-
-	if (!s)
-		return FALSE;
-
-	Stream_Write_UINT8(s, controlFlags); /* Header (1 byte) */
-	orderSizePos = Stream_GetPosition(s);
-	Stream_Seek_UINT16(s);                         /* OrderSize (2 bytes) */
-	Stream_Write_UINT32(s, orderInfo->fieldFlags); /* FieldsPresentFlags (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
 	{
-		Stream_Write_UINT32(s, monitoredDesktop->activeWindowId); /* activeWindowId (4 bytes) */
 		orderSize += 4;
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 	{
+		orderSize += 1 + (4 * monitoredDesktop->numWindowIds);
+	}
+
+	return orderSize;
+}
+
+static BOOL update_send_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                          const MONITORED_DESKTOP_ORDER* monitoredDesktop)
+{
+	UINT32 i;
+	wStream* s;
+	rdpUpdate* update = context->update;
+	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
+	UINT16 orderSize = update_calculate_monitored_desktop(orderInfo, monitoredDesktop);
+	update_check_flush(context, orderSize);
+
+	s = update->us;
+
+	if (!s)
+		return FALSE;
+
+	Stream_Write_UINT8(s, controlFlags);           /* Header (1 byte) */
+	Stream_Write_UINT16(s, orderSize);             /* OrderSize (2 bytes) */
+	Stream_Write_UINT32(s, orderInfo->fieldFlags); /* FieldsPresentFlags (4 bytes) */
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
+	{
+		Stream_Write_UINT32(s, monitoredDesktop->activeWindowId); /* activeWindowId (4 bytes) */
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
+	{
 		Stream_Write_UINT8(s, monitoredDesktop->numWindowIds); /* numWindowIds (1 byte) */
-		orderSize += 1;
 
 		/* windowIds */
-		for (i = 0; i < (int)monitoredDesktop->numWindowIds; i++)
+		for (i = 0; i < monitoredDesktop->numWindowIds; i++)
 		{
 			Stream_Write_UINT32(s, monitoredDesktop->windowIds[i]);
-			orderSize += 4;
 		}
 	}
 
-	/* Write size */
-	orderEndPos = Stream_GetPosition(s);
-	Stream_SetPosition(s, orderSizePos);
-	Stream_Write_UINT16(s, orderSize);
-	Stream_SetPosition(s, orderEndPos);
 	update->numberOrders++;
 	return TRUE;
 }
 
-BOOL update_send_non_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
+static BOOL update_send_non_monitored_desktop(rdpContext* context,
+                                              const WINDOW_ORDER_INFO* orderInfo)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
 	UINT16 orderSize = 7;
+	update_check_flush(context, orderSize);
+
 	s = update->us;
 
 	if (!s)

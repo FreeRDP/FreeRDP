@@ -867,6 +867,7 @@ void rdpsnd_server_context_free(RdpsndServerContext* context)
 	if (context->priv->input_stream)
 		Stream_Free(context->priv->input_stream, TRUE);
 
+	free(context->server_formats);
 	free(context->client_formats);
 	free(context->priv);
 	free(context);
