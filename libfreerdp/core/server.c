@@ -990,6 +990,47 @@ static void peer_channel_queue_free_message(void* obj)
 	free(obj);
 }
 
+static void channel_free(rdpPeerChannel* channel)
+{
+	if (!channel)
+		return;
+
+	MessageQueue_Free(channel->queue);
+	Stream_Free(channel->receiveData, TRUE);
+	free(channel);
+}
+
+static rdpPeerChannel* channel_new(WTSVirtualChannelManager* vcm, freerdp_peer* client,
+                                   UINT32 ChannelId, UINT16 index, UINT16 type, size_t chunkSize)
+{
+	wObject queueCallbacks = { 0 };
+	rdpPeerChannel* channel = (rdpPeerChannel*)calloc(1, sizeof(rdpPeerChannel));
+
+	if (!channel)
+		goto fail;
+
+	channel->vcm = vcm;
+	channel->client = client;
+	channel->channelId = ChannelId;
+	channel->index = index;
+	channel->channelType = type;
+	channel->receiveData = Stream_New(NULL, chunkSize);
+
+	if (!channel->receiveData)
+		goto fail;
+
+	queueCallbacks.fnObjectFree = peer_channel_queue_free_message;
+	channel->queue = MessageQueue_New(&queueCallbacks);
+
+	if (!channel->queue)
+		goto fail;
+
+	return channel;
+fail:
+	channel_free(channel);
+	return NULL;
+}
+
 HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
 {
 	size_t length;
@@ -1038,41 +1079,19 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 
 	if (!channel)
 	{
-		wObject queueCallbacks = { 0 };
-		channel = (rdpPeerChannel*)calloc(1, sizeof(rdpPeerChannel));
+		channel = channel_new(vcm, client, mcs->channels[index].ChannelId, index,
+		                      RDP_PEER_CHANNEL_TYPE_SVC, client->settings->VirtualChannelChunkSize);
 
 		if (!channel)
-			goto error_channel_alloc;
-
-		channel->vcm = vcm;
-		channel->client = client;
-		channel->channelId = mcs->channels[index].ChannelId;
-		channel->index = index;
-		channel->channelType = RDP_PEER_CHANNEL_TYPE_SVC;
-		channel->receiveData = Stream_New(NULL, client->settings->VirtualChannelChunkSize);
-
-		if (!channel->receiveData)
-		{
-			WLog_ERR(TAG, "Stream_New failed!");
-			goto error_receiveData;
-		}
-
-		queueCallbacks.fnObjectFree = peer_channel_queue_free_message;
-		channel->queue = MessageQueue_New(&queueCallbacks);
-
-		if (!channel->queue)
-			goto error_queue;
+			goto fail;
 
 		mcs->channels[index].handle = channel;
 	}
 
 	hChannelHandle = (HANDLE)channel;
 	return hChannelHandle;
-error_queue:
-	Stream_Free(channel->receiveData, TRUE);
-error_receiveData:
-	free(channel);
-error_channel_alloc:
+fail:
+	channel_free(channel);
 	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 	return NULL;
 }
@@ -1080,13 +1099,13 @@ error_channel_alloc:
 HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 {
 	UINT32 index;
-	wStream* s;
+	wStream* s = NULL;
 	rdpMcs* mcs;
 	BOOL joined = FALSE;
 	freerdp_peer* client;
-	rdpPeerChannel* channel;
+	rdpPeerChannel* channel = NULL;
 	ULONG written;
-	WTSVirtualChannelManager* vcm;
+	WTSVirtualChannelManager* vcm = NULL;
 
 	if (SessionId == WTS_CURRENT_SESSION)
 		return NULL;
@@ -1126,7 +1145,8 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 		return NULL;
 	}
 
-	channel = (rdpPeerChannel*)calloc(1, sizeof(rdpPeerChannel));
+	channel = channel_new(vcm, client, 0, 0, RDP_PEER_CHANNEL_TYPE_DVC,
+	                      client->settings->VirtualChannelChunkSize);
 
 	if (!channel)
 	{
@@ -1134,51 +1154,30 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 		return NULL;
 	}
 
-	channel->vcm = vcm;
-	channel->client = client;
-	channel->channelType = RDP_PEER_CHANNEL_TYPE_DVC;
-	channel->receiveData = Stream_New(NULL, client->settings->VirtualChannelChunkSize);
-
-	if (!channel->receiveData)
-	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		goto error_receiveData;
-	}
-
-	channel->queue = MessageQueue_New(NULL);
-
-	if (!channel->queue)
-		goto error_queue;
-
 	channel->channelId = InterlockedIncrement(&vcm->dvc_channel_id_seq);
 
 	if (ArrayList_Add(vcm->dynamicVirtualChannels, channel) < 0)
-		goto error_add;
+		goto fail;
 
 	s = Stream_New(NULL, 64);
 
 	if (!s)
-		goto error_s;
+		goto fail;
 
 	if (!wts_write_drdynvc_create_request(s, channel->channelId, pVirtualName))
-		goto error_create;
+		goto fail;
 
 	if (!WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR)Stream_Buffer(s),
 	                            Stream_GetPosition(s), &written))
-		goto error_create;
+		goto fail;
 
 	Stream_Free(s, TRUE);
 	return channel;
-error_create:
+fail:
 	Stream_Free(s, TRUE);
-error_s:
-	ArrayList_Remove(vcm->dynamicVirtualChannels, channel);
-error_add:
-	MessageQueue_Free(channel->queue);
-error_queue:
-	Stream_Free(channel->receiveData, TRUE);
-error_receiveData:
-	free(channel);
+	if (vcm)
+		ArrayList_Remove(vcm->dynamicVirtualChannels, channel);
+	channel_free(channel);
 	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 	return NULL;
 }
