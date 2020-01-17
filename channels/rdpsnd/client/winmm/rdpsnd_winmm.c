@@ -54,6 +54,7 @@ struct rdpsnd_winmm_plugin
 	UINT32 latency;
 	HANDLE hThread;
 	DWORD threadId;
+	CRITICAL_SECTION cs;
 };
 
 static BOOL rdpsnd_winmm_convert_format(const AUDIO_FORMAT* in, WAVEFORMATEX* out)
@@ -96,6 +97,7 @@ static BOOL rdpsnd_winmm_set_format(rdpsndDevicePlugin* device, const AUDIO_FORM
 static DWORD WINAPI waveOutProc(LPVOID lpParameter)
 {
 	MSG msg;
+	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*)lpParameter;
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
 		if (msg.message == MM_WOM_CLOSE)
@@ -107,7 +109,9 @@ static DWORD WINAPI waveOutProc(LPVOID lpParameter)
 		{
 			/* free buffer */
 			LPWAVEHDR waveHdr = (LPWAVEHDR)msg.lParam;
+			EnterCriticalSection(&winmm->cs);
 			waveOutUnprepareHeader((HWAVEOUT)msg.wParam, waveHdr, sizeof(WAVEHDR));
+			LeaveCriticalSection(&winmm->cs);
 			free(waveHdr->lpData);
 			free(waveHdr);
 		}
@@ -128,7 +132,7 @@ static BOOL rdpsnd_winmm_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* fo
 	if (!rdpsnd_winmm_set_format(device, format, latency))
 		return FALSE;
 
-	winmm->hThread = CreateThread(NULL, 0, waveOutProc, NULL, 0, &winmm->threadId);
+	winmm->hThread = CreateThread(NULL, 0, waveOutProc, winmm, 0, &winmm->threadId);
 	if (!winmm->hThread)
 	{
 		WLog_Print(winmm->log, WLOG_ERROR, "CreateThread failed: %" PRIu32 "", GetLastError());
@@ -162,6 +166,8 @@ static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
 
 	if (winmm->hWaveOut)
 	{
+		EnterCriticalSection(&winmm->cs);
+
 		mmResult = waveOutReset(winmm->hWaveOut);
 		if (mmResult != MMSYSERR_NOERROR)
 			WLog_Print(winmm->log, WLOG_ERROR, "waveOutReset failure: %" PRIu32 "", mmResult);
@@ -169,6 +175,8 @@ static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
 		mmResult = waveOutClose(winmm->hWaveOut);
 		if (mmResult != MMSYSERR_NOERROR)
 			WLog_Print(winmm->log, WLOG_ERROR, "waveOutClose failure: %" PRIu32 "", mmResult);
+
+		LeaveCriticalSection(&winmm->cs);
 
 		winmm->hWaveOut = NULL;
 	}
@@ -188,6 +196,7 @@ static void rdpsnd_winmm_free(rdpsndDevicePlugin* device)
 	if (winmm)
 	{
 		rdpsnd_winmm_close(device);
+		DeleteCriticalSection(&winmm->cs);
 		free(winmm);
 	}
 }
@@ -269,11 +278,13 @@ static UINT rdpsnd_winmm_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	memcpy(lpWaveHdr->lpData, data, size);
 	lpWaveHdr->dwBufferLength = (DWORD)size;
 
+	EnterCriticalSection(&winmm->cs);
+
 	mmResult = waveOutPrepareHeader(winmm->hWaveOut, lpWaveHdr, sizeof(WAVEHDR));
 	if (mmResult != MMSYSERR_NOERROR)
 	{
 		WLog_Print(winmm->log, WLOG_ERROR, "waveOutPrepareHeader failure: %" PRIu32 "", mmResult);
-		goto fail;
+		goto failCS;
 	}
 
 	mmResult = waveOutWrite(winmm->hWaveOut, lpWaveHdr, sizeof(WAVEHDR));
@@ -281,10 +292,13 @@ static UINT rdpsnd_winmm_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	{
 		WLog_Print(winmm->log, WLOG_ERROR, "waveOutWrite failure: %" PRIu32 "", mmResult);
 		waveOutUnprepareHeader(winmm->hWaveOut, lpWaveHdr, sizeof(WAVEHDR));
-		goto fail;
+		goto failCS;
 	}
 
+	LeaveCriticalSection(&winmm->cs);
 	return winmm->latency;
+failCS:
+	LeaveCriticalSection(&winmm->cs);
 fail:
 	if (lpWaveHdr)
 		free(lpWaveHdr->lpData);
@@ -332,6 +346,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	winmm->device.Close = rdpsnd_winmm_close;
 	winmm->device.Free = rdpsnd_winmm_free;
 	winmm->log = WLog_Get(TAG);
+	InitializeCriticalSection(&winmm->cs);
 
 	args = pEntryPoints->args;
 	rdpsnd_winmm_parse_addin_args((rdpsndDevicePlugin*)winmm, args);
