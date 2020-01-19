@@ -19,26 +19,16 @@
  * limitations under the License.
  */
 
-#include <errno.h>
-#include <signal.h>
-
-#include <freerdp/freerdp.h>
-#include <freerdp/listener.h>
-
 #include <winpr/crt.h>
 #include <winpr/ssl.h>
 #include <winpr/synch.h>
 #include <winpr/string.h>
-#include <winpr/path.h>
 #include <winpr/winsock.h>
 #include <winpr/thread.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
-
-#include <freerdp/constants.h>
-#include <freerdp/server/rdpsnd.h>
-#include <freerdp/server/rdpgfx.h>
 
 #include "pf_server.h"
 #include "pf_log.h"
@@ -208,9 +198,10 @@ static BOOL pf_server_adjust_monitor_layout(freerdp_peer* peer)
 static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 {
 	pServerContext* ps = (pServerContext*)peer->context;
+	rdpSettings* settings = peer->settings;
 	proxyData* pdata;
 	proxyConfig* config;
-	rdpSettings* settings = peer->settings;
+	proxyServer* server;
 
 	if (!ps)
 		return FALSE;
@@ -220,7 +211,9 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 		return FALSE;
 
 	proxy_data_set_server_context(pdata, ps);
-	config = pdata->config = peer->ContextExtra;
+	server = (proxyServer*)peer->ContextExtra;
+
+	config = pdata->config = server->config;
 
 	/* currently not supporting GDI orders */
 	ZeroMemory(settings->OrderSupport, 32);
@@ -262,6 +255,11 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	peer->Activate = pf_server_activate;
 	peer->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
 	peer->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
+
+	if (ArrayList_Add(server->clients, pdata) < 0)
+		return FALSE;
+
+	CountdownEvent_AddCount(server->waitGroup, 1);
 	return TRUE;
 }
 
@@ -281,6 +279,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	rdpContext* pc;
 	proxyData* pdata;
 	freerdp_peer* client = (freerdp_peer*)arg;
+	proxyServer* server = (proxyServer*)client->ContextExtra;
 
 	if (!pf_context_init_server_context(client))
 		goto out_free_peer;
@@ -317,7 +316,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 
 		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForMultipleObjects failed (errno: %d)", errno);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed (status: %d)", status);
 			break;
 		}
 
@@ -376,6 +375,7 @@ fail:
 	LOG_INFO(TAG, ps, "freeing server's channels");
 	pf_server_channels_free(ps);
 	LOG_INFO(TAG, ps, "freeing proxy data");
+	ArrayList_Remove(server->clients, pdata);
 	proxy_data_free(pdata);
 	freerdp_client_context_free(pc);
 	client->Close(client);
@@ -383,6 +383,8 @@ fail:
 out_free_peer:
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
+	CountdownEvent_Signal(server->waitGroup, 1);
+	ExitThread(0);
 	return 0;
 }
 
@@ -398,11 +400,13 @@ static BOOL pf_server_peer_accepted(freerdp_listener* listener, freerdp_peer* cl
 	return TRUE;
 }
 
-static void pf_server_mainloop(freerdp_listener* listener)
+static DWORD WINAPI pf_server_mainloop(LPVOID arg)
 {
 	HANDLE eventHandles[32];
 	DWORD eventCount;
 	DWORD status;
+	proxyServer* server = (proxyServer*)arg;
+	freerdp_listener* listener = server->listener;
 
 	while (1)
 	{
@@ -414,7 +418,11 @@ static void pf_server_mainloop(freerdp_listener* listener)
 			break;
 		}
 
+		eventHandles[eventCount++] = server->stopEvent;
 		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
+
+		if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
+			break;
 
 		if (WAIT_FAILED == status)
 		{
@@ -430,33 +438,113 @@ static void pf_server_mainloop(freerdp_listener* listener)
 	}
 
 	listener->Close(listener);
+	ExitThread(0);
+	return 0;
 }
 
-int pf_server_start(proxyConfig* config)
+BOOL pf_server_start(proxyServer* server)
 {
 	WSADATA wsaData;
-	freerdp_listener* listener = freerdp_listener_new();
-
-	if (!listener)
-		return -1;
-
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
-	listener->info = config;
-	listener->PeerAccepted = pf_server_peer_accepted;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-	{
-		freerdp_listener_free(listener);
-		return -1;
-	}
+		goto error;
 
-	if (listener->Open(listener, config->Host, config->Port))
-	{
-		pf_server_mainloop(listener);
-	}
+	if (!server->listener->Open(server->listener, server->config->Host, server->config->Port))
+		goto error;
 
-	freerdp_listener_free(listener);
+	server->thread = CreateThread(NULL, 0, pf_server_mainloop, (void*)server, 0, NULL);
+	if (!server->thread)
+		goto error;
+
+	return TRUE;
+
+error:
 	WSACleanup();
-	return 0;
+	return FALSE;
+}
+
+static void pf_server_clients_list_client_free(void* obj)
+{
+	proxyData* pdata = (proxyData*)obj;
+	proxy_data_abort_connect(pdata);
+}
+
+proxyServer* pf_server_new(proxyConfig* config)
+{
+	proxyServer* server;
+
+	if (!config)
+		return NULL;
+
+	server = calloc(1, sizeof(proxyServer));
+	if (!server)
+		return NULL;
+
+	server->config = config;
+
+	server->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!server->stopEvent)
+		goto out;
+
+	server->clients = ArrayList_New(TRUE);
+	if (!server->clients)
+		goto out;
+
+	server->clients->object.fnObjectFree = pf_server_clients_list_client_free;
+
+	server->waitGroup = CountdownEvent_New(0);
+	if (!server->waitGroup)
+		goto out;
+
+	server->listener = freerdp_listener_new();
+	if (!server->listener)
+		goto out;
+
+	server->listener->info = server;
+	server->listener->PeerAccepted = pf_server_peer_accepted;
+	return server;
+
+out:
+	pf_server_free(server);
+	return NULL;
+}
+
+void pf_server_stop(proxyServer* server)
+{
+	HANDLE waitHandle = INVALID_HANDLE_VALUE;
+
+	if (!server)
+		return;
+
+	/* clear clients list, also disconnects every client */
+	ArrayList_Clear(server->clients);
+
+	/* block until all clients are disconnected */
+	waitHandle = CountdownEvent_WaitHandle(server->waitGroup);
+	if (WaitForSingleObject(waitHandle, INFINITE) != WAIT_OBJECT_0)
+		WLog_ERR(TAG, "[%s]: WaitForSingleObject failed!", __FUNCTION__);
+
+	/* signal main thread to stop and wait for the thread to exit */
+	SetEvent(server->stopEvent);
+	WaitForSingleObject(server->thread, INFINITE);
+}
+
+void pf_server_free(proxyServer* server)
+{
+	if (!server)
+		return;
+
+	freerdp_listener_free(server->listener);
+	ArrayList_Free(server->clients);
+	CountdownEvent_Free(server->waitGroup);
+
+	if (server->stopEvent)
+		CloseHandle(server->stopEvent);
+
+	if (server->thread)
+		CloseHandle(server->thread);
+
+	free(server);
 }
