@@ -1857,13 +1857,11 @@ void rdp_reset(rdpRdp* rdp)
 	license_free(rdp->license);
 	transport_free(rdp->transport);
 	fastpath_free(rdp->fastpath);
-	nla_free(rdp->nla);
 	rdp->transport = transport_new(context);
 	rdp->license = license_new(rdp);
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
 	rdp->fastpath = fastpath_new(rdp);
-	rdp->nla = nla_new(rdp->instance, rdp->transport, rdp->settings);
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
 	rdp->errorInfo = 0;
 	rdp->deactivation_reactivation = 0;
