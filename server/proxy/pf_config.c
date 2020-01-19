@@ -242,9 +242,9 @@ static BOOL pf_config_load_captures(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
-BOOL pf_server_config_load(const char* path, proxyConfig* config)
+proxyConfig* pf_server_config_load(const char* path)
 {
-	BOOL ok = FALSE;
+	proxyConfig* config = NULL;
 	wIniFile* ini = IniFile_New();
 
 	if (!ini)
@@ -258,6 +258,8 @@ BOOL pf_server_config_load(const char* path, proxyConfig* config)
 		WLog_ERR(TAG, "pf_server_load_config(): IniFile_ReadFile() failed!");
 		goto out;
 	}
+
+	config = calloc(1, sizeof(proxyConfig));
 
 	if (!pf_config_load_server(ini, config))
 		goto out;
@@ -283,10 +285,13 @@ BOOL pf_server_config_load(const char* path, proxyConfig* config)
 	if (!pf_config_load_captures(ini, config))
 		goto out;
 
-	ok = TRUE;
+	IniFile_Free(ini);
+	return config;
+
 out:
 	IniFile_Free(ini);
-	return ok;
+	pf_server_config_free(config);
+	return NULL;
 }
 
 void pf_server_config_print(proxyConfig* config)
@@ -336,7 +341,7 @@ void pf_server_config_print(proxyConfig* config)
 	CONFIG_PRINT_STR(config, CapturesDirectory);
 }
 
-void pf_server_config_free_internal(proxyConfig* config)
+void pf_server_config_free(proxyConfig* config)
 {
 	if (config == NULL)
 		return;
@@ -344,4 +349,5 @@ void pf_server_config_free_internal(proxyConfig* config)
 	free(config->CapturesDirectory);
 	free(config->TargetHost);
 	free(config->Host);
+	free(config);
 }

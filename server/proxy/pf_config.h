@@ -77,8 +77,8 @@ FREERDP_API BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const 
 FREERDP_API BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* key);
 FREERDP_API const char* pf_config_get_str(wIniFile* ini, const char* section, const char* key);
 
-BOOL pf_server_config_load(const char* path, proxyConfig* config);
+proxyConfig* pf_server_config_load(const char* path);
 void pf_server_config_print(proxyConfig* config);
-void pf_server_config_free_internal(proxyConfig* config);
+void pf_server_config_free(proxyConfig* config);
 
 #endif /* FREERDP_SERVER_PROXY_PFCONFIG_H */

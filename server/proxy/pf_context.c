@@ -56,10 +56,12 @@ error:
 /* Proxy context free callback */
 static void client_to_proxy_context_free(freerdp_peer* client, pServerContext* context)
 {
-	WINPR_UNUSED(client);
+	proxyServer* server;
 
-	if (!context)
+	if (!client || !context)
 		return;
+
+	server = (proxyServer*)client->ContextExtra;
 
 	WTSCloseServer((HANDLE)context->vcm);
 
