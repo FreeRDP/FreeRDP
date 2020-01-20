@@ -23,24 +23,9 @@
 #include "config.h"
 #endif
 
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-
 #include <freerdp/freerdp.h>
-#include <freerdp/constants.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/utils/signal.h>
-
-#include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
-#include <freerdp/client/cliprdr.h>
-#include <freerdp/client/channels.h>
-#include <freerdp/channels/channels.h>
-#include <freerdp/log.h>
-
-#include <winpr/crt.h>
-#include <winpr/synch.h>
 
 #include "pf_channels.h"
 #include "pf_gdi.h"
@@ -133,9 +118,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 */
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 	ZeroMemory(instance->settings->OrderSupport, 32);
-
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 
 	settings->SupportDynamicChannels = TRUE;
 
