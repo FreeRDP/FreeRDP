@@ -452,7 +452,11 @@ BOOL pf_server_start(proxyServer* server)
 		goto error;
 
 	if (!server->listener->Open(server->listener, server->config->Host, server->config->Port))
+	{
+		WLog_ERR(TAG,
+		         "listener->Open failed! Port might be already used, or insufficient permissions.");
 		goto error;
+	}
 
 	server->thread = CreateThread(NULL, 0, pf_server_mainloop, (void*)server, 0, NULL);
 	if (!server->thread)
