@@ -159,6 +159,11 @@ extern "C"
 	WINPR_API COMMAND_LINE_ARGUMENT_A*
 	CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* argument);
 
+	WINPR_API char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count);
+
+	WINPR_API char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list,
+	                                                        size_t* count);
+
 #ifdef __cplusplus
 }
 #endif
