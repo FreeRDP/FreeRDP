@@ -473,3 +473,87 @@ COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* a
 
 	return nextArgument;
 }
+
+char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list, size_t* count)
+{
+	char** p;
+	char* str;
+	size_t nArgs;
+	size_t index;
+	size_t nCommas;
+	size_t prefix, len;
+	nCommas = 0;
+
+	if (count == NULL)
+		return NULL;
+
+	*count = 0;
+
+	if (!list)
+	{
+		if (name)
+		{
+			size_t len = strlen(name);
+			p = (char**)calloc(2UL + len, sizeof(char*));
+
+			if (p)
+			{
+				char* dst = (char*)&p[1];
+				p[0] = dst;
+				sprintf_s(dst, len + 1, "%s", name);
+				*count = 1;
+				return p;
+			}
+		}
+
+		return NULL;
+	}
+
+	{
+		const char* it = list;
+
+		while ((it = strchr(it, ',')) != NULL)
+		{
+			it++;
+			nCommas++;
+		}
+	}
+
+	nArgs = nCommas + 1;
+
+	if (name)
+		nArgs++;
+
+	prefix = (nArgs + 1UL) * sizeof(char*);
+	len = strlen(list);
+	p = (char**)calloc(len + prefix + 1, sizeof(char*));
+
+	if (!p)
+		return NULL;
+
+	str = &((char*)p)[prefix];
+	memcpy(str, list, len);
+
+	if (name)
+		p[0] = (char*)name;
+
+	for (index = name ? 1 : 0; index < nArgs; index++)
+	{
+		char* comma = strchr(str, ',');
+		p[index] = str;
+
+		if (comma)
+		{
+			str = comma + 1;
+			*comma = '\0';
+		}
+	}
+
+	*count = nArgs;
+	return p;
+}
+
+char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count)
+{
+	return CommandLineParseCommaSeparatedValuesEx(NULL, list, count);
+}

@@ -775,94 +775,6 @@ error_argv:
 	return FALSE;
 }
 
-static char** freerdp_command_line_parse_comma_separated_values_ex(const char* name,
-                                                                   const char* list, size_t* count)
-{
-	char** p;
-	char* str;
-	size_t nArgs;
-	size_t index;
-	size_t nCommas;
-	size_t prefix, len;
-	nCommas = 0;
-	assert(NULL != count);
-	*count = 0;
-
-	if (!list)
-	{
-		if (name)
-		{
-			size_t len = strlen(name);
-			p = (char**)calloc(2UL + len, sizeof(char*));
-
-			if (p)
-			{
-				char* dst = (char*)&p[1];
-				p[0] = dst;
-				sprintf_s(dst, len + 1, "%s", name);
-				*count = 1;
-				return p;
-			}
-		}
-
-		return NULL;
-	}
-
-	{
-		const char* it = list;
-
-		while ((it = strchr(it, ',')) != NULL)
-		{
-			it++;
-			nCommas++;
-		}
-	}
-
-	nArgs = nCommas + 1;
-
-	if (name)
-		nArgs++;
-
-	prefix = (nArgs + 1UL) * sizeof(char*);
-	len = strlen(list);
-	p = (char**)calloc(len + prefix + 1, sizeof(char*));
-
-	if (!p)
-		return NULL;
-
-	str = &((char*)p)[prefix];
-	memcpy(str, list, len);
-
-	if (name)
-		p[0] = (char*)name;
-
-	for (index = name ? 1 : 0; index < nArgs; index++)
-	{
-		char* comma = strchr(str, ',');
-		p[index] = str;
-
-		if (comma)
-		{
-			str = comma + 1;
-			*comma = '\0';
-		}
-	}
-
-	*count = nArgs;
-	return p;
-}
-
-static char** freerdp_command_line_parse_comma_separated_values(char* list, size_t* count)
-{
-	return freerdp_command_line_parse_comma_separated_values_ex(NULL, list, count);
-}
-
-static char** freerdp_command_line_parse_comma_separated_values_offset(const char* name, char* list,
-                                                                       size_t* count)
-{
-	return freerdp_command_line_parse_comma_separated_values_ex(name, list, count);
-}
-
 static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
 	rdpSettings* settings = (rdpSettings*)context;
@@ -872,7 +784,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
 		if ((status = freerdp_client_add_device_channel(settings, count, p)))
 		{
@@ -885,7 +797,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 		status = freerdp_client_add_static_channel(settings, count, p);
 		free(p);
 	}
@@ -893,7 +805,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 		status = freerdp_client_add_dynamic_channel(settings, count, p);
 		free(p);
 	}
@@ -901,7 +813,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Name, arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
 		status = freerdp_client_add_device_channel(settings, count, p);
 		free(p);
 	}
@@ -909,7 +821,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Name, arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
 		status = freerdp_client_add_device_channel(settings, count, p);
 		free(p);
 	}
@@ -917,7 +829,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Name, arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
 		status = freerdp_client_add_device_channel(settings, count, p);
 		free(p);
 	}
@@ -925,7 +837,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Name, arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
 		status = freerdp_client_add_device_channel(settings, count, p);
 		free(p);
 	}
@@ -933,7 +845,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Name, arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
 		status = freerdp_client_add_device_channel(settings, count, p);
 		free(p);
 	}
@@ -941,8 +853,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values_offset(URBDRC_CHANNEL_NAME,
-		                                                             arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx(URBDRC_CHANNEL_NAME, arg->Value, &count);
 		status = freerdp_client_add_dynamic_channel(settings, count, p);
 		free(p);
 	}
@@ -979,7 +890,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values_offset("rdpsnd", arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx("rdpsnd", arg->Value, &count);
 		status = freerdp_client_add_static_channel(settings, count, p);
 		free(p);
 	}
@@ -987,7 +898,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values_offset("audin", arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx("audin", arg->Value, &count);
 		status = freerdp_client_add_dynamic_channel(settings, count, p);
 		free(p);
 	}
@@ -995,7 +906,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = freerdp_command_line_parse_comma_separated_values_offset("tsmf", arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx("tsmf", arg->Value, &count);
 		status = freerdp_client_add_dynamic_channel(settings, count, p);
 		free(p);
 	}
@@ -1867,7 +1778,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				UINT32 i;
 				char** p;
 				size_t count = 0;
-				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+				p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
 				if (!p)
 					return COMMAND_LINE_ERROR_MEMORY;
@@ -2455,7 +2366,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				char** p;
 				size_t count, x;
 
-				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+				p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 				if (!p || (count == 0))
 					rc = COMMAND_LINE_ERROR;
 				for (x = 0; x < count; x++)
@@ -2533,7 +2444,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				char** p;
 				size_t count, x;
 
-				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+				p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 				if (!p || (count == 0))
 					rc = COMMAND_LINE_ERROR;
 				for (x = 0; x < count; x++)
@@ -2670,7 +2581,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				UINT32 i;
 				char** p;
 				size_t count = 0;
-				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+				p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
 				for (i = 0; i < count; i++)
 				{
