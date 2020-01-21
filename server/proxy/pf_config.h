@@ -66,6 +66,13 @@ struct proxy_config
 	/* session capture */
 	BOOL SessionCapture;
 	char* CapturesDirectory;
+
+	/* modules */
+	char** Modules; /* module file names to load */
+	size_t ModulesCount;
+
+	char** RequiredPlugins; /* required plugin names */
+	size_t RequiredPluginsCount;
 };
 
 typedef struct proxy_config proxyConfig;

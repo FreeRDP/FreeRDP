@@ -28,6 +28,7 @@
 #include <winpr/collections.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <winpr/cmdline.h>
 
 #define TAG PROXY_TAG("server")
 
@@ -48,7 +49,35 @@ static void cleanup_handler(int signum)
 	pf_server_free(server);
 
 	WLog_INFO(TAG, "exiting.");
-	exit(signum);
+	exit(0);
+}
+
+static void pf_server_register_signal_handlers(void)
+{
+	signal(SIGINT, cleanup_handler);
+	signal(SIGTERM, cleanup_handler);
+#ifndef _WIN32
+	signal(SIGQUIT, cleanup_handler);
+	signal(SIGKILL, cleanup_handler);
+#endif
+}
+
+static BOOL is_all_required_modules_loaded(proxyConfig* config)
+{
+	size_t i;
+
+	for (i = 0; i < config->RequiredPluginsCount; i++)
+	{
+		const char* plugin_name = config->RequiredPlugins[i];
+
+		if (!pf_modules_is_plugin_loaded(plugin_name))
+		{
+			WLog_ERR(TAG, "Required plugin '%s' is not loaded. stopping.", plugin_name);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
 }
 
 int main(int argc, char* argv[])
@@ -57,30 +86,24 @@ int main(int argc, char* argv[])
 	const char* config_path = "config.ini";
 	int status = -1;
 
-	if (argc > 1)
-		config_path = argv[1];
-
-	/* Register cleanup handler for graceful termination */
-	signal(SIGINT, cleanup_handler);
-	signal(SIGTERM, cleanup_handler);
-#ifndef _WIN32
-	signal(SIGQUIT, cleanup_handler);
-	signal(SIGKILL, cleanup_handler);
-#endif
-
-	if (!pf_modules_init(FREERDP_PROXY_PLUGINDIR))
-	{
-		WLog_ERR(TAG, "failed to initialize proxy plugins!");
-		goto fail;
-	}
-
-	pf_modules_list_loaded_plugins();
+	pf_server_register_signal_handlers();
 
 	config = pf_server_config_load(config_path);
 	if (!config)
 		goto fail;
 
 	pf_server_config_print(config);
+
+	if (!pf_modules_init(FREERDP_PROXY_PLUGINDIR, (const char**)config->Modules,
+	                     config->ModulesCount))
+	{
+		WLog_ERR(TAG, "failed to initialize proxy modules!");
+		goto fail;
+	}
+
+	pf_modules_list_loaded_plugins();
+	if (!is_all_required_modules_loaded(config))
+		goto fail;
 
 	server = pf_server_new(config);
 	if (!server)
