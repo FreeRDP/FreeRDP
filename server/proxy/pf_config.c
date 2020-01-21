@@ -22,6 +22,7 @@
 #include <string.h>
 #include <winpr/crt.h>
 #include <winpr/collections.h>
+#include <winpr/cmdline.h>
 
 #include "pf_log.h"
 #include "pf_server.h"
@@ -188,27 +189,16 @@ static BOOL pf_config_load_clipboard(wIniFile* ini, proxyConfig* config)
 
 static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 {
+	const char* modules_to_load;
 	const char* required_modules;
-	char* tmp;
 
-	/* make sure that all required modules are loaded */
+	modules_to_load = IniFile_GetKeyValueString(ini, "Plugins", "Modules");
 	required_modules = IniFile_GetKeyValueString(ini, "Plugins", "Required");
-	if (!required_modules)
-		return TRUE;
 
-	tmp = strtok((char*)required_modules, ",");
+	config->Modules = CommandLineParseCommaSeparatedValues(modules_to_load, &config->ModulesCount);
 
-	while (tmp != NULL)
-	{
-		if (!pf_modules_is_plugin_loaded(tmp))
-		{
-			WLog_ERR(TAG, "Required plugin '%s' is not loaded. stopping.", tmp);
-			return FALSE;
-		}
-
-		tmp = strtok(NULL, ",");
-	}
-
+	config->RequiredPlugins =
+	    CommandLineParseCommaSeparatedValues(required_modules, &config->RequiredPluginsCount);
 	return TRUE;
 }
 
@@ -249,13 +239,13 @@ proxyConfig* pf_server_config_load(const char* path)
 
 	if (!ini)
 	{
-		WLog_ERR(TAG, "pf_server_load_config(): IniFile_New() failed!");
+		WLog_ERR(TAG, "[%s]: IniFile_New() failed!", __FUNCTION__);
 		return FALSE;
 	}
 
 	if (IniFile_ReadFile(ini, path) < 0)
 	{
-		WLog_ERR(TAG, "pf_server_load_config(): IniFile_ReadFile() failed!");
+		WLog_ERR(TAG, "[%s] failed to parse ini file: '%s'", __FUNCTION__, path);
 		goto out;
 	}
 
@@ -347,6 +337,8 @@ void pf_server_config_free(proxyConfig* config)
 		return;
 
 	free(config->CapturesDirectory);
+	free(config->RequiredPlugins);
+	free(config->Modules);
 	free(config->TargetHost);
 	free(config->Host);
 	free(config);

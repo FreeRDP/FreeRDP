@@ -48,7 +48,7 @@ enum _PF_HOOK_TYPE
 	HOOK_LAST
 };
 
-BOOL pf_modules_init(const char* modules_directory_path);
+BOOL pf_modules_init(const char* root_dir, const char** modules, size_t count);
 BOOL pf_modules_is_plugin_loaded(const char* plugin_name);
 void pf_modules_list_loaded_plugins(void);
 

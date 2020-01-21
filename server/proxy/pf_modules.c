@@ -217,7 +217,7 @@ static BOOL pf_modules_register_plugin(proxyPlugin* plugin_to_register)
 	{
 		if (strcmp(plugin->name, plugin_to_register->name) == 0)
 		{
-			WLog_ERR(TAG, "can not register plugin '%s', it is already registered!");
+			WLog_ERR(TAG, "can not register plugin '%s', it is already registered!", plugin->name);
 			return FALSE;
 		}
 	}
@@ -313,33 +313,22 @@ error:
 	return FALSE;
 }
 
-BOOL pf_modules_init(const char* modules_directory)
+BOOL pf_modules_init(const char* root_dir, const char** modules, size_t count)
 {
-	HANDLE hFind = INVALID_HANDLE_VALUE;
-	WIN32_FIND_DATA ffd;
-	char* find_path;
+	size_t i;
 
-	if (!PathFileExistsA(modules_directory))
+	if (!PathFileExistsA(root_dir))
 	{
-		if (!CreateDirectoryA(modules_directory, NULL))
+		if (!CreateDirectoryA(root_dir, NULL))
 		{
-			WLog_ERR(TAG, "error occurred while creating modules directory: %s", modules_directory);
+			WLog_ERR(TAG, "error occurred while creating modules directory: %s", root_dir);
 			return FALSE;
 		}
 
 		return TRUE;
 	}
 
-	WLog_DBG(TAG, "searching plugins in directory %s", modules_directory);
-	find_path = GetCombinedPath(modules_directory, "*.so");
-	hFind = FindFirstFile(find_path, &ffd);
-	free(find_path);
-
-	if (INVALID_HANDLE_VALUE == hFind)
-	{
-		WLog_ERR(TAG, "FindFirstFile failed!");
-		return FALSE;
-	}
+	WLog_DBG(TAG, "modules root directory: %s", root_dir);
 
 	plugins_list = ArrayList_New(FALSE);
 
@@ -357,21 +346,16 @@ BOOL pf_modules_init(const char* modules_directory)
 		goto error;
 	}
 
-	do
+	for (i = 0; i < count; i++)
 	{
-		if ((ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-		{
-			char* fullpath = GetCombinedPath(modules_directory, ffd.cFileName);
-			pf_modules_load_module(fullpath);
-			free(fullpath);
-		}
-	} while (FindNextFile(hFind, &ffd) != 0);
+		char* fullpath = GetCombinedPath(root_dir, modules[i]);
+		pf_modules_load_module(fullpath);
+		free(fullpath);
+	}
 
-	FindClose(hFind);
 	return TRUE;
 
 error:
-	FindClose(hFind);
 	ArrayList_Free(plugins_list);
 	plugins_list = NULL;
 	ArrayList_Free(handles_list);
