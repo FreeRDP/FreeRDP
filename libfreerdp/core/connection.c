@@ -394,6 +394,7 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 		return FALSE;
 
 	codecs_free(context->codecs);
+	context->codecs = NULL;
 	return TRUE;
 }
 
