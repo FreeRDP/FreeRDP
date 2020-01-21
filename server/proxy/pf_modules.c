@@ -319,8 +319,19 @@ BOOL pf_modules_init(const char* modules_directory)
 	WIN32_FIND_DATA ffd;
 	char* find_path;
 
+	if (!PathFileExistsA(modules_directory))
+	{
+		if (!CreateDirectoryA(modules_directory, NULL))
+		{
+			WLog_ERR(TAG, "error occurred while creating modules directory: %s", modules_directory);
+			return FALSE;
+		}
+
+		return TRUE;
+	}
+
 	WLog_DBG(TAG, "searching plugins in directory %s", modules_directory);
-	find_path = GetCombinedPath(modules_directory, "*");
+	find_path = GetCombinedPath(modules_directory, "*.so");
 	hFind = FindFirstFile(find_path, &ffd);
 	free(find_path);
 
@@ -351,11 +362,7 @@ BOOL pf_modules_init(const char* modules_directory)
 		if ((ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
 		{
 			char* fullpath = GetCombinedPath(modules_directory, ffd.cFileName);
-			char* dot = strrchr(ffd.cFileName, '.');
-
-			if (dot && strcmp(dot, FREERDP_SHARED_LIBRARY_SUFFIX) == 0)
-				pf_modules_load_module(fullpath);
-
+			pf_modules_load_module(fullpath);
 			free(fullpath);
 		}
 	} while (FindNextFile(hFind, &ffd) != 0);
