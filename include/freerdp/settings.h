@@ -1551,7 +1551,7 @@ struct rdp_settings
 	ALIGN64 struct rdp_ext_set extensions[16]; /*  */
 
 	ALIGN64 BYTE* SettingsModified; /* byte array marking fields that have been modified from their
-	                                   default value */
+	                                   default value - currently UNUSED! */
 	ALIGN64 char* ActionScript;
 	ALIGN64 DWORD Floatbar;
 };

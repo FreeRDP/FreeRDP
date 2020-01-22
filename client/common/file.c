@@ -841,74 +841,85 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 	return status;
 }
 
-#define WRITE_ALL_SETTINGS TRUE
-#define SETTING_MODIFIED(_settings, _field) \
-	(WRITE_ALL_SETTINGS || _settings->SettingsModified[FreeRDP_##_field])
-#define SETTING_MODIFIED_SET(_target, _settings, _field) \
-	if                                                   \
-		SETTING_MODIFIED(_settings, _field)              \
-	_target = _settings->_field
-
-#define SETTING_MODIFIED_SET_BOOL(_target, _settings, _field) \
-	if                                                        \
-		SETTING_MODIFIED(_settings, _field)                   \
-	_target = _settings->_field ? 1 : 0
-
-#define SETTING_MODIFIED_SET_STRING(_target, _settings, _field)                       \
-	do                                                                                \
-	{                                                                                 \
-		if                                                                            \
-			SETTING_MODIFIED(_settings, _field) _target = _strdup(_settings->_field); \
-		if (!_target && _settings->_field)                                            \
-			return FALSE;                                                             \
+#define FILE_POPULATE_STRING(_target, _setting) \
+	do                                          \
+	{                                           \
+		if (_setting)                           \
+		{                                       \
+			_target = _strdup(_setting);        \
+			if (!_target)                       \
+				return FALSE;                   \
+		}                                       \
 	} while (0)
 
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings)
 {
-	SETTING_MODIFIED_SET_STRING(file->Domain, settings, Domain);
-	SETTING_MODIFIED_SET_STRING(file->Username, settings, Username);
-	SETTING_MODIFIED_SET_STRING(file->Password, settings, Password);
-	SETTING_MODIFIED_SET(file->ServerPort, settings, ServerPort);
-	SETTING_MODIFIED_SET_STRING(file->FullAddress, settings, ServerHostname);
-	SETTING_MODIFIED_SET_STRING(file->AlternateFullAddress, settings, ServerHostname);
-	SETTING_MODIFIED_SET(file->DesktopWidth, settings, DesktopWidth);
-	SETTING_MODIFIED_SET(file->DesktopHeight, settings, DesktopHeight);
-	SETTING_MODIFIED_SET(file->SessionBpp, settings, ColorDepth);
-	SETTING_MODIFIED_SET_BOOL(file->ConnectToConsole, settings, ConsoleSession);
-	SETTING_MODIFIED_SET_BOOL(file->AdministrativeSession, settings, ConsoleSession);
-	SETTING_MODIFIED_SET_BOOL(file->NegotiateSecurityLayer, settings, NegotiateSecurityLayer);
-	SETTING_MODIFIED_SET_BOOL(file->EnableCredSSPSupport, settings, NlaSecurity);
-	SETTING_MODIFIED_SET_STRING(file->AlternateShell, settings, AlternateShell);
-	SETTING_MODIFIED_SET_STRING(file->ShellWorkingDirectory, settings, ShellWorkingDirectory);
-	SETTING_MODIFIED_SET(file->ConnectionType, settings, ConnectionType);
-	SETTING_MODIFIED_SET_STRING(file->DrivesToRedirect, settings, DrivesToRedirect);
+	FILE_POPULATE_STRING(file->Domain, settings->Domain);
+	FILE_POPULATE_STRING(file->Username, settings->Username);
+	FILE_POPULATE_STRING(file->Password, settings->Password);
+	file->ServerPort = settings->ServerPort;
+	FILE_POPULATE_STRING(file->FullAddress, settings->ServerHostname);
+	FILE_POPULATE_STRING(file->AlternateFullAddress, settings->ServerHostname);
+	file->DesktopWidth = settings->DesktopWidth;
+	file->DesktopHeight = settings->DesktopHeight;
+	file->SessionBpp = settings->ColorDepth;
+	file->ConnectToConsole = settings->ConsoleSession;
+	file->NegotiateSecurityLayer = settings->NegotiateSecurityLayer;
+	file->EnableCredSSPSupport = settings->NlaSecurity;
+	FILE_POPULATE_STRING(file->AlternateShell, settings->AlternateShell);
+	FILE_POPULATE_STRING(file->ShellWorkingDirectory, settings->ShellWorkingDirectory);
+	file->ConnectionType = settings->ConnectionType;
+	FILE_POPULATE_STRING(file->DrivesToRedirect, settings->DrivesToRedirect);
+	file->ScreenModeId = settings->Fullscreen ? 2 : 1;
 
-	if (SETTING_MODIFIED(settings, AudioPlayback) || SETTING_MODIFIED(settings, RemoteConsoleAudio))
+	if (settings->LoadBalanceInfoLength)
 	{
-		if (settings->AudioPlayback)
-			file->AudioMode = AUDIO_MODE_REDIRECT;
-		else if (settings->RemoteConsoleAudio)
-			file->AudioMode = AUDIO_MODE_PLAY_ON_SERVER;
-		else
-			file->AudioMode = AUDIO_MODE_NONE;
+		file->LoadBalanceInfo = calloc(settings->LoadBalanceInfoLength + 1, 1);
+		if (!file->LoadBalanceInfo)
+			return FALSE;
+		strncpy(file->LoadBalanceInfo, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
 	}
 
-	SETTING_MODIFIED_SET_BOOL(file->AudioCaptureMode, settings, AudioCapture);
-	SETTING_MODIFIED_SET_STRING(file->GatewayHostname, settings, GatewayHostname);
-	SETTING_MODIFIED_SET_STRING(file->GatewayAccessToken, settings, GatewayAccessToken);
-	SETTING_MODIFIED_SET(file->GatewayUsageMethod, settings, GatewayUsageMethod);
-	SETTING_MODIFIED_SET_BOOL(file->PromptCredentialOnce, settings, GatewayUseSameCredentials);
-	SETTING_MODIFIED_SET_BOOL(file->PromptForCredentials, settings, PromptForCredentials);
-	SETTING_MODIFIED_SET_BOOL(file->RemoteApplicationMode, settings, RemoteApplicationMode);
-	SETTING_MODIFIED_SET_STRING(file->RemoteApplicationProgram, settings, RemoteApplicationProgram);
-	SETTING_MODIFIED_SET_STRING(file->RemoteApplicationName, settings, RemoteApplicationName);
-	SETTING_MODIFIED_SET_STRING(file->RemoteApplicationIcon, settings, RemoteApplicationIcon);
-	SETTING_MODIFIED_SET_STRING(file->RemoteApplicationFile, settings, RemoteApplicationFile);
-	SETTING_MODIFIED_SET_STRING(file->RemoteApplicationGuid, settings, RemoteApplicationGuid);
-	SETTING_MODIFIED_SET_STRING(file->RemoteApplicationCmdLine, settings, RemoteApplicationCmdLine);
-	SETTING_MODIFIED_SET_BOOL(file->SpanMonitors, settings, SpanMonitors);
-	SETTING_MODIFIED_SET_BOOL(file->UseMultiMon, settings, UseMultimon);
-	SETTING_MODIFIED_SET_STRING(file->PreconnectionBlob, settings, PreconnectionBlob);
+	if (settings->AudioPlayback)
+		file->AudioMode = AUDIO_MODE_REDIRECT;
+	else if (settings->RemoteConsoleAudio)
+		file->AudioMode = AUDIO_MODE_PLAY_ON_SERVER;
+	else
+		file->AudioMode = AUDIO_MODE_NONE;
+
+	file->AudioCaptureMode = settings->AudioCapture;
+	file->Compression = settings->CompressionEnabled;
+	FILE_POPULATE_STRING(file->GatewayHostname, settings->GatewayHostname);
+	FILE_POPULATE_STRING(file->GatewayAccessToken, settings->GatewayAccessToken);
+	file->GatewayUsageMethod = settings->GatewayUsageMethod;
+	file->PromptCredentialOnce = settings->GatewayUseSameCredentials;
+	file->PromptForCredentials = settings->PromptForCredentials;
+	file->RemoteApplicationMode = settings->RemoteApplicationMode;
+	FILE_POPULATE_STRING(file->RemoteApplicationProgram, settings->RemoteApplicationProgram);
+	FILE_POPULATE_STRING(file->RemoteApplicationName, settings->RemoteApplicationName);
+	FILE_POPULATE_STRING(file->RemoteApplicationIcon, settings->RemoteApplicationIcon);
+	FILE_POPULATE_STRING(file->RemoteApplicationFile, settings->RemoteApplicationFile);
+	FILE_POPULATE_STRING(file->RemoteApplicationGuid, settings->RemoteApplicationGuid);
+	FILE_POPULATE_STRING(file->RemoteApplicationCmdLine, settings->RemoteApplicationCmdLine);
+	file->SpanMonitors = settings->SpanMonitors;
+	file->UseMultiMon = settings->UseMultimon;
+	file->AllowFontSmoothing = settings->AllowFontSmoothing;
+	file->DisableWallpaper = settings->DisableWallpaper;
+	file->DisableFullWindowDrag = settings->DisableFullWindowDrag;
+	file->DisableMenuAnims = settings->DisableMenuAnims;
+	file->DisableThemes = settings->DisableThemes;
+	file->BandwidthAutoDetect = (settings->ConnectionType >= 7) ? TRUE : FALSE;
+	file->NetworkAutoDetect = settings->NetworkAutoDetect;
+	file->AutoReconnectionEnabled = settings->AutoReconnectionEnabled;
+	file->RedirectSmartCards = settings->RedirectSmartCards;
+	file->RedirectClipboard = settings->RedirectClipboard;
+	file->RedirectPrinters = settings->RedirectPrinters;
+	file->RedirectDrives = settings->RedirectDrives;
+	file->RedirectComPorts = (settings->RedirectSerialPorts || settings->RedirectParallelPorts);
+	FILE_POPULATE_STRING(file->DrivesToRedirect, settings->DrivesToRedirect);
+	file->KeyboardHook = settings->KeyboardHook;
+	FILE_POPULATE_STRING(file->PreconnectionBlob, settings->PreconnectionBlob);
+
 	return TRUE;
 }
 
