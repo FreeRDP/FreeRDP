@@ -346,6 +346,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->KeyboardSubType = 0;
 	settings->KeyboardFunctionKey = 12;
 	settings->KeyboardLayout = 0;
+	settings->KeyboardHook = 2;
 	settings->UseRdpSecurityLayer = FALSE;
 	settings->SaltedChecksum = TRUE;
 	settings->ServerPort = 3389;
@@ -605,10 +606,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	}
 
 	settings_load_hkey_local_machine(settings);
-	settings->SettingsModified = (BYTE*)calloc(1, sizeof(rdpSettings) / 8);
-
-	if (!settings->SettingsModified)
-		goto out_fail;
 
 	settings->ActionScript = _strdup("~/.config/freerdp/action.sh");
 	settings->SmartcardLogon = FALSE;
@@ -713,7 +710,6 @@ static void freerdp_settings_free_internal(rdpSettings* settings)
 	freerdp_device_collection_free(settings);
 	freerdp_static_channel_collection_free(settings);
 	freerdp_dynamic_channel_collection_free(settings);
-	free(settings->SettingsModified);
 	memset(settings, 0, sizeof(rdpSettings));
 }
 
@@ -1110,11 +1106,6 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 		if (!_settings->DynamicChannelArray[index])
 			goto out_fail;
 	}
-
-	_settings->SettingsModified = (BYTE*)calloc(1, sizeof(rdpSettings) / 8);
-
-	if (!_settings->SettingsModified)
-		goto out_fail;
 
 	return TRUE;
 out_fail:
