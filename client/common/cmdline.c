@@ -1544,7 +1544,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "v")
 		{
-			assert(arg->Value);
+			if (!arg->Value)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			free(settings->ServerHostname);
 			settings->ServerHostname = NULL;
 			p = strchr(arg->Value, '[');
@@ -1614,7 +1615,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			size_t count = 0;
 			char* cur = arg->Value;
-			assert(arg->Value);
+			if (!arg->Value)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			settings->RedirectionPreferType = 0;
 
 			do
@@ -1684,7 +1686,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "size")
 		{
-			assert(arg->Value);
+			if (!arg->Value)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			p = strchr(arg->Value, 'x');
 
 			if (p)
@@ -1962,7 +1965,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				assert(arg->Value);
+				if (!arg->Value)
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				p = strchr(arg->Value, ':');
 
 				if (p)
@@ -2006,7 +2010,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
 				char* atPtr;
-				assert(arg->Value);
+				if (!arg->Value)
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				/* value is [scheme://][user:password@]hostname:port */
 				p = strstr(arg->Value, "://");
 
@@ -2485,7 +2490,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "rfx-mode")
 		{
-			assert(arg->Value);
+			if (!arg->Value)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			if (strcmp(arg->Value, "video") == 0)
 				settings->RemoteFxCodecMode = 0x00;
@@ -2544,7 +2550,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "sec")
 		{
-			assert(arg->Value);
+			if (!arg->Value)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			if (strcmp("rdp", arg->Value) == 0) /* Standard RDP */
 			{
@@ -2612,7 +2619,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				assert(arg->Value);
+				if (!arg->Value)
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				promptForPassword = (strncmp(arg->Value, "force", 6) == 0);
 
 				if (!promptForPassword)
@@ -2649,7 +2657,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "tls-ciphers")
 		{
-			assert(arg->Value);
+			if (!arg->Value)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			free(settings->AllowedTlsCiphers);
 
 			if (strcmp(arg->Value, "netmon") == 0)
@@ -2807,8 +2816,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "codec-cache")
 		{
+			if (!arg->Value)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			settings->BitmapCacheV3Enabled = TRUE;
-			assert(arg->Value);
 
 			if (strcmp(arg->Value, "rfx") == 0)
 			{
@@ -2908,7 +2918,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			BYTE* base64 = NULL;
 			int length;
-			assert(arg->Value);
+			if (!arg->Value)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
 			crypto_base64_decode((const char*)(arg->Value), (int)strlen(arg->Value), &base64,
 			                     &length);
 
