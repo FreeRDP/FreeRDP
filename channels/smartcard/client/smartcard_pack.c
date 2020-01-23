@@ -67,7 +67,7 @@ static char* smartcard_msz_dump_a(const char* msz, size_t len, char* buffer, siz
 static char* smartcard_msz_dump_w(const WCHAR* msz, size_t len, char* buffer, size_t bufferLen)
 {
 	char* sz;
-	ConvertFromUnicode(CP_UTF8, 0, msz, len, &sz, 0, NULL, NULL);
+	ConvertFromUnicode(CP_UTF8, 0, msz, (int)len, &sz, 0, NULL, NULL);
 	return smartcard_msz_dump_a(sz, len, buffer, bufferLen);
 }
 
@@ -99,16 +99,16 @@ static void smartcard_log_redir_handle(const char* tag, const REDIR_SCARDHANDLE*
 {
 	char buffer[128];
 
-	smartcard_array_dump(pHandle->pbHandle, pHandle->cbHandle, buffer, sizeof(buffer));
-	WLog_DBG(tag, "hContext: %s", buffer);
+	WLog_DBG(tag, "hContext: %s",
+	         smartcard_array_dump(pHandle->pbHandle, pHandle->cbHandle, buffer, sizeof(buffer)));
 }
 
 static void smartcard_log_context(const char* tag, const REDIR_SCARDCONTEXT* phContext)
 {
 	char buffer[128];
-
-	smartcard_array_dump(phContext->pbContext, phContext->cbContext, buffer, sizeof(buffer));
-	WLog_DBG(tag, "hContext: %s", buffer);
+	WLog_DBG(
+	    tag, "hContext: %s",
+	    smartcard_array_dump(phContext->pbContext, phContext->cbContext, buffer, sizeof(buffer)));
 }
 
 static void smartcard_trace_context_and_string_call_a(const char* name,
@@ -590,13 +590,14 @@ static void smartcard_trace_write_cache_a_call(SMARTCARD_DEVICE* smartcard,
 	WLog_DBG(TAG, "  szLookupName=%s", call->szLookupName);
 
 	smartcard_log_context(TAG, &call->Common.hContext);
-	smartcard_array_dump(call->Common.CardIdentifier, sizeof(UUID), buffer, sizeof(buffer));
-	WLog_DBG(TAG, "..CardIdentifier=%s", buffer);
+	WLog_DBG(
+	    TAG, "..CardIdentifier=%s",
+	    smartcard_array_dump(call->Common.CardIdentifier, sizeof(UUID), buffer, sizeof(buffer)));
 	WLog_DBG(TAG, "  FreshnessCounter=%" PRIu32, call->Common.FreshnessCounter);
 	WLog_DBG(TAG, "  cbDataLen=%" PRIu32, call->Common.cbDataLen);
-
-	smartcard_array_dump(call->Common.pbData, call->Common.cbDataLen, buffer, sizeof(buffer));
-	WLog_DBG(TAG, "  pbData=%s", call->Common.pbData);
+	WLog_DBG(
+	    TAG, "  pbData=%s",
+	    smartcard_array_dump(call->Common.pbData, call->Common.cbDataLen, buffer, sizeof(buffer)));
 	WLog_DBG(TAG, "}");
 }
 
@@ -615,13 +616,14 @@ static void smartcard_trace_write_cache_w_call(SMARTCARD_DEVICE* smartcard,
 	WLog_DBG(TAG, "  szLookupName=%s", tmp);
 	free(tmp);
 	smartcard_log_context(TAG, &call->Common.hContext);
-	smartcard_array_dump(call->Common.CardIdentifier, sizeof(UUID), buffer, sizeof(buffer));
-	WLog_DBG(TAG, "..CardIdentifier=%s", buffer);
+	WLog_DBG(
+	    TAG, "..CardIdentifier=%s",
+	    smartcard_array_dump(call->Common.CardIdentifier, sizeof(UUID), buffer, sizeof(buffer)));
 	WLog_DBG(TAG, "  FreshnessCounter=%" PRIu32, call->Common.FreshnessCounter);
 	WLog_DBG(TAG, "  cbDataLen=%" PRIu32, call->Common.cbDataLen);
-
-	smartcard_array_dump(call->Common.pbData, call->Common.cbDataLen, buffer, sizeof(buffer));
-	WLog_DBG(TAG, "  pbData=%s", call->Common.pbData);
+	WLog_DBG(
+	    TAG, "  pbData=%s",
+	    smartcard_array_dump(call->Common.pbData, call->Common.cbDataLen, buffer, sizeof(buffer)));
 	WLog_DBG(TAG, "}");
 }
 
@@ -637,8 +639,9 @@ static void smartcard_trace_read_cache_a_call(SMARTCARD_DEVICE* smartcard,
 
 	WLog_DBG(TAG, "  szLookupName=%s", call->szLookupName);
 	smartcard_log_context(TAG, &call->Common.hContext);
-	smartcard_array_dump(call->Common.CardIdentifier, sizeof(UUID), buffer, sizeof(buffer));
-	WLog_DBG(TAG, "..CardIdentifier=%s", buffer);
+	WLog_DBG(
+	    TAG, "..CardIdentifier=%s",
+	    smartcard_array_dump(call->Common.CardIdentifier, sizeof(UUID), buffer, sizeof(buffer)));
 	WLog_DBG(TAG, "  FreshnessCounter=%" PRIu32, call->Common.FreshnessCounter);
 	WLog_DBG(TAG, "  fPbDataIsNULL=%" PRId32, call->Common.fPbDataIsNULL);
 	WLog_DBG(TAG, "  cbDataLen=%" PRIu32, call->Common.cbDataLen);
@@ -661,8 +664,9 @@ static void smartcard_trace_read_cache_w_call(SMARTCARD_DEVICE* smartcard,
 	WLog_DBG(TAG, "  szLookupName=%s", tmp);
 	free(tmp);
 	smartcard_log_context(TAG, &call->Common.hContext);
-	smartcard_array_dump(call->Common.CardIdentifier, sizeof(UUID), buffer, sizeof(buffer));
-	WLog_DBG(TAG, "..CardIdentifier=%s", buffer);
+	WLog_DBG(
+	    TAG, "..CardIdentifier=%s",
+	    smartcard_array_dump(call->Common.CardIdentifier, sizeof(UUID), buffer, sizeof(buffer)));
 	WLog_DBG(TAG, "  FreshnessCounter=%" PRIu32, call->Common.FreshnessCounter);
 	WLog_DBG(TAG, "  fPbDataIsNULL=%" PRId32, call->Common.fPbDataIsNULL);
 	WLog_DBG(TAG, "  cbDataLen=%" PRIu32, call->Common.cbDataLen);
@@ -895,8 +899,9 @@ static void smartcard_trace_control_call(SMARTCARD_DEVICE* smartcard, const Cont
 	WLog_DBG(TAG, "}");
 }
 
-static void smartcard_trace_set_attrib_call(SMARTCARD_DEVICE* smartcard, const GetAttrib_Call* call)
+static void smartcard_trace_set_attrib_call(SMARTCARD_DEVICE* smartcard, const SetAttrib_Call* call)
 {
+	char buffer[8192];
 	WINPR_UNUSED(smartcard);
 
 	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
@@ -906,9 +911,9 @@ static void smartcard_trace_set_attrib_call(SMARTCARD_DEVICE* smartcard, const G
 	smartcard_log_context(TAG, &call->hContext);
 	smartcard_log_redir_handle(TAG, &call->hCard);
 	WLog_DBG(TAG, "dwAttrId: 0x%08" PRIX32, call->dwAttrId);
-	WLog_DBG(TAG, "fpbAttrIsNULL: 0x%08" PRId32, call->fpbAttrIsNULL);
 	WLog_DBG(TAG, "cbAttrLen: 0x%08" PRId32, call->cbAttrLen);
-
+	WLog_DBG(TAG, "pbAttr: %s",
+	         smartcard_array_dump(call->pbAttr, call->cbAttrLen, buffer, sizeof(buffer)));
 	WLog_DBG(TAG, "}");
 }
 
@@ -3510,7 +3515,7 @@ LONG smartcard_unpack_locate_cards_w_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	return SCARD_S_SUCCESS;
 }
 
-LONG smartcard_unpack_set_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetAttrib_Call* call)
+LONG smartcard_unpack_set_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, SetAttrib_Call* call)
 {
 	LONG status;
 	smartcard_trace_set_attrib_call(smartcard, call);
@@ -3525,9 +3530,14 @@ LONG smartcard_unpack_set_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, G
 	if (Stream_GetRemainingLength(s) < 12)
 		return STATUS_BUFFER_TOO_SMALL;
 	Stream_Read_UINT32(s, call->dwAttrId);
-	Stream_Read_INT32(s, call->fpbAttrIsNULL);
 	Stream_Read_UINT32(s, call->cbAttrLen);
+	if (Stream_GetRemainingLength(s) < call->cbAttrLen)
+		return STATUS_BUFFER_TOO_SMALL;
+	call->pbAttr = malloc(call->cbAttrLen);
+	if (!call->pbAttr)
+		return STATUS_NO_MEMORY;
 
+	Stream_Read(s, call->pbAttr, call->cbAttrLen);
 	return SCARD_S_SUCCESS;
 }
 

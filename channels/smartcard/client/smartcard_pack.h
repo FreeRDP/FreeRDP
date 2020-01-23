@@ -571,7 +571,7 @@ LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
                                       const GetAttrib_Return* ret, DWORD dwAttrId);
 
 LONG smartcard_unpack_set_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s,
-                                      GetAttrib_Call* call);
+                                      SetAttrib_Call* call);
 
 LONG smartcard_pack_set_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
                                       const GetAttrib_Return* ret);

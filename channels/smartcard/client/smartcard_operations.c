@@ -1758,7 +1758,7 @@ static LONG smartcard_GetAttrib_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 static LONG smartcard_SetAttrib_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	GetAttrib_Call* call;
+	SetAttrib_Call* call;
 	IRP* irp = operation->irp;
 	operation->call = call = calloc(1, sizeof(SetAttrib_Call));
 
