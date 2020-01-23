@@ -3391,8 +3391,7 @@ LONG smartcard_unpack_locate_cards_a_call(SMARTCARD_DEVICE* smartcard, wStream* 
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_WARN(TAG, "smartcard_unpack_locate_cards_a_call is too short: %" PRIuz "",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "%s is too short: %" PRIuz "", __FUNCTION__, Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 	Stream_Read_UINT32(s, call->cBytes);
@@ -3427,18 +3426,18 @@ LONG smartcard_unpack_locate_cards_a_call(SMARTCARD_DEVICE* smartcard, wStream* 
 		UINT32 len;
 		if (Stream_GetRemainingLength(s) < 4)
 		{
-			WLog_WARN(TAG, "smartcard_unpack_locate_cards_a_call is too short: %" PRIuz "",
+			WLog_WARN(TAG, "%s is too short: %" PRIuz "", __FUNCTION__,
 			          Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 		Stream_Read_UINT32(s, len);
 		if (Stream_GetRemainingLength(s) < len)
 		{
-			WLog_WARN(TAG, "smartcard_unpack_locate_cards_a_call is too short: %" PRIuz "",
+			WLog_WARN(TAG, "%s is too short: %" PRIuz "", __FUNCTION__,
 			          Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
-		call->rgReaderStates = calloc(len + 1, sizeof(CCHAR));
+		call->rgReaderStates = calloc(len / sizeof(ReaderStateA) + 1, sizeof(ReaderStateA));
 		if (!call->rgReaderStates)
 			return STATUS_NO_MEMORY;
 
@@ -3461,8 +3460,7 @@ LONG smartcard_unpack_locate_cards_w_call(SMARTCARD_DEVICE* smartcard, wStream* 
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_WARN(TAG, "smartcard_unpack_locate_cards_w_call is too short: %" PRIuz "",
-		          Stream_GetRemainingLength(s));
+		WLog_WARN(TAG, "%s is too short: %" PRIuz "", __FUNCTION__, Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 	Stream_Read_UINT32(s, call->cBytes);
@@ -3474,18 +3472,18 @@ LONG smartcard_unpack_locate_cards_w_call(SMARTCARD_DEVICE* smartcard, wStream* 
 		UINT32 len;
 		if (Stream_GetRemainingLength(s) < 4)
 		{
-			WLog_WARN(TAG, "smartcard_unpack_locate_cards_w_call is too short: %" PRIuz "",
+			WLog_WARN(TAG, "%s is too short: %" PRIuz "", __FUNCTION__,
 			          Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 		Stream_Read_UINT32(s, len);
 		if (Stream_GetRemainingLength(s) < len)
 		{
-			WLog_WARN(TAG, "smartcard_unpack_locate_cards_w_call is too short: %" PRIuz "",
+			WLog_WARN(TAG, "%s is too short: %" PRIuz "", __FUNCTION__,
 			          Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
-		call->mszCards = calloc(len + 1, sizeof(CHAR));
+		call->mszCards = calloc(len + 1, sizeof(WCHAR));
 		if (!call->mszCards)
 			return STATUS_NO_MEMORY;
 		Stream_Read(s, call->mszCards, len);
@@ -3495,18 +3493,18 @@ LONG smartcard_unpack_locate_cards_w_call(SMARTCARD_DEVICE* smartcard, wStream* 
 		UINT32 len;
 		if (Stream_GetRemainingLength(s) < 4)
 		{
-			WLog_WARN(TAG, "smartcard_unpack_locate_cards_w_call is too short: %" PRIuz "",
+			WLog_WARN(TAG, "%s is too short: %" PRIuz "", __FUNCTION__,
 			          Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 		Stream_Read_UINT32(s, len);
 		if (Stream_GetRemainingLength(s) < len)
 		{
-			WLog_WARN(TAG, "smartcard_unpack_locate_cards_w_call is too short: %" PRIuz "",
+			WLog_WARN(TAG, "%s is too short: %" PRIuz "", __FUNCTION__,
 			          Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
-		call->rgReaderStates = calloc(len + 1, sizeof(CCHAR));
+		call->rgReaderStates = calloc(len / sizeof(ReaderStateW) + 1, sizeof(ReaderStateW));
 		if (!call->rgReaderStates)
 			return STATUS_NO_MEMORY;
 
@@ -3668,7 +3666,7 @@ LONG smartcard_unpack_locate_cards_by_atr_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if (call->cReaders > 0)
 	{
-		call->rgReaderStates = (ReaderStateW*)calloc(call->cReaders, sizeof(ReaderStateA));
+		call->rgReaderStates = (ReaderStateW*)calloc(call->cReaders, sizeof(ReaderStateW));
 
 		if (!call->rgReaderStates)
 		{
@@ -3784,7 +3782,7 @@ LONG smartcard_unpack_read_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
-		call->Common.CardIdentifier = calloc(len, sizeof(CHAR));
+		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
 		if (!call->Common.CardIdentifier)
 			return SCARD_E_NO_MEMORY;
 		Stream_Read(s, call->Common.CardIdentifier, len);
@@ -3834,7 +3832,7 @@ LONG smartcard_unpack_read_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
-		call->Common.CardIdentifier = calloc(len, sizeof(CHAR));
+		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
 		if (!call->Common.CardIdentifier)
 			return SCARD_E_NO_MEMORY;
 		Stream_Read(s, call->Common.CardIdentifier, len);
@@ -3886,7 +3884,7 @@ LONG smartcard_unpack_write_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
-		call->Common.CardIdentifier = calloc(len, sizeof(CHAR));
+		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
 		if (!call->Common.CardIdentifier)
 			return SCARD_E_NO_MEMORY;
 		Stream_Read(s, call->Common.CardIdentifier, len);
@@ -3951,7 +3949,7 @@ LONG smartcard_unpack_write_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
-		call->Common.CardIdentifier = calloc(len, sizeof(CHAR));
+		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
 		if (!call->Common.CardIdentifier)
 			return SCARD_E_NO_MEMORY;
 		Stream_Read(s, call->Common.CardIdentifier, len);
