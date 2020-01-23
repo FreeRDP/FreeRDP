@@ -439,7 +439,7 @@ static UINT dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 static UINT dvcman_create_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr,
                                   UINT32 ChannelId, const char* ChannelName)
 {
-	int i;
+	size_t i;
 	BOOL bAccept;
 	DVCMAN_LISTENER* listener;
 	DVCMAN_CHANNEL* channel;
