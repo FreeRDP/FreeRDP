@@ -2369,9 +2369,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 				if (!p || (count == 0))
 					rc = COMMAND_LINE_ERROR;
-				for (x = 0; x < count; x++)
+				else
 				{
-					const char* val = p[x];
+					for (x = 0; x < count; x++)
+					{
+						const char* val = p[x];
 #ifdef WITH_GFX_H264
 					if (_strnicmp("AVC444", val, 7) == 0)
 					{
@@ -2402,6 +2404,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					}
 					else
 						rc = COMMAND_LINE_ERROR;
+					}
 				}
 				free(p);
 				if (rc != CHANNEL_RC_OK)
@@ -2447,24 +2450,27 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 				if (!p || (count == 0))
 					rc = COMMAND_LINE_ERROR;
-				for (x = 0; x < count; x++)
+				else
 				{
-					const char* val = p[x];
+					for (x = 0; x < count; x++)
+					{
+						const char* val = p[x];
 
-					if (_strnicmp("AVC444", val, 7) == 0)
-					{
-						settings->GfxAVC444 = TRUE;
-					}
-					else if (_strnicmp("AVC420", val, 7) != 0)
-						rc = COMMAND_LINE_ERROR;
-					else if (_strnicmp("mask:", val, 5) == 0)
-					{
-						ULONGLONG v;
-						const char* uv = &val[5];
-						if (!value_to_uint(uv, &v, 0, UINT32_MAX))
+						if (_strnicmp("AVC444", val, 7) == 0)
+						{
+							settings->GfxAVC444 = TRUE;
+						}
+						else if (_strnicmp("AVC420", val, 7) != 0)
 							rc = COMMAND_LINE_ERROR;
-						else
-							settings->GfxCapsFilter = (UINT32)v;
+						else if (_strnicmp("mask:", val, 5) == 0)
+						{
+							ULONGLONG v;
+							const char* uv = &val[5];
+							if (!value_to_uint(uv, &v, 0, UINT32_MAX))
+								rc = COMMAND_LINE_ERROR;
+							else
+								settings->GfxCapsFilter = (UINT32)v;
+						}
 					}
 				}
 				free(p);
