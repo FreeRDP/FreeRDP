@@ -3018,7 +3018,6 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 	UINT32 szReaderNdrPtr;
 	UINT32 rgReaderStatesNdrPtr;
 	UINT32 rgAtrMasksNdrPtr;
-	LPSCARD_READERSTATEA readerState;
 	call->rgReaderStates = NULL;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
@@ -3111,7 +3110,8 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if (call->cReaders > 0)
 	{
-		call->rgReaderStates = (ReaderStateA*)calloc(call->cReaders, sizeof(ReaderStateA));
+		call->rgReaderStates =
+		    (SCARD_READERSTATEA*)calloc(call->cReaders, sizeof(SCARD_READERSTATEA));
 
 		if (!call->rgReaderStates)
 		{
@@ -3121,7 +3121,7 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 		for (index = 0; index < call->cReaders; index++)
 		{
-			readerState = (LPSCARD_READERSTATEA)&call->rgReaderStates[index];
+			LPSCARD_READERSTATEA readerState = &call->rgReaderStates[index];
 
 			if (Stream_GetRemainingLength(s) < 52)
 			{
@@ -3140,7 +3140,7 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 		for (index = 0; index < call->cReaders; index++)
 		{
-			readerState = (LPSCARD_READERSTATEA)&call->rgReaderStates[index];
+			LPSCARD_READERSTATEA readerState = &call->rgReaderStates[index];
 
 			if (Stream_GetRemainingLength(s) < 12)
 			{
@@ -3384,7 +3384,8 @@ LONG smartcard_unpack_locate_cards_a_call(SMARTCARD_DEVICE* smartcard, wStream* 
 			          Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
-		call->rgReaderStates = calloc(len / sizeof(ReaderStateA) + 1, sizeof(ReaderStateA));
+		call->rgReaderStates =
+		    calloc(len / sizeof(SCARD_READERSTATEA) + 1, sizeof(SCARD_READERSTATEA));
 		if (!call->rgReaderStates)
 			return STATUS_NO_MEMORY;
 
@@ -3451,7 +3452,8 @@ LONG smartcard_unpack_locate_cards_w_call(SMARTCARD_DEVICE* smartcard, wStream* 
 			          Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
-		call->rgReaderStates = calloc(len / sizeof(ReaderStateW) + 1, sizeof(ReaderStateW));
+		call->rgReaderStates =
+		    calloc(len / sizeof(SCARD_READERSTATEW) + 1, sizeof(SCARD_READERSTATEW));
 		if (!call->rgReaderStates)
 			return STATUS_NO_MEMORY;
 
@@ -3613,7 +3615,8 @@ LONG smartcard_unpack_locate_cards_by_atr_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if (call->cReaders > 0)
 	{
-		call->rgReaderStates = (ReaderStateW*)calloc(call->cReaders, sizeof(ReaderStateW));
+		call->rgReaderStates =
+		    (SCARD_READERSTATEW*)calloc(call->cReaders, sizeof(SCARD_READERSTATEW));
 
 		if (!call->rgReaderStates)
 		{

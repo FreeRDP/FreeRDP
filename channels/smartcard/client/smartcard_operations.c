@@ -473,7 +473,7 @@ static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD
 		(*mszReaders)[wpos++] = '\0';
 	}
 
-	return wpos;
+	return (DWORD)wpos;
 }
 
 static DWORD filter_device_by_name_w(wLinkedList* list, LPWSTR* mszReaders, DWORD cchReaders)
@@ -688,9 +688,16 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	DWORD cchReaders = 0;
 	IRP* irp = operation->irp;
 	ListReaders_Call* call = operation->call;
+	union {
+		const BYTE* bp;
+		const char* sz;
+		const WCHAR* wz;
+	} string;
+
+	string.bp = call->mszGroups;
 	cchReaders = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode =
-	    SCardListReadersW(operation->hContext, call->mszGroups, (LPWSTR)&mszReaders, &cchReaders);
+	    SCardListReadersW(operation->hContext, string.wz, (LPWSTR)&mszReaders, &cchReaders);
 
 	if (call->mszGroups)
 	{
@@ -894,7 +901,7 @@ static LONG smartcard_LocateCardsA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	free(call->mszCards);
 	for (x = 0; x < call->cReaders; x++)
 	{
-		const ReaderStateA* state = &call->rgReaderStates[x];
+		SCARD_READERSTATEA* state = &call->rgReaderStates[x];
 		free(state->szReader);
 	}
 	free(call->rgReaderStates);
@@ -920,7 +927,7 @@ static LONG smartcard_LocateCardsW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	free(call->mszCards);
 	for (x = 0; x < call->cReaders; x++)
 	{
-		const ReaderStateW* state = &call->rgReaderStates[x];
+		SCARD_READERSTATEW* state = &call->rgReaderStates[x];
 		free(state->szReader);
 	}
 	free(call->rgReaderStates);
@@ -1044,6 +1051,9 @@ static LONG smartcard_GetTransmitCount_Call(SMARTCARD_DEVICE* smartcard,
 static LONG smartcard_ReleaseStartedEvent_Call(SMARTCARD_DEVICE* smartcard,
                                                SMARTCARD_OPERATION* operation)
 {
+	WINPR_UNUSED(smartcard);
+	WINPR_UNUSED(operation);
+
 	WLog_WARN(TAG, "According to [MS-RDPESC] 3.1.4 Message Processing Events and Sequencing Rules "
 	               "this is not supported?!?");
 	return SCARD_E_UNSUPPORTED_FEATURE;
@@ -1053,13 +1063,13 @@ static LONG smartcard_GetReaderIcon_Call(SMARTCARD_DEVICE* smartcard,
                                          SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	GetReaderIcon_Return ret;
+	GetReaderIcon_Return ret = { 0 };
 	GetReaderIcon_Call* call = operation->call;
 	IRP* irp = operation->irp;
 
 	ret.cbDataLen = SCARD_AUTOALLOCATE;
-	ret.ReturnCode =
-	    SCardGetReaderIconW(operation->hContext, call->szReaderName, &ret.pbData, &ret.cbDataLen);
+	ret.ReturnCode = SCardGetReaderIconW(operation->hContext, call->szReaderName,
+	                                     (LPBYTE)&ret.pbData, &ret.cbDataLen);
 	log_status_error(TAG, "SCardGetReaderIconW", ret.ReturnCode);
 	free(call->szReaderName);
 	status = smartcard_pack_get_reader_icon_return(smartcard, irp->output, &ret);
@@ -2055,10 +2065,10 @@ static LONG smartcard_LocateCardsByATRA_Call(SMARTCARD_DEVICE* smartcard,
 	for (i = 0; i < call->cReaders; i++)
 	{
 		states[i].szReader = (LPSTR)call->rgReaderStates[i].szReader;
-		states[i].dwCurrentState = call->rgReaderStates[i].Common.dwCurrentState;
-		states[i].dwEventState = call->rgReaderStates[i].Common.dwEventState;
-		states[i].cbAtr = call->rgReaderStates[i].Common.cbAtr;
-		CopyMemory(&(states[i].rgbAtr), &(call->rgReaderStates[i].Common.rgbAtr), 36);
+		states[i].dwCurrentState = call->rgReaderStates[i].dwCurrentState;
+		states[i].dwEventState = call->rgReaderStates[i].dwEventState;
+		states[i].cbAtr = call->rgReaderStates[i].cbAtr;
+		CopyMemory(&(states[i].rgbAtr), &(call->rgReaderStates[i].rgbAtr), 36);
 	}
 
 	status = ret.ReturnCode =

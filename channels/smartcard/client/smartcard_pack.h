@@ -118,26 +118,6 @@ typedef struct _ListReaders_Call
 	DWORD cchReaders;
 } ListReaders_Call;
 
-typedef struct _ReaderState_Common_Call
-{
-	DWORD dwCurrentState;
-	DWORD dwEventState;
-	/* [range] */ DWORD cbAtr;
-	BYTE rgbAtr[36];
-} ReaderState_Common_Call;
-
-typedef struct _ReaderStateA
-{
-	/* [string] */ unsigned char* szReader;
-	ReaderState_Common_Call Common;
-} ReaderStateA;
-
-typedef struct _ReaderStateW
-{
-	/* [string] */ WCHAR* szReader;
-	ReaderState_Common_Call Common;
-} ReaderStateW;
-
 typedef struct _ReaderState_Return
 {
 	DWORD dwCurrentState;
@@ -160,7 +140,7 @@ typedef struct _LocateCardsA_Call
 	/* [range] */ DWORD cBytes;
 	/* [size_is] */ char* mszCards;
 	/* [range] */ DWORD cReaders;
-	/* [size_is] */ ReaderStateA* rgReaderStates;
+	/* [size_is] */ LPSCARD_READERSTATEA rgReaderStates;
 } LocateCardsA_Call;
 
 typedef struct _LocateCardsW_Call
@@ -169,7 +149,7 @@ typedef struct _LocateCardsW_Call
 	/* [range] */ DWORD cBytes;
 	/* [size_is] */ WCHAR* mszCards;
 	/* [range] */ DWORD cReaders;
-	/* [size_is] */ ReaderStateW* rgReaderStates;
+	/* [size_is] */ LPSCARD_READERSTATEW rgReaderStates;
 } LocateCardsW_Call;
 
 typedef struct _LocateCards_ATRMask
@@ -185,7 +165,7 @@ typedef struct _LocateCardsByATRA_Call
 	/* [range] */ DWORD cAtrs;
 	/* [size_is] */ LocateCards_ATRMask* rgAtrMasks;
 	/* [range] */ DWORD cReaders;
-	/* [size_is] */ ReaderStateA* rgReaderStates;
+	/* [size_is] */ LPSCARD_READERSTATEA rgReaderStates;
 } LocateCardsByATRA_Call;
 
 typedef struct _LocateCardsByATRW_Call
@@ -194,7 +174,7 @@ typedef struct _LocateCardsByATRW_Call
 	/* [range] */ DWORD cAtrs;
 	/* [size_is] */ LocateCards_ATRMask* rgAtrMasks;
 	/* [range] */ DWORD cReaders;
-	/* [size_is] */ ReaderStateW* rgReaderStates;
+	/* [size_is] */ LPSCARD_READERSTATEW rgReaderStates;
 } LocateCardsByATRW_Call;
 
 typedef struct _GetStatusChange_Return
