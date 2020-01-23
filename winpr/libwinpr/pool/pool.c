@@ -178,6 +178,8 @@ PTP_POOL winpr_CreateThreadpool(PVOID reserved)
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
 	if (pCreateThreadpool)
 		return pCreateThreadpool(reserved);
+#else
+	WINPR_UNUSED(reserved);
 #endif
 	if (!(pool = (PTP_POOL)calloc(1, sizeof(TP_POOL))))
 		return NULL;
