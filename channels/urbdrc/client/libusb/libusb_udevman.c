@@ -293,8 +293,6 @@ static BOOL udevman_unregister_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 
 static BOOL udevman_cancel_all_device_requests(IUDEVMAN* idevman)
 {
-	UDEVMAN* udevman = (UDEVMAN*)idevman;
-
 	if (!idevman)
 		return FALSE;
 
