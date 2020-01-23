@@ -428,7 +428,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYTE
 
 static pstatus_t neon_YCoCgToRGB_8u_X(const BYTE* pSrc, INT32 srcStep, BYTE* pDst, UINT32 DstFormat,
                                       INT32 dstStep, UINT32 width, UINT32 height, UINT8 shift,
-                                      BYTE rPos, BYTE gPos, BYTE bPos, BYTE aPos, BOOL alpha)
+                                      BYTE bPos, BYTE gPos, BYTE rPos, BYTE aPos, BOOL alpha)
 {
 	UINT32 y;
 	BYTE* dptr = pDst;
