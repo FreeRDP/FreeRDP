@@ -210,7 +210,8 @@ static BOOL pf_modules_register_plugin(proxyPlugin* plugin_to_register)
 	size_t index;
 	proxyPlugin* plugin;
 
-	assert(plugins_list != NULL);
+	if (!plugin_to_register)
+		return FALSE;
 
 	/* make sure there's no other loaded plugin with the same name of `plugin_to_register`. */
 	ArrayList_ForEach(plugins_list, proxyPlugin*, index, plugin)
@@ -224,7 +225,8 @@ static BOOL pf_modules_register_plugin(proxyPlugin* plugin_to_register)
 
 	if (ArrayList_Add(plugins_list, plugin_to_register) < 0)
 	{
-		WLog_ERR(TAG, "[%s]: failed adding plugin to list: %s", __FUNCTION__, plugin->name);
+		WLog_ERR(TAG, "[%s]: failed adding plugin to list: %s", __FUNCTION__,
+		         plugin_to_register->name);
 		return FALSE;
 	}
 
