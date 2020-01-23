@@ -82,13 +82,6 @@ macro (freerdp_definition_add)
 		 set (LIBFREERDP_DEFINITIONS ${LIBFREERDP_DEFINITIONS} PARENT_SCOPE)
 endmacro()
 
-if (WITH_SWSCALE)
-    find_package(SWScale REQUIRED)
-endif(WITH_SWSCALE)
-if (WITH_CAIRO)
-    find_package(Cairo REQUIRED)
-endif(WITH_CAIRO)
-
 # Prefer SWScale over Cairo, both at the same time are not possible.
 if (WITH_SWSCALE)
     add_definitions(-DSWSCALE_FOUND=1)
