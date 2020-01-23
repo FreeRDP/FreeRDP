@@ -46,6 +46,46 @@ static LONG smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard,
 static LONG smartcard_pack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
                                                   const REDIR_SCARDHANDLE* handle);
 
+static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL unicode)
+{
+	size_t index, length;
+	union {
+		const void* pv;
+		const char* sz;
+		const WCHAR* wz;
+	} string;
+	char* mszA = NULL;
+
+	string.pv = in;
+
+	if (unicode)
+	{
+		length = (bytes / 2);
+		if (ConvertFromUnicode(CP_UTF8, 0, string.wz, (int)length, &mszA, 0, NULL, NULL) !=
+		    (int)length)
+		{
+			free(mszA);
+			return NULL;
+		}
+	}
+	else
+	{
+		length = bytes;
+		mszA = (char*)malloc(length);
+		if (!mszA)
+			return NULL;
+		CopyMemory(mszA, string.sz, length);
+	}
+
+	for (index = 0; index < length - 1; index++)
+	{
+		if (mszA[index] == '\0')
+			mszA[index] = ',';
+	}
+
+	return mszA;
+}
+
 static char* smartcard_msz_dump_a(const char* msz, size_t len, char* buffer, size_t bufferLen)
 {
 	char* buf = buffer;
@@ -215,31 +255,13 @@ static void smartcard_trace_list_reader_groups_return(SMARTCARD_DEVICE* smartcar
                                                       const ListReaderGroups_Return* ret,
                                                       BOOL unicode)
 {
-	int index;
-	int length;
 	char* mszA = NULL;
 	WINPR_UNUSED(smartcard);
 
 	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	if (unicode)
-	{
-		length = ret->cBytes / 2;
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)ret->msz, length, &mszA, 0, NULL, NULL);
-	}
-	else
-	{
-		length = ret->cBytes;
-		mszA = (char*)malloc(length);
-		CopyMemory(mszA, ret->msz, ret->cBytes);
-	}
-
-	for (index = 0; index < length - 2; index++)
-	{
-		if (mszA[index] == '\0')
-			mszA[index] = ',';
-	}
+	mszA = smartcard_convert_string_list(ret->msz, ret->cBytes, unicode);
 
 	WLog_DBG(TAG, "ListReaderGroups%s_Return {", unicode ? "W" : "A");
 	WLog_DBG(TAG, "ReturnCode: %s (0x%08" PRIx32 ")", SCardGetErrorString(ret->ReturnCode),
@@ -258,9 +280,7 @@ static void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard,
 	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	if (unicode)
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)call->mszGroups, call->cBytes / 2, &mszGroupsA, 0,
-		                   NULL, NULL);
+	mszGroupsA = smartcard_convert_string_list(call->mszGroups, call->cBytes, unicode);
 
 	WLog_DBG(TAG, "ListReaders%s_Call {", unicode ? "W" : "A");
 	smartcard_log_context(TAG, &call->hContext);
@@ -271,8 +291,7 @@ static void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard,
 	         call->cBytes, mszGroupsA, call->fmszReadersIsNULL, call->cchReaders);
 	WLog_DBG(TAG, "}");
 
-	if (unicode)
-		free(mszGroupsA);
+	free(mszGroupsA);
 }
 
 static void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard,
@@ -435,8 +454,6 @@ static void smartcard_trace_locate_cards_w_call(SMARTCARD_DEVICE* smartcard,
 static void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard,
                                                 const ListReaders_Return* ret, BOOL unicode)
 {
-	size_t index;
-	size_t length;
 	char* mszA = NULL;
 	WINPR_UNUSED(smartcard);
 
@@ -453,35 +470,7 @@ static void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard,
 		return;
 	}
 
-	if (unicode)
-	{
-		length = ret->cBytes / 2;
-
-		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)ret->msz, (int)length, &mszA, 0, NULL, NULL) < 1)
-		{
-			WLog_ERR(TAG, "ConvertFromUnicode failed");
-			return;
-		}
-	}
-	else
-	{
-		length = ret->cBytes;
-		mszA = (char*)malloc(length);
-
-		if (!mszA)
-		{
-			WLog_ERR(TAG, "malloc failed!");
-			return;
-		}
-
-		CopyMemory(mszA, ret->msz, ret->cBytes);
-	}
-
-	for (index = 0; index < length - 1; index++)
-	{
-		if (mszA[index] == '\0')
-			mszA[index] = ',';
-	}
+	mszA = smartcard_convert_string_list(ret->msz, ret->cBytes, unicode);
 
 	WLog_DBG(TAG, "cBytes: %" PRIu32 " msz: %s", ret->cBytes, mszA);
 	WLog_DBG(TAG, "}");
@@ -984,8 +973,6 @@ static void smartcard_trace_status_call(SMARTCARD_DEVICE* smartcard, const Statu
 static void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Status_Return* ret,
                                           BOOL unicode)
 {
-	size_t index;
-	size_t length;
 	char* pbAtr = NULL;
 	char* mszReaderNamesA = NULL;
 	WINPR_UNUSED(smartcard);
@@ -993,44 +980,7 @@ static void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Sta
 	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	if (ret->mszReaderNames)
-	{
-		if (unicode)
-		{
-			length = ret->cBytes / 2;
-
-			if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)ret->mszReaderNames, (int)length,
-			                       &mszReaderNamesA, 0, NULL, NULL) < 1)
-			{
-				WLog_ERR(TAG, "ConvertFromUnicode failed");
-				return;
-			}
-		}
-		else
-		{
-			length = (int)ret->cBytes;
-			mszReaderNamesA = (char*)malloc(length);
-
-			if (!mszReaderNamesA)
-			{
-				WLog_ERR(TAG, "malloc failed!");
-				return;
-			}
-
-			CopyMemory(mszReaderNamesA, ret->mszReaderNames, ret->cBytes);
-		}
-	}
-	else
-		length = 0;
-
-	if (length > 2)
-	{
-		for (index = 0; index < length - 2; index++)
-		{
-			if (mszReaderNamesA[index] == '\0')
-				mszReaderNamesA[index] = ',';
-		}
-	}
+	mszReaderNamesA = smartcard_convert_string_list(ret->mszReaderNames, ret->cBytes, unicode);
 
 	pbAtr = winpr_BinToHexString(ret->pbAtr, ret->cbAtrLen, FALSE);
 	WLog_DBG(TAG, "Status%s_Return {", unicode ? "W" : "A");
@@ -1040,10 +990,7 @@ static void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Sta
 	         SCardGetCardStateString(ret->dwState), ret->dwState,
 	         SCardGetProtocolString(ret->dwProtocol), ret->dwProtocol);
 
-	if (mszReaderNamesA)
-	{
-		WLog_DBG(TAG, "cBytes: %" PRIu32 " mszReaderNames: %s", ret->cBytes, mszReaderNamesA);
-	}
+	WLog_DBG(TAG, "cBytes: %" PRIu32 " mszReaderNames: %s", ret->cBytes, mszReaderNamesA);
 
 	WLog_DBG(TAG, "cbAtrLen: %" PRIu32 " pbAtr: %s", ret->cbAtrLen, pbAtr);
 	WLog_DBG(TAG, "}");
@@ -1386,7 +1333,7 @@ LONG smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, U
 	if (pad)
 		Stream_Seek(s, pad);
 
-	return pad;
+	return (LONG)pad;
 }
 
 LONG smartcard_pack_write_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size,
@@ -4054,7 +4001,7 @@ LONG smartcard_pack_locate_cards_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 			return SCARD_F_INTERNAL_ERROR;
 		}
 
-		Stream_Write_UINT32(s, size);
+		Stream_Write_UINT32(s, (UINT32)size);
 		for (x = 0; x < ret->cReaders; x++)
 		{
 			ReaderState_Return* reader = &ret->rgReaderStates[x];
@@ -4063,7 +4010,7 @@ LONG smartcard_pack_locate_cards_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 			Stream_Write_UINT32(s, reader->cbAtr);
 			Stream_Write(s, reader->rgbAtr, sizeof(reader->rgbAtr));
 		}
-		smartcard_pack_write_size_align(smartcard, s, size, 4);
+		smartcard_pack_write_size_align(smartcard, s, (UINT32)size, 4);
 	}
 
 	return SCARD_S_SUCCESS;
