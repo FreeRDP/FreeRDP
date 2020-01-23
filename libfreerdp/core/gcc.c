@@ -1985,11 +1985,8 @@ void gcc_write_client_multitransport_channel_data(wStream* s, rdpMcs* mcs)
 {
 	rdpSettings* settings = mcs->settings;
 
-	if (settings->MultitransportFlags != 0)
-	{
-		gcc_write_user_data_header(s, CS_MULTITRANSPORT, 8);
-		Stream_Write_UINT32(s, settings->MultitransportFlags); /* flags */
-	}
+	gcc_write_user_data_header(s, CS_MULTITRANSPORT, 8);
+	Stream_Write_UINT32(s, settings->MultitransportFlags); /* flags */
 }
 
 BOOL gcc_read_server_multitransport_channel_data(wStream* s, rdpMcs* mcs)
