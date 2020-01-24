@@ -46,6 +46,73 @@ static LONG smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard,
 static LONG smartcard_pack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s,
                                                   const REDIR_SCARDHANDLE* handle);
 
+static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min)
+{
+	UINT32 len;
+	void* r;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_ERR(TAG, "Short data while trying to read NDR pointer, expected 4, got %" PRIu32,
+		         Stream_GetRemainingLength(s));
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+	Stream_Read_UINT32(s, len);
+
+	if (min > len)
+	{
+		WLog_ERR(TAG, "Invalid length read from NDR pointer, minimum %" PRIu32 ", got %" PRIu32,
+		         min, len);
+		return STATUS_DATA_ERROR;
+	}
+
+	if (Stream_GetRemainingLength(s) < len)
+	{
+		WLog_ERR(TAG,
+		         "Short data while trying to read data from NDR pointer, expected %" PRIu32
+		         ", got %" PRIu32,
+		         len, Stream_GetRemainingLength(s));
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	r = calloc(len + 1, sizeof(CHAR));
+	if (!r)
+		return SCARD_E_NO_MEMORY;
+	Stream_Read(s, r, len);
+	*data = r;
+	return STATUS_SUCCESS;
+}
+
+static LONG smartcard_ndr_read_a(wStream* s, CHAR** data, size_t min)
+{
+	union {
+		CHAR** ppc;
+		BYTE** ppv;
+	} u;
+	u.ppc = data;
+	return smartcard_ndr_read(s, u.ppv, min);
+}
+
+static LONG smartcard_ndr_read_w(wStream* s, WCHAR** data, size_t min)
+{
+	union {
+		WCHAR** ppc;
+		BYTE** ppv;
+	} u;
+	u.ppc = data;
+	return smartcard_ndr_read(s, u.ppv, min);
+}
+
+static LONG smartcard_ndr_read_u(wStream* s, UUID** data, size_t min)
+{
+	union {
+		UUID** ppc;
+		BYTE** ppv;
+	} u;
+	u.ppc = data;
+	return smartcard_ndr_read(s, u.ppv, min);
+}
+
 static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL unicode)
 {
 	size_t index, length;
@@ -3716,30 +3783,16 @@ LONG smartcard_unpack_read_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	call->szLookupName = NULL;
 	if (mszNdrPtr)
 	{
-		UINT32 len;
-		if (Stream_GetRemainingLength(s) < 4)
-			return STATUS_BUFFER_TOO_SMALL;
-		Stream_Read_UINT32(s, len);
-		if (Stream_GetRemainingLength(s) < len)
-			return STATUS_BUFFER_TOO_SMALL;
-		call->szLookupName = calloc(len + 1, sizeof(CHAR));
-		if (!call->szLookupName)
-			return SCARD_E_NO_MEMORY;
-		Stream_Read(s, call->szLookupName, len);
+		status = smartcard_ndr_read_a(s, &call->szLookupName, sizeof(CHAR));
+		if (status)
+			return status;
 	}
 
 	if (contextNdrPtr)
 	{
-		UINT32 len;
-		if (Stream_GetRemainingLength(s) < 4)
-			return STATUS_BUFFER_TOO_SMALL;
-		Stream_Read_UINT32(s, len);
-		if (Stream_GetRemainingLength(s) < len)
-			return STATUS_BUFFER_TOO_SMALL;
-		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
-		if (!call->Common.CardIdentifier)
-			return SCARD_E_NO_MEMORY;
-		Stream_Read(s, call->Common.CardIdentifier, len);
+		status = smartcard_ndr_read_u(s, &call->Common.CardIdentifier, sizeof(UUID));
+		if (status)
+			return status;
 	}
 	return SCARD_S_SUCCESS;
 }
@@ -3770,30 +3823,16 @@ LONG smartcard_unpack_read_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	call->szLookupName = NULL;
 	if (mszNdrPtr)
 	{
-		UINT32 len;
-		if (Stream_GetRemainingLength(s) < 4)
-			return STATUS_BUFFER_TOO_SMALL;
-		Stream_Read_UINT32(s, len);
-		if (Stream_GetRemainingLength(s) < len)
-			return STATUS_BUFFER_TOO_SMALL;
-		call->szLookupName = calloc(len + 1, sizeof(WCHAR));
-		if (!call->szLookupName)
-			return SCARD_E_NO_MEMORY;
-		Stream_Read(s, call->szLookupName, len);
+		status = smartcard_ndr_read_w(s, &call->szLookupName, sizeof(WCHAR));
+		if (status)
+			return status;
 	}
 
 	if (contextNdrPtr)
 	{
-		UINT32 len;
-		if (Stream_GetRemainingLength(s) < 4)
-			return STATUS_BUFFER_TOO_SMALL;
-		Stream_Read_UINT32(s, len);
-		if (Stream_GetRemainingLength(s) < len)
-			return STATUS_BUFFER_TOO_SMALL;
-		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
-		if (!call->Common.CardIdentifier)
-			return SCARD_E_NO_MEMORY;
-		Stream_Read(s, call->Common.CardIdentifier, len);
+		status = smartcard_ndr_read(s, &call->Common.CardIdentifier, sizeof(UUID));
+		if (status)
+			return status;
 	}
 	return SCARD_S_SUCCESS;
 }
@@ -3825,46 +3864,25 @@ LONG smartcard_unpack_write_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s
 	call->szLookupName = NULL;
 	if (mszNdrPtr)
 	{
-		UINT32 len;
-		if (Stream_GetRemainingLength(s) < 4)
-			return STATUS_BUFFER_TOO_SMALL;
-		Stream_Read_UINT32(s, len);
-		if (Stream_GetRemainingLength(s) < len)
-			return STATUS_BUFFER_TOO_SMALL;
-		call->szLookupName = calloc(len + 1, sizeof(CHAR));
-		if (!call->szLookupName)
-			return SCARD_E_NO_MEMORY;
-		Stream_Read(s, call->szLookupName, len);
+		status = smartcard_ndr_read_a(s, &call->szLookupName, sizeof(CHAR));
+		if (status)
+			return status;
 	}
 
 	call->Common.CardIdentifier = NULL;
 	if (contextNdrPtr)
 	{
-		UINT32 len;
-		if (Stream_GetRemainingLength(s) < 4)
-			return STATUS_BUFFER_TOO_SMALL;
-		Stream_Read_UINT32(s, len);
-		if (Stream_GetRemainingLength(s) < len)
-			return STATUS_BUFFER_TOO_SMALL;
-		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
-		if (!call->Common.CardIdentifier)
-			return SCARD_E_NO_MEMORY;
-		Stream_Read(s, call->Common.CardIdentifier, len);
+		status = smartcard_ndr_read_u(s, &call->Common.CardIdentifier, sizeof(UUID));
+		if (status)
+			return status;
 	}
 
 	call->Common.pbData = NULL;
 	if (pbDataNdrPtr)
 	{
-		UINT32 len;
-		if (Stream_GetRemainingLength(s) < 4)
-			return STATUS_BUFFER_TOO_SMALL;
-		Stream_Read_UINT32(s, len);
-		if (Stream_GetRemainingLength(s) < len)
-			return STATUS_BUFFER_TOO_SMALL;
-		call->Common.pbData = malloc(len);
-		if (!call->Common.pbData)
-			return SCARD_E_NO_MEMORY;
-		Stream_Read(s, call->Common.pbData, len);
+		status = smartcard_ndr_read(s, &call->Common.pbData, sizeof(CHAR));
+		if (status)
+			return status;
 	}
 	return SCARD_S_SUCCESS;
 }
@@ -3896,46 +3914,25 @@ LONG smartcard_unpack_write_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s
 	call->szLookupName = NULL;
 	if (mszNdrPtr)
 	{
-		UINT32 len;
-		if (Stream_GetRemainingLength(s) < 4)
-			return STATUS_BUFFER_TOO_SMALL;
-		Stream_Read_UINT32(s, len);
-		if (Stream_GetRemainingLength(s) < len)
-			return STATUS_BUFFER_TOO_SMALL;
-		call->szLookupName = calloc(len + 1, sizeof(WCHAR));
-		if (!call->szLookupName)
-			return SCARD_E_NO_MEMORY;
-		Stream_Read(s, call->szLookupName, len);
+		status = smartcard_ndr_read_w(s, &call->szLookupName, sizeof(WCHAR));
+		if (status)
+			return status;
 	}
 
 	call->Common.CardIdentifier = NULL;
 	if (contextNdrPtr)
 	{
-		UINT32 len;
-		if (Stream_GetRemainingLength(s) < 4)
-			return STATUS_BUFFER_TOO_SMALL;
-		Stream_Read_UINT32(s, len);
-		if (Stream_GetRemainingLength(s) < len)
-			return STATUS_BUFFER_TOO_SMALL;
-		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
-		if (!call->Common.CardIdentifier)
-			return SCARD_E_NO_MEMORY;
-		Stream_Read(s, call->Common.CardIdentifier, len);
+		status = smartcard_ndr_read_u(s, &call->Common.CardIdentifier, sizeof(UUID));
+		if (status)
+			return status;
 	}
 
 	call->Common.pbData = NULL;
 	if (pbDataNdrPtr)
 	{
-		UINT32 len;
-		if (Stream_GetRemainingLength(s) < 4)
-			return STATUS_BUFFER_TOO_SMALL;
-		Stream_Read_UINT32(s, len);
-		if (Stream_GetRemainingLength(s) < len)
-			return STATUS_BUFFER_TOO_SMALL;
-		call->Common.pbData = malloc(len);
-		if (!call->Common.pbData)
-			return SCARD_E_NO_MEMORY;
-		Stream_Read(s, call->Common.pbData, len);
+		status = smartcard_ndr_read(s, &call->Common.pbData, sizeof(CHAR));
+		if (status)
+			return status;
 	}
 	return SCARD_S_SUCCESS;
 }
