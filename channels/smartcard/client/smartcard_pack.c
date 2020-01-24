@@ -3720,6 +3720,8 @@ LONG smartcard_unpack_read_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
+		if (Stream_GetRemainingLength(s) < len)
+			return STATUS_BUFFER_TOO_SMALL;
 		call->szLookupName = calloc(len + 1, sizeof(CHAR));
 		if (!call->szLookupName)
 			return SCARD_E_NO_MEMORY;
@@ -3732,6 +3734,8 @@ LONG smartcard_unpack_read_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
+		if (Stream_GetRemainingLength(s) < len)
+			return STATUS_BUFFER_TOO_SMALL;
 		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
 		if (!call->Common.CardIdentifier)
 			return SCARD_E_NO_MEMORY;
@@ -3770,6 +3774,8 @@ LONG smartcard_unpack_read_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
+		if (Stream_GetRemainingLength(s) < len)
+			return STATUS_BUFFER_TOO_SMALL;
 		call->szLookupName = calloc(len + 1, sizeof(WCHAR));
 		if (!call->szLookupName)
 			return SCARD_E_NO_MEMORY;
@@ -3782,6 +3788,8 @@ LONG smartcard_unpack_read_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
+		if (Stream_GetRemainingLength(s) < len)
+			return STATUS_BUFFER_TOO_SMALL;
 		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
 		if (!call->Common.CardIdentifier)
 			return SCARD_E_NO_MEMORY;
@@ -3821,6 +3829,8 @@ LONG smartcard_unpack_write_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
+		if (Stream_GetRemainingLength(s) < len)
+			return STATUS_BUFFER_TOO_SMALL;
 		call->szLookupName = calloc(len + 1, sizeof(CHAR));
 		if (!call->szLookupName)
 			return SCARD_E_NO_MEMORY;
@@ -3834,6 +3844,8 @@ LONG smartcard_unpack_write_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
+		if (Stream_GetRemainingLength(s) < len)
+			return STATUS_BUFFER_TOO_SMALL;
 		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
 		if (!call->Common.CardIdentifier)
 			return SCARD_E_NO_MEMORY;
@@ -3847,6 +3859,8 @@ LONG smartcard_unpack_write_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
+		if (Stream_GetRemainingLength(s) < len)
+			return STATUS_BUFFER_TOO_SMALL;
 		call->Common.pbData = malloc(len);
 		if (!call->Common.pbData)
 			return SCARD_E_NO_MEMORY;
@@ -3886,6 +3900,8 @@ LONG smartcard_unpack_write_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
+		if (Stream_GetRemainingLength(s) < len)
+			return STATUS_BUFFER_TOO_SMALL;
 		call->szLookupName = calloc(len + 1, sizeof(WCHAR));
 		if (!call->szLookupName)
 			return SCARD_E_NO_MEMORY;
@@ -3899,6 +3915,8 @@ LONG smartcard_unpack_write_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
+		if (Stream_GetRemainingLength(s) < len)
+			return STATUS_BUFFER_TOO_SMALL;
 		call->Common.CardIdentifier = calloc(len / sizeof(UUID) + 1, sizeof(UUID));
 		if (!call->Common.CardIdentifier)
 			return SCARD_E_NO_MEMORY;
@@ -3912,6 +3930,8 @@ LONG smartcard_unpack_write_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s
 		if (Stream_GetRemainingLength(s) < 4)
 			return STATUS_BUFFER_TOO_SMALL;
 		Stream_Read_UINT32(s, len);
+		if (Stream_GetRemainingLength(s) < len)
+			return STATUS_BUFFER_TOO_SMALL;
 		call->Common.pbData = malloc(len);
 		if (!call->Common.pbData)
 			return SCARD_E_NO_MEMORY;
