@@ -25,6 +25,7 @@
 #include <winpr/string.h>
 #include <winpr/winsock.h>
 #include <winpr/thread.h>
+#include <errno.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/wtsvc.h>
@@ -453,8 +454,19 @@ BOOL pf_server_start(proxyServer* server)
 
 	if (!server->listener->Open(server->listener, server->config->Host, server->config->Port))
 	{
-		WLog_ERR(TAG,
-		         "listener->Open failed! Port might be already used, or insufficient permissions.");
+		switch (errno)
+		{
+			case EADDRINUSE:
+				WLog_ERR(TAG, "failed to start listener: address already in use!");
+				break;
+			case EACCES:
+				WLog_ERR(TAG, "failed to start listener: insufficent permissions!");
+				break;
+			default:
+				WLog_ERR(TAG, "failed to start listener: errno=%d", errno);
+				break;
+		}
+
 		goto error;
 	}
 

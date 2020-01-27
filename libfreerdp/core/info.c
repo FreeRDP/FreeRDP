@@ -1542,5 +1542,4 @@ BOOL rdp_send_server_status_info(rdpContext* context, UINT32 status)
 
 	Stream_Write_UINT32(s, status);
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_STATUS_INFO, rdp->mcs->userId);
-	;
 }
