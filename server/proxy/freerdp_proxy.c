@@ -28,7 +28,6 @@
 #include <winpr/collections.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <winpr/cmdline.h>
 
 #define TAG PROXY_TAG("server")
 
