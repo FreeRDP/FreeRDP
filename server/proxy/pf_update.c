@@ -20,6 +20,7 @@
  */
 
 #include <freerdp/display.h>
+#include <freerdp/session.h>
 #include <winpr/image.h>
 #include <winpr/sysinfo.h>
 
@@ -188,7 +189,25 @@ static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* 
 	pClientContext* pc = (pClientContext*)context;
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
+	logon_info* logonInfo = NULL;
+
 	WLog_DBG(TAG, __FUNCTION__);
+
+	switch (type)
+	{
+		case INFO_TYPE_LOGON:
+		case INFO_TYPE_LOGON_LONG:
+		{
+			logonInfo = (logon_info*)data;
+			LOG_INFO(TAG, pc, "client logon info: Username: %s, Domain: %s", logonInfo->username,
+			         logonInfo->domain);
+			break;
+		}
+
+		default:
+			break;
+	}
+
 	return ps->update->SaveSessionInfo(ps, type, data);
 }
 

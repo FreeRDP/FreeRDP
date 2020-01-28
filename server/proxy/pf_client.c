@@ -147,7 +147,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 * Load all required plugins / channels / libraries specified by current
 	 * settings.
 	 */
-	WLog_INFO(TAG, "Loading addins");
+	LOG_INFO(TAG, pc, "Loading addins");
 
 	if (!pf_client_load_rdpsnd(pc, config))
 	{
@@ -157,7 +157,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 
 	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
 	{
-		WLog_ERR(TAG, "Failed to load addins");
+		LOG_ERR(TAG, pc, "Failed to load addins");
 		return FALSE;
 	}
 
@@ -312,8 +312,12 @@ static BOOL pf_client_connect_without_nla(pClientContext* pc)
 static BOOL pf_client_connect(freerdp* instance)
 {
 	pClientContext* pc = (pClientContext*)instance->context;
+	rdpSettings* settings = instance->settings;
 	BOOL rc = FALSE;
 	BOOL retry = FALSE;
+
+	LOG_INFO(TAG, pc, "connecting using client info: Username: %s, Domain: %s", settings->Username,
+	         settings->Domain);
 
 	pf_client_set_security_settings(pc);
 	if (pf_client_should_retry_without_nla(pc))
