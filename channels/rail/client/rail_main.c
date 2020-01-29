@@ -583,15 +583,14 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
 	UINT error = CHANNEL_RC_OK;
 	railPlugin* rail = (railPlugin*)lpUserParam;
 
-	if (!rail || (rail->OpenHandle != openHandle))
-	{
-		WLog_ERR(TAG, "error no match");
-		return;
-	}
-
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
+			if (!rail || (rail->OpenHandle != openHandle))
+			{
+				WLog_ERR(TAG, "error no match");
+				return;
+			}
 			if ((error = rail_virtual_channel_event_data_received(rail, pData, dataLength,
 			                                                      totalLength, dataFlags)))
 				WLog_ERR(TAG,
@@ -612,7 +611,7 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
 			break;
 	}
 
-	if (error && rail->rdpcontext)
+	if (error && rail && rail->rdpcontext)
 		setChannelError(rail->rdpcontext, error,
 		                "rail_virtual_channel_open_event reported an error");
 
