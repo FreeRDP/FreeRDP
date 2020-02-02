@@ -659,6 +659,21 @@ void* WTSChannelGetHandleById(freerdp_peer* client, const UINT16 channel_id)
 	return channel->handle;
 }
 
+const char* WTSChannelGetName(freerdp_peer* client, UINT16 channel_id)
+{
+	rdpMcsChannel* channel;
+
+	if (!client || !client->context || !client->context->rdp)
+		return NULL;
+
+	channel = wts_get_joined_channel_by_id(client->context->rdp->mcs, channel_id);
+
+	if (!channel)
+		return NULL;
+
+	return (const char*)channel->Name;
+}
+
 BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId,
                                                   BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
