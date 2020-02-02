@@ -53,6 +53,7 @@ static BOOL demo_plugin_unload()
 static proxyPlugin demo_plugin = {
 	plugin_name,                /* name */
 	plugin_desc,                /* description */
+	demo_plugin_unload,         /* PluginUnload */
 	NULL,                       /* ClientPreConnect */
 	NULL,                       /* ClientLoginFailure */
 	NULL,                       /* ServerPostConnect */
@@ -60,7 +61,8 @@ static proxyPlugin demo_plugin = {
 	NULL,                       /* ServerChannelsFree */
 	demo_filter_keyboard_event, /* KeyboardEvent */
 	NULL,                       /* MouseEvent */
-	demo_plugin_unload          /* PluginUnload */
+	NULL,                       /* ClientChannelData */
+	NULL,                       /* ServerChannelData */
 };
 
 BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager)

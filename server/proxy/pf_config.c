@@ -154,6 +154,23 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	config->Clipboard = pf_config_get_bool(ini, "Channels", "Clipboard");
 	config->AudioOutput = pf_config_get_bool(ini, "Channels", "AudioOutput");
 	config->RemoteApp = pf_config_get_bool(ini, "Channels", "RemoteApp");
+	config->Passthrough = CommandLineParseCommaSeparatedValues(
+	    pf_config_get_str(ini, "Channels", "Passthrough"), &config->PassthroughCount);
+
+	{
+		/* validate channel name length */
+		size_t i;
+
+		for (i = 0; i < config->PassthroughCount; i++)
+		{
+			if (strlen(config->Passthrough[i]) > CHANNEL_NAME_LEN)
+			{
+				WLog_ERR(TAG, "passthrough channel: %s: name too long!", config->Passthrough[i]);
+				return FALSE;
+			}
+		}
+	}
+
 	return TRUE;
 }
 
@@ -284,6 +301,14 @@ out:
 	return NULL;
 }
 
+static void pf_server_config_print_list(char** list, size_t count)
+{
+	size_t i;
+
+	for (i = 0; i < count; i++)
+		WLog_INFO(TAG, "\t\t- %s", list[i]);
+}
+
 void pf_server_config_print(proxyConfig* config)
 {
 	WLog_INFO(TAG, "Proxy configuration:");
@@ -321,6 +346,12 @@ void pf_server_config_print(proxyConfig* config)
 	CONFIG_PRINT_BOOL(config, AudioOutput);
 	CONFIG_PRINT_BOOL(config, RemoteApp);
 
+	if (config->PassthroughCount)
+	{
+		WLog_INFO(TAG, "\tStatic Channels Proxy:");
+		pf_server_config_print_list(config->Passthrough, config->PassthroughCount);
+	}
+
 	CONFIG_PRINT_SECTION("Clipboard");
 	CONFIG_PRINT_BOOL(config, TextOnly);
 	if (config->MaxTextLength > 0)
@@ -336,6 +367,7 @@ void pf_server_config_free(proxyConfig* config)
 	if (config == NULL)
 		return;
 
+	free(config->Passthrough);
 	free(config->CapturesDirectory);
 	free(config->RequiredPlugins);
 	free(config->Modules);
