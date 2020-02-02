@@ -75,6 +75,7 @@ extern "C"
 	                                         void* handle);
 	FREERDP_API void* WTSChannelGetHandleByName(freerdp_peer* client, const char* channel_name);
 	FREERDP_API void* WTSChannelGetHandleById(freerdp_peer* client, const UINT16 channel_id);
+	FREERDP_API const char* WTSChannelGetName(freerdp_peer* client, UINT16 channel_id);
 
 #ifdef __cplusplus
 }
