@@ -25,9 +25,25 @@
 #include "pf_client.h"
 #include "pf_context.h"
 
+static wHashTable* create_channel_ids_map()
+{
+	wHashTable* table = HashTable_New(TRUE);
+	if (!table)
+		return NULL;
+
+	table->hash = HashTable_StringHash;
+	table->keyCompare = HashTable_StringCompare;
+	table->keyClone = HashTable_StringClone;
+	table->keyFree = HashTable_StringFree;
+	return table;
+}
+
 /* Proxy context initialization callback */
 static BOOL client_to_proxy_context_new(freerdp_peer* client, pServerContext* context)
 {
+	proxyServer* server = (proxyServer*)client->ContextExtra;
+	proxyConfig* config = server->config;
+
 	context->dynvcReady = NULL;
 
 	context->vcm = WTSOpenServerA((LPSTR)client->context);
@@ -36,6 +52,14 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, pServerContext* co
 		goto error;
 
 	if (!(context->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		goto error;
+
+	context->vc_handles = (HANDLE*)calloc(config->PassthroughCount, sizeof(HANDLE));
+	if (!context->vc_handles)
+		goto error;
+
+	context->vc_ids = create_channel_ids_map();
+	if (!context->vc_ids)
 		goto error;
 
 	return TRUE;
@@ -50,6 +74,10 @@ error:
 		context->dynvcReady = NULL;
 	}
 
+	free(context->vc_handles);
+	context->vc_handles = NULL;
+	HashTable_Free(context->vc_ids);
+	context->vc_ids = NULL;
 	return FALSE;
 }
 
@@ -70,6 +98,9 @@ static void client_to_proxy_context_free(freerdp_peer* client, pServerContext* c
 		CloseHandle(context->dynvcReady);
 		context->dynvcReady = NULL;
 	}
+
+	HashTable_Free(context->vc_ids);
+	free(context->vc_handles);
 }
 
 BOOL pf_context_init_server_context(freerdp_peer* client)
@@ -155,6 +186,10 @@ pClientContext* pf_context_create_client_context(rdpSettings* clientSettings)
 	pc = (pClientContext*)context;
 
 	if (!pf_context_copy_settings(context->settings, clientSettings))
+		goto error;
+
+	pc->vc_ids = create_channel_ids_map();
+	if (!pc->vc_ids)
 		goto error;
 
 	return pc;

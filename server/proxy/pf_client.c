@@ -39,6 +39,8 @@
 
 #define TAG PROXY_TAG("client")
 
+static pReceiveChannelData client_receive_channel_data_original = NULL;
+
 static BOOL proxy_server_reactivate(rdpContext* ps, const rdpContext* pc)
 {
 	if (!pf_context_copy_settings(ps->settings, pc->settings))
@@ -149,6 +151,37 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 */
 	WLog_INFO(TAG, "Loading addins");
 
+	{
+		/* add passthrough channels to channel def array */
+		size_t i;
+
+		if (settings->ChannelCount + config->PassthroughCount >= settings->ChannelDefArraySize)
+		{
+			LOG_ERR(TAG, pc, "too many channels");
+			return FALSE;
+		}
+
+		for (i = 0; i < config->PassthroughCount; i++)
+		{
+			const char* channel_name = config->Passthrough[i];
+			CHANNEL_DEF channel = { 0 };
+
+			/* only connect connect this channel if already joined in peer connection */
+			if (!WTSVirtualChannelManagerIsChannelJoined(ps->vcm, channel_name))
+			{
+				LOG_INFO(TAG, ps, "client did not connected with channel %s, skipping passthrough",
+				         channel_name);
+
+				continue;
+			}
+
+			channel.options = CHANNEL_OPTION_INITIALIZED; /* TODO: Export to config. */
+			strncpy(channel.name, channel_name, CHANNEL_NAME_LEN);
+
+			settings->ChannelDefArray[settings->ChannelCount++] = channel;
+		}
+	}
+
 	if (!pf_client_load_rdpsnd(pc, config))
 	{
 		LOG_ERR(TAG, pc, "Failed to load rdpsnd client");
@@ -162,6 +195,41 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	}
 
 	return TRUE;
+}
+
+static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channelId, BYTE* data,
+                                                int size, int flags, int totalSize)
+{
+	pClientContext* pc = (pClientContext*)instance->context;
+	pServerContext* ps = pc->pdata->ps;
+	proxyData* pdata = ps->pdata;
+	proxyConfig* config = pdata->config;
+	size_t i;
+
+	const char* channel_name = freerdp_channels_get_name_by_id(instance, channelId);
+
+	for (i = 0; i < config->PassthroughCount; i++)
+	{
+		if (strncmp(channel_name, config->Passthrough[i], CHANNEL_NAME_LEN) == 0)
+		{
+			proxyChannelDataEventInfo ev;
+			UINT64 server_channel_id;
+
+			ev.channel_id = channelId;
+			ev.channel_name = channel_name;
+			ev.data = (const BYTE*)data;
+			ev.data_len = size;
+
+			if (!pf_modules_run_filter(FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA, pdata, &ev))
+				return FALSE;
+
+			server_channel_id = (UINT64)HashTable_GetItemValue(ps->vc_ids, (void*)channel_name);
+			return ps->context.peer->SendChannelData(ps->context.peer, (UINT16)server_channel_id,
+			                                         data, size);
+		}
+	}
+
+	return client_receive_channel_data_original(instance, channelId, data, size, flags, totalSize);
 }
 
 /**
@@ -224,10 +292,25 @@ static BOOL pf_client_post_connect(freerdp* instance)
 
 	pf_client_register_update_callbacks(update);
 
+	/* virtual channels receive data hook */
+	client_receive_channel_data_original = instance->ReceiveChannelData;
+	instance->ReceiveChannelData = pf_client_receive_channel_data_hook;
+
+	/* populate channel name -> channel ids map */
+	{
+		size_t i;
+		for (i = 0; i < config->PassthroughCount; i++)
+		{
+			char* channel_name = config->Passthrough[i];
+			UINT64 channel_id = (UINT64)freerdp_channels_get_id_by_name(instance, channel_name);
+			HashTable_Add(pc->vc_ids, (void*)channel_name, (void*)channel_id);
+		}
+	}
+
 	/*
-	 * after the connection fully established and settings were negotiated with target server, send
-	 * a reactivation sequence to the client with the negotiated settings. This way, settings are
-	 * synchorinized between proxy's peer and and remote target.
+	 * after the connection fully established and settings were negotiated with target server,
+	 * send a reactivation sequence to the client with the negotiated settings. This way,
+	 * settings are synchorinized between proxy's peer and and remote target.
 	 */
 	return proxy_server_reactivate(ps, context);
 }
@@ -502,6 +585,8 @@ static void pf_client_client_free(freerdp* instance, rdpContext* context)
 
 	free(pc->frames_dir);
 	pc->frames_dir = NULL;
+
+	HashTable_Free(pc->vc_ids);
 }
 
 static int pf_client_client_stop(rdpContext* context)

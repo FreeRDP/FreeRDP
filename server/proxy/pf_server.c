@@ -46,6 +46,8 @@
 
 #define TAG PROXY_TAG("server")
 
+static psPeerReceiveChannelData server_receive_channel_data_original = NULL;
+
 static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char** target,
                                                       DWORD* port)
 {
@@ -196,6 +198,42 @@ static BOOL pf_server_adjust_monitor_layout(freerdp_peer* peer)
 	return TRUE;
 }
 
+static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 channelId,
+                                                const BYTE* data, int size, int flags,
+                                                int totalSize)
+{
+	pServerContext* ps = (pServerContext*)peer->context;
+	pClientContext* pc = ps->pdata->pc;
+	proxyData* pdata = pc->pdata;
+	proxyConfig* config = pdata->config;
+	size_t i;
+	const char* channel_name = WTSChannelGetName(peer, channelId);
+
+	for (i = 0; i < config->PassthroughCount; i++)
+	{
+		if (strncmp(channel_name, config->Passthrough[i], CHANNEL_NAME_LEN) == 0)
+		{
+			proxyChannelDataEventInfo ev;
+			UINT64 client_channel_id;
+
+			ev.channel_id = channelId;
+			ev.channel_name = channel_name;
+			ev.data = data;
+			ev.data_len = size;
+
+			if (!pf_modules_run_filter(FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA, pdata, &ev))
+				return FALSE;
+
+			client_channel_id = (UINT64)HashTable_GetItemValue(pc->vc_ids, (void*)channel_name);
+
+			return pc->context.instance->SendChannelData(
+			    pc->context.instance, (UINT16)client_channel_id, (BYTE*)data, size);
+		}
+	}
+
+	return server_receive_channel_data_original(peer, channelId, data, size, flags, totalSize);
+}
+
 static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 {
 	pServerContext* ps = (pServerContext*)peer->context;
@@ -256,6 +294,10 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	peer->Activate = pf_server_activate;
 	peer->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
 	peer->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
+
+	/* virtual channels receive data hook */
+	server_receive_channel_data_original = peer->ReceiveChannelData;
+	peer->ReceiveChannelData = pf_server_receive_channel_data_hook;
 
 	if (ArrayList_Add(server->clients, pdata) < 0)
 		return FALSE;
