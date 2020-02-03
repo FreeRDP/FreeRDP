@@ -561,6 +561,19 @@ static DWORD pf_client_verify_changed_certificate_ex(
 	return 1;
 }
 
+static void pf_client_context_free(freerdp* instance, rdpContext* context)
+{
+	pClientContext* pc = (pClientContext*)context;
+
+	if (!pc)
+		return;
+
+	free(pc->frames_dir);
+	pc->frames_dir = NULL;
+
+	HashTable_Free(pc->vc_ids);
+}
+
 static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 {
 	if (!instance || !context)
@@ -572,21 +585,9 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyCertificateEx = pf_client_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = pf_client_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = pf_logon_error_info;
+	instance->ContextFree = pf_client_context_free;
 
 	return TRUE;
-}
-
-static void pf_client_client_free(freerdp* instance, rdpContext* context)
-{
-	pClientContext* pc = (pClientContext*)context;
-
-	if (!pc)
-		return;
-
-	free(pc->frames_dir);
-	pc->frames_dir = NULL;
-
-	HashTable_Free(pc->vc_ids);
 }
 
 static int pf_client_client_stop(rdpContext* context)
@@ -620,7 +621,6 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ContextSize = sizeof(pClientContext);
 	/* Client init and finish */
 	pEntryPoints->ClientNew = pf_client_client_new;
-	pEntryPoints->ClientFree = pf_client_client_free;
 	pEntryPoints->ClientStop = pf_client_client_stop;
 	return 0;
 }
