@@ -478,9 +478,7 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 
 	end = GetTickCount64();
 	diffMS = end - rdpsnd->wArrivalTime + latency;
-	ts = rdpsnd->wTimeStamp + diffMS;
-	if (ts > UINT16_MAX)
-		ts = UINT16_MAX;
+	ts = (rdpsnd->wTimeStamp + diffMS) % UINT16_MAX;
 	return rdpsnd_send_wave_confirm_pdu(rdpsnd, (UINT16)ts, rdpsnd->cBlockNo);
 }
 
@@ -741,7 +739,7 @@ static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 				if ((errno != 0) || (val > UINT16_MAX))
 					return CHANNEL_RC_INITIALIZATION_ERROR;
 
-				rdpsnd->fixed_format->wFormatTag = val;
+				rdpsnd->fixed_format->wFormatTag = (UINT16)val;
 			}
 			CommandLineSwitchCase(arg, "rate")
 			{
@@ -759,7 +757,7 @@ static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 				if ((errno != 0) || (val > UINT16_MAX))
 					return CHANNEL_RC_INITIALIZATION_ERROR;
 
-				rdpsnd->fixed_format->nChannels = val;
+				rdpsnd->fixed_format->nChannels = (UINT16)val;
 			}
 			CommandLineSwitchCase(arg, "latency")
 			{

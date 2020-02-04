@@ -184,7 +184,7 @@ static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
 	if (winmm->hThread)
 	{
 		WaitForSingleObject(winmm->hThread, INFINITE);
-		CloseHandle(&winmm->hThread);
+		CloseHandle(winmm->hThread);
 		winmm->hThread = NULL;
 	}
 }
@@ -266,7 +266,7 @@ static UINT rdpsnd_winmm_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	if (size > UINT32_MAX)
 		return 0;
 
-	lpWaveHdr = malloc(sizeof(WAVEHDR));
+	lpWaveHdr = (LPWAVEHDR)calloc(1, sizeof(WAVEHDR));
 	if (!lpWaveHdr)
 		return 0;
 
