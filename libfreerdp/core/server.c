@@ -987,7 +987,11 @@ BOOL WINAPI FreeRDP_WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* p
 
 static void peer_channel_queue_free_message(void* obj)
 {
-	free(obj);
+	wMessage* msg = (wMessage*)obj;
+	if (!msg)
+		return;
+
+	free(msg->context);
 }
 
 static void channel_free(rdpPeerChannel* channel)
@@ -1276,7 +1280,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, 
 	if (messageCtx->offset >= messageCtx->length)
 	{
 		MessageQueue_Peek(channel->queue, &message, TRUE);
-		peer_channel_queue_free_message(messageCtx);
+		peer_channel_queue_free_message(&message);
 	}
 
 	return TRUE;
