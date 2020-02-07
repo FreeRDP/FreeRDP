@@ -348,7 +348,7 @@ typedef void(WINAPI* LPOCNDSCPROC)(SCARDCONTEXT hSCardContext, SCARDHANDLE hCard
 
 typedef struct
 {
-	LPCSTR szReader;
+	LPSTR szReader;
 	LPVOID pvUserData;
 	DWORD dwCurrentState;
 	DWORD dwEventState;
@@ -358,7 +358,7 @@ typedef struct
 
 typedef struct
 {
-	LPCWSTR szReader;
+	LPWSTR szReader;
 	LPVOID pvUserData;
 	DWORD dwCurrentState;
 	DWORD dwEventState;
