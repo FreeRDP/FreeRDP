@@ -965,15 +965,14 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, D
 	UINT error = CHANNEL_RC_OK;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)lpUserParam;
 
-	if (!rdpsnd || (rdpsnd->OpenHandle != openHandle))
-	{
-		WLog_ERR(TAG, "error no match");
-		return;
-	}
-
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
+			if (!rdpsnd || (rdpsnd->OpenHandle != openHandle))
+			{
+				WLog_ERR(TAG, "error no match");
+				return;
+			}
 			if ((error = rdpsnd_virtual_channel_event_data_received(rdpsnd, pData, dataLength,
 			                                                        totalLength, dataFlags)))
 				WLog_ERR(TAG,
@@ -994,7 +993,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, D
 			break;
 	}
 
-	if (error && rdpsnd->rdpcontext)
+	if (error && rdpsnd && rdpsnd->rdpcontext)
 		setChannelError(rdpsnd->rdpcontext, error,
 		                "rdpsnd_virtual_channel_open_event_ex reported an error");
 }

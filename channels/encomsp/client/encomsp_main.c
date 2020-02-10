@@ -1046,15 +1046,14 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 	UINT error = CHANNEL_RC_OK;
 	encomspPlugin* encomsp = (encomspPlugin*)lpUserParam;
 
-	if (!encomsp || (encomsp->OpenHandle != openHandle))
-	{
-		WLog_ERR(TAG, "error no match");
-		return;
-	}
-
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
+			if (!encomsp || (encomsp->OpenHandle != openHandle))
+			{
+				WLog_ERR(TAG, "error no match");
+				return;
+			}
 			if ((error = encomsp_virtual_channel_event_data_received(encomsp, pData, dataLength,
 			                                                         totalLength, dataFlags)))
 				WLog_ERR(TAG,
@@ -1076,7 +1075,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 			break;
 	}
 
-	if (error && encomsp->rdpcontext)
+	if (error && encomsp && encomsp->rdpcontext)
 		setChannelError(encomsp->rdpcontext, error,
 		                "encomsp_virtual_channel_open_event reported an error");
 

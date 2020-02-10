@@ -771,15 +771,14 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 	UINT error = CHANNEL_RC_OK;
 	remdeskPlugin* remdesk = (remdeskPlugin*)lpUserParam;
 
-	if (!remdesk || (remdesk->OpenHandle != openHandle))
-	{
-		WLog_ERR(TAG, "error no match");
-		return;
-	}
-
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
+			if (!remdesk || (remdesk->OpenHandle != openHandle))
+			{
+				WLog_ERR(TAG, "error no match");
+				return;
+			}
 			if ((error = remdesk_virtual_channel_event_data_received(remdesk, pData, dataLength,
 			                                                         totalLength, dataFlags)))
 				WLog_ERR(TAG,
@@ -805,7 +804,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 			error = ERROR_INTERNAL_ERROR;
 	}
 
-	if (error && remdesk->rdpcontext)
+	if (error && remdesk && remdesk->rdpcontext)
 		setChannelError(remdesk->rdpcontext, error,
 		                "remdesk_virtual_channel_open_event_ex reported an error");
 }

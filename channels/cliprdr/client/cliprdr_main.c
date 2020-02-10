@@ -856,15 +856,14 @@ static VOID VCAPITYPE cliprdr_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 	UINT error = CHANNEL_RC_OK;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*)lpUserParam;
 
-	if (!cliprdr || (cliprdr->OpenHandle != openHandle))
-	{
-		WLog_ERR(TAG, "error no match");
-		return;
-	}
-
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
+			if (!cliprdr || (cliprdr->OpenHandle != openHandle))
+			{
+				WLog_ERR(TAG, "error no match");
+				return;
+			}
 			if ((error = cliprdr_virtual_channel_event_data_received(cliprdr, pData, dataLength,
 			                                                         totalLength, dataFlags)))
 				WLog_ERR(TAG, "failed with error %" PRIu32 "", error);
@@ -883,7 +882,7 @@ static VOID VCAPITYPE cliprdr_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 			break;
 	}
 
-	if (error && cliprdr->context->rdpcontext)
+	if (error && cliprdr && cliprdr->context->rdpcontext)
 		setChannelError(cliprdr->context->rdpcontext, error,
 		                "cliprdr_virtual_channel_open_event_ex reported an error");
 }

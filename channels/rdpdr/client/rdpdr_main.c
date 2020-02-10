@@ -1509,15 +1509,14 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DW
 	UINT error = CHANNEL_RC_OK;
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*)lpUserParam;
 
-	if (!rdpdr || !pData || (rdpdr->OpenHandle != openHandle))
-	{
-		WLog_ERR(TAG, "error no match");
-		return;
-	}
-
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
+			if (!rdpdr || !pData || (rdpdr->OpenHandle != openHandle))
+			{
+				WLog_ERR(TAG, "error no match");
+				return;
+			}
 			if ((error = rdpdr_virtual_channel_event_data_received(rdpdr, pData, dataLength,
 			                                                       totalLength, dataFlags)))
 				WLog_ERR(TAG,
@@ -1538,7 +1537,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DW
 			break;
 	}
 
-	if (error && rdpdr->rdpcontext)
+	if (error && rdpdr && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error,
 		                "rdpdr_virtual_channel_open_event_ex reported an error");
 
