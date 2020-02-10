@@ -125,6 +125,9 @@ static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL un
 
 	string.pv = in;
 
+	if (bytes < 1)
+		return NULL;
+
 	if (unicode)
 	{
 		length = (bytes / 2);
