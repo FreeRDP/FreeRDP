@@ -611,13 +611,15 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	SEC_CHANNEL_BINDINGS* ChannelBindings;
 	SecPkgContext_Bindings* ContextBindings;
 	const size_t PrefixLength = strnlen(TLS_SERVER_END_POINT, ARRAYSIZE(TLS_SERVER_END_POINT));
-	BYTE CertificateHash[32] = { 0 };
-	X509_digest(cert, EVP_sha256(), CertificateHash, &CertificateHashLength);
+	BYTE* CertificateHash = crypto_cert_hash(cert, "sha256", &CertificateHashLength);
+	if (!CertificateHash)
+		return NULL;
+
 	ChannelBindingTokenLength = PrefixLength + CertificateHashLength;
 	ContextBindings = (SecPkgContext_Bindings*)calloc(1, sizeof(SecPkgContext_Bindings));
 
 	if (!ContextBindings)
-		return NULL;
+		goto out_free;
 
 	ContextBindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + ChannelBindingTokenLength;
 	ChannelBindings = (SEC_CHANNEL_BINDINGS*)calloc(1, ContextBindings->BindingsLength);
@@ -633,6 +635,7 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	memcpy(ChannelBindingToken + PrefixLength, CertificateHash, CertificateHashLength);
 	return ContextBindings;
 out_free:
+	free(CertificateHash);
 	free(ContextBindings);
 	return NULL;
 }
@@ -1195,7 +1198,7 @@ static BOOL is_accepted_fingerprint(CryptoCert cert, const char* CertificateAcce
 		while (cur)
 		{
 			BOOL equal;
-
+			char* strhash;
 			const char* h = strtok(cur, ":");
 			const char* fp;
 
@@ -1206,7 +1209,7 @@ static BOOL is_accepted_fingerprint(CryptoCert cert, const char* CertificateAcce
 			if (!fp)
 				continue;
 
-			char* strhash = crypto_cert_fingerprint_by_hash(cert->px509, h);
+			strhash = crypto_cert_fingerprint_by_hash(cert->px509, h);
 			if (!strhash)
 				continue;
 

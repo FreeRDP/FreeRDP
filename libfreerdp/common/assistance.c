@@ -571,7 +571,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!rc4Ctx)
 	{
-		WLog_ERR(TAG, "EVP_CipherInit_ex failure");
+		WLog_ERR(TAG, "winpr_Cipher_New failure");
 		goto fail;
 	}
 
@@ -581,13 +581,13 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!rc)
 	{
-		WLog_ERR(TAG, "EVP_CipherUpdate failure");
+		WLog_ERR(TAG, "winpr_Cipher_Update failure");
 		goto fail;
 	}
 
 	if (!winpr_Cipher_Final(rc4Ctx, pbOut + cbOut, &cbFinal))
 	{
-		WLog_ERR(TAG, "EVP_CipherFinal_ex failure");
+		WLog_ERR(TAG, "winpr_Cipher_Final failure");
 		goto fail;
 	}
 
@@ -663,7 +663,7 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* pas
 
 	if (!winpr_Cipher_Final(aesDec, pbOut + cbOut, &cbFinal))
 	{
-		WLog_ERR(TAG, "EVP_DecryptFinal_ex failure");
+		WLog_ERR(TAG, "winpr_Cipher_Final failure");
 		goto fail;
 	}
 
