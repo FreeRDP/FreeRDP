@@ -1184,6 +1184,81 @@ static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
 	return FALSE;
 }
 
+static BOOL is_accepted_fingerprint(CryptoCert cert, const char* CertificateAcceptedFingerprints)
+{
+	BOOL rc = FALSE;
+	if (CertificateAcceptedFingerprints)
+	{
+		char* context = NULL;
+		char* copy = _strdup(CertificateAcceptedFingerprints);
+		char* cur = strtok_s(copy, ",", &context);
+		while (cur)
+		{
+			BYTE hash[EVP_MAX_MD_SIZE] = { 0 };
+			struct hash_map
+			{
+				const char* name;
+				const EVP_MD* type;
+			};
+			unsigned int hashlen;
+
+			struct hash_map hashes[] = { { "sha1", EVP_sha1() },
+				                         { "sha224", EVP_sha224() },
+				                         { "sha256", EVP_sha256() },
+				                         { "sha384", EVP_sha384() },
+				                         { "sha512", EVP_sha512() },
+				                         { "ripemd160", EVP_ripemd160() },
+				                         { "sha3_224", EVP_sha3_224() },
+				                         { "sha3_256", EVP_sha3_256() },
+				                         { "sha3_384", EVP_sha3_384() },
+				                         { "sha3_512", EVP_sha3_512() },
+				                         { "shake128", EVP_shake128() },
+				                         { "shake256", EVP_shake256() },
+				                         { NULL, NULL } };
+			struct hash_map* chash = &hashes[0];
+			const char* h = strtok(cur, ":");
+			const char* fp;
+
+			while (chash->name && h)
+			{
+				if (_stricmp(chash->name, cur) == 0)
+					break;
+				chash++;
+			}
+			if ((chash->name == NULL) || (chash->type == NULL))
+				continue;
+
+			fp = h + strlen(h) + 1;
+			if (!fp)
+				continue;
+
+			hashlen = (unsigned int)EVP_MD_size(chash->type);
+			if (X509_digest(cert->px509, chash->type, hash, &hashlen) == 1)
+			{
+				size_t x;
+				char strhash[EVP_MAX_MD_SIZE * 3 + 1] = { 0 };
+				for (x = 0; x < hashlen; x++)
+				{
+					if (x > 0)
+						_snprintf(&strhash[3 * x - 1], 4, ":%02x", hash[x]);
+					else
+						_snprintf(strhash, 3, "%02x", hash[x]);
+				}
+
+				if (_strnicmp(strhash, fp, hashlen * 3) == 0)
+				{
+					rc = TRUE;
+					break;
+				}
+			}
+			cur = strtok_s(NULL, ",", &context);
+		}
+		free(copy);
+	}
+
+	return rc;
+}
+
 static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
 {
 	rdpSettings* settings = tls->settings;
@@ -1351,6 +1426,12 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 		goto end;
 	}
 
+	if (is_accepted_fingerprint(cert, tls->settings->CertificateAcceptedFingerprints))
+	{
+		verification_status = 1;
+		goto end;
+	}
+
 	if (tls->isGatewayTransport || is_redirected(tls))
 		flags |= VERIFY_CERT_FLAG_LEGACY;
 
@@ -1419,7 +1500,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 			}
 		}
 
-		/* if the certificate is valid and the certificate name matches, verification succeeds */
+		/* if the certificate is valid and the certificate name matches, verification succeeds
+		 */
 		if (certificate_status && hostname_match)
 			verification_status = 1; /* success! */
 
@@ -1442,7 +1524,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 
 			if (match == 1)
 			{
-				/* no entry was found in known_hosts file, prompt user for manual verification */
+				/* no entry was found in known_hosts file, prompt user for manual verification
+				 */
 				if (!hostname_match)
 					tls_print_certificate_name_mismatch_error(hostname, port, common_name,
 					                                          dns_names, dns_names_count);
@@ -1488,8 +1571,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 				char* old_subject = NULL;
 				char* old_issuer = NULL;
 				char* old_fingerprint = NULL;
-				/* entry was found in known_hosts file, but fingerprint does not match. ask user to
-				 * use it */
+				/* entry was found in known_hosts file, but fingerprint does not match. ask user
+				 * to use it */
 				tls_print_certificate_error(hostname, port, fingerprint,
 				                            tls->certificate_store->file);
 
