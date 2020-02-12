@@ -156,6 +156,28 @@ static BOOL copy_value(const char* value, char** dst)
 	return (*dst) != NULL;
 }
 
+static BOOL append_value(const char* value, char** dst)
+{
+	size_t x = 0, y;
+	char* tmp;
+	if (!dst || !value)
+		return FALSE;
+
+	if (*dst)
+		x = strlen(*dst);
+	y = strlen(value);
+	tmp = realloc(*dst, x + y + 1);
+	if (!tmp)
+		return FALSE;
+	if (x == 0)
+		tmp[0] = '\0';
+	else
+		strcat(tmp, ",");
+	strcat(tmp, value);
+	*dst = tmp;
+	return TRUE;
+}
+
 static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONGLONG max)
 {
 	long long rc;
@@ -2685,6 +2707,47 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			settings->TlsSecLevel = (UINT32)val;
+		}
+		CommandLineSwitchCase(arg, "cert")
+		{
+			int rc = 0;
+			char** p;
+			size_t count, x;
+			p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+			for (x = 0; (x < count) && (rc == 0); x++)
+			{
+				const char deny[] = "deny";
+				const char ignore[] = "ignore";
+				const char tofu[] = "tofu";
+				const char name[5] = "name:";
+				const char fingerprints[12] = "fingerprint:";
+
+				const char* cur = p[x];
+				if (strncmp(deny, cur, sizeof(deny)) == 0)
+					settings->AutoDenyCertificate = TRUE;
+				else if (strncmp(ignore, cur, sizeof(ignore)) == 0)
+					settings->IgnoreCertificate = TRUE;
+				else if (strncmp(tofu, cur, 4) == 0)
+					settings->AutoAcceptCertificate = TRUE;
+				else if (strncmp(name, cur, sizeof(name)) == 0)
+				{
+					const char* val = &cur[sizeof(name)];
+					if (!copy_value(val, &settings->CertificateName))
+						rc = COMMAND_LINE_ERROR_MEMORY;
+				}
+				else if (strncmp(fingerprints, cur, sizeof(fingerprints)) == 0)
+				{
+					const char* val = &cur[sizeof(fingerprints)];
+					if (!append_value(val, &settings->CertificateAcceptedFingerprints))
+						rc = COMMAND_LINE_ERROR_MEMORY;
+				}
+				else
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
+			free(p);
+
+			if (rc)
+				return rc;
 		}
 		CommandLineSwitchCase(arg, "cert-name")
 		{
