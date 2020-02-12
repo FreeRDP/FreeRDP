@@ -2255,6 +2255,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_RdpKeyContent:
 			return settings->RdpKeyContent;
 
+		case FreeRDP_CertificateAcceptedFingerprints:
+			return settings->CertificateAcceptedFingerprints;
+
 		case FreeRDP_WindowTitle:
 			return settings->WindowTitle;
 
@@ -2535,6 +2538,11 @@ BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* v
 			settings->RdpKeyContent = (val ? _strdup(val) : NULL);
 			return (!val || settings->RdpKeyContent != NULL);
 
+		case FreeRDP_CertificateAcceptedFingerprints:
+			free(settings->CertificateAcceptedFingerprints);
+			settings->CertificateAcceptedFingerprints = (val ? _strdup(val) : NULL);
+			return (!val || settings->CertificateAcceptedFingerprints != NULL);
+
 		case FreeRDP_WindowTitle:
 			free(settings->WindowTitle);
 			settings->WindowTitle = (val ? _strdup(val) : NULL);
@@ -2697,6 +2705,54 @@ const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id)
 		case FreeRDP_instance:
 			return settings->instance;
 
+		case FreeRDP_RdpServerCertificate:
+			return settings->RdpServerCertificate;
+
+		case FreeRDP_ServerAutoReconnectCookie:
+			return settings->ServerAutoReconnectCookie;
+
+		case FreeRDP_BitmapCacheV2CellInfo:
+			return settings->BitmapCacheV2CellInfo;
+
+		case FreeRDP_RdpServerRsaKey:
+			return settings->RdpServerRsaKey;
+
+		case FreeRDP_MonitorIds:
+			return settings->MonitorIds;
+
+		case FreeRDP_TargetNetPorts:
+			return settings->TargetNetPorts;
+
+		case FreeRDP_MonitorDefArray:
+			return settings->MonitorDefArray;
+
+		case FreeRDP_ChannelDefArray:
+			return settings->ChannelDefArray;
+
+		case FreeRDP_ClientAutoReconnectCookie:
+			return settings->ClientAutoReconnectCookie;
+
+		case FreeRDP_TargetNetAddresses:
+			return settings->TargetNetAddresses;
+
+		case FreeRDP_StaticChannelArray:
+			return settings->StaticChannelArray;
+
+		case FreeRDP_DynamicChannelArray:
+			return settings->DynamicChannelArray;
+
+		case FreeRDP_DeviceArray:
+			return settings->DeviceArray;
+
+		case FreeRDP_GlyphCache:
+			return settings->GlyphCache;
+
+		case FreeRDP_FragCache:
+			return settings->FragCache;
+
+		case FreeRDP_ClientTimeZone:
+			return settings->ClientTimeZone;
+
 		case FreeRDP_ServerRandom:
 			return settings->ServerRandom;
 
@@ -2723,54 +2779,6 @@ const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id)
 
 		case FreeRDP_OrderSupport:
 			return settings->OrderSupport;
-
-		case FreeRDP_ChannelDefArray:
-			return settings->ChannelDefArray;
-
-		case FreeRDP_MonitorDefArray:
-			return settings->MonitorDefArray;
-
-		case FreeRDP_MonitorIds:
-			return settings->MonitorIds;
-
-		case FreeRDP_TargetNetPorts:
-			return settings->TargetNetPorts;
-
-		case FreeRDP_ClientAutoReconnectCookie:
-			return settings->ClientAutoReconnectCookie;
-
-		case FreeRDP_ServerAutoReconnectCookie:
-			return settings->ServerAutoReconnectCookie;
-
-		case FreeRDP_ClientTimeZone:
-			return settings->ClientTimeZone;
-
-		case FreeRDP_TargetNetAddresses:
-			return settings->TargetNetAddresses;
-
-		case FreeRDP_RdpServerRsaKey:
-			return settings->RdpServerRsaKey;
-
-		case FreeRDP_RdpServerCertificate:
-			return settings->RdpServerCertificate;
-
-		case FreeRDP_BitmapCacheV2CellInfo:
-			return settings->BitmapCacheV2CellInfo;
-
-		case FreeRDP_GlyphCache:
-			return settings->GlyphCache;
-
-		case FreeRDP_FragCache:
-			return settings->FragCache;
-
-		case FreeRDP_DeviceArray:
-			return settings->DeviceArray;
-
-		case FreeRDP_StaticChannelArray:
-			return settings->StaticChannelArray;
-
-		case FreeRDP_DynamicChannelArray:
-			return settings->DynamicChannelArray;
 
 		default:
 			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);

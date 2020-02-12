@@ -658,6 +658,7 @@ static void freerdp_settings_free_internal(rdpSettings* settings)
 	free(settings->CertificateContent);
 	free(settings->PrivateKeyContent);
 	free(settings->RdpKeyContent);
+	free(settings->CertificateAcceptedFingerprints);
 	free(settings->ClientAutoReconnectCookie);
 	free(settings->ServerAutoReconnectCookie);
 	free(settings->ClientTimeZone);
@@ -931,6 +932,17 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	CopyMemory(_settings->GlyphCache, settings->GlyphCache, sizeof(GLYPH_CACHE_DEFINITION) * 10);
 	CopyMemory(_settings->FragCache, settings->FragCache, sizeof(GLYPH_CACHE_DEFINITION));
+
+	if (settings->CertificateContent)
+		_settings->CertificateContent = _strdup(settings->CertificateContent);
+	if (settings->PrivateKeyContent)
+		_settings->PrivateKeyContent = _strdup(settings->PrivateKeyContent);
+	if (settings->RdpKeyContent)
+		_settings->RdpKeyContent = _strdup(settings->RdpKeyContent);
+	if (settings->CertificateAcceptedFingerprints)
+		_settings->CertificateAcceptedFingerprints =
+		    _strdup(settings->CertificateAcceptedFingerprints);
+
 	_settings->ClientAutoReconnectCookie =
 	    (ARC_CS_PRIVATE_PACKET*)malloc(sizeof(ARC_CS_PRIVATE_PACKET));
 
