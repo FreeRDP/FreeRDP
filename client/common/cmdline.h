@@ -70,13 +70,30 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	  "Session bpp (color depth)" },
 	{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL, -1,
 	  NULL, "Print the build configuration" },
+	{ "cert", COMMAND_LINE_VALUE_REQUIRED,
+	  "[deny,ignore,name:<name>,tofu,fingerprint:<hash>:<hash as hex>[,fingerprint:<hash>:<another "
+	  "hash>]]",
+	  NULL, NULL, -1, NULL,
+	  "Certificate accept options. Use with care!"
+	  " * deny         ... Automatically abort connection if the certificate does not match, no "
+	  "user interaction.          "
+	  " * ignore       ... Ignore the certificate checks altogether (overrules all other options)  "
+	  "                        "
+	  " * name         ... Use the alternate <name> instead of the certificate subject to match "
+	  "locally stored certificates"
+	  " * tofu         ... Accept certificate unconditionally on first connect and deny on "
+	  "subsequent connections if the certificate does not match"
+	  " * fingerprints ... A list of certificate hashes that are accepted unconditionally for a "
+	  "connection" },
 	{ "cert-deny", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
-	  "Automatically abort connection for any certificate that can not be validated." },
-	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Ignore certificate" },
+	  "[deprecated, use /cert:deny] Automatically abort connection for any certificate that can "
+	  "not be validated." },
+	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
+	  "[deprecated, use /cert:ignore] Ignore certificate" },
 	{ "cert-name", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
-	  "Certificate name" },
+	  "[deprecated, use /cert:name:<name>] Certificate name" },
 	{ "cert-tofu", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
-	  "Automatically accept certificate on first connect" },
+	  "[deprecated, use /cert:tofu] Automatically accept certificate on first connect" },
 	{ "client-build-number", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
 	  "Client Build Number sent to server (influences smartcard behaviour, see [MS-RDPESC])" },
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
