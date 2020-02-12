@@ -85,6 +85,26 @@ const EVP_MD* winpr_openssl_get_evp_md(int md)
 		case WINPR_MD_RIPEMD160:
 			evp = EVP_get_digestbyname("ripemd160");
 			break;
+		case WINPR_MD_SHA3_224:
+			evp = EVP_get_digestbyname("sha3_224");
+			break;
+		case WINPR_MD_SHA3_256:
+			evp = EVP_get_digestbyname("sha3_256");
+			break;
+		case WINPR_MD_SHA3_384:
+			evp = EVP_get_digestbyname("sha3_384");
+			break;
+		case WINPR_MD_SHA3_512:
+			evp = EVP_get_digestbyname("sha3_512");
+			break;
+		case WINPR_MD_SHAKE128:
+			evp = EVP_get_digestbyname("shake128");
+			break;
+		case WINPR_MD_SHAKE256:
+			evp = EVP_get_digestbyname("shake256");
+			break;
+		default:
+			break;
 	}
 
 	return evp;
