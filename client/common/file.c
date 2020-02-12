@@ -877,7 +877,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		file->LoadBalanceInfo = calloc(settings->LoadBalanceInfoLength + 1, 1);
 		if (!file->LoadBalanceInfo)
 			return FALSE;
-		strncpy(file->LoadBalanceInfo, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
+		memcpy(file->LoadBalanceInfo, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
 	}
 
 	if (settings->AudioPlayback)

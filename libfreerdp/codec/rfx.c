@@ -946,7 +946,12 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 		if (context->priv->UseThreads)
 		{
-			assert(params);
+			if (!params)
+			{
+				rc = FALSE;
+				break;
+			}
+
 			params[i].context = context;
 			params[i].tile = message->tiles[i];
 

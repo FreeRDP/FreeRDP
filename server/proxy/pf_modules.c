@@ -74,7 +74,7 @@ static const char* pf_modules_get_hook_type_string(PF_HOOK_TYPE result)
 BOOL pf_modules_run_hook(PF_HOOK_TYPE type, proxyData* pdata)
 {
 	BOOL ok = TRUE;
-	size_t index;
+	int index;
 	proxyPlugin* plugin;
 
 	ArrayList_ForEach(plugins_list, proxyPlugin*, index, plugin)
@@ -127,7 +127,7 @@ BOOL pf_modules_run_hook(PF_HOOK_TYPE type, proxyData* pdata)
 BOOL pf_modules_run_filter(PF_FILTER_TYPE type, proxyData* pdata, void* param)
 {
 	BOOL result = TRUE;
-	size_t index;
+	int index;
 	proxyPlugin* plugin;
 
 	ArrayList_ForEach(plugins_list, proxyPlugin*, index, plugin)
@@ -174,7 +174,7 @@ static BOOL pf_modules_set_plugin_data(const char* plugin_name, proxyData* pdata
 	if (data == NULL) /* no need to store anything */
 		return FALSE;
 
-	if (HashTable_Add(pdata->modules_info, (void*)plugin_name, data) < 0)
+	if (HashTable_Add(pdata->modules_info, plugin_name, data) < 0)
 	{
 		WLog_ERR(TAG, "[%s]: HashTable_Add failed!");
 		return FALSE;
@@ -195,7 +195,7 @@ static void* pf_modules_get_plugin_data(const char* plugin_name, proxyData* pdat
 	assert(plugin_name);
 	assert(pdata);
 
-	return HashTable_GetItemValue(pdata->modules_info, (void*)plugin_name);
+	return HashTable_GetItemValue(pdata->modules_info, plugin_name);
 }
 
 static void pf_modules_abort_connect(proxyData* pdata)
@@ -207,10 +207,11 @@ static void pf_modules_abort_connect(proxyData* pdata)
 
 static BOOL pf_modules_register_plugin(proxyPlugin* plugin_to_register)
 {
-	size_t index;
+	int index;
 	proxyPlugin* plugin;
 
-	assert(plugins_list != NULL);
+	if (!plugin_to_register)
+		return FALSE;
 
 	/* make sure there's no other loaded plugin with the same name of `plugin_to_register`. */
 	ArrayList_ForEach(plugins_list, proxyPlugin*, index, plugin)
@@ -224,7 +225,8 @@ static BOOL pf_modules_register_plugin(proxyPlugin* plugin_to_register)
 
 	if (ArrayList_Add(plugins_list, plugin_to_register) < 0)
 	{
-		WLog_ERR(TAG, "[%s]: failed adding plugin to list: %s", __FUNCTION__, plugin->name);
+		WLog_ERR(TAG, "[%s]: failed adding plugin to list: %s", __FUNCTION__,
+		         plugin_to_register->name);
 		return FALSE;
 	}
 
@@ -233,7 +235,7 @@ static BOOL pf_modules_register_plugin(proxyPlugin* plugin_to_register)
 
 BOOL pf_modules_is_plugin_loaded(const char* plugin_name)
 {
-	size_t i;
+	int i;
 	proxyPlugin* plugin;
 
 	if (plugins_list == NULL)
@@ -251,7 +253,7 @@ BOOL pf_modules_is_plugin_loaded(const char* plugin_name)
 void pf_modules_list_loaded_plugins(void)
 {
 	size_t count;
-	size_t i;
+	int i;
 	proxyPlugin* plugin;
 
 	if (plugins_list == NULL)
@@ -365,7 +367,7 @@ error:
 
 void pf_modules_free(void)
 {
-	size_t index;
+	int index;
 
 	if (plugins_list)
 	{
