@@ -60,17 +60,26 @@
 
 static BOOL wf_create_console(void)
 {
+#if defined(WITH_WIN_CONSOLE)
 	if (!AttachConsole(ATTACH_PARENT_PROCESS))
 		return FALSE;
 
 	freopen("CONOUT$", "w", stdout);
 	freopen("CONOUT$", "w", stderr);
+	clearerr(stdout);
+	clearerr(stderr);
+	fflush(stdout);
+	fflush(stderr);
+
 	freopen("CONIN$", "r", stdin);
 	clearerr(stdin);
 
 	WLog_INFO(TAG, "Debug console created.");
 
 	return TRUE;
+#else
+	return FALSE;
+#endif
 }
 
 static BOOL wf_end_paint(rdpContext* context)
