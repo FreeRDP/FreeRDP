@@ -1194,63 +1194,30 @@ static BOOL is_accepted_fingerprint(CryptoCert cert, const char* CertificateAcce
 		char* cur = strtok_s(copy, ",", &context);
 		while (cur)
 		{
-			BYTE hash[EVP_MAX_MD_SIZE] = { 0 };
-			struct hash_map
-			{
-				const char* name;
-				const EVP_MD* type;
-			};
-			unsigned int hashlen;
+			BOOL equal;
 
-			struct hash_map hashes[] = { { "sha1", EVP_sha1() },
-				                         { "sha224", EVP_sha224() },
-				                         { "sha256", EVP_sha256() },
-				                         { "sha384", EVP_sha384() },
-				                         { "sha512", EVP_sha512() },
-				                         { "ripemd160", EVP_ripemd160() },
-				                         { "sha3_224", EVP_sha3_224() },
-				                         { "sha3_256", EVP_sha3_256() },
-				                         { "sha3_384", EVP_sha3_384() },
-				                         { "sha3_512", EVP_sha3_512() },
-				                         { "shake128", EVP_shake128() },
-				                         { "shake256", EVP_shake256() },
-				                         { NULL, NULL } };
-			struct hash_map* chash = &hashes[0];
 			const char* h = strtok(cur, ":");
 			const char* fp;
 
-			while (chash->name && h)
-			{
-				if (_stricmp(chash->name, cur) == 0)
-					break;
-				chash++;
-			}
-			if ((chash->name == NULL) || (chash->type == NULL))
+			if (!h)
 				continue;
 
 			fp = h + strlen(h) + 1;
 			if (!fp)
 				continue;
 
-			hashlen = (unsigned int)EVP_MD_size(chash->type);
-			if (X509_digest(cert->px509, chash->type, hash, &hashlen) == 1)
-			{
-				size_t x;
-				char strhash[EVP_MAX_MD_SIZE * 3 + 1] = { 0 };
-				for (x = 0; x < hashlen; x++)
-				{
-					if (x > 0)
-						_snprintf(&strhash[3 * x - 1], 4, ":%02x", hash[x]);
-					else
-						_snprintf(strhash, 3, "%02x", hash[x]);
-				}
+			char* strhash = crypto_cert_fingerprint_by_hash(cert->px509, h);
+			if (!strhash)
+				continue;
 
-				if (_strnicmp(strhash, fp, hashlen * 3) == 0)
-				{
-					rc = TRUE;
-					break;
-				}
+			equal = (_stricmp(strhash, fp) == 0);
+			free(strhash);
+			if (equal)
+			{
+				rc = TRUE;
+				break;
 			}
+
 			cur = strtok_s(NULL, ",", &context);
 		}
 		free(copy);

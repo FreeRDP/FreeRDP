@@ -54,6 +54,8 @@ extern "C"
 	typedef struct crypto_cert_struct* CryptoCert;
 
 	FREERDP_API CryptoCert crypto_cert_read(BYTE* data, UINT32 length);
+	FREERDP_API char* crypto_cert_fingerprint_by_hash(X509* xcert, const char* hash);
+	FREERDP_API char* crypto_cert_sign_with_hash(X509* xcert, const char* hash);
 	FREERDP_API char* crypto_cert_fingerprint(X509* xcert);
 	FREERDP_API char* crypto_cert_subject(X509* xcert);
 	FREERDP_API char* crypto_cert_subject_common_name(X509* xcert, int* length);
