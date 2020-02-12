@@ -128,7 +128,7 @@ void winpr_RC4_Free(WINPR_RC4_CTX* ctx)
  */
 
 #ifdef WITH_OPENSSL
-extern const EVP_MD* winpr_openssl_get_evp_md(int md);
+extern const EVP_MD* winpr_openssl_get_evp_md(WINPR_MD_TYPE md);
 #endif
 
 #ifdef WITH_MBEDTLS
@@ -681,7 +681,7 @@ int winpr_Cipher_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* da
 #if defined(WITH_OPENSSL)
 	const EVP_MD* evp_md;
 	const EVP_CIPHER* evp_cipher;
-	evp_md = winpr_openssl_get_evp_md(md);
+	evp_md = winpr_openssl_get_evp_md((WINPR_MD_TYPE)md);
 	evp_cipher = winpr_openssl_get_evp_cipher(cipher);
 	return EVP_BytesToKey(evp_cipher, evp_md, salt, data, datal, count, key, iv);
 #elif defined(WITH_MBEDTLS)

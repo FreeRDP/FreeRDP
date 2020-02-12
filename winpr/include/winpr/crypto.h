@@ -671,6 +671,9 @@ extern "C"
 {
 #endif
 
+	WINPR_API WINPR_MD_TYPE winpr_md_type_from_string(const char* name);
+	WINPR_API const char* winpr_md_type_to_string(WINPR_MD_TYPE md);
+
 	WINPR_API WINPR_HMAC_CTX* winpr_HMAC_New(void);
 	WINPR_API BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key,
 	                               size_t keylen);

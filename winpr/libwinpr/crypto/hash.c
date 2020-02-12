@@ -44,70 +44,12 @@
  */
 
 #ifdef WITH_OPENSSL
-const EVP_MD* winpr_openssl_get_evp_md(int md)
+const EVP_MD* winpr_openssl_get_evp_md(WINPR_MD_TYPE md)
 {
-	const EVP_MD* evp = NULL;
-
-	switch (md)
-	{
-		case WINPR_MD_MD2:
-			evp = EVP_get_digestbyname("md2");
-			break;
-
-		case WINPR_MD_MD4:
-			evp = EVP_get_digestbyname("md4");
-			break;
-
-		case WINPR_MD_MD5:
-			evp = EVP_get_digestbyname("md5");
-			break;
-
-		case WINPR_MD_SHA1:
-			evp = EVP_get_digestbyname("sha1");
-			break;
-
-		case WINPR_MD_SHA224:
-			evp = EVP_get_digestbyname("sha224");
-			break;
-
-		case WINPR_MD_SHA256:
-			evp = EVP_get_digestbyname("sha256");
-			break;
-
-		case WINPR_MD_SHA384:
-			evp = EVP_get_digestbyname("sha384");
-			break;
-
-		case WINPR_MD_SHA512:
-			evp = EVP_get_digestbyname("sha512");
-			break;
-
-		case WINPR_MD_RIPEMD160:
-			evp = EVP_get_digestbyname("ripemd160");
-			break;
-		case WINPR_MD_SHA3_224:
-			evp = EVP_get_digestbyname("sha3_224");
-			break;
-		case WINPR_MD_SHA3_256:
-			evp = EVP_get_digestbyname("sha3_256");
-			break;
-		case WINPR_MD_SHA3_384:
-			evp = EVP_get_digestbyname("sha3_384");
-			break;
-		case WINPR_MD_SHA3_512:
-			evp = EVP_get_digestbyname("sha3_512");
-			break;
-		case WINPR_MD_SHAKE128:
-			evp = EVP_get_digestbyname("shake128");
-			break;
-		case WINPR_MD_SHAKE256:
-			evp = EVP_get_digestbyname("shake256");
-			break;
-		default:
-			break;
-	}
-
-	return evp;
+	const char* name = winpr_md_type_to_string(md);
+	if (!name)
+		return NULL;
+	return EVP_get_digestbyname(name);
 }
 #endif
 
@@ -158,6 +100,51 @@ mbedtls_md_type_t winpr_mbedtls_get_md_type(int md)
 	return type;
 }
 #endif
+
+struct hash_map
+{
+	const char* name;
+	WINPR_MD_TYPE md;
+};
+static const struct hash_map hashes[] = { { "md2", WINPR_MD_MD2 },
+	                                      { "md4", WINPR_MD_MD4 },
+	                                      { "md5", WINPR_MD_MD5 },
+	                                      { "sha1", WINPR_MD_SHA1 },
+	                                      { "sha224", WINPR_MD_SHA224 },
+	                                      { "sha256", WINPR_MD_SHA256 },
+	                                      { "sha384", WINPR_MD_SHA384 },
+	                                      { "sha512", WINPR_MD_SHA512 },
+	                                      { "sha3_224", WINPR_MD_SHA3_224 },
+	                                      { "sha3_256", WINPR_MD_SHA3_256 },
+	                                      { "sha3_384", WINPR_MD_SHA3_384 },
+	                                      { "sha3_512", WINPR_MD_SHA3_512 },
+	                                      { "shake128", WINPR_MD_SHAKE128 },
+	                                      { "shake256", WINPR_MD_SHAKE256 },
+	                                      { NULL, WINPR_MD_NONE } };
+
+WINPR_MD_TYPE winpr_md_type_from_string(const char* name)
+{
+	const struct hash_map* cur = hashes;
+	while (cur->name)
+	{
+		if (_stricmp(cur->name, name) == 0)
+			return cur->md;
+		cur++;
+	}
+	return WINPR_MD_NONE;
+}
+
+const char* winpr_md_type_to_string(WINPR_MD_TYPE md)
+{
+	const struct hash_map* cur = hashes;
+	while (cur->name)
+	{
+		if (cur->md == md)
+			return cur->name;
+		cur++;
+	}
+	return NULL;
+}
 
 WINPR_HMAC_CTX* winpr_HMAC_New(void)
 {
