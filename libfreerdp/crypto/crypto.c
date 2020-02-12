@@ -215,25 +215,49 @@ void crypto_reverse(BYTE* data, int length)
 
 char* crypto_cert_fingerprint(X509* xcert)
 {
-	return crypto_cert_fingerprint_by_hash(xcert, "sha1");
+	return crypto_cert_fingerprint_by_hash(xcert, "sha256");
+}
+
+BYTE* crypto_cert_hash(X509* xcert, const char* hash, UINT32* length)
+{
+	UINT32 fp_len = EVP_MAX_MD_SIZE;
+	BYTE* fp;
+	const EVP_MD* md = EVP_get_digestbyname(hash);
+	if (!md)
+		return NULL;
+	if (!length)
+		return NULL;
+	if (!xcert)
+		return NULL;
+
+	fp = calloc(fp_len, sizeof(BYTE));
+	if (!fp)
+		return NULL;
+
+	if (X509_digest(xcert, md, fp, &fp_len) != 1)
+	{
+		free(fp);
+		return NULL;
+	}
+
+	*length = fp_len;
+	return fp;
 }
 
 char* crypto_cert_fingerprint_by_hash(X509* xcert, const char* hash)
 {
-	size_t i = 0;
+	UINT32 fp_len, i;
+	BYTE* fp;
 	char* p;
 	char* fp_buffer;
-	UINT32 fp_len;
-	BYTE fp[EVP_MAX_MD_SIZE];
-	const EVP_MD* md = EVP_get_digestbyname(hash);
-	if (!md)
+
+	fp = crypto_cert_hash(xcert, hash, &fp_len);
+	if (!fp)
 		return NULL;
 
-	X509_digest(xcert, md, fp, &fp_len);
-	fp_buffer = (char*)calloc(fp_len + 1, 3);
-
+	fp_buffer = calloc(fp_len * 3 + 1, sizeof(char));
 	if (!fp_buffer)
-		return NULL;
+		goto fail;
 
 	p = fp_buffer;
 
@@ -244,6 +268,9 @@ char* crypto_cert_fingerprint_by_hash(X509* xcert, const char* hash)
 	}
 
 	sprintf_s(p, (fp_len - i) * 3, "%02" PRIx8 "", fp[i]);
+fail:
+	free(fp);
+
 	return fp_buffer;
 }
 
