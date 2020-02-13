@@ -138,7 +138,7 @@ typedef struct _LocateCardsA_Call
 {
 	REDIR_SCARDCONTEXT hContext;
 	/* [range] */ DWORD cBytes;
-	/* [size_is] */ char* mszCards;
+	/* [size_is] */ CHAR* mszCards;
 	/* [range] */ DWORD cReaders;
 	/* [size_is] */ LPSCARD_READERSTATEA rgReaderStates;
 } LocateCardsA_Call;
@@ -228,7 +228,7 @@ typedef struct _Connect_Common
 
 typedef struct _ConnectA_Call
 {
-	/* [string] */ unsigned char* szReader;
+	/* [string] */ CHAR* szReader;
 	Connect_Common Common;
 } ConnectA_Call;
 
