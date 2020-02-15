@@ -86,6 +86,9 @@ struct rdpsnd_plugin
 	BOOL isOpen;
 	AUDIO_FORMAT* fixed_format;
 
+	UINT32 startPlayTime;
+	size_t totalPlaySize;
+
 	char* subsystem;
 	char* device_name;
 
@@ -370,6 +373,8 @@ static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT32 wFormatNo,
 
 		rdpsnd->isOpen = TRUE;
 		rdpsnd->wCurrentFormatNo = wFormatNo;
+		rdpsnd->startPlayTime = 0;
+		rdpsnd->totalPlaySize = 0;
 	}
 
 	return TRUE;
@@ -437,6 +442,54 @@ static UINT rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp
 	return rdpsnd_virtual_channel_write(rdpsnd, pdu);
 }
 
+static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, AUDIO_FORMAT* format, size_t size)
+{
+	UINT32 bpf;
+	UINT32 now;
+	UINT32 duration;
+	UINT32 totalDuration;
+	UINT32 remainingDuration;
+	UINT32 maxDuration;
+
+	bpf = format->nChannels * format->wBitsPerSample / 8;
+	duration = (UINT32)(1000 * size / bpf / format->nSamplesPerSec);
+	totalDuration = (UINT32)(1000 * rdpsnd->totalPlaySize / bpf / format->nSamplesPerSec);
+	now = GetTickCountPrecise();
+	if (rdpsnd->startPlayTime == 0)
+	{
+		rdpsnd->startPlayTime = now;
+		rdpsnd->totalPlaySize = size;
+		return FALSE;
+	}
+	else if (now - rdpsnd->startPlayTime > totalDuration + 10)
+	{
+		/* Buffer underrun */
+		WLog_Print(rdpsnd->log, WLOG_DEBUG, "Buffer underrun by %u ms",
+		           (UINT)(now - rdpsnd->startPlayTime - totalDuration));
+		rdpsnd->startPlayTime = now;
+		rdpsnd->totalPlaySize = size;
+		return FALSE;
+	}
+	else
+	{
+		/* Calculate remaining duration to be played */
+		remainingDuration = totalDuration - (now - rdpsnd->startPlayTime);
+
+		/* Maximum allow duration calculation */
+		maxDuration = duration * 2 + rdpsnd->latency;
+
+		if (remainingDuration + duration > maxDuration)
+		{
+			WLog_Print(rdpsnd->log, WLOG_DEBUG, "Buffer overrun pending %u ms dropping %u ms",
+			           remainingDuration, duration);
+			return TRUE;
+		}
+
+		rdpsnd->totalPlaySize += size;
+		return FALSE;
+	}
+}
+
 static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 {
 	BYTE* data;
@@ -454,7 +507,7 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 	           "Wave: cBlockNo: %" PRIu8 " wTimeStamp: %" PRIu16 ", size: %" PRIdz,
 	           rdpsnd->cBlockNo, rdpsnd->wTimeStamp, size);
 
-	if (rdpsnd->device && rdpsnd->attached)
+	if (rdpsnd->device && rdpsnd->attached && !rdpsnd_detect_overrun(rdpsnd, format, size))
 	{
 		UINT status = CHANNEL_RC_OK;
 		wStream* pcmData = StreamPool_Take(rdpsnd->pool, 4096);
