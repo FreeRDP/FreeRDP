@@ -116,44 +116,66 @@
 #define PCSC_SCARD_PCI_T1 (&g_PCSC_rgSCardT1Pci)
 #define PCSC_SCARD_PCI_RAW (&g_PCSC_rgSCardRawPci)
 
+typedef PCSC_LONG (*fnPCSCSCardEstablishContext)(PCSC_DWORD dwScope, LPCVOID pvReserved1,
+                                                 LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
+typedef PCSC_LONG (*fnPCSCSCardReleaseContext)(SCARDCONTEXT hContext);
+typedef PCSC_LONG (*fnPCSCSCardIsValidContext)(SCARDCONTEXT hContext);
+typedef PCSC_LONG (*fnPCSCSCardConnect)(SCARDCONTEXT hContext, LPCSTR szReader,
+                                        PCSC_DWORD dwShareMode, PCSC_DWORD dwPreferredProtocols,
+                                        LPSCARDHANDLE phCard, PCSC_LPDWORD pdwActiveProtocol);
+typedef PCSC_LONG (*fnPCSCSCardReconnect)(SCARDHANDLE hCard, PCSC_DWORD dwShareMode,
+                                          PCSC_DWORD dwPreferredProtocols,
+                                          PCSC_DWORD dwInitialization,
+                                          PCSC_LPDWORD pdwActiveProtocol);
+typedef PCSC_LONG (*fnPCSCSCardDisconnect)(SCARDHANDLE hCard, PCSC_DWORD dwDisposition);
+typedef PCSC_LONG (*fnPCSCSCardBeginTransaction)(SCARDHANDLE hCard);
+typedef PCSC_LONG (*fnPCSCSCardEndTransaction)(SCARDHANDLE hCard, PCSC_DWORD dwDisposition);
+typedef PCSC_LONG (*fnPCSCSCardStatus)(SCARDHANDLE hCard, LPSTR mszReaderName,
+                                       PCSC_LPDWORD pcchReaderLen, PCSC_LPDWORD pdwState,
+                                       PCSC_LPDWORD pdwProtocol, LPBYTE pbAtr,
+                                       PCSC_LPDWORD pcbAtrLen);
+typedef PCSC_LONG (*fnPCSCSCardGetStatusChange)(SCARDCONTEXT hContext, PCSC_DWORD dwTimeout,
+                                                PCSC_SCARD_READERSTATE* rgReaderStates,
+                                                PCSC_DWORD cReaders);
+typedef PCSC_LONG (*fnPCSCSCardControl)(SCARDHANDLE hCard, PCSC_DWORD dwControlCode,
+                                        LPCVOID pbSendBuffer, PCSC_DWORD cbSendLength,
+                                        LPVOID pbRecvBuffer, PCSC_DWORD cbRecvLength,
+                                        PCSC_LPDWORD lpBytesReturned);
+typedef PCSC_LONG (*fnPCSCSCardTransmit)(SCARDHANDLE hCard, const PCSC_SCARD_IO_REQUEST* pioSendPci,
+                                         LPCBYTE pbSendBuffer, PCSC_DWORD cbSendLength,
+                                         PCSC_SCARD_IO_REQUEST* pioRecvPci, LPBYTE pbRecvBuffer,
+                                         PCSC_LPDWORD pcbRecvLength);
+typedef PCSC_LONG (*fnPCSCSCardListReaderGroups)(SCARDCONTEXT hContext, LPSTR mszGroups,
+                                                 PCSC_LPDWORD pcchGroups);
+typedef PCSC_LONG (*fnPCSCSCardListReaders)(SCARDCONTEXT hContext, LPCSTR mszGroups,
+                                            LPSTR mszReaders, PCSC_LPDWORD pcchReaders);
+typedef PCSC_LONG (*fnPCSCSCardFreeMemory)(SCARDCONTEXT hContext, LPCVOID pvMem);
+typedef PCSC_LONG (*fnPCSCSCardCancel)(SCARDCONTEXT hContext);
+typedef PCSC_LONG (*fnPCSCSCardGetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPBYTE pbAttr,
+                                          PCSC_LPDWORD pcbAttrLen);
+typedef PCSC_LONG (*fnPCSCSCardSetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPCBYTE pbAttr,
+                                          PCSC_DWORD cbAttrLen);
+
 struct _PCSCFunctionTable
 {
-	PCSC_LONG(*pfnSCardEstablishContext)
-	(PCSC_DWORD dwScope, LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
-	PCSC_LONG (*pfnSCardReleaseContext)(SCARDCONTEXT hContext);
-	PCSC_LONG (*pfnSCardIsValidContext)(SCARDCONTEXT hContext);
-	PCSC_LONG(*pfnSCardConnect)
-	(SCARDCONTEXT hContext, LPCSTR szReader, PCSC_DWORD dwShareMode,
-	 PCSC_DWORD dwPreferredProtocols, LPSCARDHANDLE phCard, PCSC_LPDWORD pdwActiveProtocol);
-	PCSC_LONG(*pfnSCardReconnect)
-	(SCARDHANDLE hCard, PCSC_DWORD dwShareMode, PCSC_DWORD dwPreferredProtocols,
-	 PCSC_DWORD dwInitialization, PCSC_LPDWORD pdwActiveProtocol);
-	PCSC_LONG (*pfnSCardDisconnect)(SCARDHANDLE hCard, PCSC_DWORD dwDisposition);
-	PCSC_LONG (*pfnSCardBeginTransaction)(SCARDHANDLE hCard);
-	PCSC_LONG (*pfnSCardEndTransaction)(SCARDHANDLE hCard, PCSC_DWORD dwDisposition);
-	PCSC_LONG(*pfnSCardStatus)
-	(SCARDHANDLE hCard, LPSTR mszReaderName, PCSC_LPDWORD pcchReaderLen, PCSC_LPDWORD pdwState,
-	 PCSC_LPDWORD pdwProtocol, LPBYTE pbAtr, PCSC_LPDWORD pcbAtrLen);
-	PCSC_LONG(*pfnSCardGetStatusChange)
-	(SCARDCONTEXT hContext, PCSC_DWORD dwTimeout, PCSC_SCARD_READERSTATE* rgReaderStates,
-	 PCSC_DWORD cReaders);
-	PCSC_LONG(*pfnSCardControl)
-	(SCARDHANDLE hCard, PCSC_DWORD dwControlCode, LPCVOID pbSendBuffer, PCSC_DWORD cbSendLength,
-	 LPVOID pbRecvBuffer, PCSC_DWORD cbRecvLength, PCSC_LPDWORD lpBytesReturned);
-	PCSC_LONG(*pfnSCardTransmit)
-	(SCARDHANDLE hCard, const PCSC_SCARD_IO_REQUEST* pioSendPci, LPCBYTE pbSendBuffer,
-	 PCSC_DWORD cbSendLength, PCSC_SCARD_IO_REQUEST* pioRecvPci, LPBYTE pbRecvBuffer,
-	 PCSC_LPDWORD pcbRecvLength);
-	PCSC_LONG(*pfnSCardListReaderGroups)
-	(SCARDCONTEXT hContext, LPSTR mszGroups, PCSC_LPDWORD pcchGroups);
-	PCSC_LONG(*pfnSCardListReaders)
-	(SCARDCONTEXT hContext, LPCSTR mszGroups, LPSTR mszReaders, PCSC_LPDWORD pcchReaders);
-	PCSC_LONG (*pfnSCardFreeMemory)(SCARDCONTEXT hContext, LPCVOID pvMem);
-	PCSC_LONG (*pfnSCardCancel)(SCARDCONTEXT hContext);
-	PCSC_LONG(*pfnSCardGetAttrib)
-	(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPBYTE pbAttr, PCSC_LPDWORD pcbAttrLen);
-	PCSC_LONG(*pfnSCardSetAttrib)
-	(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPCBYTE pbAttr, PCSC_DWORD cbAttrLen);
+	fnPCSCSCardEstablishContext pfnSCardEstablishContext;
+	fnPCSCSCardReleaseContext pfnSCardReleaseContext;
+	fnPCSCSCardIsValidContext pfnSCardIsValidContext;
+	fnPCSCSCardConnect pfnSCardConnect;
+	fnPCSCSCardReconnect pfnSCardReconnect;
+	fnPCSCSCardDisconnect pfnSCardDisconnect;
+	fnPCSCSCardBeginTransaction pfnSCardBeginTransaction;
+	fnPCSCSCardEndTransaction pfnSCardEndTransaction;
+	fnPCSCSCardStatus pfnSCardStatus;
+	fnPCSCSCardGetStatusChange pfnSCardGetStatusChange;
+	fnPCSCSCardControl pfnSCardControl;
+	fnPCSCSCardTransmit pfnSCardTransmit;
+	fnPCSCSCardListReaderGroups pfnSCardListReaderGroups;
+	fnPCSCSCardListReaders pfnSCardListReaders;
+	fnPCSCSCardFreeMemory pfnSCardFreeMemory;
+	fnPCSCSCardCancel pfnSCardCancel;
+	fnPCSCSCardGetAttrib pfnSCardGetAttrib;
+	fnPCSCSCardSetAttrib pfnSCardSetAttrib;
 };
 typedef struct _PCSCFunctionTable PCSCFunctionTable;
 
@@ -2965,42 +2987,45 @@ int PCSC_InitializeSCardApi(void)
 		return -1;
 
 	g_PCSC.pfnSCardEstablishContext =
-	    (fnSCardEstablishContext)GetProcAddress(g_PCSCModule, "SCardEstablishContext");
+	    (fnPCSCSCardEstablishContext)GetProcAddress(g_PCSCModule, "SCardEstablishContext");
 	g_PCSC.pfnSCardReleaseContext =
-	    (fnSCardReleaseContext)GetProcAddress(g_PCSCModule, "SCardReleaseContext");
+	    (fnPCSCSCardReleaseContext)GetProcAddress(g_PCSCModule, "SCardReleaseContext");
 	g_PCSC.pfnSCardIsValidContext =
-	    (fnSCardIsValidContext)GetProcAddress(g_PCSCModule, "SCardIsValidContext");
-	g_PCSC.pfnSCardConnect = (fnSCardConnectA)GetProcAddress(g_PCSCModule, "SCardConnect");
-	g_PCSC.pfnSCardReconnect = (fnSCardReconnect)GetProcAddress(g_PCSCModule, "SCardReconnect");
-	g_PCSC.pfnSCardDisconnect = (fnSCardDisconnect)GetProcAddress(g_PCSCModule, "SCardDisconnect");
+	    (fnPCSCSCardIsValidContext)GetProcAddress(g_PCSCModule, "SCardIsValidContext");
+	g_PCSC.pfnSCardConnect = (fnPCSCSCardConnect)GetProcAddress(g_PCSCModule, "SCardConnect");
+	g_PCSC.pfnSCardReconnect = (fnPCSCSCardReconnect)GetProcAddress(g_PCSCModule, "SCardReconnect");
+	g_PCSC.pfnSCardDisconnect =
+	    (fnPCSCSCardDisconnect)GetProcAddress(g_PCSCModule, "SCardDisconnect");
 	g_PCSC.pfnSCardBeginTransaction =
-	    (fnSCardBeginTransaction)GetProcAddress(g_PCSCModule, "SCardBeginTransaction");
+	    (fnPCSCSCardBeginTransaction)GetProcAddress(g_PCSCModule, "SCardBeginTransaction");
 	g_PCSC.pfnSCardEndTransaction =
-	    (fnSCardEndTransaction)GetProcAddress(g_PCSCModule, "SCardEndTransaction");
-	g_PCSC.pfnSCardStatus = (fnSCardStatusA)GetProcAddress(g_PCSCModule, "SCardStatus");
+	    (fnPCSCSCardEndTransaction)GetProcAddress(g_PCSCModule, "SCardEndTransaction");
+	g_PCSC.pfnSCardStatus = (fnPCSCSCardStatus)GetProcAddress(g_PCSCModule, "SCardStatus");
 	g_PCSC.pfnSCardGetStatusChange =
-	    (fnSCardGetStatusChangeA)GetProcAddress(g_PCSCModule, "SCardGetStatusChange");
+	    (fnPCSCSCardGetStatusChange)GetProcAddress(g_PCSCModule, "SCardGetStatusChange");
 #ifdef __MACOSX__
 
 	if (OSXVersion >= 0x10050600)
-		g_PCSC.pfnSCardControl = (fnSCardControl)GetProcAddress(g_PCSCModule, "SCardControl132");
+		g_PCSC.pfnSCardControl =
+		    (fnPCSCSCardControl)GetProcAddress(g_PCSCModule, "SCardControl132");
 	else
-		g_PCSC.pfnSCardControl = (fnSCardControl)GetProcAddress(g_PCSCModule, "SCardControl");
+		g_PCSC.pfnSCardControl = (fnPCSCSCardControl)GetProcAddress(g_PCSCModule, "SCardControl");
 
 #else
-	g_PCSC.pfnSCardControl = (fnSCardControl)GetProcAddress(g_PCSCModule, "SCardControl");
+	g_PCSC.pfnSCardControl = (fnPCSCSCardControl)GetProcAddress(g_PCSCModule, "SCardControl");
 #endif
-	g_PCSC.pfnSCardTransmit = (fnSCardTransmit)GetProcAddress(g_PCSCModule, "SCardTransmit");
+	g_PCSC.pfnSCardTransmit = (fnPCSCSCardTransmit)GetProcAddress(g_PCSCModule, "SCardTransmit");
 	g_PCSC.pfnSCardListReaderGroups =
-	    (fnSCardListReaderGroupsA)GetProcAddress(g_PCSCModule, "SCardListReaderGroups");
+	    (fnPCSCSCardListReaderGroups)GetProcAddress(g_PCSCModule, "SCardListReaderGroups");
 	g_PCSC.pfnSCardListReaders =
-	    (fnSCardListReadersA)GetProcAddress(g_PCSCModule, "SCardListReaders");
-	g_PCSC.pfnSCardCancel = (fnSCardCancel)GetProcAddress(g_PCSCModule, "SCardCancel");
-	g_PCSC.pfnSCardGetAttrib = (fnSCardGetAttrib)GetProcAddress(g_PCSCModule, "SCardGetAttrib");
-	g_PCSC.pfnSCardSetAttrib = (fnSCardSetAttrib)GetProcAddress(g_PCSCModule, "SCardSetAttrib");
+	    (fnPCSCSCardListReaders)GetProcAddress(g_PCSCModule, "SCardListReaders");
+	g_PCSC.pfnSCardCancel = (fnPCSCSCardCancel)GetProcAddress(g_PCSCModule, "SCardCancel");
+	g_PCSC.pfnSCardGetAttrib = (fnPCSCSCardGetAttrib)GetProcAddress(g_PCSCModule, "SCardGetAttrib");
+	g_PCSC.pfnSCardSetAttrib = (fnPCSCSCardSetAttrib)GetProcAddress(g_PCSCModule, "SCardSetAttrib");
 	g_PCSC.pfnSCardFreeMemory = NULL;
 #ifndef __APPLE__
-	g_PCSC.pfnSCardFreeMemory = (fnSCardFreeMemory)GetProcAddress(g_PCSCModule, "SCardFreeMemory");
+	g_PCSC.pfnSCardFreeMemory =
+	    (fnPCSCSCardFreeMemory)GetProcAddress(g_PCSCModule, "SCardFreeMemory");
 #endif
 
 	if (g_PCSC.pfnSCardFreeMemory)
