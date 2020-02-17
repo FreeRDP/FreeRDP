@@ -970,9 +970,6 @@ static void xf_check_extensions(xfContext* context)
 /* this device when trying to find the input device which is the pointer.  */
 static const char TEST_PTR_STR[] = "Virtual core XTEST pointer";
 static const size_t TEST_PTR_LEN = sizeof(TEST_PTR_STR) / sizeof(char);
-
-/* Invalid device identifier which indicate failure. */
-static const int INVALID_XID = -1;
 #endif /* WITH_XI */
 
 static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
