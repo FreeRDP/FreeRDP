@@ -23,6 +23,6 @@
 #include <winpr/platform.h>
 #include <winpr/smartcard.h>
 
-PSCardApiFunctionTable Inspect_RegisterSCardApi(PSCardApiFunctionTable pSCardApi);
+const SCardApiFunctionTable* Inspect_RegisterSCardApi(const SCardApiFunctionTable* pSCardApi);
 
 #endif /* WINPR_SMARTCARD_INSPECT_PRIVATE_H */
