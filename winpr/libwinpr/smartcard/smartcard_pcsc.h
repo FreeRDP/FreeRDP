@@ -3,6 +3,8 @@
  * Smart Card API
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2020 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2020 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,18 +42,70 @@
  */
 
 #ifdef __APPLE__
-typedef unsigned int PCSC_DWORD;
-typedef PCSC_DWORD *PCSC_PDWORD, *PCSC_LPDWORD;
-typedef unsigned int PCSC_ULONG;
-typedef PCSC_ULONG* PCSC_PULONG;
-typedef int PCSC_LONG;
-#else
-typedef unsigned long PCSC_DWORD;
-typedef PCSC_DWORD *PCSC_PDWORD, *PCSC_LPDWORD;
-typedef unsigned long PCSC_ULONG;
-typedef PCSC_ULONG* PCSC_PULONG;
-typedef long PCSC_LONG;
+
+#include <stdint.h>
+
+#ifndef BYTE
+typedef uint8_t PCSC_BYTE;
 #endif
+typedef uint8_t PCSC_UCHAR;
+typedef PCSC_UCHAR* PCSC_PUCHAR;
+typedef uint16_t PCSC_USHORT;
+
+#ifndef __COREFOUNDATION_CFPLUGINCOM__
+typedef uint32_t PCSC_ULONG;
+typedef void* PCSC_LPVOID;
+typedef int16_t PCSC_BOOL;
+#endif
+
+typedef PCSC_ULONG* PCSC_PULONG;
+typedef const void* PCSC_LPCVOID;
+typedef uint32_t PCSC_DWORD;
+typedef PCSC_DWORD* PCSC_PDWORD;
+typedef uint16_t PCSC_WORD;
+typedef int32_t PCSC_LONG;
+typedef const char* PCSC_LPCSTR;
+typedef const PCSC_BYTE* PCSC_LPCBYTE;
+typedef PCSC_BYTE* PCSC_LPBYTE;
+typedef PCSC_DWORD* PCSC_LPDWORD;
+typedef char* PCSC_LPSTR;
+
+#else
+
+#ifndef BYTE
+typedef unsigned char PCSC_BYTE;
+#endif
+typedef unsigned char PCSC_UCHAR;
+typedef PCSC_UCHAR* PCSC_PUCHAR;
+typedef unsigned short PCSC_USHORT;
+
+#ifndef __COREFOUNDATION_CFPLUGINCOM__
+typedef unsigned long PCSC_ULONG;
+typedef void* PCSC_LPVOID;
+#endif
+
+typedef const void* PCSC_LPCVOID;
+typedef unsigned long PCSC_DWORD;
+typedef PCSC_DWORD* PCSC_PDWORD;
+typedef long PCSC_LONG;
+typedef const char* PCSC_LPCSTR;
+typedef const PCSC_BYTE* PCSC_LPCBYTE;
+typedef PCSC_BYTE* PCSC_LPBYTE;
+typedef PCSC_DWORD* PCSC_LPDWORD;
+typedef char* PCSC_LPSTR;
+
+/* these types were deprecated but still used by old drivers and
+ * applications. So just declare and use them. */
+typedef PCSC_LPSTR PCSC_LPTSTR;
+typedef PCSC_LPCSTR PCSC_LPCTSTR;
+
+/* types unused by pcsc-lite */
+typedef short PCSC_BOOL;
+typedef unsigned short PCSC_WORD;
+typedef PCSC_ULONG* PCSC_PULONG;
+
+#endif
+
 #define PCSC_SCARD_UNKNOWN 0x0001
 #define PCSC_SCARD_ABSENT 0x0002
 #define PCSC_SCARD_PRESENT 0x0004
