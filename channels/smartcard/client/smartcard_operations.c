@@ -945,24 +945,36 @@ static LONG smartcard_ReadCacheA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 	ReadCache_Return ret = { 0 };
 	ReadCacheA_Call* call = operation->call;
 	IRP* irp = operation->irp;
+	BOOL autoalloc = (call->Common.cbDataLen == SCARD_AUTOALLOCATE);
 
 	if (!call->Common.fPbDataIsNULL)
 	{
 		ret.cbDataLen = call->Common.cbDataLen;
-		ret.pbData = malloc(ret.cbDataLen);
-		if (!ret.pbData)
-			return SCARD_F_INTERNAL_ERROR;
+		if (autoalloc)
+		{
+			ret.pbData = malloc(ret.cbDataLen);
+			if (!ret.pbData)
+				return SCARD_F_INTERNAL_ERROR;
+		}
 	}
 
-	ret.ReturnCode = SCardReadCacheA(operation->hContext, call->Common.CardIdentifier,
-	                                 call->Common.FreshnessCounter, call->szLookupName, ret.pbData,
-	                                 &ret.cbDataLen);
+	if (autoalloc)
+		ret.ReturnCode = SCardReadCacheA(operation->hContext, call->Common.CardIdentifier,
+		                                 call->Common.FreshnessCounter, call->szLookupName,
+		                                 (BYTE*)&ret.pbData, &ret.cbDataLen);
+	else
+		ret.ReturnCode = SCardReadCacheA(operation->hContext, call->Common.CardIdentifier,
+		                                 call->Common.FreshnessCounter, call->szLookupName,
+		                                 ret.pbData, &ret.cbDataLen);
 	log_status_error(TAG, "SCardReadCacheA", ret.ReturnCode);
 	free(call->szLookupName);
 	free(call->Common.CardIdentifier);
 
 	status = smartcard_pack_read_cache_return(smartcard, irp->output, &ret);
-	free(ret.pbData);
+	if (autoalloc)
+		SCardFreeMemory(operation->hContext, ret.pbData);
+	else
+		free(ret.pbData);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -975,24 +987,35 @@ static LONG smartcard_ReadCacheW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 	ReadCache_Return ret = { 0 };
 	ReadCacheW_Call* call = operation->call;
 	IRP* irp = operation->irp;
-
+	BOOL autoalloc = (call->Common.cbDataLen == SCARD_AUTOALLOCATE);
 	if (!call->Common.fPbDataIsNULL)
 	{
 		ret.cbDataLen = call->Common.cbDataLen;
-		ret.pbData = malloc(ret.cbDataLen);
-		if (!ret.pbData)
-			return SCARD_F_INTERNAL_ERROR;
+		if (autoalloc)
+		{
+			ret.pbData = malloc(ret.cbDataLen);
+			if (!ret.pbData)
+				return SCARD_F_INTERNAL_ERROR;
+		}
 	}
 
-	ret.ReturnCode = SCardReadCacheW(operation->hContext, call->Common.CardIdentifier,
-	                                 call->Common.FreshnessCounter, call->szLookupName, ret.pbData,
-	                                 &ret.cbDataLen);
+	if (autoalloc)
+		ret.ReturnCode = SCardReadCacheW(operation->hContext, call->Common.CardIdentifier,
+		                                 call->Common.FreshnessCounter, call->szLookupName,
+		                                 (BYTE*)&ret.pbData, &ret.cbDataLen);
+	else
+		ret.ReturnCode = SCardReadCacheW(operation->hContext, call->Common.CardIdentifier,
+		                                 call->Common.FreshnessCounter, call->szLookupName,
+		                                 ret.pbData, &ret.cbDataLen);
 	log_status_error(TAG, "SCardReadCacheW", ret.ReturnCode);
 	free(call->szLookupName);
 	free(call->Common.CardIdentifier);
 
 	status = smartcard_pack_read_cache_return(smartcard, irp->output, &ret);
-	free(ret.pbData);
+	if (autoalloc)
+		SCardFreeMemory(operation->hContext, ret.pbData);
+	else
+		free(ret.pbData);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
