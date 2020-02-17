@@ -681,7 +681,7 @@ extern "C"
 	WINSCARDAPI LONG WINAPI SCardForgetCardTypeA(SCARDCONTEXT hContext, LPCSTR szCardName);
 	WINSCARDAPI LONG WINAPI SCardForgetCardTypeW(SCARDCONTEXT hContext, LPCWSTR szCardName);
 
-	WINSCARDAPI LONG WINAPI SCardFreeMemory(SCARDCONTEXT hContext, LPCVOID pvMem);
+	WINSCARDAPI LONG WINAPI SCardFreeMemory(SCARDCONTEXT hContext, LPVOID pvMem);
 
 	WINSCARDAPI HANDLE WINAPI SCardAccessStartedEvent(void);
 
@@ -959,7 +959,7 @@ typedef LONG(WINAPI* fnSCardSetCardTypeProviderNameW)(SCARDCONTEXT hContext, LPC
 typedef LONG(WINAPI* fnSCardForgetCardTypeA)(SCARDCONTEXT hContext, LPCSTR szCardName);
 typedef LONG(WINAPI* fnSCardForgetCardTypeW)(SCARDCONTEXT hContext, LPCWSTR szCardName);
 
-typedef LONG(WINAPI* fnSCardFreeMemory)(SCARDCONTEXT hContext, LPCVOID pvMem);
+typedef LONG(WINAPI* fnSCardFreeMemory)(SCARDCONTEXT hContext, LPVOID pvMem);
 
 typedef HANDLE(WINAPI* fnSCardAccessStartedEvent)(void);
 
