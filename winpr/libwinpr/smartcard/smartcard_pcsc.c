@@ -2541,7 +2541,10 @@ static LONG WINAPI PCSC_SCardReadCacheA(SCARDCONTEXT hContext, UUID* CardIdentif
 			return SCARD_E_NO_MEMORY;
 
 		if (!PCSC_AddMemoryBlock(hContext, mem))
+		{
+			free(mem);
 			return SCARD_E_NO_MEMORY;
+		}
 
 		memcpy(mem, data->data, data->len);
 		*ppData = mem;
@@ -2579,7 +2582,10 @@ static LONG WINAPI PCSC_SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIdentif
 			return SCARD_E_NO_MEMORY;
 
 		if (!PCSC_AddMemoryBlock(hContext, mem))
+		{
+			free(mem);
 			return SCARD_E_NO_MEMORY;
+		}
 
 		memcpy(mem, data->data, data->len);
 		*ppData = mem;
