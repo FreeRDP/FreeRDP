@@ -633,6 +633,7 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	ChannelBindingToken = &((BYTE*)ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
 	memcpy(ChannelBindingToken, TLS_SERVER_END_POINT, PrefixLength);
 	memcpy(ChannelBindingToken + PrefixLength, CertificateHash, CertificateHashLength);
+	free(CertificateHash);
 	return ContextBindings;
 out_free:
 	free(CertificateHash);
