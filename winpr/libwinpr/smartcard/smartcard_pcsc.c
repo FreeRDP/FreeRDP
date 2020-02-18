@@ -1850,12 +1850,7 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard, LPSTR mszReaderN
 		*pcbAtrLen = (DWORD)pcsc_cbAtrLen;
 
 	if (pcchReaderLen)
-	{
-		if (unicode)
-			*pcchReaderLen = (pcsc_cchReaderLen + 1) * 2;
-		else
-			*pcchReaderLen = pcsc_cchReaderLen + 1;
-	}
+		*pcchReaderLen = pcsc_cchReaderLen + 1;
 
 	/* Make sure the last byte is set */
 	if (readerNames)

@@ -712,7 +712,7 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 
 	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders, cchReaders);
 	ret.msz = (BYTE*)mszReaders;
-	ret.cBytes = cchReaders * 2;
+	ret.cBytes = cchReaders;
 
 	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret, TRUE);
 
@@ -1613,7 +1613,6 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 {
 	LONG status;
 	Status_Return ret = { 0 };
-	DWORD cchReaderLen = 0;
 	LPWSTR mszReaderNames = NULL;
 	IRP* irp = operation->irp;
 	Status_Call* call = operation->call;
@@ -1626,27 +1625,19 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 	cbAtrLen = call->cbAtrLen = 32;
 
 	if (call->fmszReaderNamesIsNULL)
-		cchReaderLen = 0;
+		ret.cBytes = 0;
 	else
-		cchReaderLen = SCARD_AUTOALLOCATE;
+		ret.cBytes = SCARD_AUTOALLOCATE;
 
 	ZeroMemory(ret.pbAtr, 32);
 	status = ret.ReturnCode =
 	    SCardStatusW(operation->hCard, call->fmszReaderNamesIsNULL ? NULL : (LPWSTR)&mszReaderNames,
-	                 &cchReaderLen, &ret.dwState, &ret.dwProtocol, (BYTE*)&ret.pbAtr, &cbAtrLen);
+	                 &ret.cBytes, &ret.dwState, &ret.dwProtocol, (BYTE*)&ret.pbAtr, &cbAtrLen);
 	log_status_error(TAG, "SCardStatusW", status);
 	if (status == SCARD_S_SUCCESS)
 	{
 		if (!call->fmszReaderNamesIsNULL)
 			ret.mszReaderNames = (BYTE*)mszReaderNames;
-
-			// WinScard returns the number of CHARACTERS whereas pcsc-lite returns the
-			// number of BYTES.
-#ifdef _WIN32
-		ret.cBytes = cchReaderLen * 2;
-#else
-		ret.cBytes = cchReaderLen;
-#endif
 
 		ret.cbAtrLen = cbAtrLen;
 	}

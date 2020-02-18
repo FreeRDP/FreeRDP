@@ -226,7 +226,7 @@ static LONG smartcard_ndr_write(wStream* s, const BYTE* data, UINT32 size, UINT3
 			break;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(s, required + dataLen))
+	if (!Stream_EnsureRemainingCapacity(s, required + dataLen + 4))
 		return STATUS_BUFFER_TOO_SMALL;
 
 	switch (type)
@@ -247,9 +247,7 @@ static LONG smartcard_ndr_write(wStream* s, const BYTE* data, UINT32 size, UINT3
 		Stream_Write(s, data, dataLen);
 	else
 		Stream_Zero(s, dataLen);
-	smartcard_pack_write_size_align(NULL, s, len, 4);
-
-	return STATUS_SUCCESS;
+	return smartcard_pack_write_size_align(NULL, s, len, 4);
 }
 
 static LONG smartcard_ndr_write_state(wStream* s, const ReaderState_Return* data, UINT32 size,
