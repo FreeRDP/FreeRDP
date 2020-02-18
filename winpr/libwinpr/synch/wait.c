@@ -415,14 +415,18 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 			pollfds[polled].events = handle_mode_to_pollevent(Object->Mode);
 			pollfds[polled].revents = 0;
 #else
-			FD_SET(fd, &rfds);
-			FD_SET(fd, &wfds);
 
 			if (Object->Mode & WINPR_FD_READ)
+			{
+				FD_SET(fd, &rfds);
 				prfds = &rfds;
+			}
 
 			if (Object->Mode & WINPR_FD_WRITE)
+			{
+				FD_SET(fd, &wfds);
 				pwfds = &wfds;
+			}
 
 			if (fd > maxfd)
 				maxfd = fd;
