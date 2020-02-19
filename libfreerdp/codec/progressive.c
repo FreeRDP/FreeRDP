@@ -2145,6 +2145,12 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 	REGION16 clippingRects, updateRegion;
 	PROGRESSIVE_BLOCK_REGION* region;
 	PROGRESSIVE_SURFACE_CONTEXT* surface = progressive_get_surface_data(progressive, surfaceId);
+	union {
+		const BYTE* cbp;
+		BYTE* bp;
+	} sconv;
+
+	sconv.cbp = pSrcData;
 
 	if (!surface)
 	{
@@ -2157,7 +2163,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 	if (!region)
 		return -1111;
 
-	Stream_StaticInit(&ss, pSrcData, SrcSize);
+	Stream_StaticInit(&ss, sconv.bp, SrcSize);
 	s = &ss;
 
 	switch (DstFormat)

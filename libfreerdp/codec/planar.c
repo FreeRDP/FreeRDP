@@ -105,7 +105,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* pSrcData, UINT3
 
 	previousScanline = NULL;
 
-	for (y = 0; y < nHeight; y++)
+	for (y = 0; y < (INT32)nHeight; y++)
 	{
 		BYTE* dstp = &pDstData[((y) * (INT32)nWidth)];
 		pixel = 0;

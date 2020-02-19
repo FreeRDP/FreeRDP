@@ -169,12 +169,17 @@ BOOL pf_modules_run_filter(PF_FILTER_TYPE type, proxyData* pdata, void* param)
  */
 static BOOL pf_modules_set_plugin_data(const char* plugin_name, proxyData* pdata, void* data)
 {
+	union {
+		const char* ccp;
+		char* cp;
+	} ccharconv;
 	assert(plugin_name);
 
+	ccharconv.ccp = plugin_name;
 	if (data == NULL) /* no need to store anything */
 		return FALSE;
 
-	if (HashTable_Add(pdata->modules_info, plugin_name, data) < 0)
+	if (HashTable_Add(pdata->modules_info, ccharconv.cp, data) < 0)
 	{
 		WLog_ERR(TAG, "[%s]: HashTable_Add failed!");
 		return FALSE;
@@ -192,10 +197,15 @@ static BOOL pf_modules_set_plugin_data(const char* plugin_name, proxyData* pdata
  */
 static void* pf_modules_get_plugin_data(const char* plugin_name, proxyData* pdata)
 {
+	union {
+		const char* ccp;
+		char* cp;
+	} ccharconv;
 	assert(plugin_name);
 	assert(pdata);
+	ccharconv.ccp = plugin_name;
 
-	return HashTable_GetItemValue(pdata->modules_info, plugin_name);
+	return HashTable_GetItemValue(pdata->modules_info, ccharconv.cp);
 }
 
 static void pf_modules_abort_connect(proxyData* pdata)

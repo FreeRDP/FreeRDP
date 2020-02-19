@@ -183,7 +183,12 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 	const char* ServiceName = NULL;
 	DEVICE_SERVICE_ENTRY_POINTS ep;
 	PDEVICE_SERVICE_ENTRY entry = NULL;
+	union {
+		const RDPDR_DEVICE* cdp;
+		RDPDR_DEVICE* dp;
+	} devconv;
 
+	devconv.cdp = device;
 	if (!devman || !device || !rdpcontext)
 		return ERROR_INVALID_PARAMETER;
 
@@ -220,7 +225,7 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 
 	ep.devman = devman;
 	ep.RegisterDevice = devman_register_device;
-	ep.device = device;
+	ep.device = devconv.dp;
 	ep.rdpcontext = rdpcontext;
 	return entry(&ep);
 }
