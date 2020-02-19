@@ -1,7 +1,7 @@
 {
     "app-id": "com.freerdp.FreeRDP",
     "runtime": "org.freedesktop.Platform",
-    "runtime-version": "18.08",
+    "runtime-version": "19.08",
     "sdk": "org.freedesktop.Sdk",
     "build-options" : {
         "cflags": "-O2 -g",
@@ -13,16 +13,16 @@
     "finish-args": [
         /* X11 + XShm access */
         "--share=ipc",
-				"--socket=x11",
-				"--socket=fallback-x11",
+        "--socket=x11",
+        "--socket=fallback-x11",
         /* Needs to talk to the network */
         "--share=network",
         /* Play sounds redirected from guests */
         "--socket=pulseaudio",
         /* Wayland access */
         "--socket=wayland",
-				/* Allow rw access to download folder */
-				"--filesystem=xdg-download"
+        /* Allow rw access to download folder */
+        "--filesystem=xdg-download"
     ],
     "modules": [
     {
@@ -38,8 +38,6 @@
         }
         ]
     },
-    "shared-modules/udev/udev-175.json",
-    "shared-modules/dbus-glib/dbus-glib-0.110.json",
     {
         "name": "libusb",
         "config-opts": ["--disable-static"],
@@ -64,7 +62,7 @@
         "sources": [
             {
                 "type": "git",
-                "url": "https://salsa.debian.org/rousseau/PCSC.git",
+                "url": "https://github.com/LudovicRousseau/PCSC.git",
                 "tag": "pcsc-1.8.24",
                 "commit": "73d95ada3221c060cbd7b6aa2375453f9d0e359b"
             }
