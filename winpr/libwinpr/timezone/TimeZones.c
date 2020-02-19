@@ -1361,11 +1361,18 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_49[] = { {
 	                                                             { 0, 6, 0, 2, 2, 0, 0, 0 },
 	                                                         },
 	                                                         {
-	                                                             3155378076000000000ULL,
+	                                                             637449660000000000ULL,
 	                                                             637134300000000000ULL,
 	                                                             60,
 	                                                             { 0, 4, 0, 3, 3, 0, 0, 0 },
 	                                                             { 0, 5, 0, 4, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             3155378076000000000ULL,
+	                                                             637450524000000000ULL,
+	                                                             60,
+	                                                             { 0, 4, 0, 2, 3, 0, 0, 0 },
+	                                                             { 0, 5, 0, 3, 2, 0, 0, 0 },
 	                                                         } };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_50[] = { {
@@ -3302,10 +3309,17 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_132[] = { {
 	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
 	                                                          },
 	                                                          {
-	                                                              3155378076000000000ULL,
+	                                                              637449660000000000ULL,
 	                                                              637134300000000000ULL,
 	                                                              60,
 	                                                              { 0, 1, 0, 2, 3, 0, 0, 0 },
+	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              3155378076000000000ULL,
+	                                                              637450524000000000ULL,
+	                                                              60,
+	                                                              { 0, 1, 0, 3, 3, 0, 0, 0 },
 	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
 	                                                          } };
 
@@ -3487,7 +3501,7 @@ const TIME_ZONE_ENTRY TimeZoneTable[] = {
 	{ "Sao Tome Standard Time", 0, TRUE, "(UTC+00:00) Sao Tome", "Sao Tome Standard Time",
 	  "Sao Tome Daylight Time", TimeZoneRuleTable_48, 2 },
 	{ "Morocco Standard Time", 0, TRUE, "(UTC+01:00) Casablanca", "Morocco Standard Time",
-	  "Morocco Daylight Time", TimeZoneRuleTable_49, 13 },
+	  "Morocco Daylight Time", TimeZoneRuleTable_49, 14 },
 	{ "W. Europe Standard Time", -60, TRUE,
 	  "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna", "W. Europe Standard Time",
 	  "W. Europe Daylight Time", TimeZoneRuleTable_50, 1 },
@@ -3655,7 +3669,7 @@ const TIME_ZONE_ENTRY TimeZoneTable[] = {
 	{ "UTC+12", -720, FALSE, "(UTC+12:00) Coordinated Universal Time+12", "UTC+12", "UTC+12", NULL,
 	  0 },
 	{ "Fiji Standard Time", -720, TRUE, "(UTC+12:00) Fiji", "Fiji Standard Time",
-	  "Fiji Daylight Time", TimeZoneRuleTable_132, 12 },
+	  "Fiji Daylight Time", TimeZoneRuleTable_132, 13 },
 	{ "Kamchatka Standard Time", -720, TRUE, "(UTC+12:00) Petropavlovsk-Kamchatsky - Old",
 	  "Kamchatka Standard Time", "Kamchatka Daylight Time", TimeZoneRuleTable_133, 1 },
 	{ "Chatham Islands Standard Time", -765, TRUE, "(UTC+12:45) Chatham Islands",
