@@ -30,7 +30,7 @@
 
 #include "smartcard_pack.h"
 
-static const DWORD g_LogLevel = WLOG_INFO;
+static const DWORD g_LogLevel = WLOG_DEBUG;
 
 #define smartcard_unpack_redir_scard_context(smartcard, s, context, index)                \
 	smartcard_unpack_redir_scard_context_((smartcard), (s), (context), (index), __FILE__, \
