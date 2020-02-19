@@ -1338,6 +1338,9 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 	BYTE* pemCert = NULL;
 	DWORD flags = VERIFY_CERT_FLAG_NONE;
 
+	if (freerdp_shall_disconnect(instance))
+		return -1;
+
 	if (!tls_extract_pem(cert, &pemCert, &length))
 		goto end;
 

@@ -274,6 +274,9 @@ static int nla_client_init(rdpNla* nla)
 
 	if (PromptPassword)
 	{
+		if (freerdp_shall_disconnect(instance))
+			return 0;
+
 		if (!instance->Authenticate)
 		{
 			freerdp_set_last_error_log(instance->context,
