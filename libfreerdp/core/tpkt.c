@@ -25,6 +25,10 @@
 
 #include "tpkt.h"
 
+#include <winpr/wlog.h>
+
+#define TAG FREERDP_TAG(".core.tpkt")
+
 /**
  * TPKTs are defined in:
  *
@@ -93,15 +97,27 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 
 	if (version == 3)
 	{
+		size_t slen;
 		UINT16 len;
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 
 		Stream_Seek(s, 2);
 		Stream_Read_UINT16_BE(s, len);
-		if (len < 4)
-			return FALSE;
 
+		/* ITU-T Rec. T.123 8 Packet header to delimit data units in an octet stream */
+		if (len < 7)
+		{
+			WLog_ERR(TAG, "TPKT header too short, require minimum of 7 bytes, got %" PRId16, len);
+			return FALSE;
+		}
+
+		slen = Stream_GetRemainingLength(s) + 4;
+		if (len > slen)
+		{
+			WLog_ERR(TAG, "TPKT header length %" PRIu16 ", but only received %" PRIdz, len, slen);
+			return FALSE;
+		}
 		*length = len;
 	}
 	else
