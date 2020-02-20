@@ -684,7 +684,6 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 {
 	LONG status;
 	ListReaders_Return ret;
-	LPWSTR mszReaders = NULL;
 	DWORD cchReaders = 0;
 	IRP* irp = operation->irp;
 	ListReaders_Call* call = operation->call;
@@ -693,11 +692,17 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 		const char* sz;
 		const WCHAR* wz;
 	} string;
+	union {
+		WCHAR** ppw;
+		WCHAR* pw;
+		CHAR* pc;
+		BYTE* pb;
+	} mszReaders;
 
 	string.bp = call->mszGroups;
 	cchReaders = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode =
-	    SCardListReadersW(operation->hContext, string.wz, (LPWSTR)&mszReaders, &cchReaders);
+	    SCardListReadersW(operation->hContext, string.wz, (LPWSTR)&mszReaders.pw, &cchReaders);
 
 	if (call->mszGroups)
 	{
@@ -708,14 +713,14 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	if (status != SCARD_S_SUCCESS)
 		return log_status_error(TAG, "SCardListReadersW", status);
 
-	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders, cchReaders);
-	ret.msz = (BYTE*)mszReaders;
+	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders.pw, cchReaders);
+	ret.msz = mszReaders.pb;
 	ret.cBytes = cchReaders;
 
 	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret, TRUE);
 
-	if (mszReaders)
-		SCardFreeMemory(operation->hContext, mszReaders);
+	if (mszReaders.pb)
+		SCardFreeMemory(operation->hContext, mszReaders.pb);
 
 	if (status != SCARD_S_SUCCESS)
 		return status;

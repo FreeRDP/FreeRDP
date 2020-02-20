@@ -1193,9 +1193,13 @@ static void smartcard_trace_get_attrib_return(SMARTCARD_DEVICE* smartcard,
 	}
 	else if (dwAttrId == SCARD_ATTR_CURRENT_PROTOCOL_TYPE)
 	{
-		UINT32 dwProtocolType = *((UINT32*)ret->pbAttr);
+		union {
+			BYTE* pb;
+			DWORD* pd;
+		} attr;
+		attr.pb = ret->pbAttr;
 		WLog_LVL(TAG, g_LogLevel, "  dwProtocolType: %s (0x%08" PRIX32 ")",
-		         SCardGetProtocolString(dwProtocolType), dwProtocolType);
+		         SCardGetProtocolString(*attr.pd), *attr.pd);
 	}
 
 	WLog_LVL(TAG, g_LogLevel, "}");
