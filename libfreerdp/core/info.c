@@ -245,7 +245,10 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	UINT16 cbClientDir;
 	UINT16 cbAutoReconnectLen;
 	rdpSettings* settings = rdp->settings;
-	WCHAR* wstr;
+	union {
+		BYTE* bp;
+		WCHAR* wp;
+	} ptrconv;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -280,15 +283,16 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (cbClientAddress)
 	{
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbClientAddress / 2 - 1])
+		if (ptrconv.wp[cbClientAddress / 2 - 1])
 		{
 			WLog_ERR(TAG, "protocol error: clientAddress must be null terminated");
 			return FALSE;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &settings->ClientAddress, 0, NULL, NULL) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->ClientAddress, 0, NULL,
+		                       NULL) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert client address");
 			return FALSE;
@@ -328,16 +332,15 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (cbClientDir)
 	{
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbClientDir / 2 - 1])
+		if (ptrconv.wp[cbClientDir / 2 - 1])
 		{
 			WLog_ERR(TAG, "protocol error: clientDir must be null terminated");
 			return FALSE;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)Stream_Pointer(s), -1, &settings->ClientDir, 0,
-		                       NULL, NULL) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->ClientDir, 0, NULL, NULL) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert client directory");
 			return FALSE;
@@ -488,7 +491,10 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	UINT16 cbWorkingDir;
 	UINT32 CompressionLevel;
 	rdpSettings* settings = rdp->settings;
-	WCHAR* wstr;
+	union {
+		BYTE* bp;
+		WCHAR* wp;
+	} ptrconv;
 
 	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
@@ -541,15 +547,15 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 			return FALSE;
 		}
 
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbDomain / 2])
+		if (ptrconv.wp[cbDomain / 2])
 		{
 			WLog_ERR(TAG, "protocol error: Domain must be null terminated");
 			return FALSE;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &settings->Domain, 0, NULL, NULL) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->Domain, 0, NULL, NULL) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert Domain string");
 			return FALSE;
@@ -575,15 +581,15 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 			return FALSE;
 		}
 
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbUserName / 2])
+		if (ptrconv.wp[cbUserName / 2])
 		{
 			WLog_ERR(TAG, "protocol error: UserName must be null terminated");
 			return FALSE;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &settings->Username, 0, NULL, NULL) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->Username, 0, NULL, NULL) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert UserName string");
 			return FALSE;
@@ -609,15 +615,15 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 			return FALSE;
 		}
 
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbPassword / 2])
+		if (ptrconv.wp[cbPassword / 2])
 		{
 			WLog_ERR(TAG, "protocol error: Password must be null terminated");
 			return FALSE;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &settings->Password, 0, NULL, NULL) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->Password, 0, NULL, NULL) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert Password string");
 			return FALSE;
@@ -644,15 +650,16 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 			return FALSE;
 		}
 
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbAlternateShell / 2])
+		if (ptrconv.wp[cbAlternateShell / 2])
 		{
 			WLog_ERR(TAG, "protocol error: AlternateShell must be null terminated");
 			return FALSE;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &settings->AlternateShell, 0, NULL, NULL) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->AlternateShell, 0, NULL,
+		                       NULL) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert AlternateShell string");
 			return FALSE;
@@ -678,16 +685,16 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 			return FALSE;
 		}
 
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbWorkingDir / 2])
+		if (ptrconv.wp[cbWorkingDir / 2])
 		{
 			WLog_ERR(TAG, "protocol error: WorkingDir must be null terminated");
 			return FALSE;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &settings->ShellWorkingDirectory, 0, NULL,
-		                       NULL) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->ShellWorkingDirectory, 0,
+		                       NULL, NULL) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert AlternateShell string");
 			return FALSE;
@@ -818,12 +825,17 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	{
 		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
 		{
+			union {
+				BYTE* bp;
+				WCHAR* wp;
+			} ptrconv;
 
 			if (settings->RedirectionPasswordLength > UINT16_MAX)
 				return FALSE;
 			usedPasswordCookie = TRUE;
 
-			passwordW = (WCHAR*)settings->RedirectionPassword;
+			ptrconv.bp = settings->RedirectionPassword;
+			passwordW = ptrconv.wp;
 			cbPassword = (UINT16)settings->RedirectionPasswordLength;
 		}
 		else
@@ -1016,7 +1028,12 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 {
 	UINT32 cbDomain;
 	UINT32 cbUserName;
-	WCHAR* wstr;
+	union {
+		BYTE* bp;
+		WCHAR* wp;
+	} ptrconv;
+
+	WINPR_UNUSED(rdp);
 	ZeroMemory(info, sizeof(*info));
 
 	if (Stream_GetRemainingLength(s) < 576)
@@ -1035,15 +1052,15 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 			goto fail;
 		}
 
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbDomain / 2 - 1])
+		if (ptrconv.wp[cbDomain / 2 - 1])
 		{
 			WLog_ERR(TAG, "protocol error: Domain must be null terminated");
 			goto fail;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->domain, 0, NULL, FALSE) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &info->domain, 0, NULL, FALSE) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert the Domain string");
 			goto fail;
@@ -1064,15 +1081,15 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 			goto fail;
 		}
 
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbUserName / 2 - 1])
+		if (ptrconv.wp[cbUserName / 2 - 1])
 		{
 			WLog_ERR(TAG, "protocol error: UserName must be null terminated");
 			goto fail;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->username, 0, NULL, FALSE) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &info->username, 0, NULL, FALSE) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert the UserName string");
 			goto fail;
@@ -1098,7 +1115,12 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	UINT32 Size;
 	UINT32 cbDomain;
 	UINT32 cbUserName;
-	WCHAR* wstr;
+	union {
+		BYTE* bp;
+		WCHAR* wp;
+	} ptrconv;
+
+	WINPR_UNUSED(rdp);
 	ZeroMemory(info, sizeof(*info));
 
 	if (Stream_GetRemainingLength(s) < 576)
@@ -1131,15 +1153,15 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 			goto fail;
 		}
 
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbDomain / 2 - 1])
+		if (ptrconv.wp[cbDomain / 2 - 1])
 		{
 			WLog_ERR(TAG, "protocol error: Domain field must be null terminated");
 			goto fail;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->domain, 0, NULL, FALSE) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &info->domain, 0, NULL, FALSE) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert the Domain string");
 			goto fail;
@@ -1168,15 +1190,15 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 			goto fail;
 		}
 
-		wstr = (WCHAR*)Stream_Pointer(s);
+		ptrconv.bp = Stream_Pointer(s);
 
-		if (wstr[cbUserName / 2 - 1])
+		if (ptrconv.wp[cbUserName / 2 - 1])
 		{
 			WLog_ERR(TAG, "protocol error: UserName field must be null terminated");
 			goto fail;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->username, 0, NULL, FALSE) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &info->username, 0, NULL, FALSE) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert the Domain string");
 			goto fail;
@@ -1197,6 +1219,7 @@ fail:
 
 static BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, wStream* s)
 {
+	WINPR_UNUSED(rdp);
 	if (Stream_GetRemainingLength(s) < 576)
 		return FALSE;
 
@@ -1353,20 +1376,21 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 
 static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 {
-	int sz = 4 + 52 + 4 + 512 + 4;
-	int len;
+	size_t sz = 4 + 52 + 4 + 512 + 4;
+	int ilen;
+	UINT32 len;
 	WCHAR* wString = NULL;
 
 	if (!Stream_EnsureRemainingCapacity(s, sz))
 		return FALSE;
 
 	/* domain */
-	len = ConvertToUnicode(CP_UTF8, 0, info->domain, -1, &wString, 0);
+	ilen = ConvertToUnicode(CP_UTF8, 0, info->domain, -1, &wString, 0);
 
-	if (len < 0)
+	if (ilen < 0)
 		return FALSE;
 
-	len *= 2;
+	len = (UINT32)ilen * 2;
 
 	if (len > 52)
 	{
@@ -1380,12 +1404,12 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 	free(wString);
 	/* username */
 	wString = NULL;
-	len = ConvertToUnicode(CP_UTF8, 0, info->username, -1, &wString, 0);
+	ilen = ConvertToUnicode(CP_UTF8, 0, info->username, -1, &wString, 0);
 
-	if (len < 0)
+	if (ilen < 0)
 		return FALSE;
 
-	len *= 2;
+	len = (UINT32)ilen * 2;
 
 	if (len > 512)
 	{
@@ -1404,8 +1428,9 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 
 static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 {
-	int Size = 2 + 4 + 4 + 4 + 4 + 558;
-	int domainLen, usernameLen, len;
+	UINT32 Size = 2 + 4 + 4 + 4 + 4 + 558;
+	size_t domainLen, usernameLen;
+	int len;
 	WCHAR* wString = NULL;
 
 	if (!Stream_EnsureRemainingCapacity(s, Size))
@@ -1415,16 +1440,20 @@ static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 	Stream_Write_UINT32(s, Size);
 	Stream_Write_UINT32(s, info->sessionId);
 	domainLen = strlen(info->domain);
-	Stream_Write_UINT32(s, (domainLen + 1) * 2);
+	if (domainLen > UINT32_MAX)
+		return FALSE;
+	Stream_Write_UINT32(s, (UINT32)(domainLen + 1) * 2);
 	usernameLen = strlen(info->username);
-	Stream_Write_UINT32(s, (usernameLen + 1) * 2);
+	if (usernameLen > UINT32_MAX)
+		return FALSE;
+	Stream_Write_UINT32(s, (UINT32)(usernameLen + 1) * 2);
 	Stream_Seek(s, 558);
 	len = ConvertToUnicode(CP_UTF8, 0, info->domain, -1, &wString, 0);
 
 	if (len < 0)
 		return FALSE;
 
-	Stream_Write(s, wString, len * 2);
+	Stream_Write(s, wString, (size_t)len * 2);
 	free(wString);
 	wString = NULL;
 	len = ConvertToUnicode(CP_UTF8, 0, info->username, -1, &wString, 0);
@@ -1432,7 +1461,7 @@ static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 	if (len < 0)
 		return FALSE;
 
-	Stream_Write(s, wString, len * 2);
+	Stream_Write(s, wString, (size_t)len * 2);
 	free(wString);
 	return TRUE;
 }
