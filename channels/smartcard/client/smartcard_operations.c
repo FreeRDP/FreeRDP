@@ -364,7 +364,7 @@ static LONG smartcard_ListReaderGroupsA_Call(SMARTCARD_DEVICE* smartcard,
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	status = smartcard_pack_list_reader_groups_return(smartcard, irp->output, &ret);
+	status = smartcard_pack_list_reader_groups_return(smartcard, irp->output, &ret, FALSE);
 
 	if (status != SCARD_S_SUCCESS)
 		return status;
@@ -409,7 +409,7 @@ static LONG smartcard_ListReaderGroupsW_Call(SMARTCARD_DEVICE* smartcard,
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	status = smartcard_pack_list_reader_groups_return(smartcard, irp->output, &ret);
+	status = smartcard_pack_list_reader_groups_return(smartcard, irp->output, &ret, TRUE);
 
 	if (status != SCARD_S_SUCCESS)
 		return status;

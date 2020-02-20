@@ -481,7 +481,7 @@ LONG smartcard_unpack_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, wStre
                                               ListReaderGroups_Call* call, BOOL unicode);
 
 LONG smartcard_pack_list_reader_groups_return(SMARTCARD_DEVICE* smartcard, wStream* s,
-                                              const ListReaderGroups_Return* ret);
+                                              const ListReaderGroups_Return* ret, BOOL unicode);
 
 LONG smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         ListReaders_Call* call, BOOL unicode);
