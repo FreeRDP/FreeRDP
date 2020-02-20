@@ -443,9 +443,9 @@ typedef struct _WriteCacheW_Call
 
 #include "smartcard_main.h"
 
-LONG smartcard_pack_write_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size,
+LONG smartcard_pack_write_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, size_t size,
                                      UINT32 alignment);
-LONG smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size,
+LONG smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, size_t size,
                                       UINT32 alignment);
 
 SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartcard,

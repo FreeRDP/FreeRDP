@@ -223,7 +223,7 @@ static LONG smartcard_EstablishContext_Call(SMARTCARD_DEVICE* smartcard,
                                             SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	SCARDCONTEXT hContext = -1;
+	SCARDCONTEXT hContext = { 0 };
 	EstablishContext_Return ret;
 	IRP* irp = operation->irp;
 	EstablishContext_Call* call = operation->call;
