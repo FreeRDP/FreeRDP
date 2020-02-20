@@ -24,6 +24,8 @@
 #include "activation.h"
 #include "display.h"
 
+#define TAG FREERDP_TAG("core.activation")
+
 /*
 static const char* const CTRLACTION_STRINGS[] =
 {
@@ -255,6 +257,7 @@ BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp)
 BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 {
 	UINT16 lengthSourceDescriptor;
+	UINT32 timeout;
 
 	if (rdp->state == CONNECTION_STATE_ACTIVE)
 		rdp->deactivation_reactivation = TRUE;
@@ -288,18 +291,22 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
 
-	while (rdp->state != CONNECTION_STATE_ACTIVE)
+	for (timeout = 0; timeout < rdp->settings->TcpAckTimeout; timeout += 100)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
 
 		if (freerdp_shall_disconnect(rdp->instance))
-			break;
+			return TRUE;
 
-		SwitchToThread();
+		if (rdp->state == CONNECTION_STATE_ACTIVE)
+			return TRUE;
+
+		Sleep(100);
 	}
 
-	return TRUE;
+	WLog_ERR(TAG, "Timeout waiting for activation");
+	return FALSE;
 }
 
 BOOL rdp_send_deactivate_all(rdpRdp* rdp)
