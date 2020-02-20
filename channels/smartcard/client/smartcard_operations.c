@@ -716,7 +716,6 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders.pw, cchReaders);
 	ret.msz = mszReaders.pb;
 	ret.cBytes = cchReaders;
-
 	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret, TRUE);
 
 	if (mszReaders.pb)
