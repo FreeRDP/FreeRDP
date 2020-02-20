@@ -530,6 +530,8 @@ int license_recv(rdpLicense* license, wStream* s)
 			return -1;
 	}
 
+	if (!tpkt_ensure_stream_consumed(s, length))
+		return -1;
 	return 0;
 }
 

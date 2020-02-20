@@ -74,13 +74,19 @@ static void tpdu_write_header(wStream* s, UINT16 length, BYTE code);
  * @return TPDU length indicator (LI)
  */
 
-BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li)
+BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength)
 {
 	if (Stream_GetRemainingLength(s) < 3)
 		return FALSE;
 
 	Stream_Read_UINT8(s, *li);   /* LI */
 	Stream_Read_UINT8(s, *code); /* Code */
+
+	if (*li + 4 > tpktlength)
+	{
+		WLog_ERR(TAG, "tpdu length %" PRIu16 " > tpkt header length %" PRIu16, li, tpktlength);
+		return FALSE;
+	}
 
 	if (*code == X224_TPDU_DATA)
 	{
@@ -128,11 +134,11 @@ void tpdu_write_header(wStream* s, UINT16 length, BYTE code)
  * @return length indicator (LI)
  */
 
-BOOL tpdu_read_connection_request(wStream* s, BYTE* li)
+BOOL tpdu_read_connection_request(wStream* s, BYTE* li, UINT16 tpktlength)
 {
 	BYTE code;
 
-	if (!tpdu_read_header(s, &code, li))
+	if (!tpdu_read_header(s, &code, li, tpktlength))
 		return FALSE;
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
@@ -161,7 +167,7 @@ void tpdu_write_connection_request(wStream* s, UINT16 length)
  * @return length indicator (LI)
  */
 
-BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
+BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li, UINT16 tpktlength)
 {
 	BYTE code;
 	size_t position;
@@ -170,7 +176,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 	/* save the position to determine the number of bytes read */
 	position = Stream_GetPosition(s);
 
-	if (!tpdu_read_header(s, &code, li))
+	if (!tpdu_read_header(s, &code, li, tpktlength))
 		return FALSE;
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
@@ -227,12 +233,12 @@ void tpdu_write_data(wStream* s)
  * @param s stream
  */
 
-BOOL tpdu_read_data(wStream* s, UINT16* LI)
+BOOL tpdu_read_data(wStream* s, UINT16* LI, UINT16 tpktlength)
 {
 	BYTE code;
 	BYTE li;
 
-	if (!tpdu_read_header(s, &code, &li))
+	if (!tpdu_read_header(s, &code, &li, tpktlength))
 		return FALSE;
 
 	if (code != X224_TPDU_DATA)

@@ -478,7 +478,7 @@ fail:
  * @param settings settings
  */
 
-static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
+static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 {
 	UINT32 flags;
 	UINT16 cbDomain;
@@ -701,7 +701,7 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
 		return rdp_read_extended_info_packet(rdp, s); /* extraInfo */
 
-	return TRUE;
+	return tpkt_ensure_stream_consumed(s, tpktlength);
 }
 
 /**
@@ -818,9 +818,11 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	{
 		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
 		{
+
 			if (settings->RedirectionPasswordLength > UINT16_MAX)
 				return FALSE;
 			usedPasswordCookie = TRUE;
+
 			passwordW = (WCHAR*)settings->RedirectionPassword;
 			cbPassword = (UINT16)settings->RedirectionPasswordLength;
 		}
@@ -985,7 +987,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	return rdp_read_info_packet(rdp, s);
+	return rdp_read_info_packet(rdp, s, length);
 }
 
 /**

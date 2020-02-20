@@ -129,6 +129,18 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 	return TRUE;
 }
 
+BOOL tpkt_ensure_stream_consumed(wStream* s, UINT16 length)
+{
+	size_t rem = Stream_GetRemainingLength(s);
+	if (rem > 0)
+	{
+		WLog_ERR(TAG, "Received invalid TPKT header length %" PRIu16 ", %" PRIdz " bytes too long!",
+		         length, rem);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /**
  * Write a TPKT header.\n
  * @param s
