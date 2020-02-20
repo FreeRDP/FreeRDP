@@ -371,7 +371,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	if (!tpkt_read_header(s, length))
 		return FALSE;
 
-	if (!tpdu_read_header(s, &code, &li))
+	if (!tpdu_read_header(s, &code, &li, *length))
 		return FALSE;
 
 	if (code != X224_TPDU_DATA)
@@ -1231,6 +1231,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, INT32 length, UINT16 securityFlags)
 
 static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 {
+	int rc = 0;
 	UINT16 length;
 	UINT16 pduType;
 	UINT16 pduLength;
@@ -1278,7 +1279,9 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			 */
 			Stream_Rewind(s, 2);
 			rdp->inPackets++;
-			return rdp_recv_enhanced_security_redirection_packet(rdp, s);
+
+			rc = rdp_recv_enhanced_security_redirection_packet(rdp, s);
+			goto out;
 		}
 	}
 
@@ -1320,7 +1323,6 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 				case PDU_TYPE_SERVER_REDIRECTION:
 					return rdp_recv_enhanced_security_redirection_packet(rdp, s);
-					break;
 
 				case PDU_TYPE_FLOW_RESPONSE:
 				case PDU_TYPE_FLOW_STOP:
@@ -1342,7 +1344,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			if (!rdp_read_security_header(s, &securityFlags, NULL))
 				return -1;
 		rdp->inPackets++;
-		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
+		rc = rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 	else
 	{
@@ -1355,7 +1357,10 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	return 0;
+out:
+	if (!tpkt_ensure_stream_consumed(s, length))
+		return -1;
+	return rc;
 }
 
 static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)

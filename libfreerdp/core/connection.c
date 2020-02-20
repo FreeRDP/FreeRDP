@@ -852,7 +852,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (!rdp->rc4_decrypt_key || !rdp->rc4_encrypt_key)
 		goto end;
 
-	ret = TRUE;
+	ret = tpkt_ensure_stream_consumed(s, length);
 end:
 	free(crypt_client_random);
 
@@ -999,7 +999,7 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 				}
 
 				if (rdp_recv_message_channel_pdu(rdp, s, securityFlags) == 0)
-					return TRUE;
+					return tpkt_ensure_stream_consumed(s, length);
 			}
 		}
 
@@ -1036,20 +1036,28 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	BYTE* mark;
 	UINT16 width;
 	UINT16 height;
+	UINT16 length;
 	width = rdp->settings->DesktopWidth;
 	height = rdp->settings->DesktopHeight;
 	Stream_GetPointer(s, mark);
 
 	if (!rdp_recv_demand_active(rdp, s))
 	{
+		int rc;
 		UINT16 channelId;
 		Stream_SetPointer(s, mark);
-		rdp_recv_get_active_header(rdp, s, &channelId);
+		if (!rdp_recv_get_active_header(rdp, s, &channelId, &length))
+			return -1;
 		/* Was Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 		 * but the headers aren't always that length,
 		 * so that could result in a bad offset.
 		 */
-		return rdp_recv_out_of_sequence_pdu(rdp, s);
+		rc = rdp_recv_out_of_sequence_pdu(rdp, s);
+		if (rc < 0)
+			return rc;
+		if (!tpkt_ensure_stream_consumed(s, length))
+			return -1;
+		return rc;
 	}
 
 	if (freerdp_shall_disconnect(rdp->instance))

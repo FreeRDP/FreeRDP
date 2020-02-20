@@ -3486,20 +3486,20 @@ static BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOO
 }
 #endif
 
-static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCapabilities)
+static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCapabilities,
+                                     UINT16 totalLength)
 {
-	BYTE* mark;
-	UINT16 count;
-	UINT16 type;
-	UINT16 length;
-	BYTE *bm, *em;
 	BOOL treated;
-	Stream_GetPointer(s, mark);
-	count = numberCapabilities;
+	size_t start, end, len;
+	UINT16 count = numberCapabilities;
 
+	start = Stream_GetPosition(s);
 	while (numberCapabilities > 0 && Stream_GetRemainingLength(s) >= 4)
 	{
-		Stream_GetPointer(s, bm);
+		UINT16 type;
+		UINT16 length;
+		BYTE* em;
+		BYTE* bm = Stream_Pointer(s);
 		rdp_read_capability_set_header(s, &length, &type);
 
 		if (type < 32)
@@ -3513,7 +3513,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 
 		em = bm + length;
 
-		if (Stream_GetRemainingLength(s) < ((size_t)length - 4))
+		if (Stream_GetRemainingLength(s) + 4 < ((size_t)length))
 		{
 			WLog_ERR(TAG, "error processing stream");
 			return FALSE;
@@ -3733,11 +3733,14 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 			WLog_ERR(TAG,
 			         "incorrect offset, type:0x%04" PRIX16 " actual:%" PRIuz " expected:%" PRIuz "",
 			         type, Stream_Pointer(s) - bm, em - bm);
+			Stream_SetPointer(s, em);
 		}
 
-		Stream_SetPointer(s, em);
 		numberCapabilities--;
 	}
+
+	end = Stream_GetPosition(s);
+	len = end - start;
 
 	if (numberCapabilities)
 	{
@@ -3748,21 +3751,26 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 	}
 
 #ifdef WITH_DEBUG_CAPABILITIES
-	Stream_GetPointer(s, em);
-	Stream_SetPointer(s, mark);
-	numberCapabilities = count;
-	rdp_print_capability_sets(s, numberCapabilities, TRUE);
-	Stream_SetPointer(s, em);
+	{
+		Stream_SetPosition(s, start);
+		numberCapabilities = count;
+		rdp_print_capability_sets(s, numberCapabilities, TRUE);
+		Stream_SetPosition(s, end);
+	}
 #endif
+	if (len < totalLength)
+	{
+		if (!Stream_SafeSeek(s, totalLength - len))
+			return FALSE;
+	}
 	return TRUE;
 }
 
-BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
+BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId, UINT16* length)
 {
-	UINT16 length;
 	UINT16 securityFlags = 0;
 
-	if (!rdp_read_header(rdp, s, &length, pChannelId))
+	if (!rdp_read_header(rdp, s, length, pChannelId))
 		return FALSE;
 
 	if (freerdp_shall_disconnect(rdp->instance))
@@ -3770,12 +3778,12 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 
 	if (rdp->settings->UseRdpSecurityLayer)
 	{
-		if (!rdp_read_security_header(s, &securityFlags, &length))
+		if (!rdp_read_security_header(s, &securityFlags, length))
 			return FALSE;
 
 		if (securityFlags & SEC_ENCRYPT)
 		{
-			if (!rdp_decrypt(rdp, s, length, securityFlags))
+			if (!rdp_decrypt(rdp, s, *length, securityFlags))
 			{
 				WLog_ERR(TAG, "rdp_decrypt failed");
 				return FALSE;
@@ -3803,11 +3811,12 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	UINT16 pduType;
 	UINT16 pduLength;
 	UINT16 pduSource;
+	UINT16 length;
 	UINT16 numberCapabilities;
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
 
-	if (!rdp_recv_get_active_header(rdp, s, &channelId))
+	if (!rdp_recv_get_active_header(rdp, s, &channelId, &length))
 		return FALSE;
 
 	if (freerdp_shall_disconnect(rdp->instance))
@@ -3857,14 +3866,14 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	Stream_Seek(s, 2);                         /* pad2Octets (2 bytes) */
 
 	/* capabilitySets */
-	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
+	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities, lengthCombinedCapabilities))
 	{
 		WLog_ERR(TAG, "rdp_read_capability_sets failed");
 		return FALSE;
 	}
 
 	rdp->update->secondary->glyph_v2 = (rdp->settings->GlyphSupportLevel > GLYPH_SUPPORT_FULL);
-	return TRUE;
+	return tpkt_ensure_stream_consumed(s, length);
 }
 
 static BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
@@ -3970,13 +3979,14 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, lengthSourceDescriptor);     /* lengthSourceDescriptor (2 bytes) */
 	Stream_Read_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 
-	if (((int)Stream_GetRemainingLength(s)) < lengthSourceDescriptor + 4)
+	if ((Stream_GetRemainingLength(s)) < lengthSourceDescriptor + 4)
 		return FALSE;
 
 	Stream_Seek(s, lengthSourceDescriptor);    /* sourceDescriptor */
 	Stream_Read_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
 	Stream_Seek(s, 2);                         /* pad2Octets (2 bytes) */
-	status = rdp_read_capability_sets(s, rdp->settings, numberCapabilities);
+	status =
+	    rdp_read_capability_sets(s, rdp->settings, numberCapabilities, lengthCombinedCapabilities);
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
 	{

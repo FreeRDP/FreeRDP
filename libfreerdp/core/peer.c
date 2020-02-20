@@ -430,6 +430,8 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 			return -1;
 	}
 
+	if (!tpkt_ensure_stream_consumed(s, length))
+		return -1;
 	return 0;
 }
 

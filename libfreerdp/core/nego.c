@@ -607,10 +607,7 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 	if (!tpkt_read_header(s, &length))
 		return -1;
 
-	if (length == 0)
-		return -1;
-
-	if (!tpdu_read_connection_confirm(s, &li))
+	if (!tpdu_read_connection_confirm(s, &li, length))
 		return -1;
 
 	if (li > 6)
@@ -667,6 +664,8 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 		nego->state = NEGO_STATE_FAIL;
 	}
 
+	if (!tpkt_ensure_stream_consumed(s, length))
+		return -1;
 	return 0;
 }
 
@@ -770,7 +769,7 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 	if (!tpkt_read_header(s, &length))
 		return FALSE;
 
-	if (!tpdu_read_connection_request(s, &li))
+	if (!tpdu_read_connection_request(s, &li, length))
 		return FALSE;
 
 	if (li != Stream_GetRemainingLength(s) + 6)
@@ -799,7 +798,7 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 		nego_process_negotiation_request(nego, s);
 	}
 
-	return TRUE;
+	return tpkt_ensure_stream_consumed(s, length);
 }
 
 /**
