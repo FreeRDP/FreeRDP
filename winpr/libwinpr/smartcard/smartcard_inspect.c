@@ -134,11 +134,9 @@ static LONG WINAPI Inspect_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszG
                                              LPWSTR mszReaders, LPDWORD pcchReaders)
 {
 	LONG status;
-
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersW { hContext: %p", (void*)hContext);
 
 	status = g_SCardApi->pfnSCardListReadersW(hContext, mszGroups, mszReaders, pcchReaders);
-
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
 
@@ -1304,41 +1302,13 @@ static const SCardApiFunctionTable Inspect_SCardApiFunctionTable = {
 	Inspect_SCardAudit                             /* SCardAudit */
 };
 
-#ifndef _WIN32
-#define SMARTCARD_INSPECT_FILEPATH "/tmp"
-#else
-#define SMARTCARD_INSPECT_FILEPATH "C:\\Windows\\Temp"
-#endif
-
 static void Inspect_InitLog(void)
 {
-	wLogLayout* layout;
-	wLogAppender* appender;
-	const char* filepath = SMARTCARD_INSPECT_FILEPATH;
-
 	if (g_Log)
 		return;
 
-	if (!PathFileExistsA(filepath))
-		if (!PathMakePathA(filepath, NULL))
-			return;
-
 	if (!(g_Log = WLog_Get("WinSCard")))
 		return;
-
-	WLog_SetLogLevel(g_Log, g_LogLevel);
-	WLog_SetLogAppenderType(g_Log, WLOG_APPENDER_FILE);
-	appender = WLog_GetLogAppender(g_Log);
-	if (!appender)
-		return;
-
-	WLog_ConfigureAppender(appender, "outputfilename", "WinSCard.txt");
-	WLog_ConfigureAppender(appender, "outputfilepath", (void*)filepath);
-
-	layout = WLog_GetLogLayout(g_Log);
-	WLog_Layout_SetPrefixFormat(g_Log, layout, "[%mn] ");
-
-	WLog_OpenAppender(g_Log);
 }
 
 const SCardApiFunctionTable* Inspect_RegisterSCardApi(const SCardApiFunctionTable* pSCardApi)
