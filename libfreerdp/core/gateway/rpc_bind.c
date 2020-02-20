@@ -133,6 +133,9 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	if (promptPassword)
 	{
+		if (freerdp_shall_disconnect(instance))
+			return -1;
+
 		if (!instance->GatewayAuthenticate)
 		{
 			freerdp_set_last_error_log(instance->context,
