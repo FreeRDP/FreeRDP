@@ -238,13 +238,13 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 		cur->prims = primitives_get_by_type(cur->flags);
 		if (!cur->prims)
 		{
-			WLog_ERR(TAG, "Failed to initialize %s primitives", cur->name);
-			goto out;
+			WLog_WARN(TAG, "Failed to initialize %s primitives", cur->name);
+			continue;
 		}
 		if (!primitives_YUV_benchmark_run(yuvBench, cur->prims, benchDuration, &cur->count))
 		{
-			WLog_ERR(TAG, "error running %s YUV bench", cur->name);
-			goto out;
+			WLog_WARN(TAG, "error running %s YUV bench", cur->name);
+			continue;
 		}
 
 		WLog_DBG(TAG, " * %s= %" PRIu32, cur->name, cur->count);
@@ -263,6 +263,8 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 	WLog_INFO(TAG, "primitives autodetect, using %s", best->name);
 	ret = TRUE;
 out:
+	if (!ret)
+		*prims = pPrimitivesGeneric;
 	primitives_YUV_benchmark_free(yuvBench);
 	return ret;
 }
