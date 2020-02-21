@@ -3836,10 +3836,11 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 		Stream_SetPosition(s, end);
 	}
 #endif
-	if (len < totalLength)
+
+	if (len > totalLength)
 	{
-		if (!Stream_SafeSeek(s, totalLength - len))
-			return FALSE;
+		WLog_ERR(TAG, "Capability length expected %" PRIu16 ", actual %" PRIdz, totalLength, len);
+		return FALSE;
 	}
 	return TRUE;
 }
@@ -3950,6 +3951,9 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
+	if (!Stream_SafeSeek(s, 4)) /* SessionId */
+		return FALSE;
+
 	rdp->update->secondary->glyph_v2 = (rdp->settings->GlyphSupportLevel > GLYPH_SUPPORT_FULL);
 	return tpkt_ensure_stream_consumed(s, length);
 }
@@ -4043,9 +4047,8 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 	return status;
 }
 
-BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
+BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 {
-	BOOL status;
 	rdpSettings* settings;
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
@@ -4066,8 +4069,8 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 	Stream_Seek(s, lengthSourceDescriptor);    /* sourceDescriptor */
 	Stream_Read_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
 	Stream_Seek(s, 2);                         /* pad2Octets (2 bytes) */
-	status =
-	    rdp_read_capability_sets(s, rdp->settings, numberCapabilities, lengthCombinedCapabilities);
+	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities, lengthCombinedCapabilities))
+		return FALSE;
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
 	{
@@ -4108,10 +4111,10 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 		settings->LargePointerFlag = 0;
 	}
 
-	return status;
+	return tpkt_ensure_stream_consumed(s, pduLength);
 }
 
-BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
+static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 {
 	size_t bm, em, lm;
 	UINT16 numberCapabilities;
@@ -4257,6 +4260,7 @@ BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 	Stream_Seek_UINT16(s);
 #endif
 	Stream_SetPosition(s, em);
+
 	return TRUE;
 }
 

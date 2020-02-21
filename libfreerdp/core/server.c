@@ -403,27 +403,21 @@ static int WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const B
 {
 	UINT32 i;
 	BOOL status = FALSE;
-	rdpPeerChannel* channel;
 	rdpMcs* mcs = client->context->rdp->mcs;
 
 	for (i = 0; i < mcs->channelCount; i++)
 	{
 		if (mcs->channels[i].ChannelId == channelId)
-			break;
-	}
-
-	if (i < mcs->channelCount)
-	{
-		channel = (rdpPeerChannel*)mcs->channels[i].handle;
-
-		if (channel)
 		{
-			WTSProcessChannelData(channel, channelId, data, size, flags, totalSize);
-			status = TRUE;
+			rdpPeerChannel* channel = (rdpPeerChannel*)mcs->channels[i].handle;
+
+			if (channel)
+				status = WTSProcessChannelData(channel, channelId, data, size, flags, totalSize);
+			break;
 		}
 	}
 
-	return status;
+	return status ? 0 : -1;
 }
 
 void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* fds_count)
