@@ -1433,7 +1433,8 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			{
 				if (nla_recv_pdu(rdp->nla, s) < 1)
 				{
-					WLog_ERR(TAG, "rdp_recv_callback: CONNECTION_STATE_NLA - nla_recv_pdu() fail");
+					WLog_ERR(TAG, "%s: %s - nla_recv_pdu() fail", __FUNCTION__,
+					         rdp_server_connection_state_string(rdp->state));
 					return -1;
 				}
 			}
@@ -1443,7 +1444,8 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 				if (nego_get_state(rdp->nego) != NEGO_STATE_FINAL)
 				{
-					WLog_ERR(TAG, "rdp_recv_callback: CONNECTION_STATE_NLA - nego_recv() fail");
+					WLog_ERR(TAG, "%s: %s - nego_recv() fail", __FUNCTION__,
+					         rdp_server_connection_state_string(rdp->state));
 					return -1;
 				}
 
@@ -1482,8 +1484,8 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 				if (!mcs_client_begin(rdp->mcs))
 				{
-					WLog_ERR(TAG,
-					         "rdp_recv_callback: CONNECTION_STATE_NLA - mcs_client_begin() fail");
+					WLog_ERR(TAG, "%s: %s - mcs_client_begin() fail", __FUNCTION__,
+					         rdp_server_connection_state_string(rdp->state));
 					return -1;
 				}
 			}
@@ -1531,8 +1533,10 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
 			if (!rdp_client_connect_mcs_channel_join_confirm(rdp, s))
 			{
-				WLog_ERR(TAG, "rdp_recv_callback: CONNECTION_STATE_MCS_CHANNEL_JOIN - "
-				              "rdp_client_connect_mcs_channel_join_confirm() fail");
+				WLog_ERR(TAG,
+				         "%s: %s - "
+				         "rdp_client_connect_mcs_channel_join_confirm() fail",
+				         __FUNCTION__, rdp_server_connection_state_string(rdp->state));
 				status = -1;
 			}
 
@@ -1542,8 +1546,8 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			status = rdp_client_connect_license(rdp, s);
 
 			if (status < 0)
-				WLog_DBG(TAG, "CONNECTION_STATE_LICENSING - rdp_client_connect_license() - %i",
-				         status);
+				WLog_DBG(TAG, "%s: %s - rdp_client_connect_license() - %i", __FUNCTION__,
+				         rdp_server_connection_state_string(rdp->state), status);
 
 			break;
 
@@ -1552,9 +1556,9 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			if (status < 0)
 				WLog_DBG(TAG,
-				         "CONNECTION_STATE_CAPABILITIES_EXCHANGE - "
+				         "%s: %s - "
 				         "rdp_client_connect_demand_active() - %i",
-				         status);
+				         __FUNCTION__, rdp_server_connection_state_string(rdp->state), status);
 
 			break;
 
@@ -1573,7 +1577,8 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			}
 
 			if (status < 0)
-				WLog_DBG(TAG, "CONNECTION_STATE_FINALIZATION - rdp_recv_pdu() - %i", status);
+				WLog_DBG(TAG, "%s: %s - rdp_recv_pdu() - %i", __FUNCTION__,
+				         rdp_server_connection_state_string(rdp->state), status);
 
 			break;
 
@@ -1581,12 +1586,14 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			status = rdp_recv_pdu(rdp, s);
 
 			if (status < 0)
-				WLog_DBG(TAG, "CONNECTION_STATE_ACTIVE - rdp_recv_pdu() - %i", status);
+				WLog_DBG(TAG, "%s: %s - rdp_recv_pdu() - %i", __FUNCTION__,
+				         rdp_server_connection_state_string(rdp->state), status);
 
 			break;
 
 		default:
-			WLog_ERR(TAG, "Invalid state %d", rdp->state);
+			WLog_ERR(TAG, "%s: %s state %d", __FUNCTION__,
+			         rdp_server_connection_state_string(rdp->state), rdp->state);
 			status = -1;
 			break;
 	}

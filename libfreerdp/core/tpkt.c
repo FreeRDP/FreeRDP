@@ -27,7 +27,7 @@
 
 #include <winpr/wlog.h>
 
-#define TAG FREERDP_TAG(".core.tpkt")
+#define TAG FREERDP_TAG("core.tpkt")
 
 /**
  * TPKTs are defined in:

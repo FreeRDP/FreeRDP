@@ -145,7 +145,7 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 {
 	UINT32 length;
 	UINT32 flags;
-	int chunkLength;
+	size_t chunkLength;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
@@ -156,6 +156,7 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 
 	if (client->VirtualChannelRead)
 	{
+		int rc;
 		UINT32 index;
 		BOOL found = FALSE;
 		HANDLE hChannel = 0;
@@ -178,16 +179,18 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 		if (!found)
 			return FALSE;
 
-		client->VirtualChannelRead(client, hChannel, Stream_Pointer(s),
-		                           Stream_GetRemainingLength(s));
+		rc = client->VirtualChannelRead(client, hChannel, Stream_Pointer(s), chunkLength);
+		if (rc < 0)
+			return FALSE;
 	}
 	else if (client->ReceiveChannelData)
 	{
-		client->ReceiveChannelData(client, channelId, Stream_Pointer(s), chunkLength, flags,
-		                           length);
+		int rc = client->ReceiveChannelData(client, channelId, Stream_Pointer(s), chunkLength,
+		                                    flags, length);
+		if (rc < 0)
+			return FALSE;
 	}
-
-	return TRUE;
+	return Stream_SafeSeek(s, chunkLength);
 }
 
 static const WtsApiFunctionTable FreeRDP_WtsApiFunctionTable = {

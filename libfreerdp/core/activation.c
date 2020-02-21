@@ -196,6 +196,8 @@ BOOL rdp_recv_client_font_list_pdu(wStream* s)
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
+	/* 2.2.1.18.1 Font List PDU Data (TS_FONT_LIST_PDU) */
+	Stream_Seek(s, 8);
 	return TRUE;
 }
 

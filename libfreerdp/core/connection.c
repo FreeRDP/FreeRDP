@@ -1380,14 +1380,14 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 	return TRUE;
 }
 
-BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s)
+BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 {
 	freerdp_peer* peer = rdp->context->peer;
 
 	if (rdp->state != CONNECTION_STATE_CAPABILITIES_EXCHANGE)
 		return FALSE;
 
-	if (!rdp_recv_confirm_active(rdp, s))
+	if (!rdp_recv_confirm_active(rdp, s, pduLength))
 		return FALSE;
 
 	if (peer->ClientCapabilities && !peer->ClientCapabilities(peer))
@@ -1534,4 +1534,58 @@ int rdp_server_transition_to_state(rdpRdp* rdp, int state)
 	}
 
 	return status;
+}
+
+const char* rdp_client_connection_state_string(int state)
+{
+	switch (state)
+	{
+		case CLIENT_STATE_INITIAL:
+			return "CLIENT_STATE_INITIAL";
+		case CLIENT_STATE_PRECONNECT_PASSED:
+			return "CLIENT_STATE_PRECONNECT_PASSED";
+		case CLIENT_STATE_POSTCONNECT_PASSED:
+			return "CLIENT_STATE_POSTCONNECT_PASSED";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+const char* rdp_server_connection_state_string(int state)
+{
+	switch (state)
+	{
+		case CONNECTION_STATE_INITIAL:
+			return "CONNECTION_STATE_INITIAL";
+		case CONNECTION_STATE_NEGO:
+			return "CONNECTION_STATE_NEGO";
+		case CONNECTION_STATE_NLA:
+			return "CONNECTION_STATE_NLA";
+		case CONNECTION_STATE_MCS_CONNECT:
+			return "CONNECTION_STATE_MCS_CONNECT";
+		case CONNECTION_STATE_MCS_ERECT_DOMAIN:
+			return "CONNECTION_STATE_MCS_ERECT_DOMAIN";
+		case CONNECTION_STATE_MCS_ATTACH_USER:
+			return "CONNECTION_STATE_MCS_ATTACH_USER";
+		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
+			return "CONNECTION_STATE_MCS_CHANNEL_JOIN";
+		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
+			return "CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT";
+		case CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE:
+			return "CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE";
+		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT:
+			return "CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT";
+		case CONNECTION_STATE_LICENSING:
+			return "CONNECTION_STATE_LICENSING";
+		case CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING:
+			return "CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING";
+		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
+			return "CONNECTION_STATE_CAPABILITIES_EXCHANGE";
+		case CONNECTION_STATE_FINALIZATION:
+			return "CONNECTION_STATE_FINALIZATION";
+		case CONNECTION_STATE_ACTIVE:
+			return "CONNECTION_STATE_ACTIVE";
+		default:
+			return "UNKNOWN";
+	}
 }
