@@ -73,8 +73,7 @@ static UINT irp_complete(IRP* irp)
 	error = rdpdr_send(rdpdr, irp->output);
 	irp->output = NULL;
 
-	irp_free(irp);
-	return error;
+	return irp_free(irp);
 }
 
 IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
