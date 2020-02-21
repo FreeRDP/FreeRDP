@@ -233,6 +233,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	/* make sure SSL is initialize for earlier enough for crypto, by taking advantage of winpr SSL
 	 * FIPS flag for openssl initialization */
 	DWORD flags = WINPR_SSL_INIT_DEFAULT;
+	UINT32 timeout;
 
 	if (!rdp_client_reset_codecs(rdp->context))
 		return FALSE;
@@ -361,18 +362,22 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	while (rdp->state != CONNECTION_STATE_ACTIVE)
+	for (timeout = 0; timeout < settings->TcpAckTimeout; timeout += 100)
 	{
 		if (rdp_check_fds(rdp) < 0)
 		{
 			freerdp_set_last_error_if_not(rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
-
 			return FALSE;
 		}
-		SwitchToThread();
+
+		if (rdp->state == CONNECTION_STATE_ACTIVE)
+			return TRUE;
+
+		Sleep(100);
 	}
 
-	return TRUE;
+	WLog_ERR(TAG, "Timeout waiting for activation");
+	return FALSE;
 }
 
 BOOL rdp_client_disconnect(rdpRdp* rdp)
