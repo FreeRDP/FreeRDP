@@ -528,6 +528,7 @@ static void xf_floatbar_button_event_buttonrelease(xfFloatbar* floatbar, XEvent*
 	{
 		if (button->clicked)
 			button->onclick(floatbar);
+		button->clicked = FALSE;
 	}
 }
 
@@ -658,7 +659,6 @@ static void xf_floatbar_button_event_focusout(xfFloatbar* floatbar, XEvent* even
 	if (button)
 	{
 		button->focus = FALSE;
-		button->clicked = FALSE;
 		xf_floatbar_button_event_expose(floatbar, event);
 	}
 }
