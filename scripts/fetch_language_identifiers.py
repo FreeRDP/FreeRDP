@@ -7,6 +7,7 @@ import os
 import sys
 import requests
 import numpy as np
+import traceback
 from bs4 import BeautifulSoup
 from bs4 import element
 
@@ -50,7 +51,11 @@ def is_base(num, base):
     except ValueError:
         return False
 
-def write_struct(fp, struct, name, url, base, typemap = None):
+def padhexa(v):
+    s = hex(v)
+    return '0x' + s[2:].zfill(8)
+
+def write_struct(fp, struct, name, url, base, inv = False, typemap = None):
     li = requests.get(url)
     if li.status_code != requests.codes.ok:
         print('Could not fetch ' + str(url) + ', reponse code ' + str(li.status_code))
@@ -65,6 +70,7 @@ def write_struct(fp, struct, name, url, base, typemap = None):
         fp.write(h)
         fp.write(']\t')
     fp.write('*/\n')
+    last = [None] * 32
     for language in languages:
         fp.write('\t{ ')
         line = ''
@@ -73,18 +79,29 @@ def write_struct(fp, struct, name, url, base, typemap = None):
             try:
                 v = int(e, base=base)
                 switcher = {
-                        0: hex(v),
+                        0: padhexa(v),
                         2: bin(v),
                         8: oct(v),
                         10: str(v),
-                        16: hex(v)
+                        16: padhexa(v)
                         }
-                line += switcher.get(base) + ', '
+                h = str(switcher.get(base))
+                if h != "None":
+                  last[pos] = h
+                if inv:
+                  line = h + ', ' + line
+                else:
+                  line += h + ', '
             except ValueError:
                 if typemap and typemap[pos] != str:
-                    line += 'xxxxxx,\t'
+                    line += str(last[pos]) + ',\t'
                 else:
-                    line += '"' + e + '",\t'
+                    if e == "":
+                      line += '"' + str(last[pos]) + '",\t'
+                    else:
+                      line += '"' + e + '",\t'
+                      if e != "None":
+                        last[pos] = str(e)
             pos = pos + 1
         fp.write(line[:-2] + '},\n')
     fp.write('};\n')
@@ -92,14 +109,14 @@ def write_struct(fp, struct, name, url, base, typemap = None):
 
 def update_lang_identifiers(fp):
 #   [Language identifier]   [Primary language]    [Prim. lang. identifier]    [Prim. lang. symbol]    [Sublanguage]   [Sublang. identifier]   [Sublang. symbol]
-    write_struct(fp, 'LanguageIdentifier', 'language_identifiers', 'https://docs.microsoft.com/en-us/windows/win32/intl/language-identifier-constants-and-strings', 16, [int, str, int, str, str, int, str])
+    write_struct(fp, 'LanguageIdentifier', 'language_identifiers', 'https://docs.microsoft.com/en-us/windows/win32/intl/language-identifier-constants-and-strings', 16, False, [int, str, int, str, str, int, str])
 
 def update_code_pages(fp):
     write_struct(fp, 'CodePage', 'code_pages', 'https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers', 10)
 
 def update_input_locales(fp):
     write_struct(fp, 'KeyboardIdentifier', 'keyboard_identifiers', 'https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-vista/cc766503(v=ws.10)', 0)
-    write_struct(fp, 'KeyboardIdentifier', 'keyboard_identifiers', 'https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values', 16)
+    write_struct(fp, 'RDP_KEYBOARD_LAYOUT', 'RDP_KEYBOARD_LAYOUT_TABLE', 'https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values', 16, True)
 
 try:
     with open('language_identifiers.c', 'w') as fp:
@@ -109,3 +126,4 @@ try:
         update_input_locales(fp)
 except:
     print('exception cought')
+    traceback.print_exc()
