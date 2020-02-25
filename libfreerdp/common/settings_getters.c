@@ -1467,6 +1467,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_PointerCacheSize:
 			return settings->PointerCacheSize;
 
+		case FreeRDP_KeyboardCodePage:
+			return settings->KeyboardCodePage;
+
 		case FreeRDP_KeyboardLayout:
 			return settings->KeyboardLayout;
 
@@ -1881,6 +1884,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_PointerCacheSize:
 			settings->PointerCacheSize = val;
+			break;
+
+		case FreeRDP_KeyboardCodePage:
+			settings->KeyboardCodePage = val;
 			break;
 
 		case FreeRDP_KeyboardLayout:

@@ -493,7 +493,7 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
 
-	Stream_Seek_UINT32(s);        /* CodePage (4 bytes ) */
+	Stream_Read_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes ) */
 	Stream_Read_UINT32(s, flags); /* flags (4 bytes) */
 	settings->AudioCapture = ((flags & INFO_AUDIOCAPTURE) ? TRUE : FALSE);
 	settings->AudioPlayback = ((flags & INFO_NOAUDIOPLAYBACK) ? FALSE : TRUE);
@@ -894,7 +894,7 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	/* excludes (!) the length of the mandatory null terminator */
 	cbWorkingDir = cbWorkingDir >= 2 ? cbWorkingDir - 2 : cbWorkingDir;
-	Stream_Write_UINT32(s, 0);                /* CodePage (4 bytes) */
+	Stream_Write_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes) */
 	Stream_Write_UINT32(s, flags);            /* flags (4 bytes) */
 	Stream_Write_UINT16(s, cbDomain);         /* cbDomain (2 bytes) */
 	Stream_Write_UINT16(s, cbUserName);       /* cbUserName (2 bytes) */

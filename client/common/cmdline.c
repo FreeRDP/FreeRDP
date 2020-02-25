@@ -48,6 +48,37 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
+static BOOL freerdp_client_print_codepages(const char* arg)
+{
+	size_t count = 0, x;
+	DWORD column = 2;
+	const char* filter = NULL;
+	char buffer[80];
+	RDP_CODEPAGE* pages;
+
+	if (arg)
+		filter = strchr(arg, ',') + 1;
+	pages = freerdp_keyboard_get_matching_codepages(column, filter, &count);
+	if (!pages)
+		return TRUE;
+
+	printf("%-10s %-8s %-60s %-36s %-48s\n", "<id>", "<locale>", "<win langid>", "<language>",
+	       "<country>");
+	for (x = 0; x < count; x++)
+	{
+		const RDP_CODEPAGE* page = &pages[x];
+		if (strnlen(page->subLanguageSymbol, ARRAYSIZE(page->subLanguageSymbol)) > 0)
+			_snprintf(buffer, sizeof(buffer), "[%s|%s]", page->primaryLanguageSymbol,
+			          page->subLanguageSymbol);
+		else
+			_snprintf(buffer, sizeof(buffer), "[%s]", page->primaryLanguageSymbol);
+		printf("id=0x%04" PRIx16 ": [%-6s] %-60s %-36s %-48s\n", page->id, page->locale, buffer,
+		       page->primaryLanguage, page->subLanguage);
+	}
+	freerdp_codepages_free(pages);
+	return TRUE;
+}
+
 static BOOL freerdp_path_valid(const char* path, BOOL* special)
 {
 	const char DynamicDrives[] = "DynamicDrives";
@@ -1354,6 +1385,17 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{
+		COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
+		memcpy(largs, args, sizeof(largs));
+		CommandLineParseArgumentsA(argc, argv, largs, 0x112, NULL, NULL, NULL);
+
+		arg = CommandLineFindArgumentA(largs, "kbd-lang-list");
+
+		if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+		{
+			freerdp_client_print_codepages(arg->Value);
+		}
+
 		arg = CommandLineFindArgumentA(largs, "kbd-list");
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -1917,6 +1959,19 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 
 			settings->KeyboardLayout = (UINT32)val;
+		}
+		CommandLineSwitchCase(arg, "kbd-lang")
+		{
+			LONGLONG val;
+
+			if (!value_to_int(arg->Value, &val, 1, UINT32_MAX))
+			{
+				WLog_ERR(TAG, "Could not identify keyboard active language %s", arg->Value);
+				WLog_ERR(TAG, "Use /kbd-lang-list to list available layouts");
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
+
+			settings->KeyboardCodePage = (UINT32)val;
 		}
 		CommandLineSwitchCase(arg, "kbd-type")
 		{

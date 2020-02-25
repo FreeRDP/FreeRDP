@@ -30,6 +30,19 @@
 #define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT 2
 #define RDP_KEYBOARD_LAYOUT_TYPE_IME 4
 
+struct _RDP_CODEPAGE
+{
+	UINT16 id;
+	UINT8 primaryId;
+	UINT8 subId;
+	char locale[512];
+	char primaryLanguage[512];
+	char primaryLanguageSymbol[512];
+	char subLanguage[512];
+	char subLanguageSymbol[512];
+};
+typedef struct _RDP_CODEPAGE RDP_CODEPAGE;
+
 struct _RDP_KEYBOARD_LAYOUT
 {
 	DWORD code; /* Keyboard layout code */
@@ -214,6 +227,10 @@ extern "C"
 	FREERDP_API DWORD freerdp_keyboard_get_rdp_scancode_from_x11_keycode(DWORD keycode);
 	FREERDP_API DWORD freerdp_keyboard_get_x11_keycode_from_rdp_scancode(DWORD scancode,
 	                                                                     BOOL extended);
+
+	FREERDP_API RDP_CODEPAGE*
+	freerdp_keyboard_get_matching_codepages(DWORD column, const char* filter, size_t* count);
+	FREERDP_API void freerdp_codepages_free(RDP_CODEPAGE*);
 
 #ifdef __cplusplus
 }

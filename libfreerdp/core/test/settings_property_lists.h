@@ -249,6 +249,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_BitmapCacheVersion,
 	FreeRDP_BitmapCacheV2NumCells,
 	FreeRDP_PointerCacheSize,
+	FreeRDP_KeyboardCodePage,
 	FreeRDP_KeyboardLayout,
 	FreeRDP_KeyboardType,
 	FreeRDP_KeyboardSubType,
