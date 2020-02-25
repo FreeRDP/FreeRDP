@@ -18,6 +18,13 @@
  * limitations under the License.
  */
 
+/* DEPRECATION WARNING:
+ *
+ * This channel is unmaintained and not used since windows 7.
+ * Only compile and use it if absolutely necessary, otherwise
+ * deactivate it or use the newer [MS-RDPEVOR] video redirection.
+ */
+
 #ifndef FREERDP_CHANNEL_TSMF_H
 #define FREERDP_CHANNEL_TSMF_H
 

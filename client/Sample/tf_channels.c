@@ -25,7 +25,6 @@
 #include <freerdp/gdi/gfx.h>
 
 #include <freerdp/client/rdpei.h>
-#include <freerdp/client/tsmf.h>
 #include <freerdp/client/rail.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/rdpgfx.h>
@@ -75,9 +74,6 @@ void tf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	{
 		tf->rdpei = (RdpeiClientContext*)e->pInterface;
 	}
-	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
-	{
-	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		gdi_graphics_pipeline_init(tf->context.gdi, (RdpgfxClientContext*)e->pInterface);
@@ -101,9 +97,6 @@ void tf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEven
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		tf->rdpei = NULL;
-	}
-	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
-	{
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{

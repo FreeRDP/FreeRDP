@@ -26,7 +26,6 @@
 #include <freerdp/gdi/gfx.h>
 
 #include <freerdp/client/rdpei.h>
-#include <freerdp/client/tsmf.h>
 #include <freerdp/client/rail.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/rdpgfx.h>

@@ -89,7 +89,9 @@
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
+#if defined(CHANNEL_TSMF_CLIENT)
 #include "xf_tsmf.h"
+#endif
 #include "xf_event.h"
 #include "xf_input.h"
 #include "xf_cliprdr.h"
@@ -664,11 +666,13 @@ static void xf_window_free(xfContext* xfc)
 		xfc->hdc = NULL;
 	}
 
+#if defined(CHANNEL_TSMF_CLIENT)
 	if (xfc->xv_context)
 	{
 		xf_tsmf_uninit(xfc, NULL);
 		xfc->xv_context = NULL;
 	}
+#endif
 
 	if (xfc->image)
 	{

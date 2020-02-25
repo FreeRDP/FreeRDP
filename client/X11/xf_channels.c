@@ -28,7 +28,9 @@
 #include "xfreerdp.h"
 
 #include "xf_gfx.h"
+#if defined(CHANNEL_TSMF_CLIENT)
 #include "xf_tsmf.h"
+#endif
 #include "xf_rail.h"
 #include "xf_cliprdr.h"
 #include "xf_disp.h"
@@ -42,10 +44,12 @@ void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	{
 		xfc->rdpei = (RdpeiClientContext*)e->pInterface;
 	}
+#if defined(CHANNEL_TSMF_CLIENT)
 	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
 	{
 		xf_tsmf_init(xfc, (TsmfClientContext*)e->pInterface);
 	}
+#endif
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		xf_graphics_pipeline_init(xfc, (RdpgfxClientContext*)e->pInterface);
@@ -93,10 +97,12 @@ void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEven
 	{
 		xf_disp_uninit(xfc->xfDisp, (DispClientContext*)e->pInterface);
 	}
+#if defined(CHANNEL_TSMF_CLIENT)
 	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
 	{
 		xf_tsmf_uninit(xfc, (TsmfClientContext*)e->pInterface);
 	}
+#endif
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		xf_graphics_pipeline_uninit(xfc, (RdpgfxClientContext*)e->pInterface);
