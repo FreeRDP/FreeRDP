@@ -710,15 +710,15 @@ set(ALSA_FEATURE_TYPE "RECOMMENDED")
 set(ALSA_FEATURE_PURPOSE "sound")
 set(ALSA_FEATURE_DESCRIPTION "audio input, audio output and multimedia redirection")
 
-set(PULSE_FEATURE_TYPE "OPTIONAL")
+set(PULSE_FEATURE_TYPE "RECOMMENDED")
 set(PULSE_FEATURE_PURPOSE "sound")
 set(PULSE_FEATURE_DESCRIPTION "audio input, audio output and multimedia redirection")
 
-set(CUPS_FEATURE_TYPE "OPTIONAL")
+set(CUPS_FEATURE_TYPE "RECOMMENDED")
 set(CUPS_FEATURE_PURPOSE "printing")
 set(CUPS_FEATURE_DESCRIPTION "printer device redirection")
 
-set(PCSC_FEATURE_TYPE "OPTIONAL")
+set(PCSC_FEATURE_TYPE "RECOMMENDED")
 set(PCSC_FEATURE_PURPOSE "smart card")
 set(PCSC_FEATURE_DESCRIPTION "smart card device redirection")
 
