@@ -295,6 +295,17 @@ endmacro(add_channel_server_library)
 set(FILENAME "ChannelOptions.cmake")
 file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 
+# We need special treatement for drdynvc:
+# It needs to be the first entry so that every
+# dynamic channel has the dependent options available.
+list(FIND FILEPATHS "drdynvc/${FILENAME}" DRDYNVC_LIST_INDEX)
+if ("${DRDYNVC_LIST_INDEX}" GREATER "-1")
+	list(GET FILEPATHS ${DRDYNVC_LIST_INDEX} DRDYNVC_LIST_VALUE)
+	list(REMOVE_AT FILEPATHS ${DRDYNVC_LIST_INDEX})
+	list(APPEND FILEPATHS ${DRDYNVC_LIST_VALUE})
+	list(REVERSE FILEPATHS) # list PREPEND is not available on old CMake3
+endif()
+
 foreach(FILEPATH ${FILEPATHS})
 	if(${FILEPATH} MATCHES "^([^/]*)/+${FILENAME}")
 		string(REGEX REPLACE "^([^/]*)/+${FILENAME}" "\\1" DIR ${FILEPATH})
