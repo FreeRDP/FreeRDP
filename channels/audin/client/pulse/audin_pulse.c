@@ -62,27 +62,67 @@ typedef struct _AudinPulseDevice
 	wLog* log;
 } AudinPulseDevice;
 
+static const char* pulse_context_state_string(pa_context_state_t state)
+{
+	switch (state)
+	{
+		case PA_CONTEXT_UNCONNECTED:
+			return "PA_CONTEXT_UNCONNECTED";
+		case PA_CONTEXT_CONNECTING:
+			return "PA_CONTEXT_CONNECTING";
+		case PA_CONTEXT_AUTHORIZING:
+			return "PA_CONTEXT_AUTHORIZING";
+		case PA_CONTEXT_SETTING_NAME:
+			return "PA_CONTEXT_SETTING_NAME";
+		case PA_CONTEXT_READY:
+			return "PA_CONTEXT_READY";
+		case PA_CONTEXT_FAILED:
+			return "PA_CONTEXT_FAILED";
+		case PA_CONTEXT_TERMINATED:
+			return "PA_CONTEXT_TERMINATED";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+static const char* pulse_stream_state_string(pa_stream_state_t state)
+{
+	switch (state)
+	{
+		case PA_STREAM_UNCONNECTED:
+			return "PA_STREAM_UNCONNECTED";
+		case PA_STREAM_CREATING:
+			return "PA_STREAM_CREATING";
+		case PA_STREAM_READY:
+			return "PA_STREAM_READY";
+		case PA_STREAM_FAILED:
+			return "PA_STREAM_FAILED";
+		case PA_STREAM_TERMINATED:
+			return "PA_STREAM_TERMINATED";
+		default:
+			return "UNKNOWN";
+	}
+}
+
 static void audin_pulse_context_state_callback(pa_context* context, void* userdata)
 {
 	pa_context_state_t state;
 	AudinPulseDevice* pulse = (AudinPulseDevice*)userdata;
 	state = pa_context_get_state(context);
 
+	WLog_Print(pulse->log, WLOG_DEBUG, "context state %s", pulse_context_state_string(state));
 	switch (state)
 	{
 		case PA_CONTEXT_READY:
-			WLog_Print(pulse->log, WLOG_DEBUG, "PA_CONTEXT_READY");
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 
 		case PA_CONTEXT_FAILED:
 		case PA_CONTEXT_TERMINATED:
-			WLog_Print(pulse->log, WLOG_DEBUG, "state %d", state);
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 
 		default:
-			WLog_Print(pulse->log, WLOG_DEBUG, "state %d", state);
 			break;
 	}
 }
@@ -126,8 +166,8 @@ static UINT audin_pulse_connect(IAudinDevice* device)
 
 		if (!PA_CONTEXT_IS_GOOD(state))
 		{
-			WLog_Print(pulse->log, WLOG_ERROR, "bad context state (%d)",
-			           pa_context_errno(pulse->context));
+			WLog_Print(pulse->log, WLOG_ERROR, "bad context state (%s: %d)",
+			           pulse_context_state_string(state), pa_context_errno(pulse->context));
 			pa_context_disconnect(pulse->context);
 			return ERROR_INVALID_STATE;
 		}
@@ -279,21 +319,19 @@ static void audin_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 	AudinPulseDevice* pulse = (AudinPulseDevice*)userdata;
 	state = pa_stream_get_state(stream);
 
+	WLog_Print(pulse->log, WLOG_DEBUG, "stream state %s", pulse_stream_state_string(state));
 	switch (state)
 	{
 		case PA_STREAM_READY:
-			WLog_Print(pulse->log, WLOG_DEBUG, "PA_STREAM_READY");
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 
 		case PA_STREAM_FAILED:
 		case PA_STREAM_TERMINATED:
-			WLog_Print(pulse->log, WLOG_DEBUG, "state %d", state);
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 
 		default:
-			WLog_Print(pulse->log, WLOG_DEBUG, "state %d", state);
 			break;
 	}
 }
@@ -404,8 +442,8 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 		if (!PA_STREAM_IS_GOOD(state))
 		{
 			audin_pulse_close(device);
-			WLog_Print(pulse->log, WLOG_ERROR, "bad stream state (%d)",
-			           pa_context_errno(pulse->context));
+			WLog_Print(pulse->log, WLOG_ERROR, "bad stream state (%s: %d)",
+			           pulse_stream_state_string(state), pa_context_errno(pulse->context));
 			pa_threaded_mainloop_unlock(pulse->mainloop);
 			return pa_context_errno(pulse->context);
 		}
