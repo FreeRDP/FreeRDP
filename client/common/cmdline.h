@@ -321,8 +321,10 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	  NULL, "Username" },
 	{ "unmap-buttons", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Let server see real physical pointer button" },
+#ifdef CHANNEL_URBDRC_CLIENT
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED, "[dbg,][dev:<dev>,][id|addr,][auto]", NULL, NULL, -1,
 	  NULL, "Redirect USB device" },
+#endif
 	{ "v", COMMAND_LINE_VALUE_REQUIRED, "<server>[:port]", NULL, NULL, -1, NULL,
 	  "Server hostname" },
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, "<channel>[,<options>]", NULL, NULL, -1, NULL,

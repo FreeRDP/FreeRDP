@@ -432,7 +432,9 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("\n");
 	printf("Multimedia Redirection: /multimedia:sys:oss,dev:/dev/dsp1,decoder:ffmpeg\n");
 	printf("Multimedia Redirection: /multimedia:sys:alsa\n");
+#ifdef CHANNEL_URBDRC_CLIENT
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
+#endif
 	printf("\n");
 	printf("For Gateways, the https_proxy environment variable is respected:\n");
 #ifdef _WIN32
