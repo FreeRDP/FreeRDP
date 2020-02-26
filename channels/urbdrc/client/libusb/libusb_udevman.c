@@ -151,7 +151,7 @@ static size_t udevman_register_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 
 	if (flag == UDEVMAN_FLAG_ADD_BY_ADDR)
 	{
-		IUDEVICE* tdev = udev_new_by_addr(urbdrc, bus_number, dev_number);
+		IUDEVICE* tdev = udev_new_by_addr(urbdrc, udevman->context, bus_number, dev_number);
 
 		if (tdev == NULL)
 			return 0;
@@ -180,7 +180,7 @@ static size_t udevman_register_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 	{
 		addnum = 0;
 		/* register all device that match pid vid */
-		num = udev_new_by_id(urbdrc, idVendor, idProduct, &devArray);
+		num = udev_new_by_id(urbdrc, udevman->context, idVendor, idProduct, &devArray);
 
 		for (i = 0; i < num; i++)
 		{
@@ -435,14 +435,6 @@ static BOOL udevman_parse_device_pid_vid(const char* str, size_t maxLen, UINT16*
 	return TRUE;
 }
 
-static int udevman_check_device_exist_by_id(IUDEVMAN* idevman, UINT16 idVendor, UINT16 idProduct)
-{
-	if (libusb_open_device_with_vid_pid(NULL, idVendor, idProduct))
-		return 1;
-
-	return 0;
-}
-
 static int udevman_is_auto_add(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*)idevman;
@@ -520,27 +512,131 @@ static void udevman_free(IUDEVMAN* idevman)
 	free(udevman);
 }
 
+static BOOL filter_by_class(uint8_t bDeviceClass, uint8_t bDeviceSubClass)
+{
+	switch (bDeviceClass)
+	{
+		case LIBUSB_CLASS_AUDIO:
+		case LIBUSB_CLASS_HID:
+		case LIBUSB_CLASS_MASS_STORAGE:
+		case LIBUSB_CLASS_HUB:
+		case LIBUSB_CLASS_SMART_CARD:
+			return TRUE;
+		default:
+			break;
+	}
+
+	switch (bDeviceSubClass)
+	{
+		default:
+			break;
+	}
+
+	return FALSE;
+}
+
+static BOOL append(char* dst, size_t length, const char* src)
+{
+	size_t slen = strlen(src);
+	size_t dlen = strnlen(dst, length);
+	if (dlen + slen >= length)
+		return FALSE;
+	strcat(dst, src);
+	return TRUE;
+}
+
+static BOOL device_is_filtered(struct libusb_device* dev,
+                               const struct libusb_device_descriptor* desc,
+                               libusb_hotplug_event event)
+{
+	char buffer[8192] = { 0 };
+	char* what;
+	BOOL filtered = FALSE;
+	append(buffer, sizeof(buffer), usb_interface_class_to_string(desc->bDeviceClass));
+	if (filter_by_class(desc->bDeviceClass, desc->bDeviceSubClass))
+		filtered = TRUE;
+
+	switch (desc->bDeviceClass)
+	{
+		case LIBUSB_CLASS_PER_INTERFACE:
+		{
+			struct libusb_config_descriptor* config = NULL;
+			int rc = libusb_get_active_config_descriptor(dev, &config);
+			if (rc == LIBUSB_SUCCESS)
+			{
+				uint8_t x;
+
+				for (x = 0; x < config->bNumInterfaces; x++)
+				{
+					uint8_t y;
+					const struct libusb_interface* ifc = &config->interface[x];
+					for (y = 0; y < ifc->num_altsetting; y++)
+					{
+						const struct libusb_interface_descriptor* const alt = &ifc->altsetting[y];
+						if (filter_by_class(alt->bInterfaceClass, alt->bInterfaceSubClass))
+							filtered = TRUE;
+
+						append(buffer, sizeof(buffer), "|");
+						append(buffer, sizeof(buffer),
+						       usb_interface_class_to_string(alt->bInterfaceClass));
+					}
+				}
+			}
+			libusb_free_config_descriptor(config);
+		}
+		break;
+		default:
+			break;
+	}
+
+	if (filtered)
+		what = "Filtered";
+	else
+	{
+		switch (event)
+		{
+			case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT:
+				what = "Hotplug remove";
+				break;
+			case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED:
+				what = "Hotplug add";
+				break;
+			default:
+				what = "Hotplug unknown";
+				break;
+		}
+	}
+
+	WLog_DBG(TAG, "%s device VID=0x%04X,PID=0x%04X class %s", what, desc->idVendor, desc->idProduct,
+	         buffer);
+	return filtered;
+}
+
 static int hotplug_callback(struct libusb_context* ctx, struct libusb_device* dev,
                             libusb_hotplug_event event, void* user_data)
 {
-	int rc;
 	struct libusb_device_descriptor desc;
 	IUDEVMAN* idevman = (IUDEVMAN*)user_data;
 	const uint8_t bus = libusb_get_bus_number(dev);
 	const uint8_t addr = libusb_get_device_address(dev);
-	rc = libusb_get_device_descriptor(dev, &desc);
+	int rc = libusb_get_device_descriptor(dev, &desc);
+
+	WINPR_UNUSED(ctx);
 
 	if (rc != LIBUSB_SUCCESS)
 		return rc;
 
+	if (device_is_filtered(dev, &desc, event))
+		return 0;
+
 	switch (event)
 	{
 		case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED:
-			add_device(idevman, bus, addr, desc.iManufacturer, desc.iProduct);
+			add_device(idevman, bus, addr, desc.idVendor, desc.idProduct);
 			break;
 
 		case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT:
-			del_device(idevman, bus, addr, desc.iManufacturer, desc.iProduct);
+			del_device(idevman, bus, addr, desc.idVendor, desc.idProduct);
 			break;
 
 		default:
@@ -573,7 +669,6 @@ static void udevman_load_interface(UDEVMAN* udevman)
 	udevman->iface.unregister_udevice = udevman_unregister_udevice;
 	udevman->iface.get_udevice_by_UsbDevice = udevman_get_udevice_by_UsbDevice;
 	/* Extension */
-	udevman->iface.check_device_exist_by_id = udevman_check_device_exist_by_id;
 	udevman->iface.isAutoAdd = udevman_is_auto_add;
 	/* Basic state */
 	BASIC_STATE_FUNC_REGISTER(defUsbDevice, udevman);

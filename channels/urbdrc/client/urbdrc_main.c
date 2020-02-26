@@ -825,42 +825,27 @@ BOOL add_device(IUDEVMAN* idevman, BYTE busnum, BYTE devnum, UINT16 idVendor, UI
 	if (!searchman)
 		return FALSE;
 
-	searchman->rewind(searchman);
+	sdev = searchman->get_next_by_vid_pid(searchman, idVendor, idProduct);
 
-	while (searchman->has_next(searchman))
-	{
-		USB_SEARCHDEV* dev = searchman->get_next(searchman);
-
-		if (dev->idVendor == idVendor && dev->idProduct == idProduct)
-		{
-			WLog_Print(urbdrc->log, WLOG_TRACE,
-			           "Searchman Find Device: %04" PRIx16 ":%04" PRIx16 "", dev->idVendor,
-			           dev->idProduct);
-			found = TRUE;
-			sdev = dev;
-			break;
-		}
-	}
-
-	if (!found && idevman->isAutoAdd(idevman))
+	if (!sdev && idevman->isAutoAdd(idevman))
 	{
 		WLog_Print(urbdrc->log, WLOG_TRACE, "Auto Find Device: %04x:%04x ", idVendor, idProduct);
 		found = TRUE;
 	}
 
-	if (found)
+	if (sdev || found)
 	{
 		success = idevman->register_udevice(idevman, busnum, devnum, searchman->UsbDevice, 0, 0,
 		                                    UDEVMAN_FLAG_ADD_BY_ADDR);
 	}
 
-	if (success)
+	if (success > 0)
 	{
 		searchman->UsbDevice++;
 		urdbrc_send_virtual_channel_add(idevman->plugin, get_channel(idevman),
 		                                5 + searchman->UsbDevice);
 
-		if (found && sdev)
+		if (sdev)
 			searchman->remove(searchman, sdev->idVendor, sdev->idProduct);
 	}
 

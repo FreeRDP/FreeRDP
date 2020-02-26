@@ -55,10 +55,11 @@ struct _USB_SEARCHMAN
 	BOOL (*add)(USB_SEARCHMAN* seachman, UINT16 idVendor, UINT16 idProduct);
 	/* remove a usb device from list */
 	int (*remove)(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct);
-	/* check list has next device*/
-	int (*has_next)(USB_SEARCHMAN* seachman);
 	/* get the device from list*/
 	USB_SEARCHDEV* (*get_next)(USB_SEARCHMAN* seachman);
+	/* get the device by vendor and product */
+	USB_SEARCHDEV* (*get_next_by_vid_pid)(USB_SEARCHMAN* seachman, UINT16 idVendor,
+	                                      UINT16 idProduct);
 	/* free! */
 	void (*free)(USB_SEARCHMAN* searchman);
 };
