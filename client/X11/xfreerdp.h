@@ -22,6 +22,10 @@
 #ifndef FREERDP_CLIENT_X11_FREERDP_H
 #define FREERDP_CLIENT_X11_FREERDP_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 typedef struct xf_context xfContext;
 
 #include <freerdp/api.h>
@@ -29,6 +33,10 @@ typedef struct xf_context xfContext;
 #include "xf_window.h"
 #include "xf_monitor.h"
 #include "xf_channels.h"
+
+#if defined(CHANNEL_TSMF_CLIENT)
+#include <freerdp/client/tsmf.h>
+#endif
 
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/rfx.h>
@@ -173,7 +181,9 @@ struct xf_context
 	XSetWindowAttributes attribs;
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
+#if defined(CHANNEL_TSMF_CLIENT)
 	void* xv_context;
+#endif
 
 	Atom* supportedAtoms;
 	unsigned long supportedAtomCount;
@@ -216,7 +226,10 @@ struct xf_context
 	Atom WM_DELETE_WINDOW;
 
 	/* Channels */
+#if defined(CHANNEL_TSMF_CLIENT)
 	TsmfClientContext* tsmf;
+#endif
+
 	xfClipboard* clipboard;
 	CliprdrClientContext* cliprdr;
 	xfVideoContext* xfVideo;

@@ -45,8 +45,6 @@
 #cmakedefine WITH_EVENTFD_READ_WRITE
 #cmakedefine HAVE_MATH_C99_LONG_DOUBLE
 
-#cmakedefine WITH_GSTREAMER_1_0
-#cmakedefine WITH_GSTREAMER_0_10
 #cmakedefine WITH_WINMM
 #cmakedefine WITH_MACAUDIO
 #cmakedefine WITH_OSS

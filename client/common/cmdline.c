@@ -430,8 +430,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Audio Input Redirection: /microphone:sys:oss,dev:1,format:1\n");
 	printf("Audio Input Redirection: /microphone:sys:alsa\n");
 	printf("\n");
-	printf("Multimedia Redirection: /multimedia:sys:oss,dev:/dev/dsp1,decoder:ffmpeg\n");
-	printf("Multimedia Redirection: /multimedia:sys:alsa\n");
+	printf("Multimedia Redirection: /video\n");
 #ifdef CHANNEL_URBDRC_CLIENT
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
 #endif
@@ -935,6 +934,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 		status = freerdp_client_add_dynamic_channel(settings, count, p);
 		free(p);
 	}
+#if defined(CHANNEL_TSMF_CLIENT)
 	CommandLineSwitchCase(arg, "multimedia")
 	{
 		char** p;
@@ -943,6 +943,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 		status = freerdp_client_add_dynamic_channel(settings, count, p);
 		free(p);
 	}
+#endif
 	CommandLineSwitchCase(arg, "heartbeat")
 	{
 		settings->SupportHeartbeatPdu = enable;
@@ -3271,8 +3272,11 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||
-	    (freerdp_dynamic_channel_collection_find(settings, "tsmf")))
+	if ((freerdp_static_channel_collection_find(settings, "rdpsnd"))
+#if defined(CHANNEL_TSMF_CLIENT)
+	    || (freerdp_dynamic_channel_collection_find(settings, "tsmf"))
+#endif
+	)
 	{
 		settings->DeviceRedirection = TRUE; /* rdpsnd requires rdpdr to be registered */
 		settings->AudioPlayback = TRUE;     /* Both rdpsnd and tsmf require this flag to be set */

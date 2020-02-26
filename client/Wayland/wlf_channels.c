@@ -105,9 +105,6 @@ void wlf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs
 	{
 		wlf->rdpei = (RdpeiClientContext*)e->pInterface;
 	}
-	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
-	{
-	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		gdi_graphics_pipeline_init(wlf->context.gdi, (RdpgfxClientContext*)e->pInterface);
@@ -136,9 +133,6 @@ void wlf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEve
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		wlf->rdpei = NULL;
-	}
-	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
-	{
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{

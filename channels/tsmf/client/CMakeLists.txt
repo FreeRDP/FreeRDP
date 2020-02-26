@@ -18,6 +18,43 @@
 
 define_channel_client("tsmf")
 
+message(DEPRECATION "TSMF channel is no longer maintained. Use [MS-RDPEVOR] (/video) instead.")
+
+set(GSTREAMER_0_10_FEATURE_TYPE "OPTIONAL")
+set(GSTREAMER_0_10_FEATURE_PURPOSE "multimedia")
+set(GSTREAMER_0_10_FEATURE_DESCRIPTION "multimedia redirection, audio and video playback, gstreamer 0.10 version")
+
+set(GSTREAMER_1_0_FEATURE_TYPE "RECOMMENDED")
+set(GSTREAMER_1_0_FEATURE_PURPOSE "multimedia")
+set(GSTREAMER_1_0_FEATURE_DESCRIPTION "multimedia redirection, audio and video playback")
+
+if (WIN32)
+	set(GSTREAMER_1_0_FEATURE_TYPE "DISABLED")
+	set(GSTREAMER_0_10_FEATURE_TYPE "OPTIONAL")
+endif()
+if (APPLE)
+	set(GSTREAMER_1_0_FEATURE_TYPE "OPTIONAL")
+
+	if (IOS)
+		set(GSTREAMER_1_0_FEATURE_TYPE "DISABLED")
+		set(GSTREAMER_0_10_FEATURE_TYPE "DISABLED")
+	endif()
+endif()
+if (ANDROID)
+	set(GSTREAMER_1_0_FEATURE_TYPE "DISABLED")
+	set(GSTREAMER_0_10_FEATURE_TYPE "DISABLED")
+endif()
+
+find_feature(GStreamer_0_10 ${GSTREAMER_0_10_FEATURE_TYPE} ${GSTREAMER_0_10_FEATURE_PURPOSE} ${GSTREAMER_0_10_FEATURE_DESCRIPTION})
+find_feature(GStreamer_1_0 ${GSTREAMER_1_0_FEATURE_TYPE} ${GSTREAMER_1_0_FEATURE_PURPOSE} ${GSTREAMER_1_0_FEATURE_DESCRIPTION})
+
+if (WITH_GSTREAMER_0_10 AND GSTREAMER_0_10_FOUND)
+	add_definitions(-DWITH_GSTREAMER_0_10)
+endif()
+if (WITH_GSTREAMER_1_0 AND GSTREAMER_1_0_FOUND)
+	add_definitions(-DWITH_GSTREAMER_1_0)
+endif()
+
 set(${MODULE_PREFIX}_SRCS
 	tsmf_audio.c
 	tsmf_audio.h

@@ -42,6 +42,7 @@ int TestClientChannels(int argc, char* argv[])
 
 	freerdp_channels_addin_list_free(ppAddins);
 
+#if defined(CHANNEL_TSMF_CLIENT)
 	printf("Enumerate tsmf video\n");
 	ppAddins = freerdp_channels_list_addins("tsmf", NULL, "video", dwFlags);
 
@@ -54,6 +55,7 @@ int TestClientChannels(int argc, char* argv[])
 	}
 
 	freerdp_channels_addin_list_free(ppAddins);
+#endif
 
 	ppAddins = freerdp_channels_list_addins("unknown", NULL, NULL, dwFlags);
 

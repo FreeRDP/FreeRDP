@@ -1,6 +1,6 @@
 
 set(OPTION_DEFAULT OFF)
-set(OPTION_CLIENT_DEFAULT ON)
+set(OPTION_CLIENT_DEFAULT OFF)
 set(OPTION_SERVER_DEFAULT OFF)
 
 if(WIN32)
@@ -14,7 +14,7 @@ if(ANDROID)
 endif()
 
 define_channel_options(NAME "tsmf" TYPE "dynamic"
-	DESCRIPTION "Video Redirection Virtual Channel Extension"
+	DESCRIPTION "[DEPRECATED] Video Redirection Virtual Channel Extension"
 	SPECIFICATIONS "[MS-RDPEV]"
 	DEFAULT ${OPTION_DEFAULT})
 

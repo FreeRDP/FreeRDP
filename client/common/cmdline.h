@@ -208,8 +208,10 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	  "Select monitors to use" },
 	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Send mouse motion" },
+#if defined(CHANNEL_TSMF_CLIENT)
 	{ "multimedia", COMMAND_LINE_VALUE_OPTIONAL, "[sys:<sys>,][dev:<dev>,][decoder:<decoder>]",
-	  NULL, NULL, -1, "mmr", "Redirect multimedia (video)" },
+	  NULL, NULL, -1, "mmr", "[DEPRECATED] Redirect multimedia (video) use /video instead" },
+#endif
 	{ "multimon", COMMAND_LINE_VALUE_OPTIONAL, "force", NULL, NULL, -1, NULL,
 	  "Use multiple monitors" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
