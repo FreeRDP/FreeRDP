@@ -32,7 +32,8 @@ macro(define_channel_options)
 	string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
 	string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" CHANNEL_CLIENT_OPTION)
 	string(TOUPPER "CHANNEL_${CHANNEL_NAME}_SERVER" CHANNEL_SERVER_OPTION)
-	
+	string(TOUPPER "${CHANNEL_TYPE}" CHANNEL_TYPE)
+
 	if(${${CHANNEL_CLIENT_OPTION}})
 		set(OPTION_CLIENT_DEFAULT ${${CHANNEL_CLIENT_OPTION}})
 	endif()
@@ -52,23 +53,30 @@ macro(define_channel_options)
 	set(CHANNEL_DEFAULT ${OPTION_DEFAULT})
 		
 	set(CHANNEL_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel")
-	option(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT})
+
+	if ("${CHANNEL_TYPE}" STREQUAL "DYNAMIC")
+		CMAKE_DEPENDENT_OPTION(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT} "CHANNEL_DRDYNVC" OFF)
+	else()
+		option(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT})
+	endif()
 
 endmacro(define_channel_options)
 
 macro(define_channel_client_options _channel_client_default)
 	string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" CHANNEL_CLIENT_OPTION)
+	string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
 	set(CHANNEL_CLIENT_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel client")
-	option(${CHANNEL_CLIENT_OPTION} "${CHANNEL_CLIENT_OPTION_DOC}" ${_channel_client_default})
-	cmake_dependent_option(${CHANNEL_CLIENT_OPTION} "${CHANNEL_CLIENT_OPTION_DOC}"
+
+	CMAKE_DEPENDENT_OPTION(${CHANNEL_CLIENT_OPTION} "${CHANNEL_CLIENT_OPTION_DOC}"
 		${_channel_client_default} "${CHANNEL_OPTION}" OFF)
 endmacro(define_channel_client_options)
 
 macro(define_channel_server_options _channel_server_default)
 	string(TOUPPER "CHANNEL_${CHANNEL_NAME}_SERVER" CHANNEL_SERVER_OPTION)
+	string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
 	set(CHANNEL_SERVER_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel server")
-	option(${CHANNEL_SERVER_OPTION} "${CHANNEL_SERVER_OPTION_DOC}" ${_channel_server_default})
-	cmake_dependent_option(${CHANNEL_SERVER_OPTION} "${CHANNEL_SERVER_OPTION_DOC}"
+
+	CMAKE_DEPENDENT_OPTION(${CHANNEL_SERVER_OPTION} "${CHANNEL_SERVER_OPTION_DOC}"
 		${_channel_server_default} "${CHANNEL_OPTION}" OFF)
 endmacro(define_channel_server_options)
 
@@ -286,6 +294,17 @@ endmacro(add_channel_server_library)
 
 set(FILENAME "ChannelOptions.cmake")
 file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
+
+# We need special treatement for drdynvc:
+# It needs to be the first entry so that every
+# dynamic channel has the dependent options available.
+list(FIND FILEPATHS "drdynvc/${FILENAME}" DRDYNVC_LIST_INDEX)
+if ("${DRDYNVC_LIST_INDEX}" GREATER "-1")
+	list(GET FILEPATHS ${DRDYNVC_LIST_INDEX} DRDYNVC_LIST_VALUE)
+	list(REMOVE_AT FILEPATHS ${DRDYNVC_LIST_INDEX})
+	list(APPEND FILEPATHS ${DRDYNVC_LIST_VALUE})
+	list(REVERSE FILEPATHS) # list PREPEND is not available on old CMake3
+endif()
 
 foreach(FILEPATH ${FILEPATHS})
 	if(${FILEPATH} MATCHES "^([^/]*)/+${FILENAME}")

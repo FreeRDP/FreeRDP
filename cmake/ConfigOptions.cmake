@@ -71,7 +71,7 @@ CMAKE_DEPENDENT_OPTION(BUILD_COMM_TESTS "Build comm related tests (require comm 
 option(WITH_SAMPLE "Build sample code" OFF)
 
 option(WITH_CLIENT_COMMON "Build client common library" ON)
-cmake_dependent_option(WITH_CLIENT "Build client binaries" ON "WITH_CLIENT_COMMON" OFF)
+CMAKE_DEPENDENT_OPTION(WITH_CLIENT "Build client binaries" ON "WITH_CLIENT_COMMON" OFF)
 
 option(WITH_SERVER "Build server binaries" OFF)
 
@@ -81,10 +81,10 @@ option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
 option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ON)
 
-cmake_dependent_option(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON
+CMAKE_DEPENDENT_OPTION(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON
 	"WITH_CLIENT_COMMON;WITH_CHANNELS" OFF)
 
-cmake_dependent_option(WITH_MACAUDIO "Enable OSX sound backend" ON "APPLE;NOT IOS" OFF)
+CMAKE_DEPENDENT_OPTION(WITH_MACAUDIO "Enable OSX sound backend" ON "APPLE;NOT IOS" OFF)
 
 if(WITH_SERVER AND WITH_CHANNELS)
 	option(WITH_SERVER_CHANNELS "Build virtual channel plugins" ON)
