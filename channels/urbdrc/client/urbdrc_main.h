@@ -163,9 +163,6 @@ struct _IUDEVICE
 
 	BOOL (*attach_kernel_driver)(IUDEVICE* idev);
 
-	/* Wait for 5 sec */
-	BOOL (*wait_for_detach)(IUDEVICE* idev);
-
 	int (*query_device_port_status)(IUDEVICE* idev, UINT32* UsbdStatus, UINT32* BufferSize,
 	                                BYTE* Buffer);
 
@@ -213,7 +210,6 @@ struct _IUDEVMAN
 	IUDEVICE* (*get_udevice_by_UsbDevice)(IUDEVMAN* idevman, UINT32 UsbDevice);
 
 	/* Extension */
-	int (*check_device_exist_by_id)(IUDEVMAN* idevman, UINT16 idVendor, UINT16 idProduct);
 	int (*isAutoAdd)(IUDEVMAN* idevman);
 
 	/* Basic state */

@@ -348,7 +348,6 @@ static UINT urbdrc_process_query_device_text(IUDEVICE* pdev, URBDRC_CHANNEL_CALL
 
 	if (!pdev || !callback || !s || !udevman)
 		return ERROR_INVALID_PARAMETER;
-
 	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
@@ -1816,5 +1815,10 @@ UINT urbdrc_process_udev_data_transfer(URBDRC_CHANNEL_CALLBACK* callback, URBDRC
 	}
 
 fail:
+	if (error)
+	{
+		WLog_WARN(TAG, "USB request failed with %08" PRIx32, error);
+	}
+
 	return error;
 }

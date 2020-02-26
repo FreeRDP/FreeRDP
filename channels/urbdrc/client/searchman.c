@@ -33,20 +33,40 @@ static void searchman_rewind(USB_SEARCHMAN* searchman)
 	searchman->idev = searchman->head;
 }
 
-static int searchman_has_next(USB_SEARCHMAN* searchman)
-{
-	if (searchman->idev == NULL)
-		return 0;
-	else
-		return 1;
-}
-
 static USB_SEARCHDEV* searchman_get_next(USB_SEARCHMAN* searchman)
 {
 	USB_SEARCHDEV* search;
+	if (!searchman)
+		return NULL;
+
 	search = searchman->idev;
+	if (!search)
+		return NULL;
+
 	searchman->idev = (USB_SEARCHDEV*)searchman->idev->next;
 	return search;
+}
+
+static USB_SEARCHDEV* searchman_get_by_vid_pid(USB_SEARCHMAN* searchman, UINT16 idVendor,
+                                               UINT16 idProduct)
+{
+	USB_SEARCHDEV* dev;
+	if (!searchman)
+		return NULL;
+
+	searchman->rewind(searchman);
+
+	while ((dev = searchman->get_next(searchman)) != NULL)
+	{
+		if ((dev->idVendor == idVendor) && (dev->idProduct == idProduct))
+		{
+			WLog_VRB(TAG, "Searchman Find Device: %04" PRIx16 ":%04" PRIx16 "", dev->idVendor,
+			         dev->idProduct);
+			return dev;
+		}
+	}
+
+	return NULL;
 }
 
 static BOOL searchman_list_add(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct)
@@ -84,11 +104,9 @@ static int searchman_list_remove(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT
 	USB_SEARCHDEV* point;
 	searchman_rewind(searchman);
 
-	while (searchman_has_next(searchman) != 0)
+	while ((point = searchman_get_next(searchman)) != NULL)
 	{
-		point = searchman_get_next(searchman);
-
-		if (point->idVendor == idVendor && point->idProduct == idProduct)
+		if ((point->idVendor == idVendor) && (point->idProduct == idProduct))
 		{
 			/* set previous device to point to next device */
 			search = point;
@@ -143,9 +161,8 @@ static void searchman_list_show(USB_SEARCHMAN* self)
 	WLog_Print(urbdrc->log, WLOG_DEBUG, "=========== Usb Search List =========");
 	self->rewind(self);
 
-	while (self->has_next(self))
+	while ((usb = self->get_next(self)) != NULL)
 	{
-		usb = self->get_next(self);
 		WLog_Print(urbdrc->log, WLOG_DEBUG, "  USB %d: ", num++);
 		WLog_Print(urbdrc->log, WLOG_DEBUG, "	idVendor: 0x%04" PRIX16 "", usb->idVendor);
 		WLog_Print(urbdrc->log, WLOG_DEBUG, "	idProduct: 0x%04" PRIX16 "", usb->idProduct);
@@ -183,8 +200,8 @@ USB_SEARCHMAN* searchman_new(void* urbdrc, UINT32 UsbDevice)
 	searchman->remove = searchman_list_remove;
 	searchman->rewind = searchman_rewind;
 	searchman->get_next = searchman_get_next;
-	searchman->has_next = searchman_has_next;
 	searchman->show = searchman_list_show;
+	searchman->get_next_by_vid_pid = searchman_get_by_vid_pid;
 	searchman->free = searchman_free;
 	return searchman;
 }
