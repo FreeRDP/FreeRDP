@@ -121,9 +121,6 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 	if (!gdi)
 		return status;
 
-	if (!gdi->graphicsReset)
-		return status;
-
 	if (gdi->suppressOutput)
 		return CHANNEL_RC_OK;
 

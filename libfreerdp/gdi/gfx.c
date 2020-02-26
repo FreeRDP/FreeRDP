@@ -92,7 +92,6 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	                                 gdi->height))
 		goto fail;
 
-	gdi->graphicsReset = TRUE;
 	rc = CHANNEL_RC_OK;
 fail:
 	LeaveCriticalSection(&context->mux);
@@ -166,9 +165,6 @@ static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 	gdiGfxSurface* surface;
 	UINT16* pSurfaceIds = NULL;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
-
-	if (!gdi->graphicsReset)
-		return CHANNEL_RC_OK;
 
 	EnterCriticalSection(&context->mux);
 	context->GetSurfaceIds(context, &pSurfaceIds, &count);
@@ -1474,6 +1470,15 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 	gfx->UpdateSurfaceArea = update;
 	InitializeCriticalSection(&gfx->mux);
 	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER");
+
+	/**
+	 * gdi->graphicsReset will be removed in FreeRDP v3 from public headers,
+	 * since the EGFX Reset Graphics PDU seems to be optional.
+	 * There are still some clients that expect and check it and therefore
+	 * we simply initialize it with TRUE here for now.
+	 */
+	gdi->graphicsReset = TRUE;
+
 	return TRUE;
 }
 
