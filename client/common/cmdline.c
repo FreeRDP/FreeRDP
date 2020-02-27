@@ -926,7 +926,6 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 		status = freerdp_client_add_static_channel(settings, count, p);
 		if (status)
 		{
-			p[0] = "rdpsnd_dyn";
 			status = freerdp_client_add_dynamic_channel(settings, count, p);
 		}
 		free(p);
@@ -3272,7 +3271,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	/* for audio playback also load the dynamic sound channel */
 	if (settings->AudioPlayback)
 	{
-		char* p[] = { "rdpsnd_dyn" };
+		char* p[] = { "rdpsnd" };
 
 		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
 			return FALSE;
@@ -3287,7 +3286,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	}
 
 	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||
-	    (freerdp_dynamic_channel_collection_find(settings, "rdpsnd_dyn"))
+	    (freerdp_dynamic_channel_collection_find(settings, "rdpsnd"))
 #if defined(CHANNEL_TSMF_CLIENT)
 	    || (freerdp_dynamic_channel_collection_find(settings, "tsmf"))
 #endif
@@ -3413,7 +3412,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			return FALSE;
 
 		if (!freerdp_static_channel_collection_find(settings, "rdpsnd") &&
-		    !freerdp_dynamic_channel_collection_find(settings, "rdpsnd_dyn"))
+		    !freerdp_dynamic_channel_collection_find(settings, "rdpsnd"))
 		{
 			char* params[2];
 			params[0] = "rdpsnd";

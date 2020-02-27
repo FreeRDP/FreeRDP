@@ -349,13 +349,30 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
                                                               LPCSTR pszType, DWORD dwFlags)
 {
 	const STATIC_ADDIN_TABLE* table = CLIENT_STATIC_ADDIN_TABLE;
+	const char* type = NULL;
+
 	if (!pszName)
 		return NULL;
+
+	if (dwFlags & FREERDP_ADDIN_CHANNEL_DYNAMIC)
+		type = "DVCPluginEntry";
+	else if (dwFlags & FREERDP_ADDIN_CHANNEL_DEVICE)
+		type = "DeviceServiceEntry";
+	else if (dwFlags & FREERDP_ADDIN_CHANNEL_STATIC)
+	{
+		if (dwFlags & FREERDP_ADDIN_CHANNEL_ENTRYEX)
+			type = "VirtualChannelEntryEx";
+		else
+			type = "VirtualChannelEntry";
+	}
 
 	for (; table->name != NULL; table++)
 	{
 		if (strncmp(table->name, pszName, MAX_PATH) == 0)
 		{
+			if (type && strncmp(table->type, type, MAX_PATH))
+				continue;
+
 			if (pszSubsystem != NULL)
 			{
 				const STATIC_SUBSYSTEM_ENTRY* subsystems = table->table;
