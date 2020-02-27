@@ -89,7 +89,7 @@ struct xf_clipboard
 	const char* data_format_name;
 	int data_length;
 	int data_raw_length;
-	XEvent* respond;
+	XSelectionEvent* respond;
 
 	Window owner;
 	BOOL sync;
@@ -746,35 +746,35 @@ static void xf_cliprdr_append_target(xfClipboard* clipboard, Atom target)
 	clipboard->targets[clipboard->numTargets++] = target;
 }
 
-static void xf_cliprdr_provide_targets(xfClipboard* clipboard, XEvent* respond)
+static void xf_cliprdr_provide_targets(xfClipboard* clipboard, const XSelectionEvent* respond)
 {
 	xfContext* xfc = clipboard->xfc;
 
-	if (respond->xselection.property != None)
+	if (respond->property != None)
 	{
-		XChangeProperty(xfc->display, respond->xselection.requestor, respond->xselection.property,
-		                XA_ATOM, 32, PropModeReplace, (BYTE*)clipboard->targets,
-		                clipboard->numTargets);
+		XChangeProperty(xfc->display, respond->requestor, respond->property, XA_ATOM, 32,
+		                PropModeReplace, (BYTE*)clipboard->targets, clipboard->numTargets);
 	}
 }
 
-static void xf_cliprdr_provide_data(xfClipboard* clipboard, XEvent* respond, BYTE* data,
-                                    UINT32 size)
+static void xf_cliprdr_provide_data(xfClipboard* clipboard, const XSelectionEvent* respond,
+                                    const BYTE* data, UINT32 size)
 {
 	xfContext* xfc = clipboard->xfc;
 
-	if (respond->xselection.property != None)
+	if (respond->property != None)
 	{
-		XChangeProperty(xfc->display, respond->xselection.requestor, respond->xselection.property,
-		                respond->xselection.target, 8, PropModeReplace, data, size);
+		XChangeProperty(xfc->display, respond->requestor, respond->property, respond->target, 8,
+		                PropModeReplace, data, size);
 	}
 }
 
-static BOOL xf_cliprdr_process_selection_notify(xfClipboard* clipboard, XEvent* xevent)
+static BOOL xf_cliprdr_process_selection_notify(xfClipboard* clipboard,
+                                                const XSelectionEvent* xevent)
 {
-	if (xevent->xselection.target == clipboard->targets[1])
+	if (xevent->target == clipboard->targets[1])
 	{
-		if (xevent->xselection.property == None)
+		if (xevent->property == None)
 		{
 			xf_cliprdr_send_client_format_list(clipboard);
 		}
@@ -787,7 +787,7 @@ static BOOL xf_cliprdr_process_selection_notify(xfClipboard* clipboard, XEvent* 
 	}
 	else
 	{
-		return xf_cliprdr_get_requested_data(clipboard, xevent->xselection.target);
+		return xf_cliprdr_get_requested_data(clipboard, xevent->target);
 	}
 }
 
@@ -810,13 +810,14 @@ static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 	clipboard->data_raw_length = 0;
 }
 
-static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard, XEvent* xevent)
+static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
+                                                 const XSelectionRequestEvent* xevent)
 {
 	int fmt;
 	Atom type;
 	UINT32 formatId;
 	const char* formatName;
-	XEvent* respond;
+	XSelectionEvent* respond;
 	BYTE* data = NULL;
 	BOOL delayRespond;
 	BOOL rawTransfer;
@@ -826,40 +827,40 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard, XEvent*
 	CLIPRDR_FORMAT* format;
 	xfContext* xfc = clipboard->xfc;
 
-	if (xevent->xselectionrequest.owner != xfc->drawable)
+	if (xevent->owner != xfc->drawable)
 		return FALSE;
 
 	delayRespond = FALSE;
 
-	if (!(respond = (XEvent*)calloc(1, sizeof(XEvent))))
+	if (!(respond = (XSelectionEvent*)calloc(1, sizeof(XSelectionEvent))))
 	{
 		WLog_ERR(TAG, "failed to allocate XEvent data");
 		return FALSE;
 	}
 
-	respond->xselection.property = None;
-	respond->xselection.type = SelectionNotify;
-	respond->xselection.display = xevent->xselectionrequest.display;
-	respond->xselection.requestor = xevent->xselectionrequest.requestor;
-	respond->xselection.selection = xevent->xselectionrequest.selection;
-	respond->xselection.target = xevent->xselectionrequest.target;
-	respond->xselection.time = xevent->xselectionrequest.time;
+	respond->property = None;
+	respond->type = SelectionNotify;
+	respond->display = xevent->display;
+	respond->requestor = xevent->requestor;
+	respond->selection = xevent->selection;
+	respond->target = xevent->target;
+	respond->time = xevent->time;
 
-	if (xevent->xselectionrequest.target == clipboard->targets[0]) /* TIMESTAMP */
+	if (xevent->target == clipboard->targets[0]) /* TIMESTAMP */
 	{
 		/* TODO */
 	}
-	else if (xevent->xselectionrequest.target == clipboard->targets[1]) /* TARGETS */
+	else if (xevent->target == clipboard->targets[1]) /* TARGETS */
 	{
 		/* Someone else requests our available formats */
-		respond->xselection.property = xevent->xselectionrequest.property;
+		respond->property = xevent->property;
 		xf_cliprdr_provide_targets(clipboard, respond);
 	}
 	else
 	{
-		format = xf_cliprdr_get_server_format_by_atom(clipboard, xevent->xselectionrequest.target);
+		format = xf_cliprdr_get_server_format_by_atom(clipboard, xevent->target);
 
-		if (format && (xevent->xselectionrequest.requestor != xfc->drawable))
+		if (format && (xevent->requestor != xfc->drawable))
 		{
 			formatId = format->formatId;
 			formatName = format->formatName;
@@ -867,9 +868,9 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard, XEvent*
 
 			if (formatId == CF_RAW)
 			{
-				if (XGetWindowProperty(xfc->display, xevent->xselectionrequest.requestor,
-				                       clipboard->property_atom, 0, 4, 0, XA_INTEGER, &type, &fmt,
-				                       &length, &bytes_left, &data) != Success)
+				if (XGetWindowProperty(xfc->display, xevent->requestor, clipboard->property_atom, 0,
+				                       4, 0, XA_INTEGER, &type, &fmt, &length, &bytes_left,
+				                       &data) != Success)
 				{
 				}
 
@@ -889,14 +890,14 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard, XEvent*
 			if (matchingFormat && (clipboard->data != 0) && !rawTransfer)
 			{
 				/* Cached converted clipboard data available. Send it now */
-				respond->xselection.property = xevent->xselectionrequest.property;
+				respond->property = xevent->property;
 				xf_cliprdr_provide_data(clipboard, respond, clipboard->data,
 				                        clipboard->data_length);
 			}
 			else if (matchingFormat && (clipboard->data_raw != 0) && rawTransfer)
 			{
 				/* Cached raw clipboard data available. Send it now */
-				respond->xselection.property = xevent->xselectionrequest.property;
+				respond->property = xevent->property;
 				xf_cliprdr_provide_data(clipboard, respond, clipboard->data_raw,
 				                        clipboard->data_raw_length);
 			}
@@ -911,7 +912,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard, XEvent*
 				 * Response will be postponed after receiving the data
 				 */
 				xf_cliprdr_clear_cached_data(clipboard);
-				respond->xselection.property = xevent->xselectionrequest.property;
+				respond->property = xevent->property;
 				clipboard->respond = respond;
 				clipboard->data_format_id = formatId;
 				clipboard->data_format_name = formatName;
@@ -924,7 +925,13 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard, XEvent*
 
 	if (!delayRespond)
 	{
-		XSendEvent(xfc->display, xevent->xselectionrequest.requestor, 0, 0, respond);
+		union {
+			XEvent* ev;
+			XSelectionEvent* sev;
+		} conv;
+
+		conv.sev = respond;
+		XSendEvent(xfc->display, xevent->requestor, 0, 0, conv.ev);
 		XFlush(xfc->display);
 		free(respond);
 	}
@@ -932,7 +939,8 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard, XEvent*
 	return TRUE;
 }
 
-static BOOL xf_cliprdr_process_selection_clear(xfClipboard* clipboard, XEvent* xevent)
+static BOOL xf_cliprdr_process_selection_clear(xfClipboard* clipboard,
+                                               const XSelectionClearEvent* xevent)
 {
 	xfContext* xfc = clipboard->xfc;
 
@@ -945,7 +953,7 @@ static BOOL xf_cliprdr_process_selection_clear(xfClipboard* clipboard, XEvent* x
 	return TRUE;
 }
 
-static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard, XEvent* xevent)
+static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard, const XPropertyEvent* xevent)
 {
 	xfCliprdrFormat* format;
 	xfContext* xfc = NULL;
@@ -955,15 +963,15 @@ static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard, XEvent* x
 
 	xfc = clipboard->xfc;
 
-	if (xevent->xproperty.atom != clipboard->property_atom)
+	if (xevent->atom != clipboard->property_atom)
 		return FALSE; /* Not cliprdr-related */
 
-	if (xevent->xproperty.window == clipboard->root_window)
+	if (xevent->window == clipboard->root_window)
 	{
 		xf_cliprdr_send_client_format_list(clipboard);
 	}
-	else if ((xevent->xproperty.window == xfc->drawable) &&
-	         (xevent->xproperty.state == PropertyNewValue) && clipboard->incr_starts)
+	else if ((xevent->window == xfc->drawable) && (xevent->state == PropertyNewValue) &&
+	         clipboard->incr_starts)
 	{
 		format = xf_cliprdr_get_client_format_by_id(clipboard, clipboard->requestedFormatId);
 
@@ -974,7 +982,7 @@ static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard, XEvent* x
 	return TRUE;
 }
 
-void xf_cliprdr_handle_xevent(xfContext* xfc, XEvent* event)
+void xf_cliprdr_handle_xevent(xfContext* xfc, const XEvent* event)
 {
 	xfClipboard* clipboard;
 
@@ -1013,19 +1021,19 @@ void xf_cliprdr_handle_xevent(xfContext* xfc, XEvent* event)
 	switch (event->type)
 	{
 		case SelectionNotify:
-			xf_cliprdr_process_selection_notify(clipboard, event);
+			xf_cliprdr_process_selection_notify(clipboard, &event->xselection);
 			break;
 
 		case SelectionRequest:
-			xf_cliprdr_process_selection_request(clipboard, event);
+			xf_cliprdr_process_selection_request(clipboard, &event->xselectionrequest);
 			break;
 
 		case SelectionClear:
-			xf_cliprdr_process_selection_clear(clipboard, event);
+			xf_cliprdr_process_selection_clear(clipboard, &event->xselectionclear);
 			break;
 
 		case PropertyNotify:
-			xf_cliprdr_process_property_notify(clipboard, event);
+			xf_cliprdr_process_property_notify(clipboard, &event->xproperty);
 			break;
 
 		case FocusIn:
@@ -1446,8 +1454,17 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	}
 
 	xf_cliprdr_provide_data(clipboard, clipboard->respond, pDstData, DstSize);
-	XSendEvent(xfc->display, clipboard->respond->xselection.requestor, 0, 0, clipboard->respond);
-	XFlush(xfc->display);
+	{
+		union {
+			XEvent* ev;
+			XSelectionEvent* sev;
+		} conv;
+
+		conv.sev = clipboard->respond;
+
+		XSendEvent(xfc->display, clipboard->respond->requestor, 0, 0, conv.ev);
+		XFlush(xfc->display);
+	}
 	free(clipboard->respond);
 	clipboard->respond = NULL;
 	return CHANNEL_RC_OK;
