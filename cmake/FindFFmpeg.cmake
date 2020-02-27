@@ -19,7 +19,7 @@ endif(PKG_CONFIG_FOUND)
 
 # avcodec
 find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h PATHS ${AVCODEC_INCLUDE_DIRS})
-find_library(AVCODEC_LIBRARY avcodec PATHS $ {AVCODEC_LIBRARY_DIRS})
+find_library(AVCODEC_LIBRARY avcodec PATHS ${AVCODEC_LIBRARY_DIRS})
 
 # avutil
 find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h PATHS ${AVUTIL_INCLUDE_DIRS})
