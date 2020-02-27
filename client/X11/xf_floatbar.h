@@ -25,8 +25,8 @@ typedef struct xf_floatbar xfFloatbar;
 xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* title, DWORD flags);
 void xf_floatbar_free(xfFloatbar* floatbar);
 
-BOOL xf_floatbar_event_process(xfFloatbar* floatbar, XEvent* event);
-BOOL xf_floatbar_check_event(xfFloatbar* floatbar, XEvent* event);
+BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event);
+BOOL xf_floatbar_check_event(xfFloatbar* floatbar, const XEvent* event);
 BOOL xf_floatbar_toggle_fullscreen(xfFloatbar* floatbar, bool visible);
 BOOL xf_floatbar_hide_and_show(xfFloatbar* floatbar);
 BOOL xf_floatbar_set_root_y(xfFloatbar* floatbar, int y);

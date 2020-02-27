@@ -345,14 +345,13 @@ static unsigned long xf_floatbar_get_color(xfFloatbar* floatbar, char* rgb_value
 	return color.pixel;
 }
 
-static void xf_floatbar_event_expose(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 {
 	GC gc, shape_gc;
 	Pixmap pmap;
 	XPoint shape[5], border[5];
 	int len;
 	Display* display = floatbar->xfc->display;
-	WINPR_UNUSED(event);
 
 	/* create the pixmap that we'll use for shaping the window */
 	pmap = XCreatePixmap(display, floatbar->handle, floatbar->width, floatbar->height, 1);
@@ -402,14 +401,14 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar, XEvent* event)
 	XFreeGC(display, shape_gc);
 }
 
-static xfFloatbarButton* xf_floatbar_get_button(xfFloatbar* floatbar, XEvent* event)
+static xfFloatbarButton* xf_floatbar_get_button(xfFloatbar* floatbar, Window window)
 {
 	int i, size;
 	size = ARRAYSIZE(floatbar->buttons);
 
 	for (i = 0; i < size; i++)
 	{
-		if (floatbar->buttons[i]->handle == event->xany.window)
+		if (floatbar->buttons[i]->handle == window)
 		{
 			return floatbar->buttons[i];
 		}
@@ -418,7 +417,7 @@ static xfFloatbarButton* xf_floatbar_get_button(xfFloatbar* floatbar, XEvent* ev
 	return NULL;
 }
 
-static void xf_floatbar_button_update_positon(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_button_update_positon(xfFloatbar* floatbar)
 {
 	xfFloatbarButton* button;
 	int i, size;
@@ -451,13 +450,13 @@ static void xf_floatbar_button_update_positon(xfFloatbar* floatbar, XEvent* even
 		}
 
 		XMoveWindow(xfc->display, button->handle, button->x, button->y);
-		xf_floatbar_event_expose(floatbar, event);
+		xf_floatbar_event_expose(floatbar);
 	}
 }
 
-static void xf_floatbar_button_event_expose(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_button_event_expose(xfFloatbar* floatbar, Window window)
 {
-	xfFloatbarButton* button = xf_floatbar_get_button(floatbar, event);
+	xfFloatbarButton* button = xf_floatbar_get_button(floatbar, window);
 	static unsigned char* bits;
 	GC gc;
 	Pixmap pattern;
@@ -511,18 +510,18 @@ static void xf_floatbar_button_event_expose(xfFloatbar* floatbar, XEvent* event)
 	XFreeGC(xfc->display, gc);
 }
 
-static void xf_floatbar_button_event_buttonpress(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_button_event_buttonpress(xfFloatbar* floatbar, const XButtonEvent* event)
 {
-	xfFloatbarButton* button = xf_floatbar_get_button(floatbar, event);
+	xfFloatbarButton* button = xf_floatbar_get_button(floatbar, event->window);
 
 	if (button)
 		button->clicked = TRUE;
 }
 
-static void xf_floatbar_button_event_buttonrelease(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_button_event_buttonrelease(xfFloatbar* floatbar, const XButtonEvent* event)
 {
 	xfFloatbarButton* button;
-	button = xf_floatbar_get_button(floatbar, event);
+	button = xf_floatbar_get_button(floatbar, event->window);
 
 	if (button)
 	{
@@ -532,14 +531,14 @@ static void xf_floatbar_button_event_buttonrelease(xfFloatbar* floatbar, XEvent*
 	}
 }
 
-static void xf_floatbar_event_buttonpress(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_event_buttonpress(xfFloatbar* floatbar, const XButtonEvent* event)
 {
-	switch (event->xbutton.button)
+	switch (event->button)
 	{
 		case Button1:
-			if (event->xmotion.x <= FLOATBAR_BORDER)
+			if (event->x <= FLOATBAR_BORDER)
 				floatbar->mode = XF_FLOATBAR_MODE_RESIZE_LEFT;
-			else if (event->xmotion.x >= (floatbar->width - FLOATBAR_BORDER))
+			else if (event->x >= (floatbar->width - FLOATBAR_BORDER))
 				floatbar->mode = XF_FLOATBAR_MODE_RESIZE_RIGHT;
 			else
 				floatbar->mode = XF_FLOATBAR_MODE_DRAGGING;
@@ -551,9 +550,9 @@ static void xf_floatbar_event_buttonpress(xfFloatbar* floatbar, XEvent* event)
 	}
 }
 
-static void xf_floatbar_event_buttonrelease(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_event_buttonrelease(xfFloatbar* floatbar, const XButtonEvent* event)
 {
-	switch (event->xbutton.button)
+	switch (event->button)
 	{
 		case Button1:
 			floatbar->mode = XF_FLOATBAR_MODE_NONE;
@@ -564,12 +563,12 @@ static void xf_floatbar_event_buttonrelease(xfFloatbar* floatbar, XEvent* event)
 	}
 }
 
-static void xf_floatbar_resize(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_resize(xfFloatbar* floatbar, const XMotionEvent* event)
 {
 	int x, width, movement;
 	xfContext* xfc = floatbar->xfc;
 	/* calculate movement which happened on the root window */
-	movement = event->xmotion.x_root - floatbar->last_motion_x_root;
+	movement = event->x_root - floatbar->last_motion_x_root;
 
 	/* set x and width depending if movement happens on the left or right  */
 	if (floatbar->mode == XF_FLOATBAR_MODE_RESIZE_LEFT)
@@ -592,12 +591,12 @@ static void xf_floatbar_resize(xfFloatbar* floatbar, XEvent* event)
 	}
 }
 
-static void xf_floatbar_dragging(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_dragging(xfFloatbar* floatbar, const XMotionEvent* event)
 {
 	int x, movement;
 	xfContext* xfc = floatbar->xfc;
 	/* calculate movement and new x position */
-	movement = event->xmotion.x_root - floatbar->last_motion_x_root;
+	movement = event->x_root - floatbar->last_motion_x_root;
 	x = floatbar->x + movement;
 
 	/* do nothing if floatbar would be moved out of the window */
@@ -611,7 +610,7 @@ static void xf_floatbar_dragging(xfFloatbar* floatbar, XEvent* event)
 	floatbar->x = x;
 }
 
-static void xf_floatbar_event_motionnotify(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_event_motionnotify(xfFloatbar* floatbar, const XMotionEvent* event)
 {
 	int mode;
 	Cursor cursor;
@@ -619,62 +618,60 @@ static void xf_floatbar_event_motionnotify(xfFloatbar* floatbar, XEvent* event)
 	mode = floatbar->mode;
 	cursor = XCreateFontCursor(xfc->display, XC_arrow);
 
-	if ((event->xmotion.state & Button1Mask) && (mode > XF_FLOATBAR_MODE_DRAGGING))
+	if ((event->state & Button1Mask) && (mode > XF_FLOATBAR_MODE_DRAGGING))
 	{
 		xf_floatbar_resize(floatbar, event);
 	}
-	else if ((event->xmotion.state & Button1Mask) && (mode == XF_FLOATBAR_MODE_DRAGGING))
+	else if ((event->state & Button1Mask) && (mode == XF_FLOATBAR_MODE_DRAGGING))
 	{
 		xf_floatbar_dragging(floatbar, event);
 	}
 	else
 	{
-		if (event->xmotion.x <= FLOATBAR_BORDER ||
-		    event->xmotion.x >= floatbar->width - FLOATBAR_BORDER)
+		if (event->x <= FLOATBAR_BORDER || event->x >= floatbar->width - FLOATBAR_BORDER)
 			cursor = XCreateFontCursor(xfc->display, XC_sb_h_double_arrow);
 	}
 
 	XDefineCursor(xfc->display, xfc->window->handle, cursor);
 	XFreeCursor(xfc->display, cursor);
-	floatbar->last_motion_x_root = event->xmotion.x_root;
+	floatbar->last_motion_x_root = event->x_root;
 }
 
-static void xf_floatbar_button_event_focusin(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_button_event_focusin(xfFloatbar* floatbar, const XAnyEvent* event)
 {
 	xfFloatbarButton* button;
-	button = xf_floatbar_get_button(floatbar, event);
+	button = xf_floatbar_get_button(floatbar, event->window);
 
 	if (button)
 	{
 		button->focus = TRUE;
-		xf_floatbar_button_event_expose(floatbar, event);
+		xf_floatbar_button_event_expose(floatbar, event->window);
 	}
 }
 
-static void xf_floatbar_button_event_focusout(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_button_event_focusout(xfFloatbar* floatbar, const XAnyEvent* event)
 {
 	xfFloatbarButton* button;
-	button = xf_floatbar_get_button(floatbar, event);
+	button = xf_floatbar_get_button(floatbar, event->window);
 
 	if (button)
 	{
 		button->focus = FALSE;
-		xf_floatbar_button_event_expose(floatbar, event);
+		xf_floatbar_button_event_expose(floatbar, event->window);
 	}
 }
 
-static void xf_floatbar_event_focusout(xfFloatbar* floatbar, XEvent* event)
+static void xf_floatbar_event_focusout(xfFloatbar* floatbar)
 {
 	xfContext* xfc = floatbar->xfc;
 
-	WINPR_UNUSED(event);
 	if (xfc->pointer)
 	{
 		XDefineCursor(xfc->display, xfc->window->handle, xfc->pointer->cursor);
 	}
 }
 
-BOOL xf_floatbar_check_event(xfFloatbar* floatbar, XEvent* event)
+BOOL xf_floatbar_check_event(xfFloatbar* floatbar, const XEvent* event)
 {
 	xfFloatbarButton* button;
 	size_t i, size;
@@ -701,7 +698,7 @@ BOOL xf_floatbar_check_event(xfFloatbar* floatbar, XEvent* event)
 	return FALSE;
 }
 
-BOOL xf_floatbar_event_process(xfFloatbar* floatbar, XEvent* event)
+BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event)
 {
 	if (!floatbar || !floatbar->xfc || !event)
 		return FALSE;
@@ -712,58 +709,58 @@ BOOL xf_floatbar_event_process(xfFloatbar* floatbar, XEvent* event)
 	switch (event->type)
 	{
 		case Expose:
-			if (event->xany.window == floatbar->handle)
-				xf_floatbar_event_expose(floatbar, event);
+			if (event->xexpose.window == floatbar->handle)
+				xf_floatbar_event_expose(floatbar);
 			else
-				xf_floatbar_button_event_expose(floatbar, event);
+				xf_floatbar_button_event_expose(floatbar, event->xexpose.window);
 
 			break;
 
 		case MotionNotify:
-			xf_floatbar_event_motionnotify(floatbar, event);
+			xf_floatbar_event_motionnotify(floatbar, &event->xmotion);
 			break;
 
 		case ButtonPress:
 			if (event->xany.window == floatbar->handle)
-				xf_floatbar_event_buttonpress(floatbar, event);
+				xf_floatbar_event_buttonpress(floatbar, &event->xbutton);
 			else
-				xf_floatbar_button_event_buttonpress(floatbar, event);
+				xf_floatbar_button_event_buttonpress(floatbar, &event->xbutton);
 
 			break;
 
 		case ButtonRelease:
 			if (event->xany.window == floatbar->handle)
-				xf_floatbar_event_buttonrelease(floatbar, event);
+				xf_floatbar_event_buttonrelease(floatbar, &event->xbutton);
 			else
-				xf_floatbar_button_event_buttonrelease(floatbar, event);
+				xf_floatbar_button_event_buttonrelease(floatbar, &event->xbutton);
 
 			break;
 
 		case EnterNotify:
 		case FocusIn:
 			if (event->xany.window != floatbar->handle)
-				xf_floatbar_button_event_focusin(floatbar, event);
+				xf_floatbar_button_event_focusin(floatbar, &event->xany);
 
 			break;
 
 		case LeaveNotify:
 		case FocusOut:
 			if (event->xany.window == floatbar->handle)
-				xf_floatbar_event_focusout(floatbar, event);
+				xf_floatbar_event_focusout(floatbar);
 			else
-				xf_floatbar_button_event_focusout(floatbar, event);
+				xf_floatbar_button_event_focusout(floatbar, &event->xany);
 
 			break;
 
 		case ConfigureNotify:
 			if (event->xany.window == floatbar->handle)
-				xf_floatbar_button_update_positon(floatbar, event);
+				xf_floatbar_button_update_positon(floatbar);
 
 			break;
 
 		case PropertyNotify:
 			if (event->xany.window == floatbar->handle)
-				xf_floatbar_button_update_positon(floatbar, event);
+				xf_floatbar_button_update_positon(floatbar);
 
 			break;
 
