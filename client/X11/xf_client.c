@@ -498,17 +498,16 @@ static BOOL xf_process_x_events(freerdp* instance)
 	{
 		xf_lock_x11(xfc, FALSE);
 		pending_status = XPending(xfc->display);
-		xf_unlock_x11(xfc, FALSE);
 
 		if (pending_status)
 		{
 			ZeroMemory(&xevent, sizeof(xevent));
 			XNextEvent(xfc->display, &xevent);
 			status = xf_event_process(instance, &xevent);
-
-			if (!status)
-				return status;
 		}
+		xf_unlock_x11(xfc, FALSE);
+		if (!status)
+			break;
 	}
 
 	return status;
@@ -811,10 +810,17 @@ void xf_lock_x11(xfContext* xfc, BOOL display)
 		if (display)
 			XLockDisplay(xfc->display);
 	}
+	if (xfc->locked)
+		WLog_WARN(TAG, "X11 trying to lock although already locked!");
+
+	xfc->locked = TRUE;
 }
 
 void xf_unlock_x11(xfContext* xfc, BOOL display)
 {
+	if (!xfc->locked)
+		WLog_WARN(TAG, "X11: trying to unlock although not locked!");
+
 	if (!xfc->UseXThreads)
 	{
 		ReleaseMutex(xfc->mutex);
@@ -824,6 +830,7 @@ void xf_unlock_x11(xfContext* xfc, BOOL display)
 		if (display)
 			XUnlockDisplay(xfc->display);
 	}
+	xfc->locked = FALSE;
 }
 
 static BOOL xf_get_pixmap_info(xfContext* xfc)
