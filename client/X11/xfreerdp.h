@@ -247,6 +247,7 @@ struct xf_context
 	/* value to be sent over wire for each logical client mouse button */
 	button_map button_map[NUM_BUTTONS_MAPPED];
 	BYTE savedMaximizedState;
+	BOOL locked;
 };
 
 BOOL xf_create_window(xfContext* xfc);
