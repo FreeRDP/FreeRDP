@@ -924,6 +924,11 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 		size_t count;
 		p = CommandLineParseCommaSeparatedValuesEx("rdpsnd", arg->Value, &count);
 		status = freerdp_client_add_static_channel(settings, count, p);
+		if (status)
+		{
+			p[0] = "rdpsnd_dyn";
+			status = freerdp_client_add_dynamic_channel(settings, count, p);
+		}
 		free(p);
 	}
 	CommandLineSwitchCase(arg, "microphone")
@@ -2438,35 +2443,35 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					{
 						const char* val = p[x];
 #ifdef WITH_GFX_H264
-					if (_strnicmp("AVC444", val, 7) == 0)
-					{
-						settings->GfxH264 = TRUE;
-						settings->GfxAVC444 = TRUE;
-					}
-					else if (_strnicmp("AVC420", val, 7) == 0)
-					{
-						settings->GfxH264 = TRUE;
-						settings->GfxAVC444 = FALSE;
-					}
-					else
-#endif
-					    if (_strnicmp("RFX", val, 4) == 0)
-					{
-						settings->GfxAVC444 = FALSE;
-						settings->GfxH264 = FALSE;
-						settings->RemoteFxCodec = TRUE;
-					}
-					else if (_strnicmp("mask:", val, 5) == 0)
-					{
-						ULONGLONG v;
-						const char* uv = &val[5];
-						if (!value_to_uint(uv, &v, 0, UINT32_MAX))
-							rc = COMMAND_LINE_ERROR;
+						if (_strnicmp("AVC444", val, 7) == 0)
+						{
+							settings->GfxH264 = TRUE;
+							settings->GfxAVC444 = TRUE;
+						}
+						else if (_strnicmp("AVC420", val, 7) == 0)
+						{
+							settings->GfxH264 = TRUE;
+							settings->GfxAVC444 = FALSE;
+						}
 						else
-							settings->GfxCapsFilter = (UINT32)v;
-					}
-					else
-						rc = COMMAND_LINE_ERROR;
+#endif
+						    if (_strnicmp("RFX", val, 4) == 0)
+						{
+							settings->GfxAVC444 = FALSE;
+							settings->GfxH264 = FALSE;
+							settings->RemoteFxCodec = TRUE;
+						}
+						else if (_strnicmp("mask:", val, 5) == 0)
+						{
+							ULONGLONG v;
+							const char* uv = &val[5];
+							if (!value_to_uint(uv, &v, 0, UINT32_MAX))
+								rc = COMMAND_LINE_ERROR;
+							else
+								settings->GfxCapsFilter = (UINT32)v;
+						}
+						else
+							rc = COMMAND_LINE_ERROR;
 					}
 				}
 				free(p);
@@ -3264,6 +3269,15 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			return FALSE;
 	}
 
+	/* for audio playback also load the dynamic sound channel */
+	if (settings->AudioPlayback)
+	{
+		char* p[] = { "rdpsnd_dyn" };
+
+		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
+			return FALSE;
+	}
+
 	if (settings->AudioCapture)
 	{
 		char* p[] = { "audin" };
@@ -3272,7 +3286,8 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if ((freerdp_static_channel_collection_find(settings, "rdpsnd"))
+	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||
+	    (freerdp_dynamic_channel_collection_find(settings, "rdpsnd_dyn"))
 #if defined(CHANNEL_TSMF_CLIENT)
 	    || (freerdp_dynamic_channel_collection_find(settings, "tsmf"))
 #endif
@@ -3397,7 +3412,8 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdpdr", settings))
 			return FALSE;
 
-		if (!freerdp_static_channel_collection_find(settings, "rdpsnd"))
+		if (!freerdp_static_channel_collection_find(settings, "rdpsnd") &&
+		    !freerdp_dynamic_channel_collection_find(settings, "rdpsnd_dyn"))
 		{
 			char* params[2];
 			params[0] = "rdpsnd";
