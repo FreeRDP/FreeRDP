@@ -348,7 +348,7 @@ UINT xf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, int nmoni
 	return ret;
 }
 
-BOOL xf_disp_handle_xevent(xfContext* xfc, XEvent* event)
+BOOL xf_disp_handle_xevent(xfContext* xfc, const XEvent* event)
 {
 	xfDispContext* xfDisp;
 	rdpSettings* settings;
