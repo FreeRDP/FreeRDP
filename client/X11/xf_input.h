@@ -28,6 +28,6 @@
 #endif
 
 int xf_input_init(xfContext* xfc, Window window);
-int xf_input_handle_event(xfContext* xfc, XEvent* event);
+int xf_input_handle_event(xfContext* xfc, const XEvent* event);
 
 #endif /* FREERDP_CLIENT_X11_INPUT_H */
