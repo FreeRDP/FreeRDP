@@ -28,7 +28,7 @@
 BOOL xf_event_action_script_init(xfContext* xfc);
 void xf_event_action_script_free(xfContext* xfc);
 
-BOOL xf_event_process(freerdp* instance, XEvent* event);
+BOOL xf_event_process(freerdp* instance, const XEvent* event);
 void xf_event_SendClientEvent(xfContext* xfc, xfWindow* window, Atom atom, unsigned int numArgs,
                               ...);
 
