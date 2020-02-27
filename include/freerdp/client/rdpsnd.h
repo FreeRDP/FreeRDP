@@ -23,6 +23,8 @@
 
 #include <freerdp/channels/rdpsnd.h>
 
+#define RDPSND_DVC_CHANNEL_NAME "AUDIO_PLAYBACK_DVC"
+
 /**
  * Subsystem Interface
  */
