@@ -1125,9 +1125,9 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, D
 	if (error && rdpsnd && rdpsnd->rdpcontext)
 	{
 		char buffer[8192];
-		snprintf(buffer, sizeof(buffer),
-		         "%s rdpsnd_virtual_channel_open_event_ex reported an error",
-		         rdpsnd_is_dyn_str(rdpsnd->dynamic));
+		_snprintf(buffer, sizeof(buffer),
+		          "%s rdpsnd_virtual_channel_open_event_ex reported an error",
+		          rdpsnd_is_dyn_str(rdpsnd->dynamic));
 		setChannelError(rdpsnd->rdpcontext, error, buffer);
 	}
 }
@@ -1185,7 +1185,8 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	if (rdpsnd->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	IFCALL(rdpsnd->device->Close, rdpsnd->device);
+	if (rdpsnd->device)
+		IFCALL(rdpsnd->device->Close, rdpsnd->device);
 
 	error =
 	    rdpsnd->channelEntryPoints.pVirtualChannelCloseEx(rdpsnd->InitHandle, rdpsnd->OpenHandle);
@@ -1276,8 +1277,8 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 	if (error && plugin && plugin->rdpcontext)
 	{
 		char buffer[8192];
-		snprintf(buffer, sizeof(buffer), "%s %s reported an error",
-		         rdpsnd_is_dyn_str(plugin->dynamic), __FUNCTION__);
+		_snprintf(buffer, sizeof(buffer), "%s %s reported an error",
+		          rdpsnd_is_dyn_str(plugin->dynamic), __FUNCTION__);
 		setChannelError(plugin->rdpcontext, error, buffer);
 	}
 }
@@ -1374,7 +1375,8 @@ static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	RDPSND_CHANNEL_CALLBACK* callback = (RDPSND_CHANNEL_CALLBACK*)pChannelCallback;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)callback->plugin;
 
-	IFCALL(rdpsnd->device->Close, rdpsnd->device);
+	if (rdpsnd->device)
+		IFCALL(rdpsnd->device->Close, rdpsnd->device);
 	freerdp_dsp_context_free(rdpsnd->dsp_context);
 	StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
 	StreamPool_Free(rdpsnd->pool);
