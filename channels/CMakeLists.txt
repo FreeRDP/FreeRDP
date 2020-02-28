@@ -298,11 +298,17 @@ file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 # We need special treatement for drdynvc:
 # It needs to be the first entry so that every
 # dynamic channel has the dependent options available.
-list(FIND FILEPATHS "drdynvc/${FILENAME}" DRDYNVC_LIST_INDEX)
-if ("${DRDYNVC_LIST_INDEX}" GREATER "-1")
-	list(GET FILEPATHS ${DRDYNVC_LIST_INDEX} DRDYNVC_LIST_VALUE)
-	list(REMOVE_AT FILEPATHS ${DRDYNVC_LIST_INDEX})
-	list(APPEND FILEPATHS ${DRDYNVC_LIST_VALUE})
+set(DRDYNVC_MATCH "")
+
+foreach(FILEPATH ${FILEPATHS})
+	if(${FILEPATH} MATCHES "^([^/]*)drdynvc/+${FILENAME}")
+		set(DRDYNVC_MATCH ${FILEPATH})
+	endif()
+endforeach()
+
+if (NOT "${DRDYNVC_MATCH}" STREQUAL "")
+	list(REMOVE_ITEM FILEPATHS ${DRDYNVC_MATCH})
+	list(APPEND FILEPATHS ${DRDYNVC_MATCH})
 	list(REVERSE FILEPATHS) # list PREPEND is not available on old CMake3
 endif()
 
