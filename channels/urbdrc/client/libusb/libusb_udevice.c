@@ -1037,8 +1037,7 @@ static void libusb_udev_channel_closed(IUDEVICE* idev)
 	UDEVICE* pdev = (UDEVICE*)idev;
 	if (pdev)
 	{
-		const UINT16 idVendor = (UINT16)idev->query_device_descriptor(idev, ID_VENDOR);
-		const UINT16 idProduct = (UINT16)idev->query_device_descriptor(idev, ID_PRODUCT);
+		URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
 		const uint8_t busNr = idev->get_bus_number(idev);
 		const uint8_t devNr = idev->get_dev_number(idev);
 		IWTSVirtualChannel* channel = NULL;
@@ -1051,14 +1050,10 @@ static void libusb_udev_channel_closed(IUDEVICE* idev)
 
 		if (channel)
 		{
-			URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
-			USB_SEARCHMAN* searchman = urbdrc->searchman;
-
 			/* Notify the server the device is no longer available. */
 			channel->Write(channel, 0, NULL, NULL);
-			urbdrc->udevman->unregister_udevice(urbdrc->udevman, busNr, devNr);
-			searchman->add(searchman, idVendor, idProduct);
 		}
+		urbdrc->udevman->unregister_udevice(urbdrc->udevman, busNr, devNr);
 	}
 }
 
@@ -1380,11 +1375,6 @@ static void udev_set_UsbDevice(IUDEVICE* idev, UINT32 val)
 
 	if (!pdev)
 		return;
-
-	val = 0x10 + val;
-
-	if (val < 0x10)
-		val += 0x10;
 
 	pdev->UsbDevice = val;
 }

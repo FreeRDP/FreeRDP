@@ -18,9 +18,7 @@
 
 define_channel_client("urbdrc")
 
-set(${MODULE_PREFIX}_SRCS
-	searchman.c
-	searchman.h
+set(${MODULE_PREFIX}_SRCS	
 	data_transfer.c
 	data_transfer.h
 	urbdrc_main.c

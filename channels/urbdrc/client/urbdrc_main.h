@@ -24,8 +24,6 @@
 #include <winpr/pool.h>
 #include <freerdp/channels/log.h>
 
-#include "searchman.h"
-
 #define DEVICE_HARDWARE_ID_SIZE 32
 #define DEVICE_COMPATIBILITY_ID_SIZE 36
 #define DEVICE_INSTANCE_STR_SIZE 37
@@ -82,7 +80,6 @@ struct _URBDRC_PLUGIN
 	URBDRC_LISTENER_CALLBACK* listener_callback;
 
 	IUDEVMAN* udevman;
-	USB_SEARCHMAN* searchman;
 	UINT32 vchannel_status;
 	char* subsystem;
 
@@ -204,8 +201,8 @@ struct _IUDEVMAN
 	void (*rewind)(IUDEVMAN* idevman);
 	BOOL (*has_next)(IUDEVMAN* idevman);
 	BOOL (*unregister_udevice)(IUDEVMAN* idevman, BYTE bus_number, BYTE dev_number);
-	size_t (*register_udevice)(IUDEVMAN* idevman, BYTE bus_number, BYTE dev_number,
-	                           UINT32 UsbDevice, UINT16 idVendor, UINT16 idProduct, int flag);
+	size_t (*register_udevice)(IUDEVMAN* idevman, BYTE bus_number, BYTE dev_number, UINT16 idVendor,
+	                           UINT16 idProduct, UINT32 flag);
 	IUDEVICE* (*get_next)(IUDEVMAN* idevman);
 	IUDEVICE* (*get_udevice_by_UsbDevice)(IUDEVMAN* idevman, UINT32 UsbDevice);
 
@@ -213,9 +210,8 @@ struct _IUDEVMAN
 	int (*isAutoAdd)(IUDEVMAN* idevman);
 
 	/* Basic state */
-	BASIC_DEVMAN_STATE_DEFINED(defUsbDevice, UINT32);
 	BASIC_DEVMAN_STATE_DEFINED(device_num, UINT32);
-	BASIC_DEVMAN_STATE_DEFINED(sem_timeout, int);
+	BASIC_DEVMAN_STATE_DEFINED(next_device_id, UINT32);
 
 	/* control semaphore or mutex lock */
 	void (*loading_lock)(IUDEVMAN* idevman);
@@ -226,8 +222,20 @@ struct _IUDEVMAN
 	UINT32 controlChannelId;
 };
 
-FREERDP_API BOOL add_device(IUDEVMAN* idevman, BYTE busnum, BYTE devnum, UINT16 idVendor,
-                            UINT16 idProduct);
+enum
+{
+	DEVICE_ADD_FLAG_BUS,
+	DEVICE_ADD_FLAG_DEV,
+	DEVICE_ADD_FLAG_VENDOR,
+	DEVICE_ADD_FLAG_PRODUCT,
+	DEVICE_ADD_FLAG_REGISTER
+} device_add_flag_t;
+#define DEVICE_ADD_FLAG_ALL                                               \
+	(DEVICE_ADD_FLAG_BUS | DEVICE_ADD_FLAG_DEV | DEVICE_ADD_FLAG_VENDOR | \
+	 DEVICE_ADD_FLAG_PRODUCT | DEVICE_ADD_FLAG_REGISTER)
+
+FREERDP_API BOOL add_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum,
+                            UINT16 idVendor, UINT16 idProduct);
 FREERDP_API BOOL del_device(IUDEVMAN* idevman, BYTE busnum, BYTE devnum, UINT16 idVendor,
                             UINT16 idProduct);
 
