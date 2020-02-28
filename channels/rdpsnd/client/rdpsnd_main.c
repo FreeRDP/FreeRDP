@@ -442,7 +442,7 @@ static UINT rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp
 	return rdpsnd_virtual_channel_write(rdpsnd, pdu);
 }
 
-static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, AUDIO_FORMAT* format, size_t size)
+static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* format, size_t size)
 {
 	UINT32 bpf;
 	UINT32 now;
@@ -451,9 +451,16 @@ static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, AUDIO_FORMAT* format, si
 	UINT32 remainingDuration;
 	UINT32 maxDuration;
 
-	bpf = format->nChannels * format->wBitsPerSample / 8;
-	duration = (UINT32)(1000 * size / bpf / format->nSamplesPerSec);
-	totalDuration = (UINT32)(1000 * rdpsnd->totalPlaySize / bpf / format->nSamplesPerSec);
+	if (!rdpsnd || !format)
+		return FALSE;
+
+	audio_format_print(WLog_Get(TAG), WLOG_DEBUG, format);
+	bpf = format->nChannels * format->wBitsPerSample * format->nSamplesPerSec / 8;
+	if (bpf == 0)
+		return FALSE;
+
+	duration = (UINT32)(1000 * size / bpf);
+	totalDuration = (UINT32)(1000 * rdpsnd->totalPlaySize / bpf);
 	now = GetTickCountPrecise();
 	if (rdpsnd->startPlayTime == 0)
 	{
