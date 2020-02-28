@@ -9,6 +9,13 @@ set(${MODULE_PREFIX}_TESTS
     TestBase64.c
     Test_x509_cert_info.c)
 
+set(${MODULE_PREFIX}_FUZZERS
+	TestFuzzCryptoGetDNSNames.c
+	TestFuzzCryptoGetEmail.c
+	TestFuzzCryptoGetPublicKey.c
+	TestFuzzCryptoRSAPrivate.c
+	TestFuzzCryptoRSAPublic.c)
+
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
 	${${MODULE_PREFIX}_TESTS})
@@ -22,6 +29,17 @@ string(REGEX REPLACE "\\\\" "\\\\\\\\" TEST_PATH ${TEST_PATH})
 
 add_definitions(-DTEST_SOURCE_DIR="${TEST_PATH}")
 target_link_libraries(${MODULE_NAME} freerdp winpr ${OPENSSL_LIBRARIES})
+
+if (BUILD_FUZZERS)
+	foreach(test ${${MODULE_PREFIX}_FUZZERS})
+		get_filename_component(TestName ${test} NAME_WE)
+		add_executable(${TestName} ${test})
+		add_compile_options(-fsanitize-coverage=trace-cmp -fsanitize=fuzzer,address)
+		target_link_libraries(${TestName} freerdp winpr ${OPENSSL_LIBRARIES} -fsanitize=fuzzer,address)
+		add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
+		set_target_properties(${TestName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+	endforeach()
+endif (BUILD_FUZZERS)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
