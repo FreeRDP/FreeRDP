@@ -112,7 +112,12 @@ static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
 	RDPGFX_CHANNEL_CALLBACK* callback;
 	wStream* s;
 	gfx = (RDPGFX_PLUGIN*)context->handle;
+
+	if (!gfx || !gfx->listener_callback)
+		return ERROR_BAD_ARGUMENTS;
+
 	callback = gfx->listener_callback->channel_callback;
+
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_CAPSADVERTISE;
 	header.pduLength = RDPGFX_HEADER_SIZE + 2;
@@ -374,7 +379,7 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RdpgfxClientContext* context,
 
 	gfx = (RDPGFX_PLUGIN*)context->handle;
 
-	if (!gfx)
+	if (!gfx || !gfx->listener_callback)
 		return ERROR_BAD_CONFIGURATION;
 
 	callback = gfx->listener_callback->channel_callback;
@@ -429,7 +434,7 @@ static UINT rdpgfx_send_qoe_frame_acknowledge_pdu(RdpgfxClientContext* context,
 
 	gfx = (RDPGFX_PLUGIN*)context->handle;
 
-	if (!gfx)
+	if (!gfx || !gfx->listener_callback)
 		return ERROR_BAD_CONFIGURATION;
 
 	callback = gfx->listener_callback->channel_callback;
@@ -482,7 +487,7 @@ static UINT rdpgfx_send_cache_import_offer_pdu(RdpgfxClientContext* context,
 
 	gfx = (RDPGFX_PLUGIN*)context->handle;
 
-	if (!gfx)
+	if (!gfx || !gfx->listener_callback)
 		return ERROR_BAD_CONFIGURATION;
 
 	callback = gfx->listener_callback->channel_callback;
