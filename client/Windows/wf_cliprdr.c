@@ -1558,6 +1558,7 @@ static DWORD WINAPI cliprdr_thread_func(LPVOID arg)
 
 	if ((ret = create_cliprdr_window(clipboard)) != 0)
 	{
+		OleUninitialize();
 		DEBUG_CLIPRDR("error: create clipboard window failed.");
 		return 0;
 	}
