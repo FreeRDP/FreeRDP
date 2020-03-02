@@ -28,8 +28,7 @@ set(${MODULE_PREFIX}_FUZZERS
 	TestFuzzCryptoErReadContextualTag.c
 	TestFuzzCryptoErReadApplicationTag.c
 	TestFuzzCryptoCertificateReadServerCertificate.c
-	TestFuzzCryptoCertificateDataMatch.c
-	TestFuzzCryptoCertificateDataPrint.c)
+	TestFuzzCryptoCertificateDataMatch.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
