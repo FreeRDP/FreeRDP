@@ -2,6 +2,6 @@
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
-	/* TODO */
+	// BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength)
 	return 0;
 }

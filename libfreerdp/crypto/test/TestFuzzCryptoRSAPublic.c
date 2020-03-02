@@ -2,12 +2,21 @@
 
 extern int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
-	X509* certificate = (X509*)Data;
-	/*
-	int crypto_rsa_private_encrypt(const BYTE* input, int length, UINT32 key_length,
-	                               const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
-	int crypto_rsa_private_decrypt(const BYTE* input, int length, UINT32 key_length,
-	                               const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
-	*/
-	return 0;
+	BYTE* crypt_client_random = NULL;
+	rdpSettings* settings;
+	UINT32 key_len;
+	BYTE* mod, exp;
+
+	settings = freerdp_settings_new(0);
+	key_len = settings->RdpServerCertificate->cert_info.ModulusLength;
+	mod = settings->RdpServerCertificate->cert_info.Modulus;
+	exp = settings->RdpServerCertificate->cert_info.exponent;
+	crypt_client_random = calloc(key_len + 8, 1);
+	if (!crypt_client_random)
+		return EXIT_FAILURE;
+	crypto_rsa_public_encrypt((BYTE*)Data, (int)Size, key_len, mod, &exp, crypt_client_random);
+	crypto_rsa_public_decrypt((BYTE*)Data, (int)Size, key_len, mod, &exp, crypt_client_random);
+	freerdp_settings_free(settings);
+
+	return EXIT_SUCCESS;
 }

@@ -8,7 +8,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestRingBuffer.c)
 
 set(${MODULE_PREFIX}_FUZZERS
-	TestFuzzReadPassphrase.c)
+	TestFuzzUtilsReadPassphrase.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
