@@ -78,7 +78,7 @@ struct _RDPGFX_PLUGIN
 
 	wHashTable* SurfaceTable;
 
-	UINT16 MaxCacheSlot;
+	UINT16 MaxCacheSlots;
 	void* CacheSlots[25600];
 	rdpContext* rdpcontext;
 
