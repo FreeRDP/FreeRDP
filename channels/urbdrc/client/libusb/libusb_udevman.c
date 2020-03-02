@@ -628,7 +628,7 @@ static int hotplug_callback(struct libusb_context* ctx, struct libusb_device* de
 			break;
 
 		case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT:
-			del_device(idevman, bus, addr, desc.idVendor, desc.idProduct);
+			del_device(idevman, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor, desc.idProduct);
 			break;
 
 		default:

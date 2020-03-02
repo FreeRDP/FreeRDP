@@ -236,8 +236,8 @@ enum
 
 FREERDP_API BOOL add_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum,
                             UINT16 idVendor, UINT16 idProduct);
-FREERDP_API BOOL del_device(IUDEVMAN* idevman, BYTE busnum, BYTE devnum, UINT16 idVendor,
-                            UINT16 idProduct);
+FREERDP_API BOOL del_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum,
+                            UINT16 idVendor, UINT16 idProduct);
 
 UINT stream_write_and_free(IWTSPlugin* plugin, IWTSVirtualChannel* channel, wStream* s);
 
