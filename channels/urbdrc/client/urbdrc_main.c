@@ -836,7 +836,8 @@ BOOL add_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum, UINT1
 	return TRUE;
 }
 
-BOOL del_device(IUDEVMAN* idevman, BYTE busnum, BYTE devnum, UINT16 idVendor, UINT16 idProduct)
+BOOL del_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum, UINT16 idVendor,
+                UINT16 idProduct)
 {
 	IUDEVICE* pdev = NULL;
 	URBDRC_PLUGIN* urbdrc;
@@ -854,9 +855,36 @@ BOOL del_device(IUDEVMAN* idevman, BYTE busnum, BYTE devnum, UINT16 idVendor, UI
 
 	while (idevman->has_next(idevman))
 	{
+		BOOL match = TRUE;
 		IUDEVICE* dev = idevman->get_next(idevman);
 
-		if (dev->get_bus_number(dev) == busnum && dev->get_dev_number(dev) == devnum)
+		if ((flags & (DEVICE_ADD_FLAG_BUS | DEVICE_ADD_FLAG_DEV | DEVICE_ADD_FLAG_VENDOR |
+		              DEVICE_ADD_FLAG_PRODUCT)) == 0)
+			match = FALSE;
+		if (flags & DEVICE_ADD_FLAG_BUS)
+		{
+			if (dev->get_bus_number(dev) != busnum)
+				match = FALSE;
+		}
+		if (flags & DEVICE_ADD_FLAG_DEV)
+		{
+			if (dev->get_dev_number(dev) != devnum)
+				match = FALSE;
+		}
+		if (flags & DEVICE_ADD_FLAG_VENDOR)
+		{
+			int vid = dev->query_device_descriptor(dev, ID_VENDOR);
+			if (vid != idVendor)
+				match = FALSE;
+		}
+		if (flags & DEVICE_ADD_FLAG_PRODUCT)
+		{
+			int pid = dev->query_device_descriptor(dev, ID_PRODUCT);
+			if (pid != idProduct)
+				match = FALSE;
+		}
+
+		if (match)
 		{
 			pdev = dev;
 			break;
