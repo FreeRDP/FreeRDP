@@ -398,21 +398,35 @@ static char* smartcard_array_dump(const void* pd, size_t len, char* buffer, size
 	int rc;
 	char* start = buffer;
 
+	/* Ensure '\0' termination */
+	if (bufferLen > 0)
+	{
+		buffer[bufferLen - 1] = '\0';
+		bufferLen--;
+	}
+
 	rc = _snprintf(buffer, bufferLen, "{ ");
+	if ((rc < 0) || ((size_t)rc > bufferLen))
+		goto fail;
 	buffer += rc;
 	bufferLen -= (size_t)rc;
 
 	for (x = 0; x < len; x++)
 	{
 		rc = _snprintf(buffer, bufferLen, "%02X", data[x]);
+		if ((rc < 0) || ((size_t)rc > bufferLen))
+			goto fail;
 		buffer += rc;
 		bufferLen -= (size_t)rc;
 	}
 
 	rc = _snprintf(buffer, bufferLen, " }");
+	if ((rc < 0) || ((size_t)rc > bufferLen))
+		goto fail;
 	buffer += rc;
 	bufferLen -= (size_t)rc;
 
+fail:
 	return start;
 }
 static void smartcard_log_redir_handle(const char* tag, const REDIR_SCARDHANDLE* pHandle)
