@@ -14,7 +14,22 @@ set(${MODULE_PREFIX}_FUZZERS
 	TestFuzzCryptoGetEmail.c
 	TestFuzzCryptoGetPublicKey.c
 	TestFuzzCryptoRSAPrivate.c
-	TestFuzzCryptoRSAPublic.c)
+	TestFuzzCryptoRSAPublic.c
+	TestFuzzCryptoBase64Decode.c
+	TestFuzzCryptoCertRead.c
+	TestFuzzCryptoBerReadUniversalTag.c
+	TestFuzzCryptoBerReadSequenceTag.c
+	TestFuzzCryptoBerReadLenght.c
+	TestFuzzCryptoBerReadContextualTag.c
+	TestFuzzCryptoBerReadApplicationTag.c
+	TestFuzzCryptoErReadUniversalTag.c
+	TestFuzzCryptoErReadSequenceTag.c
+	TestFuzzCryptoErReadLength.c
+	TestFuzzCryptoErReadContextualTag.c
+	TestFuzzCryptoErReadApplicationTag.c
+	TestFuzzCryptoCertificateReadServerCertificate.c
+	TestFuzzCryptoCertificateDataMatch.c
+	TestFuzzCryptoCertificateDataPrint.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
