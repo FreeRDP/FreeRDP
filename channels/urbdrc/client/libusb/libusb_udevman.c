@@ -645,6 +645,7 @@ static BOOL udevman_initialize(IUDEVMAN* idevman, UINT32 channelId)
 	if (!udevman)
 		return FALSE;
 
+	idevman->status &= ~URBDRC_DEVICE_CHANNEL_CLOSED;
 	idevman->controlChannelId = channelId;
 	return TRUE;
 }

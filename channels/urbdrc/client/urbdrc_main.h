@@ -83,7 +83,6 @@ struct _URBDRC_PLUGIN
 	UINT32 vchannel_status;
 	char* subsystem;
 
-	UINT32 status;
 	wLog* log;
 };
 
@@ -220,6 +219,7 @@ struct _IUDEVMAN
 
 	IWTSPlugin* plugin;
 	UINT32 controlChannelId;
+	UINT32 status;
 };
 
 enum

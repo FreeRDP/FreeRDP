@@ -1014,11 +1014,16 @@ static int libusb_udev_is_exist(IUDEVICE* idev)
 static int libusb_udev_is_channel_closed(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
+	IUDEVMAN* udevman;
 	if (!pdev || !pdev->urbdrc)
 		return 1;
 
-	if (pdev->urbdrc->status & URBDRC_DEVICE_CHANNEL_CLOSED)
-		return 1;
+	udevman = pdev->urbdrc->udevman;
+	if (udevman)
+	{
+		if (udevman->status & URBDRC_DEVICE_CHANNEL_CLOSED)
+			return 1;
+	}
 
 	if (pdev->status & URBDRC_DEVICE_CHANNEL_CLOSED)
 		return 1;
