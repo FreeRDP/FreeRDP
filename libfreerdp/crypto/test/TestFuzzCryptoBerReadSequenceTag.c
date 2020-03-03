@@ -4,7 +4,7 @@
 extern int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
 	wStream* s = Stream_New((BYTE*)Data, Size);
-	ber_read_sequence_tag(s, Size);
+	ber_read_sequence_tag(s, &Size);
 	Stream_Free(s, FALSE);
 
 	return EXIT_SUCCESS;

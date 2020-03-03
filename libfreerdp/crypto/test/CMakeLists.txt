@@ -27,7 +27,6 @@ set(${MODULE_PREFIX}_FUZZERS
 	TestFuzzCryptoErReadLength.c
 	TestFuzzCryptoErReadContextualTag.c
 	TestFuzzCryptoErReadApplicationTag.c
-	TestFuzzCryptoCertificateReadServerCertificate.c
 	TestFuzzCryptoCertificateDataMatch.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
