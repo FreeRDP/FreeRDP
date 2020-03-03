@@ -1714,7 +1714,7 @@ static UINT rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	if (error)
 	{
-		WLog_Print(gfx->log, WLOG_ERROR, "Error while parsing GFX cmdId: %s (0x%04" PRIX16 ")",
+		WLog_Print(gfx->log, WLOG_ERROR, "Error while processing GFX cmdId: %s (0x%04" PRIX16 ")",
 		           rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId);
 		return error;
 	}

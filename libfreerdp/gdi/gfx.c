@@ -1301,7 +1301,7 @@ static UINT gdi_EvictCacheEntry(RdpgfxClientContext* context,
                                 const RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry)
 {
 	gdiGfxCacheEntry* cacheEntry;
-	UINT rc = ERROR_INTERNAL_ERROR;
+	UINT rc = ERROR_NOT_FOUND;
 	EnterCriticalSection(&context->mux);
 	cacheEntry = (gdiGfxCacheEntry*)context->GetCacheSlotData(context, evictCacheEntry->cacheSlot);
 
@@ -1309,9 +1309,9 @@ static UINT gdi_EvictCacheEntry(RdpgfxClientContext* context,
 	{
 		free(cacheEntry->data);
 		free(cacheEntry);
+		rc = context->SetCacheSlotData(context, evictCacheEntry->cacheSlot, NULL);
 	}
 
-	rc = context->SetCacheSlotData(context, evictCacheEntry->cacheSlot, NULL);
 	LeaveCriticalSection(&context->mux);
 	return rc;
 }
