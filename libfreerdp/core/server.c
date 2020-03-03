@@ -223,6 +223,8 @@ static BOOL wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s, UINT32 le
 			                             channel->dvc_total_length);
 			channel->dvc_total_length = 0;
 		}
+		else
+			ret = TRUE;
 	}
 	else
 	{
