@@ -612,7 +612,15 @@ static UINT urbdrc_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	{
 		URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)callback->plugin;
 		if (urbdrc)
-			urbdrc->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
+		{
+			IUDEVMAN* udevman = urbdrc->udevman;
+			if (udevman && callback->channel_mgr)
+			{
+				UINT32 control = callback->channel_mgr->GetChannelId(callback->channel);
+				if (udevman->controlChannelId == control)
+					udevman->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
+			}
+		}
 	}
 	free(callback);
 	return CHANNEL_RC_OK;
