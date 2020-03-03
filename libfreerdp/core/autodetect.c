@@ -401,6 +401,8 @@ static BOOL autodetect_recv_bandwidth_measure_payload(rdpRdp* rdp, wStream* s,
 		return FALSE;
 
 	Stream_Read_UINT16(s, payloadLength); /* payloadLength (2 bytes) */
+	if (!Stream_SafeSeek(s, payloadLength))
+		return FALSE;
 	WLog_DBG(AUTODETECT_TAG, "received Bandwidth Measure Payload PDU -> payloadLength=%" PRIu16 "",
 	         payloadLength);
 	/* Add the payload length to the bandwidth measurement parameters */
@@ -431,6 +433,9 @@ static BOOL autodetect_recv_bandwidth_measure_stop(rdpRdp* rdp, wStream* s,
 
 		payloadLength = 0;
 	}
+
+	if (!Stream_SafeSeek(s, payloadLength))
+		return FALSE;
 
 	WLog_VRB(AUTODETECT_TAG, "received Bandwidth Measure Stop PDU -> payloadLength=%" PRIu16 "",
 	         payloadLength);
@@ -622,7 +627,6 @@ int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s)
 		default:
 			break;
 	}
-
 	return success ? 0 : -1;
 }
 
