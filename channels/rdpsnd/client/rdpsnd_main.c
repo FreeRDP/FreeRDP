@@ -1096,7 +1096,10 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, D
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
-			if (!rdpsnd || (rdpsnd->OpenHandle != openHandle))
+			if (!rdpsnd)
+				return;
+
+			if (rdpsnd->OpenHandle != openHandle)
 			{
 				WLog_ERR(TAG, "%s error no match", rdpsnd_is_dyn_str(rdpsnd->dynamic));
 				return;
@@ -1239,7 +1242,10 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 	UINT error = CHANNEL_RC_OK;
 	rdpsndPlugin* plugin = (rdpsndPlugin*)lpUserParam;
 
-	if (!plugin || (plugin->InitHandle != pInitHandle))
+	if (!plugin)
+		return;
+
+	if (plugin->InitHandle != pInitHandle)
 	{
 		WLog_ERR(TAG, "%s error no match", rdpsnd_is_dyn_str(plugin->dynamic));
 		return;
