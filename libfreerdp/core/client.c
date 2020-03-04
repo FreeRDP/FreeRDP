@@ -427,6 +427,14 @@ int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data, int d
 	rdpChannels* channels;
 	rdpMcsChannel* channel = NULL;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
+
+	if (!instance || !data || (dataSize < 0) || (totalSize < 0))
+	{
+		WLog_ERR(TAG, "%s(%p, %" PRIu16 ", %p, %d, 0x%08x, %d): Invalid arguments", __FUNCTION__,
+		         instance, channelId, data, dataSize, flags, totalSize);
+		return -1;
+	}
+
 	mcs = instance->context->rdp->mcs;
 	channels = instance->context->channels;
 
