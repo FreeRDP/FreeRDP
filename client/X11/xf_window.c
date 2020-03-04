@@ -1053,7 +1053,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	if (ay + height > appWindow->windowOffsetY + appWindow->height)
 		height = (appWindow->windowOffsetY + appWindow->height - 1) - ay;
 
-	xf_lock_x11(xfc, TRUE);
+	xf_lock_x11(xfc);
 
 	if (xfc->context.settings->SoftwareGdi)
 	{
@@ -1064,7 +1064,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	XCopyArea(xfc->display, xfc->primary, appWindow->handle, appWindow->gc, ax, ay, width, height,
 	          x, y);
 	XFlush(xfc->display);
-	xf_unlock_x11(xfc, TRUE);
+	xf_unlock_x11(xfc);
 }
 
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)

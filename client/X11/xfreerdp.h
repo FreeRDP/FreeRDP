@@ -247,7 +247,7 @@ struct xf_context
 	/* value to be sent over wire for each logical client mouse button */
 	button_map button_map[NUM_BUTTONS_MAPPED];
 	BYTE savedMaximizedState;
-	BOOL locked;
+	UINT32 locked;
 };
 
 BOOL xf_create_window(xfContext* xfc);
@@ -300,8 +300,11 @@ enum XF_EXIT_CODE
 	XF_EXIT_UNKNOWN = 255,
 };
 
-void xf_lock_x11(xfContext* xfc, BOOL display);
-void xf_unlock_x11(xfContext* xfc, BOOL display);
+#define xf_lock_x11(xfc) xf_lock_x11_(xfc, __FUNCTION__);
+#define xf_unlock_x11(xfc) xf_unlock_x11_(xfc, __FUNCTION__);
+
+void xf_lock_x11_(xfContext* xfc, const char* fkt);
+void xf_unlock_x11_(xfContext* xfc, const char* fkt);
 
 BOOL xf_picture_transform_required(xfContext* xfc);
 void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h);
