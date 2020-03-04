@@ -107,6 +107,8 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
+#define MIN_PIXEL_DIFF 0.001
+
 static int (*_def_error_handler)(Display*, XErrorEvent*);
 static int _xf_error_handler(Display* d, XErrorEvent* ev);
 static void xf_check_extensions(xfContext* context);
@@ -170,16 +172,16 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	    XRenderCreatePicture(xfc->display, xfc->primary, picFormat, CPSubwindowMode, &pa);
 	windowPicture =
 	    XRenderCreatePicture(xfc->display, xfc->window->handle, picFormat, CPSubwindowMode, &pa);
-	// avoid blurry filter when scaling factor is 2x, 3x, etc
-	// useful when the client has high-dpi monitor
+	/* avoid blurry filter when scaling factor is 2x, 3x, etc
+	 * useful when the client has high-dpi monitor */
 	filter = FilterBilinear;
-	if (fabs(xScalingFactor - yScalingFactor) < DBL_EPSILON)
+	if (fabs(xScalingFactor - yScalingFactor) < MIN_PIXEL_DIFF)
 	{
 		const double inverseX = 1.0 / xScalingFactor;
 		const double inverseRoundedX = round(inverseX);
 		const double absInverse = fabs(inverseX - inverseRoundedX);
 
-		if (absInverse < DBL_EPSILON)
+		if (absInverse < MIN_PIXEL_DIFF)
 			filter = FilterNearest;
 	}
 	XRenderSetPictureFilter(xfc->display, primaryPicture, filter, 0, 0);
