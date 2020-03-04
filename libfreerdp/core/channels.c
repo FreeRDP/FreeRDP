@@ -139,6 +139,11 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
+	/* [MS-RDPBCGR] 3.1.5.2.2 Processing of Virtual Channel PDU
+	 * chunked data. Length is the total size of the combined data,
+	 * chunkLength is the actual data received.
+	 * check chunkLength against packetLength, which is the TPKT header size.
+	 */
 	Stream_Read_UINT32(s, length);
 	Stream_Read_UINT32(s, flags);
 	chunkLength = Stream_GetRemainingLength(s);
@@ -150,7 +155,7 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 	}
 	if (length < chunkLength)
 	{
-		WLog_ERR(TAG, "Expected %" PRIu32 " bytes, but only have %" PRIdz, length, chunkLength);
+		WLog_ERR(TAG, "Expected %" PRIu32 " bytes, but have %" PRIdz, length, chunkLength);
 		return FALSE;
 	}
 	IFCALLRET(instance->ReceiveChannelData, rc, instance, channelId, Stream_Pointer(s), chunkLength,
@@ -209,7 +214,7 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 	else if (client->ReceiveChannelData)
 	{
 		int rc = client->ReceiveChannelData(client, channelId, Stream_Pointer(s), chunkLength,
-		                                     flags, length);
+		                                    flags, length);
 		if (rc < 0)
 			return FALSE;
 	}
