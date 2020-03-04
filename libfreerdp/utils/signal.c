@@ -23,6 +23,7 @@
 
 #include <stddef.h>
 #include <errno.h>
+#include <string.h>
 
 #include <winpr/crt.h>
 
@@ -52,7 +53,7 @@ static void fatal_handler(int signum)
 {
 	struct sigaction default_sigaction;
 	sigset_t this_mask;
-	WLog_DBG(TAG, "fatal_handler: signum=%d", signum);
+	WLog_INFO(TAG, "Caught signal '%s' [%d]", strsignal(signum), signum);
 
 	if (terminal_needs_reset)
 		tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);
