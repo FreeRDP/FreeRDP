@@ -54,7 +54,7 @@ typedef BOOL (*psPeerClientCapabilities)(freerdp_peer* peer);
 typedef int (*psPeerSendChannelData)(freerdp_peer* peer, UINT16 channelId, const BYTE* data,
                                      int size);
 typedef int (*psPeerReceiveChannelData)(freerdp_peer* peer, UINT16 channelId, const BYTE* data,
-                                        int size, int flags, int totalSize);
+                                        size_t size, UINT32 flags, size_t totalSize);
 
 typedef HANDLE (*psPeerVirtualChannelOpen)(freerdp_peer* peer, const char* name, UINT32 flags);
 typedef BOOL (*psPeerVirtualChannelClose)(freerdp_peer* peer, HANDLE hChannel);

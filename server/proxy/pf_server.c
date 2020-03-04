@@ -199,7 +199,8 @@ static BOOL pf_server_adjust_monitor_layout(freerdp_peer* peer)
 }
 
 static int pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 channelId,
-                                               const BYTE* data, int size, int flags, int totalSize)
+                                               const BYTE* data, size_t size, UINT32 flags,
+                                               size_t totalSize)
 {
 	pServerContext* ps = (pServerContext*)peer->context;
 	pClientContext* pc = ps->pdata->pc;
