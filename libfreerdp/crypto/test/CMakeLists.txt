@@ -11,7 +11,6 @@ set(${MODULE_PREFIX}_TESTS
 
 set(${MODULE_PREFIX}_FUZZERS
 	TestFuzzCryptoGetDNSNames.c
-	TestFuzzCryptoGetEmail.c
 	TestFuzzCryptoGetPublicKey.c
 	TestFuzzCryptoRSAPrivate.c
 	TestFuzzCryptoRSAPublic.c
