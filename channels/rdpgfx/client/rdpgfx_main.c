@@ -75,11 +75,11 @@ static void free_surfaces(RdpgfxClientContext* context, wHashTable* SurfaceTable
 	free(pKeys);
 }
 
-static void evict_cache_slots(RdpgfxClientContext* context, UINT16 MaxCacheSlot, void** CacheSlots)
+static void evict_cache_slots(RdpgfxClientContext* context, UINT16 MaxCacheSlots, void** CacheSlots)
 {
 	UINT16 index;
 
-	for (index = 0; index < MaxCacheSlot; index++)
+	for (index = 0; index < MaxCacheSlots; index++)
 	{
 		if (CacheSlots[index])
 		{
@@ -1819,7 +1819,7 @@ static UINT rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 
 	DEBUG_RDPGFX(gfx->log, "OnClose");
 	free_surfaces(context, gfx->SurfaceTable);
-	evict_cache_slots(context, gfx->MaxCacheSlot, gfx->CacheSlots);
+	evict_cache_slots(context, gfx->MaxCacheSlots, gfx->CacheSlots);
 
 	if (gfx->listener_callback)
 	{
@@ -1991,14 +1991,15 @@ static UINT rdpgfx_set_cache_slot_data(RdpgfxClientContext* context, UINT16 cach
 {
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
 
-	if (cacheSlot >= gfx->MaxCacheSlot)
+	/* Microsoft uses 1-based indexing for the egfx bitmap cache ! */
+	if (cacheSlot == 0 || cacheSlot > gfx->MaxCacheSlots)
 	{
-		WLog_ERR(TAG, "%s: invalid cache slot %" PRIu16 " maxAllowed=%" PRIu16 "", __FUNCTION__,
-		         cacheSlot, gfx->MaxCacheSlot);
+		WLog_ERR(TAG, "%s: invalid cache slot %" PRIu16 ", must be between 1 and %" PRIu16 "",
+		         __FUNCTION__, cacheSlot, gfx->MaxCacheSlots);
 		return ERROR_INVALID_INDEX;
 	}
 
-	gfx->CacheSlots[cacheSlot] = pData;
+	gfx->CacheSlots[cacheSlot - 1] = pData;
 	return CHANNEL_RC_OK;
 }
 
@@ -2007,14 +2008,15 @@ static void* rdpgfx_get_cache_slot_data(RdpgfxClientContext* context, UINT16 cac
 	void* pData = NULL;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
 
-	if (cacheSlot >= gfx->MaxCacheSlot)
+	/* Microsoft uses 1-based indexing for the egfx bitmap cache ! */
+	if (cacheSlot == 0 || cacheSlot > gfx->MaxCacheSlots)
 	{
-		WLog_ERR(TAG, "%s: invalid cache slot %" PRIu16 " maxAllowed=%" PRIu16 "", __FUNCTION__,
-		         cacheSlot, gfx->MaxCacheSlot);
+		WLog_ERR(TAG, "%s: invalid cache slot %" PRIu16 ", must be between 1 and %" PRIu16 "",
+		         __FUNCTION__, cacheSlot, gfx->MaxCacheSlots);
 		return NULL;
 	}
 
-	pData = gfx->CacheSlots[cacheSlot];
+	pData = gfx->CacheSlots[cacheSlot - 1];
 	return pData;
 }
 
@@ -2069,7 +2071,7 @@ RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings)
 	if (gfx->H264)
 		gfx->SmallCache = TRUE;
 
-	gfx->MaxCacheSlot = gfx->SmallCache ? 4096 : 25600;
+	gfx->MaxCacheSlots = gfx->SmallCache ? 4096 : 25600;
 	context = (RdpgfxClientContext*)calloc(1, sizeof(RdpgfxClientContext));
 
 	if (!context)
@@ -2115,7 +2117,7 @@ void rdpgfx_client_context_free(RdpgfxClientContext* context)
 	gfx = (RDPGFX_PLUGIN*)context->handle;
 
 	free_surfaces(context, gfx->SurfaceTable);
-	evict_cache_slots(context, gfx->MaxCacheSlot, gfx->CacheSlots);
+	evict_cache_slots(context, gfx->MaxCacheSlots, gfx->CacheSlots);
 
 	if (gfx->listener_callback)
 	{
