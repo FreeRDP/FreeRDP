@@ -198,9 +198,8 @@ static BOOL pf_server_adjust_monitor_layout(freerdp_peer* peer)
 	return TRUE;
 }
 
-static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 channelId,
-                                                const BYTE* data, int size, int flags,
-                                                int totalSize)
+static int pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 channelId,
+                                               const BYTE* data, int size, int flags, int totalSize)
 {
 	pServerContext* ps = (pServerContext*)peer->context;
 	pClientContext* pc = ps->pdata->pc;
@@ -222,7 +221,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 			ev.data_len = size;
 
 			if (!pf_modules_run_filter(FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA, pdata, &ev))
-				return FALSE;
+				return -1;
 
 			client_channel_id = (UINT64)HashTable_GetItemValue(pc->vc_ids, (void*)channel_name);
 

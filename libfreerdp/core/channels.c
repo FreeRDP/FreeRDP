@@ -49,10 +49,10 @@
 
 #define TAG FREERDP_TAG("core.channels")
 
-BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, int size)
+BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_t size)
 {
 	DWORD i;
-	int left;
+	size_t left;
 	wStream* s;
 	UINT32 flags;
 	size_t chunkSize;
@@ -84,7 +84,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, int s
 		if (!s)
 			return FALSE;
 
-		if (left > (int)rdp->settings->VirtualChannelChunkSize)
+		if (left > rdp->settings->VirtualChannelChunkSize)
 		{
 			chunkSize = rdp->settings->VirtualChannelChunkSize;
 		}
