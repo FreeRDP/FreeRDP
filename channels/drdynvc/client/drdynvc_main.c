@@ -794,7 +794,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 	UINT8 cbChId;
 	UINT8 cbLen;
 	unsigned long chunkLength;
-	UINT status;
+	UINT status = CHANNEL_RC_BAD_INIT_HANDLE;
 
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
