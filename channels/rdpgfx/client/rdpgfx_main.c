@@ -84,7 +84,7 @@ static void evict_cache_slots(RdpgfxClientContext* context, UINT16 MaxCacheSlots
 		if (CacheSlots[index])
 		{
 			RDPGFX_EVICT_CACHE_ENTRY_PDU pdu;
-			pdu.cacheSlot = (UINT16)index;
+			pdu.cacheSlot = (UINT16)index + 1;
 
 			if (context && context->EvictCacheEntry)
 			{
