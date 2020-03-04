@@ -60,7 +60,7 @@ typedef HANDLE (*psPeerVirtualChannelOpen)(freerdp_peer* peer, const char* name,
 typedef BOOL (*psPeerVirtualChannelClose)(freerdp_peer* peer, HANDLE hChannel);
 typedef int (*psPeerVirtualChannelRead)(freerdp_peer* peer, HANDLE hChannel, BYTE* buffer,
                                         UINT32 length);
-typedef int (*psPeerVirtualChannelWrite)(freerdp_peer* peer, HANDLE hChannel, BYTE* buffer,
+typedef int (*psPeerVirtualChannelWrite)(freerdp_peer* peer, HANDLE hChannel, const BYTE* buffer,
                                          UINT32 length);
 typedef void* (*psPeerVirtualChannelGetData)(freerdp_peer* peer, HANDLE hChannel);
 typedef int (*psPeerVirtualChannelSetData)(freerdp_peer* peer, HANDLE hChannel, void* data);
