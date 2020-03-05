@@ -23,7 +23,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include <libusb.h>
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
 
@@ -33,6 +32,8 @@
 #include "urbdrc_main.h"
 
 #include "libusb_udevice.h"
+
+#include <libusb.h>
 
 #if !defined(LIBUSB_HOTPLUG_NO_FLAGS)
 #define LIBUSB_HOTPLUG_NO_FLAGS 0
@@ -347,7 +348,7 @@ static BOOL udevman_unregister_all_udevices(IUDEVMAN* idevman)
 	return TRUE;
 }
 
-static BOOL udevman_parse_device_addr(const char* str, size_t maxLen, UINT16* id1, UINT16* id2,
+static BOOL udevman_parse_device_addr(const char* str, size_t maxLen, UINT8* id1, UINT8* id2,
                                       char sign)
 {
 	unsigned long rc;
@@ -368,16 +369,16 @@ static BOOL udevman_parse_device_addr(const char* str, size_t maxLen, UINT16* id
 	strncpy(s1, str, cpLen);
 	rc = strtoul(s1, NULL, 16);
 
-	if ((rc > UINT16_MAX) || (errno != 0))
+	if ((rc > UINT8_MAX) || (errno != 0))
 		return FALSE;
 
-	*id1 = rc;
+	*id1 = (UINT8)rc;
 	rc = strtoul(s2, NULL, 16);
 
-	if ((rc > UINT16_MAX) || (errno != 0))
+	if ((rc > UINT8_MAX) || (errno != 0))
 		return FALSE;
 
-	*id2 = rc;
+	*id2 = (UINT8)rc;
 	return TRUE;
 }
 
@@ -406,13 +407,13 @@ static BOOL udevman_parse_device_pid_vid(const char* str, size_t maxLen, UINT16*
 	if ((rc > UINT16_MAX) || (errno != 0))
 		return FALSE;
 
-	*id1 = rc;
+	*id1 = (UINT16)rc;
 	rc = strtoul(s2, NULL, 16);
 
 	if ((rc > UINT16_MAX) || (errno != 0))
 		return FALSE;
 
-	*id2 = rc;
+	*id2 = (UINT16)rc;
 	return TRUE;
 }
 
@@ -708,7 +709,7 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 		}
 		else if (udevman->flags & UDEVMAN_FLAG_ADD_BY_ADDR)
 		{
-			UINT16 bus_number, dev_number;
+			UINT8 bus_number, dev_number;
 
 			if (!udevman_parse_device_addr(hardware_id, sizeof(hardware_id), &bus_number,
 			                               &dev_number, ':'))
