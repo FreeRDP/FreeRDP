@@ -1223,6 +1223,33 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, INT32 length, UINT16 securityFlags)
 	return TRUE;
 }
 
+static const char* pdu_type_to_str(UINT16 pduType)
+{
+	static char buffer[1024] = { 0 };
+	switch (pduType)
+	{
+		case PDU_TYPE_DEMAND_ACTIVE:
+			return "PDU_TYPE_DEMAND_ACTIVE";
+		case PDU_TYPE_CONFIRM_ACTIVE:
+			return "PDU_TYPE_CONFIRM_ACTIVE";
+		case PDU_TYPE_DEACTIVATE_ALL:
+			return "PDU_TYPE_DEACTIVATE_ALL";
+		case PDU_TYPE_DATA:
+			return "PDU_TYPE_DATA";
+		case PDU_TYPE_SERVER_REDIRECTION:
+			return "PDU_TYPE_SERVER_REDIRECTION";
+		case PDU_TYPE_FLOW_TEST:
+			return "PDU_TYPE_FLOW_TEST";
+		case PDU_TYPE_FLOW_RESPONSE:
+			return "PDU_TYPE_FLOW_RESPONSE";
+		case PDU_TYPE_FLOW_STOP:
+			return "PDU_TYPE_FLOW_STOP";
+		default:
+			_snprintf(buffer, sizeof(buffer), "UNKNOWN %04" PRIx16, pduType);
+			return buffer;
+	}
+}
+
 /**
  * Process an RDP packet.\n
  * @param rdp RDP module
@@ -1238,7 +1265,6 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 pduSource;
 	UINT16 channelId = 0;
 	UINT16 securityFlags = 0;
-	size_t nextPosition;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
@@ -1289,27 +1315,35 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	{
 		while (Stream_GetRemainingLength(s) > 3)
 		{
-			nextPosition = Stream_GetPosition(s);
+			size_t startheader, endheader, start, end, diff, headerdiff;
 
+			startheader = Stream_GetPosition(s);
 			if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 			{
 				WLog_ERR(TAG, "rdp_recv_tpkt_pdu: rdp_read_share_control_header() fail");
 				return -1;
 			}
+			start = endheader = Stream_GetPosition(s);
+			headerdiff = endheader - startheader;
+			if (pduLength < headerdiff)
+			{
+				WLog_ERR(
+				    TAG,
+				    "rdp_recv_tpkt_pdu: rdp_read_share_control_header() invalid pduLength %" PRIu16,
+				    pduLength);
+				return -1;
+			}
+			pduLength -= headerdiff;
 
-			nextPosition += pduLength;
 			rdp->settings->PduSource = pduSource;
 			rdp->inPackets++;
 
 			switch (pduType)
 			{
 				case PDU_TYPE_DATA:
-					if (rdp_recv_data_pdu(rdp, s) < 0)
-					{
-						WLog_ERR(TAG, "rdp_recv_data_pdu() failed");
-						return -1;
-					}
-
+					rc = rdp_recv_data_pdu(rdp, s);
+					if (rc < 0)
+						return rc;
 					break;
 
 				case PDU_TYPE_DEACTIVATE_ALL:
@@ -1328,6 +1362,9 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 				case PDU_TYPE_FLOW_STOP:
 				case PDU_TYPE_FLOW_TEST:
 					WLog_DBG(TAG, "flow message 0x%04" PRIX16 "", pduType);
+					/* http://msdn.microsoft.com/en-us/library/cc240576.aspx */
+					if (!Stream_SafeSeek(s, pduLength))
+						return -1;
 					break;
 
 				default:
@@ -1335,10 +1372,20 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					break;
 			}
 
-			Stream_SetPosition(s, nextPosition);
+			end = Stream_GetPosition(s);
+			diff = end - start;
+			if (diff != pduLength)
+			{
+				WLog_WARN(TAG,
+				          "pduType %s not properly parsed, %" PRIdz
+				          " bytes remaining unhandled. Skipping.",
+				          pdu_type_to_str(pduType), diff);
+				if (!Stream_SafeSeek(s, pduLength))
+					return -1;
+			}
 		}
 	}
-	else if (rdp->mcs->messageChannelId && channelId == rdp->mcs->messageChannelId)
+	else if (rdp->mcs->messageChannelId && (channelId == rdp->mcs->messageChannelId))
 	{
 		if (!rdp->settings->UseRdpSecurityLayer)
 			if (!rdp_read_security_header(s, &securityFlags, NULL))
