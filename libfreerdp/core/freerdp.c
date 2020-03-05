@@ -488,9 +488,18 @@ int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id)
 	return status;
 }
 
-static int freerdp_send_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int size)
+static int freerdp_send_channel_data(freerdp* instance, UINT16 channelId, const BYTE* data,
+                                     int size)
 {
-	return rdp_send_channel_data(instance->context->rdp, channelId, data, size);
+	if (size < 0)
+	{
+		WLog_ERR(TAG, "%s: size has invalid value %d", __FUNCTION__, size);
+		return -1;
+	}
+
+	if (!rdp_send_channel_data(instance->context->rdp, channelId, data, (size_t)size))
+		return -2;
+	return 0;
 }
 
 BOOL freerdp_disconnect(freerdp* instance)

@@ -108,14 +108,8 @@ static BOOL freerdp_peer_virtual_channel_close(freerdp_peer* client, HANDLE hCha
 	return TRUE;
 }
 
-static int freerdp_peer_virtual_channel_read(freerdp_peer* client, HANDLE hChannel, BYTE* buffer,
-                                             UINT32 length)
-{
-	return 0; /* this needs to be implemented by the server application */
-}
-
-static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChannel, BYTE* buffer,
-                                              UINT32 length)
+static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChannel,
+                                              const BYTE* buffer, UINT32 length)
 {
 	wStream* s;
 	UINT32 flags;
@@ -745,7 +739,14 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, const BYTE* data,
                                           int size)
 {
-	return rdp_send_channel_data(client->context->rdp, channelId, data, size);
+	if (size < 0)
+	{
+		WLog_ERR(TAG, "%s: invalid size %d", __FUNCTION__, size);
+		return -1;
+	}
+	if (!rdp_send_channel_data(client->context->rdp, channelId, data, (size_t)size))
+		return -1;
+	return 0;
 }
 
 static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)

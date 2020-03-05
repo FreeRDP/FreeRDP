@@ -1350,11 +1350,8 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	{
 		rdp->inPackets++;
 
-		if (!freerdp_channel_process(rdp->instance, s, channelId))
-		{
-			WLog_ERR(TAG, "rdp_recv_tpkt_pdu: freerdp_channel_process() fail");
+		if (!freerdp_channel_process(rdp->instance, s, channelId, length))
 			return -1;
-		}
 	}
 
 out:
@@ -1601,7 +1598,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 	return status;
 }
 
-int rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, const BYTE* data, int size)
+BOOL rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_t size)
 {
 	return freerdp_channel_send(rdp, channelId, data, size);
 }

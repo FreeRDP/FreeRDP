@@ -359,13 +359,13 @@ static BOOL wts_write_drdynvc_create_request(wStream* s, UINT32 ChannelId, const
 }
 
 static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, const BYTE* data,
-                                  int s, int flags, int t)
+                                  size_t s, UINT32 flags, size_t t)
 {
 	BOOL ret = TRUE;
 	const size_t size = (size_t)s;
 	const size_t totalSize = (size_t)t;
-	if ((s < 0) || (t < 0))
-		return FALSE;
+
+	WINPR_UNUSED(channelId);
 
 	if (flags & CHANNEL_FLAG_FIRST)
 	{
@@ -400,8 +400,8 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 	return ret;
 }
 
-static int WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const BYTE* data, int size,
-                                 int flags, int totalSize)
+static int WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const BYTE* data,
+                                 size_t size, UINT32 flags, size_t totalSize)
 {
 	UINT32 i;
 	BOOL status = FALSE;
@@ -478,6 +478,7 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer)
 
 	while (MessageQueue_Peek(vcm->queue, &message, TRUE))
 	{
+		int rc;
 		BYTE* buffer;
 		UINT32 length;
 		UINT16 channelId;
@@ -485,7 +486,8 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer)
 		buffer = (BYTE*)message.wParam;
 		length = (UINT32)(UINT_PTR)message.lParam;
 
-		if (vcm->client->SendChannelData(vcm->client, channelId, buffer, length) == FALSE)
+		rc = vcm->client->SendChannelData(vcm->client, channelId, buffer, length);
+		if (rc < 0)
 		{
 			status = FALSE;
 		}
