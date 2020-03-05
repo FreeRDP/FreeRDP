@@ -1245,6 +1245,9 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 		goto out_free_blob;
 	}
 
+	if (!Stream_SafeSeek(s, 16))
+		goto out_free_blob;
+
 	licenseStream = Stream_New(calBlob->data, calBlob->length);
 	if (!licenseStream)
 		goto out_free_blob;
