@@ -861,6 +861,19 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 	if (rc != LIBUSB_SUCCESS)
 		goto fail;
 
+#if LIBUSB_API_VERSION >= 0x01000106
+	/* Prefer usbDK backend on windows. Not uspported on other platforms. */
+	rc = libusb_set_option(udevman->context, LIBUSB_OPTION_USE_USBDK);
+	switch (rc)
+	{
+		case LIBUSB_SUCCESS:
+		case LIBUSB_ERROR_NOT_SUPPORTED:
+			break;
+		default:
+			goto fail;
+	}
+#endif
+
 	udevman->flags = UDEVMAN_FLAG_ADD_BY_VID_PID;
 	udevman->devman_loading = CreateMutexA(NULL, FALSE, "devman_loading");
 
