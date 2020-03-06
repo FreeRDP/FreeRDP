@@ -72,7 +72,6 @@ struct _UDEVMAN
 
 	HANDLE devman_loading;
 	libusb_context* context;
-	libusb_hotplug_callback_handle handle;
 	HANDLE thread;
 	BOOL running;
 };
@@ -487,14 +486,8 @@ static void udevman_free(IUDEVMAN* idevman)
 	if (!udevman)
 		return;
 
-	libusb_hotplug_deregister_callback(udevman->context, udevman->handle);
-
 	udevman->running = FALSE;
 	WaitForSingleObject(udevman->thread, INFINITE);
-
-	/* Process remaining usb events */
-	while (poll_libusb_events(udevman))
-		;
 
 	udevman_unregister_all_udevices(idevman);
 	CloseHandle(udevman->devman_loading);
@@ -828,13 +821,38 @@ static BOOL poll_libusb_events(UDEVMAN* udevman)
 
 static DWORD poll_thread(LPVOID lpThreadParameter)
 {
+	libusb_hotplug_callback_handle handle;
 	UDEVMAN* udevman = (UDEVMAN*)lpThreadParameter;
+	BOOL hasHotplug = libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG);
+
+	if (hasHotplug)
+	{
+		int rc = libusb_hotplug_register_callback(
+		    udevman->context,
+		    LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+		    LIBUSB_HOTPLUG_NO_FLAGS, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
+		    LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, udevman, &handle);
+
+		if (rc != LIBUSB_SUCCESS)
+			udevman->running = FALSE;
+	}
+	else
+		WLog_WARN(TAG, "Platform does not support libusb hotplug. USB devices plugged in later "
+		               "will not be detected.");
 
 	while (udevman->running)
 	{
 		poll_libusb_events(udevman);
 	}
 
+	if (hasHotplug)
+		libusb_hotplug_deregister_callback(udevman->context, handle);
+
+	/* Process remaining usb events */
+	while (poll_libusb_events(udevman))
+		;
+
+	ExitThread(0);
 	return 0;
 }
 
@@ -891,14 +909,6 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 	udevman->thread = CreateThread(NULL, 0, poll_thread, udevman, 0, NULL);
 
 	if (!udevman->thread)
-		goto fail;
-
-	rc = libusb_hotplug_register_callback(
-	    udevman->context, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
-	    LIBUSB_HOTPLUG_NO_FLAGS, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
-	    LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, udevman, &udevman->handle);
-
-	if (rc != LIBUSB_SUCCESS)
 		goto fail;
 
 	if (!pEntryPoints->pRegisterUDEVMAN(pEntryPoints->plugin, (IUDEVMAN*)udevman))
