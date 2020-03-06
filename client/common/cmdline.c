@@ -197,7 +197,7 @@ static BOOL append_value(const char* value, char** dst)
 	if (*dst)
 		x = strlen(*dst);
 	y = strlen(value);
-	tmp = realloc(*dst, x + y + 1);
+	tmp = realloc(*dst, x + y + 2);
 	if (!tmp)
 		return FALSE;
 	if (x == 0)
@@ -2705,7 +2705,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			{
 				if (!arg->Value)
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-				promptForPassword = (strncmp(arg->Value, "force", 6) == 0);
+				promptForPassword = (_strnicmp(arg->Value, "force", 6) == 0);
 
 				if (!promptForPassword)
 					return COMMAND_LINE_ERROR;
@@ -2785,19 +2785,19 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				const char fingerprints[12] = "fingerprint:";
 
 				const char* cur = p[x];
-				if (strncmp(deny, cur, sizeof(deny)) == 0)
+				if (_strnicmp(deny, cur, sizeof(deny)) == 0)
 					settings->AutoDenyCertificate = TRUE;
-				else if (strncmp(ignore, cur, sizeof(ignore)) == 0)
+				else if (_strnicmp(ignore, cur, sizeof(ignore)) == 0)
 					settings->IgnoreCertificate = TRUE;
-				else if (strncmp(tofu, cur, 4) == 0)
+				else if (_strnicmp(tofu, cur, 4) == 0)
 					settings->AutoAcceptCertificate = TRUE;
-				else if (strncmp(name, cur, sizeof(name)) == 0)
+				else if (_strnicmp(name, cur, sizeof(name)) == 0)
 				{
 					const char* val = &cur[sizeof(name)];
 					if (!copy_value(val, &settings->CertificateName))
 						rc = COMMAND_LINE_ERROR_MEMORY;
 				}
-				else if (strncmp(fingerprints, cur, sizeof(fingerprints)) == 0)
+				else if (_strnicmp(fingerprints, cur, sizeof(fingerprints)) == 0)
 				{
 					const char* val = &cur[sizeof(fingerprints)];
 					if (!append_value(val, &settings->CertificateAcceptedFingerprints))
