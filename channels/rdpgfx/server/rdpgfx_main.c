@@ -1091,7 +1091,7 @@ static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context, wStr
 static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wStream* s)
 {
 	UINT16 index;
-	RDPGFX_CACHE_IMPORT_OFFER_PDU pdu;
+	RDPGFX_CACHE_IMPORT_OFFER_PDU pdu = { 0 };
 	RDPGFX_CACHE_ENTRY_METADATA* cacheEntries;
 	UINT error = CHANNEL_RC_OK;
 
@@ -1104,9 +1104,9 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 	/* cacheEntriesCount (2 bytes) */
 	Stream_Read_UINT16(s, pdu.cacheEntriesCount);
 
-	if (pdu.cacheEntriesCount <= 0)
+	/* 2.2.2.16 RDPGFX_CACHE_IMPORT_OFFER_PDU */
+	if (pdu.cacheEntriesCount >= 5462)
 	{
-		/* According to the latest spec, capsSetCount <= 3 */
 		WLog_ERR(TAG, "Invalid cacheEntriesCount: %" PRIu16 "", pdu.cacheEntriesCount);
 		return ERROR_INVALID_DATA;
 	}
@@ -1117,13 +1117,16 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 		return ERROR_INVALID_DATA;
 	}
 
-	pdu.cacheEntries = (RDPGFX_CACHE_ENTRY_METADATA*)calloc(pdu.cacheEntriesCount,
-	                                                        sizeof(RDPGFX_CACHE_ENTRY_METADATA));
-
-	if (!pdu.cacheEntries)
+	if (pdu.cacheEntriesCount > 0)
 	{
-		WLog_ERR(TAG, "calloc failed!");
-		return CHANNEL_RC_NO_MEMORY;
+		pdu.cacheEntries = (RDPGFX_CACHE_ENTRY_METADATA*)calloc(
+		    pdu.cacheEntriesCount, sizeof(RDPGFX_CACHE_ENTRY_METADATA));
+
+		if (!pdu.cacheEntries)
+		{
+			WLog_ERR(TAG, "calloc failed!");
+			return CHANNEL_RC_NO_MEMORY;
+		}
 	}
 
 	for (index = 0; index < pdu.cacheEntriesCount; index++)
@@ -1153,8 +1156,8 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream* s)
 {
 	UINT16 index;
-	RDPGFX_CAPSET* capsSets;
-	RDPGFX_CAPS_ADVERTISE_PDU pdu;
+	RDPGFX_CAPSET* capsSets = NULL;
+	RDPGFX_CAPS_ADVERTISE_PDU pdu = { 0 };
 	UINT error = ERROR_INVALID_DATA;
 
 	if (!context)
@@ -1167,12 +1170,14 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream
 	}
 
 	Stream_Read_UINT16(s, pdu.capsSetCount); /* capsSetCount (2 bytes) */
-	capsSets = calloc(pdu.capsSetCount, (RDPGFX_CAPSET_BASE_SIZE + 4));
+	if (pdu.capsSetCount > 0)
+	{
+		capsSets = calloc(pdu.capsSetCount, (RDPGFX_CAPSET_BASE_SIZE + 4));
+		if (!capsSets)
+			return ERROR_OUTOFMEMORY;
+	}
 
-	if (!capsSets)
-		return ERROR_OUTOFMEMORY;
-
-	pdu.capsSets = (RDPGFX_CAPSET*)capsSets;
+	pdu.capsSets = capsSets;
 
 	for (index = 0; index < pdu.capsSetCount; index++)
 	{
