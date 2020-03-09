@@ -20,7 +20,6 @@ include(CMakeDependentOption)
 
 CMAKE_DEPENDENT_OPTION(WITH_SHADOW "Compile with shadow server" ON	"WITH_SERVER" OFF)
 CMAKE_DEPENDENT_OPTION(WITH_PROXY "Compile with proxy server" ON	"WITH_SERVER" OFF)
-CMAKE_DEPENDENT_OPTION(WITH_PROXY_MODULES "Compile proxy modules" ON	"WITH_PROXY" OFF)
 
 add_subdirectory(common)
 if (WITH_SHADOW)
