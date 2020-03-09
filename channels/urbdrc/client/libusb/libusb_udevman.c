@@ -885,9 +885,13 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 	switch (rc)
 	{
 		case LIBUSB_SUCCESS:
+			break;
+		case LIBUSB_ERROR_NOT_FOUND:
 		case LIBUSB_ERROR_NOT_SUPPORTED:
+			WLog_WARN(TAG, "LIBUSB_OPTION_USE_USBDK %s [%d]", libusb_strerror(rc), rc);
 			break;
 		default:
+			WLog_ERR(TAG, "LIBUSB_OPTION_USE_USBDK %s [%d]", libusb_strerror(rc), rc);
 			goto fail;
 	}
 #endif
