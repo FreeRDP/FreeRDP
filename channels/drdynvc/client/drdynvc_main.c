@@ -281,7 +281,7 @@ static UINT dvcman_load_addin(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager*
 		entryPoints.dvcman = (DVCMAN*)pChannelMgr;
 		entryPoints.args = args;
 		entryPoints.settings = settings;
-		return pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*)&entryPoints);
+		return pDVCPluginEntry(&entryPoints.iface);
 	}
 
 	return ERROR_INVALID_FUNCTION;
