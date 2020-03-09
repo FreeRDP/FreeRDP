@@ -736,17 +736,10 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 	transport_disconnect(transport);
 }
 
-static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, const BYTE* data,
-                                          int size)
+static BOOL freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, const BYTE* data,
+                                           size_t size)
 {
-	if (size < 0)
-	{
-		WLog_ERR(TAG, "%s: invalid size %d", __FUNCTION__, size);
-		return -1;
-	}
-	if (!rdp_send_channel_data(client->context->rdp, channelId, data, (size_t)size))
-		return -1;
-	return 0;
+	return rdp_send_channel_data(client->context->rdp, channelId, data, size);
 }
 
 static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)

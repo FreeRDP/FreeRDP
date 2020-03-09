@@ -51,8 +51,8 @@ typedef BOOL (*psPeerLogon)(freerdp_peer* peer, SEC_WINNT_AUTH_IDENTITY* identit
 typedef BOOL (*psPeerAdjustMonitorsLayout)(freerdp_peer* peer);
 typedef BOOL (*psPeerClientCapabilities)(freerdp_peer* peer);
 
-typedef int (*psPeerSendChannelData)(freerdp_peer* peer, UINT16 channelId, const BYTE* data,
-                                     int size);
+typedef BOOL (*psPeerSendChannelData)(freerdp_peer* peer, UINT16 channelId, const BYTE* data,
+                                      size_t size);
 typedef int (*psPeerReceiveChannelData)(freerdp_peer* peer, UINT16 channelId, const BYTE* data,
                                         size_t size, UINT32 flags, size_t totalSize);
 
