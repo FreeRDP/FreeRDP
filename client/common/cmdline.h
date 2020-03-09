@@ -20,6 +20,10 @@
 #ifndef CLIENT_COMMON_CMDLINE_H
 #define CLIENT_COMMON_CMDLINE_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <winpr/cmdline.h>
 
 static const COMMAND_LINE_ARGUMENT_A args[] = {
