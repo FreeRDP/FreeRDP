@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(CMakeDependentOption)
 set(MODULE_NAME "freerdp-proxy")
 set(MODULE_PREFIX "FREERDP_SERVER_PROXY")
 
@@ -88,6 +89,7 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/proxy")
 
+CMAKE_DEPENDENT_OPTION(WITH_PROXY_MODULES "Compile proxy modules" OFF	"WITH_PROXY" OFF)
 if (WITH_PROXY_MODULES)
   add_subdirectory("modules")
 endif()

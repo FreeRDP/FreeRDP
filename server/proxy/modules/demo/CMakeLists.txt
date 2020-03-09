@@ -23,6 +23,7 @@ add_library(${PLUGIN_NAME} MODULE
 	demo.cpp
 )
 
+set_target_properties(${PLUGIN_NAME} PROPERTIES CXX_STANDARD 11)
 set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
 set_target_properties(${PLUGIN_NAME} PROPERTIES NO_SONAME 1)
 set_target_properties(${PLUGIN_NAME} PROPERTIES
