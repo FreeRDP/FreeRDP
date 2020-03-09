@@ -371,7 +371,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 		if (securityFlags & SEC_ENCRYPT)
 		{
-			if (!rdp_decrypt(rdp, s, length, securityFlags))
+			if (!rdp_decrypt(rdp, s, &length, securityFlags))
 			{
 				WLog_ERR(TAG, "rdp_decrypt failed");
 				return -1;
@@ -446,7 +446,7 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		if (!rdp_decrypt(rdp, s, length,
+		if (!rdp_decrypt(rdp, s, &length,
 		                 (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM)
 		                     ? SEC_SECURE_CHECKSUM
 		                     : 0))

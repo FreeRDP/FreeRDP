@@ -1141,15 +1141,17 @@ void rdp_read_flow_control_pdu(wStream* s, UINT16* type)
  * @param length int
  */
 
-BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, INT32 length, UINT16 securityFlags)
+BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 {
 	BYTE cmac[8];
 	BYTE wmac[8];
 	BOOL status;
+	INT32 length;
 
-	if (!rdp || !s || (length < 0))
+	if (!rdp || !s || !pLength)
 		return FALSE;
 
+	length = *pLength;
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		UINT16 len;
@@ -1184,6 +1186,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, INT32 length, UINT16 securityFlags)
 		}
 
 		Stream_SetLength(s, Stream_Length(s) - pad);
+		*pLength = padLength;
 		return TRUE;
 	}
 
@@ -1220,6 +1223,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, INT32 length, UINT16 securityFlags)
 		// return FALSE;
 	}
 
+	*pLength = length;
 	return TRUE;
 }
 
@@ -1290,7 +1294,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 		if (securityFlags & (SEC_ENCRYPT | SEC_REDIRECTION_PKT))
 		{
-			if (!rdp_decrypt(rdp, s, length, securityFlags))
+			if (!rdp_decrypt(rdp, s, &length, securityFlags))
 			{
 				WLog_ERR(TAG, "rdp_decrypt failed");
 				return -1;
@@ -1435,7 +1439,7 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 		UINT16 flags =
 		    (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0;
 
-		if (!rdp_decrypt(rdp, s, length, flags))
+		if (!rdp_decrypt(rdp, s, &length, flags))
 		{
 			WLog_ERR(TAG, "rdp_recv_fastpath_pdu: rdp_decrypt() fail");
 			return -1;
