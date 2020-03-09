@@ -400,8 +400,8 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 	return ret;
 }
 
-static int WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const BYTE* data,
-                                 size_t size, UINT32 flags, size_t totalSize)
+static BOOL WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const BYTE* data,
+                                  size_t size, UINT32 flags, size_t totalSize)
 {
 	UINT32 i;
 	BOOL status = FALSE;
@@ -419,7 +419,7 @@ static int WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const B
 		}
 	}
 
-	return status ? 0 : -1;
+	return status;
 }
 
 void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* fds_count)

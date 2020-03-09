@@ -419,20 +419,25 @@ fail:
 	return error;
 }
 
-int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data, int dataSize, int flags,
-                          int totalSize)
+BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdata, size_t dataSize,
+                           UINT32 flags, size_t totalSize)
 {
 	UINT32 index;
 	rdpMcs* mcs;
 	rdpChannels* channels;
 	rdpMcsChannel* channel = NULL;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
+	union {
+		const BYTE* pcb;
+		BYTE* pb;
+	} data;
 
-	if (!instance || !data || (dataSize < 0) || (totalSize < 0))
+	data.pcb = cdata;
+	if (!instance || !data.pcb)
 	{
-		WLog_ERR(TAG, "%s(%p, %" PRIu16 ", %p, %d, 0x%08x, %d): Invalid arguments", __FUNCTION__,
-		         instance, channelId, data, dataSize, flags, totalSize);
-		return -1;
+		WLog_ERR(TAG, "%s(%p, %" PRIu16 ", %p, 0x%08x): Invalid arguments", __FUNCTION__, instance,
+		         channelId, data, flags);
+		return FALSE;
 	}
 
 	mcs = instance->context->rdp->mcs;
@@ -440,7 +445,7 @@ int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data, int d
 
 	if (!channels || !mcs)
 	{
-		return 1;
+		return FALSE;
 	}
 
 	for (index = 0; index < mcs->channelCount; index++)
@@ -454,30 +459,30 @@ int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data, int d
 
 	if (!channel)
 	{
-		return 1;
+		return FALSE;
 	}
 
 	pChannelOpenData = freerdp_channels_find_channel_open_data_by_name(channels, channel->Name);
 
 	if (!pChannelOpenData)
 	{
-		return 1;
+		return FALSE;
 	}
 
 	if (pChannelOpenData->pChannelOpenEventProc)
 	{
 		pChannelOpenData->pChannelOpenEventProc(pChannelOpenData->OpenHandle,
-		                                        CHANNEL_EVENT_DATA_RECEIVED, data, dataSize,
+		                                        CHANNEL_EVENT_DATA_RECEIVED, data.pb, dataSize,
 		                                        totalSize, flags);
 	}
 	else if (pChannelOpenData->pChannelOpenEventProcEx)
 	{
 		pChannelOpenData->pChannelOpenEventProcEx(
 		    pChannelOpenData->lpUserParam, pChannelOpenData->OpenHandle,
-		    CHANNEL_EVENT_DATA_RECEIVED, data, dataSize, totalSize, flags);
+		    CHANNEL_EVENT_DATA_RECEIVED, data.pb, dataSize, totalSize, flags);
 	}
 
-	return 0;
+	return TRUE;
 }
 
 UINT16 freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name)
