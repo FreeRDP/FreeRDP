@@ -176,8 +176,8 @@ extern "C"
 
 	typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
 
-	typedef int (*pSendChannelData)(freerdp* instance, UINT16 channelId, const BYTE* data,
-	                                int size);
+	typedef BOOL (*pSendChannelData)(freerdp* instance, UINT16 channelId, const BYTE* data,
+	                                 size_t size);
 	typedef int (*pReceiveChannelData)(freerdp* instance, UINT16 channelId, BYTE* data, int size,
 	                                   int flags, int totalSize);
 

@@ -488,18 +488,10 @@ int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id)
 	return status;
 }
 
-static int freerdp_send_channel_data(freerdp* instance, UINT16 channelId, const BYTE* data,
-                                     int size)
+static BOOL freerdp_send_channel_data(freerdp* instance, UINT16 channelId, const BYTE* data,
+                                      size_t size)
 {
-	if (size < 0)
-	{
-		WLog_ERR(TAG, "%s: size has invalid value %d", __FUNCTION__, size);
-		return -1;
-	}
-
-	if (!rdp_send_channel_data(instance->context->rdp, channelId, data, (size_t)size))
-		return -2;
-	return 0;
+	return rdp_send_channel_data(instance->context->rdp, channelId, data, size);
 }
 
 BOOL freerdp_disconnect(freerdp* instance)
@@ -1008,7 +1000,7 @@ const char* freerdp_get_logon_error_info_data(UINT32 data)
 /** Allocator function for the rdp_freerdp structure.
  *  @return an allocated structure filled with 0s. Need to be deallocated using freerdp_free()
  */
-freerdp* freerdp_new()
+freerdp* freerdp_new(void)
 {
 	freerdp* instance;
 	instance = (freerdp*)calloc(1, sizeof(freerdp));

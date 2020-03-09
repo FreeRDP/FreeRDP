@@ -226,8 +226,10 @@ static int pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 channe
 
 			client_channel_id = (UINT64)HashTable_GetItemValue(pc->vc_ids, (void*)channel_name);
 
-			return pc->context.instance->SendChannelData(
-			    pc->context.instance, (UINT16)client_channel_id, (BYTE*)data, size);
+			if (!pc->context.instance->SendChannelData(
+			        pc->context.instance, (UINT16)client_channel_id, (BYTE*)data, size))
+				return -1;
+			return 0;
 		}
 	}
 
