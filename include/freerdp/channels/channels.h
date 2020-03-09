@@ -50,8 +50,8 @@ extern "C"
 	FREERDP_API HANDLE freerdp_channels_get_event_handle(freerdp* instance);
 	FREERDP_API int freerdp_channels_process_pending_messages(freerdp* instance);
 
-	FREERDP_API int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data,
-	                                      int dataSize, int flags, int totalSize);
+	FREERDP_API BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* data,
+	                                       size_t dataSize, UINT32 flags, size_t totalSize);
 
 	FREERDP_API UINT16 freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name);
 	FREERDP_API const char* freerdp_channels_get_name_by_id(freerdp* instance, UINT16 channelId);

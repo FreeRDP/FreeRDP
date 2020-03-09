@@ -178,8 +178,8 @@ extern "C"
 
 	typedef BOOL (*pSendChannelData)(freerdp* instance, UINT16 channelId, const BYTE* data,
 	                                 size_t size);
-	typedef int (*pReceiveChannelData)(freerdp* instance, UINT16 channelId, BYTE* data, int size,
-	                                   int flags, int totalSize);
+	typedef BOOL (*pReceiveChannelData)(freerdp* instance, UINT16 channelId, const BYTE* data,
+	                                    size_t size, UINT32 flags, size_t totalSize);
 
 	typedef BOOL (*pPresentGatewayMessage)(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
 	                                       BOOL isConsentMandatory, size_t length,

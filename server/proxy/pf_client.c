@@ -197,8 +197,9 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	return TRUE;
 }
 
-static int pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channelId, BYTE* data,
-                                               int size, int flags, int totalSize)
+static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channelId,
+                                                const BYTE* data, size_t size, UINT32 flags,
+                                                size_t totalSize)
 {
 	pClientContext* pc = (pClientContext*)instance->context;
 	pServerContext* ps = pc->pdata->ps;
@@ -221,13 +222,11 @@ static int pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channel
 			ev.data_len = size;
 
 			if (!pf_modules_run_filter(FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA, pdata, &ev))
-				return -1;
+				return FALSE;
 
 			server_channel_id = (UINT64)HashTable_GetItemValue(ps->vc_ids, (void*)channel_name);
-			if (!ps->context.peer->SendChannelData(ps->context.peer, (UINT16)server_channel_id,
-			                                       data, size))
-				return -1;
-			return 0;
+			return ps->context.peer->SendChannelData(ps->context.peer, (UINT16)server_channel_id,
+			                                         data, size);
 		}
 	}
 
