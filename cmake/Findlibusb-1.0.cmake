@@ -49,18 +49,20 @@ if (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
   find_path(LIBUSB_1_INCLUDE_DIR
     NAMES
-libusb.h
+      libusb.h
     PATHS
       /usr/include
       /usr/local/include
       /sw/include
-PATH_SUFFIXES
-libusb-1.0
+    PATH_SUFFIXES
+      libusb-1.0
   )
 
   find_library(LIBUSB_1_LIBRARY
     NAMES
-      usb-1.0 usb
+      libusb-1.0
+      usb-1.0
+      usb
     PATHS
       /usr/lib
       /usr/local/lib
@@ -81,8 +83,8 @@ libusb-1.0
   if (LIBUSB_1_FOUND)
     if (NOT libusb_1_FIND_QUIETLY)
       message(STATUS "Found libusb-1.0:")
-message(STATUS " - Includes: ${LIBUSB_1_INCLUDE_DIRS}")
-message(STATUS " - Libraries: ${LIBUSB_1_LIBRARIES}")
+      message(STATUS " - Includes: ${LIBUSB_1_INCLUDE_DIRS}")
+      message(STATUS " - Libraries: ${LIBUSB_1_LIBRARIES}")
     endif (NOT libusb_1_FIND_QUIETLY)
   else (LIBUSB_1_FOUND)
     if (libusb_1_FIND_REQUIRED)
