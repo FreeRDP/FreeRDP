@@ -428,22 +428,6 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width, i
 	return 0;
 }
 
-static int tsmf_window_pause(TSMFGstreamerDecoder* decoder)
-{
-	if (!decoder)
-		return -1;
-
-	return 0;
-}
-
-static int tsmf_window_resume(TSMFGstreamerDecoder* decoder)
-{
-	if (!decoder)
-		return -1;
-
-	return 0;
-}
-
 int tsmf_window_map(TSMFGstreamerDecoder* decoder)
 {
 	struct X11Handle* hdl;
