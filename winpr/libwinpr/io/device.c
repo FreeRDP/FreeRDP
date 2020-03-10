@@ -234,25 +234,4 @@ VOID _IoDeleteDeviceEx(PDEVICE_OBJECT_EX DeviceObject)
 	free(pDeviceObjectEx);
 }
 
-/**
- * IoCreateSymbolicLink:
- * http://msdn.microsoft.com/en-us/library/windows/hardware/ff549043/
- */
-
-static NTSTATUS _IoCreateSymbolicLinkEx(PUNICODE_STRING SymbolicLinkName,
-                                        PUNICODE_STRING DeviceName)
-{
-	return STATUS_SUCCESS;
-}
-
-/**
- * IoDeleteSymbolicLink:
- * http://msdn.microsoft.com/en-us/library/windows/hardware/ff549085/
- */
-
-static NTSTATUS _IoDeleteSymbolicLinkEx(PUNICODE_STRING SymbolicLinkName)
-{
-	return STATUS_SUCCESS;
-}
-
 #endif
