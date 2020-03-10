@@ -36,9 +36,6 @@
 
 #define WINPR_HKLM_HIVE "/etc/winpr/HKLM.reg"
 
-static void reg_print_key(Reg* reg, RegKey* key);
-static void reg_print_value(Reg* reg, RegVal* value);
-
 struct reg_data_type
 {
 	char* tag;
@@ -456,48 +453,5 @@ void reg_close(Reg* reg)
 		reg_unload(reg);
 		fclose(reg->fp);
 		free(reg);
-	}
-}
-
-void reg_print_value(Reg* reg, RegVal* value)
-{
-	WLog_INFO(TAG, "\"%s\"=", value->name);
-
-	if (value->type == REG_DWORD)
-	{
-		WLog_INFO(TAG, "dword:%08" PRIX32 "", value->data.dword);
-	}
-	else if (value->type == REG_SZ)
-	{
-		WLog_INFO(TAG, "%s\"", value->data.string);
-	}
-	else
-	{
-		WLog_ERR(TAG, "unimplemented format: %s", REG_DATA_TYPE_STRINGS[value->type]);
-	}
-}
-
-void reg_print_key(Reg* reg, RegKey* key)
-{
-	RegVal* pValue;
-	pValue = key->values;
-	WLog_INFO(TAG, "[%s]", key->name);
-
-	while (pValue != NULL)
-	{
-		reg_print_value(reg, pValue);
-		pValue = pValue->next;
-	}
-}
-
-static void reg_print(Reg* reg)
-{
-	RegKey* pKey;
-	pKey = reg->root_key->subkeys;
-
-	while (pKey != NULL)
-	{
-		reg_print_key(reg, pKey);
-		pKey = pKey->next;
 	}
 }
