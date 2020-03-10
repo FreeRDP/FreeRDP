@@ -1583,70 +1583,69 @@ static BOOL update_message_process_update_class(rdpUpdateProxy* proxy, wMessage*
 	switch (type)
 	{
 		case Update_BeginPaint:
-			rc = IFCALLRESULT(FALSE, proxy->BeginPaint, msg->context);
+			rc = IFCALLRESULT(TRUE, proxy->BeginPaint, msg->context);
 			break;
 
 		case Update_EndPaint:
-			rc = IFCALLRESULT(FALSE, proxy->EndPaint, msg->context);
+			rc = IFCALLRESULT(TRUE, proxy->EndPaint, msg->context);
 			break;
 
 		case Update_SetBounds:
-			rc = IFCALLRESULT(FALSE, proxy->SetBounds, msg->context, (rdpBounds*)msg->wParam);
+			rc = IFCALLRESULT(TRUE, proxy->SetBounds, msg->context, (rdpBounds*)msg->wParam);
 			break;
 
 		case Update_Synchronize:
-			rc = IFCALLRESULT(FALSE, proxy->Synchronize, msg->context);
+			rc = IFCALLRESULT(TRUE, proxy->Synchronize, msg->context);
 			break;
 
 		case Update_DesktopResize:
-			rc = IFCALLRESULT(FALSE, proxy->DesktopResize, msg->context);
+			rc = IFCALLRESULT(TRUE, proxy->DesktopResize, msg->context);
 			break;
 
 		case Update_BitmapUpdate:
-			rc =
-			    IFCALLRESULT(FALSE, proxy->BitmapUpdate, msg->context, (BITMAP_UPDATE*)msg->wParam);
+			rc = IFCALLRESULT(TRUE, proxy->BitmapUpdate, msg->context, (BITMAP_UPDATE*)msg->wParam);
 			break;
 
 		case Update_Palette:
-			rc = IFCALLRESULT(FALSE, proxy->Palette, msg->context, (PALETTE_UPDATE*)msg->wParam);
+			rc = IFCALLRESULT(TRUE, proxy->Palette, msg->context, (PALETTE_UPDATE*)msg->wParam);
 			break;
 
 		case Update_PlaySound:
-			rc = IFCALLRESULT(FALSE, proxy->PlaySound, msg->context,
-			                  (PLAY_SOUND_UPDATE*)msg->wParam);
+			rc =
+			    IFCALLRESULT(TRUE, proxy->PlaySound, msg->context, (PLAY_SOUND_UPDATE*)msg->wParam);
 			break;
 
 		case Update_RefreshRect:
-			rc = IFCALLRESULT(FALSE, proxy->RefreshRect, msg->context, (BYTE)(size_t)msg->wParam,
+			rc = IFCALLRESULT(TRUE, proxy->RefreshRect, msg->context, (BYTE)(size_t)msg->wParam,
 			                  (RECTANGLE_16*)msg->lParam);
 			break;
 
 		case Update_SuppressOutput:
-			rc = IFCALLRESULT(FALSE, proxy->SuppressOutput, msg->context, (BYTE)(size_t)msg->wParam,
+			rc = IFCALLRESULT(TRUE, proxy->SuppressOutput, msg->context, (BYTE)(size_t)msg->wParam,
 			                  (RECTANGLE_16*)msg->lParam);
 			break;
 
 		case Update_SurfaceCommand:
-			rc = IFCALLRESULT(FALSE, proxy->SurfaceCommand, msg->context, (wStream*)msg->wParam);
+			rc = IFCALLRESULT(TRUE, proxy->SurfaceCommand, msg->context, (wStream*)msg->wParam);
 			break;
 
 		case Update_SurfaceBits:
-			rc = IFCALLRESULT(FALSE, proxy->SurfaceBits, msg->context,
+			rc = IFCALLRESULT(TRUE, proxy->SurfaceBits, msg->context,
 			                  (SURFACE_BITS_COMMAND*)msg->wParam);
 			break;
 
 		case Update_SurfaceFrameMarker:
-			rc = IFCALLRESULT(FALSE, proxy->SurfaceFrameMarker, msg->context,
+			rc = IFCALLRESULT(TRUE, proxy->SurfaceFrameMarker, msg->context,
 			                  (SURFACE_FRAME_MARKER*)msg->wParam);
 			break;
 
 		case Update_SurfaceFrameAcknowledge:
-			rc = IFCALLRESULT(FALSE, proxy->SurfaceFrameAcknowledge, msg->context,
+			rc = IFCALLRESULT(TRUE, proxy->SurfaceFrameAcknowledge, msg->context,
 			                  (UINT32)(size_t)msg->wParam);
 			break;
 
 		case Update_SetKeyboardIndicators:
-			rc = IFCALLRESULT(FALSE, proxy->SetKeyboardIndicators, msg->context,
+			rc = IFCALLRESULT(TRUE, proxy->SetKeyboardIndicators, msg->context,
 			                  (UINT16)(size_t)msg->wParam);
 			break;
 
@@ -1655,7 +1654,7 @@ static BOOL update_message_process_update_class(rdpUpdateProxy* proxy, wMessage*
 			const UINT16 imeId = ((size_t)msg->wParam) >> 16 & 0xFFFF;
 			const UINT32 imeState = ((size_t)msg->wParam) & 0xFFFF;
 			const UINT32 imeConvMode = ((size_t)msg->lParam);
-			rc = IFCALLRESULT(FALSE, proxy->SetKeyboardImeStatus, msg->context, imeId, imeState,
+			rc = IFCALLRESULT(TRUE, proxy->SetKeyboardImeStatus, msg->context, imeId, imeState,
 			                  imeConvMode);
 		}
 		break;
@@ -1794,84 +1793,84 @@ static BOOL update_message_process_primary_update_class(rdpUpdateProxy* proxy, w
 	switch (type)
 	{
 		case PrimaryUpdate_DstBlt:
-			return IFCALLRESULT(FALSE, proxy->DstBlt, msg->context, (DSTBLT_ORDER*)msg->wParam);
+			return IFCALLRESULT(TRUE, proxy->DstBlt, msg->context, (DSTBLT_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_PatBlt:
-			return IFCALLRESULT(FALSE, proxy->PatBlt, msg->context, (PATBLT_ORDER*)msg->wParam);
+			return IFCALLRESULT(TRUE, proxy->PatBlt, msg->context, (PATBLT_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_ScrBlt:
-			return IFCALLRESULT(FALSE, proxy->ScrBlt, msg->context, (SCRBLT_ORDER*)msg->wParam);
+			return IFCALLRESULT(TRUE, proxy->ScrBlt, msg->context, (SCRBLT_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_OpaqueRect:
-			return IFCALLRESULT(FALSE, proxy->OpaqueRect, msg->context,
+			return IFCALLRESULT(TRUE, proxy->OpaqueRect, msg->context,
 			                    (OPAQUE_RECT_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_DrawNineGrid:
-			return IFCALLRESULT(FALSE, proxy->DrawNineGrid, msg->context,
+			return IFCALLRESULT(TRUE, proxy->DrawNineGrid, msg->context,
 			                    (DRAW_NINE_GRID_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_MultiDstBlt:
-			return IFCALLRESULT(FALSE, proxy->MultiDstBlt, msg->context,
+			return IFCALLRESULT(TRUE, proxy->MultiDstBlt, msg->context,
 			                    (MULTI_DSTBLT_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_MultiPatBlt:
-			return IFCALLRESULT(FALSE, proxy->MultiPatBlt, msg->context,
+			return IFCALLRESULT(TRUE, proxy->MultiPatBlt, msg->context,
 			                    (MULTI_PATBLT_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_MultiScrBlt:
-			return IFCALLRESULT(FALSE, proxy->MultiScrBlt, msg->context,
+			return IFCALLRESULT(TRUE, proxy->MultiScrBlt, msg->context,
 			                    (MULTI_SCRBLT_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_MultiOpaqueRect:
-			return IFCALLRESULT(FALSE, proxy->MultiOpaqueRect, msg->context,
+			return IFCALLRESULT(TRUE, proxy->MultiOpaqueRect, msg->context,
 			                    (MULTI_OPAQUE_RECT_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_MultiDrawNineGrid:
-			return IFCALLRESULT(FALSE, proxy->MultiDrawNineGrid, msg->context,
+			return IFCALLRESULT(TRUE, proxy->MultiDrawNineGrid, msg->context,
 			                    (MULTI_DRAW_NINE_GRID_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_LineTo:
-			return IFCALLRESULT(FALSE, proxy->LineTo, msg->context, (LINE_TO_ORDER*)msg->wParam);
+			return IFCALLRESULT(TRUE, proxy->LineTo, msg->context, (LINE_TO_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_Polyline:
-			return IFCALLRESULT(FALSE, proxy->Polyline, msg->context, (POLYLINE_ORDER*)msg->wParam);
+			return IFCALLRESULT(TRUE, proxy->Polyline, msg->context, (POLYLINE_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_MemBlt:
-			return IFCALLRESULT(FALSE, proxy->MemBlt, msg->context, (MEMBLT_ORDER*)msg->wParam);
+			return IFCALLRESULT(TRUE, proxy->MemBlt, msg->context, (MEMBLT_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_Mem3Blt:
-			return IFCALLRESULT(FALSE, proxy->Mem3Blt, msg->context, (MEM3BLT_ORDER*)msg->wParam);
+			return IFCALLRESULT(TRUE, proxy->Mem3Blt, msg->context, (MEM3BLT_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_SaveBitmap:
-			return IFCALLRESULT(FALSE, proxy->SaveBitmap, msg->context,
+			return IFCALLRESULT(TRUE, proxy->SaveBitmap, msg->context,
 			                    (SAVE_BITMAP_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_GlyphIndex:
-			return IFCALLRESULT(FALSE, proxy->GlyphIndex, msg->context,
+			return IFCALLRESULT(TRUE, proxy->GlyphIndex, msg->context,
 			                    (GLYPH_INDEX_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_FastIndex:
-			return IFCALLRESULT(FALSE, proxy->FastIndex, msg->context,
+			return IFCALLRESULT(TRUE, proxy->FastIndex, msg->context,
 			                    (FAST_INDEX_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_FastGlyph:
-			return IFCALLRESULT(FALSE, proxy->FastGlyph, msg->context,
+			return IFCALLRESULT(TRUE, proxy->FastGlyph, msg->context,
 			                    (FAST_GLYPH_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_PolygonSC:
-			return IFCALLRESULT(FALSE, proxy->PolygonSC, msg->context,
+			return IFCALLRESULT(TRUE, proxy->PolygonSC, msg->context,
 			                    (POLYGON_SC_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_PolygonCB:
-			return IFCALLRESULT(FALSE, proxy->PolygonCB, msg->context,
+			return IFCALLRESULT(TRUE, proxy->PolygonCB, msg->context,
 			                    (POLYGON_CB_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_EllipseSC:
-			return IFCALLRESULT(FALSE, proxy->EllipseSC, msg->context,
+			return IFCALLRESULT(TRUE, proxy->EllipseSC, msg->context,
 			                    (ELLIPSE_SC_ORDER*)msg->wParam);
 
 		case PrimaryUpdate_EllipseCB:
-			return IFCALLRESULT(FALSE, proxy->EllipseCB, msg->context,
+			return IFCALLRESULT(TRUE, proxy->EllipseCB, msg->context,
 			                    (ELLIPSE_CB_ORDER*)msg->wParam);
 
 		default:
@@ -1955,31 +1954,31 @@ static BOOL update_message_process_secondary_update_class(rdpUpdateProxy* proxy,
 	switch (type)
 	{
 		case SecondaryUpdate_CacheBitmap:
-			return IFCALLRESULT(FALSE, proxy->CacheBitmap, msg->context,
+			return IFCALLRESULT(TRUE, proxy->CacheBitmap, msg->context,
 			                    (CACHE_BITMAP_ORDER*)msg->wParam);
 
 		case SecondaryUpdate_CacheBitmapV2:
-			return IFCALLRESULT(FALSE, proxy->CacheBitmapV2, msg->context,
+			return IFCALLRESULT(TRUE, proxy->CacheBitmapV2, msg->context,
 			                    (CACHE_BITMAP_V2_ORDER*)msg->wParam);
 
 		case SecondaryUpdate_CacheBitmapV3:
-			return IFCALLRESULT(FALSE, proxy->CacheBitmapV3, msg->context,
+			return IFCALLRESULT(TRUE, proxy->CacheBitmapV3, msg->context,
 			                    (CACHE_BITMAP_V3_ORDER*)msg->wParam);
 
 		case SecondaryUpdate_CacheColorTable:
-			return IFCALLRESULT(FALSE, proxy->CacheColorTable, msg->context,
+			return IFCALLRESULT(TRUE, proxy->CacheColorTable, msg->context,
 			                    (CACHE_COLOR_TABLE_ORDER*)msg->wParam);
 
 		case SecondaryUpdate_CacheGlyph:
-			return IFCALLRESULT(FALSE, proxy->CacheGlyph, msg->context,
+			return IFCALLRESULT(TRUE, proxy->CacheGlyph, msg->context,
 			                    (CACHE_GLYPH_ORDER*)msg->wParam);
 
 		case SecondaryUpdate_CacheGlyphV2:
-			return IFCALLRESULT(FALSE, proxy->CacheGlyphV2, msg->context,
+			return IFCALLRESULT(TRUE, proxy->CacheGlyphV2, msg->context,
 			                    (CACHE_GLYPH_V2_ORDER*)msg->wParam);
 
 		case SecondaryUpdate_CacheBrush:
-			return IFCALLRESULT(FALSE, proxy->CacheBrush, msg->context,
+			return IFCALLRESULT(TRUE, proxy->CacheBrush, msg->context,
 			                    (CACHE_BRUSH_ORDER*)msg->wParam);
 
 		default:
@@ -2062,51 +2061,51 @@ static BOOL update_message_process_altsec_update_class(rdpUpdateProxy* proxy, wM
 	switch (type)
 	{
 		case AltSecUpdate_CreateOffscreenBitmap:
-			return IFCALLRESULT(FALSE, proxy->CreateOffscreenBitmap, msg->context,
+			return IFCALLRESULT(TRUE, proxy->CreateOffscreenBitmap, msg->context,
 			                    (CREATE_OFFSCREEN_BITMAP_ORDER*)msg->wParam);
 
 		case AltSecUpdate_SwitchSurface:
-			return IFCALLRESULT(FALSE, proxy->SwitchSurface, msg->context,
+			return IFCALLRESULT(TRUE, proxy->SwitchSurface, msg->context,
 			                    (SWITCH_SURFACE_ORDER*)msg->wParam);
 
 		case AltSecUpdate_CreateNineGridBitmap:
-			return IFCALLRESULT(FALSE, proxy->CreateNineGridBitmap, msg->context,
+			return IFCALLRESULT(TRUE, proxy->CreateNineGridBitmap, msg->context,
 			                    (CREATE_NINE_GRID_BITMAP_ORDER*)msg->wParam);
 
 		case AltSecUpdate_FrameMarker:
-			return IFCALLRESULT(FALSE, proxy->FrameMarker, msg->context,
+			return IFCALLRESULT(TRUE, proxy->FrameMarker, msg->context,
 			                    (FRAME_MARKER_ORDER*)msg->wParam);
 
 		case AltSecUpdate_StreamBitmapFirst:
-			return IFCALLRESULT(FALSE, proxy->StreamBitmapFirst, msg->context,
+			return IFCALLRESULT(TRUE, proxy->StreamBitmapFirst, msg->context,
 			                    (STREAM_BITMAP_FIRST_ORDER*)msg->wParam);
 
 		case AltSecUpdate_StreamBitmapNext:
-			return IFCALLRESULT(FALSE, proxy->StreamBitmapNext, msg->context,
+			return IFCALLRESULT(TRUE, proxy->StreamBitmapNext, msg->context,
 			                    (STREAM_BITMAP_NEXT_ORDER*)msg->wParam);
 
 		case AltSecUpdate_DrawGdiPlusFirst:
-			return IFCALLRESULT(FALSE, proxy->DrawGdiPlusFirst, msg->context,
+			return IFCALLRESULT(TRUE, proxy->DrawGdiPlusFirst, msg->context,
 			                    (DRAW_GDIPLUS_FIRST_ORDER*)msg->wParam);
 
 		case AltSecUpdate_DrawGdiPlusNext:
-			return IFCALLRESULT(FALSE, proxy->DrawGdiPlusNext, msg->context,
+			return IFCALLRESULT(TRUE, proxy->DrawGdiPlusNext, msg->context,
 			                    (DRAW_GDIPLUS_NEXT_ORDER*)msg->wParam);
 
 		case AltSecUpdate_DrawGdiPlusEnd:
-			return IFCALLRESULT(FALSE, proxy->DrawGdiPlusEnd, msg->context,
+			return IFCALLRESULT(TRUE, proxy->DrawGdiPlusEnd, msg->context,
 			                    (DRAW_GDIPLUS_END_ORDER*)msg->wParam);
 
 		case AltSecUpdate_DrawGdiPlusCacheFirst:
-			return IFCALLRESULT(FALSE, proxy->DrawGdiPlusCacheFirst, msg->context,
+			return IFCALLRESULT(TRUE, proxy->DrawGdiPlusCacheFirst, msg->context,
 			                    (DRAW_GDIPLUS_CACHE_FIRST_ORDER*)msg->wParam);
 
 		case AltSecUpdate_DrawGdiPlusCacheNext:
-			return IFCALLRESULT(FALSE, proxy->DrawGdiPlusCacheNext, msg->context,
+			return IFCALLRESULT(TRUE, proxy->DrawGdiPlusCacheNext, msg->context,
 			                    (DRAW_GDIPLUS_CACHE_NEXT_ORDER*)msg->wParam);
 
 		case AltSecUpdate_DrawGdiPlusCacheEnd:
-			return IFCALLRESULT(FALSE, proxy->DrawGdiPlusCacheEnd, msg->context,
+			return IFCALLRESULT(TRUE, proxy->DrawGdiPlusCacheEnd, msg->context,
 			                    (DRAW_GDIPLUS_CACHE_END_ORDER*)msg->wParam);
 
 		default:
@@ -2209,50 +2208,50 @@ static BOOL update_message_process_window_update_class(rdpUpdateProxy* proxy, wM
 	switch (type)
 	{
 		case WindowUpdate_WindowCreate:
-			return IFCALLRESULT(FALSE, proxy->WindowCreate, msg->context,
+			return IFCALLRESULT(TRUE, proxy->WindowCreate, msg->context,
 			                    (WINDOW_ORDER_INFO*)msg->wParam, (WINDOW_STATE_ORDER*)msg->lParam);
 
 		case WindowUpdate_WindowUpdate:
-			return IFCALLRESULT(FALSE, proxy->WindowCreate, msg->context,
+			return IFCALLRESULT(TRUE, proxy->WindowCreate, msg->context,
 			                    (WINDOW_ORDER_INFO*)msg->wParam, (WINDOW_STATE_ORDER*)msg->lParam);
 
 		case WindowUpdate_WindowIcon:
 		{
 			WINDOW_ORDER_INFO* orderInfo = (WINDOW_ORDER_INFO*)msg->wParam;
 			WINDOW_ICON_ORDER* windowIcon = (WINDOW_ICON_ORDER*)msg->lParam;
-			return IFCALLRESULT(FALSE, proxy->WindowIcon, msg->context, orderInfo, windowIcon);
+			return IFCALLRESULT(TRUE, proxy->WindowIcon, msg->context, orderInfo, windowIcon);
 		}
 
 		case WindowUpdate_WindowCachedIcon:
-			return IFCALLRESULT(FALSE, proxy->WindowCachedIcon, msg->context,
+			return IFCALLRESULT(TRUE, proxy->WindowCachedIcon, msg->context,
 			                    (WINDOW_ORDER_INFO*)msg->wParam,
 			                    (WINDOW_CACHED_ICON_ORDER*)msg->lParam);
 
 		case WindowUpdate_WindowDelete:
-			return IFCALLRESULT(FALSE, proxy->WindowDelete, msg->context,
+			return IFCALLRESULT(TRUE, proxy->WindowDelete, msg->context,
 			                    (WINDOW_ORDER_INFO*)msg->wParam);
 
 		case WindowUpdate_NotifyIconCreate:
-			return IFCALLRESULT(FALSE, proxy->NotifyIconCreate, msg->context,
+			return IFCALLRESULT(TRUE, proxy->NotifyIconCreate, msg->context,
 			                    (WINDOW_ORDER_INFO*)msg->wParam,
 			                    (NOTIFY_ICON_STATE_ORDER*)msg->lParam);
 
 		case WindowUpdate_NotifyIconUpdate:
-			return IFCALLRESULT(FALSE, proxy->NotifyIconUpdate, msg->context,
+			return IFCALLRESULT(TRUE, proxy->NotifyIconUpdate, msg->context,
 			                    (WINDOW_ORDER_INFO*)msg->wParam,
 			                    (NOTIFY_ICON_STATE_ORDER*)msg->lParam);
 
 		case WindowUpdate_NotifyIconDelete:
-			return IFCALLRESULT(FALSE, proxy->NotifyIconDelete, msg->context,
+			return IFCALLRESULT(TRUE, proxy->NotifyIconDelete, msg->context,
 			                    (WINDOW_ORDER_INFO*)msg->wParam);
 
 		case WindowUpdate_MonitoredDesktop:
-			return IFCALLRESULT(FALSE, proxy->MonitoredDesktop, msg->context,
+			return IFCALLRESULT(TRUE, proxy->MonitoredDesktop, msg->context,
 			                    (WINDOW_ORDER_INFO*)msg->wParam,
 			                    (MONITORED_DESKTOP_ORDER*)msg->lParam);
 
 		case WindowUpdate_NonMonitoredDesktop:
-			return IFCALLRESULT(FALSE, proxy->NonMonitoredDesktop, msg->context,
+			return IFCALLRESULT(TRUE, proxy->NonMonitoredDesktop, msg->context,
 			                    (WINDOW_ORDER_INFO*)msg->wParam);
 
 		default:
@@ -2322,23 +2321,23 @@ static BOOL update_message_process_pointer_update_class(rdpUpdateProxy* proxy, w
 	switch (type)
 	{
 		case PointerUpdate_PointerPosition:
-			return IFCALLRESULT(FALSE, proxy->PointerPosition, msg->context,
+			return IFCALLRESULT(TRUE, proxy->PointerPosition, msg->context,
 			                    (POINTER_POSITION_UPDATE*)msg->wParam);
 
 		case PointerUpdate_PointerSystem:
-			return IFCALLRESULT(FALSE, proxy->PointerSystem, msg->context,
+			return IFCALLRESULT(TRUE, proxy->PointerSystem, msg->context,
 			                    (POINTER_SYSTEM_UPDATE*)msg->wParam);
 
 		case PointerUpdate_PointerColor:
-			return IFCALLRESULT(FALSE, proxy->PointerColor, msg->context,
+			return IFCALLRESULT(TRUE, proxy->PointerColor, msg->context,
 			                    (POINTER_COLOR_UPDATE*)msg->wParam);
 
 		case PointerUpdate_PointerNew:
-			return IFCALLRESULT(FALSE, proxy->PointerNew, msg->context,
+			return IFCALLRESULT(TRUE, proxy->PointerNew, msg->context,
 			                    (POINTER_NEW_UPDATE*)msg->wParam);
 
 		case PointerUpdate_PointerCached:
-			return IFCALLRESULT(FALSE, proxy->PointerCached, msg->context,
+			return IFCALLRESULT(TRUE, proxy->PointerCached, msg->context,
 			                    (POINTER_CACHED_UPDATE*)msg->wParam);
 
 		default:
