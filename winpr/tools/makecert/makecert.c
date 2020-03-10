@@ -563,12 +563,12 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 					goto out_fail;
 
 				x509_str = makecert_read_str(bio, &offset);
-				if (x509_str)
+				if (!x509_str)
 					goto out_fail;
 
 				length = offset;
 
-				if (fwrite((void*)x509_str, length, 1, fp) != 1)
+				if (fwrite(x509_str, length, 1, fp) != 1)
 					goto out_fail;
 			}
 		}
