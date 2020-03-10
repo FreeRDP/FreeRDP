@@ -48,8 +48,8 @@ static HMODULE g_WtsApiModule = NULL;
 
 static PWtsApiFunctionTable g_WtsApi = NULL;
 
+#if defined(_WIN32)
 static HMODULE g_WtsApi32Module = NULL;
-
 static WtsApiFunctionTable WtsApi32_WtsApiFunctionTable = { 0 };
 
 #define WTSAPI32_LOAD_PROC(_name, _type)                                                   \
@@ -63,7 +63,6 @@ static BOOL WtsApi32_InitializeWtsApi(void)
 	if (!g_WtsApi32Module)
 		return FALSE;
 
-#ifdef _WIN32
 	WTSAPI32_LOAD_PROC(StopRemoteControlSession, WTS_STOP_REMOTE_CONTROL_SESSION_FN);
 	WTSAPI32_LOAD_PROC(StartRemoteControlSessionW, WTS_START_REMOTE_CONTROL_SESSION_FN_W);
 	WTSAPI32_LOAD_PROC(StartRemoteControlSessionA, WTS_START_REMOTE_CONTROL_SESSION_FN_A);
@@ -129,12 +128,12 @@ static BOOL WtsApi32_InitializeWtsApi(void)
 	WTSAPI32_LOAD_PROC(GetActiveConsoleSessionId, WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN);
 
 	Win32_InitializeWinSta(&WtsApi32_WtsApiFunctionTable);
-#endif
 
 	g_WtsApi = &WtsApi32_WtsApiFunctionTable;
 
 	return TRUE;
 }
+#endif
 
 /* WtsApi Functions */
 
