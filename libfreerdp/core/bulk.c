@@ -26,6 +26,19 @@
 #define TAG "com.freerdp.core"
 
 //#define WITH_BULK_DEBUG		1
+struct rdp_bulk
+{
+	rdpContext* context;
+	UINT32 CompressionLevel;
+	UINT32 CompressionMaxSize;
+	MPPC_CONTEXT* mppcSend;
+	MPPC_CONTEXT* mppcRecv;
+	NCRUSH_CONTEXT* ncrushRecv;
+	NCRUSH_CONTEXT* ncrushSend;
+	XCRUSH_CONTEXT* xcrushRecv;
+	XCRUSH_CONTEXT* xcrushSend;
+	BYTE OutputBuffer[65536];
+};
 
 static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
 {
@@ -51,7 +64,7 @@ static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
 	return "PACKET_UNKNOWN";
 }
 
-UINT32 bulk_compression_level(rdpBulk* bulk)
+static UINT32 bulk_compression_level(rdpBulk* bulk)
 {
 	rdpSettings* settings = bulk->context->settings;
 	bulk->CompressionLevel = (settings->CompressionLevel >= PACKET_COMPR_TYPE_RDP61)

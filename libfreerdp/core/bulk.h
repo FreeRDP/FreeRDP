@@ -29,24 +29,9 @@ typedef struct rdp_bulk rdpBulk;
 #include <freerdp/codec/ncrush.h>
 #include <freerdp/codec/xcrush.h>
 
-struct rdp_bulk
-{
-	rdpContext* context;
-	UINT32 CompressionLevel;
-	UINT32 CompressionMaxSize;
-	MPPC_CONTEXT* mppcSend;
-	MPPC_CONTEXT* mppcRecv;
-	NCRUSH_CONTEXT* ncrushRecv;
-	NCRUSH_CONTEXT* ncrushSend;
-	XCRUSH_CONTEXT* xcrushRecv;
-	XCRUSH_CONTEXT* xcrushSend;
-	BYTE OutputBuffer[65536];
-};
-
 #define BULK_COMPRESSION_FLAGS_MASK 0xE0
 #define BULK_COMPRESSION_TYPE_MASK 0x0F
 
-FREERDP_LOCAL UINT32 bulk_compression_level(rdpBulk* bulk);
 FREERDP_LOCAL UINT32 bulk_compression_max_size(rdpBulk* bulk);
 
 FREERDP_LOCAL int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
