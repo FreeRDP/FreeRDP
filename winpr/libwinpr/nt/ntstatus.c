@@ -32,6 +32,7 @@ struct ntstatus_map
 };
 
 static const struct ntstatus_map ntstatusmap[] = {
+
 	{ 0x00000000, "STATUS_SUCCESS" },
 	{ 0x00000000, "STATUS_WAIT_0" },
 	{ 0x00000001, "STATUS_WAIT_1" },
@@ -83,9 +84,6 @@ static const struct ntstatus_map ntstatusmap[] = {
 	{ 0x00010001, "DBG_EXCEPTION_HANDLED" },
 	{ 0x00010002, "DBG_CONTINUE" },
 	{ 0x001C0001, "STATUS_FLT_IO_COMPLETE" },
-	{ 0xC0000467, "STATUS_FILE_NOT_AVAILABLE" },
-	{ 0xC0000480, "STATUS_SHARE_UNAVAILABLE" },
-	{ 0xC0000721, "STATUS_CALLBACK_RETURNED_THREAD_AFFINITY" },
 	{ 0x40000000, "STATUS_OBJECT_NAME_EXISTS" },
 	{ 0x40000001, "STATUS_THREAD_WAS_SUSPENDED" },
 	{ 0x40000002, "STATUS_WORKING_SET_LIMIT_RANGE" },
@@ -995,6 +993,8 @@ static const struct ntstatus_map ntstatusmap[] = {
 	{ 0xC0000464, "STATUS_DEVICE_UNREACHABLE" },
 	{ 0xC0000465, "STATUS_INVALID_TOKEN" },
 	{ 0xC0000466, "STATUS_SERVER_UNAVAILABLE" },
+	{ 0xC0000467, "STATUS_FILE_NOT_AVAILABLE" },
+	{ 0xC0000480, "STATUS_SHARE_UNAVAILABLE" },
 	{ 0xC0000500, "STATUS_INVALID_TASK_NAME" },
 	{ 0xC0000501, "STATUS_INVALID_TASK_INDEX" },
 	{ 0xC0000502, "STATUS_THREAD_ALREADY_IN_TASK" },
@@ -1034,6 +1034,7 @@ static const struct ntstatus_map ntstatusmap[] = {
 	{ 0xC000071E, "STATUS_CALLBACK_RETURNED_LDR_LOCK" },
 	{ 0xC000071F, "STATUS_CALLBACK_RETURNED_LANG" },
 	{ 0xC0000720, "STATUS_CALLBACK_RETURNED_PRI_BACK" },
+	{ 0xC0000721, "STATUS_CALLBACK_RETURNED_THREAD_AFFINITY" },
 	{ 0xC0000800, "STATUS_DISK_REPAIR_DISABLED" },
 	{ 0xC0000801, "STATUS_DS_DOMAIN_RENAME_IN_PROGRESS" },
 	{ 0xC0000802, "STATUS_DISK_QUOTA_EXCEEDED" },
@@ -1839,8 +1840,11 @@ static int ntstatus_compare(const void* pKey, const void* pValue)
 
 const char* NtStatus2Tag(DWORD ntstatus)
 {
-#if 0 /* TODO: Need to sort struct first */
-    return bsearch(&ntstatus, ntstatusmap, ARRAYSIZE(ntstatusmap), sizeof(ntstatusmap[0]), ntstatus_compare);
+
+#if 1 /* Requires sorted struct */
+	size_t count = ARRAYSIZE(ntstatusmap);
+	size_t base = sizeof(ntstatusmap[0]);
+	return bsearch(&ntstatus, ntstatusmap, count, base, ntstatus_compare);
 #else
 	size_t x;
 	for (x = 0; x < ARRAYSIZE(ntstatusmap); x++)
