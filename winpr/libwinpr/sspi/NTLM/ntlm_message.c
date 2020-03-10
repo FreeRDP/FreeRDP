@@ -38,6 +38,7 @@
 
 static const char NTLM_SIGNATURE[8] = { 'N', 'T', 'L', 'M', 'S', 'S', 'P', '\0' };
 
+#ifdef WITH_DEBUG_NTLM
 static const char* const NTLM_NEGOTIATE_STRINGS[] = { "NTLMSSP_NEGOTIATE_56",
 	                                                  "NTLMSSP_NEGOTIATE_KEY_EXCH",
 	                                                  "NTLMSSP_NEGOTIATE_128",
@@ -86,6 +87,7 @@ static void ntlm_print_negotiate_flags(UINT32 flags)
 		}
 	}
 }
+#endif
 
 static int ntlm_read_message_header(wStream* s, NTLM_MESSAGE_HEADER* header)
 {
