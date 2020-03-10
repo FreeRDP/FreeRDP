@@ -148,14 +148,6 @@ static void HashTable_Rehash(wHashTable* table, int numOfBuckets)
 	table->numOfBuckets = numOfBuckets;
 }
 
-static void HashTable_SetIdealRatio(wHashTable* table, float idealRatio, float lowerRehashThreshold,
-                                    float upperRehashThreshold)
-{
-	table->idealRatio = idealRatio;
-	table->lowerRehashThreshold = lowerRehashThreshold;
-	table->upperRehashThreshold = upperRehashThreshold;
-}
-
 wKeyValuePair* HashTable_Get(wHashTable* table, void* key)
 {
 	UINT32 hashValue;
