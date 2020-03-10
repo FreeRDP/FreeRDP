@@ -40,6 +40,7 @@ struct rdp_bulk
 	BYTE OutputBuffer[65536];
 };
 
+#if WITH_BULK_DEBUG
 static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
 {
 	flags &= BULK_COMPRESSION_FLAGS_MASK;
@@ -63,6 +64,7 @@ static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
 
 	return "PACKET_UNKNOWN";
 }
+#endif
 
 static UINT32 bulk_compression_level(rdpBulk* bulk)
 {
@@ -80,6 +82,7 @@ UINT32 bulk_compression_max_size(rdpBulk* bulk)
 	return bulk->CompressionMaxSize;
 }
 
+#if WITH_BULK_DEBUG
 static INLINE int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize,
                                          BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
@@ -124,6 +127,7 @@ static INLINE int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 S
 
 	return status;
 }
+#endif
 
 int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
                     UINT32* pDstSize, UINT32 flags)
@@ -165,6 +169,12 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 				break;
 
 			case PACKET_COMPR_TYPE_RDP8:
+				WLog_ERR(TAG, "Unsupported bulk compression type %08" PRIx32,
+				         bulk->CompressionLevel);
+				status = -1;
+				break;
+			default:
+				WLog_ERR(TAG, "Unknown bulk compression type %08" PRIx32, bulk->CompressionLevel);
 				status = -1;
 				break;
 		}
@@ -225,23 +235,29 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 	bulk_compression_level(bulk);
 	bulk_compression_max_size(bulk);
 
-	if ((bulk->CompressionLevel == PACKET_COMPR_TYPE_8K) ||
-	    (bulk->CompressionLevel == PACKET_COMPR_TYPE_64K))
+	switch (bulk->CompressionLevel)
 	{
-		mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
-		status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
-	}
-	else if (bulk->CompressionLevel == PACKET_COMPR_TYPE_RDP6)
-	{
-		status = ncrush_compress(bulk->ncrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
-	}
-	else if (bulk->CompressionLevel == PACKET_COMPR_TYPE_RDP61)
-	{
-		status = xcrush_compress(bulk->xcrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
-	}
-	else
-	{
-		status = -1;
+		case PACKET_COMPR_TYPE_8K:
+		case PACKET_COMPR_TYPE_64K:
+			mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
+			status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
+			break;
+		case PACKET_COMPR_TYPE_RDP6:
+			status =
+			    ncrush_compress(bulk->ncrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
+			break;
+		case PACKET_COMPR_TYPE_RDP61:
+			status =
+			    xcrush_compress(bulk->xcrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
+			break;
+		case PACKET_COMPR_TYPE_RDP8:
+			WLog_ERR(TAG, "Unsupported bulk compression type %08" PRIx32, bulk->CompressionLevel);
+			status = -1;
+			break;
+		default:
+			WLog_ERR(TAG, "Unknown bulk compression type %08" PRIx32, bulk->CompressionLevel);
+			status = -1;
+			break;
 	}
 
 	if (status >= 0)
@@ -265,7 +281,7 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 #endif
 	}
 
-#if 0
+#if WITH_BULK_DEBUG
 
 	if (bulk_compress_validate(bulk, pSrcData, SrcSize, ppDstData, pDstSize, pFlags) < 0)
 		status = -1;
