@@ -81,9 +81,9 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		{
 			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image, nXSrc, nYSrc, nXDst,
 			          nYDst, dwidth, dheight);
-			xf_lock_x11(xfc, FALSE);
+			xf_lock_x11(xfc);
 			xf_rail_paint(xfc, nXDst, nYDst, nXDst + dwidth, nYDst + dheight);
-			xf_unlock_x11(xfc, FALSE);
+			xf_unlock_x11(xfc);
 		}
 		else
 #ifdef WITH_XRENDER

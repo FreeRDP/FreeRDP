@@ -326,17 +326,17 @@ static BOOL xf_sw_end_paint(rdpContext* context)
 			if (gdi->primary->hdc->hwnd->invalid->null)
 				return TRUE;
 
-			xf_lock_x11(xfc, FALSE);
+			xf_lock_x11(xfc);
 			XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 			xf_draw_screen(xfc, x, y, w, h);
-			xf_unlock_x11(xfc, FALSE);
+			xf_unlock_x11(xfc);
 		}
 		else
 		{
 			if (gdi->primary->hdc->hwnd->ninvalid < 1)
 				return TRUE;
 
-			xf_lock_x11(xfc, FALSE);
+			xf_lock_x11(xfc);
 
 			for (i = 0; i < ninvalid; i++)
 			{
@@ -349,7 +349,7 @@ static BOOL xf_sw_end_paint(rdpContext* context)
 			}
 
 			XFlush(xfc->display);
-			xf_unlock_x11(xfc, FALSE);
+			xf_unlock_x11(xfc);
 		}
 	}
 	else
@@ -357,9 +357,9 @@ static BOOL xf_sw_end_paint(rdpContext* context)
 		if (gdi->primary->hdc->hwnd->invalid->null)
 			return TRUE;
 
-		xf_lock_x11(xfc, FALSE);
+		xf_lock_x11(xfc);
 		xf_rail_paint(xfc, x, y, x + w, y + h);
-		xf_unlock_x11(xfc, FALSE);
+		xf_unlock_x11(xfc);
 	}
 
 	gdi->primary->hdc->hwnd->invalid->null = TRUE;
@@ -373,7 +373,7 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings = context->settings;
 	BOOL ret = FALSE;
-	xf_lock_x11(xfc, TRUE);
+	xf_lock_x11(xfc);
 
 	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
 		goto out;
@@ -395,7 +395,7 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 	xfc->image->bitmap_bit_order = LSBFirst;
 	ret = xf_desktop_resize(context);
 out:
-	xf_unlock_x11(xfc, TRUE);
+	xf_unlock_x11(xfc);
 	return ret;
 }
 
@@ -419,9 +419,9 @@ static BOOL xf_hw_end_paint(rdpContext* context)
 			y = xfc->hdc->hwnd->invalid->y;
 			w = xfc->hdc->hwnd->invalid->w;
 			h = xfc->hdc->hwnd->invalid->h;
-			xf_lock_x11(xfc, FALSE);
+			xf_lock_x11(xfc);
 			xf_draw_screen(xfc, x, y, w, h);
-			xf_unlock_x11(xfc, FALSE);
+			xf_unlock_x11(xfc);
 		}
 		else
 		{
@@ -434,7 +434,7 @@ static BOOL xf_hw_end_paint(rdpContext* context)
 
 			ninvalid = xfc->hdc->hwnd->ninvalid;
 			cinvalid = xfc->hdc->hwnd->cinvalid;
-			xf_lock_x11(xfc, FALSE);
+			xf_lock_x11(xfc);
 
 			for (i = 0; i < ninvalid; i++)
 			{
@@ -446,7 +446,7 @@ static BOOL xf_hw_end_paint(rdpContext* context)
 			}
 
 			XFlush(xfc->display);
-			xf_unlock_x11(xfc, FALSE);
+			xf_unlock_x11(xfc);
 		}
 	}
 	else
@@ -458,9 +458,9 @@ static BOOL xf_hw_end_paint(rdpContext* context)
 		y = xfc->hdc->hwnd->invalid->y;
 		w = xfc->hdc->hwnd->invalid->w;
 		h = xfc->hdc->hwnd->invalid->h;
-		xf_lock_x11(xfc, FALSE);
+		xf_lock_x11(xfc);
 		xf_rail_paint(xfc, x, y, x + w, y + h);
-		xf_unlock_x11(xfc, FALSE);
+		xf_unlock_x11(xfc);
 	}
 
 	xfc->hdc->hwnd->invalid->null = TRUE;
@@ -474,14 +474,14 @@ static BOOL xf_hw_desktop_resize(rdpContext* context)
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings = context->settings;
 	BOOL ret = FALSE;
-	xf_lock_x11(xfc, TRUE);
+	xf_lock_x11(xfc);
 
 	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
 		goto out;
 
 	ret = xf_desktop_resize(context);
 out:
-	xf_unlock_x11(xfc, TRUE);
+	xf_unlock_x11(xfc);
 	return ret;
 }
 
@@ -496,7 +496,7 @@ static BOOL xf_process_x_events(freerdp* instance)
 
 	while (pending_status)
 	{
-		xf_lock_x11(xfc, FALSE);
+		xf_lock_x11(xfc);
 		pending_status = XPending(xfc->display);
 
 		if (pending_status)
@@ -505,7 +505,7 @@ static BOOL xf_process_x_events(freerdp* instance)
 			XNextEvent(xfc->display, &xevent);
 			status = xf_event_process(instance, &xevent);
 		}
-		xf_unlock_x11(xfc, FALSE);
+		xf_unlock_x11(xfc);
 		if (!status)
 			break;
 	}
@@ -799,38 +799,31 @@ void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp)
 	xfc->encomsp = NULL;
 }
 
-void xf_lock_x11(xfContext* xfc, BOOL display)
+void xf_lock_x11_(xfContext* xfc, const char* fkt)
 {
-	if (!xfc->UseXThreads)
-	{
-		WaitForSingleObject(xfc->mutex, INFINITE);
-	}
-	else
-	{
-		if (display)
-			XLockDisplay(xfc->display);
-	}
-	if (xfc->locked)
-		WLog_WARN(TAG, "X11 trying to lock although already locked!");
 
-	xfc->locked = TRUE;
+	if (!xfc->UseXThreads)
+		WaitForSingleObject(xfc->mutex, INFINITE);
+	else
+		XLockDisplay(xfc->display);
+
+	if (xfc->locked)
+		WLog_WARN(TAG, "%s:\t[%" PRIu32 "] recursive lock from %s", __FUNCTION__, xfc->locked, fkt);
+	xfc->locked++;
+	WLog_VRB(TAG, "%s:\t[%" PRIu32 "] from %s", __FUNCTION__, xfc->locked, fkt);
 }
 
-void xf_unlock_x11(xfContext* xfc, BOOL display)
+void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 {
-	if (!xfc->locked)
+	if (xfc->locked == 0)
 		WLog_WARN(TAG, "X11: trying to unlock although not locked!");
 
+	WLog_VRB(TAG, "%s:\t[%" PRIu32 "] from %s", __FUNCTION__, xfc->locked - 1, fkt);
 	if (!xfc->UseXThreads)
-	{
 		ReleaseMutex(xfc->mutex);
-	}
 	else
-	{
-		if (display)
-			XUnlockDisplay(xfc->display);
-	}
-	xfc->locked = FALSE;
+		XUnlockDisplay(xfc->display);
+	xfc->locked--;
 }
 
 static BOOL xf_get_pixmap_info(xfContext* xfc)
@@ -1427,17 +1420,17 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 				{
 					do
 					{
-						xf_lock_x11(xfc, FALSE);
+						xf_lock_x11(xfc);
 						pending_status = XPending(xfc->display);
-						xf_unlock_x11(xfc, FALSE);
+						xf_unlock_x11(xfc);
 
 						if (pending_status)
 						{
-							xf_lock_x11(xfc, FALSE);
+							xf_lock_x11(xfc);
 							ZeroMemory(&xevent, sizeof(xevent));
 							XNextEvent(xfc->display, &xevent);
 							process_status = xf_event_process(instance, &xevent);
-							xf_unlock_x11(xfc, FALSE);
+							xf_unlock_x11(xfc);
 
 							if (!process_status)
 								break;
