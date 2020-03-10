@@ -42,12 +42,14 @@
 #define TARGET_SEAT_INTERFACE 5U
 #define TARGET_XDG_VERSION 5U /* The version of xdg-shell that we implement */
 
+#if !defined(NDEBUG)
 static const char* event_names[] = {
 	"new seat",      "removed seat",      "new output",      "configure",    "pointer enter",
 	"pointer leave", "pointer motion",    "pointer buttons", "pointer axis", "keyboard enter",
 	"key",           "touch frame begin", "touch up",        "touch down",   "touch motion",
 	"touch cancel",  "touch frame end",   "frame done",      "close",        NULL
 };
+#endif
 
 static bool uwac_default_error_handler(UwacDisplay* display, UwacReturnCode code, const char* msg,
                                        ...)
