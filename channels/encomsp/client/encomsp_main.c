@@ -1262,7 +1262,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unhandled event type %" PRIu32 "", event);
+			break;
 	}
 
 	if (error && encomsp->rdpcontext)
