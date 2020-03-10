@@ -869,9 +869,9 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 	{
 		UINT32 DstSize = 0;
 		BYTE* pDstData = NULL;
-		UINT32 SrcSize = compressedLength - 18;
+		UINT16 SrcSize = compressedLength - 18;
 
-		if (Stream_GetRemainingLength(s) < (size_t)SrcSize)
+		if ((compressedLength < 18) || (Stream_GetRemainingLength(s) < SrcSize))
 		{
 			WLog_ERR(TAG, "bulk_decompress: not enough bytes for compressedLength %" PRIu16 "",
 			         compressedLength);
