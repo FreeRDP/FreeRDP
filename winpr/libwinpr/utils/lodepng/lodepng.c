@@ -3020,12 +3020,6 @@ size_t lodepng_get_raw_size(unsigned w, unsigned h, const LodePNGColorMode* colo
 	return (w * h * lodepng_get_bpp(color) + 7) / 8;
 }
 
-static size_t lodepng_get_raw_size_lct(unsigned w, unsigned h, LodePNGColorType colortype,
-                                       unsigned bitdepth)
-{
-	return (w * h * lodepng_get_bpp_lct(colortype, bitdepth) + 7) / 8;
-}
-
 #ifdef LODEPNG_COMPILE_PNG
 #ifdef LODEPNG_COMPILE_DECODER
 /*in an idat chunk, each scanline is a multiple of 8 bits, unlike the lodepng output buffer*/
@@ -3275,13 +3269,6 @@ unsigned lodepng_info_copy(LodePNGInfo* dest, const LodePNGInfo* source)
 	CERROR_TRY_RETURN(LodePNGUnknownChunks_copy(dest, source));
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
 	return 0;
-}
-
-static void lodepng_info_swap(LodePNGInfo* a, LodePNGInfo* b)
-{
-	LodePNGInfo temp = *a;
-	*a = *b;
-	*b = temp;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
