@@ -218,7 +218,7 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 
 			ev.channel_id = channelId;
 			ev.channel_name = channel_name;
-			ev.data = (const BYTE*)data;
+			ev.data = data;
 			ev.data_len = size;
 
 			if (!pf_modules_run_filter(FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA, pdata, &ev))
