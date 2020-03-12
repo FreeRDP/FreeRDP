@@ -160,8 +160,8 @@ BOOL pf_modules_run_filter(PF_FILTER_TYPE type, proxyData* pdata, void* param)
 		if (!result)
 		{
 			/* current filter return FALSE, no need to run other filters. */
-			WLog_INFO(TAG, "plugin %s, filter type [%s] returned FALSE", plugin->name,
-			          pf_modules_get_filter_type_string(type));
+			WLog_DBG(TAG, "plugin %s, filter type [%s] returned FALSE", plugin->name,
+			         pf_modules_get_filter_type_string(type));
 			return result;
 		}
 	}
@@ -182,6 +182,7 @@ static BOOL pf_modules_set_plugin_data(const char* plugin_name, proxyData* pdata
 		const char* ccp;
 		char* cp;
 	} ccharconv;
+
 	assert(plugin_name);
 
 	ccharconv.ccp = plugin_name;
