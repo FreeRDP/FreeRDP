@@ -82,8 +82,11 @@ static BOOL is_all_required_modules_loaded(proxyConfig* config)
 int main(int argc, char* argv[])
 {
 	proxyConfig* config = NULL;
-	const char* config_path = "config.ini";
+	char* config_path = "config.ini";
 	int status = -1;
+
+	if (argc >= 2)
+		config_path = argv[1];
 
 	pf_server_register_signal_handlers();
 
