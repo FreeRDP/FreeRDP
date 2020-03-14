@@ -2559,7 +2559,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 								settings->GfxCapsFilter = (UINT32)v;
 						}
 						else if (_strnicmp("AVC420", val, 7) != 0)
-
 							rc = COMMAND_LINE_ERROR;
 					}
 				}
