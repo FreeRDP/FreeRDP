@@ -216,6 +216,15 @@ void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
  * @param credssp
  */
 
+static BOOL is_empty(const char* str)
+{
+	if (!str)
+		return TRUE;
+	if (strlen(str) == 0)
+		return TRUE;
+	return FALSE;
+}
+
 static int nla_client_init(rdpNla* nla)
 {
 	char* spn;
@@ -231,13 +240,13 @@ static int nla_client_init(rdpNla* nla)
 	if (settings->RestrictedAdminModeRequired)
 		settings->DisableCredentialsDelegation = TRUE;
 
-	if ((!settings->Username) || (!strlen(settings->Username)) ||
-	    ((!settings->Password) && (!settings->RedirectionPassword)))
+	if (is_empty(settings->Username) ||
+	    (is_empty(settings->Password) && is_empty(settings->RedirectionPassword)))
 	{
 		PromptPassword = TRUE;
 	}
 
-	if (PromptPassword && settings->Username && strlen(settings->Username))
+	if (PromptPassword && !is_empty(settings->Username))
 	{
 		sam = SamOpen(NULL, TRUE);
 
@@ -265,7 +274,7 @@ static int nla_client_init(rdpNla* nla)
 	{
 		if (settings->RestrictedAdminModeRequired)
 		{
-			if ((settings->PasswordHash) && (strlen(settings->PasswordHash) > 0))
+			if (!is_empty(settings->PasswordHash))
 				PromptPassword = FALSE;
 		}
 	}
