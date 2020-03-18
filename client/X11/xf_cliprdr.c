@@ -1668,6 +1668,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	int i, n = 0;
 	rdpChannels* channels;
 	xfClipboard* clipboard;
+	const char* selectionAtom;
 
 	if (!(clipboard = (xfClipboard*)calloc(1, sizeof(xfClipboard))))
 	{
@@ -1682,11 +1683,14 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	clipboard->system = ClipboardCreate();
 	clipboard->requestedFormatId = -1;
 	clipboard->root_window = DefaultRootWindow(xfc->display);
-	clipboard->clipboard_atom = XInternAtom(xfc->display, "CLIPBOARD", FALSE);
+	selectionAtom = "CLIPBOARD";
+	if (xfc->context.settings->XSelectionAtom)
+		selectionAtom = xfc->context.settings->XSelectionAtom;
+	clipboard->clipboard_atom = XInternAtom(xfc->display, selectionAtom, FALSE);
 
 	if (clipboard->clipboard_atom == None)
 	{
-		WLog_ERR(TAG, "unable to get CLIPBOARD atom");
+		WLog_ERR(TAG, "unable to get %s atom", selectionAtom);
 		goto error;
 	}
 
