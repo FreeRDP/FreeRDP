@@ -346,7 +346,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->KeyboardSubType = 0;
 	settings->KeyboardFunctionKey = 12;
 	settings->KeyboardLayout = 0;
-	settings->KeyboardHook = 2;
+	settings->KeyboardHook = KEYBOARD_HOOK_FULLSCREEN_ONLY;
 	settings->UseRdpSecurityLayer = FALSE;
 	settings->SaltedChecksum = TRUE;
 	settings->ServerPort = 3389;
