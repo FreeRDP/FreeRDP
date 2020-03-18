@@ -226,7 +226,7 @@ BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* c
 	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH))
 		return FALSE;
 
-	Stream_Write_UINT16(s, CMDTYPE_STREAM_SURFACE_BITS);
+	Stream_Write_UINT16(s, CMDTYPE_SET_SURFACE_BITS);
 	Stream_Write_UINT16(s, cmd->destLeft);
 	Stream_Write_UINT16(s, cmd->destTop);
 	Stream_Write_UINT16(s, cmd->destRight);
