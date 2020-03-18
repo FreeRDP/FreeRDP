@@ -2326,7 +2326,36 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "clipboard")
 		{
-			settings->RedirectClipboard = enable;
+			if (arg->Value == BoolValueTrue || arg->Value == BoolValueFalse)
+			{
+				settings->RedirectClipboard = (arg->Value == BoolValueTrue);
+			}
+			else
+			{
+				int rc = 0;
+				char** p;
+				size_t count, x;
+				p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+				for (x = 0; (x < count) && (rc == 0); x++)
+				{
+					const char usesel[14] = "use-selection:";
+
+					const char* cur = p[x];
+					if (_strnicmp(usesel, cur, sizeof(usesel)) == 0)
+					{
+						const char* val = &cur[sizeof(usesel)];
+						if (!copy_value(val, &settings->XSelectionAtom))
+							rc = COMMAND_LINE_ERROR_MEMORY;
+						settings->RedirectClipboard = TRUE;
+					}
+					else
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
+				free(p);
+
+				if (rc)
+					return rc;
+			}
 		}
 		CommandLineSwitchCase(arg, "shell")
 		{

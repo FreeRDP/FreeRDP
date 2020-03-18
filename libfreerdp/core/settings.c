@@ -610,6 +610,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings_load_hkey_local_machine(settings);
 
 	settings->ActionScript = _strdup("~/.config/freerdp/action.sh");
+	settings->XSelectionAtom = NULL;
 	settings->SmartcardLogon = FALSE;
 	settings->TlsSecLevel = 1;
 	settings->OrderSupport = calloc(1, 32);
@@ -656,6 +657,8 @@ static void freerdp_settings_free_internal(rdpSettings* settings)
 	/* Extensions */
 	free(settings->ActionScript);
 	settings->ActionScript = NULL;
+	free(settings->XSelectionAtom);
+	settings->XSelectionAtom = NULL;
 
 	/* Free all strings, set other pointers NULL */
 	freerdp_settings_free_keys(settings, TRUE);
@@ -983,6 +986,8 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 
 	if (settings->ActionScript)
 		_settings->ActionScript = _strdup(settings->ActionScript);
+	if (settings->XSelectionAtom)
+		_settings->XSelectionAtom = _strdup(settings->XSelectionAtom);
 	rc = TRUE;
 out_fail:
 	return rc;
@@ -1024,6 +1029,7 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	_settings->StaticChannelArray = NULL;
 	_settings->DynamicChannelArray = NULL;
 	_settings->ActionScript = NULL;
+	_settings->XSelectionAtom = NULL;
 	if (!rc)
 		goto out_fail;
 
