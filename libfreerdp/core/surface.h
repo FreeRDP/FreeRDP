@@ -28,13 +28,6 @@
 #define SURFCMD_SURFACE_BITS_HEADER_LENGTH 22
 #define SURFCMD_FRAME_MARKER_LENGTH 8
 
-enum SURFCMD_CMDTYPE
-{
-	CMDTYPE_SET_SURFACE_BITS = 0x0001,
-	CMDTYPE_FRAME_MARKER = 0x0004,
-	CMDTYPE_STREAM_SURFACE_BITS = 0x0006
-};
-
 FREERDP_LOCAL int update_recv_surfcmds(rdpUpdate* update, wStream* s);
 
 FREERDP_LOCAL BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* cmd);

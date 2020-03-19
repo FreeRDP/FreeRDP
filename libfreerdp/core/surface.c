@@ -85,13 +85,14 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 	return TRUE;
 }
 
-static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s)
+static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT16 cmdType)
 {
 	SURFACE_BITS_COMMAND cmd = { 0 };
 
 	if (Stream_GetRemainingLength(s) < 8)
 		goto fail;
 
+	cmd.cmdType = cmdType;
 	Stream_Read_UINT16(s, cmd.destLeft);
 	Stream_Read_UINT16(s, cmd.destTop);
 	Stream_Read_UINT16(s, cmd.destRight);
@@ -148,7 +149,7 @@ int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 		{
 			case CMDTYPE_SET_SURFACE_BITS:
 			case CMDTYPE_STREAM_SURFACE_BITS:
-				if (!update_recv_surfcmd_surface_bits(update, s))
+				if (!update_recv_surfcmd_surface_bits(update, s, cmdType))
 					return -1;
 
 				break;
@@ -226,7 +227,18 @@ BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* c
 	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH))
 		return FALSE;
 
-	Stream_Write_UINT16(s, CMDTYPE_STREAM_SURFACE_BITS);
+	switch (cmd->cmdType)
+	{
+		case CMDTYPE_SET_SURFACE_BITS:
+		case CMDTYPE_STREAM_SURFACE_BITS:
+			break;
+		default:
+			WLog_ERR(TAG, "%s SURFACE_BITS_COMMAND->cmdType 0x%08" PRIx32 " not allowed.",
+			         cmd->cmdType);
+			return FALSE;
+	}
+
+	Stream_Write_UINT16(s, cmd->cmdType);
 	Stream_Write_UINT16(s, cmd->destLeft);
 	Stream_Write_UINT16(s, cmd->destTop);
 	Stream_Write_UINT16(s, cmd->destRight);
