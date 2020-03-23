@@ -2434,6 +2434,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->DisableThemes = !enable;
 		}
+		CommandLineSwitchCase(arg, "timeout")
+		{
+			ULONGLONG val;
+			if (!value_to_uint(arg->Value, &val, 1, 600000))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			settings->TcpAckTimeout = (UINT32)val;
+		}
 		CommandLineSwitchCase(arg, "aero")
 		{
 			settings->AllowDesktopComposition = enable;
