@@ -1992,9 +1992,7 @@ rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags)
 
 	return file;
 fail:
-	free(file->argv);
-	free(file->lines);
-	free(file);
+	freerdp_client_rdp_file_free(file);
 	return NULL;
 }
 void freerdp_client_rdp_file_free(rdpFile* file)
@@ -2010,18 +2008,16 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 				free(file->lines[i].name);
 				free(file->lines[i].sValue);
 			}
-
-			free(file->lines);
 		}
+		free(file->lines);
 
 		if (file->argv)
 		{
 			size_t i;
 			for (i = 0; i < file->argc; i++)
 				free(file->argv[i]);
-
-			free(file->argv);
 		}
+		free(file->argv);
 
 		freerdp_client_file_string_check_free(file->Username);
 		freerdp_client_file_string_check_free(file->Domain);
