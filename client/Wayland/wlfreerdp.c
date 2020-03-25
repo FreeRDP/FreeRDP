@@ -352,6 +352,24 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 				break;
 
+			case UWAC_EVENT_TOUCH_UP:
+				if(!wlf_handle_touch_up(instance, &event.touchUp))
+					return FALSE;
+
+				break;
+
+			case UWAC_EVENT_TOUCH_DOWN:
+				if(!wlf_handle_touch_down(instance, &event.touchDown))
+					return FALSE;
+
+				break;
+
+			case UWAC_EVENT_TOUCH_MOTION:
+				if(!wlf_handle_touch_motion(instance, &event.touchMotion))
+					return FALSE;
+
+				break;
+
 			case UWAC_EVENT_KEYBOARD_ENTER:
 				if (instance->context->settings->GrabKeyboard)
 					UwacSeatInhibitShortcuts(event.keyboard_enter_leave.seat, true);

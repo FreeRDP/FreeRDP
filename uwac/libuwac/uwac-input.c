@@ -495,8 +495,12 @@ static void touch_handle_down(void* data, struct wl_touch* wl_touch, uint32_t se
 
 	tdata->seat = seat;
 	tdata->id = id;
-	tdata->x = x_w;
-	tdata->y = y_w;
+
+	float sx = wl_fixed_to_double(x_w);
+	float sy = wl_fixed_to_double(y_w);
+
+	tdata->x = sx;
+	tdata->y = sy;
 
 #if 0
 	struct widget *widget;
@@ -597,8 +601,12 @@ static void touch_handle_motion(void* data, struct wl_touch* wl_touch, uint32_t 
 
 	tdata->seat = seat;
 	tdata->id = id;
-	tdata->x = x_w;
-	tdata->y = y_w;
+
+	float sx = wl_fixed_to_double(x_w);
+	float sy = wl_fixed_to_double(y_w);
+
+	tdata->x = sx;
+	tdata->y = sy;
 
 #if 0
 	struct touch_point *tp;
