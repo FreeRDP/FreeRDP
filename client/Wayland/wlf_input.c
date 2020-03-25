@@ -22,9 +22,25 @@
 #include <linux/input.h>
 
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/client/rdpei.h>
+#include <uwac/uwac.h>
 
 #include "wlfreerdp.h"
 #include "wlf_input.h"
+
+#define TAG CLIENT_TAG("wayland.input")
+
+#define MAX_CONTACTS 10
+
+typedef struct touch_contact
+{
+	int id;
+	double pos_x;
+	double pos_y;
+	BOOL emulate_mouse;
+} touchContact;
+
+static touchContact contacts[MAX_CONTACTS];
 
 BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEvent* ev)
 {
@@ -190,4 +206,156 @@ BOOL wlf_keyboard_enter(freerdp* instance, const UwacKeyboardEnterLeaveEvent* ev
 	input = instance->input;
 	return freerdp_input_send_focus_in_event(input, 0) &&
 	       freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, 0, 0);
+}
+
+BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
+{
+	uint32_t x, y;
+	int i;
+	int touchId;
+	int contactId;
+
+	if (!instance || !ev || !instance->context)
+		return FALSE;
+
+	touchId = ev->id;
+
+	for (i = 0; i < MAX_CONTACTS; i++)
+	{
+		if (contacts[i].id == touchId)
+		{
+			contacts[i].id = 0;
+			x = contacts[i].pos_x;
+			y = contacts[i].pos_y;
+			break;
+		}
+	}
+
+	WLog_DBG(TAG, "%s called | event_id: %u | x: %u / y: %u", __FUNCTION__, touchId, x, y);
+
+	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
+		return FALSE;
+
+	RdpeiClientContext* rdpei = ((wlfContext*) instance->context)->rdpei;
+
+	if (contacts[i].emulate_mouse == TRUE)
+	{
+		UINT16 flags = 0;
+		flags |= PTR_FLAGS_BUTTON1;
+
+		if ((flags & ~PTR_FLAGS_DOWN) != 0)
+			return freerdp_input_send_mouse_event(instance->input, flags, x, y);
+
+		return TRUE;
+	}
+
+	if (!rdpei)
+		return FALSE;
+
+	rdpei->TouchEnd(rdpei, touchId, x, y, &contactId);
+
+	return TRUE;
+}
+
+BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
+{
+	uint32_t x, y;
+	int i;
+	int touchId;
+	int contactId;
+	wlfContext* context;
+
+	if (!instance || !ev || !instance->context)
+		return FALSE;
+
+	x = ev->x;
+	y = ev->y;
+	touchId = ev->id;
+
+	WLog_DBG(TAG, "%s called | event_id: %u | x: %u / y: %u", __FUNCTION__, touchId, x, y);
+
+	for (i = 0; i < MAX_CONTACTS; i++)
+	{
+		if (contacts[i].id == 0)
+		{
+			contacts[i].id = touchId;
+			contacts[i].pos_x = x;
+			contacts[i].pos_y = y;
+			contacts[i].emulate_mouse = FALSE;
+			break;
+		}
+	}
+
+	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
+		return FALSE;
+
+	context = (wlfContext*)instance->context;
+	RdpeiClientContext* rdpei = ((wlfContext*) instance->context)->rdpei;
+
+	// Emulate mouse click if touch is not possible, like in login screen
+	if (!rdpei)
+	{
+		contacts[i].emulate_mouse = TRUE;
+
+		UINT16 flags = 0;
+		flags |= PTR_FLAGS_DOWN;
+		flags |= PTR_FLAGS_BUTTON1;
+
+		if ((flags & ~PTR_FLAGS_DOWN) != 0)
+			return freerdp_input_send_mouse_event(instance->input, flags, x, y);
+
+		return FALSE;
+	}
+
+	rdpei->TouchBegin(rdpei, touchId, x, y, &contactId);
+
+	return TRUE;
+}
+
+BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
+{
+	uint32_t x, y;
+	int i;
+	int touchId;
+	int contactId;
+
+	if (!instance || !ev || !instance->context)
+		return FALSE;
+
+	x = ev->x;
+	y = ev->y;
+	touchId = ev->id;
+
+	for (i = 0; i < MAX_CONTACTS; i++)
+	{
+		if (contacts[i].id == touchId)
+		{
+			if(contacts[i].pos_x == x && contacts[i].pos_y == y)
+			{
+				return TRUE;
+			}
+			contacts[i].pos_x = x;
+			contacts[i].pos_y = y;
+			break;
+		}
+	}
+
+	WLog_DBG(TAG, "%s called | event_id: %u | x: %u / y: %u", __FUNCTION__, touchId, x, y);
+
+	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
+		return FALSE;
+
+	RdpeiClientContext* rdpei = ((wlfContext*) instance->context)->rdpei;
+
+	if (contacts[i].emulate_mouse == TRUE)
+	{
+		return TRUE;
+	}
+
+	if (!rdpei)
+		return FALSE;
+
+	rdpei->TouchUpdate(rdpei, touchId, x, y, &contactId);
+
+	return TRUE;
 }
