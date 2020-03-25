@@ -1171,6 +1171,8 @@ SecurityFunctionTableW SSPI_SecurityFunctionTableW =
 	SetContextAttributes, /* SetContextAttributes */
 };
 
+#endif
+
 const char* GetSecurityStatusString(SECURITY_STATUS status)
 {
 	switch (status)
@@ -1430,5 +1432,3 @@ const char* GetSecurityStatusString(SECURITY_STATUS status)
 
 	return "SEC_E_UNKNOWN";
 }
-
-#endif
