@@ -38,6 +38,9 @@
 #define STATUS_ACCOUNT_LOCKED_OUT					((NTSTATUS)0xC0000234L)
 #define STATUS_ACCOUNT_EXPIRED						((NTSTATUS)0xC0000193L)
 #define STATUS_LOGON_TYPE_NOT_GRANTED					((NTSTATUS)0xC000015BL)
+
+#else
+#include <wincred.h>
 #endif
 
 #endif /* WINPR_NT_H */
