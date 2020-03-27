@@ -2671,7 +2671,7 @@ LONG smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, const
 
 	Stream_Write_UINT32(s, ret->dwState);    /* dwState (4 bytes) */
 	Stream_Write_UINT32(s, ret->dwProtocol); /* dwProtocol (4 bytes) */
-	Stream_Write(s, ret->pbAtr, 32);         /* pbAtr (32 bytes) */
+	Stream_Write(s, ret->pbAtr, sizeof(ret->pbAtr)); /* pbAtr (32 bytes) */
 	Stream_Write_UINT32(s, ret->cbAtrLen);   /* cbAtrLen (4 bytes) */
 	return smartcard_ndr_write(s, ret->mszReaderNames, size, 1, NDR_PTR_SIMPLE);
 }
