@@ -211,7 +211,8 @@ static LONG smartcard_EstablishContext_Decode(SMARTCARD_DEVICE* smartcard,
 	if (!call)
 		return STATUS_NO_MEMORY;
 
-	if ((status = smartcard_unpack_establish_context_call(smartcard, irp->input, call)))
+	status = smartcard_unpack_establish_context_call(smartcard, irp->input, call);
+	if (status != SCARD_S_SUCCESS)
 	{
 		return log_status_error(TAG, "smartcard_unpack_establish_context_call", status);
 	}
@@ -255,7 +256,8 @@ static LONG smartcard_EstablishContext_Call(SMARTCARD_DEVICE* smartcard,
 
 	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), hContext);
 
-	if ((status = smartcard_pack_establish_context_return(smartcard, irp->output, &ret)))
+	status = smartcard_pack_establish_context_return(smartcard, irp->output, &ret);
+	if (status != SCARD_S_SUCCESS)
 	{
 		return log_status_error(TAG, "smartcard_pack_establish_context_return", status);
 	}
@@ -274,7 +276,8 @@ static LONG smartcard_ReleaseContext_Decode(SMARTCARD_DEVICE* smartcard,
 	if (!call)
 		return STATUS_NO_MEMORY;
 
-	if ((status = smartcard_unpack_context_call(smartcard, irp->input, call, "ReleaseContext")))
+	status = smartcard_unpack_context_call(smartcard, irp->input, call, "ReleaseContext");
+	if (status != SCARD_S_SUCCESS)
 		log_status_error(TAG, "smartcard_unpack_context_call", status);
 
 	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
@@ -538,7 +541,7 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 		call->mszGroups = NULL;
 	}
 
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 	{
 		return log_status_error(TAG, "SCardListReadersA", status);
 	}
@@ -547,7 +550,8 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	ret.msz = (BYTE*)mszReaders;
 	ret.cBytes = cchReaders;
 
-	if ((status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret, FALSE)))
+	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret, FALSE);
+	if (status != SCARD_S_SUCCESS)
 	{
 		return log_status_error(TAG, "smartcard_pack_list_readers_return", status);
 	}
@@ -1069,7 +1073,8 @@ static LONG smartcard_GetTransmitCount_Call(SMARTCARD_DEVICE* smartcard,
 
 	ret.ReturnCode = SCardGetTransmitCount(operation->hContext, &ret.cTransmitCount);
 	log_status_error(TAG, "SCardGetTransmitCount", ret.ReturnCode);
-	if ((status = smartcard_pack_get_transmit_count_return(smartcard, irp->output, &ret)))
+	status = smartcard_pack_get_transmit_count_return(smartcard, irp->output, &ret);
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	return ret.ReturnCode;
@@ -1101,7 +1106,7 @@ static LONG smartcard_GetReaderIcon_Call(SMARTCARD_DEVICE* smartcard,
 	free(call->szReaderName);
 	status = smartcard_pack_get_reader_icon_return(smartcard, irp->output, &ret);
 	SCardFreeMemory(operation->hContext, ret.pbData);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	return ret.ReturnCode;
@@ -1121,7 +1126,7 @@ static LONG smartcard_GetDeviceTypeId_Call(SMARTCARD_DEVICE* smartcard,
 	free(call->szReaderName);
 
 	status = smartcard_pack_device_type_id_return(smartcard, irp->output, &ret);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	return ret.ReturnCode;
@@ -1705,7 +1710,7 @@ static LONG smartcard_Transmit_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	free(call->pioSendPci);
 	free(call->pioRecvPci);
 
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 	return ret.ReturnCode;
 }
@@ -2179,10 +2184,12 @@ LONG smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard,
 	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
 	    (ioControlCode != SCARD_IOCTL_RELEASETARTEDEVENT))
 	{
-		if ((status = smartcard_unpack_common_type_header(smartcard, irp->input)))
+		status = smartcard_unpack_common_type_header(smartcard, irp->input);
+		if (status != SCARD_S_SUCCESS)
 			return status;
 
-		if ((status = smartcard_unpack_private_type_header(smartcard, irp->input)))
+		status = smartcard_unpack_private_type_header(smartcard, irp->input);
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 

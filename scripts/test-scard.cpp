@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Smartcard API test program
  *
- * This simple program can be used to trigger calls for (almose) the
+ * This simple program can be used to trigger calls for (almost) the
  * entire SCARD API.
  * Compile on windows, connect with FreeRDP via RDP with smartcard
  * redirection enabled and run this test program on the windows

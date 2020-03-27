@@ -1484,18 +1484,18 @@ static LONG smartcard_unpack_common_context_and_string_a(SMARTCARD_DEVICE* smart
 	LONG status;
 	UINT32 index = 0;
 	status = smartcard_unpack_redir_scard_context(smartcard, s, phContext, &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!smartcard_ndr_pointer_read(s, &index, NULL))
 		return ERROR_INVALID_DATA;
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, phContext);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_ndr_read_a(s, pszReaderName, NDR_PTR_FULL);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	smartcard_trace_context_and_string_call_a(__FUNCTION__, phContext, *pszReaderName);
@@ -1510,18 +1510,18 @@ static LONG smartcard_unpack_common_context_and_string_w(SMARTCARD_DEVICE* smart
 	UINT32 index = 0;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, phContext, &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!smartcard_ndr_pointer_read(s, &index, NULL))
 		return ERROR_INVALID_DATA;
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, phContext);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_ndr_read_w(s, pszReaderName, NDR_PTR_FULL);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	smartcard_trace_context_and_string_call_w(__FUNCTION__, phContext, *pszReaderName);
@@ -1995,7 +1995,7 @@ LONG smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 	UINT32 index = 0;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
@@ -2013,7 +2013,7 @@ LONG smartcard_unpack_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, wStre
 	UINT32 index = 0;
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
 
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 8)
@@ -2026,7 +2026,7 @@ LONG smartcard_unpack_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, wStre
 	Stream_Read_UINT32(s, call->cchGroups);       /* cchGroups (4 bytes) */
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
 
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	smartcard_trace_list_reader_groups_call(smartcard, call, unicode);
@@ -2063,7 +2063,7 @@ LONG smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	call->mszGroups = NULL;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 16)
@@ -2084,7 +2084,7 @@ LONG smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	if (mszGroupsNdrPtr)
 	{
 		status = smartcard_ndr_read(s, &call->mszGroups, call->cBytes, 1, NDR_PTR_SIMPLE);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
@@ -2123,7 +2123,7 @@ static LONG smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream
 	LONG status;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(common->hContext), index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 8)
@@ -2153,7 +2153,7 @@ LONG smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	}
 
 	status = smartcard_ndr_read_a(s, &call->szReader, NDR_PTR_FULL);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.hContext))))
@@ -2181,7 +2181,7 @@ LONG smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	}
 
 	status = smartcard_ndr_read_w(s, &call->szReader, NDR_PTR_FULL);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.hContext))))
@@ -2203,11 +2203,11 @@ LONG smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 		return ret->ReturnCode;
 
 	status = smartcard_pack_redir_scard_context(smartcard, s, &ret->hContext, &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_pack_redir_scard_handle(smartcard, s, &ret->hCard, &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
@@ -2215,7 +2215,7 @@ LONG smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 
 	Stream_Write_UINT32(s, ret->dwActiveProtocol); /* dwActiveProtocol (4 bytes) */
 	status = smartcard_pack_redir_scard_context_ref(smartcard, s, &ret->hContext);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 	return smartcard_pack_redir_scard_handle_ref(smartcard, s, &(ret->hCard));
 }
@@ -2226,11 +2226,11 @@ LONG smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Re
 	UINT32 index = 0;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 12)
@@ -2278,11 +2278,11 @@ LONG smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, wS
 	UINT32 index = 0;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 4)
@@ -2385,7 +2385,7 @@ static LONG smartcard_unpack_reader_state_a(wStream* s, LPSCARD_READERSTATEA* pp
 		LPSCARD_READERSTATEA readerState = &rgReaderStates[index];
 
 		status = smartcard_ndr_read_a(s, &readerState->szReader, NDR_PTR_FULL);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			goto fail;
 	}
 
@@ -2450,7 +2450,7 @@ static LONG smartcard_unpack_reader_state_w(wStream* s, LPSCARD_READERSTATEW* pp
 		LPSCARD_READERSTATEW readerState = &rgReaderStates[index];
 
 		status = smartcard_ndr_read_w(s, &readerState->szReader, NDR_PTR_FULL);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			goto fail;
 	}
 
@@ -2482,7 +2482,7 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 	call->rgReaderStates = NULL;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 12)
@@ -2503,7 +2503,7 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 	if (ndrPtr)
 	{
 		status = smartcard_unpack_reader_state_a(s, &call->rgReaderStates, call->cReaders, &index);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
@@ -2521,7 +2521,7 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 	call->rgReaderStates = NULL;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 12)
@@ -2542,7 +2542,7 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 	if (ndrPtr)
 	{
 		status = smartcard_unpack_reader_state_w(s, &call->rgReaderStates, call->cReaders, &index);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
@@ -2574,11 +2574,11 @@ LONG smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, State_
 	UINT32 index = 0;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 8)
@@ -2621,11 +2621,11 @@ LONG smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Statu
 	LONG status;
 	UINT32 index = 0;
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 12)
@@ -2682,11 +2682,11 @@ LONG smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, G
 	UINT32 index = 0;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 12)
@@ -2736,11 +2736,11 @@ LONG smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 	call->pvInBuffer = NULL;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 20)
@@ -2765,7 +2765,7 @@ LONG smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 	if (pvInBufferNdrPtr)
 	{
 		status = smartcard_ndr_read(s, &call->pvInBuffer, call->cbInBufferSize, 1, NDR_PTR_SIMPLE);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
@@ -2808,11 +2808,11 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 	call->pbSendBuffer = NULL;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 32)
@@ -2921,7 +2921,7 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 	if (pbSendBufferNdrPtr)
 	{
 		status = smartcard_ndr_read(s, &call->pbSendBuffer, call->cbSendLength, 1, NDR_PTR_SIMPLE);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
@@ -3079,7 +3079,7 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 	call->rgReaderStates = NULL;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 16)
@@ -3111,14 +3111,14 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 	if (rgAtrMasksNdrPtr)
 	{
 		status = smartcard_ndr_read_atrmask(s, &call->rgAtrMasks, call->cAtrs, NDR_PTR_SIMPLE);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
 	if (rgReaderStatesNdrPtr)
 	{
 		status = smartcard_unpack_reader_state_a(s, &call->rgReaderStates, call->cReaders, &index);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
@@ -3134,7 +3134,7 @@ LONG smartcard_unpack_context_and_two_strings_a_call(SMARTCARD_DEVICE* smartcard
 	UINT32 index = 0;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!smartcard_ndr_pointer_read(s, &index, &sz1NdrPtr))
@@ -3143,19 +3143,19 @@ LONG smartcard_unpack_context_and_two_strings_a_call(SMARTCARD_DEVICE* smartcard
 		return ERROR_INVALID_DATA;
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &call->hContext);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (sz1NdrPtr)
 	{
 		status = smartcard_ndr_read_a(s, &call->sz1, NDR_PTR_FULL);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	if (sz2NdrPtr)
 	{
 		status = smartcard_ndr_read_a(s, &call->sz2, NDR_PTR_FULL);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	smartcard_trace_context_and_two_strings_a_call(smartcard, call);
@@ -3169,7 +3169,7 @@ LONG smartcard_unpack_context_and_two_strings_w_call(SMARTCARD_DEVICE* smartcard
 	UINT32 sz1NdrPtr, sz2NdrPtr;
 	UINT32 index = 0;
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!smartcard_ndr_pointer_read(s, &index, &sz1NdrPtr))
@@ -3178,19 +3178,19 @@ LONG smartcard_unpack_context_and_two_strings_w_call(SMARTCARD_DEVICE* smartcard
 		return ERROR_INVALID_DATA;
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &call->hContext);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (sz1NdrPtr)
 	{
 		status = smartcard_ndr_read_w(s, &call->sz1, NDR_PTR_FULL);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	if (sz2NdrPtr)
 	{
 		status = smartcard_ndr_read_w(s, &call->sz2, NDR_PTR_FULL);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	smartcard_trace_context_and_two_strings_w_call(smartcard, call);
@@ -3204,7 +3204,7 @@ LONG smartcard_unpack_locate_cards_a_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	UINT32 sz1NdrPtr, sz2NdrPtr;
 	UINT32 index = 0;
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 16)
@@ -3224,13 +3224,13 @@ LONG smartcard_unpack_locate_cards_a_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	{
 		status =
 		    smartcard_ndr_read_fixed_string_a(s, &call->mszCards, call->cBytes, NDR_PTR_SIMPLE);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	if (sz2NdrPtr)
 	{
 		status = smartcard_unpack_reader_state_a(s, &call->rgReaderStates, call->cReaders, &index);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	smartcard_trace_locate_cards_a_call(smartcard, call);
@@ -3245,7 +3245,7 @@ LONG smartcard_unpack_locate_cards_w_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	UINT32 index = 0;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 16)
@@ -3265,13 +3265,13 @@ LONG smartcard_unpack_locate_cards_w_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	{
 		status =
 		    smartcard_ndr_read_fixed_string_w(s, &call->mszCards, call->cBytes, NDR_PTR_SIMPLE);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	if (sz2NdrPtr)
 	{
 		status = smartcard_unpack_reader_state_w(s, &call->rgReaderStates, call->cReaders, &index);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	smartcard_trace_locate_cards_w_call(smartcard, call);
@@ -3285,10 +3285,10 @@ LONG smartcard_unpack_set_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, S
 	UINT32 ndrPtr;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 12)
@@ -3303,7 +3303,7 @@ LONG smartcard_unpack_set_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, S
 		// TODO: call->cbAttrLen was larger than the pointer value.
 		// TODO: Maybe need to refine the checks?
 		status = smartcard_ndr_read(s, &call->pbAttr, 0, 1, NDR_PTR_SIMPLE);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	smartcard_trace_set_attrib_call(smartcard, call);
@@ -3320,7 +3320,7 @@ LONG smartcard_unpack_locate_cards_by_atr_w_call(SMARTCARD_DEVICE* smartcard, wS
 	call->rgReaderStates = NULL;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (Stream_GetRemainingLength(s) < 16)
@@ -3353,14 +3353,14 @@ LONG smartcard_unpack_locate_cards_by_atr_w_call(SMARTCARD_DEVICE* smartcard, wS
 	if (rgAtrMasksNdrPtr)
 	{
 		status = smartcard_ndr_read_atrmask(s, &call->rgAtrMasks, call->cAtrs, NDR_PTR_SIMPLE);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
 	if (rgReaderStatesNdrPtr)
 	{
 		status = smartcard_unpack_reader_state_w(s, &call->rgReaderStates, call->cReaders, &index);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
@@ -3380,7 +3380,7 @@ LONG smartcard_unpack_read_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 		return ERROR_INVALID_DATA;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Common.hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!smartcard_ndr_pointer_read(s, &index, &contextNdrPtr))
@@ -3396,18 +3396,18 @@ LONG smartcard_unpack_read_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	if (mszNdrPtr)
 	{
 		status = smartcard_ndr_read_a(s, &call->szLookupName, NDR_PTR_FULL);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &call->Common.hContext);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (contextNdrPtr)
 	{
 		status = smartcard_ndr_read_u(s, &call->Common.CardIdentifier);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	smartcard_trace_read_cache_a_call(smartcard, call);
@@ -3426,7 +3426,7 @@ LONG smartcard_unpack_read_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 		return ERROR_INVALID_DATA;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Common.hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!smartcard_ndr_pointer_read(s, &index, &contextNdrPtr))
@@ -3442,18 +3442,18 @@ LONG smartcard_unpack_read_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	if (mszNdrPtr)
 	{
 		status = smartcard_ndr_read_w(s, &call->szLookupName, NDR_PTR_FULL);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &call->Common.hContext);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (contextNdrPtr)
 	{
 		status = smartcard_ndr_read_u(s, &call->Common.CardIdentifier);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	smartcard_trace_read_cache_w_call(smartcard, call);
@@ -3473,7 +3473,7 @@ LONG smartcard_unpack_write_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s
 		return ERROR_INVALID_DATA;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Common.hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!smartcard_ndr_pointer_read(s, &index, &contextNdrPtr))
@@ -3492,19 +3492,19 @@ LONG smartcard_unpack_write_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s
 	if (mszNdrPtr)
 	{
 		status = smartcard_ndr_read_a(s, &call->szLookupName, NDR_PTR_FULL);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &call->Common.hContext);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	call->Common.CardIdentifier = NULL;
 	if (contextNdrPtr)
 	{
 		status = smartcard_ndr_read_u(s, &call->Common.CardIdentifier);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
@@ -3513,7 +3513,7 @@ LONG smartcard_unpack_write_cache_a_call(SMARTCARD_DEVICE* smartcard, wStream* s
 	{
 		status =
 		    smartcard_ndr_read(s, &call->Common.pbData, call->Common.cbDataLen, 1, NDR_PTR_SIMPLE);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	smartcard_trace_write_cache_a_call(smartcard, call);
@@ -3533,7 +3533,7 @@ LONG smartcard_unpack_write_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s
 		return ERROR_INVALID_DATA;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Common.hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!smartcard_ndr_pointer_read(s, &index, &contextNdrPtr))
@@ -3551,19 +3551,19 @@ LONG smartcard_unpack_write_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s
 	if (mszNdrPtr)
 	{
 		status = smartcard_ndr_read_w(s, &call->szLookupName, NDR_PTR_FULL);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &call->Common.hContext);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	call->Common.CardIdentifier = NULL;
 	if (contextNdrPtr)
 	{
 		status = smartcard_ndr_read_u(s, &call->Common.CardIdentifier);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 
@@ -3572,7 +3572,7 @@ LONG smartcard_unpack_write_cache_w_call(SMARTCARD_DEVICE* smartcard, wStream* s
 	{
 		status =
 		    smartcard_ndr_read(s, &call->Common.pbData, call->Common.cbDataLen, 1, NDR_PTR_SIMPLE);
-		if (status)
+		if (status != SCARD_S_SUCCESS)
 			return status;
 	}
 	smartcard_trace_write_cache_w_call(smartcard, call);
@@ -3586,11 +3586,11 @@ LONG smartcard_unpack_get_transmit_count_call(SMARTCARD_DEVICE* smartcard, wStre
 	UINT32 index = 0;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard), &index);
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	smartcard_trace_get_transmit_count_call(smartcard, call);
