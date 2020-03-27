@@ -28,6 +28,8 @@
 #include <winpr/stream.h>
 #include <winpr/smartcard.h>
 
+#pragma pack(push, 1)
+
 /* interface type_scard_pack */
 /* [unique][version][uuid] */
 
@@ -437,6 +439,8 @@ typedef struct _WriteCacheW_Call
 	/* [string] */ WCHAR* szLookupName;
 	WriteCache_Common Common;
 } WriteCacheW_Call;
+
+#pragma pack(pop)
 
 #define SMARTCARD_COMMON_TYPE_HEADER_LENGTH 8
 #define SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH 8
