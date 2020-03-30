@@ -3295,6 +3295,13 @@ LONG smartcard_unpack_set_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, S
 		return STATUS_BUFFER_TOO_SMALL;
 	Stream_Read_UINT32(s, call->dwAttrId);
 	Stream_Read_UINT32(s, call->cbAttrLen);
+
+	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+		return status;
+
+	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
+		return status;
+
 	if (!smartcard_ndr_pointer_read(s, &index, &ndrPtr))
 		return ERROR_INVALID_DATA;
 
@@ -3592,6 +3599,17 @@ LONG smartcard_unpack_get_transmit_count_call(SMARTCARD_DEVICE* smartcard, wStre
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard), &index);
 	if (status != SCARD_S_SUCCESS)
 		return status;
+
+	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	{
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
+		         status);
+		return status;
+	}
+
+	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
+		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %" PRId32 "",
+		         status);
 
 	smartcard_trace_get_transmit_count_call(smartcard, call);
 	return status;
