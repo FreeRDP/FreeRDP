@@ -43,9 +43,19 @@ static char* gdi_rect_str(char* buffer, size_t size, const HGDI_RECT rect)
 	          "[top/left=%" PRId32 "x%" PRId32 "-bottom/right%" PRId32 "x%" PRId32 "]", rect->top,
 	          rect->left, rect->bottom, rect->right);
 	if (size > 1)
-		buffer[size - 1] = '\0'
+		buffer[size - 1] = '\0';
 
-		    return buffer;
+	        return buffer;
+}
+
+static char* gdi_regn_str(char* buffer, size_t size, const HGDI_RGN rgn)
+{
+	_snprintf(buffer, size - 1, "[%" PRId32 "x%" PRId32 "-%" PRId32 "x%" PRId32 "]", rgn->x, rgn->y,
+	          rgn->w, rgn->h);
+	if (size > 1)
+		buffer[size - 1] = '\0';
+
+	return buffer;
 }
 
 /**
@@ -60,7 +70,20 @@ static char* gdi_rect_str(char* buffer, size_t size, const HGDI_RECT rect)
 
 HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, INT32 nBottomRect)
 {
-	HGDI_RGN hRgn = (HGDI_RGN)calloc(1, sizeof(GDI_RGN));
+	INT64 w, h;
+	HGDI_RGN hRgn;
+
+	w = nRightRect - nLeftRect + 1ll;
+	h = nBottomRect - nTopRect + 1ll;
+	if ((w < 0) || (h < 0) || (w > INT32_MAX) || (h > INT32_MAX))
+	{
+		WLog_ERR(TAG,
+		         "Can not create region top/left=%" PRId32 "x%" PRId32 "-bottom/right=%" PRId32
+		         "x%" PRId32,
+		         nTopRect, nLeftRect, nBottomRect, nRightRect);
+		return NULL;
+	}
+	hRgn = (HGDI_RGN)calloc(1, sizeof(GDI_RGN));
 
 	if (!hRgn)
 		return NULL;
@@ -68,8 +91,8 @@ HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, IN
 	hRgn->objectType = GDIOBJECT_REGION;
 	hRgn->x = nLeftRect;
 	hRgn->y = nTopRect;
-	hRgn->w = nRightRect - nLeftRect + 1;
-	hRgn->h = nBottomRect - nTopRect + 1;
+	hRgn->w = w;
+	hRgn->h = h;
 	hRgn->null = FALSE;
 	return hRgn;
 }
@@ -106,10 +129,24 @@ HGDI_RECT gdi_CreateRect(INT32 xLeft, INT32 yTop, INT32 xRight, INT32 yBottom)
 
 INLINE void gdi_RectToRgn(HGDI_RECT rect, HGDI_RGN rgn)
 {
+	INT64 w, h;
+	w = rect->right - rect->left + 1ll;
+	h = rect->bottom - rect->top + 1ll;
+
+	if ((w < 0) || (h < 0) || (w > INT32_MAX) || (h > INT32_MAX))
+	{
+		WLog_ERR(TAG,
+		         "Can not create region top/left=%" PRId32 "x%" PRId32 "-bottom/right=%" PRId32
+		         "x%" PRId32,
+		         rect->top, rect->left, rect->bottom, rect->right);
+		w = 0;
+		h = 0;
+	}
+
 	rgn->x = rect->left;
 	rgn->y = rect->top;
-	rgn->w = rect->right - rect->left + 1;
-	rgn->h = rect->bottom - rect->top + 1;
+	rgn->w = w;
+	rgn->h = h;
 }
 
 /**
@@ -123,10 +160,24 @@ INLINE void gdi_RectToRgn(HGDI_RECT rect, HGDI_RGN rgn)
 
 INLINE void gdi_CRectToRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, HGDI_RGN rgn)
 {
+	INT64 w, h;
+	w = right - left + 1ll;
+	h = bottom - top + 1ll;
+
+	if ((w < 0) || (h < 0) || (w > INT32_MAX) || (h > INT32_MAX))
+	{
+		WLog_ERR(TAG,
+		         "Can not create region top/left=%" PRId32 "x%" PRId32 "-bottom/right=%" PRId32
+		         "x%" PRId32,
+		         top, left, bottom, right);
+		w = 0;
+		h = 0;
+	}
+
 	rgn->x = left;
 	rgn->y = top;
-	rgn->w = right - left + 1;
-	rgn->h = bottom - top + 1;
+	rgn->w = w;
+	rgn->h = h;
 }
 
 /**
@@ -180,10 +231,24 @@ INLINE void gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, I
 INLINE void gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, INT32* x, INT32* y,
                             INT32* w, INT32* h)
 {
+	INT64 wl, hl;
+	wl = right - left + 1ll;
+	hl = bottom - top + 1ll;
+
+	if ((wl < 0) || (hl < 0) || (wl > INT32_MAX) || (hl > INT32_MAX))
+	{
+		WLog_ERR(TAG,
+		         "Can not create region top/left=%" PRId32 "x%" PRId32 "-bottom/right=%" PRId32
+		         "x%" PRId32,
+		         top, left, bottom, right);
+		w = 0;
+		h = 0;
+	}
+
 	*x = left;
 	*y = top;
-	*w = right - left + 1;
-	*h = bottom - top + 1;
+	*w = wl;
+	*h = hl;
 }
 
 /**
@@ -194,10 +259,21 @@ INLINE void gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, IN
 
 INLINE void gdi_RgnToRect(HGDI_RGN rgn, HGDI_RECT rect)
 {
+	INT64 r, b;
+	r = rgn->x + rgn->w - 1ll;
+	b = rgn->y + rgn->h - 1ll;
+
+	if ((r < INT32_MIN) || (r > INT32_MAX) || (b < INT32_MIN) || (b > INT32_MAX))
+	{
+		char buffer[256];
+		WLog_ERR(TAG, "Can not create region %s", gdi_regn_str(buffer, sizeof(buffer), rgn));
+		r = rgn->x;
+		b = rgn->y;
+	}
 	rect->left = rgn->x;
 	rect->top = rgn->y;
-	rect->right = rgn->x + rgn->w - 1;
-	rect->bottom = rgn->y + rgn->h - 1;
+	rect->right = r;
+	rect->bottom = b;
 }
 
 /**
@@ -247,6 +323,12 @@ INLINE void gdi_CRgnToRect(INT64 x, INT64 y, INT32 w, INT32 h, HGDI_RECT rect)
 
 INLINE void gdi_RgnToCRect(HGDI_RGN rgn, INT32* left, INT32* top, INT32* right, INT32* bottom)
 {
+	if ((rgn->w < 0) || (rgn->h < 0))
+	{
+		char buffer[256];
+		WLog_ERR(TAG, "Can not create region %s", gdi_regn_str(buffer, sizeof(buffer), rgn));
+	}
+
 	*left = rgn->x;
 	*top = rgn->y;
 	*right = rgn->x + rgn->w - 1;
