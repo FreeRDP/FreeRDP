@@ -215,7 +215,7 @@ static INLINE BOOL ensure_capacity(const BYTE* start, const BYTE* end, size_t si
 {
 	const size_t available = (uintptr_t)end - (uintptr_t)start;
 	const BOOL rc = available >= size * base;
-	return rc;
+	return rc && (start <= end);
 }
 
 static INLINE void write_pixel_8(BYTE* _buf, BYTE _pix)
