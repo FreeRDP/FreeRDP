@@ -334,6 +334,9 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case MEGA_MEGA_COLOR_IMAGE:
 				runLength = ExtractRunLength(code, pbSrc, &advance);
 				pbSrc = pbSrc + advance;
+				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
+					return FALSE;
+
 				UNROLL(runLength, {
 					SRCREADPIXEL(temp, pbSrc);
 					SRCNEXTPIXEL(pbSrc);
