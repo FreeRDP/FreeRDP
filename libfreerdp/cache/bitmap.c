@@ -214,7 +214,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index
 {
 	rdpBitmap* bitmap;
 
-	if (id > bitmapCache->maxCells)
+	if (id >= bitmapCache->maxCells)
 	{
 		WLog_ERR(TAG, "get invalid bitmap cell id: %" PRIu32 "", id);
 		return NULL;
@@ -271,7 +271,7 @@ void bitmap_cache_register_callbacks(rdpUpdate* update)
 
 rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 {
-	int i;
+	UINT32 i;
 	rdpBitmapCache* bitmapCache;
 	bitmapCache = (rdpBitmapCache*)calloc(1, sizeof(rdpBitmapCache));
 
@@ -288,7 +288,7 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 		goto fail;
 	bitmapCache->maxCells = settings->BitmapCacheV2NumCells;
 
-	for (i = 0; i < (int)bitmapCache->maxCells; i++)
+	for (i = 0; i < bitmapCache->maxCells; i++)
 	{
 		bitmapCache->cells[i].number = settings->BitmapCacheV2CellInfo[i].numEntries;
 		/* allocate an extra entry for BITMAP_CACHE_WAITING_LIST_INDEX */
@@ -302,26 +302,20 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 	return bitmapCache;
 fail:
 
-	if (bitmapCache->cells)
-	{
-		for (i = 0; i < (int)bitmapCache->maxCells; i++)
-			free(bitmapCache->cells[i].entries);
-	}
-
-	free(bitmapCache);
+	bitmap_cache_free(bitmapCache);
 	return NULL;
 }
 
 void bitmap_cache_free(rdpBitmapCache* bitmapCache)
 {
-	int i, j;
+	UINT32 i, j;
 	rdpBitmap* bitmap;
 
 	if (bitmapCache)
 	{
-		for (i = 0; i < (int)bitmapCache->maxCells; i++)
+		for (i = 0; i < bitmapCache->maxCells; i++)
 		{
-			for (j = 0; j < (int)bitmapCache->cells[i].number + 1; j++)
+			for (j = 0; j < bitmapCache->cells[i].number + 1; j++)
 			{
 				bitmap = bitmapCache->cells[i].entries[j];
 				Bitmap_Free(bitmapCache->context, bitmap);
