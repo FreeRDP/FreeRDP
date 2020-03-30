@@ -3485,7 +3485,14 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	Stream_Read_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Read_UINT16(s, extraFlags);  /* extraFlags (2 bytes) */
 	Stream_Read_UINT8(s, orderType);    /* orderType (1 byte) */
-	next = Stream_Pointer(s) + ((INT16)orderLength) + 7;
+	if (Stream_GetRemainingLength(s) < orderLength + 7)
+	{
+		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) %" PRIuz " < %" PRIu16,
+		           Stream_GetRemainingLength(s), orderLength + 7);
+		return FALSE;
+	}
+
+	next = Stream_Pointer(s) + orderLength + 7;
 	name = secondary_order_string(orderType);
 	WLog_Print(update->log, WLOG_DEBUG, "Secondary Drawing Order %s", name);
 
