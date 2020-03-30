@@ -846,15 +846,19 @@ static INLINE BOOL update_write_brush(wStream* s, rdpBrush* brush, BYTE fieldFla
 
 	return TRUE;
 }
-static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, UINT32 number)
+static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, UINT32* nr)
 {
+	UINT32 number = *nr;
 	UINT32 i;
 	BYTE flags = 0;
 	BYTE* zeroBits;
 	UINT32 zeroBitsSize;
 
 	if (number > 45)
-		number = 45;
+	{
+		WLog_WARN(TAG, "Invalid number of delta rectangles %" PRIu32, number);
+		return FALSE;
+	}
 
 	zeroBitsSize = ((number + 1) / 2);
 
@@ -1248,7 +1252,7 @@ static BOOL update_read_multi_dstblt_order(wStream* s, const ORDER_INFO* orderIn
 			return FALSE;
 
 		Stream_Read_UINT16(s, multi_dstblt->cbData);
-		return update_read_delta_rects(s, multi_dstblt->rectangles, multi_dstblt->numRectangles);
+		return update_read_delta_rects(s, multi_dstblt->rectangles, &multi_dstblt->numRectangles);
 	}
 
 	return TRUE;
@@ -1276,7 +1280,7 @@ static BOOL update_read_multi_patblt_order(wStream* s, const ORDER_INFO* orderIn
 
 		Stream_Read_UINT16(s, multi_patblt->cbData);
 
-		if (!update_read_delta_rects(s, multi_patblt->rectangles, multi_patblt->numRectangles))
+		if (!update_read_delta_rects(s, multi_patblt->rectangles, &multi_patblt->numRectangles))
 			return FALSE;
 	}
 
@@ -1300,7 +1304,7 @@ static BOOL update_read_multi_scrblt_order(wStream* s, const ORDER_INFO* orderIn
 			return FALSE;
 
 		Stream_Read_UINT16(s, multi_scrblt->cbData);
-		return update_read_delta_rects(s, multi_scrblt->rectangles, multi_scrblt->numRectangles);
+		return update_read_delta_rects(s, multi_scrblt->rectangles, &multi_scrblt->numRectangles);
 	}
 
 	return TRUE;
@@ -1350,7 +1354,7 @@ static BOOL update_read_multi_opaque_rect_order(wStream* s, const ORDER_INFO* or
 
 		Stream_Read_UINT16(s, multi_opaque_rect->cbData);
 		return update_read_delta_rects(s, multi_opaque_rect->rectangles,
-		                               multi_opaque_rect->numRectangles);
+		                               &multi_opaque_rect->numRectangles);
 	}
 
 	return TRUE;
@@ -1372,7 +1376,7 @@ static BOOL update_read_multi_draw_nine_grid_order(wStream* s, const ORDER_INFO*
 
 		Stream_Read_UINT16(s, multi_draw_nine_grid->cbData);
 		return update_read_delta_rects(s, multi_draw_nine_grid->rectangles,
-		                               multi_draw_nine_grid->nDeltaEntries);
+		                               &multi_draw_nine_grid->nDeltaEntries);
 	}
 
 	return TRUE;
