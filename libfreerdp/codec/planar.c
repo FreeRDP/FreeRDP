@@ -42,10 +42,9 @@ static INLINE BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane
 static INLINE INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, UINT32 nWidth,
                                           UINT32 nHeight)
 {
+	UINT32 used = 0;
 	UINT32 x, y;
 	BYTE controlByte;
-	const BYTE* pRLE = pSrcData;
-	const BYTE* pEnd = &pSrcData[SrcSize];
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -54,10 +53,10 @@ static INLINE INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, 
 			int cRawBytes;
 			int nRunLength;
 
-			if (pRLE >= pEnd)
+			if (used >= SrcSize)
 				return -1;
 
-			controlByte = *pRLE++;
+			controlByte = pSrcData[used++];
 			nRunLength = PLANAR_CONTROL_BYTE_RUN_LENGTH(controlByte);
 			cRawBytes = PLANAR_CONTROL_BYTE_RAW_BYTES(controlByte);
 
@@ -72,19 +71,21 @@ static INLINE INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, 
 				cRawBytes = 0;
 			}
 
-			pRLE += cRawBytes;
+			used += cRawBytes;
 			x += cRawBytes;
 			x += nRunLength;
 
 			if (x > nWidth)
 				return -1;
 
-			if (pRLE > pEnd)
+			if (used > SrcSize)
 				return -1;
 		}
 	}
 
-	return (INT32)(pRLE - pSrcData);
+	if (used > INT32_MAX)
+		return -1;
+	return (INT32)used;
 }
 
 static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* pSrcData, UINT32 SrcSize,

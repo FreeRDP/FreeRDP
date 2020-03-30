@@ -1903,6 +1903,9 @@ static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wSt
 		}
 	}
 
+	if (cache_bitmap->bitmapLength == 0)
+		goto fail;
+
 	if (Stream_GetRemainingLength(s) < cache_bitmap->bitmapLength)
 		goto fail;
 
@@ -2029,6 +2032,9 @@ static CACHE_BITMAP_V2_ORDER* update_read_cache_bitmap_v2_order(rdpUpdate* updat
 			cache_bitmap_v2->bitmapLength = cache_bitmap_v2->cbCompMainBodySize;
 		}
 	}
+
+	if (cache_bitmap_v2->bitmapLength == 0)
+		goto fail;
 
 	if (Stream_GetRemainingLength(s) < cache_bitmap_v2->bitmapLength)
 		goto fail;
