@@ -102,7 +102,7 @@ const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?" /* 0x41 - 0x46 */
 };
 
-static void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
+static BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type);
 static void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type,
                                            UINT16 channel_id);
 static void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id);
@@ -145,29 +145,33 @@ void rdp_write_security_header(wStream* s, UINT16 flags)
 
 BOOL rdp_read_share_control_header(wStream* s, UINT16* length, UINT16* type, UINT16* channel_id)
 {
+	UINT16 len;
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
 	/* Share Control Header */
-	Stream_Read_UINT16(s, *length); /* totalLength */
+	Stream_Read_UINT16(s, len); /* totalLength */
+
+	*length = len;
 
 	/* If length is 0x8000 then we actually got a flow control PDU that we should ignore
 	 http://msdn.microsoft.com/en-us/library/cc240576.aspx */
-	if (*length == 0x8000)
+	if (len == 0x8000)
 	{
-		rdp_read_flow_control_pdu(s, type);
+		if (!rdp_read_flow_control_pdu(s, type))
+			return FALSE;
 		*channel_id = 0;
 		*length = 8; /* Flow control PDU is 8 bytes */
 		return TRUE;
 	}
 
-	if (((size_t)*length - 2) > Stream_GetRemainingLength(s))
+	if ((len < 4) || ((len - 2) > Stream_GetRemainingLength(s)))
 		return FALSE;
 
 	Stream_Read_UINT16(s, *type); /* pduType */
 	*type &= 0x0F;                /* type is in the 4 least significant bits */
 
-	if (*length > 4)
+	if (len > 4)
 		Stream_Read_UINT16(s, *channel_id); /* pduSource */
 	else
 		*channel_id = 0; /* Windows XP can send such short DEACTIVATE_ALL PDUs. */
@@ -1116,7 +1120,7 @@ int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
 	}
 }
 
-void rdp_read_flow_control_pdu(wStream* s, UINT16* type)
+BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type)
 {
 	/*
 	 * Read flow control PDU - documented in FlowPDU section in T.128
@@ -1126,12 +1130,17 @@ void rdp_read_flow_control_pdu(wStream* s, UINT16* type)
 	 * Switched the order of these two fields to match this observation.
 	 */
 	UINT8 pduType;
+	if (!type)
+		return FALSE;
+	if (Stream_GetRemainingLength(s) < 6)
+		return FALSE;
 	Stream_Read_UINT8(s, pduType); /* pduTypeFlow */
 	*type = pduType;
 	Stream_Seek_UINT8(s);  /* pad8bits */
 	Stream_Seek_UINT8(s);  /* flowIdentifier */
 	Stream_Seek_UINT8(s);  /* flowNumber */
 	Stream_Seek_UINT16(s); /* pduSource */
+	return TRUE;
 }
 
 /**
