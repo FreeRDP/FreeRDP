@@ -39,10 +39,12 @@
 
 static char* gdi_rect_str(char* buffer, size_t size, const HGDI_RECT rect)
 {
+	if (!buffer || (size < 1) || !rect)
+		return NULL;
+
 	_snprintf(buffer, size - 1,
 	          "[top/left=%" PRId32 "x%" PRId32 "-bottom/right%" PRId32 "x%" PRId32 "]", rect->top,
 	          rect->left, rect->bottom, rect->right);
-	if (size > 1)
 		buffer[size - 1] = '\0';
 
 	        return buffer;
@@ -50,9 +52,11 @@ static char* gdi_rect_str(char* buffer, size_t size, const HGDI_RECT rect)
 
 static char* gdi_regn_str(char* buffer, size_t size, const HGDI_RGN rgn)
 {
+	if (!buffer || (size < 1) || !rgn)
+		return NULL;
+
 	_snprintf(buffer, size - 1, "[%" PRId32 "x%" PRId32 "-%" PRId32 "x%" PRId32 "]", rgn->x, rgn->y,
 	          rgn->w, rgn->h);
-	if (size > 1)
 		buffer[size - 1] = '\0';
 
 	return buffer;
