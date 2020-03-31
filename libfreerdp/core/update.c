@@ -103,6 +103,9 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 	{
 		if (!(bitmapData->flags & NO_BITMAP_COMPRESSION_HDR))
 		{
+			if (Stream_GetRemainingLength(s) < 8)
+				return FALSE;
+
 			Stream_Read_UINT16(s,
 			                   bitmapData->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
 			Stream_Read_UINT16(s,
